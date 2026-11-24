@@ -260,4 +260,40 @@ function down7(e){if(scene!=='lots7')return priorDown7(e);if(modal||!started)ret
 function move7(e){if(scene!=='lots7')return priorMove7(e);let a=activity.lots;if(a?.hold&&!a.slip){let q=local(point(e));a.progress=Math.min(100,a.progress+Math.abs(q.x-a.last.x)*.16);a.last=q;a.shake=1}}
 function up7(e){if(scene!=='lots7')return priorUp7(e);if(activity.lots)activity.lots.hold=false;mouse.down=false}
 c.removeEventListener('pointerdown',priorDown7);c.removeEventListener('pointermove',priorMove7);c.removeEventListener('pointerup',priorUp7);c.addEventListener('pointerdown',down7);c.addEventListener('pointermove',move7);c.addEventListener('pointerup',up7);c.addEventListener('pointercancel',()=>{if(scene==='lots7'&&activity.lots)activity.lots.hold=false});
+
+/* V8: contextual bilingual banter, persistent speech strip and expanded lunch choices */
+const banter8={
+district:[['You have arrived at a place with no calendar invites.','恭喜抵达一个没有会议邀请的地方。'],['Your boss thinks you are working. Excellent teamwork.','老板以为你在工作。配合得非常好。']],
+temple:[['Even the universe needs a moment to reply.','宇宙也有消息免打扰的时候。'],['Fortune first. Existential crisis later.','先看运势，人生难题等会儿再说。']],
+tarot7:[['Choose a card, not another red flag.','选张牌，不要再选错人了。'],['The cards are shuffled. Unlike your unread emails.','牌洗好了，未读邮件还没有。']],
+lots7:[['Shake the cup, not your life decisions.','摇签筒就好，人生不用跟着摇。'],['No need to shake like your salary depends on it.','不用摇得像月底发工资一样紧张。']],
+tea:[['Ah Ma: pearls cost money, you know!','阿嫲：珍珠也是要钱的好吗！'],['Ah Ma: make tea, not a swimming pool.','阿嫲：做奶茶，不是开游泳池。'],['Ah Ma: the cup is not a cocktail shaker at a nightclub.','阿嫲：摇奶茶，不是在夜店打碟。']],
+kitchen:[['Ah Ma: chop the vegetables, not your career prospects.','阿嫲：切菜就好，别把前途也切没了。'],['Ah Ma: the pan has feelings too.','阿嫲：锅也是有尊严的。'],['Ah Ma: Michelin can wait. Lunch cannot.','阿嫲：米其林可以等，午饭不能等。']],
+claw:[['The machine is judging your hand-eye coordination.','娃娃机正在评估你的手眼协调能力。'],['The toy has trust issues. Understandable.','娃娃不太信任你，可以理解。'],['Your aim has gone on annual leave.','你的准头已经请年假了。']],
+petcare:[['Boss Meow: I accept snacks, not excuses.','鱼老板：只接受零食，不接受借口。'],['Boss Meow: you work for me now.','鱼老板：从今天起，你给我打工。'],['Boss Meow: finally, competent staff.','鱼老板：终于招到一个像样的员工。']],
+unwind:[['This is a meeting-free zone.','本区禁止开会。'],['Leave the office drama outside.','办公室的宫斗剧请留在门外。']],
+pillow:[['That pillow has never sent a meeting invite.','这个枕头从来没发过会议邀请。'],['Good hit! The cushion will recover.','打得好！枕头表示还能撑住。'],['Pillow: I would like to speak to HR.','枕头：我要找人事部投诉。'],['One more? No performance review here.','再来一下？这里没有绩效考核。']],
+paper:[['Paperwork has finally met its match.','文件终于遇到对手了。'],['That imaginary deadline is losing confidence.','那个虚构的截止日期开始慌了。'],['Outstanding performance in the nonsense department.','恭喜获得烦恼清理部门优秀员工。']],
+bubble:[['Pop the bubbles, not your blood vessels.','捏气泡，别把自己气炸了。'],['More satisfying than clearing your inbox.','比清空收件箱还爽。']],
+garden:[['Ah Ma: have you eaten, or just overthought?','阿嫲：吃饭了吗，还是光顾着想太多？'],['A Juan: my hobbies include cancelling plans.','阿卷：我的爱好是取消约好的活动。'],['Boss Meow: sit down. Nobody is taking attendance.','鱼老板：坐吧，这里不点名。']],
+board:[['Anonymous office drama is apparently a national sport.','匿名吐槽办公室，堪称全民运动。'],['Read the tea. Do not spill your personal details.','吃瓜可以，个人资料别乱晒。']],
+foodhub:[['The hardest question in adult life: lunch.','成年人最难的题：午饭吃什么。']],
+food:[['Your lunch has been promoted to a major life decision.','午饭已升级为人生重大决策。'],['The wheel has no opinions about your diet.','轮盘对你的饮食计划没有意见。']],
+dance:[['Dance like your boss cannot see the CCTV.','跳吧，就当老板看不到监控。'],['Your feet have their own strategy.','你的双脚显然有自己的想法。']],
+train:[['Next stop: absolutely no productivity.','下一站：理直气壮地不干活。'],['Window seat secured. Life is briefly sorted.','靠窗位到手，人生暂时圆满。']],
+kite:[['Even the kite has fewer commitments than you.','连风筝的行程都比你自由。']],
+lantern:[['A little light for whatever is on your mind.','给心里的小事，留一盏灯。']],
+memorial:[['Take your time. There is no rush here.','慢慢来，这里不用赶时间。']]
+};
+const talk8=document.createElement('div');talk8.id='talk8';talk8.setAttribute('aria-live','polite');document.body.append(talk8);const st8=document.createElement('style');st8.textContent='#talk8{position:fixed;z-index:2;left:50%;top:max(72px,calc(env(safe-area-inset-top) + 64px));transform:translateX(-50%);max-width:min(440px,64vw);padding:10px 17px;border:2px solid #e6b7a5;border-radius:18px;background:#fff0dbee;color:#735363;font-size:13px;line-height:1.35;text-align:center;box-shadow:0 4px 12px #523d5225;display:none;pointer-events:none}body.playing #talk8{display:block}@media(max-width:600px){#talk8{top:max(108px,calc(env(safe-area-inset-top) + 95px));max-width:86vw;font-size:12px;padding:7px 12px}}';document.head.append(st8);
+let lastBanter8=-100,sceneBanter8='',lastState8='',lastHit8=-100;
+function say8(pair){if(!pair)return;talk8.textContent=tr(pair[0],pair[1]);lastBanter8=T}
+function randomBanter8(){let a=banter8[scene]||banter8.district;say8(pick(a))}
+const priorUpdate8=updateActivity;updateActivity=function(){priorUpdate8();if(!started||modal)return;let state='';if(scene==='tea')state=[activity.pearls,Math.floor((activity.level||0)/25),activity.ice,activity.served].join(':');if(scene==='kitchen'&&activity.cook)state=activity.cook.step;if(scene==='claw')state=activity.toys?.filter(t=>t.gone).length+':'+!!activity.grab;if(scene==='pillow'||scene==='paper')state=String(activity.count||0);if(scene==='petcare')state=[activity.tool,Math.floor(pet5.happy/10),Math.floor(pet5.clean/10),Math.floor(pet5.hunger/10)].join(':');if(scene==='dance')state=String(activity.rhythm?.combo||0);if(scene==='bubble')state=String(Math.floor((activity.popped?.size||0)/5));if(scene!==sceneBanter8){sceneBanter8=scene;lastState8=state;randomBanter8()}else if(state!==lastState8){lastState8=state;if(T-lastBanter8>((scene==='pillow'||scene==='paper')?.17:2))randomBanter8()}else if(T-lastBanter8>14)randomBanter8()};
+foods5.push(['Lanzhou beef noodles','兰州牛肉面'],['Biang biang noodles','油泼扯面'],['Sichuan wontons','红油抄手'],['Chongqing noodles','重庆小面'],['Rice noodles','过桥米线'],['Snail rice noodles','螺蛳粉'],['Claypot rice','煲仔饭'],['Roast duck','烤鸭'],['Soup dumplings','小笼包'],['Scallion pancakes','葱油饼'],['Mapo tofu','麻婆豆腐'],['Braised chicken rice','黄焖鸡米饭'],['Pickled fish','酸菜鱼'],['Grilled fish','烤鱼'],['Chinese barbecue','烧烤'],['Hot dry noodles','热干面'],['Xinjiang big plate chicken','新疆大盘鸡'],['Hand pulled rice','新疆手抓饭'],['Fried rice noodles','炒河粉'],['Congee','粥'],['Dim sum','广式早茶'],['Spicy crawfish','麻辣小龙虾'],['Roujiamo','肉夹馍'],['Cold noodles','凉皮'],['Pork rib soup','排骨汤'],['Steamed buns','包子']);
+/* Keep the wheel readable: choose eight candidates per spin from the full pool. */
+const fullFood8=foods5.slice();foods5.splice(0,foods5.length,...shuffle7(fullFood8).slice(0,8));
+const oldEnter8=enter;enter=function(id){if(id==='tea')id='foodhub';if(id==='food')foods5.splice(0,foods5.length,...shuffle7(fullFood8).slice(0,8));return oldEnter8(id)};
+const oldDraw8=drawActivity;drawActivity=function(){if(scene==='foodhub'){activityCoords();room('#f3cdb3','#dca88f');txt(tr('AH MA’S KITCHEN & TEA','阿嫲厨房 · 奶茶铺'),300,35,22,'#865966');avatar(300,190,.87,{ahma:true,hair:'#b8b4b0',coat:'#b38282'});let a=[['tea','Make milk tea','做奶茶',()=>baseEnter5('tea')],['kitchen','Cook a meal','做顿饭',()=>enter('kitchen')],['food','Pick lunch','今天吃什么',()=>{foods5.splice(0,foods5.length,...shuffle7(fullFood8).slice(0,8));go5('food')}]];for(let i=0;i<3;i++){let x=22+i*190;rect(x,222,176,185,['#f6deb5','#dce4bf','#ead2d9'][i],19);if(i===0){rect(x+61,250,55,83,'#c39872',10);for(let j=0;j<6;j++)circle(x+70+j%3*15,318-Math.floor(j/3)*10,4,'#69483f');line(x+92,250,x+105,228,'#df8c91',5)}else if(i===1)mealDish6(recipes6[0],x+88,293,.85);else{circle(x+88,291,41,'#d8a5ab');txt('?',x+88,291,34,'#fff2dc')}txt(tr(a[i][1],a[i][2]),x+88,373,15,'#805d68');hits.push({x:OX+x*A,y:OY+222*A,w:176*A,h:185*A,fn:a[i][3]})}endRoom()}else oldDraw8()};
+const oldExit8=exit;exit=function(){if(scene==='tea'){baseEnter5('foodhub');return}return oldExit8()};$('back').onclick=exit;
 </script></body></html>
