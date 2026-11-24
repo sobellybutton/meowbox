@@ -72,4 +72,30 @@ cleanup=()=>{cancelAnimationFrame(frameId);clearTimeout(hideTimer)};
 };
 function enhanceRoom(){let el=document.querySelector('.living-room');if(!el||el.dataset.experience)return;el.dataset.experience='yes';let dialog=el.querySelector('.rpg-dialogue'),npc=el.querySelector('.rpg-npc');if(!dialog||!npc)return;let speech=document.createElement('div');speech.className='scene-speech';speech.hidden=true;let choices=document.createElement('div');choices.className='scene-choices';choices.hidden=true;el.append(speech,choices);function sync(){if(!el.isConnected)return;if(dialog.hidden){speech.hidden=true;choices.hidden=true;choices.style.display='none';return}let line=dialog.querySelector('p');speech.textContent=line?.textContent||'';speech.hidden=false;let n=npc.getBoundingClientRect(),r=el.getBoundingClientRect();speech.style.left=clamp((n.left+n.width/2-r.left)/r.width*100,23,77)+'%';speech.style.top=Math.max(15,(n.top-r.top)/r.height*100-2)+'%';choices.replaceChildren();for(let source of dialog.querySelectorAll('.dialog-choices button')){let b=document.createElement('button');b.textContent=source.textContent;b.onclick=()=>source.click();choices.append(b)}let dismiss=document.createElement('button');dismiss.className='dismiss';dismiss.textContent=tr('Look around','四处看看');dismiss.onclick=()=>dialog.querySelector('.dialog-top button')?.click();choices.append(dismiss);choices.hidden=false;choices.style.display='flex'}new MutationObserver(sync).observe(dialog,{attributes:true,childList:true,subtree:true,characterData:true});sync()}
 new MutationObserver(enhanceRoom).observe($id('stage'),{childList:true,subtree:true});enhanceRoom();
+
+/* Scene-first presentation: preserve existing artwork and game handlers. */
+const immersive=document.createElement('style');immersive.textContent=`
+@media(min-width:900px){
+#roomHead,#stage,#stage.rpg-stage{width:min(96vw,1800px)!important;max-width:none!important}
+#stage .living-room,#stage .pet-world{min-height:clamp(540px,78dvh,1100px)!important;border-radius:10px}
+#stage .rpg-action{min-height:72dvh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#stage .rpg-action>svg{width:min(65vw,850px);max-height:55dvh}
+}
+#stage .living-room{touch-action:none;background-size:100% 100%!important}
+#stage .living-room .rpg-prop{opacity:1}
+#stage .living-room .rpg-prop small{pointer-events:none}
+#stage .living-room .rpg-prop:focus-visible{outline:2px solid #fff1b9}
+#stage .rpg-action{isolation:isolate;background:radial-gradient(ellipse at 50% 65%,#e9d5a3,#a7b98f 75%)}
+#stage .rpg-action:after{content:'';position:absolute;inset:0;z-index:-1;background:var(--game-scenery,none) center/cover no-repeat;opacity:.28;pointer-events:none}
+#stage .rpg-action svg{overflow:visible;filter:drop-shadow(0 10px 12px #43392a33)}
+#stage .rpg-action .talk{max-width:90%;background:#f8eed8e8}
+#stage .rpg-action h2{font-size:clamp(22px,3vw,34px)}
+#stage .rpg-sky{background:radial-gradient(ellipse at bottom,#999bad,#334d62 70%)}
+#stage .rpg-action button{min-height:44px}
+@media(max-width:760px){#stage .living-room,#stage .pet-world{min-height:clamp(460px,72dvh,780px)!important}.scene-choices{bottom:48px;max-height:32%;overflow:auto;overscroll-behavior:contain}.scene-choices button{min-height:40px}.scene-speech{font-size:13px}.rpg-action{padding:10px!important}.rpg-action svg{max-width:100%;max-height:48dvh}}
+`;document.head.append(immersive);
+let scenery='';
+function scenePresentation(){const stage=$id('stage');const living=stage.querySelector('.living-room');if(living){const v=getComputedStyle(living).getPropertyValue('--storybook');if(v.trim())scenery=v;return}const activity=stage.querySelector('.rpg-action');if(activity&&!activity.dataset.immersive){activity.dataset.immersive='yes';if(scenery&&!activity.classList.contains('rpg-sky'))activity.style.setProperty('--game-scenery',scenery);if(!reduced)activity.animate([{opacity:.4,transform:'scale(.985)'},{opacity:1,transform:'none'}],{duration:300,easing:'ease-out'})}}
+new MutationObserver(scenePresentation).observe($id('stage'),{childList:true,subtree:true});scenePresentation();
+
 })();
