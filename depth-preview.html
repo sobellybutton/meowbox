@@ -1,0 +1,3603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>MeowBox · Fortune Valley 解忧谷</title>
+<style>
+  :root {
+    --ink: #2c221e;
+    --ink-soft: #5c4b43;
+    --paper: #f6efe2;
+    --paper-warm: #ede0c8;
+    --vermilion: #c84b31;
+    --gold: #d49b38;
+    --sage: #5e7a68;
+    --night: #1c2230;
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    background: #1a1614;
+    font-family: "Georgia", "Songti SC", "STSong", "Noto Serif SC", serif;
+    color: var(--ink);
+    touch-action: manipulation;
+  }
+  #gameCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+  /* Subtle hand-drawn paper grain overlay */
+  #paperGrain {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0.055;
+    background-image: radial-gradient(#2c221e 0.75px, transparent 0.75px),
+                      radial-gradient(#5c4b43 0.5px, #f6efe2 0.5px);
+    background-size: 24px 24px;
+    background-position: 0 0, 12px 12px;
+    mix-blend-mode: multiply;
+  }
+
+  /* Minimal Top-Right Controls (Language & Audio & Settings) */
+  #topControls {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 14px);
+    right: calc(env(safe-area-inset-right, 0px) + 16px);
+    z-index: 30;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .ink-pill {
+    background: rgba(246, 239, 226, 0.86);
+    backdrop-filter: blur(6px);
+    border: 1.5px solid rgba(44, 34, 30, 0.45);
+    color: var(--ink);
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-family: inherit;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  .ink-pill:hover {
+    background: rgba(255, 250, 240, 0.96);
+    transform: translateY(-1px);
+  }
+  .ink-pill:active {
+    transform: translateY(1px);
+  }
+
+  /* Subtle Top-Left Diegetic Location Whisper (Only active in Valley) */
+  #valleyHeader {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 14px);
+    left: calc(env(safe-area-inset-left, 0px) + 16px);
+    z-index: 25;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: rgba(246, 239, 226, 0.84);
+    backdrop-filter: blur(6px);
+    border: 1.5px solid rgba(44, 34, 30, 0.4);
+    padding: 5px 14px 5px 8px;
+    border-radius: 999px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+    pointer-events: auto;
+  }
+  #miniAvatarCanvas {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #e9dec8;
+    border: 1px solid rgba(44,34,30,0.35);
+  }
+  .vh-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+  }
+  .vh-name {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--ink);
+  }
+  .vh-sub {
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+
+  /* Diegetic Ticket Name Input (Borderless handwritten ink right on the illustrated ticket) */
+  #ticketInputWrap {
+    position: fixed;
+    left: 50%;
+    top: 53%;
+    transform: translate(-50%, -50%);
+    z-index: 28;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: auto;
+  }
+  #ticketNameInput {
+    width: 220px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px dashed rgba(44, 34, 30, 0.55);
+    outline: none;
+    text-align: center;
+    font-family: "Georgia", "Kaiti SC", "STKaiti", "Songti SC", serif;
+    font-size: 22px;
+    font-style: italic;
+    color: #2b1e19;
+    padding: 4px 8px;
+    user-select: text;
+  }
+  #ticketNameInput::placeholder {
+    color: rgba(92, 75, 67, 0.5);
+    font-size: 16px;
+  }
+  #ticketConfirmBtn {
+    margin-top: 18px;
+    background: var(--vermilion);
+    color: #fff9f0;
+    border: 1.5px solid #2c221e;
+    border-radius: 999px;
+    padding: 7px 22px;
+    font-family: inherit;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #2c221e;
+    transition: transform 0.12s ease;
+  }
+  #ticketConfirmBtn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #2c221e;
+  }
+
+  /* Diegetic Wish Input inside Wishing Garden */
+  #wishInputWrap {
+    position: fixed;
+    left: 50%;
+    top: 52%;
+    transform: translate(-50%, -50%);
+    z-index: 35;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  #wishTextInput {
+    width: 240px;
+    height: 76px;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    text-align: center;
+    font-family: "Georgia", "Kaiti SC", "STKaiti", serif;
+    font-size: 16px;
+    line-height: 1.45;
+    color: #2c221e;
+    user-select: text;
+  }
+
+  /* Earned Diegetic Bottom Dock (Hidden until items are physically received!) */
+  #diegeticDock {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 26;
+    display: none;
+    gap: 10px;
+    padding: 6px 12px;
+    background: rgba(246, 239, 226, 0.88);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(44, 34, 30, 0.5);
+    border-radius: 999px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  }
+  .dock-item {
+    display: none;
+    align-items: center;
+    gap: 5px;
+    background: transparent;
+    border: none;
+    padding: 5px 11px;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .dock-item.unlocked {
+    display: flex;
+  }
+  .dock-item:hover {
+    background: rgba(212, 155, 56, 0.22);
+    transform: translateY(-1px);
+  }
+  .dock-badge {
+    background: var(--vermilion);
+    color: #fff;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 999px;
+  }
+
+  /* In-Scene Story Choices (Organic floating slips, NOT covering scenery) */
+  #storyChoices {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 74px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 29;
+    display: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: min(92vw, 560px);
+  }
+  .choice-slip {
+    background: rgba(249, 243, 230, 0.94);
+    border: 1.5px solid #2c221e;
+    border-left: 4px solid var(--vermilion);
+    padding: 9px 16px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.16);
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .choice-slip:hover {
+    background: #fffdf7;
+    transform: translateY(-2px);
+  }
+
+  /* Illustrated Keepsake Book / Interior Activity Layer (Drawn like open sketchbook / tabletop, never generic web grid) */
+  #bookOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20, 16, 14, 0.58);
+    backdrop-filter: blur(4px);
+    padding: 16px;
+  }
+  .storybook-sheet {
+    position: relative;
+    width: min(94vw, 680px);
+    max-height: 86dvh;
+    overflow-y: auto;
+    background: linear-gradient(135deg, #f8f1e3 0%, #efe3cc 100%);
+    border: 2px solid #2c221e;
+    border-radius: 14px;
+    box-shadow: 0 16px 42px rgba(0,0,0,0.42), inset 0 0 0 4px rgba(255,255,255,0.35);
+    padding: 22px 24px;
+    color: var(--ink);
+  }
+  .sheet-close {
+    position: sticky;
+    top: 0;
+    float: right;
+    background: #2c221e;
+    color: #f8f1e3;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 15px;
+    cursor: pointer;
+    z-index: 5;
+  }
+  .storybook-title {
+    margin: 0 0 4px 0;
+    font-size: 21px;
+    letter-spacing: 0.03em;
+    color: #2c221e;
+  }
+  .storybook-sub {
+    margin: 0 0 16px 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .stamp-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .passport-stamp {
+    width: calc(33.33% - 8px);
+    min-width: 130px;
+    min-height: 92px;
+    border: 1.5px dashed rgba(44,34,30,0.32);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: rgba(255,252,245,0.5);
+    position: relative;
+  }
+  .passport-stamp.stamped {
+    border-style: solid;
+    border-color: rgba(200, 75, 49, 0.65);
+    background: rgba(255, 248, 236, 0.88);
+  }
+  .stamp-seal {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--vermilion);
+    border: 2px solid var(--vermilion);
+    border-radius: 50%;
+    padding: 6px 8px;
+    transform: rotate(-8deg);
+    margin-bottom: 5px;
+    letter-spacing: 0.04em;
+  }
+  .tarot-table {
+    background: radial-gradient(circle at center, #2b2338 0%, #171321 100%);
+    border: 2px solid #d49b38;
+    border-radius: 12px;
+    padding: 18px;
+    color: #f6efe2;
+    margin-top: 10px;
+  }
+  .tarot-cards-row {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+  .tarot-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 145px;
+  }
+  .tarot-card-canvas {
+    width: 132px;
+    height: 210px;
+    border-radius: 9px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+    cursor: pointer;
+    transition: transform 0.28s ease;
+  }
+  .tarot-card-canvas:hover {
+    transform: translateY(-5px);
+  }
+  .ink-btn {
+    background: #2c221e;
+    color: #f8f1e3;
+    border: 1.5px solid #d49b38;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    margin: 4px;
+    transition: transform 0.12s ease, opacity 0.15s;
+  }
+  .ink-btn:hover {
+    transform: translateY(-1px);
+  }
+  .ink-btn.active {
+    background: var(--vermilion);
+    border-color: #fff3dd;
+  }
+  @media (max-width: 560px) {
+    .passport-stamp { width: calc(50% - 6px); min-width: 110px; }
+    .tarot-slot { width: 106px; }
+    .tarot-card-canvas { width: 102px; height: 164px; }
+    .storybook-sheet { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+<div id="paperGrain"></div>
+
+<!-- Top-Left Diegetic Header (Only visible once inside Fortune Valley) -->
+<div id="valleyHeader">
+  <canvas id="miniAvatarCanvas" width="60" height="60"></canvas>
+  <div class="vh-text">
+    <span class="vh-name" id="vhName">Traveller</span>
+    <span class="vh-sub" id="vhLoc">Fortune Valley · 解忧谷 (0/24)</span>
+  </div>
+</div>
+
+<!-- Top-Right Minimal Controls -->
+<div id="topControls">
+  <button class="ink-pill" id="skipBtn" style="display:none;"></button>
+  <button class="ink-pill" id="langBtn">中文</button>
+  <button class="ink-pill" id="muteBtn" title="Sound">♪</button>
+  <button class="ink-pill" id="settingsBtn" style="display:none;" title="Settings">⚙</button>
+</div>
+
+<!-- Diegetic Handwritten Name Input on the Ticket -->
+<div id="ticketInputWrap">
+  <input id="ticketNameInput" type="text" maxlength="14" autocomplete="off" spellcheck="false" />
+  <button id="ticketConfirmBtn"></button>
+</div>
+
+<!-- Diegetic Wish Input for Wishing Garden -->
+<div id="wishInputWrap">
+  <textarea id="wishTextInput" maxlength="60"></textarea>
+  <button class="ink-btn active" id="releaseWishBtn"></button>
+</div>
+
+<!-- Organic Floating Story Reply Slips -->
+<div id="storyChoices"></div>
+
+<!-- Diegetic Earned Dock -->
+<div id="diegeticDock">
+  <button class="dock-item" id="dockHome"><span>⛩</span><span data-i18n="dock_home">Gate</span></button>
+  <button class="dock-item" id="dockPassport"><span>📖</span><span data-i18n="dock_passport">Passport</span><span class="dock-badge" id="stampCountBadge">0/24</span></button>
+  <button class="dock-item" id="dockBag"><span>👜</span><span data-i18n="dock_bag">Bag</span><span class="dock-badge" id="bagCountBadge">0</span></button>
+  <button class="dock-item" id="dockMap"><span>🗺</span><span data-i18n="dock_map">Scroll</span></button>
+</div>
+
+<!-- Illustrated Storybook / Tabletop Activity Sheet -->
+<div id="bookOverlay">
+  <div class="storybook-sheet" id="storybookContent"></div>
+</div>
+
+<script>
+(() => {
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+      const rad = typeof r === "number" ? r : (Array.isArray(r) ? r[0] : 6);
+      const rr = Math.min(rad, Math.abs(w) / 2, Math.abs(h) / 2);
+      this.moveTo(x + rr, y);
+      this.arcTo(x + w, y, x + w, y + h, rr);
+      this.arcTo(x + w, y + h, x, y + h, rr);
+      this.arcTo(x, y + h, x, y, rr);
+      this.arcTo(x, y, x + w, y, rr);
+      this.closePath();
+      return this;
+    };
+  }
+
+  /* =========================================================================
+     1. BILINGUAL SCRIPT & HUMOUR (Natural EN & 中文)
+     ========================================================================= */
+  const TEXT = {
+    en: {
+      title_sub: "A little escape from the real world.",
+      tap_begin: "Begin your journey",
+      tap_continue: "Continue journey",
+      skip_intro: "Skip to Valley ▸",
+      station_greet_1: "Evening, traveller. Last train out of reality leaves shortly.",
+      station_greet_2: "Write your name on the ticket—no forms, just ink.",
+      ticket_placeholder: "What should we call you?",
+      ticket_sign_btn: "Sign Ticket ✒",
+      default_name: "Traveller",
+      give_passport: "Here—take this Passport. Every valley stamp belongs inside. (Tap Passport on counter)",
+      passport_taken: "Good. Now step onto the platform and see which cat you feel like being today.",
+      choose_prompt: "Who will you be today? (Tap a cat to react · Swipe or use arrows)",
+      pick_cat_btn: "Travel as ",
+      take_bag_hint: "Don't forget your woven Bag by the bench! (Tap Bag to pick up)",
+      bag_taken: "All packed! Let's stamp that ticket and board.",
+      stamp_ticket_msg: "Stamped for Fortune Valley! Mind the gap...",
+      train_caption: "Leaving the noise behind... Next stop: Fortune Valley.",
+      keeper_greet: "Welcome, {name}. Here for your fortune, or is your love life acting up again?",
+      keeper_c1: "Love life is in shambles, honestly.",
+      keeper_c2: "Career & money rescue, please.",
+      keeper_c3: "Just hiding from reality for a bit.",
+      keeper_r1: "Ha! Half the valley's lanterns are lit for broken hearts. Try the Tarot House up the hill.",
+      keeper_r2: "Practical soul. Shake a bamboo lot at the Shrine, or check your stars at Destiny House.",
+      keeper_r3: "The best reason of all. Walk slowly—nobody clocks in here.",
+      keeper_open: "The gate is open. Take your time climbing the hill.",
+      valley_sub: "Fortune Valley",
+      dock_home: "Gate",
+      dock_passport: "Passport",
+      dock_bag: "Bag",
+      dock_map: "Map",
+      enter_prompt: "Tap door to enter",
+      wish_placeholder: "Write a quiet wish on the lantern...",
+      wish_btn: "Release Lantern 🏮"
+    },
+    zh: {
+      title_sub: "现实太累，就来这里摸会儿鱼。",
+      tap_begin: "踏上旅途",
+      tap_continue: "继续旅程",
+      skip_intro: "跳过序章 ▸",
+      station_greet_1: "晚上好，旅人。逃离现实的末班车马上就要发车了。",
+      station_greet_2: "在车票上签个名字吧——不用填表，落笔就行。",
+      ticket_placeholder: "怎么称呼你？",
+      ticket_sign_btn: "落笔签名 ✒",
+      default_name: "旅人",
+      give_passport: "拿着这本旅行手帐吧。以后每到一处，印章都会留在里面。（轻触柜台上的手帐）",
+      passport_taken: "收好啦。去站台上看看，今天你想变成哪只猫？",
+      choose_prompt: "今天，想变成哪只猫？（点击猫咪互动 · 左右切换）",
+      pick_cat_btn: "化身这只猫出发：",
+      take_bag_hint: "别忘了长椅旁的小行囊！（点击行囊背上）",
+      bag_taken: "收拾妥当！盖上车票印章，准备登车吧。",
+      stamp_ticket_msg: "解忧谷通行章已盖好！请小心站台间隙……",
+      train_caption: "把喧嚣甩在身后……下一站：解忧谷。",
+      keeper_greet: "来啦，{name}？是想问前程，还是感情又出问题了？",
+      keeper_c1: "别提了，感情一团乱麻。",
+      keeper_c2: "搞钱要紧，先看事业财运。",
+      keeper_c3: "纯粹来躲个清静，摸会儿鱼。",
+      keeper_r1: "哈哈，谷里一半的灯笼都是为情所困的人点的。去山坡上的塔罗小屋看看吧。",
+      keeper_r2: "务实的家伙。去解忧庙求支签，或者到命理小馆算算流年吧。",
+      keeper_r3: "这才是最正当的理由。慢慢走，这里不用打卡上班。",
+      keeper_open: "山门开啦，顺着石阶往上走便是。",
+      valley_sub: "解忧谷",
+      dock_home: "山门",
+      dock_passport: "手帐",
+      dock_bag: "行囊",
+      dock_map: "绘卷",
+      enter_prompt: "轻触木门进入",
+      wish_placeholder: "在天灯上写下心愿……",
+      wish_btn: "放飞心愿灯 🏮"
+    }
+  };
+
+  /* =========================================================================
+     2. CHARACTERS (Consistent Proportions, Personalities & Reactions)
+     ========================================================================= */
+  const CATS = [
+    {
+      id: "ginger",
+      nameEn: "Ginger", nameZh: "橘猫",
+      tagEn: "Here for snacks.", tagZh: "主要是来找吃的。",
+      coat: "#e38b3c", stripe: "#b85d19", belly: "#faecd8", nose: "#e07a7a", eye: "#4b6b3c",
+      quipsEn: ["Is the train serving dried bonito?", "My spiritual aura is 90% soup dumpling.", "Purr... wake me when dinner's ready."],
+      quipsZh: ["火车上卖小鱼干便当吗？", "大师说我命里缺一顿夜宵。", "呼噜……走不动道了，除非有猫条。"]
+    },
+    {
+      id: "snowball",
+      nameEn: "Snowball", nameZh: "白猫",
+      tagEn: "Quietly judging everyone.", tagZh: "安静地审视每一个人。",
+      coat: "#f5f2eb", stripe: "#dcd6c8", belly: "#ffffff", nose: "#eca1a6", eye: "#4a80a8",
+      quipsEn: ["I already know your fortune. Fix your sleep schedule.", "Hmph. At least the mountain air is respectable.", "Do not ruffle my fur. Okay, maybe once."],
+      quipsZh: ["不用算了，你最大的问题是熬夜。", "哼，这里的空气勉强配得上本喵。", "别乱摸我头……算了，只准摸一下。"]
+    },
+    {
+      id: "midnight",
+      nameEn: "Midnight", nameZh: "黑猫",
+      tagEn: "Definitely up to something.", tagZh: "一看就在憋什么坏主意。",
+      coat: "#282832", stripe: "#16161d", belly: "#3a3a48", nose: "#575263", eye: "#e6b437",
+      quipsEn: ["Bad luck? Please, I AM the omen.", "I know three secret shortcuts already.", "Hehe... shiny things belong in my bag."],
+      quipsZh: ["黑猫不吉利？拜托，我就是神秘本身。", "我已经在盘算今晚去哪探险了。", "嘿嘿……亮晶晶的水晶归我啦。"]
+    },
+    {
+      id: "mochi",
+      nameEn: "Mochi", nameZh: "三花猫",
+      tagEn: "Too curious for its own good.", tagZh: "好奇心重到让人头疼。",
+      coat: "#f4ede1", patch1: "#de8335", patch2: "#38322e", belly: "#fffaf2", nose: "#e58b8b", eye: "#9e6b30",
+      quipsEn: ["Ooh! What's behind that lantern?!", "Can I shake ALL the fortune sticks at once?", "Wait—did that frog just wink at me?!"],
+      quipsZh: ["哇！那个灯笼后面藏着什么？！", "我能把签筒里的签全都摇出来看一遍吗？", "等等——刚才那只青蛙是不是对我眨眼了！"]
+    }
+  ];
+
+  /* =========================================================================
+     3. AUTHENTIC 22 MAJOR ARCANA TAROT DECK (Real Meanings & Cat Symbolism)
+     ========================================================================= */
+  const MAJOR_ARCANA = [
+    { num: "0", en: "The Fool", zh: "愚者", motif: "cliff",
+      upEn: "A fresh leap of faith. Let go of overthinking and step lightly into an unplanned chapter.",
+      revEn: "Hesitation or reckless distraction. Pause at the edge and check what you're ignoring.",
+      upZh: "勇敢而轻盈的新开始。放下过度思虑，像踏出窗台的小猫一样相信直觉。",
+      revZh: "瞻前顾后或一时冲动。先停在屋檐边理清思绪，别急着闭眼往下跳。" },
+    { num: "I", en: "The Magician", zh: "魔术师", motif: "wand",
+      upEn: "You already hold all four tools you need. Turn scattered ideas into deliberate action today.",
+      revEn: "Untapped talent or self-doubt. Stop waiting for 'perfect readiness'—start small.",
+      upZh: "万事俱备，你手头已拥有所需的一切筹码。把脑海里的灵感化作行动吧。",
+      revZh: "才华被犹豫掩盖，或精力过于分散。别等所谓完美时机，先迈出第一步。" },
+    { num: "II", en: "The High Priestess", zh: "女祭司", motif: "veil",
+      upEn: "Quiet intuition speaks louder than noise. Observe, listen between the lines, and keep your counsel.",
+      revEn: "Drowning out your inner voice with external opinions. Step back into stillness.",
+      upZh: "静默中的直觉最敏锐。答案不在喧嚣里，而在你早就察觉却未说破的心意中。",
+      revZh: "外界杂音太多，掩盖了你原本通透的第六感。给自己留一点独处的安静。" },
+    { num: "III", en: "The Empress", zh: "皇后", motif: "garden",
+      upEn: "Warmth, creative abundance, and gentle nourishment. Treat yourself and your projects generously.",
+      revEn: "Creative burnout from pouring into others while neglecting your own comfort.",
+      upZh: "丰盛、温柔与创造力正在生长。好好照顾自己的身心，美好会自然绽放。",
+      revZh: "过度消耗自己去迁就外界。先把自己哄开心，灵感与好运才会回流。" },
+    { num: "IV", en: "The Emperor", zh: "皇帝", motif: "throne",
+      upEn: "Clear boundaries, steady structure, and calm authority. Build a solid routine you can trust.",
+      revEn: "Rigidity or trying to control what isn't yours to carry. Loosen your grip slightly.",
+      upZh: "秩序、边界与稳健的掌控力。立下清晰的规则与计划，事情会稳步推进。",
+      revZh: "过于紧绷或试图控制无法掌控的事。适当松开爪子，反而更从容。" },
+    { num: "V", en: "The Hierophant", zh: "教皇", motif: "keys",
+      upEn: "Seek wisdom in time-tested craft, mentorship, or sincere shared values.",
+      revEn: "Outgrowing old expectations. You have permission to write your own quiet rulebook.",
+      upZh: "值得向经验丰富的前辈请教，或在稳妥的传统方法中找到安心的指引。",
+      revZh: "不必再被世俗标准束缚。你完全可以按照自己舒服的步调定义生活。" },
+    { num: "VI", en: "The Lovers", zh: "恋人", motif: "twins",
+      upEn: "Genuine resonance, honest alignment, and a choice made wholeheartedly rather than out of habit.",
+      revEn: "Mixed signals or avoiding a heartfelt decision. Honesty clears the fog.",
+      upZh: "真诚的默契与双向奔赴。遵从内心真正的偏爱做出选择，而非将就。",
+      revZh: "关系或选择中存在犹豫与错位。坦诚面对真实心意，迷雾才会散开。" },
+    { num: "VII", en: "The Chariot", zh: "战车", motif: "carriage",
+      upEn: "Focused momentum! Channel opposing feelings in the same direction and move decisively.",
+      revEn: "Spinning wheels without a clear destination. Realign your compass before sprinting.",
+      upZh: "势如破竹的行动力！驾驭住内心的拉扯，认准方向果断前进。",
+      revZh: "用力过猛却方向模糊。先握稳缰绳确认目的地，比盲目狂奔更重要。" },
+    { num: "VIII", en: "Strength", zh: "力量", motif: "lion",
+      upEn: "Soft courage triumphs over brute force. Patience and self-compassion tame the loudest worries.",
+      revEn: "Inner fatigue—being too harsh on yourself. Rest is part of resilience.",
+      upZh: "以柔克刚的温柔勇气。耐心与自我接纳，比强撑更能抚平焦虑。",
+      revZh: "最近对自己太苛刻了，心力有些透支。允许自己歇一歇也是勇敢。" },
+    { num: "IX", en: "The Hermit", zh: "隐士", motif: "lantern",
+      upEn: "Solitude brings clarity. Hold up your small lantern—you only need to see the very next step.",
+      revEn: "Isolating out of overthinking. Share a cup of tea with someone trustworthy.",
+      upZh: "独处能沉淀出真正的答案。提着小灯笼看清脚下一步就够了，不必照亮整座山。",
+      revZh: "一个人闷头钻牛角尖啦。走出来晒晒太阳，和信得过的朋友聊聊天吧。" },
+    { num: "X", en: "Wheel of Fortune", zh: "命运之轮", motif: "wheel",
+      upEn: "The tide is turning in your favour. Welcome unexpected timing and serendipitous encounters.",
+      revEn: "Temporary delay in the cycle. Don't fight the weather—let the wheel turn past this bump.",
+      upZh: "时来运转的契机正在转动！顺应变化，意想不到的好消息正在路上。",
+      revZh: "正处于周期交替的缓冲期。不必逆风较劲，顺其自然等风向转暖。" },
+    { num: "XI", en: "Justice", zh: "正义", motif: "scales",
+      upEn: "Fair balance, clear truth, and earned results. Effort you put in honestly returns in kind.",
+      revEn: "Unfairness to yourself or unbalanced give-and-take. Weigh the facts objectively.",
+      upZh: "公平、澄明与因果回响。你认真付出的每一分努力，都会得到公正的回馈。",
+      revZh: "付出与回报有些失衡，或者对某件事带有滤镜。抽离情绪，客观衡量利弊。" },
+    { num: "XII", en: "The Hanged Man", zh: "倒吊人", motif: "branch",
+      upEn: "Willing pause and a fresh angle. Upside-down on a tree branch, the whole valley looks different.",
+      revEn: "Stalling out of fear when you already know what needs to change.",
+      upZh: "换个角度看世界。暂时的停顿不是白费力气，而是为了看清平时忽略的风景。",
+      revZh: "明明心里已经有数，却还在原地拖延消耗。是时候从树枝上跳下来啦。" },
+    { num: "XIII", en: "Death", zh: "死神", motif: "autumn",
+      upEn: "Clean closure and natural renewal. Shedding autumn leaves makes room for spring buds.",
+      revEn: "Clinging to a chapter that has already finished its story. Let it go gently.",
+      upZh: "告别旧篇章，迎来蜕变与新生。落叶归根之后，新芽才有生长的空间。",
+      revZh: "紧抓着已经过期的人或事不肯放爪。温柔地告别，轻装前行吧。" },
+    { num: "XIV", en: "Temperance", zh: "节制", motif: "tea",
+      upEn: "Unhurried harmony and steady healing. Blend work and rest like pouring warm tea at the right temperature.",
+      revEn: "All-or-nothing extremes. Restore gentle rhythm to your days.",
+      upZh: "恰到好处的平衡与治愈。像慢火煮茶一样调和生活节奏，好事自然融汇。",
+      revZh: "最近作息或情绪容易走极端。慢下来调匀呼吸，找回舒服的节奏。" },
+    { num: "XV", en: "The Devil", zh: "恶魔", motif: "yarn",
+      upEn: "Notice what tangles your energy—obsessive worry, toxic habits, or comparison. The yarn loop isn't locked.",
+      revEn: "Breaking free from an unhealthy attachment! Lighter air awaits.",
+      upZh: "觉察那些缠住你的执念、内耗或坏习惯。其实毛线团并没有上锁，随时可以抽身。",
+      revZh: "正在挣脱内耗与束缚！放下执念的那一刻，你会发现浑身轻松。" },
+    { num: "XVI", en: "The Tower", zh: "高塔", motif: "lightning",
+      upEn: "A sudden truth knocks over shaky assumptions—clearing false walls so you can build on solid stone.",
+      revEn: "Quietly averting a crisis or resisting an overdue shake-up. Embrace honest repair.",
+      upZh: "突如其来的清醒打破了虚假的安全感——推倒摇晃的积木，才能在坚实地基上重建。",
+      revZh: "危机正在悄然化解，但别忽视已经露出的裂痕，及时调整才最稳妥。" },
+    { num: "XVII", en: "The Star", zh: "星星", motif: "star",
+      upEn: "Quiet hope, inspiration, and serene recovery after a long week. Keep faith in your gentle light.",
+      revEn: "Feeling uninspired or doubting your worth. Look up—the stars haven't gone anywhere.",
+      upZh: "温柔的希望与心灵治愈。风雨过后的夜空最清澈，请继续相信你眼里的光。",
+      revZh: "一时感到迷茫或自我怀疑。抬起头看看夜空吧，属于你的那颗星一直都在。" },
+    { num: "XVIII", en: "The Moon", zh: "月亮", motif: "moon",
+      upEn: "Vivid dreams and misty uncertainty. Not everything is clear yet—trust subtle instincts without panicking.",
+      revEn: "Fog lifting! Confusion and unspoken anxieties begin to untangle in daylight.",
+      upZh: "月色朦胧，事情尚未完全明朗。不必被想象出的影子吓到，静观其变即可。",
+      revZh: "迷雾正在散去！困扰你的误会或胡思乱想，很快就会水落石出。" },
+    { num: "XIX", en: "The Sun", zh: "太阳", motif: "sun",
+      upEn: "Radiant warmth, joyful clarity, and straightforward success! Stretch out in the sunbeam unapologetically.",
+      revEn: "Clouded optimism—good news is still there, just delayed by minor clutter.",
+      upZh: "明朗、顺遂与纯粹的快乐！像在午后阳光里打滚的猫一样，尽情享受好时光吧。",
+      revZh: "阳光只是暂时被薄云遮住，好结果依然在，别因为一点小插曲扫兴。" },
+    { num: "XX", en: "Judgement", zh: "审判", motif: "bell",
+      upEn: "An awakening call! Forgive your past self, answer what truly matters, and step into a wiser season.",
+      revEn: "Harsh self-criticism keeping you from answering a good opportunity.",
+      upZh: "内心的钟声敲响！与过去的遗憾和解，回应真正召唤你的理想与契机。",
+      revZh: "别再用过去的失误苛责自己了，放下包袱才能听见新的好消息。" },
+    { num: "XXI", en: "The World", zh: "世界", motif: "wreath",
+      upEn: "Wholeness, fulfilment, and a milestone Coming Full Circle. Celebrate how far you've travelled.",
+      revEn: "One last loose thread before completion. Tie it off patiently—you're almost there.",
+      upZh: "圆满、达成与水到渠成的收获！为你一路走来的坚持好好庆祝吧。",
+      revZh: "距离圆满只差最后一步收尾。耐心系好最后一个结，终点就在眼前。" }
+  ];
+
+  /* =========================================================================
+     4. FORTUNE VALLEY 8 LOCATIONS (Coordinates along winding mountain road)
+     ========================================================================= */
+  const BUILDINGS = [
+    { id: "shrine", x: 560, y: 1580, side: "right", roof: "#b8432e", wall: "#f3e7d3",
+      nameEn: "Fortune Shrine", nameZh: "解忧庙", subEn: "Kau Cim Lots & Moon Blocks", subZh: "求签 · 掷筊问卜",
+      npcCat: 1, stampId: "stamp_shrine", stampEn: "Sacred Bamboo Lot", stampZh: "解忧灵签印" },
+    { id: "tarot", x: 240, y: 1360, side: "left", roof: "#3c335c", wall: "#ebe0f0",
+      nameEn: "Tarot House", nameZh: "塔罗小屋", subEn: "22 Major Arcana Readings", subZh: "正逆位塔罗占卜",
+      npcCat: 2, stampId: "stamp_tarot", stampEn: "Velvet Arcana Seal", stampZh: "星秘塔罗印" },
+    { id: "wishing", x: 575, y: 1150, side: "right", roof: "#4c7a60", wall: "#eef2e6",
+      nameEn: "Wishing Garden", nameZh: "心愿花园", subEn: "Sky Lanterns & Wishes", subZh: "祈愿天灯 · 寄语",
+      npcCat: 3, stampId: "stamp_wish", stampEn: "Lantern Blossom", stampZh: "心愿花灯印" },
+    { id: "crystal", x: 230, y: 950, side: "left", roof: "#5b7d99", wall: "#e8eff5",
+      nameEn: "Crystal Cottage", nameZh: "水晶小屋", subEn: "Raw Minerals & Resonance", subZh: "矿石能量 · 拾晶",
+      npcCat: 0, stampId: "stamp_crystal", stampEn: "Prism Geode Stamp", stampZh: "澄澈水晶印" },
+    { id: "destiny", x: 565, y: 740, side: "right", roof: "#8c5332", wall: "#f5ead8",
+      nameEn: "Destiny House", nameZh: "命理小馆", subEn: "Five Elements & Zi Wei Stars", subZh: "五行八字 · 紫微星象",
+      npcCat: 1, stampId: "stamp_destiny", stampEn: "Five Elements Seal", stampZh: "五行命盘印" },
+    { id: "secret", x: 195, y: 550, side: "left", roof: "#46523c", wall: "#e4e8dc",
+      nameEn: "Secret Corner", nameZh: "神秘角落", subEn: "Hidden Curios & Stray Bard", subZh: "偶遇奇物 · 藏宝角",
+      npcCat: 2, stampId: "stamp_secret", stampEn: "Mossy Paw Mark", stampZh: "秘境猫爪印" },
+    { id: "moon", x: 570, y: 370, side: "right", roof: "#273754", wall: "#e4eaf4",
+      nameEn: "Moon Observatory", nameZh: "观月台", subEn: "Lunar Phases & Starlight", subZh: "月相观测 · 星轨",
+      npcCat: 3, stampId: "stamp_moon", stampEn: "Crescent Astrolabe", stampZh: "观月星盘印" },
+    { id: "station", x: 395, y: 175, side: "center", roof: "#6e473b", wall: "#f2e6d5",
+      nameEn: "Railway Station", nameZh: "旅途驿站", subEn: "Departures to Distant Worlds", subZh: "通往远方世界的月台",
+      npcCat: 0, stampId: "stamp_station", stampEn: "Ridge Platform Crest", stampZh: "云端驿站印" }
+  ];
+
+  /* =========================================================================
+     5. AMBIENT WEBAUDIO SYNTHESIZER (Gentle Pentatonic Music & Tactile SFX)
+     ========================================================================= */
+  class SoundEngine {
+    constructor() {
+      this.ctx = null;
+      this.muted = false;
+      this.bgmTimer = null;
+    }
+    init() {
+      if (!this.ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) this.ctx = new AC();
+      }
+      if (this.ctx && this.ctx.state === "suspended") this.ctx.resume();
+      if (!this.bgmTimer) this.startAmbient();
+    }
+    playTone(freq, dur = 0.25, type = "sine", vol = 0.06, slide = 0) {
+      if (this.muted || !this.ctx) return;
+      try {
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), now + dur);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(vol, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0008, now + dur);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + dur + 0.02);
+      } catch (e) {}
+    }
+    sfxMeow(catIdx = 0) {
+      const base = [520, 610, 440, 580][catIdx % 4];
+      this.playTone(base, 0.16, "triangle", 0.08, 120);
+      setTimeout(() => this.playTone(base * 1.15, 0.22, "sine", 0.07, -90), 90);
+    }
+    sfxStamp() {
+      this.playTone(110, 0.14, "triangle", 0.15, -55);
+      setTimeout(() => this.playTone(760, 0.18, "sine", 0.05, 120), 60);
+    }
+    sfxStep() {
+      this.playTone(190 + Math.random() * 40, 0.05, "sine", 0.025, -30);
+    }
+    sfxRattle() {
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => this.playTone(680 + Math.random() * 400, 0.06, "triangle", 0.05, -120), i * 55);
+      }
+    }
+    sfxChime() {
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+        setTimeout(() => this.playTone(f, 0.55, "sine", 0.045), i * 85);
+      });
+    }
+    startAmbient() {
+      const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
+      this.bgmTimer = setInterval(() => {
+        if (this.muted || !this.ctx || document.hidden) return;
+        if (Math.random() < 0.68) {
+          const f = notes[Math.floor(Math.random() * notes.length)];
+          this.playTone(f, 1.4, "sine", 0.022);
+          if (Math.random() < 0.3) {
+            setTimeout(() => this.playTone(f * 1.5, 1.1, "sine", 0.014), 280);
+          }
+        }
+      }, 1500);
+    }
+  }
+  const sound = new SoundEngine();
+
+  /* =========================================================================
+     6. GAME STATE & SAVE PERSISTENCE
+     ========================================================================= */
+  const SAVE_KEY = "meowbox_fortune_valley_v7";
+  const state = {
+    lang: "en",
+    scene: "title", // title -> counter -> platform -> train -> gate -> valley
+    subStep: 0,
+    playerName: "",
+    catIndex: 0,
+    hasPassport: false,
+    hasBag: false,
+    ticketStamped: false,
+    stamps: ["stamp_arrival"], // Up to 24 valley stamps/collectibles
+    bagItems: [],
+    wishes: [
+      { textEn: "May everyone sleep 8 hours tonight.", textZh: "愿今晚每个人都能睡够八小时。", x: 0.25, y: 0.4 },
+      { textEn: "More snacks, fewer meetings.", textZh: "少开点会，多吃点好的。", x: 0.68, y: 0.3 }
+    ],
+    hasSavedJourney: false,
+    // World & Camera
+    time: 0,
+    fadeAlpha: 0,
+    fadeTarget: 0,
+    // Player in Gate / Valley (Virtual world width 800, height 2150; y>1720 is Shrine Entrance)
+    px: 400,
+    py: 1990,
+    targetX: null,
+    targetY: null,
+    dir: "up",
+    moving: false,
+    walkFrame: 0,
+    camY: 1650,
+    // Shrine Keeper
+    keeperY: 1810,
+    keeperState: "waiting", // waiting, approaching, chatting, aside
+    gateOpenProgress: 0,
+    // Speech Bubble integrated into scene
+    speech: null, // { speakerX, speakerY, text, timer }
+    // Platform swipe/hover
+    platformFocusCat: 0,
+    catBounce: [0, 0, 0, 0],
+    // Train progress
+    trainT: 0,
+    stampAnim: 0,
+    nearBuilding: null
+  };
+
+  function loadSave() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d && d.playerName) {
+        state.hasSavedJourney = true;
+        state.lang = d.lang || "en";
+        state.savedSnapshot = d;
+      }
+    } catch (e) {}
+  }
+
+  function saveGame() {
+    try {
+      const payload = {
+        lang: state.lang,
+        playerName: state.playerName || t("default_name"),
+        catIndex: state.catIndex,
+        hasPassport: state.hasPassport,
+        hasBag: state.hasBag,
+        stamps: state.stamps,
+        bagItems: state.bagItems,
+        wishes: state.wishes.slice(-12),
+        px: state.px,
+        py: state.py,
+        gateOpened: state.gateOpenProgress >= 1
+      };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+      state.hasSavedJourney = true;
+      state.savedSnapshot = payload;
+    } catch (e) {}
+  }
+
+  function unlockStamp(id, labelEn, labelZh) {
+    if (!state.stamps.includes(id)) {
+      state.stamps.push(id);
+      sound.sfxStamp();
+      updateHUD();
+      saveGame();
+      showFloatingToast(state.lang === "zh" ? `✦ 获得手帐印章：${labelZh}` : `✦ New Passport Stamp: ${labelEn}`);
+      return true;
+    }
+    return false;
+  }
+
+  function addBagItem(id, nameEn, nameZh, descEn, descZh, icon = "✦") {
+    if (!state.bagItems.some(it => it.id === id)) {
+      state.bagItems.push({ id, nameEn, nameZh, descEn, descZh, icon });
+      sound.sfxChime();
+      updateHUD();
+      saveGame();
+    }
+  }
+
+  function t(key) {
+    return (TEXT[state.lang] && TEXT[state.lang][key]) || TEXT.en[key] || key;
+  }
+
+  loadSave();
+
+  /* =========================================================================
+     7. DOM REFERENCES & HUD SYNC
+     ========================================================================= */
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+  const miniCanvas = document.getElementById("miniAvatarCanvas");
+  const miniCtx = miniCanvas.getContext("2d");
+  const langBtn = document.getElementById("langBtn");
+  const muteBtn = document.getElementById("muteBtn");
+  const skipBtn = document.getElementById("skipBtn");
+  const settingsBtn = document.getElementById("settingsBtn");
+  const valleyHeader = document.getElementById("valleyHeader");
+  const vhName = document.getElementById("vhName");
+  const vhLoc = document.getElementById("vhLoc");
+  const ticketInputWrap = document.getElementById("ticketInputWrap");
+  const ticketNameInput = document.getElementById("ticketNameInput");
+  const ticketConfirmBtn = document.getElementById("ticketConfirmBtn");
+  const storyChoices = document.getElementById("storyChoices");
+  const diegeticDock = document.getElementById("diegeticDock");
+  const dockHome = document.getElementById("dockHome");
+  const dockPassport = document.getElementById("dockPassport");
+  const dockBag = document.getElementById("dockBag");
+  const dockMap = document.getElementById("dockMap");
+  const stampCountBadge = document.getElementById("stampCountBadge");
+  const bagCountBadge = document.getElementById("bagCountBadge");
+  const bookOverlay = document.getElementById("bookOverlay");
+  const storybookContent = document.getElementById("storybookContent");
+  const wishInputWrap = document.getElementById("wishInputWrap");
+  const wishTextInput = document.getElementById("wishTextInput");
+  const releaseWishBtn = document.getElementById("releaseWishBtn");
+
+  let W = window.innerWidth, H = window.innerHeight, DPR = Math.min(window.devicePixelRatio || 1, 2);
+  function resize() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    renderMiniAvatar();
+  }
+  window.addEventListener("resize", resize);
+
+  let floatingToast = null;
+  function showFloatingToast(msg) {
+    floatingToast = { msg, alpha: 1, y: 78, timer: 180 };
+  }
+
+  function renderMiniAvatar() {
+    miniCtx.clearRect(0, 0, 60, 60);
+    miniCtx.save();
+    miniCtx.fillStyle = "#efe3cc";
+    miniCtx.fillRect(0, 0, 60, 60);
+    drawCat(miniCtx, 30, 48, state.catIndex, "down", "idle", 0, 0.82, false);
+    miniCtx.restore();
+  }
+
+  function updateHUD() {
+    langBtn.textContent = state.lang === "en" ? "中文" : "EN";
+    muteBtn.textContent = sound.muted ? "✕" : "♪";
+    skipBtn.textContent = t("skip_intro");
+    ticketNameInput.placeholder = t("ticket_placeholder");
+    ticketConfirmBtn.textContent = t("ticket_sign_btn");
+    wishTextInput.placeholder = t("wish_placeholder");
+    releaseWishBtn.textContent = t("wish_btn");
+
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      el.textContent = t(el.getAttribute("data-i18n"));
+    });
+
+    const inIntro = ["counter", "platform", "train", "gate"].includes(state.scene);
+    skipBtn.style.display = (inIntro && state.hasSavedJourney) ? "inline-block" : "none";
+    settingsBtn.style.display = (state.scene === "valley" || state.scene === "gate") ? "inline-block" : "none";
+
+    // Diegetic Dock: Only appears once the player physically receives the Passport or Bag!
+    if ((state.hasPassport || state.hasBag) && state.scene !== "title") {
+      diegeticDock.style.display = "flex";
+      dockPassport.classList.toggle("unlocked", state.hasPassport);
+      dockBag.classList.toggle("unlocked", state.hasBag);
+      dockHome.classList.toggle("unlocked", state.scene === "valley");
+      dockMap.classList.toggle("unlocked", state.scene === "valley");
+    } else {
+      diegeticDock.style.display = "none";
+    }
+
+    stampCountBadge.textContent = `${state.stamps.length}/24`;
+    bagCountBadge.textContent = `${state.bagItems.length}`;
+
+    if (state.scene === "valley" || state.scene === "gate") {
+      valleyHeader.style.display = "flex";
+      vhName.textContent = state.playerName || t("default_name");
+      vhLoc.textContent = `${t("valley_sub")} (${state.stamps.length}/24)`;
+      renderMiniAvatar();
+    } else {
+      valleyHeader.style.display = "none";
+    }
+  }
+
+  langBtn.addEventListener("click", () => {
+    sound.init();
+    state.lang = state.lang === "en" ? "zh" : "en";
+    // Refresh current speech bubble if active
+    refreshSceneSpeechOnLangChange();
+    updateHUD();
+    if (state.playerName) saveGame();
+  });
+
+  muteBtn.addEventListener("click", () => {
+    sound.init();
+    sound.muted = !sound.muted;
+    updateHUD();
+  });
+
+  skipBtn.addEventListener("click", () => {
+    sound.init();
+    if (state.savedSnapshot) continueSavedJourney();
+  });
+
+  settingsBtn.addEventListener("click", () => {
+    sound.init();
+    openSettingsSheet();
+  });
+
+  /* =========================================================================
+     8. ILLUSTRATED MANGA CAT RENDERER (Consistent Proportions & Directions!)
+     ========================================================================= */
+  function drawCat(c, x, y, catIdx, dir = "down", anim = "idle", frame = 0, scale = 1, hasBag = false, expr = "normal") {
+    const cat = CATS[catIdx % CATS.length];
+    c.save();
+    c.translate(x, y);
+    c.scale(scale, scale);
+
+    const bob = anim === "walk" ? Math.abs(Math.sin(frame * 0.25)) * 3.5 : Math.sin(frame * 0.06) * 1.1;
+    const legSwing = anim === "walk" ? Math.sin(frame * 0.25) * 4.5 : 0;
+    const jumpY = anim === "happy" ? -Math.abs(Math.sin(frame * 0.2)) * 9 : 0;
+
+    // Ground soft ink shadow
+    c.fillStyle = "rgba(32, 24, 18, 0.22)";
+    c.beginPath();
+    c.ellipse(0, 2, 15, 5.5, 0, 0, Math.PI * 2);
+    c.fill();
+
+    c.translate(0, -bob + jumpY);
+    c.lineWidth = 2.1;
+    c.strokeStyle = "#261d19";
+    c.lineCap = "round";
+    c.lineJoin = "round";
+
+    // Swaying Tail
+    const tailWag = Math.sin(frame * 0.09 + catIdx) * 7;
+    c.save();
+    c.strokeStyle = "#261d19";
+    c.lineWidth = 6.5;
+    c.beginPath();
+    if (dir === "left") {
+      c.moveTo(9, -11);
+      c.quadraticCurveTo(22, -16 + tailWag * 0.4, 21, -26 + tailWag * 0.3);
+    } else if (dir === "right") {
+      c.moveTo(-9, -11);
+      c.quadraticCurveTo(-22, -16 + tailWag * 0.4, -21, -26 + tailWag * 0.3);
+    } else {
+      c.moveTo(6, -10);
+      c.quadraticCurveTo(20 + tailWag * 0.5, -15, 18 + tailWag * 0.8, -28);
+    }
+    c.stroke();
+    c.strokeStyle = cat.id === "mochi" ? cat.patch2 : cat.coat;
+    c.lineWidth = 3.8;
+    c.stroke();
+    c.restore();
+
+    // Little Legs
+    const drawFoot = (fx, fy) => {
+      c.fillStyle = cat.coat;
+      c.beginPath();
+      c.roundRect(fx - 4, fy - 7, 8, 9, 4);
+      c.fill();
+      c.stroke();
+    };
+    if (dir === "left" || dir === "right") {
+      drawFoot(-3 + legSwing * 0.7, 0);
+      drawFoot(3 - legSwing * 0.7, 0);
+    } else {
+      drawFoot(-6.5, legSwing * 0.5);
+      drawFoot(6.5, -legSwing * 0.5);
+    }
+
+    // Plump Torso (Consistent cozy proportions!)
+    c.fillStyle = cat.coat;
+    c.beginPath();
+    c.ellipse(0, -15, 13, 12.5, 0, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+
+    // Belly Patch (Front / Side)
+    if (dir !== "up") {
+      c.fillStyle = cat.belly;
+      const bx = dir === "left" ? -3.5 : (dir === "right" ? 3.5 : 0);
+      c.beginPath();
+      c.ellipse(bx, -13.5, dir === "down" ? 7.5 : 5.5, 8, 0, 0, Math.PI * 2);
+      c.fill();
+    }
+
+    // Calico Patches on Body
+    if (cat.id === "mochi") {
+      c.fillStyle = cat.patch1;
+      c.beginPath();
+      c.arc(-7, -18, 4.5, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = cat.patch2;
+      c.beginPath();
+      c.arc(7, -13, 4, 0, Math.PI * 2);
+      c.fill();
+    }
+
+    // Woven Traveller's Crossbody Bag!
+    if (hasBag) {
+      c.strokeStyle = "#6e472b";
+      c.lineWidth = 2.6;
+      c.beginPath();
+      c.moveTo(-8, -24);
+      c.lineTo(8, -8);
+      c.stroke();
+      c.fillStyle = "#d9a962";
+      c.strokeStyle = "#261d19";
+      c.lineWidth = 1.6;
+      const bagX = dir === "left" ? 5 : 8;
+      c.beginPath();
+      c.roundRect(bagX - 5, -14, 9, 8, 2.5);
+      c.fill();
+      c.stroke();
+    }
+
+    // Arms
+    c.fillStyle = cat.coat;
+    c.strokeStyle = "#261d19";
+    c.lineWidth = 1.9;
+    if (dir !== "left") {
+      c.beginPath();
+      c.ellipse(11, -16, 3.5, 5.5, -0.25, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+    }
+    if (dir !== "right") {
+      c.beginPath();
+      c.ellipse(-11, -16, 3.5, 5.5, 0.25, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+    }
+
+    // Head
+    const hx = dir === "left" ? -1.5 : (dir === "right" ? 1.5 : 0);
+    const hy = -34;
+
+    // Ears
+    const drawEar = (ex, tilt) => {
+      c.save();
+      c.translate(hx + ex, hy - 9);
+      c.rotate(tilt);
+      c.fillStyle = cat.id === "mochi" && ex > 0 ? cat.patch2 : cat.coat;
+      c.beginPath();
+      c.moveTo(-6, 3);
+      c.lineTo(0, -9);
+      c.lineTo(6, 3);
+      c.closePath();
+      c.fill();
+      c.stroke();
+      if (dir !== "up") {
+        c.fillStyle = "#e8b4b4";
+        c.beginPath();
+        c.moveTo(-3, 2);
+        c.lineTo(0, -5);
+        c.lineTo(3, 2);
+        c.closePath();
+        c.fill();
+      }
+      c.restore();
+    };
+    drawEar(-9.5, -0.22);
+    drawEar(9.5, 0.22);
+
+    // Round Manga Head
+    c.fillStyle = cat.coat;
+    c.beginPath();
+    c.ellipse(hx, hy, 15.5, 13, 0, 0, Math.PI * 2);
+    c.fill();
+
+    // Calico or Ginger Forehead Markings
+    if (cat.id === "mochi") {
+      c.save();
+      c.beginPath();
+      c.ellipse(hx, hy, 15.5, 13, 0, 0, Math.PI * 2);
+      c.clip();
+      c.fillStyle = cat.patch1;
+      c.beginPath();
+      c.arc(hx - 10, hy - 8, 9, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = cat.patch2;
+      c.beginPath();
+      c.arc(hx + 11, hy - 7, 8.5, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+    }
+    c.beginPath();
+    c.ellipse(hx, hy, 15.5, 13, 0, 0, Math.PI * 2);
+    c.stroke();
+
+    if (cat.id === "ginger" && dir !== "up") {
+      c.strokeStyle = cat.stripe;
+      c.lineWidth = 1.6;
+      [-3, 0, 3].forEach(dx => {
+        c.beginPath();
+        c.moveTo(hx + dx, hy - 11);
+        c.lineTo(hx + dx * 0.8, hy - 6.5);
+        c.stroke();
+      });
+    }
+
+    // Face Details (When not facing away)
+    if (dir !== "up") {
+      const fx = hx + (dir === "left" ? -4.5 : (dir === "right" ? 4.5 : 0));
+      const blink = (Math.floor(frame / 8) % 26 === 0) || expr === "happy";
+
+      const drawEye = (ex) => {
+        if (blink) {
+          c.strokeStyle = "#261d19";
+          c.lineWidth = 2;
+          c.beginPath();
+          c.arc(fx + ex, hy - 0.5, 3.2, Math.PI * 1.1, Math.PI * 1.9);
+          c.stroke();
+        } else if (cat.id === "snowball" && expr !== "surprised") {
+          // Quietly judging half-lidded eyes!
+          c.fillStyle = cat.eye;
+          c.beginPath();
+          c.arc(fx + ex, hy - 0.5, 3.1, 0, Math.PI * 2);
+          c.fill();
+          c.fillStyle = "#1c1614";
+          c.beginPath();
+          c.arc(fx + ex, hy - 0.5, 1.4, 0, Math.PI * 2);
+          c.fill();
+          c.fillStyle = cat.coat;
+          c.fillRect(fx + ex - 4, hy - 4.5, 8, 3.2);
+          c.strokeStyle = "#261d19";
+          c.lineWidth = 1.8;
+          c.beginPath();
+          c.moveTo(fx + ex - 3.6, hy - 1.3);
+          c.lineTo(fx + ex + 3.6, hy - 1.3);
+          c.stroke();
+        } else {
+          c.fillStyle = cat.eye;
+          c.beginPath();
+          c.arc(fx + ex, hy - 1, 3.2, 0, Math.PI * 2);
+          c.fill();
+          c.fillStyle = "#1a1412";
+          c.beginPath();
+          c.arc(fx + ex, hy - 1, 1.6, 0, Math.PI * 2);
+          c.fill();
+          c.fillStyle = "#ffffff";
+          c.beginPath();
+          c.arc(fx + ex - 1, hy - 2.1, 0.95, 0, Math.PI * 2);
+          c.fill();
+        }
+      };
+
+      if (dir === "left") {
+        drawEye(-3);
+      } else if (dir === "right") {
+        drawEye(3);
+      } else {
+        drawEye(-5.8);
+        drawEye(5.8);
+      }
+
+      // Tiny Nose & Cat 'w' Mouth
+      c.fillStyle = cat.nose;
+      c.beginPath();
+      c.arc(fx, hy + 2.5, 1.5, 0, Math.PI * 2);
+      c.fill();
+
+      c.strokeStyle = "#261d19";
+      c.lineWidth = 1.4;
+      c.beginPath();
+      c.moveTo(fx - 3.2, hy + 4.5);
+      c.quadraticCurveTo(fx - 1.5, hy + 6.2, fx, hy + 4.2);
+      c.quadraticCurveTo(fx + 1.5, hy + 6.2, fx + 3.2, hy + 4.5);
+      c.stroke();
+
+      // Whiskers
+      c.lineWidth = 1.1;
+      c.strokeStyle = cat.id === "midnight" ? "#777285" : "#4a3b34";
+      if (dir !== "right") {
+        c.beginPath();
+        c.moveTo(hx - 11, hy + 1); c.lineTo(hx - 18, hy);
+        c.moveTo(hx - 11, hy + 3.5); c.lineTo(hx - 17.5, hy + 4.5);
+        c.stroke();
+      }
+      if (dir !== "left") {
+        c.beginPath();
+        c.moveTo(hx + 11, hy + 1); c.lineTo(hx + 18, hy);
+        c.moveTo(hx + 11, hy + 3.5); c.lineTo(hx + 17.5, hy + 4.5);
+        c.stroke();
+      }
+    }
+
+    c.restore();
+  }
+
+  // NPC Outfit Helpers (Station Master Cap & Shrine Keeper Robe/Lantern)
+  function drawStationMaster(c, x, y, frame) {
+    drawCat(c, x, y, 1, "down", "idle", frame, 1.25, false);
+    c.save();
+    c.translate(x, y - 56);
+    // Navy Gold-Trimmed Station Master Cap
+    c.fillStyle = "#23304a";
+    c.strokeStyle = "#1c1614";
+    c.lineWidth = 2;
+    c.beginPath();
+    c.ellipse(0, 2, 16, 5, 0, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.beginPath();
+    c.roundRect(-12, -8, 24, 10, 4);
+    c.fill();
+    c.stroke();
+    c.fillStyle = "#e0ab3c";
+    c.fillRect(-11, -2, 22, 3);
+    c.beginPath();
+    c.arc(0, -4, 2.5, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+  }
+
+  function drawShrineKeeper(c, x, y, frame, walking = false) {
+    drawCat(c, x, y, 3, "down", walking ? "walk" : "idle", frame, 1.08, false);
+    c.save();
+    c.translate(x, y);
+    // Shrine Maiden / Keeper Crimson & Cream Haori Sash
+    c.fillStyle = "#c84b31";
+    c.strokeStyle = "#261d19";
+    c.lineWidth = 1.6;
+    c.beginPath();
+    c.roundRect(-11, -18, 22, 9, 3);
+    c.fill();
+    c.stroke();
+    // Handheld Glowing Paper Lantern
+    const sway = Math.sin(frame * 0.08) * 2.5;
+    c.strokeStyle = "#3b281e";
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(12, -18);
+    c.lineTo(22, -23);
+    c.stroke();
+    const lx = 22 + sway * 0.4, ly = -12;
+    const g = c.createRadialGradient(lx, ly, 2, lx, ly, 22);
+    g.addColorStop(0, "rgba(255, 215, 130, 0.65)");
+    g.addColorStop(1, "rgba(255, 180, 80, 0)");
+    c.fillStyle = g;
+    c.beginPath();
+    c.arc(lx, ly, 22, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#ffdf9a";
+    c.strokeStyle = "#2c221e";
+    c.lineWidth = 1.5;
+    c.beginPath();
+    c.ellipse(lx, ly, 6, 8.5, 0, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.restore();
+  }
+
+  /* =========================================================================
+     9. ORGANIC MANGA SPEECH BUBBLE IN WORLD SPACE
+     ========================================================================= */
+  function drawSpeechBubble(c, sx, sy, text, maxW = 290) {
+    if (!text) return;
+    c.save();
+    c.font = "14px 'Georgia', 'Songti SC', serif";
+    // Word-wrap for EN and CJK
+    const lines = wrapText(c, text, maxW - 28);
+    const lineH = 20;
+    const bw = Math.min(maxW, Math.max(120, Math.max(...lines.map(l => c.measureText(l).width)) + 30));
+    const bh = lines.length * lineH + 20;
+    const bx = Math.max(16, Math.min(W - bw - 16, sx - bw / 2));
+    const by = Math.max(58, sy - bh - 18);
+
+    // Warm hand-drawn parchment bubble
+    c.fillStyle = "rgba(252, 247, 236, 0.96)";
+    c.strokeStyle = "#2c221e";
+    c.lineWidth = 2;
+    c.beginPath();
+    c.roundRect(bx, by, bw, bh, 12);
+    c.fill();
+    c.stroke();
+
+    // Pointer tail
+    const tailX = Math.max(bx + 18, Math.min(bx + bw - 18, sx));
+    c.fillStyle = "rgba(252, 247, 236, 0.96)";
+    c.beginPath();
+    c.moveTo(tailX - 7, by + bh - 1);
+    c.lineTo(tailX, by + bh + 10);
+    c.lineTo(tailX + 7, by + bh - 1);
+    c.closePath();
+    c.fill();
+    c.beginPath();
+    c.moveTo(tailX - 7, by + bh);
+    c.lineTo(tailX, by + bh + 10);
+    c.lineTo(tailX + 7, by + bh);
+    c.stroke();
+
+    c.fillStyle = "#2c221e";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    lines.forEach((ln, idx) => {
+      c.fillText(ln, bx + bw / 2, by + 18 + idx * lineH);
+    });
+    c.restore();
+  }
+
+  function wrapText(c, str, maxWidth) {
+    const hasSpaces = str.includes(" ");
+    const tokens = hasSpaces ? str.split(" ") : Array.from(str);
+    const lines = [];
+    let cur = "";
+    for (const tk of tokens) {
+      const test = cur ? (hasSpaces ? cur + " " + tk : cur + tk) : tk;
+      if (c.measureText(test).width > maxWidth && cur) {
+        lines.push(cur);
+        cur = tk;
+      } else {
+        cur = test;
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  }
+
+  /* =========================================================================
+     10. ATMOSPHERIC PARTICLES (Drifting Petals & Passing Clouds)
+     ========================================================================= */
+  const petals = Array.from({ length: 28 }, () => ({
+    x: Math.random() * 1400,
+    y: Math.random() * 900,
+    r: 2.8 + Math.random() * 3.2,
+    vx: -0.35 - Math.random() * 0.5,
+    vy: 0.4 + Math.random() * 0.55,
+    rot: Math.random() * Math.PI * 2,
+    vrot: (Math.random() - 0.5) * 0.04
+  }));
+
+  const clouds = [
+    { x: 0.12, y: 0.14, s: 1.1, v: 0.00012 },
+    { x: 0.55, y: 0.10, s: 0.85, v: 0.00009 },
+    { x: 0.84, y: 0.19, s: 1.25, v: 0.00014 }
+  ];
+
+  function drawCloud(c, cx, cy, sc) {
+    c.save();
+    c.translate(cx, cy);
+    c.scale(sc, sc);
+    c.fillStyle = "rgba(255, 248, 236, 0.72)";
+    c.beginPath();
+    c.arc(0, 0, 26, 0, Math.PI * 2);
+    c.arc(24, -6, 32, 0, Math.PI * 2);
+    c.arc(54, 2, 24, 0, Math.PI * 2);
+    c.arc(-24, 5, 18, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+  }
+
+  function drawPetalsOverlay(c) {
+    c.save();
+    for (const p of petals) {
+      p.x += p.vx + Math.sin(state.time * 0.02 + p.y * 0.01) * 0.25;
+      p.y += p.vy;
+      p.rot += p.vrot;
+      if (p.x < -20) p.x = W + 20;
+      if (p.y > H + 20) { p.y = -15; p.x = Math.random() * W; }
+      c.save();
+      c.translate(p.x % (W + 40), p.y);
+      c.rotate(p.rot);
+      c.fillStyle = "rgba(244, 188, 192, 0.78)";
+      c.beginPath();
+      c.ellipse(0, 0, p.r * 1.35, p.r * 0.75, 0, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+    }
+    c.restore();
+  }
+
+  function drawSwayingLantern(c, x, y, time, scale = 1) {
+    const ang = Math.sin(time * 0.028 + x * 0.02) * 0.09;
+    c.save();
+    c.translate(x, y);
+    c.scale(scale, scale);
+    c.rotate(ang);
+    // Cord
+    c.strokeStyle = "#2c221e";
+    c.lineWidth = 1.8;
+    c.beginPath();
+    c.moveTo(0, 0);
+    c.lineTo(0, 16);
+    c.stroke();
+    // Glow
+    const glow = c.createRadialGradient(0, 28, 3, 0, 28, 34);
+    glow.addColorStop(0, "rgba(255, 200, 110, 0.55)");
+    glow.addColorStop(1, "rgba(255, 160, 70, 0)");
+    c.fillStyle = glow;
+    c.beginPath();
+    c.arc(0, 28, 34, 0, Math.PI * 2);
+    c.fill();
+    // Body
+    c.fillStyle = "#df5a3c";
+    c.strokeStyle = "#2c221e";
+    c.lineWidth = 1.8;
+    c.beginPath();
+    c.ellipse(0, 28, 10, 13, 0, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.fillStyle = "#2c221e";
+    c.fillRect(-6, 14, 12, 3);
+    c.fillRect(-5, 40, 10, 2.5);
+    c.restore();
+  }
+
+  /* =========================================================================
+     11. SCENE RENDERERS (Scenes 1 -> 2 -> 3 -> 4 -> 5 -> 6)
+     ========================================================================= */
+  let hitZones = []; // Interactive clickable canvas regions per frame
+
+  // --- SCENE 1: WELCOME TO MEOWBOX (Countryside + Distant Fortune Valley + Train) ---
+  function renderTitleScene() {
+    // Warm nostalgic dusk-apricot sky
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, "#d8a47f");
+    sky.addColorStop(0.48, "#f3d5b0");
+    sky.addColorStop(1, "#e8dec6");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+
+    // Soft glowing sun
+    ctx.fillStyle = "rgba(255, 244, 214, 0.72)";
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.34, Math.min(W, H) * 0.13, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Passing clouds
+    clouds.forEach(cl => {
+      cl.x = (cl.x + cl.v) % 1.25;
+      drawCloud(ctx, (cl.x - 0.1) * W, cl.y * H, cl.s);
+    });
+
+    // Distant Fortune Valley Mountain & Torii Shrine Glimpse!
+    const mx = W * 0.5, my = H * 0.56;
+    ctx.fillStyle = "#7a8478";
+    ctx.beginPath();
+    ctx.moveTo(0, H * 0.68);
+    ctx.quadraticCurveTo(W * 0.25, H * 0.48, mx, H * 0.36);
+    ctx.quadraticCurveTo(W * 0.76, H * 0.49, W, H * 0.67);
+    ctx.lineTo(W, H);
+    ctx.lineTo(0, H);
+    ctx.closePath();
+    ctx.fill();
+
+    // Tiny illuminated Fortune Valley lanterns & Torii silhouette on the distant peak
+    ctx.strokeStyle = "#b8432e";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(mx - 12, H * 0.375); ctx.lineTo(mx - 12, H * 0.352);
+    ctx.moveTo(mx + 12, H * 0.375); ctx.lineTo(mx + 12, H * 0.352);
+    ctx.moveTo(mx - 17, H * 0.353); ctx.lineTo(mx + 17, H * 0.353);
+    ctx.stroke();
+    for (let i = 0; i < 6; i++) {
+      const lx = mx - 24 + i * 9 + Math.sin(i * 2) * 5;
+      const ly = H * 0.39 + i * 8;
+      ctx.fillStyle = "rgba(255, 214, 120, 0.85)";
+      ctx.beginPath();
+      ctx.arc(lx, ly, 2.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Distant Viaduct & Chugging Little Train
+    const vy = H * 0.63;
+    ctx.fillStyle = "#565e53";
+    ctx.fillRect(0, vy, W, 8);
+    for (let ax = 20; ax < W; ax += 54) {
+      ctx.fillRect(ax, vy, 10, H * 0.12);
+    }
+    const tx = ((state.time * 0.9) % (W + 240)) - 180;
+    ctx.fillStyle = "#3c2f2b";
+    ctx.fillRect(tx, vy - 14, 38, 13);
+    ctx.fillRect(tx + 42, vy - 13, 36, 12);
+    ctx.fillRect(tx + 82, vy - 13, 36, 12);
+    // Warm lit train windows
+    ctx.fillStyle = "#ffd984";
+    for (let wx = tx + 6; wx < tx + 112; wx += 12) {
+      ctx.fillRect(wx, vy - 10, 6, 5);
+    }
+    // Steam puffs
+    for (let s = 0; s < 4; s++) {
+      const sx = tx + 8 - s * 13 - (state.time * 0.3 % 12);
+      const sy = vy - 20 - s * 5;
+      ctx.fillStyle = `rgba(255,250,240,${0.55 - s * 0.12})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 4 + s * 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Rolling countryside foreground hills & wooden eaves
+    ctx.fillStyle = "#485948";
+    ctx.beginPath();
+    ctx.moveTo(0, H * 0.72);
+    ctx.quadraticCurveTo(W * 0.35, H * 0.65, W * 0.7, H * 0.73);
+    ctx.quadraticCurveTo(W * 0.88, H * 0.76, W, H * 0.71);
+    ctx.lineTo(W, H);
+    ctx.lineTo(0, H);
+    ctx.closePath();
+    ctx.fill();
+
+    // Foreground rustic wooden beam & swaying lanterns
+    ctx.fillStyle = "#362720";
+    ctx.fillRect(0, 0, W, 12);
+    drawSwayingLantern(ctx, W * 0.15, 10, state.time, 1.05);
+    drawSwayingLantern(ctx, W * 0.84, 10, state.time + 20, 0.95);
+
+    // Gradual Poetic Title Reveal
+    const reveal = Math.min(1, state.time / 55);
+    ctx.save();
+    ctx.globalAlpha = reveal;
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#2c221e";
+    ctx.font = `bold ${Math.min(54, Math.max(36, W * 0.08))}px 'Georgia', serif`;
+    ctx.fillText("MeowBox", W * 0.5, H * 0.25);
+
+    ctx.font = `italic ${Math.min(19, Math.max(15, W * 0.035))}px 'Georgia', 'Songti SC', serif`;
+    ctx.fillStyle = "#4a3830";
+    ctx.fillText(TEXT.en.title_sub, W * 0.5, H * 0.25 + 34);
+    ctx.fillText(TEXT.zh.title_sub, W * 0.5, H * 0.25 + 60);
+
+    // Illustrated Brush-Stroke Action Slips (No generic web cards!)
+    const btnY = H * 0.79;
+    drawIllustratedSlipButton(ctx, W * 0.5, btnY, t("tap_begin"), true, "begin_new");
+
+    if (state.hasSavedJourney) {
+      drawIllustratedSlipButton(ctx, W * 0.5, btnY + 54, t("tap_continue") + ` (${state.savedSnapshot.playerName})`, false, "continue_save");
+    }
+    ctx.restore();
+
+    drawPetalsOverlay(ctx);
+  }
+
+  function drawIllustratedSlipButton(c, cx, cy, label, primary, actionId) {
+    c.save();
+    c.font = "16px 'Georgia', 'Songti SC', serif";
+    const tw = Math.max(200, c.measureText(label).width + 48);
+    const th = 42;
+    const x = cx - tw / 2, y = cy - th / 2;
+    c.fillStyle = primary ? "rgba(248, 241, 227, 0.95)" : "rgba(44, 34, 30, 0.82)";
+    c.strokeStyle = primary ? "#2c221e" : "#e8dec6";
+    c.lineWidth = 2;
+    c.beginPath();
+    c.roundRect(x, y, tw, th, 21);
+    c.fill();
+    c.stroke();
+
+    if (primary) {
+      c.strokeStyle = "rgba(200, 75, 49, 0.55)";
+      c.lineWidth = 1;
+      c.beginPath();
+      c.roundRect(x + 4, y + 4, tw - 8, th - 8, 17);
+      c.stroke();
+    }
+
+    c.fillStyle = primary ? "#2c221e" : "#f8f1e3";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText(label, cx, cy + 1);
+    c.restore();
+
+    hitZones.push({ x, y, w: tw, h: th, id: actionId });
+  }
+
+  // --- SCENE 2: STATION COUNTER (Handwritten Ticket & Earning the Passport) ---
+  function renderCounterScene() {
+    // Cozy warm station interior
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, "#3b2c24");
+    bg.addColorStop(0.58, "#594235");
+    bg.addColorStop(1, "#33241c");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Station window showing twilight countryside behind Station Master
+    const winW = Math.min(460, W * 0.82), winH = H * 0.34;
+    const winX = (W - winW) / 2, winY = H * 0.11;
+    ctx.fillStyle = "#d9a982";
+    ctx.fillRect(winX, winY, winW, winH);
+    drawCloud(ctx, winX + winW * 0.25, winY + winH * 0.35, 0.7);
+    ctx.fillStyle = "#6e7a6d";
+    ctx.beginPath();
+    ctx.moveTo(winX, winY + winH);
+    ctx.quadraticCurveTo(winX + winW * 0.5, winY + winH * 0.45, winX + winW, winY + winH);
+    ctx.fill();
+    // Wooden window mullions
+    ctx.strokeStyle = "#2b1e17";
+    ctx.lineWidth = 6;
+    ctx.strokeRect(winX, winY, winW, winH);
+    ctx.beginPath();
+    ctx.moveTo(winX + winW / 3, winY); ctx.lineTo(winX + winW / 3, winY + winH);
+    ctx.moveTo(winX + (winW * 2) / 3, winY); ctx.lineTo(winX + (winW * 2) / 3, winY + winH);
+    ctx.stroke();
+
+    drawSwayingLantern(ctx, Math.max(46, winX - 28), winY - 12, state.time, 0.9);
+    drawSwayingLantern(ctx, Math.min(W - 46, winX + winW + 28), winY - 12, state.time + 15, 0.9);
+
+    // Station Master standing behind counter
+    const smY = winY + winH + 14;
+    drawStationMaster(ctx, W * 0.5, smY, state.time);
+
+    // Warm Polished Wooden Countertop
+    const cy = H * 0.44;
+    const wood = ctx.createLinearGradient(0, cy, 0, H);
+    wood.addColorStop(0, "#8c5c3c");
+    wood.addColorStop(0.12, "#73492e");
+    wood.addColorStop(1, "#4a2e1d");
+    ctx.fillStyle = wood;
+    ctx.fillRect(0, cy, W, H - cy);
+    ctx.strokeStyle = "#261810";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, cy); ctx.lineTo(W, cy);
+    ctx.stroke();
+
+    // Illustrated Paper Travel Ticket resting directly on the wooden counter!
+    const tkW = Math.min(360, W * 0.88), tkH = 165;
+    const tkX = (W - tkW) / 2, tkY = H * 0.53 - tkH / 2;
+    ctx.save();
+    ctx.fillStyle = "#f7eedb";
+    ctx.strokeStyle = "#2c221e";
+    ctx.lineWidth = 2.2;
+    ctx.shadowColor = "rgba(0,0,0,0.32)";
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetY = 6;
+    ctx.beginPath();
+    ctx.roundRect(tkX, tkY, tkW, tkH, 8);
+    ctx.fill();
+    ctx.shadowColor = "transparent";
+    ctx.stroke();
+
+    // Vintage railway border & stub perforation
+    ctx.strokeStyle = "#b88446";
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(tkX + 7, tkY + 7, tkW - 14, tkH - 14);
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(tkX + tkW - 74, tkY + 8);
+    ctx.lineTo(tkX + tkW - 74, tkY + tkH - 8);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = "#5c4b43";
+    ctx.font = "bold 11px 'Georgia', serif";
+    ctx.textAlign = "left";
+    ctx.fillText("MEOWBOX RAILWAY · ONE-WAY ESCAPE", tkX + 18, tkY + 26);
+    ctx.fillStyle = "#2c221e";
+    ctx.font = "14px 'Georgia', 'Songti SC', serif";
+    ctx.fillText("➔  FORTUNE VALLEY · 解忧谷", tkX + 18, tkY + 48);
+
+    ctx.font = "11px 'Georgia', serif";
+    ctx.fillStyle = "#7a665c";
+    ctx.fillText("PASSENGER / 旅客姓名:", tkX + 18, tkY + 74);
+
+    // If already signed, render handwritten ink name & optional red stamp
+    if (state.subStep >= 1) {
+      ctx.font = "italic 24px 'Georgia', 'Kaiti SC', serif";
+      ctx.fillStyle = "#2b1e19";
+      ctx.textAlign = "center";
+      ctx.fillText(state.playerName, tkX + (tkW - 74) / 2 + 8, tkY + 108);
+    }
+
+    // Stub number
+    ctx.save();
+    ctx.translate(tkX + tkW - 36, tkY + tkH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.font = "bold 12px monospace";
+    ctx.fillStyle = "#8a4b38";
+    ctx.textAlign = "center";
+    ctx.fillText("NO. 0409", 0, 4);
+    ctx.restore();
+    ctx.restore();
+
+    // Step 1: Station Master physically slides the Leather Passport onto the counter!
+    if (state.subStep === 1 && !state.hasPassport) {
+      const px = W * 0.5, py = tkY + tkH + 62 + Math.sin(state.time * 0.08) * 3;
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(-0.08);
+      ctx.fillStyle = "#6e3828";
+      ctx.strokeStyle = "#241612";
+      ctx.lineWidth = 2.2;
+      ctx.shadowColor = "rgba(0,0,0,0.35)";
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.roundRect(-48, -34, 96, 68, 7);
+      ctx.fill();
+      ctx.shadowColor = "transparent";
+      ctx.stroke();
+      // Gold embossed paw emblem
+      ctx.strokeStyle = "#e2b154";
+      ctx.lineWidth = 1.6;
+      ctx.strokeRect(-41, -27, 82, 54);
+      ctx.fillStyle = "#e2b154";
+      ctx.font = "bold 12px 'Georgia', 'Songti SC', serif";
+      ctx.textAlign = "center";
+      ctx.fillText("PASSPORT", 0, -4);
+      ctx.fillText("旅行手帐", 0, 14);
+      ctx.restore();
+
+      hitZones.push({ x: px - 60, y: py - 44, w: 120, h: 88, id: "pickup_passport" });
+    }
+
+    // Speech Bubble from Station Master
+    const smMsg = state.subStep === 0
+      ? `${t("station_greet_1")} ${t("station_greet_2")}`
+      : (!state.hasPassport ? t("give_passport") : t("passport_taken"));
+    drawSpeechBubble(ctx, W * 0.5, smY - 68, smMsg, Math.min(390, W - 28));
+  }
+
+  // --- SCENE 3: WOODEN STATION PLATFORM (In-Scene Character Selection & Picking up the Bag!) ---
+  function renderPlatformScene() {
+    const sky = ctx.createLinearGradient(0, 0, 0, H * 0.65);
+    sky.addColorStop(0, "#4a435c");
+    sky.addColorStop(0.55, "#b37c68");
+    sky.addColorStop(1, "#e6be94");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+
+    // Distant twilight mountain
+    ctx.fillStyle = "#4d5659";
+    ctx.beginPath();
+    ctx.moveTo(0, H * 0.62);
+    ctx.quadraticCurveTo(W * 0.45, H * 0.38, W, H * 0.58);
+    ctx.lineTo(W, H);
+    ctx.lineTo(0, H);
+    ctx.fill();
+
+    // Waiting Vintage Country Train in background behind platform
+    const railY = H * 0.57;
+    ctx.fillStyle = "#2b3d34";
+    ctx.strokeStyle = "#1c1614";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect(W * 0.08, railY - 96, W * 0.84, 92, 12);
+    ctx.fill();
+    ctx.stroke();
+    // Cream stripe & warm windows
+    ctx.fillStyle = "#e8dcc4";
+    ctx.fillRect(W * 0.08 + 3, railY - 46, W * 0.84 - 6, 16);
+    for (let wx = W * 0.14; wx < W * 0.86; wx += 68) {
+      ctx.fillStyle = "#ffdf96";
+      ctx.strokeStyle = "#1c1614";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(wx, railY - 82, 44, 28, 5);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Wooden Platform Floor
+    const platY = H * 0.56;
+    ctx.fillStyle = "#8a6648";
+    ctx.fillRect(0, platY, W, H - platY);
+    ctx.strokeStyle = "#5c402b";
+    ctx.lineWidth = 1.5;
+    for (let py = platY + 22; py < H; py += 28) {
+      ctx.beginPath();
+      ctx.moveTo(0, py); ctx.lineTo(W, py);
+      ctx.stroke();
+    }
+    // Safety yellow line
+    ctx.fillStyle = "#d9a74a";
+    ctx.fillRect(0, platY + 8, W, 5);
+
+    // Wooden Platform Canopy Pillars & Lanterns
+    ctx.fillStyle = "#3a271d";
+    ctx.fillRect(0, 0, W, 16);
+    ctx.fillRect(W * 0.12, 16, 14, platY - 16);
+    ctx.fillRect(W * 0.86, 16, 14, platY - 16);
+    drawSwayingLantern(ctx, W * 0.25, 14, state.time, 0.95);
+    drawSwayingLantern(ctx, W * 0.75, 14, state.time + 12, 0.95);
+
+    // Wooden Station Bench in the middle
+    const bx = W * 0.5 - 85, by = platY + 34;
+    ctx.fillStyle = "#69452c";
+    ctx.strokeStyle = "#261810";
+    ctx.lineWidth = 2;
+    ctx.fillRect(bx, by, 170, 12);
+    ctx.strokeRect(bx, by, 170, 12);
+    ctx.fillRect(bx, by + 18, 170, 10);
+    ctx.strokeRect(bx, by + 18, 170, 10);
+    ctx.fillRect(bx + 14, by + 12, 8, 26);
+    ctx.fillRect(bx + 148, by + 12, 8, 26);
+
+    // Prompt Banner integrated gently in sky
+    ctx.fillStyle = "#fff9ed";
+    ctx.font = "bold 17px 'Georgia', 'Songti SC', serif";
+    ctx.textAlign = "center";
+    ctx.fillText(t("choose_prompt"), W * 0.5, H * 0.12);
+
+    // All 4 Cats Standing Naturally in the Platform Scene (Responsive spacing!)
+    const span = Math.min(W * 0.82, 540);
+    const startX = W * 0.5 - span / 2;
+    const catYBase = platY + 86;
+
+    CATS.forEach((cat, idx) => {
+      const cx = startX + (span / 3) * idx;
+      const cy = catYBase + (idx === 1 || idx === 2 ? -12 : 4);
+      const isSelected = state.catIndex === idx;
+      if (state.catBounce[idx] > 0) state.catBounce[idx]--;
+
+      // Subtle warm spotlight under chosen cat (No boxy UI!)
+      if (isSelected) {
+        const g = ctx.createRadialGradient(cx, cy - 12, 4, cx, cy - 12, 48);
+        g.addColorStop(0, "rgba(255, 232, 165, 0.55)");
+        g.addColorStop(1, "rgba(255, 232, 165, 0)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy - 8, 44, 24, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const animMode = state.catBounce[idx] > 0 ? "happy" : "idle";
+      drawCat(ctx, cx, cy, idx, "down", animMode, state.time + idx * 19, isSelected ? 1.24 : 1.02, isSelected && state.hasBag, state.catBounce[idx] > 0 ? "happy" : "normal");
+
+      // Handwritten label directly beneath paws
+      ctx.textAlign = "center";
+      ctx.fillStyle = isSelected ? "#fff8e8" : "rgba(248, 241, 227, 0.78)";
+      ctx.font = `${isSelected ? "bold " : ""}14px 'Georgia', 'Songti SC', serif`;
+      ctx.fillText(`${cat.nameEn} · ${cat.nameZh}`, cx, cy + 22);
+      if (isSelected) {
+        ctx.font = "italic 12px 'Georgia', 'Songti SC', serif";
+        ctx.fillStyle = "#ffe29a";
+        ctx.fillText(state.lang === "zh" ? cat.tagZh : cat.tagEn, cx, cy + 40);
+      }
+
+      hitZones.push({ x: cx - 42, y: cy - 64, w: 84, h: 105, id: `select_cat_${idx}` });
+    });
+
+    // Woven Traveller's Bag sitting on the platform by the bench until picked up!
+    if (!state.hasBag) {
+      const bagX = Math.min(W - 56, W * 0.5 + span / 2 + 34);
+      const bagY = platY + 46 + Math.sin(state.time * 0.1) * 2.5;
+      ctx.save();
+      ctx.translate(bagX, bagY);
+      ctx.fillStyle = "#d9a962";
+      ctx.strokeStyle = "#261d19";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(-16, -12, 32, 24, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(0, -12, 9, Math.PI, 0);
+      ctx.stroke();
+      ctx.fillStyle = "#c84b31";
+      ctx.beginPath();
+      ctx.arc(0, -1, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      hitZones.push({ x: bagX - 32, y: bagY - 32, w: 64, h: 64, id: "pickup_bag" });
+    }
+
+    // Active cat funny reaction speech bubble
+    if (state.speech) {
+      const chosenX = startX + (span / 3) * state.catIndex;
+      const chosenY = catYBase - 58;
+      drawSpeechBubble(ctx, chosenX, chosenY, state.speech.text, 260);
+    }
+
+    // Action button at bottom: either hint to grab bag or board the train!
+    const selCat = CATS[state.catIndex];
+    const catTitle = state.lang === "zh" ? selCat.nameZh : selCat.nameEn;
+    if (!state.hasBag) {
+      drawIllustratedSlipButton(ctx, W * 0.5, H * 0.87, t("take_bag_hint"), false, "pickup_bag");
+    } else {
+      drawIllustratedSlipButton(ctx, W * 0.5, H * 0.87, `${t("pick_cat_btn")}${catTitle} 🚂`, true, "board_train");
+    }
+  }
+
+  // --- SCENE 4: TICKET STAMP & ANIMATED TRAIN JOURNEY ---
+  function renderTrainScene() {
+    state.trainT++;
+
+    // Phase A (0..105): Close-up Ticket Receiving Red Fortune Valley Stamp!
+    if (state.trainT < 110) {
+      ctx.fillStyle = "#3a281e";
+      ctx.fillRect(0, 0, W, H);
+
+      const tkW = Math.min(350, W * 0.86), tkH = 160;
+      const tkX = (W - tkW) / 2, tkY = (H - tkH) / 2;
+      ctx.fillStyle = "#f7eedb";
+      ctx.strokeStyle = "#2c221e";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.roundRect(tkX, tkY, tkW, tkH, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#2c221e";
+      ctx.font = "14px 'Georgia', 'Songti SC', serif";
+      ctx.textAlign = "left";
+      ctx.fillText("➔  FORTUNE VALLEY · 解忧谷", tkX + 20, tkY + 46);
+      ctx.font = "italic 24px 'Georgia', 'Kaiti SC', serif";
+      ctx.fillText(state.playerName, tkX + 24, tkY + 98);
+
+      if (state.trainT === 28) sound.sfxStamp();
+      if (state.trainT >= 28) {
+        const sScale = state.trainT < 38 ? 1.5 - (state.trainT - 28) * 0.05 : 1;
+        ctx.save();
+        ctx.translate(tkX + tkW - 95, tkY + 86);
+        ctx.scale(sScale, sScale);
+        ctx.rotate(-0.18);
+        ctx.strokeStyle = "rgba(200, 58, 42, 0.88)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, 36, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 31, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(200, 58, 42, 0.88)";
+        ctx.font = "bold 12px 'Georgia', 'Songti SC', serif";
+        ctx.textAlign = "center";
+        ctx.fillText("解忧谷", 0, -4);
+        ctx.font = "bold 9px 'Georgia', serif";
+        ctx.fillText("APPROVED", 0, 11);
+        ctx.restore();
+      }
+
+      ctx.fillStyle = "#f6efe2";
+      ctx.font = "16px 'Georgia', 'Songti SC', serif";
+      ctx.textAlign = "center";
+      ctx.fillText(t("stamp_ticket_msg"), W * 0.5, tkY - 32);
+      return;
+    }
+
+    // Phase B (110..290): Inside Cozy Wooden Train Carriage Looking Out at Passing Cedar Forest & Lantern Mountain
+    const progress = (state.trainT - 110) / 180;
+    const bounce = Math.sin(state.trainT * 0.45) * 1.6;
+
+    // Passing Night-Twilight Scenery outside the carriage window
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, "#1f2940");
+    sky.addColorStop(0.6, "#434c6b");
+    sky.addColorStop(1, "#2a332d");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+
+    // Moon & stars outside
+    ctx.fillStyle = "#fff4cf";
+    ctx.beginPath();
+    ctx.arc(W * 0.72 - progress * 40, H * 0.24, 24, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Parallax mountain & cedar silhouettes scrolling past
+    for (let i = 0; i < 14; i++) {
+      const treeX = ((i * 110 - (state.trainT * 4.5)) % (W + 220) + (W + 220)) % (W + 220) - 110;
+      ctx.fillStyle = "#1a2421";
+      ctx.beginPath();
+      ctx.moveTo(treeX, H * 0.62);
+      ctx.lineTo(treeX + 26, H * 0.36 + (i % 3) * 18);
+      ctx.lineTo(treeX + 52, H * 0.62);
+      ctx.fill();
+    }
+
+    // Wooden Train Carriage Interior Frame (Window + Seat + Chosen Cat gazing outside!)
+    ctx.save();
+    ctx.translate(0, bounce);
+    ctx.fillStyle = "#4a3122";
+    const winW = Math.min(480, W * 0.8), winH = H * 0.42;
+    const winX = (W - winW) / 2, winY = H * 0.16;
+    // Frame around window
+    ctx.fillRect(0, 0, W, winY);
+    ctx.fillRect(0, winY + winH, W, H - (winY + winH));
+    ctx.fillRect(0, winY, winX, winH);
+    ctx.fillRect(winX + winW, winY, W - (winX + winW), winH);
+    ctx.strokeStyle = "#261710";
+    ctx.lineWidth = 6;
+    ctx.strokeRect(winX, winY, winW, winH);
+
+    // Plush green velvet train bench
+    ctx.fillStyle = "#3c5e4b";
+    ctx.strokeStyle = "#1f1612";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect(winX + 20, winY + winH + 16, winW - 40, 56, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    // Chosen cat sitting on the train seat looking out toward Fortune Valley!
+    drawCat(ctx, W * 0.5, winY + winH + 46, state.catIndex, "up", "idle", state.time, 1.35, state.hasBag);
+
+    ctx.fillStyle = "#f6efe2";
+    ctx.font = "italic 16px 'Georgia', 'Songti SC', serif";
+    ctx.textAlign = "center";
+    ctx.fillText(t("train_caption"), W * 0.5, H * 0.86);
+    ctx.restore();
+
+    if (state.trainT >= 285) {
+      enterShrineArrival();
+    }
+  }
+
+  // --- SCENE 5 & 6: CONTINUOUS SHRINE ENTRANCE + FORTUNE VALLEY MAIN MAP ---
+  // Unified world space (800 x 2120) with smooth camera following the player uphill!
+  function renderWorldScene() {
+    updateWorldPhysics();
+
+    // Map scale to fit mobile smoothly and pan naturally, or fill desktop cleanly
+    const worldW = 800;
+    const scale = Math.min(W / worldW, Math.max(0.72, H / 720));
+    const viewW = W / scale;
+    const viewH = H / scale;
+
+    // Smooth camera lerp following player
+    const desiredCamY = state.py - viewH * 0.6;
+    const minCamY = 0;
+    const maxCamY = Math.max(0, 2120 - viewH);
+    state.camY += (Math.max(minCamY, Math.min(maxCamY, desiredCamY)) - state.camY) * 0.09;
+    const camX = (worldW - viewW) / 2;
+
+    // Independent distant landscape, projected at a fraction of camera speed.
+    const sky=ctx.createLinearGradient(0,0,0,H); sky.addColorStop(0,"#78949b"); sky.addColorStop(1,"#e1c49a"); ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+    for(let layer=0;layer<3;layer++){
+      ctx.fillStyle=["#80989a","#597b78","#365b54"][layer]; ctx.beginPath(); ctx.moveTo(0,H);
+      for(let x=-30;x<=W+30;x+=12){let q=x/Math.max(W,1); let y=H*(.22+layer*.17)+Math.sin(q*8+layer*2+state.camY*.0009*(layer+1))*H*.10+Math.sin(q*19+layer)*H*.045;ctx.lineTo(x,y);}ctx.lineTo(W+30,H);ctx.closePath();ctx.fill();
+    }
+    ctx.save();
+    ctx.scale(scale, scale);
+    ctx.translate(-camX, -state.camY);
+
+    // 1. Lush Hand-Painted Mountain Valley Background Gradient (Starry Observatory peak -> Warm Cedar Shrine base)
+    const valleyBg = ctx.createLinearGradient(0, 0, 0, 2120);
+    valleyBg.addColorStop(0, "#1d273b");     // Starry summit near Observatory & Station
+    valleyBg.addColorStop(0.28, "#33474a");  // Misty upper pines
+    valleyBg.addColorStop(0.58, "#4c634f");  // Heart of Fortune Valley
+    valleyBg.addColorStop(1, "#3d4f41");     // Mossy Shrine Entrance steps
+    ctx.fillStyle = valleyBg;
+    ctx.fillRect(65, 0, 670, 2150);
+    // Textured ground, deterministic so it does not shimmer during motion.
+    for(let i=0;i<1500;i++){const x=80+(i*137.39)%640,y=(i*83.71)%2150;if(y<state.camY-30||y>state.camY+viewH+30)continue;ctx.fillStyle=i%2?"rgba(191,198,135,.13)":"rgba(15,38,29,.13)";ctx.beginPath();ctx.ellipse(x,y,2+i%5,1+i%3,0,0,Math.PI*2);ctx.fill();}
+
+    // Subtle stars near Moon Observatory & Station ridge (y: 0..480)
+    ctx.fillStyle = "rgba(255, 246, 210, 0.75)";
+    for (let i = 0; i < 36; i++) {
+      const sx = (i * 173) % 1000 - 100;
+      const sy = (i * 89) % 430;
+      const r = (i % 3 === 0 ? 1.8 : 1.1) + Math.sin(state.time * 0.05 + i) * 0.4;
+      ctx.beginPath();
+      ctx.arc(sx, sy, Math.max(0.4, r), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 2. Winding Cobblestone Mountain Path from Bottom (y=2100) to Ridge Station (y=210)
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#cbbba0";
+    ctx.lineWidth = 88;
+    ctx.beginPath();
+    ctx.moveTo(400, 2120);
+    ctx.lineTo(400, 1740);
+    ctx.bezierCurveTo(400, 1600, 480, 1560, 430, 1440);
+    ctx.bezierCurveTo(360, 1300, 330, 1240, 420, 1120);
+    ctx.bezierCurveTo(500, 1010, 340, 920, 390, 790);
+    ctx.bezierCurveTo(450, 650, 340, 560, 410, 410);
+    ctx.lineTo(400, 215);
+    ctx.stroke();
+
+    // Stone steps & warm flagstone texture along path
+    ctx.strokeStyle = "rgba(82, 68, 56, 0.28)";
+    ctx.lineWidth = 3;
+    for (let sy = 2080; sy > 240; sy -= 26) {
+      const offset = sy > 1730 ? 0 : Math.sin(sy * 0.012) * 28;
+      ctx.beginPath();
+      ctx.moveTo(366 + offset, sy);
+      ctx.lineTo(434 + offset, sy);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Branching flagstone walkways to each building door
+    BUILDINGS.forEach(b => {
+      ctx.strokeStyle = "#c4b397";
+      ctx.lineWidth = 36;
+      ctx.beginPath();
+      ctx.moveTo(400 + Math.sin(b.y * 0.012) * 20, b.y + 30);
+      ctx.lineTo(b.x, b.y + 24);
+      ctx.stroke();
+    });
+
+    // Decorative Cedar Trees & Cherry Blossom Clusters
+    const trees = [
+      [140, 1940, "pine"], [650, 1920, "sakura"], [150, 1690, "sakura"], [670, 1700, "pine"],
+      [120, 1490, "pine"], [690, 1390, "sakura"], [135, 1160, "sakura"], [695, 960, "pine"],
+      [125, 760, "pine"], [685, 570, "sakura"], [150, 360, "pine"], [665, 220, "pine"]
+    ];
+
+
+    // Stone Lanterns lining the Shrine Entrance & Mountain Path
+    [[325, 1950], [475, 1950], [325, 1820], [475, 1820], [335, 1500], [475, 1260], [320, 1040], [475, 840], [325, 630], [470, 450]].forEach(([lx, ly]) => {
+      drawStoneLantern(ctx, lx, ly);
+    });
+
+    // 3. Render the 8 Recognizable Buildings with Real Doors & Resident Cats!
+
+
+    // 4. Shrine Entrance Grand Torii & Wooden Double Doors (at y = 1755)
+
+
+    // 5. Y-Sorted Characters (Shrine Keeper + Player Cat) so depth feels authentic!
+    const actors = [
+      ...trees.map(([x,y,k])=>({y,draw:()=>drawIllustratedTree(ctx,x,y,k)})),
+      ...BUILDINGS.map(b=>({y:b.y+20,draw:()=>drawValleyBuilding(ctx,b,scale,camX,state.camY)})),
+      {y:1755,draw:()=>drawShrineGate(ctx,400,1755,state.gateOpenProgress)},
+      { y: state.py, draw: () => drawCat(ctx, state.px, state.py, state.catIndex, state.dir, state.moving ? "walk" : "idle", state.walkFrame, 1.08, state.hasBag) },
+      { y: state.keeperY, draw: () => {
+        const keeperX = 400 + state.gateOpenProgress * 64;
+        drawShrineKeeper(ctx, keeperX, state.keeperY, state.time, state.keeperState === "approaching");
+      }}
+    ];
+    actors.sort((a, b) => a.y - b.y).forEach(a => a.draw());
+
+    // Tap destination ripple
+    if (state.targetX !== null && state.moving) {
+      ctx.strokeStyle = "rgba(255, 243, 204, 0.65)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(state.targetX, state.targetY, 12 + (state.time % 12), 6 + (state.time % 12) * 0.4, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    // Local time ambience and independent foreground parallax.
+    const hour=new Date().getHours(); const night=hour<6||hour>=19;
+    if(night){ctx.fillStyle="rgba(20,35,75,.23)";ctx.fillRect(0,0,W,H);}
+    ctx.save(); ctx.globalCompositeOperation="screen";
+    for(const [x,y] of [[325,1950],[475,1950],[325,1820],[475,1820],[335,1500],[475,1260],[320,1040],[475,840],[325,630],[470,450],...BUILDINGS.map(b=>[b.x,b.y])]){
+      const sx=(x-camX)*scale,sy=(y-24-state.camY)*scale,r=55*scale;if(sy<-r||sy>H+r)continue;const g=ctx.createRadialGradient(sx,sy,0,sx,sy,r);g.addColorStop(0,`rgba(255,174,72,${(night?.45:.19)+Math.sin(state.time*.08+y)*.035})`);g.addColorStop(1,"rgba(255,174,72,0)");ctx.fillStyle=g;ctx.fillRect(sx-r,sy-r,r*2,r*2);
+    }ctx.restore();
+    ctx.save();for(let i=0;i<18;i++){const edge=i%2?W:0;const yy=((i*113-state.camY*scale*1.22)% (H+160)+(H+160))%(H+160)-80;ctx.fillStyle=i%3?"rgba(31,66,48,.62)":"rgba(57,91,58,.65)";ctx.beginPath();ctx.ellipse(edge+(i%2?-7:7),yy,22+ i%5*4,42,Math.sin(i)*.5,0,Math.PI*2);ctx.fill();}ctx.restore();
+    // Screen-Space Organic Speech Bubble (for Shrine Keeper or Valley Residents)
+    if (state.speech) {
+      const sx = (state.speech.wx - camX) * scale;
+      const sy = (state.speech.wy - state.camY) * scale;
+      drawSpeechBubble(ctx, sx, sy, state.speech.text, Math.min(340, W - 30));
+    }
+
+    // Subtle Door Prompt when standing right in front of a building
+    if (state.nearBuilding && !bookOverlayOpen()) {
+      const b = state.nearBuilding;
+      const bx = (b.x - camX) * scale;
+      const by = (b.y + 18 - state.camY) * scale;
+      const label = state.lang === "zh" ? `进入 ${b.nameZh}` : `Enter ${b.nameEn}`;
+      drawIllustratedSlipButton(ctx, Math.max(110, Math.min(W - 110, bx)), Math.max(80, Math.min(H - 95, by)), label, true, `enter_${b.id}`);
+    }
+
+    drawPetalsOverlay(ctx);
+  }
+
+  function drawIllustratedTree(c, x, y, kind) {
+    c.save();
+    c.translate(x, y);
+    c.fillStyle = "rgba(20,16,12,0.22)";
+    c.beginPath();
+    c.ellipse(0, 4, 28, 10, 0, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#4a3223";
+    c.strokeStyle = "#241811";
+    c.lineWidth = 2;
+    c.fillRect(-6, -34, 12, 36);
+    c.strokeRect(-6, -34, 12, 36);
+
+    if (kind === "sakura") {
+      const puffs = [[-18, -44, 22], [18, -42, 20], [0, -58, 26]];
+      puffs.forEach(([px, py, pr]) => {
+        c.fillStyle = "#ebbec2";
+        c.beginPath();
+        c.arc(px, py, pr, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+      });
+    } else {
+      for (let tier = 0; tier < 3; tier++) {
+        c.fillStyle = tier === 2 ? "#3b5944" : "#2e4736";
+        c.beginPath();
+        c.moveTo(-32 + tier * 5, -24 - tier * 18);
+        c.lineTo(0, -54 - tier * 20);
+        c.lineTo(32 - tier * 5, -24 - tier * 18);
+        c.closePath();
+        c.fill();
+        c.stroke();
+      }
+    }
+    c.restore();
+  }
+
+  function drawStoneLantern(c, x, y) {
+    c.save();
+    c.translate(x, y);
+    const glow = c.createRadialGradient(0, -24, 2, 0, -24, 34);
+    glow.addColorStop(0, "rgba(255, 214, 125, 0.55)");
+    glow.addColorStop(1, "rgba(255, 180, 90, 0)");
+    c.fillStyle = glow;
+    c.beginPath();
+    c.arc(0, -24, 34, 0, Math.PI * 2);
+    c.fill();
+
+    c.fillStyle = "#9e988c";
+    c.strokeStyle = "#2c221e";
+    c.lineWidth = 1.8;
+    c.fillRect(-8, -6, 16, 6);
+    c.strokeRect(-8, -6, 16, 6);
+    c.fillRect(-5, -19, 10, 13);
+    c.strokeRect(-5, -19, 10, 13);
+    c.fillStyle = "#ffe39c";
+    c.fillRect(-6, -29, 12, 10);
+    c.strokeRect(-6, -29, 12, 10);
+    c.fillStyle = "#857f74";
+    c.beginPath();
+    c.moveTo(-13, -29);
+    c.lineTo(0, -38);
+    c.lineTo(13, -29);
+    c.closePath();
+    c.fill();
+    c.stroke();
+    c.restore();
+  }
+
+  function drawShrineGate(c, x, y, openProg) {
+    c.save();
+    c.translate(x, y);
+    // Shadow
+    c.fillStyle = "rgba(20,14,10,0.28)";
+    c.fillRect(-95, -4, 190, 14);
+
+    // Stone Flanking Walls
+    c.fillStyle = "#d9ceba";
+    c.strokeStyle = "#2c221e";
+    c.lineWidth = 2.2;
+    c.fillRect(-150, -44, 68, 46);
+    c.strokeRect(-150, -44, 68, 46);
+    c.fillRect(82, -44, 68, 46);
+    c.strokeRect(82, -44, 68, 46);
+
+    // Sliding / Swinging Wooden Shrine Gate Doors
+    const slide = openProg * 48;
+    c.fillStyle = "#6e422a";
+    c.fillRect(-64 - slide, -56, 62, 56);
+    c.strokeRect(-64 - slide, -56, 62, 56);
+    c.fillRect(2 + slide, -56, 62, 56);
+    c.strokeRect(2 + slide, -56, 62, 56);
+
+    // Vermilion Torii Pillars & Curved Kasagi Top Beam
+    c.fillStyle = "#b83e2b";
+    c.fillRect(-82, -118, 16, 120);
+    c.strokeRect(-82, -118, 16, 120);
+    c.fillRect(66, -118, 16, 120);
+    c.strokeRect(66, -118, 16, 120);
+
+    c.fillRect(-98, -96, 196, 12);
+    c.strokeRect(-98, -96, 196, 12);
+
+    c.fillStyle = "#2b211d";
+    c.beginPath();
+    c.moveTo(-116, -124);
+    c.quadraticCurveTo(0, -112, 116, -124);
+    c.lineTo(110, -112);
+    c.quadraticCurveTo(0, -104, -110, -112);
+    c.closePath();
+    c.fill();
+    c.stroke();
+
+    // Gold Inscribed Plaque: 解忧谷
+    c.fillStyle = "#261c18";
+    c.strokeStyle = "#d49b38";
+    c.lineWidth = 2;
+    c.fillRect(-34, -114, 68, 24);
+    c.strokeRect(-34, -114, 68, 24);
+    c.fillStyle = "#f2c66d";
+    c.font = "bold 13px 'Songti SC', 'Georgia', serif";
+    c.textAlign = "center";
+    c.fillText("解 忧 谷", 0, -97);
+
+    drawSwayingLantern(c, -56, -84, state.time, 0.78);
+    drawSwayingLantern(c, 56, -84, state.time + 10, 0.78);
+    c.restore();
+  }
+
+  function drawValleyBuilding(c, b, scale, camX, camY) {
+    c.save();
+    c.translate(b.x, b.y);
+
+    // Ground shadow
+    c.fillStyle = "rgba(20, 16, 12, 0.26)";
+    c.beginPath();
+    c.ellipse(0, 16, 78, 20, 0, 0, Math.PI * 2);
+    c.fill();
+
+    c.strokeStyle = "#261d19";
+    c.lineWidth = 2.2;
+
+    // Distinct Silhouette Details per Building!
+    if (b.id === "moon") {
+      // Observatory Copper & Indigo Dome + Brass Telescope!
+      c.fillStyle = b.wall;
+      c.fillRect(-54, -56, 108, 68);
+      c.strokeRect(-54, -56, 108, 68);
+      c.fillStyle = b.roof;
+      c.beginPath();
+      c.arc(0, -56, 56, Math.PI, 0);
+      c.fill();
+      c.stroke();
+      // Brass Telescope peeking out
+      c.save();
+      c.translate(22, -88);
+      c.rotate(-0.45);
+      c.fillStyle = "#d49b38";
+      c.fillRect(0, -5, 36, 10);
+      c.strokeRect(0, -5, 36, 10);
+      c.restore();
+    } else if (b.id === "tarot") {
+      // Mystic Steep Gabled Cottage with Crescent Finial & Star Window
+      c.fillStyle = b.wall;
+      c.fillRect(-58, -54, 116, 66);
+      c.strokeRect(-58, -54, 116, 66);
+      c.fillStyle = b.roof;
+      c.beginPath();
+      c.moveTo(-74, -52);
+      c.lineTo(0, -112);
+      c.lineTo(74, -52);
+      c.closePath();
+      c.fill();
+      c.stroke();
+      c.fillStyle = "#f2c66d";
+      c.beginPath();
+      c.arc(0, -76, 11, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+    } else if (b.id === "wishing") {
+      // Open Wooden Pavilion & Blossom Trellis with Floating Lanterns
+      c.fillStyle = "#e9e2cf";
+      c.fillRect(-62, -10, 124, 22);
+      c.strokeRect(-62, -10, 124, 22);
+      c.fillStyle = "#69422b";
+      [-48, 48].forEach(px => { c.fillRect(px - 5, -64, 10, 56); c.strokeRect(px - 5, -64, 10, 56); });
+      c.fillStyle = b.roof;
+      c.beginPath();
+      c.moveTo(-76, -62);
+      c.quadraticCurveTo(0, -96, 76, -62);
+      c.closePath();
+      c.fill();
+      c.stroke();
+    } else {
+      // Classic Japanese Timber-Frame Architecture
+      c.fillStyle = b.wall;
+      c.fillRect(-64, -56, 128, 68);
+      c.strokeRect(-64, -56, 128, 68);
+      // Timber beams
+      c.fillStyle = "#5c3d29";
+      c.fillRect(-64, -56, 8, 68);
+      c.fillRect(56, -56, 8, 68);
+      // Curved tiled roof
+      c.fillStyle = b.roof;
+      c.beginPath();
+      c.moveTo(-82, -52);
+      c.quadraticCurveTo(-40, -88, 0, -94);
+      c.quadraticCurveTo(40, -88, 82, -52);
+      c.closePath();
+      c.fill();
+      c.stroke();
+    }
+
+    // Special Prop Icons per Building
+    if (b.id === "crystal") {
+      c.fillStyle = "#9ad1e8";
+      c.beginPath();
+      c.moveTo(-46, 12); c.lineTo(-40, -8); c.lineTo(-32, 12); c.closePath();
+      c.fill(); c.stroke();
+    } else if (b.id === "station") {
+      // Station Clock
+      c.fillStyle = "#fff9eb";
+      c.beginPath();
+      c.arc(0, -70, 11, 0, Math.PI * 2);
+      c.fill(); c.stroke();
+      c.beginPath();
+      c.moveTo(0, -70); c.lineTo(0, -76);
+      c.moveTo(0, -70); c.lineTo(5, -70);
+      c.stroke();
+    }
+
+    // Actual Warm Lit Sliding Wooden Door (Clickable to walk up & enter!)
+    if (b.id !== "wishing") {
+      c.fillStyle = "#ffe29e";
+      c.fillRect(-16, -34, 32, 46);
+      c.strokeStyle = "#4a2f1e";
+      c.lineWidth = 2;
+      c.strokeRect(-16, -34, 32, 46);
+      c.beginPath();
+      c.moveTo(0, -34); c.lineTo(0, 12);
+      c.moveTo(-16, -12); c.lineTo(16, -12);
+      c.stroke();
+    }
+
+    // Swaying Signboard
+    c.fillStyle = "#fcf4e4";
+    c.strokeStyle = "#2c221e";
+    c.lineWidth = 1.6;
+    c.beginPath();
+    c.roundRect(-52, -50, 104, 18, 4);
+    c.fill();
+    c.stroke();
+    c.fillStyle = "#2c221e";
+    c.font = "bold 11px 'Georgia', 'Songti SC', serif";
+    c.textAlign = "center";
+    c.fillText(state.lang === "zh" ? b.nameZh : b.nameEn, 0, -37);
+
+    // Animated Resident Cat outside each location!
+    const npcX = b.side === "left" ? 56 : -56;
+    drawCat(c, npcX, 18, b.npcCat, "down", "idle", state.time + b.y, 0.86, false);
+
+    // Stamp check seal if already visited
+    if (state.stamps.includes(b.stampId)) {
+      c.fillStyle = "#c84b31";
+      c.beginPath();
+      c.arc(48, -41, 5, 0, Math.PI * 2);
+      c.fill();
+    }
+    c.restore();
+
+    // Register clickable screen-space zone for building door
+    const sx = (b.x - 65 - camX) * scale;
+    const sy = (b.y - 90 - camY) * scale;
+    hitZones.push({ x: sx, y: sy, w: 130 * scale, h: 115 * scale, id: `walk_to_${b.id}`, b });
+  }
+
+  /* =========================================================================
+     12. WORLD PHYSICS, KEYBOARD & CONTINUOUS GATE -> VALLEY TRANSITION
+     ========================================================================= */
+  const keys = {};
+  window.addEventListener("keydown", e => {
+    keys[e.key] = true;
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key) && state.scene === "platform") {
+      sound.init();
+      if (e.key === "ArrowLeft") selectPlatformCat((state.catIndex + 3) % 4);
+      if (e.key === "ArrowRight") selectPlatformCat((state.catIndex + 1) % 4);
+    }
+  });
+  window.addEventListener("keyup", e => { keys[e.key] = false; });
+
+  function updateWorldPhysics() {
+    // Shrine Keeper Entrance Sequence
+    if (state.scene === "gate") {
+      if (state.keeperState === "approaching") {
+        state.keeperY += 1.6;
+        if (state.keeperY >= 1905) {
+          state.keeperState = "chatting";
+          const greet = (state.returning ? (state.lang === "zh" ? "回来啦，{name}！今天也来躲个清静？" : "Welcome back, {name}. Escaping another meeting?") : t("keeper_greet")).replace("{name}", state.playerName || t("default_name"));
+          state.speech = { wx: 400, wy: state.keeperY - 52, text: greet };
+          showShrineKeeperChoices();
+        }
+      } else if (state.keeperState === "opening") {
+        state.gateOpenProgress = Math.min(1, state.gateOpenProgress + 0.028);
+        if (state.gateOpenProgress >= 1) {
+          state.keeperState = "aside";
+          // Auto walk gently through the open gate into Fortune Valley!
+          state.targetX = 400;
+          state.targetY = 1660;
+        }
+      }
+    }
+
+    // Keyboard movement in Gate/Valley
+    const canMove = (state.scene === "valley") || (state.scene === "gate" && state.gateOpenProgress >= 1);
+    if (canMove && !bookOverlayOpen() && wishInputWrap.style.display !== "flex") {
+      let vx = 0, vy = 0;
+      if (keys["ArrowUp"] || keys["w"] || keys["W"]) vy -= 1;
+      if (keys["ArrowDown"] || keys["s"] || keys["S"]) vy += 1;
+      if (keys["ArrowLeft"] || keys["a"] || keys["A"]) vx -= 1;
+      if (keys["ArrowRight"] || keys["d"] || keys["D"]) vx += 1;
+
+      if (vx !== 0 || vy !== 0) {
+        state.targetX = null;
+        state.targetY = null;
+        const len = Math.hypot(vx, vy);
+        movePlayerBy((vx / len) * 3.4, (vy / len) * 3.4);
+      } else if (state.targetX !== null && state.targetY !== null) {
+        const dx = state.targetX - state.px;
+        const dy = state.targetY - state.py;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 5) {
+          state.moving = false;
+          state.targetX = null;
+          state.targetY = null;
+          if (state.pendingEnterBuilding) {
+            const b = state.pendingEnterBuilding;
+            state.pendingEnterBuilding = null;
+            openBuildingActivity(b);
+          }
+        } else {
+          movePlayerBy((dx / dist) * 3.5, (dy / dist) * 3.5);
+        }
+      } else {
+        state.moving = false;
+      }
+    } else {
+      state.moving = false;
+    }
+
+    // Seamless transition from Gate into Fortune Valley Main Map!
+    if (state.scene === "gate" && state.py < 1725) {
+      state.scene = "valley";
+      state.speech = null;
+      updateHUD();
+      saveGame();
+    }
+
+    // Check proximity to building doors
+    state.nearBuilding = null;
+    if (state.scene === "valley") {
+      for (const b of BUILDINGS) {
+        if (Math.hypot(state.px - b.x, state.py - (b.y + 26)) < 68) {
+          state.nearBuilding = b;
+          break;
+        }
+      }
+    }
+  }
+
+  function movePlayerBy(dx, dy) {
+    let nx = Math.max(120, Math.min(680, state.px + dx));
+    let ny = Math.max(195, Math.min(2060, state.py + dy));
+    // Block gate if closed
+    if (state.gateOpenProgress < 0.95 && ny < 1785) ny = 1785;
+    state.px = nx;
+    state.py = ny;
+    state.moving = true;
+    state.walkFrame++;
+    if (state.walkFrame % 16 === 0) sound.sfxStep();
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      state.dir = dx < 0 ? "left" : "right";
+    } else {
+      state.dir = dy < 0 ? "up" : "down";
+    }
+  }
+
+  /* =========================================================================
+     13. SCENE FLOW CONTROLLERS & INTERACTION HANDLERS
+     ========================================================================= */
+  function startNewJourney() {
+    sound.init();
+    sound.sfxChime();
+    state.returning = false;
+    state.scene = "counter";
+    state.subStep = 0;
+    state.hasPassport = false;
+    state.hasBag = false;
+    state.stamps = ["stamp_arrival"];
+    state.bagItems = [];
+    state.speech = null;
+    ticketInputWrap.style.display = "flex";
+    ticketNameInput.value = "";
+    setTimeout(() => ticketNameInput.focus(), 120);
+    updateHUD();
+  }
+
+  function continueSavedJourney() {
+    const s = state.savedSnapshot;
+    if (!s) return startNewJourney();
+    sound.init();
+    sound.sfxChime();
+    state.playerName = s.playerName;
+    state.catIndex = s.catIndex || 0;
+    state.hasPassport = true;
+    state.hasBag = true;
+    state.stamps = Array.isArray(s.stamps) ? s.stamps : ["stamp_arrival"];
+    state.bagItems = Array.isArray(s.bagItems) ? s.bagItems : [];
+    if (Array.isArray(s.wishes)) state.wishes = s.wishes;
+    ticketInputWrap.style.display = "none";
+    storyChoices.style.display = "none";
+    state.returning = true;
+    enterShrineArrival();
+  }
+
+  ticketConfirmBtn.addEventListener("click", confirmTicketSignature);
+  ticketNameInput.addEventListener("keydown", e => {
+    if (e.key === "Enter") confirmTicketSignature();
+  });
+
+  function confirmTicketSignature() {
+    sound.init();
+    const val = ticketNameInput.value.trim().replace(/[<> &]/g, ch => ch === " " ? " " : "");
+    state.playerName = val || t("default_name");
+    ticketInputWrap.style.display = "none";
+    state.subStep = 1;
+    sound.sfxChime();
+    updateHUD();
+  }
+
+  function selectPlatformCat(idx) {
+    state.catIndex = idx;
+    state.catBounce[idx] = 28;
+    sound.sfxMeow(idx);
+    const cat = CATS[idx];
+    const pool = state.lang === "zh" ? cat.quipsZh : cat.quipsEn;
+    const quip = pool[Math.floor(Math.random() * pool.length)];
+    state.speech = { text: quip };
+    updateHUD();
+  }
+
+  function enterShrineArrival() {
+    state.scene = "gate";
+    state.px = 400;
+    state.py = 2005;
+    state.dir = "up";
+    state.camY = 1660;
+    state.keeperY = 1795;
+    state.keeperState = "approaching";
+    state.gateOpenProgress = 0;
+    state.speech = null;
+    updateHUD();
+  }
+
+  function showShrineKeeperChoices() {
+    storyChoices.innerHTML = "";
+    [
+      { text: t("keeper_c1"), replyKey: "keeper_r1" },
+      { text: t("keeper_c2"), replyKey: "keeper_r2" },
+      { text: t("keeper_c3"), replyKey: "keeper_r3" }
+    ].forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "choice-slip";
+      btn.textContent = opt.text;
+      btn.addEventListener("click", () => {
+        sound.sfxChime();
+        storyChoices.style.display = "none";
+        state.speech = { wx: 400, wy: state.keeperY - 52, text: `${t(opt.replyKey)} ${t("keeper_open")}` };
+        setTimeout(() => {
+          state.keeperState = "opening";
+        }, 1200);
+      });
+      storyChoices.appendChild(btn);
+    });
+    storyChoices.style.display = "flex";
+  }
+
+  function refreshSceneSpeechOnLangChange() {
+    if (state.scene === "platform") {
+      const cat = CATS[state.catIndex];
+      state.speech = { text: (state.lang === "zh" ? cat.quipsZh : cat.quipsEn)[0] };
+    } else if (state.scene === "gate" && state.keeperState === "chatting") {
+      state.speech = { wx: 400, wy: state.keeperY - 52, text: t("keeper_greet").replace("{name}", state.playerName || t("default_name")) };
+      showShrineKeeperChoices();
+    }
+  }
+
+  // Touch Swipe & Tap Handling on Canvas
+  let pointerStart = null;
+  canvas.addEventListener("pointerdown", e => {
+    sound.init();
+    pointerStart = { x: e.clientX, y: e.clientY };
+  });
+
+  canvas.addEventListener("pointerup", e => {
+    if (bookOverlayOpen()) return;
+    const dx = pointerStart ? e.clientX - pointerStart.x : 0;
+    if (state.scene === "platform" && Math.abs(dx) > 45) {
+      selectPlatformCat((state.catIndex + (dx < 0 ? 1 : 3)) % 4);
+      pointerStart = null;
+      return;
+    }
+    handleCanvasTap(e.clientX, e.clientY);
+    pointerStart = null;
+  });
+
+  function handleCanvasTap(cx, cy) {
+    // Check registered interactive hit zones (top-most first)
+    for (let i = hitZones.length - 1; i >= 0; i--) {
+      const z = hitZones[i];
+      if (cx >= z.x && cx <= z.x + z.w && cy >= z.y && cy <= z.y + z.h) {
+        triggerZone(z);
+        return;
+      }
+    }
+
+    // Free exploration tap-to-walk in Shrine Entrance / Fortune Valley
+    if ((state.scene === "valley") || (state.scene === "gate" && state.gateOpenProgress >= 1)) {
+      const worldW = 800;
+      const scale = Math.min(W / worldW, Math.max(0.72, H / 720));
+      const viewW = W / scale;
+      const camX = (worldW - viewW) / 2;
+      const wx = cx / scale + camX;
+      const wy = cy / scale + state.camY;
+      state.pendingEnterBuilding = null;
+      state.targetX = Math.max(125, Math.min(675, wx));
+      state.targetY = Math.max(200, Math.min(2050, wy));
+    }
+  }
+
+  function triggerZone(z) {
+    if (z.id === "begin_new") {
+      startNewJourney();
+    } else if (z.id === "continue_save") {
+      continueSavedJourney();
+    } else if (z.id === "pickup_passport") {
+      state.hasPassport = true;
+      sound.sfxChime();
+      updateHUD();
+      setTimeout(() => {
+        state.scene = "platform";
+        selectPlatformCat(0);
+        updateHUD();
+      }, 950);
+    } else if (z.id.startsWith("select_cat_")) {
+      const idx = parseInt(z.id.split("_")[2], 10);
+      selectPlatformCat(idx);
+    } else if (z.id === "pickup_bag") {
+      state.hasBag = true;
+      addBagItem("ticket_item", "Stamped Valley Ticket", "解忧谷车票", "One-way ticket signed in ink.", "亲笔签名的单程逃离车票。", "🎫");
+      updateHUD();
+    } else if (z.id === "board_train") {
+      sound.sfxChime();
+      state.scene = "train";
+      state.trainT = 0;
+      state.speech = null;
+      updateHUD();
+    } else if (z.id.startsWith("enter_")) {
+      const bid = z.id.replace("enter_", "");
+      const b = BUILDINGS.find(it => it.id === bid);
+      if (b) openBuildingActivity(b);
+    } else if (z.id.startsWith("walk_to_")) {
+      const b = z.b;
+      if (Math.hypot(state.px - b.x, state.py - (b.y + 26)) < 75) {
+        openBuildingActivity(b);
+      } else {
+        state.targetX = b.x;
+        state.targetY = b.y + 32;
+        state.pendingEnterBuilding = b;
+      }
+    }
+  }
+
+  /* =========================================================================
+     14. DIEGETIC DOCK SHEETS (Passport, Bag, Painted Map Scroll, Settings)
+     ========================================================================= */
+  function bookOverlayOpen() {
+    return bookOverlay.style.display === "flex";
+  }
+  function closeBookOverlay() {
+    bookOverlay.style.display = "none";
+    wishInputWrap.style.display = "none";
+  }
+  bookOverlay.addEventListener("click", e => {
+    if (e.target === bookOverlay) closeBookOverlay();
+  });
+
+  dockHome.addEventListener("click", () => {
+    sound.init();
+    closeBookOverlay();
+    state.targetX = 400;
+    state.targetY = 1690;
+  });
+
+  dockPassport.addEventListener("click", () => {
+    sound.init();
+    const allStamps = [
+      { id: "stamp_arrival", en: "Departure Ticket", zh: "启程车票章" },
+      ...BUILDINGS.map(b => ({ id: b.stampId, en: b.stampEn, zh: b.stampZh })),
+      { id: "stamp_tarot_love", en: "Heart Arcana", zh: "恋语塔罗章" },
+      { id: "stamp_shengbei", en: "Sacred Shengbei", zh: "圣筊吉兆章" },
+      { id: "stamp_curio_bell", en: "Brass Cat Bell", zh: "古铜猫铃章" }
+    ];
+    const cat = CATS[state.catIndex];
+    storybookContent.innerHTML = `
+      <button class="sheet-close" id="closeSheetBtn">✕</button>
+      <h2 class="storybook-title">${state.lang === "zh" ? "旅行手帐" : "Traveller's Passport"}</h2>
+      <p class="storybook-sub">${state.playerName || t("default_name")} · ${state.lang === "zh" ? cat.nameZh : cat.nameEn} · ${state.stamps.length}/24 ${state.lang === "zh" ? "枚印章" : "Stamps Collected"}</p>
+      <div class="stamp-row">
+        ${allStamps.map(s => {
+          const got = state.stamps.includes(s.id);
+          return `<div class="passport-stamp ${got ? "stamped" : ""}">
+            ${got ? `<div class="stamp-seal">${state.lang === "zh" ? "解忧印" : "STAMPED"}</div>` : `<div style="opacity:0.35;font-size:20px;">◌</div>`}
+            <div style="font-size:12px;font-weight:${got ? "bold" : "normal"};opacity:${got ? 1 : 0.45};">${state.lang === "zh" ? s.zh : s.en}</div>
+          </div>`;
+        }).join("")}
+      </div>
+    `;
+    bookOverlay.style.display = "flex";
+    document.getElementById("closeSheetBtn").onclick = closeBookOverlay;
+  });
+
+  dockBag.addEventListener("click", () => {
+    sound.init();
+    storybookContent.innerHTML = `
+      <button class="sheet-close" id="closeSheetBtn">✕</button>
+      <h2 class="storybook-title">${state.lang === "zh" ? "随身行囊 · Woven Bag" : "Woven Traveller's Bag"}</h2>
+      <p class="storybook-sub">${state.lang === "zh" ? "旅途中拾起的小物件与纪念" : "Keepsakes, crystals, and fortune slips gathered along the hill."}</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        ${state.bagItems.length === 0
+          ? `<p style="opacity:0.65;">${state.lang === "zh" ? "行囊里还空空的，去谷里逛逛吧。" : "Your bag is light and empty—explore the valley doors!"}</p>`
+          : state.bagItems.map(it => `
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(255,252,244,0.85);border:1.5px solid rgba(44,34,30,0.3);border-radius:10px;">
+              <span style="font-size:24px;">${it.icon}</span>
+              <div>
+                <div style="font-weight:bold;font-size:14px;">${state.lang === "zh" ? it.nameZh : it.nameEn}</div>
+                <div style="font-size:12px;color:#5c4b43;">${state.lang === "zh" ? it.descZh : it.descEn}</div>
+              </div>
+            </div>
+          `).join("")}
+      </div>
+    `;
+    bookOverlay.style.display = "flex";
+    document.getElementById("closeSheetBtn").onclick = closeBookOverlay;
+  });
+
+  dockMap.addEventListener("click", () => {
+    sound.init();
+    storybookContent.innerHTML = `
+      <button class="sheet-close" id="closeSheetBtn">✕</button>
+      <h2 class="storybook-title">${state.lang === "zh" ? "解忧谷手绘卷 · Valley Scroll" : "Fortune Valley Illustrated Scroll"}</h2>
+      <p class="storybook-sub">${state.lang === "zh" ? "点击任意地点，猫咪会顺着石阶走过去" : "Tap any stop along the mountain path to stroll there."}</p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${[...BUILDINGS].reverse().map(b => `
+          <button class="choice-slip" data-goto="${b.id}" style="display:flex;justify-content:space-between;align-items:center;text-align:left;width:100%;">
+            <span><strong>${state.lang === "zh" ? b.nameZh : b.nameEn}</strong> · <small>${state.lang === "zh" ? b.subZh : b.subEn}</small></span>
+            <span>${state.stamps.includes(b.stampId) ? "💮" : "➔"}</span>
+          </button>
+        `).join("")}
+      </div>
+    `;
+    bookOverlay.style.display = "flex";
+    document.getElementById("closeSheetBtn").onclick = closeBookOverlay;
+    storybookContent.querySelectorAll("[data-goto]").forEach(btn => {
+      btn.onclick = () => {
+        const b = BUILDINGS.find(it => it.id === btn.getAttribute("data-goto"));
+        closeBookOverlay();
+        if (b) {
+          state.targetX = b.x;
+          state.targetY = b.y + 34;
+          state.pendingEnterBuilding = null;
+        }
+      };
+    });
+  });
+
+  function openSettingsSheet() {
+    storybookContent.innerHTML = `
+      <button class="sheet-close" id="closeSheetBtn">✕</button>
+      <h2 class="storybook-title">${state.lang === "zh" ? "旅途设置 · Traveller Settings" : "Traveller Settings"}</h2>
+      <p class="storybook-sub">${state.lang === "zh" ? "随时切换猫咪化身，或重温开场火车之旅" : "Change your cat form anytime, or replay the countryside train arrival."}</p>
+      <div style="margin:12px 0;">
+        <div style="font-weight:bold;margin-bottom:8px;">${state.lang === "zh" ? "切换猫咪形态：" : "Switch Character:"}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${CATS.map((c, idx) => `
+            <button class="ink-btn ${state.catIndex === idx ? "active" : ""}" data-switchcat="${idx}">
+              ${c.nameEn} · ${c.nameZh}
+            </button>
+          `).join("")}
+        </div>
+      </div>
+      <hr style="border:none;border-top:1px dashed rgba(44,34,30,0.25);margin:16px 0;" />
+      <button class="ink-btn" id="replayIntroBtn">${state.lang === "zh" ? "🚂 重新体验开场列车序章" : "🚂 Replay Opening Train Sequence"}</button>
+    `;
+    bookOverlay.style.display = "flex";
+    document.getElementById("closeSheetBtn").onclick = closeBookOverlay;
+    storybookContent.querySelectorAll("[data-switchcat]").forEach(btn => {
+      btn.onclick = () => {
+        state.catIndex = parseInt(btn.getAttribute("data-switchcat"), 10);
+        sound.sfxMeow(state.catIndex);
+        updateHUD();
+        saveGame();
+        openSettingsSheet();
+      };
+    });
+    document.getElementById("replayIntroBtn").onclick = () => {
+      closeBookOverlay();
+      state.scene = "title";
+      state.time = 0;
+      updateHUD();
+    };
+  }
+
+  /* =========================================================================
+     15. IMMERSIVE ACTIVITIES INSIDE ALL 8 FORTUNE VALLEY BUILDINGS
+     ========================================================================= */
+  function openBuildingActivity(b) {
+    sound.sfxChime();
+    unlockStamp(b.stampId, b.stampEn, b.stampZh);
+    if (b.id === "tarot") return renderTarotHouse();
+    if (b.id === "shrine") return renderFortuneShrine();
+    if (b.id === "destiny") return renderDestinyHouse();
+    if (b.id === "crystal") return renderCrystalCottage();
+    if (b.id === "moon") return renderMoonObservatory();
+    if (b.id === "wishing") return renderWishingGarden();
+    if (b.id === "secret") return renderSecretCorner();
+    if (b.id === "station") return renderRailwayStation();
+  }
+
+  // --- 1. TAROT HOUSE: AUTHENTIC 22 MAJOR ARCANA & ILLUSTRATED CARD CANVAS ---
+  function renderTarotHouse() {
+    let topic = "general";
+    let spreadMode = 3; // 3-card Past/Present/Future or 1-card Daily
+    let drawn = [];
+
+    const topics = [
+      { id: "love", en: "Love & Heart", zh: "感情姻缘" },
+      { id: "career", en: "Career & Craft", zh: "事业前程" },
+      { id: "money", en: "Wealth & Flow", zh: "财运丰盛" },
+      { id: "general", en: "General Path", zh: "综合指引" }
+    ];
+
+    function drawTarotUI() {
+      storybookContent.innerHTML = `
+        <button class="sheet-close" id="closeSheetBtn">✕</button>
+        <h2 class="storybook-title">${state.lang === "zh" ? "塔罗小屋 · Tarot House" : "Tarot House · 塔罗小屋"}</h2>
+        <p class="storybook-sub">${state.lang === "zh" ? "22张大阿卡纳正逆位真实牌义 · 烛光天鹅绒占卜桌" : "Authentic 22 Major Arcana with Upright & Reversed interpretations."}</p>
+        <div>
+          ${topics.map(tp => `<button class="ink-btn ${topic === tp.id ? "active" : ""}" data-topic="${tp.id}">${state.lang === "zh" ? tp.zh : tp.en}</button>`).join("")}
+        </div>
+        <div style="margin-top:6px;">
+          <button class="ink-btn ${spreadMode === 1 ? "active" : ""}" id="mode1Btn">${state.lang === "zh" ? "单张每日指引" : "Single Card Draw"}</button>
+          <button class="ink-btn ${spreadMode === 3 ? "active" : ""}" id="mode3Btn">${state.lang === "zh" ? "三张牌阵（过去 · 现在 · 未来）" : "3-Card Spread (Past · Present · Future)"}</button>
+          <button class="ink-btn active" id="shuffleDrawBtn">✦ ${state.lang === "zh" ? "洗牌抽牌" : "Shuffle & Draw"}</button>
+        </div>
+        <div class="tarot-table">
+          <div style="text-align:center;font-size:13px;color:#e6cfa3;">
+            ${drawn.length === 0
+              ? (state.lang === "zh" ? "静下心默念你的问题，点击「洗牌抽牌」后翻开牌面" : "Hold your question quietly in mind, then Shuffle & tap each card to reveal.")
+              : (state.lang === "zh" ? "轻触背面塔罗牌翻开命运牌面" : "Tap each face-down card on the velvet cloth to turn it over.")}
+          </div>
+          <div class="tarot-cards-row" id="tarotCardsMount"></div>
+          <div id="tarotReadingText" style="margin-top:12px;font-size:13.5px;line-height:1.65;color:#f6efe2;"></div>
+        </div>
+      `;
+      bookOverlay.style.display = "flex";
+      document.getElementById("closeSheetBtn").onclick = closeBookOverlay;
+
+      storybookContent.querySelectorAll("[data-topic]").forEach(b => {
+        b.onclick = () => { topic = b.getAttribute("data-topic"); drawTarotUI(); };
+      });
+      document.getElementById("mode1Btn").onclick = () => { spreadMode = 1; drawn = []; drawTarotUI(); };
+      document.getElementById("mode3Btn").onclick = () => { spreadMode = 3; drawn = []; drawTarotUI(); };
+      document.getElementById("shuffleDrawBtn").onclick = () => {
+        sound.sfxRattle();
+        const pool = [...MAJOR_ARCANA].sort(() => Math.random() - 0.5);
+        drawn = pool.slice(0, spreadMode).map(card => ({
+          card,
+          reversed: Math.random() < 0.34,
+          flipped: false
+        }));
+        if (topic === "love") unlockStamp("stamp_tarot_love", "Heart Arcana", "恋语塔罗章");
+        drawTarotUI();
+      };
+
+      const mount = document.getElementById("tarotCardsMount");
+      const posLabels = spreadMode === 3
+        ? (state.lang === "zh" ? ["过去 · Past", "现在 · Present", "未来 · Future"] : ["Past", "Present", "Future"])
+        : [state.lang === "zh" ? "当下指引 · Guidance" : "Present Guidance"];
+
+      drawn.forEach((slot, idx) => {
+        const wrap = document.createElement("div");
+        wrap.className = "tarot-slot";
+        const lbl = document.createElement("div");
+        lbl.style.cssText = "font-size:11px;color:#d49b38;margin-bottom:6px;";
+        lbl.textContent = posLabels[idx];
+        const cv = document.createElement("canvas");
+        cv.width = 220;
+        cv.height = 350;
+        cv.className = "tarot-card-canvas";
+        paintTarotCard(cv, slot);
+        cv.onclick = () => {
+          if (!slot.flipped) {
+            slot.flipped = true;
+            sound.sfxChime();
+            paintTarotCard(cv, slot);
+            addBagItem(
+              `tarot_${slot.card.num}`,
+              `Tarot: ${slot.card.num} ${slot.card.en}`,
+              `塔罗纪念牌：${slot.card.num} ${slot.card.zh}`,
+              slot.reversed ? slot.card.revEn : slot.card.upEn,
+              slot.reversed ? slot.card.revZh : slot.card.upZh,
+              "🃏"
+            );
+            updateReadingBox();
+          }
+        };
+        wrap.appendChild(lbl);
+        wrap.appendChild(cv);
+        mount.appendChild(wrap);
+      });
+      updateReadingBox();
+    }
+
+    function updateReadingBox() {
+      const box = document.getElementById("tarotReadingText");
+      if (!box) return;
+      const revealed = drawn.filter(d => d.flipped);
+      if (revealed.length === 0) { box.innerHTML = ""; return; }
+      const topicHint = {
+        love: state.lang === "zh" ? "【感情视角】" : "[In Love] ",
+        career: state.lang === "zh" ? "【事业视角】" : "[In Career] ",
+        money: state.lang === "zh" ? "【财运视角】" : "[In Finances] ",
+        general: state.lang === "zh" ? "【生活指引】" : "[Life Path] "
+      }[topic];
+      const posNames = spreadMode === 3
+        ? (state.lang === "zh" ? ["过去", "现在", "未来"] : ["Past", "Present", "Future"])
+        : [state.lang === "zh" ? "核心牌意" : "Key Message"];
+
+      box.innerHTML = drawn.map((d, idx) => {
+        if (!d.flipped) return "";
+        const ori = d.reversed
+          ? (state.lang === "zh" ? "逆位 Reversed" : "Reversed")
+          : (state.lang === "zh" ? "正位 Upright" : "Upright");
+        const meaning = d.reversed
+          ? (state.lang === "zh" ? d.card.revZh : d.card.revEn)
+          : (state.lang === "zh" ? d.card.upZh : d.card.upEn);
+        const title = state.lang === "zh" ? `${d.card.num} · ${d.card.zh} (${d.card.en})` : `${d.card.num} · ${d.card.en}`;
+        return `<div style="margin-bottom:10px;padding:10px 12px;background:rgba(255,248,232,0.08);border-left:3px solid #d49b38;border-radius:6px;">
+          <div style="color:#f5cf7a;font-weight:bold;">${posNames[idx]} — ${title} [${ori}]</div>
+          <div style="margin-top:4px;">${idx === revealed.length - 1 ? topicHint : ""}${meaning}</div>
+        </div>`;
+      }).join("");
+    }
+
+    drawTarotUI();
+  }
+
+  function paintTarotCard(cv, slot) {
+    const c = cv.getContext("2d");
+    c.clearRect(0, 0, 220, 350);
+    if (!slot.flipped) {
+      // Ornate Celestial Card Back
+      c.fillStyle = "#221b33";
+      c.strokeStyle = "#d49b38";
+      c.lineWidth = 5;
+      c.beginPath();
+      c.roundRect(4, 4, 212, 342, 14);
+      c.fill();
+      c.stroke();
+      c.lineWidth = 1.6;
+      c.strokeRect(16, 16, 188, 318);
+      // Mystic sun-moon mandala
+      c.translate(110, 175);
+      c.beginPath();
+      c.arc(0, 0, 48, 0, Math.PI * 2);
+      c.stroke();
+      for (let i = 0; i < 8; i++) {
+        c.rotate(Math.PI / 4);
+        c.beginPath();
+        c.moveTo(0, -52); c.lineTo(0, -68);
+        c.stroke();
+      }
+      c.fillStyle = "#d49b38";
+      c.beginPath();
+      c.arc(0, 0, 12, 0, Math.PI * 2);
+      c.fill();
+      return;
+    }
+
+    // Authentic Illustrated Tarot Face (Rider-Waite parchment aesthetic + Cat Arcana symbolism)
+    c.save();
+    c.fillStyle = "#f7eedb";
+    c.strokeStyle = "#2c221e";
+    c.lineWidth = 5;
+    c.beginPath();
+    c.roundRect(4, 4, 212, 342, 14);
+    c.fill();
+    c.stroke();
+
+    c.strokeStyle = "#b88446";
+    c.lineWidth = 2;
+    c.strokeRect(14, 14, 192, 322);
+
+    // Rotate artwork region if Reversed!
+    c.save();
+    c.translate(110, 172);
+    if (slot.reversed) c.rotate(Math.PI);
+
+    // Sky backdrop inside card frame
+    const artGrad = c.createLinearGradient(0, -110, 0, 110);
+    artGrad.addColorStop(0, "#323e5e");
+    artGrad.addColorStop(1, "#e6c594");
+    c.fillStyle = artGrad;
+    c.fillRect(-80, -112, 160, 214);
+    c.strokeStyle = "#2c221e";
+    c.lineWidth = 2;
+    c.strokeRect(-80, -112, 160, 214);
+
+    // Arcana Emblem Symbolism
+    c.fillStyle = "#f7d57e";
+    c.strokeStyle = "#f7d57e";
+    c.lineWidth = 2.2;
+    const m = slot.card.motif;
+    if (m === "sun") {
+      c.beginPath(); c.arc(0, -64, 24, 0, Math.PI * 2); c.fill();
+    } else if (m === "moon") {
+      c.beginPath(); c.arc(-4, -64, 20, 0.4, Math.PI * 1.7); c.fill();
+    } else if (m === "star") {
+      [-36, 0, 36].forEach((sx, i) => {
+        c.beginPath(); c.arc(sx, -68 + (i === 1 ? -10 : 6), i === 1 ? 9 : 5, 0, Math.PI * 2); c.fill();
+      });
+    } else if (m === "wheel" || m === "wreath") {
+      c.beginPath(); c.arc(0, -60, 24, 0, Math.PI * 2); c.stroke();
+      c.beginPath(); c.moveTo(-24, -60); c.lineTo(24, -60); c.moveTo(0, -84); c.lineTo(0, -36); c.stroke();
+    } else if (m === "lightning") {
+      c.beginPath(); c.moveTo(10, -98); c.lineTo(-12, -64); c.lineTo(6, -64); c.lineTo(-14, -32); c.stroke();
+    } else if (m === "scales") {
+      c.beginPath(); c.moveTo(-28, -68); c.lineTo(28, -68); c.moveTo(0, -86); c.lineTo(0, -50); c.stroke();
+    } else {
+      c.beginPath(); c.arc(0, -68, 16, 0, Math.PI * 2); c.stroke();
+    }
+
+    // Illustrated Cat Figure embodying the Arcana
+    const catIdx = slot.card.num.length % 4;
+    drawCat(c, 0, 62, catIdx, "down", "idle", 12, 1.35, m === "cliff");
+    c.restore();
+
+    // Roman Numeral at Top & Authentic Arcana Title at Bottom
+    c.fillStyle = "#2c221e";
+    c.font = "bold 15px 'Georgia', serif";
+    c.textAlign = "center";
+    c.fillText(slot.card.num, 110, 42);
+
+    c.fillStyle = "#f7eedb";
+    c.fillRect(22, 294, 176, 36);
+    c.fillStyle = "#2c221e";
+    c.font = "bold 14px 'Georgia', 'Songti SC', serif";
+    c.fillText(state.lang === "zh" ? `${slot.card.zh} · ${slot.card.en}` : slot.card.en, 110, 315);
+    if (slot.reversed) {
+      c.fillStyle = "#c84b31";
+      c.font = "11px 'Georgia', serif";
+      c.fillText(state.lang === "zh" ? "（逆位）" : "(Reversed)", 110, 331);
+    }
+    c.restore();
+  }
+
+  // --- 2. FORTUNE SHRINE: KAU CIM BAMBOO LOTS (求签) & MOON BLOCKS (掷筊) ---
+  function renderFortuneShrine() {
+    const LOTS = [
+      { rankZh: "第柒签 · 上上签", rankEn: "Lot No. 7 · Supreme Fortune",
+        poemZh: "云开月出正分明，不须进退问前程。",
+        poemEn: "Clouds part and the bright moon shines clear; walk forward without hesitation.",
+        descZh: "心头挂念之事即将迎来转机，顺着心意踏实去做，自有贵人与顺风相助。",
+        descEn: "What weighed on your mind is clearing up. Trust your steady effort—good allies and warm timing await." },
+      { rankZh: "第拾贰签 · 中吉签", rankEn: "Lot No. 12 · Gentle Blessing",
+        poemZh: "守得春风花自开，莫教急雨催新苔。",
+        poemEn: "Wait for the spring breeze and blossoms open naturally; rushing rain cannot hurry moss.",
+        descZh: "欲速则不达。眼下适合蓄力与耐心经营，好结果会在不经意间落入怀中。",
+        descEn: "Do not force the pace today. Quiet preparation brings a sweeter, longer-lasting reward." },
+      { rankZh: "第廿肆签 · 上吉签", rankEn: "Lot No. 24 · Bright Horizon",
+        poemZh: "扁舟轻泛碧波宽，两岸猿声俱已安。",
+        poemEn: "A light boat glides onto wide emerald waters; past noise fades behind the hills.",
+        descZh: "过去的纠结与口舌正在远去，财运与心情都将迎来舒展明朗的新阶段。",
+        descEn: "Old friction is receding behind you. Expect lighter spirits and smoother progress ahead." }
+    ];
+    let currentLot = null;
+    let poeResult = null;
+
+    function drawShrineUI() {
+      storybookContent.innerHTML = `
+        <button class="sheet-close" id="closeSheetBtn">✕</button>
+        <h2 class="storybook-title">${state.lang === "zh" ? "解忧庙 · Fortune Shrine" : "Fortune Shrine · 解忧庙"}</h2>
+        <p class="storybook-sub">${state.lang === "zh" ? "摇动竹签筒求签，再掷红木筊杯请神明印证" : "Shake the bamboo cylinder for a numbered lot, then toss the wooden Moon Blocks (Poe) to confirm."}</p>
+        <div style="text-align:center;padding:14px;background:rgba(255,249,238,0.85);border:1.5px solid #2c221e;border-radius:12px;">
+          <button class="ink-btn active" id="shakeCylinderBtn">🎋 ${state.lang === "zh" ? "诚心摇签筒 (求签)" : "Shake Bamboo Cylinder"}</button>
+          <button class="ink-btn" id="tossPoeBtn">🌙 ${state.lang === "zh" ? "掷筊问卜 (掷筊)" : "Toss Moon Blocks (Poe)"}</button>
+          ${currentLot ? `
+            <div style="margin-top:16px;padding:14px;background:#fffdf6;border:2px solid #c84b31;border-radius:8px;max-width:420px;margin-inline:auto;">
+              <div style="color:#c84b31;font-weight:bold;font-size:16px;">${state.lang === "zh" ? currentLot.rankZh : currentLot.rankEn}</div>
+              <div style="font-style:italic;margin:8px 0;font-size:15px;">「 ${state.lang === "zh" ? currentLot.poemZh : currentLot.poemEn} 」</div>
+              <div style="font-size:13px;color:#4a3b34;">${state.lang === "zh" ? currentLot.descZh : currentLot.descEn}</div>
+            </div>
+          ` : ""}
+          ${poeResult ? `
+            <div style="margin-top:12px;font-size:14px;color:#2c221e;">
+              <strong>${poeResult.title}</strong> — ${poeResult.desc}
+            </div>
+          ` : ""}
+        </div>
+      `;
+      bookOverlay.style.display = "flex";
+      document.getElementById("closeSheetBtn").onclick = closeBookOverlay;
+      document.getElementById("shakeCylinderBtn").onclick = () => {
+        sound.sfxRattle();
+        currentLot = LOTS[Math.floor(Math.random() * LOTS.length)];
+        addBagItem("shrine_slip", currentLot.rankEn, currentLot.rankZh, currentLot.poemEn, currentLot.poemZh, "🎋");
+        drawShrineUI();
+      };
+      document.getElementById("tossPoeBtn").onclick = () => {
+        sound.sfxStamp();
+        const r = Math.random();
+        if (r < 0.58) {
+          unlockStamp("stamp_shengbei", "Sacred Shengbei", "圣筊吉兆章");
+          poeResult = state.lang === "zh"
+            ? { title: "🌙 圣筊 (一平一凸)", desc: "神明含笑点头，此签与你所求之事相合，放心前行吧！" }
+            : { title: "🌙 Shengbei · Confirmed (One flat, one round)", desc: "A clear yes! Your question and intuition are aligned." };
+        } else if (r < 0.84) {
+          poeResult = state.lang === "zh"
+            ? { title: "🌙 笑筊 (两平面朝上)", desc: "猫神笑而不语——其实你心里早就知道答案啦，不用多问。" }
+            : { title: "🌙 Xiaobei · Laughing Blocks", desc: "The shrine spirit chuckles—you already know the answer in your heart!" };
+        } else {
+          poeResult = state.lang === "zh"
+            ? { title: "🌙 阴筊 (两凸面朝上)", desc: "时机尚早，不妨换个问法或缓几天再做决定。" }
+            : { title: "🌙 Yinbei · Wait Gently", desc: "Not just yet—let the dust settle a little before rushing." };
+        }
+        drawShrineUI();
+      };
+    }
+    drawShrineUI();
+  }
+
+  // --- 3. DESTINY HOUSE: FIVE ELEMENTS (五行) & ZI WEI GUARDIAN STAR ---
+  function renderDestinyHouse() {
+    const SEASONS = [
+      { id: "spring", en: "Spring Born (Wood · 木)", zh: "春生 · 巽木星垣", starZh: "天机星伴太阴", starEn: "Tian Ji & Crescent Star",
+        readingZh: "木气生发，心思细腻而富创意。今年宜深耕一门手艺，少替别人操心，福气自聚。",
+        readingEn: "Rooted in flourishing Wood energy with quick intuition. Focus deeply on one craft this season and stop carrying others' worries." },
+      { id: "summer", en: "Summer Born (Fire · 火)", zh: "夏生 · 离火星垣", starZh: "太阳星耀紫微", starEn: "Radiant Sun & Zi Wei Star",
+        readingZh: "火象赤诚明快，感染力极强。注意留白休息，财运多从远方合作或新尝试中来。",
+        readingEn: "Warm, luminous Fire spirit. Pace your enthusiasm with quiet tea breaks; new opportunities arrive through unexpected collaborations." },
+      { id: "autumn", en: "Autumn Born (Metal · 金)", zh: "秋生 · 兑金星垣", starZh: "武曲星映七杀", starEn: "Wu Qu & Crisp Metal Star",
+        readingZh: "金气澄澈果断，审美品味佳。放下完美主义的紧绷感，人际与感情反而更温柔顺畅。",
+        readingEn: "Clear-eyed Metal precision and discerning taste. Soften perfectionism slightly and relationships flow effortlessly." },
+      { id: "winter", en: "Winter Born (Water · 水)", zh: "冬生 · 坎水星垣", starZh: "天同星伴贪狼", starEn: "Tian Tong & Deep Water Star",
+        readingZh: "水主智慧与包容，外柔内韧。顺应直觉把握年末与新季交替的良机，有意外之喜。",
+        readingEn: "Deep Water wisdom—gentle on the surface, resilient underneath. Trust quiet instincts for a delightful surprise." }
+    ];
+    let chosen = SEASONS[0];
+
+    function paint() {
+      storybookContent.innerHTML = `
+        <button class="sheet-close" id="closeSheetBtn">✕</button>
+        <h2 class="storybook-title">${state.lang === "zh" ? "命理小馆 · Destiny House" : "Destiny House · 命理小馆"}</h2>
+        <p class="storybook-sub">${state.lang === "zh" ? "生辰四时五行 · 紫微守护主星推演" : "Four Pillars Seasonal Elements & Zi Wei Star Chart"}</p>
+        <div>
+          ${SEASONS.map((s, i) => `<button class="ink-btn ${chosen.id === s.id ? "active" : ""}" data-sidx="${i}">${state.lang === "zh" ? s.zh : s.en}</button>`).join("")}
+        </div>
+        <div style="margin-top:14px;padding:16px;background:rgba(255,250,240,0.9);border:1.5px solid #2c221e;border-radius:10px;">
+          <div style="font-size:16px;font-weight:bold;color:#8c5332;">✦ ${state.lang === "zh" ? `命宫主星：${chosen.starZh}` : `Guardian Star: ${chosen.starEn}`}</div>
+          <p style="font-size:14px;line-height:1.65;margin:8px 0 0 0;">${state.lang === "zh" ? chosen.readingZh : chosen.readingEn}</p>
+        </div>
+      `;
+      bookOverlay.style.display = "flex";
+      document.getElementById("closeSheetBtn").onclick = closeBookOverlay;
+      storybookContent.querySelectorAll("[data-sidx]").forEach(btn => {
+        btn.onclick = () => {
+          chosen = SEASONS[parseInt(btn.getAttribute("data-sidx"), 10)];
+          sound.sfxChime();
+          paint();
+        };
+      });
+    }
+    paint();
+  }
+
+  // --- 4. CRYSTAL COTTAGE: RAW MINERALS & SYMBOLIC KEEPSAKES ---
+  function renderCrystalCottage() {
+    const CRYSTALS = [
+      { id: "amethyst", icon: "🔮", en: "Lavender Amethyst", zh: "乌拉圭紫水晶",
+        descEn: "Quiets racing midnight thoughts and invites restful dreams.", descZh: "抚平深夜停不下来的胡思乱想，守护安稳好眠。" },
+      { id: "citrine", icon: "✨", en: "Honey Citrine", zh: "暖阳黄水晶",
+        descEn: "Warm solar confidence, steady abundance, and joyful focus.", descZh: "凝聚午后阳光般的自信与正财能量，驱散阴霾。" },
+      { id: "rosequartz", icon: "🌸", en: "Misty Rose Quartz", zh: "芙蓉粉晶原石",
+        descEn: "Softens self-criticism first, then attracts gentle affection.", descZh: "先学会温柔对待自己，自然吸引真诚契合的缘分。" },
+      { id: "moonstone", icon: "🌙", en: "Blue Sheen Moonstone", zh: "蓝光月光石",
+        descEn: "A traveller's talisman for calm transitions and intuition.", descZh: "旅人的护身石，在变化与远行中带来温柔直觉。" }
+    ];
+    storybookContent.innerHTML = `
+      <button class="sheet-close" id="closeSheetBtn">✕</button>
+      <h2 class="storybook-title">${state.lang === "zh" ? "水晶小屋 · Crystal Cottage" : "Crystal Cottage · 水晶小屋"}</h2>
+      <p class="storybook-sub">${state.lang === "zh" ? "凭第一眼直觉挑一颗原石收进行囊吧" : "Pick the raw mineral your eyes rest on first to tuck into your Bag."}</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;">
+        ${CRYSTALS.map(cr => `
+          <div style="padding:12px;background:rgba(255,253,248,0.88);border:1.5px solid rgba(44,34,30,0.35);border-radius:10px;">
+            <div style="font-size:24px;">${cr.icon} <strong>${state.lang === "zh" ? cr.zh : cr.en}</strong></div>
+            <p style="font-size:12.5px;color:#5c4b43;margin:6px 0 10px 0;">${state.lang === "zh" ? cr.descZh : cr.descEn}</p>
+            <button class="ink-btn" data-pickcr="${cr.id}">${state.lang === "zh" ? "收入行囊" : "Keep Pocket Stone"}</button>
+          </div>
+        `).join("")}
+      </div>
+    `;
+    bookOverlay.style.display = "flex";
+    document.getElementById("closeSheetBtn").onclick = closeBookOverlay;
+    storybookContent.querySelectorAll("[data-pickcr]").forEach(btn => {
+      btn.onclick = () => {
+        const cr = CRYSTALS.find(c => c.id === btn.getAttribute("data-pickcr"));
+        if (cr) {
+          addBagItem(`crystal_${cr.id}`, cr.en, cr.zh, cr.descEn, cr.descZh, cr.icon);
+          showFloatingToast(state.lang === "zh" ? `✦ 已将 ${cr.zh} 放入行囊` : `✦ Tucked ${cr.en} into your Bag`);
+          closeBookOverlay();
+        }
+      };
+    });
+  }
+
+  // --- 5. MOON OBSERVATORY: REAL LUNAR PHASE & ZODIAC TELESCOPE ---
+  function renderMoonObservatory() {
+    // Compute authentic lunar age for current date
+    const now = new Date();
+    const synodic = 29.53058867;
+    const refNewMoon = new Date("2026-01-18T19:52:00Z").getTime();
+    const age = (((now.getTime() - refNewMoon) / 86400000) % synodic + synodic) % synodic;
+    let phaseEn = "Waxing Crescent · 蛾眉月", phaseZh = "蛾眉新月 · 蓄力生长之时", msgEn = "Plant quiet intentions without rushing results.", msgZh = "适合立下微小的心愿，不必急于向外界证明。";
+    if (age >= 6 && age < 11) { phaseEn = "First Quarter · 上弦月"; phaseZh = "上弦半月 · 稳步推进之时"; msgEn = "Steady momentum builds step by step."; msgZh = "半明半暗最从容，认准的小目标正在稳步成形。"; }
+    else if (age >= 11 && age < 17.5) { phaseEn = "Full Moon · 望月圆满"; phaseZh = "清辉望月 · 澄明圆满之时"; msgEn = "Emotions and clarity peak—celebrate progress and release tension."; msgZh = "月光最盛，看清内心真实渴望，把积攒的疲惫温柔放下。"; }
+    else if (age >= 17.5 && age < 25) { phaseEn = "Waning Moon · 下弦月"; phaseZh = "下弦清月 · 减法释怀之时"; msgEn = "Declutter obligations and rest deeply."; msgZh = "适合给生活做减法，推掉不必要的应酬，好好休息。"; }
+
+    storybookContent.innerHTML = `
+      <button class="sheet-close" id="closeSheetBtn">✕</button>
+      <h2 class="storybook-title">${state.lang === "zh" ? "观月台 · Moon Observatory" : "Moon Observatory · 观月台"}</h2>
+      <p class="storybook-sub">${state.lang === "zh" ? "黄铜望远镜下的今夜真实月相与星语" : "Tonight's lunar phase through the brass observatory lens."}</p>
+      <div style="background:#172033;color:#f6efe2;border-radius:12px;padding:20px;text-align:center;border:2px solid #d49b38;">
+        <div style="font-size:44px;margin-bottom:6px;">🌕</div>
+        <div style="font-size:17px;font-weight:bold;color:#f5cf7a;">${state.lang === "zh" ? phaseZh : phaseEn}</div>
+        <div style="font-size:12px;opacity:0.75;margin:4px 0 10px 0;">Lunar Day ${age.toFixed(1)} / 29.5</div>
+        <p style="font-size:14px;max-width:440px;margin:0 auto;line-height:1.6;">${state.lang === "zh" ? msgZh : msgEn}</p>
+      </div>
+    `;
+    bookOverlay.style.display = "flex";
+    document.getElementById("closeSheetBtn").onclick = closeBookOverlay;
+  }
+
+  // --- 6. WISHING GARDEN: DIEGETIC SKY LANTERNS ---
+  function renderWishingGarden() {
+    storybookContent.innerHTML = `
+      <button class="sheet-close" id="closeSheetBtn">✕</button>
+      <h2 class="storybook-title">${state.lang === "zh" ? "心愿花园 · Wishing Garden" : "Wishing Garden · 心愿花园"}</h2>
+      <p class="storybook-sub">${state.lang === "zh" ? "夜风里飘浮着旅人们的心愿天灯" : "Sky lanterns carrying quiet wishes up above Fortune Valley."}</p>
+      <div style="background:linear-gradient(180deg,#1a2336,#2e3b4e);color:#fff6e5;padding:16px;border-radius:12px;min-height:190px;">
+        <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:14px;">
+          ${state.wishes.slice(-6).map(w => `
+            <div style="background:rgba(255,214,130,0.16);border:1px solid rgba(255,210,120,0.55);border-radius:10px;padding:8px 12px;font-size:13px;max-width:200px;">
+              🏮 ${w.custom ? w.custom : (state.lang === "zh" ? w.textZh : w.textEn)}
+            </div>
+          `).join("")}
+        </div>
+        <div style="text-align:center;">
+          <button class="ink-btn active" id="writeLanternOpenBtn">✒ ${state.lang === "zh" ? "亲手写一盏心愿灯" : "Write on a Sky Lantern"}</button>
+        </div>
+      </div>
+    `;
+    bookOverlay.style.display = "flex";
+    document.getElementById("closeSheetBtn").onclick = closeBookOverlay;
+    document.getElementById("writeLanternOpenBtn").onclick = () => {
+      storybookContent.innerHTML = `
+        <button class="sheet-close" id="closeSheetBtn">✕</button>
+        <div style="text-align:center;padding:24px 10px;">
+          <div style="width:260px;height:180px;margin:0 auto;background:radial-gradient(circle,#ffe6a3 0%,#e38b4f 100%);border:2px solid #2c221e;border-radius:36px 36px 14px 14px;box-shadow:0 0 28px rgba(255,190,90,0.45);"></div>
+          <p style="font-size:13px;color:#5c4b43;margin-top:14px;">${state.lang === "zh" ? "直接写在灯面上，放飞山谷夜空" : "Write directly onto the warm paper lantern."}</p>
+        </div>
+      `;
+      document.getElementById("closeSheetBtn").onclick = closeBookOverlay;
+      wishTextInput.value = "";
+      wishInputWrap.style.display = "flex";
+      setTimeout(() => wishTextInput.focus(), 80);
+    };
+  }
+
+  releaseWishBtn.addEventListener("click", () => {
+    const val = wishTextInput.value.trim();
+    if (val) {
+      state.wishes.push({ custom: val });
+      addBagItem("wish_ember", "Warm Lantern Charm", "心愿天灯火漆", val, val, "🏮");
+      sound.sfxChime();
+      saveGame();
+    }
+    wishInputWrap.style.display = "none";
+    renderWishingGarden();
+  });
+
+  // --- 7. SECRET CORNER: HIDDEN COLLECTIBLE & STRAY BARD ENCOUNTER ---
+  function renderSecretCorner() {
+    const gotBell = unlockStamp("stamp_curio_bell", "Brass Cat Bell", "古铜猫铃章");
+    if (gotBell) {
+      addBagItem("curio_bell", "Mossy Brass Bell", "青苔古铜铃铛", "Found tucked behind the bamboo fence—rings with a lucky clear note.", "在竹篱笆后捡到的古旧铜铃，摇晃时清脆悦耳。", "🔔");
+    }
+    storybookContent.innerHTML = `
+      <button class="sheet-close" id="closeSheetBtn">✕</button>
+      <h2 class="storybook-title">${state.lang === "zh" ? "神秘角落 · Secret Corner" : "Secret Corner · 神秘角落"}</h2>
+      <p class="storybook-sub">${state.lang === "zh" ? "竹林深处藏着打盹的吟游黑猫与旧物" : "Behind the mossy bamboo fence lounges a wandering bard cat."}</p>
+      <div style="padding:16px;background:rgba(255,251,242,0.9);border:1.5px solid #2c221e;border-radius:10px;line-height:1.65;font-size:14px;">
+        <p>${state.lang === "zh"
+          ? "「嘘……别告诉山门口的守门人我在这儿偷懒。地上那枚青苔铜铃送你啦，据说带着它坐火车不会坐过站。」"
+          : "\"Shh... don't tell the Shrine Keeper I'm napping back here. Keep that mossy brass bell by your paws—travellers say it brings serendipitous detours.\""}</p>
+      </div>
+    `;
+    bookOverlay.style.display = "flex";
+    document.getElementById("closeSheetBtn").onclick = closeBookOverlay;
+  }
+
+  // --- 8. RAILWAY STATION: FUTURE WORLDS DEPARTURE BOARD (Scoped Cleanly!) ---
+  function renderRailwayStation() {
+    storybookContent.innerHTML = `
+      <button class="sheet-close" id="closeSheetBtn">✕</button>
+      <h2 class="storybook-title">${state.lang === "zh" ? "旅途驿站 · Ridge Railway Station" : "Railway Station · 旅途驿站"}</h2>
+      <p class="storybook-sub">${state.lang === "zh" ? "山顶月台云雾缭绕，木牌上写着尚未发车的远方航线" : "Mist curls along the ridge tracks. Wooden departure plaques list distant worlds yet to open."}</p>
+      <div style="background:#261e1a;color:#f6efe2;padding:16px;border-radius:10px;border:2px solid #b88446;font-family:monospace,serif;">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.2);">
+          <span>01 · FORTUNE VALLEY 解忧谷</span><span style="color:#8cd990;">● ARRIVED 已抵达</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.2);opacity:0.62;">
+          <span>02 · CLOUD BAKERY 云端烘焙坊</span><span>◌ TRACK MISTED 筹备中</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;opacity:0.62;">
+          <span>03 · STARLIGHT HARBOR 星光港湾</span><span>◌ TRACK MISTED 筹备中</span>
+        </div>
+      </div>
+      <p style="font-size:13px;color:#5c4b43;margin-top:12px;">
+        ${state.lang === "zh"
+          ? "站长猫咪打了个哈欠：「远方的铁轨还在修缮呢，先在解忧谷安心待一阵子吧。」"
+          : "The ridge porter yawns: \"Tracks beyond the clouds are still being laid. Enjoy Fortune Valley first—your Passport will carry over when the whistle blows.\""}
+      </p>
+    `;
+    bookOverlay.style.display = "flex";
+    document.getElementById("closeSheetBtn").onclick = closeBookOverlay;
+  }
+
+  /* =========================================================================
+     16. MAIN ANIMATION LOOP
+     ========================================================================= */
+  function loop() {
+    state.time++;
+    hitZones = [];
+
+    if (state.scene === "title") renderTitleScene();
+    else if (state.scene === "counter") renderCounterScene();
+    else if (state.scene === "platform") renderPlatformScene();
+    else if (state.scene === "train") renderTrainScene();
+    else renderWorldScene();
+
+    // Gentle floating stamp/keepsake toast notification
+    if (floatingToast) {
+      floatingToast.timer--;
+      if (floatingToast.timer < 35) floatingToast.alpha = floatingToast.timer / 35;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, floatingToast.alpha);
+      ctx.font = "bold 14px 'Georgia', 'Songti SC', serif";
+      const tw = ctx.measureText(floatingToast.msg).width + 36;
+      ctx.fillStyle = "rgba(44, 34, 30, 0.9)";
+      ctx.strokeStyle = "#d49b38";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect((W - tw) / 2, floatingToast.y, tw, 34, 17);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#fff6e0";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(floatingToast.msg, W / 2, floatingToast.y + 17);
+      ctx.restore();
+      if (floatingToast.timer <= 0) floatingToast = null;
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  resize();
+  updateHUD();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
