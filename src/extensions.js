@@ -828,8 +828,8 @@ drawActivity=function(){
  ellipse(400,580,190,37,'#302a2440');ellipse(272,548,50,12,'#302a2444');
  // Real seat and foot anchors: stool at y504, feet at y550.
  const stoolWood=ctx.createLinearGradient(0,499,0,551);stoolWood.addColorStop(0,'#c9a878');stoolWood.addColorStop(1,'#71543e');
- line(247,511,242,552,'#70513c',7);line(297,511,302,552,'#70513c',7);line(248,535,298,535,'#70513c',4);
- ellipse(272,506,35,8,stoolWood);ellipse(272,503,34,6,'#b4956c');
+ const seatY=550-54*(W<H?.67:.70);line(247,seatY+5,242,552,'#70513c',7);line(297,seatY+5,302,552,'#70513c',7);line(248,535,298,535,'#70513c',4);
+ ellipse(272,seatY,35,8,stoolWood);ellipse(272,seatY-3,34,6,'#b4956c');
  if(room==='fish'){if(!drawProductionAhMa(272,550,W<H?.67:.70))riverAuntie(272,550,W<H?.67:.68)}else backHuman(272,550,0,false,'right',1.1);
  // Low ritual block: the paper is on the working surface, rather than floating on an enormous table.
  const wood=ctx.createLinearGradient(0,505,0,557);wood.addColorStop(0,'#bca078');wood.addColorStop(.5,'#9f805e');wood.addColorStop(1,'#795d42');
@@ -1005,7 +1005,7 @@ const templeProps=prop;prop=function(id,x,y){if(id==='templeBell'){templeBellArt
 const templeRoom=drawRoom;drawRoom=function(){if(room!=='temple')return templeRoom();ctx.save();templeRitualBackground();let locations=[['templeWater','Water pavilion','手水亭'],['prayer','Prayer altar','祈愿香案'],['templeBell','Bronze bell','山寺钟声'],['sticks','Fortune sticks','求签'],['moon','Moon blocks','掷筊']];for(let [id,en,cn] of locations){const [x,y,ax,ay]=indoorStation(id),first=hit.length;prop(id,x,y);label(tr(en,cn),x,y+34,()=>start(id));target(x-65,y-105,130,115,()=>start(id));markIndoorStation(id,first,[ax,ay])}ctx.restore()};
 const templeRitualDraw=drawActivity;drawActivity=function(){
  if(!['templeBell','templeWater','templePaper'].includes(activity))return templeRitualDraw();ctx.save();templeRitualBackground();
- if(activity==='templeBell'){let age=t-state.bellAt,held=drag?.id==='templeStriker',pull=held?Math.min(85,Math.abs(drag.x-drag.sx)):0,impact=age>.22&&age<4?Math.sin((age-.22)*16)*Math.exp(-(age-.22)*1.7)*state.bellStrength*.045:0;if(age>=.22&&age<4&&!state.bellRung){state.bellRung=true;sound(146+state.bellStrength*12);if(!muted&&ambientBus){ambientTone(146.83,.065*state.bellStrength,2.5,'sine');ambientTone(293.66,.025*state.bellStrength,1.6,'sine',.04)}}line(270,285,530,285,'#6c5239',16);line(400,285,400,318,'#5f5542',12);templeBellArt(400,438,1.05,impact);let swing=held?-pull:age<.22?-85*state.bellStrength*(1-age/.22):age<1.5?-Math.abs(Math.sin((age-.22)*5))*40*state.bellStrength*Math.exp(-age):0;let sx=285+swing;line(300,290,sx,474,'#9a825d',3);line(355,290,sx+85,474,'#9a825d',3);ctx.save();ctx.translate(sx,474);round(-8,-10,108,20,10,'#a8855b','#654c38');line(6,-4,87,-4,'#d0b082',2);ctx.restore();target(180,440,210,65,()=>templeReleaseBell(55),'templeStriker');if(age>.22&&age<3){for(let j=0;j<3;j++){let f=(age-.22-j*.28)/2.3;if(f>0&&f<1){ctx.strokeStyle='rgba(246,221,158,'+(1-f)*.4*state.bellStrength+')';ctx.beginPath();ctx.ellipse(400,490,80+f*130,19+f*30,0,0,TAU);ctx.stroke()}}}drawRitualPose(211,570,1.8,{reach:held||age<1?{x:sx+8,y:474}:null,bow:held?.10:0});txt(tr('Pull the striker and let go','拉动木槌，再松手'),400,616,17,'#fff1d6');}
+ if(activity==='templeBell'){let age=t-state.bellAt,held=drag?.id==='templeStriker',pull=held?Math.min(85,Math.abs(drag.x-drag.sx)):0,impact=age>.22&&age<4?Math.sin((age-.22)*16)*Math.exp(-(age-.22)*1.7)*state.bellStrength*.045:0;if(age>=.22&&age<4&&!state.bellRung){state.bellRung=true;sound(146+state.bellStrength*12);if(!muted&&ambientBus){ambientTone(146.83,.065*state.bellStrength,2.5,'sine');ambientTone(293.66,.025*state.bellStrength,1.6,'sine',.04)}}line(215,250,530,250,'#6c5239',16);line(400,250,400,272,'#5f5542',12);templeBellArt(400,438,1.05,impact);let swing=held?-pull:age<.22?-85*state.bellStrength*(1-age/.22):age<1.5?-Math.abs(Math.sin((age-.22)*5))*40*state.bellStrength*Math.exp(-age):0;let sx=bellStrikerGeometry(swing);line(250,255,sx+10,467,'#9a825d',3);line(300,255,sx+55,467,'#9a825d',3);ctx.save();ctx.translate(sx,467);round(0,-9,68,18,9,'#a8855b','#654c38');line(8,-4,59,-4,'#d0b082',2);ctx.restore();target(sx-18,433,104,68,()=>templeReleaseBell(55),'templeStriker');if(age>.22&&age<3){for(let j=0;j<3;j++){let f=(age-.22-j*.28)/2.3;if(f>0&&f<1){ctx.strokeStyle='rgba(246,221,158,'+(1-f)*.4*state.bellStrength+')';ctx.beginPath();ctx.ellipse(400,490,80+f*130,19+f*30,0,0,TAU);ctx.stroke()}}}drawRitualPose(211,570,1.8,{reach:held||age<1?{x:sx+8,y:467}:null,bow:held?.10:0});txt(tr('Pull the striker and let go','拉动木槌，再松手'),400,616,17,'#fff1d6');}
  if(activity==='templeWater'){
   const stage=state.waterStage,age=t-state.waterAt,held=drag?.id==='templeLadle';templeBasin(475,486);
   const handX=410,handY=485;waterHandArt(handX,handY);
@@ -4008,7 +4008,7 @@ function drawProductionAhMa(x,y,scale=1){
  if(!im)return false;
  ctx.save();ellipse(x,y+2,37*scale,8*scale,'#3b322842');
  // Sprite pivot is the actual foot line, not the bounding-box centre.
- const h=205*scale,w=h*im.naturalWidth/im.naturalHeight;ctx.drawImage(im,x-w/2,y-h,w,h);
+ const h=220*scale,w=h*im.naturalWidth/im.naturalHeight;ctx.drawImage(im,x-w/2,y-h*(205/220),w,h);
  ctx.restore();return true
 }
 // Request the matching two poses together when first reaching the stall.
@@ -4373,17 +4373,17 @@ function openMeowShare(raw,back=null){
   if(row?.lastElementChild)row.lastElementChild.hidden=true;
   const panel=element('section','',q,'meowSharePanel'),tabs=element('div','',panel,'meowShareTabs'),langs=element('div','',panel,'meowShareTabs');
   const cv=element('canvas','',panel,'meowSharePreview');cv.setAttribute('role','img');
-  const status=element('p','',panel,'meowShareStatus');status.setAttribute('role','status');
-  const send=b(panel,tr('Share image to apps','分享到其他应用'),async()=>{
+  const status=element('p','',panel,'meowShareStatus');status.setAttribute('role','status');const actions=element('div','',panel,'sharePrimaryActions');
+  const send=b(actions,tr('Share image to apps','分享到其他应用'),async()=>{
    if(!ready)return;
    try{if(typeof File==='function'&&navigator.share&&navigator.canShare?.({files:[ready]})){await navigator.share({files:[ready],title:'MeowBox'});return}}catch(e){if(e?.name==='AbortError')return}
    status.textContent=tr('Image sharing is not supported here. Save the PNG and upload it in your chosen app.','当前浏览器不支持图片直传，请保存 PNG 后在目标应用中上传。')
   });
-  const saveButton=b(panel,tr('Save PNG image','保存 PNG 图片'),()=>{if(!ready)return;const a=document.createElement('a'),url=URL.createObjectURL(ready);a.href=url;a.download=ready.name||'meowbox-'+data.kind+'-'+format+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)});
-  const copy=b(panel,tr('Copy post caption','复制发布文案'),async()=>{const text=meowSocialCaption(data,format,cn);try{await navigator.clipboard.writeText(text);status.textContent=tr('Caption copied.','文案已复制。')}catch{const field=element('textarea',text,panel);field.value=text;field.readOnly=true;field.select();status.textContent=tr('Select and copy the caption.','请选择并复制文案。')}});
+  const saveButton=b(actions,tr('Save PNG image','保存 PNG 图片'),()=>{if(!ready)return;const a=document.createElement('a'),url=URL.createObjectURL(ready);a.href=url;a.download=ready.name||'meowbox-'+data.kind+'-'+format+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)});
+  const copy=b(actions,tr('Copy post caption','复制发布文案'),async()=>{const text=meowSocialCaption(data,format,cn);try{await navigator.clipboard.writeText(text);status.textContent=tr('Caption copied.','文案已复制。')}catch{const field=element('textarea',text,panel);field.value=text;field.readOnly=true;field.select();status.textContent=tr('Select and copy the caption.','请选择并复制文案。')}});
   b(panel,tr('Copy game link separately','单独复制游戏链接'),async()=>{try{await navigator.clipboard.writeText(meowShareUrl);status.textContent=tr('Game link copied.','游戏链接已复制。')}catch{const field=element('input','',panel);field.value=meowShareUrl;field.readOnly=true;field.select();status.textContent=tr('Select and copy the game link.','请选择并复制游戏链接。')}});
   const fb=b(panel,tr('Share game link on Facebook','分享到 Facebook（游戏链接）'),()=>{window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(meowShareUrl),'_blank','noopener,noreferrer')});
-  const view=b(panel,tr('Open image to save','打开图片以保存'),()=>{if(!ready)return;const url=URL.createObjectURL(ready);const tab=window.open(url,'_blank');if(!tab){const im=element('img','',panel,'meowSharePreview');im.alt=tr('Shareable result image','可分享的测试结果图');im.src=url;im.addEventListener('load',()=>{status.textContent=tr('Touch and hold the image to save it.','长按图片保存。')},{once:true})}setTimeout(()=>URL.revokeObjectURL(url),120000)});
+  const view=b(actions,tr('Open image to save','打开图片以保存'),()=>{if(!ready)return;const url=URL.createObjectURL(ready);const tab=window.open(url,'_blank');if(!tab){const im=element('img','',panel,'meowSharePreview');im.alt=tr('Shareable result image','可分享的测试结果图');im.src=url;im.addEventListener('load',()=>{status.textContent=tr('Touch and hold the image to save it.','长按图片保存。')},{once:true})}setTimeout(()=>URL.revokeObjectURL(url),120000)});
   element('small',tr('Choose the layout, save the image and post it to Instagram, Facebook, Xiaohongshu, TikTok photo posts or WeChat. If your phone offers the app in its share menu, you may share there. Facebook link shares the game only. TikTok video export is not included.','选好尺寸，保存图片后可发布到 Instagram、Facebook、小红书、TikTok 图文或微信。系统分享菜单若显示目标应用，也可直接选择。Facebook 链接仅分享游戏网址，目前不提供视频导出。'),panel,'meowShareHelp');
   const formatButtons=Object.keys(shareFormats).map(k=>{const btn=b(tabs,k==='feed'?'IG / FB':k==='xhs'?'小红书':k==='story'?'Story / TikTok':tr('WeChat','微信'),()=>{format=k;render()});element('small',({feed:'4:5',xhs:'3:4',story:'9:16',square:'1:1'})[k],btn);return btn});
   const languageButtons=[b(langs,'English',()=>{cn=false;render()}),b(langs,'中文',()=>{cn=true;render()})];
@@ -5943,7 +5943,7 @@ hideoutSceneArt=function(theme){
  const grain=Array.from({length:34},(_,i)=>{const x=(i*83)%400,y=305+(i*29)%195;return '<path d="M'+x+' '+y+'q18 -2 36 1t43 0" fill="none" stroke="#f4d5a4" stroke-opacity=".13" stroke-width=".8"/>'}).join('');
  const lights=Array.from({length:13},(_,i)=>'<circle cx="'+(18+i*30)+'" cy="'+(55+Math.sin(i*.55)*11)+'" r="2.3" fill="#ffde9b" filter="url(#hrGlow)"/>').join('');
  const valley=ART.valleyClean;
- return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" preserveAspectRatio="none" aria-hidden="true">
+ return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
  <defs>
  <linearGradient id="hrWall" x2=".15" y2="1"><stop stop-color="${theme.wall}"/><stop offset="1" stop-color="#bd9a71"/></linearGradient>
  <linearGradient id="hrFloor" x2=".3" y2="1"><stop stop-color="#bd9469"/><stop offset="1" stop-color="${theme.floor}"/></linearGradient>
@@ -6429,3 +6429,39 @@ const arcadeTransitStyle=document.createElement('style');arcadeTransitStyle.text
 #proposal .rail-platform-sign{top:11%;max-width:90%;white-space:normal;text-align:center}
 }
 `;document.head.append(arcadeTransitStyle);
+
+/* The striker is a short suspended timber, not a second bell-sized prop.
+   At impact its tip meets the outer rim near x323; it never crosses the bell. */
+function bellStrikerGeometry(swing){return 255+Math.min(0,swing)}
+/* Final interface pass: keep export resolution and stored room/item coordinates
+   unchanged; separate reading, editing and posting actions on narrow screens. */
+const finalInterfaceStyle=document.createElement('style');finalInterfaceStyle.textContent=`
+#content .sharePrimaryActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;width:100%}
+#content .sharePrimaryActions button{min-width:0;min-height:44px;white-space:normal;overflow-wrap:anywhere}
+#content .meowShareStatus{min-height:1.5em;text-align:center}
+#content .meowSharePanel canvas.meowSharePreview{display:block;max-width:100%;height:auto!important;object-fit:contain}
+#content .communityForm input,#content .townChatCompose input{font-size:16px;max-width:100%;box-sizing:border-box}
+#content .communityReport{min-height:44px}
+#content .communityReactions{display:flex;flex-wrap:wrap;gap:4px}
+#content .communityReactions button{min-height:44px;white-space:normal}
+#content .townChatLine,#content .townResidentNote{min-width:0;overflow-wrap:anywhere}
+#content .hideoutRoomView .hideoutScene>svg{object-fit:contain}
+@media(orientation:portrait) and (max-width:600px){
+#content .travelAlbum .albumGrid{grid-template-columns:1fr!important}
+#content .travelAlbum .albumCard:has(>img){display:grid;grid-template-columns:minmax(86px,29%) minmax(0,1fr);gap:5px 10px;align-items:start}
+#content .travelAlbum .albumCard>img{grid-row:1/span 4;height:auto!important;aspect-ratio:2/3!important;object-fit:contain!important;border-width:2px}
+#content .travelAlbum .albumCard>button{grid-column:2;white-space:normal}
+#content .travelAlbum .albumCard>strong,#content .travelAlbum .albumCard>p,#content .travelAlbum .albumCard>small{min-width:0;overflow-wrap:anywhere}
+#content .bagSlots{grid-template-columns:repeat(3,minmax(0,1fr))}
+#content .bagSlot{min-height:98px!important}
+#content .bagSlot small{font-size:12px;line-height:1.25}
+#content .bagDetail{min-width:0}
+#content .bagFooter{flex-wrap:wrap}#content .bagFooter button{flex:1 1 86px}
+#content .communityForm{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end}
+#content .communityTabs{flex-wrap:wrap}#content .communityTabs button{flex:1 1 95px}
+#content .townChatTranscript{max-height:36dvh!important;min-height:120px}
+#content .hideoutRoomView .hideoutScene{aspect-ratio:4/5!important;max-height:none!important}
+#content .hideoutRoomView .hideoutTools button{min-width:0}
+#content .meowShareTabs button{font-size:11px!important}
+}
+`;document.head.append(finalInterfaceStyle);
