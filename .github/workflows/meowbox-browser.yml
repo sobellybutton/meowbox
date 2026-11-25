@@ -1,0 +1,67 @@
+name: MeowBox browser smoke tests
+on:
+  push:
+    branches: [main]
+    paths: ['index.html', 'preview-v9-1/**', '.github/workflows/meowbox-browser.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Test entrance and responsive layout
+        shell: bash
+        run: |
+          python3 -m http.server 8765 > /tmp/meowbox-server.log 2>&1 &
+          mkdir -p test-results
+          node <<'JS'
+          const {chromium}=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch();
+            let failed=false;
+            for(const [name,options] of [
+              ['mobile-small',{viewport:{width:360,height:640},isMobile:true,hasTouch:true,deviceScaleFactor:1}],
+              ['mobile-tall',{viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:1}],
+              ['desktop',{viewport:{width:1440,height:900}}]
+            ]){
+              const page=await browser.newPage(options);
+              const errors=[];
+              page.on('pageerror',e=>errors.push(e.message));
+              try{
+                await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'load'});
+                await page.locator('#proposal footer button.next').waitFor({timeout:45000});
+                await page.screenshot({path:'test-results/'+name+'-entrance.png'});
+                await page.locator('#proposal footer button.next').click();
+                await page.locator('#proposal .rail-ticket input').fill('Test Traveller');
+                await page.locator('#proposal .ticket-confirm').click();
+                await page.locator('#proposal footer button.next').click();
+                await page.locator('#proposal footer .actions button').first().click();
+                await page.locator('#proposal').waitFor({state:'hidden',timeout:30000});
+                await page.waitForTimeout(3500);
+                await page.screenshot({path:'test-results/'+name+'-village.png'});
+                if(await page.locator('#dock').isHidden())throw Error('Navigation hidden');
+                await page.locator('#dockPassport').click();
+                await page.locator('.travelAlbum').waitFor({timeout:8000});
+                await page.screenshot({path:'test-results/'+name+'-passport.png'});
+                if(errors.length)throw Error(errors.join('; '));
+                console.log(name+': PASS');
+              }catch(e){failed=true;console.error(name+': FAIL '+e.message);await page.screenshot({path:'test-results/'+name+'-failure.png'}).catch(()=>{});}
+              finally{await page.close();}
+            }
+            await browser.close();
+            if(failed)process.exitCode=1;
+          })().catch(e=>{console.error(e);process.exitCode=1});
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: meowbox-browser-screenshots
+          path: test-results/
