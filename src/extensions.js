@@ -119,7 +119,7 @@ const oldFortuneVariation=arcanaReading;arcanaReading=function(d,rev){let base=o
 const proposalPolish=document.createElement('style');proposalPolish.textContent='#proposal .cinema-world{background:#34493b}#proposal .cinema-world img{object-fit:contain;background:#34493b}#proposal[data-shot="ticket"] .cinema-world img.station{transform:scale(1.08)}#proposal[data-shot="platform"] .cinema-world img.station{transform:scale(1.04)}#proposal .gate{max-width:520px;left:50%;width:100%;transform:translateX(-50%)}#proposal .gate-traveller{height:38%}#proposal footer{padding-bottom:4px}#worldSigns{z-index:2;pointer-events:none}#worldSigns .worldSign{pointer-events:auto!important;touch-action:manipulation;white-space:nowrap!important;max-width:calc(100vw - 16px)!important;min-height:44px!important;padding:7px 10px!important;font-size:12px!important;letter-spacing:.02em;box-shadow:0 2px 5px #322b2150!important}#moveGuide{bottom:calc(env(safe-area-inset-bottom,0px) + 158px);font-size:13px}#movePad{grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px)}#movePad button{min-width:44px;min-height:44px}#dialogue{max-height:42dvh!important;overflow:auto!important}#dialogue #choices{display:flex;flex-wrap:wrap;gap:6px}#dialogue #choices button{min-height:44px}#page .astroResult{overflow-wrap:anywhere}#page .astroForm details label{margin-top:10px}#page .v9scene{border-radius:5px!important}#gameControls button{min-height:44px}#fade{pointer-events:none!important}@media(max-height:480px){#moveGuide{bottom:80px;right:12px;left:auto;max-width:45vw;transform:none}#proposal .rail-ticket{padding:12px;gap:6px}}';document.head.append(proposalPolish);
 const signAnchorsProposal={tarot:[560,488],destiny:[300,715],temple:[680,943],wishes:[495,1190],station:[660,323]};
 syncSigns=function(){let show=scene==='fortune'&&!room&&!transitioning&&$('page').style.display!=='block'&&avatar!==null&&proposal.hidden&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;signRoot.hidden=!show;if(!show)return;if(signButtons.size!==maps.fortune.st.length){signRoot.replaceChildren();signButtons.clear();for(let [id,x,y,en,cn] of maps.fortune.st){let e=element('button','',signRoot,'worldSign');e.onclick=()=>walkDoor(id,x,y);signButtons.set(id,e)}}for(let [id,x,y,en,cn] of maps.fortune.st){let e=signButtons.get(id),[ax,ay]=signAnchorsProposal[id]||[x,y-90],sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;if(e.textContent!==tr(en,cn))e.textContent=tr(en,cn);e.hidden=sy<Math.min(145,H*.22)||sy>H-115||sx<0||sx>W;if(!e.hidden){const half=Math.min(W/2-8,(e.offsetWidth||100)/2+8);e.style.left=Math.max(half,Math.min(W-half,sx))+'px';e.style.top=sy+'px'}}};
-drawRoute=function(){if(pics.valleyClean?.naturalWidth)ctx.drawImage(pics.valleyClean,0,0,1000,routeHeight);for(let [x,y,r,i] of [[108,1280,36,0],[130,912,35,1],[475,918,36,2],[620,664,36,3],[960,594,30,4],[306,407,33,5],[855,267,35,6]])glow(x,y,r,i);for(let i=0;i<18;i++){let x=((i*91-t*(8+i%7))%1000+1000)%1000,y=(i*83+t*(14+i%8))%routeHeight;petal(x,y,3+i%4,i)}for(let [id,x,y] of maps.fortune.st){let z=doorZones[id];if(z)target(z[0],z[1],z[2],z[3],()=>walkDoor(id,x,y))}for(let n of [...npc,p].sort((a,b)=>a.y-b.y)){let sc=.72+n.y/routeHeight*.55;if(n===p){const sc=travellerOutdoorScale(1.65*(.72+p.y/routeHeight*.55),cam.scale,W,H,true);backHuman(p.x,p.y,avatar??0,p.walk,p.facing||'up',sc);continue}let dx=n.tx-n.x,dy=n.ty-n.y,moving=residentMoving(n),dir=Math.abs(dy)>Math.abs(dx)?dy<0?'up':'down':dx<0?'left':'right';if(n.kind===2&&n.visitor===undefined){cat(n.x,n.y,0,moving,.65*sc)}else{const k=n.visitor??1;backHuman(n.x,n.y,k===(avatar??0)?(k+1)%4:k,moving,dir,travellerOutdoorScale(1.22*sc,cam.scale,W,H,false))}if(Math.hypot(n.x-p.x,n.y-p.y)<105&&valleyRevealAt<0&&npc.filter(v=>Math.hypot(v.x-p.x,v.y-p.y)<105).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]===n){let label=n.visitor===undefined||n.popGuest?tr(...n.n):'···';ctx.save();ctx.font='14px Georgia';let w=Math.max(34,ctx.measureText(label).width+16);round(n.x-w/2,n.y-111,w,24,5,'#fff0d9e8','#b39a70');txt(label,n.x,n.y-99,13);ctx.restore();target(n.x-36,n.y-115,72,115,()=>npcTalk(n))}}if(!guideDismissed&&guideStage===0&&guideTarget&&valleyRevealAt<0&&proposal.hidden){let {x,y}=guideTarget,f=(Math.sin(t*3)+1)/2;ctx.save();ctx.strokeStyle='rgba(255,230,155,'+(.65+f*.3)+')';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,23+f*7,12+f*4,0,0,TAU);ctx.stroke();ctx.restore();target(x-40,y-40,80,80,()=>{stopRoute();p.tx=x;p.ty=y})}};
+drawRoute=function(){if(pics.valleyClean?.naturalWidth)ctx.drawImage(pics.valleyClean,0,0,1000,routeHeight);for(let [x,y,r,i] of [[108,1280,36,0],[130,912,35,1],[475,918,36,2],[620,664,36,3],[960,594,30,4],[306,407,33,5],[855,267,35,6]])glow(x,y,r,i);for(let i=0;i<18;i++){let x=((i*91-t*(8+i%7))%1000+1000)%1000,y=(i*83+t*(14+i%8))%routeHeight;petal(x,y,3+i%4,i)}for(let [id,x,y] of maps.fortune.st){let z=doorZones[id];if(z)target(z[0],z[1],z[2],z[3],()=>walkDoor(id,x,y))}for(let n of [...npc,p].sort((a,b)=>a.y-b.y)){let sc=.72+n.y/routeHeight*.55;if(n===p){const sc=travellerOutdoorScale(1.65*(.72+p.y/routeHeight*.55),cam.scale,W,H,true);backHuman(p.x,p.y,avatar??0,p.walk,p.facing||'up',sc);continue}let dx=n.tx-n.x,dy=n.ty-n.y,moving=residentMoving(n),dir=Math.abs(dy)>Math.abs(dx)?dy<0?'up':'down':dx<0?'left':'right';if(n.kind===2&&n.visitor===undefined){cat(n.x,n.y,0,moving,.65*sc)}else{const k=n.visitor??1;const actorScale=travellerOutdoorScale(1.22*sc,cam.scale,W,H,false);if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,k===(avatar??0)?(k+1)%4:k,moving,dir,actorScale)}if(Math.hypot(n.x-p.x,n.y-p.y)<105&&valleyRevealAt<0&&npc.filter(v=>Math.hypot(v.x-p.x,v.y-p.y)<105).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]===n){let label=n.visitor===undefined||n.popGuest?tr(...n.n):'···';ctx.save();ctx.font='14px Georgia';let w=Math.max(34,ctx.measureText(label).width+16);round(n.x-w/2,n.y-111,w,24,5,'#fff0d9e8','#b39a70');txt(label,n.x,n.y-99,13);ctx.restore();target(n.x-36,n.y-115,72,115,()=>npcTalk(n))}}if(!guideDismissed&&guideStage===0&&guideTarget&&valleyRevealAt<0&&proposal.hidden){let {x,y}=guideTarget,f=(Math.sin(t*3)+1)/2;ctx.save();ctx.strokeStyle='rgba(255,230,155,'+(.65+f*.3)+')';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,23+f*7,12+f*4,0,0,TAU);ctx.stroke();ctx.restore();target(x-40,y-40,80,80,()=>{stopRoute();p.tx=x;p.ty=y})}};
 let lanternMemories=load('proposalLanternCount',0);
 const worldActivityDraw=drawActivity;drawActivity=function(){worldActivityDraw();if(activity==='wishes'){for(let i=0;i<Math.min(lanternMemories,7);i++){let x=185+i*66,y=295+(i%3)*28;ctx.save();ctx.translate(x+Math.sin(t*.9+i)*3,y);ctx.rotate(Math.sin(t*.9+i)*.04);glow(0,0,38,i);line(0,-35,0,-18,'#a68a61',1.5);round(-14,-18,28,35,8,'#db9b51','#875534');line(-5,-15,-5,14,'#ad6d3a');line(5,-15,5,14,'#ad6d3a');ctx.restore()}}};
 const finalGuideStart=start;start=function(id){finalGuideStart(id);if(id==='wishes')state.lanternAt=undefined};
@@ -1717,7 +1717,7 @@ drawMap=function(){
   if(n.kind===2){cat(n.x,n.y,0,moving,.65*sc);continue}
   const dir=Math.abs(n.ty-n.y)>Math.abs(n.tx-n.x)?(n.ty<n.y?'up':'down'):(n.tx<n.x?'left':'right');
   const actorScale=travellerOutdoorScale(sc,cam.scale,W,H,false),grannyScale=actorScale*94/150;
-  if(n.grumpy){drawWalkingGranny(n.x,n.y,grannyScale,moving,dir)}else backHuman(n.x,n.y,((avatar??0)+1+n.kind)%4,moving,dir,actorScale);
+  if(n.grumpy){drawWalkingGranny(n.x,n.y,grannyScale,moving,dir)}else if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,((avatar??0)+1+n.kind)%4,moving,dir,actorScale);
   const actorHeight=94*actorScale;
   if(Math.hypot(n.x-p.x,n.y-p.y)<150){
    if(n.popGuest||n.grumpy){ctx.save();ctx.font='15px Georgia';const label=tr(...n.n),width=ctx.measureText(label).width+18;ctx.fillStyle='#f6e8cced';ctx.fillRect(n.x-width/2,n.y-actorHeight-25,width,22);ctx.fillStyle='#435744';ctx.textAlign='center';ctx.fillText(label,n.x,n.y-actorHeight-9);ctx.restore()}
@@ -5173,3 +5173,52 @@ const washiStyle=document.createElement('style');washiStyle.textContent=`
 #dialogue:not(.characterSpeech){background:linear-gradient(120deg,#fff9e9,#f1e2c3)!important;border:1px solid #aa926d!important;border-radius:8px 12px 9px 7px!important}
 #dialogue:not(.characterSpeech) #choices button{background:#e9ddc1!important;border:1px solid #baaa87!important;color:#435746!important}
 `;document.head.append(washiStyle);
+
+/* Original painted resident artwork, separate from player identity. This
+   initial map atlas contains standing illustrations only. A subtle idle
+   movement is not a substitute for dedicated directional walk frames. */
+productionVisualManifest.paintedResidents={path:'assets/visual/painted-npc-atlas.webp',width:168,height:168,cell:[56,84],foot:[28,83]};
+const paintedResidentNames=[
+ ['Temple keeper','庙祝'],
+ ['Master Yue','月师傅'],
+ ['Fortune Teller','占卜师'],
+ ['Auntie Mei','梅姨'],
+ ['Wang Laoban','王老板'],
+ ['Grandma','外婆']
+];
+function paintedResidentIndex(name){
+ const value=String(name||'').trim().toLowerCase();
+ return paintedResidentNames.findIndex(pair=>pair.some(v=>v.toLowerCase()===value))
+}
+function paintedResidentCell(i){return {x:(i%3)*56,y:Math.floor(i/3)*84,w:56,h:84}}
+function drawPaintedResident(n,sc,moving,dir){
+ const i=paintedResidentIndex(n?.n?.[0]);if(i<0)return false;
+ const im=productionVisual('paintedResidents');if(!im)return false;
+ const q=paintedResidentCell(i),height=94*sc,width=height*2/3;
+ ctx.save();ellipse(n.x,n.y+2,width*.31,Math.max(3,4.2*sc),'#352c2438');
+ ctx.translate(n.x,n.y);ctx.scale(dir==='left'?-1:1,1);
+ const bob=moving?-Math.abs(Math.sin(t*9+n.x*.01))*1.8*sc:0;
+ ctx.drawImage(im,q.x,q.y,q.w,q.h,-width/2,-height+bob,width,height);
+ ctx.restore();return true
+}
+const paintedDialogueThumbs=new Map();
+function paintedDialoguePortrait(name){
+ const i=paintedResidentIndex(name);if(i<0)return null;
+ if(paintedDialogueThumbs.has(i))return paintedDialogueThumbs.get(i);
+ const im=productionVisual('paintedResidents');if(!im)return null;
+ const q=paintedResidentCell(i),thumb=document.createElement('canvas');thumb.width=56;thumb.height=60;
+ const art=thumb.getContext('2d');art.drawImage(im,q.x,q.y,q.w,60,0,0,56,60);
+ const url=thumb.toDataURL('image/png');paintedDialogueThumbs.set(i,url);return url
+}
+const paintedResidentSayBefore=say;
+say=function(...args){
+ const result=paintedResidentSayBefore(...args),name=args[0],portrait=$('talkPortrait'),i=paintedResidentIndex(name);
+ if(i>=0&&portrait){
+  const apply=()=>{if(!talkOpen||$('speaker').textContent!==String(name))return;const url=paintedDialoguePortrait(name);if(url){portrait.src=url;portrait.hidden=false;portrait.classList.add('paintedResidentPortrait')}};
+  portrait.classList.remove('paintedResidentPortrait');apply();
+  const im=productionVisualCache.get('paintedResidents');if(im&&!im.complete)im.addEventListener('load',apply,{once:true})
+ }else portrait?.classList.remove('paintedResidentPortrait');
+ return result
+};
+const paintedResidentStyle=document.createElement('style');paintedResidentStyle.textContent='#talkPortrait.paintedResidentPortrait{width:58px!important;height:62px!important;object-fit:contain!important;border:0!important;background:transparent!important;box-shadow:none!important}';document.head.append(paintedResidentStyle);
+productionVisual('paintedResidents');
