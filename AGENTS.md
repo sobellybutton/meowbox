@@ -9,3 +9,6 @@ Use Graphify first, with small context budgets (1000-3000 tokens); compare its i
 - Community noticeboard must eventually support genuine shared posts; distinguish local storage from shared data. Personality tests for fun; reflective fortune readings, not predictions.
 - Prioritize verified bugs then unfinished work; preserve artwork and save keys. Test new/returning entry, languages, all doors, touch/mouse, activities, collection and save/reload on small and tall mobile, tablet and desktop. Review screenshots. Never claim passes or deployment without evidence.
 - Edit readable src files, not encoded legacy chunks. Run node scripts/build.cjs and browser tests. Batch related improvements into coherent commits and update status. Automated test success is not visual acceptance.
+
+## Current product authority
+Read [docs/FINAL_PRODUCT_BRIEF.md](docs/FINAL_PRODUCT_BRIEF.md) first for the owner-approved 13 design gates and curated activity plan. It supersedes older keep-every-game assumptions. Do not reintroduce visible fishing/bench games, duplicate stress rooms or subactivity destinations. Prioritize a complete playable, visually reviewed slice over further breadth; preserve existing progress and retired keepsakes.
