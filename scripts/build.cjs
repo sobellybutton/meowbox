@@ -12,6 +12,7 @@ for(let i=0;i<original.length;i++){
  bytes+=extracted.length;
 }
 const scripts=['engine','extensions','startup'].map(x=>read('src/'+x+'.js')),shell=read('src/shell.html');
+require('./quality-checks.cjs')(scripts[1]);
 // Validate the canonical registry before rendering or assigning later portrait anchors.
 const mapDeclaration=scripts[0].match(/const maps=(\{[^\n]+\});/);
 if(!mapDeclaration)throw Error('Canonical map registry not found');
