@@ -53,7 +53,8 @@ async function handle(req,env){
  if(req.method==='GET'&&u.pathname==='/health'){
   await env.DB.prepare('SELECT reply_to,place FROM messages LIMIT 0').all();await env.DB.prepare('SELECT id FROM submission_events LIMIT 0').all();await env.DB.prepare('SELECT message_id FROM reports LIMIT 0').all();
   let presence=false;if(env.ENABLE_PRESENCE==='true'){try{await env.DB.prepare('SELECT public_id FROM presence LIMIT 0').all();presence=true}catch{}}
-  return reply({service:'meowbox-community',version:1,moderated:true,replies:true,places:true,presence});
+  let reactions=false;try{await env.DB.prepare('SELECT kind FROM reactions LIMIT 0').all();reactions=true}catch{}
+  return reply({service:'meowbox-community',version:1,moderated:true,replies:true,places:true,presence,reactions});
  }
  const now=Date.now(),cutoff=now-TTL;
  const auth=req.headers.get('Authorization')||'',token=auth.startsWith('Bearer ')?auth.slice(7):'';
@@ -81,7 +82,20 @@ async function handle(req,env){
  if(req.method==='GET'&&u.pathname==='/messages'){
   const place=u.searchParams.get('place')||'square';if(!['square','fortune','home','island','wonder'].includes(place))return reply({error:'invalid place'},400);
   const r=await db.prepare("SELECT m.id,m.name,m.text,m.created,m.reply_to AS replyTo,p.name AS replyName FROM messages m LEFT JOIN messages p ON p.id=m.reply_to AND p.status='approved' AND p.created>=? WHERE m.status='approved' AND m.created>=? AND m.place=? ORDER BY m.created DESC LIMIT 60").bind(cutoff,cutoff,place).all();
-  return reply({messages:r.results.reverse()});
+  const messages=r.results.reverse();
+  try{
+   const reactions=await db.prepare("SELECT r.message_id,r.kind,COUNT(*) AS count,MAX(CASE WHEN r.owner=? THEN 1 ELSE 0 END) AS mine FROM reactions r JOIN messages m ON m.id=r.message_id WHERE m.status='approved' AND m.created>=? AND m.place=? GROUP BY r.message_id,r.kind").bind(owner,cutoff,place).all();
+   const byId=new Map(messages.map(m=>[m.id,m]));for(const v of reactions.results){const m=byId.get(v.message_id);if(!m)continue;m.reactions??={};m.reactions[v.kind]=Number(v.count);if(v.mine)m.myReaction=v.kind}
+  }catch{/* old schema remains readable until migration */}
+  return reply({messages});
+ }
+
+ if(req.method==='POST'&&u.pathname==='/reactions'){
+  let body;try{body=await readBody(req)}catch{return reply({error:'invalid body'},400)}
+  if(!validId(body?.id)||!['laugh','heart','same'].includes(body?.kind))return reply({error:'invalid reaction'},400);
+  const r=await db.prepare("INSERT INTO reactions(message_id,owner,kind,created) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM messages WHERE id=? AND status='approved' AND created>=?) AND ((SELECT COUNT(*) FROM reactions WHERE owner=? AND created>=?)<30 OR EXISTS(SELECT 1 FROM reactions WHERE message_id=? AND owner=?)) ON CONFLICT(message_id,owner) DO UPDATE SET kind=excluded.kind,created=excluded.created WHERE reactions.created<=?").bind(body.id,owner,body.kind,now,body.id,cutoff,owner,now-DAY,body.id,owner,now-3000).run();
+  if(!r.meta.changes)return reply({error:'reaction unavailable or rate limited'},429);
+  return reply({ok:true});
  }
  if(req.method==='GET'&&u.pathname==='/mine'){
   const r=await db.prepare("SELECT id,name,text,created,status,place FROM messages WHERE owner=? AND created>=? ORDER BY created DESC LIMIT 60").bind(owner,cutoff).all();return reply({messages:r.results});
