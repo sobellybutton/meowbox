@@ -831,7 +831,7 @@ function templeRitualBackground(){paintLivingBackdrop(pics.streetTemple||pics.te
 function templeReleaseBell(moved){if(activity!=='templeBell'||t-state.bellAt<1.0)return;state.bellStrength=Math.max(.15,Math.min(1,moved/120));state.bellAt=t;state.bellRung=false;hint('Listen as the sound travels through the valley.','听钟声慢慢传向山谷。')}
 function templeReleaseWater(a){if(activity!=='templeWater'||t-state.waterAt<1)return;if(state.waterStage===0){if(a.y>425&&a.y<560){state.waterStage=1;state.waterAt=t;hint('Lift the filled ladle towards your hands.','把盛满水的竹勺提到手边。')}else hint('Lower the ladle into the basin.','把竹勺放入水盆。')}else if(state.waterStage===1){if(a.x<385){state.waterStage=2;state.waterAt=t;sound(490);hint('Let the water flow over your hands.','让水缓缓流过双手。')}else hint('Move the ladle towards your hands on the left.','把竹勺移向左边的双手。')}}
 const templeProps=prop;prop=function(id,x,y){if(id==='templeBell'){templeBellArt(x,y-35,.57);return}if(id==='templeWater'){ctx.save();ctx.translate(x,y-32);ctx.scale(.56,.56);templeBasin(0,0);templeLadle(0,-35,-.1);ctx.restore();return}return templeProps(id,x,y)};
-const templeRoom=drawRoom;drawRoom=function(){if(room!=='temple')return templeRoom();ctx.save();templeRitualBackground();let locations=[['templeWater','Water pavilion','手水亭',230,440],['prayer','Prayer altar','祈愿香案',400,440],['templeBell','Bronze bell','山寺钟声',570,440],['sticks','Fortune sticks','求签',300,620],['moon','Moon blocks','掷筊',500,620]];for(let [id,en,cn,x,y] of locations){prop(id,x,y);label(tr(en,cn),x,y+34,()=>start(id));target(x-70,y-110,140,122,()=>start(id))}ctx.restore()};
+const templeRoom=drawRoom;drawRoom=function(){if(room!=='temple')return templeRoom();ctx.save();templeRitualBackground();let locations=[['templeWater','Water pavilion','手水亭'],['prayer','Prayer altar','祈愿香案'],['templeBell','Bronze bell','山寺钟声'],['sticks','Fortune sticks','求签'],['moon','Moon blocks','掷筊']];for(let [id,en,cn] of locations){const [x,y,ax,ay]=indoorStation(id),first=hit.length;prop(id,x,y);label(tr(en,cn),x,y+34,()=>start(id));target(x-65,y-105,130,115,()=>start(id));markIndoorStation(id,first,[ax,ay])}ctx.restore()};
 const templeRitualDraw=drawActivity;drawActivity=function(){
  if(!['templeBell','templeWater','templePaper'].includes(activity))return templeRitualDraw();ctx.save();templeRitualBackground();
  if(activity==='templeBell'){let age=t-state.bellAt,held=drag?.id==='templeStriker',pull=held?Math.min(85,Math.abs(drag.x-drag.sx)):0,impact=age>.22&&age<4?Math.sin((age-.22)*16)*Math.exp(-(age-.22)*1.7)*state.bellStrength*.045:0;if(age>=.22&&age<4&&!state.bellRung){state.bellRung=true;sound(146+state.bellStrength*12);if(!muted&&ambientBus){ambientTone(146.83,.065*state.bellStrength,2.5,'sine');ambientTone(293.66,.025*state.bellStrength,1.6,'sine',.04)}}line(270,315,530,315,'#6c5239',16);line(400,315,400,348,'#5f5542',12);templeBellArt(400,438,1.05,impact);let swing=held?-pull:age<.22?-85*state.bellStrength*(1-age/.22):age<1.5?-Math.abs(Math.sin((age-.22)*5))*40*state.bellStrength*Math.exp(-age):0;let sx=285+swing;line(300,320,sx,474,'#9a825d',3);line(355,320,sx+85,474,'#9a825d',3);ctx.save();ctx.translate(sx,474);round(-8,-10,108,20,10,'#a8855b','#654c38');line(6,-4,87,-4,'#d0b082',2);ctx.restore();target(180,440,210,65,()=>templeReleaseBell(55),'templeStriker');if(age>.22&&age<3){for(let j=0;j<3;j++){let f=(age-.22-j*.28)/2.3;if(f>0&&f<1){ctx.strokeStyle='rgba(246,221,158,'+(1-f)*.4*state.bellStrength+')';ctx.beginPath();ctx.ellipse(400,490,80+f*130,19+f*30,0,0,TAU);ctx.stroke()}}}drawRitualPose(211,570,1.8,{reach:held||age<1?{x:sx+8,y:474}:null,bow:held?.10:0});txt(tr('Pull the striker and let go','拉动木槌，再松手'),400,616,17,'#fff1d6');}
@@ -1008,7 +1008,7 @@ function gardenFeed(x=435,y=480){if(activity!=='secretGarden'||t-state.gardenFee
 function gardenSeat(){if(activity!=='secretGarden'||t-state.gardenSeatAt<.75)return;state.gardenSitting=!state.gardenSitting;state.gardenSeatAt=t;hint(...(state.gardenSitting?['Sit as long as you like. No countdown here.','想坐多久就坐多久，这里没有倒计时。']:['Take the quiet with you.','把这一份清静带走吧。']))}
 function gardenKoi(x,y,angle,kind){ctx.save();ctx.translate(x,y);ctx.rotate(angle);let col=['#d99b62','#e4d9ba','#d16b48','#e2bf75'][kind%4];ctx.globalAlpha=.88;ctx.beginPath();ctx.moveTo(-17,0);ctx.quadraticCurveTo(-30,Math.sin(t*6+kind)*9-7,-36,-12);ctx.lineTo(-29,0);ctx.lineTo(-36,12);ctx.quadraticCurveTo(-28,7,-17,0);ctx.fillStyle=col;ctx.fill();ellipse(0,0,23,9,col);ellipse(2,0,15,6,kind===1?'#c66b48':'#f2dbb7');ellipse(-6,2,6,4,col);ellipse(16,-3,1.6,1.6,'#514638');ellipse(16,3,1.6,1.6,'#514638');ctx.restore()}
 function gardenWindChime(x,y){let age=t-state.gardenChimeAt,ang=Math.sin(t*1.4)*.07+(age<3?Math.sin(age*12)*.35*Math.exp(-age*1.4):0);ctx.save();ctx.translate(x,y);line(0,-65,0,-22,'#ad9470',2);ctx.rotate(ang);let g=ctx.createLinearGradient(-20,0,20,0);g.addColorStop(0,'#829e9b80');g.addColorStop(.48,'#e5eddbcc');g.addColorStop(1,'#648f8d90');ctx.beginPath();ctx.arc(0,0,19,Math.PI,0);ctx.lineTo(19,11);ctx.quadraticCurveTo(0,21,-19,11);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#a8c3ad';ctx.stroke();line(0,5,0,40,'#bca681',1.5);ellipse(0,12,3,4,'#d8b47a');ctx.rotate(Math.sin(t*1.9)*.14);round(-8,40,16,40,1,'#d9bd89','#8e7856');line(-4,48,4,66,'#a8644a',1);ctx.restore()}
-const gardenRoomDraw=drawRoom;drawRoom=function(){gardenRoomDraw();if(room!=='temple')return;ctx.save();let x=400,y=710;line(x-55,y-25,x-55,y+12,'#75543e',6);line(x+55,y-25,x+55,y+12,'#75543e',6);round(x-76,y-50,152,31,3,'#a48760','#634b37');txt(tr('Garden path →','后院小径 →'),x,y-34,15,'#fff0d0');target(x-85,y-60,170,74,()=>start('secretGarden'));ctx.restore()};
+const gardenRoomDraw=drawRoom;drawRoom=function(){gardenRoomDraw();if(room!=='temple')return;ctx.save();let [x,y,ax,ay]=indoorStation('secretGarden'),first=hit.length;line(x-55,y-25,x-55,y+12,'#75543e',6);line(x+55,y-25,x+55,y+12,'#75543e',6);round(x-76,y-50,152,31,3,'#a48760','#634b37');txt(tr('Garden path →','后院小径 →'),x,y-34,15,'#fff0d0');target(x-85,y-60,170,74,()=>start('secretGarden'));markIndoorStation('secretGarden',first,[ax,ay]);ctx.restore()};
 const gardenDraw=drawActivity;drawActivity=function(){if(activity!=='secretGarden')return gardenDraw();ctx.save();paintLivingBackdrop(pics.park||pics.streetTemple||pics.temple);let shade=ctx.createLinearGradient(0,280,0,690);shade.addColorStop(0,'#304b3030');shade.addColorStop(1,'#27392d80');shadeLivingBackdrop(shade);
 let age=t-state.gardenAt,walk=age<1.2,seatAge=t-state.gardenSeatAt,seat=state.gardenSitting?poseEase(seatAge/.75):seatAge<.75?1-poseEase(seatAge/.75):0;
 ellipse(438,501,148,78,'#636d57');ellipse(438,492,141,75,'#436f6b');ellipse(438,492,133,67,'#668c81');ctx.save();ctx.beginPath();ctx.ellipse(438,492,133,67,0,0,TAU);ctx.clip();for(let i=0;i<5;i++){let f=(t*.25+i*.2)%1;ctx.beginPath();ctx.ellipse(445,491,25+f*114,9+f*49,0,0,TAU);ctx.strokeStyle='rgba(220,239,216,'+(.2*(1-f))+')';ctx.stroke()}
@@ -1096,36 +1096,98 @@ const collectionMore=[['Quiet garden postcard','静谧后院明信片','stamp'],
 const collectionClue=keepsakeClue;keepsakeClue=function(item){let n=item[0];if(boxPrizes.some(v=>v[0]===n))return ['Open a blind box in the arcade','去游戏厅开盲盒'];if(/recipe$/.test(n))return ['Make a drink with Grandma','跟外婆做一杯奶茶'];if(n==='Quiet garden postcard')return ['Feed the koi in the hidden garden','去后院喂锦鲤'];if(n==='Temple cat blessing')return ['Befriend the temple cat','和庙猫做朋友'];if(n.includes('rhythm'))return ['Try the arcade rhythm floor','试试游戏厅节奏舞台'];return collectionClue(item)};
 
 
-/* Indoor exploration: a separate position preserves the outdoor doorway. */
+/* Authored room staging. Coordinates are in the same world space as props and camera.
+   Floor footprints are conservative for the current draft artwork; revise with final art. */
+const indoorStages={
+ tarot:{entry:[190,730],arrival:[225,685],stations:{tarot:[270,440,270,615],love:[530,440,530,615]}},
+ destiny:{entry:[190,730],arrival:[240,685],stations:{destiny:[400,440,400,615]}},
+ wishes:{entry:[615,730],arrival:[580,680],stations:{wishes:[270,440,270,615],coin:[530,440,530,615]}},
+ fish:{entry:[180,730],arrival:[220,680],stations:{hit:[215,430,215,615],pier:[400,430,400,615],riverShout:[585,430,585,615]}},
+ tea:{entry:[610,730],arrival:[575,680],stations:{chat:[270,440,270,615],board:[530,440,530,615],news:[400,440,400,615]}},
+ office:{entry:[190,730],arrival:[230,685],stations:{officeSketch:[400,440,400,615]}},
+ park:{entry:[610,730],arrival:[575,680],stations:{pet:[270,440,270,615],chat:[530,440,530,615]}},
+ kitchen:{entry:[190,730],arrival:[235,680],stations:{cook:[270,440,270,615],bubbleTea:[530,440,530,615]}},
+ arcade:{entry:[610,730],arrival:[580,680],stations:{claw:[215,430,215,615],rhythm:[400,430,400,615],blindBox:[585,430,585,615]}},
+ mystery:{entry:[190,730],arrival:[235,680],stations:{mystery:[400,440,400,615]}},
+ quiz:{entry:[190,730],arrival:[235,680],stations:{quiz:[400,440,400,615]}},
+ story:{entry:[610,730],arrival:[575,680],stations:{story:[400,440,400,615]}},
+ match:{entry:[610,730],arrival:[575,680],stations:{match:[400,440,400,615]}},
+ temple:{entry:[400,735],arrival:[400,700],stations:{
+  templeWater:[215,380,215,520],prayer:[400,380,400,520],templeBell:[585,380,585,520],
+  sticks:[200,570,200,710],moon:[600,570,600,710],secretGarden:[400,610,400,730]
+ }}
+};
 let continuityRoom=null,continuityActivity=null;
-let indoor={x:400,y:650,tx:400,ty:550,facing:'up',last:0,goal:null};
+let indoor={x:400,y:700,tx:400,ty:700,facing:'up',last:0,goal:null,route:[]};
 function indoorReady(){return !!room&&!activity&&!transitioning&&proposal.hidden&&$('page').style.display!=='block'&&avatar!==null}
-function indoorDestination(x,y,goal=null){
- const bounds=livingBounds();
- const left=Math.max(110,bounds.x+35),right=Math.min(690,bounds.x+bounds.w-35),top=Math.max(390,bounds.y+100),bottom=Math.min(715,bounds.y+bounds.h-85/cam.scale);
- indoor.tx=left<=right?clamp(x,left,right):400;
- indoor.ty=top<=bottom?clamp(y,top,bottom):550;
- indoor.goal=goal;indoor.goalAt=goal?performance.now():0;
+function indoorSpec(){return indoorStages[room]||{entry:[190,730],arrival:[235,680],stations:{}}}
+function indoorStation(id,index=0,count=1){
+ const spec=indoorSpec(),known=spec.stations[id];if(known)return known;
+ const x=count===1?400:count===2?270+260*index:215+185*(index%3);
+ return [x,440,x,615]
+}
+function indoorObstacles(){
+ const spec=indoorSpec(),ids=room==='temple'?Object.keys(spec.stations):(roomActions[room]||[]).map(v=>v[0]);
+ return ids.map((id,i)=>{const [x,y]=indoorStation(id,i,ids.length);return {l:x-48,r:x+48,u:y-44,d:y+25}})
+}
+function indoorSafe(x,y,obstacles=indoorObstacles()){
+ return x>=145&&x<=655&&y>=(room==='temple'?480:565)&&y<=738&&!obstacles.some(o=>x>o.l-13&&x<o.r+13&&y>o.u-12&&y<o.d+12)
+}
+function indoorSegment(a,b,obstacles){
+ const steps=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/12));
+ for(let i=1;i<=steps;i++){const f=i/steps;if(!indoorSafe(a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,obstacles))return false}
+ return true
+}
+function indoorPath(from,to,obstacles=indoorObstacles()){
+ if(!indoorSafe(...to,obstacles))return null;
+ if(indoorSegment(from,to,obstacles))return [to];
+ // Small deterministic visibility graph around prop footprints, never time-trigger an action.
+ const nodes=[from,to];for(const o of obstacles)for(const x of [o.l-18,o.r+18])for(const y of [o.u-17,o.d+17])if(indoorSafe(x,y,obstacles))nodes.push([x,y]);
+ for(const x of [145,320,400,480,655])for(const y of [500,550,600,660,730])if(indoorSafe(x,y,obstacles))nodes.push([x,y]);
+ const d=nodes.map(()=>Infinity),prev=nodes.map(()=>-1),used=new Set();d[0]=0;
+ while(used.size<nodes.length){
+  let u=-1;for(let i=0;i<nodes.length;i++)if(!used.has(i)&&(u<0||d[i]<d[u]))u=i;
+  if(u<0||!Number.isFinite(d[u]))break;if(u===1){const out=[];for(let j=1;j>0;j=prev[j])out.unshift(nodes[j]);return out}
+  used.add(u);for(let v=1;v<nodes.length;v++){if(used.has(v)||!indoorSegment(nodes[u],nodes[v],obstacles))continue;const nd=d[u]+Math.hypot(nodes[u][0]-nodes[v][0],nodes[u][1]-nodes[v][1]);if(nd<d[v]){d[v]=nd;prev[v]=u}}
+ }return null
+}
+function indoorDestination(x,y,goal=null,facing=null){
+ const obs=indoorObstacles();x=clamp(x,145,655);y=clamp(y,room==='temple'?480:565,738);
+ if(!indoorSafe(x,y,obs)){if(goal){hint('Try the clear path beside the station.','请从体验区旁边的小路过去。');return false}return false}
+ const route=indoorPath([indoor.x,indoor.y],[x,y],obs);
+ if(!route){if(goal)hint('Try the clear path beside the station.','请从体验区旁边的小路过去。');return false}
+ indoor.route=route;[indoor.tx,indoor.ty]=route.shift();indoor.goal=goal;indoor.goalFacing=facing;return true
+}
+function markIndoorStation(id,from,anchor){
+ for(const h of hit.slice(from)){h.stationId=id;h.approach=anchor}
 }
 const continuityRoomDraw=drawRoom;
 drawRoom=function(){
  const first=hit.length;continuityRoomDraw();
  if(!room||avatar===null)return;
- if(continuityRoom!==room){continuityRoom=room;const b=livingBounds(),doorY=Math.min(735,b.y+b.h-108/cam.scale),entryY=Math.min(doorY,Math.max(655,doorY-28));indoor={x:clamp(190,b.x+46,b.x+b.w-46),y:doorY,tx:clamp(220,b.x+46,b.x+b.w-46),ty:entryY,facing:'up',last:t,goal:null}}
- if(continuityActivity!==null){continuityActivity=null;indoor.last=t;indoor.goal=null;indoor.tx=indoor.x;indoor.ty=indoor.y}
+ if(continuityRoom!==room){continuityRoom=room;const spec=indoorSpec();indoor={x:spec.entry[0],y:spec.entry[1],tx:spec.entry[0],ty:spec.entry[1],facing:'up',last:t,goal:null,route:[]};indoorDestination(...spec.arrival)}
+ if(continuityActivity!==null){continuityActivity=null;indoor.last=t;indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y}
  const delta=Math.max(0,Math.min(.05,t-indoor.last));indoor.last=t;
  for(let h of hit.slice(first)){
-  const fn=h.fn;h.fn=()=>{if(!indoorReady())return;indoorDestination(h.x+h.w/2,h.y+h.h+88,fn);hint('Walking to the station…','正在走向体验区……')};
+  const fn=h.fn;
+  // Unmarked ambient objects (e.g. the temple cat) remain optional, not a teleport.
+  const a=h.approach||[clamp(h.x+h.w/2,145,655),room==='temple'?520:615];
+  h.fn=()=>{if(!indoorReady())return;if(indoorDestination(a[0],a[1],fn,'up'))hint('Walking over…','走过去看看……')};
  }
  if(indoorReady()){
   let dx=Number(!!(keys.ArrowRight||keys.d))-Number(!!(keys.ArrowLeft||keys.a)),dy=Number(!!(keys.ArrowDown||keys.s))-Number(!!(keys.ArrowUp||keys.w));
-  if(dx||dy){let norm=Math.hypot(dx,dy);indoorDestination(indoor.x+dx/norm*45,indoor.y+dy/norm*45);}
+  if(dx||dy){let norm=Math.hypot(dx,dy);indoorDestination(indoor.x+dx/norm*45,indoor.y+dy/norm*45)}
   let vx=indoor.tx-indoor.x,vy=indoor.ty-indoor.y,dist=Math.hypot(vx,vy);
   if(dist>2){indoor.facing=Math.abs(vy)>Math.abs(vx)?(vy<0?'up':'down'):(vx<0?'left':'right');let amount=Math.min(dist,delta*Math.min(235,Math.max(65,dist*5)));indoor.x+=vx/dist*amount;indoor.y+=vy/dist*amount}
-  if((dist<=3||performance.now()-indoor.goalAt>3500)&&indoor.goal){const fn=indoor.goal,expectedRoom=room;indoor.goal=null;requestAnimationFrame(()=>{if(indoorReady()&&room===expectedRoom)fn()})}
-  if(dist>5){ctx.save();ctx.globalAlpha=.65;ellipse(indoor.tx,indoor.ty,10,4,'#e6c88d');ctx.restore()}
+  if(dist<=3){
+   indoor.x=indoor.tx;indoor.y=indoor.ty;
+   if(indoor.route.length){[indoor.tx,indoor.ty]=indoor.route.shift()}
+   else if(indoor.goal){const fn=indoor.goal,expectedRoom=room;indoor.goal=null;indoor.facing=indoor.goalFacing||'up';requestAnimationFrame(()=>{if(indoorReady()&&room===expectedRoom&&!indoor.goal)fn()})}
+  }
+  if(dist>5){ctx.save();ctx.globalAlpha=.4;ellipse(indoor.tx,indoor.ty,9,3,'#ead3a4');ctx.restore()}
  }
- ctx.save();const visible= livingBounds();const ix=clamp(indoor.x,visible.x+25,visible.x+visible.w-25),iy=clamp(indoor.y,visible.y+110,visible.y+visible.h-85/cam.scale);backHuman(ix,iy,avatar,Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3,indoor.facing,Math.max(1.05,42/(85*cam.scale)));ctx.restore();
+ const usable=Math.max(160,H-230),screenHeight=clamp(usable*.16,60,90),scale=clamp(screenHeight/(94*Math.max(.1,cam.scale)),1.08,2.1);
+ ctx.save();backHuman(indoor.x,indoor.y,avatar,Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3,indoor.facing,scale);ctx.restore();
 };
 c.addEventListener('pointerup',e=>{if(!indoorReady()||!drag||drag.moved>30||drag.h)return;const a=point(e);indoorDestination(a.x,a.y)},true);
 const indoorControlStyle=document.createElement('style');indoorControlStyle.textContent='#movePad[data-indoor="true"]{bottom:calc(env(safe-area-inset-bottom,0px) + 76px);z-index:4}';document.head.append(indoorControlStyle);
@@ -1200,12 +1262,12 @@ function ensureTravellerCoordinates(){if(!Number.isFinite(p.x)||!Number.isFinite
 /* A reachable consultation control in Destiny House, independent of canvas hit testing. */
 const destinyAccess=element('button','',document.body);destinyAccess.id='destinyAccess';destinyAccess.hidden=true;
 destinyAccess.style.cssText='position:fixed;z-index:5;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 145px);min-height:44px;max-width:70vw;background:#ead9b5;color:#453b2f;border:1px solid #9b805e;font:14px Georgia,serif';
-destinyAccess.onclick=()=>{if(room!=='destiny'||activity)return;indoor.goal=null;indoor.tx=indoor.x;indoor.ty=indoor.y;releaseWalkKeys();try{destinyPage()}catch(err){console.error('Destiny consultation:',err);$('page').style.display='none';hint('The consultation could not open. Try again or step outside.','命理咨询暂时无法打开，请重试或先出门。')}};
+destinyAccess.onclick=()=>{if(room!=='destiny'||activity)return;indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y;releaseWalkKeys();try{destinyPage()}catch(err){console.error('Destiny consultation:',err);$('page').style.display='none';hint('The consultation could not open. Try again or step outside.','命理咨询暂时无法打开，请重试或先出门。')}};
 function destinyAccessTick(){const hide=!(room==='destiny'&&!activity&&!transitioning&&proposal.hidden&&$('page').style.display!=='block');if(destinyAccess.hidden!==hide)destinyAccess.hidden=hide;if(!hide){const label=tr('Consult Master Yue','请月师傅看命盘');if(destinyAccess.textContent!==label)destinyAccess.textContent=label}setTimeout(destinyAccessTick,100)}setTimeout(destinyAccessTick,0);
 
 /* Recover from a failed transition and retain a usable exit in all houses. */
 const houseBack=$('back'),houseBackBefore=houseBack.onclick;
-houseBack.onclick=function(e){releaseWalkKeys();indoor.goal=null;indoor.tx=indoor.x;indoor.ty=indoor.y;return houseBackBefore.call(this,e)};
+houseBack.onclick=function(e){releaseWalkKeys();indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y;return houseBackBefore.call(this,e)};
 const originalHouseEnter=enter;
 enter=function(id){releaseWalkKeys();joystickReset();continuityRoom=null;continuityActivity=null;indoor.goal=null;return originalHouseEnter(id)};
 const houseFade=fade;
@@ -1532,7 +1594,7 @@ travel=function(){
  activePage='travel';
  page(tr('Where shall we go?','下一站去哪里？'),tr('Four little worlds, one railway ticket.','一张车票，四个小世界。'),q=>{
   const grid=element('div','',q,'portraitTravelGrid');
-  const desc={fortune:['Tarot, temple and wishes','塔罗、庙宇与心愿'],home:['Tea, gossip and quiet fishing','喝茶、吃瓜、悠闲摸鱼'],island:['Cooking, arcade and souvenirs','美食、游戏与手信'],wonder:['Personality, stories and connections','性格、故事与缘分']};
+  const desc={fortune:['Tarot, temple and wishes','塔罗、庙宇与心愿'],home:['Tea, gossip and letting off steam','喝茶、吃瓜、河边解压'],island:['Cooking, arcade and souvenirs','美食、游戏与手信'],wonder:['Personality, stories and connections','性格、故事与缘分']};
   for(const k of ['fortune','home','island','wonder']){
    const button=element('button','',grid,'portraitDestination');button.type='button';button.setAttribute('aria-label',tr(...maps[k].n));
    const im=element('img','',button);im.src=destinationPortrait(k);im.alt='';im.loading='lazy';im.decoding='async';
