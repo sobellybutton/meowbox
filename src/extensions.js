@@ -4324,3 +4324,125 @@ wallThreads.push(
  [["Public transport philosopher","通勤哲学家"],["Public transport fares go up. My salary is practising stillness.","车费涨了，我的工资正在练习禅定。"],[["MRT Uncle","地铁阿叔","Even the escalator has more upward mobility.","连扶梯都比我的工资有上升空间。"]]],
  [["Toilet philosopher","厕所哲学家"],["May whoever keeps sending urgent requests at 6pm spend three days on the toilet composing emails to themselves.","祝每天六点发紧急任务的人，蹲三天厕所，只能给自己发邮件。"],[["Anonymous","匿名","Please mark it urgent.","记得标记紧急。"]]]
 );
+
+
+/* Nostalgia arcade: original bubble-matching game, free play, no currency.
+   Keep legacy claw code and earned plushies for save compatibility. */
+roomActions.arcade=[['bubbleArcade','Bubble pop','泡泡龙'],['rhythm','Rhythm floor','节奏舞台'],['blindBox','Blind boxes','摸鱼盲盒']];
+activityTitle.bubbleArcade=['Bubble pop','泡泡龙'];
+indoorStages.arcade.stations.bubbleArcade=indoorStages.arcade.stations.claw;
+const nostalgiaBubbleColors=[['#e9a399','#a44d57'],['#f6d78f','#aa7c36'],['#a9d2b6','#527f68'],['#a2c8e6','#52749f']];
+const nostalgiaCells=[];
+for(let row=0;row<8;row++)for(let col=0;col<8-row%2;col++)nostalgiaCells.push({id:row*8+col,row,col,x:274+col*36+row%2*18,y:330+row*31});
+const nostalgiaCellMap=new Map(nostalgiaCells.map(v=>[v.id,v]));
+const nostalgiaEdges=new Map(nostalgiaCells.map(a=>[a.id,nostalgiaCells.filter(b=>a.id!==b.id&&Math.hypot(a.x-b.x,a.y-b.y)<38).map(b=>b.id)]));
+function nostalgiaFlood(board,seeds,color=null){
+ const seen=new Set(seeds),queue=[...seeds];for(let i=0;i<queue.length;i++)for(const id of nostalgiaEdges.get(queue[i]))if(board.has(id)&&!seen.has(id)&&(color===null||board.get(id)===color)){seen.add(id);queue.push(id)}return seen
+}
+function nostalgiaColor(g){const colors=[...new Set(g.board.values())];return colors.length?colors[Math.floor(Math.random()*colors.length)]:0}
+function nostalgiaNew(){
+ const board=new Map();for(const p of nostalgiaCells)if(p.row<4)board.set(p.id,Math.floor((p.col+Math.floor(p.row/2))/2)%4);
+ const g={board,angle:0,flight:null,remaining:24,score:0,miss:0,particles:[],status:'play',last:t};
+ g.color=nostalgiaColor(g);g.next=nostalgiaColor(g);return g
+}
+function nostalgiaActive(){return activity==='bubbleArcade'&&!!state.bubbleGame}
+const nostalgiaRoasts={
+ pop:[['Ah Ma: Finally, someone knows how to clear their backlog.','阿嬷：终于有人懂得清积压了。'],['More satisfying than cancelling a meeting.','比取消会议还爽。'],['Wah, your aim is better than your boss’s instructions.','哇，瞄得比老板交代任务还准。']],
+ miss:[['Ah Ma: Same colour, not same zodiac sign!','阿嬷：找同色，不是找同星座！'],['The bubbles are not your ex. Stop chasing the wrong one.','泡泡又不是前任，别老追错人。'],['Are your eyes buffering? Match three of the same colour.','眼睛还在加载吗？三个同色才能消掉。']],
+ win:[['You cleared the board. Now pretend the inbox does not exist.','清完了！现在假装邮箱不存在。'],['Ah Ma: Not bad. I almost called in my grandma.','阿嬷：不错嘛，我差点就要请我阿嬷出马了。']],
+ lose:[['Ah Ma: Go drink water. Your luck is overheating.','阿嬷：去喝口水，你的运气过热了。'],['The bubbles won this round. They still cannot claim your annual leave.','这局泡泡赢了，年假还是你的。']]
+};
+function nostalgiaSay(key){hint(...townReaction('nostalgia-bubble-'+key,nostalgiaRoasts[key]))}
+function nostalgiaEnd(g,win){
+ g.status=win?'won':'lost';g.flight=null;
+ if(win){addItem('Bubble arcade champion','泡泡龙小冠军');sound(640)}else sound(220);
+ nostalgiaSay(win?'win':'lose');refreshControls()
+}
+function nostalgiaFire(){
+ if(!nostalgiaActive())return;const g=state.bubbleGame;if(g.status!=='play'||g.flight||g.remaining<=0)return;
+ g.remaining--;g.flight={x:400,y:592,vx:Math.sin(g.angle)*570,vy:-Math.cos(g.angle)*570,color:g.color};sound(460);refreshControls()
+}
+function nostalgiaAttach(g,impact=null){
+ const f=g.flight;if(!f)return;
+ const available=nostalgiaCells.filter(p=>!g.board.has(p.id)&&(impact===null?p.row===0:nostalgiaEdges.get(impact).includes(p.id)));
+ available.sort((a,b)=>Math.hypot(a.x-f.x,a.y-f.y)-Math.hypot(b.x-f.x,b.y-f.y));
+ if(!available.length){nostalgiaEnd(g,false);return}
+ const p=available[0];g.board.set(p.id,f.color);g.flight=null;
+ const group=nostalgiaFlood(g.board,[p.id],f.color);
+ if(group.size>=3){
+  const remove=id=>{const v=nostalgiaCellMap.get(id),color=g.board.get(id);g.particles.push({x:v.x,y:v.y,color,at:t,vx:(Math.random()-.5)*140});g.board.delete(id);g.score+=10};
+  for(const id of group)remove(id);
+  const anchored=nostalgiaFlood(g.board,nostalgiaCells.filter(v=>v.row===0&&g.board.has(v.id)).map(v=>v.id));
+  for(const id of [...g.board.keys()])if(!anchored.has(id))remove(id);
+  g.miss=0;sound(730);nostalgiaSay('pop')
+ }else{g.miss++;nostalgiaSay('miss')}
+ if(!g.board.size){nostalgiaEnd(g,true);return}
+ if(p.row===7&&g.board.has(p.id)||g.remaining<=0){nostalgiaEnd(g,false);return}
+ g.color=[...g.board.values()].includes(g.next)?g.next:nostalgiaColor(g);g.next=nostalgiaColor(g);refreshControls()
+}
+function nostalgiaTick(g){
+ let dt=Math.min(.05,Math.max(0,t-g.last));g.last=t;
+ while(g.flight&&dt>0){const step=Math.min(dt,.007),f=g.flight;dt-=step;f.x+=f.vx*step;f.y+=f.vy*step;
+  if(f.x<266){f.x=266+(266-f.x);f.vx=Math.abs(f.vx)}if(f.x>534){f.x=534-(f.x-534);f.vx=-Math.abs(f.vx)}
+  let near=null,dist=Infinity;for(const id of g.board.keys()){const p=nostalgiaCellMap.get(id),d=Math.hypot(p.x-f.x,p.y-f.y);if(d<34&&d<dist){near=id;dist=d}}
+  if(near!==null||f.y<=330){nostalgiaAttach(g,near);break}
+ }
+ g.particles=g.particles.filter(p=>t-p.at<.8)
+}
+function nostalgiaOrb(x,y,color,r=17,alpha=1){
+ ctx.save();ctx.globalAlpha=alpha;const p=nostalgiaBubbleColors[color];const grad=ctx.createRadialGradient(x-r*.36,y-r*.42,1,x,y,r);grad.addColorStop(0,'#fff8e2');grad.addColorStop(.25,p[0]);grad.addColorStop(1,p[1]);ellipse(x,y,r,r,grad);
+ ctx.strokeStyle=p[1];ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,y,r-.5,0,TAU);ctx.stroke();ellipse(x-r*.33,y-r*.42,r*.23,r*.14,'#fff9e2bc');
+ // Distinct engraved shapes supplement colour matching.
+ ctx.strokeStyle='#fff4debd';ctx.lineWidth=1.6;ctx.beginPath();
+ if(color===0){ctx.arc(x,y+1,r*.29,0,TAU)}else if(color===1){ctx.rect(x-r*.22,y-r*.22,r*.44,r*.44)}else if(color===2){ctx.moveTo(x,y-r*.32);ctx.lineTo(x+r*.31,y+r*.23);ctx.lineTo(x-r*.31,y+r*.23);ctx.closePath()}else{ctx.moveTo(x-r*.25,y);ctx.lineTo(x+r*.25,y);ctx.moveTo(x,y-r*.25);ctx.lineTo(x,y+r*.25)}ctx.stroke();ctx.restore()
+}
+function nostalgiaCabinet(x,y,mini=false){
+ ctx.save();ctx.translate(x,y);if(mini)ctx.scale(.27,.27);ctx.translate(-400,-470);
+ ctx.shadowColor='#29211988';ctx.shadowBlur=12;round(231,275,338,369,15,'#684c39','#392b26');ctx.shadowBlur=0;
+ const wood=ctx.createLinearGradient(233,0,567,0);wood.addColorStop(0,'#80563c');wood.addColorStop(.15,'#c29769');wood.addColorStop(.5,'#a7754f');wood.addColorStop(.85,'#c29769');wood.addColorStop(1,'#80563c');round(237,281,326,355,12,wood,'#5e4130');
+ for(let i=0;i<7;i++){ctx.strokeStyle='#66432e38';ctx.beginPath();ctx.moveTo(240+i*49,287);ctx.bezierCurveTo(250+i*49,365,230+i*49,530,240+i*49,631);ctx.stroke()}
+ round(251,292,298,29,5,'#e9d5a7','#72523b');txt(tr('BUBBLE POP','泡 泡 龙'),400,307,20,'#563d31');
+ const glass=ctx.createLinearGradient(0,321,0,580);glass.addColorStop(0,'#354d49');glass.addColorStop(1,'#182f34');round(252,322,296,255,5,glass,'#cfb486');
+ for(let i=0;i<6;i++)ellipse(263+i*54,325,2.5,2.5,'#ead4a0');
+ round(251,579,298,47,7,'#60493c','#d3b17a');ctx.restore()
+}
+const nostalgiaStartBefore=start;
+start=function(id){nostalgiaStartBefore(id);if(id==='bubbleArcade'){state.bubbleGame=nostalgiaNew();hint('Aim and tap to shoot. Match three of the same colour.','瞄准后点击发射，三个同色泡泡即可消除。');refreshControls()}};
+const nostalgiaPropBefore=prop;
+prop=function(id,x,y){if(id!=='bubbleArcade')return nostalgiaPropBefore(id,x,y);nostalgiaCabinet(x,y-48,true);for(let i=0;i<4;i++)nostalgiaOrb(x-24+i*16,y-77,i,7)};
+const nostalgiaControlsBefore=refreshControls;
+refreshControls=function(){
+ nostalgiaControlsBefore();const el=$('gameControls');if(!el)return;el.classList.toggle('nostalgiaControls',nostalgiaActive());if(!nostalgiaActive())return;
+ const g=state.bubbleGame;el.replaceChildren();el.hidden=false;
+ if(g.status!=='play'){b(el,tr('Play again','再来一局'),()=>{state.bubbleGame=nostalgiaNew();hint('A fresh board. Aim and shoot!','新的一局，瞄准发射！');refreshControls()});b(el,tr('Back to arcade','返回游戏厅'),()=>$('back').click());return}
+ const aim=d=>{if(!g.flight)g.angle=clamp(g.angle+d,-1.15,1.15)};
+ b(el,'◀',()=>aim(-.12)).setAttribute('aria-label',tr('Aim left','向左瞄准'));
+ const fire=b(el,tr('Shoot','发射'),nostalgiaFire);fire.disabled=!!g.flight;
+ b(el,'▶',()=>aim(.12)).setAttribute('aria-label',tr('Aim right','向右瞄准'));
+};
+const nostalgiaCSS=document.createElement('style');nostalgiaCSS.textContent='#gameControls.nostalgiaControls{display:flex;gap:8px;max-width:95vw}#gameControls.nostalgiaControls button{min-height:44px;min-width:48px;white-space:normal}';document.head.append(nostalgiaCSS);
+const nostalgiaDrawBefore=drawActivity;
+drawActivity=function(){
+ if(!nostalgiaActive())return nostalgiaDrawBefore();
+ continuityActivity=activity;const g=state.bubbleGame;nostalgiaTick(g);ctx.save();
+ paintLivingBackdrop(pics.arcade||pics.tea);shadeLivingBackdrop('#392d285c');nostalgiaCabinet(400,470);
+ for(const [id,color] of g.board){const p=nostalgiaCellMap.get(id);nostalgiaOrb(p.x,p.y,color)}
+ for(const p of g.particles){const age=t-p.at;nostalgiaOrb(p.x+p.vx*age,p.y+130*age*age,p.color,17*(1-age*.8),1-age/.8)}
+ if(g.flight)nostalgiaOrb(g.flight.x,g.flight.y,g.flight.color);
+ if(!g.flight&&g.status==='play'){
+  let x=400,y=592,vx=Math.sin(g.angle),vy=-Math.cos(g.angle);for(let i=0;i<15;i++){x+=vx*13;y+=vy*13;if(x<266){x=266+(266-x);vx=Math.abs(vx)}if(x>534){x=534-(x-534);vx=-Math.abs(vx)}if(y<330||[...g.board.keys()].some(id=>{const p=nostalgiaCellMap.get(id);return Math.hypot(p.x-x,p.y-y)<34}))break;ellipse(x,y,2,2,'#f7e2b3a0')}
+  ctx.save();ctx.translate(400,600);ctx.rotate(g.angle);round(-7,-30,14,30,4,'#bfa476','#6f5a43');ctx.restore();nostalgiaOrb(400,592,g.color)
+ }
+ nostalgiaOrb(516,603,g.next,12);txt(tr('Next','下一个'),516,623,10,'#fff1cf');
+ txt(tr('Shots ','剩余 ')+g.remaining,295,603,15,'#fff0d0');txt(String(g.score),400,655,18,'#fff0d0');
+ if(g.status!=='play'){round(278,427,244,66,10,'#f7e6c4','#b09164');txt(g.status==='won'?tr('Board cleared!','全部消除！'):tr('Try again?','再来挑战？'),400,459,23,'#4b4436')}
+ ctx.restore()
+};
+let nostalgiaPointer=null;
+function nostalgiaAim(e){const p=point(e),g=state.bubbleGame;g.angle=clamp(Math.atan2(p.x-400,Math.max(20,592-p.y)),-1.15,1.15)}
+c.addEventListener('pointerdown',e=>{if(!nostalgiaActive()||state.bubbleGame.status!=='play'||state.bubbleGame.flight)return;const p=point(e);if(p.x<250||p.x>550||p.y<320||p.y>610)return;e.stopImmediatePropagation();nostalgiaPointer=e.pointerId;c.setPointerCapture(e.pointerId);nostalgiaAim(e)},true);
+c.addEventListener('pointermove',e=>{if(nostalgiaActive()&&nostalgiaPointer===e.pointerId){e.stopImmediatePropagation();nostalgiaAim(e)}},true);
+c.addEventListener('pointerup',e=>{if(nostalgiaPointer!==e.pointerId)return;nostalgiaPointer=null;e.stopImmediatePropagation();if(nostalgiaActive()){nostalgiaAim(e);nostalgiaFire()}},true);
+c.addEventListener('pointercancel',e=>{if(nostalgiaPointer===e.pointerId)nostalgiaPointer=null},true);
+const nostalgiaIntroBefore=roomIntro;
+roomIntro=function(){nostalgiaIntroBefore();if(room==='arcade')toast(tr('Welcome to the old-school arcade. No coins needed.','欢迎来到童年游戏厅，不用投币。'))};
