@@ -799,7 +799,7 @@ const prayerDraw=drawActivity;drawActivity=function(){if(activity!=='prayer')ret
  let elapsed=t-state.prayerAt,stage=state.prayerStage,walk=stage==='approach',bow=0,x=walk?245+Math.min(1,elapsed/1.2)*90:335;if(walk&&elapsed>=1.2){state.prayerStage='ready';state.prayerAt=t;hint('Tap the incense to light it, then tap your character or the mat to bow.','点击香炉上香，再点击角色或蒲团鞠躬。')}
  if(stage==='kneel'&&elapsed>.65){state.prayerStage='bow';state.prayerAt=t}if(stage==='bow'){if(elapsed<3.9){let phase=(elapsed/1.3)%1;bow=Math.sin(Math.PI*phase)**1.6;state.bows=Math.min(3,Math.floor(elapsed/1.3));}else{state.bows=3;state.prayerStage='silent';state.prayerAt=t;hint('Keep your wish to yourself. Take a few quiet breaths.','心愿留在心里，安静地呼吸几次。')}}
  if(stage==='silent'&&elapsed>4){state.prayerStage='rise';state.prayerAt=t}if(stage==='rise'&&elapsed>.72){state.prayerStage='complete';state.prayerAt=t;hint('Take your time. Draw a fortune whenever you are ready.','不用着急，准备好了再去求签。')}
- let kneel=stage==='kneel'?poseEase(elapsed/.65):['bow','silent'].includes(stage)?1:stage==='rise'?1-poseEase(elapsed/.72):0;let lightAge=t-(state.incenseAt??-100),reaching=stage==='ready'&&lightAge<1.05;let reach=reaching?{x:335+125*Math.sin(Math.PI*Math.min(1,lightAge/1.05)),y:455}:null;ctx.save();ctx.translate(x,553);ctx.rotate(bow*.10);backHuman(0,0,avatar??0,walk,'right',1.30);ctx.restore();if(reaching){let f=poseEase(lightAge/.62);line(390+104*f,438-38*f,390+104*f,394-38*f,'#9b6943',2);ellipse(390+104*f,394-38*f,2,2,'#efb270')}target(465,355,95,140,lightTempleIncense);target(260,330,150,250,beginQuietBow);
+ let kneel=stage==='kneel'?poseEase(elapsed/.65):['bow','silent'].includes(stage)?1:stage==='rise'?1-poseEase(elapsed/.72):0;let lightAge=t-(state.incenseAt??-100),reaching=stage==='ready'&&lightAge<1.05;let f=reaching?Math.sin(Math.PI*clamp(lightAge/1.05,0,1)):0;let reach=reaching?{x:390+55*f,y:455}:null;if(walk){backHuman(x,553,avatar??0,true,'right',1.65)}else{let hand=drawRitualPose(x+32*f,553,1.65,{kneel,bow,praying:['kneel','bow','silent','rise'].includes(stage),reach});if(reaching){line(hand.x,hand.y,hand.x+12*f,hand.y-42,'#9b6943',2);ellipse(hand.x+12*f,hand.y-42,2,2,'#efb270')}}target(465,355,95,140,lightTempleIncense);target(260,330,150,250,beginQuietBow);
  if(stage==='ready'){label(tr('Light incense','上香'),510,545,lightTempleIncense);label(tr('Bow and pray','合十祈愿'),335,612,beginQuietBow)}else if(stage==='bow'){txt(tr('Bow ','鞠躬 ')+Math.min(3,state.bows+1)+' / 3',400,622,18,'#fff2d5')}else if(stage==='silent'){txt(tr('A quiet moment','片刻静心'),400,622,20,'#fff2d5')}else if(stage==='complete'){label(tr('Draw a fortune','求签'),300,620,()=>start('sticks'));label(tr('Ask with moon blocks','掷筊'),505,620,()=>start('moon'))}
  ctx.restore()};
 
@@ -879,10 +879,36 @@ const originalTempleStory=keepsakeStory;keepsakeStory=function(item){if(/^Fortun
 
 /* Shared character pose renderer: preserve the selected identity and articulate joints. */
 function poseEase(v){v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)}
-function drawRitualPose(x,y,sc,opts={}){let k=((avatar??0)%4+4)%4,shirt=['#ead1a5','#e7e8e3','#425c77','#82986d'][k],pants=['#514b45','#4b5260','#465563','#777464'][k],skin='#efc8a7',kn=Math.max(0,Math.min(1,opts.kneel||0)),angle=(opts.bow||0)*.87,breath=actorReduce?0:Math.sin(t*2.2)*.45;ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
- ellipse(3,1,19+kn*5,5,'#342d2855');let hip={x:-5*kn,y:-22+13*kn},knee={x:6+13*kn,y:-10+9*kn},ankle={x:5-14*kn,y:-2};line(hip.x-3,hip.y,knee.x-3,knee.y,pants,8);line(knee.x-3,knee.y,ankle.x-3,ankle.y,pants,7);line(ankle.x-5,ankle.y,ankle.x+2,0,'#494038',5);line(hip.x+2,hip.y,knee.x+2,knee.y,pants,9);line(knee.x+2,knee.y,ankle.x+2,ankle.y,pants,8);line(ankle.x,ankle.y,ankle.x+8,0,'#4c4038',6);
- let trp=(a,b)=>({x:hip.x+a*Math.cos(angle)-b*Math.sin(angle),y:hip.y+a*Math.sin(angle)+b*Math.cos(angle)});let shoulder=trp(2,-22);ctx.save();ctx.translate(hip.x,hip.y);ctx.rotate(angle);ctx.translate(0,22+breath);round(-11,-48,23,31,6,shirt,'#59473c');round(-17,-44,12,22,4,'#a5815a','#59473c');ctx.save();ctx.beginPath();ctx.rect(-31,-108,68,59);ctx.clip();backHuman(0,0,k,false,'right',1);ctx.restore();ctx.restore();
- let hand=opts.reach?{x:(opts.reach.x-x)/sc,y:(opts.reach.y-y)/sc}:opts.praying?trp(24,-28):trp(8,-5);let elbow={x:(shoulder.x+hand.x)*.5-3,y:(shoulder.y+hand.y)*.5+7};line(shoulder.x-3,shoulder.y,elbow.x-2,elbow.y,shirt,7);line(elbow.x-2,elbow.y,hand.x-2,hand.y,shirt,6);line(shoulder.x,shoulder.y,elbow.x+2,elbow.y,shirt,8);line(elbow.x+2,elbow.y,hand.x,hand.y,shirt,7);ctx.save();ctx.translate(hand.x,hand.y);ctx.rotate(opts.praying?-.24:Math.atan2(hand.y-elbow.y,hand.x-elbow.x)+Math.PI*.5);ellipse(0,0,3.4,5.2,skin);if(opts.praying)line(-.5,-4,-.5,3,'#bd8e77',.7);ctx.restore();ctx.restore()}
+function drawRitualPose(x,y,sc,opts={}){
+ const k=((avatar??0)%4+4)%4,shirt=['#ead1a5','#e7e8e3','#425c77','#82986d'][k],pants=['#514b45','#4b5260','#465563','#777464'][k],skin='#efc8a7';
+ const kn=clamp(opts.kneel||0,0,1),angle=clamp(opts.bow||0,0,1)*.70,breath=actorReduce?0:Math.sin(t*2.2)*.40;
+ const hip={x:-10*kn,y:-24+13*kn},knee={x:3+17*kn,y:-11+9*kn},ankle={x:2-16*kn,y:-2};
+ const trp=(a,b)=>({x:hip.x+a*Math.cos(angle)-b*Math.sin(angle),y:hip.y+a*Math.sin(angle)+b*Math.cos(angle)+breath});
+ const shoulder=trp(2,-22);
+ let hand=opts.reach?{x:(opts.reach.x-x)/sc,y:(opts.reach.y-y)/sc}:opts.praying?trp(20,-29):trp(11,-4);
+ // Keep the wrist within the natural reach of the upper and lower arm.
+ let dx=hand.x-shoulder.x,dy=hand.y-shoulder.y,d=Math.hypot(dx,dy);
+ if(d>28){hand={x:shoulder.x+dx/d*28,y:shoulder.y+dy/d*28};dx=hand.x-shoulder.x;dy=hand.y-shoulder.y;d=28}
+ const bend=Math.sqrt(Math.max(0,15*15-(d*.5)**2)),elbow={x:(shoulder.x+hand.x)*.5-dy/Math.max(1,d)*bend,y:(shoulder.y+hand.y)*.5+dx/Math.max(1,d)*bend};
+ ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+ ellipse(3,2,19+kn*6,5,'#342d2855');
+ for(const side of [-1,1]){
+  line(hip.x+side*3,hip.y,knee.x+side*3,knee.y,pants,8);
+  line(knee.x+side*3,knee.y,ankle.x+side*3,ankle.y,pants,7);
+  line(ankle.x+side*3-3,ankle.y,ankle.x+side*3+5,0,'#494038',5);
+ }
+ ctx.save();ctx.translate(hip.x,hip.y+breath);ctx.rotate(angle);ctx.translate(0,22);
+ round(-11,-48,23,31,6,shirt,'#59473c');round(-17,-44,12,22,4,'#a5815a','#59473c');
+ ctx.save();ctx.beginPath();ctx.rect(-31,-108,68,59);ctx.clip();backHuman(0,0,k,false,'right',1);ctx.restore();ctx.restore();
+ ctx.lineCap='round';ctx.lineJoin='round';
+ line(shoulder.x-3,shoulder.y,elbow.x-2,elbow.y,shirt,7);
+ line(elbow.x-2,elbow.y,hand.x-2,hand.y,shirt,6);
+ line(shoulder.x,shoulder.y,elbow.x+2,elbow.y,shirt,8);
+ line(elbow.x+2,elbow.y,hand.x,hand.y,shirt,7);
+ ctx.save();ctx.translate(hand.x,hand.y);ctx.rotate(opts.praying?-.24:Math.atan2(hand.y-elbow.y,hand.x-elbow.x)+Math.PI*.5);
+ ellipse(0,0,3.4,5.2,skin);if(opts.praying)line(-.5,-4,-.5,3,'#bd8e77',.7);ctx.restore();ctx.restore();
+ return {x:x+hand.x*sc,y:y+hand.y*sc};
+}
 function lightTempleIncense(){if(activity!=='prayer'||state.incense||state.prayerStage!=='ready')return;state.incense=true;state.incenseAt=t;sound(350);hint('The incense is lit. Tap the mat to offer your prayer.','香已点燃，点击蒲团静心祈愿。')}
 
 /* Food Street release: prepare, serve, taste and keep the finished recipe. */
