@@ -12,3 +12,11 @@ Use Graphify first, with small context budgets (1000-3000 tokens); compare its i
 
 ## Current product authority
 Read [docs/FINAL_PRODUCT_BRIEF.md](docs/FINAL_PRODUCT_BRIEF.md) first for the owner-approved 13 design gates and curated activity plan. It supersedes older keep-every-game assumptions. Do not reintroduce visible fishing/bench games, duplicate stress rooms or subactivity destinations. Prioritize a complete playable, visually reviewed slice over further breadth; preserve existing progress and retired keepsakes.
+
+
+## Non-negotiable art quality (owner, 26 November)
+- Visible character, prop, furniture, collectible, result card, game cabinet and activity art must be individually illustrated, with a coherent nostalgic Japanese watercolor/gouache art direction. Simple procedural vector shapes, flat recolors, generic icon packs and geometric substitutes are temporary fallback art only, never a finished deliverable.
+- Rooms may be intentionally sparse, but their lighting, architecture, materials and foreground/background composition still need to feel like the same painted world. Do not fill every empty area with decoration.
+- Draw actual character poses, tool contact, feet pivots, seating and coherent shadows. Do not disguise missing animation with boxes or floating objects. Keep character size appropriate to each room and camera.
+- Prioritize final raster assets, original painted portrait/landscape compositions and isolated transparent sprites, with documented anchors and load budgets; reuse existing illustrated assets when suitable. Code remains responsible for motion, hit areas, accessibility and responsive layout.
+- Before accepting an activity, inspect actual mobile and desktop screenshots and an exported share image where applicable. Review art quality, composition, readability, character proportions and prop contact. Passing code tests never constitutes visual approval. Work in batches of five related improvements, record actual evidence and explicitly flag interim art.
