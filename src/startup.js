@@ -128,6 +128,7 @@ action=function(id){
    [tr('Celebrate a good thing','庆祝小确幸'),()=>{closeTalk();communityTab='celebrate';townChatPage()}],
    [tr('Hear the latest gossip','听听最新的瓜'),parkSerialTalk],
    [tr('Office comedy','职场小剧场'),gatheringOfficeStory],
+   [tr('Play a table game','来局井字棋'),()=>{closeTalk();start('woodenThree')}],
    [tr('Keep wandering','继续逛'),closeTalk]
   ]);return
  }
@@ -267,5 +268,134 @@ roomIntro=function(){
  if(room==='match')hint('Explore how you might respond to someone you care about. No compatibility score.','想想你会怎样回应在乎的人。不算缘分分数。');
  if(room==='story')hint('Follow a story, make choices and discover a different ending.','跟着故事走，自己做决定，探索不同结局。')
 };
+
+
+/* Curation batch 3: the existing wooden board moves to the social table;
+   one genuinely different festival activity takes its former arcade slot. */
+const festivalThreeSlot=(roomActions.arcade||[]).find(a=>a[0]==='woodenThree');
+if(festivalThreeSlot){
+ roomActions.arcade=roomActions.arcade.map(a=>a[0]==='woodenThree'?['goldfishScoop','Goldfish scooping','捞金鱼']:a);
+ indoorStages.arcade.stations.goldfishScoop=[...(indoorStages.arcade.stations.woodenThree||[400,440,400,615])];
+}
+const festivalFishKinds=[
+ {name:['Little Tangerine','小橘子'],color:'#db8a56',light:'#f4c78c',speed:1.07},
+ {name:['Snowball','雪球'],color:'#e9d9b4',light:'#fff3d7',speed:.78},
+ {name:['Inky','墨墨'],color:'#555d61',light:'#b3b4a4',speed:1.21},
+ {name:['Peach Blossom','桃花'],color:'#cc8b89',light:'#f3c4ac',speed:.91},
+ {name:['Golden Dumpling','金元宝'],color:'#d1a047',light:'#f3df9b',speed:1.36}
+];
+function festivalFishPosition(i,age,seed=0){
+ const k=festivalFishKinds[i],a=age*.8*k.speed+i*1.73+seed;
+ return {x:400+Math.cos(a)*111+Math.sin(a*1.7+i)*24,y:458+Math.sin(a*.84+i)*61,dir:-Math.sin(a)>=0?1:-1}
+}
+function festivalNewRound(now,seed=0){
+ return {at:now,seed,x:400,y:458,paper:100,phase:'aim',caught:[],attempts:0,last:now,resultAt:0,feedback:['Aim the scoop, then dip.','先对准小鱼，再下网。']}
+}
+function festivalFishOutcome(game,now){
+ const elapsed=now-game.last;
+ if(game.phase!=='dip'||elapsed<.32)return null;
+ let nearest=-1,distance=Infinity;
+ for(let i=0;i<festivalFishKinds.length;i++){if(game.caught.includes(i))continue;const p=festivalFishPosition(i,now-game.at,game.seed),d=Math.hypot(p.x-game.x,p.y-game.y);if(d<distance){distance=d;nearest=i}}
+ const gentle=elapsed<=1.2,hit=gentle&&distance<=29;
+ const wear=Math.min(100,(hit?18:gentle?12:28)+Math.max(0,Math.floor((elapsed-1.2)*16)));
+ return {caught:hit?nearest:-1,wear}
+}
+function festivalFinish(g){
+ if(g.phase==='done')return;g.phase='done';g.resultAt=t;
+ if(g.attempts)lifeEarn('round:goldfish',{skill:2,happiness:1},true);
+ g.feedback=g.caught.length?['A little fish parade! All fish return safely to the tank.','小鱼巡游成功！小鱼们都安全回水池啦。']:['The fish have excellent evasive manoeuvres.','小鱼的闪避技能已经点满。'];
+ refreshControls()
+}
+function festivalAim(x,y){
+ const g=state.festivalFish;if(activity!=='goldfishScoop'||g?.phase!=='aim'||!Number.isFinite(x)||!Number.isFinite(y))return;
+ g.x=clamp(x,270,530);g.y=clamp(y,390,525)
+}
+function festivalDip(){
+ const g=state.festivalFish;if(activity!=='goldfishScoop'||g?.phase!=='aim'||g.paper<=0)return;
+ g.phase='dip';g.last=t;g.feedback=['Lift gently while a fish is inside the ring.','小鱼游进圈里，轻轻捞起来。'];physicalFx('water',.6);refreshControls()
+}
+function festivalLift(){
+ const g=state.festivalFish;if(activity!=='goldfishScoop'||g?.phase!=='dip')return;
+ const result=festivalFishOutcome(g,t);if(!result)return;
+ g.attempts++;g.paper=Math.max(0,g.paper-result.wear);g.phase='lift';g.last=t;
+ if(result.caught>=0){const i=result.caught,k=festivalFishKinds[i];g.caught.push(i);addItem('Goldfish postcard: '+k.name[0],'金鱼明信片：'+k.name[1]);g.feedback=['A gentle catch! '+k.name[0]+' is going back in the water.','轻轻捞到了'+k.name[1]+'！一会儿放回水里。'];physicalFx('water',.8)}
+ else{g.feedback=['That fish has seen your performance review.','这条鱼显然看过你的绩效考核。'];physicalFx('splash',.4)}
+ refreshControls()
+}
+const festivalStartBefore=start;
+start=function(id){
+ festivalStartBefore(id);
+ if(id==='goldfishScoop'){state.festivalFish=festivalNewRound(t,Math.random()*TAU);refreshControls();hint('Tap the water to aim, dip the paper ring, then lift gently.','点击水面瞄准，下网，再轻轻捞起。')}
+};
+activityTitle.goldfishScoop=['Goldfish scooping','捞金鱼'];
+const festivalHintBefore=activityHint;
+activityHint=function(){if(activity==='goldfishScoop'){hint('Aim, dip, then lift. Your paper wears out in water.','瞄准、下网、捞起。纸网泡久了会破。');return}return festivalHintBefore()};
+const festivalActionBefore=action;
+action=function(id){if(room==='arcade'&&id==='goldfishScoop'){start(id);return}return festivalActionBefore(id)};
+const festivalPawBefore=townPawCategory;
+townPawCategory=function(key){return key==='round:goldfish'?'play':festivalPawBefore(key)};
+function festivalDrawFish(x,y,k,dir,age,i,scale=1){
+ ctx.save();ctx.translate(x,y);ctx.scale(dir*scale,scale);ctx.rotate(Math.sin(age*2+i)*.12);
+ ctx.beginPath();ctx.moveTo(-16,0);ctx.quadraticCurveTo(-31,-12-Math.sin(age*5+i)*3,-34,-11);ctx.lineTo(-29,0);ctx.lineTo(-34,12);ctx.quadraticCurveTo(-20,7,-16,0);ctx.fillStyle=k.light;ctx.fill();
+ const g=ctx.createLinearGradient(0,-10,0,10);g.addColorStop(0,k.light);g.addColorStop(.55,k.color);g.addColorStop(1,k.light);ellipse(0,0,20,10,g);ellipse(6,-3,7,4,k.light);ellipse(13,-2,2,2,'#413a33');ellipse(13.5,-2.5,.7,.7,'#fff4df');
+ ctx.beginPath();ctx.moveTo(-3,2);ctx.quadraticCurveTo(-8,14,-15,9);ctx.lineTo(-5,-1);ctx.fillStyle=k.light;ctx.fill();ctx.restore()
+}
+function festivalTank(x,y,sc=1,game=null){
+ ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+ ellipse(0,45,158,27,'#422d263d');
+ for(const dx of [-121,121]){line(dx,23,dx,62,'#604738',8);line(dx+2,25,dx+2,59,'#b39472',2)}
+ ellipse(0,10,155,91,'#a57e55');ellipse(0,0,155,89,'#ccb18a');ellipse(0,0,146,81,'#765c45');const water=ctx.createRadialGradient(-32,-29,4,0,0,156);water.addColorStop(0,'#b8c9aa');water.addColorStop(.45,'#79a49a');water.addColorStop(1,'#426b68');ellipse(0,0,138,74,water);
+ ctx.save();ctx.beginPath();ctx.ellipse(0,0,137,73,0,0,TAU);ctx.clip();
+ for(let i=0;i<15;i++){let xx=-124+(i*49%248),yy=-61+(i*33%122);ctx.globalAlpha=.18;ellipse(xx,yy,9+i%4*3,2,'#e7ead0')}
+ ctx.globalAlpha=1;
+ if(game){const age=t-game.at;for(let i=0;i<festivalFishKinds.length;i++){if(game.caught.includes(i))continue;const p=festivalFishPosition(i,age,game.seed);festivalDrawFish(p.x-400,p.y-458,festivalFishKinds[i],p.dir,age,i,.72)}}
+ else for(let i=0;i<3;i++)festivalDrawFish(-70+i*68,Math.sin(t*.8+i)*24,festivalFishKinds[i],i%2?1:-1,t,i,.8);
+ ctx.restore();ctx.restore()
+}
+const festivalPropBefore=prop;
+prop=function(id,x,y){if(room==='arcade'&&id==='goldfishScoop'){festivalTank(x,y-21,.42);return}return festivalPropBefore(id,x,y)};
+const festivalDrawBefore=drawActivity;
+drawActivity=function(){
+ if(activity!=='goldfishScoop'||!state.festivalFish)return festivalDrawBefore();
+ const g=state.festivalFish,age=t-g.at;
+ if(g.phase==='dip'&&t-g.last>=2.4)festivalLift();
+ if(g.phase==='lift'&&t-g.last>=.65){if(g.paper<=0||g.caught.length===festivalFishKinds.length||g.attempts>=8)festivalFinish(g);else{g.phase='aim';refreshControls()}}
+ ctx.save();paintLivingBackdrop(pics.arcade||pics.tea);
+ const b=livingBounds(),shade=ctx.createLinearGradient(0,325,0,650);shade.addColorStop(0,'#332e2620');shade.addColorStop(1,'#4f382c9c');ctx.fillStyle=shade;ctx.fillRect(b.x,b.y,b.w,b.h);
+ // The actual tank rests on its own wooden legs, with separate moving fish.
+ festivalTank(400,458,1,g);
+ const gx=g.x,gy=g.y,raise=g.phase==='lift'?Math.sin(Math.PI*clamp((t-g.last)/.65,0,1))*32:0;
+ if(g.phase!=='done'){
+  ctx.save();ctx.translate(gx,gy-raise);ctx.globalAlpha=g.phase==='dip'?.72:1;
+  line(13,11,46,58,'#9d744d',8);line(15,9,46,56,'#d3b083',2);ellipse(0,0,24,20,g.paper>0?'#ece5ce80':'#00000000');
+  ctx.beginPath();ctx.ellipse(0,0,24,20,0,0,TAU);ctx.strokeStyle='#cba26d';ctx.lineWidth=4;ctx.stroke();ctx.restore();
+ }
+ backHuman(228,575,avatar??0,false,'right',.86);
+ if(g.phase==='aim')for(let ix=0;ix<5;ix++)for(let iy=0;iy<3;iy++){const x=280+ix*60,y=404+iy*54;target(x-30,y-27,60,54,()=>festivalAim(x,y))}
+ ctx.restore()
+};
+const festivalControlsBefore=refreshControls;
+refreshControls=function(){
+ festivalControlsBefore();const el=$('gameControls');if(!el)return;el.classList.toggle('festivalFishControls',activity==='goldfishScoop');
+ if(activity!=='goldfishScoop'||!state.festivalFish)return;
+ const g=state.festivalFish;el.hidden=false;el.replaceChildren();
+ element('strong',tr('Paper ','纸网 ')+g.paper+'% · '+tr('Fish ','小鱼 ')+g.caught.length+'/5',el);
+ element('small',tr(...g.feedback),el);
+ const controls=element('div','',el,'festivalFishButtons');
+ if(g.phase==='done'){b(controls,tr('Try again','再玩一局'),()=>start('goldfishScoop'));return}
+ if(g.phase==='aim'){
+  for(const [label,cn,dx,dy] of [['Left','左',-30,0],['Right','右',30,0],['Up','上',0,-27],['Down','下',0,27]])b(controls,tr(label,cn),()=>festivalAim(g.x+dx,g.y+dy));
+  b(controls,tr('Dip','下网'),festivalDip)
+ }else if(g.phase==='dip')b(controls,tr('Lift gently','轻轻捞起'),festivalLift);
+ else element('small',tr('Returning the fish…','让小鱼回水池……'),controls)
+};
+const festivalCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(s,ox,oy){
+ if(activity!=='goldfishScoop')return festivalCameraBefore(s,ox,oy);
+ const short=W>=H&&H<500,top=short?65:120,bottom=H-(short?80:180),usableW=W-(short?220:16);
+ const z=Math.max(.08,Math.min(usableW/385,Math.max(70,bottom-top)/260));
+ return {s:z,ox:(short?(W-210)/2:W/2)-400*z,oy:(top+bottom)/2-475*z}
+};
+const festivalStyle=document.createElement('style');festivalStyle.textContent='#game #gameControls.festivalFishControls:not([hidden]){display:flex;flex-direction:column;gap:4px;width:min(92vw,390px);padding:7px;background:#f0e2c7;color:#514638;border:3px double #b09a72;border-radius:5px}.festivalFishControls small{font-size:12px;line-height:1.35;text-align:center}.festivalFishButtons{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}.festivalFishButtons button{min-width:44px!important;min-height:44px!important;padding:5px 8px!important;white-space:normal!important}@media(orientation:landscape) and (max-height:499px){#game #gameControls.festivalFishControls:not([hidden]){width:200px!important;left:auto!important;right:8px!important;transform:none!important}}';document.head.append(festivalStyle);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
