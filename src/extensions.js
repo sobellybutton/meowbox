@@ -60,7 +60,7 @@ const oldDestinyPolish=destinyPage;destinyPage=function(){oldDestinyPolish();let
 
 const ticketStyle=document.createElement('style');ticketStyle.textContent='#proposal .rail-ticket{align-self:center;width:min(92%,430px);background:#f3e6c7;color:#504836;position:relative;border:1px solid #a99165;padding:22px 22px 18px;box-shadow:0 14px 40px #15261b88;transform:rotate(-2deg);font-family:Georgia,"Songti SC",serif;display:grid;gap:13px;clip-path:polygon(0 0,100% 0,100% 45%,97% 50%,100% 55%,100% 100%,0 100%,0 55%,3% 50%,0 45%)}#proposal .rail-ticket .rail-brand{font:11px/1.3 system-ui;letter-spacing:.14em;border-bottom:1px solid #ad9978;padding-bottom:8px}#proposal .rail-ticket .route{font-size:clamp(24px,6vw,36px);line-height:1.1}#proposal .rail-ticket .rail-sub{font:12px/1.5 system-ui;color:#76674d}#proposal .rail-ticket label{display:grid;gap:4px;font-size:13px}#proposal .rail-ticket input{border:0;border-bottom:1px solid #85785c;border-radius:0;background:transparent;padding:7px 1px;font-size:23px;min-height:44px}#proposal .rail-ticket .ticket-stub{border-top:1px dashed #aa9770;padding-top:9px;display:flex;justify-content:space-between;align-items:center;font:11px system-ui;letter-spacing:.08em}#proposal .rail-ticket .stampmark{border:2px solid #9d5d45;color:#9d5d45;border-radius:50%;padding:8px;transform:rotate(-10deg)}#proposal .rail-ticket .ticket-confirm{border:1px solid #a69471;background:#e1d0a7;min-height:44px}#proposal .train-window{position:absolute;inset:10% 3%;overflow:hidden;border:12px solid #524337;border-radius:25px;background:#a1b6a2;box-shadow:0 0 0 3px #b8a081,inset 0 0 20px #342c22}#proposal .train-window img{width:145%;height:100%;object-fit:cover;animation:trainLandscape 3s linear forwards}#proposal .train-window:after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,#ffefc425,transparent 40%,#f4e7b522 60%,transparent);pointer-events:none}@keyframes trainLandscape{from{transform:translateX(0)}to{transform:translateX(-30%)}}#proposal .scenery{transition:opacity .5s}#proposal .actions button{background:#f8edda20;color:#fff5df;border-color:#f3e5c67a;backdrop-filter:blur(8px)}#proposal header button{border-radius:50%;padding:8px;min-width:44px}#proposal .next{border-radius:4px}#proposal .ticket-stage footer{display:none}#worldSigns .worldSign{background:#e8d5adf0!important;border:1px solid #8e7654!important;color:#443b2a!important;border-radius:3px!important;font-family:Georgia,"Songti SC",serif!important;font-size:13px!important}#dialogue{background:#263a32ed!important;color:#fff3dc!important;border:1px solid #b0a382!important;box-shadow:0 5px 20px #18282055!important}#dialogue #speaker{color:#e6c990!important}#dialogue #choices button{background:transparent!important;color:#fff3dc!important;border:1px solid #d4c4a880!important;box-shadow:none!important;border-radius:4px!important}#hint{background:#24372cd9!important;color:#fff4db!important;border:0!important;box-shadow:none!important}';
 document.head.append(ticketStyle);
-const ticketBaseRender=proRender;proRender=function(){ticketBaseRender();if(proStep===4){let hero=proposal.querySelector('.hero'),foot=proposal.querySelector('footer');foot.replaceChildren();let ticket=element('form','',hero,'rail-ticket');element('div',tr('MEOWBOX RAILWAY · ONE WAY','摸鱼铁路 · 单程车票'),ticket,'rail-brand');element('div',tr('Reality → Fortune Valley','现实世界 → 解忧谷'),ticket,'route');element('div',tr('Valid for a much needed break.','有效期：直到你想回去为止。'),ticket,'rail-sub');let lab=element('label',tr('Passenger signature','旅客签名'),ticket);let input=element('input','',lab);input.type='text';input.maxLength=24;input.autocomplete='off';input.placeholder=tr('Your name','你的名字');input.value=proName;input.oninput=()=>proName=input.value;let stub=element('div','',ticket,'ticket-stub');element('span',tr('PLATFORM 01 · FREE SEAT','01号站台 · 自由席'),stub);element('span',tr('VALID','准予入境'),stub,'stampmark');let go=element('button',tr('Collect ticket','领取车票'),ticket,'ticket-confirm');go.type='submit';ticket.onsubmit=e=>{e.preventDefault();proStep=1;proRender()}}if(proStep===5){let hero=proposal.querySelector('.hero'),foot=proposal.querySelector('footer');foot.replaceChildren();hero.classList.add('rail-carriage');const cabin=element('div','',hero,'rail-cabin');element('small',tr('MEOWBOX RAILWAY · CAR 01','摸鱼铁路 · 01号车厢'),cabin,'rail-car-number');const frame=element('div','',cabin,'train-window');const scenery=element('img','',frame);scenery.src=ART.valleyClean;scenery.alt=tr('Mountain scenery outside the train window','车窗外的山间风景');element('div','',cabin,'rail-window-sill');element('div','',cabin,'rail-seat');element('div','',cabin,'rail-seat rail-seat-right');const table=element('div','',cabin,'rail-table');element('span',tr('Reserved for doing nothing','摸鱼专座'),table);const passenger=element('img','',cabin,'rail-passenger');passenger.src=ART['walker'+proAvatar+'0'];passenger.alt='';element('h1',tr('On board the mountain train','搭上山间列车'),foot);element('p',tr('Next stop: Fortune Valley. Watch the scenery or step off when ready.','下一站：解忧谷。看看风景，准备好了再下车。'),foot);let done=false;const arrive=()=>{if(done||proStep!==5||!cabin.isConnected)return;done=true;proBusy=false;proStep=3;proRender()};proButton(foot,tr('Arrive at Fortune Valley','抵达解忧谷'),arrive,'next rail-arrive');/* Arrival is player-controlled so the carriage cannot flash past. */}};
+const ticketBaseRender=proRender;proRender=function(){ticketBaseRender();if(proStep===4){let hero=proposal.querySelector('.hero'),foot=proposal.querySelector('footer');foot.replaceChildren();let ticket=element('form','',hero,'rail-ticket');element('div',tr('MEOWBOX RAILWAY · ONE WAY','摸鱼铁路 · 单程车票'),ticket,'rail-brand');element('div',tr('Reality → Fortune Valley','现实世界 → 解忧谷'),ticket,'route');element('div',tr('Valid for a much needed break.','有效期：直到你想回去为止。'),ticket,'rail-sub');let lab=element('label',tr('Passenger signature','旅客签名'),ticket);let input=element('input','',lab);input.type='text';input.maxLength=24;input.autocomplete='off';input.placeholder=tr('Your name','你的名字');input.value=proName;input.oninput=()=>proName=input.value;let stub=element('div','',ticket,'ticket-stub');element('span',tr('PLATFORM 01 · FREE SEAT','01号站台 · 自由席'),stub);element('span',tr('VALID','准予入境'),stub,'stampmark');let go=element('button',tr('Collect ticket','领取车票'),ticket,'ticket-confirm');go.type='submit';ticket.onsubmit=e=>{e.preventDefault();proStep=1;proRender()}}if(proStep===5){let hero=proposal.querySelector('.hero'),foot=proposal.querySelector('footer');foot.replaceChildren();hero.classList.add('rail-carriage');const cabin=element('div','',hero,'rail-cabin');element('small',tr('MEOWBOX RAILWAY · CAR 01','摸鱼铁路 · 01号车厢'),cabin,'rail-car-number');const frame=element('div','',cabin,'train-window');const scenery=element('img','',frame);scenery.src=railSceneryURL('fortune');scenery.alt=tr('Mountains, river and trees outside the train window','车窗外的山峦、河流与树木');element('div','',cabin,'rail-window-sill');element('div','',cabin,'rail-seat');element('div','',cabin,'rail-seat rail-seat-right');const table=element('div','',cabin,'rail-table');element('span',tr('Reserved for doing nothing','摸鱼专座'),table);const passenger=element('img','',cabin,'rail-passenger');passenger.src=ART['walker'+proAvatar+'0'];passenger.alt='';element('h1',tr('On board the mountain train','搭上山间列车'),foot);element('p',tr('Next stop: Fortune Valley. Watch the scenery or step off when ready.','下一站：解忧谷。看看风景，准备好了再下车。'),foot);let done=false;const arrive=()=>{if(done||proStep!==5||!cabin.isConnected)return;done=true;proBusy=false;proStep=3;proRender()};proButton(foot,tr('Arrive at Fortune Valley','抵达解忧谷'),arrive,'next rail-arrive');/* Arrival is player-controlled so the carriage cannot flash past. */}};
 proposalBoard=function(){if(proBusy)return;proBusy=true;proposal.classList.add('boarding');setTimeout(()=>{proStep=5;proRender()},matchMedia('(prefers-reduced-motion: reduce)').matches?0:400)};
 
 const cinemaCSS=document.createElement('style');cinemaCSS.textContent='#proposal .cinema-world{position:absolute;inset:0;z-index:-3;overflow:hidden;background:#293d33}#proposal .cinema-world img{position:absolute;width:100%;height:100%;object-fit:cover;object-position:center;transition:transform 1.25s cubic-bezier(.22,.61,.36,1),opacity .85s ease;will-change:transform,opacity}#proposal .cinema-world img.station{transform:scale(1.06)}#proposal[data-shot="ticket"] .cinema-world img.station{transform:scale(1.25) translate(-5%,4%)}#proposal[data-shot="platform"] .cinema-world img.station{transform:scale(1.1) translate(3%,-1%)}#proposal[data-shot="train"] .cinema-world img.station{transform:scale(1.35) translate(-8%,0);opacity:0}#proposal .cinema-world img.valley{opacity:0;transform:scale(1.12)}#proposal[data-shot="train"] .cinema-world img.valley{opacity:1;transform:scale(1.05)}#proposal[data-shot="shrine"] .cinema-world img.valley{opacity:1;transform:scale(1)}#proposal[data-shot="shrine"] .cinema-world img.station{opacity:0}#proposal .scene-content{display:contents}#proposal .hero,#proposal footer{animation:cinemaIn .45s ease both}@keyframes cinemaIn{from{opacity:0;translate:0 7px}to{opacity:1;translate:0 0}}#proposal .rail-ticket{animation:ticketSlide .7s cubic-bezier(.22,.61,.36,1) both}@keyframes ticketSlide{from{opacity:0;transform:translateY(35px) rotate(2deg)}to{opacity:1;transform:translateY(0) rotate(-2deg)}}@media(prefers-reduced-motion:reduce){#proposal .cinema-world img{transition:none}}';document.head.append(cinemaCSS);
@@ -1911,15 +1911,15 @@ travelPortraitStyle.textContent=`
 travel=function(){
  activePage='travel';
  page(tr('Where shall we go?','下一站去哪里？'),tr('Four little worlds, one railway ticket.','一张车票，四个小世界。'),q=>{
-  const grid=element('div','',q,'portraitTravelGrid');
-  const desc={fortune:['Tarot, temple and wishes','塔罗、庙宇与心愿'],home:['Tea, gossip and letting off steam','喝茶、吃瓜、河边解压'],island:['Cooking, arcade and souvenirs','美食、游戏与手信'],wonder:['Personality, stories and connections','性格、故事与缘分']};
+  renderRailRoute(q);const grid=element('div','',q,'portraitTravelGrid');
+  const desc={fortune:['Tarot, temple and wishes','塔罗、庙宇与心愿'],home:['Tea, gossip and letting off steam','喝茶、吃瓜、河边解压'],island:['Cooking, bubble tea, arcade and souvenirs','美食、奶茶、游戏与手信'],wonder:['Personality, stories and connections','性格、故事与缘分']};
   for(const k of ['fortune','home','island','wonder']){
    const button=element('button','',grid,'portraitDestination');button.type='button';button.setAttribute('aria-label',tr(...maps[k].n));
    const im=element('img','',button);im.src=destinationPortrait(k);im.alt='';im.loading='lazy';im.decoding='async';
    const caption=element('span','',button,'destinationCaption');
    element('span',k===scene?tr('YOU ARE HERE','你在这里'):visited.includes(k)?tr('REVISIT','重游'):tr('UNDISCOVERED','尚未探索'),caption,'destinationStatus');
    element('strong',tr(...maps[k].n),caption);element('small',tr(...desc[k]),caption);
-   button.onclick=()=>{if(transitioning)return;if(k===scene&&!room){$('page').style.display='none';return}$('page').style.display='none';journey(k)};
+   button.onclick=()=>{if(transitioning)return;if(k===scene&&!room){$('page').style.display='none';return}openRailStop(k)};
   }cluePanel(q);
  });
 };
@@ -2343,7 +2343,7 @@ roomActions.tea=[['chat','Tea & gossip','喝茶吃瓜'],['board','The Daily Scoo
 activityTitle.hit=['Whack your worries','打走烦恼'];
 activityTitle.pet=['Make a furry friend','和毛孩子做朋友'];
 const nextStopButton=element('button','',$('back').parentNode);
-nextStopButton.id='nextStopShortcut';nextStopButton.onclick=()=>travel();
+nextStopButton.id='nextStopShortcut';nextStopButton.onclick=()=>openRailStop();
 const nextStopStyle=document.createElement('style');
 nextStopStyle.textContent='#nextStopShortcut{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 110px);z-index:6;max-width:46vw;font:13px system-ui;padding:10px 12px;border:1px solid #b99c73;border-radius:14px;background:#f7ead1;color:#584534;box-shadow:0 2px 6px #2c261e30}#nextStopShortcut[hidden]{display:none!important}@media(max-height:500px){#nextStopShortcut{top:86px}}';
 document.head.append(nextStopStyle);
@@ -2351,7 +2351,7 @@ const copyHUD=updateHUD;updateHUD=function(){
  copyHUD();
  if(room)$('back').textContent=activity?tr('‹ Back to room','‹ 返回小屋'):tr('‹ Back outside','‹ 出门逛逛');
  $('hudProgress').textContent=tr('Traveller','摸鱼旅人')+' · '+items.length+tr(' keepsakes',' 件纪念品');
- nextStopButton.textContent=tr('Next stop ›','下一站 ›');nextStopButton.hidden=avatar===null||!!activity||!proposal.hidden||!!room||$('page').style.display==='block';
+ nextStopButton.textContent=tr('Next: ','下一站：')+tr(...maps[railNextDistrict(scene)].n);nextStopButton.hidden=avatar===null||!!activity||!proposal.hidden||!!room||$('page').style.display==='block'||transitioning;
 };
 const copyAlbumProfile=albumProfile;
 albumProfile=function(q){copyAlbumProfile(q);const a=q.querySelector('.albumProfile p');if(a)a.textContent=items.length+tr(' little discoveries',' 份小小回忆')};
@@ -6936,3 +6936,84 @@ const pearlPanelCSS=document.createElement('style');pearlPanelCSS.textContent=`
 body.meow-dialogue #pearlRecipePanel,#game:has(#page[style*="block"]) #pearlRecipePanel{display:none!important}
 @media(orientation:landscape){#pearlRecipePanel{width:min(32vw,350px);left:auto;right:12px;transform:none;max-height:44dvh;bottom:calc(env(safe-area-inset-bottom,0px) + 85px)}}
 `;document.head.append(pearlPanelCSS);
+
+
+/* All four districts belong to one optional rail loop. Travel anywhere
+   from the timetable, or follow the suggested next unexplored district. */
+function railNextDistrict(current){
+ const order=['fortune','home','island','wonder'],i=order.indexOf(current);return order[(i+1)%order.length]
+}
+function railSceneryURL(k){
+ const palettes={fortune:['#c8d9d2','#f5d9ab','#759b96','#496f70','#779d7d','#709fa6'],home:['#c3d9dd','#f2d8b6','#88a9a5','#6a9393','#789886','#7daeb3'],island:['#b5d5dc','#f6dfbb','#7fa9b0','#6a8f91','#89a488','#5b9da9'],wonder:['#bdc8dd','#f2d8c3','#8c97af','#727e9c','#8da08b','#91b0b5']},p=palettes[k]||palettes.fortune;
+ // A native landscape panorama, not a cropped map. Fixed SVG geometry
+ // means no external network or reused village door illustration.
+ let foliage='',houses='',grain='';
+ for(let i=0;i<37;i++){
+  const x=i*89-40,y=473+Math.sin(i*2.13)*22,h=56+(i*37)%115;
+  foliage+='<g transform="translate('+x+' '+y+')" opacity="'+(.72+(i%4)*.07)+'"><path d="M0 5Q-7 -'+(h*.46)+' 5 -'+h+'" fill="none" stroke="#635b47" stroke-width="'+(3+i%4)+'"/><path d="M4 -'+h+'Q-33 -'+(h*.7)+' -24 -'+(h*.45)+'Q-42 -'+(h*.37)+' -23 -'+(h*.20)+'Q0 -'+(h*.12)+' 21 -'+(h*.26)+'Q43 -'+(h*.44)+' 24 -'+(h*.58)+'Q27 -'+(h*.83)+' 4 -'+h+'Z" fill="'+(i%3===0?'#5b806d':'#759784')+'"/><path d="M0 -'+(h*.82)+'Q-11 -'+(h*.61)+' -16 -'+(h*.39)+'" stroke="#b1bb91" stroke-width="2" fill="none" opacity=".45"/></g>'
+ }
+ for(let i=0;i<11;i++){const x=235+i*259,y=351+Math.sin(i*1.8)*18,ww=24+i%3*7;houses+='<g transform="translate('+x+' '+y+')"><path d="M-3 0L'+ww/2+' -16L'+(ww+4)+' 0Z" fill="#8d6d60"/><path d="M0 0H'+ww+'V18H0Z" fill="#e1d3b1"/><path d="M8 4H14V12H8Z" fill="#80938b"/></g>'}
+ for(let i=0;i<100;i++){const x=(i*179+23)%3200,y=40+(i*97)%550;grain+='<path d="M'+x+' '+y+'l7 -1" stroke="#fff6da" stroke-width="1" opacity=".17"/>'}
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="3200" height="600" viewBox="0 0 3200 600"><defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="'+p[0]+'"/><stop offset="1" stop-color="'+p[1]+'"/></linearGradient><linearGradient id="water" x2="0" y2="1"><stop stop-color="'+p[5]+'"/><stop offset="1" stop-color="#b8d3c7"/></linearGradient><linearGradient id="near" x2="0" y2="1"><stop stop-color="'+p[4]+'"/><stop offset="1" stop-color="#577867"/></linearGradient></defs><path d="M0 0H3200V600H0Z" fill="url(#sky)"/><g fill="#fff2d2" opacity=".64"><path d="M45 87Q111 40 175 79Q227 38 281 74Q328 78 356 100H25Z M690 115Q770 65 832 98Q925 45 985 100L1046 115Z M1900 81Q1964 36 2030 75Q2100 40 2175 95H1870Z M2600 114Q2710 64 2785 102Q2884 48 2980 106Z"/></g><circle cx="1410" cy="115" r="49" fill="#fff1c7" opacity=".8"/><path d="M0 300Q140 170 295 201L475 57 580 181 688 140 827 262 1010 151 1190 216 1370 87 1540 211 1715 150 1888 245 2060 135 2260 68 2440 229 2640 145 2820 225 3040 101 3200 246V430H0Z" fill="'+p[2]+'"/><path d="M412 116L475 57 530 116 490 107 472 124 452 105Z M1315 126L1370 87 1428 144 1390 129 1369 144 1345 120Z M2212 108L2260 68 2320 122 2270 111 2250 126Z" fill="#f1efe0" opacity=".88"/><path d="M0 337Q150 215 360 320Q570 183 780 302Q950 224 1150 323Q1380 200 1550 325Q1720 245 1880 330Q2080 201 2300 310Q2490 243 2650 324Q2860 210 3200 305V455H0Z" fill="'+p[3]+'"/><path d="M0 363Q370 332 750 366T1500 362T2250 359T3200 364V550H0Z" fill="url(#water)"/><path d="M0 378Q500 345 1000 380T2000 376T3200 383M160 414Q500 393 840 416M1300 445Q1760 421 2200 443M2400 410Q2800 392 3150 421" fill="none" stroke="#d7e7d9" stroke-width="4" opacity=".6"/><path d="M0 359Q400 339 800 359T1600 355T2400 357T3200 356" fill="none" stroke="#b5bc8e" stroke-width="13"/>'+houses+'<path d="M0 472Q400 440 800 478T1600 471T2400 467T3200 473V600H0Z" fill="url(#near)"/>'+foliage+'<path d="M0 566Q500 530 1000 567T2000 562T3200 561V600H0Z" fill="#456b60"/>'+grain+'</svg>';
+ return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)
+}
+function installRailParallax(frame){
+ if(!frame||frame.querySelector('.railPassingTrees'))return;
+ const layer=element('div','',frame,'railPassingTrees');layer.setAttribute('aria-hidden','true');
+ for(let i=0;i<8;i++){const tree=element('i','',layer);tree.style.left=(i*23)+'%';tree.style.height=(36+i%3*15)+'%'}
+}
+const scenicEntranceBefore=proRender;
+proRender=function(){scenicEntranceBefore();if(proStep===5)installRailParallax(proposal.querySelector('.train-window'))};
+function renderRailRoute(q){
+ const section=element('section','',q,'railRouteStrip');element('small',tr('MEOWBOX RAILWAY · FOUR STOPS','摸鱼铁路 · 四站环线'),section);
+ const list=element('div','',section,'railRouteNodes');
+ for(const k of ['fortune','home','island','wonder']){
+  const stop=element('span',tr(...maps[k].n),list,k===scene?'railCurrent':visited.includes(k)?'railVisited':'');
+  if(k===scene)stop.setAttribute('aria-current','location')
+ }
+}
+function openRailStop(destination=railNextDistrict(scene)){
+ if(transitioning||!Object.hasOwn(maps,destination)||!proposal.hidden)return;
+ if(destination===scene&&!room){$('page').style.display='none';return}
+ activePage='travel';
+ page(tr('Next stop: ','下一站：')+tr(...maps[destination].n),tr('Take a seat. Leave when you feel ready.','坐下来看看风景，准备好了再出发。'),q=>{
+  renderRailRoute(q);
+  const cabin=element('div','',q,'districtRailCabin');
+  element('small',tr('MEOWBOX RAILWAY · SCENIC SERVICE','摸鱼铁路 · 观景列车'),cabin,'railRouteCar');
+  const frame=element('div','',cabin,'districtRailWindow train-window'),im=element('img','',frame);
+  im.src=railSceneryURL(destination);im.alt=tr('Landscape passing the train window','车窗外流动的风景');installRailParallax(frame);
+  const seat=element('div','',cabin,'districtRailSeat');element('span',tr('Reserved for doing nothing','摸鱼专座'),seat);
+  element('p',tr(...maps[scene].n)+' → '+tr(...maps[destination].n),q,'railRouteTicket');
+  const actions=element('div','',q,'railJourneyActions');let boarded=false;
+  b(actions,tr('Arrive at ','抵达')+tr(...maps[destination].n),()=>{if(boarded||transitioning)return;boarded=true;$('page').style.display='none';journey(destination)});
+  b(actions,tr('Choose another stop','选择其他站'),travel);
+  b(actions,tr('Stay here a little longer','再逛一会儿'),()=>{$('page').style.display='none';updateHUD()})
+ })
+}
+const railNextHUDBefore=updateHUD;
+updateHUD=function(){railNextHUDBefore();nextStopButton.setAttribute('aria-label',tr('Take the train to ','搭列车前往')+tr(...maps[railNextDistrict(scene)].n));nextStopButton.title=tr('Optional onward journey','随心选择下一站')};
+const stationTravelActionBefore=enter;
+enter=function(id){if(id==='station'){openRailStop();return}return stationTravelActionBefore(id)};
+const scenicRailStyle=document.createElement('style');scenicRailStyle.textContent=`
+#nextStopShortcut{max-width:min(49vw,210px)!important;min-height:44px!important;white-space:normal!important;border-radius:5px!important;background:#efe2c5!important;color:#4b5c4a!important;line-height:1.25!important;font:600 13px/1.25 Georgia,"Songti SC",serif!important}
+#proposal .rail-cabin .train-window img,#content .districtRailWindow img{display:block!important;position:absolute;top:0;left:0;width:100%!important;height:100%!important;object-fit:cover!important;object-position:0% center!important;animation:railPanorama 32s linear infinite alternate!important;transform:none!important}
+@keyframes railPanorama{from{object-position:0% center}to{object-position:100% center}}
+.train-window{overflow:hidden!important;isolation:isolate}
+.railPassingTrees{position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:.8;animation:railNearPass 11s linear infinite}
+.railPassingTrees i{position:absolute;bottom:-9%;width:7px;background:#435c4d;transform:rotate(2deg);box-shadow:2px 0 2px #3d554c60}
+.railPassingTrees i:after{content:"";position:absolute;top:-9px;left:-17px;width:41px;height:50px;border-radius:45% 55% 48% 53%;background:#587764;box-shadow:12px 12px 0 #6d8b70,-9px 13px 0 #719079}
+@keyframes railNearPass{from{transform:translateX(0)}to{transform:translateX(-75%)}}
+#content .railRouteStrip{border:1px solid #c1ad85;background:#f2e6cd;color:#5d4c3b;padding:10px;border-radius:5px;margin:10px 0}
+#content .railRouteStrip>small{font-size:11px;letter-spacing:.05em}
+#content .railRouteNodes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;margin-top:8px}
+#content .railRouteNodes span{font-size:11px;line-height:1.25;text-align:center;border-top:2px solid #aa9a78;padding:7px 1px 0;overflow-wrap:anywhere;color:#786c58}
+#content .railRouteNodes .railCurrent{font-weight:700;border-color:#597b68;color:#3d664f}
+#content .railRouteNodes .railVisited{border-color:#839982}
+#content .districtRailCabin{position:relative;aspect-ratio:4/3;max-height:360px;isolation:isolate;overflow:hidden;background:linear-gradient(100deg,#9e7a59,#c5a583,#8b6a50);border:2px solid #846647;border-radius:14px;margin:12px auto;max-width:560px}
+#content .railRouteCar{display:block;text-align:center;color:#fff3d7;font-size:10px;letter-spacing:.08em;padding-top:9px}
+#content .districtRailWindow{position:absolute;inset:12% 7% 28%;border:6px solid #5e4838;border-radius:16px;background:#b9d0c0;box-shadow:0 0 0 2px #d8be93}
+#content .districtRailSeat{position:absolute;left:10%;right:10%;bottom:5%;height:17%;background:#607d73;border:2px solid #49675d;border-radius:10px 10px 4px 4px;display:grid;place-items:center;color:#f4e5cb;font:12px Georgia,serif}
+#content .railRouteTicket{text-align:center;font-weight:600;color:#6d5a43}
+#content .railJourneyActions{display:grid;gap:7px}#content .railJourneyActions button{min-height:44px;white-space:normal}
+@media(prefers-reduced-motion:reduce){#proposal .rail-cabin .train-window img,#content .districtRailWindow img,.railPassingTrees{animation:none!important}}
+`;document.head.append(scenicRailStyle);
