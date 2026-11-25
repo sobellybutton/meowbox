@@ -2488,3 +2488,54 @@ for(const guest of [
  ['The Crossing Guard','路口守望人','wonder','The crossing has turned green. The inbox can wait.','路口绿灯了，未读消息先放着。'],
  ['Eurostar Nap Club','欧洲睡神','wonder','I came for the scenery. Slept through the Alps.','我来看风景，结果睡过了阿尔卑斯山。']
 ])if(!cast9.some(a=>a[0]===guest[0]))cast9.push(guest);
+
+
+/* Chart consultation: private in-page follow-up, based on computed palaces.
+   Original reflection prompts, not predictions or a claimed full traditional reading. */
+const chartStarThemes={
+ '紫微':['leadership and responsibility','责任与主导'],
+ '天机':['planning and adaptability','思考与应变'],
+ '太阳':['visibility and contribution','表达与付出'],
+ '武曲':['discipline and practical resources','执行力与资源管理'],
+ '天同':['comfort and ease','安稳与自在'],
+ '廉贞':['principles and boundaries','原则与界限'],
+ '天府':['stability and stewardship','稳定与积累'],
+ '太阴':['reflection and inner security','内省与安全感'],
+ '贪狼':['curiosity and desire','好奇与欲望'],
+ '巨门':['discussion and discernment','沟通与辨析'],
+ '天相':['cooperation and balance','合作与平衡'],
+ '天梁':['support and judgement','照顾与判断'],
+ '七杀':['independence and decisiveness','独立与决断'],
+ '破军':['change and rebuilding','改变与重整']
+};
+const chartConsultTopics=[
+ {k:0,name:['Life & character','命宫与性格'],question:['What do I want to be known for?','我希望自己成为什么样的人？'],practice:['Think of a recent decision that felt true to you. What made it feel right?','想一想最近一次让你觉得很符合自己的决定。为什么？']},
+ {k:8,name:['Career & direction','官禄宫与事业'],question:['How can I find a better direction at work?','事业上怎样找到更适合自己的方向？'],practice:['Name one skill you enjoy using, and one condition that helps you do your best work.','列出一项你喜欢发挥的能力，以及一种让你工作更顺心的条件。']},
+ {k:2,name:['Relationships','夫妻宫与关系'],question:['What matters to me in a relationship?','在亲密关系中，我真正重视什么？'],practice:['Consider one need you can express clearly instead of hoping someone will guess it.','想一想有什么需要可以直接表达，而不是期待对方猜中。']},
+ {k:4,name:['Money habits','财帛宫与金钱习惯'],question:['How do I think about money?','我可以怎样看待自己的金钱习惯？'],practice:['Review a real budget or savings goal. A chart cannot predict investment returns.','看看真实预算或储蓄目标。命盘不能预测投资收益。']},
+ {k:6,name:['Travel & change','迁移宫与变化'],question:['What helps me adjust to a new place?','什么能帮助我适应新的环境？'],practice:['Choose one practical step that makes an upcoming change feel manageable.','找一个实际可行的小步骤，让接下来的变化更容易面对。']},
+ {k:10,name:['Rest & wellbeing','福德宫与休息'],question:['What helps me genuinely unwind?','怎样才能真正放松下来？'],practice:['Try a small break that does not depend on achieving something.','试试不以完成任务为目标的一小段休息。']}
+];
+function chartConsultData(z,topic){
+ const index=mod(z.life-topic.k,12),stars=z.stars[index]||[];
+ return {index,stars:stars.map(st=>tr(...st)),themes:stars.map(st=>chartStarThemes[st[1]]).filter(Boolean).map(v=>tr(...v))}
+}
+function renderChartConsultation(out,z){
+ const section=element('section','',out,'chartConsultation');
+ element('h2',tr('A conversation with Master Yue','与月师傅聊聊'),section);
+ element('p',tr('Choose a topic. The explanation uses the stars in your actual chart, with questions for reflection. This is a small main-star interpretation, not an AI adviser or a forecast.','选一个想了解的主题。这里结合你命盘中的主星，提供简要解读和反思问题。仅为十四主星趣味解读，不是 AI 咨询或未来预测。'),section);
+ const topics=element('div','',section,'chartTopics'),answer=element('article','',section,'chartReply');
+ answer.setAttribute('aria-live','polite');
+ const show=topic=>{
+  const data=chartConsultData(z,topic);answer.replaceChildren();
+  element('h3',tr(...topic.question),answer);
+  element('p',tr('Your palace: ','你的宫位：')+tr(...topic.name)+' · '+branches[data.index],answer);
+  element('p',data.stars.length?tr('Main stars: ','主星：')+data.stars.join(' · '):tr('No main star in this palace. A fuller reading would consider the opposite palace and other factors. No missing-star judgement is made here.','此宫无主星。完整解读还需参考对宫和其他因素，这里不据此判断吉凶。'),answer);
+  if(data.themes.length)element('p',tr('Symbolic themes for reflection: ','可供反思的象征主题：')+data.themes.join(' / '),answer);
+  element('p',tr(...topic.practice),answer,'chartPractice');
+  for(const button of topics.querySelectorAll('button'))button.setAttribute('aria-pressed',String(button.dataset.topic===String(topic.k)));
+ };
+ for(const topic of chartConsultTopics){const button=b(topics,tr(...topic.name),()=>show(topic));button.dataset.topic=String(topic.k);button.setAttribute('aria-pressed','false')}
+ show(chartConsultTopics[0])
+}
+const consultStyle=document.createElement('style');consultStyle.textContent='.chartConsultation{margin:24px 0;padding:17px;border-top:2px solid #a38a61;background:#eee3ca;color:#544436}.chartConsultation h2,.chartConsultation h3{font-family:Georgia,"Songti SC",serif}.chartConsultation h3{font-size:19px;line-height:1.4;margin:4px 0 10px}.chartTopics{display:flex;flex-wrap:wrap;gap:6px}.chartTopics button{flex:1 1 125px;min-height:44px;font-size:14px;white-space:normal}.chartTopics button[aria-pressed=true]{background:#536b5a;color:#fff5de}.chartReply{margin:16px 0 0;border-top:1px solid #bdab8b;padding:14px 0 0;overflow-wrap:anywhere}.chartPractice{font-style:italic;color:#4f634e}';document.head.append(consultStyle);
