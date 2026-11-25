@@ -5222,3 +5222,121 @@ say=function(...args){
 };
 const paintedResidentStyle=document.createElement('style');paintedResidentStyle.textContent='#talkPortrait.paintedResidentPortrait{width:58px!important;height:62px!important;object-fit:contain!important;border:0!important;background:transparent!important;box-shadow:none!important}';document.head.append(paintedResidentStyle);
 productionVisual('paintedResidents');
+
+
+/* Responsive scene system. Portrait images stay portrait; wide rooms have
+   an independent horizontal layout with side scenery and an unobstructed
+   central interaction stage. Original landscape paintings are preferred
+   only when their proportions fit the screen without stretching. */
+const landscapeRoomProfiles={
+ temple:{wall:'#83998a',floor:'#938a73',accent:'#8f6d4c',keys:['streetTemple'],kind:'shrine'},
+ tarot:{wall:'#58606e',floor:'#776050',accent:'#a68b68',keys:['readingInterior','tarot'],kind:'study'},
+ destiny:{wall:'#4e6467',floor:'#7b6957',accent:'#a59072',keys:['streetDestiny'],kind:'study'},
+ wishes:{wall:'#9cb6a5',floor:'#8d9879',accent:'#ab8861',keys:['wishes','streetWishes'],kind:'garden'},
+ secretGarden:{wall:'#8aa29a',floor:'#8b9879',accent:'#8d765a',keys:[],kind:'garden'},
+ tea:{wall:'#a59b80',floor:'#9c7d5e',accent:'#b78c65',keys:['tea'],kind:'tea'},
+ office:{wall:'#a6aaa0',floor:'#988a78',accent:'#7e8173',keys:['office'],kind:'office'},
+ park:{wall:'#9ab6a2',floor:'#899d7b',accent:'#91775a',keys:['park'],kind:'garden'},
+ fish:{wall:'#90ada9',floor:'#9b856a',accent:'#a88b61',keys:['fish'],kind:'pier'},
+ kitchen:{wall:'#b6a28b',floor:'#9d805d',accent:'#bd986c',keys:['kitchen'],kind:'kitchen'},
+ arcade:{wall:'#526a67',floor:'#80675a',accent:'#b58b6d',keys:['arcade'],kind:'arcade'},
+ mystery:{wall:'#a196a1',floor:'#967c69',accent:'#b48e6d',keys:[],kind:'shop'},
+ quiz:{wall:'#839b9a',floor:'#927e69',accent:'#b2a080',keys:[],kind:'study'},
+ story:{wall:'#8795a3',floor:'#8c776a',accent:'#bc9878',keys:[],kind:'story'},
+ match:{wall:'#b79b96',floor:'#9e8170',accent:'#c2a17b',keys:[],kind:'tea'}
+};
+function wideSceneFit(iw,ih,w,h){
+ if(![iw,ih,w,h].every(v=>Number.isFinite(v)&&v>0))return null;
+ const source=iw/ih,view=w/h;
+ if(source<1.35||view<1.15)return null;
+ // The image may crop at most ten percent of a dimension. Otherwise use the
+ // dedicated wide composition, never a horizontally stretched photograph.
+ const crop=1-Math.min(source/view,view/source);
+ if(crop>.10)return null;
+ const k=Math.max(w/iw,h/ih);
+ return {w:iw*k,h:ih*k,dx:(w-iw*k)/2,dy:(h-ih*k)/2,crop}
+}
+const landscapeSourceCache=new Map();
+function landscapeSideDetails(kind){
+ const colors=['#af9277','#839b91','#c2a46f','#a18a9f'];
+ let a='';
+ if(kind==='shrine'||kind==='garden'||kind==='pier'){
+  for(const x of [110,1490])a+='<g transform="translate('+x+' 0)"><path d="M0 0Q-30 200 10 520L-30 650H35L20 500Q35 220 15 0Z" fill="#77664f"/><path d="M0 175Q110 40 235 90M15 220Q-90 85 -185 125" fill="none" stroke="#77664f" stroke-width="22"/><g fill="#718e76"><ellipse cx="85" cy="65" rx="145" ry="85"/><ellipse cx="-55" cy="99" rx="130" ry="75"/></g></g>';
+  if(kind==='shrine')a+=roomLantern(340,260)+roomLantern(1260,260);
+  if(kind==='pier')a+='<path d="M0 490Q800 462 1600 490V545Q800 510 0 545Z" fill="#927e60"/><path d="M0 485Q800 457 1600 485" stroke="#d5c098" stroke-width="11" fill="none"/>';
+  return a;
+ }
+ if(kind==='study')return roomShelf(62,260,320,260,colors)+roomShelf(1218,260,320,260,colors)+roomWindow(610,110,380,350,true)+roomLantern(470,210)+roomLantern(1130,210);
+ if(kind==='office')return roomWindow(570,105,460,330)+roomShelf(58,300,300,225,colors)+roomShelf(1240,300,300,225,colors)+'<g fill="#52635f" stroke="#9f9078" stroke-width="5"><path d="M110 410H315V535H110Z M1280 410H1485V535H1280Z"/></g>';
+ if(kind==='arcade'){
+  for(const x of [85,260,1170,1345])a+='<g transform="translate('+x+' 0)"><path d="M0 260H132L154 340V558H-18V340Z" fill="#9b7d65" stroke="#4d4b42" stroke-width="6"/><path d="M7 297H126V390H7Z" fill="#486d6d" stroke="#dcc598" stroke-width="4"/><path d="M1 414H134L144 438H-10Z" fill="#bba179"/><circle cx="105" cy="423" r="8" fill="#b4695a"/></g>';
+  return a+roomLantern(495,220)+roomLantern(1105,220);
+ }
+ if(kind==='kitchen')return roomWindow(590,112,420,320)+roomShelf(70,260,290,250,colors)+roomShelf(1240,260,290,250,colors)+'<path d="M90 485H390V565H90Z M1210 485H1510V565H1210Z" fill="#9d7d5b" stroke="#775a43" stroke-width="5"/><path d="M110 474H410M1190 474H1490" stroke="#d5b78c" stroke-width="12"/>';
+ if(kind==='shop')return roomShelf(50,235,345,305,colors)+roomShelf(1205,235,345,305,colors)+roomLantern(535,215)+roomLantern(1065,215);
+ if(kind==='story')return roomWindow(570,110,460,360,true)+roomPlant(225,525,1.4)+roomPlant(1375,525,1.4)+roomLantern(430,205)+roomLantern(1170,205);
+ return roomWindow(590,115,420,330)+roomShelf(75,270,300,225,colors)+roomShelf(1225,270,300,225,colors)+roomLantern(470,205)+roomLantern(1130,205)+roomPlant(135,545,1.1)+roomPlant(1465,545,1.1)
+}
+function landscapeRoomSource(id){
+ const p=landscapeRoomProfiles[id];if(!p)return null;
+ const outdoor=['garden','pier','shrine'].includes(p.kind);
+ const structure=outdoor?'<g fill="#8ca99a"><path d="M0 315Q160 165 330 285Q500 135 700 300Q900 130 1080 285Q1310 170 1600 300V550H0Z"/></g><path d="M0 420Q240 280 480 410Q800 290 1120 420Q1370 320 1600 420V550H0Z" fill="#6d8d7d"/>':'<path d="M0 0H1600V96Q800 135 0 96Z" fill="#594b3e"/><path d="M0 103Q800 142 1600 103" fill="none" stroke="#a1815e" stroke-width="18"/><path d="M34 110H65V540H34Z M1535 110H1566V540H1535Z" fill="#795e47"/>';
+ let grain='';for(let i=0;i<70;i++){const x=(i*179+31)%1600,y=30+(i*97)%830;grain+='<path d="M'+x+' '+y+'l6 -2" stroke="#5f4b3f" stroke-width=".7" opacity=".07"/>'}
+ const floor='<path d="M0 535Q800 490 1600 535V900H0Z" fill="url(#floor)"/><g fill="none" stroke="#5c5144" opacity=".29"><path d="M0 590Q800 545 1600 590M0 680Q800 630 1600 680M0 790Q800 735 1600 790M0 900Q800 840 1600 900" stroke-width="2"/><path d="M235 528L-85 900M510 517L360 900M800 512V900M1090 517L1240 900M1365 528L1685 900"/></g>';
+ const room='<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900"><defs><linearGradient id="wall" x2="0" y2="1"><stop stop-color="'+p.wall+'"/><stop offset="1" stop-color="#e0cfaa"/></linearGradient><linearGradient id="floor" x2="0" y2="1"><stop stop-color="'+p.floor+'"/><stop offset="1" stop-color="#655346"/></linearGradient><radialGradient id="light"><stop stop-color="#f7d79a" stop-opacity=".58"/><stop offset="1" stop-color="#f7d79a" stop-opacity="0"/></radialGradient></defs><path d="M0 0H1600V900H0Z" fill="url(#wall)"/>'+structure+floor+landscapeSideDetails(p.kind)+grain+'</svg>';
+ return room
+}
+function landscapeRoomImage(id){
+ if(!landscapeSourceCache.has(id)){const source=landscapeRoomSource(id);if(!source)return null;const im=new Image();im.decoding='async';im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(source);landscapeSourceCache.set(id,im)}
+ return landscapeSourceCache.get(id)
+}
+function paintLandscapeRoom(id){
+ if(W/H<1.15||!Object.hasOwn(landscapeRoomProfiles,id))return false;
+ const b=livingBounds(),p=landscapeRoomProfiles[id];
+ ctx.save();
+ const base=ctx.createLinearGradient(b.x,b.y,b.x,b.y+b.h);base.addColorStop(0,p.wall);base.addColorStop(.58,p.accent);base.addColorStop(1,p.floor);ctx.fillStyle=base;ctx.fillRect(b.x,b.y,b.w,b.h);
+ const candidates=p.keys.map(k=>pics[k]).filter(im=>im?.naturalWidth);
+ let chosen=null,fit=null;
+ for(const im of candidates){const candidate=wideSceneFit(im.naturalWidth,im.naturalHeight,b.w,b.h);if(candidate){chosen=im;fit=candidate;break}}
+ if(chosen){ctx.drawImage(chosen,b.x+fit.dx,b.y+fit.dy,fit.w,fit.h)}
+ else{const im=landscapeRoomImage(id);if(im?.naturalWidth){const k=Math.min(b.w/1600,b.h/900),w=1600*k,h=900*k;ctx.drawImage(im,b.x+(b.w-w)/2,b.y+(b.h-h)/2,w,h)}}
+ ctx.restore();return true
+}
+const adaptiveBackdropBefore=paintLivingBackdrop;
+paintLivingBackdrop=function(im){if(paintLandscapeRoom(activePortraitInterior()))return;return adaptiveBackdropBefore(im)};
+const adaptivePortraitBefore=paintPortraitInterior;
+paintPortraitInterior=function(id){if(paintLandscapeRoom(id))return;return adaptivePortraitBefore(id)};
+const adaptiveWarmBefore=warmRoomArt;
+warmRoomArt=function(id){if(paintLandscapeRoom(id))return true;return adaptiveWarmBefore(id)};
+const adaptiveRoomBefore=drawRoom;
+drawRoom=function(){if(W/H>=1.15)paintLandscapeRoom(activePortraitInterior());return adaptiveRoomBefore()};
+const adaptiveActivityBefore=drawActivity;
+drawActivity=function(){if(W/H>=1.15)paintLandscapeRoom(activePortraitInterior());return adaptiveActivityBefore()};
+const adaptiveCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(s,ox,oy){
+ const current=adaptiveCameraBefore(s,ox,oy);
+ if(W/H<1.15)return current;
+ const top=H<500?70:82,bottom=H-(H<500?82:96);
+ const span=activity?(['wonderScene','story','match'].includes(activity)?[185,615,255,695]:['tarot','love'].includes(activity)?[195,605,265,685]:[170,630,265,690]):[110,690,300,750];
+ const [l,r,u,d]=span,fit=Math.max(.08,Math.min((W-32)/(r-l),Math.max(80,bottom-top)/(d-u)));
+ const base=Math.max(.08,Math.min((W-32)/720,Math.max(80,bottom-top)/450));
+ const f=activity&&activityZoomAt>=0?poseEase(Math.min(1,(performance.now()-activityZoomAt)/550)):1;
+ const z=activity?Math.min(fit,base)+(fit-Math.min(fit,base))*f:fit;
+ return {s:z,ox:W/2-(l+r)/2*z,oy:(top+bottom)/2-(u+d)/2*z}
+};
+const adaptivePageStyle=document.createElement('style');adaptivePageStyle.textContent=`
+@media(min-width:900px) and (orientation:landscape){
+ #page .inner{max-width:min(1040px,94vw)!important}
+ #content .portraitTravelGrid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+ #content .lifeBook{max-width:900px!important;padding:22px 26px!important}
+ #content .lifeBook .lifeAttribute{display:grid;grid-template-columns:minmax(180px,1fr) minmax(160px,1fr);column-gap:18px;align-items:center}
+ #content .lifeBook .lifeAttribute small{grid-column:1/-1}
+ #content .travelAlbum{max-width:920px!important}
+ #dialogue:not(.characterSpeech){width:min(620px,60vw)!important;max-height:36dvh!important}
+}
+@media(max-height:500px) and (orientation:landscape){
+ #dialogue:not(.characterSpeech){max-height:45dvh!important;bottom:54px!important}
+ #gameControls button{min-height:40px!important}
+ #game #back:not([hidden]){bottom:60px!important}
+}
+`;document.head.append(adaptivePageStyle);
