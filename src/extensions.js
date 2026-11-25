@@ -3858,7 +3858,7 @@ drawActivity=function(){
 // Dedicated canvas gestures. Capture before legacy canvas listeners.
 function careCapture(e){if(!careIsActive()||$('page').style.display==='block'||talkOpen||transitioning)return false;e.preventDefault();e.stopImmediatePropagation();return true}
 c.addEventListener('pointerdown',e=>{
- if(!careCapture(e))return;const a=state.care;if(a.phase!=='idle')return;const q=point(e);
+ if(!careCapture(e))return;const a=state.care;if(a.phase!=='idle'||a.drag)return;const q=point(e);
  let kind=null;if(Math.hypot(q.x-285,q.y-620)<43)kind='feed';else if(Math.hypot(q.x-400,q.y-620)<43)kind='water';else if(Math.hypot(q.x-510,q.y-615)<46)kind='play';else if(Math.hypot(q.x-a.x,q.y-(a.y-42))<85)kind='pet';
  if(!kind||!careCan(a.values,kind))return;
  if(kind==='play'||kind==='pet')careStart(kind);a.drag={kind,x:q.x,y:q.y,last:performance.now(),id:e.pointerId};a.stroke=0;c.setPointerCapture(e.pointerId)
@@ -3879,7 +3879,7 @@ function careRelease(e,cancel=false){
  if(!cancel&&d.kind==='water'){careMessage('Pour into the right bowl.','把水倒进右边的碗。');return}
  if(a.phase==='pet'||a.phase==='play'){a.phase='return';a.returnFromX=a.x;a.returnFromY=a.y;a.returnAt=t;careMessage('A little more next time. No need to rush.','下次再玩一会儿，别急。');careSync()}
 }
-c.addEventListener('pointerup',e=>careRelease(e),true);c.addEventListener('pointercancel',e=>careRelease(e,true),true);
+c.addEventListener('pointerup',e=>careRelease(e),true);c.addEventListener('pointercancel',e=>careRelease(e,true),true);c.addEventListener('lostpointercapture',e=>careRelease(e,true),true);
 const parkCareCss=document.createElement('style');parkCareCss.textContent='#gameControls.parkCareControls{display:flex!important;flex-direction:column;gap:4px;width:min(95vw,440px);max-width:95vw;padding:6px;background:#eee4ccf5;border:1px solid #ad9974;color:#4b5747;border-radius:5px}#gameControls.parkCareControls[hidden]{display:none!important}.parkCareStats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;width:100%}.parkCareStat{display:flex;flex-direction:column;align-items:center;min-width:0;font-size:10px;line-height:1.2}.parkCareStat progress{width:95%;height:7px;accent-color:#71916f}.parkCareStat:first-child progress,.parkCareStat:last-child progress{accent-color:#b68c59}.parkCareStat small{font-size:10px}.parkCareButtons{display:flex;gap:3px;width:100%}.parkCareButtons button{flex:1;min-width:0;min-height:44px;padding:3px!important;font-size:12px;white-space:normal}.parkCareMessage{font-size:11px;line-height:1.3;text-align:center;min-height:14px}';document.head.append(parkCareCss);
 
 /* Physical action audio. Original synthesized effects, no copyrighted music.
@@ -4386,7 +4386,8 @@ function nostalgiaFlood(board,seeds,color=null){
 }
 function nostalgiaColor(g){const colors=[...new Set(g.board.values())];return colors.length?colors[Math.floor(Math.random()*colors.length)]:0}
 function nostalgiaNew(){
- const board=new Map();for(const p of nostalgiaCells)if(p.row<4)board.set(p.id,Math.floor((p.col+Math.floor(p.row/2))/2)%4);
+ const board=new Map(),offset=Math.floor(Math.random()*4),mirror=Math.random()<.5;
+ for(const p of nostalgiaCells)if(p.row<4){const col=mirror?7-p.row%2-p.col:p.col;board.set(p.id,(Math.floor((col+Math.floor(p.row/2))/2)+offset)%4)}
  const g={board,angle:0,flight:null,remaining:24,score:0,miss:0,particles:[],status:'play',last:t};
  g.color=nostalgiaColor(g);g.next=nostalgiaColor(g);return g
 }
@@ -4404,11 +4405,12 @@ function nostalgiaEnd(g,win){
  nostalgiaSay(win?'win':'lose');refreshControls()
 }
 function nostalgiaFire(){
- if(!nostalgiaActive())return;const g=state.bubbleGame;if(g.status!=='play'||g.flight||g.remaining<=0)return;
- g.remaining--;g.flight={x:400,y:592,vx:Math.sin(g.angle)*570,vy:-Math.cos(g.angle)*570,color:g.color};sound(460);refreshControls()
+ if(!nostalgiaActive())return;const g=state.bubbleGame;if(g.status!=='play'||g.flight||g.remaining<=0||!Number.isFinite(g.angle))return;
+ g.angle=clamp(g.angle,-1.15,1.15);g.remaining--;g.flight={x:400,y:592,vx:Math.sin(g.angle)*570,vy:-Math.cos(g.angle)*570,color:g.color};sound(460);refreshControls()
 }
 function nostalgiaAttach(g,impact=null){
  const f=g.flight;if(!f)return;
+ if(impact!==null&&!nostalgiaEdges.has(impact)){nostalgiaEnd(g,false);return}
  const available=nostalgiaCells.filter(p=>!g.board.has(p.id)&&(impact===null?p.row===0:nostalgiaEdges.get(impact).includes(p.id)));
  available.sort((a,b)=>Math.hypot(a.x-f.x,a.y-f.y)-Math.hypot(b.x-f.x,b.y-f.y));
  if(!available.length){nostalgiaEnd(g,false);return}
@@ -4462,7 +4464,7 @@ refreshControls=function(){
  if(g.status!=='play'){b(el,tr('Play again','再来一局'),()=>{state.bubbleGame=nostalgiaNew();hint('A fresh board. Aim and shoot!','新的一局，瞄准发射！');refreshControls()});b(el,tr('Back to arcade','返回游戏厅'),()=>$('back').click());return}
  const aim=d=>{if(!g.flight)g.angle=clamp(g.angle+d,-1.15,1.15)};
  const left=b(el,'◀',()=>aim(-.12));left.setAttribute('aria-label',tr('Aim left','向左瞄准'));left.disabled=!!g.flight;
- const fire=b(el,tr('Shoot','发射'),nostalgiaFire);fire.disabled=!!g.flight;
+ const fire=b(el,tr('Shoot','发射'),nostalgiaFire);fire.disabled=!!g.flight;fire.setAttribute('aria-label',tr('Shoot. Shots left: ','发射。剩余次数：')+g.remaining);
  const right=b(el,'▶',()=>aim(.12));right.setAttribute('aria-label',tr('Aim right','向右瞄准'));right.disabled=!!g.flight;
 };
 const nostalgiaCSS=document.createElement('style');nostalgiaCSS.textContent='#gameControls.nostalgiaControls{display:flex;gap:8px;max-width:95vw}#gameControls.nostalgiaControls button{min-height:44px;min-width:48px;white-space:normal}';document.head.append(nostalgiaCSS);
@@ -4531,12 +4533,12 @@ const threeTalk={
 function threeActive(){return activity==='woodenThree'&&!!state.threeGame}
 function threeSay(g,key){g.line=townReaction('three-'+g.opponent+'-'+key,threeTalk[g.opponent][key]);hint(...g.line)}
 function threeNew(opponent='cat'){
- const g={opponent,board:Array(9).fill(0),placed:Array(9).fill(-10),result:null,thinking:false,thinkAt:0,turn:1,line:null};
+ const g={opponent:opponent==='auntie'?'auntie':'cat',board:Array(9).fill(0),placed:Array(9).fill(-10),result:null,thinking:false,thinkAt:0,turn:1,line:null};
  threeSay(g,'start');return g
 }
 function threePlace(g,index,who){g.board[index]=who;g.placed[index]=t;sound(who===1?370:310)}
 function threeFinish(g){
- const result=threeWinner(g.board);if(!result)return false;g.result=result;g.thinking=false;
+ if(g.result)return true;const result=threeWinner(g.board);if(!result)return false;g.result=result;g.thinking=false;
  threeSay(g,result.who===1?'win':result.who===2?'lose':'draw');
  if(result.who===1)addItem('Wooden three-in-a-row keepsake','木纹井字棋纪念章');
  refreshControls();return true
@@ -4797,7 +4799,7 @@ albumProfile=function(q){
  const old=q.querySelector('.travellerProgress');if(old){old.replaceChildren();element('strong',v.total+' '+tr('life points','人生积分'),old);const meter=element('progress','',old);meter.max=v.next||Math.max(1,v.total);meter.value=v.total;meter.setAttribute('aria-label',tr('Life progress','人生进度'));element('small',v.next?tr('Next rank at ','下一级需要 ')+v.next:tr('Maximum rank','已满级'),old);b(old,tr('My life journal','摸鱼人生档案'),lifeProfile)}
 };
 const lifeCareBefore=careComplete;
-careComplete=function(action){const active=careIsActive(),profile=active?parkCats[state.petKind??0]:null;lifeCareBefore(action);if(active&&profile&&state.care.phase==='return'){lifeEarn('care:'+profile.name[0],{happiness:2,calm:1},true);lifeHUDRefresh()}};
+careComplete=function(action){const active=careIsActive()&&state.care.phase===action&&careCan(state.care.values,action),profile=active?parkCats[state.petKind??0]:null;lifeCareBefore(action);if(active&&profile&&state.care.phase==='return'){lifeEarn('care:'+profile.name[0],{happiness:2,calm:1},true);lifeHUDRefresh()}};
 
 
 /* Coordinated quality batch: compact HUD, localizable reward feedback, optional
@@ -4841,7 +4843,7 @@ function lifeDailyIdeas(){
  const keys=lifeJournal.daily.day===shrineClock().day?lifeJournal.daily.keys:[];
  return [
  {title:['A little game break','玩一局小游戏'],desc:['Finish a bubble or tic tac toe round. Winning is optional.','完成一局泡泡龙或井字棋，输赢随意。'],done:keys.some(k=>k==='round:bubble'||k==='round:three')},
- {title:['Say hello','找个聊天搭子'],desc:['Meet a resident or play a round against a friend.','认识小镇居民，或跟老熟人下一局棋。'],done:keys.some(k=>k.startsWith('friend:'))},
+ {title:['Say hello','找个聊天搭子'],desc:['Talk to a resident or finish Tic Tac Toe with Mochi or Ah Ma.','跟小镇居民聊聊天，或和麻薯、阿嬷下一局井字棋。'],done:keys.some(k=>k.startsWith('friend:')||k==='round:three')},
  {title:['Let something go','放下一个烦恼'],desc:['Release a bottle or shout by the river.','去码头放个漂流瓶，或者喊一声。'],done:keys.some(k=>k.startsWith('release:'))},
  {title:['Make a cat happy','哄一只小猫开心'],desc:['Complete a care activity in the park.','去公园陪小猫完成一次照顾活动。'],done:keys.some(k=>k.startsWith('care:'))}
  ]
