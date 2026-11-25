@@ -329,7 +329,12 @@ jobs:
                 await page.evaluate(()=>{state.rhythmAt=t-15});
                 await page.waitForFunction(()=>state.rhythmStage==='result',{},{timeout:5000});
                 if(!await page.evaluate(()=>items.some(x=>x[0]==='After-hours rhythm ticket')))throw Error('Rhythm ticket missing');
-                await page.evaluate(()=>{room='tarot';activity=null;start('love');readingTopic(1);readingShuffle()});
+                await page.evaluate(()=>{room='tarot';activity=null;state={};closeTalk();updateHUD()});
+                if(options.hasTouch){
+                  await page.waitForFunction(()=>readingRoomPortrait.naturalWidth===800&&readingRoomPortrait.naturalHeight===1400,{},{timeout:10000});
+                  await page.screenshot({path:'test-results/'+name+'-portrait-tarot-room.png'});
+                }
+                await page.evaluate(()=>{start('love');readingTopic(1);readingShuffle()});
                 await page.waitForFunction(()=>state.readStage==='deck',{},{timeout:5000});
                 await page.evaluate(()=>readingDeal());
                 await page.waitForFunction(()=>state.readStage==='cards',{},{timeout:5000});
