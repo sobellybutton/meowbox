@@ -3345,11 +3345,11 @@ function communityPublic(q,generation){
     list.replaceChildren();
     if(!messages.length)element('p',tr('Quiet moment. Say hello to the next traveller.','此刻很安静，给下一位旅人留句问候吧。'),list,'communityMuted');
     for(const m of messages){const row=element('article','',list,'townChatLine');element('strong',String(m.name||'').slice(0,24),row);if(m.replyName)element('small',tr('In reply to ','回复 ')+String(m.replyName).slice(0,24),row,'communityMuted');element('p',String(m.text||'').slice(0,180),row);const reply=b(row,tr('Reply','回复'),()=>chooseReply(m));reply.disabled=!communityNickname();const report=b(row,tr('Report','举报'),async()=>{report.disabled=true;try{await communityRequest('/report',{method:'POST',body:JSON.stringify({id:m.id})});report.textContent=tr('Reported','已举报')}catch{report.disabled=false;status.textContent=tr('Report could not be sent.','举报未发送成功。')}});report.className='communityReport';if(health.reactions===true){
- const bar=element('div','',row,'communityReactions');for(const [kind,en,cn] of [['laugh','Funny','笑死'],['heart','Sending love','抱抱'],['same','Same here','我也是']]){
+ const bar=element('div','',row,'communityReactions');for(const [kind,en,cn] of [['laugh','Funny','笑死'],['heart','Cheer & support','喝彩与鼓励'],['same','Same here','我也是']]){
   const count=Number(m.reactions?.[kind]||0),chosen=m.myReaction===kind;
   const reaction=b(bar,tr(en,cn)+(count>0?' '+count:''),async()=>{
    if(!active()||reaction.disabled)return;const buttons=[...bar.querySelectorAll('button')];buttons.forEach(x=>x.disabled=true);
-   try{await communityRequest('/reactions',{method:'POST',body:JSON.stringify({id:m.id,kind})});if(active())await refresh()}
+   try{await communityRequest('/reactions',{method:'POST',body:JSON.stringify({id:m.id,kind})});if(active()){if(kind==='heart')goodCompanyApplause();await refresh()}}
    catch{if(active())status.textContent=tr('Reaction unavailable. Try again shortly.','暂时无法回应，请稍后重试。')}
    finally{if(active()&&bar.isConnected)buttons.forEach(x=>x.disabled=x.getAttribute('aria-pressed')==='true')}
   });reaction.setAttribute('aria-pressed',String(chosen));reaction.disabled=chosen
@@ -5961,6 +5961,7 @@ function sharedTownEnable(enabled){
  sharedTown.generation++;sharedTown.enabled=!!enabled;sharedTown.error=false;sharedTown.ready=false;sharedTown.actors.clear();sharedTown.gestureUntil=0;
  if(!enabled)sharedTownLeave();else sharedTownHeartbeat();sharedTownRefreshPanel()
 }
+function familiarTravellerIds(){const v=load('familiarTravellersV1',[]);return Array.isArray(v)?[...new Set(v.filter(id=>typeof id==='string'&&/^[a-f0-9]{24}$/.test(id)))].slice(-50):[]}
 function sharedTownRefreshPanel(){
  const q=document.getElementById('sharedTownPanel');if(!q||!q.isConnected)return;
  const status=q.querySelector('[data-shared-status]'),toggle=q.querySelector('[data-shared-toggle]'),list=q.querySelector('[data-shared-list]'),actions=q.querySelector('[data-shared-actions]'),prompt=q.querySelector('[data-shared-prompt]');
@@ -5972,8 +5973,9 @@ function sharedTownRefreshPanel(){
  actions.hidden=!online;prompt.hidden=!online;
  const prompts=[['Resident · Auntie Mei: No need to talk. Just borrow a little peace and quiet.','居民 · 梅姨：不用找话题，安安静静摸会儿鱼。'],['Resident · Grandma: Anyone fancy a tea break? A wave will do.','居民 · 外婆：有人想喝杯茶吗？挥挥手就好。'],['Resident · Temple keeper: Enjoy your stroll. No attendance sheet today.','居民 · 庙祝：慢慢逛，今天不用签到。']];
  prompt.textContent=online?(teaCount>=2?tr('Resident · Grandma: '+teaCount+' of you are taking a tea break. Cheers to doing absolutely nothing!','居民 · 外婆：'+teaCount+' 位旅人一起喝茶，敬今天的无所事事！'):tr(...prompts[peers.length===0?0:peers.length<3?1:2])):'';
- const signature=(zh?'zh:':'en:')+peers.map(a=>a.id).join(',')+'|'+[...sharedTown.serverBlocked].join(',');if(list.dataset.signature===signature)return;list.dataset.signature=signature;list.replaceChildren();
- for(const a of peers){const row=element('div','',list,'sharedTownPeer');element('span',sharedTownLabel(a.id),row);
+ const familiar=familiarTravellerIds();const signature=(zh?'zh:':'en:')+peers.map(a=>a.id).join(',')+'|'+[...sharedTown.serverBlocked].join(',')+'|'+familiar.join(',');if(list.dataset.signature===signature)return;list.dataset.signature=signature;list.replaceChildren();
+ for(const a of peers){const row=element('div','',list,'sharedTownPeer');element('span',sharedTownLabel(a.id)+(familiar.includes(a.id)?tr(' · Familiar face',' · 熟面孔'):''),row);
+  const remember=b(row,familiar.includes(a.id)?tr('Forget face','取消记住'):tr('Remember face','记住旅伴'),()=>{const ids=familiarTravellerIds();save('familiarTravellersV1',ids.includes(a.id)?ids.filter(id=>id!==a.id):[...ids,a.id].slice(-50));sharedTownRefreshPanel()});remember.setAttribute('aria-pressed',String(familiar.includes(a.id)));
   const block=b(row,tr('Block traveller','屏蔽旅人'),async()=>{block.disabled=true;try{await communityRequest('/presence/block',{method:'POST',body:JSON.stringify({id:a.id,blocked:true})});sharedTown.serverBlocked.add(a.id);save('sharedTownBlocksV1',[...sharedTown.serverBlocked]);sharedTown.actors.delete(a.id);sharedTownRefreshPanel()}catch{block.disabled=false;toast(tr('Could not block yet. Try again.','暂未屏蔽成功，请重试。'))}});
   const report=b(row,tr('Report','举报'),async()=>{report.disabled=true;try{const result=await communityRequest('/presence/report',{method:'POST',body:JSON.stringify({id:a.id,reason:'other'})});toast(result.recorded?tr('Report submitted.','举报已提交。'):tr('No new report recorded.','未新增举报记录。'))}catch{report.disabled=false;toast(tr('Report not sent.','举报未发送。'))}})
  }
@@ -5989,9 +5991,10 @@ function sharedTownPage(q){
  const toggle=b(panel,'',()=>sharedTownEnable(!sharedTown.enabled));toggle.dataset.sharedToggle='';
  const prompt=element('p','',panel);prompt.dataset.sharedPrompt='';
  const actions=element('div','',panel);actions.dataset.sharedActions='';
- for(const [gesture,en,cn] of [['wave','Wave','挥挥手'],['cheer','Send encouragement','打个气'],['tea','Tea break?','喝杯茶？']])b(actions,tr(en,cn),()=>{sharedTown.gesture=gesture;sharedTown.gestureUntil=Date.now()+10000;toast(tr('Gesture ready for the next update. Return to the village to see your companions.','动作将在下次联机更新时发送。回到小镇看看旅伴吧。'))});
+ for(const [gesture,en,cn] of [['wave','Wave','挥挥手'],['cheer','Clap & cheer','鼓掌喝彩'],['tea','Tea break?','喝杯茶？']])b(actions,tr(en,cn),()=>{sharedTown.gesture=gesture;sharedTown.gestureUntil=Date.now()+10000;toast(tr('Gesture ready for the next update. Return to the village to see your companions.','动作将在下次联机更新时发送。回到小镇看看旅伴吧。'))});
  const list=element('div','',panel);list.dataset.sharedList='';
- element('small',tr('Blocking is mutual within this community session. Reports go to the moderator.','屏蔽对当前社区会话双方生效，举报会交给管理员。'),panel,'communityMuted');
+ element('small',tr('Remember a face to recognise them when you meet again. This is private to this device, not a friend request or location tracker. Blocking is mutual; reports go to the moderator.','记住旅伴，下次遇见就能认出来。仅本设备可见，不是好友申请，也不会追踪位置。屏蔽对双方生效，举报交给管理员。'),panel,'communityMuted');
+ if(!room&&!activity&&scene!=='home')b(panel,tr('Find the Tea Room','去茶馆集合'),()=>travellerFollowRoute(travellerMoodRoutes.find(v=>v.id==='happy')));else if(!room&&!activity)b(panel,tr('Walk to the Tea Room','走去茶馆'),()=>travellerFollowRoute(travellerMoodRoutes.find(v=>v.id==='happy')));
  b(panel,tr('Back to the village','回到小镇'),()=>{$('page').style.display='none'});
  sharedTownRefreshPanel();
 }
@@ -8181,7 +8184,7 @@ function goodCompanyPage(q){
  element('small',tr('Town residents · fictional companions','小镇居民 · 虚构伙伴'),banner);
  const actions=element('div','',book,'goodCompanyActions');
  b(actions,tr('Meet other travellers','认识其他旅人'),()=>{communityTab='stroll';townChatPage()});
- b(actions,tr('Read & share good news','看看好消息，也分享你的'),goodCompanyPublic);
+ b(actions,tr('Share good news in the square','去广场分享好消息'),goodCompanyPublic);
  element('h2',tr('What are you grateful for today?','今天有什么值得感恩的？'),book);
  let selected=goodCompanyDraft?.kind||'little';
  const picks=element('div','',book,'goodCompanyPicks'),prompt=element('p','',book,'goodCompanyPrompt');
