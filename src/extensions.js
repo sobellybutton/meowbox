@@ -1,0 +1,1459 @@
+
+follower=function(){};
+const proposalStyle=document.createElement('style');
+proposalStyle.textContent= '#proposal{position:fixed;inset:0;z-index:100;background:#22352d;color:#fff7e5;display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding: max(14px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));overflow:hidden;isolation:isolate;font-family:Georgia,"Songti SC",serif}#proposal[hidden]{display:none}#proposal .scenery{position:absolute;inset:0;z-index:-3;width:100%;height:100%;object-fit:cover;object-position:center;opacity:.83}#proposal:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,#192e29a0,transparent 30%,transparent 56%,#172a25ed 96%);pointer-events:none}#proposal header{display:flex;justify-content:space-between;align-items:center;gap:10px}#proposal header span{letter-spacing:.12em;font-size:13px}#proposal button{min-height:44px;background:#fff4dce9;color:#384c3b;border:1px solid #c8b28b;border-radius:8px;padding:10px 16px;box-shadow:none}#proposal .hero{min-height:0;position:relative;display:flex;align-items:flex-end;justify-content:center;overflow:visible}#proposal .traveller{height:90%;max-height:500px;width:82%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 10px 5px #152b2860);animation:quietBreath 3s ease-in-out infinite alternate;z-index:1}#proposal .shadow{position:absolute;bottom:2%;width:30%;height:3%;border-radius:50%;background:#172a2560;filter:blur(4px)}#proposal footer{max-width:480px;width:100%;justify-self:center;text-align:center;display:grid;gap:10px;padding-top:10px}#proposal h1{font-weight:normal;font-size:clamp(27px,6vw,49px);margin:0;line-height:1.12}#proposal p{font:15px/1.45 system-ui,sans-serif;margin:0;text-wrap:pretty}#proposal .actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}#proposal .actions button{flex:1;min-width:44px}#proposal input{font:16px Georgia,serif;padding:12px;background:#fff2db;color:#334a39;border:1px solid #d4be96;border-radius:5px;width:100%;min-height:44px}#proposal .next{background:#e6d0a6;font-weight:bold;width:100%}#proposal .speck{position:absolute;top:20%;left:20%;width:5px;height:5px;background:#fff5be;border-radius:50%;animation:drift 7s linear infinite;pointer-events:none}#proposal .speck:nth-of-type(2){left:70%;animation-delay:-3s}#proposal .speck:nth-of-type(3){left:40%;animation-delay:-5s}@keyframes drift{from{transform:translate(0,15vh);opacity:0}30%{opacity:.8}to{transform:translate(45px,-22vh);opacity:0}}@keyframes quietBreath{to{transform:translateY(-3px)}}#proposal.boarding .traveller{animation:boardWalk .8s ease-in forwards}@keyframes boardWalk{to{transform:translateY(-18px) scale(.75);opacity:0}}@media(min-width:800px){#proposal footer{max-width:440px}#proposal .traveller{max-height:62vh}}@media(max-height:480px){#proposal{grid-template-columns:1fr 1fr;grid-template-rows:auto minmax(0,1fr)}#proposal header{grid-column:1/-1}#proposal footer{align-self:center;max-height:100%;overflow:auto}#proposal .hero{height:100%}}@media(prefers-reduced-motion:reduce){#proposal *{animation:none!important;transition:none!important}}';
+document.head.append(proposalStyle);
+let proposal=document.createElement('section');proposal.id='proposal';proposal.hidden=true;document.body.append(proposal);
+let proStep=0,proAvatar=avatar??0,proDir=0,proName=playerName||'',proPersona=personality??0,proBusy=false;
+function proButton(parent,txt,fn,cls){let e=document.createElement('button');e.textContent=txt;e.onclick=fn;if(cls)e.className=cls;parent.append(e);return e}
+function proRender(){
+ for(const node of [...proposal.children])if(!node.classList.contains('cinema-world'))node.remove();proposal.classList.remove('boarding');proposal.hidden=false;
+ let bg=element('img','',proposal,'scenery');bg.alt='';bg.src=ART[proStep===3?'valleyClean':'streetStation']||ART.valleyClean;
+ for(let i=0;i<3;i++)element('i','',proposal,'speck');
+ let head=element('header','',proposal);element('span',tr('MEOWBOX · A LITTLE WORLD AWAY','摸鱼盒 · 偷得浮生半日闲'),head);const languages=element('div','',head,'languageChoice');for(const [cn,label] of [[false,'EN'],[true,'中文']]){const choice=proButton(languages,label,()=>{if(proBusy||zh===cn)return;zh=cn;save('zh',zh);document.documentElement.lang=zh?'zh':'en';proRender()});choice.setAttribute('aria-pressed',String(zh===cn));choice.disabled=proBusy}
+ let hero=element('div','',proposal,'hero');
+ if(proStep===1||proStep===2){element('div','',hero,'shadow');let im=element('img','',hero,'traveller');im.src=ART['walker'+proAvatar+proDir];im.alt=tr(...names[proAvatar]);let startX=0;hero.ontouchstart=e=>startX=e.changedTouches[0].clientX;hero.ontouchend=e=>{let delta=e.changedTouches[0].clientX-startX;if(proStep===1&&Math.abs(delta)>40){proAvatar=(proAvatar+(delta<0?1:3))%4;proRender()}}}
+ let foot=element('footer','',proposal);
+ if(proStep===0){element('h1',tr('The last train out of reality','逃离现实的末班车'),foot);element('p',avatar===null?tr('No deadlines beyond this platform. Your ticket is waiting.','站台之外，不再有截止日期。你的车票已经准备好了。'):tr('Welcome back. The mountain gate is waiting for you.','欢迎回来，山门还在等你。'),foot);proButton(foot,avatar===null?tr('Sign my ticket','签下车票'):tr('Return to the valley','重返解忧谷'),()=>{proStep=avatar===null?4:3;proRender()},'next')}
+ if(proStep===1){element('h1',tr(...names[proAvatar]),foot);let a=element('div','',foot,'actions');proButton(a,'‹',()=>{proAvatar=(proAvatar+3)%4;proRender()});proButton(a,tr('Turn around','转身'),()=>{proDir=(proDir+1)%3;proRender()});proButton(a,'›',()=>{proAvatar=(proAvatar+1)%4;proRender()});proButton(foot,tr('This is me','就选这个旅人'),()=>{proStep=2;proDir=1;proRender()},'next')}
+ if(proStep===2){element('h1',tr('What brings you here?','今天为何而来？'),foot);let opts=[['A little peace','找点清静'],['A little luck','求点好运'],['Something delicious','找点好吃的'],['Just avoiding work','单纯摸鱼']];let a=element('div','',foot,'actions');opts.forEach((v,i)=>proButton(a,tr(...v),()=>{proPersona=i;proposalBoard()}));}
+ if(proStep===3){element('h1',tr('Fortune Valley','解忧谷'),foot);element('p',tr('The keeper smiles. “Take your time. Nobody clocks in here.”','庙祝笑了笑：“慢慢走，这里不用打卡。”'),foot);/* Arrival advances automatically. */}
+}
+function proposalBoard(){if(proBusy)return;proBusy=true;proposal.classList.add('boarding');setTimeout(()=>{proBusy=false;proStep=3;proRender()},850)}
+function finishProposal(){recordShrineArrival();avatar=proAvatar;playerName=proName.trim();personality=proPersona;save('avatar',avatar);save('playerName',playerName);save('personality',personality);save('begun',true);scene='fortune';save('scene',scene);room=null;activity=null;resetPosition();initNPC();visit(scene);updateHUD();$('arrival').hidden=true;$('page').style.display='none';$('dock').hidden=false;$('hud').style.visibility='';$('small').style.visibility='';$('hint').style.visibility='';proposal.style.transition='opacity .45s';proposal.style.opacity='0';proposal.style.pointerEvents='none';setTimeout(()=>{proposal.hidden=true;proposal.style.opacity='';proposal.style.pointerEvents=''},470)}
+immigration=function(){proStep=1;proAvatar=avatar??0;proDir=0;proName=playerName||'';proRender()};
+entryStory=function(){shrineReturning=avatar!==null;shrineVisitSnapshot=readShrineVisits();shrineArrivalRecorded=false;proStep=shrineReturning?3:0;proAvatar=avatar??0;proName=playerName||'';proPersona=personality??0;proBusy=false;proRender()};
+
+const valleyStyle=document.createElement('style');valleyStyle.textContent='#worldSigns .worldSign{font-size:13px!important;line-height:1.2;max-width:140px;white-space:normal;min-height:44px;padding:8px 12px;background:#efe3c9ed;color:#344737;border:1px solid #8c8a68;border-radius:6px;box-shadow:0 3px 8px #273b3240}#worldSigns .valleyTitle{display:none}#proposal .gate{position:absolute;inset:8% 0 0;display:flex;overflow:hidden;pointer-events:none}#proposal .gate i{width:50%;background:repeating-linear-gradient(90deg,#634b35 0 4px,#91704c 4px 34px,#78583e 34px 38px);border:6px solid #4a3829;box-shadow:inset 0 0 28px #33271988;transition:transform .75s cubic-bezier(.3,.1,.2,1)}#proposal .gate.open i:first-child{transform:translateX(-105%)}#proposal .gate.open i:last-child{transform:translateX(105%)}@media(prefers-reduced-motion:reduce){#proposal .gate i{transition:none}}';document.head.append(valleyStyle);
+const originalProRender=proRender;proRender=function(){originalProRender();if(proStep===3){let gate=element('div','',proposal.querySelector('.hero'),'gate');element('i','',gate);element('i','',gate)}};
+const originalFinishProposal=finishProposal;finishProposal=function(){if(proBusy)return;proBusy=true;let gate=proposal.querySelector('.gate');if(gate)gate.classList.add('open');setTimeout(()=>{proBusy=false;originalFinishProposal();hint('Tap a shop to walk inside. Tarot House is just ahead.','点击店铺，旅人会走进去。塔罗小屋就在前方。')},matchMedia('(prefers-reduced-motion: reduce)').matches?0:780)};
+let signButtons=new Map();syncSigns=function(){let visible=scene==='fortune'&&!room&&!transitioning&&$('page').style.display!=='block'&&avatar!==null&&proposal.hidden&&$('arrival').hidden;signRoot.hidden=!visible;if(!visible)return;if(signButtons.size===0){signRoot.replaceChildren();for(let [id,x,y,en,cn] of maps.fortune.st){let e=element('button','',signRoot,'worldSign');e.onclick=()=>walkDoor(id,x,y);signButtons.set(id,e)}}for(let [id,x,y,en,cn] of maps.fortune.st){let e=signButtons.get(id),sx=cam.ox+x*cam.scale,sy=cam.oy+(y-90)*cam.scale;e.textContent=tr(en,cn);e.style.left=Math.max(66,Math.min(W-66,sx))+'px';e.style.top=sy+'px';e.hidden=sy<85||sy>H-135||sx<-45||sx>W+45;}};
+
+const gatePolish=document.createElement('style');gatePolish.textContent='#proposal .gate{inset:0;pointer-events:auto;cursor:pointer;z-index:2}#proposal .gate i{position:relative;border:5px solid #463424;background:repeating-linear-gradient(90deg,#65472e 0 3px,#947653 3px 29px,#795638 29px 32px)}#proposal .gate i:before,#proposal .gate i:after{content:"";position:absolute;left:0;right:0;height:12px;background:#4e3727;box-shadow:0 2px 3px #241b16;top:25%}#proposal .gate i:after{top:75%}#proposal .gate.open{pointer-events:none}#proposal .gate-traveller{position:absolute;bottom:0;height:44%;width:38%;object-fit:contain;z-index:3;pointer-events:none;filter:drop-shadow(0 6px 4px #172a2560);transform-origin:center bottom;transition:transform 1.15s ease-in,opacity .35s .85s}#proposal .gate-traveller.go{transform:translateY(-24%) scale(.45);opacity:0}#proposal .gate-handle{position:absolute;width:16px;height:30px;border:3px solid #d3b581;border-radius:50%;top:52%;right:12px}#proposal .gate i:last-child .gate-handle{left:12px;right:auto}';document.head.append(gatePolish);
+const previousProGate=proRender;
+proRender=function(){previousProGate();if(proStep!==3)return;let foot=proposal.querySelector('footer'),gate=proposal.querySelector('.gate'),hero=proposal.querySelector('.hero');foot.querySelector('h1').textContent=shrineReturning?tr('Welcome home','欢迎回来'):tr('The mountain gate','解忧谷山门');const welcome=foot.querySelector('p');welcome.textContent=shrineWelcome();welcome.classList.add('shrine-welcome');element('span',tr('Temple keeper','庙祝'),foot,'shrine-speaker');gate.querySelectorAll('i').forEach(el=>element('span','',el,'gate-handle'));gate.setAttribute('aria-hidden','true');let im=element('img','',hero,'gate-traveller');im.src=ART['walker'+proAvatar+'1'];im.alt='';let reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;proBusy=false;const enterGate=()=>{if(proBusy)return;proBusy=true;gate.onclick=null;enter.disabled=true;proposal.querySelectorAll('header button').forEach(b=>b.disabled=true);gate.classList.add('open');sound(440);setTimeout(()=>{im.classList.add('go');setTimeout(()=>{proBusy=false;originalFinishProposal();beginValleyReveal();hint('Explore the valley at your own pace.','慢慢逛，不用赶时间。')},reducedMotion?0:1100)},reducedMotion?0:600)};const enter=proButton(foot,tr('Open the shrine gate','推开山门'),enterGate,'next shrine-enter');gate.onclick=enterGate;paintShrineWeather(hero);};
+const proDrawActivity=drawActivity;
+drawActivity=function(){proDrawActivity();if(activity==='wishes'&&state.wish){ctx.save();let elapsed=Math.max(0,t-(state.lanternAt??t));if(state.lanternAt===undefined)state.lanternAt=t;let rise=Math.min(1,elapsed/1.5);ctx.translate(400+Math.sin(t*1.7)*9,445-115*rise);ctx.rotate(Math.sin(t*1.7)*.07);glow(0,0,64,1);line(0,-46,0,-29,'#b29b69',2);round(-25,-28,50,57,13,'#edab5b','#9e5c38');for(let x of [-14,0,14])line(x,-22,x,23,'#bf783e',1);round(-15,-32,30,7,3,'#634b38');round(-15,27,30,6,3,'#634b38');ctx.restore()}};
+
+let valleyRevealAt=-1;
+function beginValleyReveal(){valleyRevealAt=performance.now();p.x=p.tx=500;p.y=p.ty=Math.max(minY(),maxY()-180);p.facing='up';cam.y=p.y;stopRoute();let dock=$('dock');dock.style.visibility='hidden';$('hud').style.visibility='hidden';$('small').style.visibility='hidden';$('hint').style.visibility='hidden';setTimeout(()=>{if(valleyRevealAt<0)return;p.ty=Math.max(minY(),p.y-230)},1600);setTimeout(()=>{valleyRevealAt=-1;dock.style.visibility='';$('hud').style.visibility='';$('small').style.visibility='';$('hint').style.visibility=''},2900)}
+const oldSyncCinematic=syncSigns;syncSigns=function(){if(valleyRevealAt>=0){signRoot.hidden=true;return}oldSyncCinematic()};
+const suits78=[['Wands','权杖','island'],['Cups','圣杯','home'],['Swords','宝剑','fortune'],['Pentacles','星币','wonder']];
+const ranks78=[['Ace','王牌'],['Two','二'],['Three','三'],['Four','四'],['Five','五'],['Six','六'],['Seven','七'],['Eight','八'],['Nine','九'],['Ten','十'],['Page','侍从'],['Knight','骑士'],['Queen','王后'],['King','国王']];
+const minor78=[
+[['Inspiration and a fresh opportunity','灵感与新机会','A stalled beginning or lack of direction','起步受阻或缺少方向'],['Planning and looking ahead','规划与展望','Fear of stepping beyond the familiar','害怕走出舒适区'],['Progress and expanding horizons','进展与拓展视野','Delays or limited perspective','延误或眼界受限'],['Celebration and a stable foundation','庆祝与稳定的基础','Tension at home or a private celebration','家庭紧张或低调庆祝'],['Competition and differing opinions','竞争与意见分歧','Avoiding conflict or resolving tension','回避冲突或缓解矛盾'],['Recognition and confidence','认可与自信','Self doubt or seeking approval','自我怀疑或过度寻求认可'],['Standing your ground','坚守立场','Feeling overwhelmed by pressure','压力过大'],['Rapid movement and messages','快速进展与消息','Delays and scattered energy','延迟与精力分散'],['Resilience and boundaries','韧性与界限','Exhaustion or defensiveness','疲惫或过度防备'],['Responsibility and heavy burdens','责任与重担','Releasing or delegating burdens','放下或分担负担'],['Curiosity and creative exploration','好奇与创意探索','Restlessness or unfinished ideas','浮躁或想法未落实'],['Bold action and adventure','勇敢行动与冒险','Haste and inconsistency','急躁与反复'],['Warm confidence and independence','热情自信与独立','Insecurity or jealousy','不安或嫉妒'],['Vision and leadership','远见与领导力','Impulsiveness or excessive control','冲动或过度控制']],
+[['Emotional openness and compassion','情感开放与关怀','Blocked emotions or self care needs','情绪阻塞或需要自我照顾'],['Mutual connection and partnership','相互理解与伙伴关系','Imbalance or disconnection','失衡或疏离'],['Friendship and shared joy','友谊与共同喜悦','Social tension or overindulgence','社交紧张或过度享乐'],['Contemplation and missed opportunities','沉思与错过机会','Renewed interest and awareness','重新投入与觉察'],['Loss and disappointment','失落与失望','Acceptance and gradual recovery','接受与逐渐恢复'],['Nostalgia and kindness','怀旧与善意','Living in the past','沉溺过去'],['Choices and imagination','选择与想象','Clarity after confusion','迷茫后的清晰'],['Leaving what no longer fulfills you','离开不再满足内心的事','Fear of moving on','害怕放下'],['Contentment and gratitude','满足与感恩','Superficial satisfaction','表面的满足'],['Harmony and emotional fulfillment','和谐与情感圆满','Strained relationships or expectations','关系紧张或期待落差'],['Sensitivity and a creative message','敏感与创意消息','Emotional immaturity or insecurity','情绪不成熟或不安'],['Romance and following the heart','浪漫与听从内心','Unrealistic expectations','不切实际的期待'],['Empathy and emotional wisdom','同理心与情感智慧','Emotional overwhelm','情绪负荷过重'],['Emotional balance and compassion','情绪平衡与慈悲','Moodiness or emotional manipulation','情绪波动或情感操控']],
+[['Clarity and a breakthrough','清晰与突破','Confusion or miscommunication','困惑或沟通不良'],['A difficult choice or stalemate','艰难选择或僵局','Indecision or emerging clarity','犹豫或逐渐明朗'],['Heartache and painful truth','心痛与残酷的真相','Healing and forgiveness','疗愈与宽恕'],['Rest and recovery','休息与恢复','Burnout or restless recovery','倦怠或无法安心休息'],['Conflict and hollow victories','冲突与空洞的胜利','Reconciliation or lingering resentment','和解或残留怨气'],['Transition towards calmer conditions','走向平静的过渡','Resistance to change','抗拒变化'],['Strategy and discretion','策略与谨慎','Confession or self deception','坦白或自我欺骗'],['Feeling trapped by assumptions','被自身想法困住','Releasing limiting beliefs','摆脱限制性信念'],['Anxiety and sleepless worry','焦虑与夜间忧虑','Seeking support and relief','寻求支持与缓解'],['A painful ending and closure','痛苦的结束与告别','Recovery or resistance to closure','恢复或抗拒结束'],['Curiosity and alert observation','好奇与敏锐观察','Hasty words or gossip','言语草率或流言'],['Determination and swift action','决心与迅速行动','Recklessness or impatience','鲁莽或不耐烦'],['Clear boundaries and discernment','清晰界限与判断力','Harsh judgment or bitterness','严苛判断或怨愤'],['Reason and fair judgment','理性与公正判断','Misuse of authority or rigidity','滥用权威或僵化']],
+[['A practical opportunity','实际的新机会','Missed opportunity or poor planning','错失机会或计划不足'],['Balancing competing priorities','平衡多重事务','Overcommitment or imbalance','承担过多或失衡'],['Teamwork and craftsmanship','合作与技艺','Poor coordination or uneven effort','协调不足或付出不均'],['Security and holding on','安全感与守护','Fear of loss or excessive attachment','害怕失去或过度执着'],['Hardship and need for support','困境与对支持的需要','Recovery and accepting help','恢复与接受帮助'],['Generosity and reciprocity','慷慨与互惠','Unequal giving or hidden conditions','付出不均或附带条件'],['Patience and assessing progress','耐心与检视进展','Impatience or unproductive effort','急躁或无效努力'],['Practice and dedication','练习与专注投入','Perfectionism or lack of focus','完美主义或缺乏专注'],['Independence and earned comfort','独立与努力所得的舒适','Overwork or dependence on appearances','过度工作或依赖外在评价'],['Long term security and legacy','长期稳定与传承','Family or financial instability','家庭或财务不稳'],['Learning and practical ambition','学习与务实目标','Procrastination or lack of planning','拖延或缺乏计划'],['Reliability and steady effort','可靠与稳定努力','Stagnation or excessive routine','停滞或过度循规蹈矩'],['Practical care and resourcefulness','务实照顾与善用资源','Neglecting yourself or imbalance','忽略自己或失衡'],['Stability and responsible stewardship','稳定与负责任的管理','Materialism or stubbornness','物质主义或固执']]
+];
+for(let s=0;s<4;s++)for(let i=0;i<14;i++){let n=ranks78[i],u=suits78[s],m=minor78[s][i];tarotDeck.push([n[0]+' of '+u[0],u[1]+n[1],m[0],m[1]]);arcanaMeanings.push([m[0]+'. Consider how this applies to your situation.',m[1]+'。想想这与你目前的处境有什么关联。',m[2]+'. Consider what needs attention.',m[3]+'。想想哪些地方值得留意。',u[2]])}
+const oldTarotArt78=tarotArt;
+tarotArt=function(x,y,w,h,i,rev=false){if(i<22)return oldTarotArt78(x,y,w,h,i,rev);let s=Math.floor((i-22)/14),n=(i-22)%14;ctx.save();ctx.translate(x,y);if(rev){ctx.translate(w,h);ctx.rotate(Math.PI)}ctx.scale(w/100,h/120);let colors=['#af7751','#557f83','#767a91','#7e9463'];round(0,0,100,120,3,colors[s]);round(4,4,92,112,2,null,'#eed6a0');let count=n<10?n+1:1;for(let j=0;j<count;j++){let cols=count===1?1:count<=4?2:3,rows=Math.ceil(count/cols),xx=(j%cols+.5)*80/cols+10,yy=(Math.floor(j/cols)+.5)*80/rows+15;ctx.save();ctx.translate(xx,yy);if(s===0){line(-6,10,6,-12,'#f3d291',4);line(3,-6,11,-12,'#d2e2ad',2)}else if(s===1){ctx.fillStyle='#f4dba2';ctx.beginPath();ctx.moveTo(-9,-9);ctx.quadraticCurveTo(-8,5,0,5);ctx.quadraticCurveTo(8,5,9,-9);ctx.fill();line(0,4,0,12,'#f4dba2',2);line(-6,12,6,12,'#f4dba2',2)}else if(s===2){line(0,-13,0,10,'#e7e4d1',4);line(-7,5,7,5,'#e5bb75',3)}else{ellipse(0,0,10,10,'#e7bf67');ctx.strokeStyle='#785b39';ctx.beginPath();for(let k=0;k<6;k++){let z=k%5*4*Math.PI/5-Math.PI/2;let a=Math.cos(z)*7,b=Math.sin(z)*7;k?ctx.lineTo(a,b):ctx.moveTo(a,b)}ctx.stroke()}ctx.restore()}if(n>=10)txt(['P','N','Q','K'][n-10],50,100,17,'#fff0c9');ctx.restore()};
+
+const playStyle=document.createElement('style');playStyle.textContent='#dialogue{border-radius:9px!important;max-height:32dvh!important;line-height:1.5;background:#fff4dfed!important}#dialogue #line{white-space:pre-line}#hint{max-width:88%;font-size:13px;line-height:1.4}#dock button{min-height:48px}#page .astroForm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#page .astroForm label{display:flex;flex-direction:column;gap:6px;min-width:0}#page .astroForm input{width:100%;min-width:0;min-height:44px;font-size:16px}#page .astroForm button{grid-column:1/-1;min-height:48px}#page .ziGrid article{overflow-wrap:anywhere;min-width:0;font-size:12px}#page .ziGrid article strong{font-size:12px}@media(max-width:370px){#page .astroForm{grid-template-columns:1fr}#page .ziGrid article{font-size:10px}}';document.head.append(playStyle);
+const startPolished=start;let activityZoomAt=-1;
+start=function(a){startPolished(a);activityZoomAt=performance.now();if(a==='tarot'||a==='love'){state.shuffleUntil=t+.85;hint('The reader is shuffling your cards…','占卜师正在洗牌……');let run=state;setTimeout(()=>{if(state===run)activityHint()},850)}};
+const drawPolished=drawActivity;
+drawActivity=function(){if((activity==='tarot'||activity==='love')&&state.shuffleUntil>t){table();let f=1-(state.shuffleUntil-t)/.85;for(let i=0;i<9;i++){ctx.save();ctx.translate(400+(i-4)*24*Math.sin(f*Math.PI),470+Math.sin(f*10+i)*12);ctx.rotate((i-4)*.085*Math.sin(f*Math.PI));card(-55,-85,110,170,false);ctx.restore()}return}drawPolished();if(activity==='cook'){for(let i=0;i<5;i++){let x=338+i*30,y=448-((t*31+i*14)%78);ctx.save();ctx.globalAlpha=.23*(1-((t*31+i*14)%78)/78);ellipse(x+Math.sin(t*2+i)*10,y,8,16,'#fff4d4');ctx.restore()}}if(activity==='sticks'&&state.drawing){ctx.save();let f=Math.max(0,Math.min(1,1-(state.shakeUntil-t)/.65));ctx.translate(400+f*95,420-f*120+f*f*160);ctx.rotate(f*2.8);round(-4,-45,8,90,2,'#e4c080','#98744d');ctx.restore()}};
+const oldRoomTable=table;table=function(){if(activity==='tarot'||activity==='love'){ctx.save();let g=ctx.createLinearGradient(0,340,0,700);g.addColorStop(0,'#453b4a');g.addColorStop(1,'#242d38');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(90,340);ctx.lineTo(710,340);ctx.lineTo(940,720);ctx.lineTo(-140,720);ctx.closePath();ctx.fill();ctx.strokeStyle='#a78c60';ctx.lineWidth=2;ctx.stroke();for(let i=0;i<22;i++){let x=150+(i*97)%500,y=355+(i*37)%300;ellipse(x,y,1.2,1.2,'#d9c39966')}ctx.restore();return}oldRoomTable()};
+const oldDestinyPolish=destinyPage;destinyPage=function(){oldDestinyPolish();let form=$('content').querySelector('.astroForm');if(!form)return;let labels=[...form.querySelectorAll('label')];if(labels.length<5)return;let locationDetails=document.createElement('details');locationDetails.style.cssText='grid-column:1/-1;padding:12px;border:1px solid #c9b18a;border-radius:8px;background:#fff6e5';element('summary',tr('Birthplace: Singapore · change location','出生地：新加坡 · 更改地点'),locationDetails);let country=element('select','',locationDetails);country.style.cssText='width:100%;min-height:44px;margin:10px 0;font:inherit';let cities=[['Singapore','新加坡',8,1.35,103.82],['Hangzhou','杭州',8,30.27,120.16],['Shanghai','上海',8,31.23,121.47],['Beijing','北京',8,39.9,116.4],['Hong Kong','香港',8,22.32,114.17],['Kuala Lumpur','吉隆坡',8,3.14,101.69],['Taipei','台北',8,25.03,121.57],['Tokyo','东京',9,35.68,139.69]];cities.forEach((city,i)=>{let op=element('option',tr(city[0],city[1]),country);op.value=i});let custom=element('option',tr('Other / manual coordinates','其他地点 / 手动输入'),country);custom.value='custom';labels.slice(2,5).forEach(l=>locationDetails.append(l));country.onchange=()=>{if(country.value==='custom')return;let city=cities[Number(country.value)];labels.slice(2,5).forEach((l,i)=>l.querySelector('input').value=city[i+2]);locationDetails.querySelector('summary').textContent=tr('Birthplace: '+city[0],'出生地：'+city[1])};form.insertBefore(locationDetails,form.querySelector('button'));};
+
+const ticketStyle=document.createElement('style');ticketStyle.textContent='#proposal .rail-ticket{align-self:center;width:min(92%,430px);background:#f3e6c7;color:#504836;position:relative;border:1px solid #a99165;padding:22px 22px 18px;box-shadow:0 14px 40px #15261b88;transform:rotate(-2deg);font-family:Georgia,"Songti SC",serif;display:grid;gap:13px;clip-path:polygon(0 0,100% 0,100% 45%,97% 50%,100% 55%,100% 100%,0 100%,0 55%,3% 50%,0 45%)}#proposal .rail-ticket .rail-brand{font:11px/1.3 system-ui;letter-spacing:.14em;border-bottom:1px solid #ad9978;padding-bottom:8px}#proposal .rail-ticket .route{font-size:clamp(24px,6vw,36px);line-height:1.1}#proposal .rail-ticket .rail-sub{font:12px/1.5 system-ui;color:#76674d}#proposal .rail-ticket label{display:grid;gap:4px;font-size:13px}#proposal .rail-ticket input{border:0;border-bottom:1px solid #85785c;border-radius:0;background:transparent;padding:7px 1px;font-size:23px;min-height:44px}#proposal .rail-ticket .ticket-stub{border-top:1px dashed #aa9770;padding-top:9px;display:flex;justify-content:space-between;align-items:center;font:11px system-ui;letter-spacing:.08em}#proposal .rail-ticket .stampmark{border:2px solid #9d5d45;color:#9d5d45;border-radius:50%;padding:8px;transform:rotate(-10deg)}#proposal .rail-ticket .ticket-confirm{border:1px solid #a69471;background:#e1d0a7;min-height:44px}#proposal .train-window{position:absolute;inset:10% 3%;overflow:hidden;border:12px solid #524337;border-radius:25px;background:#a1b6a2;box-shadow:0 0 0 3px #b8a081,inset 0 0 20px #342c22}#proposal .train-window img{width:145%;height:100%;object-fit:cover;animation:trainLandscape 3s linear forwards}#proposal .train-window:after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,#ffefc425,transparent 40%,#f4e7b522 60%,transparent);pointer-events:none}@keyframes trainLandscape{from{transform:translateX(0)}to{transform:translateX(-30%)}}#proposal .scenery{transition:opacity .5s}#proposal .actions button{background:#f8edda20;color:#fff5df;border-color:#f3e5c67a;backdrop-filter:blur(8px)}#proposal header button{border-radius:50%;padding:8px;min-width:44px}#proposal .next{border-radius:4px}#proposal .ticket-stage footer{display:none}#worldSigns .worldSign{background:#e8d5adf0!important;border:1px solid #8e7654!important;color:#443b2a!important;border-radius:3px!important;font-family:Georgia,"Songti SC",serif!important;font-size:13px!important}#dialogue{background:#263a32ed!important;color:#fff3dc!important;border:1px solid #b0a382!important;box-shadow:0 5px 20px #18282055!important}#dialogue #speaker{color:#e6c990!important}#dialogue #choices button{background:transparent!important;color:#fff3dc!important;border:1px solid #d4c4a880!important;box-shadow:none!important;border-radius:4px!important}#hint{background:#24372cd9!important;color:#fff4db!important;border:0!important;box-shadow:none!important}';
+document.head.append(ticketStyle);
+const ticketBaseRender=proRender;proRender=function(){ticketBaseRender();if(proStep===4){let hero=proposal.querySelector('.hero'),foot=proposal.querySelector('footer');foot.replaceChildren();let ticket=element('form','',hero,'rail-ticket');element('div',tr('MEOWBOX RAILWAY · ONE WAY','摸鱼铁路 · 单程车票'),ticket,'rail-brand');element('div',tr('Reality → Fortune Valley','现实世界 → 解忧谷'),ticket,'route');element('div',tr('Valid for a much needed break.','有效期：直到你想回去为止。'),ticket,'rail-sub');let lab=element('label',tr('Passenger signature','旅客签名'),ticket);let input=element('input','',lab);input.type='text';input.maxLength=24;input.autocomplete='off';input.placeholder=tr('Your name','你的名字');input.value=proName;input.oninput=()=>proName=input.value;let stub=element('div','',ticket,'ticket-stub');element('span',tr('PLATFORM 01 · FREE SEAT','01号站台 · 自由席'),stub);element('span',tr('VALID','准予入境'),stub,'stampmark');let go=element('button',tr('Collect ticket','领取车票'),ticket,'ticket-confirm');go.type='submit';ticket.onsubmit=e=>{e.preventDefault();proStep=1;proRender()}}if(proStep===5){let hero=proposal.querySelector('.hero'),foot=proposal.querySelector('footer');let window=element('div','',hero,'train-window');let scenery=element('img','',window);scenery.src=ART.valleyClean;scenery.alt='';element('p',tr('Next stop, Fortune Valley.','下一站，解忧谷。'),foot);setTimeout(()=>{proBusy=false;proStep=3;proRender()},matchMedia('(prefers-reduced-motion: reduce)').matches?0:1600)}};
+proposalBoard=function(){if(proBusy)return;proBusy=true;proposal.classList.add('boarding');setTimeout(()=>{proStep=5;proRender()},matchMedia('(prefers-reduced-motion: reduce)').matches?0:400)};
+
+const cinemaCSS=document.createElement('style');cinemaCSS.textContent='#proposal .cinema-world{position:absolute;inset:0;z-index:-3;overflow:hidden;background:#293d33}#proposal .cinema-world img{position:absolute;width:100%;height:100%;object-fit:cover;object-position:center;transition:transform 1.25s cubic-bezier(.22,.61,.36,1),opacity .85s ease;will-change:transform,opacity}#proposal .cinema-world img.station{transform:scale(1.06)}#proposal[data-shot="ticket"] .cinema-world img.station{transform:scale(1.25) translate(-5%,4%)}#proposal[data-shot="platform"] .cinema-world img.station{transform:scale(1.1) translate(3%,-1%)}#proposal[data-shot="train"] .cinema-world img.station{transform:scale(1.35) translate(-8%,0);opacity:0}#proposal .cinema-world img.valley{opacity:0;transform:scale(1.12)}#proposal[data-shot="train"] .cinema-world img.valley{opacity:1;transform:scale(1.05)}#proposal[data-shot="shrine"] .cinema-world img.valley{opacity:1;transform:scale(1)}#proposal[data-shot="shrine"] .cinema-world img.station{opacity:0}#proposal .scene-content{display:contents}#proposal .hero,#proposal footer{animation:cinemaIn .45s ease both}@keyframes cinemaIn{from{opacity:0;translate:0 7px}to{opacity:1;translate:0 0}}#proposal .rail-ticket{animation:ticketSlide .7s cubic-bezier(.22,.61,.36,1) both}@keyframes ticketSlide{from{opacity:0;transform:translateY(35px) rotate(2deg)}to{opacity:1;transform:translateY(0) rotate(-2deg)}}@media(prefers-reduced-motion:reduce){#proposal .cinema-world img{transition:none}}';document.head.append(cinemaCSS);
+let cinematicWorld=null;
+const beforeCinemaRender=proRender;
+proRender=function(){let oldWorld=cinematicWorld;beforeCinemaRender();proposal.querySelector('.scenery')?.remove();if(!oldWorld){oldWorld=document.createElement('div');oldWorld.className='cinema-world';for(let [cls,key] of [['station','streetStation'],['valley','valleyClean']]){let im=document.createElement('img');im.className=cls;im.alt='';im.src=ART[key]||ART.valleyClean;oldWorld.append(im)}}cinematicWorld=oldWorld;if(oldWorld.parentNode!==proposal)proposal.prepend(oldWorld);proposal.dataset.shot=({0:'station',4:'ticket',1:'platform',2:'platform',5:'train',3:'shrine'})[proStep]||'station'};
+
+const smoothStyle=document.createElement('style');smoothStyle.textContent='#proposal .hero,#proposal footer{animation:none}#proposal .cinema-world img{transition:transform 1.1s cubic-bezier(.25,.65,.35,1),opacity .7s ease}#proposal .traveller{animation:quietBreath 3s ease-in-out infinite alternate}#proposal.boarding .traveller{animation:boardWalk .8s ease-in forwards}#game canvas{display:block}#game .worldSign{transition:opacity .15s linear}#game #fade.door,#game #fade.curtain,#game #fade.gust{background:#24332c;transition:opacity .32s ease}#game #fade .doorPanel,#game #fade.gust i{display:none!important}';document.head.append(smoothStyle);
+const cinematicFade=fade;
+fade=function(fn,kind='gust',destination=null){if(kind==='postcard')return cinematicFade(fn,kind,destination);if(transitioning)return;transitioning=true;let overlay=$('fade');overlay.replaceChildren();overlay.className='';overlay.style.background='#26342c';overlay.style.transition='opacity .32s ease';overlay.style.opacity='0';let reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;requestAnimationFrame(()=>{overlay.style.opacity='1';setTimeout(()=>{try{fn()}catch(e){console.error(e)}finally{requestAnimationFrame(()=>{overlay.style.opacity='0';setTimeout(()=>{overlay.style.opacity='';overlay.style.background='';overlay.style.transition='';transitioning=false},reduce?0:340)})}},reduce?0:330)})};
+
+const crowdStyle=document.createElement('style');crowdStyle.textContent='#proposal .station-crowd{position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .35s;z-index:-1}#proposal[data-shot="station"] .station-crowd,#proposal[data-shot="platform"] .station-crowd,#proposal[data-shot="ticket"] .station-crowd{opacity:1}#proposal .station-walker{position:absolute;bottom:26%;left:-12%;width:13%;height:22%;animation:stationCross 12s linear infinite;filter:drop-shadow(0 5px 3px #20342866)}#proposal .station-walker img{width:100%;height:100%;object-fit:contain;object-position:center bottom;animation:stationBob .42s ease-in-out infinite alternate}#proposal .station-walker.reverse{bottom:36%;width:10%;height:17%;animation-direction:reverse;animation-duration:16s}#proposal .station-walker.reverse img{transform:scaleX(-1)}@keyframes stationCross{0%{translate:-20vw 0}100%{translate:125vw 0}}@keyframes stationBob{to{translate:0 -3px}}#proposal[data-shot="ticket"] .station-crowd{opacity:.6}#proposal .gate i{transition-duration:.5s}#proposal .gate-traveller{transition:transform .7s ease-in,opacity .2s .5s}#proposal .cinema-world img{transition-duration:.65s,.45s}@media(prefers-reduced-motion:reduce){#proposal .station-walker,#proposal .station-walker img{animation:none!important}}';document.head.append(crowdStyle);
+const crowdRender=proRender;proRender=function(){crowdRender();if(!cinematicWorld.querySelector('.station-crowd')){let crowd=element('div','',cinematicWorld,'station-crowd');for(let i=0;i<3;i++){let w=element('div','',crowd,'station-walker'+(i===1?' reverse':''));w.style.animationDelay=(-i*4-2)+'s';let im=element('img','',w);im.src=ART['walker'+((i+1)%4)+'2'];im.alt=''}}};
+const villageInit=initNPC;initNPC=function(){villageInit();if(!isRoute())return;for(let i=0;i<4;i++){let y=480+i*285,x=435+(i%2)*100;npc.push({x,y,tx:x+30,ty:y-40,kind:0,visitor:i,n:[['Mina','阿敏'],['Jun','小俊'],['Ren','阿仁'],['Hana','小花']][i]})}};
+const villageDraw=drawRoute;drawRoute=function(){villageDraw();for(let n of npc){if(n.visitor===undefined)continue;let moving=Math.hypot(n.tx-n.x,n.ty-n.y)>3,dir=Math.abs(n.ty-n.y)>Math.abs(n.tx-n.x)?(n.ty<n.y?'up':'down'):(n.tx<n.x?'left':'right');backHuman(n.x,n.y,n.visitor,moving,dir,1.18*(.72+n.y/routeHeight*.55));if(Math.hypot(n.x-p.x,n.y-p.y)<160)target(n.x-24,n.y-110,48,115,()=>npcTalk(n))}};
+const villageTalk=npcTalk;npcTalk=function(n){if(n?.visitor===undefined)return villageTalk(n);let lines=[['I came for a fortune. Stayed for the snacks.','本来是来求签的，结果吃了一路。'],['My calendar says I’m in a meeting. Technically, I’m meeting you.','日历显示我在开会。严格来说，我确实在见你。'],['The view up there is worth the stairs. Probably.','山上的风景值得爬楼梯。应该吧。'],['I asked the cards about my career. They suggested a nap.','我问塔罗事业如何，它建议我先睡一觉。']];let k=(n.visitor+(n.chats||0))%lines.length;n.chats=(n.chats||0)+1;say(tr(...n.n),tr(...lines[k]))};
+
+const moveStyle=document.createElement('style');moveStyle.textContent='#moveGuide{position:fixed;z-index:5;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 94px);width:min(88%,360px);display:flex;align-items:center;gap:10px;padding:10px 14px;background:#283c32f0;border:1px solid #b8a985;color:#fff1d5;border-radius:8px;box-shadow:0 4px 18px #17251c55;font:14px/1.4 system-ui}#moveGuide[hidden],#movePad[hidden]{display:none!important}#moveGuide button{margin-left:auto;background:transparent;color:#fff1d5;border:0;box-shadow:none;padding:7px;min-width:44px;min-height:44px}#movePad{position:fixed;z-index:4;left:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 88px);display:grid;grid-template-columns:repeat(3,38px);grid-template-rows:repeat(2,38px);gap:2px;touch-action:none}#movePad button{min-width:38px;min-height:38px;padding:0;background:#263a32b8;color:#fff4dc;border:1px solid #eee0bc80;border-radius:50%;box-shadow:none;font-size:20px;touch-action:none}#movePad button:active{background:#d5b885;color:#2b3e34}#movePad .up{grid-column:2}#movePad .left{grid-row:2;grid-column:1}#movePad .down{grid-row:2;grid-column:2}#movePad .right{grid-row:2;grid-column:3}@media(max-height:480px){#moveGuide{bottom:80px;left:auto;right:14px;transform:none;width:240px}}';document.head.append(moveStyle);
+let moveGuide=element('div','',document.body);moveGuide.id='moveGuide';moveGuide.hidden=true;let moveCopy=element('span','',moveGuide);let moveDismiss=element('button','×',moveGuide);moveDismiss.setAttribute('aria-label','Dismiss movement hint');let movePad=element('div','',document.body);movePad.id='movePad';movePad.hidden=true;let guideDismissed=load('movementTutorialDone',false),guideStage=0,guideOrigin=null,guideTarget=null,guideStartedAt=0;
+moveDismiss.onclick=()=>{guideDismissed=true;save('movementTutorialDone',true);moveGuide.hidden=true};
+for(let [cl,key,arrow] of [['up','ArrowUp','↑'],['left','ArrowLeft','←'],['down','ArrowDown','↓'],['right','ArrowRight','→']]){let btn=element('button',arrow,movePad,cl);btn.setAttribute('aria-label','Move '+cl);btn.onpointerdown=e=>{e.preventDefault();btn.setPointerCapture(e.pointerId);keys[key]=true};btn.onpointerup=btn.onpointercancel=btn.onlostpointercapture=()=>{keys[key]=false};btn.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();keys[key]=true}};btn.onkeyup=()=>{keys[key]=false}}
+const previousMoveReveal=beginValleyReveal;beginValleyReveal=function(){previousMoveReveal();guideStage=0;guideOrigin=null;guideTarget=null;guideStartedAt=0};
+function movementUI(){let visible=proposal.hidden&&avatar!==null&&!activity&&!transitioning&&$('page').style.display!=='block'&&valleyRevealAt<0;movePad.hidden=!visible||!('ontouchstart' in window||navigator.maxTouchPoints>0);if(!visible||room||!isRoute()){moveGuide.hidden=true;requestAnimationFrame(movementUI);return}if(!guideOrigin){guideOrigin={x:p.x,y:p.y};guideTarget={x:p.x,y:Math.max(minY(),p.y-105)};guideStartedAt=performance.now()}if(!guideDismissed){let dist=Math.hypot(p.x-guideOrigin.x,p.y-guideOrigin.y);if(guideStage===0&&dist>65){guideStage=1;guideStartedAt=performance.now()}if(guideStage===1&&(pending||performance.now()-guideStartedAt>8500)){guideDismissed=true;save('movementTutorialDone',true)}moveGuide.hidden=guideDismissed;moveCopy.textContent=guideStage===0?tr('Tap the glowing spot on the path to walk. You can also use the joystick.','点击小路上的光圈前进，也可以使用摇杆。'):tr('Now tap a shop sign. Your traveller will walk inside.','现在点击店铺招牌，旅人会自己走进去。')}else moveGuide.hidden=true;requestAnimationFrame(movementUI)}
+requestAnimationFrame(movementUI);
+const drawGuideRoute=drawRoute;drawRoute=function(){drawGuideRoute();if(guideDismissed||guideStage!==0||!guideTarget||valleyRevealAt>=0||!proposal.hidden)return;let x=guideTarget.x,y=guideTarget.y,pulse=(Math.sin(t*3)+1)/2;ctx.save();ctx.strokeStyle='rgba(255,230,155,'+(.65+pulse*.3)+')';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,23+pulse*7,12+pulse*4,0,0,TAU);ctx.stroke();ctx.fillStyle='#fff2bb';ctx.beginPath();ctx.moveTo(x,y-23);ctx.lineTo(x-8,y-36);ctx.lineTo(x+8,y-36);ctx.closePath();ctx.fill();ctx.restore();target(x-38,y-40,76,75,()=>{stopRoute();p.tx=x;p.ty=y})};
+
+const livingEntranceStyle=document.createElement('style');livingEntranceStyle.textContent='#proposal .platform-ui{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:12px;z-index:5}#proposal .platform-ui button{min-height:44px;min-width:44px;background:#263b32d9;color:#fff3d9;border-color:#d2bd8a;border-radius:50%}#proposal .living-lights{position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 75% 24%,#ffdda52b,transparent 45%);animation:lightDrift 7s ease-in-out infinite alternate}#proposal .platform-player{position:absolute;left:50%;bottom:8%;width:min(55%,250px);height:78%;object-fit:contain;object-position:center bottom;transform:translateX(-50%);transition:left .7s ease,bottom .7s ease,scale .7s ease;filter:drop-shadow(0 8px 5px #17291e66)}#proposal .platform-player.walking{animation:stepBob .28s ease-in-out infinite alternate}#proposal .rail-ticket{transform-origin:center bottom}#proposal .train-window img{animation-duration:1.6s}#proposal .cinema-world img{transition-duration:.65s,.45s}@keyframes stepBob{to{translate:0 -4px}}@keyframes lightDrift{to{opacity:.4;transform:translateX(-4%)}}';document.head.append(livingEntranceStyle);
+const livingRender=proRender;let platformX=50,platformY=8,platformTimer;
+proRender=function(){livingRender();if(!cinematicWorld.querySelector('.living-lights'))element('div','',cinematicWorld,'living-lights');if(proStep!==1&&proStep!==2)return;let hero=proposal.querySelector('.hero'),im=hero.querySelector('.traveller');if(!im)return;im.classList.remove('traveller');im.classList.add('platform-player');im.style.left=platformX+'%';im.style.bottom=platformY+'%';let foot=proposal.querySelector('footer');if(proStep===1){let control=element('div','',hero,'platform-ui');for(let [dx,arrow] of [[-14,'‹'],[14,'›']]){let btn=element('button',arrow,control);btn.setAttribute('aria-label',dx<0?tr('Walk left','向左走'):tr('Walk right','向右走'));btn.onclick=()=>{platformX=Math.max(22,Math.min(78,platformX+dx));im.style.left=platformX+'%';im.src=ART['walker'+proAvatar+'2'];im.style.transform='translateX(-50%) scaleX('+(dx<0?-1:1)+')';im.classList.add('walking');clearTimeout(platformTimer);platformTimer=setTimeout(()=>{im.classList.remove('walking');im.style.transform='translateX(-50%)';im.src=ART['walker'+proAvatar+'0']},720)}}}};
+const priorBoardLiving=proposalBoard;proposalBoard=function(){let im=proposal.querySelector('.platform-player');if(im&&!proBusy){im.classList.add('walking');im.style.left='76%';im.style.bottom='35%';im.style.scale='.48';im.src=ART['walker'+proAvatar+'1'];setTimeout(()=>{if(!proBusy)priorBoardLiving()},650)}else priorBoardLiving()};
+const cameoNamesLiving=[['Master Payrise','周薪驰'],['Lady Clocked Out','甄摸鱼'],['Mr. Raincheck','王家卫班'],['Dragon King Meow','龙傲喵'],['Uncle Offchip','黄不忙'],['Auntie Hong','红姐'],['Chef Grumbles','暴躁大厨'],['Uncle Wok','锅叔'],['Emily in Payroll','薪水博主'],['Kim Out-of-Office','金总'],['Mr. Been-on-Leave','休假先生'],['Miss Holiday','李佳期'],['Mystery Box Merchant','盲盒奸商']];
+const cameoLinesLiving=[['I came to ask for a raise. The gods suggested annual leave.','我来求加薪，神明建议我先请假。'],['One shall not be summoned to a meeting after five.','本宫绝不参加五点后的会议。'],['Some deadlines are like rain. They arrive when you forget your umbrella.','有些截止日期像雨，偏偏在没带伞时出现。'],['The entire valley is mine. Except the bills.','整座解忧谷都是我的，除了账单。'],['Fishing? No, I am conducting aquatic research.','摸鱼？我是在进行水生研究。'],['Have you heard? The boss booked a fortune reading.','听说了吗？老板也来求签了。'],['This soup needs salt, not another committee.','这锅汤需要盐，不需要再开会。'],['The wok is hot. Your inbox can wait.','锅已经热了，邮件等一等。'],['Payroll says happiness is not a reimbursable expense.','财务说快乐不能报销。'],['My out-of-office reply has its own out-of-office reply.','我的自动回复也设置了自动回复。'],['I took leave to recover from planning my leave.','我请假是为了休息一下，毕竟计划休假也很累。'],['I have three trips planned and no annual leave left.','我计划了三趟旅行，年假却没了。'],['A mysterious box. No PowerPoint inside, I promise.','神秘盲盒，保证里面没有PPT。']];
+const initCameoLiving=initNPC;initNPC=function(){initCameoLiving();if(!isRoute())return;let daily=Math.floor(Date.now()/86400000)%cameoNamesLiving.length;npc.filter(n=>n.visitor!==undefined).forEach((n,i)=>{n.cameo=(daily+i*3)%cameoNamesLiving.length;n.n=cameoNamesLiving[n.cameo]})};
+const talkCameoLiving=npcTalk;npcTalk=function(n){if(n?.cameo===undefined)return talkCameoLiving(n);let line=cameoLinesLiving[n.cameo];n.chats=(n.chats||0)+1;let follow=n.chats%2===0?tr(' Anyway, if anyone asks, we are networking.',' 对了，有人问就说我们在拓展人脉。'):'';say(tr(...n.n),tr(...line)+follow);if(typeof addItem==='function')addItem('Met '+n.n[0],'偶遇'+n.n[1])};
+
+const lunarMenu=()=>{let l=lunarInfo();return !!l&&(l.d===1||l.d===15)};
+const dailyLocal=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const pickDaily=(arr,key)=>arr[hash(dailyLocal()+key)%arr.length];
+const lunarNoteStyle=document.createElement('style');lunarNoteStyle.textContent='#lunarRibbon{position:fixed;top:calc(env(safe-area-inset-top,0px) + 65px);left:50%;transform:translateX(-50%);z-index:4;background:#38483aeb;color:#fff2cd;border:1px solid #b6a47c;padding:7px 12px;border-radius:4px;font:13px Georgia,serif;max-width:75%;text-align:center;box-shadow:0 3px 8px #19251c44}#lunarRibbon[hidden]{display:none!important}';document.head.append(lunarNoteStyle);
+let lunarRibbon=element('button','',document.body);lunarRibbon.id='lunarRibbon';lunarRibbon.hidden=true;lunarRibbon.onclick=()=>calendarPage();
+function lunarTick(){let on=lunarMenu()&&proposal.hidden&&!room&&scene==='fortune'&&valleyRevealAt<0&&$('page').style.display!=='block';lunarRibbon.hidden=!on;if(on){let l=lunarInfo();lunarRibbon.textContent=tr('Lunar day '+l.d+' · Vegetarian day', (l.d===1?'初一':'十五')+' · 今日宜吃素')}setTimeout(lunarTick,1000)}lunarTick();
+const seasonalGreetings={
+tarot:[['The cards are ready. Your emails can wait.','牌已经洗好了，邮件先放一边。'],['Ask about love, work or whatever keeps you awake.','问感情、事业，或让你睡不着的事。'],['Take a seat. There is no rush to know everything.','坐吧，不用急着知道所有答案。']],
+temple:[['A sincere wish is enough. No appointment needed.','心诚就好，不用预约。'],['The gods are listening. Unlike some group chats.','神明在听，不像有些群聊。'],['One question at a time, please. Heaven has a queue.','一次问一件事，天庭也要排队。']],
+kitchen:[['Come hungry. Leave the work talk outside.','饿了就来，工作的话留在门外。'],['Today we cook slowly. No performance appraisal.','今天慢慢煮，不用做绩效考核。'],['Wash your hands. Your boss cannot help with this one.','先洗手，这件事老板帮不了你。']],
+wishes:[['A lantern for the things you cannot put into words.','说不出口的心愿，就交给这盏灯。'],['Write a wish. No need to CC the universe.','写个心愿，不用抄送宇宙。'],['The wind is gentle today. Stay a little longer.','今天风很轻，多待一会儿吧。']],
+arcade:[['The machine is in a good mood. Or so it claims.','机器说自己今天心情不错。'],['Aim carefully. These plushies have no deadlines.','慢慢瞄准，玩偶没有截止日期。']],
+destiny:[['Your birth chart is a map, not a prison.','命盘是一张地图，不是一座牢笼。'],['Let us look at your stars before your inbox.','先看看星星，再看收件箱。']]
+};
+const prevSeasonIntro=roomIntro;roomIntro=function(){prevSeasonIntro();if(room==='temple'&&lunarMenu()){toast(tr('It is lunar day '+lunarInfo().d+'. Vegetarian meals are available at Grandma’s today.', '今天农历'+(lunarInfo().d===1?'初一':'十五')+'，有吃素习惯的旅人，外婆今天准备了素食。'));return}if(room==='kitchen'&&lunarMenu()){toast(tr('Grandma: Mushroom, greens and tofu today. Come eat!','外婆：今天初一十五，香菇青菜豆腐汤，来吃饭啦！'));return}let pool=seasonalGreetings[room];if(pool)toast(tr(...pickDaily(pool,room)))};
+const prevSeasonStart=start;start=function(id){prevSeasonStart(id);if(id==='cook'){state.vegetarian=lunarMenu();state.recipe=state.vegetarian?['Mushroom and tofu soup','香菇豆腐汤']:pickDaily([['Tomato and egg soup','番茄蛋汤'],['Tomato and greens soup','番茄青菜汤'],['Grandma’s comfort soup','外婆暖心汤']],'recipe');hint(tr('Today’s recipe: '+state.recipe[0]+'. Drag ingredients into the pot.','今日菜谱：'+state.recipe[1]+'。把食材拖入锅中。'),'今日菜谱：'+state.recipe[1]+'。把食材拖入锅中。')}};
+const priorSeasonDraw=drawActivity;drawActivity=function(){priorSeasonDraw();if(activity==='cook'&&state.recipe){ctx.save();txt(tr(...state.recipe),400,350,18,'#fff1c8');ctx.restore()}};
+const oldFortuneVariation=arcanaReading;arcanaReading=function(d,rev){let base=oldFortuneVariation(d,rev);let lines=[['Give yourself a moment before responding to anything urgent.','遇到急事，先给自己一点思考的时间。'],['Notice what you can change, and what you can leave alone.','分清哪些事能改变，哪些事可以放下。'],['One small practical step is enough for today.','今天先做好一件小事就够了。']];return base+' '+tr(...pickDaily(lines,d[0]+rev))};
+
+/* Proposal polish: a single depth-sorted world pass, reliable signs and contextual interaction. */
+const proposalPolish=document.createElement('style');proposalPolish.textContent='#proposal .cinema-world{background:#34493b}#proposal .cinema-world img{object-fit:contain;background:#34493b}#proposal[data-shot="ticket"] .cinema-world img.station{transform:scale(1.08)}#proposal[data-shot="platform"] .cinema-world img.station{transform:scale(1.04)}#proposal .gate{max-width:520px;left:50%;width:100%;transform:translateX(-50%)}#proposal .gate-traveller{height:38%}#proposal footer{padding-bottom:4px}#worldSigns{z-index:2;pointer-events:none}#worldSigns .worldSign{pointer-events:auto!important;touch-action:manipulation;white-space:nowrap!important;max-width:calc(100vw - 16px)!important;min-height:44px!important;padding:7px 10px!important;font-size:12px!important;letter-spacing:.02em;box-shadow:0 2px 5px #322b2150!important}#moveGuide{bottom:calc(env(safe-area-inset-bottom,0px) + 158px);font-size:13px}#movePad{grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px)}#movePad button{min-width:44px;min-height:44px}#dialogue{max-height:42dvh!important;overflow:auto!important}#dialogue #choices{display:flex;flex-wrap:wrap;gap:6px}#dialogue #choices button{min-height:44px}#page .astroResult{overflow-wrap:anywhere}#page .astroForm details label{margin-top:10px}#page .v9scene{border-radius:5px!important}#gameControls button{min-height:44px}#fade{pointer-events:none!important}@media(max-height:480px){#moveGuide{bottom:80px;right:12px;left:auto;max-width:45vw;transform:none}#proposal .rail-ticket{padding:12px;gap:6px}}';document.head.append(proposalPolish);
+const signAnchorsProposal={tarot:[560,488],destiny:[300,715],temple:[680,943],wishes:[495,1190],station:[660,323]};
+syncSigns=function(){let show=scene==='fortune'&&!room&&!transitioning&&$('page').style.display!=='block'&&avatar!==null&&proposal.hidden&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;signRoot.hidden=!show;if(!show)return;if(signButtons.size!==maps.fortune.st.length){signRoot.replaceChildren();signButtons.clear();for(let [id,x,y,en,cn] of maps.fortune.st){let e=element('button','',signRoot,'worldSign');e.onclick=()=>walkDoor(id,x,y);signButtons.set(id,e)}}for(let [id,x,y,en,cn] of maps.fortune.st){let e=signButtons.get(id),[ax,ay]=signAnchorsProposal[id]||[x,y-90],sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;if(e.textContent!==tr(en,cn))e.textContent=tr(en,cn);e.hidden=sy<Math.min(145,H*.22)||sy>H-115||sx<0||sx>W;if(!e.hidden){const half=Math.min(W/2-8,(e.offsetWidth||100)/2+8);e.style.left=Math.max(half,Math.min(W-half,sx))+'px';e.style.top=sy+'px'}}};
+drawRoute=function(){if(pics.valleyClean?.naturalWidth)ctx.drawImage(pics.valleyClean,0,0,1000,routeHeight);for(let [x,y,r,i] of [[108,1280,36,0],[130,912,35,1],[475,918,36,2],[620,664,36,3],[960,594,30,4],[306,407,33,5],[855,267,35,6]])glow(x,y,r,i);for(let i=0;i<18;i++){let x=((i*91-t*(8+i%7))%1000+1000)%1000,y=(i*83+t*(14+i%8))%routeHeight;petal(x,y,3+i%4,i)}for(let [id,x,y] of maps.fortune.st){let z=doorZones[id];if(z)target(z[0],z[1],z[2],z[3],()=>walkDoor(id,x,y))}for(let n of [...npc,p].sort((a,b)=>a.y-b.y)){let sc=.72+n.y/routeHeight*.55;if(n===p){continue}let dx=n.tx-n.x,dy=n.ty-n.y,moving=Math.hypot(dx,dy)>3,dir=Math.abs(dy)>Math.abs(dx)?dy<0?'up':'down':dx<0?'left':'right';if(n.kind===2&&n.visitor===undefined){cat(n.x,n.y,0,moving,.65*sc)}else backHuman(n.x,n.y,n.visitor??1,moving,dir,1.22*sc);if(Math.hypot(n.x-p.x,n.y-p.y)<170&&valleyRevealAt<0){let label=n.visitor===undefined?tr(...n.n):'···';ctx.save();ctx.font='14px Georgia';let w=Math.max(34,ctx.measureText(label).width+16);round(n.x-w/2,n.y-111,w,24,5,'#fff0d9e8','#b39a70');txt(label,n.x,n.y-99,13);ctx.restore();target(n.x-36,n.y-115,72,115,()=>npcTalk(n))}}const playerScale=Math.max(1.65*(.72+p.y/routeHeight*.55),54/(85*Math.max(.01,cam.scale)));ctx.save();ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';backHuman(p.x,p.y,avatar??0,p.walk,p.facing||'up',playerScale);ctx.restore();if(!guideDismissed&&guideStage===0&&guideTarget&&valleyRevealAt<0&&proposal.hidden){let {x,y}=guideTarget,f=(Math.sin(t*3)+1)/2;ctx.save();ctx.strokeStyle='rgba(255,230,155,'+(.65+f*.3)+')';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,23+f*7,12+f*4,0,0,TAU);ctx.stroke();ctx.restore();target(x-40,y-40,80,80,()=>{stopRoute();p.tx=x;p.ty=y})}};
+let lanternMemories=load('proposalLanternCount',0);
+const worldActivityDraw=drawActivity;drawActivity=function(){worldActivityDraw();if(activity==='wishes'){for(let i=0;i<Math.min(lanternMemories,7);i++){let x=185+i*66,y=295+(i%3)*28;ctx.save();ctx.translate(x+Math.sin(t*.9+i)*3,y);ctx.rotate(Math.sin(t*.9+i)*.04);glow(0,0,38,i);line(0,-35,0,-18,'#a68a61',1.5);round(-14,-18,28,35,8,'#db9b51','#875534');line(-5,-15,-5,14,'#ad6d3a');line(5,-15,5,14,'#ad6d3a');ctx.restore()}}};
+const finalGuideStart=start;start=function(id){finalGuideStart(id);if(id==='wishes')state.lanternAt=undefined};
+window.addEventListener('blur',()=>{for(let k in keys)keys[k]=false;drag=null});c.addEventListener('pointercancel',()=>{drag=null});
+const dayReadings=tarotDetails;tarotDetails=function(d,rev){dayReadings(d,rev);let opts=$('choices');for(let [en,cn,advice,adviceZh] of [['Love','感情','Consider how the card relates to mutual understanding, boundaries and what you need from a relationship.','想想这张牌与你的相处方式、界限，以及感情需求有什么关联。'],['Career','事业','Consider the choices you can make at work and what is outside your control.','想想工作中有哪些选择是你能掌握的，哪些并非你能控制。'],['Money','财运','Reflect on spending habits and practical priorities; this is not financial advice.','想想消费习惯与实际需要；这不是投资建议。']]){let btn=element('button',tr(en,cn),opts);btn.onclick=()=>say(tr('Luna','月见'),tr(d[0],d[1])+' · '+orient(rev)+'\n'+arcanaReading(d,rev)+'\n'+tr(advice,adviceZh),[[tr('Back to reading','返回解读'),()=>tarotDetails(d,rev)],[tr('Close','关闭'),closeTalk]])}};
+
+const destinyChamberStyle=document.createElement('style');
+destinyChamberStyle.textContent=`
+#content:has(.destinyChamber){color:#f4e6c7;background:linear-gradient(150deg,#182e36,#293d40 55%,#473e36);border:1px solid #a58b60;padding:clamp(12px,4vw,30px);border-radius:3px}
+#content:has(.destinyChamber)>h1,#content:has(.destinyChamber)>p{display:none}
+#content:has(.destinyChamber) .row button{color:#f4e6c7;background:#203638;border:1px solid #a58b60}
+.destinyChamber{position:relative;isolation:isolate;min-height:185px;overflow:hidden;text-align:center;padding:22px 12px 16px;background:radial-gradient(ellipse at 50% 12%,#b6a16b38,transparent 65%);border-bottom:1px solid #a58b6070}
+.destinyChamber svg{width:100%;max-width:440px;height:140px;display:block;margin:auto}
+.destinyChamber h1{font:normal clamp(25px,6vw,42px) Georgia,serif;margin:0;color:#f7dfaa}
+.destinyChamber p{color:#e5d7b8;font:15px/1.6 Georgia,serif;margin:10px auto;max-width:440px}
+.destinyChamber .star{animation:destinyTwinkle 3s ease-in-out infinite alternate}
+@keyframes destinyTwinkle{from{opacity:.25}to{opacity:1}}
+@keyframes destinyOrbit{to{transform:rotate(360deg)}}
+.destinyChamber .orbit{transform-origin:220px 70px;animation:destinyOrbit 65s linear infinite}
+#content:has(.destinyChamber) .astroForm{margin:18px 0;padding:16px;background:#f0e2c8;color:#514333;border:1px solid #b29b71;border-radius:2px;box-shadow:0 5px 22px #0d202e55}
+#content:has(.destinyChamber) .astroForm input,#content:has(.destinyChamber) .astroForm select{background:#fff5e0;color:#463e30;border:0;border-bottom:1px solid #a58b60;border-radius:0;box-sizing:border-box}
+#content:has(.destinyChamber) .astroForm button{background:#8a513d;color:#fff2d6;border:1px solid #6f4433;border-radius:2px}
+#content:has(.destinyChamber) .astroResult h2{color:#f5dcab;font:normal 24px Georgia,serif;margin-top:25px}
+#content:has(.destinyChamber) .astroThree article{background:#e8d9b8;color:#534334;border:1px solid #b4a079}
+#content:has(.destinyChamber) .ziGrid{position:relative;gap:4px;grid-template-columns:repeat(4,minmax(0,1fr));margin:12px 0}
+#content:has(.destinyChamber) .ziGrid article:not(.blank){background:#e9d9b5;color:#483d30;border:1px solid #a68a58;border-radius:2px;padding:7px 4px;cursor:pointer;min-height:70px;animation:destinyReveal .55s both;animation-delay:calc(var(--i)*60ms)}
+#content:has(.destinyChamber) .ziGrid article.lifePalace{background:#d3a76c;border:2px solid #f6d891}
+#content:has(.destinyChamber) .ziGrid article[aria-pressed=true]{outline:2px solid #eec678;outline-offset:1px}
+#content:has(.destinyChamber) .ziGrid article.blank{background:transparent;border:0;visibility:hidden}
+#content:has(.destinyChamber) .destinyCenter{position:absolute;inset:25% 25%;display:grid;place-content:center;text-align:center;pointer-events:none;color:#e6c98b;font:normal clamp(12px,3vw,21px) Georgia,serif;line-height:1.6;background:radial-gradient(circle,#c6a35d20,transparent 65%)}
+#content:has(.destinyChamber) .destinyReflection{background:#f0e2c8;color:#514333;border-left:4px solid #b89a5e;padding:14px;margin:12px 0;line-height:1.6}
+#content:has(.destinyChamber) .destinySave{min-height:44px;background:#d6b77e;color:#47372a;border:1px solid #9f8356;width:100%}
+@keyframes destinyReveal{from{opacity:0;transform:translateY(6px) scale(.94)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.destinyChamber .star,.destinyChamber .orbit,#content:has(.destinyChamber) .ziGrid article{animation:none!important}}
+`;document.head.append(destinyChamberStyle);
+const destinyBeforeChamber=destinyPage;
+destinyPage=function(){
+ destinyBeforeChamber();
+ let q=$('content'),form=q.querySelector('.astroForm'),out=q.querySelector('.astroResult');if(!form||!out)return;
+ let hero=document.createElement('section');hero.className='destinyChamber';
+ let stars=Array.from({length:32},(_,i)=>'<circle class="star" cx="'+(15+(i*97)%410)+'" cy="'+(7+(i*53)%126)+'" r="'+(i%4===0?1.8:.8)+'" fill="#f7e5b4" style="animation-delay:-'+(i%7)*.4+'s"/>').join('');
+ hero.innerHTML='<svg viewBox="0 0 440 140" aria-hidden="true"><defs><radialGradient id="destinyMoon"><stop stop-color="#fff0bc"/><stop offset="1" stop-color="#c0a273"/></radialGradient></defs>'+stars+'<g class="orbit" stroke="#bca16c" fill="none" opacity=".7"><circle cx="220" cy="70" r="58"/><ellipse cx="220" cy="70" rx="105" ry="38" transform="rotate(-25 220 70)"/><ellipse cx="220" cy="70" rx="105" ry="38" transform="rotate(25 220 70)"/><path d="M220 12v116M162 70h116" stroke-dasharray="2 7"/></g><circle cx="220" cy="70" r="27" fill="url(#destinyMoon)"/><circle cx="231" cy="63" r="23" fill="#263b40"/><g stroke="#dbbf81" stroke-width="1.3" fill="none"><path d="M36 38l43 24 38-35 38 28M292 31l42 33 36-25 33 35"/></g><g fill="#e7cf97"><circle cx="36" cy="38" r="3"/><circle cx="79" cy="62" r="3"/><circle cx="117" cy="27" r="3"/><circle cx="155" cy="55" r="3"/><circle cx="292" cy="31" r="3"/><circle cx="334" cy="64" r="3"/><circle cx="370" cy="39" r="3"/><circle cx="403" cy="74" r="3"/></g></svg>';
+ element('h1',tr('The Observatory','星月命理小馆'),hero);
+ element('p',tr('Astrologer · The stars have been waiting. Your emails can wait a little longer.','命理师：星星等你很久了。至于工作消息，再等等也无妨。'),hero);
+ element('small',tr('A birth chart for reflection, not a prediction. Your birth details are not saved.','命盘仅供自我探索，并非预言。生辰资料不会保存。'),hero);
+ q.insertBefore(hero,form);
+ let row=q.querySelector('.row');if(row&&row.lastElementChild)row.lastElementChild.onclick=()=>{zh=!zh;save('zh',zh);updateHUD();destinyPage()};
+ let birthTime=form.querySelector('input[type=time]');if(birthTime)birthTime.value='';
+ let dateField=form.querySelector('input[type=date]');if(dateField)dateField.max=new Date().toLocaleDateString('en-CA');
+ const prompts=[
+ ['Life','命宫','What part of yourself deserves more attention?','最近，你最想好好照顾自己的哪一面？'],
+ ['Siblings','兄弟','Who makes you feel understood?','谁能让你感觉被理解？'],
+ ['Partner','夫妻','What makes a relationship feel safe and kind?','怎样的关系会让你安心自在？'],
+ ['Children','子女','What are you creating or nurturing?','你正在用心培育什么？'],
+ ['Wealth','财帛','What spending choices reflect your real priorities?','怎样花钱才更符合你真正的需要？'],
+ ['Health','疾厄','What ordinary habit helps you rest?','什么日常习惯能让你好好休息？'],
+ ['Travel','迁移','Where would you go with a free afternoon?','如果有半天空闲，你想去哪里？'],
+ ['Friends','交友','Which friendships feel reciprocal?','哪些朋友让你感觉彼此珍惜？'],
+ ['Career','官禄','What work feels worthwhile to you?','什么样的工作让你觉得有意义？'],
+ ['Property','田宅','What makes a place feel like home?','什么能让一个地方有家的感觉？'],
+ ['Fortune','福德','What brings you peace without needing to achieve anything?','不必完成任何任务，什么也能让你感到快乐？'],
+ ['Parents','父母','What values have you chosen to carry forward?','有哪些价值观是你愿意继续传承的？']];
+ form.addEventListener('submit',()=>{
+ let grid=out.querySelector('.ziGrid');if(!grid)return;
+ let note=element('p',tr('Tap any palace to explore a reflection question. The chart follows the existing main-star calculation; interpretations are reflective, not a verified reading.','点击任意宫位，探索对应的自我反思问题。命盘沿用现有十四主星算法，解读仅供反思，未经专业验证。'),out);
+ out.insertBefore(note,grid);
+ let center=element('div',tr('Twelve Palaces','十二宫')+' · '+tr('Star map','星图'),grid,'destinyCenter');
+ let panel=element('section',tr('Choose a palace. The astrologer is listening.','选一宫吧，命理师在听。'),out,'destinyReflection');panel.setAttribute('aria-live','polite');
+ grid.after(panel);
+ [...grid.querySelectorAll('article:not(.blank)')].forEach((a,i)=>{
+ a.style.setProperty('--i',i);a.tabIndex=0;a.setAttribute('role','button');a.setAttribute('aria-pressed','false');
+ let choose=()=>{let title=a.querySelector('strong')?.textContent||'',p=prompts.find(x=>title.startsWith(tr(x[0],x[1])));if(!p)return;grid.querySelectorAll('[aria-pressed]').forEach(el=>el.setAttribute('aria-pressed','false'));a.setAttribute('aria-pressed','true');panel.replaceChildren();element('strong',tr(p[0],p[1]),panel);element('p',a.querySelector('span')?.textContent||'',panel);element('p',tr(p[2],p[3]),panel);sound(440+i*18)};
+ a.onclick=choose;a.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose()}};
+ });
+ let saveScroll=b(out,tr('Tie the destiny scroll and keep it','系好命理卷轴，收入背包'),()=>{addItem('Observatory destiny scroll','星月命理卷轴');saveScroll.textContent=tr('Scroll collected','卷轴已收藏');saveScroll.disabled=true;sound(660)});saveScroll.className='destinySave';
+ });
+};
+
+const destinyRoomArtStyle=document.createElement('style');
+destinyRoomArtStyle.textContent=`
+#content:has(.destinyChamber){background:#d8c5a1 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath d='M0 0h120v100H0z' filter='url(%23n)' opacity='.08'/%3E%3C/svg%3E");color:#514335;border:0;padding:clamp(10px,3vw,24px);box-shadow:inset 0 0 36px #77553740}
+#content:has(.destinyChamber) .row button{background:#f2e3c5;color:#614b37;border:1px solid #9b8059}
+.destinyChamber{min-height:0;padding:0 0 13px;background:#eee0c4;border:1px solid #a68b65;overflow:hidden}
+.destinyChamber .roomIllustration{display:block;width:100%;height:auto;max-height:320px;object-fit:cover;object-position:50% 45%;aspect-ratio:16/9}
+.destinyChamber .roomArtWrap{position:relative;overflow:hidden;background:#74634c}
+.destinyChamber .roomArtWrap:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,#4a302c55,transparent 40%),radial-gradient(ellipse at 80% 45%,#ffe8a655,transparent 42%);animation:roomGlow 3.5s ease-in-out infinite alternate}
+@keyframes roomGlow{to{opacity:.35}}
+.destinyChamber .roomArtWrap svg{position:absolute;inset:0;width:100%;height:100%;max-width:none;pointer-events:none}
+.destinyChamber h1{color:#5f4934;margin:15px 10px 0;font-size:clamp(25px,5vw,35px)}
+.destinyChamber p{color:#674f3b;padding:0 12px;margin:8px auto}
+.destinyChamber small{display:block;color:#856e54;padding:0 12px;font-size:12px}
+.destinyChamber .keeperNote{border-top:1px solid #c9b38c;margin:10px 16px 0;padding:10px 0 0;text-align:left}
+.destinyChamber .keeperNote strong{color:#9b543d;font:normal 13px Georgia,serif}
+#content:has(.destinyChamber) .astroForm{background:#f4e7cb;box-shadow:0 4px 10px #72513340;border:1px solid #b39871;position:relative}
+#content:has(.destinyChamber) .astroResult h2{color:#634a36}
+#content:has(.destinyChamber) .destinyScrollStage{position:relative;padding:20px 10px;background:repeating-linear-gradient(2deg,#926b4c 0px,#a47c56 3px,#9e7652 6px,#9e7652 15px);box-shadow:inset 0 2px 12px #49302160;border-radius:4px}
+#content:has(.destinyChamber) .destinyScroll{position:relative;padding:17px 10px;background:radial-gradient(ellipse at center,#fff0cf,#e1c89a);color:#624a32;border:1px solid #ae8e59;box-shadow:0 5px 11px #51382166;animation:scrollUnfurl .9s ease-out both;transform-origin:top center}
+#content:has(.destinyChamber) .destinyScroll:before,#content:has(.destinyChamber) .destinyScroll:after{content:"";position:absolute;left:-5px;right:-5px;height:11px;background:linear-gradient(#71533e,#b28b5f 35%,#7f5738);border-radius:5px;box-shadow:0 2px 4px #4e362c55}
+.destinyScroll:before{top:-6px}.destinyScroll:after{bottom:-6px}
+@keyframes scrollUnfurl{from{clip-path:inset(0 0 96% 0);opacity:.65}to{clip-path:inset(0 -6px -8px -6px);opacity:1}}
+#content:has(.destinyChamber) .ziGrid{gap:0;margin:6px 0;border:1px solid #987b50;background:transparent}
+#content:has(.destinyChamber) .ziGrid article:not(.blank){background:transparent;border:0;border-right:1px solid #b1986b;border-bottom:1px solid #b1986b;border-radius:0;color:#63492e;padding:6px 3px;font-family:Georgia,"Songti SC",serif;min-height:78px}
+#content:has(.destinyChamber) .ziGrid article.lifePalace{background:#bc765329;box-shadow:inset 0 0 0 2px #a45c40;border:0}
+#content:has(.destinyChamber) .ziGrid article[aria-pressed=true]{background:#e3b66c70;outline:2px solid #ad6945;outline-offset:-2px}
+#content:has(.destinyChamber) .destinyCenter{color:#936642;background:none;font-size:clamp(11px,3vw,20px);letter-spacing:.04em}
+#content:has(.destinyChamber) .destinyReflection{background:#f3e4c6;border-left:3px solid #a36a4a;color:#604a36;box-shadow:0 2px 8px #5f402c22}
+#content:has(.destinyChamber) .destinySave{background:#8c5c45;color:#fff0d4;border-color:#754c37}
+.destinyScrollTitle{color:#916144;font:normal 18px Georgia,serif;text-align:center;letter-spacing:.12em;margin:0 0 8px}
+@media(max-width:420px){#content:has(.destinyChamber) .destinyScrollStage{padding:15px 5px}#content:has(.destinyChamber) .destinyScroll{padding:12px 3px}#content:has(.destinyChamber) .ziGrid article:not(.blank){font-size:10px;min-height:70px;overflow-wrap:anywhere}#content:has(.destinyChamber) .ziGrid article strong{font-size:11px}}
+@media(prefers-reduced-motion:reduce){.destinyScroll,.roomArtWrap:after{animation:none!important}}
+`;document.head.append(destinyRoomArtStyle);
+const destinyPriorIllustration=destinyPage;
+destinyPage=function(){
+ destinyPriorIllustration();let q=$('content'),hero=q.querySelector('.destinyChamber'),form=q.querySelector('.astroForm'),out=q.querySelector('.astroResult');if(!hero||!form||!out)return;
+ const oldSvg=hero.querySelector('svg');if(oldSvg)oldSvg.remove();
+ let wrap=document.createElement('div');wrap.className='roomArtWrap';let im=document.createElement('img');im.className='roomIllustration';im.alt=tr('Illustrated fortune reading room','手绘命理小馆');im.src=ART.readingInterior||ART.streetDestiny;wrap.append(im);
+ wrap.insertAdjacentHTML('beforeend','<svg viewBox="0 0 600 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g fill="#fff2c7"><circle class="star" cx="98" cy="69" r="2"/><circle class="star" cx="318" cy="55" r="1.5"/><circle class="star" cx="487" cy="113" r="2"/><circle class="star" cx="425" cy="64" r="1.5"/></g><g transform="translate(515 24)"><path d="M0 0v25" stroke="#5e4538" stroke-width="2"/><path d="M-15 31Q0 19 15 31L19 54Q0 67-19 54Z" fill="#e1a55d" stroke="#79513a" stroke-width="2"/><path d="M-7 29Q-11 46-7 58M7 29Q11 46 7 58" stroke="#ae7443" fill="none"/><path d="M-10 27h20M-10 60h20M0 61v15" stroke="#624536" stroke-width="3"/><ellipse class="star" cx="0" cy="45" rx="11" ry="16" fill="#ffe9a5" opacity=".5"/></g><g fill="none" stroke="#e9d8b5" stroke-width="2" opacity=".55"><path d="M82 278q-20-17 0-37t-3-30"><animate attributeName="opacity" values=".1;.7;.1" dur="5s" repeatCount="indefinite"/></path><path d="M89 279q16-22 0-35t7-36"><animate attributeName="opacity" values=".6;.1;.6" dur="6s" repeatCount="indefinite"/></path></g></svg>');
+ hero.prepend(wrap);let h=hero.querySelector('h1');if(h)h.textContent=tr('Destiny House','星月命理小馆');let p=hero.querySelector('p');if(p){p.className='keeperNote';p.replaceChildren();element('strong',tr('Master Yue · ','月师傅：'),p);p.append(document.createTextNode(tr('Come, sit. The tea is warm. Let us see what the stars have to say before your next meeting.','来，坐。茶还热着呢。开会之前，先听听星星怎么说。')))}
+ let submit=form.querySelector('button[type=submit]');if(submit)submit.textContent=tr('Unroll my birth chart','展开我的命盘');
+ let date=form.querySelector('input[type=date]');if(date){let now=new Date(),pad=x=>String(x).padStart(2,'0');date.max=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())}
+ form.addEventListener('submit',()=>{let grid=out.querySelector('.ziGrid');if(!grid)return;let stage=document.createElement('div');stage.className='destinyScrollStage';let scroll=document.createElement('div');scroll.className='destinyScroll';grid.before(stage);stage.append(scroll);element('div',tr('NATAL STAR SCROLL','紫微命盘'),scroll,'destinyScrollTitle');scroll.append(grid);let c=grid.querySelector('.destinyCenter');if(c){c.innerHTML='<svg viewBox="0 0 80 55" width="64" aria-hidden="true"><circle cx="40" cy="27" r="21" fill="none" stroke="#ae8855" stroke-width=".8"/><path d="M10 32L23 17 40 25 57 12 70 34" fill="none" stroke="#a97848"/><g fill="#a97848"><circle cx="10" cy="32" r="2"/><circle cx="23" cy="17" r="2"/><circle cx="40" cy="25" r="3"/><circle cx="57" cy="12" r="2"/><circle cx="70" cy="34" r="2"/></g></svg>';c.append(document.createTextNode(tr('Twelve Palaces','十二宫')))}
+ });
+};
+
+const yueStyle=document.createElement('style');yueStyle.textContent=`
+#content .roomArtWrap .yueActor{position:absolute;bottom:0;right:5%;width:37%;height:85%;z-index:2;overflow:visible;filter:drop-shadow(2px 4px 3px #392a2650);pointer-events:none}
+.yueActor .yueBody{transform-origin:100px 210px;animation:yueBreath 4s ease-in-out infinite}
+.yueActor .yueEyes{transform-origin:100px 68px;animation:yueBlink 6s infinite}
+.yueActor .yueArm{transform-origin:133px 117px;transition:transform .45s ease}
+.yueActor.pointing .yueArm{transform:rotate(27deg)}
+@keyframes yueBreath{50%{transform:translateY(-2px) rotate(-.5deg)}}
+@keyframes yueBlink{0%,46%,49%,100%{transform:scaleY(1)}47%,48%{transform:scaleY(.1)}}
+.yueTopic{display:flex;align-items:center;gap:12px;margin:12px 0;color:#674b32;font:15px/1.5 Georgia,serif}
+.yueTopic svg{flex:0 0 48px;width:48px;height:48px}
+.yueTopic p{margin:0}
+#content .ziGrid .starSeal{width:15px;height:15px;display:block;margin:0 auto 3px;opacity:.8}
+#content .destinyReflection .yueReply{font-style:italic;border-top:1px solid #cbb38e;padding-top:10px}
+@media(prefers-reduced-motion:reduce){.yueActor .yueBody,.yueActor .yueEyes{animation:none}.yueActor .yueArm{transition:none}}
+`;document.head.append(yueStyle);
+const yuePortrait='<svg viewBox="0 0 200 240" class="yueActor" aria-hidden="true"><defs><linearGradient id="yueRobe" x2=".8" y2="1"><stop stop-color="#79877e"/><stop offset="1" stop-color="#3b5855"/></linearGradient><linearGradient id="yueSkin" x2=".5" y2="1"><stop stop-color="#f1d6ad"/><stop offset="1" stop-color="#d5a27c"/></linearGradient></defs><g class="yueBody" stroke="#594b41" stroke-width="1.6" stroke-linejoin="round"><path d="M59 106Q37 123 32 177L23 223Q102 246 177 221L163 152Q156 120 139 106" fill="url(#yueRobe)"/><path d="M71 111L101 147L128 110L142 129L101 172L61 130Z" fill="#d9c49a"/><path d="M98 148L86 225M49 174L42 214M148 169L160 214" fill="none" opacity=".55"/><path d="M77 99L77 119Q100 135 123 119L123 99" fill="url(#yueSkin)"/><path d="M62 47Q57 14 99 10Q140 9 144 48L137 92L64 90Z" fill="#514b49"/><path d="M87 15Q79 -2 101 1Q123 5 115 17" fill="#68605b"/><path d="M69 45Q66 65 70 84Q76 110 100 114Q126 111 134 84L135 44Q105 52 83 33Q80 45 69 45Z" fill="url(#yueSkin)"/><path d="M65 62Q54 54 58 74Q60 84 72 84M134 62Q145 53 142 73Q141 83 130 84" fill="#e4b58c"/><path d="M65 53Q76 36 83 33Q111 52 137 43L135 24Q92 4 69 27Z" fill="#514b49"/><path d="M70 44Q83 15 111 20M122 22Q139 30 139 43" stroke="#a69c91" fill="none" stroke-width="2"/><g class="yueEyes" fill="#473b34" stroke="none"><ellipse cx="85" cy="67" rx="2.6" ry="4"/><ellipse cx="116" cy="67" rx="2.6" ry="4"/></g><path d="M77 59Q85 55 92 59M108 59Q116 55 123 59M100 68L97 78L102 79M92 91Q100 96 109 90" fill="none" stroke-linecap="round"/><path d="M76 85Q84 88 90 86M111 86Q119 89 126 85" fill="none" stroke="#c48d72" opacity=".7"/><path d="M66 117Q38 137 45 169L81 185L89 166L65 151Z" fill="#73877b"/><path d="M79 175Q94 162 105 173L104 182Q94 190 82 186" fill="#eac29a"/><g class="yueArm"><path d="M137 116Q163 128 170 154L142 181L130 166L148 148L124 131Z" fill="#7d8c7c"/><path d="M133 166Q120 168 116 180Q118 188 127 185L142 177Z" fill="#eac29a"/><path d="M121 180L93 188" stroke="#795038" stroke-width="3" stroke-linecap="round"/></g><path d="M49 207Q100 216 152 207L154 222Q100 231 46 222Z" fill="#b38d5d"/><path d="M93 210Q100 202 107 210L108 224L92 224Z" fill="#e0c591"/></g></svg>';
+const beforeYue=destinyPage;
+destinyPage=function(){beforeYue();let q=$('content'),wrap=q.querySelector('.roomArtWrap'),form=q.querySelector('.astroForm'),out=q.querySelector('.astroResult');if(!wrap||!form||!out)return;wrap.insertAdjacentHTML('beforeend',yuePortrait);let actor=wrap.querySelector('.yueActor');
+const replies=[
+['The stars can suggest a question. You still get to write the answer.','星星可以提问，答案还是由你来写。'],
+['A good companion is worth more than a perfectly arranged chart.','有人懂你，比命盘排得漂亮还重要。'],
+['Even the moon has phases. Relationships need room to change.','月亮都有阴晴圆缺，感情也需要一点空间。'],
+['Not everything you nurture needs to become a side hustle.','用心栽培的东西，不一定都要变成副业。'],
+['A budget is more dependable than a lucky number. Tea is on the house.','预算比幸运数字靠谱。今天这杯茶我请。'],
+['Rest is a habit, not a reward for exhaustion.','休息不是累到极限后的奖励，而是日常。'],
+['A short walk counts as an adventure. No leave form required.','出门散个步也算旅行，不必填请假单。'],
+['Keep the friends who let you finish your tea in peace.','珍惜那些让你安心喝完一杯茶的朋友。'],
+['Your job title is not your entire destiny.','你的职位不是你全部的命运。'],
+['Home is somewhere your shoulders can finally relax.','家是一个能让肩膀终于放松的地方。'],
+['Doing nothing can be a perfectly respectable plan.','什么都不做，也可以是很正经的计划。'],
+['Some traditions are worth keeping; others you may gently question.','有些传统值得传承，有些也可以温柔地重新思考。']];
+const palaceNames=['Life','Siblings','Partner','Children','Wealth','Health','Travel','Friends','Career','Property','Fortune','Parents'],palaceZh=['命宫','兄弟','夫妻','子女','财帛','疾厄','迁移','交友','官禄','田宅','福德','父母'];
+form.addEventListener('submit',()=>{let grid=out.querySelector('.ziGrid'),panel=out.querySelector('.destinyReflection');if(!grid||!panel)return;let guide=element('p',tr('Master Yue · Choose a palace to begin our conversation.','月师傅：选一宫，我们慢慢聊。'),panel);guide.className='yueReply';
+[...grid.querySelectorAll('article:not(.blank)')].forEach(a=>{let label=a.querySelector('strong')?.textContent||'',k=palaceNames.findIndex((x,i)=>label.startsWith(tr(x,palaceZh[i])));if(k<0)return;let stamp=document.createElement('span');stamp.innerHTML='<svg viewBox="0 0 24 24" class="starSeal" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#a5794b"/><path d="M12 3Q13 10 21 12Q13 13 12 21Q11 13 3 12Q11 10 12 3" fill="#b48250"/><circle cx="12" cy="12" r="2" fill="#f3dfae"/></svg>';a.prepend(stamp);let reactYue=()=>{actor?.classList.add('pointing');setTimeout(()=>actor?.classList.remove('pointing'),1100);let old=panel.querySelector('.yueReply');if(old)old.remove();element('p',tr('Master Yue: ','月师傅：')+tr(...replies[k]),panel,'yueReply');};a.addEventListener('click',reactYue);a.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')reactYue()});});
+let first=grid.querySelector('.lifePalace');if(first)first.click();
+});};
+
+const tarotOriginalCard=card;
+card=function(x,y,w,h,front,name=''){
+ if((activity!=='tarot'&&activity!=='love')||w<22)return tarotOriginalCard(x,y,w,h,front,name);
+ ctx.save();ctx.translate(x,y);ctx.shadowColor='#271e1d55';ctx.shadowBlur=8;ctx.shadowOffsetY=4;
+ round(0,0,w,h,5,front?'#f6e4bf':'#596b65','#a88959');ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+ if(front){round(w*.045,h*.035,w*.91,h*.93,3,null,'#b89b6b');txt(name,w/2,h*.81,Math.min(14,w/6.5),'#634d37');}
+ else{ctx.save();ctx.scale(w/100,h/155);round(5,5,90,145,3,null,'#e1c68d');round(9,9,82,137,3,null,'#a69e79');ctx.strokeStyle='#d4b97f';ctx.lineWidth=1;for(let j=0;j<4;j++){ctx.save();ctx.translate(j%2?88:12,j<2?12:143);ctx.rotate(j*Math.PI/2);ctx.beginPath();ctx.moveTo(0,14);ctx.quadraticCurveTo(1,1,14,0);ctx.moveTo(0,9);ctx.quadraticCurveTo(9,9,9,0);ctx.stroke();ctx.restore()}
+ ellipse(50,77,28,35,'#405b57');ctx.strokeStyle='#d5bb83';ctx.beginPath();ctx.ellipse(50,77,28,35,0,0,TAU);ctx.stroke();ellipse(50,73,17,17,'#e5c98e');ellipse(58,67,15,15,'#405b57');for(let i=0;i<9;i++){let a=i*TAU/9,xx=50+Math.cos(a)*34,yy=77+Math.sin(a)*43;line(xx-2,yy,xx+2,yy,'#e6cb96',.8);line(xx,yy-2,xx,yy+2,'#e6cb96',.8)}ctx.restore()}
+ ctx.restore();
+};
+const tarotOriginalTable=table;
+table=function(){if(activity!=='tarot'&&activity!=='love')return tarotOriginalTable();ctx.save();let g=ctx.createLinearGradient(0,335,0,730);g.addColorStop(0,'#b3916c');g.addColorStop(.5,'#92694e');g.addColorStop(1,'#78533e');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(100,335);ctx.lineTo(700,335);ctx.lineTo(930,740);ctx.lineTo(-130,740);ctx.closePath();ctx.fill();ctx.clip();for(let i=0;i<34;i++){let yy=342+i*12;ctx.strokeStyle=i%3===0?'#5f402c40':'#e4bd8825';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-130,yy);ctx.bezierCurveTo(120,yy+Math.sin(i)*4,660,yy-4,950,yy+2);ctx.stroke()}ctx.beginPath();ctx.moveTo(185,345);ctx.lineTo(615,345);ctx.lineTo(765,706);ctx.lineTo(35,706);ctx.closePath();ctx.fillStyle='#4c6761';ctx.fill();ctx.strokeStyle='#b59a6e';ctx.lineWidth=2;ctx.stroke();for(let i=0;i<20;i++){let yy=355+i*17;line(183-i*6.5,yy,190-i*6.5,yy+4,'#d1bc8a70',1);line(617+i*6.5,yy,610+i*6.5,yy+4,'#d1bc8a70',1)}ctx.restore();
+ // Warm little tea cup stays on the table while the cards move.
+ ctx.save();ellipse(196,406,27,12,'#463c3060');ellipse(195,402,24,9,'#e1c79f');round(180,377,30,24,5,'#cbb68e','#816a4c');ellipse(195,378,15,6,'#9a6e49');for(let i=0;i<2;i++){ctx.strokeStyle='#fff3d98c';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(190+i*9,374);ctx.quadraticCurveTo(182+i*9+Math.sin(t*1.8+i)*6,362,194+i*9,348);ctx.stroke()}ctx.restore();
+};
+const tarotBeforeStart=start;
+start=function(a){tarotBeforeStart(a);if(a==='tarot'||a==='love'){state.shuffleUntil=0;state.ritual='waiting';state.shuffleCount=0;hint('Tap the deck to shuffle. Then choose your card.','点击牌堆洗牌，然后选牌。')}};
+const tarotBeforeDraw=drawActivity;
+drawActivity=function(){
+ if((activity!=='tarot'&&activity!=='love')||!state.ritual)return tarotBeforeDraw();
+ if(state.ritual==='ready')return tarotBeforeDraw();
+ table();let shuffling=state.ritual==='shuffling',f=shuffling?Math.max(0,Math.min(1,(t-state.ritualStart)/1.15)):0;
+ if(shuffling&&f>=1){state.ritual=state.shuffleCount>=2?'ready':'waiting';hint(state.ritual==='ready'?'Turn over your card when you are ready.':'One more shuffle, or deal the cards. ',state.ritual==='ready'?'准备好了就翻牌吧。':'再洗一次，或者直接发牌。');return}
+ for(let i=0;i<10;i++){let spread=shuffling?Math.sin(f*Math.PI):0,dir=i<5?-1:1;ctx.save();ctx.translate(400+dir*80*spread+(i-4.5)*3,463+Math.sin(f*TAU+i)*spread*9-i*1.4);ctx.rotate((i-4.5)*.012+dir*spread*.16);card(-50,-74,100,148,false);ctx.restore()}
+ let shuffle=()=>{if(state.ritual!=='waiting')return;state.shuffleCount++;state.ritual='shuffling';state.ritualStart=t;sound(360);hint('The deck is being shuffled…','洗牌中……')};
+ target(325,365,150,186,shuffle);txt(shuffling?tr('Shuffling…','洗牌中……'):tr('Tap the deck to shuffle','点击牌堆洗牌'),400,564,19,'#fff3d8');
+ if(!shuffling&&state.shuffleCount>0){label(tr('Deal the cards','发牌'),400,607,()=>{state.ritual='ready';hint('Turn over your card when ready.','准备好了就翻牌吧。');sound(530)})}
+ txt(tr('Take your time. No one is timing you.','慢慢来，又没人给你计时。'),400,642,13,'#f1dbb9');
+};
+const tarotBeforeDetails=tarotDetails;
+tarotDetails=function(d,rev){tarotBeforeDetails(d,rev);let lineEl=$('line');if(lineEl){let phrases=[['The card is not your manager. You can disagree.','牌卡又不是老板，你当然可以不同意。'],['A little reflection, then back to your tea.','想一想，再喝口茶。'],['The future is not a deadline.','未来又不是截止日期。']];lineEl.textContent+='\n\n'+tr(...phrases[hash(d[0]+day())%phrases.length])}};
+
+function templeMoon(x,y,angle,flat){ctx.save();ctx.translate(x,y);ctx.rotate(angle);let g=ctx.createLinearGradient(-35,-24,30,28);g.addColorStop(0,flat?'#f1c191':'#d17e55');g.addColorStop(.45,flat?'#d5a16e':'#a74635');g.addColorStop(1,flat?'#b57750':'#743d32');ctx.beginPath();ctx.moveTo(-33,-11);ctx.bezierCurveTo(-37,28,18,42,34,-10);ctx.bezierCurveTo(16,6,-11,8,-33,-11);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#784b35';ctx.lineWidth=2;ctx.stroke();ctx.beginPath();ctx.moveTo(-30,-11);ctx.bezierCurveTo(-8,8,18,5,32,-10);ctx.strokeStyle=flat?'#f3d4a0':'#e5a27b';ctx.stroke();if(flat){for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(-20+i*5,10+i*3);ctx.quadraticCurveTo(0,24+i*2,21-i*3,10+i*3);ctx.strokeStyle='#a8784b55';ctx.lineWidth=.8;ctx.stroke()}}ctx.restore()}
+const shrineBeforeDraw=drawActivity;
+drawActivity=function(){
+ if(activity!=='moon'&&activity!=='sticks')return shrineBeforeDraw();
+ table();ctx.save();let g=ctx.createRadialGradient(400,470,20,400,470,210);g.addColorStop(0,'#d4a56d');g.addColorStop(1,'#986747');ellipse(400,482,179,122,'#62412b70');ellipse(400,475,175,119,g);ctx.strokeStyle='#e4c18b';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(400,475,163,109,0,0,TAU);ctx.stroke();ctx.restore();
+ if(activity==='moon'){
+ let airborne=state.tossUntil>t,f=airborne?Math.max(0,Math.min(1,1-(state.tossUntil-t)/(state.moonDuration||.55))):1,lift=airborne?Math.sin(f*Math.PI)*(state.moonHeight||95):0;
+ for(let i=0;i<2;i++){let x=350+i*100+(i?1:-1)*Math.sin(f*Math.PI)*21;let bounce=airborne&&f>.76?Math.abs(Math.sin((f-.76)/.24*Math.PI*2))*11*(1-f):0;ellipse(x,499,Math.max(8,30-lift*.12),7,'#52352455');let flat=state.count===0||state.result===2||(state.result===0&&i===0);templeMoon(x,480-lift-bounce,airborne?(i?1:-1)*f*TAU*(i?1.7:1.2):((i?1:-1)*.25),airborne?Math.cos(f*TAU)>0:flat)}
+ let name=state.count?tr(...[['Holy blocks · Yes','圣杯 · 一阴一阳'],['No · both rounded','阴杯 · 两个凸面'],['Laughing blocks · ask again','笑杯 · 两个平面']][state.result]):tr('Ask a question quietly','在心里默念一个问题');
+ txt(airborne?tr('Listening…','静候回应……'):name,400,603,18,'#fff2d8');txt(tr('Tosses: ','次数：')+state.count,400,633,13,'#fff2d8');target(270,390,260,160,()=>{},'moon');
+ }else{
+ let held=drag?.id==='sticks',shaking=(state.shakeUntil||0)>t,xx=400+(held?Math.max(-42,Math.min(42,(drag.x-drag.sx)*.45)):shaking?Math.sin(t*28)*18:0),lift=held?16:0;ctx.save();ctx.translate(xx,476-lift);ctx.rotate(shaking?Math.sin(t*22)*.14:0);ellipse(0,67,53,12,'#56352166');ellipse(0,-24,48,13,'#6d4a32');for(let i=0;i<12;i++){ctx.save();ctx.translate(-36+i*6.5,-27);ctx.rotate((i-5)*.035+(shaking?Math.sin(t*20+i)*.12:0));let yy=-75-(i%4)*6+(shaking?Math.sin(t*27+i)*7:0);round(-3,yy,6,106,2,'#e3bd80','#a67a47');line(-2,yy+4,2,yy+4,'#a54e3d',2);ctx.restore()}
+ let wood=ctx.createLinearGradient(-45,0,45,0);wood.addColorStop(0,'#925d37');wood.addColorStop(.5,'#c99356');wood.addColorStop(1,'#805137');ctx.beginPath();ctx.moveTo(-47,-24);ctx.lineTo(-39,60);ctx.lineTo(-19,72);ctx.lineTo(20,72);ctx.lineTo(39,60);ctx.lineTo(47,-24);ctx.lineTo(23,-14);ctx.lineTo(-23,-14);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle='#69452f';ctx.stroke();for(let [x1,x2,shade] of [[-47,-23,'#69452f35'],[23,47,'#51372455']]){ctx.beginPath();ctx.moveTo(x1,-24);ctx.lineTo(x2,-14);ctx.lineTo(x2*.84,71);ctx.lineTo(x1*.84,60);ctx.closePath();ctx.fillStyle=shade;ctx.fill()}line(-23,-14,-19,72,'#e9bf7955',1.5);line(23,-14,20,72,'#583b2a80',1.5);line(-39,54,-19,65,'#e1b279',2);line(-19,65,20,65,'#e1b279',2);line(20,65,39,54,'#e1b279',2);txt('籤',0,19,31,'#f9e0ad');ctx.restore();
+ if(state.drawing||state.fallenStick){let f=state.drawing?Math.max(0,Math.min(1,1-((state.shakeUntil||t)-t)/.65)):1;ctx.save();ctx.translate(400+f*97,385-70*Math.sin(Math.PI*f)+f*f*120);ctx.rotate(f*1.57);round(-5,-50,10,100,2,'#efd29c','#a57743');if(f>.9){ctx.fillStyle='#9a493a';ctx.font='9px serif';ctx.fillText(String(state.fallenStick||''),-3,-20)}ctx.restore()}
+ txt(state.drawing?tr('A stick is falling…','签文落下来了……'):state.fallenStick?tr('Pick up the numbered stick','拾起落下的签'):tr('Shake or tap the bamboo cup','左右摇动或点击签筒'),400,603,17,'#fff2d8');if(!state.fallenStick&&!state.drawing){target(315,345,160,220,shakeFortuneStick,'sticks');label(tr('Shake the cup','摇签筒'),400,645,shakeFortuneStick)}if(state.fallenStick&&!state.drawing){target(445,450,115,105,()=>templePaperOpen(state.fallenStick));label(tr('Pick up stick','拾签'),500,570,()=>templePaperOpen(state.fallenStick))}
+ }
+};
+const templeStart=start;start=function(a){templeStart(a);if(a==='moon')hint('Think of a yes-or-no question. Swipe the blocks upwards and release.','默念一个是非问题，向上滑动筊杯再松手。');if(a==='sticks')hint('Drag the cup from side to side to draw a fortune stick.','左右拖动签筒，摇出一支签。')};
+const shrineReact=react;react=function(en,cn){if(activity==='moon'&&state.count>0&&!(state.tossUntil>t)){let r=state.result,streak=state.noStreak||0;let lines=r===0?[['A yes! Even heaven approves of your tea break.','圣杯！连神明都批准你去喝茶。'],['A little encouragement, not a guarantee.','给你一点鼓励，不是保证哦。']]:r===2?[['Heaven is smiling. Perhaps rephrase that question.','神明笑了，要不换个问法？'],['Even the gods need context.','神明也需要一点前情提要。']]:streak>=3?[['Three refusals or more. The temple keeper quietly offers you a seat.','都被拒三次以上了，庙祝默默搬来一张椅子。'],['Perhaps stop interrogating heaven. Have a biscuit.','别审问天庭了，来块饼干吧。']]:streak===2?[['Two noes. No need to send a follow-up email.','连续两个阴杯，不必再发跟进邮件了。']]:[['Not this time. Your luck is not your worth.','这次不行，运气可不代表你的价值。']];let l=lines[(state.count-1)%lines.length];return shrineReact(...l)}return shrineReact(en,cn)};
+
+let gardenWishes=load('gardenWishesV1',[]);if(!Array.isArray(gardenWishes))gardenWishes=[];
+const gardenColors=['#dca15d','#c87962','#e4c17c','#a3ab8b','#b69aa7'];
+function gardenLantern(x,y,i,sc=1){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(Math.sin(t*1.35+i)*.045);glow(0,0,48,i);line(0,-47,0,-27,'#94704c',1.5);let g=ctx.createRadialGradient(-7,-8,1,0,0,35);g.addColorStop(0,'#fff0bd');g.addColorStop(.5,gardenColors[i%5]);g.addColorStop(1,'#916144');ctx.beginPath();ctx.moveTo(-18,-28);ctx.bezierCurveTo(-37,-12,-29,22,-15,29);ctx.lineTo(15,29);ctx.bezierCurveTo(29,22,37,-12,18,-28);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#92613e';ctx.stroke();for(let j of [-13,0,13]){ctx.beginPath();ctx.moveTo(j*.8,-26);ctx.quadraticCurveTo(j*1.6,0,j*.8,27);ctx.strokeStyle='#a6764c88';ctx.stroke()}round(-16,-32,32,6,2,'#78553e');round(-15,28,30,6,2,'#78553e');line(0,34,0,46,'#ab7352',2);ctx.restore()}
+function gardenPosition(i){return {x:205+(i%6)*78,y:337+Math.floor(i/6)*68+Math.sin(i*1.8)*15}}
+function gardenWishBook(){
+ page(tr('Letters to the evening sky','寄给夜空的信'),tr('Your wishes are stored only on this device.','心愿仅保存在这台设备上。'),q=>{if(!gardenWishes.length)element('p',tr('Your garden is waiting for its first lantern.','花园还在等第一盏灯。'),q);gardenWishes.slice().reverse().forEach(w=>{let a=element('article','',q);a.style.cssText='padding:14px;margin:10px 0;background:#f3e4c6;color:#654b36;border-left:3px solid #b78254';element('small',w.date,a);let p=element('p',w.text,a);p.style.whiteSpace='pre-wrap';b(a,tr('Remove this wish','取下这盏灯'),()=>{gardenWishes=gardenWishes.filter(v=>v.id!==w.id);save('gardenWishesV1',gardenWishes);gardenWishBook()})});b(q,tr('Return to the garden','回到花园'),()=>{$('page').style.display='none'})})
+}
+function gardenWrite(){page(tr('A little wish','写一份小小心愿'),tr('Write something for yourself. No one else can read it here.','写给自己的一句话，这里不会公开给别人。'),q=>{let ta=element('textarea','',q);ta.maxLength=300;ta.placeholder=tr('Dear universe…','亲爱的宇宙……');ta.style.cssText='width:100%;min-height:125px;background:#f4e7cb;color:#654b36;padding:14px;font:16px Georgia,serif;border:1px solid #b6976c;box-sizing:border-box';b(q,tr('Fold the wish into a lantern','把心愿折进灯里'),()=>{let v=ta.value.trim();if(!v){ta.focus();return}state.pendingGardenWish=v;state.gardenStage='carry';$('page').style.display='none';hint('Tap a lantern hook to hang your wish.','点击挂钩，把心愿灯挂起来。')})})}
+const gardenBeforeStart=start;start=function(a){gardenBeforeStart(a);if(a==='wishes'){state.gardenStage='write';hint('Tap the blank wish paper, then choose where to hang your lantern.','点击空白心愿纸，再选个地方挂灯。')}};
+const gardenBeforeDraw=drawActivity;drawActivity=function(){if(activity!=='wishes')return gardenBeforeDraw();
+ ctx.save();for(let i=0;i<22;i++){let x=175+(i*71)%455,y=285+(i*37)%330;ctx.globalAlpha=.25+.2*Math.sin(t*.8+i);ellipse(x+Math.sin(t*.65+i)*6,y,1.6,1.6,'#ffe6a6')}ctx.restore();
+
+ let recent=gardenWishes.slice(state.gardenStage==='carry'?-11:-12);let assigned=new Set(),display=recent.map(w=>{let slot=Number.isInteger(w.slot)&&w.slot>=0&&w.slot<12&&!assigned.has(w.slot)?w.slot:Array.from({length:12},(_,i)=>i).find(i=>!assigned.has(i));assigned.add(slot);return {w,slot}});
+ for(let row=0;row<2;row++){let y=290+row*68;ctx.beginPath();ctx.moveTo(170,y);ctx.quadraticCurveTo(400,y+27,630,y);ctx.strokeStyle='#71543c';ctx.lineWidth=2;ctx.stroke()}
+ display.forEach(({w,slot},i)=>{let pos=gardenPosition(slot),isNew=state.gardenStage==='rise'&&i===display.length-1;if(isNew)return;gardenLantern(pos.x,pos.y,slot,.82);if(state.gardenStage!=='carry')target(pos.x-28,pos.y-30,56,65,()=>gardenWishBook())});
+ if(state.gardenStage==='carry'){gardenLantern(400,525,0,1);for(let n=0;n<12;n++){if(assigned.has(n))continue;let pos=gardenPosition(n);ctx.save();ctx.strokeStyle='#ffe9b7';ctx.lineWidth=2;ctx.beginPath();ctx.arc(pos.x,pos.y-37,7+Math.sin(t*3+n)*2,0,TAU);ctx.stroke();ctx.restore();target(pos.x-23,pos.y-55,46,50,()=>{if(!state.pendingGardenWish)return;gardenWishes.push({id:Date.now()+'-'+Math.random().toString(36).slice(2),text:state.pendingGardenWish,date:new Date().toLocaleDateString(),slot:n});save('gardenWishesV1',gardenWishes);state.pendingGardenWish='';state.gardenStage='rise';state.gardenRise=t;state.gardenSlot=n;addItem('Wishing lantern','许愿灯');sound(660);hint('Your wish has found its place.','心愿找到自己的位置了。')})}txt(tr('Choose any glowing hook','选一个喜欢的发光挂钩'),400,597,18,'#fff0d5');
+ }else if(state.gardenStage==='rise'){let f=Math.min(1,(t-state.gardenRise)/1.6),e=f*f*(3-2*f),i=state.gardenSlot??display[display.length-1]?.slot??0,pos=gardenPosition(i);gardenLantern(400+(pos.x-400)*e,525+(pos.y-525)*e,i,1-.18*e);ctx.save();ctx.globalAlpha=Math.sin(f*Math.PI)*.8;for(let k=0;k<9;k++)ellipse(400+(pos.x-400)*e+Math.cos(k*2.4+t)*27,525+(pos.y-525)*e+Math.sin(k*2.4+t)*38,2,2,'#ffe9aa');ctx.restore();if(f>=1){state.gardenStage='write';react('A little light for whatever matters to you.','为你在乎的事，留一盏小小的灯。')}}
+
+ else{ctx.save();ctx.translate(400,498);ctx.rotate(-.06);round(-52,-62,104,124,3,'#f6e6c2','#b99a67');for(let i=0;i<5;i++)line(-35,-30+i*14,34,-30+i*14,'#cfb98f',.8);txt('願',0,-39,22,'#9d5e44');ctx.restore();target(340,430,120,142,gardenWrite);txt(tr('Write a wish','写下心愿'),400,584,19,'#fff0d5')}
+ label(tr('My lanterns','我的心愿灯')+' · '+gardenWishes.length,400,635,gardenWishBook);
+};
+
+let encounterMemory=load('encounterMemoryV1',{});if(!encounterMemory||typeof encounterMemory!=='object')encounterMemory={};
+const encounterTalk=npcTalk;npcTalk=function(n){if(!n||!n.n)return encounterTalk(n);if(scene!=='fortune'||n.cameo===undefined)return encounterTalk(n);stopRoute();p.tx=p.x;p.ty=p.y;let id=n.n[0],count=(encounterMemory[id]||0)+1;encounterMemory[id]=count;save('encounterMemoryV1',encounterMemory);let greetings=cameoLinesLiving[n.cameo]||['Lovely weather for a break.','今天适合摸鱼。'];let follow=[['You look like someone who deserves a day off.','一看你就是该放假的人。'],['We meet again. This valley has better networking than LinkedIn.','又见面了。这解忧谷的人脉比职场还广。'],['At this point we should start a tea club.','都这么熟了，不如成立喝茶协会。']];say(tr(...n.n),tr(...greetings)+' '+tr(...follow[Math.min(2,count-1)]),[[tr('Ask for a local tip','问问附近有什么好玩的'),()=>say(tr(...n.n),tr(...[['Try the wishing pool. The koi are terrible at keeping secrets, so make your wish silently.','去锦鲤池试试吧。锦鲤不擅长保守秘密，心愿默念就好。'],['Visit the reading house. The cards have fewer meetings than we do.','去占卜小屋坐坐吧，牌卡的会议比我们少多了。'],['Hang a lantern in the garden. There is always room for a little hope.','去花园挂盏灯，总有地方留给一点希望。']][(n.cameo+count)%3]),[[tr('Thank you','谢谢你'),closeTalk]])],[tr('How is your day?','今天过得怎么样？'),()=>cameoHeart(n,count)],[tr('Exchange a travel stamp','交换旅行印章'),()=>{addItem('Met '+id,'偶遇'+n.n[1]);closeTalk()}],[tr('See you around','回头见'),closeTalk]]);};
+const villageWalkBefore=walkDoor;walkDoor=function(id,x,y){if(!room&&!transitioning&&pending===id)return;villageWalkBefore(id,x,y)};
+const albumStyle=document.createElement('style');albumStyle.textContent=`
+.travelAlbum{background:linear-gradient(115deg,#d6ba87,#f7e8c9 9%,#ead6ad 49%,#b99b6e 50%,#f3e3c3 51%,#e5ce9e);padding:16px 12px;color:#614832;border:1px solid #9e8056;border-radius:3px;box-shadow:0 5px 12px #533c3333}
+.travelAlbum h2{font:normal 22px Georgia,serif;margin:12px 0}
+.albumGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.albumCard{position:relative;overflow:hidden;min-height:110px;background:#f5e7cb;color:#614832;border:1px solid #ac8c62;padding:9px;text-align:center;display:grid;justify-items:center;align-content:center;gap:6px}
+.albumCard img{width:100%;height:75px;object-fit:cover}
+.albumCard svg{width:60px;height:60px}
+.albumCard.locked{opacity:.56;filter:saturate(.25)}
+.albumCard strong{font:600 13px/1.3 Georgia,serif;overflow-wrap:anywhere}
+.albumCard small{font:11px system-ui;color:#8e6d50}
+.albumCard button{min-height:44px}
+.albumProfile{display:flex;gap:12px;align-items:center;margin:0 0 14px}
+.albumProfile img{width:72px;height:72px;object-fit:contain}
+.albumTabs{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.albumTabs button{min-height:44px;flex:1}
+.albumStamp{border:2px solid #ad674d;color:#ad674d;padding:4px 9px;transform:rotate(-5deg);font:11px Georgia,serif;letter-spacing:.07em}
+@media(min-width:680px){.albumGrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+`;document.head.append(albumStyle);
+const keepsakes=[['Observatory destiny scroll','星月命理卷轴','scroll'],['Love reading','感情占卜','card'],['Heaven’s approval','圣杯祝福','moon'],['Wishing lantern','许愿灯','lantern'],['Cat friendship','猫咪友谊','cat'],['Soul Cat keepsake','猫灵纪念章','cat']];
+function albumIcon(kind){let art={scroll:'<path d="M15 12h33v42H15z" fill="#f1d9a6" stroke="#8f704a"/><path d="M10 10h43M10 56h43" stroke="#946847" stroke-width="5"/><path d="M22 22h20m-20 8h20m-20 8h14" stroke="#a58c60"/>',card:'<rect x="17" y="7" width="31" height="49" rx="3" fill="#607b70" stroke="#b79967"/><circle cx="32" cy="30" r="10" fill="#e8c785"/><circle cx="37" cy="26" r="8" fill="#607b70"/>',moon:'<path d="M9 25Q10 51 31 27Q18 33 9 25M34 21Q37 48 57 24Q45 30 34 21" fill="#b65f43" stroke="#80503a"/>',lantern:'<path d="M32 4v9m0 39v8" stroke="#84603e"/><path d="M20 15Q6 32 20 49h24q14-17 0-34z" fill="#e4ae65" stroke="#95633f"/><path d="M25 15q-8 17 0 34m14-34q8 17 0 34" fill="none" stroke="#b77947"/><path d="M20 13h24m-24 38h24" stroke="#79573f" stroke-width="4"/>',cat:'<path d="M13 27L15 8 28 19H38L50 8 52 30Q54 49 32 51Q9 49 13 27Z" fill="#d7ad77" stroke="#866345"/><path d="M23 33h2m14 0h2m-12 7q3 3 6 0" stroke="#674c3c" stroke-width="2" fill="none"/>',stamp:'<circle cx="32" cy="32" r="24" fill="#d8b78a" stroke="#a77a4e"/><path d="M13 42l12-17 9 8 11-16 10 25z" fill="#718879"/><circle cx="20" cy="19" r="4" fill="#f4db9e"/>'};return '<svg viewBox="0 0 64 64" aria-hidden="true">'+(art[kind]||art.stamp)+'</svg>'}
+function albumProfile(q){let a=element('div','',q,'albumProfile');let im=element('img','',a);im.src=ART['badge'+(avatar??0)];let info=element('div','',a);element('strong',playerName||tr('Traveller','旅人'),info);element('p',tr('Level ','等级 ')+(1+Math.floor(items.length/5))+' · '+items.length+' '+tr('discoveries','份回忆'),info)}
+function collectionKind(item){let n=item[0];return /Tarot|reading/.test(n)?'card':/lantern/i.test(n)?'lantern':/scroll|Fortune stick|Fortune paper/.test(n)?'scroll':/cat/i.test(n)?'cat':/approval/.test(n)?'moon':'stamp'}
+function keepsakeDetails(item){page(tr('A little memory','一份小回忆'),tr('Every discovery has a story.','每份收藏都有一段故事。'),q=>{let a=element('div','',q,'albumCard');let im=element('div','',a);im.innerHTML=albumIcon(collectionKind(item));element('strong',tr(...item),a);element('span',tr('Collected','已收藏'),a,'albumStamp');let story=keepsakeStory(item);element('p',tr(...story),q,'memoryStory');b(q,tr('Back to my bag','返回背包'),myRoom)})}
+let albumTab='all';
+myRoom=function(){activePage='room';page(tr('Traveller’s bag','旅人的背包'),tr('Little things from your travels.','把旅途的小小回忆都收起来。'),q=>{let book=element('section','',q,'travelAlbum');albumProfile(book);let tabs=element('div','',book,'albumTabs');for(let [id,en,cn] of [['all','All','全部'],['collected','Collected','已收藏'],['locked','To discover','待发现']]){let btn=b(tabs,tr(en,cn),()=>{albumTab=id;myRoom()});btn.setAttribute('aria-pressed',String(albumTab===id))}let g=element('div','',book,'albumGrid');let entries=keepsakes.map(k=>({item:k.slice(0,2),kind:k[2],owned:items.some(x=>x[0]===k[0])}));for(let item of items)if(!entries.some(x=>x.item[0]===item[0]))entries.push({item,kind:collectionKind(item),owned:true});for(let v of entries.filter(x=>albumTab==='all'||(albumTab==='collected'?x.owned:!x.owned))){let a=element('article','',g,'albumCard'+(v.owned?'':' locked'));let im=element('div','',a);im.innerHTML=albumIcon(v.kind);element('strong',v.owned?tr(...v.item):tr('Undiscovered keepsake','未发现的手信'),a);element('small',v.owned?tr('Collected','已收藏'):tr(...keepsakeClue(v.item)),a);if(v.owned)b(a,tr('Inspect','看看'),()=>keepsakeDetails(v.item))}b(book,tr('Open passport','打开护照'),passport)})};
+passport=function(){activePage='passport';page(tr('Traveller passport','旅人护照'),tr('Visa free. No annual leave required.','免签，不用请年假。'),q=>{let book=element('section','',q,'travelAlbum');albumProfile(book);renderRailKeepsake(book);let g=element('div','',book,'albumGrid');for(let k of ['fortune','home','island','wonder']){let a=element('article','',g,'albumCard'+(visited.includes(k)?'':' locked'));let im=element('img','',a);im.src=destinationPortrait(k);im.alt=tr(...maps[k].n);im.loading='lazy';element('strong',tr(...maps[k].n),a);element('span',visited.includes(k)?tr('ARRIVED','已入境'):tr('UNDISCOVERED','未发现'),a,'albumStamp')}element('h2',tr('People I met','旅途偶遇'),book);let friends=Object.entries(encounterMemory).sort((a,b)=>Number(friendFavourites.includes(b[0]))-Number(friendFavourites.includes(a[0])));if(!friends.length)element('p',tr('Say hello to a fellow traveller.','跟路上的旅人打个招呼吧。'),book);for(let [name,count] of friends){let n=cameoNamesLiving.find(x=>x[0]===name)||[name,name];let entry=element('div','',book,'friendEntry');element('strong',tr(...n),entry);element('small',count+' '+tr('encounters','次相遇')+' · '+tr(...(count>=5?['Old friend','老朋友']:count>=3?['Familiar face','熟面孔']:['New acquaintance','新朋友'])),entry);const fav=b(entry,friendFavourites.includes(name)?tr('★ Favourite','★ 喜欢的旅伴'):tr('☆ Favourite','☆ 收藏旅伴'),()=>{friendFavourites=friendFavourites.includes(name)?friendFavourites.filter(x=>x!==name):[...friendFavourites,name];save('friendFavouritesV1',friendFavourites);passport()});fav.setAttribute('aria-pressed',String(friendFavourites.includes(name)))}cluePanel(book);b(book,tr('Open my bag','打开背包'),myRoom);b(book,tr('Travel map','旅行地图'),travel)})};
+$('dockRoom').onclick=myRoom;$('profileHud').onclick=myRoom;$('dockPassport').onclick=passport;
+const albumHUD=updateHUD;updateHUD=function(){albumHUD();$('dockRoom').lastElementChild.textContent=tr('Bag','背包');$('dockValley').lastElementChild.textContent=tr('Home','主页');$('dockTravel').lastElementChild.textContent=tr('Map','地图')};
+
+maps.wonder.n=['Wonder Valley','奇遇谷'];
+const soulCats=[
+['Cloud Poet','云朵诗人','Imaginative, gentle and excellent at staring out of windows.','浪漫又细腻，擅长望着窗外发呆。','#a9a2bb'],
+['Professional Napper','咸鱼猫','A master of conserving energy for genuinely important things.','把精力留给真正重要的事，比如睡觉。','#c6a276'],
+['Rooftop Explorer','屋顶探险家','Curiosity takes you places your calendar never planned.','好奇心带你去计划表以外的地方。','#b98058'],
+['Midnight Stargazer','午夜观星猫','A thoughtful observer with an entire universe in your head.','安静观察世界，脑袋里住着整个宇宙。','#737e9b'],
+['Matcha Companion','抹茶暖暖猫','You make ordinary moments feel like home.','你能把平凡的日子过出家的温度。','#8eaa86'],
+['Gossip Detective','吃瓜猫','You notice the tiny details everybody else misses.','别人错过的细节，都逃不过你的眼睛。','#cb9980'],
+['Clear-eyed Cat','人间清醒猫','Independent, grounded and resistant to unnecessary meetings.','独立清醒，对无效会议有天然免疫力。','#9ba8a0'],
+['Lucky Opportunist','好运招财猫','You spot little possibilities and enjoy making them happen.','善于发现小机会，也愿意付诸行动。','#d4b06b']];
+const soulQs=[
+[['A rainstorm interrupts your valley stroll. Where do you go?','山谷突然下雨，你会去哪儿？'],[['Write by the window','靠窗写写画画',[0,3]],['Curl up with a blanket','裹着毯子睡觉',[1,4]],['Explore a covered alley','探索有屋檐的小巷',[2,7]],['Ask the shopkeeper for stories','听店主讲故事',[5,6]]]],
+[['A mysterious parcel appears at the inn. What do you do?','旅馆出现一个神秘包裹，你会？'],[['Imagine its backstory','想象它的来历',[0,2]],['Check the label carefully','仔细查看标签',[3,6]],['Find its owner','帮忙找失主',[4,5]],['Ask whether there is a reward','问问有没有奖励',[7,1]]]],
+[['Your tea gets cold during a long chat.','聊天聊到茶都凉了。'],[['Order another cup for everyone','给大家再点一杯',[4,7]],['Enjoy the conversation anyway','继续开心聊天',[5,0]],['Find a quiet seat','找个安静位置',[3,1]],['Politely end the chat','礼貌结束聊天',[6,2]]]],
+[['The souvenir shop has one shelf left.','手信店只剩最后一架商品。'],[['An old illustrated notebook','一本旧插画笔记本',[0,3]],['A ridiculously soft cushion','一个超软抱枕',[1,4]],['A map with hidden paths','一张藏着小路的地图',[2,5]],['A practical little travel kit','一套实用旅行用品',[6,7]]]],
+[['Your friend cannot decide which train to take.','朋友纠结该搭哪班车。'],[['Look at the scenery together','一起看看风景',[0,4]],['Compare the routes','认真比较路线',[3,6]],['Take the unexpected train','选一班意想不到的车',[2,7]],['Ask the other passengers','问问其他旅客',[5,1]]]],
+[['The valley lantern festival is almost over.','山谷灯会快结束了。'],[['Keep a little memory in a diary','把回忆写进日记',[0,3]],['Head home for a good sleep','回家好好睡一觉',[1,6]],['Help the keeper tidy up','帮店主收拾',[4,7]],['Find one last little adventure','再找一个小小奇遇',[2,5]]]]
+];
+let soulResult=load('soulCatV1',null),soulAnswers=[];
+const soulStyle=document.createElement('style');soulStyle.textContent=`
+.soulScene{background:#eee0c6;border:1px solid #ad9270;color:#624c38;padding:14px;box-shadow:0 4px 12px #54402c25}
+.soulScene img{display:block;width:100%;height:clamp(120px,30vw,240px);object-fit:cover}
+.soulScene h2{font:normal 24px Georgia,serif}
+.soulScene button{width:100%;min-height:48px;margin:5px 0;text-align:left;background:#f7ead0;color:#624c38;border:1px solid #bca27a}
+.soulResultCard{text-align:center;padding:22px;background:radial-gradient(ellipse at 50% 28%,#fff0d0,#e6cba0);border:double 4px #ae8756}
+.soulResultCard svg{width:min(100%,170px);height:155px}
+.soulResultCard h2{font:normal 28px Georgia,serif}
+`;document.head.append(soulStyle);
+function soulCatArt(color){return '<svg viewBox="0 0 180 160" aria-hidden="true"><circle cx="90" cy="75" r="65" fill="#f5dfb1" stroke="#b28c59"/><path d="M25 127Q50 95 90 125T155 127" fill="#a0aa8e"/><path d="M61 104Q42 132 85 138Q137 141 129 109" fill="'+color+'" stroke="#705849" stroke-width="2"/><path d="M57 61L52 26Q57 19 77 42Q91 36 103 42L127 24Q131 22 125 61Q137 99 90 105Q45 100 57 61Z" fill="'+color+'" stroke="#705849" stroke-width="2"/><path d="M62 46l-3-13 15 13m34 0 14-13-4 13" fill="#d7a59a"/><path d="M70 72q6-5 12 0m16 0q6-5 12 0" stroke="#594638" stroke-width="2" fill="none"/><path d="M86 81l8 0-4 4z" fill="#9f6b60"/><path d="M90 85q-3 7-8 3m8-3q3 7 8 3" fill="none" stroke="#594638"/><path d="M124 125q35-4 25-29" stroke="'+color+'" stroke-width="12" stroke-linecap="round" fill="none"/><circle cx="37" cy="38" r="3" fill="#c09558"/><circle cx="145" cy="51" r="3" fill="#c09558"/></svg>'}
+function soulResultPage(){if(!Number.isInteger(soulResult)||!soulCats[soulResult])return soulIntro();let c=soulCats[soulResult];page(tr('Your Soul Cat','你的猫灵'),tr('A little keepsake from Wonder Valley.','来自奇遇谷的一份小纪念。'),q=>{let card=element('section','',q,'soulResultCard');let art=element('div','',card);art.innerHTML=soulCatArt(c[4]);element('small',playerName||tr('Traveller','旅人'),card);element('h2',tr(c[0],c[1]),card);element('p',tr(c[2],c[3]),card);element('small','MeowBox · Wonder Valley',card);element('p',tr('For fun, not a psychological assessment.','趣味测试，并非心理测评。'),q);b(q,tr('Share my Soul Cat','分享我的猫灵'),async()=>{let message=tr('My Soul Cat is ','我的猫灵是：')+tr(c[0],c[1])+' · MeowBox';let url='https://sobellybutton.github.io/meowbox/';try{if(navigator.share){await navigator.share({title:'MeowBox',text:message,url});return}if(navigator.clipboard){await navigator.clipboard.writeText(message+' '+url);toast(tr('Copied!','已复制！'));return}}catch(e){if(e?.name==='AbortError')return}toast(tr('You can screenshot your keepsake above.','可以截图保存上方纪念卡。'))});b(q,tr('Take the quiz again','再测一次'),()=>{soulAnswers=[];soulQuestion()});b(q,tr('Back to Wonder Valley','返回奇遇谷'),()=>{$('page').style.display='none'})})}
+function soulQuestion(){let i=soulAnswers.length;if(i>=soulQs.length){let scores=Array(8).fill(0);soulAnswers.forEach((choice,j)=>soulQs[j][1][choice][2].forEach(k=>scores[k]++));soulResult=scores.indexOf(Math.max(...scores));save('soulCatV1',soulResult);addItem('Soul Cat keepsake','猫灵纪念章');addItem('Soul Cat: '+soulCats[soulResult][0],'猫灵：'+soulCats[soulResult][1]);return soulResultPage()}let v=soulQs[i];page(tr('Soul Cat Sanctuary','猫灵小屋'),(i+1)+' / '+soulQs.length,q=>{let a=element('section','',q,'soulScene');let im=element('img','',a);im.src=ART[['streetStation','readingInterior','tea','kitchen','streetStation','streetWishes'][i]]||ART.park;element('small',tr('Cat keeper','猫灵守护者'),a);element('h2',tr(...v[0]),a);v[1].forEach((opt,j)=>b(a,tr(opt[0],opt[1]),()=>{soulAnswers.push(j);sound(440+j*40);soulQuestion()}));if(i)b(q,tr('Previous question','上一题'),()=>{soulAnswers.pop();soulQuestion()});let lang=q.querySelector('.row')?.lastElementChild;if(lang)lang.onclick=()=>{zh=!zh;save('zh',zh);updateHUD();soulQuestion()}})}
+function soulIntro(){page(tr('Soul Cat Sanctuary','猫灵小屋'),tr('Six little encounters. One hidden cat personality.','六个小小奇遇，找到你的隐藏猫灵。'),q=>{let a=element('section','',q,'soulScene');let art=element('div','',a);art.style.cssText='width:140px;margin:auto';art.innerHTML=soulCatArt('#a5ad8b');element('p',tr('Come in, traveller. You do not need to be a cat to have a cat soul.','进来吧旅人，不是猫也可以有一颗猫灵之心。'),a);b(a,tr('Discover my Soul Cat','寻找我的猫灵'),()=>{soulAnswers=[];soulQuestion()});if(soulResult!==null)b(a,tr('See my last result','查看上次结果'),soulResultPage)})}
+roomActions.quiz=[['soulcat','Soul Cat Sanctuary','猫灵小屋'],['quiz','Workplace alter ego','职场隐藏人格']];
+const soulAction=action;action=function(id){if(id==='soulcat'&&scene==='wonder'){closeTalk();return soulIntro()}return soulAction(id)};
+const soulProp=prop;prop=function(id,x,y){if(id==='soulcat'){cat(x,y-30,0,false,2.4);return}soulProp(id,x,y)};
+
+const wonderTypes=[
+[['E','I'],[['At the village festival, what draws you in?','山谷庆典开始了，什么最吸引你？'],['Joining a lively table','加入热闹的一桌'],['Finding a quiet lantern-lit corner','找个灯火温柔的安静角落']],[['After a long day, how do you recharge?','忙了一整天，你会怎么充电？'],['Chat with a friend over tea','找朋友喝茶聊天'],['Enjoy some time on my own','享受独处时光']]],
+[['S','N'],[['An old map has a mysterious mark. What interests you?','旧地图上有个神秘记号，你更好奇什么？'],['What is actually at that spot','那个地方究竟有什么'],['The story it might be hiding','它可能藏着什么故事']],[['A souvenir catches your eye. What matters more?','一件手信吸引了你，什么更重要？'],['Its craftsmanship and usefulness','做工与实用性'],['The ideas and memories it inspires','它带来的想象与回忆']]],
+[['T','F'],[['Two travellers disagree about a route. What helps?','两位旅人对路线有分歧，你会怎么帮忙？'],['Compare the options fairly','客观比较不同路线'],['Understand what each person hopes for','了解每个人的期待']],[['A shopkeeper asks for advice on a new menu.','店主请你给新菜单提建议。'],['Explain which choices work best','分析哪些选择最合理'],['Consider what makes guests feel welcome','考虑怎样让客人感到温暖']]],
+[['J','P'],[['Your train leaves tomorrow. How do you prepare?','明天就要搭火车了，你会怎么准备？'],['Make a little plan tonight','今晚先列个小计划'],['Leave room for surprises','留一点空间给惊喜']],[['A whole afternoon opens up unexpectedly.','突然多出一个空闲下午。'],['Choose one place and enjoy it','选个地方好好逛'],['Wander and see where I end up','随心走走，看看会遇见什么']]]];
+const wonderMotives=[['The Improver','认真改进家','Make little things better','把小事做得更好'],['The Helper','暖心帮忙猫','Make others feel cared for','让别人感到被照顾'],['The Achiever','目标行动派','Finish something satisfying','完成一件有成就感的事'],['The Dreamer','浪漫梦想家','Create something uniquely mine','创造属于自己的东西'],['The Observer','安静观察者','Understand how things work','弄懂事情背后的道理'],['The Guardian','安心守护者','Make sure everyone is prepared','让大家都安心有准备'],['The Explorer','快乐探险家','Discover an unexpected adventure','发现意外的小冒险'],['The Protector','勇敢守护猫','Stand up for what matters','守护自己在意的东西'],['The Peacemaker','和平摸鱼家','Keep things calm and comfortable','让一切平静又舒服']];
+const wonderMotivationQs=[
+[['The inn is planning a festival. What would you enjoy most?','旅馆准备办庆典，你最想做什么？'],[0,1,2]],
+[['A whole room is yours to decorate. What is your priority?','有个房间任你布置，你最在意什么？'],[3,4,5]],
+[['Your friends have a free afternoon. What would you suggest?','朋友们有空闲下午，你会建议什么？'],[6,7,8]],
+[['The village needs volunteers. Which contribution appeals to you?','小镇需要志愿者，你更愿意贡献什么？'],[0,4,8]],
+[['A travelling merchant invites you to help with a project.','旅行商人邀请你帮忙做个项目。'],[1,5,6]],
+[['At the end of a good day, what feels most rewarding?','美好的一天结束时，什么最让你满足？'],[2,3,7]]];
+let wonderSaved=load('wonderTestsV1',{});if(!wonderSaved||typeof wonderSaved!=='object')wonderSaved={};
+let wonderMode='type',wonderAnswers=[],wonderScreen='intro',wonderBusy=false;
+const wonderStyle=document.createElement('style');wonderStyle.textContent=`
+.wonderJourney{position:relative;background:#eee1c5;color:#604b39;border:1px solid #b39772;padding:clamp(12px,3vw,22px);box-shadow:0 8px 24px #352a2533}
+.wonderJourney img{width:100%;height:clamp(100px,25vh,230px);object-fit:cover;border-radius:2px}
+.wonderJourney .wonderProgress{height:4px;background:#cbb898;margin:14px 0}
+.wonderJourney .wonderProgress span{display:block;height:4px;background:#718c77;transition:width .25s}
+.wonderJourney .wonderChoice{display:block;width:100%;min-height:48px;text-align:left;margin:8px 0;background:#f6ead3;color:#614c37;border:1px solid #c3a77e;white-space:normal}
+.wonderJourney .wonderChoice:active{background:#d7dfc5}
+.wonderJourney h2{font:normal clamp(20px,4vw,28px)/1.35 Georgia,serif}
+.wonderJourney .wonderBeat{animation:wonderArrival .25s ease-out both}
+@keyframes wonderArrival{from{opacity:.35;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.wonderJourney .wonderBeat{animation:none}}
+`;document.head.append(wonderStyle);
+function wonderName(){return wonderMode==='type'?['Personality Lab','人格研究所']:['Nine Inner Motives','九型茶馆']}
+function wonderShell(q){let a=element('section','',q,'wonderJourney');let im=element('img','',a);im.src=ART[wonderMode==='type'?'readingInterior':'tea']||ART.park;let body=element('div','',a,'wonderBeat');return body}
+function wonderExit(){wonderBusy=false;$('page').style.display='none';activePage='';closeTalk();hint('Explore the other discoveries in Wonder Valley.','继续探索奇遇谷的其他小秘密。')}
+function wonderLanguage(q){let btn=q.querySelector('.row')?.lastElementChild;if(btn)btn.onclick=()=>{zh=!zh;save('zh',zh);updateHUD();wonderRender()};let back=q.querySelector('.row')?.firstElementChild;if(back)back.onclick=()=>{if(wonderScreen==='questions'&&wonderAnswers.length){wonderAnswers.pop();wonderRender()}else wonderExit()}}
+function wonderRender(){let title=wonderName();page(tr(...title),tr('A little conversation with yourself.','与自己进行一场小小对话。'),q=>{let a=wonderShell(q);if(wonderScreen==='intro'){element('h2',tr('Welcome, traveller','欢迎你，旅人'),a);element('p',wonderMode==='type'?tr('Eight everyday choices explore four playful personality preferences.','八道日常情境题，探索四种性格偏好。'):tr('Six little choices explore nine different inner motivations.','六道小小情境题，探索九种内在动力。'),a);element('p',tr('Inspired by familiar personality frameworks, for fun only.','灵感来自常见人格理论，仅供娱乐。'),a);b(a,tr('Take a seat','坐下来聊聊'),()=>{wonderAnswers=[];wonderScreen='questions';wonderRender()});if(wonderSaved[wonderMode])b(a,tr('Revisit my result','看看上次的结果'),()=>{wonderScreen='result';wonderRender()});}
+else if(wonderScreen==='questions'){let i=wonderAnswers.length,total=wonderMode==='type'?8:6;let bar=element('div','',a,'wonderProgress'),fill=element('span','',bar);fill.style.width=(i/total*100)+'%';element('small',(i+1)+' / '+total,a);let v=wonderMode==='type'?wonderTypes[Math.floor(i/2)][1+i%2]:wonderMotivationQs[i];element('h2',tr(...v[0]),a);let opts=wonderMode==='type'?v.slice(1).map((o,j)=>[o[0],o[1],j]):v[1].map(k=>[wonderMotives[k][2],wonderMotives[k][3],k]);opts.forEach(o=>{let btn=b(a,tr(o[0],o[1]),()=>{if(wonderBusy)return;wonderBusy=true;wonderAnswers.push(o[2]);sound(430+i*30);btn.style.background='#c8d5b7';setTimeout(()=>{wonderBusy=false;if($('page').style.display!=='block')return;if(wonderAnswers.length===total)wonderFinish();else wonderRender()},160)});btn.className='wonderChoice'});}
+else{let result=wonderSaved[wonderMode];if(!result){wonderScreen='intro';return}let art=element('div','',a);art.className='soulResultCard';let drawing=element('div','',art);drawing.innerHTML=soulCatArt(wonderMode==='type'?'#93a99d':'#d4b17b');element('small',playerName||tr('Traveller','旅人'),art);element('h2',wonderMode==='type'?result.code:tr(...wonderMotives[result.index].slice(0,2)),art);element('p',wonderMode==='type'?result.code.split('').map((x,i)=>tr(...({E:['Social energy','社交充电'],I:['Quiet energy','独处充电'],S:['Practical details','实际细节'],N:['Imagination','想象探索'],T:['Logical choices','理性选择'],F:['Personal values','重视感受'],J:['Planning','喜欢计划'],P:['Flexibility','灵活随心']}[x]))).join(' · '):tr(...wonderMotives[result.index].slice(2,4)),art);element('small','MeowBox · Wonder Valley',art);if(result.ties?.length)element('p',tr('Some preferences were tied or close. You can be a little of both.','有些偏好不分高低或十分接近，你可以同时拥有不同的一面。'),a);element('p',tr('A playful snapshot, not an official assessment.','趣味性格小画像，并非正式测评。'),a);b(a,tr('Share my discovery','分享我的发现'),async()=>{let msg='MeowBox · '+(wonderMode==='type'?result.code:tr(...wonderMotives[result.index].slice(0,2)));let url='https://sobellybutton.github.io/meowbox/journey-preview.html';try{if(navigator.share)await navigator.share({text:msg,url});else if(navigator.clipboard){await navigator.clipboard.writeText(msg+' '+url);toast(tr('Copied!','已复制！'))}}catch(e){if(e?.name!=='AbortError')toast(tr('Screenshot your keepsake to save it.','截图保存纪念卡吧。'))}});b(a,tr('Try again','再测一次'),()=>{wonderAnswers=[];wonderScreen='questions';wonderRender()});b(a,tr('Return to the village','回到小镇'),wonderExit)}
+wonderLanguage(q)})}
+function wonderFinish(){if(wonderMode==='type'){let code='',ties=[];for(let i=0;i<4;i++){let a=wonderAnswers[i*2],b=wonderAnswers[i*2+1];if(a!==b)ties.push(i);code+=wonderTypes[i][0][a===b?a:a]}wonderSaved.type={code,ties};addItem('Personality Lab: '+code,'人格研究所：'+code)}else{let scores=Array(9).fill(0);wonderAnswers.forEach(k=>scores[k]++);let max=Math.max(...scores),indices=scores.map((v,i)=>v===max?i:-1).filter(i=>i>=0);let index=indices[0];wonderSaved.motive={index,ties:indices.length>1?indices:[]};addItem('Inner motive: '+wonderMotives[index][0],'内在动力：'+wonderMotives[index][1])}save('wonderTestsV1',wonderSaved);wonderScreen='result';wonderRender()}
+function openWonder(mode){wonderMode=mode;wonderScreen='intro';wonderAnswers=[];wonderBusy=false;wonderRender()}
+const wonderPriorAction=action;action=function(id){if(scene==='wonder'&&id==='quiz'){return say(tr('Lab keeper','研究所店主'),tr('A few little questions, no homework. Which discovery shall we try?','几个小问题，没有作业。想探索哪一面？'),[[tr('Soul Cat','猫灵测试'),soulIntro],[tr('Four personality preferences','四维性格探索'),()=>openWonder('type')],[tr('Nine inner motives','九型动力探索'),()=>openWonder('motive')]])}return wonderPriorAction(id)};
+roomActions.quiz=[['soulcat','Soul Cat Sanctuary','猫灵小屋'],['quiz','Personality Lab','人格研究所']];
+
+/* Wonder Valley: continuous canvas interaction, no quiz page overlay. */
+activityTitle.wonderScene=['Inner discoveries','心灵奇遇'];
+let wonderSceneMode='soul',wonderSceneAnswers=[],wonderScenePhase='welcome',wonderSceneAt=0,wonderScenePick=-1,wonderSceneResult=null,wonderSceneToken=0;
+const wonderSceneNames={soul:['Soul Cat Sanctuary','猫灵小屋'],type:['Personality Lab','人格研究所'],motive:['Nine Inner Motives','九型茶馆']};
+const wonderSceneBeforeHint=activityHint;activityHint=function(){if(activity==='wonderScene'){hint('Choose an object on the table. Step Back returns to the room.','点击桌上的物品。退一步可回到小屋。');return}return wonderSceneBeforeHint()};
+function wonderSceneOpen(mode){wonderSceneToken++;wonderSceneMode=mode;wonderSceneAnswers=[];wonderScenePhase='welcome';wonderScenePick=-1;wonderSceneAt=t;wonderSceneResult=null;$('page').style.display='none';start('wonderScene');hint('Choose a little discovery on the table.','选一件桌上的小小奇遇。')}
+function wonderSceneData(){let i=wonderSceneAnswers.length;if(wonderSceneMode==='soul'){let v=soulQs[i];return v&&{prompt:v[0],opts:v[1].map((o,j)=>[o[0],o[1],j]),total:6}}if(wonderSceneMode==='type'){let v=wonderTypes[Math.floor(i/2)]?.[1+i%2];return v&&{prompt:v[0],opts:v.slice(1).map((o,j)=>[o[0],o[1],j]),total:8}}let v=wonderMotivationQs[i];return v&&{prompt:v[0],opts:v[1].map(k=>[wonderMotives[k][2],wonderMotives[k][3],k]),total:6}}
+function wonderSceneFinish(){let mode=wonderSceneMode,a=wonderSceneAnswers;if(mode==='soul'){let scores=Array(8).fill(0);a.forEach((v,i)=>soulQs[i][1][v][2].forEach(k=>scores[k]++));soulResult=scores.indexOf(Math.max(...scores));save('soulCatV1',soulResult);let c=soulCats[soulResult];wonderSceneResult={name:c.slice(0,2),desc:c.slice(2,4),color:c[4]};addItem('Soul Cat keepsake','猫灵纪念章');addItem('Soul Cat: '+c[0],'猫灵：'+c[1])}else if(mode==='type'){let code='',ties=[];for(let i=0;i<4;i++){let x=a[i*2],y=a[i*2+1];if(x!==y){ties.push(i);code+='X'}else code+=wonderTypes[i][0][x]}wonderSaved.type={code,ties};save('wonderTestsV1',wonderSaved);wonderSceneResult={name:[code,code],desc:ties.length?['X means a mixed preference. You can be a little of both.','X 表示两种偏好相近，你可以同时拥有两面。']:['A snapshot of your everyday preferences.','你的日常性格偏好小画像。'],color:'#92a79a'};addItem('Personality Lab: '+code,'人格研究所：'+code)}else{let scores=Array(9).fill(0);a.forEach(k=>scores[k]++);let best=Math.max(...scores),ties=scores.map((v,i)=>v===best?i:-1).filter(i=>i>=0),k=ties[0],c=wonderMotives[k];wonderSaved.motive={index:k,ties:ties.length>1?ties:[]};save('wonderTestsV1',wonderSaved);wonderSceneResult={name:c.slice(0,2),desc:ties.length>1?[c[2]+' · Other motives scored equally.',''+c[3]+' · 其他动力也有相同得分。']:c.slice(2,4),color:'#d4b17b'};addItem('Inner motive: '+c[0],'内在动力：'+c[1])}wonderScenePhase='result';wonderSceneAt=t;sound(660)}
+function wonderSceneChoose(j){if(wonderScenePhase!=='question')return;let d=wonderSceneData();if(!d||!d.opts[j])return;wonderScenePick=j;wonderScenePhase='turn';wonderSceneAt=t;sound(430+j*70);let token=wonderSceneToken,answer=d.opts[j][2];setTimeout(()=>{if(activity!=='wonderScene'||token!==wonderSceneToken||wonderScenePhase!=='turn')return;wonderSceneAnswers.push(answer);wonderScenePick=-1;if(wonderSceneAnswers.length===d.total)wonderSceneFinish();else{wonderScenePhase='question';wonderSceneAt=t}},330)}
+function wonderSceneText(s,x,y,maxW,size=18,color='#fff1d7',maxLines=3){ctx.save();ctx.font=size+'px Georgia, serif';let parts=/[\u3400-\u9fff]/.test(s)?Array.from(s):s.split(/\s+/),sep=/[\u3400-\u9fff]/.test(s)?'':' ',lines=[],cur='';for(let part of parts){let n=cur?cur+sep+part:part;if(cur&&ctx.measureText(n).width>maxW){lines.push(cur);cur=part}else cur=n}if(cur)lines.push(cur);lines.slice(0,maxLines).forEach((v,i)=>txt(v,x,y+i*(size+5),size,color));ctx.restore()}
+function wonderSceneObject(x,y,j,kind,chosen){ctx.save();ctx.translate(x,y+(chosen?-14:Math.sin(t*1.7+j)*2));ctx.rotate(chosen?.08:Math.sin(t*.8+j)*.018);ellipse(0,35,44,9,'#47362e66');if(kind==='motive'){ellipse(0,26,48,12,'#e7d0a3');let g=ctx.createLinearGradient(-32,0,32,0);g.addColorStop(0,'#a5b09a');g.addColorStop(.5,'#f5e6c8');g.addColorStop(1,'#a69d81');ctx.beginPath();ctx.moveTo(-32,-18);ctx.quadraticCurveTo(-29,24,0,24);ctx.quadraticCurveTo(29,24,32,-18);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#877357';ctx.stroke();ellipse(0,-18,32,10,'#d5bf96');ellipse(0,-18,27,7,'#957a4e');for(let n=0;n<2;n++){ctx.strokeStyle='#fff3db99';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-8+n*14,-25);ctx.quadraticCurveTo(-17+n*14+Math.sin(t*2+n)*7,-40,-4+n*14,-57);ctx.stroke()}}else{let color=['#77968a','#b28472','#9d99b3','#c4a266'][j%4];round(-38,-48,76,85,4,'#f6e4bf','#ab895d');round(-33,-43,66,54,2,color,'#c5a778');ctx.save();ctx.translate(0,-15);if(kind==='soul'){cat(0,24,j%4,false,.8)}else{ellipse(0,-3,17,17,'#ead6aa');for(let n=0;n<4;n++){let a=n*Math.PI/2+t*.12;line(0,-3,Math.cos(a)*22,-3+Math.sin(a)*22,'#f4e5bc',1.4)}ellipse(0,-3,5,5,'#7d715b')}ctx.restore();line(-24,22,24,22,'#ba9871',1);line(-15,28,15,28,'#cbb18a',1)}ctx.restore()}
+async function wonderSceneShare(){let v=wonderSceneResult;if(!v)return;let msg=tr('My MeowBox discovery: ','我的摸鱼小镇奇遇：')+tr(...v.name),url='https://sobellybutton.github.io/meowbox/journey-preview.html';try{if(navigator.share)await navigator.share({text:msg,url});else if(navigator.clipboard){await navigator.clipboard.writeText(msg+' '+url);toast(tr('Copied!','已复制！'))}else toast(tr('Take a screenshot of your keepsake.','截图保存纪念卡吧。'))}catch(e){if(e?.name!=='AbortError')toast(tr('Take a screenshot of your keepsake.','截图保存纪念卡吧。'))}}
+const wonderCanvasPrior=drawActivity;drawActivity=function(){if(activity!=='wonderScene')return wonderCanvasPrior();
+ let mode=wonderSceneMode,phase=wonderScenePhase;ctx.save();let bg=pics[mode==='motive'?'tea':'readingInterior'];paintLivingBackdrop(bg);let veil=ctx.createLinearGradient(0,225,0,680);veil.addColorStop(0,'#293e3970');veil.addColorStop(.55,'#3b34292a');veil.addColorStop(1,'#49372f8c');ctx.fillStyle=veil;shadeLivingBackdrop(veil);
+ for(let i=0;i<12;i++){let x=187+(i*73)%421,y=235+(i*43)%175;ctx.globalAlpha=.25+.2*Math.sin(t+i);ellipse(x+Math.sin(t*.8+i)*4,y,1.8,1.8,'#ffe5a5')}ctx.globalAlpha=1;glow(218,278,56,1);glow(582,275,52,2);
+ if(mode==='soul')cat(400,372+Math.sin(t*2)*1.5,0,false,2);else human(400,383,mode==='type'?2:0,false,1,1.55);
+ let wood=ctx.createLinearGradient(0,395,0,670);wood.addColorStop(0,'#ae8761');wood.addColorStop(1,'#72513b');ctx.beginPath();ctx.moveTo(211,399);ctx.lineTo(589,399);ctx.lineTo(780,1800);ctx.lineTo(20,1800);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle='#c4a071';ctx.stroke();for(let i=0;i<12;i++)line(188,416+i*20,612,418+i*20,'#e5bc8922',1);
+ txt(tr(...wonderSceneNames[mode]),400,251,21,'#fff1d5');
+ if(phase==='welcome'){wonderSceneText(tr('The keeper has a little story for you.','守护者有个小故事想与你分享。'),400,420,385,19);wonderSceneObject(400,516,0,mode,false);label(tr('Begin our conversation','开始我们的对话'),400,606,()=>{wonderScenePhase='question';wonderSceneAt=t;sound(480)});txt(tr('For fun, at your own pace.','趣味探索，慢慢来。'),400,644,13,'#f8e4c6')}
+ else if(phase==='result'){let v=wonderSceneResult,f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.65));ctx.save();ctx.translate(400,493);ctx.scale(Math.max(.02,f),1);round(-147,-103,294,207,4,'#f5e3ba','#b88b5e');round(-139,-95,278,191,2,null,'#b88b5e');if(mode==='soul')cat(0,-15,0,false,1.35);else{ellipse(0,-55,28,28,v.color);ctx.strokeStyle='#b28c5b';ctx.beginPath();ctx.arc(0,-55,35,0,TAU);ctx.stroke()}wonderSceneText(tr(...v.name),0,-1,260,23,'#654b39',2);wonderSceneText(tr(...v.desc),0,29,262,14,'#654b39',3);ctx.restore();label(tr('Share keepsake','分享纪念卡'),330,623,wonderSceneShare);label(tr('Try again','再测一次'),486,623,()=>wonderSceneOpen(mode));txt(tr('Step Back to leave · for fun only','退一步离开 · 仅供娱乐'),400,655,13,'#fff1d5')}
+ else{let d=wonderSceneData();if(d){let n=d.opts.length;let f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.3));ctx.globalAlpha=phase==='turn'?1:Math.max(.15,f);wonderSceneText(tr(...d.prompt),400,410,395,18,'#fff1d5',3);for(let j=0;j<n;j++){let x=n===4?250+j*100:n===3?278+j*122:327+j*146,y=528;wonderSceneObject(x,y,j,mode,phase==='turn'&&wonderScenePick===j);wonderSceneText(tr(d.opts[j][0],d.opts[j][1]),x,579,n===4?93:117,13,'#fff5df',4);if(phase==='question')target(x-48,470,96,160,()=>wonderSceneChoose(j))}ctx.globalAlpha=1;txt((wonderSceneAnswers.length+1)+' / '+d.total,400,654,14,'#fff1d5')}}
+ ctx.restore();
+};
+const wonderCanvasAction=action;action=function(id){if(scene==='wonder'&&id==='soulcat')return wonderSceneOpen('soul');if(scene==='wonder'&&id==='quiz')return say(tr('Lab keeper','研究所店主'),tr('Which little discovery shall we explore?','今天想探索哪一个小秘密？'),[[tr('Four personality preferences','四维性格探索'),()=>wonderSceneOpen('type')],[tr('Nine inner motives','九型动力探索'),()=>wonderSceneOpen('motive')],[tr('Soul Cat','猫灵测试'),()=>wonderSceneOpen('soul')]]);return wonderCanvasAction(id)};
+
+/* The café lives on the game canvas, with a conversation rather than a compatibility score. */
+let cafeRound=0,cafeAnswers=[],cafePhase='welcome',cafeAt=0,cafePick=-1,cafeToken=0,cafeResult=null;
+const cafeQuestions=[
+[['A friend arrives with a whole afternoon free.','朋友来啦，今天下午都有空。'],[['Find a quiet window seat','找个安静的靠窗位'],['Discover a new street','一起探索新街道'],['Order tea and catch up','点杯茶慢慢聊']]],
+[['Your friend has had a difficult day.','朋友今天过得不太顺心。'],[['Give them space','给对方一点空间'],['Suggest a change of scenery','提议出去换换心情'],['Listen without rushing','耐心听对方说']]],
+[['You both have different dinner ideas.','你们想吃的晚餐不一样。'],[['Make a simple compromise','找个简单折中方案'],['Try both places','两家都去试试'],['Ask what matters to them','问问对方最在意什么']]],
+[['The last train is approaching.','末班车快到了。'],[['Plan a comfortable trip home','安排舒服的回家路线'],['Find one last little adventure','再找个小小奇遇'],['Make plans to meet again','约好下次见面']]]];
+const cafeKinds=[
+['Quiet Harbour','安静港湾','You enjoy companionship with room to breathe.','你喜欢有陪伴，也有自在空间的相处方式。','#92a89f'],
+['Adventure Companion','冒险搭子','You enjoy discovering small surprises together.','你喜欢和别人一起发现生活里的小惊喜。','#d6a36d'],
+['Warm-hearted Listener','暖心倾听者','You value time, attention and mutual understanding.','你重视陪伴、倾听与相互理解。','#c99a96']];
+const cafePriorHint=activityHint;activityHint=function(){if(activity==='match'&&scene==='wonder'){hint('Choose a cup. Every choice tells the host a little more.','选一杯茶，每个选择都是一段小故事。');return}return cafePriorHint()};
+const cafePriorStart=start;start=function(a){cafePriorStart(a);if(a==='match'&&scene==='wonder'){cafeToken++;cafeRound=0;cafeAnswers=[];cafePhase='welcome';cafeAt=t;cafeResult=null;cafePick=-1}};
+function cafeChoose(i){if(cafePhase!=='question')return;cafePick=i;cafePhase='turn';cafeAt=t;let token=cafeToken;sound(450+i*70);setTimeout(()=>{if(activity!=='match'||scene!=='wonder'||cafeToken!==token||cafePhase!=='turn')return;cafeAnswers.push(i);cafeRound++;cafePick=-1;cafeAt=t;if(cafeRound===cafeQuestions.length){let scores=[0,0,0];cafeAnswers.forEach(k=>scores[k]++);let max=Math.max(...scores),ties=scores.map((v,k)=>v===max?k:-1).filter(k=>k>=0);cafeResult={index:ties[0],ties};save('cafeStyleV1',cafeResult);addItem('Café discovery: '+cafeKinds[ties[0]][0],'缘分咖啡馆：'+cafeKinds[ties[0]][1]);cafePhase='result';sound(660)}else cafePhase='question'},350)}
+function cafeRoom(){let im=pics.tea||pics.readingInterior;paintLivingBackdrop(im);let veil=ctx.createLinearGradient(0,220,0,675);veil.addColorStop(0,'#2f38363b');veil.addColorStop(1,'#30261d8b');ctx.fillStyle=veil;shadeLivingBackdrop(veil);glow(218,265,60,1);glow(570,270,65,2);for(let i=0;i<10;i++){ctx.save();ctx.globalAlpha=.24+.18*Math.sin(t+i);ellipse(185+(i*73)%425+Math.sin(t+i)*3,243+(i*39)%148,1.5,1.5,'#ffefba');ctx.restore()}human(400,382,0,false,1,1.6);let g=ctx.createLinearGradient(0,392,0,660);g.addColorStop(0,'#bc976d');g.addColorStop(1,'#76533b');ctx.beginPath();ctx.moveTo(218,394);ctx.lineTo(582,394);ctx.lineTo(780,1800);ctx.lineTo(20,1800);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#bda073';ctx.stroke();for(let i=0;i<12;i++)line(190,418+i*20,610,420+i*20,'#e6c39325',1);txt(tr('Compatibility Café','缘分咖啡馆'),400,250,22,'#fff4dd')}
+const cafePriorDraw=drawActivity;drawActivity=function(){if(activity!=='match'||scene!=='wonder')return cafePriorDraw();ctx.save();cafeRoom();
+ if(cafePhase==='welcome'){wonderSceneText(tr('Pull up a chair. Let us find your favourite way to connect.','坐下来，看看你最喜欢怎样与人相处。'),400,420,390,18);wonderSceneObject(400,525,0,'motive',false);label(tr('Join me for tea','一起喝杯茶'),400,605,()=>{cafePhase='question';cafeAt=t;sound(490)});txt(tr('A friendly conversation, not a match prediction.','轻松聊聊，并非缘分预测。'),400,647,13,'#fff1d8')}
+ else if(cafePhase==='result'){let v=cafeKinds[cafeResult.index],f=Math.min(1,(t-cafeAt)/.65);ctx.save();ctx.translate(400,495);ctx.scale(Math.max(.03,f),1);round(-155,-100,310,205,4,'#f2dfbb','#a67f53');round(-147,-92,294,189,2,null,'#b39161');wonderSceneObject(0,-42,cafeResult.index,'motive',false);wonderSceneText(tr(v[0],v[1]),0,9,280,22,'#624938',2);wonderSceneText(tr(v[2],v[3]),0,40,275,14,'#624938',3);ctx.restore();if(cafeResult.ties.length>1)txt(tr('You have more than one favourite style.','你也有其他同样喜欢的相处方式。'),400,609,13,'#fff1d8');label(tr('Share','分享'),323,637,async()=>{let msg='MeowBox · '+tr(v[0],v[1]),url='https://sobellybutton.github.io/meowbox/journey-preview.html';try{if(navigator.share)await navigator.share({text:msg,url});else if(navigator.clipboard){await navigator.clipboard.writeText(msg+' '+url);toast(tr('Copied!','已复制！'))}}catch(e){if(e?.name!=='AbortError')toast(tr('Screenshot your keepsake.','截图保存纪念卡。'))}});label(tr('Try again','再玩一次'),480,637,()=>start('match'))}
+ else{let q=cafeQuestions[cafeRound];if(q){let f=Math.min(1,Math.max(.15,(t-cafeAt)/.3));ctx.globalAlpha=cafePhase==='turn'?1:f;wonderSceneText(tr(...q[0]),400,414,390,18,'#fff1d7',3);q[1].forEach((opt,i)=>{let x=278+i*122;wonderSceneObject(x,525,i,'motive',cafePhase==='turn'&&cafePick===i);wonderSceneText(tr(...opt),x,581,112,14,'#fff5dd',3);if(cafePhase==='question')target(x-58,465,116,155,()=>cafeChoose(i))});ctx.globalAlpha=1;txt((cafeRound+1)+' / '+cafeQuestions.length,400,651,14,'#fff1d8')}}
+ ctx.restore()};
+const soulAwareTalk=npcTalk;npcTalk=function(n){soulAwareTalk(n);if(!n?.n||!talkOpen||!Number.isInteger(soulResult)||!soulCats[soulResult])return;let lineEl=$('line');if(!lineEl)return;let remarks=[['A fellow daydreamer! The clouds are particularly good today.','原来也是发呆同好！今天的云特别好看。'],['I know a bench with excellent nap potential.','我知道一张特别适合午睡的长椅。'],['There is a little street you probably have not explored yet.','有条小巷，你可能还没探索过。'],['The night sky here is worth staying up for.','这里的夜空值得晚一点睡。'],['You have the kind of company that makes tea taste better.','有你陪着喝茶，茶都更香了。'],['You did not hear this from me, but the boss is on holiday.','别说是我说的，老板偷偷去度假了。'],['Finally, someone else who dislikes pointless meetings.','终于遇见另一个讨厌无效会议的人。'],['The souvenir merchant might have something special today.','今天手信店可能有点特别的东西。']];if(hash(day()+n.n[0])%2===0)lineEl.textContent+=' '+tr(...remarks[soulResult])};
+
+/* Parallel Lives: a miniature branching journey, rendered in the same living canvas. */
+const parallelScenes={
+station:{art:'streetStation',host:2,title:['The letter without an address','没有地址的信'],text:['A conductor hands you a letter. The destination says: somewhere you have never been.','列车长递给你一封信，目的地写着：一个你从未去过的地方。'],choices:[['Board the mysterious train','搭上神秘列车','train'],['Ask the conductor about the letter','问问列车长信的来历','post']]},
+train:{art:'streetStation',host:2,title:['A ticket to nowhere','一张没有终点的车票'],text:['The conductor offers a coastal ticket and a mountain ticket. Neither needs annual leave.','列车长拿出海边和山间的车票，两张都不用请年假。'],choices:[['Follow the ocean','去看海','coast'],['Follow the mountain mist','追着山间的雾','mountain']]},
+post:{art:'readingInterior',host:0,title:['The lost letter office','失物邮局'],text:['The postmistress says the letter belongs to a version of you who made a different choice.','邮局店主说，这封信属于另一个做了不同选择的你。'],choices:[['Deliver it to the café','把信送去咖啡馆','cafe'],['Open your own tiny bookshop','开一家自己的小书店','books']]},
+coast:{art:'island',host:3,title:['The seaside tomorrow','海边的明天'],text:['A little shop has a vacancy: lighthouse keeper or postcard artist. The salary is mostly sunshine.','海边小店正在招聘灯塔守护人和明信片画师，工资主要是阳光。'],choices:[['Keep the lighthouse','守护灯塔','endLight'],['Paint the postcards','画明信片','endArt']]},
+mountain:{art:'valleyClean',host:2,title:['The mountain station','山间小站'],text:['A cat sits beside a forgotten bench. A trail leads towards a hidden observatory.','一只猫坐在被遗忘的长椅旁，小路通向一座隐藏的观星台。'],choices:[['Stay with the cat','留下陪猫咪','endNap'],['Walk to the observatory','走去观星台','endStars']]},
+cafe:{art:'tea',host:0,title:['A café in another life','另一个人生的咖啡馆'],text:['The owner offers you the keys. There is only one rule: no meetings before breakfast.','店主把钥匙交给你，只有一条规矩：早餐前不准开会。'],choices:[['Open a quiet tea shop','开一家安静茶馆','endTea'],['Start a gossip club','开个吃瓜俱乐部','endGossip']]},
+books:{art:'readingInterior',host:1,title:['The bookshop after hours','深夜书店'],text:['A dusty notebook contains two possible lives. Which page do you turn?','一本落满灰尘的笔记本写着两种人生，你会翻向哪一页？'],choices:[['Write stories for travellers','为旅人写故事','endWriter'],['Send postcards to future me','寄明信片给未来的自己','endLetters']]}
+};
+const parallelEndings={
+endLight:['Lighthouse Keeper','灯塔守护人','You became the little light somebody needed.','你成为了某个人需要的那一点光。','island'],
+endArt:['Seaside Artist','海边画师','Your biggest deadline is the sunset.','你最大的截止时间，是日落。','island'],
+endNap:['Professional Bench Warmer','长椅专业户','The cat has promoted you to full-time companion.','猫咪正式聘请你当全职陪伴员。','park'],
+endStars:['Midnight Astronomer','午夜观星人','The stars never schedule unnecessary meetings.','星星从来不开无效会议。','readingInterior'],
+endTea:['Tea Shop Keeper','茶馆主人','You finally have a meeting worth attending: afternoon tea.','终于有一场值得参加的会议：下午茶。','tea'],
+endGossip:['Chief Gossip Officer','首席吃瓜官','The tea is hot and the news is even hotter.','茶很热，瓜更热。','tea'],
+endWriter:['Story Collector','故事收藏家','Every traveller leaves you a little story.','每个旅人都留给你一段小故事。','readingInterior'],
+endLetters:['Future Postmaster','未来邮局店长','Your future self says to take more breaks.','未来的你说：记得多休息。','streetStation']
+};
+let parallelNode='station',parallelAt=0,parallelPick=-1,parallelToken=0,parallelTurning=false,parallelTrail=[];
+let parallelFound=load('parallelEndingsV1',[]);if(!Array.isArray(parallelFound))parallelFound=[];
+const parallelPriorStart=start;start=function(a){parallelPriorStart(a);if(a==='story'&&scene==='wonder'){parallelToken++;parallelNode='station';parallelAt=t;parallelPick=-1;parallelTurning=false;parallelTrail=[];hint('Follow the letter and choose your own path.','跟随这封信，选择属于你的路。')}};
+function parallelSelect(i){let node=parallelScenes[parallelNode];if(!node||parallelTurning||!node.choices[i])return;parallelTurning=true;parallelPick=i;parallelAt=t;let next=node.choices[i][2],token=parallelToken;parallelTrail.push(parallelNode);sound(490+i*80);setTimeout(()=>{if(activity!=='story'||scene!=='wonder'||token!==parallelToken)return;parallelNode=next;parallelAt=t;parallelPick=-1;parallelTurning=false;if(parallelEndings[next]){let end=parallelEndings[next];if(!parallelFound.includes(next)){parallelFound.push(next);save('parallelEndingsV1',parallelFound)}addItem('Parallel life: '+end[0],'平行人生：'+end[1]);sound(660)}},420)}
+function parallelPaper(x,y,j,selected){ctx.save();ctx.translate(x,y+(selected?-13:Math.sin(t*1.5+j)*2));ctx.rotate(selected?.1:j===0?-.06:.06);ellipse(0,32,48,8,'#30272066');round(-57,-40,114,74,3,'#eed9af','#9e8056');ctx.strokeStyle='#b69b72';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-57,-40);ctx.lineTo(0,2);ctx.lineTo(57,-40);ctx.moveTo(-57,34);ctx.lineTo(-15,-5);ctx.moveTo(57,34);ctx.lineTo(15,-5);ctx.stroke();ellipse(0,0,10,10,j===0?'#a75f4c':'#738d75');ctx.strokeStyle='#e8c79a';ctx.beginPath();ctx.arc(0,0,5,0,TAU);ctx.stroke();ctx.restore()}
+const parallelPriorDraw=drawActivity;drawActivity=function(){if(activity!=='story'||scene!=='wonder')return parallelPriorDraw();let n=parallelScenes[parallelNode],end=parallelEndings[parallelNode],art=n?.art||end?.[4]||'streetStation';ctx.save();let im=pics[art]||pics.readingInterior;paintLivingBackdrop(im);let shade=ctx.createLinearGradient(0,222,0,675);shade.addColorStop(0,'#34423e45');shade.addColorStop(.55,'#3c312a66');shade.addColorStop(1,'#463228b0');ctx.fillStyle=shade;shadeLivingBackdrop(shade);glow(218,280,60,1);glow(580,270,55,2);for(let i=0;i<14;i++){ctx.save();ctx.globalAlpha=.18+.18*Math.sin(t+i);ellipse(180+(i*71)%440+Math.sin(t*.7+i)*4,240+(i*31)%170,1.5,1.5,'#ffe7b0');ctx.restore()}
+ if(n){human(400,385,n.host,false,1,1.65);txt(tr('Parallel Lives','平行人生'),400,250,22,'#fff2d7');let wood=ctx.createLinearGradient(0,395,0,670);wood.addColorStop(0,'#b58b61');wood.addColorStop(1,'#75513a');ctx.beginPath();ctx.moveTo(215,395);ctx.lineTo(585,395);ctx.lineTo(780,1800);ctx.lineTo(20,1800);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle='#bd986c';ctx.stroke();for(let i=0;i<13;i++)line(190,415+i*20,610,417+i*20,'#e2bc8725',1);let f=Math.min(1,Math.max(.1,(t-parallelAt)/.3));ctx.globalAlpha=parallelTurning?1:f;wonderSceneText(tr(...n.title),400,412,385,21,'#fff0d5',2);wonderSceneText(tr(...n.text),400,448,390,15,'#fff2d8',4);for(let i=0;i<2;i++){let x=300+i*200;parallelPaper(x,553,i,parallelTurning&&parallelPick===i);wonderSceneText(tr(n.choices[i][0],n.choices[i][1]),x,602,175,15,'#fff4df',3);if(!parallelTurning)target(x-82,510,164,127,()=>parallelSelect(i))}ctx.globalAlpha=1;txt(tr('Discoveries: ','已发现：')+parallelFound.length+' / 8',400,656,13,'#f8e4c5')}
+ else if(end){let f=Math.min(1,Math.max(.03,(t-parallelAt)/.7));ctx.save();ctx.translate(400,468);ctx.rotate((1-f)*-.12);ctx.scale(f,1);round(-166,-112,332,224,3,'#f3dfb6','#9d784f');round(-158,-104,316,208,2,null,'#b39766');let img=pics[end[4]];if(img?.naturalWidth)cover(img,-140,-92,280,84);wonderSceneText(tr(end[0],end[1]),0,13,292,23,'#604b37',2);wonderSceneText(tr(end[2],end[3]),0,47,285,15,'#604b37',3);ctx.restore();txt(tr('Parallel life collected','平行人生已收藏')+' · '+parallelFound.length+'/8',400,600,15,'#fff1d5');label(tr('Another life','再试一种人生'),310,639,()=>start('story'));label(tr('Share memory','分享回忆'),490,639,async()=>{let msg='MeowBox · '+tr(end[0],end[1]),url='https://sobellybutton.github.io/meowbox/journey-preview.html';try{if(navigator.share)await navigator.share({text:msg,url});else if(navigator.clipboard){await navigator.clipboard.writeText(msg+' '+url);toast(tr('Copied!','已复制！'))}}catch(e){if(e?.name!=='AbortError')toast(tr('Screenshot your postcard.','截图保存明信片吧。'))}})}
+ ctx.restore()};
+
+/* Shared stage polish: world-sized backgrounds and a short illustrated crossfade. */
+function livingBounds(){let sc=Math.max(.01,cam.scale);return {x:-cam.ox/sc,y:-cam.oy/sc,w:W/sc,h:H/sc}}
+function paintLivingBackdrop(im){let b=livingBounds();if(im?.naturalWidth)cover(im,b.x,b.y,b.w,b.h);else{ctx.fillStyle='#526357';ctx.fillRect(b.x,b.y,b.w,b.h)}}
+function shadeLivingBackdrop(g){let b=livingBounds();ctx.fillStyle=g;ctx.fillRect(b.x,b.y,b.w,b.h)}
+const motionStageStyle=document.createElement('style');motionStageStyle.textContent=`
+#sceneCrossfade{position:absolute;inset:0;width:100%;height:100%;z-index:28;pointer-events:none;object-fit:fill;opacity:1;transition:opacity .32s ease}
+#game[data-living="true"] #hint{background:#33483fe8;color:#f8ecd1;border:1px solid #b6a17a;max-width:min(88%,580px);padding:7px 13px}
+#game[data-living="true"] #location{background:#f1e4c9e8;color:#514438}
+#game[data-living="true"] #dock{background:#f4e7cfe8;border-color:#bba47c}
+#game[data-living="true"] #back{min-height:44px}
+@media(max-height:500px){#game[data-living="true"] #hint{display:none}}
+@media(prefers-reduced-motion:reduce){#sceneCrossfade{transition:none}}
+`;document.head.append(motionStageStyle);
+const stageHUD=updateHUD;updateHUD=function(){stageHUD();$('game').dataset.living=String(scene==='wonder'&&!!activity&&['wonderScene','story','match'].includes(activity))};
+const priorStageFade=fade;
+fade=function(fn,kind='gust',destination=null){if(kind==='postcard')return priorStageFade(fn,kind,destination);if(transitioning)return;let reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;if(reduce){fn();return}transitioning=true;let snapshot=document.createElement('canvas');snapshot.id='sceneCrossfade';snapshot.width=c.width;snapshot.height=c.height;try{snapshot.getContext('2d').drawImage(c,0,0);$('game').append(snapshot)}catch(e){transitioning=false;return priorStageFade(fn,kind,destination)}
+ try{fn()}catch(e){snapshot.remove();transitioning=false;throw e}
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{snapshot.style.opacity='0';setTimeout(()=>{snapshot.remove();transitioning=false},350)}))
+};
+
+/* Character motion: preserve illustrated heads, animate bodies and host responses. */
+let actorGestureUntil=-1,actorGestureDirection=1,actorGestureKind='wave';
+let greetingNPC=null,greetingUntil=-1;
+const actorReduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function actorGesture(kind='wave',direction=1){if(actorReduce)return;actorGestureKind=kind;actorGestureDirection=direction;actorGestureUntil=t+.85}
+const actorOriginalHuman=human;
+human=function(x,y,kind,walking,dir,scale=1){
+ let host=room&&activity&&scene==='wonder'&&Math.abs(x-400)<2&&y>350&&y<400;
+ let greet=!room&&greetingNPC&&Math.hypot(x-greetingNPC.x,y-greetingNPC.y)<3&&t<greetingUntil;
+ let acting=!actorReduce&&!walking&&((host&&t<actorGestureUntil)||greet);
+ if(!acting)return actorOriginalHuman(x,y,kind,walking,dir,scale);
+ let f=host?Math.max(0,Math.min(1,(actorGestureUntil-t)/.85)):Math.max(0,Math.min(1,(greetingUntil-t)/.9));
+ let lift=Math.sin(f*Math.PI),side=host?actorGestureDirection:1;
+ ctx.save();ctx.translate(x,y);ctx.rotate(lift*.045*side);
+ actorOriginalHuman(0,-lift*2,kind,false,dir,scale);
+ ctx.scale(scale,scale);let shirt=['#ead1a5','#e7e8e3','#425c77','#82986d'][kind%4]||'#e7e8e3';
+ let sx=side*14,ex=side*(22+lift*4),ey=-37-lift*20;
+ if(host&&actorGestureKind==='nod'){ctx.restore();return}
+ line(sx,-41,side*22,-36-lift*7,shirt,9);line(side*22,-36-lift*7,ex,ey,shirt,8);ellipse(ex,ey,4.2,5.1,'#efc8a7');
+ ctx.restore()
+};
+const actorOriginalCat=cat;
+cat=function(x,y,kind=0,walking=false,sc=1){
+ let host=scene==='wonder'&&room&&activity==='wonderScene'&&wonderSceneMode==='soul'&&Math.abs(x-400)<3&&y>350&&y<390;
+ let active=host&&!actorReduce&&t<actorGestureUntil;
+ let f=active?Math.max(0,Math.min(1,(actorGestureUntil-t)/.85)):0;
+ let lift=Math.sin(f*Math.PI)*5;
+ actorOriginalCat(x,y-lift,kind,walking,sc);
+ if(!walking&&!actorReduce&&((t+kind*.67+x*.005)%4.8)<.13){
+ ctx.save();ctx.translate(x,y-lift);ctx.scale(sc,sc);
+ let fur=['#d89858','#ece1c6','#44434a','#d1a077','#9399a2'][kind%5];for(let k of [-7,7]){ellipse(k,-27,3.3,4.2,fur);line(k-2.4,-26,k+2.4,-26,kind===2?'#f5d376':'#45352e',1.25)}
+ ctx.restore()}
+};
+const actorPriorBack=backHuman;
+backHuman=function(x,y,kind,walking,facing,sc){
+ if(!['up','down','left','right'].includes(facing))facing='down';
+ if(!Number.isFinite(kind))kind=0;kind=((kind%4)+4)%4;
+ if(facing==='down')return human(x,y,kind,walking,1,sc);
+ if(actorReduce||!walking)return actorPriorBack(x,y,kind,walking,facing,sc);
+ ctx.save();ctx.translate(x,y);let sway=Math.sin(t*12)*.018;ctx.rotate(sway);actorPriorBack(0,0,kind,walking,facing,sc);ctx.restore()
+};
+const actorPriorTalk=npcTalk;
+npcTalk=function(n){if(n&&!room){greetingNPC=n;greetingUntil=t+.9;stopRoute();p.tx=p.x;p.ty=p.y;if(Math.abs(n.x-p.x)>Math.abs(n.y-p.y))p.facing=n.x<p.x?'left':'right';else p.facing=n.y<p.y?'up':'down'}return actorPriorTalk(n)};
+const actorPriorWonderChoose=wonderSceneChoose;
+wonderSceneChoose=function(j){if(wonderScenePhase==='question')actorGesture(j%2?'wave':'nod',j%2?1:-1);return actorPriorWonderChoose(j)};
+const actorPriorCafeChoose=cafeChoose;
+cafeChoose=function(j){if(cafePhase==='question')actorGesture(j===1?'wave':'nod',j===0?-1:1);return actorPriorCafeChoose(j)};
+const actorPriorParallelSelect=parallelSelect;
+parallelSelect=function(i){if(!parallelTurning)actorGesture('wave',i===0?-1:1);return actorPriorParallelSelect(i)};
+const actorPriorStart=start;
+start=function(a){actorPriorStart(a);if(scene==='wonder'&&['wonderScene','match','story'].includes(a))actorGesture('wave',1)};
+/* Extend directional motion to the other maps without replacing their art or interactive targets. */
+const actorPriorMap=drawMap;
+drawMap=function(){if(isRoute())return actorPriorMap();let original=human;human=function(x,y,kind,walking,dir,sc=1){if(Math.abs(x-p.x)<.01&&Math.abs(y-p.y)<.01){if(p.facing==='down')return original(x,y,kind,walking,dir,sc);let front=human;human=original;try{return backHuman(x,y,kind,walking,p.facing||'down',sc)}finally{human=front}}return original(x,y,kind,walking,dir,sc)};try{actorPriorMap()}finally{human=original}};
+
+/* Food & Fun Street: tactile feedback without additional panels. */
+let arcadeFeedback=null,streetSparks=[],streetObservedState=null,streetIngredientCount=0,streetStirAmount=0,streetCookDone=false;
+function streetBurst(x,y,count,color){for(let i=0;i<count;i++){let angle=Math.random()*TAU,speed=25+Math.random()*65;streetSparks.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-40,at:t,color})}if(streetSparks.length>80)streetSparks.splice(0,streetSparks.length-80)}
+const streetStartBefore=start;start=function(a){streetStartBefore(a);streetSparks=[];arcadeFeedback=null;streetObservedState=state;streetIngredientCount=0;streetStirAmount=0;streetCookDone=false;if(a==='cook')hint('Drag ingredients into the soup, then stir with your finger.','把食材拖进汤锅，再用手指搅拌。')};
+const streetClawBefore=doClaw;doClaw=function(){if(activity!=='claw'||state.dropping)return;streetClawBefore();let run=state,grab=state.grab;arcadeFeedback=null;refreshControls();setTimeout(()=>{if(activity!=='claw'||state!==run)return;arcadeFeedback={at:t,grab};if(grab>=0){streetBurst(400,555,16,'#f3cd83');sound(660)}refreshControls()},1380)};
+const streetFishBefore=doFish;doFish=function(){if(activity!=='fish')return;let was=state.fish;streetFishBefore();if(was===0&&state.fish===1){state.castAnimAt=t;streetBurst(468,462,9,'#d5ede0')}if(was===2&&state.fish===0){streetBurst(468,480,18,'#c8e4dc');sound(620)}};
+const streetControlBefore=refreshControls;refreshControls=function(){streetControlBefore();if(activity==='claw'&&state.dropping){let e=$('gameControls');if(e)for(let b of e.querySelectorAll('button'))b.disabled=true}};
+const streetPotBefore=pot;pot=function(x,y){if(activity!=='cook')return streetPotBefore(x,y);ctx.save();let heat=state.done?.28:.75;ellipse(x,y+50,100,20,'#3e3830');for(let i=0;i<7;i++){let xx=x-66+i*22,h=(16+Math.sin(t*9+i)*7)*heat;ctx.fillStyle='#d68743';ctx.beginPath();ctx.moveTo(xx-8,y+53);ctx.quadraticCurveTo(xx-10,y+38,xx+Math.sin(t*7+i)*3,y+32-h);ctx.quadraticCurveTo(xx+12,y+42,xx+8,y+53);ctx.fill();ellipse(xx,y+48,4,6,'#f5cb78')}streetPotBefore(x,y);if(state.ingredients?.length){ctx.save();ctx.beginPath();ctx.ellipse(x,y-10,77,20,0,0,TAU);ctx.clip();for(let i=0;i<9;i++){let f=(t*.55+i*.137)%1,xx=x+Math.sin(i*2.4+t*.6)*62,yy=y-10+Math.cos(i*1.7)*13;ctx.globalAlpha=(1-f)*.65;ctx.strokeStyle='#ffebbd';ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(xx,yy,2+f*5,0,TAU);ctx.stroke()}ctx.restore()}ctx.restore()};
+const streetMachineBefore=machine;machine=function(x,y,hook,drop){streetMachineBefore(x,y,hook,drop);if(activity!=='claw')return;ctx.save();ctx.strokeStyle='#f8e3b6';ctx.lineWidth=2;for(let i=0;i<6;i++){let xx=x-93+i*37;ellipse(xx,y-90,3,3,Math.sin(t*3+i)>.1?'#fff0b9':'#b58a86')}ctx.globalAlpha=.28;line(x-94,y-69,x-37,y+53,'#fffdf2',4);line(x-80,y-69,x-23,y+53,'#fffdf2',2);ctx.globalAlpha=1;ctx.restore()};
+const streetDrawBefore=drawActivity;drawActivity=function(){streetDrawBefore();if(!['cook','claw','fish','pet','hit'].includes(activity))return;ctx.save();
+ if(activity==='cook'){if(streetObservedState!==state){streetObservedState=state;streetIngredientCount=0;streetStirAmount=0;streetCookDone=false}let n=state.ingredients?.length||0;if(n>streetIngredientCount){streetBurst(400,473,10,'#e7c87c');streetIngredientCount=n}if(state.done&&!streetCookDone){streetBurst(400,430,15,'#f6db9b');streetCookDone=true}if(!state.done)streetCookDone=false;let stir=Math.max(0,Math.min(1,(state.coins||0)/150));if(n){ctx.strokeStyle='#e9d0a1';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(400,477,105,32,0,Math.PI,Math.PI+TAU*stir*.5);ctx.stroke();if(drag?.id==='stir'){ctx.save();ctx.translate(400,479);ctx.rotate(Math.atan2(drag.y-479,drag.x-400)+Math.PI*.5);line(0,2,0,-64,'#8c6848',8);ellipse(0,3,10,6,'#b78b59');ctx.restore()}txt(state.done?tr('Ready to serve','可以上桌啦'):tr('Stir the soup','搅拌汤锅')+' '+Math.round(stir*100)+'%',400,548,14,'#fff0d1')}}
+ if(activity==='claw'&&arcadeFeedback&&t-arcadeFeedback.at<2){let f=Math.min(1,(t-arcadeFeedback.at)*3);ctx.save();ctx.translate(400,566);ctx.scale(f,f);if(arcadeFeedback.grab>=0){ellipse(0,14,32,8,'#402d2d55');cat(0,7,arcadeFeedback.grab,false,1.15);txt(tr('Your new plush!','新玩偶到手！'),0,30,14,'#fff0d1')}else{txt(tr('So close. Try another angle!','差一点！换个角度吧。'),0,0,15,'#fff0d1')}ctx.restore()}
+ if(activity==='fish'&&state.fish){let f=(t*1.3)%1;ctx.strokeStyle='#e3f5e3aa';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(468,466,8+f*36,3+f*11,0,0,TAU);ctx.stroke();if(state.castAnimAt&&t-state.castAnimAt<.5){let f=Math.min(1,(t-state.castAnimAt)*2);ellipse(405+63*f,345+118*f-30*Math.sin(f*Math.PI),5,8,'#edb47f')}}
+ if(activity==='pet'&&drag?.id==='pet'){let x=drag.x,y=drag.y;if(t-streetStirAmount>.13){streetStirAmount=t;streetBurst(x,y,2,'#efd1a2')}}
+ streetSparks=streetSparks.filter(p=>t-p.at<1.05);for(let p of streetSparks){let dt=Math.max(0,t-p.at);ctx.globalAlpha=Math.max(0,1-dt);ellipse(p.x+p.vx*dt,p.y+p.vy*dt+40*dt*dt,2.2,2.2,p.color)}ctx.restore()
+};
+
+/* Ambient village atmosphere. Local daylight, fictional weather, no gameplay penalties. */
+let atmosphereLast=-Infinity,atmosphere={hour:12,weather:'clear',season:11};
+function refreshAtmosphere(){if(t-atmosphereLast<30)return;atmosphereLast=t;let parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Singapore',hour:'2-digit',hourCycle:'h23',month:'numeric',day:'numeric'}).formatToParts(new Date());let get=k=>Number(parts.find(v=>v.type===k)?.value||0);let hour=get('hour'),month=get('month'),date=get('day');let roll=hash(day()+'sky'+Math.floor(hour/3))%10;atmosphere={hour,season:month,weather:roll<2?'rain':roll<4?'mist':'clear'};}
+const atmosphereReduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function villageAtmosphere(){refreshAtmosphere();let h=atmosphere.hour,w=1000,height=isRoute()?routeHeight:600,night=h>=19||h<6,dusk=h>=17&&h<19,dawn=h>=6&&h<8;ctx.save();if(night||dusk||dawn){let light=ctx.createLinearGradient(0,0,0,height);light.addColorStop(0,night?'#2238554d':dusk?'#b36b452f':'#e8ac5626');light.addColorStop(1,night?'#20394b29':'#d5ad6c10');ctx.fillStyle=light;ctx.fillRect(0,0,w,height)}
+ if(atmosphere.weather==='mist'){let fog=ctx.createLinearGradient(0,0,0,height);fog.addColorStop(0,'#e9e5d938');fog.addColorStop(.55,'#e0e6d710');fog.addColorStop(1,'#eff0e61a');ctx.fillStyle=fog;ctx.fillRect(0,0,w,height)}
+ if(!atmosphereReduced){let drift=atmosphere.weather==='rain';if(drift){ctx.strokeStyle='#e1ebea66';ctx.lineWidth=1.2;for(let i=0;i<78;i++){let x=((i*113-t*35)%w+w)%w,y=((i*97+t*310)%height+height)%height;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-8,y+23);ctx.stroke()}for(let i=0;i<8;i++){let f=(t*.8+i*.17)%1,x=310+(i*71)%370,y=height-45-(i*83)%(height*.55);ctx.strokeStyle='rgba(225,240,230,'+(.35*(1-f))+')';ctx.beginPath();ctx.ellipse(x,y,3+f*18,1+f*5,0,0,TAU);ctx.stroke()}}else if(night){for(let i=0;i<27;i++){let x=60+(i*131)%880+Math.sin(t*.5+i)*12,y=140+(i*83)%(height-160)+Math.sin(t*.8+i)*9;ctx.globalAlpha=.35+.28*Math.sin(t*1.6+i);ellipse(x,y,2.2,2.2,'#f6e8a5')}}else{for(let i=0;i<13;i++){let x=((i*97+t*14)%w+w)%w,y=80+(i*73)%(height-90)+Math.sin(t*.7+i)*13;ctx.globalAlpha=.45;petal(x,y,3+i%3,i)}}}
+ ctx.restore()
+}
+const atmosphereMapBefore=drawMap;drawMap=function(){atmosphereMapBefore();villageAtmosphere()};
+const atmosphereRoomBefore=drawRoom;drawRoom=function(){atmosphereRoomBefore();if(!atmosphereReduced){ctx.save();for(let i=0;i<9;i++){let x=190+(i*67)%430+Math.sin(t*.6+i)*6,y=220+(i*37)%155;ctx.globalAlpha=.18+.13*Math.sin(t+i);ellipse(x,y,1.8,1.8,'#ffe4ac')}ctx.restore()}};
+const weatherIndicator=document.createElement('span');weatherIndicator.id='weatherIndicator';weatherIndicator.style.cssText='display:block;font:10px system-ui;opacity:.9;letter-spacing:.03em;margin-top:2px';let lastSkyLabel='';function atmosphereHUD(){if(!$('location'))return;refreshAtmosphere();let h=atmosphere.hour,label=atmosphere.weather==='rain'?tr('Passing shower','阵雨'):atmosphere.weather==='mist'?tr('Gentle mist','薄雾'):h>=19||h<6?tr('Starlit evening','星夜'):tr('Clear skies','晴空');if(!room&&!activity&&proposal.hidden){if(weatherIndicator.parentNode!==$('location'))$('location').append(weatherIndicator);if(label!==lastSkyLabel){weatherIndicator.textContent=label;lastSkyLabel=label}}else if(weatherIndicator.parentNode)weatherIndicator.remove();requestAnimationFrame(atmosphereHUD)}
+requestAnimationFrame(atmosphereHUD);
+
+/* Original procedural ambience; no external audio or autoplay before interaction. */
+let ambientBus=null,ambientNoise=null,ambientFilter=null,ambientGain=null,ambientTimer=null,ambientNext=0,ambientStep=0,ambientKey='',ambientUnlocked=false,ambientLastFoot=0;
+const ambientProfiles={fortune:{notes:[220,261.63,293.66,329.63,392],cutoff:480,noise:.012},home:{notes:[196,246.94,293.66,329.63,392],cutoff:340,noise:.008},island:{notes:[261.63,293.66,349.23,392,440],cutoff:720,noise:.019},wonder:{notes:[220,261.63,329.63,349.23,440],cutoff:560,noise:.011}};
+function ambientContext(){if(muted||!ambientUnlocked)return false;try{audio??=new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume().catch(()=>{});if(!ambientBus){ambientBus=audio.createGain();ambientBus.gain.value=.0001;ambientBus.connect(audio.destination);let n=audio.createBuffer(1,audio.sampleRate*2,audio.sampleRate),d=n.getChannelData(0),v=0;for(let i=0;i<d.length;i++){v=(v+Math.random()*.04-.02)/1.02;d[i]=v*3}ambientNoise=audio.createBufferSource();ambientNoise.buffer=n;ambientNoise.loop=true;ambientFilter=audio.createBiquadFilter();ambientFilter.type='lowpass';ambientFilter.frequency.value=500;ambientGain=audio.createGain();ambientGain.gain.value=.008;ambientNoise.connect(ambientFilter).connect(ambientGain).connect(ambientBus);ambientNoise.start()}return true}catch(e){return false}}
+function ambientTone(f,vol=.018,dur=1.4,type='sine',when=0){if(!ambientBus||!audio||audio.state!=='running'||muted)return;let now=audio.currentTime+when,o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(Math.max(.0002,vol),now+.045);g.gain.exponentialRampToValueAtTime(.0001,now+dur);o.connect(g).connect(ambientBus);o.start(now);o.stop(now+dur+.02)}
+function ambientTick(){if(!ambientBus||!audio)return;if(muted||document.hidden){ambientBus.gain.setTargetAtTime(.0001,audio.currentTime,.12);return}ambientBus.gain.setTargetAtTime(.42,audio.currentTime,.4);let profile=ambientProfiles[scene]||ambientProfiles.fortune,key=scene+':'+(room||'outdoor');if(key!==ambientKey){ambientKey=key;ambientStep=0;ambientNext=audio.currentTime+.3}let rainy=!room&&atmosphere.weather==='rain';ambientFilter.frequency.setTargetAtTime(rainy?1050:room?240:profile.cutoff,audio.currentTime,.8);ambientGain.gain.setTargetAtTime(rainy?.045:room?.005:profile.noise,audio.currentTime,.8);if(audio.state!=='running'||audio.currentTime<ambientNext)return;let seq=[0,2,1,4,2,3,0,1],note=profile.notes[seq[ambientStep%seq.length]];ambientTone(note,.026,2.1,'sine');if(ambientStep%4===0)ambientTone(profile.notes[0]/2,.015,3.1,'sine');ambientStep++;ambientNext=audio.currentTime+(room?2.2:1.65)}
+function ambientUnlock(){if(muted)return;ambientUnlocked=true;if(ambientContext()){if(!ambientTimer)ambientTimer=setInterval(ambientTick,250);ambientTick()}}
+document.addEventListener('pointerdown',ambientUnlock,{passive:true});document.addEventListener('keydown',ambientUnlock);
+const ambientMuteBefore=$('mute').onclick;$('mute').onclick=function(e){ambientMuteBefore.call(this,e);if(muted){if(ambientBus&&audio)ambientBus.gain.setTargetAtTime(.0001,audio.currentTime,.03)}else ambientUnlock()};
+document.addEventListener('visibilitychange',()=>{if(ambientBus)ambientTick()});
+const ambientSoundBefore=sound;sound=function(f=420){if(muted)return;/* keep the game's existing short cues, softened where procedural audio is available */if(!ambientBus||!audio||audio.state!=='running')return ambientSoundBefore(f);ambientTone(Math.max(100,Math.min(1200,f)),.045,.16,'sine');if(f>=620)ambientTone(f*1.25,.014,.32,'sine',.065)};
+const ambientDrawBefore=drawMap;drawMap=function(){ambientDrawBefore();if(ambientBus&&!muted&&!room&&p.walk&&t-ambientLastFoot>.34){ambientLastFoot=t;ambientTone(85+Math.random()*24,.016,.09,'triangle')}};
+const ambientReactBefore=react;react=function(en,cn){ambientReactBefore(en,cn);if(muted||!ambientBus)return;if(activity==='cook'){ambientTone(130,.02,.18,'triangle');ambientTone(250,.012,.25,'sine',.08)}else if(activity==='fish'){ambientTone(180,.02,.3,'sine');ambientTone(270,.015,.28,'sine',.1)}else if(activity==='pet'){ambientTone(105,.022,.55,'sine')}else if(activity==='moon'||activity==='sticks'){ambientTone(350,.025,.12,'triangle',.03)}};
+
+/* A playful fictional paper-villain ritual, with no real-person targets. */
+let stressTarget=0,stressSwingAt=-10,stressSide=1,stressCombo=0,stressLast=-10,stressPieces=[],stressTool=0;
+const stressTargets=[['Unnecessary meetings','无效会议'],['Monday blues','周一综合征'],['Endless emails','回不完的邮件'],['Overthinking','想太多']];
+const stressStartBefore=start;start=function(a){stressStartBefore(a);if(a==='hit'){stressSwingAt=-10;stressLast=-10;stressCombo=0;stressPieces=[];hint('Choose a paper worry, then tap or swipe to let it go.','选一张烦恼纸人，点击或滑动，把烦恼打走。')}};
+const stressSmackBefore=smack;smack=function(){if(activity!=='hit')return;stressCombo=t-stressLast<.65?stressCombo+1:1;stressLast=t;stressSwingAt=t;stressSide*=-1;stressSmackBefore();for(let i=0;i<7;i++)stressPieces.push({at:t,x:400+(Math.random()-.5)*55,y:465+(Math.random()-.5)*65,vx:(Math.random()-.5)*140,vy:-30-Math.random()*80,angle:Math.random()*TAU});if(stressPieces.length>70)stressPieces.splice(0,stressPieces.length-70);if(ambientBus&&!muted)ambientTone(100,.035,.13,'triangle');if(stressCombo===5)react('Even the paper wants annual leave.','纸人都想请年假了。');if(state.count===25)addItem('Certified worry shredder','认证烦恼粉碎机')};
+function stressSlipper(x,y,angle){ctx.save();ctx.translate(x,y);ctx.rotate(angle);let g=ctx.createLinearGradient(-20,0,22,0);g.addColorStop(0,stressTool?'#8b6541':'#a65d58');g.addColorStop(.5,stressTool?'#d3a976':'#d7a18a');g.addColorStop(1,stressTool?'#916b47':'#98544e');ctx.beginPath();ctx.moveTo(-16,41);ctx.bezierCurveTo(-28,10,-27,-44,-9,-50);ctx.bezierCurveTo(15,-56,26,-29,22,4);ctx.quadraticCurveTo(18,47,-16,41);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#684b39';ctx.lineWidth=2;ctx.stroke();ctx.strokeStyle='#f0d0a4';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-20,-16);ctx.quadraticCurveTo(0,-4,20,-16);ctx.stroke();ctx.restore()}
+const stressDrawBefore=drawActivity;drawActivity=function(){if(activity!=='hit')return stressDrawBefore();ctx.save();paintLivingBackdrop(pics.office||pics.tea);let b=livingBounds(),g=ctx.createLinearGradient(0,280,0,700);g.addColorStop(0,'#372e2820');g.addColorStop(1,'#3b2927ae');shadeLivingBackdrop(g);human(400,377,0,false,1,1.55);let wood=ctx.createLinearGradient(0,390,0,700);wood.addColorStop(0,'#b99067');wood.addColorStop(1,'#76513d');ctx.fillStyle=wood;ctx.beginPath();ctx.moveTo(215,390);ctx.lineTo(585,390);ctx.lineTo(790,1600);ctx.lineTo(10,1600);ctx.closePath();ctx.fill();for(let j=0;j<14;j++)line(185,408+j*20,615,410+j*20,'#dfb98a33',1);
+ txt(tr('Paper Worry Ritual','打小烦恼'),400,258,23,'#fff0d2');
+ let f=Math.max(0,Math.min(1,(t-stressSwingAt)/.46)),impact=(1-f)*Math.sin(f*13);ctx.save();ctx.translate(400,491);ctx.rotate(impact*.48*stressSide);ctx.translate(impact*13,0);let paper=ctx.createLinearGradient(-50,-80,50,75);paper.addColorStop(0,'#f2d7a5');paper.addColorStop(1,'#d5b17b');ctx.fillStyle=paper;ctx.beginPath();ctx.moveTo(-25,-68);ctx.lineTo(25,-68);ctx.lineTo(31,-28);ctx.lineTo(62,-13);ctx.lineTo(47,15);ctx.lineTo(27,5);ctx.lineTo(23,66);ctx.lineTo(1,56);ctx.lineTo(-23,66);ctx.lineTo(-27,5);ctx.lineTo(-47,15);ctx.lineTo(-62,-13);ctx.lineTo(-31,-28);ctx.closePath();ctx.fill();ctx.strokeStyle='#a27a4b';ctx.stroke();line(-16,-45,-4,-40,'#78543c',2);line(16,-45,4,-40,'#78543c',2);line(-8,-28,8,-28,'#78543c',2);wonderSceneText(tr(...stressTargets[stressTarget]),0,-9,55,11,'#86563b',4);ctx.restore();
+ let swing=Math.sin(Math.min(1,f)*Math.PI);stressSlipper(520-108*swing,511-45*swing,.3-1.4*swing);target(325,405,150,155,()=>{},'hit');target(474,433,90,120,()=>smack());
+ stressPieces=stressPieces.filter(v=>t-v.at<.65);for(let v of stressPieces){let d=t-v.at;ctx.save();ctx.globalAlpha=1-d/.65;ctx.translate(v.x+v.vx*d,v.y+v.vy*d+100*d*d);ctx.rotate(v.angle+d*4);ctx.fillStyle='#f0d8a3';ctx.fillRect(-3,-2,6,4);ctx.restore()}
+ txt(tr('Worries released: ','烦恼释放：')+state.count,400,579,17,'#fff0d4');if(stressCombo>1&&t-stressLast<1)txt(tr('Combo ','连击 ')+stressCombo,400,607,15,'#ffe0a0');label(tr('Change worry','换个烦恼'),302,642,()=>{stressTarget=(stressTarget+1)%stressTargets.length;stressCombo=0;sound(430)});label(tr('Change slipper','换只拖鞋'),500,642,()=>{stressTool=1-stressTool;sound(430)});ctx.restore()
+};
+
+const movementHelpStyle=document.createElement('style');
+movementHelpStyle.textContent='#walkHelp{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(90px + env(safe-area-inset-bottom,0px));z-index:5;border:1px solid #c3ad80;background:#31483ddd;color:#fff4d5;border-radius:50%;width:44px;height:44px;font:22px Georgia;box-shadow:0 3px 10px #172a2540}#walkHelp[hidden]{display:none!important}#movePad button{touch-action:none;user-select:none;-webkit-user-select:none}#movePad button:active{background:#e7d4a8;color:#334a3c}';
+document.head.append(movementHelpStyle);
+const walkHelp=element('button','?',document.body);walkHelp.id='walkHelp';walkHelp.hidden=true;
+walkHelp.onclick=()=>{guideDismissed=false;guideStage=0;guideOrigin=null;guideTarget=null;guideStartedAt=0;save('movementTutorialDone',false)};
+function releaseWalkKeys(){for(const key of ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d','W','A','S','D'])keys[key]=false}
+window.addEventListener('blur',releaseWalkKeys);document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseWalkKeys()});
+let walkWasVisible=false;
+function walkHelpTick(){const visible=proposal.hidden&&avatar!==null&&!room&&!transitioning&&$('page').style.display!=='block'&&valleyRevealAt<0&&isRoute();walkHelp.hidden=!visible||!guideDismissed;walkHelp.setAttribute('aria-label',tr('Show walking instructions','查看行走指南'));if(walkWasVisible&&!visible)releaseWalkKeys();walkWasVisible=visible;setTimeout(walkHelpTick,200)}
+walkHelpTick();
+
+function keepsakeClue(item){const clues={'Observatory destiny scroll':['Visit the observatory','到星月观去看看'],'Love reading':['Turn the cards in the reading house','到占卜小屋翻牌'],'Heaven’s approval':['Try the wooden moon blocks','试试掷筊'],'Wishing lantern':['Leave a wish in the garden','在花园留下一份心愿'],'Cat friendship':['Spend time with a valley cat','陪山谷的小猫玩一会儿'],'Soul Cat keepsake':['Discover your Soul Cat in Wonder Valley','到奇遇谷寻找你的猫灵']};return clues[item[0]]||['Explore to unlock','探索解锁']}
+function keepsakeStory(item){const stories={'Observatory destiny scroll':['A little reminder that your future is still yours to write.','未来的故事，仍由你自己书写。'],'Love reading':['A memory of the cards you turned and the questions you carried.','记下那天翻过的牌，还有心里的疑问。'],'Heaven’s approval':['Even the wooden moon blocks decided to give you a break.','连筊杯都决定让你松一口气。'],'Wishing lantern':['Somewhere in the valley, a little light carries your wish.','山谷的某盏小灯，藏着你的心愿。'],'Cat friendship':['You earned a cat’s trust. More impressive than getting a reply from HR.','你赢得了猫咪的信任，比等到人事部回信还难得。'],'Soul Cat keepsake':['A small portrait of the way you see the world.','一幅小小的画像，记下你眼里的世界。']};return stories[item[0]]||(/^Met /.test(item[0])?['A familiar face from a day away from ordinary life.','平凡日子之外，偶遇的一张熟悉面孔。']:['A small souvenir of the time you spent here.','把在这里度过的时光，收成一份小小的纪念。'])}
+const memoryBookStyle=document.createElement('style');memoryBookStyle.textContent='.memoryStory{font:17px/1.65 Georgia,serif;padding:16px;color:inherit}.friendEntry{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:12px 4px;border-bottom:1px dashed #ac8c62}.friendEntry small{font-size:12px;color:#79583d}.albumCard small{line-height:1.4}.albumTabs button[aria-pressed=true]{outline:2px solid #a77a4e;outline-offset:-3px}';document.head.append(memoryBookStyle);
+
+const langChoiceStyle=document.createElement('style');langChoiceStyle.textContent='.languageChoice{display:inline-flex;gap:3px;align-items:center;white-space:nowrap}#proposal .languageChoice button,#small .languageChoice button{min-width:44px;min-height:40px;padding:5px 9px;border:1px solid #b9a77d;background:#34483c;color:#fff0d1;border-radius:6px;font:13px system-ui}#proposal .languageChoice button[aria-pressed=true],#small .languageChoice button[aria-pressed=true]{background:#f1dfb4;color:#304337;font-weight:700}';document.head.append(langChoiceStyle);
+const oldLanguageButton=$('language');const languageChoices=element('span','',oldLanguageButton.parentNode,'languageChoice');oldLanguageButton.hidden=true;oldLanguageButton.style.display='none';const languageButtons=[];
+for(const [cn,label] of [[false,'EN'],[true,'中文']]){const btn=element('button',label,languageChoices);btn.onclick=()=>{if(Boolean(zh)!==cn)toggleLang();refreshLanguageChoice()};languageButtons.push([cn,btn])}
+function refreshLanguageChoice(){for(const [cn,btn] of languageButtons)btn.setAttribute('aria-pressed',String(zh===cn));document.documentElement.lang=zh?'zh':'en'}
+const languageHUD=updateHUD;updateHUD=function(){languageHUD();refreshLanguageChoice()};refreshLanguageChoice();
+
+const wishingPoolStyle=document.createElement('style');wishingPoolStyle.textContent='.wishRitual{position:relative;isolation:isolate;min-height:330px;height:min(56vh,480px);overflow:hidden;background:radial-gradient(ellipse at 50% 42%,#527e70,#254d4c 60%,#173e38);border:8px solid #ad9672;border-radius:45% 45% 18% 18% / 24% 24% 12% 12%;box-shadow:inset 0 0 35px #112f2d88;touch-action:none}.wishRitual .v9koi{pointer-events:none}.wishBowl{position:absolute;left:50%;top:39%;width:29%;height:21%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(ellipse,#31564c 0 48%,#a68b58 51%,#e0c69a 62%,#756444 76%);box-shadow:0 8px 15px #163b37aa,inset 0 3px 8px #e8d8b6;pointer-events:none}.wishRitual .ritualCoin{position:absolute;width:52px;height:52px;object-fit:contain;left:50%;top:86%;transform:translate(-50%,-50%);touch-action:none;cursor:grab;z-index:3;filter:drop-shadow(0 5px 5px #142f2a88)}.wishRipple{position:absolute;border:2px solid #d9f1d8;border-radius:50%;width:28px;height:14px;pointer-events:none;animation:wishRippleOut 1s ease-out forwards}.wishRipple.gold{border-color:#ffe2a0;box-shadow:0 0 16px #ffe0a0}.wishMessage{min-height:3em;font:16px/1.5 Georgia,serif}.wishRitual .wishAim{position:absolute;width:8px;height:8px;border-radius:50%;background:#ffedb2;box-shadow:0 0 9px #fff0bb;pointer-events:none}.wishRitual .wishAim[hidden]{display:none}@keyframes wishRippleOut{from{transform:translate(-50%,-50%) scale(.5);opacity:1}to{transform:translate(-50%,-50%) scale(7);opacity:0}}';document.head.append(wishingPoolStyle);
+wishPond9=function(){page(tr('The wishing pool','锦鲤许愿池'),tr('Hold a wish in your heart. No need to tell anyone.','在心里默默许个愿，不必告诉任何人。'),q=>{
+ const pond=pond9(q);pond.classList.add('wishRitual');const koiLife=animateWishKoi(pond);element('div','',pond,'wishBowl');const aim=element('i','',pond,'wishAim');aim.hidden=true;const coin=element('img','',pond,'ritualCoin');coin.src=art9.coin;coin.alt=tr('Swipe the coin toward the centre bowl','将铜钱向中央许愿碗滑动');coin.draggable=false;
+ const powerBar=element('div','',q,'wishPower');const powerFill=element('i','',powerBar);powerBar.setAttribute('aria-label',tr('Throw strength','投币力度'));const message=element('p',tr('Make a wish, then flick the coin. Direction and strength matter.','默默许愿，再滑动铜钱。方向和力度都很重要。'),q,'wishMessage');message.setAttribute('aria-live','polite');
+ let busy=false,done=false,misses=0,origin=null;const home=()=>{coin.style.left='50%';coin.style.top='86%';coin.style.opacity='1';coin.style.transform='translate(-50%,-50%)';coin.hidden=false};
+ const clampWish=(v,min,max)=>Math.max(min,Math.min(max,v));
+ const destination=(dx,dy,ms)=>{const w=pond.clientWidth,h=pond.clientHeight,dist=Math.hypot(dx,dy)/h,velocity=dist/Math.max(.09,ms/1000),power=clampWish(dist*.65+velocity*.24,0,1.15),angle=Math.atan2(dy,dx);return {x:clampWish(50+Math.cos(angle)*power*100*h/w,4,96),y:clampWish(86+Math.sin(angle)*power*100,5,94),power}};
+ function throwWish(x,y){if(busy||done)return;busy=true;aim.hidden=true;let hit=Math.pow((x-50)/6.2,2)+Math.pow((y-39)/4.8,2)<=1;let startTime=performance.now();sound(520);const distance=Math.hypot((x-50)*pond.clientWidth/pond.clientHeight,y-86),duration=460+distance*5,arc=8+distance*.26;const rim=!hit&&Math.pow((x-50)/13.8,2)+Math.pow((y-39)/9.6,2)<=1;const landingX=rim?clampWish(x+(x>=50?1:-1)*(8+distance*.045),5,95):x,landingY=rim?clampWish(y+(y>=39?7:-7),5,93):y;let bounced=false;function frame(now){if(!pond.isConnected)return;let f=Math.min(1,(now-startTime)/duration);coin.style.left=(50+(x-50)*f)+'%';coin.style.top=(86+(y-86)*f-arc*Math.sin(Math.PI*f))+'%';coin.style.transform='translate(-50%,-50%) rotateY('+(f*720)+'deg) scale('+(1-.55*f)+')';if(f<1){requestAnimationFrame(frame);return}if(rim&&!bounced){bounced=true;sound(780);const bowl=pond.querySelector('.wishBowl');bowl.animate([{transform:'translate(-50%,-50%) rotate(0deg)'},{transform:'translate(-50%,-50%) rotate(3deg)'},{transform:'translate(-50%,-50%) rotate(-2deg)'},{transform:'translate(-50%,-50%) rotate(0deg)'}],{duration:260});const bounceAt=performance.now();function rebound(at){if(!pond.isConnected)return;const u=Math.min(1,(at-bounceAt)/310);coin.style.left=(x+(landingX-x)*u)+'%';coin.style.top=(y+(landingY-y)*u-7*Math.sin(Math.PI*u))+'%';coin.style.transform='translate(-50%,-50%) rotate('+(u*420)+'deg) scale(.45)';if(u<1)requestAnimationFrame(rebound);else{x=landingX;y=landingY;finish()}}requestAnimationFrame(rebound);return}finish()}function finish(){if(!pond.isConnected)return;coin.hidden=true;const bumped=!hit&&koiLife.collision(x,y);koiLife.splash(x,y,hit,bumped);sound(hit?660:bumped?410:280);wishLanding(pond,x,y,hit,bumped);for(let n=0;n<3;n++){setTimeout(()=>{if(!pond.isConnected)return;let ripple=element('i','',pond,'wishRipple'+(hit?' gold':''));ripple.style.left=x+'%';ripple.style.top=y+'%';setTimeout(()=>ripple.remove(),1100)},n*150)}if(hit){done=true;busy=false;const settled=element('img','',pond,'settledWishCoin');settled.src=art9.coin;settled.alt='';settled.style.left=x+'%';settled.style.top=y+'%';settled.animate([{transform:'translate(-50%,-50%) scale(.9)',opacity:1},{transform:'translate(-50%,-50%) scale(.65)',opacity:.85}],{duration:450,fill:'forwards'});message.textContent=tr('Your coin found the centre. May your wish find its way, too.','铜钱落入碗心。愿你的心愿，也慢慢找到归处。');addItem('Wishing coin','许愿铜钱');again.hidden=false}else{misses++;let lines=[['A little closer. Your wish is still yours.','差一点点，心愿还在。'],['The koi are curious. Try aiming a little higher.','锦鲤都来看热闹了，再往中间瞄一点。'],['Even the koi are cheering for you now. Take your time.','锦鲤都在替你加油了，慢慢来。']];message.textContent=bumped&&bumped.el.classList.contains('golden')?tr('Golden koi: I grant good luck, not refunds.','金锦鲤：我负责好运，不负责退币。'):rim?tr('Clink! The coin bounced off the rim. Even wishes take a little practice.','叮！铜钱碰到碗沿弹出去了。许愿也要练练手。'):bumped?tr(...[['Koi: Excuse me, I am not the wishing bowl!','锦鲤：喂，我不是许愿碗！'],['Koi: Please direct all wishes to the management.','锦鲤：许愿请找池中央，不要找我。'],['Koi: I accept compliments, not flying coins.','锦鲤：我收赞美，不收飞来的铜钱。']][(misses-1)%3]):tr(...(y>48?['A little more strength. Your coin fell short.','再用一点力，铜钱还没飞到碗边。']:y<31?['A little gentler. Your coin flew past the bowl.','轻一点，铜钱飞过头啦。']:lines[Math.min(2,misses-1)]));setTimeout(()=>{if(!pond.isConnected)return;home();busy=false},650)}}requestAnimationFrame(frame)}
+ coin.onpointerdown=e=>{if(busy||done)return;e.preventDefault();origin={x:e.clientX,y:e.clientY,at:performance.now()};coin.setPointerCapture(e.pointerId)};
+ coin.onpointermove=e=>{if(!origin||busy)return;let v=destination(e.clientX-origin.x,e.clientY-origin.y,performance.now()-origin.at);aim.hidden=true;powerFill.style.width=Math.min(100,v.power*100)+'%'};
+ coin.onpointerup=e=>{if(!origin)return;let dx=e.clientX-origin.x,dy=e.clientY-origin.y,elapsed=performance.now()-origin.at;origin=null;aim.hidden=true;if(Math.hypot(dx,dy)<12){message.textContent=tr('Swipe upward to send your coin toward the bowl.','向上滑动铜钱，让它飞向许愿碗。');return}let v=destination(dx,dy,elapsed);powerFill.style.width=Math.min(100,v.power*100)+'%';throwWish(v.x,v.y)};
+ coin.onpointercancel=()=>{origin=null;aim.hidden=true};
+ let keyboardAim=0,keyboardPower=36;const keyboard=element('details','',q);element('summary',tr('Alternative aiming controls','其他瞄准方式'),keyboard);const controls=element('div','',keyboard,'wishKeyboard');const readout=element('output','',controls);function updateAim(){readout.textContent=tr('Angle ','角度 ')+keyboardAim+'° · '+tr('Power ','力度 ')+keyboardPower+'%';powerFill.style.width=keyboardPower+'%'};for(const [label,fn] of [['←',()=>keyboardAim=Math.max(-45,keyboardAim-5)],['→',()=>keyboardAim=Math.min(45,keyboardAim+5)],['−',()=>keyboardPower=Math.max(10,keyboardPower-4)],['+',()=>keyboardPower=Math.min(90,keyboardPower+4)]])b(controls,label,()=>{fn();updateAim()});b(controls,tr('Throw','投币'),()=>{const a=keyboardAim*Math.PI/180;throwWish(clampWish(50+Math.sin(a)*keyboardPower*pond.clientHeight/pond.clientWidth,4,96),clampWish(86-Math.cos(a)*keyboardPower,5,94))});updateAim();
+let again=b(q,tr('Make another wish','再许一个愿'),()=>{done=false;misses=0;koiLife.reset();pond.querySelectorAll('.settledWishCoin').forEach(n=>n.remove());home();again.hidden=true;message.textContent=tr('Hold another wish in your heart, then toss.','再默默许个愿，然后投币。')});again.hidden=true;
+ b(q,tr('Hang a private wish','挂心愿牌'),()=>{$('page').style.display='none';start('wishes')});
+})};
+
+const koiLifeCSS=document.createElement('style');koiLifeCSS.textContent='.wishRitual .livingKoi{position:absolute;width:19%;height:13%;pointer-events:none;transform-origin:center;z-index:0;filter:drop-shadow(0 4px 4px #102f3066);opacity:.9}.livingKoi img{width:100%;height:100%;object-fit:contain;animation:koiFinMotion 1.2s ease-in-out infinite alternate;transform-origin:50% 50%}.livingKoi.golden img{filter:sepia(.8) saturate(1.8) brightness(1.16)}.wishRitual .waterLight{position:absolute;inset:0;pointer-events:none;z-index:0;background:repeating-linear-gradient(115deg,transparent 0 25px,#d9edd416 29px,transparent 34px 58px);mask-image:radial-gradient(ellipse,#000 20%,transparent 80%);animation:pondLightDrift 11s ease-in-out infinite alternate}.wishRitual .floatingPetal{position:absolute;width:9px;height:5px;border-radius:70% 30% 65% 35%;background:#ead1be;opacity:.8;pointer-events:none}.wishRitual .fishWake{position:absolute;width:24px;height:12px;border:1px solid #cae9d380;border-radius:50%;pointer-events:none;animation:wishRippleOut 1.6s ease-out forwards;z-index:0}@keyframes koiFinMotion{from{transform:scaleY(.92) skewY(-4deg)}to{transform:scaleY(1.06) skewY(4deg)}}@keyframes pondLightDrift{to{transform:translate(8%,4%) rotate(7deg);opacity:.55}}@media(prefers-reduced-motion:reduce){.livingKoi img,.wishRitual .waterLight{animation:none}}';document.head.append(koiLifeCSS);
+function animateWishKoi(pond){
+ pond.querySelectorAll('.v9koi').forEach(n=>n.remove());element('div','',pond,'waterLight');
+ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const fish=[];let event=null,last=performance.now(),wake=last;
+ const count=Math.random()<.12?4:3;
+ for(let k=0;k<count;k++){const el=element('div','',pond,'livingKoi'+(k===3?' golden':''));const im=element('img','',el);im.src=art9.koi;im.alt='';im.style.animationDelay=(-k*.4)+'s';const angle=k*2*Math.PI/count;fish.push({el,x:50+Math.cos(angle)*29,y:43+Math.sin(angle)*24,angle,heading:angle*180/Math.PI+90,speed:.36+k*.045})}
+ const petals=Array.from({length:5},(_,k)=>({el:element('i','',pond,'floatingPetal'),x:15+k*17,y:15+(k*29)%64,phase:k*1.9}));
+ function tick(now){if(!pond.isConnected)return;if($('page').style.display==='none'){last=now;requestAnimationFrame(tick);return}const dt=Math.min(.06,Math.max(0,(now-last)/1000));last=now;const age=event?(now-event.at)/1000:0;const active=event&&age<4.5;for(let k=0;k<fish.length;k++){const f=fish[k];let prevX=f.x,prevY=f.y;f.angle+=dt*f.speed*(reduce?.35:1);let gx=50+Math.cos(f.angle)*31,gy=45+Math.sin(f.angle)*27;if(active){if(event.hit&&age>.7){gx=50+Math.cos(f.angle+k*.22)*20;gy=39+Math.sin(f.angle+k*.22)*16}else if(!event.hit&&age<1.5){const dx=f.x-event.x,dy=f.y-event.y,dist=Math.max(1,Math.hypot(dx,dy));if(dist<42){gx=f.x+dx/dist*24;gy=f.y+dy/dist*24}}}const ease=Math.min(1,dt*(active&&!event.hit&&age<1.5?3:1.4));f.x=Math.max(9,Math.min(91,f.x+(gx-f.x)*ease));f.y=Math.max(12,Math.min(77,f.y+(gy-f.y)*ease));const dx=f.x-prevX,dy=f.y-prevY;if(Math.hypot(dx,dy)>.001){const desired=Math.atan2(dy*pond.clientHeight,dx*pond.clientWidth)*180/Math.PI;const delta=((desired-f.heading+540)%360)-180;f.heading+=delta*Math.min(1,dt*5)}f.el.style.left=f.x+'%';f.el.style.top=f.y+'%';f.el.style.transform='translate(-50%,-50%) rotate('+f.heading+'deg)';}
+ if(!reduce&&now-wake>1700){wake=now;const f=fish[Math.floor(now/1700)%fish.length];const ripple=element('i','',pond,'fishWake');ripple.style.left=f.x+'%';ripple.style.top=f.y+'%';setTimeout(()=>ripple.remove(),1650)}
+ for(const petal of petals){if(!reduce){petal.x+=dt*.5;petal.y+=dt*Math.sin(now/4000+petal.phase)*.2;if(petal.x>90)petal.x=10}petal.el.style.left=petal.x+'%';petal.el.style.top=petal.y+'%';petal.el.style.transform='rotate('+(Math.sin(now/3200+petal.phase)*35)+'deg)'}
+ requestAnimationFrame(tick)}
+ requestAnimationFrame(tick);return {collision(x,y){return fish.find(f=>Math.pow((f.x-x)/8,2)+Math.pow((f.y-y)/5,2)<1)||null},splash(x,y,hit,bumped){event={x,y,hit,at:performance.now()};if(bumped){bumped.el.animate([{opacity:1,filter:'brightness(1.7)'},{opacity:.7,filter:'brightness(1)'}],{duration:500});}},reset(){event=null}};
+}
+
+const wishImpactCSS=document.createElement('style');wishImpactCSS.textContent='.wishPower{height:8px;border-radius:6px;background:#28433d55;overflow:hidden;margin:12px 0 4px}.wishPower i{display:block;width:0;height:100%;background:linear-gradient(90deg,#afc6a0,#e8c57d,#bd7156);transition:width .08s}.wishImpact{position:absolute;z-index:2;width:7px;height:12px;background:#e2f4df;border-radius:70%;pointer-events:none;transform:translate(-50%,-50%)}.wishImpact.gold{background:#ffe4a1;box-shadow:0 0 12px #ffdb86}.wishImpact.fish{background:#fff4dd}';document.head.append(wishImpactCSS);
+function wishLanding(pond,x,y,hit,bumped){for(let k=0;k<12;k++){const drop=element('i','',pond,'wishImpact'+(hit?' gold':bumped?' fish':''));drop.style.left=x+'%';drop.style.top=y+'%';const angle=k*Math.PI*2/12,dx=Math.cos(angle)*(18+k%3*8),dy=Math.sin(angle)*17;const anim=drop.animate([{transform:'translate(-50%,-50%) scale(.4)',opacity:1},{transform:'translate('+dx+'px,'+(dy-30)+'px) scale(1)',opacity:1,offset:.4},{transform:'translate('+(dx*1.6)+'px,'+(dy+10)+'px) scale(.25)',opacity:0}],{duration:650+k%4*50,easing:'ease-out'});anim.onfinish=()=>drop.remove()}}
+
+/* Quiet, contextual feedback for repeated activities, without adding another task or timer. */
+const ritualExperienceStart=start;
+start=function(a){ritualExperienceStart(a);if(a==='fish')hint('Cast your line, watch the float, and reel in when it dips. No rush.','抛下鱼线，看看浮标，等它沉下去再收线。不用赶。');if(a==='cook')hint('Choose a few ingredients, drop them in the pot and stir slowly.','挑几样食材放进锅里，慢慢搅拌。');if(a==='pet')hint('Gently stroke the cat. Let it decide when it trusts you.','轻轻摸摸小猫，让它慢慢熟悉你。')};
+const ritualExperienceFish=doFish;
+doFish=function(){if(activity!=='fish')return ritualExperienceFish();const before=state.fish;ritualExperienceFish();if(before===0&&state.fish===1)hint('The float is on the water. Enjoy the quiet.','浮标已经入水，安静等一会儿吧。');else if(before===2&&state.fish===0)hint('A little discovery from the water. Cast again whenever you like.','水里捞起一份小惊喜。想钓就再抛一竿。')};
+const quietGardenStyle=document.createElement('style');quietGardenStyle.textContent='.wishPower:before{content:"";display:block;position:absolute;left:36%;width:2px;height:8px;background:#fff0cb99}.wishPower{position:relative}.wishRitual .wishBowl{box-shadow:0 8px 15px #163b37aa,inset 0 3px 8px #e8d8b6}.wishMessage{overflow-wrap:anywhere}';document.head.append(quietGardenStyle);
+
+/* Small screen polish: keep scrollable forms and the scene controls usable. */
+const compactGameStyle=document.createElement('style');compactGameStyle.textContent='@media(max-width:480px){#proposal header>span{font-size:10px;letter-spacing:.07em}#proposal .languageChoice{flex-shrink:0}#proposal .rail-ticket{box-sizing:border-box;width:94%;padding:14px;gap:9px}#proposal .rail-ticket input,#content input,#content textarea,#content select{font-size:16px!important}#content .albumCard{min-width:0}#content .albumCard strong{overflow-wrap:anywhere}#content .wishRitual{box-sizing:border-box;min-height:250px;height:clamp(250px,45dvh,420px)}#content .wishMessage{font-size:15px}#content .wishRitual .ritualCoin{width:48px;height:48px}#content .astroForm{min-width:0}#content .astroForm input,#content .astroForm select{max-width:100%;min-width:0;box-sizing:border-box}}@media(max-height:650px){#proposal footer{gap:5px}#proposal footer p{font-size:13px}#proposal h1{font-size:clamp(23px,6vw,38px)}#proposal .actions{gap:5px}#proposal .rail-ticket{gap:7px;padding:12px}}';
+document.head.append(compactGameStyle);
+const priorKoiPage=wishPond9;wishPond9=function(){priorKoiPage();const pond=$('content').querySelector('.wishRitual');if(pond){pond.setAttribute('aria-label',tr('Wishing pool with a small bowl in the centre','中央有许愿碗的锦鲤池'));const power=$('content').querySelector('.wishPower');if(power){const guide=element('small',tr('Short flick = short throw. A stronger flick travels farther.','轻滑投得近，用力滑投得远。'),$('content'));power.before(guide)}}};
+
+/* Make the wishing ritual accessible without bypassing its aiming challenge. */
+const wishKeyboardStyle=document.createElement('style');wishKeyboardStyle.textContent='.wishKeyboard{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0}.wishKeyboard button{min-height:44px;min-width:44px}.wishKeyboard output{font:13px system-ui;min-width:110px;text-align:center}';document.head.append(wishKeyboardStyle);
+
+function cameoHeart(n,count){let stories=[['I escaped a meeting that could have been an email. I am celebrating with tea.','我逃过了一场本来可以发邮件解决的会议，正在喝茶庆祝。'],['I came here to make a wish. I think I forgot how to rest without feeling guilty.','我来这里许愿，好像已经忘了怎么毫无负担地休息。'],['The best part of today is that nobody asked me for a status update.','今天最开心的是没人催我汇报进度。'],['I am practising the art of doing absolutely nothing. Progress is excellent.','我正在练习什么都不做的艺术，进展非常好。']];let v=stories[(n.cameo+count-1)%stories.length];if(count>=3&&Math.random()<.28)v=trShareStory(n);say(tr(...n.n),tr(...v),[[tr('Stay and chat','陪你聊一会儿'),()=>{let k=n.n[0];let shared=load('cameoSharedV1',{});if(!shared||typeof shared!=='object')shared={};shared[k]=(shared[k]||0)+1;save('cameoSharedV1',shared);say(tr(...n.n),tr('That was nice. No agenda, no minutes to write. Come find me again.','真舒服。不用议程，也不用写会议记录。下次再来找我。'),[[tr('See you soon','下次见'),closeTalk]]);if(shared[k]===3)addItem('Tea with '+k,'和'+n.n[1]+'喝茶的回忆');if(shared[k]===5)addItem('A letter from '+k,'来自'+n.n[1]+'的信')}],[tr('Enjoy your break','好好休息'),closeTalk]])}
+
+const wishPhysicsStyle=document.createElement('style');wishPhysicsStyle.textContent='.settledWishCoin{position:absolute;width:23px;height:23px;object-fit:contain;pointer-events:none;z-index:2;filter:drop-shadow(0 2px 2px #172d26aa);transform:translate(-50%,-50%) scale(.65)}';document.head.append(wishPhysicsStyle);
+
+/* Gesture-sensitive activities and optional memories. */
+let friendFavourites=load('friendFavouritesV1',[]);if(!Array.isArray(friendFavourites))friendFavourites=[];
+function trShareStory(n){return [
+ ['I left a little note inside my old train ticket. It says: you are allowed to have a good day for no reason.','我在旧车票里夹了一张纸条：没有任何理由，也可以开心一天。'],
+ ['One night I saw a golden koi. I wished for fewer emails. The koi looked deeply offended.','有晚看见金锦鲤，我许愿少收邮件。它看起来相当不满。'],
+ ['The last train once stopped for a cat sleeping on the platform. Nobody complained. That is my kind of town.','有次末班车为了站台上睡觉的猫停了一会儿，居然没人投诉。我就喜欢这样的小镇。'],
+ ['Someone left an empty seat for me at the tea shop. I still remember how that felt.','有人曾在茶馆给我留了一个空位。那种感觉，我到现在还记得。']
+ ][n.cameo%4]}
+function kitchenActualRecipe(){let i=state.ingredients||[],veg=state.vegetarian;if(veg)return i.includes(0)&&i.includes(2)?['Mushroom and tofu soup','香菇豆腐汤']:i.includes(1)?['Garden greens soup','田园青菜汤']:['Simple vegetarian broth','清淡素汤'];if(i.includes(0)&&i.includes(2))return ['Tomato and egg soup','番茄蛋汤'];if(i.includes(0)&&i.includes(1))return ['Tomato and greens soup','番茄青菜汤'];return i.includes(2)?['Silky egg soup','滑蛋汤']:i.includes(1)?['Garden greens soup','田园青菜汤']:['Slow cooked tomato soup','慢炖番茄汤']}
+const deeperPot=pot;pot=function(x,y){deeperPot(x,y);if(activity!=='cook'||!state.ingredients?.length)return;ctx.save();ctx.beginPath();ctx.ellipse(x,y-10,77,20,0,0,TAU);ctx.clip();let energy=Math.max(0,1-(t-(state.stirAt||-10))*1.3),rotation=(state.stirAngle||0)+t*.12+energy*t*.22;for(let i of state.ingredients){for(let j=0;j<3;j++){let angle=i*2.1+j*.7+rotation;ctx.save();ctx.translate(x+Math.cos(angle)*54,y-10+Math.sin(angle)*12);ctx.rotate(angle);round(-7,-3,14,6,2,(state.vegetarian?['#947256','#92ad69','#eee0b4']:['#cf7956','#92ad69','#f0dd99'])[i]);ctx.restore()}}ctx.restore()};
+const deeperStart=start;start=function(a){deeperStart(a);if(a==='cook')hint('Drop your favourite ingredients in the pot. Stir in gentle circles.','选喜欢的食材下锅，再轻轻画圈搅拌。');if(a==='pet'){state.petKind=Math.floor(Math.random()*5);hint('Slow strokes help the cat trust you. Fast swipes may startle it.','慢慢摸，小猫会更信任你。太快可能会吓到它。')}};
+const deeperDraw=drawActivity;drawActivity=function(){deeperDraw();if(activity==='pet'){ctx.save();let f=Math.min(1,(state.pet||0)/100);txt(state.done?tr('You have been adopted.','你已经被猫领养啦。'):state.petAlarmUntil>t?tr('A little slower, please.','请摸慢一点嘛。'):tr('Trust','信任')+' '+Math.round(f*100)+'%',400,623,15,'#fff1d0');ctx.restore()}};
+const deeperFish=doFish;doFish=function(){let before=state?.fish;deeperFish();if(activity==='fish'&&before===2&&state.fish===0){let g=state.catchName;if(g?.[0]==='Moonlit postcard')hint('A rare postcard! Someone wrote a wish on the back.','稀有明信片！背面有人写了一份心愿。');else if(g?.[0]==='Sealed train ticket')hint('An old ticket to a place that no longer appears on maps.','一张旧车票，目的地早已从地图上消失。')}};
+
+/* Temple visit: quiet, optional gestures in the existing illustrated room. */
+activityTitle.prayer=['A moment at the altar','静心祈愿'];
+roomActions.temple=[['sticks','Draw a fortune','求签'],['prayer','Offer a quiet prayer','静心祈愿'],['moon','Ask with moon blocks','掷筊']];
+const templePrayerStart=start;start=function(id){templePrayerStart(id);if(id==='prayer'){state.prayerStage='approach';state.prayerAt=t;state.incense=false;state.bows=0;hint('Walk up to the altar. Take a moment for yourself.','走到香案前，给自己一点安静的时间。')}};
+function templeIncense(x,y,lit){ctx.save();ellipse(x,y+15,39,9,'#35292366');let g=ctx.createLinearGradient(x-32,y,x+32,y);g.addColorStop(0,'#72533d');g.addColorStop(.45,'#b99a60');g.addColorStop(1,'#72533d');ctx.beginPath();ctx.moveTo(x-34,y-8);ctx.quadraticCurveTo(x-34,y+25,x,y+25);ctx.quadraticCurveTo(x+34,y+25,x+34,y-8);ctx.fillStyle=g;ctx.fill();ellipse(x,y-8,34,9,'#b8a27c');ellipse(x,y-7,27,5,'#7d6b50');for(let i=-1;i<=1;i++){line(x+i*8,y-9,x+i*12,y-65+(i%2)*6,'#8d493b',2.8);if(lit){ellipse(x+i*12,y-65+(i%2)*6,2.5,2.5,'#f7aa60');for(let j=0;j<4;j++){let f=(t*.45+j*.25+i*.13+1)%1;ctx.globalAlpha=(1-f)*.24;ellipse(x+i*12+Math.sin(t*1.4+j+i)*f*19,y-68-f*74,3+f*11,4+f*14,'#f3e7cc')}ctx.globalAlpha=1}}ctx.restore()}
+function templePrayerFigure(x,y,bow,praying,walking,kneel=0,reach=null){if(walking){backHuman(x,y,avatar??0,true,'right',2.45);return}drawRitualPose(x,y,2.45,{bow,kneel,praying,reach})}
+const prayerProp=prop;prop=function(id,x,y){if(id==='prayer'){templeIncense(x,y-32,true);return}return prayerProp(id,x,y)};
+function beginQuietBow(){if(activity!=='prayer'||!['ready','complete'].includes(state.prayerStage))return;if(!state.incense){hint('Light the incense first.','先点燃香，再开始祈愿。');return;}state.prayerStage='kneel';state.prayerAt=t;state.bows=0;hint('Hands together. Breathe slowly.','双手合十，慢慢呼吸。');sound(330)}
+const prayerDraw=drawActivity;drawActivity=function(){if(activity!=='prayer')return prayerDraw();ctx.save();paintLivingBackdrop(pics.streetTemple||pics.temple||pics.sticks);let b=livingBounds(),shade=ctx.createLinearGradient(0,260,0,760);shade.addColorStop(0,'#493c2820');shade.addColorStop(1,'#2b30276e');shadeLivingBackdrop(shade);
+ const g=ctx.createLinearGradient(0,445,0,555);g.addColorStop(0,'#aa815b');g.addColorStop(1,'#654737');ctx.beginPath();ctx.moveTo(435,445);ctx.lineTo(580,445);ctx.lineTo(610,520);ctx.lineTo(410,520);ctx.closePath();ctx.fillStyle=g;ctx.fill();line(423,520,423,571,'#624536',12);line(592,520,592,571,'#624536',12);
+ templeIncense(510,455,state.incense);for(let i=0;i<2;i++){let xx=458+i*105;round(xx-4,410,8,34,2,'#e1c290','#8b6e4c');ctx.globalAlpha=.75+.2*Math.sin(t*6+i);ellipse(xx,407,3.5,8,'#f8d18a');ctx.globalAlpha=1}
+ ellipse(335,576,75,16,'#5f493c80');round(275,555,118,22,8,'#ae906e','#70543b');line(286,566,383,566,'#dac19b',1.5);
+ let elapsed=t-state.prayerAt,stage=state.prayerStage,walk=stage==='approach',bow=0,x=walk?245+Math.min(1,elapsed/1.2)*90:335;if(walk&&elapsed>=1.2){state.prayerStage='ready';state.prayerAt=t;hint('Tap the incense to light it, then tap your character or the mat to bow.','点击香炉上香，再点击角色或蒲团鞠躬。')}
+ if(stage==='kneel'&&elapsed>.65){state.prayerStage='bow';state.prayerAt=t}if(stage==='bow'){if(elapsed<3.9){let phase=(elapsed/1.3)%1;bow=Math.sin(Math.PI*phase)**1.6;state.bows=Math.min(3,Math.floor(elapsed/1.3));}else{state.bows=3;state.prayerStage='silent';state.prayerAt=t;hint('Keep your wish to yourself. Take a few quiet breaths.','心愿留在心里，安静地呼吸几次。')}}
+ if(stage==='silent'&&elapsed>4){state.prayerStage='rise';state.prayerAt=t}if(stage==='rise'&&elapsed>.72){state.prayerStage='complete';state.prayerAt=t;hint('Take your time. Draw a fortune whenever you are ready.','不用着急，准备好了再去求签。')}
+ let kneel=stage==='kneel'?poseEase(elapsed/.65):['bow','silent'].includes(stage)?1:stage==='rise'?1-poseEase(elapsed/.72):0;let lightAge=t-(state.incenseAt??-100),reaching=stage==='ready'&&lightAge<1.05;let reach=reaching?{x:335+125*Math.sin(Math.PI*Math.min(1,lightAge/1.05)),y:455}:null;ctx.save();ctx.translate(x,553);ctx.rotate(bow*.10);backHuman(0,0,avatar??0,walk,'right',1.30);ctx.restore();if(reaching){let f=poseEase(lightAge/.62);line(390+104*f,438-38*f,390+104*f,394-38*f,'#9b6943',2);ellipse(390+104*f,394-38*f,2,2,'#efb270')}target(465,355,95,140,lightTempleIncense);target(260,330,150,250,beginQuietBow);
+ if(stage==='ready'){label(tr('Light incense','上香'),510,545,lightTempleIncense);label(tr('Bow and pray','合十祈愿'),335,612,beginQuietBow)}else if(stage==='bow'){txt(tr('Bow ','鞠躬 ')+Math.min(3,state.bows+1)+' / 3',400,622,18,'#fff2d5')}else if(stage==='silent'){txt(tr('A quiet moment','片刻静心'),400,622,20,'#fff2d5')}else if(stage==='complete'){label(tr('Draw a fortune','求签'),300,620,()=>start('sticks'));label(tr('Ask with moon blocks','掷筊'),505,620,()=>start('moon'))}
+ ctx.restore()};
+
+/* Temple courtyard: every ritual remains in the illustrated scene. */
+activityTitle.templeBell=['The bronze bell','山寺钟声'];
+activityTitle.templeWater=['Water pavilion','手水亭'];
+activityTitle.templePaper=['Fortune paper','展开签文'];
+const shrinePaperLines=[
+ ['A little patience goes a long way.','耐心一点，自有转机。'],['Good fortune favours a break.','今日宜休息。'],['A new opportunity may appear.','新的机会或许就在前方。'],['Seek a trusted friend.','不妨与可信的人聊聊。'],['Finish one thing before starting another.','先完成一件，再开始下一件。'],['A quiet day can be a good day.','平平淡淡也是福。'],['Be generous without exhausting yourself.','待人慷慨，也别累坏自己。'],['Wait until the path is clear.','路未明时，且慢行。'],['Small efforts add up.','积少成多，水滴石穿。'],['Kind words can open a door.','良言一句，或能开一扇门。'],['Make room for unexpected joy.','给意外的小欢喜留个位置。'],['Do not mistake hurry for progress.','忙碌不一定等于前进。']];
+let templeTies=load('templeTiesV1',[]);if(!Array.isArray(templeTies))templeTies=[];
+const templeMoreStart=start;start=function(a){templeMoreStart(a);if(a==='templeBell'){state.bellAt=-100;state.bellStrength=0;hint('Pull the wooden striker back, then release.','把木槌向后拉，再松手。')}if(a==='templeWater'){state.waterAt=-100;state.waterStage=0;hint('Drag the bamboo ladle down to the water to fill it.','将竹勺拖入水中舀水。')}if(a==='templePaper'){state.paperAt=-100;state.paperStage='folded';state.paperNumber=1;hint('Tap the folded paper to open it.','点击折叠的签纸，将它展开。')}};
+function templePaperOpen(n){start('templePaper');state.paperNumber=Math.max(1,Math.min(12,n||1));}
+function templePaperTap(){if(state.paperStage!=='folded')return;state.paperAt=t;state.paperStage='opening';sound(410);hint('Read your fortune, then keep it or leave it here.','慢慢读签文，可以收藏，也可以留在这里。')}
+function templePaperKeep(tie){if(state.paperStage!=='open')return;state.paperStage=tie?'tied':'kept';state.paperAt=t;if(tie){templeTies.push(state.paperNumber);templeTies=templeTies.slice(-28);save('templeTiesV1',templeTies);hint('Leave the paper, take the peace.','留下签纸，带走平静。')}else{addItem('Fortune paper '+state.paperNumber,'签文纸 '+state.paperNumber);hint('A little reminder for another day.','把这一份提醒留给以后的自己。')}sound(530)}
+function templeBellArt(x,y,sc=1,angle=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(angle);let g=ctx.createLinearGradient(-75,0,80,0);g.addColorStop(0,'#554c3b');g.addColorStop(.27,'#8e8562');g.addColorStop(.53,'#b3a378');g.addColorStop(.8,'#71664f');g.addColorStop(1,'#4b493e');round(-12,-104,24,27,7,'#8d805e','#514a38');ctx.beginPath();ctx.moveTo(-29,-80);ctx.bezierCurveTo(-62,-79,-62,-20,-77,35);ctx.quadraticCurveTo(0,55,77,35);ctx.bezierCurveTo(62,-20,62,-79,29,-80);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#4d493b';ctx.lineWidth=3;ctx.stroke();ellipse(0,37,78,13,'#57513e');ellipse(0,35,70,8,'#343a34');for(let j=0;j<3;j++){ctx.beginPath();ctx.ellipse(0,-52+j*24,46+j*7,7,0,0,Math.PI);ctx.strokeStyle='#cab88a90';ctx.lineWidth=2;ctx.stroke()}for(let j=0;j<6;j++)ellipse(-36+j*14,-48,3,3,'#c2b28a');ctx.restore()}
+function templeLadle(x,y,a=0){ctx.save();ctx.translate(x,y);ctx.rotate(a);line(-68,0,24,0,'#97734b',9);line(-66,-2,22,-2,'#d8bc80',3);ellipse(35,1,23,12,'#8d714b');ellipse(35,-2,21,10,'#d2bc86');ellipse(35,-2,15,6,'#72948c');ctx.restore()}
+function templeBasin(x,y){ctx.save();let g=ctx.createLinearGradient(0,y,0,y+85);g.addColorStop(0,'#a9aa91');g.addColorStop(1,'#616d61');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x-94,y);ctx.lineTo(x+94,y);ctx.lineTo(x+69,y+65);ctx.quadraticCurveTo(x,y+88,x-69,y+65);ctx.closePath();ctx.fill();ellipse(x,y,96,32,'#a6ad94');ellipse(x,y,82,25,'#526f68');ellipse(x,y,76,20,'#75948b');for(let i=0;i<5;i++){let f=(t*.38+i*.19)%1;ctx.strokeStyle='rgba(227,237,214,'+(1-f)*.55+')';ctx.beginPath();ctx.ellipse(x+22,y,8+f*48,2+f*13,0,0,TAU);ctx.stroke()}ctx.restore()}
+function templeRitualBackground(){paintLivingBackdrop(pics.streetTemple||pics.temple||pics.sticks);let g=ctx.createLinearGradient(0,270,0,680);g.addColorStop(0,'#243b3020');g.addColorStop(1,'#26392fa0');shadeLivingBackdrop(g)}
+function templeReleaseBell(moved){if(activity!=='templeBell'||t-state.bellAt<1.0)return;state.bellStrength=Math.max(.15,Math.min(1,moved/120));state.bellAt=t;state.bellRung=false;hint('Listen as the sound travels through the valley.','听钟声慢慢传向山谷。')}
+function templeReleaseWater(a){if(activity!=='templeWater'||t-state.waterAt<1)return;if(state.waterStage===0){if(a.y>425&&a.y<560){state.waterStage=1;state.waterAt=t;hint('Lift the filled ladle towards your hands.','把盛满水的竹勺提到手边。')}else hint('Lower the ladle into the basin.','把竹勺放入水盆。')}else if(state.waterStage===1){if(a.x<385){state.waterStage=2;state.waterAt=t;sound(490);hint('Let the water flow over your hands.','让水缓缓流过双手。')}else hint('Move the ladle towards your hands on the left.','把竹勺移向左边的双手。')}}
+const templeProps=prop;prop=function(id,x,y){if(id==='templeBell'){templeBellArt(x,y-35,.57);return}if(id==='templeWater'){ctx.save();ctx.translate(x,y-32);ctx.scale(.56,.56);templeBasin(0,0);templeLadle(0,-35,-.1);ctx.restore();return}return templeProps(id,x,y)};
+const templeRoom=drawRoom;drawRoom=function(){if(room!=='temple')return templeRoom();ctx.save();templeRitualBackground();let locations=[['templeWater','Water pavilion','手水亭',230,440],['prayer','Prayer altar','祈愿香案',400,440],['templeBell','Bronze bell','山寺钟声',570,440],['sticks','Fortune sticks','求签',300,620],['moon','Moon blocks','掷筊',500,620]];for(let [id,en,cn,x,y] of locations){prop(id,x,y);label(tr(en,cn),x,y+34,()=>start(id));target(x-70,y-110,140,122,()=>start(id))}ctx.restore()};
+const templeRitualDraw=drawActivity;drawActivity=function(){
+ if(!['templeBell','templeWater','templePaper'].includes(activity))return templeRitualDraw();ctx.save();templeRitualBackground();
+ if(activity==='templeBell'){let age=t-state.bellAt,held=drag?.id==='templeStriker',pull=held?Math.min(85,Math.abs(drag.x-drag.sx)):0,impact=age>.22&&age<4?Math.sin((age-.22)*16)*Math.exp(-(age-.22)*1.7)*state.bellStrength*.045:0;if(age>=.22&&age<4&&!state.bellRung){state.bellRung=true;sound(146+state.bellStrength*12);if(!muted&&ambientBus){ambientTone(146.83,.065*state.bellStrength,2.5,'sine');ambientTone(293.66,.025*state.bellStrength,1.6,'sine',.04)}}line(270,315,530,315,'#6c5239',16);line(400,315,400,348,'#5f5542',12);templeBellArt(400,438,1.05,impact);let swing=held?-pull:age<.22?-85*state.bellStrength*(1-age/.22):age<1.5?-Math.abs(Math.sin((age-.22)*5))*40*state.bellStrength*Math.exp(-age):0;let sx=285+swing;line(300,320,sx,474,'#9a825d',3);line(355,320,sx+85,474,'#9a825d',3);ctx.save();ctx.translate(sx,474);round(-8,-10,108,20,10,'#a8855b','#654c38');line(6,-4,87,-4,'#d0b082',2);ctx.restore();target(180,440,210,65,()=>templeReleaseBell(55),'templeStriker');if(age>.22&&age<3){for(let j=0;j<3;j++){let f=(age-.22-j*.28)/2.3;if(f>0&&f<1){ctx.strokeStyle='rgba(246,221,158,'+(1-f)*.4*state.bellStrength+')';ctx.beginPath();ctx.ellipse(400,490,80+f*130,19+f*30,0,0,TAU);ctx.stroke()}}}drawRitualPose(211,570,1.8,{reach:held||age<1?{x:sx+8,y:474}:null,bow:held?.10:0});txt(tr('Pull the striker and let go','拉动木槌，再松手'),400,616,17,'#fff1d6');}
+ if(activity==='templeWater'){let age=t-state.waterAt;templeBasin(475,486);let lx=drag?.id==='templeLadle'?drag.x:state.waterStage===1?473:state.waterStage===2?337:455,ly=drag?.id==='templeLadle'?drag.y:state.waterStage===1?420:state.waterStage===2?437:456;let using=drag?.id==='templeLadle'||state.waterStage===2;templePrayerFigure(305,565,using?.10:0,false,false,0,using?{x:lx-49,y:ly}:null);templeLadle(lx,ly,state.waterStage===2?.55:-.12);if(state.waterStage===2&&age<2){for(let j=0;j<12;j++){let f=(age*2+j*.12)%1;ellipse(365+Math.sin(j*2)*6,450+f*62,2,5,'#cde8df')}}if(state.waterStage===2&&age>2){state.waterStage=3;hint('Ready to visit the altar, or stay a little longer.','可以去祈愿，也可以在这里多待一会儿。')}if(state.waterStage<2){target(lx-80,ly-35,150,70,()=>{},'templeLadle');txt(state.waterStage===0?tr('Scoop water','舀水'):tr('Lift and pour','提起竹勺，缓缓倒水'),400,620,17,'#fff2db')}else if(state.waterStage===3){label(tr('Visit the altar','前往香案'),400,620,()=>start('prayer'))}}
+ if(activity==='templePaper'){let age=t-state.paperAt;drawTemplePaperRack(565,410,.62,state.paperStage==='tied'&&age<.65?1:0);if(state.paperStage==='opening'&&age>.75)state.paperStage='open';let open=state.paperStage!=='folded';let f=state.paperStage==='opening'?Math.min(1,age/.75):open?1:0;let w=72+f*178,h=65+f*133;let cx=400,cy=472;if(state.paperStage==='tied'){let u=Math.min(1,age/.65);cx=400+165*u;cy=472-62*u;w*=1-u*.94;h*=1-u*.88}if(state.paperStage==='kept'){let u=Math.min(1,age/.7);cy+=85*u;w*=1-u*.6;h*=1-u*.6;ctx.globalAlpha=1-u*.75}ctx.save();ctx.translate(cx,cy);ctx.rotate(state.paperStage==='tied'?Math.sin(t*1.8)*.07:0);ctx.shadowColor='#3a322a88';ctx.shadowBlur=10;round(-w/2,-h/2,w,h,3,'#eadcb9','#ad986f');ctx.shadowBlur=0;line(-w/2+9,0,w/2-9,0,'#b9a37a70',1);if(f>.92&&['open','opening'].includes(state.paperStage)){txt(tr('Fortune No. ','第 ')+state.paperNumber+(zh?' 签':''),0,-58,20,'#70503d');let words=tr(...shrinePaperLines[state.paperNumber-1]);let chunks=zh?[words]:words.match(/.{1,24}(?:\s|$)|\S+?(?:\s|$)/g)||[words];chunks.slice(0,4).forEach((v,i)=>txt(v.trim(),0,-17+i*22,16,'#594c39'));txt(tr('A reflection, not a promise','签文仅供自我反思'),0,69,12,'#84694c')}else if(!open)txt('籤',0,0,24,'#a16e49');ctx.restore();ctx.globalAlpha=1;if(state.paperStage==='folded'){target(335,420,130,110,templePaperTap);label(tr('Unfold your fortune','展开签纸'),400,620,templePaperTap)}if(state.paperStage==='open'){label(tr('Keep in bag','收入背包'),300,620,()=>templePaperKeep(false));label(tr('Tie on rack','系上签纸'),500,620,()=>templePaperKeep(true))}if(['kept','tied'].includes(state.paperStage)&&age>.8){label(tr('Return to temple','回到寺庙'),400,620,()=>{activity=null;state={};updateHUD();roomIntro()})}}
+ ctx.restore()
+};
+
+const mandatoryGateStyle=document.createElement('style');mandatoryGateStyle.textContent='#proposal .gate i{transition-duration:.75s}#proposal .gate-traveller.go{transition:transform 1.05s ease-in,opacity .25s .8s;transform:translateY(-32%) scale(.38)}#proposal[data-shot="shrine"] .gate{max-width:530px}#proposal[data-shot="shrine"] .shrine-enter{position:relative;z-index:4}';document.head.append(mandatoryGateStyle);
+
+/* Homecoming: greetings use local visit history, not a new registration form. */
+let shrineReturning=false,shrineVisitSnapshot={},shrineArrivalRecorded=false;
+function readShrineVisits(){const value=load('shrineVisitsV1',{});return value&&typeof value==='object'&&!Array.isArray(value)?value:{}}
+function shrineClock(){const fmt=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Singapore',weekday:'short',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'});const parts=Object.fromEntries(fmt.formatToParts(new Date()).map(v=>[v.type,v.value]));return {day:parts.year+'-'+parts.month+'-'+parts.day,weekday:parts.weekday,hour:Number(parts.hour)}}
+function shrineWelcome(){const clock=shrineClock(),v=shrineVisitSnapshot,who=proName.trim(),prefix=who?who+'，':'',enName=who?who+', ':'';if(!shrineReturning)return tr('Welcome, '+(who||'traveller')+'. Leave the busy world outside. This valley is yours to explore.','欢迎你，'+(who||'旅人')+'。把忙碌留在山门外，慢慢逛吧。');let lines;if(lunarMenu())lines=[['It is a vegetarian day. Grandma has warm vegetable soup waiting.','今日宜吃素，也宜摸鱼。外婆备好素汤啦。']];else if(v.day===clock.day&&Number(v.today)>0)lines=[['Back again today? That meeting must be fascinating.','今天又来啦？看来那个会相当精彩。'],['Your usual place is waiting. No need to explain where you have been.','老位置给你留着，不用解释刚才去了哪里。'],['Another little escape? Your secret is safe with the temple cat.','又来偷偷摸鱼啦？庙里的猫会替你保密。']];else if(v.lastAt&&Date.now()-v.lastAt>7*86400000)lines=[['Even the temple cat was wondering where you went.','连庙里的猫都在念叨你去哪儿了。']];else if(clock.hour>=22||clock.hour<5)lines=[['The world can wait until tomorrow. Take a quiet walk.','世界可以等到明天，今晚慢慢走吧。']];else if(clock.weekday==='Fri'&&clock.hour>=16)lines=[['Congratulations on surviving another week.','恭喜你，又成功熬过一个星期。']];else if(clock.weekday==='Mon'&&clock.hour<12)lines=[['Back already? It is only Monday.','这么快就回来啦？今天才周一呢。']];else lines=[['Good to see you. I saved you a quiet moment.','又见面啦，给你留了一小段清静时光。'],['Nothing urgent on this side of the gate.','山门这一边，没有什么十万火急的事。'],['The koi have been behaving. Mostly.','锦鲤今天很乖。大概吧。'],['Your little world has been waiting for you.','你的小小世界一直在等你回来。']];const pick=lines[(Number(v.total)||0)%lines.length];return tr(enName+pick[0],prefix+pick[1])}
+function recordShrineArrival(){if(shrineArrivalRecorded)return;shrineArrivalRecorded=true;const old=readShrineVisits(),clock=shrineClock();save('shrineVisitsV1',{day:clock.day,today:old.day===clock.day?(Number(old.today)||0)+1:1,total:(Number(old.total)||0)+1,lastAt:Date.now()});const ticket=load('originalRailTicketV1',null);if(!ticket||typeof ticket!=='object'){save('originalRailTicketV1',{name:proName.trim(),avatar:proAvatar,issued:shrineReturning?null:clock.day,number:'MB-'+String(hash(proName.trim()+'|'+proAvatar)%1000000).padStart(6,'0')})}}
+function renderRailKeepsake(book){const data=load('originalRailTicketV1',null);if(!data||typeof data!=='object')return;let ticket=element('section','',book,'passportRailTicket');element('small',tr('MEOWBOX RAILWAY · ORIGINAL TICKET','摸鱼铁路 · 初次入境车票'),ticket);let route=element('strong',tr('Reality → Fortune Valley','现实世界 → 解忧谷'),ticket);let row=element('div','',ticket,'passportRailPassenger');let info=element('div','',row);element('span',tr('Passenger','旅客'),info);element('p',data.name||tr('Traveller','旅人'),info);let portrait=element('img','',row);portrait.src=ART['badge'+(Number(data.avatar)||0)];portrait.alt='';let stub=element('div','',ticket,'passportRailStub');element('span',data.number||'MB',stub);element('span',data.issued||tr('First journey · date unknown','初次旅程 · 日期未记录'),stub);element('p',tr('Valid whenever you need a little escape.','有效期：每一个想摸鱼的瞬间。'),ticket);}
+function paintShrineWeather(hero){refreshAtmosphere();const clock=shrineClock(),night=clock.hour>=19||clock.hour<6,dusk=clock.hour>=17&&clock.hour<19;const sky=element('div','',hero,'shrine-sky');sky.dataset.light=night?'night':dusk?'dusk':'day';sky.dataset.weather=atmosphere.weather;sky.setAttribute('aria-hidden','true');if(atmosphere.weather==='rain'){for(let i=0;i<21;i++){const drop=element('i','',sky,'shrine-rain');drop.style.left=((i*37)%100)+'%';drop.style.animationDelay=(-i*.18)+'s';drop.style.animationDuration=(.7+(i%5)*.14)+'s'}}else if(night){for(let i=0;i<11;i++){const spark=element('i','',sky,'shrine-firefly');spark.style.left=((i*37)%94+3)+'%';spark.style.top=((i*29)%75+8)+'%';spark.style.animationDelay=(-i*.47)+'s'}}for(let i=0;i<2;i++){let lantern=element('div','',hero,'shrine-ambient-lantern '+(i?'right':'left'));lantern.setAttribute('aria-hidden','true');element('i','',lantern)}}
+const homecomingStyle=document.createElement('style');homecomingStyle.textContent=`
+#proposal[data-shot="shrine"] footer{gap:5px}
+#proposal .shrine-speaker{order:-1;color:#efd1a0;font:12px Georgia,serif;letter-spacing:.08em}
+#proposal .shrine-welcome{font-size:clamp(13px,2.8vw,16px);line-height:1.45}
+#proposal .shrine-sky{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden}
+#proposal .shrine-sky[data-light="night"]{background:linear-gradient(#182e4e28,#152a4035)}
+#proposal .shrine-sky[data-light="dusk"]{background:linear-gradient(#ce925d30,transparent)}
+#proposal .shrine-sky[data-weather="mist"]{box-shadow:inset 0 -55px 65px #e3e4d22a}
+#proposal .shrine-rain{position:absolute;top:-30%;width:1px;height:30px;background:linear-gradient(transparent,#e4f0ed85);transform:rotate(12deg);animation:shrineRain 1s linear infinite}
+#proposal .shrine-firefly{position:absolute;width:3px;height:3px;border-radius:50%;background:#fbe5a3;box-shadow:0 0 8px #ffe5a7;animation:shrineFirefly 3s ease-in-out infinite alternate}
+#proposal .shrine-ambient-lantern{position:absolute;z-index:5;top:11%;width:24px;height:32px;border-radius:42%;background:radial-gradient(ellipse at 42% 40%,#ffe2a2,#c77b49 67%,#89543a);border:1px solid #8e5c3f;box-shadow:0 0 24px #f6c56b55;transform-origin:50% -18px;animation:shrineSway 3.6s ease-in-out infinite alternate;pointer-events:none}
+#proposal .shrine-ambient-lantern.left{left:calc(50% - min(40%,220px))}
+#proposal .shrine-ambient-lantern.right{right:calc(50% - min(40%,220px));animation-delay:-1.4s}
+#proposal .shrine-ambient-lantern:before{content:"";position:absolute;width:1px;height:18px;top:-19px;left:50%;background:#bba27c}
+#proposal .shrine-ambient-lantern:after{content:"";position:absolute;left:4px;right:4px;bottom:-3px;height:4px;background:#76523b}
+#proposal .shrine-ambient-lantern i{position:absolute;inset:1px 6px;border-left:1px solid #b47c4a88;border-right:1px solid #b47c4a88;border-radius:50%}
+@keyframes shrineRain{to{top:115%;translate:-16px 0}}
+@keyframes shrineFirefly{from{opacity:.2;translate:0 0}to{opacity:.85;translate:8px -12px}}
+@keyframes shrineSway{from{rotate:-5deg}to{rotate:5deg}}
+.passportRailTicket{margin:12px 0 18px;background:#f1dfb7;color:#674f38;border:1px solid #a78b60;border-radius:4px;padding:12px;box-shadow:0 3px 8px #5b452a25}
+.passportRailTicket>small{display:block;letter-spacing:.08em;font-size:11px}
+.passportRailTicket>strong{display:block;font:20px Georgia,serif;margin:8px 0}
+.passportRailPassenger{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.passportRailPassenger span{font-size:11px}.passportRailPassenger p{margin:3px 0;font-size:17px;overflow-wrap:anywhere}
+.passportRailPassenger img{width:44px;height:44px;object-fit:contain}
+.passportRailStub{border-top:1px dashed #9d845e;margin-top:8px;padding-top:7px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;font-size:11px}
+.passportRailTicket>p{font-size:12px;margin:8px 0 0}
+`;document.head.append(homecomingStyle);
+
+/* Courtyard details, optional encounters and physical fortune rack. */
+function drawTemplePaperRack(x,y,sc=1,hideLatest=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ellipse(0,100,116,12,'#39332a55');for(let sign of [-1,1]){let xx=sign*109;line(xx,-103,xx,99,'#694d38',12);line(xx-2,-101,xx-2,96,'#b08b62',3)}line(-121,-105,121,-105,'#6c4a35',13);line(-118,-108,118,-108,'#c2a17a',3);for(let j=0;j<3;j++){let yy=-72+j*59;line(-104,yy,104,yy,'#8d7455',3);for(let i=0;i<7;i++){let idx=j*7+i;let papers=templeTies.slice(-21-hideLatest,hideLatest?-hideLatest:undefined);if(idx>=papers.length)continue;let xx=-88+i*29;ctx.save();ctx.translate(xx,yy);ctx.rotate(Math.sin(t*1.4+idx)*.12);ctx.beginPath();ctx.moveTo(-7,0);ctx.lineTo(0,-4);ctx.lineTo(8,0);ctx.lineTo(10,24);ctx.lineTo(1,29);ctx.lineTo(-9,23);ctx.closePath();ctx.fillStyle=['#e5d5b4','#f2e4c8','#d9c8a4'][idx%3];ctx.fill();line(-5,8,6,12,'#9c735d99',1);line(-4,15,6,19,'#9c735d66',1);ctx.restore()}}ctx.restore()}
+let templeCatVisits=Number(load('templeCatVisitsV1',0))||0,templeCatTouchedAt=-100;
+const templeCatLines=[['The cat stares at you. Apparently, your offering was not a snack.','猫盯着你看。看来你供奉的不是零食。'],['It sits on the edge of your sleeve. You have been chosen as furniture.','它坐在你的袖口上。恭喜，你被选中当家具了。'],['The temple cat has declared your afternoon officially free.','庙猫宣布：今天下午正式准假。'],['It remembers you. Or possibly the snacks you might be carrying.','它记得你。也可能只是记得你身上或许有零食。']];
+function meetTempleCat(){if(t-templeCatTouchedAt<1.5)return;templeCatTouchedAt=t;let v=templeCatLines[templeCatVisits%templeCatLines.length];templeCatVisits++;save('templeCatVisitsV1',templeCatVisits);react(...v);if(templeCatVisits===3)addItem('Temple cat blessing','庙猫的祝福')}
+const courtyardDetailDraw=drawRoom;drawRoom=function(){courtyardDetailDraw();if(room!=='temple')return;ctx.save();drawTemplePaperRack(620,545,.42);let x=185+Math.sin(t*.16)*19,y=542+Math.sin(t*.32)*3;cat(x,y,1,false,.82);if(t-templeCatTouchedAt<1.2){ellipse(x,y-47,2.5,2.5,'#f3d4a0')}target(x-29,y-44,58,49,meetTempleCat);ctx.restore()};
+const originalTempleStory=keepsakeStory;keepsakeStory=function(item){if(/^Fortune paper /.test(item[0])){const n=Number(item[0].split(' ').at(-1));return shrinePaperLines[n-1]||originalTempleStory(item)}if(item[0]==='Temple cat blessing')return ['A resident cat decided you were welcome. No application form required.','庙猫认定你可以留下，不用填申请表。'];return originalTempleStory(item)};
+
+/* Shared character pose renderer: preserve the selected identity and articulate joints. */
+function poseEase(v){v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)}
+function drawRitualPose(x,y,sc,opts={}){let k=((avatar??0)%4+4)%4,shirt=['#ead1a5','#e7e8e3','#425c77','#82986d'][k],pants=['#514b45','#4b5260','#465563','#777464'][k],skin='#efc8a7',kn=Math.max(0,Math.min(1,opts.kneel||0)),angle=(opts.bow||0)*.87,breath=actorReduce?0:Math.sin(t*2.2)*.45;ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+ ellipse(3,1,19+kn*5,5,'#342d2855');let hip={x:-5*kn,y:-22+13*kn},knee={x:6+13*kn,y:-10+9*kn},ankle={x:5-14*kn,y:-2};line(hip.x-3,hip.y,knee.x-3,knee.y,pants,8);line(knee.x-3,knee.y,ankle.x-3,ankle.y,pants,7);line(ankle.x-5,ankle.y,ankle.x+2,0,'#494038',5);line(hip.x+2,hip.y,knee.x+2,knee.y,pants,9);line(knee.x+2,knee.y,ankle.x+2,ankle.y,pants,8);line(ankle.x,ankle.y,ankle.x+8,0,'#4c4038',6);
+ let trp=(a,b)=>({x:hip.x+a*Math.cos(angle)-b*Math.sin(angle),y:hip.y+a*Math.sin(angle)+b*Math.cos(angle)});let shoulder=trp(2,-22);ctx.save();ctx.translate(hip.x,hip.y);ctx.rotate(angle);ctx.translate(0,22+breath);round(-11,-48,23,31,6,shirt,'#59473c');round(-17,-44,12,22,4,'#a5815a','#59473c');ctx.save();ctx.beginPath();ctx.rect(-31,-108,68,59);ctx.clip();backHuman(0,0,k,false,'right',1);ctx.restore();ctx.restore();
+ let hand=opts.reach?{x:(opts.reach.x-x)/sc,y:(opts.reach.y-y)/sc}:opts.praying?trp(24,-28):trp(8,-5);let elbow={x:(shoulder.x+hand.x)*.5-3,y:(shoulder.y+hand.y)*.5+7};line(shoulder.x-3,shoulder.y,elbow.x-2,elbow.y,shirt,7);line(elbow.x-2,elbow.y,hand.x-2,hand.y,shirt,6);line(shoulder.x,shoulder.y,elbow.x+2,elbow.y,shirt,8);line(elbow.x+2,elbow.y,hand.x,hand.y,shirt,7);ctx.save();ctx.translate(hand.x,hand.y);ctx.rotate(opts.praying?-.24:Math.atan2(hand.y-elbow.y,hand.x-elbow.x)+Math.PI*.5);ellipse(0,0,3.4,5.2,skin);if(opts.praying)line(-.5,-4,-.5,3,'#bd8e77',.7);ctx.restore();ctx.restore()}
+function lightTempleIncense(){if(activity!=='prayer'||state.incense||state.prayerStage!=='ready')return;state.incense=true;state.incenseAt=t;sound(350);hint('The incense is lit. Tap the mat to offer your prayer.','香已点燃，点击蒲团静心祈愿。')}
+
+/* Food Street release: prepare, serve, taste and keep the finished recipe. */
+activityTitle.bubbleTea=['Bubble tea counter','珍珠奶茶铺'];
+roomActions.kitchen=[['cook','Cook with Grandma','跟外婆做饭'],['bubbleTea','Make bubble tea','亲手做奶茶']];
+const foodReleaseStart=start;start=function(id){foodReleaseStart(id);if(id==='bubbleTea'){state.teaStage='base';state.teaBase=-1;state.teaPearls=0;state.teaMix=0;state.teaAt=t;hint('Choose a tea, then add pearls and shake.','选茶底，加珍珠，再摇匀。')}};
+const teaChoices=[['Milk tea','经典奶茶','#b68965'],['Jasmine milk tea','茉莉奶茶','#d7c59b'],['Brown sugar tea','黑糖奶茶','#976843']];
+function teaCup(x,y,sc=1,base=0,pearls=0,fill=1,angle=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(-36,-74);ctx.lineTo(36,-74);ctx.lineTo(26,0);ctx.lineTo(-26,0);ctx.closePath();ctx.fillStyle='#e6e3cf';ctx.fill();ctx.save();ctx.clip();let level=-69*Math.max(0,Math.min(1,fill));ctx.fillStyle=teaChoices[Math.max(0,base)][2];ctx.fillRect(-38,level,76,75);for(let i=0;i<Math.min(16,pearls);i++){let xx=-20+(i*17)%42,yy=-5-Math.floor(i/5)*7+Math.sin(t*6+i)*Math.min(3,Math.abs(angle)*12);ellipse(xx,yy,4.2,4.2,'#4b342e')}ctx.restore();ctx.strokeStyle='#c8b999';ctx.lineWidth=2;ctx.stroke();ellipse(0,-74,37,7,'#eee1c7');line(9,-78,16,-110,'#a66357',5);line(-24,-63,-19,-12,'#fff3da66',3);ctx.restore()}
+function selectTeaBase(i){if(activity!=='bubbleTea'||state.teaStage!=='base')return;state.teaBase=i;state.teaStage='pearls';state.teaAt=t;sound(440);hint('Scoop the pearls into your cup.','把珍珠舀进杯里。')}
+function teaAddPearls(){if(activity!=='bubbleTea'||state.teaStage!=='pearls')return;state.teaPearls+=5;state.teaAt=t;sound(280+state.teaPearls*12);if(state.teaPearls>=10){state.teaStage='mix';hint('Drag the cup from side to side to shake it.','左右拖动杯子，把奶茶摇匀。')}}
+function teaShake(amount){if(activity!=='bubbleTea'||state.teaStage!=='mix')return;state.teaMix=Math.min(100,state.teaMix+Math.min(50,Math.max(0,amount*.55)));state.teaAt=t;if(state.teaMix>=100){state.teaStage='ready';sound(630);hint('Your drink is ready. Take a sip!','奶茶做好啦，喝一口吧！')}}
+function teaSip(){if(activity!=='bubbleTea'||state.teaStage!=='ready')return;state.teaStage='sip';state.teaAt=t;sound(380)}
+function drawFoodCounter(){paintLivingBackdrop(pics.tea||pics.streetKitchen||pics.kitchen||pics.sticks);let g=ctx.createLinearGradient(0,410,0,690);g.addColorStop(0,'#a8835b');g.addColorStop(1,'#654c39');ctx.beginPath();ctx.moveTo(180,466);ctx.lineTo(620,466);ctx.lineTo(690,690);ctx.lineTo(110,690);ctx.closePath();ctx.fillStyle=g;ctx.fill();for(let i=0;i<5;i++)line(175-i*12,482+i*39,625+i*12,482+i*39,'#e0b98230',2)}
+const foodReleaseProp=prop;prop=function(id,x,y){if(id==='bubbleTea'){teaCup(x,y-16,.85,0,10);return}return foodReleaseProp(id,x,y)};
+const foodReleaseDraw=drawActivity;drawActivity=function(){if(activity!=='bubbleTea')return foodReleaseDraw();ctx.save();drawFoodCounter();let stage=state.teaStage,age=t-state.teaAt,cx=420,cy=525,angle=0,fill=state.teaBase<0?0:Math.min(1,stage==='pearls'&&state.teaPearls===0?age*2:1);
+if(stage==='mix'&&drag?.id==='teaMix'){cx=Math.max(315,Math.min(505,drag.x));cy=Math.max(465,Math.min(550,drag.y));angle=Math.sin(t*15)*.17}if(stage==='sip'){let f=Math.sin(Math.PI*Math.min(1,age/2.4));cx=420-104*f;cy=525-100*f;angle=-.12*f;fill=Math.max(.35,1-age*.25);if(age>=2.4){state.teaStage='done';state.teaAt=t;let v=teaChoices[state.teaBase];addItem(v[0]+' recipe',v[1]+'配方');react('The perfect amount of sugar is none of my boss’s business.','几分糖，轮不到老板来管。')}}if(stage==='done')fill=.35;
+drawRitualPose(270,480,1.8,{kneel:.35,reach:stage==='sip'||drag?.id==='teaMix'?{x:cx-25,y:cy-35}:null});
+teaCup(cx,cy,1.15,state.teaBase,state.teaPearls,fill,angle);
+if(stage==='base'){teaChoices.forEach((v,i)=>{let x=265+i*135;teaCup(x,602,.54,i,0,.8);label(tr(v[0],v[1]),x,635,()=>selectTeaBase(i));target(x-32,548,64,60,()=>selectTeaBase(i))})}
+if(stage==='pearls'){ellipse(530,540,36,15,'#e5caa0');ellipse(530,537,30,10,'#986b53');for(let i=0;i<12;i++)ellipse(511+(i*13)%39,532+(i%3)*5,4,4,'#50362e');if(age<.48&&state.teaPearls){for(let i=0;i<5;i++){let f=Math.min(1,age/.48);ellipse(530-110*f+i*3,530-83*Math.sin(f*Math.PI)+f*15,4,4,'#4b342e')}}target(490,504,78,57,teaAddPearls);label(tr('Scoop pearls','舀珍珠'),530,610,teaAddPearls)}
+if(stage==='mix'){target(325,415,185,145,()=>{},'teaMix');txt(tr('Shake the cup','摇匀奶茶')+' '+Math.round(state.teaMix)+'%',400,612,17,'#fff3d9');label(tr('Shake gently','轻轻摇晃'),400,646,()=>teaShake(60))}
+if(stage==='ready'){target(365,420,110,125,teaSip);label(tr('Take a sip','喝一口'),420,620,teaSip)}if(stage==='sip')txt(tr('A well deserved break','这一口，值得'),400,620,18,'#fff4dd');if(stage==='done'){label(tr('Make another','再做一杯'),310,620,()=>start('bubbleTea'));label(tr('Back to kitchen','回到厨房'),500,620,()=>{activity=null;state={};updateHUD();roomIntro()})}ctx.restore()};
+function soupTaste(){if(activity!=='cook'||!state.done||state.tasteAt!==undefined)return;state.tasteAt=t;sound(390);closeTalk();hint('Careful, it is hot.','慢慢喝，小心烫。')}
+const foodTasteDraw=drawActivity;drawActivity=function(){foodTasteDraw();if(activity!=='cook'||!state.done)return;ctx.save();let age=t-(state.tasteAt??-100),active=state.tasteAt!==undefined&&age<2.7,f=active?Math.sin(Math.PI*Math.min(1,age/2.7)):0;let bx=510-130*f,by=422-33*f;drawRitualPose(290,495,1.6,{kneel:.4,reach:active?{x:bx-25,y:by}:null});ellipse(bx,by+9,32,10,'#58483c66');ellipse(bx,by,32,13,'#e7d8b9');ellipse(bx,by-2,27,8,'#ac8050');if(age>=2.7&&state.tasteAt!==undefined&&!state.tasted){state.tasted=true;react('Grandma: Eat properly. The emails can wait.','外婆：好好吃饭，邮件等会儿再回。')}if(state.tasteAt===undefined){label(tr('Taste the soup','尝一口汤'),510,390,soupTaste);target(478,397,64,42,soupTaste)}ctx.restore()};
+
+/* Fortune Valley: a quiet garden beyond the temple courtyard. */
+activityTitle.secretGarden=['Behind the temple','寺后小径'];
+let gardenVisits=Number(load('secretGardenVisitsV1',0))||0;
+const gardenStart=start;start=function(id){gardenStart(id);if(id==='secretGarden'){gardenVisits++;save('secretGardenVisitsV1',gardenVisits);state.gardenAt=t;state.gardenSeatAt=-100;state.gardenChimeAt=-100;state.gardenFeedAt=-100;state.gardenFeedCount=0;state.gardenSitting=false;hint('Follow the path. Listen to the wind or feed the koi.','沿着小径走走，听风铃，或喂喂锦鲤。')}};
+function gardenChime(){if(activity!=='secretGarden'||t-state.gardenChimeAt<.6)return;state.gardenChimeAt=t;sound(690);if(!muted&&ambientBus){ambientTone(659.25,.028,1.9,'sine');ambientTone(987.77,.018,1.4,'sine',.17)}hint('Even the wind has nothing urgent to say.','连风都没有什么急事要说。')}
+function gardenFeed(x=435,y=480){if(activity!=='secretGarden'||t-state.gardenFeedAt<.8)return;state.gardenFeedAt=t;state.gardenFeedX=Math.max(320,Math.min(570,x));state.gardenFeedY=Math.max(430,Math.min(545,y));state.gardenFeedCount++;sound(320);if(state.gardenFeedCount===3){addItem('Quiet garden postcard','静谧后院明信片');hint('The keeper left a little postcard for you.','庙祝给你留了一张小小的明信片。')}else hint(...(state.gardenFeedCount%2?['The koi have spotted lunch. You are now their favourite person.','锦鲤发现午餐了，你现在是它们最爱的人。']:['One koi is clearly running the buffet.','有一条锦鲤显然承包了整个自助餐。']))}
+function gardenSeat(){if(activity!=='secretGarden'||t-state.gardenSeatAt<.75)return;state.gardenSitting=!state.gardenSitting;state.gardenSeatAt=t;hint(...(state.gardenSitting?['Sit as long as you like. No countdown here.','想坐多久就坐多久，这里没有倒计时。']:['Take the quiet with you.','把这一份清静带走吧。']))}
+function gardenKoi(x,y,angle,kind){ctx.save();ctx.translate(x,y);ctx.rotate(angle);let col=['#d99b62','#e4d9ba','#d16b48','#e2bf75'][kind%4];ctx.globalAlpha=.88;ctx.beginPath();ctx.moveTo(-17,0);ctx.quadraticCurveTo(-30,Math.sin(t*6+kind)*9-7,-36,-12);ctx.lineTo(-29,0);ctx.lineTo(-36,12);ctx.quadraticCurveTo(-28,7,-17,0);ctx.fillStyle=col;ctx.fill();ellipse(0,0,23,9,col);ellipse(2,0,15,6,kind===1?'#c66b48':'#f2dbb7');ellipse(-6,2,6,4,col);ellipse(16,-3,1.6,1.6,'#514638');ellipse(16,3,1.6,1.6,'#514638');ctx.restore()}
+function gardenWindChime(x,y){let age=t-state.gardenChimeAt,ang=Math.sin(t*1.4)*.07+(age<3?Math.sin(age*12)*.35*Math.exp(-age*1.4):0);ctx.save();ctx.translate(x,y);line(0,-65,0,-22,'#ad9470',2);ctx.rotate(ang);let g=ctx.createLinearGradient(-20,0,20,0);g.addColorStop(0,'#829e9b80');g.addColorStop(.48,'#e5eddbcc');g.addColorStop(1,'#648f8d90');ctx.beginPath();ctx.arc(0,0,19,Math.PI,0);ctx.lineTo(19,11);ctx.quadraticCurveTo(0,21,-19,11);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#a8c3ad';ctx.stroke();line(0,5,0,40,'#bca681',1.5);ellipse(0,12,3,4,'#d8b47a');ctx.rotate(Math.sin(t*1.9)*.14);round(-8,40,16,40,1,'#d9bd89','#8e7856');line(-4,48,4,66,'#a8644a',1);ctx.restore()}
+const gardenRoomDraw=drawRoom;drawRoom=function(){gardenRoomDraw();if(room!=='temple')return;ctx.save();let x=400,y=710;line(x-55,y-25,x-55,y+12,'#75543e',6);line(x+55,y-25,x+55,y+12,'#75543e',6);round(x-76,y-50,152,31,3,'#a48760','#634b37');txt(tr('Garden path →','后院小径 →'),x,y-34,15,'#fff0d0');target(x-85,y-60,170,74,()=>start('secretGarden'));ctx.restore()};
+const gardenDraw=drawActivity;drawActivity=function(){if(activity!=='secretGarden')return gardenDraw();ctx.save();paintLivingBackdrop(pics.park||pics.streetTemple||pics.temple);let shade=ctx.createLinearGradient(0,280,0,690);shade.addColorStop(0,'#304b3030');shade.addColorStop(1,'#27392d80');shadeLivingBackdrop(shade);
+let age=t-state.gardenAt,walk=age<1.2,seatAge=t-state.gardenSeatAt,seat=state.gardenSitting?poseEase(seatAge/.75):seatAge<.75?1-poseEase(seatAge/.75):0;
+ellipse(438,501,148,78,'#636d57');ellipse(438,492,141,75,'#436f6b');ellipse(438,492,133,67,'#668c81');ctx.save();ctx.beginPath();ctx.ellipse(438,492,133,67,0,0,TAU);ctx.clip();for(let i=0;i<5;i++){let f=(t*.25+i*.2)%1;ctx.beginPath();ctx.ellipse(445,491,25+f*114,9+f*49,0,0,TAU);ctx.strokeStyle='rgba(220,239,216,'+(.2*(1-f))+')';ctx.stroke()}
+let feedAge=t-state.gardenFeedAt;for(let i=0;i<5;i++){let theta=t*(.23+i*.035)+i*1.26,xx=438+Math.cos(theta)*(82+i*7),yy=492+Math.sin(theta)*44,dx=-Math.sin(theta)*90,dy=Math.cos(theta)*44;if(feedAge<5){let attraction=poseEase(feedAge/1.1)*Math.min(1,(5-feedAge)/1.4)*.75;xx+=(state.gardenFeedX-xx)*attraction;yy+=(state.gardenFeedY-yy)*attraction;dx=state.gardenFeedX-xx;dy=state.gardenFeedY-yy}gardenKoi(xx,yy,Math.atan2(dy,dx),i)}if(feedAge<1.5){for(let i=0;i<6;i++){let f=Math.min(1,feedAge*2);ellipse(state.gardenFeedX-15+i*6,state.gardenFeedY-(1-f)*60+Math.sin(i)*6,2.5,2.5,'#ddc294')}ctx.beginPath();ctx.ellipse(state.gardenFeedX,state.gardenFeedY,8+feedAge*20,4+feedAge*10,0,0,TAU);ctx.strokeStyle='rgba(245,238,208,'+(1-feedAge/1.5)*.75+')';ctx.stroke()}ctx.restore();
+for(let i=0;i<7;i++){let xx=325+i*36,yy=540+Math.sin(i)*17;ellipse(xx,yy,22,9,'#8c9180');ellipse(xx-3,yy-3,17,5,'#aab09b')}line(580,310,580,405,'#78583e',9);line(580,310,527,310,'#78583e',8);gardenWindChime(527,371);target(499,320,62,105,gardenChime);txt(tr('Wind chime','风铃'),527,420,14,'#fff1d2');
+round(206,540,100,15,3,'#9f7953','#674e38');line(215,555,215,582,'#694d37',6);line(298,555,298,582,'#694d37',6);if(walk){backHuman(200+poseEase(age/1.2)*55,555,avatar??0,true,'right',1.5)}else drawRitualPose(253,seat>0?555+seat*6:555,1.5,{kneel:seat*.75,reach:feedAge<.45?{x:315,y:460}:null});target(205,505,102,77,gardenSeat);
+label(tr(state.gardenSitting?'Stand up':'Sit awhile',state.gardenSitting?'起身':'坐一会儿'),253,610,gardenSeat);label(tr('Feed the koi','喂锦鲤'),450,610,()=>gardenFeed());target(321,435,240,105,()=>gardenFeed());label(tr('Temple','回寺庙'),400,659,()=>{activity=null;state={};updateHUD();roomIntro()});
+ctx.restore()};
+const gardenKeepsakeStory=keepsakeStory;keepsakeStory=function(item){if(item[0]==='Quiet garden postcard')return ['A little garden where even the koi have time for lunch.','一个连锦鲤都能慢慢吃午饭的小后院。'];return gardenKeepsakeStory(item)};
+
+/* Slackade: a complete short rhythm round and a physical blind-box opening. */
+activityTitle.rhythm=['After-hours rhythm','下班节拍'];
+activityTitle.blindBox=['Lucky little boxes','摸鱼盲盒'];
+roomActions.arcade=[['claw','Claw machine','夹娃娃'],['rhythm','Rhythm floor','节奏舞台'],['blindBox','Blind boxes','摸鱼盲盒']];
+const arcadeReleaseStart=start;start=function(id){arcadeReleaseStart(id);if(id==='rhythm'){state.rhythmStage='intro';state.rhythmScore=0;state.rhythmCombo=0;state.rhythmBest=0;state.rhythmMiss=0;state.rhythmNotes=[];state.rhythmFlash=-100;hint('Follow the beat. Tap a lane when a note reaches the line.','跟着节奏，音符到达判定线时点击对应位置。')}if(id==='blindBox'){state.boxStage='choose';state.boxPick=-1;state.boxAt=t;state.boxShake=0;hint('Pick a sealed box. Give it a little shake.','选一个密封盲盒，轻轻摇一摇。')}};
+const rhythmArrows=['←','↓','↑','→'],rhythmFreq=[261.63,329.63,392,440],rhythmColor=['#c99182','#a4bda0','#d8b77c','#8ba8bb'];
+function rhythmBegin(){if(activity!=='rhythm'||state.rhythmStage!=='intro')return;state.rhythmStage='play';state.rhythmAt=t+1.8;state.rhythmNotes=Array.from({length:24},(_,i)=>({lane:(i*3+Math.floor(i/4)+Math.floor(Math.random()*2))%4,at:i*.56,status:0}));hint('No pressure. Missing a beat is part of the fun.','别紧张，漏拍也是摸鱼的一部分。')}
+function rhythmHit(lane){if(activity!=='rhythm'||state.rhythmStage!=='play')return;let elapsed=t-state.rhythmAt;let n=state.rhythmNotes.filter(n=>n.status===0&&n.lane===lane&&Math.abs(n.at-elapsed)<=.29).sort((a,b)=>Math.abs(a.at-elapsed)-Math.abs(b.at-elapsed))[0];state.rhythmLane=lane;state.rhythmFlash=t;if(n){n.status=1;let perfect=Math.abs(n.at-elapsed)<.13;state.rhythmScore+=perfect?100:60;state.rhythmCombo++;state.rhythmBest=Math.max(state.rhythmBest,state.rhythmCombo);state.rhythmResult=perfect?['Perfect!','完美！']:['Nice!','不错！'];sound(rhythmFreq[lane])}else{state.rhythmResult=['A little early or late','早了一点或晚了一点'];state.rhythmCombo=0;sound(170)}}
+function rhythmFinish(){if(state.rhythmStage!=='play')return;state.rhythmStage='result';state.rhythmEnd=t;let best=Number(load('rhythmHighV1',0))||0;save('rhythmHighV1',Math.max(best,state.rhythmScore));addItem('After-hours rhythm ticket','下班节拍门票');if(state.rhythmScore>=1600)addItem('Golden rhythm badge','金色节拍徽章');hint(...(state.rhythmScore>=1600?['Your boss cannot compete with those moves.','老板可比不上你的舞步。']:['You survived the dance floor. That counts.','成功存活于舞池，这就算赢了。']))}
+document.addEventListener('keydown',e=>{if(activity!=='rhythm'||state.rhythmStage!=='play'||e.repeat||e.target.matches?.('input,textarea,select'))return;const l=['ArrowLeft','ArrowDown','ArrowUp','ArrowRight'].indexOf(e.key);if(l>=0){e.preventDefault();rhythmHit(l)}});
+const boxPrizes=[['Office escape cat','逃班猫','#d89858',0,'common'],['Meeting survivor cat','开会幸存猫','#ece1c6',1,'common'],['Annual leave cat','请假猫','#9399a2',4,'uncommon'],['Moonlight cat','月光猫','#44434a',2,'rare'],['Golden payday cat','金薪猫','#d1a077',3,'rare']];
+function boxSelect(i){if(activity!=='blindBox'||state.boxStage!=='choose')return;state.boxPick=i;state.boxStage='shake';state.boxAt=t;sound(400);hint('Shake the box sideways, then open it.','左右摇动盒子，再打开看看。')}
+function boxShake(amount){if(activity!=='blindBox'||state.boxStage!=='shake')return;state.boxShake=Math.min(100,state.boxShake+Math.max(0,Math.min(50,amount*.65)));state.boxAt=t;sound(280);if(state.boxShake>=100){state.boxStage='ready';hint('Something is rattling inside. Open it!','里面有东西在响，打开看看！')}}
+function boxOpen(){if(activity!=='blindBox'||state.boxStage!=='ready')return;state.boxStage='opening';state.boxAt=t;let q=Math.random();state.boxPrize=q<.035?4:q<.13?3:q<.35?2:q<.68?1:0;sound(520)}
+function boxAward(){if(state.boxStage!=='opening')return;state.boxStage='result';state.boxAt=t;let v=boxPrizes[state.boxPrize],duplicate=items.some(x=>x[0]===v[0]);addItem(v[0],v[1]);let count=Number(load('blindBoxOpenedV1',0))||0;save('blindBoxOpenedV1',count+1);hint(...(duplicate?['A familiar face! This one can keep the other one company.','又是熟面孔！正好给上一只作伴。']:v[4]==='rare'?['Rare find! The universe finally approved your leave.','稀有款！宇宙终于批准你休假了。']:['A tiny companion for your next escape.','下次摸鱼，又多了一个小伙伴。']))}
+function boxArt(x,y,sc=1,i=0,open=0,tilt=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(tilt);let col=['#cba58a','#91aba3','#b3a2bd'][i%3];ellipse(0,9,49,11,'#292c2744');ctx.beginPath();ctx.moveTo(-44,-72);ctx.lineTo(28,-72);ctx.lineTo(44,-58);ctx.lineTo(44,0);ctx.lineTo(-28,9);ctx.lineTo(-44,-5);ctx.closePath();ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#695548';ctx.stroke();ctx.beginPath();ctx.moveTo(28,-72);ctx.lineTo(28,0);ctx.lineTo(44,0);ctx.lineTo(44,-58);ctx.closePath();ctx.fillStyle='#4b443b35';ctx.fill();round(-46,-76-open*37,92,16,3,'#e8d5ad','#826a4c');line(-36,-66-open*37,35,-66-open*37,'#a7895c',2);txt('?',-8,-25,32,'#fff0cc');line(-29,-8,15,-8,'#f4e1bd',2);ctx.restore()}
+const arcadeReleaseProp=prop;prop=function(id,x,y){if(id==='blindBox'){boxArt(x,y-23,.8,1);return}if(id==='rhythm'){ctx.save();ctx.translate(x,y-45);round(-50,-56,100,83,5,'#3d5350','#c9aa77');for(let i=0;i<4;i++){round(-43+i*23,-15,20,32,3,rhythmColor[i]);txt(rhythmArrows[i],-33+i*23,1,18,'#443b33')}for(let i=0;i<3;i++)ellipse(-22+i*22,-35,6,6,'#ead3a0');ctx.restore();return}return arcadeReleaseProp(id,x,y)};
+const arcadeReleaseDraw=drawActivity;drawActivity=function(){if(!['rhythm','blindBox'].includes(activity))return arcadeReleaseDraw();ctx.save();paintLivingBackdrop(pics.arcade||pics.tea||pics.streetKitchen);let shade=ctx.createLinearGradient(0,280,0,700);shade.addColorStop(0,'#293e3f40');shade.addColorStop(1,'#282b32b0');shadeLivingBackdrop(shade);
+if(activity==='rhythm'){let stage=state.rhythmStage,elapsed=t-(state.rhythmAt??t);if(stage==='play'){for(let n of state.rhythmNotes){if(!n.status&&elapsed-n.at>.31){n.status=2;state.rhythmMiss++;state.rhythmCombo=0}}if(elapsed>14)rhythmFinish()}let left=258,top=326,bottom=566;for(let i=0;i<4;i++){let x=left+i*71;round(x,top,65,bottom-top+45,5,'#243834a8','#bda37d');for(let j=0;j<5;j++)line(x+3,top+j*48,x+62,top+j*48,'#e9d8b528',1);round(x,bottom,65,45,5,state.rhythmLane===i&&t-state.rhythmFlash<.18?'#f5e2b1':rhythmColor[i],'#e7d2a4');txt(rhythmArrows[i],x+32,bottom+21,28,'#423a32');if(stage==='play')target(x,bottom-28,65,92,()=>rhythmHit(i))}if(stage==='play'){for(let n of state.rhythmNotes){let delta=n.at-elapsed;if(!n.status&&delta<1.8&&delta>-.31){let y=bottom+22-delta*135;ctx.save();ctx.beginPath();ctx.rect(left,top,278,285);ctx.clip();round(left+n.lane*71+7,y-18,51,36,5,rhythmColor[n.lane],'#fff0d1');txt(rhythmArrows[n.lane],left+n.lane*71+32,y,22,'#403b32');ctx.restore()}}txt(String(state.rhythmScore)+'  ·  '+tr('Combo ','连击 ')+state.rhythmCombo,400,292,18,'#fff1d2');if(elapsed<0)txt(String(Math.max(1,Math.ceil(-elapsed))),400,435,48,'#fff0bf');if(state.rhythmResult&&t-state.rhythmFlash<.6)txt(tr(...state.rhythmResult),400,638,17,'#fff1d0')}else if(stage==='intro'){txt(tr('A short dance break','来一段下班舞曲'),400,295,20,'#fff0d1');label(tr('Start the beat','开始节拍'),400,640,rhythmBegin)}else{txt(tr('Score ','得分 ')+state.rhythmScore+'  ·  '+tr('Best combo ','最高连击 ')+state.rhythmBest,400,290,17,'#fff1d2');label(tr('Play again','再来一次'),400,640,()=>start('rhythm'))}}
+if(activity==='blindBox'){let stage=state.boxStage,age=t-state.boxAt;if(stage==='choose'){for(let i=0;i<3;i++){let x=270+i*130;boxArt(x,530,.9,i);target(x-48,438,96,105,()=>boxSelect(i));label(tr('Box ','盲盒 ')+(i+1),x,570,()=>boxSelect(i))}}else{let held=drag?.id==='boxShake',x=held?Math.max(290,Math.min(510,drag.x)):400,y=held?Math.max(440,Math.min(535,drag.y)):515,opening=stage==='opening'?poseEase(age/.95):stage==='result'?1:0;drawRitualPose(275,555,1.45,{reach:held?{x:x-38,y:y-35}:null});boxArt(x,y,1.15,state.boxPick,opening,held?Math.sin(t*20)*.16:age<.3&&stage==='shake'?Math.sin(age*28)*.1:0);if(stage==='opening'&&age>=.95)boxAward();if(stage==='opening'||stage==='result'){let v=boxPrizes[state.boxPrize];ctx.save();ctx.globalAlpha=Math.max(.1,opening);cat(400,450-35*opening,v[3],false,1.8);ctx.restore();if(stage==='result'){txt(tr(v[0],v[1]),400,590,19,'#fff2d1');txt(tr(v[4]==='rare'?'RARE':v[4]==='uncommon'?'UNCOMMON':'COMMON',v[4]==='rare'?'稀有款':v[4]==='uncommon'?'特别款':'普通款'),400,615,13,'#f2d49d');label(tr('Pick another','再选一个'),400,650,()=>start('blindBox'))}}if(stage==='shake'){target(330,420,140,130,()=>{},'boxShake');txt(tr('Shake ','摇动 ')+Math.round(state.boxShake)+'%',400,602,17,'#fff1d0');label(tr('Shake gently','轻轻摇晃'),400,642,()=>boxShake(70))}if(stage==='ready'){target(330,420,140,130,boxOpen);label(tr('Open the box','打开盲盒'),400,620,boxOpen)}}}ctx.restore()};
+const arcadeStory=keepsakeStory;keepsakeStory=function(item){if(boxPrizes.some(v=>v[0]===item[0]))return ['A little figure from the arcade. Its only job is to keep you company.','来自游戏厅的小手办，唯一的工作就是陪你摸鱼。'];return arcadeStory(item)};
+
+/* Reading house: a physical spread with topic choices, card handling and a saved journal. */
+activityTitle.tarot=['Daily tarot','今日塔罗'];activityTitle.love=['Three-card reading','三张牌占卜'];
+roomActions.tarot=[['tarot','Daily tarot','今日塔罗'],['love','Ask the cards','问问塔罗']];
+const readingTopics=[['Love','感情'],['Work','事业'],['Money','财运'],['Life','生活']];
+const readingPositions=[['Situation','现状'],['What needs attention','需要留意'],['A next step','下一步']];
+let readingJournal=load('readingJournalV1',[]);if(!Array.isArray(readingJournal))readingJournal=[];
+const readingStart=start;start=function(id){readingStart(id);if(id==='tarot'||id==='love'){state.readStage=id==='love'?'topic':'deck';state.readTopic=id==='love'?null:-1;state.readShuffle=0;state.readAt=t;state.readCards=[];state.readFlip=[];state.readSaved=false;hint(...(id==='love'?['What is on your mind today?','今天想问些什么？']:['Touch the deck, or drag it sideways to shuffle.','轻触牌堆，或左右拖动洗牌。']))}};
+function readingTopic(i){if(state.readStage!=='topic')return;state.readTopic=i;state.readStage='deck';state.readAt=t;hint('Shuffle the deck as much as you like.','想洗几次都可以。')}
+function readingShuffle(){if(state.readStage!=='deck')return;state.readStage='shuffle';state.readShuffle++;state.readAt=t;sound(350);hint('Two halves of the deck come together.','两叠牌慢慢合在一起。')}
+function readingDeal(){if(state.readStage!=='deck'||!state.readShuffle)return;state.readStage='deal';state.readAt=t;let count=activity==='love'?3:1,pool=tarotDeck.map((_,i)=>i);if(activity==='tarot'){let d=dailyCard();state.readCards=[{i:Math.max(0,tarotDeck.indexOf(d)),rev:tarotReversed('daily')}]}
+else{state.readCards=Array.from({length:count},()=>{let j=Math.floor(Math.random()*pool.length);return {i:pool.splice(j,1)[0],rev:Math.random()<.5}})}state.readFlip=Array(count).fill(-1);state.readCards.forEach(v=>readingArtwork(v.i));sound(460)}
+function readingReveal(i){if(state.readStage!=='cards'||!state.readCards[i]||state.readFlip[i]>=0)return;state.readFlip[i]=t;sound(490+i*90);hint('The card has a thought for you.','这张牌，有句话想对你说。')}
+function readingSave(){if(state.readSaved||!state.readCards.length||!state.readFlip.every(v=>v>=0&&t-v>.6))return;state.readSaved=true;let entry={date:new Date().toISOString().slice(0,10),topic:state.readTopic,cards:state.readCards.map(v=>({...v}))};let key=JSON.stringify(entry);if(!readingJournal.some(v=>JSON.stringify(v)===key)){readingJournal.unshift(entry);readingJournal=readingJournal.slice(0,40);save('readingJournalV1',readingJournal)}if(activity==='tarot'){let d=tarotDeck[state.readCards[0].i];addItem('Daily Tarot: '+d[0],'今日塔罗：'+d[1])}else addItem('Love reading','感情占卜');hint('Your reading is tucked into your passport.','这份牌意已经收进旅人护照。')}
+function readingShow(i){let v=state.readCards[i];if(!v||state.readFlip[i]<0||t-state.readFlip[i]<.65)return;let d=tarotDeck[v.i];tarotDetails(d,v.rev)}
+const readingDraw=drawActivity;drawActivity=function(){if(!['tarot','love'].includes(activity)||!state.readStage)return readingDraw();ctx.save();paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);let g=ctx.createLinearGradient(0,250,0,690);g.addColorStop(0,'#40373220');g.addColorStop(1,'#2a332c50');shadeLivingBackdrop(g);table();let stage=state.readStage,age=t-state.readAt;
+if(stage==='topic'){txt(tr('What brings you here?','今天想问什么？'),400,365,23,'#fff0d0');readingTopics.forEach((v,i)=>{let x=305+(i%2)*190,y=455+Math.floor(i/2)*100;ctx.save();ctx.translate(x,y-28);ctx.rotate((i%2?1:-1)*.05);card(-33,-46,66,92,false);ctx.restore();label(tr(...v),x,y+39,()=>readingTopic(i));target(x-55,y-75,110,110,()=>readingTopic(i))})}
+else if(stage==='deck'||stage==='shuffle'){let f=stage==='shuffle'?Math.min(1,age/1.45):0,split=Math.sin(f*Math.PI),held=drag?.id==='readShuffle',offset=held?Math.max(-45,Math.min(45,(drag.x-drag.sx)*.4)):0;for(let i=0;i<12;i++){let dir=i<6?-1:1,x=400+dir*split*83+(i-5.5)*1.8+offset,y=475-i*1.2+Math.sin(f*TAU+i)*split*7;ctx.save();ctx.translate(x,y);ctx.rotate(dir*split*.17+(held?offset*.003:0));card(-46,-68,92,136,false);ctx.restore()}if(stage==='shuffle'&&age>=1.45){state.readStage='deck';state.readAt=t;hint('Deal when you feel ready.','准备好了就发牌。')}if(stage==='deck'){target(321,381,158,173,readingShuffle,'readShuffle');label(tr('Shuffle','洗牌'),300,605,readingShuffle);if(state.readShuffle)label(tr('Deal cards','发牌'),500,605,readingDeal)}else txt(tr('Shuffling…','正在洗牌……'),400,600,20,'#fff0d2')}
+else if(stage==='deal'||stage==='cards'){let n=state.readCards.length;for(let i=0;i<n;i++){let endX=n===1?400:276+i*124,sc=n===1?1.40:1.02,deal=stage==='deal'?poseEase((age-i*.22)/.65):1,x=400+(endX-400)*deal,y=465-18*Math.sin(Math.PI*deal),flip=state.readFlip[i]<0?0:Math.min(1,(t-state.readFlip[i])/.72),face=flip>=.5,w=92*sc*(flip>0&&flip<1?Math.max(.045,Math.abs(Math.cos(Math.PI*flip))):1),h=145*sc,v=state.readCards[i],d=tarotDeck[v.i];ctx.save();ctx.translate(x,y);ctx.rotate((1-deal)*.14*(i-1));if(face){drawReadingCard(-w/2,-h/2,w,h,v.i,v.rev)}else card(-w/2,-h/2,w,h,false);ctx.restore();if(stage==='cards'){target(endX-52,y-h/2,104,h,()=>state.readFlip[i]<0?readingReveal(i):readingShow(i));if(n===3)readingPositionCaption(tr(...readingPositions[i]),endX,560,112);if(face)txt(orient(v.rev),endX,n===1?586:594,13,'#f1ddad')}}
+if(stage==='deal'&&age>.65+(n-1)*.22){state.readStage='cards';state.readAt=t;hint('Turn the cards over one by one.','一张一张慢慢翻开。')}let complete=state.readFlip.every(v=>v>=0&&t-v>.72);if(stage==='cards'&&complete){if(!state.readSaved)readingSave();label(tr('Read the cards','查看牌意'),400,636,()=>{let lines=state.readCards.map((v,i)=>{let d=tarotDeck[v.i];return (n===3?tr(...readingPositions[i])+': ':'')+tr(d[0],d[1])+' · '+orient(v.rev)+'\n'+arcanaReading(d,v.rev)});say(tr('Fortune Teller','占卜师'),lines.join('\n\n')+'\n\n'+tr('The future is not a deadline.','未来又不是截止日期。'))})}else if(stage==='cards')txt(tr('Choose a card to turn','点击牌面翻开'),400,622,16,'#fff0d2')}
+ctx.restore()};
+function openReadingJournal(){activePage='readingJournal';page(tr('Reading journal','塔罗手记'),tr('Reflections from your visits, not predictions.','每次来访的心情记录，并非预言。'),q=>{let book=element('section','',q,'travelAlbum');if(!readingJournal.length)element('p',tr('Your first reading will appear here.','第一次占卜之后，手记会出现在这里。'),book);for(let v of readingJournal){let a=element('article','',book,'albumCard');element('strong',v.date+' · '+(v.topic<0||v.topic===null?tr('Daily tarot','今日塔罗'):tr(...(readingTopics[v.topic]||readingTopics[3]))),a);for(let d of v.cards||[]){let cardData=tarotDeck[d.i];if(!cardData)continue;let item=element('div','',a);element('p',tr(cardData[0],cardData[1])+' · '+orient(d.rev),item);element('small',arcanaReading(cardData,d.rev),item)}}b(book,tr('Back to passport','返回护照'),passport)})}
+const readingPassport=passport;passport=function(){readingPassport();let book=$('content').querySelector('.travelAlbum');if(book)b(book,tr('Reading journal','塔罗手记')+' ('+readingJournal.length+')',openReadingJournal)};$('dockPassport').onclick=passport;
+const collectionMore=[['Quiet garden postcard','静谧后院明信片','stamp'],['Temple cat blessing','庙猫的祝福','cat'],['After-hours rhythm ticket','下班节拍门票','stamp'],['Golden rhythm badge','金色节拍徽章','stamp'],...boxPrizes.map(v=>[v[0],v[1],'cat']),...teaChoices.map(v=>[v[0]+' recipe',v[1]+'配方','stamp'])];for(let item of collectionMore)if(!keepsakes.some(v=>v[0]===item[0]))keepsakes.push(item);
+const collectionClue=keepsakeClue;keepsakeClue=function(item){let n=item[0];if(boxPrizes.some(v=>v[0]===n))return ['Open a blind box in the arcade','去游戏厅开盲盒'];if(/recipe$/.test(n))return ['Make a drink with Grandma','跟外婆做一杯奶茶'];if(n==='Quiet garden postcard')return ['Feed the koi in the hidden garden','去后院喂锦鲤'];if(n==='Temple cat blessing')return ['Befriend the temple cat','和庙猫做朋友'];if(n.includes('rhythm'))return ['Try the arcade rhythm floor','试试游戏厅节奏舞台'];return collectionClue(item)};
+
+
+/* Indoor exploration: a separate position preserves the outdoor doorway. */
+let continuityRoom=null,continuityActivity=null;
+let indoor={x:400,y:650,tx:400,ty:550,facing:'up',last:0,goal:null};
+function indoorReady(){return !!room&&!activity&&!transitioning&&proposal.hidden&&$('page').style.display!=='block'&&avatar!==null}
+function indoorDestination(x,y,goal=null){
+ const bounds=livingBounds();
+ const left=Math.max(110,bounds.x+35),right=Math.min(690,bounds.x+bounds.w-35),top=Math.max(390,bounds.y+100),bottom=Math.min(715,bounds.y+bounds.h-85/cam.scale);
+ indoor.tx=left<=right?clamp(x,left,right):400;
+ indoor.ty=top<=bottom?clamp(y,top,bottom):550;
+ indoor.goal=goal;indoor.goalAt=goal?performance.now():0;
+}
+const continuityRoomDraw=drawRoom;
+drawRoom=function(){
+ const first=hit.length;continuityRoomDraw();
+ if(!room||avatar===null)return;
+ if(continuityRoom!==room){continuityRoom=room;indoor={x:400,y:590,tx:400,ty:550,facing:'up',last:t,goal:null}}
+ if(continuityActivity!==null){continuityActivity=null;indoor.last=t;indoor.goal=null;indoor.tx=indoor.x;indoor.ty=indoor.y}
+ const delta=Math.max(0,Math.min(.05,t-indoor.last));indoor.last=t;
+ for(let h of hit.slice(first)){
+  const fn=h.fn;h.fn=()=>{if(!indoorReady())return;indoorDestination(h.x+h.w/2,h.y+h.h+38,fn);hint('Walking to the station…','正在走向体验区……')};
+ }
+ if(indoorReady()){
+  let dx=Number(!!(keys.ArrowRight||keys.d))-Number(!!(keys.ArrowLeft||keys.a)),dy=Number(!!(keys.ArrowDown||keys.s))-Number(!!(keys.ArrowUp||keys.w));
+  if(dx||dy){let norm=Math.hypot(dx,dy);indoorDestination(indoor.x+dx/norm*45,indoor.y+dy/norm*45);}
+  let vx=indoor.tx-indoor.x,vy=indoor.ty-indoor.y,dist=Math.hypot(vx,vy);
+  if(dist>2){indoor.facing=Math.abs(vy)>Math.abs(vx)?(vy<0?'up':'down'):(vx<0?'left':'right');let amount=Math.min(dist,delta*Math.min(235,Math.max(65,dist*5)));indoor.x+=vx/dist*amount;indoor.y+=vy/dist*amount}
+  if((dist<=3||performance.now()-indoor.goalAt>3500)&&indoor.goal){const fn=indoor.goal,expectedRoom=room;indoor.goal=null;requestAnimationFrame(()=>{if(indoorReady()&&room===expectedRoom)fn()})}
+  if(dist>5){ctx.save();ctx.globalAlpha=.65;ellipse(indoor.tx,indoor.ty,10,4,'#e6c88d');ctx.restore()}
+ }
+ ctx.save();const visible= livingBounds();const ix=clamp(indoor.x,visible.x+25,visible.x+visible.w-25),iy=clamp(indoor.y,visible.y+110,visible.y+visible.h-85/cam.scale);backHuman(ix,iy,avatar,Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3,indoor.facing,Math.max(1.25,48/(85*cam.scale)));ctx.restore();
+};
+c.addEventListener('pointerup',e=>{if(!indoorReady()||!drag||drag.moved>30||drag.h)return;const a=point(e);indoorDestination(a.x,a.y)},true);
+const indoorControlStyle=document.createElement('style');indoorControlStyle.textContent='#movePad[data-indoor="true"]{bottom:calc(env(safe-area-inset-bottom,0px) + 76px);z-index:4}';document.head.append(indoorControlStyle);
+function indoorControls(){movePad.dataset.indoor=String(indoorReady());if(!room)continuityRoom=null;requestAnimationFrame(indoorControls)}requestAnimationFrame(indoorControls);
+const continuityActivityDraw=drawActivity;
+drawActivity=function(){
+ continuityActivityDraw();
+ continuityActivity=activity;
+ if(!activity||avatar===null)return;
+ // Activities with articulated player poses already render their own traveller.
+ if(['prayer','sticks','templeBell','templeWater','secretGarden','blindBox','bubbleTea','wonderScene','tarot','love','story','match','fish','cook','pet','hit'].includes(activity))return;
+ const b=livingBounds(),x=Math.max(b.x+65,Math.min(250,b.x+b.w-65)),y=Math.max(b.y+130,Math.min(550,b.y+b.h-100));
+ ctx.save();backHuman(x,y,avatar,false,'right',1.05);ctx.restore();
+};
+
+/* Mobile HUD: independent rows prevent language controls covering counters. */
+const mobileHudLayout=document.createElement('style');
+mobileHudLayout.textContent=`
+@media(max-width:600px){
+ #hud{top:calc(env(safe-area-inset-top,0px) + 8px)!important;left:8px!important;right:8px!important;padding:0!important;display:flex!important;justify-content:space-between!important;align-items:center!important;gap:6px!important;min-height:44px!important}
+ #profileHud{max-width:49%!important;min-width:0!important;flex:0 1 auto!important;padding:4px 8px 4px 4px!important}
+ #hudName{max-width:80px!important}
+ #hudStats{position:static!important;display:flex!important;flex:0 0 auto!important;gap:4px!important;margin:0!important}
+ #hudStats span{padding:5px 7px!important;font-size:11px!important}
+ #small{top:calc(env(safe-area-inset-top,0px) + 62px)!important;right:8px!important;left:auto!important;z-index:4!important}
+ #small .languageChoice button{min-height:44px!important;min-width:44px!important;padding:5px 7px!important}
+ #hud #location{top:54px!important;left:8px!important;transform:none!important;max-width:calc(100% - 175px)!important;overflow:hidden;text-overflow:ellipsis}
+ #lunarBtn{top:calc(env(safe-area-inset-top,0px) + 112px)!important;right:8px!important}
+ #quietToggle{top:calc(env(safe-area-inset-top,0px) + 156px)!important;right:8px!important}
+ #back{top:calc(env(safe-area-inset-top,0px) + 112px)!important;left:8px!important}
+}
+`;document.head.append(mobileHudLayout);
+
+/* Compact analogue-style touch control and explicit language state. */
+const controlPolish=document.createElement('style');controlPolish.textContent=`
+#small .languageChoice button[aria-pressed="true"],#proposal .languageChoice button[aria-pressed="true"]{background:#34483c!important;color:#fff2d9!important;outline:2px solid #e3ca99;outline-offset:-3px}
+#small .languageChoice button[aria-pressed="false"],#proposal .languageChoice button[aria-pressed="false"]{background:#f1dfb4!important;color:#304337!important;outline:none}
+#movePad{width:88px;height:88px;display:block!important;border-radius:50%;background:#263a3266;border:1px solid #f1dfb488;touch-action:none;z-index:4;user-select:none}
+#movePad[hidden]{display:none!important}
+#movePad button{display:none!important}
+#movePad .joystickThumb{position:absolute;left:50%;top:50%;width:36px;height:36px;border-radius:50%;background:#f1dfb4dd;border:1px solid #fff4db;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 2px 6px #263a3255}
+#movePad .joystickCompass{position:absolute;inset:0;display:grid;place-items:center;color:#fff4dca0;font:12px system-ui;pointer-events:none}
+#moveGuide{pointer-events:none!important;max-width:calc(100vw - 30px)}
+#moveGuide button{pointer-events:auto}
+`;document.head.append(controlPolish);
+const joystickThumb=element('span','',movePad,'joystickThumb');element('span','✦',movePad,'joystickCompass');
+movePad.setAttribute('aria-label',tr('Movement joystick','移动摇杆'));let joystickPointer=null;
+function joystickReset(){joystickPointer=null;releaseWalkKeys();joystickThumb.style.transform='translate(-50%,-50%)'}
+function joystickMove(e){let rect=movePad.getBoundingClientRect(),dx=e.clientX-rect.left-rect.width/2,dy=e.clientY-rect.top-rect.height/2,len=Math.hypot(dx,dy),f=Math.min(1,25/Math.max(1,len));joystickThumb.style.transform='translate(calc(-50% + '+dx*f+'px),calc(-50% + '+dy*f+'px))';keys.ArrowLeft=dx<-8;keys.ArrowRight=dx>8;keys.ArrowUp=dy<-8;keys.ArrowDown=dy>8}
+movePad.addEventListener('pointerdown',e=>{if(movePad.hidden)return;e.preventDefault();joystickPointer=e.pointerId;movePad.setPointerCapture(e.pointerId);joystickMove(e)});
+movePad.addEventListener('pointermove',e=>{if(joystickPointer===e.pointerId)joystickMove(e)});
+for(const ev of ['pointerup','pointercancel','lostpointercapture'])movePad.addEventListener(ev,e=>{if(joystickPointer===e.pointerId)joystickReset()});
+window.addEventListener('blur',joystickReset);
+/* Shared movement integrator. */
+step=function(n,dt,speed){
+ dt=Number.isFinite(dt)?Math.max(0,Math.min(.05,dt)):0;
+ if(n===p&&isRoute()&&!room&&!pending){n.tx=clamp(n.tx,405,595);if(Math.abs(n.ty-n.y)>35)speed=Math.min(speed,250)}
+ if(n!==p&&isRoute()&&!room&&Math.hypot(n.x-p.x,n.y-p.y)<58){let side=n.x<p.x?-1:1;if(Math.abs(n.x-p.x)<12)side=p.x<500?1:-1;n.tx=clamp(p.x+side*80,395,605);n.ty=n.y}
+ const dx=n.tx-n.x,dy=n.ty-n.y,d=Math.hypot(dx,dy);
+ if(!Number.isFinite(d)){if(n===p)resetPosition();return false}
+ if(d<=2){n.x=n.tx;n.y=n.ty;n.motionSpeed=0;return false}
+ const wanted=n===p?Math.min(speed,Math.max(40,d*7)):speed;
+ n.motionSpeed=n===p?(n.motionSpeed||0)+(wanted-(n.motionSpeed||0))*Math.min(1,dt*12):wanted;
+ const amount=Math.min(d,n.motionSpeed*dt);n.x+=dx/d*amount;n.y+=dy/d*amount;return true
+};
+const stairRoomIntro=roomIntro;
+roomIntro=function(){stairRoomIntro();if(room&&!activity)hint('Walk around, or tap a station to approach it.','自由走动，或点击体验区走过去。')};
+
+/* Recover corrupt coordinates before the camera is calculated, never reposition for ordinary camera lag. */
+function ensureTravellerCoordinates(){if(!Number.isFinite(p.x)||!Number.isFinite(p.y)||!Number.isFinite(p.tx)||!Number.isFinite(p.ty)){resetPosition();p.motionSpeed=0}}
+
+/* A reachable consultation control in Destiny House, independent of canvas hit testing. */
+const destinyAccess=element('button','',document.body);destinyAccess.id='destinyAccess';destinyAccess.hidden=true;
+destinyAccess.style.cssText='position:fixed;z-index:5;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 145px);min-height:44px;max-width:70vw;background:#ead9b5;color:#453b2f;border:1px solid #9b805e;font:14px Georgia,serif';
+destinyAccess.onclick=()=>{if(room!=='destiny'||activity)return;indoor.goal=null;indoor.tx=indoor.x;indoor.ty=indoor.y;releaseWalkKeys();try{destinyPage()}catch(err){console.error('Destiny consultation:',err);$('page').style.display='none';hint('The consultation could not open. Try again or step outside.','命理咨询暂时无法打开，请重试或先出门。')}};
+function destinyAccessTick(){destinyAccess.hidden=!(room==='destiny'&&!activity&&!transitioning&&proposal.hidden&&$('page').style.display!=='block');if(!destinyAccess.hidden)destinyAccess.textContent=tr('Consult Master Yue','请月师傅看命盘');requestAnimationFrame(destinyAccessTick)}requestAnimationFrame(destinyAccessTick);
+
+/* Recover from a failed transition and retain a usable exit in all houses. */
+const houseBack=$('back'),houseBackBefore=houseBack.onclick;
+houseBack.onclick=function(e){releaseWalkKeys();indoor.goal=null;indoor.tx=indoor.x;indoor.ty=indoor.y;return houseBackBefore.call(this,e)};
+const originalHouseEnter=enter;
+enter=function(id){releaseWalkKeys();joystickReset();continuityRoom=null;continuityActivity=null;indoor.goal=null;return originalHouseEnter(id)};
+const houseFade=fade;
+fade=function(fn,kind='gust',destination=null){
+ const began=performance.now();const result=houseFade(fn,kind,destination);
+ setTimeout(()=>{if(transitioning&&performance.now()-began>=2400){$('game').querySelectorAll('#sceneCrossfade').forEach(n=>n.remove());const overlay=$('fade');overlay.className='';overlay.style.opacity='';transitioning=false;updateHUD()}},2500);return result
+};
+
+/* Optional recovery navigation, accessible even when the world canvas fails. */
+const recoveryStyle=document.createElement('style');recoveryStyle.textContent='#journeyRecovery{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);z-index:27;min-height:44px;background:#ead9b5;color:#453b2f;border:1px solid #9b805e;border-radius:8px;padding:8px 12px;font:13px Georgia,serif}#journeyRecovery[hidden]{display:none!important}';document.head.append(recoveryStyle);
+const journeyRecovery=element('button','',document.body);journeyRecovery.id='journeyRecovery';journeyRecovery.hidden=true;
+journeyRecovery.onclick=()=>{releaseWalkKeys();stopRoute();indoor.goal=null;activity=null;room=null;state={};transitioning=false;continuityRoom=null;continuityActivity=null;document.querySelectorAll('#sceneCrossfade').forEach(n=>n.remove());$('fade').className='';$('fade').style.opacity='';$('page').style.display='none';closeTalk();resetPosition();updateHUD();hint('Back on the village path. Tap a doorway to explore.','已回到村庄小路，点击门口继续探索。')};
+let lastHealthyFrame=performance.now(),frameFault=null;
+const originalSafeLoop=loop;
+loop=function(ms){try{ctx.setTransform(c.width/Math.max(1,W),0,0,c.height/Math.max(1,H),0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';originalSafeLoop(ms);lastHealthyFrame=performance.now();frameFault=null}catch(err){if(!frameFault)console.error('MeowBox frame error',err);frameFault=err;ctx.setTransform(c.width/Math.max(1,W),0,0,c.height/Math.max(1,H),0,0);requestAnimationFrame(loop)}};
+function recoveryTick(){const stalled=performance.now()-lastHealthyFrame>1500||!!frameFault;journeyRecovery.hidden=!proposal.hidden||!stalled;journeyRecovery.textContent=tr('Return to path','返回小路');requestAnimationFrame(recoveryTick)}requestAnimationFrame(recoveryTick);
+
+/* Route taps intercepted by the canvas to the visible sign at that screen position. */
+const touchSignStyle=document.createElement('style');touchSignStyle.textContent='#worldSigns{z-index:3!important;pointer-events:none!important}#worldSigns .worldSign{pointer-events:auto!important;touch-action:manipulation!important}';document.head.append(touchSignStyle);
+let signPress=null;
+function signAtScreen(x,y){if(room||transitioning||!proposal.hidden||signRoot.hidden)return null;for(const el of signButtons.values()){if(el.hidden)continue;const r=el.getBoundingClientRect();if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return el}return null}
+document.addEventListener('pointerdown',e=>{
+ if(!e.isPrimary||room||transitioning||!proposal.hidden||signRoot.hidden)return;
+ if(e.target.closest?.('.worldSign'))return;const el=e.target===c?signAtScreen(e.clientX,e.clientY):null;
+ if(!el)return;
+ signPress={el,id:e.pointerId,x:e.clientX,y:e.clientY};drag=null;e.preventDefault();e.stopImmediatePropagation();
+},true);
+document.addEventListener('pointerup',e=>{
+ const a=signPress;if(!a||a.id!==e.pointerId)return;
+ signPress=null;drag=null;e.preventDefault();e.stopImmediatePropagation();
+ if(Math.hypot(e.clientX-a.x,e.clientY-a.y)<30&&!room&&!transitioning)a.el.click();
+},true);
+document.addEventListener('pointercancel',e=>{if(signPress?.id===e.pointerId)signPress=null},true);
+window.addEventListener('blur',()=>{signPress=null});
+/* Bound the walking-to-door sequence so mobile navigation cannot strand a player. */
+let doorAttempt=0;
+const walkDoorStable=walkDoor;
+walkDoor=function(id,x,y){
+ if(room||transitioning)return;
+ if(pending===id)return;releaseWalkKeys();guideDismissed=true;moveGuide.hidden=true;save('movementTutorialDone',true);const token=++doorAttempt;
+ walkDoorStable(id,x,y);
+ setTimeout(()=>{if(token!==doorAttempt||room||pending!==id)return;releaseWalkKeys();stopRoute();p.tx=p.x;p.ty=p.y;p.motionSpeed=0;enter(id)},6500)
+};
+const cleanMobileFade=fade;
+fade=function(fn,kind='gust',destination=null){
+ if(kind==='postcard')return cleanMobileFade(fn,kind,destination);
+ if(transitioning)return;
+ transitioning=true;
+ document.querySelectorAll('#sceneCrossfade').forEach(n=>n.remove());
+ const overlay=$('fade');overlay.className='';overlay.style.opacity='0';overlay.style.pointerEvents='none';
+ try{fn()}catch(err){console.error('Room transition',err)}finally{transitioning=false;overlay.style.opacity='';updateHUD()}
+};
+const screenCleanStyle=document.createElement('style');screenCleanStyle.textContent='#sceneCrossfade{display:none!important}#worldSigns .worldSign{font-size:clamp(12px,3.3vw,16px)!important;padding:6px 10px!important;min-height:44px!important}';document.head.append(screenCleanStyle);
+
+/* Keep mobile HUD clear of the path and avoid repeated layout updates. */
+const valleyInterface=document.createElement('style');valleyInterface.textContent=`
+@media(max-width:600px){
+ #worldSigns .worldSign{background:#f2e3c7ed!important;border:1px solid #a58b62!important;border-radius:4px!important;box-shadow:0 2px 5px #30291e33!important;font:600 12px/1.15 Georgia,serif!important;padding:5px 9px!important;max-width:125px!important;min-height:44px!important}
+ #movePad{width:78px!important;height:78px!important;left:12px!important}
+ #moveGuide{bottom:calc(env(safe-area-inset-bottom,0px) + 180px)!important}
+ #journeyRecovery{font:12px system-ui!important;min-height:44px!important}
+ #profileHud{max-width:55%!important}
+ #hudName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+`;document.head.append(valleyInterface);
+const originalRouteFrame=drawRoute;
+drawRoute=function(){ctx.save();try{originalRouteFrame()}finally{ctx.restore()}};
+
+/* A single non-recursive illustrated traveller renderer for every direction. */
+backHuman=function(x,y,kind,walking,facing,sc=1){
+ const k=Number.isFinite(kind)?((kind%4)+4)%4:0;
+ const direction=['up','down','left','right'].includes(facing)?facing:'down';
+ const im=pics['walker'+k+(direction==='up'?1:direction==='down'?0:2)];
+ if(!im?.naturalWidth){return human9(x,y,k,walking,direction==='left'?-1:1,sc)}
+ ctx.save();try{
+  ctx.translate(x,y);ctx.scale(sc,sc);ellipse(0,0,14,3,'#302a2438');
+  const bob=walking?Math.abs(Math.sin(t*13))*1.6:0;
+  ctx.translate(0,-bob);if(direction==='left')ctx.scale(-1,1);
+  const h=94,w=h*im.naturalWidth/im.naturalHeight;ctx.drawImage(im,-w/2,-h,w,h)
+ }finally{ctx.restore()}
+};
+const singleActorProps=prop;
+prop=function(id,x,y){
+ if(id==='chat'){
+  ctx.save();round(x-38,y-29,76,14,4,'#ae8b66','#73553c');line(x-29,y-15,x-29,y+7,'#73553c',5);line(x+29,y-15,x+29,y+7,'#73553c',5);ctx.restore();return
+ }
+ if(id==='destiny'){
+  ctx.save();round(x-48,y-68,96,66,5,'#b08c64','#674c3c');round(x-39,y-61,77,49,2,'#f1dfb5','#a78559');
+  ellipse(x,y-37,19,19,'#d4bd8b');ctx.strokeStyle='#8b6a52';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y-37,17,0,TAU);ctx.stroke();for(let i=0;i<8;i++){let ang=i*TAU/8;line(x+7*Math.cos(ang),y-37+7*Math.sin(ang),x+17*Math.cos(ang),y-37+17*Math.sin(ang),'#8b6a52',1)}ctx.restore();return
+ }
+ return singleActorProps(id,x,y)
+};
+
+/* Portrait rooms: give the player a consistent floor-level stage. */
+const portraitRoomStyle=document.createElement('style');portraitRoomStyle.textContent=`
+@media(max-width:600px){
+ #hint{max-width:calc(100vw - 118px)!important;left:calc(50% + 34px)!important;font-size:12px!important;white-space:normal!important}
+ #destinyAccess{bottom:calc(env(safe-area-inset-bottom,0px) + 150px)!important;font-size:12px!important;padding:7px 12px!important}
+}
+`;document.head.append(portraitRoomStyle);
+const portraitRoomDraw=drawRoom;
+drawRoom=function(){
+ if(W<H&&room!=='temple'){
+  // A single floor wash keeps stations and the traveller legible on busy illustrations.
+  const b=livingBounds();ctx.save();let g=ctx.createLinearGradient(0,500,0,b.y+b.h);g.addColorStop(0,'#473b2b00');g.addColorStop(1,'#453b2b55');ctx.fillStyle=g;ctx.fillRect(b.x,500,b.w,Math.max(0,b.y+b.h-500));ctx.restore();
+ }
+ portraitRoomDraw()
+};
+
+/* Make station labels readable and avoid overlapping adjacent touch targets. */
+const roomStationLabel=label;
+label=function(name,x,y,fn){
+ if(!room||activity)return roomStationLabel(name,x,y,fn);
+ ctx.save();try{
+ const size=Math.max(14,12/Math.max(.1,cam.scale));ctx.font='600 '+size+'px Georgia,serif';
+ const maxWidth=room==='temple'?160:roomActions[room]?.length>=3?155:245,w=Math.min(maxWidth,ctx.measureText(name).width+20);
+ const h=Math.max(30,32/Math.max(.2,cam.scale));round(x-w/2,y-h/2,w,h,7,'#f3e5ccf0','#a78d68');
+ ctx.save();ctx.beginPath();ctx.rect(x-w/2+4,y-h/2,w-8,h);ctx.clip();let words=name.split(' '),lines=[name];if(ctx.measureText(name).width>w-12&&words.length>1){let split=Math.ceil(words.length/2);lines=[words.slice(0,split).join(' '),words.slice(split).join(' ')]}for(let i=0;i<lines.length;i++)txt(lines[i],x,y+(i-(lines.length-1)/2)*size*.95,Math.min(size,(w-10)/Math.max(1,ctx.measureText(lines[i]).width)*size),'#514333');ctx.restore();
+ target(x-w/2,y-h/2,w,h,fn);
+ }finally{ctx.restore()}
+};
+const refinedHUDStyle=document.createElement('style');refinedHUDStyle.textContent=`
+@media(max-width:600px){
+ #hud{gap:4px!important}
+ #profileHud{max-width:52%!important}
+ #small{right:8px!important}
+ #hint{bottom:calc(env(safe-area-inset-bottom,0px) + 82px)!important}
+ #movePad{bottom:calc(env(safe-area-inset-bottom,0px) + 88px)!important}
+ #dock button{min-width:0!important}
+ #dock button span{font-size:11px!important}
+}
+`;document.head.append(refinedHUDStyle);
+
+/* Reading card typography is bounded to a dedicated footer; illustrations never cover text. */
+function drawReadingCard(x,y,w,h,index,reversed){
+ const d=tarotDeck[index];if(!d)return;
+ ctx.save();try{
+ round(x,y,w,h,5,'#f4e7c9','#ad9366');
+ if(w<24)return;
+ round(x+3,y+3,w-6,h-6,3,null,'#c1a477');
+ const inset=5,artH=h*.70;
+ paintReadingArtwork(x+inset,y+inset,w-inset*2,artH,index,reversed);
+ line(x+inset,y+artH+9,x+w-inset,y+artH+9,'#ba9a70',.8);
+ const name=tr(d[0],d[1]),max=w-12;
+ ctx.beginPath();ctx.rect(x+5,y+artH+10,w-10,h-artH-14);ctx.clip();
+ ctx.font='11px Georgia,serif';let words=name.split(' '),lines=[],row='';
+ for(const word of words){let test=row?row+' '+word:word;if(row&&ctx.measureText(test).width>max){lines.push(row);row=word}else row=test}if(row)lines.push(row);
+ if(lines.length>2)lines=[name];
+ const center=y+artH+10+(h-artH-14)/2;
+ lines.forEach((v,j)=>{ctx.font='11px Georgia,serif';let measured=ctx.measureText(v).width;let size=Math.min(11,11*max/Math.max(1,measured));ctx.font=size+'px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#594535';ctx.fillText(v,x+w/2,center+(j-(lines.length-1)/2)*11,max)});
+ }finally{ctx.restore()}
+}
+/* Never draw a detached synthetic arm over an illustrated character. */
+drawRitualPose=function(x,y,sc,opts={}){
+ ctx.save();try{ctx.translate(x,y);ctx.rotate(Math.min(.12,Math.max(0,opts.bow||0)*.12));backHuman(0,0,avatar??0,false,'right',sc*.88)}finally{ctx.restore()}
+};
+
+/* Authentic public-domain Rider–Waite–Smith art, sourced from the verified 78-card set.
+   Lazy load only dealt cards; retain a local symbolic fallback if offline.
+   Pamela Colman Smith, 1909. Source: https://github.com/sixseeds/tarot-api */
+const readingImageFiles={"The Fool":"ar00.jpg","The Magician":"ar01.jpg","The High Priestess":"ar02.jpg","The Empress":"ar03.jpg","The Emperor":"ar04.jpg","The Hierophant":"ar05.jpg","The Lovers":"ar06.jpg","The Chariot":"ar07.jpg","Strength":"ar08.jpg","The Hermit":"ar09.jpg","Wheel of Fortune":"ar10.jpg","Justice":"ar11.jpg","The Hanged Man":"ar12.jpg","Death":"ar13.jpg","Temperance":"ar14.jpg","The Devil":"ar15.jpg","The Tower":"ar16.jpg","The Star":"ar17.jpg","The Moon":"ar18.jpg","The Sun":"ar19.jpg","Judgement":"ar20.jpg","The World":"ar21.jpg","Ace of Wands":"wa01.jpg","Two of Wands":"wa02.jpg","Three of Wands":"wa03.jpg","Four of Wands":"wa04.jpg","Five of Wands":"wa05.jpg","Six of Wands":"wa06.jpg","Seven of Wands":"wa07.jpg","Eight of Wands":"wa08.jpg","Nine of Wands":"wa09.jpg","Ten of Wands":"wa10.jpg","Page of Wands":"wa11.jpg","Knight of Wands":"wa12.jpg","Queen of Wands":"wa13.jpg","King of Wands":"wa14.jpg","Ace of Cups":"cu01.jpg","Two of Cups":"cu02.jpg","Three of Cups":"cu03.jpg","Four of Cups":"cu04.jpg","Five of Cups":"cu05.jpg","Six of Cups":"cu06.jpg","Seven of Cups":"cu07.jpg","Eight of Cups":"cu08.jpg","Nine of Cups":"cu09.jpg","Ten of Cups":"cu10.jpg","Page of Cups":"cu11.jpg","Knight of Cups":"cu12.jpg","Queen of Cups":"cu13.jpg","King of Cups":"cu14.jpg","Ace of Swords":"sw01.jpg","Two of Swords":"sw02.jpg","Three of Swords":"sw03.jpg","Four of Swords":"sw04.jpg","Five of Swords":"sw05.jpg","Six of Swords":"sw06.jpg","Seven of Swords":"sw07.jpg","Eight of Swords":"sw08.jpg","Nine of Swords":"sw09.jpg","Ten of Swords":"sw10.jpg","Page of Swords":"sw11.jpg","Knight of Swords":"sw12.jpg","Queen of Swords":"sw13.jpg","King of Swords":"sw14.jpg","Ace of Pentacles":"pe01.jpg","Two of Pentacles":"pe02.jpg","Three of Pentacles":"pe03.jpg","Four of Pentacles":"pe04.jpg","Five of Pentacles":"pe05.jpg","Six of Pentacles":"pe06.jpg","Seven of Pentacles":"pe07.jpg","Eight of Pentacles":"pe08.jpg","Nine of Pentacles":"pe09.jpg","Ten of Pentacles":"pe10.jpg","Page of Pentacles":"pe11.jpg","Knight of Pentacles":"pe12.jpg","Queen of Pentacles":"pe13.jpg","King of Pentacles":"pe14.jpg"};
+const readingImages=new Map();
+function readingArtwork(index){
+ const name=tarotDeck[index]?.[0],file=readingImageFiles[name];if(!file)return null;
+ if(!readingImages.has(file)){const im=new Image();im.crossOrigin='anonymous';im.decoding='async';im.src='https://raw.githubusercontent.com/sixseeds/tarot-api/main/cards/'+file;readingImages.set(file,im)}
+ return readingImages.get(file)
+}
+function paintReadingArtwork(x,y,w,h,i,rev){
+ const im=readingArtwork(i);if(!im?.naturalWidth)return tarotArt(x,y,w,h,i,rev);
+ ctx.save();try{
+ ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();ctx.fillStyle='#e7d6b3';ctx.fillRect(x,y,w,h);
+ ctx.translate(x+w/2,y+h/2);if(rev)ctx.rotate(Math.PI);
+ const scale=Math.min(w/im.naturalWidth,h/im.naturalHeight),iw=im.naturalWidth*scale,ih=im.naturalHeight*scale;
+ ctx.drawImage(im,-iw/2,-ih/2,iw,ih);
+ }finally{ctx.restore()}
+}
+function readingPositionCaption(name,x,y,w){
+ ctx.save();try{ctx.font='13px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f8e9cc';
+ const words=name.split(' ');if(ctx.measureText(name).width<=w||words.length<2){ctx.fillText(name,x,y,w);return}
+ const k=Math.ceil(words.length/2);ctx.fillText(words.slice(0,k).join(' '),x,y-5,w);ctx.fillText(words.slice(k).join(' '),x,y+9,w)
+ }finally{ctx.restore()}
+}
+function shakeFortuneStick(){
+ if(activity!=='sticks'||state.drawing||state.fallenStick)return;
+ const run=state;state.shakeUntil=t+.85;state.drawing=true;const fortune=1+Math.floor(Math.random()*12);
+ sound(350);hint('One stick is finding its way out…','一支签正在慢慢落下……');
+ setTimeout(()=>{if(activity!=='sticks'||state!==run)return;state.drawing=false;state.fallenStick=fortune;addItem('Fortune stick '+fortune,'签文 '+fortune);sound(480);hint('Pick up the numbered stick to receive your fortune paper.','拾起落下的签，领取签文。')},850)
+}
+
+/* Original portrait-composed destinations. All coordinates refer to the new artwork,
+   never to the old landscape photographs. NPCs remain independent of the scenery. */
+const portraitWorlds={
+ home:{file:'salted-fish-island.webp',h:1516,spawn:[630,1370],route:[[0,710],[450,680],[850,570],[1516,630]],stations:{fish:[270,1090],tea:[750,850],office:[285,610],park:[765,495]}},
+ island:{file:'food-and-fun-street.webp',h:1527,spawn:[510,1380],route:[[0,670],[450,570],[850,510],[1527,510]],stations:{kitchen:[265,910],arcade:[785,530],mystery:[300,410]}},
+ wonder:{file:'wonder-valley.webp',h:1519,spawn:[525,1380],route:[[0,710],[450,660],[900,500],[1519,525]],stations:{quiz:[790,360],story:[260,950],match:[790,1110]}}
+};
+function portraitMap(){return portraitWorlds[scene]||null}
+function mapWorldHeight(){return portraitMap()?.h||(isRoute()?routeHeight:600)}
+const portraitImages={};
+for(const [key,data] of Object.entries(portraitWorlds)){
+ const im=new Image();im.decoding='async';im.src='assets/portrait/'+data.file;portraitImages[key]=im;
+ const seen=new Set();maps[key].st=maps[key].st.filter(a=>{if(seen.has(a[0]))return false;seen.add(a[0]);return true}).map(a=>{const pos=data.stations[a[0]];return pos?[a[0],pos[0],pos[1],a[3],a[4]]:a})
+}
+function portraitPathX(y){const world=portraitMap();if(!world)return 500;const route=world.route;for(let i=1;i<route.length;i++){if(y<=route[i][0]){const a=route[i-1],b=route[i],f=clamp((y-a[0])/(b[0]-a[0]),0,1);return a[1]+(b[1]-a[1])*f}}return route[route.length-1][1]}
+const oldMapMin=minY,oldMapMax=maxY,oldMapReset=resetPosition,oldPortraitInit=initNPC;
+minY=function(){return portraitMap()?250:oldMapMin()};
+maxY=function(){return portraitMap()?portraitMap().h-85:oldMapMax()};
+resetPosition=function(){oldMapReset();const w=portraitMap();if(!w)return;p.x=p.tx=w.spawn[0];p.y=p.ty=w.spawn[1];p.motionSpeed=0;p.facing='up';cam.x=p.x;cam.y=p.y;petPos={x:p.x,y:p.y+40}};
+initNPC=function(){oldPortraitInit();const w=portraitMap();if(!w)return;npc.forEach((n,i)=>{n.y=n.ty=510+i*310;n.x=n.tx=portraitPathX(n.y)+(i%2?85:-85);n.motionSpeed=0})};
+const originalPortraitStep=step;
+step=function(n,dt,speed){if(portraitMap()&&!room){
+ if(n===p&&!pending){n.ty=clamp(n.ty,minY(),maxY());let x=portraitPathX(n.ty);n.tx=clamp(n.tx,x-125,x+125)}
+ if(n!==p){n.ty=clamp(n.ty,minY(),maxY());let x=portraitPathX(n.ty);n.tx=clamp(n.tx,x-95,x+95)}
+ }return originalPortraitStep(n,dt,speed)};
+const formerDoorRoute=walkDoor;
+walkDoor=function(id,x,y){
+ if(!portraitMap())return formerDoorRoute(id,x,y);
+ if(room||transitioning||pending===id)return;
+ releaseWalkKeys();closeTalk();stopRoute();pending=id;lastDoor={x,y};let token=++doorAttempt;
+ let endY=clamp(y+45,minY(),maxY()),center=portraitPathX(endY);
+ let arrivalX=clamp(x,center-155,center+155);
+ walkQueue=[{x:portraitPathX(p.y),y:p.y},{x:center,y:endY},{x:arrivalX,y:endY}];
+ p.tx=walkQueue[0].x;p.ty=walkQueue[0].y;p.motionSpeed=0;hint('Walking to '+roomName(id)[0]+'…','正在前往'+roomName(id)[1]+'…');sound(380);
+ let ms=Math.min(13000,Math.max(4500,Math.abs(p.y-endY)/240*1000+3200));
+ setTimeout(()=>{if(token!==doorAttempt||room||pending!==id)return;stopRoute();releaseWalkKeys();p.x=p.tx=arrivalX;p.y=p.ty=endY;p.motionSpeed=0;enter(id)},ms)
+};
+const formerMapDraw=drawMap;
+drawMap=function(){
+ const world=portraitMap();if(!world)return formerMapDraw();
+ ctx.save();try{
+ const im=portraitImages[scene];if(im?.naturalWidth)ctx.drawImage(im,0,0,1000,world.h);
+ else{let g=ctx.createLinearGradient(0,0,0,world.h);g.addColorStop(0,'#9ab7b6');g.addColorStop(1,'#d4bb93');ctx.fillStyle=g;ctx.fillRect(0,0,1000,world.h);txt(tr('Preparing the village…','正在准备小镇……'),500,world.h*.5,22,'#314438')}
+ for(let i=0;i<18;i++){let xx=(i*143+t*(4+i%4))%1000,yy=(i*97+t*(5+i%4))%world.h;ctx.globalAlpha=.50;petal(xx,yy,2.5,i);ctx.globalAlpha=1}
+ for(const n of [...npc,p].sort((a,b)=>a.y-b.y)){
+  const sc=Math.max(.95,(.8+n.y/world.h*.45));
+  if(n===p){backHuman(n.x,n.y,avatar??0,n.walk,n.facing||'up',Math.max(sc,48/(94*Math.max(.1,cam.scale))));continue}
+  const moving=Math.hypot(n.tx-n.x,n.ty-n.y)>2;
+  if(n.kind===2){cat(n.x,n.y,0,moving,.65*sc);continue}
+  const dir=Math.abs(n.ty-n.y)>Math.abs(n.tx-n.x)?(n.ty<n.y?'up':'down'):(n.tx<n.x?'left':'right');
+  backHuman(n.x,n.y,((avatar??0)+1+n.kind)%4,moving,dir,sc*.83);
+  if(Math.hypot(n.x-p.x,n.y-p.y)<150){target(n.x-36,n.y-100,72,110,()=>npcTalk(n))}
+ }
+ for(const [id,x,y] of maps[scene].st){target(x-85,y-110,170,150,()=>walkDoor(id,x,y))}
+ if(ambientBus&&!muted&&p.walk&&t-ambientLastFoot>.34){ambientLastFoot=t;ambientTone(85+Math.random()*24,.016,.09,'triangle')}
+ }finally{ctx.restore()}
+};
+let signsForScene=null;
+const formerSignSync=syncSigns;
+syncSigns=function(){
+ if(signsForScene!==scene){signsForScene=scene;signButtons.clear();signRoot.replaceChildren()}
+ if(!portraitMap()){signRoot.classList.toggle('quiet',quiet9);return formerSignSync()}
+ signRoot.classList.remove('quiet');
+ let visible=proposal.hidden&&!room&&!transitioning&&avatar!==null&&$('page').style.display!=='block'&&$('arrival').hidden;
+ signRoot.hidden=!visible;if(!visible)return;
+ if(!signButtons.size){for(const [id,x,y,en,cn] of maps[scene].st){let e=element('button','',signRoot,'worldSign');e.onclick=()=>walkDoor(id,x,y);signButtons.set(id,e)}}
+ for(const [id,x,y,en,cn] of maps[scene].st){const e=signButtons.get(id);if(!e)continue;const name=tr(en,cn);if(e.textContent!==name)e.textContent=name;
+  const sx=cam.ox+x*cam.scale,sy=cam.oy+(y-65)*cam.scale;
+  e.hidden=sy<138||sy>H-120||sx<-20||sx>W+20;if(!e.hidden){let half=Math.min(W/2-6,(e.offsetWidth||95)/2+7);e.style.left=clamp(sx,half,W-half)+'px';e.style.top=sy+'px'}
+ }
+};
+
+/* Portrait navigation: keep the actual doorway and its sign together. */
+for(const [id,x,y] of maps.fortune.st)signAnchorsProposal[id]=[x,y-95];
+/* Fishing belongs to Salted Fish Island; do not reuse landscape coordinates on Food Street. */
+maps.island.st=maps.island.st.filter(st=>st[0]!=='fish');
+const portraitDoorV2=walkDoor;
+walkDoor=function(id,x,y){
+ if(!portraitMap())return portraitDoorV2(id,x,y);
+ if(room||transitioning||pending===id)return;
+ portraitDoorV2(id,x,y);
+ if(pending!==id)return;
+ const end=walkQueue[walkQueue.length-1];if(!end)return;
+ const path=[{x:portraitPathX(p.y),y:p.y}];
+ const direction=Math.sign(end.y-p.y);
+ for(let yy=p.y+direction*125;direction&&direction*(end.y-yy)>0;yy+=direction*125)path.push({x:portraitPathX(yy),y:yy});
+ path.push({x:portraitPathX(end.y),y:end.y},end);
+ walkQueue=path;p.tx=path[0].x;p.ty=path[0].y;
+ guideDismissed=true;moveGuide.hidden=true;
+};
+/* Swipe/wheel navigation on every portrait village, not just Fortune Valley. */
+c.addEventListener('wheel',e=>{
+ if(!portraitMap()||room||transitioning||!proposal.hidden||$('page').style.display==='block')return;
+ e.preventDefault();stopRoute();releaseWalkKeys();
+ p.ty=clamp(p.ty+Math.max(-350,Math.min(350,e.deltaY))*.85,minY(),maxY());p.tx=portraitPathX(p.ty);
+},{passive:false});
+
+/* The travel journal uses the same portrait illustrations as the actual world. */
+function destinationPortrait(k){return k==='fortune'?ART.valleyClean:'assets/portrait/'+portraitWorlds[k].file}
+const travelPortraitStyle=document.createElement('style');
+travelPortraitStyle.textContent=`
+#content .portraitTravelGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+#content .portraitDestination{display:block;position:relative;isolation:isolate;width:100%;aspect-ratio:2/3;min-width:0;padding:0!important;overflow:hidden;border:1px solid #af9470;border-radius:7px;text-align:left;background:#3c534a;box-shadow:0 3px 10px #352c2233}
+#content .portraitDestination img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+#content .portraitDestination:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 32%,#24362b35 49%,#203129f5 100%);z-index:-1;pointer-events:none}
+#content .portraitDestination .destinationCaption{position:absolute;bottom:0;left:0;right:0;padding:12px;color:#fff4dc;display:grid;gap:4px}
+#content .portraitDestination strong{font:600 clamp(15px,4vw,21px)/1.18 Georgia,serif;overflow-wrap:anywhere}
+#content .portraitDestination small{font:12px/1.35 system-ui,sans-serif;color:#f0dfc1;overflow-wrap:anywhere}
+#content .portraitDestination .destinationStatus{font:10px/1.2 system-ui,sans-serif;letter-spacing:.05em;color:#f4d89a}
+#content .portraitDestination:focus-visible{outline:3px solid #efbe72;outline-offset:2px}
+#content .travelAlbum .albumCard>img{width:100%;height:auto;aspect-ratio:2/3;object-fit:cover;object-position:center}
+@media(max-width:390px){#content .portraitTravelGrid{gap:8px}#content .portraitDestination .destinationCaption{padding:8px}#content .portraitDestination small{font-size:11px}}
+`;document.head.append(travelPortraitStyle);
+travel=function(){
+ activePage='travel';
+ page(tr('Where shall we go?','下一站去哪里？'),tr('Four little worlds, one railway ticket.','一张车票，四个小世界。'),q=>{
+  const grid=element('div','',q,'portraitTravelGrid');
+  const desc={fortune:['Tarot, temple and wishes','塔罗、庙宇与心愿'],home:['Tea, gossip and quiet fishing','喝茶、吃瓜、悠闲摸鱼'],island:['Cooking, arcade and souvenirs','美食、游戏与手信'],wonder:['Personality, stories and connections','性格、故事与缘分']};
+  for(const k of ['fortune','home','island','wonder']){
+   const button=element('button','',grid,'portraitDestination');button.type='button';button.setAttribute('aria-label',tr(...maps[k].n));
+   const im=element('img','',button);im.src=destinationPortrait(k);im.alt='';im.loading='lazy';im.decoding='async';
+   const caption=element('span','',button,'destinationCaption');
+   element('span',k===scene&&!room?tr('YOU ARE HERE','你在这里'):visited.includes(k)?tr('REVISIT','重游'):tr('UNDISCOVERED','尚未探索'),caption,'destinationStatus');
+   element('strong',tr(...maps[k].n),caption);element('small',tr(...desc[k]),caption);
+   button.onclick=()=>{if(transitioning)return;$('page').style.display='none';journey(k)};
+  }cluePanel(q);
+ });
+};
+$('travel').onclick=travel;$('dockTravel').onclick=travel;
+
+/* Fit the playable stage between the HUD and dock, including the lowest controls. */
+function mobileRoomCamera(s,ox,oy){
+ if(W>=H)return {s,ox,oy};
+ const top=room&&!activity?155:135,bottom=H-122;
+ const span=activity?(['wonderScene','story','match'].includes(activity)?[185,615,255,695]:['tarot','love'].includes(activity)?[195,605,265,685]:[170,630,265,690]):[110,690,300,750];
+ const [l,r,u,d]=span,fit=Math.max(.08,Math.min((W-16)/(r-l),Math.max(80,bottom-top)/(d-u)));
+ const base=Math.max(.08,Math.min(W/720,Math.max(80,bottom-top)/450));
+ const f=activity&&activityZoomAt>=0?poseEase(Math.min(1,(performance.now()-activityZoomAt)/550)):1;
+ const z=activity?base+(fit-base)*f:fit;
+ return {s:z,ox:W/2-(l+r)/2*z,oy:(top+bottom)/2-(u+d)/2*z}
+}
+/* Draw compact in-world placards; measure every line instead of clipping card text. */
+const priorInteriorLabel=label;
+label=function(name,x,y,fn){
+ if(!room)return priorInteriorLabel(name,x,y,fn);
+ const scale=Math.max(.08,cam.scale),size=Math.min(25,Math.max(16,12/scale));
+ const limit=activity?205:room==='temple'||roomActions[room]?.length>=3?165:235;
+ ctx.save();try{
+  ctx.font='600 '+size+'px Georgia,serif';
+  const tokens=name.includes(' ')?name.split(/ +/):Array.from(name);
+  const sep=name.includes(' ')?' ':'';
+  let rows=[],row='';
+  for(const token of tokens){const candidate=row?row+sep+token:token;if(row&&ctx.measureText(candidate).width>limit-16){rows.push(row);row=token}else row=candidate}
+  if(row)rows.push(row);
+  if(rows.length>2)rows=[rows[0],rows.slice(1).join(sep)];
+  const w=Math.min(limit,Math.max(75,...rows.map(v=>ctx.measureText(v).width+16))),h=Math.max(32,rows.length*size*1.14+12);
+  round(x-w/2,y-h/2,w,h,5,'#f3e5ccf5','#a78d68');
+  ctx.fillStyle='#514333';ctx.textAlign='center';ctx.textBaseline='middle';
+  rows.forEach((v,i)=>{ctx.font='600 '+size+'px Georgia,serif';let fs=Math.min(size,size*(w-12)/Math.max(1,ctx.measureText(v).width));ctx.font='600 '+fs+'px Georgia,serif';ctx.fillText(v,x,y+(i-(rows.length-1)/2)*size*1.1)});
+  const hitW=Math.min(limit+12,Math.max(w,44/scale)),hitH=Math.max(h,44/scale);
+  target(x-hitW/2,y-hitH/2,hitW,hitH,fn);
+ }finally{ctx.restore()}
+};
+
+/* Make world signs real interactive elements above the canvas on every device. */
+const accessibleSigns=document.createElement('style');
+accessibleSigns.textContent=`
+#game{isolation:isolate}
+#game>canvas#c{position:absolute!important;inset:0!important;z-index:0!important}
+#game>#worldSigns{position:absolute!important;inset:0!important;z-index:6!important;pointer-events:none!important}
+#game>#worldSigns[hidden]{display:none!important}
+#game>#worldSigns>.worldSign{position:absolute!important;pointer-events:auto!important;touch-action:manipulation!important;transform:translate(-50%,-50%)!important;transition:none!important;min-height:44px!important;white-space:normal!important}
+#game>#hud,#game>#small,#game>#dock,#game>#dialogue,#game>#gameControls{z-index:8!important}
+#game>#page{z-index:20!important}
+#game>#fade{z-index:21!important;pointer-events:none!important}
+`;document.head.append(accessibleSigns);
+/* Native click for mouse, touch and keyboard. The canvas fallback remains available. */
+function directSignClick(id,x,y){
+ if(room||transitioning||!proposal.hidden||$('page').style.display==='block')return;
+ walkDoor(id,x,y);
+}
+syncSigns=function(){
+ const show=proposal.hidden&&!room&&!transitioning&&avatar!==null&&$('page').style.display!=='block'&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;
+ signRoot.hidden=!show;if(!show)return;
+ if(signsForScene!==scene||signButtons.size!==maps[scene].st.length){
+  signsForScene=scene;signButtons.clear();signRoot.replaceChildren();
+  for(const [id,x,y,en,cn] of maps[scene].st){
+   const btn=element('button','',signRoot,'worldSign');btn.type='button';btn.dataset.door=id;
+   btn.style.setProperty('pointer-events','auto','important');btn.onclick=()=>directSignClick(id,x,y);signButtons.set(id,btn)
+  }
+ }
+ const top=Math.min(164,H*.25),bottom=H-130;
+ for(const [id,x,y,en,cn] of maps[scene].st){
+  const btn=signButtons.get(id);const name=tr(en,cn);
+  if(btn.textContent!==name)btn.textContent=name;
+  const [ax,ay]=scene==='fortune'?(signAnchorsProposal[id]||[x,y-95]):[x,y-65];
+  const sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
+  const inView=sx>=-30&&sx<=W+30&&sy>=top-125&&sy<=bottom+70;
+  btn.hidden=!inView;if(!inView)continue;
+  const half=Math.min(W/2-7,(btn.offsetWidth||105)/2+8);
+  btn.style.left=clamp(sx,half,W-half)+'px';btn.style.top=clamp(sy,top,bottom)+'px';
+ }
+};

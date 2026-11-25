@@ -2,7 +2,7 @@ name: MeowBox browser smoke tests
 on:
   push:
     branches: [main]
-    paths: ['index.html', 'preview-v9-1/**', 'assets/**', '.github/workflows/meowbox-browser.yml']
+    paths: ['index.html', 'preview-v9-1/**', 'assets/**', 'src/**', 'scripts/**', '.github/workflows/meowbox-browser.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -15,6 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: node scripts/build.cjs
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps chromium
       - name: Test all four villages and actual doorway taps
