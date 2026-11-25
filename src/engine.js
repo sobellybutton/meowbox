@@ -166,7 +166,7 @@ myRoom=function(){activePage='room';page(tr('My Room','我的小窝'),tr('Your s
 $('dockRoom').onclick=myRoom;$('profileHud').onclick=myRoom;
 // More gentle audio, no spoken narration. Respect existing mute preference and suspend when hidden.
 let music9=0;const tones9={fortune:[261.63,329.63,392,440,392,329.63],home:[220,261.63,329.63,392,329.63,261.63],island:[293.66,369.99,440,493.88,440,369.99],wonder:[246.94,293.66,369.99,440,369.99,293.66]};
-function ambient9(){if(muted||document.hidden||!audio||audio.state!=='running')return;try{let a=audio.currentTime,seq=tones9[scene]||tones9.fortune,o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.value=seq[music9++%seq.length];g.gain.setValueAtTime(.001,a);g.gain.exponentialRampToValueAtTime(.011,a+.12);g.gain.exponentialRampToValueAtTime(.001,a+1.3);o.connect(g);g.connect(audio.destination);o.start(a);o.stop(a+1.35)}catch{}}setInterval(ambient9,1800);
+function ambient9(){if(muted||document.hidden||!audio||audio.state!=='running')return;try{let a=audio.currentTime,seq=tones9[scene]||tones9.fortune,o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.value=seq[music9++%seq.length];g.gain.setValueAtTime(.001,a);g.gain.exponentialRampToValueAtTime(.011,a+.12);g.gain.exponentialRampToValueAtTime(.001,a+1.3);o.connect(g);g.connect(audio.destination);o.start(a);o.stop(a+1.35)}catch{}}/* Legacy melody timer retired: room-aware audio in extensions.js owns ambience. */
 // Click feedback throughout the interface, excluding text entry and motion-reduced environments.
-document.addEventListener('click',e=>{if(e.target.closest('button')&&!muted){sound(440)}},{capture:true});
+/* No generic click chime; purposeful action sounds are handled by the activity. */
 
