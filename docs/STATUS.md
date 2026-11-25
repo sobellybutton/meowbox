@@ -151,3 +151,8 @@ Canonical source is src; original legacy chunks only supply art. Preserve existi
 
 ## Satirical writing follow-up (25 November, 9 pm SGT)
 - c1ff715 adds escalating claw failure roasts after three misses (reset on success), extra winning reactions, eight petty paper curses and eight bilingual fictional noticeboard threads with replies. Keep jokes short, contextual, and character-specific. Harmless petty inconveniences, dating satire, workplace and everyday civic jokes are welcome; do not fabricate human participation or turn jokes into real threats. Extend the same reaction design to every retained activity, with varied success, failure, repeat attempts and rare outcomes. Natural Chinese internet phrasing and locally adapted English, not literal translations. Build/CI and actual mobile text-fit checks not verified in this turn.
+
+
+## Nostalgia arcade pilot
+- 9a5ef87 replaces the visible claw station with an original 泡泡龙-style bubble matching cabinet. Old claw code and earned plushies retained for compatibility. Includes touch aim/release, accessible aim/fire buttons, wall rebounds, hex adjacency, matched clusters and detached bubbles, finite shots, replay, bilingual satire, colour-independent bubble symbols, fixed single collectible. No wagering or purchase.
+- Combined engine/extensions/startup JavaScript parse passed; isolated tests confirmed three-cell flood, anchored/detached removal, board clear and moving shot settling. Full build, CI, actual touch testing, screenshots and deployment not verified in this turn. Cabinet artwork is procedural and requires visual acceptance. Next consider 井字棋 against NPC, 消消乐, or 连连看; curate before adding more. Do not reintroduce visible claw without substantial visual rework.
