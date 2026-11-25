@@ -7100,10 +7100,16 @@ function yueZodiacAlmanac(birth='',selection=null){
  const out=element('section','',q,'yueAlmanacPaper');out.setAttribute('aria-live','polite');
  f.onsubmit=e=>{e.preventDefault();out.replaceChildren();try{
  const i=yueZodiacIndex(yueZodiacYear(date.value)),j=yueZodiacIndex(Number(year.value)),a=yueZodiacAnimals[i],v=yueZodiacAnimals[j],flags=yueZodiacRelations(i,j);
- element('div',a[1],out,'yueAlmanacSeal');
- element('h2',tr(a[0]+' in the '+year.value+' '+v[0]+' year','属'+a[1]+' · '+year.value+v[1]+'年'),out);
+ const front=element('header','',out,'yueReadingFront'),mast=element('div','',front,'yueReadingMast');
+ const master=element('img','',mast,'yueReadingMaster');master.src='assets/visual/painted/master-yue/expressions/warm.webp';master.alt='';master.onerror=()=>master.remove();
+ const intro=element('div','',mast);element('small',tr('From the desk of Master Yue','月师傅亲笔'),intro);element('strong',tr('A little yearbook of fortune','摸鱼流年小笺'),intro);
+ const emblem=element('div','',front,'yueReadingEmblem'),animal=element('img','',emblem);animal.alt='';const animalAsset=yuePaintedZodiac[a[0].toLowerCase()];if(animalAsset)animal.src=animalAsset;else animal.hidden=true;
+ const seal=element('div',zh?a[1]:a[0],emblem,'yueAlmanacSeal');animal.hidden=true;animal.onload=()=>{animal.hidden=false;seal.classList.add('yueSealSmall')};animal.onerror=()=>animal.remove();
+ const targetYear=Number(year.value),stem='甲乙丙丁戊己庚辛壬癸'[((targetYear-4)%10+10)%10],branch='子丑寅卯辰巳午未申酉戌亥'[j];
+ element('small',tr('Lunar year '+targetYear,targetYear+' · '+stem+branch+v[1]+'年'),front,'yueReadingYear');
+ element('h2',tr('The year ahead for the '+a[0],'属'+a[1]+' · 流年小笺'),front);
  element('strong',flags.length?tr('Traditional relations: ','民俗太岁关系：')+flags.map(x=>tr(...x)).join(' · '):tr('No direct Tai Sui relation under this convention','按此民俗算法，无直接犯太岁关系'),out);
- element('p',tr('Master Yue: ','月师傅：')+tr(a[2],a[3]),out);
+ element('p',tr('Master Yue: ','月师傅：')+tr(a[2],a[3]),out,'yueReadingRoast');
  const replies={'值太岁':['Your own year has arrived. The universe has not assigned you any extra KPIs.','本命年到了，宇宙没有给你加KPI。'],'冲太岁':['Tai Sui and you are facing each other. This is not a reason to schedule a meeting.','你和太岁面对面，不用特地拉个会。'],'害太岁':['Read the group chat carefully before replying to everyone.','群聊看清楚再回，别一不小心全体回复。'],'破太岁':['Leave a little wiggle room in your plans, especially the weekend ones.','计划留点余地，尤其是周末的。'],'刑太岁':['No heavenly disciplinary hearing required. Take one thing at a time.','不用上天庭开检讨会，一件一件慢慢来。']};
  flags.forEach(x=>element('p',tr(...replies[x[1]]),out));
  if(!flags.length)element('p',tr('No Tai Sui flag is not a promotion letter. Enjoy the little wins.','没犯太岁不等于升职通知书，小确幸照收。'),out);
@@ -7112,7 +7118,7 @@ function yueZodiacAlmanac(birth='',selection=null){
  ['Money','财运',['A discount is not income.','Save a little for something you truly enjoy.','Check subscriptions before adding another.'],['打折省的钱不叫收入。','给真正喜欢的东西留点预算。','开新会员前先查查旧会员。']],
  ['Relationships','感情',['Say what you need, kindly.','Make time for the people who make you laugh.','You do not owe every message an instant reply.'],['有话好好说，别让人猜。','给能逗你笑的人留点时间。','不是每条消息都需要秒回。']],
  ['Everyday life','生活',['A proper lunch break counts as progress.','Take a walk without turning it into a target.','Leave a little unplanned time.'],['好好吃顿午饭也算进步。','散步不必变成运动指标。','留点没有安排的时间。']]];
- topics.forEach((x,k)=>{const n=(i+j+k)%3;element('h3',tr(x[0],x[1]),out);element('p',tr(x[2][n],x[3][n]),out)});
+ const topicGrid=element('div','',out,'yueReadingTopics');topics.forEach((x,k)=>{const n=(i+j+k)%3,cell=element('article','',topicGrid);element('h3',tr(x[0],x[1]),cell);element('p',tr(x[2][n],x[3][n]),cell)});
  element('small',tr('Folklore and playful reflections, not predictions. Lunar New Year convention; other traditions use Li Chun or different Tai Sui rules. Birth date stays in this page and is not saved or uploaded.','仅为民俗与趣味提示，并非预测。以农历正月初一为年界，其他流派或采用立春及不同太岁规则。出生日期仅在此页面使用，不保存、不上传。'),out);
  }catch(err){element('p',tr('Please check your birth date and browser calendar support.','请检查出生日期及浏览器农历支持。'),out)}};
  const row=q.querySelector('.row');if(row?.lastElementChild)row.lastElementChild.onclick=()=>{const d=date.value,y=Number(year.value);zh=!zh;save('zh',zh);updateHUD();yueZodiacAlmanac(d,y)};
@@ -7127,3 +7133,58 @@ destinyConsultMenu=function(){closeTalk();say(tr('Master Yue','月师傅'),tr('C
  [tr('Personal birth chart','个人生辰命盘'),()=>{closeTalk();destinyPage()}],
  [tr('Maybe later','改天再聊'),closeTalk]
 ])};
+
+
+// Populate only with verified installed original paintings.
+const yuePaintedZodiac=Object.freeze({});
+const paintedBlindFigures=Object.freeze({});
+
+/* Paper almanac and miniature collectible cabinet. Existing painted resident
+   portrait is real; the future animal and figurine paintings are not bundled. */
+const warmVisualDetailStyle=document.createElement('style');
+warmVisualDetailStyle.textContent=`
+.yueAlmanacPaper:not(:empty){position:relative;isolation:isolate;padding:clamp(14px,4vw,25px);border:1px solid #a48a64;border-radius:3px;background:radial-gradient(ellipse at 12% 5%,#fff3d5 0,transparent 48%),repeating-linear-gradient(97deg,#947a4208 0px,#947a4208 1px,transparent 1px,transparent 5px),#f1e3c6;box-shadow:inset 0 0 0 5px #ead7b2,0 5px 14px #5e473020;color:#514638}
+.yueReadingFront{text-align:center;padding:2px 0 14px;border-bottom:1px solid #bba27c;margin-bottom:14px}
+.yueReadingMast{display:flex;align-items:center;text-align:left;gap:12px;max-width:100%;margin-bottom:12px}
+.yueReadingMaster{width:56px;height:56px;object-fit:contain;background:#e6d3ae;border:1px solid #baa17c;border-radius:50%;flex:none}
+.yueReadingMast small{font-size:11px;letter-spacing:.06em}.yueReadingMast strong{font-family:Georgia,serif;font-size:17px;line-height:1.3;color:#526454;display:block}
+.yueReadingEmblem{position:relative;display:grid;place-items:center;min-height:116px;max-width:190px;margin:0 auto 6px;background:radial-gradient(circle,#e4d2a9 0,#e4d2a9 45%,transparent 46%);border:1px solid #b7a17d;border-radius:50% 50% 4px 4px}
+.yueReadingEmblem img{width:100%;height:145px;object-fit:contain}.yueReadingEmblem img[hidden]{display:none}
+.yueReadingEmblem .yueAlmanacSeal{width:84px;height:84px;max-width:90%;font-size:clamp(18px,5vw,31px);border:4px double #964b3b;border-radius:3px;transform:rotate(-3deg)}
+.yueReadingEmblem .yueSealSmall{position:absolute;right:4px;bottom:3px;width:42px;height:42px;font-size:14px;background:#f2e4c9}
+.yueReadingYear{color:#8b6343;letter-spacing:.04em}.yueReadingFront h2{font:600 clamp(21px,5vw,30px)/1.25 Georgia,serif;color:#514638;margin:6px 0}
+.yueReadingRoast{border-left:3px solid #a45b47;background:#e6d3b1;padding:12px 14px;font-size:17px;line-height:1.5;color:#634538}
+.yueReadingTopics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:16px 0}
+.yueReadingTopics article{padding:10px;background:#fbefda;border:1px solid #c8b18d;min-width:0}.yueReadingTopics h3{font-size:15px;color:#526454;margin:0 0 6px}.yueReadingTopics p{font-size:13px;margin:0;line-height:1.5}
+@media(max-width:360px){.yueReadingTopics{grid-template-columns:1fr}}
+.blindAlbumProgress{padding:12px 14px;background:#e3d3b4;border:1px solid #b59c77;color:#534738;margin:8px 0 14px}.blindAlbumProgress progress{width:100%;height:9px;accent-color:#68816a}
+.blindAlbum{gap:10px}.blindAlbum article{position:relative;min-height:170px;display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 6px;border-radius:4px;background:linear-gradient(#f8ecd3 0 70%,#d9bf96 70% 74%,#efdfc1 74%);border:1px solid #ae9470}.blindAlbum article[data-owned=false]{opacity:1}
+.blindAlbum .blindAlbumArt{height:106px;width:100%;display:grid;place-items:center;position:relative}.blindAlbumArt svg,.blindAlbumArt img{width:100%;height:100%;max-width:112px;object-fit:contain}.blindAlbum article[data-owned=false] .blindAlbumArt svg{filter:brightness(.4) saturate(.2);opacity:.48}
+.blindAlbum .blindAlbumArt img[hidden]{display:none}.blindAlbum .blindAlbumArt .mysteryShadow{width:52px;height:65px;border-radius:48% 48% 40% 40%;background:#988d77;color:#f1e5cd;display:grid;place-items:center;font:29px Georgia,serif}
+.blindAlbum article strong{font-size:13px;line-height:1.35}.blindAlbum article small{font-size:11px;line-height:1.4}.blindAlbum .blindAlbumRarity{color:#77603f;margin-top:4px}
+`;
+document.head.append(warmVisualDetailStyle);
+const blindFigureLore=[
+ ['Clocked out emotionally at 9:01.','九点零一分，精神下班。'],['Survived another meeting without becoming the minutes.','开完会，幸好没被写进会议纪要。'],['Guardian of the annual leave balance.','年假余额守护神。'],['A tiny night owl for quiet evenings.','陪你安静过夜的小伙伴。'],['A payday miracle, minus the bills.','发薪日奇迹，账单先别提。'],['Soft outside, strawberry stubborn inside.','外表软糯，内心草莓般倔强。'],['Too cozy to get out of the toaster.','舒服到不想离开面包机。'],['Extra pearls, no extra responsibilities.','加珍珠，不加工作量。'],['Taking a cloud-sized nap.','正在云朵上补觉。'],['Every puddle is a holiday.','每个水坑都是小假期。'],['Packed snacks instead of a schedule.','野餐包里只有零食，没有行程表。'],['A soft little light for a late night.','深夜里的一点小温柔。'],['A secret companion for the days you need a little magic.','需要一点奇迹的日子，它就偷偷出现。']
+];
+function blindPaintedKey(v){return v[0].toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/-$/,'')}
+blindCollectionPage=function(){
+ page(tr('The little keepsake cabinet','摸鱼小小收藏柜'),tr('A shelf of little companions. Come back whenever you feel like it.','给小伙伴们留个位置，想来就来，不用赶进度。'),q=>{
+ const ownedCount=boxPrizes.filter(v=>items.some(it=>it[0]===v[0])).length;
+ const progress=element('div','',q,'blindAlbumProgress');element('strong',ownedCount+' / '+boxPrizes.length+' '+tr('little companions','款小伙伴'),progress);
+ const bar=element('progress','',progress);bar.max=boxPrizes.length;bar.value=ownedCount;bar.setAttribute('aria-label',tr('Collection progress','收藏进度'));
+ const grid=element('div','',q,'blindAlbum');
+ boxPrizes.forEach((v,i)=>{
+ const owned=items.some(it=>it[0]===v[0]),secret=!owned&&v[4]==='secret',tile=element('article','',grid);tile.dataset.owned=String(owned);
+ const art=element('div','',tile,'blindAlbumArt');
+ if(secret)element('div','?',art,'mysteryShadow');else{const fallback=element('div','',art);fallback.style.cssText='width:100%;height:100%;display:grid;place-items:center';fallback.innerHTML=bagFigureIcon(v);
+ if(owned&&paintedBlindFigures[blindPaintedKey(v)]){const im=element('img','',art);im.alt='';im.hidden=true;im.src=paintedBlindFigures[blindPaintedKey(v)];im.onload=()=>{im.hidden=false;fallback.remove()};im.onerror=()=>im.remove()}}
+ element('strong',secret?tr('Mystery companion','神秘小伙伴'):tr(v[0],v[1]),tile);
+ element('small',tr(v[4]==='secret'?'Secret':v[4]==='rare'?'Rare':v[4]==='uncommon'?'Special':'Everyday',v[4]==='secret'?'隐藏款':v[4]==='rare'?'稀有款':v[4]==='uncommon'?'特别款':'日常款'),tile,'blindAlbumRarity');
+ element('small',owned?tr(...blindFigureLore[i]):tr('Waiting to meet you','等你来偶遇'),tile)
+ });
+ b(q,tr('Back to blind boxes','返回盲盒'),()=>{$('page').style.display='none';if(activity!=='blindBox')start('blindBox')})
+ })
+};
+const warmBlindStoryBefore=keepsakeStory;
+keepsakeStory=function(item){const i=boxPrizes.findIndex(v=>v[0]===item[0]);return i>=0?blindFigureLore[i]:warmBlindStoryBefore(item)};
