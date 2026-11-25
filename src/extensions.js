@@ -6871,10 +6871,10 @@ const pearlSugar=[[0,'No sugar','无糖'],[30,'30% sugar','三分糖'],[50,'50% 
 const pearlIce=[[0,'No ice','去冰'],[1,'Less ice','少冰'],[3,'Regular ice','正常冰']];
 const pearlToppings=[[0,'No topping','不加料'],[1,'Tapioca pearls','黑珍珠'],[2,'Coconut jelly','椰果']];
 const pearlOrders=[
- {guest:['Sleepy traveller','困困旅人'],line:['Something to survive the afternoon meeting.','下午还有个会，救救我。'],base:0,sugar:30,ice:1,topping:1},
- {guest:['Off-duty auntie','下班阿姨'],line:['I am saving my sugar allowance for gossip.','糖分额度留给八卦。'],base:1,sugar:0,ice:0,topping:2},
- {guest:['Weekend wanderer','周末旅人'],line:['It is my day off. Extra drama, extra sugar.','休假啦，甜一点才对得起自己。'],base:2,sugar:100,ice:3,topping:1},
- {guest:['Quiet reader','安静读者'],line:['A simple drink, no toppings to distract me.','来杯简单的，别让小料打扰我看书。'],base:1,sugar:50,ice:1,topping:0}
+ {guest:['Wang Laoban','王老板'],resident:['Wang Laoban','王老板'],line:['Something to survive the afternoon meeting.','下午还有个会，救救我。'],base:0,sugar:30,ice:1,topping:1},
+ {guest:['Auntie Mei','梅姨'],resident:['Auntie Mei','梅姨'],line:['I am saving my sugar allowance for gossip.','糖分额度留给八卦。'],base:1,sugar:0,ice:0,topping:2},
+ {guest:['Grandma','外婆'],resident:['Grandma','外婆'],line:['It is my day off. Extra drama, extra sugar.','休假啦，甜一点才对得起自己。'],base:2,sugar:100,ice:3,topping:1},
+ {guest:['Master Yue','月师傅'],resident:['Master Yue','月师傅'],line:['A simple drink, no toppings to distract me.','来杯简单的，别让小料打扰我看书。'],base:1,sugar:50,ice:1,topping:0}
 ];
 const pearlPrompts={order:['Choose your own drink or a guest order.','自由搭配，或接一张客人订单。'],base:['Choose the tea base.','选择茶底。'],sugar:['How sweet today?','今天几分甜？'],ice:['Choose the ice.','冰块加多少？'],topping:['Choose your topping.','选喜欢的小料。'],pourReady:['Pour your chosen tea into the cup.','把茶倒进杯里。'],pearls:['Scoop two portions into the cup.','舀两勺小料进杯里。'],mix:['Hold the cup and shake side to side.','拿起杯子，左右摇匀。'],seal:['Seal the cup before drinking.','先给奶茶封口。'],ready:['Take a sip, or serve your guest.','喝一口，或者递给客人。']};
 function pearlStage(stage){state.teaStage=stage;state.teaAt=t;const p=pearlPrompts[stage];if(p)hint(...p)}
@@ -6888,8 +6888,8 @@ function pearlSeal(){if(activity==='bubbleTea'&&state.teaStage==='seal'){pearlSt
 function pearlScore(q){if(!q.teaOrder)return null;const g=q.teaOrder;return ['base','sugar','ice','topping'].reduce((n,k)=>n+Number(q['tea'+k[0].toUpperCase()+k.slice(1)]===g[k]),0)}
 function pearlAdvance(){
  const age=t-state.teaAt;
- if(state.teaStage==='pouring'&&age>=1.55)pearlStage('seasoning');
- if(state.teaStage==='seasoning'&&age>=1.35)pearlStage(state.teaTopping===0?'mix':'pearls');
+ if(state.teaStage==='pouring'&&age>=1.55){pearlStage('seasoning');return}
+ if(state.teaStage==='seasoning'&&age>=1.35){pearlStage(state.teaTopping===0?'mix':'pearls');return}
  if(state.teaStage==='sealing'&&age>=1.25){state.teaSealed=true;pearlStage('ready');sound(580)}
  if(state.teaStage==='sip'&&age>=2.4){
   pearlStage('done');if(state.teaSaved)return;state.teaSaved=true;
