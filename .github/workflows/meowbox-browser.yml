@@ -60,6 +60,9 @@ jobs:
                 if(!await page.evaluate(()=>roomActions.quiz.length===1&&roomActions.quiz[0][0]==='quiz'))throw Error('Personality Lab has duplicate entry points');
                 const assessmentCheck=await page.evaluate(()=>{let n=0;for(const mode of ['type','motive','soul']){const q=prepareWonderQuestions(mode),answers=q.map(v=>v.id%v.opts.length),expected={type:16,motive:27,soul:6}[mode];if(q.length!==expected)throw Error('Wrong question count '+mode);if(JSON.stringify(scoreWonder(mode,q,answers))!==JSON.stringify(scoreWonder(mode,q.slice().reverse(),answers.slice().reverse())))throw Error('Question order changed outcome '+mode);n++}const q=prepareWonderQuestions('motive');if(scoreWonder('motive',q,q.map(()=>1)).ties.length!==9)throw Error('Equal motive scores collapsed');return n+1});
                 console.log('ASSESSMENT_LOGIC '+assessmentCheck);
+                const poseCheck=await page.evaluate(()=>{let n=0;for(let i=0;i<=10;i++)for(let j=0;j<=10;j++){for(const opts of [{kneel:i/10,bow:j/10},{seat:i/10,bow:j/10}]){const p=ritualSpritePose(opts,{x:25,y:-20});if(!(p.hip.y<p.knee.y&&p.knee.y<p.foot.y&&Number.isFinite(p.wrist.x)&&Number.isFinite(p.wrist.y)))throw Error('Invalid action pose');n++}}return n});
+                console.log('POSE_GEOMETRY '+poseCheck);
+
                 const storyCheck=await page.evaluate(()=>{const ends=new Set();function visit(id,seen=[]){if(seen.includes(id))throw Error('Story cycle');if(parallelEndings[id]){ends.add(id);return}if(!parallelScenes[id])throw Error('Missing story');parallelScenes[id].choices.forEach(c=>visit(c[2],[...seen,id]))}visit('station');return ends.size});
                 if(storyCheck!==16)throw Error('Expected all sixteen story endings to be reachable');
 
