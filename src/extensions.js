@@ -5072,3 +5072,41 @@ for(const world of Object.values(maps))for(const station of world.st){
  const name=housePlaqueNames[station[0]];if(name){station[3]=name[0];station[4]=name[1]}
 }
 const houseSignStyle=document.createElement('style');houseSignStyle.textContent='#game>#worldSigns>.worldSign .doorPlaque{padding:5px 8px;background:linear-gradient(160deg,#786447f5,#414d40f5);border:1px solid #d0b580;border-radius:3px;box-shadow:0 2px 3px #2c231d44,inset 0 0 0 2px #f7dfae15;color:#fff0d0}';document.head.append(houseSignStyle);
+
+
+function speechOverlap(a,b){return a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top}
+function chooseSpeechPosition(w,h,width,height,speaker,player,blockers=[]){
+ const center=(speaker.left+speaker.right)/2;
+ const candidates=[{left:center-w/2,top:speaker.top-h-14},{left:speaker.right+12,top:speaker.top+5},{left:speaker.left-w-12,top:speaker.top+5},{left:center-w/2,top:speaker.bottom+12}];
+ for(const v of candidates){const left=Math.max(8,Math.min(width-w-8,v.left)),top=v.top,rect={left,top,right:left+w,bottom:top+h};
+ if(w>width-16||top<10||rect.bottom>height-74||[speaker,player,...blockers].some(b=>b&&speechOverlap(rect,b)))continue;
+ return {left,top,tailX:Math.max(12,Math.min(w-12,center-left)),above:rect.bottom<=speaker.top}}
+ return null
+}
+function syncCharacterSpeech(){
+ const el=$('dialogue');if(!el||!talkOpen)return;
+ el.classList.remove('characterSpeech');el.style.removeProperty('--speech-left');el.style.removeProperty('--speech-top');
+ if(room||activity||!greetingNPC)return;
+ const text=$('line').textContent||'',options=$('choices').children.length;
+ if(text.length>160||options>1)return;
+ el.classList.add('characterSpeech');
+ const w=el.offsetWidth,h=el.offsetHeight,root=$('game').getBoundingClientRect();
+ const blockers=[];for(const id of ['hud','small','dock','back']){const node=$(id);if(!node||node.hidden||!node.getClientRects().length||getComputedStyle(node).visibility==='hidden')continue;const b=node.getBoundingClientRect();if(b.width&&b.height)blockers.push({left:b.left-root.left,top:b.top-root.top,right:b.right-root.left,bottom:b.bottom-root.top})}
+ for(const n of npc)if(n!==greetingNPC)blockers.push(characterScreenBounds(n));
+ const position=chooseSpeechPosition(w,h,W,H,characterScreenBounds(greetingNPC),characterScreenBounds(p,true),blockers);
+ if(!position){el.classList.remove('characterSpeech');return}
+ el.style.setProperty('--speech-left',position.left+'px');el.style.setProperty('--speech-top',position.top+'px');el.style.setProperty('--speech-tail',position.tailX+'px');el.dataset.above=String(position.above)
+}
+const characterSpeechBefore=say;
+say=function(...args){const result=characterSpeechBefore(...args);requestAnimationFrame(syncCharacterSpeech);return result};
+const characterCloseBefore=closeTalk;
+closeTalk=function(...args){const result=characterCloseBefore(...args);$('dialogue').classList.remove('characterSpeech');return result};
+window.addEventListener('resize',()=>{if(talkOpen)requestAnimationFrame(syncCharacterSpeech)});
+const speechStyle=document.createElement('style');speechStyle.textContent=`
+#dialogue.characterSpeech{position:absolute!important;top:var(--speech-top,12px)!important;left:var(--speech-left,12px)!important;bottom:auto!important;transform:none!important;width:min(245px,72vw)!important;max-height:none!important;padding:9px 12px!important;border-radius:12px!important;background:#fff2d9fa!important;border:1px solid #b89b70!important;box-shadow:0 3px 12px #29231e30!important;overflow:visible!important}
+#dialogue.characterSpeech[data-above="true"]::after{content:"";position:absolute;left:var(--speech-tail,50%);bottom:-7px;width:12px;height:12px;transform:translateX(-50%) rotate(45deg);background:#fff2d9;border-right:1px solid #b89b70;border-bottom:1px solid #b89b70;pointer-events:none}
+#dialogue.characterSpeech #talkPortrait{display:none!important}
+#dialogue.characterSpeech #speaker{font-size:12px;color:#796449}
+#dialogue.characterSpeech #line{font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+#dialogue.characterSpeech #choices button{font-size:12px;min-height:44px;white-space:normal}
+`;document.head.append(speechStyle);
