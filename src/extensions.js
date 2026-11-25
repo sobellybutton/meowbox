@@ -4624,9 +4624,9 @@ drawRoom=function(){if(W>=H&&(room==='arcade'||room==='tea'))warmRoomArt(room);r
 const warmStationPropBefore=prop;
 prop=function(id,x,y){
  if(room==='arcade'||room==='tea'){
-  ctx.save();
-  const g=ctx.createRadialGradient(x,y+4,4,x,y+4,65);g.addColorStop(0,'#392d2860');g.addColorStop(1,'#392d2800');
-  ctx.scale(1,.30);ellipse(x,(y+4)/.30,65,65,g);ctx.restore()
+  ctx.save();ctx.translate(x,y+4);ctx.scale(1,.30);
+  const g=ctx.createRadialGradient(0,0,4,0,0,65);g.addColorStop(0,'#392d2860');g.addColorStop(1,'#392d2800');
+  ellipse(0,0,65,65,g);ctx.restore()
  }
  return warmStationPropBefore(id,x,y)
 };
