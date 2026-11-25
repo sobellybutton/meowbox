@@ -4991,9 +4991,9 @@ function lifeDiscovery(name){
  if(/story|parallel|ending|café|cafe/i.test(name))return {wisdom:2,social:2};
  return {happiness:1}
 }
-function lifeBackfill(){for(const item of items)if(typeof item?.[0]==='string')lifeEarn('item:'+item[0].slice(0,150),lifeDiscovery(item[0]));}
+function lifeBackfill(){for(const item of items)if(typeof item?.[0]==='string'&&!blindShopLedger().some(v=>v.key===item[0]))lifeEarn('item:'+item[0].slice(0,150),lifeDiscovery(item[0]));}
 const lifeItemBefore=addItem;
-addItem=function(a,b){const fresh=!items.some(v=>v[0]===a);lifeItemBefore(a,b);if(fresh&&items.some(v=>v[0]===a)){lifeEarn('item:'+String(a).slice(0,150),lifeDiscovery(String(a)));lifeHUDRefresh()}if((activity==='riverBottle'&&a==='Let it drift keepsake')||(activity==='riverShout'&&a==='River echo keepsake')){lifeEarn('release:'+activity,{calm:2,mischief:1},true);lifeHUDRefresh()}};
+addItem=function(a,b){const fresh=!items.some(v=>v[0]===a);lifeItemBefore(a,b);if(fresh&&items.some(v=>v[0]===a)&&!blindShopLedger().some(v=>v.key===a)){lifeEarn('item:'+String(a).slice(0,150),lifeDiscovery(String(a)));lifeHUDRefresh()}if((activity==='riverBottle'&&a==='Let it drift keepsake')||(activity==='riverShout'&&a==='River echo keepsake')){lifeEarn('release:'+activity,{calm:2,mischief:1},true);lifeHUDRefresh()}};
 function lifeFriend(name){
  if(!Array.isArray(name)||!name[0]||!name[1])return;
  const key='npc:'+String(name[0]).slice(0,85),today=shrineClock().day;
