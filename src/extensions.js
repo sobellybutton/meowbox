@@ -4505,7 +4505,7 @@ function threePlay(i){
 function threeAdvance(g){
  if(!g.thinking||g.result||t<g.thinkAt)return;
  g.thinking=false;const i=threeMove(g.board,g.opponent==='auntie');if(i>=0)threePlace(g,i,2);
- if(!threeFinish(g)){hint(tr('Your turn. Find three in a row.','轮到你了。三个连成一线。'),tr('Your turn. Find three in a row.','轮到你了。三个连成一线。'));refreshControls()}
+ if(!threeFinish(g)){if(g.line)hint(...g.line);refreshControls()}
 }
 function threeWood(x,y,w,h,edge){
  const grain=ctx.createLinearGradient(x,y,x+w,y+h);grain.addColorStop(0,'#e8c99b');grain.addColorStop(.5,'#d0a677');grain.addColorStop(1,'#af7d52');
@@ -4566,3 +4566,15 @@ drawActivity=function(){
  ctx.restore()
 };
 window.addEventListener('keydown',e=>{if(!threeActive()||e.target.matches('input,textarea,select,button')||e.repeat)return;const i=Number(e.key);if(i>=1&&i<=9&&e.key.length===1){e.preventDefault();threePlay(i-1)}});
+
+/* Keep guidance and the current NPC quip localized after a language change. */
+const nostalgiaHintBefore=activityHint;
+activityHint=function(){
+ if(threeActive()){const g=state.threeGame;if(g.line)hint(...g.line);refreshControls();return}
+ if(nostalgiaActive()){const g=state.bubbleGame;if(g.line)hint(...g.line);else hint('Aim and tap to shoot. Match three of the same colour.','瞄准后点击发射，三个同色泡泡即可消除。');refreshControls();return}
+ return nostalgiaHintBefore()
+};
+nostalgiaSay=function(key){const pair=townReaction('nostalgia-bubble-'+key,nostalgiaRoasts[key]);if(nostalgiaActive())state.bubbleGame.line=pair;hint(...pair)};
+nostalgiaRoasts.pop.push(['Three bubbles, zero meetings. A productive afternoon.','消掉三个泡泡，没开一个会。今天效率真高。'],['Ah Ma: Look at you. Even your bubbles know when to let go.','阿嬷：看看你，连泡泡都懂得放下。']);
+nostalgiaRoasts.miss.push(['The target was right there. Did you approve a different direction?','目标明明就在那儿，你是不是又被领导指错方向了？'],['Ah Ma: Please do not put precision on your CV yet.','阿嬷：精准操作这四个字，先别写进简历。']);
+nostalgiaRoasts.lose.push(['At least here, a bad performance review comes with a free restart.','至少在这里，绩效不及格还能免费重来。'],['Ah Ma: The board is full. Just like your calendar, except you can clear this one.','阿嬷：满了，跟你的工作日程一样。好在这个能清空。']);
