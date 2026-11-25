@@ -327,16 +327,18 @@ drawActivity=function(){
  let held=drag?.id==='sticks',shaking=(state.shakeUntil||0)>t;
  const movement=held?clamp((drag.x-drag.sx)*.45,-35,35):shaking?Math.sin(t*24)*17:0;
  const xx=400+movement,lift=held?14:shaking?8:0,tilt=held?clamp(movement*.008,-.20,.20):shaking?Math.sin(t*22)*.12:0;
- const activeGrip=held||shaking;
- const actorX=activeGrip?xx-68:332,actorY=552;
- const grip=activeGrip?{x:xx-39,y:490-lift}:null;
- drawRitualPose(actorX,actorY,1.55,{reach:grip,kneel:.08,bow:activeGrip?.12:0});
+ const activeGrip=held||shaking,picking=Boolean(state.stickPicked),pickProgress=picking?poseEase((t-state.stickPickAt)/.8):0;
+ const actorX=picking?332+108*poseEase((t-state.stickPickAt)/.34):activeGrip?xx-68:332,actorY=552;
+ const grip=picking?{x:502,y:524-37*pickProgress}:activeGrip?{x:xx-39,y:490-lift}:null;
+ let stickHand=null;
+ if(picking&&t-state.stickPickAt<.34)backHuman(actorX,actorY,avatar??0,true,'right',1.55);
+ else stickHand=drawRitualPose(actorX,actorY,1.55,{reach:grip,kneel:picking?.28*(1-pickProgress):.08,bow:picking?.4*(1-pickProgress):activeGrip?.12:0});
  ctx.save();ctx.translate(xx,476-lift);ctx.rotate(tilt);ellipse(0,67,53,12,'#56352166');ellipse(0,-24,48,13,'#6d4a32');for(let i=0;i<(state.fallenStick?11:12);i++){ctx.save();ctx.translate(-36+i*6.5,-27);ctx.rotate((i-5)*.035+(shaking?Math.sin(t*20+i)*.12:0));let yy=-75-(i%4)*6+(shaking?Math.sin(t*27+i)*7:0);round(-3,yy,6,106,2,'#e3bd80','#a67a47');line(-2,yy+4,2,yy+4,'#a54e3d',2);ctx.restore()}
  let wood=ctx.createLinearGradient(-45,0,45,0);wood.addColorStop(0,'#925d37');wood.addColorStop(.5,'#c99356');wood.addColorStop(1,'#805137');ctx.beginPath();ctx.moveTo(-47,-24);ctx.lineTo(-39,60);ctx.lineTo(-19,72);ctx.lineTo(20,72);ctx.lineTo(39,60);ctx.lineTo(47,-24);ctx.lineTo(23,-14);ctx.lineTo(-23,-14);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle='#69452f';ctx.stroke();for(let [x1,x2,shade] of [[-47,-23,'#69452f35'],[23,47,'#51372455']]){ctx.beginPath();ctx.moveTo(x1,-24);ctx.lineTo(x2,-14);ctx.lineTo(x2*.84,71);ctx.lineTo(x1*.84,60);ctx.closePath();ctx.fillStyle=shade;ctx.fill()}line(-23,-14,-19,72,'#e9bf7955',1.5);line(23,-14,20,72,'#583b2a80',1.5);line(-39,54,-19,65,'#e1b279',2);line(-19,65,20,65,'#e1b279',2);line(20,65,39,54,'#e1b279',2);txt('籤',0,19,31,'#f9e0ad');ctx.restore();
  if(state.drawing||state.fallenStick){
  const age=Math.max(0,t-(state.stickDrawAt??t)),f=state.fallenStick?1:clamp((age-.38)/.83,0,1);
  if(age>=.38||state.fallenStick){
-  const sx=(state.stickLaunchX??400)*(1-f)+510*f,sy=382-92*Math.sin(Math.PI*f)+f*142;
+  const pickupLift=picking&&stickHand?poseEase((t-state.stickPickAt-.34)/.46):0;const sx=((state.stickLaunchX??400)*(1-f)+510*f)*(1-pickupLift)+(stickHand?.x??510)*pickupLift,sy=(382-92*Math.sin(Math.PI*f)+f*142)*(1-pickupLift)+(stickHand?.y??524)*pickupLift;
   ellipse(sx,527,18+20*f,4,'#56352155');
   ctx.save();ctx.translate(sx,sy);ctx.rotate(f*1.37+Math.sin(f*Math.PI)*.24);
   let grain=ctx.createLinearGradient(-6,0,6,0);grain.addColorStop(0,'#b68b51');grain.addColorStop(.45,'#f3d69e');grain.addColorStop(1,'#d1a56d');
@@ -345,7 +347,7 @@ drawActivity=function(){
   ctx.restore();
  }
 }
- txt(state.drawing?tr('A stick is falling…','签文落下来了……'):state.fallenStick?tr('Pick up the numbered stick','拾起落下的签'):tr('Shake or tap the bamboo cup','左右摇动或点击签筒'),400,603,17,'#fff2d8');if(!state.fallenStick&&!state.drawing){target(315,345,160,220,shakeFortuneStick,'sticks');label(tr('Shake the cup','摇签筒'),400,645,shakeFortuneStick)}if(state.fallenStick&&!state.drawing){target(450,498,125,52,pickupFortuneStick);label(tr('Pick up stick','拾签'),510,575,pickupFortuneStick)}
+ txt(state.drawing?tr('A stick is falling…','签文落下来了……'):state.stickPicked?tr('Collecting your fortune…','正在拾签……'):state.fallenStick?tr('Pick up the numbered stick','拾起落下的签'):tr('Shake or tap the bamboo cup','左右摇动或点击签筒'),400,603,17,'#fff2d8');if(!state.fallenStick&&!state.drawing){target(315,345,160,220,shakeFortuneStick,'sticks');label(tr('Shake the cup','摇签筒'),400,645,shakeFortuneStick)}if(state.fallenStick&&!state.drawing&&!state.stickPicked){target(450,498,125,52,pickupFortuneStick);label(tr('Pick up stick','拾签'),510,575,pickupFortuneStick)}
  }
 };
 const templeStart=start;start=function(a){templeStart(a);if(a==='moon')hint('Think of a yes-or-no question. Swipe the blocks upwards and release.','默念一个是非问题，向上滑动筊杯再松手。');if(a==='sticks')hint('Drag the cup from side to side to draw a fortune stick.','左右拖动签筒，摇出一支签。')};
@@ -1385,8 +1387,9 @@ function shakeFortuneStick(){
 }
 function pickupFortuneStick(){
  if(activity!=='sticks'||state.drawing||!state.fallenStick||state.stickPicked)return;
- state.stickPicked=true;const n=state.fallenStick;
- addItem('Fortune stick '+n,'签文 '+n);sound(520);templePaperOpen(n)
+ state.stickPicked=true;state.stickPickAt=t;const n=state.fallenStick,run=state;
+ sound(420);hint('Pick up the stick and take it to the fortune paper.','拾起签文，慢慢展开签纸。');
+ setTimeout(()=>{if(activity!=='sticks'||state!==run)return;addItem('Fortune stick '+n,'签文 '+n);sound(520);templePaperOpen(n)},850)
 }
 
 /* Original portrait-composed destinations. All coordinates refer to the new artwork,
