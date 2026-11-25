@@ -1102,20 +1102,29 @@ function recoveryTick(){const stalled=performance.now()-lastHealthyFrame>1500||!
 
 /* Route taps intercepted by the canvas to the visible sign at that screen position. */
 const touchSignStyle=document.createElement('style');touchSignStyle.textContent='#worldSigns{z-index:3!important;pointer-events:none!important}#worldSigns .worldSign{pointer-events:auto!important;touch-action:manipulation!important}';document.head.append(touchSignStyle);
-let signPress=null;
+let signPress=null,signClickSuppressedUntil=0,signClickSuppressedDoor=null;
 function signAtScreen(x,y){if(room||transitioning||!proposal.hidden||signRoot.hidden)return null;for(const el of signButtons.values()){if(el.hidden)continue;const r=el.getBoundingClientRect();if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return el}return null}
 document.addEventListener('pointerdown',e=>{
- if(!e.isPrimary||room||transitioning||!proposal.hidden||signRoot.hidden)return;
- if(e.target.closest?.('.worldSign'))return;const el=e.target===c?signAtScreen(e.clientX,e.clientY):null;
- if(!el)return;
- signPress={el,id:e.pointerId,x:e.clientX,y:e.clientY};drag=null;e.preventDefault();e.stopImmediatePropagation();
+ if(!e.isPrimary||e.button!==0||room||transitioning||!proposal.hidden||signRoot.hidden)return;
+ const el=e.target.closest?.('.worldSign')||(e.target===c?signAtScreen(e.clientX,e.clientY):null);
+ const door=el?.dataset.door,station=maps[scene].st.find(v=>v[0]===door);
+ if(!el||el.hidden||!station)return;
+ // Keep the original doorway identity through the gesture, even if the
+ // camera or a floating control changes position before pointerup.
+ signPress={el,id:e.pointerId,x:e.clientX,y:e.clientY,scene,station};
+ signClickSuppressedDoor=door;signClickSuppressedUntil=performance.now()+1200;
+ drag=null;e.preventDefault();e.stopImmediatePropagation();
+ try{el.setPointerCapture(e.pointerId)}catch{}
 },true);
 document.addEventListener('pointerup',e=>{
  const a=signPress;if(!a||a.id!==e.pointerId)return;
  signPress=null;drag=null;e.preventDefault();e.stopImmediatePropagation();
- if(Math.hypot(e.clientX-a.x,e.clientY-a.y)<30&&!room&&!transitioning)a.el.click();
+ signClickSuppressedUntil=performance.now()+700;
+ if(a.scene===scene&&Math.hypot(e.clientX-a.x,e.clientY-a.y)<30&&!room&&!transitioning){
+  const [id,x,y]=a.station;directSignClick(id,x,y);
+ }
 },true);
-document.addEventListener('pointercancel',e=>{if(signPress?.id===e.pointerId)signPress=null},true);
+document.addEventListener('pointercancel',e=>{if(signPress?.id===e.pointerId){signPress=null;signClickSuppressedUntil=performance.now()+700}},true);
 window.addEventListener('blur',()=>{signPress=null});
 /* Bound the walking-to-door sequence so mobile navigation cannot strand a player. */
 let doorAttempt=0;
@@ -1459,14 +1468,23 @@ function directSignClick(id,x,y){
  if(room||transitioning||!proposal.hidden||$('page').style.display==='block')return;
  walkDoor(id,x,y);
 }
+let lastDoorLayoutAt=-Infinity,lastDoorLayoutLanguage=null;
 syncSigns=function(){
  const show=proposal.hidden&&!room&&!transitioning&&avatar!==null&&$('page').style.display!=='block'&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;
- signRoot.hidden=!show;if(!show)return;
- if(signsForScene!==scene||signButtons.size!==maps[scene].st.length){
+ const wasHidden=signRoot.hidden;signRoot.hidden=!show;if(!show)return;
+ if(signPress?.scene===scene&&signPress.el.isConnected)return;
+ const changed=signsForScene!==scene||signButtons.size!==maps[scene].st.length;
+ const now=performance.now();
+ // The canvas remains full frame rate; DOM measurements need not run 60 times a second.
+ if(!changed&&!wasHidden&&lastDoorLayoutLanguage===zh&&now-lastDoorLayoutAt<32)return;
+ lastDoorLayoutAt=now;lastDoorLayoutLanguage=zh;
+ if(changed){
   signsForScene=scene;signButtons.clear();signRoot.replaceChildren();
   for(const [id,x,y,en,cn] of maps[scene].st){
    const btn=element('button','',signRoot,'worldSign');btn.type='button';btn.dataset.door=id;
-   btn.style.setProperty('pointer-events','auto','important');btn.onclick=()=>directSignClick(id,x,y);signButtons.set(id,btn)
+   btn.style.setProperty('pointer-events','auto','important');
+   btn.onclick=e=>{if(e.detail!==0&&signClickSuppressedDoor===id&&performance.now()<signClickSuppressedUntil)return;directSignClick(id,x,y)};
+   signButtons.set(id,btn)
   }
  }
  signRoot.classList.remove('quiet');
