@@ -4271,8 +4271,8 @@ const entranceSignStyle=document.createElement('style');entranceSignStyle.textCo
 #game>#worldSigns>.worldSign{background:transparent!important;border:0!important;box-shadow:none!important;padding:8px 5px!important;max-width:130px!important;font:600 12px/1.12 "Georgia","Songti SC",serif!important;letter-spacing:.015em!important;color:#f9edcf!important}
 #game>#worldSigns>.worldSign .doorPlaque{display:block;padding:5px 9px;background:linear-gradient(155deg,#5d5849ed,#3e5046ef);border:1px solid #dfc69a99;border-radius:2px;box-shadow:0 2px 4px #241f193b;text-shadow:0 1px 1px #352a22;white-space:normal;pointer-events:none}
 #game>#worldSigns>.worldSign:focus-visible .doorPlaque{outline:2px solid #fff4c9;outline-offset:2px}
-#game #back:not([hidden]){top:auto!important;bottom:calc(env(safe-area-inset-bottom,0px) + 80px)!important;left:10px!important;min-height:44px!important;border-radius:5px!important;font:500 12px/1.2 system-ui!important;max-width:145px;background:#344a3de8!important;color:#f9edcf!important;border:1px solid #d0bf95!important;box-shadow:none!important;z-index:8!important}
-@media(max-width:600px){#game[data-meow-in-room="true"] #movePad:not([hidden]){bottom:calc(env(safe-area-inset-bottom,0px) + 133px)!important}#game[data-meow-in-room="true"] #hint{left:calc(50% + 48px)!important;max-width:calc(100vw - 145px)!important}}
+#game #back:not([hidden]){top:calc(env(safe-area-inset-top,0px) + 104px)!important;bottom:auto!important;left:max(10px,env(safe-area-inset-left,0px))!important;min-height:44px!important;border-radius:5px!important;font:500 12px/1.2 system-ui!important;max-width:145px;background:#344a3de8!important;color:#f9edcf!important;border:1px solid #d0bf95!important;box-shadow:none!important;z-index:8!important}
+@media(max-width:600px){#game[data-meow-in-room="true"] #movePad:not([hidden]){bottom:calc(env(safe-area-inset-bottom,0px) + 88px)!important}#game[data-meow-in-room="true"] #hint{left:calc(50% + 48px)!important;max-width:calc(100vw - 145px)!important}}
 `;document.head.append(entranceSignStyle);
 const entranceSignBefore=syncSigns;
 syncSigns=function(){entranceSignBefore();if(signRoot.hidden)return;for(const btn of signButtons.values()){if(!btn.querySelector('.doorPlaque')){const title=btn.textContent;btn.replaceChildren();element('span',title,btn,'doorPlaque');btn.setAttribute('aria-label',title)}}};
@@ -5431,7 +5431,7 @@ const adaptivePageStyle=document.createElement('style');adaptivePageStyle.textCo
 @media(max-height:500px) and (orientation:landscape){
  #dialogue:not(.characterSpeech){max-height:45dvh!important;bottom:54px!important}
  #gameControls button{min-height:40px!important}
- #game #back:not([hidden]){bottom:60px!important}
+ #game #back:not([hidden]){top:calc(env(safe-area-inset-top,0px) + 60px)!important;bottom:auto!important}
 }
 `;document.head.append(adaptivePageStyle);
 
