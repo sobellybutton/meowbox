@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="220" viewBox="0 0 180 220">
+<defs><linearGradient id="jacket" x2="1" y2=".8"><stop stop-color="#a65f52"/><stop offset=".48" stop-color="#854d48"/><stop offset="1" stop-color="#633d3e"/></linearGradient><linearGradient id="hair" x2=".6" y2="1"><stop stop-color="#a5a19a"/><stop offset=".6" stop-color="#74716b"/><stop offset="1" stop-color="#535651"/></linearGradient><linearGradient id="skin" x2=".3" y2="1"><stop stop-color="#ead1b1"/><stop offset=".7" stop-color="#cda78a"/><stop offset="1" stop-color="#af826c"/></linearGradient><linearGradient id="apron" x2=".6" y2="1"><stop stop-color="#cab58e"/><stop offset="1" stop-color="#9b8263"/></linearGradient></defs>
+<!-- Transparent character. Foot pivot 90,205; seat pivot 90,151. -->
+<path d="M68 133Q51 138 49 161L48 188Q56 195 68 187L80 161L95 164L105 191Q120 196 128 188L125 152Q119 133 102 133Z" fill="#554e49" stroke="#453d3a" stroke-width="2"/>
+<path d="M50 183Q39 191 37 198Q44 207 67 205L74 194L67 184Z M107 183L104 196Q119 208 141 203Q146 197 131 187L127 182Z" fill="#373a36" stroke="#413b36" stroke-width="2"/><path d="M39 200Q50 206 67 202M108 199Q125 205 140 201" fill="none" stroke="#8b8272" stroke-width="2"/>
+<path d="M62 82Q43 89 42 116L49 146Q80 166 111 147Q132 134 128 112Q126 90 107 82L93 76Z" fill="url(#jacket)" stroke="#644641" stroke-width="2"/>
+<path d="M61 98Q52 111 51 141M117 100Q124 121 115 144" fill="none" stroke="#ad7664" opacity=".7" stroke-width="2"/>
+<path d="M76 86L66 113Q63 133 58 145Q83 155 113 145L105 112L100 86Z" fill="url(#apron)" stroke="#8d7459" stroke-width="1.5"/>
+<path d="M70 117Q83 122 102 117M67 128Q85 135 105 127M65 140Q85 145 109 138" fill="none" stroke="#e0cba3" stroke-width="1.5" opacity=".7"/><path d="M77 106L83 110L90 105L97 110L104 106" stroke="#8a7056" fill="none" stroke-width="1.5"/>
+<g fill="#c2957b" opacity=".8"><path d="M55 100q5 -6 8 0q-4 7 -8 0M52 117q5 -6 8 0q-4 7 -8 0M114 99q5 -6 8 0q-4 7 -8 0M116 127q5 -6 8 0q-4 7 -8 0"/></g>
+<path d="M55 103Q41 105 36 127Q36 140 49 149L67 147L66 137L49 133L63 113Z" fill="url(#jacket)" stroke="#694741" stroke-width="2"/><path d="M62 136Q70 132 80 136Q85 142 78 148L65 148Q59 144 62 136Z" fill="url(#skin)" stroke="#a17b65" stroke-width="1.2"/><path d="M67 141L78 140M67 145L77 144" stroke="#a67d68" stroke-width="1"/>
+<path d="M118 102Q133 105 137 128Q137 139 123 147L105 148L105 137L121 131L111 113Z" fill="url(#jacket)" stroke="#694741" stroke-width="2"/><path d="M109 136Q101 132 94 137Q87 142 95 148L108 148Q113 144 109 136Z" fill="url(#skin)" stroke="#a17b65" stroke-width="1.2"/><path d="M96 141L107 141M97 145L107 145" stroke="#a67d68" stroke-width="1"/><path d="M97 144Q121 150 137 154Q145 161 137 166Q131 169 120 164L94 153Z" fill="#94715a" stroke="#654f40" stroke-width="1.6"/><path d="M106 150L132 158" stroke="#b99a76" stroke-width="2"/>
+<path d="M74 73L73 92Q85 104 102 91L103 71Z" fill="url(#skin)" stroke="#9b7763" stroke-width="1.5"/>
+<path d="M104 19Q115 0 132 10Q145 20 133 36Q121 43 109 32Z" fill="url(#hair)" stroke="#68665d" stroke-width="2"/><path d="M116 15Q132 10 136 22M118 23Q130 18 134 28" fill="none" stroke="#c5beb0" stroke-width="1.4" opacity=".65"/>
+<path d="M54 51Q49 21 78 14Q112 5 130 28Q140 45 125 74L113 91L64 84Q54 72 54 51Z" fill="url(#hair)" stroke="#62625a" stroke-width="2"/>
+<path d="M59 51Q61 34 83 29Q100 28 121 47L120 66Q117 87 95 94Q74 94 62 77Q54 65 59 51Z" fill="url(#skin)" stroke="#a17b66" stroke-width="1.5"/>
+<path d="M59 52Q54 45 50 52Q47 61 57 67M120 50Q128 45 131 53Q133 63 122 67" fill="url(#skin)" stroke="#a17b66" stroke-width="1.3"/>
+<path d="M57 50Q53 31 72 20Q94 11 114 26Q126 35 125 49Q109 37 99 28Q91 42 78 38Q66 47 57 50Z" fill="url(#hair)" stroke="#77736a" stroke-width="1.2"/>
+<g fill="none" stroke="#bcb7aa" stroke-width="1.5" opacity=".65"><path d="M61 41Q69 25 86 23M74 38Q87 22 96 22M102 25Q117 32 120 43"/></g>
+<path d="M65 49Q73 46 82 51M99 51Q109 46 117 49" stroke="#55463f" stroke-width="2.6" stroke-linecap="round" fill="none"/><path d="M66 44L80 46M100 46L114 44" stroke="#a88a75" stroke-width="1" fill="none"/>
+<path d="M68 57Q75 53 82 57M100 57Q107 53 114 57" fill="#6b5144" stroke="#6b5144" stroke-width="1.5"/><ellipse cx="76" cy="57" rx="2.2" ry="3.3" fill="#3c3734"/><ellipse cx="106" cy="57" rx="2.2" ry="3.3" fill="#3c3734"/>
+<path d="M88 56L84 67Q91 70 96 66" stroke="#a57863" stroke-width="1.3" fill="none"/><path d="M67 66Q70 72 76 72M115 66Q111 72 106 72M65 70Q68 80 75 83M116 70Q113 80 106 83" stroke="#ad8974" stroke-width="1.2" fill="none"/>
+<path d="M82 80Q91 76 101 80" stroke="#865c51" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+<path d="M86 88Q92 90 98 87" stroke="#af8b74" stroke-width="1.1" fill="none"/>
+</svg>
