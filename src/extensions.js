@@ -119,7 +119,7 @@ const oldFortuneVariation=arcanaReading;arcanaReading=function(d,rev){let base=o
 const proposalPolish=document.createElement('style');proposalPolish.textContent='#proposal .cinema-world{background:#34493b}#proposal .cinema-world img{object-fit:contain;background:#34493b}#proposal[data-shot="ticket"] .cinema-world img.station{transform:scale(1.08)}#proposal[data-shot="platform"] .cinema-world img.station{transform:scale(1.04)}#proposal .gate{max-width:520px;left:50%;width:100%;transform:translateX(-50%)}#proposal .gate-traveller{height:38%}#proposal footer{padding-bottom:4px}#worldSigns{z-index:2;pointer-events:none}#worldSigns .worldSign{pointer-events:auto!important;touch-action:manipulation;white-space:nowrap!important;max-width:calc(100vw - 16px)!important;min-height:44px!important;padding:7px 10px!important;font-size:12px!important;letter-spacing:.02em;box-shadow:0 2px 5px #322b2150!important}#moveGuide{bottom:calc(env(safe-area-inset-bottom,0px) + 158px);font-size:13px}#movePad{grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px)}#movePad button{min-width:44px;min-height:44px}#dialogue{max-height:42dvh!important;overflow:auto!important}#dialogue #choices{display:flex;flex-wrap:wrap;gap:6px}#dialogue #choices button{min-height:44px}#page .astroResult{overflow-wrap:anywhere}#page .astroForm details label{margin-top:10px}#page .v9scene{border-radius:5px!important}#gameControls button{min-height:44px}#fade{pointer-events:none!important}@media(max-height:480px){#moveGuide{bottom:80px;right:12px;left:auto;max-width:45vw;transform:none}#proposal .rail-ticket{padding:12px;gap:6px}}';document.head.append(proposalPolish);
 const signAnchorsProposal={tarot:[560,488],destiny:[300,715],temple:[680,943],wishes:[495,1190],station:[660,323]};
 syncSigns=function(){let show=scene==='fortune'&&!room&&!transitioning&&$('page').style.display!=='block'&&avatar!==null&&proposal.hidden&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;signRoot.hidden=!show;if(!show)return;if(signButtons.size!==maps.fortune.st.length){signRoot.replaceChildren();signButtons.clear();for(let [id,x,y,en,cn] of maps.fortune.st){let e=element('button','',signRoot,'worldSign');e.onclick=()=>walkDoor(id,x,y);signButtons.set(id,e)}}for(let [id,x,y,en,cn] of maps.fortune.st){let e=signButtons.get(id),[ax,ay]=signAnchorsProposal[id]||[x,y-90],sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;if(e.textContent!==tr(en,cn))e.textContent=tr(en,cn);e.hidden=sy<Math.min(145,H*.22)||sy>H-115||sx<0||sx>W;if(!e.hidden){const half=Math.min(W/2-8,(e.offsetWidth||100)/2+8);e.style.left=Math.max(half,Math.min(W-half,sx))+'px';e.style.top=sy+'px'}}};
-drawRoute=function(){if(pics.valleyClean?.naturalWidth)ctx.drawImage(pics.valleyClean,0,0,1000,routeHeight);for(let [x,y,r,i] of [[108,1280,36,0],[130,912,35,1],[475,918,36,2],[620,664,36,3],[960,594,30,4],[306,407,33,5],[855,267,35,6]])glow(x,y,r,i);for(let i=0;i<18;i++){let x=((i*91-t*(8+i%7))%1000+1000)%1000,y=(i*83+t*(14+i%8))%routeHeight;petal(x,y,3+i%4,i)}for(let [id,x,y] of maps.fortune.st){let z=doorZones[id];if(z)target(z[0],z[1],z[2],z[3],()=>walkDoor(id,x,y))}for(let n of [...npc,p].sort((a,b)=>a.y-b.y)){let sc=.72+n.y/routeHeight*.55;if(n===p){continue}let dx=n.tx-n.x,dy=n.ty-n.y,moving=Math.hypot(dx,dy)>3,dir=Math.abs(dy)>Math.abs(dx)?dy<0?'up':'down':dx<0?'left':'right';if(n.kind===2&&n.visitor===undefined){cat(n.x,n.y,0,moving,.65*sc)}else backHuman(n.x,n.y,n.visitor??1,moving,dir,1.22*sc);if(Math.hypot(n.x-p.x,n.y-p.y)<170&&valleyRevealAt<0){let label=n.visitor===undefined?tr(...n.n):'···';ctx.save();ctx.font='14px Georgia';let w=Math.max(34,ctx.measureText(label).width+16);round(n.x-w/2,n.y-111,w,24,5,'#fff0d9e8','#b39a70');txt(label,n.x,n.y-99,13);ctx.restore();target(n.x-36,n.y-115,72,115,()=>npcTalk(n))}}const playerScale=Math.max(1.65*(.72+p.y/routeHeight*.55),54/(85*Math.max(.01,cam.scale)));ctx.save();ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';backHuman(p.x,p.y,avatar??0,p.walk,p.facing||'up',playerScale);ctx.restore();if(!guideDismissed&&guideStage===0&&guideTarget&&valleyRevealAt<0&&proposal.hidden){let {x,y}=guideTarget,f=(Math.sin(t*3)+1)/2;ctx.save();ctx.strokeStyle='rgba(255,230,155,'+(.65+f*.3)+')';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,23+f*7,12+f*4,0,0,TAU);ctx.stroke();ctx.restore();target(x-40,y-40,80,80,()=>{stopRoute();p.tx=x;p.ty=y})}};
+drawRoute=function(){if(pics.valleyClean?.naturalWidth)ctx.drawImage(pics.valleyClean,0,0,1000,routeHeight);for(let [x,y,r,i] of [[108,1280,36,0],[130,912,35,1],[475,918,36,2],[620,664,36,3],[960,594,30,4],[306,407,33,5],[855,267,35,6]])glow(x,y,r,i);for(let i=0;i<18;i++){let x=((i*91-t*(8+i%7))%1000+1000)%1000,y=(i*83+t*(14+i%8))%routeHeight;petal(x,y,3+i%4,i)}for(let [id,x,y] of maps.fortune.st){let z=doorZones[id];if(z)target(z[0],z[1],z[2],z[3],()=>walkDoor(id,x,y))}for(let n of [...npc,p].sort((a,b)=>a.y-b.y)){let sc=.72+n.y/routeHeight*.55;if(n===p){continue}let dx=n.tx-n.x,dy=n.ty-n.y,moving=residentMoving(n),dir=Math.abs(dy)>Math.abs(dx)?dy<0?'up':'down':dx<0?'left':'right';if(n.kind===2&&n.visitor===undefined){cat(n.x,n.y,0,moving,.65*sc)}else backHuman(n.x,n.y,n.visitor??1,moving,dir,1.22*sc);if(Math.hypot(n.x-p.x,n.y-p.y)<170&&valleyRevealAt<0){let label=n.visitor===undefined?tr(...n.n):'···';ctx.save();ctx.font='14px Georgia';let w=Math.max(34,ctx.measureText(label).width+16);round(n.x-w/2,n.y-111,w,24,5,'#fff0d9e8','#b39a70');txt(label,n.x,n.y-99,13);ctx.restore();target(n.x-36,n.y-115,72,115,()=>npcTalk(n))}}const playerScale=Math.max(1.65*(.72+p.y/routeHeight*.55),54/(85*Math.max(.01,cam.scale)));ctx.save();ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';backHuman(p.x,p.y,avatar??0,p.walk,p.facing||'up',playerScale);ctx.restore();if(!guideDismissed&&guideStage===0&&guideTarget&&valleyRevealAt<0&&proposal.hidden){let {x,y}=guideTarget,f=(Math.sin(t*3)+1)/2;ctx.save();ctx.strokeStyle='rgba(255,230,155,'+(.65+f*.3)+')';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,23+f*7,12+f*4,0,0,TAU);ctx.stroke();ctx.restore();target(x-40,y-40,80,80,()=>{stopRoute();p.tx=x;p.ty=y})}};
 let lanternMemories=load('proposalLanternCount',0);
 const worldActivityDraw=drawActivity;drawActivity=function(){worldActivityDraw();if(activity==='wishes'){for(let i=0;i<Math.min(lanternMemories,7);i++){let x=185+i*66,y=295+(i%3)*28;ctx.save();ctx.translate(x+Math.sin(t*.9+i)*3,y);ctx.rotate(Math.sin(t*.9+i)*.04);glow(0,0,38,i);line(0,-35,0,-18,'#a68a61',1.5);round(-14,-18,28,35,8,'#db9b51','#875534');line(-5,-15,-5,14,'#ad6d3a');line(5,-15,5,14,'#ad6d3a');ctx.restore()}}};
 const finalGuideStart=start;start=function(id){finalGuideStart(id);if(id==='wishes')state.lanternAt=undefined};
@@ -821,7 +821,7 @@ walkHelp.onclick=()=>{guideDismissed=false;guideStage=0;guideOrigin=null;guideTa
 function releaseWalkKeys(){for(const key of ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d','W','A','S','D'])keys[key]=false}
 window.addEventListener('blur',releaseWalkKeys);document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseWalkKeys()});
 let walkWasVisible=false;
-function walkHelpTick(){const visible=proposal.hidden&&avatar!==null&&!room&&!transitioning&&$('page').style.display!=='block'&&valleyRevealAt<0&&isRoute();walkHelp.hidden=!visible||!guideDismissed;walkHelp.setAttribute('aria-label',tr('Show walking instructions','查看行走指南'));if(walkWasVisible&&!visible)releaseWalkKeys();walkWasVisible=visible;setTimeout(walkHelpTick,200)}
+function walkHelpTick(){const visible=proposal.hidden&&avatar!==null&&!room&&!talkOpen&&!transitioning&&$('page').style.display!=='block'&&valleyRevealAt<0&&isRoute();walkHelp.hidden=!visible||!guideDismissed;walkHelp.setAttribute('aria-label',tr('Show walking instructions','查看行走指南'));if(walkWasVisible&&!visible)releaseWalkKeys();walkWasVisible=visible;setTimeout(walkHelpTick,200)}
 walkHelpTick();
 
 function keepsakeClue(item){const clues={'Observatory destiny scroll':['Visit the observatory','到星月观去看看'],'Three-card reading':['Turn the cards in the reading house','到占卜小屋翻牌'],'Heaven’s approval':['Try the wooden moon blocks','试试掷筊'],'Wishing lantern':['Leave a wish in the garden','在花园留下一份心愿'],'Cat friendship':['Spend time with a valley cat','陪山谷的小猫玩一会儿'],'Soul Cat keepsake':['Discover your Soul Cat in Wonder Valley','到奇遇谷寻找你的猫灵']};return clues[item[0]]||['Explore to unlock','探索解锁']}
@@ -1635,7 +1635,7 @@ drawMap=function(){
  for(const n of [...npc,p].sort((a,b)=>a.y-b.y)){
   const sc=Math.max(.95,(.8+n.y/world.h*.45));
   if(n===p){backHuman(n.x,n.y,avatar??0,n.walk,n.facing||'up',Math.max(sc,48/(94*Math.max(.1,cam.scale))));continue}
-  const moving=Math.hypot(n.tx-n.x,n.ty-n.y)>2;
+  const moving=residentMoving(n);
   if(n.kind===2){cat(n.x,n.y,0,moving,.65*sc);continue}
   const dir=Math.abs(n.ty-n.y)>Math.abs(n.tx-n.x)?(n.ty<n.y?'up':'down'):(n.tx<n.x?'left':'right');
   backHuman(n.x,n.y,((avatar??0)+1+n.kind)%4,moving,dir,sc*.83);
@@ -2818,3 +2818,49 @@ function starSignPage(selected=null){
 const signNotebookCSS=document.createElement('style');signNotebookCSS.textContent='.signNotebookGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:18px 0}.signNotebookGrid button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:88px;padding:8px 3px;background:#f5e8cf;border:1px solid #b9a17b;border-radius:4px;color:#5a4d3b}.signNotebookGrid button[aria-pressed=true]{background:#4c6257;color:#fff0cc}.signTileSymbol{font-family:Georgia,serif;font-size:28px;line-height:1.2}.signNotebookGrid strong{font-size:13px;line-height:1.2;overflow-wrap:anywhere}.signNotebookGrid small{font-size:11px}.signNotebookResult:not(:empty){background:#f1e2c4;border:1px solid #b6a079;padding:18px;margin:12px 0;color:#594a38}.signNotebookSymbol{font:36px Georgia,serif;color:#786549}.signNotebookResult p{line-height:1.55}.signNotebookNote{font-size:12px;color:#74634d}';document.head.append(signNotebookCSS);
 const destinySingleAction=action;
 action=function(id){if(room==='destiny'&&id==='destiny')return destinyConsultMenu();return destinySingleAction(id)};
+
+
+/* Ambient residents walk within the painted path, not the full image.
+   Fortune samples are conservative stair-centre anchors; calibrate against final art. */
+const valleyNpcPath=[[180,590,35],[300,560,35],[500,545,38],[720,540,42],[950,535,44],[1180,515,42],[1400,500,43],[1680,500,43]];
+function residentLane(world,y){
+ const points=world==='fortune'?valleyNpcPath:portraitWorlds[world]?.route?.map(([yy,x])=>[yy,x,45]);
+ if(!points)return {x:500,half:35};
+ if(y<=points[0][0])return{x:points[0][1],half:points[0][2]};
+ for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i];if(y<=b[0]){const f=(y-a[0])/(b[0]-a[0]);return{x:a[1]+(b[1]-a[1])*f,half:a[2]+(b[2]-a[2])*f}}}
+ return {x:points.at(-1)[1],half:points.at(-1)[2]}
+}
+function residentGround(world,x,y){const l=residentLane(world,y);return clamp(x,l.x-l.half,l.x+l.half)}
+function residentTarget(n,i){
+ const y=clamp(n.y+(n.walkDirection||1)*(70+18*(i%3)),minY()+15,maxY()-15);
+ if(Math.abs(y-n.y)<8)n.walkDirection=-(n.walkDirection||1);
+ const lane=residentLane(scene,y);n.ty=y;n.tx=lane.x+(i%2?1:-1)*lane.half*.48;
+}
+const groundedInit=initNPC;
+initNPC=function(){groundedInit();npc.forEach((n,i)=>{
+ const y=clamp(n.y,minY()+20,maxY()-20),lane=residentLane(scene,y);
+ n.y=n.ty=y;n.x=n.tx=lane.x+(i%2?1:-1)*lane.half*.48;n.walkDirection=i%2?-1:1;n.pauseUntil=t+1+i*.4;
+ })};
+const groundedStep=step;
+step=function(n,dt,speed){
+ if(n===p)return groundedStep(n,dt,speed);
+ if(room)return false;
+ n.y=clamp(n.y,minY(),maxY());n.x=residentGround(scene,n.x,n.y);
+ if(talkOpen){n.tx=n.x;n.ty=n.y;return false}
+ // Replace legacy random destinations with a continuous short path segment.
+ if(!n.pathReady||n.pathWorld!==scene||Math.abs(n.ty-n.pathY)>1||Math.abs(n.tx-n.pathX)>1){n.pathReady=true;n.pathWorld=scene;residentTarget(n,npc.indexOf(n));n.pathY=n.ty;n.pathX=n.tx}
+ if(t<(n.pauseUntil||0)){n.tx=n.pathX;n.ty=n.pathY;return true}
+ if(Math.hypot(n.x-n.tx,n.y-n.ty)<=2){n.x=n.tx;n.y=n.ty;n.walkDirection=Math.random()<.25?-(n.walkDirection||1):n.walkDirection;residentTarget(n,npc.indexOf(n));n.pathY=n.ty;n.pathX=n.tx;n.pauseUntil=t+1.8+Math.random()*2.8;return true}
+ // Hold position instead of walking through a visitor. Feet stay on the path at all times.
+ if(Math.hypot(n.x-p.x,n.y-p.y)<55){n.pauseUntil=t+.45;return true}
+ const dx=n.tx-n.x,dy=n.ty-n.y,d=Math.hypot(dx,dy),amount=Math.min(d,Math.min(42,speed)*Math.max(0,Math.min(.05,dt)));
+ if(d>0){n.y+=dy/d*amount;n.x=residentGround(scene,n.x+dx/d*amount,n.y)}
+ return true
+};
+// Old drawing code infers movement from target distance; keep paused residents visibly still.
+function residentMoving(n){return !talkOpen&&t>=(n.pauseUntil||0)&&Math.hypot(n.tx-n.x,n.ty-n.y)>2}
+const groundedTalk=npcTalk;
+npcTalk=function(n){stopRoute();p.tx=p.x;p.ty=p.y;groundedTalk(n)};
+const conversationCss=document.createElement('style');
+conversationCss.textContent='body.meow-dialogue #movePad,body.meow-dialogue #walkHelp,body.meow-dialogue #moveGuide,body.meow-dialogue #worldSigns,body.meow-dialogue #nextStopShortcut,body.meow-dialogue #destinyAccess{visibility:hidden!important;pointer-events:none!important;display:none!important}body.meow-dialogue #hint{display:none!important}#dialogue #choices button{min-height:44px;max-width:100%;white-space:normal;overflow-wrap:anywhere}#dialogue{max-height:48dvh!important;overflow:auto!important;overscroll-behavior:contain}';
+document.head.append(conversationCss);
