@@ -1908,10 +1908,10 @@ syncSigns=function(){
  // Clamping independently made neighbouring doors share the same screen position.
  const blockers=[],placed=[],items=[];
  const rootRect=signRoot.getBoundingClientRect();
- for(const el of document.querySelectorAll('#hud,#small,#dock,#gameControls,#movePad,#moveGuide,#dialogue,#lunarBtn,#lunarRibbon,#hint,#walkHelp,#nextStopShortcut,#back,#ritualActionBar,#destinyAccess')){
+ for(const el of document.querySelectorAll('#hud>*,#small button,#dock,#gameControls,#movePad,#moveGuide,#dialogue,#lunarBtn,#lunarRibbon,#hint,#walkHelp,#nextStopShortcut,#back,#ritualActionBar,#destinyAccess')){
   if(el.hidden||!el.getClientRects().length)continue;
   const b=el.getBoundingClientRect(),style=getComputedStyle(el);
-  if(style.visibility==='hidden'||style.display==='none'||style.pointerEvents==='none'||!b.width||!b.height)continue;
+  if(style.visibility==='hidden'||style.display==='none'||Number(style.opacity)===0||!b.width||!b.height)continue;
   blockers.push({left:b.left-rootRect.left-6,right:b.right-rootRect.left+6,top:b.top-rootRect.top-6,bottom:b.bottom-rootRect.top+6});
  }
  for(const actor of [p,...npc,...sharedTownActors()]){if(actor&&Number.isFinite(actor.x)&&Number.isFinite(actor.y))blockers.push(characterScreenBounds(actor,actor===p));}
@@ -5874,7 +5874,7 @@ function meowVisibleRects(selector){
  for(const el of document.querySelectorAll(selector)){
   if(el.hidden||!el.getClientRects().length)continue;
   const style=getComputedStyle(el),b=el.getBoundingClientRect();
-  if(style.visibility==='hidden'||style.display==='none'||!b.width||!b.height)continue;
+  if(style.visibility==='hidden'||style.display==='none'||Number(style.opacity)===0||!b.width||!b.height)continue;
   out.push({left:b.left-root.left-4,right:b.right-root.left+4,top:b.top-root.top-4,bottom:b.bottom-root.top+4})
  }
  return out
@@ -5886,7 +5886,7 @@ function meowIndoorActorBounds(a,scale=travellerRoomScale(H,cam.scale)){
 function meowBeginTextFrame(inside){
  meowTextFrameRects=[];
  const now=performance.now();
- if(now-meowUILast>100){meowUILast=now;meowUIRects=meowVisibleRects('#hud,#small,#dock,#back,#hint,#gameControls,#movePad,#moveGuide,#walkHelp,#ritualActionBar,#dialogue,#nextStopShortcut,#lunarRibbon,#destinyAccess')}
+ if(now-meowUILast>100){meowUILast=now;meowUIRects=meowVisibleRects('#hud>*,#small button,#dock,#back,#hint,#gameControls,#movePad,#moveGuide,#walkHelp,#ritualActionBar,#dialogue,#nextStopShortcut,#lunarRibbon,#destinyAccess')}
  meowFrameBlockers=[...meowUIRects];
  if(inside){
   if(continuityRoom===room)meowFrameBlockers.push(meowIndoorActorBounds(indoor));
@@ -5935,9 +5935,16 @@ function meowHintSpacing(){
  const hintEl=$('hint'),root=$('game').getBoundingClientRect(),b=hintEl.getBoundingClientRect();
  const rect={left:b.left-root.left,right:b.right-root.left,top:b.top-root.top,bottom:b.bottom-root.top};
  const blockers=meowVisibleRects('#dock,#movePad,#gameControls,#ritualActionBar,#dialogue,#back,#nextStopShortcut');
- const overlap=b.width>0&&b.height>0&&blockers.some(v=>speechOverlap(rect,v));
- hintEl.classList.toggle('meowHintBlocked',overlap);
+ // Test from the authored layout each time, not the previous shifted position.
+ hintEl.classList.remove('meowHintMoved','meowHintBlocked');
+ const base=hintEl.getBoundingClientRect(),preferred={left:base.left-root.left,right:base.right-root.left,top:base.top-root.top,bottom:base.bottom-root.top};
+ if(base.width>0&&base.height>0&&blockers.some(v=>speechOverlap(preferred,v))){
+  const dock=meowVisibleRects('#dock')[0],lower=Math.min(root.height-5,dock?.top??root.height-5);
+  const spot=meowPlaceText((preferred.left+preferred.right)/2,(preferred.top+preferred.bottom)/2,base.width,base.height,{left:6,right:root.width-6,top:root.height*.67,bottom:lower},blockers,Math.min(80,root.height*.14));
+  if(spot){hintEl.style.setProperty('--meow-hint-x',spot.x+'px');hintEl.style.setProperty('--meow-hint-y',spot.y+'px');hintEl.classList.add('meowHintMoved')}
+  else hintEl.classList.add('meowHintBlocked')
+ }
  setTimeout(meowHintSpacing,150)
 }
-const meowHintCSS=document.createElement('style');meowHintCSS.textContent='#game #hint.meowHintBlocked{opacity:0!important;pointer-events:none!important}';document.head.append(meowHintCSS);
+const meowHintCSS=document.createElement('style');meowHintCSS.textContent='#game #hint.meowHintMoved{left:var(--meow-hint-x)!important;top:var(--meow-hint-y)!important;bottom:auto!important;transform:translate(-50%,-50%)!important}#game #hint.meowHintBlocked{opacity:0!important;pointer-events:none!important}';document.head.append(meowHintCSS);
 setTimeout(meowHintSpacing,150);
