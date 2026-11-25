@@ -116,6 +116,9 @@ const meowSettingsCSS=document.createElement('style');meowSettingsCSS.textConten
 /* Curated social hub: one story location, one community entrance.
    Preserve park serial progress, historical collections and existing room IDs. */
 roomActions.park=(roomActions.park||[]).filter(a=>a[0]!=='chat');
+const curatedOfficeDoor=maps.home.st.find(v=>v[0]==='office');
+if(curatedOfficeDoor)maps.home.st=maps.home.st.filter(v=>v[0]!=='office');
+function gatheringOfficeStory(){closeTalk();const finish=()=>{addItem('Meeting escape ticket','逃会车票');closeTalk()};say(tr('Wang Laoban','王老板'),tr('Quick meeting. Only five minutes. It starts at 5:58 PM.','开个短会，就五分钟。下午五点五十八开始。'),[[tr('Ask for an agenda','先问议程'),()=>say(tr('Wang Laoban','王老板'),tr('Excellent initiative. Please prepare the agenda.','很好，很主动。那你来准备议程吧。'),[[tr('I have a train to catch','我要赶车'),finish]])],[tr('Pretend the connection froze','假装网络卡了'),()=>say(tr('Wang Laoban','王老板'),tr('No problem. I recorded the meeting for you. All 97 minutes.','没关系，我录下来了。整整九十七分钟。'),[[tr('Clock out anyway','照常下班'),finish]])],[tr('Return to the table','回茶桌'),closeTalk]])}
 roomActions.tea=[['chat','Join the table','来茶桌坐坐'],['board','Town noticeboard','小镇留言墙']];
 const gatheringActionBefore=action;
 action=function(id){
@@ -124,6 +127,7 @@ action=function(id){
    [tr('Meet & chat','认识新朋友'),()=>{closeTalk();communityTab=communityURL()?'public':'lounge';townChatPage()}],
    [tr('Celebrate a good thing','庆祝小确幸'),()=>{closeTalk();communityTab='celebrate';townChatPage()}],
    [tr('Hear the latest gossip','听听最新的瓜'),parkSerialTalk],
+   [tr('Office comedy','职场小剧场'),gatheringOfficeStory],
    [tr('Keep wandering','继续逛'),closeTalk]
   ]);return
  }
@@ -131,6 +135,8 @@ action=function(id){
  if(room==='tea'&&id==='board'){closeTalk();communityTab='board';townChatPage();return}
  return gatheringActionBefore(id)
 };
+const gatheringWalkBefore=walkDoor;
+walkDoor=function(id,x,y){if(scene==='home'&&id==='office'){const tea=maps.home.st.find(v=>v[0]==='tea');if(tea){hint('The office comedy has moved to the Tea Room.','职场小剧场搬到茶馆啦。');return gatheringWalkBefore(tea[0],tea[1],tea[2])}}return gatheringWalkBefore(id,x,y)};
 const gatheringRoomIntroBefore=roomIntro;
 roomIntro=function(){gatheringRoomIntroBefore();if(room==='park'&&!activity)hint('Meet the cats or visit the deer. The gossip has moved to the Tea Room.','陪陪小猫，看看小鹿。想吃瓜，去茶馆坐坐。');if(room==='tea'&&!activity)hint('Join the communal table for good news, gossip or company.','来长桌边坐坐，聊聊喜事、八卦，或者单纯找个伴。')};
 
@@ -158,9 +164,9 @@ function gatheringTeaBackdrop(){
    line(x,windowTop+2,x+w,windowTop+2,'#f1ddaf',2);
   }
  }
- const floor=ctx.createLinearGradient(0,440,0,bottom);floor.addColorStop(0,'#a48665');floor.addColorStop(.4,'#c1a27c');floor.addColorStop(1,'#8c7055');ctx.fillStyle=floor;ctx.fillRect(l,440,b.w,Math.max(0,bottom-440));
- line(l,440,r,440,'#72563f',9);line(l,449,r,449,'#dfc096',2);
- for(let i=-9;i<=9;i++){const bx=400+i*100;line(400+i*27,450,bx,bottom,'#765a433d',1.5)}
+ const floor=ctx.createLinearGradient(0,400,0,bottom);floor.addColorStop(0,'#a48665');floor.addColorStop(.4,'#c1a27c');floor.addColorStop(1,'#8c7055');ctx.fillStyle=floor;ctx.fillRect(l,400,b.w,Math.max(0,bottom-400));
+ line(l,400,r,400,'#72563f',9);line(l,408,r,408,'#dfc096',2);
+ for(let i=-9;i<=9;i++){const bx=400+i*100;line(400+i*27,410,bx,bottom,'#765a433d',1.5)}
  for(let j=0;j<15;j++){const yy=455+j*j*2.1;if(yy>bottom)break;line(l,yy,r,yy,'#6d543b28',1)}
  // Ceiling beams and pendant lamps, outside the walkable floor.
  line(l,Math.max(top+10,174),r,Math.max(top+10,174),'#6f513c',10);
@@ -188,13 +194,16 @@ prop=function(id,x,y){
  if(room!=='tea')return gatheringPropBefore(id,x,y);
  if(id==='chat'){
   ctx.save();
-  // Residents behind the table first, then furniture in front of their bodies.
+  // Furniture and resident feet remain inside the room's non-walking zone.
+  ellipse(x,y+3,95,11,'#49352524');for(const dx of [-56,56])line(x+dx,y-6,x+dx,y+8,'#725039',5);round(x-75,y-20,150,14,4,'#94734f','#694d37');
   gatheringResident(['Auntie Mei','梅姨'],x-48,y-6,1.12,'right',0);
   gatheringResident(['Grandma','外婆'],x+48,y-6,1.12,'left',1);
   const im=townResidentImage('lin');if(im.complete&&im.naturalWidth){ellipse(x+107,y+23,15,4,'#352c2438');ctx.drawImage(im,x+107-37,y+23-85,74,91)}else gatheringResident(['Auntie Lin','林姨'],x+107,y+23,.97,'left',2);
   ellipse(x,y+25,91,15,'#49352535');for(const dx of [-62,62]){line(x+dx,y+6,x+dx-3,y+38,'#725039',7);line(x+dx,y+6,x+dx+3,y+36,'#b18a61',2)}
   round(x-84,y-12,168,25,6,'#a77d53','#705039');ellipse(x,y-12,84,13,'#b99469');line(x-65,y-10,x+65,y-10,'#dfb88b',1.5);
   gatheringCup(x-50,y-13,'#e0d3ae');gatheringCup(x+49,y-13,'#91a58b');ellipse(x,y-17,19,8,'#dbca9f');ellipse(x,y-22,12,13,'#918d69');ellipse(x,y-34,9,3,'#b4ad86');line(x+12,y-26,x+20,y-32,'#7d7758',4);
+  // An empty stool is an invitation, not an invisible collider or new activity.
+  ellipse(x-96,y+54,19,5,'#49352535');for(const dx of [-10,10])line(x-96+dx,y+33,x-96+dx,y+51,'#75573e',4);ellipse(x-96,y+32,18,7,'#a7845d');
   ctx.restore();return
  }
  if(id==='board'){gatheringPropBefore(id,x,y);gatheringResident(['Master Yue','月师傅'],x+90,y+3,.95,'left',3);return}
