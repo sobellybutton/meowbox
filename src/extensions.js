@@ -3030,3 +3030,130 @@ const townSocialCSS=document.createElement('style');townSocialCSS.textContent='.
 const wallStyle=document.createElement('style');wallStyle.textContent='.townWall{margin:16px 0 24px;scroll-margin:12px}.wallIntro{margin:4px 0 8px}.wallDisclosure{display:block;font-size:12px;line-height:1.4;color:inherit;opacity:.78;margin-bottom:12px}.townResidentNote{transform:none!important;padding:13px 15px}.townResidentNote strong{font-size:13px;color:#64754f}.townResidentNote p{font-size:15px;line-height:1.5}.wallReplies{margin-top:9px;border-top:1px solid #b6a07955;padding-top:7px}.wallReplies summary{font-size:13px;cursor:pointer;min-height:32px;line-height:1.5}.wallReply{border-left:2px solid #baa17a;padding-left:10px;margin:8px 0}.wallReply p{font-size:14px}.townPostNav span{font-size:13px}';document.head.append(wallStyle);
 
 const chatComposeStyle=document.createElement('style');chatComposeStyle.textContent='.townChatCompose{display:flex;gap:8px;align-items:center;margin:8px 0}.townChatCompose input{flex:1;min-width:0;font-size:16px;padding:10px;border:1px solid #b3a886;border-radius:4px;background:#fff6e4;color:#514337}.townChatCompose button{min-height:44px;flex:0 0 auto}.townChatStatus{display:block;min-height:20px;margin:5px 0;font-size:12px;color:inherit}.townChatTranscript{max-height:36dvh!important}';document.head.append(chatComposeStyle);
+
+
+/* Social UX: a single accessible lobby with distinct public and fictional spaces.
+   Optional deployment: set window.MEOW_COMMUNITY_API to a trusted HTTPS Worker URL.
+   The local story lounge never sends a message to that endpoint. */
+let communityTab='lounge', communityView=0;
+const communityAliasKey='communityAliasV1';
+function communityURL(){
+ try{const u=new URL(window.MEOW_COMMUNITY_API||'');return u.protocol==='https:'?u.href.replace(/\/$/,''):''}catch{return ''}
+}
+function communityNickname(){return String(load(communityAliasKey,'')).trim().slice(0,24)}
+function communityNicknameForm(parent,done){
+ const form=element('form','',parent,'communityForm');
+ const input=element('input','',form);input.maxLength=24;input.required=true;input.value=communityNickname();input.placeholder=tr('Choose a nickname','取个昵称');input.setAttribute('aria-label',tr('Community nickname','社区昵称'));
+ const btn=element('button',tr('Save nickname','保存昵称'),form);btn.type='submit';
+ form.onsubmit=e=>{e.preventDefault();const name=input.value.trim();if(!name)return;save(communityAliasKey,name);done()};
+ element('small',tr('Use a nickname, not your real name or workplace.','用昵称就好，别填真实姓名或公司。'),parent,'communityMuted')
+}
+function communitySession(){
+ let token=load('communitySessionV1','');if(!/^[a-f0-9]{48}$/.test(token)){token=Array.from(crypto.getRandomValues(new Uint8Array(24)),x=>x.toString(16).padStart(2,'0')).join('');save('communitySessionV1',token)}return token
+}
+async function communityRequest(route,options={}){
+ const url=communityURL();if(!url)throw Error('Community service not configured');
+ const response=await fetch(url+route,{...options,cache:'no-store',credentials:'omit',headers:{'Content-Type':'application/json','Authorization':'Bearer '+communitySession(),...(options.headers||{})}});
+ if(!response.ok)throw Error('Community request failed: '+response.status);
+ return response.json()
+}
+function communityTabs(q){
+ const tabs=element('nav','',q,'communityTabs');tabs.setAttribute('aria-label',tr('Community spaces','社区空间'));
+ for(const [key,en,cn] of [['public','Town square','广场'],['lounge','Tea chat','茶馆闲聊'],['board','Noticeboard','留言墙']]){
+  const btn=b(tabs,tr(en,cn),()=>{communityTab=key;townChatPage()});btn.setAttribute('aria-pressed',String(communityTab===key))
+ }
+}
+function communityPublic(q,generation){
+ const status=element('p','',q,'communityMuted');status.setAttribute('role','status');
+ if(!communityURL()){
+  status.textContent=tr('The shared square is not open yet. Messages here will appear only when a live community service is connected.','公共广场尚未开放，接入联机服务后才会显示真人留言。');
+  b(q,tr('Hang out in the tea room','去茶馆坐坐'),()=>{communityTab='lounge';townChatPage()});return
+ }
+ const nick=element('div','',q,'communityIdentity');communityNicknameForm(nick,()=>townChatPage());
+ const list=element('div','',q,'townChatTranscript');list.setAttribute('role','log');list.setAttribute('aria-live','polite');
+ const form=element('form','',q,'communityForm');const input=element('input','',form);input.maxLength=180;input.placeholder=tr('Leave a friendly hello…','打个友好的招呼……');input.setAttribute('aria-label',tr('Public message','公开消息'));
+ const send=element('button',tr('Send','发送'),form);send.type='submit';send.disabled=!communityNickname();
+ element('small',tr('Public messages are shared with other visitors. No personal details, spam or harassment.','公开留言会分享给其他旅人。请勿发布个人资料、广告或骚扰内容。'),q,'communityMuted');
+ const active=()=>generation===communityView&&list.isConnected&&$('page').style.display==='block';
+ let busy=false,lastFingerprint='',pollTimer;
+ async function refresh(){
+  if(!active())return;try{
+   const data=await communityRequest('/messages');
+   if(!active())return;const messages=Array.isArray(data.messages)?data.messages.slice(-60):[];
+   const fingerprint=JSON.stringify(messages);if(fingerprint!==lastFingerprint){
+    const nearBottom=list.scrollHeight-list.scrollTop-list.clientHeight<70;
+    list.replaceChildren();
+    if(!messages.length)element('p',tr('Quiet moment. Say hello to the next traveller.','此刻很安静，给下一位旅人留句问候吧。'),list,'communityMuted');
+    for(const m of messages){const row=element('article','',list,'townChatLine');element('strong',String(m.name||'').slice(0,24),row);element('p',String(m.text||'').slice(0,180),row);const report=b(row,tr('Report','举报'),async()=>{report.disabled=true;try{await communityRequest('/report',{method:'POST',body:JSON.stringify({id:m.id})});report.textContent=tr('Reported','已举报')}catch{report.disabled=false;status.textContent=tr('Report could not be sent.','举报未发送成功。')}});report.className='communityReport'}
+    if(nearBottom)list.scrollTop=list.scrollHeight;lastFingerprint=fingerprint;
+   }status.textContent=tr('Shared with real visitors','与真实旅人共享');
+  }catch{if(active())status.textContent=tr('Cannot reach the square. Try again in a moment.','暂时连不上广场，稍后再试。')}
+  finally{if(active()){clearTimeout(pollTimer);pollTimer=setTimeout(refresh,7000)}}
+ }
+ form.onsubmit=async e=>{e.preventDefault();const value=input.value.trim();if(!value||busy||!communityNickname())return;busy=true;send.disabled=true;
+  try{await communityRequest('/messages',{method:'POST',body:JSON.stringify({name:communityNickname(),text:value})});if(active()){input.value='';await refresh()}}
+  catch{if(active())status.textContent=tr('Not sent. Your message is still here.','未发送，留言仍在输入框。')}
+  finally{busy=false;if(active())send.disabled=false}
+ };refresh()
+}
+const communityLoungeOriginal=townChatPage;
+const communityTopicExamples=[
+ ['This website is so cute!','这个小镇也太可爱了吧！'],
+ ['Anyone else hiding from work?','有没有人在偷偷摸鱼？'],
+ ['What should I eat?','今天吃什么？'],
+ ['Which place should I visit first?','第一站去哪儿比较好？']
+];
+const communityExtraReplies={
+ navigation:[[['MRT Uncle','地铁阿叔'],['Try the temple first, then take the train to the coast. No need to rush.','先逛庙里，再坐车去海边，慢慢来。']]],
+ game:[[['Mochi','麻薯'],['Have you met the cats in Daydream Park? We take our naps very seriously.','去过白日梦公园了吗？我们睡觉可认真了。']]]
+};
+const communityTopicOriginal=townChatTopic;
+townChatTopic=function(v){if(/where|which place|visit first|how to play|去哪|怎么玩|第一站/.test(String(v).toLowerCase()))return 'navigation';if(/game|arcade|cat|游戏|猫|娃娃机/.test(String(v).toLowerCase()))return 'game';return communityTopicOriginal(v)};
+const communityReplyOriginal=townChatReply;
+townChatReply=function(v,turn){const pool=communityExtraReplies[townChatTopic(v)];return pool?pool[turn%pool.length]:communityReplyOriginal(v,turn)};
+townChatPage=function(){
+ const generation=++communityView;++townChatGeneration;
+ if(communityTab==='lounge'){
+  communityLoungeOriginal();
+  const q=$('content'),header=q.querySelector('h1'),intro=header?.nextElementSibling;
+  if(header)header.textContent=tr('Town Square','摸鱼广场');
+  if(intro)intro.textContent=tr('A little company between adventures.','逛累了，就来聊两句。');
+  const controls=element('section','',q,'communityHeader');communityTabs(controls);
+  element('small',tr('Tea chat · fictional town companions, private to this visit.','茶馆闲聊 · 虚构小镇伙伴，仅本次会话可见。'),controls,'communityMuted');
+  const log=q.querySelector('.townChatTranscript');if(log)q.insertBefore(controls,log);
+  const chips=q.querySelector('.townChatChoices');const input=q.querySelector('.townChatCompose input');const form=q.querySelector('.townChatCompose');
+  if(chips&&input&&form){chips.replaceChildren();for(const prompt of communityTopicExamples)b(chips,tr(...prompt),()=>{input.value=tr(...prompt);form.requestSubmit()})}
+ }else{
+  page(tr('Town Square','摸鱼广场'),tr('A little company between adventures.','逛累了，就来聊两句。'),q=>{
+   communityTabs(q);
+   if(communityTab==='public')communityPublic(q,generation);
+   else{renderResidentNoticeboard(q);b(q,tr('Open my private notes','打开我的私密留言'),()=>todayScoopBefore.call($('dockScoop')))}
+  })
+ }
+ // Switching language keeps the selected community tab rather than leaving the page.
+ const q=$('content'),lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();townChatPage()};
+};
+todayHub=function(){
+ page(tr('Today in MeowBox','摸鱼小镇 · 今日'),tr('A little something new each day.','每天都有一点新鲜事。'),q=>{
+  const social=element('section','',q,'communityWelcome');element('h2',tr('Fancy some company?','来摸鱼搭个伴？'),social);
+  element('p',tr('Share a little nonsense, see what’s on the board, or just say hi.','聊两句废话，看看留言墙，或者打声招呼。'),social);
+  b(social,tr('Open Town Square','进入摸鱼广场'),()=>{communityTab=communityURL()?'public':'lounge';townChatPage()});
+  b(social,tr('Town chat','小镇聊天室'),()=>{communityTab='lounge';townChatPage()});
+  renderTownFortune(q);
+  b(q,tr('Read the town paper','翻翻摸鱼日报'),()=>todayScoopBefore.call($('dockScoop')));
+ })
+};
+$('dockScoop').onclick=todayHub;
+// Preserve earned progress, but make the otherwise cryptic number legible.
+const communityHUDPrevious=updateHUD;
+updateHUD=function(){communityHUDPrevious();const coins=$('hudCoins');coins.textContent=tr('Paws ','爪币 ')+(items.length*10);coins.title=tr('Paw coins from discoveries; not real money.','探索所得爪币，不是真实货币。');coins.setAttribute('aria-label',coins.title+' '+items.length*10)};
+const communityProfileOriginal=myRoom;
+myRoom=function(){communityProfileOriginal();const q=$('content'),profile=q.querySelector('.albumProfile');if(profile){
+ const editor=element('details','',profile.parentElement,'communityNameEditor');profile.after(editor);element('summary',tr('Edit traveller nickname','修改旅人昵称'),editor);
+ const form=element('form','',editor,'communityForm'),input=element('input','',form);input.value=playerName||'';input.maxLength=24;input.required=true;input.setAttribute('aria-label',tr('Traveller nickname','旅人昵称'));const btn=element('button',tr('Save','保存'),form);btn.type='submit';
+ form.onsubmit=e=>{e.preventDefault();const name=input.value.trim();if(!name)return;playerName=name;save('playerName',name);updateHUD();myRoom();toast(tr('Nickname updated.','昵称已修改。'))};
+ }};
+$('dockRoom').onclick=myRoom;$('profileHud').onclick=myRoom;
+const communityStyle=document.createElement('style');
+communityStyle.textContent='.communityWelcome{background:#eee3ca;border:1px solid #b8a47c;padding:14px;margin:12px 0 20px;border-radius:5px;color:#4c5945}.communityWelcome h2{margin:0 0 5px}.communityWelcome button{margin:4px 6px 4px 0;min-height:44px}.communityTabs{display:flex;gap:4px;margin:10px 0 12px}.communityTabs button{flex:1;min-width:0;min-height:44px;padding:6px 3px!important;font-size:13px;white-space:normal;line-height:1.2}.communityTabs button[aria-pressed=true]{background:#526a54;color:#fff6e4;border-color:#526a54}.communityMuted{display:block;font-size:12px;line-height:1.45;margin:7px 0 12px;opacity:.85}.communityForm{display:flex;align-items:center;gap:7px;margin:9px 0}.communityForm input{min-width:0;flex:1;font-size:16px;padding:10px;background:#fff8e7;color:#514337;border:1px solid #b3a886;border-radius:4px}.communityForm button{min-height:44px;flex:0 0 auto;padding:8px}.communityIdentity{margin-bottom:12px}.communityReport{font-size:12px;min-height:32px;box-shadow:none!important;background:transparent!important;color:#6a6255!important;padding:3px 8px!important}.communityNameEditor{margin:12px 0}.communityNameEditor summary{cursor:pointer;padding:10px 0}.townChatTranscript{max-height:40dvh!important;min-height:110px;overscroll-behavior:contain}.townChatLine{border-radius:10px 10px 10px 2px}.townChatLine.self{border-radius:10px 10px 2px 10px}.townChatChoices button{min-height:44px}.townChatCompose{position:relative}';
+document.head.append(communityStyle);
