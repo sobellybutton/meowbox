@@ -126,5 +126,26 @@ module.exports=function runQualityChecks(s,log=console.log){
  results.bagInventory=build(range('const boxPrizes=','function boxSelect(')+"const keepsakes=boxPrizes.map(p=>[p[0],p[1],'cat']);const items=[boxPrizes[0].slice(0,2),['Legacy postcard','旧明信片'],boxPrizes[5].slice(0,2),boxPrizes[0].slice(0,2)];const collectionKind=()=> 'stamp';"+range('function bagClass(','function bagFigureIcon(')+`
  const all=bagEntries();if(all.length!==14||all.filter(v=>v.owned).length!==3)throw Error('Duplicate or missing inventory');
  if(bagClass(items[2])!=='figures'||bagClass(items[1])!=='travel'||bagClass(['Milk tea recipe','奶茶配方'])!=='food')throw Error('Category mismatch');return 6;`);
+
+ // 19. Exercise the live sign synchronization routine with instrumented DOM
+ // doubles. Walking past a stationary camera must not mutate plaque positions.
+ results.mapSignStability=build(`
+ let now=0,scene='fortune',room=null,transitioning=false,avatar=0,quiet9=false,valleyRevealAt=-1,signPress=null,signsForScene=null,zh=false,W=390,H=844,p={x:0,y:0},cam={ox:0,oy:0,scale:1},syncSigns;
+ let mutations=0;const signButtons=new Map(),proposal={hidden:true},signRoot={hidden:true,classList:{remove(){}},replaceChildren(){},getBoundingClientRect(){return {left:0,top:0}}};
+ const performance={now:()=>now},document={querySelectorAll:()=>[]},$=()=>({hidden:true,style:{display:'none'}}),tr=(a,b)=>zh?b:a,houseSignMaterial=()=> 'wood',directSignClick=()=>{};
+ const maps=Object.fromEntries(['fortune','home','island','wonder'].map(k=>[k,{st:[['a',100,365,'Tea room','茶馆'],['b',290,445,'Park','公园'],['c',110,625,'Arcade','游戏厅']]}]));
+ const signAnchorsProposal={};const speechOverlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+ function element(tag,label,parent,cls){if(tag==='span'){const child={textContent:''};parent.plaque=child;return child}let hidden=false;const style=new Proxy({setProperty(){}},{set(o,k,v){if(o[k]!==v)mutations++;o[k]=v;return true}});
+ const node={style,dataset:{},offsetWidth:90,offsetHeight:44,attrs:{},querySelector:()=>node.plaque,replaceChildren(){node.plaque=null},setAttribute(k,v){node.attrs[k]=v},getAttribute(k){return node.attrs[k]}};Object.defineProperty(node,'hidden',{get:()=>hidden,set:v=>{if(v!==hidden)mutations++;hidden=v}});return node}
+ `+range('function meowPlaceText(','let meowTextFrameRects=')+range('let lastDoorLayoutAt=','/* Recurring villagers remember')+`
+ let checks=0;
+ for(const k of ['fortune','home','island','wonder']){
+ scene=k;for(let i=0;i<8;i++){now+=40;syncSigns()}
+ if(signButtons.size!==3||[...signButtons.values()].some(v=>v.hidden))throw Error('Missing map signs '+scene);
+ const before=mutations;for(let i=0;i<40;i++){now+=40;p.x=90+i*5;p.y=300+i*2;syncSigns()}
+ if(mutations!==before)throw Error('Stationary plaques moved while walking '+scene);checks+=40;
+ zh=!zh;now+=40;syncSigns();if([...signButtons.values()].some(v=>v.plaque.textContent!==tr(...maps[scene].st.find(d=>d[0]===v.dataset.door).slice(3))))throw Error('Language update failed');
+ checks++;
+ }return checks;`);
  log('PASS: MeowBox isolated quality checks '+JSON.stringify(results));return results
 };
