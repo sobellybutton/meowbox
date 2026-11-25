@@ -7483,3 +7483,158 @@ townDetailMaterials.textContent=
 '#page .astroThree article,#page .signNotebookResult:not(:empty),#page .chartConsultation,#page .townFortuneSlip,#page .yueAlmanacPaper:not(:empty){background-image:var(--town-grain)}'+
 '@media(prefers-reduced-motion:reduce){#game #dock button,#game #profileHud,#game #hudCoins{transition:none!important;animation:none!important}}';
 document.head.append(townDetailMaterials);
+
+
+/* Traveller's bookshelf: separate daily tasks from permanent achievements.
+   Existing save data, life points, stamps, coin rules and unlocks are retained. */
+function journalBookLink(parent,title,description,kind,fn){
+ const button=b(parent,'',fn);button.className='journalBookLink';button.dataset.book=kind;
+ const spine=element('span','',button,'journalBookSpine');spine.setAttribute('aria-hidden','true');
+ const copy=element('span','',button,'journalBookCopy');element('strong',title,copy);element('small',description,copy);return button
+}
+function journalLanguage(render){
+ const lang=$('content').querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{zh=!zh;save('zh',zh);updateHUD();render()}
+}
+function journalAchievementRows(){
+ return lifeAchievements.map(([en,cn,k,n])=>({name:[en,cn],value:lifeJournal.points[k]||0,need:n,detail:lifeAttributes[k].label,done:(lifeJournal.points[k]||0)>=n}))
+}
+function journalAchievementTile(parent,v){
+ const row=element('article','',parent,'journalAchievementTile');row.dataset.earned=String(v.done);
+ const seal=element('span',v.done?tr('Earned','成就'):tr('To do','待续'),row,'journalAchievementSeal');seal.setAttribute('aria-hidden','true');
+ const copy=element('div','',row);element('strong',tr(...v.name),copy);element('small',v.done?tr('Unlocked','已解锁'):tr(...v.detail)+' '+v.value+' / '+v.need,copy);
+ if(!v.done){const meter=element('progress','',copy);meter.max=v.need;meter.value=Math.min(v.need,v.value);meter.setAttribute('aria-label',tr(...v.name))}
+}
+function achievementBook(filter='all'){
+ page(tr('The little achievement book','摸鱼成就图鉴'),tr('Things to discover whenever the mood strikes. Nothing expires.','随缘解锁的小目标，什么时候完成都算数。'),q=>{
+ const rows=journalAchievementRows(),figures=boxPrizes.filter(v=>items.some(i=>i[0]===v[0])).length,decor=hideoutRewards.filter(hideoutUnlocked).length;
+ const book=element('section','',q,'journalShelfPage');
+ element('h2',rows.filter(v=>v.done).length+'/'+rows.length+' '+tr('Life achievements','项人生小成就'),book);
+ const tabs=element('div','',book,'journalFilterTabs');
+ for(const [id,en,cn] of [['all','All','全部'],['open','To discover','待解锁'],['done','Earned','已获得']]){const btn=b(tabs,tr(en,cn),()=>achievementBook(id));btn.setAttribute('aria-pressed',String(filter===id))}
+ const shown=rows.filter(v=>filter==='all'||v.done===(filter==='done'));
+ if(!shown.length)element('p',tr('Nothing on this page yet. Plenty of time.','这一页还空着，慢慢来。'),book);
+ shown.forEach(v=>journalAchievementTile(book,v));
+ element('h2',tr('Other little milestones','其他小小里程碑'),book);
+ journalBookLink(book,tr('Travel stamps','旅行印章'),hideoutStampCount()+'/4 '+tr('destinations','个目的地'),'passport',passport);
+ journalBookLink(book,tr('Room rewards','小窝奖励'),decor+'/'+hideoutRewards.length+' '+tr('unlocked','已解锁'),'decor',hideoutClaimPage);
+ journalBookLink(book,tr('Collectible figures','手办收藏'),figures+'/'+boxPrizes.length+' '+tr('collected','已收藏'),'figures',()=>figureCabinetPage('bag'));
+ b(q,tr('Back to my profile','返回旅人档案'),lifeProfile);journalLanguage(()=>achievementBook(filter))
+ })
+}
+function friendshipJournal(){
+ page(tr('Friends around town','小镇好友录'),tr('Familiar faces, little conversations and memories.','熟悉的脸、聊过的天，还有小镇里的回忆。'),q=>{
+ const book=element('section','',q,'journalShelfPage'),friends=Object.values(lifeJournal.friends).sort((a,b)=>b.count-a.count);
+ if(!friends.length)element('p',tr('Say hello to a resident when you feel like it.','哪天有空，就跟小镇居民打个招呼吧。'),book);
+ for(const f of friends){
+ const row=element('article','',book,'journalFriendRow'),art=paintedDialoguePortrait(f.name[0]);
+ if(art){const im=element('img','',row);im.src=art;im.alt=''}
+ const copy=element('div','',row);element('strong',tr(...f.name),copy);element('small',tr(...lifeFriendTitle(f.count))+' · '+f.count+' '+tr('days met','天相遇'),copy)
+ }
+ b(q,tr('Back to my profile','返回旅人档案'),lifeProfile);journalLanguage(friendshipJournal)
+ })
+}
+function lifeAttributesBook(){
+ page(tr('My little life notebook','摸鱼成长手记'),tr('A record of your game adventures, not a real personality or happiness score.','这是游戏里的成长记录，不是真实的人格或快乐评分。'),q=>{
+ const book=element('section','',q,'journalShelfPage'),rank=lifeRank();
+ element('h2',tr(...rank.label),book);element('p',tr('Level ','等级 ')+(rank.index+1)+' · '+rank.total+' '+tr('life points','人生积分'),book);
+ for(const [key,v] of Object.entries(lifeAttributes)){
+ const row=element('article','',book,'journalAttribute'),head=element('div','',row);element('strong',tr(...v.label),head);element('small',(lifeJournal.points[key]||0)+'/100',head);
+ const meter=element('progress','',row);meter.max=100;meter.value=lifeJournal.points[key]||0;meter.style.accentColor=v.color;meter.setAttribute('aria-label',tr(...v.label));element('small',tr(...v.desc),row)
+ }
+ element('h2',tr('Arcade records','游戏厅纪录'),book);
+ for(const [en,cn,n] of [['Bubble best score','泡泡龙最高分',lifeJournal.records.bubble],['Tic tac toe wins','井字棋胜场',lifeJournal.records.threeWins],['Tic tac toe draws','井字棋平局',lifeJournal.records.threeDraws]]){const row=element('div','',book,'lifeFriend');element('span',tr(en,cn),row);element('strong',String(n||0),row)}
+ b(q,tr('Back to my profile','返回旅人档案'),lifeProfile);journalLanguage(lifeAttributesBook)
+ })
+}
+lifeProfile=function(){
+ page(tr('Traveller’s profile','旅人档案'),tr('A small record of your time away from the busy world.','忙里偷闲，也值得好好记下来。'),q=>{
+ const rank=lifeRank(),book=element('section','',q,'journalProfileBook'),intro=element('header','',book,'journalIdentity');
+ const im=element('img','',intro);im.src=ART['portrait'+(avatar??0)];im.alt='';
+ const bio=element('div','',intro);element('small',tr('MeowBox resident card','摸鱼小镇旅人证'),bio);element('h2',playerName||tr('Traveller','旅人'),bio);element('strong',tr(...rank.label),bio);
+ b(bio,tr('Edit profile','编辑资料'),()=>hideoutProfilePage());
+ const stats=element('div','',book,'journalQuickStats');
+ for(const [value,label,fn] of [[hideoutBalance(),tr('Paw Coins','爪币'),pawWalletPage],[hideoutStampCount()+'/4',tr('Travel stamps','旅行印章'),passport],[rank.index+1,tr('Level','等级'),lifeAttributesBook]]){
+ const btn=b(stats,'',fn);element('strong',String(value),btn);element('small',label,btn)
+ }
+ const rows=journalAchievementRows(),earned=rows.filter(v=>v.done),next=rows.filter(v=>!v.done).sort((a,b)=>b.value/b.need-a.value/a.need),preview=[...earned,...next].slice(0,3);
+ element('h2',tr('Little achievements','小小成就'),book);
+ element('small',earned.length+'/'+rows.length+' '+tr('unlocked','已解锁'),book);
+ preview.forEach(v=>journalAchievementTile(book,v));
+ b(book,tr('Open achievement book','打开成就图鉴'),()=>achievementBook());
+ const shelf=element('section','',q,'journalBookshelf');element('h2',tr('My bookshelf','我的小书架'),shelf);
+ journalBookLink(shelf,tr('Daily journal','今日手账'),tr('Check in and find something to do','签到，看看今天玩什么'),'daily',todayHub);
+ journalBookLink(shelf,tr('Travel passport','旅行护照'),tr('Stamps and memories','印章与旅行回忆'),'passport',passport);
+ journalBookLink(shelf,tr('Friendship journal','小镇好友录'),Object.keys(lifeJournal.friends).length+' '+tr('familiar faces','位熟悉的小伙伴'),'friends',friendshipJournal);
+ journalBookLink(shelf,tr('Life notebook','成长手记'),tr('Attributes and game records','属性与游戏纪录'),'life',lifeAttributesBook);
+ journalBookLink(shelf,tr('Collection & bag','珍藏与背包'),items.length+' '+tr('keepsakes','件纪念品'),'figures',()=>myRoom());
+ journalBookLink(shelf,tr('My little room','我的小窝'),tr('Decorate and display your treasures','布置小窝、摆放收藏'),'decor',()=>hideoutPage());
+ journalLanguage(lifeProfile)
+ })
+};
+$('profileHud').onclick=lifeProfile;
+/* Daily activity destinations are optional navigation hints, not auto-completion. */
+function journalDailyDestination(id){return ({play:'island',food:'island',ritual:'fortune',care:'home',social:scene,release:'home'})[id]||scene}
+function journalDailyGuide(id){
+ const destination=journalDailyDestination(id),tips={play:['Visit the arcade.','去游戏厅玩一局。'],food:['Visit Grandma or Pearl & Pause.','去外婆厨房或珍珠摸鱼铺。'],ritual:['Visit the temple, Wishing Garden or Tarot House.','去庙里、许愿花园或塔罗屋。'],care:['Visit Daydream Park.','去白日梦公园。'],social:['Say hello to a resident nearby.','找附近的居民聊聊天。'],release:['Visit Worry-Free Pier.','去无忧码头。']};
+ $('page').style.display='none';
+ if(destination!==scene)journey(destination);else hint(...tips[id])
+}
+function journalDailyTaskList(parent,all=false){
+ const state=townPawToday(),categories=townPawCategories(),ordered=[...categories.filter(v=>!state.keys.includes(v.id)),...categories.filter(v=>state.keys.includes(v.id))];
+ const box=element('section','',parent,'journalDailyTasks');element('h2',tr('Things to do today','今天可以做什么'),box);
+ element('p',state.keys.length+'/'+categories.length+' '+tr('done · ','已完成 · ')+state.earned+'/40 '+tr('Paws earned','爪币到账'),box);
+ const list=element('div','',box),draw=expanded=>{
+ list.replaceChildren();
+ for(const item of ordered.slice(0,expanded?categories.length:3)){
+ const got=state.keys.includes(item.id),row=element('article','',list,'journalDailyTask');row.dataset.earned=String(got);
+ const mark=element('span',got?'✓':'+'+item.amount,row,'townPawStamp');mark.setAttribute('aria-label',got?tr('Completed','已完成'):item.amount+' '+tr('Paws','爪币'));
+ const copy=element('div','',row);element('strong',tr(...item.name),copy);element('small',tr(...item.description),copy);
+ if(!got)b(row,tr('Go','去看看'),()=>journalDailyGuide(item.id));else element('small',tr('Done','已完成'),row)
+ }
+ more.textContent=expanded?tr('Show less','收起'):tr('Show all six activities','查看全部六项活动');more.setAttribute('aria-expanded',String(expanded))
+ };
+ const more=b(box,'',()=>draw(more.getAttribute('aria-expanded')!=='true'));draw(all);
+ element('small',tr('Optional ideas. No streaks or penalties.','随心选择，不用连签，错过也不扣分。'),box);
+ return box
+}
+const journalTodayBefore=todayHub;
+todayHub=function(){
+ journalTodayBefore();const q=$('content'),old=q.querySelector('.townPawLedger'),wheel=q.querySelector('.dailyWheelOffer');
+ old?.remove();wheel?.remove();
+ const lead=element('section','',q,'journalCheckin'),claimed=dailyWheelRecord().day>=shrineClock().day;
+ const badge=element('span',claimed?tr('Stamped','已签到'):tr('Today','今日'),lead,'journalCheckinSeal');
+ const copy=element('div','',lead,'journalCheckinCopy');element('small',shrineClock().day,copy);element('h2',claimed?tr('Welcome back, traveller','旅人，欢迎回来'):tr('Your daily little treat','今日小小签到'),copy);
+ element('p',claimed?tr('Today’s free spin added ','今日签到已获得 ')+dailyWheelRecord().amount+' '+tr('Paws','爪币'):tr('One free lucky spin, 10 to 30 Paws.','每天免费转一次，10至30爪币。'),copy);
+ b(lead,claimed?tr('See today’s prize','查看今日奖励'):tr('Check in & spin','签到转转乐'),dailyWheelPage);
+ const tasks=journalDailyTaskList(q);
+ const intro=q.querySelector(':scope > p');if(intro){intro.after(lead);lead.after(tasks)}
+ const secondary=element('details','',q,'journalTownMore');element('summary',tr('Around town · news, guests & community','小镇见闻 · 日报、访客与社区'),secondary);
+ for(const el of [...q.children])if(el!==intro&&el!==lead&&el!==tasks&&el!==secondary&&!el.matches('.row,h1'))secondary.append(el);
+ journalLanguage(todayHub)
+};
+$('dockScoop').onclick=todayHub;
+function journalCheckinIndicator(){
+ const btn=$('dockScoop');if(!btn)return;
+ const pending=dailyWheelRecord().day<shrineClock().day,flag=String(pending);
+ if(btn.dataset.checkin!==flag)btn.dataset.checkin=flag;
+ btn.setAttribute('aria-label',pending?tr('Today, free check-in available','今日，可免费签到'):tr('Today, checked in','今日，已签到'))
+}
+const journalHUDPrevious=updateHUD;
+updateHUD=function(){journalHUDPrevious();journalCheckinIndicator()};
+const journalWheelBefore=dailyWheelPage;
+dailyWheelPage=function(){
+ journalWheelBefore();const q=$('content'),stage=q.querySelector('.dailyWheelStage');if(stage){const surround=element('div','',q,'journalWheelStand');stage.before(surround);surround.append(stage);const title=element('div',tr('The town’s lucky wheel','小镇幸运转盘'),surround,'journalWheelPlaque');surround.prepend(title)}
+ journalLanguage(dailyWheelPage);journalCheckinIndicator()
+};
+const journalStyle=document.createElement('style');
+journalStyle.textContent=
+'.journalProfileBook,.journalShelfPage,.journalDailyTasks,.journalCheckin,.journalBookshelf{background:var(--town-grain),#f5e9cf;border:1px solid #b5a07a;border-radius:4px;padding:14px;margin:12px 0;color:#504638;box-shadow:2px 3px 0 #bba17b30}'+
+'.journalIdentity{display:flex;align-items:center;gap:12px;border-bottom:1px dashed #bda47d;padding-bottom:12px}.journalIdentity>img{width:90px;height:110px;object-fit:contain;background:#e7d6b7;border:1px solid #c2a87c;border-radius:45% 45% 4px 4px}.journalIdentity>div{flex:1;min-width:0}.journalIdentity h2{margin:4px 0!important;overflow-wrap:anywhere}.journalIdentity small,.journalIdentity strong{display:block;line-height:1.4}.journalIdentity button{margin-top:7px;min-height:44px}'+
+'.journalQuickStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:12px 0}.journalQuickStats button{min-width:0;padding:7px 4px;background:#ead8b5;border:1px solid #b89e73;border-radius:3px}.journalQuickStats strong,.journalQuickStats small{display:block}.journalQuickStats strong{font:600 21px var(--town-title);color:#536b56}.journalQuickStats small{font-size:11px;line-height:1.4}'+
+'.journalBookLink{width:100%;display:flex!important;align-items:stretch;gap:10px;margin:8px 0;padding:0!important;text-align:left;min-height:58px;border:1px solid #b39b75!important;background:#f9eed7!important;border-radius:3px!important;overflow:hidden;color:#514638!important}.journalBookSpine{width:13px;background:#78907c;flex:none;border-right:1px solid #657761}.journalBookLink[data-book="daily"] .journalBookSpine,.journalBookLink[data-book="figures"] .journalBookSpine{background:#ae8079}.journalBookLink[data-book="passport"] .journalBookSpine,.journalBookLink[data-book="decor"] .journalBookSpine{background:#ac8b5e}.journalBookCopy{display:block;min-width:0;padding:9px 7px 9px 0}.journalBookCopy strong,.journalBookCopy small{display:block;line-height:1.4;overflow-wrap:anywhere}.journalBookCopy small{font-size:12px;color:#77654d}'+
+'.journalAchievementTile,.journalDailyTask,.journalFriendRow{display:flex;align-items:center;gap:9px;padding:10px 0;border-bottom:1px solid #c7b18b77}.journalAchievementTile>div,.journalDailyTask>div,.journalFriendRow>div{min-width:0;flex:1}.journalAchievementTile strong,.journalAchievementTile small,.journalDailyTask strong,.journalDailyTask small,.journalFriendRow strong,.journalFriendRow small{display:block;line-height:1.45;overflow-wrap:anywhere}.journalAchievementTile small,.journalDailyTask small,.journalFriendRow small{font-size:12px;color:#78654d}.journalAchievementSeal{display:grid;place-items:center;flex:none;width:41px;height:41px;border:2px double #a98d69;color:#8a765a;font:12px var(--town-title);transform:rotate(-5deg)}.journalAchievementTile[data-earned="true"] .journalAchievementSeal{color:#a35c49;border-color:#a35c49}.journalAchievementTile progress,.journalAttribute progress{width:100%;height:7px;accent-color:#84947c}.journalFilterTabs{display:flex;gap:5px;flex-wrap:wrap}.journalFilterTabs button{flex:1;min-height:44px}.journalFilterTabs button[aria-pressed="true"]{background:#536b56;color:#fff3d7}.journalFriendRow img{width:48px;height:48px;object-fit:contain;border:1px solid #ba9e75;border-radius:50%}.journalAttribute{padding:8px 0;border-bottom:1px solid #ccb68d}.journalAttribute>div{display:flex;justify-content:space-between;gap:8px}.journalAttribute small{font-size:12px}'+
+'.journalCheckin{display:flex;align-items:center;flex-wrap:wrap;gap:10px;background:var(--town-grain),#eedab3}.journalCheckinSeal{flex:none;display:grid;place-items:center;width:53px;height:53px;border:3px double #a15c49;color:#a15c49;font:600 12px var(--town-title);transform:rotate(-6deg)}.journalCheckinCopy{flex:1;min-width:0}.journalCheckinCopy h2{margin:3px 0!important;font-size:20px}.journalCheckinCopy p{margin:4px 0;font-size:13px}.journalCheckin>button{width:100%;min-height:44px;background:#536b56;color:#fff4da;border:1px solid #405947;border-radius:4px}.journalDailyTask button{min-height:44px;max-width:90px;flex:none;padding:6px 8px}.journalDailyTasks>button{width:100%;margin:9px 0}.journalTownMore{margin:12px 0;padding:10px;border:1px solid #bba47e;background:#f0e1c6}.journalTownMore summary{min-height:44px;display:list-item;padding:8px 0;font-weight:600;color:#536550;cursor:pointer}'+
+'#dockScoop{position:relative}#dockScoop[data-checkin="true"]::after{content:"";position:absolute;top:5px;right:8px;width:7px;height:7px;background:#a85b4a;border:1px solid #f9edd0;border-radius:50%;pointer-events:none}'+
+'.journalWheelStand{background:linear-gradient(90deg,#8e6a4b,#b59468 16%,#c4a87d 50%,#b59468 84%,#8e6a4b);border:2px solid #76573e;border-radius:8px;padding:9px;margin:12px auto;max-width:390px;box-shadow:inset 0 0 0 3px #d6b88b,0 4px 8px #59412c30}.journalWheelPlaque{font:600 17px/1.4 var(--town-title);text-align:center;color:#fff0ce;background:#536b56;border:1px solid #e5c896;border-radius:3px;padding:5px 8px;margin:3px 5px 8px}.journalWheelStand .dailyWheelStage{margin:0 auto!important;max-width:100%}'+
+'@media(max-width:360px){.journalProfileBook,.journalShelfPage,.journalDailyTasks,.journalCheckin,.journalBookshelf{padding:10px}.journalIdentity>img{width:72px;height:91px}.journalQuickStats strong{font-size:18px}}';
+document.head.append(journalStyle);
