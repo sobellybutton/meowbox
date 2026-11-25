@@ -5,9 +5,12 @@ const DAY=86400000, TTL=30*DAY;
 const PRESENCE_TTL=18000, PRESENCE_MIN_INTERVAL=2500;
 const worldHeights={fortune:1777,home:1516,island:1527,wonder:1519};
 const gestures=['none','wave','cheer','tea'];
+const socialRooms={home:['tea','park'],island:['kitchen','arcade']};
+const validTraveller=v=>typeof v==='string'&&/^[a-f0-9]{24}$/.test(v);
 function validatePresence(v){
  if(!v||!Object.hasOwn(worldHeights,v.place)||!Number.isInteger(v.avatar)||v.avatar<0||v.avatar>3||!Number.isFinite(v.x)||!Number.isFinite(v.y)||v.x<0||v.x>1000||v.y<0||v.y>worldHeights[v.place]||!['up','down','left','right'].includes(v.facing)||typeof v.walking!=='boolean'||!gestures.includes(v.gesture))return null;
- return {place:v.place,x:Math.round(v.x),y:Math.round(v.y),avatar:v.avatar,facing:v.facing,walking:Number(v.walking),gesture:v.gesture};
+ const room=v.room??'';if(typeof room!=='string'||(room&&(!(socialRooms[v.place]||[]).includes(room)||v.x<145||v.x>655||v.y<565||v.y>738)))return null;
+ return {room,place:v.place,x:Math.round(v.x),y:Math.round(v.y),avatar:v.avatar,facing:v.facing,walking:Number(v.walking),gesture:v.gesture};
 }
 const enc=new TextEncoder();
 const hex=b=>Array.from(new Uint8Array(b),v=>v.toString(16).padStart(2,'0')).join('');
@@ -52,9 +55,9 @@ async function handle(req,env){
  if(!env.DB||!env.RATE_SECRET||String(env.RATE_SECRET).length<32||!env.MODERATOR_TOKEN||String(env.MODERATOR_TOKEN).length<32)return reply({error:'not configured'},503);
  if(req.method==='GET'&&u.pathname==='/health'){
   await env.DB.prepare('SELECT reply_to,place FROM messages LIMIT 0').all();await env.DB.prepare('SELECT id FROM submission_events LIMIT 0').all();await env.DB.prepare('SELECT message_id FROM reports LIMIT 0').all();
-  let presence=false;if(env.ENABLE_PRESENCE==='true'){try{await env.DB.prepare('SELECT public_id FROM presence LIMIT 0').all();presence=true}catch{}}
+  let presence=false;if(env.ENABLE_PRESENCE==='true'){try{await env.DB.prepare('SELECT public_id,room FROM presence LIMIT 0').all();await env.DB.prepare('SELECT target_id FROM presence_blocks LIMIT 0').all();await env.DB.prepare('SELECT target_id FROM presence_reports LIMIT 0').all();await env.DB.prepare('SELECT public_id FROM presence_bans LIMIT 0').all();presence=true}catch{}}
   let reactions=false;try{await env.DB.prepare('SELECT kind FROM reactions LIMIT 0').all();reactions=true}catch{}
-  return reply({service:'meowbox-community',version:1,moderated:true,replies:true,places:true,presence,reactions});
+  return reply({service:'meowbox-community',version:1,moderated:true,replies:true,places:true,presence,reactions,sharedRooms:presence,presenceModeration:presence});
  }
  const now=Date.now(),cutoff=now-TTL;
  const auth=req.headers.get('Authorization')||'',token=auth.startsWith('Bearer ')?auth.slice(7):'';
@@ -66,6 +69,33 @@ async function handle(req,env){
  const owner=await digest('session:'+token);
  const db=env.DB;
 
+ if(u.pathname==='/presence/block'||u.pathname==='/presence/report'){
+  if(env.ENABLE_PRESENCE!=='true'||req.method!=='POST')return reply({error:'unavailable'},503);
+  let body;try{body=await readBody(req)}catch{return reply({error:'invalid body'},400)}
+  const self=(await rateHash(env.RATE_SECRET,'public|'+owner)).slice(0,24);
+  if(!validTraveller(body?.id)||body.id===self)return reply({error:'invalid traveller'},400);
+  if(u.pathname.endsWith('/block')){
+   if(typeof body.blocked!=='boolean')return reply({error:'invalid action'},400);
+   if(!body.blocked){await db.prepare('DELETE FROM presence_blocks WHERE owner=? AND target_id=?').bind(owner,body.id).run();return reply({ok:true})}
+   const result=await db.prepare("INSERT OR IGNORE INTO presence_blocks(owner,target_id,created) SELECT ?,?,? WHERE (SELECT COUNT(*) FROM presence_blocks WHERE owner=?)<100").bind(owner,body.id,now,owner).run();
+   if(!result.meta.changes&&!await db.prepare('SELECT 1 FROM presence_blocks WHERE owner=? AND target_id=?').bind(owner,body.id).first())return reply({error:'block limit'},429);
+   return reply({ok:true});
+  }
+  if(!['harassment','spam','other'].includes(body.reason))return reply({error:'invalid reason'},400);
+  const result=await db.prepare("INSERT OR IGNORE INTO presence_reports(reporter,target_id,reason,created) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM presence WHERE public_id=? AND updated>=?) AND (SELECT COUNT(*) FROM presence_reports WHERE reporter=? AND created>=?)<10").bind(owner,body.id,body.reason,now,body.id,now-PRESENCE_TTL,owner,now-DAY).run();
+  return reply({ok:true,recorded:!!result.meta.changes});
+ }
+ if(req.method==='GET'&&u.pathname==='/moderation/presence'){
+  const result=await db.prepare("SELECT target_id AS id,reason,COUNT(*) AS reports,MAX(created) AS lastReported FROM presence_reports GROUP BY target_id,reason ORDER BY lastReported DESC LIMIT 100").all();return reply({reports:result.results});
+ }
+ if(req.method==='POST'&&u.pathname==='/moderation/presence'){
+  let body;try{body=await readBody(req)}catch{return reply({error:'invalid body'},400)}
+  if(!validTraveller(body?.id)||!Number.isInteger(body.hours)||body.hours<0||body.hours>720)return reply({error:'invalid decision'},400);
+  if(body.hours===0)await db.prepare('DELETE FROM presence_bans WHERE public_id=?').bind(body.id).run();
+  else await db.batch([db.prepare("INSERT INTO presence_bans(public_id,until) VALUES(?,?) ON CONFLICT(public_id) DO UPDATE SET until=excluded.until").bind(body.id,now+body.hours*3600000),db.prepare('DELETE FROM presence WHERE public_id=?').bind(body.id)]);
+  return reply({ok:true});
+ }
+
  if(u.pathname==='/presence'){
   if(env.ENABLE_PRESENCE!=='true')return reply({error:'presence disabled'},503);
   if(req.method==='DELETE'){await db.prepare('DELETE FROM presence WHERE owner=?').bind(owner).run();return reply({ok:true})}
@@ -74,9 +104,10 @@ async function handle(req,env){
   if(!value)return reply({error:'invalid presence'},400);
   const since=now-PRESENCE_TTL,rate=await rateHash(env.RATE_SECRET,'presence|'+(req.headers.get('CF-Connecting-IP')||'unknown')),id=(await rateHash(env.RATE_SECRET,'public|'+owner)).slice(0,24);
   // Stable pseudonym derived server-side; do not expose bearer token, owner hash or IP.
-  const written=await db.prepare("INSERT INTO presence(owner,public_id,rate_key,place,x,y,avatar,facing,walking,gesture,updated) SELECT ?,?,?,?,?,?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM presence WHERE rate_key=? AND updated>=? AND owner<>?)<8 AND (SELECT COUNT(*) FROM presence WHERE updated>=? AND owner<>?)<100 ON CONFLICT(owner) DO UPDATE SET place=excluded.place,x=excluded.x,y=excluded.y,avatar=excluded.avatar,facing=excluded.facing,walking=excluded.walking,gesture=excluded.gesture,updated=excluded.updated,rate_key=excluded.rate_key WHERE presence.updated<=?").bind(owner,id,rate,value.place,value.x,value.y,value.avatar,value.facing,value.walking,value.gesture,now,rate,since,owner,since,owner,now-PRESENCE_MIN_INTERVAL).run();
+  if(await db.prepare('SELECT 1 FROM presence_bans WHERE public_id=? AND until>?').bind(id,now).first())return reply({error:'presence restricted'},403);
+  const written=await db.prepare("INSERT INTO presence(owner,public_id,rate_key,place,room,x,y,avatar,facing,walking,gesture,updated) SELECT ?,?,?,?,?,?,?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM presence WHERE rate_key=? AND updated>=? AND owner<>?)<8 AND (SELECT COUNT(*) FROM presence WHERE updated>=? AND owner<>?)<100 ON CONFLICT(owner) DO UPDATE SET place=excluded.place,room=excluded.room,x=excluded.x,y=excluded.y,avatar=excluded.avatar,facing=excluded.facing,walking=excluded.walking,gesture=excluded.gesture,updated=excluded.updated,rate_key=excluded.rate_key WHERE presence.updated<=?").bind(owner,id,rate,value.place,value.room,value.x,value.y,value.avatar,value.facing,value.walking,value.gesture,now,rate,since,owner,since,owner,now-PRESENCE_MIN_INTERVAL).run();
   if(!written.meta.changes)return reply({error:'presence rate limited'},429);
-  const result=await db.prepare("SELECT public_id AS id,place,x,y,avatar,facing,walking,gesture,updated FROM presence WHERE updated>=? AND place=? AND owner<>? ORDER BY updated DESC LIMIT 30").bind(since,value.place,owner).all();
+  const result=await db.prepare("SELECT p.public_id AS id,p.place,p.room,p.x,p.y,p.avatar,p.facing,p.walking,p.gesture,p.updated FROM presence p WHERE p.updated>=? AND p.place=? AND p.room=? AND p.owner<>? AND NOT EXISTS(SELECT 1 FROM presence_blocks b WHERE (b.owner=? AND b.target_id=p.public_id) OR (b.owner=p.owner AND b.target_id=?)) AND NOT EXISTS(SELECT 1 FROM presence_bans z WHERE z.public_id=p.public_id AND z.until>?) ORDER BY p.updated DESC LIMIT 30").bind(since,value.place,value.room,owner,owner,id,now).all();
   return reply({self:id,peers:result.results});
  }
  if(req.method==='GET'&&u.pathname==='/messages'){
@@ -135,6 +166,6 @@ async function handle(req,env){
  }
  return reply({error:'not found'},404)
 }
-async function purge(env){const now=Date.now();if(env.ENABLE_PRESENCE==='true')await env.DB.prepare('DELETE FROM presence WHERE updated<?').bind(now-PRESENCE_TTL).run();await env.DB.batch([env.DB.prepare('DELETE FROM messages WHERE created<?').bind(now-TTL),env.DB.prepare('DELETE FROM submission_events WHERE created<?').bind(now-DAY),env.DB.prepare('DELETE FROM reports WHERE created<?').bind(now-TTL)])}
+async function purge(env){const now=Date.now();if(env.ENABLE_PRESENCE==='true')await env.DB.batch([env.DB.prepare('DELETE FROM presence WHERE updated<?').bind(now-PRESENCE_TTL),env.DB.prepare('DELETE FROM presence_reports WHERE created<?').bind(now-TTL),env.DB.prepare('DELETE FROM presence_bans WHERE until<=?').bind(now)]);await env.DB.batch([env.DB.prepare('DELETE FROM messages WHERE created<?').bind(now-TTL),env.DB.prepare('DELETE FROM submission_events WHERE created<?').bind(now-DAY),env.DB.prepare('DELETE FROM reports WHERE created<?').bind(now-TTL)])}
 export {validatePost,normalized,validId,validatePresence,handle};
 export default {async fetch(req,env){try{return await handle(req,env)}catch{return json({error:'temporarily unavailable'},503)}},async scheduled(event,env,ctx){ctx.waitUntil(purge(env))}};
