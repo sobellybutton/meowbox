@@ -227,7 +227,7 @@ const curatedDiscoveryActionBefore=action;
 action=function(id){
  if(room==='tarot'&&id==='tarot'){
   closeTalk();return say(tr('Fortune Teller','占卜师'),tr('Something on your mind? Take your time. The cards aren’t going anywhere.','心里有事？慢慢来，牌又不会跑。'),[
-   [tr('Daily guidance · 1 card','今日指引 · 一张牌'),()=>{closeTalk();start('tarot')}],
+   [tr('Daily guidance · 1 card','今日指引 · 一张牌'),()=>{closeTalk();start('tarot');tarotToneChoice(()=>{})}],
    [tr('Find some clarity · 3 cards','三牌解惑 · 三张牌'),()=>{closeTalk();start('love')}],
    [tr('Look a little deeper · 5 cards','深入解读 · 五张牌'),()=>{closeTalk();start('love');state.readSpreadSize=5}],
    [tr('Maybe later','待会儿再来'),closeTalk]
@@ -458,7 +458,7 @@ function fiveReadingSave(){
 }
 function fiveReadingDetail(v,i){
  const d=tarotDeck[v.i];if(!d)return;
- say(tr(...fiveReadingPositions[i]),tr(d[0],d[1])+' · '+orient(v.rev)+'\n\n'+arcanaReading(d,v.rev)+'\n\n'+fiveReadingPrompt(state.readTopic,i),[[tr('Back to the cards','回到牌桌'),closeTalk]])
+ say(tr(...fiveReadingPositions[i]),tr(d[0],d[1])+' · '+orient(v.rev)+'\n\n'+arcanaReading(d,v.rev)+'\n\n'+fiveReadingPrompt(state.readTopic,i)+(tarotCommentary(d[0],v.rev,state.readTopic,state.tarotTone)?'\n\n'+tr(...tarotCommentary(d[0],v.rev,state.readTopic,state.tarotTone)):''),[[tr('Back to the cards','回到牌桌'),closeTalk]])
 }
 function fiveReadingEntries(parent,entry){
  for(const [i,v] of entry.cards.entries()){
@@ -468,7 +468,7 @@ function fiveReadingEntries(parent,entry){
 }
 function fiveReadingResult(entry,back=null){
  page(tr('Five-card reflection','五张牌解读'),tr('Consider these five perspectives together. They are prompts, not predictions.','把五个角度放在一起慢慢想。它们是启发，不是预言。'),q=>{
-  const wrap=element('section','',q,'fiveReadingBook');element('small',tr('A moment for yourself','给自己一点时间'),wrap);fiveReadingEntries(wrap,entry);element('h2',tr('Bring the reading together','把五张牌串起来'),wrap);element('p',tr('Which two cards seem to speak to each other? What would you do differently, even if you had never drawn these cards?','哪两张牌似乎在彼此呼应？就算没有抽到这些牌，你会想做出什么改变？'),wrap);element('small',tr('Keep what feels useful. Leave the rest. Your decisions are still yours.','有启发的就留下，其他的放一放。决定权始终在你手里。'),wrap);
+  const wrap=element('section','',q,'fiveReadingBook');element('small',tr('A moment for yourself','给自己一点时间'),wrap);fiveReadingEntries(wrap,entry);element('h2',tr('Bring the reading together','把五张牌串起来'),wrap);element('p',tr('Which two cards seem to speak to each other? What would you do differently, even if you had never drawn these cards?','哪两张牌似乎在彼此呼应？就算没有抽到这些牌，你会想做出什么改变？'),wrap);element('small',tr('Keep what feels useful. Leave the rest. Your decisions are still yours.','有启发的就留下，其他的放一放。决定权始终在你手里。'),wrap);const snapshot=tarotShareSnapshot({...entry,tone:entry.tone||(!back?state.tarotTone:'gentle')});if(snapshot)b(wrap,tr('Make a keepsake card','制作纪念卡'),()=>tarotKeepsakePage(snapshot,()=>fiveReadingResult(entry,back)));
   b(wrap,back?tr('Back to the reading journal','返回塔罗手记'):tr('Back to the reading table','回到牌桌'),()=>{if(back)back();else $('page').style.display='none'});if(back){const close=q.querySelector('.row button:first-child');if(close)close.onclick=back}
   const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();fiveReadingResult(entry,back)}
  })
@@ -523,4 +523,122 @@ readingTopic=function(i){
  return result
 };
 const tarotWordingStyle=document.createElement('style');tarotWordingStyle.textContent='.fiveReadingPrompt{border-left:2px solid #899577;padding-left:10px;color:#53674e;font-style:italic}.fiveReadingBook>small{display:block;line-height:1.5;margin:8px 0}';document.head.append(tarotWordingStyle);
+
+/* Tarot personality: choose a relatable private prompt and a tone, then keep
+   actual meanings separate from optional, clearly playful commentary. */
+const tarotMoodChoices=[
+ [['He didn’t reply. Again.','他又没回消息。又。'],['Should I text or keep my dignity?','主动发消息，还是保住最后一点尊严？'],['My heart needs a little kindness.','今天想对自己的心温柔一点。']],
+ [['Should I resign or am I just hungry?','我是真的想辞职，还是单纯饿了？'],['My workload and salary are not on speaking terms.','工作量和工资好像互不认识。'],['I need some clarity about work.','想理清工作上的烦恼。']],
+ [['Why does money treat me like a transit station?','钱为什么把我当中转站？'],['My wallet would like a word.','我的钱包有意见。'],['I need to feel more secure.','我想多一点安稳。']],
+ [['Is it intuition or overthinking?','这是直觉，还是我又脑补过头？'],['Just nosy about my own life.','纯粹想吃自己的瓜。'],['I need a quiet moment.','我想安静一会儿。']]
+];
+const tarotRoastMajor={
+ 'The Fool':[['A fresh start. No need to reopen the old chat.','新的开始，不必重开旧聊天框。'],['Check the ground before leaping. The group chat is not a safety net.','先看清脚下再跳，群聊可不是安全网。']],
+ 'The Magician':[['Use what you have. No need to buy another productivity app.','善用手中资源，不用再买一个效率软件。'],['One task at a time. Twenty open tabs are not a strategy.','一次做一件事，开二十个网页不算策略。']],
+ 'The High Priestess':[['Listen inward. Your notifications can sit this one out.','听听自己的心，通知栏先靠边站。'],['A feeling is not automatically a fact. Even at 2 am.','感受不一定是事实，凌晨两点也一样。']],
+ 'The Empress':[['Care for yourself too. You are not the town’s free pantry.','也照顾一下自己，你不是全镇免费茶水间。'],['Overgiving is not a subscription you must renew.','过度付出不是必须续费的会员。']],
+ 'The Emperor':[['Boundaries are allowed. Even without a calendar invite.','设立界限不用先发会议邀请。'],['Not everything needs a spreadsheet. The spreadsheet can rest.','不是所有事都要做表格，表格也该休息。']],
+ 'The Hierophant':[['Tradition has its uses. So does asking why.','经验有用，问一句为什么也有用。'],['An old rule is not automatically a good rule.','老规矩不一定是好规矩。']],
+ 'The Lovers':[['Choose with care. Your heart is not an automatic renewal.','认真选择，你的心又不是自动续费。'],['Check whether your choices and values agree. No committee required.','看看选择和价值观是否一致，不必开委员会。']],
+ 'The Chariot':[['Pick a direction. Running in circles is still cardio, not progress.','选个方向，原地转圈算运动，不算进度。'],['Slow down. You are not racing the last train.','慢一点，你又不是在追末班车。']],
+ 'Strength':[['Gentleness counts. Nobody asked you to wrestle the whole week.','温柔也算本事，没人让你跟整周生活摔跤。'],['Rest is allowed. You do not need a permission slip.','可以休息，不用请示批准。']],
+ 'The Hermit':[['A little solitude. Your phone can survive without supervision.','独处一会儿，手机没人监管也能活。'],['Quiet time is good. Going permanently offline is not the only option.','安静一下很好，不必直接永久下线。']],
+ 'Wheel of Fortune':[['Things change. Even the meeting agenda, apparently.','事情会变，会议议程尤其擅长。'],['You cannot control every turn. Save your energy for the brakes.','不是每个转弯都能控制，留点力气踩刹车。']],
+ 'Justice':[['Consider the facts. A dramatic playlist is not evidence.','看清事实，伤感歌单不算证据。'],['Check the assumptions. The evidence deserves a proper hearing.','核对一下预设，别让证据连发言机会都没有。']],
+ 'The Hanged Man':[['Try another angle. No actual hanging upside down required.','换个角度，不必真的倒挂。'],['Waiting and avoiding are not quite the same thing.','等待和逃避，还是有一点区别的。']],
+ 'Death':[['Some chapters end so others can begin.','有些章节结束了，新的章节才有空间开始。'],['Change can take time. You do not have to rush it.','改变需要时间，不必催自己。']],
+ 'Temperance':[['Balance. Three coffees do not count as a balanced breakfast.','讲究平衡，三杯咖啡不算均衡早餐。'],['Make room for the middle ground. All or nothing is exhausting.','给中间地带留点空间，非黑即白太累了。']],
+ 'The Devil':[['Notice what keeps you hooked. Autoplay is suspicious.','留意让你停不下来的东西，自动播放很可疑。'],['One small boundary can make a difference.','一个小小的界限，也能带来改变。']],
+ 'The Tower':[['When something feels uncertain, take it one step at a time.','当一切不太确定时，一步一步来。'],['You do not need to rebuild everything today.','不用今天就把一切重新搭好。']],
+ 'The Star':[['Keep a little hope. It does not require a performance review.','留一点希望，不用给它做绩效考核。'],['Hope can be quiet. It does not have to sparkle on demand.','希望可以很安静，不必随叫随闪。']],
+ 'The Moon':[['Uncertainty is not an invitation to write twelve imaginary endings.','不确定，不代表要脑补十二个结局。'],['Look for clarity before filling in the blanks.','先找清楚事实，别急着自己补剧情。']],
+ 'The Sun':[['Enjoy the good bit. No need to ask when the next problem starts.','好好享受开心的时刻，别急着问下个麻烦什么时候来。'],['A small joy is still joy. No fireworks required.','小小的快乐也是快乐，不用放烟花。']],
+ 'Judgement':[['Reflect, then move on. This is not an annual appraisal.','反思，然后往前走，这不是年度考核。'],['Your inner critic does not need a megaphone.','内心的批评家不需要扩音器。']],
+ 'The World':[['Something is complete. Resist the urge to add one more deliverable.','一件事完成了，忍住别再加一个交付项。'],['Unfinished does not mean failed. Leave room for the next chapter.','没完成不代表失败，给下一章留点空间。']]
+};
+const tarotRoastMinor={
+ 'Four of Swords':[['Rest. Not refresh the chat.','宇宙让你休息，不是让你刷新聊天记录。'],['You may need a proper break, not another five-minute scroll.','你可能需要真正休息，不是再刷五分钟手机。']],
+ 'Eight of Pentacles':[['Your dedication is admirable. Your salary should probably be informed.','你的努力值得肯定，建议也通知一下你的工资。'],['Doing more is not always doing better.','做得更多，不一定做得更好。']],
+ 'Two of Cups':[['Connection is a two-person job.','双向奔赴，至少需要两个人。'],['A mismatch is worth a conversation, not a detective agency.','有分歧就聊聊，不必成立侦探社。']],
+ 'Seven of Cups':[['Too many options. Even the bubble tea menu has fewer decisions.','选项太多，奶茶菜单都没这么难选。'],['Choose what matters. No need to open another seventeen tabs.','选真正重要的，不用再开十七个网页。']],
+ 'Ten of Wands':[['You can put something down. You are not the luggage trolley.','可以放下一点，你又不是行李推车。'],['Ask for help. Carrying everything is not a personality test.','试着求助，什么都自己扛不是人格测试。']],
+ 'Nine of Swords':[['Be kind to yourself when thoughts feel overwhelming.','思绪太多的时候，记得对自己温柔一点。'],['A difficult night does not define your whole life.','难熬的一晚，不代表整个人生。']],
+ 'Three of Swords':[['Give yourself time and room to feel what hurts.','给自己时间和空间，慢慢感受那些难过。'],['Healing does not need a deadline.','疗愈不需要截止日期。']],
+ 'Five of Cups':[['It is okay to feel disappointed.','感到失望也没关系。'],['Notice what remains, without dismissing what you lost.','看看还在的东西，也别否定失去的难过。']]
+};
+const tarotSensitiveNames=new Set(['Death','The Tower','Nine of Swords','Three of Swords','Five of Cups','Ten of Swords','Five of Pentacles']);
+function tarotCommentary(name,rev,topic,tone='gentle'){
+ if(tone!=='playful')return null;
+ const exact=tarotRoastMinor[name]||tarotRoastMajor[name];if(exact)return exact[rev?1:0];
+ if(tarotSensitiveNames.has(name))return ['Take the time you need.','给自己需要的时间。'];
+ const suit=(name.match(/\b(Cups|Wands|Swords|Pentacles)\b/i)||[])[1]?.toLowerCase();
+ const generic={
+  cups:[['Feelings deserve room. They do not need a status report.','感受需要空间，不用写进度报告。'],['Pause before interpreting every little signal.','别急着解读每个小信号。']],
+  wands:[['A little momentum is enough. No need to become a motivational poster.','有一点行动力就够了，不必把自己活成励志海报。'],['Pace yourself. Even enthusiasm needs lunch.','慢一点，热情也需要吃午饭。']],
+  swords:[['Think clearly. Your brain can close a few tabs.','理清思路，脑内网页可以关几个了。'],['A thought is not automatically a fact.','一个念头不一定就是事实。']],
+  pentacles:[['Small practical steps count. Your future self appreciates receipts.','小小的实际行动也算数，未来的你会感谢现在的记录。'],['Check your resources before making another commitment.','再答应一件事之前，先看看自己的余力。']]
+ };
+ return generic[suit]?.[rev?1:0]||null
+}
+function tarotToneChoice(next){
+ say(tr('Fortune Teller','占卜师'),tr('A little cosmic side-eye, or a quiet reading? You choose.','想被宇宙轻轻吐槽一下，还是安静读牌？你选。'),[
+ [tr('A gentle roast, please','轻轻吐槽一下'),()=>{closeTalk();state.tarotTone='playful';next()}],
+ [tr('Be kind today','今天温柔一点'),()=>{closeTalk();state.tarotTone='gentle';next()}]
+ ])
+}
+const tarotMoodTopicBefore=readingTopic;
+readingTopic=function(i){
+ if(state.readStage!=='topic'||!Number.isInteger(i)||i<0||i>3)return tarotMoodTopicBefore(i);
+ const active=state,finish=(gentle)=>{if(state!==active)return;closeTalk();if(gentle){state.tarotTone='gentle';tarotMoodTopicBefore(i)}else tarotToneChoice(()=>{if(state===active)tarotMoodTopicBefore(i)})};
+ return say(tr('Fortune Teller','占卜师'),tr('What brought you here? You can keep the details to yourself.','今天为什么来？细节可以留在心里。'),[
+ ...tarotMoodChoices[i].map((v,j)=>[tr(...v),()=>finish(j===2)]),
+ [tr('My own question, quietly','心里有自己的问题'),()=>finish(true)],
+ [tr('Back to the topics','返回主题'),closeTalk]
+ ])
+};
+const tarotCommentShowBefore=readingShow;
+readingShow=function(i){
+ const v=state.readCards?.[i];const result=tarotCommentShowBefore(i);
+ if(!v||!talkOpen||state.readFlip?.[i]<0||t-state.readFlip[i]<.72)return result;
+ const joke=tarotCommentary(tarotDeck[v.i]?.[0]||'',v.rev,state.readTopic,state.tarotTone);const line=$('line');
+ if(joke&&line)line.textContent+='\n\n'+tr('A little cosmic side-eye: ','宇宙轻轻吐槽：')+tr(...joke);
+ if(state.readCards?.length&&state.readFlip?.every(v=>v>=0&&t-v>=.72)){const snapshot=tarotShareSnapshot(state);if(snapshot)b($('choices'),tr('Make a keepsake card','制作纪念卡'),()=>tarotKeepsakePage(snapshot))}
+ return result
+};
+function tarotShareSnapshot(source){
+ const cards=source.readCards||source.cards;if(!Array.isArray(cards)||![1,3,5].includes(cards.length)||!cards.every(v=>Number.isInteger(v.i)&&tarotDeck[v.i]&&typeof v.rev==='boolean'))return null;
+ return {cards:cards.map(v=>({i:v.i,rev:v.rev})),tone:source.tarotTone||source.tone||'gentle'}
+}
+function tarotKeepsakePage(entry,back=null){
+ page(tr('A little cosmic keepsake','宇宙寄来一张卡'),tr('Only the cards and a small takeaway. Your question stays private.','只分享牌面与一句提醒，私人的问题留给自己。'),q=>{
+ const wrap=element('section','',q,'tarotKeepsake');const controls=element('div','',wrap,'tarotKeepsakeFormats');
+ const canvas=element('canvas','',wrap,'tarotKeepsakeCanvas');canvas.setAttribute('aria-label',tr('Preview of your tarot keepsake','塔罗纪念卡预览'));
+ let format='feed';const dims={feed:[1080,1350],xhs:[1080,1440],story:[1080,1920],square:[1080,1080]};
+ const focus=entry.cards[entry.cards.length===1?0:entry.cards.length===3?2:3],joke=tarotCommentary(tarotDeck[focus.i][0],focus.rev,-1,entry.tone);
+ function render(useArt=true){
+ const [w,h]=dims[format];canvas.width=w;canvas.height=h;const g=canvas.getContext('2d');const paper=g.createLinearGradient(0,0,w,h);paper.addColorStop(0,'#f9eed4');paper.addColorStop(.56,'#e9d9b4');paper.addColorStop(1,'#ccb58b');g.fillStyle=paper;g.fillRect(0,0,w,h);
+ g.strokeStyle='#8c744b';g.lineWidth=3;g.strokeRect(35,35,w-70,h-70);g.strokeStyle='#b69b65';g.lineWidth=1.8;g.strokeRect(46,46,w-92,h-92);
+ for(const [x,y] of [[65,65],[w-65,65],[65,h-65],[w-65,h-65]]){g.save();g.translate(x,y);g.strokeStyle='#8b7955';for(let i=0;i<8;i++){g.rotate(Math.PI/4);g.beginPath();g.ellipse(0,13,4,12,0,0,Math.PI*2);g.stroke()}g.restore()}
+ function line(text,y,size=34,color='#394f45'){g.fillStyle=color;g.font='600 '+size+'px Georgia,"Noto Serif SC","Songti SC",serif';g.textAlign='center';g.fillText(text,w/2,y,w-140)}
+ function wrapped(value,y,maxWidth,size=33,maxLines=4){g.font=size+'px Georgia,"Noto Serif SC","Songti SC",serif';g.fillStyle='#554b3d';g.textAlign='center';const units=zh?Array.from(value):value.split(/\s+/);let lines=[],current='';for(const unit of units){const next=current+(zh?'':current?' ':'')+unit;if(current&&g.measureText(next).width>maxWidth){lines.push(current);current=unit}else current=next}if(current)lines.push(current);lines=lines.slice(0,maxLines);lines.forEach((v,i)=>g.fillText(v,w/2,y+i*size*1.28,maxWidth));return y+lines.length*size*1.28}
+ line('MEOWBOX  ·  '+tr('THE TAROT HOUSE','塔罗小屋'),104,25,'#79654a');
+ line(tr('A message to carry with you','带走一句宇宙的提醒'),174,45);
+ const count=entry.cards.length,rows=count===5?[2,3]:[count],areaTop=220,areaH=h*.53,cardH=Math.min(count===5?areaH/2-65:areaH-90,count===1?470:310),cardW=cardH*.58;let k=0;
+ for(let row=0;row<rows.length;row++){const n=rows[row],step=Math.max(cardW+30,Math.min(275,(w-150)/n)),cy=areaTop+(row+.5)*areaH/rows.length-25;
+ for(let j=0;j<n;j++){const v=entry.cards[k++],cx=w/2+(j-(n-1)/2)*step,x=cx-cardW/2,y=cy-cardH/2;g.fillStyle='#394f45';g.fillRect(x-5,y-5,cardW+10,cardH+10);g.strokeStyle='#b99b62';g.strokeRect(x-2,y-2,cardW+4,cardH+4);g.fillStyle='#ead8ad';g.fillRect(x,y,cardW,cardH);
+ const im=useArt?readingArtwork(v.i):null;
+ if(im?.complete&&im.naturalWidth){g.save();g.translate(cx,cy);if(v.rev)g.rotate(Math.PI);g.drawImage(im,-cardW/2,-cardH/2,cardW,cardH);g.restore()}else{g.save();g.translate(cx,cy);g.strokeStyle='#8b7652';g.lineWidth=2;g.beginPath();g.arc(0,0,cardW*.28,0,Math.PI*2);g.stroke();for(let j=0;j<12;j++){g.rotate(Math.PI/6);g.beginPath();g.moveTo(0,-cardW*.32);g.lineTo(0,-cardW*.41);g.stroke()}g.restore();g.fillStyle='#695b44';g.font='26px Georgia';g.textAlign='center';g.fillText(String(v.i+1).padStart(2,'0'),cx,cy+8)}
+ g.fillStyle='#394f45';g.font='600 '+(count===1?32:22)+'px Georgia,"Songti SC",serif';g.textAlign='center';g.fillText(tr(tarotDeck[v.i][0],tarotDeck[v.i][1]),cx,y+cardH+30,step-10);g.font='20px Georgia,"Songti SC",serif';g.fillText(orient(v.rev),cx,y+cardH+55,step-10)
+ }}
+ const quoteY=areaTop+areaH+45;wrapped(joke?tr(...joke):tr('Keep what helps you. Leave the rest.','有启发的就留下，其他的放一放。'),quoteY,w-180,36,3);
+ line(tr('A reflection, not a prediction.','一份启发，并非预言。'),h-108,24,'#79654a');line('MEOWBOX · 摸鱼小镇',h-72,24,'#79654a')
+ }
+ for(const [id,label] of [['feed','4:5'],['xhs','3:4'],['story','9:16'],['square','1:1']])b(controls,label,()=>{format=id;render()});
+ render();const images=entry.cards.map(v=>readingArtwork(v.i)).filter(Boolean);for(const im of images)if(!im.complete)im.addEventListener('load',()=>{if(canvas.isConnected)render()},{once:true});
+ b(wrap,tr('Save or share image','保存或分享图片'),async()=>{let blob;try{blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'))}catch(e){render(false);blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'))}if(!blob){toast(tr('Could not export image','暂时无法导出图片'));return}const file=new File([blob],'meowbox-tarot.png',{type:'image/png'});if(navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file]});return}catch(e){if(e.name==='AbortError')return}}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)});
+ const returnTo=back||(()=>{$('page').style.display='none'});b(wrap,tr('Back','返回'),returnTo);const close=q.querySelector('.row button:first-child');if(close)close.onclick=returnTo;const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();tarotKeepsakePage(entry,back)}
+ })
+}
+const tarotKeepsakeCSS=document.createElement('style');tarotKeepsakeCSS.textContent='.tarotKeepsake{display:flex;flex-direction:column;gap:10px;max-width:520px;margin:auto}.tarotKeepsakeCanvas{width:100%;height:auto;display:block;border:1px solid #9b8155;box-shadow:0 5px 18px #32271933}.tarotKeepsakeFormats{display:flex;gap:6px;justify-content:center}.tarotKeepsakeFormats button,.tarotKeepsake>button{min-height:44px}';document.head.append(tarotKeepsakeCSS);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
