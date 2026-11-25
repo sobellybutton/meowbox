@@ -5247,10 +5247,26 @@ function paintedResidentIndex(name){
  return Object.hasOwn(aliases,value)?aliases[value]:paintedResidentNames.findIndex(pair=>pair.some(v=>v.toLowerCase()===value))
 }
 function paintedResidentCell(i){return {x:(i%3)*56,y:Math.floor(i/3)*84,w:56,h:84}}
+const fullPaintedKeys=['temple-keeper','master-yue','fortune-teller','auntie-mei','wang-laoban','grandma'];
+function registerPaintedManifest(data){
+ if(data?.version!==1||!data.residents||typeof data.residents!=='object')return 0;
+ let count=0;
+ for(const key of fullPaintedKeys)for(const kind of ['standing','warm']){
+  const record=data.residents[key]?.[kind],path='assets/visual/painted/'+key+'/'+(kind==='standing'?'standing.webp':'expressions/warm.webp');
+  if(record?.path!==path||!Number.isInteger(record.width)||!Number.isInteger(record.height)||record.width<1||record.height<1||record.width>2048||record.height>2048)continue;
+  productionVisualManifest['resident:'+key+':'+kind]={path,width:record.width,height:record.height};count++
+ }
+ return count
+}
+function fullPaintedAsset(i,kind){
+ const id='resident:'+fullPaintedKeys[i]+':'+kind,record=productionVisualManifest[id];
+ if(!record)return null;const im=productionVisual(id);
+ return im&&im.naturalWidth===record.width&&im.naturalHeight===record.height?im:null
+}
 function drawPaintedResident(n,sc,moving,dir){
  const i=paintedResidentIndex(n?.n?.[0]);if(i<0)return false;
- const im=productionVisual('paintedResidents');if(!im)return false;
- const q=paintedResidentCell(i);if(im.naturalWidth<q.x+q.w||im.naturalHeight<q.y+q.h)return false;const height=94*sc,width=height*2/3;
+ const full=fullPaintedAsset(i,'standing'),im=full||productionVisual('paintedResidents');if(!im)return false;
+ const q=full?{x:0,y:0,w:full.naturalWidth,h:full.naturalHeight}:paintedResidentCell(i);if(im.naturalWidth<q.x+q.w||im.naturalHeight<q.y+q.h)return false;const height=94*sc,width=height*q.w/q.h;
  ctx.save();ellipse(n.x,n.y+2,width*.31,Math.max(3,4.2*sc),'#352c2438');
  if(moving&&(dir==='left'||dir==='right'))n.paintedFacing=dir;
  ctx.translate(n.x,n.y);ctx.scale((n.paintedFacing||dir)==='left'?-1:1,1);
@@ -5264,6 +5280,7 @@ const residentReducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)'
 const paintedDialogueThumbs=new Map();
 function paintedDialoguePortrait(name){
  const i=paintedResidentIndex(name);if(i<0)return null;
+ const full=fullPaintedAsset(i,'warm');if(full)return full.src;
  if(paintedDialogueThumbs.has(i))return paintedDialogueThumbs.get(i);
  const im=productionVisual('paintedResidents');if(!im)return null;
  const q=paintedResidentCell(i);if(im.naturalWidth<q.x+q.w||im.naturalHeight<q.y+q.h)return null;const thumb=document.createElement('canvas');thumb.width=56;thumb.height=48;
@@ -5276,7 +5293,8 @@ say=function(...args){
  if(i>=0&&portrait){
   const apply=()=>{if(!talkOpen||$('speaker').textContent!==String(name))return;const url=paintedDialoguePortrait(name);if(url){portrait.src=url;portrait.hidden=false;portrait.classList.add('paintedResidentPortrait');requestAnimationFrame(syncCharacterSpeech)}};
   portrait.classList.remove('paintedResidentPortrait');portrait.hidden=true;apply();
-  const im=productionVisualCache.get('paintedResidents');if(im&&!im.complete)im.addEventListener('load',apply,{once:true})
+  const im=productionVisualCache.get('paintedResidents');if(im&&!im.complete)im.addEventListener('load',apply,{once:true});
+  const warm=productionVisualCache.get('resident:'+fullPaintedKeys[i]+':warm');if(warm&&!warm.complete)warm.addEventListener('load',apply,{once:true})
  }else portrait?.classList.remove('paintedResidentPortrait');
  return result
 };
@@ -5530,3 +5548,7 @@ function soulResultIllustration(v){
  return soulIllustrationCache.get(key)
 }
 const branchSheetStyle=document.createElement('style');branchSheetStyle.textContent='#storyReadingSheet .storyPrevious{background:transparent;border:0;text-decoration:underline;color:#635644}';document.head.append(branchSheetStyle);
+
+/* The checked-in manifest is empty until the archive importer installs the
+   selected files. Existing small atlas remains the fallback, not an error. */
+fetch('assets/visual/painted/runtime.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(registerPaintedManifest).catch(()=>{});
