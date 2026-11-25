@@ -1067,9 +1067,9 @@ function poseEase(v){v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)}
    No replacement rectangle, backpack block, generic trousers or pasted head.
    The current sprite is gently deformed until dedicated action frames are available. */
 function ritualSpritePose(opts={},reach=null){
- const kneel=clamp(opts.kneel||0,0,1),sit=clamp(opts.seat||0,0,1),bow=clamp(opts.bow||0,0,1);
- const hip={x:-7*kneel-9*sit,y:-26+15*kneel+2*sit};
- const knee={x:hip.x+3+15*kneel+18*sit,y:-12+9*kneel};
+ const sit=clamp(opts.seat||0,0,1),kneel=clamp(opts.kneel||0,0,1)*(1-sit),bow=clamp(opts.bow||0,0,1);
+ const hip={x:-7*kneel-9*sit,y:-26+15*kneel+6*sit};
+ const knee={x:hip.x+3+15*kneel+18*sit,y:-12+9*kneel-6*sit};
  const foot={x:2-11*kneel+13*sit,y:0};
  const angle=bow*.65+(reach?clamp((reach.x-15)/115,-.09,.20):0)+(opts.praying?.045:0);
  const shift=reach?clamp((reach.x-12)*.12,-2,5):0;
@@ -1084,7 +1084,7 @@ function drawRitualPose(x,y,sc,opts={}){
  const reach=opts.reach?{x:(opts.reach.x-x)/sc,y:(opts.reach.y-y)/sc}:null;
  const pose=ritualSpritePose(opts,reach),{hip,knee,foot,angle,wrist}=pose;
  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
- ellipse((hip.x+foot.x)*.5,2,17,4,'#342d2838');
+ ellipse(foot.x,2,17,4,'#342d2838');
  if(!im?.naturalWidth||!im.naturalHeight){
   // Loading fallback: the existing whole character, never a synthetic action body.
   backHuman(0,0,k,false,'right',1);ctx.restore();return{x:x+wrist.x*sc,y:y+wrist.y*sc}
@@ -2421,7 +2421,7 @@ refreshControls=function(){
   inp.setAttribute('aria-label',inp.placeholder);inp.autocomplete='off';inp.value=state.riverNote||'';
   inp.oninput=()=>{if(riverIsActive())state.riverNote=inp.value};
   inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();riverPerform()}};
-  if(activity==='riverBottle'){const powerLabel=element('label',tr('Strength','力度'),el,'riverPowerLabel');powerLabel.htmlFor='riverThrowPower';const power=element('input','',el);power.id='riverThrowPower';power.type='range';power.min=15;power.max=100;power.value=state.riverStrength||60;power.setAttribute('aria-label',tr('Throw strength','投掷力度'));power.oninput=()=>{state.riverStrength=Number(power.value)}}
+  if(activity==='riverBottle'){const powerLabel=element('label',tr('Strength','力度'),el,'riverPowerLabel');powerLabel.htmlFor='riverThrowPower';const power=element('input','',el);power.id='riverThrowPower';power.type='range';power.min=15;power.max=100;power.value=state.riverStrength||60;power.setAttribute('aria-label',tr('Throw strength','投掷力度'));const value=element('output',power.value+'%',powerLabel);value.setAttribute('for',power.id);power.oninput=()=>{state.riverStrength=Number(power.value);value.textContent=power.value+'%'}}
   b(el,activity==='riverBottle'?tr('Seal & release','封瓶放走'):tr('Shout!','大声喊！'),riverPerform)
  }else if(state.riverPhase==='done'){
   b(el,tr('Again','再来一次'),riverReset);
@@ -2443,7 +2443,7 @@ drawActivity=function(){
  if(bottleMode){
   if(phase==='ready'){round(275,465,68,13,3,'#ad8860','#74583e');round(290,448,23,12,2,'#f0e1ba');riverBottleArt(330,445,.05,.75,false)}
   else if(age<.55){riverBottleArt(330,445,0,.85,age>.3);round(319,422+age*45,15,9,2,'#f1dfad')}
-  else if(age<1.1)riverBottleArt(px+15,py-70,.1,.75);
+  else if(age<1.1){const carry=ritualSpritePose({reach:{x:18,y:-42}}).wrist;riverBottleArt(px+carry.x*1.35,py+carry.y*1.35-7,.12,.75)}
   else if(age<1.85){const f=(age-1.1)/.75;if(!state.riverLaunch)state.riverLaunch={x:wrist?.x??px+24,y:(wrist?.y??py-70)-10};const launch=state.riverLaunch;riverBottleArt(launch.x+(landX-launch.x)*f,launch.y+(landY-launch.y)*f-(28+power*.62)*Math.sin(Math.PI*f),Math.PI*f,.8)}
   else {const drift=Math.min(1,(age-1.85)/2.5);if(drift<1){ctx.save();ctx.globalAlpha=1-drift;riverBottleArt(landX+75*drift,landY-18*drift+Math.sin(t*4)*2,1.2,.72);ctx.restore()}riverRing(landX,landY,age-1.85,48)}
  }else if(age>1.1&&phase!=='ready'){
@@ -3926,7 +3926,7 @@ function productionVisual(id){
 const productionPortraitBefore=portraitInteriorImage;
 portraitInteriorImage=function(id){return productionVisual(id)||productionPortraitBefore(id)};
 function drawProductionAhMa(x,y,scale=1){
- const age=t-stressSwingAt,scold=activity==='hit'&&age>=0&&age<.46;
+ const age=t-stressSwingAt,releaseAge=t-(state?.riverAt??-100),scold=(activity==='hit'&&age>=0&&age<.46)||(activity==='riverShout'&&state.riverPhase==='walk'&&releaseAge>1.1&&releaseAge<2.8);
  const im=productionVisual(scold?'ahMaScold':'ahMaIdle')||productionVisual('ahMaIdle');
  if(!im)return false;
  ctx.save();ellipse(x,y+2,37*scale,8*scale,'#3b322842');
@@ -3936,7 +3936,7 @@ function drawProductionAhMa(x,y,scale=1){
 }
 // Request the matching two poses together when first reaching the stall.
 const productionVisualStart=start;
-start=function(a){if(a==='hit'){productionVisual('fish');productionVisual('ahMaIdle');productionVisual('ahMaScold')}if(a==='pet'){productionVisual('park');productionVisual('parkCats')}return productionVisualStart(a)};
+start=function(a){if(['hit','riverBottle','riverShout'].includes(a)){productionVisual('fish');productionVisual('ahMaIdle');productionVisual('ahMaScold')}if(a==='pet'){productionVisual('park');productionVisual('parkCats')}return productionVisualStart(a)};
 
 /* Art sheet rows retain the established five cat identities.
    Eight original poses per row, all sharing the same foot pivot. */
@@ -5230,9 +5230,12 @@ function drawPaintedResident(n,sc,moving,dir){
  const im=productionVisual('paintedResidents');if(!im)return false;
  const q=paintedResidentCell(i),height=94*sc,width=height*2/3;
  ctx.save();ellipse(n.x,n.y+2,width*.31,Math.max(3,4.2*sc),'#352c2438');
- ctx.translate(n.x,n.y);ctx.scale(dir==='left'?-1:1,1);
- const bob=moving&&!residentReducedMotion.matches?-Math.abs(Math.sin(t*9+n.x*.01))*1.8*sc:0;
- ctx.drawImage(im,q.x,q.y,q.w,q.h,-width/2,-height+bob,width,height);
+ if(moving&&(dir==='left'||dir==='right'))n.paintedFacing=dir;
+ ctx.translate(n.x,n.y);ctx.scale((n.paintedFacing||dir)==='left'?-1:1,1);
+ // Interim standing art: keep the soles planted, with very subtle breathing.
+ const breath=moving&&!residentReducedMotion.matches?Math.sin(t*9+n.x*.01)*.012:0;
+ const drawnHeight=height*(1+breath);
+ ctx.drawImage(im,q.x,q.y,q.w,q.h,-width/2,-drawnHeight,width,drawnHeight);
  ctx.restore();return true
 }
 const residentReducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
