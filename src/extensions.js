@@ -697,7 +697,7 @@ const stressTargets=[['Unnecessary meetings','无效会议'],['Monday blues','�
 const stressStartBefore=start;start=function(a){stressStartBefore(a);if(a==='hit'){stressSwingAt=-10;stressLast=-10;stressCombo=0;stressPieces=[];hint('Tap the paper figure or press WHACK! No actual colleagues were harmed.','点击纸人，或按「打走烦恼」。同事们毫发无伤。')}};
 const stressSmackBefore=smack;smack=function(){if(activity!=='hit')return;stressCombo=t-stressLast<.65?stressCombo+1:1;stressLast=t;stressSwingAt=t;stressSide*=-1;stressSmackBefore();for(let i=0;i<7;i++)stressPieces.push({at:t,x:400+(Math.random()-.5)*55,y:465+(Math.random()-.5)*65,vx:(Math.random()-.5)*140,vy:-30-Math.random()*80,angle:Math.random()*TAU});if(stressPieces.length>70)stressPieces.splice(0,stressPieces.length-70);if(ambientBus&&!muted)ambientTone(100,.035,.13,'triangle');if(stressCombo===5)react('Even the paper wants annual leave.','纸人都想请年假了。');if(state.count===25)addItem('Certified worry shredder','认证烦恼粉碎机')};
 function stressSlipper(x,y,angle){ctx.save();ctx.translate(x,y);ctx.rotate(angle);let g=ctx.createLinearGradient(-20,0,22,0);g.addColorStop(0,stressTool?'#8b6541':'#a65d58');g.addColorStop(.5,stressTool?'#d3a976':'#d7a18a');g.addColorStop(1,stressTool?'#916b47':'#98544e');ctx.beginPath();ctx.moveTo(-16,41);ctx.bezierCurveTo(-28,10,-27,-44,-9,-50);ctx.bezierCurveTo(15,-56,26,-29,22,4);ctx.quadraticCurveTo(18,47,-16,41);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#684b39';ctx.lineWidth=2;ctx.stroke();ctx.strokeStyle='#f0d0a4';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-20,-16);ctx.quadraticCurveTo(0,-4,20,-16);ctx.stroke();ctx.restore()}
-const stressDrawBefore=drawActivity;drawActivity=function(){if(activity!=='hit')return stressDrawBefore();ctx.save();paintLivingBackdrop(pics.office||pics.tea);let b=livingBounds(),g=ctx.createLinearGradient(0,280,0,700);g.addColorStop(0,'#372e2820');g.addColorStop(1,'#3b2927ae');shadeLivingBackdrop(g);human(400,377,0,false,1,1.55);let wood=ctx.createLinearGradient(0,390,0,700);wood.addColorStop(0,'#b99067');wood.addColorStop(1,'#76513d');ctx.fillStyle=wood;ctx.beginPath();ctx.moveTo(215,390);ctx.lineTo(585,390);ctx.lineTo(790,1600);ctx.lineTo(10,1600);ctx.closePath();ctx.fill();for(let j=0;j<14;j++)line(185,408+j*20,615,410+j*20,'#dfb98a33',1);
+const stressDrawBefore=drawActivity;drawActivity=function(){if(activity!=='hit')return stressDrawBefore();ctx.save();paintLivingBackdrop(room==='fish'?pics.fish:(pics.office||pics.tea));let b=livingBounds(),g=ctx.createLinearGradient(0,280,0,700);g.addColorStop(0,'#372e2820');g.addColorStop(1,'#3b2927ae');shadeLivingBackdrop(g);if(room==='fish')riverAuntie(400,377,1.3);else human(400,377,0,false,1,1.55);let wood=ctx.createLinearGradient(0,390,0,700);wood.addColorStop(0,'#b99067');wood.addColorStop(1,'#76513d');ctx.fillStyle=wood;ctx.beginPath();ctx.moveTo(215,390);ctx.lineTo(585,390);ctx.lineTo(790,1600);ctx.lineTo(10,1600);ctx.closePath();ctx.fill();for(let j=0;j<14;j++)line(185,408+j*20,615,410+j*20,'#dfb98a33',1);
  txt(tr('Paper Worry Ritual','打小烦恼'),400,258,23,'#fff0d2');
  let f=Math.max(0,Math.min(1,(t-stressSwingAt)/.46)),impact=(1-f)*Math.sin(f*13);ctx.save();ctx.translate(400,491);ctx.rotate(impact*.48*stressSide);ctx.translate(impact*13,0);let paper=ctx.createLinearGradient(-50,-80,50,75);paper.addColorStop(0,'#f2d7a5');paper.addColorStop(1,'#d5b17b');ctx.fillStyle=paper;ctx.beginPath();ctx.moveTo(-25,-68);ctx.lineTo(25,-68);ctx.lineTo(31,-28);ctx.lineTo(62,-13);ctx.lineTo(47,15);ctx.lineTo(27,5);ctx.lineTo(23,66);ctx.lineTo(1,56);ctx.lineTo(-23,66);ctx.lineTo(-27,5);ctx.lineTo(-47,15);ctx.lineTo(-62,-13);ctx.lineTo(-31,-28);ctx.closePath();ctx.fill();ctx.strokeStyle='#a27a4b';ctx.stroke();line(-16,-45,-4,-40,'#78543c',2);line(16,-45,4,-40,'#78543c',2);line(-8,-28,8,-28,'#78543c',2);wonderSceneText(tr(...stressTargets[stressTarget]),0,-9,55,11,'#86563b',4);ctx.restore();
  let swing=Math.sin(Math.min(1,f)*Math.PI);stressSlipper(520-108*swing,511-45*swing,.3-1.4*swing);target(310,392,180,178,()=>{},'hit');target(474,433,90,120,()=>{},'hit');
@@ -1956,9 +1956,9 @@ drawActivity=function(){
 
 /* Friendly navigation, locally written jokes and conversational cameos. */
 for(const st of maps.home.st)if(st[0]==='fish'){st[3]='Worry-Free Pier';st[4]='忘忧码头'}
-roomActions.fish=[['pier','Send worries adrift','烦恼漂流瓶'],['fish','Go fishing','正经摸鱼'],['chat','Share a bench','找个搭子聊聊']];
+roomActions.fish=[['hit','Villain hitting','打小人'],['pier','Bottle a worry','烦恼漂流瓶'],['riverShout','Shout it out','河边喊一喊']];
 roomActions.park=[['pet','Make a furry friend','找个毛茸茸的朋友'],['chat','Chat under the trees','树下聊聊天']];
-roomActions.office=[['rant','Rant Wall','吐槽墙'],['hit','Whack your worries','打走烦恼']];
+roomActions.office=[['officeSketch','Escape the meeting','逃离无效会议']];
 roomActions.tea=[['chat','Tea and gossip','来杯茶，聊个瓜'],['board','The Daily Scoop','摸鱼日报']];
 activityTitle.hit=['Whack your worries','打走烦恼'];
 activityTitle.pet=['Make a furry friend','和毛孩子做朋友'];
@@ -2064,3 +2064,127 @@ albumProfile=function(q){
  element('p',tr('Discover new places, finish recipes and earn unique keepsakes. Repeating a chat does not earn XP.','探索新地点、完成配方、收藏不同的纪念品。重复聊天不加经验。'),box)
 };
 const rankStyle=document.createElement('style');rankStyle.textContent='.travellerProgress{padding:12px 15px;margin:0 0 15px;border:1px solid #b69a70;border-radius:8px;background:#efdfbf;color:#554438}.travellerProgress progress{width:100%;height:12px;accent-color:#698a75;display:block;margin:8px 0}.travellerProgress p{font-size:12px;line-height:1.4;margin:6px 0 0}.travellerProgress small{display:block}';document.head.append(rankStyle);
+
+
+/* Worry-Free Pier: a single emotional-release venue. Keep the legacy fish room ID
+   and earned items for saved travellers. Fishing is no longer a player-facing activity. */
+activityTitle.riverBottle=['Let it drift','烦恼漂流瓶'];
+activityTitle.riverShout=['Shout into the wind','河边喊一喊'];
+const riverIsActive=()=>activity==='riverBottle'||activity==='riverShout';
+const riverNotes=[
+ ['Not another meeting!','别再开会啦！'],
+ ['I am going on leave!','我要放假！'],
+ ['That was not a quick call!','说好的五分钟呢！'],
+ ['Tomorrow can wait!','明天的事明天说！']
+];
+function riverAuntie(x,y,sc=1){
+ ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ellipse(0,3,38,9,'#322c2855');
+ ctx.fillStyle='#68675e';ctx.beginPath();ctx.moveTo(-29,-31);ctx.quadraticCurveTo(-42,-80,-18,-94);ctx.lineTo(18,-94);ctx.quadraticCurveTo(42,-77,29,-31);ctx.closePath();ctx.fill();
+ round(-27,-64,54,43,10,'#a16e58','#6d5142');round(-19,-29,14,25,4,'#56483f');round(5,-29,14,25,4,'#56483f');
+ ellipse(0,-101,31,31,'#77716a');ellipse(15,-128,16,15,'#77716a');ellipse(0,-96,25,24,'#dcb99b');
+ line(-19,-105,-6,-101,'#654e40',2.8);line(19,-105,6,-101,'#654e40',2.8);
+ ellipse(-11,-96,2.3,2.8,'#4e443b');ellipse(11,-96,2.3,2.8,'#4e443b');line(-5,-84,6,-83,'#8f5e52',2);
+ let sw=activity==='hit'?Math.sin(Math.min(1,Math.max(0,(t-stressSwingAt)/.46))*Math.PI)*13:Math.sin(t*1.9)*2;
+ line(-23,-60,-37,-43,'#a16e58',12);line(-37,-43,-22,-35,'#dcb99b',8);
+ line(23,-60,38,-45-sw,'#a16e58',12);line(38,-45-sw,39,-33-sw,'#dcb99b',8);
+ ctx.restore()
+}
+function riverBottleArt(x,y,angle=0,scale=1,sealed=true){
+ ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.scale(scale,scale);
+ let glass=ctx.createLinearGradient(-13,0,14,0);glass.addColorStop(0,'#507f71');glass.addColorStop(.25,'#b0d6b3');glass.addColorStop(.65,'#7aa997');glass.addColorStop(1,'#4d756c');
+ ctx.fillStyle=glass;ctx.strokeStyle='#46695e';ctx.lineWidth=1.7;ctx.beginPath();ctx.moveTo(-6,-25);ctx.lineTo(6,-25);ctx.lineTo(7,-13);ctx.quadraticCurveTo(14,-8,14,2);ctx.lineTo(14,19);ctx.quadraticCurveTo(0,25,-14,19);ctx.lineTo(-14,2);ctx.quadraticCurveTo(-14,-8,-7,-13);ctx.closePath();ctx.fill();ctx.stroke();
+ line(-8,-4,-8,16,'#edf2c7bb',2);round(-7,0,14,12,2,'#efdfb9','#a78d68');if(sealed)round(-7,-30,14,6,2,'#ab8057');ctx.restore()
+}
+function riverSceneBackdrop(){
+ paintLivingBackdrop(pics.fish);
+ const b=livingBounds(),water=ctx.createLinearGradient(0,330,0,690);
+ water.addColorStop(0,'#7eaba8');water.addColorStop(.6,'#638f91');water.addColorStop(1,'#456e76');
+ ctx.save();ctx.fillStyle=water;ctx.beginPath();ctx.moveTo(b.x,365);ctx.bezierCurveTo(400,320,490,355,b.x+b.w,325);ctx.lineTo(b.x+b.w,b.y+b.h);ctx.lineTo(b.x,b.y+b.h);ctx.closePath();ctx.fill();
+ for(let i=0;i<28;i++){let x=b.x+((i*89+t*(5+i%4))%Math.max(1,b.w)),y=365+i*12;line(x,y,x+24+(i%5)*9,y,'#d3e5cc55',1.2)}
+ ctx.fillStyle='#88765a';ctx.beginPath();ctx.moveTo(b.x,544);ctx.lineTo(262,544);ctx.lineTo(355,650);ctx.lineTo(b.x+b.w,650);ctx.lineTo(b.x+b.w,b.y+b.h);ctx.lineTo(b.x,b.y+b.h);ctx.closePath();ctx.fill();
+ for(let i=0;i<8;i++)line(b.x,557+i*20,Math.min(b.x+b.w,300+i*35),557+i*20,'#c5ac7a88',2);
+ for(let i=0;i<5;i++){let x=177+i*35;line(x,550,x,518,'#765b46',5);line(x,522,x+35,522,'#c2a477',4)}
+ ctx.restore()
+}
+function riverRing(x,y,age,max=55){
+ if(age<0||age>1.5)return;ctx.save();ctx.strokeStyle='rgba(224,245,222,'+Math.max(0,1-age/1.5)*.75+')';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y,9+max*age,3+max*.28*age,0,0,TAU);ctx.stroke();ctx.restore()
+}
+function riverBegin(mode){
+ if(room!=='fish')return;
+ start(mode);state.riverPhase='ready';state.riverAt=t;state.riverNote='';state.riverMode=mode;
+ hint(...(mode==='riverBottle'?['Write a private worry, or release a blank note.','写下烦恼，或直接放走一张空白纸。']:['Choose what to shout. No microphone needed.','想喊什么就喊什么，不需要麦克风。']));
+ refreshControls()
+}
+function riverPerform(){
+ if(!riverIsActive()||state.riverPhase!=='ready')return;
+ const input=$('riverPrivateNote');if(input){state.riverNote=input.value.slice(0,100);input.value='';input.blur()}
+ if(activity==='riverShout'&&!state.riverNote)state.riverNote=tr(...riverNotes[hash(day()+'riverShout'+(state.count||0))%riverNotes.length]);
+ state.riverPhase='walk';state.riverAt=t;state.count=(state.count||0)+1;refreshControls();sound(420);
+ hint(...(activity==='riverBottle'?['Fold it, seal it, and walk to the water.','折好纸条，封好瓶子，走到河边。']:['Walk to the riverbank and let it out.','走到河边，把烦恼喊出去。']))
+}
+function riverReset(){
+ if(!riverIsActive())return;state.riverNote='';state.riverPhase='ready';state.riverAt=t;refreshControls()
+}
+const riverControlsBefore=refreshControls;
+refreshControls=function(){
+ riverControlsBefore();const el=$('gameControls');if(!el)return;el.classList.toggle('riverControls',riverIsActive());
+ if(!riverIsActive())return;
+ el.replaceChildren();el.hidden=false;
+ if(state.riverPhase==='ready'){
+  const inp=element('input','',el);inp.id='riverPrivateNote';inp.type='text';inp.maxLength=100;
+  inp.placeholder=activity==='riverBottle'?tr('A worry (optional)','写下烦恼（选填）'):tr('What would you shout?','想喊些什么？');
+  inp.setAttribute('aria-label',inp.placeholder);inp.autocomplete='off';inp.value=state.riverNote||'';
+  inp.oninput=()=>{if(riverIsActive())state.riverNote=inp.value};
+  inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();riverPerform()}};
+  b(el,activity==='riverBottle'?tr('Seal & release','封瓶放走'):tr('Shout!','大声喊！'),riverPerform)
+ }else if(state.riverPhase==='done'){
+  b(el,tr('Again','再来一次'),riverReset);
+  b(el,tr('Back to pier','返回码头'),()=>{$('back').click()})
+ }else{const status=element('span',activity==='riverBottle'?tr('Letting it go…','烦恼漂走了……'):tr('Let it out…','把烦恼喊出去……'),el);status.setAttribute('role','status')}
+};
+const riverControlStyle=document.createElement('style');riverControlStyle.textContent='#gameControls.riverControls{width:min(92vw,420px);max-width:92vw;display:flex;flex-wrap:wrap;justify-content:center;border-radius:8px;background:#eee2c9f5;padding:8px;gap:6px}#gameControls.riverControls input{min-width:0;flex:1 1 130px;width:100%;border:1px solid #b69a72;border-radius:5px;background:#fff7e5;padding:10px;font:14px system-ui;min-height:44px}#gameControls.riverControls button{font-size:13px;white-space:normal;min-height:44px}#gameControls.riverControls span{font-size:13px;padding:9px}';document.head.append(riverControlStyle);
+const riverActivityBefore=drawActivity;
+drawActivity=function(){
+ if(!riverIsActive())return riverActivityBefore();
+ riverSceneBackdrop();
+ const bottleMode=activity==='riverBottle',phase=state.riverPhase||'ready',age=Math.max(0,t-(state.riverAt||t)),walking=phase==='walk'&&age<1.1;
+ let walk=phase==='ready'?0:Math.min(1,age/1.1),px=265+walk*65,py=610-walk*70;
+ if(phase==='ready'||walking)backHuman(px,py,avatar??0,walking,'up',1.35);
+ else drawRitualPose(px,py,1.4,{reach:{x:px+26,y:py-75},bow:phase==='walk'?.12:0});
+ riverAuntie(220,485,.78);
+ if(bottleMode){
+  if(phase==='ready'){round(275,465,68,13,3,'#ad8860','#74583e');round(290,448,23,12,2,'#f0e1ba');riverBottleArt(330,445,.05,.75,false)}
+  else if(age<.55){riverBottleArt(330,445,0,.85,age>.3);round(319,422+age*45,15,9,2,'#f1dfad')}
+  else if(age<1.1)riverBottleArt(px+15,py-70,.1,.75);
+  else if(age<1.85){const f=(age-1.1)/.75;riverBottleArt(px+24+150*f,py-70-48*Math.sin(Math.PI*f)-48*f,Math.PI*f,.8)}
+  else {const drift=Math.min(1,(age-1.85)/2.5);if(drift<1){ctx.save();ctx.globalAlpha=1-drift;riverBottleArt(504+75*drift,422-18*drift+Math.sin(t*4)*2,1.2,.72);ctx.restore()}riverRing(504,422,age-1.85,48)}
+ }else if(age>1.1&&phase!=='ready'){
+  for(let i=0;i<3;i++)riverRing(375,430,age-1.1-i*.25,95);
+  if(age<2.85)wonderSceneText(tr('AAAAAH!','啊啊啊！'),450,392-(age-1.1)*12,240,24,'#fff4d5',1)
+ }
+ if(phase==='walk'&&age>(bottleMode?4.35:3.1)){
+  state.riverNote='';state.riverPhase='done';
+  if(bottleMode){addItem('Let it drift keepsake','烦恼随风纪念章');hint('Auntie: That worry is officially out of office.','阿姨：这个烦恼正式下班了。')}
+  else{addItem('River echo keepsake','河边回声纪念章');hint('Auntie: Good. Even the fish heard you.','阿姨：不错，连鱼都听见了。')}
+  refreshControls();sound(530)
+ }
+};
+const riverPropBefore=prop;
+prop=function(id,x,y){
+ if(id==='riverShout'){ctx.save();line(x-35,y+8,x-35,y-76,'#785c45',5);line(x-35,y-76,x+32,y-76,'#785c45',4);ctx.fillStyle='#b97561';ctx.beginPath();ctx.moveTo(x-28,y-73);ctx.quadraticCurveTo(x+Math.sin(t*3)*8,y-65,x+35,y-70);ctx.lineTo(x+24,y-45);ctx.lineTo(x-28,y-48);ctx.closePath();ctx.fill();ctx.restore();return}
+ if(id==='officeSketch')return riverPropBefore('rant',x,y);
+ return riverPropBefore(id,x,y)
+};
+const riverActionBefore=action;
+action=function(id){
+ if(room==='fish'&&id==='pier')return riverBegin('riverBottle');
+ if(room==='fish'&&id==='riverShout')return riverBegin('riverShout');
+ if(room==='fish'&&id==='hit'){start('hit');hint('Auntie: Hit the paper worry, not a person.','阿姨：打的是烦恼纸人，不是真人。');return}
+ if(room==='office'&&id==='officeSketch'){
+  closeTalk();return say(tr('Wang Laoban','王老板'),tr('Quick meeting. Only five minutes. It starts at 5:58 PM.','开个短会，就五分钟。下午五点五十八开始。'),[
+   [tr('Ask for an agenda','先问议程'),()=>say(tr('Wang Laoban','王老板'),tr('Excellent initiative. Please prepare the agenda.','很好，很主动。那你来准备议程吧。'),[[tr('I have a train to catch','我要赶车'),()=>{addItem('Meeting escape ticket','逃会车票');closeTalk()}]])],
+   [tr('Pretend my connection froze','假装网络卡了'),()=>say(tr('Wang Laoban','王老板'),tr('No problem. I recorded the meeting for you. All 97 minutes.','没关系，我录下来了。整整九十七分钟。'),[[tr('Clock out anyway','照常下班'),()=>{addItem('Meeting escape ticket','逃会车票');closeTalk()}]])]
+  ])
+ }
+ return riverActionBefore(id)
+};
