@@ -3600,3 +3600,175 @@ todayHub=function(){
 };
 $('dockScoop').onclick=todayHub;
 const dailyWheelCSS=document.createElement('style');dailyWheelCSS.textContent='.dailyWheelStage{position:relative;width:min(76vw,300px);margin:22px auto 10px;aspect-ratio:1}.dailyWheelDisk{width:100%;height:100%;filter:drop-shadow(0 5px 4px #34292150)}.dailyWheelDisk svg{width:100%;height:100%}.dailyWheelPointer{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:28px solid #8c4f40;filter:drop-shadow(0 2px 1px #5b4439)}.dailyWheelResult{text-align:center;font-size:15px;line-height:1.5}.dailyWheelSpin{display:block;margin:10px auto;min-height:48px;padding:10px 22px!important}.dailyWheelOffer{padding:12px 14px;margin:10px 0 15px;border:1px solid #b39b71;background:#eee2c9;color:#4e5a49}.dailyWheelOffer h2{margin:0;font-size:19px}.dailyWheelOffer p{font-size:13px}.dailyWheelOffer button{min-height:44px}';document.head.append(dailyWheelCSS);
+
+/* Daydream Park: a continuous, tactile animal-care scene rather than tap-to-fill.
+   Care is local, gentle, optional and does not punish absence. */
+const careDefaults={hunger:62,happiness:42,trust:18,energy:72,thirst:42};
+let parkCareRecords=load('parkCareV2',{});
+if(!parkCareRecords||typeof parkCareRecords!=='object'||Array.isArray(parkCareRecords))parkCareRecords={};
+function careValues(raw={},now=Date.now()){
+ const out={};for(const [k,v] of Object.entries(careDefaults))out[k]=Number.isFinite(raw[k])?clamp(raw[k],0,100):v;
+ const hours=Number.isFinite(raw.at)?clamp((now-raw.at)/3600000,0,24):0;
+ out.hunger=Math.min(85,out.hunger+hours*.55);out.thirst=Math.min(85,out.thirst+hours*.4);
+ out.energy=Math.min(100,out.energy+hours*.8);return out
+}
+function careAdjust(v,changes){const out={...v};for(const [k,n] of Object.entries(changes))if(Object.hasOwn(careDefaults,k))out[k]=clamp(out[k]+n,0,100);return out}
+function careCan(v,action){
+ if(action==='feed')return v.hunger>=20;
+ if(action==='water')return v.thirst>=15;
+ if(action==='play')return v.energy>=18&&v.hunger<85;
+ if(action==='pet')return v.trust>=12;
+ return true
+}
+function careOutcome(v,action,pace=1){
+ const effects={feed:{hunger:-34,happiness:12,trust:10},water:{thirst:-35,happiness:4,trust:5},play:{happiness:18,energy:-17,hunger:5,thirst:4,trust:8},pet:{happiness:10,trust:10*pace},rest:{energy:24,happiness:5,trust:4}};
+ return careCan(v,action)&&effects[action]?careAdjust(v,effects[action]):{...v}
+}
+function careIsActive(){return activity==='pet'&&!!state.care}
+function careSave(){
+ if(!careIsActive())return;const pet=state.care,profile=parkCats[state.petKind??0];
+ parkCareRecords[profile.name[0]]={...pet.values,at:Date.now()};save('parkCareV2',parkCareRecords)
+}
+function careMessage(en,cn){if(!careIsActive())return;state.care.message=tr(en,cn);hint(en,cn);const el=$('parkCareMessage');if(el)el.textContent=state.care.message}
+function careSync(){
+ if(!careIsActive())return;const a=state.care;
+ for(const [key,value] of Object.entries(a.values)){const meter=$('parkCareMeter_'+key);if(meter)meter.value=value;const num=$('parkCareNum_'+key);if(num)num.textContent=Math.round(value)+'%'}
+ const controls=$('gameControls');if(controls)for(const btn of controls.querySelectorAll('[data-care]'))btn.disabled=a.phase!=='idle'||!careCan(a.values,btn.dataset.care);
+}
+function careComplete(action){
+ if(!careIsActive())return;const a=state.care,profile=parkCats[state.petKind??0],key=profile.name[0];
+ a.values=careOutcome(a.values,action,profile.pace);a.phase='idle';a.x=400;a.y=535;a.drag=null;a.stroke=0;careSave();
+ const jokes={
+ feed:[['Your food has passed the inspection. You may remain employed.','猫粮通过质检，你暂时不用辞职。'],['Good. The human has finally understood its job description.','不错，人类终于弄明白自己的岗位职责了。']],
+ water:[['Fresh water. The management has finally listened.','新鲜水！管理层终于听劝了。'],['Five stars. Would drink again.','五星好评，下次还喝。']],
+ play:[['The feather has been arrested for suspicious behaviour.','羽毛涉嫌可疑行为，已被逮捕。'],['No meetings. Only extremely important feather business.','不开会，只处理非常重要的羽毛事务。']],
+ pet:[['Your hand has been promoted to full-time pillow.','你的手正式晋升为全职枕头。'],['Do not stop. This is your performance review.','别停，正在给你做绩效考核。']],
+ rest:[['The cat has mastered the art of doing absolutely nothing.','猫猫已掌握无所事事的最高境界。'],['A very productive nap. No minutes were taken.','非常有产出的一觉，不用写会议纪要。']]
+ };
+ careMessage(...townReaction('park-care:'+key+':'+action,jokes[action]));
+ if(a.values.trust>=65&&a.values.happiness>=65){
+  const record=parkBonds[key]||{visits:1,friends:0};
+  if(!record.friends){record.friends=1;parkBonds[key]=record;save('parkBondsV1',parkBonds);addItem('Cat friendship','猫咪友谊');addItem('Friend of '+key,'猫咪好友：'+profile.name[1]);careMessage(...profile.friend)}
+ }
+ sound(310);careSync()
+}
+function careStart(action){
+ if(!careIsActive())return;const a=state.care;if(a.phase!=='idle'||!careCan(a.values,action))return;
+ a.phase=action;a.at=t;a.fromX=a.x;a.fromY=a.y;a.stroke=0;a.drag=null;
+ const messages={feed:['The cat is inspecting dinner.','猫猫正在检查晚饭。'],water:['Fresh water is on the way.','新鲜水来了。'],play:['Move the feather across the grass.','在草地上轻轻拖动羽毛。'],pet:['Stroke along the back, slowly.','顺着背部慢慢摸。'],rest:['Let the cat settle down in peace.','让猫猫安静地睡一会儿。']};
+ careMessage(...messages[action]);careSync()
+}
+function careTick(){
+ const a=state.care,age=t-a.at;
+ if(a.phase==='feed'||a.phase==='water'){
+  const x=a.phase==='feed'?295:505,f=poseEase(clamp(age/.9,0,1));a.x=a.fromX+(x-a.fromX)*f;a.y=a.fromY+(535-a.fromY)*f;
+  if(age>3.1)careComplete(a.phase)
+ }else if(a.phase==='rest'){if(age>4.5)careComplete('rest')}
+ else if(a.phase==='play'&&a.drag){
+  const dx=a.drag.x-a.x,dy=clamp(a.drag.y+33,470,565)-a.y;a.x+=clamp(dx*.07,-4,4);a.y+=clamp(dy*.07,-3,3);
+  if(a.stroke>=190&&age>1.1)careComplete('play')
+ }
+}
+const parkCareStartBefore=start;
+start=function(a){parkCareStartBefore(a);if(a!=='pet')return;
+ const profile=parkCats[state.petKind??0],saved=parkCareRecords[profile.name[0]]||{};
+ const values=careValues(saved);if(parkBonds[profile.name[0]]?.friends)values.trust=Math.max(values.trust,55);
+ state.care={values,x:400,y:535,phase:'idle',at:t,stroke:0,drag:null,message:tr(...profile.hello)};
+ careSave();refreshControls();hint('Drag food, water or the feather. Stroke the cat gently.','拖动猫粮、水或羽毛玩具，轻轻摸猫。')
+};
+// Disable legacy tap-to-fill, including any older event path.
+parkPetInput=function(){};
+const parkCareControlBefore=refreshControls;
+refreshControls=function(){
+ parkCareControlBefore();const controls=$('gameControls');if(!controls)return;
+ controls.classList.toggle('parkCareControls',careIsActive());
+ if(!careIsActive())return;
+ controls.replaceChildren();controls.hidden=false;
+ const stats=element('div','',controls,'parkCareStats');
+ for(const [key,en,cn] of [['hunger','Hunger','饥饿'],['happiness','Happy','开心'],['trust','Trust','信任'],['energy','Energy','精力'],['thirst','Thirst','口渴']]){
+  const row=element('div','',stats,'parkCareStat');element('span',tr(en,cn),row);const meter=element('progress','',row);meter.id='parkCareMeter_'+key;meter.max=100;meter.value=state.care.values[key];meter.setAttribute('aria-label',tr(en,cn));const num=element('small',Math.round(meter.value)+'%',row);num.id='parkCareNum_'+key
+ }
+ const buttons=element('div','',controls,'parkCareButtons');
+ for(const [key,en,cn] of [['feed','Feed','喂食'],['water','Water','喝水'],['pet','Stroke','摸摸'],['play','Feather','逗猫'],['rest','Rest','休息']]){
+  const btn=b(buttons,tr(en,cn),()=>{
+   const a=state.care;if(key==='pet'||key==='play'){
+    // Keyboard/touch alternative is a timed gentle activity, not rapid tapping.
+    careStart(key);const run=state;
+    setTimeout(()=>{if(state===run&&careIsActive()&&a.phase===key)careComplete(key)},key==='pet'?2300:3200)
+   }else careStart(key)
+  });btn.dataset.care=key
+ }
+ const msg=element('div',state.care.message,controls,'parkCareMessage');msg.id='parkCareMessage';msg.setAttribute('role','status');careSync()
+};
+function careBowl(x,y,water,filled){
+ ctx.save();ellipse(x,y+4,39,8,'#38362b44');ctx.fillStyle=water?'#819e9f':'#b87959';ctx.beginPath();ctx.moveTo(x-36,y-6);ctx.quadraticCurveTo(x-29,y+22,x,y+22);ctx.quadraticCurveTo(x+29,y+22,x+36,y-6);ctx.closePath();ctx.fill();ellipse(x,y-6,36,12,'#dbc6a2');ellipse(x,y-6,30,8,filled?(water?'#9ec5c4':'#8d684b'):'#64564b');
+ if(filled&&!water)for(let i=0;i<9;i++)ellipse(x-20+(i%5)*9,y-7+Math.floor(i/5)*4,3,2.4,'#c09260');
+ if(filled&&water)line(x-18,y-8,x+11,y-8,'#e0eee0',1.8);ctx.restore()
+}
+function careFeather(x,y){
+ ctx.save();ctx.translate(x,y);ctx.rotate(-.42);line(0,0,39,31,'#8d7356',3);line(0,0,-8,-12,'#7d654f',1.5);for(let i=0;i<3;i++){ctx.save();ctx.translate(-6-i*3,-12+i*2);ctx.rotate(i*.35);ctx.fillStyle=['#b77f67','#92a895','#e2c38d'][i];ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(-13,-17,0,-24);ctx.quadraticCurveTo(12,-13,0,0);ctx.fill();ctx.restore()}ctx.restore()
+}
+function careFood(x,y){ctx.save();ctx.translate(x,y);ctx.rotate(-.10);ctx.fillStyle='#c7a276';ctx.beginPath();ctx.moveTo(-22,-30);ctx.lineTo(22,-30);ctx.lineTo(28,25);ctx.quadraticCurveTo(0,32,-28,25);ctx.closePath();ctx.fill();line(-20,-23,20,-23,'#8b7259',3);ellipse(0,2,15,12,'#ead5ac');ellipse(-5,-1,4,4,'#957454');ellipse(5,-1,4,4,'#957454');ellipse(0,5,6,4,'#957454');ctx.restore()}
+function carePitcher(x,y){ctx.save();ctx.translate(x,y);ctx.fillStyle='#c6ded6';ctx.strokeStyle='#779994';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-20,-27);ctx.lineTo(19,-27);ctx.lineTo(30,-35);ctx.lineTo(23,-18);ctx.lineTo(22,21);ctx.quadraticCurveTo(0,28,-23,21);ctx.closePath();ctx.fill();ctx.stroke();ellipse(-1,-27,20,5,'#94b6b2');line(-15,-15,-15,12,'#e5f0df',3);ctx.restore()}
+function careCatArt(a){
+ const kind=state.petKind??0,fur=['#cb975f','#e3d8bc','#615c60','#c99c78','#929da5'][kind%5],light=['#e4ba85','#f6ead0','#858089','#e5c5a0','#bcc5c7'][kind%5];
+ const eating=(a.phase==='feed'||a.phase==='water')&&t-a.at>.9,sleep=a.phase==='rest',playing=a.phase==='play',petting=a.phase==='pet',walk=(a.phase==='feed'||a.phase==='water')&&t-a.at<.9||playing&&!!a.drag,dir=(a.phase==='feed'||playing&&a.drag?.x<a.x)?-1:1,step=walk?Math.sin(t*11)*8:0,bob=sleep?Math.sin(t*2)*1.5:walk?Math.abs(step)*.22:Math.sin(t*2)*.8;
+ ctx.save();ctx.translate(a.x,a.y);ellipse(0,6,72,13,'#393d2f44');ctx.scale(dir,1);ctx.translate(0,-bob);
+ // Curved body and articulated tail, then four paws on the same ground plane.
+ ctx.strokeStyle=fur;ctx.lineWidth=16;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-38,-23);ctx.bezierCurveTo(-78,-38,-83,-65+Math.sin(t*2)*8,-59,-76+Math.sin(t*2)*6);ctx.stroke();
+ if(!sleep){for(const [x,z] of [[-32,1],[-14,-1],[22,-1],[39,1]]){line(x,-27,x+step*z,-3,fur,13);ellipse(x+step*z+2,-2,10,5,light)}}
+ const g=ctx.createLinearGradient(0,-70,0,5);g.addColorStop(0,light);g.addColorStop(.5,fur);g.addColorStop(1,fur);
+ ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(-58,-25);ctx.bezierCurveTo(-63,-59,-24,-72,19,-53);ctx.quadraticCurveTo(58,-37,49,-16);ctx.quadraticCurveTo(0,5,-45,-8);ctx.closePath();ctx.fill();
+ if(kind===0||kind===3)for(let i=0;i<3;i++)line(-35+i*15,-52+i*2,-29+i*15,-38+i*2,'#8d633d66',4);
+ const headX=sleep?29:eating?53:43,headY=sleep?-20:eating?-24:-58;
+ ctx.save();ctx.translate(headX,headY);ctx.rotate(eating?.18*Math.sin(t*8):sleep?.12:0);
+ ctx.fillStyle=fur;ctx.beginPath();ctx.moveTo(-27,-9);ctx.lineTo(-28,-39);ctx.quadraticCurveTo(-13,-35,-7,-22);ctx.lineTo(11,-22);ctx.quadraticCurveTo(20,-37,29,-38);ctx.lineTo(29,-8);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#c59a8a';ctx.beginPath();ctx.moveTo(-23,-30);ctx.lineTo(-20,-12);ctx.lineTo(-10,-19);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(23,-30);ctx.lineTo(20,-12);ctx.lineTo(10,-19);ctx.closePath();ctx.fill();
+ ellipse(0,0,31,24,fur);ellipse(0,11,21,11,light);
+ const blink=sleep||petting||eating||t%5<.17;
+ for(const sign of [-1,1]){if(blink)line(sign*12-4,-2,sign*12+4,-2,'#514238',2.5);else{ellipse(sign*12,-2,4,5,kind===2?'#e4c375':'#52463a');ellipse(sign*12+1,-3,1.2,1.4,'#fff5d7')}}
+ ellipse(0,8,3,2.4,'#ac706a');line(0,10,0,13,'#72564e',1.5);for(const sign of [-1,1])for(let j=0;j<3;j++)line(sign*15,10+j*3,sign*35,6+j*6,'#5a514780',1);
+ ctx.restore();ctx.restore()
+}
+const parkCareDrawBefore=drawActivity;
+drawActivity=function(){
+ if(!careIsActive())return parkCareDrawBefore();
+ const a=state.care;careTick();ctx.save();
+ if(W<H&&typeof paintPortraitInterior==='function')paintPortraitInterior('park');else paintLivingBackdrop(pics.park||pics.home);
+ const shade=ctx.createLinearGradient(0,400,0,680);shade.addColorStop(0,'#596b4c00');shade.addColorStop(1,'#46553e65');shadeLivingBackdrop(shade);
+ // Leaf-strewn woven picnic mat, warm light and moving leaves give a grounded foreground.
+ ellipse(400,550,162,48,'#34443144');ellipse(400,544,148,39,'#c3af81');for(let i=0;i<7;i++)line(278+i*35,537,280+i*35,555,'#8d7e5d55',1.5);
+ for(let i=0;i<9;i++){const x=240+(i*83)%320,y=380+(i*37)%170;ellipse(x+Math.sin(t*.8+i)*7,y+Math.cos(t*.6+i)*4,3,1.5,'#e5d7a79c')}
+ careBowl(295,548,false,a.phase==='feed'&&t-a.at<3.0);careBowl(505,548,true,a.phase==='water'&&t-a.at<3.0);
+ careCatArt(a);
+ const d=a.drag,food=d?.kind==='feed'?d:{x:285,y:620},water=d?.kind==='water'?d:{x:400,y:620},toy=d?.kind==='play'?d:{x:510,y:615};
+ careFood(food.x,food.y);carePitcher(water.x,water.y);careFeather(toy.x,toy.y);
+ if(a.phase==='pet'&&d){ctx.save();ctx.globalAlpha=.8;ellipse(d.x,d.y,9,7,'#e9d5ad');ctx.restore()}
+ if(a.phase==='rest'){txt('z',a.x+47,a.y-90-Math.sin(t*2)*5,19,'#fff2d6');txt('z',a.x+61,a.y-110,14,'#fff2d6')}
+ txt(tr(...parkCats[state.petKind??0].name),400,375,24,'#fff4d9');
+ ctx.restore()
+};
+// Dedicated canvas gestures. Capture before legacy canvas listeners.
+function careCapture(e){if(!careIsActive()||$('page').style.display==='block'||talkOpen||transitioning)return false;e.preventDefault();e.stopImmediatePropagation();return true}
+c.addEventListener('pointerdown',e=>{
+ if(!careCapture(e))return;const a=state.care;if(a.phase!=='idle')return;const q=point(e);
+ let kind=null;if(Math.hypot(q.x-285,q.y-620)<43)kind='feed';else if(Math.hypot(q.x-400,q.y-620)<43)kind='water';else if(Math.hypot(q.x-510,q.y-615)<46)kind='play';else if(Math.hypot(q.x-a.x,q.y-(a.y-42))<85)kind='pet';
+ if(!kind||!careCan(a.values,kind))return;
+ if(kind==='play'||kind==='pet')careStart(kind);a.drag={kind,x:q.x,y:q.y,last:performance.now(),id:e.pointerId};a.stroke=0;c.setPointerCapture(e.pointerId)
+},true);
+c.addEventListener('pointermove',e=>{
+ if(!careCapture(e))return;const a=state.care,d=a.drag;if(!d||d.id!==e.pointerId)return;const q=point(e),delta=Math.hypot(q.x-d.x,q.y-d.y),now=performance.now(),elapsed=Math.max(16,now-d.last);d.x=q.x;d.y=q.y;d.last=now;
+ if(d.kind==='pet'){
+  if(Math.hypot(q.x-a.x,q.y-(a.y-38))>85)return;
+  if(delta/elapsed>1.5/(parkCats[state.petKind??0].sensitivity)||delta>42){a.stroke=Math.max(0,a.stroke-8);careMessage('Oi, gentle! I am not a dirty frying pan.','喂！轻点，我又不是待刷的锅！');return}
+  a.stroke+=Math.min(12,delta);if(a.stroke>=110&&t-a.at>.65)careComplete('pet')
+ }else if(d.kind==='play'){a.stroke+=Math.min(14,delta)}
+},true);
+function careRelease(e,cancel=false){
+ if(!careCapture(e))return;const a=state.care,d=a.drag;if(!d||d.id!==e.pointerId)return;const q=point(e);a.drag=null;
+ if(!cancel&&d.kind==='feed'&&Math.hypot(q.x-295,q.y-548)<55){careStart('feed');return}
+ if(!cancel&&d.kind==='water'&&Math.hypot(q.x-505,q.y-548)<55){careStart('water');return}
+ if(a.phase==='pet'||a.phase==='play'){a.phase='idle';a.x=400;a.y=535;careMessage('A little more next time. No need to rush.','下次再玩一会儿，别急。');careSync()}
+}
+c.addEventListener('pointerup',e=>careRelease(e),true);c.addEventListener('pointercancel',e=>careRelease(e,true),true);
+const parkCareCss=document.createElement('style');parkCareCss.textContent='#gameControls.parkCareControls{display:flex!important;flex-direction:column;gap:4px;width:min(95vw,440px);max-width:95vw;padding:6px;background:#eee4ccf5;border:1px solid #ad9974;color:#4b5747;border-radius:5px}#gameControls.parkCareControls[hidden]{display:none!important}.parkCareStats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;width:100%}.parkCareStat{display:flex;flex-direction:column;align-items:center;min-width:0;font-size:10px;line-height:1.2}.parkCareStat progress{width:95%;height:7px;accent-color:#71916f}.parkCareStat:first-child progress,.parkCareStat:last-child progress{accent-color:#b68c59}.parkCareStat small{font-size:10px}.parkCareButtons{display:flex;gap:3px;width:100%}.parkCareButtons button{flex:1;min-width:0;min-height:44px;padding:3px!important;font-size:12px;white-space:normal}.parkCareMessage{font-size:11px;line-height:1.3;text-align:center;min-height:14px}';document.head.append(parkCareCss);
