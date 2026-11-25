@@ -7860,3 +7860,20 @@ hideoutPage=function(){
 };
 const komorebiRenovationStyle=document.createElement('style');komorebiRenovationStyle.textContent='.komorebiRoomTabs{margin:10px 0}.komorebiFinishChoices{display:flex;gap:6px;flex-wrap:wrap}.komorebiFinishChoices button{min-height:44px;border:1px solid #b39a74;border-radius:4px;background:#f5e8ce;color:#544638}.komorebiFinishChoices button[aria-pressed=true]{outline:2px solid #80937c;outline-offset:-2px}.hideoutRoomView .hideoutScene{border:3px double #ae8f63!important;border-radius:4px!important}.komorebiBook,.komorebiConfirm{border:3px double #b49a72!important;border-radius:4px!important}.komorebiTile{border:1px solid #c3ab84!important}.hideoutRoomView .hideoutPlaced{transform:translate(-50%,-84%)}';
 document.head.append(komorebiRenovationStyle);
+
+
+/* Shop-specific scenery: display pieces along both edges, clear counter
+   approach and visible floor. Native portrait and wide illustrated drafts. */
+function komorebiShowroom(orientation){
+ const wide=orientation==='wide',w=wide?1600:800;
+ const left=wide?100:78,right=wide?1130:502,unit=wide?350:220,base=wide?265:420;
+ function cabinet(x){let cubbies='<path d="M0 0H'+unit+'V260H0Z" fill="#a38059" stroke="#72563d" stroke-width="5"/><path d="M9 9H'+(unit-9)+'V248H9Z" fill="#d8c3a0"/>';
+ for(let row=0;row<3;row++){const y=78+row*83;cubbies+='<path d="M0 '+y+'H'+unit+'" stroke="#8d6b48" stroke-width="9"/>';for(let i=0;i<3;i++){const px=(i+.5)*unit/3;cubbies+='<g transform="translate('+px+' '+(y-8)+')">'+(row===0?'<path d="M-17-42H17L24-7H-24Z" fill="#e5cda0" stroke="#a48b65"/><path d="M0-7V0" stroke="#7d6044" stroke-width="3"/>':row===1?'<rect x="-24" y="-32" width="48" height="30" rx="7" fill="'+['#819982','#b68779','#a6a393'][i]+'" stroke="#846e56"/><path d="M-18-24H18" stroke="#eddfc2"/>':'<path d="M-15-32H15L22-6Q0 4-22-6Z" fill="'+['#9aaca1','#e2d2b3','#b9a3b1'][i]+'" stroke="#806b54"/>')+'</g>'}}
+ return '<g transform="translate('+x+' '+base+')">'+cubbies+'</g>'}
+ return cabinet(left)+cabinet(right)+roomWindow(w/2-(wide?210:125),wide?125:120,wide?420:250,wide?280:270)+roomLantern(wide?490:195,wide?205:315)+roomLantern(wide?1110:605,wide?205:315)+roomPlant(wide?63:60,wide?510:754,.72)+roomPlant(wide?1540:740,wide?510:754,.72)
+}
+additionalPortraits.mystery=portraitComposition('#b1ad90','#e3d1ad','#a68b65',komorebiShowroom('portrait'));
+portraitInteriorSources.mystery=additionalPortraits.mystery;portraitInteriorCache.delete('mystery');
+const komorebiWideDetailsBefore=landscapeSideDetails;
+landscapeSideDetails=function(kind){return kind==='komorebi'?komorebiShowroom('wide'):komorebiWideDetailsBefore(kind)};
+Object.assign(landscapeRoomProfiles.mystery,{wall:'#b5b49a',floor:'#9d805c',accent:'#c2a77e',kind:'komorebi'});landscapeSourceCache.delete('mystery');
