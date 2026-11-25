@@ -72,3 +72,17 @@ const townLadleBefore=waterLadleArt;
 waterLadleArt=function(x,y,a,filled){townLadleBefore(x,y,a,filled);if(!filled)return;ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.strokeStyle='#e7efe0c0';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(34,-1,12,3,0,Math.PI*.1,Math.PI*.9);ctx.stroke();ctx.restore()};
 const townTeaCupBefore=teaCup;
 teaCup=function(x,y,sc=1,base=0,pearls=0,fill=1,angle=0){townTeaCupBefore(x,y,sc,base,pearls,fill,angle);if(activity!=='bubbleTea'||fill<=0)return;ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(-33,-70);ctx.lineTo(33,-70);ctx.lineTo(25,-3);ctx.lineTo(-25,-3);ctx.closePath();ctx.clip();const y0=-69*clamp(fill,0,1),slosh=clamp(-angle*38,-10,10);ctx.strokeStyle='#fff0d1b0';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-27,y0-slosh);ctx.quadraticCurveTo(0,y0+(residentReducedMotion.matches?0:Math.sin(t*8)*Math.abs(slosh)*.25),27,y0+slosh);ctx.stroke();ctx.restore()};
+
+/* Hand-finished prop detail and small physical feedback. */
+const townPitcherBefore=teaPitcher;
+teaPitcher=function(x,y,base,tilt=0){townPitcherBefore(x,y,base,tilt);ctx.save();ctx.translate(x,y);ctx.rotate(tilt);ellipse(1,-15,11,8,'#f3e6ccaa');ellipse(1,-15,5,3,teaChoices[Math.max(0,base)]?.[2]||'#ad8869');ctx.restore()};
+const townCounterBefore=drawFoodCounter;
+drawFoodCounter=function(){townCounterBefore();ctx.save();for(let i=0;i<17;i++){const xx=329+i*10;line(xx,565,xx-1,569,'#d9c7a0aa',1.1)}ellipse(235,537,28,9,'#5f473a44');ellipse(235,533,26,8,'#aeae8e');ellipse(235,532,20,5,'#d7cfad');ctx.restore()};
+const townCatArtBefore=careCatArt;
+careCatArt=function(a){townCatArtBefore(a);if(!a||!Number.isFinite(a.x)||!Number.isFinite(a.y)||residentReducedMotion.matches)return;const age=t-a.at;if(a.phase!=='pet'||age<0||age>1.4)return;
+ ctx.save();ctx.translate(a.x,a.y-103);for(let i=0;i<3;i++){const f=(age*.8+i*.27)%1,x=-22+i*22,y=-f*19;ctx.globalAlpha=(1-f)*.68;ctx.fillStyle='#efc2b4';ctx.beginPath();ctx.moveTo(x,y+4);ctx.bezierCurveTo(x-10,y-2,x-3,y-10,x,y-4);ctx.bezierCurveTo(x+3,y-10,x+10,y-2,x,y+4);ctx.fill()}ctx.restore()
+};
+const townRackBefore=drawTemplePaperRack;
+drawTemplePaperRack=function(x,y,sc=1,hideLatest=0){townRackBefore(x,y,sc,hideLatest);ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);for(const sign of [-1,1]){const xx=sign*109;for(const yy of [-90,88]){ellipse(xx,yy,3,3,'#b99564');ellipse(xx-1,yy-1,1,1,'#e1cfa2')}}ctx.restore()};
+const townScoopBefore=teaScoopArt;
+teaScoopArt=function(x,y,tilt=0,loaded=false){townScoopBefore(x,y,tilt,loaded);ctx.save();ctx.translate(x,y);ctx.rotate(tilt);if(loaded)for(let i=0;i<5;i++)ellipse(-19+i*5,(i%2)*4-1,1.1,1,'#b0957f');ctx.restore()};
