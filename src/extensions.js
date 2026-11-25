@@ -1213,7 +1213,8 @@ function lightTempleIncense(){requestIncenseAction('light')}
 
 /* Food Street release: prepare, serve, taste and keep the finished recipe. */
 activityTitle.bubbleTea=['Bubble tea','手摇奶茶'];
-roomActions.kitchen=[['cook','Grandma’s soup','外婆煮汤'],['bubbleTea','Bubble tea','手摇奶茶']];
+roomActions.kitchen=[['cook','Cook with Grandma','跟外婆煮汤']];
+roomActions.boba=[['bubbleTea','Make your own bubble tea','自己摇杯奶茶']];
 const foodReleaseStart=start;start=function(id){foodReleaseStart(id);if(id==='bubbleTea'){state.teaStage='base';state.teaBase=-1;state.teaPearls=0;state.teaMix=0;state.teaAt=t;hint('Choose a tea, then add pearls and shake.','选茶底，加珍珠，再摇匀。')}};
 const teaChoices=[['Milk tea','经典奶茶','#b68965'],['Jasmine milk tea','茉莉奶茶','#d7c59b'],['Brown sugar tea','黑糖奶茶','#976843']];
 function teaCup(x,y,sc=1,base=0,pearls=0,fill=1,angle=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(-36,-74);ctx.lineTo(36,-74);ctx.lineTo(26,0);ctx.lineTo(-26,0);ctx.closePath();ctx.fillStyle='#e6e3cf';ctx.fill();ctx.save();ctx.clip();let level=-69*Math.max(0,Math.min(1,fill));ctx.fillStyle=teaChoices[Math.max(0,base)][2];ctx.fillRect(-38,level,76,75);for(let i=0;i<Math.min(16,pearls);i++){let xx=-20+(i*17)%42,yy=-5-Math.floor(i/5)*7+Math.sin(t*6+i)*Math.min(3,Math.abs(angle)*12);ellipse(xx,yy,4.2,4.2,'#4b342e')}ctx.restore();ctx.strokeStyle='#c8b999';ctx.lineWidth=2;ctx.stroke();ellipse(0,-74,37,7,'#eee1c7');line(9,-78,16,-110,'#a66357',5);line(-24,-63,-19,-12,'#fff3da66',3);ctx.restore()}
@@ -1221,7 +1222,7 @@ function selectTeaBase(i){if(activity!=='bubbleTea'||state.teaStage!=='base'||!N
 function teaAddPearls(){if(activity!=='bubbleTea'||state.teaStage!=='pearls')return;state.teaPearls+=5;state.teaAt=t;sound(280+state.teaPearls*12);if(state.teaPearls>=10){state.teaStage='mix';hint('Drag the cup from side to side to shake it.','左右拖动杯子，把奶茶摇匀。')}}
 function teaShake(amount){if(activity!=='bubbleTea'||state.teaStage!=='mix'||!Number.isFinite(amount)||amount<=0)return;state.teaMix=Math.min(100,state.teaMix+Math.min(50,Math.max(0,amount*.55)));state.teaAt=t;if(state.teaMix>=100){state.teaStage='ready';sound(630);hint('Your drink is ready. Take a sip!','奶茶做好啦，喝一口吧！')}}
 function teaSip(){if(activity!=='bubbleTea'||state.teaStage!=='ready')return;state.teaStage='sip';state.teaAt=t;sound(380)}
-function drawFoodCounter(){paintLivingBackdrop(pics.kitchen||pics.streetKitchen||pics.tea||pics.sticks);let g=ctx.createLinearGradient(0,410,0,690);g.addColorStop(0,'#a8835b');g.addColorStop(1,'#654c39');ctx.beginPath();ctx.moveTo(180,466);ctx.lineTo(620,466);ctx.lineTo(690,690);ctx.lineTo(110,690);ctx.closePath();ctx.fillStyle=g;ctx.fill();for(let i=0;i<5;i++)line(175-i*12,482+i*39,625+i*12,482+i*39,'#e0b98230',2)}
+function drawFoodCounter(){paintLivingBackdrop(room==='boba'?null:(pics.kitchen||pics.streetKitchen||pics.tea||pics.sticks));let g=ctx.createLinearGradient(0,410,0,690);g.addColorStop(0,room==='boba'?'#d2b393':'#a8835b');g.addColorStop(1,room==='boba'?'#a17d66':'#654c39');ctx.beginPath();ctx.moveTo(180,466);ctx.lineTo(620,466);ctx.lineTo(690,690);ctx.lineTo(110,690);ctx.closePath();ctx.fillStyle=g;ctx.fill();for(let i=0;i<5;i++)line(175-i*12,482+i*39,625+i*12,482+i*39,'#e0b98230',2)}
 const foodReleaseProp=prop;prop=function(id,x,y){if(id==='bubbleTea'){teaCup(x,y-16,.85,0,10);return}return foodReleaseProp(id,x,y)};
 /* A real counter sequence: pour, scoop, shake and drink. */
 function teaPitcher(x,y,base,tilt=0){
@@ -1285,7 +1286,7 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
  }
  if(stage==='ready'){target(365,420,110,125,teaSip);label(tr('Take a sip','喝一口'),420,620,teaSip)}
  if(stage==='sip')txt(tr('A well deserved break','这一口，值得'),400,620,18,'#fff4dd');
- if(stage==='done'){label(tr('Make another','再做一杯'),310,620,()=>start('bubbleTea'));label(tr('Back to kitchen','回到厨房'),500,620,()=>{activity=null;state={};updateHUD();roomIntro()})}
+ if(stage==='done'){label(tr('Make another','再做一杯'),310,620,()=>start('bubbleTea'));label(tr('Back to shop','返回奶茶铺'),500,620,()=>{activity=null;state={};updateHUD();roomIntro()})}
  ctx.restore();
 };
 function soupTaste(){if(activity!=='cook'||!state.done||state.tasteAt!==undefined)return;state.tasteAt=t;sound(390);closeTalk();hint('Careful, it is hot.','慢慢喝，小心烫。')}
@@ -1386,7 +1387,7 @@ ctx.restore()};
 function openReadingJournal(){activePage='readingJournal';page(tr('Reading journal','塔罗手记'),tr('Reflections from your visits, not predictions.','每次来访的心情记录，并非预言。'),q=>{let book=element('section','',q,'travelAlbum');if(!readingJournal.length)element('p',tr('Your first reading will appear here.','第一次占卜之后，手记会出现在这里。'),book);for(let v of readingJournal){let a=element('article','',book,'albumCard');element('strong',v.date+' · '+(v.topic<0||v.topic===null?tr('Daily tarot','今日塔罗'):tr(...(readingTopics[v.topic]||readingTopics[3]))),a);for(let [i,d] of (v.cards||[]).entries()){let cardData=tarotDeck[d.i];if(!cardData)continue;let item=element('div','',a);element('p',tr(cardData[0],cardData[1])+' · '+orient(d.rev),item);element('small',arcanaReading(cardData,d.rev),item);const prompt=topicReflection(v.topic,i);if(prompt)element('p',prompt,item)}b(a,tr('Share card','分享牌卡'),()=>shareReadingResult(v,openReadingJournal))}b(book,tr('Back to passport','返回护照'),passport)})}
 const readingPassport=passport;passport=function(){readingPassport();let book=$('content').querySelector('.travelAlbum');if(book)b(book,tr('Reading journal','塔罗手记')+' ('+readingJournal.length+')',openReadingJournal)};$('dockPassport').onclick=passport;
 const collectionMore=[['Quiet garden postcard','静谧后院明信片','stamp'],['Temple cat blessing','庙猫的祝福','cat'],['After-hours rhythm ticket','下班节拍门票','stamp'],['Golden rhythm badge','金色节拍徽章','stamp'],...boxPrizes.map(v=>[v[0],v[1],'cat']),...teaChoices.map(v=>[v[0]+' recipe',v[1]+'配方','stamp'])];for(let item of collectionMore)if(!keepsakes.some(v=>v[0]===item[0]))keepsakes.push(item);
-const collectionClue=keepsakeClue;keepsakeClue=function(item){let n=item[0];if(boxPrizes.some(v=>v[0]===n))return ['Open a blind box in the arcade','去游戏厅开盲盒'];if(/recipe$/.test(n))return ['Make a drink with Grandma','跟外婆做一杯奶茶'];if(n==='Quiet garden postcard')return ['Feed the koi in the hidden garden','去后院喂锦鲤'];if(n==='Temple cat blessing')return ['Befriend the temple cat','和庙猫做朋友'];if(n.includes('rhythm'))return ['Try the arcade rhythm floor','试试游戏厅节奏舞台'];return collectionClue(item)};
+const collectionClue=keepsakeClue;keepsakeClue=function(item){let n=item[0];if(boxPrizes.some(v=>v[0]===n))return ['Open a blind box in the arcade','去游戏厅开盲盒'];if(/recipe$/.test(n))return ['Make a drink at Pearl & Pause','去珍珠摸鱼铺摇杯奶茶'];if(n==='Quiet garden postcard')return ['Feed the koi in the hidden garden','去后院喂锦鲤'];if(n==='Temple cat blessing')return ['Befriend the temple cat','和庙猫做朋友'];if(n.includes('rhythm'))return ['Try the arcade rhythm floor','试试游戏厅节奏舞台'];return collectionClue(item)};
 
 
 /* Authored room staging. Coordinates are in the same world space as props and camera.
@@ -1399,7 +1400,8 @@ const indoorStages={
  tea:{entry:[610,730],arrival:[575,680],stations:{chat:[270,440,270,615],board:[530,440,530,615],news:[400,440,400,615]}},
  office:{entry:[190,730],arrival:[230,685],stations:{officeSketch:[400,440,400,615]}},
  park:{entry:[610,730],arrival:[575,680],stations:{pet:[270,440,270,615],chat:[530,440,530,615]}},
- kitchen:{entry:[190,730],arrival:[235,680],stations:{cook:[270,440,270,615],bubbleTea:[530,440,530,615]}},
+ kitchen:{entry:[190,730],arrival:[235,680],stations:{cook:[400,440,400,615]}},
+ boba:{entry:[610,730],arrival:[575,680],stations:{bubbleTea:[400,440,400,615]}},
  arcade:{entry:[610,730],arrival:[580,680],stations:{claw:[215,430,215,615],rhythm:[400,430,400,615],blindBox:[585,430,585,615]}},
  mystery:{entry:[190,730],arrival:[235,680],stations:{mystery:[400,440,400,615]}},
  quiz:{entry:[190,730],arrival:[235,680],stations:{quiz:[400,440,400,615]}},
@@ -1792,7 +1794,7 @@ function pickupFortuneStick(){
    never to the old landscape photographs. NPCs remain independent of the scenery. */
 const portraitWorlds={
  home:{file:'salted-fish-island.webp',h:1516,spawn:[630,1370],route:[[0,710],[450,680],[850,570],[1516,630]],stations:{fish:[270,1090],tea:[750,850],office:[285,610],park:[765,495]}},
- island:{file:'food-and-fun-street.webp',h:1527,spawn:[510,1380],route:[[0,670],[450,570],[850,510],[1527,510]],stations:{kitchen:[265,910],arcade:[785,530],mystery:[300,410]}},
+ island:{file:'food-and-fun-street.webp',h:1527,spawn:[510,1380],route:[[0,670],[450,570],[850,510],[1527,510]],stations:{kitchen:[265,910],boba:[805,1040],arcade:[785,530],mystery:[300,410]}},
  wonder:{file:'wonder-valley.webp',h:1519,spawn:[525,1380],route:[[0,710],[450,660],[900,500],[1519,525]],stations:{quiz:[790,360],story:[260,950],match:[790,1110]}}
 };
 function portraitMap(){return portraitWorlds[scene]||null}
@@ -1872,7 +1874,8 @@ syncSigns=function(){
 /* Portrait navigation: keep the actual doorway and its sign together. */
 for(const [id,x,y] of maps.fortune.st)signAnchorsProposal[id]=[x,y-95];
 /* Fishing belongs to Salted Fish Island; do not reuse landscape coordinates on Food Street. */
-maps.island.st=maps.island.st.filter(st=>st[0]!=='fish');
+maps.island.st=maps.island.st.filter(st=>st[0]!=='fish'&&st[0]!=='boba');
+maps.island.st.push(['boba',...portraitWorlds.island.stations.boba,'Pearl & Pause','珍珠摸鱼铺']);
 const portraitDoorV2=walkDoor;
 walkDoor=function(id,x,y){
  if(!portraitMap())return portraitDoorV2(id,x,y);
@@ -2017,7 +2020,7 @@ syncSigns=function(){
   const btn=signButtons.get(id),name=tr(en,cn);
   let plaque=btn.querySelector('.doorPlaque');if(!plaque){btn.replaceChildren();plaque=element('span','',btn,'doorPlaque')}if(plaque.textContent!==name)plaque.textContent=name;
   if(btn.getAttribute('aria-label')!==name)btn.setAttribute('aria-label',name);const material=houseSignMaterial(id);if(btn.dataset.signMaterial!==material)btn.dataset.signMaterial=material;
-  const [ax,ay]=scene==='fortune'?(signAnchorsProposal[id]||[x,y-95]):[x,y-65];
+  const [ax,ay]=housePlaqueAnchor(scene,id,x,y);
   const sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
   const inView=sx>=-30&&sx<=W+30&&sy>=top-125&&sy<=bottom+70;
   if(!inView){btn._clearAt=0;btn._signOffset=null;if(!btn.hidden)btn.hidden=true;continue}
@@ -2074,7 +2077,7 @@ function residentRecord(id){
 function residentStatus(r){return r.topics.length===3?['Trusted friend','知心好友']:r.topics.length>=1?['Familiar face','熟面孔']:['New acquaintance','新朋友']}
 function residentTip(id){
  if(id==='keeper'||id==='mochi')return null;
- if(scene==='island')return ['Grandma’s Kitchen is just down the street. Try bubble tea or make a bowl of soup.','外婆厨房就在前面，试试做奶茶或者煮碗汤吧。'];
+ if(scene==='island')return ['Grandma’s Kitchen is on the left; Pearl & Pause is across the street. Soup or bubble tea?','左边是外婆厨房，对面是珍珠摸鱼铺。想喝汤还是奶茶？'];
  if(scene==='wonder')return ['The Personality Lab is for fun. Nobody needs to fit inside a personality box.','人格研究所就是图个开心，人不需要被一种性格框住。'];
  return null;
 }
@@ -3427,7 +3430,7 @@ const popGuestStories=[
   [['The flying timesheet','飞天工时表'],['No spreadsheet was harmed, unfortunately.','可惜，没有任何表格受到伤害。']]],tip:['The arcade is a better place to practise reflexes than your office inbox.','去街机厅练反应吧，比闪躲老板邮件好玩。'],gift:['Meeting-dodge stunt ticket','闪避会议特技票']},
  {id:'eason-rest',name:['Eason Rest','陈奕闲'],world:'island',intro:['I was going to sing about adulthood. Then I saw the price of bubble tea.','本来想唱成年人的心酸，结果先看到了奶茶价格。'],prompt:['What is the most emotional encore?','返场唱什么最有共鸣？'],choices:[
   [['One more pearl','再来一颗珍珠'],['The audience is crying. Mostly because they paid for toppings.','观众哭了，主要是因为小料要加钱。']],
-  [['Friday at last','终于周五了'],['A standing ovation from every exhausted office worker.','所有疲惫打工人起立鼓掌。']]],tip:['Try making tea at Grandma’s kitchen. A good drink deserves a good chorus.','去外婆厨房摇杯奶茶，好喝就给它唱两句。'],gift:['Friday encore stub','周五返场票根']},
+  [['Friday at last','终于周五了'],['A standing ovation from every exhausted office worker.','所有疲惫打工人起立鼓掌。']]],tip:['Try making tea at Pearl & Pause. A good drink deserves a good chorus.','去珍珠摸鱼铺摇杯奶茶，好喝就给它唱两句。'],gift:['Friday encore stub','周五返场票根']},
  {id:'raincheck',name:['Mr. Raincheck','王家卫班'],world:'wonder',intro:['I waited for the last train. It was late. For once, this was not my fault.','我等了末班车，它迟到了。这一次，终于不是我的错。'],prompt:['Choose the ending of my very slow film.','帮我的慢节奏电影选个结局。'],choices:[
   [['Two strangers share a coffee','两个陌生人喝咖啡'],['The coffee is cold. The scene is warm.','咖啡凉了，画面还是暖的。']],
   [['Everyone goes home on time','所有人准时下班'],['An ambitious work of speculative cinema.','一部大胆的科幻电影。']]],tip:['Parallel Lives has endings you can actually choose. Unlike the corporate appraisal form.','平行人生的结局由你选，不像绩效表。'],gift:['Unfinished film ticket','未完成电影票']},
@@ -5717,6 +5720,7 @@ function stableResidentFallback(n){
 }
 function houseSignMaterial(id){
  if(['temple','sticks','moon','destiny','tarot','daily'].includes(id))return 'ritual';
+ if(id==='boba')return 'pearl';
  if(['tea','news','kitchen','match'].includes(id))return 'warm';
  if(['arcade','mystery','office'].includes(id))return 'retro';
  if(['park','fish','wishes','secretGarden'].includes(id))return 'garden';
@@ -6152,7 +6156,7 @@ function meowBeginTextFrame(inside){
   // Actual visible signs take precedence over actor names; reserve their current rectangles.
   meowFrameBlockers.push(...meowVisibleRects('#worldSigns .worldSign'));
   for(const [id,x,y] of maps[scene].st){
-   const [ax,ay]=scene==='fortune'?(signAnchorsProposal[id]||[x,y-95]):[x,y-65],sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
+   const [ax,ay]=housePlaqueAnchor(scene,id,x,y),sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
    meowFrameBlockers.push({left:sx-70,right:sx+70,top:sy-26,bottom:sy+26})
   }
  }
@@ -6643,7 +6647,7 @@ const activityProtectedStage={
  templeBell:[145,570,215,665],templeWater:[215,605,300,690],prayer:[155,610,310,665]
 };
 const ambientResidentPool=[['Temple keeper','庙祝'],['Master Yue','月师傅'],['Fortune Teller','占卜师'],['Auntie Mei','梅姨'],['Wang Laoban','王老板'],['Grandma','外婆']];
-const ambientResidentsByRoom={kitchen:[3,4],arcade:[3,4,5],fish:[3,4],park:[3,4],temple:[0,1,2],tarot:[0,1],daily:[0,1]};
+const ambientResidentsByRoom={boba:[3,4,5],kitchen:[3,4],arcade:[3,4,5],fish:[3,4],park:[3,4],temple:[0,1,2],tarot:[0,1],daily:[0,1]};
 const ambientVisit={key:'',run:null,next:0,active:null,last:-1,drawnAt:-Infinity,mode:''};
 function ambientVisitDelay(random=Math.random,first=false){return first?7+random()*19:19+random()*44}
 function ambientOverlap(a,b){return a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top}
@@ -6735,3 +6739,127 @@ const backgroundVisitPaintBefore=paintLivingBackdrop;
 paintLivingBackdrop=function(im){const result=backgroundVisitPaintBefore(im);if(activity&&ambientVisit.active)drawAmbientBackgroundVisit();return result};
 
 const incenseRitualStyle=document.createElement('style');incenseRitualStyle.textContent='#ritualActionBar .incenseRitualStatus{margin:0;padding:10px 12px;border:1px solid #b8a077;border-radius:5px;background:#f0e2c7f2;color:#5e503d;font:14px/1.4 system-ui}#ritualActionBar button{white-space:normal;min-height:48px}';document.head.append(incenseRitualStyle);
+
+
+/* The right-hand pink-awning shop already exists in the painted street.
+   Preserve the four districts, and give its separate door a matching room. */
+function housePlaqueAnchor(world,id,x,y){
+ if(world==='fortune')return signAnchorsProposal[id]||[x,y-95];
+ if(id==='boba')return [810,865];
+ return [x,y-65]
+}
+function pearlTeaJars(x,y,sc=1){
+ return '<g transform="translate('+x+' '+y+') scale('+sc+')">'+[0,1,2,3].map((n)=>{
+  const dx=n*45,col=['#b0926d','#c0a17e','#80917b','#aa8169'][n];return '<g transform="translate('+dx+' 0)"><path d="M5 7Q0 13 0 23V73Q0 84 18 84Q36 84 36 73V23Q36 13 31 7Z" fill="#e1d5b8" stroke="#9b8266" stroke-width="2"/><path d="M4 45H32V72Q32 79 18 79Q4 79 4 72Z" fill="'+col+'" opacity=".8"/><path d="M8 19V55" stroke="#fff8df" opacity=".65" stroke-width="3"/><path d="M3 0H33V9H3Z" fill="#826c55" stroke="#6c5845" stroke-width="1.4"/><path d="M9 35H27V47H9Z" fill="#f1e3bd" stroke="#b7a181" stroke-width=".8"/></g>'}).join('')+'</g>'
+}
+const pearlPortraitDetail=roomWindow(210,135,380,382)+roomLantern(105,263,'#c38c82')+roomLantern(695,263,'#c38c82')+
+ '<path d="M72 123Q400 92 728 123V185Q400 154 72 185Z" fill="#b98583" stroke="#997268" stroke-width="4"/>'+
+ '<g fill="#ecd4bd"><path d="M109 119L160 115V181L109 185Z M241 108L292 105V170L241 174Z M373 103L424 103V166H373Z M505 105L556 110V175L505 171Z M637 115L688 120V184L637 179Z"/></g>'+
+ '<path d="M83 537H310V728H83Z M490 537H717V728H490Z" fill="#98775d" stroke="#765a47" stroke-width="4"/><path d="M72 525H321V547H72Z M479 525H728V547H479Z" fill="#c4a383" stroke="#a18468" stroke-width="3"/>'+
+ pearlTeaJars(96,434,1.04)+pearlTeaJars(504,434,1.04)+
+ '<g fill="#eee1c5" stroke="#987c68" stroke-width="3"><path d="M125 580H168L160 644H133Z M174 580H217L209 644H182Z M223 580H266L258 644H231Z"/></g>'+
+ '<g fill="#d2ad99" stroke="#8e6f60" stroke-width="3"><path d="M537 580H578L570 644H545Z M590 580H631L623 644H598Z M643 580H684L676 644H651Z"/></g>'+roomPlant(698,790,.75);
+additionalPortraits.boba=portraitComposition('#b59d91','#ebd6c1','#b89b80',pearlPortraitDetail);
+portraitInteriorSources.boba=additionalPortraits.boba;
+landscapeRoomProfiles.boba={wall:'#c1a49a',floor:'#b79a80',accent:'#c18c85',keys:[],kind:'pearl'};
+const pearlWideDetailsBefore=landscapeSideDetails;
+landscapeSideDetails=function(kind){
+ if(kind!=='pearl')return pearlWideDetailsBefore(kind);
+ return roomWindow(590,115,420,330)+roomLantern(475,218,'#c38c82')+roomLantern(1125,218,'#c38c82')+
+ '<path d="M75 290H400V550H75Z M1200 290H1525V550H1200Z" fill="#a5866e" stroke="#795e4d" stroke-width="5"/><path d="M65 285H410V307H65Z M1190 285H1535V307H1190Z" fill="#d5b799"/>'+
+ pearlTeaJars(104,186,1.5)+pearlTeaJars(1229,186,1.5)+roomPlant(145,550,1.1)+roomPlant(1455,550,1.1)
+};
+const pearlRoomIntroBefore=roomIntro;
+roomIntro=function(){pearlRoomIntroBefore();if(room==='boba')hint('Pearl & Pause. Walk to the tea counter to make a drink.','珍珠摸鱼铺。走到奶茶台，摇杯喜欢的奶茶。')};
+const pearlStartBefore=start;
+start=function(a){if(a==='bubbleTea'&&room==='boba'){portraitInteriorImage('boba');landscapeRoomImage('boba')}return pearlStartBefore(a)};
+activityComedy.tea=activityComedy.tea.map(v=>[v[0].replace(/^Grandma:/,'Tea keeper:'),v[1].replace(/^外婆：/,'奶茶店主：')]);
+activityComedy.tea.push(['The tea is 30% sugar. Your job is 100% drama.','奶茶三分糖，工作十分戏。'],['Your pearls have better attendance than your team.','珍珠全员到齐，你的同事就不一定了。']);
+
+/* House identity: one bilingual name per doorway, one material family,
+   carried through the outdoor plaque and HUD rather than stacked badges. */
+const unifiedHouseNames={
+ tarot:['Tarot House','塔罗小屋'],destiny:['Starlight Observatory','星月命理馆'],temple:['Fortune Temple','解忧寺'],wishes:['Wishing Garden','心愿花园'],station:['Next Stop','下一站'],
+ fish:['Worry-Free Pier','忘忧码头'],tea:['Gossip Tea House','吃瓜茶馆'],office:['Office Escape','冤种办公室'],park:['Daydream Park','白日梦公园'],
+ kitchen:['Grandma’s Kitchen','外婆厨房'],boba:['Pearl & Pause','珍珠摸鱼铺'],arcade:['Retro Arcade','童年游戏厅'],mystery:['Souvenir Shop','手信小铺'],
+ quiz:['Personality Lab','人格研究所'],story:['Parallel Lives','平行人生'],match:['Compatibility Café','缘分咖啡馆']
+};
+for(const map of Object.values(maps))for(const st of map.st){const v=unifiedHouseNames[st[0]];if(v){st[3]=v[0];st[4]=v[1]}}
+const houseTitleHUDBefore=updateHUD;
+updateHUD=function(){
+ houseTitleHUDBefore();const loc=$('location');if(!loc)return;
+ loc.dataset.signMaterial=room?houseSignMaterial(room):'travel';
+ loc.dataset.locationKind=activity?'activity':room?'house':'district';
+ if(room)loc.title=tr(...roomName(room));else loc.title=tr(...maps[scene].n)
+};
+
+/* Short dialogue may anchor to a visible resident; long stories keep a
+   paper conversation panel. The panel has no invented pointer. */
+function dialogueSpeakerMatches(name,n){
+ return !!n?.n?.some(v=>name===v||name.startsWith(v+' · '))
+}
+function parkDialogueActors(){
+ if(room!=='park'||activity)return [];
+ const [x,y]=indoorStation('chat');return [
+ {x:x-48,y:y+12,n:['Auntie Mei','梅姨'],sc:.95},
+ {x:x+47,y:y+12,n:['Auntie Lin','林姨'],sc:.87}
+ ]
+}
+const unifiedCloseBefore=closeTalk;
+closeTalk=function(...args){const result=unifiedCloseBefore(...args),el=$('dialogue');el?.classList.remove('paperConversation','characterSpeech');el?.removeAttribute('data-sign-material');return result};
+syncCharacterSpeech=function(){
+ const el=$('dialogue');if(!el||!talkOpen)return;
+ const name=$('speaker').textContent||'',line=$('line').textContent||'',options=$('choices').children.length;
+ el.dataset.signMaterial=houseSignMaterial(room||'station');
+ const actors=parkDialogueActors();
+ const actor=room?actors.find(a=>dialogueSpeakerMatches(name,a)):dialogueSpeakerMatches(name,greetingNPC)?greetingNPC:null;
+ const short=!!actor&&!activity&&line.length<=160&&options<=2;
+ if(short){
+  el.classList.add('characterSpeech');el.classList.remove('paperConversation');
+  const w=el.offsetWidth,h=el.offsetHeight,blockers=meowVisibleRects('#hud>*,#small button,#dock,#back,#gameControls,#ritualActionBar,#nextStopShortcut,#worldSigns .worldSign');
+  const player=room?meowIndoorActorBounds(indoor):characterScreenBounds(p,true);
+  const speaker=room?meowIndoorActorBounds(actor,actor.sc):characterScreenBounds(actor);
+  if(room){for(const a of actors)if(a!==actor)blockers.push(meowIndoorActorBounds(a,a.sc));for(const a of sharedTownActors())blockers.push(meowIndoorActorBounds(a))}
+  else{for(const a of npc)if(a!==actor)blockers.push(characterScreenBounds(a));for(const a of sharedTownActors())blockers.push(characterScreenBounds(a))}
+  const position=chooseSpeechPosition(w,h,W,H,speaker,player,blockers);
+  if(position&&h<=H*.40){
+   el.style.setProperty('--speech-left',position.left+'px');el.style.setProperty('--speech-top',position.top+'px');
+   el.style.setProperty('--speech-tail',position.tailX+'px');el.dataset.above=String(position.above);el.dataset.tailSide=position.side;
+   const key=[w,h,position.side,Math.round(position.tailX)].join('|');
+   if(el.dataset.speechArtKey!==key||!el.querySelector('.washiSpeechArt')){drawWashiSpeech(el,w,h,position);el.dataset.speechArtKey=key}
+   return
+  }
+ }
+ el.classList.remove('characterSpeech');el.classList.add('paperConversation');el.querySelector('.washiSpeechArt')?.remove();
+ el.style.removeProperty('--speech-left');el.style.removeProperty('--speech-top');
+};
+const unifiedTownStyle=document.createElement('style');unifiedTownStyle.textContent=`
+#game>#worldSigns>.worldSign .doorPlaque,#game #hud #location{
+ --plaque-top:#8d7659;--plaque-bottom:#605342;--plaque-border:#d2b784;
+ color:#fff2d6!important;background:linear-gradient(155deg,var(--plaque-top),var(--plaque-bottom))!important;
+ border:1px solid var(--plaque-border)!important;border-radius:4px 3px 4px 3px!important;
+ box-shadow:0 2px 3px #342a2340,inset 0 0 0 2px #241e171e!important;text-shadow:0 1px 1px #271d1a45;
+ font-family:Georgia,"Songti SC","Noto Serif SC",serif!important;letter-spacing:.01em
+}
+#game>#worldSigns>.worldSign .doorPlaque{position:relative;padding:7px 10px!important;line-height:1.22!important}
+#game>#worldSigns>.worldSign .doorPlaque::before{content:"";position:absolute;inset:3px;border:1px solid #f7dfaa30;border-radius:2px;pointer-events:none}
+#game>#worldSigns>.worldSign[data-sign-material="ritual"] .doorPlaque,#game #location[data-sign-material="ritual"]{--plaque-top:#8d6e52;--plaque-bottom:#51483e;--plaque-border:#d6bd8b}
+#game>#worldSigns>.worldSign[data-sign-material="warm"] .doorPlaque,#game #location[data-sign-material="warm"]{--plaque-top:#a47958;--plaque-bottom:#76523d}
+#game>#worldSigns>.worldSign[data-sign-material="pearl"] .doorPlaque,#game #location[data-sign-material="pearl"]{--plaque-top:#ad807d;--plaque-bottom:#78514e;--plaque-border:#ecd0b6}
+#game>#worldSigns>.worldSign[data-sign-material="retro"] .doorPlaque,#game #location[data-sign-material="retro"]{--plaque-top:#69827a;--plaque-bottom:#3c5a53}
+#game>#worldSigns>.worldSign[data-sign-material="garden"] .doorPlaque,#game #location[data-sign-material="garden"]{--plaque-top:#84906e;--plaque-bottom:#52654d}
+#game #hud #location{max-width:min(47vw,240px)!important;font-size:clamp(12px,3.2vw,15px)!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:6px 9px!important}
+#game #dialogue{--ink:#5c4836;--paper-edge:#b39871;--paper-accent:#785738;font-family:system-ui,"PingFang SC","Microsoft YaHei",sans-serif;box-sizing:border-box}
+#game #dialogue[data-sign-material="pearl"]{--paper-accent:#8b5558;--paper-edge:#c29a8d}
+#game #dialogue[data-sign-material="garden"]{--paper-accent:#566d4e}
+#game #dialogue[data-sign-material="retro"]{--paper-accent:#416d60}
+#game #dialogue #speaker{font:600 15px/1.35 Georgia,"Songti SC",serif!important;color:var(--paper-accent)!important;overflow-wrap:anywhere}
+#game #dialogue #line{font-size:14px!important;line-height:1.55!important;color:var(--ink)!important}
+#game #dialogue.paperConversation{border:1px solid var(--paper-edge)!important;border-radius:5px 11px 7px 8px!important;box-shadow:0 4px 18px #35271c39,inset 0 0 0 3px #e9d8b655!important;background:linear-gradient(150deg,#fff9eb,#efe0c3)!important;padding:13px 15px!important;max-height:min(38dvh,340px)!important;overflow:auto!important;overscroll-behavior:contain}
+#game #dialogue.paperConversation #speaker{border-bottom:1px solid #bca68166;padding-bottom:5px;margin-bottom:5px}
+#game #dialogue.paperConversation #choices{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+#game #dialogue.paperConversation #choices button{background:#f5ead3!important;border:1px solid #b9a47f!important;color:#52634d!important;border-radius:4px!important;min-height:44px!important;flex:1 1 140px;box-shadow:none!important}
+#game #dialogue.characterSpeech #choices{display:flex;flex-wrap:wrap;gap:3px}
+#game #dialogue.characterSpeech #choices button{flex:1 1 75px;font-size:12px!important}
+@media(max-width:380px){#game>#worldSigns>.worldSign .doorPlaque{padding:6px 8px!important;font-size:12px!important}#game #dialogue.paperConversation{padding:10px 12px!important;max-height:42dvh!important}}
+`;document.head.append(unifiedTownStyle);
