@@ -38,8 +38,10 @@ jobs:
               const errors=[];page.on('pageerror',e=>errors.push(e.message));
               page.on('console',m=>{if(m.type()==='error'&&/frame error|Room transition/.test(m.text()))errors.push(m.text())});
               try{
-                await page.goto('http://127.0.0.1:8766/index.html');
+                const coldStart=Date.now();
+                await page.goto('http://127.0.0.1:8766/index.html',{waitUntil:'domcontentloaded'});
                 await page.locator('#proposal footer button.next').waitFor({timeout:45000});
+                console.log('COLD_START '+name+' '+JSON.stringify(await page.evaluate(()=>({navigation:performance.getEntriesByType('navigation').map(e=>({domContentLoadedMs:Math.round(e.domContentLoadedEventEnd),transferBytes:e.transferSize})),resources:performance.getEntriesByType('resource').length,artRequests:performance.getEntriesByType('resource').filter(e=>e.name.includes('/assets/art/')).length,resourceBytes:performance.getEntriesByType('resource').reduce((n,e)=>n+e.transferSize,0)})))+' entranceReadyMs='+(Date.now()-coldStart));
                 await page.locator('#proposal .languageChoice').getByRole('button',{name:'EN',exact:true}).click();
                 await page.locator('#proposal footer button.next').click();
                 await page.locator('#proposal .rail-ticket input').fill('Navigation Tester');
@@ -76,9 +78,12 @@ jobs:
                         const details=await door.evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return {x:r.left,y:r.top,width:r.width,height:r.height,hit:hit?.outerHTML.slice(0,180)}});
                         throw Error('Door touch target intercepted or too small: '+JSON.stringify(details));
                       });
-                      if(options.hasTouch){const b=await door.boundingBox();if(!b)throw Error('Door has no bounding box');await page.touchscreen.tap(b.x+b.width/2,b.y+b.height/2)}
-                      else await door.click();
-                      await page.waitForFunction(id=>pending===id||room===id,st.id,{timeout:2000}).catch(()=>{throw Error('Door click did not start the requested walking route')});
+                      // Capture actual input targets for diagnosis; locator.tap waits for stable layout
+                      // and dispatches a real touchscreen gesture, not a DOM click.
+                      await page.evaluate(()=>{window.__doorEvents=[];if(!window.__doorTraceInstalled){window.__doorTraceInstalled=true;for(const type of ['pointerdown','pointerup','pointercancel','click','lostpointercapture'])document.addEventListener(type,e=>{window.__doorEvents.push({type,door:e.target.closest?.('.worldSign')?.dataset.door||null,target:e.target.id||e.target.tagName,pointer:e.pointerType,x:Math.round(e.clientX||0),y:Math.round(e.clientY||0)});if(window.__doorEvents.length>20)window.__doorEvents.shift()},true)}});
+                      if(options.hasTouch)await door.tap({timeout:5000});
+                      else await door.click({timeout:5000});
+                      await page.waitForFunction(id=>pending===id||room===id,st.id,{timeout:2000}).catch(async()=>{throw Error('Door click did not start the requested walking route: '+JSON.stringify(await page.evaluate(()=>({events:window.__doorEvents,pending,room,transitioning,scene}))))});
                       await page.waitForFunction(id=>room===id&&!transitioning,st.id,{timeout:15000});
                       await page.screenshot({path:'test-results/'+name+'-'+map+'-'+st.id+'.png'});
                       for(let j=0;j<3&&await page.evaluate(()=>!!room);j++)await page.locator('#back').click();
