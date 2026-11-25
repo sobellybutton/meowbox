@@ -1228,16 +1228,16 @@ function rhythmBegin(){if(activity!=='rhythm'||state.rhythmStage!=='intro')retur
 function rhythmHit(lane){if(activity!=='rhythm'||state.rhythmStage!=='play')return;let elapsed=t-state.rhythmAt;let n=state.rhythmNotes.filter(n=>n.status===0&&n.lane===lane&&Math.abs(n.at-elapsed)<=.29).sort((a,b)=>Math.abs(a.at-elapsed)-Math.abs(b.at-elapsed))[0];state.rhythmLane=lane;state.rhythmFlash=t;if(n){n.status=1;let perfect=Math.abs(n.at-elapsed)<.13;state.rhythmScore+=perfect?100:60;state.rhythmCombo++;state.rhythmBest=Math.max(state.rhythmBest,state.rhythmCombo);state.rhythmResult=perfect?['Perfect!','完美！']:['Nice!','不错！'];sound(rhythmFreq[lane])}else{state.rhythmResult=['A little early or late','早了一点或晚了一点'];state.rhythmCombo=0;sound(170)}}
 function rhythmFinish(){if(state.rhythmStage!=='play')return;state.rhythmStage='result';state.rhythmEnd=t;let best=Number(load('rhythmHighV1',0))||0;save('rhythmHighV1',Math.max(best,state.rhythmScore));addItem('After-hours rhythm ticket','下班节拍门票');if(state.rhythmScore>=1600)addItem('Golden rhythm badge','金色节拍徽章');hint(...(state.rhythmScore>=1600?['Your boss cannot compete with those moves.','老板可比不上你的舞步。']:['You survived the dance floor. That counts.','成功存活于舞池，这就算赢了。']))}
 document.addEventListener('keydown',e=>{if(activity!=='rhythm'||state.rhythmStage!=='play'||e.repeat||e.target.matches?.('input,textarea,select'))return;const l=['ArrowLeft','ArrowDown','ArrowUp','ArrowRight'].indexOf(e.key);if(l>=0){e.preventDefault();rhythmHit(l)}});
-const boxPrizes=[['Office escape cat','逃班猫','#d89858',0,'common'],['Meeting survivor cat','开会幸存猫','#ece1c6',1,'common'],['Annual leave cat','请假猫','#9399a2',4,'uncommon'],['Moonlight cat','月光猫','#44434a',2,'rare'],['Golden payday cat','金薪猫','#d1a077',3,'rare']];
+const boxPrizes=[['Office escape cat','逃班猫','#d89858',0,'common'],['Meeting survivor cat','开会幸存猫','#ece1c6',1,'common'],['Annual leave cat','请假猫','#9399a2',4,'uncommon'],['Moonlight cat','月光猫','#44434a',2,'rare'],['Golden payday cat','金薪猫','#d1a077',3,'rare'],['Strawberry mochi kitten','草莓麻薯猫','#eab0b5',1,'common','berry'],['Toast loaf cat','吐司猫','#dfb981',0,'common','toast'],['Bubble tea bear','奶茶小熊','#c99978',0,'common','tea'],['Sleepy cloud bunny','困困云朵兔','#d5dce9',1,'uncommon','cloud'],['Little raincoat duck','雨衣小鸭','#e7c570',0,'uncommon','duck'],['Sakura picnic fox','樱花野餐狐','#e8b098',3,'uncommon','fox'],['Moon rabbit lantern','月兔小灯','#c5b3e0',1,'rare','moon'],['Secret aurora dragon','极光小龙','#9dc9b8',4,'secret','dragon']];
 function boxSelect(i){if(activity!=='blindBox'||state.boxStage!=='choose'||!Number.isInteger(i)||i<0||i>2)return;state.boxPick=i;state.boxStage='shake';state.boxAt=t;sound(400);hint('Shake the box sideways, then open it.','左右摇动盒子，再打开看看。')}
 function boxShake(amount){if(activity!=='blindBox'||state.boxStage!=='shake'||!Number.isFinite(amount)||amount<=0)return;state.boxShake=Math.min(100,state.boxShake+Math.max(0,Math.min(50,amount*.65)));state.boxAt=t;sound(280);if(state.boxShake>=100){state.boxStage='ready';hint('Something is rattling inside. Open it!','里面有东西在响，打开看看！')}}
-function boxOpen(){if(activity!=='blindBox'||state.boxStage!=='ready')return;state.boxStage='opening';state.boxAt=t;let q=Math.random();state.boxPrize=q<.035?4:q<.13?3:q<.35?2:q<.68?1:0;sound(520)}
+function boxOpen(){if(activity!=='blindBox'||state.boxStage!=='ready')return;state.boxStage='opening';state.boxAt=t;const weights=[7,7,5,2,1,16,16,15,10,9,8,3,1];let roll=Math.random()*weights.reduce((a,b)=>a+b,0);state.boxPrize=weights.findIndex(w=>(roll-=w)<0);if(state.boxPrize<0)state.boxPrize=weights.length-1;sound(520)}
 function boxAward(){if(state.boxStage!=='opening')return;state.boxStage='result';state.boxAt=t;let v=boxPrizes[state.boxPrize],duplicate=items.some(x=>x[0]===v[0]);addItem(v[0],v[1]);let count=Number(load('blindBoxOpenedV1',0))||0;save('blindBoxOpenedV1',count+1);hint(...(duplicate?['A familiar face! This one can keep the other one company.','又是熟面孔！正好给上一只作伴。']:v[4]==='rare'?['Rare find! The universe finally approved your leave.','稀有款！宇宙终于批准你休假了。']:['A tiny companion for your next escape.','下次摸鱼，又多了一个小伙伴。']))}
 function boxArt(x,y,sc=1,i=0,open=0,tilt=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(tilt);let col=['#cba58a','#91aba3','#b3a2bd'][i%3];ellipse(0,9,49,11,'#292c2744');ctx.beginPath();ctx.moveTo(-44,-72);ctx.lineTo(28,-72);ctx.lineTo(44,-58);ctx.lineTo(44,0);ctx.lineTo(-28,9);ctx.lineTo(-44,-5);ctx.closePath();ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#695548';ctx.stroke();ctx.beginPath();ctx.moveTo(28,-72);ctx.lineTo(28,0);ctx.lineTo(44,0);ctx.lineTo(44,-58);ctx.closePath();ctx.fillStyle='#4b443b35';ctx.fill();round(-46,-76-open*37,92,16,3,'#e8d5ad','#826a4c');line(-36,-66-open*37,35,-66-open*37,'#a7895c',2);txt('?',-8,-25,32,'#fff0cc');line(-29,-8,15,-8,'#f4e1bd',2);ctx.restore()}
 const arcadeReleaseProp=prop;prop=function(id,x,y){if(id==='blindBox'){boxArt(x,y-23,.8,1);return}if(id==='rhythm'){ctx.save();ctx.translate(x,y-45);round(-50,-56,100,83,5,'#3d5350','#c9aa77');for(let i=0;i<4;i++){round(-43+i*23,-15,20,32,3,rhythmColor[i]);txt(rhythmArrows[i],-33+i*23,1,18,'#443b33')}for(let i=0;i<3;i++)ellipse(-22+i*22,-35,6,6,'#ead3a0');ctx.restore();return}return arcadeReleaseProp(id,x,y)};
 const arcadeReleaseDraw=drawActivity;drawActivity=function(){if(!['rhythm','blindBox'].includes(activity))return arcadeReleaseDraw();ctx.save();paintLivingBackdrop(pics.arcade||pics.tea||pics.streetKitchen);let shade=ctx.createLinearGradient(0,280,0,700);shade.addColorStop(0,'#293e3f40');shade.addColorStop(1,'#282b32b0');shadeLivingBackdrop(shade);
 if(activity==='rhythm'){let stage=state.rhythmStage,elapsed=t-(state.rhythmAt??t);if(stage==='play'){for(let n of state.rhythmNotes){if(!n.status&&elapsed-n.at>.31){n.status=2;state.rhythmMiss++;state.rhythmCombo=0}}if(elapsed>14)rhythmFinish()}let left=258,top=326,bottom=566;for(let i=0;i<4;i++){let x=left+i*71;round(x,top,65,bottom-top+45,5,'#243834a8','#bda37d');for(let j=0;j<5;j++)line(x+3,top+j*48,x+62,top+j*48,'#e9d8b528',1);round(x,bottom,65,45,5,state.rhythmLane===i&&t-state.rhythmFlash<.18?'#f5e2b1':rhythmColor[i],'#e7d2a4');txt(rhythmArrows[i],x+32,bottom+21,28,'#423a32');if(stage==='play')target(x,bottom-28,65,92,()=>rhythmHit(i))}if(stage==='play'){for(let n of state.rhythmNotes){let delta=n.at-elapsed;if(!n.status&&delta<1.8&&delta>-.31){let y=bottom+22-delta*135;ctx.save();ctx.beginPath();ctx.rect(left,top,278,285);ctx.clip();round(left+n.lane*71+7,y-18,51,36,5,rhythmColor[n.lane],'#fff0d1');txt(rhythmArrows[n.lane],left+n.lane*71+32,y,22,'#403b32');ctx.restore()}}txt(String(state.rhythmScore)+'  ·  '+tr('Combo ','连击 ')+state.rhythmCombo,400,292,18,'#fff1d2');if(elapsed<0)txt(String(Math.max(1,Math.ceil(-elapsed))),400,435,48,'#fff0bf');if(state.rhythmResult&&t-state.rhythmFlash<.6)txt(tr(...state.rhythmResult),400,638,17,'#fff1d0')}else if(stage==='intro'){txt(tr('A short dance break','来一段下班舞曲'),400,295,20,'#fff0d1');label(tr('Start the beat','开始节拍'),400,640,rhythmBegin)}else{txt(tr('Score ','得分 ')+state.rhythmScore+'  ·  '+tr('Best combo ','最高连击 ')+state.rhythmBest,400,290,17,'#fff1d2');label(tr('Play again','再来一次'),400,640,()=>start('rhythm'))}}
-if(activity==='blindBox'){let stage=state.boxStage,age=t-state.boxAt;if(stage==='choose'){for(let i=0;i<3;i++){let x=270+i*130;boxArt(x,530,.9,i);target(x-48,438,96,105,()=>boxSelect(i));label(tr('Box ','盲盒 ')+(i+1),x,570,()=>boxSelect(i))}}else{let held=drag?.id==='boxShake',x=held?Math.max(290,Math.min(510,drag.x)):400,y=held?Math.max(440,Math.min(535,drag.y)):515,opening=stage==='opening'?poseEase(age/.95):stage==='result'?1:0;drawRitualPose(275,555,1.45,{reach:held?{x:x-38,y:y-35}:null});boxArt(x,y,1.15,state.boxPick,opening,held?Math.sin(t*20)*.16:age<.3&&stage==='shake'?Math.sin(age*28)*.1:0);if(stage==='opening'&&age>=.95)boxAward();if(stage==='opening'||stage==='result'){let v=boxPrizes[state.boxPrize];ctx.save();ctx.globalAlpha=Math.max(.1,opening);arcadePrizeArt(400,450-35*opening,v[3],1.8);ctx.restore();if(stage==='result'){txt(tr(v[0],v[1]),400,590,19,'#fff2d1');txt(tr(v[4]==='rare'?'RARE':v[4]==='uncommon'?'UNCOMMON':'COMMON',v[4]==='rare'?'稀有款':v[4]==='uncommon'?'特别款':'普通款'),400,615,13,'#f2d49d');label(tr('Pick another','再选一个'),400,650,()=>start('blindBox'))}}if(stage==='shake'){target(330,420,140,130,()=>{},'boxShake');txt(tr('Shake ','摇动 ')+Math.round(state.boxShake)+'%',400,602,17,'#fff1d0');label(tr('Shake gently','轻轻摇晃'),400,642,()=>boxShake(70))}if(stage==='ready'){target(330,420,140,130,boxOpen);label(tr('Open the box','打开盲盒'),400,620,boxOpen)}}}ctx.restore()};
+if(activity==='blindBox'){let stage=state.boxStage,age=t-state.boxAt;if(stage==='choose'){for(let i=0;i<3;i++){let x=270+i*130;boxArt(x,530,.9,i);target(x-48,438,96,105,()=>boxSelect(i));label(tr('Box ','盲盒 ')+(i+1),x,570,()=>boxSelect(i))}}else{let held=drag?.id==='boxShake',x=held?Math.max(290,Math.min(510,drag.x)):400,y=held?Math.max(440,Math.min(535,drag.y)):515,opening=stage==='opening'?poseEase(age/.95):stage==='result'?1:0;drawRitualPose(275,555,1.45,{reach:held?{x:x-38,y:y-35}:null});boxArt(x,y,1.15,state.boxPick,opening,held?Math.sin(t*20)*.16:age<.3&&stage==='shake'?Math.sin(age*28)*.1:0);if(stage==='opening'&&age>=.95)boxAward();if(stage==='opening'||stage==='result'){let v=boxPrizes[state.boxPrize];ctx.save();ctx.globalAlpha=Math.max(.1,opening);drawBlindCollectible(400,450-35*opening,v,1.8);ctx.restore();if(stage==='result'){txt(tr(v[0],v[1]),400,590,19,'#fff2d1');txt(tr(v[4]==='secret'?'SECRET':v[4]==='rare'?'RARE':v[4]==='uncommon'?'UNCOMMON':'COMMON',v[4]==='secret'?'隐藏款':v[4]==='rare'?'稀有款':v[4]==='uncommon'?'特别款':'普通款')+' · '+boxPrizes.filter(p=>items.some(it=>it[0]===p[0])).length+'/'+boxPrizes.length,400,615,13,'#f2d49d');label(tr('Pick another','再选一个'),310,650,()=>start('blindBox'));label(tr('Collection','收藏册'),500,650,blindCollectionPage)}}if(stage==='shake'){target(330,420,140,130,()=>{},'boxShake');txt(tr('Shake ','摇动 ')+Math.round(state.boxShake)+'%',400,602,17,'#fff1d0');label(tr('Shake gently','轻轻摇晃'),400,642,()=>boxShake(70))}if(stage==='ready'){target(330,420,140,130,boxOpen);label(tr('Open the box','打开盲盒'),400,620,boxOpen)}}}ctx.restore()};
 const arcadeStory=keepsakeStory;keepsakeStory=function(item){if(boxPrizes.some(v=>v[0]===item[0]))return ['A little figure from the arcade. Its only job is to keep you company.','来自游戏厅的小手办，唯一的工作就是陪你摸鱼。'];return arcadeStory(item)};
 
 /* Reading house: a physical spread with topic choices, card handling and a saved journal. */
@@ -1836,6 +1836,10 @@ $('travel').onclick=travel;$('dockTravel').onclick=travel;
 
 /* Fit the playable stage between the HUD and dock, including the lowest controls. */
 function mobileRoomCamera(s,ox,oy){
+ if(activity==='woodenThree'){
+ const landscape=W>=H,top=landscape?100:142,bottom=H-(landscape?140:165),z=Math.max(.08,Math.min((W-20)/370,Math.max(80,bottom-top)/390));
+ return {s:z,ox:W/2-400*z,oy:(top+bottom)/2-465*z}
+ }
  const landscape=W>=H,top=room&&!activity?(landscape?95:155):(landscape?90:135),bottom=H-(landscape?100:122);
  const span=activity?(['wonderScene','story','match'].includes(activity)?[185,615,255,695]:['tarot','love'].includes(activity)?[195,605,265,685]:[170,630,265,690]):[110,690,300,750];
  const [l,r,u,d]=span,fit=Math.max(.08,Math.min((W-16)/(r-l),Math.max(80,bottom-top)/(d-u)));
@@ -1887,7 +1891,7 @@ function directSignClick(id,x,y){
 let lastDoorLayoutAt=-Infinity,lastDoorLayoutLanguage=null;
 syncSigns=function(){
  const show=proposal.hidden&&!room&&!transitioning&&avatar!==null&&$('page').style.display!=='block'&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;
- const wasHidden=signRoot.hidden;signRoot.hidden=!show;if(!show)return;
+ const wasHidden=signRoot.hidden;if(wasHidden===show)signRoot.hidden=!show;if(!show)return;
  if(signPress?.scene===scene&&signPress.el.isConnected)return;
  const changed=signsForScene!==scene||signButtons.size!==maps[scene].st.length;
  const now=performance.now();
@@ -1915,26 +1919,28 @@ syncSigns=function(){
   if(style.visibility==='hidden'||style.display==='none'||Number(style.opacity)===0||!b.width||!b.height)continue;
   blockers.push({left:b.left-rootRect.left-6,right:b.right-rootRect.left+6,top:b.top-rootRect.top-6,bottom:b.bottom-rootRect.top+6});
  }
- for(const actor of [p,...npc,...sharedTownActors()]){if(actor&&Number.isFinite(actor.x)&&Number.isFinite(actor.y))blockers.push(characterScreenBounds(actor,actor===p));}
- blockers.push(...meowTextFrameRects);
+ // House plaques are fixed to their buildings. Moving actors and transient name labels do not compete for these positions.
  for(const [id,x,y,en,cn] of maps[scene].st){
   const btn=signButtons.get(id),name=tr(en,cn);
   let plaque=btn.querySelector('.doorPlaque');if(!plaque){btn.replaceChildren();plaque=element('span','',btn,'doorPlaque')}if(plaque.textContent!==name)plaque.textContent=name;
-  btn.setAttribute('aria-label',name);btn.dataset.signMaterial=houseSignMaterial(id);
+  if(btn.getAttribute('aria-label')!==name)btn.setAttribute('aria-label',name);const material=houseSignMaterial(id);if(btn.dataset.signMaterial!==material)btn.dataset.signMaterial=material;
   const [ax,ay]=scene==='fortune'?(signAnchorsProposal[id]||[x,y-95]):[x,y-65];
   const sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
   const inView=sx>=-30&&sx<=W+30&&sy>=top-125&&sy<=bottom+70;
-  btn.hidden=!inView;if(!inView)continue;
-  items.push({btn,sx,sy,w:Math.max(44,btn.offsetWidth),h:Math.max(44,btn.offsetHeight),distance:Math.hypot(x-p.x,y-p.y)});
+  if(!inView){if(!btn.hidden)btn.hidden=true;continue}
+  // Measure only when necessary; do not repeatedly unhide a blocked sign.
+  if(btn._measureName!==name||!btn._signSize){const hidden=btn.hidden;if(hidden)btn.hidden=false;btn._signSize=[Math.max(44,btn.offsetWidth),Math.max(44,btn.offsetHeight)];btn._measureName=name;if(hidden)btn.hidden=true}
+  items.push({btn,sx,sy,w:btn._signSize[0],h:btn._signSize[1]});
  }
  // Keep the nearest doorway closest to its artwork; move other labels only
  // as far as necessary to avoid an overlapping sign or navigation control.
- items.sort((a,b)=>a.distance-b.distance);
+ // Preserve authored map order so walking past a house cannot reshuffle the other labels.
  for(const item of items){
   const {btn,sx,sy,w,h}=item;
   const choice=meowPlaceText(sx,sy,w,h,{left:6,right:W-6,top,bottom},[...blockers,...placed],Math.min(62,W*.16));
-  if(!choice){btn.hidden=true;continue}
-  btn.style.left=choice.x+'px';btn.style.top=choice.y+'px';placed.push(choice.rect);
+  if(!choice){if(!btn.hidden)btn.hidden=true;continue}
+  const left=Math.round(choice.x)+'px',topPx=Math.round(choice.y)+'px';
+  if(btn.style.left!==left)btn.style.left=left;if(btn.style.top!==topPx)btn.style.top=topPx;if(btn.hidden)btn.hidden=false;placed.push(choice.rect);
  }
 };
 
@@ -4122,6 +4128,38 @@ start=function(a){if(a==='cook'||a==='bubbleTea'){productionVisual('kitchen');pr
 
 /* Plush rewards are toys, not live cats. Fixed stitching and tag details stay
    attached to the reward through grip, lift, drop and collection. */
+/* Original pocket-sized figurines with distinct silhouettes and accessories. */
+function drawBlindCollectible(x,y,v,sc=1){
+ if(!v[5])return arcadePrizeArt(x,y,v[3],sc);
+ ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const k=v[5],col=v[2],outline='#88695e';
+ ellipse(0,3,27,6,'#2f282641');
+ const soft=(x,y,rx,ry,c)=>{const g=ctx.createRadialGradient(x-rx*.3,y-ry*.4,1,x,y,Math.max(rx,ry));g.addColorStop(0,'#fff4d8');g.addColorStop(.48,c);g.addColorStop(1,c);ellipse(x,y,rx,ry,g)};
+ const ear=(x,y,rx,ry,c)=>{soft(x,y,rx,ry,c);ellipse(x,y+2,rx*.48,ry*.64,'#e5a6a4')};
+ if(k==='cloud'||k==='moon'){ear(-11,-55,7,20,col);ear(11,-55,7,20,col)}
+ if(k==='tea'){ear(-20,-42,10,10,col);ear(20,-42,10,10,col)}
+ if(['berry','toast','fox','dragon'].includes(k)){for(const sign of [-1,1]){ctx.beginPath();ctx.moveTo(sign*5,-35);ctx.quadraticCurveTo(sign*16,-65,sign*22,-57);ctx.lineTo(sign*24,-31);ctx.closePath();ctx.fillStyle=col;ctx.fill();ctx.strokeStyle=outline;ctx.lineWidth=.8;ctx.stroke()}}
+ if(k==='dragon'){for(const sign of [-1,1]){ctx.beginPath();ctx.moveTo(sign*16,-25);ctx.quadraticCurveTo(sign*42,-42,sign*38,-11);ctx.quadraticCurveTo(sign*26,-17,sign*15,-8);ctx.fillStyle='#b2c7df';ctx.fill()}}
+ soft(0,-14,21,17,col);soft(0,-34,26,23,col);ellipse(-12,-2,9,5,col);ellipse(12,-2,9,5,col);
+ ellipse(-9,-35,2.5,3.2,'#52413b');ellipse(9,-35,2.5,3.2,'#52413b');ellipse(-16,-28,4,2,'#e5a0a3');ellipse(16,-28,4,2,'#e5a0a3');
+ if(k==='duck'){ellipse(0,-28,10,5,'#d88949');ctx.beginPath();ctx.arc(0,-37,29,Math.PI,TAU);ctx.strokeStyle='#eecb69';ctx.lineWidth=6;ctx.stroke()}
+ else{ellipse(0,-29,3,2,'#a67569');line(-4,-25,0,-23,'#806052',1);line(0,-23,4,-25,'#806052',1)}
+ if(k==='berry'){ellipse(0,-56,8,10,'#cf6c79');for(let i=0;i<4;i++)ellipse(-3+i%2*6,-59+Math.floor(i/2)*5,1,1,'#fae7a1');line(-5,-65,5,-65,'#71916c',3)}
+ if(k==='toast'){ctx.strokeStyle='#ad7953';ctx.lineWidth=5;ctx.beginPath();ctx.roundRect(-29,-56,58,44,13);ctx.stroke()}
+ if(k==='tea'){round(-10,-20,20,22,4,'#c59468','#927057');for(let i=0;i<4;i++)ellipse(-6+i*4,-3,2,2,'#77584d');line(3,-20,8,-29,'#f7dcbe',2)}
+ if(k==='cloud'){for(let i=0;i<3;i++)ellipse(-12+i*12,-9,10,8,'#f4e9dc')}
+ if(k==='fox'){for(let i=0;i<5;i++)ellipse(15+Math.cos(i*TAU/5)*5,-49+Math.sin(i*TAU/5)*5,4,4,'#f4cad2');ellipse(15,-49,2,2,'#d8b176')}
+ if(k==='moon'){ellipse(0,-12,11,12,'#e6c788');ellipse(4,-15,9,10,col);line(-10,-2,10,-2,'#aa8663',2)}
+ if(k==='dragon'){for(let i=0;i<3;i++)ellipse(-10+i*10,-52,3,5,'#efd5a2')}
+ ctx.restore()
+}
+function blindCollectionPage(){
+ page(tr('Pocket-sized escape club','口袋摸鱼收藏社'),tr('Collect the whole little village. No purchase needed.','把小镇装进口袋，不用花钱。'),q=>{
+ const grid=element('div','',q,'blindAlbum');
+ for(const v of boxPrizes){const owned=items.some(it=>it[0]===v[0]),tile=element('article','',grid);element('strong',owned?tr(v[0],v[1]):v[4]==='secret'?tr('Secret silhouette','隐藏款剪影'):tr(v[0],v[1]),tile);element('small',owned?tr('Collected','已收藏'):tr('Still hiding','还在躲猫猫'),tile);tile.dataset.owned=String(owned)}
+ b(q,tr('Back to blind boxes','返回盲盒'),()=>{$('page').style.display='none';if(activity!=='blindBox')start('blindBox')})
+ })
+}
+const blindAlbumCSS=document.createElement('style');blindAlbumCSS.textContent='.blindAlbum{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}.blindAlbum article{padding:12px;border:1px solid #b9a27d;border-radius:8px;background:#f7e6c9;color:#624d3f;min-height:74px}.blindAlbum article[data-owned=false]{opacity:.65}.blindAlbum strong,.blindAlbum small{display:block;overflow-wrap:anywhere}.blindAlbum small{margin-top:6px}';document.head.append(blindAlbumCSS);
 function arcadePrizeArt(x,y,kind,sc=1){
  const im=productionVisual('arcadePlush');
  if(!im||kind<0||kind>2)return cat(x,y,kind,false,sc);
@@ -4714,11 +4752,10 @@ refreshControls=function(){
  threeControlsBefore();const el=$('gameControls');if(!el)return;el.classList.toggle('threeControls',threeActive());if(!threeActive())return;
  const g=state.threeGame;el.replaceChildren();el.hidden=false;
  const reset=opponent=>{state.threeGame=threeNew(opponent);refreshControls()};
- const catBtn=b(el,tr('Mochi · Casual','麻薯 · 轻松'),()=>reset('cat'));catBtn.setAttribute('aria-pressed',String(g.opponent==='cat'));
- const maBtn=b(el,tr('Ah Ma · Expert','阿嬷 · 高手'),()=>reset('auntie'));maBtn.setAttribute('aria-pressed',String(g.opponent==='auntie'));
- const busy=g.board.some(Boolean)&&!g.result;catBtn.disabled=busy;maBtn.disabled=busy;
- if(g.result)b(el,tr('Again','再来一局'),()=>reset(g.opponent));
- else{const status=element('span',g.thinking?tr('Thinking…','思考中……'):tr('Your turn','轮到你'),el);status.setAttribute('role','status');if(busy)b(el,tr('New round','重新开局'),()=>reset(g.opponent))}
+ const busy=g.board.some(Boolean)&&!g.result;
+ const opponent=b(el,g.opponent==='cat'?tr('Mochi · Casual','麻薯 · 轻松'):tr('Ah Ma · Expert','阿嬷 · 高手'),()=>reset(g.opponent==='cat'?'auntie':'cat'));opponent.disabled=busy;opponent.title=tr('Tap to change opponent','点击切换对手');
+ const restart=b(el,g.result?tr('Again','再来一局'):tr('New round','重新开局'),()=>reset(g.opponent));
+ const status=element('span',g.result?(g.result.who===1?tr('You win!','你赢啦！'):g.result.who===2?tr('NPC wins','对手赢啦'):tr('A draw','平局')):g.thinking?tr('Thinking…','思考中……'):tr('Your turn','轮到你'),el);status.setAttribute('role','status');
 };
 const threeStyle=document.createElement('style');threeStyle.textContent='#gameControls.threeControls{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:5px;max-width:95vw}#gameControls.threeControls button{min-height:44px;font-size:13px;white-space:normal}#gameControls.threeControls button[aria-pressed=true]{background:#536a5a;color:#fff3d9}#gameControls.threeControls span{padding:3px 8px;font-size:12px;color:#fff0ce;background:#493e34;border-radius:8px}';document.head.append(threeStyle);
 const threeDrawBefore=drawActivity;
@@ -5001,14 +5038,32 @@ npcTalk=function(n){
  b(choice,tr('Catch up','叙叙旧'),()=>say(tr(...n.n),tr(...townReaction('friendship:'+n.n[0]+':'+tier,[...familiarityLines[tier],...(residentFamiliarity[n.n[0]]||[])])),[[tr('See you around','回头见'),closeTalk]]));
  return result
 };
+/* Accessible native buttons sit exactly over the nine board squares.
+   No separate panel in front of the game. */
+const threeBoardAccess=element('div','',$('game'),'threeBoardAccess');
+threeBoardAccess.hidden=true;threeBoardAccess.setAttribute('role','group');threeBoardAccess.setAttribute('aria-label','Tic tac toe board');
+const threeAccessKeys=Array.from({length:9},(_,i)=>{const key=b(threeBoardAccess,'',()=>threePlay(i));key.dataset.cell=String(i);return key});
+function syncThreeAccess(){
+ const visible=threeActive()&&!talkOpen&&!transitioning&&$('page').style.display!=='block';if(threeBoardAccess.hidden===visible)threeBoardAccess.hidden=!visible;if(!visible)return;
+ const g=state.threeGame;const styles={left:Math.round(cam.ox+286*cam.scale)+'px',top:Math.round(cam.oy+388*cam.scale)+'px',width:Math.round(228*cam.scale)+'px',height:Math.round(228*cam.scale)+'px'};
+ for(const [k,v] of Object.entries(styles))if(threeBoardAccess.style[k]!==v)threeBoardAccess.style[k]=v;
+ const title=tr('Tic tac toe board','井字棋棋盘');if(threeBoardAccess.getAttribute('aria-label')!==title)threeBoardAccess.setAttribute('aria-label',title);
+ for(let i=0;i<9;i++){const key=threeAccessKeys[i],v=g.board[i],name=tr('Row ','第 ')+(Math.floor(i/3)+1)+tr(', column ',' 行，第 ')+(i%3+1)+tr(v?' occupied':' empty',v?' 列，已占用':' 列，空位');if(key.getAttribute('aria-label')!==name)key.setAttribute('aria-label',name);key.disabled=!!v||!!g.thinking||!!g.result}
+}
 const arcadeAccessibleBefore=refreshControls;
-let lifeBoardExpanded=false;
-refreshControls=function(){
- arcadeAccessibleBefore();if(!threeActive())return;const g=state.threeGame,el=$('gameControls');if(!el||g.result)return;
- const more=element('details','',el,'lifeBoardAccess');more.open=lifeBoardExpanded;more.ontoggle=()=>{if(more.isConnected)lifeBoardExpanded=more.open};element('summary',tr('Alternative board controls','棋盘辅助操作'),more);
- const grid=element('div','',more,'lifeBoardKeys');
- for(let i=0;i<9;i++){const value=g.board[i],btn=b(grid,value===1?'×':value===2?'○':String(i+1),()=>threePlay(i));btn.disabled=!!value||g.thinking;btn.setAttribute('aria-label',tr('Row ','第 ')+(Math.floor(i/3)+1)+tr(', column ',' 行，第 ')+(i%3+1)+tr(value?', occupied':'',value?' 列，已占用':' 列'))}
-};
+refreshControls=function(){arcadeAccessibleBefore();syncThreeAccess()};
+const threeAccessDrawBefore=drawActivity;
+drawActivity=function(){const result=threeAccessDrawBefore();if(threeActive())syncThreeAccess();else if(!threeBoardAccess.hidden)threeBoardAccess.hidden=true;return result};
+const threeAccessCss=document.createElement('style');threeAccessCss.textContent=`
+#game #gameControls.threeControls{bottom:calc(env(safe-area-inset-bottom,0px) + 77px)!important;width:min(92vw,310px)!important;max-width:92vw!important;display:grid!important;grid-template-columns:1fr 1fr;gap:4px;padding:5px!important;border-radius:8px!important;background:#efe2c6f5!important}
+#game #gameControls.threeControls button{font-size:12px!important;min-height:44px!important;min-width:0!important;margin:0!important;padding:4px 5px!important}
+#game #gameControls.threeControls span{grid-column:1/-1;text-align:center;background:transparent!important;color:#4a5043!important;padding:2px!important}
+#game .threeBoardAccess{position:absolute;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);z-index:3;touch-action:manipulation}
+#game .threeBoardAccess[hidden]{display:none!important}
+#game .threeBoardAccess button{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important;min-width:0!important;min-height:0!important;border-radius:0!important}
+#game .threeBoardAccess button:focus-visible{outline:3px solid #fff3b9!important;outline-offset:-4px}
+@media(max-height:500px) and (orientation:landscape){#game #gameControls.threeControls{width:150px!important;left:auto!important;right:12px!important;transform:none!important;grid-template-columns:1fr;bottom:80px!important}}
+`;document.head.append(threeAccessCss);
 window.addEventListener('keydown',e=>{
  if(!nostalgiaActive()||talkOpen||transitioning||$('page').style.display==='block'||e.target.matches('input,textarea,select,button'))return;
  const g=state.bubbleGame;if(g.status!=='play'||g.flight)return;
@@ -5992,7 +6047,8 @@ function meowBeginTextFrame(inside){
   for(const a of sharedTownActors())meowFrameBlockers.push(meowIndoorActorBounds(a));
  }else{
   for(const a of [p,...npc,...sharedTownActors()])meowFrameBlockers.push(characterScreenBounds(a,a===p));
-  // Keep the authored house anchors free even before DOM signs have been laid out.
+  // Actual visible signs take precedence over actor names; reserve their current rectangles.
+  meowFrameBlockers.push(...meowVisibleRects('#worldSigns .worldSign'));
   for(const [id,x,y] of maps[scene].st){
    const [ax,ay]=scene==='fortune'?(signAnchorsProposal[id]||[x,y-95]):[x,y-65],sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
    meowFrameBlockers.push({left:sx-70,right:sx+70,top:sy-26,bottom:sy+26})
@@ -6025,7 +6081,7 @@ function drawMeowActorName(a,value,indoorScale=null){
   let spot=null;
   if(q?.offset){const x=cx+q.offset.x,y=cy+q.offset.y,rect={left:x-w/2,right:x+w/2,top:y-h/2,bottom:y+h/2};if(rect.left>=5&&rect.right<=W-5&&rect.top>=5&&rect.bottom<=H-5&&!blockers.some(b=>speechOverlap(rect,b)))spot={x,y,rect}}
   if(!spot)spot=meowPlaceText(cx,cy,w,h,{left:5,right:W-5,top:5,bottom:H-5},blockers,25);
-  if(!spot)return;if(q)q.offset={x:spot.x-cx,y:spot.y-cy};meowTextFrameRects.push(spot.rect);ctx.globalAlpha*=alpha;
+  if(!spot){if(q)q.blockedAt=performance.now();return}if(q){q.offset={x:spot.x-cx,y:spot.y-cy};if(q.blockedAt&&performance.now()-q.blockedAt<160)return;if(q.blockedAt){q.reappearAt=performance.now();q.blockedAt=0}}meowTextFrameRects.push(spot.rect);ctx.globalAlpha*=alpha*(q?.reappearAt?clamp((performance.now()-q.reappearAt)/220,0,1):1);
   const x=(spot.x-cam.ox)/scale,y=(spot.y-cam.oy)/scale;
   round(x-w/scale/2,y-h/scale/2,w/scale,h/scale,4/scale,'#f6e8cdeb','#aa9672');ctx.font='600 '+size+'px Georgia, "Songti SC", serif';ctx.fillStyle='#425646';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(name,x,y)
  }finally{ctx.restore()}
