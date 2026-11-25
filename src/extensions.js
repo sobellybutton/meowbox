@@ -3467,11 +3467,11 @@ function hideoutClaimPage(){
 }
 function hideoutPage(){
  activePage='hideout';
- page(tr('My Hideout','我的小窝'),tr('The rent is imaginary. The peace is real.','房租是假的，清静是真的。'),q=>{
-  const profile=element('div','',q,'hideoutProfile'),pic=element('img','',profile);pic.src=ART['badge'+(avatar??0)];pic.alt='';
+ page(tr('My Room','我的小窝'),tr('The rent is imaginary. The peace is real.','房租是假的，清静是真的。'),q=>{
+  q.classList.add('hideoutRoomView');const profile=element('div','',q,'hideoutProfile'),pic=element('img','',profile);pic.src=ART['badge'+(avatar??0)];pic.alt='';
   const identity=element('div','',profile);element('strong',playerName||tr('Traveller','旅人'),identity);element('small',tr(...names[avatar??0]),identity);b(profile,tr('Edit profile','编辑资料'),hideoutProfilePage);
   const theme=hideoutThemes.find(v=>v.id===hideoutPrefs.theme&&hideoutThemeUnlocked(v))||hideoutThemes[0];
-  const stage=element('div','',q,'hideoutScene');stage.innerHTML=hideoutSceneArt(theme);
+  const stage=element('div','',q,'hideoutScene');stage.innerHTML=hideoutSceneArt(theme);stage.dataset.roomTheme=theme.id;
   function render(){
    stage.querySelectorAll('.hideoutPlaced,.hideoutDisplay,.hideoutPlayer').forEach(el=>el.remove());
    const sorted=hideoutFurniture.map((d,i)=>({d,i})).filter(v=>Object.hasOwn(art9,v.d.id)).sort((a,b)=>(a.d.id==='rug'?-1:a.d.y)-(b.d.id==='rug'?-1:b.d.y));
@@ -3488,22 +3488,22 @@ function hideoutPage(){
    for(const [i,reward] of displays.entries()){
     const el=element('button','',stage,'hideoutDisplay');el.style.left=(16+(i%4)*22)+'%';el.style.top=(47+Math.floor(i/4)*9)+'%';el.innerHTML=albumIcon(reward.kind);el.setAttribute('aria-label',tr(...reward.name));el.onclick=()=>toast(tr(...reward.name));
    }
-   const player=element('img','',stage,'hideoutPlayer');player.src=ART['walker'+(avatar??0)+'0'];player.alt=tr(...names[avatar??0]);player.onclick=()=>toast(tr('Do not disturb. Recovering from adulthood.','请勿打扰，正在治疗成年人的疲惫。'))
+   if(!hideoutEditing){const player=element('img','',stage,'hideoutPlayer');player.src=ART['walker'+(avatar??0)+'0'];player.alt=tr(...names[avatar??0]);player.onclick=()=>toast(tr('Do not disturb. Recovering from adulthood.','请勿打扰，正在治疗成年人的疲惫。'))}
   }render();
   const controls=element('div','',q,'hideoutActions');
-  b(controls,hideoutEditing?tr('Finish decorating','布置好了'):tr('Decorate','布置小窝'),()=>{hideoutEditing=!hideoutEditing;hideoutPage()});
-  b(controls,tr('Stamps & rewards','印章与奖励'),hideoutClaimPage);
+  b(controls,hideoutEditing?tr('Save & view room','保存布置'):tr('Decorate room','布置小窝'),()=>{saveHideout();hideoutEditing=!hideoutEditing;hideoutPage()});
+  b(controls,tr('Stamps & rewards','印章与奖励'),hideoutClaimPage);controls.classList.add('hideoutPrimary');
   if(hideoutEditing){
    element('p',tr('Drag furniture. Tap an item to select it, then rotate or remove it.','拖动家具。点选后可旋转或移除。'),q);
-   const tray=element('div','',q,'hideoutFurnitureTray');
+   const tray=element('div','',q,'hideoutFurnitureTray');tray.setAttribute('aria-label',tr('Furniture catalogue','家具目录'));
    for(const [id,name] of Object.entries(roomNames9)){
     const btn=b(tray,'',()=>{if(hideoutFurniture.length>=24){toast(tr('Your room is full. Even the cat needs space.','小窝满啦，猫猫也需要空间。'));return}hideoutFurniture.push({id,x:50,y:68});hideoutSelected=hideoutFurniture.length-1;saveHideout();render()});const im=element('img','',btn);im.src=art9[id];im.alt='';element('small',tr(...name),btn)
    }
-   const tools=element('div','',q,'hideoutActions');b(tools,tr('Rotate','旋转'),()=>{if(hideoutFurniture[hideoutSelected]){const d=hideoutFurniture[hideoutSelected];d.r=((d.r||0)+15)%360;saveHideout();render()}});b(tools,tr('Remove','移除'),()=>{if(hideoutSelected>=0&&hideoutFurniture[hideoutSelected]){hideoutFurniture.splice(hideoutSelected,1);hideoutSelected=-1;saveHideout();render()}});
+   const tools=element('div','',q,'hideoutActions hideoutTools');stage.after(tools);b(tools,tr('Rotate','旋转'),()=>{if(hideoutFurniture[hideoutSelected]){const d=hideoutFurniture[hideoutSelected];d.r=((d.r||0)+15)%360;saveHideout();render()}});b(tools,tr('Remove','移除'),()=>{if(hideoutSelected>=0&&hideoutFurniture[hideoutSelected]){hideoutFurniture.splice(hideoutSelected,1);hideoutSelected=-1;saveHideout();render()}});
    element('h2',tr('Room atmosphere','小窝氛围'),q);element('p',tr('Available paws: ','可用爪币：')+hideoutBalance()+' · '+tr('Use them for optional room themes.','可兑换自选小窝主题。'),q);
    const themes=element('div','',q,'hideoutActions');for(const theme of hideoutThemes){const unlocked=hideoutThemeUnlocked(theme);const btn=b(themes,tr(...theme.name)+(unlocked?'':theme.cost?' · '+theme.cost+' '+tr('paws','爪币'):' · '+theme.need+' '+tr('stamps','枚印章')),()=>{if(!unlocked){if(!theme.cost||!buyHideoutTheme(theme))return}hideoutPrefs.theme=theme.id;saveHideout();hideoutPage()});btn.disabled=!unlocked&&(!theme.cost||hideoutBalance()<theme.cost);btn.setAttribute('aria-pressed',String(hideoutPrefs.theme===theme.id))}
   }
-  const links=element('div','',q,'hideoutActions');b(links,tr('My bag','我的背包'),myRoom);b(links,tr('Private notes','私人留言'),myNotes9);b(links,tr('Saved readings','收藏解读'),album9);b(links,tr('Passport','护照'),passport);
+  const links=element('div','',q,'hideoutActions hideoutLibrary');for(const [art,en,cn,fn,descEn,descCn] of [['board','Noticeboard','留言板',myNotes9,'Private thoughts and reminders','私人心事与提醒'],['frame','Readings album','占卜记录',album9,'Revisit saved readings','重温收藏的解读'],['card','Memories','旅途回忆',passport,'Stamps and little discoveries','印章与旅途小发现'],['bag','My bag','我的背包',myRoom,'Your collected keepsakes','珍藏的小物件']]){const tile=b(links,'',fn);const im=element('span','',tile,'hideoutLibraryArt');im.innerHTML=albumIcon(art);const label=element('span','',tile);element('strong',tr(en,cn),label);element('small',tr(descEn,descCn),label)}
   const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();hideoutPage()}
  })
 }
@@ -5780,3 +5780,81 @@ const stationRepairStyle=document.createElement('style');stationRepairStyle.text
 #proposal .rail-table span{font:10px/1.2 Georgia,serif;color:#fff3d8}
 @media(prefers-reduced-motion:reduce){#proposal .rail-cabin .train-window img{animation:none!important;transform:none!important}}
 `;document.head.append(stationRepairStyle);
+
+/* More detailed editable room stage. Artwork and furniture are separate;
+   retain every player's existing positions, rotations, rewards and purchases.
+   This is a vector interior, not the final hand-painted reference artwork. */
+hideoutSceneArt=function(theme){
+ const flowers=Array.from({length:26},(_,i)=>{const x=15+(i*67)%370,y=12+(i*29)%57;return '<g transform="translate('+x+' '+y+') rotate('+i*19+')"><path d="M0-7Q9-11 6-2Q15 4 5 7Q0 14-4 7Q-14 5-6-2Q-7-10 0-7Z" fill="'+['#f1c2c5','#ebaeaf','#f6d9d0'][i%3]+'" stroke="#b97875" stroke-width=".45"/><circle r="1.7" fill="#ba755a"/></g>'}).join('');
+ const boards=Array.from({length:8},(_,i)=>'<path d="M'+(i*60-30)+' 301L'+(i*82-100)+' 510" stroke="#513b2d" stroke-opacity=".5" stroke-width="1.1"/>').join('');
+ const grain=Array.from({length:34},(_,i)=>{const x=(i*83)%400,y=305+(i*29)%195;return '<path d="M'+x+' '+y+'q18 -2 36 1t43 0" fill="none" stroke="#f4d5a4" stroke-opacity=".13" stroke-width=".8"/>'}).join('');
+ const lights=Array.from({length:13},(_,i)=>'<circle cx="'+(18+i*30)+'" cy="'+(55+Math.sin(i*.55)*11)+'" r="2.3" fill="#ffde9b" filter="url(#hrGlow)"/>').join('');
+ const valley=ART.valleyClean;
+ return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" preserveAspectRatio="none" aria-hidden="true">
+ <defs>
+ <linearGradient id="hrWall" x2=".15" y2="1"><stop stop-color="${theme.wall}"/><stop offset="1" stop-color="#bd9a71"/></linearGradient>
+ <linearGradient id="hrFloor" x2=".3" y2="1"><stop stop-color="#bd9469"/><stop offset="1" stop-color="${theme.floor}"/></linearGradient>
+ <linearGradient id="hrWood" x2=".1" y2="1"><stop stop-color="#ba8b55"/><stop offset=".45" stop-color="#855839"/><stop offset="1" stop-color="#513a2b"/></linearGradient>
+ <linearGradient id="hrCurtain" x2="1" y2="0"><stop stop-color="#68527c"/><stop offset=".35" stop-color="#a38bbe"/><stop offset=".7" stop-color="#775e91"/><stop offset="1" stop-color="#4e4167"/></linearGradient>
+ <radialGradient id="hrWarm"><stop stop-color="#ffe4aa" stop-opacity=".6"/><stop offset="1" stop-color="#ffe2a2" stop-opacity="0"/></radialGradient>
+ <filter id="hrGlow"><feGaussianBlur stdDeviation="1.8"/></filter>
+ <clipPath id="hrWindow"><path d="M28 210V110Q28 65 94 65Q160 65 160 110V210Z"/></clipPath>
+ </defs>
+ <rect width="400" height="500" fill="url(#hrWall)"/><rect y="301" width="400" height="199" fill="url(#hrFloor)"/>
+ <path d="M0 302H400M0 334H400M0 371H400M0 418H400M0 474H400" fill="none" stroke="#68492f" stroke-opacity=".45"/>${boards}${grain}
+ <path d="M0 0H400V26H0Z M0 280H400V299H0Z M0 20H12V290H0Z M388 20H400V290H388Z" fill="url(#hrWood)"/>
+ <path d="M0 26L72 0M104 26L174 0M228 26L298 0M334 26L400 0" stroke="#d3aa75" stroke-opacity=".45" stroke-width="5"/>
+ <path d="M17 215V110Q17 53 94 53Q171 53 171 110V215Z" fill="#543d2e" stroke="#bd955d" stroke-width="3"/>
+ <g clip-path="url(#hrWindow)"><rect x="28" y="65" width="132" height="145" fill="${theme.sky}"/><image href="${valley}" x="28" y="65" width="132" height="145" preserveAspectRatio="xMidYMid slice"/><path d="M28 65L115 65L56 210H28Z" fill="#fff5d0" opacity=".12"/></g>
+ <path d="M94 68V210M28 135H160" stroke="#6c4832" stroke-width="5"/><path d="M94 68V210M28 135H160" stroke="#c39965" stroke-width="1.4"/>
+ <path d="M17 59Q32 85 29 139L11 209Q22 211 43 207Q51 164 48 113L45 59Z M151 59Q137 85 144 139L175 209Q162 215 141 208Q126 157 131 111L133 59Z" fill="url(#hrCurtain)" stroke="#594769" stroke-width="1.4"/>
+ <path d="M12 170Q32 178 47 167M135 168Q155 178 170 169" fill="none" stroke="#deb77b" stroke-width="3"/>
+ <path d="M14 212H173L179 220H8Z" fill="url(#hrWood)" stroke="#513c2d"/>
+ <g transform="translate(209 88)"><rect x="-21" y="-34" width="42" height="68" rx="2" fill="#573e2f" stroke="#c69b61" stroke-width="3"/><rect x="-16" y="-28" width="32" height="56" fill="#62507f"/><path d="M0-18L3-5 15-1 3 2 0 16 -3 2 -15-1 -3-5Z" fill="#f7d887"/><circle cx="-10" cy="-16" r="1.5" fill="#ffdb8b"/><circle cx="10" cy="17" r="1.5" fill="#ffdb8b"/></g>
+ <g transform="translate(293 108) rotate(-3)"><rect x="-47" y="-33" width="94" height="66" fill="#f5e8cc" stroke="#87613f" stroke-width="2"/><image href="${valley}" x="-42" y="-28" width="84" height="48" preserveAspectRatio="xMidYMid slice"/><path d="M-10 27h20" stroke="#9b7754"/></g>
+ <g transform="translate(192 31)"><path d="M0-13V5" stroke="#4c392d" stroke-width="2"/><path d="M-15 5H15L20 12L15 39H-15L-20 12Z" fill="#dfad62" stroke="#68462d" stroke-width="2"/><path d="M-7 7V38M7 7V38M-18 14H18M-15 36H15" stroke="#95653b"/><ellipse cy="23" rx="78" ry="75" fill="url(#hrWarm)" pointer-events="none"/></g>
+ <path d="M3 53Q111 80 205 52T397 52" fill="none" stroke="#755239" stroke-width="1.7"/>${lights}
+ <path d="M0 4Q45 45 103 28M400 3Q350 43 296 30" stroke="#6f4934" stroke-width="5" fill="none"/>${flowers}
+ <g opacity=".5"><path d="M33 231L161 232L247 425L32 425Z" fill="#fff4c5" opacity=".18"/><ellipse cx="230" cy="336" rx="152" ry="68" fill="url(#hrWarm)"/></g>
+ </svg>`
+};
+const roomPageBefore=hideoutPage;
+hideoutPage=function(){
+ roomPageBefore();
+ const q=$('content'),stage=q.querySelector('.hideoutScene'),head=q.querySelector('h1'),profile=q.querySelector('.hideoutProfile'),primary=q.querySelector('.hideoutPrimary');
+ if(!stage||!profile||!primary)return;
+ const intro=head?.nextElementSibling;if(intro?.tagName==='P')intro.classList.add('hideoutIntro');
+ const ribbon=element('div','',q,'hideoutRibbon');ribbon.append(profile,primary);stage.before(ribbon);
+ const footer=element('div','',q,'hideoutRoomCaption');element('span',tr(hideoutEditing?'Decorating · drag to place':'Your private little retreat',hideoutEditing?'布置中 · 拖动摆放':'自己的安静小天地'),footer);
+ element('span',tr('Paws ','爪币 ')+hideoutBalance(),footer);stage.after(footer);
+ if(hideoutEditing){const tools=q.querySelector('.hideoutTools');if(tools){footer.after(tools);const move=b(tools,tr('Move','移动'),()=>toast(tr('Select a piece and drag it to its new place.','点选家具，再拖到新位置。')));tools.prepend(move);b(tools,tr('Preview','预览'),()=>{hideoutEditing=false;hideoutPage()})}}
+ const pageEl=$('page');pageEl.dataset.roomView='true';
+};
+const roomPageReset=page;page=function(...args){$('page').removeAttribute('data-room-view');$('content').classList.remove('hideoutRoomView');return roomPageReset(...args)};
+const hideoutRoomStyle=document.createElement('style');hideoutRoomStyle.textContent=`
+#page[data-room-view=true]{background:#f2e7d2!important}
+#page[data-room-view=true] .inner{max-width:800px!important;padding:10px 12px 24px!important;margin:auto!important}
+.hideoutRoomView>h1{font:700 clamp(23px,6vw,34px)/1.15 Georgia,"Songti SC",serif!important;color:#594230;margin:10px 0 4px!important}
+.hideoutRoomView .hideoutIntro{font-size:13px;margin:4px 0;color:#7b6754}
+.hideoutRibbon{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:8px 0}
+.hideoutRibbon .hideoutProfile{margin:0;flex:1;min-width:160px}
+.hideoutRibbon .hideoutProfile img{width:42px;height:42px}
+.hideoutRibbon .hideoutProfile button{font-size:12px;padding:5px 8px;min-height:44px}
+.hideoutRibbon .hideoutPrimary{margin:0;flex:0 1 auto}
+.hideoutRibbon .hideoutPrimary button{background:#755487!important;color:#fff3dc!important;border:1px solid #b99dca!important;padding:7px 10px;font-size:13px}
+.hideoutRoomView .hideoutScene{aspect-ratio:4/5;max-height:none;width:100%;border:2px solid #b18b59;border-radius:10px;box-shadow:0 5px 15px #6f4c3138}
+.hideoutRoomView .hideoutPlaced{filter:drop-shadow(2px 4px 2px #30231455);max-height:38%}
+.hideoutRoomView .hideoutPlaced.selected{outline:2px dashed #f8d395;outline-offset:3px;filter:drop-shadow(0 0 4px #ffd78a)}
+.hideoutRoomView .hideoutPlayer{width:12%;left:67%;bottom:7%}
+.hideoutRoomCaption{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:#745e47;padding:7px 3px}
+.hideoutRoomView .hideoutTools{display:flex;justify-content:center;gap:5px;margin:4px 0 12px}
+.hideoutRoomView .hideoutTools button{flex:1;min-width:60px;min-height:44px;font-size:12px;padding:6px}
+.hideoutRoomView .hideoutFurnitureTray{display:flex;overflow-x:auto;gap:8px;padding:6px 0 12px;scroll-snap-type:x proximity}
+.hideoutRoomView .hideoutFurnitureTray button{flex:0 0 88px;min-height:82px;scroll-snap-align:start;background:#fff6e1!important;border:1px solid #c2a47a!important;border-radius:8px!important}
+.hideoutRoomView .hideoutFurnitureTray img{height:48px;width:65px}
+.hideoutRoomView .hideoutLibrary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.hideoutRoomView .hideoutLibrary button{display:flex;align-items:center;gap:8px;text-align:left;white-space:normal;min-width:0;min-height:64px;background:#fff5e0!important;border:1px solid #bd9a6e!important;padding:9px!important}
+.hideoutLibraryArt{flex:0 0 32px}.hideoutLibraryArt svg{display:block;width:100%}
+.hideoutLibrary strong,.hideoutLibrary small{display:block;line-height:1.2}.hideoutLibrary small{font-size:11px;color:#78634e;margin-top:4px}
+@media(min-width:760px){.hideoutRoomView .hideoutScene{max-width:560px;margin:0 auto}.hideoutRoomView .hideoutRoomCaption{max-width:560px;margin:0 auto}.hideoutRoomView .hideoutLibrary{grid-template-columns:repeat(4,minmax(0,1fr))}}
+`;document.head.append(hideoutRoomStyle);
