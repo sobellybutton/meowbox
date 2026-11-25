@@ -72,6 +72,9 @@ jobs:
                 if(await page.locator('#proposal').getAttribute('data-shot')!=='shrine')throw Error('Returning player did not start at shrine');
                 await page.waitForTimeout(1500);
                 if(await page.locator('#proposal').isHidden())throw Error('Returning player bypassed gate');
+                if(!/Test Traveller/.test(await page.locator('#proposal .shrine-welcome').innerText()))throw Error('Returning welcome lost player name');
+                if(!await page.locator('#proposal .shrine-sky').count())throw Error('Shrine atmosphere missing');
+                if(await page.locator('#proposal .rail-ticket').count())throw Error('Returning player asked to register again');
                 await page.screenshot({path:'test-results/'+name+'-returning-player-gate.png'});
                 await page.locator('#proposal .shrine-enter').click();
                 await page.locator('#proposal').waitFor({state:'hidden',timeout:30000});
@@ -79,6 +82,8 @@ jobs:
                 await page.locator('#dockPassport').click();
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
                 if(!/Test Traveller/.test(await page.locator('.albumProfile').innerText()))throw Error('Saved player name lost');
+                if(!/Test Traveller/.test(await page.locator('.passportRailTicket').innerText()))throw Error('Original railway ticket missing');
+                if(await page.evaluate(()=>readShrineVisits().total)!==2)throw Error('Visit history did not persist exactly twice');
                 await page.getByRole('button',{name:'‹ Back',exact:true}).click();
                 // Direct activity integration check, separate from the normal entrance flow.
                 await page.evaluate(()=>{room='wishes';activity=null;action('coin')});
