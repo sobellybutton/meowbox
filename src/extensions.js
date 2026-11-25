@@ -410,7 +410,7 @@ if(migratedReadingItems!==items){items=migratedReadingItems;save('items',items)}
 const keepsakes=[['Observatory destiny scroll','星月命理卷轴','scroll'],['Three-card reading','三张牌占卜','card'],['Heaven’s approval','圣杯祝福','moon'],['Wishing lantern','许愿灯','lantern'],['Cat friendship','猫咪友谊','cat'],['Soul Cat keepsake','猫灵纪念章','cat']];
 function albumIcon(kind){let art={scroll:'<path d="M15 12h33v42H15z" fill="#f1d9a6" stroke="#8f704a"/><path d="M10 10h43M10 56h43" stroke="#946847" stroke-width="5"/><path d="M22 22h20m-20 8h20m-20 8h14" stroke="#a58c60"/>',card:'<rect x="17" y="7" width="31" height="49" rx="3" fill="#607b70" stroke="#b79967"/><circle cx="32" cy="30" r="10" fill="#e8c785"/><circle cx="37" cy="26" r="8" fill="#607b70"/>',moon:'<path d="M9 25Q10 51 31 27Q18 33 9 25M34 21Q37 48 57 24Q45 30 34 21" fill="#b65f43" stroke="#80503a"/>',lantern:'<path d="M32 4v9m0 39v8" stroke="#84603e"/><path d="M20 15Q6 32 20 49h24q14-17 0-34z" fill="#e4ae65" stroke="#95633f"/><path d="M25 15q-8 17 0 34m14-34q8 17 0 34" fill="none" stroke="#b77947"/><path d="M20 13h24m-24 38h24" stroke="#79573f" stroke-width="4"/>',cat:'<path d="M13 27L15 8 28 19H38L50 8 52 30Q54 49 32 51Q9 49 13 27Z" fill="#d7ad77" stroke="#866345"/><path d="M23 33h2m14 0h2m-12 7q3 3 6 0" stroke="#674c3c" stroke-width="2" fill="none"/>',stamp:'<circle cx="32" cy="32" r="24" fill="#d8b78a" stroke="#a77a4e"/><path d="M13 42l12-17 9 8 11-16 10 25z" fill="#718879"/><circle cx="20" cy="19" r="4" fill="#f4db9e"/>'};return '<svg viewBox="0 0 64 64" aria-hidden="true">'+(art[kind]||art.stamp)+'</svg>'}
 function albumProfile(q){let a=element('div','',q,'albumProfile');let im=element('img','',a);im.src=ART['badge'+(avatar??0)];let info=element('div','',a);element('strong',playerName||tr('Traveller','旅人'),info);element('p',tr('Level ','等级 ')+(1+Math.floor(items.length/5))+' · '+items.length+' '+tr('discoveries','份回忆'),info)}
-function collectionKind(item){let n=item[0];return /Tarot|reading/.test(n)?'card':/lantern/i.test(n)?'lantern':/scroll|Fortune stick|Fortune paper/.test(n)?'scroll':/cat/i.test(n)?'cat':/approval/.test(n)?'moon':'stamp'}
+function collectionKind(item){let n=item[0];return /recipe|soup|milk tea|bubble tea|broth/i.test(n)?'recipe':/Wishing coin/i.test(n)?'coin':/let it drift|bottle/i.test(n)?'bottle':/ticket|parallel life/i.test(n)?'ticket':/Tarot|reading/.test(n)?'card':/lantern/i.test(n)?'lantern':/scroll|Fortune stick|Fortune paper/.test(n)?'scroll':/cat/i.test(n)?'cat':/approval/.test(n)?'moon':'stamp'}
 function keepsakeDetails(item){page(tr('A little memory','一份小回忆'),tr('Every discovery has a story.','每份收藏都有一段故事。'),q=>{let a=element('div','',q,'albumCard');let im=element('div','',a);im.innerHTML=albumIcon(collectionKind(item));element('strong',tr(...item),a);element('span',tr('Collected','已收藏'),a,'albumStamp');let story=keepsakeStory(item);element('p',tr(...story),q,'memoryStory');b(q,tr('Back to my bag','返回背包'),myRoom)})}
 let albumTab='all';
 myRoom=function(){activePage='room';page(tr('Traveller’s bag','旅人的背包'),tr('Little things from your travels.','把旅途的小小回忆都收起来。'),q=>{let book=element('section','',q,'travelAlbum');albumProfile(book);let tabs=element('div','',book,'albumTabs');for(let [id,en,cn] of [['all','All','全部'],['collected','Collected','已收藏'],['locked','To discover','待发现']]){let btn=b(tabs,tr(en,cn),()=>{albumTab=id;myRoom()});btn.setAttribute('aria-pressed',String(albumTab===id))}let g=element('div','',book,'albumGrid');let entries=keepsakes.map(k=>({item:k.slice(0,2),kind:k[2],owned:items.some(x=>x[0]===k[0])}));for(let item of items)if(!entries.some(x=>x.item[0]===item[0]))entries.push({item,kind:collectionKind(item),owned:true});for(let v of entries.filter(x=>albumTab==='all'||(albumTab==='collected'?x.owned:!x.owned))){let a=element('article','',g,'albumCard'+(v.owned?'':' locked'));let im=element('div','',a);im.innerHTML=albumIcon(v.kind);element('strong',v.owned?tr(...v.item):tr('Undiscovered keepsake','未发现的手信'),a);element('small',v.owned?tr('Collected','已收藏'):tr(...keepsakeClue(v.item)),a);if(v.owned)b(a,tr('Inspect','看看'),()=>keepsakeDetails(v.item))}b(book,tr('Open passport','打开护照'),passport)})};
@@ -563,7 +563,7 @@ const wonderCanvasPrior=drawActivity;drawActivity=function(){if(activity!=='wond
  let wood=ctx.createLinearGradient(0,395,0,670);wood.addColorStop(0,'#ae8761');wood.addColorStop(1,'#72513b');ctx.beginPath();ctx.moveTo(211,399);ctx.lineTo(589,399);ctx.lineTo(780,1800);ctx.lineTo(20,1800);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle='#c4a071';ctx.stroke();for(let i=0;i<12;i++)line(188,416+i*20,612,418+i*20,'#e5bc8922',1);
  txt(tr(...wonderSceneNames[mode]),400,251,21,'#fff1d5');
  if(phase==='welcome'){wonderSceneText(tr('Take your time. Answer as you are, not as you wish to be.','慢慢来，按真实的自己作答就好。'),400,420,385,19);wonderSceneObject(400,516,0,mode,false);label(tr('Begin our conversation','开始我们的对话'),400,606,()=>{wonderScenePhase='question';wonderSceneAt=t;sound(480)});txt(tr('For fun, at your own pace.','趣味探索，慢慢来。'),400,644,13,'#f8e4c6')}
- else if(phase==='result'){let v=wonderSceneResult,f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.65));ctx.save();ctx.translate(400,493);ctx.scale(Math.max(.02,f),1);round(-147,-103,294,207,4,'#f5e3ba','#b88b5e');round(-139,-95,278,191,2,null,'#b88b5e');if(mode==='soul')cat(0,-19,0,false,.86);else{ellipse(0,-55,28,28,v.color);ctx.strokeStyle='#b28c5b';ctx.beginPath();ctx.arc(0,-55,35,0,TAU);ctx.stroke()}wonderSceneText(tr(...v.name),0,-1,260,23,'#654b39',2);wonderSceneText(tr(...v.desc),0,29,262,16,'#654b39',4);ctx.restore();label(tr('Share keepsake','分享纪念卡'),330,623,wonderSceneShare);label(tr('Try again','再测一次'),486,623,()=>wonderSceneOpen(mode));txt(tr('Back to lab · for fun only','返回研究所 · 仅供娱乐'),400,655,13,'#fff1d5')}
+ else if(phase==='result'){let v=wonderSceneResult,f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.65));ctx.save();ctx.translate(400,493);ctx.scale(Math.max(.02,f),1);round(-147,-103,294,207,4,'#f5e3ba','#b88b5e');round(-139,-95,278,191,2,null,'#b88b5e');if(mode==='soul'){const illustration=soulResultIllustration(v);if(illustration)ctx.drawImage(illustration,-90,-94,180,80);else cat(0,-19,0,false,.86)}else{ellipse(0,-55,28,28,v.color);ctx.strokeStyle='#b28c5b';ctx.beginPath();ctx.arc(0,-55,35,0,TAU);ctx.stroke()}wonderSceneText(tr(...v.name),0,-1,260,23,'#654b39',2);wonderSceneText(tr(...v.desc),0,29,262,16,'#654b39',4);ctx.restore();label(tr('Share keepsake','分享纪念卡'),330,623,wonderSceneShare);label(tr('Try again','再测一次'),486,623,()=>wonderSceneOpen(mode));txt(tr('Back to lab · for fun only','返回研究所 · 仅供娱乐'),400,655,13,'#fff1d5')}
  else{let d=wonderSceneData();if(d){if(W<=540&&W<H){wonderSceneObject(400,433,Math.max(0,wonderScenePick),mode,phase==='turn');ctx.restore();return}let n=d.opts.length;let f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.3));ctx.globalAlpha=phase==='turn'?1:Math.max(.15,f);wonderSceneText(tr(...d.prompt),400,402,395,21,'#fff1d5',3);for(let j=0;j<n;j++){let x=n===4?250+j*100:n===3?278+j*122:327+j*146,y=528;wonderSceneObject(x,y,j,mode,phase==='turn'&&wonderScenePick===j);wonderSceneText(tr(d.opts[j][0],d.opts[j][1]),x,579,n===4?93:117,16,'#fff5df',4);if(phase==='question')target(x-48,470,96,160,()=>wonderSceneChoose(j))}ctx.globalAlpha=1;txt((wonderSceneAnswers.length+1)+' / '+d.total,400,654,14,'#fff1d5')}}
  ctx.restore();
 };
@@ -636,13 +636,14 @@ const parallelNext={coast:['coastStorm','coastGallery'],mountain:['mountainCat',
 for(const [node,ids] of Object.entries(parallelNext))parallelScenes[node].choices.forEach((choice,i)=>choice[2]=ids[i]);
 
 let parallelNode='station',parallelAt=0,parallelPick=-1,parallelToken=0,parallelTurning=false,parallelTrail=[];
-let parallelFound=load('parallelEndingsV1',[]);if(!Array.isArray(parallelFound))parallelFound=[];
+let parallelFound=load('parallelEndingsV1',[]);if(!Array.isArray(parallelFound))parallelFound=[];parallelFound=[...new Set(parallelFound.filter(id=>typeof id==='string'))];
 const parallelPriorStart=start;start=function(a){parallelPriorStart(a);if(a==='story'&&scene==='wonder'){parallelToken++;parallelNode='station';parallelAt=t;parallelPick=-1;parallelTurning=false;parallelTrail=[];hint('Follow the letter and choose your own path.','跟随这封信，选择属于你的路。')}};
 function parallelSelect(i){let node=parallelScenes[parallelNode];if(!node||parallelTurning||!node.choices[i])return;parallelTurning=true;parallelPick=i;parallelAt=t;let next=node.choices[i][2],token=parallelToken;parallelTrail.push(parallelNode);sound(490+i*80);setTimeout(()=>{if(activity!=='story'||scene!=='wonder'||token!==parallelToken)return;parallelNode=next;parallelAt=t;parallelPick=-1;parallelTurning=false;if(parallelEndings[next]){let end=parallelEndings[next];if(!parallelFound.includes(next)){parallelFound.push(next);save('parallelEndingsV1',parallelFound)}addItem('Parallel life: '+end[0],'平行人生：'+end[1]);sound(660)}},420)}
+function parallelBack(){if(activity!=='story'||scene!=='wonder'||parallelTurning||!parallelScenes[parallelNode]||!parallelTrail.length)return false;parallelToken++;parallelNode=parallelTrail.pop();parallelPick=-1;parallelAt=t;parallelTurning=false;hint('Read the letter again and choose another path.','再读一次信，换条路试试。');return true}
 function parallelPaper(x,y,j,selected){ctx.save();ctx.translate(x,y+(selected?-13:Math.sin(t*1.5+j)*2));ctx.rotate(selected?.1:j===0?-.06:.06);ellipse(0,32,48,8,'#30272066');round(-57,-40,114,74,3,'#eed9af','#9e8056');ctx.strokeStyle='#b69b72';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-57,-40);ctx.lineTo(0,2);ctx.lineTo(57,-40);ctx.moveTo(-57,34);ctx.lineTo(-15,-5);ctx.moveTo(57,34);ctx.lineTo(15,-5);ctx.stroke();ellipse(0,0,10,10,j===0?'#a75f4c':'#738d75');ctx.strokeStyle='#e8c79a';ctx.beginPath();ctx.arc(0,0,5,0,TAU);ctx.stroke();ctx.restore()}
 const parallelPriorDraw=drawActivity;drawActivity=function(){if(activity!=='story'||scene!=='wonder')return parallelPriorDraw();let n=parallelScenes[parallelNode],end=parallelEndings[parallelNode],art=n?.art||end?.[4]||'streetStation';ctx.save();let im=pics[art]||pics.readingInterior;paintLivingBackdrop(im);let shade=ctx.createLinearGradient(0,222,0,675);shade.addColorStop(0,'#34423e45');shade.addColorStop(.55,'#3c312a66');shade.addColorStop(1,'#463228b0');ctx.fillStyle=shade;shadeLivingBackdrop(shade);glow(218,280,60,1);glow(580,270,55,2);for(let i=0;i<14;i++){ctx.save();ctx.globalAlpha=.18+.18*Math.sin(t+i);ellipse(180+(i*71)%440+Math.sin(t*.7+i)*4,240+(i*31)%170,1.5,1.5,'#ffe7b0');ctx.restore()}
- if(n){human(400,385,n.host,false,1,1.65);if(W<=540&&W<H){parallelPaper(400,460,0,parallelTurning);ctx.restore();return}txt(tr('Parallel Lives','平行人生'),400,250,22,'#fff2d7');let wood=ctx.createLinearGradient(0,395,0,670);wood.addColorStop(0,'#b58b61');wood.addColorStop(1,'#75513a');ctx.beginPath();ctx.moveTo(215,395);ctx.lineTo(585,395);ctx.lineTo(780,1800);ctx.lineTo(20,1800);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle='#bd986c';ctx.stroke();for(let i=0;i<13;i++)line(190,415+i*20,610,417+i*20,'#e2bc8725',1);let f=Math.min(1,Math.max(.1,(t-parallelAt)/.3));ctx.globalAlpha=parallelTurning?1:f;wonderSceneText(tr(...n.title),400,412,385,21,'#fff0d5',2);wonderSceneText(tr(...n.text),400,448,390,17,'#fff2d8',4);for(let i=0;i<2;i++){let x=300+i*200;parallelPaper(x,553,i,parallelTurning&&parallelPick===i);wonderSceneText(tr(n.choices[i][0],n.choices[i][1]),x,602,175,15,'#fff4df',3);if(!parallelTurning)target(x-82,510,164,127,()=>parallelSelect(i))}ctx.globalAlpha=1;txt(tr('Discoveries: ','已发现：')+parallelFound.length+' / '+Object.keys(parallelEndings).length,400,656,13,'#f8e4c5')}
- else if(end){let f=Math.min(1,Math.max(.03,(t-parallelAt)/.7));ctx.save();ctx.translate(400,468);ctx.rotate((1-f)*-.12);ctx.scale(f,1);round(-166,-112,332,224,3,'#f3dfb6','#9d784f');round(-158,-104,316,208,2,null,'#b39766');let img=pics[end[4]];if(img?.naturalWidth)cover(img,-140,-92,280,84);wonderSceneText(tr(end[0],end[1]),0,13,292,23,'#604b37',2);wonderSceneText(tr(end[2],end[3]),0,47,285,15,'#604b37',3);ctx.restore();txt(tr('Parallel life collected','平行人生已收藏')+' · '+parallelFound.length+'/'+Object.keys(parallelEndings).length,400,600,15,'#fff1d5');label(tr('Another life','再试一种人生'),310,639,()=>start('story'));label(tr('Share memory','分享回忆'),490,639,()=>openMeowShare({kind:'story',title:end.slice(0,2),lines:[end.slice(2,4)],accent:'#869e9b'}))}
+ if(n){human(400,385,n.host,false,1,1.65);if(W<=540&&W<H){parallelPaper(400,460,0,parallelTurning);ctx.restore();return}txt(tr('Parallel Lives','平行人生'),400,250,22,'#fff2d7');let wood=ctx.createLinearGradient(0,395,0,670);wood.addColorStop(0,'#b58b61');wood.addColorStop(1,'#75513a');ctx.beginPath();ctx.moveTo(215,395);ctx.lineTo(585,395);ctx.lineTo(780,1800);ctx.lineTo(20,1800);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle='#bd986c';ctx.stroke();for(let i=0;i<13;i++)line(190,415+i*20,610,417+i*20,'#e2bc8725',1);let f=Math.min(1,Math.max(.1,(t-parallelAt)/.3));ctx.globalAlpha=parallelTurning?1:f;wonderSceneText(tr(...n.title),400,412,385,21,'#fff0d5',2);wonderSceneText(tr(...n.text),400,448,390,17,'#fff2d8',4);for(let i=0;i<2;i++){let x=300+i*200;parallelPaper(x,553,i,parallelTurning&&parallelPick===i);wonderSceneText(tr(n.choices[i][0],n.choices[i][1]),x,602,175,15,'#fff4df',3);if(!parallelTurning)target(x-82,510,164,127,()=>parallelSelect(i))}ctx.globalAlpha=1;txt(tr('Keys 1 / 2 · Backspace to revisit','按 1 / 2 选择 · 退格键返回'),400,656,13,'#f8e4c5')}
+ else if(end){let f=Math.min(1,Math.max(.03,(t-parallelAt)/.7));ctx.save();ctx.translate(400,468);ctx.rotate((1-f)*-.12);ctx.scale(f,1);round(-166,-112,332,224,3,'#f3dfb6','#9d784f');round(-158,-104,316,208,2,null,'#b39766');let img=pics[end[4]];if(img?.naturalWidth)cover(img,-140,-92,280,84);wonderSceneText(tr(end[0],end[1]),0,13,292,23,'#604b37',2);wonderSceneText(tr(end[2],end[3]),0,47,285,15,'#604b37',3);ctx.restore();txt(tr('Parallel life collected','平行人生已收藏')+' · '+parallelFound.filter(id=>Object.hasOwn(parallelEndings,id)).length+'/'+Object.keys(parallelEndings).length,400,600,15,'#fff1d5');label(tr('Another life','再试一种人生'),310,639,()=>start('story'));label(tr('Share memory','分享回忆'),490,639,()=>openMeowShare({kind:'story',title:end.slice(0,2),lines:[end.slice(2,4)],accent:'#869e9b'}))}
  ctx.restore()};
 
 /* Shared stage polish: world-sized backgrounds and a short illustrated crossfade. */
@@ -2804,6 +2805,7 @@ function syncStorySheet(){
  element('small',tr('Parallel Lives','平行人生')+' · '+(parallelTrail.length+1),storySheet);
  element('h3',tr(...n.title),storySheet);element('p',tr(...n.text),storySheet);
  n.choices.forEach((v,i)=>{const button=b(storySheet,tr(v[0],v[1]),()=>parallelSelect(i));button.disabled=parallelTurning});
+ if(parallelTrail.length){const previous=b(storySheet,tr('Previous choice','返回上一个选择'),parallelBack);previous.disabled=parallelTurning;previous.className='storyPrevious'}
 }
 const storySheetStyle=document.createElement('style');storySheetStyle.textContent='#storyReadingSheet{position:absolute;z-index:5;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 65px);width:min(94vw,440px);max-height:48dvh;overflow:auto;padding:12px 15px;background:#f0e3c7;color:#554534;border:1px solid #a78b64;border-radius:3px;box-shadow:0 4px 12px #28261b44}#storyReadingSheet[hidden]{display:none!important}#storyReadingSheet small{font-size:12px}#storyReadingSheet h3{font:600 19px/1.25 Georgia,"Songti SC",serif;margin:7px 0}#storyReadingSheet p{font:15px/1.45 system-ui;margin:5px 0 10px}#storyReadingSheet button{display:block;width:100%;min-height:44px;text-align:left;white-space:normal;margin:5px 0;padding:8px 10px;background:#faf0dc;border:1px solid #c2ab81;border-radius:3px;box-shadow:none;font-size:14px}';document.head.append(storySheetStyle);
 const storySheetDraw=drawActivity;drawActivity=function(){storySheetDraw();syncStorySheet()};
@@ -3708,9 +3710,10 @@ function careAdjust(v,changes){const out={...v};for(const [k,n] of Object.entrie
 function careCan(v,action){
  if(action==='feed')return v.hunger>=20;
  if(action==='water')return v.thirst>=15;
- if(action==='play')return v.energy>=18&&v.hunger<85;
+ if(action==='play')return v.energy>=18&&v.hunger<85&&v.thirst<85;
  if(action==='pet')return v.trust>=12;
- return true
+ if(action==='rest')return true;
+ return false
 }
 function careOutcome(v,action,pace=1){
  const effects={feed:{hunger:-34,happiness:12,trust:10},water:{thirst:-35,happiness:4,trust:5},play:{happiness:18,energy:-17,hunger:5,thirst:4,trust:8},pet:{happiness:10,trust:10*pace},rest:{energy:24,happiness:5,trust:4}};
@@ -3729,6 +3732,7 @@ function careSync(){
 }
 function careComplete(action){
  if(!careIsActive())return;const a=state.care,profile=parkCats[state.petKind??0],key=profile.name[0];
+ if(a.phase!==action||!careCan(a.values,action))return;
  a.values=careOutcome(a.values,action,profile.pace);a.phase='return';a.returnFromX=a.x;a.returnFromY=a.y;a.returnAt=t;a.drag=null;a.stroke=0;a.assisted=false;careSave();
  const jokes={
  feed:[['Your food has passed the inspection. You may remain employed.','猫粮通过质检，你暂时不用辞职。'],['Good. The human has finally understood its job description.','不错，人类终于弄明白自己的岗位职责了。']],
@@ -3787,7 +3791,7 @@ refreshControls=function(){
   const btn=b(buttons,tr(en,cn),()=>{
    const a=state.care;if(key==='pet'||key==='play'){
     // Keyboard/touch alternative is a timed gentle activity, not rapid tapping.
-    careStart(key);a.assisted=true;const run=state;
+    careStart(key);if(a.phase!==key)return;a.assisted=true;const run=state;
     setTimeout(()=>{if(state===run&&careIsActive()&&a.phase===key)careComplete(key)},key==='pet'?2300:3200)
    }else careStart(key)
   });btn.dataset.care=key
@@ -3959,7 +3963,7 @@ const catArtDraft=careCatArt;
 careCatArt=function(a){
  const im=productionVisual('parkCats');if(!im)return catArtDraft(a);
  const kind=Math.max(0,Math.min(4,state.petKind??0)),age=Math.max(0,t-a.at);
- const frame=parkCatFrame(a.phase,age,t,a.assisted,!!a.drag,a.values.trust);
+ const frame=residentReducedMotion.matches?(a.phase==='rest'?6:['feed','water'].includes(a.phase)&&age>=.9?4:a.phase==='pet'?1:0):parkCatFrame(a.phase,age,t,a.assisted,!!a.drag,a.values.trust);
  const dir=a.phase==='return'?(a.returnFromX>400?-1:1):a.phase==='feed'?-1:a.phase==='play'&&a.drag&&a.drag.x<a.x?-1:1;
  const resting=frame===6,pounce=frame===7,bob=pounce?-Math.abs(Math.sin(age*5))*5:resting?Math.sin(t*2)*.6:0;
  ctx.save();ctx.translate(a.x,a.y);ellipse(0,3,resting?58:72,resting?10:12,'#393d2f38');ctx.scale(dir,1);
@@ -4856,7 +4860,7 @@ npcTalk=function(n){
  if(!entry||entry.count<2)return result;
  const choice=$('choices');if(!choice)return result;
  const tier=entry.count>=10?'trusted':entry.count>=5?'regular':'early';
- b(choice,tr('Catch up','叙叙旧'),()=>say(tr(...n.n),tr(...townReaction('friendship:'+n.n[0]+':'+tier,familiarityLines[tier])),[[tr('See you around','回头见'),closeTalk]]));
+ b(choice,tr('Catch up','叙叙旧'),()=>say(tr(...n.n),tr(...townReaction('friendship:'+n.n[0]+':'+tier,[...familiarityLines[tier],...(residentFamiliarity[n.n[0]]||[])])),[[tr('See you around','回头见'),closeTalk]]));
  return result
 };
 const arcadeAccessibleBefore=refreshControls;
@@ -5482,3 +5486,36 @@ nostalgiaRoasts.miss.push(['The board asked for three matching bubbles, not thre
 nostalgiaRoasts.win.push(['Your inbox would like to know your secret. Do not tell it.','邮箱想知道你的秘诀。千万别告诉它。']);
 activityComedy.tea.push(['Grandma: That is a proper drink. Now stop reviewing it and enjoy it.','外婆：奶茶做好了，别写测评了，快喝。']);
 activityComedy.soup.push(['Grandma: A full stomach is a perfectly valid evening plan.','外婆：吃饱了就是今晚最好的安排。']);
+
+window.addEventListener('keydown',e=>{
+ if(activity!=='story'||scene!=='wonder'||parallelTurning||talkOpen||transitioning||$('page').style.display==='block'||!parallelScenes[parallelNode]||e.repeat||e.ctrlKey||e.metaKey||e.altKey||e.target?.closest?.('input,textarea,select,button,[contenteditable]'))return;
+ if(e.key==='1'||e.key==='2'){e.preventDefault();parallelSelect(Number(e.key)-1)}
+ if(e.key==='Backspace'&&parallelTrail.length){e.preventDefault();parallelBack()}
+});
+
+const collectionIconBefore=albumIcon;
+albumIcon=function(kind){
+ const art={
+ recipe:'<ellipse cx="32" cy="48" rx="24" ry="6" fill="#c5ac83"/><path d="M11 29Q15 51 32 51Q49 51 53 29Z" fill="#a2aa8c" stroke="#6f7d64"/><ellipse cx="32" cy="29" rx="21" ry="7" fill="#ead6ac" stroke="#9e845d"/><ellipse cx="32" cy="29" rx="17" ry="4" fill="#a77643"/><path d="M22 21q-7-9 0-14m10 14q-7-9 0-14m10 14q-7-9 0-14" fill="none" stroke="#b5a184" stroke-linecap="round"/>',
+ coin:'<circle cx="32" cy="33" r="23" fill="#a3814c" stroke="#79623e"/><circle cx="30" cy="30" r="22" fill="#d8b675" stroke="#977648"/><circle cx="30" cy="30" r="17" fill="none" stroke="#b28c52"/><path d="M23 23h14v14H23Z" fill="#f4e6c8" stroke="#94774b"/><path d="M15 20l5-5m23 27l5-5" stroke="#f0d49c" stroke-width="2"/>',
+ bottle:'<path d="M26 8h12v12q15 8 15 20v9q0 9-21 9T11 49v-9q0-12 15-20Z" fill="#91b7aa" stroke="#557c70"/><path d="M26 6h12v7H26Z" fill="#b8915d" stroke="#876641"/><path d="M22 35l19-3 3 16-19 3Z" fill="#eedbbb" stroke="#b3956a"/><path d="M17 36v12" stroke="#edf4dc" stroke-width="3" stroke-linecap="round"/>',
+ ticket:'<path d="M7 17h50v10q-9 5 0 10v10H7V37q9-5 0-10Z" fill="#dfc28d" stroke="#9b774d"/><path d="M15 22h25v20H15Z" fill="none" stroke="#b29059"/><path d="M45 19v26" stroke="#a88b60" stroke-dasharray="2 3"/><path d="M18 37l7-10 5 5 6-9 2 14Z" fill="#83937b"/>'
+ };
+ return Object.hasOwn(art,kind)?'<svg viewBox="0 0 64 64" aria-hidden="true">'+art[kind]+'</svg>':collectionIconBefore(kind)
+};
+
+const residentFamiliarity={
+ 'Temple keeper':[['I left the gate open for you. No appointment, no sign-in sheet.','给你留着山门呢，不用预约，也不用签到。']],
+ 'Auntie Mei':[['I saved you the good tea. The good gossip is still under investigation.','好茶给你留了，好瓜还在核实。']],
+ 'Wang Laoban':[['Your presence has been noted. Your absence from meetings is also appreciated.','已记录你的出席，也感谢你没有出席那些会。']],
+ 'Grandma':[['You look hungry. No need to submit a request for more soup.','一看就饿了，添汤不用打申请。']],
+ 'Grumpy Ah Ma':[['You again? Good. The slipper was getting bored.','又是你啊？正好，拖鞋都快闲坏了。']]
+};
+
+const soulIllustrationCache=new Map();
+function soulResultIllustration(v){
+ const key=v?.name?.[0];if(!socialCatCover.some(c=>c.name===key))return null;
+ if(!soulIllustrationCache.has(key)){const art=document.createElement('canvas');art.width=360;art.height=160;socialCoverIllustration(art.getContext('2d'),{kind:'soul',title:v.name,accent:v.color},0,0,360,160);soulIllustrationCache.set(key,art)}
+ return soulIllustrationCache.get(key)
+}
+const branchSheetStyle=document.createElement('style');branchSheetStyle.textContent='#storyReadingSheet .storyPrevious{background:transparent;border:0;text-decoration:underline;color:#635644}';document.head.append(branchSheetStyle);
