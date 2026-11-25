@@ -828,8 +828,7 @@ drawActivity=function(){
  ellipse(400,580,190,37,'#302a2440');ellipse(272,548,50,12,'#302a2444');
  // Real seat and foot anchors: stool at y504, feet at y550.
  const stoolWood=ctx.createLinearGradient(0,499,0,551);stoolWood.addColorStop(0,'#c9a878');stoolWood.addColorStop(1,'#71543e');
- const seatY=550-54*(W<H?.67:.70);line(247,seatY+5,242,552,'#70513c',7);line(297,seatY+5,302,552,'#70513c',7);line(248,535,298,535,'#70513c',4);
- ellipse(272,seatY,35,8,stoolWood);ellipse(272,seatY-3,34,6,'#b4956c');
+ const seatY=550-54*(W<H?.67:.70);if(room==='fish'&&productionVisual('guestAtlasV2')){ellipse(272,550,44,12,'#bda57c');ellipse(272,548,40,9,'#d8c39b');for(let j=0;j<5;j++)line(242+j*15,545,245+j*15,553,'#a98e6570',1)}else{line(247,seatY+5,242,552,'#70513c',7);line(297,seatY+5,302,552,'#70513c',7);line(248,535,298,535,'#70513c',4);ellipse(272,seatY,35,8,stoolWood);ellipse(272,seatY-3,34,6,'#b4956c')}
  if(room==='fish'){if(!drawProductionAhMa(272,550,W<H?.67:.70))riverAuntie(272,550,W<H?.67:.68)}else backHuman(272,550,0,false,'right',1.1);
  // Low ritual block: the paper is on the working surface, rather than floating on an enormous table.
  const wood=ctx.createLinearGradient(0,505,0,557);wood.addColorStop(0,'#bca078');wood.addColorStop(.5,'#9f805e');wood.addColorStop(1,'#795d42');
@@ -4004,7 +4003,7 @@ const productionPortraitBefore=portraitInteriorImage;
 portraitInteriorImage=function(id){return productionVisual(id)||productionPortraitBefore(id)};
 function drawProductionAhMa(x,y,scale=1){
  const age=t-stressSwingAt,releaseAge=t-(state?.riverAt??-100),scold=(activity==='hit'&&age>=0&&age<.46)||(activity==='riverShout'&&state.riverPhase==='walk'&&releaseAge>1.1&&releaseAge<2.8);
- if(drawGuestAtlasActor(scold?2:1,x,y,174*scale,'right'))return true;
+ if(drawGuestAtlasActor(activity==='hit'?(scold?2:1):0,x,y,174*scale,'right'))return true;
  const im=productionVisual(scold?'ahMaScold':'ahMaIdle')||productionVisual('ahMaIdle');
  if(!im)return false;
  ctx.save();ellipse(x,y+2,37*scale,8*scale,'#3b322842');
@@ -6503,8 +6502,8 @@ say=function(...args){
 
 /* Two visible guest slots on every district. Existing hosts and cats keep
    their roles. First guest begins near the arrival path; the other explores. */
-function guestSpawnY(spawnY,min,max,slot){
- return clamp(spawnY-(slot===0?100:390),min+40,max-40)
+function guestSpawnY(spawnY,min,max,slot,random=Math.random){
+ return clamp(spawnY-(slot===0?80+random()*65:300+random()*120),min+40,max-40)
 }
 const livingGuestInitBefore=initNPC;
 initNPC=function(){
@@ -6547,7 +6546,7 @@ const activityProtectedStage={
 };
 const ambientResidentPool=[['Temple keeper','庙祝'],['Master Yue','月师傅'],['Fortune Teller','占卜师'],['Auntie Mei','梅姨'],['Wang Laoban','王老板'],['Grandma','外婆']];
 const ambientResidentsByRoom={kitchen:[3,4],arcade:[3,4,5],fish:[3,4],park:[3,4],temple:[0,1,2],tarot:[0,1],daily:[0,1]};
-const ambientVisit={key:'',next:0,active:null,last:-1};
+const ambientVisit={key:'',run:null,next:0,active:null,last:-1,drawnAt:-Infinity,mode:''};
 function ambientVisitDelay(random=Math.random,first=false){return first?7+random()*19:19+random()*44}
 function ambientOverlap(a,b){return a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top}
 function ambientVisitSafe(rect,protectedRect,targets,ui,width,height){
@@ -6555,18 +6554,22 @@ function ambientVisitSafe(rect,protectedRect,targets,ui,width,height){
  return ![protectedRect,...targets,...ui].some(b=>b&&ambientOverlap(rect,b))
 }
 function screenWorldRect(left,right,top,bottom){return {left:cam.ox+left*cam.scale,right:cam.ox+right*cam.scale,top:cam.oy+top*cam.scale,bottom:cam.oy+bottom*cam.scale}}
-function ambientActivityGuest(){
- const eligible=!!activity&&!!room&&!!activityVisitorPaths[activity]&&proposal.hidden&&!talkOpen&&!transitioning&&$('page').style.display!=='block'&&!document.hidden;
+function ambientVisitState(){
+ const eligible=!!activity&&!!room&&(!!activityVisitorPaths[activity]||!!backgroundGuestPaths[activity])&&proposal.hidden&&!talkOpen&&!transitioning&&$('page').style.display!=='block'&&!document.hidden;
  const key=eligible?scene+'|'+room+'|'+activity:'';
- if(ambientVisit.key!==key){ambientVisit.key=key;ambientVisit.active=null;ambientVisit.next=t+ambientVisitDelay(Math.random,true)}
- if(!eligible)return;
+ if(ambientVisit.key!==key||ambientVisit.run!==state){ambientVisit.key=key;ambientVisit.run=state;ambientVisit.active=null;ambientVisit.next=t+ambientVisitDelay(Math.random,true)}
+ if(!eligible)return null;
  if(!ambientVisit.active&&t>=ambientVisit.next){
   const pool=ambientResidentsByRoom[room]||[0,1,2,3,4,5],available=pool.filter(i=>i!==ambientVisit.last),pick=(available.length?available:pool)[Math.floor(Math.random()*(available.length||pool.length))];
-  ambientVisit.last=pick;ambientVisit.active={start:t,duration:6+Math.random()*6,index:pick,reverse:Math.random()<.5};
+  ambientVisit.last=pick;const guests=npc.filter(n=>n.popGuest),guest=guests.length&&productionVisual('guestAtlasV2')&&Math.random()<.35?guests[Math.floor(Math.random()*guests.length)]:null;ambientVisit.active={start:t,duration:6+Math.random()*6,index:pick,guest,reverse:Math.random()<.5};ambientVisit.mode=W<H&&backgroundGuestPaths[activity]?'background':activityVisitorPaths[activity]?'edge':'background';
   ambientVisit.next=t+ambientVisit.active.duration+ambientVisitDelay()
  }
- const a=ambientVisit.active;if(!a)return;
- const f=(t-a.start)/a.duration;if(f>=1){ambientVisit.active=null;return}
+ const a=ambientVisit.active;if(!a)return null;
+ const f=(t-a.start)/a.duration;if(f>=1){ambientVisit.active=null;return null}
+ return {a,f}
+}
+function ambientActivityGuest(){
+ const visit=ambientVisitState();if(!visit||ambientVisit.mode!=='edge'||!activityVisitorPaths[activity])return;const {a,f}=visit;
  // No foreground animations, controls, or character overlaps. No hit target,
  // auto-dialogue, sound, input capture, score changes or fake public posts.
  const [start,end]=activityVisitorPaths[activity],q=a.reverse?1-f:f;
@@ -6578,12 +6581,12 @@ function ambientActivityGuest(){
  const targets=hit.map(h=>screenWorldRect(h.x-5,h.x+h.w+5,h.y-5,h.y+h.h+5));
  const ui=meowVisibleRects('#hud,#small,#dock,#back,#hint,#gameControls,#ritualActionBar,#dialogue,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet,#threeBoardAccess');
  if(!ambientVisitSafe(rect,protectedRect,targets,ui,W,H))return;
- const n={x,y,n:ambientResidentPool[a.index]};ctx.save();
+ const n=a.guest?{...a.guest,x,y}:{x,y,n:ambientResidentPool[a.index]};ctx.save();
  ctx.globalAlpha=residentReducedMotion.matches?1:Math.min(1,f*6,(1-f)*6)*.92;
  drawPaintedResident(n,size/94,!residentReducedMotion.matches,a.reverse?'up':'down');ctx.restore()
 }
 const ambientActivityDrawBefore=drawActivity;
-drawActivity=function(){const result=ambientActivityDrawBefore();ambientActivityGuest();return result};
+drawActivity=function(){ambientVisitState();const result=ambientActivityDrawBefore();ambientActivityGuest();return result};
 const livingGuestsTodayBefore=todayHub;
 todayHub=function(){
  livingGuestsTodayBefore();const q=$('content'),section=element('section','',q,'guestVisitPanel');
@@ -6598,3 +6601,37 @@ todayHub=function(){
  const first=q.querySelector('.communityWelcome');if(first)first.after(section)
 };$('dockScoop').onclick=todayHub;
 const guestVisitStyle=document.createElement('style');guestVisitStyle.textContent='.guestVisitPanel{margin:18px 0;padding:13px;border:1px solid #b7a17b;border-radius:6px;background:#f2e6cc;color:#594b38}.guestVisitRow{padding:9px 0;border-top:1px solid #c9b68f;overflow-wrap:anywhere}.guestVisitRow p{font-size:14px;margin:4px 0}.guestVisitRow button{min-height:44px}.guestVisitRow small{font-size:12px;color:#71634f}';document.head.append(guestVisitStyle);
+
+
+/* Portrait background visits: residents pass behind the foreground counter,
+   pond or table, so foreground artwork occludes them naturally. Each path
+   is local to a single authored scene. No generic floating avatar overlay. */
+const backgroundGuestPaths={
+ cook:[[548,450],[576,453]],bubbleTea:[[550,458],[579,462]],
+ secretGarden:[[355,416],[401,418]],riverBottle:[[577,450],[613,452]],
+ riverShout:[[571,451],[609,453]],pet:[[520,444],[553,448]],
+ tarot:[[533,400],[561,402]],love:[[538,406],[566,409]],
+ wonderScene:[[535,383],[566,385]],match:[[535,384],[566,388]]
+};
+const ambientBackgroundHostRegions={
+ cook:[180,475,260,480],bubbleTea:[190,488,265,460],
+ secretGarden:[180,315,405,635],riverBottle:[155,470,245,640],
+ riverShout:[155,525,245,640],pet:[270,492,365,570],
+ tarot:[235,515,240,400],love:[210,520,230,400],
+ wonderScene:[315,490,235,390],match:[315,490,235,395]
+};
+function drawAmbientBackgroundVisit(){
+ if(ambientVisit.mode!=='background'||ambientVisit.drawnAt===t||!backgroundGuestPaths[activity])return;
+ const v=ambientVisitState();if(!v)return;const {a,f}=v;
+ const [p0,p1]=backgroundGuestPaths[activity],u=a.reverse?1-f:f,x=p0[0]+(p1[0]-p0[0])*u,y=p0[1]+(p1[1]-p0[1])*u;
+ const size=Math.min(86,52/Math.max(.08,cam.scale));if(size*cam.scale<26)return;
+ const rect=screenWorldRect(x-size*.36,x+size*.36,y-size,y+4),host=ambientBackgroundHostRegions[activity];
+ const blockers=meowVisibleRects('#hud,#small,#dock,#back,#hint,#gameControls,#ritualActionBar,#dialogue,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet');
+ if(!ambientVisitSafe(rect,host?screenWorldRect(...host):null,[],blockers,W,H))return;
+ const n=a.guest?{...a.guest,x,y}:{x,y,n:ambientResidentPool[a.index]};ctx.save();
+ ctx.globalAlpha=residentReducedMotion.matches?1:Math.min(1,f*5,(1-f)*5)*.88;
+ if(drawPaintedResident(n,size/94,!residentReducedMotion.matches,a.reverse?'left':'right'))ambientVisit.drawnAt=t;
+ ctx.restore()
+}
+const backgroundVisitPaintBefore=paintLivingBackdrop;
+paintLivingBackdrop=function(im){const result=backgroundVisitPaintBefore(im);if(activity&&ambientVisit.active)drawAmbientBackgroundVisit();return result};
