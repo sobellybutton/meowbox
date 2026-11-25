@@ -3538,7 +3538,7 @@ function hideoutUnlocked(reward){
 let hideoutPrefs=load('hideoutPrefsV2',{theme:'morning',display:[],furniture:null});
 if(!hideoutPrefs||typeof hideoutPrefs!=='object'||Array.isArray(hideoutPrefs))hideoutPrefs={theme:'morning',display:[],furniture:null};
 if(!Array.isArray(hideoutPrefs.display))hideoutPrefs.display=[];
-let hideoutFurniture=Array.isArray(hideoutPrefs.furniture)?hideoutPrefs.furniture:decor9.filter(d=>Object.hasOwn(roomNames9,d.id)&&Object.hasOwn(art9,d.id)).map(d=>({...d}));
+let hideoutFurniture=Array.isArray(hideoutPrefs.furniture)?hideoutPrefs.furniture:Array.isArray(load('decor9',null))?decor9.filter(d=>Object.hasOwn(roomNames9,d.id)&&Object.hasOwn(art9,d.id)).map(d=>({...d})):[{id:'bed',x:29,y:66},{id:'lamp',x:70,y:64},{id:'rug',x:51,y:85}];
 let hideoutEditing=false,hideoutSelected=-1;
 function saveHideout(){hideoutPrefs.furniture=hideoutFurniture;save('hideoutPrefsV2',hideoutPrefs)}
 function hideoutSceneArt(theme){
@@ -3573,7 +3573,7 @@ function hideoutPage(){
    stage.querySelectorAll('.hideoutPlaced,.hideoutDisplay,.hideoutPlayer').forEach(el=>el.remove());
    const sorted=hideoutFurniture.map((d,i)=>({d,i})).filter(v=>Object.hasOwn(art9,v.d.id)).sort((a,b)=>(a.d.id==='rug'?-1:a.d.y)-(b.d.id==='rug'?-1:b.d.y));
    for(const {d,i} of sorted){
-    const im=element('img','',stage,'hideoutPlaced'+(hideoutEditing&&i===hideoutSelected?' selected':''));im.src=art9[d.id];im.alt=tr(...roomNames9[d.id]);im.style.left=clamp(Number(d.x)||50,8,92)+'%';im.style.top=clamp(Number(d.y)||50,12,91)+'%';im.style.rotate=(Number(d.r)||0)+'deg';im.style.width=(d.id==='bed'?36:d.id==='rug'?44:d.id==='shelf'?26:19)+'%';
+    const im=element('img','',stage,'hideoutPlaced'+(hideoutEditing&&i===hideoutSelected?' selected':''));im.src=art9[d.id];im.alt=tr(...roomNames9[d.id]);im.style.left=clamp(Number(d.x)||50,8,92)+'%';im.style.top=clamp(Number(d.y)||50,12,91)+'%';im.style.rotate=(Number(d.r)||0)+'deg';im.style.width=furnitureWidth(d.id)+'%';
     if(hideoutEditing){
      im.tabIndex=0;im.setAttribute('role','button');im.onkeydown=e=>{const dirs={ArrowLeft:[-3,0],ArrowRight:[3,0],ArrowUp:[0,-3],ArrowDown:[0,3]};if(!dirs[e.key])return;e.preventDefault();d.x=clamp((Number(d.x)||50)+dirs[e.key][0],8,92);d.y=clamp((Number(d.y)||50)+dirs[e.key][1],12,91);im.style.left=d.x+'%';im.style.top=d.y+'%';saveHideout()};
      im.onpointerdown=e=>{hideoutSelected=i;stage.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected'));im.classList.add('selected');im.setPointerCapture(e.pointerId)};
@@ -3593,9 +3593,10 @@ function hideoutPage(){
   if(hideoutEditing){
    element('p',tr('Drag furniture. Tap an item to select it, then rotate or remove it.','拖动家具。点选后可旋转或移除。'),q);
    const tray=element('div','',q,'hideoutFurnitureTray');tray.setAttribute('aria-label',tr('Furniture catalogue','家具目录'));
-   for(const [id,name] of Object.entries(roomNames9)){
-    const btn=b(tray,'',()=>{if(hideoutFurniture.length>=24){toast(tr('Your room is full. Even the cat needs space.','小窝满啦，猫猫也需要空间。'));return}hideoutFurniture.push({id,x:50,y:68});hideoutSelected=hideoutFurniture.length-1;saveHideout();render()});const im=element('img','',btn);im.src=art9[id];im.alt='';element('small',tr(...name),btn)
+   for(const [id,name] of Object.entries(roomNames9).filter(([id])=>furnitureOwned(id))){
+    const btn=b(tray,'',()=>{if(hideoutFurniture.some(d=>d.id===id)){toast(tr('Already in your room. Move it or put it away first.','已经摆在小窝啦，先移动或收起来吧。'));return}if(hideoutFurniture.length>=24){toast(tr('Your room is full. Even the cat needs space.','小窝满啦，猫猫也需要空间。'));return}hideoutFurniture.push({id,x:50,y:68});hideoutSelected=hideoutFurniture.length-1;saveHideout();render()});const im=element('img','',btn);im.src=art9[id];im.alt='';element('small',tr(...name),btn)
    }
+   b(q,tr('Visit Komorebi Living','去木漏日杂货铺'),()=>furnitureMarket('room'));
    const tools=element('div','',q,'hideoutActions hideoutTools');stage.after(tools);b(tools,tr('Rotate','旋转'),()=>{if(hideoutFurniture[hideoutSelected]){const d=hideoutFurniture[hideoutSelected];d.r=((d.r||0)+15)%360;saveHideout();render()}});b(tools,tr('Remove','移除'),()=>{if(hideoutSelected>=0&&hideoutFurniture[hideoutSelected]){hideoutFurniture.splice(hideoutSelected,1);hideoutSelected=-1;saveHideout();render()}});
    element('h2',tr('Room atmosphere','小窝氛围'),q);element('p',tr('Available paws: ','可用爪币：')+hideoutBalance()+' · '+tr('Use them for optional room themes.','可兑换自选小窝主题。'),q);
    const themes=element('div','',q,'hideoutActions');for(const theme of hideoutThemes){const unlocked=hideoutThemeUnlocked(theme);const btn=b(themes,tr(...theme.name)+(unlocked?'':theme.cost?' · '+theme.cost+' '+tr('paws','爪币'):' · '+theme.need+' '+tr('stamps','枚印章')),()=>{if(!unlocked){if(!theme.cost||!buyHideoutTheme(theme))return}hideoutPrefs.theme=theme.id;saveHideout();hideoutPage()});btn.disabled=!unlocked&&(!theme.cost||hideoutBalance()<theme.cost);btn.setAttribute('aria-pressed',String(hideoutPrefs.theme===theme.id))}
@@ -3757,7 +3758,7 @@ hideoutThemes.push(
  {id:'retro',name:['Old Hong Kong evening','港风黄昏'],wall:'#e4c7a5',floor:'#866354',sky:'#bf8f78',need:0,cost:120}
 );
 function hideoutPurchases(){const v=load('hideoutThemePurchasesV1',[]);return Array.isArray(v)?[...new Set(v.filter(id=>hideoutThemes.some(t=>t.id===id&&t.cost)))]:[]}
-function hideoutBalance(){const purchased=hideoutPurchases(),draws=blindShopLedger(),paidKeys=new Set(draws.map(v=>v.key));return Math.max(0,items.filter(v=>!paidKeys.has(v[0])).length*10+dailyWheelRecord().total+townPawRecord().total-hideoutThemes.filter(v=>purchased.includes(v.id)).reduce((sum,v)=>sum+(v.cost||0),0)-draws.reduce((sum,v)=>sum+v.cost,0))}
+function hideoutBalance(){const purchased=hideoutPurchases(),draws=blindShopLedger(),paidKeys=new Set(draws.map(v=>v.key));return Math.max(0,items.filter(v=>!paidKeys.has(v[0])).length*10+dailyWheelRecord().total+townPawRecord().total-hideoutThemes.filter(v=>purchased.includes(v.id)).reduce((sum,v)=>sum+(v.cost||0),0)-draws.reduce((sum,v)=>sum+v.cost,0)-furniturePurchaseTotal())}
 function hideoutThemeUnlocked(theme){return theme.cost?hideoutPurchases().includes(theme.id):hideoutStampCount()>=theme.need}
 function buyHideoutTheme(theme){
  if(hideoutThemeUnlocked(theme))return true;
@@ -7664,3 +7665,104 @@ hideoutStampArt=function(k,got){
 const journalWheelDetailStyle=document.createElement('style');
 journalWheelDetailStyle.textContent='.journalWheelStand .dailyWheelPointer{filter:drop-shadow(0 2px 1px #523b2c55)}#content .dailyWheelResult{position:relative;background:var(--town-grain),#f6e8c9;border:1px dashed #b39a74;padding:12px;color:#536b56;line-height:1.5;font-family:var(--town-title)}#content .dailyWheelSpin{background:#536b56!important;color:#fff1d5!important;border:1px solid #3d5848!important;border-radius:4px!important;min-height:44px}#content .dailyWheelSpin:disabled{opacity:.75}#content .hideoutStampGrid button{background:#f4e7cb;border:1px solid #bca27a;border-radius:4px;min-height:44px}';
 document.head.append(journalWheelDetailStyle);
+
+
+/* Komorebi Living: furniture ownership is distinct from placement.
+   Old saved furniture remains owned even after it is put away. */
+function furnitureCatalogue(){return [
+ ['bed','Linen bed','亚麻小床',0,'rest',36],['rug','Woven rug','编织地毯',0,'rest',44],['lamp','Rice paper lamp','和纸小灯',0,'light',19],
+ ['shelf','Oak bookshelf','橡木书架',55,'storage',25],['board','Cork memory board','软木留言板',30,'wall',22],['plant','Little fern','小蕨盆栽',25,'green',17],['frame','Scenic picture frame','风景相框',35,'wall',22],
+ ['kotatsu','Kotatsu tea table','暖桌',85,'rest',35],['zabuton','Indigo floor cushion','靛蓝坐垫',30,'rest',22],['teaCabinet','Tea cabinet','茶具小柜',75,'storage',26],
+ ['shojiLamp','Shoji floor lantern','障子落地灯',60,'light',16],['bonsai','Tiny bonsai','迷你盆景',45,'green',20],['recordPlayer','Vintage record player','复古唱片机',90,'storage',24],
+ ['catBasket','Cat nap basket','猫猫午睡篮',40,'rest',23],['sakuraVase','Sakura ceramic vase','樱花陶瓶',45,'green',17],['lowDesk','Writing desk','木作书桌',80,'storage',32]
+]}
+function furniturePurchaseRecord(){
+ const raw=load('komorebiPurchasesV1',[]),seen=new Set(),catalogue=furnitureCatalogue();
+ return Array.isArray(raw)?raw.filter(v=>v&&catalogue.some(x=>x[0]===v.id&&x[3]>0&&x[3]===v.cost)&&!seen.has(v.id)&&seen.add(v.id)):[]
+}
+function furniturePurchaseTotal(){return furniturePurchaseRecord().reduce((n,v)=>n+v.cost,0)}
+function furnitureOwned(id){
+ const item=furnitureCatalogue().find(x=>x[0]===id);if(!item)return false;
+ const legacy=load('komorebiLegacyOwnedV1',[]);
+ return item[3]===0||(Array.isArray(legacy)&&legacy.includes(id))||furniturePurchaseRecord().some(v=>v.id===id)
+}
+function furnitureWidth(id){return furnitureCatalogue().find(v=>v[0]===id)?.[5]||19}
+function buyFurniture(id){
+ const item=furnitureCatalogue().find(v=>v[0]===id);
+ if(!item||furnitureOwned(id)||hideoutBalance()<item[3])return false;
+ save('komorebiPurchasesV1',[...furniturePurchaseRecord(),{id,cost:item[3]}]);updateHUD();return true
+}
+if(load('komorebiLegacyOwnedV1',null)===null){
+ save('komorebiLegacyOwnedV1',[...new Set(hideoutFurniture.map(v=>v.id).filter(id=>furnitureCatalogue().some(x=>x[0]===id)))])
+}
+function komorebiArt(id){
+ const wood='#9d7651',ink='#755b46',cream='#f0e1bf',green='#81957a';
+ const shapes={
+ bed:'<path d="M16 52v100m137-78v80" stroke="#76523c" stroke-width="9" stroke-linecap="round"/><path d="M18 47Q55 28 82 42L82 97H18Z" fill="#b08b62" stroke="#755b46" stroke-width="2"/><path d="M18 89L74 64 158 102 99 137 18 117Z" fill="#d5ba92" stroke="#755b46" stroke-width="2"/><path d="M21 85L73 64 154 100 99 127 21 109Z" fill="#f2e4c8" stroke="#a58c66"/><path d="M53 81L87 72 109 84 76 99Z" fill="#ffefd2" stroke="#cbb18b"/><path d="M71 96L113 81 154 100 99 127 57 112Z" fill="#8d9f8b" stroke="#64785e"/><path d="M77 99l41 14m-32-20 41 13m-33-19 42 13" stroke="#c5d0b5" stroke-width="2"/>',
+ rug:'<path d="M12 90L80 55 168 96 101 132Z" fill="#d6bd8c" stroke="#9a805b" stroke-width="2"/><path d="M22 91L80 62 156 96 100 124Z" fill="none" stroke="#a4865e" stroke-width="2"/><path d="M35 92l57 26m-41-34 57 26m-41-34 57 26m-41-34 57 26" stroke="#a78f66" stroke-opacity=".75"/><path d="M11 91l-7 5m15 0-7 5m15 0-7 5m15 0-7 5m15 0-7 5m15 0-7 5m15 0-7 5" stroke="#b89c73" stroke-width="2"/>',
+ lamp:'<ellipse cx="90" cy="148" rx="26" ry="8" fill="#9b7856"/><path d="M90 143V70" stroke="#806144" stroke-width="5"/><path d="M65 31Q90 18 115 31L126 81Q90 93 54 81Z" fill="#edcf8e" stroke="#ad8b5e" stroke-width="2"/><path d="M66 34L62 79M80 30L78 85M100 30L102 85M114 34L118 79" stroke="#c4a26d"/><ellipse cx="90" cy="32" rx="25" ry="5" fill="#f4e4b7" stroke="#b39364"/>',
+ shelf:'<path d="M30 20h114v130H30z" fill="#b59166" stroke="#755b46" stroke-width="3"/><path d="M39 29h96v111H39z" fill="#85674c"/><path d="M36 65h103v7H36zM36 105h103v7H36z" fill="#c5a477"/><path d="M44 41h12v23H44zM59 37h11v27H59zM74 45h13v19H74zM93 38h12v26H93z" fill="#aab29b"/><path d="M45 78h22v26H45zM73 82h23v22H73zM106 75h13v29H106z" fill="#e2c6a0"/><path d="M48 118h32v19H48zM97 116h24v21H97z" fill="#aa7d70"/>',
+ board:'<rect x="19" y="35" width="142" height="105" rx="3" fill="#a98258" stroke="#765b42" stroke-width="4"/><rect x="27" y="43" width="126" height="89" fill="#ceb28a"/><path d="M41 53l44 6-5 39-43-6Z M97 65l42-8 7 45-42 8Z" fill="#f4e7ca" stroke="#b49c76"/><circle cx="61" cy="57" r="3" fill="#a76051"/><circle cx="117" cy="62" r="3" fill="#6f8875"/><path d="M47 71l26 4m-27 6 22 3m40-1 23-4m-21 12 19-4" stroke="#998568"/>',
+ plant:'<path d="M67 116h47l-7 33H75Z" fill="#c1876f" stroke="#95634d"/><ellipse cx="90" cy="115" rx="24" ry="7" fill="#80644b"/><path d="M90 116Q89 66 54 40M90 116Q101 72 135 45M90 116Q69 72 71 26M90 116Q113 60 108 23" stroke="#69836b" stroke-width="3" fill="none"/><g fill="#819b7b" stroke="#657f65"><path d="M68 61Q38 59 44 40Q65 36 68 61Z M77 77Q49 78 52 59Q72 54 77 77Z M101 65Q126 60 129 42Q105 40 101 65Z M105 87Q136 86 139 65Q118 62 105 87Z M75 45Q54 35 67 20Q83 28 75 45Z M107 49Q128 31 109 18Q96 31 107 49Z"/></g>',
+ frame:'<rect x="20" y="37" width="140" height="100" rx="2" fill="#9f7a54" stroke="#70523c" stroke-width="3"/><rect x="29" y="46" width="122" height="82" fill="#f3e4c4"/><rect x="35" y="52" width="110" height="66" fill="#b4c1ac"/><circle cx="115" cy="67" r="11" fill="#edcf95"/><path d="M35 111l35-40 20 25 23-18 32 40H35Z" fill="#7c9787"/><path d="M35 118l42-24 31 13 37-15v26Z" fill="#536f63"/>',
+ kotatsu:'<path d="M29 80v60m120-60v60" stroke="#755b46" stroke-width="8"/><path d="M25 73L87 45 155 75 95 108Z" fill="#a5825d" stroke="#755b46" stroke-width="2"/><path d="M25 78L95 111 155 80 165 140 96 161 15 137Z" fill="#a78383" stroke="#765e62"/><path d="M38 96l-9 40m29-28-7 37m64-36 7 43m18-56 11 40" stroke="#d8b9b1" stroke-width="2"/><path d="M23 66L87 40 157 72 94 103Z" fill="#c9a576" stroke="#755b46" stroke-width="2"/><ellipse cx="94" cy="74" rx="14" ry="6" fill="#e9d5af"/>',
+ zabuton:'<path d="M25 85L84 58 155 88 98 122Z" fill="#82929f" stroke="#536775" stroke-width="2"/><path d="M25 85v12L98 135 155 101V88L98 122Z" fill="#617783" stroke="#536775"/><path d="M36 86l48-21 60 24-46 25Z" fill="none" stroke="#c6d2cf" stroke-dasharray="3 3"/>',
+ teaCabinet:'<path d="M30 42h120v104H30z" fill="#a6855e" stroke="#765b42" stroke-width="3"/><rect x="37" y="50" width="106" height="49" fill="#d6c9a7" stroke="#8a704e"/><path d="M90 50v49M37 75h106" stroke="#9d815e"/><path d="M48 81h25v12H48zM103 64h24v28h-24z" fill="#809889"/><path d="M37 106h50v31H37zM93 106h50v31H93z" fill="#c4a278" stroke="#8b6d4d"/><circle cx="79" cy="122" r="2.5" fill="#6b513b"/><circle cx="101" cy="122" r="2.5" fill="#6b513b"/>',
+ shojiLamp:'<path d="M58 30h64l8 115H50Z" fill="#edddb5" stroke="#8f7352" stroke-width="4"/><path d="M61 30v115m29-115v115m29-115v115M55 66h70m-73 39h76" stroke="#99784f" stroke-width="3"/><path d="M46 145h88v8H46z" fill="#8e6e4e"/>',
+ bonsai:'<path d="M56 116h68l-9 28H65Z" fill="#78928b" stroke="#536d66" stroke-width="2"/><ellipse cx="90" cy="116" rx="34" ry="8" fill="#80674b"/><path d="M88 116Q103 85 82 66Q71 49 91 31M85 81L55 57M91 62l27-15" stroke="#806043" stroke-width="7" fill="none" stroke-linecap="round"/><g fill="#7a9675" stroke="#536e59"><ellipse cx="56" cy="53" rx="25" ry="13"/><ellipse cx="118" cy="45" rx="26" ry="14"/><ellipse cx="91" cy="30" rx="30" ry="17"/></g>',
+ recordPlayer:'<path d="M25 91L88 59 157 91 96 126 25 111Z" fill="#b58b5d" stroke="#755b46" stroke-width="2"/><path d="M25 91L96 126 157 91V108L96 143 25 111Z" fill="#8e6a4b" stroke="#755b46"/><ellipse cx="84" cy="94" rx="37" ry="17" fill="#424b46" stroke="#d1b88d"/><ellipse cx="84" cy="94" rx="25" ry="11" fill="none" stroke="#69756b"/><ellipse cx="84" cy="94" rx="10" ry="5" fill="#b18373"/><path d="M135 79l-10 20-23 6" stroke="#e9dbb8" stroke-width="4" fill="none"/>',
+ catBasket:'<ellipse cx="90" cy="108" rx="65" ry="35" fill="#b79a70" stroke="#896e50"/><path d="M25 108q65 36 130 0l-11 26q-54 31-108 0Z" fill="#ba9d72" stroke="#8e7352"/><ellipse cx="90" cy="107" rx="53" ry="24" fill="#d8c7aa"/><path d="M37 122l3 13m12-8 3 13m13-9 2 13m15-11v13m15-13-1 13m16-15-2 13m16-18-3 13" stroke="#947b55" stroke-width="2"/>',
+ sakuraVase:'<path d="M72 94h36q-3 14 12 32 0 24-30 24t-30-24q15-18 12-32Z" fill="#ded2b8" stroke="#a18c70" stroke-width="2"/><path d="M90 95L55 39M90 95l32-61M89 87l6-65" stroke="#8e775b" stroke-width="2" fill="none"/><g fill="#d7a5a5" stroke="#b98988"><circle cx="55" cy="39" r="12"/><circle cx="122" cy="34" r="13"/><circle cx="95" cy="22" r="11"/><circle cx="70" cy="63" r="9"/><circle cx="108" cy="58" r="9"/></g><path d="M68 132q22 11 44 0" fill="none" stroke="#8c9e90" stroke-width="3"/>',
+ lowDesk:'<path d="M25 86v65m130-65v65m-65-28v28" stroke="#836144" stroke-width="8" stroke-linecap="round"/><path d="M20 78l65-34 75 36-67 38Z" fill="#c7a575" stroke="#846343" stroke-width="2"/><path d="M20 78v11l73 40 67-38V80l-67 38Z" fill="#a58056" stroke="#846343"/><path d="M60 73l31-16 34 16-32 18Z" fill="#f1e4c7" stroke="#a28d6b"/><path d="M95 61l-25 14m34-10-25 14" stroke="#a28d6b"/>'
+ };
+ return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><ellipse cx="90" cy="153" rx="54" ry="9" fill="#59442e18"/>'+(shapes[id]||'')+'</svg>')
+}
+for(const [id,en,cn] of furnitureCatalogue()){roomNames9[id]=[en,cn];art9[id]=komorebiArt(id)}
+let komorebiCategory='all';
+function furnitureMarket(back='shop'){
+ page(tr('Komorebi Living','木漏日杂货铺'),tr('Small comforts for a home that feels like yours.','一点点布置，把小窝变成喜欢的样子。'),q=>{
+ const shelf=element('section','',q,'komorebiBook'),head=element('header','',shelf,'komorebiHead');
+ element('strong',tr('Paw Coin purse','爪币小钱包')+' · '+hideoutBalance(),head);
+ element('small',tr('Buy once, keep forever. No real money.','买一次，永久拥有。不用真钱。'),head);
+ const tabs=element('div','',shelf,'journalFilterTabs');
+ for(const [id,en,cn] of [['all','All','全部'],['rest','Rest','休息'],['storage','Furniture','家具'],['light','Lighting','灯具'],['green','Plants','绿植'],['wall','Wall','墙饰']]){
+ const btn=b(tabs,tr(en,cn),()=>{komorebiCategory=id;furnitureMarket(back)});btn.setAttribute('aria-pressed',String(komorebiCategory===id))
+ }
+ const grid=element('div','',shelf,'komorebiGrid');
+ for(const v of furnitureCatalogue().filter(v=>komorebiCategory==='all'||v[4]===komorebiCategory)){
+ const [id,en,cn,cost]=v,owned=furnitureOwned(id),tile=element('article','',grid,'komorebiTile'),im=element('img','',tile);im.src=art9[id];im.alt='';
+ element('strong',tr(en,cn),tile);element('small',owned?tr('In your furniture collection','已拥有'):cost+' '+tr('Paws','爪币'),tile);
+ const buy=b(tile,owned?tr('Owned','已拥有'):tr('View & buy','看看再买'),()=>{if(owned)return;furnitureConfirm(id,back)});
+ buy.disabled=owned;
+ }
+ b(shelf,tr('Decorate my room','布置我的小窝'),()=>{hideoutEditing=true;hideoutPage()});
+ if(back==='shop')b(shelf,tr('Today’s souvenir','今日小手信'),()=>{ $('page').style.display='none';komorebiOldAction('mystery')});
+ b(q,back==='room'?tr('Back to my room','返回小窝'):tr('Back to shop','返回店里'),()=>{if(back==='room'){hideoutEditing=true;hideoutPage()}else $('page').style.display='none'});
+ journalLanguage(()=>furnitureMarket(back))
+ })
+}
+function furnitureConfirm(id,back){
+ const v=furnitureCatalogue().find(x=>x[0]===id);if(!v)return;
+ page(tr(v[1],v[2]),tr('A little piece of home.','给小窝添一点温柔。'),q=>{
+ const card=element('section','',q,'komorebiConfirm'),im=element('img','',card);im.src=art9[id];im.alt='';
+ element('h2',v[3]+' '+tr('Paw Coins','爪币'),card);element('p',tr('Your balance: ','目前余额：')+hideoutBalance(),card);
+ const btn=b(card,furnitureOwned(id)?tr('Already owned','已拥有'):tr('Buy for ','购买 · ')+v[3]+' '+tr('Paws','爪币'),()=>{if(buyFurniture(id)){toast(tr('Delivered to your furniture collection.','已送到你的小窝家具库。'));furnitureMarket(back)}});
+ btn.disabled=furnitureOwned(id)||hideoutBalance()<v[3];
+ if(!furnitureOwned(id)&&hideoutBalance()<v[3])element('p',tr('A little more exploring will get you there.','再逛逛小镇，攒一点爪币就够啦。'),card);
+ b(q,tr('Keep browsing','继续看看'),()=>furnitureMarket(back));journalLanguage(()=>furnitureConfirm(id,back))
+ })
+}
+const komorebiOldAction=action;
+action=function(id){if(room==='mystery'&&id==='mystery'){closeTalk();furnitureMarket();return}return komorebiOldAction(id)};
+unifiedHouseNames.mystery=['Komorebi Living','木漏日杂货铺'];housePlaqueNames.mystery=unifiedHouseNames.mystery;
+for(const st of maps.island.st)if(st[0]==='mystery'){st[3]=unifiedHouseNames.mystery[0];st[4]=unifiedHouseNames.mystery[1]}
+roomActions.mystery=[['mystery','Browse furniture & souvenirs','看看家具和手信']];
+const komorebiRoomIntro=roomIntro;
+roomIntro=function(){komorebiRoomIntro();if(room==='mystery')hint('Browse the furniture counter. Make your room a little more yours.','去家具柜台看看，把小窝布置成喜欢的样子。')};
+const komorebiRoomBefore=hideoutPage;
+hideoutPage=function(){komorebiRoomBefore();const q=$('content'),primary=q.querySelector('.hideoutPrimary');if(primary)b(primary,tr('Furniture shop','家具杂货铺'),()=>furnitureMarket('room'))};
+const komorebiWalletBefore=pawWalletPage;
+pawWalletPage=function(){komorebiWalletBefore();b($('content'),tr('Browse Komorebi furniture','逛木漏日家具铺'),()=>furnitureMarket('wallet'))};
+const komorebiStyle=document.createElement('style');
+komorebiStyle.textContent='.komorebiBook,.komorebiConfirm{padding:14px;background:var(--town-grain),#f3e5c9;border:1px solid #b59b74;border-radius:4px;color:#554737}.komorebiHead{padding-bottom:10px;border-bottom:1px dashed #bca27a;margin-bottom:10px}.komorebiHead small,.komorebiHead strong{display:block}.komorebiGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}.komorebiTile{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px;border:1px solid #b99e75;background:#fbefd7;border-radius:4px;min-width:0;text-align:center}.komorebiTile img{width:100%;height:110px;object-fit:contain;background:radial-gradient(ellipse at 50% 75%,#d8c4a36b,transparent 65%)}.komorebiTile strong,.komorebiTile small{overflow-wrap:anywhere;font-size:13px}.komorebiTile small{color:#6f624f}.komorebiTile button{margin-top:auto;width:100%;min-height:44px}.komorebiConfirm{text-align:center}.komorebiConfirm img{width:min(100%,280px);height:230px;object-fit:contain}.hideoutRoomView .hideoutRibbon .hideoutPrimary button{background:#536b56!important;border-color:#83957c!important}.hideoutRoomView .hideoutPlaced{filter:none!important;object-fit:contain}.hideoutRoomView .hideoutPlaced.selected{outline:2px dashed #bfa276;filter:drop-shadow(0 0 3px #f4d9aa)!important}@media(min-width:720px){.komorebiGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}';
+document.head.append(komorebiStyle);
