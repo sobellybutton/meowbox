@@ -3848,6 +3848,8 @@ const productionVisualManifest={
  destiny:{path:'assets/visual/destiny-study.svg',width:800,height:1400},
  kitchen:{path:'assets/visual/kitchen-interior.svg',width:800,height:1400},
  tarot:{path:'assets/visual/tarot-reading.svg',width:800,height:1400},
+ temple:{path:'assets/visual/temple-courtyard.svg',width:800,height:1400},
+ templePropsArt:{path:'assets/visual/temple-props.svg',width:960,height:240},
  ahMaIdle:{path:'assets/visual/ah-ma-seated.svg',width:180,height:220,foot:[90,205],seat:[90,151]},
  ahMaScold:{path:'assets/visual/ah-ma-scold.svg',width:180,height:220,foot:[90,205],seat:[90,151]}
 };
@@ -3917,3 +3919,25 @@ function travellerRoomScale(height,camera){
  const usable=Math.max(160,height-230),screenHeight=clamp(usable*.195,72,110);
  return clamp(screenHeight/(94*Math.max(.1,camera)),1.18,2.4)
 }
+
+/* Independently drawn ritual objects: keep the physical input, rotation, and
+   original world-space contact anchors exactly as before. */
+function ritualAtlasPart(cell,x,y,sc=1,angle=0,flat=false){
+ const im=productionVisual('templePropsArt');if(!im)return false;
+ const cuts={bell:[0,0,240,240,120,145],ladle:[240,0,240,240,120,120],basin:[480,0,240,240,120,90],moon:[720,flat?120:0,240,120,120,flat?45:65]};
+ const q=cuts[cell];if(!q)return false;ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.scale(sc,sc);ctx.drawImage(im,q[0],q[1],q[2],q[3],-q[4],-q[5],q[2],q[3]);ctx.restore();return true
+}
+const shrineBellDraft=templeBellArt;
+templeBellArt=function(x,y,sc=1,angle=0){if(!ritualAtlasPart('bell',x,y,sc,angle))shrineBellDraft(x,y,sc,angle)};
+const shrineLadleDraft=templeLadle;
+templeLadle=function(x,y,a=0){if(!ritualAtlasPart('ladle',x,y,1,a))shrineLadleDraft(x,y,a)};
+const shrineMoonDraft=templeMoon;
+templeMoon=function(x,y,a,flat){if(!ritualAtlasPart('moon',x,y,1,a,flat))shrineMoonDraft(x,y,a,flat)};
+const shrineBasinDraft=templeBasin;
+templeBasin=function(x,y){
+ if(!ritualAtlasPart('basin',x,y)){shrineBasinDraft(x,y);return}
+ ctx.save();ctx.beginPath();ctx.ellipse(x,y+1,77,20,0,0,TAU);ctx.clip();
+ for(let i=0;i<4;i++){let f=(t*.35+i*.25)%1;ctx.strokeStyle='rgba(230,239,216,'+((1-f)*.40)+')';ctx.beginPath();ctx.ellipse(x+12,y,8+f*56,2+f*16,0,0,TAU);ctx.stroke()}ctx.restore()
+};
+const shrineArtStart=start;
+start=function(a){if(['prayer','templeWater','templeBell','templePaper','sticks','moon'].includes(a)){productionVisual('temple');productionVisual('templePropsArt')}return shrineArtStart(a)};
