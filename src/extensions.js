@@ -1425,7 +1425,7 @@ accessibleSigns.textContent=`
 #game>canvas#c{position:absolute!important;inset:0!important;z-index:0!important}
 #game>#worldSigns{position:absolute!important;inset:0!important;z-index:6!important;pointer-events:none!important}
 #game>#worldSigns[hidden]{display:none!important}
-#game>#worldSigns>.worldSign{position:absolute!important;pointer-events:auto!important;touch-action:manipulation!important;transform:translate(-50%,-50%)!important;transition:none!important;min-height:44px!important;white-space:normal!important}
+#game>#worldSigns>.worldSign{position:absolute!important;pointer-events:auto!important;touch-action:manipulation!important;transform:translate(-50%,-50%)!important;transition:none!important;min-width:44px!important;min-height:44px!important;white-space:normal!important}
 #game>#hud,#game>#small,#game>#dock,#game>#dialogue,#game>#gameControls{z-index:8!important}
 #game>#page{z-index:20!important}
 #game>#fade{z-index:21!important;pointer-events:none!important}
