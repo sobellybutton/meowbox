@@ -3156,3 +3156,112 @@ $('dockRoom').onclick=myRoom;$('profileHud').onclick=myRoom;
 const communityStyle=document.createElement('style');
 communityStyle.textContent='.communityWelcome{background:#eee3ca;border:1px solid #b8a47c;padding:14px;margin:12px 0 20px;border-radius:5px;color:#4c5945}.communityWelcome h2{margin:0 0 5px}.communityWelcome button{margin:4px 6px 4px 0;min-height:44px}.communityTabs{display:flex;gap:4px;margin:10px 0 12px}.communityTabs button{flex:1;min-width:0;min-height:44px;padding:6px 3px!important;font-size:13px;white-space:normal;line-height:1.2}.communityTabs button[aria-pressed=true]{background:#526a54;color:#fff6e4;border-color:#526a54}.communityMuted{display:block;font-size:12px;line-height:1.45;margin:7px 0 12px;opacity:.85}.communityForm{display:flex;align-items:center;gap:7px;margin:9px 0}.communityForm input{min-width:0;flex:1;font-size:16px;padding:10px;background:#fff8e7;color:#514337;border:1px solid #b3a886;border-radius:4px}.communityForm button{min-height:44px;flex:0 0 auto;padding:8px}.communityIdentity{margin-bottom:12px}.communityReport{font-size:12px;min-height:32px;box-shadow:none!important;background:transparent!important;color:#6a6255!important;padding:3px 8px!important}.communityNameEditor{margin:12px 0}.communityNameEditor summary{cursor:pointer;padding:10px 0}.townChatTranscript{max-height:40dvh!important;min-height:110px;overscroll-behavior:contain}.townChatLine{border-radius:10px 10px 10px 2px}.townChatLine.self{border-radius:10px 10px 2px 10px}.townChatChoices button{min-height:44px}.townChatCompose{position:relative}';
 document.head.append(communityStyle);
+
+
+/* Original pop-culture-inspired guests. No real celebrity likeness, voice,
+   quotes, endorsement, franchise costumes or borrowed song lyrics.
+   Each has a small optional two-choice comic scene and one unique keepsake. */
+const popGuestStories=[
+ {id:'jay-conclusion',name:['Jay Conclusion','周结论'],world:'fortune',intro:['I wrote a ballad about my inbox. It has 47 verses and no resolution.','我给邮箱写了首情歌，四十七段，还没有结局。'],prompt:['My next album needs a title. Help me pick one.','新专辑缺个名字，帮我选一个。'],choices:[
+  [['Rain on my keyboard','键盘上的雨'],['Excellent. The IT department will be my first audience.','好，第一批听众就是IT维修部。']],
+  [['Sorry, I have a meeting','对不起，我有个会'],['A heartbreak anthem for the entire office.','这首歌够整个办公室一起失恋。']]],tip:['The wishing garden is good for inspiration. Even the koi refuse to answer work emails.','去许愿花园找灵感吧，锦鲤也不回工作邮件。'],gift:['Unsent album demo','未发送的专辑小样']},
+ {id:'jj-leave',name:['JJ Leave','林准假'],world:'fortune',intro:['I can hit every high note except the one where my manager approves leave.','什么高音我都唱得上去，唯独请假申请上不去。'],prompt:['My leave application needs a subject line.','我的请假邮件缺个标题。'],choices:[
+  [['Annual leave world tour','年假世界巡演'],['Sold out. Unfortunately the only seat is my office chair.','票卖光了，唯一的座位是我的办公椅。']],
+  [['Out of office, in tune','人在休假，音准在线'],['Finally, a performance with no appraisal.','终于有场不用做绩效的演出。']]],tip:['Draw a fortune at the temple, but do not ask it to approve your leave.','去庙里求个签吧，不过别让神明替老板批年假。'],gift:['Unofficial leave pass','非官方准假通行证']},
+ {id:'andy-leisure',name:['Andy Leisure','刘德闲'],world:'fortune',intro:['After years of working hard, I am finally rehearsing the role of a person with free time.','辛苦打拼这么多年，终于开始练习扮演一个有空的人。'],prompt:['What should my big comeback be?','你觉得我复出该干嘛？'],choices:[
+  [['A nap on the scenic train','观景列车上睡午觉'],['Best supporting pillow award. I can feel it.','最佳配角枕头奖，稳了。']],
+  [['A very long lunch','吃一顿很长的午饭'],['No press conference. Just extra rice.','不开记者会，只加一碗饭。']]],tip:['The temple courtyard is quiet. Take your time instead of treating it like another appointment.','庙里很清静，慢慢逛，别又当成一个行程。'],gift:['Lifetime rest award','终身摸鱼成就奖']},
+ {id:'lady-off',name:['Lady Clocked Out','甄摸鱼'],world:'home',intro:['The palace has issued another decree. I have muted the imperial group chat.','宫里又下圣旨了，本宫已经把御用群聊设为免打扰。'],prompt:['A royal banquet starts at 5:59. How shall we respond?','宫宴五点五十九开席，本宫该如何应对？'],choices:[
+  [['Send the eunuch','派总管公公代劳'],['Excellent. Give him the meeting minutes too.','甚好，会议纪要也一并交给他。']],
+  [['Claim a prior tea appointment','本宫已有茶约'],['At last, a courtly excuse with actual refreshments.','好一个有茶有点心的正当理由。']]],tip:['Auntie at Worry-Free Pier can help you retire an imaginary grievance.','忘忧码头的阿姨专治职场烦恼。'],gift:['Imperial no-overtime decree','皇家拒绝加班圣旨']},
+ {id:'taylor-shift',name:['Taylor Shift','泰勒换班'],world:'home',intro:['My breakup album is about a company that called itself a family.','我的分手专辑写给一家自称大家庭的公司。'],prompt:['Pick a title for the bonus track.','帮我给隐藏曲目取个名字。'],choices:[
+  [['We are never doing overtime again','我们再也不加班'],['Perfect. Payroll will call it experimental fiction.','完美。财务会把它归类为科幻作品。']],
+  [['The calendar was the problem','都是日程表的错'],['I shall thank my former meeting invitations in the credits.','我要在鸣谢里感谢那些前任会议邀请。']]],tip:['Try the tea room. Gossip has excellent acoustics.','去茶馆听瓜吧，那儿的八卦音质特别好。'],gift:['Unreleased clock-out track','未发行的下班单曲']},
+ {id:'dilitea',name:['Dilitea','迪丽热茶'],world:'home',intro:['My skincare routine is tea, sleep and not reading the office group chat.','护肤三件套：喝茶、睡觉、不看工作群。'],prompt:['A gossip reporter is coming. What is our official statement?','有八卦记者来了，咱们官方回应怎么说？'],choices:[
+  [['No comment, extra pearls','无可奉告，多加珍珠'],['The tea is confirmed. The rumour is still steeping.','奶茶是真的，绯闻还在泡。']],
+  [['We are just tea friends','我们只是茶友'],['Very good. Our relationship is strictly 30 percent sugar.','很好，我们的关系严格保持三分糖。']]],tip:['The tea room has a noticeboard. Read it with a pinch of salt and a sip of tea.','茶馆留言墙有瓜，喝着茶看看，别全当真。'],gift:['Thirty-percent-sugar press pass','三分糖记者证']},
+ {id:'gordon-ramen',name:['Gordon Ramen','高登拉面'],world:'island',intro:['Your noodles have been waiting longer than my last meeting. At least the noodles have a purpose.','这碗面等得比我上次开会还久，至少面条有明确用途。'],prompt:['The soup needs something. What do we add?','这锅汤还缺点什么？'],choices:[
+  [['A pinch of salt','一撮盐'],['Finally! A decision made without a committee.','终于！一个不用开会就能做的决定。']],
+  [['Another committee','再开个会'],['The soup has resigned. I support its decision.','这锅汤辞职了，我支持它的决定。']]],tip:['Grandma has the real kitchen. Stir gently and do not serve a meeting agenda for dinner.','外婆家有厨房，轻轻搅拌，晚饭别端会议议程上来。'],gift:['Golden noodle spoon','金牌拉面勺']},
+ {id:'jackie-cant',name:['Jackie Can’t','成躲龙'],world:'island',intro:['My latest stunt is escaping a calendar invite without opening the email.','我最新的特技是不打开邮件就闪避会议邀请。'],prompt:['The final stunt needs a name.','最后一个特技叫什么好？'],choices:[
+  [['Rush home hour','下班时刻'],['One take. No overtime. My finest work.','一条过，不加班，巅峰之作。']],
+  [['The flying timesheet','飞天工时表'],['No spreadsheet was harmed, unfortunately.','可惜，没有任何表格受到伤害。']]],tip:['The arcade is a better place to practise reflexes than your office inbox.','去街机厅练反应吧，比闪躲老板邮件好玩。'],gift:['Meeting-dodge stunt ticket','闪避会议特技票']},
+ {id:'eason-rest',name:['Eason Rest','陈奕闲'],world:'island',intro:['I was going to sing about adulthood. Then I saw the price of bubble tea.','本来想唱成年人的心酸，结果先看到了奶茶价格。'],prompt:['What is the most emotional encore?','返场唱什么最有共鸣？'],choices:[
+  [['One more pearl','再来一颗珍珠'],['The audience is crying. Mostly because they paid for toppings.','观众哭了，主要是因为小料要加钱。']],
+  [['Friday at last','终于周五了'],['A standing ovation from every exhausted office worker.','所有疲惫打工人起立鼓掌。']]],tip:['Try making tea at Grandma’s kitchen. A good drink deserves a good chorus.','去外婆厨房摇杯奶茶，好喝就给它唱两句。'],gift:['Friday encore stub','周五返场票根']},
+ {id:'raincheck',name:['Mr. Raincheck','王家卫班'],world:'wonder',intro:['I waited for the last train. It was late. For once, this was not my fault.','我等了末班车，它迟到了。这一次，终于不是我的错。'],prompt:['Choose the ending of my very slow film.','帮我的慢节奏电影选个结局。'],choices:[
+  [['Two strangers share a coffee','两个陌生人喝咖啡'],['The coffee is cold. The scene is warm.','咖啡凉了，画面还是暖的。']],
+  [['Everyone goes home on time','所有人准时下班'],['An ambitious work of speculative cinema.','一部大胆的科幻电影。']]],tip:['Parallel Lives has endings you can actually choose. Unlike the corporate appraisal form.','平行人生的结局由你选，不像绩效表。'],gift:['Unfinished film ticket','未完成电影票']},
+ {id:'kpop-lunch',name:['Lunch Break Girls','午休女团'],world:'wonder',intro:['Our latest comeback is scheduled for after lunch. Before lunch we are unavailable.','新专辑午饭后回归。午饭前，整个团都不营业。'],prompt:['Name our fan club.','给粉丝团起个名吧。'],choices:[
+  [['The Out of Officers','离线打工人'],['Official lightstick: a fully closed laptop.','官方应援棒：合上的笔记本电脑。']],
+  [['Pearl Nation','珍珠共和国'],['Our debut single will be served with less ice.','出道单曲指定少冰。']]],tip:['Take the Soul Cat test at Personality Lab. Every fan club needs a resident cat.','去人格研究所测测猫灵吧，粉丝团怎么能没有猫。'],gift:['Lunch break concert ticket','午休演唱会门票']},
+ {id:'merlion-host',name:['Kopi Phua','咖啡潘叔'],world:'wonder',intro:['I came to upgrade my lifestyle. So far I have upgraded from kopi to kopi peng.','本来要提升生活品质，目前只从热咖啡升级成冰咖啡。'],prompt:['We need a new Singaporean luxury product.','咱们发明一个新加坡奢侈品吧。'],choices:[
+  [['A seat on the MRT','地铁座位'],['Limited edition. Very limited.','限量款，真的非常限量。']],
+  [['A whole day without WhatsApp','一天不用回消息'],['That one cannot buy even with CDC vouchers.','这个连邻里购物券都买不到。']]],tip:['Visit Compatibility Café only if you feel like reflecting. No matchmaking pressure here.','想聊缘分就去缘分咖啡馆，这里没有催婚压力。'],gift:['Luxury kopi receipt','奢华咖啡收据']}
+];
+function popGuestPool(world){return popGuestStories.filter(g=>g.world===world)}
+// A guest stays the same for the local calendar day, including on re-entry.
+function popGuestFor(world,slot,date=shrineClock().day){
+ const pool=popGuestPool(world);if(!pool.length)return null;
+ const ordinal=Math.floor(Date.parse(date+'T00:00:00Z')/86400000);
+ return pool[((ordinal+hash(world)+slot)%pool.length+pool.length)%pool.length]
+}
+let popGuestMemory=load('popGuestMemoryV1',{});
+if(!popGuestMemory||typeof popGuestMemory!=='object'||Array.isArray(popGuestMemory))popGuestMemory={};
+function popGuestRecord(g){return Object.hasOwn(popGuestMemory,g.id)?popGuestMemory[g.id]:null}
+function popGuestSay(g,line,opts){
+ say(tr(...g.name),line,opts);
+ // Distinct fictional identity, with no false endorsement.
+ const speaker=$('speaker');if(speaker)speaker.textContent=tr(...g.name)+' · '+tr('Guest','客串');
+}
+function popGuestMeet(g,n=null){
+ if(n){greetingNPC=n;greetingUntil=t+.9;stopRoute();p.tx=p.x;p.ty=p.y;p.facing=Math.abs(n.x-p.x)>Math.abs(n.y-p.y)?(n.x<p.x?'left':'right'):(n.y<p.y?'up':'down')}
+ const rec=popGuestRecord(g)||{visits:0,choices:[]};rec.visits++;popGuestMemory[g.id]=rec;save('popGuestMemoryV1',popGuestMemory);
+ const repeat=rec.visits>1?' '+tr('You again! No autograph queue today.','又见面了！今天不用排签名队。'):'';
+ popGuestSay(g,tr(...g.intro)+repeat,[
+  [tr('What are you up to?','你在忙什么？'),()=>popGuestScene(g)],
+  [tr('Any local tips?','附近有什么好玩的？'),()=>popGuestSay(g,tr(...g.tip),[[tr('Thanks, see you!','谢啦，回头见！'),closeTalk]])],
+  [tr('Keep exploring','继续逛逛'),closeTalk]
+ ])
+}
+function popGuestScene(g){
+ popGuestSay(g,tr(...g.prompt),g.choices.map(([label,reply],i)=>[tr(...label),()=>{
+  const rec=popGuestRecord(g)||{visits:1,choices:[]};
+  if(!rec.choices.includes(i))rec.choices.push(i);popGuestMemory[g.id]=rec;save('popGuestMemoryV1',popGuestMemory);
+  if(!items.some(x=>x[0]===g.gift[0]))addItem(...g.gift);
+  popGuestSay(g,tr(...reply),[[tr('See you around','下次见'),closeTalk]])
+ }]).concat([[tr('Maybe later','下次再聊'),closeTalk]]))
+}
+const popGuestInitBefore=initNPC;
+initNPC=function(){
+ popGuestInitBefore();const pool=popGuestPool(scene);if(!pool.length)return;
+ const visitors=npc.filter(n=>n.visitor!==undefined&&n.kind!==2);
+ // Do not replace hosts, resident characters or cats.
+ if(!visitors.length){const regular=npc.find(n=>n.n?.[0]==='Traveller');if(regular)visitors.push(regular)}
+ visitors.slice(0,Math.min(2,pool.length)).forEach((n,i)=>{const g=popGuestFor(scene,i);if(g){n.popGuest=g.id;n.n=g.name}})
+};
+const popGuestTalkBefore=npcTalk;
+npcTalk=function(n){
+ const g=n?.popGuest&&popGuestStories.find(v=>v.id===n.popGuest);
+ if(g&&!room)return popGuestMeet(g,n);return popGuestTalkBefore(n)
+};
+// Existing tea-room encounter button remains available, but has a stable daily guest.
+const popGuestCameoBefore=cameo9;
+cameo9=function(place=scene){const g=popGuestFor(place,0);return g?popGuestMeet(g):popGuestCameoBefore(place)};
+const popGuestPassportBefore=passport;
+passport=function(){
+ popGuestPassportBefore();const book=$('content').querySelector('.travelAlbum');if(!book)return;
+ const section=element('section','',book,'popGuestAlbum');
+ element('h2',tr('Unexpected encounters','偶遇小名人'),section);
+ element('p',tr('Fictional pop-culture parodies. Catch different guests around town each day.','原创流行文化趣味客串，每天逛小镇都有不同偶遇。'),section);
+ const count=popGuestStories.filter(g=>popGuestRecord(g)).length;
+ element('small',count+' / '+popGuestStories.length+' '+tr('guests met','位已偶遇'),section);
+ for(const g of popGuestStories.filter(g=>popGuestRecord(g))){
+  const row=element('article','',section,'popGuestRow');element('strong',tr(...g.name),row);
+  element('small',tr(...maps[g.world].n),row);
+  if(items.some(x=>x[0]===g.gift[0]))element('p',tr(...g.gift),row);
+ }
+};
+$('dockPassport').onclick=passport;
+const popGuestStyle=document.createElement('style');
+popGuestStyle.textContent='.popGuestAlbum{margin:20px 0;color:inherit}.popGuestRow{border-bottom:1px solid #b7a47e;padding:10px 0}.popGuestRow strong,.popGuestRow small{display:block}.popGuestRow p{margin:5px 0;font-size:13px}.popGuestAlbum>p{font-size:13px;line-height:1.4}';document.head.append(popGuestStyle);
