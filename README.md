@@ -3,7 +3,7 @@
 [Play the live game](https://sobellybutton.github.io/meowbox/). Bilingual Japanese illustrated browser life sim for short breaks.
 
 ## AI developer quick start
-Read [AGENTS.md](AGENTS.md) and [development status](docs/STATUS.md). Query Graphify for relevant symbols, dependencies and tests; compare indexed commit with GitHub main. Retrieve only relevant lines; do not ingest legacy artwork or archived HTML. Graphify free plan indexes README among documents.
+Read [AGENTS.md](AGENTS.md), [owner feedback and Work handover](docs/PRODUCT_REVIEW.md), and [development status](docs/STATUS.md). Query Graphify for relevant symbols, dependencies and tests; compare indexed commit with GitHub main. Retrieve only relevant lines; do not ingest legacy artwork or archived HTML. Graphify free plan indexes README among documents.
 
 ## Canonical source
 - `src/engine.js`: base world engine, activity state and input, storage and core rendering.
