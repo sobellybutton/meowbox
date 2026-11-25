@@ -58,6 +58,7 @@ jobs:
                   if(registry.filter(v=>v.id===id&&v.world===world).length!==1)throw Error('Wrong station ownership: '+id);
                 }
                 if(!await page.evaluate(()=>roomActions.quiz.length===1&&roomActions.quiz[0][0]==='quiz'))throw Error('Personality Lab has duplicate entry points');
+                if(!await page.evaluate(()=>roomActions.arcade.map(v=>v[0]).join(',')==='bubbleArcade,woodenThree,blindBox'))throw Error('Visible arcade lineup differs from curated games');
                 const assessmentCheck=await page.evaluate(()=>{let n=0;for(const mode of ['type','motive','soul']){const q=prepareWonderQuestions(mode),answers=q.map(v=>v.id%v.opts.length),expected={type:16,motive:27,soul:6}[mode];if(q.length!==expected)throw Error('Wrong question count '+mode);if(JSON.stringify(scoreWonder(mode,q,answers))!==JSON.stringify(scoreWonder(mode,q.slice().reverse(),answers.slice().reverse())))throw Error('Question order changed outcome '+mode);n++}const q=prepareWonderQuestions('motive');if(scoreWonder('motive',q,q.map(()=>1)).ties.length!==9)throw Error('Equal motive scores collapsed');return n+1});
                 console.log('ASSESSMENT_LOGIC '+assessmentCheck);
                 const poseCheck=await page.evaluate(()=>{let n=0;for(let i=0;i<=10;i++)for(let j=0;j<=10;j++){for(const opts of [{kneel:i/10,bow:j/10},{seat:i/10,bow:j/10}]){const p=ritualSpritePose(opts,{x:25,y:-20});if(!(p.hip.y<p.knee.y&&p.knee.y<p.foot.y&&Number.isFinite(p.wrist.x)&&Number.isFinite(p.wrist.y)))throw Error('Invalid action pose');n++}}return n});
@@ -285,7 +286,7 @@ jobs:
                 await page.evaluate(()=>{room='temple';activity=null;action('prayer')});
                 await page.waitForFunction(()=>activity==='prayer'&&state.prayerStage==='ready',{},{timeout:10000});
                 if(options.hasTouch){
-                  await page.waitForFunction(()=>portraitInteriorCache.get('temple')?.naturalWidth===800&&portraitInteriorCache.get('temple')?.naturalHeight===1400,{},{timeout:10000});
+                  await page.waitForFunction(()=>(()=>{const im=portraitInteriorImage('temple');return im?.naturalWidth===800&&im?.naturalHeight===1400})(),{},{timeout:10000});
                 }
                 await page.screenshot({path:'test-results/'+name+'-temple-ready.png'});
                 const prayerTap=async(x,y)=>{
@@ -299,7 +300,7 @@ jobs:
                 await page.waitForTimeout(450);
                 await page.screenshot({path:'test-results/'+name+'-temple-incense-reach.png'});
                 await page.locator('#ritualActionBar').getByRole('button',{name:'Make a wish',exact:true}).click();
-                await page.waitForFunction(()=>state.prayerStage==='kneel',{},{timeout:3000});
+                // Standing bow is deliberate until dedicated kneeling art is available.
                 await page.waitForFunction(()=>state.prayerStage==='bow',{},{timeout:3000});
                 await page.waitForTimeout(600);
                 await page.screenshot({path:'test-results/'+name+'-temple-bow.png'});
@@ -514,13 +515,13 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-chart-consultation.png'});
                 await page.getByRole('button',{name:'‹ Back',exact:true}).click();
                 if(options.hasTouch){
-                  await page.waitForFunction(()=>portraitInteriorCache.get('destiny')?.naturalWidth===800&&portraitInteriorCache.get('destiny')?.naturalHeight===1400,{},{timeout:10000});
+                  await page.waitForFunction(()=>(()=>{const im=portraitInteriorImage('destiny');return im?.naturalWidth===800&&im?.naturalHeight===1400})(),{},{timeout:10000});
                   await page.screenshot({path:'test-results/'+name+'-portrait-destiny-room.png'});
                 }
                 if(options.hasTouch){
                   for(const id of ['wishes','park','fish','kitchen','arcade','tea','office','mystery','quiz','story','match']){
                     await page.evaluate(id=>{room=id;activity=null;state={};closeTalk();updateHUD()},id);
-                    await page.waitForFunction(id=>portraitInteriorCache.get(id)?.naturalWidth===800&&portraitInteriorCache.get(id)?.naturalHeight===1400,id,{timeout:10000});
+                    await page.waitForFunction(id=>(()=>{const im=portraitInteriorImage(id);return im?.naturalWidth===800&&im?.naturalHeight===1400})(),id,{timeout:10000});
                     await page.screenshot({path:'test-results/'+name+'-portrait-'+id+'.png'});
                   }
                   await page.evaluate(()=>{room='temple';activity=null;start('secretGarden')});
@@ -529,7 +530,7 @@ jobs:
                 }
                 await page.evaluate(()=>{room='tarot';activity=null;state={};closeTalk();updateHUD()});
                 if(options.hasTouch){
-                  await page.waitForFunction(()=>readingRoomPortrait.naturalWidth===800&&readingRoomPortrait.naturalHeight===1400,{},{timeout:10000});
+                  await page.waitForFunction(()=>(()=>{const im=requestReadingRoomPortrait();return im?.naturalWidth===800&&im?.naturalHeight===1400})(),{},{timeout:10000});
                   await page.screenshot({path:'test-results/'+name+'-portrait-tarot-room.png'});
                 }
                 await page.evaluate(()=>{start('love');readingTopic(1);readingShuffle()});
@@ -603,19 +604,25 @@ jobs:
   shrine-repair:
     runs-on: ubuntu-latest
     timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - run: npm install --no-save --no-package-lock playwright
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
       - name: Test shrine arrival and water interaction
+        env:
+          MEOW_BROWSER: ${{ matrix.engine }}
         run: |
           python3 -m http.server 8768 >/tmp/meowbox-shrine-server.log 2>&1 &
           node scripts/shrine-repair-test.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: meowbox-shrine-repair-previews
+          name: meowbox-shrine-repair-previews-${{ matrix.engine }}
           path: test-results/
