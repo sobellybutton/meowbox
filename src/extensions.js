@@ -1650,7 +1650,7 @@ drawMap=function(){
   const moving=residentMoving(n);
   if(n.kind===2){cat(n.x,n.y,0,moving,.65*sc);continue}
   const dir=Math.abs(n.ty-n.y)>Math.abs(n.tx-n.x)?(n.ty<n.y?'up':'down'):(n.tx<n.x?'left':'right');
-  if(n.grumpy){riverAuntie(n.x,n.y,sc*.76)}else backHuman(n.x,n.y,((avatar??0)+1+n.kind)%4,moving,dir,sc*.83);
+  if(n.grumpy){drawWalkingGranny(n.x,n.y,sc*.76,moving,dir)}else backHuman(n.x,n.y,((avatar??0)+1+n.kind)%4,moving,dir,sc*.83);
   if(Math.hypot(n.x-p.x,n.y-p.y)<150){
    if(n.popGuest||n.grumpy){ctx.save();ctx.font='15px Georgia';const label=tr(...n.n),width=ctx.measureText(label).width+18;ctx.fillStyle='#f6e8cced';ctx.fillRect(n.x-width/2,n.y-120*sc,width,22);ctx.fillStyle='#435744';ctx.textAlign='center';ctx.fillText(label,n.x,n.y-120*sc+16);ctx.restore()}
    target(n.x-36,n.y-100,72,110,()=>npcTalk(n))
@@ -3314,7 +3314,7 @@ function hideoutClaimPage(){
   const stamps=element('div','',q,'hideoutStampGrid');
   for(const k of ['fortune','home','island','wonder']){
    const got=visited.includes(k),btn=b(stamps,'',()=>{if(got){toast(tr('Stamp collected. See the rewards below.','印章已收集，往下看看解锁奖励。'));q.querySelector('.hideoutRewardList')?.scrollIntoView({block:'start',behavior:'smooth'})}else travel()});
-   const art=element('span','',btn,'hideoutRewardArt');art.innerHTML=albumIcon('stamp');element('strong',tr(...maps[k].n),btn);element('small',got?tr('Stamped','已盖章'):tr('How to visit','怎么去'),btn);btn.classList.toggle('locked',!got);
+   const art=element('span','',btn,'hideoutRewardArt');art.innerHTML=hideoutStampArt(k,got);element('strong',tr(...maps[k].n),btn);element('small',got?tr('Stamped','已盖章'):tr('How to visit','怎么去'),btn);btn.classList.toggle('locked',!got);
   }
   const rewards=element('div','',q,'hideoutRewardList');
   for(const reward of hideoutRewards){
@@ -3331,7 +3331,7 @@ function hideoutPage(){
  page(tr('My Hideout','我的小窝'),tr('The rent is imaginary. The peace is real.','房租是假的，清静是真的。'),q=>{
   const profile=element('div','',q,'hideoutProfile'),pic=element('img','',profile);pic.src=ART['badge'+(avatar??0)];pic.alt='';
   const identity=element('div','',profile);element('strong',playerName||tr('Traveller','旅人'),identity);element('small',tr(...names[avatar??0]),identity);b(profile,tr('Edit profile','编辑资料'),hideoutProfilePage);
-  const theme=hideoutThemes.find(v=>v.id===hideoutPrefs.theme&&hideoutStampCount()>=v.need)||hideoutThemes[0];
+  const theme=hideoutThemes.find(v=>v.id===hideoutPrefs.theme&&hideoutThemeUnlocked(v))||hideoutThemes[0];
   const stage=element('div','',q,'hideoutScene');stage.innerHTML=hideoutSceneArt(theme);
   function render(){
    stage.querySelectorAll('.hideoutPlaced,.hideoutDisplay,.hideoutPlayer').forEach(el=>el.remove());
@@ -3361,8 +3361,8 @@ function hideoutPage(){
     const btn=b(tray,'',()=>{if(hideoutFurniture.length>=24){toast(tr('Your room is full. Even the cat needs space.','小窝满啦，猫猫也需要空间。'));return}hideoutFurniture.push({id,x:50,y:68});hideoutSelected=hideoutFurniture.length-1;saveHideout();render()});const im=element('img','',btn);im.src=art9[id];im.alt='';element('small',tr(...name),btn)
    }
    const tools=element('div','',q,'hideoutActions');b(tools,tr('Rotate','旋转'),()=>{if(hideoutFurniture[hideoutSelected]){const d=hideoutFurniture[hideoutSelected];d.r=((d.r||0)+15)%360;saveHideout();render()}});b(tools,tr('Remove','移除'),()=>{if(hideoutSelected>=0&&hideoutFurniture[hideoutSelected]){hideoutFurniture.splice(hideoutSelected,1);hideoutSelected=-1;saveHideout();render()}});
-   element('h2',tr('Room atmosphere','小窝氛围'),q);
-   const themes=element('div','',q,'hideoutActions');for(const theme of hideoutThemes){const unlocked=hideoutStampCount()>=theme.need;const btn=b(themes,tr(...theme.name)+(unlocked?'':' · '+theme.need+' '+tr('stamps','枚印章')),()=>{if(!unlocked)return;hideoutPrefs.theme=theme.id;saveHideout();hideoutPage()});btn.disabled=!unlocked;btn.setAttribute('aria-pressed',String(hideoutPrefs.theme===theme.id))}
+   element('h2',tr('Room atmosphere','小窝氛围'),q);element('p',tr('Available paws: ','可用爪币：')+hideoutBalance()+' · '+tr('Use them for optional room themes.','可兑换自选小窝主题。'),q);
+   const themes=element('div','',q,'hideoutActions');for(const theme of hideoutThemes){const unlocked=hideoutThemeUnlocked(theme);const btn=b(themes,tr(...theme.name)+(unlocked?'':theme.cost?' · '+theme.cost+' '+tr('paws','爪币'):' · '+theme.need+' '+tr('stamps','枚印章')),()=>{if(!unlocked){if(!theme.cost||!buyHideoutTheme(theme))return}hideoutPrefs.theme=theme.id;saveHideout();hideoutPage()});btn.disabled=!unlocked&&(!theme.cost||hideoutBalance()<theme.cost);btn.setAttribute('aria-pressed',String(hideoutPrefs.theme===theme.id))}
   }
   const links=element('div','',q,'hideoutActions');b(links,tr('My bag','我的背包'),myRoom);b(links,tr('Private notes','私人留言'),myNotes9);b(links,tr('Saved readings','收藏解读'),album9);b(links,tr('Passport','护照'),passport);
   const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();hideoutPage()}
@@ -3423,14 +3423,14 @@ step=function(n,dt,speed){
  const result=grannyStepBefore(n,dt,speed);
  if(n!==p||room||transitioning||talkOpen||!proposal.hidden||$('page').style.display==='block'||scene!=='home'||t-grannyBumpAt<7)return result;
  const ma=npc.find(v=>v.grumpy);if(!ma)return result;
- if(Math.hypot(p.x-ma.x,p.y-ma.y)<31&&Math.hypot(p.tx-p.x,p.ty-p.y)>4){grannyBumpAt=t;ma.pauseUntil=t+1.6;toast(tr(...townReaction('granny-bump',grumpyBumps)))}
+ if(Math.hypot(p.x-ma.x,p.y-ma.y)<38&&Math.hypot(p.tx-p.x,p.ty-p.y)>4){grannyBumpAt=t;ma.pauseUntil=t+1.6;toast(tr(...townReaction('granny-bump',grumpyBumps)))}
  return result
 };
 const grannyTalkBefore=npcTalk;
 npcTalk=function(n){
  if(!n?.grumpy||room)return grannyTalkBefore(n);
  stopRoute();p.tx=p.x;p.ty=p.y;greetingNPC=n;greetingUntil=t+.9;
- say(tr(...n.n),tr(...townReaction('granny-greeting',grumpyTalk)),[
+ say(tr(...n.n),tr(...townReaction('granny-greeting',grumpyWeatherLines())),[
   [tr('What else annoys you?','还有什么想吐槽的？'),()=>say(tr(...n.n),tr(...townReaction('granny-greeting',grumpyTalk)),[[tr('Take care, Ah Ma','阿嬷慢走'),closeTalk]])],
   [tr('Sorry, Auntie!','不好意思阿嬷！'),()=>say(tr(...n.n),tr('Good lah. At least got manners. Go eat something. Too skinny already.','还算有礼貌。去吃点东西，瘦成这样！'),[[tr('See you','回头见'),closeTalk]])],
   [tr('Continue walking','继续逛'),closeTalk]
@@ -3489,3 +3489,58 @@ townChatReplies.civic=[
  [['Grumpy Ah Ma','暴躁阿嬷'],['Our fictional town council has formed a committee to reduce the number of committees.','小镇议会成立了一个委员会，专门研究怎么减少委员会。']],
  [['Office Intern','实习生'],['Public consultation complete. We are now consulting on the results of the consultation.','公众咨询已完成，现在开始咨询咨询结果。']]
 ];
+
+/* Street auntie uses a standing gait rather than sliding a seated sprite. */
+function drawWalkingGranny(x,y,sc,moving,dir){
+ ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+ const stride=moving?Math.sin(t*9):0,bob=moving?Math.abs(stride)*2:0,side=dir==='left'?-1:1;
+ ellipse(0,0,24,6,'#30292040');
+ for(const sign of [-1,1]){
+  const foot=sign*10+(dir==='left'||dir==='right'?sign*stride*9:0),lift=Math.max(0,sign*stride)*6;
+  line(sign*9,-35,foot,-8-lift,'#51453e',13);ellipse(foot+side*3,-4-lift,11,4,'#383a35')
+ }
+ ctx.translate(0,-bob);
+ ctx.fillStyle='#894c48';ctx.beginPath();ctx.moveTo(-20,-98);ctx.quadraticCurveTo(-37,-80,-31,-42);ctx.quadraticCurveTo(0,-29,31,-42);ctx.quadraticCurveTo(35,-79,20,-98);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#b9a17a';ctx.beginPath();ctx.moveTo(-11,-91);ctx.lineTo(11,-91);ctx.lineTo(23,-45);ctx.quadraticCurveTo(0,-37,-23,-45);ctx.closePath();ctx.fill();
+ line(-18,-70,-24,-46-stride*5,'#894c48',11);ellipse(-24,-43-stride*5,6,7,'#d8b596');line(18,-70,27,-45+stride*5,'#894c48',11);ellipse(27,-43+stride*5,6,7,'#d8b596');
+ ctx.save();ctx.translate(27,-43+stride*5);ctx.rotate(stride*.13);ctx.beginPath();ctx.moveTo(-5,3);ctx.quadraticCurveTo(0,-8,7,3);ctx.strokeStyle='#625d50';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#8a9a7a';ctx.beginPath();ctx.moveTo(-11,4);ctx.lineTo(13,4);ctx.lineTo(17,28);ctx.quadraticCurveTo(0,35,-15,28);ctx.closePath();ctx.fill();ctx.restore();
+ ellipse(0,-116,27,27,'#77766d');ellipse(12,-140,13,12,'#77766d');
+ if(dir==='up'){ctx.restore();return}
+ ellipse(0,-112,23,22,'#d8b596');ctx.fillStyle='#8b887e';ctx.beginPath();ctx.moveTo(-23,-116);ctx.quadraticCurveTo(-24,-141,0,-141);ctx.quadraticCurveTo(24,-140,23,-116);ctx.quadraticCurveTo(12,-130,0,-126);ctx.quadraticCurveTo(-13,-130,-23,-116);ctx.fill();
+ line(-15,-119,-5,-115,'#514338',3);line(15,-119,5,-115,'#514338',3);ellipse(-8,-111,2,2,'#453e37');ellipse(8,-111,2,2,'#453e37');line(-5,-100,5,-102,'#875a4e',2);ctx.restore()
+}
+function grumpyWeatherLines(){
+ const weather=typeof atmosphere==='object'?atmosphere.weather:'';
+ if(weather==='rain')return [['This town rains every time I hang out the laundry. Got personal grudge ah?','衣服一晾，小镇就下雨。跟阿嬷有仇啊？'],...grumpyTalk];
+ if(weather==='sunny'||weather==='clear')return [['So hot, my kopi peng becomes kopi before I reach home.','热到冰咖啡还没到家就变热咖啡了！'],...grumpyTalk];
+ return grumpyTalk
+}
+hideoutThemes.push(
+ {id:'rain',name:['Rainy window','听雨小窝'],wall:'#c4d3ce',floor:'#8a8277',sky:'#758f9b',need:0,cost:70},
+ {id:'retro',name:['Old Hong Kong evening','港风黄昏'],wall:'#e4c7a5',floor:'#866354',sky:'#bf8f78',need:0,cost:120}
+);
+function hideoutPurchases(){const v=load('hideoutThemePurchasesV1',[]);return Array.isArray(v)?[...new Set(v.filter(id=>hideoutThemes.some(t=>t.id===id&&t.cost)))]:[]}
+function hideoutBalance(){const purchased=hideoutPurchases();return Math.max(0,items.length*10-hideoutThemes.filter(v=>purchased.includes(v.id)).reduce((sum,v)=>sum+(v.cost||0),0))}
+function hideoutThemeUnlocked(theme){return theme.cost?hideoutPurchases().includes(theme.id):hideoutStampCount()>=theme.need}
+function buyHideoutTheme(theme){
+ if(hideoutThemeUnlocked(theme))return true;
+ if(!theme.cost||hideoutBalance()<theme.cost)return false;
+ save('hideoutThemePurchasesV1',[...hideoutPurchases(),theme.id]);updateHUD();return true
+}
+function hideoutStampArt(k,got){
+ const sets={
+ fortune:['#9b624b','<path d="M15 35H49L44 28H20Z M21 28H43L38 21H26Z M24 35V47M40 35V47M18 48H46" fill="none" stroke="currentColor" stroke-width="3"/>'],
+ home:['#547d76','<path d="M17 38Q23 30 29 38T41 38T53 38M14 45Q20 37 26 45T38 45T50 45M32 17V32L18 32Z" fill="none" stroke="currentColor" stroke-width="2.5"/>'],
+ island:['#a47b44','<path d="M17 30H44L40 44Q31 52 21 44Z M44 32Q58 30 49 40H43M21 25Q18 20 23 16M32 25Q29 20 34 16" fill="none" stroke="currentColor" stroke-width="3"/>'],
+ wonder:['#726783','<path d="M32 15L35 28L48 31L35 34L32 48L29 34L16 31L29 28Z M43 17L46 23L52 26L46 29L43 35L40 29L34 26L40 23Z" fill="currentColor"/>']
+ };
+ const [color,mark]=sets[k]||sets.fortune;
+ return '<svg viewBox="0 0 64 64" aria-hidden="true" style="color:'+color+';opacity:'+(got?1:.48)+'"><circle cx="32" cy="32" r="28" fill="#e9d7ac" stroke="'+color+'" stroke-width="3" stroke-dasharray="2 1"/><circle cx="32" cy="32" r="23" fill="none" stroke="'+color+'" stroke-width="1"/>'+mark+'</svg>'
+}
+const pawsHudBefore=updateHUD;
+updateHUD=function(){pawsHudBefore();const paws=$('hudCoins');paws.textContent=tr('Paws ','爪币 ')+hideoutBalance();paws.title=tr('Paws available for room themes.','可兑换小窝主题的爪币。');paws.setAttribute('aria-label',paws.title+' '+hideoutBalance())};
+function openHudReward(fn){if(avatar===null||!proposal.hidden||transitioning||activity||talkOpen)return;fn()}
+for(const [id,fn] of [['hudStamps',hideoutClaimPage],['hudCoins',()=>{hideoutEditing=true;hideoutPage()}]]){
+ const el=$(id);el.setAttribute('role','button');el.tabIndex=0;el.style.cursor='pointer';
+ el.onclick=()=>openHudReward(fn);el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openHudReward(fn)}}
+}
