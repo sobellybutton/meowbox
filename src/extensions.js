@@ -6521,7 +6521,8 @@ const guestWalkBefore=residentTarget;
 residentTarget=function(n,i){
  guestWalkBefore(n,i);
  if(!n.popGuest)return;
- const y=clamp(n.y+(n.walkDirection||-1)*(55+Math.random()*85),minY()+20,Math.min(maxY()-20,scene==='fortune'?1370:Infinity));
+ const low=minY()+20,high=Math.min(maxY()-20,scene==='fortune'?1370:Infinity),distance=55+Math.random()*85;
+ let y=clamp(n.y+(n.walkDirection||-1)*distance,low,high);if(Math.abs(y-n.y)<8){n.walkDirection=-(n.walkDirection||-1);y=clamp(n.y+n.walkDirection*distance,low,high)}
  const lane=residentLane(scene,y);n.ty=y;n.tx=lane.x+(i%2?1:-1)*lane.half*.55
 };
 
