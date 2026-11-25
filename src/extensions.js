@@ -1325,12 +1325,13 @@ function indoorSafe(x,y,obstacles=indoorObstacles()){
  return x>=145&&x<=655&&y>=(room==='temple'?480:565)&&y<=738&&!obstacles.some(o=>x>o.l-13&&x<o.r+13&&y>o.u-12&&y<o.d+12)
 }
 function indoorSegment(a,b,obstacles){
- const steps=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/12));
+ if(![...a,...b].every(Number.isFinite))return false;
+ const steps=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/8));
  for(let i=1;i<=steps;i++){const f=i/steps;if(!indoorSafe(a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,obstacles))return false}
  return true
 }
 function indoorPath(from,to,obstacles=indoorObstacles()){
- if(!indoorSafe(...to,obstacles))return null;
+ if(![...from,...to].every(Number.isFinite)||!indoorSafe(...to,obstacles))return null;
  if(indoorSegment(from,to,obstacles))return [to];
  // Small deterministic visibility graph around prop footprints, never time-trigger an action.
  const nodes=[from,to];for(const o of obstacles)for(const x of [o.l-18,o.r+18])for(const y of [o.u-17,o.d+17])if(indoorSafe(x,y,obstacles))nodes.push([x,y]);
@@ -1343,6 +1344,7 @@ function indoorPath(from,to,obstacles=indoorObstacles()){
  }return null
 }
 function indoorDestination(x,y,goal=null,facing=null){
+ if(!Number.isFinite(x)||!Number.isFinite(y))return false;
  const obs=indoorObstacles();x=clamp(x,145,655);y=clamp(y,room==='temple'?480:565,738);
  if(!indoorSafe(x,y,obs)){if(goal){hint('Try the clear path beside the station.','请从体验区旁边的小路过去。');return false}return false}
  const route=indoorPath([indoor.x,indoor.y],[x,y],obs);
@@ -1389,7 +1391,7 @@ drawActivity=function(){
  continuityActivity=activity;
  if(!activity||avatar===null)return;
  // Activities with articulated player poses already render their own traveller.
- if(['prayer','sticks','templeBell','templeWater','secretGarden','blindBox','bubbleTea','wonderScene','tarot','love','story','match','fish','cook','pet','hit','riverBottle','riverShout','claw','rhythm','moon','templePaper','wishes'].includes(activity))return;
+ if(['prayer','sticks','templeBell','templeWater','secretGarden','blindBox','bubbleTea','wonderScene','tarot','love','story','match','fish','cook','pet','hit','riverBottle','riverShout','claw','rhythm','moon','templePaper','wishes','bubbleArcade','woodenThree'].includes(activity))return;
  const b=livingBounds(),x=Math.max(b.x+65,Math.min(250,b.x+b.w-65)),y=Math.max(b.y+130,Math.min(550,b.y+b.h-100));
  ctx.save();backHuman(x,y,avatar,false,'right',1.05);ctx.restore();
 };
@@ -3931,8 +3933,8 @@ const productionVisualManifest={
 const productionVisualCache=new Map();
 function productionVisual(id){
  const asset=productionVisualManifest[id];if(!asset)return null;
- if(!productionVisualCache.has(id)){const im=new Image();im.decoding='async';im.src=asset.path;productionVisualCache.set(id,im)}
- const im=productionVisualCache.get(id);return im.complete&&im.naturalWidth>0?im:null
+ if(!productionVisualCache.has(id)){const im=new Image();im.decoding='async';productionVisualCache.set(id,im);im.src=asset.path}
+ const im=productionVisualCache.get(id);return im.complete&&im.naturalWidth>0&&im.naturalHeight>0?im:null
 }
 const productionPortraitBefore=portraitInteriorImage;
 portraitInteriorImage=function(id){return productionVisual(id)||productionPortraitBefore(id)};
@@ -3985,14 +3987,14 @@ destinyPage=function(){
 /* Character readability: increase walkaround sprites, not activity/prop contact poses.
    Perspective and logical feet are preserved, with a bounded mobile size floor. */
 function travellerOutdoorScale(base,camera,width,height,player){
- const minPx=width<height?(player?62:51):(player?54:44);
- const maxPx=Math.min(player?112:94,height*.25);
- const desired=Math.max(base*(player?1.18:1.18),minPx/(94*Math.max(.08,camera)));
- return Math.min(desired,Math.max(base,maxPx/(94*Math.max(.08,camera))))
+ const safeCamera=Math.max(.08,Number.isFinite(camera)?camera:1),safeHeight=Math.max(1,Number.isFinite(height)?height:640),safeBase=Math.max(.1,Number.isFinite(base)?base:1);
+ const maxPx=Math.min(player?112:94,safeHeight*.25),minPx=Math.min(maxPx,width<safeHeight?(player?62:51):(player?54:44));
+ return clamp(safeBase*1.18,minPx/(94*safeCamera),maxPx/(94*safeCamera))
 }
 function travellerRoomScale(height,camera){
- const usable=Math.max(160,height-230),screenHeight=clamp(usable*.195,72,110);
- return clamp(screenHeight/(94*Math.max(.1,camera)),1.18,2.4)
+ const safeHeight=Number.isFinite(height)?Math.max(1,height):640,safeCamera=Number.isFinite(camera)?Math.max(.1,camera):1;
+ const usable=Math.max(100,safeHeight-230),screenHeight=Math.min(safeHeight*.28,clamp(usable*.195,54,110));
+ return clamp(screenHeight/(94*safeCamera),.65,2.4)
 }
 
 /* Independently drawn ritual objects: keep the physical input, rotation, and
@@ -5239,7 +5241,7 @@ function paintedResidentCell(i){return {x:(i%3)*56,y:Math.floor(i/3)*84,w:56,h:8
 function drawPaintedResident(n,sc,moving,dir){
  const i=paintedResidentIndex(n?.n?.[0]);if(i<0)return false;
  const im=productionVisual('paintedResidents');if(!im)return false;
- const q=paintedResidentCell(i),height=94*sc,width=height*2/3;
+ const q=paintedResidentCell(i);if(im.naturalWidth<q.x+q.w||im.naturalHeight<q.y+q.h)return false;const height=94*sc,width=height*2/3;
  ctx.save();ellipse(n.x,n.y+2,width*.31,Math.max(3,4.2*sc),'#352c2438');
  if(moving&&(dir==='left'||dir==='right'))n.paintedFacing=dir;
  ctx.translate(n.x,n.y);ctx.scale((n.paintedFacing||dir)==='left'?-1:1,1);
@@ -5255,7 +5257,7 @@ function paintedDialoguePortrait(name){
  const i=paintedResidentIndex(name);if(i<0)return null;
  if(paintedDialogueThumbs.has(i))return paintedDialogueThumbs.get(i);
  const im=productionVisual('paintedResidents');if(!im)return null;
- const q=paintedResidentCell(i),thumb=document.createElement('canvas');thumb.width=56;thumb.height=48;
+ const q=paintedResidentCell(i);if(im.naturalWidth<q.x+q.w||im.naturalHeight<q.y+q.h)return null;const thumb=document.createElement('canvas');thumb.width=56;thumb.height=48;
  const art=thumb.getContext('2d');art.drawImage(im,q.x,q.y,q.w,48,0,0,56,48);
  const url=thumb.toDataURL('image/png');paintedDialogueThumbs.set(i,url);return url
 }
