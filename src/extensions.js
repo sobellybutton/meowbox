@@ -1837,8 +1837,8 @@ $('travel').onclick=travel;$('dockTravel').onclick=travel;
 /* Fit the playable stage between the HUD and dock, including the lowest controls. */
 function mobileRoomCamera(s,ox,oy){
  if(activity==='woodenThree'){
- const landscape=W>=H,top=landscape?100:142,bottom=H-(landscape?140:165),z=Math.max(.08,Math.min((W-20)/370,Math.max(80,bottom-top)/390));
- return {s:z,ox:W/2-400*z,oy:(top+bottom)/2-465*z}
+ const landscape=W>=H,short=landscape&&H<500,top=short?70:landscape?100:142,bottom=H-(short?78:landscape?140:165),span=short?300:390,z=Math.max(.08,Math.min((W-(short?320:20))/370,Math.max(80,bottom-top)/span));
+ return {s:z,ox:(short?(W-150)/2:W/2)-400*z,oy:(top+bottom)/2-(short?490:465)*z}
  }
  const landscape=W>=H,top=room&&!activity?(landscape?95:155):(landscape?90:135),bottom=H-(landscape?100:122);
  const span=activity?(['wonderScene','story','match'].includes(activity)?[185,615,255,695]:['tarot','love'].includes(activity)?[195,605,265,685]:[170,630,265,690]):[110,690,300,750];
@@ -1913,7 +1913,7 @@ syncSigns=function(){
  // Clamping independently made neighbouring doors share the same screen position.
  const blockers=[],placed=[],items=[];
  const rootRect=signRoot.getBoundingClientRect();
- for(const el of document.querySelectorAll('#hud>*,#small button,#dock,#gameControls,#movePad,#moveGuide,#dialogue,#lunarBtn,#lunarRibbon,#hint,#walkHelp,#nextStopShortcut,#back,#ritualActionBar,#destinyAccess')){
+ for(const el of document.querySelectorAll('#hud>*,#small button,#dock,#gameControls,#movePad,#moveGuide,#dialogue,#lunarBtn,#lunarRibbon,#walkHelp,#nextStopShortcut,#back,#ritualActionBar,#destinyAccess')){
   if(el.hidden||!el.getClientRects().length)continue;
   const b=el.getBoundingClientRect(),style=getComputedStyle(el);
   if(style.visibility==='hidden'||style.display==='none'||Number(style.opacity)===0||!b.width||!b.height)continue;
@@ -1927,7 +1927,7 @@ syncSigns=function(){
   const [ax,ay]=scene==='fortune'?(signAnchorsProposal[id]||[x,y-95]):[x,y-65];
   const sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
   const inView=sx>=-30&&sx<=W+30&&sy>=top-125&&sy<=bottom+70;
-  if(!inView){if(!btn.hidden)btn.hidden=true;continue}
+  if(!inView){btn._clearAt=0;btn._signOffset=null;if(!btn.hidden)btn.hidden=true;continue}
   // Measure only when necessary; do not repeatedly unhide a blocked sign.
   if(btn._measureName!==name||!btn._signSize){const hidden=btn.hidden;if(hidden)btn.hidden=false;btn._signSize=[Math.max(44,btn.offsetWidth),Math.max(44,btn.offsetHeight)];btn._measureName=name;if(hidden)btn.hidden=true}
   items.push({btn,sx,sy,w:btn._signSize[0],h:btn._signSize[1]});
@@ -1937,8 +1937,12 @@ syncSigns=function(){
  // Preserve authored map order so walking past a house cannot reshuffle the other labels.
  for(const item of items){
   const {btn,sx,sy,w,h}=item;
-  const choice=meowPlaceText(sx,sy,w,h,{left:6,right:W-6,top,bottom},[...blockers,...placed],Math.min(62,W*.16));
-  if(!choice){if(!btn.hidden)btn.hidden=true;continue}
+  const avoid=[...blockers,...placed],maxShift=Math.min(62,W*.16);let choice=null;
+  if(btn._signOffset){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
+  if(!choice)choice=meowPlaceText(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,maxShift);
+  if(!choice){btn._clearAt=0;if(!btn.hidden)btn.hidden=true;continue}
+  if(btn.hidden){if(!btn._clearAt)btn._clearAt=now;if(now-btn._clearAt<125){placed.push(choice.rect);continue}}
+  btn._signOffset={x:choice.x-sx,y:choice.y-sy};
   const left=Math.round(choice.x)+'px',topPx=Math.round(choice.y)+'px';
   if(btn.style.left!==left)btn.style.left=left;if(btn.style.top!==topPx)btn.style.top=topPx;if(btn.hidden)btn.hidden=false;placed.push(choice.rect);
  }
@@ -5048,7 +5052,7 @@ function syncThreeAccess(){
  const g=state.threeGame;const styles={left:Math.round(cam.ox+286*cam.scale)+'px',top:Math.round(cam.oy+388*cam.scale)+'px',width:Math.round(228*cam.scale)+'px',height:Math.round(228*cam.scale)+'px'};
  for(const [k,v] of Object.entries(styles))if(threeBoardAccess.style[k]!==v)threeBoardAccess.style[k]=v;
  const title=tr('Tic tac toe board','井字棋棋盘');if(threeBoardAccess.getAttribute('aria-label')!==title)threeBoardAccess.setAttribute('aria-label',title);
- for(let i=0;i<9;i++){const key=threeAccessKeys[i],v=g.board[i],name=tr('Row ','第 ')+(Math.floor(i/3)+1)+tr(', column ',' 行，第 ')+(i%3+1)+tr(v?' occupied':' empty',v?' 列，已占用':' 列，空位');if(key.getAttribute('aria-label')!==name)key.setAttribute('aria-label',name);key.disabled=!!v||!!g.thinking||!!g.result}
+ for(let i=0;i<9;i++){const key=threeAccessKeys[i],v=g.board[i],name=tr('Row ','第 ')+(Math.floor(i/3)+1)+tr(', column ',' 行，第 ')+(i%3+1)+tr(v?' occupied':' empty',v?' 列，已占用':' 列，空位');if(key.getAttribute('aria-label')!==name)key.setAttribute('aria-label',name);const disabled=!!v||!!g.thinking||!!g.result;if(key.disabled!==disabled)key.disabled=disabled}
 }
 const arcadeAccessibleBefore=refreshControls;
 refreshControls=function(){arcadeAccessibleBefore();syncThreeAccess()};
@@ -5579,7 +5583,7 @@ drawActivity=function(){if(W/H>=1.15)paintLandscapeRoom(activePortraitInterior()
 const adaptiveCameraBefore=mobileRoomCamera;
 mobileRoomCamera=function(s,ox,oy){
  const current=adaptiveCameraBefore(s,ox,oy);
- if(W/H<1.15)return current;
+ if(activity==='woodenThree'||W/H<1.15)return current;
  const top=H<500?70:82,bottom=H-(H<500?82:96);
  const span=activity?(['wonderScene','story','match'].includes(activity)?[185,615,255,695]:['tarot','love'].includes(activity)?[195,605,265,685]:[170,630,265,690]):[110,690,300,750];
  const [l,r,u,d]=span,fit=Math.max(.08,Math.min((W-32)/(r-l),Math.max(80,bottom-top)/(d-u)));
@@ -6164,3 +6168,85 @@ const revealShareStyles=document.createElement('style');revealShareStyles.textCo
 #proposal .platform-player{z-index:2!important}
 @media(prefers-reduced-motion:reduce){#proposal .rail-cabin .train-window img{animation:none!important}}
 `;document.head.append(revealShareStyles);
+
+/* Traveller's bag: a compact illustrated inventory, separate from the discovery
+   catalogue and the room. Uses existing item IDs and save keys. */
+let bagCategory='all',bagMode='owned',bagSelected=null,bagQuery='',bagSort='recent';
+let bagFavorites=load('bagFavoritesV1',[]);if(!Array.isArray(bagFavorites))bagFavorites=[];
+const bagCats=[['all','All','全部'],['figures','Figures','手办'],['travel','Travel','旅行'],['fortune','Fortune','祈愿'],['food','Food','美食'],['memory','Memories','回忆']];
+function bagClass(item){
+ const n=item[0];if(boxPrizes.some(v=>v[0]===n)||/plush|figurine|toy/i.test(n))return 'figures';
+ if(/recipe|soup|milk tea|bubble tea|broth/i.test(n))return 'food';
+ if(/arrival|ticket|postcard|passport|travel|stamp/i.test(n))return 'travel';
+ if(/fortune|tarot|reading|blessing|moon|wish|destiny|scroll|lantern/i.test(n))return 'fortune';return 'memory'
+}
+function bagEntries(){
+ const found=new Map();for(const k of keepsakes)found.set(k[0],{item:k.slice(0,2),kind:k[2],owned:false,order:-1});
+ for(const [order,item] of items.entries()){if(!Array.isArray(item)||!item[0])continue;found.set(item[0],{item,kind:found.get(item[0])?.kind||collectionKind(item),owned:true,order})}
+ return [...found.values()]
+}
+function bagFigureIcon(v){
+ const k=v[5]||'cat',c=v[2],rabbit=k==='cloud'||k==='moon',bear=k==='tea',duck=k==='duck';
+ const ears=rabbit?'<ellipse cx="25" cy="18" rx="6" ry="15"/><ellipse cx="39" cy="18" rx="6" ry="15"/>':bear?'<circle cx="17" cy="25" r="8"/><circle cx="47" cy="25" r="8"/>':duck?'':'<path d="M14 32L13 12L29 26M35 26L51 12L50 32"/>';
+ const accessory={berry:'<path d="M26 14Q32 9 38 14L36 24Q32 30 28 24Z" fill="#c87582"/><path d="M27 14L32 10L37 14" fill="none" stroke="#6c8961" stroke-width="2"/>',toast:'<rect x="9" y="20" width="46" height="33" rx="9" fill="none" stroke="#ac794f" stroke-width="4"/>',tea:'<rect x="24" y="41" width="16" height="18" rx="4" fill="#c69464"/><path d="M35 43l4 -8" stroke="#fff1dc" stroke-width="2"/><circle cx="29" cy="54" r="2" fill="#5c4339"/><circle cx="35" cy="54" r="2" fill="#5c4339"/>',cloud:'<path d="M17 54Q11 43 23 43Q29 36 37 43Q50 42 49 54Z" fill="#f5efe1"/>',duck:'<path d="M12 36Q11 12 32 12Q53 12 52 36" fill="none" stroke="#e4bb62" stroke-width="6"/>',fox:'<path d="M48 20l3 5 6 1-4 4 1 6-6-3-5 3 1-6-4-4 6-1z" fill="#f1c1cd"/>',moon:'<path d="M38 41a10 10 0 1 0 6 14a12 12 0 0 1-6-14" fill="#e7bb67"/>',dragon:'<path d="M15 43L3 34L8 54L18 51M49 43L61 34L56 54L46 51" fill="#acb8d7"/><path d="M25 17l4-9 4 9 5-9 3 9" fill="#e5d199"/>'}[k]||'';
+ return '<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="59" rx="22" ry="3" fill="#9b795b33"/><g fill="'+c+'" stroke="#8c6d5d" stroke-width=".8">'+ears+'<ellipse cx="32" cy="48" rx="17" ry="12"/><ellipse cx="32" cy="34" rx="23" ry="18"/></g><ellipse cx="24" cy="33" rx="2.4" ry="3" fill="#504038"/><ellipse cx="40" cy="33" rx="2.4" ry="3" fill="#504038"/><ellipse cx="19" cy="39" rx="4" ry="2" fill="#e1a2a0"/><ellipse cx="45" cy="39" rx="4" ry="2" fill="#e1a2a0"/>'+(duck?'<ellipse cx="32" cy="39" rx="8" ry="4" fill="#d98c48"/>':'<path d="M29 38q3 4 6 0" fill="none" stroke="#805d50" stroke-width="1.5"/>')+accessory+'</svg>'
+}
+function bagArt(v){
+ const prize=boxPrizes.find(p=>p[0]===v.item[0]);if(prize)return bagFigureIcon(prize);
+ const kind=v.kind;
+ if(kind==='recipe')return '<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="8" width="41" height="49" rx="4" fill="#e9c99c" stroke="#9a7956"/><path d="M18 9v47M24 22h22M24 27h18" stroke="#aa8963"/><ellipse cx="34" cy="42" rx="12" ry="5" fill="#b98a5c"/><path d="M22 42q12 19 24 0" fill="#9bb2a0" stroke="#718d7a"/></svg>';
+ if(kind==='ticket')return '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M5 19H59V28Q50 32 59 36V45H5V36Q14 32 5 28Z" fill="#dfc491" stroke="#93724f"/><path d="M17 20v24M23 26h28M23 34h17" stroke="#a18564" stroke-dasharray="3 2"/></svg>';
+ return albumIcon(kind)
+}
+function renderTravellerBag(){
+ activePage='room';page(tr('Traveller’s bag','旅人的背包'),tr('Little treasures from your escape.','把摸鱼路上的小宝贝收好。'),q=>{
+  const wrap=element('section','',q,'travellerBagV2'),all=bagEntries(),owned=all.filter(v=>v.owned),head=element('div','',wrap,'bagHeader');
+  const pic=element('img','',head);pic.src=ART['badge'+(avatar??0)];pic.alt='';
+  const info=element('div','',head);element('strong',playerName||tr('Traveller','旅人'),info);element('small',owned.length+' '+tr('keepsakes','件收藏')+' · '+hideoutBalance()+' '+tr('paws','爪币'),info);
+  const profile=b(head,tr('Profile','资料'),()=>hideoutProfilePage());profile.className='bagProfileButton';
+  const tabs=element('div','',wrap,'bagModes');
+  for(const [key,en,cn] of [['owned','My bag','背包'],['catalog','Collection','图鉴'],['favorites','Favourites','喜欢']]){const btn=b(tabs,tr(en,cn),()=>{bagMode=key;bagSelected=null;draw()});btn.dataset.mode=key}
+  const category=element('div','',wrap,'bagCategories');
+  for(const [key,en,cn] of bagCats){const btn=b(category,tr(en,cn),()=>{bagCategory=key;bagSelected=null;draw()});btn.dataset.category=key}
+  const tools=element('div','',wrap,'bagTools'),search=element('input','',tools);search.type='search';search.placeholder=tr('Find a treasure','找一件宝贝');search.setAttribute('aria-label',search.placeholder);search.value=bagQuery;search.oninput=()=>{bagQuery=search.value;draw()};
+  const sort=element('select','',tools);sort.setAttribute('aria-label',tr('Sort items','排序'));for(const [key,en,cn] of [['recent','Recent','最近'],['name','Name','名称']]){const opt=element('option',tr(en,cn),sort);opt.value=key}sort.value=bagSort;sort.onchange=()=>{bagSort=sort.value;draw()};
+  const body=element('div','',wrap,'bagBody'),grid=element('div','',body,'bagSlots'),detail=element('section','',body,'bagDetail');
+  const foot=element('div','',wrap,'bagFooter');b(foot,tr('My room','我的小窝'),hideoutPage);b(foot,tr('Passport','护照'),passport);b(foot,tr('Stamp rewards','印章奖励'),hideoutClaimPage);
+  function draw(){
+   tabs.querySelectorAll('button').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.mode===bagMode)));
+   category.querySelectorAll('button').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.category===bagCategory)));
+   const query=bagQuery.trim().toLowerCase(),shown=all.filter(v=>(bagMode==='catalog'||v.owned)&&(bagMode!=='favorites'||bagFavorites.includes(v.item[0]))&&(bagCategory==='all'||bagClass(v.item)===bagCategory)&&(!query||v.item.some(n=>String(n).toLowerCase().includes(query))));
+   shown.sort((a,b)=>bagSort==='name'?tr(...a.item).localeCompare(tr(...b.item)):b.order-a.order);
+   if(!shown.some(v=>v.item[0]===bagSelected))bagSelected=shown[0]?.item[0]||null;
+   grid.replaceChildren();
+   for(const v of shown){const button=b(grid,'',()=>{bagSelected=v.item[0];draw()});button.className='bagSlot';button.dataset.owned=String(v.owned);button.setAttribute('aria-pressed',String(bagSelected===v.item[0]));button.setAttribute('aria-label',v.owned?tr(...v.item):tr('Undiscovered item','未发现的物品'));const art=element('span','',button,'bagSlotArt');art.innerHTML=bagArt(v);const prize=boxPrizes.find(p=>p[0]===v.item[0]);element('small',v.owned?tr(...v.item):prize?.[4]==='secret'?tr('Secret','隐藏款'):tr('Not found','未发现'),button);if(bagFavorites.includes(v.item[0]))element('span','★',button,'bagStar')}
+   if(!shown.length)element('p',tr('Nothing in this pocket yet.','这个口袋还空空的。'),grid,'bagEmpty');
+   detail.replaceChildren();const v=shown.find(v=>v.item[0]===bagSelected);detail.hidden=!v;if(!v)return;
+   const art=element('div','',detail,'bagHeroArt');art.innerHTML=bagArt(v);if(!v.owned)art.classList.add('bagUnknown');
+   const prize=boxPrizes.find(p=>p[0]===v.item[0]),secret=!v.owned&&prize?.[4]==='secret';
+   element('h2',secret?tr('Mystery figure','神秘手办'):tr(...v.item),detail);
+   element('small',v.owned?tr('In your bag','已放入背包'):tr('Still to discover','等待发现'),detail);
+   if(prize)element('small',tr(prize[4]==='secret'?'Secret':prize[4]==='rare'?'Rare':prize[4]==='uncommon'?'Uncommon':'Common',prize[4]==='secret'?'隐藏款':prize[4]==='rare'?'稀有款':prize[4]==='uncommon'?'特别款':'普通款'),detail,'bagRarity');
+   element('p',tr(...(v.owned?keepsakeStory(v.item):keepsakeClue(v.item))),detail);
+   if(v.owned){const fav=b(detail,bagFavorites.includes(v.item[0])?tr('★ Remove favourite','★ 取消喜欢'):tr('☆ Keep as favourite','☆ 加入喜欢'),()=>{bagFavorites=bagFavorites.includes(v.item[0])?bagFavorites.filter(x=>x!==v.item[0]):[...bagFavorites,v.item[0]];save('bagFavoritesV1',bagFavorites);draw()});fav.setAttribute('aria-pressed',String(bagFavorites.includes(v.item[0])))}
+   if(prize)element('small',boxPrizes.filter(p=>owned.some(o=>o.item[0]===p[0])).length+'/'+boxPrizes.length+' '+tr('figures collected','款手办已收集'),detail)
+  }draw();
+  const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();renderTravellerBag()}
+ })
+}
+myRoom=renderTravellerBag;$('dockRoom').onclick=myRoom;$('profileHud').onclick=myRoom;
+const bagV2CSS=document.createElement('style');bagV2CSS.textContent=`
+#content .travellerBagV2{max-width:880px;margin:0 auto;color:#594a3b;font-family:system-ui,"PingFang SC",sans-serif}
+.travellerBagV2 .bagHeader{display:flex;align-items:center;gap:10px;background:linear-gradient(130deg,#f2dfb9,#e7d1a9);border:1px solid #b6986d;border-radius:13px 13px 5px 5px;padding:12px;box-shadow:inset 0 0 0 3px #f9ecd3}
+.bagHeader img{width:54px;height:54px;object-fit:contain;border:1px solid #b79b78;border-radius:50%;background:#f7e8cf}.bagHeader div{flex:1;min-width:0}.bagHeader strong,.bagHeader small{display:block;overflow-wrap:anywhere}.bagHeader small{font-size:12px;color:#79654d}
+.travellerBagV2 button{min-height:44px;white-space:normal!important;box-sizing:border-box;margin:0!important;min-width:0!important}
+.bagModes,.bagCategories,.bagTools,.bagFooter{display:flex;gap:5px;margin:9px 0}.bagModes button,.bagFooter button{flex:1;font-size:13px}.bagCategories{overflow-x:auto;padding:2px 0 5px}.bagCategories button{flex:0 0 auto;font-size:12px;padding:5px 10px!important}
+.travellerBagV2 button[aria-pressed=true]{background:#536d58!important;color:#fff1d6!important;border-color:#536d58!important}
+.bagTools input,.bagTools select{min-width:0;font:16px system-ui;padding:8px;border:1px solid #bea17b;border-radius:5px;background:#fff7e5;color:#574d40;min-height:44px}.bagTools input{flex:1;width:0}.bagTools select{width:90px;font-size:13px}
+.bagBody{display:grid;gap:10px;align-items:start}.bagSlots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:8px;background:repeating-linear-gradient(0deg,#c8ad8655 0 1px,transparent 1px 5px),#d5bc96;border:2px solid #a3855f;border-radius:8px;box-shadow:inset 0 2px 8px #785c3730}
+#page .bagSlot{display:flex;position:relative;align-items:center;flex-direction:column;justify-content:center;gap:2px;padding:5px!important;min-height:89px;background:#f9edd5;border:1px solid #baa07b;border-radius:7px;color:#5a4b3d;font-size:12px;line-height:1.15;text-align:center;box-shadow:none}
+.bagSlotArt{width:46px;height:46px;display:block}.bagSlotArt svg,.bagHeroArt svg{width:100%;height:100%;display:block}.bagSlot small{font-size:10px;overflow-wrap:anywhere}.bagSlot[data-owned=false] .bagSlotArt,.bagUnknown{filter:grayscale(1) brightness(.52);opacity:.45}.bagStar{position:absolute;top:3px;right:5px;color:#c89c49}
+.bagDetail{background:#f7e8cd;border:1px solid #baa078;border-radius:6px;padding:12px;text-align:center;box-shadow:0 3px 8px #68563d20}.bagDetail[hidden]{display:none}.bagHeroArt{width:95px;height:95px;margin:auto}.bagDetail h2{font:700 19px Georgia,"Songti SC",serif;margin:5px 0}.bagDetail small{display:block;color:#77644d;font-size:12px}.bagDetail p{font-size:13px;line-height:1.5;margin:8px 0}.bagDetail button{width:100%;font-size:13px}.bagRarity{color:#8a6648!important}.bagEmpty{grid-column:1/-1;text-align:center;font-size:13px;padding:12px}
+@media(min-width:720px){.bagBody{grid-template-columns:minmax(0,1.75fr) minmax(0,1fr)}.bagSlots{grid-template-columns:repeat(4,minmax(0,1fr))}.bagDetail{position:sticky;top:8px}}
+@media(max-width:719px){.bagBody{grid-template-columns:1fr}.bagDetail{grid-row:1;display:grid;grid-template-columns:74px 1fr;gap:3px 8px;text-align:left}.bagHeroArt{width:70px;height:70px;grid-row:1/span 4}.bagDetail h2{font-size:17px}.bagDetail p,.bagDetail button,.bagDetail>small:last-child{grid-column:1/-1}.bagDetail p{margin:3px 0}.bagDetail button{min-height:44px}}
+`;document.head.append(bagV2CSS);
