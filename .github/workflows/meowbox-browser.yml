@@ -232,6 +232,16 @@ jobs:
                 for(const [label,mode] of [['Soul Cat','soul'],['Four personality preferences','type'],['Nine inner motives','motive']]){
                   await page.locator('#choices').getByRole('button',{name:label,exact:true}).click();
                   await page.waitForFunction(mode=>scene==='wonder'&&room==='quiz'&&activity==='wonderScene'&&wonderSceneMode===mode,mode,{timeout:3000});
+                  if(options.hasTouch&&options.viewport.width<=540){
+                    await page.evaluate(()=>{wonderScenePhase='question';wonderSceneAt=t;syncWonderSheet()});
+                    const question=page.locator('#wonderQuestionSheet');
+                    await question.waitFor({state:'visible',timeout:4000});
+                    await question.locator('button').first().tap();
+                    await page.waitForFunction(()=>wonderSceneAnswers.length===1&&wonderScenePhase==='question',{},{timeout:3000});
+                    await question.getByRole('button',{name:'Previous',exact:true}).tap();
+                    await page.waitForFunction(()=>wonderSceneAnswers.length===0,{},{timeout:3000});
+                    await page.screenshot({path:'test-results/'+name+'-'+mode+'-readable-questions.png'});
+                  }
                   await page.evaluate(()=>{closeTalk();updateHUD()});
                   await page.locator('#back').click();
                   await page.waitForFunction(()=>room==='quiz'&&!activity,{},{timeout:3000});
@@ -430,6 +440,14 @@ jobs:
                 await page.locator('#nextStopShortcut').click();
                 await page.waitForFunction(()=>$('page').style.display==='block',{},{timeout:3000});
                 await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                await page.evaluate(()=>{scene='home';room='park';activity=null;state={};closeTalk();start('pet')});
+                await page.waitForFunction(()=>activity==='pet'&&Number.isInteger(state.petKind),{},{timeout:4000});
+                const parkVisit=await page.evaluate(()=>({kind:state.petKind,visit:parkBonds[parkCats[state.petKind].name[0]].visits,trust:state.pet}));
+                await tapWorld(400,455);
+                await page.waitForFunction(v=>state.pet>v,parkVisit.trust,{timeout:3000});
+                await page.screenshot({path:'test-results/'+name+'-named-park-cat.png'});
+                await page.locator('#back').click();
+                await page.waitForFunction(()=>room==='park'&&!activity,{},{timeout:3000});
                 await page.evaluate(()=>{room='park';activity=null;state={};updateHUD();cameo9('home')});
                 await page.locator('#choices').getByRole('button',{name:'Work',exact:true}).click();
                 await page.locator('#choices').getByRole('button',{name:'Keep chatting',exact:true}).click();
