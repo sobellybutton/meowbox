@@ -5110,3 +5110,26 @@ const speechStyle=document.createElement('style');speechStyle.textContent=`
 #dialogue.characterSpeech #line{font-size:13px;line-height:1.4;overflow-wrap:anywhere}
 #dialogue.characterSpeech #choices button{font-size:12px;min-height:44px;white-space:normal}
 `;document.head.append(speechStyle);
+
+/* Indoor station signs use the same visual vocabulary as the outdoor plaques.
+   Keep the established label measurement and accessible hit target geometry. */
+const roomPlaqueLabelBefore=label;
+label=function(name,x,y,fn){
+ if(!room||activity)return roomPlaqueLabelBefore(name,x,y,fn);
+ const scale=Math.max(.08,cam.scale),size=Math.min(30,Math.max(18,14/scale)),limit=room==='temple'||roomActions[room]?.length>=3?165:235;
+ ctx.save();
+ try{
+  ctx.font='600 '+size+'px Georgia, "Songti SC", serif';
+  const sep=name.includes(' ')?' ':'',tokens=sep?name.split(/ +/):Array.from(name);
+  let rows=[],row='';
+  for(const token of tokens){const candidate=row?row+sep+token:token;if(row&&ctx.measureText(candidate).width>limit-20){rows.push(row);row=token}else row=candidate}
+  if(row)rows.push(row);if(rows.length>2)rows=[rows[0],rows.slice(1).join(sep)];
+  const w=Math.min(limit,Math.max(75,...rows.map(v=>ctx.measureText(v).width+20))),h=Math.max(32,rows.length*size*1.14+12);
+  const left=x-w/2,top=y-h/2;
+  ctx.shadowColor='#33271f40';ctx.shadowBlur=3;round(left,top,w,h,3,'#514e3fea','#d0b580');ctx.shadowBlur=0;
+  round(left+3,top+3,w-6,h-6,2,null,'#d0b58055');
+  ctx.fillStyle='#fff1d4';ctx.textAlign='center';ctx.textBaseline='middle';
+  rows.forEach((v,i)=>{ctx.font='600 '+size+'px Georgia, "Songti SC", serif';const fs=Math.min(size,size*(w-12)/Math.max(1,ctx.measureText(v).width));ctx.font='600 '+fs+'px Georgia, "Songti SC", serif';ctx.fillText(v,x,y+(i-(rows.length-1)/2)*size*1.1)});
+  const hitW=Math.min(limit+12,Math.max(w,44/scale)),hitH=Math.max(h,44/scale);target(x-hitW/2,y-hitH/2,hitW,hitH,fn)
+ }finally{ctx.restore()}
+};
