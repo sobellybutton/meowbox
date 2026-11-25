@@ -7638,3 +7638,29 @@ journalStyle.textContent=
 '.journalWheelStand{background:linear-gradient(90deg,#8e6a4b,#b59468 16%,#c4a87d 50%,#b59468 84%,#8e6a4b);border:2px solid #76573e;border-radius:8px;padding:9px;margin:12px auto;max-width:390px;box-shadow:inset 0 0 0 3px #d6b88b,0 4px 8px #59412c30}.journalWheelPlaque{font:600 17px/1.4 var(--town-title);text-align:center;color:#fff0ce;background:#536b56;border:1px solid #e5c896;border-radius:3px;padding:5px 8px;margin:3px 5px 8px}.journalWheelStand .dailyWheelStage{margin:0 auto!important;max-width:100%}'+
 '@media(max-width:360px){.journalProfileBook,.journalShelfPage,.journalDailyTasks,.journalCheckin,.journalBookshelf{padding:10px}.journalIdentity>img{width:72px;height:91px}.journalQuickStats strong{font-size:18px}}';
 document.head.append(journalStyle);
+
+
+/* Festival-wheel face: exact slice indices and existing free-spin rotation
+   preserved. Each district stamp is its own ink illustration, not an emoji. */
+dailyWheelArt=function(){
+ const colors=['#b58268','#7c9783','#d2b17a','#a88387','#78938e','#c2a46e','#a46b57','#8f9c76'];let slices='';
+ for(let i=0;i<dailyWheelPrizes.length;i++){
+ const a=(i*45-112.5)*Math.PI/180,b=a+Math.PI/4,m=a+Math.PI/8,x1=150+125*Math.cos(a),y1=150+125*Math.sin(a),x2=150+125*Math.cos(b),y2=150+125*Math.sin(b),tx=150+91*Math.cos(m),ty=150+91*Math.sin(m);
+ slices+='<path d="M150 150L'+x1+' '+y1+' A125 125 0 0 1 '+x2+' '+y2+'Z" fill="'+colors[i]+'" stroke="#e8d5ad" stroke-width="2"/><g transform="translate('+tx+' '+ty+') rotate('+i*45+')"><rect x="-19" y="-13" width="38" height="28" rx="3" fill="#f5e5c3" stroke="#9c7b51" stroke-width=".9"/><text x="0" y="2" fill="#554536" font-family="Georgia,serif" font-size="17" font-weight="bold" text-anchor="middle" dominant-baseline="middle">'+dailyWheelPrizes[i]+'</text></g>'
+ }
+ let rivets='';for(let i=0;i<24;i++){const a=i*Math.PI/12,x=150+137*Math.cos(a),y=150+137*Math.sin(a);rivets+='<circle cx="'+x+'" cy="'+y+'" r="2.5" fill="#e5c68e" stroke="#936c48" stroke-width=".7"/>'}
+ return '<svg viewBox="0 0 300 300" aria-hidden="true"><circle cx="150" cy="150" r="145" fill="#77543a" stroke="#e3c18a" stroke-width="3"/><circle cx="150" cy="150" r="132" fill="#ae8a5c" stroke="#e3c18a" stroke-width="2"/>'+slices+rivets+'<circle cx="150" cy="150" r="34" fill="#d6b47c" stroke="#795e43" stroke-width="4"/><circle cx="150" cy="150" r="27" fill="#f1dcb1" stroke="#a98555"/><ellipse cx="150" cy="156" rx="13" ry="10" fill="#9a7953"/><ellipse cx="134" cy="140" rx="4" ry="5" fill="#9a7953"/><ellipse cx="145" cy="134" rx="4" ry="5" fill="#9a7953"/><ellipse cx="156" cy="134" rx="4" ry="5" fill="#9a7953"/><ellipse cx="167" cy="140" rx="4" ry="5" fill="#9a7953"/></svg>'
+};
+const stampTownArt={
+ fortune:['#a26150','<path d="M12 34l20-16 20 16M17 34h30M20 35v15m24-15v15M13 50h38M27 50V37h10v13" fill="none" stroke="currentColor" stroke-width="2.1"/><path d="M11 17q11-10 21-4t21 4" fill="none" stroke="currentColor" stroke-width="1.4"/>'],
+ home:['#567f79','<path d="M13 43q5-5 10 0t10 0 10 0 10 0M12 50q5-5 10 0t10 0 10 0 10 0M31 17v22M29 20l-12 18h12M34 23l10 15H34" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19 39h26l-4 5H23z" fill="currentColor"/>'],
+ island:['#a27b46','<path d="M16 30h28v6q0 13-14 13T16 36zM44 31h4q8 0 4 8-3 4-9 3M12 52h37M23 24q-5-5 0-10M34 24q-5-5 0-10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'],
+ wonder:['#796982','<path d="M16 50l5-23h22l5 23M21 27l11-13 11 13M13 50h38M28 50V37h8v13" fill="none" stroke="currentColor" stroke-width="2"/><path d="M48 12l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="currentColor"/>']
+};
+hideoutStampArt=function(k,got){
+ const [ink,art]=stampTownArt[k]||stampTownArt.fortune;
+ return '<svg viewBox="0 0 64 64" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" style="color:'+ink+';opacity:'+(got?1:.45)+'"><g transform="rotate(-7 32 32)"><circle cx="32" cy="32" r="29" fill="#f2e5ca" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 1"/><circle cx="32" cy="32" r="25.5" fill="none" stroke="currentColor" stroke-width="1"/>'+art+'<path d="M20 57h24" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/></g></svg>'
+};
+const journalWheelDetailStyle=document.createElement('style');
+journalWheelDetailStyle.textContent='.journalWheelStand .dailyWheelPointer{filter:drop-shadow(0 2px 1px #523b2c55)}#content .dailyWheelResult{position:relative;background:var(--town-grain),#f6e8c9;border:1px dashed #b39a74;padding:12px;color:#536b56;line-height:1.5;font-family:var(--town-title)}#content .dailyWheelSpin{background:#536b56!important;color:#fff1d5!important;border:1px solid #3d5848!important;border-radius:4px!important;min-height:44px}#content .dailyWheelSpin:disabled{opacity:.75}#content .hideoutStampGrid button{background:#f4e7cb;border:1px solid #bca27a;border-radius:4px;min-height:44px}';
+document.head.append(journalWheelDetailStyle);
