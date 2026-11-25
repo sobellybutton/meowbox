@@ -275,6 +275,23 @@ jobs:
                 if(!await page.evaluate(()=>readingJournal.some(v=>v.topic===1&&v.cards.length===3)))throw Error('Tarot journal missing');
                 if(!await page.evaluate(()=>items.some(x=>x[0]==='Three-card reading')&&readingPrompts.length===4&&readingPrompts.every(t=>t.length===3)))throw Error('Topic-specific reading collection or prompts missing');
                 await page.screenshot({path:'test-results/'+name+'-tarot-spread.png'});
+                // Test actual dialogue choice buttons; set up a nearby resident without walking.
+                await page.evaluate(()=>{room=null;activity=null;state={};stopRoute();closeTalk();npcTalk({n:['Mochi','麻薯'],kind:2,x:p.x+30,y:p.y})});
+                for(const topic of ['Offer an imaginary snack','Scratch behind the ears','Sit quietly together']){
+                  await page.locator('#choices').getByRole('button',{name:topic,exact:true}).click();
+                  if(topic!=='Sit quietly together')await page.locator('#choices').getByRole('button',{name:'Chat a little more',exact:true}).click();
+                }
+                if(!await page.evaluate(()=>residentRecord('mochi').topics.length===3&&items.filter(x=>x[0]===residentProfiles.mochi.reward[0]).length===1))throw Error('Resident choices or unique reward missing');
+                await page.locator('#choices').getByRole('button',{name:'Chat a little more',exact:true}).click();
+                await page.locator('#choices').getByRole('button',{name:'Offer an imaginary snack',exact:true}).click();
+                if(!await page.evaluate(()=>residentRecord('mochi').topics.length===3&&items.filter(x=>x[0]===residentProfiles.mochi.reward[0]).length===1))throw Error('Repeat topic granted duplicate progress');
+                await page.locator('#choices').getByRole('button',{name:'See you around',exact:true}).click();
+                await page.locator('#dockPassport').click();
+                await page.getByText('Trusted friend · 3/3 stories shared',{exact:true}).waitFor({timeout:5000});
+                await page.screenshot({path:'test-results/'+name+'-resident-friendship.png'});
+                await page.reload({waitUntil:'domcontentloaded'});
+                await page.locator('#proposal .shrine-enter').waitFor({timeout:45000});
+                if(!await page.evaluate(()=>residentRecord('mochi').topics.length===3&&items.filter(x=>x[0]===residentProfiles.mochi.reward[0]).length===1))throw Error('Resident progress did not survive reload');
                 if(errors.length)throw Error(errors.join('; '));
                 console.log(name+': PASS');
               }catch(e){failed=true;console.error(name+': FAIL '+e.message+' | page errors: '+errors.join('; '));console.error('Visible page: '+(await page.locator('body').innerText().catch(()=>'' )).slice(0,500));await page.screenshot({path:'test-results/'+name+'-failure.png'}).catch(()=>{});}
