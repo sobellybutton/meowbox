@@ -36,7 +36,7 @@ const proDrawActivity=drawActivity;
 drawActivity=function(){proDrawActivity();if(activity==='wishes'&&state.wish){ctx.save();let elapsed=Math.max(0,t-(state.lanternAt??t));if(state.lanternAt===undefined)state.lanternAt=t;let rise=Math.min(1,elapsed/1.5);ctx.translate(400+Math.sin(t*1.7)*9,445-115*rise);ctx.rotate(Math.sin(t*1.7)*.07);glow(0,0,64,1);line(0,-46,0,-29,'#b29b69',2);round(-25,-28,50,57,13,'#edab5b','#9e5c38');for(let x of [-14,0,14])line(x,-22,x,23,'#bf783e',1);round(-15,-32,30,7,3,'#634b38');round(-15,27,30,6,3,'#634b38');ctx.restore()}};
 
 let valleyRevealAt=-1;
-function beginValleyReveal(){valleyRevealAt=performance.now();p.x=p.tx=500;p.y=p.ty=Math.max(minY(),maxY()-24);p.facing='up';cam.x=p.x;cam.y=p.y;stopRoute();let dock=$('dock');dock.style.visibility='hidden';$('hud').style.visibility='hidden';$('small').style.visibility='hidden';$('hint').style.visibility='hidden';setTimeout(()=>{if(valleyRevealAt<0)return;p.ty=Math.max(minY(),p.y-65)},1600);setTimeout(()=>{valleyRevealAt=-1;dock.style.visibility='';$('hud').style.visibility='';$('small').style.visibility='';$('hint').style.visibility=''},2900)}
+function beginValleyReveal(){valleyRevealAt=performance.now();p.x=p.tx=500;p.y=p.ty=Math.max(minY(),maxY()-24);p.facing='up';cam.x=p.x;cam.y=p.y;stopRoute();let dock=$('dock');dock.style.visibility='hidden';$('hud').style.visibility='hidden';$('small').style.visibility='hidden';$('hint').style.visibility='hidden';setTimeout(()=>{if(valleyRevealAt<0)return;p.ty=Math.max(minY(),p.y-65)},1600);setTimeout(()=>{valleyRevealAt=-1;dock.style.visibility='';$('hud').style.visibility='';$('small').style.visibility='';$('hint').style.visibility='';syncEntranceControls();requestAnimationFrame(()=>syncSigns())},2900)}
 const oldSyncCinematic=syncSigns;syncSigns=function(){if(valleyRevealAt>=0){signRoot.hidden=true;return}oldSyncCinematic()};
 const suits78=[['Wands','权杖','island'],['Cups','圣杯','home'],['Swords','宝剑','fortune'],['Pentacles','星币','wonder']];
 const ranks78=[['Ace','王牌'],['Two','二'],['Three','三'],['Four','四'],['Five','五'],['Six','六'],['Seven','七'],['Eight','八'],['Nine','九'],['Ten','十'],['Page','侍从'],['Knight','骑士'],['Queen','王后'],['King','国王']];
@@ -1876,7 +1876,7 @@ accessibleSigns.textContent=`
 `;document.head.append(accessibleSigns);
 /* Native click for mouse, touch and keyboard. The canvas fallback remains available. */
 function directSignClick(id,x,y){
- if(room||transitioning||!proposal.hidden||$('page').style.display==='block')return;
+ if(room||transitioning||!proposal.hidden||valleyRevealAt>=0||$('page').style.display==='block')return;
  walkDoor(id,x,y);
 }
 let lastDoorLayoutAt=-Infinity,lastDoorLayoutLanguage=null;
@@ -1958,8 +1958,8 @@ const residentProfiles={
  ]},
  wang:{name:['Wang Laoban','王老板'],reward:['Wang’s official rest permit','王老板的摸鱼许可证'],greeting:['I am conducting an important experiment in doing nothing.','我正在进行一项重要实验，研究如何什么都不做。'],returning:['My favourite colleague! Our unofficial rest committee is now in session.','我的摸鱼搭子来了！非正式休息委员会现在开会。'],topics:[
   {label:['Complain about meetings','吐槽开会'],reply:['I propose an agenda with one item: cancel the agenda. Motion carried.','我提议今天只有一项议程：取消议程。全票通过。']},
-  {label:['Ask for a break idea','问问怎么休息'],reply:['Try the fishing pond. Even when you catch nothing, you have successfully avoided work.','去摸鱼池试试。就算一条鱼都没钓到，也成功摸鱼了。']},
-  {label:['Ask about his dream job','问问他的理想职业'],reply:['Professional bench inspector. Excellent work-life balance, although the benches keep falling asleep on duty.','专业长椅体验员。工作生活很平衡，就是长椅上容易睡着。']}
+  {label:['Ask for a break idea','问问怎么休息'],reply:['Try Worry-Free Pier. Give your troubles a one-way ticket down the river.','去忘忧码头逛逛，给烦恼买张单程漂流票。']},
+  {label:['Ask about his dream job','问问他的理想职业'],reply:['Professional tea taster. The only meeting I accept comes with a teapot.','专业试茶员。我唯一接受的会议，必须自带茶壶。']}
  ]},
  mochi:{name:['Mochi','麻薯'],reward:['Mochi’s trusted human badge','麻薯认证铲屎官徽章'],greeting:['Mrrp. I see you have two hands. Excellent.','喵。我看见你有两只手。不错。'],returning:['Mrrp! You came back. I was absolutely not waiting.','喵！你回来了。我才没有特意等你。'],topics:[
   {label:['Offer an imaginary snack','请它吃虚拟小零食'],reply:['Sniff. Acceptable. My compliments to the imaginary chef.','闻闻。勉强合格。替我夸夸那位不存在的厨师。']},
@@ -5089,7 +5089,7 @@ boxAward=function(){
 /* The entrance sequence owns the screen until the traveller is admitted.
    Never allow background HUD/dock actions to open a page over the ticket. */
 function syncEntranceControls(){
- const blocked=avatar===null||!proposal.hidden||!$('arrival').hidden;
+ const blocked=avatar===null||!proposal.hidden||!$('arrival').hidden||valleyRevealAt>=0;
  for(const id of ['hud','dock']){const el=$(id);if(el)el.inert=blocked}
  $('game').dataset.entranceControlsBlocked=String(blocked);
 }
