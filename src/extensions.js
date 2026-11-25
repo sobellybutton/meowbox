@@ -5064,8 +5064,10 @@ syncEntranceControls();
 function characterScreenBounds(actor,player=false){
  const scale=Math.max(.08,cam.scale),x=cam.ox+actor.x*scale,y=cam.oy+actor.y*scale;
  const isCat=!player&&actor.kind===2;
- const h=isCat?Math.max(26,45*scale):Math.max(player?68:56,Math.min(120,94*scale*1.75));
- const w=isCat?Math.max(24,35*scale):Math.max(38,h*.56);
+ const world=portraitMap(),base=isRoute()?(player?1.65:1.22)*(.72+actor.y/routeHeight*.55):world?Math.max(.95,.8+actor.y/world.h*.45):1.2;
+ const drawnScale=travellerOutdoorScale(base,scale,W,H,player);
+ const h=isCat?Math.max(26,45*scale):Math.max(player?68:56,94*scale*drawnScale);
+ const w=isCat?Math.max(24,35*scale):Math.max(38,h*.70);
  return {left:x-w/2-6,right:x+w/2+6,top:y-h-6,bottom:y+8}
 }
 const housePlaqueNames={temple:['Fortune Temple','解忧寺'],tea:['Gossip Tea House','吃瓜茶馆'],office:['Office Escape','冤种办公室'],park:['Daydream Park','白日梦公园'],kitchen:['Grandma’s Kitchen','外婆的小厨房'],arcade:['Retro Arcade','童年游戏厅'],mystery:['Souvenir Shop','手信小铺']};
@@ -5082,9 +5084,14 @@ function chooseSpeechPosition(w,h,width,height,speaker,player,blockers=[]){
  for(const v of candidates){const left=Math.max(8,Math.min(width-w-8,v.left)),top=v.top,rect={left,top,right:left+w,bottom:top+h};
  if(w>width-16||top<10||rect.bottom>height-74||[speaker,player,...blockers].some(b=>b&&speechOverlap(rect,b)))continue;
  const side=rect.bottom<=speaker.top?'bottom':rect.top>=speaker.bottom?'top':rect.left>=speaker.right?'left':'right';
-  const anchor=side==='top'||side==='bottom'?Math.max(20,Math.min(w-20,center-left)):Math.max(20,Math.min(h-20,(speaker.top+speaker.bottom)/2-top));
+  const span=side==='top'||side==='bottom'?w:h,edge=Math.min(20,span/2);
+   const anchor=Math.max(edge,Math.min(span-edge,side==='top'||side==='bottom'?center-left:(speaker.top+speaker.bottom)/2-top));
   const tail=side==='top'?{left:left+anchor-10,right:left+anchor+10,top:top-12,bottom:top}:side==='bottom'?{left:left+anchor-10,right:left+anchor+10,top:rect.bottom,bottom:rect.bottom+12}:side==='left'?{left:left-12,right:left,top:top+anchor-10,bottom:top+anchor+10}:{left:rect.right,right:rect.right+12,top:top+anchor-10,bottom:top+anchor+10};
   if(tail.left<0||tail.right>width||tail.top<0||tail.bottom>height||[player,...blockers].some(b=>b&&speechOverlap(tail,b)))continue;
+   // The pointer should actually meet the speaker, not another patch of scenery.
+   const tailPoint=side==='top'||side==='bottom'?left+anchor:top+anchor;
+   const speakerMin=side==='top'||side==='bottom'?speaker.left:speaker.top,speakerMax=side==='top'||side==='bottom'?speaker.right:speaker.bottom;
+   if(tailPoint<speakerMin-8||tailPoint>speakerMax+8)continue;
   return {left,top,tailX:anchor,above:side==='bottom',side}}
  return null
 }
@@ -5190,8 +5197,9 @@ const paintedResidentNames=[
  ['Grandma','外婆']
 ];
 function paintedResidentIndex(name){
- const value=String(name||'').trim().toLowerCase();
- return paintedResidentNames.findIndex(pair=>pair.some(v=>v.toLowerCase()===value))
+ const value=String(name||'').normalize('NFKC').trim().toLowerCase();
+ const aliases={'luna':2,'月见':2,'astrologer':1,'命理师':1};
+ return Object.hasOwn(aliases,value)?aliases[value]:paintedResidentNames.findIndex(pair=>pair.some(v=>v.toLowerCase()===value))
 }
 function paintedResidentCell(i){return {x:(i%3)*56,y:Math.floor(i/3)*84,w:56,h:84}}
 function drawPaintedResident(n,sc,moving,dir){
@@ -5200,25 +5208,26 @@ function drawPaintedResident(n,sc,moving,dir){
  const q=paintedResidentCell(i),height=94*sc,width=height*2/3;
  ctx.save();ellipse(n.x,n.y+2,width*.31,Math.max(3,4.2*sc),'#352c2438');
  ctx.translate(n.x,n.y);ctx.scale(dir==='left'?-1:1,1);
- const bob=moving?-Math.abs(Math.sin(t*9+n.x*.01))*1.8*sc:0;
+ const bob=moving&&!residentReducedMotion.matches?-Math.abs(Math.sin(t*9+n.x*.01))*1.8*sc:0;
  ctx.drawImage(im,q.x,q.y,q.w,q.h,-width/2,-height+bob,width,height);
  ctx.restore();return true
 }
+const residentReducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 const paintedDialogueThumbs=new Map();
 function paintedDialoguePortrait(name){
  const i=paintedResidentIndex(name);if(i<0)return null;
  if(paintedDialogueThumbs.has(i))return paintedDialogueThumbs.get(i);
  const im=productionVisual('paintedResidents');if(!im)return null;
- const q=paintedResidentCell(i),thumb=document.createElement('canvas');thumb.width=56;thumb.height=36;
- const art=thumb.getContext('2d');art.drawImage(im,q.x,q.y,q.w,36,0,0,56,36);
+ const q=paintedResidentCell(i),thumb=document.createElement('canvas');thumb.width=56;thumb.height=48;
+ const art=thumb.getContext('2d');art.drawImage(im,q.x,q.y,q.w,48,0,0,56,48);
  const url=thumb.toDataURL('image/png');paintedDialogueThumbs.set(i,url);return url
 }
 const paintedResidentSayBefore=say;
 say=function(...args){
  const result=paintedResidentSayBefore(...args),name=args[0],portrait=$('talkPortrait'),i=paintedResidentIndex(name);
  if(i>=0&&portrait){
-  const apply=()=>{if(!talkOpen||$('speaker').textContent!==String(name))return;const url=paintedDialoguePortrait(name);if(url){portrait.src=url;portrait.hidden=false;portrait.classList.add('paintedResidentPortrait')}};
-  portrait.classList.remove('paintedResidentPortrait');apply();
+  const apply=()=>{if(!talkOpen||$('speaker').textContent!==String(name))return;const url=paintedDialoguePortrait(name);if(url){portrait.src=url;portrait.hidden=false;portrait.classList.add('paintedResidentPortrait');requestAnimationFrame(syncCharacterSpeech)}};
+  portrait.classList.remove('paintedResidentPortrait');portrait.hidden=true;apply();
   const im=productionVisualCache.get('paintedResidents');if(im&&!im.complete)im.addEventListener('load',apply,{once:true})
  }else portrait?.classList.remove('paintedResidentPortrait');
  return result
@@ -5374,6 +5383,31 @@ const visualQualityStyle=document.createElement('style');visualQualityStyle.text
 const visualQualityDailyBefore=lifeDailyIdeas;
 lifeDailyIdeas=function(){
  const ideas=visualQualityDailyBefore(),keys=lifeJournal.daily.day===shrineClock().day?lifeJournal.daily.keys:[];
- ideas.push({title:['A quiet moment','给自己一点清静'],desc:['Finish a temple ritual or save a tarot reading.','完成一次庙宇仪式，或者收藏一份塔罗解读。'],done:keys.some(k=>k.startsWith('ritual:'))});
+ ideas.push({title:['A quiet moment','给自己一点清静'],desc:['Finish a temple ritual or save a tarot reading.','在庙里完成一项仪式，或收藏塔罗解读。'],done:keys.some(k=>k.startsWith('ritual:'))});
  return ideas
+};
+
+
+/* Complete a kitchen recipe or successfully deliver a claw prize to record
+   one optional daily activity. Repeated recipes/prizes never farm life points. */
+const dailyActivityItemBefore=addItem;
+addItem=function(a,b){
+ const cooking=activity==='cook'&&state.done&&state.recipe?.[0]===a;
+ const tea=activity==='bubbleTea'&&state.teaStage==='done'&&String(a).endsWith(' recipe');
+ const result=dailyActivityItemBefore(a,b);
+ if(cooking||tea){lifeEarn('kitchen:'+(cooking?'soup':'tea'),{creativity:2,happiness:1},true);lifeHUDRefresh()}
+ return result
+};
+const dailyClawFinishBefore=clawFinish;
+clawFinish=function(){
+ const active=activity==='claw'&&state.dropping;
+ const result=dailyClawFinishBefore();
+ if(active&&state.clawResult?.i>=0){lifeEarn('round:claw',{skill:2,happiness:1},true);lifeHUDRefresh()}
+ return result
+};
+const dailyMoreIdeasBefore=lifeDailyIdeas;
+lifeDailyIdeas=function(){
+ const ideas=dailyMoreIdeasBefore(),keys=lifeJournal.daily.day===shrineClock().day?lifeJournal.daily.keys:[];
+ return [...ideas.slice(0,1).map(v=>({...v,desc:['Finish a bubble or tic tac toe round, or win a claw prize.','玩完一局泡泡龙或井字棋，或者夹到一只玩偶。'],done:v.done||keys.includes('round:claw')})),...ideas.slice(1),
+ {title:['Something delicious','给自己加个餐'],desc:['Finish a bowl of soup or make and sip bubble tea.','煮好一碗汤，或者摇好奶茶再喝一口。'],done:keys.some(k=>k.startsWith('kitchen:'))}]
 };
