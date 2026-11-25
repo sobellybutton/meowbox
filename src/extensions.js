@@ -3610,13 +3610,23 @@ function hideoutPage(){
  })
 }
 function hideoutProfilePage(draft=null){
- page(tr('My profile','我的旅人资料'),tr('Change your nickname or appearance without losing your memories.','换个昵称或形象，旅途回忆不会消失。'),q=>{
-  let chosen=draft?.avatar??avatar??0;const name=element('input','',q);name.value=draft?.name??playerName??'';name.maxLength=24;name.setAttribute('aria-label',tr('Nickname','昵称'));name.className='hideoutName';
-  const choices=element('div','',q,'hideoutAvatarGrid');
-  for(let i=0;i<4;i++){const btn=b(choices,'',()=>{chosen=i;choices.querySelectorAll('button').forEach((el,j)=>el.setAttribute('aria-pressed',String(j===chosen)))});btn.setAttribute('aria-pressed',String(i===chosen));const im=element('img','',btn);im.src=ART['portrait'+i];im.alt='';element('small',tr(...names[i]),btn)}
-  b(q,tr('Save profile','保存资料'),()=>{const v=name.value.trim();if(!v){name.focus();return}playerName=v;avatar=chosen;save('playerName',v);save('avatar',chosen);updateHUD();hideoutPage();toast(tr('Profile updated. Memories intact.','资料更新，回忆都在。'))});
-  b(q,tr('Back without changing','不修改，返回'),hideoutPage);
-  const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{const draft={name:name.value,avatar:chosen};toggleLang();hideoutProfilePage(draft)}
+ const origin=draft?.origin||lifeProfile;
+ page(tr('My traveller card','我的旅人证'),tr('A different face, the same adventures.','换个模样，回忆照旧。'),q=>{
+  let chosen=draft?.avatar??avatar??0;
+  const card=element('section','',q,'travellerEditBook');
+  const heading=element('div','',card,'travellerEditHeading');element('small',tr('MEOWBOX RAILWAY · RESIDENT CARD','摸鱼铁路 · 旅人证'),heading);
+  const preview=element('img','',heading);preview.alt='';preview.src=ART['portrait'+chosen];
+  const nameLabel=element('label',tr('Your nickname','你的昵称'),card);nameLabel.htmlFor='travellerEditName';
+  const name=element('input','',card);name.id='travellerEditName';name.value=draft?.name??playerName??'';name.maxLength=24;name.autocomplete='off';name.className='hideoutName';
+  element('small',tr('Choose a familiar face. You can change it anytime, for free.','选一个喜欢的角色，随时免费更换。'),card);
+  const choices=element('div','',card,'hideoutAvatarGrid travellerEditChoices');
+  const lines=[['Head in the clouds','脑袋在云上'],['Surviving one meeting at a time','开完一个会，又来一个会'],['Plans? What plans?','计划？随缘吧'],['Collecting little escapes','收集小小的远方']];
+  for(let i=0;i<4;i++){const btn=b(choices,'',()=>{chosen=i;preview.src=ART['portrait'+i];choices.querySelectorAll('button').forEach((el,j)=>el.setAttribute('aria-pressed',String(j===chosen)))});btn.setAttribute('aria-pressed',String(i===chosen));const im=element('img','',btn);im.src=ART['portrait'+i];im.alt='';element('strong',tr(...names[i]),btn);element('small',tr(...lines[i]),btn)}
+  const message=element('p','',card,'travellerEditMessage');message.setAttribute('role','status');
+  const actions=element('div','',card,'travellerEditActions');
+  b(actions,tr('Save my traveller card','保存旅人证'),()=>{const v=name.value.trim();if(!v){message.textContent=tr('Give yourself a nickname first.','先给自己取个昵称吧。');name.focus();return}playerName=v;avatar=chosen;save('playerName',v);save('avatar',chosen);updateHUD();origin();toast(tr('New look, same memories.','新模样，旧回忆。'))});
+  b(actions,tr('Keep things as they are','保持原样'),origin);
+  const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{const next={name:name.value,avatar:chosen,origin};toggleLang();hideoutProfilePage(next)}
  })
 }
 const hideoutPassportPrevious=passport;
@@ -8027,3 +8037,60 @@ pawWalletPage=function(){
  journalLanguage(pawWalletPage)
 };
 const pawReceiptCSS=document.createElement('style');pawReceiptCSS.textContent='.pawReceiptRow{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed #c6af85;padding:8px 0;font-size:13px}.pawReceiptRow strong{font-variant-numeric:tabular-nums;color:#536b56}.townPawLedger summary{min-height:44px;padding:8px 0;cursor:pointer;font-family:var(--town-title);font-weight:600}';document.head.append(pawReceiptCSS);
+
+
+/* Optional personal recommendations: reuse real doors and railway,
+   not hidden teleports or new floating gameplay overlays. */
+const travellerMoodRoutes=[
+ {id:'release',district:'home',door:'fish',ask:['My boss is testing my patience.','老板又在考验我的忍耐力。'],reason:['Leave the office drama by the river.','把办公室的破事留在河边。']},
+ {id:'reflect',district:'fortune',door:'tarot',ask:['I could use a little clarity.','最近有点迷茫。'],reason:['Take a quiet moment for a reflective reading.','给自己一点时间，安静地抽张牌。']},
+ {id:'cute',district:'home',door:'park',ask:['I need something cute.','今天需要一点可爱。'],reason:['The cats and deer have no meetings scheduled.','猫猫小鹿今天都不用开会。']},
+ {id:'treat',district:'island',door:'boba',ask:['I deserve a little treat.','今天值得奖励自己。'],reason:['Make your own cup, no approval required.','亲手调杯奶茶，不用任何人批准。']},
+ {id:'discover',district:'wonder',door:'quiz',ask:['I want to understand myself.','想多了解自己一点。'],reason:['Explore your preferences, without labels or diagnoses.','看看自己的偏好，不贴标签，也不下诊断。']},
+ {id:'play',district:'island',door:'arcade',ask:['I am bored out of my mind.','无聊到快发芽了。'],reason:['A quick round of arcade fun might help.','去游戏厅摸一会儿鱼。']}
+];
+let travellerSuggestedRoute=null;
+function travellerRouteDoor(v){return maps[v.district]?.st.find(st=>st[0]===v.door)}
+function travellerRouteName(v){const st=travellerRouteDoor(v);return st?tr(st[3],st[4]):tr(...maps[v.district].n)}
+function travellerFollowRoute(v){
+ const st=travellerRouteDoor(v);if(!st||transitioning||activity||room)return;
+ travellerSuggestedRoute=v;
+ if(scene!==v.district){openRailStop(v.district);return}
+ $('page').style.display='none';updateHUD();
+ hint('Let’s walk to '+travellerRouteName(v)+'.','一起走去'+travellerRouteName(v)+'吧。');
+ walkDoor(st[0],st[1],st[2])
+}
+function travellerMoodPanel(q){
+ const panel=element('details','',q,'travellerMoodBook');
+ element('summary',tr('Not sure where to go?','不知道去哪儿？'),panel);
+ element('h2',tr('What brings you to town today?','今天为什么来小镇？'),panel);
+ element('p',tr('A little suggestion, never a compulsory task.','给你一个小建议，不是任务。'),panel);
+ const grid=element('div','',panel,'travellerMoodChoices'),result=element('div','',panel,'travellerMoodResult');result.hidden=true;
+ let selected=null;
+ for(const v of travellerMoodRoutes){if(!travellerRouteDoor(v))continue;const btn=b(grid,tr(...v.ask),()=>{selected=v;for(const el of grid.querySelectorAll('button'))el.setAttribute('aria-pressed',String(el===btn));result.hidden=false;result.replaceChildren();element('strong',travellerRouteName(v),result);element('p',tr(...v.reason),result);b(result,scene===v.district?tr('Show me the way','带我过去'):tr('Catch the train','搭列车过去'),()=>travellerFollowRoute(selected))});btn.setAttribute('aria-pressed','false')}
+ const intro=q.querySelector(':scope > p');if(intro)intro.after(panel);
+ return panel
+}
+const travellerTravelBefore=travel;
+travel=function(){travellerTravelBefore();if(!room&&!activity)travellerMoodPanel($('content'));journalLanguage(travel)};
+$('travel').onclick=travel;$('dockTravel').onclick=travel;
+const travellerTodayBefore=todayHub;
+todayHub=function(){travellerTodayBefore();if(!room&&!activity)travellerMoodPanel($('content'));journalLanguage(todayHub)};
+$('dockScoop').onclick=todayHub;
+const travellerGuideEnterBefore=enter;
+enter=function(id){if(travellerSuggestedRoute?.district===scene&&travellerSuggestedRoute.door===id)travellerSuggestedRoute=null;return travellerGuideEnterBefore(id)};
+const travellerGuideHUD=updateHUD;
+updateHUD=function(){
+ travellerGuideHUD();
+ const v=travellerSuggestedRoute,here=v&&v.district===scene&&travellerRouteDoor(v);
+ const label=here?tr('Find: ','去找：')+travellerRouteName(v):tr('Next train: ','下一班：')+tr(...maps[railNextDistrict(scene)].n);
+ if(nextStopButton.textContent!==label)nextStopButton.textContent=label;
+ nextStopButton.setAttribute('aria-label',label);
+};
+nextStopButton.onclick=()=>{const v=travellerSuggestedRoute;if(v&&v.district===scene){travellerFollowRoute(v);return}openRailStop()};
+const travellerEditStyle=document.createElement('style');travellerEditStyle.textContent=
+'.travellerEditBook,.travellerMoodBook{background:var(--town-grain),#f5e9cf;color:#504638;border:1px solid #b5a07a;border-radius:4px;padding:14px;margin:12px 0;box-sizing:border-box}'+
+'.travellerEditHeading{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px dashed #bda47d;padding-bottom:10px;margin-bottom:12px}.travellerEditHeading img{width:76px;height:94px;object-fit:contain;border:1px solid #c2a87c;background:#e7d6b7;border-radius:40% 40% 4px 4px}.travellerEditHeading small{font:600 15px/1.5 var(--town-title)}'+
+'.travellerEditBook label,.travellerEditBook>small{display:block;margin:8px 0;line-height:1.5}.travellerEditBook input{width:100%;box-sizing:border-box;min-height:44px}.travellerEditChoices{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}.travellerEditChoices button{min-width:0;white-space:normal;overflow-wrap:anywhere;min-height:120px;padding:8px}.travellerEditChoices img{height:86px!important;width:100%!important;object-fit:contain}.travellerEditChoices strong,.travellerEditChoices small{display:block;line-height:1.35}.travellerEditChoices small{font-size:11px;margin-top:4px}.travellerEditChoices button[aria-pressed=true],.travellerMoodChoices button[aria-pressed=true]{outline:2px solid #597b68;outline-offset:-2px;background:#e3e9d4!important}'+
+'.travellerEditActions,.travellerMoodChoices{display:grid;gap:7px}.travellerEditActions button,.travellerMoodChoices button,.travellerMoodResult button{min-height:44px;white-space:normal;overflow-wrap:anywhere}.travellerEditMessage{color:#975e43}.travellerMoodBook summary{min-height:44px;display:flex;align-items:center;font:600 16px/1.3 var(--town-title);cursor:pointer}.travellerMoodChoices button{text-align:left}.travellerMoodResult{border-top:1px dashed #b5a07a;margin-top:12px;padding-top:12px}.travellerMoodResult[hidden]{display:none!important}@media(min-width:650px){.travellerMoodChoices{grid-template-columns:repeat(2,minmax(0,1fr))}.travellerEditChoices{grid-template-columns:repeat(4,minmax(0,1fr))}}';
+document.head.append(travellerEditStyle);
