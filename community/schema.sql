@@ -3,7 +3,9 @@ CREATE TABLE IF NOT EXISTS messages (
  id TEXT PRIMARY KEY, owner TEXT NOT NULL, rate_key TEXT NOT NULL,
  name TEXT NOT NULL, text TEXT NOT NULL, created INTEGER NOT NULL,
  status TEXT NOT NULL CHECK(status IN ('pending','approved','rejected')),
- moderated INTEGER
+ moderated INTEGER,
+ reply_to TEXT REFERENCES messages(id) ON DELETE SET NULL,
+ place TEXT NOT NULL DEFAULT 'square' CHECK(place IN ('square','fortune','home','island','wonder'))
 );
 CREATE INDEX IF NOT EXISTS messages_status_created ON messages(status,created);
 CREATE INDEX IF NOT EXISTS messages_owner_created ON messages(owner,created);
@@ -20,3 +22,5 @@ CREATE TABLE IF NOT EXISTS submission_events (
 );
 CREATE INDEX IF NOT EXISTS events_owner_created ON submission_events(owner,created);
 CREATE INDEX IF NOT EXISTS events_rate_created ON submission_events(rate_key,created);
+CREATE INDEX IF NOT EXISTS messages_place_status_created ON messages(place,status,created);
+CREATE INDEX IF NOT EXISTS messages_reply ON messages(reply_to);

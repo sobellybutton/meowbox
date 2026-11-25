@@ -18,7 +18,9 @@ function validatePost(value){
  if(!name||!text)return null;
  // Basic PII/link filter; manual moderation still required.
  if(/https?:\/\/|www\.|\b[^\s@]+@[^\s@]+\.[^\s@]+\b|(?:\+?\d[\s().-]*){8,}/iu.test(name+' '+text))return null;
- return {name,text}
+ const replyTo=value?.replyTo??null;if(replyTo!==null&&!validId(replyTo))return null;
+ const place=value?.place??'square';if(!['square','fortune','home','island','wonder'].includes(place))return null;
+ return {name,text,replyTo,place}
 }
 function validId(v){return typeof v==='string'&&/^[a-f0-9-]{36}$/.test(v)}
 function json(value,status=200,headers={}){
@@ -39,7 +41,11 @@ async function handle(req,env){
  const reply=(value,status=200)=>json(value,status,cors);
  if(origin&&origin!==allowed)return reply({error:'origin'},403);
  if(req.method==='OPTIONS')return new Response(null,{status:204,headers:cors});
- if(!env.DB||!env.RATE_SECRET||String(env.RATE_SECRET).length<32)return reply({error:'not configured'},503);
+ if(!env.DB||!env.RATE_SECRET||String(env.RATE_SECRET).length<32||!env.MODERATOR_TOKEN||String(env.MODERATOR_TOKEN).length<32)return reply({error:'not configured'},503);
+ if(req.method==='GET'&&u.pathname==='/health'){
+  await env.DB.prepare('SELECT reply_to,place FROM messages LIMIT 0').all();await env.DB.prepare('SELECT id FROM submission_events LIMIT 0').all();await env.DB.prepare('SELECT message_id FROM reports LIMIT 0').all();
+  return reply({service:'meowbox-community',version:1,moderated:true,replies:true,places:true});
+ }
  const now=Date.now(),cutoff=now-TTL;
  const auth=req.headers.get('Authorization')||'',token=auth.startsWith('Bearer ')?auth.slice(7):'';
  const admin=u.pathname.startsWith('/moderation/');
@@ -50,20 +56,22 @@ async function handle(req,env){
  const owner=await digest('session:'+token);
  const db=env.DB;
  if(req.method==='GET'&&u.pathname==='/messages'){
-  const r=await db.prepare("SELECT id,name,text,created FROM messages WHERE status='approved' AND created>=? ORDER BY created DESC LIMIT 60").bind(cutoff).all();
+  const place=u.searchParams.get('place')||'square';if(!['square','fortune','home','island','wonder'].includes(place))return reply({error:'invalid place'},400);
+  const r=await db.prepare("SELECT m.id,m.name,m.text,m.created,m.reply_to AS replyTo,p.name AS replyName FROM messages m LEFT JOIN messages p ON p.id=m.reply_to AND p.status='approved' AND p.created>=? WHERE m.status='approved' AND m.created>=? AND m.place=? ORDER BY m.created DESC LIMIT 60").bind(cutoff,cutoff,place).all();
   return reply({messages:r.results.reverse()});
  }
  if(req.method==='GET'&&u.pathname==='/mine'){
-  const r=await db.prepare("SELECT id,name,text,created,status FROM messages WHERE owner=? AND created>=? ORDER BY created DESC LIMIT 60").bind(owner,cutoff).all();return reply({messages:r.results});
+  const r=await db.prepare("SELECT id,name,text,created,status,place FROM messages WHERE owner=? AND created>=? ORDER BY created DESC LIMIT 60").bind(owner,cutoff).all();return reply({messages:r.results});
  }
  if(req.method==='POST'&&u.pathname==='/messages'){
   let value;try{value=validatePost(await readBody(req))}catch{return reply({error:'invalid body'},400)}
   if(!value)return reply({error:'invalid text or personal details'},400);
+  if(value.replyTo&&!await db.prepare("SELECT id FROM messages WHERE id=? AND status='approved' AND created>=? AND place=?").bind(value.replyTo,cutoff,value.place).first())return reply({error:'reply unavailable'},409);
   const ip=req.headers.get('CF-Connecting-IP')||'unknown',rate=await rateHash(env.RATE_SECRET,ip+'|'+Math.floor(now/DAY)),id=crypto.randomUUID();
   // Atomic write condition enforces session and daily network limits.
   const [limit,r]=await db.batch([
    db.prepare("INSERT INTO submission_events(id,owner,rate_key,created) SELECT ?,?,?,? WHERE (SELECT COUNT(*) FROM submission_events WHERE owner=? AND created>?)<5 AND (SELECT COUNT(*) FROM submission_events WHERE rate_key=? AND created>?)<20 AND (SELECT COUNT(*) FROM submission_events WHERE owner=? AND created>?)=0").bind(id,owner,rate,now,owner,now-DAY,rate,now-DAY,owner,now-15000),
-   db.prepare("INSERT INTO messages(id,owner,rate_key,name,text,created,status) SELECT ?,?,?,?,?,?,'pending' WHERE EXISTS(SELECT 1 FROM submission_events WHERE id=?)").bind(id,owner,rate,value.name,value.text,now,id)
+   db.prepare("INSERT INTO messages(id,owner,rate_key,name,text,created,status,reply_to,place) SELECT ?,?,?,?,?,?,'pending',?,? WHERE EXISTS(SELECT 1 FROM submission_events WHERE id=?)").bind(id,owner,rate,value.name,value.text,now,value.replyTo,value.place,id)
   ]);
   if(!limit.meta.changes||!r.meta.changes)return reply({error:'rate limited'},429);
   return reply({id,status:'pending'},201);
