@@ -88,3 +88,34 @@ For each asset record map/room/activity ID, file path, dimensions, intended came
 Acceptance per vertical slice: screenshot of map spawn, walk toward door, interior entrance, approach, input, visible reaction, result and return; inspect small/tall phone, tablet and desktop at both language settings. Review animation playback and touch targets in actual browser, check no clipped text, overlapping HUD, disappearing avatar, broken occlusion, incorrect prop contacts, duplicated destinations, or dead-end transitions. Compare cold load and animation performance to existing baseline; record measured values, not guesses. Do not approve a new map based only on pretty concept art or CI.
 
 Production sequence: establish art/character style and complete the Worry-Free Pier slice first, then Fortune Valley (arrival and temple first), remaining retained interiors map by map, then global UI, collection art and polish. Curation precedes expensive art. Existing code changes are committed but final illustrated artwork and real-device visual acceptance remain outstanding.
+
+
+## Mandatory room staging redesign (owner repeated feedback)
+
+Owner reports that on entering houses, the avatar appears tiny, in the middle of nowhere, and sometimes overlaps the game item. This is a priority visual/gameplay defect, not an optional polish item. Do not solve it by globally increasing avatar scale or changing the same spawn coordinate for all rooms.
+
+### Technical diagnosis
+Current src/extensions.js indoor exploration uses a generic entrance derived from livingBounds(), fixed x coordinates, a generic approach computed from each hit rectangle, a 3.5-second timeout that may invoke an action before the player actually arrives, and render-time clamping of the avatar separate from its true movement coordinates. mobileRoomCamera() uses generic room/activity framing. These do not guarantee the player is on a walkable surface, clear of furniture, properly scaled to the room, or visibly approaching the right side of an item. Verify current effective overrides before editing.
+
+### Required architecture
+Define a room staging manifest for every retained room, with room-specific entrance/exit anchors, arrival facing, floor/walkable polygon or navigation graph, solid obstacle footprints, station-specific approach anchors/facing, interaction distances, actor foot pivot, perspective scale range, camera safe bounds, foreground occlusion and optional activity staging. Use the same coordinate transform for art, player, pathfinding, hit testing and camera. Do not derive a standing position from a button or item hit rectangle. Keep logical world and rendered foot position identical; camera follows the actor instead of secretly clamping the rendered avatar. Resolve paths around solid furniture with clearance for the actor; taps outside walkable space should resolve to a nearby safe floor point or be ignored. Never let a timeout initiate a game before arrival; recover to a reachable anchor with an understandable prompt if route fails.
+
+### Player-visible sequence
+1. Approach the outdoor door and cross the threshold with a short continuous transition.
+2. Appear just inside the actual doorway on a clearly visible floor, facing inward; walk a few steps to a safe arrival point. No spawn in center, behind counters or over interactive props.
+3. Camera establishes the room and keeps the character readable. Suggested starting calibration: standing full-body sprite roughly 12–18% of usable scene height on mobile near entry, adjusted to painted perspective and tested per room; not a universal mandatory size. Preserve real proportions and contact shadows; on desktop no tiny avatar floating in oversized room.
+4. Player taps an object or walks. Route to its authored approach point on the correct side (customer side of counter, front of altar, beside river), stop and face it. Only when actually within reach may interaction begin.
+5. Camera smoothly reframes to the station. Keep the same avatar visible in a believable action pose where appropriate; hands meet objects, no overlap with furniture or floating tools. For closeups like tarot or birth chart, use purposeful over-the-shoulder/table framing or a clear hand view rather than shrink avatar in the middle of a card.
+6. On activity completion or cancellation, return to the same station's safe standing position in the same room, not the entrance or center. Preserve completed results. On exit, walk toward door and return outside at correct doorway, not another map.
+
+### Example authored layouts
+- Temple: entrance at lower stone path; bell approach beside striker; basin approach in front of ladle; prayer on mat facing altar; fortune draw beside cup; paper reveal at counter. Never stand inside altar or basin.
+- Tarot: enter near lower aisle, approach visitor side of reading table; seated/standing reading pose, closeup on cards, then return beside table.
+- Destiny: enter study aisle, approach Master Yue's consultation desk on visitor side; chart and follow-up stay in that room.
+- Kitchen: enter through side doorway; approach work side of prep counter/stove or tea station; face and reach utensil; return to safe prep position after tasting.
+- Arcade: enter aisle, stand directly in front of chosen cabinet with sufficient clearance; never overlap machine or prize chute.
+- Worry-Free Pier: enter covered courtyard; approach Auntie's paper target, writing table or river lookout along path. Land/water boundary is solid to the avatar; throwing and shout animate from riverbank, not in water.
+- Remaining rooms must each define their own anchors and camera composition, not reuse a generic middle-floor template.
+
+### Acceptance criteria (must inspect actual rendered gameplay)
+For every house at 360x640, 390x844, tablet and desktop: capture immediately after entry, arrival, approach to every retained station, interaction and return. Both languages; same selected avatar throughout. Assert feet lie on walkable floor and outside obstacles; body does not obscure labels or interactive item; actor's screen size is legible and proportional; tap targets remain usable; no forced action until actual arrival; cancel/move/back works; no unexpected teleport after returning from closeup. Check route from entry to farthest station using normal input, not only test repositioning. Inspect screenshots and video; reject if technically passing but visually floating, tiny or overlapping. Update staging/asset manifest together before replacing any room art. This is an implementation requirement, not a claim the defect has been fixed.
