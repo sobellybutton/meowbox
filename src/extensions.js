@@ -987,8 +987,8 @@ function templeReleaseWater(a){
  if(activity!=='templeWater'||![0,1].includes(state.waterStage)||!Number.isFinite(a?.x)||!Number.isFinite(a?.y))return;
  const stage=state.waterStage;if(!waterDropZone(stage,a.x,a.y)){hint(stage===0?'Lower the scoop into the highlighted water.':'Bring the filled scoop above your hand.',stage===0?'把勺口放进亮起的水面。':'把装满水的勺移到手掌上方。');return}
  state.waterStage=stage+1;state.waterAt=t;state.waterFrom={x:a.x,y:a.y};
- if(stage===0){hint('Now move the full ladle over your hand.','现在把盛满水的勺移到手掌上方。');if(typeof physicalFx==='function')physicalFx('water')}
- else{hint('Let the water rinse your hand.','让清水缓缓流过手掌。');if(typeof physicalFx==='function')physicalFx('water')}
+ if(stage===0){hint('Now move the full ladle over your hand.','现在把盛满水的勺移到手掌上方。');shrineWaterFx(false)}
+ else{hint('Let the water rinse your hand.','让清水缓缓流过手掌。');shrineWaterFx(true)}
 }
 function waterLadleArt(x,y,angle,filled){
  ctx.save();ctx.translate(x,y);ctx.rotate(angle);line(-69,1,22,1,'#987249',9);line(-67,-2,23,-2,'#e3c28a',2.5);ellipse(35,2,23,12,'#917249');ellipse(35,-1,22,10,'#d7b97f');ellipse(35,-1,17,6,filled?'#83a99f':'#b28f5b');if(filled)line(23,-3,44,-3,'#d9e7d4',1);ctx.restore()
@@ -1004,7 +1004,7 @@ const templeProps=prop;prop=function(id,x,y){if(id==='templeBell'){templeBellArt
 const templeRoom=drawRoom;drawRoom=function(){if(room!=='temple')return templeRoom();ctx.save();templeRitualBackground();let locations=[['templeWater','Water pavilion','手水亭'],['prayer','Prayer altar','祈愿香案'],['templeBell','Bronze bell','山寺钟声'],['sticks','Fortune sticks','求签'],['moon','Moon blocks','掷筊']];for(let [id,en,cn] of locations){const [x,y,ax,ay]=indoorStation(id),first=hit.length;prop(id,x,y);label(tr(en,cn),x,y+34,()=>start(id));target(x-65,y-105,130,115,()=>start(id));markIndoorStation(id,first,[ax,ay])}ctx.restore()};
 const templeRitualDraw=drawActivity;drawActivity=function(){
  if(!['templeBell','templeWater','templePaper'].includes(activity))return templeRitualDraw();ctx.save();templeRitualBackground();
- if(activity==='templeBell'){let age=t-state.bellAt,held=drag?.id==='templeStriker',pull=held?Math.min(85,Math.abs(drag.x-drag.sx)):0,impact=age>.22&&age<4?Math.sin((age-.22)*16)*Math.exp(-(age-.22)*1.7)*state.bellStrength*.045:0;if(age>=.22&&age<4&&!state.bellRung){state.bellRung=true;sound(146+state.bellStrength*12);if(!muted&&ambientBus){ambientTone(146.83,.065*state.bellStrength,2.5,'sine');ambientTone(293.66,.025*state.bellStrength,1.6,'sine',.04)}}line(270,315,530,315,'#6c5239',16);line(400,315,400,348,'#5f5542',12);templeBellArt(400,438,1.05,impact);let swing=held?-pull:age<.22?-85*state.bellStrength*(1-age/.22):age<1.5?-Math.abs(Math.sin((age-.22)*5))*40*state.bellStrength*Math.exp(-age):0;let sx=285+swing;line(300,320,sx,474,'#9a825d',3);line(355,320,sx+85,474,'#9a825d',3);ctx.save();ctx.translate(sx,474);round(-8,-10,108,20,10,'#a8855b','#654c38');line(6,-4,87,-4,'#d0b082',2);ctx.restore();target(180,440,210,65,()=>templeReleaseBell(55),'templeStriker');if(age>.22&&age<3){for(let j=0;j<3;j++){let f=(age-.22-j*.28)/2.3;if(f>0&&f<1){ctx.strokeStyle='rgba(246,221,158,'+(1-f)*.4*state.bellStrength+')';ctx.beginPath();ctx.ellipse(400,490,80+f*130,19+f*30,0,0,TAU);ctx.stroke()}}}drawRitualPose(211,570,1.8,{reach:held||age<1?{x:sx+8,y:474}:null,bow:held?.10:0});txt(tr('Pull the striker and let go','拉动木槌，再松手'),400,616,17,'#fff1d6');}
+ if(activity==='templeBell'){let age=t-state.bellAt,held=drag?.id==='templeStriker',pull=held?Math.min(85,Math.abs(drag.x-drag.sx)):0,impact=age>.22&&age<4?Math.sin((age-.22)*16)*Math.exp(-(age-.22)*1.7)*state.bellStrength*.045:0;if(age>=.22&&age<4&&!state.bellRung){state.bellRung=true;sound(146+state.bellStrength*12);if(!muted&&ambientBus){ambientTone(146.83,.065*state.bellStrength,2.5,'sine');ambientTone(293.66,.025*state.bellStrength,1.6,'sine',.04)}}line(270,285,530,285,'#6c5239',16);line(400,285,400,318,'#5f5542',12);templeBellArt(400,438,1.05,impact);let swing=held?-pull:age<.22?-85*state.bellStrength*(1-age/.22):age<1.5?-Math.abs(Math.sin((age-.22)*5))*40*state.bellStrength*Math.exp(-age):0;let sx=285+swing;line(300,290,sx,474,'#9a825d',3);line(355,290,sx+85,474,'#9a825d',3);ctx.save();ctx.translate(sx,474);round(-8,-10,108,20,10,'#a8855b','#654c38');line(6,-4,87,-4,'#d0b082',2);ctx.restore();target(180,440,210,65,()=>templeReleaseBell(55),'templeStriker');if(age>.22&&age<3){for(let j=0;j<3;j++){let f=(age-.22-j*.28)/2.3;if(f>0&&f<1){ctx.strokeStyle='rgba(246,221,158,'+(1-f)*.4*state.bellStrength+')';ctx.beginPath();ctx.ellipse(400,490,80+f*130,19+f*30,0,0,TAU);ctx.stroke()}}}drawRitualPose(211,570,1.8,{reach:held||age<1?{x:sx+8,y:474}:null,bow:held?.10:0});txt(tr('Pull the striker and let go','拉动木槌，再松手'),400,616,17,'#fff1d6');}
  if(activity==='templeWater'){
   const stage=state.waterStage,age=t-state.waterAt,held=drag?.id==='templeLadle';templeBasin(475,486);
   const handX=410,handY=485;waterHandArt(handX,handY);
@@ -1750,8 +1750,8 @@ drawMap=function(){
   const actorScale=travellerOutdoorScale(sc,cam.scale,W,H,false),grannyScale=actorScale*94/150;
   if(n.grumpy){drawWalkingGranny(n.x,n.y,grannyScale,moving,dir)}else if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,stableResidentFallback(n),moving,dir,actorScale);
   const actorHeight=94*actorScale;
+  if(n.popGuest||n.grumpy)drawMeowActorName(n,tr(...n.n));
   if(Math.hypot(n.x-p.x,n.y-p.y)<150){
-   if((n.popGuest||n.grumpy)&&npc.filter(v=>v.popGuest||v.grumpy).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]===n)drawMeowActorName(n,tr(...n.n));
    target(n.x-Math.max(36,actorScale*23),n.y-actorHeight,Math.max(72,actorScale*46),actorHeight+10,()=>npcTalk(n))
   }
  }
@@ -3926,6 +3926,24 @@ function physicalFx(type,strength=1){
  const p=settings[type];if(!p)return;const now=audio.currentTime,n=audio.createBufferSource(),f=audio.createBiquadFilter(),g=audio.createGain();n.buffer=actionFxNoise;f.type='bandpass';f.frequency.value=p[0];f.Q.value=p[1];g.gain.setValueAtTime(Math.max(.001,p[3]*clamp(strength,.25,1.4)),now);g.gain.exponentialRampToValueAtTime(.0001,now+p[2]);n.connect(f).connect(g).connect(actionFxBus);n.start(now);n.stop(now+p[2]+.015);
  if(type==='whack'){const o=audio.createOscillator(),a=audio.createGain();o.type='triangle';o.frequency.setValueAtTime(145,now);o.frequency.exponentialRampToValueAtTime(57,now+.075);a.gain.setValueAtTime(.12*clamp(strength,.25,1.4),now);a.gain.exponentialRampToValueAtTime(.0001,now+.1);o.connect(a).connect(actionFxBus);o.start(now);o.stop(now+.11)}
 }
+/* Gentle water movement: no abrupt impact envelope, separate fill and pour. */
+function shrineWaterFx(pouring){
+ if(!actionFxContext())return;
+ const now=audio.currentTime,duration=pouring?1.48:.64,attack=pouring?.18:.10,tail=pouring?.29:.22;
+ const source=audio.createBufferSource(),filter=audio.createBiquadFilter(),level=audio.createGain();
+ source.buffer=actionFxNoise;source.loop=true;filter.type='bandpass';filter.Q.value=.55;
+ filter.frequency.setValueAtTime(pouring?1450:1050,now);
+ filter.frequency.linearRampToValueAtTime(pouring?1950:1650,now+duration*.5);
+ level.gain.setValueAtTime(.0001,now);level.gain.linearRampToValueAtTime(pouring?.046:.032,now+attack);
+ level.gain.linearRampToValueAtTime(pouring?.034:.017,now+duration-tail);
+ level.gain.exponentialRampToValueAtTime(.0001,now+duration);
+ source.connect(filter).connect(level).connect(actionFxBus);source.start(now);source.stop(now+duration+.02);
+ const count=pouring?12:5;
+ for(let i=0;i<count;i++){const at=now+attack+i*(duration-attack-tail)/count,osc=audio.createOscillator(),gain=audio.createGain(),f=490+Math.random()*510;
+ osc.type='sine';osc.frequency.setValueAtTime(f,at);osc.frequency.exponentialRampToValueAtTime(f*1.3,at+.045);
+ gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(.008+Math.random()*.008,at+.012);gain.gain.exponentialRampToValueAtTime(.0001,at+.085);
+ osc.connect(gain).connect(actionFxBus);osc.start(at);osc.stop(at+.09)}
+}
 const roomSoundBefore=sound;
 sound=function(f=420){
  if(muted||actionFxSuppress||document.hidden)return;
@@ -4039,7 +4057,7 @@ function ritualAtlasPart(cell,x,y,sc=1,angle=0,flat=false){
  const q=cuts[cell];if(!q)return false;ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.scale(sc,sc);ctx.drawImage(im,q[0],q[1],q[2],q[3],-q[4],-q[5],q[2],q[3]);ctx.restore();return true
 }
 const shrineBellDraft=templeBellArt;
-templeBellArt=function(x,y,sc=1,angle=0){if(!ritualAtlasPart('bell',x,y,sc,angle))shrineBellDraft(x,y,sc,angle)};
+templeBellArt=function(x,y,sc=1,angle=0){ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.scale(sc,sc);/* Taller body, unchanged width and striking rim. */ctx.translate(0,-10.8);ctx.scale(1,1.24);if(!ritualAtlasPart('bell',0,0,1,0))shrineBellDraft(0,0,1,0);ctx.restore()};
 const shrineLadleDraft=templeLadle;
 templeLadle=function(x,y,a=0){if(!ritualAtlasPart('ladle',x,y,1,a))shrineLadleDraft(x,y,a)};
 const shrineMoonDraft=templeMoon;
@@ -5674,7 +5692,6 @@ function drawSharedTownActor(a){
  if(a.y<minY()-15||a.y>maxY()+15||Math.abs(a.x-center)>(portraitMap()?180:240))return;
  const sc=travellerOutdoorScale((isRoute()?1.22:1)*(.8+a.y/mapWorldHeight()*.45),cam.scale,W,H,false);
  backHuman(a.x,a.y,a.avatar,a.walking===1,a.facing,sc);
- if(Math.hypot(a.x-p.x,a.y-p.y)>145)return;
  const gesture=sharedGestureNames[a.gesture];
  drawMeowActorName(a,gesture?sharedTownLabel(a.id)+' · '+tr(...gesture):sharedTownLabel(a.id));
 }
@@ -5964,15 +5981,33 @@ function meowBeginTextFrame(inside){
   }
  }
 }
+/* Passersby get a readable, gently fading label instead of a frame-by-frame nearest-name swap. */
+const meowPasserLabels=new WeakMap();
+function meowPasserOpacity(a){
+ const dist=Math.hypot(a.x-p.x,a.y-p.y),now=performance.now();let q=meowPasserLabels.get(a);
+ if(!q||q.scene!==scene||now-q.last>1000){q={scene,inside:false,entered:now,shown:-Infinity,alpha:0,last:now};meowPasserLabels.set(a,q)}
+ const dt=Math.min(80,Math.max(0,now-q.last));q.last=now;
+ if(!q.inside&&dist<145){q.inside=true;q.entered=now}
+ else if(q.inside&&dist>185)q.inside=false;
+ const wants=q.inside&&now-q.entered>=220;
+ if(wants&&q.alpha===0)q.shown=now;
+ const hold=dist<235&&q.alpha>0&&now-q.shown<1250;
+ q.alpha=clamp(q.alpha+(wants||hold?dt/230:-dt/380),0,1);
+ return q.alpha;
+}
 function drawMeowActorName(a,value,indoorScale=null){
  if(talkOpen||!value)return;
+ const alpha=indoorScale===null?meowPasserOpacity(a):1;if(alpha<=.01)return;
  const bounds=indoorScale===null?characterScreenBounds(a):meowIndoorActorBounds(a,indoorScale),scale=Math.max(.08,cam.scale),size=12/scale;
  ctx.save();try{
   ctx.font='600 '+size+'px Georgia, "Songti SC", serif';
   let name=String(value),max=Math.min(176,W*.48),w=ctx.measureText(name).width*scale+14;
   if(w>max){const chars=Array.from(name);while(chars.length>1&&ctx.measureText(chars.join('')+'…').width*scale+14>max)chars.pop();name=chars.join('')+'…';w=ctx.measureText(name).width*scale+14}
-  const h=24,spot=meowPlaceText((bounds.left+bounds.right)/2,bounds.top-h/2-9,w,h,{left:5,right:W-5,top:5,bottom:H-5},[...meowFrameBlockers,bounds,...meowTextFrameRects],25);
-  if(!spot)return;meowTextFrameRects.push(spot.rect);
+  const h=24,cx=(bounds.left+bounds.right)/2,cy=bounds.top-h/2-9,blockers=[...meowFrameBlockers,bounds,...meowTextFrameRects],q=indoorScale===null?meowPasserLabels.get(a):null;
+  let spot=null;
+  if(q?.offset){const x=cx+q.offset.x,y=cy+q.offset.y,rect={left:x-w/2,right:x+w/2,top:y-h/2,bottom:y+h/2};if(rect.left>=5&&rect.right<=W-5&&rect.top>=5&&rect.bottom<=H-5&&!blockers.some(b=>speechOverlap(rect,b)))spot={x,y,rect}}
+  if(!spot)spot=meowPlaceText(cx,cy,w,h,{left:5,right:W-5,top:5,bottom:H-5},blockers,25);
+  if(!spot)return;if(q)q.offset={x:spot.x-cx,y:spot.y-cy};meowTextFrameRects.push(spot.rect);ctx.globalAlpha*=alpha;
   const x=(spot.x-cam.ox)/scale,y=(spot.y-cam.oy)/scale;
   round(x-w/scale/2,y-h/scale/2,w/scale,h/scale,4/scale,'#f6e8cdeb','#aa9672');ctx.font='600 '+size+'px Georgia, "Songti SC", serif';ctx.fillStyle='#425646';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(name,x,y)
  }finally{ctx.restore()}
