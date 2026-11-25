@@ -3609,22 +3609,31 @@ function hideoutPage(){
   const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();hideoutPage()}
  })
 }
+const travellerProfileDay=86400000;
+function travellerProfileLimits(){
+ const raw=load('travellerProfileLimitsV1',{})||{};
+ const valid=v=>Number.isFinite(v)&&v>=0?v:0;
+ return {nameAt:valid(raw.nameAt),avatarAt:valid(raw.avatarAt)};
+}
+function travellerProfileWait(at,days,now=Date.now()){return at?Math.max(0,at+days*travellerProfileDay-now):0}
+function travellerProfileWaitLabel(ms){return tr('Available in ','还需等待 ')+Math.ceil(ms/travellerProfileDay)+tr(' day(s)',' 天')}
 function hideoutProfilePage(draft=null){
  const origin=draft?.origin||lifeProfile;
  page(tr('My traveller card','我的旅人证'),tr('A different face, the same adventures.','换个模样，回忆照旧。'),q=>{
-  let chosen=draft?.avatar??avatar??0;
+  let chosen=draft?.avatar??avatar??0;const limits=travellerProfileLimits(),nameWait=travellerProfileWait(limits.nameAt,7),avatarWait=travellerProfileWait(limits.avatarAt,14);
   const card=element('section','',q,'travellerEditBook');
   const heading=element('div','',card,'travellerEditHeading');element('small',tr('MEOWBOX RAILWAY · RESIDENT CARD','摸鱼铁路 · 旅人证'),heading);
   const preview=element('img','',heading);preview.alt='';preview.src=ART['portrait'+chosen];
   const nameLabel=element('label',tr('Your nickname','你的昵称'),card);nameLabel.htmlFor='travellerEditName';
   const name=element('input','',card);name.id='travellerEditName';name.value=draft?.name??playerName??'';name.maxLength=24;name.autocomplete='off';name.className='hideoutName';
-  element('small',tr('Choose a familiar face. You can change it anytime, for free.','选一个喜欢的角色，随时免费更换。'),card);
+  name.readOnly=nameWait>0;element('small',nameWait?travellerProfileWaitLabel(nameWait):tr('Nickname changes are available every 7 days.','昵称每7天可修改一次。'),card);
+  element('small',avatarWait?travellerProfileWaitLabel(avatarWait):tr('First avatar change is immediate. After that, change every 14 days for free.','首次换角色无需等待，之后每14天可免费更换一次。'),card);
   const choices=element('div','',card,'hideoutAvatarGrid travellerEditChoices');
   const lines=[['Head in the clouds','脑袋在云上'],['Surviving one meeting at a time','开完一个会，又来一个会'],['Plans? What plans?','计划？随缘吧'],['Collecting little escapes','收集小小的远方']];
-  for(let i=0;i<4;i++){const btn=b(choices,'',()=>{chosen=i;preview.src=ART['portrait'+i];choices.querySelectorAll('button').forEach((el,j)=>el.setAttribute('aria-pressed',String(j===chosen)))});btn.setAttribute('aria-pressed',String(i===chosen));const im=element('img','',btn);im.src=ART['portrait'+i];im.alt='';element('strong',tr(...names[i]),btn);element('small',tr(...lines[i]),btn)}
+  for(let i=0;i<4;i++){const btn=b(choices,'',()=>{chosen=i;preview.src=ART['portrait'+i];choices.querySelectorAll('button').forEach((el,j)=>el.setAttribute('aria-pressed',String(j===chosen)))});btn.setAttribute('aria-pressed',String(i===chosen));btn.disabled=avatarWait>0&&i!==avatar;const im=element('img','',btn);im.src=ART['portrait'+i];im.alt='';element('strong',tr(...names[i]),btn);element('small',tr(...lines[i]),btn)}
   const message=element('p','',card,'travellerEditMessage');message.setAttribute('role','status');
   const actions=element('div','',card,'travellerEditActions');
-  b(actions,tr('Save my traveller card','保存旅人证'),()=>{const v=name.value.trim();if(!v){message.textContent=tr('Give yourself a nickname first.','先给自己取个昵称吧。');name.focus();return}playerName=v;avatar=chosen;save('playerName',v);save('avatar',chosen);updateHUD();origin();toast(tr('New look, same memories.','新模样，旧回忆。'))});
+  b(actions,tr('Save my traveller card','保存旅人证'),()=>{const v=name.value.trim();if(!v){message.textContent=tr('Give yourself a nickname first.','先给自己取个昵称吧。');name.focus();return}const current=travellerProfileLimits(),now=Date.now(),nameChanged=v!==playerName,avatarChanged=chosen!==avatar;if((nameChanged&&travellerProfileWait(current.nameAt,7,now))||(avatarChanged&&travellerProfileWait(current.avatarAt,14,now))){message.textContent=tr('That change is not available yet.','暂时还不能修改哦。');return}if(nameChanged){playerName=v;save('playerName',v);current.nameAt=now}if(avatarChanged){avatar=chosen;save('avatar',chosen);current.avatarAt=now}if(nameChanged||avatarChanged)save('travellerProfileLimitsV1',current);updateHUD();origin();if(nameChanged||avatarChanged)toast(tr('New look, same memories.','新模样，旧回忆。'))});
   b(actions,tr('Keep things as they are','保持原样'),origin);
   const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{const next={name:name.value,avatar:chosen,origin};toggleLang();hideoutProfilePage(next)}
  })
@@ -8042,6 +8051,12 @@ const pawReceiptCSS=document.createElement('style');pawReceiptCSS.textContent='.
 /* Optional personal recommendations: reuse real doors and railway,
    not hidden teleports or new floating gameplay overlays. */
 const travellerMoodRoutes=[
+ {id:'heartbreak',district:'home',door:'fish',ask:['My heart is a little broken.','有点失恋，心里不好受。'],reason:['Leave a private note by the river. You do not have to figure everything out today.','去河边写下不想说出口的话，今天不必想通所有事。']},
+ {id:'sad',district:'home',door:'park',ask:['I feel sad for no particular reason.','没什么特别的原因，就是有点难过。'],reason:['Spend a quiet moment with the animals. No need to pretend to be cheerful.','去陪小动物待一会儿，不必假装开心。']},
+ {id:'lonely',district:'home',door:'tea',ask:['I could use a little company.','今天有点孤单，想找个伴。'],reason:['The tea room has stories and a warm seat waiting.','茶馆有故事，也有留给你的座位。']},
+ {id:'tired',district:'island',door:'kitchen',ask:['My social battery is at 1%.','社交电量只剩1%。'],reason:['Grandma understands. Soup first, life decisions later.','外婆懂你。先喝汤，人生大事等会儿再说。']},
+ {id:'anxious',district:'fortune',door:'wishes',ask:['My brain has too many tabs open.','脑子开了太多网页，关不掉。'],reason:['Make a little wish in the garden. No need to solve everything at once.','去花园许个小愿，不必一次解决所有问题。']},
+ {id:'happy',district:'island',door:'boba',ask:['Actually, today is a good day!','其实今天心情很好！'],reason:['Celebrate with a cup of bubble tea. Good days deserve a little ceremony too.','亲手做杯奶茶庆祝，好日子也值得一点仪式感。']},
  {id:'release',district:'home',door:'fish',ask:['My boss is testing my patience.','老板又在考验我的忍耐力。'],reason:['Leave the office drama by the river.','把办公室的破事留在河边。']},
  {id:'reflect',district:'fortune',door:'tarot',ask:['I could use a little clarity.','最近有点迷茫。'],reason:['Take a quiet moment for a reflective reading.','给自己一点时间，安静地抽张牌。']},
  {id:'cute',district:'home',door:'park',ask:['I need something cute.','今天需要一点可爱。'],reason:['The cats and deer have no meetings scheduled.','猫猫小鹿今天都不用开会。']},
@@ -8064,7 +8079,7 @@ function travellerFollowRoute(v){
 function travellerMoodPanel(q){
  const panel=element('details','',q,'travellerMoodBook');
  element('summary',tr('Not sure where to go?','不知道去哪儿？'),panel);
- element('h2',tr('What brings you to town today?','今天为什么来小镇？'),panel);
+ element('h2',tr('How are you feeling today?','你今天心情怎么样？'),panel);
  element('p',tr('A little suggestion, never a compulsory task.','给你一个小建议，不是任务。'),panel);
  const grid=element('div','',panel,'travellerMoodChoices'),result=element('div','',panel,'travellerMoodResult');result.hidden=true;
  let selected=null;
