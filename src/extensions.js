@@ -6067,8 +6067,9 @@ function meowPasserOpacity(a){
  const dist=Math.hypot(a.x-p.x,a.y-p.y),now=performance.now();let q=meowPasserLabels.get(a);
  if(!q||q.scene!==scene||now-q.last>1000){q={scene,inside:false,entered:now,shown:-Infinity,alpha:0,last:now};meowPasserLabels.set(a,q)}
  const dt=Math.min(80,Math.max(0,now-q.last));q.last=now;
- if(!q.inside&&dist<145){q.inside=true;q.entered=now}
- else if(q.inside&&dist>185)q.inside=false;
+ const approach=a.popGuest?200:145,depart=a.popGuest?245:185;
+ if(!q.inside&&dist<approach){q.inside=true;q.entered=now}
+ else if(q.inside&&dist>depart)q.inside=false;
  const wants=q.inside&&now-q.entered>=220;
  if(wants&&q.alpha===0)q.shown=now;
  const hold=dist<235&&q.alpha>0&&now-q.shown<1250;
@@ -6089,7 +6090,7 @@ function drawMeowActorName(a,value,indoorScale=null){
   if(!spot)spot=meowPlaceText(cx,cy,w,h,{left:5,right:W-5,top:5,bottom:H-5},blockers,25);
   if(!spot){if(q)q.blockedAt=performance.now();return}if(q){q.offset={x:spot.x-cx,y:spot.y-cy};if(q.blockedAt&&performance.now()-q.blockedAt<160)return;if(q.blockedAt){q.reappearAt=performance.now();q.blockedAt=0}}meowTextFrameRects.push(spot.rect);ctx.globalAlpha*=alpha*(q?.reappearAt?clamp((performance.now()-q.reappearAt)/220,0,1):1);
   const x=(spot.x-cam.ox)/scale,y=(spot.y-cam.oy)/scale;
-  round(x-w/scale/2,y-h/scale/2,w/scale,h/scale,4/scale,'#f6e8cdeb','#aa9672');ctx.font='600 '+size+'px Georgia, "Songti SC", serif';ctx.fillStyle='#425646';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(name,x,y)
+  round(x-w/scale/2,y-h/scale/2,w/scale,h/scale,4/scale,a.popGuest?'#f7e6b9ed':'#f6e8cdeb',a.popGuest?'#b78c46':'#aa9672');ctx.font='600 '+size+'px Georgia, "Songti SC", serif';ctx.fillStyle=a.popGuest?'#77562d':'#425646';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(name,x,y)
  }finally{ctx.restore()}
 }
 const meowTextMapBefore=drawMap;drawMap=function(){meowBeginTextFrame(false);return meowTextMapBefore()};
@@ -6476,7 +6477,7 @@ function guestAtlasIndex(n){
  return guestAtlasNames.findIndex(v=>v.includes(n?.n?.[0])||v.includes(n?.n?.[1]))
 }
 function drawGuestAtlasActor(i,x,y,height,dir='right'){
- if(i<0||i>=16)return false;const im=productionVisual('guestAtlasV2');
+ if(i<0||i>=16||[6,8,9].includes(i))return false;const im=productionVisual('guestAtlasV2');
  if(!im||im.naturalWidth!==1024||im.naturalHeight!==1024)return false;
  const cell=256;ctx.save();ellipse(x,y+1,height*.19,Math.max(2,height*.035),'#352c2438');
  ctx.translate(x,y);ctx.scale(dir==='left'?-1:1,1);
@@ -6492,7 +6493,7 @@ drawPaintedResident=function(n,sc,moving,dir){
 const guestThumbCache=new Map(),guestSayBefore=say;
 say=function(...args){
  const result=guestSayBefore(...args),name=String(args[0]),i=guestAtlasNames.findIndex(v=>v.includes(name));
- if(i<0)return result;const portrait=$('talkPortrait');if(!portrait)return result;
+ if(i<0||[6,8,9].includes(i))return result;const portrait=$('talkPortrait');if(!portrait)return result;
  function apply(){if(!talkOpen||!$('speaker').textContent.startsWith(name))return;const im=productionVisual('guestAtlasV2');if(!im)return;
   if(!guestThumbCache.has(i)){const c=document.createElement('canvas');c.width=c.height=160;const g=c.getContext('2d');if(!g)return;g.drawImage(im,i%4*256,Math.floor(i/4)*256,256,256,0,0,160,160);guestThumbCache.set(i,c.toDataURL('image/png'))}
   portrait.src=guestThumbCache.get(i);portrait.hidden=false;portrait.classList.add('paintedResidentPortrait')
