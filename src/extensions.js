@@ -119,7 +119,7 @@ const oldFortuneVariation=arcanaReading;arcanaReading=function(d,rev){let base=o
 const proposalPolish=document.createElement('style');proposalPolish.textContent='#proposal .cinema-world{background:#34493b}#proposal .cinema-world img{object-fit:contain;background:#34493b}#proposal[data-shot="ticket"] .cinema-world img.station{transform:scale(1.08)}#proposal[data-shot="platform"] .cinema-world img.station{transform:scale(1.04)}#proposal .gate{max-width:520px;left:50%;width:100%;transform:translateX(-50%)}#proposal .gate-traveller{height:38%}#proposal footer{padding-bottom:4px}#worldSigns{z-index:2;pointer-events:none}#worldSigns .worldSign{pointer-events:auto!important;touch-action:manipulation;white-space:nowrap!important;max-width:calc(100vw - 16px)!important;min-height:44px!important;padding:7px 10px!important;font-size:12px!important;letter-spacing:.02em;box-shadow:0 2px 5px #322b2150!important}#moveGuide{bottom:calc(env(safe-area-inset-bottom,0px) + 158px);font-size:13px}#movePad{grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px)}#movePad button{min-width:44px;min-height:44px}#dialogue{max-height:42dvh!important;overflow:auto!important}#dialogue #choices{display:flex;flex-wrap:wrap;gap:6px}#dialogue #choices button{min-height:44px}#page .astroResult{overflow-wrap:anywhere}#page .astroForm details label{margin-top:10px}#page .v9scene{border-radius:5px!important}#gameControls button{min-height:44px}#fade{pointer-events:none!important}@media(max-height:480px){#moveGuide{bottom:80px;right:12px;left:auto;max-width:45vw;transform:none}#proposal .rail-ticket{padding:12px;gap:6px}}';document.head.append(proposalPolish);
 const signAnchorsProposal={tarot:[560,488],destiny:[300,715],temple:[680,943],wishes:[495,1190],station:[660,323]};
 syncSigns=function(){let show=scene==='fortune'&&!room&&!transitioning&&$('page').style.display!=='block'&&avatar!==null&&proposal.hidden&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;signRoot.hidden=!show;if(!show)return;if(signButtons.size!==maps.fortune.st.length){signRoot.replaceChildren();signButtons.clear();for(let [id,x,y,en,cn] of maps.fortune.st){let e=element('button','',signRoot,'worldSign');e.onclick=()=>walkDoor(id,x,y);signButtons.set(id,e)}}for(let [id,x,y,en,cn] of maps.fortune.st){let e=signButtons.get(id),[ax,ay]=signAnchorsProposal[id]||[x,y-90],sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;if(e.textContent!==tr(en,cn))e.textContent=tr(en,cn);e.hidden=sy<Math.min(145,H*.22)||sy>H-115||sx<0||sx>W;if(!e.hidden){const half=Math.min(W/2-8,(e.offsetWidth||100)/2+8);e.style.left=Math.max(half,Math.min(W-half,sx))+'px';e.style.top=sy+'px'}}};
-drawRoute=function(){if(pics.valleyClean?.naturalWidth)ctx.drawImage(pics.valleyClean,0,0,1000,routeHeight);for(let [x,y,r,i] of [[108,1280,36,0],[130,912,35,1],[475,918,36,2],[620,664,36,3],[960,594,30,4],[306,407,33,5],[855,267,35,6]])glow(x,y,r,i);for(let i=0;i<18;i++){let x=((i*91-t*(8+i%7))%1000+1000)%1000,y=(i*83+t*(14+i%8))%routeHeight;petal(x,y,3+i%4,i)}for(let [id,x,y] of maps.fortune.st){let z=doorZones[id];if(z)target(z[0],z[1],z[2],z[3],()=>walkDoor(id,x,y))}for(let n of [...npc,p,...sharedTownActors()].sort((a,b)=>a.y-b.y)){if(n.sharedPeer){drawSharedTownActor(n);continue}let sc=.72+n.y/routeHeight*.55;if(n===p){const sc=travellerOutdoorScale(1.65*(.72+p.y/routeHeight*.55),cam.scale,W,H,true);backHuman(p.x,p.y,avatar??0,p.walk,p.facing||'up',sc);continue}let dx=n.tx-n.x,dy=n.ty-n.y,moving=residentMoving(n),dir=Math.abs(dy)>Math.abs(dx)?dy<0?'up':'down':dx<0?'left':'right';if(n.kind===2&&n.visitor===undefined){cat(n.x,n.y,0,moving,.65*sc)}else{const k=stableResidentFallback(n);const actorScale=travellerOutdoorScale(1.22*sc,cam.scale,W,H,false);if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,k,moving,dir,actorScale)}if(Math.hypot(n.x-p.x,n.y-p.y)<105&&valleyRevealAt<0&&npc.filter(v=>Math.hypot(v.x-p.x,v.y-p.y)<105).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]===n){let label=n.visitor===undefined||n.popGuest?tr(...n.n):'···';drawMeowActorName(n,label);target(n.x-36,n.y-115,72,115,()=>npcTalk(n))}}if(!guideDismissed&&guideStage===0&&guideTarget&&valleyRevealAt<0&&proposal.hidden){let {x,y}=guideTarget,f=(Math.sin(t*3)+1)/2;ctx.save();ctx.strokeStyle='rgba(255,230,155,'+(.65+f*.3)+')';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,23+f*7,12+f*4,0,0,TAU);ctx.stroke();ctx.restore();target(x-40,y-40,80,80,()=>{stopRoute();p.tx=x;p.ty=y})}};
+drawRoute=function(){if(pics.valleyClean?.naturalWidth)ctx.drawImage(pics.valleyClean,0,0,1000,routeHeight);for(let [x,y,r,i] of [[108,1280,36,0],[130,912,35,1],[475,918,36,2],[620,664,36,3],[960,594,30,4],[306,407,33,5],[855,267,35,6]])glow(x,y,r,i);for(let i=0;i<18;i++){let x=((i*91-t*(8+i%7))%1000+1000)%1000,y=(i*83+t*(14+i%8))%routeHeight;petal(x,y,3+i%4,i)}for(let [id,x,y] of maps.fortune.st){let z=doorZones[id];if(z)target(z[0],z[1],z[2],z[3],()=>walkDoor(id,x,y))}for(let n of [...npc,p,...sharedTownActors()].sort((a,b)=>a.y-b.y)){if(n.sharedPeer){drawSharedTownActor(n);continue}let sc=.72+n.y/routeHeight*.55;if(n===p){const sc=travellerOutdoorScale(1.65*(.72+p.y/routeHeight*.55),cam.scale,W,H,true);backHuman(p.x,p.y,avatar??0,p.walk,p.facing||'up',sc);continue}let dx=n.tx-n.x,dy=n.ty-n.y,moving=residentMoving(n),dir=Math.abs(dy)>Math.abs(dx)?dy<0?'up':'down':dx<0?'left':'right';if(n.kind===2&&n.visitor===undefined){cat(n.x,n.y,0,moving,.65*sc)}else{const k=stableResidentFallback(n);const actorScale=travellerOutdoorScale(1.22*sc,cam.scale,W,H,false);if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,k,moving,dir,actorScale)}if(Math.hypot(n.x-p.x,n.y-p.y)<(n.popGuest?175:105)&&valleyRevealAt<0&&(n.popGuest||npc.filter(v=>Math.hypot(v.x-p.x,v.y-p.y)<105).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]===n)){let label=n.visitor===undefined||n.popGuest?tr(...n.n):'···';drawMeowActorName(n,label);target(n.x-36,n.y-115,72,115,()=>npcTalk(n))}}if(!guideDismissed&&guideStage===0&&guideTarget&&valleyRevealAt<0&&proposal.hidden){let {x,y}=guideTarget,f=(Math.sin(t*3)+1)/2;ctx.save();ctx.strokeStyle='rgba(255,230,155,'+(.65+f*.3)+')';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,23+f*7,12+f*4,0,0,TAU);ctx.stroke();ctx.restore();target(x-40,y-40,80,80,()=>{stopRoute();p.tx=x;p.ty=y})}};
 let lanternMemories=load('proposalLanternCount',0);
 const worldActivityDraw=drawActivity;drawActivity=function(){worldActivityDraw();if(activity==='wishes'){for(let i=0;i<Math.min(lanternMemories,7);i++){let x=185+i*66,y=295+(i%3)*28;ctx.save();ctx.translate(x+Math.sin(t*.9+i)*3,y);ctx.rotate(Math.sin(t*.9+i)*.04);glow(0,0,38,i);line(0,-35,0,-18,'#a68a61',1.5);round(-14,-18,28,35,8,'#db9b51','#875534');line(-5,-15,-5,14,'#ad6d3a');line(5,-15,5,14,'#ad6d3a');ctx.restore()}}};
 const finalGuideStart=start;start=function(id){finalGuideStart(id);if(id==='wishes')state.lanternAt=undefined};
@@ -1750,10 +1750,10 @@ drawMap=function(){
   if(n.kind===2){cat(n.x,n.y,0,moving,.65*sc);continue}
   const dir=Math.abs(n.ty-n.y)>Math.abs(n.tx-n.x)?(n.ty<n.y?'up':'down'):(n.tx<n.x?'left':'right');
   const actorScale=travellerOutdoorScale(sc,cam.scale,W,H,false),grannyScale=actorScale*94/150;
-  if(n.grumpy){drawWalkingGranny(n.x,n.y,grannyScale,moving,dir)}else if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,stableResidentFallback(n),moving,dir,actorScale);
+  if(n.grumpy){if(!drawGuestAtlasActor(0,n.x,n.y,94*actorScale,dir))drawWalkingGranny(n.x,n.y,grannyScale,moving,dir)}else if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,stableResidentFallback(n),moving,dir,actorScale);
   const actorHeight=94*actorScale;
   if(n.popGuest||n.grumpy)drawMeowActorName(n,tr(...n.n));
-  if(Math.hypot(n.x-p.x,n.y-p.y)<150){
+  if(Math.hypot(n.x-p.x,n.y-p.y)<(n.popGuest?175:150)){
    target(n.x-Math.max(36,actorScale*23),n.y-actorHeight,Math.max(72,actorScale*46),actorHeight+10,()=>npcTalk(n))
   }
  }
@@ -4004,6 +4004,7 @@ const productionPortraitBefore=portraitInteriorImage;
 portraitInteriorImage=function(id){return productionVisual(id)||productionPortraitBefore(id)};
 function drawProductionAhMa(x,y,scale=1){
  const age=t-stressSwingAt,releaseAge=t-(state?.riverAt??-100),scold=(activity==='hit'&&age>=0&&age<.46)||(activity==='riverShout'&&state.riverPhase==='walk'&&releaseAge>1.1&&releaseAge<2.8);
+ if(drawGuestAtlasActor(scold?2:1,x,y,174*scale,'right'))return true;
  const im=productionVisual(scold?'ahMaScold':'ahMaIdle')||productionVisual('ahMaIdle');
  if(!im)return false;
  ctx.save();ellipse(x,y+2,37*scale,8*scale,'#3b322842');
@@ -4423,7 +4424,7 @@ prop=function(id,x,y){
  if(room!=='park'||id!=='chat')return parkHostPropBefore(id,x,y);
  // Two visible hosts, grounded near a bench, no invisible conversation target.
  ctx.save();line(x-52,y-5,x-56,y+22,'#735842',5);line(x+52,y-5,x+56,y+22,'#735842',5);round(x-61,y-26,122,17,3,'#a78a62','#715940');round(x-61,y-54,122,23,2,'#9e805b','#715940');line(x-55,y-43,x+55,y-43,'#d5b38a',1.5);
- if(!drawPaintedResident({x:x-48,y:y+12,n:['Auntie Mei','梅姨']},.95,false,'right'))backHuman(x-48,y+12,1,false,'right',.87);backHuman(x+47,y+12,3,false,'left',.87);if(talkOpen){const who=$('speaker').textContent,mei=who===tr('Auntie Mei','梅姨'),lin=who===tr('Auntie Lin','林姨');if(mei||lin){const hx=x+(mei?-48:47);ellipse(hx,y-88,14,9,'#f5e5c8');for(let j=0;j<3;j++)ellipse(hx-6+j*6,y-88+Math.sin(t*4+j)*1.2,1.4,1.4,'#82755e')}}
+ if(!drawPaintedResident({x:x-48,y:y+12,n:['Auntie Mei','梅姨']},.95,false,'right'))backHuman(x-48,y+12,1,false,'right',.87);if(!drawGuestAtlasActor(3,x+47,y+12,82,'left'))backHuman(x+47,y+12,3,false,'left',.87);if(talkOpen){const who=$('speaker').textContent,mei=who===tr('Auntie Mei','梅姨'),lin=who===tr('Auntie Lin','林姨');if(mei||lin){const hx=x+(mei?-48:47);ellipse(hx,y-88,14,9,'#f5e5c8');for(let j=0;j<3;j++)ellipse(hx-6+j*6,y-88+Math.sin(t*4+j)*1.2,1.4,1.4,'#82755e')}}
  const sway=Math.sin(t*2)*.10;ctx.save();ctx.translate(x+27,y-31);ctx.rotate(sway);ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(-24,-34,0,-32);ctx.quadraticCurveTo(24,-34,0,0);ctx.fillStyle='#e2caa0';ctx.fill();ctx.strokeStyle='#a28a65';ctx.stroke();ctx.restore();ctx.restore()
 };
 /* Fictional park serials, with saved episode, scene and player choice. */
@@ -4775,7 +4776,7 @@ drawActivity=function(){
  threeWood(224,373,352,267,'#6d4b37');
  round(235,396,330,218,8,'#68786a','#4a5b50');
  for(let j=0;j<30;j++){const y=399+j*7;line(239,y,561,y,'#f9e6b30b',1)}
- if(g.opponent==='auntie'){const im=productionVisual(g.result?.who===2?'ahMaScold':'ahMaIdle')||productionVisual('ahMaIdle');if(im)ctx.drawImage(im,358,270,84,103);else riverAuntie(400,373,.70)}
+ if(g.opponent==='auntie'){const im=productionVisual(g.result?.who===2?'ahMaScold':'ahMaIdle')||productionVisual('ahMaIdle');if(!drawGuestAtlasActor(g.result?.who===2?2:1,400,373,103,'right')){if(im)ctx.drawImage(im,358,270,84,103);else riverAuntie(400,373,.70)}}
  else{cat(400,361,0,false,1.25)}
  ellipse(400,374,45,5,'#3f382d44');
  threeBoard(286,388,228,g.board,g);
@@ -6465,3 +6466,135 @@ const finalInterfaceStyle=document.createElement('style');finalInterfaceStyle.te
 #content .meowShareTabs button{font-size:11px!important}
 }
 `;document.head.append(finalInterfaceStyle);
+
+
+/* Distinct guest/resident sprites. The original 4x4 transparent WebP atlas
+   is an optional production asset; never label its fallback as painted art. */
+const guestAtlasNames=[['Grumpy Ah Ma','暴躁阿嬷'],['Ah Ma','阿嬷'],['Ah Ma scolding','阿嬷发火'],['Auntie Lin','林姨'],...popGuestStories.map(g=>g.name)];
+productionVisualManifest.guestAtlasV2={path:'assets/visual/painted/meowbox-resident-guest-atlas.webp',width:1024,height:1024};
+function guestAtlasIndex(n){
+ if(n?.popGuest){const i=popGuestStories.findIndex(g=>g.id===n.popGuest);return i>=0?4+i:-1}
+ return guestAtlasNames.findIndex(v=>v.includes(n?.n?.[0])||v.includes(n?.n?.[1]))
+}
+function drawGuestAtlasActor(i,x,y,height,dir='right'){
+ if(i<0||i>=16)return false;const im=productionVisual('guestAtlasV2');
+ if(!im||im.naturalWidth!==1024||im.naturalHeight!==1024)return false;
+ const cell=256;ctx.save();ellipse(x,y+1,height*.19,Math.max(2,height*.035),'#352c2438');
+ ctx.translate(x,y);ctx.scale(dir==='left'?-1:1,1);
+ ctx.drawImage(im,i%4*cell,Math.floor(i/4)*cell,cell,cell,-height/2,-height,height,height);
+ ctx.restore();return true
+}
+const guestResidentPaintBefore=drawPaintedResident;
+drawPaintedResident=function(n,sc,moving,dir){
+ const index=guestAtlasIndex(n);
+ if(index>=0&&drawGuestAtlasActor(index,n.x,n.y,94*sc,dir))return true;
+ return guestResidentPaintBefore(n,sc,moving,dir)
+};
+const guestThumbCache=new Map(),guestSayBefore=say;
+say=function(...args){
+ const result=guestSayBefore(...args),name=String(args[0]),i=guestAtlasNames.findIndex(v=>v.includes(name));
+ if(i<0)return result;const portrait=$('talkPortrait');if(!portrait)return result;
+ function apply(){if(!talkOpen||!$('speaker').textContent.startsWith(name))return;const im=productionVisual('guestAtlasV2');if(!im)return;
+  if(!guestThumbCache.has(i)){const c=document.createElement('canvas');c.width=c.height=160;const g=c.getContext('2d');if(!g)return;g.drawImage(im,i%4*256,Math.floor(i/4)*256,256,256,0,0,160,160);guestThumbCache.set(i,c.toDataURL('image/png'))}
+  portrait.src=guestThumbCache.get(i);portrait.hidden=false;portrait.classList.add('paintedResidentPortrait')
+ }
+ apply();const im=productionVisualCache.get('guestAtlasV2');if(im&&!im.complete)im.addEventListener('load',apply,{once:true});return result
+};
+
+/* Two visible guest slots on every district. Existing hosts and cats keep
+   their roles. First guest begins near the arrival path; the other explores. */
+function guestSpawnY(spawnY,min,max,slot){
+ return clamp(spawnY-(slot===0?100:390),min+40,max-40)
+}
+const livingGuestInitBefore=initNPC;
+initNPC=function(){
+ livingGuestInitBefore();const pool=popGuestPool(scene);if(!pool.length)return;
+ const slots=npc.filter(n=>n.popGuest);
+ for(let i=slots.length;i<Math.min(2,pool.length);i++){const g=popGuestFor(scene,i);if(!g)continue;const n={kind:1,visitor:i,popGuest:g.id,n:g.name};npc.push(n);slots.push(n)}
+ const entry=portraitMap()?.spawn?.[1]??Math.min(maxY()-25,1370);
+ slots.slice(0,2).forEach((n,i)=>{
+  const g=popGuestFor(scene,i),y=guestSpawnY(entry,minY(),maxY(),i),lane=residentLane(scene,y);
+  n.popGuest=g.id;n.n=g.name;n.x=n.tx=lane.x+(i%2?1:-1)*lane.half*.65;n.y=n.ty=y;n.walkDirection=-1;n.pathReady=false;n.pauseUntil=t+4+Math.random()*6
+ })
+};
+const guestWalkBefore=residentTarget;
+residentTarget=function(n,i){
+ guestWalkBefore(n,i);
+ if(!n.popGuest)return;
+ const y=clamp(n.y+(n.walkDirection||-1)*(55+Math.random()*85),minY()+20,Math.min(maxY()-20,scene==='fortune'?1370:Infinity));
+ const lane=residentLane(scene,y);n.ty=y;n.tx=lane.x+(i%2?1:-1)*lane.half*.55
+};
+
+/* Optional ambient visits during gameplay. Only one fictional resident, never
+   a synthetic online peer. Authored edge paths and actual hit/UI rectangles
+   must all be clear, otherwise no visitor is drawn. */
+const activityVisitorPaths={
+ cook:[[645,515],[645,595]],bubbleTea:[[640,515],[640,600]],
+ claw:[[620,570],[620,635]],rhythm:[[625,505],[625,580]],blindBox:[[620,475],[620,560]],
+ bubbleArcade:[[620,540],[620,610]],woodenThree:[[635,570],[635,635]],
+ riverBottle:[[620,490],[635,560]],riverShout:[[620,490],[635,560]],hit:[[615,535],[630,605]],
+ secretGarden:[[160,565],[160,635]],pet:[[605,520],[620,580]],
+ tarot:[[625,520],[625,585]],love:[[635,520],[635,585]],
+ templeBell:[[605,520],[625,590]],templeWater:[[625,535],[625,600]],
+ prayer:[[635,540],[635,605]]
+};
+const activityProtectedStage={
+ cook:[180,615,300,665],bubbleTea:[210,605,310,710],claw:[222,602,295,680],rhythm:[210,600,230,745],
+ blindBox:[210,595,250,680],bubbleArcade:[215,585,250,675],woodenThree:[215,585,265,675],
+ riverBottle:[165,600,175,635],riverShout:[165,605,200,635],hit:[205,565,315,640],
+ secretGarden:[200,605,285,670],pet:[235,565,320,655],tarot:[205,595,250,690],love:[185,615,230,800],
+ templeBell:[145,570,215,665],templeWater:[215,605,300,690],prayer:[155,610,310,665]
+};
+const ambientResidentPool=[['Temple keeper','庙祝'],['Master Yue','月师傅'],['Fortune Teller','占卜师'],['Auntie Mei','梅姨'],['Wang Laoban','王老板'],['Grandma','外婆']];
+const ambientResidentsByRoom={kitchen:[3,4],arcade:[3,4,5],fish:[3,4],park:[3,4],temple:[0,1,2],tarot:[0,1],daily:[0,1]};
+const ambientVisit={key:'',next:0,active:null,last:-1};
+function ambientVisitDelay(random=Math.random,first=false){return first?7+random()*19:19+random()*44}
+function ambientOverlap(a,b){return a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top}
+function ambientVisitSafe(rect,protectedRect,targets,ui,width,height){
+ if(rect.left<8||rect.right>width-8||rect.top<5||rect.bottom>height-5)return false;
+ return ![protectedRect,...targets,...ui].some(b=>b&&ambientOverlap(rect,b))
+}
+function screenWorldRect(left,right,top,bottom){return {left:cam.ox+left*cam.scale,right:cam.ox+right*cam.scale,top:cam.oy+top*cam.scale,bottom:cam.oy+bottom*cam.scale}}
+function ambientActivityGuest(){
+ const eligible=!!activity&&!!room&&!!activityVisitorPaths[activity]&&proposal.hidden&&!talkOpen&&!transitioning&&$('page').style.display!=='block'&&!document.hidden;
+ const key=eligible?scene+'|'+room+'|'+activity:'';
+ if(ambientVisit.key!==key){ambientVisit.key=key;ambientVisit.active=null;ambientVisit.next=t+ambientVisitDelay(Math.random,true)}
+ if(!eligible)return;
+ if(!ambientVisit.active&&t>=ambientVisit.next){
+  const pool=ambientResidentsByRoom[room]||[0,1,2,3,4,5],available=pool.filter(i=>i!==ambientVisit.last),pick=(available.length?available:pool)[Math.floor(Math.random()*(available.length||pool.length))];
+  ambientVisit.last=pick;ambientVisit.active={start:t,duration:6+Math.random()*6,index:pick,reverse:Math.random()<.5};
+  ambientVisit.next=t+ambientVisit.active.duration+ambientVisitDelay()
+ }
+ const a=ambientVisit.active;if(!a)return;
+ const f=(t-a.start)/a.duration;if(f>=1){ambientVisit.active=null;return}
+ // No foreground animations, controls, or character overlaps. No hit target,
+ // auto-dialogue, sound, input capture, score changes or fake public posts.
+ const [start,end]=activityVisitorPaths[activity],q=a.reverse?1-f:f;
+ const x=start[0]+(end[0]-start[0])*q,y=start[1]+(end[1]-start[1])*q;
+ const size=Math.min(92,55/Math.max(.08,cam.scale)),px=size*cam.scale;
+ if(px<28)return;
+ const rect=screenWorldRect(x-size*.38,x+size*.38,y-size-4,y+5);
+ const stage=activityProtectedStage[activity],protectedRect=stage?screenWorldRect(...stage):null;
+ const targets=hit.map(h=>screenWorldRect(h.x-5,h.x+h.w+5,h.y-5,h.y+h.h+5));
+ const ui=meowVisibleRects('#hud,#small,#dock,#back,#hint,#gameControls,#ritualActionBar,#dialogue,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet,#threeBoardAccess');
+ if(!ambientVisitSafe(rect,protectedRect,targets,ui,W,H))return;
+ const n={x,y,n:ambientResidentPool[a.index]};ctx.save();
+ ctx.globalAlpha=residentReducedMotion.matches?1:Math.min(1,f*6,(1-f)*6)*.92;
+ drawPaintedResident(n,size/94,!residentReducedMotion.matches,a.reverse?'up':'down');ctx.restore()
+}
+const ambientActivityDrawBefore=drawActivity;
+drawActivity=function(){const result=ambientActivityDrawBefore();ambientActivityGuest();return result};
+const livingGuestsTodayBefore=todayHub;
+todayHub=function(){
+ livingGuestsTodayBefore();const q=$('content'),section=element('section','',q,'guestVisitPanel');
+ element('h2',tr('Who is around town?','今天谁来摸鱼？'),section);
+ element('p',tr('Fictional town guests come and go. No need to chase them or finish every story.','小镇客串角色随缘出现，不用追着找，也不必集齐所有故事。'),section);
+ for(const district of ['fortune','home','island','wonder']){
+  const row=element('article','',section,'guestVisitRow');element('strong',tr(...maps[district].n),row);
+  const names=[0,1].map(i=>popGuestFor(district,i)).filter(Boolean).map(g=>tr(...g.name));
+  element('p',names.join(' · '),row);
+  if(district!==scene)b(row,tr('Visit district','去逛逛'),()=>journey(district));else element('small',tr('Current district · look along the main path','当前区域 · 沿小路偶遇'),row)
+ }
+ const first=q.querySelector('.communityWelcome');if(first)first.after(section)
+};$('dockScoop').onclick=todayHub;
+const guestVisitStyle=document.createElement('style');guestVisitStyle.textContent='.guestVisitPanel{margin:18px 0;padding:13px;border:1px solid #b7a17b;border-radius:6px;background:#f2e6cc;color:#594b38}.guestVisitRow{padding:9px 0;border-top:1px solid #c9b68f;overflow-wrap:anywhere}.guestVisitRow p{font-size:14px;margin:4px 0}.guestVisitRow button{min-height:44px}.guestVisitRow small{font-size:12px;color:#71634f}';document.head.append(guestVisitStyle);
