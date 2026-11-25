@@ -188,23 +188,54 @@ paintLandscapeRoom=function(id,...args){if(id==='tea'&&W/H>=1.15&&gatheringTeaBa
 const gatheringPropBefore=prop;
 function gatheringResident(name,x,y,scale,facing,kind){
  if(drawPaintedResident({x,y,n:name},scale,false,facing))return;
- backHuman(x,y,kind,false,facing,scale*.82)
+ backHuman(x,y,kind,false,facing,scale*.96)
 }
-function gatheringCup(x,y,c){ellipse(x,y+5,12,4,'#6f51434d');ellipse(x,y+3,11,4,'#d7bf98');round(x-7,y-8,14,11,3,c,'#82664d');ellipse(x,y-8,7,2.5,'#986c49');line(x+7,y-6,x+11,y-4,'#a98b63',2)}
+function gatheringCup(x,y,c){
+ ctx.save();ellipse(x+2,y+5,13,5,'#4c352832');ellipse(x,y+3,12,4.5,'#d7c6a3');ellipse(x,y+2,8,2.5,'#a58c6a');
+ const gl=ctx.createLinearGradient(x-8,0,x+8,0);gl.addColorStop(0,'#ded4b8');gl.addColorStop(.45,c);gl.addColorStop(1,'#7d8067');
+ ctx.fillStyle=gl;ctx.strokeStyle='#7a7057';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x-8,y-8);ctx.quadraticCurveTo(x-7,y+2,x-3,y+3);ctx.quadraticCurveTo(x+7,y+5,x+8,y-8);ctx.closePath();ctx.fill();ctx.stroke();ellipse(x,y-8,8,3,'#cdbb98');ellipse(x,y-8,6,2,'#8d6848');ctx.restore()
+}
+function gatheringTeaTable(x,y){
+ ctx.save();ctx.translate(x,y);
+ ellipse(0,42,100,15,'#3b2c2342');
+ // Rear legs, stretcher and nearer legs support the same tabletop.
+ for(const [xx,yy,foot] of [[-65,-10,25],[65,-10,25],[-73,10,44],[73,10,44]]){line(xx,yy,xx+(xx<0?-4:4),foot,'#684c36',8);line(xx+2,yy+2,xx+(xx<0?-4:4)+2,foot-2,'#b18c65',2)}
+ line(-72,34,72,34,'#795638',5);
+ const edge=ctx.createLinearGradient(0,-8,0,19);edge.addColorStop(0,'#bd9264');edge.addColorStop(1,'#805936');
+ ctx.beginPath();ctx.moveTo(-92,-12);ctx.bezierCurveTo(-94,6,-76,17,0,18);ctx.bezierCurveTo(76,17,94,6,92,-12);ctx.closePath();ctx.fillStyle=edge;ctx.fill();ctx.strokeStyle='#735239';ctx.lineWidth=1.5;ctx.stroke();
+ const top=ctx.createLinearGradient(-75,-28,75,10);top.addColorStop(0,'#c3a276');top.addColorStop(.42,'#d4b48a');top.addColorStop(1,'#b68b5e');
+ ellipse(0,-13,92,25,top);
+ ctx.save();ctx.beginPath();ctx.ellipse(0,-13,91,24,0,0,TAU);ctx.clip();
+ for(let j=0;j<8;j++){const yy=-34+j*6;ctx.strokeStyle=j%2?'#936a4745':'#ead0a37a';ctx.lineWidth=j%3===0?1.5:.7;ctx.beginPath();ctx.moveTo(-94,yy);ctx.bezierCurveTo(-33,yy-3,16,yy+5,95,yy-1);ctx.stroke()}
+ ctx.restore();ctx.strokeStyle='#ebd1a0';ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(0,-13,90,23,0,Math.PI*.07,Math.PI*.92);ctx.stroke();
+ // Tea tray, small glazed cups and teapot; everything rests on the surface.
+ ellipse(0,-14,36,10,'#8e765a');ellipse(0,-14,33,8,'#c1ac84');
+ gatheringCup(-53,-10,'#a5aa88');gatheringCup(51,-10,'#b88c72');
+ ellipse(1,-17,15,6,'#655b4344');
+ const glaze=ctx.createRadialGradient(-4,-29,2,1,-22,15);glaze.addColorStop(0,'#b4b493');glaze.addColorStop(1,'#687a64');
+ ellipse(1,-24,14,13,glaze);ellipse(1,-36,9,3,'#b6b598');ellipse(1,-39,2.5,2,'#63785f');
+ ctx.beginPath();ctx.moveTo(12,-26);ctx.quadraticCurveTo(27,-25,24,-34);ctx.strokeStyle='#77866a';ctx.lineWidth=4;ctx.stroke();
+ ctx.beginPath();ctx.ellipse(-13,-24,6,7,0,0,TAU);ctx.strokeStyle='#6a765d';ctx.lineWidth=2;ctx.stroke();
+ if(!residentReducedMotion.matches){ctx.strokeStyle='#fff5d36b';ctx.lineWidth=1;for(let j=0;j<2;j++){const phase=(t*.35+j*.5)%1;ctx.globalAlpha=(1-phase)*.45;ctx.beginPath();ctx.moveTo(1+j*4,-39-phase*10);ctx.quadraticCurveTo(9+j*4,-46-phase*10,2+j*4,-52-phase*10);ctx.stroke()}ctx.globalAlpha=1}
+ ctx.restore()
+}
+function gatheringStool(x,y){
+ ctx.save();ctx.translate(x,y);ellipse(0,19,20,5,'#49352530');for(const dx of [-11,11]){line(dx,0,dx+(dx<0?-3:3),18,'#72553c',4);line(dx+1,1,dx+1,15,'#a98a60',1)}
+ ellipse(0,0,20,8,'#97734f');ellipse(0,-3,20,7,'#c5a57b');ctx.strokeStyle='#8d6e4c80';ctx.lineWidth=.9;ctx.beginPath();ctx.ellipse(0,-3,14,4,0,0,TAU);ctx.stroke();ctx.restore()
+}
 prop=function(id,x,y){
  if(room!=='tea')return gatheringPropBefore(id,x,y);
  if(id==='chat'){
   ctx.save();
-  // Furniture and resident feet remain inside the room's non-walking zone.
-  ellipse(x,y+3,95,11,'#49352524');for(const dx of [-56,56])line(x+dx,y-6,x+dx,y+8,'#725039',5);round(x-75,y-20,150,14,4,'#94734f','#694d37');
-  gatheringResident(['Auntie Mei','梅姨'],x-48,y-6,1.12,'right',0);
-  gatheringResident(['Grandma','外婆'],x+48,y-6,1.12,'left',1);
-  const im=townResidentImage('lin');if(im.complete&&im.naturalWidth){ellipse(x+107,y+23,15,4,'#352c2438');ctx.drawImage(im,x+107-37,y+23-85,74,91)}else gatheringResident(['Auntie Lin','林姨'],x+107,y+23,.97,'left',2);
-  ellipse(x,y+25,91,15,'#49352535');for(const dx of [-62,62]){line(x+dx,y+6,x+dx-3,y+38,'#725039',7);line(x+dx,y+6,x+dx+3,y+36,'#b18a61',2)}
-  round(x-84,y-12,168,25,6,'#a77d53','#705039');ellipse(x,y-12,84,13,'#b99469');line(x-65,y-10,x+65,y-10,'#dfb88b',1.5);
-  gatheringCup(x-50,y-13,'#e0d3ae');gatheringCup(x+49,y-13,'#91a58b');ellipse(x,y-17,19,8,'#dbca9f');ellipse(x,y-22,12,13,'#918d69');ellipse(x,y-34,9,3,'#b4ad86');line(x+12,y-26,x+20,y-32,'#7d7758',4);
-  // An empty stool is an invitation, not an invisible collider or new activity.
-  ellipse(x-96,y+54,19,5,'#49352535');for(const dx of [-10,10])line(x-96+dx,y+33,x-96+dx,y+51,'#75573e',4);ellipse(x-96,y+32,18,7,'#a7845d');
+  // Rear guests have stable feet; the table partly occludes their lower bodies.
+  gatheringStool(x-48,y-10);gatheringStool(x+48,y-10);
+  gatheringResident(['Auntie Mei','梅姨'],x-48,y-8,1.16,'right',0);
+  gatheringResident(['Grandma','外婆'],x+48,y-8,1.16,'left',1);
+  gatheringTeaTable(x,y);
+  const im=townResidentImage('lin');
+  if(im.complete&&im.naturalWidth){ellipse(x+116,y+32,17,4,'#352c2438');ctx.drawImage(im,x+116-42,y+32-96,84,103)}
+  else gatheringResident(['Auntie Lin','林姨'],x+116,y+32,1.04,'left',2);
+  gatheringStool(x-99,y+36);
   ctx.restore();return
  }
  if(id==='board'){gatheringPropBefore(id,x,y);gatheringResident(['Master Yue','月师傅'],x+90,y+3,.95,'left',3);return}
@@ -628,7 +659,7 @@ function tarotShareSnapshot(source){
 /* Keep headline, artwork, labels and footer in distinct reserved bands. */
 function tarotEditorialLayout(w,h,count){
  if(![1,3,5].includes(count)||w<=0||h<=0)throw Error('Invalid keepsake geometry');
- const top=260, bottom=h-150, rows=count===5?[2,3]:[count], rowH=(bottom-top)/rows.length;
+ const top=282, bottom=h-150, rows=count===5?[2,3]:[count], rowH=(bottom-top)/rows.length;
  const slots=[];let i=0;
  rows.forEach((n,row)=>{
   const step=n===1?Math.min(w-160,540):Math.min((w-152)/n,292);
@@ -661,8 +692,8 @@ function tarotKeepsakePage(entry,back=null){
  const title=joke?tr(...joke):tr('Take what helps you. Leave the rest.','有启发的就留下，其他的放一放。');
  line(tr('MEOWBOX  /  THE TAROT HOUSE','摸鱼小镇  /  塔罗小屋'),100,24,'#786847',600);
  const headline=lines(title,w-188,43,3),y0=153-(headline.length-1)*4;headline.forEach((v,i)=>line(v,y0+i*50,43,'#344b42',600));
- g.strokeStyle='#b39b69';g.lineWidth=1.3;g.beginPath();g.moveTo(130,242);g.lineTo(w/2-20,242);g.moveTo(w/2+20,242);g.lineTo(w-130,242);g.stroke();
- g.save();g.translate(w/2,242);g.rotate(Math.PI/4);g.fillStyle='#a98d57';g.fillRect(-6,-6,12,12);g.restore();
+ g.strokeStyle='#b39b69';g.lineWidth=1.3;g.beginPath();g.moveTo(130,264);g.lineTo(w/2-20,264);g.moveTo(w/2+20,264);g.lineTo(w-130,264);g.stroke();
+ g.save();g.translate(w/2,264);g.rotate(Math.PI/4);g.fillStyle='#a98d57';g.fillRect(-6,-6,12,12);g.restore();
  for(const slot of geo.slots){
   const v=entry.cards[slot.i],cx=slot.cx,cy=slot.cy,cw=slot.w,ch=slot.h,x=cx-cw/2,y=cy-ch/2;
   g.save();g.shadowColor='#30291845';g.shadowBlur=16;g.shadowOffsetY=6;g.fillStyle='#465e50';g.fillRect(x-5,y-5,cw+10,ch+10);g.restore();g.strokeStyle='#b69d68';g.strokeRect(x-3,y-3,cw+6,ch+6);g.fillStyle='#eadbb5';g.fillRect(x,y,cw,ch);
