@@ -119,7 +119,7 @@ const oldFortuneVariation=arcanaReading;arcanaReading=function(d,rev){let base=o
 const proposalPolish=document.createElement('style');proposalPolish.textContent='#proposal .cinema-world{background:#34493b}#proposal .cinema-world img{object-fit:contain;background:#34493b}#proposal[data-shot="ticket"] .cinema-world img.station{transform:scale(1.08)}#proposal[data-shot="platform"] .cinema-world img.station{transform:scale(1.04)}#proposal .gate{max-width:520px;left:50%;width:100%;transform:translateX(-50%)}#proposal .gate-traveller{height:38%}#proposal footer{padding-bottom:4px}#worldSigns{z-index:2;pointer-events:none}#worldSigns .worldSign{pointer-events:auto!important;touch-action:manipulation;white-space:nowrap!important;max-width:calc(100vw - 16px)!important;min-height:44px!important;padding:7px 10px!important;font-size:12px!important;letter-spacing:.02em;box-shadow:0 2px 5px #322b2150!important}#moveGuide{bottom:calc(env(safe-area-inset-bottom,0px) + 158px);font-size:13px}#movePad{grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px)}#movePad button{min-width:44px;min-height:44px}#dialogue{max-height:42dvh!important;overflow:auto!important}#dialogue #choices{display:flex;flex-wrap:wrap;gap:6px}#dialogue #choices button{min-height:44px}#page .astroResult{overflow-wrap:anywhere}#page .astroForm details label{margin-top:10px}#page .v9scene{border-radius:5px!important}#gameControls button{min-height:44px}#fade{pointer-events:none!important}@media(max-height:480px){#moveGuide{bottom:80px;right:12px;left:auto;max-width:45vw;transform:none}#proposal .rail-ticket{padding:12px;gap:6px}}';document.head.append(proposalPolish);
 const signAnchorsProposal={tarot:[560,488],destiny:[300,715],temple:[680,943],wishes:[495,1190],station:[660,323]};
 syncSigns=function(){let show=scene==='fortune'&&!room&&!transitioning&&$('page').style.display!=='block'&&avatar!==null&&proposal.hidden&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;signRoot.hidden=!show;if(!show)return;if(signButtons.size!==maps.fortune.st.length){signRoot.replaceChildren();signButtons.clear();for(let [id,x,y,en,cn] of maps.fortune.st){let e=element('button','',signRoot,'worldSign');e.onclick=()=>walkDoor(id,x,y);signButtons.set(id,e)}}for(let [id,x,y,en,cn] of maps.fortune.st){let e=signButtons.get(id),[ax,ay]=signAnchorsProposal[id]||[x,y-90],sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;if(e.textContent!==tr(en,cn))e.textContent=tr(en,cn);e.hidden=sy<Math.min(145,H*.22)||sy>H-115||sx<0||sx>W;if(!e.hidden){const half=Math.min(W/2-8,(e.offsetWidth||100)/2+8);e.style.left=Math.max(half,Math.min(W-half,sx))+'px';e.style.top=sy+'px'}}};
-drawRoute=function(){if(pics.valleyClean?.naturalWidth)ctx.drawImage(pics.valleyClean,0,0,1000,routeHeight);for(let [x,y,r,i] of [[108,1280,36,0],[130,912,35,1],[475,918,36,2],[620,664,36,3],[960,594,30,4],[306,407,33,5],[855,267,35,6]])glow(x,y,r,i);for(let i=0;i<18;i++){let x=((i*91-t*(8+i%7))%1000+1000)%1000,y=(i*83+t*(14+i%8))%routeHeight;petal(x,y,3+i%4,i)}for(let [id,x,y] of maps.fortune.st){let z=doorZones[id];if(z)target(z[0],z[1],z[2],z[3],()=>walkDoor(id,x,y))}for(let n of [...npc,p].sort((a,b)=>a.y-b.y)){let sc=.72+n.y/routeHeight*.55;if(n===p){const sc=travellerOutdoorScale(1.65*(.72+p.y/routeHeight*.55),cam.scale,W,H,true);backHuman(p.x,p.y,avatar??0,p.walk,p.facing||'up',sc);continue}let dx=n.tx-n.x,dy=n.ty-n.y,moving=residentMoving(n),dir=Math.abs(dy)>Math.abs(dx)?dy<0?'up':'down':dx<0?'left':'right';if(n.kind===2&&n.visitor===undefined){cat(n.x,n.y,0,moving,.65*sc)}else{const k=stableResidentFallback(n);const actorScale=travellerOutdoorScale(1.22*sc,cam.scale,W,H,false);if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,k,moving,dir,actorScale)}if(Math.hypot(n.x-p.x,n.y-p.y)<105&&valleyRevealAt<0&&npc.filter(v=>Math.hypot(v.x-p.x,v.y-p.y)<105).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]===n){let label=n.visitor===undefined||n.popGuest?tr(...n.n):'···';ctx.save();ctx.font='14px Georgia';let w=Math.max(34,ctx.measureText(label).width+16);round(n.x-w/2,n.y-111,w,24,5,'#fff0d9e8','#b39a70');txt(label,n.x,n.y-99,13);ctx.restore();target(n.x-36,n.y-115,72,115,()=>npcTalk(n))}}if(!guideDismissed&&guideStage===0&&guideTarget&&valleyRevealAt<0&&proposal.hidden){let {x,y}=guideTarget,f=(Math.sin(t*3)+1)/2;ctx.save();ctx.strokeStyle='rgba(255,230,155,'+(.65+f*.3)+')';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,23+f*7,12+f*4,0,0,TAU);ctx.stroke();ctx.restore();target(x-40,y-40,80,80,()=>{stopRoute();p.tx=x;p.ty=y})}};
+drawRoute=function(){if(pics.valleyClean?.naturalWidth)ctx.drawImage(pics.valleyClean,0,0,1000,routeHeight);for(let [x,y,r,i] of [[108,1280,36,0],[130,912,35,1],[475,918,36,2],[620,664,36,3],[960,594,30,4],[306,407,33,5],[855,267,35,6]])glow(x,y,r,i);for(let i=0;i<18;i++){let x=((i*91-t*(8+i%7))%1000+1000)%1000,y=(i*83+t*(14+i%8))%routeHeight;petal(x,y,3+i%4,i)}for(let [id,x,y] of maps.fortune.st){let z=doorZones[id];if(z)target(z[0],z[1],z[2],z[3],()=>walkDoor(id,x,y))}for(let n of [...npc,p,...sharedTownActors()].sort((a,b)=>a.y-b.y)){if(n.sharedPeer){drawSharedTownActor(n);continue}let sc=.72+n.y/routeHeight*.55;if(n===p){const sc=travellerOutdoorScale(1.65*(.72+p.y/routeHeight*.55),cam.scale,W,H,true);backHuman(p.x,p.y,avatar??0,p.walk,p.facing||'up',sc);continue}let dx=n.tx-n.x,dy=n.ty-n.y,moving=residentMoving(n),dir=Math.abs(dy)>Math.abs(dx)?dy<0?'up':'down':dx<0?'left':'right';if(n.kind===2&&n.visitor===undefined){cat(n.x,n.y,0,moving,.65*sc)}else{const k=stableResidentFallback(n);const actorScale=travellerOutdoorScale(1.22*sc,cam.scale,W,H,false);if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,k,moving,dir,actorScale)}if(Math.hypot(n.x-p.x,n.y-p.y)<105&&valleyRevealAt<0&&npc.filter(v=>Math.hypot(v.x-p.x,v.y-p.y)<105).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]===n){let label=n.visitor===undefined||n.popGuest?tr(...n.n):'···';ctx.save();ctx.font='14px Georgia';let w=Math.max(34,ctx.measureText(label).width+16);round(n.x-w/2,n.y-111,w,24,5,'#fff0d9e8','#b39a70');txt(label,n.x,n.y-99,13);ctx.restore();target(n.x-36,n.y-115,72,115,()=>npcTalk(n))}}if(!guideDismissed&&guideStage===0&&guideTarget&&valleyRevealAt<0&&proposal.hidden){let {x,y}=guideTarget,f=(Math.sin(t*3)+1)/2;ctx.save();ctx.strokeStyle='rgba(255,230,155,'+(.65+f*.3)+')';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,23+f*7,12+f*4,0,0,TAU);ctx.stroke();ctx.restore();target(x-40,y-40,80,80,()=>{stopRoute();p.tx=x;p.ty=y})}};
 let lanternMemories=load('proposalLanternCount',0);
 const worldActivityDraw=drawActivity;drawActivity=function(){worldActivityDraw();if(activity==='wishes'){for(let i=0;i<Math.min(lanternMemories,7);i++){let x=185+i*66,y=295+(i%3)*28;ctx.save();ctx.translate(x+Math.sin(t*.9+i)*3,y);ctx.rotate(Math.sin(t*.9+i)*.04);glow(0,0,38,i);line(0,-35,0,-18,'#a68a61',1.5);round(-14,-18,28,35,8,'#db9b51','#875534');line(-5,-15,-5,14,'#ad6d3a');line(5,-15,5,14,'#ad6d3a');ctx.restore()}}};
 const finalGuideStart=start;start=function(id){finalGuideStart(id);if(id==='wishes')state.lanternAt=undefined};
@@ -1738,7 +1738,8 @@ drawMap=function(){
  const im=portraitImages[scene];if(im?.naturalWidth)ctx.drawImage(im,0,0,1000,world.h);
  else{let g=ctx.createLinearGradient(0,0,0,world.h);g.addColorStop(0,'#9ab7b6');g.addColorStop(1,'#d4bb93');ctx.fillStyle=g;ctx.fillRect(0,0,1000,world.h);txt(tr('Preparing the village…','正在准备小镇……'),500,world.h*.5,22,'#314438')}
  for(let i=0;i<18;i++){let xx=(i*143+t*(4+i%4))%1000,yy=(i*97+t*(5+i%4))%world.h;ctx.globalAlpha=.50;petal(xx,yy,2.5,i);ctx.globalAlpha=1}
- for(const n of [...npc,p].sort((a,b)=>a.y-b.y)){
+ for(const n of [...npc,p,...sharedTownActors()].sort((a,b)=>a.y-b.y)){
+  if(n.sharedPeer){drawSharedTownActor(n);continue}
   const sc=Math.max(.95,(.8+n.y/world.h*.45));
   if(n===p){backHuman(n.x,n.y,avatar??0,n.walk,n.facing||'up',travellerOutdoorScale(sc,cam.scale,W,H,true));continue}
   const moving=residentMoving(n);
@@ -3165,7 +3166,7 @@ async function communityRequest(route,options={}){
 }
 function communityTabs(q){
  const tabs=element('nav','',q,'communityTabs');tabs.setAttribute('aria-label',tr('Community spaces','社区空间'));
- for(const [key,en,cn] of [['public','Town square','广场'],['lounge','Tea chat','茶馆闲聊'],['board','Noticeboard','留言墙']]){
+ for(const [key,en,cn] of [['public','Town square','广场'],['lounge','Tea chat','茶馆闲聊'],['board','Noticeboard','留言墙'],['stroll','Shared stroll','结伴散步']]){
   const btn=b(tabs,tr(en,cn),()=>{communityTab=key;townChatPage()});btn.setAttribute('aria-pressed',String(communityTab===key))
  }
 }
@@ -3255,6 +3256,7 @@ townChatPage=function(){
   page(tr('Town Square','摸鱼广场'),tr('A little company between adventures.','逛累了，就来聊两句。'),q=>{
    communityTabs(q);
    if(communityTab==='public')communityPublic(q,generation);
+   else if(communityTab==='stroll')sharedTownPage(q);
    else{renderResidentNoticeboard(q);b(q,tr('Open my private notes','打开我的私密留言'),()=>todayScoopBefore.call($('dockScoop')))}
   })
  }
@@ -5577,3 +5579,91 @@ const branchSheetStyle=document.createElement('style');branchSheetStyle.textCont
 fetch('assets/visual/painted/runtime.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(registerPaintedManifest).catch(()=>{});
 
 const communityFlowStyle=document.createElement('style');communityFlowStyle.textContent='.communityPlace{display:grid;gap:6px;margin:12px 0}.communityPlace select{font:inherit;min-height:44px;max-width:100%;padding:8px;border:1px solid #b8a27d;background:#fff5df;color:#524234;border-radius:6px}.communityReplyBar:not([hidden]){display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:8px;border-left:3px solid #879778;background:#efe3c9}.communityReplyBar button,.townChatLine button{min-height:44px}.communityOwn{margin:12px 0}';document.head.append(communityFlowStyle);
+
+/* Optional shared outdoor town. Real session snapshots only, never synthetic users. */
+const sharedTown={enabled:false,ready:false,inFlight:false,published:false,generation:0,lastSuccess:0,place:'',actors:new Map(),gesture:'none',gestureUntil:0,blocked:new Set(),error:false};
+const sharedGestureNames={wave:['Hello!','你好呀！'],cheer:['You got this!','给你打气！'],tea:['Tea break?','摸鱼喝茶？']};
+function sharedTownVisible(){return sharedTown.enabled&&!document.hidden&&proposal.hidden&&$('arrival').hidden&&!room&&!activity&&!transitioning&&avatar!==null&&!!maps[scene]}
+function sharedTownValidPeer(v){return v&&/^[a-f0-9]{24}$/.test(v.id)&&v.place===scene&&Number.isInteger(v.avatar)&&v.avatar>=0&&v.avatar<4&&Number.isFinite(v.x)&&Number.isFinite(v.y)&&v.x>=0&&v.x<=1000&&v.y>=0&&v.y<=mapWorldHeight()&&['up','down','left','right'].includes(v.facing)&&['none','wave','cheer','tea'].includes(v.gesture)}
+function sharedTownActors(){
+ if(!sharedTownVisible()||!sharedTown.ready||sharedTown.place!==scene||Date.now()-sharedTown.lastSuccess>12000)return [];
+ const now=performance.now(),out=[];
+ for(const a of sharedTown.actors.values()){
+  if(sharedTown.blocked.has(a.id))continue;
+  const f=matchMedia('(prefers-reduced-motion: reduce)').matches?1:Math.min(1,Math.max(0,(now-a.received)/900));
+  a.x=a.fromX+(a.toX-a.fromX)*f;a.y=a.fromY+(a.toY-a.fromY)*f;out.push(a)
+ }
+ return out;
+}
+function sharedTownLabel(id){return tr('Traveller ','旅人 ')+id.slice(0,5).toUpperCase()}
+function drawSharedTownActor(a){
+ // Limit drawing to visible playable corridor, keep the existing foot-based depth order.
+ const center=portraitMap()?portraitPathX(a.y):500;
+ if(a.y<minY()-15||a.y>maxY()+15||Math.abs(a.x-center)>(portraitMap()?180:240))return;
+ const sc=travellerOutdoorScale((isRoute()?1.22:1)*(.8+a.y/mapWorldHeight()*.45),cam.scale,W,H,false);
+ backHuman(a.x,a.y,a.avatar,a.walking===1,a.facing,sc);
+ if(Math.hypot(a.x-p.x,a.y-p.y)>145)return;
+ const gesture=sharedGestureNames[a.gesture];
+ ctx.save();const fs=13/Math.max(.6,cam.scale);ctx.font=fs+'px system-ui';const label=gesture?tr(...gesture):sharedTownLabel(a.id),width=ctx.measureText(label).width+12;
+ round(a.x-width/2,a.y-100*sc-22,width,22,5,'#f5ecd5f2','#89785f');txt(label,a.x,a.y-100*sc-11,fs,'#425b4c');ctx.restore();
+}
+async function sharedTownLeave(){
+ sharedTown.ready=false;sharedTown.actors.clear();sharedTown.lastSuccess=0;
+ if(sharedTown.inFlight)return;
+ if(!sharedTown.published)return;sharedTown.published=false;
+ try{await communityRequest('/presence',{method:'DELETE'})}catch{}
+}
+async function sharedTownHeartbeat(){
+ if(sharedTown.inFlight)return;
+ if(!sharedTownVisible()){await sharedTownLeave();sharedTownRefreshPanel();return}
+ if(!communityURL()){sharedTown.error=true;sharedTownRefreshPanel();return}
+ const generation=sharedTown.generation,place=scene;sharedTown.inFlight=true;
+ try{
+  if(!sharedTown.ready){const h=await communityRequest('/health');if(h.service!=='meowbox-community'||h.version!==1||!h.moderated||h.presence!==true)throw Error('presence unavailable')}
+  if(!sharedTownVisible()||generation!==sharedTown.generation||place!==scene)return;
+  const payload={place,x:Math.round(p.x),y:Math.round(p.y),avatar,facing:p.facing||'down',walking:!!p.walk,gesture:Date.now()<sharedTown.gestureUntil?sharedTown.gesture:'none'};
+  const data=await communityRequest('/presence',{method:'POST',body:JSON.stringify(payload)});sharedTown.published=true;
+  if(generation!==sharedTown.generation||place!==scene||!sharedTownVisible())return;
+  const old=sharedTown.place===place?sharedTown.actors:new Map(),next=new Map();
+  for(const v of (Array.isArray(data.peers)?data.peers:[]).slice(0,30)){
+   if(!sharedTownValidPeer(v)||sharedTown.blocked.has(v.id)||v.id===data.self)continue;
+   const prev=old.get(v.id),fx=prev?.x??v.x,fy=prev?.y??v.y;
+   next.set(v.id,{...v,sharedPeer:true,fromX:fx,fromY:fy,toX:v.x,toY:v.y,x:fx,y:fy,received:performance.now()})
+  }
+  sharedTown.actors=next;sharedTown.place=place;sharedTown.ready=true;sharedTown.error=false;sharedTown.lastSuccess=Date.now();
+ }catch{sharedTown.ready=false;sharedTown.actors.clear();sharedTown.error=true}
+ finally{sharedTown.inFlight=false;if(!sharedTownVisible()||generation!==sharedTown.generation)await sharedTownLeave();sharedTownRefreshPanel()}
+}
+function sharedTownEnable(enabled){
+ sharedTown.generation++;sharedTown.enabled=!!enabled;sharedTown.error=false;sharedTown.ready=false;sharedTown.actors.clear();sharedTown.gestureUntil=0;
+ if(!enabled)sharedTownLeave();else sharedTownHeartbeat();sharedTownRefreshPanel()
+}
+function sharedTownRefreshPanel(){
+ const q=document.getElementById('sharedTownPanel');if(!q||!q.isConnected)return;
+ const status=q.querySelector('[data-shared-status]'),toggle=q.querySelector('[data-shared-toggle]'),list=q.querySelector('[data-shared-list]'),actions=q.querySelector('[data-shared-actions]'),prompt=q.querySelector('[data-shared-prompt]');
+ toggle.textContent=sharedTown.enabled?tr('Return to solo mode','切回独处模式'):tr('Join the shared town','加入共享小镇');toggle.disabled=!communityURL();
+ const online=sharedTown.enabled&&sharedTown.ready&&sharedTown.place===scene&&Date.now()-sharedTown.lastSuccess<12000;
+ const peers=online?[...sharedTown.actors.values()].filter(a=>!sharedTown.blocked.has(a.id)):[];
+ status.textContent=!communityURL()?tr('Shared town is not connected yet. Solo play is available.','共享小镇尚未连接，仍可独自游玩。'):!sharedTown.enabled?tr('Solo mode · your position stays on this device.','独处模式 · 位置仅保存在本设备。'):!sharedTownVisible()?tr('Step outside to meet other travellers.','走到户外即可遇见其他旅人。'):sharedTown.error?tr('Connection unavailable. Retrying when possible.','连接暂不可用，将自动重试。'):!online?tr('Connecting…','连接中……'):tr(peers.length+' other connected travellers in this village','本村有 '+peers.length+' 位其他联机旅人');
+ actions.hidden=!online;prompt.hidden=!online;
+ const prompts=[['Resident · Auntie Mei: No need to talk. Just borrow a little peace and quiet.','居民 · 梅姨：不用找话题，安安静静摸会儿鱼。'],['Resident · Grandma: Anyone fancy a tea break? A wave will do.','居民 · 外婆：有人想喝杯茶吗？挥挥手就好。'],['Resident · Temple keeper: Enjoy your stroll. No attendance sheet today.','居民 · 庙祝：慢慢逛，今天不用签到。']];
+ prompt.textContent=online?tr(...prompts[peers.length===0?0:peers.length<3?1:2]):'';
+ const signature=peers.map(a=>a.id).join(',');if(list.dataset.signature===signature)return;list.dataset.signature=signature;list.replaceChildren();
+ for(const a of peers){const row=element('div','',list,'sharedTownPeer');element('span',sharedTownLabel(a.id),row);b(row,tr('Hide traveller','隐藏旅人'),()=>{sharedTown.blocked.add(a.id);sharedTown.actors.delete(a.id);sharedTownRefreshPanel()})}
+}
+function sharedTownPage(q){
+ const panel=element('section','',q,'communityWelcome');panel.id='sharedTownPanel';
+ element('h2',tr('A little company, no small talk required','有个伴，不必尬聊'),panel);
+ element('p',tr('Opt in to share your selected avatar, outdoor game position and preset gestures with other visitors. No personal nickname or private notes are sent. Residents are fictional. You can leave anytime.','自愿分享所选角色、户外游戏位置及预设动作。不发送个人昵称或私密留言。居民均为虚构，可随时退出。'),panel);
+ const status=element('p','',panel,'communityMuted');status.dataset.sharedStatus='';status.setAttribute('role','status');
+ const toggle=b(panel,'',()=>sharedTownEnable(!sharedTown.enabled));toggle.dataset.sharedToggle='';
+ const prompt=element('p','',panel);prompt.dataset.sharedPrompt='';
+ const actions=element('div','',panel);actions.dataset.sharedActions='';
+ for(const [gesture,en,cn] of [['wave','Wave','挥挥手'],['cheer','Send encouragement','打个气'],['tea','Tea break?','喝杯茶？']])b(actions,tr(en,cn),()=>{sharedTown.gesture=gesture;sharedTown.gestureUntil=Date.now()+10000;toast(tr('Gesture ready for the next update.','动作将在下次联机更新时发送。'))});
+ const list=element('div','',panel);list.dataset.sharedList='';
+ b(panel,tr('Show hidden travellers again','重新显示已隐藏旅人'),()=>{sharedTown.blocked.clear();sharedTownRefreshPanel()});
+ b(panel,tr('Back to the village','回到小镇'),()=>{$('page').style.display='none'});
+ sharedTownRefreshPanel();
+}
+setInterval(sharedTownHeartbeat,5000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)sharedTownLeave();else if(sharedTown.enabled)sharedTownHeartbeat()});
