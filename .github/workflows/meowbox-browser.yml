@@ -130,8 +130,8 @@ jobs:
                   if(!localStorage.getItem('meowbox-preview-items'))localStorage.setItem('meowbox-preview-items',JSON.stringify([['Love reading','感情占卜'],['Migration test keepsake','迁移测试纪念品']]));
                 });
                 await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'load'});
-                if(!await page.evaluate(()=>items.some(v=>v[0]==='Three-card reading')&&!items.some(v=>v[0]==='Love reading')&&items.some(v=>v[0]==='Migration test keepsake')))throw Error('Legacy reading collectible migration failed');
                 await page.locator('#proposal footer button.next').waitFor({timeout:45000});
+                if(!await page.evaluate(()=>items.some(v=>v[0]==='Three-card reading')&&!items.some(v=>v[0]==='Love reading')&&items.some(v=>v[0]==='Migration test keepsake')))throw Error('Legacy reading collectible migration failed');
                 await page.screenshot({path:'test-results/'+name+'-entrance.png'});
                 const lang=page.locator('#proposal .languageChoice');
                 await lang.getByRole('button',{name:'中文',exact:true}).click();
