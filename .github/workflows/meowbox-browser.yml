@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: meowbox-browser-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   browser:
     runs-on: ubuntu-latest
@@ -603,7 +606,7 @@ jobs:
 
   shrine-repair:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 18
     strategy:
       fail-fast: false
       matrix:
@@ -621,6 +624,13 @@ jobs:
         run: |
           python3 -m http.server 8768 >/tmp/meowbox-shrine-server.log 2>&1 &
           node scripts/shrine-repair-test.cjs
+      - name: Test organic journey, responsive rotation and saved identity
+        if: always()
+        env:
+          MEOW_BROWSER: ${{ matrix.engine }}
+        run: |
+          python3 -m http.server 8768 >/tmp/meowbox-device-server.log 2>&1 &
+          node scripts/device-journey-test.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
