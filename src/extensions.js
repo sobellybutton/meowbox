@@ -2949,20 +2949,84 @@ function renderResidentNoticeboard(q){
   element('span',(offset+1)+' / '+pages,nav);const next=b(nav,tr('Next','下一页'),()=>{offset++;render();wrap.scrollIntoView({block:'start',behavior:'instant'})});next.disabled=offset===pages-1
  }render()
 }
+/* A local character lounge, not a simulated online-player population.
+   Typed messages stay in session memory and are never sent to a service. */
 const chatLocalHistory=[];
+let townChatGeneration=0,townChatTurn=0;
+const townChatReplies={
+ greeting:[
+ [['MRT Uncle','地铁阿叔'],['Hello lah. Come in, no need to take attendance.','来啦？这里不用打卡。']],
+ [['Auntie Hong','红姐'],['Hello! Tea first, gossip later.','来来来，先喝茶，瓜慢慢聊。']]],
+ cute:[
+ [['Grandma','外婆'],['Aiyoh, thank you! I just swept the kitchen too.','哎哟，谢谢！外婆刚把厨房扫干净呢。']],
+ [['Mochi','麻薯'],['Mrrp. I accept this compliment on behalf of the cats.','喵。代表全体猫咪收下这句夸奖。']]],
+ food:[
+ [['Kopi Uncle','咖啡叔'],['Chicken rice or ban mian? If you cannot decide, go where the queue is shorter.','吃鸡饭还是板面？实在选不出来，哪家排队短去哪家。']],
+ [['Hotpot Commissioner','火锅委员'],['Hotpot. No need for a committee meeting.','火锅。此事无需开会表决。']],
+ [['Grandma','外婆'],['Come to my kitchen. At least you know who cooked it.','来外婆家吧，至少知道是谁做的。']]],
+ work:[
+ [['Auntie Hong','红姐'],['The moment someone says quick call, I start charging my phone.','一听见领导说简单聊两句，我就开始给手机充电。']],
+ [['Office Intern','实习生'],['My boss says five minutes. Which time zone?','老板说五分钟。请问是哪个时区？']],
+ [['Lady Clocked Out','甄摸鱼'],['本宫 refuses to read another work message after six.','本宫六点以后不接工作群圣旨。']]],
+ rest:[
+ [['Temple keeper','庙祝'],['No attendance sheet here. Take as long as you need.','这里没有签到表，想歇多久歇多久。']],
+ [['MRT Uncle','地铁阿叔'],['Sit lah. You are not catching the last train.','坐啦，又不是赶末班地铁。']]],
+ gossip:[
+ [['Auntie Hong','红姐'],['Someone brought a spreadsheet to the tea room. It was promptly sent outside.','有人带表格进茶馆，被大家礼貌请出去了。']],
+ [['Office Intern','实习生'],['Heard there is a meeting-free day coming. They are meeting to confirm it.','听说要推行无会议日，正在开会确认。']]],
+ fortune:[
+ [['Master Yue','月师傅'],['I have a little star-sign notebook in Destiny House, if you fancy a look.','命理小馆有本十二星座小笺，有空来看看。']],
+ [['Temple keeper','庙祝'],['One wish at a time. The koi are not an express counter.','心愿一个一个来，锦鲤可不是快速窗口。']]],
+ travel:[
+ [['Mr. Raincheck','雨先生'],['My ideal holiday has a window seat and absolutely no itinerary before breakfast.','理想旅行：靠窗坐，早餐前没有任何行程。']],
+ [['Eurostar Nap Club','欧洲睡神'],['Take the scenic train. Just try not to sleep through the entire view like me.','坐趟观景列车吧，别像我一样一路睡过去。']]],
+ other:[
+ [['Auntie Hong','红姐'],['Tell me more? I am better at gossip than guessing.','再说说？我擅长吃瓜，不太擅长猜谜。']],
+ [['MRT Uncle','地铁阿叔'],['My expertise is mostly kopi, lunch and getting home on time. Which one shall we discuss?','我的专长是咖啡、午饭和准时下班。聊哪个？']]]
+};
+function townChatTopic(value){
+ const v=String(value).toLowerCase();
+ if(/cute|beautiful|pretty|love this|好可爱|可爱|好看|漂亮|喜欢这个/.test(v))return 'cute';
+ if(/food|eat|lunch|dinner|hungry|kopi|奶茶|吃|饿|午饭|晚饭|咖啡/.test(v))return 'food';
+ if(/gossip|八卦|吃瓜|有瓜/.test(v))return 'gossip';
+ if(/tired|stress|break|sleep|rest|摸鱼|休息|累|烦|睡/.test(v))return 'rest';
+ if(/work|boss|meeting|office|上班|下班|老板|领导|开会|加班/.test(v))return 'work';
+ if(/zodiac|tarot|fortune|horoscope|星座|塔罗|运势|求签/.test(v))return 'fortune';
+ if(/travel|holiday|trip|vacation|旅游|旅行|度假/.test(v))return 'travel';
+ if(/^(hi\b|hello\b|hey\b|你好|哈喽|嗨|大家好)/.test(v.trim()))return 'greeting';
+ return 'other'
+}
+function townChatReply(value,turn){const pool=townChatReplies[townChatTopic(value)];return pool[((turn%pool.length)+pool.length)%pool.length]}
 function townChatPage(){
- page(tr('Town chat','小镇聊天室'),tr('Chat with fictional town residents. This is a local, scripted conversation, not a live multiplayer lobby.','和虚构小镇角色聊天。这里是本地角色对话，不是真人联机聊天室。'),q=>{
+ const generation=++townChatGeneration;
+ page(tr('Town chat','小镇聊天室'),tr('A chat with town characters · local play, not live players.','小镇角色聊天室 · 本地互动，非真人联机。'),q=>{
   const transcript=element('div','',q,'townChatTranscript');transcript.setAttribute('role','log');transcript.setAttribute('aria-live','polite');
-  const topics=[
-   [['Anyone else still at work?','还有谁没下班？'],[2,6,10,18]],
-   [['What should I eat?','今天吃什么？'],[3,7,12,13]],
-   [['Any good gossip?','今天有瓜吗？'],[0,1,14,15]],
-   [['I need a break.','想摸会儿鱼。'],[4,8,16,17]]
-  ];
-  function render(){transcript.replaceChildren();const initial=townMessages.slice(0,3).map(m=>({name:[m[0],m[1]],line:[m[3],m[4]]}));for(const m of [...initial,...chatLocalHistory.slice(-18)]){const row=element('article','',transcript,'townChatLine'+(m.self?' self':''));element('strong',m.self?tr('You','你'):tr(...m.name),row);element('p',tr(...m.line),row)}transcript.scrollTop=transcript.scrollHeight}
-  render();const choices=element('div','',q,'townChatChoices');for(let i=0;i<topics.length;i++){const [prompt,pool]=topics[i];b(choices,tr(...prompt),()=>{chatLocalHistory.push({self:true,line:prompt});const m=townMessages[pool[(hash(shrineClock().day+'chat'+i)+chatLocalHistory.length)%pool.length]];chatLocalHistory.push({name:[m[0],m[1]],line:[m[3],m[4]]});if(chatLocalHistory.length>40)chatLocalHistory.splice(0,2);render()})}
+  const status=element('small','',q,'townChatStatus');status.setAttribute('aria-live','polite');
+  const form=element('form','',q,'townChatCompose'),input=element('input','',form);input.type='text';input.maxLength=180;input.placeholder=tr('Say something…','说点什么……');input.setAttribute('aria-label',tr('Your message','你的消息'));input.autocomplete='off';
+  const send=element('button',tr('Send','发送'),form);send.type='submit';
+  const topics=[['Anyone else still at work?','还有谁没下班？'],['What should I eat?','今天吃什么？'],['Any good gossip?','今天有瓜吗？'],['I need a break.','想摸会儿鱼。']];
+  const initial=townMessages.slice(0,3).map(m=>({name:[m[0],m[1]],line:[m[3],m[4]]}));
+  let pendingReply=false,ambientCount=0;
+  const active=()=>generation===townChatGeneration&&transcript.isConnected&&$('page').style.display==='block';
+  function render(){if(!active())return;transcript.replaceChildren();for(const m of [...initial,...chatLocalHistory.slice(-24)]){const row=element('article','',transcript,'townChatLine'+(m.self?' self':''));element('strong',m.self?tr('You','你'):tr(...m.name),row);element('p',m.raw??tr(...m.line),row)}transcript.scrollTop=transcript.scrollHeight}
+  function append(m){chatLocalHistory.push(m);if(chatLocalHistory.length>48)chatLocalHistory.splice(0,chatLocalHistory.length-48);render()}
+  function submit(value){
+   const raw=String(value).trim().slice(0,180);if(!raw||pendingReply||!active())return;
+   append({self:true,raw});input.value='';pendingReply=true;send.disabled=true;
+   const [name,line]=townChatReply(raw,townChatTurn++);
+   status.textContent=tr(name[0]+' is replying…',name[1]+'正在回复……');
+   setTimeout(()=>{if(!active())return;append({name,line});pendingReply=false;send.disabled=false;status.textContent=''},700+Math.min(raw.length*12,650))
+  }
+  form.addEventListener('submit',e=>{e.preventDefault();submit(input.value)});
+  const choices=element('div','',q,'townChatChoices');for(const prompt of topics)b(choices,tr(...prompt),()=>submit(tr(...prompt)));
+  render();
+  // Occasional authored background chatter only while the character lounge is open.
+  function ambient(){if(!active()||ambientCount>=4)return;if(!pendingReply){const m=townMessages[(hash(shrineClock().day+'lounge')+ambientCount*3)%townMessages.length];append({name:[m[0],m[1]],line:[m[3],m[4]]});ambientCount++}setTimeout(ambient,16000)}
+  setTimeout(ambient,13000)
  })
 }
 const townSocialCSS=document.createElement('style');townSocialCSS.textContent='.townResidentNote{background:#f2e5cb;border:1px solid #c1a77c;margin:10px 0;padding:14px 16px;color:#564635;border-radius:3px;transform:rotate(-.35deg)}.townResidentNote:nth-child(even){background:#e7e4c8;transform:rotate(.35deg)}.townResidentNote small{float:right;color:#756449}.townResidentNote p,.townChatLine p{margin:6px 0;line-height:1.5;overflow-wrap:anywhere}.townPostNav{display:flex;align-items:center;justify-content:space-between;gap:8px}.townPostNav button,.townChatChoices button{min-height:44px}.townChatTranscript{max-height:47dvh;overflow:auto;padding:8px;background:#dcdac5;border:1px solid #b3a886}.townChatLine{margin:8px 32px 10px 0;padding:10px;background:#f9efd9;border:1px solid #d0bb96;border-radius:5px}.townChatLine strong{font-size:12px;color:#65744e}.townChatLine.self{margin:8px 0 10px 32px;background:#e1e7ce}.townChatChoices{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}.townChatChoices button{white-space:normal;font-size:13px}';document.head.append(townSocialCSS);
 
 const wallStyle=document.createElement('style');wallStyle.textContent='.townWall{margin:16px 0 24px;scroll-margin:12px}.wallIntro{margin:4px 0 8px}.wallDisclosure{display:block;font-size:12px;line-height:1.4;color:inherit;opacity:.78;margin-bottom:12px}.townResidentNote{transform:none!important;padding:13px 15px}.townResidentNote strong{font-size:13px;color:#64754f}.townResidentNote p{font-size:15px;line-height:1.5}.wallReplies{margin-top:9px;border-top:1px solid #b6a07955;padding-top:7px}.wallReplies summary{font-size:13px;cursor:pointer;min-height:32px;line-height:1.5}.wallReply{border-left:2px solid #baa17a;padding-left:10px;margin:8px 0}.wallReply p{font-size:14px}.townPostNav span{font-size:13px}';document.head.append(wallStyle);
+
+const chatComposeStyle=document.createElement('style');chatComposeStyle.textContent='.townChatCompose{display:flex;gap:8px;align-items:center;margin:8px 0}.townChatCompose input{flex:1;min-width:0;font-size:16px;padding:10px;border:1px solid #b3a886;border-radius:4px;background:#fff6e4;color:#514337}.townChatCompose button{min-height:44px;flex:0 0 auto}.townChatStatus{display:block;min-height:20px;margin:5px 0;font-size:12px;color:inherit}.townChatTranscript{max-height:36dvh!important}';document.head.append(chatComposeStyle);
