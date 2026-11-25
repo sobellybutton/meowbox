@@ -29,6 +29,7 @@ CREATE INDEX IF NOT EXISTS messages_reply ON messages(reply_to);
 CREATE TABLE IF NOT EXISTS presence (
  owner TEXT PRIMARY KEY, public_id TEXT NOT NULL UNIQUE, rate_key TEXT NOT NULL,
  place TEXT NOT NULL CHECK(place IN ('fortune','home','island','wonder')),
+ room TEXT NOT NULL DEFAULT '' CHECK(room IN ('','tea','park','kitchen','arcade')),
  x INTEGER NOT NULL CHECK(x BETWEEN 0 AND 1000),
  y INTEGER NOT NULL CHECK(y BETWEEN 0 AND 1777),
  avatar INTEGER NOT NULL CHECK(avatar BETWEEN 0 AND 3),
@@ -47,3 +48,17 @@ CREATE TABLE IF NOT EXISTS reactions (
  created INTEGER NOT NULL, PRIMARY KEY(message_id,owner)
 );
 CREATE INDEX IF NOT EXISTS reactions_owner_created ON reactions(owner,created);
+
+-- Presence moderation. Traveller codes are pseudonymous and contain no account data.
+CREATE TABLE IF NOT EXISTS presence_blocks (
+ owner TEXT NOT NULL, target_id TEXT NOT NULL, created INTEGER NOT NULL,
+ PRIMARY KEY(owner,target_id)
+);
+CREATE TABLE IF NOT EXISTS presence_reports (
+ reporter TEXT NOT NULL, target_id TEXT NOT NULL, reason TEXT NOT NULL CHECK(reason IN ('harassment','spam','other')), created INTEGER NOT NULL,
+ PRIMARY KEY(reporter,target_id)
+);
+CREATE INDEX IF NOT EXISTS presence_reports_created ON presence_reports(created);
+CREATE TABLE IF NOT EXISTS presence_bans (
+ public_id TEXT PRIMARY KEY, until INTEGER NOT NULL
+);
