@@ -42,5 +42,29 @@ module.exports=function runQualityChecks(s,log=console.log){
  const prayer=build(range('function poseEase(','/* Use the actual illustrated side-view')+range('function prayerBowFrame(','function beginQuietBow(')+';return prayerBowFrame');
  for(let i=0;i<3;i++){const low=prayer(i*1.8),deep=prayer(i*1.8+.95),up=prayer(i*1.8+1.79);assert(low.bow<.01&&deep.bow>.99&&up.bow<.01&&deep.completed===i,'Prayer bow '+i);assert(pose({bow:deep.bow,praying:true}).angle>.6,'Visible torso bend')}
  assert(prayer(5.4).completed===3&&prayer(5.4).bow===0,'Prayer finish');results.prayerBows=7;
+
+ // 12. Plaque and name layouts stay inside the screen, avoid occupied rectangles,
+ // and never move far enough from the original door to misidentify another shop.
+ const placeText=build(range('function meowPlaceText(','let meowTextFrameRects=')+';return meowPlaceText');
+ const overlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+ let placements=0,hidden=0;
+ for(const [width,height] of [[320,568],[375,667],[390,844],[430,932],[844,390],[1280,720],[1920,1080]]){
+  const bounds={left:6,right:width-6,top:Math.min(164,height*.25),bottom:height-100};
+  for(const language of ['en','zh'])for(const actorOffset of [-36,0,36]){
+   const occupied=[{left:width*.5-26,right:width*.5+26,top:height*.42+actorOffset,bottom:height*.42+actorOffset+90}];
+   for(const [fx,fy] of [[.22,.32],[.76,.33],[.24,.51],[.75,.53],[.5,.64]]){
+    const x=width*fx,y=height*fy,w=language==='en'?126:90,h=44,maxShift=Math.min(62,width*.16);
+    const q=placeText(x,y,w,h,bounds,occupied,maxShift);
+    if(!q){hidden++;continue}
+    assert(q.rect.left>=bounds.left-1e-6&&q.rect.right<=bounds.right+1e-6&&q.rect.top>=bounds.top-1e-6&&q.rect.bottom<=bounds.bottom+1e-6,'Plaque escapes screen');
+    assert(!occupied.some(b=>overlap(b,q.rect)),'Text overlap');
+    assert(Math.hypot(q.x-x,q.y-y)<=maxShift+.02,'Plaque moved away from its building');occupied.push(q.rect);placements++;
+   }
+  }
+ }
+ assert(placements>0&&hidden>0,'Missing visible/hidden layout coverage');
+ assert(!placeText(100,100,60,44,{left:0,right:200,top:0,bottom:200},[{left:0,right:200,top:0,bottom:200}],40),'Fully blocked text must be omitted');
+ assert(!placeText(NaN,100,60,44,{left:0,right:200,top:0,bottom:200},[],40),'Invalid text coordinate accepted');
+ results.textPlacements=placements;results.textHidden=hidden;
  log('PASS: MeowBox isolated quality checks '+JSON.stringify(results));return results
 };
