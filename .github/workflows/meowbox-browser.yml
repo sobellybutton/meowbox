@@ -578,3 +578,24 @@ jobs:
         with:
           name: meowbox-browser-screenshots
           path: test-results/
+
+  share-exports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+      - name: Render and encode social cards
+        run: |
+          python3 -m http.server 8767 >/tmp/meowbox-share-server.log 2>&1 &
+          node scripts/share-export-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: meowbox-share-previews
+          path: test-results/
