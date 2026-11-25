@@ -39,6 +39,12 @@ jobs:
                 await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'load'});
                 await page.locator('#proposal footer button.next').waitFor({timeout:45000});
                 await page.screenshot({path:'test-results/'+name+'-entrance.png'});
+                const lang=page.locator('#proposal .languageChoice');
+                await lang.getByRole('button',{name:'中文',exact:true}).click();
+                if(await lang.getByRole('button',{name:'中文',exact:true}).getAttribute('aria-pressed')!=='true')throw Error('Chinese selection incorrect');
+                if(!/逃离现实/.test(await page.locator('#proposal footer h1').innerText()))throw Error('Chinese entrance translation incorrect');
+                await lang.getByRole('button',{name:'EN',exact:true}).click();
+                if(!/last train/i.test(await page.locator('#proposal footer h1').innerText()))throw Error('English entrance translation incorrect');
                 await page.locator('#proposal footer button.next').click();
                 await page.locator('#proposal .rail-ticket input').fill('Test Traveller');
                 await page.locator('#proposal .ticket-confirm').click();
@@ -51,6 +57,18 @@ jobs:
                 await page.locator('#dockPassport').click();
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
                 await page.screenshot({path:'test-results/'+name+'-passport.png'});
+                await page.locator('#dockRoom').click();
+                await page.locator('.travelAlbum').waitFor({timeout:8000});
+                await page.screenshot({path:'test-results/'+name+'-bag.png'});
+                await page.reload({waitUntil:'load'});
+                await page.locator('#proposal footer button.next').waitFor({timeout:45000});
+                if(!/return/i.test(await page.locator('#proposal footer button.next').innerText()))throw Error('Returning player not recognised');
+                await page.locator('#proposal footer button.next').click();
+                await page.locator('#proposal').waitFor({state:'hidden',timeout:30000});
+                await page.waitForTimeout(3500);
+                await page.locator('#dockPassport').click();
+                await page.locator('.travelAlbum').waitFor({timeout:8000});
+                if(!/Test Traveller/.test(await page.locator('.albumProfile').innerText()))throw Error('Saved player name lost');
                 if(errors.length)throw Error(errors.join('; '));
                 console.log(name+': PASS');
               }catch(e){failed=true;console.error(name+': FAIL '+e.message);await page.screenshot({path:'test-results/'+name+'-failure.png'}).catch(()=>{});}
