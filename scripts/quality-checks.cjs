@@ -161,5 +161,11 @@ module.exports=function runQualityChecks(s,log=console.log){
  zh=!zh;now+=40;syncSigns();if([...signButtons.values()].some(v=>v.plaque.textContent!==tr(...maps[scene].st.find(d=>d[0]===v.dataset.door).slice(3))))throw Error('Language update failed');
  checks++;
  }return checks;`);
+ // 20. Deer encounters use stable daily identities, safe saved records and once-daily care.
+ results.deerMeadow=build(`let activity='deerVisit',t=0,day='2026-11-26',state={deerPhase:'greet'},awards=0,postcards=0;const store=new Map(),load=(k,d)=>store.get(k)??d,save=(k,v)=>store.set(k,v),shrineClock=()=>({day}),hash=s=>Array.from(s).reduce((n,c)=>(n*31+c.charCodeAt(0))>>>0,0),addItem=()=>postcards++,lifeEarn=()=>awards++,refreshControls=()=>{},hint=()=>{};`+range('const deerProfiles=','const deerStartBefore=')+`
+ const ok=(x,m)=>{if(!x)throw Error(m)};
+ state.deerProfile=deerForDay(day);ok(deerForDay(day)===state.deerProfile,'Daily identity');ok(deerVisitRecord({day:'invalid',fed:true,met:['mugi','mugi','unknown']}).fed===false,'Invalid record');ok(deerVisitRecord({met:['mugi','mugi','unknown']}).met.length===1,'Valid memory IDs');
+ deerBow();ok(state.deerPhase==='bow','Bow state');deerFeed();ok(state.deerPhase==='bow','Cannot interrupt bow');state.deerPhase='ready';deerFeed();ok(state.deerPhase==='feed','Feed state');deerVisitReward();ok(state.deerPhase==='done'&&deerVisitRecord().fed&&postcards===1,'Feed completion');deerVisitReward();ok(postcards===1&&awards===1,'No duplicate reward');
+ day='2026-11-27';state.deerPhase='watch';deerVisitReward(false);ok(!deerVisitRecord().fed,'Observation does not consume cracker');state.deerPhase='ready';deerFeed();ok(state.deerPhase==='feed','Can feed after watching');return 10;`);
  log('PASS: MeowBox isolated quality checks '+JSON.stringify(results));return results
 };
