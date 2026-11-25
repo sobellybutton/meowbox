@@ -226,9 +226,10 @@ if(indoorStages.tarot?.stations?.tarot)indoorStages.tarot.stations.tarot=[400,44
 const curatedDiscoveryActionBefore=action;
 action=function(id){
  if(room==='tarot'&&id==='tarot'){
-  closeTalk();return say(tr('Fortune Teller','占卜师'),tr('One deck, two ways to reflect. The cards do not decide your future.','一副牌，两种读法。未来怎么走，还是你自己说了算。'),[
+  closeTalk();return say(tr('Fortune Teller','占卜师'),tr('One deck, three ways to reflect. The cards do not decide your future.','一副牌，三种读法。未来怎么走，还是你自己说了算。'),[
    [tr('One card for today','今日一张牌'),()=>{closeTalk();start('tarot')}],
-   [tr('Three cards for a question','带着问题抽三张牌'),()=>{closeTalk();start('love')}],
+   [tr('Three cards · quick reflection','三张牌 · 简短解读'),()=>{closeTalk();start('love')}],
+   [tr('Five cards · deeper reflection','五张牌 · 深入解读'),()=>{closeTalk();start('love');state.readSpreadSize=5}],
    [tr('Maybe later','待会儿再来'),closeTalk]
   ])
  }
@@ -263,7 +264,7 @@ const curatedDiscoveryIntroBefore=roomIntro;
 roomIntro=function(){
  curatedDiscoveryIntroBefore();
  if(activity)return;
- if(room==='tarot')hint('One table. Choose a daily card or a three-card reflection.','一张牌桌，抽今日一张牌，或带着问题抽三张。');
+ if(room==='tarot')hint('One table. Choose one, three or five cards.','一张牌桌，选一张、三张或五张牌。');
  if(room==='quiz')hint('Find out more about yourself. No diagnosis, no homework.','认识自己，不贴标签，也不交作业。');
  if(room==='match')hint('Explore how you might respond to someone you care about. No compatibility score.','想想你会怎样回应在乎的人。不算缘分分数。');
  if(room==='story')hint('Follow a story, make choices and discover a different ending.','跟着故事走，自己做决定，探索不同结局。')
@@ -348,7 +349,7 @@ function festivalTank(x,y,sc=1,game=null){
  ctx.save();ctx.beginPath();ctx.ellipse(0,0,137,73,0,0,TAU);ctx.clip();
  for(let i=0;i<15;i++){let xx=-124+(i*49%248),yy=-61+(i*33%122);ctx.globalAlpha=.18;ellipse(xx,yy,9+i%4*3,2,'#e7ead0')}
  ctx.globalAlpha=1;
- if(game){const age=t-game.at;for(let i=0;i<festivalFishKinds.length;i++){if(game.caught.includes(i))continue;const p=festivalFishPosition(i,age,game.seed);festivalDrawFish(p.x-400,p.y-458,festivalFishKinds[i],p.dir,age,i,.72)}}
+ if(game){const age=t-game.at;for(let i=0;i<festivalFishKinds.length;i++){const p=festivalFishPosition(i,age,game.seed);festivalDrawFish(p.x-400,p.y-458,festivalFishKinds[i],p.dir,age,i,.72);if(game.caught.includes(i)){ctx.save();ctx.globalAlpha=.65;ellipse(p.x-400,p.y-458-13,2,2,'#f6e6ba');ctx.restore()}}}
  else for(let i=0;i<3;i++)festivalDrawFish(-70+i*68,Math.sin(t*.8+i)*24,festivalFishKinds[i],i%2?1:-1,t,i,.8);
  ctx.restore();ctx.restore()
 }
@@ -397,5 +398,82 @@ mobileRoomCamera=function(s,ox,oy){
  return {s:z,ox:(short?(W-210)/2:W/2)-400*z,oy:(top+bottom)/2-475*z}
 };
 const festivalStyle=document.createElement('style');festivalStyle.textContent='#game #gameControls.festivalFishControls:not([hidden]){display:flex;flex-direction:column;gap:4px;width:min(92vw,390px);padding:7px;background:#f0e2c7;color:#514638;border:3px double #b09a72;border-radius:5px}.festivalFishControls small{font-size:12px;line-height:1.35;text-align:center}.festivalFishButtons{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}.festivalFishButtons button{min-width:44px!important;min-height:44px!important;padding:5px 8px!important;white-space:normal!important}@media(orientation:landscape) and (max-height:499px){#game #gameControls.festivalFishControls:not([hidden]){width:200px!important;left:auto!important;right:8px!important;transform:none!important}}';document.head.append(festivalStyle);
+
+
+/* One deck and one table; five cards extend the existing topic/shuffle flow.
+   Use a separate versioned archive for extended spreads so older journal
+   validation cannot silently discard them. No private question is uploaded. */
+const fiveReadingPositions=[['Situation','现状'],['Challenge','挑战'],['What helps','助力'],['A next step','下一步'],['Perspective','提醒']];
+function fiveReadingDraw(poolLength,random=Math.random){
+ const pool=Array.from({length:poolLength},(_,i)=>i),out=[];if(pool.length<5)return out;
+ for(let i=0;i<5;i++){const index=Math.min(pool.length-1,Math.max(0,Math.floor(random()*pool.length)));out.push({i:pool.splice(index,1)[0],rev:random()<.5})}return out
+}
+function fiveReadingLayout(portrait){
+ return portrait?[{x:330,y:385},{x:470,y:385},{x:260,y:565},{x:400,y:565},{x:540,y:565}].map(v=>({...v,w:82,h:125})):
+ [220,310,400,490,580].map(x=>({x,y:480,w:76,h:119}))
+}
+function fiveReadingArchive(){
+ const raw=load('fiveReadingJournalV1',[]);return Array.isArray(raw)?raw.filter(v=>typeof v?.date==='string'&&Array.isArray(v.cards)&&v.cards.length===5&&new Set(v.cards.map(c=>c.i)).size===5&&v.cards.every(c=>Number.isInteger(c.i)&&c.i>=0&&c.i<tarotDeck.length&&typeof c.rev==='boolean')).slice(0,40):[]
+}
+function fiveReadingSave(){
+ if(state.readSaved||state.readCards.length!==5||!state.readFlip.every(v=>v>=0&&t-v>=.72))return;
+ const entry={date:shrineClock().day,topic:state.readTopic,cards:state.readCards.map(v=>({...v}))};
+ const archive=fiveReadingArchive(),key=JSON.stringify(entry);
+ if(!archive.some(v=>JSON.stringify(v)===key))save('fiveReadingJournalV1',[entry,...archive].slice(0,40));
+ state.readSaved=true;addItem('Five-card reading','五张牌占卜');lifeEarn('ritual:reading',{wisdom:2,calm:1},true);hint('All five cards are saved in your reading journal.','五张牌都已收入塔罗手记。')
+}
+function fiveReadingDetail(v,i){
+ const d=tarotDeck[v.i];if(!d)return;
+ say(tr(...fiveReadingPositions[i]),tr(d[0],d[1])+' · '+orient(v.rev)+'\n\n'+arcanaReading(d,v.rev),[[tr('Back to the cards','回到牌桌'),closeTalk]])
+}
+function fiveReadingEntries(parent,entry){
+ for(const [i,v] of entry.cards.entries()){
+  const d=tarotDeck[v.i];if(!d)continue;const row=element('article','',parent,'fiveReadingEntry');
+  element('small',(i+1)+'. '+tr(...fiveReadingPositions[i]),row);element('strong',tr(d[0],d[1])+' · '+orient(v.rev),row);element('p',arcanaReading(d,v.rev),row)
+ }
+}
+function fiveReadingResult(entry){
+ page(tr('Five-card reflection','五张牌解读'),tr('Consider these five perspectives together. They are prompts, not predictions.','把五个角度放在一起慢慢想。它们是启发，不是预言。'),q=>{
+  const wrap=element('section','',q,'fiveReadingBook');fiveReadingEntries(wrap,entry);
+  b(wrap,tr('Back to the reading table','回到牌桌'),()=>{$('page').style.display='none'});
+  const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();fiveReadingResult(entry)}
+ })
+}
+const fiveDealBefore=readingDeal;
+readingDeal=function(){
+ if(activity!=='love'||state.readSpreadSize!==5)return fiveDealBefore();
+ if(state.readStage!=='deck'||!state.readShuffle)return;
+ const cards=fiveReadingDraw(tarotDeck.length);if(cards.length!==5)return;
+ state.readStage='deal';state.readAt=t;state.readCards=cards;state.readFlip=Array(5).fill(-1);state.readSaved=false;
+ cards.forEach(v=>readingArtwork(v.i));sound(460)
+};
+const fiveDrawBefore=drawActivity;
+drawActivity=function(){
+ if(activity!=='love'||state.readSpreadSize!==5||!['deal','cards'].includes(state.readStage))return fiveDrawBefore();
+ const age=t-state.readAt,portrait=W<H,slots=fiveReadingLayout(portrait),complete=state.readFlip.every(v=>v>=0&&t-v>=.72);
+ if(state.readStage==='deal'&&age>=1.45){state.readStage='cards';state.readAt=t;hint('Turn the five cards over one by one.','一张一张翻开五张牌。')}
+ ctx.save();paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);table();
+ for(const [i,slot] of slots.entries()){
+  const v=state.readCards[i];if(!v)continue;const f=state.readStage==='deal'?clamp((age-i*.17)/.62,0,1):1,e=f*f*(3-2*f),x=400+(slot.x-400)*e,y=465+(slot.y-465)*e-12*Math.sin(Math.PI*e),flip=state.readFlip[i]<0?0:clamp((t-state.readFlip[i])/.72,0,1),face=flip>=.5,w=slot.w*(flip>0&&flip<1?Math.max(.045,Math.abs(Math.cos(Math.PI*flip))):1),h=slot.h;
+  if(face)drawReadingCard(x-w/2,y-h/2,w,h,v.i,v.rev);else card(x-w/2,y-h/2,w,h,false);
+  if(state.readStage==='cards'){target(slot.x-slot.w/2-5,slot.y-slot.h/2-4,slot.w+10,slot.h+8,()=>{if(state.readFlip[i]<0)readingReveal(i);else if(t-state.readFlip[i]>=.72)fiveReadingDetail(v,i)});activityFitText(tr(...fiveReadingPositions[i]),slot.x,slot.y+slot.h/2+15,12,portrait?110:85,'#fff0d2');if(face)activityFitText(orient(v.rev),slot.x,slot.y+slot.h/2+28,11,portrait?110:85,'#f3dfaf')}
+ }
+ if(complete){fiveReadingSave();label(tr('Read all five','查看完整解读'),400,portrait?700:625,()=>fiveReadingResult({cards:state.readCards.map(v=>({...v})),topic:state.readTopic}));}
+ ctx.restore()
+};
+const fiveCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(s,ox,oy){
+ if(activity!=='love'||state.readSpreadSize!==5||!['deal','cards'].includes(state.readStage))return fiveCameraBefore(s,ox,oy);
+ const portrait=W<H,short=!portrait&&H<500,top=short?60:125,bottom=H-(short?74:120),left=portrait?210:170,right=portrait?590:630,u=portrait?305:405,d=portrait?735:665;
+ const z=Math.max(.08,Math.min((W-16)/(right-left),Math.max(80,bottom-top)/(d-u)));return {s:z,ox:W/2-(left+right)/2*z,oy:(top+bottom)/2-(u+d)/2*z}
+};
+const fiveJournalBefore=openReadingJournal;
+openReadingJournal=function(){
+ fiveJournalBefore();const q=$('content'),archive=fiveReadingArchive();if(!archive.length)return;
+ const wrap=element('section','',q,'fiveReadingBook');element('h2',tr('Five-card readings','五张牌手记'),wrap);
+ for(const v of archive){const row=element('article','',wrap,'fiveReadingEntry');element('strong',v.date,row);element('p',v.cards.map(c=>tr(tarotDeck[c.i][0],tarotDeck[c.i][1])).join(' · '),row);b(row,tr('Read again','重温解读'),()=>fiveReadingResult(v))}
+ const back=q.querySelector('.row button:first-child');const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();openReadingJournal()}
+};
+const fiveReadingStyle=document.createElement('style');fiveReadingStyle.textContent='.fiveReadingBook{background:#f2e4c9;color:#514638;border:3px double #a99168;padding:12px;margin:12px 0}.fiveReadingEntry{border-bottom:1px dashed #b49d77;padding:10px 0;overflow-wrap:anywhere}.fiveReadingEntry strong,.fiveReadingEntry small{display:block}.fiveReadingEntry strong{font:600 17px/1.4 Georgia,"Songti SC",serif;color:#53674e}.fiveReadingEntry p{line-height:1.6}.fiveReadingBook button{min-height:44px;white-space:normal}';document.head.append(fiveReadingStyle);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
