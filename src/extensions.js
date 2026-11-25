@@ -75,7 +75,7 @@ fade=function(fn,kind='gust',destination=null){if(kind==='postcard')return cinem
 const crowdStyle=document.createElement('style');crowdStyle.textContent='#proposal .station-crowd{position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .35s;z-index:-1}#proposal[data-shot="station"] .station-crowd,#proposal[data-shot="platform"] .station-crowd,#proposal[data-shot="ticket"] .station-crowd{opacity:1}#proposal .station-walker{position:absolute;bottom:26%;left:-12%;width:13%;height:22%;animation:stationCross 12s linear infinite;filter:drop-shadow(0 5px 3px #20342866)}#proposal .station-walker img{width:100%;height:100%;object-fit:contain;object-position:center bottom;animation:stationBob .42s ease-in-out infinite alternate}#proposal .station-walker.reverse{bottom:36%;width:10%;height:17%;animation-direction:reverse;animation-duration:16s}#proposal .station-walker.reverse img{transform:scaleX(-1)}@keyframes stationCross{0%{translate:-20vw 0}100%{translate:125vw 0}}@keyframes stationBob{to{translate:0 -3px}}#proposal[data-shot="ticket"] .station-crowd{opacity:.6}#proposal .gate i{transition-duration:.5s}#proposal .gate-traveller{transition:transform .7s ease-in,opacity .2s .5s}#proposal .cinema-world img{transition-duration:.65s,.45s}@media(prefers-reduced-motion:reduce){#proposal .station-walker,#proposal .station-walker img{animation:none!important}}';document.head.append(crowdStyle);
 const crowdRender=proRender;proRender=function(){crowdRender();if(!cinematicWorld.querySelector('.station-crowd')){let crowd=element('div','',cinematicWorld,'station-crowd');for(let i=0;i<3;i++){let w=element('div','',crowd,'station-walker'+(i===1?' reverse':''));w.style.animationDelay=(-i*4-2)+'s';let im=element('img','',w);im.src=ART['walker'+((i+1)%4)+'2'];im.alt=''}}};
 const villageInit=initNPC;initNPC=function(){villageInit();if(!isRoute())return;for(let i=0;i<4;i++){let y=480+i*285,x=435+(i%2)*100;npc.push({x,y,tx:x+30,ty:y-40,kind:0,visitor:i,n:[['Mina','阿敏'],['Jun','小俊'],['Ren','阿仁'],['Hana','小花']][i]})}};
-const villageDraw=drawRoute;drawRoute=function(){villageDraw();for(let n of npc){if(n.visitor===undefined)continue;let moving=Math.hypot(n.tx-n.x,n.ty-n.y)>3,dir=Math.abs(n.ty-n.y)>Math.abs(n.tx-n.x)?(n.ty<n.y?'up':'down'):(n.tx<n.x?'left':'right');backHuman(n.x,n.y,n.visitor,moving,dir,1.18*(.72+n.y/routeHeight*.55));if(Math.hypot(n.x-p.x,n.y-p.y)<160)target(n.x-24,n.y-110,48,115,()=>npcTalk(n))}};
+const villageDraw=drawRoute;drawRoute=function(){villageDraw();for(let n of npc){if(n.visitor===undefined)continue;let moving=Math.hypot(n.tx-n.x,n.ty-n.y)>3,dir=Math.abs(n.ty-n.y)>Math.abs(n.tx-n.x)?(n.ty<n.y?'up':'down'):(n.tx<n.x?'left':'right');const sc=travellerOutdoorScale(1.18*(.72+n.y/routeHeight*.55),cam.scale,W,H,false);backHuman(n.x,n.y,n.visitor,moving,dir,sc);if(Math.hypot(n.x-p.x,n.y-p.y)<160)target(n.x-Math.max(28,sc*23),n.y-94*sc,Math.max(56,sc*46),94*sc+8,()=>npcTalk(n))}};
 const villageTalk=npcTalk;npcTalk=function(n){if(n?.visitor===undefined)return villageTalk(n);let lines=[['I came for a fortune. Stayed for the snacks.','本来是来求签的，结果吃了一路。'],['My calendar says I’m in a meeting. Technically, I’m meeting you.','日历显示我在开会。严格来说，我确实在见你。'],['The view up there is worth the stairs. Probably.','山上的风景值得爬楼梯。应该吧。'],['I asked the cards about my career. They suggested a nap.','我问塔罗事业如何，它建议我先睡一觉。']];let k=(n.visitor+(n.chats||0))%lines.length;n.chats=(n.chats||0)+1;say(tr(...n.n),tr(...lines[k]))};
 
 const moveStyle=document.createElement('style');moveStyle.textContent='#moveGuide{position:fixed;z-index:5;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 94px);width:min(88%,360px);display:flex;align-items:center;gap:10px;padding:10px 14px;background:#283c32f0;border:1px solid #b8a985;color:#fff1d5;border-radius:8px;box-shadow:0 4px 18px #17251c55;font:14px/1.4 system-ui}#moveGuide[hidden],#movePad[hidden]{display:none!important}#moveGuide button{margin-left:auto;background:transparent;color:#fff1d5;border:0;box-shadow:none;padding:7px;min-width:44px;min-height:44px}#movePad{position:fixed;z-index:4;left:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 88px);display:grid;grid-template-columns:repeat(3,38px);grid-template-rows:repeat(2,38px);gap:2px;touch-action:none}#movePad button{min-width:38px;min-height:38px;padding:0;background:#263a32b8;color:#fff4dc;border:1px solid #eee0bc80;border-radius:50%;box-shadow:none;font-size:20px;touch-action:none}#movePad button:active{background:#d5b885;color:#2b3e34}#movePad .up{grid-column:2}#movePad .left{grid-row:2;grid-column:1}#movePad .down{grid-row:2;grid-column:2}#movePad .right{grid-row:2;grid-column:3}@media(max-height:480px){#moveGuide{bottom:80px;left:auto;right:14px;transform:none;width:240px}}';document.head.append(moveStyle);
@@ -1330,7 +1330,7 @@ drawRoom=function(){
   }
   if(dist>5){ctx.save();ctx.globalAlpha=.4;ellipse(indoor.tx,indoor.ty,9,3,'#ead3a4');ctx.restore()}
  }
- const usable=Math.max(160,H-230),screenHeight=clamp(usable*.16,60,90),scale=clamp(screenHeight/(94*Math.max(.1,cam.scale)),1.08,2.1);
+ const scale=travellerRoomScale(H,cam.scale);
  ctx.save();backHuman(indoor.x,indoor.y,avatar,Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3,indoor.facing,scale);ctx.restore();
 };
 c.addEventListener('pointerup',e=>{if(!indoorReady()||!drag||drag.moved>30||drag.h)return;const a=point(e);indoorDestination(a.x,a.y)},true);
@@ -1670,14 +1670,16 @@ drawMap=function(){
  for(let i=0;i<18;i++){let xx=(i*143+t*(4+i%4))%1000,yy=(i*97+t*(5+i%4))%world.h;ctx.globalAlpha=.50;petal(xx,yy,2.5,i);ctx.globalAlpha=1}
  for(const n of [...npc,p].sort((a,b)=>a.y-b.y)){
   const sc=Math.max(.95,(.8+n.y/world.h*.45));
-  if(n===p){backHuman(n.x,n.y,avatar??0,n.walk,n.facing||'up',Math.max(sc,48/(94*Math.max(.1,cam.scale))));continue}
+  if(n===p){backHuman(n.x,n.y,avatar??0,n.walk,n.facing||'up',travellerOutdoorScale(sc,cam.scale,W,H,true));continue}
   const moving=residentMoving(n);
   if(n.kind===2){cat(n.x,n.y,0,moving,.65*sc);continue}
   const dir=Math.abs(n.ty-n.y)>Math.abs(n.tx-n.x)?(n.ty<n.y?'up':'down'):(n.tx<n.x?'left':'right');
-  if(n.grumpy){drawWalkingGranny(n.x,n.y,sc*.76,moving,dir)}else backHuman(n.x,n.y,((avatar??0)+1+n.kind)%4,moving,dir,sc*.83);
+  const actorScale=travellerOutdoorScale(sc,cam.scale,W,H,false),grannyScale=actorScale*94/150;
+  if(n.grumpy){drawWalkingGranny(n.x,n.y,grannyScale,moving,dir)}else backHuman(n.x,n.y,((avatar??0)+1+n.kind)%4,moving,dir,actorScale);
+  const actorHeight=94*actorScale;
   if(Math.hypot(n.x-p.x,n.y-p.y)<150){
-   if(n.popGuest||n.grumpy){ctx.save();ctx.font='15px Georgia';const label=tr(...n.n),width=ctx.measureText(label).width+18;ctx.fillStyle='#f6e8cced';ctx.fillRect(n.x-width/2,n.y-120*sc,width,22);ctx.fillStyle='#435744';ctx.textAlign='center';ctx.fillText(label,n.x,n.y-120*sc+16);ctx.restore()}
-   target(n.x-36,n.y-100,72,110,()=>npcTalk(n))
+   if(n.popGuest||n.grumpy){ctx.save();ctx.font='15px Georgia';const label=tr(...n.n),width=ctx.measureText(label).width+18;ctx.fillStyle='#f6e8cced';ctx.fillRect(n.x-width/2,n.y-actorHeight-25,width,22);ctx.fillStyle='#435744';ctx.textAlign='center';ctx.fillText(label,n.x,n.y-actorHeight-9);ctx.restore()}
+   target(n.x-Math.max(36,actorScale*23),n.y-actorHeight,Math.max(72,actorScale*46),actorHeight+10,()=>npcTalk(n))
   }
  }
  for(const [id,x,y] of maps[scene].st){target(x-85,y-110,170,150,()=>walkDoor(id,x,y))}
@@ -3902,3 +3904,16 @@ destinyPage=function(){
  const apply=()=>{if(!target.isConnected||!pending?.naturalWidth)return;target.src=pending.src;wrap.classList.add('portraitDestinyIllustration')};
  if(loaded)apply();else pending?.addEventListener('load',apply,{once:true})
 };
+
+/* Character readability: increase walkaround sprites, not activity/prop contact poses.
+   Perspective and logical feet are preserved, with a bounded mobile size floor. */
+function travellerOutdoorScale(base,camera,width,height,player){
+ const minPx=width<height?(player?62:51):(player?54:44);
+ const maxPx=Math.min(player?112:94,height*.25);
+ const desired=Math.max(base*(player?1.18:1.18),minPx/(94*Math.max(.08,camera)));
+ return Math.min(desired,Math.max(base,maxPx/(94*Math.max(.08,camera))))
+}
+function travellerRoomScale(height,camera){
+ const usable=Math.max(160,height-230),screenHeight=clamp(usable*.195,72,110);
+ return clamp(screenHeight/(94*Math.max(.1,camera)),1.18,2.4)
+}
