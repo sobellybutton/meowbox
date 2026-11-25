@@ -769,12 +769,48 @@ const stressTargets=[['Unnecessary meetings','无效会议'],['Monday blues','�
 const stressStartBefore=start;start=function(a){stressStartBefore(a);if(a==='hit'){stressSwingAt=-10;stressLast=-10;stressCombo=0;stressPieces=[];hint('Tap the paper figure or press WHACK! No actual colleagues were harmed.','点击纸人，或按「打走烦恼」。同事们毫发无伤。')}};
 const stressSmackBefore=smack;smack=function(){if(activity!=='hit')return;stressCombo=t-stressLast<.65?stressCombo+1:1;stressLast=t;stressSwingAt=t;stressSide*=-1;stressSmackBefore();for(let i=0;i<7;i++)stressPieces.push({at:t,x:400+(Math.random()-.5)*55,y:465+(Math.random()-.5)*65,vx:(Math.random()-.5)*140,vy:-30-Math.random()*80,angle:Math.random()*TAU});if(stressPieces.length>70)stressPieces.splice(0,stressPieces.length-70);if(ambientBus&&!muted)ambientTone(100,.035,.13,'triangle');if(stressCombo===5)react('Even the paper wants annual leave.','纸人都想请年假了。');if(state.count===25)addItem('Certified worry shredder','认证烦恼粉碎机')};
 function stressSlipper(x,y,angle){ctx.save();ctx.translate(x,y);ctx.rotate(angle);let g=ctx.createLinearGradient(-20,0,22,0);g.addColorStop(0,stressTool?'#8b6541':'#a65d58');g.addColorStop(.5,stressTool?'#d3a976':'#d7a18a');g.addColorStop(1,stressTool?'#916b47':'#98544e');ctx.beginPath();ctx.moveTo(-16,41);ctx.bezierCurveTo(-28,10,-27,-44,-9,-50);ctx.bezierCurveTo(15,-56,26,-29,22,4);ctx.quadraticCurveTo(18,47,-16,41);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#684b39';ctx.lineWidth=2;ctx.stroke();ctx.strokeStyle='#f0d0a4';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-20,-16);ctx.quadraticCurveTo(0,-4,20,-16);ctx.stroke();ctx.restore()}
-const stressDrawBefore=drawActivity;drawActivity=function(){if(activity!=='hit')return stressDrawBefore();ctx.save();paintLivingBackdrop(room==='fish'?pics.fish:(pics.office||pics.tea));let b=livingBounds(),g=ctx.createLinearGradient(0,280,0,700);g.addColorStop(0,'#372e2820');g.addColorStop(1,'#3b2927ae');shadeLivingBackdrop(g);if(room==='fish')riverAuntie(400,385,.82);else human(400,377,0,false,1,1.55);let wood=ctx.createLinearGradient(0,390,0,700);wood.addColorStop(0,'#b99067');wood.addColorStop(1,'#76513d');ctx.fillStyle=wood;ctx.beginPath();ctx.moveTo(215,390);ctx.lineTo(585,390);ctx.lineTo(790,1600);ctx.lineTo(10,1600);ctx.closePath();ctx.fill();for(let j=0;j<14;j++)line(185,408+j*20,615,410+j*20,'#dfb98a33',1);
- txt(tr('Paper Worry Ritual','打小烦恼'),400,258,23,'#fff0d2');
- let f=Math.max(0,Math.min(1,(t-stressSwingAt)/.46)),impact=(1-f)*Math.sin(f*13);ctx.save();ctx.translate(400,491);ctx.rotate(impact*.48*stressSide);ctx.translate(impact*13,0);let paper=ctx.createLinearGradient(-50,-80,50,75);paper.addColorStop(0,'#f2d7a5');paper.addColorStop(1,'#d5b17b');ctx.fillStyle=paper;ctx.beginPath();ctx.moveTo(-25,-68);ctx.lineTo(25,-68);ctx.lineTo(31,-28);ctx.lineTo(62,-13);ctx.lineTo(47,15);ctx.lineTo(27,5);ctx.lineTo(23,66);ctx.lineTo(1,56);ctx.lineTo(-23,66);ctx.lineTo(-27,5);ctx.lineTo(-47,15);ctx.lineTo(-62,-13);ctx.lineTo(-31,-28);ctx.closePath();ctx.fill();ctx.strokeStyle='#a27a4b';ctx.stroke();line(-16,-45,-4,-40,'#78543c',2);line(16,-45,4,-40,'#78543c',2);line(-8,-28,8,-28,'#78543c',2);wonderSceneText(tr(...stressTargets[stressTarget]),0,-9,55,11,'#86563b',4);ctx.restore();
- let swing=Math.sin(Math.min(1,f)*Math.PI);if(room==='fish'){const wrist=drawRitualPose(491,554,1.38,{reach:{x:498-60*swing,y:497-22*swing},bow:.18*swing});stressSlipper(wrist.x-8*swing,wrist.y-8,.45-1.55*swing)}else stressSlipper(520-108*swing,511-45*swing,.3-1.4*swing);target(310,392,180,178,()=>{},'hit');target(474,433,90,120,()=>{},'hit');
- stressPieces=stressPieces.filter(v=>t-v.at<.65);for(let v of stressPieces){let d=t-v.at;ctx.save();ctx.globalAlpha=1-d/.65;ctx.translate(v.x+v.vx*d,v.y+v.vy*d+100*d*d);ctx.rotate(v.angle+d*4);ctx.fillStyle='#f0d8a3';ctx.fillRect(-3,-2,6,4);ctx.restore()}
- txt(tr('Worries released: ','烦恼已打走：')+state.count,400,568,15,'#fff0d4');label(tr('WHACK!','打走烦恼！'),400,603,()=>smack());label(tr('Change worry','换个烦恼'),302,642,()=>{stressTarget=(stressTarget+1)%stressTargets.length;stressCombo=0;sound(430)});label(tr('Change slipper','换只拖鞋'),500,642,()=>{stressTool=1-stressTool;sound(430)});ctx.restore()
+/* Paper-worry ritual: seated host, small real work surface, hand-sized slipper. */
+const stressDrawBefore=drawActivity;
+function paperWorryAt(x,y,impact){
+ ctx.save();ctx.translate(x,y);ctx.rotate(impact*.34*stressSide);
+ const paper=ctx.createLinearGradient(-35,-45,35,45);paper.addColorStop(0,'#f5e1b6');paper.addColorStop(1,'#cfad79');
+ ctx.fillStyle=paper;ctx.strokeStyle='#98774d';ctx.lineWidth=1.5;ctx.beginPath();
+ ctx.moveTo(-15,-45);ctx.lineTo(15,-45);ctx.lineTo(20,-18);ctx.lineTo(38,-9);ctx.lineTo(29,10);ctx.lineTo(18,4);ctx.lineTo(14,39);ctx.lineTo(0,33);ctx.lineTo(-14,39);ctx.lineTo(-18,4);ctx.lineTo(-29,10);ctx.lineTo(-38,-9);ctx.lineTo(-20,-18);ctx.closePath();ctx.fill();ctx.stroke();
+ line(-10,-30,-3,-27,'#6c5037',1.8);line(10,-30,3,-27,'#6c5037',1.8);line(-5,-18,5,-18,'#6c5037',1.8);
+ wonderSceneText(tr(...stressTargets[stressTarget]),0,-5,38,9,'#76523a',3);
+ if(state.count>0){let n=Math.min(6,Math.floor(state.count/3)+1);for(let i=0;i<n;i++){let yy=4+i*5;line(-11+(i%2)*4,yy,7-(i%3)*3,yy+3,'#aa8d6266',1)}}
+ ctx.restore()
+}
+function mirrorRitualPose(x,y,scale,opts){
+ ctx.save();ctx.translate(x,0);ctx.scale(-1,1);ctx.translate(-x,0);
+ const reach=opts.reach?{x:2*x-opts.reach.x,y:opts.reach.y}:undefined;
+ const w=drawRitualPose(x,y,scale,{...opts,reach});ctx.restore();return{x:2*x-w.x,y:w.y}
+}
+drawActivity=function(){
+ if(activity!=='hit')return stressDrawBefore();
+ ctx.save();
+ // Prefer the original illustrated waterfront over the flat portrait SVG in this close-up.
+ if(room==='fish'&&pics.fish?.naturalWidth){const v=livingBounds();cover(pics.fish,v.x,v.y,v.w,v.h)}else paintLivingBackdrop(room==='fish'?pics.fish:pics.office||pics.tea);
+ const bounds=livingBounds(),shade=ctx.createLinearGradient(0,270,0,740);shade.addColorStop(0,'#40372b19');shade.addColorStop(1,'#2b342c70');shadeLivingBackdrop(shade);
+ // Ground plane and compact wooden stool, separate from the background.
+ ellipse(400,580,190,37,'#302a2440');ellipse(272,548,50,12,'#302a2444');
+ round(244,504,56,12,3,'#ac8b65','#6b503b');line(251,516,246,553,'#69513f',6);line(290,516,296,553,'#69513f',6);
+ if(room==='fish')riverAuntie(272,515,.8);else backHuman(272,550,0,false,'right',1.1);
+ // Low ritual block: the paper is on the working surface, rather than floating on an enormous table.
+ const wood=ctx.createLinearGradient(0,505,0,557);wood.addColorStop(0,'#bca078');wood.addColorStop(.5,'#9f805e');wood.addColorStop(1,'#795d42');
+ ctx.fillStyle=wood;ctx.beginPath();ctx.moveTo(335,506);ctx.lineTo(421,506);ctx.lineTo(443,540);ctx.lineTo(318,540);ctx.closePath();ctx.fill();ctx.strokeStyle='#806448';ctx.stroke();
+ round(318,540,125,12,2,'#866746','#654c37');line(333,552,329,577,'#654c37',6);line(428,552,433,577,'#654c37',6);
+ for(let i=0;i<3;i++)line(331,515+i*7,427,516+i*7,'#e0c09a55',1);
+ const f=clamp((t-stressSwingAt)/.46,0,1),impact=(1-f)*Math.sin(f*13),swing=Math.sin(Math.PI*f);
+ paperWorryAt(381,494,impact);
+ const playerX=490,playerY=572;
+ // Face left towards the paper. Tool pivot follows the wrist instead of hiding the body.
+ const wrist=mirrorRitualPose(playerX,playerY,1.38,{reach:{x:playerX-20-42*swing,y:playerY-55-36*swing},bow:.13*swing});
+ ctx.save();ctx.translate(wrist.x-9,wrist.y-6);ctx.scale(.43,.43);stressSlipper(0,0,-.40+1.45*swing);ctx.restore();
+ target(333,445,95,112,()=>{},'hit');
+ stressPieces=stressPieces.filter(v=>t-v.at<.65);for(const v of stressPieces){const d=t-v.at;ctx.save();ctx.globalAlpha=1-d/.65;ctx.translate(v.x-19+v.vx*d*.6,v.y+20+v.vy*d*.6+70*d*d);ctx.rotate(v.angle+d*3);ctx.fillStyle='#f0d8a3';ctx.fillRect(-2,-1.5,4,3);ctx.restore()}
+ txt(tr('Worries released: ','打走的烦恼：')+state.count,400,603,18,'#fff0d4');
+ ctx.restore()
 };
 
 const movementHelpStyle=document.createElement('style');
@@ -2723,3 +2759,16 @@ window.addEventListener('pageshow',e=>{
  if(frameFault||performance.now()-lastHealthyFrame>2000){if(room&&!activity)continuityRoom=null;frameFault=null}
  meowHistoryArmed=history.state?.meowOverlay===true;meowHistorySync()
 });
+
+/* Real touch controls for the paper ritual. Keep the scene free of overlapping signs. */
+const stressControlsPrior=refreshControls;
+refreshControls=function(){
+ stressControlsPrior();const el=$('gameControls');if(!el)return;
+ el.classList.toggle('paperRitualControls',activity==='hit');
+ if(activity!=='hit')return;
+ el.replaceChildren();el.hidden=false;
+ const hitButton=b(el,tr('Whack!','打走烦恼！'),()=>smack());hitButton.className='paperWhack';
+ const change=b(el,tr('Change worry','换个烦恼'),()=>{stressTarget=(stressTarget+1)%stressTargets.length;stressCombo=0;sound(430)});
+ const slipper=b(el,tr('Change slipper','换只拖鞋'),()=>{stressTool=1-stressTool;sound(430)});
+};
+const paperControlStyle=document.createElement('style');paperControlStyle.textContent='#gameControls.paperRitualControls{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:min(86vw,340px);padding:6px;background:#f1e3c9e8;border:1px solid #a88c65;border-radius:5px}#gameControls.paperRitualControls button{min-height:44px;font-size:14px;white-space:normal}#gameControls.paperRitualControls .paperWhack{grid-column:1/-1;background:#52674f;color:#fff3d8;font-size:16px}';document.head.append(paperControlStyle);
