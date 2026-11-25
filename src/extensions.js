@@ -1370,8 +1370,8 @@ function ensureTravellerCoordinates(){if(!Number.isFinite(p.x)||!Number.isFinite
 /* A reachable consultation control in Destiny House, independent of canvas hit testing. */
 const destinyAccess=element('button','',document.body);destinyAccess.id='destinyAccess';destinyAccess.hidden=true;
 destinyAccess.style.cssText='position:fixed;z-index:5;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 145px);min-height:44px;max-width:70vw;background:#ead9b5;color:#453b2f;border:1px solid #9b805e;font:14px Georgia,serif';
-destinyAccess.onclick=()=>{if(!indoorReady()||room!=='destiny')return;releaseWalkKeys();const a=indoorStation('destiny').slice(2);indoorDestination(a[0],a[1],()=>{try{destinyPage()}catch(err){console.error('Destiny consultation:',err);$('page').style.display='none';hint('The consultation could not open. Try again or step outside.','命理咨询暂时无法打开，请重试或先出门。')}},'up')};
-function destinyAccessTick(){const hide=!(room==='destiny'&&!activity&&!transitioning&&proposal.hidden&&$('page').style.display!=='block');if(destinyAccess.hidden!==hide)destinyAccess.hidden=hide;if(!hide){const label=tr('Consult Master Yue','请月师傅看命盘');if(destinyAccess.textContent!==label)destinyAccess.textContent=label}setTimeout(destinyAccessTick,100)}setTimeout(destinyAccessTick,0);
+destinyAccess.onclick=()=>{if(!indoorReady()||room!=='destiny')return;releaseWalkKeys();const a=indoorStation('destiny').slice(2);indoorDestination(a[0],a[1],()=>{try{destinyConsultMenu()}catch(err){console.error('Destiny consultation:',err);$('page').style.display='none';hint('The consultation could not open. Try again or step outside.','命理咨询暂时无法打开，请重试或先出门。')}},'up')};
+function destinyAccessTick(){const hide=!(room==='destiny'&&!activity&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block');if(destinyAccess.hidden!==hide)destinyAccess.hidden=hide;if(!hide){const label=tr('Consult Master Yue','请月师傅看星盘');if(destinyAccess.textContent!==label)destinyAccess.textContent=label;const rect=c.getBoundingClientRect(),x=rect.left+cam.ox+400*cam.scale,y=rect.top+cam.oy+483*cam.scale;destinyAccess.style.setProperty('bottom','auto','important');destinyAccess.style.top=Math.max(rect.top+150,Math.min(rect.bottom-150,y-22))+'px';destinyAccess.style.left=Math.max(90,Math.min(innerWidth-90,x))+'px'}setTimeout(destinyAccessTick,100)}setTimeout(destinyAccessTick,0);
 
 /* Recover from a failed transition and retain a usable exit in all houses. */
 const houseBack=$('back'),houseBackBefore=houseBack.onclick;
@@ -2772,3 +2772,49 @@ refreshControls=function(){
  const slipper=b(el,tr('Change slipper','换只拖鞋'),()=>{stressTool=1-stressTool;sound(430)});
 };
 const paperControlStyle=document.createElement('style');paperControlStyle.textContent='#gameControls.paperRitualControls{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:min(86vw,340px);padding:6px;background:#f1e3c9e8;border:1px solid #a88c65;border-radius:5px}#gameControls.paperRitualControls button{min-height:44px;font-size:14px;white-space:normal}#gameControls.paperRitualControls .paperWhack{grid-column:1/-1;background:#52674f;color:#fff3d8;font-size:16px}';document.head.append(paperControlStyle);
+
+
+/* One desk, two distinct readings. The quick horoscope uses editorial weekly
+   themes, not a calculated transit forecast, and does not need birth details. */
+const signNotebook=[
+ {symbol:'♈',dates:'3/21–4/19',name:['Aries','白羊座'],theme:['Initiative','行动力'],lines:[['Before volunteering, check whether it is actually your job.','冲在最前面之前，先看看这活儿到底归谁。'],['Leave one thing unfinished on purpose. Not every tab needs closing today.','今天允许自己留个小尾巴，不必把所有事情都做完。'],['Try something new without making it a competition.','试点新鲜的，不用顺便争个第一。']]},
+ {symbol:'♉',dates:'4/20–5/20',name:['Taurus','金牛座'],theme:['Comfort and steadiness','安稳与享受'],lines:[['A good lunch is a better investment than a fourth productivity app.','好好吃顿饭，比再下载一个效率软件实在。'],['Change one tiny routine. Your favourite kopi can stay.','换个小习惯就好，最爱的咖啡照旧。'],['Save some time for the things you already enjoy.','别把时间全花在追新鲜感上，喜欢的事也值得慢慢做。']]},
+ {symbol:'♊',dates:'5/21–6/20',name:['Gemini','双子座'],theme:['Curiosity and conversation','好奇与交流'],lines:[['Pick one of your seventeen interesting ideas. The other sixteen can wait.','十七个新点子里先挑一个，剩下的十六个明天再聊。'],['Tell a friend the funny part of your day, not just the work update.','和朋友聊聊今天的笑点，别把聊天变成周报。'],['A quiet afternoon is also a topic worth exploring.','一个安静的下午，也值得你好好体验。']]},
+ {symbol:'♋',dates:'6/21–7/22',name:['Cancer','巨蟹座'],theme:['Care and belonging','照顾与归属'],lines:[['You can care about the team without adopting its entire workload.','关心同事，不等于把整个部门的活儿都接过来。'],['Make a little corner of the day feel like home.','给自己留一点像回家一样安心的时间。'],['Ask for the help you usually offer other people.','平时总帮别人，这次也试着开口求助。']]},
+ {symbol:'♌',dates:'7/23–8/22',name:['Leo','狮子座'],theme:['Expression and warmth','表达与热情'],lines:[['Enjoy the applause, but do not volunteer to run the next office party.','掌声可以收下，下次团建主持人就别急着报名了。'],['Give someone a sincere compliment without turning it into a speech.','真心夸个人就好，不必发表获奖感言。'],['Do something fun even if nobody sees it.','做件自己开心的事，不一定要有人围观。']]},
+ {symbol:'♍',dates:'8/23–9/22',name:['Virgo','处女座'],theme:['Discernment and care','细致与判断'],lines:[['The spreadsheet is good enough. Stop correcting the alignment of column J.','表格已经能用了，别再跟第十列的对齐方式较劲。'],['Give yourself the same useful advice you give your friends.','平时劝朋友别内耗，这次自己也听一次。'],['Leave ten minutes unplanned. The universe does not need your checklist.','留十分钟不做安排，宇宙不需要你的待办清单。']]},
+ {symbol:'♎',dates:'9/23–10/22',name:['Libra','天秤座'],theme:['Balance and connection','平衡与关系'],lines:[['Choose the lunch place before the group chat reaches 80 messages.','趁群聊还没刷到八十条，先把午饭地点定了。'],['A polite no can be kinder than a reluctant yes.','礼貌拒绝，有时比勉强答应更体贴。'],['Make one choice just because you like it.','这次选自己喜欢的，不必让所有人都满意。']]},
+ {symbol:'♏',dates:'10/23–11/21',name:['Scorpio','天蝎座'],theme:['Depth and boundaries','深度与界限'],lines:[['Not every mysterious message requires a full internal investigation.','不是每条意味深长的消息都值得你开启侦探模式。'],['Keep a secret for a friend, and a little time for yourself.','替朋友守住秘密，也替自己守住一点休息时间。'],['Let one old annoyance stay in the past.','有些陈年不爽，就留在昨天吧。']]},
+ {symbol:'♐',dates:'11/22–12/21',name:['Sagittarius','射手座'],theme:['Exploration and freedom','探索与自由'],lines:[['A walk to a different hawker centre counts as a small expedition.','换家小贩中心吃饭，也算一次微型探险。'],['Plan the getaway after checking the actual annual leave balance.','订机票前先看看年假余额，别让梦想跑得比假期快。'],['Finish one small thing before starting a new adventure.','先收好一个小尾巴，再开启下一段旅程。']]},
+ {symbol:'♑',dates:'12/22–1/19',name:['Capricorn','摩羯座'],theme:['Patience and purpose','耐心与目标'],lines:[['A rest day does not need a performance indicator.','休息日不需要绩效指标。'],['Celebrate a tiny win rather than immediately raising the target.','小目标完成了先庆祝一下，别立刻给自己加码。'],['Ask which deadline is actually important, not merely loud.','分清真正重要的截止日期，和喊得最大声的那个。']]},
+ {symbol:'♒',dates:'1/20–2/18',name:['Aquarius','水瓶座'],theme:['Originality and independence','独立与创意'],lines:[['Your strange idea deserves a notebook, not necessarily a meeting.','奇思妙想值得记下来，不一定值得开个会。'],['Try explaining your unusual hobby to someone who has never heard of it.','试着跟没听过的人聊聊你的冷门爱好。'],['Be different because it feels right, not because it looks impressive.','与众不同可以是因为喜欢，不必为了显得特别。']]},
+ {symbol:'♓',dates:'2/19–3/20',name:['Pisces','双鱼座'],theme:['Imagination and empathy','想象与共情'],lines:[['Daydreaming is fine. Just remember where you put your MRT card.','发会儿呆没关系，记得交通卡放哪儿就行。'],['Give your imagination somewhere to go: a sketch, a story or a walk.','给想象力找个出口，画画、写故事，或者出门散步。'],['You can sympathise without absorbing every group chat crisis.','可以共情，但不必接收工作群里每一场情绪风暴。']]}
+];
+function signWeekIndex(date=shrineClock().day){return Math.floor((Date.parse(date+'T00:00:00Z')/86400000+3)/7)}
+function signReading(i,date=shrineClock().day){const sign=signNotebook[i];if(!sign)throw Error('Unknown sign');const week=signWeekIndex(date);return {sign,week,line:sign.lines[((week+i)%sign.lines.length+sign.lines.length)%sign.lines.length]}}
+function destinyConsultMenu(){
+ closeTalk();say(tr('Master Yue','月师傅'),tr('Want a quick look at your star sign, or shall we unroll your birth chart?','想随便看看星座，还是坐下来排个命盘？'),[
+ [tr('Weekly star signs','本周十二星座'),()=>{closeTalk();starSignPage()}],
+ [tr('Personal birth chart','个人生辰命盘'),()=>{closeTalk();destinyPage()}],
+ [tr('Maybe later','改天再聊'),closeTalk]
+ ])
+}
+function starSignPage(selected=null){
+ page(tr('The twelve star signs','十二星座小笺'),tr('Choose your usual Western sun sign. No birth date or time needed. A weekly themed reflection, for fun rather than prediction.','选你平时熟悉的太阳星座，不用填写出生时间。本周趣味星座小笺，并非运势预测。'),q=>{
+  const grid=element('div','',q,'signNotebookGrid'),out=element('section','',q,'signNotebookResult');out.setAttribute('aria-live','polite');
+  function select(i){
+   const result=signReading(i);out.replaceChildren();element('div',result.sign.symbol,out,'signNotebookSymbol');element('h2',tr(...result.sign.name),out);
+   element('small',tr('This week’s theme · ','本周主题 · ')+tr(...result.sign.theme),out);
+   element('p',tr(...result.line),out);
+   element('p',tr('The dates are approximate. For a birth date near a sign boundary, use the personal chart with birth time and location.','星座日期仅供参考，若生日接近交界日，可用出生时间和地点查看个人星盘。'),out,'signNotebookNote');
+   grid.querySelectorAll('button').forEach((btn,j)=>btn.setAttribute('aria-pressed',String(i===j)))
+  }
+  signNotebook.forEach((sign,i)=>{const btn=b(grid,'',()=>select(i));btn.setAttribute('aria-pressed','false');element('span',sign.symbol,btn,'signTileSymbol');element('strong',tr(...sign.name),btn);element('small',sign.dates,btn)});
+  if(selected!==null&&signNotebook[selected])select(selected);
+  const row=q.querySelector('.row');if(row?.lastElementChild)row.lastElementChild.onclick=()=>{const i=[...grid.querySelectorAll('button')].findIndex(v=>v.getAttribute('aria-pressed')==='true');zh=!zh;save('zh',zh);updateHUD();starSignPage(i<0?null:i)}
+  b(q,tr('Personal birth chart','查看个人生辰命盘'),()=>destinyPage());
+ })
+}
+const signNotebookCSS=document.createElement('style');signNotebookCSS.textContent='.signNotebookGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:18px 0}.signNotebookGrid button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:88px;padding:8px 3px;background:#f5e8cf;border:1px solid #b9a17b;border-radius:4px;color:#5a4d3b}.signNotebookGrid button[aria-pressed=true]{background:#4c6257;color:#fff0cc}.signTileSymbol{font-family:Georgia,serif;font-size:28px;line-height:1.2}.signNotebookGrid strong{font-size:13px;line-height:1.2;overflow-wrap:anywhere}.signNotebookGrid small{font-size:11px}.signNotebookResult:not(:empty){background:#f1e2c4;border:1px solid #b6a079;padding:18px;margin:12px 0;color:#594a38}.signNotebookSymbol{font:36px Georgia,serif;color:#786549}.signNotebookResult p{line-height:1.55}.signNotebookNote{font-size:12px;color:#74634d}';document.head.append(signNotebookCSS);
+const destinySingleAction=action;
+action=function(id){if(room==='destiny'&&id==='destiny')return destinyConsultMenu();return destinySingleAction(id)};
