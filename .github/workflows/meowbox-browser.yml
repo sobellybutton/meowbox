@@ -198,6 +198,10 @@ jobs:
                 await page.waitForTimeout(3500);
                 await page.screenshot({path:'test-results/'+name+'-village.png'});
                 if(await page.locator('#dock').isHidden())throw Error('Navigation hidden');
+                await page.locator('#dockScoop').click();
+                await page.locator('.townFortuneSlip').waitFor({timeout:8000});
+                if(!await page.locator('#luck').isHidden())throw Error('Obsolete luck shortcut visible');
+                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
                 await page.locator('#dockPassport').click();
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
                 await page.locator('.townFortuneSlip').waitFor({timeout:5000});
@@ -271,11 +275,11 @@ jobs:
                 };
                 await prayerTap(335,570);
                 if(await page.evaluate(()=>state.prayerStage)!=='ready')throw Error('Prayer started before incense');
-                await prayerTap(510,445);
-                if(!await page.evaluate(()=>state.incense===true))throw Error('Incense did not light from a physical tap');
+                await page.locator('#ritualActionBar').getByRole('button',{name:'Offer incense',exact:true}).click();
+                if(!await page.evaluate(()=>state.incense===true))throw Error('Incense did not light');
                 await page.waitForTimeout(450);
                 await page.screenshot({path:'test-results/'+name+'-temple-incense-reach.png'});
-                await prayerTap(335,570);
+                await page.locator('#ritualActionBar').getByRole('button',{name:'Make a wish',exact:true}).click();
                 await page.waitForFunction(()=>state.prayerStage==='kneel',{},{timeout:3000});
                 await page.waitForFunction(()=>state.prayerStage==='bow',{},{timeout:3000});
                 await page.waitForTimeout(600);
@@ -427,7 +431,7 @@ jobs:
                 await page.waitForFunction(()=>room==='fish'&&!activity,{},{timeout:5000});
                 await page.evaluate(()=>action('hit'));
                 await page.waitForTimeout(650);
-                await tapWorld(400,490);
+                await page.locator('#gameControls .paperWhack').click();
                 await page.waitForFunction(()=>state.count>=1,{},{timeout:3000});
                 await page.screenshot({path:'test-results/'+name+'-pier-auntie.png'});
                 await page.evaluate(()=>{scene='fortune';room=null;activity=null;state={};closeTalk();updateHUD()});
@@ -449,6 +453,11 @@ jobs:
                 await page.locator('#back').click();
                 await page.waitForFunction(()=>room==='park'&&!activity,{},{timeout:3000});
                 await page.evaluate(()=>{room='park';activity=null;state={};updateHUD();cameo9('home')});
+                if(!await page.locator('#movePad').isHidden())throw Error('Joystick covers dialogue');
+                await page.waitForFunction(()=>meowHistoryArmed,{},{timeout:4000});
+                await page.goBack();
+                await page.waitForFunction(()=>room==='park'&&!talkOpen,{},{timeout:4000});
+                await page.evaluate(()=>cameo9('home'));
                 await page.locator('#choices').getByRole('button',{name:'Work',exact:true}).click();
                 await page.locator('#choices').getByRole('button',{name:'Keep chatting',exact:true}).click();
                 if(!await page.locator('#choices').getByRole('button',{name:'Just sit together',exact:true}).isVisible())throw Error('Cameo conversation cannot continue');
