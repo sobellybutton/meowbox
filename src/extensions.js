@@ -3757,7 +3757,7 @@ hideoutThemes.push(
  {id:'retro',name:['Old Hong Kong evening','港风黄昏'],wall:'#e4c7a5',floor:'#866354',sky:'#bf8f78',need:0,cost:120}
 );
 function hideoutPurchases(){const v=load('hideoutThemePurchasesV1',[]);return Array.isArray(v)?[...new Set(v.filter(id=>hideoutThemes.some(t=>t.id===id&&t.cost)))]:[]}
-function hideoutBalance(){const purchased=hideoutPurchases(),draws=blindShopLedger(),paidKeys=new Set(draws.map(v=>v.key));return Math.max(0,items.filter(v=>!paidKeys.has(v[0])).length*10+dailyWheelRecord().total-hideoutThemes.filter(v=>purchased.includes(v.id)).reduce((sum,v)=>sum+(v.cost||0),0)-draws.reduce((sum,v)=>sum+v.cost,0))}
+function hideoutBalance(){const purchased=hideoutPurchases(),draws=blindShopLedger(),paidKeys=new Set(draws.map(v=>v.key));return Math.max(0,items.filter(v=>!paidKeys.has(v[0])).length*10+dailyWheelRecord().total+townPawRecord().total-hideoutThemes.filter(v=>purchased.includes(v.id)).reduce((sum,v)=>sum+(v.cost||0),0)-draws.reduce((sum,v)=>sum+v.cost,0))}
 function hideoutThemeUnlocked(theme){return theme.cost?hideoutPurchases().includes(theme.id):hideoutStampCount()>=theme.need}
 function buyHideoutTheme(theme){
  if(hideoutThemeUnlocked(theme))return true;
@@ -7344,3 +7344,113 @@ drawBlindCollectible=function(x,y,v,sc=1){
  const im=pocketCanvasCache.get(v[0]);if(im.complete&&im.naturalWidth){const size=72*sc;ctx.drawImage(im,x-size/2,y-size,size,size)}else pocketCollectibleBefore(x,y,v,sc)
 };
 const coinHudStyle=document.createElement('style');coinHudStyle.textContent='#game #hudStamps{display:none!important} #game #hudCoins{font-variant-numeric:tabular-nums;white-space:nowrap}';document.head.append(coinHudStyle);
+
+
+/* Town pocket money: recurring activities award once per category each local
+   day. Existing one-time discovery coins and daily wheel remain independent.
+   No purchase, login streak, wait-time farming or reward for spending. */
+function townPawCategories(){return [
+ {id:'play',amount:8,name:['Play a little','玩一小会儿'],description:['Finish an arcade round. Winning is optional.','完成一局游戏，输赢随意。']},
+ {id:'food',amount:8,name:['Make something delicious','做点好吃的'],description:['Finish Grandma’s soup or a bubble tea.','煮好外婆的汤，或做完一杯奶茶。']},
+ {id:'ritual',amount:6,name:['Find a quiet moment','找一点清静'],description:['Finish a temple ritual, wish or saved tarot reading.','完成庙里仪式、许愿或收藏塔罗解读。']},
+ {id:'care',amount:6,name:['Care for a little friend','照顾小伙伴'],description:['Finish a care activity in the park.','在公园完成一次宠物照顾。']},
+ {id:'social',amount:6,name:['Say hello','跟居民打招呼'],description:['Have a conversation with a resident.','跟小镇居民聊聊天。']},
+ {id:'release',amount:6,name:['Let something go','放下烦恼'],description:['Finish a river bottle release or shout.','完成一次漂流瓶或河边喊话。']}
+]}
+function townPawRecord(){
+ const raw=load('townPawEarnedV1',{}),v=raw&&typeof raw==='object'?raw:{},allowed=new Set(townPawCategories().map(x=>x.id));
+ return {day:typeof v.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v.day)?v.day:'',total:Number.isSafeInteger(v.total)&&v.total>=0?v.total:0,keys:Array.isArray(v.keys)?[...new Set(v.keys.filter(k=>allowed.has(k)))]:[]}
+}
+function townPawCategory(key){
+ if(['round:bubble','round:three','round:claw','round:rhythm'].includes(key))return 'play';
+ if(/^kitchen:(soup|tea)$/.test(key))return 'food';
+ if(/^ritual:(prayer|water|paper|reading|wishingCoin)$/.test(key))return 'ritual';
+ if(key.startsWith('care:'))return 'care';
+ if(key.startsWith('friend:'))return 'social';
+ if(/^release:(riverBottle|riverShout)$/.test(key))return 'release';
+ return null
+}
+function townPawClaim(key,day=shrineClock().day){
+ const id=townPawCategory(key),category=townPawCategories().find(x=>x.id===id);
+ if(!category||!/^\d{4}-\d{2}-\d{2}$/.test(day))return null;
+ const record=townPawRecord();if(day<record.day)return null;
+ if(day>record.day){record.day=day;record.keys=[]}
+ if(record.keys.includes(id))return null;
+ record.keys.push(id);record.total+=category.amount;save('townPawEarnedV1',record);
+ return category
+}
+function townPawToday(){
+ const record=townPawRecord(),day=shrineClock().day,keys=record.day===day?record.keys:[];
+ return {keys,earned:townPawCategories().filter(x=>keys.includes(x.id)).reduce((sum,x)=>sum+x.amount,0),maximum:40}
+}
+let townPawNoticeTimer=0;
+function townPawNotice(category){
+ const notice=$('townPawNotice');if(!notice)return;
+ notice.textContent=tr('A little treat · +','小小奖励 · +')+category.amount+' '+tr('Paws','爪币');
+ notice.hidden=false;clearTimeout(townPawNoticeTimer);townPawNoticeTimer=setTimeout(()=>{notice.hidden=true},2300)
+}
+const townPawLifeBefore=lifeEarn;
+lifeEarn=function(key,amounts,daily=false){
+ const result=townPawLifeBefore(key,amounts,daily);
+ if(daily&&result){const category=townPawClaim(key);if(category){updateHUD();townPawNotice(category)}}
+ return result
+};
+const townPawRhythmBefore=rhythmFinish;
+rhythmFinish=function(){const active=activity==='rhythm'&&state.rhythmStage==='play',result=townPawRhythmBefore();if(active&&state.rhythmStage==='result')lifeEarn('round:rhythm',{skill:2,happiness:1},true);return result};
+const townPawNoticeEl=element('div','',$('game'),'townPawNotice');townPawNoticeEl.id='townPawNotice';townPawNoticeEl.hidden=true;townPawNoticeEl.setAttribute('role','status');townPawNoticeEl.setAttribute('aria-live','polite');
+function appendTownPawLedger(parent){
+ const day=townPawToday(),book=element('section','',parent,'townPawLedger');
+ const heading=element('header','',book,'townPawLedgerHead');
+ element('h2',tr('A little pocket money','今日摸鱼零花钱'),heading);element('strong',day.earned+' / 40 '+tr('Paws','爪币'),heading);
+ element('p',tr('Pick whatever feels good. No streaks, no lost rewards, no need to do them all.','想做什么就做什么。不用打卡，不怕漏签，不必做完。'),book);
+ for(const item of townPawCategories()){
+  const got=day.keys.includes(item.id),row=element('article','',book,'townPawLedgerRow');row.dataset.earned=String(got);
+  const stamp=element('span',got?'✓':'+'+item.amount,row,'townPawStamp');stamp.setAttribute('aria-label',got?tr('Collected','已领取'):item.amount+' '+tr('Paws','爪币'));
+  const copy=element('div','',row);element('strong',tr(...item.name),copy);element('small',tr(...item.description),copy);
+  if(got)element('small',tr('Collected today','今日已到账'),copy,'townPawCollected')
+ }
+ return book
+}
+const townPawWalletBefore=pawWalletPage;
+pawWalletPage=function(){
+ townPawWalletBefore();const q=$('content'),card=q.querySelector('.blindAlbumProgress');
+ if(card){const ledger=appendTownPawLedger(q);card.after(ledger)}
+ const wheel=element('section','',q,'townPawWheelLink');element('p',tr('Your daily free wheel gives 10 to 30 more Paws.','每日免费转盘另送10至30爪币。'),wheel);
+ b(wheel,tr('Visit the daily wheel','去转转乐'),dailyWheelPage);
+ const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{zh=!zh;save('zh',zh);updateHUD();pawWalletPage()}
+};
+const townPawTodayBefore=todayHub;
+todayHub=function(){townPawTodayBefore();const q=$('content'),section=appendTownPawLedger(q),welcome=q.querySelector('.communityWelcome');if(welcome)welcome.after(section);b(section,tr('Open my coin purse','打开爪币小钱包'),pawWalletPage)};
+$('dockScoop').onclick=todayHub;
+$('hudCoins').onclick=()=>openHudReward(pawWalletPage);
+
+/* A single material and typography vocabulary, layered over existing
+   screen-specific layout. Do not replace room art or force card dimensions. */
+const townVisualLanguage=document.createElement('style');
+townVisualLanguage.textContent=
+'#game,#page,#proposal{--town-ink:#504638;--town-paper:#f3e6c9;--town-edge:#b39a74;--town-green:#536c5b;--town-red:#a65e4c;--town-title:Georgia,"Songti SC","Noto Serif SC",serif;--town-body:system-ui,"PingFang SC","Microsoft YaHei",sans-serif;--town-grain:repeating-linear-gradient(97deg,#947a4207 0px,#947a4207 1px,transparent 1px,transparent 5px)}'+
+'#page #content:not(.hideoutRoomView){font-family:var(--town-body);color:var(--town-ink)}'+
+'#page #content>h1,#page #content h2,#page #content h3,#proposal h1{font-family:var(--town-title);font-weight:600;line-height:1.3;overflow-wrap:anywhere}'+
+'#page #content>h1{font-size:clamp(23px,5.6vw,34px);color:#526454;border-bottom:1px solid #bda37b;padding-bottom:10px;margin-bottom:8px}'+
+'#page #content>p:first-of-type{line-height:1.65;color:#6d604c}'+
+'#page #content p,#page #content label{line-height:1.55;overflow-wrap:anywhere}'+
+'#page #content>button,#page #content>.row>button,#page #content form button:not([aria-pressed="true"]),#page .lifeActions button,#page .bagFooter button{font-family:var(--town-title);background:var(--town-grain),#f5e9d0;border:1px solid #b29a73;color:#536550;border-radius:4px;min-height:44px;white-space:normal;box-shadow:0 2px 0 #9e835622}'+
+'#page #content input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),#page #content textarea,#page #content select{font-family:var(--town-body);color:var(--town-ink);background:#fff6e5;border:1px solid #bba17b;border-radius:3px;max-width:100%;box-sizing:border-box}'+
+'#page #content button:focus-visible,#game button:focus-visible,#proposal button:focus-visible{outline:2px solid #a65e4c;outline-offset:2px}'+
+'#game #gameControls button,#game #ritualActionBar button,#game #pearlRecipePanel button,#game #wonderQuestionSheet button,#game #storyReadingSheet button,#game #cafeQuestionSheet button{font-family:var(--town-title);border-radius:4px!important;line-height:1.25!important;min-height:44px!important}'+
+'#game #hint,#game #toast{font-family:var(--town-body);font-weight:500;letter-spacing:0;line-height:1.4}'+
+'#game #dock button,#game #small button,#game #back{font-family:var(--town-title);letter-spacing:0}'+
+'#game #hudCoins{color:#f9e9c3;font-family:var(--town-title);font-variant-numeric:tabular-nums}'+
+'.townPawLedger,.townPawWheelLink{margin:14px 0;padding:14px;background:var(--town-grain),#f5e8ce;border:1px solid #b29a72;border-radius:4px;color:#504638;box-shadow:2px 3px 0 #b99f7320}'+
+'.townPawLedgerHead{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px;border-bottom:1px dashed #bba27a;padding-bottom:8px}.townPawLedgerHead h2{margin:0!important;font-size:19px}.townPawLedgerHead>strong{color:#536c5b;font-size:14px}'+
+'.townPawLedger>p{font-size:13px}.townPawLedgerRow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #bdab864d}.townPawLedgerRow>div{min-width:0}.townPawLedgerRow small{display:block;font-size:12px;line-height:1.45;color:#6b604d}.townPawStamp{flex:none;width:38px;height:38px;display:grid;place-items:center;border:2px double #a3634d;border-radius:50%;font-family:var(--town-title);color:#a3634d;background:#f9ecd3;font-size:15px;transform:rotate(-4deg)}'+
+'.townPawLedgerRow[data-earned="true"] .townPawStamp{color:#526c56;border-color:#526c56}.townPawLedgerRow .townPawCollected{color:#536c5b;font-weight:600}'+
+'#game #townPawNotice{position:absolute;z-index:9;left:50%;top:calc(env(safe-area-inset-top,0px) + 74px);transform:translateX(-50%);max-width:calc(100% - 26px);padding:7px 12px;border:1px solid #b79a69;border-radius:3px;background:#f3e4c8;color:#536550;box-shadow:0 2px 8px #3c2e2040;font:600 13px/1.4 var(--town-title);pointer-events:none;white-space:normal;text-align:center}#townPawNotice[hidden]{display:none!important}';
+document.head.append(townVisualLanguage);
+const townPageMaterialBefore=page;
+page=function(title,sub,body){
+ return townPageMaterialBefore(title,sub,q=>{
+  q.setAttribute('lang',zh?'zh-Hans':'en');
+  body(q)
+ })
+};
