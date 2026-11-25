@@ -656,7 +656,7 @@ const streetControlBefore=refreshControls;refreshControls=function(){streetContr
 const streetPotBefore=pot;pot=function(x,y){if(activity!=='cook')return streetPotBefore(x,y);ctx.save();let heat=state.done?.28:.75;ellipse(x,y+50,100,20,'#3e3830');for(let i=0;i<7;i++){let xx=x-66+i*22,h=(16+Math.sin(t*9+i)*7)*heat;ctx.fillStyle='#d68743';ctx.beginPath();ctx.moveTo(xx-8,y+53);ctx.quadraticCurveTo(xx-10,y+38,xx+Math.sin(t*7+i)*3,y+32-h);ctx.quadraticCurveTo(xx+12,y+42,xx+8,y+53);ctx.fill();ellipse(xx,y+48,4,6,'#f5cb78')}streetPotBefore(x,y);if(state.ingredients?.length){ctx.save();ctx.beginPath();ctx.ellipse(x,y-10,77,20,0,0,TAU);ctx.clip();for(let i=0;i<9;i++){let f=(t*.55+i*.137)%1,xx=x+Math.sin(i*2.4+t*.6)*62,yy=y-10+Math.cos(i*1.7)*13;ctx.globalAlpha=(1-f)*.65;ctx.strokeStyle='#ffebbd';ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(xx,yy,2+f*5,0,TAU);ctx.stroke()}ctx.restore()}ctx.restore()};
 const streetMachineBefore=machine;machine=function(x,y,hook,drop){streetMachineBefore(x,y,hook,drop);if(activity!=='claw')return;ctx.save();ctx.strokeStyle='#f8e3b6';ctx.lineWidth=2;for(let i=0;i<6;i++){let xx=x-93+i*37;ellipse(xx,y-90,3,3,Math.sin(t*3+i)>.1?'#fff0b9':'#b58a86')}ctx.globalAlpha=.28;line(x-94,y-69,x-37,y+53,'#fffdf2',4);line(x-80,y-69,x-23,y+53,'#fffdf2',2);ctx.globalAlpha=1;ctx.restore()};
 const streetDrawBefore=drawActivity;drawActivity=function(){streetDrawBefore();if(!['cook','claw','fish','pet','hit'].includes(activity))return;ctx.save();
- if(activity==='cook'){if(streetObservedState!==state){streetObservedState=state;streetIngredientCount=0;streetStirAmount=0;streetCookDone=false}let n=state.ingredients?.length||0;if(n>streetIngredientCount){streetBurst(400,473,10,'#e7c87c');streetIngredientCount=n}if(state.done&&!streetCookDone){streetBurst(400,430,15,'#f6db9b');streetCookDone=true}if(!state.done)streetCookDone=false;let stir=Math.max(0,Math.min(1,(state.coins||0)/150));if(n){ctx.strokeStyle='#e9d0a1';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(400,477,105,32,0,Math.PI,Math.PI+TAU*stir*.5);ctx.stroke();if(drag?.id==='stir'){ctx.save();ctx.translate(400,479);ctx.rotate(Math.atan2(drag.y-479,drag.x-400)+Math.PI*.5);line(0,2,0,-64,'#8c6848',8);ellipse(0,3,10,6,'#b78b59');ctx.restore()}txt(state.done?tr('Ready to serve','可以上桌啦'):tr('Stir the soup','搅拌汤锅')+' '+Math.round(stir*100)+'%',400,548,14,'#fff0d1')}}
+ if(activity==='cook'){if(streetObservedState!==state){streetObservedState=state;streetIngredientCount=0;streetStirAmount=0;streetCookDone=false}let n=state.ingredients?.length||0;if(n>streetIngredientCount){streetBurst(400,473,10,'#e7c87c');streetIngredientCount=n}if(state.done&&!streetCookDone){streetBurst(400,430,15,'#f6db9b');streetCookDone=true}if(!state.done)streetCookDone=false;let stir=Math.max(0,Math.min(1,(state.coins||0)/150));if(n){ctx.strokeStyle='#e9d0a1';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(400,477,105,32,0,Math.PI,Math.PI+TAU*stir*.5);ctx.stroke();if(drag?.id==='stir'){ctx.save();ctx.translate(400,479);ctx.rotate(Math.atan2(drag.y-479,drag.x-400)+Math.PI*.5);line(0,0,0,-103,'#76553d',8);line(-2,-5,-2,-98,'#c19b6d',2);ellipse(0,5,15,9,'#966c47');ellipse(0,2,12,5,'#d8b081');ctx.restore()}txt(state.done?tr('Ready to serve','可以上桌啦'):tr('Stir the soup','搅拌汤锅')+' '+Math.round(stir*100)+'%',400,548,14,'#fff0d1')}}
  if(activity==='claw'&&arcadeFeedback&&t-arcadeFeedback.at<2){let f=Math.min(1,(t-arcadeFeedback.at)*3);ctx.save();ctx.translate(400,566);ctx.scale(f,f);if(arcadeFeedback.grab>=0){ellipse(0,14,32,8,'#402d2d55');cat(0,7,arcadeFeedback.grab,false,1.15);txt(tr('Your new plush!','新玩偶到手！'),0,30,14,'#fff0d1')}else{txt(tr('So close. Try another angle!','差一点！换个角度吧。'),0,0,15,'#fff0d1')}ctx.restore()}
  if(activity==='fish'&&state.fish){let f=(t*1.3)%1;ctx.strokeStyle='#e3f5e3aa';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(468,466,8+f*36,3+f*11,0,0,TAU);ctx.stroke();if(state.castAnimAt&&t-state.castAnimAt<.5){let f=Math.min(1,(t-state.castAnimAt)*2);ellipse(405+63*f,345+118*f-30*Math.sin(f*Math.PI),5,8,'#edb47f')}}
  if(activity==='pet'&&drag?.id==='pet'){let x=drag.x,y=drag.y;if(t-streetStirAmount>.13){streetStirAmount=t;streetBurst(x,y,2,'#efd1a2')}}
@@ -922,8 +922,8 @@ function drawRitualPose(x,y,sc,opts={}){
 function lightTempleIncense(){if(activity!=='prayer'||state.incense||state.prayerStage!=='ready')return;state.incense=true;state.incenseAt=t;sound(350);hint('The incense is lit. Tap the mat to offer your prayer.','香已点燃，点击蒲团静心祈愿。')}
 
 /* Food Street release: prepare, serve, taste and keep the finished recipe. */
-activityTitle.bubbleTea=['Bubble tea counter','珍珠奶茶铺'];
-roomActions.kitchen=[['cook','Cook with Grandma','跟外婆做饭'],['bubbleTea','Make bubble tea','亲手做奶茶']];
+activityTitle.bubbleTea=['Bubble tea','手摇奶茶'];
+roomActions.kitchen=[['cook','Grandma’s soup','外婆煮汤'],['bubbleTea','Bubble tea','手摇奶茶']];
 const foodReleaseStart=start;start=function(id){foodReleaseStart(id);if(id==='bubbleTea'){state.teaStage='base';state.teaBase=-1;state.teaPearls=0;state.teaMix=0;state.teaAt=t;hint('Choose a tea, then add pearls and shake.','选茶底，加珍珠，再摇匀。')}};
 const teaChoices=[['Milk tea','经典奶茶','#b68965'],['Jasmine milk tea','茉莉奶茶','#d7c59b'],['Brown sugar tea','黑糖奶茶','#976843']];
 function teaCup(x,y,sc=1,base=0,pearls=0,fill=1,angle=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(-36,-74);ctx.lineTo(36,-74);ctx.lineTo(26,0);ctx.lineTo(-26,0);ctx.closePath();ctx.fillStyle='#e6e3cf';ctx.fill();ctx.save();ctx.clip();let level=-69*Math.max(0,Math.min(1,fill));ctx.fillStyle=teaChoices[Math.max(0,base)][2];ctx.fillRect(-38,level,76,75);for(let i=0;i<Math.min(16,pearls);i++){let xx=-20+(i*17)%42,yy=-5-Math.floor(i/5)*7+Math.sin(t*6+i)*Math.min(3,Math.abs(angle)*12);ellipse(xx,yy,4.2,4.2,'#4b342e')}ctx.restore();ctx.strokeStyle='#c8b999';ctx.lineWidth=2;ctx.stroke();ellipse(0,-74,37,7,'#eee1c7');line(9,-78,16,-110,'#a66357',5);line(-24,-63,-19,-12,'#fff3da66',3);ctx.restore()}
@@ -1111,11 +1111,11 @@ const continuityRoomDraw=drawRoom;
 drawRoom=function(){
  const first=hit.length;continuityRoomDraw();
  if(!room||avatar===null)return;
- if(continuityRoom!==room){continuityRoom=room;indoor={x:400,y:590,tx:400,ty:550,facing:'up',last:t,goal:null}}
+ if(continuityRoom!==room){continuityRoom=room;const b=livingBounds(),doorY=Math.min(735,b.y+b.h-108/cam.scale),entryY=Math.min(doorY,Math.max(655,doorY-28));indoor={x:clamp(190,b.x+46,b.x+b.w-46),y:doorY,tx:clamp(220,b.x+46,b.x+b.w-46),ty:entryY,facing:'up',last:t,goal:null}}
  if(continuityActivity!==null){continuityActivity=null;indoor.last=t;indoor.goal=null;indoor.tx=indoor.x;indoor.ty=indoor.y}
  const delta=Math.max(0,Math.min(.05,t-indoor.last));indoor.last=t;
  for(let h of hit.slice(first)){
-  const fn=h.fn;h.fn=()=>{if(!indoorReady())return;indoorDestination(h.x+h.w/2,h.y+h.h+38,fn);hint('Walking to the station…','正在走向体验区……')};
+  const fn=h.fn;h.fn=()=>{if(!indoorReady())return;indoorDestination(h.x+h.w/2,h.y+h.h+88,fn);hint('Walking to the station…','正在走向体验区……')};
  }
  if(indoorReady()){
   let dx=Number(!!(keys.ArrowRight||keys.d))-Number(!!(keys.ArrowLeft||keys.a)),dy=Number(!!(keys.ArrowDown||keys.s))-Number(!!(keys.ArrowUp||keys.w));
@@ -1125,7 +1125,7 @@ drawRoom=function(){
   if((dist<=3||performance.now()-indoor.goalAt>3500)&&indoor.goal){const fn=indoor.goal,expectedRoom=room;indoor.goal=null;requestAnimationFrame(()=>{if(indoorReady()&&room===expectedRoom)fn()})}
   if(dist>5){ctx.save();ctx.globalAlpha=.65;ellipse(indoor.tx,indoor.ty,10,4,'#e6c88d');ctx.restore()}
  }
- ctx.save();const visible= livingBounds();const ix=clamp(indoor.x,visible.x+25,visible.x+visible.w-25),iy=clamp(indoor.y,visible.y+110,visible.y+visible.h-85/cam.scale);backHuman(ix,iy,avatar,Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3,indoor.facing,Math.max(1.25,48/(85*cam.scale)));ctx.restore();
+ ctx.save();const visible= livingBounds();const ix=clamp(indoor.x,visible.x+25,visible.x+visible.w-25),iy=clamp(indoor.y,visible.y+110,visible.y+visible.h-85/cam.scale);backHuman(ix,iy,avatar,Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3,indoor.facing,Math.max(1.05,42/(85*cam.scale)));ctx.restore();
 };
 c.addEventListener('pointerup',e=>{if(!indoorReady()||!drag||drag.moved>30||drag.h)return;const a=point(e);indoorDestination(a.x,a.y)},true);
 const indoorControlStyle=document.createElement('style');indoorControlStyle.textContent='#movePad[data-indoor="true"]{bottom:calc(env(safe-area-inset-bottom,0px) + 76px);z-index:4}';document.head.append(indoorControlStyle);
@@ -1764,19 +1764,19 @@ const clawPlushes=[
 const clawNextStart=start;
 start=function(id){
  clawNextStart(id);
- if(id==='claw'){state.hook=.5;state.clawPhase='aim';state.clawStreak=0;state.clawResult=null;hint('Slide the claw directly over a plush. Aim carefully!','把夹爪移到玩偶正上方，瞄准再下夹！')}
+ if(id==='claw'){state.hook=.5;state.clawPhase='aim';state.clawStreak=0;state.clawResult=null;state.clawExpert=false;hint('Slide the claw directly over a plush. Aim carefully!','把夹爪移到玩偶正上方，瞄准再下夹！')}
 };
 function clawAimX(){return 286+clamp(state.hook,0,1)*228}
 doClaw=function(){
  if(activity!=='claw'||state.dropping)return;
  const x=clawAimX(),dist=clawPlushes.map(v=>Math.abs(v[2]-x)),i=dist.indexOf(Math.min(...dist));
- state.clawTarget=dist[i]<=21?i:-1;state.clawStartX=x;state.clawAt=t;state.clawPhase='lower';state.clawResult=null;state.dropping=true;state.count++;
+ state.clawTarget=dist[i]<=(state.clawExpert?8:21)?i:-1;state.clawStartX=x;state.clawAt=t;state.clawPhase='lower';state.clawResult=null;state.dropping=true;state.count++;
  refreshControls();sound(310);hint('Here goes…','下夹啦……');
 };
 function clawFinish(){
  if(!state.dropping)return;
  const i=state.clawTarget;state.dropping=false;state.clawPhase='aim';state.clawResult={i,at:t};state.hook=0;state.drop=0;
- if(i>=0){state.clawStreak=0;let v=clawPlushes[i],owned=items.some(x=>x[0]===v[0]);addItem(v[0],v[1]);sound(660);
+ if(i>=0){state.clawStreak=0;let v=clawPlushes[i],owned=items.some(x=>x[0]===v[0]);addItem(v[0],v[1]);if(state.clawExpert)addItem('Precision claw champion','精准夹娃娃冠军');sound(660);
   hint(...(owned?['A twin! Your plush has acquired a colleague.','又来一只！玩偶也有同事啦。']:['A new plush is waiting in the prize tray.','新玩偶已落入出货口，快来看看！']));
  }else{state.clawStreak=(state.clawStreak||0)+1;const lines=[['Empty claws. They are practising minimalism.','夹了个寂寞。夹爪正在实践极简主义。'],['Even the plushies are avoiding responsibility. Try a little closer.','连玩偶都在逃避责任。再瞄准一点。'],['The claw has filed for annual leave. Please try again.','夹爪已申请年假。请再试一次。']];hint(...lines[Math.min(2,state.clawStreak-1)]);sound(210)}
  refreshControls();
@@ -1818,7 +1818,7 @@ function clawCabinet(){
  round(358,559,174,33,7,state.dropping?'#aa9983':'#b76856','#7a5146');
  txt(state.dropping?tr('In motion…','抓取中……'):tr('LOWER CLAW','下夹'),445,575,15,'#fff0db');
  if(!state.dropping){target(252,358,296,178,()=>{},'claw');target(354,550,184,49,doClaw)}
- txt(state.clawResult?state.clawResult.i>=0?tr('Prize delivered!','玩偶到手啦！'):tr('Try a little closer','再瞄准一点'):tr('Slide to aim','左右滑动瞄准'),400,633,17,'#fff1d8');
+ txt(state.clawResult?state.clawResult.i>=0?tr('Prize delivered!','玩偶到手啦！'):tr('Try a little closer','再瞄准一点'):tr('Slide to aim','左右滑动瞄准'),400,621,15,'#fff1d8');if(!state.dropping){label(state.clawExpert?tr('Precision mode: ON','精准模式：开'):tr('Try precision mode','挑战精准夹取'),400,655,()=>{state.clawExpert=!state.clawExpert;state.clawResult=null;hint(...(state.clawExpert?['Expert mode: aim at the exact centre.','高手模式：对准玩偶正中心。']:['Casual mode. Take your time.','休闲模式，慢慢来。']))});}
  ctx.restore();
 }
 const previousClawDraw=drawActivity;
@@ -2029,3 +2029,38 @@ cameo9=function(place=scene){
  save('cameoCount',n+1);cameoOpenConversation(a)
 };
 
+/* Progress rewards unique achievements, not repeated low-effort actions.
+   Recalculate from existing saves to avoid reset or duplicate migration awards. */
+const travellerRanks=[
+ [0,'Wandering novice','初来乍到'],
+ [40,'Weekend wanderer','周末旅人'],
+ [110,'Certified slacker','持证摸鱼人'],
+ [220,'Master of doing less','摸鱼大师'],
+ [380,'Legend of the valley','解忧谷传说'],
+ [600,'Grandmaster of rest','摸鱼宗师']
+];
+function travellerProgress(){
+ const unique=[...new Set(items.map(v=>v[0]))];let xp=0;
+ for(const name of unique){
+  if(/^Met |^Arrival:/.test(name))continue;
+  if(name==='Precision claw champion'||name==='Certified worry shredder')xp+=35;
+  else if(/recipe|reading|friendship|blessing|badge|ticket|permit|plush|fortune stick|fortune paper|keepsake|postcard|chart/i.test(name))xp+=10;
+  else xp+=4;
+ }
+ xp+=new Set(visited).size*12;
+ let index=0;for(let i=1;i<travellerRanks.length;i++)if(xp>=travellerRanks[i][0])index=i;
+ return {xp,level:index+1,rank:travellerRanks[index],next:travellerRanks[index+1]||null};
+}
+const progressionHUD=updateHUD;
+updateHUD=function(){progressionHUD();const v=travellerProgress();$('hudProgress').textContent=tr('Lv. ','等级 ')+v.level+' · '+tr(v.rank[1],v.rank[2]);$('hudProgress').title=v.xp+' XP'+(v.next?' / '+v.next[0]:'');};
+const progressionAlbum=albumProfile;
+albumProfile=function(q){
+ progressionAlbum(q);const v=travellerProgress(),p=q.querySelector('.albumProfile p');
+ if(p)p.textContent=tr('Lv. ','等级 ')+v.level+' · '+tr(v.rank[1],v.rank[2]);
+ const box=element('section','',q,'travellerProgress');
+ element('strong',v.xp+' XP'+(v.next?' / '+v.next[0]:''),box);
+ const bar=element('progress','',box);bar.max=v.next?v.next[0]-v.rank[0]:1;bar.value=v.next?v.xp-v.rank[0]:1;
+ element('small',v.next?tr('Next: ','下一称号：')+tr(v.next[1],v.next[2]):tr('Maximum rank. Time for tea.','已达最高称号，喝茶去吧。'),box);
+ element('p',tr('Discover new places, finish recipes and earn unique keepsakes. Repeating a chat does not earn XP.','探索新地点、完成配方、收藏不同的纪念品。重复聊天不加经验。'),box)
+};
+const rankStyle=document.createElement('style');rankStyle.textContent='.travellerProgress{padding:12px 15px;margin:0 0 15px;border:1px solid #b69a70;border-radius:8px;background:#efdfbf;color:#554438}.travellerProgress progress{width:100%;height:12px;accent-color:#698a75;display:block;margin:8px 0}.travellerProgress p{font-size:12px;line-height:1.4;margin:6px 0 0}.travellerProgress small{display:block}';document.head.append(rankStyle);
