@@ -4328,7 +4328,7 @@ wallThreads.push(
 
 /* Nostalgia arcade: original bubble-matching game, free play, no currency.
    Keep legacy claw code and earned plushies for save compatibility. */
-roomActions.arcade=[['bubbleArcade','Bubble pop','泡泡龙'],['rhythm','Rhythm floor','节奏舞台'],['blindBox','Blind boxes','摸鱼盲盒']];
+roomActions.arcade=[['bubbleArcade','Bubble pop','泡泡龙'],['woodenThree','Tic tac toe','井字棋'],['blindBox','Blind boxes','摸鱼盲盒']];
 activityTitle.bubbleArcade=['Bubble pop','泡泡龙'];
 indoorStages.arcade.stations.bubbleArcade=indoorStages.arcade.stations.claw;
 const nostalgiaBubbleColors=[['#e9a399','#a44d57'],['#f6d78f','#aa7c36'],['#a9d2b6','#527f68'],['#a2c8e6','#52749f']];
@@ -4446,3 +4446,123 @@ c.addEventListener('pointerup',e=>{if(nostalgiaPointer!==e.pointerId)return;nost
 c.addEventListener('pointercancel',e=>{if(nostalgiaPointer===e.pointerId)nostalgiaPointer=null},true);
 const nostalgiaIntroBefore=roomIntro;
 roomIntro=function(){nostalgiaIntroBefore();if(room==='arcade')toast(tr('Welcome to the old-school arcade. No coins needed.','欢迎来到童年游戏厅，不用投币。'))};
+
+
+/* An original wooden three-in-a-row table. No points spent, no timed pressure.
+   The old rhythm activity and keepsakes remain readable for existing saves. */
+activityTitle.woodenThree=['Tic tac toe','井字棋'];
+indoorStages.arcade.stations.woodenThree=indoorStages.arcade.stations.rhythm;
+const threeLines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function threeWinner(board){for(const a of threeLines)if(board[a[0]]&&board[a[0]]===board[a[1]]&&board[a[0]]===board[a[2]])return {who:board[a[0]],line:a};return board.every(Boolean)?{who:'draw',line:[]}:null}
+function threeSearch(board,turn,depth=0){
+ const result=threeWinner(board);if(result)return result.who===2?10-depth:result.who===1?depth-10:0;
+ let best=turn===2?-Infinity:Infinity;
+ for(let i=0;i<9;i++)if(!board[i]){board[i]=turn;const score=threeSearch(board,3-turn,depth+1);board[i]=0;best=turn===2?Math.max(best,score):Math.min(best,score)}return best
+}
+function threeMove(board,expert,random=Math.random){
+ const free=board.flatMap((v,i)=>v?[]:[i]);if(!free.length||threeWinner(board))return -1;
+ for(const i of free){board[i]=2;const win=threeWinner(board)?.who===2;board[i]=0;if(win)return i}
+ if(!expert&&random()<.30)return free[Math.floor(random()*free.length)];
+ let best=-Infinity,picks=[];
+ for(const i of free){board[i]=2;const value=threeSearch(board,1,1);board[i]=0;if(value>best){best=value;picks=[i]}else if(value===best)picks.push(i)}
+ return picks[Math.floor(random()*picks.length)]
+}
+const threeTalk={
+ cat:{
+  start:[['Mochi: You get the crosses. I get the circles and your chair.','麻薯：叉叉归你，圈圈和你的椅子归我。'],['Mochi: I learned strategy by stealing unattended food.','麻薯：我的战术是靠偷吃练出来的。']],
+  turn:[['Mochi: Interesting. I was going to sit there.','麻薯：有意思，本来想坐那里的。'],['Mochi: Give me a second. My brain is on a tea break.','麻薯：等一下，脑子正在摸鱼。'],['Mochi: I have consulted my whiskers.','麻薯：本喵已征求胡须的意见。']],
+  win:[['Mochi: Fine. I was distracted by a bird.','麻薯：行吧，刚才有只鸟影响我发挥。'],['Mochi: You win. I still own the house.','麻薯：你赢了，但房子还是我的。']],
+  lose:[['Mochi: Imagine losing to someone who licks their own feet.','麻薯：居然输给一只天天舔脚的猫。'],['Mochi: Nine squares and you still cannot afford one.','麻薯：九个格子，你连三个都保不住。']],
+  draw:[['Mochi: A draw. I shall accept payment in chin scratches.','麻薯：平局。摸下巴抵账吧。'],['Mochi: A tie is the perfect excuse for a nap.','麻薯：打平了，正好睡觉。']]
+ },
+ auntie:{
+  start:[['Ah Ma: Three in a row. Easier than applying for leave.','阿嬷：三个连成一线，比请年假简单多了。'],['Ah Ma: Come. Let me see what your years of education were for.','阿嬷：来，让我看看你这么多年书读到哪里去了。']],
+  turn:[['Ah Ma: Aiyoh, you are really making me think today.','阿嬷：哎哟，今天还得动脑筋啊。'],['Ah Ma: I see what you are trying to do lah.','阿嬷：你这点小算盘，我看得清清楚楚。'],['Ah Ma: Wait. Even a grandmother deserves a thinking break.','阿嬷：等一下，老人家也有思考时间的嘛。']],
+  win:[['Ah Ma: Fine, you win. I forgot my reading glasses.','阿嬷：行行行，你赢了。我老花镜没戴。'],['Ah Ma: Not bad. At least your degree was useful for something.','阿嬷：不错，大学总算没白读。']],
+  lose:[['Ah Ma: My grandson could do better. He is still learning his ABCs.','阿嬷：我孙子都比你会下，他还在学ABC呢。'],['Ah Ma: So simple also lose? Come, I teach you.','阿嬷：这么简单也输？来来来，我教你。'],['Ah Ma: Your boss must love how easy it is to block you.','阿嬷：你这么容易被拿捏，老板一定很喜欢你。']],
+  draw:[['Ah Ma: I am giving you face. Do not tell the neighbours.','阿嬷：给你留点面子，别告诉邻居。'],['Ah Ma: Draw? Alright, we can both keep our dignity.','阿嬷：平局？好，咱俩的面子都保住了。']]
+ }
+};
+function threeActive(){return activity==='woodenThree'&&!!state.threeGame}
+function threeSay(g,key){g.line=townReaction('three-'+g.opponent+'-'+key,threeTalk[g.opponent][key]);hint(...g.line)}
+function threeNew(opponent='cat'){
+ const g={opponent,board:Array(9).fill(0),placed:Array(9).fill(-10),result:null,thinking:false,thinkAt:0,turn:1,line:null};
+ threeSay(g,'start');return g
+}
+function threePlace(g,index,who){g.board[index]=who;g.placed[index]=t;sound(who===1?370:310)}
+function threeFinish(g){
+ const result=threeWinner(g.board);if(!result)return false;g.result=result;g.thinking=false;
+ threeSay(g,result.who===1?'win':result.who===2?'lose':'draw');
+ if(result.who===1)addItem('Wooden three-in-a-row keepsake','木纹井字棋纪念章');
+ refreshControls();return true
+}
+function threePlay(i){
+ if(!threeActive())return;const g=state.threeGame;
+ if(g.result||g.thinking||g.board[i]||!Number.isInteger(i)||i<0||i>8)return;
+ threePlace(g,i,1);if(threeFinish(g))return;
+ g.thinking=true;g.thinkAt=t+.55;threeSay(g,'turn');refreshControls()
+}
+function threeAdvance(g){
+ if(!g.thinking||g.result||t<g.thinkAt)return;
+ g.thinking=false;const i=threeMove(g.board,g.opponent==='auntie');if(i>=0)threePlace(g,i,2);
+ if(!threeFinish(g)){hint(tr('Your turn. Find three in a row.','轮到你了。三个连成一线。'),tr('Your turn. Find three in a row.','轮到你了。三个连成一线。'));refreshControls()}
+}
+function threeWood(x,y,w,h,edge){
+ const grain=ctx.createLinearGradient(x,y,x+w,y+h);grain.addColorStop(0,'#e8c99b');grain.addColorStop(.5,'#d0a677');grain.addColorStop(1,'#af7d52');
+ round(x,y+6,w,h,10,edge,'#694c38');round(x,y,w,h,10,grain,'#79563b');
+ ctx.save();ctx.beginPath();ctx.roundRect(x+4,y+4,w-8,h-8,7);ctx.clip();
+ for(let i=0;i<15;i++){ctx.beginPath();ctx.moveTo(x-4,y+8+i*h/15);ctx.bezierCurveTo(x+w*.25,y+i*h/15-5,x+w*.65,y+12+i*h/15,x+w+3,y+4+i*h/15);ctx.strokeStyle=i%3===0?'#fff3cc52':'#80563924';ctx.lineWidth=i%3===0?2:1;ctx.stroke()}
+ ctx.restore()
+}
+function threeToken(x,y,who,scale=1,age=1){
+ const f=clamp(age/.24,0,1),lift=(1-f)*22;ctx.save();ctx.translate(x,y-lift);ctx.scale(scale,scale);
+ ellipse(0,4+lift,24,10,'#48322145');
+ const material=ctx.createRadialGradient(-9,-10,2,0,0,27);material.addColorStop(0,who===1?'#f9e8bd':'#9db9a7');material.addColorStop(1,who===1?'#c79b65':'#547d6f');
+ ellipse(0,2,26,25,who===1?'#93673f':'#365b54');ellipse(0,-2,26,24,material);ctx.strokeStyle=who===1?'#b58a57':'#486e60';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(0,-2,23,21,0,0,TAU);ctx.stroke();
+ ctx.strokeStyle=who===1?'#8b5846':'#f6e7c5';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();
+ if(who===1){ctx.moveTo(-9,-11);ctx.lineTo(9,7);ctx.moveTo(9,-11);ctx.lineTo(-9,7)}else{ctx.ellipse(0,-2,11,10,0,0,TAU)}ctx.stroke();ctx.restore()
+}
+function threeBoard(x,y,side,board=null,game=null){
+ const u=side/3;threeWood(x-9,y-9,side+18,side+18,'#a47850');
+ for(let i=1;i<3;i++){line(x+u*i,y+5,x+u*i,y+side-5,'#856343',2);line(x+5,y+u*i,x+side-5,y+u*i,'#856343',2)}
+ for(let i=0;i<9;i++){const xx=x+(i%3+.5)*u,yy=y+(Math.floor(i/3)+.5)*u;
+  if(board?.[i])threeToken(xx,yy,board[i],u/82,game?t-game.placed[i]:1);
+  else if(game&&!game.result&&!game.thinking){target(x+i%3*u,y+Math.floor(i/3)*u,u,u,()=>threePlay(i))}
+ }
+ if(game?.result?.line.length){const a=game.result.line[0],b=game.result.line[2];line(x+(a%3+.5)*u,y+(Math.floor(a/3)+.5)*u,x+(b%3+.5)*u,y+(Math.floor(b/3)+.5)*u,'#fff0bba8',6)}
+}
+const threeStartBefore=start;
+start=function(id){threeStartBefore(id);if(id==='woodenThree'){productionVisual('ahMaIdle');productionVisual('ahMaScold');state.threeGame=threeNew();refreshControls()}};
+const threePropBefore=prop;
+prop=function(id,x,y){if(id!=='woodenThree')return threePropBefore(id,x,y);threeWood(x-58,y-69,116,61,'#805c43');threeBoard(x-32,y-74,64,[1,0,0,0,2,0,0,0,1]);};
+const threeControlsBefore=refreshControls;
+refreshControls=function(){
+ threeControlsBefore();const el=$('gameControls');if(!el)return;el.classList.toggle('threeControls',threeActive());if(!threeActive())return;
+ const g=state.threeGame;el.replaceChildren();el.hidden=false;
+ const reset=opponent=>{state.threeGame=threeNew(opponent);refreshControls()};
+ const catBtn=b(el,tr('Mochi · Casual','麻薯 · 轻松'),()=>reset('cat'));catBtn.setAttribute('aria-pressed',String(g.opponent==='cat'));
+ const maBtn=b(el,tr('Ah Ma · Expert','阿嬷 · 高手'),()=>reset('auntie'));maBtn.setAttribute('aria-pressed',String(g.opponent==='auntie'));
+ if(g.result)b(el,tr('Again','再来一局'),()=>reset(g.opponent));
+ else{const status=element('span',g.thinking?tr('Thinking…','思考中……'):tr('Your turn','轮到你'),el);status.setAttribute('role','status')}
+};
+const threeStyle=document.createElement('style');threeStyle.textContent='#gameControls.threeControls{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:5px;max-width:95vw}#gameControls.threeControls button{min-height:44px;font-size:13px;white-space:normal}#gameControls.threeControls button[aria-pressed=true]{background:#536a5a;color:#fff3d9}#gameControls.threeControls span{padding:3px 8px;font-size:12px;color:#fff0ce;background:#493e34;border-radius:8px}';document.head.append(threeStyle);
+const threeDrawBefore=drawActivity;
+drawActivity=function(){
+ if(!threeActive())return threeDrawBefore();continuityActivity=activity;const g=state.threeGame;threeAdvance(g);
+ ctx.save();paintLivingBackdrop(pics.arcade||pics.tea);shadeLivingBackdrop('#392d2866');
+ // The table is an object within the room, not a generic dialogue or game modal.
+ ellipse(400,641,180,20,'#2f29275e');
+ threeWood(224,373,352,267,'#6d4b37');
+ round(235,396,330,218,8,'#68786a','#4a5b50');
+ for(let j=0;j<30;j++){const y=399+j*7;line(239,y,561,y,'#f9e6b30b',1)}
+ if(g.opponent==='auntie'){const im=productionVisual(g.result?.who===2?'ahMaScold':'ahMaIdle')||productionVisual('ahMaIdle');if(im)ctx.drawImage(im,358,270,84,103);else riverAuntie(400,373,.70)}
+ else{cat(400,371,0,false,1.7)}
+ ellipse(400,374,45,5,'#3f382d44');
+ threeBoard(286,388,228,g.board,g);
+ threeToken(254,566,1,.52);threeToken(546,566,2,.52);
+ txt(tr('You','你'),254,590,13,'#fff1d0');txt(g.opponent==='auntie'?tr('Ah Ma','阿嬷'):tr('Mochi','麻薯'),546,590,13,'#fff1d0');
+ if(g.result){round(299,626,202,34,8,'#e7d5aa','#b18a57');txt(g.result.who===1?tr('You win!','你赢啦！'):g.result.who===2?tr('NPC wins','对手赢啦'):tr('A draw','平局'),400,643,18,'#554337')}
+ else txt(g.thinking?tr('Thinking…','正在思考……'):tr('Three in a row','三个连成一线'),400,641,18,'#fff2d4');
+ ctx.restore()
+};
+window.addEventListener('keydown',e=>{if(!threeActive()||e.target.matches('input,textarea,select,button')||e.repeat)return;const i=Number(e.key);if(i>=1&&i<=9&&e.key.length===1){e.preventDefault();threePlay(i-1)}});
