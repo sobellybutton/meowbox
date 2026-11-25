@@ -4332,7 +4332,7 @@ function socialResultQuote(data){
 }
 function meowSocialCaption(data,format,cn){
  const mood=data.kind==='tarot'&&data.cards?.length?shareTarotMood(data.cards):data.kind==='type'&&/^[EIX][SNX][TFX][JPX]$/.test(data.title[0])?shareTypeMood(data.title[0]):null;const title=(mood?.title||data.title)[cn?1:0],quote=socialResultQuote(data)[cn?1:0];
- const invite=cn?'来摸鱼小镇，看看你的隐藏身份。':'Take a little break and find your own result.';
+ const invites={soul:['Which cat are you when nobody is watching?','没人在看时，你是哪种摸鱼猫？'],type:['Send this to someone who knows your real personality.','发给那个最懂你的人，看看他说准不准。'],motive:['What secretly keeps you going?','支撑你继续打工的，到底是什么？'],tarot:['What would your cards remind you to make time for?','如果抽到你的牌，它会提醒你留点时间做什么？'],fortune:['What little good thing would make your day?','今天遇到哪件小事，你就会觉得很幸运？'],cafe:['Tag the person you could sit in silence with.','想起了哪个可以一起安静喝茶的人？'],story:['What would you be doing in a parallel life?','平行人生里的你，正在做什么？']};const invite=invites[data.kind][cn?1:0];
  const tags=cn?'#摸鱼小镇 #趣味测试 #治愈系':'#MeowBox #CozyGames #TakeABreak';
  return [cn?'我在摸鱼小镇测到：'+title:'My MeowBox result: '+title,quote,...(data.kind==='tarot'?data.lines.map(v=>v[cn?1:0]):[]),invite,tags,...(format==='xhs'||format==='story'?[]:[meowShareUrl])].join('\n')
 }
@@ -4455,7 +4455,7 @@ function shareCardArt(cv,data,format,cn){
  const mood=data.kind==='tarot'&&data.cards.length?shareTarotMood(data.cards):data.kind==='type'&&/^[EIX][SNX][TFX][JPX]$/.test(data.title[0])?shareTypeMood(data.title[0]):null;
  const panelTop=top+44;frame(left-12,panelTop,width+24,end-panelTop,26,paper,'#d8b77d');
  line('MEOWBOX  /  '+(cn?'摸鱼小镇':'LITTLE ESCAPE CLUB'),cx,top-2,30,'bold','#fff0c9');
- const artY=panelTop+18;g.save();g.beginPath();g.rect(left+7,artY,width-14,artH);g.clip();if(!crop(left+7,artY,width-14,artH))socialCoverIllustration(g,data,left+7,artY,width-14,artH);g.restore();
+ const artY=panelTop+18;g.save();g.beginPath();g.rect(left+7,artY,width-14,artH);g.clip();if(data.kind==='soul'||data.kind==='tarot'||data.kind==='cafe'||!crop(left+7,artY,width-14,artH))socialCoverIllustration(g,data,left+7,artY,width-14,artH);g.restore();
  // Print a small editorial label over a reserved strip, never over the result text.
  const chip=locale(shareKinds[data.kind]);frame(left+23,artY+17,Math.min(width-46,390),52,14,'#fff1d9f5','#d8ba89');g.font='bold 27px '+font;g.textAlign='left';g.textBaseline='middle';g.fillStyle=ink;g.fillText(chip,left+40,artY+43,Math.min(width-78,350));
  let y=artY+artH+22;
@@ -4473,7 +4473,7 @@ function shareCardArt(cv,data,format,cn){
   const body=data.lines.map(locale).filter(Boolean).join('  •  ');if(body&&bodyEnd-y>=30)block(body,y,width-54,format==='square'?30:37,Math.max(1,Math.min(7,Math.floor((bodyEnd-y)/36))),ink)
  }
  g.strokeStyle='#d5b687';g.lineWidth=2;g.beginPath();g.moveTo(left+25,footerY-10);g.lineTo(w-right-25,footerY-10);g.stroke();
- line(cn?'你是哪种摸鱼人？':'What kind of escape are you?',cx,footerY+8,26,'bold','#67465b');
+ const prompts={soul:['Which cat are you?','你是哪只摸鱼猫？'],type:['Does this sound like you?','这个结果像你吗？'],motive:['What keeps you going?','什么在支撑着你？'],tarot:['Make a little time for yourself.','也给自己留一点时间。'],fortune:['A little luck for your day.','送今天的你一点小好运。'],cafe:['Who would you share a cup with?','你想和谁一起喝杯茶？'],story:['In another life…','如果是另一个人生……']};line(prompts[data.kind][cn?1:0],cx,footerY+8,26,'bold','#67465b');
  line(cn?'趣味探索 · 仅供反思':'For fun & reflection · MeowBox',cx,footerY+33,20,'normal','#725f62');
  if(format!=='xhs')line('sobellybutton.github.io/meowbox',cx,end+25,22,'bold','#fff1d9');
 }
