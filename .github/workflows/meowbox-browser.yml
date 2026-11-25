@@ -264,7 +264,17 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-bubble-tea.png'});
                 await tapWorld(420,480);
                 await page.waitForFunction(()=>state.teaStage==='done',{},{timeout:7000});
-                await page.evaluate(()=>{start('cook');state.done=true;state.recipe=['Tomato and egg soup','番茄蛋汤'];soupTaste()});
+                await page.evaluate(()=>start('cook'));
+                await page.waitForTimeout(700);
+                await dragWorld([[270,600],[320,560],[360,520],[400,480]]);
+                if(!await page.evaluate(()=>state.ingredients.includes(0)))throw Error('First ingredient drag failed');
+                await dragWorld([[530,600],[490,550],[440,520],[400,480]]);
+                if(!await page.evaluate(()=>state.ingredients.includes(2)))throw Error('Second ingredient drag failed');
+                const circles=[[450,480],[435,515],[400,525],[365,515],[350,480],[365,455],[400,447],[435,455],[450,480]];
+                for(let i=0;i<3;i++){if(await page.evaluate(()=>state.done))break;await dragWorld(circles);}
+                await page.waitForFunction(()=>state.done&&state.ingredients.length===2,{},{timeout:4000});
+                if(!await page.evaluate(()=>state.recipe[0]===(state.vegetarian?'Mushroom and tofu soup':'Tomato and egg soup')))throw Error('Recipe does not reflect actual ingredients');
+                await page.evaluate(()=>soupTaste());
                 await page.waitForFunction(()=>state.tasted===true,{},{timeout:7000});
                 await page.screenshot({path:'test-results/'+name+'-soup-tasting.png'});
                 await page.evaluate(()=>{room='temple';activity=null;start('secretGarden')});
