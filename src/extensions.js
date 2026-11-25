@@ -5080,7 +5080,9 @@ function chooseSpeechPosition(w,h,width,height,speaker,player,blockers=[]){
  const candidates=[{left:center-w/2,top:speaker.top-h-14},{left:speaker.right+12,top:speaker.top+5},{left:speaker.left-w-12,top:speaker.top+5},{left:center-w/2,top:speaker.bottom+12}];
  for(const v of candidates){const left=Math.max(8,Math.min(width-w-8,v.left)),top=v.top,rect={left,top,right:left+w,bottom:top+h};
  if(w>width-16||top<10||rect.bottom>height-74||[speaker,player,...blockers].some(b=>b&&speechOverlap(rect,b)))continue;
- return {left,top,tailX:Math.max(12,Math.min(w-12,center-left)),above:rect.bottom<=speaker.top}}
+ const side=rect.bottom<=speaker.top?'bottom':rect.top>=speaker.bottom?'top':rect.left>=speaker.right?'left':'right';
+  const anchor=side==='top'||side==='bottom'?Math.max(20,Math.min(w-20,center-left)):Math.max(20,Math.min(h-20,(speaker.top+speaker.bottom)/2-top));
+  return {left,top,tailX:anchor,above:side==='bottom',side}}
  return null
 }
 function syncCharacterSpeech(){
@@ -5095,7 +5097,7 @@ function syncCharacterSpeech(){
  for(const n of npc)if(n!==greetingNPC)blockers.push(characterScreenBounds(n));
  const position=chooseSpeechPosition(w,h,W,H,characterScreenBounds(greetingNPC),characterScreenBounds(p,true),blockers);
  if(!position){el.classList.remove('characterSpeech');return}
- el.style.setProperty('--speech-left',position.left+'px');el.style.setProperty('--speech-top',position.top+'px');el.style.setProperty('--speech-tail',position.tailX+'px');el.dataset.above=String(position.above)
+ el.style.setProperty('--speech-left',position.left+'px');el.style.setProperty('--speech-top',position.top+'px');el.style.setProperty('--speech-tail',position.tailX+'px');el.dataset.above=String(position.above);el.dataset.tailSide=position.side;drawWashiSpeech(el,w,h,position)
 }
 const characterSpeechBefore=say;
 say=function(...args){const result=characterSpeechBefore(...args);requestAnimationFrame(syncCharacterSpeech);return result};
@@ -5133,3 +5135,41 @@ label=function(name,x,y,fn){
   const hitW=Math.min(limit+12,Math.max(w,44/scale)),hitH=Math.max(h,44/scale);target(x-hitW/2,y-hitH/2,hitW,hitH,fn)
  }finally{ctx.restore()}
 };
+
+/* Paper and ink conversation art. Text stays real DOM text, not baked into an
+   illustration. Decorative contour is non-interactive and screen-reader hidden. */
+function washiOutline(w,h,side,n){
+ const q=Math.min(15,w/5,h/5);
+ const top=side==='top'?' L '+(n-8)+' 1 Q '+(n-2)+' -5 '+n+' -12 Q '+(n+3)+' -3 '+(n+8)+' 1':'';
+ const right=side==='right'?' L '+(w-1)+' '+(n-8)+' Q '+(w+5)+' '+(n-2)+' '+(w+12)+' '+n+' Q '+(w+4)+' '+(n+3)+' '+(w-1)+' '+(n+8):'';
+ const bottom=side==='bottom'?' L '+(n+8)+' '+(h-1)+' Q '+(n+2)+' '+(h+5)+' '+n+' '+(h+12)+' Q '+(n-3)+' '+(h+4)+' '+(n-8)+' '+(h-1):'';
+ const left=side==='left'?' L 1 '+(n+8)+' Q -5 '+(n+2)+' -12 '+n+' Q -3 '+(n-3)+' 1 '+(n-8):'';
+ return 'M '+q+' 1'+top+' L '+(w-q-2)+' 1 Q '+(w-1)+' 0 '+(w-1)+' '+(q+1)+right+' L '+(w-1)+' '+(h-q)+' Q '+w+' '+(h-1)+' '+(w-q)+' '+(h-1)+bottom+' L '+(q+3)+' '+(h-1)+' Q 1 '+h+' 1 '+(h-q-2)+left+' L 1 '+q+' Q 0 2 '+q+' 1 Z'
+}
+function drawWashiSpeech(el,w,h,position){
+ el.querySelector('.washiSpeechArt')?.remove();
+ const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
+ svg.classList.add('washiSpeechArt');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');svg.setAttribute('viewBox','-16 -16 '+(w+32)+' '+(h+32));svg.style.width=(w+32)+'px';svg.style.height=(h+32)+'px';
+ const node=(tag,attrs,parent)=>{const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));parent.append(e);return e};
+ const defs=node('defs',{},svg),gradient=node('linearGradient',{id:'meowSpeechPaper',x1:'0%',y1:'0%',x2:'100%',y2:'100%'},defs);
+ for(const [offset,color] of [['0%','#fffaf0'],['65%','#f7ebd1'],['100%','#ead9b9']])node('stop',{offset,'stop-color':color},gradient);
+ const grain=node('pattern',{id:'meowSpeechGrain',width:37,height:31,patternUnits:'userSpaceOnUse'},defs);
+ for(const [x,y] of [[3,9],[17,3],[25,23],[9,28],[31,13]])node('path',{d:'M '+x+' '+y+' l 2.4 -.7',stroke:'#9d8059','stroke-width':'.55',opacity:'.14'},grain);
+ const d=washiOutline(w,h,position.side,position.tailX);
+ node('path',{d,fill:'url(#meowSpeechPaper)',stroke:'#9d805b','stroke-width':1.15,'stroke-linejoin':'round'},svg);
+ node('path',{d,fill:'url(#meowSpeechGrain)',stroke:'none'},svg);
+ el.prepend(svg)
+}
+const washiCloseBefore=closeTalk;
+closeTalk=function(...args){const result=washiCloseBefore(...args);$('dialogue').querySelector('.washiSpeechArt')?.remove();return result};
+const washiStyle=document.createElement('style');washiStyle.textContent=`
+#dialogue.characterSpeech{background:transparent!important;border-color:transparent!important;box-shadow:none!important;isolation:isolate;padding:10px 13px!important}
+#dialogue.characterSpeech::after{display:none!important}
+#dialogue .washiSpeechArt{display:none;position:absolute;left:-16px;top:-16px;z-index:-1;pointer-events:none;overflow:visible;filter:drop-shadow(0 3px 3px #30271c32)}
+#dialogue.characterSpeech .washiSpeechArt{display:block}
+#dialogue.characterSpeech #speaker{font-family:Georgia,"Songti SC",serif;font-size:13px;letter-spacing:.015em;color:#80593d;border-bottom:1px solid #bca27a55;padding-bottom:3px}
+#dialogue.characterSpeech #line{font-family:system-ui,"PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.45;color:#443c31}
+#dialogue.characterSpeech #choices button{background:transparent!important;border:0!important;box-shadow:none!important;color:#5a6b50!important;text-decoration:underline;text-underline-offset:3px;padding:5px 0!important;min-height:44px}
+#dialogue:not(.characterSpeech){background:linear-gradient(120deg,#fff9e9,#f1e2c3)!important;border:1px solid #aa926d!important;border-radius:8px 12px 9px 7px!important}
+#dialogue:not(.characterSpeech) #choices button{background:#e9ddc1!important;border:1px solid #baaa87!important;color:#435746!important}
+`;document.head.append(washiStyle);
