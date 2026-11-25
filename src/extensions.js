@@ -1680,3 +1680,21 @@ passport=function(){
  }
 };
 $('dockPassport').onclick=passport;
+
+/* Recognisable illustrated ingredients, preserving the original hit boxes. */
+function kitchenIngredientArt(x,y,i,veg,used=false){
+ ctx.save();ctx.translate(x,y);ctx.globalAlpha=used?.62:1;
+ ellipse(0,3,37,15,'#76604750');ellipse(0,0,36,15,'#e9d7b1');ellipse(0,-2,31,11,'#f8e7c8');ctx.save();ctx.translate(0,-8);
+ if(i===0&&veg){
+  for(let j=0;j<3;j++){const px=-16+j*16,py=(j%2)*5;round(px-3,py-1,6,15,2,'#e2cba2','#a98c6b');ctx.beginPath();ctx.moveTo(px-12,py+1);ctx.quadraticCurveTo(px-13,py-17,px,py-18);ctx.quadraticCurveTo(px+12,py-17,px+13,py+1);ctx.quadraticCurveTo(px,py+5,px-12,py+1);ctx.fillStyle='#947052';ctx.fill();ctx.strokeStyle='#6d503d';ctx.stroke()}
+ }else if(i===0){
+  for(let j=0;j<3;j++){let px=-14+j*14,py=(j%2)*5;ellipse(px,py,12,11,'#c86447');ellipse(px-3,py-4,4,3,'#e99a70');line(px,py-10,px+5,py-12,'#577c4a',3);line(px,py-10,px-5,py-12,'#577c4a',3)}
+ }else if(i===1){
+  for(let j=0;j<5;j++){ctx.save();ctx.translate(-18+j*9,2);ctx.rotate((j-2)*.27);ctx.beginPath();ctx.moveTo(0,9);ctx.bezierCurveTo(-16,-3,-14,-22,0,-25);ctx.bezierCurveTo(13,-19,14,-1,0,9);ctx.fillStyle=j%2?'#739758':'#91ae6d';ctx.fill();line(0,8,0,-17,'#d1d5a3',1.5);ctx.restore()}
+ }else if(veg){
+  for(let j=0;j<3;j++){const px=-15+j*13,py=(j%2)*5;round(px-7,py-8,15,15,2,'#f1e3be','#b9a986');line(px-5,py-5,px+5,py-5,'#fff8df',2)}
+ }else{
+  for(let j=0;j<2;j++){ctx.save();ctx.translate(-10+j*18,0);ctx.rotate((j?1:-1)*.35);ellipse(0,0,10,16,'#d8b38b');ellipse(-2,-5,6,9,'#ecd0a8');ctx.restore()}
+ }
+ ctx.restore();ctx.restore();
+}
