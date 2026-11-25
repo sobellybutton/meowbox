@@ -57,7 +57,7 @@ jobs:
                 await page.locator('#dockPassport').click();
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
                 await page.screenshot({path:'test-results/'+name+'-passport.png'});
-                await page.locator('#dockRoom').click();
+                await page.getByRole('button',{name:'Open my bag',exact:true}).click();
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
                 await page.screenshot({path:'test-results/'+name+'-bag.png'});
                 await page.reload({waitUntil:'load'});
@@ -69,6 +69,15 @@ jobs:
                 await page.locator('#dockPassport').click();
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
                 if(!/Test Traveller/.test(await page.locator('.albumProfile').innerText()))throw Error('Saved player name lost');
+                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                // Direct activity integration check, separate from the normal entrance flow.
+                await page.evaluate(()=>{room='wishes';activity=null;action('coin')});
+                await page.locator('.wishRitual').waitFor({timeout:8000});
+                await page.locator('.wishKeyboard').locator('..').locator('summary').click();
+                await page.locator('.wishKeyboard').getByRole('button',{name:'Throw',exact:true}).click();
+                await page.waitForTimeout(1700);
+                if(!await page.locator('.ritualCoin').isVisible())throw Error('Missed coin did not return');
+                await page.screenshot({path:'test-results/'+name+'-wishing-pool.png'});
                 if(errors.length)throw Error(errors.join('; '));
                 console.log(name+': PASS');
               }catch(e){failed=true;console.error(name+': FAIL '+e.message);await page.screenshot({path:'test-results/'+name+'-failure.png'}).catch(()=>{});}
