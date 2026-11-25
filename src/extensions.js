@@ -830,7 +830,7 @@ drawActivity=function(){
  const stoolWood=ctx.createLinearGradient(0,499,0,551);stoolWood.addColorStop(0,'#c9a878');stoolWood.addColorStop(1,'#71543e');
  line(247,511,242,552,'#70513c',7);line(297,511,302,552,'#70513c',7);line(248,535,298,535,'#70513c',4);
  ellipse(272,506,35,8,stoolWood);ellipse(272,503,34,6,'#b4956c');
- if(room==='fish'){if(!drawProductionAhMa(272,550,.70))riverAuntie(272,550,.68)}else backHuman(272,550,0,false,'right',1.1);
+ if(room==='fish'){if(!drawProductionAhMa(272,550,W<H?.67:.70))riverAuntie(272,550,W<H?.67:.68)}else backHuman(272,550,0,false,'right',1.1);
  // Low ritual block: the paper is on the working surface, rather than floating on an enormous table.
  const wood=ctx.createLinearGradient(0,505,0,557);wood.addColorStop(0,'#bca078');wood.addColorStop(.5,'#9f805e');wood.addColorStop(1,'#795d42');
  ctx.fillStyle=wood;ctx.beginPath();ctx.moveTo(335,506);ctx.lineTo(421,506);ctx.lineTo(443,540);ctx.lineTo(318,540);ctx.closePath();ctx.fill();ctx.strokeStyle='#806448';ctx.stroke();
@@ -1215,7 +1215,7 @@ ellipse(438,501,148,78,'#636d57');ellipse(438,492,141,75,'#436f6b');ellipse(438,
 let feedAge=t-state.gardenFeedAt;for(let i=0;i<5;i++){let theta=t*(.23+i*.035)+i*1.26,xx=438+Math.cos(theta)*(82+i*7),yy=492+Math.sin(theta)*44,dx=-Math.sin(theta)*90,dy=Math.cos(theta)*44;if(feedAge<5){let attraction=poseEase(feedAge/1.1)*Math.min(1,(5-feedAge)/1.4)*.75;xx+=(state.gardenFeedX-xx)*attraction;yy+=(state.gardenFeedY-yy)*attraction;dx=state.gardenFeedX-xx;dy=state.gardenFeedY-yy}gardenKoi(xx,yy,Math.atan2(dy,dx),i)}if(feedAge<1.5){for(let i=0;i<6;i++){let f=Math.min(1,feedAge*2);ellipse(state.gardenFeedX-15+i*6,state.gardenFeedY-(1-f)*60+Math.sin(i)*6,2.5,2.5,'#ddc294')}ctx.beginPath();ctx.ellipse(state.gardenFeedX,state.gardenFeedY,8+feedAge*20,4+feedAge*10,0,0,TAU);ctx.strokeStyle='rgba(245,238,208,'+(1-feedAge/1.5)*.75+')';ctx.stroke()}ctx.restore();
 for(let i=0;i<7;i++){let xx=325+i*36,yy=540+Math.sin(i)*17;ellipse(xx,yy,22,9,'#8c9180');ellipse(xx-3,yy-3,17,5,'#aab09b')}line(580,310,580,405,'#78583e',9);line(580,310,527,310,'#78583e',8);gardenWindChime(527,371);target(499,320,62,105,gardenChime);txt(tr('Wind chime','风铃'),527,420,14,'#fff1d2');
 round(206,540,100,15,3,'#9f7953','#674e38');line(215,555,215,582,'#694d37',6);line(298,555,298,582,'#694d37',6);if(walk){backHuman(200+poseEase(age/1.2)*55,586,avatar??0,true,'right',1.5)}else{const footY=586-seat*9;drawRitualPose(253-seat*4,footY,1.5,{seat,reach:feedAge<.45?{x:315,y:460}:null})}target(205,505,102,77,gardenSeat);
-label(tr(state.gardenSitting?'Stand up':'Sit awhile',state.gardenSitting?'起身':'坐一会儿'),253,610,gardenSeat);label(tr('Feed the koi','喂锦鲤'),450,610,()=>gardenFeed());target(321,435,240,105,()=>gardenFeed());label(tr('Temple','回寺庙'),400,659,()=>{activity=null;state={};updateHUD();roomIntro()});cat(610,540,1,false,.62);target(588,510,44,34,meetTempleCat);
+label(tr(state.gardenSitting?'Stand up':'Sit awhile',state.gardenSitting?'起身':'坐一会儿'),253,610,gardenSeat);label(tr('Feed the koi','喂锦鲤'),450,610,()=>gardenFeed());target(321,435,240,105,()=>gardenFeed());label(tr('Temple','回寺庙'),400,659,()=>{activity=null;state={};updateHUD();roomIntro()});cat(W<H?580:610,540,1,false,.62);target(W<H?558:588,510,44,34,meetTempleCat);
 ctx.restore()};
 const gardenKeepsakeStory=keepsakeStory;keepsakeStory=function(item){if(item[0]==='Quiet garden postcard')return ['A little garden where even the koi have time for lunch.','一个连锦鲤都能慢慢吃午饭的小后院。'];return gardenKeepsakeStory(item)};
 
@@ -2458,7 +2458,7 @@ drawActivity=function(){
  let wrist=null;if(phase==='ready'||walking)backHuman(px,py,avatar??0,walking,'up',1.35);
  else if(bottleMode){const swing=phase==='walk'?Math.sin(Math.PI*clamp((age-1.1)/.75,0,1)):0;wrist=drawRitualPose(px,py,1.4,{reach:{x:px+26+16*swing,y:py-66-20*swing},bow:.16*swing})}
  else{drawRitualPose(px,py,1.4,{reach:{x:px+16,y:py-94},bow:phase==='walk'?.10:0,praying:true});if(phase==='walk'&&age<2.8)riverSoundWaves(px+20,py-93,age-1.1)}
- riverAuntie(205,488,.78);
+ riverAuntie(W<H?222:205,488,W<H?.70:.78);
  if(bottleMode){
   if(phase==='ready'){round(275,465,68,13,3,'#ad8860','#74583e');round(290,448,23,12,2,'#f0e1ba');riverBottleArt(330,445,.05,.75,false)}
   else if(age<.55){riverBottleArt(330,445,0,.85,age>.3);round(319,422+age*45,15,9,2,'#f1dfad')}
@@ -2467,7 +2467,7 @@ drawActivity=function(){
   else {const drift=Math.min(1,(age-1.85)/2.5);if(drift<1){ctx.save();ctx.globalAlpha=1-drift;riverBottleArt(landX+75*drift,landY-18*drift+Math.sin(t*4)*2,1.2,.72);ctx.restore()}riverRing(landX,landY,age-1.85,48)}
  }else if(age>1.1&&phase!=='ready'){
   for(let i=0;i<3;i++)riverRing(375,riverBankY(375)-25,age-1.1-i*.25,80);
-  if(age<2.85)wonderSceneText(state.riverNote||tr('AAAAAH!','啊啊啊！'),450,354-(age-1.1)*12,240,19,'#fff4d5',3)
+  if(age<2.85){const echoY=354-(age-1.1)*12;wonderSceneText(state.riverNote||tr('AAAAAH!','啊啊啊！'),450,echoY,240,19,'#fff4d5',3);if(!residentReducedMotion.matches)for(let i=0;i<3;i++){const bx=460+i*31+(age-1.1)*32,by=260-i*12-(age-1.1)*13;ctx.save();ctx.strokeStyle='#536760';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(bx-6,by);ctx.quadraticCurveTo(bx-3,by-4,bx,by);ctx.quadraticCurveTo(bx+3,by-4,bx+6,by);ctx.stroke();ctx.restore()}}
  }
  if(phase==='walk'&&age>(bottleMode?4.35:3.1)){
   state.riverNote='';state.riverPhase='done';
@@ -4008,7 +4008,7 @@ function drawProductionAhMa(x,y,scale=1){
  if(!im)return false;
  ctx.save();ellipse(x,y+2,37*scale,8*scale,'#3b322842');
  // Sprite pivot is the actual foot line, not the bounding-box centre.
- ctx.drawImage(im,x-90*scale,y-205*scale,180*scale,220*scale);
+ const h=205*scale,w=h*im.naturalWidth/im.naturalHeight;ctx.drawImage(im,x-w/2,y-h,w,h);
  ctx.restore();return true
 }
 // Request the matching two poses together when first reaching the stall.
@@ -4423,7 +4423,7 @@ prop=function(id,x,y){
  if(room!=='park'||id!=='chat')return parkHostPropBefore(id,x,y);
  // Two visible hosts, grounded near a bench, no invisible conversation target.
  ctx.save();line(x-52,y-5,x-56,y+22,'#735842',5);line(x+52,y-5,x+56,y+22,'#735842',5);round(x-61,y-26,122,17,3,'#a78a62','#715940');round(x-61,y-54,122,23,2,'#9e805b','#715940');line(x-55,y-43,x+55,y-43,'#d5b38a',1.5);
- if(!drawPaintedResident({x:x-48,y:y+12,n:['Auntie Mei','梅姨']},.95,false,'right'))backHuman(x-48,y+12,1,false,'right',.87);backHuman(x+47,y+12,3,false,'left',.87);
+ if(!drawPaintedResident({x:x-48,y:y+12,n:['Auntie Mei','梅姨']},.95,false,'right'))backHuman(x-48,y+12,1,false,'right',.87);backHuman(x+47,y+12,3,false,'left',.87);if(talkOpen){const who=$('speaker').textContent,mei=who===tr('Auntie Mei','梅姨'),lin=who===tr('Auntie Lin','林姨');if(mei||lin){const hx=x+(mei?-48:47);ellipse(hx,y-88,14,9,'#f5e5c8');for(let j=0;j<3;j++)ellipse(hx-6+j*6,y-88+Math.sin(t*4+j)*1.2,1.4,1.4,'#82755e')}}
  const sway=Math.sin(t*2)*.10;ctx.save();ctx.translate(x+27,y-31);ctx.rotate(sway);ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(-24,-34,0,-32);ctx.quadraticCurveTo(24,-34,0,0);ctx.fillStyle='#e2caa0';ctx.fill();ctx.strokeStyle='#a28a65';ctx.stroke();ctx.restore();ctx.restore()
 };
 /* Fictional park serials, with saved episode, scene and player choice. */
@@ -6319,3 +6319,29 @@ mobileRoomCamera=function(s,ox,oy){
  // Stable scale throughout gestures and stage changes; keeps drag paths aligned.
  return portraitActivityFit(W,H,bounds,1)
 };
+
+/* Waterfront and park: reserve the actual control band below the illustrated stage. */
+const shorePortraitBounds={hit:[205,595,300,650],riverBottle:[170,660,175,650],riverShout:[170,635,205,650],secretGarden:[150,635,260,700],pet:[235,565,320,655]};
+function shorePortraitFit(width,height,bounds,reserve){
+ const [l,r,u,d]=bounds,top=height<680?95:115,bottom=Math.max(top+80,height-reserve);
+ const scale=Math.min((width-20)/(r-l),(bottom-top)/(d-u));
+ return {s:scale,ox:width/2-(l+r)/2*scale,oy:(top+bottom)/2-(u+d)/2*scale}
+}
+const shoreCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(s,ox,oy){
+ if(W>=H||!Object.hasOwn(shorePortraitBounds,activity))return shoreCameraBefore(s,ox,oy);
+ const reserve=activity==='pet'?240:activity==='riverBottle'||activity==='riverShout'?225:145;
+ return shorePortraitFit(W,H,shorePortraitBounds[activity],reserve)
+};
+const shorePortraitStyle=document.createElement('style');
+shorePortraitStyle.textContent=`
+@media(orientation:portrait) and (max-width:600px){
+#game #gameControls.riverControls{bottom:calc(env(safe-area-inset-bottom,0px) + 74px)!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);width:min(92vw,420px);padding:6px!important;gap:4px}
+#game #gameControls.riverControls input[type=text]{grid-column:1/-1;width:100%;box-sizing:border-box}
+#game #gameControls.riverControls input[type=range]{width:100%;min-width:0}
+#game #gameControls.riverControls button:last-child,#game #gameControls.riverControls>span{grid-column:1/-1}
+#game #gameControls.riverControls .riverPowerLabel{display:flex;align-items:center;gap:5px}
+#game #gameControls.parkCareControls{bottom:calc(env(safe-area-inset-bottom,0px) + 75px)!important;gap:3px;padding:6px!important}
+#game #gameControls.parkCareControls .parkCareButtons button{min-height:44px!important;font-size:11px!important}
+}
+`;document.head.append(shorePortraitStyle);
