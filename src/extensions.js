@@ -3847,6 +3847,7 @@ const productionVisualManifest={
  parkCats:{path:'assets/visual/park-cats-sheet.svg',width:1760,height:700,cell:[220,140],foot:[110,120]},
  destiny:{path:'assets/visual/destiny-study.svg',width:800,height:1400},
  kitchen:{path:'assets/visual/kitchen-interior.svg',width:800,height:1400},
+ kitchenIngredients:{path:'assets/visual/kitchen-ingredients.svg',width:720,height:100},
  tarot:{path:'assets/visual/tarot-reading.svg',width:800,height:1400},
  temple:{path:'assets/visual/temple-courtyard.svg',width:800,height:1400},
  templePropsArt:{path:'assets/visual/temple-props.svg',width:960,height:240},
@@ -3941,3 +3942,51 @@ templeBasin=function(x,y){
 };
 const shrineArtStart=start;
 start=function(a){if(['prayer','templeWater','templeBell','templePaper','sticks','moon'].includes(a)){productionVisual('temple');productionVisual('templePropsArt')}return shrineArtStart(a)};
+
+/* Kitchen: distinct preparation bench, ingredient plates and a real enamel pot.
+   Keep the established interaction locations and completion/recipe rules. */
+const ingredientDraft=kitchenIngredientArt;
+kitchenIngredientArt=function(x,y,i,veg,used=false){
+ const im=productionVisual('kitchenIngredients');if(!im)return ingredientDraft(x,y,i,veg,used);
+ const cell=(veg?3:0)+i;ctx.save();ctx.globalAlpha=used?.50:1;
+ ctx.drawImage(im,cell*120,0,120,100,x-54,y-55.8,108,90);ctx.restore()
+};
+const preparationTableBefore=table;
+table=function(){
+ if(activity!=='cook')return preparationTableBefore();
+ paintLivingBackdrop(pics.kitchen||pics.streetKitchen);ctx.save();
+ const bounds=livingBounds(),top=ctx.createLinearGradient(0,374,0,685);
+ top.addColorStop(0,'#ba9a70');top.addColorStop(.55,'#927252');top.addColorStop(1,'#785c46');
+ ctx.fillStyle=top;ctx.beginPath();ctx.moveTo(198,400);ctx.lineTo(602,400);ctx.lineTo(Math.max(bounds.x+bounds.w,690),690);ctx.lineTo(Math.min(bounds.x,110),690);ctx.closePath();ctx.fill();
+ ctx.save();ctx.clip();for(let i=0;i<17;i++){const y=407+i*18;ctx.beginPath();ctx.moveTo(90,y);ctx.bezierCurveTo(220,y+Math.sin(i*3)*4,560,y-5,730,y+Math.cos(i)*4);ctx.strokeStyle=i%3===0?'#684c3d80':'#d8b18565';ctx.lineWidth=i%3===0?2:1;ctx.stroke()}ctx.restore();
+ // Stove top, low cast iron trivet and visible burner; no floating pot.
+ const stove=ctx.createLinearGradient(0,450,0,555);stove.addColorStop(0,'#7e8179');stove.addColorStop(1,'#464b48');
+ ctx.fillStyle=stove;ctx.beginPath();ctx.moveTo(313,449);ctx.lineTo(487,449);ctx.lineTo(535,559);ctx.lineTo(265,559);ctx.closePath();ctx.fill();ctx.strokeStyle='#454b45';ctx.lineWidth=2;ctx.stroke();ellipse(400,516,103,35,'#3f4440');ellipse(400,517,81,24,'#676f65');for(const x of [312,488]){ellipse(x,542,14,8,'#414a43');ellipse(x,539,10,5,'#a29e88')}
+ ctx.restore()
+};
+const enamelPotBefore=pot;
+pot=function(x,y){
+ if(activity!=='cook')return enamelPotBefore(x,y);
+ ctx.save();ctx.translate(x,y);
+ const heat=state.done?.15:.65;ellipse(0,48,98,20,'#343a3555');
+ if(!state.done){for(let i=0;i<10;i++){const xx=-63+i*14,hh=8+(Math.sin(t*9+i)*5+8)*heat;ctx.fillStyle='#b3c6d1';ctx.beginPath();ctx.moveTo(xx-5,44);ctx.quadraticCurveTo(xx-8,39,xx,43-hh);ctx.quadraticCurveTo(xx+7,38,xx+5,44);ctx.fill()}}
+ // Enamel body and solid handles, scaled to existing pot opening.
+ for(const sign of [-1,1]){ctx.beginPath();ctx.moveTo(sign*81,-1);ctx.bezierCurveTo(sign*130,-12,sign*134,20,sign*83,22);ctx.strokeStyle='#454b45';ctx.lineWidth=9;ctx.stroke();ctx.strokeStyle='#888d80';ctx.lineWidth=2;ctx.stroke()}
+ const body=ctx.createLinearGradient(-92,0,94,0);body.addColorStop(0,'#606c65');body.addColorStop(.28,'#b5bfb0');body.addColorStop(.52,'#e1ddbd');body.addColorStop(.83,'#98a89b');body.addColorStop(1,'#56695e');
+ ctx.beginPath();ctx.moveTo(-91,-10);ctx.bezierCurveTo(-90,20,-77,43,-61,49);ctx.quadraticCurveTo(0,63,61,49);ctx.bezierCurveTo(77,43,90,20,91,-10);ctx.closePath();ctx.fillStyle=body;ctx.fill();ctx.strokeStyle='#4f6258';ctx.lineWidth=2.6;ctx.stroke();ctx.beginPath();ctx.moveTo(-76,25);ctx.quadraticCurveTo(0,52,76,25);ctx.strokeStyle='#777e6e';ctx.lineWidth=3;ctx.stroke();
+ ellipse(0,-10,93,29,'#d6cfab');ellipse(0,-10,84,24,'#777a64');const broth=ctx.createLinearGradient(0,-30,0,12);
+ const ing=state.ingredients||[];broth.addColorStop(0,ing.includes(0)&&!state.vegetarian?'#dca17a':ing.length?'#d8ba83':'#acbeb5');broth.addColorStop(1,ing.includes(0)&&!state.vegetarian?'#ad754a':ing.length?'#a77e4b':'#7fa69c');ellipse(0,-9,79,20,broth);
+ ctx.save();ctx.beginPath();ctx.ellipse(0,-9,78,20,0,0,TAU);ctx.clip();
+ const turn=(state.stirAngle||0)+t*.16;
+ for(const i of ing)for(let j=0;j<4;j++){let a=i*2.1+j*1.55+turn;ctx.save();ctx.translate(Math.cos(a)*(30+j*10),-9+Math.sin(a)*(7+j*2));ctx.rotate(a);
+ if(i===1){ctx.beginPath();ctx.moveTo(-7,0);ctx.quadraticCurveTo(0,-7,8,0);ctx.quadraticCurveTo(0,7,-7,0);ctx.fillStyle='#73945d';ctx.fill();line(-5,0,5,0,'#bbcf8b',.9)}
+ else if(i===0&&!state.vegetarian){ctx.beginPath();ctx.moveTo(-7,0);ctx.quadraticCurveTo(0,-8,7,0);ctx.quadraticCurveTo(0,8,-7,0);ctx.fillStyle='#bf6148';ctx.fill();ellipse(0,0,2,1,'#f5bc8e')}
+ else if(i===0){ellipse(0,-1,8,4,'#947052');line(0,1,0,5,'#d8bc92',3)}
+ else if(state.vegetarian){round(-6,-4,12,8,1,'#eee1bb','#a99c7a')}
+ else{ctx.beginPath();ctx.moveTo(-8,0);ctx.quadraticCurveTo(-2,-5,2,0);ctx.quadraticCurveTo(8,5,10,-1);ctx.strokeStyle='#f1d18c';ctx.lineWidth=3;ctx.stroke()}
+ ctx.restore()}
+ for(let j=0;j<7;j++){let f=(t*.6+j*.18)%1;ctx.globalAlpha=(1-f)*.65;ctx.strokeStyle='#fff0c9';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(Math.cos(j*2)*65,Math.sin(j*2)*14-9,2+f*4,1+f*2,0,0,TAU);ctx.stroke()}
+ ctx.restore();ctx.restore()
+};
+const kitchenArtStart=start;
+start=function(a){if(a==='cook'||a==='bubbleTea'){productionVisual('kitchen');productionVisual('kitchenIngredients')}return kitchenArtStart(a)};
