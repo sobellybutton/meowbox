@@ -1,4 +1,89 @@
 {
   "version": 1,
-  "residents": {}
+  "residents": {
+    "temple-keeper": {
+      "standing": {
+        "path": "assets/visual/painted/temple-keeper/standing.webp",
+        "width": 238,
+        "height": 509,
+        "sha256": "5f3d7b619a27f3503557b4a81c3c54da04ec7f0a28e27b51033206aebee84060"
+      },
+      "warm": {
+        "path": "assets/visual/painted/temple-keeper/expressions/warm.webp",
+        "width": 120,
+        "height": 98,
+        "sha256": "482e48afe6494bf38f3fb4ec5530823b5f3c90c3dfcbaed47cb4bd567b23bc5c"
+      }
+    },
+    "master-yue": {
+      "standing": {
+        "path": "assets/visual/painted/master-yue/standing.webp",
+        "width": 242,
+        "height": 500,
+        "sha256": "9ebc3a3a198ede374aa4c5addf79dad8f69d4a4d3b98093786e1d19f14c07d05"
+      },
+      "warm": {
+        "path": "assets/visual/painted/master-yue/expressions/warm.webp",
+        "width": 120,
+        "height": 98,
+        "sha256": "7b19945fecc7f0bfdb81b9aae7a60496bf94d50bfad161e63797f31f23ef0c01"
+      }
+    },
+    "fortune-teller": {
+      "standing": {
+        "path": "assets/visual/painted/fortune-teller/standing.webp",
+        "width": 251,
+        "height": 508,
+        "sha256": "060da576d972400d45e1c005a793191cab0406d4428c9e49c010d251abb2cc68"
+      },
+      "warm": {
+        "path": "assets/visual/painted/fortune-teller/expressions/warm.webp",
+        "width": 120,
+        "height": 102,
+        "sha256": "a61c5d55bde743345782e789b48378a22d6dcc1452e3f1639c1c0838b207ea6e"
+      }
+    },
+    "auntie-mei": {
+      "standing": {
+        "path": "assets/visual/painted/auntie-mei/standing.webp",
+        "width": 299,
+        "height": 504,
+        "sha256": "9a5eee63053aa23ddb894384d9dd7526982fcd07059a42ffbd4534fc292fe52c"
+      },
+      "warm": {
+        "path": "assets/visual/painted/auntie-mei/expressions/warm.webp",
+        "width": 120,
+        "height": 96,
+        "sha256": "d1acc67538d83540129062635425e97ecc7239bfe7ccb4b9a11fcc794d1c3f4e"
+      }
+    },
+    "wang-laoban": {
+      "standing": {
+        "path": "assets/visual/painted/wang-laoban/standing.webp",
+        "width": 285,
+        "height": 515,
+        "sha256": "e7e4b1d0776ff05ca6e38d6a98a553d26d3a01baa2eec54102fea24c4afddb69"
+      },
+      "warm": {
+        "path": "assets/visual/painted/wang-laoban/expressions/warm.webp",
+        "width": 120,
+        "height": 100,
+        "sha256": "7e53d8c0051edd5cbe0c76e5404aea514b7afeed9f33573526ad7cdc894c7e9f"
+      }
+    },
+    "grandma": {
+      "standing": {
+        "path": "assets/visual/painted/grandma/standing.webp",
+        "width": 249,
+        "height": 507,
+        "sha256": "3e547b8c44a86a9333173d5f55971cafa16024af277b1e3f9710231a8d895ba2"
+      },
+      "warm": {
+        "path": "assets/visual/painted/grandma/expressions/warm.webp",
+        "width": 120,
+        "height": 98,
+        "sha256": "4048a13f47d1f94b3ae21fa8b430d9a7717a59c5b9a224a3ce2e2a00b83e51c9"
+      }
+    }
+  }
 }
