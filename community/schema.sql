@@ -14,3 +14,9 @@ CREATE TABLE IF NOT EXISTS reports (
  PRIMARY KEY(message_id,reporter)
 );
 CREATE INDEX IF NOT EXISTS reports_reporter_created ON reports(reporter,created);
+-- Separate submission events retain rate limits after a visitor deletes a post.
+CREATE TABLE IF NOT EXISTS submission_events (
+ id TEXT PRIMARY KEY, owner TEXT NOT NULL, rate_key TEXT NOT NULL, created INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS events_owner_created ON submission_events(owner,created);
+CREATE INDEX IF NOT EXISTS events_rate_created ON submission_events(rate_key,created);
