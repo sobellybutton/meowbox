@@ -226,10 +226,10 @@ if(indoorStages.tarot?.stations?.tarot)indoorStages.tarot.stations.tarot=[400,44
 const curatedDiscoveryActionBefore=action;
 action=function(id){
  if(room==='tarot'&&id==='tarot'){
-  closeTalk();return say(tr('Fortune Teller','占卜师'),tr('One deck, three ways to reflect. The cards do not decide your future.','一副牌，三种读法。未来怎么走，还是你自己说了算。'),[
-   [tr('One card for today','今日一张牌'),()=>{closeTalk();start('tarot')}],
-   [tr('Three cards · quick reflection','三张牌 · 简短解读'),()=>{closeTalk();start('love')}],
-   [tr('Five cards · deeper reflection','五张牌 · 深入解读'),()=>{closeTalk();start('love');state.readSpreadSize=5}],
+  closeTalk();return say(tr('Fortune Teller','占卜师'),tr('Something on your mind? Take your time. The cards aren’t going anywhere.','心里有事？慢慢来，牌又不会跑。'),[
+   [tr('Daily guidance · 1 card','今日指引 · 一张牌'),()=>{closeTalk();start('tarot')}],
+   [tr('Find some clarity · 3 cards','三牌解惑 · 三张牌'),()=>{closeTalk();start('love')}],
+   [tr('Look a little deeper · 5 cards','深入解读 · 五张牌'),()=>{closeTalk();start('love');state.readSpreadSize=5}],
    [tr('Maybe later','待会儿再来'),closeTalk]
   ])
  }
@@ -404,6 +404,40 @@ const festivalStyle=document.createElement('style');festivalStyle.textContent='#
    Use a separate versioned archive for extended spreads so older journal
    validation cannot silently discard them. No private question is uploaded. */
 const fiveReadingPositions=[['Situation','现状'],['Challenge','挑战'],['What helps','助力'],['A next step','下一步'],['Perspective','提醒']];
+const fiveReadingQuestions=[
+ // Preserve the four existing topic indices in historic journals.
+ [
+  ['What is happening in this relationship, beneath the surface?','这段关系的表面之下，正在发生什么？'],
+  ['Which expectation, fear or boundary needs attention?','哪一种期待、顾虑或界限值得留意？'],
+  ['What support or strength is available to you?','现在有哪些支持，或是你自身的力量，可以帮助你？'],
+  ['What could you communicate or do without forcing an outcome?','不强求结果的前提下，你能沟通什么，做些什么？'],
+  ['What perspective would help you treat yourself and others with care?','换个什么角度，能让你更温柔地对待自己和别人？']
+ ],
+ [
+  ['Which part of your work deserves your attention right now?','眼下，工作中哪一部分最值得你关注？'],
+  ['What is draining you, or standing in your way?','是什么在消耗你的精力，或阻碍你前进？'],
+  ['Which skills, people or resources could help?','哪些能力、人或资源可以帮到你？'],
+  ['What is one realistic action you could take next?','接下来，你能采取哪一个实际的行动？'],
+  ['What matters to you beyond your job title?','除了工牌上的职位，还有什么对你很重要？']
+ ],
+ [
+  ['What does stability mean to you at the moment?','此刻，安稳对你来说意味着什么？'],
+  ['Which spending habit or financial concern deserves a closer look?','哪些消费习惯或财务顾虑值得重新审视？'],
+  ['Which practical resources or habits could support you?','哪些实际资源或习惯能给你支持？'],
+  ['What can you do based on your budget and the facts, not the cards?','根据预算和事实，而不是牌面，你能做些什么？'],
+  ['What is enough, and what are you trying to make room for?','对你而言，怎样才算足够？你想给什么留出空间？']
+ ],
+ [
+  ['What is really on your mind?','此刻，你心里真正放不下的是什么？'],
+  ['Which assumption or uncertainty might be holding you back?','哪一种预设或不确定感，可能让你停在原地？'],
+  ['What strength, resource or support have you overlooked?','有哪些力量、资源或支持，是你忽略了的？'],
+  ['What is one manageable step you could choose?','你可以选择迈出怎样力所能及的一步？'],
+  ['What would you like to remember when you look back on this moment?','将来回望这一刻，你希望自己记住什么？']
+ ]
+];
+function fiveReadingPrompt(topic,i){
+ const row=fiveReadingQuestions[Number.isInteger(topic)&&topic>=0&&topic<3?topic:3];return row[i]?tr(...row[i]):''
+}
 function fiveReadingDraw(poolLength,random=Math.random){
  const pool=Array.from({length:poolLength},(_,i)=>i),out=[];if(pool.length<5)return out;
  for(let i=0;i<5;i++){const index=Math.min(pool.length-1,Math.max(0,Math.floor(random()*pool.length)));out.push({i:pool.splice(index,1)[0],rev:random()<.5})}return out
@@ -424,17 +458,17 @@ function fiveReadingSave(){
 }
 function fiveReadingDetail(v,i){
  const d=tarotDeck[v.i];if(!d)return;
- say(tr(...fiveReadingPositions[i]),tr(d[0],d[1])+' · '+orient(v.rev)+'\n\n'+arcanaReading(d,v.rev),[[tr('Back to the cards','回到牌桌'),closeTalk]])
+ say(tr(...fiveReadingPositions[i]),tr(d[0],d[1])+' · '+orient(v.rev)+'\n\n'+arcanaReading(d,v.rev)+'\n\n'+fiveReadingPrompt(state.readTopic,i),[[tr('Back to the cards','回到牌桌'),closeTalk]])
 }
 function fiveReadingEntries(parent,entry){
  for(const [i,v] of entry.cards.entries()){
   const d=tarotDeck[v.i];if(!d)continue;const row=element('article','',parent,'fiveReadingEntry');
-  element('small',(i+1)+'. '+tr(...fiveReadingPositions[i]),row);element('strong',tr(d[0],d[1])+' · '+orient(v.rev),row);element('p',arcanaReading(d,v.rev),row)
+  element('small',(i+1)+'. '+tr(...fiveReadingPositions[i]),row);element('strong',tr(d[0],d[1])+' · '+orient(v.rev),row);element('p',arcanaReading(d,v.rev),row);element('p',fiveReadingPrompt(entry.topic,i),row,'fiveReadingPrompt')
  }
 }
 function fiveReadingResult(entry,back=null){
  page(tr('Five-card reflection','五张牌解读'),tr('Consider these five perspectives together. They are prompts, not predictions.','把五个角度放在一起慢慢想。它们是启发，不是预言。'),q=>{
-  const wrap=element('section','',q,'fiveReadingBook');fiveReadingEntries(wrap,entry);
+  const wrap=element('section','',q,'fiveReadingBook');element('small',tr('A moment for yourself','给自己一点时间'),wrap);fiveReadingEntries(wrap,entry);element('h2',tr('Bring the reading together','把五张牌串起来'),wrap);element('p',tr('Which two cards seem to speak to each other? What would you do differently, even if you had never drawn these cards?','哪两张牌似乎在彼此呼应？就算没有抽到这些牌，你会想做出什么改变？'),wrap);element('small',tr('Keep what feels useful. Leave the rest. Your decisions are still yours.','有启发的就留下，其他的放一放。决定权始终在你手里。'),wrap);
   b(wrap,back?tr('Back to the reading journal','返回塔罗手记'):tr('Back to the reading table','回到牌桌'),()=>{if(back)back();else $('page').style.display='none'});if(back){const close=q.querySelector('.row button:first-child');if(close)close.onclick=back}
   const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();fiveReadingResult(entry,back)}
  })
@@ -451,7 +485,7 @@ const fiveDrawBefore=drawActivity;
 drawActivity=function(){
  if(activity!=='love'||state.readSpreadSize!==5||!['deal','cards'].includes(state.readStage))return fiveDrawBefore();
  const age=t-state.readAt,portrait=W<H,slots=fiveReadingLayout(portrait),complete=state.readFlip.every(v=>v>=0&&t-v>=.72);
- if(state.readStage==='deal'&&age>=1.45){state.readStage='cards';state.readAt=t;hint('Turn the five cards over one by one.','一张一张翻开五张牌。')}
+ if(state.readStage==='deal'&&age>=1.45){state.readStage='cards';state.readAt=t;hint('Turn the cards one at a time. Notice what each brings to mind.','一张一张翻，看看每张牌让你想起了什么。')}
  ctx.save();paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);table();
  for(const [i,slot] of slots.entries()){
   const v=state.readCards[i];if(!v)continue;const f=state.readStage==='deal'?clamp((age-i*.17)/.62,0,1):1,e=f*f*(3-2*f),x=400+(slot.x-400)*e,y=465+(slot.y-465)*e-12*Math.sin(Math.PI*e),flip=state.readFlip[i]<0?0:clamp((t-state.readFlip[i])/.72,0,1),face=flip>=.5,w=slot.w*(flip>0&&flip<1?Math.max(.045,Math.abs(Math.cos(Math.PI*flip))):1),h=slot.h;
@@ -476,4 +510,17 @@ openReadingJournal=function(){
 };
 const fiveReadingStyle=document.createElement('style');fiveReadingStyle.textContent='.fiveReadingBook{background:#f2e4c9;color:#514638;border:3px double #a99168;padding:12px;margin:12px 0}.fiveReadingEntry{border-bottom:1px dashed #b49d77;padding:10px 0;overflow-wrap:anywhere}.fiveReadingEntry strong,.fiveReadingEntry small{display:block}.fiveReadingEntry strong{font:600 17px/1.4 Georgia,"Songti SC",serif;color:#53674e}.fiveReadingEntry p{line-height:1.6}.fiveReadingBook button{min-height:44px;white-space:normal}';document.head.append(fiveReadingStyle);
 
+/* Clarify the established four topic choices without changing saved indices.
+   Personal growth, life choices and private questions fit General guidance. */
+if(typeof readingTopics!=='undefined'&&Array.isArray(readingTopics)&&readingTopics.length===4&&readingTopics.every(v=>Array.isArray(v)&&v.length>=2)){
+ const names=[['Love & relationships','感情与关系'],['Career & work','事业与工作'],['Money & stability','金钱与安稳'],['General guidance','随缘指引']];
+ for(let i=0;i<4;i++){readingTopics[i][0]=names[i][0];readingTopics[i][1]=names[i][1]}
+}
+const tarotTopicCopyBefore=readingTopic;
+readingTopic=function(i){
+ const was=state.readStage;const result=tarotTopicCopyBefore(i);
+ if(was==='topic'&&state.readStage==='deck')hint('Hold your question in mind, then shuffle when you feel ready.','把问题放在心里，准备好了就洗牌。');
+ return result
+};
+const tarotWordingStyle=document.createElement('style');tarotWordingStyle.textContent='.fiveReadingPrompt{border-left:2px solid #899577;padding-left:10px;color:#53674e;font-style:italic}.fiveReadingBook>small{display:block;line-height:1.5;margin:8px 0}';document.head.append(tarotWordingStyle);
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
