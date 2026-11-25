@@ -139,3 +139,18 @@ The product is a prototype, not an approved public launch. This assessment is ba
 - Roadmap: P0 room staging/camera/collision and core navigation; P1 complete one polished vertical slice with art, meaningful gameplay and bilingual flow; P2 extend signature experience standard to remaining retained houses; P3 pilot, fix observations, repeat, then public release. No percentage-complete claims without an explicit evaluated checklist. Do not introduce unrelated monetization or backend scope until the core is validated.
 
 Success means a player willingly chooses a short enjoyable break and wants to revisit; time spent or feature count is not the primary objective. This review sets proposed product strategy and gates, not verified implementation or user acceptance.
+
+
+## Replay variation and authored personality (owner feedback)
+
+The player should experience intentional variety, not generic AI-generated filler or arbitrary changes. Keep rules fair and results explainable.
+
+- Daily layer: stable personal daily fortune, seasonal menu, town news, occasional resident appearances, weather and time-of-day. Reset by Singapore date; do not reroll a fortune on refresh. Daily theme is entertainment and not a prediction.
+- Session layer: rotate curated dialogue and small environmental reactions without immediate repetition. Vary based on location, resident personality, prior encounters and physical action. Avoid repeatedly granting the same reward for different lines.
+- Skill layer: input strength, timing, angle and choices should influence outcomes; chance may vary cosmetic events or rare discoveries, not secretly override skill.
+- Assessment layer: vary question order or use equivalent balanced question forms only after scoring audit; same substantive answers should produce comparable results. Do not randomly change Zi Wei Dou Shu charts, personality classifications or fixed daily tarot to make them entertaining. Separate humorous presentation from results.
+- Story layer: branches have real consequences, rare encounters have context and memory. NPC voice guide: Auntie is sharp and practical, Grandma warm and occasionally sarcastic, Wang Laoban absurdly corporate, temple keeper understated, Mochi mostly nonverbal. Original culturally natural EN and ZH, not translated templates.
+- Visual layer: small natural variations in wind, light, weather, expressions and object reactions; original consistent illustrated art, no mixed AI styles, generic icons or visual noise. Draw individual native portrait backgrounds, props, character sheets and foreground layers against room staging. Review actual gameplay before approval. Never market as human-made if that is not true; quality and intentional design should speak for themselves.
+- Example: same bottle throw strength may get a different Auntie comment or water reaction, but landing stays governed by the input. Same quiz answers should not randomly return another type.
+
+Implementation e17dae1 and 255a5d6: optional Daily Luck paper slip in passport, 12 original bilingual themes with symbolic color/number, local random seed (not based on private data), consistent Singapore date, adjacent days rotate themes. Rotating Auntie hitting/shout/bottle reactions, with strength-aware pools and unchanged reward rules. No new destination, no forced travel, no network service. 7eb6730 adds browser regression coverage for daily consistency/rollover and reaction rotation. JavaScript parsed; actual CI/deployment and visual review not yet confirmed. Fortune slip is a styled HTML draft, not final painted artwork. Broader NPC, seasonal, question-bank and animation improvements remain pending.
