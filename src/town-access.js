@@ -55,3 +55,20 @@ keepsakeClue=function(item){return boxPrizes.some(v=>v[0]===item?.[0])?['Find it
 const townStoryBefore=keepsakeStory;
 keepsakeStory=function(item){const i=boxPrizes.findIndex(v=>v[0]===item?.[0]);const stories=[['A tiny permit to leave before the meeting ends.','开会结束前合法消失的许可证。'],['Survived a meeting that could have been a message.','活着走出了本可发条消息解决的会议。'],['A holiday your manager cannot reject.','老板无权拒绝的小假期。'],['The moon never asks for overtime.','月亮从来不要求你加班。'],['Payday, before the bills arrive.','工资到账、账单未到的快乐。']];return stories[i]||townStoryBefore(item)};
 const townBagCss=document.createElement('style');townBagCss.textContent='.bagTools .townClearSearch{flex:0 0 auto;font-size:12px;padding:5px 8px!important}.bagDetail{overflow-wrap:anywhere}.bagCategories{overscroll-behavior-inline:contain}.bagSlots>.bagDetail{grid-column:1/-1;min-width:0}';document.head.append(townBagCss);
+
+/* Physical feedback at existing contact points. */
+const townPaperBefore=paperWorryAt;
+paperWorryAt=function(x,y,impact){
+ townPaperBefore(x,y,impact);const hits=Math.max(0,Math.min(20,Number(state.count)||0));if(hits<3)return;
+ ctx.save();ctx.translate(x,y);ctx.rotate(impact*.34*stressSide);
+ for(let i=0;i<Math.min(5,Math.floor(hits/3));i++){const a=i%2?-1:1,yy=-15+i*11;line(a*13,yy,a*7,yy+2,'#92704b88',1.2);line(a*7,yy+2,a*3,yy-1,'#92704b88',1.2)}
+ if(hits>=12){line(-13,39,-7,30,'#98734e',1.5);line(-7,30,-3,34,'#98734e',1.5);line(-3,34,1,28,'#98734e',1.5)}ctx.restore()
+};
+const townBasinBefore=templeBasin;
+templeBasin=function(x,y){townBasinBefore(x,y);ctx.save();for(let i=0;i<6;i++){const xx=x-52+i*19,yy=y+34+(i%2)*6;line(xx-7,yy-4,xx+7,yy,'#c8c5ac55',1)}
+ if(activity==='templeWater'&&state.waterStage===1){const age=t-state.waterAt;if(age>=0&&age<.8){const f=age/.8;ctx.strokeStyle='rgba(238,246,222,'+((1-f)*.72)+')';ctx.lineWidth=1.8;ctx.beginPath();ctx.ellipse(x,y,12+f*58,4+f*14,0,0,TAU);ctx.stroke()}}ctx.restore()
+};
+const townLadleBefore=waterLadleArt;
+waterLadleArt=function(x,y,a,filled){townLadleBefore(x,y,a,filled);if(!filled)return;ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.strokeStyle='#e7efe0c0';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(34,-1,12,3,0,Math.PI*.1,Math.PI*.9);ctx.stroke();ctx.restore()};
+const townTeaCupBefore=teaCup;
+teaCup=function(x,y,sc=1,base=0,pearls=0,fill=1,angle=0){townTeaCupBefore(x,y,sc,base,pearls,fill,angle);if(activity!=='bubbleTea'||fill<=0)return;ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(-33,-70);ctx.lineTo(33,-70);ctx.lineTo(25,-3);ctx.lineTo(-25,-3);ctx.closePath();ctx.clip();const y0=-69*clamp(fill,0,1),slosh=clamp(-angle*38,-10,10);ctx.strokeStyle='#fff0d1b0';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-27,y0-slosh);ctx.quadraticCurveTo(0,y0+(residentReducedMotion.matches?0:Math.sin(t*8)*Math.abs(slosh)*.25),27,y0+slosh);ctx.stroke();ctx.restore()};
