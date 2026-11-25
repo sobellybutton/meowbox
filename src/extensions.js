@@ -1115,26 +1115,30 @@ const touchSignStyle=document.createElement('style');touchSignStyle.textContent=
 let signPress=null,signClickSuppressedUntil=0,signClickSuppressedDoor=null;
 function signAtScreen(x,y){if(room||transitioning||!proposal.hidden||signRoot.hidden)return null;for(const el of signButtons.values()){if(el.hidden)continue;const r=el.getBoundingClientRect();if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return el}return null}
 document.addEventListener('pointerdown',e=>{
- if(!e.isPrimary||e.button!==0||room||transitioning||!proposal.hidden||signRoot.hidden)return;
+ if(e.button!==0||room||transitioning||!proposal.hidden||signRoot.hidden||signPress)return;
  const el=e.target.closest?.('.worldSign')||(e.target===c?signAtScreen(e.clientX,e.clientY):null);
  const door=el?.dataset.door,station=maps[scene].st.find(v=>v[0]===door);
  if(!el||el.hidden||!station)return;
- // Keep the original doorway identity through the gesture, even if the
- // camera or a floating control changes position before pointerup.
+ // Preserve the selected door and allow a native button click as a fallback.
  signPress={el,id:e.pointerId,x:e.clientX,y:e.clientY,scene,station};
- signClickSuppressedDoor=door;signClickSuppressedUntil=performance.now()+1200;
- drag=null;e.preventDefault();e.stopImmediatePropagation();
+ drag=null;
+ if(e.target===c){e.preventDefault();e.stopImmediatePropagation()}
  try{el.setPointerCapture(e.pointerId)}catch{}
 },true);
 document.addEventListener('pointerup',e=>{
  const a=signPress;if(!a||a.id!==e.pointerId)return;
- signPress=null;drag=null;e.preventDefault();e.stopImmediatePropagation();
- signClickSuppressedUntil=performance.now()+700;
- if(a.scene===scene&&Math.hypot(e.clientX-a.x,e.clientY-a.y)<30&&!room&&!transitioning){
-  const [id,x,y]=a.station;directSignClick(id,x,y);
+ signPress=null;drag=null;
+ if(a.scene!==scene||room||transitioning||Math.hypot(e.clientX-a.x,e.clientY-a.y)>=30){
+  signClickSuppressedDoor=a.station[0];signClickSuppressedUntil=performance.now()+400;return;
+ }
+ const [id,x,y]=a.station;
+ directSignClick(id,x,y);
+ if(pending===id||room===id){
+  signClickSuppressedDoor=id;signClickSuppressedUntil=performance.now()+400;
  }
 },true);
-document.addEventListener('pointercancel',e=>{if(signPress?.id===e.pointerId){signPress=null;signClickSuppressedUntil=performance.now()+700}},true);
+document.addEventListener('pointercancel',e=>{if(signPress?.id===e.pointerId)signPress=null},true);
+document.addEventListener('lostpointercapture',e=>{if(signPress?.id===e.pointerId)signPress=null},true);
 window.addEventListener('blur',()=>{signPress=null});
 /* Bound the walking-to-door sequence so mobile navigation cannot strand a player. */
 let doorAttempt=0;
@@ -1471,7 +1475,7 @@ accessibleSigns.textContent=`
 #game>canvas#c{position:absolute!important;inset:0!important;z-index:0!important}
 #game>#worldSigns{position:absolute!important;inset:0!important;z-index:6!important;pointer-events:none!important}
 #game>#worldSigns[hidden]{display:none!important}
-#game>#worldSigns>.worldSign{position:absolute!important;pointer-events:auto!important;touch-action:manipulation!important;transform:translate(-50%,-50%)!important;transition:none!important;min-width:44px!important;min-height:44px!important;white-space:normal!important}
+#game>#worldSigns>.worldSign{position:absolute!important;pointer-events:auto!important;touch-action:none!important;user-select:none!important;-webkit-user-select:none!important;transform:translate(-50%,-50%)!important;transition:none!important;min-width:44px!important;min-height:44px!important;white-space:normal!important}
 #game>#hud,#game>#small,#game>#dock,#game>#dialogue,#game>#gameControls{z-index:8!important}
 #game>#page{z-index:20!important}
 #game>#fade{z-index:21!important;pointer-events:none!important}
