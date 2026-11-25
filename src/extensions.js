@@ -6293,7 +6293,7 @@ function bagFigureIcon(v){
  return '<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="59" rx="22" ry="3" fill="#9b795b33"/><g fill="'+c+'" stroke="#8c6d5d" stroke-width=".8">'+ears+'<ellipse cx="32" cy="48" rx="17" ry="12"/><ellipse cx="32" cy="34" rx="23" ry="18"/></g><ellipse cx="24" cy="33" rx="2.4" ry="3" fill="#504038"/><ellipse cx="40" cy="33" rx="2.4" ry="3" fill="#504038"/><ellipse cx="19" cy="39" rx="4" ry="2" fill="#e1a2a0"/><ellipse cx="45" cy="39" rx="4" ry="2" fill="#e1a2a0"/>'+(duck?'<ellipse cx="32" cy="39" rx="8" ry="4" fill="#d98c48"/>':'<path d="M29 38q3 4 6 0" fill="none" stroke="#805d50" stroke-width="1.5"/>')+accessory+'</svg>'
 }
 function bagArt(v){
- const prize=boxPrizes.find(p=>p[0]===v.item[0]);if(prize)return bagFigureIcon(prize);
+ const prize=boxPrizes.find(p=>p[0]===v.item[0]);if(prize)return !v.owned&&prize[4]==='secret'?'<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M11 53V28Q11 8 32 8Q53 8 53 28V53Z" fill="#8b806e"/><text x="32" y="42" fill="#f0e3ca" font-size="25" text-anchor="middle">?</text></svg>':bagFigureIcon(prize);
  const kind=v.kind;
  if(kind==='recipe')return '<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="8" width="41" height="49" rx="4" fill="#e9c99c" stroke="#9a7956"/><path d="M18 9v47M24 22h22M24 27h18" stroke="#aa8963"/><ellipse cx="34" cy="42" rx="12" ry="5" fill="#b98a5c"/><path d="M22 42q12 19 24 0" fill="#9bb2a0" stroke="#718d7a"/></svg>';
  if(kind==='ticket')return '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M5 19H59V28Q50 32 59 36V45H5V36Q14 32 5 28Z" fill="#dfc491" stroke="#93724f"/><path d="M17 20v24M23 26h28M23 34h17" stroke="#a18564" stroke-dasharray="3 2"/></svg>';
@@ -7242,7 +7242,7 @@ function openPaidBlindBox(){
  state.boxPrize=pick.i;state.boxStage='opening';state.boxAt=t;
  // Delivery is immediate in the bag, reveal remains animated. Recovery below
  // repairs a reload between the two local writes without charging again.
- addItem(pick.v[0],pick.v[1]);updateHUD();sound(520);return true
+ addItem(pick.v[0],pick.v[1]);$('toast').classList.remove('on');updateHUD();sound(520);return true
 }
 function recoverBlindPurchases(){
  const keys=new Set(items.map(v=>v[0]));let changed=false;
@@ -7301,7 +7301,7 @@ function drawBlindShopStage(){
  boxArt(332,515,.82,state.boxPick,opening,0);
  ellipse(458,522,48,8,'#5f49383c');round(408,507,100,17,4,'#d7bb8b','#98724e');
  if(v){ctx.save();ctx.globalAlpha=Math.max(.12,opening);drawBlindCollectible(458,508,v,1.42);ctx.restore()}
- if(stage==='opening'&&age>=.95)boxAward();
+ if(stage==='opening'&&age>=.95){boxAward();if(v)toast(tr('Meet '+v[0],'遇见'+v[1]))}
  if(stage==='result'&&v){activityFitText(tr(v[0],v[1]),400,584,19,310,'#fff1d0');activityFitText(tr(...blindFigureLore[state.boxPrize]),400,610,13,320,'#fff1d0');label(tr('Back to shelf','回到货架'),310,650,()=>start('blindBox'));label(tr('Collection','收藏册'),500,650,blindCollectionPage)}
  return
  }
