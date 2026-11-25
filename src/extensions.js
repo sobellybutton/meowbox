@@ -2987,8 +2987,8 @@ const townChatReplies={
 function townChatTopic(value){
  const v=String(value).toLowerCase();
  if(/cute|beautiful|pretty|love this|好可爱|可爱|好看|漂亮|喜欢这个/.test(v))return 'cute';
- if(/food|eat|lunch|dinner|hungry|kopi|奶茶|吃|饿|午饭|晚饭|咖啡/.test(v))return 'food';
  if(/gossip|八卦|吃瓜|有瓜/.test(v))return 'gossip';
+ if(/food|eat|lunch|dinner|hungry|kopi|奶茶|吃|饿|午饭|晚饭|咖啡/.test(v))return 'food';
  if(/tired|stress|break|sleep|rest|摸鱼|休息|累|烦|睡/.test(v))return 'rest';
  if(/work|boss|meeting|office|上班|下班|老板|领导|开会|加班/.test(v))return 'work';
  if(/zodiac|tarot|fortune|horoscope|星座|塔罗|运势|求签/.test(v))return 'fortune';
