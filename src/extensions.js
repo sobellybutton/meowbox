@@ -1891,3 +1891,65 @@ destinyPage=function(){
 const destinyPortraitStyle=document.createElement('style');
 destinyPortraitStyle.textContent='.destinyChamber .portraitDestinyIllustration .roomIllustration{aspect-ratio:4/7;max-height:none;object-fit:contain;width:100%;height:auto}.destinyChamber .portraitDestinyIllustration{max-width:340px;margin-inline:auto}.destinyChamber .portraitDestinyIllustration .yueActor{height:60%;width:36%;right:6%}';
 document.head.append(destinyPortraitStyle);
+
+/* Remaining portrait interiors, each composed independently for a tall viewport.
+   Decorative artwork deliberately contains no interactive controls or labels. */
+function portraitComposition(top,bottom,floor,detail,open=false){
+ return '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1400" viewBox="0 0 800 1400"><defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="'+top+'"/><stop offset="1" stop-color="'+bottom+'"/></linearGradient><linearGradient id="ground" x2="0" y2="1"><stop stop-color="'+floor+'"/><stop offset="1" stop-color="#655b4d"/></linearGradient><radialGradient id="light"><stop stop-color="#ffdda0" stop-opacity=".65"/><stop offset="1" stop-color="#ffdda0" stop-opacity="0"/></radialGradient><filter id="paper"><feTurbulence baseFrequency=".67" numOctaves="3" stitchTiles="stitch" type="fractalNoise"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".085"/></feComponentTransfer><feBlend in="SourceGraphic" mode="multiply"/></filter></defs><g filter="url(#paper)"><path fill="url(#sky)" d="M0 0H800V1400H0Z"/><path fill="url(#ground)" d="M0 810Q400 720 800 810V1400H0Z"/>'+(open?'':'<path fill="#645044" d="M0 0H800V75Q400 113 0 75Z M0 768Q400 719 800 768V793Q400 744 0 793Z"/><path fill="#8d7056" d="M23 80L53 80L68 800L32 813Z M747 80L777 80L768 813L732 800Z"/>')+'<g fill="none" stroke="#574c3c" opacity=".30"><path d="M0 900Q400 840 800 900M0 1020Q400 954 800 1020M0 1180Q400 1107 800 1180M0 1380Q400 1300 800 1380" stroke-width="3"/><path d="M145 789L-88 1400M275 775L173 1400M400 770V1400M525 775L627 1400M655 789L888 1400" stroke-width="2"/></g>'+detail+'</g></svg>'
+}
+function roomWindow(x,y,w,h,night=false){
+ return '<g transform="translate('+x+' '+y+')"><path d="M0 '+h+'V'+(w*.42)+'Q0 0 '+w/2+' 0Q'+w+' 0 '+w+' '+w*.42+'V'+h+'Z" fill="'+(night?'#526d79':'#b7c9ba')+'" stroke="#775a42" stroke-width="12"/><circle cx="'+w*.72+'" cy="'+h*.25+'" r="'+w*.13+'" fill="#f4dfab"/><path d="M7 '+h*.66+'Q'+w*.28+' '+h*.34+' '+w*.5+' '+h*.65+'Q'+w*.75+' '+h*.34+' '+(w-7)+' '+h*.57+'V'+(h-7)+'H7Z" fill="#8ba698"/><path d="M7 '+h*.84+'Q'+w*.25+' '+h*.59+' '+w*.5+' '+h*.8+'Q'+w*.77+' '+h*.57+' '+(w-7)+' '+h*.73+'V'+(h-7)+'H7Z" fill="#648779"/><path d="M'+w/2+' 4V'+h+'M6 '+h*.55+'H'+(w-6)+'" stroke="#94714e" stroke-width="7"/></g>'
+}
+function roomLantern(x,y,col='#b88456'){
+ return '<g transform="translate('+x+' '+y+')"><path d="M0 -110V-43" stroke="#765a42" stroke-width="3"/><path d="M-26 -43Q-52 -4 -26 36Q0 47 26 36Q52 -4 26 -43Z" fill="'+col+'" stroke="#785744" stroke-width="3"/><path d="M-12 -41Q-26 -4 -12 37M12 -41Q26 -4 12 37" fill="none" stroke="#e4bb79" stroke-width="2"/><circle r="90" fill="url(#light)"/></g>'
+}
+function roomPlant(x,y,s=1){
+ return '<g transform="translate('+x+' '+y+') scale('+s+')"><path d="M-35 0Q0 -16 35 0L25 48H-25Z" fill="#a1805e" stroke="#70513d" stroke-width="3"/><path d="M0 3Q-5 -49 -34 -70M0 3Q15 -54 35 -78M0 0V-100" fill="none" stroke="#4a6955" stroke-width="4"/><g fill="#6f9470"><path d="M-34 -70Q-75 -96 -60 -111Q-32 -109 -12 -53Z M35 -78Q74 -116 83 -97Q71 -67 16 -53Z M0 -100Q-28 -138 0 -145Q24 -132 3 -75Z"/></g></g>'
+}
+function roomShelf(x,y,w,h,colors){
+ let books='';for(let row=0;row<2;row++)for(let i=0;i<6;i++){const bx=13+i*(w-26)/6,by=24+row*h*.43,bh=43+(i*17%25);books+='<path d="M'+bx+' '+(by+65-bh)+'h'+((w-42)/6)+'v'+bh+'h-'+((w-42)/6)+'Z" fill="'+colors[(i+row)%colors.length]+'" stroke="#715a45" stroke-width="1.5"/>'}
+ return '<g transform="translate('+x+' '+y+')"><path d="M0 0H'+w+'V'+h+'H0Z" fill="#705746" stroke="#564538" stroke-width="4"/><path d="M8 8H'+(w-8)+'V'+(h-8)+'H8Z" fill="#987d5e"/>'+books+'<path d="M0 '+h*.49+'H'+w+'M0 '+h*.93+'H'+w+'" stroke="#6d503c" stroke-width="9"/></g>'
+}
+function portraitGardenScene(pool){
+ return '<path fill="#adc0a5" d="M0 345Q114 175 240 332Q342 231 421 303Q604 138 800 293V800H0Z"/><path fill="#779a82" d="M0 510Q112 353 240 469Q400 345 523 448Q681 339 800 434V836H0Z"/><g fill="#50775f"><path d="M0 190Q120 165 173 300Q230 338 196 461L0 602Z M800 190Q680 165 627 300Q570 338 604 461L800 602Z"/></g><path d="M50 670Q77 409 49 241M750 670Q723 409 751 241" stroke="#695846" stroke-width="15" fill="none"/><path d="M150 323Q400 395 650 323" stroke="#765a42" stroke-width="3" fill="none"/>'+roomLantern(195,380)+roomLantern(400,411)+roomLantern(605,380)+'<path d="M0 790Q145 696 271 790L0 1020Z M800 790Q655 696 529 790L800 1020Z" fill="#67886c"/>'+ (pool?'<ellipse cx="400" cy="1045" rx="260" ry="190" fill="#a19a7e" stroke="#d5c29a" stroke-width="17"/><ellipse cx="400" cy="1045" rx="239" ry="169" fill="#537f7d"/><path d="M215 1002Q400 930 585 1002M244 1098Q400 1140 556 1098" stroke="#b9cbbb" opacity=".6" stroke-width="3" fill="none"/>':'<path d="M256 1000Q400 950 544 1000L678 1370Q400 1410 122 1370Z" fill="#b7a584" stroke="#c9ba94" stroke-width="4"/>')+roomPlant(110,874,1.15)+roomPlant(690,874,1.15)
+}
+const additionalPortraits={
+ wishes:portraitComposition('#9eb8aa','#e2d4ac','#9eab8b',portraitGardenScene(true),true),
+ park:portraitComposition('#b5c8b5','#e1d5b1','#a2ae8a',portraitGardenScene(false)+'<path d="M112 730H288V757H112Z M125 757V808M275 757V808" stroke="#6c5542" stroke-width="9" fill="#ac8b65"/>',true),
+ secretGarden:portraitComposition('#92aeaa','#c9d3aa','#8d9e7f',portraitGardenScene(false),true),
+ fish:portraitComposition('#a3c0b6','#ddd8b5','#a4af8d','<path fill="#8ba896" d="M0 475Q140 241 309 435Q470 255 800 405V820H0Z"/><path fill="#597f79" d="M0 665Q400 567 800 665V1400H0Z"/><g fill="none" stroke="#b6d0c4" opacity=".65" stroke-width="3"><path d="M30 800Q170 774 320 800M440 900Q590 874 770 900M80 1110Q300 1075 530 1110M460 1270Q650 1245 800 1270"/></g><path d="M0 1090Q300 976 423 1400H0Z" fill="#a48c6c" stroke="#77644e" stroke-width="6"/>'+roomPlant(83,940,1.5),true),
+ kitchen:portraitComposition('#c9b294','#ead9b5','#ae9069',roomWindow(238,155,324,392)+roomLantern(115,275)+roomLantern(685,275)+roomShelf(80,545,210,195,['#ba9c70','#879e89','#b47e64'])+'<path d="M480 563H717V747H480Z" fill="#967355" stroke="#6e5341" stroke-width="4"/><path d="M468 554H731V582H468Z" fill="#c19f70"/><g fill="#b7a080" stroke="#77604b" stroke-width="3"><path d="M508 538Q482 478 523 456Q566 476 543 538Z"/><path d="M594 538Q574 492 607 477Q644 493 627 538Z"/></g><path d="M129 448V518M170 448V518M212 448V518" stroke="#6e5541" stroke-width="5"/><g fill="#a9aba0"><ellipse cx="129" cy="527" rx="15" ry="25"/><ellipse cx="170" cy="527" rx="16" ry="22"/><ellipse cx="212" cy="527" rx="13" ry="25"/></g>'+roomPlant(695,788,.8)),
+ arcade:portraitComposition('#625b70','#b5a08d','#93816f','<path d="M85 170Q400 132 715 170V228Q400 190 85 228Z" fill="#8a6069" stroke="#d0ae78" stroke-width="5"/><g fill="#eac588"><circle cx="140" cy="191" r="8"/><circle cx="205" cy="182" r="8"/><circle cx="270" cy="176" r="8"/><circle cx="530" cy="176" r="8"/><circle cx="595" cy="182" r="8"/><circle cx="660" cy="191" r="8"/></g><g fill="#9d736d" stroke="#674f56" stroke-width="5"><path d="M77 305H243L258 720H62Z"/><path d="M557 305H723L738 720H542Z"/></g><g fill="#779a99" stroke="#e2c69c" stroke-width="4"><path d="M95 347H225V530H95Z"/><path d="M575 347H705V530H575Z"/></g><g fill="#e9c492"><circle cx="133" cy="578" r="15"/><circle cx="185" cy="578" r="15"/><circle cx="613" cy="578" r="15"/><circle cx="665" cy="578" r="15"/></g>'+roomLantern(400,285,'#aa775f')+'<path d="M300 395H500V708H300Z" fill="#6c7776" stroke="#a89178" stroke-width="5"/><path d="M317 412H483V607H317Z" fill="#a9c1b7"/><path d="M330 640H470V683H330Z" fill="#dbc394"/>'),
+ tea:portraitComposition('#b8a28a','#e0ccb0','#af916c',roomWindow(190,135,420,425)+roomLantern(108,292)+roomLantern(692,292)+roomShelf(85,578,208,180,['#be9b76','#79928a','#b7ad80'])+'<path d="M535 570H714V751H535Z" fill="#856a4e" stroke="#604a3a" stroke-width="4"/><path d="M523 560H727V588H523Z" fill="#c6a57a"/><g fill="#c4c7a0" stroke="#766953" stroke-width="3"><path d="M551 545Q535 505 572 502Q609 505 593 545Z"/><path d="M622 545Q608 512 639 507Q670 512 656 545Z"/></g>'+roomPlant(693,806,.9)),
+ office:portraitComposition('#a5aca9','#d5c8b4','#a39a86',roomWindow(238,130,324,380)+'<path d="M100 550H310V733H100Z M490 550H700V733H490Z" fill="#957d65" stroke="#635849" stroke-width="4"/><path d="M89 540H321V567H89Z M479 540H711V567H479Z" fill="#bba587"/><g fill="#515f60" stroke="#7c7160" stroke-width="4"><path d="M137 408H262V528H137Z"/><path d="M532 408H657V528H532Z"/></g><g fill="#a5bfbc"><path d="M148 420H251V510H148Z"/><path d="M543 420H646V510H543Z"/></g><circle cx="400" cy="613" r="65" fill="#dfceb0" stroke="#806c52" stroke-width="5"/><path d="M400 613V571M400 613L430 632" stroke="#665846" stroke-width="4"/>'+roomPlant(708,781,.9)),
+ mystery:portraitComposition('#a49aa7','#d8bca3','#a69074',roomWindow(275,145,250,333,true)+roomLantern(150,280)+roomLantern(650,280)+roomShelf(85,520,230,240,['#a58488','#c6a96c','#809b96'])+roomShelf(485,520,230,240,['#c0a17b','#8a9592','#ad7a74'])+'<path d="M325 570H475V747H325Z" fill="#9a7b5e" stroke="#6d5340" stroke-width="4"/><path d="M310 558H490V580H310Z" fill="#c5a677"/>'),
+ quiz:portraitComposition('#93a8a8','#ddd0af','#a1a18a',roomWindow(190,135,420,420)+roomShelf(80,565,210,183,['#a99b7a','#779d92','#a2869c'])+roomShelf(510,565,210,183,['#ab8b79','#8b9f8d','#c1ac7c'])+'<circle cx="400" cy="641" r="85" fill="#bcb5a2" stroke="#927e63" stroke-width="6"/><path d="M362 630Q400 580 438 630Q438 681 400 690Q362 681 362 630Z" fill="#738e80"/>'+roomPlant(710,802,.75)),
+ story:portraitComposition('#8996a9','#d4bba4','#978776',roomWindow(155,105,490,455,true)+roomLantern(104,275)+roomLantern(696,275)+'<path d="M92 598Q182 578 279 598V727H92Z M521 598Q618 578 708 598V727H521Z" fill="#9a776d" stroke="#6e574f" stroke-width="5"/><path d="M100 690H270M530 690H700" stroke="#d2ac83" stroke-width="6"/>'+roomPlant(702,796,.8)),
+ match:portraitComposition('#b8a09b','#e7cfb6','#a89478',roomWindow(170,122,460,425)+roomLantern(95,268,'#c29879')+roomLantern(705,268,'#c29879')+'<path d="M92 568Q180 552 268 568V727H92Z M532 568Q620 552 708 568V727H532Z" fill="#9e7772" stroke="#73564c" stroke-width="5"/><path d="M104 684H256M544 684H696" stroke="#d8b395" stroke-width="7"/>'+roomPlant(400,760,.85)),
+};
+Object.assign(portraitInteriorSources,additionalPortraits);
+function activePortraitInterior(){
+ if(activity==='secretGarden')return 'secretGarden';
+ if(room==='daily')return 'tarot';
+ if(room==='news')return 'tea';
+ if(room==='sticks'||room==='moon')return 'temple';
+ return room;
+}
+const batchPortraitBackdropBefore=paintLivingBackdrop;
+paintLivingBackdrop=function(im){
+ const id=activePortraitInterior();
+ if(W<H&&Object.hasOwn(additionalPortraits,id)){paintPortraitInterior(id);return}
+ return batchPortraitBackdropBefore(im)
+};
+const batchPortraitRoomBefore=drawRoom;
+drawRoom=function(){
+ const id=activePortraitInterior();
+ if(W<H&&Object.hasOwn(additionalPortraits,id))paintPortraitInterior(id);
+ return batchPortraitRoomBefore()
+};
+const batchPortraitActivityBefore=drawActivity;
+drawActivity=function(){
+ const id=activePortraitInterior();
+ if(W<H&&Object.hasOwn(additionalPortraits,id))paintPortraitInterior(id);
+ return batchPortraitActivityBefore()
+};
