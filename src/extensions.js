@@ -3177,8 +3177,9 @@ function communityPublic(q,generation){
   status.textContent=tr('The shared square is not open yet. Messages here will appear only when a live community service is connected.','公共广场尚未开放，接入联机服务后才会显示真人留言。');
   b(q,tr('Hang out in the tea room','去茶馆坐坐'),()=>{communityTab='lounge';townChatPage()});return
  }
+ status.textContent=tr('Checking community connection…','正在检查社区连接……');
  const nick=element('div','',q,'communityIdentity');communityNicknameForm(nick,()=>townChatPage());
- const placeLabel=element('label',tr('Conversation spot','聊天地点'),q,'communityPlace');const placeSelect=element('select','',placeLabel);for(const [id,en,cn] of communityPlaces){const opt=element('option',tr(en,cn),placeSelect);opt.value=id}placeSelect.value=communityPlace;placeSelect.onchange=()=>{communityPlace=placeSelect.value;townChatPage()};
+ const placeLabel=element('label',tr('Conversation spot','聊天地点'),q,'communityPlace');const placeSelect=element('select','',placeLabel);for(const [id,en,cn] of communityPlaces){const opt=element('option',id==='square'?tr(en,cn):tr(...(maps[id]?.n||[en,cn])),placeSelect);opt.value=id}placeSelect.value=communityPlace;placeSelect.onchange=()=>{communityPlace=placeSelect.value;townChatPage()};
  const list=element('div','',q,'townChatTranscript');list.setAttribute('role','log');list.setAttribute('aria-live','polite');
  const form=element('form','',q,'communityForm');const input=element('input','',form);input.maxLength=180;input.placeholder=tr('Leave a friendly hello…','打个友好的招呼……');input.setAttribute('aria-label',tr('Public message','公开消息'));
  const send=element('button',tr('Send','发送'),form);send.type='submit';send.disabled=true;let serviceReady=false,replyTarget=null;
