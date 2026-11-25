@@ -1262,12 +1262,12 @@ function ensureTravellerCoordinates(){if(!Number.isFinite(p.x)||!Number.isFinite
 /* A reachable consultation control in Destiny House, independent of canvas hit testing. */
 const destinyAccess=element('button','',document.body);destinyAccess.id='destinyAccess';destinyAccess.hidden=true;
 destinyAccess.style.cssText='position:fixed;z-index:5;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 145px);min-height:44px;max-width:70vw;background:#ead9b5;color:#453b2f;border:1px solid #9b805e;font:14px Georgia,serif';
-destinyAccess.onclick=()=>{if(room!=='destiny'||activity)return;indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y;releaseWalkKeys();try{destinyPage()}catch(err){console.error('Destiny consultation:',err);$('page').style.display='none';hint('The consultation could not open. Try again or step outside.','命理咨询暂时无法打开，请重试或先出门。')}};
+destinyAccess.onclick=()=>{if(!indoorReady()||room!=='destiny')return;releaseWalkKeys();const a=indoorStation('destiny').slice(2);indoorDestination(a[0],a[1],()=>{try{destinyPage()}catch(err){console.error('Destiny consultation:',err);$('page').style.display='none';hint('The consultation could not open. Try again or step outside.','命理咨询暂时无法打开，请重试或先出门。')}},'up')};
 function destinyAccessTick(){const hide=!(room==='destiny'&&!activity&&!transitioning&&proposal.hidden&&$('page').style.display!=='block');if(destinyAccess.hidden!==hide)destinyAccess.hidden=hide;if(!hide){const label=tr('Consult Master Yue','请月师傅看命盘');if(destinyAccess.textContent!==label)destinyAccess.textContent=label}setTimeout(destinyAccessTick,100)}setTimeout(destinyAccessTick,0);
 
 /* Recover from a failed transition and retain a usable exit in all houses. */
 const houseBack=$('back'),houseBackBefore=houseBack.onclick;
-houseBack.onclick=function(e){releaseWalkKeys();indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y;return houseBackBefore.call(this,e)};
+houseBack.onclick=function(e){releaseWalkKeys();indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y;if(room&&!activity&&indoorReady()&&continuityRoom===room){const spec=indoorSpec();if(Math.hypot(indoor.x-spec.entry[0],indoor.y-spec.entry[1])>4){if(indoorDestination(spec.entry[0],spec.entry[1],()=>houseBackBefore.call(houseBack,e),'down')){hint('Heading outside…','走到门口……');return}}}return houseBackBefore.call(this,e)};
 const originalHouseEnter=enter;
 enter=function(id){releaseWalkKeys();joystickReset();continuityRoom=null;continuityActivity=null;indoor.goal=null;return originalHouseEnter(id)};
 const houseFade=fade;
