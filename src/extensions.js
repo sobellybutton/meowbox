@@ -1320,15 +1320,15 @@ function rhythmHit(lane){if(activity!=='rhythm'||state.rhythmStage!=='play')retu
 function rhythmFinish(){if(state.rhythmStage!=='play')return;state.rhythmStage='result';state.rhythmEnd=t;let best=Number(load('rhythmHighV1',0))||0;save('rhythmHighV1',Math.max(best,state.rhythmScore));addItem('After-hours rhythm ticket','下班节拍门票');if(state.rhythmScore>=1600)addItem('Golden rhythm badge','金色节拍徽章');hint(...(state.rhythmScore>=1600?['Your boss cannot compete with those moves.','老板可比不上你的舞步。']:['You survived the dance floor. That counts.','成功存活于舞池，这就算赢了。']))}
 document.addEventListener('keydown',e=>{if(activity!=='rhythm'||state.rhythmStage!=='play'||e.repeat||e.target.matches?.('input,textarea,select'))return;const l=['ArrowLeft','ArrowDown','ArrowUp','ArrowRight'].indexOf(e.key);if(l>=0){e.preventDefault();rhythmHit(l)}});
 const boxPrizes=[['Office escape cat','逃班猫','#d89858',0,'common'],['Meeting survivor cat','开会幸存猫','#ece1c6',1,'common'],['Annual leave cat','请假猫','#9399a2',4,'uncommon'],['Moonlight cat','月光猫','#44434a',2,'rare'],['Golden payday cat','金薪猫','#d1a077',3,'rare'],['Strawberry mochi kitten','草莓麻薯猫','#eab0b5',1,'common','berry'],['Toast loaf cat','吐司猫','#dfb981',0,'common','toast'],['Bubble tea bear','奶茶小熊','#c99978',0,'common','tea'],['Sleepy cloud bunny','困困云朵兔','#d5dce9',1,'uncommon','cloud'],['Little raincoat duck','雨衣小鸭','#e7c570',0,'uncommon','duck'],['Sakura picnic fox','樱花野餐狐','#e8b098',3,'uncommon','fox'],['Moon rabbit lantern','月兔小灯','#c5b3e0',1,'rare','moon'],['Secret aurora dragon','极光小龙','#9dc9b8',4,'secret','dragon']];
-function boxSelect(i){if(activity!=='blindBox'||state.boxStage!=='choose'||!Number.isInteger(i)||i<0||i>2)return;state.boxPick=i;state.boxStage='shake';state.boxAt=t;sound(400);hint('Shake the box sideways, then open it.','左右摇动盒子，再打开看看。')}
+function boxSelect(i){if(activity!=='blindBox'||state.boxStage!=='choose'||!Number.isInteger(i)||i<0||i>2)return;if(!blindShopCanOpen()){blindShopExplain();return}state.boxPick=i;state.boxStage='shake';state.boxAt=t;sound(400);hint('Shake the box sideways, then open it.','左右摇动盒子，再打开看看。')}
 function boxShake(amount){if(activity!=='blindBox'||state.boxStage!=='shake'||!Number.isFinite(amount)||amount<=0)return;state.boxShake=Math.min(100,state.boxShake+Math.max(0,Math.min(50,amount*.65)));state.boxAt=t;sound(280);if(state.boxShake>=100){state.boxStage='ready';hint('Something is rattling inside. Open it!','里面有东西在响，打开看看！')}}
-function boxOpen(){if(activity!=='blindBox'||state.boxStage!=='ready')return;state.boxStage='opening';state.boxAt=t;const weights=[7,7,5,2,1,16,16,15,10,9,8,3,1];let roll=Math.random()*weights.reduce((a,b)=>a+b,0);state.boxPrize=weights.findIndex(w=>(roll-=w)<0);if(state.boxPrize<0)state.boxPrize=weights.length-1;sound(520)}
-function boxAward(){if(state.boxStage!=='opening')return;state.boxStage='result';state.boxAt=t;let v=boxPrizes[state.boxPrize],duplicate=items.some(x=>x[0]===v[0]);addItem(v[0],v[1]);let count=Number(load('blindBoxOpenedV1',0))||0;save('blindBoxOpenedV1',count+1);hint(...(duplicate?['A familiar face! This one can keep the other one company.','又是熟面孔！正好给上一只作伴。']:v[4]==='rare'?['Rare find! The universe finally approved your leave.','稀有款！宇宙终于批准你休假了。']:['A tiny companion for your next escape.','下次摸鱼，又多了一个小伙伴。']))}
+function boxOpen(){return openPaidBlindBox()}
+function boxAward(){if(activity!=='blindBox'||state.boxStage!=='opening')return;state.boxStage='result';state.boxAt=t;const v=boxPrizes[state.boxPrize];if(!v)return;addItem(v[0],v[1]);const count=Number(load('blindBoxOpenedV1',0))||0;save('blindBoxOpenedV1',count+1);hint(...blindFigureLore[state.boxPrize]);}
 function boxArt(x,y,sc=1,i=0,open=0,tilt=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(tilt);let col=['#cba58a','#91aba3','#b3a2bd'][i%3];ellipse(0,9,49,11,'#292c2744');ctx.beginPath();ctx.moveTo(-44,-72);ctx.lineTo(28,-72);ctx.lineTo(44,-58);ctx.lineTo(44,0);ctx.lineTo(-28,9);ctx.lineTo(-44,-5);ctx.closePath();ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#695548';ctx.stroke();ctx.beginPath();ctx.moveTo(28,-72);ctx.lineTo(28,0);ctx.lineTo(44,0);ctx.lineTo(44,-58);ctx.closePath();ctx.fillStyle='#4b443b35';ctx.fill();round(-46,-76-open*37,92,16,3,'#e8d5ad','#826a4c');line(-36,-66-open*37,35,-66-open*37,'#a7895c',2);txt('?',-8,-25,32,'#fff0cc');line(-29,-8,15,-8,'#f4e1bd',2);ctx.restore()}
 const arcadeReleaseProp=prop;prop=function(id,x,y){if(id==='blindBox'){boxArt(x,y-23,.8,1);return}if(id==='rhythm'){ctx.save();ctx.translate(x,y-45);round(-50,-56,100,83,5,'#3d5350','#c9aa77');for(let i=0;i<4;i++){round(-43+i*23,-15,20,32,3,rhythmColor[i]);txt(rhythmArrows[i],-33+i*23,1,18,'#443b33')}for(let i=0;i<3;i++)ellipse(-22+i*22,-35,6,6,'#ead3a0');ctx.restore();return}return arcadeReleaseProp(id,x,y)};
 const arcadeReleaseDraw=drawActivity;drawActivity=function(){if(!['rhythm','blindBox'].includes(activity))return arcadeReleaseDraw();ctx.save();paintLivingBackdrop(pics.arcade||pics.tea||pics.streetKitchen);let shade=ctx.createLinearGradient(0,280,0,700);shade.addColorStop(0,'#293e3f40');shade.addColorStop(1,'#282b32b0');shadeLivingBackdrop(shade);
 if(activity==='rhythm'){let stage=state.rhythmStage,elapsed=t-(state.rhythmAt??t);if(stage==='play'){for(let n of state.rhythmNotes){if(!n.status&&elapsed-n.at>.31){n.status=2;state.rhythmMiss++;state.rhythmCombo=0}}if(elapsed>14)rhythmFinish()}let layout=arcadeRhythmLayout(W<H),{left,top,bottom,laneW,step,padH,travel}=layout;for(let i=0;i<4;i++){let x=left+i*step;round(x,top,laneW,bottom-top+padH,5,'#243834a8','#bda37d');for(let j=0;j<5;j++){let yy=top+j*(bottom-top)/5;line(x+3,yy,x+laneW-3,yy,'#e9d8b528',1)}round(x,bottom,laneW,padH,5,state.rhythmLane===i&&t-state.rhythmFlash<.18?'#f5e2b1':rhythmColor[i],'#e7d2a4');txt(rhythmArrows[i],x+laneW/2,bottom+padH/2,W<H?34:28,'#423a32');if(stage==='play')target(x,bottom-12,laneW,padH+18,()=>rhythmHit(i))}if(stage==='play'){for(let n of state.rhythmNotes){let delta=n.at-elapsed;if(!n.status&&delta<1.8&&delta>-.31){let y=bottom+padH/2-delta*travel;ctx.save();ctx.beginPath();ctx.rect(left,top,step*3+laneW,bottom-top+padH);ctx.clip();round(left+n.lane*step+7,y-18,laneW-14,36,5,rhythmColor[n.lane],'#fff0d1');txt(rhythmArrows[n.lane],left+n.lane*step+laneW/2,y,22,'#403b32');ctx.restore()}}txt(String(state.rhythmScore)+'  ·  '+tr('Combo ','连击 ')+state.rhythmCombo,400,top-30,18,'#fff1d2');if(elapsed<0)txt(String(Math.max(1,Math.ceil(-elapsed))),400,435,48,'#fff0bf');if(state.rhythmResult&&t-state.rhythmFlash<.6)txt(tr(...state.rhythmResult),400,bottom+padH+27,17,'#fff1d0')}else if(stage==='intro'){txt(tr('A short dance break','来一段下班舞曲'),400,top-30,20,'#fff0d1');label(tr('Start the beat','开始节拍'),400,bottom+padH+32,rhythmBegin)}else{txt(tr('Score ','得分 ')+state.rhythmScore+'  ·  '+tr('Best combo ','最高连击 ')+state.rhythmBest,400,top-30,17,'#fff1d2');label(tr('Play again','再来一次'),400,bottom+padH+32,()=>start('rhythm'))}}
-if(activity==='blindBox'){let stage=state.boxStage,age=t-state.boxAt;if(stage==='choose'){for(let i=0;i<3;i++){let p=arcadeBoxSlot(i,W<H);boxArt(p.x,p.y,p.sc,i);target(p.x-54*p.sc,p.y-85*p.sc,108*p.sc,98*p.sc,()=>boxSelect(i));label(tr('Box ','盲盒 ')+(i+1),p.x,p.y+35,()=>boxSelect(i))}}else{let held=drag?.id==='boxShake',x=held?Math.max(290,Math.min(510,drag.x)):400,y=held?Math.max(440,Math.min(535,drag.y)):515,opening=stage==='opening'?poseEase(age/.95):stage==='result'?1:0;drawRitualPose(275,555,1.45,{reach:held?{x:x-38,y:y-35}:null});boxArt(x,y,1.15,state.boxPick,opening,held?Math.sin(t*20)*.16:age<.3&&stage==='shake'?Math.sin(age*28)*.1:0);if(stage==='opening'&&age>=.95)boxAward();if(stage==='opening'||stage==='result'){let v=boxPrizes[state.boxPrize];ctx.save();ctx.globalAlpha=Math.max(.1,opening);drawBlindCollectible(400,(W<H?430:450)-35*opening,v,W<H?2.45:1.8);ctx.restore();if(stage==='result'){activityFitText(tr(v[0],v[1]),400,590,19,310,'#fff2d1');txt(tr(v[4]==='secret'?'SECRET':v[4]==='rare'?'RARE':v[4]==='uncommon'?'UNCOMMON':'COMMON',v[4]==='secret'?'隐藏款':v[4]==='rare'?'稀有款':v[4]==='uncommon'?'特别款':'普通款')+' · '+boxPrizes.filter(p=>items.some(it=>it[0]===p[0])).length+'/'+boxPrizes.length,400,615,13,'#f2d49d');label(tr('Pick another','再选一个'),310,650,()=>start('blindBox'));label(tr('Collection','收藏册'),500,650,blindCollectionPage)}}if(stage==='shake'){target(330,420,140,130,()=>{},'boxShake');txt(tr('Shake ','摇动 ')+Math.round(state.boxShake)+'%',400,602,17,'#fff1d0');label(tr('Shake gently','轻轻摇晃'),400,642,()=>boxShake(70))}if(stage==='ready'){target(330,420,140,130,boxOpen);label(tr('Open the box','打开盲盒'),400,620,boxOpen)}}}ctx.restore()};
+if(activity==='blindBox')drawBlindShopStage();ctx.restore()};
 const arcadeStory=keepsakeStory;keepsakeStory=function(item){if(boxPrizes.some(v=>v[0]===item[0]))return ['A little figure from the arcade. Its only job is to keep you company.','来自游戏厅的小手办，唯一的工作就是陪你摸鱼。'];return arcadeStory(item)};
 
 /* Reading house: a physical spread with topic choices, card handling and a saved journal. */
@@ -3757,7 +3757,7 @@ hideoutThemes.push(
  {id:'retro',name:['Old Hong Kong evening','港风黄昏'],wall:'#e4c7a5',floor:'#866354',sky:'#bf8f78',need:0,cost:120}
 );
 function hideoutPurchases(){const v=load('hideoutThemePurchasesV1',[]);return Array.isArray(v)?[...new Set(v.filter(id=>hideoutThemes.some(t=>t.id===id&&t.cost)))]:[]}
-function hideoutBalance(){const purchased=hideoutPurchases();return Math.max(0,items.length*10+dailyWheelRecord().total-hideoutThemes.filter(v=>purchased.includes(v.id)).reduce((sum,v)=>sum+(v.cost||0),0))}
+function hideoutBalance(){const purchased=hideoutPurchases(),draws=blindShopLedger(),paidKeys=new Set(draws.map(v=>v.key));return Math.max(0,items.filter(v=>!paidKeys.has(v[0])).length*10+dailyWheelRecord().total-hideoutThemes.filter(v=>purchased.includes(v.id)).reduce((sum,v)=>sum+(v.cost||0),0)-draws.reduce((sum,v)=>sum+v.cost,0))}
 function hideoutThemeUnlocked(theme){return theme.cost?hideoutPurchases().includes(theme.id):hideoutStampCount()>=theme.need}
 function buyHideoutTheme(theme){
  if(hideoutThemeUnlocked(theme))return true;
@@ -7188,3 +7188,131 @@ blindCollectionPage=function(){
 };
 const warmBlindStoryBefore=keepsakeStory;
 keepsakeStory=function(item){const i=boxPrizes.findIndex(v=>v[0]===item[0]);return i>=0?blindFigureLore[i]:warmBlindStoryBefore(item)};
+
+
+/* Pocket companions: 20 saved collectible identities. A paid draw is recorded
+   before delivery, so leaving the animation cannot lose a purchased keepsake.
+   Paw Coins are virtual and no external payment or monetisation is supported. */
+boxPrizes.push(
+ ['Kopi otter','咖啡水獭','#b89775',0,'common','otter'],
+ ['Dumpling blanket','被窝饺子','#ead9b7',0,'common','dumpling'],
+ ['Overtime ghost','加班小幽灵','#c9d3d1',0,'uncommon','ghost'],
+ ['Tiny commuter pigeon','通勤小鸽','#a0adb0',0,'uncommon','pigeon'],
+ ['Sleepy capybara','摸鱼水豚','#c6a282',0,'uncommon','capybara'],
+ ['Grumpy lucky koi','傲娇锦鲤','#ec9a79',0,'rare','koi'],
+ ['Little lantern spirit','提灯小精灵','#e5b677',0,'rare','lantern']
+);
+blindFigureLore.push(
+ ['A little kopi break can fix the mood, if not the inbox.','咖啡能救心情，救不了收件箱。'],
+ ['Wrapped up and unavailable until further notice.','裹好被子，暂不营业。'],
+ ['It only haunts unfinished spreadsheets.','专门出没于没做完的表格。'],
+ ['The MRT is packed, but this one still found a seat.','地铁再挤，也能找到一个座位。'],
+ ['Unbothered, moisturised, on lunch break.','情绪稳定，皮肤滋润，正在午休。'],
+ ['A lucky fish with very strong opinions.','有福气，也有脾气。'],
+ ['A warm light when the day feels a little long.','日子有点长，就给你留一盏灯。']
+);
+function blindShopLedger(){
+ const v=load('blindShopPurchasesV1',[]);if(!Array.isArray(v))return [];
+ const seen=new Set();return v.filter(x=>x&&typeof x.key==='string'&&boxPrizes.some(p=>p[0]===x.key)&&typeof x.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.day)&&x.cost===40&&!seen.has(x.key)&&seen.add(x.key));
+}
+const blindPrice=40,blindStock=3;
+function blindStockRemaining(day=shrineClock().day,ledger=blindShopLedger()){return Math.max(0,blindStock-ledger.filter(v=>v.day===day).length)}
+function blindUnowned(prizes=boxPrizes,owned=items,ledger=blindShopLedger()){
+ const keys=new Set([...owned.map(v=>v[0]),...ledger.map(v=>v.key)]);return prizes.map((v,i)=>({v,i})).filter(x=>!keys.has(x.v[0]))
+}
+function blindWeightedPick(pool,random=Math.random){
+ if(!pool.length)return null;const weight=x=>({common:16,uncommon:9,rare:3,secret:1}[x.v[4]]||1);
+ let roll=Math.max(0,Math.min(.999999999,random()))*pool.reduce((n,x)=>n+weight(x),0);
+ return pool.find(x=>(roll-=weight(x))<0)||pool.at(-1)
+}
+function blindShopCanOpen(){return hideoutBalance()>=blindPrice&&blindStockRemaining()>0&&blindUnowned().length>0}
+function blindShopMessage(){
+ if(!blindUnowned().length)return ['Your cabinet is complete. Enjoy your little companions!','收藏柜满啦，好好陪陪你的小伙伴吧！'];
+ if(!blindStockRemaining())return ['Today’s three boxes have found homes. Restocked tomorrow.','今天三盒都找到主人啦，明天再补货。'];
+ if(hideoutBalance()<blindPrice)return ['Explore for more Paws. A box costs 40; no real money.','去小镇逛逛攒爪币吧。一盒40爪币，不用花真钱。'];
+ return ['Choose a box on the shelf. 40 Paws when you open it.','挑一个架上的盒子。开盒时扣40爪币。']
+}
+function blindShopExplain(){hint(...blindShopMessage())}
+function openPaidBlindBox(){
+ if(activity!=='blindBox'||state.boxStage!=='ready')return false;
+ if(!blindShopCanOpen()){blindShopExplain();return false}
+ const pick=blindWeightedPick(blindUnowned());if(!pick)return false;
+ const entry={key:pick.v[0],day:shrineClock().day,cost:blindPrice};
+ save('blindShopPurchasesV1',[...blindShopLedger(),entry]);
+ state.boxPrize=pick.i;state.boxStage='opening';state.boxAt=t;
+ // Delivery is immediate in the bag, reveal remains animated. Recovery below
+ // repairs a reload between the two local writes without charging again.
+ addItem(pick.v[0],pick.v[1]);updateHUD();sound(520);return true
+}
+function recoverBlindPurchases(){
+ const keys=new Set(items.map(v=>v[0]));let changed=false;
+ for(const entry of blindShopLedger()){if(keys.has(entry.key))continue;const prize=boxPrizes.find(v=>v[0]===entry.key);if(prize){items.push(prize.slice(0,2));keys.add(entry.key);changed=true}}
+ if(changed)save('items',items)
+}
+recoverBlindPurchases();
+const blindShopStartBefore=start;
+start=function(a){const result=blindShopStartBefore(a);if(a==='blindBox')blindShopExplain();return result};
+const blindShopHudBefore=updateHUD;
+updateHUD=function(){blindShopHudBefore();const paws=$('hudCoins');paws.textContent=tr('Paws ','爪币 ')+hideoutBalance();paws.title=tr('Paw Coins: blind boxes and room themes. Earn them by exploring.','爪币可兑换盲盒和小窝主题，探索小镇即可获得。');paws.setAttribute('aria-label',paws.title+' '+hideoutBalance());const progress=$('hudProgress');progress.textContent=tr('Town traveller','小镇旅人');progress.title=tr('Open your journal for ranks and life points.','在人生档案查看等级与积分。')};
+const blindJournalRefreshBefore=lifeHUDRefresh;
+lifeHUDRefresh=function(){blindJournalRefreshBefore();const p=$('hudProgress');if(p)p.textContent=tr('Town traveller','小镇旅人')};
+function pawWalletPage(){
+ page(tr('Paw Coin purse','爪币小钱包'),tr('Little treats earned by exploring. Never real money.','逛小镇攒来的小零花，不是真钱。'),q=>{
+ const card=element('section','',q,'blindAlbumProgress');element('h2',String(hideoutBalance())+' '+tr('Paws','爪币'),card);
+ element('p',tr('Discoveries earn 10 Paws each; purchased blind box figures do not earn coins back. The daily wheel also gives Paws.','每件探索纪念品赚10爪币，购买的盲盒手办不返爪币。每日转盘也可攒爪币。'),card);
+ element('p',tr('Blind boxes: 40 Paws each, up to three per Singapore day.','盲盒40爪币一盒，每个新加坡日最多三盒。'),card);
+ element('p',tr('Today’s stock: ','今日剩余：')+blindStockRemaining()+'/'+blindStock,card);
+ b(q,tr('My collectible cabinet','我的收藏柜'),()=>{bagCategory='figures';bagMode='catalog';renderTravellerBag()});
+ b(q,tr('Room themes','小窝主题'),()=>{hideoutEditing=true;hideoutPage()});
+ b(q,tr('Keep exploring','继续逛小镇'),()=>{$('page').style.display='none'})
+ })
+}
+$('hudCoins').onclick=()=>openHudReward(pawWalletPage);
+$('hudCoins').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openHudReward(pawWalletPage)}};
+function blindShopCounter(x,y,w){
+ // Front fascia and top share the same contact plane as the boxes.
+ ctx.save();round(x,y+5,w,46,5,'#9d7654','#6e543f');round(x-5,y-4,w+10,15,4,'#e2c59b','#8d6a49');
+ for(let i=0;i<3;i++)line(x+12,y+19+i*9,x+w-12,y+19+i*9,'#bd9973',1);
+ ctx.restore()
+}
+function drawBlindShopStage(){
+ const stage=state.boxStage,age=t-state.boxAt,portrait=W<H,stock=blindStockRemaining();
+ // One authored shop sign, grounded shelves, and a work counter. The existing
+ // room painting remains behind this vector staging draft.
+ round(245,230,310,61,5,'#e9d8b6','#92734e');
+ activityFitText(tr('The Little Keepsake Shop','小小收藏铺'),400,250,20,290,'#594a38');
+ activityFitText(tr('40 Paws / box · ','40爪币 / 盒 · ')+hideoutBalance()+tr(' in purse',' 可用'),400,274,15,285,'#52664f');
+ if(stage==='choose'){
+ if(portrait){blindShopCounter(326,400,148);blindShopCounter(237,582,326)}else blindShopCounter(202,538,396);
+ for(let i=0;i<3;i++){
+ const p=arcadeBoxSlot(i,portrait);boxArt(p.x,p.y,p.sc,i);
+ if(blindShopCanOpen()){target(p.x-54*p.sc,p.y-85*p.sc,108*p.sc,98*p.sc,()=>boxSelect(i));label(tr('Choose','选这个'),p.x,p.y+32,()=>boxSelect(i))}
+ }
+ activityFitText(tr('Today’s stock ','今日库存 ')+stock+'/'+blindStock,400,portrait?470:600,16,290,'#fff0ce');
+ if(!blindShopCanOpen())activityFitText(tr(...blindShopMessage()),400,portrait?635:634,14,330,'#fff0ce');
+ label(tr('Collection','收藏册'),400,665,blindCollectionPage);return
+ }
+ const held=drag?.id==='boxShake'&&stage==='shake',x=held?Math.max(335,Math.min(465,drag.x)):400,y=held?Math.max(450,Math.min(535,drag.y)):515;
+ const opening=stage==='opening'?poseEase(age/.95):stage==='result'?1:0;
+ drawRitualPose(270,560,1.15,{reach:held?{x:x-38,y:y-35}:null});
+ blindShopCounter(245,525,310);
+ if(stage==='opening'||stage==='result'){
+ const v=boxPrizes[state.boxPrize];
+ boxArt(332,515,.82,state.boxPick,opening,0);
+ ellipse(458,522,48,8,'#5f49383c');round(408,507,100,17,4,'#d7bb8b','#98724e');
+ if(v){ctx.save();ctx.globalAlpha=Math.max(.12,opening);drawBlindCollectible(458,508,v,1.42);ctx.restore()}
+ if(stage==='opening'&&age>=.95)boxAward();
+ if(stage==='result'&&v){activityFitText(tr(v[0],v[1]),400,584,19,310,'#fff1d0');activityFitText(tr(...blindFigureLore[state.boxPrize]),400,610,13,320,'#fff1d0');label(tr('Back to shelf','回到货架'),310,650,()=>start('blindBox'));label(tr('Collection','收藏册'),500,650,blindCollectionPage)}
+ return
+ }
+ boxArt(x,y,1.15,state.boxPick,0,held?Math.sin(t*20)*.12:0);
+ if(stage==='shake'){target(330,420,140,130,()=>{},'boxShake');activityFitText(tr('Shake ','摇动 ')+Math.round(state.boxShake)+'%',400,594,17,300,'#fff1d0');label(tr('Shake gently','轻轻摇晃'),400,642,()=>boxShake(70))}
+ if(stage==='ready'){target(330,420,140,130,boxOpen);label(tr('Open · 40 Paws','开盒 · 40爪币'),400,620,boxOpen)}
+}
+const blindCabinetPageBefore=blindCollectionPage;
+blindCollectionPage=function(){
+ blindCabinetPageBefore();const q=$('content'),progress=q.querySelector('.blindAlbumProgress');if(!progress)return;
+ element('small',tr('40 Paws each · Today’s stock ','每盒40爪币 · 今日剩余 ')+blindStockRemaining()+'/'+blindStock+' · '+tr('Balance ','余额 ')+hideoutBalance(),progress);
+};
+const blindBagEntriesBefore=bagEntries;
+bagEntries=function(){const entries=blindBagEntriesBefore(),existing=new Set(entries.map(v=>v.item[0]));for(const v of boxPrizes){if(!existing.has(v[0]))entries.push({item:v.slice(0,2),kind:'figure',owned:false,order:-1})}return entries};
