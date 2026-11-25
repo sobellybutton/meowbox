@@ -210,4 +210,62 @@ prop=function(id,x,y){
  return gatheringPropBefore(id,x,y)
 };
 
+
+/* Curation batch 2: one reading table, one self-discovery host, distinct
+   relationship conversation and branching fiction. Keep legacy activity IDs. */
+function curatedSingleStation(entries,id,en,cn){
+ const match=(entries||[]).find(v=>v[0]===id);
+ return match?[[id,en,cn]]:entries
+}
+roomActions.tarot=curatedSingleStation(roomActions.tarot,'tarot','Reading table','塔罗牌桌');
+roomActions.quiz=curatedSingleStation(roomActions.quiz,'quiz','Discover yourself','认识自己');
+roomActions.story=curatedSingleStation(roomActions.story,'story','Choose a different life','选择另一种人生');
+roomActions.match=curatedSingleStation(roomActions.match,'match','Conversation cards','相处话题卡');
+if(indoorStages.tarot?.stations?.tarot)indoorStages.tarot.stations.tarot=[400,440,400,615];
+const curatedDiscoveryActionBefore=action;
+action=function(id){
+ if(room==='tarot'&&id==='tarot'){
+  closeTalk();return say(tr('Fortune Teller','占卜师'),tr('One deck, two ways to reflect. The cards do not decide your future.','一副牌，两种读法。未来怎么走，还是你自己说了算。'),[
+   [tr('One card for today','今日一张牌'),()=>{closeTalk();start('tarot')}],
+   [tr('Three cards for a question','带着问题抽三张牌'),()=>{closeTalk();start('love')}],
+   [tr('Maybe later','待会儿再来'),closeTalk]
+  ])
+ }
+ if(room==='quiz'&&id==='quiz'){
+  closeTalk();return say(tr('Lab keeper','研究所店主'),tr('Three different lenses, not three versions of the same test. Which part of yourself are you curious about?','三种不同的自我探索，不是把同一份题做三遍。今天想认识自己的哪一面？'),[
+   [tr('Soul Cat · playful character','猫灵 · 趣味性格'),()=>{closeTalk();wonderSceneOpen('soul')}],
+   [tr('Four preferences · how I think','四种偏好 · 我怎样思考'),()=>{closeTalk();wonderSceneOpen('type')}],
+   [tr('Inner motives · what matters to me','内在动力 · 我在乎什么'),()=>{closeTalk();wonderSceneOpen('motive')}],
+   [tr('Keep exploring','继续逛逛'),closeTalk]
+  ])
+ }
+ return curatedDiscoveryActionBefore(id)
+};
+/* The existing café's physical choice/turn animation stays. Replace the
+   old generic outing questions with relational situations. Choice categories
+   indicate ways to begin a conversation, never compatibility or worth. */
+const curatedCafeQuestions=[
+ [['Someone you care about has been quiet all day.','你在乎的人今天一直很安静。'],[['Ask if they would like space','问问对方是否想独处'],['Invite them for a short walk','约对方出去走走'],['Ask if they would like to talk','问问对方想不想聊聊']]],
+ [['A friend cancels plans at the last minute.','朋友临时取消了约定。'],[['Take time before replying','先缓一缓再回复'],['Offer another day or plan','换个时间或安排'],['Ask kindly what happened','温和地问发生了什么']]],
+ [['You disagree about something important.','你们在一件重要的事上意见不同。'],[['Pause and return when calm','先冷静一下再谈'],['Look for a practical compromise','一起找实际的折中方案'],['Listen to what each person needs','听听彼此真正需要什么']]],
+ [['You want to show someone they matter.','你想让对方知道，自己很在乎他们。'],[['Respect their time and boundaries','尊重对方的时间和边界'],['Make time for something together','抽时间一起做点事'],['Tell them something you appreciate','说出你欣赏对方的地方']]]
+];
+const curatedCafeStyles=[
+ ['Quiet Harbour','安静港湾','You tended to choose space and time. Ask what the other person needs rather than assuming.','你比较常选择留出空间和时间。别替对方猜，问问他们真正需要什么。','#92a89f'],
+ ['Adventure Companion','冒险搭子','You tended to offer practical next steps. Remember that sometimes company is enough.','你比较常提出实际行动。有时候陪着对方，就已经足够。','#d6a36d'],
+ ['Warm-hearted Listener','暖心倾听者','You tended to begin by listening. Remember that your own needs deserve room too.','你比较常先倾听。也别忘了给自己的需求留一点位置。','#c99a96']
+];
+if(typeof cafeQuestions!=='undefined'&&Array.isArray(cafeQuestions)&&cafeQuestions.length===4&&cafeQuestions.every(v=>Array.isArray(v)&&Array.isArray(v[1])&&v[1].length===3))cafeQuestions.splice(0,4,...curatedCafeQuestions);
+if(typeof cafeKinds!=='undefined'&&Array.isArray(cafeKinds)&&cafeKinds.length===3&&cafeKinds.every(v=>Array.isArray(v)&&v.length>=5))for(let i=0;i<3;i++){cafeKinds[i][2]=curatedCafeStyles[i][2];cafeKinds[i][3]=curatedCafeStyles[i][3]}
+// Do not infer a player's personality from the café result or introduce a second score.
+const curatedDiscoveryIntroBefore=roomIntro;
+roomIntro=function(){
+ curatedDiscoveryIntroBefore();
+ if(activity)return;
+ if(room==='tarot')hint('One table. Choose a daily card or a three-card reflection.','一张牌桌，抽今日一张牌，或带着问题抽三张。');
+ if(room==='quiz')hint('Find out more about yourself. No diagnosis, no homework.','认识自己，不贴标签，也不交作业。');
+ if(room==='match')hint('Explore how you might respond to someone you care about. No compatibility score.','想想你会怎样回应在乎的人。不算缘分分数。');
+ if(room==='story')hint('Follow a story, make choices and discover a different ending.','跟着故事走，自己做决定，探索不同结局。')
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
