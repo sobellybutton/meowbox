@@ -4644,7 +4644,7 @@ const lifeAttributes={
  mischief:{label:['Mischief','搞事能力'],color:'#c18a65',desc:['Find funny stories and harmless ways to vent.','吃瓜、吐槽，把怨气变成笑点。']}
 };
 function lifeClean(raw){
- const a={version:1,points:{},seen:{},friends:{},records:{},daily:{day:'',keys:[]}};
+ const a={version:1,points:{},seen:Object.create(null),friends:Object.create(null),records:{},daily:{day:'',keys:[]}};
  if(!raw||typeof raw!=='object')return a;
  for(const key of Object.keys(lifeAttributes))a.points[key]=Math.max(0,Math.min(100,Math.floor(Number(raw.points?.[key])||0)));
  for(const [k,v] of Object.entries(raw.seen||{}))if(k.length<=180&&v===true)a.seen[k]=true;
@@ -4674,7 +4674,7 @@ function lifeDiscovery(name){
 }
 function lifeBackfill(){for(const item of items)if(typeof item?.[0]==='string')lifeEarn('item:'+item[0].slice(0,150),lifeDiscovery(item[0]));}
 const lifeItemBefore=addItem;
-addItem=function(a,b){const fresh=!items.some(v=>v[0]===a);lifeItemBefore(a,b);if(fresh&&items.some(v=>v[0]===a)){lifeEarn('item:'+String(a).slice(0,150),lifeDiscovery(String(a)));lifeHUDRefresh()}};
+addItem=function(a,b){const fresh=!items.some(v=>v[0]===a);lifeItemBefore(a,b);if(fresh&&items.some(v=>v[0]===a)){lifeEarn('item:'+String(a).slice(0,150),lifeDiscovery(String(a)));lifeHUDRefresh()}if((activity==='riverBottle'&&a==='Let it drift keepsake')||(activity==='riverShout'&&a==='River echo keepsake')){lifeEarn('release:'+activity,{calm:2,mischief:1},true);lifeHUDRefresh()}};
 function lifeFriend(name){
  if(!Array.isArray(name)||!name[0]||!name[1])return;
  const key='npc:'+String(name[0]).slice(0,85),today=shrineClock().day;
@@ -4742,3 +4742,13 @@ const lifeStyle=document.createElement('style');lifeStyle.textContent=`
 .lifeBook h2{font-size:19px;margin:20px 0 8px;color:#524c3a}.lifeIntro{display:flex;align-items:center;gap:12px;border-bottom:1px solid #b8a480;padding-bottom:12px}.lifeIntro img{width:84px;height:96px;object-fit:contain;flex:none}.lifeIntro>div{min-width:0;overflow-wrap:anywhere}.lifeIntro h2{margin:0 0 5px}.lifeIntro p{font-size:13px;margin:6px 0}.lifeAttribute{padding:7px 0;border-bottom:1px solid #b8a48050}.lifeAttrName,.lifeFriend{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px}.lifeAttrName span,.lifeFriend span{overflow-wrap:anywhere}.lifeAttribute progress{width:100%;height:9px;margin:6px 0}.lifeAttribute small,.lifeNote{font-size:12px;line-height:1.45;color:#72634d}.lifeFriend{padding:8px 0;border-bottom:1px solid #c1ad8a}.lifeAchievement{padding:9px 0 9px 12px;border-left:3px solid #bca88a;margin:5px 0;opacity:.72}.lifeAchievement.earned{border-left-color:#6f9478;opacity:1}.lifeAchievement small{display:block;font-size:12px;margin-top:4px}.lifeActions{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}.lifeActions button{min-height:44px;white-space:normal}
 `;document.head.append(lifeStyle);
 lifeBackfill();
+
+/* Align the journal, bag and passport progression; maintain existing Paws/stamp balance. */
+const lifeAlbumPrior=albumProfile;
+albumProfile=function(q){
+ lifeAlbumPrior(q);const v=lifeRank(),p=q.querySelector('.albumProfile p');
+ if(p)p.textContent=tr('Level ','等级 ')+(v.index+1)+' · '+tr(...v.label);
+ const old=q.querySelector('.travellerProgress');if(old){old.replaceChildren();element('strong',v.total+' '+tr('life points','人生积分'),old);const meter=element('progress','',old);meter.max=v.next||Math.max(1,v.total);meter.value=v.total;meter.setAttribute('aria-label',tr('Life progress','人生进度'));element('small',v.next?tr('Next rank at ','下一级需要 ')+v.next:tr('Maximum rank','已满级'),old);b(old,tr('My life journal','摸鱼人生档案'),lifeProfile)}
+};
+const lifeCareBefore=careComplete;
+careComplete=function(action){const active=careIsActive(),profile=active?parkCats[state.petKind??0]:null;lifeCareBefore(action);if(active&&profile&&state.care.phase==='return'){lifeEarn('care:'+profile.name[0],{happiness:2,calm:1},true);lifeHUDRefresh()}};
