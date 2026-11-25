@@ -36,7 +36,7 @@ const proDrawActivity=drawActivity;
 drawActivity=function(){proDrawActivity();if(activity==='wishes'&&state.wish){ctx.save();let elapsed=Math.max(0,t-(state.lanternAt??t));if(state.lanternAt===undefined)state.lanternAt=t;let rise=Math.min(1,elapsed/1.5);ctx.translate(400+Math.sin(t*1.7)*9,445-115*rise);ctx.rotate(Math.sin(t*1.7)*.07);glow(0,0,64,1);line(0,-46,0,-29,'#b29b69',2);round(-25,-28,50,57,13,'#edab5b','#9e5c38');for(let x of [-14,0,14])line(x,-22,x,23,'#bf783e',1);round(-15,-32,30,7,3,'#634b38');round(-15,27,30,6,3,'#634b38');ctx.restore()}};
 
 let valleyRevealAt=-1;
-function beginValleyReveal(){valleyRevealAt=performance.now();p.x=p.tx=500;p.y=p.ty=Math.max(minY(),maxY()-180);p.facing='up';cam.y=p.y;stopRoute();let dock=$('dock');dock.style.visibility='hidden';$('hud').style.visibility='hidden';$('small').style.visibility='hidden';$('hint').style.visibility='hidden';setTimeout(()=>{if(valleyRevealAt<0)return;p.ty=Math.max(minY(),p.y-230)},1600);setTimeout(()=>{valleyRevealAt=-1;dock.style.visibility='';$('hud').style.visibility='';$('small').style.visibility='';$('hint').style.visibility=''},2900)}
+function beginValleyReveal(){valleyRevealAt=performance.now();p.x=p.tx=500;p.y=p.ty=Math.max(minY(),maxY()-24);p.facing='up';cam.x=p.x;cam.y=p.y;stopRoute();let dock=$('dock');dock.style.visibility='hidden';$('hud').style.visibility='hidden';$('small').style.visibility='hidden';$('hint').style.visibility='hidden';setTimeout(()=>{if(valleyRevealAt<0)return;p.ty=Math.max(minY(),p.y-65)},1600);setTimeout(()=>{valleyRevealAt=-1;dock.style.visibility='';$('hud').style.visibility='';$('small').style.visibility='';$('hint').style.visibility=''},2900)}
 const oldSyncCinematic=syncSigns;syncSigns=function(){if(valleyRevealAt>=0){signRoot.hidden=true;return}oldSyncCinematic()};
 const suits78=[['Wands','权杖','island'],['Cups','圣杯','home'],['Swords','宝剑','fortune'],['Pentacles','星币','wonder']];
 const ranks78=[['Ace','王牌'],['Two','二'],['Three','三'],['Four','四'],['Five','五'],['Six','六'],['Seven','七'],['Eight','八'],['Nine','九'],['Ten','十'],['Page','侍从'],['Knight','骑士'],['Queen','王后'],['King','国王']];
@@ -933,15 +933,20 @@ const templePrayerStart=start;start=function(id){templePrayerStart(id);if(id==='
 function templeIncense(x,y,lit){ctx.save();ellipse(x,y+15,39,9,'#35292366');let g=ctx.createLinearGradient(x-32,y,x+32,y);g.addColorStop(0,'#72533d');g.addColorStop(.45,'#b99a60');g.addColorStop(1,'#72533d');ctx.beginPath();ctx.moveTo(x-34,y-8);ctx.quadraticCurveTo(x-34,y+25,x,y+25);ctx.quadraticCurveTo(x+34,y+25,x+34,y-8);ctx.fillStyle=g;ctx.fill();ellipse(x,y-8,34,9,'#b8a27c');ellipse(x,y-7,27,5,'#7d6b50');for(let i=-1;i<=1;i++){line(x+i*8,y-9,x+i*12,y-65+(i%2)*6,'#8d493b',2.8);if(lit){ellipse(x+i*12,y-65+(i%2)*6,2.5,2.5,'#f7aa60');for(let j=0;j<4;j++){let f=(t*.45+j*.25+i*.13+1)%1;ctx.globalAlpha=(1-f)*.24;ellipse(x+i*12+Math.sin(t*1.4+j+i)*f*19,y-68-f*74,3+f*11,4+f*14,'#f3e7cc')}ctx.globalAlpha=1}}ctx.restore()}
 function templePrayerFigure(x,y,bow,praying,walking,kneel=0,reach=null){if(walking){backHuman(x,y,avatar??0,true,'right',2.45);return}drawRitualPose(x,y,2.45,{bow,kneel,praying,reach})}
 const prayerProp=prop;prop=function(id,x,y){if(id==='prayer'){templeIncense(x,y-32,true);return}return prayerProp(id,x,y)};
-function beginQuietBow(){if(activity!=='prayer'||!['ready','complete'].includes(state.prayerStage))return;if(!state.incense||t-(state.incenseAt??0)<1.05){return;}state.prayerStage='kneel';state.prayerAt=t;state.bows=0;hint('Hands together. Breathe slowly.','双手合十，慢慢呼吸。');sound(330)}
+function beginQuietBow(){if(activity!=='prayer'||!['ready','complete'].includes(state.prayerStage))return;if(!state.incense||t-(state.incenseAt??0)<1.05){return;}state.prayerStage='bow';state.prayerAt=t;state.bows=0;hint('Bow gently. Breathe slowly.','轻轻行礼，慢慢呼吸。')}
 const prayerDraw=drawActivity;drawActivity=function(){if(activity!=='prayer')return prayerDraw();ctx.save();paintLivingBackdrop(pics.streetTemple||pics.temple||pics.sticks);let b=livingBounds(),shade=ctx.createLinearGradient(0,260,0,760);shade.addColorStop(0,'#493c2820');shade.addColorStop(1,'#2b30276e');shadeLivingBackdrop(shade);
  const g=ctx.createLinearGradient(0,445,0,555);g.addColorStop(0,'#aa815b');g.addColorStop(1,'#654737');ctx.beginPath();ctx.moveTo(435,445);ctx.lineTo(580,445);ctx.lineTo(610,520);ctx.lineTo(410,520);ctx.closePath();ctx.fillStyle=g;ctx.fill();line(423,520,423,571,'#624536',12);line(592,520,592,571,'#624536',12);
  templeIncense(510,455,state.incense);for(let i=0;i<2;i++){let xx=458+i*105;round(xx-4,410,8,34,2,'#e1c290','#8b6e4c');ctx.globalAlpha=.75+.2*Math.sin(t*6+i);ellipse(xx,407,3.5,8,'#f8d18a');ctx.globalAlpha=1}
- ellipse(335,576,75,16,'#5f493c80');round(275,555,118,22,8,'#ae906e','#70543b');line(286,566,383,566,'#dac19b',1.5);
+ // Woven floor mat, with no raised platform or floating body.
+ ctx.save();ctx.beginPath();ctx.moveTo(281,545);ctx.lineTo(387,545);ctx.lineTo(400,572);ctx.lineTo(268,572);ctx.closePath();ctx.fillStyle='#b7a07b';ctx.fill();ctx.strokeStyle='#88765b';ctx.lineWidth=1;ctx.stroke();for(let j=0;j<7;j++)line(278-j*1.5,549+j*3,390+j*1.5,549+j*3,'#ddc7a06a',.8);ctx.restore();
  let elapsed=t-state.prayerAt,stage=state.prayerStage,walk=stage==='approach',bow=0,x=walk?245+Math.min(1,elapsed/1.2)*90:335;if(walk&&elapsed>=1.2){state.prayerStage='ready';state.prayerAt=t;hint('Offer incense, then make your wish.','先上香，再静心祈愿。')}
  if(stage==='kneel'&&elapsed>.65){state.prayerStage='bow';state.prayerAt=t}if(stage==='bow'){if(elapsed<3.9){let phase=(elapsed/1.3)%1;bow=Math.sin(Math.PI*phase)**1.6;state.bows=Math.min(3,Math.floor(elapsed/1.3));}else{state.bows=3;state.prayerStage='silent';state.prayerAt=t;hint('Keep your wish to yourself. Take a few quiet breaths.','心愿留在心里，安静地呼吸几次。')}}
  if(stage==='silent'&&elapsed>4){state.prayerStage='rise';state.prayerAt=t}if(stage==='rise'&&elapsed>.72){state.prayerStage='complete';state.prayerAt=t;hint('Take your time. Draw a fortune whenever you are ready.','不用着急，准备好了再去求签。')}
- let kneel=stage==='kneel'?poseEase(elapsed/.65):['bow','silent'].includes(stage)?1:stage==='rise'?1-poseEase(elapsed/.72):0;let lightAge=t-(state.incenseAt??-100),reaching=stage==='ready'&&lightAge<1.05;let f=reaching?Math.sin(Math.PI*clamp(lightAge/1.05,0,1)):0;let reach=reaching?{x:390+55*f,y:455}:null;if(walk){backHuman(x,553,avatar??0,true,'right',1.65)}else{let hand=drawRitualPose(x+32*f,553,1.65,{kneel,bow,praying:['kneel','bow','silent','rise'].includes(stage),reach});if(reaching&&hand&&Number.isFinite(hand.x)&&Number.isFinite(hand.y)){line(hand.x,hand.y,hand.x+12*f,hand.y-42,'#9b6943',2);ellipse(hand.x+12*f,hand.y-42,2,2,'#efb270')}}target(465,355,95,140,lightTempleIncense);target(260,330,150,250,beginQuietBow);
+ // Use a complete illustrated standing sprite for a modest bow until dedicated
+ // knee/hand pose art is ready. Never shear the legs into a false kneel.
+ let lightAge=t-(state.incenseAt??-100),reaching=stage==='ready'&&lightAge<1.05,f=reaching?Math.sin(Math.PI*clamp(lightAge/1.05,0,1)):0;
+ if(walk){backHuman(x,553,avatar??0,true,'right',1.65)}else{ctx.save();ctx.translate(x+12*f,553);ctx.rotate(bow*.12+f*.065);backHuman(0,0,avatar??0,false,'right',1.65);ctx.restore()}
+ 
  if(stage==='ready'){if(!state.incense){target(465,355,95,140,lightTempleIncense)}else if(t-(state.incenseAt??0)>1.05){target(260,330,150,250,beginQuietBow)}}else if(stage==='bow'){txt(tr('Bow ','鞠躬 ')+Math.min(3,state.bows+1)+' / 3',400,622,18,'#fff2d5')}else if(stage==='silent'){txt(tr('A quiet moment','片刻静心'),400,622,20,'#fff2d5')}else if(stage==='complete'){label(tr('Draw a fortune','求签'),300,620,()=>start('sticks'));label(tr('Ask with moon blocks','掷筊'),505,620,()=>start('moon'))}
  ctx.restore()};
 
@@ -961,13 +966,49 @@ function templeLadle(x,y,a=0){ctx.save();ctx.translate(x,y);ctx.rotate(a);line(-
 function templeBasin(x,y){ctx.save();let g=ctx.createLinearGradient(0,y,0,y+85);g.addColorStop(0,'#a9aa91');g.addColorStop(1,'#616d61');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x-94,y);ctx.lineTo(x+94,y);ctx.lineTo(x+69,y+65);ctx.quadraticCurveTo(x,y+88,x-69,y+65);ctx.closePath();ctx.fill();ellipse(x,y,96,32,'#a6ad94');ellipse(x,y,82,25,'#526f68');ellipse(x,y,76,20,'#75948b');for(let i=0;i<5;i++){let f=(t*.38+i*.19)%1;ctx.strokeStyle='rgba(227,237,214,'+(1-f)*.55+')';ctx.beginPath();ctx.ellipse(x+22,y,8+f*48,2+f*13,0,0,TAU);ctx.stroke()}ctx.restore()}
 function templeRitualBackground(){paintLivingBackdrop(pics.streetTemple||pics.temple||pics.sticks);let g=ctx.createLinearGradient(0,270,0,680);g.addColorStop(0,'#243b3020');g.addColorStop(1,'#26392fa0');shadeLivingBackdrop(g)}
 function templeReleaseBell(moved){if(activity!=='templeBell'||t-state.bellAt<1.0)return;state.bellStrength=Math.max(.15,Math.min(1,moved/120));state.bellAt=t;state.bellRung=false;hint('Listen as the sound travels through the valley.','听钟声慢慢传向山谷。')}
-function templeReleaseWater(a){if(activity!=='templeWater'||t-state.waterAt<1)return;if(state.waterStage===0){if(a.y>425&&a.y<560){state.waterStage=1;state.waterAt=t;hint('Lift the filled ladle towards your hands.','把盛满水的竹勺提到手边。')}else hint('Lower the ladle into the basin.','把竹勺放入水盆。')}else if(state.waterStage===1){if(a.x<385){state.waterStage=2;state.waterAt=t;sound(490);hint('Let the water flow over your hands.','让水缓缓流过双手。')}else hint('Move the ladle towards your hands on the left.','把竹勺移向左边的双手。')}}
+function waterDropZone(stage,x,y){
+ if(!Number.isFinite(x)||!Number.isFinite(y))return false;
+ // Ladle coordinates are its handle centre; the bowl is 35 units to the right.
+ return stage===0?Math.hypot((x+35)-475,(y+1)-486)<48:stage===1?Math.hypot((x+35)-410,(y+1)-430)<48:false
+}
+function templeReleaseWater(a){
+ if(activity!=='templeWater'||![0,1].includes(state.waterStage))return;
+ const stage=state.waterStage;if(!waterDropZone(stage,a.x,a.y)){hint(stage===0?'Lower the scoop into the highlighted water.':'Bring the filled scoop above your hand.',stage===0?'把勺口放进亮起的水面。':'把装满水的勺移到手掌上方。');return}
+ state.waterStage=stage+1;state.waterAt=t;state.waterFrom={x:a.x,y:a.y};
+ if(stage===0){hint('Now move the full ladle over your hand.','现在把盛满水的勺移到手掌上方。');if(typeof physicalFx==='function')physicalFx('water')}
+ else{hint('Let the water rinse your hand.','让清水缓缓流过手掌。');if(typeof physicalFx==='function')physicalFx('water')}
+}
+function waterLadleArt(x,y,angle,filled){
+ ctx.save();ctx.translate(x,y);ctx.rotate(angle);line(-69,1,22,1,'#987249',9);line(-67,-2,23,-2,'#e3c28a',2.5);ellipse(35,2,23,12,'#917249');ellipse(35,-1,22,10,'#d7b97f');ellipse(35,-1,17,6,filled?'#83a99f':'#b28f5b');if(filled)line(23,-3,44,-3,'#d9e7d4',1);ctx.restore()
+}
+function waterHandArt(x,y){
+ // First-person close-up: wrist and palm stay visibly connected, no distorted avatar.
+ ctx.save();ctx.translate(x,y);ctx.rotate(-.18);ctx.fillStyle='#d8b594';ctx.strokeStyle='#98745e';ctx.lineWidth=1.5;
+ ctx.beginPath();ctx.moveTo(-91,18);ctx.bezierCurveTo(-69,7,-43,1,-22,-2);ctx.bezierCurveTo(-14,-14,-1,-18,8,-15);ctx.bezierCurveTo(17,-14,14,-9,8,-6);ctx.lineTo(26,-10);ctx.quadraticCurveTo(35,-10,34,-5);ctx.lineTo(16,1);ctx.lineTo(38,-2);ctx.quadraticCurveTo(46,0,41,5);ctx.lineTo(17,9);ctx.lineTo(36,9);ctx.quadraticCurveTo(43,13,35,16);ctx.lineTo(9,17);ctx.lineTo(24,21);ctx.quadraticCurveTo(29,26,19,27);ctx.bezierCurveTo(-4,31,-13,23,-29,19);ctx.lineTo(-91,39);ctx.closePath();ctx.fill();ctx.stroke();
+ ctx.beginPath();ctx.moveTo(-111,14);ctx.lineTo(-62,6);ctx.lineTo(-53,33);ctx.lineTo(-108,52);ctx.closePath();ctx.fillStyle='#b1a083';ctx.fill();ctx.strokeStyle='#82715b';ctx.stroke();line(-61,9,-54,31,'#e4ceb0',2);ctx.restore()
+}
+
 const templeProps=prop;prop=function(id,x,y){if(id==='templeBell'){templeBellArt(x,y-35,.57);return}if(id==='templeWater'){ctx.save();ctx.translate(x,y-32);ctx.scale(.56,.56);templeBasin(0,0);templeLadle(0,-35,-.1);ctx.restore();return}return templeProps(id,x,y)};
 const templeRoom=drawRoom;drawRoom=function(){if(room!=='temple')return templeRoom();ctx.save();templeRitualBackground();let locations=[['templeWater','Water pavilion','手水亭'],['prayer','Prayer altar','祈愿香案'],['templeBell','Bronze bell','山寺钟声'],['sticks','Fortune sticks','求签'],['moon','Moon blocks','掷筊']];for(let [id,en,cn] of locations){const [x,y,ax,ay]=indoorStation(id),first=hit.length;prop(id,x,y);label(tr(en,cn),x,y+34,()=>start(id));target(x-65,y-105,130,115,()=>start(id));markIndoorStation(id,first,[ax,ay])}ctx.restore()};
 const templeRitualDraw=drawActivity;drawActivity=function(){
  if(!['templeBell','templeWater','templePaper'].includes(activity))return templeRitualDraw();ctx.save();templeRitualBackground();
  if(activity==='templeBell'){let age=t-state.bellAt,held=drag?.id==='templeStriker',pull=held?Math.min(85,Math.abs(drag.x-drag.sx)):0,impact=age>.22&&age<4?Math.sin((age-.22)*16)*Math.exp(-(age-.22)*1.7)*state.bellStrength*.045:0;if(age>=.22&&age<4&&!state.bellRung){state.bellRung=true;sound(146+state.bellStrength*12);if(!muted&&ambientBus){ambientTone(146.83,.065*state.bellStrength,2.5,'sine');ambientTone(293.66,.025*state.bellStrength,1.6,'sine',.04)}}line(270,315,530,315,'#6c5239',16);line(400,315,400,348,'#5f5542',12);templeBellArt(400,438,1.05,impact);let swing=held?-pull:age<.22?-85*state.bellStrength*(1-age/.22):age<1.5?-Math.abs(Math.sin((age-.22)*5))*40*state.bellStrength*Math.exp(-age):0;let sx=285+swing;line(300,320,sx,474,'#9a825d',3);line(355,320,sx+85,474,'#9a825d',3);ctx.save();ctx.translate(sx,474);round(-8,-10,108,20,10,'#a8855b','#654c38');line(6,-4,87,-4,'#d0b082',2);ctx.restore();target(180,440,210,65,()=>templeReleaseBell(55),'templeStriker');if(age>.22&&age<3){for(let j=0;j<3;j++){let f=(age-.22-j*.28)/2.3;if(f>0&&f<1){ctx.strokeStyle='rgba(246,221,158,'+(1-f)*.4*state.bellStrength+')';ctx.beginPath();ctx.ellipse(400,490,80+f*130,19+f*30,0,0,TAU);ctx.stroke()}}}drawRitualPose(211,570,1.8,{reach:held||age<1?{x:sx+8,y:474}:null,bow:held?.10:0});txt(tr('Pull the striker and let go','拉动木槌，再松手'),400,616,17,'#fff1d6');}
- if(activity==='templeWater'){let age=t-state.waterAt;templeBasin(475,486);let lx=drag?.id==='templeLadle'?drag.x:state.waterStage===1?473:state.waterStage===2?337:455,ly=drag?.id==='templeLadle'?drag.y:state.waterStage===1?420:state.waterStage===2?437:456;let using=drag?.id==='templeLadle'||state.waterStage===2;templePrayerFigure(305,565,using?.10:0,false,false,0,using?{x:lx-49,y:ly}:null);templeLadle(lx,ly,state.waterStage===2?.55:-.12);if(state.waterStage===2&&age<2){for(let j=0;j<12;j++){let f=(age*2+j*.12)%1;ellipse(365+Math.sin(j*2)*6,450+f*62,2,5,'#cde8df')}}if(state.waterStage===2&&age>2){state.waterStage=3;hint('Ready to visit the altar, or stay a little longer.','可以去祈愿，也可以在这里多待一会儿。')}if(state.waterStage<2){target(lx-80,ly-35,150,70,()=>{},'templeLadle');txt(state.waterStage===0?tr('Scoop water','舀水'):tr('Lift and pour','提起竹勺，缓缓倒水'),400,620,17,'#fff2db')}else if(state.waterStage===3){label(tr('Visit the altar','前往香案'),400,620,()=>start('prayer'))}}
+ if(activity==='templeWater'){
+  const stage=state.waterStage,age=t-state.waterAt,held=drag?.id==='templeLadle';templeBasin(475,486);
+  const handX=410,handY=485;waterHandArt(handX,handY);
+  let lx=stage===0?400:stage===1?440:375,ly=stage===0?426:stage===1?447:430,angle=0;
+  if(held&&stage<2){lx=clamp(drag.x,250,560);ly=clamp(drag.y,350,565)}
+  else if(stage===1&&age<.3&&state.waterFrom){const f=poseEase(age/.3);lx=state.waterFrom.x+(440-state.waterFrom.x)*f;ly=state.waterFrom.y+(447-state.waterFrom.y)*f}
+  else if(stage===2){const f=poseEase(age/.4),from=state.waterFrom||{x:375,y:430};lx=from.x+(375-from.x)*f;ly=from.y+(430-from.y)*f;angle=.64*f*(1-poseEase((age-1.5)/.5))}
+  const filled=stage===1||stage===2&&age<1.6;waterLadleArt(lx,ly,angle,filled);
+  if(stage===2&&age>.18&&age<1.8){const sx=lx+55*Math.cos(angle),sy=ly+55*Math.sin(angle);for(let j=0;j<13;j++){const f=(age*3+j/13)%1;const x=sx+(handX-sx)*f,y=sy+(handY-sy)*f+Math.sin(f*Math.PI)*5;ellipse(x+Math.sin(j)*1.5,y,1.8,3.8,'#d8eae2')}for(let j=0;j<5;j++){let f=(age*2+j*.2)%1;ellipse(handX+Math.sin(j*2)*17,handY+5+f*35,1.4,2.4,'#d9ede3')}}
+  if(stage===2&&age>=2){state.waterStage=3;hint('Hands rinsed. Continue to the altar when ready.','净手完成，准备好了就去香案。')}
+  if(stage<2){const zx=stage===0?475:410,zy=stage===0?486:430;ctx.save();ctx.strokeStyle='#f6e7ad';ctx.lineWidth=2.5;ctx.setLineDash([5,5]);ctx.beginPath();ctx.ellipse(zx,zy,37+Math.sin(t*3)*2,stage===0?19:23,0,0,TAU);ctx.stroke();ctx.restore();target(lx-79,ly-27,145,56,()=>{},'templeLadle');
+   txt(stage===0?tr('1 · Scoop water','1 · 舀水'):tr('2 · Rinse your hand','2 · 净手'),400,602,18,'#fff2db');
+   label(stage===0?tr('Scoop water','舀水'):tr('Pour water','倒水'),400,646,()=>templeReleaseWater({x:stage===0?440:375,y:stage===0?486:430}))
+  }else if(stage===3){label(tr('Visit the altar','前往香案'),400,620,()=>start('prayer'))}
+ }
+
  if(activity==='templePaper'){let age=t-state.paperAt;drawTemplePaperRack(565,410,.62,state.paperStage==='tied'&&age<.65?1:0);if(state.paperStage==='opening'&&age>.75)state.paperStage='open';let open=state.paperStage!=='folded';let f=state.paperStage==='opening'?Math.min(1,age/.75):open?1:0;let w=72+f*178,h=65+f*133;let cx=400,cy=472;if(state.paperStage==='tied'){let u=Math.min(1,age/.65);cx=400+165*u;cy=472-62*u;w*=1-u*.94;h*=1-u*.88}if(state.paperStage==='kept'){let u=Math.min(1,age/.7);cy+=85*u;w*=1-u*.6;h*=1-u*.6;ctx.globalAlpha=1-u*.75}ctx.save();ctx.translate(cx,cy);ctx.rotate(state.paperStage==='tied'?Math.sin(t*1.8)*.07:0);ctx.shadowColor='#3a322a88';ctx.shadowBlur=10;round(-w/2,-h/2,w,h,3,'#eadcb9','#ad986f');ctx.shadowBlur=0;line(-w/2+9,0,w/2-9,0,'#b9a37a70',1);if(f>.92&&['open','opening'].includes(state.paperStage)){txt(tr('Fortune No. ','第 ')+state.paperNumber+(zh?' 签':''),0,-58,20,'#70503d');let words=tr(...shrinePaperLines[state.paperNumber-1]);let chunks=zh?[words]:words.match(/.{1,24}(?:\s|$)|\S+?(?:\s|$)/g)||[words];chunks.slice(0,4).forEach((v,i)=>txt(v.trim(),0,-17+i*22,16,'#594c39'));txt(tr('A reflection, not a promise','签文仅供自我反思'),0,69,12,'#84694c')}else if(!open)txt('籤',0,0,24,'#a16e49');ctx.restore();ctx.globalAlpha=1;if(state.paperStage==='folded'){target(335,420,130,110,templePaperTap);label(tr('Unfold your fortune','展开签纸'),400,620,templePaperTap)}if(state.paperStage==='open'){label(tr('Keep in bag','收入背包'),300,620,()=>templePaperKeep(false));label(tr('Tie on rack','系上签纸'),500,620,()=>templePaperKeep(true))}if(['kept','tied'].includes(state.paperStage)&&age>.8){label(tr('Return to temple','回到寺庙'),400,620,()=>{activity=null;state={};updateHUD();roomIntro()})}}
  ctx.restore()
 };
@@ -4154,3 +4195,44 @@ wonderSceneShare=function(){const v=wonderSceneResult;if(v)openMeowShare({kind:w
 shareTownFortune=function(f){openMeowShare({kind:'fortune',title:f.theme.title,lines:[f.theme.work,f.theme.rest,['Lucky colour: '+f.colour[0]+' · '+f.number,'幸运色：'+f.colour[1]+' · '+f.number]],accent:f.colour[2]},todayHub)};
 function shareReadingResult(v,back=null){const cards=(v.cards||[]).slice(0,3).filter(x=>tarotDeck[x.i]);if(!cards.length)return;const pair=x=>{const d=tarotDeck[x.i];return [d[0]+(x.rev?' · Reversed':' · Upright'),d[1]+(x.rev?' · 逆位':' · 正位')]};const title=cards.length===1?pair(cards[0]):['Three-card reflection','三张牌小记'];openMeowShare({kind:'tarot',title,lines:cards.length===1?(cards[0].rev?[['A moment to reconsider and reflect.','给自己一点重新思考的时间。']]:[tarotDeck[cards[0].i].slice(2,4)]):cards.map(pair),accent:'#9a8295'},back)}
 const shareStyles=document.createElement('style');shareStyles.textContent='.meowSharePanel{display:flex;flex-direction:column;align-items:stretch;gap:9px;max-width:440px;margin:auto}.meowShareTabs{display:flex;flex-wrap:wrap;gap:6px}.meowShareTabs button{flex:1;min-width:70px}.meowSharePanel button{min-height:44px;white-space:normal;line-height:1.3}.meowShareTabs button[aria-pressed=true]{background:#4d6556;color:#fff2d5}.meowSharePreview{display:block;width:auto;max-width:100%;max-height:48dvh;object-fit:contain;margin:3px auto;border:1px solid #ac9773}.meowShareStatus{font-size:13px;min-height:1.4em;margin:0}.meowShareHelp{line-height:1.5;font-size:12px;color:#655843}';document.head.append(shareStyles);
+
+/* Entry composition and quiet signage. Keep the existing door ids and 44px hit boxes. */
+const entranceCrowdBefore=initNPC;
+initNPC=function(){
+ entranceCrowdBefore();if(scene!=='fortune')return;
+ const slots=[{y:1260,side:-1},{y:920,side:1},{y:1110,side:1},{y:470,side:-1},{y:690,side:1},{y:820,side:-1},{y:1010,side:-1}];
+ npc.forEach((n,i)=>{const q=slots[i%slots.length],y=q.y-(Math.floor(i/slots.length)*55),lane=residentLane('fortune',y);n.x=n.tx=lane.x+lane.half*q.side*.72;n.y=n.ty=y;n.pathReady=false;n.walkDirection=i%2?1:-1;n.pauseUntil=t+.2+i*.08})
+};
+const entranceNpcTargetBefore=residentTarget;
+residentTarget=function(n,i){entranceNpcTargetBefore(n,i);if(scene==='fortune'){n.ty=Math.min(n.ty,1370);const lane=residentLane(scene,n.ty);n.tx=lane.x+(i%2?1:-1)*lane.half*.72}};
+const entranceSignStyle=document.createElement('style');entranceSignStyle.textContent=`
+#game>#worldSigns>.worldSign{background:transparent!important;border:0!important;box-shadow:none!important;padding:8px 5px!important;max-width:130px!important;font:600 12px/1.12 "Georgia","Songti SC",serif!important;letter-spacing:.015em!important;color:#f9edcf!important}
+#game>#worldSigns>.worldSign .doorPlaque{display:block;padding:5px 9px;background:linear-gradient(155deg,#5d5849ed,#3e5046ef);border:1px solid #dfc69a99;border-radius:2px;box-shadow:0 2px 4px #241f193b;text-shadow:0 1px 1px #352a22;white-space:normal;pointer-events:none}
+#game>#worldSigns>.worldSign:focus-visible .doorPlaque{outline:2px solid #fff4c9;outline-offset:2px}
+#game #back:not([hidden]){top:auto!important;bottom:calc(env(safe-area-inset-bottom,0px) + 80px)!important;left:10px!important;min-height:44px!important;border-radius:5px!important;font:500 12px/1.2 system-ui!important;max-width:145px;background:#344a3de8!important;color:#f9edcf!important;border:1px solid #d0bf95!important;box-shadow:none!important;z-index:8!important}
+@media(max-width:600px){#game[data-meow-in-room="true"] #movePad:not([hidden]){bottom:calc(env(safe-area-inset-bottom,0px) + 133px)!important}#game[data-meow-in-room="true"] #hint{left:calc(50% + 48px)!important;max-width:calc(100vw - 145px)!important}}
+`;document.head.append(entranceSignStyle);
+const entranceSignBefore=syncSigns;
+syncSigns=function(){entranceSignBefore();if(signRoot.hidden)return;for(const btn of signButtons.values()){if(!btn.querySelector('.doorPlaque')){const title=btn.textContent;btn.replaceChildren();element('span',title,btn,'doorPlaque');btn.setAttribute('aria-label',title)}}};
+const entranceHUD=updateHUD;updateHUD=function(){entranceHUD();$('game').dataset.meowInRoom=String(!!room)};
+const homecomingTicketRender=proRender;
+proRender=function(){homecomingTicketRender();if(proStep!==3||!shrineReturning)return;const ticket=load('originalRailTicketV1',null),foot=proposal.querySelector('footer');if(!foot)return;const strip=element('div','',foot,'shrine-ticket-reminder');element('span',tr('RETURN TICKET · FORTUNE VALLEY','返程车票 · 解忧谷'),strip);element('small',ticket?.number||tr('Your usual seat is waiting','老位置给你留着'),strip)};
+const returnTicketStyle=document.createElement('style');returnTicketStyle.textContent='#proposal .shrine-ticket-reminder{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px dashed #d2bd8d88;background:#f3e6c71a;color:#f6e3b8;padding:7px 11px;font:11px/1.3 system-ui;order:-2}#proposal .shrine-ticket-reminder small{font-size:10px;opacity:.8}';document.head.append(returnTicketStyle);
+const parkHostPropBefore=prop;
+prop=function(id,x,y){
+ if(room!=='park'||id!=='chat')return parkHostPropBefore(id,x,y);
+ // Two visible hosts, grounded near a bench, no invisible conversation target.
+ ctx.save();line(x-52,y-5,x-56,y+22,'#735842',5);line(x+52,y-5,x+56,y+22,'#735842',5);round(x-61,y-26,122,17,3,'#a78a62','#715940');round(x-61,y-54,122,23,2,'#9e805b','#715940');line(x-55,y-43,x+55,y-43,'#d5b38a',1.5);
+ backHuman(x-48,y+12,1,false,'right',.87);backHuman(x+47,y+12,3,false,'left',.87);
+ const sway=Math.sin(t*2)*.10;ctx.save();ctx.translate(x+27,y-31);ctx.rotate(sway);ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(-24,-34,0,-32);ctx.quadraticCurveTo(24,-34,0,0);ctx.fillStyle='#e2caa0';ctx.fill();ctx.strokeStyle='#a28a65';ctx.stroke();ctx.restore();ctx.restore()
+};
+const parkGossipAction=action;
+action=function(id){
+ if(room==='park'&&id==='chat'){
+  closeTalk();say(tr('Auntie Mei & Auntie Lin','梅姨和林姨'),tr('Come, sit. The town has been very productive at discussing other people’s productivity.','来来来，坐。今天大家都很勤奋，忙着讨论别人有多勤奋。'),[
+   [tr('What happened today?','今天有什么瓜？'),()=>say(tr('Auntie Lin','林姨'),tr('They held a meeting about reducing meetings. Naturally, it ran over.','今天开会讨论减少会议，结果还超时了。'),[[tr('Of course.','果然。'),closeTalk]])],
+   [tr('Any good news?','有没有好消息？'),()=>say(tr('Auntie Mei','梅姨'),tr('The park cats have declared every day a public holiday. We support the motion.','公园的猫宣布每天都是公共假期。我们一致通过。'),[[tr('Excellent policy.','好政策。'),closeTalk]])],
+   [tr('See you around','下次聊'),closeTalk]
+  ]);return
+ }return parkGossipAction(id)
+};
