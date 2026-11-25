@@ -87,5 +87,44 @@ module.exports=function runQualityChecks(s,log=console.log){
   exports++;
  }
  results.socialExports=exports;
+
+ // 14. Actual board camera stays clear of its compact controls and keeps
+ // 44px targets, including phone landscape. Geometry, not DOM screenshots.
+ const camera=new Function('W','H',"const activity='woodenThree',room='arcade';"+range('function mobileRoomCamera(','/* Draw compact in-world placards')+';return mobileRoomCamera(1,0,0)');
+ let boardFits=0;
+ for(const [W,H] of [[320,568],[360,640],[390,844],[430,932],[768,1024],[1280,720],[844,390],[568,320]]){
+  const c=camera(W,H),board={left:c.ox+286*c.s,right:c.ox+514*c.s,top:c.oy+388*c.s,bottom:c.oy+616*c.s};
+  const controls=H<500&&W>H?{left:W-162,top:H-235,right:W,bottom:H-80}:{left:W/2-155,top:H-189,right:W/2+155,bottom:H};
+  assert(!overlap(board,controls)&&board.left>=0&&board.right<=W&&board.top>=0&&board.bottom<=H&&76*c.s>=44,'Tic tac toe layout '+W+'x'+H);boardFits++;
+ }
+ results.boardFits=boardFits;
+ // 15. Passerby timing: short pass does not flash; a sustained encounter
+ // fades in, survives boundary oscillation, then fades out.
+ const passer=build("let now=0,scene='fortune',p={x:0,y:0};const performance={now:()=>now};"+range('const meowPasserLabels=new WeakMap();','function drawMeowActorName(')+`
+ const a={x:100,y:0},step=(ms,x)=>{now+=ms;a.x=x;return meowPasserOpacity(a)};let n=0;
+ for(let i=0;i<4;i++){if(step(40,100)!==0)throw Error('Premature passer label');n++}
+ step(40,220);if(step(40,220)!==0)throw Error('Short pass flashed');n++;
+ for(let i=0;i<14;i++)step(40,100);if(step(40,100)<.95)throw Error('Sustained label failed');n++;
+ for(let i=0;i<10;i++)if(step(40,i%2?170:140)<.95)throw Error('Boundary flicker');n+=10;
+ for(let i=0;i<15;i++)step(40,260);if(step(40,260)!==0)throw Error('Label did not fade');n++;
+ scene='island';if(step(40,100)!==0)throw Error('Map transition stale label');return n+1;`);
+ results.passerTiming=passer;
+ // 16. Park story is resumable and honours branching choice across visits.
+ results.parkSerial=build("let stored=null,date='2026-11-25',room='park',last,friend=0;const day=()=>date,load=(k,d)=>stored??d,save=(k,v)=>{stored={...v}},tr=(a,b)=>a,closeTalk=()=>{},lifeFriend=()=>friend++,say=(speaker,line,opts)=>{last={speaker,line,opts}};"+range('const parkSerials=','const parkGossipAction=')+`
+ parkSerialTalk();if(!last.line.includes('bench'))throw Error('Missing episode');
+ last.opts[0][1]();if(stored.beat!==1)throw Error('Missing saved beat');
+ parkSerialTalk();last.opts[1][1]();if(stored.choice!==1||stored.beat!==2||!last.line.includes('Evidence recovered'))throw Error('Branch not respected');
+ parkSerialTalk();last.opts[0][1]();if(stored.beat!==3||friend!==2)throw Error('Completion missing');
+ parkSerialTalk();if(stored.episode!==0)throw Error('Same day advanced');
+ date='2026-11-26';parkSerialTalk();if(stored.episode!==1||stored.beat!==0)throw Error('Next day not advanced');
+ stored={episode:-1,beat:2};if(parkProgress().episode!==0)throw Error('Corrupt progress');return 7;`);
+ // 17. Every blind-box reward is reachable and old saved items remain distinct.
+ results.blindBox=build("let activity='blindBox',state={boxStage:'ready'},t=0,q=0;const sound=()=>{},Math=Object.assign(Object.create(globalThis.Math),{random:()=>q});"+range('const boxPrizes=','function boxSelect(')+range('function boxOpen(','function boxAward(')+`
+ const seen=new Set();for(let i=0;i<10000;i++){state.boxStage='ready';q=(i+.5)/10000;boxOpen();if(!boxPrizes[state.boxPrize])throw Error('Invalid reward');seen.add(state.boxPrize)}
+ if(seen.size!==13||new Set(boxPrizes.map(p=>p[0])).size!==13)throw Error('Unreachable or duplicate collectible');return seen.size;`);
+ // 18. Inventory catalogue and owned items merge without losing legacy rewards.
+ results.bagInventory=build(range('const boxPrizes=','function boxSelect(')+"const keepsakes=boxPrizes.map(p=>[p[0],p[1],'cat']);const items=[boxPrizes[0].slice(0,2),['Legacy postcard','旧明信片'],boxPrizes[5].slice(0,2),boxPrizes[0].slice(0,2)];const collectionKind=()=> 'stamp';"+range('function bagClass(','function bagFigureIcon(')+`
+ const all=bagEntries();if(all.length!==14||all.filter(v=>v.owned).length!==3)throw Error('Duplicate or missing inventory');
+ if(bagClass(items[2])!=='figures'||bagClass(items[1])!=='travel'||bagClass(['Milk tea recipe','奶茶配方'])!=='food')throw Error('Category mismatch');return 6;`);
  log('PASS: MeowBox isolated quality checks '+JSON.stringify(results));return results
 };
