@@ -870,8 +870,8 @@ wishPond9=function(){page(tr('The wishing pool','锦鲤许愿池'),tr('Hold a wi
  coin.onpointerdown=e=>{if(busy||done)return;e.preventDefault();origin={x:e.clientX,y:e.clientY,at:performance.now()};coin.setPointerCapture(e.pointerId)};
  coin.onpointermove=e=>{if(!origin||busy)return;let v=destination(e.clientX-origin.x,e.clientY-origin.y,performance.now()-origin.at);aim.hidden=true;powerFill.style.width=Math.min(100,v.power*100)+'%'};
  coin.onpointerup=e=>{if(!origin)return;let dx=e.clientX-origin.x,dy=e.clientY-origin.y,elapsed=performance.now()-origin.at;origin=null;aim.hidden=true;if(Math.hypot(dx,dy)<12){message.textContent=tr('Swipe upward to send your coin toward the bowl.','向上滑动铜钱，让它飞向许愿碗。');return}let v=destination(dx,dy,elapsed);powerFill.style.width=Math.min(100,v.power*100)+'%';throwWish(v.x,v.y)};
- coin.onpointercancel=()=>{origin=null;aim.hidden=true};
- let keyboardAim=0,keyboardPower=36;const keyboard=element('details','',q);element('summary',tr('Alternative aiming controls','其他瞄准方式'),keyboard);const controls=element('div','',keyboard,'wishKeyboard');const readout=element('output','',controls);function updateAim(){readout.textContent=tr('Angle ','角度 ')+keyboardAim+'° · '+tr('Power ','力度 ')+keyboardPower+'%';powerFill.style.width=keyboardPower+'%'};for(const [label,fn] of [['←',()=>keyboardAim=Math.max(-45,keyboardAim-5)],['→',()=>keyboardAim=Math.min(45,keyboardAim+5)],['−',()=>keyboardPower=Math.max(10,keyboardPower-4)],['+',()=>keyboardPower=Math.min(90,keyboardPower+4)]])b(controls,label,()=>{fn();updateAim()});b(controls,tr('Throw','投币'),()=>{const a=keyboardAim*Math.PI/180;throwWish(clampWish(50+Math.sin(a)*keyboardPower*pond.clientHeight/pond.clientWidth,4,96),clampWish(86-Math.cos(a)*keyboardPower,5,94))});updateAim();
+ coin.onpointercancel=coin.onlostpointercapture=()=>{origin=null;aim.hidden=true};
+ let keyboardAim=0,keyboardPower=36;const keyboard=element('details','',q);element('summary',tr('Alternative aiming controls','其他瞄准方式'),keyboard);const controls=element('div','',keyboard,'wishKeyboard');const readout=element('output','',controls);readout.setAttribute('aria-live','polite');function updateAim(){readout.textContent=tr('Angle ','角度 ')+keyboardAim+'° · '+tr('Power ','力度 ')+keyboardPower+'%';powerFill.style.width=keyboardPower+'%'};for(const [label,description,fn] of [['←',['Aim left','向左瞄准'],()=>keyboardAim=Math.max(-45,keyboardAim-5)],['→',['Aim right','向右瞄准'],()=>keyboardAim=Math.min(45,keyboardAim+5)],['−',['Less power','减小力度'],()=>keyboardPower=Math.max(10,keyboardPower-4)],['+',['More power','加大力度'],()=>keyboardPower=Math.min(90,keyboardPower+4)]]){const btn=b(controls,label,()=>{fn();updateAim()});btn.setAttribute('aria-label',tr(...description))}b(controls,tr('Throw','投币'),()=>{const a=keyboardAim*Math.PI/180;throwWish(clampWish(50+Math.sin(a)*keyboardPower*pond.clientHeight/pond.clientWidth,4,96),clampWish(86-Math.cos(a)*keyboardPower,5,94))});updateAim();
 let again=b(q,tr('Make another wish','再许一个愿'),()=>{done=false;misses=0;koiLife.reset();pond.querySelectorAll('.settledWishCoin').forEach(n=>n.remove());home();again.hidden=true;message.textContent=tr('Hold another wish in your heart, then toss.','再默默许个愿，然后投币。')});again.hidden=true;
  b(q,tr('Hang a private wish','挂心愿牌'),()=>{$('page').style.display='none';start('wishes')});
 })};
@@ -1246,7 +1246,7 @@ function readingShuffle(){if(state.readStage!=='deck')return;state.readStage='sh
 function readingDeal(){if(state.readStage!=='deck'||!state.readShuffle)return;state.readStage='deal';state.readAt=t;let count=activity==='love'?3:1,pool=tarotDeck.map((_,i)=>i);if(activity==='tarot'){let d=dailyCard();state.readCards=[{i:Math.max(0,tarotDeck.indexOf(d)),rev:tarotReversed('daily')}]}
 else{state.readCards=Array.from({length:count},()=>{let j=Math.floor(Math.random()*pool.length);return {i:pool.splice(j,1)[0],rev:Math.random()<.5}})}state.readFlip=Array(count).fill(-1);state.readCards.forEach(v=>readingArtwork(v.i));sound(460)}
 function readingReveal(i){if(state.readStage!=='cards'||!state.readCards[i]||state.readFlip[i]>=0)return;state.readFlip[i]=t;sound(490+i*90);hint('The card has a thought for you.','这张牌，有句话想对你说。')}
-function readingSave(){if(state.readSaved||!state.readCards.length||!state.readFlip.every(v=>v>=0&&t-v>.6))return;state.readSaved=true;let entry={date:new Date().toISOString().slice(0,10),topic:state.readTopic,cards:state.readCards.map(v=>({...v}))};let key=JSON.stringify(entry);if(!readingJournal.some(v=>JSON.stringify(v)===key)){readingJournal.unshift(entry);readingJournal=readingJournal.slice(0,40);save('readingJournalV1',readingJournal)}if(activity==='tarot'){let d=tarotDeck[state.readCards[0].i];addItem('Daily Tarot: '+d[0],'今日塔罗：'+d[1])}else addItem('Three-card reading','三张牌占卜');hint('Your reading is tucked into your passport.','这份牌意已经收进旅人护照。')}
+function readingSave(){if(state.readSaved||!state.readCards.length||!state.readFlip.every(v=>v>=0&&t-v>.6))return;state.readSaved=true;let entry={date:shrineClock().day,topic:state.readTopic,cards:state.readCards.map(v=>({...v}))};let key=JSON.stringify(entry);if(!readingJournal.some(v=>JSON.stringify(v)===key)){readingJournal.unshift(entry);readingJournal=readingJournal.slice(0,40);save('readingJournalV1',readingJournal)}if(activity==='tarot'){let d=tarotDeck[state.readCards[0].i];addItem('Daily Tarot: '+d[0],'今日塔罗：'+d[1])}else addItem('Three-card reading','三张牌占卜');hint('Your reading is tucked into your passport.','这份牌意已经收进旅人护照。')}
 function readingShow(i){
  let v=state.readCards[i];if(!v||state.readFlip[i]<0||t-state.readFlip[i]<.72)return;
  state.readFocus=i;state.readStage='focus';state.readAt=t;
@@ -1501,14 +1501,29 @@ document.addEventListener('pointerup',e=>{
 document.addEventListener('pointercancel',e=>{if(signPress?.id===e.pointerId)signPress=null},true);
 document.addEventListener('lostpointercapture',e=>{if(signPress?.id===e.pointerId)signPress=null},true);
 window.addEventListener('blur',()=>{signPress=null});
-/* Bound the walking-to-door sequence so mobile navigation cannot strand a player. */
+/* A door opens only when the movement engine finishes its route. A stalled
+   route may be cancelled, never completed by a timer or a teleport. */
 let doorAttempt=0;
+function monitorDoorRoute(token,id){
+ let previous=[p.x,p.y,p.tx,p.ty],stalls=0;
+ function check(){
+  if(token!==doorAttempt||room||pending!==id)return;
+  const next=[p.x,p.y,p.tx,p.ty];
+  if(document.hidden||transitioning||$('page').style.display==='block'||talkOpen){stalls=0}
+  else if(next.every(Number.isFinite)&&Math.hypot(next[0]-previous[0],next[1]-previous[1])<1&&Math.hypot(next[2]-previous[2],next[3]-previous[3])<1)stalls++;
+  else stalls=0;
+  previous=next;
+  if(stalls>=5){releaseWalkKeys();stopRoute();p.tx=p.x;p.ty=p.y;p.motionSpeed=0;hint('The path is blocked. Tap the doorway to try again.','路好像堵住了，再点一下门口试试。');return}
+  setTimeout(check,1000)
+ }
+ setTimeout(check,1000)
+}
 const walkDoorStable=walkDoor;
 walkDoor=function(id,x,y){
  if(room||transitioning)return;
  if(pending===id)return;releaseWalkKeys();guideDismissed=true;moveGuide.hidden=true;save('movementTutorialDone',true);const token=++doorAttempt;
  walkDoorStable(id,x,y);
- setTimeout(()=>{if(token!==doorAttempt||room||pending!==id)return;releaseWalkKeys();stopRoute();p.tx=p.x;p.ty=p.y;p.motionSpeed=0;enter(id)},6500)
+ monitorDoorRoute(token,id)
 };
 const cleanMobileFade=fade;
 fade=function(fn,kind='gust',destination=null){
@@ -1659,7 +1674,7 @@ function shakeFortuneStick(){
 function pickupFortuneStick(){
  if(activity!=='sticks'||state.drawing||!state.fallenStick||state.stickPicked)return;
  state.stickPicked=true;state.stickPickAt=t;const n=state.fallenStick,run=state;
- sound(420);hint('Pick up the stick and take it to the fortune paper.','拾起签文，慢慢展开签纸。');
+ sound(420);hint('Pick up the stick and take it to the fortune paper.','拾起竹签，去领对应的签纸。');
  setTimeout(()=>{if(activity!=='sticks'||state!==run)return;addItem('Fortune stick '+n,'签文 '+n);sound(520);templePaperOpen(n)},850)
 }
 
@@ -1700,8 +1715,7 @@ walkDoor=function(id,x,y){
  let arrivalX=clamp(x,center-155,center+155);
  walkQueue=[{x:portraitPathX(p.y),y:p.y},{x:center,y:endY},{x:arrivalX,y:endY}];
  p.tx=walkQueue[0].x;p.ty=walkQueue[0].y;p.motionSpeed=0;hint('Walking to '+roomName(id)[0]+'…','正在前往'+roomName(id)[1]+'…');sound(380);
- let ms=Math.min(13000,Math.max(4500,Math.abs(p.y-endY)/240*1000+3200));
- setTimeout(()=>{if(token!==doorAttempt||room||pending!==id)return;stopRoute();releaseWalkKeys();p.x=p.tx=arrivalX;p.y=p.ty=endY;p.motionSpeed=0;enter(id)},ms)
+ monitorDoorRoute(token,id)
 };
 const formerMapDraw=drawMap;
 drawMap=function(){
@@ -3438,13 +3452,14 @@ function hideoutPage(){
   const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();hideoutPage()}
  })
 }
-function hideoutProfilePage(){
+function hideoutProfilePage(draft=null){
  page(tr('My profile','我的旅人资料'),tr('Change your nickname or appearance without losing your memories.','换个昵称或形象，旅途回忆不会消失。'),q=>{
-  let chosen=avatar??0;const name=element('input','',q);name.value=playerName||'';name.maxLength=24;name.setAttribute('aria-label',tr('Nickname','昵称'));name.className='hideoutName';
+  let chosen=draft?.avatar??avatar??0;const name=element('input','',q);name.value=draft?.name??playerName??'';name.maxLength=24;name.setAttribute('aria-label',tr('Nickname','昵称'));name.className='hideoutName';
   const choices=element('div','',q,'hideoutAvatarGrid');
   for(let i=0;i<4;i++){const btn=b(choices,'',()=>{chosen=i;choices.querySelectorAll('button').forEach((el,j)=>el.setAttribute('aria-pressed',String(j===chosen)))});btn.setAttribute('aria-pressed',String(i===chosen));const im=element('img','',btn);im.src=ART['portrait'+i];im.alt='';element('small',tr(...names[i]),btn)}
   b(q,tr('Save profile','保存资料'),()=>{const v=name.value.trim();if(!v){name.focus();return}playerName=v;avatar=chosen;save('playerName',v);save('avatar',chosen);updateHUD();hideoutPage();toast(tr('Profile updated. Memories intact.','资料更新，回忆都在。'))});
-  b(q,tr('Back without changing','不修改，返回'),hideoutPage)
+  b(q,tr('Back without changing','不修改，返回'),hideoutPage);
+  const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{const draft={name:name.value,avatar:chosen};toggleLang();hideoutProfilePage(draft)}
  })
 }
 const hideoutPassportPrevious=passport;
@@ -4062,8 +4077,16 @@ function sharePublicData(data){
  return {kind,title,lines:lines.slice(0,4),accent}
 }
 function shareTextLines(c,text,max){
- const chars=/[\u3400-\u9fff]/.test(text),sep=chars?'':' ',parts=chars?Array.from(text):text.split(/\s+/),lines=[];let row='';
- for(const p of parts){const next=row?row+sep+p:p;if(row&&c.measureText(next).width>max){lines.push(row);row=p}else row=next}if(row)lines.push(row);return lines
+ const chars=/[\u3400-\u9fff]/.test(text),sep=chars?'':' ',parts=chars?Array.from(text.trim()):text.trim().split(/\s+/),lines=[];let row='';
+ for(const p of parts){
+  if(!p)continue;
+  const next=row?row+sep+p:p;
+  if(c.measureText(next).width<=max){row=next;continue}
+  if(row){lines.push(row);row=''}
+  if(c.measureText(p).width<=max){row=p;continue}
+  for(const ch of Array.from(p)){if(row&&c.measureText(row+ch).width>max){lines.push(row);row=''}row+=ch}
+ }
+ if(row)lines.push(row);return lines
 }
 
 /* Social cover direction: original illustrated editorial postcard, not a screenshot.
@@ -4349,7 +4372,7 @@ function nostalgiaNew(){
 }
 function nostalgiaActive(){return activity==='bubbleArcade'&&!!state.bubbleGame}
 const nostalgiaRoasts={
- pop:[['Ah Ma: Finally, someone knows how to clear their backlog.','阿嬷：终于有人懂得清积压了。'],['More satisfying than cancelling a meeting.','比取消会议还爽。'],['Wah, your aim is better than your boss’s instructions.','哇，瞄得比老板交代任务还准。']],
+ pop:[['Ah Ma: Finally, someone knows how to clear their backlog.','阿嬷：终于有人懂得清积压了。'],['More satisfying than cancelling a meeting.','比取消会议还爽。'],['Your aim is clearer than your boss’s instructions.','哇，瞄得比老板交代任务还准。']],
  miss:[['Ah Ma: Same colour, not same zodiac sign!','阿嬷：找同色，不是找同星座！'],['The bubbles are not your ex. Stop chasing the wrong one.','泡泡又不是前任，别老追错人。'],['Are your eyes buffering? Match three of the same colour.','眼睛还在加载吗？三个同色才能消掉。']],
  win:[['You cleared the board. Now pretend the inbox does not exist.','清完了！现在假装邮箱不存在。'],['Ah Ma: Not bad. I almost called in my grandma.','阿嬷：不错嘛，我差点就要请我阿嬷出马了。']],
  lose:[['Ah Ma: Go drink water. Your luck is overheating.','阿嬷：去喝口水，你的运气过热了。'],['The bubbles won this round. They still cannot claim your annual leave.','这局泡泡赢了，年假还是你的。']]
@@ -4479,7 +4502,7 @@ const threeTalk={
  },
  auntie:{
   start:[['Ah Ma: Three in a row. Easier than applying for leave.','阿嬷：三个连成一线，比请年假简单多了。'],['Ah Ma: Come. Let me see what your years of education were for.','阿嬷：来，让我看看你这么多年书读到哪里去了。']],
-  turn:[['Ah Ma: Aiyoh, you are really making me think today.','阿嬷：哎哟，今天还得动脑筋啊。'],['Ah Ma: I can see your little scheme from here.','阿嬷：你这点小算盘，我看得清清楚楚。'],['Ah Ma: Wait. Even a grandmother deserves a thinking break.','阿嬷：等一下，老人家也有思考时间的嘛。']],
+  turn:[['Ah Ma: I came here to relax, not sit an exam.','阿嬷：哎哟，今天还得动脑筋啊。'],['Ah Ma: I can see your little scheme from here.','阿嬷：你这点小算盘，我看得清清楚楚。'],['Ah Ma: Wait. Even a grandmother deserves a thinking break.','阿嬷：等一下，老人家也有思考时间的嘛。']],
   win:[['Ah Ma: Fine, you win. I forgot my reading glasses.','阿嬷：行行行，你赢了。我老花镜没戴。'],['Ah Ma: Not bad. At least your degree was useful for something.','阿嬷：不错，大学总算没白读。']],
   lose:[['Ah Ma: My grandson could do better. He is still learning his ABCs.','阿嬷：我孙子都比你会下，他还在学ABC呢。'],['Ah Ma: That was the easy part. Shall I get the instruction manual?','阿嬷：这么简单也输？来来来，我教你。'],['Ah Ma: Your boss must love how easy it is to block you.','阿嬷：你这么容易被拿捏，老板一定很喜欢你。']],
   draw:[['Ah Ma: I am giving you face. Do not tell the neighbours.','阿嬷：给你留点面子，别告诉邻居。'],['Ah Ma: Draw? Alright, we can both keep our dignity.','阿嬷：平局？好，咱俩的面子都保住了。']]
@@ -5396,6 +5419,7 @@ addItem=function(a,b){
  const tea=activity==='bubbleTea'&&state.teaStage==='done'&&String(a).endsWith(' recipe');
  const result=dailyActivityItemBefore(a,b);
  if(cooking||tea){lifeEarn('kitchen:'+(cooking?'soup':'tea'),{creativity:2,happiness:1},true);lifeHUDRefresh()}
+ if(room==='wishes'&&a==='Wishing coin'){lifeEarn('ritual:wishingCoin',{calm:2,happiness:1},true);lifeHUDRefresh()}
  return result
 };
 const dailyClawFinishBefore=clawFinish;
@@ -5408,6 +5432,7 @@ clawFinish=function(){
 const dailyMoreIdeasBefore=lifeDailyIdeas;
 lifeDailyIdeas=function(){
  const ideas=dailyMoreIdeasBefore(),keys=lifeJournal.daily.day===shrineClock().day?lifeJournal.daily.keys:[];
- return [...ideas.slice(0,1).map(v=>({...v,desc:['Finish a bubble or tic tac toe round, or win a claw prize.','玩完一局泡泡龙或井字棋，或者夹到一只玩偶。'],done:v.done||keys.includes('round:claw')})),...ideas.slice(1),
- {title:['Something delicious','给自己加个餐'],desc:['Finish a bowl of soup or make and sip bubble tea.','煮好一碗汤，或者摇好奶茶再喝一口。'],done:keys.some(k=>k.startsWith('kitchen:'))}]
+ return [...ideas.slice(0,1).map(v=>({...v,desc:['Finish a Bubble Pop or Tic Tac Toe round. Winning is optional.','玩完一局泡泡龙或井字棋，输赢都算。'],done:v.done||keys.includes('round:claw')})),...ideas.slice(1),
+ {title:['Something delicious','给自己加个餐'],desc:['Finish a bowl of soup or make and sip bubble tea.','煮好一碗汤，或者摇好奶茶再喝一口。'],done:keys.some(k=>k.startsWith('kitchen:'))},
+ {title:['A tiny surprise','拆个小惊喜'],desc:['Open a blind box in the arcade. No purchase needed.','去游戏厅拆个盲盒，不用花钱。'],done:keys.includes('arcade:box')}]
 };
