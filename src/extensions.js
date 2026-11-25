@@ -4160,7 +4160,7 @@ function meowSocialCaption(data,format,cn){
  const mood=data.kind==='tarot'&&data.cards?.length?shareTarotMood(data.cards):data.kind==='type'&&/^[EIX][SNX][TFX][JPX]$/.test(data.title[0])?shareTypeMood(data.title[0]):null;const title=(mood?.title||data.title)[cn?1:0],quote=socialResultQuote(data)[cn?1:0];
  const invite=cn?'来摸鱼小镇，看看你的隐藏身份。':'Take a little break and find your own result.';
  const tags=cn?'#摸鱼小镇 #趣味测试 #治愈系':'#MeowBox #CozyGames #TakeABreak';
- return [cn?'我在摸鱼小镇测到：'+title:'My MeowBox result: '+title,quote,invite,tags,...(format==='xhs'||format==='story'?[]:[meowShareUrl])].join('\n')
+ return [cn?'我在摸鱼小镇测到：'+title:'My MeowBox result: '+title,quote,...(data.kind==='tarot'?data.lines.map(v=>v[cn?1:0]):[]),invite,tags,...(format==='xhs'||format==='story'?[]:[meowShareUrl])].join('\n')
 }
 function socialCoverIllustration(g,data,x,y,w,h){
  const catDef=socialCatCover.find(v=>v.name===data.title[0]),cat=data.kind==='soul';
@@ -4218,6 +4218,10 @@ function socialCoverIllustration(g,data,x,y,w,h){
 /* Result-specific editorial copy, playful interpretations rather than diagnoses or predictions. */
 function shareTarotMood(cards){
  const pick=cards.length===3?cards[1]:cards[0],d=tarotDeck[pick.i],n=d[0].toLowerCase();
+ if(cards.length===3){
+  const [situation,obstacle,advice]=cards.map(c=>({name:tarotDeck[c.i][0],rev:c.rev}));
+  if(situation.name==='Nine of Wands'&&!situation.rev&&obstacle.name==='Queen of Cups'&&obstacle.rev&&advice.name==='Nine of Cups'&&!advice.rev)return {title:['Strong, tired & overdue for a treat','坚强、疲惫、急需犒赏自己'],quote:['I can handle everything. I would simply prefer not to.','我什么都能扛，但也不是非扛不可。'],meaning:['You might reflect on persistence, emotional boundaries and enjoying what you already have.','想想坚持、情绪界限，以及如何享受已经拥有的小幸福。']};
+ }
  if(pick.rev){
   if(n.includes('cups'))return {title:['Emotionally on annual leave','情绪正在休年假'],quote:['Even the universe says: stop absorbing everybody’s drama.','宇宙友情提醒：别再帮别人收拾情绪。'],meaning:['A moment to check your emotional boundaries and make space for yourself.','试着厘清情绪界限，把一点空间留给自己。']};
   if(n.includes('wands'))return {title:['Running on emergency power','本人已开启省电模式'],quote:['Your ambition can wait. The battery cannot.','事业心可以等等，电量真的不行。'],meaning:['Reconsider where you spend your energy before taking on more.','先看看精力都花在哪，再决定要不要继续加码。']};
