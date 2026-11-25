@@ -112,4 +112,93 @@ function meowSettingsPage(){
 }
 const meowSettingsCSS=document.createElement('style');meowSettingsCSS.textContent='.meowSoundSettings{max-width:460px;margin:auto}.meowSettingRow{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #bcaa89}.meowSettingRow span{flex:1;min-width:0}.meowSettingRow strong,.meowSettingRow small{display:block}.meowSettingRow small{font-size:12px;line-height:1.4;margin-top:3px}.meowSettingRow input{width:24px;height:24px;accent-color:#536d58;flex:none}.meowSoundSettings>button{display:block;width:100%;min-height:44px;margin-top:9px}';document.head.append(meowSettingsCSS);
 
+
+/* Curated social hub: one story location, one community entrance.
+   Preserve park serial progress, historical collections and existing room IDs. */
+roomActions.park=(roomActions.park||[]).filter(a=>a[0]!=='chat');
+roomActions.tea=[['chat','Join the table','来茶桌坐坐'],['board','Town noticeboard','小镇留言墙']];
+const gatheringActionBefore=action;
+action=function(id){
+ if(room==='tea'&&id==='chat'){
+  closeTalk();say(tr('Auntie Mei','梅姨'),tr('Pull up a chair. Good news, bad jokes, or a bit of quiet company?','来坐坐。有喜事、有冷笑话，还是想找个人陪陪？'),[
+   [tr('Meet & chat','认识新朋友'),()=>{closeTalk();communityTab=communityURL()?'public':'lounge';townChatPage()}],
+   [tr('Celebrate a good thing','庆祝小确幸'),()=>{closeTalk();communityTab='celebrate';townChatPage()}],
+   [tr('Hear the latest gossip','听听最新的瓜'),parkSerialTalk],
+   [tr('Keep wandering','继续逛'),closeTalk]
+  ]);return
+ }
+ if(room==='park'&&id==='chat')return;
+ if(room==='tea'&&id==='board'){closeTalk();communityTab='board';townChatPage();return}
+ return gatheringActionBefore(id)
+};
+const gatheringRoomIntroBefore=roomIntro;
+roomIntro=function(){gatheringRoomIntroBefore();if(room==='park'&&!activity)hint('Meet the cats or visit the deer. The gossip has moved to the Tea Room.','陪陪小猫，看看小鹿。想吃瓜，去茶馆坐坐。');if(room==='tea'&&!activity)hint('Join the communal table for good news, gossip or company.','来长桌边坐坐，聊聊喜事、八卦，或者单纯找个伴。')};
+
+/* Original native room compositions drawn directly in world coordinates.
+   Characters, tables and station labels remain independent from the background.
+   The floor from y=565 remains clear for existing walking and shared peers. */
+function gatheringTeaBackdrop(){
+ const b=livingBounds(),l=b.x,r=b.x+b.w,top=b.y,bottom=b.y+b.h,wide=W/H>=1.15;
+ if(![l,r,top,bottom].every(Number.isFinite)||r<=l||bottom<=top)return false;
+ ctx.save();
+ const wall=ctx.createLinearGradient(0,top,0,510);wall.addColorStop(0,'#b7ad87');wall.addColorStop(.55,'#e5d4ac');wall.addColorStop(1,'#bd9b76');ctx.fillStyle=wall;ctx.fillRect(l,top,b.w,b.h);
+ // Timber frame and garden-facing shoji windows; different compositions
+ // in wide and vertical view, with clear centre rather than enlarged cropping.
+ const start=wide?Math.max(l+26,20):Math.max(l+12,145),end=wide?Math.min(r-26,780):Math.min(r-12,655),span=end-start;
+ const windowTop=Math.max(top+20,190),windowBottom=385,windowCount=wide?4:2;
+ if(span>80&&windowBottom>windowTop+40){
+  for(let i=0;i<windowCount;i++){
+   const x=start+i*span/windowCount+8,w=span/windowCount-16,h=windowBottom-windowTop;
+   round(x-4,windowTop-4,w+8,h+8,2,'#795c43','#624c39');
+   const sky=ctx.createLinearGradient(0,windowTop,0,windowBottom);sky.addColorStop(0,'#bed3cd');sky.addColorStop(.55,'#d9dcc0');sky.addColorStop(1,'#8da58b');ctx.fillStyle=sky;ctx.fillRect(x,windowTop,w,h);
+   ctx.save();ctx.beginPath();ctx.rect(x,windowTop,w,h);ctx.clip();
+   for(let k=0;k<4;k++){const xx=x+w*(k*.33-.05);ctx.fillStyle=['#b0ba9f','#a0b295','#879d83','#75937d'][k];ctx.beginPath();ctx.moveTo(xx-w*.3,windowBottom);ctx.quadraticCurveTo(xx+w*.12,windowTop+h*(.38+k*.09),xx+w*.5,windowBottom);ctx.closePath();ctx.fill()}
+   for(let k=0;k<22;k++){const xx=x+(k*43%Math.max(1,w)),yy=windowBottom-8-(k*19%Math.max(1,h*.38));ellipse(xx,yy,9+k%4*3,5+k%3,'#728a7155')}
+   ctx.restore();line(x+w*.5,windowTop,x+w*.5,windowBottom,'#8e7456',4);line(x,windowTop+h*.55,x+w,windowTop+h*.55,'#8e7456',3);
+   line(x,windowTop+2,x+w,windowTop+2,'#f1ddaf',2);
+  }
+ }
+ const floor=ctx.createLinearGradient(0,440,0,bottom);floor.addColorStop(0,'#a48665');floor.addColorStop(.4,'#c1a27c');floor.addColorStop(1,'#8c7055');ctx.fillStyle=floor;ctx.fillRect(l,440,b.w,Math.max(0,bottom-440));
+ line(l,440,r,440,'#72563f',9);line(l,449,r,449,'#dfc096',2);
+ for(let i=-9;i<=9;i++){const bx=400+i*100;line(400+i*27,450,bx,bottom,'#765a433d',1.5)}
+ for(let j=0;j<15;j++){const yy=455+j*j*2.1;if(yy>bottom)break;line(l,yy,r,yy,'#6d543b28',1)}
+ // Ceiling beams and pendant lamps, outside the walkable floor.
+ line(l,Math.max(top+10,174),r,Math.max(top+10,174),'#6f513c',10);
+ for(const x of wide?[100,300,500,700]:[230,570]){
+  const y=Math.max(top+28,235);if(x<l+15||x>r-15||y>350)continue;
+  line(x,Math.max(top,174),x,y-25,'#785b43',2);
+  const g=ctx.createRadialGradient(x,y,5,x,y,45);g.addColorStop(0,'#f8db9e75');g.addColorStop(1,'#f8db9e00');ctx.fillStyle=g;ctx.fillRect(x-45,y-45,90,90);
+  ellipse(x,y,19,25,'#dba56e');ellipse(x,y,14,21,'#efd09a');line(x-12,y-20,x+12,y-20,'#926b4a',3);line(x-12,y+20,x+12,y+20,'#926b4a',3);for(const dx of [-8,0,8])line(x+dx,y-17,x+dx,y+17,'#b7885c77',1)
+ }
+ // Wall shelves: tea jars and pottery, kept well above the walking lane.
+ for(const xx of [175,625]){if(xx<l+30||xx>r-30)continue;line(xx-35,421,xx+35,421,'#76553e',6);for(let j=0;j<3;j++){const cx=xx-22+j*22;round(cx-8,398-j%2*4,16,20+j%2*4,5,['#879582','#b48566','#e2c79a'][j],'#80684f');ellipse(cx,398-j%2*4,7,2,'#cfb28a')}}
+ ctx.restore();return true
+}
+const gatheringPortraitBefore=paintPortraitInterior;
+paintPortraitInterior=function(id,...args){if(id==='tea'&&gatheringTeaBackdrop())return true;return gatheringPortraitBefore(id,...args)};
+const gatheringLandscapeBefore=paintLandscapeRoom;
+paintLandscapeRoom=function(id,...args){if(id==='tea'&&W/H>=1.15&&gatheringTeaBackdrop())return true;return gatheringLandscapeBefore(id,...args)};
+const gatheringPropBefore=prop;
+function gatheringResident(name,x,y,scale,facing,kind){
+ if(drawPaintedResident({x,y,n:name},scale,false,facing))return;
+ backHuman(x,y,kind,false,facing,scale*.82)
+}
+function gatheringCup(x,y,c){ellipse(x,y+5,12,4,'#6f51434d');ellipse(x,y+3,11,4,'#d7bf98');round(x-7,y-8,14,11,3,c,'#82664d');ellipse(x,y-8,7,2.5,'#986c49');line(x+7,y-6,x+11,y-4,'#a98b63',2)}
+prop=function(id,x,y){
+ if(room!=='tea')return gatheringPropBefore(id,x,y);
+ if(id==='chat'){
+  ctx.save();
+  // Residents behind the table first, then furniture in front of their bodies.
+  gatheringResident(['Auntie Mei','梅姨'],x-48,y-6,1.12,'right',0);
+  gatheringResident(['Grandma','外婆'],x+48,y-6,1.12,'left',1);
+  const im=townResidentImage('lin');if(im.complete&&im.naturalWidth){ellipse(x+107,y+23,15,4,'#352c2438');ctx.drawImage(im,x+107-37,y+23-85,74,91)}else gatheringResident(['Auntie Lin','林姨'],x+107,y+23,.97,'left',2);
+  ellipse(x,y+25,91,15,'#49352535');for(const dx of [-62,62]){line(x+dx,y+6,x+dx-3,y+38,'#725039',7);line(x+dx,y+6,x+dx+3,y+36,'#b18a61',2)}
+  round(x-84,y-12,168,25,6,'#a77d53','#705039');ellipse(x,y-12,84,13,'#b99469');line(x-65,y-10,x+65,y-10,'#dfb88b',1.5);
+  gatheringCup(x-50,y-13,'#e0d3ae');gatheringCup(x+49,y-13,'#91a58b');ellipse(x,y-17,19,8,'#dbca9f');ellipse(x,y-22,12,13,'#918d69');ellipse(x,y-34,9,3,'#b4ad86');line(x+12,y-26,x+20,y-32,'#7d7758',4);
+  ctx.restore();return
+ }
+ if(id==='board'){gatheringPropBefore(id,x,y);gatheringResident(['Master Yue','月师傅'],x+90,y+3,.95,'left',3);return}
+ return gatheringPropBefore(id,x,y)
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
