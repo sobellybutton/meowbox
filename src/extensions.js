@@ -3594,7 +3594,7 @@ function hideoutPage(){
    element('p',tr('Drag furniture. Tap an item to select it, then rotate or remove it.','拖动家具。点选后可旋转或移除。'),q);
    const tray=element('div','',q,'hideoutFurnitureTray');tray.setAttribute('aria-label',tr('Furniture catalogue','家具目录'));
    for(const [id,name] of Object.entries(roomNames9).filter(([id])=>furnitureOwned(id))){
-    const btn=b(tray,'',()=>{if(hideoutFurniture.some(d=>d.id===id)){toast(tr('Already in your room. Move it or put it away first.','已经摆在小窝啦，先移动或收起来吧。'));return}if(hideoutFurniture.length>=24){toast(tr('Your room is full. Even the cat needs space.','小窝满啦，猫猫也需要空间。'));return}hideoutFurniture.push({id,x:50,y:68});hideoutSelected=hideoutFurniture.length-1;saveHideout();render()});const im=element('img','',btn);im.src=art9[id];im.alt='';element('small',tr(...name),btn)
+    const btn=b(tray,'',()=>{if(hideoutFurniture.some(d=>d.id===id)){toast(tr('Already in your room. Move it or put it away first.','已经摆在小窝啦，先移动或收起来吧。'));return}if(hideoutFurniture.length>=24){toast(tr('Your room is full. Even the cat needs space.','小窝满啦，猫猫也需要空间。'));return}const kind=furnitureCatalogue().find(v=>v[0]===id)?.[4];hideoutFurniture.push({id,x:50,y:kind==='wall'?30:id==='rug'?85:68});hideoutSelected=hideoutFurniture.length-1;saveHideout();render()});const im=element('img','',btn);im.src=art9[id];im.alt='';element('small',tr(...name),btn)
    }
    b(q,tr('Visit Komorebi Living','去木漏日杂货铺'),()=>furnitureMarket('room'));
    const tools=element('div','',q,'hideoutActions hideoutTools');stage.after(tools);b(tools,tr('Rotate','旋转'),()=>{if(hideoutFurniture[hideoutSelected]){const d=hideoutFurniture[hideoutSelected];d.r=((d.r||0)+15)%360;saveHideout();render()}});b(tools,tr('Remove','移除'),()=>{if(hideoutSelected>=0&&hideoutFurniture[hideoutSelected]){hideoutFurniture.splice(hideoutSelected,1);hideoutSelected=-1;saveHideout();render()}});
@@ -7737,7 +7737,7 @@ function furnitureMarket(back='shop'){
  }
  b(shelf,tr('Decorate my room','布置我的小窝'),()=>{hideoutEditing=true;hideoutPage()});
  if(back==='shop')b(shelf,tr('Today’s souvenir','今日小手信'),()=>{ $('page').style.display='none';komorebiOldAction('mystery')});
- b(q,back==='room'?tr('Back to my room','返回小窝'):tr('Back to shop','返回店里'),()=>{if(back==='room'){hideoutEditing=true;hideoutPage()}else $('page').style.display='none'});
+ b(q,back==='room'?tr('Back to my room','返回小窝'):back==='wallet'?tr('Back to my purse','返回小钱包'):tr('Back to shop','返回店里'),()=>{if(back==='room'){hideoutEditing=true;hideoutPage()}else if(back==='wallet')pawWalletPage();else $('page').style.display='none'});
  journalLanguage(()=>furnitureMarket(back))
  })
 }
@@ -7766,3 +7766,17 @@ pawWalletPage=function(){komorebiWalletBefore();b($('content'),tr('Browse Komore
 const komorebiStyle=document.createElement('style');
 komorebiStyle.textContent='.komorebiBook,.komorebiConfirm{padding:14px;background:var(--town-grain),#f3e5c9;border:1px solid #b59b74;border-radius:4px;color:#554737}.komorebiHead{padding-bottom:10px;border-bottom:1px dashed #bca27a;margin-bottom:10px}.komorebiHead small,.komorebiHead strong{display:block}.komorebiGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}.komorebiTile{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px;border:1px solid #b99e75;background:#fbefd7;border-radius:4px;min-width:0;text-align:center}.komorebiTile img{width:100%;height:110px;object-fit:contain;background:radial-gradient(ellipse at 50% 75%,#d8c4a36b,transparent 65%)}.komorebiTile strong,.komorebiTile small{overflow-wrap:anywhere;font-size:13px}.komorebiTile small{color:#6f624f}.komorebiTile button{margin-top:auto;width:100%;min-height:44px}.komorebiConfirm{text-align:center}.komorebiConfirm img{width:min(100%,280px);height:230px;object-fit:contain}.hideoutRoomView .hideoutRibbon .hideoutPrimary button{background:#536b56!important;border-color:#83957c!important}.hideoutRoomView .hideoutPlaced{filter:none!important;object-fit:contain}.hideoutRoomView .hideoutPlaced.selected{outline:2px dashed #bfa276;filter:drop-shadow(0 0 3px #f4d9aa)!important}@media(min-width:720px){.komorebiGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}';
 document.head.append(komorebiStyle);
+
+
+const komorebiPropBefore=prop;
+prop=function(id,x,y){
+ if(id!=='mystery'||room!=='mystery')return komorebiPropBefore(id,x,y);
+ ctx.save();ctx.translate(x,y);
+ ellipse(0,13,76,13,'#44332435');
+ round(-69,-35,138,53,4,'#a07c54','#71583f');round(-75,-44,150,15,3,'#d1b58b','#987650');
+ for(let i=0;i<3;i++)line(-59,-18+i*10,59,-18+i*10,'#bd9c71',1);
+ round(-46,-90,34,46,2,'#b5956a','#72583e');round(-40,-83,22,32,2,'#e5d0a9','#a38860');
+ ellipse(31,-48,21,6,'#5f493b30');round(18,-75,26,28,5,'#8d9e85','#647861');
+ line(31,-75,29,-98,'#62795f',2);ellipse(21,-91,9,4,'#859c7e');ellipse(39,-91,9,4,'#859c7e');
+ round(-9,-48,23,7,2,'#eee0bc','#a78962');ctx.restore()
+};
