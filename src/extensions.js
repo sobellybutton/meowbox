@@ -3843,6 +3843,9 @@ const productionVisualManifest={
  fish:{path:'assets/visual/pier-courtyard.svg',width:800,height:1400},
  park:{path:'assets/visual/daydream-park.svg',width:800,height:1400},
  parkCats:{path:'assets/visual/park-cats-sheet.svg',width:1760,height:700,cell:[220,140],foot:[110,120]},
+ destiny:{path:'assets/visual/destiny-study.svg',width:800,height:1400},
+ kitchen:{path:'assets/visual/kitchen-interior.svg',width:800,height:1400},
+ tarot:{path:'assets/visual/tarot-reading.svg',width:800,height:1400},
  ahMaIdle:{path:'assets/visual/ah-ma-seated.svg',width:180,height:220,foot:[90,205],seat:[90,151]},
  ahMaScold:{path:'assets/visual/ah-ma-scold.svg',width:180,height:220,foot:[90,205],seat:[90,151]}
 };
@@ -3887,4 +3890,15 @@ careCatArt=function(a){
  ctx.save();ctx.translate(a.x,a.y);ellipse(0,3,resting?58:72,resting?10:12,'#393d2f38');ctx.scale(dir,1);
  ctx.drawImage(im,frame*220,kind*140,220,140,-110,-120+bob,220,140);
  ctx.restore()
+};
+
+/* New room artwork retains the existing interaction coordinates. */
+const productionReadingRequest=requestReadingRoomPortrait;
+requestReadingRoomPortrait=function(){return productionVisual('tarot')||productionReadingRequest()};
+const productionDestinyPage=destinyPage;
+destinyPage=function(){
+ productionDestinyPage();const wrap=$('content').querySelector('.roomArtWrap'),target=wrap?.querySelector('.roomIllustration');if(!target)return;
+ const loaded=productionVisual('destiny'),pending=productionVisualCache.get('destiny');
+ const apply=()=>{if(!target.isConnected||!pending?.naturalWidth)return;target.src=pending.src;wrap.classList.add('portraitDestinyIllustration')};
+ if(loaded)apply();else pending?.addEventListener('load',apply,{once:true})
 };
