@@ -808,7 +808,7 @@ const prayerDraw=drawActivity;drawActivity=function(){if(activity!=='prayer')ret
  let elapsed=t-state.prayerAt,stage=state.prayerStage,walk=stage==='approach',bow=0,x=walk?245+Math.min(1,elapsed/1.2)*90:335;if(walk&&elapsed>=1.2){state.prayerStage='ready';state.prayerAt=t;hint('Tap the incense to light it, then tap your character or the mat to bow.','点击香炉上香，再点击角色或蒲团鞠躬。')}
  if(stage==='kneel'&&elapsed>.65){state.prayerStage='bow';state.prayerAt=t}if(stage==='bow'){if(elapsed<3.9){let phase=(elapsed/1.3)%1;bow=Math.sin(Math.PI*phase)**1.6;state.bows=Math.min(3,Math.floor(elapsed/1.3));}else{state.bows=3;state.prayerStage='silent';state.prayerAt=t;hint('Keep your wish to yourself. Take a few quiet breaths.','心愿留在心里，安静地呼吸几次。')}}
  if(stage==='silent'&&elapsed>4){state.prayerStage='rise';state.prayerAt=t}if(stage==='rise'&&elapsed>.72){state.prayerStage='complete';state.prayerAt=t;hint('Take your time. Draw a fortune whenever you are ready.','不用着急，准备好了再去求签。')}
- let kneel=stage==='kneel'?poseEase(elapsed/.65):['bow','silent'].includes(stage)?1:stage==='rise'?1-poseEase(elapsed/.72):0;let lightAge=t-(state.incenseAt??-100),reaching=stage==='ready'&&lightAge<1.05;let f=reaching?Math.sin(Math.PI*clamp(lightAge/1.05,0,1)):0;let reach=reaching?{x:390+55*f,y:455}:null;if(walk){backHuman(x,553,avatar??0,true,'right',1.65)}else{let hand=drawRitualPose(x+32*f,553,1.65,{kneel,bow,praying:['kneel','bow','silent','rise'].includes(stage),reach});if(reaching){line(hand.x,hand.y,hand.x+12*f,hand.y-42,'#9b6943',2);ellipse(hand.x+12*f,hand.y-42,2,2,'#efb270')}}target(465,355,95,140,lightTempleIncense);target(260,330,150,250,beginQuietBow);
+ let kneel=stage==='kneel'?poseEase(elapsed/.65):['bow','silent'].includes(stage)?1:stage==='rise'?1-poseEase(elapsed/.72):0;let lightAge=t-(state.incenseAt??-100),reaching=stage==='ready'&&lightAge<1.05;let f=reaching?Math.sin(Math.PI*clamp(lightAge/1.05,0,1)):0;let reach=reaching?{x:390+55*f,y:455}:null;if(walk){backHuman(x,553,avatar??0,true,'right',1.65)}else{let hand=drawRitualPose(x+32*f,553,1.65,{kneel,bow,praying:['kneel','bow','silent','rise'].includes(stage),reach});if(reaching&&hand&&Number.isFinite(hand.x)&&Number.isFinite(hand.y)){line(hand.x,hand.y,hand.x+12*f,hand.y-42,'#9b6943',2);ellipse(hand.x+12*f,hand.y-42,2,2,'#efb270')}}target(465,355,95,140,lightTempleIncense);target(260,330,150,250,beginQuietBow);
  if(stage==='ready'){label(tr('Light incense','上香'),510,545,lightTempleIncense);label(tr('Bow and pray','合十祈愿'),335,612,beginQuietBow)}else if(stage==='bow'){txt(tr('Bow ','鞠躬 ')+Math.min(3,state.bows+1)+' / 3',400,622,18,'#fff2d5')}else if(stage==='silent'){txt(tr('A quiet moment','片刻静心'),400,622,20,'#fff2d5')}else if(stage==='complete'){label(tr('Draw a fortune','求签'),300,620,()=>start('sticks'));label(tr('Ask with moon blocks','掷筊'),505,620,()=>start('moon'))}
  ctx.restore()};
 
@@ -1348,10 +1348,7 @@ function drawReadingCard(x,y,w,h,index,reversed){
  lines.forEach((v,j)=>{ctx.font='11px Georgia,serif';let measured=ctx.measureText(v).width;let size=Math.min(11,11*max/Math.max(1,measured));ctx.font=size+'px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#594535';ctx.fillText(v,x+w/2,center+(j-(lines.length-1)/2)*11,max)});
  }finally{ctx.restore()}
 }
-/* Never draw a detached synthetic arm over an illustrated character. */
-drawRitualPose=function(x,y,sc,opts={}){
- ctx.save();try{ctx.translate(x,y);ctx.rotate(Math.min(.12,Math.max(0,opts.bow||0)*.12));backHuman(0,0,avatar??0,false,'right',sc*.88)}finally{ctx.restore()}
-};
+/* The shared articulated pose above is authoritative; callers use its returned wrist coordinates. */
 
 /* Authentic public-domain Rider–Waite–Smith art, sourced from the verified 78-card set.
    Lazy load only dealt cards; retain a local symbolic fallback if offline.
