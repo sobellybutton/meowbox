@@ -1429,9 +1429,12 @@ backHuman=function(x,y,kind,walking,facing,sc=1){
  if(!im?.naturalWidth){return human9(x,y,k,walking,direction==='left'?-1:1,sc)}
  ctx.save();try{
   ctx.translate(x,y);ctx.scale(sc,sc);ellipse(0,0,14,3,'#302a2438');
-  const bob=walking?Math.abs(Math.sin(t*13))*1.6:0;
-  ctx.translate(0,-bob);if(direction==='left')ctx.scale(-1,1);
-  const h=94,w=h*im.naturalWidth/im.naturalHeight;ctx.drawImage(im,-w/2,-h,w,h)
+  const gait=walking&&!actorReduce?Math.sin(t*11):0,bob=walking&&!actorReduce?Math.abs(gait)*1.25:0;
+  if(direction==='left')ctx.scale(-1,1);
+  const h=94,w=h*im.naturalWidth/im.naturalHeight;
+  // Grounded feet; slight opposite shoulder sway instead of lifting the full cutout.
+  if(walking&&!actorReduce){ctx.translate(0,-bob);ctx.rotate(gait*(direction==='up'||direction==='down'?.012:.018));ctx.scale(1+Math.abs(gait)*.008,1-Math.abs(gait)*.006)}
+  ctx.drawImage(im,-w/2,-h,w,h)
  }finally{ctx.restore()}
 };
 const singleActorProps=prop;
@@ -2266,7 +2269,7 @@ function riverPerform(){
  if(!riverIsActive()||state.riverPhase!=='ready')return;
  const input=$('riverPrivateNote');if(input){state.riverNote=input.value.slice(0,100);input.value='';input.blur()}
  if(activity==='riverShout'&&!state.riverNote)state.riverNote=tr(...townReaction('riverPrompt',riverNotes));
- state.riverPhase='walk';state.riverAt=t;state.count=(state.count||0)+1;refreshControls();sound(420);
+ state.riverPhase='walk';state.riverLaunch=null;state.riverAt=t;state.count=(state.count||0)+1;refreshControls();sound(420);
  hint(...(activity==='riverBottle'?['Fold it, seal it, and walk to the water.','折好纸条，封好瓶子，走到河边。']:['Walk to the riverbank and let it out.','走到河边，把烦恼喊出去。']))
 }
 function riverReset(){
@@ -2298,15 +2301,15 @@ drawActivity=function(){
  const bottleMode=activity==='riverBottle',phase=state.riverPhase||'ready',age=Math.max(0,t-(state.riverAt??t)),walking=phase==='walk'&&age<1.1;
  const power=clamp(state.riverStrength||60,15,100),{x:landX,y:landY}=riverLanding(power);
  let walk=phase==='ready'?0:Math.min(1,age/1.1),px=265+walk*65,py=610-walk*102;
- if(phase==='ready'||walking)backHuman(px,py,avatar??0,walking,'up',1.35);
- else if(bottleMode){const swing=phase==='walk'?Math.sin(Math.PI*clamp((age-1.1)/.75,0,1)):0;drawRitualPose(px,py,1.4,{reach:{x:px+26+16*swing,y:py-66-20*swing},bow:.16*swing})}
+ let wrist=null;if(phase==='ready'||walking)backHuman(px,py,avatar??0,walking,'up',1.35);
+ else if(bottleMode){const swing=phase==='walk'?Math.sin(Math.PI*clamp((age-1.1)/.75,0,1)):0;wrist=drawRitualPose(px,py,1.4,{reach:{x:px+26+16*swing,y:py-66-20*swing},bow:.16*swing})}
  else{drawRitualPose(px,py,1.4,{reach:{x:px+16,y:py-94},bow:phase==='walk'?.10:0,praying:true});if(phase==='walk'&&age<2.8)riverSoundWaves(px+20,py-93,age-1.1)}
  riverAuntie(205,488,.78);
  if(bottleMode){
   if(phase==='ready'){round(275,465,68,13,3,'#ad8860','#74583e');round(290,448,23,12,2,'#f0e1ba');riverBottleArt(330,445,.05,.75,false)}
   else if(age<.55){riverBottleArt(330,445,0,.85,age>.3);round(319,422+age*45,15,9,2,'#f1dfad')}
   else if(age<1.1)riverBottleArt(px+15,py-70,.1,.75);
-  else if(age<1.85){const f=(age-1.1)/.75;riverBottleArt(px+24+(landX-px-24)*f,py-70+(landY-py+70)*f-(28+power*.62)*Math.sin(Math.PI*f),Math.PI*f,.8)}
+  else if(age<1.85){const f=(age-1.1)/.75;if(!state.riverLaunch)state.riverLaunch={x:wrist?.x??px+24,y:(wrist?.y??py-70)-10};const launch=state.riverLaunch;riverBottleArt(launch.x+(landX-launch.x)*f,launch.y+(landY-launch.y)*f-(28+power*.62)*Math.sin(Math.PI*f),Math.PI*f,.8)}
   else {const drift=Math.min(1,(age-1.85)/2.5);if(drift<1){ctx.save();ctx.globalAlpha=1-drift;riverBottleArt(landX+75*drift,landY-18*drift+Math.sin(t*4)*2,1.2,.72);ctx.restore()}riverRing(landX,landY,age-1.85,48)}
  }else if(age>1.1&&phase!=='ready'){
   for(let i=0;i<3;i++)riverRing(375,riverBankY(375)-25,age-1.1-i*.25,80);
