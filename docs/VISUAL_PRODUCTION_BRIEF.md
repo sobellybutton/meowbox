@@ -78,3 +78,31 @@ Use a product gate for every activity: what does the player do, why is it satisf
 
 ### Asset acceptance
 Treat the current artwork concepts as mood references only. Verify precise existing door locations, routes, interactions and final runtime overrides before drawing map-specific plates. Create production-ready map and interior scenes individually, with dynamic characters, props and foreground layers separated. No baked-in people, labels, second temples or stations from another map. Each asset must identify its map/station/activity ID and intended interactive anchors. Start with Fortune Valley vertical slice, compare actual mobile and desktop screenshots and test travel to every remaining map.
+
+
+## End-user journey contract (25 November 2026)
+
+A house is a complete experience, not a menu of disconnected websites. A dependent step stays in its parent house, preserves current state and returns to the previous logical stage. A different destination requires deliberate travel. Distinct optional activities can share a physical space without becoming separate doors. Do not draw or name subactivities as new destinations.
+
+| House | Player journey and completion |
+| --- | --- |
+| Arrival | First visit: ticket, name, avatar, journey, gateway. Return: personalized gateway, same avatar and progress, no repeat registration. Gateway leads into Fortune Valley, not an extra temple. |
+| Fortune Temple | Enter courtyard; optional bell and purification; prayer; optional moon blocks or draw stick; pick up matching stick; unfold its paper; keep or tie it as appropriate; return to temple. Quiet back garden reached only from temple; no second shrine or separate paper-reading house. Ritual steps remain optional, not forced for every visit. |
+| Tarot House | Choose daily card or deeper question; shuffle, deal, flip, inspect, reflect, save if chosen; return to spread or room. No extra love-tarot house. Daily card remains stable; deeper reading has distinct purpose. |
+| Destiny House | Consult Master Yue; enter birth details once; generate chart; read chart-specific explanations and ask follow-up questions from that result; return to study. Two UI entry points to one consultation may be retained for accessibility but must use the same name and destination. No promise of live AI unless actually implemented. Keep birth details private. |
+| Wishing Garden | Choose coin wish or wish plaque; complete throw with visible outcome/retry, or write and hang a wish; optionally return to garden. No fortune-stick or fishing duplicate. |
+| Worry-Free Pier | Choose fishing, private worry bottle, or quiet bench. After casting bottle optionally fish or meet resident at same pier; do not transport to another map. |
+| Tea Room | Tea, gossip, fictional news and clearly labeled noticeboard. Not another private stress wall. |
+| Office | Private vent then optional physical stress relief; no forced sharing; end with satisfying response and choice to leave. |
+| Daydream Park | Meet animal, build trust, optional rest or encounter; no separate pet house. |
+| Kitchen | Pick a recipe or drink, prepare, cook/mix, taste, finish, optionally start another from same kitchen. |
+| Arcade | Choose machine, play, receive earned prize or retry, return to arcade floor. Keep blind boxes here; retire daily souvenir door only if testing shows it adds no independent story/discovery value. |
+| Daily Souvenir | Distinct daily curated travel object and story, not random arcade box. Reassess after playtest. |
+| Personality Lab | One in-room discovery entry, then Soul Cat, four preferences, or nine motives; answer, receive result and explanation, return to lab. No separate Soul Cat Sanctuary or Nine Motives Tea Room destination. |
+| Parallel Lives | Choose a story, make consequential decisions, reach distinct endings, optionally replay from same house. |
+| Compatibility Café | Separate relational reflection, not another personality classification or horoscope; retain only if it has unique value. |
+| Travel | Finish or explicitly leave the current activity, return to room/outside or use Next Stop. Next Stop and map shortcuts share one travel selector; no invented travel destination. |
+
+Player-facing review: can I predict the next step? Does the same avatar remain present? Do I understand what changed? Can I go back without losing a completed result? Does the location's name describe what I do? If two controls lead to the same experience, prefer a single canonical interaction with accessibility alternatives, not two separate locations or misleading labels.
+
+Implementation 9b54ed5: one visible Personality Lab selection entry; all three modes retained, renamed as activities rather than separate houses; existing results/save keys unchanged. 60fb213: browser checks for unique final runtime station IDs/ownership and entry/return of all three lab modes via actual choice buttons. The test uses direct setup for room entry; full organic exploration remains to be tested. New CI results and visual approval are pending. Other flow decisions above are production requirements, not claims of completed redesign.
