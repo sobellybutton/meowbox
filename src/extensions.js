@@ -3609,7 +3609,7 @@ if(!parkCareRecords||typeof parkCareRecords!=='object'||Array.isArray(parkCareRe
 function careValues(raw={},now=Date.now()){
  const out={};for(const [k,v] of Object.entries(careDefaults))out[k]=Number.isFinite(raw[k])?clamp(raw[k],0,100):v;
  const hours=Number.isFinite(raw.at)?clamp((now-raw.at)/3600000,0,24):0;
- out.hunger=Math.min(85,out.hunger+hours*.55);out.thirst=Math.min(85,out.thirst+hours*.4);
+ out.hunger=Math.min(100,out.hunger+Math.min(13.2,hours*.55));out.thirst=Math.min(100,out.thirst+Math.min(9.6,hours*.4));
  out.energy=Math.min(100,out.energy+hours*.8);return out
 }
 function careAdjust(v,changes){const out={...v};for(const [k,n] of Object.entries(changes))if(Object.hasOwn(careDefaults,k))out[k]=clamp(out[k]+n,0,100);return out}
@@ -3637,7 +3637,7 @@ function careSync(){
 }
 function careComplete(action){
  if(!careIsActive())return;const a=state.care,profile=parkCats[state.petKind??0],key=profile.name[0];
- a.values=careOutcome(a.values,action,profile.pace);a.phase='idle';a.x=400;a.y=535;a.drag=null;a.stroke=0;careSave();
+ a.values=careOutcome(a.values,action,profile.pace);a.phase='idle';a.x=400;a.y=535;a.drag=null;a.stroke=0;a.assisted=false;careSave();
  const jokes={
  feed:[['Your food has passed the inspection. You may remain employed.','猫粮通过质检，你暂时不用辞职。'],['Good. The human has finally understood its job description.','不错，人类终于弄明白自己的岗位职责了。']],
  water:[['Fresh water. The management has finally listened.','新鲜水！管理层终于听劝了。'],['Five stars. Would drink again.','五星好评，下次还喝。']],
@@ -3654,16 +3654,17 @@ function careComplete(action){
 }
 function careStart(action){
  if(!careIsActive())return;const a=state.care;if(a.phase!=='idle'||!careCan(a.values,action))return;
- a.phase=action;a.at=t;a.fromX=a.x;a.fromY=a.y;a.stroke=0;a.drag=null;
+ a.phase=action;a.at=t;a.fromX=a.x;a.fromY=a.y;a.stroke=0;a.drag=null;a.assisted=false;
  const messages={feed:['The cat is inspecting dinner.','猫猫正在检查晚饭。'],water:['Fresh water is on the way.','新鲜水来了。'],play:['Move the feather across the grass.','在草地上轻轻拖动羽毛。'],pet:['Stroke along the back, slowly.','顺着背部慢慢摸。'],rest:['Let the cat settle down in peace.','让猫猫安静地睡一会儿。']};
  careMessage(...messages[action]);careSync()
 }
 function careTick(){
  const a=state.care,age=t-a.at;
  if(a.phase==='feed'||a.phase==='water'){
-  const x=a.phase==='feed'?295:505,f=poseEase(clamp(age/.9,0,1));a.x=a.fromX+(x-a.fromX)*f;a.y=a.fromY+(535-a.fromY)*f;
+  const x=a.phase==='feed'?348:452,f=poseEase(clamp(age/.9,0,1));a.x=a.fromX+(x-a.fromX)*f;a.y=a.fromY+(535-a.fromY)*f;
   if(age>3.1)careComplete(a.phase)
  }else if(a.phase==='rest'){if(age>4.5)careComplete('rest')}
+ else if(a.phase==='play'&&a.assisted){a.x=400+Math.sin(age*2.3)*58;a.y=535-Math.abs(Math.sin(age*2.3))*9}
  else if(a.phase==='play'&&a.drag){
   const dx=a.drag.x-a.x,dy=clamp(a.drag.y+33,470,565)-a.y;a.x+=clamp(dx*.07,-4,4);a.y+=clamp(dy*.07,-3,3);
   if(a.stroke>=190&&age>1.1)careComplete('play')
@@ -3693,7 +3694,7 @@ refreshControls=function(){
   const btn=b(buttons,tr(en,cn),()=>{
    const a=state.care;if(key==='pet'||key==='play'){
     // Keyboard/touch alternative is a timed gentle activity, not rapid tapping.
-    careStart(key);const run=state;
+    careStart(key);a.assisted=true;const run=state;
     setTimeout(()=>{if(state===run&&careIsActive()&&a.phase===key)careComplete(key)},key==='pet'?2300:3200)
    }else careStart(key)
   });btn.dataset.care=key
@@ -3712,7 +3713,7 @@ function careFood(x,y){ctx.save();ctx.translate(x,y);ctx.rotate(-.10);ctx.fillSt
 function carePitcher(x,y){ctx.save();ctx.translate(x,y);ctx.fillStyle='#c6ded6';ctx.strokeStyle='#779994';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-20,-27);ctx.lineTo(19,-27);ctx.lineTo(30,-35);ctx.lineTo(23,-18);ctx.lineTo(22,21);ctx.quadraticCurveTo(0,28,-23,21);ctx.closePath();ctx.fill();ctx.stroke();ellipse(-1,-27,20,5,'#94b6b2');line(-15,-15,-15,12,'#e5f0df',3);ctx.restore()}
 function careCatArt(a){
  const kind=state.petKind??0,fur=['#cb975f','#e3d8bc','#615c60','#c99c78','#929da5'][kind%5],light=['#e4ba85','#f6ead0','#858089','#e5c5a0','#bcc5c7'][kind%5];
- const eating=(a.phase==='feed'||a.phase==='water')&&t-a.at>.9,sleep=a.phase==='rest',playing=a.phase==='play',petting=a.phase==='pet',walk=(a.phase==='feed'||a.phase==='water')&&t-a.at<.9||playing&&!!a.drag,dir=(a.phase==='feed'||playing&&a.drag?.x<a.x)?-1:1,step=walk?Math.sin(t*11)*8:0,bob=sleep?Math.sin(t*2)*1.5:walk?Math.abs(step)*.22:Math.sin(t*2)*.8;
+ const eating=(a.phase==='feed'||a.phase==='water')&&t-a.at>.9,sleep=a.phase==='rest',playing=a.phase==='play',petting=a.phase==='pet',walk=(a.phase==='feed'||a.phase==='water')&&t-a.at<.9||playing&&(!!a.drag||a.assisted),dir=(a.phase==='feed'||playing&&a.drag?.x<a.x)?-1:1,step=walk?Math.sin(t*11)*8:0,bob=sleep?Math.sin(t*2)*1.5:walk?Math.abs(step)*.22:Math.sin(t*2)*.8;
  ctx.save();ctx.translate(a.x,a.y);ellipse(0,6,72,13,'#393d2f44');ctx.scale(dir,1);ctx.translate(0,-bob);
  // Curved body and articulated tail, then four paws on the same ground plane.
  ctx.strokeStyle=fur;ctx.lineWidth=16;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-38,-23);ctx.bezierCurveTo(-78,-38,-83,-65+Math.sin(t*2)*8,-59,-76+Math.sin(t*2)*6);ctx.stroke();
@@ -3720,7 +3721,7 @@ function careCatArt(a){
  const g=ctx.createLinearGradient(0,-70,0,5);g.addColorStop(0,light);g.addColorStop(.5,fur);g.addColorStop(1,fur);
  ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(-58,-25);ctx.bezierCurveTo(-63,-59,-24,-72,19,-53);ctx.quadraticCurveTo(58,-37,49,-16);ctx.quadraticCurveTo(0,5,-45,-8);ctx.closePath();ctx.fill();
  if(kind===0||kind===3)for(let i=0;i<3;i++)line(-35+i*15,-52+i*2,-29+i*15,-38+i*2,'#8d633d66',4);
- const headX=sleep?29:eating?53:43,headY=sleep?-20:eating?-24:-58;
+ const headX=sleep?29:eating?53:43,headY=sleep?-20:eating?-8:-58;
  ctx.save();ctx.translate(headX,headY);ctx.rotate(eating?.18*Math.sin(t*8):sleep?.12:0);
  ctx.fillStyle=fur;ctx.beginPath();ctx.moveTo(-27,-9);ctx.lineTo(-28,-39);ctx.quadraticCurveTo(-13,-35,-7,-22);ctx.lineTo(11,-22);ctx.quadraticCurveTo(20,-37,29,-38);ctx.lineTo(29,-8);ctx.closePath();ctx.fill();
  ctx.fillStyle='#c59a8a';ctx.beginPath();ctx.moveTo(-23,-30);ctx.lineTo(-20,-12);ctx.lineTo(-10,-19);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(23,-30);ctx.lineTo(20,-12);ctx.lineTo(10,-19);ctx.closePath();ctx.fill();
@@ -3741,9 +3742,9 @@ drawActivity=function(){
  for(let i=0;i<9;i++){const x=240+(i*83)%320,y=380+(i*37)%170;ellipse(x+Math.sin(t*.8+i)*7,y+Math.cos(t*.6+i)*4,3,1.5,'#e5d7a79c')}
  careBowl(295,548,false,a.phase==='feed'&&t-a.at<3.0);careBowl(505,548,true,a.phase==='water'&&t-a.at<3.0);
  careCatArt(a);
- const d=a.drag,food=d?.kind==='feed'?d:{x:285,y:620},water=d?.kind==='water'?d:{x:400,y:620},toy=d?.kind==='play'?d:{x:510,y:615};
+ const d=a.drag,food=d?.kind==='feed'?d:{x:285,y:620},water=d?.kind==='water'?d:{x:400,y:620},toy=d?.kind==='play'?d:a.phase==='play'&&a.assisted?{x:400+Math.sin((t-a.at)*2.3+.7)*95,y:465}:{x:510,y:615};
  careFood(food.x,food.y);carePitcher(water.x,water.y);careFeather(toy.x,toy.y);
- if(a.phase==='pet'&&d){ctx.save();ctx.globalAlpha=.8;ellipse(d.x,d.y,9,7,'#e9d5ad');ctx.restore()}
+ if(a.phase==='pet'&&(d||a.assisted)){const x=d?.x??(a.x-25+Math.sin((t-a.at)*2.8)*30),y=d?.y??(a.y-58);ctx.save();ctx.translate(x,y);ctx.rotate(-.35);ctx.fillStyle='#e1bc9b';ctx.beginPath();ctx.moveTo(-13,5);ctx.quadraticCurveTo(-18,-8,-7,-11);ctx.lineTo(5,-20);ctx.quadraticCurveTo(11,-23,11,-17);ctx.lineTo(2,-8);ctx.lineTo(16,-13);ctx.quadraticCurveTo(21,-13,20,-8);ctx.lineTo(9,5);ctx.quadraticCurveTo(2,13,-7,10);ctx.closePath();ctx.fill();ctx.restore()}
  if(a.phase==='rest'){txt('z',a.x+47,a.y-90-Math.sin(t*2)*5,19,'#fff2d6');txt('z',a.x+61,a.y-110,14,'#fff2d6')}
  txt(tr(...parkCats[state.petKind??0].name),400,375,24,'#fff4d9');
  ctx.restore()
