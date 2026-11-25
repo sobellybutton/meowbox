@@ -1022,7 +1022,7 @@ const templeRitualDraw=drawActivity;drawActivity=function(){
   }else if(stage===3){label(tr('Visit the altar','前往香案'),400,620,()=>start('prayer'))}
  }
 
- if(activity==='templePaper'){let age=t-state.paperAt;drawTemplePaperRack(565,410,.62,state.paperStage==='tied'&&age<.65?1:0);if(state.paperStage==='opening'&&age>.75)state.paperStage='open';let open=state.paperStage!=='folded';let f=state.paperStage==='opening'?Math.min(1,age/.75):open?1:0;let w=72+f*178,h=65+f*133;let cx=400,cy=472;if(state.paperStage==='tied'){let u=Math.min(1,age/.65);cx=400+165*u;cy=472-62*u;w*=1-u*.94;h*=1-u*.88}if(state.paperStage==='kept'){let u=Math.min(1,age/.7);cy+=85*u;w*=1-u*.6;h*=1-u*.6;ctx.globalAlpha=1-u*.75}ctx.save();ctx.translate(cx,cy);ctx.rotate(state.paperStage==='tied'?Math.sin(t*1.8)*.07:0);ctx.shadowColor='#3a322a88';ctx.shadowBlur=10;round(-w/2,-h/2,w,h,3,'#eadcb9','#ad986f');ctx.shadowBlur=0;line(-w/2+9,0,w/2-9,0,'#b9a37a70',1);if(f>.92&&['open','opening'].includes(state.paperStage)){txt(tr('Fortune No. ','第 ')+state.paperNumber+(zh?' 签':''),0,-58,20,'#70503d');let words=tr(...shrinePaperLines[state.paperNumber-1]);let chunks=zh?[words]:words.match(/.{1,24}(?:\s|$)|\S+?(?:\s|$)/g)||[words];chunks.slice(0,4).forEach((v,i)=>txt(v.trim(),0,-17+i*22,16,'#594c39'));txt(tr('A reflection, not a promise','签文仅供自我反思'),0,69,12,'#84694c')}else if(!open)txt('籤',0,0,24,'#a16e49');ctx.restore();ctx.globalAlpha=1;if(state.paperStage==='folded'){target(335,420,130,110,templePaperTap);label(tr('Unfold your fortune','展开签纸'),400,620,templePaperTap)}if(state.paperStage==='open'){label(tr('Keep in bag','收入背包'),300,620,()=>templePaperKeep(false));label(tr('Tie on rack','系上签纸'),500,620,()=>templePaperKeep(true))}if(['kept','tied'].includes(state.paperStage)&&age>.8){label(tr('Return to temple','回到寺庙'),400,620,()=>{activity=null;state={};updateHUD();roomIntro()})}}
+ if(activity==='templePaper'){let age=t-state.paperAt;drawTemplePaperRack(565,410,.62,state.paperStage==='tied'&&age<.65?1:0);if(state.paperStage==='opening'&&age>.75)state.paperStage='open';let open=state.paperStage!=='folded';let f=state.paperStage==='opening'?Math.min(1,age/.75):open?1:0;let w=72+f*178,h=65+f*(W<H?195:133);let cx=400,cy=472;if(state.paperStage==='tied'){let u=Math.min(1,age/.65);cx=400+165*u;cy=472-62*u;w*=1-u*.94;h*=1-u*.88}if(state.paperStage==='kept'){let u=Math.min(1,age/.7);cy+=85*u;w*=1-u*.6;h*=1-u*.6;ctx.globalAlpha=1-u*.75}ctx.save();ctx.translate(cx,cy);ctx.rotate(state.paperStage==='tied'?Math.sin(t*1.8)*.07:0);ctx.shadowColor='#3a322a88';ctx.shadowBlur=10;round(-w/2,-h/2,w,h,3,'#eadcb9','#ad986f');ctx.shadowBlur=0;line(-w/2+9,0,w/2-9,0,'#b9a37a70',1);if(f>.92&&['open','opening'].includes(state.paperStage)){txt(tr('Fortune No. ','第 ')+state.paperNumber+(zh?' 签':''),0,-h/2+35,20,'#70503d');let words=tr(...shrinePaperLines[state.paperNumber-1]);drawFittedFortuneText(words,w,h);txt(tr('A reflection, not a promise','签文仅供自我反思'),0,h/2-23,12,'#84694c')}else if(!open)txt('籤',0,0,24,'#a16e49');ctx.restore();ctx.globalAlpha=1;if(state.paperStage==='folded'){target(335,420,130,110,templePaperTap);label(tr('Unfold your fortune','展开签纸'),400,620,templePaperTap)}if(state.paperStage==='open'){label(tr('Keep in bag','收入背包'),300,620,()=>templePaperKeep(false));label(tr('Tie on rack','系上签纸'),500,620,()=>templePaperKeep(true))}if(['kept','tied'].includes(state.paperStage)&&age>.8){label(tr('Return to temple','回到寺庙'),400,620,()=>{activity=null;state={};updateHUD();roomIntro()})}}
  ctx.restore()
 };
 
@@ -1287,8 +1287,8 @@ else if(stage==='focus'){
  label(tr('Read meaning','查看牌意'),310,647,readingFocusMeaning);
  label(tr('Back to spread','返回牌阵'),490,647,readingReturnSpread);
 }
-else if(stage==='deal'||stage==='cards'){let n=state.readCards.length;for(let i=0;i<n;i++){let endX=n===1?400:274+i*126,sc=n===1?1.55:1.12,deal=stage==='deal'?poseEase((age-i*.22)/.65):1,x=400+(endX-400)*deal,y=465-18*Math.sin(Math.PI*deal),flip=state.readFlip[i]<0?0:Math.min(1,(t-state.readFlip[i])/.72),face=flip>=.5,w=92*sc*(flip>0&&flip<1?Math.max(.045,Math.abs(Math.cos(Math.PI*flip))):1),h=145*sc,v=state.readCards[i],d=tarotDeck[v.i];ctx.save();ctx.translate(x,y);ctx.rotate((1-deal)*.14*(i-1));if(face){drawReadingCard(-w/2,-h/2,w,h,v.i,v.rev)}else card(-w/2,-h/2,w,h,false);ctx.restore();if(stage==='cards'){target(endX-(n===1?80:60),y-h/2,n===1?160:120,h,()=>state.readFlip[i]<0?readingReveal(i):readingShow(i));if(n===3)readingPositionCaption(tr(...readingPositions[i]),endX,565,118);if(face)txt(orient(v.rev),endX,n===1?593:597,13,'#f1ddad')}}
-if(stage==='deal'&&age>.65+(n-1)*.22){state.readStage='cards';state.readAt=t;hint('Turn the cards over one by one.','一张一张慢慢翻开。')}let complete=state.readFlip.every(v=>v>=0&&t-v>.72);if(stage==='cards'&&complete){if(!state.readSaved)readingSave();txt(tr('Tap a revealed card for a closer look','轻触已翻开的牌，放大查看'),400,618,13,'#f8e9cc');label(tr('Share card','分享牌卡'),502,650,()=>shareReadingResult({cards:state.readCards}));label(tr('Read the cards','查看牌意'),298,650,()=>{let lines=state.readCards.map((v,i)=>{let d=tarotDeck[v.i];return (n===3?tr(...readingPositions[i])+': ':'')+tr(d[0],d[1])+' · '+orient(v.rev)+'\n'+arcanaReading(d,v.rev)+(topicReflection(state.readTopic,i)?'\n'+topicReflection(state.readTopic,i):'')});say(tr('Fortune Teller','占卜师'),lines.join('\n\n')+'\n\n'+tr('The future is not a deadline.','未来又不是截止日期。'))})}else if(stage==='cards')txt(tr('Choose a card to turn','点击牌面翻开'),400,622,16,'#fff0d2')}
+else if(stage==='deal'||stage==='cards'){let n=state.readCards.length,portraitSpread=n===3&&W<H;for(let i=0;i<n;i++){let slot=readingActivitySlot(i,n,portraitSpread),endX=slot.x,sc=slot.scale,deal=stage==='deal'?poseEase((age-i*.22)/.65):1,x=400+(endX-400)*deal,y=465+(slot.y-465)*deal-18*Math.sin(Math.PI*deal),flip=state.readFlip[i]<0?0:Math.min(1,(t-state.readFlip[i])/.72),face=flip>=.5,w=92*sc*(flip>0&&flip<1?Math.max(.045,Math.abs(Math.cos(Math.PI*flip))):1),h=145*sc,v=state.readCards[i],d=tarotDeck[v.i];ctx.save();ctx.translate(x,y);ctx.rotate((1-deal)*.14*(i-1));if(face){drawReadingCard(-w/2,-h/2,w,h,v.i,v.rev)}else card(-w/2,-h/2,w,h,false);ctx.restore();if(stage==='cards'){target(endX-slot.hitW/2,y-h/2,slot.hitW,h,()=>state.readFlip[i]<0?readingReveal(i):readingShow(i));if(n===3)readingPositionCaption(tr(...readingPositions[i]),endX,slot.captionY,slot.hitW);if(face)txt(orient(v.rev),endX,slot.orientationY,13,'#f1ddad')}}
+if(stage==='deal'&&age>.65+(n-1)*.22){state.readStage='cards';state.readAt=t;hint('Turn the cards over one by one.','一张一张慢慢翻开。')}let complete=state.readFlip.every(v=>v>=0&&t-v>.72);if(stage==='cards'&&complete){if(!state.readSaved)readingSave();txt(tr('Tap a revealed card for a closer look','轻触已翻开的牌，放大查看'),400,portraitSpread?720:618,13,'#f8e9cc');label(tr('Share card','分享牌卡'),502,portraitSpread?755:650,()=>shareReadingResult({cards:state.readCards}));label(tr('Read the cards','查看牌意'),298,portraitSpread?755:650,()=>{let lines=state.readCards.map((v,i)=>{let d=tarotDeck[v.i];return (n===3?tr(...readingPositions[i])+': ':'')+tr(d[0],d[1])+' · '+orient(v.rev)+'\n'+arcanaReading(d,v.rev)+(topicReflection(state.readTopic,i)?'\n'+topicReflection(state.readTopic,i):'')});say(tr('Fortune Teller','占卜师'),lines.join('\n\n')+'\n\n'+tr('The future is not a deadline.','未来又不是截止日期。'))})}else if(stage==='cards')txt(tr('Choose a card to turn','点击牌面翻开'),400,portraitSpread?735:622,16,'#fff0d2')}
 ctx.restore()};
 function openReadingJournal(){activePage='readingJournal';page(tr('Reading journal','塔罗手记'),tr('Reflections from your visits, not predictions.','每次来访的心情记录，并非预言。'),q=>{let book=element('section','',q,'travelAlbum');if(!readingJournal.length)element('p',tr('Your first reading will appear here.','第一次占卜之后，手记会出现在这里。'),book);for(let v of readingJournal){let a=element('article','',book,'albumCard');element('strong',v.date+' · '+(v.topic<0||v.topic===null?tr('Daily tarot','今日塔罗'):tr(...(readingTopics[v.topic]||readingTopics[3]))),a);for(let [i,d] of (v.cards||[]).entries()){let cardData=tarotDeck[d.i];if(!cardData)continue;let item=element('div','',a);element('p',tr(cardData[0],cardData[1])+' · '+orient(d.rev),item);element('small',arcanaReading(cardData,d.rev),item);const prompt=topicReflection(v.topic,i);if(prompt)element('p',prompt,item)}b(a,tr('Share card','分享牌卡'),()=>shareReadingResult(v,openReadingJournal))}b(book,tr('Back to passport','返回护照'),passport)})}
 const readingPassport=passport;passport=function(){readingPassport();let book=$('content').querySelector('.travelAlbum');if(book)b(book,tr('Reading journal','塔罗手记')+' ('+readingJournal.length+')',openReadingJournal)};$('dockPassport').onclick=passport;
@@ -6250,3 +6250,48 @@ const bagV2CSS=document.createElement('style');bagV2CSS.textContent=`
 @media(min-width:720px){.bagBody{grid-template-columns:minmax(0,1.75fr) minmax(0,1fr)}.bagSlots{grid-template-columns:repeat(4,minmax(0,1fr))}.bagDetail{position:sticky;top:8px}}
 @media(max-width:719px){.bagBody{grid-template-columns:1fr}.bagDetail{grid-row:1;display:grid;grid-template-columns:74px 1fr;gap:3px 8px;text-align:left}.bagHeroArt{width:70px;height:70px;grid-row:1/span 4}.bagDetail h2{font-size:17px}.bagDetail p,.bagDetail button,.bagDetail>small:last-child{grid-column:1/-1}.bagDetail p{margin:3px 0}.bagDetail button{min-height:44px}}
 `;document.head.append(bagV2CSS);
+
+/* Activity-specific portrait stage layouts. Keep all hit targets in world coordinates
+   so the same camera transform is used for painting and pointer input. */
+function readingActivitySlot(i,n,portrait){
+ if(n===1)return {x:400,y:465,scale:1.55,hitW:160,captionY:565,orientationY:593};
+ if(!portrait)return {x:274+i*126,y:465,scale:1.12,hitW:120,captionY:565,orientationY:597};
+ const first=i===0;
+ return {x:first?400:i===1?309:491,y:first?340:565,scale:1.3,hitW:144,captionY:first?449:674,orientationY:first?470:695};
+}
+function drawFittedFortuneText(words,w,h){
+ ctx.save();try{
+  let size=18,rows=[];
+  for(;size>=11;size--){
+   ctx.font=size+'px Georgia,serif';
+   rows=shareTextLines(ctx,words,w-30);
+   if(rows.length*size*1.3<=h-99)break;
+  }
+  const lineH=size*1.3,y=-((rows.length-1)*lineH)/2;
+  ctx.beginPath();ctx.rect(-w/2+13,-h/2+61,w-26,h-99);ctx.clip();
+  ctx.font=size+'px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#594c39';
+  rows.forEach((v,i)=>ctx.fillText(v,0,y+i*lineH,w-30));
+ }finally{ctx.restore()}
+}
+const portraitActivityBounds={
+ prayer:[155,660,310,665],templeBell:[110,665,215,665],
+ templeWater:[240,650,325,690],sticks:[205,615,260,670],
+ moon:[200,600,220,665],templePaper:[215,655,300,675]
+};
+function portraitActivityFit(width,height,bounds,progress=1){
+ const [l,r,u,d]=bounds,top=height<680?100:124,bottom=height-132;
+ const usable=Math.max(80,bottom-top),fit=Math.max(.05,Math.min((width-20)/(r-l),usable/(d-u)));
+ const base=Math.min(fit,Math.max(.05,Math.min(width/720,usable/450)));
+ const z=base+(fit-base)*Math.max(0,Math.min(1,progress));
+ return {s:z,ox:width/2-(l+r)/2*z,oy:(top+bottom)/2-(u+d)/2*z};
+}
+const portraitActivityCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(s,ox,oy){
+ if(W>=H||!activity)return portraitActivityCameraBefore(s,ox,oy);
+ const bounds=activity==='love'&&['deal','cards'].includes(state.readStage)?[185,615,230,800]:portraitActivityBounds[activity];
+ if(!bounds)return portraitActivityCameraBefore(s,ox,oy);
+ // Freeze the camera at its fitted scale during pointer gestures, rather than
+ // changing the coordinate conversion halfway through a throw or drag.
+ const progress=drag||residentReducedMotion.matches||activityZoomAt<0?1:poseEase(clamp((performance.now()-activityZoomAt)/550,0,1));
+ return portraitActivityFit(W,H,bounds,progress)
+};
