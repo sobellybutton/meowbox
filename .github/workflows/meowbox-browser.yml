@@ -130,6 +130,16 @@ jobs:
                 await page.evaluate(()=>{start('cook');state.done=true;state.recipe=['Tomato and egg soup','番茄蛋汤'];soupTaste()});
                 await page.waitForFunction(()=>state.tasted===true,{},{timeout:7000});
                 await page.screenshot({path:'test-results/'+name+'-soup-tasting.png'});
+                await page.evaluate(()=>{room='temple';activity=null;start('secretGarden')});
+                await page.waitForTimeout(1300);
+                await page.evaluate(()=>{gardenSeat();gardenChime();gardenFeed()});
+                await page.waitForTimeout(1000);
+                if(!await page.evaluate(()=>state.gardenSitting&&state.gardenFeedCount===1))throw Error('Garden interactions failed');
+                await page.evaluate(()=>gardenFeed());
+                await page.waitForTimeout(1000);
+                await page.evaluate(()=>gardenFeed());
+                if(!await page.evaluate(()=>items.some(x=>x[0]==='Quiet garden postcard')))throw Error('Garden keepsake not collected');
+                await page.screenshot({path:'test-results/'+name+'-secret-garden.png'});
                 if(errors.length)throw Error(errors.join('; '));
                 console.log(name+': PASS');
               }catch(e){failed=true;console.error(name+': FAIL '+e.message+' | page errors: '+errors.join('; '));console.error('Visible page: '+(await page.locator('body').innerText().catch(()=>'' )).slice(0,500));await page.screenshot({path:'test-results/'+name+'-failure.png'}).catch(()=>{});}
