@@ -11,3 +11,9 @@ Baseline 1b61befb4bd1f41a01e81fc250dc6ed6dac147c4. Baseline deployment confirmed
 6. Visual screenshot review and real touch/drag tests; many activity smoke tests call functions directly and cannot establish visual quality.
 
 Canonical source is src; original legacy chunks only supply art. Preserve existing save format and visuals. Graphify may not index all symbols or infer dynamic calls. Test history: https://github.com/sobellybutton/meowbox/actions
+
+## Doorway regression follow-up (25 November, 2.50 pm SGT)
+- Browser run 45561937190: 47/56 doorway checks passed. Nine timeouts remained (360px Fortune tarot/destiny; 390px Island kitchen/arcade/mystery and Wonder quiz/story; tablet Wonder quiz/story). All desktop doors and three entrance/activity smoke-test viewports passed.
+- Source extraction commit ecf79ea deployed successfully; its browser run 45563148079 was still in progress when checked.
+- Commits 6f30467 and 9bed04d separate overlapping sign rectangles, avoid interactive HUD controls, prioritize the nearest door, and require a 44px minimum tap target. Commit 9e02e76 makes the test identify intercepted taps separately from route failures and uses exact door IDs.
+- These changes are committed, not yet confirmed by completed browser tests. Inspect latest Actions results, including screenshots, before declaring the regression fixed. Watch for sign placement jitter and frame-time cost on slower devices; no visual approval yet.
