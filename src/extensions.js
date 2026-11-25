@@ -940,27 +940,120 @@ const deeperFish=doFish;doFish=function(){let before=state?.fish;deeperFish();if
 /* Temple visit: quiet, optional gestures in the existing illustrated room. */
 activityTitle.prayer=['A moment at the altar','静心祈愿'];
 roomActions.temple=[['sticks','Draw a fortune','求签'],['prayer','Offer a quiet prayer','静心祈愿'],['moon','Ask with moon blocks','掷筊']];
-const templePrayerStart=start;start=function(id){templePrayerStart(id);if(id==='prayer'){state.prayerStage='approach';state.prayerAt=t;state.incense=false;state.bows=0;hint('Walk up to the altar. Take a moment for yourself.','走到香案前，给自己一点安静的时间。')}};
-function templeIncense(x,y,lit){ctx.save();ellipse(x,y+15,39,9,'#35292366');let g=ctx.createLinearGradient(x-32,y,x+32,y);g.addColorStop(0,'#72533d');g.addColorStop(.45,'#b99a60');g.addColorStop(1,'#72533d');ctx.beginPath();ctx.moveTo(x-34,y-8);ctx.quadraticCurveTo(x-34,y+25,x,y+25);ctx.quadraticCurveTo(x+34,y+25,x+34,y-8);ctx.fillStyle=g;ctx.fill();ellipse(x,y-8,34,9,'#b8a27c');ellipse(x,y-7,27,5,'#7d6b50');for(let i=-1;i<=1;i++){line(x+i*8,y-9,x+i*12,y-65+(i%2)*6,'#8d493b',2.8);if(lit){ellipse(x+i*12,y-65+(i%2)*6,2.5,2.5,'#f7aa60');for(let j=0;j<4;j++){let clock=residentReducedMotion.matches?0:t,f=(clock*.45+j*.25+i*.13+1)%1;ctx.globalAlpha=(1-f)*.24;ellipse(x+i*12+Math.sin(clock*1.4+j+i)*f*19,y-68-f*74,3+f*11,4+f*14,'#f3e7cc')}ctx.globalAlpha=1}}ctx.restore()}
+const templePrayerStart=start;start=function(id){templePrayerStart(id);if(id==='prayer'){state.prayerStage='approach';state.prayerAt=t;state.incense=false;state.prayerHeld=0;state.prayerLit=false;state.prayerOffered=0;state.bows=0;state.prayerRewarded=false;hint('Walk over to the incense stand.','走到香台前，准备取香。')}};
+function templeIncense(x,y,lit,count=3){ctx.save();ellipse(x,y+15,39,9,'#35292366');let g=ctx.createLinearGradient(x-32,y,x+32,y);g.addColorStop(0,'#72533d');g.addColorStop(.45,'#b99a60');g.addColorStop(1,'#72533d');ctx.beginPath();ctx.moveTo(x-34,y-8);ctx.quadraticCurveTo(x-34,y+25,x,y+25);ctx.quadraticCurveTo(x+34,y+25,x+34,y-8);ctx.fillStyle=g;ctx.fill();ellipse(x,y-8,34,9,'#b8a27c');ellipse(x,y-7,27,5,'#7d6b50');for(let i=-1;i<=1;i++){if(i+1>=count)break;line(x+i*8,y-9,x+i*12,y-65+(i%2)*6,'#8d493b',2.8);if(lit){ellipse(x+i*12,y-65+(i%2)*6,2.5,2.5,'#f7aa60');for(let j=0;j<4;j++){let clock=residentReducedMotion.matches?0:t,f=(clock*.45+j*.25+i*.13+1)%1;ctx.globalAlpha=(1-f)*.24;ellipse(x+i*12+Math.sin(clock*1.4+j+i)*f*19,y-68-f*74,3+f*11,4+f*14,'#f3e7cc')}ctx.globalAlpha=1}}ctx.restore()}
 function templePrayerFigure(x,y,bow,praying,walking,kneel=0,reach=null){if(walking){backHuman(x,y,avatar??0,true,'right',2.45);return}drawRitualPose(x,y,2.45,{bow,kneel,praying,reach})}
 const prayerProp=prop;prop=function(id,x,y){if(id==='prayer'){templeIncense(x,y-32,true);return}return prayerProp(id,x,y)};
 function prayerBowFrame(elapsed){const e=clamp(elapsed,0,5.4);if(e>=5.4)return {bow:0,completed:3};const phase=(e/1.8)%1;return {bow:phase<.45?poseEase(phase/.45):phase<.62?1:poseEase((1-phase)/.38),completed:Math.min(3,Math.floor(e/1.8))}}
-function beginQuietBow(){if(activity!=='prayer'||!['ready','complete'].includes(state.prayerStage))return;if(!state.incense||t-(state.incenseAt??0)<1.05){return;}state.prayerStage='bow';state.prayerAt=t;state.bows=0;hint('Bow gently. Breathe slowly.','轻轻行礼，慢慢呼吸。')}
-const prayerDraw=drawActivity;drawActivity=function(){if(activity!=='prayer')return prayerDraw();ctx.save();paintLivingBackdrop(pics.streetTemple||pics.temple||pics.sticks);let b=livingBounds(),shade=ctx.createLinearGradient(0,260,0,760);shade.addColorStop(0,'#493c2820');shade.addColorStop(1,'#2b30276e');shadeLivingBackdrop(shade);
- const g=ctx.createLinearGradient(0,445,0,555);g.addColorStop(0,'#aa815b');g.addColorStop(1,'#654737');ctx.beginPath();ctx.moveTo(435,445);ctx.lineTo(580,445);ctx.lineTo(610,520);ctx.lineTo(410,520);ctx.closePath();ctx.fillStyle=g;ctx.fill();line(423,520,423,571,'#624536',12);line(592,520,592,571,'#624536',12);
- templeIncense(510,455,state.incense);for(let i=0;i<2;i++){let xx=458+i*105;round(xx-4,410,8,34,2,'#e1c290','#8b6e4c');ctx.globalAlpha=.75+.2*Math.sin(t*6+i);ellipse(xx,407,3.5,8,'#f8d18a');ctx.globalAlpha=1}
- // Woven floor mat, with no raised platform or floating body.
- ctx.save();ctx.beginPath();ctx.moveTo(281,545);ctx.lineTo(387,545);ctx.lineTo(400,572);ctx.lineTo(268,572);ctx.closePath();ctx.fillStyle='#b7a07b';ctx.fill();ctx.strokeStyle='#88765b';ctx.lineWidth=1;ctx.stroke();for(let j=0;j<7;j++)line(278-j*1.5,549+j*3,390+j*1.5,549+j*3,'#ddc7a06a',.8);ctx.restore();
- let elapsed=t-state.prayerAt,stage=state.prayerStage,walk=stage==='approach',bow=0,x=walk?245+Math.min(1,elapsed/1.2)*90:335;if(walk&&elapsed>=1.2){state.prayerStage='ready';state.prayerAt=t;hint('Offer incense, then make your wish.','先上香，再静心祈愿。')}
- if(stage==='kneel'&&elapsed>.65){state.prayerStage='bow';state.prayerAt=t}if(stage==='bow'){if(elapsed<5.4){const frame=prayerBowFrame(elapsed);bow=frame.bow;state.bows=frame.completed;}else{state.bows=3;state.prayerStage='silent';state.prayerAt=t;hint('Keep your wish to yourself. Take a few quiet breaths.','心愿留在心里，安静地呼吸几次。')}}
- if(stage==='silent'&&elapsed>4){state.prayerStage='rise';state.prayerAt=t}if(stage==='rise'&&elapsed>.72){state.prayerStage='complete';state.prayerAt=t;lifeEarn('ritual:prayer',{calm:2},true);lifeHUDRefresh();hint('Take your time. Draw a fortune whenever you are ready.','不用着急，准备好了再去求签。')}
- // Use an articulated torso over planted feet, without kneeling or whole-body tilting.
- // Dedicated painted bow frames are still a future visual upgrade.
- let lightAge=t-(state.incenseAt??-100),reaching=stage==='ready'&&lightAge<1.05,f=reaching?Math.sin(Math.PI*clamp(lightAge/1.05,0,1)):0;
- if(walk){backHuman(x,553,avatar??0,true,'right',1.65)}else if(stage==='bow'||reaching){drawRitualPose(x,553,1.65,{bow:stage==='bow'?bow:0,praying:stage==='bow',reach:reaching?{x:x+28*f,y:553-92-12*f}:null})}else{backHuman(x,553,avatar??0,false,'right',1.65)}
- 
- if(stage==='ready'){if(!state.incense){target(465,355,95,140,lightTempleIncense)}else if(t-(state.incenseAt??0)>1.05){target(260,330,150,250,beginQuietBow)}}else if(stage==='bow'){txt(tr('Bow ','鞠躬 ')+Math.min(3,state.bows+1)+' / 3',400,622,18,'#fff2d5')}else if(stage==='silent'){txt(tr('A quiet moment','片刻静心'),400,622,20,'#fff2d5')}else if(stage==='complete'){label(tr('Draw a fortune','求签'),300,620,()=>start('sticks'));label(tr('Ask with moon blocks','掷筊'),505,620,()=>start('moon'))}
- ctx.restore()};
+/* Incense is a physical carried object. A single local state machine prevents
+   a fourth stick, unlit offerings, early placement, or repeated rewards. */
+function incenseRitualAction(q,action,now){
+ if(action==='take'&&q.prayerStage==='collect'&&q.prayerHeld<3){q.prayerStage='taking'}
+ else if(action==='light'&&q.prayerStage==='lightReady'&&q.prayerHeld===3&&!q.prayerLit){q.prayerStage='lighting'}
+ else if(action==='bow'&&q.prayerStage==='hold'&&q.prayerHeld===3&&q.prayerLit&&q.bows<3){q.prayerStage='bow'}
+ else if(action==='offer'&&q.prayerStage==='offer'&&q.prayerHeld===3&&q.prayerLit&&q.bows===3){q.prayerStage='placing'}
+ else return false;
+ q.prayerAt=now;return true
+}
+function incenseRitualTick(q,now){
+ const age=Math.max(0,now-q.prayerAt),stage=q.prayerStage;let next=null;
+ if(stage==='approach'&&age>=1.1)next='collect';
+ if(stage==='taking'&&age>=.72){q.prayerHeld=Math.min(3,q.prayerHeld+1);next=q.prayerHeld===3?'lightReady':'collect'}
+ if(stage==='lighting'&&age>=1.65){q.prayerLit=true;next='walkMat'}
+ if(stage==='walkMat'&&age>=1.25)next='hold';
+ if(stage==='bow'&&age>=1.8){q.bows=Math.min(3,q.bows+1);next=q.bows===3?'offer':'hold'}
+ if(stage==='placing'&&age>=2.25){q.prayerOffered=q.prayerHeld;q.prayerHeld=0;q.incense=true;next='returnMat'}
+ if(stage==='returnMat'&&age>=1.1)next='complete';
+ if(next){q.prayerStage=next;q.prayerAt=now}return next
+}
+function requestIncenseAction(action){
+ if(activity!=='prayer'||talkOpen||transitioning||$('page').style.display==='block'||!incenseRitualAction(state,action,t))return;
+ if(action==='take')sound(460);if(action==='bow')hint('Keep your wish in your heart.','把心愿放在心里。');
+ if(action==='offer')hint('Place the three sticks upright in the incense burner.','将三炷香轻轻插入香炉。');
+ syncRitualBar()
+}
+function beginQuietBow(){requestIncenseAction('bow')}
+function incenseStem(x,y,angle=0,lit=false,length=65,smoke=false){
+ ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+ line(0,0,0,-length,'#8d493b',2.8);line(-.65,-2,-.65,-length+3,'#c79668',.7);
+ if(lit){ellipse(0,-length,2,2,'#eab66b');ellipse(0,-length,3.4,3.4,'#e5b17a30');if(smoke){
+ const clock=residentReducedMotion.matches?0:t;
+ for(let j=0;j<3;j++){const f=(clock*.55+j/3)%1;ctx.globalAlpha=(1-f)*.18;ellipse(Math.sin(clock*1.5+j)*f*7,-length-4-f*24,2+f*4,3+f*5,'#f7e9ce')}
+ }}ctx.restore()
+}
+function incenseBundle(x,y,count,angle,lit){for(let j=0;j<count;j++)incenseStem(x+(j-1)*4,y,angle+(j-1)*.055,lit,65,j===1)}
+function incenseTray(){
+ // A shallow wooden incense rack and a candle on their own low side table.
+ const wood=ctx.createLinearGradient(0,468,0,527);wood.addColorStop(0,'#bc9669');wood.addColorStop(1,'#826044');
+ ctx.beginPath();ctx.moveTo(199,468);ctx.lineTo(319,468);ctx.lineTo(334,500);ctx.lineTo(186,500);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle='#87654a';ctx.stroke();
+ line(194,500,194,540,'#70513d',6);line(324,500,324,540,'#70513d',6);
+ ctx.beginPath();ctx.moveTo(228,407);ctx.lineTo(284,407);ctx.lineTo(292,483);ctx.lineTo(220,483);ctx.closePath();ctx.fillStyle='#c9b18a';ctx.fill();ctx.strokeStyle='#836b51';ctx.stroke();
+ line(225,480,287,480,'#9b7957',3);
+ const used=state.prayerOffered?3:state.prayerHeld||0;
+ for(let j=used;j<3;j++){if(state.prayerStage==='taking'&&j===used)continue;incenseStem(242+j*12,474,(j-1)*.025,false)}
+ round(297,438,13,34,3,'#bc7752','#896047');ellipse(303.5,438,6.5,3,'#deb27c');
+ const flicker=residentReducedMotion.matches?0:Math.sin(t*6)*1.2;ellipse(303.5,430+flicker,3.2,8,'#e8ad60');ellipse(303.5,432+flicker,1.4,4.5,'#fff1ba');
+}
+const incenseStagePrompts={
+ collect:['Take three joss sticks, one at a time.','取三炷香，一炷一炷来。'],
+ lightReady:['Light all three at the candle.','在烛火旁点燃三炷香。'],
+ hold:['Hold the incense and bow gently.','双手持香，轻轻鞠躬。'],
+ offer:['Now place the incense in the burner.','现在将香插入香炉。'],
+ complete:['Your offering is complete. Take your time.','上香礼成，慢慢来。']
+};
+const prayerDraw=drawActivity;drawActivity=function(){
+ if(activity!=='prayer')return prayerDraw();
+ const next=incenseRitualTick(state,t);
+ if(next&&incenseStagePrompts[next])hint(...incenseStagePrompts[next]);
+ if(next==='walkMat')sound(350);
+ if(next==='returnMat')sound(510);
+ if(next==='complete'&&!state.prayerRewarded){state.prayerRewarded=true;lifeEarn('ritual:prayer',{calm:2},true);lifeHUDRefresh()}
+ ctx.save();paintLivingBackdrop(pics.streetTemple||pics.temple||pics.sticks);
+ const shade=ctx.createLinearGradient(0,260,0,760);shade.addColorStop(0,'#493c2810');shade.addColorStop(1,'#2b302765');shadeLivingBackdrop(shade);
+ // Altar table and initially empty burner, separate from the incense rack.
+ const g=ctx.createLinearGradient(0,480,0,550);g.addColorStop(0,'#aa815b');g.addColorStop(1,'#654737');
+ ctx.beginPath();ctx.moveTo(431,480);ctx.lineTo(580,480);ctx.lineTo(608,535);ctx.lineTo(411,535);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+ line(423,535,423,575,'#624536',9);line(592,535,592,575,'#624536',9);
+ templeIncense(510,502,true,state.prayerOffered||0);
+ for(const xx of [447,573]){round(xx-4,454,8,32,2,'#c6a77a','#8b6e4c');ellipse(xx,449,3.2,7,'#f8d18a')}
+ incenseTray();
+ // Floor mat keeps the three standing bows facing the altar.
+ ctx.beginPath();ctx.moveTo(304,550);ctx.lineTo(389,550);ctx.lineTo(403,579);ctx.lineTo(290,579);ctx.closePath();ctx.fillStyle='#b7a07b';ctx.fill();ctx.strokeStyle='#88765b';ctx.stroke();
+ for(let j=0;j<7;j++)line(303-j*1.7,554+j*3,390+j*1.7,554+j*3,'#ddc7a06a',.8);
+ const stage=state.prayerStage,age=Math.max(0,t-state.prayerAt),smooth=v=>poseEase(clamp(v,0,1));
+ let x=228,y=557,bow=0,angle=0,walking=false,reach=null;
+ if(stage==='approach'){x=185+43*smooth(age/1.1);walking=true}
+ if(stage==='taking')reach={x:254+12*state.prayerHeld,y:474};
+ if(stage==='lighting'){const f=Math.sin(Math.PI*clamp(age/1.65,0,1));x=228+43*f;reach={x:303,y:475};angle=.075*f}
+ if(stage==='walkMat'){x=228+112*smooth(age/1.25);y=557+16*smooth(age/1.25);walking=true}
+ if(['hold','bow','offer','complete'].includes(stage)){x=340;y=573}
+ if(stage==='bow'){const f=clamp(age/1.8,0,1);bow=f<.42?smooth(f/.42):f<.58?1:smooth((1-f)/.42);angle=bow*.22}
+ if(stage==='placing'){const f=smooth(age/1.15);x=340+143*f;y=573-6*f;reach={x:510,y:493}}
+ if(stage==='returnMat'){x=483-143*smooth(age/1.1);y=567+6*smooth(age/1.1);walking=true}
+ let wrist;
+ if(walking){backHuman(x,y,avatar??0,true,stage==='returnMat'?'left':'right',1.65);wrist={x:x+(stage==='returnMat'?-25:25),y:y-68}}
+ else wrist=drawRitualPose(x,y,1.65,{bow,praying:['hold','bow','offer','complete'].includes(stage),reach});
+ const held=state.prayerHeld||0,lit=state.prayerLit||(stage==='lighting'&&age>.82);
+ if(stage==='placing'&&age>=1.15){
+  const f=smooth((age-1.15)/1.10),xx=wrist.x+(510-wrist.x)*f,yy=wrist.y+(493-wrist.y)*f;incenseBundle(xx,yy,held,0,true);
+ }else if(held)incenseBundle(wrist.x,wrist.y,held,angle,lit);
+ if(stage==='taking'){const f=smooth(age/.72),sx=242+held*12,sy=474;incenseStem(sx+(wrist.x+(held-1)*4-sx)*f,sy+(wrist.y-sy)*f,0,false)}
+ if(stage==='collect')target(219,403,78,88,()=>requestIncenseAction('take'));
+ if(stage==='lightReady')target(290,418,42,65,()=>requestIncenseAction('light'));
+ if(stage==='hold')target(290,400,115,176,beginQuietBow);
+ if(stage==='offer')target(469,430,84,91,()=>requestIncenseAction('offer'));
+ // Progress stays above the persistent action button, not on the character.
+ if(stage==='complete'){
+  label(tr('Draw a fortune','求签'),310,632,()=>start('sticks'));
+  label(tr('Moon blocks','掷筊'),490,632,()=>start('moon'))
+ }else{
+  const info=stage==='bow'?tr('Bow ','鞠躬 ')+(state.bows+1)+' / 3':
+   ['hold','offer'].includes(stage)?tr('Bows ','鞠躬 ')+state.bows+' / 3':
+   tr('Incense ','取香 ')+(state.prayerHeld||0)+' / 3';
+  txt(info,400,625,17,'#fff1d6')
+ }
+ ctx.restore()
+};
 
 /* Temple courtyard: every ritual remains in the illustrated scene. */
 activityTitle.templeBell=['The bronze bell','山寺钟声'];
@@ -1116,7 +1209,7 @@ function drawRitualPose(x,y,sc,opts={}){
  ctx.restore();ctx.restore();
  return{x:x+wrist.x*sc,y:y+wrist.y*sc}
 }
-function lightTempleIncense(){if(activity!=='prayer'||state.incense||state.prayerStage!=='ready')return;state.incense=true;state.incenseAt=t;sound(350);hint('The incense is lit. Make a wish when you are ready.','香已点燃，准备好就静心祈愿。')}
+function lightTempleIncense(){requestIncenseAction('light')}
 
 /* Food Street release: prepare, serve, taste and keep the finished recipe. */
 activityTitle.bubbleTea=['Bubble tea','手摇奶茶'];
@@ -1951,7 +2044,7 @@ syncSigns=function(){
 /* Recurring villagers remember distinct conversations rather than rewarding repeated taps. */
 const residentProfiles={
  keeper:{name:['Temple keeper','庙祝'],reward:['Keeper’s quiet blessing','庙祝的静心福签'],greeting:['The incense is ready. Your inbox can wait.','香已经备好了，工作消息可以晚点再回。'],returning:['Welcome back. The bell missed you. It has been very dramatic about it.','又来了啊。钟都想你了，刚才还闹着要响。'],topics:[
-  {label:['Ask about the temple','问问庙里的事'],reply:['Light incense, bow quietly, then try the fortune sticks. You can keep a slip or tie it in the garden.','先上香，再静心行礼，然后去求签。签纸可以带走，也可以系在庭院里。']},
+  {label:['Ask about the temple','问问庙里的事'],reply:['Take three joss sticks, light them, bow three times and place them in the burner. Then draw a fortune if you like.','先取三炷香，点香，三鞠躬，再插入香炉。之后可以随心求签。']},
   {label:['Share a little worry','聊聊最近的烦恼'],reply:['You do not need to solve everything before sunset. Even the incense burns one moment at a time.','不用赶在日落前把所有烦恼解决。你看，香也是一点一点烧的。']},
   {label:['Ask for a quiet spot','找个清静的地方'],reply:['There is a little garden behind the temple. Sit by the chimes. Nobody will ask for your quarterly goals.','庙后面有个小庭院，去风铃旁坐坐吧。那里没人问你季度目标。']}
  ]},
@@ -2840,10 +2933,13 @@ let ritualActionKey='';
 function syncRitualBar(){
  const show=activity==='prayer'&&!talkOpen&&proposal.hidden&&$('page').style.display!=='block';
  if(!show){ritualActionBar.hidden=true;ritualActionKey='';return}
- const stage=state.prayerStage,canPray=state.incense&&t-(state.incenseAt??0)>=1.05;
- const key=[stage,!!state.incense,canPray,zh].join('|');if(key===ritualActionKey)return;ritualActionKey=key;ritualActionBar.replaceChildren();
- ritualActionBar.hidden=stage!=='ready';
- if(stage==='ready'){const btn=b(ritualActionBar,state.incense?tr('Bow three times','三鞠躬祈愿'):tr('Offer incense','上香'),state.incense?beginQuietBow:lightTempleIncense);btn.disabled=!!state.incense&&!canPray}
+ const stage=state.prayerStage,held=state.prayerHeld||0,bows=state.bows||0;
+ const key=[stage,held,bows,zh].join('|');if(key===ritualActionKey)return;ritualActionKey=key;ritualActionBar.replaceChildren();
+ const steps={collect:[tr('Take a joss stick','取一炷香')+' ('+held+'/3)','take'],lightReady:[tr('Light the three sticks','点燃三炷香'),'light'],hold:[tr('Bow','鞠躬')+' '+(bows+1)+'/3','bow'],offer:[tr('Place incense in burner','将香插入香炉'),'offer']};
+ ritualActionBar.hidden=stage==='complete';
+ if(ritualActionBar.hidden)return;
+ if(steps[stage]){const [label,action]=steps[stage];b(ritualActionBar,label,()=>requestIncenseAction(action))}
+ else {const messages={approach:['Walking to the incense stand…','走向香台……'],taking:['Picking up the incense…','正在取香……'],lighting:['Lighting incense…','正在点香……'],walkMat:['Walking to the altar…','走到香案前……'],bow:['A quiet bow…','静心行礼……'],placing:['Offering incense…','正在上香……'],returnMat:['Stepping back…','退后一步……']};const status=element('p',tr(...(messages[stage]||['A quiet moment','片刻静心'])),ritualActionBar,'incenseRitualStatus');status.setAttribute('role','status')}
 }
 const quietUiStyle=document.createElement('style');quietUiStyle.textContent='#ritualActionBar{position:absolute;z-index:5;bottom:calc(env(safe-area-inset-bottom,0px) + 75px);left:50%;transform:translateX(-50%);width:min(80vw,260px);text-align:center}#ritualActionBar[hidden]{display:none!important}#ritualActionBar button{width:100%;min-height:48px;background:#f2e4c6;color:#584732;font-size:16px;border:1px solid #a28b61;border-radius:5px}body.meow-dialogue #movePad,body.meow-dialogue #moveGuide,body.meow-dialogue #walkHelp,body.meow-dialogue #gameControls,body.meow-dialogue #ritualActionBar,body.meow-dialogue #hint{display:none!important;pointer-events:none!important}#dialogue{z-index:12!important}#luck{display:none!important}#dockScoop .dockIcon{font-size:21px}';document.head.append(quietUiStyle);
 const sayBeforeQuiet=say,closeBeforeQuiet=closeTalk;
@@ -6277,7 +6373,7 @@ function drawFittedFortuneText(words,w,h){
  }finally{ctx.restore()}
 }
 const portraitActivityBounds={
- prayer:[155,660,310,665],templeBell:[110,665,215,665],
+ prayer:[160,635,365,660],templeBell:[110,665,215,665],
  templeWater:[240,650,325,690],sticks:[205,615,260,670],
  moon:[200,600,220,665],templePaper:[215,655,300,675]
 };
@@ -6637,3 +6733,5 @@ function drawAmbientBackgroundVisit(){
 }
 const backgroundVisitPaintBefore=paintLivingBackdrop;
 paintLivingBackdrop=function(im){const result=backgroundVisitPaintBefore(im);if(activity&&ambientVisit.active)drawAmbientBackgroundVisit();return result};
+
+const incenseRitualStyle=document.createElement('style');incenseRitualStyle.textContent='#ritualActionBar .incenseRitualStatus{margin:0;padding:10px 12px;border:1px solid #b8a077;border-radius:5px;background:#f0e2c7f2;color:#5e503d;font:14px/1.4 system-ui}#ritualActionBar button{white-space:normal;min-height:48px}';document.head.append(incenseRitualStyle);
