@@ -2190,3 +2190,73 @@ action=function(id){
  }
  return riverActionBefore(id)
 };
+
+
+/* Daily editorial content: stable personal fortune, changing reactions.
+   No birth details, name, private notes, network or paid service involved. */
+let townDailySeed=load('townDailySeedV1',null);
+if(typeof townDailySeed!=='string'||!/^[a-z0-9]{8,40}$/.test(townDailySeed)){
+ townDailySeed=Array.from(crypto.getRandomValues(new Uint32Array(3)),n=>n.toString(36).padStart(7,'0')).join('');
+ save('townDailySeedV1',townDailySeed)
+}
+const townFortunes=[
+ {title:['The quiet inbox','邮箱难得清静'],work:['If nobody says “quick call”, take the win.','没人喊你开个短会，就是今天的福气。'],rest:['Make a cup of something before opening another tab.','先喝口水，别急着开第十八个网页。'],place:'island'},
+ {title:['A small detour','今日宜绕路'],work:['The printer can have its own personal crisis.','打印机卡纸，让它自己冷静一下。'],rest:['Take the scenic route to the kitchen.','绕个路去外婆家，顺便蹭口汤。'],place:'island'},
+ {title:['Protect your lunch','午饭保卫战'],work:['A meeting at noon is a crime against noodles.','中午开会，面条都替你委屈。'],rest:['Eat something you actually enjoy.','今天吃点自己喜欢的，别再随便对付。'],place:'island'},
+ {title:['No need to explain','今日宜少解释'],work:['“Noted” is a complete sentence in this town.','在摸鱼小镇，回复“收到”就够了。'],rest:['Let Auntie handle the imaginary paperwork.','把烦恼交给码头阿姨，她专治加班。'],place:'home'},
+ {title:['A little bravery','胆量加一格'],work:['You are allowed to ask when the meeting ends.','勇敢一点，问问这个会到底几点结束。'],rest:['Try a machine you have not mastered.','试试那台还没拿下的游戏机。'],place:'island'},
+ {title:['The cat approves','猫猫已批准'],work:['Today’s imaginary supervisor is a cat. It is asleep.','今天的虚拟领导是只猫，正在睡觉。'],rest:['Give yourself the same patience as a shy cat.','对自己也像对怕生的小猫一样耐心。'],place:'home'},
+ {title:['An ordinary good day','平平常常也很好'],work:['No grand achievement required. Showing up counts.','不用每天干出大事，平安下班也算赢。'],rest:['Visit the temple if you feel like a quiet minute.','想清静一分钟，就去庙里走走。'],place:'fortune'},
+ {title:['Leave it for tomorrow','明天再说'],work:['The spreadsheet has not developed feelings overnight.','表格不会因为你今晚不改它而伤心。'],rest:['Send one imaginary worry down the river.','挑一个烦恼，送它去河里出差。'],place:'home'},
+ {title:['A curious little clue','今日有点小好奇'],work:['Not every mystery requires a follow-up email.','不是每个谜团都需要邮件追进度。'],rest:['Explore a different story at Discovery Station.','去奇遇驿站，看看人生还有什么剧本。'],place:'wonder'},
+ {title:['A warm bowl','热汤比大道理实在'],work:['Some problems are easier after lunch.','有些事情吃饱了再想，真的会容易一点。'],rest:['Grandma has an opinion about instant noodles.','外婆对泡面当晚餐这件事很有意见。'],place:'island'},
+ {title:['The right to do less','今天少做一点'],work:['Your calendar does not need another personality.','你的日历已经够满了，不必再培养一个分身。'],rest:['A short walk counts as a whole little holiday.','走一小段路，也算给自己放个小假。'],place:'fortune'},
+ {title:['Unexpected small joys','小开心正在路上'],work:['The group chat can wait until the tea is ready.','群聊先放着，奶茶摇完再说。'],rest:['Follow your curiosity, not the task list.','今天跟着好奇心走，不跟着待办清单。'],place:'wonder'}
+];
+const townColours=[['Sage green','鼠尾草绿','#8d9d81'],['Tea brown','奶茶棕','#b38d68'],['River blue','河水蓝','#729ba4'],['Persimmon','柿子橙','#c78658'],['Plum','梅子紫','#94758c'],['Rice paper','米纸白','#e5d6b5'],['Moss','苔藓绿','#6e8361'],['Evening pink','晚霞粉','#c9918c']];
+function townFortuneFor(date=shrineClock().day,seed=townDailySeed){
+ // A rotating editorial sequence guarantees adjacent days have different themes.
+ const ordinal=Math.floor(Date.parse(date+'T00:00:00Z')/86400000);
+ const n=hash(seed+'theme')%townFortunes.length;
+ const themeIndex=((ordinal+n)%townFortunes.length+townFortunes.length)%townFortunes.length;
+ return {date,themeIndex,theme:townFortunes[themeIndex],colour:townColours[hash(seed+date+'colour')%townColours.length],number:1+hash(seed+date+'number')%9}
+}
+function renderTownFortune(book){
+ const f=townFortuneFor(),slip=element('section','',book,'townFortuneSlip');slip.dataset.date=f.date;slip.dataset.theme=String(f.themeIndex);
+ element('small',f.date+' · '+tr('A NOTE FROM THE VALLEY','解忧谷今日小签'),slip,'fortuneDate');
+ element('h2',tr(...f.theme.title),slip);
+ element('p',tr(...f.theme.work),slip,'fortuneWork');
+ element('p',tr(...f.theme.rest),slip);
+ const row=element('div','',slip,'fortuneDetails'),swatch=element('span','',row,'fortuneSwatch');swatch.style.backgroundColor=f.colour[2];
+ element('span',tr(...f.colour.slice(0,2))+' · '+tr('Lucky number ','幸运数字 ')+f.number,row);
+ element('small',tr('For fun, not a prediction.','摸鱼趣签，仅供娱乐。'),slip);
+ // No automatic travel, no new collectible or reroll button.
+}
+const townFortuneStyle=document.createElement('style');
+townFortuneStyle.textContent='.townFortuneSlip{position:relative;margin:14px 0 20px;padding:17px 19px;background:#f2e5c7;color:#594634;border:1px solid #bca17c;border-radius:3px;box-shadow:2px 4px 0 #cfba92;font-family:Georgia,"Songti SC",serif}.townFortuneSlip:before{content:"";position:absolute;inset:5px;border:1px solid #bca17c88;pointer-events:none}.townFortuneSlip h2{margin:8px 0!important;font-size:clamp(20px,5vw,26px);line-height:1.25;color:#4c6253}.townFortuneSlip p{margin:7px 0;line-height:1.5;font-size:14px;overflow-wrap:anywhere}.townFortuneSlip small{font-size:11px;color:#725c45}.townFortuneSlip .fortuneDetails{display:flex;gap:9px;align-items:center;margin:11px 0;font-size:13px}.fortuneSwatch{display:inline-block;flex:none;width:22px;height:22px;border-radius:50%;border:1px solid #927c60}.fortuneDate{letter-spacing:.02em}';
+document.head.append(townFortuneStyle);
+const townFortunePassport=passport;
+passport=function(){townFortunePassport();const book=$('content').querySelector('.travelAlbum');if(book){renderTownFortune(book);const slip=book.lastElementChild,profile=book.querySelector('.albumProfile');if(profile&&profile.parentNode===book)profile.after(slip);else book.prepend(slip)}};
+$('dockPassport').onclick=passport;
+
+// Reactions rotate without immediately repeating. Attempts are session-local;
+// personality scores, daily readings, skill outcomes and private text are untouched.
+const townReactionCursor=new Map();
+function townReaction(key,lines){
+ const count=townReactionCursor.get(key)||0;townReactionCursor.set(key,count+1);
+ return lines[(hash(shrineClock().day+townDailySeed+key)%lines.length+count)%lines.length]
+}
+const auntieHitReplies=[
+ ['Auntie: That one was for the meeting about the meeting.','阿姨：这一下，打给那个讨论要不要开会的会。'],
+ ['Auntie: Slow down. The slipper also has working hours.','阿姨：慢点，拖鞋也是有下班时间的。'],
+ ['Auntie: Very good. Now unclench your jaw.','阿姨：很好。现在把牙关松开。'],
+ ['Auntie: Nobody needs a PowerPoint for this.','阿姨：这件事不用做汇报PPT。'],
+ ['Auntie: Your paper worry has requested a transfer.','阿姨：纸小人已经申请调部门了。'],
+ ['Auntie: One more? Up to you. I charge imaginary money.','阿姨：还打不打随你，反正收的是空气钱。']
+];
+const auntieSmackBefore=smack;
+smack=function(){
+ if(activity!=='hit'||room!=='fish')return auntieSmackBefore();
+ auntieSmackBefore();
+ if(state.count!==10&&state.count!==25&&state.count!==50&&stressCombo!==5)hint(...townReaction('auntieHit',auntieHitReplies))
+};
