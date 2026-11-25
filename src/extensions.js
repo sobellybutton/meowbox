@@ -1173,7 +1173,8 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
   const f=poseEase(age/.25),px=495-48*f,py=421-30*f;teaPitcher(px,py,state.teaBase,-.72*f);
   if(age>.18&&age<.98){ctx.save();ctx.strokeStyle=teaChoices[state.teaBase][2];ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(px-19,py-35);ctx.quadraticCurveTo(420,py+5,420,450);ctx.stroke();ctx.restore()}
  }
- if(stage==='base')teaChoices.forEach((v,i)=>{let x=265+i*135;teaPitcher(x,596,i);label(tr(v[0],v[1]),x,635,()=>selectTeaBase(i));target(x-38,530,76,76,()=>selectTeaBase(i))});
+ if(stage==='base'&&W<H){txt(tr('Choose your tea','选择茶底'),400,566,19,'#fff3d9');line(235,578,565,578,'#e3c69b',1.5)}
+ if(stage==='base')teaChoices.forEach((v,i)=>{let p=teaBaseSlot(i,W<H),short=[['Milk tea','经典奶茶'],['Jasmine','茉莉奶茶'],['Brown sugar','黑糖奶茶']][i];teaPitcher(p.x,p.y,i);label(tr(...(W<H?short:v)),p.x,p.y+39,()=>selectTeaBase(i));target(p.x-51,p.y-65,102,78,()=>selectTeaBase(i))});
  if(stage==='pearls'){
   ellipse(530,540,36,15,'#e5caa0');ellipse(530,537,30,10,'#986b53');
   for(let i=0;i<12;i++)ellipse(511+(i*13)%39,532+(i%3)*5,4,4,'#50362e');
@@ -1182,7 +1183,7 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
   else teaScoopArt(530,520,0,true);
   target(487,480,90,80,()=>{},'teaPearlScoop');
   label(tr('Scoop pearls','舀珍珠'),530,610,teaAddPearls);
-  txt(tr('Drag the scoop to the cup','把珍珠舀进杯里'),400,570,15,'#fff3d9');
+  activityFitText(tr('Drag the scoop to the cup','把珍珠舀进杯里'),400,570,15,290,'#fff3d9');
  }
  if(stage==='mix'){
   target(325,415,185,145,()=>{},'teaMix');
@@ -1236,8 +1237,8 @@ function boxAward(){if(state.boxStage!=='opening')return;state.boxStage='result'
 function boxArt(x,y,sc=1,i=0,open=0,tilt=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(tilt);let col=['#cba58a','#91aba3','#b3a2bd'][i%3];ellipse(0,9,49,11,'#292c2744');ctx.beginPath();ctx.moveTo(-44,-72);ctx.lineTo(28,-72);ctx.lineTo(44,-58);ctx.lineTo(44,0);ctx.lineTo(-28,9);ctx.lineTo(-44,-5);ctx.closePath();ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#695548';ctx.stroke();ctx.beginPath();ctx.moveTo(28,-72);ctx.lineTo(28,0);ctx.lineTo(44,0);ctx.lineTo(44,-58);ctx.closePath();ctx.fillStyle='#4b443b35';ctx.fill();round(-46,-76-open*37,92,16,3,'#e8d5ad','#826a4c');line(-36,-66-open*37,35,-66-open*37,'#a7895c',2);txt('?',-8,-25,32,'#fff0cc');line(-29,-8,15,-8,'#f4e1bd',2);ctx.restore()}
 const arcadeReleaseProp=prop;prop=function(id,x,y){if(id==='blindBox'){boxArt(x,y-23,.8,1);return}if(id==='rhythm'){ctx.save();ctx.translate(x,y-45);round(-50,-56,100,83,5,'#3d5350','#c9aa77');for(let i=0;i<4;i++){round(-43+i*23,-15,20,32,3,rhythmColor[i]);txt(rhythmArrows[i],-33+i*23,1,18,'#443b33')}for(let i=0;i<3;i++)ellipse(-22+i*22,-35,6,6,'#ead3a0');ctx.restore();return}return arcadeReleaseProp(id,x,y)};
 const arcadeReleaseDraw=drawActivity;drawActivity=function(){if(!['rhythm','blindBox'].includes(activity))return arcadeReleaseDraw();ctx.save();paintLivingBackdrop(pics.arcade||pics.tea||pics.streetKitchen);let shade=ctx.createLinearGradient(0,280,0,700);shade.addColorStop(0,'#293e3f40');shade.addColorStop(1,'#282b32b0');shadeLivingBackdrop(shade);
-if(activity==='rhythm'){let stage=state.rhythmStage,elapsed=t-(state.rhythmAt??t);if(stage==='play'){for(let n of state.rhythmNotes){if(!n.status&&elapsed-n.at>.31){n.status=2;state.rhythmMiss++;state.rhythmCombo=0}}if(elapsed>14)rhythmFinish()}let left=258,top=326,bottom=566;for(let i=0;i<4;i++){let x=left+i*71;round(x,top,65,bottom-top+45,5,'#243834a8','#bda37d');for(let j=0;j<5;j++)line(x+3,top+j*48,x+62,top+j*48,'#e9d8b528',1);round(x,bottom,65,45,5,state.rhythmLane===i&&t-state.rhythmFlash<.18?'#f5e2b1':rhythmColor[i],'#e7d2a4');txt(rhythmArrows[i],x+32,bottom+21,28,'#423a32');if(stage==='play')target(x,bottom-28,65,92,()=>rhythmHit(i))}if(stage==='play'){for(let n of state.rhythmNotes){let delta=n.at-elapsed;if(!n.status&&delta<1.8&&delta>-.31){let y=bottom+22-delta*135;ctx.save();ctx.beginPath();ctx.rect(left,top,278,285);ctx.clip();round(left+n.lane*71+7,y-18,51,36,5,rhythmColor[n.lane],'#fff0d1');txt(rhythmArrows[n.lane],left+n.lane*71+32,y,22,'#403b32');ctx.restore()}}txt(String(state.rhythmScore)+'  ·  '+tr('Combo ','连击 ')+state.rhythmCombo,400,292,18,'#fff1d2');if(elapsed<0)txt(String(Math.max(1,Math.ceil(-elapsed))),400,435,48,'#fff0bf');if(state.rhythmResult&&t-state.rhythmFlash<.6)txt(tr(...state.rhythmResult),400,638,17,'#fff1d0')}else if(stage==='intro'){txt(tr('A short dance break','来一段下班舞曲'),400,295,20,'#fff0d1');label(tr('Start the beat','开始节拍'),400,640,rhythmBegin)}else{txt(tr('Score ','得分 ')+state.rhythmScore+'  ·  '+tr('Best combo ','最高连击 ')+state.rhythmBest,400,290,17,'#fff1d2');label(tr('Play again','再来一次'),400,640,()=>start('rhythm'))}}
-if(activity==='blindBox'){let stage=state.boxStage,age=t-state.boxAt;if(stage==='choose'){for(let i=0;i<3;i++){let x=270+i*130;boxArt(x,530,.9,i);target(x-48,438,96,105,()=>boxSelect(i));label(tr('Box ','盲盒 ')+(i+1),x,570,()=>boxSelect(i))}}else{let held=drag?.id==='boxShake',x=held?Math.max(290,Math.min(510,drag.x)):400,y=held?Math.max(440,Math.min(535,drag.y)):515,opening=stage==='opening'?poseEase(age/.95):stage==='result'?1:0;drawRitualPose(275,555,1.45,{reach:held?{x:x-38,y:y-35}:null});boxArt(x,y,1.15,state.boxPick,opening,held?Math.sin(t*20)*.16:age<.3&&stage==='shake'?Math.sin(age*28)*.1:0);if(stage==='opening'&&age>=.95)boxAward();if(stage==='opening'||stage==='result'){let v=boxPrizes[state.boxPrize];ctx.save();ctx.globalAlpha=Math.max(.1,opening);drawBlindCollectible(400,450-35*opening,v,1.8);ctx.restore();if(stage==='result'){txt(tr(v[0],v[1]),400,590,19,'#fff2d1');txt(tr(v[4]==='secret'?'SECRET':v[4]==='rare'?'RARE':v[4]==='uncommon'?'UNCOMMON':'COMMON',v[4]==='secret'?'隐藏款':v[4]==='rare'?'稀有款':v[4]==='uncommon'?'特别款':'普通款')+' · '+boxPrizes.filter(p=>items.some(it=>it[0]===p[0])).length+'/'+boxPrizes.length,400,615,13,'#f2d49d');label(tr('Pick another','再选一个'),310,650,()=>start('blindBox'));label(tr('Collection','收藏册'),500,650,blindCollectionPage)}}if(stage==='shake'){target(330,420,140,130,()=>{},'boxShake');txt(tr('Shake ','摇动 ')+Math.round(state.boxShake)+'%',400,602,17,'#fff1d0');label(tr('Shake gently','轻轻摇晃'),400,642,()=>boxShake(70))}if(stage==='ready'){target(330,420,140,130,boxOpen);label(tr('Open the box','打开盲盒'),400,620,boxOpen)}}}ctx.restore()};
+if(activity==='rhythm'){let stage=state.rhythmStage,elapsed=t-(state.rhythmAt??t);if(stage==='play'){for(let n of state.rhythmNotes){if(!n.status&&elapsed-n.at>.31){n.status=2;state.rhythmMiss++;state.rhythmCombo=0}}if(elapsed>14)rhythmFinish()}let layout=arcadeRhythmLayout(W<H),{left,top,bottom,laneW,step,padH,travel}=layout;for(let i=0;i<4;i++){let x=left+i*step;round(x,top,laneW,bottom-top+padH,5,'#243834a8','#bda37d');for(let j=0;j<5;j++){let yy=top+j*(bottom-top)/5;line(x+3,yy,x+laneW-3,yy,'#e9d8b528',1)}round(x,bottom,laneW,padH,5,state.rhythmLane===i&&t-state.rhythmFlash<.18?'#f5e2b1':rhythmColor[i],'#e7d2a4');txt(rhythmArrows[i],x+laneW/2,bottom+padH/2,W<H?34:28,'#423a32');if(stage==='play')target(x,bottom-12,laneW,padH+18,()=>rhythmHit(i))}if(stage==='play'){for(let n of state.rhythmNotes){let delta=n.at-elapsed;if(!n.status&&delta<1.8&&delta>-.31){let y=bottom+padH/2-delta*travel;ctx.save();ctx.beginPath();ctx.rect(left,top,step*3+laneW,bottom-top+padH);ctx.clip();round(left+n.lane*step+7,y-18,laneW-14,36,5,rhythmColor[n.lane],'#fff0d1');txt(rhythmArrows[n.lane],left+n.lane*step+laneW/2,y,22,'#403b32');ctx.restore()}}txt(String(state.rhythmScore)+'  ·  '+tr('Combo ','连击 ')+state.rhythmCombo,400,top-30,18,'#fff1d2');if(elapsed<0)txt(String(Math.max(1,Math.ceil(-elapsed))),400,435,48,'#fff0bf');if(state.rhythmResult&&t-state.rhythmFlash<.6)txt(tr(...state.rhythmResult),400,bottom+padH+27,17,'#fff1d0')}else if(stage==='intro'){txt(tr('A short dance break','来一段下班舞曲'),400,top-30,20,'#fff0d1');label(tr('Start the beat','开始节拍'),400,bottom+padH+32,rhythmBegin)}else{txt(tr('Score ','得分 ')+state.rhythmScore+'  ·  '+tr('Best combo ','最高连击 ')+state.rhythmBest,400,top-30,17,'#fff1d2');label(tr('Play again','再来一次'),400,bottom+padH+32,()=>start('rhythm'))}}
+if(activity==='blindBox'){let stage=state.boxStage,age=t-state.boxAt;if(stage==='choose'){for(let i=0;i<3;i++){let p=arcadeBoxSlot(i,W<H);boxArt(p.x,p.y,p.sc,i);target(p.x-54*p.sc,p.y-85*p.sc,108*p.sc,98*p.sc,()=>boxSelect(i));label(tr('Box ','盲盒 ')+(i+1),p.x,p.y+35,()=>boxSelect(i))}}else{let held=drag?.id==='boxShake',x=held?Math.max(290,Math.min(510,drag.x)):400,y=held?Math.max(440,Math.min(535,drag.y)):515,opening=stage==='opening'?poseEase(age/.95):stage==='result'?1:0;drawRitualPose(275,555,1.45,{reach:held?{x:x-38,y:y-35}:null});boxArt(x,y,1.15,state.boxPick,opening,held?Math.sin(t*20)*.16:age<.3&&stage==='shake'?Math.sin(age*28)*.1:0);if(stage==='opening'&&age>=.95)boxAward();if(stage==='opening'||stage==='result'){let v=boxPrizes[state.boxPrize];ctx.save();ctx.globalAlpha=Math.max(.1,opening);drawBlindCollectible(400,(W<H?430:450)-35*opening,v,W<H?2.45:1.8);ctx.restore();if(stage==='result'){activityFitText(tr(v[0],v[1]),400,590,19,310,'#fff2d1');txt(tr(v[4]==='secret'?'SECRET':v[4]==='rare'?'RARE':v[4]==='uncommon'?'UNCOMMON':'COMMON',v[4]==='secret'?'隐藏款':v[4]==='rare'?'稀有款':v[4]==='uncommon'?'特别款':'普通款')+' · '+boxPrizes.filter(p=>items.some(it=>it[0]===p[0])).length+'/'+boxPrizes.length,400,615,13,'#f2d49d');label(tr('Pick another','再选一个'),310,650,()=>start('blindBox'));label(tr('Collection','收藏册'),500,650,blindCollectionPage)}}if(stage==='shake'){target(330,420,140,130,()=>{},'boxShake');txt(tr('Shake ','摇动 ')+Math.round(state.boxShake)+'%',400,602,17,'#fff1d0');label(tr('Shake gently','轻轻摇晃'),400,642,()=>boxShake(70))}if(stage==='ready'){target(330,420,140,130,boxOpen);label(tr('Open the box','打开盲盒'),400,620,boxOpen)}}}ctx.restore()};
 const arcadeStory=keepsakeStory;keepsakeStory=function(item){if(boxPrizes.some(v=>v[0]===item[0]))return ['A little figure from the arcade. Its only job is to keep you company.','来自游戏厅的小手办，唯一的工作就是陪你摸鱼。'];return arcadeStory(item)};
 
 /* Reading house: a physical spread with topic choices, card handling and a saved journal. */
@@ -2105,8 +2106,8 @@ function clawCabinet(){
  round(264,552,77,40,5,'#584e47','#f1d4a2');
  if(state.clawResult?.i>=0&&t-state.clawResult.at<6)arcadePrizeArt(302,587,clawPlushes[state.clawResult.i][3],.65);
  round(358,559,174,33,7,state.dropping?'#aa9983':'#b76856','#7a5146');
- txt(state.dropping?tr('In motion…','抓取中……'):tr('LOWER CLAW','下夹'),445,575,15,'#fff0db');
- if(!state.dropping){target(252,358,296,178,()=>{},'claw');target(354,550,184,49,doClaw)}
+ activityFitText(state.dropping?tr('In motion…','抓取中……'):tr('LOWER CLAW','下夹'),445,575,15,160,'#fff0db');
+ if(!state.dropping){target(252,358,296,178,()=>{},'claw');target(354,540,184,W<H?65:59,doClaw)}
  txt(state.clawResult?state.clawResult.i>=0?tr('Prize delivered!','玩偶到手啦！'):tr('Try a little closer','再瞄准一点'):tr('Slide to aim','左右滑动瞄准'),400,621,15,'#fff1d8');if(!state.dropping){label(state.clawExpert?tr('Precision mode: ON','精准模式：开'):tr('Try precision mode','挑战精准夹取'),400,655,()=>{state.clawExpert=!state.clawExpert;state.clawResult=null;hint(...(state.clawExpert?['Expert mode: aim at the exact centre.','高手模式：对准玩偶正中心。']:['Casual mode. Take your time.','休闲模式，慢慢来。']))});}
  ctx.restore();
 }
@@ -4101,6 +4102,7 @@ table=function(){
  // Stove top, low cast iron trivet and visible burner; no floating pot.
  const stove=ctx.createLinearGradient(0,450,0,555);stove.addColorStop(0,'#7e8179');stove.addColorStop(1,'#464b48');
  ctx.fillStyle=stove;ctx.beginPath();ctx.moveTo(313,449);ctx.lineTo(487,449);ctx.lineTo(535,559);ctx.lineTo(265,559);ctx.closePath();ctx.fill();ctx.strokeStyle='#454b45';ctx.lineWidth=2;ctx.stroke();ellipse(400,516,103,35,'#3f4440');ellipse(400,517,81,24,'#676f65');for(const x of [312,488]){ellipse(x,542,14,8,'#414a43');ellipse(x,539,10,5,'#a29e88')}
+ if(W<H&&!state.done){const stirring=drag?.id==='stir';drawRitualPose(250,450,1.22,{reach:stirring?{x:310,y:425}:null,bow:stirring?.10:0})}
  ctx.restore()
 };
 const enamelPotBefore=pot;
@@ -6294,4 +6296,26 @@ mobileRoomCamera=function(s,ox,oy){
  // changing the coordinate conversion halfway through a throw or drag.
  const progress=drag||residentReducedMotion.matches||activityZoomAt<0?1:poseEase(clamp((performance.now()-activityZoomAt)/550,0,1));
  return portraitActivityFit(W,H,bounds,progress)
+};
+
+/* Food and arcade: native portrait interaction arrangements, with world-space
+   controls matching the painted objects. Desktop retains its original layout. */
+function arcadeRhythmLayout(portrait){
+ return portrait?{left:220,top:267,bottom:615,laneW:86,step:92,padH:68,travel:205}:{left:258,top:326,bottom:566,laneW:65,step:71,padH:45,travel:135};
+}
+function arcadeBoxSlot(i,portrait){
+ if(!portrait)return {x:270+i*130,y:530,sc:.9};
+ return i===0?{x:400,y:392,sc:1.25}:{x:i===1?302:498,y:574,sc:1.15};
+}
+function teaBaseSlot(i,portrait){return {x:265+i*135,y:portrait?653:596}}
+function activityFitText(value,x,y,size,maxWidth,color){
+ ctx.save();try{ctx.font=size+'px Georgia,serif';const actual=Math.min(size,size*maxWidth/Math.max(1,ctx.measureText(value).width));ctx.font=actual+'px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=color;ctx.fillText(value,x,y,maxWidth)}finally{ctx.restore()}
+}
+const foodArcadePortraitBounds={cook:[190,610,290,675],bubbleTea:[200,605,285,730],claw:[206,600,270,690],rhythm:[205,595,220,755],blindBox:[205,595,220,690]};
+const foodArcadeCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(s,ox,oy){
+ if(W>=H||!Object.hasOwn(foodArcadePortraitBounds,activity))return foodArcadeCameraBefore(s,ox,oy);
+ const bounds=foodArcadePortraitBounds[activity];
+ // Stable scale throughout gestures and stage changes; keeps drag paths aligned.
+ return portraitActivityFit(W,H,bounds,1)
 };
