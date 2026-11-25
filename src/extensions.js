@@ -1182,7 +1182,7 @@ function boxArt(x,y,sc=1,i=0,open=0,tilt=0){ctx.save();ctx.translate(x,y);ctx.sc
 const arcadeReleaseProp=prop;prop=function(id,x,y){if(id==='blindBox'){boxArt(x,y-23,.8,1);return}if(id==='rhythm'){ctx.save();ctx.translate(x,y-45);round(-50,-56,100,83,5,'#3d5350','#c9aa77');for(let i=0;i<4;i++){round(-43+i*23,-15,20,32,3,rhythmColor[i]);txt(rhythmArrows[i],-33+i*23,1,18,'#443b33')}for(let i=0;i<3;i++)ellipse(-22+i*22,-35,6,6,'#ead3a0');ctx.restore();return}return arcadeReleaseProp(id,x,y)};
 const arcadeReleaseDraw=drawActivity;drawActivity=function(){if(!['rhythm','blindBox'].includes(activity))return arcadeReleaseDraw();ctx.save();paintLivingBackdrop(pics.arcade||pics.tea||pics.streetKitchen);let shade=ctx.createLinearGradient(0,280,0,700);shade.addColorStop(0,'#293e3f40');shade.addColorStop(1,'#282b32b0');shadeLivingBackdrop(shade);
 if(activity==='rhythm'){let stage=state.rhythmStage,elapsed=t-(state.rhythmAt??t);if(stage==='play'){for(let n of state.rhythmNotes){if(!n.status&&elapsed-n.at>.31){n.status=2;state.rhythmMiss++;state.rhythmCombo=0}}if(elapsed>14)rhythmFinish()}let left=258,top=326,bottom=566;for(let i=0;i<4;i++){let x=left+i*71;round(x,top,65,bottom-top+45,5,'#243834a8','#bda37d');for(let j=0;j<5;j++)line(x+3,top+j*48,x+62,top+j*48,'#e9d8b528',1);round(x,bottom,65,45,5,state.rhythmLane===i&&t-state.rhythmFlash<.18?'#f5e2b1':rhythmColor[i],'#e7d2a4');txt(rhythmArrows[i],x+32,bottom+21,28,'#423a32');if(stage==='play')target(x,bottom-28,65,92,()=>rhythmHit(i))}if(stage==='play'){for(let n of state.rhythmNotes){let delta=n.at-elapsed;if(!n.status&&delta<1.8&&delta>-.31){let y=bottom+22-delta*135;ctx.save();ctx.beginPath();ctx.rect(left,top,278,285);ctx.clip();round(left+n.lane*71+7,y-18,51,36,5,rhythmColor[n.lane],'#fff0d1');txt(rhythmArrows[n.lane],left+n.lane*71+32,y,22,'#403b32');ctx.restore()}}txt(String(state.rhythmScore)+'  ·  '+tr('Combo ','连击 ')+state.rhythmCombo,400,292,18,'#fff1d2');if(elapsed<0)txt(String(Math.max(1,Math.ceil(-elapsed))),400,435,48,'#fff0bf');if(state.rhythmResult&&t-state.rhythmFlash<.6)txt(tr(...state.rhythmResult),400,638,17,'#fff1d0')}else if(stage==='intro'){txt(tr('A short dance break','来一段下班舞曲'),400,295,20,'#fff0d1');label(tr('Start the beat','开始节拍'),400,640,rhythmBegin)}else{txt(tr('Score ','得分 ')+state.rhythmScore+'  ·  '+tr('Best combo ','最高连击 ')+state.rhythmBest,400,290,17,'#fff1d2');label(tr('Play again','再来一次'),400,640,()=>start('rhythm'))}}
-if(activity==='blindBox'){let stage=state.boxStage,age=t-state.boxAt;if(stage==='choose'){for(let i=0;i<3;i++){let x=270+i*130;boxArt(x,530,.9,i);target(x-48,438,96,105,()=>boxSelect(i));label(tr('Box ','盲盒 ')+(i+1),x,570,()=>boxSelect(i))}}else{let held=drag?.id==='boxShake',x=held?Math.max(290,Math.min(510,drag.x)):400,y=held?Math.max(440,Math.min(535,drag.y)):515,opening=stage==='opening'?poseEase(age/.95):stage==='result'?1:0;drawRitualPose(275,555,1.45,{reach:held?{x:x-38,y:y-35}:null});boxArt(x,y,1.15,state.boxPick,opening,held?Math.sin(t*20)*.16:age<.3&&stage==='shake'?Math.sin(age*28)*.1:0);if(stage==='opening'&&age>=.95)boxAward();if(stage==='opening'||stage==='result'){let v=boxPrizes[state.boxPrize];ctx.save();ctx.globalAlpha=Math.max(.1,opening);cat(400,450-35*opening,v[3],false,1.8);ctx.restore();if(stage==='result'){txt(tr(v[0],v[1]),400,590,19,'#fff2d1');txt(tr(v[4]==='rare'?'RARE':v[4]==='uncommon'?'UNCOMMON':'COMMON',v[4]==='rare'?'稀有款':v[4]==='uncommon'?'特别款':'普通款'),400,615,13,'#f2d49d');label(tr('Pick another','再选一个'),400,650,()=>start('blindBox'))}}if(stage==='shake'){target(330,420,140,130,()=>{},'boxShake');txt(tr('Shake ','摇动 ')+Math.round(state.boxShake)+'%',400,602,17,'#fff1d0');label(tr('Shake gently','轻轻摇晃'),400,642,()=>boxShake(70))}if(stage==='ready'){target(330,420,140,130,boxOpen);label(tr('Open the box','打开盲盒'),400,620,boxOpen)}}}ctx.restore()};
+if(activity==='blindBox'){let stage=state.boxStage,age=t-state.boxAt;if(stage==='choose'){for(let i=0;i<3;i++){let x=270+i*130;boxArt(x,530,.9,i);target(x-48,438,96,105,()=>boxSelect(i));label(tr('Box ','盲盒 ')+(i+1),x,570,()=>boxSelect(i))}}else{let held=drag?.id==='boxShake',x=held?Math.max(290,Math.min(510,drag.x)):400,y=held?Math.max(440,Math.min(535,drag.y)):515,opening=stage==='opening'?poseEase(age/.95):stage==='result'?1:0;drawRitualPose(275,555,1.45,{reach:held?{x:x-38,y:y-35}:null});boxArt(x,y,1.15,state.boxPick,opening,held?Math.sin(t*20)*.16:age<.3&&stage==='shake'?Math.sin(age*28)*.1:0);if(stage==='opening'&&age>=.95)boxAward();if(stage==='opening'||stage==='result'){let v=boxPrizes[state.boxPrize];ctx.save();ctx.globalAlpha=Math.max(.1,opening);arcadePrizeArt(400,450-35*opening,v[3],1.8);ctx.restore();if(stage==='result'){txt(tr(v[0],v[1]),400,590,19,'#fff2d1');txt(tr(v[4]==='rare'?'RARE':v[4]==='uncommon'?'UNCOMMON':'COMMON',v[4]==='rare'?'稀有款':v[4]==='uncommon'?'特别款':'普通款'),400,615,13,'#f2d49d');label(tr('Pick another','再选一个'),400,650,()=>start('blindBox'))}}if(stage==='shake'){target(330,420,140,130,()=>{},'boxShake');txt(tr('Shake ','摇动 ')+Math.round(state.boxShake)+'%',400,602,17,'#fff1d0');label(tr('Shake gently','轻轻摇晃'),400,642,()=>boxShake(70))}if(stage==='ready'){target(330,420,140,130,boxOpen);label(tr('Open the box','打开盲盒'),400,620,boxOpen)}}}ctx.restore()};
 const arcadeStory=keepsakeStory;keepsakeStory=function(item){if(boxPrizes.some(v=>v[0]===item[0]))return ['A little figure from the arcade. Its only job is to keep you company.','来自游戏厅的小手办，唯一的工作就是陪你摸鱼。'];return arcadeStory(item)};
 
 /* Reading house: a physical spread with topic choices, card handling and a saved journal. */
@@ -2008,7 +2008,7 @@ function clawCabinet(){
  }
  ctx.save();paintLivingBackdrop(pics.arcade||pics.tea);shadeLivingBackdrop('#27352d72');
  const body=ctx.createLinearGradient(240,340,560,610);body.addColorStop(0,'#c58f79');body.addColorStop(.55,'#ac736a');body.addColorStop(1,'#835b62');
- round(232,302,336,313,13,body,'#563e42');round(246,315,308,40,6,'#e7c69a','#9f7b5c');
+ const frame=productionVisual('arcadeCabinet');if(frame)ctx.drawImage(frame,222,302,380,345);else{round(232,302,336,313,13,body,'#563e42');round(246,315,308,40,6,'#e7c69a','#9f7b5c')}
  txt(tr('AFTER HOURS ARCADE','下班游戏厅'),400,335,17,'#614a3e');
  round(248,358,304,181,5,'#92aaa8','#514e50');
  ctx.save();ctx.beginPath();ctx.rect(250,360,300,176);ctx.clip();
@@ -2016,18 +2016,18 @@ function clawCabinet(){
  ellipse(400,518,151,21,'#687d71');
  for(let i=0;i<3;i++){
   const v=clawPlushes[i];if(state.dropping&&hitIndex===i&&age>=1.05)continue;
-  ellipse(v[2],518,25,6,'#4d5f5760');cat(v[2],515,v[3],false,1.05);
+  ellipse(v[2],518,25,6,'#4d5f5760');arcadePrizeArt(v[2],515,v[3],1.05);
  }
  line(266,361,534,361,'#667574',9);
  line(x,363,x,y,'#504c4a',3);round(x-9,y-9,18,14,4,'#b8b3a0','#726b61');
  const spread=5+open*19;
  for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+side*spread,y+7,x+side*spread,y+18);ctx.lineTo(x+side*(spread-6),y+24);ctx.strokeStyle='#5d6461';ctx.lineWidth=5;ctx.lineCap='round';ctx.stroke()}
- if(carry)cat(x,y+43,clawPlushes[hitIndex][3],false,1.05);
- if(state.dropping&&hitIndex>=0&&state.clawPhase==='release'&&fall<1)cat(286,412+fall*128,clawPlushes[hitIndex][3],false,1.05);
+ if(carry)arcadePrizeArt(x,y+43,clawPlushes[hitIndex][3],1.05);
+ if(state.dropping&&hitIndex>=0&&state.clawPhase==='release'&&fall<1)arcadePrizeArt(286,412+fall*128,clawPlushes[hitIndex][3],1.05);
  ctx.globalAlpha=.19;line(265,366,310,475,'#fffbed',5);line(278,366,323,475,'#fffbed',2);ctx.restore();
  round(250,544,300,57,5,'#d3b18a','#865f52');
  round(264,552,77,40,5,'#584e47','#f1d4a2');
- if(state.clawResult?.i>=0&&t-state.clawResult.at<6)cat(302,587,clawPlushes[state.clawResult.i][3],false,.65);
+ if(state.clawResult?.i>=0&&t-state.clawResult.at<6)arcadePrizeArt(302,587,clawPlushes[state.clawResult.i][3],.65);
  round(358,559,174,33,7,state.dropping?'#aa9983':'#b76856','#7a5146');
  txt(state.dropping?tr('In motion…','抓取中……'):tr('LOWER CLAW','下夹'),445,575,15,'#fff0db');
  if(!state.dropping){target(252,358,296,178,()=>{},'claw');target(354,550,184,49,doClaw)}
@@ -3848,6 +3848,8 @@ const productionVisualManifest={
  destiny:{path:'assets/visual/destiny-study.svg',width:800,height:1400},
  kitchen:{path:'assets/visual/kitchen-interior.svg',width:800,height:1400},
  kitchenIngredients:{path:'assets/visual/kitchen-ingredients.svg',width:720,height:100},
+ arcadeCabinet:{path:'assets/visual/arcade-cabinet.svg',width:380,height:345},
+ arcadePlush:{path:'assets/visual/arcade-plushes.svg',width:480,height:128},
  tarot:{path:'assets/visual/tarot-reading.svg',width:800,height:1400},
  temple:{path:'assets/visual/temple-courtyard.svg',width:800,height:1400},
  templePropsArt:{path:'assets/visual/temple-props.svg',width:960,height:240},
@@ -3990,3 +3992,13 @@ pot=function(x,y){
 };
 const kitchenArtStart=start;
 start=function(a){if(a==='cook'||a==='bubbleTea'){productionVisual('kitchen');productionVisual('kitchenIngredients')}return kitchenArtStart(a)};
+
+/* Plush rewards are toys, not live cats. Fixed stitching and tag details stay
+   attached to the reward through grip, lift, drop and collection. */
+function arcadePrizeArt(x,y,kind,sc=1){
+ const im=productionVisual('arcadePlush');
+ if(!im||kind<0||kind>2)return cat(x,y,kind,false,sc);
+ const k=.57*sc;ctx.drawImage(im,kind*160,0,160,128,x-80*k,y-108*k,160*k,128*k)
+}
+const arcadeVisualStart=start;
+start=function(a){if(a==='claw'||a==='blindBox'){productionVisual('arcadePlush');if(a==='claw')productionVisual('arcadeCabinet')}return arcadeVisualStart(a)};
