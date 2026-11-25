@@ -120,7 +120,7 @@ module.exports=function runQualityChecks(s,log=console.log){
  stored={episode:-1,beat:2};if(parkProgress().episode!==0)throw Error('Corrupt progress');return 7;`);
  // 17. Paid draws, unique prizes, daily stock and repeatable town rewards.
  const prizeDefs=range('const boxPrizes=','function boxSelect(')+range('boxPrizes.push(','blindFigureLore.push(');
- const walletDefs=range('function hideoutBalance()','function hideoutThemeUnlocked(')+range('function blindShopLedger()','function blindShopExplain()')+range('function openPaidBlindBox()','const blindShopStartBefore=')+range('function townPawCategories()','let townPawNoticeTimer=');
+ const walletDefs=range('function hideoutBalance()','function hideoutThemeUnlocked(')+range('function blindShopLedger()','function blindShopExplain()')+range('function openPaidBlindBox()','const blindShopStartBefore=')+range('function townPawCategories()','let townPawNoticeTimer=')+range('function furnitureCatalogue()','if(load(\'komorebiLegacyOwnedV1\',null)===null)');
  results.blindBox=build(prizeDefs+`let activity='blindBox',state={boxStage:'ready'},t=0,day='2026-11-26',items=Array.from({length:20},(_,i)=>['earned'+i,'']);const store=new Map(),load=(k,d)=>store.get(k)??d,save=(k,v)=>store.set(k,v),hideoutPurchases=()=>[],dailyWheelRecord=()=>({total:0}),hideoutThemes=[],shrineClock=()=>({day}),addItem=(a,b)=>items.push([a,b]),updateHUD=()=>{},sound=()=>{},blindShopExplain=()=>{},$=()=>({classList:{remove(){}}});`+walletDefs+`
  const assert=(v,m)=>{if(!v)throw Error(m)};
  assert(boxPrizes.length===20&&new Set(boxPrizes.map(v=>v[0])).size===20,'Catalogue');
@@ -135,7 +135,7 @@ module.exports=function runQualityChecks(s,log=console.log){
  for(const key of [...keys,'round:three','kitchen:tea','friend:Yue','arcade:box','item:paid'])assert(!townPawClaim(key),'Duplicate or spending reward '+key);
  assert(!townPawClaim('round:bubble','2026-11-25'),'Clock rollback');
  day='2026-11-27';assert(blindStockRemaining()===3&&townPawToday().earned===0,'Daily reset');assert(townPawClaim('round:three')&&hideoutBalance()===128,'Next day earnings');
- return {reachable:seen.size,earnings:48,purchases:3};`);
+ assert(furnitureCatalogue().length===16,'Furniture catalogue');assert(furnitureOwned('bed')&&!furnitureOwned('shelf'),'Starter ownership');assert(buyFurniture('shelf')&&hideoutBalance()===73,'Furniture debit');assert(!buyFurniture('shelf'),'Duplicate furniture purchase');assert(!buyFurniture('recordPlayer'),'Insufficient funds');assert(furnitureOwned('shelf')&&furniturePurchaseTotal()===55,'Persistent ownership');return {reachable:seen.size,earnings:48,purchases:3,furniture:16};`);
  // 18. Inventory catalogue and owned items merge without losing legacy rewards.
  results.bagInventory=build(prizeDefs+"const keepsakes=boxPrizes.map(p=>[p[0],p[1],'cat']);const items=[boxPrizes[0].slice(0,2),['Legacy postcard','旧明信片'],boxPrizes[5].slice(0,2),boxPrizes[0].slice(0,2)];const collectionKind=()=> 'stamp';"+range('function bagClass(','function bagFigureIcon(')+`
  const all=bagEntries();if(all.length!==21||all.filter(v=>v.owned).length!==3)throw Error('Duplicate or missing inventory');
