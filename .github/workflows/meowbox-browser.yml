@@ -337,6 +337,16 @@ jobs:
                   await page.waitForFunction(()=>portraitInteriorCache.get('destiny')?.naturalWidth===800&&portraitInteriorCache.get('destiny')?.naturalHeight===1400,{},{timeout:10000});
                   await page.screenshot({path:'test-results/'+name+'-portrait-destiny-room.png'});
                 }
+                if(options.hasTouch){
+                  for(const id of ['wishes','park','fish','kitchen','arcade','tea','office','mystery','quiz','story','match']){
+                    await page.evaluate(id=>{room=id;activity=null;state={};closeTalk();updateHUD()},id);
+                    await page.waitForFunction(id=>portraitInteriorCache.get(id)?.naturalWidth===800&&portraitInteriorCache.get(id)?.naturalHeight===1400,id,{timeout:10000});
+                    await page.screenshot({path:'test-results/'+name+'-portrait-'+id+'.png'});
+                  }
+                  await page.evaluate(()=>{room='temple';activity=null;start('secretGarden')});
+                  await page.waitForFunction(()=>portraitInteriorCache.get('secretGarden')?.naturalWidth===800&&portraitInteriorCache.get('secretGarden')?.naturalHeight===1400,{},{timeout:10000});
+                  await page.screenshot({path:'test-results/'+name+'-portrait-secret-garden.png'});
+                }
                 await page.evaluate(()=>{room='tarot';activity=null;state={};closeTalk();updateHUD()});
                 if(options.hasTouch){
                   await page.waitForFunction(()=>readingRoomPortrait.naturalWidth===800&&readingRoomPortrait.naturalHeight===1400,{},{timeout:10000});
