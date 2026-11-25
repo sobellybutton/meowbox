@@ -1837,7 +1837,7 @@ $('travel').onclick=travel;$('dockTravel').onclick=travel;
 /* Fit the playable stage between the HUD and dock, including the lowest controls. */
 function mobileRoomCamera(s,ox,oy){
  if(activity==='woodenThree'){
- const landscape=W>=H,short=landscape&&H<500,top=short?70:landscape?100:142,bottom=H-(short?78:landscape?140:165),span=short?300:390,z=Math.max(.08,Math.min((W-(short?320:20))/370,Math.max(80,bottom-top)/span));
+ const landscape=W>=H,short=landscape&&H<500,top=short?70:landscape?100:142,bottom=H-(short?78:landscape?140:165),span=short?295:390,z=Math.max(.08,Math.min((W-(short?320:20))/370,Math.max(80,bottom-top)/span));
  return {s:z,ox:(short?(W-150)/2:W/2)-400*z,oy:(top+bottom)/2-(short?490:465)*z}
  }
  const landscape=W>=H,top=room&&!activity?(landscape?95:155):(landscape?90:135),bottom=H-(landscape?100:122);
