@@ -895,16 +895,71 @@ function selectTeaBase(i){if(activity!=='bubbleTea'||state.teaStage!=='base')ret
 function teaAddPearls(){if(activity!=='bubbleTea'||state.teaStage!=='pearls')return;state.teaPearls+=5;state.teaAt=t;sound(280+state.teaPearls*12);if(state.teaPearls>=10){state.teaStage='mix';hint('Drag the cup from side to side to shake it.','左右拖动杯子，把奶茶摇匀。')}}
 function teaShake(amount){if(activity!=='bubbleTea'||state.teaStage!=='mix')return;state.teaMix=Math.min(100,state.teaMix+Math.min(50,Math.max(0,amount*.55)));state.teaAt=t;if(state.teaMix>=100){state.teaStage='ready';sound(630);hint('Your drink is ready. Take a sip!','奶茶做好啦，喝一口吧！')}}
 function teaSip(){if(activity!=='bubbleTea'||state.teaStage!=='ready')return;state.teaStage='sip';state.teaAt=t;sound(380)}
-function drawFoodCounter(){paintLivingBackdrop(pics.tea||pics.streetKitchen||pics.kitchen||pics.sticks);let g=ctx.createLinearGradient(0,410,0,690);g.addColorStop(0,'#a8835b');g.addColorStop(1,'#654c39');ctx.beginPath();ctx.moveTo(180,466);ctx.lineTo(620,466);ctx.lineTo(690,690);ctx.lineTo(110,690);ctx.closePath();ctx.fillStyle=g;ctx.fill();for(let i=0;i<5;i++)line(175-i*12,482+i*39,625+i*12,482+i*39,'#e0b98230',2)}
+function drawFoodCounter(){paintLivingBackdrop(pics.kitchen||pics.streetKitchen||pics.tea||pics.sticks);let g=ctx.createLinearGradient(0,410,0,690);g.addColorStop(0,'#a8835b');g.addColorStop(1,'#654c39');ctx.beginPath();ctx.moveTo(180,466);ctx.lineTo(620,466);ctx.lineTo(690,690);ctx.lineTo(110,690);ctx.closePath();ctx.fillStyle=g;ctx.fill();for(let i=0;i<5;i++)line(175-i*12,482+i*39,625+i*12,482+i*39,'#e0b98230',2)}
 const foodReleaseProp=prop;prop=function(id,x,y){if(id==='bubbleTea'){teaCup(x,y-16,.85,0,10);return}return foodReleaseProp(id,x,y)};
-const foodReleaseDraw=drawActivity;drawActivity=function(){if(activity!=='bubbleTea')return foodReleaseDraw();ctx.save();drawFoodCounter();let stage=state.teaStage,age=t-state.teaAt,cx=420,cy=525,angle=0,fill=state.teaBase<0?0:Math.min(1,stage==='pearls'&&state.teaPearls===0?age*2:1);
-if(stage==='mix'&&drag?.id==='teaMix'){cx=Math.max(315,Math.min(505,drag.x));cy=Math.max(465,Math.min(550,drag.y));angle=Math.sin(t*15)*.17}if(stage==='sip'){let f=Math.sin(Math.PI*Math.min(1,age/2.4));cx=420-104*f;cy=525-100*f;angle=-.12*f;fill=Math.max(.35,1-age*.25);if(age>=2.4){state.teaStage='done';state.teaAt=t;let v=teaChoices[state.teaBase];addItem(v[0]+' recipe',v[1]+'配方');react('The perfect amount of sugar is none of my boss’s business.','几分糖，轮不到老板来管。')}}if(stage==='done')fill=.35;
-drawRitualPose(270,480,1.8,{kneel:.35,reach:stage==='sip'||drag?.id==='teaMix'?{x:cx-25,y:cy-35}:null});
-teaCup(cx,cy,1.15,state.teaBase,state.teaPearls,fill,angle);
-if(stage==='base'){teaChoices.forEach((v,i)=>{let x=265+i*135;teaCup(x,602,.54,i,0,.8);label(tr(v[0],v[1]),x,635,()=>selectTeaBase(i));target(x-32,548,64,60,()=>selectTeaBase(i))})}
-if(stage==='pearls'){ellipse(530,540,36,15,'#e5caa0');ellipse(530,537,30,10,'#986b53');for(let i=0;i<12;i++)ellipse(511+(i*13)%39,532+(i%3)*5,4,4,'#50362e');if(age<.48&&state.teaPearls){for(let i=0;i<5;i++){let f=Math.min(1,age/.48);ellipse(530-110*f+i*3,530-83*Math.sin(f*Math.PI)+f*15,4,4,'#4b342e')}}target(490,504,78,57,teaAddPearls);label(tr('Scoop pearls','舀珍珠'),530,610,teaAddPearls)}
-if(stage==='mix'){target(325,415,185,145,()=>{},'teaMix');txt(tr('Shake the cup','摇匀奶茶')+' '+Math.round(state.teaMix)+'%',400,612,17,'#fff3d9');label(tr('Shake gently','轻轻摇晃'),400,646,()=>teaShake(60))}
-if(stage==='ready'){target(365,420,110,125,teaSip);label(tr('Take a sip','喝一口'),420,620,teaSip)}if(stage==='sip')txt(tr('A well deserved break','这一口，值得'),400,620,18,'#fff4dd');if(stage==='done'){label(tr('Make another','再做一杯'),310,620,()=>start('bubbleTea'));label(tr('Back to kitchen','回到厨房'),500,620,()=>{activity=null;state={};updateHUD();roomIntro()})}ctx.restore()};
+/* A real counter sequence: pour, scoop, shake and drink. */
+function teaPitcher(x,y,base,tilt=0){
+ ctx.save();ctx.translate(x,y);ctx.rotate(tilt);
+ ctx.beginPath();ctx.moveTo(-23,-55);ctx.lineTo(22,-55);ctx.lineTo(34,-66);ctx.lineTo(29,-44);ctx.lineTo(27,4);ctx.quadraticCurveTo(0,16,-28,4);ctx.closePath();
+ ctx.fillStyle='#e5dcc8';ctx.fill();ctx.strokeStyle='#ae9271';ctx.lineWidth=2;ctx.stroke();
+ ctx.save();ctx.clip();ctx.fillStyle=teaChoices[Math.max(0,base)][2];ctx.fillRect(-30,-35,67,48);ctx.restore();
+ ctx.beginPath();ctx.ellipse(-29,-22,13,21,0,Math.PI/2,Math.PI*1.5);ctx.strokeStyle='#a88c6c';ctx.lineWidth=5;ctx.stroke();
+ ellipse(0,-55,23,5,'#bba389');line(-17,-45,-14,-5,'#fff2df80',2);ctx.restore();
+}
+function teaScoopArt(x,y,tilt=0,loaded=false){
+ ctx.save();ctx.translate(x,y);ctx.rotate(tilt);
+ line(0,0,50,-29,'#765f45',8);line(1,-2,48,-31,'#d1ad79',3);
+ ellipse(-8,5,22,12,'#ad936b');ellipse(-8,2,18,8,'#e2c697');
+ if(loaded)for(let i=0;i<5;i++)ellipse(-18+i*5,1+(i%2)*4,4,4,'#4b342e');
+ ctx.restore();
+}
+function teaScoopRelease(a){
+ if(activity!=='bubbleTea'||state.teaStage!=='pearls')return;
+ if(Math.hypot(a.x-420,a.y-480)<65){teaAddPearls();return}
+ hint('Tip the scoop into the cup.','把珍珠倒进奶茶杯里。');
+}
+c.addEventListener('pointerup',e=>{
+ if(activity!=='bubbleTea'||drag?.id!=='teaPearlScoop')return;
+ const d=drag,a=point(e);drag=null;e.preventDefault();e.stopImmediatePropagation();
+ if(d.moved<12)teaAddPearls();else teaScoopRelease(a);
+},true);
+const foodReleaseDraw=drawActivity;drawActivity=function(){
+ if(activity!=='bubbleTea')return foodReleaseDraw();
+ ctx.save();drawFoodCounter();
+ let stage=state.teaStage,age=Math.max(0,t-state.teaAt),cx=420,cy=525,angle=0,fill=state.teaBase<0?0:stage==='pearls'&&state.teaPearls===0?Math.min(1,Math.max(0,(age-.18)/.75)):1;
+ if(stage==='mix'&&drag?.id==='teaMix'){cx=clamp(drag.x,315,505);cy=clamp(drag.y,465,550);angle=clamp((drag.x-drag.sx)/250,-.32,.32)+Math.sin(t*15)*.05}
+ if(stage==='sip'){let f=Math.sin(Math.PI*Math.min(1,age/2.4));cx=420-104*f;cy=525-100*f;angle=-.12*f;fill=Math.max(.35,1-age*.25);if(age>=2.4){state.teaStage='done';state.teaAt=t;let v=teaChoices[state.teaBase];addItem(v[0]+' recipe',v[1]+'配方');react('The perfect amount of sugar is none of my boss’s business.','几分糖，轮不到老板来管。')}}
+ if(stage==='done')fill=.35;
+ const pouring=stage==='pearls'&&state.teaPearls===0&&age<1.1;
+ const scooping=stage==='pearls'&&drag?.id==='teaPearlScoop';
+ drawRitualPose(270,480,1.8,{kneel:.35,reach:stage==='sip'||drag?.id==='teaMix'?{x:cx-25,y:cy-35}:null});
+ teaCup(cx,cy,1.15,state.teaBase,state.teaPearls,fill,angle);
+ if(pouring){
+  const f=poseEase(age/.25),px=495-48*f,py=421-30*f;teaPitcher(px,py,state.teaBase,-.72*f);
+  if(age>.18&&age<.98){ctx.save();ctx.strokeStyle=teaChoices[state.teaBase][2];ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(px-19,py-35);ctx.quadraticCurveTo(420,py+5,420,450);ctx.stroke();ctx.restore()}
+ }
+ if(stage==='base')teaChoices.forEach((v,i)=>{let x=265+i*135;teaPitcher(x,596,i);label(tr(v[0],v[1]),x,635,()=>selectTeaBase(i));target(x-38,530,76,76,()=>selectTeaBase(i))});
+ if(stage==='pearls'){
+  ellipse(530,540,36,15,'#e5caa0');ellipse(530,537,30,10,'#986b53');
+  for(let i=0;i<12;i++)ellipse(511+(i*13)%39,532+(i%3)*5,4,4,'#50362e');
+  if(scooping)teaScoopArt(drag.x,drag.y,-.13,true);
+  else if(age<.52&&state.teaPearls){let f=poseEase(age/.52);teaScoopArt(530-110*f,521-63*Math.sin(f*Math.PI),-.6*f,false);for(let i=0;i<5;i++)ellipse(530-110*f+i*3,530-83*Math.sin(f*Math.PI)+f*15,4,4,'#4b342e')}
+  else teaScoopArt(530,520,0,true);
+  target(487,480,90,80,()=>{},'teaPearlScoop');
+  label(tr('Scoop pearls','舀珍珠'),530,610,teaAddPearls);
+  txt(tr('Drag the scoop to the cup','把珍珠舀进杯里'),400,570,15,'#fff3d9');
+ }
+ if(stage==='mix'){
+  target(325,415,185,145,()=>{},'teaMix');
+  let live=state.teaMix+(drag?.id==='teaMix'?Math.min(50,Math.max(0,drag.moved*.55)):0);
+  txt(tr('Shake the cup','摇匀奶茶')+' '+Math.round(Math.min(100,live))+'%',400,612,17,'#fff3d9');
+  label(tr('Shake gently','轻轻摇晃'),400,646,()=>teaShake(60));
+ }
+ if(stage==='ready'){target(365,420,110,125,teaSip);label(tr('Take a sip','喝一口'),420,620,teaSip)}
+ if(stage==='sip')txt(tr('A well deserved break','这一口，值得'),400,620,18,'#fff4dd');
+ if(stage==='done'){label(tr('Make another','再做一杯'),310,620,()=>start('bubbleTea'));label(tr('Back to kitchen','回到厨房'),500,620,()=>{activity=null;state={};updateHUD();roomIntro()})}
+ ctx.restore();
+};
 function soupTaste(){if(activity!=='cook'||!state.done||state.tasteAt!==undefined)return;state.tasteAt=t;sound(390);closeTalk();hint('Careful, it is hot.','慢慢喝，小心烫。')}
 const foodTasteDraw=drawActivity;drawActivity=function(){foodTasteDraw();if(activity!=='cook'||!state.done)return;ctx.save();let age=t-(state.tasteAt??-100),active=state.tasteAt!==undefined&&age<2.7,f=active?Math.sin(Math.PI*Math.min(1,age/2.7)):0;let bx=510-130*f,by=422-33*f;drawRitualPose(290,495,1.6,{kneel:.4,reach:active?{x:bx-25,y:by}:null});ellipse(bx,by+9,32,10,'#58483c66');ellipse(bx,by,32,13,'#e7d8b9');ellipse(bx,by-2,27,8,'#ac8050');if(age>=2.7&&state.tasteAt!==undefined&&!state.tasted){state.tasted=true;react('Grandma: Eat properly. The emails can wait.','外婆：好好吃饭，邮件等会儿再回。')}if(state.tasteAt===undefined){label(tr('Taste the soup','尝一口汤'),510,390,soupTaste);target(478,397,64,42,soupTaste)}ctx.restore()};
 
