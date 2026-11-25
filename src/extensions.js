@@ -838,8 +838,8 @@ function trShareStory(n){return [
  ][n.cameo%4]}
 function kitchenActualRecipe(){let i=state.ingredients||[],veg=state.vegetarian;if(veg)return i.includes(0)&&i.includes(2)?['Mushroom and tofu soup','香菇豆腐汤']:i.includes(1)?['Garden greens soup','田园青菜汤']:['Simple vegetarian broth','清淡素汤'];if(i.includes(0)&&i.includes(2))return ['Tomato and egg soup','番茄蛋汤'];if(i.includes(0)&&i.includes(1))return ['Tomato and greens soup','番茄青菜汤'];return i.includes(2)?['Silky egg soup','滑蛋汤']:i.includes(1)?['Garden greens soup','田园青菜汤']:['Slow cooked tomato soup','慢炖番茄汤']}
 const deeperPot=pot;pot=function(x,y){deeperPot(x,y);if(activity!=='cook'||!state.ingredients?.length)return;ctx.save();ctx.beginPath();ctx.ellipse(x,y-10,77,20,0,0,TAU);ctx.clip();let energy=Math.max(0,1-(t-(state.stirAt||-10))*1.3),rotation=(state.stirAngle||0)+t*.12+energy*t*.22;for(let i of state.ingredients){for(let j=0;j<3;j++){let angle=i*2.1+j*.7+rotation;ctx.save();ctx.translate(x+Math.cos(angle)*54,y-10+Math.sin(angle)*12);ctx.rotate(angle);round(-7,-3,14,6,2,(state.vegetarian?['#947256','#92ad69','#eee0b4']:['#cf7956','#92ad69','#f0dd99'])[i]);ctx.restore()}}ctx.restore()};
-const deeperStart=start;start=function(a){deeperStart(a);if(a==='cook')hint('Drop your favourite ingredients in the pot. Stir in gentle circles.','选喜欢的食材下锅，再轻轻画圈搅拌。');if(a==='pet'){state.petKind=Math.floor(Math.random()*5);hint('Slow strokes help the cat trust you. Fast swipes may startle it.','慢慢摸，小猫会更信任你。太快可能会吓到它。')}};
-const deeperDraw=drawActivity;drawActivity=function(){deeperDraw();if(activity==='pet'){ctx.save();let f=Math.min(1,(state.pet||0)/100);txt(state.done?tr('You have been adopted.','你已经被猫领养啦。'):state.petAlarmUntil>t?tr('A little slower, please.','请摸慢一点嘛。'):tr('Trust','信任')+' '+Math.round(f*100)+'%',400,623,15,'#fff1d0');ctx.restore()}};
+const deeperStart=start;start=function(a){deeperStart(a);if(a==='cook')hint('Drop your favourite ingredients in the pot. Stir in gentle circles.','选喜欢的食材下锅，再轻轻画圈搅拌。');if(a==='pet'){prepareParkCat()}};
+const deeperDraw=drawActivity;drawActivity=function(){deeperDraw();if(activity==='pet'){ctx.save();let f=Math.min(1,(state.pet||0)/100);const catProfile=parkCats[state.petKind??0];txt(tr(...catProfile.name),400,590,21,'#fff1d0');txt(state.done?tr('You have been adopted.','你已经被猫领养啦。'):state.petAlarmUntil>t?tr('A little slower, please.','请摸慢一点嘛。'):tr('Trust','信任')+' '+Math.round(f*100)+'%',400,623,18,'#fff1d0');ctx.restore()}};
 const deeperFish=doFish;doFish=function(){let before=state?.fish;deeperFish();if(activity==='fish'&&before===2&&state.fish===0){let g=state.catchName;if(g?.[0]==='Moonlit postcard')hint('A rare postcard! Someone wrote a wish on the back.','稀有明信片！背面有人写了一份心愿。');else if(g?.[0]==='Sealed train ticket')hint('An old ticket to a place that no longer appears on maps.','一张旧车票，目的地早已从地图上消失。')}};
 
 /* Temple visit: quiet, optional gestures in the existing illustrated room. */
@@ -2583,3 +2583,43 @@ const wonderSheetCSS=document.createElement('style');wonderSheetCSS.textContent=
 const wonderSheetDraw=drawActivity;
 drawActivity=function(){wonderSheetDraw();syncWonderSheet()};
 const wonderSheetHUD=updateHUD;updateHUD=function(){wonderSheetHUD();syncWonderSheet()};
+
+
+/* Daydream Park has a recurring cast rather than an anonymous random cat. */
+const parkCats=[
+ {name:['Kaya','咖椰'],sensitivity:1.15,pace:1.05,hello:['Kaya is guarding the sunny patch.','咖椰正在霸占阳光最好的位置。'],friend:['Kaya: Approved. You may sit in my sunbeam.','咖椰：批准你共享这块阳光。']},
+ {name:['Mochi','麻薯'],sensitivity:.9,pace:1.1,hello:['Mochi looks like a sleepy rice cake.','麻薯睡成了一块糯米团。'],friend:['Mochi has decided your hand is a pillow.','麻薯宣布你的手是新枕头。']},
+ {name:['Kopi','咖啡'],sensitivity:1.35,pace:.8,hello:['Kopi is suspicious of strangers. And Mondays.','咖啡对陌生人有戒心，对星期一也是。'],friend:['Kopi gives you the very rare slow blink.','咖啡难得对你慢慢眨了一下眼。']},
+ {name:['Bao Bao','包包'],sensitivity:1.05,pace:1.2,hello:['Bao Bao has arrived precisely at snack time.','包包掐着饭点来了。'],friend:['Bao Bao approves. Snacks are still a separate negotiation.','包包同意交朋友，零食另谈。']},
+ {name:['Cloud','云朵'],sensitivity:1.2,pace:.95,hello:['Cloud is pretending not to notice you.','云朵假装没看见你。'],friend:['Cloud sits close enough to count as affection.','云朵悄悄坐近了一点，已经算是表白了。']}
+];
+let parkBonds=load('parkBondsV1',{});
+if(!parkBonds||typeof parkBonds!=='object'||Array.isArray(parkBonds))parkBonds={};
+let parkCatCursor=0;
+function prepareParkCat(){
+ const dayIndex=Math.floor(Date.parse(shrineClock().day+'T00:00:00Z')/86400000);
+ state.petKind=((dayIndex+parkCatCursor++)%parkCats.length+parkCats.length)%parkCats.length;
+ const profile=parkCats[state.petKind],record=parkBonds[profile.name[0]]||{visits:0,friends:0};
+ record.visits=(Number(record.visits)||0)+1;parkBonds[profile.name[0]]=record;save('parkBondsV1',parkBonds);
+ state.pet=Math.min(35,(Number(record.friends)||0)*12);state.petLastInput=0;
+ hint(...(record.friends?['A familiar face. '+profile.name[0]+' remembers you.','熟面孔！'+profile.name[1]+'还记得你。']:profile.hello))
+}
+function parkPetInput(delta,point,tap=false){
+ if(activity!=='pet'||state.done)return;
+ if(!tap&&(point.x<300||point.x>500||point.y<360||point.y>565))return;
+ const now=performance.now(),previous=state.petLastInput||0,elapsed=Math.max(16,now-previous);state.petLastInput=now;
+ if(tap&&previous&&elapsed<180)return;
+ const profile=parkCats[state.petKind??0];
+ if(!tap&&previous&&delta/elapsed>1.35/profile.sensitivity&&delta>12){
+  state.pet=Math.max(0,state.pet-5);if(!(state.petAlarmUntil>t))hint('A little gentler.','轻一点，小猫会怕。');state.petAlarmUntil=t+.65;return
+ }
+ if(state.petAlarmUntil>t)return;
+ state.pet=Math.min(100,(state.pet||0)+(tap?3:Math.min(7,delta*.5*profile.pace)));
+ if(state.pet>=100){
+  state.done=true;const key=profile.name[0],record=parkBonds[key]||{visits:1,friends:0};record.friends=(Number(record.friends)||0)+1;parkBonds[key]=record;save('parkBondsV1',parkBonds);
+  addItem('Cat friendship','猫咪友谊');addItem('Friend of '+key,'猫咪好友：'+profile.name[1]);hint(...profile.friend);sound(310)
+ }else if(tap)sound(280)
+}
+const parkPassport=passport;
+passport=function(){parkPassport();const book=$('content').querySelector('.travelAlbum');if(!book)return;const friends=parkCats.filter(v=>parkBonds[v.name[0]]?.visits);if(!friends.length)return;element('h2',tr('Park cats I know','认识的小猫'),book);for(const profile of friends){const record=parkBonds[profile.name[0]],line=element('div','',book,'friendEntry');element('strong',tr(...profile.name),line);element('small',record.friends?tr('Familiar friend','熟悉的朋友'):tr('Still getting acquainted','慢慢熟悉中'),line)}};
+$('dockPassport').onclick=passport;
