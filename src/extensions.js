@@ -1971,7 +1971,7 @@ const copyHUD=updateHUD;updateHUD=function(){
  copyHUD();
  if(room)$('back').textContent=activity?tr('‹ Back to room','‹ 返回小屋'):tr('‹ Back outside','‹ 出门逛逛');
  $('hudProgress').textContent=tr('Traveller','摸鱼旅人')+' · '+items.length+tr(' keepsakes',' 件纪念品');
- nextStopButton.textContent=tr('Next stop ›','下一站 ›');nextStopButton.hidden=avatar===null||!!room||!proposal.hidden;
+ nextStopButton.textContent=tr('Next stop ›','下一站 ›');nextStopButton.hidden=avatar===null||!!activity||!proposal.hidden;
 };
 const copyAlbumProfile=albumProfile;
 albumProfile=function(q){copyAlbumProfile(q);const a=q.querySelector('.albumProfile p');if(a)a.textContent=items.length+tr(' little discoveries',' 份小小回忆')};
@@ -2028,4 +2028,4 @@ cameo9=function(place=scene){
  const n=Number(load('cameoCount',0))||0,a=list[(hash(day()+place)+n)%list.length];
  save('cameoCount',n+1);cameoOpenConversation(a)
 };
-updateHUD();
+
