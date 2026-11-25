@@ -338,6 +338,12 @@ jobs:
                 if(!await page.evaluate(()=>readingJournal.some(v=>v.topic===1&&v.cards.length===3)))throw Error('Tarot journal missing');
                 if(!await page.evaluate(()=>items.some(x=>x[0]==='Three-card reading')&&readingPrompts.length===4&&readingPrompts.every(t=>t.length===3)))throw Error('Topic-specific reading collection or prompts missing');
                 await page.screenshot({path:'test-results/'+name+'-tarot-spread.png'});
+                await tapWorld(400,465);
+                await page.waitForFunction(()=>state.readStage==='focus'&&state.readFocus===1,{},{timeout:3000});
+                await page.waitForTimeout(500);
+                await page.screenshot({path:'test-results/'+name+'-tarot-closeup.png'});
+                await tapWorld(490,647);
+                await page.waitForFunction(()=>state.readStage==='cards'&&state.readFlip.every(v=>v>=0)&&state.readSaved,{},{timeout:3000});
                 // Test actual dialogue choice buttons; set up a nearby resident without walking.
                 await page.evaluate(()=>{room=null;activity=null;state={};stopRoute();closeTalk();npcTalk({n:['Mochi','麻薯'],kind:2,x:p.x+30,y:p.y})});
                 for(const topic of ['Offer an imaginary snack','Scratch behind the ears','Sit quietly together']){
