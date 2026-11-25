@@ -2166,8 +2166,8 @@ drawActivity=function(){
  }
  if(phase==='walk'&&age>(bottleMode?4.35:3.1)){
   state.riverNote='';state.riverPhase='done';
-  if(bottleMode){addItem('Let it drift keepsake','烦恼随风纪念章');hint(...(power<35?['Auntie: Small throw, big relief.','阿姨：扔得不远，烦恼照样下班。']:power>85?['Auntie: Wah, that one must have been a long meeting.','阿姨：哇，这一定开了很久的会。']:['Auntie: That worry is officially out of office.','阿姨：这个烦恼正式下班了。']))}
-  else{addItem('River echo keepsake','河边回声纪念章');hint('Auntie: Good. Even the fish heard you.','阿姨：不错，连鱼都听见了。')}
+  if(bottleMode){addItem('Let it drift keepsake','烦恼随风纪念章');hint(...townReaction(power<35?'bottleSoft':power>85?'bottleStrong':'bottleMedium',power<35?riverBottleReplies.soft:power>85?riverBottleReplies.strong:riverBottleReplies.medium))}
+  else{addItem('River echo keepsake','河边回声纪念章');hint(...townReaction('riverEcho',riverEchoReplies))}
   refreshControls();sound(530)
  }
 };
@@ -2223,7 +2223,7 @@ function townFortuneFor(date=shrineClock().day,seed=townDailySeed){
 }
 function renderTownFortune(book){
  const f=townFortuneFor(),slip=element('section','',book,'townFortuneSlip');slip.dataset.date=f.date;slip.dataset.theme=String(f.themeIndex);
- element('small',f.date+' · '+tr('A NOTE FROM THE VALLEY','解忧谷今日小签'),slip,'fortuneDate');
+ element('small',f.date+' · '+tr('DAILY LUCK · A NOTE FROM THE VALLEY','今日运势 · 解忧谷小签'),slip,'fortuneDate');
  element('h2',tr(...f.theme.title),slip);
  element('p',tr(...f.theme.work),slip,'fortuneWork');
  element('p',tr(...f.theme.rest),slip);
@@ -2259,4 +2259,16 @@ smack=function(){
  if(activity!=='hit'||room!=='fish')return auntieSmackBefore();
  auntieSmackBefore();
  if(state.count!==10&&state.count!==25&&state.count!==50&&stressCombo!==5)hint(...townReaction('auntieHit',auntieHitReplies))
+};
+
+const riverEchoReplies=[
+ ['Auntie: Even the fish heard you.','阿姨：不错，连鱼都听见了。'],
+ ['Auntie: Louder next time? No, I live here.','阿姨：下次再大声点？算了，我还住这儿。'],
+ ['Auntie: The river is not taking minutes.','阿姨：放心，这条河不用写会议纪要。'],
+ ['Auntie: Better out here than in the group chat.','阿姨：在这儿喊，总比发到工作群强。']
+];
+const riverBottleReplies={
+ soft:[['Auntie: Small throw, big relief.','阿姨：扔得不远，烦恼照样下班。'],['Auntie: No need for an Olympic record.','阿姨：不用拿奥运冠军，能放下就行。']],
+ medium:[['Auntie: That worry is officially out of office.','阿姨：这个烦恼正式下班了。'],['Auntie: No forwarding address. Excellent.','阿姨：没留新地址，很好，不许退件。'],['Auntie: The river accepts resignations.','阿姨：这条河接受烦恼辞职。']],
+ strong:[['Auntie: Wah, that one must have been a long meeting.','阿姨：哇，这一定开了很久的会。'],['Auntie: A bit more and it would need a passport.','阿姨：再远一点，瓶子都要办护照了。'],['Auntie: Save some strength for opening your lunch.','阿姨：留点力气，等会儿还要开饭盒。']]
 };
