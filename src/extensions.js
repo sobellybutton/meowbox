@@ -4430,7 +4430,7 @@ drawActivity=function(){
  for(const p of g.particles){const age=t-p.at;nostalgiaOrb(p.x+p.vx*age,p.y+130*age*age,p.color,17*(1-age*.8),1-age/.8)}
  if(g.flight)nostalgiaOrb(g.flight.x,g.flight.y,g.flight.color);
  if(!g.flight&&g.status==='play'){
-  let x=400,y=592,vx=Math.sin(g.angle),vy=-Math.cos(g.angle);for(let i=0;i<15;i++){x+=vx*13;y+=vy*13;if(x<266){x=266+(266-x);vx=Math.abs(vx)}if(x>534){x=534-(x-534);vx=-Math.abs(vx)}if(y<330||[...g.board.keys()].some(id=>{const p=nostalgiaCellMap.get(id);return Math.hypot(p.x-x,p.y-y)<34}))break;ellipse(x,y,2,2,'#f7e2b3a0')}
+  for(const q of nostalgiaAimGuide(g))ellipse(q.x,q.y,2,2,'#f7e2b3a0');
   ctx.save();ctx.translate(400,600);ctx.rotate(g.angle);round(-7,-30,14,30,4,'#bfa476','#6f5a43');ctx.restore();nostalgiaOrb(400,592,g.color)
  }
  nostalgiaOrb(516,603,g.next,12);txt(tr('Next','下一个'),516,623,10,'#fff1cf');
@@ -4841,3 +4841,19 @@ window.addEventListener('keydown',e=>{
  if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();g.angle=clamp(g.angle+(e.key==='ArrowLeft'?-.08:.08),-1.15,1.15)}
  else if(e.key===' '||e.key==='Enter'){e.preventDefault();if(!e.repeat)nostalgiaFire()}
 });
+
+
+function nostalgiaAimGuide(g){
+ const dots=[],occupied=[...g.board.keys()].map(id=>nostalgiaCellMap.get(id));
+ let x=400,y=592,vx=Math.sin(g.angle),vy=-Math.cos(g.angle);
+ for(let i=0;i<210;i++){
+  x+=vx*3;y+=vy*3;
+  if(x<266){x=266+(266-x);vx=Math.abs(vx)}if(x>534){x=534-(x-534);vx=-Math.abs(vx)}
+  if(y<=330||occupied.some(p=>Math.hypot(p.x-x,p.y-y)<34))break;
+  if(i%4===3)dots.push({x,y});
+ }
+ return dots
+}
+
+c.addEventListener('lostpointercapture',e=>{if(nostalgiaPointer===e.pointerId)nostalgiaPointer=null});
+window.addEventListener('blur',()=>{nostalgiaPointer=null});
