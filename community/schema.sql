@@ -39,3 +39,11 @@ CREATE TABLE IF NOT EXISTS presence (
 );
 CREATE INDEX IF NOT EXISTS presence_place_updated ON presence(place,updated);
 CREATE INDEX IF NOT EXISTS presence_rate_updated ON presence(rate_key,updated);
+
+-- One preset reaction per visitor per approved message; removed with its message.
+CREATE TABLE IF NOT EXISTS reactions (
+ message_id TEXT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+ owner TEXT NOT NULL, kind TEXT NOT NULL CHECK(kind IN ('laugh','heart','same')),
+ created INTEGER NOT NULL, PRIMARY KEY(message_id,owner)
+);
+CREATE INDEX IF NOT EXISTS reactions_owner_created ON reactions(owner,created);
