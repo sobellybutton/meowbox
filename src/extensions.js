@@ -6373,7 +6373,7 @@ function drawFittedFortuneText(words,w,h){
  }finally{ctx.restore()}
 }
 const portraitActivityBounds={
- prayer:[160,635,365,660],templeBell:[110,665,215,665],
+ prayer:[155,640,335,660],templeBell:[110,665,215,665],
  templeWater:[240,650,325,690],sticks:[205,615,260,670],
  moon:[200,600,220,665],templePaper:[215,655,300,675]
 };
