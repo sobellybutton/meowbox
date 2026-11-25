@@ -3520,7 +3520,7 @@ hideoutThemes.push(
  {id:'retro',name:['Old Hong Kong evening','港风黄昏'],wall:'#e4c7a5',floor:'#866354',sky:'#bf8f78',need:0,cost:120}
 );
 function hideoutPurchases(){const v=load('hideoutThemePurchasesV1',[]);return Array.isArray(v)?[...new Set(v.filter(id=>hideoutThemes.some(t=>t.id===id&&t.cost)))]:[]}
-function hideoutBalance(){const purchased=hideoutPurchases();return Math.max(0,items.length*10-hideoutThemes.filter(v=>purchased.includes(v.id)).reduce((sum,v)=>sum+(v.cost||0),0))}
+function hideoutBalance(){const purchased=hideoutPurchases();return Math.max(0,items.length*10+dailyWheelRecord().total-hideoutThemes.filter(v=>purchased.includes(v.id)).reduce((sum,v)=>sum+(v.cost||0),0))}
 function hideoutThemeUnlocked(theme){return theme.cost?hideoutPurchases().includes(theme.id):hideoutStampCount()>=theme.need}
 function buyHideoutTheme(theme){
  if(hideoutThemeUnlocked(theme))return true;
@@ -3544,3 +3544,59 @@ for(const [id,fn] of [['hudStamps',hideoutClaimPage],['hudCoins',()=>{hideoutEdi
  const el=$(id);el.setAttribute('role','button');el.tabIndex=0;el.style.cursor='pointer';
  el.onclick=()=>openHudReward(fn);el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openHudReward(fn)}}
 }
+
+/* Daily free wheel: cosmetic currency only. One local claim per Singapore day.
+   No stake, no cash value, no extra spins, no ads, no purchases. */
+const dailyWheelPrizes=[10,15,20,10,25,15,30,20];
+function dailyWheelRecord(){
+ const raw=load('dailyWheelV1',{}),v=raw&&typeof raw==='object'?raw:{};
+ return {day:typeof v.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v.day)?v.day:'',total:Number.isSafeInteger(v.total)&&v.total>=0?v.total:0,amount:dailyWheelPrizes.includes(v.amount)?v.amount:0,index:Number.isInteger(v.index)&&v.index>=0&&v.index<dailyWheelPrizes.length?v.index:0}
+}
+function dailyWheelClaim(date,index){
+ const last=dailyWheelRecord();if(date<=last.day||!Number.isInteger(index)||index<0||index>=dailyWheelPrizes.length)return null;
+ const amount=dailyWheelPrizes[index],record={day:date,total:last.total+amount,amount,index};save('dailyWheelV1',record);return record
+}
+function dailyWheelArt(){
+ const colors=['#b78666','#809989','#d3b27c','#a77f88','#7894a0','#b9a66e','#a26955','#879c79'];let slices='';
+ for(let i=0;i<8;i++){
+  const a=(i*45-112.5)*Math.PI/180,b=a+Math.PI/4,m=(a+b)/2,x1=150+130*Math.cos(a),y1=150+130*Math.sin(a),x2=150+130*Math.cos(b),y2=150+130*Math.sin(b),tx=150+93*Math.cos(m),ty=150+93*Math.sin(m);
+  slices+='<path d="M150 150L'+x1+' '+y1+' A130 130 0 0 1 '+x2+' '+y2+'Z" fill="'+colors[i]+'" stroke="#e8d7b2" stroke-width="2"/><text x="'+tx+'" y="'+ty+'" fill="#fff7e4" font-size="18" text-anchor="middle" dominant-baseline="middle" font-weight="bold" stroke="#5b5145" stroke-width=".5" paint-order="stroke">'+dailyWheelPrizes[i]+'</text>'
+ }
+ return '<svg viewBox="0 0 300 300" aria-hidden="true"><circle cx="150" cy="150" r="144" fill="#6b523e" stroke="#d9b47c" stroke-width="4"/>'+slices+'<circle cx="150" cy="150" r="34" fill="#e9d5a5" stroke="#8e6748" stroke-width="5"/><path d="M132 150Q150 124 168 150Q150 176 132 150Z" fill="#887054"/><circle cx="150" cy="150" r="5" fill="#e7c48d"/></svg>'
+}
+function dailyWheelPage(){
+ page(tr('The Wheel of Paid Leave','年假转转乐'),tr('One free spin each day. No boss approval required.','每天免费转一次，不用领导审批。'),q=>{
+  const date=shrineClock().day,last=dailyWheelRecord(),claimed=last.day>=date;
+  const stage=element('div','',q,'dailyWheelStage'),wheel=element('div','',stage,'dailyWheelDisk');wheel.innerHTML=dailyWheelArt();
+  const pin=element('div','',stage,'dailyWheelPointer');pin.setAttribute('aria-hidden','true');
+  if(claimed)wheel.style.transform='rotate('+(-last.index*45)+'deg)';
+  const result=element('p',claimed?tr('Already collected today: ','今日已领取：')+last.amount+' '+tr('paws','爪币'):tr('Every slice wins. 10 to 30 virtual paws.','格格有奖，10至30枚虚拟爪币。'),q,'dailyWheelResult');result.setAttribute('role','status');
+  let busy=false;
+  const spin=b(q,claimed?tr('Come back tomorrow','明天再来'):tr('Spin for free','免费转一次'),()=>{
+   if(busy)return;
+   const current=shrineClock().day;
+   const index=Math.floor(crypto.getRandomValues(new Uint32Array(1))[0]/4294967296*dailyWheelPrizes.length);
+   const record=dailyWheelClaim(current,index);if(!record){dailyWheelPage();return}
+   busy=true;spin.disabled=true;updateHUD();
+   const finish=()=>{if(!result.isConnected)return;result.textContent=tr('You won ','恭喜获得 ')+record.amount+' '+tr('paws! Your boss cannot claim them.','枚爪币！老板不能报销。');spin.textContent=tr('Come back tomorrow','明天再来')};
+   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+   wheel.style.transition=reduced?'none':'transform 2.6s cubic-bezier(.12,.7,.18,1)';
+   wheel.style.transform='rotate('+(360*5-index*45)+'deg)';
+   if(reduced)finish();else setTimeout(finish,2650)
+  });spin.disabled=claimed;spin.className='dailyWheelSpin';
+  element('small',tr('Free cosmetic rewards only. No real currency, extra spins or penalties for missing a day.','仅为免费装饰奖励，无真实货币、付费加转或漏签惩罚。'),q,'communityMuted');
+  b(q,tr('Decorate my hideout','布置我的小窝'),()=>{hideoutEditing=true;hideoutPage()});
+  b(q,tr('Back to Today','返回今日'),todayHub)
+ })
+}
+const dailyWheelTodayBefore=todayHub;
+todayHub=function(){
+ dailyWheelTodayBefore();const q=$('content'),social=q.querySelector('.communityWelcome'),offer=element('section','',q,'dailyWheelOffer');
+ const available=dailyWheelRecord().day<shrineClock().day;
+ element('h2',tr('Today’s little bonus','今日摸鱼福利'),offer);
+ element('p',available?tr('Spin for a little pocket money. The town is funding your escape.','转个小零花钱，小镇资助你摸鱼。'):tr('Your daily paws are collected. Go spend them on something silly.','今天的爪币已到账，买点喜欢的吧。'),offer);
+ b(offer,available?tr('Spin the wheel','转转乐'):tr('View today’s wheel','查看今日转转乐'),dailyWheelPage);
+ if(social)social.after(offer)
+};
+$('dockScoop').onclick=todayHub;
+const dailyWheelCSS=document.createElement('style');dailyWheelCSS.textContent='.dailyWheelStage{position:relative;width:min(76vw,300px);margin:22px auto 10px;aspect-ratio:1}.dailyWheelDisk{width:100%;height:100%;filter:drop-shadow(0 5px 4px #34292150)}.dailyWheelDisk svg{width:100%;height:100%}.dailyWheelPointer{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:28px solid #8c4f40;filter:drop-shadow(0 2px 1px #5b4439)}.dailyWheelResult{text-align:center;font-size:15px;line-height:1.5}.dailyWheelSpin{display:block;margin:10px auto;min-height:48px;padding:10px 22px!important}.dailyWheelOffer{padding:12px 14px;margin:10px 0 15px;border:1px solid #b39b71;background:#eee2c9;color:#4e5a49}.dailyWheelOffer h2{margin:0;font-size:19px}.dailyWheelOffer p{font-size:13px}.dailyWheelOffer button{min-height:44px}';document.head.append(dailyWheelCSS);
