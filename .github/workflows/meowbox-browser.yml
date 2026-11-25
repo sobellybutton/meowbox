@@ -58,6 +58,9 @@ jobs:
                   if(registry.filter(v=>v.id===id&&v.world===world).length!==1)throw Error('Wrong station ownership: '+id);
                 }
                 if(!await page.evaluate(()=>roomActions.quiz.length===1&&roomActions.quiz[0][0]==='quiz'))throw Error('Personality Lab has duplicate entry points');
+                const layoutCheck=await page.evaluate(()=>{const old=room,failures=[];let pairs=0;try{for(const [id,spec] of Object.entries(indoorStages)){room=id;const obs=indoorObstacles(),ids=id==='temple'?Object.keys(spec.stations):(roomActions[id]||[]).map(v=>v[0]);for(const k of ids)if(!spec.stations[k])failures.push(id+': missing '+k);const nodes=[spec.entry,spec.arrival,...ids.map(k=>indoorStation(k).slice(2))];for(const a of nodes)for(const b of nodes){pairs++;if(!indoorSafe(...a,obs)||!indoorPath(a,b,obs))failures.push(id+': '+a+' -> '+b)}}}finally{room=old}return {pairs,failures}});
+                if(layoutCheck.failures.length)throw Error('Indoor geometry: '+JSON.stringify(layoutCheck));console.log('INDOOR_GEOMETRY '+JSON.stringify(layoutCheck));
+
                 for(const map of ['fortune','home','island','wonder']){
                   // Use the normal travel engine; reposition near each door only as test setup.
                   await page.evaluate(k=>journey(k),map);
@@ -91,8 +94,24 @@ jobs:
                       if(options.hasTouch)await door.tap({timeout:5000});
                       else await door.click({timeout:5000});
                       await page.waitForFunction(id=>pending===id||room===id,st.id,{timeout:2000}).catch(async()=>{throw Error('Door click did not start the requested walking route: '+JSON.stringify(await page.evaluate(()=>({events:window.__doorEvents,pending,room,transitioning,scene}))))});
-                      await page.waitForFunction(id=>room===id&&!transitioning,st.id,{timeout:15000});
+                      await page.waitForFunction(id=>room===id&&!transitioning&&continuityRoom===id,st.id,{timeout:15000});
+                      await page.waitForFunction(()=>!indoor.route.length&&Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)<=3,{},{timeout:5000});
+                      const placement=await page.evaluate(()=>{const spec=indoorSpec();return {safe:indoorSafe(indoor.x,indoor.y),distance:Math.hypot(indoor.x-spec.arrival[0],indoor.y-spec.arrival[1]),x:cam.ox+indoor.x*cam.scale,y:cam.oy+indoor.y*cam.scale,w:W,h:H}});
+                      if(!placement.safe||placement.distance>4||placement.x<0||placement.x>placement.w||placement.y<60||placement.y>placement.h-40)throw Error('Unsafe or off-screen indoor arrival '+JSON.stringify(placement));
                       await page.screenshot({path:'test-results/'+name+'-'+map+'-'+st.id+'.png'});
+                      // One end-to-end activity entry from the real door, with no player repositioning.
+                      if(st.id==='tarot'){
+                        const tap=await page.evaluate(()=>{const target=hit.find(h=>h.stationId==='tarot');if(!target)return null;const r=c.getBoundingClientRect();return {x:r.left+cam.ox+(target.x+target.w/2)*cam.scale,y:r.top+cam.oy+(target.y+target.h/2)*cam.scale}});
+                        if(!tap)throw Error('Tarot station hit target missing');
+                        if(options.hasTouch)await page.touchscreen.tap(tap.x,tap.y);else await page.mouse.click(tap.x,tap.y);
+                        await page.waitForFunction(()=>!!indoor.goal||activity==='tarot',{},{timeout:2500});
+                        await page.waitForFunction(()=>room==='tarot'&&activity==='tarot',{},{timeout:8000});
+                        if(!await page.evaluate(()=>{const a=indoorSpec().stations.tarot.slice(2);return Math.hypot(indoor.x-a[0],indoor.y-a[1])<=3}))throw Error('Activity began before reaching authored station');
+                        await page.locator('#back').click();
+                        await page.waitForFunction(()=>room==='tarot'&&!activity&&continuityActivity===null,{},{timeout:5000});
+                        if(!await page.evaluate(()=>{const a=indoorSpec().stations.tarot.slice(2);return Math.hypot(indoor.x-a[0],indoor.y-a[1])<=3}))throw Error('Return lost station position');
+                        await page.screenshot({path:'test-results/'+name+'-tarot-return-anchor.png'});
+                      }
                       for(let j=0;j<3&&await page.evaluate(()=>!!room);j++)await page.locator('#back').click();
                       await page.waitForFunction(()=>!room&&!transitioning,{},{timeout:10000});
                       console.log(name+' '+map+'/'+st.id+' PASS');
