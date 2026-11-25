@@ -3661,7 +3661,7 @@ function careSync(){
 }
 function careComplete(action){
  if(!careIsActive())return;const a=state.care,profile=parkCats[state.petKind??0],key=profile.name[0];
- a.values=careOutcome(a.values,action,profile.pace);a.phase='idle';a.x=400;a.y=535;a.drag=null;a.stroke=0;a.assisted=false;careSave();
+ a.values=careOutcome(a.values,action,profile.pace);a.phase='return';a.returnFromX=a.x;a.returnFromY=a.y;a.returnAt=t;a.drag=null;a.stroke=0;a.assisted=false;careSave();
  const jokes={
  feed:[['Your food has passed the inspection. You may remain employed.','猫粮通过质检，你暂时不用辞职。'],['Good. The human has finally understood its job description.','不错，人类终于弄明白自己的岗位职责了。']],
  water:[['Fresh water. The management has finally listened.','新鲜水！管理层终于听劝了。'],['Five stars. Would drink again.','五星好评，下次还喝。']],
@@ -3684,6 +3684,7 @@ function careStart(action){
 }
 function careTick(){
  const a=state.care,age=t-a.at;
+ if(a.phase==='return'){const f=poseEase(clamp((t-a.returnAt)/.7,0,1));a.x=a.returnFromX+(400-a.returnFromX)*f;a.y=a.returnFromY+(535-a.returnFromY)*f;if(f>=1){a.phase='idle';careSync()}return}
  if(a.phase==='feed'||a.phase==='water'){
   const x=a.phase==='feed'?348:452,f=poseEase(clamp(age/.9,0,1));a.x=a.fromX+(x-a.fromX)*f;a.y=a.fromY+(535-a.fromY)*f;
   if(age>3.1)careComplete(a.phase)
@@ -3793,7 +3794,7 @@ function careRelease(e,cancel=false){
  if(!careCapture(e))return;const a=state.care,d=a.drag;if(!d||d.id!==e.pointerId)return;const q=point(e);a.drag=null;
  if(!cancel&&d.kind==='feed'&&Math.hypot(q.x-295,q.y-548)<55){careStart('feed');return}
  if(!cancel&&d.kind==='water'&&Math.hypot(q.x-505,q.y-548)<55){careStart('water');return}
- if(a.phase==='pet'||a.phase==='play'){a.phase='idle';a.x=400;a.y=535;careMessage('A little more next time. No need to rush.','下次再玩一会儿，别急。');careSync()}
+ if(a.phase==='pet'||a.phase==='play'){a.phase='return';a.returnFromX=a.x;a.returnFromY=a.y;a.returnAt=t;careMessage('A little more next time. No need to rush.','下次再玩一会儿，别急。');careSync()}
 }
 c.addEventListener('pointerup',e=>careRelease(e),true);c.addEventListener('pointercancel',e=>careRelease(e,true),true);
 const parkCareCss=document.createElement('style');parkCareCss.textContent='#gameControls.parkCareControls{display:flex!important;flex-direction:column;gap:4px;width:min(95vw,440px);max-width:95vw;padding:6px;background:#eee4ccf5;border:1px solid #ad9974;color:#4b5747;border-radius:5px}#gameControls.parkCareControls[hidden]{display:none!important}.parkCareStats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;width:100%}.parkCareStat{display:flex;flex-direction:column;align-items:center;min-width:0;font-size:10px;line-height:1.2}.parkCareStat progress{width:95%;height:7px;accent-color:#71916f}.parkCareStat:first-child progress,.parkCareStat:last-child progress{accent-color:#b68c59}.parkCareStat small{font-size:10px}.parkCareButtons{display:flex;gap:3px;width:100%}.parkCareButtons button{flex:1;min-width:0;min-height:44px;padding:3px!important;font-size:12px;white-space:normal}.parkCareMessage{font-size:11px;line-height:1.3;text-align:center;min-height:14px}';document.head.append(parkCareCss);
@@ -3841,6 +3842,7 @@ $('mute').onclick=function(e){physicalMuteBefore.call(this,e);if(actionFxBus&&au
 const productionVisualManifest={
  fish:{path:'assets/visual/pier-courtyard.svg',width:800,height:1400},
  park:{path:'assets/visual/daydream-park.svg',width:800,height:1400},
+ parkCats:{path:'assets/visual/park-cats-sheet.svg',width:1760,height:700,cell:[220,140],foot:[110,120]},
  ahMaIdle:{path:'assets/visual/ah-ma-seated.svg',width:180,height:220,foot:[90,205],seat:[90,151]},
  ahMaScold:{path:'assets/visual/ah-ma-scold.svg',width:180,height:220,foot:[90,205],seat:[90,151]}
 };
@@ -3863,4 +3865,26 @@ function drawProductionAhMa(x,y,scale=1){
 }
 // Request the matching two poses together when first reaching the stall.
 const productionVisualStart=start;
-start=function(a){if(a==='hit'){productionVisual('fish');productionVisual('ahMaIdle');productionVisual('ahMaScold')}if(a==='pet')productionVisual('park');return productionVisualStart(a)};
+start=function(a){if(a==='hit'){productionVisual('fish');productionVisual('ahMaIdle');productionVisual('ahMaScold')}if(a==='pet'){productionVisual('park');productionVisual('parkCats')}return productionVisualStart(a)};
+
+/* Art sheet rows retain the established five cat identities.
+   Eight original poses per row, all sharing the same foot pivot. */
+function parkCatFrame(phase,age,clock,assisted=false,moving=false,trust=50){
+ if(phase==='rest')return 6;
+ if((phase==='feed'||phase==='water')&&age>=.9)return 4+Math.floor(age*5)%2;
+ if(phase==='return'||phase==='feed'||phase==='water')return 2+Math.floor(clock*6)%2;
+ if(phase==='play'&&(assisted||moving))return Math.floor(age*5)%5===0?7:2+Math.floor(clock*7)%2;
+ if(phase==='pet'||clock%5.2<.17||trust>65&&clock%6<.5)return 1;
+ return 0
+}
+const catArtDraft=careCatArt;
+careCatArt=function(a){
+ const im=productionVisual('parkCats');if(!im)return catArtDraft(a);
+ const kind=Math.max(0,Math.min(4,state.petKind??0)),age=Math.max(0,t-a.at);
+ const frame=parkCatFrame(a.phase,age,t,a.assisted,!!a.drag,a.values.trust);
+ const dir=a.phase==='return'?(a.returnFromX>400?-1:1):a.phase==='feed'?-1:a.phase==='play'&&a.drag&&a.drag.x<a.x?-1:1;
+ const resting=frame===6,pounce=frame===7,bob=pounce?-Math.abs(Math.sin(age*5))*5:resting?Math.sin(t*2)*.6:0;
+ ctx.save();ctx.translate(a.x,a.y);ellipse(0,3,resting?58:72,resting?10:12,'#393d2f38');ctx.scale(dir,1);
+ ctx.drawImage(im,frame*220,kind*140,220,140,-110,-120+bob,220,140);
+ ctx.restore()
+};
