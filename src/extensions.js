@@ -498,7 +498,7 @@ roomActions.quiz=[['soulcat','Soul Cat Sanctuary','猫灵小屋'],['quiz','Perso
 activityTitle.wonderScene=['Inner discoveries','心灵奇遇'];
 let wonderSceneMode='soul',wonderSceneAnswers=[],wonderScenePhase='welcome',wonderSceneAt=0,wonderScenePick=-1,wonderSceneResult=null,wonderSceneToken=0;
 const wonderSceneNames={soul:['Soul Cat Sanctuary','猫灵小屋'],type:['Personality Lab','人格研究所'],motive:['Nine Inner Motives','九型茶馆']};
-const wonderSceneBeforeHint=activityHint;activityHint=function(){if(activity==='wonderScene'){hint('Choose an object on the table. Step Back returns to the room.','点击桌上的物品。退一步可回到小屋。');return}return wonderSceneBeforeHint()};
+const wonderSceneBeforeHint=activityHint;activityHint=function(){if(activity==='wonderScene'){hint('Choose an object on the table. Back to room returns to the room.','点击桌上的物品。返回小屋可回到小屋。');return}return wonderSceneBeforeHint()};
 function wonderSceneOpen(mode){wonderSceneToken++;wonderSceneMode=mode;wonderSceneAnswers=[];wonderScenePhase='welcome';wonderScenePick=-1;wonderSceneAt=t;wonderSceneResult=null;$('page').style.display='none';start('wonderScene');hint('Choose a little discovery on the table.','选一件桌上的小小奇遇。')}
 function wonderSceneData(){let i=wonderSceneAnswers.length;if(wonderSceneMode==='soul'){let v=soulQs[i];return v&&{prompt:v[0],opts:v[1].map((o,j)=>[o[0],o[1],j]),total:6}}if(wonderSceneMode==='type'){let v=wonderTypes[Math.floor(i/2)]?.[1+i%2];return v&&{prompt:v[0],opts:v.slice(1).map((o,j)=>[o[0],o[1],j]),total:8}}let v=wonderMotivationQs[i];return v&&{prompt:v[0],opts:v[1].map(k=>[wonderMotives[k][2],wonderMotives[k][3],k]),total:6}}
 function wonderSceneFinish(){let mode=wonderSceneMode,a=wonderSceneAnswers;if(mode==='soul'){let scores=Array(8).fill(0);a.forEach((v,i)=>soulQs[i][1][v][2].forEach(k=>scores[k]++));soulResult=scores.indexOf(Math.max(...scores));save('soulCatV1',soulResult);let c=soulCats[soulResult];wonderSceneResult={name:c.slice(0,2),desc:c.slice(2,4),color:c[4]};addItem('Soul Cat keepsake','猫灵纪念章');addItem('Soul Cat: '+c[0],'猫灵：'+c[1])}else if(mode==='type'){let code='',ties=[];for(let i=0;i<4;i++){let x=a[i*2],y=a[i*2+1];if(x!==y){ties.push(i);code+='X'}else code+=wonderTypes[i][0][x]}wonderSaved.type={code,ties};save('wonderTestsV1',wonderSaved);wonderSceneResult={name:[code,code],desc:ties.length?['X means a mixed preference. You can be a little of both.','X 表示两种偏好相近，你可以同时拥有两面。']:['A snapshot of your everyday preferences.','你的日常性格偏好小画像。'],color:'#92a79a'};addItem('Personality Lab: '+code,'人格研究所：'+code)}else{let scores=Array(9).fill(0);a.forEach(k=>scores[k]++);let best=Math.max(...scores),ties=scores.map((v,i)=>v===best?i:-1).filter(i=>i>=0),k=ties[0],c=wonderMotives[k];wonderSaved.motive={index:k,ties:ties.length>1?ties:[]};save('wonderTestsV1',wonderSaved);wonderSceneResult={name:c.slice(0,2),desc:ties.length>1?[c[2]+' · Other motives scored equally.',''+c[3]+' · 其他动力也有相同得分。']:c.slice(2,4),color:'#d4b17b'};addItem('Inner motive: '+c[0],'内在动力：'+c[1])}wonderScenePhase='result';wonderSceneAt=t;sound(660)}
@@ -513,7 +513,7 @@ const wonderCanvasPrior=drawActivity;drawActivity=function(){if(activity!=='wond
  let wood=ctx.createLinearGradient(0,395,0,670);wood.addColorStop(0,'#ae8761');wood.addColorStop(1,'#72513b');ctx.beginPath();ctx.moveTo(211,399);ctx.lineTo(589,399);ctx.lineTo(780,1800);ctx.lineTo(20,1800);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle='#c4a071';ctx.stroke();for(let i=0;i<12;i++)line(188,416+i*20,612,418+i*20,'#e5bc8922',1);
  txt(tr(...wonderSceneNames[mode]),400,251,21,'#fff1d5');
  if(phase==='welcome'){wonderSceneText(tr('The keeper has a little story for you.','守护者有个小故事想与你分享。'),400,420,385,19);wonderSceneObject(400,516,0,mode,false);label(tr('Begin our conversation','开始我们的对话'),400,606,()=>{wonderScenePhase='question';wonderSceneAt=t;sound(480)});txt(tr('For fun, at your own pace.','趣味探索，慢慢来。'),400,644,13,'#f8e4c6')}
- else if(phase==='result'){let v=wonderSceneResult,f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.65));ctx.save();ctx.translate(400,493);ctx.scale(Math.max(.02,f),1);round(-147,-103,294,207,4,'#f5e3ba','#b88b5e');round(-139,-95,278,191,2,null,'#b88b5e');if(mode==='soul')cat(0,-15,0,false,1.35);else{ellipse(0,-55,28,28,v.color);ctx.strokeStyle='#b28c5b';ctx.beginPath();ctx.arc(0,-55,35,0,TAU);ctx.stroke()}wonderSceneText(tr(...v.name),0,-1,260,23,'#654b39',2);wonderSceneText(tr(...v.desc),0,29,262,14,'#654b39',3);ctx.restore();label(tr('Share keepsake','分享纪念卡'),330,623,wonderSceneShare);label(tr('Try again','再测一次'),486,623,()=>wonderSceneOpen(mode));txt(tr('Step Back to leave · for fun only','退一步离开 · 仅供娱乐'),400,655,13,'#fff1d5')}
+ else if(phase==='result'){let v=wonderSceneResult,f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.65));ctx.save();ctx.translate(400,493);ctx.scale(Math.max(.02,f),1);round(-147,-103,294,207,4,'#f5e3ba','#b88b5e');round(-139,-95,278,191,2,null,'#b88b5e');if(mode==='soul')cat(0,-15,0,false,1.35);else{ellipse(0,-55,28,28,v.color);ctx.strokeStyle='#b28c5b';ctx.beginPath();ctx.arc(0,-55,35,0,TAU);ctx.stroke()}wonderSceneText(tr(...v.name),0,-1,260,23,'#654b39',2);wonderSceneText(tr(...v.desc),0,29,262,14,'#654b39',3);ctx.restore();label(tr('Share keepsake','分享纪念卡'),330,623,wonderSceneShare);label(tr('Try again','再测一次'),486,623,()=>wonderSceneOpen(mode));txt(tr('Back to room to leave · for fun only','返回小屋离开 · 仅供娱乐'),400,655,13,'#fff1d5')}
  else{let d=wonderSceneData();if(d){let n=d.opts.length;let f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.3));ctx.globalAlpha=phase==='turn'?1:Math.max(.15,f);wonderSceneText(tr(...d.prompt),400,410,395,18,'#fff1d5',3);for(let j=0;j<n;j++){let x=n===4?250+j*100:n===3?278+j*122:327+j*146,y=528;wonderSceneObject(x,y,j,mode,phase==='turn'&&wonderScenePick===j);wonderSceneText(tr(d.opts[j][0],d.opts[j][1]),x,579,n===4?93:117,13,'#fff5df',4);if(phase==='question')target(x-48,470,96,160,()=>wonderSceneChoose(j))}ctx.globalAlpha=1;txt((wonderSceneAnswers.length+1)+' / '+d.total,400,654,14,'#fff1d5')}}
  ctx.restore();
 };
@@ -694,15 +694,15 @@ const ambientReactBefore=react;react=function(en,cn){ambientReactBefore(en,cn);i
 /* A playful fictional paper-villain ritual, with no real-person targets. */
 let stressTarget=0,stressSwingAt=-10,stressSide=1,stressCombo=0,stressLast=-10,stressPieces=[],stressTool=0;
 const stressTargets=[['Unnecessary meetings','无效会议'],['Monday blues','周一综合征'],['Endless emails','回不完的邮件'],['Overthinking','想太多']];
-const stressStartBefore=start;start=function(a){stressStartBefore(a);if(a==='hit'){stressSwingAt=-10;stressLast=-10;stressCombo=0;stressPieces=[];hint('Choose a paper worry, then tap or swipe to let it go.','选一张烦恼纸人，点击或滑动，把烦恼打走。')}};
+const stressStartBefore=start;start=function(a){stressStartBefore(a);if(a==='hit'){stressSwingAt=-10;stressLast=-10;stressCombo=0;stressPieces=[];hint('Tap the paper figure or press WHACK! No actual colleagues were harmed.','点击纸人，或按「打走烦恼」。同事们毫发无伤。')}};
 const stressSmackBefore=smack;smack=function(){if(activity!=='hit')return;stressCombo=t-stressLast<.65?stressCombo+1:1;stressLast=t;stressSwingAt=t;stressSide*=-1;stressSmackBefore();for(let i=0;i<7;i++)stressPieces.push({at:t,x:400+(Math.random()-.5)*55,y:465+(Math.random()-.5)*65,vx:(Math.random()-.5)*140,vy:-30-Math.random()*80,angle:Math.random()*TAU});if(stressPieces.length>70)stressPieces.splice(0,stressPieces.length-70);if(ambientBus&&!muted)ambientTone(100,.035,.13,'triangle');if(stressCombo===5)react('Even the paper wants annual leave.','纸人都想请年假了。');if(state.count===25)addItem('Certified worry shredder','认证烦恼粉碎机')};
 function stressSlipper(x,y,angle){ctx.save();ctx.translate(x,y);ctx.rotate(angle);let g=ctx.createLinearGradient(-20,0,22,0);g.addColorStop(0,stressTool?'#8b6541':'#a65d58');g.addColorStop(.5,stressTool?'#d3a976':'#d7a18a');g.addColorStop(1,stressTool?'#916b47':'#98544e');ctx.beginPath();ctx.moveTo(-16,41);ctx.bezierCurveTo(-28,10,-27,-44,-9,-50);ctx.bezierCurveTo(15,-56,26,-29,22,4);ctx.quadraticCurveTo(18,47,-16,41);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#684b39';ctx.lineWidth=2;ctx.stroke();ctx.strokeStyle='#f0d0a4';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-20,-16);ctx.quadraticCurveTo(0,-4,20,-16);ctx.stroke();ctx.restore()}
 const stressDrawBefore=drawActivity;drawActivity=function(){if(activity!=='hit')return stressDrawBefore();ctx.save();paintLivingBackdrop(pics.office||pics.tea);let b=livingBounds(),g=ctx.createLinearGradient(0,280,0,700);g.addColorStop(0,'#372e2820');g.addColorStop(1,'#3b2927ae');shadeLivingBackdrop(g);human(400,377,0,false,1,1.55);let wood=ctx.createLinearGradient(0,390,0,700);wood.addColorStop(0,'#b99067');wood.addColorStop(1,'#76513d');ctx.fillStyle=wood;ctx.beginPath();ctx.moveTo(215,390);ctx.lineTo(585,390);ctx.lineTo(790,1600);ctx.lineTo(10,1600);ctx.closePath();ctx.fill();for(let j=0;j<14;j++)line(185,408+j*20,615,410+j*20,'#dfb98a33',1);
  txt(tr('Paper Worry Ritual','打小烦恼'),400,258,23,'#fff0d2');
  let f=Math.max(0,Math.min(1,(t-stressSwingAt)/.46)),impact=(1-f)*Math.sin(f*13);ctx.save();ctx.translate(400,491);ctx.rotate(impact*.48*stressSide);ctx.translate(impact*13,0);let paper=ctx.createLinearGradient(-50,-80,50,75);paper.addColorStop(0,'#f2d7a5');paper.addColorStop(1,'#d5b17b');ctx.fillStyle=paper;ctx.beginPath();ctx.moveTo(-25,-68);ctx.lineTo(25,-68);ctx.lineTo(31,-28);ctx.lineTo(62,-13);ctx.lineTo(47,15);ctx.lineTo(27,5);ctx.lineTo(23,66);ctx.lineTo(1,56);ctx.lineTo(-23,66);ctx.lineTo(-27,5);ctx.lineTo(-47,15);ctx.lineTo(-62,-13);ctx.lineTo(-31,-28);ctx.closePath();ctx.fill();ctx.strokeStyle='#a27a4b';ctx.stroke();line(-16,-45,-4,-40,'#78543c',2);line(16,-45,4,-40,'#78543c',2);line(-8,-28,8,-28,'#78543c',2);wonderSceneText(tr(...stressTargets[stressTarget]),0,-9,55,11,'#86563b',4);ctx.restore();
- let swing=Math.sin(Math.min(1,f)*Math.PI);stressSlipper(520-108*swing,511-45*swing,.3-1.4*swing);target(325,405,150,155,()=>{},'hit');target(474,433,90,120,()=>smack());
+ let swing=Math.sin(Math.min(1,f)*Math.PI);stressSlipper(520-108*swing,511-45*swing,.3-1.4*swing);target(310,392,180,178,()=>{},'hit');target(474,433,90,120,()=>{},'hit');
  stressPieces=stressPieces.filter(v=>t-v.at<.65);for(let v of stressPieces){let d=t-v.at;ctx.save();ctx.globalAlpha=1-d/.65;ctx.translate(v.x+v.vx*d,v.y+v.vy*d+100*d*d);ctx.rotate(v.angle+d*4);ctx.fillStyle='#f0d8a3';ctx.fillRect(-3,-2,6,4);ctx.restore()}
- txt(tr('Worries released: ','烦恼释放：')+state.count,400,579,17,'#fff0d4');if(stressCombo>1&&t-stressLast<1)txt(tr('Combo ','连击 ')+stressCombo,400,607,15,'#ffe0a0');label(tr('Change worry','换个烦恼'),302,642,()=>{stressTarget=(stressTarget+1)%stressTargets.length;stressCombo=0;sound(430)});label(tr('Change slipper','换只拖鞋'),500,642,()=>{stressTool=1-stressTool;sound(430)});ctx.restore()
+ txt(tr('Worries released: ','烦恼已打走：')+state.count,400,568,15,'#fff0d4');label(tr('WHACK!','打走烦恼！'),400,603,()=>smack());label(tr('Change worry','换个烦恼'),302,642,()=>{stressTarget=(stressTarget+1)%stressTargets.length;stressCombo=0;sound(430)});label(tr('Change slipper','换只拖鞋'),500,642,()=>{stressTool=1-stressTool;sound(430)});ctx.restore()
 };
 
 const movementHelpStyle=document.createElement('style');
@@ -1953,3 +1953,79 @@ drawActivity=function(){
  if(W<H&&Object.hasOwn(additionalPortraits,id))paintPortraitInterior(id);
  return batchPortraitActivityBefore()
 };
+
+/* Friendly navigation, locally written jokes and conversational cameos. */
+for(const st of maps.home.st)if(st[0]==='fish'){st[3]='Worry-Free Pier';st[4]='忘忧码头'}
+roomActions.fish=[['pier','Send worries adrift','烦恼漂流瓶'],['fish','Go fishing','正经摸鱼'],['chat','Share a bench','找个搭子聊聊']];
+roomActions.park=[['pet','Make a furry friend','找个毛茸茸的朋友'],['chat','Chat under the trees','树下聊聊天']];
+roomActions.office=[['rant','Rant Wall','吐槽墙'],['hit','Whack your worries','打走烦恼']];
+roomActions.tea=[['chat','Tea and gossip','来杯茶，聊个瓜'],['board','The Daily Scoop','摸鱼日报']];
+activityTitle.hit=['Whack your worries','打走烦恼'];
+activityTitle.pet=['Make a furry friend','和毛孩子做朋友'];
+const nextStopButton=element('button','',$('back').parentNode);
+nextStopButton.id='nextStopShortcut';nextStopButton.onclick=()=>travel();
+const nextStopStyle=document.createElement('style');
+nextStopStyle.textContent='#nextStopShortcut{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 110px);z-index:6;max-width:46vw;font:13px system-ui;padding:10px 12px;border:1px solid #b99c73;border-radius:14px;background:#f7ead1;color:#584534;box-shadow:0 2px 6px #2c261e30}#nextStopShortcut[hidden]{display:none!important}@media(max-height:500px){#nextStopShortcut{top:86px}}';
+document.head.append(nextStopStyle);
+const copyHUD=updateHUD;updateHUD=function(){
+ copyHUD();
+ if(room)$('back').textContent=activity?tr('‹ Back to room','‹ 返回小屋'):tr('‹ Back outside','‹ 出门逛逛');
+ $('hudProgress').textContent=tr('Traveller','摸鱼旅人')+' · '+items.length+tr(' keepsakes',' 件纪念品');
+ nextStopButton.textContent=tr('Next stop ›','下一站 ›');nextStopButton.hidden=avatar===null||!!room||!proposal.hidden;
+};
+const copyAlbumProfile=albumProfile;
+albumProfile=function(q){copyAlbumProfile(q);const a=q.querySelector('.albumProfile p');if(a)a.textContent=items.length+tr(' little discoveries',' 份小小回忆')};
+pier9=function(){page(tr('Worry-Free Pier','忘忧码头'),tr('No deadlines beyond this point. Even the fish are off duty.','过了这条线，烦恼就下班。鱼早就摸鱼去了。'),q=>{
+ pond9(q);privateNote9(q,'bottle');
+ b(q,tr('Go fishing','正经摸鱼'),()=>{$('page').style.display='none';start('fish')});
+ b(q,tr('Share a bench','找个搭子聊聊'),()=>{$('page').style.display='none';cameo9('home')});
+ b(q,tr('Next stop','下一站'),travel)
+})};
+const townWallNotes=[
+ ['Auntie Hong','红姐','The group chat has 283 unread messages. I have chosen inner peace.','群里283条未读。我选择了与世无争。'],
+ ['Office Intern','实习生','My boss said think outside the box. So I went outside.','老板说跳出框架思考，我直接下楼了。'],
+ ['Uncle Offchip','黄不忙','Caught zero fish. Avoided three meetings. Excellent morning.','鱼没钓到一条，会倒是躲了三个。上午圆满。'],
+ ['Lady Clocked Out','甄摸鱼','This palace can keep its drama. I have a dinner reservation.','后宫的戏你们慢慢演，本宫约了晚饭。'],
+ ['Mr. Been on Leave','休假先生','I am currently away from my inbox, physically and spiritually.','本人身心均已离开邮箱，勿念。'],
+ ['Mochi','麻薯','They called it a performance review. I knocked the form off the table.','听说要绩效考核。我把表格推下桌了。']
+];
+rant9=function(){page(tr('The Rant Wall','吐槽墙'),tr('The wall has heard worse. No names, no screenshots, no HR.','这面墙见过大场面。不点名，不截图，不惊动人事。'),q=>{
+ element('h2',tr('Already on the wall','墙上已有的吐槽'),q);
+ let wall=element('div','',q,'townRantWall');
+ for(const n of townWallNotes){const note=element('article','',wall,'townRantNote');element('small',tr(n[0],n[1])+tr(' · Fictional resident',' · 虚构居民'),note);element('p',tr(n[2],n[3]),note)}
+ element('h2',tr('Leave a worry here','把烦恼留在这里'),q);privateNote9(q,'rant');b(q,tr('Visit the community noticeboard','去摸鱼留言板'),board)
+})};
+const rantPaperStyle=document.createElement('style');rantPaperStyle.textContent='.townRantWall{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;padding:16px 10px;background:#a58b67;border:7px solid #795a42;border-radius:5px}.townRantNote{position:relative;min-width:0;background:#f6e5b5;color:#5a4737;padding:16px 10px 9px;box-shadow:1px 4px 7px #392b3444;transform:rotate(-1deg);overflow-wrap:anywhere}.townRantNote:nth-child(2n){background:#e6c4ba;transform:rotate(1deg)}.townRantNote:nth-child(3n){background:#d9dfbd}.townRantNote:before{content:"";position:absolute;top:4px;left:48%;width:6px;height:6px;border-radius:50%;background:#a96850}.townRantNote small{font-size:11px}.townRantNote p{font-size:14px;line-height:1.5;margin:8px 0}';document.head.append(rantPaperStyle);
+const cameoTopics=[
+ [['Work','上班那点事'],['My calendar has more meetings than I have will to attend them.','日程表上的会，比我上班的意愿还多。']],
+ [['Life lately','最近过得怎样'],['I tried to become a morning person. We are no longer on speaking terms.','我试着早起养生，现在跟早晨绝交了。']],
+ [['Something funny','讲个新瓜'],['Someone brought a laptop to the beach. Even the crabs looked disappointed.','有人带电脑去海边，螃蟹看了都摇头。']],
+ [['Just sit together','就安静坐一会儿'],['No need to fill the silence. This is not a networking event.','不用硬找话题，又不是商务社交局。']]
+];
+const cameoPersonal={
+ 'Uncle Offchip':[['Fish do not need an appraisal. Neither do you, for the next five minutes.','鱼不用做绩效。这五分钟，你也不用。'],['The tide goes in and out. My emails should learn from it.','潮水知道涨退，我的邮件怎么只进不出。']],
+ 'Lady Clocked Out':[['The emperor may summon me after six. He will receive an automated reply.','皇上六点后召见？请查收本宫的自动回复。'],['I have retired from palace politics. My new ambition is a full night of sleep.','本宫退出宫斗，现阶段目标是睡个整觉。']],
+ 'Mr. Raincheck':[['At 5:59 the rain began. At 6:00 I was already on the train.','五点五十九分下雨，六点整我已在地铁上。'],['Some people wait for love. I wait for the kettle.','有人等爱情，我等水开。']],
+ 'Auntie Hong':[['I never spread gossip. I merely provide context with excellent timing.','我从不传八卦，我只是适时补充背景资料。'],['Tea first. The plot twist can wait until the second cup.','先喝茶，反转等第二杯再说。']],
+ 'Kim Out of Office':[['My fishing report is confidential. Mainly because there are no fish.','摸鱼报告保密，主要是因为没摸到鱼。'],['A good strategy needs patience. And a comfortable chair.','好战略需要耐心，还需要一张舒服的椅子。']]
+};
+let cameoChats=load('cameoChatsV1',{});
+if(!cameoChats||typeof cameoChats!=='object'||Array.isArray(cameoChats))cameoChats={};
+function cameoOpenConversation(a,continuing=false){
+ const key=a[0],rec=cameoChats[key]||{visits:0,topics:[]};
+ if(!continuing){rec.visits++;cameoChats[key]=rec;save('cameoChatsV1',cameoChats);addItem('Met '+a[0],'遇见'+a[1])}
+ const intro=continuing?tr('Another cup? Or another story?','再喝一杯，还是再聊一段？'):rec.visits>1?tr('You again! I kept the seat beside me free.','又见面啦！旁边的位子给你留着呢。'):tr(a[3],a[4]);
+ const opts=cameoTopics.map((topic,i)=>[tr(...topic[0]),()=>{
+ if(!rec.topics.includes(i))rec.topics.push(i);cameoChats[key]=rec;save('cameoChatsV1',cameoChats);
+ const reply=cameoPersonal[key]?.[i]||topic[1];
+ say(tr(a[0],a[1]),tr(...reply),[[tr('Keep chatting','再聊会儿'),()=>cameoOpenConversation(a,true)],[tr('See you around','下次见'),closeTalk]])
+ }]);
+ opts.push([tr('See you around','下次见'),closeTalk]);
+ say(tr(a[0],a[1]),intro+' '+tr('(Fictional guest)','（虚构客串角色）'),opts)
+}
+cameo9=function(place=scene){
+ const pool=cast9.filter(a=>a[2]===place),list=pool.length?pool:cast9;
+ const n=Number(load('cameoCount',0))||0,a=list[(hash(day()+place)+n)%list.length];
+ save('cameoCount',n+1);cameoOpenConversation(a)
+};
+updateHUD();
