@@ -2,14 +2,14 @@ name: MeowBox browser smoke tests
 on:
   push:
     branches: [main]
-    paths: ['index.html', 'preview-v9-1/**', '.github/workflows/meowbox-browser.yml']
+    paths: ['index.html', 'preview-v9-1/**', 'assets/**', '.github/workflows/meowbox-browser.yml']
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,7 +17,82 @@ jobs:
           node-version: '22'
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps chromium
-      - name: Test entrance and responsive layout
+      - name: Test all four villages and actual doorway taps
+        shell: bash
+        run: |
+          python3 -m http.server 8766 > /tmp/meowbox-navigation-server.log 2>&1 &
+          mkdir -p test-results
+          node <<'JS'
+          const {chromium}=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch();
+            let failures=[];
+            for(const [name,options] of [
+              ['mobile-360',{viewport:{width:360,height:640},isMobile:true,hasTouch:true,deviceScaleFactor:1}],
+              ['mobile-390',{viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:1}],
+              ['tablet',{viewport:{width:768,height:1024},hasTouch:true}],
+              ['desktop',{viewport:{width:1440,height:900}}]
+            ]){
+              const page=await browser.newPage(options);
+              const errors=[];page.on('pageerror',e=>errors.push(e.message));
+              page.on('console',m=>{if(m.type()==='error'&&/frame error|Room transition/.test(m.text()))errors.push(m.text())});
+              try{
+                await page.goto('http://127.0.0.1:8766/index.html');
+                await page.locator('#proposal footer button.next').waitFor({timeout:45000});
+                await page.locator('#proposal .languageChoice').getByRole('button',{name:'EN',exact:true}).click();
+                await page.locator('#proposal footer button.next').click();
+                await page.locator('#proposal .rail-ticket input').fill('Navigation Tester');
+                await page.locator('#proposal .ticket-confirm').click();
+                await page.locator('#proposal footer button.next').click();
+                await page.locator('#proposal footer .actions button').first().click();
+                await page.locator('#proposal .shrine-enter').click({timeout:20000});
+                await page.locator('#proposal').waitFor({state:'hidden',timeout:30000});
+                await page.waitForTimeout(3500);
+                for(const map of ['fortune','home','island','wonder']){
+                  // Use the normal travel engine; reposition near each door only as test setup.
+                  await page.evaluate(k=>journey(k),map);
+                  await page.waitForFunction(k=>scene===k&&!transitioning&&!room,map,{timeout:15000});
+                  if(map!=='fortune'){
+                    await page.waitForFunction(()=>portraitImages[scene]?.naturalWidth>0,{},{timeout:10000});
+                    if(!await page.evaluate(()=>portraitImages[scene].naturalHeight>portraitImages[scene].naturalWidth))throw Error(map+': artwork is not portrait');
+                  }
+                  const stations=await page.evaluate(()=>maps[scene].st.map(([id,x,y,en,cn])=>({id,x,y,en,cn})));
+                  await page.screenshot({path:'test-results/'+name+'-'+map+'-map.png'});
+                  for(const st of stations){
+                    if(st.id==='station')continue;
+                    try{
+                      await page.evaluate(({x,y})=>{stopRoute();closeTalk();p.x=p.tx=x;p.y=p.ty=clamp(y+110,minY(),maxY());cam.x=p.x;cam.y=p.y;p.motionSpeed=0;quiet9=false;},st);
+                      const door=page.locator('#worldSigns .worldSign').filter({hasText:st.en});
+                      await door.waitFor({state:'visible',timeout:3500});
+                      if(options.hasTouch){const b=await door.boundingBox();if(!b)throw Error('Door has no bounding box');await page.touchscreen.tap(b.x+b.width/2,b.y+b.height/2)}
+                      else await door.click();
+                      await page.waitForFunction(id=>room===id&&!transitioning,st.id,{timeout:15000});
+                      await page.screenshot({path:'test-results/'+name+'-'+map+'-'+st.id+'.png'});
+                      for(let j=0;j<3&&await page.evaluate(()=>!!room);j++)await page.locator('#back').click();
+                      await page.waitForFunction(()=>!room&&!transitioning,{},{timeout:10000});
+                      console.log(name+' '+map+'/'+st.id+' PASS');
+                    }catch(e){
+                      failures.push(name+' '+map+'/'+st.id+': '+e.message);
+                      await page.screenshot({path:'test-results/'+name+'-'+map+'-'+st.id+'-failure.png'}).catch(()=>{});
+                      await page.evaluate(()=>{room=null;activity=null;state={};transitioning=false;stopRoute();closeTalk();$('page').style.display='none';resetPosition();updateHUD()});
+                    }
+                  }
+                  await page.evaluate(()=>toggleLang());
+                  if(await page.evaluate(()=>document.documentElement.lang)!=='zh')throw Error(map+': Chinese toggle failed');
+                  await page.evaluate(()=>toggleLang());
+                  if(await page.evaluate(()=>document.documentElement.lang)!=='en')throw Error(map+': English toggle failed');
+                }
+              }catch(e){failures.push(name+': '+e.message)}
+              finally{
+                failures.push(...errors.map(e=>name+' runtime: '+e));await page.close();
+              }
+            }
+            await browser.close();
+            if(failures.length){console.error(failures.join('\n'));process.exitCode=1}
+          })().catch(e=>{console.error(e);process.exitCode=1});
+          JS
+      - name: Test entrance and responsive layout and activities
+        if: always()
         shell: bash
         run: |
           python3 -m http.server 8765 > /tmp/meowbox-server.log 2>&1 &
@@ -97,6 +172,8 @@ jobs:
                 await page.evaluate(()=>{room='temple';activity=null;action('prayer')});
                 await page.waitForFunction(()=>activity==='prayer'&&state.prayerStage==='ready',{},{timeout:10000});
                 await page.screenshot({path:'test-results/'+name+'-temple-ready.png'});
+                await page.evaluate(()=>lightTempleIncense());
+                if(!await page.evaluate(()=>state.incense===true))throw Error('Incense did not light');
                 await page.evaluate(()=>beginQuietBow());
                 await page.waitForFunction(()=>state.prayerStage==='silent',{},{timeout:10000});
                 await page.screenshot({path:'test-results/'+name+'-temple-prayer.png'});
