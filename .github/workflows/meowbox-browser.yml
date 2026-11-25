@@ -332,6 +332,27 @@ jobs:
                 await page.evaluate(()=>{state.rhythmAt=t-15});
                 await page.waitForFunction(()=>state.rhythmStage==='result',{},{timeout:5000});
                 if(!await page.evaluate(()=>items.some(x=>x[0]==='After-hours rhythm ticket')))throw Error('Rhythm ticket missing');
+                await page.evaluate(()=>{room='office';activity=null;state={};closeTalk();updateHUD();rant9()});
+                if(await page.locator('.townRantNote').count()!==6)throw Error('Starter rant notes missing');
+                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                await page.evaluate(()=>{start('hit');updateHUD()});
+                await page.waitForTimeout(650);
+                await tapWorld(400,603);
+                await page.waitForFunction(()=>state.count===1,{},{timeout:3000});
+                await page.evaluate(()=>{room=null;activity=null;state={};closeTalk();updateHUD()});
+                if(!await page.locator('#nextStopShortcut').isVisible())throw Error('Next stop shortcut missing');
+                await page.locator('#nextStopShortcut').click();
+                await page.waitForFunction(()=>$('page').style.display==='block',{},{timeout:3000});
+                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                await page.evaluate(()=>{room='park';activity=null;state={};updateHUD();cameo9('home')});
+                await page.locator('#choices').getByRole('button',{name:'Work',exact:true}).click();
+                await page.locator('#choices').getByRole('button',{name:'Keep chatting',exact:true}).click();
+                if(!await page.locator('#choices').getByRole('button',{name:'Just sit together',exact:true}).isVisible())throw Error('Cameo conversation cannot continue');
+                await page.evaluate(()=>{closeTalk();toggleLang()});
+                if(await page.locator('#back').innerText()!=='‹ 出门逛逛')throw Error('Chinese back label incorrect');
+                await page.evaluate(()=>{rant9()});
+                if(!await page.locator('.townRantWall').innerText().then(v=>v.includes('群里283条未读')))throw Error('Chinese wall text missing');
+                await page.evaluate(()=>{$('page').style.display='none';toggleLang();closeTalk()});
                 await page.evaluate(()=>{room='destiny';activity=null;state={};closeTalk();updateHUD()});
                 if(options.hasTouch){
                   await page.waitForFunction(()=>portraitInteriorCache.get('destiny')?.naturalWidth===800&&portraitInteriorCache.get('destiny')?.naturalHeight===1400,{},{timeout:10000});
