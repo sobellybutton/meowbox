@@ -3538,7 +3538,7 @@ function hideoutUnlocked(reward){
 let hideoutPrefs=load('hideoutPrefsV2',{theme:'morning',display:[],furniture:null});
 if(!hideoutPrefs||typeof hideoutPrefs!=='object'||Array.isArray(hideoutPrefs))hideoutPrefs={theme:'morning',display:[],furniture:null};
 if(!Array.isArray(hideoutPrefs.display))hideoutPrefs.display=[];
-let hideoutFurniture=Array.isArray(hideoutPrefs.furniture)?hideoutPrefs.furniture:Array.isArray(load('decor9',null))?decor9.filter(d=>Object.hasOwn(roomNames9,d.id)&&Object.hasOwn(art9,d.id)).map(d=>({...d})):[{id:'bed',x:29,y:66},{id:'lamp',x:77,y:62},{id:'basicTable',x:65,y:76}];
+let hideoutFurniture=Array.isArray(hideoutPrefs.furniture)?hideoutPrefs.furniture:Array.isArray(load('decor9',null))?decor9.filter(d=>Object.hasOwn(roomNames9,d.id)&&Object.hasOwn(art9,d.id)).map(d=>({...d})):[{id:'futon',x:29,y:81},{id:'lamp',x:77,y:72},{id:'basicTable',x:65,y:85}];
 let hideoutEditing=false,hideoutSelected=-1;
 function saveHideout(){hideoutPrefs.furniture=hideoutFurniture;save('hideoutPrefsV2',hideoutPrefs)}
 function hideoutSceneArt(theme){
@@ -3579,7 +3579,7 @@ function hideoutPage(){
      im.onpointerdown=e=>{hideoutSelected=i;stage.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected'));im.classList.add('selected');im.setPointerCapture(e.pointerId)};
      im.onpointermove=e=>{if(!im.hasPointerCapture(e.pointerId))return;const rect=stage.getBoundingClientRect();d.x=clamp((e.clientX-rect.left)/rect.width*100,8,92);d.y=clamp((e.clientY-rect.top)/rect.height*100,12,91);im.style.left=d.x+'%';im.style.top=d.y+'%'};
      im.onpointerup=im.onpointercancel=()=>saveHideout();
-    }else im.onclick=()=>{if(d.id==='board')myNotes9();else if(d.id==='frame')album9();else if(d.id==='shelf')hideoutClaimPage();else if(['lamp','shojiLamp'].includes(d.id))stage.classList.toggle('dim');else if(d.id==='retroTV')komorebiTVPage();else if(d.id==='displayCabinet')figureCabinetPage();else if(d.id==='bed')toast(tr('The bed has approved your leave.','床铺已批准你的年假。'))};
+    }else im.onclick=()=>{if(d.id==='board')myNotes9();else if(d.id==='frame')album9();else if(d.id==='shelf')hideoutClaimPage();else if(['lamp','shojiLamp'].includes(d.id))stage.classList.toggle('dim');else if(d.id==='retroTV')komorebiTVPage();else if(d.id==='displayCabinet')figureCabinetPage();else if(d.id==='bed'||d.id==='futon')toast(tr('The bed has approved your leave.','床铺已批准你的年假。'))};
    }
    const displays=hideoutFurniture.some(d=>d.id==='shelf'&&furnitureZone(d)===komorebiZone)?hideoutRewards.filter(v=>hideoutPrefs.display.includes(v.id)&&hideoutUnlocked(v)):[];
    for(const [i,reward] of displays.entries()){
@@ -3594,7 +3594,7 @@ function hideoutPage(){
    element('p',tr('Drag furniture. Tap an item to select it, then rotate or remove it.','拖动家具。点选后可旋转或移除。'),q);
    const tray=element('div','',q,'hideoutFurnitureTray');tray.setAttribute('aria-label',tr('Furniture catalogue','家具目录'));
    for(const [id,name] of Object.entries(roomNames9).filter(([id])=>furnitureOwned(id)&&furnitureIsPlaceable(id))){
-    const btn=b(tray,'',()=>{if(hideoutFurniture.some(d=>d.id===id)){toast(tr('Already in your room. Move it or put it away first.','已经摆在小窝啦，先移动或收起来吧。'));return}if(hideoutFurniture.filter(d=>furnitureZone(d)===komorebiZone).length>=24){toast(tr('Your room is full. Even the cat needs space.','小窝满啦，猫猫也需要空间。'));return}const kind=furnitureCatalogue().find(v=>v[0]===id)?.[4];hideoutFurniture.push({id,x:50,y:kind==='wall'?30:id==='rug'?85:68,zone:komorebiZone});hideoutSelected=hideoutFurniture.length-1;saveHideout();render()});const im=element('img','',btn);im.src=art9[id];im.alt='';element('small',tr(...name),btn)
+    const btn=b(tray,'',()=>{if(hideoutFurniture.some(d=>d.id===id)){toast(tr('Already in your room. Move it or put it away first.','已经摆在小窝啦，先移动或收起来吧。'));return}if(hideoutFurniture.filter(d=>furnitureZone(d)===komorebiZone).length>=24){toast(tr('Your room is full. Even the cat needs space.','小窝满啦，猫猫也需要空间。'));return}const kind=furnitureCatalogue().find(v=>v[0]===id)?.[4];hideoutFurniture.push({id,x:50,y:kind==='wall'?30:kind==='rest'?85:76,zone:komorebiZone});hideoutSelected=hideoutFurniture.length-1;saveHideout();render()});const im=element('img','',btn);im.src=art9[id];im.alt='';element('small',tr(...name),btn)
    }
    b(q,tr('Visit Komorebi Living','去木漏日杂货铺'),()=>furnitureMarket('room'));
    const tools=element('div','',q,'hideoutActions hideoutTools');stage.after(tools);b(tools,tr('Rotate','旋转'),()=>{if(hideoutFurniture[hideoutSelected]){const d=hideoutFurniture[hideoutSelected];d.r=((d.r||0)+15)%360;saveHideout();render()}});b(tools,tr('Remove','移除'),()=>{if(hideoutSelected>=0&&hideoutFurniture[hideoutSelected]){hideoutFurniture.splice(hideoutSelected,1);hideoutSelected=-1;saveHideout();render()}});
@@ -7670,7 +7670,7 @@ document.head.append(journalWheelDetailStyle);
 /* Komorebi Living: furniture ownership is distinct from placement.
    Old saved furniture remains owned even after it is put away. */
 function furnitureCatalogue(){return [
- ['bed','Linen bed','亚麻小床',0,'rest',36],['lamp','Rice paper lamp','和纸小灯',0,'light',19],['basicTable','Plain wooden table','简约木桌',0,'storage',25],
+ ['futon','Cotton floor futon','日式棉布被褥',0,'rest',37],['bed','Linen bed','亚麻小床',180,'rest',36],['lamp','Rice paper lamp','和纸小灯',0,'light',19],['basicTable','Plain wooden table','简约木桌',0,'storage',25],
  ['rug','Woven rug','编织地毯',80,'rest',44],['shelf','Oak bookshelf','橡木书架',120,'storage',25],['board','Cork memory board','软木留言板',65,'wall',22],['plant','Little fern','小蕨盆栽',55,'green',17],['frame','Scenic picture frame','风景相框',85,'wall',22],
  ['kotatsu','Kotatsu tea table','暖桌',220,'rest',35],['zabuton','Indigo floor cushion','靛蓝坐垫',75,'rest',22],['teaCabinet','Tea cabinet','茶具小柜',180,'storage',26],
  ['shojiLamp','Shoji floor lantern','障子落地灯',145,'light',16],['bonsai','Tiny bonsai','迷你盆景',110,'green',20],['recordPlayer','Vintage record player','复古唱片机',260,'storage',24],
@@ -7678,6 +7678,7 @@ function furnitureCatalogue(){return [
  ['retroTV','Showa television','昭和小电视',320,'storage',30],['displayCabinet','Glass collectible cabinet','玻璃手办展示柜',240,'storage',30],['readingChair','Velvet reading chair','绒布阅读椅',220,'rest',30],
  ['wallLinen','Linen wallpaper','亚麻纹壁纸',100,'finish',0],['wallSakura','Sakura wallpaper','樱花壁纸',160,'finish',0],['wallMatcha','Matcha wallpaper','抹茶壁纸',140,'finish',0],['wallBlue','Indigo wallpaper','靛蓝壁纸',150,'finish',0],
  ['floorOak','Honey oak flooring','蜂蜜色橡木地板',130,'floor',0],['floorTiles','Vintage ceramic tiles','复古花砖',190,'floor',0],['floorTatami','Tatami flooring','榻榻米地板',180,'floor',0],['floorChecker','Cream checker tiles','奶油棋盘砖',170,'floor',0],
+ ['chineseTeaTable','Elm tea table','榆木茶桌',200,'storage',31],['chineseScreen','Lattice folding screen','中式格栅屏风',260,'storage',30],['chineseLantern','Silk lantern','中式绢灯',150,'light',19],['porcelainVase','Blue and white porcelain','青花瓷瓶',135,'green',17],['chineseBench','Ming style bench','明式木长凳',195,'rest',31],['moonShelf','Moon gate curio shelf','月洞博古架',280,'storage',30],
  ['roomExtension','Reading room extension','扩建阅读小室',600,'extension',0],['roomStudio','Studio extension','扩建收藏工作室',1000,'extension',0]
 ]}
 function furniturePurchaseRecord(){
@@ -7702,6 +7703,13 @@ if(load('komorebiLegacyOwnedV1',null)===null){
 function komorebiArt(id){
  const wood='#9d7651',ink='#755b46',cream='#f0e1bf',green='#81957a';if(!furnitureIsPlaceable(id))return komorebiFinishIcon(id);
  const shapes={
+ futon:'<path d="M14 108L74 67 165 101 105 144 14 122Z" fill="#c4b99e" stroke="#95886f" stroke-width="2"/><path d="M16 105L74 63 161 97 104 137 16 117Z" fill="#f4ead5" stroke="#b4a58a" stroke-width="2"/><path d="M26 104L54 85 89 98 62 116Z" fill="#fff5de" stroke="#c6b79b"/><path d="M59 114L102 81 161 101 104 137Z" fill="#a8b6a1" stroke="#7a9079"/><path d="M74 112l46 17m-33-25 46 16m-34-26 46 16" stroke="#d7deca" stroke-width="2"/><path d="M18 118l86 21 57-38" fill="none" stroke="#a89a7e"/>',
+ chineseTeaTable:'<path d="M30 82v67m121-67v67M30 122l16 7m105-7-16 7" stroke="#79553b" stroke-width="8"/><path d="M19 72L83 46 162 78 98 110Z" fill="#ad8155" stroke="#765239" stroke-width="2"/><path d="M19 72v11l79 38 64-35V78L98 110Z" fill="#8c6545" stroke="#765239"/><ellipse cx="91" cy="76" rx="26" ry="10" fill="#70543d"/><ellipse cx="90" cy="72" rx="13" ry="10" fill="#a9b4a0" stroke="#698071"/><path d="M78 70l-9 4m34-4q14 0 8 7" stroke="#698071" stroke-width="3" fill="none"/><ellipse cx="91" cy="62" rx="8" ry="3" fill="#c7d0b6"/>',
+ chineseScreen:'<path d="M16 29l46-13 53 13 48-13v125l-48 13-53-13-46 13Z" fill="#b39165" stroke="#765439" stroke-width="3"/><path d="M23 37l32-9v105l-32 9Z M70 28l38 10v105l-38-10Z M122 38l34-10v105l-34 10Z" fill="#e9d7b0" stroke="#886342"/><path d="M39 33v104M88 34v104M139 33v104M23 66l32-9m15 0 38 10m14 0 34-10M23 100l32-9m15 0 38 10m14 0 34-10" fill="none" stroke="#9b7951" stroke-width="2"/>',
+ chineseLantern:'<path d="M90 12v17M90 129v20" stroke="#806044" stroke-width="3"/><path d="M58 36Q25 76 58 118Q90 136 122 118Q155 76 122 36Z" fill="#b77c67" stroke="#8e5849" stroke-width="2"/><path d="M75 36Q52 77 75 118M105 36Q128 77 105 118" stroke="#e4b58b" stroke-width="2" fill="none"/><rect x="58" y="29" width="64" height="9" rx="2" fill="#9d7953"/><rect x="58" y="118" width="64" height="9" rx="2" fill="#9d7953"/><path d="M84 147v14m6-14v16m6-16v14" stroke="#ac8052" stroke-width="2"/>',
+ porcelainVase:'<path d="M73 32h34l-4 42q36 24 28 58-11 24-41 24t-41-24q-8-34 28-58Z" fill="#f0e9d8" stroke="#9b9b88" stroke-width="2"/><path d="M74 39h32M57 131q33 12 66 0M70 93q20-24 40 0t-40 0m-5 19q25-18 50 0" fill="none" stroke="#6f8caa" stroke-width="4"/><ellipse cx="90" cy="32" rx="17" ry="5" fill="#9caeae"/>',
+ chineseBench:'<path d="M29 91v60m122-60v60M29 124h122" stroke="#7f5b3f" stroke-width="7"/><path d="M20 77L82 49 160 80 96 112Z" fill="#bc986e" stroke="#7f5b3f" stroke-width="2"/><path d="M20 77v11l76 35 64-35v-8l-64 32Z" fill="#9f7854" stroke="#7f5b3f"/><path d="M40 87l60 27" stroke="#d4b68a" stroke-width="2"/>',
+ moonShelf:'<circle cx="90" cy="82" r="64" fill="#ad865c" stroke="#76563d" stroke-width="3"/><circle cx="90" cy="82" r="54" fill="#e8d6ae" stroke="#806047" stroke-width="2"/><path d="M42 61h96v6H42zM39 105h102v6H39zM87 29h6v79h-6z" fill="#a28059"/><path d="M54 44h13v16H54zM102 77h18v27h-18z" fill="#92a496"/><path d="M50 145h80v9H50z" fill="#8c6746"/>',
  basicTable:'<path d="M32 80v68m116-68v68" stroke="#806348" stroke-width="8" stroke-linecap="round"/><path d="M22 70L84 40 158 73 96 109Z" fill="#c5a478" stroke="#846344" stroke-width="2"/><path d="M22 70v10l74 39 62-36V73L96 109Z" fill="#a18158" stroke="#846344"/>',
  retroTV:'<path d="M35 128v23m110-23v23" stroke="#76533a" stroke-width="8"/><rect x="21" y="47" width="138" height="87" rx="13" fill="#9f7857" stroke="#624935" stroke-width="3"/><rect x="30" y="56" width="94" height="68" rx="16" fill="#5b6f66" stroke="#e7d1a6" stroke-width="4"/><path d="M39 107l26-28 22 17 24-20v36H39Z" fill="#8ea58b"/><circle cx="140" cy="76" r="7" fill="#e2c291"/><circle cx="140" cy="99" r="7" fill="#e2c291"/><path d="M74 46L57 24m17 22 25-24" stroke="#72583e" stroke-width="3"/>',
  displayCabinet:'<rect x="31" y="18" width="118" height="137" rx="4" fill="#a88158" stroke="#70533c" stroke-width="3"/><rect x="40" y="28" width="100" height="114" fill="#e1cfaa" stroke="#957752"/><path d="M40 64h100M40 103h100M90 28v114" stroke="#a0815a" stroke-width="3"/><path d="M46 33l38 29M96 72l37 28" stroke="#fff7dc" stroke-width="3" opacity=".6"/>',
@@ -7726,18 +7734,20 @@ function komorebiArt(id){
  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><ellipse cx="90" cy="153" rx="54" ry="9" fill="#59442e18"/>'+(shapes[id]||'')+'</svg>')
 }
 for(const [id,en,cn] of furnitureCatalogue()){if(furnitureIsPlaceable(id))roomNames9[id]=[en,cn];art9[id]=komorebiArt(id)}
-let komorebiCategory='all';
+let komorebiCategory='all',komorebiStyleFilter='all';
+function furnitureStyle(id){return ['chineseTeaTable','chineseScreen','chineseLantern','porcelainVase','chineseBench','moonShelf'].includes(id)?'chinese':['futon','basicTable','kotatsu','zabuton','shojiLamp','bonsai','teaCabinet','floorTatami','retroTV','wallSakura'].includes(id)?'japanese':'shared'}
 function furnitureMarket(back='shop'){
  page(tr('Komorebi Living','木漏日杂货铺'),tr('Small comforts for a home that feels like yours.','一点点布置，把小窝变成喜欢的样子。'),q=>{
  const shelf=element('section','',q,'komorebiBook'),head=element('header','',shelf,'komorebiHead');
  element('strong',tr('Paw Coin purse','爪币小钱包')+' · '+hideoutBalance(),head);
  element('small',tr('Buy once, keep forever. No real money.','买一次，永久拥有。不用真钱。'),head);
+ const styles=element('div','',shelf,'journalFilterTabs');for(const [id,en,cn] of [['all','All styles','全部风格'],['japanese','Japanese','和风'],['chinese','Chinese','中式']]){const btn=b(styles,tr(en,cn),()=>{komorebiStyleFilter=id;komorebiCategory='all';furnitureMarket(back)});btn.setAttribute('aria-pressed',String(komorebiStyleFilter===id))}
  const tabs=element('div','',shelf,'journalFilterTabs');
  for(const [id,en,cn] of [['all','All','全部'],['rest','Rest','休息'],['storage','Furniture','家具'],['light','Lighting','灯具'],['green','Plants','绿植'],['wall','Wall decor','墙饰'],['finish','Wallpaper','壁纸'],['floor','Flooring','地板砖'],['extension','Expand','扩建']]){
  const btn=b(tabs,tr(en,cn),()=>{komorebiCategory=id;furnitureMarket(back)});btn.setAttribute('aria-pressed',String(komorebiCategory===id))
  }
  const grid=element('div','',shelf,'komorebiGrid');
- for(const v of furnitureCatalogue().filter(v=>komorebiCategory==='all'||v[4]===komorebiCategory)){
+ for(const v of furnitureCatalogue().filter(v=>(komorebiCategory==='all'||v[4]===komorebiCategory)&&(komorebiStyleFilter==='all'||furnitureStyle(v[0])==='shared'||furnitureStyle(v[0])===komorebiStyleFilter))){
  const [id,en,cn,cost]=v,owned=furnitureOwned(id),tile=element('article','',grid,'komorebiTile'),im=element('img','',tile);im.src=art9[id];im.alt='';
  element('strong',tr(en,cn),tile);element('small',owned?tr('In your furniture collection','已拥有'):cost+' '+tr('Paws','爪币'),tile);
  const buy=b(tile,owned?tr('Owned','已拥有'):tr('View & buy','看看再买'),()=>{if(owned)return;furnitureConfirm(id,back)});
@@ -7814,7 +7824,7 @@ function komorebiSetFinish(kind,id){
  hideoutPrefs.finishes[komorebiZone]={...komorebiFinishes(),[kind]:id};saveHideout();return true
 }
 hideoutSceneArt=function(theme){
- const {wall,floor}=komorebiFinishes(),wc=wall==='plain'?theme.wall:komorebiFinishColor(wall),fc=floor==='plain'?theme.floor:komorebiFinishColor(floor),windowX=komorebiZone===1?245:komorebiZone===2?200:105;
+ const {wall,floor}=komorebiFinishes(),wc=wall==='plain'?theme.wall:komorebiFinishColor(wall),fc=floor==='plain'?(theme.id==='morning'?'#bda17b':theme.floor):komorebiFinishColor(floor),windowX=komorebiZone===1?245:komorebiZone===2?200:105;
  const wallPattern=wall==='wallSakura'?Array.from({length:32},(_,i)=>'<path d="M'+(12+i%8*54)+' '+(30+Math.floor(i/8)*70)+'q-6-10-12 0q6 9 12 0q6-10 12 0q-6 9-12 0Z" fill="#c18d89" opacity=".32"/>').join(''):wall==='plain'?'':Array.from({length:32},(_,i)=>'<path d="M'+(i*13)+' 0V295" stroke="#816f55" opacity=".06"/>').join('');
  let floorPattern='';
  if(floor==='floorTiles'||floor==='floorChecker'){for(let y=0;y<5;y++)for(let x=0;x<8;x++){const xx=x*50,yy=300+y*40;floorPattern+='<rect x="'+xx+'" y="'+yy+'" width="50" height="40" fill="'+((x+y)%2?'#e5d6b9':fc)+'" stroke="#927f64" stroke-width=".7"/>';if(floor==='floorTiles')floorPattern+='<path d="M'+(xx+25)+' '+(yy+9)+'l10 11-10 11-10-11Z" fill="#849b8f" opacity=".65"/>'}}
@@ -7837,7 +7847,7 @@ hideoutPage=function(){
  const tabs=element('div','',q,'journalFilterTabs komorebiRoomTabs');stage.before(tabs);
  const names=[['My first room','初始小窝'],['Reading room','阅读小室'],['Collection studio','收藏工作室']];
  for(let i=0;i<komorebiZones();i++){const btn=b(tabs,tr(...names[i]),()=>{komorebiZone=i;hideoutSelected=-1;hideoutPage()});btn.setAttribute('aria-pressed',String(i===komorebiZone))}
- if(komorebiZones()<3)b(tabs,tr('Expand home','扩建小窝'),()=>{komorebiCategory='extension';furnitureMarket('room')});
+ if(komorebiZones()<3)b(tabs,tr('Expand home','扩建小窝'),()=>{komorebiStyleFilter='all';komorebiCategory='extension';furnitureMarket('room')});
  if(hideoutEditing){
  const panel=element('section','',q,'komorebiBook');element('h2',tr('Wallpaper & flooring','墙纸与地板'),panel);
  for(const [kind,cat,en,cn] of [['wall','finish','Wallpaper','墙纸'],['floor','floor','Flooring','地板']]){
@@ -7845,7 +7855,7 @@ hideoutPage=function(){
  const base=b(row,tr('Original','原始'),()=>{komorebiSetFinish(kind,'plain');hideoutPage()});base.setAttribute('aria-pressed',String(komorebiFinishes()[kind]==='plain'));
  for(const item of furnitureCatalogue().filter(v=>v[4]===cat&&furnitureOwned(v[0]))){const btn=b(row,tr(item[1],item[2]),()=>{komorebiSetFinish(kind,item[0]);hideoutPage()});btn.style.borderLeft='8px solid '+komorebiFinishColor(item[0]);btn.setAttribute('aria-pressed',String(komorebiFinishes()[kind]===item[0]))}
  }
- b(panel,tr('Shop renovation materials','选购装修材料'),()=>{komorebiCategory='finish';furnitureMarket('room')})
+ b(panel,tr('Shop renovation materials','选购装修材料'),()=>{komorebiStyleFilter='all';komorebiCategory='finish';furnitureMarket('room')})
  }
 };
 const komorebiRenovationStyle=document.createElement('style');komorebiRenovationStyle.textContent='.komorebiRoomTabs{margin:10px 0}.komorebiFinishChoices{display:flex;gap:6px;flex-wrap:wrap}.komorebiFinishChoices button{min-height:44px;border:1px solid #b39a74;border-radius:4px;background:#f5e8ce;color:#544638}.komorebiFinishChoices button[aria-pressed=true]{outline:2px solid #80937c;outline-offset:-2px}.hideoutRoomView .hideoutScene{border:3px double #ae8f63!important;border-radius:4px!important}.komorebiBook,.komorebiConfirm{border:3px double #b49a72!important;border-radius:4px!important}.komorebiTile{border:1px solid #c3ab84!important}.hideoutRoomView .hideoutPlaced{transform:translate(-50%,-84%)}';
