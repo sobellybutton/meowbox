@@ -226,6 +226,9 @@ jobs:
                 if(await page.evaluate(n=>items.some(x=>x[0]==='Fortune stick '+n),drawn))throw Error('Uncollected stick was added to inventory');
                 await page.screenshot({path:'test-results/'+name+'-temple-sticks.png'});
                 await tapWorld(510,524);
+                await page.waitForFunction(()=>activity==='sticks'&&state.stickPicked,{},{timeout:3000});
+                if(await page.evaluate(n=>items.some(x=>x[0]==='Fortune stick '+n),drawn))throw Error('Stick awarded before pickup animation completed');
+                await page.screenshot({path:'test-results/'+name+'-fortune-pickup.png'});
                 await page.waitForFunction(n=>activity==='templePaper'&&state.paperNumber===n,drawn,{timeout:5000});
                 if(!await page.evaluate(n=>items.some(x=>x[0]==='Fortune stick '+n),drawn))throw Error('Picked-up stick missing from inventory');
                 await page.waitForTimeout(650);
