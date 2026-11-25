@@ -1306,9 +1306,12 @@ const portraitWorlds={
 };
 function portraitMap(){return portraitWorlds[scene]||null}
 function mapWorldHeight(){return portraitMap()?.h||(isRoute()?routeHeight:600)}
-const portraitImages={};
+const portraitImages=new Proxy(Object.create(null),{get(cache,key){
+ if(typeof key==='string'&&!Object.hasOwn(cache,key)&&Object.hasOwn(portraitWorlds,key)){
+  const im=new Image();im.decoding='async';cache[key]=im;im.src='assets/portrait/'+portraitWorlds[key].file;
+ }return cache[key];
+}});
 for(const [key,data] of Object.entries(portraitWorlds)){
- const im=new Image();im.decoding='async';im.src='assets/portrait/'+data.file;portraitImages[key]=im;
  const seen=new Set();maps[key].st=maps[key].st.filter(a=>{if(seen.has(a[0]))return false;seen.add(a[0]);return true}).map(a=>{const pos=data.stations[a[0]];return pos?[a[0],pos[0],pos[1],a[3],a[4]]:a})
 }
 function portraitPathX(y){const world=portraitMap();if(!world)return 500;const route=world.route;for(let i=1;i<route.length;i++){if(y<=route[i][0]){const a=route[i-1],b=route[i],f=clamp((y-a[0])/(b[0]-a[0]),0,1);return a[1]+(b[1]-a[1])*f}}return route[route.length-1][1]}

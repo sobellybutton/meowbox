@@ -22,3 +22,6 @@ Canonical source is src; original legacy chunks only supply art. Preserve existi
 - Deployment at 3a31d5c confirmed; latest full browser tests still running at time of review. Run 45563633484 had 46/56 doorway passes: 10 mobile/tablet taps failed to start their route after hit-target checks. Commit 9ce6f56 captures the pointer gesture by stable door identity, freezes placement during a press and limits DOM sign layout to ~30Hz. Requires fresh browser evidence.
 - Fortune stick collection and topic-aware tarot changes at bdf436c / 3a31d5c passed combined JavaScript and test script parse checks, awaiting interaction results.
 - Consolidate reading collectible naming and migrate older saved rewards without duplication. Reduce non-animation UI polling to 2–10Hz, avoiding repeated text writes. No measured FPS/load-time gain claimed; startup artwork extraction is still pending.
+
+## Artwork loading refactor
+- Extract all 62 original WebP images into assets/art; use external paths for production and preserve embedded export mode. Lazy cache for canvas images and three portrait destinations. Remove nine legacy chunk requests from startup. Build validates each image byte-for-byte and both game variants for syntax. Visual/interaction tests and real cold-load measurements remain outstanding until CI and live checks complete.

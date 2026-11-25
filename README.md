@@ -19,3 +19,6 @@ Source extraction preserves the exact assembled HTML from 1b61bef. It is an AI-c
 
 ## Test and export
 `node scripts/build.cjs` assembles and syntax checks. `node scripts/build.cjs meowbox-playable.html` also exports the assembled page (external assets must remain available). Run `python3 -m http.server 8765` from root and open index.html. GitHub Actions runs Playwright; inspect failures and screenshots before claiming completion.
+
+## Artwork loading
+Production uses `assets/art/000.webp` through `061.webp`, preserving the original illustrations. Canvas images and portrait destinations load on first use; the legacy chunks are retained for embedded exports only. `node scripts/build.cjs` verifies every extracted image against the original and parses both builds. No archive is deleted.
