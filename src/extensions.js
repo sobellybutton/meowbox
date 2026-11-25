@@ -1113,7 +1113,7 @@ const indoorStages={
  story:{entry:[610,730],arrival:[575,680],stations:{story:[400,440,400,615]}},
  match:{entry:[610,730],arrival:[575,680],stations:{match:[400,440,400,615]}},
  temple:{entry:[400,735],arrival:[400,700],stations:{
-  templeWater:[215,380,215,520],prayer:[400,380,400,520],templeBell:[585,380,585,520],
+  templeWater:[215,380,215,505],prayer:[400,380,400,520],templeBell:[585,380,585,505],
   sticks:[200,570,200,710],moon:[600,570,600,710],secretGarden:[400,610,400,730]
  }}
 };
@@ -1182,7 +1182,7 @@ drawRoom=function(){
   if(dist<=3){
    indoor.x=indoor.tx;indoor.y=indoor.ty;
    if(indoor.route.length){[indoor.tx,indoor.ty]=indoor.route.shift()}
-   else if(indoor.goal){const fn=indoor.goal,expectedRoom=room;indoor.goal=null;indoor.facing=indoor.goalFacing||'up';requestAnimationFrame(()=>{if(indoorReady()&&room===expectedRoom&&!indoor.goal)fn()})}
+   else if(indoor.goal){const fn=indoor.goal,expectedRoom=room;indoor.goal=null;indoor.facing=indoor.goalFacing||'up';if(indoorReady()&&room===expectedRoom)fn()}
   }
   if(dist>5){ctx.save();ctx.globalAlpha=.4;ellipse(indoor.tx,indoor.ty,9,3,'#ead3a4');ctx.restore()}
  }
@@ -1198,7 +1198,7 @@ drawActivity=function(){
  continuityActivity=activity;
  if(!activity||avatar===null)return;
  // Activities with articulated player poses already render their own traveller.
- if(['prayer','sticks','templeBell','templeWater','secretGarden','blindBox','bubbleTea','wonderScene','tarot','love','story','match','fish','cook','pet','hit'].includes(activity))return;
+ if(['prayer','sticks','templeBell','templeWater','secretGarden','blindBox','bubbleTea','wonderScene','tarot','love','story','match','fish','cook','pet','hit','riverBottle','riverShout','claw','rhythm','moon','templePaper','wishes'].includes(activity))return;
  const b=livingBounds(),x=Math.max(b.x+65,Math.min(250,b.x+b.w-65)),y=Math.max(b.y+130,Math.min(550,b.y+b.h-100));
  ctx.save();backHuman(x,y,avatar,false,'right',1.05);ctx.restore();
 };
@@ -1622,7 +1622,7 @@ function mobileRoomCamera(s,ox,oy){
 const priorInteriorLabel=label;
 label=function(name,x,y,fn){
  if(!room)return priorInteriorLabel(name,x,y,fn);
- const scale=Math.max(.08,cam.scale),size=Math.min(25,Math.max(16,12/scale));
+ const scale=Math.max(.08,cam.scale),size=Math.min(32,Math.max(18,14/scale));
  const limit=activity?205:room==='temple'||roomActions[room]?.length>=3?165:235;
  ctx.save();try{
   ctx.font='600 '+size+'px Georgia,serif';
@@ -2018,10 +2018,10 @@ drawActivity=function(){
 
 /* Friendly navigation, locally written jokes and conversational cameos. */
 for(const st of maps.home.st)if(st[0]==='fish'){st[3]='Worry-Free Pier';st[4]='忘忧码头'}
-roomActions.fish=[['hit','Villain hitting','打小人'],['pier','Bottle a worry','烦恼漂流瓶'],['riverShout','Shout it out','河边喊一喊']];
-roomActions.park=[['pet','Make a furry friend','找个毛茸茸的朋友'],['chat','Chat under the trees','树下聊聊天']];
+roomActions.fish=[['hit','Whack worries','打小人'],['pier','Bottle it up','烦恼漂流瓶'],['riverShout','Shout it out','河边喊一喊']];
+roomActions.park=[['pet','Meet the cats','认识小猫'],['chat','Park gossip','树下吃瓜']];
 roomActions.office=[['officeSketch','Escape the meeting','逃离无效会议']];
-roomActions.tea=[['chat','Tea and gossip','来杯茶，聊个瓜'],['board','The Daily Scoop','摸鱼日报']];
+roomActions.tea=[['chat','Tea & gossip','喝茶吃瓜'],['board','The Daily Scoop','摸鱼日报']];
 activityTitle.hit=['Whack your worries','打走烦恼'];
 activityTitle.pet=['Make a furry friend','和毛孩子做朋友'];
 const nextStopButton=element('button','',$('back').parentNode);
@@ -2069,7 +2069,7 @@ const cameoPersonal={
  'Lady Clocked Out':[['The emperor may summon me after six. He will receive an automated reply.','皇上六点后召见？请查收本宫的自动回复。'],['I have retired from palace politics. My new ambition is a full night of sleep.','本宫退出宫斗，现阶段目标是睡个整觉。']],
  'Mr. Raincheck':[['At 5:59 the rain began. At 6:00 I was already on the train.','五点五十九分下雨，六点整我已在地铁上。'],['Some people wait for love. I wait for the kettle.','有人等爱情，我等水开。']],
  'Auntie Hong':[['I never spread gossip. I merely provide context with excellent timing.','我从不传八卦，我只是适时补充背景资料。'],['Tea first. The plot twist can wait until the second cup.','先喝茶，反转等第二杯再说。']],
- 'Kim Out of Office':[['My fishing report is confidential. Mainly because there are no fish.','摸鱼报告保密，主要是因为没摸到鱼。'],['A good strategy needs patience. And a comfortable chair.','好战略需要耐心，还需要一张舒服的椅子。']]
+ 'Kim Out-of-Office':[['My fishing report is confidential. Mainly because there are no fish.','摸鱼报告保密，主要是因为没摸到鱼。'],['A good strategy needs patience. And a comfortable chair.','好战略需要耐心，还需要一张舒服的椅子。']]
 };
 let cameoChats=load('cameoChatsV1',{});
 if(!cameoChats||typeof cameoChats!=='object'||Array.isArray(cameoChats))cameoChats={};
