@@ -5584,7 +5584,7 @@ const communityFlowStyle=document.createElement('style');communityFlowStyle.text
 const sharedTown={enabled:false,ready:false,inFlight:false,published:false,generation:0,lastSuccess:0,place:'',actors:new Map(),gesture:'none',gestureUntil:0,blocked:new Set(),error:false};
 const sharedGestureNames={wave:['Hello!','你好呀！'],cheer:['You got this!','给你打气！'],tea:['Tea break?','摸鱼喝茶？']};
 function sharedTownVisible(){return sharedTown.enabled&&!document.hidden&&proposal.hidden&&$('arrival').hidden&&!room&&!activity&&!transitioning&&avatar!==null&&!!maps[scene]}
-function sharedTownValidPeer(v){return v&&/^[a-f0-9]{24}$/.test(v.id)&&v.place===scene&&Number.isInteger(v.avatar)&&v.avatar>=0&&v.avatar<4&&Number.isFinite(v.x)&&Number.isFinite(v.y)&&v.x>=0&&v.x<=1000&&v.y>=0&&v.y<=mapWorldHeight()&&['up','down','left','right'].includes(v.facing)&&['none','wave','cheer','tea'].includes(v.gesture)}
+function sharedTownValidPeer(v){return v&&typeof v.id==='string'&&/^[a-f0-9]{24}$/.test(v.id)&&v.place===scene&&Number.isInteger(v.avatar)&&v.avatar>=0&&v.avatar<4&&Number.isFinite(v.x)&&Number.isFinite(v.y)&&v.x>=0&&v.x<=1000&&v.y>=0&&v.y<=mapWorldHeight()&&['up','down','left','right'].includes(v.facing)&&['none','wave','cheer','tea'].includes(v.gesture)}
 function sharedTownActors(){
  if(!sharedTownVisible()||!sharedTown.ready||sharedTown.place!==scene||Date.now()-sharedTown.lastSuccess>12000)return [];
  const now=performance.now(),out=[];
@@ -5610,8 +5610,8 @@ function drawSharedTownActor(a){
 async function sharedTownLeave(){
  sharedTown.ready=false;sharedTown.actors.clear();sharedTown.lastSuccess=0;
  if(sharedTown.inFlight)return;
- if(!sharedTown.published)return;sharedTown.published=false;
- try{await communityRequest('/presence',{method:'DELETE'})}catch{}
+ if(!sharedTown.published)return;sharedTown.published=false;sharedTown.inFlight=true;
+ try{await communityRequest('/presence',{method:'DELETE'})}catch{}finally{sharedTown.inFlight=false}
 }
 async function sharedTownHeartbeat(){
  if(sharedTown.inFlight)return;
@@ -5644,11 +5644,12 @@ function sharedTownRefreshPanel(){
  toggle.textContent=sharedTown.enabled?tr('Return to solo mode','切回独处模式'):tr('Join the shared town','加入共享小镇');toggle.disabled=!communityURL();
  const online=sharedTown.enabled&&sharedTown.ready&&sharedTown.place===scene&&Date.now()-sharedTown.lastSuccess<12000;
  const peers=online?[...sharedTown.actors.values()].filter(a=>!sharedTown.blocked.has(a.id)):[];
+ const teaCount=peers.filter(a=>a.gesture==='tea').length+(sharedTown.gesture==='tea'&&Date.now()<sharedTown.gestureUntil?1:0);
  status.textContent=!communityURL()?tr('Shared town is not connected yet. Solo play is available.','共享小镇尚未连接，仍可独自游玩。'):!sharedTown.enabled?tr('Solo mode · your position stays on this device.','独处模式 · 位置仅保存在本设备。'):!sharedTownVisible()?tr('Step outside to meet other travellers.','走到户外即可遇见其他旅人。'):sharedTown.error?tr('Connection unavailable. Retrying when possible.','连接暂不可用，将自动重试。'):!online?tr('Connecting…','连接中……'):tr(peers.length+' other connected travellers in this village','本村有 '+peers.length+' 位其他联机旅人');
  actions.hidden=!online;prompt.hidden=!online;
  const prompts=[['Resident · Auntie Mei: No need to talk. Just borrow a little peace and quiet.','居民 · 梅姨：不用找话题，安安静静摸会儿鱼。'],['Resident · Grandma: Anyone fancy a tea break? A wave will do.','居民 · 外婆：有人想喝杯茶吗？挥挥手就好。'],['Resident · Temple keeper: Enjoy your stroll. No attendance sheet today.','居民 · 庙祝：慢慢逛，今天不用签到。']];
- prompt.textContent=online?tr(...prompts[peers.length===0?0:peers.length<3?1:2]):'';
- const signature=peers.map(a=>a.id).join(',');if(list.dataset.signature===signature)return;list.dataset.signature=signature;list.replaceChildren();
+ prompt.textContent=online?(teaCount>=2?tr('Resident · Grandma: '+teaCount+' of you are taking a tea break. Cheers to doing absolutely nothing!','居民 · 外婆：'+teaCount+' 位旅人一起喝茶，敬今天的无所事事！'):tr(...prompts[peers.length===0?0:peers.length<3?1:2])):'';
+ const signature=(zh?'zh:':'en:')+peers.map(a=>a.id).join(',');if(list.dataset.signature===signature)return;list.dataset.signature=signature;list.replaceChildren();
  for(const a of peers){const row=element('div','',list,'sharedTownPeer');element('span',sharedTownLabel(a.id),row);b(row,tr('Hide traveller','隐藏旅人'),()=>{sharedTown.blocked.add(a.id);sharedTown.actors.delete(a.id);sharedTownRefreshPanel()})}
 }
 function sharedTownPage(q){
@@ -5659,11 +5660,12 @@ function sharedTownPage(q){
  const toggle=b(panel,'',()=>sharedTownEnable(!sharedTown.enabled));toggle.dataset.sharedToggle='';
  const prompt=element('p','',panel);prompt.dataset.sharedPrompt='';
  const actions=element('div','',panel);actions.dataset.sharedActions='';
- for(const [gesture,en,cn] of [['wave','Wave','挥挥手'],['cheer','Send encouragement','打个气'],['tea','Tea break?','喝杯茶？']])b(actions,tr(en,cn),()=>{sharedTown.gesture=gesture;sharedTown.gestureUntil=Date.now()+10000;toast(tr('Gesture ready for the next update.','动作将在下次联机更新时发送。'))});
+ for(const [gesture,en,cn] of [['wave','Wave','挥挥手'],['cheer','Send encouragement','打个气'],['tea','Tea break?','喝杯茶？']])b(actions,tr(en,cn),()=>{sharedTown.gesture=gesture;sharedTown.gestureUntil=Date.now()+10000;toast(tr('Gesture ready for the next update. Return to the village to see your companions.','动作将在下次联机更新时发送。回到小镇看看旅伴吧。'))});
  const list=element('div','',panel);list.dataset.sharedList='';
  b(panel,tr('Show hidden travellers again','重新显示已隐藏旅人'),()=>{sharedTown.blocked.clear();sharedTownRefreshPanel()});
  b(panel,tr('Back to the village','回到小镇'),()=>{$('page').style.display='none'});
  sharedTownRefreshPanel();
 }
+const sharedTownStyle=document.createElement('style');sharedTownStyle.textContent='.communityTabs{flex-wrap:wrap}.communityTabs button{flex:1 1 20%;min-width:68px}.sharedTownPeer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:6px 0;border-top:1px solid #b8a47c66}.sharedTownPeer button{min-height:44px}';document.head.append(sharedTownStyle);
 setInterval(sharedTownHeartbeat,5000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)sharedTownLeave();else if(sharedTown.enabled)sharedTownHeartbeat()});
