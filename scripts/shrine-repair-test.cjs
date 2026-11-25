@@ -1,7 +1,8 @@
-const {chromium}=require('playwright');
+const {chromium,webkit}=require('playwright');
 const fs=require('node:fs');
 (async()=>{
- const browser=await chromium.launch();fs.mkdirSync('test-results',{recursive:true});
+ const engine=process.env.MEOW_BROWSER==='webkit'?webkit:chromium;
+ const browser=await engine.launch();fs.mkdirSync('test-results',{recursive:true});
  try{
   for(const [name,options] of [['phone',{viewport:{width:390,height:844},isMobile:true,hasTouch:true}],['desktop',{viewport:{width:1280,height:800}}]]){
    const page=await browser.newPage(options);const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&/frame error|Room transition/i.test(m.text()))errors.push(m.text())});
@@ -14,7 +15,7 @@ const fs=require('node:fs');
     await page.locator('#proposal footer button.next').click();
     await page.locator('#proposal footer .actions button').first().click();
     await page.locator('#proposal .shrine-enter').click({timeout:20000});
-    await page.waitForFunction(()=>proposal.hidden&&valleyRevealAt<0,{},{timeout:15000});
+    await page.waitForFunction(()=>proposal.hidden&&valleyRevealAt<0&&!signRoot.hidden&&[...signButtons.values()].some(b=>!b.hidden),{},{timeout:15000});
     const entry=await page.evaluate(()=>({y:p.y,max:maxY(),nearest:Math.min(...npc.map(n=>Math.hypot(n.x-p.x,n.y-p.y))),signs:[...signButtons.values()].filter(b=>!b.hidden).length}));
     if(entry.y<entry.max-160||entry.nearest<130||!entry.signs)throw Error('Entrance crowd or framing: '+JSON.stringify(entry));
     await page.screenshot({path:'test-results/'+name+'-valley-arrival.png'});
@@ -27,7 +28,7 @@ const fs=require('node:fs');
     await page.evaluate(()=>{room='temple';start('templeWater');});
     await page.waitForFunction(()=>activity==='templeWater'&&hit.some(h=>h.id==='templeLadle'),{},{timeout:10000});
     const screen=async(x,y)=>page.evaluate(([x,y])=>{const r=c.getBoundingClientRect();return {x:r.left+cam.ox+x*cam.scale,y:r.top+cam.oy+y*cam.scale}},[x,y]);
-    const drag=async(x,y,toX,toY)=>{const a=await screen(x,y),b=await screen(toX,toY);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:15});await page.mouse.up()};
+    const drag=async(x,y,toX,toY)=>{const a=await screen(x,y),b=await screen(toX,toY);if(options.hasTouch&&engine===chromium){const client=await page.context().newCDPSession(page);try{await client.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:a.x,y:a.y}]});for(let i=1;i<=15;i++){await client.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:a.x+(b.x-a.x)*i/15,y:a.y+(b.y-a.y)*i/15}]})}await client.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]})}finally{await client.detach()}}else{await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:15});await page.mouse.up()}};
     await page.screenshot({path:'test-results/'+name+'-water-empty.png'});
     await drag(400,426,250,486);
     if(await page.evaluate(()=>state.waterStage)!==0)throw Error('Accepted a drop away from basin');
