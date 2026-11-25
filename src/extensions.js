@@ -3209,11 +3209,21 @@ function communityPublic(q,generation){
    const health=await communityRequest('/health');if(health.service!=='meowbox-community'||health.version!==1||!health.moderated||!health.places||!health.replies)throw Error('Incompatible community service');
    if(!active())return;const data=await communityRequest('/messages?place='+encodeURIComponent(communityPlace));
    if(!active())return;const messages=Array.isArray(data.messages)?data.messages.slice(-60):[];
-   const fingerprint=JSON.stringify(messages);if(fingerprint!==lastFingerprint){
+   const fingerprint=JSON.stringify([health.reactions===true,messages]);if(fingerprint!==lastFingerprint){
     const nearBottom=list.scrollHeight-list.scrollTop-list.clientHeight<70;
     list.replaceChildren();
     if(!messages.length)element('p',tr('Quiet moment. Say hello to the next traveller.','此刻很安静，给下一位旅人留句问候吧。'),list,'communityMuted');
-    for(const m of messages){const row=element('article','',list,'townChatLine');element('strong',String(m.name||'').slice(0,24),row);if(m.replyName)element('small',tr('In reply to ','回复 ')+String(m.replyName).slice(0,24),row,'communityMuted');element('p',String(m.text||'').slice(0,180),row);const reply=b(row,tr('Reply','回复'),()=>chooseReply(m));reply.disabled=!communityNickname();const report=b(row,tr('Report','举报'),async()=>{report.disabled=true;try{await communityRequest('/report',{method:'POST',body:JSON.stringify({id:m.id})});report.textContent=tr('Reported','已举报')}catch{report.disabled=false;status.textContent=tr('Report could not be sent.','举报未发送成功。')}});report.className='communityReport'}
+    for(const m of messages){const row=element('article','',list,'townChatLine');element('strong',String(m.name||'').slice(0,24),row);if(m.replyName)element('small',tr('In reply to ','回复 ')+String(m.replyName).slice(0,24),row,'communityMuted');element('p',String(m.text||'').slice(0,180),row);const reply=b(row,tr('Reply','回复'),()=>chooseReply(m));reply.disabled=!communityNickname();const report=b(row,tr('Report','举报'),async()=>{report.disabled=true;try{await communityRequest('/report',{method:'POST',body:JSON.stringify({id:m.id})});report.textContent=tr('Reported','已举报')}catch{report.disabled=false;status.textContent=tr('Report could not be sent.','举报未发送成功。')}});report.className='communityReport';if(health.reactions===true){
+ const bar=element('div','',row,'communityReactions');for(const [kind,en,cn] of [['laugh','Funny','笑死'],['heart','Sending love','抱抱'],['same','Same here','我也是']]){
+  const count=Number(m.reactions?.[kind]||0),chosen=m.myReaction===kind;
+  const reaction=b(bar,tr(en,cn)+(count>0?' '+count:''),async()=>{
+   if(!active()||reaction.disabled)return;const buttons=[...bar.querySelectorAll('button')];buttons.forEach(x=>x.disabled=true);
+   try{await communityRequest('/reactions',{method:'POST',body:JSON.stringify({id:m.id,kind})});if(active())await refresh()}
+   catch{if(active())status.textContent=tr('Reaction unavailable. Try again shortly.','暂时无法回应，请稍后重试。')}
+   finally{if(active()&&bar.isConnected)buttons.forEach(x=>x.disabled=x.getAttribute('aria-pressed')==='true')}
+  });reaction.setAttribute('aria-pressed',String(chosen));reaction.disabled=chosen
+ }
+}}
     if(nearBottom)list.scrollTop=list.scrollHeight;lastFingerprint=fingerprint;
    }serviceReady=true;send.disabled=busy||!communityNickname();status.textContent=tr('Connected · real visitor posts · reviewed before publishing','已连接 · 真人留言 · 审核后公开');
   }catch{if(active()){serviceReady=false;send.disabled=true;status.textContent=tr('Community unavailable · please try again shortly','社区暂不可用 · 请稍后再试')}}
@@ -5604,7 +5614,7 @@ function drawSharedTownActor(a){
  backHuman(a.x,a.y,a.avatar,a.walking===1,a.facing,sc);
  if(Math.hypot(a.x-p.x,a.y-p.y)>145)return;
  const gesture=sharedGestureNames[a.gesture];
- ctx.save();const fs=13/Math.max(.6,cam.scale);ctx.font=fs+'px system-ui';const label=gesture?tr(...gesture):sharedTownLabel(a.id),width=ctx.measureText(label).width+12;
+ ctx.save();const fs=13/Math.max(.6,cam.scale);ctx.font=fs+'px system-ui';const label=gesture?sharedTownLabel(a.id)+' · '+tr(...gesture):sharedTownLabel(a.id),width=ctx.measureText(label).width+12;
  round(a.x-width/2,a.y-100*sc-22,width,22,5,'#f5ecd5f2','#89785f');txt(label,a.x,a.y-100*sc-11,fs,'#425b4c');ctx.restore();
 }
 async function sharedTownLeave(){
@@ -5666,6 +5676,6 @@ function sharedTownPage(q){
  b(panel,tr('Back to the village','回到小镇'),()=>{$('page').style.display='none'});
  sharedTownRefreshPanel();
 }
-const sharedTownStyle=document.createElement('style');sharedTownStyle.textContent='.communityTabs{flex-wrap:wrap}.communityTabs button{flex:1 1 20%;min-width:68px}.sharedTownPeer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:6px 0;border-top:1px solid #b8a47c66}.sharedTownPeer button{min-height:44px}';document.head.append(sharedTownStyle);
+const sharedTownStyle=document.createElement('style');sharedTownStyle.textContent='.communityReactions{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}.communityReactions button{min-height:44px;font-size:12px}.communityReactions button[aria-pressed=true]{background:#d7e1c8;color:#35533a}.communityTabs{flex-wrap:wrap}.communityTabs button{flex:1 1 20%;min-width:68px}.sharedTownPeer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:6px 0;border-top:1px solid #b8a47c66}.sharedTownPeer button{min-height:44px}';document.head.append(sharedTownStyle);
 setInterval(sharedTownHeartbeat,5000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)sharedTownLeave();else if(sharedTown.enabled)sharedTownHeartbeat()});
