@@ -4945,3 +4945,96 @@ const materialBoxShakeBefore=boxShake;
 boxShake=function(amount){const ok=activity==='blindBox'&&state.boxStage==='shake';materialBoxShakeBefore(amount);if(ok&&amount>10)physicalFx('shake',.5)};
 const materialThreePlaceBefore=threePlace;
 threePlace=function(g,index,who){materialThreePlaceBefore(g,index,who);physicalFx('step',.8)};
+
+
+/* Ritual and kitchen material pass. Maintain all existing hit zones and
+   silhouette dimensions; the animated components are drawn independently. */
+function ritualLadleMaterial(x,y,angle=0,filled=false){
+ ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+ const bamboo=ctx.createLinearGradient(0,-5,0,7);bamboo.addColorStop(0,'#eed3a0');bamboo.addColorStop(.45,'#b99359');bamboo.addColorStop(1,'#80603e');
+ round(-71,-5,101,12,5,bamboo,'#8b6944');
+ for(const knot of [-51,-16,17]){line(knot,-4,knot+1,5,'#9b7849',1.3);line(knot+2,-3,knot+3,4,'#e3bd80',.8)}
+ ctx.beginPath();ctx.moveTo(13,0);ctx.bezierCurveTo(15,13,50,18,57,1);ctx.closePath();ctx.fillStyle='#957046';ctx.fill();ctx.strokeStyle='#79583a';ctx.stroke();
+ ellipse(35,-1,23,10,'#e1c18a');ellipse(35,-1,19,7,filled?'#6d9a93':'#ad8a58');
+ if(filled){ellipse(35,-2,17,5,'#a3c2b2');line(22,-4,39,-5,'#e1ebd6',1.1);ellipse(46,0,3,1,'#e9edcc')}
+ else{for(let i=0;i<3;i++)line(23+i*7,-3,26+i*7,3,'#98744988',.7)}
+ ctx.restore()
+}
+waterLadleArt=ritualLadleMaterial;
+const detailedBasinBefore=templeBasin;
+templeBasin=function(x,y){
+ detailedBasinBefore(x,y);
+ ctx.save();ctx.beginPath();ctx.ellipse(x,y,75,19,0,0,TAU);ctx.clip();
+ for(let i=0;i<8;i++){
+  const a=t*.33+i*1.87,xx=x+Math.cos(a)*Math.min(70,24+i*6),yy=y+Math.sin(a)*12;
+  ctx.globalAlpha=.18+.1*Math.sin(a*2);line(xx-5,yy,xx+5,yy,'#e5f0d6',1.3)
+ }
+ ctx.restore()
+};
+const detailedHandBefore=waterHandArt;
+waterHandArt=function(x,y){
+ // Preserve the continuous wrist/palm silhouette and add anatomical linework.
+ detailedHandBefore(x,y);
+ ctx.save();ctx.translate(x,y);ctx.rotate(-.18);
+ ctx.strokeStyle='#a37d666e';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-25,5);ctx.quadraticCurveTo(-11,7,-6,17);ctx.moveTo(-15,-3);ctx.quadraticCurveTo(0,0,5,7);ctx.moveTo(7,12);ctx.quadraticCurveTo(2,15,-4,16);ctx.stroke();
+ line(-48,15,-31,11,'#f3d4af72',2.2);
+ for(let i=0;i<4;i++)line(-103+i*10,23-i*2,-99+i*10,37-i*2,'#71644f30',1);
+ ctx.restore()
+};
+const detailedCounterBefore=drawFoodCounter;
+drawFoodCounter=function(){
+ paintLivingBackdrop(pics.kitchen||pics.streetKitchen||pics.tea);
+ ctx.save();
+ const timber=ctx.createLinearGradient(0,466,0,690);timber.addColorStop(0,'#c4a178');timber.addColorStop(.46,'#a7835f');timber.addColorStop(1,'#76533f');
+ ctx.beginPath();ctx.moveTo(180,466);ctx.lineTo(620,466);ctx.lineTo(690,690);ctx.lineTo(110,690);ctx.closePath();ctx.fillStyle=timber;ctx.fill();ctx.strokeStyle='#836044';ctx.lineWidth=2;ctx.stroke();
+ ctx.save();ctx.clip();
+ for(let i=0;i<24;i++){
+  const yy=470+i*9;ctx.beginPath();ctx.moveTo(108,yy);ctx.bezierCurveTo(255,yy+Math.sin(i*2)*6,484,yy-4,690,yy+Math.cos(i)*3);ctx.strokeStyle=i%5===0?'#77533860':'#ebcb9539';ctx.lineWidth=i%5===0?2:1;ctx.stroke()
+ }
+ ctx.restore();
+ // Low counter apron and a cloth work mat, clear of the active cup and controls.
+ ctx.beginPath();ctx.moveTo(110,690);ctx.lineTo(690,690);ctx.lineTo(681,708);ctx.lineTo(119,708);ctx.closePath();ctx.fillStyle='#644938';ctx.fill();
+ const cloth=ctx.createLinearGradient(0,475,0,565);cloth.addColorStop(0,'#c2b69a');cloth.addColorStop(1,'#a6957c');
+ ctx.beginPath();ctx.moveTo(335,477);ctx.lineTo(480,477);ctx.lineTo(497,566);ctx.lineTo(320,566);ctx.closePath();ctx.fillStyle=cloth;ctx.fill();ctx.strokeStyle='#8c795e';ctx.stroke();
+ ctx.save();ctx.clip();for(let i=0;i<23;i++)line(316,479+i*4,500,479+i*4,'#f3e0b31c',.8);ctx.restore();
+ ctx.restore()
+};
+const detailedPotBefore=pot;
+pot=function(x,y){
+ detailedPotBefore(x,y);
+ if(activity!=='cook')return;
+ ctx.save();
+ const heat=state.done?.35:1;
+ for(let i=0;i<4;i++){
+  const age=(t*.32+i*.23)%1,px=x-43+i*29+Math.sin(t*1.2+i)*7,py=y-28-age*73;
+  ctx.globalAlpha=(1-age)*heat*.42;
+  const vapor=ctx.createLinearGradient(px,py+18,px,py-17);vapor.addColorStop(0,'#fff1cd00');vapor.addColorStop(.45,'#fff3dd');vapor.addColorStop(1,'#fff4df00');
+  ctx.beginPath();ctx.moveTo(px,py+18);ctx.bezierCurveTo(px-13,py+5,px+15,py-7,px-3,py-18);ctx.strokeStyle=vapor;ctx.lineWidth=2.6+age*3;ctx.stroke()
+ }
+ ctx.restore()
+};
+/* Reward completion, not opening a room or repeating the same button. */
+const ritualWaterRewardBefore=templeReleaseWater;
+templeReleaseWater=function(a){
+ const was=activity==='templeWater'?state.waterStage:null;
+ ritualWaterRewardBefore(a);
+ if(was===1&&state.waterStage===2){lifeEarn('ritual:water',{calm:2},true);lifeHUDRefresh()}
+};
+const ritualPaperRewardBefore=templePaperKeep;
+templePaperKeep=function(tie){
+ const ok=activity==='templePaper'&&state.paperStage==='open';
+ ritualPaperRewardBefore(tie);
+ if(ok&&['tied','kept'].includes(state.paperStage)){lifeEarn('ritual:paper',{calm:2,wisdom:1},true);lifeHUDRefresh()}
+};
+const ritualReadingRewardBefore=readingSave;
+readingSave=function(){
+ const before=state.readSaved;
+ ritualReadingRewardBefore();
+ if(!before&&state.readSaved){lifeEarn('ritual:reading',{wisdom:2,calm:1},true);lifeHUDRefresh()}
+};
+const ritualBoxRewardBefore=boxAward;
+boxAward=function(){
+ const before=state.boxStage;
+ ritualBoxRewardBefore();
+ if(before==='opening'&&state.boxStage==='result'){lifeEarn('arcade:box',{happiness:1},true);lifeHUDRefresh()}
+};
