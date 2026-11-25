@@ -811,12 +811,15 @@ drawActivity=function(){
  if(activity!=='hit')return stressDrawBefore();
  ctx.save();
  // Prefer the original illustrated waterfront over the flat portrait SVG in this close-up.
- if(room==='fish'&&pics.fish?.naturalWidth){const v=livingBounds();cover(pics.fish,v.x,v.y,v.w,v.h)}else paintLivingBackdrop(room==='fish'?pics.fish:pics.office||pics.tea);
+ if(room==='fish'){riverSceneBackdrop()}else paintLivingBackdrop(pics.office||pics.tea);
  const bounds=livingBounds(),shade=ctx.createLinearGradient(0,270,0,740);shade.addColorStop(0,'#40372b19');shade.addColorStop(1,'#2b342c70');shadeLivingBackdrop(shade);
  // Ground plane and compact wooden stool, separate from the background.
  ellipse(400,580,190,37,'#302a2440');ellipse(272,548,50,12,'#302a2444');
- round(244,504,56,12,3,'#ac8b65','#6b503b');line(251,516,246,553,'#69513f',6);line(290,516,296,553,'#69513f',6);
- if(room==='fish')riverAuntie(272,515,.8);else backHuman(272,550,0,false,'right',1.1);
+ // Real seat and foot anchors: stool at y504, feet at y550.
+ const stoolWood=ctx.createLinearGradient(0,499,0,551);stoolWood.addColorStop(0,'#c9a878');stoolWood.addColorStop(1,'#71543e');
+ line(247,511,242,552,'#70513c',7);line(297,511,302,552,'#70513c',7);line(248,535,298,535,'#70513c',4);
+ ellipse(272,506,35,8,stoolWood);ellipse(272,503,34,6,'#b4956c');
+ if(room==='fish'){if(!drawProductionAhMa(272,550,.85))riverAuntie(272,548,.8)}else backHuman(272,550,0,false,'right',1.1);
  // Low ritual block: the paper is on the working surface, rather than floating on an enormous table.
  const wood=ctx.createLinearGradient(0,505,0,557);wood.addColorStop(0,'#bca078');wood.addColorStop(.5,'#9f805e');wood.addColorStop(1,'#795d42');
  ctx.fillStyle=wood;ctx.beginPath();ctx.moveTo(335,506);ctx.lineTo(421,506);ctx.lineTo(443,540);ctx.lineTo(318,540);ctx.closePath();ctx.fill();ctx.strokeStyle='#806448';ctx.stroke();
@@ -3831,3 +3834,33 @@ doClaw=function(){const ready=activity==='claw'&&!state.dropping;physicalClawBef
 document.addEventListener('visibilitychange',()=>{if(actionFxBus&&audio)actionFxBus.gain.setTargetAtTime(document.hidden||muted?.0001:.48,audio.currentTime,.04)});
 const physicalMuteBefore=$('mute').onclick;
 $('mute').onclick=function(e){physicalMuteBefore.call(this,e);if(actionFxBus&&audio)actionFxBus.gain.setTargetAtTime(muted?.0001:.48,audio.currentTime,.035)};
+
+/* Original visual assets, lazily requested and never required for boot.
+   Legacy embedded/offline exports retain the current procedural fallback.
+   Portrait art is preserved in full; interactive shore remains world-space. */
+const productionVisualManifest={
+ fish:{path:'assets/visual/pier-courtyard.svg',width:800,height:1400},
+ park:{path:'assets/visual/daydream-park.svg',width:800,height:1400},
+ ahMaIdle:{path:'assets/visual/ah-ma-seated.svg',width:180,height:220,foot:[90,205],seat:[90,151]},
+ ahMaScold:{path:'assets/visual/ah-ma-scold.svg',width:180,height:220,foot:[90,205],seat:[90,151]}
+};
+const productionVisualCache=new Map();
+function productionVisual(id){
+ const asset=productionVisualManifest[id];if(!asset)return null;
+ if(!productionVisualCache.has(id)){const im=new Image();im.decoding='async';im.src=asset.path;productionVisualCache.set(id,im)}
+ const im=productionVisualCache.get(id);return im.complete&&im.naturalWidth>0?im:null
+}
+const productionPortraitBefore=portraitInteriorImage;
+portraitInteriorImage=function(id){return productionVisual(id)||productionPortraitBefore(id)};
+function drawProductionAhMa(x,y,scale=1){
+ const age=t-stressSwingAt,scold=activity==='hit'&&age>=0&&age<.46;
+ const im=productionVisual(scold?'ahMaScold':'ahMaIdle')||productionVisual('ahMaIdle');
+ if(!im)return false;
+ ctx.save();ellipse(x,y+2,37*scale,8*scale,'#3b322842');
+ // Sprite pivot is the actual foot line, not the bounding-box centre.
+ ctx.drawImage(im,x-90*scale,y-205*scale,180*scale,220*scale);
+ ctx.restore();return true
+}
+// Request the matching two poses together when first reaching the stall.
+const productionVisualStart=start;
+start=function(a){if(a==='hit'){productionVisual('fish');productionVisual('ahMaIdle');productionVisual('ahMaScold')}if(a==='pet')productionVisual('park');return productionVisualStart(a)};
