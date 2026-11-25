@@ -201,6 +201,22 @@ jobs:
                 await page.locator('#dockScoop').click();
                 await page.locator('.townFortuneSlip').waitFor({timeout:8000});
                 if(!await page.locator('#luck').isHidden())throw Error('Obsolete luck shortcut visible');
+                await page.getByRole('button',{name:'Read the town paper',exact:true}).click();
+                await page.locator('.townWall').waitFor({timeout:5000});
+                if(await page.locator('.townResidentNote').count()!==6)throw Error('Noticeboard page incomplete');
+                const firstPost=await page.locator('.townResidentNote').first().innerText();
+                await page.locator('.wallReplies summary').first().click();
+                if(!await page.locator('.wallReply').first().isVisible())throw Error('Noticeboard reply missing');
+                await page.locator('.townPostNav').getByRole('button',{name:'Next',exact:true}).click();
+                if(await page.locator('.townResidentNote').first().innerText()===firstPost)throw Error('Noticeboard paging did not change');
+                await page.screenshot({path:'test-results/'+name+'-town-wall.png'});
+                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                await page.locator('#dockScoop').click();
+                await page.getByRole('button',{name:'Town chat',exact:true}).click();
+                await page.getByRole('button',{name:'What should I eat?',exact:true}).click();
+                if(await page.locator('.townChatLine.self').count()===0)throw Error('Local chat prompt missing');
+                await page.screenshot({path:'test-results/'+name+'-town-chat.png'});
+
                 await page.getByRole('button',{name:'‹ Back',exact:true}).click();
                 await page.locator('#dockPassport').click();
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
@@ -454,6 +470,7 @@ jobs:
                 await page.waitForFunction(()=>room==='park'&&!activity,{},{timeout:3000});
                 await page.evaluate(()=>{room='park';activity=null;state={};updateHUD();cameo9('home')});
                 if(!await page.locator('#movePad').isHidden())throw Error('Joystick covers dialogue');
+                if(!await page.locator('#walkHelp').isHidden())throw Error('Help control covers dialogue');
                 await page.waitForFunction(()=>meowHistoryArmed,{},{timeout:4000});
                 await page.goBack();
                 await page.waitForFunction(()=>room==='park'&&!talkOpen,{},{timeout:4000});
