@@ -194,7 +194,24 @@ jobs:
                 if(await page.evaluate(()=>state.bows)!==3)throw Error('Prayer bow count incorrect');
                 await page.evaluate(()=>start('sticks'));
                 await page.waitForTimeout(650);
+                const tapWorld=async(x,y)=>{
+                  const v=await page.evaluate(({x,y})=>{const r=c.getBoundingClientRect();return {x:r.left+cam.ox+x*cam.scale,y:r.top+cam.oy+y*cam.scale}}, {x,y});
+                  if(options.hasTouch)await page.touchscreen.tap(v.x,v.y);else await page.mouse.click(v.x,v.y);
+                };
+                await tapWorld(400,450);
+                await page.waitForFunction(()=>activity==='sticks'&&state.drawing,{},{timeout:3000});
+                await page.waitForFunction(()=>state.fallenStick>=1&&state.fallenStick<=12&&!state.drawing,{},{timeout:5000});
+                const drawn=await page.evaluate(()=>state.fallenStick);
+                if(await page.evaluate(n=>items.some(x=>x[0]==='Fortune stick '+n),drawn))throw Error('Uncollected stick was added to inventory');
                 await page.screenshot({path:'test-results/'+name+'-temple-sticks.png'});
+                await tapWorld(510,524);
+                await page.waitForFunction(n=>activity==='templePaper'&&state.paperNumber===n,drawn,{timeout:5000});
+                if(!await page.evaluate(n=>items.some(x=>x[0]==='Fortune stick '+n),drawn))throw Error('Picked-up stick missing from inventory');
+                await page.waitForTimeout(650);
+                await tapWorld(400,472);
+                await page.waitForFunction(()=>state.paperStage==='open',{},{timeout:5000});
+                await page.screenshot({path:'test-results/'+name+'-temple-drawn-paper.png'});
+                await page.evaluate(()=>templePaperKeep(false));
                 await page.evaluate(()=>{start('templeBell');templeReleaseBell(95)});
                 await page.waitForFunction(()=>state.bellRung,{},{timeout:5000});
                 await page.screenshot({path:'test-results/'+name+'-temple-bell.png'});
@@ -247,6 +264,7 @@ jobs:
                 await page.evaluate(()=>{readingReveal(0);readingReveal(1);readingReveal(2)});
                 await page.waitForFunction(()=>state.readSaved,{},{timeout:5000});
                 if(!await page.evaluate(()=>readingJournal.some(v=>v.topic===1&&v.cards.length===3)))throw Error('Tarot journal missing');
+                if(!await page.evaluate(()=>items.some(x=>x[0]==='Three-card reading')&&readingPrompts.length===4&&readingPrompts.every(t=>t.length===3)))throw Error('Topic-specific reading collection or prompts missing');
                 await page.screenshot({path:'test-results/'+name+'-tarot-spread.png'});
                 if(errors.length)throw Error(errors.join('; '));
                 console.log(name+': PASS');
