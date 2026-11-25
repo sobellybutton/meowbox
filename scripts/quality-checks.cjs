@@ -118,13 +118,27 @@ module.exports=function runQualityChecks(s,log=console.log){
  parkSerialTalk();if(stored.episode!==0)throw Error('Same day advanced');
  date='2026-11-26';parkSerialTalk();if(stored.episode!==1||stored.beat!==0)throw Error('Next day not advanced');
  stored={episode:-1,beat:2};if(parkProgress().episode!==0)throw Error('Corrupt progress');return 7;`);
- // 17. Every blind-box reward is reachable and old saved items remain distinct.
- results.blindBox=build("let activity='blindBox',state={boxStage:'ready'},t=0,q=0;const sound=()=>{},Math=Object.assign(Object.create(globalThis.Math),{random:()=>q});"+range('const boxPrizes=','function boxSelect(')+range('function boxOpen(','function boxAward(')+`
- const seen=new Set();for(let i=0;i<10000;i++){state.boxStage='ready';q=(i+.5)/10000;boxOpen();if(!boxPrizes[state.boxPrize])throw Error('Invalid reward');seen.add(state.boxPrize)}
- if(seen.size!==13||new Set(boxPrizes.map(p=>p[0])).size!==13)throw Error('Unreachable or duplicate collectible');return seen.size;`);
+ // 17. Paid draws, unique prizes, daily stock and repeatable town rewards.
+ const prizeDefs=range('const boxPrizes=','function boxSelect(')+range('boxPrizes.push(','blindFigureLore.push(');
+ const walletDefs=range('function hideoutBalance()','function hideoutThemeUnlocked(')+range('function blindShopLedger()','function blindShopExplain()')+range('function openPaidBlindBox()','const blindShopStartBefore=')+range('function townPawCategories()','let townPawNoticeTimer=');
+ results.blindBox=build(prizeDefs+`let activity='blindBox',state={boxStage:'ready'},t=0,day='2026-11-26',items=Array.from({length:20},(_,i)=>['earned'+i,'']);const store=new Map(),load=(k,d)=>store.get(k)??d,save=(k,v)=>store.set(k,v),hideoutPurchases=()=>[],dailyWheelRecord=()=>({total:0}),hideoutThemes=[],shrineClock=()=>({day}),addItem=(a,b)=>items.push([a,b]),updateHUD=()=>{},sound=()=>{},blindShopExplain=()=>{},$=()=>({classList:{remove(){}}});`+walletDefs+`
+ const assert=(v,m)=>{if(!v)throw Error(m)};
+ assert(boxPrizes.length===20&&new Set(boxPrizes.map(v=>v[0])).size===20,'Catalogue');
+ const pool=blindUnowned(),seen=new Set();for(let i=0;i<10000;i++)seen.add(blindWeightedPick(pool,()=>(i+.5)/10000).i);
+ assert(seen.size===20,'Unreachable collectible');
+ assert(hideoutBalance()===200,'Initial balance');assert(openPaidBlindBox()&&hideoutBalance()===160,'Debit');assert(!openPaidBlindBox(),'Duplicate action');
+ state.boxStage='ready';assert(openPaidBlindBox(),'Second draw');state.boxStage='ready';assert(openPaidBlindBox(),'Third draw');state.boxStage='ready';assert(!openPaidBlindBox(),'Daily cap');
+ assert(hideoutBalance()===80&&new Set(blindShopLedger().map(v=>v.key)).size===3,'Unique charged purchases');
+ const missing=blindShopLedger()[0].key;items=items.filter(v=>v[0]!==missing);recoverBlindPurchases();assert(items.some(v=>v[0]===missing)&&hideoutBalance()===80,'Recovery');
+ const keys=['round:bubble','kitchen:soup','ritual:prayer','care:Mochi','friend:Mei','release:riverBottle'];for(const key of keys)assert(townPawClaim(key),'Earn '+key);
+ assert(townPawToday().earned===40&&hideoutBalance()===120,'Daily earnings included');
+ for(const key of [...keys,'round:three','kitchen:tea','friend:Yue','arcade:box','item:paid'])assert(!townPawClaim(key),'Duplicate or spending reward '+key);
+ assert(!townPawClaim('round:bubble','2026-11-25'),'Clock rollback');
+ day='2026-11-27';assert(blindStockRemaining()===3&&townPawToday().earned===0,'Daily reset');assert(townPawClaim('round:three')&&hideoutBalance()===128,'Next day earnings');
+ return {reachable:seen.size,earnings:48,purchases:3};`);
  // 18. Inventory catalogue and owned items merge without losing legacy rewards.
- results.bagInventory=build(range('const boxPrizes=','function boxSelect(')+"const keepsakes=boxPrizes.map(p=>[p[0],p[1],'cat']);const items=[boxPrizes[0].slice(0,2),['Legacy postcard','旧明信片'],boxPrizes[5].slice(0,2),boxPrizes[0].slice(0,2)];const collectionKind=()=> 'stamp';"+range('function bagClass(','function bagFigureIcon(')+`
- const all=bagEntries();if(all.length!==14||all.filter(v=>v.owned).length!==3)throw Error('Duplicate or missing inventory');
+ results.bagInventory=build(prizeDefs+"const keepsakes=boxPrizes.map(p=>[p[0],p[1],'cat']);const items=[boxPrizes[0].slice(0,2),['Legacy postcard','旧明信片'],boxPrizes[5].slice(0,2),boxPrizes[0].slice(0,2)];const collectionKind=()=> 'stamp';"+range('function bagClass(','function bagFigureIcon(')+`
+ const all=bagEntries();if(all.length!==21||all.filter(v=>v.owned).length!==3)throw Error('Duplicate or missing inventory');
  if(bagClass(items[2])!=='figures'||bagClass(items[1])!=='travel'||bagClass(['Milk tea recipe','奶茶配方'])!=='food')throw Error('Category mismatch');return 6;`);
 
  // 19. Exercise the live sign synchronization routine with instrumented DOM
@@ -137,7 +151,7 @@ module.exports=function runQualityChecks(s,log=console.log){
  const signAnchorsProposal={};const speechOverlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
  function element(tag,label,parent,cls){if(tag==='span'){const child={textContent:''};parent.plaque=child;return child}let hidden=false;const style=new Proxy({setProperty(){}},{set(o,k,v){if(o[k]!==v)mutations++;o[k]=v;return true}});
  const node={style,dataset:{},offsetWidth:90,offsetHeight:44,attrs:{},querySelector:()=>node.plaque,replaceChildren(){node.plaque=null},setAttribute(k,v){node.attrs[k]=v},getAttribute(k){return node.attrs[k]}};Object.defineProperty(node,'hidden',{get:()=>hidden,set:v=>{if(v!==hidden)mutations++;hidden=v}});return node}
- `+range('function meowPlaceText(','let meowTextFrameRects=')+range('let lastDoorLayoutAt=','/* Recurring villagers remember')+`
+ `+range('function meowPlaceText(','let meowTextFrameRects=')+range('function housePlaqueAnchor(','function pearlTeaJars(')+range('let lastDoorLayoutAt=','/* Recurring villagers remember')+`
  let checks=0;
  for(const k of ['fortune','home','island','wonder']){
  scene=k;for(let i=0;i<8;i++){now+=40;syncSigns()}
