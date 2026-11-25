@@ -4229,7 +4229,7 @@ pot=function(x,y){
  ctx.restore();ctx.restore()
 };
 const kitchenArtStart=start;
-start=function(a){if(a==='cook'||a==='bubbleTea'){productionVisual('kitchen');productionVisual('kitchenIngredients')}return kitchenArtStart(a)};
+start=function(a){if(a==='cook'){productionVisual('kitchen');productionVisual('kitchenIngredients')}return kitchenArtStart(a)};
 
 /* Plush rewards are toys, not live cats. Fixed stitching and tag details stay
    attached to the reward through grip, lift, drop and collection. */
@@ -6849,6 +6849,7 @@ const unifiedTownStyle=document.createElement('style');unifiedTownStyle.textCont
 #game>#worldSigns>.worldSign[data-sign-material="retro"] .doorPlaque,#game #location[data-sign-material="retro"]{--plaque-top:#69827a;--plaque-bottom:#3c5a53}
 #game>#worldSigns>.worldSign[data-sign-material="garden"] .doorPlaque,#game #location[data-sign-material="garden"]{--plaque-top:#84906e;--plaque-bottom:#52654d}
 #game #hud #location{max-width:min(47vw,240px)!important;font-size:clamp(12px,3.2vw,15px)!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:6px 9px!important}
+@media(max-width:600px){#game #hud #location{max-width:min(47vw,calc(100% - 175px),240px)!important}}
 #game #dialogue{--ink:#5c4836;--paper-edge:#b39871;--paper-accent:#785738;font-family:system-ui,"PingFang SC","Microsoft YaHei",sans-serif;box-sizing:border-box}
 #game #dialogue[data-sign-material="pearl"]{--paper-accent:#8b5558;--paper-edge:#c29a8d}
 #game #dialogue[data-sign-material="garden"]{--paper-accent:#566d4e}
