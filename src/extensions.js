@@ -4416,9 +4416,9 @@ refreshControls=function(){
  const g=state.bubbleGame;el.replaceChildren();el.hidden=false;
  if(g.status!=='play'){b(el,tr('Play again','再来一局'),()=>{state.bubbleGame=nostalgiaNew();hint('A fresh board. Aim and shoot!','新的一局，瞄准发射！');refreshControls()});b(el,tr('Back to arcade','返回游戏厅'),()=>$('back').click());return}
  const aim=d=>{if(!g.flight)g.angle=clamp(g.angle+d,-1.15,1.15)};
- b(el,'◀',()=>aim(-.12)).setAttribute('aria-label',tr('Aim left','向左瞄准'));
+ const left=b(el,'◀',()=>aim(-.12));left.setAttribute('aria-label',tr('Aim left','向左瞄准'));left.disabled=!!g.flight;
  const fire=b(el,tr('Shoot','发射'),nostalgiaFire);fire.disabled=!!g.flight;
- b(el,'▶',()=>aim(.12)).setAttribute('aria-label',tr('Aim right','向右瞄准'));
+ const right=b(el,'▶',()=>aim(.12));right.setAttribute('aria-label',tr('Aim right','向右瞄准'));right.disabled=!!g.flight;
 };
 const nostalgiaCSS=document.createElement('style');nostalgiaCSS.textContent='#gameControls.nostalgiaControls{display:flex;gap:8px;max-width:95vw}#gameControls.nostalgiaControls button{min-height:44px;min-width:48px;white-space:normal}';document.head.append(nostalgiaCSS);
 const nostalgiaDrawBefore=drawActivity;
@@ -4440,7 +4440,7 @@ drawActivity=function(){
 };
 let nostalgiaPointer=null;
 function nostalgiaAim(e){const p=point(e),g=state.bubbleGame;g.angle=clamp(Math.atan2(p.x-400,Math.max(20,592-p.y)),-1.15,1.15)}
-c.addEventListener('pointerdown',e=>{if(!nostalgiaActive()||state.bubbleGame.status!=='play'||state.bubbleGame.flight)return;const p=point(e);if(p.x<250||p.x>550||p.y<320||p.y>610)return;e.stopImmediatePropagation();nostalgiaPointer=e.pointerId;c.setPointerCapture(e.pointerId);nostalgiaAim(e)},true);
+c.addEventListener('pointerdown',e=>{if(!nostalgiaActive()||state.bubbleGame.status!=='play'||state.bubbleGame.flight||talkOpen||transitioning||$('page').style.display==='block')return;const p=point(e);if(p.x<250||p.x>550||p.y<320||p.y>610)return;e.stopImmediatePropagation();nostalgiaPointer=e.pointerId;c.setPointerCapture(e.pointerId);nostalgiaAim(e)},true);
 c.addEventListener('pointermove',e=>{if(nostalgiaActive()&&nostalgiaPointer===e.pointerId){e.stopImmediatePropagation();nostalgiaAim(e)}},true);
 c.addEventListener('pointerup',e=>{if(nostalgiaPointer!==e.pointerId)return;nostalgiaPointer=null;e.stopImmediatePropagation();if(nostalgiaActive()){nostalgiaAim(e);nostalgiaFire()}},true);
 c.addEventListener('pointercancel',e=>{if(nostalgiaPointer===e.pointerId)nostalgiaPointer=null},true);
@@ -4542,8 +4542,9 @@ refreshControls=function(){
  const reset=opponent=>{state.threeGame=threeNew(opponent);refreshControls()};
  const catBtn=b(el,tr('Mochi · Casual','麻薯 · 轻松'),()=>reset('cat'));catBtn.setAttribute('aria-pressed',String(g.opponent==='cat'));
  const maBtn=b(el,tr('Ah Ma · Expert','阿嬷 · 高手'),()=>reset('auntie'));maBtn.setAttribute('aria-pressed',String(g.opponent==='auntie'));
+ const busy=g.board.some(Boolean)&&!g.result;catBtn.disabled=busy;maBtn.disabled=busy;
  if(g.result)b(el,tr('Again','再来一局'),()=>reset(g.opponent));
- else{const status=element('span',g.thinking?tr('Thinking…','思考中……'):tr('Your turn','轮到你'),el);status.setAttribute('role','status')}
+ else{const status=element('span',g.thinking?tr('Thinking…','思考中……'):tr('Your turn','轮到你'),el);status.setAttribute('role','status');if(busy)b(el,tr('New round','重新开局'),()=>reset(g.opponent))}
 };
 const threeStyle=document.createElement('style');threeStyle.textContent='#gameControls.threeControls{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:5px;max-width:95vw}#gameControls.threeControls button{min-height:44px;font-size:13px;white-space:normal}#gameControls.threeControls button[aria-pressed=true]{background:#536a5a;color:#fff3d9}#gameControls.threeControls span{padding:3px 8px;font-size:12px;color:#fff0ce;background:#493e34;border-radius:8px}';document.head.append(threeStyle);
 const threeDrawBefore=drawActivity;
@@ -4567,7 +4568,7 @@ drawActivity=function(){
  else txt(g.thinking?tr('Thinking…','正在思考……'):tr('Three in a row','三个连成一线'),400,641,18,'#fff2d4');
  ctx.restore()
 };
-window.addEventListener('keydown',e=>{if(!threeActive()||e.target.matches('input,textarea,select,button')||e.repeat)return;const i=Number(e.key);if(i>=1&&i<=9&&e.key.length===1){e.preventDefault();threePlay(i-1)}});
+window.addEventListener('keydown',e=>{if(!threeActive()||talkOpen||transitioning||$('page').style.display==='block'||e.target.matches('input,textarea,select,button')||e.repeat)return;const i=Number(e.key);if(i>=1&&i<=9&&e.key.length===1){e.preventDefault();threePlay(i-1)}});
 
 /* Keep guidance and the current NPC quip localized after a language change. */
 const nostalgiaHintBefore=activityHint;
@@ -4663,12 +4664,12 @@ function lifeEarn(key,amounts,daily=false){
 }
 function lifeDiscovery(name){
  if(/^Arrival:/.test(name))return {happiness:2,calm:1};
- if(/^Met |^Tea with |^A letter from |friendship|cat friend/i.test(name))return {social:3,happiness:2};
+ if(/^Met |^Tea with |^A letter from |^Friend of |friendship|cat friend/i.test(name))return {social:3,happiness:2};
  if(/recipe|soup|milk tea|bubble tea|vegetarian|broth/i.test(name))return {creativity:4,happiness:2};
  if(/tarot|reading|chart|personality|soul cat|motives|preference/i.test(name))return {wisdom:4,calm:1};
  if(/fortune|temple|blessing|wishing|moon block|heaven|lantern|garden/i.test(name))return {calm:3,wisdom:1};
  if(/champion|claw|rhythm|three-in-a-row|bubble arcade/i.test(name))return {skill:4,happiness:2};
- if(/worry|meeting survivor|shredder|office escape/i.test(name))return {mischief:3,happiness:2};
+ if(/worry|meeting survivor|shredder|office escape|let it drift|river echo/i.test(name))return {mischief:3,happiness:2};
  if(/story|parallel|ending|café|cafe/i.test(name))return {wisdom:2,social:2};
  return {happiness:1}
 }
@@ -4736,7 +4737,7 @@ function lifeProfile(){
 const lifeHUDPrior=updateHUD;
 updateHUD=function(){lifeHUDPrior();lifeHUDRefresh()};
 const lifeProfileButton=$('profileHud');lifeProfileButton.onclick=lifeProfile;
-lifeProfileButton.setAttribute('role','button');lifeProfileButton.tabIndex=0;lifeProfileButton.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();lifeProfile()}});
+lifeProfileButton.setAttribute('aria-label',tr('Open life journal','打开人生档案'));
 const lifeStyle=document.createElement('style');lifeStyle.textContent=`
 .lifeBook{max-width:560px;margin:auto;padding:18px 15px;background:#f2e5c9;color:#51483b;border:1px solid #ad9570;box-shadow:2px 4px 0 #d4bd9560,inset 0 0 24px #b18a4820;font-family:Georgia,serif}
 .lifeBook h2{font-size:19px;margin:20px 0 8px;color:#524c3a}.lifeIntro{display:flex;align-items:center;gap:12px;border-bottom:1px solid #b8a480;padding-bottom:12px}.lifeIntro img{width:84px;height:96px;object-fit:contain;flex:none}.lifeIntro>div{min-width:0;overflow-wrap:anywhere}.lifeIntro h2{margin:0 0 5px}.lifeIntro p{font-size:13px;margin:6px 0}.lifeAttribute{padding:7px 0;border-bottom:1px solid #b8a48050}.lifeAttrName,.lifeFriend{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px}.lifeAttrName span,.lifeFriend span{overflow-wrap:anywhere}.lifeAttribute progress{width:100%;height:9px;margin:6px 0}.lifeAttribute small,.lifeNote{font-size:12px;line-height:1.45;color:#72634d}.lifeFriend{padding:8px 0;border-bottom:1px solid #c1ad8a}.lifeAchievement{padding:9px 0 9px 12px;border-left:3px solid #bca88a;margin:5px 0;opacity:.72}.lifeAchievement.earned{border-left-color:#6f9478;opacity:1}.lifeAchievement small{display:block;font-size:12px;margin-top:4px}.lifeActions{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}.lifeActions button{min-height:44px;white-space:normal}
@@ -4752,3 +4753,91 @@ albumProfile=function(q){
 };
 const lifeCareBefore=careComplete;
 careComplete=function(action){const active=careIsActive(),profile=active?parkCats[state.petKind??0]:null;lifeCareBefore(action);if(active&&profile&&state.care.phase==='return'){lifeEarn('care:'+profile.name[0],{happiness:2,calm:1},true);lifeHUDRefresh()}};
+
+
+/* Coordinated quality batch: compact HUD, localizable reward feedback, optional
+   daily ideas, resident familiarity, keyboard play and accessible board input. */
+let lifeRecent=null;
+const lifeEarnBefore=lifeEarn;
+lifeEarn=function(key,amounts,daily=false){
+ const before={...lifeJournal.points},earned=lifeEarnBefore(key,amounts,daily);
+ if(earned){
+  const changes=Object.keys(lifeAttributes).map(k=>[k,(lifeJournal.points[k]||0)-(before[k]||0)]).filter(v=>v[1]>0);
+  if(changes.length){lifeRecent=changes;lifeHUDRefresh();const status=$('lifeAwardStatus');if(status)status.textContent=changes.map(([k,v])=>tr(...lifeAttributes[k].label)+' +'+v).join(' · ')}
+ }
+ return earned
+};
+const lifeAwardStatus=element('span','',$('profileHud').parentNode);
+lifeAwardStatus.id='lifeAwardStatus';lifeAwardStatus.setAttribute('role','status');lifeAwardStatus.setAttribute('aria-live','polite');
+const lifeHUDCompactBefore=lifeHUDRefresh;
+lifeHUDRefresh=function(){
+ lifeHUDCompactBefore();const profile=$('profileHud');if(!profile)return;
+ profile.setAttribute('aria-label',tr('Open life journal','打开人生档案')+' · '+$('hudProgress').textContent);
+ const status=$('lifeAwardStatus');if(status&&lifeRecent)status.textContent=lifeRecent.map(([k,v])=>tr(...lifeAttributes[k].label)+' +'+v).join(' · ');
+};
+const lifeContextHUDBefore=updateHUD;
+updateHUD=function(){
+ lifeContextHUDBefore();$('game').dataset.lifeActivity=String(!!activity);
+ $('hudCoins').setAttribute('aria-label',tr('Paws for hideout decorations','用于兑换小窝装饰的爪币')+' '+hideoutBalance());
+};
+const lifeLayoutCSS=document.createElement('style');lifeLayoutCSS.textContent=`
+#lifeAwardStatus{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#profileHud:focus-visible,#gameControls button:focus-visible,.lifeBook button:focus-visible{outline:2px solid #b77745;outline-offset:3px}
+#game[data-life-activity="true"] #hudStats{visibility:hidden!important;pointer-events:none!important}
+#game[data-life-activity="true"] #profileHud{max-width:72%!important}
+#game[data-life-activity="true"] #movePad,#game[data-life-activity="true"] #moveGuide{display:none!important}
+.lifeDaily{border-top:1px solid #b8a480;border-bottom:1px solid #b8a480;padding:9px 0;margin:12px 0}
+.lifeDaily h2{margin:4px 0 8px}.lifeDailyRow{display:flex;gap:9px;align-items:flex-start;padding:7px 0}.lifeDailyRow>span:first-child{flex:none;color:#6b8065;font-weight:bold}.lifeDailyRow>div{min-width:0}.lifeDailyRow small{display:block;color:#72634d;line-height:1.35}
+.lifeRecent{padding:8px 0;color:#526d55;font-size:13px}.lifeBoardAccess{max-width:100%;font-size:12px}.lifeBoardAccess summary{cursor:pointer;padding:8px;color:#f9eed4}.lifeBoardKeys{display:grid;grid-template-columns:repeat(3,minmax(44px,1fr));gap:4px}.lifeBoardKeys button{min-height:44px!important}
+#gameControls.threeControls{max-width:96vw;align-items:center}#gameControls.threeControls button{font-size:12px;min-height:44px}
+@media(max-width:380px){#profileHud{max-width:55%!important}#hudStats span{font-size:10px;padding:4px!important}.lifeBook{padding:13px 10px}.lifeIntro img{width:62px;height:76px}.lifeAttrName,.lifeFriend{font-size:13px}}
+`;document.head.append(lifeLayoutCSS);
+function lifeDailyIdeas(){
+ const keys=lifeJournal.daily.day===shrineClock().day?lifeJournal.daily.keys:[];
+ return [
+ {title:['A little game break','玩一局小游戏'],desc:['Finish a bubble or tic tac toe round. Winning is optional.','完成一局泡泡龙或井字棋，输赢随意。'],done:keys.some(k=>k==='round:bubble'||k==='round:three')},
+ {title:['Say hello','找个聊天搭子'],desc:['Meet a resident or play a round against a friend.','认识小镇居民，或跟老熟人下一局棋。'],done:keys.some(k=>k.startsWith('friend:'))},
+ {title:['Let something go','放下一个烦恼'],desc:['Release a bottle or shout by the river.','去码头放个漂流瓶，或者喊一声。'],done:keys.some(k=>k.startsWith('release:'))},
+ {title:['Make a cat happy','哄一只小猫开心'],desc:['Complete a care activity in the park.','去公园陪小猫完成一次照顾活动。'],done:keys.some(k=>k.startsWith('care:'))}
+ ]
+}
+const lifePageBefore=lifeProfile;
+lifeProfile=function(){
+ lifePageBefore();const book=$('content').querySelector('.lifeBook');if(!book)return;
+ const section=element('section','',book,'lifeDaily');element('h2',tr('Little things to do today','今天可以摸点什么'),section);
+ element('p',tr('Ideas, not homework. No streaks to lose.','随便挑，不是作业。断签也没关系。'),section,'lifeNote');
+ for(const v of lifeDailyIdeas()){const row=element('div','',section,'lifeDailyRow');element('span',v.done?'✓':'○',row);const info=element('div','',row);element('strong',tr(...v.title),info);element('small',tr(...v.desc),info)}
+ const intro=book.querySelector('.lifeIntro');if(intro)intro.after(section);
+ if(lifeRecent){const p=element('p',tr('Recent progress: ','最近成长：')+lifeRecent.map(([k,v])=>tr(...lifeAttributes[k].label)+' +'+v).join(' · '),book,'lifeRecent');section.before(p)}
+ const lang=$('content').querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();lifeProfile()};
+};
+$('profileHud').onclick=()=>lifeProfile();
+const familiarityLines={
+ early:[['I recognise you. Finally, a familiar face without a meeting invitation.','我认得你了。难得有个熟人不是来约开会的。'],['Back again? Excellent. The town has a better retention policy than my old job.','又来啦？看来小镇的留人政策比我前公司强。']],
+ regular:[['You are practically a regular now. I should start reserving you a seat.','都成老熟客了，下次给你留个座。'],['I can share the good gossip with you now. The boring gossip is for strangers.','现在可以给你讲好瓜了，没营养的瓜留给生人。']],
+ trusted:[['You are one of us. No annual appraisal required.','你现在是自己人了，免年度考核。'],['At this point, we could open a department of doing absolutely nothing.','咱俩这交情，已经可以成立摸鱼办了。']]
+};
+const familiarityTalkBefore=npcTalk;
+npcTalk=function(n){
+ const result=familiarityTalkBefore(n);if(!n?.n||!talkOpen)return result;
+ const entry=lifeJournal.friends['npc:'+String(n.n[0]).slice(0,85)];
+ if(!entry||entry.count<2)return result;
+ const choice=$('choices');if(!choice)return result;
+ const tier=entry.count>=10?'trusted':entry.count>=5?'regular':'early';
+ b(choice,tr('Catch up','叙叙旧'),()=>say(tr(...n.n),tr(...townReaction('friendship:'+n.n[0]+':'+tier,familiarityLines[tier])),[[tr('See you around','回头见'),closeTalk]]));
+ return result
+};
+const arcadeAccessibleBefore=refreshControls;
+let lifeBoardExpanded=false;
+refreshControls=function(){
+ arcadeAccessibleBefore();if(!threeActive())return;const g=state.threeGame,el=$('gameControls');if(!el||g.result)return;
+ const more=element('details','',el,'lifeBoardAccess');more.open=lifeBoardExpanded;more.ontoggle=()=>{if(more.isConnected)lifeBoardExpanded=more.open};element('summary',tr('Alternative board controls','棋盘辅助操作'),more);
+ const grid=element('div','',more,'lifeBoardKeys');
+ for(let i=0;i<9;i++){const value=g.board[i],btn=b(grid,value===1?'×':value===2?'○':String(i+1),()=>threePlay(i));btn.disabled=!!value||g.thinking;btn.setAttribute('aria-label',tr('Row ','第 ')+(Math.floor(i/3)+1)+tr(', column ',' 行，第 ')+(i%3+1)+tr(value?', occupied':'',value?' 列，已占用':' 列'))}
+};
+window.addEventListener('keydown',e=>{
+ if(!nostalgiaActive()||talkOpen||transitioning||$('page').style.display==='block'||e.target.matches('input,textarea,select,button'))return;
+ const g=state.bubbleGame;if(g.status!=='play'||g.flight)return;
+ if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();g.angle=clamp(g.angle+(e.key==='ArrowLeft'?-.08:.08),-1.15,1.15)}
+ else if(e.key===' '||e.key==='Enter'){e.preventDefault();if(!e.repeat)nostalgiaFire()}
+});
