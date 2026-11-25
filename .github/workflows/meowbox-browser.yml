@@ -599,3 +599,23 @@ jobs:
         with:
           name: meowbox-share-previews
           path: test-results/
+
+  shrine-repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Test shrine arrival and water interaction
+        run: |
+          python3 -m http.server 8768 >/tmp/meowbox-shrine-server.log 2>&1 &
+          node scripts/shrine-repair-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: meowbox-shrine-repair-previews
+          path: test-results/
