@@ -1163,7 +1163,7 @@ function markIndoorStation(id,from,anchor){
 }
 const continuityRoomDraw=drawRoom;
 drawRoom=function(){
- const first=hit.length;continuityRoomDraw();
+ const first=hit.length;if(room==='fish'){riverSceneBackdrop();riverAuntie(147,466,.78)}continuityRoomDraw();
  if(!room||avatar===null)return;
  if(continuityRoom!==room){continuityRoom=room;const spec=indoorSpec();indoor={x:spec.entry[0],y:spec.entry[1],tx:spec.entry[0],ty:spec.entry[1],facing:'up',last:t,goal:null,route:[]};indoorDestination(...spec.arrival)}
  if(continuityActivity!==null){continuityActivity=null;indoor.last=t;indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y}
@@ -2158,6 +2158,7 @@ function riverBottleArt(x,y,angle=0,scale=1,sealed=true){
  line(-8,-4,-8,16,'#edf2c7bb',2);round(-7,0,14,12,2,'#efdfb9','#a78d68');if(sealed)round(-7,-30,14,6,2,'#ab8057');ctx.restore()
 }
 function riverBankY(x){return 400+14*Math.sin((x-150)/150)}
+function riverLanding(power){const p=clamp(power,15,100),x=380+p*1.65;return {x,y:riverBankY(x)-19-p*.36}}
 function riverSceneBackdrop(){
  // Fixed world-space river edge: both the room and close-up share the same shore.
  // The landscape art remains behind this interactive foreground.
@@ -2192,7 +2193,7 @@ function riverBegin(mode){
 function riverPerform(){
  if(!riverIsActive()||state.riverPhase!=='ready')return;
  const input=$('riverPrivateNote');if(input){state.riverNote=input.value.slice(0,100);input.value='';input.blur()}
- if(activity==='riverShout'&&!state.riverNote)state.riverNote=tr(...riverNotes[hash(day()+'riverShout'+(state.count||0))%riverNotes.length]);
+ if(activity==='riverShout'&&!state.riverNote)state.riverNote=tr(...townReaction('riverPrompt',riverNotes));
  state.riverPhase='walk';state.riverAt=t;state.count=(state.count||0)+1;refreshControls();sound(420);
  hint(...(activity==='riverBottle'?['Fold it, seal it, and walk to the water.','折好纸条，封好瓶子，走到河边。']:['Walk to the riverbank and let it out.','走到河边，把烦恼喊出去。']))
 }
@@ -2223,7 +2224,7 @@ drawActivity=function(){
  if(!riverIsActive())return riverActivityBefore();
  riverSceneBackdrop();
  const bottleMode=activity==='riverBottle',phase=state.riverPhase||'ready',age=Math.max(0,t-(state.riverAt??t)),walking=phase==='walk'&&age<1.1;
- const power=clamp(state.riverStrength||60,15,100),landX=380+power*1.65,landY=riverBankY(landX)-19-power*.36;
+ const power=clamp(state.riverStrength||60,15,100),{x:landX,y:landY}=riverLanding(power);
  let walk=phase==='ready'?0:Math.min(1,age/1.1),px=265+walk*65,py=610-walk*102;
  if(phase==='ready'||walking)backHuman(px,py,avatar??0,walking,'up',1.35);
  else drawRitualPose(px,py,1.4,{reach:{x:px+26,y:py-75},bow:phase==='walk'?.12:0});
@@ -2245,8 +2246,6 @@ drawActivity=function(){
   refreshControls();sound(530)
  }
 };
-const riverRoomBefore=drawRoom;
-drawRoom=function(){if(room==='fish'){riverSceneBackdrop();riverAuntie(147,466,.78)}return riverRoomBefore()};
 const riverPropBefore=prop;
 prop=function(id,x,y){
  if(id==='riverShout'){ctx.save();line(x-35,y+8,x-35,y-76,'#785c45',5);line(x-35,y-76,x+32,y-76,'#785c45',4);ctx.fillStyle='#b97561';ctx.beginPath();ctx.moveTo(x-28,y-73);ctx.quadraticCurveTo(x+Math.sin(t*3)*8,y-65,x+35,y-70);ctx.lineTo(x+24,y-45);ctx.lineTo(x-28,y-48);ctx.closePath();ctx.fill();ctx.restore();return}
