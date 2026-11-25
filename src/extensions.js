@@ -1102,7 +1102,7 @@ const indoorStages={
  tarot:{entry:[190,730],arrival:[225,685],stations:{tarot:[270,440,270,615],love:[530,440,530,615]}},
  destiny:{entry:[190,730],arrival:[240,685],stations:{destiny:[400,440,400,615]}},
  wishes:{entry:[615,730],arrival:[580,680],stations:{wishes:[270,440,270,615],coin:[530,440,530,615]}},
- fish:{entry:[180,730],arrival:[220,680],stations:{hit:[215,430,215,615],pier:[400,430,400,615],riverShout:[585,430,585,615]}},
+ fish:{entry:[180,730],arrival:[220,680],stations:{hit:[215,478,215,615],pier:[400,478,400,615],riverShout:[585,478,585,615]}},
  tea:{entry:[610,730],arrival:[575,680],stations:{chat:[270,440,270,615],board:[530,440,530,615],news:[400,440,400,615]}},
  office:{entry:[190,730],arrival:[230,685],stations:{officeSketch:[400,440,400,615]}},
  park:{entry:[610,730],arrival:[575,680],stations:{pet:[270,440,270,615],chat:[530,440,530,615]}},
@@ -2157,15 +2157,27 @@ function riverBottleArt(x,y,angle=0,scale=1,sealed=true){
  ctx.fillStyle=glass;ctx.strokeStyle='#46695e';ctx.lineWidth=1.7;ctx.beginPath();ctx.moveTo(-6,-25);ctx.lineTo(6,-25);ctx.lineTo(7,-13);ctx.quadraticCurveTo(14,-8,14,2);ctx.lineTo(14,19);ctx.quadraticCurveTo(0,25,-14,19);ctx.lineTo(-14,2);ctx.quadraticCurveTo(-14,-8,-7,-13);ctx.closePath();ctx.fill();ctx.stroke();
  line(-8,-4,-8,16,'#edf2c7bb',2);round(-7,0,14,12,2,'#efdfb9','#a78d68');if(sealed)round(-7,-30,14,6,2,'#ab8057');ctx.restore()
 }
+function riverBankY(x){return 400+14*Math.sin((x-150)/150)}
 function riverSceneBackdrop(){
+ // Fixed world-space river edge: both the room and close-up share the same shore.
+ // The landscape art remains behind this interactive foreground.
  paintLivingBackdrop(pics.fish);
- const b=livingBounds(),water=ctx.createLinearGradient(0,330,0,690);
- water.addColorStop(0,'#7eaba8');water.addColorStop(.6,'#638f91');water.addColorStop(1,'#456e76');
- ctx.save();ctx.fillStyle=water;ctx.beginPath();ctx.moveTo(b.x,365);ctx.bezierCurveTo(400,320,490,355,b.x+b.w,325);ctx.lineTo(b.x+b.w,b.y+b.h);ctx.lineTo(b.x,b.y+b.h);ctx.closePath();ctx.fill();
- for(let i=0;i<28;i++){let x=b.x+((i*89+t*(5+i%4))%Math.max(1,b.w)),y=365+i*12;line(x,y,x+24+(i%5)*9,y,'#d3e5cc55',1.2)}
- ctx.fillStyle='#88765a';ctx.beginPath();ctx.moveTo(b.x,544);ctx.lineTo(262,544);ctx.lineTo(355,650);ctx.lineTo(b.x+b.w,650);ctx.lineTo(b.x+b.w,b.y+b.h);ctx.lineTo(b.x,b.y+b.h);ctx.closePath();ctx.fill();
- for(let i=0;i<8;i++)line(b.x,557+i*20,Math.min(b.x+b.w,300+i*35),557+i*20,'#c5ac7a88',2);
- for(let i=0;i<5;i++){let x=177+i*35;line(x,550,x,518,'#765b46',5);line(x,522,x+35,522,'#c2a477',4)}
+ const b=livingBounds(),water=ctx.createLinearGradient(0,240,0,425);
+ water.addColorStop(0,'#9bb6ad');water.addColorStop(.55,'#7c9e9b');water.addColorStop(1,'#507d7e');
+ const left=b.x,right=b.x+b.w;
+ ctx.save();ctx.fillStyle=water;ctx.beginPath();ctx.moveTo(left,285);ctx.quadraticCurveTo(400,265,right,280);ctx.lineTo(right,riverBankY(right));
+ for(let x=right;x>left;x-=12)ctx.lineTo(x,riverBankY(x));ctx.lineTo(left,riverBankY(left));ctx.closePath();ctx.fill();
+ // Reflections: restrained, irregular lengths, never a grid.
+ ctx.save();ctx.clip();for(let i=0;i<38;i++){let x=left+((i*83+t*(3+i%4))%Math.max(1,b.w)),y=290+(i*29)%116;ctx.globalAlpha=.09+.10*(.5+.5*Math.sin(t*.9+i));line(x,y,x+14+(i%6)*8,y,'#f0e4b7',1.4)}
+ ctx.restore();
+ const ground=ctx.createLinearGradient(0,400,0,800);ground.addColorStop(0,'#b7a27b');ground.addColorStop(.45,'#a18d69');ground.addColorStop(1,'#786a56');
+ ctx.fillStyle=ground;ctx.beginPath();ctx.moveTo(left,riverBankY(left));for(let x=left;x<right;x+=12)ctx.lineTo(x,riverBankY(x));ctx.lineTo(right,riverBankY(right));ctx.lineTo(right,Math.max(b.y+b.h,800));ctx.lineTo(left,Math.max(b.y+b.h,800));ctx.closePath();ctx.fill();
+ // Stone embankment, shadow and worn boardwalk, drawn independently of the background.
+ ctx.beginPath();for(let x=left;x<=right;x+=10){if(x===left)ctx.moveTo(x,riverBankY(x));else ctx.lineTo(x,riverBankY(x))}ctx.strokeStyle='#5f6655';ctx.lineWidth=7;ctx.stroke();
+ for(let i=0;i<36;i++){let x=left+(i*97)%Math.max(1,b.w),y=riverBankY(x)+9+(i%3)*6;ellipse(x,y,9+i%4*3,4,'#c4b08b88')}
+ ctx.fillStyle='#9e7957';ctx.beginPath();ctx.moveTo(155,465);ctx.lineTo(630,465);ctx.lineTo(710,790);ctx.lineTo(90,790);ctx.closePath();ctx.fill();
+ for(let i=0;i<11;i++){let y=475+i*29;line(155-(y-465)*.2,y,630+(y-465)*.25,y,'#6c563e88',1.4);line(155-(y-465)*.2,y+2,630+(y-465)*.25,y+2,'#d4b38c66',1)}
+ for(const x of [145,655]){for(let i=0;i<8;i++){const xx=x+i*3-10,yy=riverBankY(xx)+8;line(xx,yy+15,xx+Math.sin(t*.9+i)*6,yy-25-i%3*8,'#607655',2.5)}}
  ctx.restore()
 }
 function riverRing(x,y,age,max=55){
@@ -2211,11 +2223,11 @@ drawActivity=function(){
  if(!riverIsActive())return riverActivityBefore();
  riverSceneBackdrop();
  const bottleMode=activity==='riverBottle',phase=state.riverPhase||'ready',age=Math.max(0,t-(state.riverAt??t)),walking=phase==='walk'&&age<1.1;
- const power=clamp(state.riverStrength||60,15,100),landX=380+power*1.65,landY=465-power*.48;
- let walk=phase==='ready'?0:Math.min(1,age/1.1),px=265+walk*65,py=610-walk*70;
+ const power=clamp(state.riverStrength||60,15,100),landX=380+power*1.65,landY=riverBankY(landX)-19-power*.36;
+ let walk=phase==='ready'?0:Math.min(1,age/1.1),px=265+walk*65,py=610-walk*102;
  if(phase==='ready'||walking)backHuman(px,py,avatar??0,walking,'up',1.35);
  else drawRitualPose(px,py,1.4,{reach:{x:px+26,y:py-75},bow:phase==='walk'?.12:0});
- riverAuntie(220,485,.78);
+ riverAuntie(205,488,.78);
  if(bottleMode){
   if(phase==='ready'){round(275,465,68,13,3,'#ad8860','#74583e');round(290,448,23,12,2,'#f0e1ba');riverBottleArt(330,445,.05,.75,false)}
   else if(age<.55){riverBottleArt(330,445,0,.85,age>.3);round(319,422+age*45,15,9,2,'#f1dfad')}
@@ -2223,8 +2235,8 @@ drawActivity=function(){
   else if(age<1.85){const f=(age-1.1)/.75;riverBottleArt(px+24+(landX-px-24)*f,py-70+(landY-py+70)*f-(28+power*.62)*Math.sin(Math.PI*f),Math.PI*f,.8)}
   else {const drift=Math.min(1,(age-1.85)/2.5);if(drift<1){ctx.save();ctx.globalAlpha=1-drift;riverBottleArt(landX+75*drift,landY-18*drift+Math.sin(t*4)*2,1.2,.72);ctx.restore()}riverRing(landX,landY,age-1.85,48)}
  }else if(age>1.1&&phase!=='ready'){
-  for(let i=0;i<3;i++)riverRing(375,430,age-1.1-i*.25,95);
-  if(age<2.85)wonderSceneText(state.riverNote||tr('AAAAAH!','啊啊啊！'),450,392-(age-1.1)*12,240,19,'#fff4d5',3)
+  for(let i=0;i<3;i++)riverRing(375,riverBankY(375)-25,age-1.1-i*.25,80);
+  if(age<2.85)wonderSceneText(state.riverNote||tr('AAAAAH!','啊啊啊！'),450,354-(age-1.1)*12,240,19,'#fff4d5',3)
  }
  if(phase==='walk'&&age>(bottleMode?4.35:3.1)){
   state.riverNote='';state.riverPhase='done';
@@ -2233,9 +2245,12 @@ drawActivity=function(){
   refreshControls();sound(530)
  }
 };
+const riverRoomBefore=drawRoom;
+drawRoom=function(){if(room==='fish'){riverSceneBackdrop();riverAuntie(147,466,.78)}return riverRoomBefore()};
 const riverPropBefore=prop;
 prop=function(id,x,y){
  if(id==='riverShout'){ctx.save();line(x-35,y+8,x-35,y-76,'#785c45',5);line(x-35,y-76,x+32,y-76,'#785c45',4);ctx.fillStyle='#b97561';ctx.beginPath();ctx.moveTo(x-28,y-73);ctx.quadraticCurveTo(x+Math.sin(t*3)*8,y-65,x+35,y-70);ctx.lineTo(x+24,y-45);ctx.lineTo(x-28,y-48);ctx.closePath();ctx.fill();ctx.restore();return}
+ if(room==='fish'&&id==='pier'){ctx.save();round(x-47,y-9,94,20,3,'#ac8661','#77583d');line(x-35,y+10,x-35,y+38,'#77583d',5);line(x+35,y+10,x+35,y+38,'#77583d',5);round(x-25,y-21,28,16,2,'#f1dfb8','#a78b6c');riverBottleArt(x+24,y-29,.04,.9,false);ctx.restore();return}
  if(id==='officeSketch')return riverPropBefore('rant',x,y);
  return riverPropBefore(id,x,y)
 };
