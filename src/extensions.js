@@ -1547,3 +1547,81 @@ syncSigns=function(){
   btn.style.left=choice.x+'px';btn.style.top=choice.y+'px';placed.push(choice.rect);
  }
 };
+
+/* Recurring villagers remember distinct conversations rather than rewarding repeated taps. */
+const residentProfiles={
+ keeper:{name:['Temple keeper','庙祝'],reward:['Keeper’s quiet blessing','庙祝的静心福签'],greeting:['The incense is ready. Your inbox can wait.','香已经备好了，工作消息可以晚点再回。'],returning:['Welcome back. The bell missed you. It has been very dramatic about it.','又来了啊。钟都想你了，刚才还闹着要响。'],topics:[
+  {label:['Ask about the temple','问问庙里的事'],reply:['Light incense, bow quietly, then try the fortune sticks. You can keep a slip or tie it in the garden.','先上香，再静心行礼，然后去求签。签纸可以带走，也可以系在庭院里。']},
+  {label:['Share a little worry','聊聊最近的烦恼'],reply:['You do not need to solve everything before sunset. Even the incense burns one moment at a time.','不用赶在日落前把所有烦恼解决。你看，香也是一点一点烧的。']},
+  {label:['Ask for a quiet spot','找个清静的地方'],reply:['There is a little garden behind the temple. Sit by the chimes. Nobody will ask for your quarterly goals.','庙后面有个小庭院，去风铃旁坐坐吧。那里没人问你季度目标。']}
+ ]},
+ auntie:{name:['Auntie Mei','梅姨'],reward:['Auntie Mei’s tea invitation','梅姨的茶席邀约'],greeting:['Come, sit. The tea is hot and the gossip is hotter.','来来来，坐下。茶是热的，瓜更新鲜。'],returning:['Ah, my regular! I have kept your seat. Not for your boss, of course.','哎呀，熟客来了！位子给你留着呢，当然没有老板的份。'],topics:[
+  {label:['Any fresh gossip?','今天有什么新瓜？'],reply:['Someone booked a meeting to discuss reducing meetings. I nearly spilled my tea.','有人专门开会讨论怎么减少开会。我差点把茶喷出来。']},
+  {label:['Ask about this village','问问附近有什么好玩的'],reply:['At Daydream Park, nobody checks your productivity. The ducks are setting an excellent example.','发呆公园不查绩效，那几只鸭子就是我们的榜样。']},
+  {label:['Ask how Auntie is doing','关心一下梅姨'],reply:['My knees complain, my kettle sings, and my tea is still better than the office pantry. Thank you for asking.','膝盖爱抱怨，水壶爱唱歌，茶还是比公司茶水间的好喝。谢谢你关心我。']}
+ ]},
+ wang:{name:['Wang Laoban','王老板'],reward:['Wang’s official rest permit','王老板的摸鱼许可证'],greeting:['I am conducting an important experiment in doing nothing.','我正在进行一项重要实验，研究如何什么都不做。'],returning:['My favourite colleague! Our unofficial rest committee is now in session.','我的摸鱼搭子来了！非正式休息委员会现在开会。'],topics:[
+  {label:['Complain about meetings','吐槽开会'],reply:['I propose an agenda with one item: cancel the agenda. Motion carried.','我提议今天只有一项议程：取消议程。全票通过。']},
+  {label:['Ask for a break idea','问问怎么休息'],reply:['Try the fishing pond. Even when you catch nothing, you have successfully avoided work.','去摸鱼池试试。就算一条鱼都没钓到，也成功摸鱼了。']},
+  {label:['Ask about his dream job','问问他的理想职业'],reply:['Professional bench inspector. Excellent work-life balance, although the benches keep falling asleep on duty.','专业长椅体验员。工作生活很平衡，就是长椅上容易睡着。']}
+ ]},
+ mochi:{name:['Mochi','麻薯'],reward:['Mochi’s trusted human badge','麻薯认证铲屎官徽章'],greeting:['Mrrp. I see you have two hands. Excellent.','喵。我看见你有两只手。不错。'],returning:['Mrrp! You came back. I was absolutely not waiting.','喵！你回来了。我才没有特意等你。'],topics:[
+  {label:['Offer an imaginary snack','请它吃虚拟小零食'],reply:['Sniff. Acceptable. My compliments to the imaginary chef.','闻闻。勉强合格。替我夸夸那位不存在的厨师。']},
+  {label:['Scratch behind the ears','挠挠耳朵后面'],reply:['Prrrrr. Your performance review has improved significantly.','呼噜噜。你的绩效考核大幅提升。']},
+  {label:['Sit quietly together','一起安静坐一会儿'],reply:['Mochi settles beside you. For once, neither of you has anything urgent to do.','麻薯在你旁边趴下了。难得你们两个都没有什么急事。']}
+ ]}
+};
+const residentIds={'Temple keeper':'keeper','Auntie Mei':'auntie','Wang Laoban':'wang','Mochi':'mochi'};
+let residentMemory=load('residentMemoryV1',{});
+if(!residentMemory||typeof residentMemory!=='object'||Array.isArray(residentMemory))residentMemory={};
+function residentRecord(id){
+ const r=residentMemory[id];const topics=Array.isArray(r?.topics)?[...new Set(r.topics.filter(x=>Number.isInteger(x)&&x>=0&&x<3))]:[];
+ return {topics,last:Number.isInteger(r?.last)&&topics.includes(r.last)?r.last:null,visits:Math.max(0,Number(r?.visits)||0),lastDay:typeof r?.lastDay==='string'?r.lastDay:''};
+}
+function residentStatus(r){return r.topics.length===3?['Trusted friend','知心好友']:r.topics.length>=1?['Familiar face','熟面孔']:['New acquaintance','新朋友']}
+function residentTip(id){
+ if(id==='keeper'||id==='mochi')return null;
+ if(scene==='island')return ['Grandma’s Kitchen is just down the street. Try bubble tea or make a bowl of soup.','外婆厨房就在前面，试试做奶茶或者煮碗汤吧。'];
+ if(scene==='wonder')return ['The Personality Lab is for fun. Nobody needs to fit inside a personality box.','人格研究所就是图个开心，人不需要被一种性格框住。'];
+ return null;
+}
+function residentReply(id,n,index){
+ const profile=residentProfiles[id],record=residentRecord(id),fresh=!record.topics.includes(index);
+ if(fresh)record.topics.push(index);
+ record.last=index;residentMemory[id]=record;save('residentMemoryV1',residentMemory);
+ const reply=index===1&&id!=='keeper'&&id!=='mochi'&&id==='auntie'?(residentTip(id)||profile.topics[index].reply):index===1&&id==='wang'?(residentTip(id)||profile.topics[index].reply):profile.topics[index].reply;
+ let extra='';
+ if(fresh&&record.topics.length===3){
+  extra=' '+tr('Here, keep this little reminder of our chats.','来，把这份聊天的小纪念收好。');
+  addItem(...profile.reward);
+ }else if(!fresh)extra=' '+tr('We have talked about this before. Still a good topic.','这个我们聊过啦，不过再聊一次也挺好。');
+ say(tr(...n.n),tr(...reply)+extra,[[tr('Chat a little more','再聊一会儿'),()=>residentConversation(id,n,false)],[tr('See you around','下次见'),closeTalk]]);
+}
+function residentConversation(id,n,arrived=true){
+ const profile=residentProfiles[id],record=residentRecord(id);
+ if(arrived){record.visits++;record.lastDay=day();residentMemory[id]=record;save('residentMemoryV1',residentMemory)}
+ const welcome=arrived&&record.visits===1?profile.greeting:profile.returning;
+ const remembered=arrived&&record.last!==null?' '+tr('I remember our last chat.','上次聊的事我还记得呢。'):'';
+ const options=profile.topics.map((topic,index)=>[tr(...topic.label),()=>residentReply(id,n,index)]);
+ options.push([tr('Keep exploring','继续逛逛'),closeTalk]);
+ say(tr(...n.n),tr(...welcome)+remembered,options);
+}
+const previousResidentTalk=npcTalk;
+npcTalk=function(n){
+ const id=n?.cameo===undefined&&n?.n&&Object.hasOwn(residentIds,n.n[0])?residentIds[n.n[0]]:null;
+ if(!id||room)return previousResidentTalk(n);
+ greetingNPC=n;greetingUntil=t+.9;stopRoute();p.tx=p.x;p.ty=p.y;
+ if(Math.abs(n.x-p.x)>Math.abs(n.y-p.y))p.facing=n.x<p.x?'left':'right';else p.facing=n.y<p.y?'up':'down';
+ residentConversation(id,n);
+};
+const residentPassport=passport;
+passport=function(){
+ residentPassport();const book=$('content').querySelector('.travelAlbum');if(!book)return;
+ element('h2',tr('Village friendships','小镇友谊'),book);
+ for(const [id,profile] of Object.entries(residentProfiles)){
+  const record=residentRecord(id),entry=element('div','',book,'friendEntry');
+  element('strong',record.visits?tr(...profile.name):tr('Someone to meet','待相遇的朋友'),entry);
+  element('small',record.visits?tr(...residentStatus(record))+' · '+record.topics.length+'/3 '+tr('stories shared','段聊天回忆'):tr('Meet a resident on the village path.','去小镇路上认识新朋友吧。'),entry);
+ }
+};
+$('dockPassport').onclick=passport;
