@@ -2069,7 +2069,7 @@ const cameoPersonal={
  'Lady Clocked Out':[['The emperor may summon me after six. He will receive an automated reply.','皇上六点后召见？请查收本宫的自动回复。'],['I have retired from palace politics. My new ambition is a full night of sleep.','本宫退出宫斗，现阶段目标是睡个整觉。']],
  'Mr. Raincheck':[['At 5:59 the rain began. At 6:00 I was already on the train.','五点五十九分下雨，六点整我已在地铁上。'],['Some people wait for love. I wait for the kettle.','有人等爱情，我等水开。']],
  'Auntie Hong':[['I never spread gossip. I merely provide context with excellent timing.','我从不传八卦，我只是适时补充背景资料。'],['Tea first. The plot twist can wait until the second cup.','先喝茶，反转等第二杯再说。']],
- 'Kim Out-of-Office':[['My fishing report is confidential. Mainly because there are no fish.','摸鱼报告保密，主要是因为没摸到鱼。'],['A good strategy needs patience. And a comfortable chair.','好战略需要耐心，还需要一张舒服的椅子。']]
+ 'Kim Out of Office':[['My fishing report is confidential. Mainly because there are no fish.','摸鱼报告保密，主要是因为没摸到鱼。'],['A good strategy needs patience. And a comfortable chair.','好战略需要耐心，还需要一张舒服的椅子。']]
 };
 let cameoChats=load('cameoChatsV1',{});
 if(!cameoChats||typeof cameoChats!=='object'||Array.isArray(cameoChats))cameoChats={};
@@ -2079,7 +2079,7 @@ function cameoOpenConversation(a,continuing=false){
  const intro=continuing?tr('Another cup? Or another story?','再喝一杯，还是再聊一段？'):rec.visits>1?tr('You again! I kept the seat beside me free.','又见面啦！旁边的位子给你留着呢。'):tr(a[3],a[4]);
  const opts=cameoTopics.map((topic,i)=>[tr(...topic[0]),()=>{
  if(!rec.topics.includes(i))rec.topics.push(i);cameoChats[key]=rec;save('cameoChatsV1',cameoChats);
- const reply=cameoPersonal[key]?.[i]||topic[1];
+ const variants=localCameoReplies[key]?.[i];const reply=variants?townReaction('cameo:'+key+':'+i,variants):(cameoPersonal[key]?.[i]||townReaction('cameo:general:'+i,internationalTopicReplies[i]));
  say(tr(a[0],a[1]),tr(...reply),[[tr('Keep chatting','再聊会儿'),()=>cameoOpenConversation(a,true)],[tr('See you around','下次见'),closeTalk]])
  }]);
  opts.push([tr('See you around','下次见'),closeTalk]);
@@ -2334,3 +2334,95 @@ const riverBottleReplies={
  medium:[['Auntie: That worry is officially out of office.','阿姨：这个烦恼正式下班了。'],['Auntie: No forwarding address. Excellent.','阿姨：没留新地址，很好，不许退件。'],['Auntie: The river accepts resignations.','阿姨：这条河接受烦恼辞职。']],
  strong:[['Auntie: Wah, that one must have been a long meeting.','阿姨：哇，这一定开了很久的会。'],['Auntie: A bit more and it would need a passport.','阿姨：再远一点，瓶子都要办护照了。'],['Auntie: Save some strength for opening your lunch.','阿姨：留点力气，等会儿还要开饭盒。']]
 };
+
+
+/* Fictional international guests. Character voices are authored separately in each language. */
+const internationalTopicReplies=[
+ [
+  ['My boss says “quick one”. I have learned to bring a charger.','领导说“简单讲两句”，我已经开始找充电器了。'],
+  ['I tried to clear my inbox. It took that personally.','刚清完未读，群里又来了个@所有人。'],
+  ['They asked me to think outside the box. I went to get kopi.','领导让我跳出舒适圈，我跳去楼下买奶茶了。']
+ ],
+ [
+  ['I left my laptop at home. First holiday in years.','出门没带电脑，终于有点旅游的感觉了。'],
+  ['My weekend plans are very ambitious. Breakfast, nap, repeat.','周末行程排得很满：吃饭、睡觉、醒来再吃。'],
+  ['I bought an umbrella. Naturally, it stopped raining.','刚买了把伞，雨就停了。老天挺会做生意。']
+ ],
+ [
+  ['Someone choped a seat with a tissue packet here. The temple cat sat on it.','有人拿纸巾占座，庙猫直接坐上去了。'],
+  ['The town introduced a meeting-free Friday. There is a meeting about it.','小镇推行周五不开会，结果先开会讨论这事。'],
+  ['The souvenir shop has a mug marked “urgent”. It is empty.','手信店有个写着“紧急”的杯子，里面啥都没有。']
+ ],
+ [
+  ['No networking. No icebreakers. Just tea.','不破冰，不自我介绍，喝茶就行。'],
+  ['This is the only queue I have joined without checking how long it is.','今天唯一没催进度的一件事，就是喝茶。']
+ ]
+];
+const localCameoReplies={
+ 'Master Payrise':[
+  [['I asked for a pay rise. They gave me a bigger spreadsheet.','我求的是加薪，领导给我升了个表格版本。'],['Apparently exposure is a form of compensation. Can I pay rent with it?','领导说这是成长机会。房东收成长值吗？']],
+  [['I bought economy. The gods upgraded me to standing room.','拜完财神，地铁还是站票。']],
+  [['I have a new kung fu move: dodge the 6pm calendar invite.','我新练了一招：六点前闪避会议邀请。']],
+  [['Even a comedy needs an intermission.','喜剧也得有中场休息嘛。']]
+ ],
+ 'Lady Clocked Out':[
+  [['If the emperor wants a status update, he may consult the eunuch.','皇上若问进度，请去找总管公公。'],['My palace has a strict no-meeting-after-six policy.','本宫宫规第一条：六点以后不接旨。']],
+  [['The court can keep its promotions. I want sleep.','晋封什么的让给别人吧，本宫想睡个整觉。']],
+  [['A concubine tried to poison my tea. It was decaf.','有人给本宫下毒，竟然换了无咖啡因奶茶。']],
+  [['Stay. No one here needs to win favour.','坐吧，这儿不用争宠。']]
+ ],
+ 'Auntie Hong':[
+  [['You heard nothing from me, hor.','这事你可不是从我这儿听说的啊。'],['I am not kaypoh. I am maintaining situational awareness.','我不叫八卦，我叫掌握一手资讯。']],
+  [['I only went downstairs for kopi. Came back with a whole season of drama.','下楼买杯咖啡，回来已经听完一整部连续剧。']],
+  [['The tissue packet was there first. In Singapore, that is basically property law.','在新加坡，纸巾先到，人后到。懂的都懂。']],
+  [['Drink first. The tea is hot, and so is the gossip.','先喝茶，瓜还烫着呢。']]
+ ],
+ 'Dragon King Meow':[
+  [['I own nine imaginary companies. None will pay my cat food bill.','本喵坐拥九大虚构集团，猫粮还得自己买。']],
+  [['My assistant booked me a nap. Finally, competent management.','助理给本喵安排了午睡，终于会办事了。']],
+  [['You have entered my territory. Admission fee: one compliment.','此乃本喵地盘，入场费一句夸奖。']],
+  [['You may sit beside me. Do not make it a strategic partnership.','准你坐旁边，别谈战略合作。']]
+ ],
+ 'Mr. Raincheck':[
+  [['In my film, the last train leaves at exactly six.','我的电影里，末班车永远六点准时开。']],
+  [['I waited for a message for 2046 seconds. It was a work notification.','我等了2046秒，结果来的是工作通知。']],
+  [['The rain fell on my umbrella. The deadline fell on me.','雨落在伞上，截止日期落在我头上。']],
+  [['We can be quiet. No subtitles necessary.','就这样坐着，不必加字幕。']]
+ ],
+ 'Kim Out of Office':[
+  [['Today I have a strategic objective: finish lunch while it is hot.','今日战略目标：趁热吃完午饭。']],
+  [['My annual leave has been approved by absolutely nobody in this fictional town.','我在虚构小镇休假，无需任何领导批准。']],
+  [['The river has rejected my meeting request. I respect its boundaries.','河流拒绝了我的会议邀请，尊重它的边界。']],
+  [['No minutes will be circulated.','不发会议纪要。']]
+ ],
+ 'MRT Uncle':[
+  [['I stood on the MRT for eight stops. That counts as a standing desk.','地铁站了八站，今天的站立办公完成。']],
+  [['Kopi o kosong. My calendar is the only thing with extra sugar.','咖啡不加糖，只有老板画的饼够甜。']],
+  [['The escalator broke. Suddenly everyone discovered exercise.','电扶梯坏了，全站的人突然开始健身。']],
+  [['Sit lah. We are not rushing for the last train.','坐啦，不赶末班车。']]
+ ],
+ 'Hotpot Commissioner':[
+  [['A hotpot has less pointless discussion than my Monday meeting.','火锅局都比周一例会有实际产出。']],
+  [['I am healing my inner child with a second bowl of noodles.','再加一份面，今日的精神补偿。']],
+  [['Someone ordered mild spice and then requested three cups of milk.','有人点了微辣，最后喝了三杯牛奶。']],
+  [['No need to clock in here.','这儿不用打卡，放心吃。']]
+ ],
+ 'The Crossing Guard':[
+  [['I missed my train at Shibuya. For once, the calendar lost.','涩谷错过一班车，今天终于不是我输给日历。']],
+  [['A convenience store egg sandwich fixed my entire afternoon.','一份便利店蛋三明治，治愈了整个下午。']],
+  [['Someone bowed to the vending machine. It gave them nothing.','有人对自动贩卖机鞠躬，它还是不给优惠。']],
+  [['Listen to the trains. No rush.','听听列车的声音，慢慢来。']]
+ ],
+ 'Eurostar Nap Club':[
+  [['My train was delayed. I called it a wellness break.','列车晚点，我宣布这是身心疗愈时间。']],
+  [['I crossed three time zones to take the exact same nap.','跨了三个时区，还是睡同款午觉。']],
+  [['My passport has more stamps than my laptop has stickers.','护照盖章比电脑贴纸还多。']],
+  [['A window seat is enough.','靠窗就好。']]
+ ]
+};
+for(const guest of [
+ ['MRT Uncle','地铁阿叔','home','Kopi first. Then we discuss your problems.','先喝咖啡，再讨论你的烦恼。'],
+ ['Hotpot Commissioner','火锅委员','island','The only agenda today is what goes into the pot.','今天唯一议程：下什么菜。'],
+ ['The Crossing Guard','路口守望人','wonder','The crossing has turned green. The inbox can wait.','路口绿灯了，未读消息先放着。'],
+ ['Eurostar Nap Club','欧洲睡神','wonder','I came for the scenery. Slept through the Alps.','我来看风景，结果睡过了阿尔卑斯山。']
+])if(!cast9.some(a=>a[0]===guest[0]))cast9.push(guest);
