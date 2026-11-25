@@ -5767,7 +5767,7 @@ lifeDailyIdeas=function(){
  const ideas=dailyMoreIdeasBefore(),keys=lifeJournal.daily.day===shrineClock().day?lifeJournal.daily.keys:[];
  return [...ideas.slice(0,1).map(v=>({...v,desc:['Finish a Bubble Pop or Tic Tac Toe round. Winning is optional.','玩完一局泡泡龙或井字棋，输赢都算。'],done:v.done||keys.includes('round:claw')})),...ideas.slice(1),
  {title:['Something delicious','给自己加个餐'],desc:['Finish a bowl of soup or make and sip bubble tea.','煮好一碗汤，或者摇好奶茶再喝一口。'],done:keys.some(k=>k.startsWith('kitchen:'))},
- {title:['A tiny surprise','拆个小惊喜'],desc:['Open a blind box in the arcade. No purchase needed.','去游戏厅拆个盲盒，不用花钱。'],done:keys.includes('arcade:box')}]
+ {title:['A tiny surprise','拆个小惊喜'],desc:['Open a blind box with 40 Paw Coins.','用40爪币去游戏厅拆个盲盒。'],done:keys.includes('arcade:box')}]
 };
 
 
@@ -7316,3 +7316,31 @@ blindCollectionPage=function(){
 };
 const blindBagEntriesBefore=bagEntries;
 bagEntries=function(){const entries=blindBagEntriesBefore(),existing=new Set(entries.map(v=>v.item[0]));for(const v of boxPrizes){if(!existing.has(v[0]))entries.push({item:v.slice(0,2),kind:'figure',owned:false,order:-1})}return entries};
+
+
+/* Seven distinct illustrated miniature designs, shared by reveal and cabinet.
+   These SVGs are original draft art; replace with matching painted assets
+   when installed. No new external dependencies. */
+function pocketFigureSVG(v){
+ const k=v[5],ink='#725b4c',face='<circle cx="27" cy="29" r="1.7" fill="#493a32"/><circle cx="37" cy="29" r="1.7" fill="#493a32"/><path d="M29 34q3 3 6 0" fill="none" stroke="#755348" stroke-width="1.2"/><ellipse cx="23" cy="34" rx="3" ry="1.6" fill="#dfa29a"/><ellipse cx="41" cy="34" rx="3" ry="1.6" fill="#dfa29a"/>';
+ const shapes={
+ otter:'<path d="M42 47q19 2 14-12q-3-6-8 2" fill="#aa8869" stroke="#725b4c"/><ellipse cx="32" cy="43" rx="17" ry="17" fill="#b28d6b"/><circle cx="16" cy="18" r="6" fill="#b28d6b"/><circle cx="48" cy="18" r="6" fill="#b28d6b"/><ellipse cx="32" cy="27" rx="19" ry="17" fill="#c7a484"/><ellipse cx="32" cy="35" rx="11" ry="7" fill="#f1d6ad"/>'+face+'<path d="M25 43h15l-2 13H27Z" fill="#f6e7cd" stroke="#725b4c"/><ellipse cx="32" cy="43" rx="7.5" ry="2.6" fill="#795541"/><path d="M40 45q8-1 4 6h-5" fill="none" stroke="#725b4c" stroke-width="2"/>',
+ dumpling:'<path d="M10 37Q12 13 32 11Q52 13 54 37Q54 49 32 50Q10 49 10 37" fill="#f5e6c5" stroke="#a18b6d"/><path d="M20 17l5 8m4-13 3 12m6-11-2 11m11-7-6 8" fill="none" stroke="#beaa83" stroke-width="2" stroke-linecap="round"/>'+face+'<path d="M9 39q23 8 46 0v13q-23 15-46 0Z" fill="#9eafa3" stroke="#71887b"/><path d="M14 48h36" stroke="#f1e4c8" stroke-dasharray="3 3"/>',
+ ghost:'<path d="M14 51V25Q14 8 32 8Q50 8 50 25V51L43 47L36 54L29 47L22 54Z" fill="#dbe5df" stroke="#91a49d"/>'+face+'<path d="M28 39l4-4 4 4-4 5Z M32 44l-4 7h8Z" fill="#986b68"/><rect x="43" y="41" width="14" height="12" rx="2" fill="#b1a081" stroke="#72624c"/><path d="M47 41v-3h6v3" fill="none" stroke="#72624c"/>',
+ pigeon:'<ellipse cx="34" cy="44" rx="19" ry="14" fill="#9ca8a7" stroke="#647571"/><ellipse cx="24" cy="43" rx="11" ry="8" fill="#738e8b"/><circle cx="35" cy="25" r="14" fill="#b4bdb8" stroke="#647571"/><circle cx="39" cy="24" r="2.2" fill="#453a32"/><path d="M47 27l8 3-8 4Z" fill="#dfb17c"/><path d="M29 34l13 2" stroke="#8ea39a" stroke-width="5"/><rect x="12" y="43" width="16" height="13" rx="3" fill="#b5946f" stroke="#725b4c"/><path d="M15 44q1-9 11-8" fill="none" stroke="#725b4c" stroke-width="2"/><path d="M30 57l-4 3m12-3 4 3" stroke="#946b59" stroke-width="2"/>',
+ capybara:'<ellipse cx="29" cy="46" rx="22" ry="13" fill="#b99a79" stroke="#725b4c"/><path d="M30 35V20q0-9 10-9t11 11v16q-3 10-15 7" fill="#c5a687" stroke="#725b4c"/><ellipse cx="34" cy="12" rx="4" ry="6" fill="#a98a6b"/><ellipse cx="46" cy="13" rx="4" ry="6" fill="#a98a6b"/><path d="M41 25q3 2 6 0" fill="none" stroke="#5f4c40" stroke-width="1.6"/><ellipse cx="49" cy="35" rx="2" ry="3" fill="#7e6550"/><circle cx="39" cy="6" r="5" fill="#dcaf64"/><path d="M39 2q2-4 6-2" fill="none" stroke="#6f8b65" stroke-width="2"/><path d="M17 53v6m25-6v6" stroke="#8c6d54" stroke-width="5" stroke-linecap="round"/>',
+ koi:'<path d="M11 33Q2 18 4 44Q11 49 20 42" fill="#f3c3a4" stroke="#ab7860"/><ellipse cx="34" cy="34" rx="23" ry="15" fill="#f9e4c8" stroke="#ab7860"/><path d="M19 25q7-7 15 0l-4 11-9 2Z M44 20q12 4 13 12l-9 5-6-8Z" fill="#ce7e63"/><path d="M26 47q3 11 14 8l-1-9" fill="#efb29a" stroke="#ab7860"/><path d="M44 29l7 3" stroke="#65483b" stroke-width="2"/><circle cx="48" cy="34" r="2" fill="#65483b"/><path d="M54 39q-4-3-6 0" fill="none" stroke="#986450" stroke-width="1.5"/>',
+ lantern:'<path d="M25 16v-5q7-10 14 0v5" fill="none" stroke="#8e7250" stroke-width="2"/><path d="M20 20q12-7 24 0l8 13-7 17H19l-7-17Z" fill="#e8b76c" stroke="#9e7953"/><path d="M23 22l-4 12 4 14m18-26 4 12-4 14" stroke="#bc8c54" fill="none"/><rect x="23" y="15" width="18" height="7" rx="2" fill="#a96e55"/><rect x="23" y="47" width="18" height="7" rx="2" fill="#a96e55"/>'+face+'<path d="M28 54v7m4-7v9m4-9v7" stroke="#b2785a" stroke-width="1.5"/>'
+ };
+ if(!shapes[k])return null;
+ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="60" rx="24" ry="3" fill="#8f775b25"/>'+shapes[k]+'</svg>'
+}
+const pocketIconBefore=bagFigureIcon;
+bagFigureIcon=function(v){return pocketFigureSVG(v)||pocketIconBefore(v)};
+const pocketCanvasCache=new Map(),pocketCollectibleBefore=drawBlindCollectible;
+drawBlindCollectible=function(x,y,v,sc=1){
+ const svg=pocketFigureSVG(v);if(!svg)return pocketCollectibleBefore(x,y,v,sc);
+ if(!pocketCanvasCache.has(v[0])){const im=new Image();im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);pocketCanvasCache.set(v[0],im)}
+ const im=pocketCanvasCache.get(v[0]);if(im.complete&&im.naturalWidth){const size=72*sc;ctx.drawImage(im,x-size/2,y-size,size,size)}else pocketCollectibleBefore(x,y,v,sc)
+};
+const coinHudStyle=document.createElement('style');coinHudStyle.textContent='#game #hudStamps{display:none!important} #game #hudCoins{font-variant-numeric:tabular-nums;white-space:nowrap}';document.head.append(coinHudStyle);
