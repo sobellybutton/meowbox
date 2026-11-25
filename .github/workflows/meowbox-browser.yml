@@ -193,6 +193,9 @@ jobs:
                 await page.getByRole('button',{name:'‹ Back',exact:true}).click();
                 await page.evaluate(()=>{room='temple';activity=null;action('prayer')});
                 await page.waitForFunction(()=>activity==='prayer'&&state.prayerStage==='ready',{},{timeout:10000});
+                if(options.hasTouch){
+                  await page.waitForFunction(()=>portraitInteriorCache.get('temple')?.naturalWidth===800&&portraitInteriorCache.get('temple')?.naturalHeight===1400,{},{timeout:10000});
+                }
                 await page.screenshot({path:'test-results/'+name+'-temple-ready.png'});
                 const prayerTap=async(x,y)=>{
                   const v=await page.evaluate(({x,y})=>{const r=c.getBoundingClientRect();return{x:r.left+cam.ox+x*cam.scale,y:r.top+cam.oy+y*cam.scale}}, {x,y});
@@ -329,6 +332,11 @@ jobs:
                 await page.evaluate(()=>{state.rhythmAt=t-15});
                 await page.waitForFunction(()=>state.rhythmStage==='result',{},{timeout:5000});
                 if(!await page.evaluate(()=>items.some(x=>x[0]==='After-hours rhythm ticket')))throw Error('Rhythm ticket missing');
+                await page.evaluate(()=>{room='destiny';activity=null;state={};closeTalk();updateHUD()});
+                if(options.hasTouch){
+                  await page.waitForFunction(()=>portraitInteriorCache.get('destiny')?.naturalWidth===800&&portraitInteriorCache.get('destiny')?.naturalHeight===1400,{},{timeout:10000});
+                  await page.screenshot({path:'test-results/'+name+'-portrait-destiny-room.png'});
+                }
                 await page.evaluate(()=>{room='tarot';activity=null;state={};closeTalk();updateHUD()});
                 if(options.hasTouch){
                   await page.waitForFunction(()=>readingRoomPortrait.naturalWidth===800&&readingRoomPortrait.naturalHeight===1400,{},{timeout:10000});
