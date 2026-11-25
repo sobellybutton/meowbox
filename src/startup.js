@@ -567,9 +567,25 @@ const tarotRoastMinor={
  'Five of Cups':[['It is okay to feel disappointed.','感到失望也没关系。'],['Notice what remains, without dismissing what you lost.','看看还在的东西，也别否定失去的难过。']]
 };
 const tarotSensitiveNames=new Set(['Death','The Tower','Nine of Swords','Three of Swords','Five of Cups','Ten of Swords','Five of Pentacles']);
+const tarotTopicRoasts={
+ 0:{
+ 'The Hermit':[['A little time alone. The last-seen timestamp can manage itself.','独处一会儿，最后上线时间不用你亲自看守。'],['Space can help. Silence alone cannot tell you what somebody feels.','留点空间也好，沉默本身不能说明对方的心意。']],
+ 'The Lovers':[['Love involves choices. You are not a subscription someone forgot to cancel.','感情需要选择，你不是对方忘了取消的会员。'],['Different values deserve a real conversation, not a poll in the group chat.','价值观不同值得好好聊聊，不必在群里投票。']],
+ 'Four of Swords':[['Rest. Not refresh the chat.','休息，不是刷新聊天记录。'],['Put the phone down for a moment. Your peace deserves a turn.','先放下手机，也轮到自己清静一会儿了。']]
+ },
+ 1:{
+ 'Eight of Pentacles':[['Your dedication is admirable. Your salary should probably be informed.','你的努力值得肯定，建议也通知一下你的工资。'],['Perfecting that spreadsheet for the ninth time may not be the answer.','第九次优化那张表格，可能不是答案。']],
+ 'The Emperor':[['Set a boundary. The meeting invite can survive a decline.','设个界限，拒绝会议邀请不会让它心碎。'],['Micromanaging your own break is still micromanaging.','连休息都要微观管理，还是微观管理。']],
+ 'Ten of Wands':[['Your job description is not a moving company. Put something down.','你的岗位说明书不是搬家公司，放下一点吧。'],['Ask for help. Overtime is not a collectible.','试着求助，加班又不是集卡。']]
+ },
+ 2:{
+ 'Temperance':[['Find balance. Your cart and your budget should meet sometime.','找找平衡，购物车和预算也该认识一下了。'],['Pause before another purchase. No cosmic discount code today.','买之前先等等，今天没有宇宙折扣码。']],
+ 'Seven of Cups':[['Many options. Your wallet would prefer a shortlist.','选项很多，你的钱包比较希望有个候选名单。'],['Check the facts before choosing. A shiny offer is still an offer.','选择前先核对事实，再闪亮的优惠也只是优惠。']]
+ }
+};
 function tarotCommentary(name,rev,topic,tone='gentle'){
  if(tone!=='playful')return null;
- const exact=tarotRoastMinor[name]||tarotRoastMajor[name];if(exact)return exact[rev?1:0];
+ const exact=tarotTopicRoasts[topic]?.[name]||tarotRoastMinor[name]||tarotRoastMajor[name];if(exact)return exact[rev?1:0];
  if(tarotSensitiveNames.has(name))return ['Take the time you need.','给自己需要的时间。'];
  const suit=(name.match(/\b(Cups|Wands|Swords|Pentacles)\b/i)||[])[1]?.toLowerCase();
  const generic={
@@ -607,14 +623,14 @@ readingShow=function(i){
 };
 function tarotShareSnapshot(source){
  const cards=source.readCards||source.cards;if(!Array.isArray(cards)||![1,3,5].includes(cards.length)||!cards.every(v=>Number.isInteger(v.i)&&tarotDeck[v.i]&&typeof v.rev==='boolean'))return null;
- return {cards:cards.map(v=>({i:v.i,rev:v.rev})),tone:source.tarotTone||source.tone||'gentle'}
+ return {cards:cards.map(v=>({i:v.i,rev:v.rev})),tone:source.tarotTone||source.tone||'gentle',topic:Number.isInteger(source.readTopic)?source.readTopic:Number.isInteger(source.topic)?source.topic:-1}
 }
 function tarotKeepsakePage(entry,back=null){
  page(tr('A little cosmic keepsake','宇宙寄来一张卡'),tr('Only the cards and a small takeaway. Your question stays private.','只分享牌面与一句提醒，私人的问题留给自己。'),q=>{
  const wrap=element('section','',q,'tarotKeepsake');const controls=element('div','',wrap,'tarotKeepsakeFormats');
  const canvas=element('canvas','',wrap,'tarotKeepsakeCanvas');canvas.setAttribute('aria-label',tr('Preview of your tarot keepsake','塔罗纪念卡预览'));
  let format='feed';const dims={feed:[1080,1350],xhs:[1080,1440],story:[1080,1920],square:[1080,1080]};
- const focus=entry.cards[entry.cards.length===1?0:entry.cards.length===3?2:3],joke=tarotCommentary(tarotDeck[focus.i][0],focus.rev,-1,entry.tone);
+ const focus=entry.cards[entry.cards.length===1?0:entry.cards.length===3?2:3],joke=tarotCommentary(tarotDeck[focus.i][0],focus.rev,entry.topic,entry.tone);
  function render(useArt=true){
  const [w,h]=dims[format];canvas.width=w;canvas.height=h;const g=canvas.getContext('2d');const paper=g.createLinearGradient(0,0,w,h);paper.addColorStop(0,'#f9eed4');paper.addColorStop(.56,'#e9d9b4');paper.addColorStop(1,'#ccb58b');g.fillStyle=paper;g.fillRect(0,0,w,h);
  g.strokeStyle='#8c744b';g.lineWidth=3;g.strokeRect(35,35,w-70,h-70);g.strokeStyle='#b69b65';g.lineWidth=1.8;g.strokeRect(46,46,w-92,h-92);
