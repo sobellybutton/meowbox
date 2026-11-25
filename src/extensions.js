@@ -3136,24 +3136,56 @@ const wallThreads=[
  [['Anonymous','匿名摸鱼人'],['My parcel is arriving today. This is the only notification I am emotionally invested in.','快递今天到，这是我唯一真正关心的通知。'],[['Window seat','靠窗旅人','Please circle back when it arrives.','到了记得同步进度。']]],
  [['Five more minutes','再摸五分钟'],['I came here to take a short break. Forgot what I was stressed about. Good enough.','本来进来摸五分钟，后来忘了刚才在烦什么。挺好。'],[['Anonymous','匿名','No need to create a reminder.','不用设提醒帮自己想起来。']]]
 ];
+/* Authored town notices release on a fixed calendar, not fake live users.
+   Append new editorial entries here; never reorder published entries. */
+const townNoticeEditions=[
+ [['Salary researcher','薪资研究员'],['My salary and I are in a long-distance relationship. It disappears as soon as we meet.','我和工资谈异地恋，刚见面就分开。'],[['Bubble tea fund','奶茶基金','Mine sent a farewell letter called rent.','我的工资留了一封分手信，叫房租。']]],
+ [['The HR oracle','人事占卜师'],['Your promotion is coming. The tarot card is a loading screen.','升职快了，抽到的塔罗牌叫加载中。'],[['Office Intern','实习生','Is Mercury in retrograde or is payroll?','到底是水逆，还是发薪逆？']]],
+ [['Unpaid therapist','免费心理顾问'],['My friend said just move on. I have moved from the bed to the sofa. Progress.','朋友叫我往前走。我从床走到了沙发，算进步吧。'],[['Mochi','麻薯','Excellent. Next stop, a snack.','很好，下一站，吃点东西。']]],
+ [['Local cat union','本地猫咪工会'],['We demand three naps, two snacks and a strict no-meeting-before-sunbeam policy.','本工会要求三觉两餐，晒太阳前禁止开会。'],[['Chairman Meow','喵董事长','Motion passed unanimously.','全票通过。']]],
+ [['Ghosted again','又被已读不回'],['My dating life has excellent sustainability. I keep recycling the same bad decisions.','我的恋爱很环保，总在循环利用错误决定。'],[['Kopi Uncle','咖啡叔','Next round is on your standards. Raise them.','下一杯算在你的标准上，记得提高点。']]],
+ [['Budget traveller','穷游达人'],['Mentally in Switzerland. Financially waiting for the bus.','精神在瑞士，财力在等巴士。'],[['Window seat','靠窗旅人','At least both have windows.','至少都能靠窗看风景。']]],
+ [['Monday survivor','周一幸存者'],['I have reached the acceptance stage of opening Outlook.','打开工作邮箱的五个悲伤阶段，我已到接受期。'],[['Printer whisperer','打印机调解员','Do not let it know you are afraid.','别让它知道你害怕。']]],
+ [['Auntie’s neighbour','阿姨隔壁那位'],['Ah Ma said money cannot buy happiness. Then she bought durian.','阿嬷说钱买不到快乐，然后去买了榴莲。'],[['Kopi O','咖啡不加糖','An excellent peer-reviewed experiment.','很有说服力的实地研究。']]],
+ [['Palace payroll','宫廷发薪处'],['本宫 has been informed that the emperor’s appreciation is non-monetary.','本宫收到通知，皇上的嘉奖仅限精神层面。'],[['Palace staff','宫里打工的','Your Majesty, please transfer the appreciation via bank.','皇上，麻烦用银行转账的方式赏识。']]],
+ [['Weekend architect','周末建筑师'],['Built an ambitious weekend itinerary. The foundation is still my blanket.','周末行程规划得宏伟，地基还是被窝。'],[['Professional Napper','职业午睡员','Approved building plan.','建筑方案已批准。']]],
+ [['Tea room witness','茶馆目击者'],['Someone said let us circle back. The town railway has offered to sponsor them.','有人说这事回头再谈，小镇环线铁路愿意赞助他。'],[['MRT Uncle','地铁阿叔','Please mind the gap between promise and reality.','请留意承诺与现实之间的空隙。']]],
+ [['Grandma’s regular','外婆厨房常客'],['Today I did not achieve anything impressive. I ate properly, though.','今天没完成什么了不起的事，但好好吃饭了。'],[['Grandma','外婆','That counts, dear.','算的，孩子。']]],
+ [['Calendar hostage','日程表人质'],['My calendar has a free slot. I am keeping it as an endangered species.','日程表出现了空档，我决定列为濒危物种保护。'],[['Office Intern','实习生','Do not tell the meeting organisers.','千万别让会议发起人知道。']]],
+ [['Koi accountant','锦鲤会计'],['Made a wish for financial freedom. The koi asked for a more realistic KPI.','许愿实现财务自由，锦鲤让我定个现实点的指标。'],[['Temple keeper','庙祝','The fish accepts snacks, not projections.','鱼只收鱼粮，不收财务预测。']]],
+ [['The overthinker','脑内小剧场'],['Practised an argument in the shower. Won decisively. Nobody attended.','洗澡时模拟吵架，大获全胜，无人到场。'],[['Anonymous','匿名','Finally a meeting worth having.','终于有个值得开的会。']]],
+ [['Pearl & Pause regular','珍珠摸鱼铺常客'],['Ordered zero sugar because my life is already full of sweet lies.','点了零糖，因为人生已经充满甜蜜的谎言。'],[['Half sugar','半糖选手','Add pearls. At least those are real.','加珍珠吧，至少那个是真的。']]],
+ [['The slow traveller','慢慢走的旅人'],['I missed a train and found a beautiful sunset. Not everything delayed is a disaster.','错过一班车，却遇见了晚霞。不是所有迟到都是坏事。'],[['Window seat','靠窗旅人','Keeping this one in my passport.','这句我要收进护照。']]],
+ [['Spreadsheet witness','表格目击者'],['My workload is like a pivot table. Every time I rearrange it, more work appears.','工作量就像数据透视表，怎么一调整，又多出一堆。'],[['Excel victim','表格受害者','Have you tried closing the laptop?','试过把电脑合上吗？']]],
+ [['Cat landlord','猫咪房东'],['My cat has started charging me emotional rent. It is payable in treats.','猫开始收我情绪房租了，用零食支付。'],[['Mochi','麻薯','Rent is due immediately.','房租即刻到期。']]],
+ [['Tomorrow department','明天事务局'],['I have moved all non-essential worrying to tomorrow. Tomorrow has filed a complaint.','我把不必要的焦虑都移到明天，明天已经投诉了。'],[['Anonymous','匿名','One day at a time, please.','一天一天来嘛。']]]
+];
+const townNoticeStart=Date.UTC(2026,10,25,23,0),townNoticeInterval=12*3600000;
+function townPublishedNotices(now=Date.now()){
+ const count=Math.max(0,Math.min(townNoticeEditions.length,1+Math.floor((now-townNoticeStart)/townNoticeInterval)));
+ return [...townNoticeEditions.slice(0,count).map((thread,i)=>({thread,date:townNoticeStart+i*townNoticeInterval})).reverse(),...wallThreads.map(thread=>({thread,date:0})).reverse()]
+}
 function renderResidentNoticeboard(q){
  const wrap=element('section','',q,'townWall');
  element('h2',tr('Overheard in town','摸鱼留言墙'),wrap,'board-heading');
- element('p',tr('A little gossip, a little nonsense.','有瓜吃，有牢骚发。'),wrap,'wallIntro');
- element('small',tr('Town stories are fictional. Your own notes are private to this device.','小镇故事为虚构内容，自己的留言仅保存在本设备。'),wrap,'wallDisclosure');
+ element('p',tr('New town notices arrive over time. Old favourites stay in the archive.','小镇见闻陆续更新，旧瓜也能慢慢翻。'),wrap,'wallIntro');
+ element('small',tr('Written by the fictional town residents. Real visitor posts are in the shared square.','以下为虚构小镇居民的趣味留言，真人留言请到共享广场。'),wrap,'wallDisclosure');
+ const publicBtn=b(wrap,tr('Read or leave a real visitor post','看看真人留言 / 留句话'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink';
  const list=element('div','',wrap,'townPostList'),nav=element('div','',wrap,'townPostNav');
- let offset=0;const dayOffset=hash(shrineClock().day)%wallThreads.length,perPage=6,pages=Math.ceil(wallThreads.length/perPage);
+ let shown=6,lastCount=-1;
  function render(){
-  list.replaceChildren();nav.replaceChildren();
-  for(let i=0;i<perPage;i++){const m=wallThreads[(dayOffset+offset*perPage+i)%wallThreads.length],post=element('article','',list,'townResidentNote');
-   element('strong',tr(...m[0]),post);element('p',tr(...m[1]),post);
+  const entries=townPublishedNotices();lastCount=entries.length;list.replaceChildren();nav.replaceChildren();
+  for(const {thread:m,date} of entries.slice(0,shown)){const post=element('article','',list,'townResidentNote');
+   element('strong',tr(...m[0]),post);if(date)element('small',new Date(date).toLocaleDateString(zh?'zh-CN':'en-SG',{month:'short',day:'numeric',timeZone:'Asia/Singapore'}),post,'townNoticeDate');element('p',tr(...m[1]),post);
    const replies=element('details','',post,'wallReplies');element('summary',tr('Read replies','看看楼下怎么说'),replies);
    for(const reply of m[2]){const row=element('div','',replies,'wallReply');element('strong',tr(reply[0],reply[1]),row);element('p',tr(reply[2],reply[3]),row)}
   }
-  const prev=b(nav,tr('Previous','上一页'),()=>{offset--;render();wrap.scrollIntoView({block:'start',behavior:'instant'})});prev.disabled=offset===0;
-  element('span',(offset+1)+' / '+pages,nav);const next=b(nav,tr('Next','下一页'),()=>{offset++;render();wrap.scrollIntoView({block:'start',behavior:'instant'})});next.disabled=offset===pages-1
- }render()
+  element('span',Math.min(shown,entries.length)+' / '+entries.length+' '+tr('notices','条见闻'),nav);
+  const more=b(nav,tr('Read older notices','翻翻以前的留言'),()=>{shown+=6;render()});more.disabled=shown>=entries.length;
+ }render();
+ const timer=setInterval(()=>{if(!wrap.isConnected||$('page').style.display!=='block'){clearInterval(timer);return}const n=townPublishedNotices().length;if(n!==lastCount){shown+=Math.max(0,n-lastCount);render()}},60000)
 }
+
 /* A local character lounge, not a simulated online-player population.
    Typed messages stay in session memory and are never sent to a service. */
 const chatLocalHistory=[];
@@ -3366,7 +3398,7 @@ townChatPage=function(){
    communityTabs(q);
    if(communityTab==='public')communityPublic(q,generation);
    else if(communityTab==='stroll')sharedTownPage(q);
-   else{renderResidentNoticeboard(q);b(q,tr('Open my private notes','打开我的私密留言'),()=>todayScoopBefore.call($('dockScoop')))}
+   else{renderResidentNoticeboard(q);if(communityURL()){element('h2',tr('Real visitor posts','旅人真实留言'),q);communityPublic(q,generation)}b(q,tr('Open my private notes','打开我的私密留言'),()=>todayScoopBefore.call($('dockScoop')))}
   })
  }
  // Switching language keeps the selected community tab rather than leaving the page.
@@ -8051,6 +8083,7 @@ const pawReceiptCSS=document.createElement('style');pawReceiptCSS.textContent='.
 /* Optional personal recommendations: reuse real doors and railway,
    not hidden teleports or new floating gameplay overlays. */
 const travellerMoodRoutes=[
+ {id:'salary',district:'home',door:'fish',ask:['My salary is an insult to my talent.','这点工资配不上我的才华。'],reason:['Auntie has a slipper and absolutely no interest in your appraisal.','阿姨有拖鞋，对你的绩效考核毫无兴趣。']},
  {id:'heartbreak',district:'home',door:'fish',ask:['My heart is a little broken.','有点失恋，心里不好受。'],reason:['Leave a private note by the river. You do not have to figure everything out today.','去河边写下不想说出口的话，今天不必想通所有事。']},
  {id:'sad',district:'home',door:'park',ask:['I feel sad for no particular reason.','没什么特别的原因，就是有点难过。'],reason:['Spend a quiet moment with the animals. No need to pretend to be cheerful.','去陪小动物待一会儿，不必假装开心。']},
  {id:'lonely',district:'home',door:'tea',ask:['I could use a little company.','今天有点孤单，想找个伴。'],reason:['The tea room has stories and a warm seat waiting.','茶馆有故事，也有留给你的座位。']},
