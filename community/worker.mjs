@@ -61,8 +61,11 @@ async function handle(req,env){
   if(!value)return reply({error:'invalid text or personal details'},400);
   const ip=req.headers.get('CF-Connecting-IP')||'unknown',rate=await rateHash(env.RATE_SECRET,ip+'|'+Math.floor(now/DAY)),id=crypto.randomUUID();
   // Atomic write condition enforces session and daily network limits.
-  const r=await db.prepare("INSERT INTO messages(id,owner,rate_key,name,text,created,status) SELECT ?,?,?,?,?,?,'pending' WHERE (SELECT COUNT(*) FROM messages WHERE owner=? AND created>?)<5 AND (SELECT COUNT(*) FROM messages WHERE rate_key=? AND created>?)<20 AND (SELECT COUNT(*) FROM messages WHERE owner=? AND created>?)=0").bind(id,owner,rate,value.name,value.text,now,owner,now-DAY,rate,now-DAY,owner,now-15000).run();
-  if(!r.meta.changes)return reply({error:'rate limited'},429);
+  const [limit,r]=await db.batch([
+   db.prepare("INSERT INTO submission_events(id,owner,rate_key,created) SELECT ?,?,?,? WHERE (SELECT COUNT(*) FROM submission_events WHERE owner=? AND created>?)<5 AND (SELECT COUNT(*) FROM submission_events WHERE rate_key=? AND created>?)<20 AND (SELECT COUNT(*) FROM submission_events WHERE owner=? AND created>?)=0").bind(id,owner,rate,now,owner,now-DAY,rate,now-DAY,owner,now-15000),
+   db.prepare("INSERT INTO messages(id,owner,rate_key,name,text,created,status) SELECT ?,?,?,?,?,?,'pending' WHERE EXISTS(SELECT 1 FROM submission_events WHERE id=?)").bind(id,owner,rate,value.name,value.text,now,id)
+  ]);
+  if(!limit.meta.changes||!r.meta.changes)return reply({error:'rate limited'},429);
   return reply({id,status:'pending'},201);
  }
  if(req.method==='DELETE'&&u.pathname==='/mine'){
@@ -87,6 +90,6 @@ async function handle(req,env){
  }
  return reply({error:'not found'},404)
 }
-async function purge(env){await env.DB.prepare('DELETE FROM messages WHERE created<?').bind(Date.now()-TTL).run()}
+async function purge(env){const now=Date.now();await env.DB.batch([env.DB.prepare('DELETE FROM messages WHERE created<?').bind(now-TTL),env.DB.prepare('DELETE FROM submission_events WHERE created<?').bind(now-DAY),env.DB.prepare('DELETE FROM reports WHERE created<?').bind(now-TTL)])}
 export {validatePost,normalized,validId,handle};
 export default {async fetch(req,env){try{return await handle(req,env)}catch{return json({error:'temporarily unavailable'},503)}},async scheduled(event,env,ctx){ctx.waitUntil(purge(env))}};
