@@ -1445,15 +1445,46 @@ syncSigns=function(){
    btn.style.setProperty('pointer-events','auto','important');btn.onclick=()=>directSignClick(id,x,y);signButtons.set(id,btn)
   }
  }
+ signRoot.classList.remove('quiet');
  const top=Math.min(164,H*.25),bottom=H-130;
+ // Reserve real interactive UI and give each sign its own touch target.
+ // Clamping independently made neighbouring doors share the same screen position.
+ const blockers=[],placed=[],items=[];
+ const rootRect=signRoot.getBoundingClientRect();
+ for(const el of document.querySelectorAll('#hud button,#small button,#dock,#gameControls,#movePad,#dialogue button,#lunarBtn')){
+  if(el.hidden||!el.getClientRects().length)continue;
+  const b=el.getBoundingClientRect(),style=getComputedStyle(el);
+  if(style.visibility==='hidden'||style.display==='none'||style.pointerEvents==='none'||!b.width||!b.height)continue;
+  blockers.push({left:b.left-rootRect.left-6,right:b.right-rootRect.left+6,top:b.top-rootRect.top-6,bottom:b.bottom-rootRect.top+6});
+ }
  for(const [id,x,y,en,cn] of maps[scene].st){
-  const btn=signButtons.get(id);const name=tr(en,cn);
+  const btn=signButtons.get(id),name=tr(en,cn);
   if(btn.textContent!==name)btn.textContent=name;
   const [ax,ay]=scene==='fortune'?(signAnchorsProposal[id]||[x,y-95]):[x,y-65];
   const sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
   const inView=sx>=-30&&sx<=W+30&&sy>=top-125&&sy<=bottom+70;
   btn.hidden=!inView;if(!inView)continue;
-  const half=Math.min(W/2-7,(btn.offsetWidth||105)/2+8);
-  btn.style.left=clamp(sx,half,W-half)+'px';btn.style.top=clamp(sy,top,bottom)+'px';
+  items.push({btn,sx,sy,w:Math.max(44,btn.offsetWidth),h:Math.max(44,btn.offsetHeight),distance:Math.hypot(x-p.x,y-p.y)});
+ }
+ // Keep the nearest doorway closest to its artwork; move other labels only
+ // as far as necessary to avoid an overlapping sign or navigation control.
+ items.sort((a,b)=>a.distance-b.distance);
+ for(const item of items){
+  const {btn,sx,sy,w,h}=item,half=w/2+7,halfH=h/2+5;
+  const cx=clamp(sx,half,W-half),cy=clamp(sy,top,bottom);
+  const options=[],seen=new Set();
+  for(const dy of [0,-h-8,h+8,-2*(h+8),2*(h+8),-3*(h+8),3*(h+8)]){
+   for(const dx of [0,-w-8,w+8,-(w+8)/2,(w+8)/2]){
+    const x=clamp(cx+dx,half,W-half),y=clamp(cy+dy,Math.max(halfH,top),Math.min(H-halfH,bottom));
+    const key=Math.round(x)+':'+Math.round(y);if(seen.has(key))continue;seen.add(key);
+    const rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};
+    if([...blockers,...placed].some(b=>rect.left<b.right&&rect.right>b.left&&rect.top<b.bottom&&rect.bottom>b.top))continue;
+    options.push({x,y,rect,score:Math.abs(x-cx)*1.15+Math.abs(y-cy)});
+   }
+  }
+  options.sort((a,b)=>a.score-b.score);
+  const choice=options[0];
+  if(!choice){btn.hidden=true;continue}
+  btn.style.left=choice.x+'px';btn.style.top=choice.y+'px';placed.push(choice.rect);
  }
 };
