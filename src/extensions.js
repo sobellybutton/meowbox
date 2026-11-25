@@ -3685,7 +3685,7 @@ function careStart(action){
  careMessage(...messages[action]);careSync()
 }
 function careTick(){
- const a=state.care,age=t-a.at;
+ const a=state.care,age=t-a.at,dt=clamp(t-(a.tickAt??t),0,.05);a.tickAt=t;
  if(a.phase==='return'){const f=poseEase(clamp((t-a.returnAt)/.7,0,1));a.x=a.returnFromX+(400-a.returnFromX)*f;a.y=a.returnFromY+(535-a.returnFromY)*f;if(f>=1){a.phase='idle';careSync()}return}
  if(a.phase==='feed'||a.phase==='water'){
   const x=a.phase==='feed'?348:452,f=poseEase(clamp(age/.9,0,1));a.x=a.fromX+(x-a.fromX)*f;a.y=a.fromY+(535-a.fromY)*f;
@@ -3693,7 +3693,7 @@ function careTick(){
  }else if(a.phase==='rest'){if(age>4.5)careComplete('rest')}
  else if(a.phase==='play'&&a.assisted){a.x=400+Math.sin(age*2.3)*58;a.y=535-Math.abs(Math.sin(age*2.3))*9}
  else if(a.phase==='play'&&a.drag){
-  const dx=a.drag.x-a.x,dy=clamp(a.drag.y+33,470,565)-a.y;a.x+=clamp(dx*.07,-4,4);a.y+=clamp(dy*.07,-3,3);
+  const dx=clamp(a.drag.x,275,525)-a.x,dy=clamp(a.drag.y+33,470,565)-a.y;const f=1-Math.exp(-4.35*dt);a.x+=clamp(dx*f,-240*dt,240*dt);a.y+=clamp(dy*f,-180*dt,180*dt);
   if(a.stroke>=190&&age>1.1)careComplete('play')
  }
 }
@@ -3790,12 +3790,14 @@ c.addEventListener('pointermove',e=>{
   if(Math.hypot(q.x-a.x,q.y-(a.y-38))>85)return;
   if(delta/elapsed>1.5/(parkCats[state.petKind??0].sensitivity)||delta>42){a.stroke=Math.max(0,a.stroke-8);careMessage('Oi, gentle! I am not a dirty frying pan.','喂！轻点，我又不是待刷的锅！');return}
   a.stroke+=Math.min(12,delta);if(a.stroke>=110&&t-a.at>.65)careComplete('pet')
- }else if(d.kind==='play'){a.stroke+=Math.min(14,delta)}
+ }else if(d.kind==='play'&&q.x>=250&&q.x<=550&&q.y>=410&&q.y<=620&&delta<=90){a.stroke+=Math.min(14,delta)}
 },true);
 function careRelease(e,cancel=false){
  if(!careCapture(e))return;const a=state.care,d=a.drag;if(!d||d.id!==e.pointerId)return;const q=point(e);a.drag=null;
  if(!cancel&&d.kind==='feed'&&Math.hypot(q.x-295,q.y-548)<55){careStart('feed');return}
  if(!cancel&&d.kind==='water'&&Math.hypot(q.x-505,q.y-548)<55){careStart('water');return}
+ if(!cancel&&d.kind==='feed'){careMessage('Drag the food into the left bowl.','把猫粮拖进左边的碗。');return}
+ if(!cancel&&d.kind==='water'){careMessage('Pour into the right bowl.','把水倒进右边的碗。');return}
  if(a.phase==='pet'||a.phase==='play'){a.phase='return';a.returnFromX=a.x;a.returnFromY=a.y;a.returnAt=t;careMessage('A little more next time. No need to rush.','下次再玩一会儿，别急。');careSync()}
 }
 c.addEventListener('pointerup',e=>careRelease(e),true);c.addEventListener('pointercancel',e=>careRelease(e,true),true);
