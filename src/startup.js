@@ -625,6 +625,21 @@ function tarotShareSnapshot(source){
  const cards=source.readCards||source.cards;if(!Array.isArray(cards)||![1,3,5].includes(cards.length)||!cards.every(v=>Number.isInteger(v.i)&&tarotDeck[v.i]&&typeof v.rev==='boolean'))return null;
  return {cards:cards.map(v=>({i:v.i,rev:v.rev})),tone:source.tarotTone||source.tone||'gentle',topic:Number.isInteger(source.readTopic)?source.readTopic:Number.isInteger(source.topic)?source.topic:-1}
 }
+/* Keep headline, artwork, labels and footer in distinct reserved bands. */
+function tarotEditorialLayout(w,h,count){
+ if(![1,3,5].includes(count)||w<=0||h<=0)throw Error('Invalid keepsake geometry');
+ const top=260, bottom=h-150, rows=count===5?[2,3]:[count], rowH=(bottom-top)/rows.length;
+ const slots=[];let i=0;
+ rows.forEach((n,row)=>{
+  const step=n===1?Math.min(w-160,540):Math.min((w-152)/n,292);
+  const cardH=Math.min(rowH-91,(step-36)/.58,count===1?650:count===3?440:340),cardW=cardH*.58;
+  for(let j=0;j<n;j++){const cx=w/2+(j-(n-1)/2)*step,cy=top+row*rowH+(rowH-73)/2;
+   slots.push({i:i++,cx,cy,w:cardW,h:cardH,labelY:cy+cardH/2+31,orientY:cy+cardH/2+61,step})
+  }
+ });
+ return {top,bottom,slots,footer:h-88}
+}
+
 function tarotKeepsakePage(entry,back=null){
  page(tr('A little cosmic keepsake','宇宙寄来一张卡'),tr('Only the cards and a small takeaway. Your question stays private.','只分享牌面与一句提醒，私人的问题留给自己。'),q=>{
  const wrap=element('section','',q,'tarotKeepsake');const controls=element('div','',wrap,'tarotKeepsakeFormats');
@@ -632,29 +647,45 @@ function tarotKeepsakePage(entry,back=null){
  let format='feed';const dims={feed:[1080,1350],xhs:[1080,1440],story:[1080,1920],square:[1080,1080]};
  const focus=entry.cards[entry.cards.length===1?0:entry.cards.length===3?2:3],joke=tarotCommentary(tarotDeck[focus.i][0],focus.rev,entry.topic,entry.tone);
  function render(useArt=true){
- const [w,h]=dims[format];canvas.width=w;canvas.height=h;const g=canvas.getContext('2d');const paper=g.createLinearGradient(0,0,w,h);paper.addColorStop(0,'#f9eed4');paper.addColorStop(.56,'#e9d9b4');paper.addColorStop(1,'#ccb58b');g.fillStyle=paper;g.fillRect(0,0,w,h);
- g.strokeStyle='#8c744b';g.lineWidth=3;g.strokeRect(35,35,w-70,h-70);g.strokeStyle='#b69b65';g.lineWidth=1.8;g.strokeRect(46,46,w-92,h-92);
- for(const [x,y] of [[65,65],[w-65,65],[65,h-65],[w-65,h-65]]){g.save();g.translate(x,y);g.strokeStyle='#8b7955';for(let i=0;i<8;i++){g.rotate(Math.PI/4);g.beginPath();g.ellipse(0,13,4,12,0,0,Math.PI*2);g.stroke()}g.restore()}
- function line(text,y,size=34,color='#394f45'){g.fillStyle=color;g.font='600 '+size+'px Georgia,"Noto Serif SC","Songti SC",serif';g.textAlign='center';g.fillText(text,w/2,y,w-140)}
- function wrapped(value,y,maxWidth,size=33,maxLines=4){g.font=size+'px Georgia,"Noto Serif SC","Songti SC",serif';g.fillStyle='#554b3d';g.textAlign='center';const units=zh?Array.from(value):value.split(/\s+/);let lines=[],current='';for(const unit of units){const next=current+(zh?'':current?' ':'')+unit;if(current&&g.measureText(next).width>maxWidth){lines.push(current);current=unit}else current=next}if(current)lines.push(current);lines=lines.slice(0,maxLines);lines.forEach((v,i)=>g.fillText(v,w/2,y+i*size*1.28,maxWidth));return y+lines.length*size*1.28}
- line('MEOWBOX  ·  '+tr('THE TAROT HOUSE','塔罗小屋'),104,25,'#79654a');
- line(tr('A message to carry with you','带走一句宇宙的提醒'),174,45);
- const count=entry.cards.length,rows=count===5?[2,3]:[count],areaTop=220,areaH=h*.53,cardH=Math.min(count===5?areaH/2-65:areaH-90,count===1?470:310),cardW=cardH*.58;let k=0;
- for(let row=0;row<rows.length;row++){const n=rows[row],step=Math.max(cardW+30,Math.min(275,(w-150)/n)),cy=areaTop+(row+.5)*areaH/rows.length-25;
- for(let j=0;j<n;j++){const v=entry.cards[k++],cx=w/2+(j-(n-1)/2)*step,x=cx-cardW/2,y=cy-cardH/2;g.fillStyle='#394f45';g.fillRect(x-5,y-5,cardW+10,cardH+10);g.strokeStyle='#b99b62';g.strokeRect(x-2,y-2,cardW+4,cardH+4);g.fillStyle='#ead8ad';g.fillRect(x,y,cardW,cardH);
- const im=useArt?readingArtwork(v.i):null;
- if(im?.complete&&im.naturalWidth){g.save();g.translate(cx,cy);if(v.rev)g.rotate(Math.PI);g.drawImage(im,-cardW/2,-cardH/2,cardW,cardH);g.restore()}else{g.save();g.translate(cx,cy);g.strokeStyle='#8b7652';g.lineWidth=2;g.beginPath();g.arc(0,0,cardW*.28,0,Math.PI*2);g.stroke();for(let j=0;j<12;j++){g.rotate(Math.PI/6);g.beginPath();g.moveTo(0,-cardW*.32);g.lineTo(0,-cardW*.41);g.stroke()}g.restore();g.fillStyle='#695b44';g.font='26px Georgia';g.textAlign='center';g.fillText(String(v.i+1).padStart(2,'0'),cx,cy+8)}
- g.fillStyle='#394f45';g.font='600 '+(count===1?32:22)+'px Georgia,"Songti SC",serif';g.textAlign='center';g.fillText(tr(tarotDeck[v.i][0],tarotDeck[v.i][1]),cx,y+cardH+30,step-10);g.font='20px Georgia,"Songti SC",serif';g.fillText(orient(v.rev),cx,y+cardH+55,step-10)
- }}
- const quoteY=areaTop+areaH+45;wrapped(joke?tr(...joke):tr('Keep what helps you. Leave the rest.','有启发的就留下，其他的放一放。'),quoteY,w-180,36,3);
- line(tr('A reflection, not a prediction.','一份启发，并非预言。'),h-108,24,'#79654a');line('MEOWBOX · 摸鱼小镇',h-72,24,'#79654a')
+ const [w,h]=dims[format];canvas.width=w;canvas.height=h;const g=canvas.getContext('2d');
+ const geo=tarotEditorialLayout(w,h,entry.cards.length),count=entry.cards.length;
+ const night=g.createLinearGradient(0,0,w,h);night.addColorStop(0,'#253d3d');night.addColorStop(.55,'#354f48');night.addColorStop(1,'#243632');g.fillStyle=night;g.fillRect(0,0,w,h);
+ const paper=g.createLinearGradient(0,0,w,h);paper.addColorStop(0,'#f8efd9');paper.addColorStop(.55,'#efe0bc');paper.addColorStop(1,'#dcc599');g.fillStyle=paper;g.fillRect(48,48,w-96,h-96);
+ g.strokeStyle='#c4a46c';g.lineWidth=2;g.strokeRect(31,31,w-62,h-62);g.strokeStyle='#9e895d';g.strokeRect(60,60,w-120,h-120);
+ // Quiet botanical corner ornaments, independent of card content.
+ for(const [x,y,flip] of [[78,78,1],[w-78,78,-1],[78,h-78,1],[w-78,h-78,-1]]){g.save();g.translate(x,y);g.scale(flip, y>h/2?-1:1);g.strokeStyle='#7b8b6f';g.fillStyle='#a1aa83';g.lineWidth=2;
+ for(let k=0;k<5;k++){const xx=8+k*13,yy=8+k*11;g.beginPath();g.moveTo(0,0);g.quadraticCurveTo(xx*.6,yy*.2,xx,yy);g.stroke();g.beginPath();g.ellipse(xx,yy,9,4,-.48,0,Math.PI*2);g.fill()}g.restore()}
+ function font(size,weight=500){g.font=weight+' '+size+'px Georgia,"Noto Serif SC","Songti SC",serif';g.textAlign='center'}
+ function line(value,y,size=30,color='#374e44',weight=500){font(size,weight);g.fillStyle=color;g.fillText(value,w/2,y,w-160)}
+ function lines(value,maxWidth,size,maxLines=3){font(size,600);const units=zh?Array.from(value):String(value).split(/\s+/);const out=[];let cur='';for(const unit of units){const v=cur+(zh?'':cur?' ':'')+unit;if(cur&&g.measureText(v).width>maxWidth){out.push(cur);cur=unit}else cur=v}if(cur)out.push(cur);if(out.length>maxLines){out.length=maxLines;out[maxLines-1]=out[maxLines-1].replace(/[。.!?…]+$/,'')+'…'}return out}
+ const title=joke?tr(...joke):tr('Take what helps you. Leave the rest.','有启发的就留下，其他的放一放。');
+ line(tr('MEOWBOX  /  THE TAROT HOUSE','摸鱼小镇  /  塔罗小屋'),100,24,'#786847',600);
+ const headline=lines(title,w-188,43,3),y0=153-(headline.length-1)*4;headline.forEach((v,i)=>line(v,y0+i*50,43,'#344b42',600));
+ g.strokeStyle='#b39b69';g.lineWidth=1.3;g.beginPath();g.moveTo(130,242);g.lineTo(w/2-20,242);g.moveTo(w/2+20,242);g.lineTo(w-130,242);g.stroke();
+ g.save();g.translate(w/2,242);g.rotate(Math.PI/4);g.fillStyle='#a98d57';g.fillRect(-6,-6,12,12);g.restore();
+ for(const slot of geo.slots){
+  const v=entry.cards[slot.i],cx=slot.cx,cy=slot.cy,cw=slot.w,ch=slot.h,x=cx-cw/2,y=cy-ch/2;
+  g.save();g.shadowColor='#30291845';g.shadowBlur=16;g.shadowOffsetY=6;g.fillStyle='#465e50';g.fillRect(x-5,y-5,cw+10,ch+10);g.restore();g.strokeStyle='#b69d68';g.strokeRect(x-3,y-3,cw+6,ch+6);g.fillStyle='#eadbb5';g.fillRect(x,y,cw,ch);
+  const im=useArt?readingArtwork(v.i):null;
+  if(im?.complete&&im.naturalWidth&&im.naturalHeight){
+   // Preserve aspect ratio instead of distorting the illustration.
+   const scale=Math.min(cw/im.naturalWidth,ch/im.naturalHeight),iw=im.naturalWidth*scale,ih=im.naturalHeight*scale;g.save();g.translate(cx,cy);if(v.rev)g.rotate(Math.PI);g.drawImage(im,-iw/2,-ih/2,iw,ih);g.restore()
+  }else{
+   g.save();g.translate(cx,cy);g.strokeStyle='#8e7b53';g.lineWidth=1.8;g.beginPath();g.arc(0,0,cw*.25,0,Math.PI*2);g.stroke();for(let j=0;j<12;j++){g.rotate(Math.PI/6);g.beginPath();g.moveTo(0,-cw*.30);g.lineTo(0,-cw*.39);g.stroke()}g.restore();font(Math.max(18,cw*.12),600);g.fillStyle='#6a5b41';g.fillText(String(v.i+1).padStart(2,'0'),cx,cy+7)
+  }
+  font(count===1?31:24,600);g.fillStyle='#374e44';g.fillText(tr(tarotDeck[v.i][0],tarotDeck[v.i][1]),cx,slot.labelY,slot.step-12);
+  font(20,500);g.fillStyle='#77664d';g.fillText(orient(v.rev),cx,slot.orientY,slot.step-12);
  }
- for(const [id,label] of [['feed','4:5'],['xhs','3:4'],['story','9:16'],['square','1:1']])b(controls,label,()=>{format=id;render()});
+ const footerY=geo.footer;g.strokeStyle='#ad9665';g.beginPath();g.moveTo(130,footerY-48);g.lineTo(w-130,footerY-48);g.stroke();
+ line(tr('A reflection, not a prediction.','一份启发，并非预言。'),footerY-15,23,'#79654a');
+ line('MEOWBOX · '+tr('A SMALL TOWN FOR BIG FEELINGS','给心情留个小镇'),footerY+17,22,'#526759',600)
+ }
+ const formatButtons=[];for(const [id,label] of [['feed','4:5'],['xhs','3:4'],['story','9:16'],['square','1:1']]){const btn=b(controls,label,()=>{format=id;for(const [key,button] of formatButtons)button.setAttribute('aria-pressed',String(key===format));render()});btn.setAttribute('aria-pressed',String(id===format));formatButtons.push([id,btn])}
  render();const images=entry.cards.map(v=>readingArtwork(v.i)).filter(Boolean);for(const im of images)if(!im.complete)im.addEventListener('load',()=>{if(canvas.isConnected)render()},{once:true});
  b(wrap,tr('Save or share image','保存或分享图片'),async()=>{let blob;try{blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'))}catch(e){render(false);blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'))}if(!blob){toast(tr('Could not export image','暂时无法导出图片'));return}const file=new File([blob],'meowbox-tarot.png',{type:'image/png'});if(navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file]});return}catch(e){if(e.name==='AbortError')return}}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)});
  const returnTo=back||(()=>{$('page').style.display='none'});b(wrap,tr('Back','返回'),returnTo);const close=q.querySelector('.row button:first-child');if(close)close.onclick=returnTo;const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();tarotKeepsakePage(entry,back)}
  })
 }
-const tarotKeepsakeCSS=document.createElement('style');tarotKeepsakeCSS.textContent='.tarotKeepsake{display:flex;flex-direction:column;gap:10px;max-width:520px;margin:auto}.tarotKeepsakeCanvas{width:100%;height:auto;display:block;border:1px solid #9b8155;box-shadow:0 5px 18px #32271933}.tarotKeepsakeFormats{display:flex;gap:6px;justify-content:center}.tarotKeepsakeFormats button,.tarotKeepsake>button{min-height:44px}';document.head.append(tarotKeepsakeCSS);
+const tarotKeepsakeCSS=document.createElement('style');tarotKeepsakeCSS.textContent='.tarotKeepsake{display:flex;flex-direction:column;gap:10px;max-width:520px;margin:auto}.tarotKeepsakeCanvas{width:100%;height:auto;display:block;border:1px solid #9b8155;box-shadow:0 5px 18px #32271933}.tarotKeepsakeFormats{display:flex;gap:6px;justify-content:center}.tarotKeepsakeFormats button,.tarotKeepsake>button{min-height:44px}.tarotKeepsakeFormats button[aria-pressed=true]{background:#415b4f!important;color:#fff3d8!important;border-color:#344c42!important}.tarotKeepsakeFormats button{flex:1;min-width:44px}.tarotKeepsakeCanvas{max-height:68dvh;object-fit:contain;background:#253d3d}';document.head.append(tarotKeepsakeCSS);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
