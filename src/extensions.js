@@ -557,11 +557,11 @@ async function wonderSceneShare(){let v=wonderSceneResult;if(!v)return;let msg=t
 const wonderCanvasPrior=drawActivity;drawActivity=function(){if(activity!=='wonderScene')return wonderCanvasPrior();
  let mode=wonderSceneMode,phase=wonderScenePhase;ctx.save();let bg=pics[mode==='motive'?'tea':'readingInterior'];paintLivingBackdrop(bg);let veil=ctx.createLinearGradient(0,225,0,680);veil.addColorStop(0,'#293e3970');veil.addColorStop(.55,'#3b34292a');veil.addColorStop(1,'#49372f8c');ctx.fillStyle=veil;shadeLivingBackdrop(veil);
  for(let i=0;i<12;i++){let x=187+(i*73)%421,y=235+(i*43)%175;ctx.globalAlpha=.25+.2*Math.sin(t+i);ellipse(x+Math.sin(t*.8+i)*4,y,1.8,1.8,'#ffe5a5')}ctx.globalAlpha=1;glow(218,278,56,1);glow(582,275,52,2);
- if(mode==='soul')cat(400,372+Math.sin(t*2)*1.5,0,false,2);else human(400,383,mode==='type'?2:0,false,1,1.55);
+ if(phase!=='result'){if(mode==='soul')cat(400,354+Math.sin(t*2)*1.5,0,false,1.25);else human(400,365,mode==='type'?2:0,false,1,1.25);}
  let wood=ctx.createLinearGradient(0,395,0,670);wood.addColorStop(0,'#ae8761');wood.addColorStop(1,'#72513b');ctx.beginPath();ctx.moveTo(211,399);ctx.lineTo(589,399);ctx.lineTo(780,1800);ctx.lineTo(20,1800);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle='#c4a071';ctx.stroke();for(let i=0;i<12;i++)line(188,416+i*20,612,418+i*20,'#e5bc8922',1);
  txt(tr(...wonderSceneNames[mode]),400,251,21,'#fff1d5');
  if(phase==='welcome'){wonderSceneText(tr('Take your time. Answer as you are, not as you wish to be.','慢慢来，按真实的自己作答就好。'),400,420,385,19);wonderSceneObject(400,516,0,mode,false);label(tr('Begin our conversation','开始我们的对话'),400,606,()=>{wonderScenePhase='question';wonderSceneAt=t;sound(480)});txt(tr('For fun, at your own pace.','趣味探索，慢慢来。'),400,644,13,'#f8e4c6')}
- else if(phase==='result'){let v=wonderSceneResult,f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.65));ctx.save();ctx.translate(400,493);ctx.scale(Math.max(.02,f),1);round(-147,-103,294,207,4,'#f5e3ba','#b88b5e');round(-139,-95,278,191,2,null,'#b88b5e');if(mode==='soul')cat(0,-15,0,false,1.35);else{ellipse(0,-55,28,28,v.color);ctx.strokeStyle='#b28c5b';ctx.beginPath();ctx.arc(0,-55,35,0,TAU);ctx.stroke()}wonderSceneText(tr(...v.name),0,-1,260,23,'#654b39',2);wonderSceneText(tr(...v.desc),0,29,262,16,'#654b39',4);ctx.restore();label(tr('Share keepsake','分享纪念卡'),330,623,wonderSceneShare);label(tr('Try again','再测一次'),486,623,()=>wonderSceneOpen(mode));txt(tr('Back to lab · for fun only','返回研究所 · 仅供娱乐'),400,655,13,'#fff1d5')}
+ else if(phase==='result'){let v=wonderSceneResult,f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.65));ctx.save();ctx.translate(400,493);ctx.scale(Math.max(.02,f),1);round(-147,-103,294,207,4,'#f5e3ba','#b88b5e');round(-139,-95,278,191,2,null,'#b88b5e');if(mode==='soul')cat(0,-19,0,false,.86);else{ellipse(0,-55,28,28,v.color);ctx.strokeStyle='#b28c5b';ctx.beginPath();ctx.arc(0,-55,35,0,TAU);ctx.stroke()}wonderSceneText(tr(...v.name),0,-1,260,23,'#654b39',2);wonderSceneText(tr(...v.desc),0,29,262,16,'#654b39',4);ctx.restore();label(tr('Share keepsake','分享纪念卡'),330,623,wonderSceneShare);label(tr('Try again','再测一次'),486,623,()=>wonderSceneOpen(mode));txt(tr('Back to lab · for fun only','返回研究所 · 仅供娱乐'),400,655,13,'#fff1d5')}
  else{let d=wonderSceneData();if(d){if(W<=540&&W<H){wonderSceneObject(400,433,Math.max(0,wonderScenePick),mode,phase==='turn');ctx.restore();return}let n=d.opts.length;let f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.3));ctx.globalAlpha=phase==='turn'?1:Math.max(.15,f);wonderSceneText(tr(...d.prompt),400,402,395,21,'#fff1d5',3);for(let j=0;j<n;j++){let x=n===4?250+j*100:n===3?278+j*122:327+j*146,y=528;wonderSceneObject(x,y,j,mode,phase==='turn'&&wonderScenePick===j);wonderSceneText(tr(d.opts[j][0],d.opts[j][1]),x,579,n===4?93:117,16,'#fff5df',4);if(phase==='question')target(x-48,470,96,160,()=>wonderSceneChoose(j))}ctx.globalAlpha=1;txt((wonderSceneAnswers.length+1)+' / '+d.total,400,654,14,'#fff1d5')}}
  ctx.restore();
 };
@@ -1882,6 +1882,7 @@ syncSigns=function(){
   if(style.visibility==='hidden'||style.display==='none'||style.pointerEvents==='none'||!b.width||!b.height)continue;
   blockers.push({left:b.left-rootRect.left-6,right:b.right-rootRect.left+6,top:b.top-rootRect.top-6,bottom:b.bottom-rootRect.top+6});
  }
+ for(const actor of [p,...npc]){if(actor&&Number.isFinite(actor.x)&&Number.isFinite(actor.y))blockers.push(characterScreenBounds(actor,actor===p));}
  for(const [id,x,y,en,cn] of maps[scene].st){
   const btn=signButtons.get(id),name=tr(en,cn);
   if(btn.textContent!==name)btn.textContent=name;
@@ -4559,7 +4560,7 @@ drawActivity=function(){
  round(235,396,330,218,8,'#68786a','#4a5b50');
  for(let j=0;j<30;j++){const y=399+j*7;line(239,y,561,y,'#f9e6b30b',1)}
  if(g.opponent==='auntie'){const im=productionVisual(g.result?.who===2?'ahMaScold':'ahMaIdle')||productionVisual('ahMaIdle');if(im)ctx.drawImage(im,358,270,84,103);else riverAuntie(400,373,.70)}
- else{cat(400,371,0,false,1.7)}
+ else{cat(400,361,0,false,1.25)}
  ellipse(400,374,45,5,'#3f382d44');
  threeBoard(286,388,228,g.board,g);
  threeToken(254,566,1,.52);threeToken(546,566,2,.52);
@@ -5057,3 +5058,17 @@ $('profileHud').onclick=()=>{
 };
 const entranceControlsStyle=document.createElement('style');entranceControlsStyle.textContent='#game[data-entrance-controls-blocked="true"] #hud,#game[data-entrance-controls-blocked="true"] #dock{visibility:hidden!important;pointer-events:none!important}';document.head.append(entranceControlsStyle);
 syncEntranceControls();
+
+
+function characterScreenBounds(actor,player=false){
+ const scale=Math.max(.08,cam.scale),x=cam.ox+actor.x*scale,y=cam.oy+actor.y*scale;
+ const isCat=!player&&actor.kind===2;
+ const h=isCat?Math.max(26,45*scale):Math.max(player?68:56,Math.min(120,94*scale*1.75));
+ const w=isCat?Math.max(24,35*scale):Math.max(38,h*.56);
+ return {left:x-w/2-6,right:x+w/2+6,top:y-h-6,bottom:y+8}
+}
+const housePlaqueNames={temple:['Fortune Temple','解忧寺'],tea:['Gossip Tea House','吃瓜茶馆'],office:['Office Escape','冤种办公室'],park:['Daydream Park','白日梦公园'],kitchen:['Grandma’s Kitchen','外婆的小厨房'],arcade:['Retro Arcade','童年游戏厅'],mystery:['Souvenir Shop','手信小铺']};
+for(const world of Object.values(maps))for(const station of world.st){
+ const name=housePlaqueNames[station[0]];if(name){station[3]=name[0];station[4]=name[1]}
+}
+const houseSignStyle=document.createElement('style');houseSignStyle.textContent='#game>#worldSigns>.worldSign .doorPlaque{padding:5px 8px;background:linear-gradient(160deg,#786447f5,#414d40f5);border:1px solid #d0b580;border-radius:3px;box-shadow:0 2px 3px #2c231d44,inset 0 0 0 2px #f7dfae15;color:#fff0d0}';document.head.append(houseSignStyle);
