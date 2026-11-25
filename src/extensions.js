@@ -2111,8 +2111,8 @@ function riverRing(x,y,age,max=55){
 }
 function riverBegin(mode){
  if(room!=='fish')return;
- start(mode);state.riverPhase='ready';state.riverAt=t;state.riverNote='';state.riverMode=mode;
- hint(...(mode==='riverBottle'?['Write a private worry, or release a blank note.','写下烦恼，或直接放走一张空白纸。']:['Choose what to shout. No microphone needed.','想喊什么就喊什么，不需要麦克风。']));
+ start(mode);state.riverPhase='ready';state.riverAt=t;state.riverNote='';state.riverMode=mode;state.riverStrength=60;
+ hint(...(mode==='riverBottle'?['Write a private note, set throw strength, then let it go.','写下私人纸条，调整力度，再把烦恼放走。']:['Choose what to shout. No microphone needed.','想喊什么就喊什么，不需要麦克风。']));
  refreshControls()
 }
 function riverPerform(){
@@ -2136,18 +2136,20 @@ refreshControls=function(){
   inp.setAttribute('aria-label',inp.placeholder);inp.autocomplete='off';inp.value=state.riverNote||'';
   inp.oninput=()=>{if(riverIsActive())state.riverNote=inp.value};
   inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();riverPerform()}};
+  if(activity==='riverBottle'){const power=element('input','',el);power.id='riverThrowPower';power.type='range';power.min=15;power.max=100;power.value=state.riverStrength||60;power.setAttribute('aria-label',tr('Throw strength','投掷力度'));power.oninput=()=>{state.riverStrength=Number(power.value)}}
   b(el,activity==='riverBottle'?tr('Seal & release','封瓶放走'):tr('Shout!','大声喊！'),riverPerform)
  }else if(state.riverPhase==='done'){
   b(el,tr('Again','再来一次'),riverReset);
   b(el,tr('Back to pier','返回码头'),()=>{$('back').click()})
  }else{const status=element('span',activity==='riverBottle'?tr('Letting it go…','烦恼漂走了……'):tr('Let it out…','把烦恼喊出去……'),el);status.setAttribute('role','status')}
 };
-const riverControlStyle=document.createElement('style');riverControlStyle.textContent='#gameControls.riverControls{width:min(92vw,420px);max-width:92vw;display:flex;flex-wrap:wrap;justify-content:center;border-radius:8px;background:#eee2c9f5;padding:8px;gap:6px}#gameControls.riverControls input{min-width:0;flex:1 1 130px;width:100%;border:1px solid #b69a72;border-radius:5px;background:#fff7e5;padding:10px;font:14px system-ui;min-height:44px}#gameControls.riverControls button{font-size:13px;white-space:normal;min-height:44px}#gameControls.riverControls span{font-size:13px;padding:9px}';document.head.append(riverControlStyle);
+const riverControlStyle=document.createElement('style');riverControlStyle.textContent='#gameControls.riverControls{width:min(92vw,420px);max-width:92vw;display:flex;flex-wrap:wrap;justify-content:center;border-radius:8px;background:#eee2c9f5;padding:8px;gap:6px}#gameControls.riverControls input{min-width:0;flex:1 1 130px;width:100%;border:1px solid #b69a72;border-radius:5px;background:#fff7e5;padding:10px;font:14px system-ui;min-height:44px}#gameControls.riverControls input[type=range]{flex:0 1 90px;width:90px;min-height:44px;accent-color:#697c65;padding:0;background:transparent}#gameControls.riverControls button{font-size:13px;white-space:normal;min-height:44px}#gameControls.riverControls span{font-size:13px;padding:9px}';document.head.append(riverControlStyle);
 const riverActivityBefore=drawActivity;
 drawActivity=function(){
  if(!riverIsActive())return riverActivityBefore();
  riverSceneBackdrop();
- const bottleMode=activity==='riverBottle',phase=state.riverPhase||'ready',age=Math.max(0,t-(state.riverAt||t)),walking=phase==='walk'&&age<1.1;
+ const bottleMode=activity==='riverBottle',phase=state.riverPhase||'ready',age=Math.max(0,t-(state.riverAt??t)),walking=phase==='walk'&&age<1.1;
+ const power=clamp(state.riverStrength||60,15,100),landX=380+power*1.65,landY=465-power*.48;
  let walk=phase==='ready'?0:Math.min(1,age/1.1),px=265+walk*65,py=610-walk*70;
  if(phase==='ready'||walking)backHuman(px,py,avatar??0,walking,'up',1.35);
  else drawRitualPose(px,py,1.4,{reach:{x:px+26,y:py-75},bow:phase==='walk'?.12:0});
@@ -2156,15 +2158,15 @@ drawActivity=function(){
   if(phase==='ready'){round(275,465,68,13,3,'#ad8860','#74583e');round(290,448,23,12,2,'#f0e1ba');riverBottleArt(330,445,.05,.75,false)}
   else if(age<.55){riverBottleArt(330,445,0,.85,age>.3);round(319,422+age*45,15,9,2,'#f1dfad')}
   else if(age<1.1)riverBottleArt(px+15,py-70,.1,.75);
-  else if(age<1.85){const f=(age-1.1)/.75;riverBottleArt(px+24+150*f,py-70-48*Math.sin(Math.PI*f)-48*f,Math.PI*f,.8)}
-  else {const drift=Math.min(1,(age-1.85)/2.5);if(drift<1){ctx.save();ctx.globalAlpha=1-drift;riverBottleArt(504+75*drift,422-18*drift+Math.sin(t*4)*2,1.2,.72);ctx.restore()}riverRing(504,422,age-1.85,48)}
+  else if(age<1.85){const f=(age-1.1)/.75;riverBottleArt(px+24+(landX-px-24)*f,py-70+(landY-py+70)*f-(28+power*.62)*Math.sin(Math.PI*f),Math.PI*f,.8)}
+  else {const drift=Math.min(1,(age-1.85)/2.5);if(drift<1){ctx.save();ctx.globalAlpha=1-drift;riverBottleArt(landX+75*drift,landY-18*drift+Math.sin(t*4)*2,1.2,.72);ctx.restore()}riverRing(landX,landY,age-1.85,48)}
  }else if(age>1.1&&phase!=='ready'){
   for(let i=0;i<3;i++)riverRing(375,430,age-1.1-i*.25,95);
-  if(age<2.85)wonderSceneText(tr('AAAAAH!','啊啊啊！'),450,392-(age-1.1)*12,240,24,'#fff4d5',1)
+  if(age<2.85)wonderSceneText(state.riverNote||tr('AAAAAH!','啊啊啊！'),450,392-(age-1.1)*12,240,19,'#fff4d5',3)
  }
  if(phase==='walk'&&age>(bottleMode?4.35:3.1)){
   state.riverNote='';state.riverPhase='done';
-  if(bottleMode){addItem('Let it drift keepsake','烦恼随风纪念章');hint('Auntie: That worry is officially out of office.','阿姨：这个烦恼正式下班了。')}
+  if(bottleMode){addItem('Let it drift keepsake','烦恼随风纪念章');hint(...(power<35?['Auntie: Small throw, big relief.','阿姨：扔得不远，烦恼照样下班。']:power>85?['Auntie: Wah, that one must have been a long meeting.','阿姨：哇，这一定开了很久的会。']:['Auntie: That worry is officially out of office.','阿姨：这个烦恼正式下班了。']))}
   else{addItem('River echo keepsake','河边回声纪念章');hint('Auntie: Good. Even the fish heard you.','阿姨：不错，连鱼都听见了。')}
   refreshControls();sound(530)
  }
