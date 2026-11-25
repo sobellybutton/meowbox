@@ -5038,3 +5038,22 @@ boxAward=function(){
  ritualBoxRewardBefore();
  if(before==='opening'&&state.boxStage==='result'){lifeEarn('arcade:box',{happiness:1},true);lifeHUDRefresh()}
 };
+
+/* The entrance sequence owns the screen until the traveller is admitted.
+   Never allow background HUD/dock actions to open a page over the ticket. */
+function syncEntranceControls(){
+ const blocked=avatar===null||!proposal.hidden||!$('arrival').hidden;
+ for(const id of ['hud','dock']){const el=$(id);if(el)el.inert=blocked}
+ $('game').dataset.entranceControlsBlocked=String(blocked);
+}
+const entranceControlsBefore=updateHUD;
+updateHUD=function(){entranceControlsBefore();syncEntranceControls()};
+const entranceControlsObserver=new MutationObserver(syncEntranceControls);
+entranceControlsObserver.observe(proposal,{attributes:true,attributeFilter:['hidden']});
+entranceControlsObserver.observe($('arrival'),{attributes:true,attributeFilter:['hidden']});
+$('profileHud').onclick=()=>{
+ if(avatar===null||!proposal.hidden||!$('arrival').hidden||transitioning||talkOpen)return;
+ lifeProfile()
+};
+const entranceControlsStyle=document.createElement('style');entranceControlsStyle.textContent='#game[data-entrance-controls-blocked="true"] #hud,#game[data-entrance-controls-blocked="true"] #dock{visibility:hidden!important;pointer-events:none!important}';document.head.append(entranceControlsStyle);
+syncEntranceControls();
