@@ -786,7 +786,8 @@ const ambientReactBefore=react;react=function(en,cn){ambientReactBefore(en,cn);i
 
 /* A playful fictional paper-villain ritual, with no real-person targets. */
 let stressTarget=0,stressSwingAt=-10,stressSide=1,stressCombo=0,stressLast=-10,stressPieces=[],stressTool=0;
-const stressTargets=[['Unnecessary meetings','无效会议'],['Monday blues','周一综合征'],['Endless emails','回不完的邮件'],['Overthinking','想太多']];
+const stressGroups=[{"label":["Work & bosses","老板与打工"],"targets":[["Boss's endless demands","老板又加活"],["Unpaid overtime","无偿加班"],["Pointless meetings","无效会议"],["Office politics","办公室内耗"],["Weekend work texts","周末工作消息"],["Empty promises","老板画大饼"],["Credit stealing","抢功劳"]],"replies":[["Ah Ma: Your boss can keep the big picture. You keep your weekend.","阿嬷：老板负责画饼，你负责下班。"],["Ah Ma: Tell that damn deadline to queue up with the rest.","阿嬷：去他的截止日期，排队去！"],["Ah Ma: Overtime without pay? Even my slipper charges by the hour.","阿嬷：加班不给钱？我的拖鞋都按小时收费。"],["Ah Ma: If the boss wants another meeting, give him a chair outside.","阿嬷：还要开会？搬张椅子去门外慢慢开。"]]},{"label":["Money & bills","工资与物价"],"targets":[["Tiny salary","微薄工资"],["Rising prices","物价上涨"],["Rent and bills","房租账单"],["No pay raise","迟迟不加薪"],["Expensive groceries","菜价太贵"],["Surprise expenses","突发开销"]],"replies":[["Ah Ma: Your salary walks. The cost of living takes a bullet train.","阿嬷：工资靠走路，物价坐高铁。"],["Ah Ma: Even my slipper has gone up in price. Where is your raise?","阿嬷：连拖鞋都涨价了，你的工资呢？"],["Ah Ma: Hit the bills, not your wallet. Poor thing has suffered enough.","阿嬷：打账单，别打钱包，它已经够可怜了。"],["Ah Ma: Money may not buy happiness, but bloody hell, groceries need it.","阿嬷：钱买不到快乐，可买菜哪样不要钱！"]]},{"label":["Government & bureaucracy","政府与繁文缛节"],"targets":[["Red tape","繁文缛节"],["Endless forms","填不完的表"],["Unclear policies","看不懂的政策"],["Costly fees","各种收费"],["Slow approvals","慢吞吞的审批"],["Empty official talk","官话套话"]],"replies":[["Ah Ma: One stamp needs three approvals. My slipper only needs one swing.","阿嬷：盖个章要三层审批，我的拖鞋只需一步。"],["Ah Ma: They formed a committee to investigate why there are too many committees.","阿嬷：委员会开会研究委员会太多的问题。"],["Ah Ma: Please submit a form to request another form. Aiyo!","阿嬷：请先填一张申请表，申请另一张表。哎哟喂！"],["Ah Ma: If paperwork could fix everything, we'd all be living in paradise.","阿嬷：要是填表能解决一切，大家早就住进天堂了。"]]},{"label":["Love & people","感情与人际"],"targets":[["Mixed signals","忽冷忽热"],["Ghosting","突然失联"],["Broken promises","说话不算数"],["Toxic drama","消耗型关系"],["Family pressure","亲戚催婚"],["One-sided effort","单方面付出"],["Old grudges","陈年怨气"]],"replies":[["Ah Ma: If they only reply when they need something, they're customer service, not romance.","阿嬷：有事才找你，那叫客服，不叫爱情。"],["Ah Ma: Stop rereading that message. Even my eyes are tired.","阿嬷：别反复看那条消息了，我的老花眼都累了。"],["Ah Ma: Let the paper go. Don't chase someone who won't meet you halfway.","阿嬷：纸人放下吧，不愿向你走来的人，别追了。"],["Ah Ma: Relatives ask when you're getting married? Ask when they're paying for the banquet.","阿嬷：亲戚催婚？你问他们什么时候包酒席钱。"]]},{"label":["Life & bad luck","生活与倒霉事"],"targets":[["Monday blues","周一综合征"],["Endless emails","回不完的邮件"],["Overthinking","想太多"],["Bad luck","倒霉运气"],["Traffic jams","堵车塞车"],["Hot weather","热到冒烟"],["Insomnia","睡不着觉"],["Everything going wrong","诸事不顺"]],"replies":[["Ah Ma: Damn it, even the weather has an attitude today.","阿嬷：真是见鬼了，连天气都有脾气。"],["Ah Ma: Today was a rubbish day. Tomorrow can apply for a different job.","阿嬷：今天太烂了，明天请换个工作岗位。"],["Ah Ma: Your brain is holding a meeting at 3am. Who approved that?","阿嬷：脑子凌晨三点开会，谁批准的？"],["Ah Ma: Enough, lah. Go have something nice to eat.","阿嬷：好啦，打完去吃点好吃的。"]]}];
+const stressTargets=stressGroups.flatMap(g=>g.targets);
 const stressStartBefore=start;start=function(a){stressStartBefore(a);if(a==='hit'){stressSwingAt=-10;stressLast=-10;stressCombo=0;stressPieces=[];hint('Tap the paper figure or press WHACK! No actual colleagues were harmed.','点击纸人，或按「打走烦恼」。同事们毫发无伤。')}};
 const stressSmackBefore=smack;smack=function(){if(activity!=='hit')return;stressCombo=t-stressLast<.65?stressCombo+1:1;stressLast=t;stressSwingAt=t;stressSide*=-1;stressSmackBefore();for(let i=0;i<7;i++)stressPieces.push({at:t,x:400+(Math.random()-.5)*55,y:465+(Math.random()-.5)*65,vx:(Math.random()-.5)*140,vy:-30-Math.random()*80,angle:Math.random()*TAU});if(stressPieces.length>70)stressPieces.splice(0,stressPieces.length-70);if(ambientBus&&!muted)ambientTone(100,.035,.13,'triangle');if(stressCombo===5)react('Even the paper wants annual leave.','纸人都想请年假了。');if(state.count===25)addItem('Certified worry shredder','认证烦恼粉碎机')};
 function stressSlipper(x,y,angle){ctx.save();ctx.translate(x,y);ctx.rotate(angle);let g=ctx.createLinearGradient(-20,0,22,0);g.addColorStop(0,stressTool?'#8b6541':'#a65d58');g.addColorStop(.5,stressTool?'#d3a976':'#d7a18a');g.addColorStop(1,stressTool?'#916b47':'#98544e');ctx.beginPath();ctx.moveTo(-16,41);ctx.bezierCurveTo(-28,10,-27,-44,-9,-50);ctx.bezierCurveTo(15,-56,26,-29,22,4);ctx.quadraticCurveTo(18,47,-16,41);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#684b39';ctx.lineWidth=2;ctx.stroke();ctx.strokeStyle='#f0d0a4';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-20,-16);ctx.quadraticCurveTo(0,-4,20,-16);ctx.stroke();ctx.restore()}
@@ -2528,7 +2529,7 @@ const auntieSmackBefore=smack;
 smack=function(){
  if(activity!=='hit'||room!=='fish')return auntieSmackBefore();
  auntieSmackBefore();
- if(state.count!==10&&state.count!==25&&state.count!==50&&stressCombo!==5)hint(...townReaction('auntieHit',auntieHitReplies))
+ if(state.count!==10&&state.count!==25&&state.count!==50&&stressCombo!==5)hint(...townReaction('auntieHit:'+stressTarget,stressReplyPool(stressTarget)))
 };
 
 const riverEchoReplies=[
@@ -2851,7 +2852,7 @@ refreshControls=function(){
  if(activity!=='hit')return;
  el.replaceChildren();el.hidden=false;
  const hitButton=b(el,tr('Whack!','打走烦恼！'),()=>smack());hitButton.className='paperWhack';
- const change=b(el,tr('Change worry','换个烦恼'),()=>{stressTarget=(stressTarget+1)%stressTargets.length;stressCombo=0;sound(430)});
+ const change=b(el,tr('Choose a worry','选个烦恼'),openStressChoices);
  const slipper=b(el,tr('Change slipper','换只拖鞋'),()=>{stressTool=1-stressTool;sound(430)});
 };
 const paperControlStyle=document.createElement('style');paperControlStyle.textContent='#gameControls.paperRitualControls{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:min(86vw,340px);padding:6px;background:#f1e3c9e8;border:1px solid #a88c65;border-radius:5px}#gameControls.paperRitualControls button{min-height:44px;font-size:14px;white-space:normal}#gameControls.paperRitualControls .paperWhack{grid-column:1/-1;background:#52674f;color:#fff3d8;font-size:16px}';document.head.append(paperControlStyle);
@@ -4236,3 +4237,24 @@ action=function(id){
   ]);return
  }return parkGossipAction(id)
 };
+
+/* Choose symbolic frustrations, not named human targets. All text stays local;
+   no free-text personal names or public accusations. */
+function stressReplyPool(index){
+ let offset=0;for(const group of stressGroups){if(index>=offset&&index<offset+group.targets.length)return group.replies;offset+=group.targets.length}return auntieHitReplies
+}
+function chooseStressTarget(index){
+ if(!Number.isInteger(index)||index<0||index>=stressTargets.length)return false;
+ stressTarget=index;stressCombo=0;stressPieces=[];stressSwingAt=-10;
+ $('page').style.display='none';
+ hint(tr('Ah Ma: Give this one a good whack!','阿嬷：来，这个给我狠狠打！'), '阿嬷：来，这个给我狠狠打！');return true
+}
+function openStressChoices(){
+ if(activity!=='hit')return;
+ page(tr('What is getting on your nerves?','今天想打走什么烦恼？'),tr('Choose the frustration, not a real person. Ah Ma has a slipper for everything.','不打真人，只打烦恼。阿嬷的拖鞋专治各种不顺。'),q=>{
+  const wrap=element('div','',q,'stressChoiceBook');let offset=0;
+  for(const group of stressGroups){const section=element('section','',wrap,'stressChoiceSection');element('h2',tr(...group.label),section);const grid=element('div','',section,'stressChoiceGrid');for(const [j,v] of group.targets.entries()){const index=offset+j,btn=b(grid,tr(...v),()=>chooseStressTarget(index));btn.setAttribute('aria-pressed',String(index===stressTarget))}offset+=group.targets.length}
+  b(wrap,tr('Surprise me','随机挑一个'),()=>{const n=stressTargets.length;chooseStressTarget((stressTarget+1+Math.floor(Math.random()*(n-1)))%n)})
+ })
+}
+const stressChoiceStyle=document.createElement('style');stressChoiceStyle.textContent='.stressChoiceBook{max-width:560px;margin:auto}.stressChoiceSection{padding:12px 0;border-bottom:1px solid #b99e74}.stressChoiceSection h2{font-size:18px;margin:0 0 10px}.stressChoiceGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.stressChoiceGrid button{min-height:44px;white-space:normal;line-height:1.3;padding:8px;font-size:14px}.stressChoiceGrid button[aria-pressed=true]{background:#52674f;color:#fff3d8}.stressChoiceBook>button{min-height:44px;margin-top:12px;width:100%}';document.head.append(stressChoiceStyle);
