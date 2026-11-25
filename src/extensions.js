@@ -2891,18 +2891,50 @@ const townMessages=[
  ['Eurostar Nap Club','欧洲睡神','17:02','The train was late. My nap arrived on time.','火车晚点了，午觉倒是准时到达。'],
  ['Temple keeper','庙祝','17:45','The garden is quiet now. Leave the fish some peace.','花园清静了，也让鱼好好歇一会儿。']
 ];
+// Editorial town stories: pseudonyms, anonymous notes and authored replies.
+// The board-level caption distinguishes these from real local user notes.
+const wallThreads=[
+ [['Anonymous','匿名摸鱼人'],['My boss said we are family. I asked if I could claim him as a dependent.','老板说公司是个大家庭。我问他能不能算赡养亲属。'],[['Kopi O','咖啡不加糖','HR has left the chat.','人事已退出群聊。']]],
+ [['No more Zoom','今天不开会'],['Meeting at 5:59. Even the lift has better boundaries.','五点五十九开会，电梯都比老板懂边界感。'],[['Anonymous','匿名','Mine said “before you go”. I am still here.','我老板说耽误两分钟，我现在还在。']]],
+ [['East side best side','城东小鱼'],['Took the MRT in the wrong direction. Suddenly my commute has a plot twist.','坐反了地铁，通勤突然有了反转剧情。'],[['Late again','又迟到了','Tell them you were doing a site visit.','就说你去实地考察了。']]],
+ [['Lunch committee','午饭委员会'],['Our team spent 46 minutes deciding what to eat and 12 minutes eating.','部门讨论吃什么用了46分钟，吃饭用了12分钟。'],[['Anonymous','匿名','Finally, a meeting with an actual outcome.','好歹是个有结果的会。']]],
+ [['Excel victim','表格受害者'],['Someone named the file FINAL_final_v8_reallyfinal. I have trust issues.','文件名：最终版_最终版8_真的最终版。我已经不敢相信任何人了。'],[['Version 9','第九版','Wait for my email.','等我邮件。']]],
+ [['Anonymous','匿名摸鱼人'],['Went to the hawker centre with $10. Came back with kopi, lunch and three new opinions.','下楼吃个饭，回来多了杯咖啡和三个新瓜。'],[['Auntie’s neighbour','阿姨隔壁那位','The opinions are free with every meal.','每份午餐附赠八卦。']]],
+ [['Weekend pending','周末加载中'],['My annual leave request is pending longer than my online shopping delivery.','年假审批比跨境快递还慢。'],[['Anonymous','匿名','At least the parcel has tracking.','人家快递好歹能查物流。']]],
+ [['Silent mode','手机静音中'],['My phone says screen time is down. My laptop says nice try.','手机说屏幕使用时间下降了，电脑说你少来。'],[['Tab 47','第47个网页','We are all doing our best.','大家都挺努力地在摸鱼。']]],
+ [['Temple regular','庙门口常客'],['Asked the moon blocks whether to work overtime. I have decided not to ask a second time.','问筊杯今晚要不要加班。我决定不问第二遍了。'],[['Anonymous','匿名','Respect the first answer.','尊重第一次结果。']]],
+ [['Bubble tea fund','奶茶基金'],['I have a savings plan. It is currently funding the bubble tea industry.','我有储蓄计划，目前主要用于支持奶茶行业。'],[['Less ice','少冰','Diversify into kopi.','建议分散投资到咖啡。']]],
+ [['Printer whisperer','打印机调解员'],['The printer only works when IT is standing beside it. Same energy as me when my boss walks past.','打印机只有IT站旁边才正常，跟老板路过时的我一模一样。'],[['Paper jam','卡纸中','Please do not restart me.','请不要重启我。']]],
+ [['Anonymous','匿名摸鱼人'],['I packed a healthy lunch. Then the office ordered fried chicken. I was outvoted.','带了健康便当，结果同事点炸鸡。我以一票之差输给了自己。'],[['Lunch committee','午饭委员会','Democracy has spoken.','民主作出了决定。']]],
+ [['Palace staff','宫里打工的'],['The emperor has requested a deck by tomorrow. 本宫 requests a day off.','皇上命本宫明日交汇报。本宫今日只想告假。'],[['Anonymous','匿名','Send the eunuch a calendar invite.','给总管公公发个会议邀请。']]],
+ [['Almost Friday','快周五了吧'],['Wore my good outfit to work. Nobody noticed except the office aircon, which tried to freeze me.','精心搭配去上班，唯一回应我的是办公室冷气。'],[['Cardigan club','办公室棉袄协会','Welcome to the club.','欢迎加入组织。']]],
+ [['Window seat','靠窗旅人'],['Booked a holiday to see the mountains. Spent the entire flight asleep. Worth it.','订机票去看山，结果全程睡觉。值了。'],[['Anonymous','匿名','That was the actual holiday.','这才是真正的度假。']]],
+ [['Group chat lurker','群聊潜水员'],['Someone asked “Are you free?” without context. My soul left my body.','有人只问在吗，不说什么事。我的灵魂已经离职。'],[['Do not disturb','勿扰模式','Never answer a mystery question.','不明来意，暂不回话。']]],
+ [['Koi observer','锦鲤观察员'],['The fish have no inbox. I am researching their career path.','锦鲤没有邮箱，正在研究它们的职业发展路线。'],[['Anonymous','匿名','Excellent work-life balance.','工作生活平衡得很好。']]],
+ [['HR survivor','绩效幸存者'],['My appraisal says I should be more visible. I have turned on my camera.','绩效说我要提升可见度。我已经打开摄像头了。'],[['Anonymous','匿名','Promotion to 1080p.','恭喜晋升到1080P。']]],
+ [['Half sugar','半糖选手'],['Ordered less sugar and got asked if I was on a diet. I was just trying to survive Monday.','点半糖被问是不是减肥。我只是想活过星期一。'],[['No pearls','不要珍珠','Monday needs a topping.','周一需要加料。']]],
+ [['Cat tenant','猫咪租客'],['My cat occupies my chair during working hours. I have been demoted to the floor.','上班时间椅子归猫，我已被降职到地板。'],[['Anonymous','匿名','At least your manager is cute.','至少你的领导挺可爱。']]],
+ [['Out of office','自动回复中'],['I set an out-of-office reply. Someone replied to the automatic reply.','设置了休假自动回复，有人回复了自动回复。'],[['Anonymous','匿名','The machine has a colleague now.','机器人终于有同事了。']]],
+ [['Nap ambassador','午睡大使'],['A 15-minute nap is my only meeting with measurable results.','午睡十五分钟，是我今天唯一有实际成果的会议。'],[['Kopi O','咖啡不加糖','Agenda: pillow. Outcome: happiness.','议程：枕头。成果：开心。']]],
+ [['Anonymous','匿名摸鱼人'],['My parcel is arriving today. This is the only notification I am emotionally invested in.','快递今天到，这是我唯一真正关心的通知。'],[['Window seat','靠窗旅人','Please circle back when it arrives.','到了记得同步进度。']]],
+ [['Five more minutes','再摸五分钟'],['I came here to take a short break. Forgot what I was stressed about. Good enough.','本来进来摸五分钟，后来忘了刚才在烦什么。挺好。'],[['Anonymous','匿名','No need to create a reminder.','不用设提醒帮自己想起来。']]]
+];
 function renderResidentNoticeboard(q){
- element('h2',tr('Notes around town','小镇留言墙'),q,'board-heading');
- element('small',tr('Fictional resident posts · not live player messages','小镇角色留言 · 非真人实时消息'),q);
- const list=element('div','',q,'townPostList'),nav=element('div','',q,'townPostNav');
- let offset=0;const dayOffset=hash(shrineClock().day)%townMessages.length;
+ const wrap=element('section','',q,'townWall');
+ element('h2',tr('Overheard in town','摸鱼留言墙'),wrap,'board-heading');
+ element('p',tr('A little gossip, a little nonsense.','有瓜吃，有牢骚发。'),wrap,'wallIntro');
+ element('small',tr('Town stories are fictional. Your own notes are private to this device.','小镇故事为虚构内容，自己的留言仅保存在本设备。'),wrap,'wallDisclosure');
+ const list=element('div','',wrap,'townPostList'),nav=element('div','',wrap,'townPostNav');
+ let offset=0;const dayOffset=hash(shrineClock().day)%wallThreads.length,perPage=6,pages=Math.ceil(wallThreads.length/perPage);
  function render(){
   list.replaceChildren();nav.replaceChildren();
-  for(let i=0;i<5;i++){const m=townMessages[(dayOffset+offset*5+i)%townMessages.length],post=element('article','',list,'townResidentNote');
-   element('strong',tr(m[0],m[1]),post);element('small',m[2],post);element('p',tr(m[3],m[4]),post)
+  for(let i=0;i<perPage;i++){const m=wallThreads[(dayOffset+offset*perPage+i)%wallThreads.length],post=element('article','',list,'townResidentNote');
+   element('strong',tr(...m[0]),post);element('p',tr(...m[1]),post);
+   const replies=element('details','',post,'wallReplies');element('summary',tr('Read replies','看看楼下怎么说'),replies);
+   for(const reply of m[2]){const row=element('div','',replies,'wallReply');element('strong',tr(reply[0],reply[1]),row);element('p',tr(reply[2],reply[3]),row)}
   }
-  const prev=b(nav,tr('Previous','上一页'),()=>{offset--;render()});prev.disabled=offset===0;
-  element('span',(offset+1)+' / 4',nav);const next=b(nav,tr('Next','下一页'),()=>{offset++;render()});next.disabled=offset===3
+  const prev=b(nav,tr('Previous','上一页'),()=>{offset--;render();wrap.scrollIntoView({block:'start',behavior:'instant'})});prev.disabled=offset===0;
+  element('span',(offset+1)+' / '+pages,nav);const next=b(nav,tr('Next','下一页'),()=>{offset++;render();wrap.scrollIntoView({block:'start',behavior:'instant'})});next.disabled=offset===pages-1
  }render()
 }
 const chatLocalHistory=[];
@@ -2920,3 +2952,5 @@ function townChatPage(){
  })
 }
 const townSocialCSS=document.createElement('style');townSocialCSS.textContent='.townResidentNote{background:#f2e5cb;border:1px solid #c1a77c;margin:10px 0;padding:14px 16px;color:#564635;border-radius:3px;transform:rotate(-.35deg)}.townResidentNote:nth-child(even){background:#e7e4c8;transform:rotate(.35deg)}.townResidentNote small{float:right;color:#756449}.townResidentNote p,.townChatLine p{margin:6px 0;line-height:1.5;overflow-wrap:anywhere}.townPostNav{display:flex;align-items:center;justify-content:space-between;gap:8px}.townPostNav button,.townChatChoices button{min-height:44px}.townChatTranscript{max-height:47dvh;overflow:auto;padding:8px;background:#dcdac5;border:1px solid #b3a886}.townChatLine{margin:8px 32px 10px 0;padding:10px;background:#f9efd9;border:1px solid #d0bb96;border-radius:5px}.townChatLine strong{font-size:12px;color:#65744e}.townChatLine.self{margin:8px 0 10px 32px;background:#e1e7ce}.townChatChoices{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}.townChatChoices button{white-space:normal;font-size:13px}';document.head.append(townSocialCSS);
+
+const wallStyle=document.createElement('style');wallStyle.textContent='.townWall{margin:16px 0 24px;scroll-margin:12px}.wallIntro{margin:4px 0 8px}.wallDisclosure{display:block;font-size:12px;line-height:1.4;color:inherit;opacity:.78;margin-bottom:12px}.townResidentNote{transform:none!important;padding:13px 15px}.townResidentNote strong{font-size:13px;color:#64754f}.townResidentNote p{font-size:15px;line-height:1.5}.wallReplies{margin-top:9px;border-top:1px solid #b6a07955;padding-top:7px}.wallReplies summary{font-size:13px;cursor:pointer;min-height:32px;line-height:1.5}.wallReply{border-left:2px solid #baa17a;padding-left:10px;margin:8px 0}.wallReply p{font-size:14px}.townPostNav span{font-size:13px}';document.head.append(wallStyle);
