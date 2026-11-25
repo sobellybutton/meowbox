@@ -479,7 +479,13 @@ jobs:
                 await page.locator('#back').click();
                 await page.evaluate(()=>{scene='fortune';room='destiny';activity=null;state={};closeTalk();updateHUD()});
                 // The chart result uses fictional test birth details; no actual player data.
-                await page.evaluate(()=>destinyPage());
+                await page.evaluate(()=>action('destiny'));
+                await page.locator('#choices').getByRole('button',{name:'Weekly star signs',exact:true}).click();
+                if(await page.locator('.signNotebookGrid button').count()!==12)throw Error('Missing zodiac signs');
+                await page.locator('.signNotebookGrid button').filter({hasText:'Virgo'}).click();
+                if(!await page.locator('.signNotebookResult').innerText().then(v=>v.includes('Virgo')))throw Error('Virgo result missing');
+                await page.screenshot({path:'test-results/'+name+'-weekly-zodiac.png'});
+                await page.getByRole('button',{name:'Personal birth chart',exact:true}).click();
                 await page.locator('.astroForm input[type=date]').fill('1990-06-15');
                 await page.locator('.astroForm button[type=submit]').click();
                 await page.locator('.chartConsultation').waitFor({timeout:8000});
