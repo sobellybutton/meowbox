@@ -12,6 +12,24 @@ for(let i=0;i<original.length;i++){
  bytes+=extracted.length;
 }
 const scripts=['engine','extensions','startup'].map(x=>read('src/'+x+'.js')),shell=read('src/shell.html');
+// Validate the canonical registry before rendering or assigning later portrait anchors.
+const mapDeclaration=scripts[0].match(/const maps=(\{[^\n]+\});/);
+if(!mapDeclaration)throw Error('Canonical map registry not found');
+const registry=new vm.Script('('+mapDeclaration[1]+')').runInNewContext({}, {timeout:1000});
+const expectedWorlds=['fortune','home','island','wonder'];
+if(Object.keys(registry).sort().join(',')!==expectedWorlds.sort().join(','))throw Error('Unexpected destination registry');
+const stationOwners=new Map();
+for(const [world,definition] of Object.entries(registry)){
+ for(const [id,x,y,en,zh] of definition.st){
+  if(stationOwners.has(id))throw Error('Duplicate station '+id+' in '+stationOwners.get(id)+' and '+world);
+  if(!Number.isFinite(x)||!Number.isFinite(y)||!en||!zh)throw Error('Invalid station anchor or localized name: '+id);
+  stationOwners.set(id,world);
+ }
+}
+for(const [id,owner] of [['temple','fortune'],['station','fortune'],['fish','home']]){
+ if(stationOwners.get(id)!==owner)throw Error('Station belongs in '+owner+': '+id);
+}
+console.log('PASS: four destinations, '+stationOwners.size+' unique base stations; temple and pier ownership correct.');
 const external=assembleMeowBox(shell,scripts),embedded=assembleMeowBox(shell,scripts,parts);
 for(const html of [external,embedded])new vm.Script(html.match(/<script>([\s\S]*?)<\/script>/)[1],{filename:'meowbox-assembled.js'});
 if(process.argv[2])fs.writeFileSync(path.resolve(process.argv[2]),embedded);
