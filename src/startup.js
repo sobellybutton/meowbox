@@ -232,9 +232,7 @@ prop=function(id,x,y){
   gatheringResident(['Auntie Mei','梅姨'],x-48,y-8,1.16,'right',0);
   gatheringResident(['Grandma','外婆'],x+48,y-8,1.16,'left',1);
   gatheringTeaTable(x,y);
-  const im=townResidentImage('lin');
-  if(im.complete&&im.naturalWidth){ellipse(x+116,y+32,17,4,'#352c2438');ctx.drawImage(im,x+116-42,y+32-96,84,103)}
-  else gatheringResident(['Auntie Lin','林姨'],x+116,y+32,1.04,'left',2);
+  gatheringResident(['Wang Laoban','王老板'],x+116,y+32,.96,'left',2);
   gatheringStool(x-99,y+36);
   ctx.restore();return
  }
@@ -713,10 +711,57 @@ function tarotKeepsakePage(entry,back=null){
  }
  const formatButtons=[];for(const [id,label] of [['feed','4:5'],['xhs','3:4'],['story','9:16'],['square','1:1']]){const btn=b(controls,label,()=>{format=id;for(const [key,button] of formatButtons)button.setAttribute('aria-pressed',String(key===format));render()});btn.setAttribute('aria-pressed',String(id===format));formatButtons.push([id,btn])}
  render();const images=entry.cards.map(v=>readingArtwork(v.i)).filter(Boolean);for(const im of images)if(!im.complete)im.addEventListener('load',()=>{if(canvas.isConnected)render()},{once:true});
- b(wrap,tr('Save or share image','保存或分享图片'),async()=>{let blob;try{blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'))}catch(e){render(false);blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'))}if(!blob){toast(tr('Could not export image','暂时无法导出图片'));return}const file=new File([blob],'meowbox-tarot.png',{type:'image/png'});if(navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file]});return}catch(e){if(e.name==='AbortError')return}}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)});
+ b(wrap,tr('Save or share image','保存或分享图片'),async()=>{if(entry.cards.some(v=>{const im=readingArtwork(v.i);return !im?.complete||!im.naturalWidth})){toast(tr('The card illustrations are still loading. Please try again.','牌面插画尚未加载完成，请稍后再试。'));return}render(true);let blob;try{blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'))}catch(e){toast(tr('The illustrated card could not be exported.','暂时无法导出完整插画卡。'));return}if(!blob){toast(tr('Could not export image','暂时无法导出图片'));return}const file=new File([blob],'meowbox-tarot.png',{type:'image/png'});if(navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file]});return}catch(e){if(e.name==='AbortError')return}}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)});
  const returnTo=back||(()=>{$('page').style.display='none'});b(wrap,tr('Back','返回'),returnTo);const close=q.querySelector('.row button:first-child');if(close)close.onclick=returnTo;const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();tarotKeepsakePage(entry,back)}
  })
 }
 const tarotKeepsakeCSS=document.createElement('style');tarotKeepsakeCSS.textContent='.tarotKeepsake{display:flex;flex-direction:column;gap:10px;max-width:520px;margin:auto}.tarotKeepsakeCanvas{width:100%;height:auto;display:block;border:1px solid #9b8155;box-shadow:0 5px 18px #32271933}.tarotKeepsakeFormats{display:flex;gap:6px;justify-content:center}.tarotKeepsakeFormats button,.tarotKeepsake>button{min-height:44px}.tarotKeepsakeFormats button[aria-pressed=true]{background:#415b4f!important;color:#fff3d8!important;border-color:#344c42!important}.tarotKeepsakeFormats button{flex:1;min-width:44px}.tarotKeepsakeCanvas{max-height:68dvh;object-fit:contain;background:#253d3d}';document.head.append(tarotKeepsakeCSS);
+
+
+/* Painted assets are scene objects, not background decorations. Six original
+   residents already have transparent WebP standing and portrait assets.
+   Do not substitute another resident or the player's avatar when loading. */
+const residentArtworkRecords=[
+ {id:'temple-keeper',names:['Temple keeper','庙祝'],height:112},
+ {id:'master-yue',names:['Master Yue','月师傅','Astrologer','命理师'],height:116},
+ {id:'fortune-teller',names:['Fortune Teller','占卜师'],height:116},
+ {id:'auntie-mei',names:['Auntie Mei','梅姨'],height:110},
+ {id:'wang-laoban',names:['Wang Laoban','王老板'],height:119},
+ {id:'grandma',names:['Grandma','外婆'],height:106}
+];
+const residentArtworkCache=new Map();
+function residentArtworkRecord(name){const names=Array.isArray(name)?name:[name];return residentArtworkRecords.find(v=>names.some(n=>v.names.some(a=>a.toLowerCase()===String(n).trim().toLowerCase())))||null}
+function residentArtworkImage(record,portrait=false){
+ if(!record)return null;const key=record.id+(portrait?':portrait':':stand');
+ if(!residentArtworkCache.has(key)){const im=new Image();im.decoding='async';im.src='assets/visual/painted/'+record.id+'/'+(portrait?'expressions/warm.webp':'standing.webp');residentArtworkCache.set(key,im)}
+ return residentArtworkCache.get(key)
+}
+function residentArtworkRect(record,im,x,y,scale){
+ if(!record||!im?.naturalWidth||!im.naturalHeight||![x,y,scale].every(Number.isFinite)||scale<=0)return null;
+ const h=record.height*scale,w=h*im.naturalWidth/im.naturalHeight;return {x:x-w/2,y:y-h,w,h}
+}
+function drawGatheringPainted(name,x,y,scale=1){
+ const record=residentArtworkRecord(name),im=residentArtworkImage(record),rect=residentArtworkRect(record,im,x,y,scale);
+ if(!im?.complete||!rect)return false;
+ ctx.save();ellipse(x,y+1,Math.min(20,rect.w*.32),4,'#342e2540');ctx.drawImage(im,rect.x,rect.y,rect.w,rect.h);ctx.restore();return true
+}
+const gatheringPaintedBefore=gatheringResident;
+gatheringResident=function(name,x,y,scale,facing,kind){
+ if(residentArtworkRecord(name)){drawGatheringPainted(name,x,y,scale);return}
+ return gatheringPaintedBefore(name,x,y,scale,facing,kind)
+};
+const paintedGatheringSayBefore=say;
+say=function(name,...args){
+ const result=paintedGatheringSayBefore(name,...args),record=residentArtworkRecord(name);
+ if(!record)return result;const portrait=$('talkPortrait'),im=residentArtworkImage(record,true);if(!portrait||!im)return result;
+ const apply=()=>{if(talkOpen&&$('speaker').textContent===String(name)&&im.complete&&im.naturalWidth){portrait.src=im.src;portrait.hidden=false;portrait.classList.add('paintedResidentPortrait');requestAnimationFrame(syncCharacterSpeech)}};
+ if(im.complete){if(im.naturalWidth)apply();else portrait.hidden=true}else{portrait.hidden=true;im.addEventListener('load',apply,{once:true})}return result
+};
+const paintedGatheringIntroBefore=roomIntro;
+roomIntro=function(){
+ if(room==='tea'){for(const key of ['auntie-mei','grandma','wang-laoban','master-yue'])residentArtworkImage(residentArtworkRecords.find(v=>v.id===key))}
+ if(room==='tarot')residentArtworkImage(residentArtworkRecords.find(v=>v.id==='fortune-teller'),true);
+ return paintedGatheringIntroBefore()
+};
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
