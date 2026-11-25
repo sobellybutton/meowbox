@@ -1827,9 +1827,9 @@ travel=function(){
    const button=element('button','',grid,'portraitDestination');button.type='button';button.setAttribute('aria-label',tr(...maps[k].n));
    const im=element('img','',button);im.src=destinationPortrait(k);im.alt='';im.loading='lazy';im.decoding='async';
    const caption=element('span','',button,'destinationCaption');
-   element('span',k===scene&&!room?tr('YOU ARE HERE','你在这里'):visited.includes(k)?tr('REVISIT','重游'):tr('UNDISCOVERED','尚未探索'),caption,'destinationStatus');
+   element('span',k===scene?tr('YOU ARE HERE','你在这里'):visited.includes(k)?tr('REVISIT','重游'):tr('UNDISCOVERED','尚未探索'),caption,'destinationStatus');
    element('strong',tr(...maps[k].n),caption);element('small',tr(...desc[k]),caption);
-   button.onclick=()=>{if(transitioning)return;$('page').style.display='none';journey(k)};
+   button.onclick=()=>{if(transitioning)return;if(k===scene&&!room){$('page').style.display='none';return}$('page').style.display='none';journey(k)};
   }cluePanel(q);
  });
 };
@@ -4646,7 +4646,7 @@ drawActivity=function(){
  paintLivingBackdrop(pics.arcade||pics.tea);shadeLivingBackdrop('#392d285c');nostalgiaCabinet(400,470);
  for(const [id,color] of g.board){const p=nostalgiaCellMap.get(id);nostalgiaOrb(p.x,p.y,color)}
  for(const p of g.particles){const age=t-p.at;nostalgiaOrb(p.x+p.vx*age,p.y+130*age*age,p.color,17*(1-age*.8),1-age/.8)}
- if(g.flight)nostalgiaOrb(g.flight.x,g.flight.y,g.flight.color);
+ if(g.flight)nostalgiaOrb(g.flight.x,g.flight.y,g.flight.color);if(!g.flight&&g.status==='play'){ctx.save();ctx.strokeStyle='#e8d9b080';ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(263,582);ctx.lineTo(537,582);ctx.stroke();ctx.restore()}
  if(!g.flight&&g.status==='play'){
   for(const q of nostalgiaAimGuide(g))ellipse(q.x,q.y,2,2,'#f7e2b3a0');
   ctx.save();ctx.translate(400,600);ctx.rotate(g.angle);round(-7,-30,14,30,4,'#bfa476','#6f5a43');ctx.restore();nostalgiaOrb(400,592,g.color)
@@ -6394,3 +6394,38 @@ const discoveryPortraitStyle=document.createElement('style');discoveryPortraitSt
 #cafeQuestionSheet button{display:block;width:100%;min-height:44px;text-align:left;white-space:normal;margin:5px 0;padding:8px 10px;background:#faf0dc;border:1px solid #c2ab81;border-radius:3px;box-shadow:none;font-size:14px}#cafeQuestionSheet button[aria-pressed=true]{background:#d7ddc0}
 #game #wonderQuestionSheet,#game #storyReadingSheet{box-sizing:border-box;border-radius:8px 8px 3px 3px;max-height:47dvh}
 `;document.head.append(discoveryPortraitStyle);
+
+/* Arcade board and transit views: preserve full scene and reserve controls. */
+const arcadeTransitCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(s,ox,oy){
+ if(W>=H)return arcadeTransitCameraBefore(s,ox,oy);
+ if(activity==='bubbleArcade')return shorePortraitFit(W,H,[217,583,258,680],155);
+ if(activity==='woodenThree'){
+  const top=H<680?100:130,bottom=H-154,z=Math.min((W-16)/370,(bottom-top)/410);
+  return {s:Math.max(.08,z),ox:W/2-400*z,oy:(top+bottom)/2-470*z}
+ }
+ return arcadeTransitCameraBefore(s,ox,oy)
+};
+const arcadeTransitStyle=document.createElement('style');arcadeTransitStyle.textContent=`
+@media(orientation:portrait) and (max-width:600px){
+#game #gameControls.nostalgiaControls{bottom:calc(env(safe-area-inset-bottom,0px) + 77px)!important;width:min(90vw,340px);justify-content:center;gap:5px}
+#game #gameControls.nostalgiaControls button{flex:1;min-height:44px!important}
+#game #gameControls.threeControls{bottom:calc(env(safe-area-inset-bottom,0px) + 74px)!important}
+#content .portraitTravelGrid{grid-template-columns:1fr!important;gap:10px}
+#content .portraitDestination{display:grid!important;grid-template-columns:clamp(94px,30vw,136px) minmax(0,1fr);aspect-ratio:auto!important;min-height:142px;background:#eee2c8;align-items:center}
+#content .portraitDestination img{position:relative!important;inset:auto!important;width:100%;height:100%;aspect-ratio:2/3;object-fit:contain!important;background:#475d50;z-index:0}
+#content .portraitDestination:after{display:none}
+#content .portraitDestination .destinationCaption{position:relative!important;inset:auto!important;padding:12px!important;gap:6px;color:#4e4437}
+#content .portraitDestination .destinationStatus{color:#876536}
+#content .portraitDestination small{color:#685c4b;font-size:13px}
+#content .portraitDestination strong{font-size:19px}
+#proposal[data-shot="train"] .rail-cabin{height:clamp(210px,49dvh,445px)!important;width:min(96%,420px)!important;border-radius:15px}
+#proposal .rail-cabin .train-window{inset:11% 8% 34%;border-width:6px}
+#proposal .rail-window-sill{top:66%}
+#proposal .rail-seat{height:33%;width:34%}
+#proposal .rail-table{bottom:10%;left:34%;right:34%}
+#proposal .rail-passenger{right:10%;height:30%;width:25%}
+#proposal .rail-platform-coach{bottom:27%;height:38%;max-height:210px}
+#proposal .rail-platform-sign{top:11%;max-width:90%;white-space:normal;text-align:center}
+}
+`;document.head.append(arcadeTransitStyle);
