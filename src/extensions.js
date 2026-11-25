@@ -4630,3 +4630,115 @@ prop=function(id,x,y){
  }
  return warmStationPropBefore(id,x,y)
 };
+
+
+/* Life journal: fictional attributes, earned through meaningful discoveries and
+   completed rounds, never through idle time or repeated tapping. Local-only. */
+const lifeAttributes={
+ happiness:{label:['Happiness','快乐值'],color:'#c49a4e',desc:['Small joys and moments worth keeping.','把生活里的小快乐攒起来。']},
+ social:{label:['Social skills','社交力'],color:'#b98279',desc:['Meet residents and build friendships.','认识居民，找到自己的聊天搭子。']},
+ wisdom:{label:['Wisdom','智慧值'],color:'#8b96b0',desc:['Discover stories and reflective readings.','从故事和占卜手记中寻找灵感。']},
+ creativity:{label:['Creativity','创造力'],color:'#9e89ae',desc:['Try recipes and make something new.','解锁食谱，动手创造。']},
+ skill:{label:['Gaming skills','游戏力'],color:'#789a80',desc:['Complete arcade rounds and improve records.','完成游戏，挑战自己的纪录。']},
+ calm:{label:['Inner peace','松弛感'],color:'#87a5a1',desc:['Take part in quiet rituals and releases.','静心祈愿，把烦恼放一放。']},
+ mischief:{label:['Mischief','搞事能力'],color:'#c18a65',desc:['Find funny stories and harmless ways to vent.','吃瓜、吐槽，把怨气变成笑点。']}
+};
+function lifeClean(raw){
+ const a={version:1,points:{},seen:{},friends:{},records:{},daily:{day:'',keys:[]}};
+ if(!raw||typeof raw!=='object')return a;
+ for(const key of Object.keys(lifeAttributes))a.points[key]=Math.max(0,Math.min(100,Math.floor(Number(raw.points?.[key])||0)));
+ for(const [k,v] of Object.entries(raw.seen||{}))if(k.length<=180&&v===true)a.seen[k]=true;
+ for(const [k,v] of Object.entries(raw.friends||{}))if(k.length<=100&&Array.isArray(v?.name)&&typeof v.name[0]==='string'&&typeof v.name[1]==='string')a.friends[k]={name:v.name.slice(0,2),count:Math.max(0,Math.min(999,Math.floor(Number(v.count)||0))),last:typeof v.last==='string'?v.last:''};
+ for(const key of ['bubble','threeWins','threeDraws'])a.records[key]=Math.max(0,Math.min(999999,Math.floor(Number(raw.records?.[key])||0)));
+ if(typeof raw.daily?.day==='string'&&Array.isArray(raw.daily.keys))a.daily={day:raw.daily.day,keys:raw.daily.keys.filter(k=>typeof k==='string').slice(0,80)};
+ return a
+}
+let lifeJournal=lifeClean(load('lifeJournalV1',null));
+function lifeSave(){save('lifeJournalV1',lifeJournal)}
+function lifeEarn(key,amounts,daily=false){
+ if(daily){const today=shrineClock().day;if(lifeJournal.daily.day!==today)lifeJournal.daily={day:today,keys:[]};if(lifeJournal.daily.keys.includes(key)||lifeJournal.daily.keys.length>=40)return false;lifeJournal.daily.keys.push(key)}
+ else{if(Object.hasOwn(lifeJournal.seen,key))return false;lifeJournal.seen[key]=true}
+ for(const [k,v] of Object.entries(amounts))if(Object.hasOwn(lifeAttributes,k))lifeJournal.points[k]=Math.min(100,(lifeJournal.points[k]||0)+v);
+ lifeSave();return true
+}
+function lifeDiscovery(name){
+ if(/^Arrival:/.test(name))return {happiness:2,calm:1};
+ if(/^Met |^Tea with |^A letter from |friendship|cat friend/i.test(name))return {social:3,happiness:2};
+ if(/recipe|soup|milk tea|bubble tea|vegetarian|broth/i.test(name))return {creativity:4,happiness:2};
+ if(/tarot|reading|chart|personality|soul cat|motives|preference/i.test(name))return {wisdom:4,calm:1};
+ if(/fortune|temple|blessing|wishing|moon block|heaven|lantern|garden/i.test(name))return {calm:3,wisdom:1};
+ if(/champion|claw|rhythm|three-in-a-row|bubble arcade/i.test(name))return {skill:4,happiness:2};
+ if(/worry|meeting survivor|shredder|office escape/i.test(name))return {mischief:3,happiness:2};
+ if(/story|parallel|ending|café|cafe/i.test(name))return {wisdom:2,social:2};
+ return {happiness:1}
+}
+function lifeBackfill(){for(const item of items)if(typeof item?.[0]==='string')lifeEarn('item:'+item[0].slice(0,150),lifeDiscovery(item[0]));}
+const lifeItemBefore=addItem;
+addItem=function(a,b){const fresh=!items.some(v=>v[0]===a);lifeItemBefore(a,b);if(fresh&&items.some(v=>v[0]===a)){lifeEarn('item:'+String(a).slice(0,150),lifeDiscovery(String(a)));lifeHUDRefresh()}};
+function lifeFriend(name){
+ if(!Array.isArray(name)||!name[0]||!name[1])return;
+ const key='npc:'+String(name[0]).slice(0,85),today=shrineClock().day;
+ let entry=Object.hasOwn(lifeJournal.friends,key)?lifeJournal.friends[key]:null;
+ if(!entry)entry=lifeJournal.friends[key]={name:[String(name[0]),String(name[1])],count:0,last:''};
+ if(entry.last===today)return;
+ entry.last=today;entry.count++;lifeEarn('friend:'+key,{social:2,happiness:1},true);lifeSave();lifeHUDRefresh()
+}
+const lifeNPCBefore=npcTalk;
+npcTalk=function(n){const result=lifeNPCBefore(n);if(n?.n&&talkOpen)lifeFriend(n.n);return result};
+const lifeBubbleBefore=nostalgiaEnd;
+nostalgiaEnd=function(g,win){const first=!g.lifeRecorded;lifeBubbleBefore(g,win);if(!first)return;g.lifeRecorded=true;lifeJournal.records.bubble=Math.max(lifeJournal.records.bubble||0,g.score||0);lifeEarn('round:bubble',{skill:2,happiness:1},true);if(win)lifeEarn('win:bubble',{skill:1},true);lifeSave();lifeHUDRefresh()};
+const lifeThreeBefore=threeFinish;
+threeFinish=function(g){const result=lifeThreeBefore(g);if(result&&!g.lifeRecorded){g.lifeRecorded=true;lifeEarn('round:three',{skill:2,social:1},true);if(g.result.who===1)lifeJournal.records.threeWins=(lifeJournal.records.threeWins||0)+1;if(g.result.who==='draw')lifeJournal.records.threeDraws=(lifeJournal.records.threeDraws||0)+1;lifeFriend(g.opponent==='auntie'?['Ah Ma','阿嬷']:['Mochi','麻薯']);lifeSave();lifeHUDRefresh()}return result};
+const lifeRanks=[
+ [0,['On a little break','初来摸鱼']],
+ [30,['Certified daydreamer','持证发呆人']],
+ [85,['Professional time waster','国家一级摸鱼运动员']],
+ [160,['Senior happiness officer','首席快乐官']],
+ [280,['Legend of the lunch break','午休界传奇']],
+ [450,['Grandmaster of rest','摸鱼宗师']]
+];
+function lifeRank(){const total=Object.values(lifeJournal.points).reduce((a,b)=>a+b,0);let i=0;for(let j=1;j<lifeRanks.length;j++)if(total>=lifeRanks[j][0])i=j;return {total,index:i,label:lifeRanks[i][1],next:lifeRanks[i+1]?.[0]||null}}
+function lifeHUDRefresh(){
+ const e=$('hudProgress');if(!e)return;
+ const v=lifeRank();e.textContent=tr('Lv. ','等级 ')+(v.index+1)+' · '+tr('Joy ','快乐 ')+(lifeJournal.points.happiness||0);
+ e.title=tr(...v.label);
+}
+function lifeFriendTitle(count){return count>=10?['Trusted friend','自己人']:count>=5?['Regular visitor','老熟客']:count>=2?['Familiar face','有点眼熟']:['New acquaintance','新朋友']}
+const lifeAchievements=[
+ ['Professional time waster','国家一级摸鱼运动员','skill',20],
+ ['Gossip department director','八卦情报局局长','social',20],
+ ['Chief happiness officer','首席快乐官','happiness',25],
+ ['Bubble tea shareholder','奶茶界隐形股东','creativity',16],
+ ['Heaven’s frequent flyer','天庭VIP客户','calm',20],
+ ['Unlicensed philosopher','野生哲学家','wisdom',20],
+ ['Petty but productive','阴阳怪气优秀毕业生','mischief',12]
+];
+function lifeProfile(){
+ page(tr('My life journal','摸鱼人生档案'),tr('A little progress, without performance reviews.','一点点成长，不需要绩效考核。'),q=>{
+ const v=lifeRank(),book=element('section','',q,'lifeBook');
+ const intro=element('header','',book,'lifeIntro'),im=element('img','',intro);im.src=ART['portrait'+(avatar??0)];im.alt='';
+ const bio=element('div','',intro);element('h2',playerName||tr('Traveller','旅人'),bio);element('strong',tr(...v.label),bio);element('p',tr('Level ','等级 ')+(v.index+1)+' · '+v.total+' '+tr('life points','人生积分'),bio);
+ element('p',v.next?tr('Next rank at ','下一级需要 ')+v.next+' '+tr('points','积分'):tr('You have reached the highest rank. Take a nap.','已满级。安心去睡个午觉吧。'),book,'lifeNote');
+ element('h2',tr('My attributes','我的属性'),book);
+ for(const [key,a] of Object.entries(lifeAttributes)){const row=element('section','',book,'lifeAttribute');const label=element('div','',row,'lifeAttrName');element('strong',tr(...a.label),label);element('span',(lifeJournal.points[key]||0)+'/100',label);const meter=element('progress','',row);meter.max=100;meter.value=lifeJournal.points[key]||0;meter.style.accentColor=a.color;meter.setAttribute('aria-label',tr(...a.label));element('small',tr(...a.desc),row)}
+ element('p',tr('These are fictional game scores, not real measures of your happiness or abilities. Scores never fall when you take a break.','这些是游戏属性，不代表真实的快乐程度或能力。休息多久都不会扣分。'),book,'lifeNote');
+ element('h2',tr('People I know','我的小镇好友'),book);
+ const friends=Object.values(lifeJournal.friends).sort((a,b)=>b.count-a.count);
+ if(!friends.length)element('p',tr('Say hello to someone in town. No networking event required.','跟小镇居民打个招呼，不用参加社交局。'),book);
+ for(const f of friends){const row=element('div','',book,'lifeFriend');element('strong',tr(...f.name),row);element('span',tr(...lifeFriendTitle(f.count))+' · '+f.count+' '+tr('days met','天相遇'),row)}
+ element('h2',tr('Arcade records','游戏厅纪录'),book);
+ for(const [en,cn,n] of [['Bubble best score','泡泡龙最高分',lifeJournal.records.bubble],['Tic tac toe wins','井字棋胜场',lifeJournal.records.threeWins],['Tic tac toe draws','井字棋平局',lifeJournal.records.threeDraws]]){const row=element('div','',book,'lifeFriend');element('span',tr(en,cn),row);element('strong',String(n||0),row)}
+ element('h2',tr('Little achievements','摸鱼成就'),book);
+ for(const [en,cn,k,n] of lifeAchievements){const unlocked=(lifeJournal.points[k]||0)>=n,row=element('div','',book,'lifeAchievement'+(unlocked?' earned':''));element('strong',tr(en,cn),row);element('small',unlocked?tr('Earned','已解锁'):tr(...lifeAttributes[k].label)+' '+(lifeJournal.points[k]||0)+' / '+n,row)}
+ const actions=element('div','',book,'lifeActions');b(actions,tr('My hideout & profile settings','我的小窝与资料设置'),hideoutPage);b(actions,tr('Passport','旅人护照'),passport);b(actions,tr('Traveller bag','旅人背包'),myRoom)
+ })
+}
+const lifeHUDPrior=updateHUD;
+updateHUD=function(){lifeHUDPrior();lifeHUDRefresh()};
+const lifeProfileButton=$('profileHud');lifeProfileButton.onclick=lifeProfile;
+lifeProfileButton.setAttribute('role','button');lifeProfileButton.tabIndex=0;lifeProfileButton.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();lifeProfile()}});
+const lifeStyle=document.createElement('style');lifeStyle.textContent=`
+.lifeBook{max-width:560px;margin:auto;padding:18px 15px;background:#f2e5c9;color:#51483b;border:1px solid #ad9570;box-shadow:2px 4px 0 #d4bd9560,inset 0 0 24px #b18a4820;font-family:Georgia,serif}
+.lifeBook h2{font-size:19px;margin:20px 0 8px;color:#524c3a}.lifeIntro{display:flex;align-items:center;gap:12px;border-bottom:1px solid #b8a480;padding-bottom:12px}.lifeIntro img{width:84px;height:96px;object-fit:contain;flex:none}.lifeIntro>div{min-width:0;overflow-wrap:anywhere}.lifeIntro h2{margin:0 0 5px}.lifeIntro p{font-size:13px;margin:6px 0}.lifeAttribute{padding:7px 0;border-bottom:1px solid #b8a48050}.lifeAttrName,.lifeFriend{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px}.lifeAttrName span,.lifeFriend span{overflow-wrap:anywhere}.lifeAttribute progress{width:100%;height:9px;margin:6px 0}.lifeAttribute small,.lifeNote{font-size:12px;line-height:1.45;color:#72634d}.lifeFriend{padding:8px 0;border-bottom:1px solid #c1ad8a}.lifeAchievement{padding:9px 0 9px 12px;border-left:3px solid #bca88a;margin:5px 0;opacity:.72}.lifeAchievement.earned{border-left-color:#6f9478;opacity:1}.lifeAchievement small{display:block;font-size:12px;margin-top:4px}.lifeActions{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}.lifeActions button{min-height:44px;white-space:normal}
+`;document.head.append(lifeStyle);
+lifeBackfill();
