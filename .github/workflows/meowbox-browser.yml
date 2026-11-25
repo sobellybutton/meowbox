@@ -63,10 +63,22 @@ jobs:
                     if(st.id==='station')continue;
                     try{
                       await page.evaluate(({x,y})=>{stopRoute();closeTalk();p.x=p.tx=x;p.y=p.ty=clamp(y+110,minY(),maxY());cam.x=p.x;cam.y=p.y;p.motionSpeed=0;quiet9=false;},st);
-                      const door=page.locator('#worldSigns .worldSign').filter({hasText:st.en});
+                      const door=page.locator('#worldSigns .worldSign[data-door="'+st.id+'"]');
                       await door.waitFor({state:'visible',timeout:3500});
+                      // Wait for the real hit target after camera positioning. Report
+                      // an intercepted sign separately from a failed walking route.
+                      await page.waitForFunction(id=>{
+                        const el=document.querySelector('#worldSigns .worldSign[data-door="'+id+'"]');
+                        if(!el||el.hidden)return false;
+                        const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+                        return r.width>=44&&r.height>=44&&(hit===el||el.contains(hit));
+                      },st.id,{timeout:3500}).catch(async()=>{
+                        const details=await door.evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return {x:r.left,y:r.top,width:r.width,height:r.height,hit:hit?.outerHTML.slice(0,180)}});
+                        throw Error('Door touch target intercepted or too small: '+JSON.stringify(details));
+                      });
                       if(options.hasTouch){const b=await door.boundingBox();if(!b)throw Error('Door has no bounding box');await page.touchscreen.tap(b.x+b.width/2,b.y+b.height/2)}
                       else await door.click();
+                      await page.waitForFunction(id=>pending===id||room===id,st.id,{timeout:2000}).catch(()=>{throw Error('Door click did not start the requested walking route')});
                       await page.waitForFunction(id=>room===id&&!transitioning,st.id,{timeout:15000});
                       await page.screenshot({path:'test-results/'+name+'-'+map+'-'+st.id+'.png'});
                       for(let j=0;j<3&&await page.evaluate(()=>!!room);j++)await page.locator('#back').click();
