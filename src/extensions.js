@@ -562,7 +562,7 @@ const wonderCanvasPrior=drawActivity;drawActivity=function(){if(activity!=='wond
  txt(tr(...wonderSceneNames[mode]),400,251,21,'#fff1d5');
  if(phase==='welcome'){wonderSceneText(tr('Take your time. Answer as you are, not as you wish to be.','慢慢来，按真实的自己作答就好。'),400,420,385,19);wonderSceneObject(400,516,0,mode,false);label(tr('Begin our conversation','开始我们的对话'),400,606,()=>{wonderScenePhase='question';wonderSceneAt=t;sound(480)});txt(tr('For fun, at your own pace.','趣味探索，慢慢来。'),400,644,13,'#f8e4c6')}
  else if(phase==='result'){let v=wonderSceneResult,f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.65));ctx.save();ctx.translate(400,493);ctx.scale(Math.max(.02,f),1);round(-147,-103,294,207,4,'#f5e3ba','#b88b5e');round(-139,-95,278,191,2,null,'#b88b5e');if(mode==='soul')cat(0,-15,0,false,1.35);else{ellipse(0,-55,28,28,v.color);ctx.strokeStyle='#b28c5b';ctx.beginPath();ctx.arc(0,-55,35,0,TAU);ctx.stroke()}wonderSceneText(tr(...v.name),0,-1,260,23,'#654b39',2);wonderSceneText(tr(...v.desc),0,29,262,16,'#654b39',4);ctx.restore();label(tr('Share keepsake','分享纪念卡'),330,623,wonderSceneShare);label(tr('Try again','再测一次'),486,623,()=>wonderSceneOpen(mode));txt(tr('Back to lab · for fun only','返回研究所 · 仅供娱乐'),400,655,13,'#fff1d5')}
- else{let d=wonderSceneData();if(d){let n=d.opts.length;let f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.3));ctx.globalAlpha=phase==='turn'?1:Math.max(.15,f);wonderSceneText(tr(...d.prompt),400,402,395,21,'#fff1d5',3);for(let j=0;j<n;j++){let x=n===4?250+j*100:n===3?278+j*122:327+j*146,y=528;wonderSceneObject(x,y,j,mode,phase==='turn'&&wonderScenePick===j);wonderSceneText(tr(d.opts[j][0],d.opts[j][1]),x,579,n===4?93:117,16,'#fff5df',4);if(phase==='question')target(x-48,470,96,160,()=>wonderSceneChoose(j))}ctx.globalAlpha=1;txt((wonderSceneAnswers.length+1)+' / '+d.total,400,654,14,'#fff1d5')}}
+ else{let d=wonderSceneData();if(d){if(W<=540&&W<H){wonderSceneObject(400,433,Math.max(0,wonderScenePick),mode,phase==='turn');ctx.restore();return}let n=d.opts.length;let f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.3));ctx.globalAlpha=phase==='turn'?1:Math.max(.15,f);wonderSceneText(tr(...d.prompt),400,402,395,21,'#fff1d5',3);for(let j=0;j<n;j++){let x=n===4?250+j*100:n===3?278+j*122:327+j*146,y=528;wonderSceneObject(x,y,j,mode,phase==='turn'&&wonderScenePick===j);wonderSceneText(tr(d.opts[j][0],d.opts[j][1]),x,579,n===4?93:117,16,'#fff5df',4);if(phase==='question')target(x-48,470,96,160,()=>wonderSceneChoose(j))}ctx.globalAlpha=1;txt((wonderSceneAnswers.length+1)+' / '+d.total,400,654,14,'#fff1d5')}}
  ctx.restore();
 };
 const wonderCanvasAction=action;action=function(id){if(scene==='wonder'&&id==='soulcat')return wonderSceneOpen('soul');if(scene==='wonder'&&id==='quiz')return say(tr('Lab keeper','研究所店主'),tr('Which little discovery shall we explore?','今天想探索哪一个小秘密？'),[[tr('Four personality preferences','四维性格探索'),()=>wonderSceneOpen('type')],[tr('Nine inner motives','九型动力探索'),()=>wonderSceneOpen('motive')],[tr('Soul Cat','猫灵测试'),()=>wonderSceneOpen('soul')]]);return wonderCanvasAction(id)};
@@ -2559,4 +2559,27 @@ const fortuneShareStyle=document.createElement('style');fortuneShareStyle.textCo
 const dailyLuckHUD=updateHUD;
 updateHUD=function(){dailyLuckHUD();const luck=$('luck');luck.hidden=avatar===null||!!room||!!activity||!proposal.hidden||$('page').style.display==='block';luck.textContent=tr('Daily Luck','今日运势')};
 $('luck').onclick=()=>{if(!room&&!activity&&proposal.hidden)passport()};
-const dailyShortcutStyle=document.createElement('style');dailyShortcutStyle.textContent='#luck:not([hidden]){display:block;min-height:40px;font-size:12px;padding:6px 9px;border-radius:4px;background:#e9dab8;color:#4c5d4d;border:1px solid #a48b66}#luck[hidden]{display:none!important}#page[style*="block"]~#luck{display:none}';document.head.append(dailyShortcutStyle);
+const dailyShortcutStyle=document.createElement('style');dailyShortcutStyle.textContent='#luck:not([hidden]){display:block!important;min-height:40px;font-size:12px;padding:6px 9px;border-radius:4px;background:#e9dab8;color:#4c5d4d;border:1px solid #a48b66}#luck[hidden]{display:none!important}#game:has(#page[style*="block"]) #luck,#game:has(#page[style*="block"]) #nextStopShortcut{display:none!important}';document.head.append(dailyShortcutStyle);
+
+
+/* A small readable question sheet on phones, integrated with the illustrated table.
+   Canvas objects respond to the chosen answer; actual buttons expose complete text. */
+const wonderQuestionSheet=element('section','',$('game'),'wonderQuestionSheet');wonderQuestionSheet.id='wonderQuestionSheet';wonderQuestionSheet.hidden=true;
+let wonderSheetKey='';
+function syncWonderSheet(){
+ const show=activity==='wonderScene'&&W<=540&&W<H&&proposal.hidden&&$('page').style.display!=='block'&&['question','turn'].includes(wonderScenePhase);
+ if(!show){wonderQuestionSheet.hidden=true;wonderSheetKey='';return}
+ const d=wonderSceneData();if(!d){wonderQuestionSheet.hidden=true;return}
+ const key=[wonderSceneToken,wonderSceneAnswers.length,wonderScenePhase,zh].join('|');
+ if(key===wonderSheetKey&&!wonderQuestionSheet.hidden)return;
+ wonderSheetKey=key;wonderQuestionSheet.hidden=false;wonderQuestionSheet.replaceChildren();
+ const header=element('div','',wonderQuestionSheet,'wonderSheetHeader');
+ element('small',tr(...wonderSceneNames[wonderSceneMode])+' · '+(wonderSceneAnswers.length+1)+' / '+d.total,header);
+ if(wonderSceneAnswers.length&&wonderScenePhase==='question'){const back=b(header,tr('Previous','上一题'),()=>{wonderSceneAnswers.pop();wonderSceneAt=t;wonderSheetKey='';syncWonderSheet()});back.className='wonderPrevious'}
+ const question=element('p',tr(...d.prompt),wonderQuestionSheet);question.setAttribute('aria-live','polite');
+ for(let j=0;j<d.opts.length;j++){const o=d.opts[j],btn=b(wonderQuestionSheet,tr(o[0],o[1]),()=>wonderSceneChoose(j));btn.disabled=wonderScenePhase!=='question';if(wonderScenePick===j)btn.classList.add('selected')}
+}
+const wonderSheetCSS=document.createElement('style');wonderSheetCSS.textContent='#wonderQuestionSheet{position:absolute;z-index:5;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 65px);width:min(94vw,440px);max-height:48dvh;overflow:auto;padding:10px 12px;background:#f2e6cb;color:#584635;border:1px solid #ab9068;border-radius:3px;box-shadow:0 5px 15px #2926194a;overscroll-behavior:contain}#wonderQuestionSheet[hidden]{display:none!important}#wonderQuestionSheet .wonderSheetHeader{display:flex;justify-content:space-between;align-items:center;gap:8px}#wonderQuestionSheet small{font-size:12px;color:#675f49}#wonderQuestionSheet p{font:600 15px/1.4 system-ui;margin:7px 0 9px;overflow-wrap:anywhere}#wonderQuestionSheet>button{display:block;width:100%;margin:5px 0;padding:8px 10px;text-align:left;white-space:normal;font-size:14px;line-height:1.3;min-height:44px;border:1px solid #c9b48d;border-radius:3px;background:#faf0db;box-shadow:none}#wonderQuestionSheet>button.selected{background:#d7ddc0}#wonderQuestionSheet .wonderPrevious{font-size:12px;min-height:44px;padding:6px 9px;background:transparent;border:0;box-shadow:none}';document.head.append(wonderSheetCSS);
+const wonderSheetDraw=drawActivity;
+drawActivity=function(){wonderSheetDraw();syncWonderSheet()};
+const wonderSheetHUD=updateHUD;updateHUD=function(){wonderSheetHUD();syncWonderSheet()};
