@@ -119,7 +119,7 @@ const oldFortuneVariation=arcanaReading;arcanaReading=function(d,rev){let base=o
 const proposalPolish=document.createElement('style');proposalPolish.textContent='#proposal .cinema-world{background:#34493b}#proposal .cinema-world img{object-fit:contain;background:#34493b}#proposal[data-shot="ticket"] .cinema-world img.station{transform:scale(1.08)}#proposal[data-shot="platform"] .cinema-world img.station{transform:scale(1.04)}#proposal .gate{max-width:520px;left:50%;width:100%;transform:translateX(-50%)}#proposal .gate-traveller{height:38%}#proposal footer{padding-bottom:4px}#worldSigns{z-index:2;pointer-events:none}#worldSigns .worldSign{pointer-events:auto!important;touch-action:manipulation;white-space:nowrap!important;max-width:calc(100vw - 16px)!important;min-height:44px!important;padding:7px 10px!important;font-size:12px!important;letter-spacing:.02em;box-shadow:0 2px 5px #322b2150!important}#moveGuide{bottom:calc(env(safe-area-inset-bottom,0px) + 158px);font-size:13px}#movePad{grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px)}#movePad button{min-width:44px;min-height:44px}#dialogue{max-height:42dvh!important;overflow:auto!important}#dialogue #choices{display:flex;flex-wrap:wrap;gap:6px}#dialogue #choices button{min-height:44px}#page .astroResult{overflow-wrap:anywhere}#page .astroForm details label{margin-top:10px}#page .v9scene{border-radius:5px!important}#gameControls button{min-height:44px}#fade{pointer-events:none!important}@media(max-height:480px){#moveGuide{bottom:80px;right:12px;left:auto;max-width:45vw;transform:none}#proposal .rail-ticket{padding:12px;gap:6px}}';document.head.append(proposalPolish);
 const signAnchorsProposal={tarot:[560,488],destiny:[300,715],temple:[680,943],wishes:[495,1190],station:[660,323]};
 syncSigns=function(){let show=scene==='fortune'&&!room&&!transitioning&&$('page').style.display!=='block'&&avatar!==null&&proposal.hidden&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;signRoot.hidden=!show;if(!show)return;if(signButtons.size!==maps.fortune.st.length){signRoot.replaceChildren();signButtons.clear();for(let [id,x,y,en,cn] of maps.fortune.st){let e=element('button','',signRoot,'worldSign');e.onclick=()=>walkDoor(id,x,y);signButtons.set(id,e)}}for(let [id,x,y,en,cn] of maps.fortune.st){let e=signButtons.get(id),[ax,ay]=signAnchorsProposal[id]||[x,y-90],sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;if(e.textContent!==tr(en,cn))e.textContent=tr(en,cn);e.hidden=sy<Math.min(145,H*.22)||sy>H-115||sx<0||sx>W;if(!e.hidden){const half=Math.min(W/2-8,(e.offsetWidth||100)/2+8);e.style.left=Math.max(half,Math.min(W-half,sx))+'px';e.style.top=sy+'px'}}};
-drawRoute=function(){if(pics.valleyClean?.naturalWidth)ctx.drawImage(pics.valleyClean,0,0,1000,routeHeight);for(let [x,y,r,i] of [[108,1280,36,0],[130,912,35,1],[475,918,36,2],[620,664,36,3],[960,594,30,4],[306,407,33,5],[855,267,35,6]])glow(x,y,r,i);for(let i=0;i<18;i++){let x=((i*91-t*(8+i%7))%1000+1000)%1000,y=(i*83+t*(14+i%8))%routeHeight;petal(x,y,3+i%4,i)}for(let [id,x,y] of maps.fortune.st){let z=doorZones[id];if(z)target(z[0],z[1],z[2],z[3],()=>walkDoor(id,x,y))}for(let n of [...npc,p].sort((a,b)=>a.y-b.y)){let sc=.72+n.y/routeHeight*.55;if(n===p){const sc=travellerOutdoorScale(1.65*(.72+p.y/routeHeight*.55),cam.scale,W,H,true);backHuman(p.x,p.y,avatar??0,p.walk,p.facing||'up',sc);continue}let dx=n.tx-n.x,dy=n.ty-n.y,moving=residentMoving(n),dir=Math.abs(dy)>Math.abs(dx)?dy<0?'up':'down':dx<0?'left':'right';if(n.kind===2&&n.visitor===undefined){cat(n.x,n.y,0,moving,.65*sc)}else{const k=n.visitor??1;const actorScale=travellerOutdoorScale(1.22*sc,cam.scale,W,H,false);if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,k===(avatar??0)?(k+1)%4:k,moving,dir,actorScale)}if(Math.hypot(n.x-p.x,n.y-p.y)<105&&valleyRevealAt<0&&npc.filter(v=>Math.hypot(v.x-p.x,v.y-p.y)<105).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]===n){let label=n.visitor===undefined||n.popGuest?tr(...n.n):'···';ctx.save();ctx.font='14px Georgia';let w=Math.max(34,ctx.measureText(label).width+16);round(n.x-w/2,n.y-111,w,24,5,'#fff0d9e8','#b39a70');txt(label,n.x,n.y-99,13);ctx.restore();target(n.x-36,n.y-115,72,115,()=>npcTalk(n))}}if(!guideDismissed&&guideStage===0&&guideTarget&&valleyRevealAt<0&&proposal.hidden){let {x,y}=guideTarget,f=(Math.sin(t*3)+1)/2;ctx.save();ctx.strokeStyle='rgba(255,230,155,'+(.65+f*.3)+')';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,23+f*7,12+f*4,0,0,TAU);ctx.stroke();ctx.restore();target(x-40,y-40,80,80,()=>{stopRoute();p.tx=x;p.ty=y})}};
+drawRoute=function(){if(pics.valleyClean?.naturalWidth)ctx.drawImage(pics.valleyClean,0,0,1000,routeHeight);for(let [x,y,r,i] of [[108,1280,36,0],[130,912,35,1],[475,918,36,2],[620,664,36,3],[960,594,30,4],[306,407,33,5],[855,267,35,6]])glow(x,y,r,i);for(let i=0;i<18;i++){let x=((i*91-t*(8+i%7))%1000+1000)%1000,y=(i*83+t*(14+i%8))%routeHeight;petal(x,y,3+i%4,i)}for(let [id,x,y] of maps.fortune.st){let z=doorZones[id];if(z)target(z[0],z[1],z[2],z[3],()=>walkDoor(id,x,y))}for(let n of [...npc,p].sort((a,b)=>a.y-b.y)){let sc=.72+n.y/routeHeight*.55;if(n===p){const sc=travellerOutdoorScale(1.65*(.72+p.y/routeHeight*.55),cam.scale,W,H,true);backHuman(p.x,p.y,avatar??0,p.walk,p.facing||'up',sc);continue}let dx=n.tx-n.x,dy=n.ty-n.y,moving=residentMoving(n),dir=Math.abs(dy)>Math.abs(dx)?dy<0?'up':'down':dx<0?'left':'right';if(n.kind===2&&n.visitor===undefined){cat(n.x,n.y,0,moving,.65*sc)}else{const k=stableResidentFallback(n);const actorScale=travellerOutdoorScale(1.22*sc,cam.scale,W,H,false);if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,k,moving,dir,actorScale)}if(Math.hypot(n.x-p.x,n.y-p.y)<105&&valleyRevealAt<0&&npc.filter(v=>Math.hypot(v.x-p.x,v.y-p.y)<105).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]===n){let label=n.visitor===undefined||n.popGuest?tr(...n.n):'···';ctx.save();ctx.font='14px Georgia';let w=Math.max(34,ctx.measureText(label).width+16);round(n.x-w/2,n.y-111,w,24,5,'#fff0d9e8','#b39a70');txt(label,n.x,n.y-99,13);ctx.restore();target(n.x-36,n.y-115,72,115,()=>npcTalk(n))}}if(!guideDismissed&&guideStage===0&&guideTarget&&valleyRevealAt<0&&proposal.hidden){let {x,y}=guideTarget,f=(Math.sin(t*3)+1)/2;ctx.save();ctx.strokeStyle='rgba(255,230,155,'+(.65+f*.3)+')';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,23+f*7,12+f*4,0,0,TAU);ctx.stroke();ctx.restore();target(x-40,y-40,80,80,()=>{stopRoute();p.tx=x;p.ty=y})}};
 let lanternMemories=load('proposalLanternCount',0);
 const worldActivityDraw=drawActivity;drawActivity=function(){worldActivityDraw();if(activity==='wishes'){for(let i=0;i<Math.min(lanternMemories,7);i++){let x=185+i*66,y=295+(i%3)*28;ctx.save();ctx.translate(x+Math.sin(t*.9+i)*3,y);ctx.rotate(Math.sin(t*.9+i)*.04);glow(0,0,38,i);line(0,-35,0,-18,'#a68a61',1.5);round(-14,-18,28,35,8,'#db9b51','#875534');line(-5,-15,-5,14,'#ad6d3a');line(5,-15,5,14,'#ad6d3a');ctx.restore()}}};
 const finalGuideStart=start;start=function(id){finalGuideStart(id);if(id==='wishes')state.lanternAt=undefined};
@@ -1717,7 +1717,7 @@ drawMap=function(){
   if(n.kind===2){cat(n.x,n.y,0,moving,.65*sc);continue}
   const dir=Math.abs(n.ty-n.y)>Math.abs(n.tx-n.x)?(n.ty<n.y?'up':'down'):(n.tx<n.x?'left':'right');
   const actorScale=travellerOutdoorScale(sc,cam.scale,W,H,false),grannyScale=actorScale*94/150;
-  if(n.grumpy){drawWalkingGranny(n.x,n.y,grannyScale,moving,dir)}else if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,((avatar??0)+1+n.kind)%4,moving,dir,actorScale);
+  if(n.grumpy){drawWalkingGranny(n.x,n.y,grannyScale,moving,dir)}else if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,stableResidentFallback(n),moving,dir,actorScale);
   const actorHeight=94*actorScale;
   if(Math.hypot(n.x-p.x,n.y-p.y)<150){
    if(n.popGuest||n.grumpy){ctx.save();ctx.font='15px Georgia';const label=tr(...n.n),width=ctx.measureText(label).width+18;ctx.fillStyle='#f6e8cced';ctx.fillRect(n.x-width/2,n.y-actorHeight-25,width,22);ctx.fillStyle='#435744';ctx.textAlign='center';ctx.fillText(label,n.x,n.y-actorHeight-9);ctx.restore()}
@@ -1876,7 +1876,7 @@ syncSigns=function(){
  // Clamping independently made neighbouring doors share the same screen position.
  const blockers=[],placed=[],items=[];
  const rootRect=signRoot.getBoundingClientRect();
- for(const el of document.querySelectorAll('#hud button,#small button,#dock,#gameControls,#movePad,#dialogue button,#lunarBtn')){
+ for(const el of document.querySelectorAll('#hud button,#small button,#dock,#gameControls,#movePad,#dialogue,#dialogue button,#lunarBtn')){
   if(el.hidden||!el.getClientRects().length)continue;
   const b=el.getBoundingClientRect(),style=getComputedStyle(el);
   if(style.visibility==='hidden'||style.display==='none'||style.pointerEvents==='none'||!b.width||!b.height)continue;
@@ -1886,6 +1886,7 @@ syncSigns=function(){
  for(const [id,x,y,en,cn] of maps[scene].st){
   const btn=signButtons.get(id),name=tr(en,cn);
   if(btn.textContent!==name)btn.textContent=name;
+  btn.setAttribute('aria-label',name);btn.dataset.signMaterial=houseSignMaterial(id);
   const [ax,ay]=scene==='fortune'?(signAnchorsProposal[id]||[x,y-95]):[x,y-65];
   const sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
   const inView=sx>=-30&&sx<=W+30&&sy>=top-125&&sy<=bottom+70;
@@ -5082,6 +5083,8 @@ function chooseSpeechPosition(w,h,width,height,speaker,player,blockers=[]){
  if(w>width-16||top<10||rect.bottom>height-74||[speaker,player,...blockers].some(b=>b&&speechOverlap(rect,b)))continue;
  const side=rect.bottom<=speaker.top?'bottom':rect.top>=speaker.bottom?'top':rect.left>=speaker.right?'left':'right';
   const anchor=side==='top'||side==='bottom'?Math.max(20,Math.min(w-20,center-left)):Math.max(20,Math.min(h-20,(speaker.top+speaker.bottom)/2-top));
+  const tail=side==='top'?{left:left+anchor-10,right:left+anchor+10,top:top-12,bottom:top}:side==='bottom'?{left:left+anchor-10,right:left+anchor+10,top:rect.bottom,bottom:rect.bottom+12}:side==='left'?{left:left-12,right:left,top:top+anchor-10,bottom:top+anchor+10}:{left:rect.right,right:rect.right+12,top:top+anchor-10,bottom:top+anchor+10};
+  if(tail.left<0||tail.right>width||tail.top<0||tail.bottom>height||[player,...blockers].some(b=>b&&speechOverlap(tail,b)))continue;
   return {left,top,tailX:anchor,above:side==='bottom',side}}
  return null
 }
@@ -5090,7 +5093,7 @@ function syncCharacterSpeech(){
  el.classList.remove('characterSpeech');el.style.removeProperty('--speech-left');el.style.removeProperty('--speech-top');
  if(room||activity||!greetingNPC)return;
  const text=$('line').textContent||'',options=$('choices').children.length;
- if(text.length>160||options>1)return;
+ if(!greetingNPC.n?.includes($('speaker').textContent)||text.length>160||options>1)return;
  el.classList.add('characterSpeech');
  const w=el.offsetWidth,h=el.offsetHeight,root=$('game').getBoundingClientRect();
  const blockers=[];for(const id of ['hud','small','dock','back']){const node=$(id);if(!node||node.hidden||!node.getClientRects().length||getComputedStyle(node).visibility==='hidden')continue;const b=node.getBoundingClientRect();if(b.width&&b.height)blockers.push({left:b.left-root.left,top:b.top-root.top,right:b.right-root.left,bottom:b.bottom-root.top})}
@@ -5206,8 +5209,8 @@ function paintedDialoguePortrait(name){
  const i=paintedResidentIndex(name);if(i<0)return null;
  if(paintedDialogueThumbs.has(i))return paintedDialogueThumbs.get(i);
  const im=productionVisual('paintedResidents');if(!im)return null;
- const q=paintedResidentCell(i),thumb=document.createElement('canvas');thumb.width=56;thumb.height=60;
- const art=thumb.getContext('2d');art.drawImage(im,q.x,q.y,q.w,60,0,0,56,60);
+ const q=paintedResidentCell(i),thumb=document.createElement('canvas');thumb.width=56;thumb.height=36;
+ const art=thumb.getContext('2d');art.drawImage(im,q.x,q.y,q.w,36,0,0,56,36);
  const url=thumb.toDataURL('image/png');paintedDialogueThumbs.set(i,url);return url
 }
 const paintedResidentSayBefore=say;
@@ -5295,7 +5298,7 @@ function paintLandscapeRoom(id){
  const b=livingBounds(),p=landscapeRoomProfiles[id];
  ctx.save();
  const base=ctx.createLinearGradient(b.x,b.y,b.x,b.y+b.h);base.addColorStop(0,p.wall);base.addColorStop(.58,p.accent);base.addColorStop(1,p.floor);ctx.fillStyle=base;ctx.fillRect(b.x,b.y,b.w,b.h);
- const candidates=p.keys.map(k=>pics[k]).filter(im=>im?.naturalWidth);
+ const candidates=p.keys.map(k=>pics[k]).filter(im=>im?.complete&&im.naturalWidth);
  let chosen=null,fit=null;
  for(const im of candidates){const candidate=wideSceneFit(im.naturalWidth,im.naturalHeight,b.w,b.h);if(candidate){chosen=im;fit=candidate;break}}
  if(chosen){ctx.drawImage(chosen,b.x+fit.dx,b.y+fit.dy,fit.w,fit.h)}
@@ -5340,3 +5343,37 @@ const adaptivePageStyle=document.createElement('style');adaptivePageStyle.textCo
  #game #back:not([hidden]){bottom:60px!important}
 }
 `;document.head.append(adaptivePageStyle);
+
+/* Quality pass: stable fallback identity, place-specific sign materials,
+   and consistent labels. Unknown guests retain existing sprites but no
+   longer change appearance when the player's avatar changes. */
+function stableResidentFallback(n){
+ const name=String(n?.popGuest?.id||n?.n?.[0]||n?.kind||'resident');
+ let h=2166136261;for(const ch of name){h^=ch.codePointAt(0);h=Math.imul(h,16777619)}
+ return Number.isInteger(n?.visitor)&&n.visitor>=0&&n.visitor<4?n.visitor:(h>>>0)%4
+}
+function houseSignMaterial(id){
+ if(['temple','sticks','moon','destiny','tarot','daily'].includes(id))return 'ritual';
+ if(['tea','news','kitchen','match'].includes(id))return 'warm';
+ if(['arcade','mystery','office'].includes(id))return 'retro';
+ if(['park','fish','wishes','secretGarden'].includes(id))return 'garden';
+ return 'travel'
+}
+const visualQualityStyle=document.createElement('style');visualQualityStyle.textContent=`
+#worldSigns .worldSign{background:linear-gradient(166deg,#79634b,#554734)!important;color:#fff1d3!important;border:1px solid #d2b881!important;border-radius:4px!important;box-shadow:0 2px 3px #33281f55,inset 0 0 0 2px #edcb961f!important;font-family:Georgia,"Songti SC",serif!important;font-weight:700!important;line-height:1.25!important;min-height:44px!important;padding:5px 9px!important;max-width:150px!important;white-space:normal!important;overflow-wrap:anywhere}
+#worldSigns .worldSign[data-sign-material="ritual"]{background:linear-gradient(155deg,#6d584a,#484b42)!important;color:#f8e4ba!important}
+#worldSigns .worldSign[data-sign-material="warm"]{background:linear-gradient(155deg,#9d785a,#75503e)!important}
+#worldSigns .worldSign[data-sign-material="retro"]{background:linear-gradient(155deg,#617a72,#3c5753)!important;border-color:#d3b484!important}
+#worldSigns .worldSign[data-sign-material="garden"]{background:linear-gradient(155deg,#7e8b69,#53674d)!important}
+#worldSigns .worldSign[data-sign-material="travel"]{background:linear-gradient(155deg,#9b856a,#76614e)!important}
+#dialogue.characterSpeech{max-width:calc(100vw - 32px)!important}
+#talkPortrait.paintedResidentPortrait{object-fit:contain!important;object-position:center!important;width:66px!important;height:48px!important}
+#dialogue #choices button:focus-visible,#worldSigns .worldSign:focus-visible{outline:2px solid #e6b56b!important;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){#worldSigns .worldSign,#dialogue{animation:none!important;transition:none!important}}
+`;document.head.append(visualQualityStyle);
+const visualQualityDailyBefore=lifeDailyIdeas;
+lifeDailyIdeas=function(){
+ const ideas=visualQualityDailyBefore(),keys=lifeJournal.daily.day===shrineClock().day?lifeJournal.daily.keys:[];
+ ideas.push({title:['A quiet moment','给自己一点清静'],desc:['Finish a temple ritual or save a tarot reading.','完成一次庙宇仪式，或者收藏一份塔罗解读。'],done:keys.some(k=>k.startsWith('ritual:'))});
+ return ideas
+};
