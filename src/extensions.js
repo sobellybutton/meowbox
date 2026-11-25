@@ -7885,3 +7885,118 @@ portraitInteriorSources.mystery=additionalPortraits.mystery;portraitInteriorCach
 const komorebiWideDetailsBefore=landscapeSideDetails;
 landscapeSideDetails=function(kind){return kind==='komorebi'?komorebiShowroom('wide'):komorebiWideDetailsBefore(kind)};
 Object.assign(landscapeRoomProfiles.mystery,{wall:'#b5b49a',floor:'#9d805c',accent:'#c2a77e',kind:'komorebi'});landscapeSourceCache.delete('mystery');
+
+
+/* Nara-inspired Deer Meadow: a gentle encounter, independent of cat care.
+   Bowing is optional; crackers are freely provided by the park, never teased
+   or used as a paid gate. Wild deer are observed, not petted. */
+activityTitle.deerVisit=['Deer Meadow','小鹿森野'];
+const deerProfiles=[
+ {id:'mugi',name:['Mugi','麦麦'],fur:'#b58b60',light:'#e4c6a0',line:['One polite bow. No performance appraisal.','鞠一个躬，不用做绩效。']},
+ {id:'koyo',name:['Koyo','枫枫'],fur:'#9e7755',light:'#dcc09a',line:['A cracker, please. Your emails can wait.','来块鹿饼吧，邮件先放一放。']},
+ {id:'sora',name:['Sora','空空'],fur:'#c29c75',light:'#eddbc0',line:['A quiet little hello is enough.','安安静静打个招呼就好。']}
+];
+function deerVisitRecord(raw=load('deerMeadowV1',{})){
+ const v=raw&&typeof raw==='object'?raw:{},valid=typeof v.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v.day);
+ return {day:valid?v.day:'',fed:valid&&v.fed===true,met:Array.isArray(v.met)?[...new Set(v.met.filter(id=>deerProfiles.some(p=>p.id===id)))]:[]}
+}
+function deerForDay(day){return deerProfiles[hash(day+'deer-meadow')%deerProfiles.length]}
+function deerVisitReward(){
+ if(activity!=='deerVisit'||state.deerPhase==='done')return;
+ const day=shrineClock().day,record=deerVisitRecord(),profile=state.deerProfile;
+ if(record.day>day)return;
+ const first=!record.met.includes(profile.id);
+ save('deerMeadowV1',{day,fed:true,met:[...new Set([...record.met,profile.id])]});
+ state.deerPhase='done';state.deerAt=t;
+ if(first)addItem('Deer postcard: '+profile.name[0],'小鹿明信片：'+profile.name[1]);
+ lifeEarn('care:deer-meadow',{calm:2,happiness:1},true);refreshControls();
+ hint(...profile.line)
+}
+function deerBow(){
+ if(activity!=='deerVisit'||state.deerPhase!=='greet')return;
+ state.deerPhase='bow';state.deerAt=t;refreshControls();
+ hint('A small bow, then let the deer decide whether to respond.','轻轻鞠躬，让小鹿自己决定要不要回应。')
+}
+function deerFeed(){
+ if(activity!=='deerVisit'||!['greet','ready'].includes(state.deerPhase))return;
+ if(deerVisitRecord().day===shrineClock().day&&deerVisitRecord().fed)return;
+ state.deerPhase='feed';state.deerAt=t;refreshControls();
+ hint('Offer the deer cracker straight away.','把鹿饼直接递给小鹿。')
+}
+function deerWatch(){
+ if(activity!=='deerVisit'||!['greet','ready','done'].includes(state.deerPhase))return;
+ state.deerPhase='watch';state.deerAt=t;refreshControls();
+ hint('Stay quiet and enjoy the meadow.','安静地待一会儿，看看草地上的小鹿。')
+}
+const deerStartBefore=start;
+start=function(id){
+ if(id!=='deerVisit')return deerStartBefore(id);
+ deerStartBefore(id);const day=shrineClock().day,record=deerVisitRecord();
+ state.deerProfile=deerForDay(day);state.deerPhase=record.day===day&&record.fed?'done':'greet';state.deerAt=t;state.deerBows=hash(day+'deer-bow')%3!==0;
+ refreshControls();hint('Bow, offer a deer cracker, or simply watch.','鞠躬、喂鹿饼，或者安静地看看小鹿。')
+};
+const deerControlsBefore=refreshControls;
+refreshControls=function(){
+ deerControlsBefore();const el=$('gameControls');if(!el)return;el.classList.toggle('deerMeadowControls',activity==='deerVisit');
+ if(activity!=='deerVisit'||!state.deerPhase)return;
+ el.replaceChildren();el.hidden=false;
+ const phase=state.deerPhase,record=deerVisitRecord(),fed=record.day===shrineClock().day&&record.fed;
+ const text=element('div',tr('Deer Meadow · ','小鹿森野 · ')+tr(...state.deerProfile.name),el,'deerMeadowCaption');
+ const actions=element('div','',el,'deerMeadowButtons');
+ const bow=b(actions,tr('Bow gently','轻轻鞠躬'),deerBow);bow.disabled=phase!=='greet';
+ const feed=b(actions,fed?tr('Fed today','今日已喂'):tr('Offer cracker','递鹿饼'),deerFeed);feed.disabled=fed||!['greet','ready'].includes(phase);
+ const watch=b(actions,tr('Just watch','静静看看'),deerWatch);watch.disabled=!['greet','ready','done'].includes(phase);
+ element('small',tr('Free deer cracker · once a day. Give wild deer space.','每日免费鹿饼一份。给野生小鹿留点空间。'),el)
+};
+function drawMeadowDeer(x,y,profile,bow=0,chew=0,sc=1){
+ ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ellipse(0,3,73,14,'#414c3438');
+ const fur=profile.fur,light=profile.light;
+ // Body and four independent legs, head and neck lower together.
+ for(const [lx,ly] of [[-36,-46],[36,-43],[-23,-40],[24,-39]]){
+ line(lx,ly,lx-3,-15,'#8b6e51',9);line(lx-3,-15,lx+1,0,'#a28362',5);line(lx-4,0,lx+7,0,'#5a4d3f',5)
+ }
+ ellipse(5,-59,60,34,fur);ellipse(2,-46,43,15,light);
+ for(const [sx,sy] of [[-14,-79],[9,-82],[30,-74],[-29,-68],[13,-66],[42,-60]])ellipse(sx,sy,4,3,'#f0dfb9');
+ ellipse(58,-69,9,18,light);
+ ctx.save();ctx.translate(-43,-65);ctx.rotate(-bow*.82);
+ ellipse(-8,-28,18,41,fur);ellipse(-13,-21,11,28,light);
+ ctx.translate(-13,-62);ellipse(-5,0,26,19,fur);ellipse(-20,7,17,10,light);
+ ctx.save();ctx.translate(-2,-17);ctx.rotate(-.6);ellipse(0,-11,7,19,fur);ellipse(0,-12,3.7,12,'#d1a691');ctx.restore();
+ ctx.save();ctx.translate(13,-15);ctx.rotate(.55);ellipse(0,-12,7,18,fur);ellipse(0,-12,3.5,11,'#d1a691');ctx.restore();
+ if(t%5<.16)line(-10,-3,-2,-3,'#513e32',1.6);else{ellipse(-6,-3,3.6,4.8,'#483b32');ellipse(-7,-4,1.1,1.1,'#f4dfba')}
+ ellipse(-33,5,4.8,3.3,'#655047');line(-29,12+chew,-17,13,'#8e7057',1.2);
+ ctx.restore();ctx.restore()
+}
+const deerDrawBefore=drawActivity;
+drawActivity=function(){
+ if(activity!=='deerVisit'||!state.deerProfile)return deerDrawBefore();
+ const phase=state.deerPhase,age=t-state.deerAt;
+ if(phase==='bow'&&age>=2.7){state.deerPhase='ready';state.deerAt=t;refreshControls();hint(...(state.deerBows?['A little bow in return!','小鹿也鞠了个躬！']:['This deer would rather look at the grass. Fair enough.','小鹿更想看看草地，也挺好。']))}
+ else if(phase==='feed'&&age>=2.5)deerVisitReward();
+ else if(phase==='watch'&&age>=4){state.deerPhase=deerVisitRecord().day===shrineClock().day&&deerVisitRecord().fed?'done':'ready';state.deerAt=t;refreshControls()}
+ const p=state.deerProfile,now=state.deerPhase,elapsed=t-state.deerAt;
+ ctx.save();paintLivingBackdrop(pics.park||pics.home);
+ // Low grassy ground, scattered leaves and a distant deer. No floating props.
+ ellipse(400,565,172,42,'#617b4b77');ellipse(395,560,155,35,'#8d9e6d');
+ for(let i=0;i<14;i++){const xx=248+i*23,yy=560+(i%3)*7;line(xx,yy,xx+3,yy-7,'#c0c399',1.3)}
+ drawMeadowDeer(535,475,deerProfiles[(deerProfiles.indexOf(p)+1)%3],.25,0,.48);
+ const bow=now==='bow'?Math.sin(Math.PI*clamp(elapsed/2.7,0,1)):0;
+ const feed=now==='feed'?Math.sin(Math.PI*clamp(elapsed/2.5,0,1)):0;
+ const deerLower=(state.deerBows?bow*.8:0)+feed*.85;
+ const reach=feed>0?{x:350,y:465}:null;
+ drawRitualPose(285,555,1.18,{bow,reach});
+ drawMeadowDeer(450-feed*26,552,p,deerLower,feed?Math.sin(t*18)*1.5:0,1.03);
+ if(now==='feed'&&elapsed<1.35){ellipse(346,468,11,5,'#cfab73');ellipse(346,467,8,3,'#e7c78c')}
+ if(now==='greet'||now==='ready'){ellipse(324,577,28,7,'#6a553b33');round(302,563,44,14,3,'#c9ad83','#937650');ellipse(324,563,14,5,'#d9b986')}
+ ctx.restore()
+};
+shorePortraitBounds.deerVisit=[220,580,350,585];
+const deerPropBefore=prop;
+prop=function(id,x,y){if(id!=='deerVisit'||room!=='park')return deerPropBefore(id,x,y);drawMeadowDeer(x,y+4,deerProfiles[0],0,0,.55)};
+roomActions.park=[['pet','Meet the cats','认识小猫'],['deerVisit','Deer Meadow','小鹿森野'],['chat','Park gossip','树下吃瓜']];
+indoorStages.park.stations.deerVisit=[400,440,400,615];
+const deerIntroBefore=roomIntro;
+roomIntro=function(){deerIntroBefore();if(room==='park')hint('Meet the cats, visit the deer meadow, or catch up on gossip.','看看小猫、逛逛小鹿森野，或者听听小镇八卦。')};
+const deerActionBefore=action;
+action=function(id){if(room==='park'&&id==='deerVisit'){start(id);return}return deerActionBefore(id)};
+const deerStyle=document.createElement('style');deerStyle.textContent='#game #gameControls.deerMeadowControls:not([hidden]){width:min(94vw,430px);display:flex;flex-direction:column;gap:5px;background:#f1e4c9;border:3px double #b29a74;border-radius:4px;padding:8px;color:#564735}.deerMeadowCaption{font:600 15px/1.3 Georgia,"Songti SC",serif}.deerMeadowButtons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:4px}.deerMeadowButtons button{min-width:0!important;min-height:44px;white-space:normal!important;padding:5px!important;font-size:12px}.deerMeadowControls small{font-size:11px;line-height:1.4;text-align:center}';document.head.append(deerStyle);
