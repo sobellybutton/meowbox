@@ -1914,13 +1914,13 @@ travel=function(){
  activePage='travel';
  page(tr('Where shall we go?','下一站去哪里？'),tr('Four little worlds, one railway ticket.','一张车票，四个小世界。'),q=>{
   renderRailRoute(q);const grid=element('div','',q,'portraitTravelGrid');
-  const desc={fortune:['Tarot, temple and wishes','塔罗、庙宇与心愿'],home:['Tea, gossip and letting off steam','喝茶、吃瓜、河边解压'],island:['Cooking, bubble tea, arcade and souvenirs','美食、奶茶、游戏与手信'],wonder:['Personality, stories and connections','性格、故事与缘分']};
+  const desc=Object.fromEntries(Object.entries(townAnchorPlaces).map(([k,v])=>[k,v.purpose]));
   for(const k of ['fortune','home','island','wonder']){
    const button=element('button','',grid,'portraitDestination');button.type='button';button.setAttribute('aria-label',tr(...maps[k].n));
    const im=element('img','',button);im.src=destinationPortrait(k);im.alt='';im.loading='lazy';im.decoding='async';
    const caption=element('span','',button,'destinationCaption');
    element('span',k===scene?tr('YOU ARE HERE','你在这里'):visited.includes(k)?tr('REVISIT','重游'):tr('UNDISCOVERED','尚未探索'),caption,'destinationStatus');
-   element('strong',tr(...maps[k].n),caption);element('small',tr(...desc[k]),caption);
+   element('strong',tr(...maps[k].n),caption);element('small',tr(...desc[k]),caption);element('small',tr(...townAnchorPlaces[k].name),caption,'destinationAnchor');
    button.onclick=()=>{if(transitioning)return;if(k===scene&&!room){$('page').style.display='none';return}openRailStop(k)};
   }cluePanel(q);
  });
@@ -7042,6 +7042,7 @@ function openRailStop(destination=railNextDistrict(scene)){
  activePage='travel';
  page(tr('Next stop: ','下一站：')+tr(...maps[destination].n),tr('Take a seat. Leave when you feel ready.','坐下来看看风景，准备好了再出发。'),q=>{
   renderRailRoute(q);
+  const featured=townAnchorPlaces[destination];if(featured){const note=element('div','',q,'railAnchorNote');element('strong',tr('Worth a visit: ','值得一去：')+tr(...featured.name),note);element('small',tr(...featured.purpose),note)}
   const cabin=element('div','',q,'districtRailCabin');
   element('small',tr('MEOWBOX RAILWAY · SCENIC SERVICE','摸鱼铁路 · 观景列车'),cabin,'railRouteCar');
   const frame=element('div','',cabin,'districtRailWindow train-window'),im=element('img','',frame);
@@ -8105,7 +8106,7 @@ const travellerMoodRoutes=[
  {id:'play',district:'island',door:'arcade',ask:['I am bored out of my mind.','无聊到快发芽了。'],reason:['A quick round of arcade fun might help.','去游戏厅摸一会儿鱼。']}
 ];
 var travellerSuggestedRoute=null;
-function travellerRailLabel(){const v=travellerSuggestedRoute;return v&&v.district===scene&&travellerRouteDoor(v)?tr('Find: ','去找：')+travellerRouteName(v):tr('Next train: ','下一班：')+tr(...maps[railNextDistrict(scene)].n)}
+function travellerRailLabel(){const v=travellerSuggestedRoute;if(v&&travellerRouteDoor(v))return v.district===scene?tr('Find: ','去找：')+travellerRouteName(v):tr('Train to: ','搭车去：')+tr(...maps[v.district].n);return tr('Next train: ','下一班：')+tr(...maps[railNextDistrict(scene)].n)}
 function travellerRouteDoor(v){return maps[v.district]?.st.find(st=>st[0]===v.door)}
 function travellerRouteName(v){const st=travellerRouteDoor(v);return st?tr(st[3],st[4]):tr(...maps[v.district].n)}
 function travellerFollowRoute(v){
@@ -8136,7 +8137,7 @@ todayHub=function(){travellerTodayBefore();if(!room&&!activity)travellerMoodPane
 $('dockScoop').onclick=todayHub;
 const travellerGuideEnterBefore=enter;
 enter=function(id){if(travellerSuggestedRoute?.district===scene&&travellerSuggestedRoute.door===id)travellerSuggestedRoute=null;return travellerGuideEnterBefore(id)};
-nextStopButton.onclick=()=>{const v=travellerSuggestedRoute;if(v&&v.district===scene){travellerFollowRoute(v);return}openRailStop()};
+nextStopButton.onclick=()=>{const v=travellerSuggestedRoute;if(v&&travellerRouteDoor(v)){travellerFollowRoute(v);return}openRailStop()};
 const travellerEditStyle=document.createElement('style');travellerEditStyle.textContent=
 '.travellerEditBook,.travellerMoodBook{background:var(--town-grain),#f5e9cf;color:#504638;border:1px solid #b5a07a;border-radius:4px;padding:14px;margin:12px 0;box-sizing:border-box}'+
 '.travellerEditHeading{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px dashed #bda47d;padding-bottom:10px;margin-bottom:12px}.travellerEditHeading img{width:76px;height:94px;object-fit:contain;border:1px solid #c2a87c;background:#e7d6b7;border-radius:40% 40% 4px 4px}.travellerEditHeading small{font:600 15px/1.5 var(--town-title)}'+
@@ -8224,3 +8225,48 @@ const goodCompanyStyle=document.createElement('style');goodCompanyStyle.textCont
 '.goodCompanyPicks,.goodCompanyActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:10px 0}.goodCompanyBook button,.goodCompanyInvitation button{min-height:44px;white-space:normal;overflow-wrap:anywhere;line-height:1.3}.goodCompanyPicks button[aria-pressed=true]{background:#d9e3cc!important;outline:2px solid #597b68;outline-offset:-2px}.goodCompanyBook label,.goodCompanyBook>small{display:block;margin:8px 0;line-height:1.5}.goodCompanyBook textarea{width:100%;min-height:95px;box-sizing:border-box;padding:10px;font:16px/1.5 system-ui;background:#fff4df;color:#514638;border:1px solid #b69d73;border-radius:3px;resize:vertical}'+
 '.goodCompanyReward{color:#536b56}.goodCompanyCheer{border:3px double #c4a66c;padding:12px;margin:12px 0;background:#f4e1ae}.goodCompanyCheer[hidden]{display:none}.goodCompanyReply{display:flex;align-items:center;gap:10px;margin:8px 0}.goodCompanyReply img{width:60px;height:60px;object-fit:contain}.goodCompanyReply>div{flex:1;min-width:0}.goodCompanyReply p,.goodCompanyMemory p{white-space:pre-wrap;overflow-wrap:anywhere}.goodCompanyArchive{border-top:1px dashed #b5a07a;margin-top:14px;padding-top:8px}.goodCompanyArchive summary{min-height:44px;cursor:pointer;display:flex;align-items:center}.goodCompanyMemory{border-bottom:1px dashed #b5a07a;padding:10px 0}.goodCompanyPrivacy{font-size:12px}@media(prefers-reduced-motion:no-preference){.goodCompanyCheer:not([hidden]){animation:goodCompanyReveal .45s ease-out}@keyframes goodCompanyReveal{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}}';
 document.head.append(goodCompanyStyle);
+
+
+/* Four signature destinations. Use existing doorway IDs; no new maps,
+   no mandatory completion and no repeatable coin rewards for walking in. */
+const townAnchorPlaces={
+ fortune:{district:'fortune',door:'temple',name:['Fortune Temple','解忧庙'],purpose:['Find a little clarity','给自己一点清静'],memory:['A moment of stillness','一刻清静'],line:['Make space for hope. The universe has no office hours.','给希望留点位置，宇宙没有上下班时间。']},
+ home:{district:'home',door:'tea',name:['The Tea Room · Good Company Club','吃瓜茶馆 · 摸鱼同好会'],purpose:['Find good company','来找个摸鱼搭子'],memory:['A seat at the table','茶桌上有你的位置'],line:['Gossip, good news and a seat saved for you.','有瓜、有喜事，也有留给你的座位。']},
+ island:{district:'island',door:'arcade',name:['The Arcade','童年游戏厅'],purpose:['Play and collect little treasures','玩一玩，收集小宝藏'],memory:['Permission to play','今日准许玩耍'],line:['An excellent place to be unproductive on purpose.','一个可以理直气壮不干正事的地方。']},
+ wonder:{district:'wonder',door:'quiz',name:['Personality Lab','人格研究所'],purpose:['Discover another side of yourself','发现不一样的自己'],memory:['A little self-discovery','认识自己的一小步'],line:['You are more interesting than your job title.','你比工牌上的职位有意思多了。']}
+};
+function townAnchorVisits(){
+ const raw=load('townAnchorVisitsV1',{}),out={};
+ for(const k of Object.keys(townAnchorPlaces))if(typeof raw?.[k]==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(raw[k]))out[k]=raw[k];
+ return out
+}
+function townAnchorRecord(district,door,day=shrineClock().day){
+ const a=townAnchorPlaces[district],visits=townAnchorVisits();if(!a||a.door!==door||visits[district])return false;
+ visits[district]=day;save('townAnchorVisitsV1',visits);return true
+}
+function townAnchorPanel(q){
+ const book=element('section','',q,'townAnchorBook'),visits=townAnchorVisits(),count=Object.keys(visits).length;
+ element('small',tr('THE FOUR-STOP JOURNEY','四站小旅行'),book);
+ element('h2',tr('Four places, four little escapes','四个地方，四种小逃离'),book);
+ element('p',count+'/4 '+tr('signature places discovered · no deadline','个招牌去处已探访 · 不限时间'),book);
+ const line=element('div','',book,'townAnchorProgress');line.setAttribute('role','progressbar');line.setAttribute('aria-valuemin','0');line.setAttribute('aria-valuemax','4');line.setAttribute('aria-valuenow',String(count));line.setAttribute('aria-label',tr('Signature places discovered','已探访招牌去处'));for(let i=0;i<4;i++){const mark=element('span','',line);mark.dataset.done=String(i<count)}
+ for(const [k,a] of Object.entries(townAnchorPlaces)){
+  const row=element('article','',book,'townAnchorRow'),im=element('img','',row);im.src=destinationPortrait(k);im.alt='';im.loading='lazy';
+  const copy=element('div','',row,'townAnchorCopy');element('small',tr(...maps[k].n),copy);element('strong',tr(...a.name),copy);element('p',tr(...a.line),copy);
+  if(visits[k])element('small',tr('Passport memory: ','护照回忆：')+tr(...a.memory),copy,'townAnchorMemory');
+  const go=b(copy,scene===k?tr('Walk there','走过去'):tr('Take the train','搭列车去'),()=>travellerFollowRoute(a));go.disabled=!!room||!!activity;
+ }
+ if(count===4)element('p',tr('All four memories collected. The town is yours to revisit.','四份回忆已集齐，随时回来逛逛。'),book,'townAnchorMemory');
+ return book
+}
+const townAnchorIntroBefore=roomIntro;
+roomIntro=function(){townAnchorIntroBefore();if(townAnchorRecord(scene,room)){toast(tr('Passport memory: ','护照回忆：')+tr(...townAnchorPlaces[scene].memory))}};
+const townAnchorTravelBefore=travel;
+travel=function(){townAnchorTravelBefore();const q=$('content'),grid=q.querySelector('.portraitTravelGrid');if(grid){const book=townAnchorPanel(q);grid.after(book)}journalLanguage(travel)};
+$('travel').onclick=travel;$('dockTravel').onclick=travel;
+const townAnchorPassportBefore=passport;
+passport=function(){townAnchorPassportBefore();const q=$('content'),album=q.querySelector('.travelAlbum');const book=townAnchorPanel(q);if(album)album.before(book);journalLanguage(passport)};
+$('dockPassport').onclick=passport;
+const townAnchorStyle=document.createElement('style');townAnchorStyle.textContent=
+'.townAnchorBook{background:var(--town-grain),#f5e9cf;color:#514638;border:1px solid #b5a07a;border-radius:4px;padding:12px;margin:12px 0}.townAnchorBook>small{font-size:11px;letter-spacing:.06em;color:#78664b}.townAnchorBook h2{font-family:var(--town-title);margin:6px 0!important}.townAnchorProgress{display:flex;gap:4px;margin:9px 0}.townAnchorProgress span{flex:1;height:4px;background:#d4c3a3}.townAnchorProgress span[data-done=true]{background:#708768}.townAnchorRow{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;padding:11px 0;border-top:1px dashed #bda47d}.townAnchorRow img{width:72px;height:105px;object-fit:cover;border:1px solid #b69d73;border-radius:3px}.townAnchorCopy{min-width:0}.townAnchorCopy strong,.townAnchorCopy small{display:block;overflow-wrap:anywhere}.townAnchorCopy strong{font:600 16px/1.35 var(--town-title);color:#53664e}.townAnchorCopy p{font-size:13px;line-height:1.4;margin:4px 0}.townAnchorCopy button{min-height:44px;white-space:normal;margin-top:5px}.townAnchorMemory{color:#65764f}.railAnchorNote{border-left:2px solid #819477;padding:8px 10px;margin:8px 0;background:#e7e2cb;color:#514638}.railAnchorNote small{display:block;margin-top:3px}.destinationAnchor{font-weight:700!important;color:#f6dfab!important}@media(min-width:650px){.townAnchorRow{grid-template-columns:88px minmax(0,1fr)}.townAnchorRow img{width:88px;height:115px}}';
+document.head.append(townAnchorStyle);
