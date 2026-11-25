@@ -1650,9 +1650,9 @@ drawMap=function(){
   const moving=residentMoving(n);
   if(n.kind===2){cat(n.x,n.y,0,moving,.65*sc);continue}
   const dir=Math.abs(n.ty-n.y)>Math.abs(n.tx-n.x)?(n.ty<n.y?'up':'down'):(n.tx<n.x?'left':'right');
-  backHuman(n.x,n.y,((avatar??0)+1+n.kind)%4,moving,dir,sc*.83);
+  if(n.grumpy){riverAuntie(n.x,n.y,sc*.76)}else backHuman(n.x,n.y,((avatar??0)+1+n.kind)%4,moving,dir,sc*.83);
   if(Math.hypot(n.x-p.x,n.y-p.y)<150){
-   if(n.popGuest){ctx.save();ctx.font='15px Georgia';const label=tr(...n.n),width=ctx.measureText(label).width+18;ctx.fillStyle='#f6e8cced';ctx.fillRect(n.x-width/2,n.y-120*sc,width,22);ctx.fillStyle='#435744';ctx.textAlign='center';ctx.fillText(label,n.x,n.y-120*sc+16);ctx.restore()}
+   if(n.popGuest||n.grumpy){ctx.save();ctx.font='15px Georgia';const label=tr(...n.n),width=ctx.measureText(label).width+18;ctx.fillStyle='#f6e8cced';ctx.fillRect(n.x-width/2,n.y-120*sc,width,22);ctx.fillStyle='#435744';ctx.textAlign='center';ctx.fillText(label,n.x,n.y-120*sc+16);ctx.restore()}
    target(n.x-36,n.y-100,72,110,()=>npcTalk(n))
   }
  }
@@ -3277,3 +3277,215 @@ passport=function(){
 $('dockPassport').onclick=passport;
 const popGuestStyle=document.createElement('style');
 popGuestStyle.textContent='.popGuestAlbum{margin:20px 0;color:inherit}.popGuestRow{border-bottom:1px solid #b7a47e;padding:10px 0}.popGuestRow strong,.popGuestRow small{display:block}.popGuestRow p{margin:5px 0;font-size:13px}.popGuestAlbum>p{font-size:13px;line-height:1.4}';document.head.append(popGuestStyle);
+
+
+/* Hideout, passport rewards and sharper in-world satire.
+   All progress remains on this browser. No network or real money. */
+const hideoutThemes=[
+ {id:'morning',name:['Morning mist','晨雾小屋'],wall:'#e6d6b7',floor:'#a68b6d',sky:'#9aafa9',need:0},
+ {id:'tea',name:['Matcha afternoon','抹茶午后'],wall:'#d2dbc0',floor:'#947b5e',sky:'#9ab7a2',need:2},
+ {id:'moon',name:['Midnight escape','午夜逃班'],wall:'#a4a7bc',floor:'#776d77',sky:'#526677',need:4}
+];
+const hideoutRewards=[
+ {id:'frame',name:['Postcard wall','旅行明信片墙'],kind:'frame',need:1,clue:['Visit one destination.','到访一个目的地。']},
+ {id:'lantern',name:['Mountain lantern','山间小灯笼'],kind:'lantern',need:2,clue:['Collect two travel stamps.','收集两枚旅行印章。']},
+ {id:'card',name:['Four-town souvenir','四镇纪念牌'],kind:'card',need:4,clue:['Visit all four towns.','走遍四个小镇。']},
+ {id:'cat',name:['Cat cushion','猫猫抱枕'],kind:'cat',need:0,item:'Cat friendship',clue:['Earn a cat’s trust in Daydream Park.','在白日梦公园赢得猫猫信任。']},
+ {id:'moon',name:['Lucky moon ornament','圣杯好运摆件'],kind:'moon',need:0,item:'Heaven’s approval',clue:['Earn the temple’s moon-block blessing.','在庙里获得圣杯祝福。']},
+ {id:'guest',name:['Guest memory shelf','偶遇名人纪念架'],kind:'scroll',need:0,guests:3,clue:['Complete three different cameo stories.','完成三个不同的客串故事。']},
+ {id:'arcade',name:['Arcade trophy','街机高手奖杯'],kind:'stamp',need:0,item:'Precision claw champion',clue:['Master the precision claw challenge.','挑战精准夹娃娃模式。']}
+];
+function hideoutStampCount(){return new Set(visited.filter(k=>Object.hasOwn(maps,k))).size}
+function hideoutUnlocked(reward){
+ return hideoutStampCount()>=reward.need&&(!reward.item||items.some(x=>x[0]===reward.item))&&(!reward.guests||popGuestStories.filter(g=>popGuestRecord(g)?.choices?.length).length>=reward.guests)
+}
+let hideoutPrefs=load('hideoutPrefsV2',{theme:'morning',display:[],furniture:null});
+if(!hideoutPrefs||typeof hideoutPrefs!=='object'||Array.isArray(hideoutPrefs))hideoutPrefs={theme:'morning',display:[],furniture:null};
+if(!Array.isArray(hideoutPrefs.display))hideoutPrefs.display=[];
+let hideoutFurniture=Array.isArray(hideoutPrefs.furniture)?hideoutPrefs.furniture:decor9.filter(d=>Object.hasOwn(roomNames9,d.id)&&Object.hasOwn(art9,d.id)).map(d=>({...d}));
+let hideoutEditing=false,hideoutSelected=-1;
+function saveHideout(){hideoutPrefs.furniture=hideoutFurniture;save('hideoutPrefsV2',hideoutPrefs)}
+function hideoutSceneArt(theme){
+ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 450" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="hw" x2="0" y2="1"><stop stop-color="'+theme.wall+'"/><stop offset="1" stop-color="#d4be98"/></linearGradient><linearGradient id="hf" x2="0" y2="1"><stop stop-color="'+theme.floor+'"/><stop offset="1" stop-color="#725744"/></linearGradient><linearGradient id="hs" x2="0" y2="1"><stop stop-color="'+theme.sky+'"/><stop offset="1" stop-color="#e4d5ad"/></linearGradient><clipPath id="windowClip"><path d="M128 171V75Q128 35 200 35Q272 35 272 75V171Z"/></clipPath></defs><path fill="url(#hw)" d="M0 0H400V280H0Z"/><path fill="url(#hf)" d="M0 280H400V450H0Z"/><path d="M0 0H400V14H0M0 268H400V282H0" fill="#806348"/><path d="M0 312H400M0 354H400M0 410H400M110 282L50 450M175 282L160 450M230 282L250 450M298 282L370 450" stroke="#765b48" opacity=".48" fill="none"/><path d="M119 182V75Q119 26 200 26Q281 26 281 75V182Z" fill="#775b45"/><g clip-path="url(#windowClip)"><path fill="url(#hs)" d="M110 26H290V182H110Z"/><circle cx="242" cy="70" r="19" fill="#f1dfad"/><path d="M108 149Q148 96 177 119Q203 90 229 114Q266 84 292 132V184H108Z" fill="#91a59a"/><path d="M110 166Q152 135 185 148Q220 110 246 141Q272 126 293 157V186H110Z" fill="#638579"/></g><path d="M200 37V172M127 108H272" stroke="#8c7051" stroke-width="4"/><path d="M112 181H288L294 189H106Z" fill="#9a7650"/><path d="M114 28Q132 40 127 78L115 175L77 190Q106 122 90 30Z M286 28Q268 40 273 78L285 175L323 190Q294 122 310 30Z" fill="#858e79" stroke="#737f6d" stroke-width="1.5"/><path d="M16 25V264M384 25V264" stroke="#a48966" stroke-width="5"/></svg>'
+}
+function hideoutClaimPage(){
+ page(tr('Travel rewards','旅人奖励'),tr('Your stamps and discoveries unlock real decorations. No daily grind.','印章和旅途发现可以解锁小窝装饰，不用每天打卡刷任务。'),q=>{
+  element('h2',tr('Travel stamps','旅行印章')+' · '+hideoutStampCount()+'/4',q);
+  const stamps=element('div','',q,'hideoutStampGrid');
+  for(const k of ['fortune','home','island','wonder']){
+   const got=visited.includes(k),btn=b(stamps,'',()=>{if(got){toast(tr('Stamp collected. See the rewards below.','印章已收集，往下看看解锁奖励。'));q.querySelector('.hideoutRewardList')?.scrollIntoView({block:'start',behavior:'smooth'})}else travel()});
+   const art=element('span','',btn,'hideoutRewardArt');art.innerHTML=albumIcon('stamp');element('strong',tr(...maps[k].n),btn);element('small',got?tr('Stamped','已盖章'):tr('How to visit','怎么去'),btn);btn.classList.toggle('locked',!got);
+  }
+  const rewards=element('div','',q,'hideoutRewardList');
+  for(const reward of hideoutRewards){
+   const unlocked=hideoutUnlocked(reward),shown=hideoutPrefs.display.includes(reward.id),row=element('article','',rewards,'hideoutReward');
+   const art=element('span','',row,'hideoutRewardArt');art.innerHTML=albumIcon(reward.kind);
+   const info=element('div','',row);element('strong',tr(...reward.name),info);element('small',unlocked?tr('Unlocked','已解锁'):tr(...reward.clue),info);
+   const btn=b(row,unlocked?(shown?tr('Put away','收起来'):tr('Display','摆进小窝')):tr('Locked','未解锁'),()=>{if(!hideoutUnlocked(reward))return;hideoutPrefs.display=shown?hideoutPrefs.display.filter(id=>id!==reward.id):[...new Set([...hideoutPrefs.display,reward.id])];saveHideout();hideoutClaimPage()});btn.disabled=!unlocked
+  }
+  b(q,tr('See my hideout','看看我的小窝'),hideoutPage)
+ })
+}
+function hideoutPage(){
+ activePage='hideout';
+ page(tr('My Hideout','我的小窝'),tr('The rent is imaginary. The peace is real.','房租是假的，清静是真的。'),q=>{
+  const profile=element('div','',q,'hideoutProfile'),pic=element('img','',profile);pic.src=ART['badge'+(avatar??0)];pic.alt='';
+  const identity=element('div','',profile);element('strong',playerName||tr('Traveller','旅人'),identity);element('small',tr(...names[avatar??0]),identity);b(profile,tr('Edit profile','编辑资料'),hideoutProfilePage);
+  const theme=hideoutThemes.find(v=>v.id===hideoutPrefs.theme&&hideoutStampCount()>=v.need)||hideoutThemes[0];
+  const stage=element('div','',q,'hideoutScene');stage.innerHTML=hideoutSceneArt(theme);
+  function render(){
+   stage.querySelectorAll('.hideoutPlaced,.hideoutDisplay,.hideoutPlayer').forEach(el=>el.remove());
+   const sorted=hideoutFurniture.map((d,i)=>({d,i})).filter(v=>Object.hasOwn(art9,v.d.id)).sort((a,b)=>(a.d.id==='rug'?-1:a.d.y)-(b.d.id==='rug'?-1:b.d.y));
+   for(const {d,i} of sorted){
+    const im=element('img','',stage,'hideoutPlaced'+(hideoutEditing&&i===hideoutSelected?' selected':''));im.src=art9[d.id];im.alt=tr(...roomNames9[d.id]);im.style.left=clamp(Number(d.x)||50,8,92)+'%';im.style.top=clamp(Number(d.y)||50,12,91)+'%';im.style.rotate=(Number(d.r)||0)+'deg';im.style.width=(d.id==='bed'?36:d.id==='rug'?44:d.id==='shelf'?26:19)+'%';
+    if(hideoutEditing){
+     im.tabIndex=0;im.setAttribute('role','button');im.onkeydown=e=>{const dirs={ArrowLeft:[-3,0],ArrowRight:[3,0],ArrowUp:[0,-3],ArrowDown:[0,3]};if(!dirs[e.key])return;e.preventDefault();d.x=clamp((Number(d.x)||50)+dirs[e.key][0],8,92);d.y=clamp((Number(d.y)||50)+dirs[e.key][1],12,91);im.style.left=d.x+'%';im.style.top=d.y+'%';saveHideout()};
+     im.onpointerdown=e=>{hideoutSelected=i;stage.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected'));im.classList.add('selected');im.setPointerCapture(e.pointerId)};
+     im.onpointermove=e=>{if(!im.hasPointerCapture(e.pointerId))return;const rect=stage.getBoundingClientRect();d.x=clamp((e.clientX-rect.left)/rect.width*100,8,92);d.y=clamp((e.clientY-rect.top)/rect.height*100,12,91);im.style.left=d.x+'%';im.style.top=d.y+'%'};
+     im.onpointerup=im.onpointercancel=()=>saveHideout();
+    }else im.onclick=()=>{if(d.id==='board')myNotes9();else if(d.id==='frame')album9();else if(d.id==='shelf')hideoutClaimPage();else if(d.id==='lamp')stage.classList.toggle('dim');else if(d.id==='bed')toast(tr('The bed has approved your leave.','床铺已批准你的年假。'))};
+   }
+   const displays=hideoutRewards.filter(v=>hideoutPrefs.display.includes(v.id)&&hideoutUnlocked(v));
+   for(const [i,reward] of displays.entries()){
+    const el=element('button','',stage,'hideoutDisplay');el.style.left=(16+(i%4)*22)+'%';el.style.top=(47+Math.floor(i/4)*9)+'%';el.innerHTML=albumIcon(reward.kind);el.setAttribute('aria-label',tr(...reward.name));el.onclick=()=>toast(tr(...reward.name));
+   }
+   const player=element('img','',stage,'hideoutPlayer');player.src=ART['walker'+(avatar??0)+'0'];player.alt=tr(...names[avatar??0]);player.onclick=()=>toast(tr('Do not disturb. Recovering from adulthood.','请勿打扰，正在治疗成年人的疲惫。'))
+  }render();
+  const controls=element('div','',q,'hideoutActions');
+  b(controls,hideoutEditing?tr('Finish decorating','布置好了'):tr('Decorate','布置小窝'),()=>{hideoutEditing=!hideoutEditing;hideoutPage()});
+  b(controls,tr('Stamps & rewards','印章与奖励'),hideoutClaimPage);
+  if(hideoutEditing){
+   element('p',tr('Drag furniture. Tap an item to select it, then rotate or remove it.','拖动家具。点选后可旋转或移除。'),q);
+   const tray=element('div','',q,'hideoutFurnitureTray');
+   for(const [id,name] of Object.entries(roomNames9)){
+    const btn=b(tray,'',()=>{if(hideoutFurniture.length>=24){toast(tr('Your room is full. Even the cat needs space.','小窝满啦，猫猫也需要空间。'));return}hideoutFurniture.push({id,x:50,y:68});hideoutSelected=hideoutFurniture.length-1;saveHideout();render()});const im=element('img','',btn);im.src=art9[id];im.alt='';element('small',tr(...name),btn)
+   }
+   const tools=element('div','',q,'hideoutActions');b(tools,tr('Rotate','旋转'),()=>{if(hideoutFurniture[hideoutSelected]){const d=hideoutFurniture[hideoutSelected];d.r=((d.r||0)+15)%360;saveHideout();render()}});b(tools,tr('Remove','移除'),()=>{if(hideoutSelected>=0&&hideoutFurniture[hideoutSelected]){hideoutFurniture.splice(hideoutSelected,1);hideoutSelected=-1;saveHideout();render()}});
+   element('h2',tr('Room atmosphere','小窝氛围'),q);
+   const themes=element('div','',q,'hideoutActions');for(const theme of hideoutThemes){const unlocked=hideoutStampCount()>=theme.need;const btn=b(themes,tr(...theme.name)+(unlocked?'':' · '+theme.need+' '+tr('stamps','枚印章')),()=>{if(!unlocked)return;hideoutPrefs.theme=theme.id;saveHideout();hideoutPage()});btn.disabled=!unlocked;btn.setAttribute('aria-pressed',String(hideoutPrefs.theme===theme.id))}
+  }
+  const links=element('div','',q,'hideoutActions');b(links,tr('My bag','我的背包'),myRoom);b(links,tr('Private notes','私人留言'),myNotes9);b(links,tr('Saved readings','收藏解读'),album9);b(links,tr('Passport','护照'),passport);
+  const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();hideoutPage()}
+ })
+}
+function hideoutProfilePage(){
+ page(tr('My profile','我的旅人资料'),tr('Change your nickname or appearance without losing your memories.','换个昵称或形象，旅途回忆不会消失。'),q=>{
+  let chosen=avatar??0;const name=element('input','',q);name.value=playerName||'';name.maxLength=24;name.setAttribute('aria-label',tr('Nickname','昵称'));name.className='hideoutName';
+  const choices=element('div','',q,'hideoutAvatarGrid');
+  for(let i=0;i<4;i++){const btn=b(choices,'',()=>{chosen=i;choices.querySelectorAll('button').forEach((el,j)=>el.setAttribute('aria-pressed',String(j===chosen)))});btn.setAttribute('aria-pressed',String(i===chosen));const im=element('img','',btn);im.src=ART['portrait'+i];im.alt='';element('small',tr(...names[i]),btn)}
+  b(q,tr('Save profile','保存资料'),()=>{const v=name.value.trim();if(!v){name.focus();return}playerName=v;avatar=chosen;save('playerName',v);save('avatar',chosen);updateHUD();hideoutPage();toast(tr('Profile updated. Memories intact.','资料更新，回忆都在。'))});
+  b(q,tr('Back without changing','不修改，返回'),hideoutPage)
+ })
+}
+const hideoutPassportPrevious=passport;
+passport=function(){
+ hideoutPassportPrevious();const book=$('content').querySelector('.travelAlbum');if(!book)return;
+ const reward=element('section','',book,'hideoutRewardCallout');const n=hideoutRewards.filter(hideoutUnlocked).length,shown=hideoutRewards.filter(v=>hideoutUnlocked(v)&&hideoutPrefs.display.includes(v.id)).length;
+ element('strong',tr('Your stamps unlock your room','旅行印章解锁小窝装饰'),reward);
+ element('p',n+' '+tr('decorations unlocked','件装饰已解锁')+' · '+shown+' '+tr('on display','件已摆放'),reward);
+ b(reward,tr('Open stamp rewards','打开印章奖励'),hideoutClaimPage);
+ const profile=book.querySelector('.albumProfile');if(profile)profile.after(reward)
+};
+$('dockPassport').onclick=passport;
+$('profileHud').onclick=hideoutPage;
+const hideoutBagBefore=myRoom;
+myRoom=function(){hideoutBagBefore();const q=$('content'),profile=q.querySelector('.albumProfile');if(profile){const btn=b(q,tr('Open my hideout','打开我的小窝'),hideoutPage);profile.after(btn)}};
+$('dockRoom').onclick=myRoom;
+const hideoutHudBefore=updateHUD;
+updateHUD=function(){hideoutHudBefore();const el=$('hudName');if(playerName)el.textContent=playerName;const stamps=$('hudStamps');stamps.textContent=tr('Stamps ','印章 ')+hideoutStampCount()+'/4';stamps.title=tr('Travel stamps unlock hideout decorations','旅行印章解锁小窝装饰');stamps.setAttribute('aria-label',stamps.title);};
+const hideoutStyle=document.createElement('style');
+hideoutStyle.textContent='.hideoutScene{position:relative;isolation:isolate;overflow:hidden;aspect-ratio:8/9;max-height:52dvh;width:100%;background:#cbb797;border:1px solid #967957;border-radius:4px}.hideoutScene>svg{position:absolute;inset:0;width:100%;height:100%;z-index:-1}.hideoutScene.dim{filter:brightness(.76)}.hideoutPlaced{position:absolute;transform:translate(-50%,-70%);touch-action:none;user-select:none;-webkit-user-drag:none;cursor:pointer;max-height:36%;object-fit:contain}.hideoutPlaced.selected{outline:2px dashed #a7633d;outline-offset:2px}.hideoutPlayer{position:absolute;width:13%;left:53%;bottom:6%;pointer-events:auto;cursor:pointer}.hideoutDisplay{position:absolute;transform:translate(-50%,-50%);width:12%;height:auto;aspect-ratio:1;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;min-height:0!important}.hideoutDisplay svg{width:100%;height:100%}.hideoutProfile{display:flex;gap:10px;align-items:center;margin:12px 0}.hideoutProfile img{width:56px;height:56px;object-fit:contain}.hideoutProfile>div{flex:1;min-width:0;overflow-wrap:anywhere}.hideoutProfile small,.hideoutReward small{display:block;font-size:12px}.hideoutActions{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.hideoutActions button{min-height:44px;white-space:normal}.hideoutFurnitureTray,.hideoutAvatarGrid,.hideoutStampGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:10px 0}.hideoutFurnitureTray button,.hideoutAvatarGrid button,.hideoutStampGrid button{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;white-space:normal;padding:7px 3px;min-height:64px;line-height:1.3}.hideoutFurnitureTray img{width:45px;height:38px;object-fit:contain}.hideoutAvatarGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.hideoutAvatarGrid img{width:100%;max-width:95px;aspect-ratio:1;object-fit:contain}.hideoutAvatarGrid button[aria-pressed=true],.hideoutActions button[aria-pressed=true]{background:#4d6652;color:#fff4d5}.hideoutName{width:100%;min-height:44px;font-size:16px;padding:8px;box-sizing:border-box}.hideoutStampGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.hideoutRewardArt{width:48px;flex:none}.hideoutRewardArt svg{width:100%;display:block}.hideoutReward{display:flex;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid #bca684}.hideoutReward>div{flex:1;min-width:0;overflow-wrap:anywhere}.hideoutReward button{min-height:44px;font-size:12px}.hideoutRewardCallout{background:#f0e1c5;padding:13px;border:1px solid #b6a17a;margin:12px 0;color:#544d3a}.hideoutRewardCallout p{font-size:13px;margin:5px 0}.hideoutStampGrid .locked{opacity:.68}';
+document.head.append(hideoutStyle);
+
+/* Grumpy roadside auntie: one character, grounded to the existing path.
+   Close encounters are short, optional banter, not blocking collision dialogs. */
+const grumpyBumps=[
+ ['Eh, eyes on annual leave ah?','哎哟，没长眼睛啊？眼睛请年假了？'],
+ ['You rushing to collect your salary or what?','走这么快，赶着去领工资啊？'],
+ ['Wah, your GPS also on MC?','导航也请病假了是吧？'],
+ ['Auntie not a revolving door, hor.','阿姨又不是旋转门，别老往我身上转！'],
+ ['Walk properly. Even the cat knows how to give way.','好好走路，连猫都知道让路！'],
+ ['Lucky I am not carrying my hot kopi.','算你走运，阿姨手上没拿热咖啡。']
+];
+const grumpyTalk=[
+ ['Every time they dig up the road, my taxes get a little more exercise.','每次修路，我交的税就出来跑个步。'],
+ ['The town council held a consultation about the consultation. Wah, very consultative.','小镇议会开会讨论征求意见的流程，意见还没征，会议先开了三个。'],
+ ['I wanted to buy a car. The certificate costs more than my ambition.','本来想买车，一看拥车证，梦想直接改乘地铁。'],
+ ['Today the town rain got a promotion. It is now senior rain.','今天小镇的雨升职了，变成高级暴雨。'],
+ ['Everything is getting expensive except the compliments from my boss. Those remain zero.','什么都涨价，只有老板的夸奖没涨，还是零。'],
+ ['The lift says maximum eight people. Why is there always a ninth with a giant bag?','电梯限载八人，怎么总有第九个人背着大包挤进来？']
+];
+const grannyInitBefore=initNPC;
+initNPC=function(){grannyInitBefore();if(scene!=='home')return;const y=clamp(maxY()-340,minY()+30,maxY()-30),lane=residentLane(scene,y);npc.push({x:lane.x-lane.half*.38,y,tx:lane.x-lane.half*.38,ty:y,n:['Grumpy Ah Ma','暴躁阿嬷'],kind:0,grumpy:true,walkDirection:-1,pauseUntil:t+2.5})};
+let grannyBumpAt=-100;
+const grannyStepBefore=step;
+step=function(n,dt,speed){
+ const result=grannyStepBefore(n,dt,speed);
+ if(n!==p||room||transitioning||talkOpen||!proposal.hidden||$('page').style.display==='block'||scene!=='home'||t-grannyBumpAt<7)return result;
+ const ma=npc.find(v=>v.grumpy);if(!ma)return result;
+ if(Math.hypot(p.x-ma.x,p.y-ma.y)<31&&Math.hypot(p.tx-p.x,p.ty-p.y)>4){grannyBumpAt=t;ma.pauseUntil=t+1.6;toast(tr(...townReaction('granny-bump',grumpyBumps)))}
+ return result
+};
+const grannyTalkBefore=npcTalk;
+npcTalk=function(n){
+ if(!n?.grumpy||room)return grannyTalkBefore(n);
+ stopRoute();p.tx=p.x;p.ty=p.y;greetingNPC=n;greetingUntil=t+.9;
+ say(tr(...n.n),tr(...townReaction('granny-greeting',grumpyTalk)),[
+  [tr('What else annoys you?','还有什么想吐槽的？'),()=>say(tr(...n.n),tr(...townReaction('granny-greeting',grumpyTalk)),[[tr('Take care, Ah Ma','阿嬷慢走'),closeTalk]])],
+  [tr('Sorry, Auntie!','不好意思阿嬷！'),()=>say(tr(...n.n),tr('Good lah. At least got manners. Go eat something. Too skinny already.','还算有礼貌。去吃点东西，瘦成这样！'),[[tr('See you','回头见'),closeTalk]])],
+  [tr('Continue walking','继续逛'),closeTalk]
+ ])
+};
+// Stronger original silhouette and animated scolding. The same auntie remains the host,
+// never the paper target. Canvas draft, not final hand-painted sprite artwork.
+riverAuntie=function(x,y,sc=1){
+ ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+ const age=activity==='hit'?clamp((t-stressSwingAt)/.46,0,1):1,sw=Math.sin(Math.PI*age),grump=activity==='hit'&&age<1;
+ ellipse(0,4,40,9,'#342d2855');
+ // Shoes and bent knees rest on the ground; cardigan and apron follow a seated silhouette.
+ ctx.fillStyle='#5b4c46';ctx.beginPath();ctx.moveTo(-27,-46);ctx.quadraticCurveTo(-32,-17,-25,-9);ctx.lineTo(-9,-8);ctx.lineTo(-5,-39);ctx.lineTo(8,-38);ctx.lineTo(11,-9);ctx.lineTo(28,-9);ctx.quadraticCurveTo(35,-20,27,-46);ctx.closePath();ctx.fill();
+ ellipse(-19,-5,13,5,'#383833');ellipse(20,-5,13,5,'#383833');
+ ctx.fillStyle='#874c49';ctx.beginPath();ctx.moveTo(-29,-84);ctx.quadraticCurveTo(-42,-65,-29,-43);ctx.quadraticCurveTo(0,-31,31,-43);ctx.quadraticCurveTo(42,-65,27,-84);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#b79b73';ctx.beginPath();ctx.moveTo(-12,-80);ctx.lineTo(12,-80);ctx.lineTo(24,-42);ctx.quadraticCurveTo(0,-32,-24,-42);ctx.closePath();ctx.fill();
+ for(let i=0;i<3;i++){line(-20,-62+i*7,20,-62+i*7,'#d5bf9755',1.4)}
+ // Grey bun, cheek jowls, forehead wrinkles and sharply angled eyebrows.
+ ellipse(0,-103,31,32,'#6d6c65');ellipse(13,-132,15,15,'#77766e');ellipse(0,-99,27,26,'#d8b596');ellipse(-23,-100,7,9,'#d8b596');ellipse(23,-100,7,9,'#d8b596');
+ ctx.fillStyle='#88867d';ctx.beginPath();ctx.moveTo(-26,-105);ctx.quadraticCurveTo(-30,-137,0,-133);ctx.quadraticCurveTo(27,-134,29,-105);ctx.quadraticCurveTo(15,-126,0,-120);ctx.quadraticCurveTo(-15,-118,-26,-105);ctx.fill();
+ line(-17,-116,-4,-116,'#a88a73',1);line(4,-116,16,-116,'#a88a73',1);line(-18,-107,-5,-103,'#544338',3.2);line(18,-107,5,-103,'#544338',3.2);
+ ellipse(-10,-99,2.1,2.5,'#443d36');ellipse(10,-99,2.1,2.5,'#443d36');line(-2,-99,-4,-94,'#a67d66',1.5);
+ line(-19,-91,-15,-87,'#ac8b74',1.2);line(19,-91,15,-87,'#ac8b74',1.2);
+ if(grump)ellipse(1,-86,7,4,'#824e47');else line(-7,-85,6,-86,'#824e47',2.4);
+ line(-23,-71,-37,-50,'#874c49',12);line(-37,-50,-20,-38,'#d8b596',8);
+ const hx=40+10*sw,hy=-48-24*sw;line(24,-70,37,-54-11*sw,'#874c49',12);line(37,-54-11*sw,hx,hy,'#d8b596',8);
+ if(activity==='hit'){ctx.save();ctx.translate(hx,hy);ctx.scale(.30,.30);stressSlipper(0,0,-.6-sw*.6);ctx.restore()}
+ ctx.restore()
+};
+auntieHitReplies.push(
+ ['Auntie: Wah, hit like that, even the printer will start working.','阿姨：哇，打这么有力，打印机都要吓得不卡纸了！'],
+ ['Auntie: One for the boss, one for the calendar, one for that stupid printer!','阿姨：一下打老板的破事，一下打日程表，再一下打那台破打印机！'],
+ ['Auntie: Don’t whack your phone, hor. That one you paid for.','阿姨：手机别打啊！那个是你自己花钱买的！'],
+ ['Auntie: Your overtime has been rejected. By my slipper.','阿姨：你的加班申请被拒了，拖鞋批的。'],
+ ['Auntie: You call that a hit? My mosquito has more force.','阿姨：这也叫打？我拍蚊子都比你有力！'],
+ ['Auntie: This paper has better attendance than your manager.','阿姨：这张纸出勤率都比你老板高！'],
+ ['Auntie: Paper only, okay. The real person can go queue for kopi.','阿姨：打纸就好啊，真人让他排队买咖啡去。']
+);
+const townRoasts=[
+ [['Weather department','天气吐槽局'],['The town weather is either sauna or free shower. Very generous.','小镇天气不是免费桑拿，就是免费淋浴，福利真好。'],[['Anonymous','匿名','My umbrella has a better work-life balance than me.','我的伞比我更懂劳逸结合。']]],
+ [['Taxpayer cat','纳税猫'],['The fictional town council has announced a task force to investigate why there are too many task forces.','小镇议会成立专项小组，调查专项小组为何太多。'],[['Mochi','麻薯','Can I sit on the paperwork?','公文给我坐一下？']]],
+ [['MRT standing champion','地铁站票冠军'],['The train said move in. My organs said there is no more room.','地铁广播叫往里走，我的内脏说真没位置了。'],[['Anonymous','匿名','We have become a group project.','挤成一个团建项目了。']]],
+ [['Kopi detective','咖啡侦探'],['I ordered less sugar. The price was not less anything.','点了少糖，价格倒是一分没少。'],[['Anonymous','匿名','That is premium disappointment.','这是高级版失望。']]],
+ [['Definitely working','认真摸鱼中'],['My boss asked for a quick sync. I have aged visibly since.','老板说快速同步一下，我肉眼可见地老了三岁。'],[['Anonymous','匿名','Please update your passport photo.','记得更新护照照片。']]],
+ [['Weather complaint department','天气投诉处'],['The town rain started as soon as my laundry went out. Personal attack.','衣服刚晾出去，小镇就下雨，属于精准打击。'],[['Anonymous','匿名','The clouds are following your calendar.','云朵在看你的日程表。']]]
+];
+wallThreads.push(...townRoasts);
+townChatReplies.work.push([['Grumpy Ah Ma','暴躁阿嬷'],['Your boss says urgent? Then ask him why he waited until Friday at five.','老板说急？那问他怎么等到周五五点才急！']]);
+townChatReplies.other.push([['Grumpy Ah Ma','暴躁阿嬷'],['Say properly lah. Auntie cannot read your mind, only your terrible posture.','好好讲啦，阿嬷不会读心，只看得出你坐姿很差。']]);
+const roastTopicBefore=townChatTopic;townChatTopic=function(v){const s=String(v).toLowerCase();if(/weather|rain|heat|hot today|天气|下雨|好热|暴雨/.test(s))return 'weather';if(/government|tax|policy|council|政府|税|政策|议会/.test(s))return 'civic';return roastTopicBefore(v)};
+townChatReplies.weather=[
+ [['Grumpy Ah Ma','暴躁阿嬷'],['The weather in this town has two settings: free steam room and free shower.','小镇天气就两档：免费桑拿和免费淋浴。']],
+ [['Kopi Uncle','咖啡叔'],['I opened my umbrella. The wind applied for joint custody.','刚撑开伞，风就申请共同抚养权。']]
+];
+townChatReplies.civic=[
+ [['Grumpy Ah Ma','暴躁阿嬷'],['Our fictional town council has formed a committee to reduce the number of committees.','小镇议会成立了一个委员会，专门研究怎么减少委员会。']],
+ [['Office Intern','实习生'],['Public consultation complete. We are now consulting on the results of the consultation.','公众咨询已完成，现在开始咨询咨询结果。']]
+];
