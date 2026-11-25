@@ -4011,7 +4011,9 @@ const shareKinds={soul:['Soul Cat','猫灵测试'],type:['Personality portrait',
 function sharePublicData(data){
  const pair=v=>Array.isArray(v)&&v.length>=2?[String(v[0]).slice(0,240),String(v[1]).slice(0,240)]:['',''];
  const kind=Object.hasOwn(shareKinds,data.kind)?data.kind:'type';
- return {kind,title:pair(data.title),lines:(Array.isArray(data.lines)?data.lines:[]).slice(0,4).map(pair),accent:/^#[0-9a-f]{6}$/i.test(data.accent||'')?data.accent:'#829a89'}
+ const title=pair(data.title),lines=(Array.isArray(data.lines)?data.lines:[]).slice(0,4).map(pair);let accent=/^#[0-9a-f]{6}$/i.test(data.accent||'')?data.accent:'#829a89';
+ if(kind==='type'&&/^[EIX][SNX][TFX][JPX]$/.test(title[0])){const traits={E:['Social recharge','社交充电'],I:['Quiet recharge','独处充电'],S:['Practical details','务实细节'],N:['Possibilities','灵感联想'],T:['Logical comparison','理性比较'],F:['People and values','感受与价值'],J:['Plans','偏好计划'],P:['Flexibility','随心应变'],X:['Balanced','偏好持平']};const labels=Array.from(title[0],k=>traits[k]);lines.unshift([labels.slice(0,2).map(v=>v[0]).join(' · '),labels.slice(0,2).map(v=>v[1]).join(' · ')],[labels.slice(2).map(v=>v[0]).join(' · '),labels.slice(2).map(v=>v[1]).join(' · ')]);accent=title[0][1]==='N'?'#a493b4':title[0][1]==='S'?'#849c8a':'#b69d78'}
+ return {kind,title,lines:lines.slice(0,4),accent}
 }
 function shareTextLines(c,text,max){
  const chars=/[\u3400-\u9fff]/.test(text),sep=chars?'':' ',parts=chars?Array.from(text):text.split(/\s+/),lines=[];let row='';
@@ -4032,13 +4034,14 @@ const socialCatCover=[
 ];
 function socialResultQuote(data){
  if(data.kind==='soul'){const found=socialCatCover.find(x=>x.name===data.title[0]);if(found)return found.quote}
+ if(data.kind==='motive'){const quotes={'The Improver':['Even my break has a quality check.','连摸鱼都要讲究质量。'],'The Helper':['Have you eaten? Yes, you too.','你吃饭了吗？还有你。'],'The Achiever':['Task completed: taking a break.','今日任务：完成摸鱼。'],'The Dreamer':['My daydream has its own postcode.','我的白日梦有独立邮编。'],'The Observer':['Currently observing the situation. From a safe distance.','正在观察局势，保持安全距离。'],'The Guardian':['I packed snacks for the entire group.','全团的零食，我都带了。'],'The Explorer':['The scenic route is the correct route.','风景好的那条路，就是正路。'],'The Protector':['I am defending our lunch break.','午休时间，由我守护。'],'The Peacemaker':['Can we resolve this over tea?','这事能不能喝杯茶解决？']};if(quotes[data.title[0]])return quotes[data.title[0]]}
  return ({type:['My personality is more than my job title.','我的人格，不止工牌上的职位。'],motive:['A tiny discovery about myself.','摸鱼的时候，顺便认识了自己。'],tarot:['The future is not a deadline.','未来不是截止日期。'],fortune:['Today, I am taking a little break.','今天宜摸鱼，也宜善待自己。'],cafe:['Good company. No agenda.','好好相处，不必列议程。'],story:['In another life, I clocked out.','平行人生里，我准时下班了。'],soul:['There is more than one side to this cat.','一只猫，也可以有好多面。']})[data.kind]
 }
 function meowSocialCaption(data,format,cn){
  const title=data.title[cn?1:0],quote=socialResultQuote(data)[cn?1:0];
  const invite=cn?'来摸鱼小镇，看看你的隐藏身份。':'Take a little break and find your own result.';
  const tags=cn?'#摸鱼小镇 #趣味测试 #治愈系':'#MeowBox #CozyGames #TakeABreak';
- return [cn?'我在摸鱼小镇测到：'+title:'My MeowBox result: '+title,quote,invite,tags,meowShareUrl].join('\n')
+ return [cn?'我在摸鱼小镇测到：'+title:'My MeowBox result: '+title,quote,invite,tags,...(format==='xhs'||format==='story'?[]:[meowShareUrl])].join('\n')
 }
 function socialCoverIllustration(g,data,x,y,w,h){
  const catDef=socialCatCover.find(v=>v.name===data.title[0]),cat=data.kind==='soul';
@@ -4134,7 +4137,8 @@ function openMeowShare(raw,back=null){
    status.textContent=tr('Image sharing is not supported here. Save the PNG and upload it in your chosen app.','当前浏览器不支持图片直传，请保存 PNG 后在目标应用中上传。')
   });
   const saveButton=b(panel,tr('Save PNG image','保存 PNG 图片'),()=>{if(!ready)return;const a=document.createElement('a'),url=URL.createObjectURL(ready);a.href=url;a.download=ready.name||'meowbox-'+data.kind+'-'+format+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)});
-  const copy=b(panel,tr('Copy caption and game link','复制文案与游戏链接'),async()=>{const text=meowSocialCaption(data,format,cn);try{await navigator.clipboard.writeText(text);status.textContent=tr('Caption copied.','文案已复制。')}catch{const field=element('textarea',text,panel);field.value=text;field.readOnly=true;field.select();status.textContent=tr('Select and copy the caption.','请选择并复制文案。')}});
+  const copy=b(panel,tr('Copy post caption','复制发布文案'),async()=>{const text=meowSocialCaption(data,format,cn);try{await navigator.clipboard.writeText(text);status.textContent=tr('Caption copied.','文案已复制。')}catch{const field=element('textarea',text,panel);field.value=text;field.readOnly=true;field.select();status.textContent=tr('Select and copy the caption.','请选择并复制文案。')}});
+  b(panel,tr('Copy game link separately','单独复制游戏链接'),async()=>{try{await navigator.clipboard.writeText(meowShareUrl);status.textContent=tr('Game link copied.','游戏链接已复制。')}catch{const field=element('input','',panel);field.value=meowShareUrl;field.readOnly=true;field.select();status.textContent=tr('Select and copy the game link.','请选择并复制游戏链接。')}});
   const fb=b(panel,tr('Share game link on Facebook','分享到 Facebook（游戏链接）'),()=>{window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(meowShareUrl),'_blank','noopener,noreferrer')});
   const view=b(panel,tr('Open image to save','打开图片以保存'),()=>{if(!ready)return;const url=URL.createObjectURL(ready);const tab=window.open(url,'_blank');if(!tab){const im=element('img','',panel,'meowSharePreview');im.alt=tr('Shareable result image','可分享的测试结果图');im.src=url;im.addEventListener('load',()=>{status.textContent=tr('Touch and hold the image to save it.','长按图片保存。')},{once:true})}setTimeout(()=>URL.revokeObjectURL(url),120000)});
   element('small',tr('Choose the layout, save the image and post it to Instagram, Facebook, Xiaohongshu, TikTok photo posts or WeChat. If your phone offers the app in its share menu, you may share there. Facebook link shares the game only. TikTok video export is not included.','选好尺寸，保存图片后可发布到 Instagram、Facebook、小红书、TikTok 图文或微信。系统分享菜单若显示目标应用，也可直接选择。Facebook 链接仅分享游戏网址，目前不提供视频导出。'),panel,'meowShareHelp');
@@ -4146,5 +4150,5 @@ function openMeowShare(raw,back=null){
 }
 wonderSceneShare=function(){const v=wonderSceneResult;if(v)openMeowShare({kind:wonderSceneMode,title:v.name,lines:[v.desc],accent:v.color})};
 shareTownFortune=function(f){openMeowShare({kind:'fortune',title:f.theme.title,lines:[f.theme.work,f.theme.rest,['Lucky colour: '+f.colour[0]+' · '+f.number,'幸运色：'+f.colour[1]+' · '+f.number]],accent:f.colour[2]},todayHub)};
-function shareReadingResult(v,back=null){const cards=(v.cards||[]).slice(0,3).filter(x=>tarotDeck[x.i]);if(!cards.length)return;const pair=x=>{const d=tarotDeck[x.i];return [d[0]+(x.rev?' · Reversed':' · Upright'),d[1]+(x.rev?' · 逆位':' · 正位')]};const title=cards.length===1?pair(cards[0]):['Three-card reflection','三张牌小记'];openMeowShare({kind:'tarot',title,lines:cards.length===1?[tarotDeck[cards[0].i].slice(2,4)]:cards.map(pair),accent:'#9a8295'},back)}
+function shareReadingResult(v,back=null){const cards=(v.cards||[]).slice(0,3).filter(x=>tarotDeck[x.i]);if(!cards.length)return;const pair=x=>{const d=tarotDeck[x.i];return [d[0]+(x.rev?' · Reversed':' · Upright'),d[1]+(x.rev?' · 逆位':' · 正位')]};const title=cards.length===1?pair(cards[0]):['Three-card reflection','三张牌小记'];openMeowShare({kind:'tarot',title,lines:cards.length===1?(cards[0].rev?[['A moment to reconsider and reflect.','给自己一点重新思考的时间。']]:[tarotDeck[cards[0].i].slice(2,4)]):cards.map(pair),accent:'#9a8295'},back)}
 const shareStyles=document.createElement('style');shareStyles.textContent='.meowSharePanel{display:flex;flex-direction:column;align-items:stretch;gap:9px;max-width:440px;margin:auto}.meowShareTabs{display:flex;flex-wrap:wrap;gap:6px}.meowShareTabs button{flex:1;min-width:70px}.meowSharePanel button{min-height:44px;white-space:normal;line-height:1.3}.meowShareTabs button[aria-pressed=true]{background:#4d6556;color:#fff2d5}.meowSharePreview{display:block;width:auto;max-width:100%;max-height:48dvh;object-fit:contain;margin:3px auto;border:1px solid #ac9773}.meowShareStatus{font-size:13px;min-height:1.4em;margin:0}.meowShareHelp{line-height:1.5;font-size:12px;color:#655843}';document.head.append(shareStyles);
