@@ -3297,7 +3297,7 @@ async function communityRequest(route,options={}){
 }
 function communityTabs(q){
  const tabs=element('nav','',q,'communityTabs');tabs.setAttribute('aria-label',tr('Community spaces','社区空间'));
- for(const [key,en,cn] of [['public','Town square','广场'],['lounge','Tea chat','茶馆闲聊'],['board','Noticeboard','留言墙'],['stroll','Shared stroll','结伴散步']]){
+ for(const [key,en,cn] of [['public','Town square','广场'],['lounge','Tea chat','茶馆闲聊'],['board','Noticeboard','留言墙'],['celebrate','Good things','小确幸'],['stroll','Meet travellers','结伴散步']]){
   const btn=b(tabs,tr(en,cn),()=>{communityTab=key;townChatPage()});btn.setAttribute('aria-pressed',String(communityTab===key))
  }
 }
@@ -3398,6 +3398,7 @@ townChatPage=function(){
    communityTabs(q);
    if(communityTab==='public')communityPublic(q,generation);
    else if(communityTab==='stroll')sharedTownPage(q);
+   else if(communityTab==='celebrate')goodCompanyPage(q);
    else{renderResidentNoticeboard(q);if(communityURL()){element('h2',tr('Real visitor posts','旅人真实留言'),q);communityPublic(q,generation)}b(q,tr('Open my private notes','打开我的私密留言'),()=>todayScoopBefore.call($('dockScoop')))}
   })
  }
@@ -7406,6 +7407,7 @@ const coinHudStyle=document.createElement('style');coinHudStyle.textContent='#ga
    day. Existing one-time discovery coins and daily wheel remain independent.
    No purchase, login streak, wait-time farming or reward for spending. */
 function townPawCategories(){return [
+ {id:'gratitude',amount:12,name:['Celebrate a good thing','记下今日小确幸'],description:['Write one thing you are grateful for. Private or shared, both count.','记下今天值得感恩的事，私藏或分享都算。']},
  {id:'play',amount:8,name:['Play a little','玩一小会儿'],description:['Finish an arcade round. Winning is optional.','完成一局游戏，输赢随意。']},
  {id:'food',amount:8,name:['Make something delicious','做点好吃的'],description:['Finish Grandma’s soup or a bubble tea.','煮好外婆的汤，或做完一杯奶茶。']},
  {id:'ritual',amount:6,name:['Find a quiet moment','找一点清静'],description:['Finish a temple ritual, wish or saved tarot reading.','完成庙里仪式、许愿或收藏塔罗解读。']},
@@ -7418,6 +7420,7 @@ function townPawRecord(){
  return {day:typeof v.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v.day)?v.day:'',total:Number.isSafeInteger(v.total)&&v.total>=0?v.total:0,keys:Array.isArray(v.keys)?[...new Set(v.keys.filter(k=>allowed.has(k)))]:[]}
 }
 function townPawCategory(key){
+ if(key==='gratitude:daily')return 'gratitude';
  if(['round:bubble','round:three','round:claw','round:rhythm'].includes(key))return 'play';
  if(/^kitchen:(soup|tea)$/.test(key))return 'food';
  if(/^ritual:(prayer|water|paper|reading|wishingCoin)$/.test(key))return 'ritual';
@@ -7437,7 +7440,7 @@ function townPawClaim(key,day=shrineClock().day){
 }
 function townPawToday(){
  const record=townPawRecord(),day=shrineClock().day,keys=record.day===day?record.keys:[];
- return {keys,earned:townPawCategories().filter(x=>keys.includes(x.id)).reduce((sum,x)=>sum+x.amount,0),maximum:40}
+ return {keys,earned:townPawCategories().filter(x=>keys.includes(x.id)).reduce((sum,x)=>sum+x.amount,0),maximum:townPawCategories().reduce((sum,x)=>sum+x.amount,0)}
 }
 let townPawNoticeTimer=0;
 function townPawNotice(category){
@@ -7457,7 +7460,7 @@ const townPawNoticeEl=element('div','',$('game'),'townPawNotice');townPawNoticeE
 function appendTownPawLedger(parent){
  const day=townPawToday(),book=element('section','',parent,'townPawLedger');
  const heading=element('header','',book,'townPawLedgerHead');
- element('h2',tr('A little pocket money','今日摸鱼零花钱'),heading);element('strong',day.earned+' / 40 '+tr('Paws','爪币'),heading);
+ element('h2',tr('A little pocket money','今日摸鱼零花钱'),heading);element('strong',day.earned+' / '+day.maximum+' '+tr('Paws','爪币'),heading);
  element('p',tr('Pick whatever feels good. No streaks, no lost rewards, no need to do them all.','想做什么就做什么。不用打卡，不怕漏签，不必做完。'),book);
  for(const item of townPawCategories()){
   const got=day.keys.includes(item.id),row=element('article','',book,'townPawLedgerRow');row.dataset.earned=String(got);
@@ -7631,6 +7634,7 @@ $('profileHud').onclick=lifeProfile;
 /* Daily activity destinations are optional navigation hints, not auto-completion. */
 function journalDailyDestination(id){return ({play:'island',food:'island',ritual:'fortune',care:'home',social:scene,release:'home'})[id]||scene}
 function journalDailyGuide(id){
+ if(id==='gratitude'){communityTab='celebrate';townChatPage();return}
  const destination=journalDailyDestination(id),tips={play:['Visit the arcade.','去游戏厅玩一局。'],food:['Visit Grandma or Pearl & Pause.','去外婆厨房或珍珠摸鱼铺。'],ritual:['Visit the temple, Wishing Garden or Tarot House.','去庙里、许愿花园或塔罗屋。'],care:['Visit Daydream Park.','去白日梦公园。'],social:['Say hello to a resident nearby.','找附近的居民聊聊天。'],release:['Visit Worry-Free Pier.','去无忧码头。']};
  $('page').style.display='none';
  if(destination!==scene)journey(destination);else hint(...tips[id])
@@ -7638,7 +7642,7 @@ function journalDailyGuide(id){
 function journalDailyTaskList(parent,all=false){
  const state=townPawToday(),categories=townPawCategories(),ordered=[...categories.filter(v=>!state.keys.includes(v.id)),...categories.filter(v=>state.keys.includes(v.id))];
  const box=element('section','',parent,'journalDailyTasks');element('h2',tr('Things to do today','今天可以做什么'),box);
- element('p',state.keys.length+'/'+categories.length+' '+tr('done · ','已完成 · ')+state.earned+'/40 '+tr('Paws earned','爪币到账'),box);
+ element('p',state.keys.length+'/'+categories.length+' '+tr('done · ','已完成 · ')+state.earned+'/'+state.maximum+' '+tr('Paws earned','爪币到账'),box);
  const list=element('div','',box),draw=expanded=>{
  list.replaceChildren();
  for(const item of ordered.slice(0,expanded?categories.length:3)){
@@ -7647,7 +7651,7 @@ function journalDailyTaskList(parent,all=false){
  const copy=element('div','',row);element('strong',tr(...item.name),copy);element('small',tr(...item.description),copy);
  if(!got)b(row,tr('Go','去看看'),()=>journalDailyGuide(item.id));else element('small',tr('Done','已完成'),row)
  }
- more.textContent=expanded?tr('Show less','收起'):tr('Show all six activities','查看全部六项活动');more.setAttribute('aria-expanded',String(expanded))
+ more.textContent=expanded?tr('Show less','收起'):tr('Show all activities','查看全部活动');more.setAttribute('aria-expanded',String(expanded))
  };
  const more=b(box,'',()=>draw(more.getAttribute('aria-expanded')!=='true'));draw(all);
  element('small',tr('Optional ideas. No streaks or penalties.','随心选择，不用连签，错过也不扣分。'),box);
@@ -8089,7 +8093,7 @@ const travellerMoodRoutes=[
  {id:'lonely',district:'home',door:'tea',ask:['I could use a little company.','今天有点孤单，想找个伴。'],reason:['The tea room has stories and a warm seat waiting.','茶馆有故事，也有留给你的座位。']},
  {id:'tired',district:'island',door:'kitchen',ask:['My social battery is at 1%.','社交电量只剩1%。'],reason:['Grandma understands. Soup first, life decisions later.','外婆懂你。先喝汤，人生大事等会儿再说。']},
  {id:'anxious',district:'fortune',door:'wishes',ask:['My brain has too many tabs open.','脑子开了太多网页，关不掉。'],reason:['Make a little wish in the garden. No need to solve everything at once.','去花园许个小愿，不必一次解决所有问题。']},
- {id:'happy',district:'island',door:'boba',ask:['Actually, today is a good day!','其实今天心情很好！'],reason:['Celebrate with a cup of bubble tea. Good days deserve a little ceremony too.','亲手做杯奶茶庆祝，好日子也值得一点仪式感。']},
+ {id:'happy',district:'home',door:'tea',ask:['I have something good to celebrate!','今天有件好事想庆祝！'],reason:['Come to the Tea Room. Big or small, your good news deserves a cheer.','来茶馆坐坐吧，好事不分大小，都值得喝彩。']},
  {id:'release',district:'home',door:'fish',ask:['My boss is testing my patience.','老板又在考验我的忍耐力。'],reason:['Leave the office drama by the river.','把办公室的破事留在河边。']},
  {id:'reflect',district:'fortune',door:'tarot',ask:['I could use a little clarity.','最近有点迷茫。'],reason:['Take a quiet moment for a reflective reading.','给自己一点时间，安静地抽张牌。']},
  {id:'cute',district:'home',door:'park',ask:['I need something cute.','今天需要一点可爱。'],reason:['The cats and deer have no meetings scheduled.','猫猫小鹿今天都不用开会。']},
@@ -8136,3 +8140,84 @@ const travellerEditStyle=document.createElement('style');travellerEditStyle.text
 '.travellerEditBook label,.travellerEditBook>small{display:block;margin:8px 0;line-height:1.5}.travellerEditBook input{width:100%;box-sizing:border-box;min-height:44px}.travellerEditChoices{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}.travellerEditChoices button{min-width:0;white-space:normal;overflow-wrap:anywhere;min-height:120px;padding:8px}.travellerEditChoices img{height:86px!important;width:100%!important;object-fit:contain}.travellerEditChoices strong,.travellerEditChoices small{display:block;line-height:1.35}.travellerEditChoices small{font-size:11px;margin-top:4px}.travellerEditChoices button[aria-pressed=true],.travellerMoodChoices button[aria-pressed=true]{outline:2px solid #597b68;outline-offset:-2px;background:#e3e9d4!important}'+
 '.travellerEditActions,.travellerMoodChoices{display:grid;gap:7px}.travellerEditActions button,.travellerMoodChoices button,.travellerMoodResult button{min-height:44px;white-space:normal;overflow-wrap:anywhere}.travellerEditMessage{color:#975e43}.travellerMoodBook summary{min-height:44px;display:flex;align-items:center;font:600 16px/1.3 var(--town-title);cursor:pointer}.travellerMoodChoices button{text-align:left}.travellerMoodResult{border-top:1px dashed #b5a07a;margin-top:12px;padding-top:12px}.travellerMoodResult[hidden]{display:none!important}@media(min-width:650px){.travellerMoodChoices{grid-template-columns:repeat(2,minmax(0,1fr))}.travellerEditChoices{grid-template-columns:repeat(4,minmax(0,1fr))}}';
 document.head.append(travellerEditStyle);
+
+
+/* Good Company Club lives in the existing Tea Room and Town Square.
+   Notes remain private unless the traveller separately submits a public post. */
+const goodCompanyKinds=[
+ {id:'milestone',name:['A milestone','人生里程碑'],prompt:['A promotion, graduation, or something you worked hard for.','升职、毕业，或努力很久终于做到的事。'],resident:['Grandma','外婆'],cheer:['You worked for this. I am proud of you!','这是你努力得来的，真替你高兴！']},
+ {id:'family',name:['Family & love','亲情与爱'],prompt:['A new arrival, a beautiful moment, or someone you love.','新生命、温暖的瞬间，或你爱的人。'],resident:['Auntie Mei','梅姨'],cheer:['May your home have plenty of laughter and good soup.','愿你家里常有笑声，还有热汤。']},
+ {id:'health',name:['Health & healing','健康与慢慢变好'],prompt:['Good news, recovery, or taking care of yourself.','好消息、慢慢康复，或好好照顾自己。'],resident:['Temple keeper','庙祝'],cheer:['Every small step is worth acknowledging.','每一小步，都值得被看见。']},
+ {id:'little',name:['An everyday joy','日常小确幸'],prompt:['A delicious meal, a good nap, or a lovely day.','一顿好饭、一个好觉，或舒服的一天。'],resident:['Grandma','外婆'],cheer:['Eating well is a perfectly respectable achievement.','好好吃饭，本来就是一件了不起的事。']},
+ {id:'courage',name:['Something I overcame','我跨过的一道坎'],prompt:['A difficult day, a fresh start, or the courage to try.','熬过难过的日子、重新开始，或鼓起勇气去尝试。'],resident:['Master Yue','月师傅'],cheer:['You can be proud of yourself even if you are still figuring things out.','即使还在摸索，也可以为自己骄傲。']},
+ {id:'kindness',name:['Someone was kind','有人给了我温暖'],prompt:['A friend, a stranger, or a moment of generosity.','朋友、陌生人，或一个温柔的举动。'],resident:['Auntie Mei','梅姨'],cheer:['Good people deserve their own fan club.','好心人值得拥有自己的后援会。']}
+];
+function goodCompanyRecords(){
+ const rows=load('goodCompanyNotesV1',[]);
+ return Array.isArray(rows)?rows.filter(v=>typeof v?.id==='string'&&typeof v.text==='string'&&typeof v.day==='string'&&goodCompanyKinds.some(k=>k.id===v.kind)).slice(-100):[]
+}
+function goodCompanySave(kind,text,day=shrineClock().day){
+ if(!goodCompanyKinds.some(k=>k.id===kind)||typeof text!=='string'||!text.trim()||text.trim().length>300)return null;
+ const v={id:crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2),kind,text:text.trim(),day};
+ const rows=goodCompanyRecords();rows.push(v);save('goodCompanyNotesV1',rows.slice(-100));return v
+}
+let goodCompanyDraft=null;
+function goodCompanyApplause(){
+ if(!actionFxContext())return;const now=audio.currentTime;
+ for(let i=0;i<10;i++){const at=now+i*.11+(i%3)*.015,n=audio.createBufferSource(),f=audio.createBiquadFilter(),g=audio.createGain();n.buffer=actionFxNoise;f.type='bandpass';f.frequency.value=1100+i*73;f.Q.value=.7;g.gain.setValueAtTime(.04,at);g.gain.exponentialRampToValueAtTime(.0001,at+.075);n.connect(f).connect(g).connect(actionFxBus);n.start(at);n.stop(at+.09)}
+}
+function goodCompanyPublic(){
+ communityPlace='square';communityTab='public';townChatPage();
+ const field=$('content').querySelector('input[aria-label="'+tr('Public message','公开消息')+'"]');
+ if(field){field.placeholder=tr('Something good happened today…','今天发生了一件好事……');field.focus()}
+}
+function goodCompanyPage(q){
+ const book=element('section','',q,'goodCompanyBook'),banner=element('div','',book,'goodCompanyBanner');
+ element('small',tr('THE TEA ROOM · GOOD COMPANY CLUB','吃瓜茶馆 · 摸鱼同好会'),banner);
+ element('h2',tr('Good things deserve a little noise.','好事，也值得热热闹闹。'),banner);
+ element('p',tr('Big news, tiny victories, or a day that went a little better. Pull up a chair.','大喜事、小胜利，或只是今天过得好一点。来坐坐吧。'),banner);
+ const friends=element('div','',banner,'goodCompanyFriends');
+ for(const pair of [['Grandma','外婆'],['Auntie Mei','梅姨'],['Master Yue','月师傅']]){const f=element('div','',friends);const src=paintedDialoguePortrait(pair[0]);if(src){const img=element('img','',f);img.src=src;img.alt=''}element('small',tr(...pair),f)}
+ element('small',tr('Town residents · fictional companions','小镇居民 · 虚构伙伴'),banner);
+ const actions=element('div','',book,'goodCompanyActions');
+ b(actions,tr('Meet other travellers','认识其他旅人'),()=>{communityTab='stroll';townChatPage()});
+ b(actions,tr('Read & share good news','看看好消息，也分享你的'),goodCompanyPublic);
+ element('h2',tr('What are you grateful for today?','今天有什么值得感恩的？'),book);
+ let selected=goodCompanyDraft?.kind||'little';
+ const picks=element('div','',book,'goodCompanyPicks'),prompt=element('p','',book,'goodCompanyPrompt');
+ function choose(id){selected=id;for(const btn of picks.children)btn.setAttribute('aria-pressed',String(btn.dataset.kind===id));prompt.textContent=tr(...goodCompanyKinds.find(k=>k.id===id).prompt);if(goodCompanyDraft)goodCompanyDraft.kind=id}
+ for(const k of goodCompanyKinds){const btn=b(picks,tr(...k.name),()=>choose(k.id));btn.dataset.kind=k.id}choose(selected);
+ const label=element('label',tr('A little note to remember','写一句想记住的话'),book);label.htmlFor='goodCompanyNote';
+ const input=element('textarea','',book);input.id='goodCompanyNote';input.maxLength=300;input.value=goodCompanyDraft?.text||'';input.placeholder=tr('Today I am grateful for…','今天，我很感恩……');input.oninput=()=>{goodCompanyDraft={kind:selected,text:input.value}};
+ const reward=element('small',townPawToday().keys.includes('gratitude')?tr('Today’s reward is collected. You can still celebrate.','今日奖励已领取，依然可以庆祝。'):tr('First reflection today: 12 Paw Coins. No public post required.','今日首次记录：12爪币，不必公开。'),book,'goodCompanyReward');
+ const feedback=element('div','',book,'goodCompanyCheer');feedback.hidden=true;feedback.setAttribute('role','status');
+ let busy=false;
+ const submit=b(book,tr('Celebrate & save privately','庆祝并私藏这份回忆'),()=>{
+  if(busy)return;const v=goodCompanySave(selected,input.value);if(!v){input.focus();return}busy=true;const k=goodCompanyKinds.find(k=>k.id===selected),category=townPawClaim('gratitude:daily');input.value='';goodCompanyDraft=null;feedback.hidden=false;feedback.replaceChildren();
+  element('strong',tr('Here’s to you!','为你喝彩！'),feedback);
+  const reply=element('div','',feedback,'goodCompanyReply'),src=paintedDialoguePortrait(k.resident[0]);if(src){const img=element('img','',reply);img.src=src;img.alt=''}
+  const copy=element('div','',reply);element('small',tr(...k.resident)+' · '+tr('Town resident','小镇居民'),copy);element('p',tr(...k.cheer),copy);
+  element('small',category?tr('12 Paw Coins earned.','已获得12爪币。'):tr('Every joy counts, even without extra coins.','不重复奖励爪币，但每份快乐都算数。'),feedback);
+  reward.textContent=tr('Today’s reward is collected. You can still celebrate.','今日奖励已领取，依然可以庆祝。');
+  updateHUD();if(category)townPawNotice(category);goodCompanyApplause();renderMemories();busy=false
+ });
+ element('small',tr('Your note is private on this device. Public messages are a separate optional action and are reviewed before publishing.','回忆仅保存在本设备。公开留言需另行选择，并经审核后发布。'),book,'goodCompanyPrivacy');
+ const archive=element('details','',book,'goodCompanyArchive'),summary=element('summary','',archive),list=element('div','',archive);
+ function renderMemories(){const rows=goodCompanyRecords().reverse();summary.textContent=tr('My little good things','我的小确幸')+' ('+rows.length+')';list.replaceChildren();if(!rows.length)element('p',tr('A blank page is a perfectly good beginning.','空白的一页，也是很好的开始。'),list);
+  for(const v of rows){const row=element('article','',list,'goodCompanyMemory');element('small',v.day+' · '+tr(...goodCompanyKinds.find(k=>k.id===v.kind).name),row);element('p',v.text,row);b(row,tr('Remove','删除'),()=>{save('goodCompanyNotesV1',goodCompanyRecords().filter(x=>x.id!==v.id));renderMemories()})}
+ }renderMemories()
+}
+const goodCompanyTodayBefore=todayHub;
+todayHub=function(){goodCompanyTodayBefore();const q=$('content'),section=element('section','',q,'goodCompanyInvitation');element('h2',tr('Something good happened?','今天有件好事？'),section);element('p',tr('We make space for good days, too.','好日子，也要好好记下来。'),section);b(section,tr('Visit the Good Company Club','去摸鱼同好会'),()=>{communityTab='celebrate';townChatPage()});const lead=q.querySelector('.journalCheckin');if(lead)lead.after(section);journalLanguage(todayHub)};
+$('dockScoop').onclick=todayHub;
+const goodCompanyActionBefore=action;
+action=function(id){if(room==='tea'&&id==='chat'){closeTalk();communityTab='lounge';townChatPage();return}return goodCompanyActionBefore(id)};
+roomActions.tea=[['chat','Meet & chat','聚会闲聊'],['board','Town noticeboard','小镇留言墙']];
+const goodCompanyIntroBefore=roomIntro;
+roomIntro=function(){goodCompanyIntroBefore();if(room==='tea')hint('Meet, chat, cheer someone on, or celebrate a little good thing.','来聊聊天、为别人喝彩，也庆祝自己的小确幸。')};
+const goodCompanyStyle=document.createElement('style');goodCompanyStyle.textContent=
+'.goodCompanyBook,.goodCompanyInvitation{background:var(--town-grain),#f5e9cf;color:#514638;border:1px solid #b5a07a;border-radius:5px;padding:14px;margin:12px 0;box-sizing:border-box}'+
+'.goodCompanyBanner{background:#e5d6b5;border:3px double #ad956c;padding:12px;margin-bottom:12px;text-align:center}.goodCompanyBanner>small{display:block;line-height:1.45;font-size:11px;letter-spacing:.04em}.goodCompanyBanner h2{font-family:var(--town-title);margin:8px 0!important;color:#586b50}.goodCompanyFriends{display:flex;align-items:end;justify-content:center;gap:10px;margin:10px 0}.goodCompanyFriends>div{flex:1;min-width:0;max-width:110px}.goodCompanyFriends img{display:block;width:100%;height:66px;object-fit:contain}.goodCompanyFriends small{display:block;font-size:11px;overflow-wrap:anywhere}'+
+'.goodCompanyPicks,.goodCompanyActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:10px 0}.goodCompanyBook button,.goodCompanyInvitation button{min-height:44px;white-space:normal;overflow-wrap:anywhere;line-height:1.3}.goodCompanyPicks button[aria-pressed=true]{background:#d9e3cc!important;outline:2px solid #597b68;outline-offset:-2px}.goodCompanyBook label,.goodCompanyBook>small{display:block;margin:8px 0;line-height:1.5}.goodCompanyBook textarea{width:100%;min-height:95px;box-sizing:border-box;padding:10px;font:16px/1.5 system-ui;background:#fff4df;color:#514638;border:1px solid #b69d73;border-radius:3px;resize:vertical}'+
+'.goodCompanyReward{color:#536b56}.goodCompanyCheer{border:3px double #c4a66c;padding:12px;margin:12px 0;background:#f4e1ae}.goodCompanyCheer[hidden]{display:none}.goodCompanyReply{display:flex;align-items:center;gap:10px;margin:8px 0}.goodCompanyReply img{width:60px;height:60px;object-fit:contain}.goodCompanyReply>div{flex:1;min-width:0}.goodCompanyReply p,.goodCompanyMemory p{white-space:pre-wrap;overflow-wrap:anywhere}.goodCompanyArchive{border-top:1px dashed #b5a07a;margin-top:14px;padding-top:8px}.goodCompanyArchive summary{min-height:44px;cursor:pointer;display:flex;align-items:center}.goodCompanyMemory{border-bottom:1px dashed #b5a07a;padding:10px 0}.goodCompanyPrivacy{font-size:12px}@media(prefers-reduced-motion:no-preference){.goodCompanyCheer:not([hidden]){animation:goodCompanyReveal .45s ease-out}@keyframes goodCompanyReveal{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}}';
+document.head.append(goodCompanyStyle);
