@@ -27,18 +27,19 @@ function figureCabinetPage(back='room'){
   const ids=figureCabinetIds(),n=figureTokenCount(),wrap=element('section','',q,'figureCabinetBook');
   fillFigureShelf(element('div','',wrap,'figureCabinetPreview'));
   element('p',ids.length+'/6 '+tr('on display','件展示中')+' · '+n+' '+tr('exchange tokens','兑换券'),wrap);
-  element('p',tr('Each duplicate gives one token. Three tokens unlock an unowned common or uncommon figure. Rare and secret figures stay special.','每个重复手办换一枚券。三枚券可兑换未收藏的普通或特别款。稀有和隐藏款仍需开盒。'),wrap,'figureHelp');
+  element('p',tr('New boxes contain unowned figures for 40 Paws. Any old exchange tokens can still unlock common or uncommon figures at three tokens each.','新盲盒40爪币一盒，不会抽到已收藏款。旧兑换券仍可用三枚兑换普通或特别款。'),wrap,'figureHelp');
   const grid=element('div','',wrap,'figureCabinetGrid');for(const v of boxPrizes){
-   const owned=items.some(i=>i[0]===v[0]),shown=ids.includes(v[0]),secret=!owned&&v[4]==='secret',tile=element('article','',grid,'figureCabinetTile');tile.dataset.owned=String(owned);const im=element('div','',tile,'figureTileArt');im.innerHTML=bagFigureIcon(v);element('strong',secret?tr('Secret silhouette','隐藏款剪影'):tr(v[0],v[1]),tile);
+   const owned=items.some(i=>i[0]===v[0]),shown=ids.includes(v[0]),secret=!owned&&v[4]==='secret',tile=element('article','',grid,'figureCabinetTile');tile.dataset.owned=String(owned);const im=element('div','',tile,'figureTileArt');im.innerHTML=secret?'<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M11 53V28Q11 8 32 8Q53 8 53 28V53Z" fill="#8b806e"/><text x="32" y="42" fill="#f0e3ca" font-size="25" text-anchor="middle">?</text></svg>':bagFigureIcon(v);element('strong',secret?tr('Secret silhouette','隐藏款剪影'):tr(v[0],v[1]),tile);
    const eligible=['common','uncommon'].includes(v[4]);const btn=b(tile,owned?(shown?tr('Put away','收起'):tr('Display','摆放')):eligible?tr('Exchange 3','兑换 · 3券'):tr('Find in a box','盲盒限定'),()=>{if(owned?toggleFigureDisplay(v[0]):exchangeFigure(v[0]))figureCabinetPage(back)});btn.disabled=!owned&&(!eligible||n<3)||owned&&!shown&&ids.length>=6;
   }
   b(wrap,back==='bag'?tr('Back to bag','返回背包'):back==='arcade'?tr('Back to blind boxes','返回盲盒'):tr('Back to my room','返回小窝'),()=>{if(back==='bag')myRoom();else if(back==='arcade'){$('page').style.display='none';if(activity!=='blindBox')start('blindBox')}else hideoutPage()});
   const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();figureCabinetPage(back)}
  })
 }
+// Paid draws are unique and delivered before the reveal; do not credit a duplicate token for an already delivered purchase.
 const cabinetAwardBefore=boxAward;
-boxAward=function(){const was=activity==='blindBox'&&state.boxStage==='opening',v=boxPrizes[state.boxPrize],duplicate=was&&v&&items.some(i=>i[0]===v[0]);cabinetAwardBefore();if(was&&state.boxStage==='result'){if(duplicate){creditFigureDuplicate();hint('A familiar face! +1 exchange token.','又见面啦！兑换券 +1。')}else if(v?.[4]==='secret')hint('A secret little dragon! Even the universe wanted a day off.','隐藏小龙！连宇宙都想放个假。')}};
-blindCollectionPage=function(){figureCabinetPage('arcade')};
+boxAward=function(){const was=activity==='blindBox'&&state.boxStage==='opening',v=boxPrizes[state.boxPrize];cabinetAwardBefore();if(was&&state.boxStage==='result'&&v?.[4]==='secret')hint('A secret little dragon! Even the universe wanted a day off.','隐藏小龙！连宇宙都想放个假。')};
+// Keep the shop album and the room display cabinet distinct.
 const cabinetRoomBefore=hideoutPage;
 hideoutPage=function(){cabinetRoomBefore();const q=$('content'),stage=q.querySelector('.hideoutScene');if(!stage)return;const actions=q.querySelector('.hideoutPrimary');if(actions)b(actions,tr('Display cabinet','手办展示柜'),()=>figureCabinetPage());
  if(figureCabinetIds().length&&!hideoutEditing){const cabinet=element('button','',stage,'figureCabinetInRoom');cabinet.setAttribute('aria-label',tr('Figure display cabinet','手办展示柜'));fillFigureShelf(cabinet);cabinet.onclick=()=>figureCabinetPage()}
