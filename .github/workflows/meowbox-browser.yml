@@ -58,6 +58,11 @@ jobs:
                   if(registry.filter(v=>v.id===id&&v.world===world).length!==1)throw Error('Wrong station ownership: '+id);
                 }
                 if(!await page.evaluate(()=>roomActions.quiz.length===1&&roomActions.quiz[0][0]==='quiz'))throw Error('Personality Lab has duplicate entry points');
+                const assessmentCheck=await page.evaluate(()=>{let n=0;for(const mode of ['type','motive','soul']){const q=prepareWonderQuestions(mode),answers=q.map(v=>v.id%v.opts.length),expected={type:16,motive:27,soul:6}[mode];if(q.length!==expected)throw Error('Wrong question count '+mode);if(JSON.stringify(scoreWonder(mode,q,answers))!==JSON.stringify(scoreWonder(mode,q.slice().reverse(),answers.slice().reverse())))throw Error('Question order changed outcome '+mode);n++}const q=prepareWonderQuestions('motive');if(scoreWonder('motive',q,q.map(()=>1)).ties.length!==9)throw Error('Equal motive scores collapsed');return n+1});
+                console.log('ASSESSMENT_LOGIC '+assessmentCheck);
+                const chartCheck=await page.evaluate(()=>{const z=ziChart('1990-06-15',12);return chartConsultTopics.every(topic=>{const v=chartConsultData(z,topic);return v.index===mod(z.life-topic.k,12)&&v.stars.length===z.stars[v.index].length})});
+                if(!chartCheck)throw Error('Consultation not using actual palace');
+
                 const layoutCheck=await page.evaluate(()=>{const old=room,failures=[];let pairs=0;try{for(const [id,spec] of Object.entries(indoorStages)){room=id;const obs=indoorObstacles(),ids=id==='temple'?Object.keys(spec.stations):(roomActions[id]||[]).map(v=>v[0]);for(const k of ids)if(!spec.stations[k])failures.push(id+': missing '+k);const nodes=[spec.entry,spec.arrival,...ids.map(k=>indoorStation(k).slice(2))];for(const a of nodes)for(const b of nodes){pairs++;if(!indoorSafe(...a,obs)||!indoorPath(a,b,obs))failures.push(id+': '+a+' -> '+b)}}}finally{room=old}return {pairs,failures}});
                 if(layoutCheck.failures.length)throw Error('Indoor geometry: '+JSON.stringify(layoutCheck));console.log('INDOOR_GEOMETRY '+JSON.stringify(layoutCheck));
                 const shoreCheck=await page.evaluate(()=>{let n=0;for(let power=15;power<=100;power++){const p=riverLanding(power);if(p.y>=riverBankY(p.x)||p.y<285)throw Error('Bottle lands outside water');n++}for(let i=0;i<=100;i++){const f=i/100,x=265+f*65,y=610-f*102;if(y<=riverBankY(x))throw Error('Avatar walks into water');n++}return n});
@@ -193,6 +198,7 @@ jobs:
                 await page.locator('#dockPassport').click();
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
                 await page.locator('.townFortuneSlip').waitFor({timeout:5000});
+                if(!await page.locator('.townFortuneSlip .fortuneShare').isVisible())throw Error('Daily fortune sharing not available');
                 const fortuneBefore=await page.evaluate(()=>{const f=townFortuneFor();return [f.date,f.themeIndex,f.colour[2],f.number]});
                 if(!await page.evaluate(()=>{const a=townFortuneFor('2026-11-25','testseed123'),b=townFortuneFor('2026-11-26','testseed123');return a.themeIndex!==b.themeIndex&&JSON.stringify(a)===JSON.stringify(townFortuneFor('2026-11-25','testseed123'))}))throw Error('Daily fortune date stability or variation failed');
                 if(!await page.evaluate(()=>{const a=townReaction('test-only',auntieHitReplies),b=townReaction('test-only',auntieHitReplies);return a!==b}))throw Error('Repeated reaction did not vary');
@@ -434,6 +440,15 @@ jobs:
                 if(!await page.locator('.townRantWall').innerText().then(v=>v.includes('群里283条未读')))throw Error('Chinese wall text missing');
                 await page.evaluate(()=>{$('page').style.display='none';toggleLang();closeTalk()});
                 await page.evaluate(()=>{room='destiny';activity=null;state={};closeTalk();updateHUD()});
+                // The chart result uses fictional test birth details; no actual player data.
+                await page.evaluate(()=>destinyPage());
+                await page.locator('.astroForm input[type=date]').fill('1990-06-15');
+                await page.locator('.astroForm button[type=submit]').click();
+                await page.locator('.chartConsultation').waitFor({timeout:8000});
+                await page.locator('.chartTopics button[data-topic="8"]').click();
+                if(!await page.locator('.chartReply').innerText().then(v=>v.includes('Career')))throw Error('Chart-specific career explanation missing');
+                await page.screenshot({path:'test-results/'+name+'-chart-consultation.png'});
+                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
                 if(options.hasTouch){
                   await page.waitForFunction(()=>portraitInteriorCache.get('destiny')?.naturalWidth===800&&portraitInteriorCache.get('destiny')?.naturalHeight===1400,{},{timeout:10000});
                   await page.screenshot({path:'test-results/'+name+'-portrait-destiny-room.png'});
