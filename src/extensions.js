@@ -3547,7 +3547,7 @@ const townRoasts=[
 ];
 wallThreads.push(...townRoasts);
 townChatReplies.work.push([['Grumpy Ah Ma','暴躁阿嬷'],['Your boss says urgent? Then ask him why he waited until Friday at five.','老板说急？那问他怎么等到周五五点才急！']]);
-townChatReplies.other.push([['Grumpy Ah Ma','暴躁阿嬷'],['Say properly lah. Auntie cannot read your mind, only your terrible posture.','好好讲啦，阿嬷不会读心，只看得出你坐姿很差。']]);
+townChatReplies.other.push([['Grumpy Ah Ma','暴躁阿嬷'],['Use your words. I cannot read minds, only terrible posture.','好好讲啦，阿嬷不会读心，只看得出你坐姿很差。']]);
 const roastTopicBefore=townChatTopic;townChatTopic=function(v){const s=String(v).toLowerCase();if(/weather|rain|heat|hot today|天气|下雨|好热|暴雨/.test(s))return 'weather';if(/government|tax|policy|council|政府|税|政策|议会/.test(s))return 'civic';return roastTopicBefore(v)};
 townChatReplies.weather=[
  [['Grumpy Ah Ma','暴躁阿嬷'],['The weather in this town has two settings: free steam room and free shower.','小镇天气就两档：免费桑拿和免费淋浴。']],
@@ -4290,12 +4290,12 @@ const clawRepeatRoasts=[
  ["Ah Ma: I can do this with one hand while cooking dinner. Try again!","阿嬷：我一边煮饭一边夹都行！再来！"],
  ["The plush is not your ex. Stop letting it get away. Aim closer.","娃娃又不是你前任，别老让它跑了。再瞄准一点。"],
  ["The claw has missed more targets than management missed the point.","夹爪抓不住重点，跟管理层有得一拼。"],
- ["Even the koi are watching. No pressure lah. Line up the claw first.","连锦鲤都在围观了。别紧张，先对准再下夹。"],
+ ["Even the koi are watching. No pressure. Line up the claw first.","连锦鲤都在围观了。别紧张，先对准再下夹。"],
  ["Your persistence is excellent. Your aim is still on probation.","毅力满分，准头还在试用期。"],
  ["Ah Ma: Take your time. Even legends started with a few empty claws.","阿嬷：慢慢来，夹娃娃高手也都是从夹空气开始的。"]
 ];
 activityComedy.clawMiss.push(
- ["Ah Ma: So simple also miss? My grandma can do better lah!","阿嬷：这么简单也夹不到？我阿嬷都比你会夹！"],
+ ["Ah Ma: Even my grandmother could catch that. And she is asleep.","阿嬷：这么简单也夹不到？我阿嬷都比你会夹！"],
  ["Arcade keeper: Need to clean your glasses or change the claw?","店主：是要擦眼镜，还是要换夹爪？"],
  ["The toy said: good luck finding someone better than me.","娃娃：祝你以后再也夹不到比我更好的。"],
  ["You are playing hide and seek with a stationary object.","你在跟一个不会动的娃娃玩捉迷藏。"]
@@ -4477,9 +4477,9 @@ const threeTalk={
  },
  auntie:{
   start:[['Ah Ma: Three in a row. Easier than applying for leave.','阿嬷：三个连成一线，比请年假简单多了。'],['Ah Ma: Come. Let me see what your years of education were for.','阿嬷：来，让我看看你这么多年书读到哪里去了。']],
-  turn:[['Ah Ma: Aiyoh, you are really making me think today.','阿嬷：哎哟，今天还得动脑筋啊。'],['Ah Ma: I see what you are trying to do lah.','阿嬷：你这点小算盘，我看得清清楚楚。'],['Ah Ma: Wait. Even a grandmother deserves a thinking break.','阿嬷：等一下，老人家也有思考时间的嘛。']],
+  turn:[['Ah Ma: Aiyoh, you are really making me think today.','阿嬷：哎哟，今天还得动脑筋啊。'],['Ah Ma: I can see your little scheme from here.','阿嬷：你这点小算盘，我看得清清楚楚。'],['Ah Ma: Wait. Even a grandmother deserves a thinking break.','阿嬷：等一下，老人家也有思考时间的嘛。']],
   win:[['Ah Ma: Fine, you win. I forgot my reading glasses.','阿嬷：行行行，你赢了。我老花镜没戴。'],['Ah Ma: Not bad. At least your degree was useful for something.','阿嬷：不错，大学总算没白读。']],
-  lose:[['Ah Ma: My grandson could do better. He is still learning his ABCs.','阿嬷：我孙子都比你会下，他还在学ABC呢。'],['Ah Ma: So simple also lose? Come, I teach you.','阿嬷：这么简单也输？来来来，我教你。'],['Ah Ma: Your boss must love how easy it is to block you.','阿嬷：你这么容易被拿捏，老板一定很喜欢你。']],
+  lose:[['Ah Ma: My grandson could do better. He is still learning his ABCs.','阿嬷：我孙子都比你会下，他还在学ABC呢。'],['Ah Ma: That was the easy part. Shall I get the instruction manual?','阿嬷：这么简单也输？来来来，我教你。'],['Ah Ma: Your boss must love how easy it is to block you.','阿嬷：你这么容易被拿捏，老板一定很喜欢你。']],
   draw:[['Ah Ma: I am giving you face. Do not tell the neighbours.','阿嬷：给你留点面子，别告诉邻居。'],['Ah Ma: Draw? Alright, we can both keep our dignity.','阿嬷：平局？好，咱俩的面子都保住了。']]
  }
 };
@@ -4578,3 +4578,9 @@ nostalgiaSay=function(key){const pair=townReaction('nostalgia-bubble-'+key,nosta
 nostalgiaRoasts.pop.push(['Three bubbles, zero meetings. A productive afternoon.','消掉三个泡泡，没开一个会。今天效率真高。'],['Ah Ma: Look at you. Even your bubbles know when to let go.','阿嬷：看看你，连泡泡都懂得放下。']);
 nostalgiaRoasts.miss.push(['The target was right there. Did you approve a different direction?','目标明明就在那儿，你是不是又被领导指错方向了？'],['Ah Ma: Please do not put precision on your CV yet.','阿嬷：精准操作这四个字，先别写进简历。']);
 nostalgiaRoasts.lose.push(['At least here, a bad performance review comes with a free restart.','至少在这里，绩效不及格还能免费重来。'],['Ah Ma: The board is full. Just like your calendar, except you can clear this one.','阿嬷：满了，跟你的工作日程一样。好在这个能清空。']);
+
+/* The Office Language Police */
+wallThreads.push(...[[["IT survivor","IT幸存者"],["Imagine Microsoft goes down, but Teams still works. What a deeply disappointing outage.","假如微软崩了，唯独Teams还能开会。这故障怎么还挑着修呢？"],[["Out of office","自动回复中","Please restore services in the opposite order.","建议最后一个恢复Teams。"],["Office Intern","实习生","Has anyone tried turning the company off and leaving it off?","有没有人试过把公司关机，然后别重启？"]]],[["Grammar Police","语文课代表"],["My manager wrote ‘Your doing great.’ The compliment is under investigation.","领导发来一句‘再接再励’。收到表扬的同时，职业病犯了。"],[["Proofreader","人形校对机","You're* welcome.","再接再厉。忍不住了。"],["Office Intern","实习生","Please do not reply all.","求你了，别回复全体。"]]],[["Kind regards","此致敬礼"],["I changed ‘Kind regards’ to ‘Regards’. This is as confrontational as my salary allows.","把邮件结尾的‘谢谢’改成了‘收到’。这是我的工资所允许的最大脾气。"],[["HR survivor","绩效幸存者","A devastating escalation.","好大的官威，好小的胆量。"]]],[["Autocorrect victim","输入法受害者"],["I typed ‘Dear team’. Autocorrect suggested ‘Dead team’. Finally, predictive text understands our culture.","想打‘老板好’，输入法先联想出‘老板烦’。这输入法比我还敢说。"],[["IT survivor","IT幸存者","Please submit a ticket for emotional accuracy.","建议给输入法发个最佳员工奖。"]]],[["Attachment missing","附件又忘了"],["Sent ‘Please see attached’ without the attachment. I am now following up with myself.","发完‘详见附件’才发现没附件。很好，成功给自己增加了一个工作量。"],[["Grammar Police","语文课代表","Please find the attachment. So would I, frankly.","附件：正在寻找存在的意义。"]]],[["Meeting refugee","会议难民"],["My calendar has a meeting called Focus Time. Naturally, someone invited themselves.","日历上刚设了一个专注时间，领导就约我开会。专注于被打扰。"],[["Anonymous","匿名","Did you decline or did your survival instinct kick in?","你敢拒绝吗，还是点了接受？"]]],[["Spreadsheet survivor","表格幸存者"],["Excel asked whether I wanted to recover my work. I would prefer to recover my weekend.","Excel问我要不要恢复文件。我想先恢复一下我的周末。"],[["IT survivor","IT幸存者","Unfortunately, weekends were not backed up.","不好意思，周末没有备份。"]]],[["Passive aggressive pen","阴阳怪气专业户"],["‘As per my last email’ is corporate for ‘I am begging you to read’.","‘如前所述’翻译一下：求求你，看看我上封邮件。"],[["Grammar Police","语文课代表","Please note the restraint demonstrated in this sentence.","此处省略八百字文明用语。"]]],[["Password expired","密码又过期了"],["My password needs a capital letter, a symbol and a number. My salary could use the same complexity.","密码要求大小写、符号和数字。希望工资也能有这么多变化。"],[["Salary loading","工资加载中","My salary has two-factor stagnation.","我的工资启用了双重防涨验证。"]]],[["PowerPoint prisoner","PPT在逃人员"],["The slide says ‘less is more’. It is slide 87.","PPT第87页写着：一切从简。"],[["Office Intern","实习生","The irony is in the appendix.","讽刺的部分请见附录。"]]],[["Oxford comma fan","标点符号研究员"],["A missing comma can change a sentence. A missing salary increase can change my attitude.","一个标点能改变一句话的意思。一个没涨的工资能改变我工作的态度。"],[["Anonymous","匿名","Finally, punctuation with consequences.","建议在工资后面多加一个零。"]]],[["Camera off","摄像头已关闭"],["Teams says I am away. Emotionally, that is the most accurate software in the office.","Teams显示我已离开。精神状态上来说，它是全公司最准的软件。"],[["Meeting refugee","会议难民","My status is available against my better judgement.","我的状态：在线，但不想在。"]]]]);
+Object.assign(townChatReplies,{"tech":[[["IT survivor","IT幸存者"],["If the office software ever goes down, let us hope the meeting calendar goes with it.","办公软件要是哪天崩了，希望会议系统也别独自坚强。"]],[["Office Intern","实习生"],["Have you tried turning your workload off and not turning it back on?","试过把工作关掉，再也不打开吗？"]],[["Grammar Police","语文课代表"],["The only update I am waiting for is my salary.","我唯一期待的系统更新是工资更新。"]]],"grammar":[[["Grammar Police","语文课代表"],["I can forgive a typo. I am still negotiating with unnecessary exclamation marks.","错别字可以原谅，满屏感叹号还在考虑中。"]],[["Office Intern","实习生"],["Please proofread the deadline before correcting my commas.","纠正我的标点之前，麻烦先核对一下截止日期。"]],[["Grammar Police","语文课代表"],["An apostrophe is small. My opinion about it is not.","标点符号虽小，我的意见可不小。"]]]});
+const officeLanguageTopicBefore=townChatTopic;
+townChatTopic=function(value){const v=String(value).toLowerCase();if(/\b(grammar|spelling|typo|apostrophe|comma|proofread|punctuation)\b|错别字|语法|标点|校对|错字/.test(v))return 'grammar';if(/\b(microsoft|outlook|teams|excel|powerpoint|outage|autocorrect|password|wifi|wi-fi)\b|微软|系统崩|断网|宕机|输入法|密码|软件故障/.test(v))return 'tech';return officeLanguageTopicBefore(value)};
