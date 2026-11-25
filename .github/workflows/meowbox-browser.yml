@@ -140,6 +140,16 @@ jobs:
                 await page.evaluate(()=>gardenFeed());
                 if(!await page.evaluate(()=>items.some(x=>x[0]==='Quiet garden postcard')))throw Error('Garden keepsake not collected');
                 await page.screenshot({path:'test-results/'+name+'-secret-garden.png'});
+                await page.evaluate(()=>{room='arcade';activity=null;start('blindBox');boxSelect(1);boxShake(100);boxShake(100);boxOpen()});
+                await page.waitForFunction(()=>state.boxStage==='result',{},{timeout:6000});
+                if(!await page.evaluate(()=>items.some(x=>x[0]===boxPrizes[state.boxPrize][0])))throw Error('Blind box prize not saved');
+                await page.screenshot({path:'test-results/'+name+'-blind-box.png'});
+                await page.evaluate(()=>{start('rhythm');rhythmBegin();state.rhythmAt=t;rhythmHit(state.rhythmNotes[0].lane)});
+                if(!await page.evaluate(()=>state.rhythmScore>0))throw Error('Rhythm scoring failed');
+                await page.screenshot({path:'test-results/'+name+'-rhythm.png'});
+                await page.evaluate(()=>{state.rhythmAt=t-15});
+                await page.waitForFunction(()=>state.rhythmStage==='result',{},{timeout:5000});
+                if(!await page.evaluate(()=>items.some(x=>x[0]==='After-hours rhythm ticket')))throw Error('Rhythm ticket missing');
                 if(errors.length)throw Error(errors.join('; '));
                 console.log(name+': PASS');
               }catch(e){failed=true;console.error(name+': FAIL '+e.message+' | page errors: '+errors.join('; '));console.error('Visible page: '+(await page.locator('body').innerText().catch(()=>'' )).slice(0,500));await page.screenshot({path:'test-results/'+name+'-failure.png'}).catch(()=>{});}
