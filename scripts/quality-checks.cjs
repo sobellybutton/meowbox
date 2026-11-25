@@ -66,5 +66,26 @@ module.exports=function runQualityChecks(s,log=console.log){
  assert(!placeText(100,100,60,44,{left:0,right:200,top:0,bottom:200},[{left:0,right:200,top:0,bottom:200}],40),'Fully blocked text must be omitted');
  assert(!placeText(NaN,100,60,44,{left:0,right:200,top:0,bottom:200},[],40),'Invalid text coordinate accepted');
  results.textPlacements=placements;results.textHidden=hidden;
+
+ // 13. Exercise the actual social-card renderer at the four export dimensions.
+ const reveal=build(range('function shareTextLines(','/* Social cover direction')+
+ "const shareFormats={feed:[1080,1350],xhs:[1080,1440],story:[1080,1920],square:[1080,1080]},shareKinds={tarot:['Tarot reflection','塔罗手记'],type:['Personality portrait','四维性格探索']},tarotDeck=[['Nine of Wands','权杖九','Persistence','坚持'],['Queen of Cups','圣杯皇后','Care','关怀'],['Nine of Cups','圣杯九','Contentment','满足']],pics=new Proxy({},{get:()=>({naturalWidth:350,naturalHeight:238})});function socialResultQuote(data){return data.kind==='tarot'?shareTarotMood(data.cards).quote:shareTypeMood(data.title[0]).quote}"+
+ range('function shareTarotMood(','function openMeowShare(')+';return {shareCardArt,shareTarotMood,socialLayout}');
+ const tarot={kind:'tarot',title:['Three-card reflection','三张牌小记'],lines:[],accent:'#9a8295',cards:[{i:0,rev:false},{i:1,rev:true},{i:2,rev:false}]};
+ assert(reveal.shareTarotMood(tarot.cards).title[0].includes('overdue'),'Reported tarot combination');
+ const type={kind:'type',title:['INFP','INFP'],lines:[['A person who likes to imagine possibilities and recharge quietly.','喜欢探索各种可能性，也喜欢安静地给自己充电。']],accent:'#829a89',cards:[]};
+ let exports=0;
+ for(const format of ['feed','xhs','story','square'])for(const cn of [false,true])for(const data of [tarot,type]){
+  const cv={};let painted=0,drawn=[];
+  const g={font:'30px Georgia',textAlign:'center',measureText(v){const fs=Number(this.font.match(/(\\d+)px/)?.[1]||30);return {width:Array.from(v).reduce((sum,ch)=>sum+fs*(/[\\u3400-\\u9fff]/.test(ch)?1:.56),0)}},fillText(v,x,y,max){const fs=Number(this.font.match(/(\\d+)px/)?.[1]||30);const width=Math.min(max??Infinity,this.measureText(v).width);drawn.push({v,x,y,fs,width,align:this.textAlign})},createLinearGradient(){return {addColorStop(){}}},drawImage(){painted++}};
+  for(const k of ['fillRect','beginPath','roundRect','rect','fill','stroke','save','restore','clip','moveTo','lineTo'])g[k]=()=>{};
+  cv.getContext=()=>g;reveal.shareCardArt(cv,data,format,cn);
+  const L=reveal.socialLayout(format);assert(cv.width===L.w&&cv.height===L.h,'Share dimensions');
+  assert(painted>=2&&drawn.length>=6,'Missing painted cover or result text');
+  for(const v of drawn){const lo=v.align==='left'?v.x:v.x-v.width/2,hi=lo+v.width;assert(lo>=0&&hi<=cv.width+.1&&v.y-v.fs/2>=0&&v.y+v.fs/2<=cv.height+.1,'Share text outside export')}
+  if(data.kind==='tarot')for(const name of cn?['权杖九','圣杯皇后','圣杯九']:['Nine of Wands','Queen of Cups','Nine of Cups'])assert(drawn.some(v=>v.v.includes(name)),'Missing actual tarot card '+name);
+  exports++;
+ }
+ results.socialExports=exports;
  log('PASS: MeowBox isolated quality checks '+JSON.stringify(results));return results
 };
