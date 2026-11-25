@@ -51,7 +51,7 @@ ambientTone=function(...args){if(meowSoundPrefs.effects!==false&&!document.hidde
 window.addEventListener('blur',()=>{joystickReset()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)joystickReset()});
 const townClueBefore=keepsakeClue;
-keepsakeClue=function(item){return boxPrizes.some(v=>v[0]===item?.[0])?['Find it in a free arcade blind box. Some figures can be exchanged for duplicate tokens.','去游戏厅开免费盲盒。部分手办可用重复款兑换券换取。']:townClueBefore(item)};
+keepsakeClue=function(item){return boxPrizes.some(v=>v[0]===item?.[0])?['Find it in a 40-Paw blind box. Earn coins by exploring and playing.','去游戏厅用40爪币开盲盒，探索小镇和玩游戏都能攒爪币。']:townClueBefore(item)};
 const townStoryBefore=keepsakeStory;
 keepsakeStory=function(item){const i=boxPrizes.findIndex(v=>v[0]===item?.[0]);const stories=[['A tiny permit to leave before the meeting ends.','开会结束前合法消失的许可证。'],['Survived a meeting that could have been a message.','活着走出了本可发条消息解决的会议。'],['A holiday your manager cannot reject.','老板无权拒绝的小假期。'],['The moon never asks for overtime.','月亮从来不要求你加班。'],['Payday, before the bills arrive.','工资到账、账单未到的快乐。']];return stories[i]||townStoryBefore(item)};
 const townBagCss=document.createElement('style');townBagCss.textContent='.bagTools .townClearSearch{flex:0 0 auto;font-size:12px;padding:5px 8px!important}.bagDetail{overflow-wrap:anywhere}.bagCategories{overscroll-behavior-inline:contain}.bagSlots>.bagDetail{grid-column:1/-1;min-width:0}';document.head.append(townBagCss);
