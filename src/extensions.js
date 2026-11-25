@@ -2353,7 +2353,7 @@ const copyHUD=updateHUD;updateHUD=function(){
  copyHUD();
  if(room)$('back').textContent=activity?tr('‹ Back to room','‹ 返回小屋'):tr('‹ Back outside','‹ 出门逛逛');
  $('hudProgress').textContent=tr('Traveller','摸鱼旅人')+' · '+items.length+tr(' keepsakes',' 件纪念品');
- nextStopButton.textContent=tr('Next: ','下一站：')+tr(...maps[railNextDistrict(scene)].n);nextStopButton.hidden=avatar===null||!!activity||!proposal.hidden||!!room||$('page').style.display==='block'||transitioning;
+ const routeLabel=travellerRailLabel();if(nextStopButton.textContent!==routeLabel)nextStopButton.textContent=routeLabel;nextStopButton.hidden=avatar===null||!!activity||!proposal.hidden||!!room||$('page').style.display==='block'||transitioning;
 };
 const copyAlbumProfile=albumProfile;
 albumProfile=function(q){copyAlbumProfile(q);const a=q.querySelector('.albumProfile p');if(a)a.textContent=items.length+tr(' little discoveries',' 份小小回忆')};
@@ -7010,7 +7010,7 @@ function openRailStop(destination=railNextDistrict(scene)){
  })
 }
 const railNextHUDBefore=updateHUD;
-updateHUD=function(){railNextHUDBefore();nextStopButton.setAttribute('aria-label',tr('Take the train to ','搭列车前往')+tr(...maps[railNextDistrict(scene)].n));nextStopButton.title=tr('Optional onward journey','随心选择下一站')};
+updateHUD=function(){railNextHUDBefore();const label=travellerRailLabel();if(nextStopButton.getAttribute('aria-label')!==label)nextStopButton.setAttribute('aria-label',label);nextStopButton.title=tr('Optional onward journey','随心选择下一站')};
 const stationTravelActionBefore=enter;
 enter=function(id){if(id==='station'){releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;openRailStop();return}return stationTravelActionBefore(id)};
 const scenicRailStyle=document.createElement('style');scenicRailStyle.textContent=`
@@ -8049,7 +8049,8 @@ const travellerMoodRoutes=[
  {id:'discover',district:'wonder',door:'quiz',ask:['I want to understand myself.','想多了解自己一点。'],reason:['Explore your preferences, without labels or diagnoses.','看看自己的偏好，不贴标签，也不下诊断。']},
  {id:'play',district:'island',door:'arcade',ask:['I am bored out of my mind.','无聊到快发芽了。'],reason:['A quick round of arcade fun might help.','去游戏厅摸一会儿鱼。']}
 ];
-let travellerSuggestedRoute=null;
+var travellerSuggestedRoute=null;
+function travellerRailLabel(){const v=travellerSuggestedRoute;return v&&v.district===scene&&travellerRouteDoor(v)?tr('Find: ','去找：')+travellerRouteName(v):tr('Next train: ','下一班：')+tr(...maps[railNextDistrict(scene)].n)}
 function travellerRouteDoor(v){return maps[v.district]?.st.find(st=>st[0]===v.door)}
 function travellerRouteName(v){const st=travellerRouteDoor(v);return st?tr(st[3],st[4]):tr(...maps[v.district].n)}
 function travellerFollowRoute(v){
@@ -8068,6 +8069,7 @@ function travellerMoodPanel(q){
  const grid=element('div','',panel,'travellerMoodChoices'),result=element('div','',panel,'travellerMoodResult');result.hidden=true;
  let selected=null;
  for(const v of travellerMoodRoutes){if(!travellerRouteDoor(v))continue;const btn=b(grid,tr(...v.ask),()=>{selected=v;for(const el of grid.querySelectorAll('button'))el.setAttribute('aria-pressed',String(el===btn));result.hidden=false;result.replaceChildren();element('strong',travellerRouteName(v),result);element('p',tr(...v.reason),result);b(result,scene===v.district?tr('Show me the way','带我过去'):tr('Catch the train','搭列车过去'),()=>travellerFollowRoute(selected))});btn.setAttribute('aria-pressed','false')}
+ if(travellerSuggestedRoute){panel.open=true;const cancel=b(panel,tr('Clear my suggested route','取消推荐路线'),()=>{travellerSuggestedRoute=null;updateHUD();cancel.remove()})}
  const intro=q.querySelector(':scope > p');if(intro)intro.after(panel);
  return panel
 }
@@ -8079,14 +8081,6 @@ todayHub=function(){travellerTodayBefore();if(!room&&!activity)travellerMoodPane
 $('dockScoop').onclick=todayHub;
 const travellerGuideEnterBefore=enter;
 enter=function(id){if(travellerSuggestedRoute?.district===scene&&travellerSuggestedRoute.door===id)travellerSuggestedRoute=null;return travellerGuideEnterBefore(id)};
-const travellerGuideHUD=updateHUD;
-updateHUD=function(){
- travellerGuideHUD();
- const v=travellerSuggestedRoute,here=v&&v.district===scene&&travellerRouteDoor(v);
- const label=here?tr('Find: ','去找：')+travellerRouteName(v):tr('Next train: ','下一班：')+tr(...maps[railNextDistrict(scene)].n);
- if(nextStopButton.textContent!==label)nextStopButton.textContent=label;
- nextStopButton.setAttribute('aria-label',label);
-};
 nextStopButton.onclick=()=>{const v=travellerSuggestedRoute;if(v&&v.district===scene){travellerFollowRoute(v);return}openRailStop()};
 const travellerEditStyle=document.createElement('style');travellerEditStyle.textContent=
 '.travellerEditBook,.travellerMoodBook{background:var(--town-grain),#f5e9cf;color:#504638;border:1px solid #b5a07a;border-radius:4px;padding:14px;margin:12px 0;box-sizing:border-box}'+
