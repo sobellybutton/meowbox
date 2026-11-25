@@ -754,7 +754,28 @@ let ambientBus=null,ambientNoise=null,ambientFilter=null,ambientGain=null,ambien
 const ambientProfiles={fortune:{notes:[220,261.63,293.66,329.63,392],cutoff:480,noise:.012},home:{notes:[196,246.94,293.66,329.63,392],cutoff:340,noise:.008},island:{notes:[261.63,293.66,349.23,392,440],cutoff:720,noise:.019},wonder:{notes:[220,261.63,329.63,349.23,440],cutoff:560,noise:.011}};
 function ambientContext(){if(muted||!ambientUnlocked)return false;try{audio??=new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume().catch(()=>{});if(!ambientBus){ambientBus=audio.createGain();ambientBus.gain.value=.0001;ambientBus.connect(audio.destination);let n=audio.createBuffer(1,audio.sampleRate*2,audio.sampleRate),d=n.getChannelData(0),v=0;for(let i=0;i<d.length;i++){v=(v+Math.random()*.04-.02)/1.02;d[i]=v*3}ambientNoise=audio.createBufferSource();ambientNoise.buffer=n;ambientNoise.loop=true;ambientFilter=audio.createBiquadFilter();ambientFilter.type='lowpass';ambientFilter.frequency.value=500;ambientGain=audio.createGain();ambientGain.gain.value=.008;ambientNoise.connect(ambientFilter).connect(ambientGain).connect(ambientBus);ambientNoise.start()}return true}catch(e){return false}}
 function ambientTone(f,vol=.018,dur=1.4,type='sine',when=0){if(!ambientBus||!audio||audio.state!=='running'||muted)return;let now=audio.currentTime+when,o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(Math.max(.0002,vol),now+.045);g.gain.exponentialRampToValueAtTime(.0001,now+dur);o.connect(g).connect(ambientBus);o.start(now);o.stop(now+dur+.02)}
-function ambientTick(){if(!ambientBus||!audio)return;if(muted||document.hidden){ambientBus.gain.setTargetAtTime(.0001,audio.currentTime,.12);return}ambientBus.gain.setTargetAtTime(.42,audio.currentTime,.4);let profile=ambientProfiles[scene]||ambientProfiles.fortune,key=scene+':'+(room||'outdoor');if(key!==ambientKey){ambientKey=key;ambientStep=0;ambientNext=audio.currentTime+.3}let rainy=!room&&atmosphere.weather==='rain';ambientFilter.frequency.setTargetAtTime(rainy?1050:room?240:profile.cutoff,audio.currentTime,.8);ambientGain.gain.setTargetAtTime(rainy?.045:room?.005:profile.noise,audio.currentTime,.8);if(audio.state!=='running'||audio.currentTime<ambientNext)return;let seq=[0,2,1,4,2,3,0,1],note=profile.notes[seq[ambientStep%seq.length]];ambientTone(note,.026,2.1,'sine');if(ambientStep%4===0)ambientTone(profile.notes[0]/2,.015,3.1,'sine');ambientStep++;ambientNext=audio.currentTime+(room?2.2:1.65)}
+/* Room-specific audio: no background melody unless explicitly needed.
+   The ambient bus stays separate from the new physical effects bus. */
+function roomAudioPolicy(world,inside,game,overlay,hidden=false){
+ if(hidden||overlay||inside==='destiny'||inside==='tarot'||inside==='daily'||inside==='quiz'||inside==='match'||inside==='office'||inside==='story'||game==='prayer'||game==='templePaper')return {noise:0,cutoff:300};
+ if(game==='rhythm')return {noise:0,cutoff:300};
+ if(inside==='fish')return {noise:.012,cutoff:450};
+ if(inside==='park'||game==='secretGarden'||inside==='wishes')return {noise:.008,cutoff:650};
+ if(inside==='temple')return {noise:.004,cutoff:400};
+ if(inside==='kitchen'||inside==='tea'||inside==='arcade')return {noise:.002,cutoff:300};
+ if(inside)return {noise:0,cutoff:300};
+ const profile=ambientProfiles[world]||ambientProfiles.fortune;return {noise:profile.noise*.7,cutoff:profile.cutoff}
+}
+function ambientTick(){
+ if(!ambientBus||!audio)return;
+ const now=audio.currentTime,hidden=muted||document.hidden;
+ ambientBus.gain.setTargetAtTime(hidden?.0001:.42,now,.12);
+ const overlay=$('page').style.display==='block'||!proposal.hidden||!$('arrival').hidden||talkOpen;
+ const profile=roomAudioPolicy(scene,room,activity,overlay,hidden);
+ const rainy=!hidden&&!overlay&&!room&&atmosphere.weather==='rain';
+ ambientFilter.frequency.setTargetAtTime(rainy?1050:profile.cutoff,now,.55);
+ ambientGain.gain.setTargetAtTime(rainy?.025:profile.noise,now,.25)
+}
 function ambientUnlock(){if(muted)return;ambientUnlocked=true;if(ambientContext()){if(!ambientTimer)ambientTimer=setInterval(ambientTick,250);ambientTick()}}
 document.addEventListener('pointerdown',ambientUnlock,{passive:true});document.addEventListener('keydown',ambientUnlock);
 const ambientMuteBefore=$('mute').onclick;$('mute').onclick=function(e){ambientMuteBefore.call(this,e);if(muted){if(ambientBus&&audio)ambientBus.gain.setTargetAtTime(.0001,audio.currentTime,.03)}else ambientUnlock()};
@@ -3773,3 +3794,40 @@ function careRelease(e,cancel=false){
 }
 c.addEventListener('pointerup',e=>careRelease(e),true);c.addEventListener('pointercancel',e=>careRelease(e,true),true);
 const parkCareCss=document.createElement('style');parkCareCss.textContent='#gameControls.parkCareControls{display:flex!important;flex-direction:column;gap:4px;width:min(95vw,440px);max-width:95vw;padding:6px;background:#eee4ccf5;border:1px solid #ad9974;color:#4b5747;border-radius:5px}#gameControls.parkCareControls[hidden]{display:none!important}.parkCareStats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;width:100%}.parkCareStat{display:flex;flex-direction:column;align-items:center;min-width:0;font-size:10px;line-height:1.2}.parkCareStat progress{width:95%;height:7px;accent-color:#71916f}.parkCareStat:first-child progress,.parkCareStat:last-child progress{accent-color:#b68c59}.parkCareStat small{font-size:10px}.parkCareButtons{display:flex;gap:3px;width:100%}.parkCareButtons button{flex:1;min-width:0;min-height:44px;padding:3px!important;font-size:12px;white-space:normal}.parkCareMessage{font-size:11px;line-height:1.3;text-align:center;min-height:14px}';document.head.append(parkCareCss);
+
+/* Physical action audio. Original synthesized effects, no copyrighted music.
+   Short buffered sounds use the effect bus, not the environmental ambience. */
+let actionFxBus=null,actionFxNoise=null,actionFxSuppress=0;
+function actionFxContext(){
+ if(muted||document.hidden)return false;
+ try{audio??=new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume().catch(()=>{});
+  if(!actionFxBus){actionFxBus=audio.createGain();actionFxBus.gain.value=.48;actionFxBus.connect(audio.destination)}
+  if(!actionFxNoise){actionFxNoise=audio.createBuffer(1,Math.ceil(audio.sampleRate*.65),audio.sampleRate);const d=actionFxNoise.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+  return audio.state==='running'
+ }catch(e){return false}
+}
+function physicalFx(type,strength=1){
+ if(!actionFxContext())return;
+ const settings={whack:[950,1.2,.12,.15],water:[1600,.8,.35,.045],paper:[2300,.9,.15,.06],scoop:[1100,1.7,.16,.055],shake:[1800,.9,.24,.07],paw:[650,.8,.10,.035],claw:[1200,2,.24,.06],splash:[900,.7,.45,.08],step:[170,.8,.08,.035]};
+ const p=settings[type];if(!p)return;const now=audio.currentTime,n=audio.createBufferSource(),f=audio.createBiquadFilter(),g=audio.createGain();n.buffer=actionFxNoise;f.type='bandpass';f.frequency.value=p[0];f.Q.value=p[1];g.gain.setValueAtTime(Math.max(.001,p[3]*clamp(strength,.25,1.4)),now);g.gain.exponentialRampToValueAtTime(.0001,now+p[2]);n.connect(f).connect(g).connect(actionFxBus);n.start(now);n.stop(now+p[2]+.015);
+ if(type==='whack'){const o=audio.createOscillator(),a=audio.createGain();o.type='triangle';o.frequency.setValueAtTime(145,now);o.frequency.exponentialRampToValueAtTime(57,now+.075);a.gain.setValueAtTime(.12*clamp(strength,.25,1.4),now);a.gain.exponentialRampToValueAtTime(.0001,now+.1);o.connect(a).connect(actionFxBus);o.start(now);o.stop(now+.11)}
+}
+const roomSoundBefore=sound;
+sound=function(f=420){
+ if(muted||actionFxSuppress||document.hidden)return;
+ if(room==='destiny'||room==='quiz'||room==='office'||room==='match'||room==='story'||activity==='prayer')return;
+ if($('page').style.display==='block'&&!['tarot','love','rhythm'].includes(activity))return;
+ if(activity==='hit')return;
+ return roomSoundBefore(f)
+};
+const physicalSmackBefore=smack;
+smack=function(){if(activity!=='hit')return physicalSmackBefore();actionFxSuppress++;try{physicalSmackBefore()}finally{actionFxSuppress--}physicalFx('whack',Math.min(1.3,.8+stressCombo*.04))};
+const physicalCareBefore=careComplete;
+careComplete=function(action){if(!careIsActive())return;actionFxSuppress++;try{physicalCareBefore(action)}finally{actionFxSuppress--}if(action==='feed')physicalFx('scoop');else if(action==='water')physicalFx('water');else if(action==='play'||action==='pet')physicalFx('paw')};
+const physicalTeaBefore=teaShake;
+teaShake=function(amount){physicalTeaBefore(amount);if(activity==='bubbleTea'&&amount>10)physicalFx('shake',Math.min(1,amount/120))};
+const physicalClawBefore=doClaw;
+doClaw=function(){const ready=activity==='claw'&&!state.dropping;physicalClawBefore();if(ready)physicalFx('claw')};
+document.addEventListener('visibilitychange',()=>{if(actionFxBus&&audio)actionFxBus.gain.setTargetAtTime(document.hidden||muted?.0001:.48,audio.currentTime,.04)});
+const physicalMuteBefore=$('mute').onclick;
+$('mute').onclick=function(e){physicalMuteBefore.call(this,e);if(actionFxBus&&audio)actionFxBus.gain.setTargetAtTime(muted?.0001:.48,audio.currentTime,.035)};
