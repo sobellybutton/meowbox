@@ -78,9 +78,21 @@ jobs:
                 await page.waitForTimeout(1700);
                 if(!await page.locator('.ritualCoin').isVisible())throw Error('Missed coin did not return');
                 await page.screenshot({path:'test-results/'+name+'-wishing-pool.png'});
+                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                await page.evaluate(()=>{room='temple';activity=null;action('prayer')});
+                await page.waitForFunction(()=>activity==='prayer'&&state.prayerStage==='ready',{},{timeout:10000});
+                await page.screenshot({path:'test-results/'+name+'-temple-ready.png'});
+                await page.evaluate(()=>beginQuietBow());
+                await page.waitForFunction(()=>state.prayerStage==='silent',{},{timeout:10000});
+                await page.screenshot({path:'test-results/'+name+'-temple-prayer.png'});
+                await page.waitForFunction(()=>state.prayerStage==='complete',{},{timeout:10000});
+                if(await page.evaluate(()=>state.bows)!==3)throw Error('Prayer bow count incorrect');
+                await page.evaluate(()=>start('sticks'));
+                await page.waitForTimeout(650);
+                await page.screenshot({path:'test-results/'+name+'-temple-sticks.png'});
                 if(errors.length)throw Error(errors.join('; '));
                 console.log(name+': PASS');
-              }catch(e){failed=true;console.error(name+': FAIL '+e.message);await page.screenshot({path:'test-results/'+name+'-failure.png'}).catch(()=>{});}
+              }catch(e){failed=true;console.error(name+': FAIL '+e.message+' | page errors: '+errors.join('; '));await page.screenshot({path:'test-results/'+name+'-failure.png'}).catch(()=>{});}
               finally{await page.close();}
             }
             await browser.close();
