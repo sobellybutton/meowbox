@@ -4006,7 +4006,7 @@ start=function(a){if(a==='claw'||a==='blindBox'){productionVisual('arcadePlush')
 /* Shareable illustrated result postcards. No private name, question, birth data,
    profile identifiers or raw quiz answers are read by this exporter. */
 const meowShareUrl='https://sobellybutton.github.io/meowbox/';
-const shareFormats={feed:[1080,1350],story:[1080,1920],square:[1080,1080]};
+const shareFormats={feed:[1080,1350],xhs:[1080,1440],story:[1080,1920],square:[1080,1080]};
 const shareKinds={soul:['Soul Cat','猫灵测试'],type:['Personality portrait','四维性格探索'],motive:['Inner motives','九型动力探索'],tarot:['Tarot reflection','塔罗手记'],fortune:['Daily luck','今日趣签'],cafe:['Café discovery','缘分咖啡馆'],story:['Parallel life','平行人生']};
 function sharePublicData(data){
  const pair=v=>Array.isArray(v)&&v.length>=2?[String(v[0]).slice(0,240),String(v[1]).slice(0,240)]:['',''];
@@ -4017,44 +4017,111 @@ function shareTextLines(c,text,max){
  const chars=/[\u3400-\u9fff]/.test(text),sep=chars?'':' ',parts=chars?Array.from(text):text.split(/\s+/),lines=[];let row='';
  for(const p of parts){const next=row?row+sep+p:p;if(row&&c.measureText(next).width>max){lines.push(row);row=p}else row=next}if(row)lines.push(row);return lines
 }
-function shareCardArt(cv,data,format,cn){
- const [w,h]=shareFormats[format],g=cv.getContext('2d');cv.width=w;cv.height=h;
- const f=h/1350,center=w/2,locale=v=>v[cn?1:0],font=cn?'"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",serif':'Georgia,serif';
- const color=data.accent;const bg=g.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#f8edda');bg.addColorStop(.56,'#e8dbc0');bg.addColorStop(1,'#d8d9bc');g.fillStyle=bg;g.fillRect(0,0,w,h);
- // Subtle paper flecks, deterministic rather than changing on every export.
- let seed=1323;for(let j=0;j<10000;j++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const x=seed%w;seed=(Math.imul(seed,1664525)+1013904223)>>>0;g.fillStyle=j%3?'#70573b09':'#ffffff20';g.fillRect(x,seed%h,1+j%2,1)}
- g.strokeStyle='#a88e66';g.lineWidth=3;g.strokeRect(44,44,w-88,h-88);g.lineWidth=1;g.strokeRect(56,56,w-112,h-112);
- function line(text,x,y,size,weight='normal',fill='#4c5143'){g.font=weight+' '+size+'px '+font;g.textAlign='center';g.textBaseline='middle';g.fillStyle=fill;g.fillText(text,x,y,w-150)}
- line('MEOWBOX · '+(cn?'摸鱼小镇':'A LITTLE WORLD AWAY'),center,98,27,'bold');
- line(locale(shareKinds[data.kind]),center,146,30,'normal','#796748');
- const iconY= h===1920?475:h===1080?290:350,rad=h===1080?112:154;
- g.save();g.translate(center,iconY);
- const wash=g.createRadialGradient(-45,-40,12,0,0,rad);wash.addColorStop(0,'#f5e6c7');wash.addColorStop(1,color);g.fillStyle=wash;g.beginPath();g.arc(0,0,rad,0,Math.PI*2);g.fill();g.strokeStyle='#ad936c';g.lineWidth=2;g.beginPath();g.arc(0,0,rad+13,0,Math.PI*2);g.stroke();
- // Original symbolic illustrations, no external card images or tainted canvas.
- if(data.kind==='soul'){
-  g.fillStyle=color;g.strokeStyle='#635342';g.lineWidth=4;g.beginPath();g.moveTo(-67,-17);g.quadraticCurveTo(-82,-84,-73,-100);g.quadraticCurveTo(-44,-95,-24,-67);g.quadraticCurveTo(0,-78,24,-67);g.quadraticCurveTo(45,-96,73,-100);g.quadraticCurveTo(82,-84,67,-17);g.bezierCurveTo(90,58,45,85,0,85);g.bezierCurveTo(-45,85,-90,58,-67,-17);g.closePath();g.fill();g.stroke();
-  g.fillStyle='#d6a092';for(const side of [-1,1]){g.beginPath();g.moveTo(side*61,-85);g.lineTo(side*34,-65);g.lineTo(side*66,-48);g.closePath();g.fill();g.strokeStyle='#635342';g.lineWidth=4;g.beginPath();g.moveTo(side*22,5);g.quadraticCurveTo(side*36,-5,side*48,5);g.stroke()}
-  g.fillStyle='#e9d0ad';g.beginPath();g.ellipse(0,41,32,23,0,0,Math.PI*2);g.fill();g.fillStyle='#9e6e61';g.beginPath();g.moveTo(-8,28);g.lineTo(8,28);g.lineTo(0,38);g.closePath();g.fill();
+
+/* Social cover direction: original illustrated editorial postcard, not a screenshot.
+   The 9:16 content avoids a generous top/bottom/right overlay allowance. */
+const socialCatCover=[
+ {name:'Cloud Poet',sky:['#a6a3b9','#e4cbb7'],coat:'#b9a6ba',prop:'book',quote:['Mentally, I am by a window.','本人精神状态：窗边发呆。']},
+ {name:'Professional Napper',sky:['#d2b18a','#f3d9ac'],coat:'#c39a69',prop:'pillow',quote:['My superpower? Power saving mode.','我的超能力：省电模式。']},
+ {name:'Rooftop Explorer',sky:['#99aaa0','#ead3a4'],coat:'#c48a59',prop:'map',quote:['My itinerary was never approved by HR.','行程不归人事部审批。']},
+ {name:'Midnight Stargazer',sky:['#536b83','#9996b0'],coat:'#7b879e',prop:'moon',quote:['Stars never send meeting invites.','星星从来不发会议邀请。']},
+ {name:'Matcha Companion',sky:['#91ac90','#e1d8ab'],coat:'#a4ad83',prop:'tea',quote:['A little tea, a little peace.','一杯茶，一点安稳。']},
+ {name:'Gossip Detective',sky:['#c6a193','#ebcfb5'],coat:'#ce9c7b',prop:'paper',quote:['I am not nosy. I am well informed.','不是八卦，是情报灵通。']},
+ {name:'Clear-eyed Cat',sky:['#a4b7b1','#dce0c4'],coat:'#a3b2a8',prop:'paper',quote:['This could have been an email.','这个会，本来可以发邮件。']},
+ {name:'Lucky Opportunist',sky:['#ccb887','#f0dfa9'],coat:'#d6b171',prop:'coin',quote:['Good luck, preferably paid leave.','好运来，最好是带薪假。']}
+];
+function socialResultQuote(data){
+ if(data.kind==='soul'){const found=socialCatCover.find(x=>x.name===data.title[0]);if(found)return found.quote}
+ return ({type:['My personality is more than my job title.','我的人格，不止工牌上的职位。'],motive:['A tiny discovery about myself.','摸鱼的时候，顺便认识了自己。'],tarot:['The future is not a deadline.','未来不是截止日期。'],fortune:['Today, I am taking a little break.','今天宜摸鱼，也宜善待自己。'],cafe:['Good company. No agenda.','好好相处，不必列议程。'],story:['In another life, I clocked out.','平行人生里，我准时下班了。'],soul:['There is more than one side to this cat.','一只猫，也可以有好多面。']})[data.kind]
+}
+function meowSocialCaption(data,format,cn){
+ const title=data.title[cn?1:0],quote=socialResultQuote(data)[cn?1:0];
+ const invite=cn?'来摸鱼小镇，看看你的隐藏身份。':'Take a little break and find your own result.';
+ const tags=cn?'#摸鱼小镇 #趣味测试 #治愈系':'#MeowBox #CozyGames #TakeABreak';
+ return [cn?'我在摸鱼小镇测到：'+title:'My MeowBox result: '+title,quote,invite,tags,meowShareUrl].join('\n')
+}
+function socialCoverIllustration(g,data,x,y,w,h){
+ const catDef=socialCatCover.find(v=>v.name===data.title[0]),cat=data.kind==='soul';
+ const palette=catDef?.sky||(data.kind==='tarot'?['#77728b','#d5c2b0']:data.kind==='cafe'?['#a0a88e','#e4cba0']:data.kind==='fortune'?['#93aca1','#e7d4a5']:['#8fa9a6','#e7d4ae']);
+ g.save();g.translate(x,y);g.scale(w/800,h/460);g.beginPath();g.rect(0,0,800,460);g.clip();
+ const sky=g.createLinearGradient(0,0,0,460);sky.addColorStop(0,palette[0]);sky.addColorStop(1,palette[1]);g.fillStyle=sky;g.fillRect(0,0,800,460);
+ function path(d,fill,stroke,width=2){const p=new Path2D(d);if(fill){g.fillStyle=fill;g.fill(p)}if(stroke){g.strokeStyle=stroke;g.lineWidth=width;g.lineCap='round';g.lineJoin='round';g.stroke(p)}}
+ function oval(x,y,rx,ry,fill){g.fillStyle=fill;g.beginPath();g.ellipse(x,y,rx,ry,0,0,Math.PI*2);g.fill()}
+ oval(607,91,47,47,catDef?.prop==='moon'?'#f4e6c0':'#f7e1a7');
+ path('M0 226 Q100 100 190 175 Q265 86 345 173 Q427 115 512 177 Q660 77 800 181 L800 460 H0Z','#b6c0ad');
+ path('M0 285 Q140 150 260 245 Q350 155 450 234 Q575 135 800 233 L800 460 H0Z','#8da49a');
+ path('M0 335 Q90 260 210 310 Q430 210 590 310 Q710 249 800 289 L800 460 H0Z','#6c8b79');
+ path('M0 367 Q400 280 800 367 L800 460 H0Z','#8c9e7c');
+ path('M250 325 Q400 314 548 325 L691 460 H106Z','#c0ae87');
+ path('M265 339 Q400 326 533 339 M217 385 Q400 369 582 385 M157 435 Q400 418 644 435',null,'#a28e71',2);
+ // Framing tree branches and varied foliage, leaving the subject unobstructed.
+ path('M12 0 Q66 170 48 354 L85 354 Q93 175 49 0Z','#746555');
+ path('M788 0 Q735 170 752 354 L715 354 Q707 175 751 0Z','#746555');
+ path('M54 137 Q134 80 200 44 M746 137 Q666 80 600 44',null,'#746555',13);
+ let seed=325;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+ for(let i=0;i<165;i++){const side=i%2,a=rand()*Math.PI*2,r=Math.sqrt(rand()),px=(side?753:47)+Math.cos(a)*r*160,py=55+Math.sin(a)*r*90;g.save();g.translate(px,py);g.rotate(rand()*Math.PI);oval(0,0,8+rand()*20,3+rand()*8,['#6c8870','#8da181','#b3b98b','#557765'][i%4]);g.restore()}
+ if(catDef?.prop==='moon'){for(let i=0;i<19;i++){const a=rand()*800,b=20+rand()*120;oval(a,b,1.5+i%3*.3,1.5+i%3*.3,'#f5e2b8')}}
+ const accent=data.accent;
+ if(cat){
+  const nap=catDef?.prop==='pillow',body=catDef?.coat||accent;
+  g.save();g.translate(400,365);
+  oval(0,8,158,19,'#424d4150');
+  if(nap){path('M-156 3 Q-176 -28 -140 -39 Q-8 -64 146 -37 Q177 -21 155 7 Q0 30 -156 3Z','#b28e83','#785c57',3);path('M-144 -24 Q0 -44 143 -24',null,'#e1b6a1',2)}
+  const fur=g.createLinearGradient(0,-210,0,20);fur.addColorStop(0,body);fur.addColorStop(1,'#e4c6a1');
+  path(nap?'M-75 -23 Q-144 -13 -132 -67 Q-122 -97 -68 -82':'M-66 -22 Q-146 -35 -137 -102 Q-133 -130 -111 -134',null,body,20);
+  path(nap?'M-110 -18 Q-116 -82 -48 -100 Q25 -122 79 -72 Q124 -30 95 -11 Q-20 16 -110 -18Z':'M-81 -13 Q-104 -55 -69 -109 Q-39 -151 6 -151 Q68 -147 80 -87 Q106 -29 65 -8 Q-4 7 -81 -13Z',fur,'#776557',3);
+  const hx=nap?48:12,hy=nap?-73:-177;g.save();g.translate(hx,hy);if(nap)g.rotate(.14);
+  path('M-59 -10 Q-68 -54 -63 -76 Q-36 -71 -20 -48 Q0 -58 21 -48 Q42 -75 64 -79 L61 -10 Q79 30 44 53 Q0 74 -44 53 Q-79 30 -59 -10Z',body,'#766053',3);
+  path('M-57 -66 L-52 -22 L-28 -47Z M56 -67 L53 -22 L29 -47Z','#d6a39a');
+  path('M-45 20 Q-18 9 0 25 Q18 9 45 20 Q40 55 0 59 Q-40 55 -45 20Z','#efddc0');
+  for(const sign of [-1,1]){if(nap||catDef?.prop==='tea')path('M'+(sign*27-10)+' 6 q10 10 20 0',null,'#544940',3);else{oval(sign*27,5,11,13,'#7e8d66');oval(sign*27,5,3.5,9,'#3f4239');oval(sign*27-3,1,2.6,2.6,'#fff0ce')}for(let j=0;j<3;j++)path('M'+(sign*39)+' '+(24+j*6)+' Q'+(sign*59)+' '+(20+j*7)+' '+(sign*79)+' '+(15+j*10),null,'#8c7462',1.6)}
+  path('M-7 26 Q0 22 7 26 L0 34Z','#ac7972');path('M0 34 v5 q-5 8 -14 3 M0 39 q5 8 14 3',null,'#84685b',2);g.restore();
+  oval(-36,-5,25,11,'#e6c8a0');oval(48,-5,25,11,'#e6c8a0');
+  const p=catDef?.prop||'book';
+  if(p==='book'||p==='map'||p==='paper'){g.save();g.translate(68,-24);g.rotate(-.17);path('M-62 -25 L0 -13 L63 -31 L60 23 L0 37 L-61 25Z','#f1dfb5','#9b815b',2);path('M0 -13 V37 M-52 -12 L-9 -3 M-52 0 L-9 9 M12 -3 L50 -14 M12 11 L49 0',null,'#b8a078',2);g.restore()}
+  if(p==='tea'){oval(110,-4,42,9,'#e5d0aa');path('M79 -42 Q80 -2 110 -1 Q140 -2 141 -42Z','#d9c7a4','#7e795c',2);oval(110,-42,31,9,'#7c9165');path('M141 -34 Q163 -39 162 -22 Q158 -10 140 -15',null,'#8d8067',3)}
+  if(p==='coin'){oval(100,-17,22,22,'#e5c575');oval(100,-17,15,15,'#c9a45e');path('M94 -23H106V-11H94Z','#f0d594','#9b7948',1)}
+  g.restore();
  }else if(data.kind==='tarot'||data.kind==='fortune'){
-  g.rotate(-.12);g.fillStyle='#f5e5c4';g.strokeStyle='#866b49';g.lineWidth=4;g.fillRect(-63,-93,126,186);g.strokeRect(-63,-93,126,186);g.lineWidth=1;g.strokeRect(-52,-82,104,164);
-  g.strokeStyle='#a88a57';g.lineWidth=3;g.beginPath();g.arc(0,-12,33,0,Math.PI*2);g.stroke();g.fillStyle='#bd9a60';g.beginPath();g.moveTo(0,-62);g.quadraticCurveTo(5,-21,47,-12);g.quadraticCurveTo(6,-5,0,38);g.quadraticCurveTo(-6,-5,-47,-12);g.quadraticCurveTo(-5,-21,0,-62);g.fill();g.strokeStyle='#8e7957';g.beginPath();g.moveTo(-30,65);g.lineTo(30,65);g.stroke();
+  g.save();g.translate(400,301);oval(0,61,175,22,'#41594f55');const count=data.kind==='tarot'&&data.lines.length===3?3:1;
+  for(let i=0;i<count;i++){g.save();g.translate((i-(count-1)/2)*104,0);g.rotate((i-(count-1)/2)*.13-.05);path('M-60 -118 Q-66 -125 -56 -127 H56 Q66 -127 66 -117 V57 Q66 68 56 68 H-56 Q-66 68 -66 57Z','#efe0ba','#8c7457',3);path('M-54 -114 H54 V56 H-54Z',null,'#b49a6d',1.6);oval(0,-33,34,34,accent);path('M0 -80 Q7 -40 44 -33 Q6 -24 0 17 Q-6 -24 -44 -33 Q-7 -40 0 -80Z','#ecd19b');path('M-28 35 H28',null,'#a98f67',2);g.restore()}g.restore()
  }else if(data.kind==='cafe'){
-  g.fillStyle='#f2e0bf';g.strokeStyle='#715c49';g.lineWidth=3;g.beginPath();g.ellipse(0,67,90,18,0,0,Math.PI*2);g.fill();g.stroke();g.beginPath();g.moveTo(-61,-28);g.bezierCurveTo(-58,57,-25,67,0,67);g.bezierCurveTo(35,67,58,45,61,-28);g.closePath();g.fill();g.stroke();g.beginPath();g.ellipse(0,-28,61,20,0,0,Math.PI*2);g.fillStyle='#98724f';g.fill();g.stroke();g.beginPath();g.arc(62,5,25,-1.6,1.6);g.stroke();for(let i=0;i<3;i++){g.beginPath();g.moveTo(-25+i*25,-55);g.bezierCurveTo(-45+i*25,-75,-8+i*25,-83,-22+i*25,-103);g.strokeStyle='#fff2d3';g.stroke()}
+  g.save();g.translate(400,327);oval(0,37,157,18,'#59635455');for(const sign of [-1,1]){g.save();g.translate(sign*69,0);oval(0,21,66,14,'#e2cda8');path('M-51 -66 Q-48 22 0 24 Q48 22 51 -66Z','#eedaba','#887760',3);oval(0,-66,51,16,'#987451');path('M51 -54 Q89 -58 80 -24 Q68 -12 49 -21',null,'#887760',5);for(let i=0;i<2;i++)path('M'+(-12+i*24)+' -87 q-22 -25 0 -47',null,'#f5ead0',3);g.restore()}g.restore()
  }else{
-  // Landscape medallion: a railway journey through the valley.
-  g.save();g.beginPath();g.arc(0,0,rad-3,0,Math.PI*2);g.clip();g.fillStyle='#b6c3aa';g.beginPath();g.moveTo(-rad,20);g.quadraticCurveTo(-80,-100,-12,5);g.quadraticCurveTo(70,-105,rad,4);g.lineTo(rad,rad);g.lineTo(-rad,rad);g.fill();g.fillStyle='#6f9281';g.beginPath();g.moveTo(-rad,54);g.quadraticCurveTo(-60,-40,0,43);g.quadraticCurveTo(70,-38,rad,38);g.lineTo(rad,rad);g.lineTo(-rad,rad);g.fill();g.strokeStyle='#ead4a5';g.lineWidth=21;g.beginPath();g.moveTo(-rad,110);g.bezierCurveTo(-70,65,40,90,rad,35);g.stroke();g.strokeStyle='#8a7051';g.lineWidth=4;g.stroke();g.fillStyle='#f3d8a1';g.beginPath();g.arc(48,-65,28,0,Math.PI*2);g.fill();g.restore()
+  // Railway ticket and traveller notebook, a tangible souvenir from the game.
+  g.save();g.translate(400,313);oval(0,43,156,20,'#4d5b4d55');g.rotate(-.09);path('M-133 -104 L131 -104 V-65 Q111 -58 131 -45 V42 H-133 V-45 Q-113 -58 -133 -65Z','#e5d4ad','#8c7355',3);path('M-118 -91 H116 V29 H-118Z',null,'#a88c64',1.4);path('M-101 2 Q-51 -47 -4 -4 Q52 -60 100 -8 L100 14 H-101Z',accent);path('M-73 16 L-8 -10 M-8 16 L47 -10',null,'#b49a6a',3);oval(52,-54,15,15,'#d6b66f');g.restore()
  }
- g.restore();
- const titleY=iconY+rad+67,footer=h-100,bodyStart=titleY+95,bodyMax=footer-50-bodyStart;
- let titleSize=h===1080?51:61;g.font='bold '+titleSize+'px '+font;while(g.measureText(locale(data.title)).width>w-160&&titleSize>30){titleSize-=2;g.font='bold '+titleSize+'px '+font}line(locale(data.title),center,titleY,titleSize,'bold','#465f50');
- let size=h===1080?31:36,all=[];for(;;){g.font=size+'px '+font;all=data.lines.flatMap((v,i)=>[...shareTextLines(g,locale(v),w-210),...(i<data.lines.length-1?['']:[])]);if(all.length*(size*1.39)<=bodyMax||size<=22)break;size-=2}
- const rowHeight=size*1.39,maxLines=Math.max(1,Math.floor(bodyMax/rowHeight));all=all.slice(0,maxLines);all.forEach((v,i)=>line(v,center,bodyStart+i*rowHeight,size,'normal','#554d40'));
- g.strokeStyle='#aa916b';g.lineWidth=1.5;g.beginPath();g.moveTo(170,footer-40);g.lineTo(w-170,footer-40);g.stroke();
- line(cn?'趣味探索 · 并非预测或专业测评':'For fun and reflection, not a professional assessment.',center,footer-12,23,'normal','#74664f');
- line('sobellybutton.github.io/meowbox',center,footer+28,24,'normal','#4e6555');
+ g.restore()
+}
+function socialLayout(format){
+ const [w,h]=shareFormats[format];
+ // Keep TikTok/Story cover readable under common app chrome; not an official guarantee.
+ if(format==='story')return {w,h,left:94,right:190,top:235,bottom:390,artH:540};
+ if(format==='square')return {w,h,left:76,right:76,top:72,bottom:86,artH:340};
+ return {w,h,left:76,right:76,top:80,bottom:95,artH:format==='xhs'?510:450}
+}
+function shareCardArt(cv,data,format,cn){
+ const L=socialLayout(format),{w,h,left,right,top,bottom,artH}=L;cv.width=w;cv.height=h;const g=cv.getContext('2d');
+ const width=w-left-right,cx=left+width/2,end=h-bottom,locale=v=>v[cn?1:0],font=cn?'"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",serif':'Georgia,serif';
+ const bg=g.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#faf0db');bg.addColorStop(.6,'#e9dcc1');bg.addColorStop(1,'#d9ddc2');g.fillStyle=bg;g.fillRect(0,0,w,h);
+ let seed=1214;for(let j=0;j<6000;j++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const x=seed%w;seed=(Math.imul(seed,1664525)+1013904223)>>>0;g.fillStyle=j%3?'#72573b0c':'#ffffff30';g.fillRect(x,seed%h,1+j%2,1)}
+ g.strokeStyle='#b09b75';g.lineWidth=2;g.strokeRect(38,38,w-76,h-76);
+ function textLine(text,x,y,size,weight='normal',color='#4b5547'){g.font=weight+' '+size+'px '+font;g.textBaseline='middle';g.textAlign='center';g.fillStyle=color;g.fillText(text,x,y,width)}
+ textLine('MEOWBOX  ·  '+(cn?'摸鱼小镇':'A LITTLE WORLD AWAY'),cx,top,24,'bold','#5a6b56');
+ textLine(locale(shareKinds[data.kind]),cx,top+44,29,'normal','#8a7050');
+ const artY=top+78;socialCoverIllustration(g,data,left,artY,width,artH);g.strokeStyle='#b6a07b';g.lineWidth=2;g.strokeRect(left,artY,width,artH);
+ let titleY=artY+artH+55,ts=format==='square'?47:58;g.font='bold '+ts+'px '+font;while(g.measureText(locale(data.title)).width>width&&ts>29){ts-=2;g.font='bold '+ts+'px '+font}textLine(locale(data.title),cx,titleY,ts,'bold','#425c4e');
+ const quoteY=titleY+55,quote=locale(socialResultQuote(data));textLine(quote,cx,quoteY,format==='square'?26:31,'normal','#8f654e');
+ const bodyStart=quoteY+54,bodyLimit=end-87;let size=format==='square'?28:34,all=[];
+ for(;;){g.font=size+'px '+font;all=data.lines.flatMap(v=>shareTextLines(g,locale(v),width-32));if(all.length*size*1.32<=bodyLimit-bodyStart||size<=22)break;size-=2}
+ const lineH=size*1.32,max=Math.max(1,Math.floor((bodyLimit-bodyStart)/lineH));const shown=all.slice(0,max);if(all.length>max&&shown.length)shown[shown.length-1]=shown[shown.length-1].replace(/[。.!?]$/,'')+'…';shown.forEach((v,i)=>textLine(v,cx,bodyStart+i*lineH,size,'normal','#554d42'));
+ g.strokeStyle='#ad946b';g.lineWidth=1.5;g.beginPath();g.moveTo(left+45,end-63);g.lineTo(w-right-45,end-63);g.stroke();
+ textLine(cn?'来小镇，发现你的隐藏身份':'Find your own little escape',cx,end-32,26,'bold','#4d6657');
+ textLine(cn?'趣味探索 · 并非专业测评或预测':'For fun and reflection, not a professional assessment.',cx,end+4,20,'normal','#786b53');
+ if(format!=='xhs')textLine('sobellybutton.github.io/meowbox',cx,end+34,20,'normal','#556a58');
 }
 function openMeowShare(raw,back=null){
- const data=sharePublicData(raw);let format='feed',cn=zh,ready=null,version=0;const returnTo=()=>{if(back)back();else $('page').style.display='none'};
+ const data=sharePublicData(raw);let format=zh?'xhs':'feed',cn=zh,ready=null,version=0;const returnTo=()=>{if(back)back();else $('page').style.display='none'};
  page(tr('Share a little piece of town','分享一张小镇纪念卡'),tr('Only the result shown here is included. Your name and private answers stay out of the image.','只分享这里显示的结果，不会附上名字或私人答案。'),q=>{
   activePage='meowShare';const row=q.querySelector('.row');if(row?.firstElementChild)row.firstElementChild.onclick=returnTo;
   if(row?.lastElementChild)row.lastElementChild.hidden=true;
@@ -4066,12 +4133,12 @@ function openMeowShare(raw,back=null){
    try{if(typeof File==='function'&&navigator.share&&navigator.canShare?.({files:[ready]})){await navigator.share({files:[ready],title:'MeowBox'});return}}catch(e){if(e?.name==='AbortError')return}
    status.textContent=tr('Image sharing is not supported here. Save the PNG and upload it in your chosen app.','当前浏览器不支持图片直传，请保存 PNG 后在目标应用中上传。')
   });
-  const saveButton=b(panel,tr('Save PNG image','保存 PNG 图片'),()=>{if(!ready)return;const a=document.createElement('a'),url=URL.createObjectURL(ready);a.href=url;a.download=ready.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)});
-  const copy=b(panel,tr('Copy caption and game link','复制文案与游戏链接'),async()=>{const text=(cn?'我的摸鱼小镇奇遇：':'My MeowBox discovery: ')+data.title[cn?1:0]+'\n'+meowShareUrl;try{await navigator.clipboard.writeText(text);status.textContent=tr('Caption copied.','文案已复制。')}catch{const field=element('textarea',text,panel);field.value=text;field.readOnly=true;field.select();status.textContent=tr('Select and copy the caption.','请选择并复制文案。')}});
+  const saveButton=b(panel,tr('Save PNG image','保存 PNG 图片'),()=>{if(!ready)return;const a=document.createElement('a'),url=URL.createObjectURL(ready);a.href=url;a.download=ready.name||'meowbox-'+data.kind+'-'+format+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)});
+  const copy=b(panel,tr('Copy caption and game link','复制文案与游戏链接'),async()=>{const text=meowSocialCaption(data,format,cn);try{await navigator.clipboard.writeText(text);status.textContent=tr('Caption copied.','文案已复制。')}catch{const field=element('textarea',text,panel);field.value=text;field.readOnly=true;field.select();status.textContent=tr('Select and copy the caption.','请选择并复制文案。')}});
   const fb=b(panel,tr('Share game link on Facebook','分享到 Facebook（游戏链接）'),()=>{window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(meowShareUrl),'_blank','noopener,noreferrer')});
   const view=b(panel,tr('Open image to save','打开图片以保存'),()=>{if(!ready)return;const url=URL.createObjectURL(ready);const tab=window.open(url,'_blank');if(!tab){const im=element('img','',panel,'meowSharePreview');im.alt=tr('Shareable result image','可分享的测试结果图');im.src=url;im.addEventListener('load',()=>{status.textContent=tr('Touch and hold the image to save it.','长按图片保存。')},{once:true})}setTimeout(()=>URL.revokeObjectURL(url),120000)});
-  element('small',tr('Instagram, Facebook, WeChat and other apps: use the phone share menu if the app is offered, or save the image and post it yourself. The Facebook link button shares the game, not your image.','Instagram、Facebook、微信等：若系统分享菜单显示该应用，可直接选择；也可保存图片后自行发布。Facebook 链接按钮只分享游戏网址。'),panel,'meowShareHelp');
-  const formatButtons=Object.keys(shareFormats).map(k=>b(tabs,k==='feed'?tr('Feed 4:5','动态 4:5'):k==='story'?tr('Story 9:16','限时动态 9:16'):tr('Square 1:1','方图 1:1'),()=>{format=k;render()}));
+  element('small',tr('Choose the layout, save the image and post it to Instagram, Facebook, Xiaohongshu, TikTok photo posts or WeChat. If your phone offers the app in its share menu, you may share there. Facebook link shares the game only. TikTok video export is not included.','选好尺寸，保存图片后可发布到 Instagram、Facebook、小红书、TikTok 图文或微信。系统分享菜单若显示目标应用，也可直接选择。Facebook 链接仅分享游戏网址，目前不提供视频导出。'),panel,'meowShareHelp');
+  const formatButtons=Object.keys(shareFormats).map(k=>b(tabs,k==='feed'?'IG / FB · 4:5':k==='xhs'?'小红书 · 3:4':k==='story'?'TikTok / Story · 9:16':tr('WeChat · 1:1','微信 · 1:1'),()=>{format=k;render()}));
   const languageButtons=[b(langs,'English',()=>{cn=false;render()}),b(langs,'中文',()=>{cn=true;render()})];
   function render(){const token=++version;ready=null;send.disabled=saveButton.disabled=view.disabled=true;formatButtons.forEach((x,i)=>x.setAttribute('aria-pressed',String(Object.keys(shareFormats)[i]===format)));languageButtons.forEach((x,i)=>x.setAttribute('aria-pressed',String(i===Number(cn))));shareCardArt(cv,data,format,cn);cv.setAttribute('aria-label',data.title[cn?1:0]);status.textContent=tr('Preparing your postcard…','正在准备纪念卡……');cv.toBlob(blob=>{if(token!==version||!cv.isConnected)return;if(!blob){status.textContent=tr('Could not create the image. Try another format.','图片生成失败，请切换尺寸重试。');return}ready=typeof File==='function'?new File([blob],'meowbox-'+data.kind+'-'+format+'.png',{type:'image/png'}):blob;send.disabled=saveButton.disabled=view.disabled=false;status.textContent=tr('Ready to share or save.','可以分享或保存啦。')},'image/png')}
   render()
