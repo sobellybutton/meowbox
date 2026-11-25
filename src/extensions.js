@@ -7440,7 +7440,7 @@ townVisualLanguage.textContent=
 '#game #gameControls button,#game #ritualActionBar button,#game #pearlRecipePanel button,#game #wonderQuestionSheet button,#game #storyReadingSheet button,#game #cafeQuestionSheet button{font-family:var(--town-title);border-radius:4px!important;line-height:1.25!important;min-height:44px!important}'+
 '#game #hint,#game #toast{font-family:var(--town-body);font-weight:500;letter-spacing:0;line-height:1.4}'+
 '#game #dock button,#game #small button,#game #back{font-family:var(--town-title);letter-spacing:0}'+
-'#game #hudCoins{color:#f9e9c3;font-family:var(--town-title);font-variant-numeric:tabular-nums}'+
+'#game #hudCoins{color:#594735;font-family:var(--town-title);font-variant-numeric:tabular-nums}'+
 '.townPawLedger,.townPawWheelLink{margin:14px 0;padding:14px;background:var(--town-grain),#f5e8ce;border:1px solid #b29a72;border-radius:4px;color:#504638;box-shadow:2px 3px 0 #b99f7320}'+
 '.townPawLedgerHead{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px;border-bottom:1px dashed #bba27a;padding-bottom:8px}.townPawLedgerHead h2{margin:0!important;font-size:19px}.townPawLedgerHead>strong{color:#536c5b;font-size:14px}'+
 '.townPawLedger>p{font-size:13px}.townPawLedgerRow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #bdab864d}.townPawLedgerRow>div{min-width:0}.townPawLedgerRow small{display:block;font-size:12px;line-height:1.45;color:#6b604d}.townPawStamp{flex:none;width:38px;height:38px;display:grid;place-items:center;border:2px double #a3634d;border-radius:50%;font-family:var(--town-title);color:#a3634d;background:#f9ecd3;font-size:15px;transform:rotate(-4deg)}'+
@@ -7454,3 +7454,32 @@ page=function(title,sub,body){
   body(q)
  })
 };
+
+
+/* Small illustrated travel tabs rather than mismatched Unicode glyphs.
+   Keep labels and original navigation actions intact. */
+const travelTabIllustrations={
+ dockRoom:'<path d="M7 9q0-5 5-5h2q5 0 5 5M4 11q0-3 3-3h14q3 0 3 3v13H4z" fill="#d5b58b"/><path d="M4 13q10 6 20 0v-2H4z" fill="#ecd4ad"/><path d="M9 16v8m10-8v8" fill="none"/><rect x="12" y="14" width="4" height="5" rx="1" fill="#a77b53"/>',
+ dockPassport:'<path d="M5 4h17v20H5q-2-1-2-4V8q0-3 2-4z" fill="#87998a"/><path d="M7 4v20" fill="none"/><circle cx="15" cy="13" r="5" fill="#e5cc9e"/><path d="M10 13h10m-5-5q-4 5 0 10m0-10q4 5 0 10" fill="none" stroke-width=".8"/>',
+ dockValley:'<path d="M3 13L14 4l11 9-3 1v10H6V14z" fill="#d9bc95"/><path d="M2 13L14 3l12 10" fill="none" stroke="#8e6650" stroke-width="2"/><path d="M11 24v-9h6v9" fill="#8a9a84"/><path d="M2 24q2-5 5-4m19 4q-2-5-5-4" stroke="#70866e" fill="none"/>',
+ dockTravel:'<path d="M3 6l7-2 8 3 7-2v18l-7 2-8-3-7 2z" fill="#ecd8ac"/><path d="M10 4v18m8-15v18" fill="none" stroke="#a38964"/><path d="M6 17q6-9 12-3l4-4" fill="none" stroke="#b16a56" stroke-dasharray="2 2"/><circle cx="22" cy="10" r="2" fill="#8d6550"/>',
+ dockScoop:'<path d="M5 4h18v20H7q-2 0-2-2z" fill="#f0dcb8"/><path d="M5 7H2v15q0 2 3 2" fill="none"/><path d="M9 8h10m-10 4h10m-10 4h5m-5 4h10" stroke="#907855" fill="none"/><rect x="16" y="15" width="4" height="3" fill="#9aa48b" stroke="none"/>'
+};
+for(const [id,art] of Object.entries(travelTabIllustrations)){
+ const node=$(id)?.querySelector('.dockIcon');if(node){node.innerHTML='<svg viewBox="0 0 28 28" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g stroke="#775f48" stroke-width="1.15" stroke-linejoin="round" stroke-linecap="round">'+art+'</g></svg>'}
+}
+const townDetailMaterials=document.createElement('style');
+townDetailMaterials.textContent=
+'#game #dock{background:var(--town-grain),#eee0c4f5!important;border:1px solid #b49b72!important;border-radius:6px!important;box-shadow:0 3px 12px #352b2345!important}'+
+'#game #dock button{border-radius:3px!important;box-shadow:none!important;color:#594a3a!important;background:transparent!important}'+
+'#game #dock button.active{background:#d3dcc8!important;box-shadow:inset 0 0 0 1px #829079!important;color:#415b4c!important}'+
+'#game #dock .dockIcon{width:27px;height:27px;display:grid;place-items:center}#game #dock .dockIcon svg{width:26px;height:26px;display:block}'+
+'#game #profileHud{border:1px solid #b29a76!important;background:var(--town-grain),#f4e8d1!important;box-shadow:0 2px 0 #8c704c30!important;border-radius:7px!important}'+
+'#game #hudStats #hudCoins{border:1px solid #a98c63!important;background:var(--town-grain),#eddbb2!important;color:#594735!important;box-shadow:0 2px 0 #8b6b4933!important;border-radius:4px!important}'+
+'#game #small>div,#game #back{background:#f3e7cdf5!important;border:1px solid #b39a74!important;border-radius:5px!important;color:#554736!important;box-shadow:none!important}'+
+'#game #gameControls:not([hidden]),#game #ritualActionBar:not([hidden]),#game #pearlRecipePanel:not([hidden]){border-color:#b29a74!important;border-radius:5px!important;box-shadow:0 3px 9px #3a2d2535!important}'+
+'#page .signNotebookGrid button,#page .bagSlot,#page .figureCabinetTile,#page .blindAlbum article{border-radius:4px!important}'+
+'#page .signNotebookGrid button[aria-pressed="true"],#page .bagSlot[aria-pressed="true"]{outline:2px solid #788d76;outline-offset:-2px}'+
+'#page .astroThree article,#page .signNotebookResult:not(:empty),#page .chartConsultation,#page .townFortuneSlip,#page .yueAlmanacPaper:not(:empty){background-image:var(--town-grain)}'+
+'@media(prefers-reduced-motion:reduce){#game #dock button,#game #profileHud,#game #hudCoins{transition:none!important;animation:none!important}}';
+document.head.append(townDetailMaterials);
