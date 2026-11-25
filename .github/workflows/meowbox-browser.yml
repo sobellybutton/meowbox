@@ -150,6 +150,14 @@ jobs:
                 await page.evaluate(()=>{state.rhythmAt=t-15});
                 await page.waitForFunction(()=>state.rhythmStage==='result',{},{timeout:5000});
                 if(!await page.evaluate(()=>items.some(x=>x[0]==='After-hours rhythm ticket')))throw Error('Rhythm ticket missing');
+                await page.evaluate(()=>{room='tarot';activity=null;start('love');readingTopic(1);readingShuffle()});
+                await page.waitForFunction(()=>state.readStage==='deck',{},{timeout:5000});
+                await page.evaluate(()=>readingDeal());
+                await page.waitForFunction(()=>state.readStage==='cards',{},{timeout:5000});
+                await page.evaluate(()=>{readingReveal(0);readingReveal(1);readingReveal(2)});
+                await page.waitForFunction(()=>state.readSaved,{},{timeout:5000});
+                if(!await page.evaluate(()=>readingJournal.some(v=>v.topic===1&&v.cards.length===3)))throw Error('Tarot journal missing');
+                await page.screenshot({path:'test-results/'+name+'-tarot-spread.png'});
                 if(errors.length)throw Error(errors.join('; '));
                 console.log(name+': PASS');
               }catch(e){failed=true;console.error(name+': FAIL '+e.message+' | page errors: '+errors.join('; '));console.error('Visible page: '+(await page.locator('body').innerText().catch(()=>'' )).slice(0,500));await page.screenshot({path:'test-results/'+name+'-failure.png'}).catch(()=>{});}
