@@ -432,11 +432,11 @@ function fiveReadingEntries(parent,entry){
   element('small',(i+1)+'. '+tr(...fiveReadingPositions[i]),row);element('strong',tr(d[0],d[1])+' · '+orient(v.rev),row);element('p',arcanaReading(d,v.rev),row)
  }
 }
-function fiveReadingResult(entry){
+function fiveReadingResult(entry,back=null){
  page(tr('Five-card reflection','五张牌解读'),tr('Consider these five perspectives together. They are prompts, not predictions.','把五个角度放在一起慢慢想。它们是启发，不是预言。'),q=>{
   const wrap=element('section','',q,'fiveReadingBook');fiveReadingEntries(wrap,entry);
-  b(wrap,tr('Back to the reading table','回到牌桌'),()=>{$('page').style.display='none'});
-  const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();fiveReadingResult(entry)}
+  b(wrap,back?tr('Back to the reading journal','返回塔罗手记'):tr('Back to the reading table','回到牌桌'),()=>{if(back)back();else $('page').style.display='none'});if(back){const close=q.querySelector('.row button:first-child');if(close)close.onclick=back}
+  const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();fiveReadingResult(entry,back)}
  })
 }
 const fiveDealBefore=readingDeal;
@@ -471,7 +471,7 @@ const fiveJournalBefore=openReadingJournal;
 openReadingJournal=function(){
  fiveJournalBefore();const q=$('content'),archive=fiveReadingArchive();if(!archive.length)return;
  const wrap=element('section','',q,'fiveReadingBook');element('h2',tr('Five-card readings','五张牌手记'),wrap);
- for(const v of archive){const row=element('article','',wrap,'fiveReadingEntry');element('strong',v.date,row);element('p',v.cards.map(c=>tr(tarotDeck[c.i][0],tarotDeck[c.i][1])).join(' · '),row);b(row,tr('Read again','重温解读'),()=>fiveReadingResult(v))}
+ for(const v of archive){const row=element('article','',wrap,'fiveReadingEntry');element('strong',v.date,row);element('p',v.cards.map(c=>tr(tarotDeck[c.i][0],tarotDeck[c.i][1])).join(' · '),row);b(row,tr('Read again','重温解读'),()=>fiveReadingResult(v,openReadingJournal))}
  const back=q.querySelector('.row button:first-child');const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();openReadingJournal()}
 };
 const fiveReadingStyle=document.createElement('style');fiveReadingStyle.textContent='.fiveReadingBook{background:#f2e4c9;color:#514638;border:3px double #a99168;padding:12px;margin:12px 0}.fiveReadingEntry{border-bottom:1px dashed #b49d77;padding:10px 0;overflow-wrap:anywhere}.fiveReadingEntry strong,.fiveReadingEntry small{display:block}.fiveReadingEntry strong{font:600 17px/1.4 Georgia,"Songti SC",serif;color:#53674e}.fiveReadingEntry p{line-height:1.6}.fiveReadingBook button{min-height:44px;white-space:normal}';document.head.append(fiveReadingStyle);
