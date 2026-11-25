@@ -7050,3 +7050,80 @@ mobileRoomCamera=function(s,ox,oy){
  }
  return pearlDesktopFitBefore(s,ox,oy)
 };
+
+
+/* Chinese zodiac almanac: date-only, local session, lunar New Year convention.
+   HKO 2027 calendar has New Year on Feb 6; some ICU builds return Feb 7.
+   https://www.hko.gov.hk/en/gts/time/calendar/pdf/files/2027e.pdf */
+const yueZodiacAnimals=[
+ ['Rat','鼠','Your survival instincts are impressive. Your 37 open tabs are not.','生存能力很强，浏览器那37个标签页就不一定了。'],
+ ['Ox','牛','Being an Ox does not mean becoming the office workhorse.','属牛不代表要当牛马。'],
+ ['Tiger','虎','Save your roar for unreasonable deadlines.','虎威留着对付离谱的截止日期。'],
+ ['Rabbit','兔','Hop away from drama without writing a farewell speech.','遇到烂事直接跳走，不必发表离职感言。'],
+ ['Dragon','龙','Even dragons need annual leave.','你是龙又怎样？龙也要休年假。'],
+ ['Snake','蛇','Shed old habits, not your share of the lunch bill.','可以蜕皮，别把午饭账单也甩掉。'],
+ ['Horse','马','Running faster is not the same as getting somewhere.','马不停蹄，也得先看看方向对不对。'],
+ ['Goat','羊','Being nice does not mean adopting the entire team workload.','善良不是每个群里的活都要接。'],
+ ['Monkey','猴','Do not spend three hours automating a five-minute task.','别为了省五分钟研究三个小时。'],
+ ['Rooster','鸡','You do not have to wake the whole department up.','报晓是公鸡的事，不是你催全公司交周报的理由。'],
+ ['Dog','狗','Unpaid overtime is not a loyalty programme.','忠诚是美德，加班不算会员积分。'],
+ ['Pig','猪','Good food and proper sleep are a respectable life strategy.','吃好睡好也是人生战略。']
+];
+function yueZodiacYear(date){
+ const d=new Date(date+'T12:00:00Z');
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(+d)||d.toISOString().slice(0,10)!==date)throw Error('date');
+ if(date.startsWith('2027-'))return date<'2027-02-06'?2026:2027;
+ const y=Number(new Intl.DateTimeFormat('en-u-ca-chinese',{year:'numeric',timeZone:'Asia/Singapore'}).formatToParts(d).find(p=>p.type==='relatedYear')?.value);
+ if(!Number.isInteger(y))throw Error('calendar');
+ return y;
+}
+function yueZodiacIndex(y){return ((y-4)%12+12)%12}
+function yueZodiacRelations(i,j){
+ const pairs=a=>a.some(([x,y])=>(x===i&&y===j)||(x===j&&y===i)),r=[];
+ if(i===j)r.push(['Own year','值太岁']);
+ if((i+6)%12===j)r.push(['Opposition','冲太岁']);
+ if(pairs([[0,7],[1,6],[2,5],[3,4],[8,11],[9,10]]))r.push(['Harm','害太岁']);
+ if(pairs([[0,9],[1,4],[2,11],[3,6],[5,8],[7,10]]))r.push(['Break','破太岁']);
+ if(pairs([[0,3],[2,5],[5,8],[2,8],[1,7],[7,10],[1,10]])||(i===j&&[4,6,9,11].includes(i)))r.push(['Punishment','刑太岁']);
+ return r;
+}
+function yueZodiacAlmanac(birth='',selection=null){
+ const today=shrineClock().day,now=Number(today.slice(0,4)),lunar=yueZodiacYear(today);
+ page(tr('Master Yue’s zodiac almanac','月师傅 · 生肖流年小册'),tr('Sit down, have some tea. The heavens do not issue performance reviews.','来都来了，先喝茶。天庭不负责你的绩效考核。'),q=>{
+ const f=element('form','',q,'yueAlmanacForm');
+ const date=element('input','',element('label',tr('Gregorian birth date','公历出生日期'),f));date.type='date';date.required=true;date.min='1901-01-01';date.max=today;date.value=birth;
+ const year=element('select','',element('label',tr('Lunar year to explore','想看哪一年的流年？'),f));
+ const years=[...new Set([lunar,now,now+1])];
+ years.forEach(y=>{const a=yueZodiacAnimals[yueZodiacIndex(y)];element('option',y+' · '+tr(a[0],a[1]+'年')+(y>lunar?tr(' (preview)','（预览）'):''),year).value=String(y)});
+ year.value=String(years.includes(selection)?selection:lunar);
+ const submit=element('button',tr('Ask Master Yue','请月师傅指点'),f);submit.type='submit';
+ const out=element('section','',q,'yueAlmanacPaper');out.setAttribute('aria-live','polite');
+ f.onsubmit=e=>{e.preventDefault();out.replaceChildren();try{
+ const i=yueZodiacIndex(yueZodiacYear(date.value)),j=yueZodiacIndex(Number(year.value)),a=yueZodiacAnimals[i],v=yueZodiacAnimals[j],flags=yueZodiacRelations(i,j);
+ element('div',a[1],out,'yueAlmanacSeal');
+ element('h2',tr(a[0]+' in the '+year.value+' '+v[0]+' year','属'+a[1]+' · '+year.value+v[1]+'年'),out);
+ element('strong',flags.length?tr('Traditional relations: ','民俗太岁关系：')+flags.map(x=>tr(...x)).join(' · '):tr('No direct Tai Sui relation under this convention','按此民俗算法，无直接犯太岁关系'),out);
+ element('p',tr('Master Yue: ','月师傅：')+tr(a[2],a[3]),out);
+ const replies={'值太岁':['Your own year has arrived. The universe has not assigned you any extra KPIs.','本命年到了，宇宙没有给你加KPI。'],'冲太岁':['Tai Sui and you are facing each other. This is not a reason to schedule a meeting.','你和太岁面对面，不用特地拉个会。'],'害太岁':['Read the group chat carefully before replying to everyone.','群聊看清楚再回，别一不小心全体回复。'],'破太岁':['Leave a little wiggle room in your plans, especially the weekend ones.','计划留点余地，尤其是周末的。'],'刑太岁':['No heavenly disciplinary hearing required. Take one thing at a time.','不用上天庭开检讨会，一件一件慢慢来。']};
+ flags.forEach(x=>element('p',tr(...replies[x[1]]),out));
+ if(!flags.length)element('p',tr('No Tai Sui flag is not a promotion letter. Enjoy the little wins.','没犯太岁不等于升职通知书，小确幸照收。'),out);
+ const topics=[
+ ['Work','事业',['Set one boundary before accepting extra work.','Choose one goal instead of seven.','Leave space for learning something new.'],['接活之前先立个边界。','目标选一个，别一口气立七个。','给自己留点学新东西的时间。']],
+ ['Money','财运',['A discount is not income.','Save a little for something you truly enjoy.','Check subscriptions before adding another.'],['打折省的钱不叫收入。','给真正喜欢的东西留点预算。','开新会员前先查查旧会员。']],
+ ['Relationships','感情',['Say what you need, kindly.','Make time for the people who make you laugh.','You do not owe every message an instant reply.'],['有话好好说，别让人猜。','给能逗你笑的人留点时间。','不是每条消息都需要秒回。']],
+ ['Everyday life','生活',['A proper lunch break counts as progress.','Take a walk without turning it into a target.','Leave a little unplanned time.'],['好好吃顿午饭也算进步。','散步不必变成运动指标。','留点没有安排的时间。']]];
+ topics.forEach((x,k)=>{const n=(i+j+k)%3;element('h3',tr(x[0],x[1]),out);element('p',tr(x[2][n],x[3][n]),out)});
+ element('small',tr('Folklore and playful reflections, not predictions. Lunar New Year convention; other traditions use Li Chun or different Tai Sui rules. Birth date stays in this page and is not saved or uploaded.','仅为民俗与趣味提示，并非预测。以农历正月初一为年界，其他流派或采用立春及不同太岁规则。出生日期仅在此页面使用，不保存、不上传。'),out);
+ }catch(err){element('p',tr('Please check your birth date and browser calendar support.','请检查出生日期及浏览器农历支持。'),out)}};
+ const row=q.querySelector('.row');if(row?.lastElementChild)row.lastElementChild.onclick=()=>{const d=date.value,y=Number(year.value);zh=!zh;save('zh',zh);updateHUD();yueZodiacAlmanac(d,y)};
+ b(q,tr('Personal birth chart','个人生辰命盘'),()=>destinyPage());
+ b(q,tr('Weekly star signs','本周十二星座'),()=>starSignPage());
+ })
+}
+const yueAlmanacStyle=document.createElement('style');yueAlmanacStyle.textContent='.yueAlmanacForm{display:grid;gap:12px;margin:16px 0}.yueAlmanacForm label{display:grid;gap:5px}.yueAlmanacForm input,.yueAlmanacForm select,.yueAlmanacForm button{min-height:44px;max-width:100%;box-sizing:border-box;font:inherit}.yueAlmanacPaper{margin:12px 0;padding:18px;border:1px solid #ab9066;background:#f2e3c4;color:#514338;box-shadow:inset 0 0 0 4px #e5d4ae;overflow-wrap:anywhere}.yueAlmanacPaper:empty{display:none}.yueAlmanacSeal{display:grid;place-items:center;width:64px;height:64px;border:3px double #9b4b3d;color:#9b4b3d;font:36px Georgia,serif;border-radius:4px}.yueAlmanacPaper p{line-height:1.6}.yueAlmanacPaper small{display:block;line-height:1.5}';document.head.append(yueAlmanacStyle);
+destinyConsultMenu=function(){closeTalk();say(tr('Master Yue','月师傅'),tr('Come in, have some tea. What shall we explore today?','进来喝杯茶。今天想聊点什么？'),[
+ [tr('Chinese zodiac & Tai Sui','生肖流年 · 犯太岁'),()=>{closeTalk();yueZodiacAlmanac()}],
+ [tr('Weekly star signs','本周十二星座'),()=>{closeTalk();starSignPage()}],
+ [tr('Personal birth chart','个人生辰命盘'),()=>{closeTalk();destinyPage()}],
+ [tr('Maybe later','改天再聊'),closeTalk]
+])};
