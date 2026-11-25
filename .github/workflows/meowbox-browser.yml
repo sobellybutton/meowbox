@@ -167,6 +167,10 @@ jobs:
                 if(await page.locator('#dock').isHidden())throw Error('Navigation hidden');
                 await page.locator('#dockPassport').click();
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
+                await page.locator('.townFortuneSlip').waitFor({timeout:5000});
+                const fortuneBefore=await page.evaluate(()=>{const f=townFortuneFor();return [f.date,f.themeIndex,f.colour[2],f.number]});
+                if(!await page.evaluate(()=>{const a=townFortuneFor('2026-11-25','testseed123'),b=townFortuneFor('2026-11-26','testseed123');return a.themeIndex!==b.themeIndex&&JSON.stringify(a)===JSON.stringify(townFortuneFor('2026-11-25','testseed123'))}))throw Error('Daily fortune date stability or variation failed');
+                if(!await page.evaluate(()=>{const a=townReaction('test-only',auntieHitReplies),b=townReaction('test-only',auntieHitReplies);return a!==b}))throw Error('Repeated reaction did not vary');
                 await page.screenshot({path:'test-results/'+name+'-passport.png'});
                 await page.getByRole('button',{name:'Open my bag',exact:true}).click();
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
@@ -185,6 +189,8 @@ jobs:
                 await page.waitForTimeout(3500);
                 await page.locator('#dockPassport').click();
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
+                const fortuneAfter=await page.evaluate(()=>{const f=townFortuneFor();return [f.date,f.themeIndex,f.colour[2],f.number]});
+                if(fortuneBefore[0]===fortuneAfter[0]&&JSON.stringify(fortuneBefore)!==JSON.stringify(fortuneAfter))throw Error('Daily fortune changed after reload');
                 if(!/Test Traveller/.test(await page.locator('.albumProfile').innerText()))throw Error('Saved player name lost');
                 if(!/Test Traveller/.test(await page.locator('.passportRailTicket').innerText()))throw Error('Original railway ticket missing');
                 if(await page.evaluate(()=>readShrineVisits().total)!==2)throw Error('Visit history did not persist exactly twice');
