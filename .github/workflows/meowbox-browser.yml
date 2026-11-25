@@ -52,6 +52,11 @@ jobs:
                 await page.locator('#proposal .ticket-confirm').click();
                 await page.locator('#proposal footer button.next').click();
                 await page.locator('#proposal footer .actions button').first().click();
+                await page.locator('#proposal .shrine-enter').waitFor({timeout:15000});
+                await page.waitForTimeout(1200);
+                if(await page.locator('#proposal').isHidden())throw Error('Gate skipped for new player');
+                await page.screenshot({path:'test-results/'+name+'-new-player-gate.png'});
+                await page.locator('#proposal .shrine-enter').click();
                 await page.locator('#proposal').waitFor({state:'hidden',timeout:30000});
                 await page.waitForTimeout(3500);
                 await page.screenshot({path:'test-results/'+name+'-village.png'});
@@ -63,9 +68,12 @@ jobs:
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
                 await page.screenshot({path:'test-results/'+name+'-bag.png'});
                 await page.reload({waitUntil:'load'});
-                await page.locator('#proposal footer button.next').waitFor({timeout:45000});
-                if(!/return/i.test(await page.locator('#proposal footer button.next').innerText()))throw Error('Returning player not recognised');
-                await page.locator('#proposal footer button.next').click();
+                await page.locator('#proposal .shrine-enter').waitFor({timeout:45000});
+                if(await page.locator('#proposal').getAttribute('data-shot')!=='shrine')throw Error('Returning player did not start at shrine');
+                await page.waitForTimeout(1500);
+                if(await page.locator('#proposal').isHidden())throw Error('Returning player bypassed gate');
+                await page.screenshot({path:'test-results/'+name+'-returning-player-gate.png'});
+                await page.locator('#proposal .shrine-enter').click();
                 await page.locator('#proposal').waitFor({state:'hidden',timeout:30000});
                 await page.waitForTimeout(3500);
                 await page.locator('#dockPassport').click();
