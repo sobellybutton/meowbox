@@ -809,7 +809,7 @@ function paperWorryAt(x,y,impact){
  ctx.fillStyle=paper;ctx.strokeStyle='#98774d';ctx.lineWidth=1.5;ctx.beginPath();
  ctx.moveTo(-15,-45);ctx.lineTo(15,-45);ctx.lineTo(20,-18);ctx.lineTo(38,-9);ctx.lineTo(29,10);ctx.lineTo(18,4);ctx.lineTo(14,39);ctx.lineTo(0,33);ctx.lineTo(-14,39);ctx.lineTo(-18,4);ctx.lineTo(-29,10);ctx.lineTo(-38,-9);ctx.lineTo(-20,-18);ctx.closePath();ctx.fill();ctx.stroke();
  line(-10,-30,-3,-27,'#6c5037',1.8);line(10,-30,3,-27,'#6c5037',1.8);line(-5,-18,5,-18,'#6c5037',1.8);
- wonderSceneText(tr(...stressTargets[stressTarget]),0,-5,38,9,'#76523a',3);
+ txt(tr('WORRY','烦恼'),0,7,8,'#76523a');
  if(state.count>0){let n=Math.min(6,Math.floor(state.count/3)+1);for(let i=0;i<n;i++){let yy=4+i*5;line(-11+(i%2)*4,yy,7-(i%3)*3,yy+3,'#aa8d6266',1)}}
  ctx.restore()
 }
@@ -830,7 +830,7 @@ drawActivity=function(){
  const stoolWood=ctx.createLinearGradient(0,499,0,551);stoolWood.addColorStop(0,'#c9a878');stoolWood.addColorStop(1,'#71543e');
  line(247,511,242,552,'#70513c',7);line(297,511,302,552,'#70513c',7);line(248,535,298,535,'#70513c',4);
  ellipse(272,506,35,8,stoolWood);ellipse(272,503,34,6,'#b4956c');
- if(room==='fish'){if(!drawProductionAhMa(272,550,.85))riverAuntie(272,548,.8)}else backHuman(272,550,0,false,'right',1.1);
+ if(room==='fish'){if(!drawProductionAhMa(272,550,.70))riverAuntie(272,550,.68)}else backHuman(272,550,0,false,'right',1.1);
  // Low ritual block: the paper is on the working surface, rather than floating on an enormous table.
  const wood=ctx.createLinearGradient(0,505,0,557);wood.addColorStop(0,'#bca078');wood.addColorStop(.5,'#9f805e');wood.addColorStop(1,'#795d42');
  ctx.fillStyle=wood;ctx.beginPath();ctx.moveTo(335,506);ctx.lineTo(421,506);ctx.lineTo(443,540);ctx.lineTo(318,540);ctx.closePath();ctx.fill();ctx.strokeStyle='#806448';ctx.stroke();
@@ -844,7 +844,8 @@ drawActivity=function(){
  ctx.save();ctx.translate(wrist.x-9,wrist.y-6);ctx.scale(.43,.43);stressSlipper(0,0,-.40+1.45*swing);ctx.restore();
  target(333,445,95,112,()=>{},'hit');
  stressPieces=stressPieces.filter(v=>t-v.at<.65);for(const v of stressPieces){const d=t-v.at;ctx.save();ctx.globalAlpha=1-d/.65;ctx.translate(v.x-19+v.vx*d*.6,v.y+20+v.vy*d*.6+70*d*d);ctx.rotate(v.angle+d*3);ctx.fillStyle='#f0d8a3';ctx.fillRect(-2,-1.5,4,3);ctx.restore()}
- txt(tr('Worries released: ','打走的烦恼：')+state.count,400,603,18,'#fff0d4');
+ wonderSceneText(tr(...stressTargets[stressTarget]),400,580,220,15,'#fff0d4',1);
+ txt(tr('Worries released: ','打走的烦恼：')+state.count,400,605,17,'#fff0d4');
  ctx.restore()
 };
 
@@ -4378,18 +4379,35 @@ prop=function(id,x,y){
  if(room!=='park'||id!=='chat')return parkHostPropBefore(id,x,y);
  // Two visible hosts, grounded near a bench, no invisible conversation target.
  ctx.save();line(x-52,y-5,x-56,y+22,'#735842',5);line(x+52,y-5,x+56,y+22,'#735842',5);round(x-61,y-26,122,17,3,'#a78a62','#715940');round(x-61,y-54,122,23,2,'#9e805b','#715940');line(x-55,y-43,x+55,y-43,'#d5b38a',1.5);
- backHuman(x-48,y+12,1,false,'right',.87);backHuman(x+47,y+12,3,false,'left',.87);
+ if(!drawPaintedResident({x:x-48,y:y+12,n:['Auntie Mei','梅姨']},.95,false,'right'))backHuman(x-48,y+12,1,false,'right',.87);backHuman(x+47,y+12,3,false,'left',.87);
  const sway=Math.sin(t*2)*.10;ctx.save();ctx.translate(x+27,y-31);ctx.rotate(sway);ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(-24,-34,0,-32);ctx.quadraticCurveTo(24,-34,0,0);ctx.fillStyle='#e2caa0';ctx.fill();ctx.strokeStyle='#a28a65';ctx.stroke();ctx.restore();ctx.restore()
 };
+/* Fictional park serials, with saved episode, scene and player choice. */
+const parkSerials=[
+ {title:['The missing bench','消失的长椅'],opening:['Remember the cat who claimed the bench? Someone filed a complaint. The cat has asked for a lawyer.','还记得霸占长椅的猫吗？有人投诉了。猫现在要求请律师。'],twist:['The complainant was the park committee chair. The cat was sitting on his lunch.','投诉人是公园委员会主席。猫坐的其实是他的午饭。'],choices:[['Defend the cat','替猫辩护'],['Investigate the lunch','调查午饭']],outcomes:[['Good. We have appointed you honorary cat counsel. The legal fee is two sardines.','好，你被任命为猫咪法律顾问。律师费两条沙丁鱼。'],['Evidence recovered: one fishball, three paw prints. Case closed.','证物找到了：一颗鱼丸，三个爪印。结案。']],after:['The bench is back. The cat now has a reservation system.','长椅回来了。猫现在实行预约制。']},
+ {title:['The five-minute meeting','五分钟会议'],opening:['Wang Laoban booked five minutes to discuss how to save time. We are now in hour two.','王老板约了五分钟讨论如何节省时间。现在已经开到第二个小时。'],twist:['He made a slideshow with 46 slides. The last slide says: Keep things simple.','他做了四十六页PPT。最后一页写着：化繁为简。'],choices:[['Send a fake calendar emergency','制造日历紧急事件'],['Suggest an actual break','建议真的休息']],outcomes:[['A meeting has appeared called Urgent Nap. Attendance is mandatory.','日历新增「紧急午睡会议」。全员必须参加。'],['He has formed a working group to investigate what a break is.','他成立了工作小组，研究什么叫休息。']],after:['The meeting minutes arrived. Nobody remembers attending.','会议纪要发来了。大家都不记得自己参加过。']},
+ {title:['The mysterious admirer','神秘追求者'],opening:['Lin received a love note with no signature. She has been pretending not to care for three days.','林姨收到一张匿名情书。她已经假装不在乎三天了。'],twist:['It says: I think of you whenever I see a discount on kopi. Very romantic, apparently.','上面写着：每次咖啡打折，我就想到你。据说这叫浪漫。'],choices:[['Find the admirer','找出追求者'],['Leave a reply','帮忙回信']],outcomes:[['It was the kopi uncle. He was advertising a loyalty programme.','是咖啡摊老板。他在推广会员积分。'],['We wrote: Please specify the discount percentage. Romance has a budget.','我们回复：请注明折扣比例。浪漫也有预算。']],after:['Lin got a free kopi. She insists this counts as a successful date.','林姨拿到一杯免费咖啡。她坚持这算约会成功。']},
+ {title:['The town council investigation','小镇调查大案'],opening:['The town council is investigating why residents look too relaxed. Naturally, we are suspects.','小镇议会正在调查居民为何看起来太悠闲。我们当然成了嫌疑人。'],twist:['Their confidential report says the main cause is sitting down.','机密报告指出：主要原因是坐下。'],choices:[['Offer the council a chair','给议会送把椅子'],['Start a relaxation committee','成立摸鱼委员会']],outcomes:[['They sat down. Investigation suspended until further notice.','他们坐下了。调查暂停，恢复时间另行通知。'],['Congratulations, you have become Chair of Chairs. No meetings allowed.','恭喜，你成了椅子委员会主席。禁止开会。']],after:['The council has classified naps as essential infrastructure.','议会把午睡列为必要基础设施。']}
+];
+function parkProgress(){
+ const raw=load('parkSerialV1',null);if(!raw||!Number.isInteger(raw.episode)||raw.episode<0||raw.episode>=parkSerials.length||![0,1,2,3].includes(raw.beat))return {episode:0,beat:0,choice:0,day:''};
+ return {...raw,choice:raw.choice===1?1:0}
+}
+function parkSerialTalk(){
+ if(room!=='park')return;const q=parkProgress(),today=day();
+ if(q.beat===3&&q.day!==today){q.episode=(q.episode+1)%parkSerials.length;q.beat=0;save('parkSerialV1',q)}
+ const ep=parkSerials[q.episode],mei=['Auntie Mei','梅姨'],lin=['Auntie Lin','林姨'];
+ const leave=[tr('Continue later','下次接着聊'),closeTalk];
+ const next=(beat,choice=q.choice)=>{save('parkSerialV1',{...q,beat,choice,day:beat===3?today:q.day});if(beat===3){lifeFriend(mei);lifeFriend(lin)}parkSerialTalk()};
+ if(q.beat===0)say(tr(...mei),tr(...ep.opening),[[tr('Wait, what happened?','等等，怎么回事？'),()=>next(1)],leave]);
+ else if(q.beat===1)say(tr(...lin),tr(...ep.twist),[...ep.choices.map((v,i)=>[tr(...v),()=>next(2,i)]),leave]);
+ else if(q.beat===2)say(tr(...mei),tr(...ep.outcomes[q.choice]),[[tr('And then?','然后呢？'),()=>next(3)],leave]);
+ else say(tr(...lin),tr(...ep.after)+' '+tr('Come back another day. Mei always knows something.','改天再来，梅姨总有新瓜。'),[[tr('Remind me what happened','回顾刚才的瓜'),()=>say(tr(...mei),tr(...ep.outcomes[q.choice]),[[tr('See you tomorrow','明天见'),closeTalk]])],[tr('See you around','回头见'),closeTalk]])
+}
 const parkGossipAction=action;
 action=function(id){
- if(room==='park'&&id==='chat'){
-  closeTalk();say(tr('Auntie Mei & Auntie Lin','梅姨和林姨'),tr('Come, sit. The town has been very productive at discussing other people’s productivity.','来来来，坐。今天大家都很勤奋，忙着讨论别人有多勤奋。'),[
-   [tr('What happened today?','今天有什么瓜？'),()=>say(tr('Auntie Lin','林姨'),tr('They held a meeting about reducing meetings. Naturally, it ran over.','今天开会讨论减少会议，结果还超时了。'),[[tr('Of course.','果然。'),closeTalk]])],
-   [tr('Any good news?','有没有好消息？'),()=>say(tr('Auntie Mei','梅姨'),tr('The park cats have declared every day a public holiday. We support the motion.','公园的猫宣布每天都是公共假期。我们一致通过。'),[[tr('Excellent policy.','好政策。'),closeTalk]])],
-   [tr('See you around','下次聊'),closeTalk]
-  ]);return
- }return parkGossipAction(id)
+ if(room==='park'&&id==='chat'){closeTalk();parkSerialTalk();return}
+ return parkGossipAction(id)
 };
 
 /* Choose symbolic frustrations, not named human targets. All text stays local;
@@ -6030,22 +6048,27 @@ const meowTextCSS=document.createElement('style');meowTextCSS.textContent=`
 `;document.head.append(meowTextCSS);
 /* Suppress only a hint that collides with a higher-priority control. Keep it in
    the accessible DOM and restore it as soon as the area is clear. */
+let meowHintLayoutKey='';
 function meowHintSpacing(){
- const hintEl=$('hint'),root=$('game').getBoundingClientRect(),b=hintEl.getBoundingClientRect();
- const rect={left:b.left-root.left,right:b.right-root.left,top:b.top-root.top,bottom:b.bottom-root.top};
+ const hintEl=$('hint'),root=$('game').getBoundingClientRect();
  const blockers=meowVisibleRects('#dock,#movePad,#gameControls,#ritualActionBar,#dialogue,#back,#nextStopShortcut');
- // Test from the authored layout each time, not the previous shifted position.
- hintEl.classList.remove('meowHintMoved','meowHintBlocked');
- const base=hintEl.getBoundingClientRect(),preferred={left:base.left-root.left,right:base.right-root.left,top:base.top-root.top,bottom:base.bottom-root.top};
- if(base.width>0&&base.height>0&&blockers.some(v=>speechOverlap(preferred,v))){
-  const dock=meowVisibleRects('#dock')[0],lower=Math.min(root.height-5,dock?.top??root.height-5);
-  const spot=meowPlaceText((preferred.left+preferred.right)/2,(preferred.top+preferred.bottom)/2,base.width,base.height,{left:6,right:root.width-6,top:root.height*.67,bottom:lower},blockers,Math.min(80,root.height*.14));
-  if(spot){hintEl.style.setProperty('--meow-hint-x',spot.x+'px');hintEl.style.setProperty('--meow-hint-y',spot.y+'px');hintEl.classList.add('meowHintMoved')}
-  else hintEl.classList.add('meowHintBlocked')
+ // Recalculate only when actual layout/text changes; never remove and reapply
+ // the same classes on every polling tick (Safari visibly repaints them).
+ const key=[room,activity,zh,hintEl.textContent,Math.round(root.width),Math.round(root.height),getComputedStyle(hintEl).display,...blockers.map(b=>[b.left,b.top,b.right,b.bottom].map(v=>Math.round(v/3)).join(':'))].join('|');
+ if(key!==meowHintLayoutKey){
+  meowHintLayoutKey=key;
+  hintEl.classList.remove('meowHintMoved','meowHintBlocked');
+  const base=hintEl.getBoundingClientRect(),preferred={left:base.left-root.left,right:base.right-root.left,top:base.top-root.top,bottom:base.bottom-root.top};
+  if(base.width>0&&base.height>0&&blockers.some(v=>speechOverlap(preferred,v))){
+   const dock=meowVisibleRects('#dock')[0],lower=Math.min(root.height-5,dock?.top??root.height-5);
+   const spot=meowPlaceText((preferred.left+preferred.right)/2,(preferred.top+preferred.bottom)/2,base.width,base.height,{left:6,right:root.width-6,top:root.height*.55,bottom:lower},blockers,Math.min(140,root.height*.23));
+   if(spot){hintEl.style.setProperty('--meow-hint-x',spot.x+'px');hintEl.style.setProperty('--meow-hint-y',spot.y+'px');hintEl.classList.add('meowHintMoved')}
+   else hintEl.classList.add('meowHintBlocked')
+  }
  }
  setTimeout(meowHintSpacing,150)
 }
-const meowHintCSS=document.createElement('style');meowHintCSS.textContent='#game #hint.meowHintMoved{left:var(--meow-hint-x)!important;top:var(--meow-hint-y)!important;bottom:auto!important;transform:translate(-50%,-50%)!important}#game #hint.meowHintBlocked{opacity:0!important;pointer-events:none!important}';document.head.append(meowHintCSS);
+const meowHintCSS=document.createElement('style');meowHintCSS.textContent='#game #hint{transition:none!important;animation:none!important}'+'#game #hint.meowHintMoved{left:var(--meow-hint-x)!important;top:var(--meow-hint-y)!important;bottom:auto!important;transform:translate(-50%,-50%)!important}#game #hint.meowHintBlocked{opacity:0!important;pointer-events:none!important}';document.head.append(meowHintCSS);
 setTimeout(meowHintSpacing,150);
 
 /* Entrance: retain shrine as default for returning travellers, offer a deliberate
