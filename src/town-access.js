@@ -86,3 +86,24 @@ const townRackBefore=drawTemplePaperRack;
 drawTemplePaperRack=function(x,y,sc=1,hideLatest=0){townRackBefore(x,y,sc,hideLatest);ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);for(const sign of [-1,1]){const xx=sign*109;for(const yy of [-90,88]){ellipse(xx,yy,3,3,'#b99564');ellipse(xx-1,yy-1,1,1,'#e1cfa2')}}ctx.restore()};
 const townScoopBefore=teaScoopArt;
 teaScoopArt=function(x,y,tilt=0,loaded=false){townScoopBefore(x,y,tilt,loaded);ctx.save();ctx.translate(x,y);ctx.rotate(tilt);if(loaded)for(let i=0;i<5;i++)ellipse(-19+i*5,(i%2)*4-1,1.1,1,'#b0957f');ctx.restore()};
+
+/* Wishing pool: dedicated vertical stage and a separate wide composition.
+   Keep the original percentage-based physics, fish movement and bowl centre. */
+function wishingPoolScene(portrait){
+ const w=portrait?400:800,h=portrait?700:450;
+ const stones=Array.from({length:24},(_,i)=>{const a=i*Math.PI/12,x=w*.5+Math.cos(a)*w*.455,y=h*.5+Math.sin(a)*h*.461;return '<ellipse cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" rx="'+(portrait?15:22)+'" ry="'+(portrait?23:15)+'" transform="rotate('+(a*180/Math.PI).toFixed(1)+' '+x.toFixed(1)+' '+y.toFixed(1)+')" fill="'+['#a79b80','#c1b59a','#908b76'][i%3]+'" stroke="#776f5c" stroke-width="1.2"/>'}).join('');
+ const ripples=Array.from({length:30},(_,i)=>{const x=w*.14+(i*73%(w*.72)),y=h*.12+(i*119%(h*.76));return '<path d="M'+x.toFixed(1)+' '+y.toFixed(1)+'q12 -3 26 0" fill="none" stroke="#c5d6b8" opacity=".14" stroke-width="1.2"/>'}).join('');
+ return '<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'"><defs><radialGradient id="water"><stop stop-color="#78998a"/><stop offset=".48" stop-color="#4c8078"/><stop offset="1" stop-color="#294f4b"/></radialGradient><linearGradient id="light" x2="1" y2="1"><stop stop-color="#f7e5b4" stop-opacity=".3"/><stop offset=".6" stop-color="#bfd8c1" stop-opacity="0"/></linearGradient></defs><rect width="'+w+'" height="'+h+'" fill="url(#water)"/><path d="M0 0L'+w+' 0L0 '+h+'Z" fill="url(#light)"/>'+ripples+'<g opacity=".67">'+stones+'</g></svg>'
+}
+const wishPortraitCSS=document.createElement('style');
+wishPortraitCSS.textContent=`
+#content:has(.wishRitual) .wishRitual{box-sizing:border-box!important;display:block;width:min(100%,340px)!important;height:auto!important;min-height:0!important;max-height:none!important;aspect-ratio:4/7!important;margin:8px auto!important;border:5px solid #b1a183!important;border-radius:46% 46% 24% 24% / 16% 16% 14% 14%!important;background-image:url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(wishingPoolScene(true))}")!important;background-size:100% 100%!important;box-shadow:inset 0 0 20px #193c386b,0 3px 8px #44382d30!important}
+#content:has(.wishRitual) .wishBowl{width:28%;height:16%;top:39%;box-shadow:0 5px 11px #193e3a99,inset 0 3px 6px #ead6aa;border:1px solid #9f8b60}
+#content:has(.wishRitual) .ritualCoin{width:clamp(44px,13vw,52px)!important;height:clamp(44px,13vw,52px)!important;top:86%}
+#content:has(.wishRitual) .wishPower{margin:8px auto;max-width:340px}
+#content:has(.wishRitual) .wishMessage{min-height:0!important;line-height:1.4!important;margin:8px 0!important}
+#content:has(.wishRitual) .wishKeyboard{gap:4px}
+#content:has(.wishRitual) .wishKeyboard button{min-width:44px;min-height:44px}
+@media(orientation:landscape){#content:has(.wishRitual) .wishRitual{width:min(100%,640px,115dvh)!important;aspect-ratio:16/9!important;background-image:url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(wishingPoolScene(false))}")!important;border-radius:30% 30% 20% 20% / 32% 32% 20% 20%!important}#content:has(.wishRitual) .wishBowl{height:21%}}
+@media(prefers-reduced-motion:reduce){#content .wishRipple,#content .fishWake{animation-duration:.3s!important}}
+`;document.head.append(wishPortraitCSS);
