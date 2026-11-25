@@ -3158,9 +3158,10 @@ function communitySession(){
 }
 async function communityRequest(route,options={}){
  const url=communityURL();if(!url)throw Error('Community service not configured');
- const response=await fetch(url+route,{...options,cache:'no-store',credentials:'omit',headers:{'Content-Type':'application/json','Authorization':'Bearer '+communitySession(),...(options.headers||{})}});
- if(!response.ok)throw Error('Community request failed: '+response.status);
- return response.json()
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+ try{const response=await fetch(url+route,{...options,signal:controller.signal,cache:'no-store',credentials:'omit',headers:{'Content-Type':'application/json','Authorization':'Bearer '+communitySession(),...(options.headers||{})}});
+  if(!response.ok){const error=Error('Community request failed: '+response.status);error.status=response.status;throw error}return await response.json()
+ }finally{clearTimeout(timer)}
 }
 function communityTabs(q){
  const tabs=element('nav','',q,'communityTabs');tabs.setAttribute('aria-label',tr('Community spaces','社区空间'));
@@ -3178,11 +3179,26 @@ function communityPublic(q,generation){
  const list=element('div','',q,'townChatTranscript');list.setAttribute('role','log');list.setAttribute('aria-live','polite');
  const form=element('form','',q,'communityForm');const input=element('input','',form);input.maxLength=180;input.placeholder=tr('Leave a friendly hello…','打个友好的招呼……');input.setAttribute('aria-label',tr('Public message','公开消息'));
  const send=element('button',tr('Send','发送'),form);send.type='submit';send.disabled=!communityNickname();
- element('small',tr('Public messages are shared with other visitors. No personal details, spam or harassment.','公开留言会分享给其他旅人。请勿发布个人资料、广告或骚扰内容。'),q,'communityMuted');
+ element('small',tr('Messages are reviewed before publication and kept for up to 30 days. Do not share personal details. You can delete your own messages on this device.','留言审核后才公开，最多保留30天。请勿分享个人资料。你可以在本设备删除自己的留言。'),q,'communityMuted');
+ const own=element('details','',q,'communityOwn');element('summary',tr('My submitted messages','我的留言及审核状态'),own);
+ const ownList=element('div','',own);let mineBusy=false;
+ async function refreshMine(){
+  if(mineBusy||!own.open||!own.isConnected)return;mineBusy=true;
+  try{const data=await communityRequest('/mine');if(!own.isConnected)return;ownList.replaceChildren();
+   const rows=Array.isArray(data.messages)?data.messages.slice(0,60):[];
+   if(!rows.length)element('p',tr('No submissions on this device.','本设备暂无提交记录。'),ownList,'communityMuted');
+   for(const m of rows){
+    const row=element('article','',ownList,'townChatLine'),statusLabels={pending:['Awaiting review','待审核'],approved:['Published','已公开'],rejected:['Not published','未公开']};
+    element('strong',tr(...(statusLabels[m.status]||statusLabels.pending)),row);element('p',String(m.text||'').slice(0,180),row);
+    const remove=b(row,tr('Delete my message','删除我的留言'),async()=>{remove.disabled=true;try{await communityRequest('/mine',{method:'DELETE',body:JSON.stringify({id:m.id})});row.remove();refresh()}catch{remove.disabled=false;status.textContent=tr('Could not delete. Try again.','删除失败，请重试。')}})
+   }
+  }catch{if(own.isConnected)ownList.textContent=tr('Unable to load your submissions.','暂时无法读取你的留言。')}finally{mineBusy=false}
+ }
+ own.ontoggle=()=>{if(own.open)refreshMine()};
  const active=()=>generation===communityView&&list.isConnected&&$('page').style.display==='block';
- let busy=false,lastFingerprint='',pollTimer;
+ let busy=false,lastFingerprint='',pollTimer,refreshing=false;
  async function refresh(){
-  if(!active())return;try{
+  if(!active()||refreshing)return;refreshing=true;try{
    const data=await communityRequest('/messages');
    if(!active())return;const messages=Array.isArray(data.messages)?data.messages.slice(-60):[];
    const fingerprint=JSON.stringify(messages);if(fingerprint!==lastFingerprint){
@@ -3193,11 +3209,11 @@ function communityPublic(q,generation){
     if(nearBottom)list.scrollTop=list.scrollHeight;lastFingerprint=fingerprint;
    }status.textContent=tr('Shared with real visitors','与真实旅人共享');
   }catch{if(active())status.textContent=tr('Cannot reach the square. Try again in a moment.','暂时连不上广场，稍后再试。')}
-  finally{if(active()){clearTimeout(pollTimer);pollTimer=setTimeout(refresh,7000)}}
+  finally{refreshing=false;if(active()){clearTimeout(pollTimer);pollTimer=setTimeout(refresh,document.hidden?30000:10000)}}
  }
  form.onsubmit=async e=>{e.preventDefault();const value=input.value.trim();if(!value||busy||!communityNickname())return;busy=true;send.disabled=true;
-  try{await communityRequest('/messages',{method:'POST',body:JSON.stringify({name:communityNickname(),text:value})});if(active()){input.value='';await refresh()}}
-  catch{if(active())status.textContent=tr('Not sent. Your message is still here.','未发送，留言仍在输入框。')}
+  try{const result=await communityRequest('/messages',{method:'POST',body:JSON.stringify({name:communityNickname(),text:value})});if(active()){input.value='';await refresh();await refreshMine();if(result.status==='pending')status.textContent=tr('Submitted for review. Check My submitted messages.','已提交审核，可在我的留言查看进度。')}}
+  catch(e){if(active())status.textContent=e.status===429?tr('A little slower, please. Try again later.','慢一点，稍后再试。'):e.status===400?tr('Please remove links or personal details. Your text is still here.','请移除链接或个人资料，原文仍保留。'):tr('Not sent. Your message is still here.','未发送，留言仍在输入框。')}
   finally{busy=false;if(active())send.disabled=false}
  };refresh()
 }
