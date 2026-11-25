@@ -4272,7 +4272,7 @@ smack=function(){
  hint('Ah Ma: '+curse[0],'阿嬷：'+curse[1])
 };
 const comedyClawBefore=clawFinish;
-clawFinish=function(){const active=state.dropping;comedyClawBefore();if(active&&state.clawResult){const win=state.clawResult.i>=0;hint(...townReaction(win?'claw-comedy-win':'claw-comedy-miss',win?activityComedy.clawWin:activityComedy.clawMiss))}};
+clawFinish=function(){const active=state.dropping;comedyClawBefore();if(active&&state.clawResult){const win=state.clawResult.i>=0;hint(...townReaction(win?'claw-comedy-win':state.clawStreak>=3?'claw-comedy-repeat':'claw-comedy-miss',win?activityComedy.clawWin:state.clawStreak>=3?clawRepeatRoasts:activityComedy.clawMiss))}};
 const comedyRhythmBefore=rhythmFinish;
 rhythmFinish=function(){const active=state.rhythmStage==='play';comedyRhythmBefore();if(active){const high=state.rhythmScore>=1600;hint(...townReaction(high?'rhythm-comedy-high':'rhythm-comedy-low',high?activityComedy.rhythmHigh:activityComedy.rhythmLow))}};
 const comedyBoxBefore=boxAward;
@@ -4280,3 +4280,47 @@ boxAward=function(){const active=state.boxStage==='opening';comedyBoxBefore();if
 
 const koiComedy={"hit":[["Koi: Finally! Even my scales were getting nervous.","锦鲤：终于进了！看得我鱼鳞都紧张了。"],["Koi: Approved. No supporting documents required.","锦鲤：审批通过，不用补交材料。"],["Koi: A wish, not another meeting invitation. Wonderful.","锦鲤：是心愿，不是会议邀请，太好了。"]],"fish":[["Koi: Oi! This is a pond, not a bowling alley.","锦鲤：喂！这里是鱼池，不是保龄球馆。"],["Koi: I am on leave. Please stop assigning me wishes.","锦鲤：我在休假，别再给我派心愿了。"],["Koi: My head is not a coin deposit machine.","锦鲤：我的头不是投币机！"],["Koi: I shall be reporting this to fish resources.","锦鲤：我要向鱼事部投诉。"]],"rim":[["Clink! The bowl has rejected your application. Try again.","叮！许愿碗退回了你的申请，再试试。"],["Almost. The bowl insists on another round of approval.","差一点，许愿碗要求再审批一次。"]],"short":[["That coin is working from home. A little more strength.","铜钱在居家办公。再用一点力。"],["Your coin needs a little more motivation.","铜钱的工作积极性不足，再用点力。"]],"long":[["That coin is applying for an overseas posting. Try less force.","铜钱申请外派了，轻一点。"],["Congratulations on the long-distance wish. Try a gentler throw.","恭喜解锁异地许愿。再轻一点。"]],"miss":[["Koi: The bowl is over there. I even drew you a mental map.","锦鲤：碗在那边啊，我脑内地图都画好了。"],["The wish has taken a scenic detour. Aim towards the bowl.","心愿去兜风了，往碗心瞄准。"]]};
 const catComedy={"feed":[["The cat has accepted your edible apology.","猫猫接受了你的食物道歉。"],["No notes. Just more dinner tomorrow.","没有改进意见，明天继续供饭。"],["Finally, someone understands the benefits package.","终于有人搞懂我的福利待遇了。"]],"water":[["No ice, no sugar, no unnecessary conversation.","不加冰，不加糖，不加废话。"],["Hydration department: satisfactory.","饮水部门：表现合格。"],["Not bad. You may operate the water bowl again.","不错，下次还准你负责水碗。"]],"play":[["The feather is now wanted by the cat police.","羽毛已被猫警察通缉。"],["A cardio session nobody asked for but everyone enjoyed.","一场没人要求却很快乐的有氧运动。"],["The cat will need a fifteen-minute break from its break.","猫猫需要从休息中再休息十五分钟。"]],"pet":[["Your hand is now a licensed massage therapist.","你的手获得了按摩师执照。"],["The cat rates your service five paws out of five.","猫猫给你的服务打了五爪满分。"],["Congratulations. You are not allowed to move now.","恭喜，你现在不能动了。"]],"rest":[["This nap could not have been an email.","这一觉不能用邮件代替。"],["The cat is unavailable for all meetings, including imaginary ones.","猫猫拒绝所有会议，包括想象中的会议。"],["Dreaming of a world without vacuum cleaners.","正在梦见一个没有吸尘器的世界。"]]};
+
+
+/* Petty, locally adapted satire. Fictional residents, never impersonated players.
+   Jokes target everyday frustrations and game actions, not a player's worth. */
+const clawRepeatRoasts=[
+ ["Ah Ma: Three times already? Give me the controls. Aim right over the toy.","阿嬷：三次了啦！来，让我夹。瞄准娃娃正上方！"],
+ ["Arcade keeper: Aiyoh, is the glass dirty or are your eyes buffering?","店主：哎哟，是玻璃脏了，还是你老花了？"],
+ ["Ah Ma: I can do this with one hand while cooking dinner. Try again!","阿嬷：我一边煮饭一边夹都行！再来！"],
+ ["The plush is not your ex. Stop letting it get away. Aim closer.","娃娃又不是你前任，别老让它跑了。再瞄准一点。"],
+ ["The claw has missed more targets than management missed the point.","夹爪抓不住重点，跟管理层有得一拼。"],
+ ["Even the koi are watching. No pressure lah. Line up the claw first.","连锦鲤都在围观了。别紧张，先对准再下夹。"],
+ ["Your persistence is excellent. Your aim is still on probation.","毅力满分，准头还在试用期。"],
+ ["Ah Ma: Take your time. Even legends started with a few empty claws.","阿嬷：慢慢来，夹娃娃高手也都是从夹空气开始的。"]
+];
+activityComedy.clawMiss.push(
+ ["Ah Ma: So simple also miss? My grandma can do better lah!","阿嬷：这么简单也夹不到？我阿嬷都比你会夹！"],
+ ["Arcade keeper: Need to clean your glasses or change the claw?","店主：是要擦眼镜，还是要换夹爪？"],
+ ["The toy said: good luck finding someone better than me.","娃娃：祝你以后再也夹不到比我更好的。"],
+ ["You are playing hide and seek with a stationary object.","你在跟一个不会动的娃娃玩捉迷藏。"]
+);
+activityComedy.clawWin.push(
+ ["Ah Ma: Wah! Finally! I was about to take over.","阿嬷：哇，终于夹到了！我差点就要亲自出马。"],
+ ["The plush finally stopped playing hard to get.","娃娃终于不欲擒故纵了。"]
+);
+pettyPaperCurses.push(
+ ["May every flight you take be delayed, but never long enough to qualify for compensation.","祝你每次搭飞机都延误，偏偏没延误到能索赔的程度。"],
+ ["May you sit on the toilet for three days and only find inspiration, not results.","祝你三天拉不出屎，蹲厕所只蹲出人生哲理。"],
+ ["May your ex find someone exactly like themselves.","祝你前任找到一个跟自己一模一样的人。"],
+ ["May your boss spend every holiday answering their own urgent messages.","祝你老板每次放假，都忙着回自己发的紧急消息。"],
+ ["May your phone switch to one percent just as your boarding pass is needed.","祝你登机时手机刚好剩百分之一的电。"],
+ ["May every buffet run out of your favourite dish just before your turn.","祝你吃自助餐，最爱吃的菜永远在你前面那位夹完。"],
+ ["May your manager accidentally share their own screen during the productivity meeting.","祝你老板开效率会议时，不小心共享自己的摸鱼画面。"],
+ ["May your dating app match you with someone who says 'up to you' to every dinner suggestion.","祝你相亲对象问吃什么，永远只会回答随便。"]
+);
+wallThreads.push(
+ [["Airport survivor","机场过夜选手"],["To my ex: may every flight you book be delayed just under the compensation threshold.","送前任一句祝福：祝你每次航班都延误，但永远差一点才能索赔。"],[["Window seat","靠窗旅人","That is not a curse. That is a detailed travel itinerary.","这哪是诅咒，这是定制旅行攻略。"],["Kopi O","咖啡不加糖","And the charging socket at the gate does not work.","登机口的插座还坏了。"]]],
+ [["Single and thriving","单身且快乐"],["You will never find a better woman than me. Not at your current subscription tier anyway.","你以后找不到比我更好的女人了。至少以你现在的会员等级，找不到。"],[["Auntie Hong","红姐","Premium benefits have expired.","高级会员权益已到期。"],["Anonymous","匿名","No free trial extension, please.","谢绝延长免费试用。"]]],
+ [["Salary loading","工资加载中"],["My boss told me money cannot buy happiness. I told him to increase my salary so I can test the theory.","老板说钱买不到快乐。我让他先给我涨工资，我来验证一下。"],[["Office Intern","实习生","A scientific study management refuses to fund.","一项管理层拒绝拨款的科学研究。"]]],
+ [["Claw machine victim","娃娃机受害者"],["The claw has commitment issues. Every time it gets close, it lets go.","娃娃机有回避型依恋，每次快抓住了就松手。"],[["Ah Ma","阿嬷","Aiyoh, blame the machine some more. I saw your aim.","哎哟，还怪机器呢，我都看见你瞄哪儿了。"]]],
+ [["Monday hater","周一受害者"],["May the person who invented Monday meetings always step on a wet bathroom floor in fresh socks.","祝发明周一例会的人，每次穿新袜子都踩到浴室积水。"],[["Anonymous","匿名","This is the most reasonable policy proposal I have heard today.","这是我今天听过最合理的提案。"]]],
+ [["Emotionally unavailable","情绪已离线"],["My ex said I would never find anyone like him. That is actually the plan.","前任说我再也找不到像他那样的人。对啊，这就是我的计划。"],[["Auntie Hong","红姐","Congratulations on your upgrade.","恭喜你成功升级。"],["Grandma","外婆","Come eat. No need to keep expired ingredients.","来吃饭，过期食材就别留了。"]]],
+ [["Public transport philosopher","通勤哲学家"],["Public transport fares go up. My salary is practising stillness.","车费涨了，我的工资正在练习禅定。"],[["MRT Uncle","地铁阿叔","Even the escalator has more upward mobility.","连扶梯都比我的工资有上升空间。"]]],
+ [["Toilet philosopher","厕所哲学家"],["May whoever keeps sending urgent requests at 6pm spend three days on the toilet composing emails to themselves.","祝每天六点发紧急任务的人，蹲三天厕所，只能给自己发邮件。"],[["Anonymous","匿名","Please mark it urgent.","记得标记紧急。"]]]
+);
