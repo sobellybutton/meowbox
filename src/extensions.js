@@ -119,7 +119,7 @@ const oldFortuneVariation=arcanaReading;arcanaReading=function(d,rev){let base=o
 const proposalPolish=document.createElement('style');proposalPolish.textContent='#proposal .cinema-world{background:#34493b}#proposal .cinema-world img{object-fit:contain;background:#34493b}#proposal[data-shot="ticket"] .cinema-world img.station{transform:scale(1.08)}#proposal[data-shot="platform"] .cinema-world img.station{transform:scale(1.04)}#proposal .gate{max-width:520px;left:50%;width:100%;transform:translateX(-50%)}#proposal .gate-traveller{height:38%}#proposal footer{padding-bottom:4px}#worldSigns{z-index:2;pointer-events:none}#worldSigns .worldSign{pointer-events:auto!important;touch-action:manipulation;white-space:nowrap!important;max-width:calc(100vw - 16px)!important;min-height:44px!important;padding:7px 10px!important;font-size:12px!important;letter-spacing:.02em;box-shadow:0 2px 5px #322b2150!important}#moveGuide{bottom:calc(env(safe-area-inset-bottom,0px) + 158px);font-size:13px}#movePad{grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px)}#movePad button{min-width:44px;min-height:44px}#dialogue{max-height:42dvh!important;overflow:auto!important}#dialogue #choices{display:flex;flex-wrap:wrap;gap:6px}#dialogue #choices button{min-height:44px}#page .astroResult{overflow-wrap:anywhere}#page .astroForm details label{margin-top:10px}#page .v9scene{border-radius:5px!important}#gameControls button{min-height:44px}#fade{pointer-events:none!important}@media(max-height:480px){#moveGuide{bottom:80px;right:12px;left:auto;max-width:45vw;transform:none}#proposal .rail-ticket{padding:12px;gap:6px}}';document.head.append(proposalPolish);
 const signAnchorsProposal={tarot:[560,488],destiny:[300,715],temple:[680,943],wishes:[495,1190],station:[660,323]};
 syncSigns=function(){let show=scene==='fortune'&&!room&&!transitioning&&$('page').style.display!=='block'&&avatar!==null&&proposal.hidden&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;signRoot.hidden=!show;if(!show)return;if(signButtons.size!==maps.fortune.st.length){signRoot.replaceChildren();signButtons.clear();for(let [id,x,y,en,cn] of maps.fortune.st){let e=element('button','',signRoot,'worldSign');e.onclick=()=>walkDoor(id,x,y);signButtons.set(id,e)}}for(let [id,x,y,en,cn] of maps.fortune.st){let e=signButtons.get(id),[ax,ay]=signAnchorsProposal[id]||[x,y-90],sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;if(e.textContent!==tr(en,cn))e.textContent=tr(en,cn);e.hidden=sy<Math.min(145,H*.22)||sy>H-115||sx<0||sx>W;if(!e.hidden){const half=Math.min(W/2-8,(e.offsetWidth||100)/2+8);e.style.left=Math.max(half,Math.min(W-half,sx))+'px';e.style.top=sy+'px'}}};
-drawRoute=function(){if(pics.valleyClean?.naturalWidth)ctx.drawImage(pics.valleyClean,0,0,1000,routeHeight);for(let [x,y,r,i] of [[108,1280,36,0],[130,912,35,1],[475,918,36,2],[620,664,36,3],[960,594,30,4],[306,407,33,5],[855,267,35,6]])glow(x,y,r,i);for(let i=0;i<18;i++){let x=((i*91-t*(8+i%7))%1000+1000)%1000,y=(i*83+t*(14+i%8))%routeHeight;petal(x,y,3+i%4,i)}for(let [id,x,y] of maps.fortune.st){let z=doorZones[id];if(z)target(z[0],z[1],z[2],z[3],()=>walkDoor(id,x,y))}for(let n of [...npc,p,...sharedTownActors()].sort((a,b)=>a.y-b.y)){if(n.sharedPeer){drawSharedTownActor(n);continue}let sc=.72+n.y/routeHeight*.55;if(n===p){const sc=travellerOutdoorScale(1.65*(.72+p.y/routeHeight*.55),cam.scale,W,H,true);backHuman(p.x,p.y,avatar??0,p.walk,p.facing||'up',sc);continue}let dx=n.tx-n.x,dy=n.ty-n.y,moving=residentMoving(n),dir=Math.abs(dy)>Math.abs(dx)?dy<0?'up':'down':dx<0?'left':'right';if(n.kind===2&&n.visitor===undefined){cat(n.x,n.y,0,moving,.65*sc)}else{const k=stableResidentFallback(n);const actorScale=travellerOutdoorScale(1.22*sc,cam.scale,W,H,false);if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,k,moving,dir,actorScale)}if(Math.hypot(n.x-p.x,n.y-p.y)<105&&valleyRevealAt<0&&npc.filter(v=>Math.hypot(v.x-p.x,v.y-p.y)<105).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]===n){let label=n.visitor===undefined||n.popGuest?tr(...n.n):'···';ctx.save();ctx.font='14px Georgia';let w=Math.max(34,ctx.measureText(label).width+16);round(n.x-w/2,n.y-111,w,24,5,'#fff0d9e8','#b39a70');txt(label,n.x,n.y-99,13);ctx.restore();target(n.x-36,n.y-115,72,115,()=>npcTalk(n))}}if(!guideDismissed&&guideStage===0&&guideTarget&&valleyRevealAt<0&&proposal.hidden){let {x,y}=guideTarget,f=(Math.sin(t*3)+1)/2;ctx.save();ctx.strokeStyle='rgba(255,230,155,'+(.65+f*.3)+')';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,23+f*7,12+f*4,0,0,TAU);ctx.stroke();ctx.restore();target(x-40,y-40,80,80,()=>{stopRoute();p.tx=x;p.ty=y})}};
+drawRoute=function(){if(pics.valleyClean?.naturalWidth)ctx.drawImage(pics.valleyClean,0,0,1000,routeHeight);for(let [x,y,r,i] of [[108,1280,36,0],[130,912,35,1],[475,918,36,2],[620,664,36,3],[960,594,30,4],[306,407,33,5],[855,267,35,6]])glow(x,y,r,i);for(let i=0;i<18;i++){let x=((i*91-t*(8+i%7))%1000+1000)%1000,y=(i*83+t*(14+i%8))%routeHeight;petal(x,y,3+i%4,i)}for(let [id,x,y] of maps.fortune.st){let z=doorZones[id];if(z)target(z[0],z[1],z[2],z[3],()=>walkDoor(id,x,y))}for(let n of [...npc,p,...sharedTownActors()].sort((a,b)=>a.y-b.y)){if(n.sharedPeer){drawSharedTownActor(n);continue}let sc=.72+n.y/routeHeight*.55;if(n===p){const sc=travellerOutdoorScale(1.65*(.72+p.y/routeHeight*.55),cam.scale,W,H,true);backHuman(p.x,p.y,avatar??0,p.walk,p.facing||'up',sc);continue}let dx=n.tx-n.x,dy=n.ty-n.y,moving=residentMoving(n),dir=Math.abs(dy)>Math.abs(dx)?dy<0?'up':'down':dx<0?'left':'right';if(n.kind===2&&n.visitor===undefined){cat(n.x,n.y,0,moving,.65*sc)}else{const k=stableResidentFallback(n);const actorScale=travellerOutdoorScale(1.22*sc,cam.scale,W,H,false);if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,k,moving,dir,actorScale)}if(Math.hypot(n.x-p.x,n.y-p.y)<105&&valleyRevealAt<0&&npc.filter(v=>Math.hypot(v.x-p.x,v.y-p.y)<105).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]===n){let label=n.visitor===undefined||n.popGuest?tr(...n.n):'···';drawMeowActorName(n,label);target(n.x-36,n.y-115,72,115,()=>npcTalk(n))}}if(!guideDismissed&&guideStage===0&&guideTarget&&valleyRevealAt<0&&proposal.hidden){let {x,y}=guideTarget,f=(Math.sin(t*3)+1)/2;ctx.save();ctx.strokeStyle='rgba(255,230,155,'+(.65+f*.3)+')';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,23+f*7,12+f*4,0,0,TAU);ctx.stroke();ctx.restore();target(x-40,y-40,80,80,()=>{stopRoute();p.tx=x;p.ty=y})}};
 let lanternMemories=load('proposalLanternCount',0);
 const worldActivityDraw=drawActivity;drawActivity=function(){worldActivityDraw();if(activity==='wishes'){for(let i=0;i<Math.min(lanternMemories,7);i++){let x=185+i*66,y=295+(i%3)*28;ctx.save();ctx.translate(x+Math.sin(t*.9+i)*3,y);ctx.rotate(Math.sin(t*.9+i)*.04);glow(0,0,38,i);line(0,-35,0,-18,'#a68a61',1.5);round(-14,-18,28,35,8,'#db9b51','#875534');line(-5,-15,-5,14,'#ad6d3a');line(5,-15,5,14,'#ad6d3a');ctx.restore()}}};
 const finalGuideStart=start;start=function(id){finalGuideStart(id);if(id==='wishes')state.lanternAt=undefined};
@@ -1751,7 +1751,7 @@ drawMap=function(){
   if(n.grumpy){drawWalkingGranny(n.x,n.y,grannyScale,moving,dir)}else if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,stableResidentFallback(n),moving,dir,actorScale);
   const actorHeight=94*actorScale;
   if(Math.hypot(n.x-p.x,n.y-p.y)<150){
-   if(n.popGuest||n.grumpy){ctx.save();ctx.font='15px Georgia';const label=tr(...n.n),width=ctx.measureText(label).width+18;ctx.fillStyle='#f6e8cced';ctx.fillRect(n.x-width/2,n.y-actorHeight-25,width,22);ctx.fillStyle='#435744';ctx.textAlign='center';ctx.fillText(label,n.x,n.y-actorHeight-9);ctx.restore()}
+   if((n.popGuest||n.grumpy)&&npc.filter(v=>v.popGuest||v.grumpy).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]===n)drawMeowActorName(n,tr(...n.n));
    target(n.x-Math.max(36,actorScale*23),n.y-actorHeight,Math.max(72,actorScale*46),actorHeight+10,()=>npcTalk(n))
   }
  }
@@ -1908,13 +1908,14 @@ syncSigns=function(){
  // Clamping independently made neighbouring doors share the same screen position.
  const blockers=[],placed=[],items=[];
  const rootRect=signRoot.getBoundingClientRect();
- for(const el of document.querySelectorAll('#hud button,#small button,#dock,#gameControls,#movePad,#dialogue,#dialogue button,#lunarBtn')){
+ for(const el of document.querySelectorAll('#hud,#small,#dock,#gameControls,#movePad,#moveGuide,#dialogue,#lunarBtn,#lunarRibbon,#hint,#walkHelp,#nextStopShortcut,#back,#ritualActionBar,#destinyAccess')){
   if(el.hidden||!el.getClientRects().length)continue;
   const b=el.getBoundingClientRect(),style=getComputedStyle(el);
   if(style.visibility==='hidden'||style.display==='none'||style.pointerEvents==='none'||!b.width||!b.height)continue;
   blockers.push({left:b.left-rootRect.left-6,right:b.right-rootRect.left+6,top:b.top-rootRect.top-6,bottom:b.bottom-rootRect.top+6});
  }
- for(const actor of [p,...npc]){if(actor&&Number.isFinite(actor.x)&&Number.isFinite(actor.y))blockers.push(characterScreenBounds(actor,actor===p));}
+ for(const actor of [p,...npc,...sharedTownActors()]){if(actor&&Number.isFinite(actor.x)&&Number.isFinite(actor.y))blockers.push(characterScreenBounds(actor,actor===p));}
+ blockers.push(...meowTextFrameRects);
  for(const [id,x,y,en,cn] of maps[scene].st){
   const btn=signButtons.get(id),name=tr(en,cn);
   let plaque=btn.querySelector('.doorPlaque');if(!plaque){btn.replaceChildren();plaque=element('span','',btn,'doorPlaque')}if(plaque.textContent!==name)plaque.textContent=name;
@@ -1929,20 +1930,8 @@ syncSigns=function(){
  // as far as necessary to avoid an overlapping sign or navigation control.
  items.sort((a,b)=>a.distance-b.distance);
  for(const item of items){
-  const {btn,sx,sy,w,h}=item,half=w/2+7,halfH=h/2+5;
-  const cx=clamp(sx,half,W-half),cy=clamp(sy,top,bottom);
-  const options=[],seen=new Set();
-  for(const dy of [0,-h-8,h+8,-2*(h+8),2*(h+8),-3*(h+8),3*(h+8)]){
-   for(const dx of [0,-w-8,w+8,-(w+8)/2,(w+8)/2]){
-    const x=clamp(cx+dx,half,W-half),y=clamp(cy+dy,Math.max(halfH,top),Math.min(H-halfH,bottom));
-    const key=Math.round(x)+':'+Math.round(y);if(seen.has(key))continue;seen.add(key);
-    const rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};
-    if([...blockers,...placed].some(b=>rect.left<b.right&&rect.right>b.left&&rect.top<b.bottom&&rect.bottom>b.top))continue;
-    options.push({x,y,rect,score:Math.abs(x-cx)*1.15+Math.abs(y-cy)});
-   }
-  }
-  options.sort((a,b)=>a.score-b.score);
-  const choice=options[0];
+  const {btn,sx,sy,w,h}=item;
+  const choice=meowPlaceText(sx,sy,w,h,{left:6,right:W-6,top,bottom},[...blockers,...placed],Math.min(62,W*.16));
   if(!choice){btn.hidden=true;continue}
   btn.style.left=choice.x+'px';btn.style.top=choice.y+'px';placed.push(choice.rect);
  }
@@ -5220,12 +5209,16 @@ label=function(name,x,y,fn){
   for(const token of tokens){const candidate=row?row+sep+token:token;if(row&&ctx.measureText(candidate).width>limit-20){rows.push(row);row=token}else row=candidate}
   if(row)rows.push(row);if(rows.length>2)rows=[rows[0],rows.slice(1).join(sep)];
   const w=Math.min(limit,Math.max(75,...rows.map(v=>ctx.measureText(v).width+20))),h=Math.max(32,rows.length*size*1.14+12);
+  const hitW=Math.max(w,44/scale),hitH=Math.max(h,44/scale);
+  const spot=meowPlaceText(cam.ox+x*scale,cam.oy+y*scale,hitW*scale,hitH*scale,{left:5,right:W-5,top:4,bottom:H-4},[...meowFrameBlockers,...meowTextFrameRects],36);
+  if(!spot)return;
+  meowTextFrameRects.push(spot.rect);x=(spot.x-cam.ox)/scale;y=(spot.y-cam.oy)/scale;
   const left=x-w/2,top=y-h/2;
   ctx.shadowColor='#33271f40';ctx.shadowBlur=3;round(left,top,w,h,3,'#514e3fea','#d0b580');ctx.shadowBlur=0;
   round(left+3,top+3,w-6,h-6,2,null,'#d0b58055');
   ctx.fillStyle='#fff1d4';ctx.textAlign='center';ctx.textBaseline='middle';
   rows.forEach((v,i)=>{ctx.font='600 '+size+'px Georgia, "Songti SC", serif';const fs=Math.min(size,size*(w-12)/Math.max(1,ctx.measureText(v).width));ctx.font='600 '+fs+'px Georgia, "Songti SC", serif';ctx.fillText(v,x,y+(i-(rows.length-1)/2)*size*1.1)});
-  const hitW=Math.min(limit+12,Math.max(w,44/scale)),hitH=Math.max(h,44/scale);target(x-hitW/2,y-hitH/2,hitW,hitH,fn)
+  target(x-hitW/2,y-hitH/2,hitW,hitH,fn)
  }finally{ctx.restore()}
 };
 
@@ -5619,8 +5612,7 @@ function drawSharedTownActor(a){
  backHuman(a.x,a.y,a.avatar,a.walking===1,a.facing,sc);
  if(Math.hypot(a.x-p.x,a.y-p.y)>145)return;
  const gesture=sharedGestureNames[a.gesture];
- ctx.save();const fs=13/Math.max(.6,cam.scale);ctx.font=fs+'px system-ui';const label=gesture?sharedTownLabel(a.id)+' · '+tr(...gesture):sharedTownLabel(a.id),width=ctx.measureText(label).width+12;
- round(a.x-width/2,a.y-100*sc-22,width,22,5,'#f5ecd5f2','#89785f');txt(label,a.x,a.y-100*sc-11,fs,'#425b4c');ctx.restore();
+ drawMeowActorName(a,gesture?sharedTownLabel(a.id)+' · '+tr(...gesture):sharedTownLabel(a.id));
 }
 async function sharedTownLeave(){
  sharedTown.ready=false;sharedTown.actors.clear();sharedTown.lastSuccess=0;
@@ -5696,7 +5688,7 @@ function drawSharedRoomActor(a,scale){
  backHuman(a.x,a.y,a.avatar,a.walking===1,a.facing,scale);
  if(Math.hypot(a.x-indoor.x,a.y-indoor.y)>145)return;
  const g=sharedGestureNames[a.gesture],label=sharedTownLabel(a.id)+(g?' · '+tr(...g):'');
- ctx.save();const fs=12/Math.max(.6,cam.scale);ctx.font=fs+'px system-ui';const width=ctx.measureText(label).width+10;round(a.x-width/2,a.y-100*scale-22,width,22,5,'#f5ecd5ee','#89785f');txt(label,a.x,a.y-100*scale-11,fs,'#425b4c');ctx.restore()
+ drawMeowActorName(a,label,scale)
 }
 
 /* Optional town occasions: fictional events, not real attendance or a daily obligation. */
@@ -5859,3 +5851,93 @@ const hideoutRoomStyle=document.createElement('style');hideoutRoomStyle.textCont
 .hideoutLibrary strong,.hideoutLibrary small{display:block;line-height:1.2}.hideoutLibrary small{font-size:11px;color:#78634e;margin-top:4px}
 @media(min-width:760px){.hideoutRoomView .hideoutScene{max-width:560px;margin:0 auto}.hideoutRoomView .hideoutRoomCaption{max-width:560px;margin:0 auto}.hideoutRoomView .hideoutLibrary{grid-template-columns:repeat(4,minmax(0,1fr))}}
 `;document.head.append(hideoutRoomStyle);
+
+/* Shared screen-space layout contract for plaques and nearby name tags.
+   Rectangles include touch padding. Unsafe placements are omitted, not stacked. */
+function meowPlaceText(cx,cy,w,h,bounds,blockers,maxShift=40){
+ if(![cx,cy,w,h,maxShift,bounds.left,bounds.top,bounds.right,bounds.bottom].every(Number.isFinite)||w<=0||h<=0||bounds.right-bounds.left<w+8||bounds.bottom-bounds.top<h+8)return null;
+ const pad=4,loX=bounds.left+w/2+pad,hiX=bounds.right-w/2-pad,loY=bounds.top+h/2+pad,hiY=bounds.bottom-h/2-pad;
+ const options=[],seen=new Set();
+ for(const dy of [0,-h/2-6,h/2+6,-h-8,h+8,-maxShift,maxShift])for(const dx of [0,-w/3,w/3,-maxShift,maxShift]){
+  const x=clamp(cx+dx,loX,hiX),y=clamp(cy+dy,loY,hiY);
+  if(Math.hypot(x-cx,y-cy)>maxShift+.01)continue;
+  const key=Math.round(x*10)+':'+Math.round(y*10);if(seen.has(key))continue;seen.add(key);
+  const rect={left:x-w/2-pad,right:x+w/2+pad,top:y-h/2-pad,bottom:y+h/2+pad};
+  if(blockers.some(b=>b&&rect.left<b.right&&rect.right>b.left&&rect.top<b.bottom&&rect.bottom>b.top))continue;
+  options.push({x,y,rect,score:Math.abs(x-cx)*1.4+Math.abs(y-cy)})
+ }
+ return options.sort((a,b)=>a.score-b.score)[0]||null
+}
+let meowTextFrameRects=[],meowFrameBlockers=[],meowUIRects=[],meowUILast=-Infinity;
+function meowVisibleRects(selector){
+ const root=$('game').getBoundingClientRect(),out=[];
+ for(const el of document.querySelectorAll(selector)){
+  if(el.hidden||!el.getClientRects().length)continue;
+  const style=getComputedStyle(el),b=el.getBoundingClientRect();
+  if(style.visibility==='hidden'||style.display==='none'||!b.width||!b.height)continue;
+  out.push({left:b.left-root.left-4,right:b.right-root.left+4,top:b.top-root.top-4,bottom:b.bottom-root.top+4})
+ }
+ return out
+}
+function meowIndoorActorBounds(a,scale=travellerRoomScale(H,cam.scale)){
+ const x=cam.ox+a.x*cam.scale,y=cam.oy+a.y*cam.scale,h=94*scale*cam.scale,w=Math.max(30,h*.7);
+ return {left:x-w/2-5,right:x+w/2+5,top:y-h-5,bottom:y+6}
+}
+function meowBeginTextFrame(inside){
+ meowTextFrameRects=[];
+ const now=performance.now();
+ if(now-meowUILast>100){meowUILast=now;meowUIRects=meowVisibleRects('#hud,#small,#dock,#back,#hint,#gameControls,#movePad,#moveGuide,#walkHelp,#ritualActionBar,#dialogue,#nextStopShortcut,#lunarRibbon,#destinyAccess')}
+ meowFrameBlockers=[...meowUIRects];
+ if(inside){
+  if(continuityRoom===room)meowFrameBlockers.push(meowIndoorActorBounds(indoor));
+  for(const a of sharedTownActors())meowFrameBlockers.push(meowIndoorActorBounds(a));
+ }else{
+  for(const a of [p,...npc,...sharedTownActors()])meowFrameBlockers.push(characterScreenBounds(a,a===p));
+  // Keep the authored house anchors free even before DOM signs have been laid out.
+  for(const [id,x,y] of maps[scene].st){
+   const [ax,ay]=scene==='fortune'?(signAnchorsProposal[id]||[x,y-95]):[x,y-65],sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
+   meowFrameBlockers.push({left:sx-70,right:sx+70,top:sy-26,bottom:sy+26})
+  }
+ }
+}
+function drawMeowActorName(a,value,indoorScale=null){
+ if(talkOpen||!value)return;
+ const bounds=indoorScale===null?characterScreenBounds(a):meowIndoorActorBounds(a,indoorScale),scale=Math.max(.08,cam.scale),size=12/scale;
+ ctx.save();try{
+  ctx.font='600 '+size+'px Georgia, "Songti SC", serif';
+  let name=String(value),max=Math.min(176,W*.48),w=ctx.measureText(name).width*scale+14;
+  if(w>max){const chars=Array.from(name);while(chars.length>1&&ctx.measureText(chars.join('')+'…').width*scale+14>max)chars.pop();name=chars.join('')+'…';w=ctx.measureText(name).width*scale+14}
+  const h=24,spot=meowPlaceText((bounds.left+bounds.right)/2,bounds.top-h/2-9,w,h,{left:5,right:W-5,top:5,bottom:H-5},[...meowFrameBlockers,bounds,...meowTextFrameRects],25);
+  if(!spot)return;meowTextFrameRects.push(spot.rect);
+  const x=(spot.x-cam.ox)/scale,y=(spot.y-cam.oy)/scale;
+  round(x-w/scale/2,y-h/scale/2,w/scale,h/scale,4/scale,'#f6e8cdeb','#aa9672');ctx.font='600 '+size+'px Georgia, "Songti SC", serif';ctx.fillStyle='#425646';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(name,x,y)
+ }finally{ctx.restore()}
+}
+const meowTextMapBefore=drawMap;drawMap=function(){meowBeginTextFrame(false);return meowTextMapBefore()};
+const meowTextRoomBefore=drawRoom;drawRoom=function(){meowBeginTextFrame(true);return meowTextRoomBefore()};
+const meowTextActivityBefore=drawActivity;drawActivity=function(){meowTextFrameRects=[];return meowTextActivityBefore()};
+const meowTextCSS=document.createElement('style');meowTextCSS.textContent=`
+#game #hudName,#game #hudProgress{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#game #profileHud{min-width:0}
+#game #hint{box-sizing:border-box;overflow-wrap:anywhere;white-space:normal!important;line-height:1.3!important;pointer-events:none!important}
+#game #gameControls button,#game #ritualActionBar button,#game #dialogue button{box-sizing:border-box;white-space:normal!important;overflow-wrap:anywhere;line-height:1.25!important}
+#game #gameControls:not([hidden]){max-width:calc(100% - 16px)!important;box-sizing:border-box}
+#game #gameControls:not([hidden]) input{min-width:0;max-width:100%}
+#game #dialogue #line,#game #dialogue #speaker{overflow-wrap:anywhere;white-space:normal}
+#page .inner button,#proposal footer button{white-space:normal;overflow-wrap:anywhere;min-width:0}
+#page .hideoutRoomCaption{flex-wrap:wrap;overflow-wrap:anywhere}
+#page .hideoutLibrary button>span:last-child{min-width:0;overflow-wrap:anywhere}
+@media(max-width:380px){#game #hudStats{gap:3px!important}#game #hudStats span{font-size:10px!important;padding:4px!important}#game #profileHud{max-width:48%!important}}
+`;document.head.append(meowTextCSS);
+/* Suppress only a hint that collides with a higher-priority control. Keep it in
+   the accessible DOM and restore it as soon as the area is clear. */
+function meowHintSpacing(){
+ const hintEl=$('hint'),root=$('game').getBoundingClientRect(),b=hintEl.getBoundingClientRect();
+ const rect={left:b.left-root.left,right:b.right-root.left,top:b.top-root.top,bottom:b.bottom-root.top};
+ const blockers=meowVisibleRects('#dock,#movePad,#gameControls,#ritualActionBar,#dialogue,#back,#nextStopShortcut');
+ const overlap=b.width>0&&b.height>0&&blockers.some(v=>speechOverlap(rect,v));
+ hintEl.classList.toggle('meowHintBlocked',overlap);
+ setTimeout(meowHintSpacing,150)
+}
+const meowHintCSS=document.createElement('style');meowHintCSS.textContent='#game #hint.meowHintBlocked{opacity:0!important;pointer-events:none!important}';document.head.append(meowHintCSS);
+setTimeout(meowHintSpacing,150);
