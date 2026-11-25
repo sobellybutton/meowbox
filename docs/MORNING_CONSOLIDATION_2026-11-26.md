@@ -1,0 +1,69 @@
+# Morning design consolidation and next production batches
+Owner feedback consolidated on 26 November 2026, Singapore time. This is a living production specification, not a claim of completed or visually approved work. Read AGENTS.md, FINAL_PRODUCT_BRIEF.md, PRODUCT_REVIEW.md, WELCOMING_TOWN_VISUAL_BRIEF.md and STATUS.md together. Later owner requests supersede older designs. Retain the four maps, existing saves and curated activity set. Do not introduce a fifth destination or duplicate temple. Work on complete playable slices, not an endless list of cosmetic patches.
+
+## Product and engagement
+MeowBox is a nostalgic illustrated town for a short welcome break. Every tap must produce an intelligible action, change, discovery, relationship, useful choice or deliberate moment of rest. Returning should be motivated by enjoyment and ownership, not punishment or grind. One selected language throughout, natural adapted Chinese/English humour and no generic template feel. Mobile native portrait and independently composed wide desktop views.
+
+Design precedents (ideas only, no copied branding or visuals):
+- Animal Crossing: daily goals, home customisation, changing merchandise, long-term upgrades. https://animalcrossing.nintendo.com/new-horizons/explore/ ; https://www.nintendo.com/jp/ichikara/acbaa/02_en.html
+- Neko Atsume: recurring animal visitors, collectible encounters and memories. https://primagames.com/eguides/mobile-gaming-eguide-tips-tricks-and-strategies-for-todays-hottest-mobile-games/neko-atsume-kitty-collector/kitty-activity
+- Nara: deer are wild; optional bow, deer crackers only, never tease or chase, give space. https://narashikanko.or.jp/en/feature/deer/ ; https://www.pref.nara.jp/site/park/1232.html
+
+## Economy and returning-player flow
+- One spendable currency (Paw Coins / 爪币), no cash value, no ads/payment/mandatory streak. Life points, friendship and travel seals are separate nonspendable records. No coins for spending, no grinding clicks. Earlier purchases and progress remain valid.
+- Today / 今日手账 first shows one free wheel (10–30), then three unfinished suggestions and Show all six. Play +8, cooking/drink +8, ritual +6, animal encounter +6, resident conversation +6, stress release +6 once per category per Singapore day. Completion grants automatically. New discovery +10; no new spendable coins for bought figures. Check-in indicator subtle, never block entrance. Wallet shows receipts. Complete a meaningful round regardless of win. No missed-day penalty, no balance expiry. Life ranks are harder and not an assessment of real personality; detailed stats in a notebook, not crowded HUD.
+- Initial price ladder: 40 blind box; 55–125 small decor; 100–190 wallpaper/flooring; 180–320 desirable furniture; 600 reading-room expansion, then 1000 collection studio. Max three blind boxes/day, 20 different characters, no duplicate purchase, mystery not revealed early. All purchased home finishes reusable. Budget pacing: target casual 25–45 Paws per short visit; an expansion at 600 takes about 14–24 earning days from zero without other spend; 1000 takes 23–40. These are targets/assumptions, not observed behaviour. Do not rebalance until real play sessions assess the first purchase, 7-day and 30-day loop. No retroactive repricing/debit.
+- Optional future engagement: rotating featured shop display (permanent access to catalogue), distinct weekly/seasonal postcards, resident story chapters, subtle weather/time variations, rare encounters, little home goals and animal friendship memories. No fake live users, no forced check-ins, no deceptive scarcity. Daily tasks should vary the wording and concrete destination suggestion while retaining clear reward categories. Never promise a real multiplayer backend if only local.
+- Profile: identity/portrait/name/title plus balance/stamps/level, first 3 achievement previews, separate achievement book (earned/locked/all, exact unlock clues), friendship journal, life notebook, passport, bag, room. Stamp art district-specific, consistent ink/seal marks. Display only useful contextual status.
+
+## Morning feature requirements and production order
+B1 (P0 stability and truthful QA): canonical build and browser suite; resolve stale tests after paid blind boxes/profile/home changes; reproduce map label flicker, entry slow loading, tap doors, NPC path bounds, obstructed control areas, English/Chinese switching, save/reload, duplicate rewards. Preserve route and visible characters. No claims of production quality until screenshots are reviewed.
+B2 (P0 original visual production): distinctive painted Master Yue, Ah Ma, Auntie Lin, all cameo and existing residents; varying silhouettes/faces/outfits/ages; full directional walking and whole-body sit/bow/kneel/reach/pull/dance/expressions. All maps/rooms original nostalgic Japanese animation-inspired gouache/watercolor with scene-specific layers and subtle lighting; native portrait + wide, no cropping or vector placeholders passed off as paintings. NPCs wander along actual paths/stairs, unpredictable arrivals and safe walk lanes; can be seen during other actions without obscuring controls. Respect genuine versus fictional guests.
+B3 (P0 coherent interfaces): source/licence and verify legible Chinese serif/Songti style titles and readable body font across iOS/Android/Windows/macOS; painted wooden signs, short anchored speech bubbles, framed paper cards, tactile borders, understated dock, accessible contrast, actual text fits. Polish passport/seals/profile/achievement book, wallet/check-in wheel, bag/collection, result and share cards. Every card/frame/page belongs in the same world. Never use generic flat modal for a physical activity. No oversized overlays.
+B4 (P1 park): retain Daydream Park cats, add Nara-inspired Deer Meadow within the existing park, distinct deer names/coats and paintings, free cracker, optional reciprocal bow (not guaranteed), observe safely, gentle feeding, no real-world wild deer petting; pet/feed/play with friendly cats as appropriate. Natural grazing, blink/tail/ears, walk/approach, head bow and hand-to-mouth contact; clear step sequence and daily encounter, one care reward/category, rare deer/cat postcards and no neglect penalties. Avoid crowded scene, standalone portrait/wide composition; verify real touch/mouse controls and nonblocking player pose.
+B5 (P1 travel): first entrance illustrated ticket/name/avatar, realistic actual train front and carriage, visible scenic route window (original mountains/coast/fields, not cropped first map), fluid journey, arrive shrine and clear Next Stop labels for each map. No hidden extra maps or repeated onboarding. Travel and return flow must preserve context.
+B6 (P1 temple): shorter bronze striker than bell, realistic pivot/impact, no floating props; collect three joss sticks, bow, place incense, appropriate ritual order; water pavilion ladle contact, moon block toss, fortune stick animation, rack and cat never block; koi toss strength and exact landing/splash, fish react naturally and funny comments, retry if misses; no external belief claims.
+B7 (P1 food): Pearl & Pause standalone boba shop (not Grandma kitchen), meaningful order choice, pearls, tea, ice/sugar, mixing, seal and serve; fix labels clipping, fluid/contact effects. Grandma kitchen choose ingredients, longer usable scoop, stir, serve soup; distinct Grandma art; both have separate counters and tangible outcomes.
+B8 (P1 arcade): physical claw grip/drop/chute, fair skill/timing, readable touch controls; tic tac toe board unobstructed; bubble and rhythm feedback; blind boxes on shelves, select/shake/open 40 Paws, reveal on pedestal, 20 individually painted designer toys (not recoloured cats), matching inventory, secret silhouette, place on bought cabinet. Complete round rewards even when losing.
+B9 (P1 home & shop): Komorebi Living / 木漏日杂货铺 replaces souvenir shop, optional daily souvenir remains. Native room/shop backgrounds, desirable original furniture asset set and contact shadows. New home only futon/low wood table/paper lamp/window/plain wood floor. Japanese and Chinese style filters; TV, table, cushions, ceramics, lanterns, shelves, collectibles cabinet; wallpapers, tiles, tatami, floor finishes, staged room expansion. Drag/position/rotate/store from owned inventory, visible placement feedback, no floating shelves or rewards, preserve legacy layouts and old prices. Catalogue, receipt, confirmation and all card borders fit world.
+B10 (P1 reflective rooms): Master Yue original character and paper Chinese zodiac card with DOB, next/current lunar year, all 12 animals, Tai Sui relations and culturally funny roasts, check calendar boundaries; optional belief disclaimer. Zi Wei Dou Shu accurate chart conventions, time/location input and clear uncertainty, meaningful follow-up guided questions; do not pretend a model backend exists. Tarot genuine shuffle/deal/reveal and correct traditional meanings/position, illustrated cards. Personality tests (MBTI-inspired/Enneagram etc.) stronger questions and scoring, explain results and humour without overclaiming accuracy. Share attractive readable portrait/social cards for Instagram, Facebook, WeChat, Xiaohongshu and TikTok; no private DOB data by default.
+B11 (P1 residents/story): Ah Ma 打小人 visual character and meaningful slap rhythm with nonviolent paper target; funny work/salary/relationship jokes. Park gossip continuity with Auntie Mei/Lin and branching outcomes; tea, office, compatibility and Parallel Lives longer varied conversations and callbacks. No forced repetitive dialogues. Community board real user posts clearly distinguished from fictional NPC chatter; authentic backend, moderation, blocking/rate limits and privacy prerequisite for public features.
+B12 (P0 acceptance before release): every screen actual mobile and desktop rendered gameplay, screenshot each phase, verify art and text fit, pointer contact, performance, accessibility, audio toggle, new and returning users, saves, all transactions, bilingual content and deployment. A logic-test pass is not visual acceptance.
+
+## Thirty review lenses (apply in each batch, not thirty invented people)
+1 Art direction: material and colour harmony.
+2 Background painting: native composition and depth.
+3 Character design: silhouette and face uniqueness.
+4 Animation: directional poses and contact.
+5 Environmental staging: logical scale and paths.
+6 Prop illustration: tangible texture and use.
+7 Typography: licensed Chinese/English font, line breaks.
+8 UI materials: cards, frames, signs, speech.
+9 Information hierarchy: essentials first, progressive disclosure.
+10 Interaction designer: meaningful tap and feedback.
+11 Mobile UX: one thumb, safe area and touch targets.
+12 Desktop UX: intentional wide layout, mouse and keyboard.
+13 Accessibility: contrast, reduced motion, keyboard alternatives.
+14 Camera: natural transitions and framing.
+15 Game mechanics: skill, agency and readable rules.
+16 Game economy: sources, sinks, prices and time-to-goal.
+17 Progression: distinct achievements and earned unlocks.
+18 Collection design: desirable diversity, rare surprises.
+19 Engagement: daily, weekly, long-term curiosity without pressure.
+20 Narrative design: continuity and branching.
+21 Comedy writing: character-specific natural satire.
+22 Localisation: Chinese and English voice, one language at a time.
+23 Cultural accuracy: rituals, zodiac, Nara etiquette.
+24 Privacy: local personal inputs, no deceptive public presence.
+25 Community trust: moderation and real versus simulated users.
+26 Audio: distinct ambient rooms, optional sound, no repetitive noise.
+27 Performance: loading, frame time, asset budget, cache.
+28 Engineering: state machines, race prevention, maintainable code.
+29 Save/data QA: migrations, unique purchases, reload and date rollover.
+30 Product quality: actual end-to-end evidence, verify every click and publish only after acceptance.
+
+## Acceptance measurements
+Run a returning 3–5 minute session and a 10–15 minute exploration session on small/tall portrait and 16:9 desktop. Record whether player can locate an activity, enter, understand, complete, see a result and exit without instructions from tester; first meaningful action, abandoned clicks, failed inputs, daily earnings, next purchase progress. Check actual visual screenshots and capture before/after from real browser. No unsupported completion percentages. Record both successful and failed cases. Use actual production QA before expanding features further.
+
+## Current batch
+Deer Meadow animated interim vector interaction and wallet receipt/earning fixes committed; final original deer artwork, physical alignment and real-browser QA remain. Current builds include many UI and furniture improvements but still use draft art. No claim of live deployment or actual 30 specialist agents.
