@@ -194,9 +194,21 @@ jobs:
                 await page.evaluate(()=>{room='temple';activity=null;action('prayer')});
                 await page.waitForFunction(()=>activity==='prayer'&&state.prayerStage==='ready',{},{timeout:10000});
                 await page.screenshot({path:'test-results/'+name+'-temple-ready.png'});
-                await page.evaluate(()=>lightTempleIncense());
-                if(!await page.evaluate(()=>state.incense===true))throw Error('Incense did not light');
-                await page.evaluate(()=>beginQuietBow());
+                const prayerTap=async(x,y)=>{
+                  const v=await page.evaluate(({x,y})=>{const r=c.getBoundingClientRect();return{x:r.left+cam.ox+x*cam.scale,y:r.top+cam.oy+y*cam.scale}}, {x,y});
+                  if(options.hasTouch)await page.touchscreen.tap(v.x,v.y);else await page.mouse.click(v.x,v.y);
+                };
+                await prayerTap(335,570);
+                if(await page.evaluate(()=>state.prayerStage)!=='ready')throw Error('Prayer started before incense');
+                await prayerTap(510,445);
+                if(!await page.evaluate(()=>state.incense===true))throw Error('Incense did not light from a physical tap');
+                await page.waitForTimeout(450);
+                await page.screenshot({path:'test-results/'+name+'-temple-incense-reach.png'});
+                await prayerTap(335,570);
+                await page.waitForFunction(()=>state.prayerStage==='kneel',{},{timeout:3000});
+                await page.waitForFunction(()=>state.prayerStage==='bow',{},{timeout:3000});
+                await page.waitForTimeout(600);
+                await page.screenshot({path:'test-results/'+name+'-temple-bow.png'});
                 await page.waitForFunction(()=>state.prayerStage==='silent',{},{timeout:10000});
                 await page.screenshot({path:'test-results/'+name+'-temple-prayer.png'});
                 await page.waitForFunction(()=>state.prayerStage==='complete',{},{timeout:10000});
