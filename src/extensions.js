@@ -3581,9 +3581,13 @@ function hideoutPage(){
      im.onpointerup=im.onpointercancel=()=>saveHideout();
     }else im.onclick=()=>{if(d.id==='board')myNotes9();else if(d.id==='frame')album9();else if(d.id==='shelf')hideoutClaimPage();else if(['lamp','shojiLamp'].includes(d.id))stage.classList.toggle('dim');else if(d.id==='retroTV')komorebiTVPage();else if(d.id==='displayCabinet')figureCabinetPage();else if(d.id==='bed'||d.id==='futon')toast(tr('The bed has approved your leave.','床铺已批准你的年假。'))};
    }
-   const displays=hideoutFurniture.some(d=>d.id==='shelf'&&furnitureZone(d)===komorebiZone)?hideoutRewards.filter(v=>hideoutPrefs.display.includes(v.id)&&hideoutUnlocked(v)):[];
+   const rewardShelf=hideoutFurniture.find(d=>d.id==='shelf'&&furnitureZone(d)===komorebiZone);
+   const displays=rewardShelf&&!hideoutEditing?hideoutRewards.filter(v=>hideoutPrefs.display.includes(v.id)&&hideoutUnlocked(v)):[];
    for(const [i,reward] of displays.entries()){
-    const el=element('button','',stage,'hideoutDisplay');el.style.left=(16+(i%4)*22)+'%';el.style.top=(47+Math.floor(i/4)*9)+'%';el.innerHTML=albumIcon(reward.kind);el.setAttribute('aria-label',tr(...reward.name));el.onclick=()=>toast(tr(...reward.name));
+    const el=element('button','',stage,'hideoutDisplay'),w=furnitureWidth('shelf'),ratio=Math.max(.3,stage.clientWidth/Math.max(1,stage.clientHeight)),dx=((i%3)-1)*w*.23,dy=(Math.floor(i/3)*40+63-151.2)/180*w*ratio,angle=(Number(rewardShelf.r)||0)*Math.PI/180;
+    el.style.left=(clamp(Number(rewardShelf.x)||50,8,92)+dx*Math.cos(angle)-dy/ratio*Math.sin(angle))+'%';
+    el.style.top=(clamp(Number(rewardShelf.y)||50,12,91)+dx*ratio*Math.sin(angle)+dy*Math.cos(angle))+'%';
+    el.style.width=(w*.22)+'%';el.style.transform='translate(-50%,-85%)';el.innerHTML=albumIcon(reward.kind);el.setAttribute('aria-label',tr(...reward.name));el.onclick=()=>toast(tr(...reward.name));
    }
    if(!hideoutEditing){const player=element('img','',stage,'hideoutPlayer');player.src=ART['walker'+(avatar??0)+'0'];player.alt=tr(...names[avatar??0]);player.onclick=()=>toast(tr('Do not disturb. Recovering from adulthood.','请勿打扰，正在治疗成年人的疲惫。'))}
   }render();
@@ -7699,7 +7703,11 @@ function buyFurniture(id){
 }
 if(load('komorebiLegacyOwnedV1',null)===null){
  save('komorebiLegacyOwnedV1',[...new Set(hideoutFurniture.map(v=>v.id).filter(id=>furnitureCatalogue().some(x=>x[0]===id)))])
+}else if(!load('komorebiStarterMigrationV2',false)){
+ const old=load('komorebiLegacyOwnedV1',[]);
+ if(Array.isArray(old)&&!old.includes('futon'))save('komorebiLegacyOwnedV1',[...new Set([...old,'bed','rug'])])
 }
+save('komorebiStarterMigrationV2',true);
 function komorebiArt(id){
  const wood='#9d7651',ink='#755b46',cream='#f0e1bf',green='#81957a';if(!furnitureIsPlaceable(id))return komorebiFinishIcon(id);
  const shapes={
