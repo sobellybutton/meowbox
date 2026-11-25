@@ -969,14 +969,14 @@ function templeBellArt(x,y,sc=1,angle=0){ctx.save();ctx.translate(x,y);ctx.scale
 function templeLadle(x,y,a=0){ctx.save();ctx.translate(x,y);ctx.rotate(a);line(-68,0,24,0,'#97734b',9);line(-66,-2,22,-2,'#d8bc80',3);ellipse(35,1,23,12,'#8d714b');ellipse(35,-2,21,10,'#d2bc86');ellipse(35,-2,15,6,'#72948c');ctx.restore()}
 function templeBasin(x,y){ctx.save();let g=ctx.createLinearGradient(0,y,0,y+85);g.addColorStop(0,'#a9aa91');g.addColorStop(1,'#616d61');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x-94,y);ctx.lineTo(x+94,y);ctx.lineTo(x+69,y+65);ctx.quadraticCurveTo(x,y+88,x-69,y+65);ctx.closePath();ctx.fill();ellipse(x,y,96,32,'#a6ad94');ellipse(x,y,82,25,'#526f68');ellipse(x,y,76,20,'#75948b');for(let i=0;i<5;i++){let f=(t*.38+i*.19)%1;ctx.strokeStyle='rgba(227,237,214,'+(1-f)*.55+')';ctx.beginPath();ctx.ellipse(x+22,y,8+f*48,2+f*13,0,0,TAU);ctx.stroke()}ctx.restore()}
 function templeRitualBackground(){paintLivingBackdrop(pics.streetTemple||pics.temple||pics.sticks);let g=ctx.createLinearGradient(0,270,0,680);g.addColorStop(0,'#243b3020');g.addColorStop(1,'#26392fa0');shadeLivingBackdrop(g)}
-function templeReleaseBell(moved){if(activity!=='templeBell'||t-state.bellAt<1.0)return;state.bellStrength=Math.max(.15,Math.min(1,moved/120));state.bellAt=t;state.bellRung=false;hint('Listen as the sound travels through the valley.','听钟声慢慢传向山谷。')}
+function templeReleaseBell(moved){if(activity!=='templeBell'||!Number.isFinite(moved)||moved<=0||t-state.bellAt<1.0)return;state.bellStrength=Math.max(.15,Math.min(1,moved/120));state.bellAt=t;state.bellRung=false;hint('Listen as the sound travels through the valley.','听钟声慢慢传向山谷。')}
 function waterDropZone(stage,x,y){
  if(!Number.isFinite(x)||!Number.isFinite(y))return false;
  // Ladle coordinates are its handle centre; the bowl is 35 units to the right.
  return stage===0?Math.hypot((x+35)-475,(y+1)-486)<48:stage===1?Math.hypot((x+35)-410,(y+1)-430)<48:false
 }
 function templeReleaseWater(a){
- if(activity!=='templeWater'||![0,1].includes(state.waterStage))return;
+ if(activity!=='templeWater'||![0,1].includes(state.waterStage)||!Number.isFinite(a?.x)||!Number.isFinite(a?.y))return;
  const stage=state.waterStage;if(!waterDropZone(stage,a.x,a.y)){hint(stage===0?'Lower the scoop into the highlighted water.':'Bring the filled scoop above your hand.',stage===0?'把勺口放进亮起的水面。':'把装满水的勺移到手掌上方。');return}
  state.waterStage=stage+1;state.waterAt=t;state.waterFrom={x:a.x,y:a.y};
  if(stage===0){hint('Now move the full ladle over your hand.','现在把盛满水的勺移到手掌上方。');if(typeof physicalFx==='function')physicalFx('water')}
@@ -1116,9 +1116,9 @@ roomActions.kitchen=[['cook','Grandma’s soup','外婆煮汤'],['bubbleTea','Bu
 const foodReleaseStart=start;start=function(id){foodReleaseStart(id);if(id==='bubbleTea'){state.teaStage='base';state.teaBase=-1;state.teaPearls=0;state.teaMix=0;state.teaAt=t;hint('Choose a tea, then add pearls and shake.','选茶底，加珍珠，再摇匀。')}};
 const teaChoices=[['Milk tea','经典奶茶','#b68965'],['Jasmine milk tea','茉莉奶茶','#d7c59b'],['Brown sugar tea','黑糖奶茶','#976843']];
 function teaCup(x,y,sc=1,base=0,pearls=0,fill=1,angle=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(-36,-74);ctx.lineTo(36,-74);ctx.lineTo(26,0);ctx.lineTo(-26,0);ctx.closePath();ctx.fillStyle='#e6e3cf';ctx.fill();ctx.save();ctx.clip();let level=-69*Math.max(0,Math.min(1,fill));ctx.fillStyle=teaChoices[Math.max(0,base)][2];ctx.fillRect(-38,level,76,75);for(let i=0;i<Math.min(16,pearls);i++){let xx=-20+(i*17)%42,yy=-5-Math.floor(i/5)*7+Math.sin(t*6+i)*Math.min(3,Math.abs(angle)*12);ellipse(xx,yy,4.2,4.2,'#4b342e')}ctx.restore();ctx.strokeStyle='#c8b999';ctx.lineWidth=2;ctx.stroke();ellipse(0,-74,37,7,'#eee1c7');line(9,-78,16,-110,'#a66357',5);line(-24,-63,-19,-12,'#fff3da66',3);ctx.restore()}
-function selectTeaBase(i){if(activity!=='bubbleTea'||state.teaStage!=='base')return;state.teaBase=i;state.teaStage='pearls';state.teaAt=t;sound(440);hint('Scoop the pearls into your cup.','把珍珠舀进杯里。')}
+function selectTeaBase(i){if(activity!=='bubbleTea'||state.teaStage!=='base'||!Number.isInteger(i)||!teaChoices[i])return;state.teaBase=i;state.teaStage='pearls';state.teaAt=t;sound(440);hint('Scoop the pearls into your cup.','把珍珠舀进杯里。')}
 function teaAddPearls(){if(activity!=='bubbleTea'||state.teaStage!=='pearls')return;state.teaPearls+=5;state.teaAt=t;sound(280+state.teaPearls*12);if(state.teaPearls>=10){state.teaStage='mix';hint('Drag the cup from side to side to shake it.','左右拖动杯子，把奶茶摇匀。')}}
-function teaShake(amount){if(activity!=='bubbleTea'||state.teaStage!=='mix')return;state.teaMix=Math.min(100,state.teaMix+Math.min(50,Math.max(0,amount*.55)));state.teaAt=t;if(state.teaMix>=100){state.teaStage='ready';sound(630);hint('Your drink is ready. Take a sip!','奶茶做好啦，喝一口吧！')}}
+function teaShake(amount){if(activity!=='bubbleTea'||state.teaStage!=='mix'||!Number.isFinite(amount)||amount<=0)return;state.teaMix=Math.min(100,state.teaMix+Math.min(50,Math.max(0,amount*.55)));state.teaAt=t;if(state.teaMix>=100){state.teaStage='ready';sound(630);hint('Your drink is ready. Take a sip!','奶茶做好啦，喝一口吧！')}}
 function teaSip(){if(activity!=='bubbleTea'||state.teaStage!=='ready')return;state.teaStage='sip';state.teaAt=t;sound(380)}
 function drawFoodCounter(){paintLivingBackdrop(pics.kitchen||pics.streetKitchen||pics.tea||pics.sticks);let g=ctx.createLinearGradient(0,410,0,690);g.addColorStop(0,'#a8835b');g.addColorStop(1,'#654c39');ctx.beginPath();ctx.moveTo(180,466);ctx.lineTo(620,466);ctx.lineTo(690,690);ctx.lineTo(110,690);ctx.closePath();ctx.fillStyle=g;ctx.fill();for(let i=0;i<5;i++)line(175-i*12,482+i*39,625+i*12,482+i*39,'#e0b98230',2)}
 const foodReleaseProp=prop;prop=function(id,x,y){if(id==='bubbleTea'){teaCup(x,y-16,.85,0,10);return}return foodReleaseProp(id,x,y)};
@@ -1139,7 +1139,7 @@ function teaScoopArt(x,y,tilt=0,loaded=false){
  ctx.restore();
 }
 function teaScoopRelease(a){
- if(activity!=='bubbleTea'||state.teaStage!=='pearls')return;
+ if(activity!=='bubbleTea'||state.teaStage!=='pearls'||!Number.isFinite(a?.x)||!Number.isFinite(a?.y))return;
  if(Math.hypot(a.x-420,a.y-480)<65){teaAddPearls();return}
  hint('Tip the scoop into the cup.','把珍珠倒进奶茶杯里。');
 }
@@ -1220,8 +1220,8 @@ function rhythmHit(lane){if(activity!=='rhythm'||state.rhythmStage!=='play')retu
 function rhythmFinish(){if(state.rhythmStage!=='play')return;state.rhythmStage='result';state.rhythmEnd=t;let best=Number(load('rhythmHighV1',0))||0;save('rhythmHighV1',Math.max(best,state.rhythmScore));addItem('After-hours rhythm ticket','下班节拍门票');if(state.rhythmScore>=1600)addItem('Golden rhythm badge','金色节拍徽章');hint(...(state.rhythmScore>=1600?['Your boss cannot compete with those moves.','老板可比不上你的舞步。']:['You survived the dance floor. That counts.','成功存活于舞池，这就算赢了。']))}
 document.addEventListener('keydown',e=>{if(activity!=='rhythm'||state.rhythmStage!=='play'||e.repeat||e.target.matches?.('input,textarea,select'))return;const l=['ArrowLeft','ArrowDown','ArrowUp','ArrowRight'].indexOf(e.key);if(l>=0){e.preventDefault();rhythmHit(l)}});
 const boxPrizes=[['Office escape cat','逃班猫','#d89858',0,'common'],['Meeting survivor cat','开会幸存猫','#ece1c6',1,'common'],['Annual leave cat','请假猫','#9399a2',4,'uncommon'],['Moonlight cat','月光猫','#44434a',2,'rare'],['Golden payday cat','金薪猫','#d1a077',3,'rare']];
-function boxSelect(i){if(activity!=='blindBox'||state.boxStage!=='choose')return;state.boxPick=i;state.boxStage='shake';state.boxAt=t;sound(400);hint('Shake the box sideways, then open it.','左右摇动盒子，再打开看看。')}
-function boxShake(amount){if(activity!=='blindBox'||state.boxStage!=='shake')return;state.boxShake=Math.min(100,state.boxShake+Math.max(0,Math.min(50,amount*.65)));state.boxAt=t;sound(280);if(state.boxShake>=100){state.boxStage='ready';hint('Something is rattling inside. Open it!','里面有东西在响，打开看看！')}}
+function boxSelect(i){if(activity!=='blindBox'||state.boxStage!=='choose'||!Number.isInteger(i)||i<0||i>2)return;state.boxPick=i;state.boxStage='shake';state.boxAt=t;sound(400);hint('Shake the box sideways, then open it.','左右摇动盒子，再打开看看。')}
+function boxShake(amount){if(activity!=='blindBox'||state.boxStage!=='shake'||!Number.isFinite(amount)||amount<=0)return;state.boxShake=Math.min(100,state.boxShake+Math.max(0,Math.min(50,amount*.65)));state.boxAt=t;sound(280);if(state.boxShake>=100){state.boxStage='ready';hint('Something is rattling inside. Open it!','里面有东西在响，打开看看！')}}
 function boxOpen(){if(activity!=='blindBox'||state.boxStage!=='ready')return;state.boxStage='opening';state.boxAt=t;let q=Math.random();state.boxPrize=q<.035?4:q<.13?3:q<.35?2:q<.68?1:0;sound(520)}
 function boxAward(){if(state.boxStage!=='opening')return;state.boxStage='result';state.boxAt=t;let v=boxPrizes[state.boxPrize],duplicate=items.some(x=>x[0]===v[0]);addItem(v[0],v[1]);let count=Number(load('blindBoxOpenedV1',0))||0;save('blindBoxOpenedV1',count+1);hint(...(duplicate?['A familiar face! This one can keep the other one company.','又是熟面孔！正好给上一只作伴。']:v[4]==='rare'?['Rare find! The universe finally approved your leave.','稀有款！宇宙终于批准你休假了。']:['A tiny companion for your next escape.','下次摸鱼，又多了一个小伙伴。']))}
 function boxArt(x,y,sc=1,i=0,open=0,tilt=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(tilt);let col=['#cba58a','#91aba3','#b3a2bd'][i%3];ellipse(0,9,49,11,'#292c2744');ctx.beginPath();ctx.moveTo(-44,-72);ctx.lineTo(28,-72);ctx.lineTo(44,-58);ctx.lineTo(44,0);ctx.lineTo(-28,9);ctx.lineTo(-44,-5);ctx.closePath();ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#695548';ctx.stroke();ctx.beginPath();ctx.moveTo(28,-72);ctx.lineTo(28,0);ctx.lineTo(44,0);ctx.lineTo(44,-58);ctx.closePath();ctx.fillStyle='#4b443b35';ctx.fill();round(-46,-76-open*37,92,16,3,'#e8d5ad','#826a4c');line(-36,-66-open*37,35,-66-open*37,'#a7895c',2);txt('?',-8,-25,32,'#fff0cc');line(-29,-8,15,-8,'#f4e1bd',2);ctx.restore()}
@@ -1245,7 +1245,7 @@ const readingPrompts=[
 function topicReflection(topic,position){const prompt=readingPrompts[topic]?.[position];return prompt?tr(...prompt):''}
 let readingJournal=load('readingJournalV1',[]);if(!Array.isArray(readingJournal))readingJournal=[];
 const readingStart=start;start=function(id){readingStart(id);if(id==='tarot'||id==='love'){state.readStage=id==='love'?'topic':'deck';state.readTopic=id==='love'?null:-1;state.readShuffle=0;state.readAt=t;state.readCards=[];state.readFlip=[];state.readSaved=false;hint(...(id==='love'?['What is on your mind today?','今天想问些什么？']:['Touch the deck, or drag it sideways to shuffle.','轻触牌堆，或左右拖动洗牌。']))}};
-function readingTopic(i){if(state.readStage!=='topic')return;state.readTopic=i;state.readStage='deck';state.readAt=t;hint('Shuffle the deck as much as you like.','想洗几次都可以。')}
+function readingTopic(i){if(activity!=='love'||state.readStage!=='topic'||!Number.isInteger(i)||!readingTopics[i])return;state.readTopic=i;state.readStage='deck';state.readAt=t;hint('Shuffle the deck as much as you like.','想洗几次都可以。')}
 function readingShuffle(){if(state.readStage!=='deck')return;state.readStage='shuffle';state.readShuffle++;state.readAt=t;sound(350);hint('Two halves of the deck come together.','两叠牌慢慢合在一起。')}
 function readingDeal(){if(state.readStage!=='deck'||!state.readShuffle)return;state.readStage='deal';state.readAt=t;let count=activity==='love'?3:1,pool=tarotDeck.map((_,i)=>i);if(activity==='tarot'){let d=dailyCard();state.readCards=[{i:Math.max(0,tarotDeck.indexOf(d)),rev:tarotReversed('daily')}]}
 else{state.readCards=Array.from({length:count},()=>{let j=Math.floor(Math.random()*pool.length);return {i:pool.splice(j,1)[0],rev:Math.random()<.5}})}state.readFlip=Array(count).fill(-1);state.readCards.forEach(v=>readingArtwork(v.i));sound(460)}
@@ -2415,7 +2415,7 @@ function riverPerform(){
  hint(...(activity==='riverBottle'?['Fold it, seal it, and walk to the water.','折好纸条，封好瓶子，走到河边。']:['Walk to the riverbank and let it out.','走到河边，把烦恼喊出去。']))
 }
 function riverReset(){
- if(!riverIsActive())return;state.riverNote='';state.riverPhase='ready';state.riverAt=t;refreshControls()
+ if(!riverIsActive()||state.riverPhase!=='done')return;state.riverNote='';state.riverLaunch=null;state.riverPhase='ready';state.riverAt=t;refreshControls()
 }
 const riverControlsBefore=refreshControls;
 refreshControls=function(){
@@ -2849,7 +2849,7 @@ function meowHistorySync(){
  if(meowHistoryBusy||!meowSubView()||meowHistoryArmed)return;
  try{history.pushState({...(history.state||{}),meowOverlay:true},'',location.href);meowHistoryArmed=true}catch(e){}
 }
-function clearTransientInput(){joystickReset();releaseWalkKeys();drag=null;signPress=null;stopRoute();indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y}
+function clearTransientInput(){joystickReset();releaseWalkKeys();drag=null;signPress=null;stopRoute();p.tx=p.x;p.ty=p.y;p.motionSpeed=0;indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y}
 function meowBackView(){
  clearTransientInput();
  if($('page').style.display==='block'){$('page').style.display='none';updateHUD();return}
