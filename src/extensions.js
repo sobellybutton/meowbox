@@ -324,12 +324,19 @@ drawActivity=function(){
  let name=state.count?tr(...[['Holy blocks · Yes','圣杯 · 一阴一阳'],['No · both rounded','阴杯 · 两个凸面'],['Laughing blocks · ask again','笑杯 · 两个平面']][state.result]):tr('Ask a question quietly','在心里默念一个问题');
  txt(airborne?tr('Listening…','静候回应……'):name,400,603,18,'#fff2d8');txt(tr('Tosses: ','次数：')+state.count,400,633,13,'#fff2d8');target(270,390,260,160,()=>{},'moon');
  }else{
- let held=drag?.id==='sticks',shaking=(state.shakeUntil||0)>t,xx=400+(held?Math.max(-42,Math.min(42,(drag.x-drag.sx)*.45)):shaking?Math.sin(t*28)*18:0),lift=held?16:0;ctx.save();ctx.translate(xx,476-lift);ctx.rotate(shaking?Math.sin(t*22)*.14:0);ellipse(0,67,53,12,'#56352166');ellipse(0,-24,48,13,'#6d4a32');for(let i=0;i<(state.fallenStick?11:12);i++){ctx.save();ctx.translate(-36+i*6.5,-27);ctx.rotate((i-5)*.035+(shaking?Math.sin(t*20+i)*.12:0));let yy=-75-(i%4)*6+(shaking?Math.sin(t*27+i)*7:0);round(-3,yy,6,106,2,'#e3bd80','#a67a47');line(-2,yy+4,2,yy+4,'#a54e3d',2);ctx.restore()}
+ let held=drag?.id==='sticks',shaking=(state.shakeUntil||0)>t;
+ const movement=held?clamp((drag.x-drag.sx)*.45,-35,35):shaking?Math.sin(t*24)*17:0;
+ const xx=400+movement,lift=held?14:shaking?8:0,tilt=held?clamp(movement*.008,-.20,.20):shaking?Math.sin(t*22)*.12:0;
+ const activeGrip=held||shaking;
+ const actorX=activeGrip?xx-68:332,actorY=552;
+ const grip=activeGrip?{x:xx-39,y:490-lift}:null;
+ drawRitualPose(actorX,actorY,1.55,{reach:grip,kneel:.08,bow:activeGrip?.12:0});
+ ctx.save();ctx.translate(xx,476-lift);ctx.rotate(tilt);ellipse(0,67,53,12,'#56352166');ellipse(0,-24,48,13,'#6d4a32');for(let i=0;i<(state.fallenStick?11:12);i++){ctx.save();ctx.translate(-36+i*6.5,-27);ctx.rotate((i-5)*.035+(shaking?Math.sin(t*20+i)*.12:0));let yy=-75-(i%4)*6+(shaking?Math.sin(t*27+i)*7:0);round(-3,yy,6,106,2,'#e3bd80','#a67a47');line(-2,yy+4,2,yy+4,'#a54e3d',2);ctx.restore()}
  let wood=ctx.createLinearGradient(-45,0,45,0);wood.addColorStop(0,'#925d37');wood.addColorStop(.5,'#c99356');wood.addColorStop(1,'#805137');ctx.beginPath();ctx.moveTo(-47,-24);ctx.lineTo(-39,60);ctx.lineTo(-19,72);ctx.lineTo(20,72);ctx.lineTo(39,60);ctx.lineTo(47,-24);ctx.lineTo(23,-14);ctx.lineTo(-23,-14);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle='#69452f';ctx.stroke();for(let [x1,x2,shade] of [[-47,-23,'#69452f35'],[23,47,'#51372455']]){ctx.beginPath();ctx.moveTo(x1,-24);ctx.lineTo(x2,-14);ctx.lineTo(x2*.84,71);ctx.lineTo(x1*.84,60);ctx.closePath();ctx.fillStyle=shade;ctx.fill()}line(-23,-14,-19,72,'#e9bf7955',1.5);line(23,-14,20,72,'#583b2a80',1.5);line(-39,54,-19,65,'#e1b279',2);line(-19,65,20,65,'#e1b279',2);line(20,65,39,54,'#e1b279',2);txt('籤',0,19,31,'#f9e0ad');ctx.restore();
  if(state.drawing||state.fallenStick){
  const age=Math.max(0,t-(state.stickDrawAt??t)),f=state.fallenStick?1:clamp((age-.38)/.83,0,1);
  if(age>=.38||state.fallenStick){
-  const sx=400+f*110,sy=382-92*Math.sin(Math.PI*f)+f*142;
+  const sx=(state.stickLaunchX??400)*(1-f)+510*f,sy=382-92*Math.sin(Math.PI*f)+f*142;
   ellipse(sx,527,18+20*f,4,'#56352155');
   ctx.save();ctx.translate(sx,sy);ctx.rotate(f*1.37+Math.sin(f*Math.PI)*.24);
   let grain=ctx.createLinearGradient(-6,0,6,0);grain.addColorStop(0,'#b68b51');grain.addColorStop(.45,'#f3d69e');grain.addColorStop(1,'#d1a56d');
@@ -1371,7 +1378,7 @@ function readingPositionCaption(name,x,y,w){
 }
 function shakeFortuneStick(){
  if(activity!=='sticks'||state.drawing||state.fallenStick)return;
- const run=state;state.shakeUntil=t+.72;state.stickDrawAt=t;state.drawing=true;
+ const run=state;state.shakeUntil=t+.38;state.stickDrawAt=t;state.stickLaunchX=400;state.drawing=true;
  state.stickNumber=1+Math.floor(Math.random()*12);
  sound(350);hint('One stick is finding its way out…','一支签正在慢慢落下……');
  setTimeout(()=>{if(activity!=='sticks'||state!==run)return;state.drawing=false;state.fallenStick=state.stickNumber;sound(480);hint('Pick up the numbered stick to receive your fortune paper.','拾起落下的签，领取签文。')},1250)
