@@ -1657,8 +1657,7 @@ $('travel').onclick=travel;$('dockTravel').onclick=travel;
 
 /* Fit the playable stage between the HUD and dock, including the lowest controls. */
 function mobileRoomCamera(s,ox,oy){
- if(W>=H)return {s,ox,oy};
- const top=room&&!activity?155:135,bottom=H-122;
+ const landscape=W>=H,top=room&&!activity?(landscape?95:155):(landscape?90:135),bottom=H-(landscape?100:122);
  const span=activity?(['wonderScene','story','match'].includes(activity)?[185,615,255,695]:['tarot','love'].includes(activity)?[195,605,265,685]:[170,630,265,690]):[110,690,300,750];
  const [l,r,u,d]=span,fit=Math.max(.08,Math.min((W-16)/(r-l),Math.max(80,bottom-top)/(d-u)));
  const base=Math.max(.08,Math.min(W/720,Math.max(80,bottom-top)/450));
@@ -2229,6 +2228,7 @@ function riverSceneBackdrop(){
  for(const x of [145,655]){for(let i=0;i<8;i++){const xx=x+i*3-10,yy=riverBankY(xx)+8;line(xx,yy+15,xx+Math.sin(t*.9+i)*6,yy-25-i%3*8,'#607655',2.5)}}
  ctx.restore()
 }
+function riverSoundWaves(x,y,age){if(age<0)return;ctx.save();ctx.strokeStyle='#f8e6b2aa';ctx.lineWidth=2;for(let i=0;i<3;i++){const r=10+((age*.85+i*.33)%1)*34;ctx.globalAlpha=Math.max(.1,1-r/48);ctx.beginPath();ctx.arc(x,y,r,-.75,.75);ctx.stroke()}ctx.restore()}
 function riverRing(x,y,age,max=55){
  if(age<0||age>1.5)return;ctx.save();ctx.strokeStyle='rgba(224,245,222,'+Math.max(0,1-age/1.5)*.75+')';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y,9+max*age,3+max*.28*age,0,0,TAU);ctx.stroke();ctx.restore()
 }
@@ -2275,7 +2275,8 @@ drawActivity=function(){
  const power=clamp(state.riverStrength||60,15,100),{x:landX,y:landY}=riverLanding(power);
  let walk=phase==='ready'?0:Math.min(1,age/1.1),px=265+walk*65,py=610-walk*102;
  if(phase==='ready'||walking)backHuman(px,py,avatar??0,walking,'up',1.35);
- else drawRitualPose(px,py,1.4,{reach:{x:px+26,y:py-75},bow:phase==='walk'?.12:0});
+ else if(bottleMode){const swing=phase==='walk'?Math.sin(Math.PI*clamp((age-1.1)/.75,0,1)):0;drawRitualPose(px,py,1.4,{reach:{x:px+26+16*swing,y:py-66-20*swing},bow:.16*swing})}
+ else{drawRitualPose(px,py,1.4,{reach:{x:px+16,y:py-94},bow:phase==='walk'?.10:0,praying:true});if(phase==='walk'&&age<2.8)riverSoundWaves(px+20,py-93,age-1.1)}
  riverAuntie(205,488,.78);
  if(bottleMode){
   if(phase==='ready'){round(275,465,68,13,3,'#ad8860','#74583e');round(290,448,23,12,2,'#f0e1ba');riverBottleArt(330,445,.05,.75,false)}
