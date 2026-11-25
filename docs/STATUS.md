@@ -17,3 +17,8 @@ Canonical source is src; original legacy chunks only supply art. Preserve existi
 - Source extraction commit ecf79ea deployed successfully; its browser run 45563148079 was still in progress when checked.
 - Commits 6f30467 and 9bed04d separate overlapping sign rectangles, avoid interactive HUD controls, prioritize the nearest door, and require a 44px minimum tap target. Commit 9e02e76 makes the test identify intercepted taps separately from route failures and uses exact door IDs.
 - These changes are committed, not yet confirmed by completed browser tests. Inspect latest Actions results, including screenshots, before declaring the regression fixed. Watch for sign placement jitter and frame-time cost on slower devices; no visual approval yet.
+
+## Stability and quality follow-up
+- Deployment at 3a31d5c confirmed; latest full browser tests still running at time of review. Run 45563633484 had 46/56 doorway passes: 10 mobile/tablet taps failed to start their route after hit-target checks. Commit 9ce6f56 captures the pointer gesture by stable door identity, freezes placement during a press and limits DOM sign layout to ~30Hz. Requires fresh browser evidence.
+- Fortune stick collection and topic-aware tarot changes at bdf436c / 3a31d5c passed combined JavaScript and test script parse checks, awaiting interaction results.
+- Consolidate reading collectible naming and migrate older saved rewards without duplication. Reduce non-animation UI polling to 2–10Hz, avoiding repeated text writes. No measured FPS/load-time gain claimed; startup artwork extraction is still pending.
