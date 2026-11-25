@@ -3137,8 +3137,7 @@ todayHub=function(){
  page(tr('Today in MeowBox','摸鱼小镇 · 今日'),tr('A little something new each day.','每天都有一点新鲜事。'),q=>{
   const social=element('section','',q,'communityWelcome');element('h2',tr('Fancy some company?','来摸鱼搭个伴？'),social);
   element('p',tr('Share a little nonsense, see what’s on the board, or just say hi.','聊两句废话，看看留言墙，或者打声招呼。'),social);
-  b(social,tr('Open Town Square','进入摸鱼广场'),()=>{communityTab=communityURL()?'public':'lounge';townChatPage()});
-  b(social,tr('Town chat','小镇聊天室'),()=>{communityTab='lounge';townChatPage()});
+  b(social,tr('Town chat','小镇聊天室'),()=>{communityTab=communityURL()?'public':'lounge';townChatPage()});
   renderTownFortune(q);
   b(q,tr('Read the town paper','翻翻摸鱼日报'),()=>todayScoopBefore.call($('dockScoop')));
  })
