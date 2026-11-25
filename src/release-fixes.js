@@ -26,6 +26,16 @@ function releaseAssessmentBalance(mode,result){
 }
 const releaseWonderFinish= wonderSceneFinish;
 wonderSceneFinish=function(){
+ if(wonderSceneMode==='motive'){
+  const result=scoreWonder('motive',wonderQuestionOrder,wonderSceneAnswers),balance=releaseAssessmentBalance('motive',result);
+  if(balance.close.length>1){
+   wonderSaved.motive={index:null,ties:result.ties,scores:result.scores,version:3,mixed:true,close:balance.close.map(x=>x.index)};
+   save('wonderTestsV1',wonderSaved);addItem('Inner motives keepsake','内在动力纪念章');
+   const name=balance.flat?['No clear preference','没有明显偏好']:['Several close motives','多种相近动力'];
+   const desc=balance.flat?['All nine motives scored equally. No type assigned.','九种动力得分相同，不强行判定类型。']:[balance.close.slice(0,3).map(x=>wonderMotives[x.index][0]+' '+x.score+'/6').join(' · '),balance.close.slice(0,3).map(x=>wonderMotives[x.index][1]+' '+x.score+'/6').join(' · ')];
+   wonderSceneResult={name,desc,color:'#c1ab8c'};wonderScenePhase='result';wonderSceneAt=t;sound(660);return
+  }
+ }
  releaseWonderFinish();
  if(!wonderSceneResult)return;
  if(wonderSceneMode==='type'){
@@ -40,3 +50,40 @@ wonderSceneFinish=function(){
   wonderSceneResult.desc=[n[0]+' '+lead.score+'/6. Next: '+m[0]+' '+next.score+'/6. A reflection, not a diagnosis.',n[1]+' '+lead.score+'/6，次高：'+m[1]+' '+next.score+'/6。仅供自我探索。'];
  }
 };
+
+/* Batch 15A: assessment integrity, clear chart details and safer input. */
+const releaseScoreBefore=scoreWonder;
+scoreWonder=function(mode,rows,answers){
+ if(!['type','motive','soul'].includes(mode)||!Array.isArray(rows)||!Array.isArray(answers)||answers.some(v=>!Number.isInteger(v)))throw Error('Invalid assessment');
+ if(mode==='type'||mode==='motive'){const count=mode==='type'?4:9;if(rows.some(q=>!Number.isInteger(q.dimension)||q.dimension<0||q.dimension>=count))throw Error('Invalid dimension')}
+ else if(rows.some(q=>!Number.isInteger(q.id)||q.id<0||q.id>=soulQs.length))throw Error('Invalid soul question');
+ return releaseScoreBefore(mode,rows,answers)
+};
+const releaseChartDetailsBefore=renderChartConsultation;
+renderChartConsultation=function(out,z){
+ releaseChartDetailsBefore(out,z);
+ const section=out.querySelector('.chartConsultation');if(!section)return;
+ const panel=element('div','',section,'releaseChartDetails');
+ element('strong',tr('Understanding your chart','读懂你的命盘'),panel);
+ element('p',tr('Life palace: ','命宫：')+branches[z.life]+' · '+tr('Body palace: ','身宫：')+branches[z.body],panel);
+ const bureaus={2:['Water 2','水二局'],3:['Wood 3','木三局'],4:['Metal 4','金四局'],5:['Earth 5','土五局'],6:['Fire 6','火六局']};
+ element('p',tr('Five-element bureau: ','五行局：')+tr(...bureaus[z.bureau]),panel);
+ element('small',tr('Civil birth time; late Zi hour stays on the entered date. Leap months split after day 15. Main stars only, for cultural exploration.','采用民用出生时间，晚子时仍按输入日期，闰月以十五日分界。仅十四主星，供文化探索。'),panel);
+ section.prepend(panel);
+};
+/* All playable results retain the original short reflective description on share. */
+const releaseWonderShareBefore=wonderSceneShare;
+wonderSceneShare=function(){
+ if(!wonderSceneResult||wonderSceneMode!=='type')return releaseWonderShareBefore();
+ const data=releaseAssessmentBalance('type',wonderSaved.type);if(!data)return releaseWonderShareBefore();
+ const lines=data.map(v=>[v.axis[0]+' '+v.first+'/4 · '+v.axis[1]+' '+v.second+'/4',v.axis[0]+' '+v.first+'/4 · '+v.axis[1]+' '+v.second+'/4']);
+ openMeowShare({kind:'type',title:wonderSceneResult.name,lines,accent:wonderSceneResult.color})
+};
+/* Language-dependent chart topics: match complete English words instead
+   of accidental substrings (e.g. networking is not work). */
+chartFollowTopic=function(value){
+ const v=String(value).trim().toLowerCase();if(!v||v.length>160)return null;
+ const terms=[[8,/\b(career|jobs?|work|promotion|boss|office)\b|事业|工作|升职|老板/iu],[2,/\b(relationship|love|partner|marriage|dating)\b|爱情|感情|婚姻|对象/iu],[4,/\b(money|finance|salary|savings?|budget)\b|金钱|财运|薪水|存钱/iu],[6,/\b(travel|moving|move|relocat\w*)\b|旅行|搬家|迁移/iu],[7,/\b(friends?|friendship|support|networking)\b|朋友|人际|贵人/iu],[11,/\b(family|parents?)\b|家庭|父母|家人/iu],[10,/\b(rest|stress|sleep|wellbeing|relax)\b|休息|压力|睡眠|放松/iu],[0,/\b(character|personality|identity)\b|性格|自己|命宫/iu]];
+ return terms.find(([,re])=>re.test(v))?.[0]??null
+};
+const releaseChartStyle=document.createElement('style');releaseChartStyle.textContent='.releaseChartDetails{padding:12px;border:1px solid #b7a17c;border-radius:5px;background:#f6ead3;margin:0 0 14px;line-height:1.45}.releaseChartDetails p{margin:5px 0}.releaseChartDetails small{display:block;font-size:12px}';document.head.append(releaseChartStyle);
