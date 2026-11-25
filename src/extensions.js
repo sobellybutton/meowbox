@@ -1698,3 +1698,75 @@ function kitchenIngredientArt(x,y,i,veg,used=false){
  }
  ctx.restore();ctx.restore();
 }
+
+/* Claw cabinet: aim, lower, close, lift, travel to the chute and release. */
+const clawPlushes=[
+ ['Mochi plush','麻薯玩偶',296,0],
+ ['Latte plush','拿铁玩偶',400,1],
+ ['Midnight plush','乌龙玩偶',504,2]
+];
+const clawNextStart=start;
+start=function(id){
+ clawNextStart(id);
+ if(id==='claw'){state.hook=.5;state.clawPhase='aim';state.clawStreak=0;state.clawResult=null;hint('Slide the claw directly over a plush. Aim carefully!','把夹爪移到玩偶正上方，瞄准再下夹！')}
+};
+function clawAimX(){return 286+clamp(state.hook,0,1)*228}
+doClaw=function(){
+ if(activity!=='claw'||state.dropping)return;
+ const x=clawAimX(),dist=clawPlushes.map(v=>Math.abs(v[2]-x)),i=dist.indexOf(Math.min(...dist));
+ state.clawTarget=dist[i]<=21?i:-1;state.clawStartX=x;state.clawAt=t;state.clawPhase='lower';state.clawResult=null;state.dropping=true;state.count++;
+ refreshControls();sound(310);hint('Here goes…','下夹啦……');
+};
+function clawFinish(){
+ if(!state.dropping)return;
+ const i=state.clawTarget;state.dropping=false;state.clawPhase='aim';state.clawResult={i,at:t};state.hook=0;state.drop=0;
+ if(i>=0){state.clawStreak=0;let v=clawPlushes[i],owned=items.some(x=>x[0]===v[0]);addItem(v[0],v[1]);sound(660);
+  hint(...(owned?['A twin! Your plush has acquired a colleague.','又来一只！玩偶也有同事啦。']:['A new plush is waiting in the prize tray.','新玩偶已落入出货口，快来看看！']));
+ }else{state.clawStreak=(state.clawStreak||0)+1;const lines=[['Empty claws. They are practising minimalism.','夹了个寂寞。夹爪正在实践极简主义。'],['Even the plushies are avoiding responsibility. Try a little closer.','连玩偶都在逃避责任。再瞄准一点。'],['The claw has filed for annual leave. Please try again.','夹爪已申请年假。请再试一次。']];hint(...lines[Math.min(2,state.clawStreak-1)]);sound(210)}
+ refreshControls();
+}
+function clawCabinet(){
+ const age=state.dropping?Math.max(0,t-state.clawAt):0,hitIndex=state.clawTarget??-1;
+ let x=clawAimX(),y=369,open=1,carry=false,fall=0;
+ if(state.dropping){
+  x=state.clawStartX;
+  if(age<.75){state.clawPhase='lower';y+=113*poseEase(age/.75)}
+  else if(age<1.05){state.clawPhase='grip';y=482;open=1-poseEase((age-.75)/.30)}
+  else if(age<1.85){state.clawPhase='lift';y=482-113*poseEase((age-1.05)/.80);open=0;carry=hitIndex>=0}
+  else if(age<2.55){state.clawPhase='travel';x=state.clawStartX+(286-state.clawStartX)*poseEase((age-1.85)/.70);open=0;carry=hitIndex>=0}
+  else if(age<3.15){state.clawPhase='release';x=286;open=poseEase((age-2.55)/.18);fall=poseEase((age-2.55)/.6)}
+  else clawFinish();
+ }
+ ctx.save();paintLivingBackdrop(pics.arcade||pics.tea);shadeLivingBackdrop('#27352d72');
+ const body=ctx.createLinearGradient(240,340,560,610);body.addColorStop(0,'#c58f79');body.addColorStop(.55,'#ac736a');body.addColorStop(1,'#835b62');
+ round(232,302,336,313,13,body,'#563e42');round(246,315,308,40,6,'#e7c69a','#9f7b5c');
+ txt(tr('AFTER HOURS ARCADE','下班游戏厅'),400,335,17,'#614a3e');
+ round(248,358,304,181,5,'#92aaa8','#514e50');
+ ctx.save();ctx.beginPath();ctx.rect(250,360,300,176);ctx.clip();
+ let glass=ctx.createLinearGradient(250,365,550,530);glass.addColorStop(0,'#dce4cb');glass.addColorStop(.55,'#a3c1b8');glass.addColorStop(1,'#71958c');ctx.fillStyle=glass;ctx.fillRect(250,360,300,178);
+ ellipse(400,518,151,21,'#687d71');
+ for(let i=0;i<3;i++){
+  const v=clawPlushes[i];if(state.dropping&&hitIndex===i&&age>=1.05)continue;
+  ellipse(v[2],518,25,6,'#4d5f5760');cat(v[2],515,v[3],false,1.05);
+ }
+ line(266,361,534,361,'#667574',9);
+ line(x,363,x,y,'#504c4a',3);round(x-9,y-9,18,14,4,'#b8b3a0','#726b61');
+ const spread=5+open*19;
+ for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+side*spread,y+7,x+side*spread,y+18);ctx.lineTo(x+side*(spread-6),y+24);ctx.strokeStyle='#5d6461';ctx.lineWidth=5;ctx.lineCap='round';ctx.stroke()}
+ if(carry)cat(x,y+43,clawPlushes[hitIndex][3],false,1.05);
+ if(state.dropping&&hitIndex>=0&&state.clawPhase==='release'&&fall<1)cat(286,412+fall*128,clawPlushes[hitIndex][3],false,1.05);
+ ctx.globalAlpha=.19;line(265,366,310,475,'#fffbed',5);line(278,366,323,475,'#fffbed',2);ctx.restore();
+ round(250,544,300,57,5,'#d3b18a','#865f52');
+ round(264,552,77,40,5,'#584e47','#f1d4a2');
+ if(state.clawResult?.i>=0&&t-state.clawResult.at<6)cat(302,587,clawPlushes[state.clawResult.i][3],false,.65);
+ round(358,559,174,33,7,state.dropping?'#aa9983':'#b76856','#7a5146');
+ txt(state.dropping?tr('In motion…','抓取中……'):tr('LOWER CLAW','下夹'),445,575,15,'#fff0db');
+ if(!state.dropping){target(252,358,296,178,()=>{},'claw');target(354,550,184,49,doClaw)}
+ txt(state.clawResult?state.clawResult.i>=0?tr('Prize delivered!','玩偶到手啦！'):tr('Try a little closer','再瞄准一点'):tr('Slide to aim','左右滑动瞄准'),400,633,17,'#fff1d8');
+ ctx.restore();
+}
+const previousClawDraw=drawActivity;
+drawActivity=function(){
+ if(activity!=='claw')return previousClawDraw();
+ continuityActivity=activity;clawCabinet();
+};
