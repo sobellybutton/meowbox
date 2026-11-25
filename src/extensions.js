@@ -4975,7 +4975,7 @@ function lifeClean(raw){
 let lifeJournal=lifeClean(load('lifeJournalV1',null));
 function lifeSave(){save('lifeJournalV1',lifeJournal)}
 function lifeEarn(key,amounts,daily=false){
- if(daily){const today=shrineClock().day;if(lifeJournal.daily.day!==today)lifeJournal.daily={day:today,keys:[]};if(lifeJournal.daily.keys.includes(key)||lifeJournal.daily.keys.length>=40)return false;lifeJournal.daily.keys.push(key)}
+ if(daily){const today=shrineClock().day;if(lifeJournal.daily.day>today)return false;if(lifeJournal.daily.day!==today)lifeJournal.daily={day:today,keys:[]};if(lifeJournal.daily.keys.includes(key)||lifeJournal.daily.keys.length>=40)return false;lifeJournal.daily.keys.push(key)}
  else{if(Object.hasOwn(lifeJournal.seen,key))return false;lifeJournal.seen[key]=true}
  for(const [k,v] of Object.entries(amounts))if(Object.hasOwn(lifeAttributes,k))lifeJournal.points[k]=Math.min(100,(lifeJournal.points[k]||0)+v);
  lifeSave();return true
@@ -5764,7 +5764,7 @@ const dailyClawFinishBefore=clawFinish;
 clawFinish=function(){
  const active=activity==='claw'&&state.dropping;
  const result=dailyClawFinishBefore();
- if(active&&state.clawResult?.i>=0){lifeEarn('round:claw',{skill:2,happiness:1},true);lifeHUDRefresh()}
+ if(active&&state.clawResult){lifeEarn('round:claw',{skill:2,happiness:1},true);lifeHUDRefresh()}
  return result
 };
 const dailyMoreIdeasBefore=lifeDailyIdeas;
@@ -7358,7 +7358,7 @@ function townPawCategories(){return [
  {id:'play',amount:8,name:['Play a little','玩一小会儿'],description:['Finish an arcade round. Winning is optional.','完成一局游戏，输赢随意。']},
  {id:'food',amount:8,name:['Make something delicious','做点好吃的'],description:['Finish Grandma’s soup or a bubble tea.','煮好外婆的汤，或做完一杯奶茶。']},
  {id:'ritual',amount:6,name:['Find a quiet moment','找一点清静'],description:['Finish a temple ritual, wish or saved tarot reading.','完成庙里仪式、许愿或收藏塔罗解读。']},
- {id:'care',amount:6,name:['Care for a little friend','照顾小伙伴'],description:['Finish a care activity in the park.','在公园完成一次宠物照顾。']},
+ {id:'care',amount:6,name:['Care for a little friend','照顾小伙伴'],description:['Spend time with a cat or visit the deer meadow.','陪陪小猫，或者去看看小鹿。']},
  {id:'social',amount:6,name:['Say hello','跟居民打招呼'],description:['Have a conversation with a resident.','跟小镇居民聊聊天。']},
  {id:'release',amount:6,name:['Let something go','放下烦恼'],description:['Finish a river bottle release or shout.','完成一次漂流瓶或河边喊话。']}
 ]}
@@ -7901,12 +7901,12 @@ function deerVisitRecord(raw=load('deerMeadowV1',{})){
  return {day:valid?v.day:'',fed:valid&&v.fed===true,met:Array.isArray(v.met)?[...new Set(v.met.filter(id=>deerProfiles.some(p=>p.id===id)))]:[]}
 }
 function deerForDay(day){return deerProfiles[hash(day+'deer-meadow')%deerProfiles.length]}
-function deerVisitReward(){
+function deerVisitReward(fed=true){
  if(activity!=='deerVisit'||state.deerPhase==='done')return;
  const day=shrineClock().day,record=deerVisitRecord(),profile=state.deerProfile;
  if(record.day>day)return;
  const first=!record.met.includes(profile.id);
- save('deerMeadowV1',{day,fed:true,met:[...new Set([...record.met,profile.id])]});
+ save('deerMeadowV1',{day,fed:fed||(record.day===day&&record.fed),met:[...new Set([...record.met,profile.id])]});
  state.deerPhase='done';state.deerAt=t;
  if(first)addItem('Deer postcard: '+profile.name[0],'小鹿明信片：'+profile.name[1]);
  lifeEarn('care:deer-meadow',{calm:2,happiness:1},true);refreshControls();
@@ -7973,7 +7973,7 @@ drawActivity=function(){
  const phase=state.deerPhase,age=t-state.deerAt;
  if(phase==='bow'&&age>=2.7){state.deerPhase='ready';state.deerAt=t;refreshControls();hint(...(state.deerBows?['A little bow in return!','小鹿也鞠了个躬！']:['This deer would rather look at the grass. Fair enough.','小鹿更想看看草地，也挺好。']))}
  else if(phase==='feed'&&age>=2.5)deerVisitReward();
- else if(phase==='watch'&&age>=4){state.deerPhase=deerVisitRecord().day===shrineClock().day&&deerVisitRecord().fed?'done':'ready';state.deerAt=t;refreshControls()}
+ else if(phase==='watch'&&age>=4){deerVisitReward(false);if(!(deerVisitRecord().day===shrineClock().day&&deerVisitRecord().fed)){state.deerPhase='ready';refreshControls()}}
  const p=state.deerProfile,now=state.deerPhase,elapsed=t-state.deerAt;
  ctx.save();paintLivingBackdrop(pics.park||pics.home);
  // Low grassy ground, scattered leaves and a distant deer. No floating props.
@@ -8000,3 +8000,30 @@ roomIntro=function(){deerIntroBefore();if(room==='park')hint('Meet the cats, vis
 const deerActionBefore=action;
 action=function(id){if(room==='park'&&id==='deerVisit'){start(id);return}return deerActionBefore(id)};
 const deerStyle=document.createElement('style');deerStyle.textContent='#game #gameControls.deerMeadowControls:not([hidden]){width:min(94vw,430px);display:flex;flex-direction:column;gap:5px;background:#f1e4c9;border:3px double #b29a74;border-radius:4px;padding:8px;color:#564735}.deerMeadowCaption{font:600 15px/1.3 Georgia,"Songti SC",serif}.deerMeadowButtons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:4px}.deerMeadowButtons button{min-width:0!important;min-height:44px;white-space:normal!important;padding:5px!important;font-size:12px}.deerMeadowControls small{font-size:11px;line-height:1.4;text-align:center}';document.head.append(deerStyle);
+
+
+/* Wallet receipts: separate earned money from permanent progression.
+   Existing lifetime discovery accounting is preserved, while purchases do
+   not produce more spendable coins. */
+function pawWalletBreakdown(){
+ const draws=blindShopLedger(),paidKeys=new Set(draws.map(v=>v.key)),themes=hideoutPurchases();
+ return {
+ discoveries:items.filter(v=>!paidKeys.has(v[0])).length*10,
+ checkin:dailyWheelRecord().total,
+ activities:townPawRecord().total,
+ blind:draws.reduce((sum,v)=>sum+v.cost,0),
+ furniture:furniturePurchaseTotal(),
+ themes:hideoutThemes.filter(v=>themes.includes(v.id)).reduce((sum,v)=>sum+(v.cost||0),0)
+ }
+}
+const receiptWalletBefore=pawWalletPage;
+pawWalletPage=function(){
+ receiptWalletBefore();const q=$('content'),v=pawWalletBreakdown(),book=element('details','',q,'townPawLedger');
+ element('summary',tr('My coin receipts','爪币收支手账'),book);
+ for(const [key,en,cn] of [['discoveries','Discovery gifts','探索奖励'],['checkin','Daily check-ins','每日签到'],['activities','Daily activities','每日活动'],['blind','Blind boxes','盲盒'],['furniture','Furniture & renovations','家具与装修'],['themes','Room atmospheres','小窝氛围']]){
+ const row=element('div','',book,'pawReceiptRow');element('span',tr(en,cn),row);element('strong',(['blind','furniture','themes'].includes(key)?'−':'+')+v[key],row)
+ }
+ element('p',tr('Life points and travel stamps are not money. They record your adventures and unlock achievements.','人生积分与旅行印章不是货币，它们记录旅程并解锁成就。'),book);
+ journalLanguage(pawWalletPage)
+};
+const pawReceiptCSS=document.createElement('style');pawReceiptCSS.textContent='.pawReceiptRow{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed #c6af85;padding:8px 0;font-size:13px}.pawReceiptRow strong{font-variant-numeric:tabular-nums;color:#536b56}.townPawLedger summary{min-height:44px;padding:8px 0;cursor:pointer;font-family:var(--town-title);font-weight:600}';document.head.append(pawReceiptCSS);
