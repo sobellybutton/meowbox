@@ -1154,7 +1154,8 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
  if(stage==='done')fill=.35;
  const pouring=stage==='pearls'&&state.teaPearls===0&&age<1.1;
  const scooping=stage==='pearls'&&drag?.id==='teaPearlScoop';
- drawRitualPose(270,480,1.8,{kneel:.35,reach:stage==='sip'||drag?.id==='teaMix'?{x:cx-25,y:cy-35}:null});
+ const wrist=drawRitualPose(270,480,1.8,{kneel:.35,reach:stage==='sip'||drag?.id==='teaMix'?{x:cx-25,y:cy-35}:null});
+ if(stage==='sip'){const lift=Math.sin(Math.PI*clamp(age/2.4,0,1));cx+=(wrist.x+22-cx)*lift;cy+=(wrist.y+27-cy)*lift}
  teaCup(cx,cy,1.15,state.teaBase,state.teaPearls,fill,angle);
  if(pouring){
   const f=poseEase(age/.25),px=495-48*f,py=421-30*f;teaPitcher(px,py,state.teaBase,-.72*f);
@@ -2378,7 +2379,7 @@ function riverSceneBackdrop(){
  ctx.save();ctx.fillStyle=water;ctx.beginPath();ctx.moveTo(left,285);ctx.quadraticCurveTo(400,265,right,280);ctx.lineTo(right,riverBankY(right));
  for(let x=right;x>left;x-=12)ctx.lineTo(x,riverBankY(x));ctx.lineTo(left,riverBankY(left));ctx.closePath();ctx.fill();
  // Reflections: restrained, irregular lengths, never a grid.
- ctx.save();ctx.clip();for(let i=0;i<38;i++){let x=left+((i*83+t*(3+i%4))%Math.max(1,b.w)),y=290+(i*29)%116;ctx.globalAlpha=.09+.10*(.5+.5*Math.sin(t*.9+i));line(x,y,x+14+(i%6)*8,y,'#f0e4b7',1.4)}
+ ctx.save();ctx.clip();for(let i=0;i<38;i++){let x=left+((i*83+(residentReducedMotion.matches?0:t)*(3+i%4))%Math.max(1,b.w)),y=290+(i*29)%116;ctx.globalAlpha=.09+.10*(.5+.5*Math.sin((residentReducedMotion.matches?0:t)*.9+i));line(x,y,x+14+(i%6)*8,y,'#f0e4b7',1.4)}
  ctx.restore();
  const ground=ctx.createLinearGradient(0,400,0,800);ground.addColorStop(0,'#b7a27b');ground.addColorStop(.45,'#a18d69');ground.addColorStop(1,'#786a56');
  ctx.fillStyle=ground;ctx.beginPath();ctx.moveTo(left,riverBankY(left));for(let x=left;x<right;x+=12)ctx.lineTo(x,riverBankY(x));ctx.lineTo(right,riverBankY(right));ctx.lineTo(right,Math.max(b.y+b.h,800));ctx.lineTo(left,Math.max(b.y+b.h,800));ctx.closePath();ctx.fill();
@@ -2387,7 +2388,7 @@ function riverSceneBackdrop(){
  for(let i=0;i<36;i++){let x=left+(i*97)%Math.max(1,b.w),y=riverBankY(x)+9+(i%3)*6;ellipse(x,y,9+i%4*3,4,'#c4b08b88')}
  ctx.fillStyle='#9e7957';ctx.beginPath();ctx.moveTo(155,465);ctx.lineTo(630,465);ctx.lineTo(710,790);ctx.lineTo(90,790);ctx.closePath();ctx.fill();
  for(let i=0;i<11;i++){let y=475+i*29;line(155-(y-465)*.2,y,630+(y-465)*.25,y,'#6c563e88',1.4);line(155-(y-465)*.2,y+2,630+(y-465)*.25,y+2,'#d4b38c66',1)}
- for(const x of [145,655]){for(let i=0;i<8;i++){const xx=x+i*3-10,yy=riverBankY(xx)+8;line(xx,yy+15,xx+Math.sin(t*.9+i)*6,yy-25-i%3*8,'#607655',2.5)}}
+ for(const x of [145,655]){for(let i=0;i<8;i++){const xx=x+i*3-10,yy=riverBankY(xx)+8;line(xx,yy+15,xx+Math.sin((residentReducedMotion.matches?0:t)*.9+i)*6,yy-25-i%3*8,'#607655',2.5)}}
  ctx.restore()
 }
 function riverSoundWaves(x,y,age){if(age<0)return;ctx.save();ctx.strokeStyle='#f8e6b2aa';ctx.lineWidth=2;for(let i=0;i<3;i++){const r=10+((age*.85+i*.33)%1)*34;ctx.globalAlpha=Math.max(.1,1-r/48);ctx.beginPath();ctx.arc(x,y,r,-.75,.75);ctx.stroke()}ctx.restore()}
@@ -5439,3 +5440,39 @@ lifeDailyIdeas=function(){
  {title:['Something delicious','给自己加个餐'],desc:['Finish a bowl of soup or make and sip bubble tea.','煮好一碗汤，或者摇好奶茶再喝一口。'],done:keys.some(k=>k.startsWith('kitchen:'))},
  {title:['A tiny surprise','拆个小惊喜'],desc:['Open a blind box in the arcade. No purchase needed.','去游戏厅拆个盲盒，不用花钱。'],done:keys.includes('arcade:box')}]
 };
+
+
+/* Passport and bag material pass; retain the existing painted destinations,
+   accessible buttons and saved records. */
+const journalMaterialStyle=document.createElement('style');
+journalMaterialStyle.textContent=`
+#content .travelAlbum,#content .lifeBook{position:relative;border:1px solid #a28a65!important;border-left:5px solid #8c6b4b!important;border-radius:5px 12px 12px 5px!important;background:repeating-linear-gradient(0deg,#f5ead300 0px,#f5ead300 23px,#a68a5d0b 24px),linear-gradient(110deg,#e3cda8 0%,#f7ecd5 4%,#f9efd9 95%,#e7d3ae 100%)!important;box-shadow:3px 4px 0 #beaa87,inset 5px 0 11px #967a4d22!important;color:#4a4136!important}
+#content .travelAlbum .albumProfile,#content .lifeBook .lifeIntro{border-bottom:1px dashed #bca47b;padding-bottom:13px}
+#content .travelAlbum .albumGrid{gap:12px;align-items:stretch}
+#content .travelAlbum .albumCard{background:#f8efd9!important;border:1px solid #c6af88!important;border-radius:3px!important;box-shadow:1px 2px 3px #71533120!important;padding:10px;min-width:0}
+#content .travelAlbum .albumCard>img{height:clamp(100px,29vw,175px);width:100%;object-fit:cover;object-position:center 45%;border:3px solid #fff7e4;box-shadow:0 1px 3px #6c593d4d}
+#content .travelAlbum .albumCard.locked>img{filter:grayscale(.72) sepia(.2);opacity:.7}
+#content .travelAlbum .albumStamp{display:inline-block;border:1px solid #8f7351;border-radius:3px;color:#765740;padding:4px 6px;letter-spacing:.04em}
+#content .travelAlbum .albumCard button{min-height:44px}
+#content .travelAlbum .albumTabs{flex-wrap:wrap}
+#content .travelAlbum .albumTabs button[aria-pressed=true]{background:#667b62!important;color:#fff6e6!important}
+#content .lifeFriend{gap:8px;flex-wrap:wrap}
+#content .lifeFriend .residentJournalFace{width:40px;height:40px;object-fit:contain;flex:none}
+#content .lifeFriend .residentJournalName{flex:1;min-width:90px}
+@media(max-width:380px){#content .travelAlbum .albumGrid{gap:7px}#content .travelAlbum .albumCard{padding:7px}#content .travelAlbum .albumStamp{font-size:11px}}
+`;document.head.append(journalMaterialStyle);
+const journalFacesBefore=lifeProfile;
+lifeProfile=function(){
+ journalFacesBefore();const book=$('content').querySelector('.lifeBook');if(!book)return;
+ const rows=Array.from(book.querySelectorAll('.lifeFriend')).filter(row=>row.firstElementChild?.tagName==='STRONG');
+ for(const row of rows){
+  const name=row.firstElementChild.textContent,index=paintedResidentIndex(name);if(index<0)continue;
+  const face=element('img','',row,'residentJournalFace');face.alt='';face.hidden=true;row.firstElementChild.classList.add('residentJournalName');row.prepend(face);
+  const apply=()=>{if(!face.isConnected)return;const src=paintedDialoguePortrait(name);if(src){face.src=src;face.hidden=false}};
+  apply();const image=productionVisualCache.get('paintedResidents');if(image&&!image.complete)image.addEventListener('load',apply,{once:true});
+ }
+};
+nostalgiaRoasts.miss.push(['The board asked for three matching bubbles, not three years of experience.','泡泡要的是三个同色，又不是三年工作经验。'],['Ah Ma: Aim first. Even a resignation letter needs the right address.','阿嬷：先瞄准。辞职信也得寄对人啊。']);
+nostalgiaRoasts.win.push(['Your inbox would like to know your secret. Do not tell it.','邮箱想知道你的秘诀。千万别告诉它。']);
+activityComedy.tea.push(['Grandma: That is a proper drink. Now stop reviewing it and enjoy it.','外婆：奶茶做好了，别写测评了，快喝。']);
+activityComedy.soup.push(['Grandma: A full stomach is a perfectly valid evening plan.','外婆：吃饱了就是今晚最好的安排。']);
