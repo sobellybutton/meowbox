@@ -4857,3 +4857,91 @@ function nostalgiaAimGuide(g){
 
 c.addEventListener('lostpointercapture',e=>{if(nostalgiaPointer===e.pointerId)nostalgiaPointer=null});
 window.addEventListener('blur',()=>{nostalgiaPointer=null});
+
+
+/* Material and interaction art pass. Draw separate, depth-aware props rather
+   than flattening a whole activity into a photograph. All touch anchors stay. */
+function paintedTarotBack(x,y,w,h){
+ ctx.save();ctx.translate(x,y);ctx.scale(w/100,h/150);
+ const paper=ctx.createLinearGradient(0,0,100,150);paper.addColorStop(0,'#f6e5bc');paper.addColorStop(1,'#ae8c60');
+ round(0,0,100,150,5,paper,'#80664f');
+ const ink=ctx.createRadialGradient(48,65,5,50,75,85);ink.addColorStop(0,'#647578');ink.addColorStop(.65,'#3f535c');ink.addColorStop(1,'#2f374a');
+ round(4,4,92,142,3,ink,'#bda575');round(8,8,84,134,3,null,'#c7ac78');
+ ctx.strokeStyle='#d6bd86';ctx.lineWidth=.85;
+ for(let k=0;k<4;k++){ctx.save();ctx.translate(k%2?88:12,k<2?12:138);ctx.rotate(k*Math.PI/2);ctx.beginPath();ctx.moveTo(0,20);ctx.bezierCurveTo(18,17,3,1,21,0);ctx.stroke();ctx.restore()}
+ ctx.beginPath();ctx.ellipse(50,75,29,44,0,0,TAU);ctx.stroke();ctx.beginPath();ctx.ellipse(50,75,24,38,0,0,TAU);ctx.stroke();
+ for(let i=0;i<12;i++){const a=i*TAU/12;line(50+Math.cos(a)*31,75+Math.sin(a)*46,50+Math.cos(a)*34,75+Math.sin(a)*50,'#bca373',.9)}
+ ctx.beginPath();ctx.arc(49,75,15,0,TAU);ctx.fillStyle='#e1c994';ctx.fill();ctx.beginPath();ctx.arc(55,70,13,0,TAU);ctx.fillStyle='#52636b';ctx.fill();
+ for(const [a,b] of [[22,34],[78,34],[24,112],[76,116],[50,23],[50,128],[18,75],[82,75]]){line(a-3,b,a+3,b,'#d9bf87',.8);line(a,b-3,a,b+3,'#d9bf87',.8)}
+ for(let i=0;i<35;i++)ellipse(12+(i*41)%76,12+(i*37)%126,.42,.42,'#e5d3a34c');
+ ctx.restore()
+}
+const materialCardBefore=card;
+card=function(x,y,w,h,front,name=''){
+ if(!front&&w>=28&&h>=38)return paintedTarotBack(x,y,w,h);
+ return materialCardBefore(x,y,w,h,front,name)
+};
+const materialTableBefore=table;
+table=function(){
+ if(!['tarot','love'].includes(activity))return materialTableBefore();
+ const b=livingBounds();ctx.save();
+ const wood=ctx.createLinearGradient(0,330,0,690);wood.addColorStop(0,'#9c7957');wood.addColorStop(.32,'#78553f');wood.addColorStop(1,'#503b35');
+ ctx.beginPath();ctx.moveTo(198,340);ctx.quadraticCurveTo(400,325,602,340);ctx.lineTo(685,706);ctx.lineTo(115,706);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle='#d0ad78';ctx.lineWidth=2;ctx.stroke();
+ ctx.save();ctx.clip();for(let i=0;i<18;i++){const yy=344+i*21;ctx.beginPath();ctx.moveTo(110,yy);ctx.bezierCurveTo(290,yy-8,502,yy+9,690,yy-2);ctx.strokeStyle=i%4?'#c6a07022':'#e0be8538';ctx.lineWidth=i%4?1:2;ctx.stroke()}ctx.restore();
+ const cloth=ctx.createLinearGradient(0,355,0,675);cloth.addColorStop(0,'#5e6866');cloth.addColorStop(.5,'#3f5155');cloth.addColorStop(1,'#364347');
+ ctx.beginPath();ctx.moveTo(232,352);ctx.quadraticCurveTo(400,341,568,352);ctx.lineTo(635,684);ctx.lineTo(165,684);ctx.closePath();ctx.fillStyle=cloth;ctx.fill();ctx.strokeStyle='#c0a77a';ctx.stroke();
+ ctx.save();ctx.clip();for(let i=0;i<130;i++){const yy=350+i*2.6;line(158,yy,642,yy,'#f3e3c109',.6)}
+ ctx.strokeStyle='#c3a97555';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(400,491,126,116,0,0,TAU);ctx.stroke();ctx.beginPath();ctx.ellipse(400,491,113,103,0,0,TAU);ctx.stroke();ctx.restore();
+ ctx.restore()
+};
+const materialTeaCupBefore=teaCup;
+teaCup=function(x,y,sc=1,base=0,pearls=0,fill=1,angle=0){
+ // Same dimensions and cup contact points as the existing gameplay.
+ ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(angle);
+ ellipse(0,5,35,8,'#30271f44');
+ ctx.beginPath();ctx.moveTo(-35,-74);ctx.lineTo(35,-74);ctx.quadraticCurveTo(31,-38,26,-2);ctx.quadraticCurveTo(0,8,-26,-2);ctx.closePath();
+ const glass=ctx.createLinearGradient(-36,0,36,0);glass.addColorStop(0,'#d5ddcbb0');glass.addColorStop(.25,'#f4f0d890');glass.addColorStop(.76,'#e8e4ca60');glass.addColorStop(1,'#a7b8aaac');ctx.fillStyle=glass;ctx.fill();
+ ctx.save();ctx.clip();
+ const level=-69*clamp(fill,0,1),col=teaChoices[Math.max(0,base)]?.[2]||'#c0a17b';
+ if(fill>0){const milk=ctx.createLinearGradient(0,-74,0,8);milk.addColorStop(0,col);milk.addColorStop(1,'#ae8267');ctx.fillStyle=milk;ctx.fillRect(-37,level,74,80);ellipse(0,level,33,5,col)}
+ for(let i=0;i<Math.min(16,pearls);i++){const xx=-21+(i*17)%43,yy=-4-Math.floor(i/5)*7+Math.sin(t*6+i)*Math.min(3,Math.abs(angle)*12);ellipse(xx,yy,4.6,4.6,'#46322d');ellipse(xx-1.3,yy-1.7,1.3,1,'#ac856b')}
+ for(let i=0;i<9;i++){const dx=-24+(i*17)%46,dy=-62+(i*19)%57;ellipse(dx,dy,1.4,2.5,'#fff4d95e')}
+ ctx.restore();ctx.strokeStyle='#c9bfa3';ctx.lineWidth=1.5;ctx.stroke();
+ ellipse(0,-74,36,6,'#e4d6b5');ellipse(0,-73,29,3,'#b5a388');
+ line(9,-76,16,-110,'#9c6558',5);line(10,-76,17,-110,'#e4b49b',1.2);
+ line(-25,-63,-19,-13,'#fff5e2a0',2.8);line(25,-57,19,-16,'#f8f4dc60',1.2);
+ ctx.restore()
+};
+const materialBoxBefore=boxArt;
+boxArt=function(x,y,sc=1,i=0,open=0,tilt=0){
+ ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(tilt);
+ const colors=[['#c38d7c','#915d55'],['#88a49b','#58766f'],['#a397b6','#746583']],p=colors[((i%3)+3)%3];
+ ellipse(0,9,49,10,'#33282150');
+ const face=ctx.createLinearGradient(-45,-70,30,5);face.addColorStop(0,p[0]);face.addColorStop(1,p[1]);
+ ctx.beginPath();ctx.moveTo(-44,-70);ctx.lineTo(28,-70);ctx.lineTo(28,2);ctx.lineTo(-29,9);ctx.lineTo(-44,-5);ctx.closePath();ctx.fillStyle=face;ctx.fill();ctx.strokeStyle='#66534a';ctx.stroke();
+ ctx.beginPath();ctx.moveTo(28,-70);ctx.lineTo(44,-56);ctx.lineTo(44,-3);ctx.lineTo(28,2);ctx.closePath();ctx.fillStyle=p[1];ctx.fill();ctx.stroke();
+ // Printed paper label and original cat silhouette, not a generic question mark.
+ round(-33,-55,51,48,4,'#ead4ab','#b69b75');ctx.fillStyle='#806758';
+ ctx.beginPath();ctx.moveTo(-23,-37);ctx.lineTo(-21,-48);ctx.lineTo(-12,-40);ctx.quadraticCurveTo(-7,-43,-1,-40);ctx.lineTo(8,-48);ctx.lineTo(10,-36);ctx.quadraticCurveTo(14,-21,-6,-19);ctx.quadraticCurveTo(-24,-21,-23,-37);ctx.closePath();ctx.fill();
+ ellipse(-12,-32,1.7,2,'#f4e6cb');ellipse(1,-32,1.7,2,'#f4e6cb');
+ for(let j=0;j<3;j++)line(-27,-13+j*3,11-j*3,-13+j*3,'#f5e1b9a0',.8);
+ const lift=open*37;ctx.save();ctx.translate(0,-lift);ctx.beginPath();ctx.moveTo(-46,-73);ctx.lineTo(30,-73);ctx.lineTo(46,-59);ctx.lineTo(-31,-59);ctx.closePath();ctx.fillStyle='#e4cca3';ctx.fill();ctx.strokeStyle='#826a4c';ctx.stroke();line(-31,-59,46,-59,'#f8e9c6',2);ctx.restore();ctx.restore()
+};
+/* Use the existing original grandmother artwork in all eligible river scenes,
+   anchored at the same foot pivot. Preserve the old vector fallback. */
+const materialAuntieBefore=riverAuntie;
+riverAuntie=function(x,y,sc=1){
+ if(drawProductionAhMa(x,y,sc))return;
+ return materialAuntieBefore(x,y,sc)
+};
+/* More tactile sound at completed, accepted actions only. */
+const materialPaperBefore=templePaperTap;
+templePaperTap=function(){const ok=activity==='templePaper'&&state.paperStage==='folded';materialPaperBefore();if(ok&&state.paperStage==='opening')physicalFx('paper')};
+const materialShuffleBefore=readingShuffle;
+readingShuffle=function(){const ok=['tarot','love'].includes(activity)&&state.readStage==='deck';materialShuffleBefore();if(ok&&state.readStage==='shuffle')physicalFx('paper',.7)};
+const materialTeaPearlsBefore=teaAddPearls;
+teaAddPearls=function(){const ok=activity==='bubbleTea'&&state.teaStage==='pearls';materialTeaPearlsBefore();if(ok)physicalFx('scoop',.7)};
+const materialBoxShakeBefore=boxShake;
+boxShake=function(amount){const ok=activity==='blindBox'&&state.boxStage==='shake';materialBoxShakeBefore(amount);if(ok&&amount>10)physicalFx('shake',.5)};
+const materialThreePlaceBefore=threePlace;
+threePlace=function(g,index,who){materialThreePlaceBefore(g,index,who);physicalFx('step',.8)};
