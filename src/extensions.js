@@ -520,13 +520,15 @@ const motiveStatements=[
 let wonderQuestionOrder=[];
 function prepareWonderQuestions(mode){
  const rows=mode==='type'?wonderTypes.flatMap((axis,k)=>[axis[1],axis[2],...preferenceExtras[k]].map((v,j)=>({prompt:v[0],opts:v.slice(1).map((o,n)=>[o[0],o[1],n]),dimension:k,id:k*4+j}))):mode==='motive'?motiveStatements.flatMap((group,k)=>group.map((prompt,j)=>({prompt,opts:[['Not much like me','不太像我',0],['Sometimes','有时像我',1],['Very much like me','很像我',2]],dimension:k,id:k*3+j}))):soulQs.map((v,i)=>({prompt:v[0],opts:v[1].map((o,j)=>[o[0],o[1],j]),id:i}));
- // Shuffle questions, not scoring. Random order avoids obvious repeated patterns.
+ // Shuffle question order and nonordinal choices, retaining the original scoring values.
+ if(mode!=='motive')for(const row of rows)for(let i=row.opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[row.opts[i],row.opts[j]]=[row.opts[j],row.opts[i]]}
  for(let i=rows.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[rows[i],rows[j]]=[rows[j],rows[i]]}
  return rows
 }
 function wonderSceneData(){const q=wonderQuestionOrder[wonderSceneAnswers.length];return q&&{...q,total:wonderQuestionOrder.length}}
 function scoreWonder(mode,rows,answers){
  if(rows.length!==answers.length||!rows.length)throw Error('Incomplete discovery');
+ if(rows.some((q,i)=>!Array.isArray(q.opts)||!q.opts.some(o=>o[2]===answers[i])))throw Error('Invalid discovery answer');
  if(mode==='type'){const scores=[0,0,0,0];rows.forEach((q,i)=>scores[q.dimension]+=answers[i]===0?1:-1);return {scores,code:scores.map((v,i)=>v===0?'X':wonderTypes[i][0][v>0?0:1]).join(''),ties:scores.map((v,i)=>v===0?i:-1).filter(i=>i>=0)}}
  if(mode==='motive'){const scores=Array(9).fill(0);rows.forEach((q,i)=>scores[q.dimension]+=answers[i]);const max=Math.max(...scores);return {scores,ties:scores.map((v,i)=>v===max?i:-1).filter(i=>i>=0)}}
  const scores=Array(8).fill(0),opportunity=Array(8).fill(0);
@@ -931,7 +933,7 @@ const deeperFish=doFish;doFish=function(){let before=state?.fish;deeperFish();if
 activityTitle.prayer=['A moment at the altar','静心祈愿'];
 roomActions.temple=[['sticks','Draw a fortune','求签'],['prayer','Offer a quiet prayer','静心祈愿'],['moon','Ask with moon blocks','掷筊']];
 const templePrayerStart=start;start=function(id){templePrayerStart(id);if(id==='prayer'){state.prayerStage='approach';state.prayerAt=t;state.incense=false;state.bows=0;hint('Walk up to the altar. Take a moment for yourself.','走到香案前，给自己一点安静的时间。')}};
-function templeIncense(x,y,lit){ctx.save();ellipse(x,y+15,39,9,'#35292366');let g=ctx.createLinearGradient(x-32,y,x+32,y);g.addColorStop(0,'#72533d');g.addColorStop(.45,'#b99a60');g.addColorStop(1,'#72533d');ctx.beginPath();ctx.moveTo(x-34,y-8);ctx.quadraticCurveTo(x-34,y+25,x,y+25);ctx.quadraticCurveTo(x+34,y+25,x+34,y-8);ctx.fillStyle=g;ctx.fill();ellipse(x,y-8,34,9,'#b8a27c');ellipse(x,y-7,27,5,'#7d6b50');for(let i=-1;i<=1;i++){line(x+i*8,y-9,x+i*12,y-65+(i%2)*6,'#8d493b',2.8);if(lit){ellipse(x+i*12,y-65+(i%2)*6,2.5,2.5,'#f7aa60');for(let j=0;j<4;j++){let f=(t*.45+j*.25+i*.13+1)%1;ctx.globalAlpha=(1-f)*.24;ellipse(x+i*12+Math.sin(t*1.4+j+i)*f*19,y-68-f*74,3+f*11,4+f*14,'#f3e7cc')}ctx.globalAlpha=1}}ctx.restore()}
+function templeIncense(x,y,lit){ctx.save();ellipse(x,y+15,39,9,'#35292366');let g=ctx.createLinearGradient(x-32,y,x+32,y);g.addColorStop(0,'#72533d');g.addColorStop(.45,'#b99a60');g.addColorStop(1,'#72533d');ctx.beginPath();ctx.moveTo(x-34,y-8);ctx.quadraticCurveTo(x-34,y+25,x,y+25);ctx.quadraticCurveTo(x+34,y+25,x+34,y-8);ctx.fillStyle=g;ctx.fill();ellipse(x,y-8,34,9,'#b8a27c');ellipse(x,y-7,27,5,'#7d6b50');for(let i=-1;i<=1;i++){line(x+i*8,y-9,x+i*12,y-65+(i%2)*6,'#8d493b',2.8);if(lit){ellipse(x+i*12,y-65+(i%2)*6,2.5,2.5,'#f7aa60');for(let j=0;j<4;j++){let clock=residentReducedMotion.matches?0:t,f=(clock*.45+j*.25+i*.13+1)%1;ctx.globalAlpha=(1-f)*.24;ellipse(x+i*12+Math.sin(clock*1.4+j+i)*f*19,y-68-f*74,3+f*11,4+f*14,'#f3e7cc')}ctx.globalAlpha=1}}ctx.restore()}
 function templePrayerFigure(x,y,bow,praying,walking,kneel=0,reach=null){if(walking){backHuman(x,y,avatar??0,true,'right',2.45);return}drawRitualPose(x,y,2.45,{bow,kneel,praying,reach})}
 const prayerProp=prop;prop=function(id,x,y){if(id==='prayer'){templeIncense(x,y-32,true);return}return prayerProp(id,x,y)};
 function beginQuietBow(){if(activity!=='prayer'||!['ready','complete'].includes(state.prayerStage))return;if(!state.incense||t-(state.incenseAt??0)<1.05){return;}state.prayerStage='bow';state.prayerAt=t;state.bows=0;hint('Bow gently. Breathe slowly.','轻轻行礼，慢慢呼吸。')}
@@ -942,11 +944,11 @@ const prayerDraw=drawActivity;drawActivity=function(){if(activity!=='prayer')ret
  ctx.save();ctx.beginPath();ctx.moveTo(281,545);ctx.lineTo(387,545);ctx.lineTo(400,572);ctx.lineTo(268,572);ctx.closePath();ctx.fillStyle='#b7a07b';ctx.fill();ctx.strokeStyle='#88765b';ctx.lineWidth=1;ctx.stroke();for(let j=0;j<7;j++)line(278-j*1.5,549+j*3,390+j*1.5,549+j*3,'#ddc7a06a',.8);ctx.restore();
  let elapsed=t-state.prayerAt,stage=state.prayerStage,walk=stage==='approach',bow=0,x=walk?245+Math.min(1,elapsed/1.2)*90:335;if(walk&&elapsed>=1.2){state.prayerStage='ready';state.prayerAt=t;hint('Offer incense, then make your wish.','先上香，再静心祈愿。')}
  if(stage==='kneel'&&elapsed>.65){state.prayerStage='bow';state.prayerAt=t}if(stage==='bow'){if(elapsed<3.9){let phase=(elapsed/1.3)%1;bow=Math.sin(Math.PI*phase)**1.6;state.bows=Math.min(3,Math.floor(elapsed/1.3));}else{state.bows=3;state.prayerStage='silent';state.prayerAt=t;hint('Keep your wish to yourself. Take a few quiet breaths.','心愿留在心里，安静地呼吸几次。')}}
- if(stage==='silent'&&elapsed>4){state.prayerStage='rise';state.prayerAt=t}if(stage==='rise'&&elapsed>.72){state.prayerStage='complete';state.prayerAt=t;hint('Take your time. Draw a fortune whenever you are ready.','不用着急，准备好了再去求签。')}
+ if(stage==='silent'&&elapsed>4){state.prayerStage='rise';state.prayerAt=t}if(stage==='rise'&&elapsed>.72){state.prayerStage='complete';state.prayerAt=t;lifeEarn('ritual:prayer',{calm:2},true);lifeHUDRefresh();hint('Take your time. Draw a fortune whenever you are ready.','不用着急，准备好了再去求签。')}
  // Use a complete illustrated standing sprite for a modest bow until dedicated
  // knee/hand pose art is ready. Never shear the legs into a false kneel.
  let lightAge=t-(state.incenseAt??-100),reaching=stage==='ready'&&lightAge<1.05,f=reaching?Math.sin(Math.PI*clamp(lightAge/1.05,0,1)):0;
- if(walk){backHuman(x,553,avatar??0,true,'right',1.65)}else{ctx.save();ctx.translate(x+12*f,553);ctx.rotate(bow*.12+f*.065);backHuman(0,0,avatar??0,false,'right',1.65);ctx.restore()}
+ if(walk){backHuman(x,553,avatar??0,true,'right',1.65)}else{ctx.save();ctx.translate(x,553);ctx.rotate(bow*.075+f*.045);backHuman(0,0,avatar??0,false,'right',1.65);ctx.restore()}
  
  if(stage==='ready'){if(!state.incense){target(465,355,95,140,lightTempleIncense)}else if(t-(state.incenseAt??0)>1.05){target(260,330,150,250,beginQuietBow)}}else if(stage==='bow'){txt(tr('Bow ','鞠躬 ')+Math.min(3,state.bows+1)+' / 3',400,622,18,'#fff2d5')}else if(stage==='silent'){txt(tr('A quiet moment','片刻静心'),400,622,20,'#fff2d5')}else if(stage==='complete'){label(tr('Draw a fortune','求签'),300,620,()=>start('sticks'));label(tr('Ask with moon blocks','掷筊'),505,620,()=>start('moon'))}
  ctx.restore()};
@@ -1247,9 +1249,10 @@ function readingShuffle(){if(state.readStage!=='deck')return;state.readStage='sh
 function readingDeal(){if(state.readStage!=='deck'||!state.readShuffle)return;state.readStage='deal';state.readAt=t;let count=activity==='love'?3:1,pool=tarotDeck.map((_,i)=>i);if(activity==='tarot'){let d=dailyCard();state.readCards=[{i:Math.max(0,tarotDeck.indexOf(d)),rev:tarotReversed('daily')}]}
 else{state.readCards=Array.from({length:count},()=>{let j=Math.floor(Math.random()*pool.length);return {i:pool.splice(j,1)[0],rev:Math.random()<.5}})}state.readFlip=Array(count).fill(-1);state.readCards.forEach(v=>readingArtwork(v.i));sound(460)}
 function readingReveal(i){if(state.readStage!=='cards'||!state.readCards[i]||state.readFlip[i]>=0)return;state.readFlip[i]=t;sound(490+i*90);hint('The card has a thought for you.','这张牌，有句话想对你说。')}
-function readingSave(){if(state.readSaved||!state.readCards.length||!state.readFlip.every(v=>v>=0&&t-v>.6))return;state.readSaved=true;let entry={date:shrineClock().day,topic:state.readTopic,cards:state.readCards.map(v=>({...v}))};let key=JSON.stringify(entry);if(!readingJournal.some(v=>JSON.stringify(v)===key)){readingJournal.unshift(entry);readingJournal=readingJournal.slice(0,40);save('readingJournalV1',readingJournal)}if(activity==='tarot'){let d=tarotDeck[state.readCards[0].i];addItem('Daily Tarot: '+d[0],'今日塔罗：'+d[1])}else addItem('Three-card reading','三张牌占卜');hint('Your reading is tucked into your passport.','这份牌意已经收进旅人护照。')}
+function readingSave(){if(!['tarot','love'].includes(activity)||state.readSaved||!Array.isArray(state.readCards)||!state.readCards.length||!Array.isArray(state.readFlip)||state.readCards.length!==state.readFlip.length||!state.readCards.every(v=>Number.isInteger(v.i)&&tarotDeck[v.i])||!state.readFlip.every(v=>Number.isFinite(v)&&v>=0&&t-v>.6))return;state.readSaved=true;let entry={date:shrineClock().day,topic:state.readTopic,cards:state.readCards.map(v=>({...v}))};let key=JSON.stringify(entry);if(!readingJournal.some(v=>JSON.stringify(v)===key)){readingJournal.unshift(entry);readingJournal=readingJournal.slice(0,40);save('readingJournalV1',readingJournal)}if(activity==='tarot'){let d=tarotDeck[state.readCards[0].i];addItem('Daily Tarot: '+d[0],'今日塔罗：'+d[1])}else addItem('Three-card reading','三张牌占卜');hint('Your reading is tucked into your passport.','这份牌意已经收进旅人护照。')}
 function readingShow(i){
- let v=state.readCards[i];if(!v||state.readFlip[i]<0||t-state.readFlip[i]<.72)return;
+ if(!['tarot','love'].includes(activity)||state.readStage!=='cards')return;
+ let v=state.readCards[i];if(!v||!Number.isFinite(state.readFlip[i])||state.readFlip[i]<0||t-state.readFlip[i]<.72)return;
  state.readFocus=i;state.readStage='focus';state.readAt=t;
  hint('Study the card, then read its meaning or return to the spread.','慢慢看看牌面，再读牌意，或回到牌阵。');
 }
@@ -1661,8 +1664,8 @@ function paintReadingArtwork(x,y,w,h,i,rev){
 }
 function readingPositionCaption(name,x,y,w){
  ctx.save();try{ctx.font='13px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f8e9cc';
- const words=name.split(' ');if(ctx.measureText(name).width<=w||words.length<2){ctx.fillText(name,x,y,w);return}
- const k=Math.ceil(words.length/2);ctx.fillText(words.slice(0,k).join(' '),x,y-5,w);ctx.fillText(words.slice(k).join(' '),x,y+9,w)
+ const rows=shareTextLines(ctx,name,w);if(rows.length<=1){ctx.fillText(name,x,y,w);return}
+ ctx.fillText(rows[0],x,y-6,w);ctx.fillText(rows.slice(1).join(' '),x,y+8,w)
  }finally{ctx.restore()}
 }
 function shakeFortuneStick(){
@@ -2678,11 +2681,13 @@ const chartConsultTopics=[
  {k:2,name:['Relationships','夫妻宫与关系'],question:['What matters to me in a relationship?','在亲密关系中，我真正重视什么？'],practice:['Consider one need you can express clearly instead of hoping someone will guess it.','想一想有什么需要可以直接表达，而不是期待对方猜中。']},
  {k:4,name:['Money habits','财帛宫与金钱习惯'],question:['How do I think about money?','我可以怎样看待自己的金钱习惯？'],practice:['Review a real budget or savings goal. A chart cannot predict investment returns.','看看真实预算或储蓄目标。命盘不能预测投资收益。']},
  {k:6,name:['Travel & change','迁移宫与变化'],question:['What helps me adjust to a new place?','什么能帮助我适应新的环境？'],practice:['Choose one practical step that makes an upcoming change feel manageable.','找一个实际可行的小步骤，让接下来的变化更容易面对。']},
- {k:10,name:['Rest & wellbeing','福德宫与休息'],question:['What helps me genuinely unwind?','怎样才能真正放松下来？'],practice:['Try a small break that does not depend on achieving something.','试试不以完成任务为目标的一小段休息。']}
+ {k:10,name:['Rest & wellbeing','福德宫与休息'],question:['What helps me genuinely unwind?','怎样才能真正放松下来？'],practice:['Try a small break that does not depend on achieving something.','试试不以完成任务为目标的一小段休息。']},
+ {k:9,name:['Friends & support','交友宫与支持'],question:['What kind of company helps me thrive?','什么样的朋友能让我更自在？'],practice:['Think about who you can ask for help and how you can return their kindness.','想想可以向谁求助，也想想怎样回馈他们的善意。']},
+ {k:11,name:['Family & boundaries','父母宫与家庭'],question:['How can I care for family while keeping my own space?','怎样关心家人，同时保留自己的空间？'],practice:['Choose one small boundary you can communicate kindly and clearly.','选一个小小的界限，试着温和而清楚地表达。']}
 ];
 function chartConsultData(z,topic){
  const index=mod(z.life-topic.k,12),stars=z.stars[index]||[];
- return {index,stars:stars.map(st=>tr(...st)),themes:stars.map(st=>chartStarThemes[st[1]]).filter(Boolean).map(v=>tr(...v))}
+ return {index,stars:stars.map(st=>tr(...st)),themes:stars.map(st=>chartStarThemes[st[1]]).filter(Boolean).map(v=>tr(...v)),opposite:(z.stars[mod(index+6,12)]||[]).map(st=>tr(...st))}
 }
 function renderChartConsultation(out,z){
  const section=element('section','',out,'chartConsultation');
@@ -2695,6 +2700,7 @@ function renderChartConsultation(out,z){
   element('h3',tr(...topic.question),answer);
   element('p',tr('Your palace: ','你的宫位：')+tr(...topic.name)+' · '+branches[data.index],answer);
   element('p',data.stars.length?tr('Main stars: ','主星：')+data.stars.join(' · '):tr('No main star in this palace. A fuller reading would consider the opposite palace and other factors. No missing-star judgement is made here.','此宫无主星。完整解读还需参考对宫和其他因素，这里不据此判断吉凶。'),answer);
+  if(!data.stars.length&&data.opposite.length)element('p',tr('Opposite palace main stars (context only): ','对宫主星（仅供参考）：')+data.opposite.join(' · '),answer);
   if(data.themes.length)element('p',tr('Symbolic themes for reflection: ','可供反思的象征主题：')+data.themes.join(' / '),answer);
   element('p',tr(...topic.practice),answer,'chartPractice');
   for(const button of topics.querySelectorAll('button'))button.setAttribute('aria-pressed',String(button.dataset.topic===String(topic.k)));
