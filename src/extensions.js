@@ -997,35 +997,47 @@ const originalTempleStory=keepsakeStory;keepsakeStory=function(item){if(/^Fortun
 
 /* Shared character pose renderer: preserve the selected identity and articulate joints. */
 function poseEase(v){v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)}
+/* Use the actual illustrated side-view character for every pose.
+   No replacement rectangle, backpack block, generic trousers or pasted head.
+   The current sprite is gently deformed until dedicated action frames are available. */
+function ritualSpritePose(opts={},reach=null){
+ const kneel=clamp(opts.kneel||0,0,1),sit=clamp(opts.seat||0,0,1),bow=clamp(opts.bow||0,0,1);
+ const hip={x:-7*kneel-9*sit,y:-26+15*kneel+2*sit};
+ const knee={x:hip.x+3+15*kneel+18*sit,y:-12+9*kneel};
+ const foot={x:2-11*kneel+13*sit,y:0};
+ const angle=bow*.65+(reach?clamp((reach.x-15)/115,-.09,.20):0)+(opts.praying?.045:0);
+ const shift=reach?clamp((reach.x-12)*.12,-2,5):0;
+ const pivot={x:hip.x+shift,y:hip.y};
+ // Estimated contact point on the illustrated sleeve, not a new artificial limb.
+ const local={x:15,y:-15};
+ const wrist={x:pivot.x+local.x*Math.cos(angle)-local.y*Math.sin(angle),y:pivot.y+local.x*Math.sin(angle)+local.y*Math.cos(angle)};
+ return {hip:pivot,knee,foot,angle,wrist}
+}
 function drawRitualPose(x,y,sc,opts={}){
- const k=((avatar??0)%4+4)%4,shirt=['#ead1a5','#e7e8e3','#425c77','#82986d'][k],pants=['#514b45','#4b5260','#465563','#777464'][k],skin='#efc8a7';
- const kn=clamp(opts.kneel||0,0,1),angle=clamp(opts.bow||0,0,1)*.70,breath=actorReduce?0:Math.sin(t*2.2)*.40;
- const hip={x:-10*kn,y:-24+13*kn},knee={x:3+17*kn,y:-11+9*kn},ankle={x:2-16*kn,y:-2};
- const trp=(a,b)=>({x:hip.x+a*Math.cos(angle)-b*Math.sin(angle),y:hip.y+a*Math.sin(angle)+b*Math.cos(angle)+breath});
- const shoulder=trp(2,-22);
- let hand=opts.reach?{x:(opts.reach.x-x)/sc,y:(opts.reach.y-y)/sc}:opts.praying?trp(20,-29):trp(11,-4);
- // Keep the wrist within the natural reach of the upper and lower arm.
- let dx=hand.x-shoulder.x,dy=hand.y-shoulder.y,d=Math.hypot(dx,dy);
- if(d>28){hand={x:shoulder.x+dx/d*28,y:shoulder.y+dy/d*28};dx=hand.x-shoulder.x;dy=hand.y-shoulder.y;d=28}
- const bend=Math.sqrt(Math.max(0,15*15-(d*.5)**2)),elbow={x:(shoulder.x+hand.x)*.5-dy/Math.max(1,d)*bend,y:(shoulder.y+hand.y)*.5+dx/Math.max(1,d)*bend};
+ const k=((avatar??0)%4+4)%4,im=pics['walker'+k+'2'];
+ const reach=opts.reach?{x:(opts.reach.x-x)/sc,y:(opts.reach.y-y)/sc}:null;
+ const pose=ritualSpritePose(opts,reach),{hip,knee,foot,angle,wrist}=pose;
  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
- ellipse(3,2,19+kn*6,5,'#342d2855');
- for(const side of [-1,1]){
-  line(hip.x+side*3,hip.y,knee.x+side*3,knee.y,pants,8);
-  line(knee.x+side*3,knee.y,ankle.x+side*3,ankle.y,pants,7);
-  line(ankle.x+side*3-3,ankle.y,ankle.x+side*3+5,0,'#494038',5);
+ ellipse((hip.x+foot.x)*.5,2,17,4,'#342d2838');
+ if(!im?.naturalWidth||!im.naturalHeight){
+  // Loading fallback: the existing whole character, never a synthetic action body.
+  backHuman(0,0,k,false,'right',1);ctx.restore();return{x:x+wrist.x*sc,y:y+wrist.y*sc}
  }
- ctx.save();ctx.translate(hip.x,hip.y+breath);ctx.rotate(angle);ctx.translate(0,22);
- round(-11,-48,23,31,6,shirt,'#59473c');round(-17,-44,12,22,4,'#a5815a','#59473c');
- ctx.save();ctx.beginPath();ctx.rect(-31,-108,68,59);ctx.clip();backHuman(0,0,k,false,'right',1);ctx.restore();ctx.restore();
- ctx.lineCap='round';ctx.lineJoin='round';
- line(shoulder.x-3,shoulder.y,elbow.x-2,elbow.y,shirt,7);
- line(elbow.x-2,elbow.y,hand.x-2,hand.y,shirt,6);
- line(shoulder.x,shoulder.y,elbow.x+2,elbow.y,shirt,8);
- line(elbow.x+2,elbow.y,hand.x,hand.y,shirt,7);
- ctx.save();ctx.translate(hand.x,hand.y);ctx.rotate(opts.praying?-.24:Math.atan2(hand.y-elbow.y,hand.x-elbow.x)+Math.PI*.5);
- ellipse(0,0,3.4,5.2,skin);if(opts.praying)line(-.5,-4,-.5,3,'#bd8e77',.7);ctx.restore();ctx.restore();
- return {x:x+hand.x*sc,y:y+hand.y*sc};
+ const h=94,w=h*im.naturalWidth/im.naturalHeight,sourceHip=68,sourceKnee=82;
+ // Stretch/shear only the original illustrated lower-body pixels between joint anchors.
+ function segment(sy0,sy1,top,bottom){
+  const sh=sy1-sy0,dy=Math.max(2,bottom.y-top.y);
+  ctx.save();ctx.translate(top.x,top.y);ctx.transform(1,0,(bottom.x-top.x)/dy,1,0,0);
+  ctx.drawImage(im,0,sy0/h*im.naturalHeight,im.naturalWidth,sh/h*im.naturalHeight,-w/2,0,w,dy+.35);
+  ctx.restore()
+ }
+ segment(sourceKnee,h,knee,foot);
+ segment(sourceHip,sourceKnee+.45,hip,knee);
+ // Head, hair, clothes, bag and sleeves stay together as one original illustration.
+ ctx.save();ctx.translate(hip.x,hip.y);ctx.rotate(angle);
+ ctx.drawImage(im,0,0,im.naturalWidth,(sourceHip+.35)/h*im.naturalHeight,-w/2,-sourceHip,w,sourceHip+.35);
+ ctx.restore();ctx.restore();
+ return{x:x+wrist.x*sc,y:y+wrist.y*sc}
 }
 function lightTempleIncense(){if(activity!=='prayer'||state.incense||state.prayerStage!=='ready')return;state.incense=true;state.incenseAt=t;sound(350);hint('The incense is lit. Make a wish when you are ready.','香已点燃，准备好就静心祈愿。')}
 
@@ -1122,7 +1134,7 @@ let age=t-state.gardenAt,walk=age<1.2,seatAge=t-state.gardenSeatAt,seat=state.ga
 ellipse(438,501,148,78,'#636d57');ellipse(438,492,141,75,'#436f6b');ellipse(438,492,133,67,'#668c81');ctx.save();ctx.beginPath();ctx.ellipse(438,492,133,67,0,0,TAU);ctx.clip();for(let i=0;i<5;i++){let f=(t*.25+i*.2)%1;ctx.beginPath();ctx.ellipse(445,491,25+f*114,9+f*49,0,0,TAU);ctx.strokeStyle='rgba(220,239,216,'+(.2*(1-f))+')';ctx.stroke()}
 let feedAge=t-state.gardenFeedAt;for(let i=0;i<5;i++){let theta=t*(.23+i*.035)+i*1.26,xx=438+Math.cos(theta)*(82+i*7),yy=492+Math.sin(theta)*44,dx=-Math.sin(theta)*90,dy=Math.cos(theta)*44;if(feedAge<5){let attraction=poseEase(feedAge/1.1)*Math.min(1,(5-feedAge)/1.4)*.75;xx+=(state.gardenFeedX-xx)*attraction;yy+=(state.gardenFeedY-yy)*attraction;dx=state.gardenFeedX-xx;dy=state.gardenFeedY-yy}gardenKoi(xx,yy,Math.atan2(dy,dx),i)}if(feedAge<1.5){for(let i=0;i<6;i++){let f=Math.min(1,feedAge*2);ellipse(state.gardenFeedX-15+i*6,state.gardenFeedY-(1-f)*60+Math.sin(i)*6,2.5,2.5,'#ddc294')}ctx.beginPath();ctx.ellipse(state.gardenFeedX,state.gardenFeedY,8+feedAge*20,4+feedAge*10,0,0,TAU);ctx.strokeStyle='rgba(245,238,208,'+(1-feedAge/1.5)*.75+')';ctx.stroke()}ctx.restore();
 for(let i=0;i<7;i++){let xx=325+i*36,yy=540+Math.sin(i)*17;ellipse(xx,yy,22,9,'#8c9180');ellipse(xx-3,yy-3,17,5,'#aab09b')}line(580,310,580,405,'#78583e',9);line(580,310,527,310,'#78583e',8);gardenWindChime(527,371);target(499,320,62,105,gardenChime);txt(tr('Wind chime','风铃'),527,420,14,'#fff1d2');
-round(206,540,100,15,3,'#9f7953','#674e38');line(215,555,215,582,'#694d37',6);line(298,555,298,582,'#694d37',6);if(walk){backHuman(200+poseEase(age/1.2)*55,555,avatar??0,true,'right',1.5)}else drawRitualPose(253,seat>0?555+seat*6:555,1.5,{kneel:seat*.75,reach:feedAge<.45?{x:315,y:460}:null});target(205,505,102,77,gardenSeat);
+round(206,540,100,15,3,'#9f7953','#674e38');line(215,555,215,582,'#694d37',6);line(298,555,298,582,'#694d37',6);if(walk){backHuman(200+poseEase(age/1.2)*55,586,avatar??0,true,'right',1.5)}else{const footY=586-seat*9;drawRitualPose(253-seat*4,footY,1.5,{seat,reach:feedAge<.45?{x:315,y:460}:null})}target(205,505,102,77,gardenSeat);
 label(tr(state.gardenSitting?'Stand up':'Sit awhile',state.gardenSitting?'起身':'坐一会儿'),253,610,gardenSeat);label(tr('Feed the koi','喂锦鲤'),450,610,()=>gardenFeed());target(321,435,240,105,()=>gardenFeed());label(tr('Temple','回寺庙'),400,659,()=>{activity=null;state={};updateHUD();roomIntro()});
 ctx.restore()};
 const gardenKeepsakeStory=keepsakeStory;keepsakeStory=function(item){if(item[0]==='Quiet garden postcard')return ['A little garden where even the koi have time for lunch.','一个连锦鲤都能慢慢吃午饭的小后院。'];return gardenKeepsakeStory(item)};
