@@ -4551,7 +4551,9 @@ drawActivity=function(){
  if(!threeActive())return threeDrawBefore();continuityActivity=activity;const g=state.threeGame;threeAdvance(g);
  ctx.save();paintLivingBackdrop(pics.arcade||pics.tea);shadeLivingBackdrop('#392d2866');
  // The table is an object within the room, not a generic dialogue or game modal.
- ellipse(400,641,180,20,'#2f29275e');
+ ellipse(400,670,177,16,'#2f29275e');
+ // Tapered legs and an apron anchor the table rather than floating above the floor.
+ ctx.fillStyle='#694e3b';ctx.beginPath();ctx.moveTo(241,606);ctx.lineTo(268,606);ctx.lineTo(260,664);ctx.lineTo(248,664);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(532,606);ctx.lineTo(559,606);ctx.lineTo(552,664);ctx.lineTo(540,664);ctx.closePath();ctx.fill();
  threeWood(224,373,352,267,'#6d4b37');
  round(235,396,330,218,8,'#68786a','#4a5b50');
  for(let j=0;j<30;j++){const y=399+j*7;line(239,y,561,y,'#f9e6b30b',1)}
@@ -4584,3 +4586,47 @@ wallThreads.push(...[[["IT survivor","IT幸存者"],["Imagine Microsoft goes dow
 Object.assign(townChatReplies,{"tech":[[["IT survivor","IT幸存者"],["If the office software ever goes down, let us hope the meeting calendar goes with it.","办公软件要是哪天崩了，希望会议系统也别独自坚强。"]],[["Office Intern","实习生"],["Have you tried turning your workload off and not turning it back on?","试过把工作关掉，再也不打开吗？"]],[["Grammar Police","语文课代表"],["The only update I am waiting for is my salary.","我唯一期待的系统更新是工资更新。"]]],"grammar":[[["Grammar Police","语文课代表"],["I can forgive a typo. I am still negotiating with unnecessary exclamation marks.","错别字可以原谅，满屏感叹号还在考虑中。"]],[["Office Intern","实习生"],["Please proofread the deadline before correcting my commas.","纠正我的标点之前，麻烦先核对一下截止日期。"]],[["Grammar Police","语文课代表"],["An apostrophe is small. My opinion about it is not.","标点符号虽小，我的意见可不小。"]]]});
 const officeLanguageTopicBefore=townChatTopic;
 townChatTopic=function(value){const v=String(value).toLowerCase();if(/\b(grammar|spelling|typo|apostrophe|comma|proofread|punctuation)\b|错别字|语法|标点|校对|错字/.test(v))return 'grammar';if(/\b(microsoft|outlook|teams|excel|powerpoint|outage|autocorrect|password|wifi|wi-fi)\b|微软|系统崩|断网|宕机|输入法|密码|软件故障/.test(v))return 'tech';return officeLanguageTopicBefore(value)};
+
+
+/* Interior visual pass: separate architectural artwork from interactive furniture.
+   A stable portrait composition for mobile; retain peripheral artwork on wide screens. */
+Object.assign(productionVisualManifest,{
+ arcade:{path:'assets/visual/arcade-interior-v2.svg',width:800,height:1400},
+ tea:{path:'assets/visual/tea-interior-v2.svg',width:800,height:1400}
+});
+function warmRoomArt(id){
+ const im=productionVisual(id);if(!im)return false;
+ const bounds=livingBounds();
+ ctx.save();
+ // A softly extended peripheral field, never a zoomed-in portrait as the main room.
+ if(W>=H){
+  const g=ctx.createLinearGradient(bounds.x,bounds.y,bounds.x,bounds.y+bounds.h);
+  g.addColorStop(0,'#454b43');g.addColorStop(.52,'#91765b');g.addColorStop(1,'#5c493e');
+  ctx.fillStyle=g;ctx.fillRect(bounds.x,bounds.y,bounds.w,bounds.h);
+ }
+ const k=Math.min(bounds.w/im.naturalWidth,bounds.h/im.naturalHeight),w=im.naturalWidth*k,h=im.naturalHeight*k;
+ ctx.drawImage(im,bounds.x+(bounds.w-w)/2,bounds.y+(bounds.h-h)/2,w,h);
+ ctx.restore();return true
+}
+const warmRoomBackdropBefore=paintLivingBackdrop;
+paintLivingBackdrop=function(im){
+ const id=activePortraitInterior();
+ if((id==='arcade'||id==='tea')&&warmRoomArt(id))return;
+ return warmRoomBackdropBefore(im)
+};
+const warmRoomPortraitBefore=paintPortraitInterior;
+paintPortraitInterior=function(id){
+ if((id==='arcade'||id==='tea')&&warmRoomArt(id))return;
+ return warmRoomPortraitBefore(id)
+};
+const warmRoomDrawBefore=drawRoom;
+drawRoom=function(){if(W>=H&&(room==='arcade'||room==='tea'))warmRoomArt(room);return warmRoomDrawBefore()};
+const warmStationPropBefore=prop;
+prop=function(id,x,y){
+ if(room==='arcade'||room==='tea'){
+  ctx.save();
+  const g=ctx.createRadialGradient(x,y+4,4,x,y+4,65);g.addColorStop(0,'#392d2860');g.addColorStop(1,'#392d2800');
+  ctx.scale(1,.30);ellipse(x,(y+4)/.30,65,65,g);ctx.restore()
+ }
+ return warmStationPropBefore(id,x,y)
+};
