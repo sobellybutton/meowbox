@@ -13,6 +13,22 @@ for(let i=0;i<original.length;i++){
 }
 const scripts=['engine','extensions','startup'].map(x=>read('src/'+x+'.js')),shell=read('src/shell.html');
 require('./quality-checks.cjs')(scripts[1]);
+const painted=JSON.parse(read('assets/visual/painted/runtime.json')),crypto=require('node:crypto');
+if(painted.version!==1||!painted.residents||Array.isArray(painted.residents)||typeof painted.residents!=='object')throw Error('Invalid painted runtime manifest');
+const allowedPainted=new Set(['temple-keeper','master-yue','fortune-teller','auntie-mei','wang-laoban','grandma']);
+let paintedCount=0;
+for(const [key,entry] of Object.entries(painted.residents)){
+ if(!allowedPainted.has(key))throw Error('Unexpected painted resident: '+key);
+ for(const kind of ['standing','warm']){
+  const v=entry[kind],expected='assets/visual/painted/'+key+'/'+(kind==='standing'?'standing.webp':'expressions/warm.webp');
+  if(v?.path!==expected||!Number.isInteger(v.width)||!Number.isInteger(v.height)||v.width<1||v.height<1||v.width>2048||v.height>2048)throw Error('Invalid painted record '+expected);
+  const raw=fs.readFileSync(path.join(root,expected));
+  if(raw.subarray(0,4).toString()!=='RIFF'||raw.subarray(8,12).toString()!=='WEBP'||crypto.createHash('sha256').update(raw).digest('hex')!==v.sha256)throw Error('Painted artwork failed checksum: '+expected);
+  paintedCount++;
+ }
+}
+console.log('PASS: '+paintedCount+' optional full-size painted artworks checked (empty manifest retains existing atlas).');
+
 // Validate the canonical registry before rendering or assigning later portrait anchors.
 const mapDeclaration=scripts[0].match(/const maps=(\{[^\n]+\});/);
 if(!mapDeclaration)throw Error('Canonical map registry not found');
