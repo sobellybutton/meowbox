@@ -749,7 +749,7 @@ const streetDrawBefore=drawActivity;drawActivity=function(){streetDrawBefore();i
 let atmosphereLast=-Infinity,atmosphere={hour:12,weather:'clear',season:11};
 function refreshAtmosphere(){if(t-atmosphereLast<30)return;atmosphereLast=t;let parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Singapore',hour:'2-digit',hourCycle:'h23',month:'numeric',day:'numeric'}).formatToParts(new Date());let get=k=>Number(parts.find(v=>v.type===k)?.value||0);let hour=get('hour'),month=get('month'),date=get('day');let roll=hash(day()+'sky'+Math.floor(hour/3))%10;atmosphere={hour,season:month,weather:roll<2?'rain':roll<4?'mist':'clear'};}
 const atmosphereReduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-function villageAtmosphere(){refreshAtmosphere();let h=atmosphere.hour,w=1000,height=isRoute()?routeHeight:600,night=h>=19||h<6,dusk=h>=17&&h<19,dawn=h>=6&&h<8;ctx.save();if(night||dusk||dawn){let light=ctx.createLinearGradient(0,0,0,height);light.addColorStop(0,night?'#2238554d':dusk?'#b36b452f':'#e8ac5626');light.addColorStop(1,night?'#20394b29':'#d5ad6c10');ctx.fillStyle=light;ctx.fillRect(0,0,w,height)}
+function villageAtmosphere(){refreshAtmosphere();let h=atmosphere.hour,w=1000,height=mapWorldHeight(),night=h>=19||h<6,dusk=h>=17&&h<19,dawn=h>=6&&h<8;ctx.save();if(night||dusk||dawn){let light=ctx.createLinearGradient(0,0,0,height);light.addColorStop(0,night?'#2238554d':dusk?'#b36b452f':'#e8ac5626');light.addColorStop(1,night?'#20394b29':'#d5ad6c10');ctx.fillStyle=light;ctx.fillRect(0,0,w,height)}
  if(atmosphere.weather==='mist'){let fog=ctx.createLinearGradient(0,0,0,height);fog.addColorStop(0,'#e9e5d938');fog.addColorStop(.55,'#e0e6d710');fog.addColorStop(1,'#eff0e61a');ctx.fillStyle=fog;ctx.fillRect(0,0,w,height)}
  if(!atmosphereReduced){let drift=atmosphere.weather==='rain';if(drift){ctx.strokeStyle='#e1ebea66';ctx.lineWidth=1.2;for(let i=0;i<78;i++){let x=((i*113-t*35)%w+w)%w,y=((i*97+t*310)%height+height)%height;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-8,y+23);ctx.stroke()}for(let i=0;i<8;i++){let f=(t*.8+i*.17)%1,x=310+(i*71)%370,y=height-45-(i*83)%(height*.55);ctx.strokeStyle='rgba(225,240,230,'+(.35*(1-f))+')';ctx.beginPath();ctx.ellipse(x,y,3+f*18,1+f*5,0,0,TAU);ctx.stroke()}}else if(night){for(let i=0;i<27;i++){let x=60+(i*131)%880+Math.sin(t*.5+i)*12,y=140+(i*83)%(height-160)+Math.sin(t*.8+i)*9;ctx.globalAlpha=.35+.28*Math.sin(t*1.6+i);ellipse(x,y,2.2,2.2,'#f6e8a5')}}else{for(let i=0;i<13;i++){let x=((i*97+t*14)%w+w)%w,y=80+(i*73)%(height-90)+Math.sin(t*.7+i)*13;ctx.globalAlpha=.45;petal(x,y,3+i%3,i)}}}
  ctx.restore()
@@ -1756,6 +1756,7 @@ drawMap=function(){
  }
  for(const [id,x,y] of maps[scene].st){target(x-85,y-110,170,150,()=>walkDoor(id,x,y))}
  if(ambientBus&&!muted&&p.walk&&t-ambientLastFoot>.34){ambientLastFoot=t;ambientTone(85+Math.random()*24,.016,.09,'triangle')}
+ villageAtmosphere();
  }finally{ctx.restore()}
 };
 let signsForScene=null;
@@ -5592,7 +5593,8 @@ fetch('assets/visual/painted/runtime.json',{cache:'no-cache'}).then(r=>r.ok?r.js
 const communityFlowStyle=document.createElement('style');communityFlowStyle.textContent='.communityPlace{display:grid;gap:6px;margin:12px 0}.communityPlace select{font:inherit;min-height:44px;max-width:100%;padding:8px;border:1px solid #b8a27d;background:#fff5df;color:#524234;border-radius:6px}.communityReplyBar:not([hidden]){display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:8px;border-left:3px solid #879778;background:#efe3c9}.communityReplyBar button,.townChatLine button{min-height:44px}.communityOwn{margin:12px 0}';document.head.append(communityFlowStyle);
 
 /* Optional shared outdoor town. Real session snapshots only, never synthetic users. */
-const sharedTown={enabled:false,ready:false,inFlight:false,published:false,generation:0,lastSuccess:0,place:'',area:'',actors:new Map(),gesture:'none',gestureUntil:0,blocked:new Set(),serverBlocked:new Set((load('sharedTownBlocksV1',[])||[]).filter(x=>typeof x==='string'&&/^[a-f0-9]{24}$/.test(x)).slice(0,100)),error:false};
+const sharedTownSavedBlocks=load('sharedTownBlocksV1',[]);
+const sharedTown={enabled:false,ready:false,inFlight:false,published:false,generation:0,lastSuccess:0,place:'',area:'',actors:new Map(),gesture:'none',gestureUntil:0,blocked:new Set(),serverBlocked:new Set((Array.isArray(sharedTownSavedBlocks)?sharedTownSavedBlocks:[]).filter(x=>typeof x==='string'&&/^[a-f0-9]{24}$/.test(x)).slice(0,100)),error:false};
 const sharedGestureNames={wave:['Hello!','你好呀！'],cheer:['You got this!','给你打气！'],tea:['Tea break?','摸鱼喝茶？']};
 function sharedTownArea(){if(!room)return '';const allowed=scene==='home'?['tea','park']:scene==='island'?['kitchen','arcade']:[];return allowed.includes(room)&&continuityRoom===room?room:null}
 function sharedTownVisible(){return sharedTown.enabled&&!document.hidden&&proposal.hidden&&$('arrival').hidden&&sharedTownArea()!==null&&!activity&&!transitioning&&avatar!==null&&!!maps[scene]}
@@ -5695,3 +5697,67 @@ function drawSharedRoomActor(a,scale){
  const g=sharedGestureNames[a.gesture],label=sharedTownLabel(a.id)+(g?' · '+tr(...g):'');
  ctx.save();const fs=12/Math.max(.6,cam.scale);ctx.font=fs+'px system-ui';const width=ctx.measureText(label).width+10;round(a.x-width/2,a.y-100*scale-22,width,22,5,'#f5ecd5ee','#89785f');txt(label,a.x,a.y-100*scale-11,fs,'#425b4c');ctx.restore()
 }
+
+/* Optional town occasions: fictional events, not real attendance or a daily obligation. */
+function townOccasion(date,lunar){
+ const md=date.slice(5);
+ if(lunar&&!lunar.leap&&String(lunar.m)==='1'&&lunar.d>=1&&lunar.d<=3)return {title:['New year in the valley','小镇过新年'],line:['Temple keeper: May your leave be approved and your group chats be quiet.','庙祝：祝你请假秒批，群聊静音。'],place:'fortune',host:['Temple keeper','庙祝']};
+ if(lunar&&!lunar.leap&&String(lunar.m)==='8'&&lunar.d===15)return {title:['Moonlit gathering','中秋赏月'],line:['Auntie Mei: The moon is round. My annual leave balance is not.','梅姨：月亮圆了，年假余额还是扁的。'],place:'home',host:['Auntie Mei','梅姨']};
+ if(md>='12-24'&&md<='12-26')return {title:['Winter lights','冬日灯会'],line:['Grandma: Santa can bring presents. I brought soup.','外婆：圣诞老人送礼物，我负责端热汤。'],place:'island',host:['Grandma','外婆']};
+ if(md.slice(3)==='25')return {title:['Imaginary payday celebration','幻想发薪日'],line:['Wang Laoban: My wallet is feeling optimistic for approximately three minutes.','王老板：钱包的幸福感，预计维持三分钟。'],place:'home',host:['Wang Laoban','王老板']};
+ if(lunar&&(lunar.d===1||lunar.d===15))return {title:['A quiet lunar day','农历静心日'],line:['Grandma has a vegetarian option today. Stay for a little while.','外婆今天备了素食，有空就来坐坐。'],place:'island',host:['Grandma','外婆']};
+ const hour=shrineClock().hour;
+ const choices=hour<11?{title:['Slow morning','慢悠悠的早晨'],line:['Temple keeper: The day can begin without a meeting.','庙祝：早晨不一定要从开会开始。'],place:'fortune',host:['Temple keeper','庙祝']}:
+ hour<15?{title:['Lunch break gossip','午休吃瓜时间'],line:['Auntie Mei: Today’s pressing issue is what to eat.','梅姨：今日重点工作是研究吃什么。'],place:'home',host:['Auntie Mei','梅姨']}:
+ hour<19?{title:['Afternoon tea','下午茶摸鱼局'],line:['Grandma: The tea is ready. Deadlines can wait five minutes.','外婆：茶泡好了，截止日期再等五分钟。'],place:'island',host:['Grandma','外婆']}:
+ {title:['Evening wander','夜游小镇'],line:['Temple keeper: Leave tomorrow’s problems to tomorrow’s version of you.','庙祝：明天的烦恼，交给明天的你。'],place:'fortune',host:['Temple keeper','庙祝']};
+ return choices
+}
+const occasionTodayBefore=todayHub;
+todayHub=function(){
+ occasionTodayBefore();const q=$('content'),v=townOccasion(shrineClock().day,lunarInfo()),section=element('section','',q,'townOccasion');
+ element('small',tr('Town calendar · optional','小镇日历 · 随缘参加'),section);
+ element('h2',tr(...v.title),section);element('p',tr(...v.line),section);
+ b(section,tr('Visit '+maps[v.place].n[0],'去'+maps[v.place].n[1]),()=>journey(v.place));
+ const social=q.querySelector('.communityWelcome');if(social)social.after(section);
+};
+$('dockScoop').onclick=todayHub;
+const occasionTalkBefore=npcTalk;
+npcTalk=function(n){
+ const result=occasionTalkBefore(n);if(!talkOpen||!n?.n||n.kind===2)return result;
+ const v=townOccasion(shrineClock().day,lunarInfo()),choices=$('choices');
+ if(choices&&choices.children.length<4)b(choices,tr('Anything happening today?','今天有什么热闹？'),()=>say(tr(...n.n),tr(...v.line),[[tr('Visit the area','去看看'),()=>journey(v.place)],[tr('Keep wandering','继续逛'),closeTalk]]));
+ return result
+};
+/* Chart follow-ups use a local, explicit topic matcher and never send or save typed text. */
+function chartFollowTopic(text){
+ const s=String(text).toLowerCase();
+ const groups=[
+ [8,/career|job|work|promotion|boss|事业|工作|升职|老板/iu],
+ [2,/relationship|love|partner|marriage|爱情|感情|婚姻|对象/iu],
+ [4,/money|finance|salary|save|budget|金钱|财运|薪水|存钱/iu],
+ [6,/travel|move|relocat|旅行|搬家|迁移/iu],
+ [9,/friend|support|朋友|人际|贵人/iu],
+ [11,/family|parent|家庭|父母|家人/iu],
+ [10,/rest|stress|sleep|wellbeing|休息|压力|睡眠|放松/iu],
+ [0,/character|personality|identity|性格|自己|命宫/iu]];
+ return groups.find(([,pattern])=>pattern.test(s))?.[0]??null
+}
+const chartFollowBefore=renderChartConsultation;
+renderChartConsultation=function(out,z){
+ chartFollowBefore(out,z);const section=out.querySelector('.chartConsultation');if(!section)return;
+ const form=element('form','',section,'chartFollowForm'),label=element('label',tr('Ask a follow-up question','继续问月师傅'),form);
+ const field=element('input','',label);field.maxLength=160;field.required=true;field.placeholder=tr('What is on your mind?','你还想了解什么？');
+ const send=element('button',tr('Explore','继续了解'),form);send.type='submit';
+ const reply=element('p','',section,'chartPractice');reply.setAttribute('role','status');
+ element('small',tr('Local topic matching only, not AI. Do not enter private details. Your question is cleared after use.','仅在本机匹配主题，并非AI。请勿输入个人资料，提问后会清空。'),section);
+ form.onsubmit=e=>{e.preventDefault();const k=chartFollowTopic(field.value);field.value='';if(k===null){reply.textContent=tr('Choose a chart topic above. This local guide cannot answer every question.','可以先选择上方命盘主题，本地解读无法回答所有问题。');return}
+  const button=section.querySelector('[data-topic="'+k+'"]');if(button)button.click();reply.textContent=tr('I have opened the closest chart topic for reflection.','已为你打开最接近的命盘主题，供你思考。')};
+};
+let indoorStepAt=-100;
+const footstepsRoomBefore=drawRoom;
+drawRoom=function(){
+ footstepsRoomBefore();
+ if(indoorReady()&&Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>5&&t-indoorStepAt>.36&&!muted&&!document.hidden){indoorStepAt=t;physicalFx('step',.45)}
+};
+const occasionStyle=document.createElement('style');occasionStyle.textContent='.townOccasion{border-block:1px solid #b3a07c;margin:14px 0;padding:12px;color:#594b37}.townOccasion h2{font-family:Georgia,serif;margin:6px 0}.townOccasion button{min-height:44px}.chartFollowForm{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px;margin-top:14px}.chartFollowForm label{flex:1 1 210px;min-width:0;display:grid;gap:6px}.chartFollowForm input{min-width:0;width:100%;box-sizing:border-box;min-height:44px;font-size:16px}.chartFollowForm button{min-height:44px}';document.head.append(occasionStyle);
