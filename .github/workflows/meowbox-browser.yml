@@ -51,6 +51,13 @@ jobs:
                 await page.locator('#proposal .shrine-enter').click({timeout:20000});
                 await page.locator('#proposal').waitFor({state:'hidden',timeout:30000});
                 await page.waitForTimeout(3500);
+                // Verify effective runtime registry, after all extensions and overrides.
+                const registry=await page.evaluate(()=>Object.entries(maps).flatMap(([world,m])=>m.st.map(([id])=>({world,id}))));
+                if(new Set(registry.map(v=>v.id)).size!==registry.length)throw Error('Duplicate runtime station ID');
+                for(const [id,world] of [['temple','fortune'],['fish','home'],['quiz','wonder'],['station','fortune']]){
+                  if(registry.filter(v=>v.id===id&&v.world===world).length!==1)throw Error('Wrong station ownership: '+id);
+                }
+                if(!await page.evaluate(()=>roomActions.quiz.length===1&&roomActions.quiz[0][0]==='quiz'))throw Error('Personality Lab has duplicate entry points');
                 for(const map of ['fortune','home','island','wonder']){
                   // Use the normal travel engine; reposition near each door only as test setup.
                   await page.evaluate(k=>journey(k),map);
@@ -183,6 +190,17 @@ jobs:
                 if(await page.evaluate(()=>readShrineVisits().total)!==2)throw Error('Visit history did not persist exactly twice');
                 await page.getByRole('button',{name:'‹ Back',exact:true}).click();
                 // Direct activity integration check, separate from the normal entrance flow.
+                // The lab is one house with three choices, not three destinations.
+                await page.evaluate(()=>{scene='wonder';room='quiz';activity=null;action('quiz')});
+                for(const [label,mode] of [['Soul Cat','soul'],['Four personality preferences','type'],['Nine inner motives','motive']]){
+                  await page.locator('#choices').getByRole('button',{name:label,exact:true}).click();
+                  await page.waitForFunction(mode=>scene==='wonder'&&room==='quiz'&&activity==='wonderScene'&&wonderSceneMode===mode,mode,{timeout:3000});
+                  await page.evaluate(()=>{closeTalk();updateHUD()});
+                  await page.locator('#back').click();
+                  await page.waitForFunction(()=>room==='quiz'&&!activity,{},{timeout:3000});
+                  if(mode!=='motive')await page.evaluate(()=>action('quiz'));
+                }
+                await page.evaluate(()=>{scene='fortune';room=null;activity=null;state={};closeTalk();updateHUD()});
                 await page.evaluate(()=>{room='wishes';activity=null;action('coin')});
                 await page.locator('.wishRitual').waitFor({timeout:8000});
                 await page.locator('.wishKeyboard').locator('..').locator('summary').click();
