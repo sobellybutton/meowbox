@@ -2710,6 +2710,7 @@ function todayHub(){
  page(tr('Today in MeowBox','摸鱼小镇 · 今日'),tr('A little something new each day.','每天都有一点新鲜事。'),q=>{
   renderTownFortune(q);
   b(q,tr('Read the town paper','翻翻摸鱼日报'),()=>todayScoopBefore.call($('dockScoop')));
+  b(q,tr('Town chat','小镇聊天室'),townChatPage);
  })
 }
 $('dockScoop').onclick=todayHub;
@@ -2864,3 +2865,58 @@ npcTalk=function(n){stopRoute();p.tx=p.x;p.ty=p.y;groundedTalk(n)};
 const conversationCss=document.createElement('style');
 conversationCss.textContent='body.meow-dialogue #movePad,body.meow-dialogue #walkHelp,body.meow-dialogue #moveGuide,body.meow-dialogue #worldSigns,body.meow-dialogue #nextStopShortcut,body.meow-dialogue #destinyAccess{visibility:hidden!important;pointer-events:none!important;display:none!important}body.meow-dialogue #hint{display:none!important}#dialogue #choices button{min-height:44px;max-width:100%;white-space:normal;overflow-wrap:anywhere}#dialogue{max-height:48dvh!important;overflow:auto!important;overscroll-behavior:contain}';
 document.head.append(conversationCss);
+
+
+/* The town is populated by fictional characters. Never present these posts
+   or scripted chat replies as messages from connected human players. */
+const townMessages=[
+ ['MRT Uncle','地铁阿叔','08:12','The train was packed. I have already fulfilled my teamwork quota.','早高峰挤完地铁，今日团队协作指标已完成。'],
+ ['Temple keeper','庙祝','08:30','Found a slipper beside the bell. Please collect it before Auntie claims it.','钟旁捡到一只拖鞋。失主快来领，免得阿姨拿去打小人。'],
+ ['Auntie Hong','红姐','09:05','The boss said dress casually. Someone arrived emotionally casual too.','老板说今天穿得随意一点，有人连工作态度都一起随意了。'],
+ ['Grandma','外婆','09:46','Soup is ready. Those who say they are not hungry will be given a small bowl anyway.','汤好了。说不饿的，也给你盛一小碗。'],
+ ['Lady Clocked Out','甄摸鱼','10:10','本宮 has rejected the emperor’s meeting request.','本宫已婉拒皇上的临时会议。'],
+ ['Jun','小俊','10:35','Can confirm that the koi do not accept PayNow.','实测，锦鲤不收转账。'],
+ ['Office Intern','实习生','11:02','I finally cleared my inbox. Someone replied “thanks all”.','刚清完邮箱，有人回复了全体：谢谢大家。'],
+ ['Kopi Uncle','咖啡叔','11:37','Who choped the bench with a tissue packet? The cat has taken ownership.','谁拿纸巾占长椅？猫已经正式接管了。'],
+ ['Master Payrise','周薪驰','12:04','I have applied for a promotion from tired to well-rested.','本人申请从疲惫岗晋升到睡饱岗。'],
+ ['Auntie Rage','码头阿姨','12:26','No hitting during lunch. Even slippers get a break.','午饭时间不打小人，拖鞋也要午休。'],
+ ['Wang Laoban','王老板','13:08','Reminder: please do not reply to this reminder unless you need to.','温馨提醒：非必要请勿回复这条温馨提醒。'],
+ ['Hana','小花','13:33','Found a tiny shell on the way here. Better souvenir than another meeting invite.','路上捡了个小贝壳，比收到会议邀请开心多了。'],
+ ['Hotpot Commissioner','火锅委员','14:12','The only thing we need to align on is whether the soup is spicy.','今天唯一需要达成共识的，就是锅底辣不辣。'],
+ ['Mochi','麻薯','14:40','Mrrp. Please stop moving my sunbeam.','喵。不要挪走我的阳光。'],
+ ['Mr. Raincheck','雨先生','15:18','The rain stopped the moment I bought an umbrella. Cinema.','刚买好伞，雨就停了。人生如戏。'],
+ ['Dragon King Meow','龙王喵','15:45','I own this bench. Please address me as Chairman.','这条长椅归本喵所有，请称呼我董事长。'],
+ ['Mina','阿敏','16:05','The souvenir shop has better annual leave policies than my company.','手信店的年假制度看着都比我司好。'],
+ ['Master Yue','月师傅','16:30','The stars say nothing about your unread emails.','星星没说未读消息必须今天回。'],
+ ['Eurostar Nap Club','欧洲睡神','17:02','The train was late. My nap arrived on time.','火车晚点了，午觉倒是准时到达。'],
+ ['Temple keeper','庙祝','17:45','The garden is quiet now. Leave the fish some peace.','花园清静了，也让鱼好好歇一会儿。']
+];
+function renderResidentNoticeboard(q){
+ element('h2',tr('Notes around town','小镇留言墙'),q,'board-heading');
+ element('small',tr('Fictional resident posts · not live player messages','小镇角色留言 · 非真人实时消息'),q);
+ const list=element('div','',q,'townPostList'),nav=element('div','',q,'townPostNav');
+ let offset=0;const dayOffset=hash(shrineClock().day)%townMessages.length;
+ function render(){
+  list.replaceChildren();nav.replaceChildren();
+  for(let i=0;i<5;i++){const m=townMessages[(dayOffset+offset*5+i)%townMessages.length],post=element('article','',list,'townResidentNote');
+   element('strong',tr(m[0],m[1]),post);element('small',m[2],post);element('p',tr(m[3],m[4]),post)
+  }
+  const prev=b(nav,tr('Previous','上一页'),()=>{offset--;render()});prev.disabled=offset===0;
+  element('span',(offset+1)+' / 4',nav);const next=b(nav,tr('Next','下一页'),()=>{offset++;render()});next.disabled=offset===3
+ }render()
+}
+const chatLocalHistory=[];
+function townChatPage(){
+ page(tr('Town chat','小镇聊天室'),tr('Chat with fictional town residents. This is a local, scripted conversation, not a live multiplayer lobby.','和虚构小镇角色聊天。这里是本地角色对话，不是真人联机聊天室。'),q=>{
+  const transcript=element('div','',q,'townChatTranscript');transcript.setAttribute('role','log');transcript.setAttribute('aria-live','polite');
+  const topics=[
+   [['Anyone else still at work?','还有谁没下班？'],[2,6,10,18]],
+   [['What should I eat?','今天吃什么？'],[3,7,12,13]],
+   [['Any good gossip?','今天有瓜吗？'],[0,1,14,15]],
+   [['I need a break.','想摸会儿鱼。'],[4,8,16,17]]
+  ];
+  function render(){transcript.replaceChildren();const initial=townMessages.slice(0,3).map(m=>({name:[m[0],m[1]],line:[m[3],m[4]]}));for(const m of [...initial,...chatLocalHistory.slice(-18)]){const row=element('article','',transcript,'townChatLine'+(m.self?' self':''));element('strong',m.self?tr('You','你'):tr(...m.name),row);element('p',tr(...m.line),row)}transcript.scrollTop=transcript.scrollHeight}
+  render();const choices=element('div','',q,'townChatChoices');for(let i=0;i<topics.length;i++){const [prompt,pool]=topics[i];b(choices,tr(...prompt),()=>{chatLocalHistory.push({self:true,line:prompt});const m=townMessages[pool[(hash(shrineClock().day+'chat'+i)+chatLocalHistory.length)%pool.length]];chatLocalHistory.push({name:[m[0],m[1]],line:[m[3],m[4]]});if(chatLocalHistory.length>40)chatLocalHistory.splice(0,2);render()})}
+ })
+}
+const townSocialCSS=document.createElement('style');townSocialCSS.textContent='.townResidentNote{background:#f2e5cb;border:1px solid #c1a77c;margin:10px 0;padding:14px 16px;color:#564635;border-radius:3px;transform:rotate(-.35deg)}.townResidentNote:nth-child(even){background:#e7e4c8;transform:rotate(.35deg)}.townResidentNote small{float:right;color:#756449}.townResidentNote p,.townChatLine p{margin:6px 0;line-height:1.5;overflow-wrap:anywhere}.townPostNav{display:flex;align-items:center;justify-content:space-between;gap:8px}.townPostNav button,.townChatChoices button{min-height:44px}.townChatTranscript{max-height:47dvh;overflow:auto;padding:8px;background:#dcdac5;border:1px solid #b3a886}.townChatLine{margin:8px 32px 10px 0;padding:10px;background:#f9efd9;border:1px solid #d0bb96;border-radius:5px}.townChatLine strong{font-size:12px;color:#65744e}.townChatLine.self{margin:8px 0 10px 32px;background:#e1e7ce}.townChatChoices{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}.townChatChoices button{white-space:normal;font-size:13px}';document.head.append(townSocialCSS);
