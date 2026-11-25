@@ -1253,18 +1253,20 @@ c.addEventListener('pointerup',e=>{
 const foodReleaseDraw=drawActivity;drawActivity=function(){
  if(activity!=='bubbleTea')return foodReleaseDraw();
  pearlAdvance();ctx.save();drawFoodCounter();
- const stage=state.teaStage,age=Math.max(0,t-state.teaAt),prepared=['pearls','mix','seal','sealing','ready','sip','done'].includes(stage);
+ const stage=state.teaStage,age=Math.max(0,t-state.teaAt),prepared=['seasoning','pearls','mix','seal','sealing','ready','sip','done'].includes(stage);
  let cx=420,cy=525,angle=0,fill=prepared?1:stage==='pouring'?poseEase(clamp((age-.25)/1.1,0,1)):0;
  if(stage==='mix'&&drag?.id==='teaMix'){cx=clamp(drag.x,335,505);cy=clamp(drag.y,470,550);angle=clamp((drag.x-drag.sx)/230,-.32,.32)}
- if(stage==='sip'){const f=Math.sin(Math.PI*clamp(age/2.4,0,1));cx=420-104*f;cy=525-100*f;angle=-.12*f;fill=Math.max(.35,1-age*.25)}
+ if(stage==='sip'){const f=Math.sin(Math.PI*clamp(age/2.4,0,1));if(state.teaOrder){cx=420+104*f;cy=525-25*f;angle=.06*f;fill=1}else{cx=420-104*f;cy=525-100*f;angle=-.12*f;fill=Math.max(.35,1-age*.25)}}
  if(stage==='done')fill=.35;
  const wrist=drawRitualPose(260,492,1.65,{reach:stage==='sip'||stage==='pouring'||drag?.id==='teaMix'?{x:cx-25,y:cy-35}:null});
- if(stage==='sip'){const lift=Math.sin(Math.PI*clamp(age/2.4,0,1));cx+=(wrist.x+22-cx)*lift;cy+=(wrist.y+27-cy)*lift}
+ if(stage==='sip'&&!state.teaOrder){const lift=Math.sin(Math.PI*clamp(age/2.4,0,1));cx+=(wrist.x+22-cx)*lift;cy+=(wrist.y+27-cy)*lift}
+ if(stage==='sip'&&state.teaOrder)drawPaintedResident({x:555,y:510,n:state.teaOrder.resident||['Wang Laoban','王老板']},1.18,false,'left');
  teaCup(cx,cy,1.12,state.teaBase,state.teaPearls,fill,angle);
  if(stage==='pouring'){
   const f=poseEase(clamp(age/.3,0,1)),px=495-45*f,py=414-25*f;teaPitcher(px,py,state.teaBase,-.72*f);
   if(age>.25&&age<1.35){ctx.save();ctx.strokeStyle=teaChoices[state.teaBase][2];ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(px-19,py-35);ctx.quadraticCurveTo(420,py+5,420,445);ctx.stroke();ctx.restore()}
  }
+ if(stage==='seasoning')drawPearlSeasoning(age);
  if(stage==='base')teaChoices.forEach((v,i)=>{const x=285+i*115;teaPitcher(x,611,i);target(x-42,544,84,75,()=>selectTeaBase(i))});
  if(stage==='pourReady'){teaPitcher(530,516,state.teaBase);target(480,440,104,90,()=>pearlPour())}
  if(stage==='pearls'){
@@ -5234,10 +5236,10 @@ teaCup=function(x,y,sc=1,base=0,pearls=0,fill=1,angle=0){
  const level=-69*clamp(fill,0,1),col=teaChoices[Math.max(0,base)]?.[2]||'#c0a17b';
  if(fill>0){const milk=ctx.createLinearGradient(0,-74,0,8);milk.addColorStop(0,col);milk.addColorStop(1,'#ae8267');ctx.fillStyle=milk;ctx.fillRect(-37,level,74,80);ellipse(0,level,33,5,col)}
  for(let i=0;i<Math.min(16,pearls);i++){const xx=-21+(i*17)%43,yy=-4-Math.floor(i/5)*7+Math.sin(t*6+i)*Math.min(3,Math.abs(angle)*12),jelly=activity==='bubbleTea'&&state.teaTopping===2;if(jelly)round(xx-4,yy-4,8,8,2,'#d9b786','#a17c57');else{ellipse(xx,yy,4.6,4.6,'#46322d');ellipse(xx-1.3,yy-1.7,1.3,1,'#ac856b')}}
- if(activity==='bubbleTea'&&fill>0&&state.teaIce>0){for(let i=0;i<state.teaIce;i++){const xx=-20+i*18,yy=level+8+(i%2)*6;ctx.save();ctx.translate(xx,yy);ctx.rotate((i-1)*.3);round(-7,-6,14,12,2,'#edf5e6a8','#d6e2d5');ctx.restore()}}
+ if(activity==='bubbleTea'&&fill>0&&state.teaIce>0&&(!['pouring','seasoning'].includes(state.teaStage)||state.teaStage==='seasoning'&&t-state.teaAt>.8)){for(let i=0;i<state.teaIce;i++){const xx=-20+i*18,yy=level+8+(i%2)*6;ctx.save();ctx.translate(xx,yy);ctx.rotate((i-1)*.3);round(-7,-6,14,12,2,'#edf5e6a8','#d6e2d5');ctx.restore()}}
  for(let i=0;i<9;i++){const dx=-24+(i*17)%46,dy=-62+(i*19)%57;ellipse(dx,dy,1.4,2.5,'#fff4d95e')}
  ctx.restore();ctx.strokeStyle='#c9bfa3';ctx.lineWidth=1.5;ctx.stroke();
- ellipse(0,-74,36,6,'#e4d6b5');ellipse(0,-73,29,3,'#b5a388');
+ ellipse(0,-74,36,6,'#e4d6b5');ellipse(0,-73,29,3,activity==='bubbleTea'&&state.teaSealed?'#e8c6a7':'#b5a388');
  if(activity!=='bubbleTea'||state.teaSealed){line(9,-76,16,-110,'#9c6558',5);line(10,-76,17,-110,'#e4b49b',1.2)}
  line(-25,-63,-19,-13,'#fff5e2a0',2.8);line(25,-57,19,-16,'#f8f4dc60',1.2);
  ctx.restore()
@@ -6142,7 +6144,7 @@ function meowIndoorActorBounds(a,scale=travellerRoomScale(H,cam.scale)){
 function meowBeginTextFrame(inside){
  meowTextFrameRects=[];
  const now=performance.now();
- if(now-meowUILast>100){meowUILast=now;meowUIRects=meowVisibleRects('#hud>*,#small button,#dock,#back,#hint,#gameControls,#movePad,#moveGuide,#walkHelp,#ritualActionBar,#dialogue,#nextStopShortcut,#lunarRibbon,#destinyAccess')}
+ if(now-meowUILast>100){meowUILast=now;meowUIRects=meowVisibleRects('#hud>*,#small button,#dock,#back,#hint,#gameControls,#movePad,#moveGuide,#walkHelp,#ritualActionBar,#pearlRecipePanel,#dialogue,#nextStopShortcut,#lunarRibbon,#destinyAccess')}
  meowFrameBlockers=[...meowUIRects];
  if(inside){
   if(continuityRoom===room)meowFrameBlockers.push(meowIndoorActorBounds(indoor));
@@ -6677,7 +6679,7 @@ function ambientActivityGuest(){
  const rect=screenWorldRect(x-size*.38,x+size*.38,y-size-4,y+5);
  const stage=activityProtectedStage[activity],protectedRect=stage?screenWorldRect(...stage):null;
  const targets=hit.map(h=>screenWorldRect(h.x-5,h.x+h.w+5,h.y-5,h.y+h.h+5));
- const ui=meowVisibleRects('#hud,#small,#dock,#back,#hint,#gameControls,#ritualActionBar,#dialogue,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet,#threeBoardAccess');
+ const ui=meowVisibleRects('#hud,#small,#dock,#back,#hint,#gameControls,#ritualActionBar,#pearlRecipePanel,#dialogue,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet,#threeBoardAccess');
  if(!ambientVisitSafe(rect,protectedRect,targets,ui,W,H))return;
  const n=a.guest?{...a.guest,x,y}:{x,y,n:ambientResidentPool[a.index]};ctx.save();
  ctx.globalAlpha=residentReducedMotion.matches?1:Math.min(1,f*6,(1-f)*6)*.92;
@@ -6724,7 +6726,7 @@ function drawAmbientBackgroundVisit(){
  const [p0,p1]=backgroundGuestPaths[activity],u=a.reverse?1-f:f,x=p0[0]+(p1[0]-p0[0])*u,y=p0[1]+(p1[1]-p0[1])*u;
  const size=Math.min(86,52/Math.max(.08,cam.scale));if(size*cam.scale<26)return;
  const rect=screenWorldRect(x-size*.36,x+size*.36,y-size,y+4),host=ambientBackgroundHostRegions[activity];
- const blockers=meowVisibleRects('#hud,#small,#dock,#back,#hint,#gameControls,#ritualActionBar,#dialogue,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet');
+ const blockers=meowVisibleRects('#hud,#small,#dock,#back,#hint,#gameControls,#ritualActionBar,#pearlRecipePanel,#dialogue,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet');
  if(!ambientVisitSafe(rect,host?screenWorldRect(...host):null,[],blockers,W,H))return;
  const n=a.guest?{...a.guest,x,y}:{x,y,n:ambientResidentPool[a.index]};ctx.save();
  ctx.globalAlpha=residentReducedMotion.matches?1:Math.min(1,f*5,(1-f)*5)*.88;
@@ -6742,6 +6744,7 @@ const incenseRitualStyle=document.createElement('style');incenseRitualStyle.text
 function housePlaqueAnchor(world,id,x,y){
  if(world==='fortune')return signAnchorsProposal[id]||[x,y-95];
  if(id==='boba')return [810,865];
+ if(id==='station')return [x,y-48];
  return [x,y-65]
 }
 function pearlTeaJars(x,y,sc=1){
@@ -6885,7 +6888,8 @@ function pearlSeal(){if(activity==='bubbleTea'&&state.teaStage==='seal'){pearlSt
 function pearlScore(q){if(!q.teaOrder)return null;const g=q.teaOrder;return ['base','sugar','ice','topping'].reduce((n,k)=>n+Number(q['tea'+k[0].toUpperCase()+k.slice(1)]===g[k]),0)}
 function pearlAdvance(){
  const age=t-state.teaAt;
- if(state.teaStage==='pouring'&&age>=1.55)pearlStage(state.teaTopping===0?'mix':'pearls');
+ if(state.teaStage==='pouring'&&age>=1.55)pearlStage('seasoning');
+ if(state.teaStage==='seasoning'&&age>=1.35)pearlStage(state.teaTopping===0?'mix':'pearls');
  if(state.teaStage==='sealing'&&age>=1.25){state.teaSealed=true;pearlStage('ready');sound(580)}
  if(state.teaStage==='sip'&&age>=2.4){
   pearlStage('done');if(state.teaSaved)return;state.teaSaved=true;
@@ -6920,9 +6924,9 @@ function syncPearlPanel(){
  else if(stage==='pearls')btn(tr('Scoop topping','舀小料')+' '+q.teaToppingCount+'/2',teaAddPearls);
  else if(stage==='mix')btn(tr('Shake cup','摇奶茶')+' '+Math.floor(q.teaMix)+'%',()=>teaShake(80));
  else if(stage==='seal')btn(tr('Press to seal','按压封口'),pearlSeal);
- else if(stage==='ready')btn(q.teaOrder?tr('Serve & taste','递给客人试喝'):tr('Take a sip','喝一口'),teaSip);
+ else if(stage==='ready')btn(q.teaOrder?tr('Serve the guest','递给客人'):tr('Take a sip','喝一口'),teaSip);
  else if(stage==='done'){element('p',q.teaScore===null?tr('Your own little recipe.','你的专属配方。'):tr('Order matched: ','订单完成度：')+q.teaScore+'/4',pearlPanel);btn(tr('Make another','再做一杯'),()=>start('bubbleTea'));btn(tr('Back to shop','返回奶茶铺'),()=>{activity=null;state={};updateHUD();roomIntro()})}
- else {const busy={pouring:['Pouring…','正在倒茶……'],sealing:['Sealing…','正在封口……'],sip:['Enjoy the drink…','慢慢品尝……']};element('small',tr(...(busy[stage]||['Preparing…','准备中……'])),choices)}
+ else {const busy={pouring:['Pouring…','正在倒茶……'],seasoning:['Adding sugar and ice…','正在加糖和冰……'],sealing:['Sealing…','正在封口……'],sip:['Enjoy the drink…','慢慢品尝……']};element('small',tr(...(busy[stage]||['Preparing…','准备中……'])),choices)}
 }
 const pearlPanelDrawBefore=drawActivity;drawActivity=function(){const result=pearlPanelDrawBefore();syncPearlPanel();return result};
 const pearlPanelHUDBefore=updateHUD;updateHUD=function(){pearlPanelHUDBefore();syncPearlPanel()};
@@ -6993,7 +6997,7 @@ function openRailStop(destination=railNextDistrict(scene)){
 const railNextHUDBefore=updateHUD;
 updateHUD=function(){railNextHUDBefore();nextStopButton.setAttribute('aria-label',tr('Take the train to ','搭列车前往')+tr(...maps[railNextDistrict(scene)].n));nextStopButton.title=tr('Optional onward journey','随心选择下一站')};
 const stationTravelActionBefore=enter;
-enter=function(id){if(id==='station'){openRailStop();return}return stationTravelActionBefore(id)};
+enter=function(id){if(id==='station'){releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;openRailStop();return}return stationTravelActionBefore(id)};
 const scenicRailStyle=document.createElement('style');scenicRailStyle.textContent=`
 #nextStopShortcut{max-width:min(49vw,210px)!important;min-height:44px!important;white-space:normal!important;border-radius:5px!important;background:#efe2c5!important;color:#4b5c4a!important;line-height:1.25!important;font:600 13px/1.25 Georgia,"Songti SC",serif!important}
 #proposal .rail-cabin .train-window img,#content .districtRailWindow img{display:block!important;position:absolute;top:0;left:0;width:100%!important;height:100%!important;object-fit:cover!important;object-position:0% center!important;animation:railPanorama 32s linear infinite alternate!important;transform:none!important}
@@ -7017,3 +7021,32 @@ const scenicRailStyle=document.createElement('style');scenicRailStyle.textConten
 #content .railJourneyActions{display:grid;gap:7px}#content .railJourneyActions button{min-height:44px;white-space:normal}
 @media(prefers-reduced-motion:reduce){#proposal .rail-cabin .train-window img,#content .districtRailWindow img,.railPassingTrees{animation:none!important}}
 `;document.head.append(scenicRailStyle);
+
+/* Signposts connect to rail travel, not an invented station building. */
+for(const district of ['home','island','wonder']){
+ const map=maps[district],world=portraitWorlds[district];if(map.st.some(st=>st[0]==='station'))continue;
+ const y=285,x=world.route[0][1]+(world.route[1][1]-world.route[0][1])*(y/world.route[1][0]);
+ map.st.push(['station',Math.round(x),y,'Train to next stop','列车下一站'])
+}
+const stationNameSignBefore=syncSigns;
+syncSigns=function(){
+ stationNameSignBefore();
+ if(signRoot.hidden)return;const btn=signButtons.get('station');
+ if(btn&&!btn.hidden)btn.title=tr('Train to ','搭车前往')+tr(...maps[railNextDistrict(scene)].n);
+ if(!room&&!activity&&!transitioning&&proposal.hidden&&avatar!==null&&!talkOpen&&$('page').style.display!=='block')nextStopButton.hidden=false;
+};
+function drawPearlSeasoning(age){
+ if(state.teaSugar>0&&age<.68){const f=poseEase(clamp(age/.25,0,1));ctx.save();ctx.translate(473,399);ctx.rotate(-.65*f);
+ round(-16,-29,32,45,7,'#e8d1aa','#b79a74');ellipse(0,-29,15,4,'#d4b992');ctx.restore();
+ ctx.save();ctx.strokeStyle='#e1c194';ctx.lineWidth=2+state.teaSugar*.022;ctx.beginPath();ctx.moveTo(456,406);ctx.quadraticCurveTo(438,418,420,445);ctx.stroke();ctx.restore()}
+ if(state.teaIce>0&&age>=.6&&age<1.2){for(let j=0;j<state.teaIce;j++){const f=clamp((age-.6-j*.08)/.36,0,1);if(f<=0||f>=1)continue;const x=488-(68-j*11)*f,y=405+43*f+Math.sin(f*Math.PI)*18;ctx.save();ctx.translate(x,y);ctx.rotate(f*.6);round(-6,-6,12,12,2,'#edf5e6','#c3d4c7');ctx.restore()}}
+}
+const pearlDesktopFitBefore=mobileRoomCamera;
+mobileRoomCamera=function(s,ox,oy){
+ if(activity==='bubbleTea'&&room==='boba'&&W>=H){
+  const panelWidth=Math.min(W*.32,350),usable=Math.max(100,W-panelWidth-26),top=H<500?65:105,bottom=H-100;
+  const z=Math.max(.08,Math.min((usable-20)/440,Math.max(80,bottom-top)/325));
+  return {s:z,ox:usable/2-395*z,oy:(top+bottom)/2-472.5*z}
+ }
+ return pearlDesktopFitBefore(s,ox,oy)
+};
