@@ -1387,7 +1387,8 @@ drawRoom=function(){
   if(dist>5){ctx.save();ctx.globalAlpha=.4;ellipse(indoor.tx,indoor.ty,9,3,'#ead3a4');ctx.restore()}
  }
  const scale=travellerRoomScale(H,cam.scale);
- ctx.save();backHuman(indoor.x,indoor.y,avatar,Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3,indoor.facing,scale);ctx.restore();
+ ctx.save();const visitors=sharedTownActors().filter(a=>a.room===room&&indoorSafe(a.x,a.y));const drawSelf=()=>backHuman(indoor.x,indoor.y,avatar,Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3,indoor.facing,scale);
+ for(const a of visitors.filter(a=>a.y<indoor.y).sort((a,b)=>a.y-b.y))drawSharedRoomActor(a,scale);drawSelf();for(const a of visitors.filter(a=>a.y>=indoor.y).sort((a,b)=>a.y-b.y))drawSharedRoomActor(a,scale);ctx.restore();
 };
 c.addEventListener('pointerup',e=>{if(!indoorReady()||!drag||drag.moved>30||drag.h)return;const a=point(e);indoorDestination(a.x,a.y)},true);
 const indoorControlStyle=document.createElement('style');indoorControlStyle.textContent='#movePad[data-indoor="true"]{bottom:calc(env(safe-area-inset-bottom,0px) + 76px);z-index:4}';document.head.append(indoorControlStyle);
@@ -5591,15 +5592,16 @@ fetch('assets/visual/painted/runtime.json',{cache:'no-cache'}).then(r=>r.ok?r.js
 const communityFlowStyle=document.createElement('style');communityFlowStyle.textContent='.communityPlace{display:grid;gap:6px;margin:12px 0}.communityPlace select{font:inherit;min-height:44px;max-width:100%;padding:8px;border:1px solid #b8a27d;background:#fff5df;color:#524234;border-radius:6px}.communityReplyBar:not([hidden]){display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:8px;border-left:3px solid #879778;background:#efe3c9}.communityReplyBar button,.townChatLine button{min-height:44px}.communityOwn{margin:12px 0}';document.head.append(communityFlowStyle);
 
 /* Optional shared outdoor town. Real session snapshots only, never synthetic users. */
-const sharedTown={enabled:false,ready:false,inFlight:false,published:false,generation:0,lastSuccess:0,place:'',actors:new Map(),gesture:'none',gestureUntil:0,blocked:new Set(),error:false};
+const sharedTown={enabled:false,ready:false,inFlight:false,published:false,generation:0,lastSuccess:0,place:'',area:'',actors:new Map(),gesture:'none',gestureUntil:0,blocked:new Set(),serverBlocked:new Set((load('sharedTownBlocksV1',[])||[]).filter(x=>typeof x==='string'&&/^[a-f0-9]{24}$/.test(x)).slice(0,100)),error:false};
 const sharedGestureNames={wave:['Hello!','你好呀！'],cheer:['You got this!','给你打气！'],tea:['Tea break?','摸鱼喝茶？']};
-function sharedTownVisible(){return sharedTown.enabled&&!document.hidden&&proposal.hidden&&$('arrival').hidden&&!room&&!activity&&!transitioning&&avatar!==null&&!!maps[scene]}
-function sharedTownValidPeer(v){return v&&typeof v.id==='string'&&/^[a-f0-9]{24}$/.test(v.id)&&v.place===scene&&Number.isInteger(v.avatar)&&v.avatar>=0&&v.avatar<4&&Number.isFinite(v.x)&&Number.isFinite(v.y)&&v.x>=0&&v.x<=1000&&v.y>=0&&v.y<=mapWorldHeight()&&['up','down','left','right'].includes(v.facing)&&['none','wave','cheer','tea'].includes(v.gesture)}
+function sharedTownArea(){if(!room)return '';const allowed=scene==='home'?['tea','park']:scene==='island'?['kitchen','arcade']:[];return allowed.includes(room)&&continuityRoom===room?room:null}
+function sharedTownVisible(){return sharedTown.enabled&&!document.hidden&&proposal.hidden&&$('arrival').hidden&&sharedTownArea()!==null&&!activity&&!transitioning&&avatar!==null&&!!maps[scene]}
+function sharedTownValidPeer(v){return v&&typeof v.id==='string'&&/^[a-f0-9]{24}$/.test(v.id)&&v.place===scene&&(v.room||'')===sharedTownArea()&&Number.isInteger(v.avatar)&&v.avatar>=0&&v.avatar<4&&Number.isFinite(v.x)&&Number.isFinite(v.y)&&v.x>=0&&v.x<=1000&&v.y>=0&&v.y<=mapWorldHeight()&&['up','down','left','right'].includes(v.facing)&&['none','wave','cheer','tea'].includes(v.gesture)}
 function sharedTownActors(){
- if(!sharedTownVisible()||!sharedTown.ready||sharedTown.place!==scene||Date.now()-sharedTown.lastSuccess>12000)return [];
+ if(!sharedTownVisible()||!sharedTown.ready||sharedTown.place!==scene||sharedTown.area!==sharedTownArea()||Date.now()-sharedTown.lastSuccess>12000)return [];
  const now=performance.now(),out=[];
  for(const a of sharedTown.actors.values()){
-  if(sharedTown.blocked.has(a.id))continue;
+  if(sharedTown.blocked.has(a.id)||sharedTown.serverBlocked.has(a.id))continue;
   const f=matchMedia('(prefers-reduced-motion: reduce)').matches?1:Math.min(1,Math.max(0,(now-a.received)/900));
   a.x=a.fromX+(a.toX-a.fromX)*f;a.y=a.fromY+(a.toY-a.fromY)*f;out.push(a)
  }
@@ -5627,20 +5629,21 @@ async function sharedTownHeartbeat(){
  if(sharedTown.inFlight)return;
  if(!sharedTownVisible()){await sharedTownLeave();sharedTownRefreshPanel();return}
  if(!communityURL()){sharedTown.error=true;sharedTownRefreshPanel();return}
- const generation=sharedTown.generation,place=scene;sharedTown.inFlight=true;
+ const generation=sharedTown.generation,place=scene,area=sharedTownArea();sharedTown.inFlight=true;
  try{
-  if(!sharedTown.ready){const h=await communityRequest('/health');if(h.service!=='meowbox-community'||h.version!==1||!h.moderated||h.presence!==true)throw Error('presence unavailable')}
-  if(!sharedTownVisible()||generation!==sharedTown.generation||place!==scene)return;
-  const payload={place,x:Math.round(p.x),y:Math.round(p.y),avatar,facing:p.facing||'down',walking:!!p.walk,gesture:Date.now()<sharedTown.gestureUntil?sharedTown.gesture:'none'};
+  if(!sharedTown.ready){const h=await communityRequest('/health');if(h.service!=='meowbox-community'||h.version!==1||!h.moderated||h.presence!==true||h.sharedRooms!==true||h.presenceModeration!==true)throw Error('presence unavailable')}
+  if(!sharedTownVisible()||generation!==sharedTown.generation||place!==scene||area!==sharedTownArea())return;
+  const actor=area?indoor:p;if(area&&!indoorSafe(actor.x,actor.y))return;
+  const payload={place,room:area,x:Math.round(actor.x),y:Math.round(actor.y),avatar,facing:actor.facing||'down',walking:area?Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3:!!p.walk,gesture:Date.now()<sharedTown.gestureUntil?sharedTown.gesture:'none'};
   const data=await communityRequest('/presence',{method:'POST',body:JSON.stringify(payload)});sharedTown.published=true;
-  if(generation!==sharedTown.generation||place!==scene||!sharedTownVisible())return;
-  const old=sharedTown.place===place?sharedTown.actors:new Map(),next=new Map();
+  if(generation!==sharedTown.generation||place!==scene||area!==sharedTownArea()||!sharedTownVisible())return;
+  const old=sharedTown.place===place&&sharedTown.area===area?sharedTown.actors:new Map(),next=new Map();
   for(const v of (Array.isArray(data.peers)?data.peers:[]).slice(0,30)){
-   if(!sharedTownValidPeer(v)||sharedTown.blocked.has(v.id)||v.id===data.self)continue;
+   if(!sharedTownValidPeer(v)||sharedTown.blocked.has(v.id)||sharedTown.serverBlocked.has(v.id)||v.id===data.self)continue;
    const prev=old.get(v.id),fx=prev?.x??v.x,fy=prev?.y??v.y;
    next.set(v.id,{...v,sharedPeer:true,fromX:fx,fromY:fy,toX:v.x,toY:v.y,x:fx,y:fy,received:performance.now()})
   }
-  sharedTown.actors=next;sharedTown.place=place;sharedTown.ready=true;sharedTown.error=false;sharedTown.lastSuccess=Date.now();
+  sharedTown.actors=next;sharedTown.place=place;sharedTown.area=area;sharedTown.ready=true;sharedTown.error=false;sharedTown.lastSuccess=Date.now();
  }catch{sharedTown.ready=false;sharedTown.actors.clear();sharedTown.error=true}
  finally{sharedTown.inFlight=false;if(!sharedTownVisible()||generation!==sharedTown.generation)await sharedTownLeave();sharedTownRefreshPanel()}
 }
@@ -5652,30 +5655,43 @@ function sharedTownRefreshPanel(){
  const q=document.getElementById('sharedTownPanel');if(!q||!q.isConnected)return;
  const status=q.querySelector('[data-shared-status]'),toggle=q.querySelector('[data-shared-toggle]'),list=q.querySelector('[data-shared-list]'),actions=q.querySelector('[data-shared-actions]'),prompt=q.querySelector('[data-shared-prompt]');
  toggle.textContent=sharedTown.enabled?tr('Return to solo mode','切回独处模式'):tr('Join the shared town','加入共享小镇');toggle.disabled=!communityURL();
- const online=sharedTown.enabled&&sharedTown.ready&&sharedTown.place===scene&&Date.now()-sharedTown.lastSuccess<12000;
- const peers=online?[...sharedTown.actors.values()].filter(a=>!sharedTown.blocked.has(a.id)):[];
+ const online=sharedTown.enabled&&sharedTown.ready&&sharedTown.place===scene&&sharedTown.area===sharedTownArea()&&Date.now()-sharedTown.lastSuccess<12000;
+ const peers=online?[...sharedTown.actors.values()].filter(a=>!sharedTown.blocked.has(a.id)&&!sharedTown.serverBlocked.has(a.id)):[];
  const teaCount=peers.filter(a=>a.gesture==='tea').length+(sharedTown.gesture==='tea'&&Date.now()<sharedTown.gestureUntil?1:0);
- status.textContent=!communityURL()?tr('Shared town is not connected yet. Solo play is available.','共享小镇尚未连接，仍可独自游玩。'):!sharedTown.enabled?tr('Solo mode · your position stays on this device.','独处模式 · 位置仅保存在本设备。'):!sharedTownVisible()?tr('Step outside to meet other travellers.','走到户外即可遇见其他旅人。'):sharedTown.error?tr('Connection unavailable. Retrying when possible.','连接暂不可用，将自动重试。'):!online?tr('Connecting…','连接中……'):tr(peers.length+' other connected travellers in this village','本村有 '+peers.length+' 位其他联机旅人');
+ status.textContent=!communityURL()?tr('Shared town is not connected yet. Solo play is available.','共享小镇尚未连接，仍可独自游玩。'):!sharedTown.enabled?tr('Solo mode · your position stays on this device.','独处模式 · 位置仅保存在本设备。'):!sharedTownVisible()?tr('Visit a public room or step outside to meet other travellers.','前往公共房间或户外，即可遇见旅伴。'):sharedTown.error?tr('Connection unavailable. Retrying when possible.','连接暂不可用，将自动重试。'):!online?tr('Connecting…','连接中……'):tr(peers.length+' other connected travellers here','这里有 '+peers.length+' 位其他联机旅人');
  actions.hidden=!online;prompt.hidden=!online;
  const prompts=[['Resident · Auntie Mei: No need to talk. Just borrow a little peace and quiet.','居民 · 梅姨：不用找话题，安安静静摸会儿鱼。'],['Resident · Grandma: Anyone fancy a tea break? A wave will do.','居民 · 外婆：有人想喝杯茶吗？挥挥手就好。'],['Resident · Temple keeper: Enjoy your stroll. No attendance sheet today.','居民 · 庙祝：慢慢逛，今天不用签到。']];
  prompt.textContent=online?(teaCount>=2?tr('Resident · Grandma: '+teaCount+' of you are taking a tea break. Cheers to doing absolutely nothing!','居民 · 外婆：'+teaCount+' 位旅人一起喝茶，敬今天的无所事事！'):tr(...prompts[peers.length===0?0:peers.length<3?1:2])):'';
- const signature=(zh?'zh:':'en:')+peers.map(a=>a.id).join(',');if(list.dataset.signature===signature)return;list.dataset.signature=signature;list.replaceChildren();
- for(const a of peers){const row=element('div','',list,'sharedTownPeer');element('span',sharedTownLabel(a.id),row);b(row,tr('Hide traveller','隐藏旅人'),()=>{sharedTown.blocked.add(a.id);sharedTown.actors.delete(a.id);sharedTownRefreshPanel()})}
+ const signature=(zh?'zh:':'en:')+peers.map(a=>a.id).join(',')+'|'+[...sharedTown.serverBlocked].join(',');if(list.dataset.signature===signature)return;list.dataset.signature=signature;list.replaceChildren();
+ for(const a of peers){const row=element('div','',list,'sharedTownPeer');element('span',sharedTownLabel(a.id),row);
+  const block=b(row,tr('Block traveller','屏蔽旅人'),async()=>{block.disabled=true;try{await communityRequest('/presence/block',{method:'POST',body:JSON.stringify({id:a.id,blocked:true})});sharedTown.serverBlocked.add(a.id);save('sharedTownBlocksV1',[...sharedTown.serverBlocked]);sharedTown.actors.delete(a.id);sharedTownRefreshPanel()}catch{block.disabled=false;toast(tr('Could not block yet. Try again.','暂未屏蔽成功，请重试。'))}});
+  const report=b(row,tr('Report','举报'),async()=>{report.disabled=true;try{const result=await communityRequest('/presence/report',{method:'POST',body:JSON.stringify({id:a.id,reason:'other'})});toast(result.recorded?tr('Report submitted.','举报已提交。'):tr('No new report recorded.','未新增举报记录。'))}catch{report.disabled=false;toast(tr('Report not sent.','举报未发送。'))}})
+ }
+ const manage=element('details','',list);element('summary',tr('Blocked travellers','已屏蔽旅人'),manage);
+ for(const id of sharedTown.serverBlocked){const line=element('div',sharedTownLabel(id),manage,'sharedTownPeer');const btn=b(line,tr('Unblock','解除屏蔽'),async()=>{btn.disabled=true;try{await communityRequest('/presence/block',{method:'POST',body:JSON.stringify({id,blocked:false})});sharedTown.serverBlocked.delete(id);save('sharedTownBlocksV1',[...sharedTown.serverBlocked]);list.dataset.signature='';sharedTownRefreshPanel()}catch{btn.disabled=false}})}
+
 }
 function sharedTownPage(q){
  const panel=element('section','',q,'communityWelcome');panel.id='sharedTownPanel';
  element('h2',tr('A little company, no small talk required','有个伴，不必尬聊'),panel);
- element('p',tr('Opt in to share your selected avatar, outdoor game position and preset gestures with other visitors. No personal nickname or private notes are sent. Residents are fictional. You can leave anytime.','自愿分享所选角色、户外游戏位置及预设动作。不发送个人昵称或私密留言。居民均为虚构，可随时退出。'),panel);
+ element('p',tr('Share your avatar, position in public areas and preset gestures only when you opt in. Private activities are not shared. Residents are fictional. Leave anytime.','自愿分享角色、公共区域位置及预设动作。私人体验不会分享。居民均为虚构，随时可退出。'),panel);
  const status=element('p','',panel,'communityMuted');status.dataset.sharedStatus='';status.setAttribute('role','status');
  const toggle=b(panel,'',()=>sharedTownEnable(!sharedTown.enabled));toggle.dataset.sharedToggle='';
  const prompt=element('p','',panel);prompt.dataset.sharedPrompt='';
  const actions=element('div','',panel);actions.dataset.sharedActions='';
  for(const [gesture,en,cn] of [['wave','Wave','挥挥手'],['cheer','Send encouragement','打个气'],['tea','Tea break?','喝杯茶？']])b(actions,tr(en,cn),()=>{sharedTown.gesture=gesture;sharedTown.gestureUntil=Date.now()+10000;toast(tr('Gesture ready for the next update. Return to the village to see your companions.','动作将在下次联机更新时发送。回到小镇看看旅伴吧。'))});
  const list=element('div','',panel);list.dataset.sharedList='';
- b(panel,tr('Show hidden travellers again','重新显示已隐藏旅人'),()=>{sharedTown.blocked.clear();sharedTownRefreshPanel()});
+ element('small',tr('Blocking is mutual within this community session. Reports go to the moderator.','屏蔽对当前社区会话双方生效，举报会交给管理员。'),panel,'communityMuted');
  b(panel,tr('Back to the village','回到小镇'),()=>{$('page').style.display='none'});
  sharedTownRefreshPanel();
 }
 const sharedTownStyle=document.createElement('style');sharedTownStyle.textContent='.communityReactions{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}.communityReactions button{min-height:44px;font-size:12px}.communityReactions button[aria-pressed=true]{background:#d7e1c8;color:#35533a}.communityTabs{flex-wrap:wrap}.communityTabs button{flex:1 1 20%;min-width:68px}.sharedTownPeer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:6px 0;border-top:1px solid #b8a47c66}.sharedTownPeer button{min-height:44px}';document.head.append(sharedTownStyle);
 setInterval(sharedTownHeartbeat,5000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)sharedTownLeave();else if(sharedTown.enabled)sharedTownHeartbeat()});
+
+function drawSharedRoomActor(a,scale){
+ backHuman(a.x,a.y,a.avatar,a.walking===1,a.facing,scale);
+ if(Math.hypot(a.x-indoor.x,a.y-indoor.y)>145)return;
+ const g=sharedGestureNames[a.gesture],label=sharedTownLabel(a.id)+(g?' · '+tr(...g):'');
+ ctx.save();const fs=12/Math.max(.6,cam.scale);ctx.font=fs+'px system-ui';const width=ctx.measureText(label).width+10;round(a.x-width/2,a.y-100*scale-22,width,22,5,'#f5ecd5ee','#89785f');txt(label,a.x,a.y-100*scale-11,fs,'#425b4c');ctx.restore()
+}
