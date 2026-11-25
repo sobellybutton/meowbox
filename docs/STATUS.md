@@ -25,3 +25,9 @@ Canonical source is src; original legacy chunks only supply art. Preserve existi
 
 ## Artwork loading refactor
 - Extract all 62 original WebP images into assets/art; use external paths for production and preserve embedded export mode. Lazy cache for canvas images and three portrait destinations. Remove nine legacy chunk requests from startup. Build validates each image byte-for-byte and both game variants for syntax. Visual/interaction tests and real cold-load measurements remain outstanding until CI and live checks complete.
+
+## Touch navigation and startup measurement follow-up
+- Completed run 45565828367 on 28fa5c4: build and entrance/activity smoke tests passed at 360px, 390px and desktop; only 38/56 doorway tests passed. All 18 failures were touch routes not starting (6 small mobile, 9 tall mobile, 3 tablet); desktop 14/14. Deployment 45565827330 passed.
+- e77d24e changes doorway gesture handling: preserve the native click fallback, suppress duplicate click only after successful activation, clear cancelled/lost captures, disable touch scrolling on the sign itself. No claim that the bug is fixed before browser CI.
+- cc807c3 uses Playwright locator.tap (real touch with actionability/stability checks) instead of independently obtaining a potentially stale bounding box. Adds pointer-event traces on route failures and per-viewport cold entrance readiness and resource transfer measurements on the local CI server. These are CI measurements, not real-world mobile network benchmarks.
+- Both modified JavaScript files/test scripts parsed before commit. Review latest workflow run and screenshots; full visual and device testing still outstanding. Do not start a broad art redesign until navigation is reliable.
