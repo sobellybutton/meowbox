@@ -162,3 +162,19 @@ ck(pawZwdsPublic({topicId:99},topics,themes)===null,'unknown topic');
 ck(pawZwdsPublic({topicId:0,starKeys:['fake']},topics,themes).lines[0][0]==='No main star in this palace','empty palace');
 return n;`)();
 console.log('PASS '+zwdsChecks+' ZWDS selected palace and privacy checks');
+
+const bubbleA=s.indexOf('/* PAW_BUBBLE_INPUT_BEGIN */'),bubbleB=s.indexOf('/* PAW_BUBBLE_INPUT_END */');
+if(bubbleA<0||bubbleB<=bubbleA)throw Error('Missing bubble input helpers');
+const bubbleChecks=new Function(s.slice(bubbleA,bubbleB)+`
+let n=0;const ck=(x,m)=>{if(!x)throw Error(m);n++};
+const g={status:'play',remaining:24,angle:0,flight:null,last:1,particles:[{at:.5}]};
+ck(pawBubbleCanAct(g,false),'ready');ck(!pawBubbleCanAct(g,true),'blocked');
+for(const patch of [{status:'won'},{remaining:0},{angle:NaN},{flight:{}},{remaining:1.2}])ck(!pawBubbleCanAct({...g,...patch},false),'invalid shot');
+ck(!pawBubbleCanAct(null,false),'missing game');
+ck(pawBubblePause(g,11)&&g.last===11&&g.particles[0].at===10.5,'paused age');
+ck(!pawBubblePause(g,NaN),'invalid time');
+let released=[];
+ck(!pawBubbleCancelPointer(null,id=>released.push(id)),'empty pointer');
+ck(pawBubbleCancelPointer(0,id=>released.push(id))&&released[0]===0,'valid zero pointer');
+return n;`)();
+console.log('PASS '+bubbleChecks+' bubble shot, pause and pointer guards');
