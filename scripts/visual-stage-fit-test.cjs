@@ -17,3 +17,24 @@ for(const [w,h] of [[320,568],[360,640],[390,844],[430,932],[768,1024]]){
 const safe={s:.5,ox:0,oy:100};if(mbVisualFitStage(safe,[100,300,0,100],360,80,300)!==safe)throw Error('Safe camera needlessly changed');
 return count+1;
 `);console.log('PASS: '+check()+' camera fit checks');
+
+const fa=src.indexOf('/* PAW_FOOT_BOUNDS_BEGIN */'),fb=src.indexOf('/* PAW_FOOT_BOUNDS_END */');
+if(fa<0||fb<fa)throw Error('Missing visible-foot helper');
+const footChecks=new Function(src.slice(fa,fb)+`
+const assert=(ok,msg)=>{if(!ok)throw Error(msg)};
+let checks=0;
+for(const [w,h] of [[80,160],[128,128],[256,180]]){
+ const rgba=new Uint8Array(w*h*4);
+ const l=Math.floor(w*.25),r=Math.floor(w*.75),top=Math.floor(h*.1),bottom=Math.floor(h*.78);
+ for(let y=top;y<bottom;y++)for(let x=l;x<r;x++)rgba[(y*w+x)*4+3]=255;
+ rgba[((h-1)*w+1)*4+3]=255;
+ const box=pawVisibleBounds(rgba,w,h);
+ assert(box&&box.top===top-1&&box.bottom===bottom+1&&box.left===l-1&&box.right===r+1,'Transparent padding or isolated pixel');
+ checks++;
+}
+assert(pawVisibleBounds(new Uint8Array(16*16*4),16,16)===null,'Blank image should not be cropped');checks++;
+const opaque=new Uint8Array(16*16*4).fill(255),box=pawVisibleBounds(opaque,16,16);
+assert(box.left===0&&box.top===0&&box.right===16&&box.bottom===16,'Opaque image should retain bounds');checks++;
+return checks;
+`);
+console.log('PASS: '+footChecks()+' resident foot-pivot checks');
