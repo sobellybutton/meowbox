@@ -6134,9 +6134,12 @@ function pawGuestEligible(id,date,hour,weather,offset=0){
 }
 function pawScheduledGuests(pool,date,hour,weather,offset=0){
  const n=pawStoryDate(date);if(n===null||!Array.isArray(pool)||!pool.length)return [];
- const regular=pool.filter(g=>!pawGuestWindows[g.id]),base=regular.length>=2?regular:pool;
+ const unique=pool.filter((g,i)=>g&&typeof g.id==='string'&&pool.findIndex(v=>v?.id===g.id)===i);
+ const eligible=unique.filter(g=>pawGuestEligible(g.id,date,hour,weather,offset));
+ const regular=eligible.filter(g=>!pawGuestWindows[g.id]),base=regular.length?regular:eligible;
+ if(!base.length)return [];
  const i=((n+offset)%base.length+base.length)%base.length,first=base[i];
- const rare=pool.filter(g=>g.id!==first.id&&pawGuestWindows[g.id]&&pawGuestEligible(g.id,date,hour,weather,offset));
+ const rare=eligible.filter(g=>g.id!==first.id&&pawGuestWindows[g.id]);
  const second=rare.length?rare[((n+offset)%rare.length+rare.length)%rare.length]:base[(i+1)%base.length];
  return second&&second.id!==first.id?[first,second]:[first]
 }
