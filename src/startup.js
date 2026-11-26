@@ -3148,4 +3148,66 @@ pawThreeSceneCss.textContent=`
 @media(orientation:landscape){#game #content .pawWishGarden{padding:0!important}#game #content .pawWishGarden .wishRitual{width:min(91%,calc((100dvh - 134px) * 1.77),980px)!important;aspect-ratio:16/9!important;transform:translateY(-9px)}#game #content:has(.pawWishGarden)>h1{top:12px;font-size:22px;left:90px;right:90px}}
 #game #content .pawWishGarden .wishRitual,#game #content .pawWishGarden .ritualCoin{touch-action:none!important;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}#game #content .pawWishGarden .ritualCoin{z-index:8!important;pointer-events:auto!important;cursor:grab;position:absolute}#game #content .pawWishGarden .wishDragging .ritualCoin{cursor:grabbing}#game #content .pawWishGarden .waterLight,#game #content .pawWishGarden .livingKoi,#game #content .pawWishGarden .wishAim,#game #content .pawWishGarden .wishBowl,#game #content .pawWishGarden .floatingPetal,#game #content .pawWishGarden .fishWake{pointer-events:none!important}#game #content .pawWishGarden [hidden]{display:none!important}#game #content .pawGardenActions .pawGentleToss{border:1px solid #cbb487!important;border-radius:20px!important;padding:6px 14px!important;text-decoration:none!important;background:#344a3cd9!important}#game #content .pawGardenActions .pawGentleToss:disabled{opacity:.45;cursor:default}#game #content .pawGardenActions{gap:4px!important}#game #content .pawGardenActions summary{max-width:120px}#game #content .pawGardenFooter{pointer-events:none}#game #content .pawGardenFooter button,#game #content .pawGardenFooter details{pointer-events:auto}#game #content .pawWishGarden .wishAim{z-index:7!important}#game #content .pawGardenFooter .wishMessage{min-height:1.3em!important} @media(max-height:530px) and (orientation:portrait){#game #content .pawWishGarden{padding-top:0!important}#game #content:has(.pawWishGarden)>h1{font-size:19px;top:49px}#game #content .pawGardenFooter .wishThrowGuide{display:none!important}}
 `;document.head.append(pawThreeSceneCss);
+
+/* PAW_ROOM_CLARITY: the room itself is the menu. Keep native station
+   accessibility, but no permanent duplicate Activities control. */
+const pawPlaceName=element('div','',$('game'),'pawPlaceName');
+pawPlaceName.id='pawPlaceName';pawPlaceName.hidden=true;
+pawPlaceName.setAttribute('aria-hidden','true');
+const pawRoomClarityBefore=syncRoomGuide;
+syncRoomGuide=function(){
+ const result=pawRoomClarityBefore();
+ const visible=!roomGuideToggle.hidden;
+ pawPlaceName.hidden=!visible;
+ if(visible){
+  const door=maps[scene]?.st.find(v=>v[0]===room);
+  const name=room==='park'?tr('Daydream Park · Deer Grove','发呆公园 · 鹿苑'):room==='boba'?tr('Pearl & Pause','珍珠摸鱼铺'):door?tr(door[3],door[4]):'';
+  if(pawPlaceName.textContent!==name)pawPlaceName.textContent=name;
+  pawPlaceName.hidden=!name;
+  const label=tr('Choose a station','选择体验地点');
+  if(roomGuideToggle.textContent!==label)roomGuideToggle.textContent=label;
+  roomGuideToggle.setAttribute('aria-label',label);
+ }
+ return result
+};
+// Use adult standing proportions for the two photographed rooms. The
+// feet, approach anchors and identity-specific portraits stay unchanged.
+roomResidentStations.park.sc=1.24;
+roomResidentStations.boba.sc=1.25;
+// Turn the existing social page into a town notebook without replacing
+// the real/fictional post distinction, navigation, reply or posting logic.
+const pawNotebookPageBefore=page;
+page=function(title,sub,body){
+ return pawNotebookPageBefore(title,sub,q=>{
+  const result=body(q);
+  const isSocial=typeof activePage!=='undefined'&&['community','townChat','townSquare','chat','board'].includes(activePage)
+   ||title===tr('Town Square','小镇广场')||title==='Town Square';
+  if(isSocial){
+   const notebook=element('section','',q,'pawTownNotebook');
+   const children=[...q.children].filter(n=>n!==notebook&&!n.matches(':scope > .row,:scope > h1,:scope > p:first-of-type'));
+   for(const child of children)notebook.append(child);
+   const nav=[...notebook.querySelectorAll('div,nav,section')].find(el=>[...el.children].filter(v=>v.tagName==='BUTTON').length>=3);
+   if(nav)nav.classList.add('pawTownNotebookTabs');
+  }
+  return result
+ })
+};
+const pawRoomClarityStyle=document.createElement('style');pawRoomClarityStyle.textContent=`
+#game #pawRoomGuideToggle:not([hidden]):not(:focus-visible){position:absolute!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important;padding:0!important;box-shadow:none!important;pointer-events:none!important}
+#game #pawRoomGuideToggle:focus-visible{z-index:12!important;outline:2px solid #fff2cf;outline-offset:3px}
+#game #pawPlaceName{position:absolute;z-index:3;top:calc(env(safe-area-inset-top,0px) + 106px);right:max(12px,env(safe-area-inset-right,0px));max-width:50%;box-sizing:border-box;pointer-events:none;color:#fff4d9;text-shadow:0 1px 3px #283c30,0 1px 6px #283c30;font:600 clamp(13px,3.7vw,19px)/1.25 Georgia,"Songti SC",serif;text-align:right;padding:4px 0;overflow-wrap:anywhere}
+#game #pawPlaceName[hidden],#game.pawRailJourneyActive #pawPlaceName,#game:has(#roomStationGuide.pawGuideOpen) #pawPlaceName,#game:has(#pawRoomGuideToggle:focus-visible) #pawPlaceName{display:none!important}
+#game #page:has(.pawTownNotebook){background:radial-gradient(ellipse at top,#d8c3a0,#9a805e)!important}
+#game #content:has(.pawTownNotebook){max-width:820px!important;color:#514638}
+#game #content:has(.pawTownNotebook)>h1{font-family:Georgia,"Songti SC",serif!important}
+#game #content .pawTownNotebook{box-sizing:border-box;position:relative;min-width:0;padding:14px clamp(12px,4vw,27px) 24px;background:linear-gradient(90deg,#d9c7a5 0,#f9eed6 5%,#f5e7cd 95%,#e5d0ad);border-left:5px solid #8d7353;border-radius:2px 5px 5px 2px;box-shadow:0 3px 0 #b69b75,0 6px 0 #e8d3ad,0 9px 0 #9d815d,0 11px 17px #49382740}
+#game #content .pawTownNotebookTabs{display:flex!important;flex-wrap:wrap!important;gap:0 12px!important;padding:0 0 6px!important;margin:0 0 14px!important;border-bottom:1px solid #bca585!important;background:none!important;box-shadow:none!important}
+#game #content .pawTownNotebookTabs>button{flex:0 1 auto!important;width:auto!important;min-height:44px;min-width:0;padding:4px 1px!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:transparent!important;color:#5b5745!important;box-shadow:none!important;text-align:left;font:600 14px/1.35 Georgia,"Songti SC",serif!important}
+#game #content .pawTownNotebookTabs>button:is([aria-selected=true],[aria-pressed=true],.active,.selected,.on){color:#365746!important;border-bottom-color:#547354!important}
+#game #content .pawTownNotebook :is(article,.communityPost,.townPost,.boardPost){border:0!important;border-bottom:1px dashed #c3ac86!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;padding:12px 0!important;margin:0!important}
+#game #content .pawTownNotebook :is(h2,h3){color:#4c6248!important;font-family:Georgia,"Songti SC",serif!important}
+#game #content .pawTownNotebook summary{min-height:44px;align-content:center;color:#51624b}
+@media(max-width:400px){#game #content .pawTownNotebookTabs{gap:0 9px!important}#game #content .pawTownNotebookTabs>button{font-size:13px!important}}
+`;document.head.append(pawRoomClarityStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
