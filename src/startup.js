@@ -910,10 +910,10 @@ function residentDrinkSummary(v){
 }
 function residentHospitalityWelcome(profile,visits,hour=new Date().getHours()){
  if(profile.id==='boba'&&residentHospitality.drink&&visits%2===0){
-  const v=residentHospitality.drink,base=teaChoices[v.base];return residentNamedGreeting('Fancy your '+tr(...base.slice(0,2))+' again?','上次喝的'+tr(...base.slice(0,2))+'，今天还想来一杯吗？')
+  const v=residentHospitality.drink,base=teaChoices[v.base];return residentNamedGreeting('Fancy your '+base[0]+' again?','上次喝的'+base[1]+'，今天还想来一杯吗？')
  }
  if(profile.id==='grandma'&&residentHospitality.soup&&visits%2===0){
-  const recipe=tr(...residentHospitality.soup);return residentNamedGreeting('Another bowl of '+recipe+' today?','今天还想喝'+recipe+'吗？')
+  const [en,cn]=residentHospitality.soup;return residentNamedGreeting('Another bowl of '+en+' today?','今天还想喝'+cn+'吗？')
  }
  if(visits>1&&visits%3===0){
   if(profile.id==='wang')return residentNamedGreeting('Back again? I will pretend I did not see you clock out.','又见面啦？就当我没看见你溜出来摸鱼。');
@@ -2161,6 +2161,7 @@ hideoutPage=function(...args){
  if(view){view.dataset.editing=String(!!hideoutEditing);const tools=view.querySelector('.hideoutTools');if(tools){tools.setAttribute('role','group');tools.setAttribute('aria-label',tr('Room editing tools','小窝布置工具'))}}
  return result
 };
+const pawReturnPolish=document.createElement('style');pawReturnPolish.textContent='#content .pawFurnitureLocation{display:block;font:11px/1.3 system-ui;color:#65533d;overflow-wrap:anywhere}#content [data-furniture-tray][data-placed=true] .pawFurnitureLocation{color:#476146}#content .pawBagReset{grid-column:1/-1;min-height:44px}#content .pawPassportNext{padding:7px 10px;border-left:3px solid #819477;background:#e7e2cb;color:#514638}#content .pawPassportUnvisited{color:#735d46}';document.head.append(pawReturnPolish);
 const mbCatalogueVisualStyle=document.createElement('style');
 mbCatalogueVisualStyle.textContent=`
 #content .komorebiBook .komorebiHead{padding:12px!important;border:1px solid #b69a70;border-left:4px solid #927354;background:var(--town-grain),#f6ead1!important}

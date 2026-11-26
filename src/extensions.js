@@ -939,7 +939,16 @@ let walkWasVisible=false;
 function walkHelpTick(){const visible=proposal.hidden&&avatar!==null&&!room&&!talkOpen&&!transitioning&&$('page').style.display!=='block'&&valleyRevealAt<0&&isRoute();walkHelp.hidden=!visible||!guideDismissed;walkHelp.setAttribute('aria-label',tr('Show walking instructions','查看行走指南'));if(walkWasVisible&&!visible)releaseWalkKeys();walkWasVisible=visible;setTimeout(walkHelpTick,200)}
 walkHelpTick();
 
-function keepsakeClue(item){const clues={'Observatory destiny scroll':['Visit the observatory','到星月观去看看'],'Three-card reading':['Turn the cards in the reading house','到占卜小屋翻牌'],'Heaven’s approval':['Try the wooden moon blocks','试试掷筊'],'Wishing lantern':['Leave a wish in the garden','在花园留下一份心愿'],'Cat friendship':['Spend time with a valley cat','陪山谷的小猫玩一会儿'],'Soul Cat keepsake':['Discover your Soul Cat in Wonder Valley','到奇遇谷寻找你的猫灵']};return clues[item[0]]||['Explore to unlock','探索解锁']}
+function pawKeepsakeClue(name){
+ if(/^Fortune (?:paper|stick) /i.test(name))return ['Draw and collect a fortune stick at Fortune Temple.','到解忧寺摇签、拾签，再读签文。'];
+ if(/^Parallel life:/i.test(name))return ['Choose a different path in Parallel Lives.','去平行人生试试另一条故事路线。'];
+ if(/Deer postcard/i.test(name))return ['Spend time with the deer in Daydream Park.','去白日梦公园陪小鹿待一会儿。'];
+ if(/plush|claw champion/i.test(name))return ['Try the claw machine in the Retro Arcade.','去童年游戏厅试试夹娃娃。'];
+ if(/recipe|soup|broth/i.test(name))return ['Finish a drink or taste a soup on Food & Fun Street.','去吃喝玩乐街做奶茶，或喝一碗汤。'];
+ if(/river echo|let it drift/i.test(name))return ['Visit the waterfront and try a little release ritual.','去码头把烦恼轻轻放下。'];
+ return null
+}
+function keepsakeClue(item){const clues={'Observatory destiny scroll':['Visit the observatory','到星月观去看看'],'Three-card reading':['Turn the cards in the reading house','到占卜小屋翻牌'],'Heaven’s approval':['Try the wooden moon blocks','试试掷筊'],'Wishing lantern':['Leave a wish in the garden','在花园留下一份心愿'],'Cat friendship':['Spend time with a valley cat','陪山谷的小猫玩一会儿'],'Soul Cat keepsake':['Discover your Soul Cat in Wonder Valley','到奇遇谷寻找你的猫灵']};return clues[item[0]]||pawKeepsakeClue(item[0])||['Explore to unlock','探索解锁']}
 function keepsakeStory(item){const stories={'Observatory destiny scroll':['A little reminder that your future is still yours to write.','未来的故事，仍由你自己书写。'],'Three-card reading':['A memory of the cards you turned and the questions you carried.','记下那天翻过的牌，还有心里的疑问。'],'Heaven’s approval':['Even the wooden moon blocks decided to give you a break.','连筊杯都决定让你松一口气。'],'Wishing lantern':['Somewhere in the valley, a little light carries your wish.','山谷的某盏小灯，藏着你的心愿。'],'Cat friendship':['You earned a cat’s trust. More impressive than getting a reply from HR.','你赢得了猫咪的信任，比等到人事部回信还难得。'],'Soul Cat keepsake':['A small portrait of the way you see the world.','一幅小小的画像，记下你眼里的世界。']};return stories[item[0]]||(/^Met /.test(item[0])?['A familiar face from a day away from ordinary life.','平凡日子之外，偶遇的一张熟悉面孔。']:['A small souvenir of the time you spent here.','把在这里度过的时光，收成一份小小的纪念。'])}
 const memoryBookStyle=document.createElement('style');memoryBookStyle.textContent='.memoryStory{font:17px/1.65 Georgia,serif;padding:16px;color:inherit}.friendEntry{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:12px 4px;border-bottom:1px dashed #ac8c62}.friendEntry small{font-size:12px;color:#79583d}.albumCard small{line-height:1.4}.albumTabs button[aria-pressed=true]{outline:2px solid #a77a4e;outline-offset:-3px}';document.head.append(memoryBookStyle);
 
@@ -3600,6 +3609,7 @@ function townChatTopic(value){
  return 'other'
 }
 function townChatReply(value,turn){const pool=townChatReplies[townChatTopic(value)];return pool[((turn%pool.length)+pool.length)%pool.length]}
+function pawChatNearEnd(top,height,total){return total-top-height<=48}
 function townChatPage(){
  const generation=++townChatGeneration;
  page(tr('Town chat','小镇聊天室'),tr('A chat with town characters · local play, not live players.','小镇角色聊天室 · 本地互动，非真人联机。'),q=>{
@@ -3611,8 +3621,8 @@ function townChatPage(){
   const initial=townMessages.slice(0,3).map(m=>({name:[m[0],m[1]],line:[m[3],m[4]]}));
   let pendingReply=false,ambientCount=0;
   const active=()=>generation===townChatGeneration&&transcript.isConnected&&$('page').style.display==='block';
-  function render(){if(!active())return;transcript.replaceChildren();for(const m of [...initial,...chatLocalHistory.slice(-24)]){const row=element('article','',transcript,'townChatLine'+(m.self?' self':''));element('strong',m.self?tr('You','你'):tr(...m.name),row);element('p',m.raw??tr(...m.line),row)}transcript.scrollTop=transcript.scrollHeight}
-  function append(m){chatLocalHistory.push(m);if(chatLocalHistory.length>48)chatLocalHistory.splice(0,chatLocalHistory.length-48);render()}
+  function render(force=false){if(!active())return;const top=transcript.scrollTop,follow=force||pawChatNearEnd(top,transcript.clientHeight,transcript.scrollHeight);transcript.replaceChildren();for(const m of [...initial,...chatLocalHistory.slice(-24)]){const row=element('article','',transcript,'townChatLine'+(m.self?' self':''));element('strong',m.self?tr('You','你'):tr(...m.name),row);element('p',m.raw??tr(...m.line),row)}transcript.scrollTop=follow?transcript.scrollHeight:Math.min(top,Math.max(0,transcript.scrollHeight-transcript.clientHeight))}
+  function append(m){chatLocalHistory.push(m);if(chatLocalHistory.length>48)chatLocalHistory.splice(0,chatLocalHistory.length-48);render(!!m.self)}
   function submit(value){
    const raw=String(value).trim().slice(0,180);if(!raw||pendingReply||!active())return;
    append({self:true,raw});input.value='';pendingReply=true;send.disabled=true;
@@ -4031,6 +4041,17 @@ function mbHomeObjects(zone,excluded=-1){
 }
 function mbHomeDepth(id,y){return mbHomeKind(id)==='wall'?2:id==='rug'?1:10+Math.round(Number.isFinite(Number(y))?Number(y):80)}
 
+function pawFurnitureLocation(placed,zone){
+ if(!placed)return ['Put away','已收纳'];
+ return furnitureZone(placed)===zone?['In this room','在本房间']:['In another room','在其他房间']
+}
+function pawSyncFurnitureTray(q){
+ for(const btn of q.querySelectorAll('[data-furniture-tray]')){
+  const placed=hideoutFurniture.find(d=>d.id===btn.dataset.furnitureTray),label=pawFurnitureLocation(placed,komorebiZone);
+  const status=btn.querySelector('.pawFurnitureLocation');if(status)status.textContent=tr(...label);
+  btn.dataset.placed=String(!!placed)
+ }
+}
 function hideoutPage(){
  activePage='hideout';
  page(tr('My Room','我的小窝'),tr('The rent is imaginary. The peace is real.','房租是假的，清静是真的。'),q=>{
@@ -4040,7 +4061,7 @@ function hideoutPage(){
   const stage=element('div','',q,'hideoutScene');stage.innerHTML=hideoutSceneArt(theme);stage.dataset.roomTheme=theme.id;
   function render(){
    const status=q.querySelector('.mbHomeSelection'),chosen=hideoutFurniture[hideoutSelected];if(status)status.textContent=chosen&&furnitureZone(chosen)===komorebiZone?tr('Selected: ','已选：')+tr(...roomNames9[chosen.id]):tr('Choose a piece to decorate.','选一件家具来布置。');
-   stage.querySelectorAll('.hideoutPlaced,.hideoutDisplay,.hideoutPlayer').forEach(el=>el.remove());
+   pawSyncFurnitureTray(q);stage.querySelectorAll('.hideoutPlaced,.hideoutDisplay,.hideoutPlayer').forEach(el=>el.remove());
    const sorted=hideoutFurniture.map((d,i)=>({d,i})).filter(v=>Object.hasOwn(art9,v.d.id)&&furnitureZone(v.d)===komorebiZone).sort((a,b)=>(a.d.id==='rug'?-1:a.d.y)-(b.d.id==='rug'?-1:b.d.y));
    for(const {d,i} of sorted){
     const im=element('img','',stage,'hideoutPlaced'+(hideoutEditing&&i===hideoutSelected?' selected':''));im.src=art9[d.id];im.alt=tr(...roomNames9[d.id]);im.style.left=clamp(Number(d.x)||50,8,92)+'%';im.style.top=clamp(Number(d.y)||50,12,91)+'%';im.style.rotate=(Number(d.r)||0)+'deg';im.style.width=furnitureWidth(d.id)+'%';im.dataset.furnitureId=d.id;
@@ -4101,9 +4122,9 @@ function hideoutPage(){
      if(hideoutFurniture.filter(d=>furnitureZone(d)===komorebiZone).length>=24){toast(tr('Your room is full. Even the cat needs space.','小窝满啦，猫猫也需要空间。'));return}
      const pos=mbHomeSuggest(mbHomeKind(id),furnitureWidth(id),mbHomeObjects(komorebiZone));
      hideoutFurniture.push({id,...pos,zone:komorebiZone});hideoutSelected=hideoutFurniture.length-1;saveHideout();render()
-    });btn.dataset.furnitureTray=id;const im=element('img','',btn);im.src=art9[id];im.alt='';element('small',tr(...name),btn)
+    });btn.dataset.furnitureTray=id;const im=element('img','',btn);im.src=art9[id];im.alt='';element('small',tr(...name),btn);element('small','',btn,'pawFurnitureLocation');
    }
-   b(q,tr('Visit Komorebi Living','去木漏日杂货铺'),()=>furnitureMarket('room'));
+   pawSyncFurnitureTray(q);b(q,tr('Visit Komorebi Living','去木漏日杂货铺'),()=>furnitureMarket('room'));
    const tools=element('div','',q,'hideoutActions hideoutTools');stage.after(tools);
    const selected=()=>hideoutSelected>=0&&furnitureZone(hideoutFurniture[hideoutSelected])===komorebiZone?hideoutFurniture[hideoutSelected]:null;
    b(tools,tr('Rotate','旋转'),()=>{const d=selected();if(d){d.r=((d.r||0)+15)%360;saveHideout();render()}});
@@ -6359,9 +6380,9 @@ clawFinish=function(){
 const dailyMoreIdeasBefore=lifeDailyIdeas;
 lifeDailyIdeas=function(){
  const ideas=dailyMoreIdeasBefore(),keys=lifeJournal.daily.day===shrineClock().day?lifeJournal.daily.keys:[];
- return [...ideas.slice(0,1).map(v=>({...v,desc:['Finish a Bubble Pop or Tic Tac Toe round. Winning is optional.','玩完一局泡泡龙或井字棋，输赢都算。'],done:v.done||keys.includes('round:claw')})),...ideas.slice(1),
+ return [...ideas.slice(0,1).map(v=>({...v,desc:['Finish a Bubble Pop, Tic Tac Toe or claw machine round. Winning is optional.','玩完一局泡泡龙、井字棋或夹娃娃，输赢都算。'],done:v.done||keys.includes('round:claw')})),...ideas.slice(1),
  {title:['Something delicious','给自己加个餐'],desc:['Finish a bowl of soup or make and sip bubble tea.','煮好一碗汤，或者摇好奶茶再喝一口。'],done:keys.some(k=>k.startsWith('kitchen:'))},
- {title:['A tiny surprise','拆个小惊喜'],desc:['Open a blind box with 40 Meow Coins.','用40喵币去游戏厅拆个盲盒。'],done:keys.includes('arcade:box')}]
+ {title:['A tiny surprise','拆个小惊喜'],desc:['Optional: open a blind box for 40 earned coins, if you feel like it.','可选：想拆盲盒时再花40个攒来的喵币。'],done:keys.includes('arcade:box')}]
 };
 
 
@@ -6923,6 +6944,12 @@ let bagChapter=null,bagPageIndex=0;
 function bagChapterName(id){return id==='travel'?tr('Travel memories','旅途回忆'):tr(...maps[id].n)}
 function bagChapterDescription(id){return tr(...({fortune:['Prayers, wishes and little answers.','祈愿、签文与小小答案。'],home:['A little less stress, a little more company.','烦恼少一点，陪伴多一点。'],island:['Good food, good games and tiny treasures.','好吃、好玩，还有小宝藏。'],wonder:['Discover more about yourself.','慢慢认识自己。'],travel:['Stamps, encounters and treasured memories.','印章、偶遇与珍藏的回忆。']}[id]))}
 function bagChapterImage(id){return destinationPortrait(id==='travel'?'fortune':id)}
+function pawBagNormalize(v){return String(v??'').normalize('NFKC').toLocaleLowerCase().trim().replace(/\s+/g,' ')}
+function pawBagSearchMatch(v,query,secret=false){
+ const q=pawBagNormalize(query);if(!q)return true;
+ const names=secret&&!v.owned?['Secret mystery figure','隐藏款 神秘手办']:v.item;
+ return names.some(name=>pawBagNormalize(name).includes(q))
+}
 function renderTravellerBag(){
  activePage='room';page(tr('Traveller’s bag','旅人的背包'),tr('Little treasures from your escape.','把摸鱼路上的小宝贝收好。'),q=>{
   const wrap=element('section','',q,'travellerBagV2'),all=bagEntries().map(v=>({...v,chapter:bagChapterFor(v.item[0],bagClass(v.item))})),owned=all.filter(v=>v.owned),head=element('div','',wrap,'bagHeader');
@@ -6942,8 +6969,9 @@ function renderTravellerBag(){
   function draw(){
    tabs.querySelectorAll('button').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.mode===bagMode)));
    category.querySelectorAll('button').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.category===bagCategory)));
-   const query=bagQuery.trim().toLowerCase(),shelf=!bagChapter&&!query&&bagCategory==='all',shown=all.filter(v=>(!bagChapter||v.chapter===bagChapter)&&(bagMode==='catalog'||v.owned)&&(bagMode!=='favorites'||bagFavorites.includes(v.item[0]))&&(bagCategory==='all'||bagClass(v.item)===bagCategory)&&(!query||v.item.some(n=>String(n).toLowerCase().includes(query))));
-   shown.sort((a,b)=>bagSort==='name'?tr(...a.item).localeCompare(tr(...b.item)):b.order-a.order);
+   const query=pawBagNormalize(bagQuery),shelf=!bagChapter&&!query&&bagCategory==='all',shown=all.filter(v=>(!bagChapter||v.chapter===bagChapter)&&(bagMode==='catalog'||v.owned)&&(bagMode!=='favorites'||bagFavorites.includes(v.item[0]))&&(bagCategory==='all'||bagClass(v.item)===bagCategory)&&pawBagSearchMatch(v,query,boxPrizes.some(p=>p[0]===v.item[0]&&p[4]==='secret')));
+   const visibleName=v=>!v.owned&&boxPrizes.some(p=>p[0]===v.item[0]&&p[4]==='secret')?tr('Mystery figure','神秘手办'):tr(...v.item);
+   shown.sort((a,b)=>bagSort==='name'?visibleName(a).localeCompare(visibleName(b)):b.order-a.order);
    if(!shown.some(v=>v.item[0]===bagSelected))bagSelected=null;
    const selected=shown.find(v=>v.item[0]===bagSelected),paged=bagPageSlice(shown,bagPageIndex);bagPageIndex=paged.page;
    chapters.replaceChildren();trail.replaceChildren();grid.replaceChildren();pagination.replaceChildren();
@@ -6953,15 +6981,15 @@ function renderTravellerBag(){
      const card=b(chapters,'',()=>{bagChapter=id;bagSelected=null;bagPageIndex=0;draw()});card.className='bagChapterCard';card.dataset.chapter=id;
      const art=element('img','',card);art.src=bagChapterImage(id);art.alt='';art.loading='lazy';
      const copy=element('div','',card,'bagChapterCopy');element('small',tr('Chapter ','章节 ')+(bagChapterIds.indexOf(id)+1),copy);element('strong',bagChapterName(id),copy);
-     element('span',bagChapterDescription(id),copy);element('small',count.owned+' / '+count.total+' '+tr('known keepsakes','件已知收藏')+(bagMode==='favorites'?' · '+available+' '+tr('liked','喜欢'):''),copy);
-     const meter=element('progress','',copy);meter.max=Math.max(1,count.total);meter.value=count.owned;meter.setAttribute('aria-label',bagChapterName(id));
+     element('span',bagChapterDescription(id),copy);element('small',bagMode==='favorites'?available+' '+tr('favourites in this chapter','件本章喜欢的收藏'):count.owned+' / '+count.total+' '+tr('known keepsakes','件已知收藏'),copy);
+     const meter=element('progress','',copy);meter.max=Math.max(1,bagMode==='favorites'?count.owned:count.total);meter.value=bagMode==='favorites'?available:count.owned;meter.setAttribute('aria-label',bagChapterName(id)+(bagMode==='favorites'?tr(' favourites',' 喜欢'):tr(' collection progress',' 收藏进度')));
     }
     detail.hidden=true;return
    }
    b(trail,tr('‹ Chapters','‹ 全部章节'),()=>{bagChapter=null;bagCategory='all';bagQuery='';search.value='';bagSelected=null;bagPageIndex=0;draw()});
    element('strong',bagChapter?bagChapterName(bagChapter):tr('Search & filters','搜索与筛选'),trail);
    if(!selected)for(const v of paged.rows){const button=b(grid,'',()=>{bagSelected=v.item[0];draw();detail.scrollIntoView({block:'nearest'})});button.className='bagSlot';button.dataset.owned=String(v.owned);button.setAttribute('aria-pressed',String(bagSelected===v.item[0]));button.setAttribute('aria-label',v.owned?tr(...v.item):tr('Undiscovered item','未发现的物品'));const art=element('span','',button,'bagSlotArt');art.innerHTML=bagArt(v);const prize=boxPrizes.find(p=>p[0]===v.item[0]);element('small',v.owned?tr(...v.item):prize?.[4]==='secret'?tr('Secret','隐藏款'):tr('Not found','未发现'),button);if(bagFavorites.includes(v.item[0]))element('span','★',button,'bagStar')}
-   if(!shown.length){element('p',tr('Nothing in this pocket yet.','这个口袋还空空的。'),grid,'bagEmpty');if(bagMode==='owned')b(grid,tr('See undiscovered keepsakes','看看待发现的收藏'),()=>{bagMode='catalog';bagPageIndex=0;draw()})}
+   if(!shown.length){element('p',query?tr('No treasures match this search.','没找到符合搜索的宝贝。'):tr('Nothing in this pocket yet.','这个口袋还空空的。'),grid,'bagEmpty');if(query||bagCategory!=='all'){const clear=b(grid,tr('Clear search & filters','清除搜索和筛选'),()=>{bagQuery='';search.value='';bagCategory='all';bagSelected=null;bagPageIndex=0;draw()});clear.className='pawBagReset'}if(bagMode==='owned')b(grid,tr('See undiscovered keepsakes','看看待发现的收藏'),()=>{bagMode='catalog';bagPageIndex=0;draw()})}
    if(!selected&&paged.pages>1){const prev=b(pagination,tr('‹ Previous','‹ 上一页'),()=>{bagPageIndex--;draw()});prev.disabled=paged.page===0;element('span',(paged.page+1)+' / '+paged.pages,pagination);const next=b(pagination,tr('Next ›','下一页 ›'),()=>{bagPageIndex++;draw()});next.disabled=paged.page===paged.pages-1}
    detail.replaceChildren();const v=selected;detail.hidden=!v;if(!v)return;
    b(detail,tr('‹ Back to keepsakes','‹ 返回收藏'),()=>{bagSelected=null;draw()});
@@ -6971,7 +6999,7 @@ function renderTravellerBag(){
    element('small',v.owned?tr('In your bag','已放入背包'):tr('Still to discover','等待发现'),detail);element('small',bagChapterName(v.chapter),detail);
    if(v.owned){const photo=element('img','',detail,'mbKeepsakeOrigin');photo.src=bagChapterImage(v.chapter);photo.alt='';photo.loading='lazy';element('small',tr('A glimpse of this chapter','这一章节的风景'),detail,'mbKeepsakeOriginCaption')}
    if(prize)element('small',tr(prize[4]==='secret'?'Secret':prize[4]==='rare'?'Rare':prize[4]==='uncommon'?'Uncommon':'Common',prize[4]==='secret'?'隐藏款':prize[4]==='rare'?'稀有款':prize[4]==='uncommon'?'特别款':'普通款'),detail,'bagRarity');
-   element('p',tr(...(v.owned?keepsakeStory(v.item):keepsakeClue(v.item))),detail);
+   element('p',tr(...(v.owned?keepsakeStory(v.item):secret?['A secret companion awaits in the blind box collection.','盲盒收藏里藏着一位神秘小伙伴。']:keepsakeClue(v.item))),detail);
    if(v.owned){const fav=b(detail,bagFavorites.includes(v.item[0])?tr('★ Remove favourite','★ 取消喜欢'):tr('☆ Keep as favourite','☆ 加入喜欢'),()=>{bagFavorites=bagFavorites.includes(v.item[0])?bagFavorites.filter(x=>x!==v.item[0]):[...bagFavorites,v.item[0]];save('bagFavoritesV1',bagFavorites);draw()});fav.setAttribute('aria-pressed',String(bagFavorites.includes(v.item[0])))}
    if(prize)element('small',boxPrizes.filter(p=>owned.some(o=>o.item[0]===p[0])).length+'/'+boxPrizes.length+' '+tr('figures collected','款手办已收集'),detail)
   }draw();
@@ -8948,11 +8976,12 @@ function townAnchorPanel(q){
  element('small',tr('THE FOUR-STOP JOURNEY','四站小旅行'),book);
  element('h2',tr('Four places, four little escapes','四个地方，四种小逃离'),book);
  element('p',count+'/4 '+tr('signature places discovered · no deadline','个招牌去处已探访 · 不限时间'),book);
+ const next=Object.keys(townAnchorPlaces).find(k=>!visits[k]);if(next){const a=townAnchorPlaces[next];element('p',tr('A place still waiting for you: ','还有一个地方等你来：')+tr(...a.name),book,'pawPassportNext')}
  const line=element('div','',book,'townAnchorProgress');line.setAttribute('role','progressbar');line.setAttribute('aria-valuemin','0');line.setAttribute('aria-valuemax','4');line.setAttribute('aria-valuenow',String(count));line.setAttribute('aria-label',tr('Signature places discovered','已探访招牌去处'));for(let i=0;i<4;i++){const mark=element('span','',line);mark.dataset.done=String(i<count)}
  for(const [k,a] of Object.entries(townAnchorPlaces)){
   const row=element('article','',book,'townAnchorRow'),im=element('img','',row);im.src=destinationPortrait(k);im.alt='';im.loading='lazy';
   const copy=element('div','',row,'townAnchorCopy');element('small',tr(...maps[k].n),copy);element('strong',tr(...a.name),copy);element('p',tr(...a.line),copy);
-  if(visits[k])element('small',tr('Passport memory: ','护照回忆：')+tr(...a.memory),copy,'townAnchorMemory');
+  if(visits[k])element('small',tr('Passport memory: ','护照回忆：')+tr(...a.memory),copy,'townAnchorMemory');else element('small',tr('Not visited yet','还没去过'),copy,'pawPassportUnvisited');
   const go=b(copy,scene===k?tr('Walk there','走过去'):tr('Take the train','搭列车去'),()=>travellerFollowRoute(a));go.disabled=!!room||!!activity;
  }
  if(count===4)element('p',tr('All four memories collected. The town is yours to revisit.','四份回忆已集齐，随时回来逛逛。'),book,'townAnchorMemory');
