@@ -19,3 +19,15 @@ if(select(['a','b','d'],'fortune',()=>true)!=='')throw Error('Do not duplicate o
 if(select([],'home',()=>true)!=='c')throw Error('Respect district');
 if(select([],'fortune',()=>false)!=='')throw Error('Missing artwork must not produce a named guest');
 return 'PASS four indoor cameo selection cases';`)());
+
+const clearance=s.slice(s.indexOf('function pawGuestClear'),s.indexOf('function pawGuestCount'));
+console.log(new Function(clearance+`let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};const anchors=[[0,0],[100,100]];
+ck(!pawGuestClear(0,0,anchors),'anchor');
+ck(pawGuestClear(52,0,anchors),'boundary');
+ck(!pawGuestClear(NaN,0,anchors),'invalid');
+ck(!pawGuestSegment([-100,0],[100,0],anchors),'crossing');
+ck(pawGuestSegment([-100,-60],[100,-60],anchors),'clear segment');
+ck(!pawGuestSegment([0,0],[0,0],anchors),'zero unsafe');
+ck(pawGuestSegment([60,0],[60,0],anchors),'zero safe');
+ck(pawGuestWaypoints([[0,0],[60,0],[200,0]],anchors,(x)=>x<100).length===1,'combined filtering');
+return 'PASS '+n+' guest clearance checks';`)());

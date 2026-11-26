@@ -43,6 +43,13 @@ async function travelLoop(page,name,touch){
   await press(sign);
   await page.waitForFunction(id=>room===id&&!transitioning&&continuityRoom===id&&Math.hypot(indoor.x-indoor.tx,indoor.y-indoor.ty)<4,id,{timeout:21000});
   assert(await page.evaluate(()=>indoorSafe(indoor.x,indoor.y)),'Arrival is outside walkable floor');
+  // Inspect actual rendered room actors, not an artificial guest count.
+  const visitors=await page.evaluate(()=>{
+   const reserved=pawGuestProtected(),obs=indoorObstacles();
+   return pawLocalVisitors.map(a=>({id:a.id,clear:pawGuestClear(a.x,a.y,reserved),safe:indoorSafe(a.x,a.y,obs),duplicate:!!a.guest&&npc.some(n=>n.popGuest===a.guest.id)}))
+  });
+  assert(visitors.every(a=>a.clear&&a.safe&&!a.duplicate),'Room visitor blocked a station, floor or existing identity: '+JSON.stringify(visitors));
+  assert.equal(new Set(visitors.map(a=>a.id)).size,visitors.length,'Duplicate indoor visitor IDs');
   await shot(id);
  }
  async function station(id){
