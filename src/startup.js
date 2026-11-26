@@ -2346,7 +2346,7 @@ async function mbMountRailPainting(host,mode){
  const stage=element('div','',host,'mbPaintedRail');
  stage.dataset.use=mode;stage.hidden=true;stage.setAttribute('aria-hidden','true');
  const picture=element('picture','',stage);
- const wide=element('source','',picture);wide.media='(min-width:760px) and (min-aspect-ratio: 1/1)';wide.srcset=art.landscape.path;
+ const wide=element('source','',picture);wide.media='(min-aspect-ratio: 1/1)';wide.srcset=art.landscape.path;
  const im=element('img','',picture);im.alt='';im.decoding='async';
  if(mode!=='transfer'){
   for(const pane of ['upper','lower']){
@@ -2728,14 +2728,24 @@ fade=function(fn,kind='gust',destination=null){
  if(transitioning)return;
  transitioning=true;
  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
- const game=$('game'),total=reduce?750:2450,arrival=reduce?330:1850;
+ const game=$('game'),rideTime=reduce?850:4200,arrivalFade=reduce?120:620;
  game.classList.add('pawRailJourneyActive');
  const old=$('fade');old.className='';old.replaceChildren();old.style.opacity='';
- setTimeout(()=>{
-  try{fn()}catch(err){console.error('Rail arrival',err)}
-  const overlay=game.querySelector('.pawRailJourney');if(overlay){overlay.dataset.arriving='true';overlay.querySelector('.pawRailCaption small').textContent=tr('Arriving at','即将抵达')}
- },arrival);
- setTimeout(()=>{game.classList.remove('pawRailJourneyActive');transitioning=false;game.querySelectorAll('.pawRailJourney').forEach(el=>el.remove());updateHUD()},total);
+ // Start the ride clock only when the shared carriage painting is decoded,
+ // with a bounded fallback so a failed image cannot trap the player.
+ const began=performance.now();
+ function waitForRail(){
+  const overlay=game.querySelector('.pawRailJourney');
+  if(!transitioning){game.classList.remove('pawRailJourneyActive');overlay?.remove();return}
+  if(overlay?.dataset.paintedRail!=='true'&&performance.now()-began<1600){requestAnimationFrame(waitForRail);return}
+  if(overlay)overlay.dataset.riding='true';
+  setTimeout(()=>{
+   try{fn()}catch(err){console.error('Rail arrival',err)}
+   if(overlay){overlay.dataset.arriving='true';overlay.querySelector('.pawRailCaption small').textContent=tr('Arriving at','即将抵达')}
+   setTimeout(()=>{game.classList.remove('pawRailJourneyActive');transitioning=false;game.querySelectorAll('.pawRailJourney').forEach(el=>el.remove());updateHUD()},arrivalFade)
+  },rideTime)
+ }
+ requestAnimationFrame(waitForRail);
 };
 mbTransferHolding=function(from,to){
  const overlay=element('section','',$('game'),'mbTransferHolding pawRailJourney');
@@ -2744,19 +2754,45 @@ mbTransferHolding=function(from,to){
  element('small',tr('Next stop','下一站'),caption);
  element('strong',tr(...maps[to].n),caption);
  element('span',tr('Pawradise railway','Pawradise 铁路'),caption);
- mbMountRailPainting(overlay,'preview');
+ // A cached painted fallback fills the viewport before the responsive source
+ // finishes decoding. The shared entrance renderer adds the moving panes.
+ const fallback=element('div','',overlay,'pawRailFallback');fallback.setAttribute('aria-hidden','true');
+ mbMountRailPainting(overlay,'ride');
 };
 mbJourneyPaintings().then(art=>{if(!art)return;for(const key of ['portrait','landscape'])if(art[key]){const im=new Image();im.src=art[key].path}});
 const pawRailJourneyStyle=document.createElement('style');pawRailJourneyStyle.textContent=`
 #game.pawRailJourneyActive #toast{visibility:hidden!important}
 #game .pawRailJourney{padding:0!important;overflow:hidden;isolation:isolate;background:#303c36!important;animation:none!important;opacity:1;transition:opacity .48s ease-out,transform .48s ease-out}
-#game .pawRailJourney .mbPaintedRail{position:absolute;inset:0;margin:auto;width:min(100%,calc(100dvh * var(--rail-aspect, .65)))!important;height:auto!important;aspect-ratio:var(--rail-aspect,.65);max-height:100%;border-radius:0!important}
-#game .pawRailJourney .mbPaintedRail picture img{object-fit:contain}
-#game .pawRailJourney .mbRailPane>span{animation-duration:2.4s}
+#game .pawRailJourney{container-type:size;pointer-events:auto}
+#game .pawRailJourney .pawRailFallback{position:absolute;inset:0;background:#303c36 url('assets/visual/painted/journey/portrait.webp') center/cover no-repeat}
+@media(min-aspect-ratio:1/1){#game .pawRailJourney .pawRailFallback{background-image:url('assets/visual/painted/journey/landscape.webp')}}
+#game .pawRailJourney[data-painted-rail=true] .pawRailFallback{display:none}
+#game .pawRailJourney .mbPaintedRail{position:absolute;inset:auto;left:50%;top:50%;margin:0;transform:translate(-50%,-50%);width:max(100cqw,calc(100cqh * var(--rail-aspect,.667)))!important;height:auto!important;aspect-ratio:var(--rail-aspect,.667);max-width:none!important;max-height:none!important;border-radius:0!important}
+#game .pawRailJourney .mbPaintedRail picture img{object-fit:fill}
+#game .pawRailJourney .mbRailPane>span,#proposal .mbPaintedRail[data-use=entrance] .mbRailPane>span{animation: pawTrainScenery 5.5s linear infinite alternate}
+#game .pawRailJourney .mbRailPane[data-pane=upper]>span,#proposal .mbPaintedRail[data-use=entrance] .mbRailPane[data-pane=upper]>span{animation-duration:7.5s}
+@keyframes pawTrainScenery{from{transform:translateX(.45%) scale(1.015)}to{transform:translateX(-2.3%) scale(1.07)}}
+#game .pawRailJourney[data-riding=true] .pawRailCaption{animation:pawRailCaptionIn .45s ease-out both}
+@keyframes pawRailCaptionIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
 #game .pawRailJourney .pawRailCaption{position:absolute;z-index:2;left:50%;bottom:max(8%,env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:max-content;max-width:88%;padding:12px 22px;text-align:center;color:#fff2d3;background:#343c32df;border:1px solid #c4ab7b;border-radius:4px;box-shadow:0 3px 18px #25271f60;box-sizing:border-box}
 #game .pawRailJourney .pawRailCaption small,#game .pawRailJourney .pawRailCaption span{display:block;font:12px/1.4 Georgia,"Songti SC",serif}
 #game .pawRailJourney .pawRailCaption strong{display:block;font:600 clamp(22px,5vw,38px)/1.25 Georgia,"Songti SC",serif;margin:4px 0 5px;overflow-wrap:anywhere}
-#game .pawRailJourney[data-arriving=true]{opacity:0;transform:scale(1.055);pointer-events:none}
-@media(prefers-reduced-motion:reduce){#game .pawRailJourney{transition:none!important}#game .pawRailJourney[data-arriving=true]{transform:none}}
+#game .pawRailJourney[data-arriving=true]{opacity:0;transform:scale(1.08);pointer-events:none;transition-duration:.62s}
+#game.pawRailJourneyActive :is(#hud,#dock,#small,#worldSigns,#movePad,#moveGuide,#hint,#back){visibility:hidden!important}
+#game .pawRailJourney[data-arriving=true] .pawRailCaption{animation:none}
+@media(prefers-reduced-motion:reduce){#game .pawRailJourney{transition:none!important}#game .pawRailJourney[data-arriving=true]{transform:none}#game .pawRailJourney .pawRailCaption{animation:none!important}}
 `;document.head.append(pawRailJourneyStyle);
+/* Map selection is a deliberate boarding action, too. Optional daily
+ suggestions retain their separate preview so browsing never forces travel. */
+const pawDirectMapBefore=travel;
+travel=function(...args){
+ const result=pawDirectMapBefore(...args);
+ const keys=['fortune','home','island','wonder'];
+ [...$('content').querySelectorAll('.portraitTravelGrid .portraitDestination')].forEach((button,i)=>{
+  const key=keys[i];if(!key)return;
+  button.onclick=()=>{if(transitioning)return;if(key===scene&&!room){$('page').style.display='none';return}journey(key)};
+ });
+ return result
+};
+$('travel').onclick=travel;$('dockTravel').onclick=travel;
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
