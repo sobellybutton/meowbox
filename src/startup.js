@@ -2358,12 +2358,8 @@ async function mbMountRailPainting(host,mode){
  const picture=element('picture','',stage);
  const wide=element('source','',picture);wide.media='(min-aspect-ratio: 1/1)';wide.srcset=art.landscape.path;
  const im=element('img','',picture);im.alt='';im.decoding='async';
- if(mode!=='transfer'){
-  for(const pane of ['upper','lower']){
-   const mask=element('span','',stage,'mbRailPane');mask.dataset.pane=pane;
-   element('span','',mask)
-  }
- }
+ // One complete painting until separately authored exterior scenery exists.
+ // Never composite a second copy of the carriage into its own window.
  const verify=()=>{
   const layout=['portrait','landscape'].find(key=>art[key].width===im.naturalWidth&&art[key].height===im.naturalHeight);
   stage.hidden=!layout;host.dataset.paintedRail=String(!!layout);
@@ -5011,24 +5007,35 @@ const pawRoomVisitorSpecs={
  match:{count:1,points:[[190,700],[610,690],[400,730]]}
 };
 let pawVisitorContext='',pawLocalVisitors=[],pawVisitorAt=0,pawVisitSerial=0,pawRenderedWalker=null;
+function pawGuestRoomCandidates(profiles,active,world,valid){return profiles.filter(g=>g.world===world&&!active.includes(g.id)&&valid(g))}
+function pawGuestAtlasSlot(g){const i=guestAtlasIndex({popGuest:g.id,n:g.name});return i>=0&&i<16&&![6,8,9].includes(i)?i:-1}
+function pawRoomGuestProfile(visit){const active=npc.filter(n=>n.popGuest).map(n=>n.popGuest),pool=pawGuestRoomCandidates(popGuestStories,active,scene,g=>pawGuestAtlasSlot(g)>=0);return pool.length?pool[visit%pool.length]:null}
 function pawGuestCount(max,visit,roomId){
  const key=Array.from(String(roomId)).reduce((a,c)=>a+c.codePointAt(0),0);
  // Some visits are quiet, and some have an extra guest. Stable within a visit.
  return (key+visit)%4===0?0:Math.min(max,1+((key+visit)%3===0?1:0))
 }
 function pawRoomWalkers(){
- const spec=pawRoomVisitorSpecs[room];if(!spec||!indoorReady())return [];
- const context=scene+'|'+room+'|'+avatar,obs=indoorObstacles(),safe=spec.points.filter(v=>indoorSafe(v[0],v[1],obs));
+ const spec=pawRoomVisitorSpecs[room];if(!spec||activity)return [];
+ const context=scene+'|'+room+'|'+avatar;
+ if(!indoorReady())return context===pawVisitorContext?pawLocalVisitors.map(a=>({...a,walking:0})):[];
+ const obs=indoorObstacles(),safe=spec.points.filter(v=>indoorSafe(v[0],v[1],obs));
  if(context!==pawVisitorContext){
   pawVisitorContext=context;pawVisitorAt=t;pawVisitSerial++;
-  const spawn=safe.filter(v=>Math.hypot(v[0]-indoor.x,v[1]-indoor.y)>90);
+  const entry=indoorSpec().entry;
+  const spawn=safe.filter(v=>Math.hypot(v[0]-indoor.x,v[1]-indoor.y)>90&&Math.hypot(v[0]-entry[0],v[1]-entry[1])>65&&!pawAmbientIndoor.some(a=>Math.hypot(v[0]-a.x,v[1]-a.y)<68));
   const offset=spawn.length?pawVisitSerial%spawn.length:0,ordered=[...spawn.slice(offset),...spawn.slice(0,offset)];
-  pawLocalVisitors=ordered.slice(0,pawGuestCount(spec.count,pawVisitSerial,room)).map((pos,i)=>({id:'fictional-visitor-'+i,fictionalVisitor:true,room,x:pos[0],y:pos[1],avatar:((avatar??0)+1+i+pawVisitSerial%2)%4,facing:'down',walking:0,index:safe.indexOf(pos),route:[],wait:t+2+i*2.5}))
+  pawLocalVisitors=ordered.slice(0,pawGuestCount(spec.count,pawVisitSerial,room)).map((pos,i)=>({id:'fictional-visitor-'+i,fictionalVisitor:true,room,x:pos[0],y:pos[1],avatar:((avatar??0)+1+i+pawVisitSerial%2)%4,facing:'down',walking:0,index:safe.indexOf(pos),route:[],wait:t+2+i*2.5}));
+  // Use existing original cameo identities, conversation branches and keepsakes.
+  // Never duplicate an outdoor character. Existing atlas has standing art only.
+  if(pawLocalVisitors.length&&pawVisitSerial%2===1){
+   const g=pawRoomGuestProfile(pawVisitSerial);if(g){const a=pawLocalVisitors[0];a.guest=g;a.id=g.id;a.facing=a.x<400?'right':'left'}
+  }
  }
  const dt=Math.max(0,Math.min(.05,t-pawVisitorAt));pawVisitorAt=t;
  if(residentReducedMotion.matches)return pawLocalVisitors.map(a=>({...a,walking:0}));
  for(const a of pawLocalVisitors){
-  a.walking=0;if(t<a.wait||safe.length<2)continue;
+  a.walking=0;if(a.guest||t<a.wait||safe.length<2)continue;
   if(!a.route.length){a.index=(a.index+1)%safe.length;const route=indoorPath([a.x,a.y],safe[a.index],obs);if(!route?.length){a.wait=t+3;continue}a.route=route}
   const dest=a.route[0],next=pawWalkStep(a,dest,dt,40+(a.avatar%3)*4);
   if(!indoorSafe(next.x,next.y,obs)){a.route=[];a.wait=t+2;continue}
@@ -5044,7 +5051,23 @@ const pawVisitorEnterBefore=enter;
 enter=function(...args){pawVisitorContext='';pawLocalVisitors=[];return pawVisitorEnterBefore(...args)};
 const pawVisitorDrawBefore=drawSharedRoomActor;
 drawSharedRoomActor=function(a,scale){
- if(a.fictionalVisitor){pawRenderedWalker=a;try{backHuman(a.x,a.y,a.avatar,a.walking===1,a.facing,scale)}finally{pawRenderedWalker=null}return}
+ if(a.fictionalVisitor){
+  if(a.guest){
+   const height=94*scale,drawn=drawGuestAtlasActor(pawGuestAtlasSlot(a.guest),a.x,a.y,height,a.facing);
+   if(drawn){
+    if(indoorReady()&&Math.hypot(a.x-indoor.x,a.y-indoor.y)<150){
+     const w=Math.max(36,48/Math.max(.2,cam.scale)),h=Math.max(height*.8,44/Math.max(.2,cam.scale));
+     target(a.x-w/2,a.y-h,w,h,()=>{
+      if(!indoorReady()||Math.hypot(a.x-indoor.x,a.y-indoor.y)>=150)return;
+      releaseWalkKeys();joystickReset();indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y;
+      indoor.facing=pawWalkFacing(indoor,[a.x,a.y]);popGuestMeet(a.guest)
+     })
+    }
+    return
+   }
+  }
+  pawRenderedWalker=a;try{backHuman(a.x,a.y,a.avatar,a.walking===1,a.facing,scale)}finally{pawRenderedWalker=null}return
+ }
  pawRenderedWalker=a;try{return pawVisitorDrawBefore(a,scale)}finally{pawRenderedWalker=null}
 };
 const pawGardenScaleBefore=drawGatheringPainted;
@@ -5134,6 +5157,28 @@ pawVisualCleanStyle.textContent=`
 /* A complete painted carriage is preferable to misaligned fragments. The next
    art pass needs independently painted scenery behind a transparent frame. */
 const pawRailSeamStyle=document.createElement('style');pawRailSeamStyle.textContent='#game .mbPaintedRail .mbRailPane,#proposal .mbPaintedRail .mbRailPane{display:none!important}';document.head.append(pawRailSeamStyle);
+/* Visitor calendar belongs in Town Hall, not a fifth dock or a duplicate
+   Today page. Only show existing scripted roster and earned conversation memory. */
+const pawTownGuestBefore=townChatPage;
+townChatPage=function(...args){
+ const result=pawTownGuestBefore(...args);
+ if(communityTab!=='board')return result;
+ const q=$('content'),tabs=q.querySelector('.communityTabs');
+ if(!tabs||q.querySelector('.pawGuestNotice'))return result;
+ const note=element('details','',q,'pawGuestNotice');tabs.after(note);
+ element('summary',tr('Around town today','今日小镇来客'),note);
+ element('p',tr('Fictional visitors in '+maps[scene].n[0]+'. Meet them while exploring; other familiar faces may turn up indoors.',''+maps[scene].n[1]+'的虚构来客。逛小镇时可以遇见他们，店里也可能有熟面孔。'),note);
+ const roster=mbGuestRoster(scene);
+ for(const g of roster){
+  const line=element('div','',note,'pawGuestNoticeLine');element('strong',tr(...g.name),line);
+  const record=popGuestRecord(g);
+  element('small',record?.choices?.length?tr('A memory you share','已有共同回忆'):record?.visits?tr('Met before','曾经见过'):tr('Yet to meet','还未见面'),line)
+ }
+ if(!roster.length)element('p',tr('A quiet day in this district.','今天这一站很安静。'),note);
+ return result
+};
+const pawGuestNoticeCss=document.createElement('style');pawGuestNoticeCss.textContent='#game #content .pawGuestNotice{border-bottom:1px dashed #b9a27d;margin:0 0 10px;padding:0 5px 8px;color:#514534}#game #content .pawGuestNotice summary{min-height:44px;align-content:center;cursor:pointer;color:#51634e;font-weight:600}#game #content .pawGuestNotice p{font-size:13px;line-height:1.4;margin:5px 0}#game #content .pawGuestNoticeLine{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;padding:5px 0}#game #content .pawGuestNoticeLine small{color:#75634d;font-size:12px}';document.head.append(pawGuestNoticeCss);
+
 
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
