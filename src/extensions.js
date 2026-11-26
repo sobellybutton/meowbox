@@ -2241,6 +2241,62 @@ function residentTip(id){
 }
 const residentTopicReturns={"keeper":[["The incense stand is still there. No renovation committee required.","香台还在原处，不用开会讨论装修。"],["I hope you found a moment to rest since our last chat.","上次聊过之后，希望你有好好休息。"],["The little garden is waiting whenever you need somewhere quiet.","想清静一下的时候，后院一直都在。"]],"auntie":[["I saved you some gossip. The kettle has heard all of it.","给你留了点新瓜，水壶已经听完了。"],["Did you find a new favourite corner of town?","上次说到逛小镇，你找到喜欢的地方了吗？"],["Thank you for asking about me last time. Tea tastes better with company.","上次还惦记着我呢。有人陪着喝茶，茶都更香。"]],"wang":[["Our meeting cancellation committee has not met. A great success.","取消会议委员会一次都没开会，项目圆满成功。"],["Have you managed to take a proper break?","上次聊到休息，你有好好摸鱼吗？"],["Still accepting applications for professional tea tasters.","专业试茶员还在招人呢。"]],"mochi":[["Mrrp. The imaginary snacks were surprisingly filling.","喵。上次的虚拟零食居然挺饱。"],["Mrrp. Ear scratches are still accepted as tribute.","喵。挠耳朵依然可以进贡。"],["Mochi makes room beside the cushion.","麻薯往旁边挪了挪，给你留了个位子。"]]};
 const residentTopicAlternates={"keeper":[["No need to finish every ritual. A quiet visit is enough.","不必每项仪式都做完，静静来坐坐就好。"],["Some problems need time more than answers.","有些烦恼需要的是时间，不一定是答案。"],["Try listening for the wind before looking for another activity.","先听听风声，再想要不要做下一件事。"]],"auntie":[["The committee has now arranged a meeting to discuss the last meeting. My tea is getting cold.","他们又约了个会讨论上次的会。我的茶都凉了。"],["Try the deer meadow. At least the deer do not send voice messages.","去小鹿森野吧，至少小鹿不会发六十秒语音。"],["I have decided to retire from worrying. The paperwork is pending.","我决定从操心这件事退休，手续还没批下来。"]],"wang":[["A meeting without slides? Let us not get too ambitious.","开会不用PPT？别一下子定这么高的目标。"],["Take a walk without measuring the steps. Radical, I know.","散个步，不计步数。是不是太大胆了？"],["My new business plan is a four-day weekend. Investors are welcome.","我的新商业计划是每周休四天。欢迎投资。"]],"mochi":[["Mochi sniffs your empty palm with great suspicion.","麻薯满脸怀疑地闻了闻你的空手掌。"],["Mrrp. The ear-scratching department approves.","喵。挠耳朵部门审核通过。"],["Mochi has fallen asleep. This is a compliment.","麻薯睡着了。这是对你的最高评价。"]]};
+
+/* MBFRIEND_BEGIN */
+const mbFriendStories={
+ keeper:[
+  {title:['The missing incense holder','不见了的香炉'],opening:['A visitor offered to modernise the temple. Their first suggestion was a QR code for every bow.','有位香客想让寺庙现代化。第一个建议是每次鞠躬都扫二维码。'],choices:[[['Keep the old ways','保留老规矩'],['Exactly. The clouds never needed a password.','就是嘛，天上的云从来不用密码。']],[['Give the visitor some tea','请香客喝茶'],['Good idea. After the tea, they forgot the entire proposal.','好主意。茶喝完，提案也忘光了。']]]},
+  {title:['A very small blessing','一点点福气'],opening:['A child left a folded paper boat beside the pond. I think the best wish today is a simple one.','有个孩子在池边留了一只纸船。我想，今天最好的愿望大概很简单。'],choices:[[['A restful evening','好好休息的晚上'],['May your pillow be more persuasive than your phone.','愿你的枕头比手机更有说服力。']],[['A good meal','一顿好饭'],['Then may your rice be warm and your favourite dish plentiful.','那就愿你米饭热乎，爱吃的菜管够。']]]}
+ ],
+ auntie:[
+  {title:['The neighbourhood group chat','街坊群里的大瓜'],opening:['Someone sent a forty-second voice note saying only “okay”. The whole street is investigating.','有人发了四十秒语音，最后只说了个好。全街坊正在调查。'],choices:[[['Mute the group','先把群静音'],['Wisdom! The only notification we need is the kettle boiling.','有智慧！我们只需要水壶烧开的通知。']],[['Ask for the tea, not the gossip','喝茶不吃瓜'],['Fine, fine. But this tea has a particularly interesting aftertaste.','行行行。不过这壶茶的回甘，可有故事了。']]]},
+  {title:['Auntie’s day off','梅姨的休息日'],opening:['I put up a sign saying “closed for rest”. Three neighbours came to ask if I was feeling unwell.','我挂了块牌子说今天休息，三个街坊跑来问我是不是生病了。'],choices:[[['Rest is a valid reason','休息就是理由'],['You understand me. Next time the sign will just say “busy relaxing”.','你懂我。下次牌子就写：忙着休息。']],[['Offer to pour the tea','帮梅姨倒茶'],['Oh! A guest who does not need to be reminded. You can sit here anytime.','哎哟，不用提醒就会倒茶的客人！以后随时来坐。']]]}
+ ],
+ wang:[
+  {title:['The meeting about nothing','关于什么都没做的会议'],opening:['I cancelled a meeting. Then someone asked for the minutes of the cancellation.','我取消了一个会议。然后有人问取消会议的会议纪要在哪。'],choices:[[['Send an empty document','发一份空白文件'],['Excellent. The most accurate report this office has ever produced.','好极了。这是本办公室史上最准确的报告。']],[['Go for a walk instead','出去走走'],['Approved. No minutes required, only footsteps.','批准。不要纪要，只要脚步。']]]},
+  {title:['The imaginary promotion','想象中的升职'],opening:['I have promoted myself to Director of Afternoon Naps. Unfortunately, nobody has approved my budget.','我自封午睡总监。可惜预算还没批。'],choices:[[['Appoint a deputy cat','任命猫咪当副总'],['Mochi has accepted, provided all meetings are held in sunlight.','麻薯同意了，条件是所有会议必须在阳光下召开。']],[['Protect the lunch break','保住午休时间'],['At last, a strategy worth putting on one slide.','终于有一个值得做成一页PPT的战略。']]]}
+ ],
+ mochi:[
+  {title:['The suspicious cardboard box','可疑的纸箱'],opening:['Mochi circles a cardboard box as though inspecting a new property development.','麻薯围着纸箱转圈，仿佛正在视察新楼盘。'],choices:[[['Leave the box open','把箱子打开'],['Mochi moves in immediately. The property has excellent ventilation.','麻薯当场入住。该楼盘通风良好。']],[['Sit beside the box','坐在纸箱旁'],['Mochi pokes its head out. Apparently the neighbourhood is acceptable.','麻薯探出脑袋。看来对这个邻居还算满意。']]]},
+  {title:['A very important patch of sunlight','一块很重要的阳光'],opening:['Mochi has found a warm patch of sunlight. There is just enough room for two.','麻薯找到了一块暖洋洋的阳光。刚好够两个朋友坐。'],choices:[[['Sit without doing anything','什么也不做，坐一会儿'],['Mochi closes its eyes. You have both successfully avoided productivity.','麻薯闭上眼睛。两位成功避开了生产力。']],[['Let Mochi have the whole spot','把阳光全让给麻薯'],['Mochi stretches into the space. A very generous allocation of sunlight.','麻薯伸了个大懒腰。阳光分配相当慷慨。']]]}
+ ]
+};
+function mbFriendRecord(raw,id){
+ const count=mbFriendStories[id]?.length||0;
+ if(!count||!raw||typeof raw!=='object')return {seen:[],last:null,day:''};
+ const seen=Array.isArray(raw.seen)?[...new Set(raw.seen.filter(v=>Number.isInteger(v)&&v>=0&&v<count))]:[];
+ const last=raw.last;
+ return {seen,last:last&&seen.includes(last.story)&&Number.isInteger(last.choice)&&last.choice>=0&&last.choice<2?{story:last.story,choice:last.choice}:null,day:typeof raw.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(raw.day)?raw.day:''}
+}
+function mbFriendNext(raw,id,day){
+ const rec=mbFriendRecord(raw,id),stories=mbFriendStories[id]||[];
+ if(!stories.length)return -1;
+ if(rec.day===day&&rec.last)return rec.last.story;
+ const unseen=stories.findIndex((_,i)=>!rec.seen.includes(i));
+ return unseen>=0?unseen:((rec.last?.story??-1)+1)%stories.length
+}
+function mbFriendFinish(raw,id,index,choice,day){
+ const rec=mbFriendRecord(raw,id);
+ if(!mbFriendStories[id]?.[index]?.choices[choice]||!Number.isInteger(index)||!Number.isInteger(choice)||!/^\d{4}-\d{2}-\d{2}$/.test(day))return rec;
+ return {seen:[...new Set([...rec.seen,index])],last:{story:index,choice},day}
+}
+/* MBFRIEND_END */
+let mbFriendMemory=load('residentExtraStoriesV1',{});
+if(!mbFriendMemory||typeof mbFriendMemory!=='object'||Array.isArray(mbFriendMemory))mbFriendMemory={};
+function mbFriendExtra(id,n){
+ if(!Object.hasOwn(mbFriendStories,id)||residentRecord(id).topics.length===0)return;
+ const date=shrineClock().day,rec=mbFriendRecord(mbFriendMemory[id],id),index=mbFriendNext(rec,id,date),story=mbFriendStories[id][index];
+ if(!story)return;
+ const returnOptions=()=>[[tr('Chat a little more','再聊一会儿'),()=>residentConversation(id,n,false)],[tr('See you around','下次见'),closeTalk]];
+ if(rec.day===date&&rec.last?.story===index){
+  say(tr(...n.n),tr('We were talking about this earlier. ','刚才我们聊到这儿。')+tr(...story.choices[rec.last.choice][1]),returnOptions());return
+ }
+ say(tr(...n.n),tr(...story.opening),story.choices.map(([label,reply],choice)=>[tr(...label),()=>{
+  mbFriendMemory[id]=mbFriendFinish(mbFriendMemory[id],id,index,choice,date);save('residentExtraStoriesV1',mbFriendMemory);
+  say(tr(...n.n),tr(...reply),returnOptions())
+ }]).concat([[tr('Maybe later','下次再聊'),()=>residentConversation(id,n,false)]]))
+}
+
 function residentReply(id,n,index){
  const profile=residentProfiles[id],record=residentRecord(id),fresh=!record.topics.includes(index);
  if(fresh)record.topics.push(index);
@@ -2262,6 +2318,10 @@ function residentConversation(id,n,arrived=true){
  const follow=residentTopicReturns[id]?.[record.last];
  const remembered=arrived&&previousDay!==today&&follow?' '+tr(...follow):'';
  const options=profile.topics.map((topic,index)=>[tr(...topic.label),()=>residentReply(id,n,index)]);
+ if(record.topics.length>0&&Object.hasOwn(mbFriendStories,id)){
+  const date=shrineClock().day,rec=mbFriendRecord(mbFriendMemory[id],id);
+  options.push([rec.day===date?tr('Remember our story','回味今天的故事'):tr('A little story for today','听个今天的小故事'),()=>mbFriendExtra(id,n)])
+ }
  options.push([tr('Keep exploring','继续逛逛'),closeTalk]);
  say(tr(...n.n),tr(...welcome)+remembered,options);
 }
@@ -2281,6 +2341,13 @@ passport=function(){
   const record=residentRecord(id),entry=element('div','',book,'friendEntry');
   element('strong',record.visits?tr(...profile.name):tr('Someone to meet','待相遇的朋友'),entry);
   element('small',record.visits?tr(...residentStatus(record))+' · '+record.topics.length+'/3 '+tr('stories shared','段聊天回忆'):tr('Meet a resident on the village path.','去小镇路上认识新朋友吧。'),entry);
+  if(record.visits&&record.topics.length){
+   const rec=mbFriendRecord(mbFriendMemory[id],id),details=element('details','',entry,'mbFriendJournal');
+   element('summary',tr('Our little memories','我们的小回忆'),details);
+   for(const index of record.topics)element('small',tr(...profile.topics[index].label),details);
+   for(const index of rec.seen)element('small',tr(...mbFriendStories[id][index].title),details);
+   if(rec.last)element('p',tr(...mbFriendStories[id][rec.last.story].choices[rec.last.choice][1]),details);
+  }
  }
 };
 $('dockPassport').onclick=passport;

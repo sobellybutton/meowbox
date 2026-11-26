@@ -1824,4 +1824,8 @@ mbJourneyStyle.textContent=
  '#game .mbFishTiming[data-timing="ready"]{color:#36583e}';
 document.head.append(mbJourneyStyle);
 
+const mbFriendJournalStyle=document.createElement('style');
+mbFriendJournalStyle.textContent='#content .friendEntry .mbFriendJournal{grid-column:1/-1;width:100%;margin-top:4px;padding:6px 9px;background:#f7ecd4;border:1px solid #c7af87;border-radius:4px;box-sizing:border-box}#content .mbFriendJournal summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:600;color:#69513e}#content .mbFriendJournal small{display:block;margin:5px 0;white-space:normal}#content .mbFriendJournal p{font-size:13px;line-height:1.5;margin:8px 0 2px}';
+document.head.append(mbFriendJournalStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

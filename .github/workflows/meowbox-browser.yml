@@ -23,6 +23,7 @@ jobs:
       - run: node scripts/parallel-letter-test.cjs
       - run: node scripts/home-placement-test.cjs
       - run: node scripts/rail-fish-test.cjs
+      - run: node scripts/resident-story-test.cjs
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps chromium
       - name: Test all four villages and actual doorway taps
@@ -640,6 +641,13 @@ jobs:
                 await page.locator('#choices').getByRole('button',{name:'Chat a little more',exact:true}).click();
                 await page.locator('#choices').getByRole('button',{name:'Offer an imaginary snack',exact:true}).click();
                 if(!await page.evaluate(()=>residentRecord('mochi').topics.length===3&&items.filter(x=>x[0]===residentProfiles.mochi.reward[0]).length===1))throw Error('Repeat topic granted duplicate progress');
+                await page.locator('#choices').getByRole('button',{name:'Chat a little more',exact:true}).click();
+                await page.locator('#choices').getByRole('button',{name:'A little story for today',exact:true}).click();
+                await page.locator('#choices').getByRole('button',{name:'Leave the box open',exact:true}).click();
+                if(!await page.evaluate(()=>mbFriendRecord(mbFriendMemory.mochi,'mochi').last?.choice===0))throw Error('Story choice was not saved');
+                await page.locator('#choices').getByRole('button',{name:'Chat a little more',exact:true}).click();
+                await page.locator('#choices').getByRole('button',{name:'Remember our story',exact:true}).click();
+                if(!await page.locator('#line').innerText().then(v=>v.includes('excellent ventilation')))throw Error('Same-day story recap missing');
                 await page.locator('#choices').getByRole('button',{name:'See you around',exact:true}).click();
                 await page.locator('#dockPassport').click();
                 await page.getByText('Trusted friend · 3/3 stories shared',{exact:true}).waitFor({timeout:5000});
@@ -663,6 +671,7 @@ jobs:
                 await page.reload({waitUntil:'domcontentloaded'});
                 await page.locator('#proposal .shrine-enter').waitFor({timeout:45000});
                 if(!await page.evaluate(()=>residentRecord('mochi').topics.length===3&&items.filter(x=>x[0]===residentProfiles.mochi.reward[0]).length===1))throw Error('Resident progress did not survive reload');
+                if(!await page.evaluate(()=>mbFriendRecord(mbFriendMemory.mochi,'mochi').seen.length===1))throw Error('Extra story memory lost after reload');
                 if(errors.length)throw Error(errors.join('; '));
                 console.log(name+': PASS');
               }catch(e){failed=true;console.error(name+': FAIL '+e.stack+' | page errors: '+errors.join('; '));console.error('Visible page: '+(await page.locator('body').innerText().catch(()=>'' )).slice(0,500));await page.screenshot({path:'test-results/'+name+'-failure.png'}).catch(()=>{});}
