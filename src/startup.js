@@ -1703,6 +1703,33 @@ mirrorRitualPose=function(x,y,scale,opts){
  }
  return mbArtStrikeBefore(x,y,scale,opts)
 };
+/* PAW_DEVICE_ART_BEGIN */
+function pawArtworkOrientation(width,height){
+ if(!Number.isFinite(width)||!Number.isFinite(height)||width<=0||height<=0)return 'portrait';
+ return width/height>=1.15?'landscape':'portrait'
+}
+function pawArtworkRecord(records,width,height){
+ return records?.[pawArtworkOrientation(width,height)]||null
+}
+function pawArtworkContain(iw,ih,w,h){
+ if(![iw,ih,w,h].every(v=>Number.isFinite(v)&&v>0))return null;
+ const scale=Math.min(w/iw,h/ih),width=iw*scale,height=ih*scale;
+ return {w:width,h:height,dx:(w-width)/2,dy:(h-height)/2}
+}
+/* PAW_DEVICE_ART_END */
+const pawWideArtworkMedia='(min-aspect-ratio: 23/20)';
+function pawSyncArtworkOrientation(){
+ const game=$('game'),width=game?.clientWidth||innerWidth,height=game?.clientHeight||innerHeight;
+ const orientation=pawArtworkOrientation(width,height);
+ document.documentElement.dataset.pawArtwork=orientation;
+ if(game)game.dataset.pawArtwork=orientation;
+ // Warm only the preferred room art when dimensions change, without changing
+ // any scene, player coordinates, saved data, controls or gameplay state.
+ if(typeof room==='string'&&room)mbArtImage(pawArtworkRecord(mbArtRegistry.rooms[activePortraitInterior()],width,height))
+}
+window.addEventListener('resize',pawSyncArtworkOrientation,{passive:true});
+if(typeof ResizeObserver==='function'&&$('game'))new ResizeObserver(pawSyncArtworkOrientation).observe($('game'));
+pawSyncArtworkOrientation();
 /* The two native room compositions are independent. Only a verified matching
    raster may replace the current background; never stretch it or load a
    nonexistent guessed filename. */
@@ -1712,12 +1739,16 @@ portraitInteriorImage=function(id){
 };
 const mbArtLandscapeBefore=paintLandscapeRoom;
 paintLandscapeRoom=function(id){
- if(W/H<1.15)return mbArtLandscapeBefore(id);
- mbArtLoad();const record=mbArtRegistry.rooms[id]?.landscape,im=mbArtImage(record);
+ if(pawArtworkOrientation(W,H)!=='landscape')return mbArtLandscapeBefore(id);
+ mbArtLoad();const record=pawArtworkRecord(mbArtRegistry.rooms[id],W,H),im=mbArtImage(record);
  if(!im)return mbArtLandscapeBefore(id);
- const b=livingBounds(),fit=wideSceneFit(im.naturalWidth,im.naturalHeight,b.w,b.h);
+ const b=livingBounds(),fit=pawArtworkContain(im.naturalWidth,im.naturalHeight,b.w,b.h);
  if(!fit)return mbArtLandscapeBefore(id);
- ctx.drawImage(im,b.x+fit.dx,b.y+fit.dy,fit.w,fit.h);return true
+ ctx.save();try{
+  ctx.fillStyle='#51493d';ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.drawImage(im,b.x+fit.dx,b.y+fit.dy,fit.w,fit.h);
+ }finally{ctx.restore()}
+ return true
 };
 /* Use the actual installed seated/scolding paintings at the correct stage.
    No pretend arm animation on the resident. */
@@ -2553,7 +2584,7 @@ async function mbMountRailPainting(host,mode){
  const stage=element('div','',host,'mbPaintedRail');
  stage.dataset.use=mode;stage.hidden=true;stage.setAttribute('aria-hidden','true');
  const picture=element('picture','',stage);
- const wide=element('source','',picture);wide.media='(min-aspect-ratio: 1/1)';wide.srcset=art.landscape.path;
+ const wide=element('source','',picture);wide.media=pawWideArtworkMedia;wide.srcset=art.landscape.path;
  const im=element('img','',picture);im.alt='';im.decoding='async';
  // The original carriage remains the stationary frame of the window animation.
  const verify=()=>{
@@ -3003,7 +3034,7 @@ const pawRailJourneyStyle=document.createElement('style');pawRailJourneyStyle.te
 #game .pawRailJourney{padding:0!important;overflow:hidden;isolation:isolate;background:#303c36!important;animation:none!important;opacity:1;transition:opacity .48s ease-out,transform .48s ease-out}
 #game .pawRailJourney{container-type:size;pointer-events:auto}
 #game .pawRailJourney .pawRailFallback{position:absolute;inset:0;background:#303c36 url('assets/visual/painted/journey/portrait.webp') center/contain no-repeat}
-@media(min-aspect-ratio:1/1){#game .pawRailJourney .pawRailFallback{background-image:url('assets/visual/painted/journey/landscape.webp')}}
+@media(min-aspect-ratio:23/20){#game .pawRailJourney .pawRailFallback{background-image:url('assets/visual/painted/journey/landscape.webp')}}
 #game .pawRailJourney[data-painted-rail=true] .pawRailFallback{display:none}
 #game .pawRailJourney .mbPaintedRail{position:absolute;inset:auto;left:50%;top:50%;margin:0;transform:translate(-50%,-50%);width:min(100cqw,calc(100cqh * var(--rail-aspect,.667)))!important;height:auto!important;aspect-ratio:var(--rail-aspect,.667);max-width:none!important;max-height:none!important;border-radius:0!important}
 #game .pawRailJourney .mbPaintedRail picture img{object-fit:fill}
@@ -4860,7 +4891,7 @@ proRender=function(...args){
   // preview of the journey until a dedicated station painting is available.
   hero.querySelector('.rail-platform-sign')?.remove();
   const preview=element('picture','',hero,'pawFirstRailPainting');
-  const wide=element('source','',preview);wide.media='(min-aspect-ratio: 1/1)';wide.srcset='assets/visual/painted/journey/landscape.webp';
+  const wide=element('source','',preview);wide.media=pawWideArtworkMedia;wide.srcset='assets/visual/painted/journey/landscape.webp';
   const art=element('img','',preview);art.src='assets/visual/painted/journey/portrait.webp';art.alt=tr('A painted preview of the mountain railway carriage','山间列车车厢的画面预览');
   const heading=foot.querySelector('h1');if(heading){const tag=element('p',tr('Pawradise railway','Pawradise 铁路'),foot,'pawFirstRailLabel');heading.before(tag)}
  }
@@ -4931,7 +4962,16 @@ loop=function(...args){const result=pawFocusBefore(...args);pawFocusView();retur
 const pawFocusHUD=updateHUD;
 updateHUD=function(...args){const result=pawFocusHUD(...args);pawFocusView();if(room&&!activity&&!$('back').hidden)$('back').textContent=tr('Step outside','走出门口');return result};
 const pawPreloadDoor=walkDoor;
-walkDoor=function(id,...args){try{const im=portraitInteriorImage(id);im?.decode?.().catch(()=>{});const wide=landscapeRoomImage(id);wide?.decode?.().catch(()=>{})}catch{}return pawPreloadDoor(id,...args)};
+walkDoor=function(id,...args){
+ try{
+  mbArtLoad();
+  const wide=pawArtworkOrientation(W,H)==='landscape';
+  const ready=mbArtImage(pawArtworkRecord(mbArtRegistry.rooms[id],W,H));
+  const preferred=ready||(wide?landscapeRoomImage(id):portraitInteriorImage(id));
+  preferred?.decode?.().catch(()=>{});
+ }catch{}
+ return pawPreloadDoor(id,...args)
+};
 const pawMaterialSound=sound;
 sound=function(f=420){if(activity==='moon'){if(!muted&&!document.hidden)physicalFx('wood',.72);return}if(activity==='sticks'){if(!muted&&!document.hidden)physicalFx('shake',.42);return}if(activity==='prayer'){if(!muted&&!document.hidden)physicalFx('paper',.28);return}return pawMaterialSound(f)};
 const pawJoySeeds=[
