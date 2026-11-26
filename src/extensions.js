@@ -1729,7 +1729,7 @@ drawRoom=function(){
   // Movement destination is communicated by the walking character, not a floating marker.
  }
  const scale=travellerRoomScale(H,cam.scale);
- ctx.save();const visitors=sharedTownActors().filter(a=>a.room===room&&indoorSafe(a.x,a.y));const drawSelf=()=>backHuman(indoor.x,indoor.y,avatar,Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3,indoor.facing,scale);
+ ctx.save();const visitors=[...sharedTownActors().filter(a=>a.room===room&&indoorSafe(a.x,a.y)),...(typeof pawRoomWalkers==='function'?pawRoomWalkers():[])];const drawSelf=()=>backHuman(indoor.x,indoor.y,avatar,Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3,indoor.facing,scale);
  for(const a of visitors.filter(a=>a.y<indoor.y).sort((a,b)=>a.y-b.y))drawSharedRoomActor(a,scale);drawSelf();for(const a of visitors.filter(a=>a.y>=indoor.y).sort((a,b)=>a.y-b.y))drawSharedRoomActor(a,scale);ctx.restore();
 };
 c.addEventListener('pointerup',e=>{if(!indoorReady()||!drag||drag.moved>30||drag.h)return;const a=point(e);indoorDestination(a.x,a.y)},true);
@@ -1810,7 +1810,22 @@ function destinyAccessTick(){const hide=!(room==='destiny'&&!activity&&!talkOpen
 
 /* Recover from a failed transition and retain a usable exit in all houses. */
 const houseBack=$('back'),houseBackBefore=houseBack.onclick;
-houseBack.onclick=function(e){releaseWalkKeys();indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y;if(room&&!activity&&indoorReady()&&continuityRoom===room){const spec=indoorSpec();if(Math.hypot(indoor.x-spec.entry[0],indoor.y-spec.entry[1])>4){if(indoorDestination(spec.entry[0],spec.entry[1],()=>{indoor.facing='down';houseBackBefore.call(houseBack,e)},'down')){hint('Heading outside…','走到门口……');return}}}return houseBackBefore.call(this,e)};
+houseBack.onclick=function(e){
+ releaseWalkKeys();indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y;
+ if(room&&!activity&&indoorReady()&&continuityRoom===room){
+  const spec=indoorSpec(),[x,y]=spec.entry;
+  if(Math.hypot(indoor.x-x,indoor.y-y)>4){
+   const obs=indoorObstacles(),approach=[x,y-35],threshold=[x,y];
+   const route=indoorPath([indoor.x,indoor.y],approach,obs);
+   if(route&&indoorSegment(approach,threshold,obs)){
+    indoor.route=[...route,threshold];[indoor.tx,indoor.ty]=indoor.route.shift();indoor.goalFacing='down';indoor.goal=()=>{indoor.facing='down';houseBackBefore.call(houseBack,e)};
+    hint('Heading to the doorway…','走向门口……');return
+   }
+   hint('Follow the clear path to the doorway.','沿着小路走到门口。');return
+  }
+ }
+ return houseBackBefore.call(this,e)
+};
 const originalHouseEnter=enter;
 enter=function(id){releaseWalkKeys();joystickReset();continuityRoom=null;continuityActivity=null;indoor.goal=null;return originalHouseEnter(id)};
 const houseFade=fade;

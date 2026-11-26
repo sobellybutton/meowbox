@@ -321,7 +321,7 @@ function festivalFishPosition(i,age,seed=0){
  return {x:400+Math.cos(a)*111+Math.sin(a*1.7+i)*24,y:458+Math.sin(a*.84+i)*61,dir:-Math.sin(a)>=0?1:-1}
 }
 function festivalNewRound(now,seed=0){
- return {at:now,seed,x:400,y:458,paper:100,phase:'aim',caught:[],attempts:0,last:now,resultAt:0,feedback:['Aim the scoop, then dip.','先对准小鱼，再下网。']}
+ return {at:now,seed,x:400,y:458,paper:100,phase:'aim',caught:[],attempts:0,last:now,resultAt:0,feedback:['Hold in the water, follow a fish and release to lift.','按住水面，跟着小鱼移动，松手捞起。']}
 }
 function festivalFishOutcome(game,now){
  const elapsed=now-game.last;
@@ -340,7 +340,7 @@ function festivalFinish(g){
 }
 function festivalAim(x,y){
  const g=state.festivalFish;if(activity!=='goldfishScoop'||!['aim','dip'].includes(g?.phase)||!Number.isFinite(x)||!Number.isFinite(y))return;
- g.x=clamp(x,270,530);g.y=clamp(y,390,525)
+ const pos=pawScoopProject(x,y);if(pos){g.x=pos.x;g.y=pos.y}
 }
 function festivalDip(){
  const g=state.festivalFish;if(activity!=='goldfishScoop'||g?.phase!=='aim'||g.paper<=0)return;
@@ -357,11 +357,11 @@ function festivalLift(){
 const festivalStartBefore=start;
 start=function(id){
  festivalStartBefore(id);
- if(id==='goldfishScoop'){state.festivalFish=festivalNewRound(t,Math.random()*TAU);refreshControls();hint('Tap the water to aim, dip the paper ring, then lift gently.','点击水面瞄准，下网，再轻轻捞起。')}
+ if(id==='goldfishScoop'){state.festivalFish=festivalNewRound(t,Math.random()*TAU);refreshControls();hint('Hold and drag in the water. Release to lift.','按住水面移动，松手捞鱼。')}
 };
 activityTitle.goldfishScoop=['Goldfish scooping','捞金鱼'];
 const festivalHintBefore=activityHint;
-activityHint=function(){if(activity==='goldfishScoop'){hint('Aim, dip, then lift. Your paper wears out in water.','瞄准、下网、捞起。纸网泡久了会破。');return}return festivalHintBefore()};
+activityHint=function(){if(activity==='goldfishScoop'){hint('Hold to dip. Drag gently. Release to lift.','按住下网，轻轻移动，松手捞起。');return}return festivalHintBefore()};
 const festivalActionBefore=action;
 action=function(id){if(room==='arcade'&&id==='goldfishScoop'){start(id);return}return festivalActionBefore(id)};
 const festivalPawBefore=townPawCategory;
@@ -396,14 +396,15 @@ drawActivity=function(){
  const b=livingBounds(),shade=ctx.createLinearGradient(0,325,0,650);shade.addColorStop(0,'#332e2620');shade.addColorStop(1,'#4f382c9c');ctx.fillStyle=shade;ctx.fillRect(b.x,b.y,b.w,b.h);
  // The actual tank rests on its own wooden legs, with separate moving fish.
  festivalTank(400,458,1,g);
- const gx=g.x,gy=g.y,raise=g.phase==='lift'?Math.sin(Math.PI*clamp((t-g.last)/.65,0,1))*32:0;
+ const gx=g.x,gy=g.y,raise=g.phase==='lift'&&!residentReducedMotion.matches?Math.sin(Math.PI*clamp((t-g.last)/.4,0,1))*32:0;
  if(g.phase!=='done'){
-  ctx.save();ctx.translate(gx,gy-raise);ctx.globalAlpha=g.phase==='dip'?.72:1;
-  line(13,11,46,58,'#9d744d',8);line(15,9,46,56,'#d3b083',2);ellipse(0,0,24,20,g.paper>0?'#ece5ce80':'#00000000');
+  if(g.phase==='dip'&&!residentReducedMotion.matches){ctx.save();ctx.strokeStyle='#e7f4da88';ctx.lineWidth=1.4;for(let i=0;i<2;i++){const f=((t-g.last)*1.45+i*.5)%1;ctx.globalAlpha=(1-f)*.65;ctx.beginPath();ctx.ellipse(gx,gy,24+f*24,19+f*12,0,0,TAU);ctx.stroke()}ctx.restore()}
+  ctx.save();ctx.translate(gx,gy-raise);ctx.globalAlpha=g.phase==='dip'?.78:1;
+  line(13,11,46,58,'#9d744d',8);line(15,9,46,56,'#d3b083',2);ellipse(0,0,24,20,g.paper>0?'rgba(236,229,206,'+(.16+.58*Math.max(0,g.paper)/100)+')':'#00000000');
   ctx.beginPath();ctx.ellipse(0,0,24,20,0,0,TAU);ctx.strokeStyle='#cba26d';ctx.lineWidth=4;ctx.stroke();ctx.restore();
  }
  backHuman(228,575,avatar??0,false,'right',.86);
- if(['aim','dip'].includes(g.phase))for(let ix=0;ix<5;ix++)for(let iy=0;iy<3;iy++){const x=280+ix*60,y=404+iy*54;target(x-30,y-27,60,54,()=>festivalAim(x,y))}
+ // Direct pointer control is attached to the actual water surface.
  ctx.restore()
 };
 const festivalControlsBefore=refreshControls;
@@ -1858,10 +1859,10 @@ function mbFishSyncTiming(){
  if(activity!=='goldfishScoop'||state.festivalFish?.phase!=='dip')return;
  const controls=$('gameControls'),g=state.festivalFish,timing=controls?.querySelector('.mbFishTiming'),progress=controls?.querySelector('.mbFishProgress'),button=controls?.querySelector('.festivalFishButtons button');
  if(!timing||!progress||!button)return;
- const age=Math.max(0,t-g.last),stage=mbFishTiming(age);
+ const age=Math.max(0,t-g.last),stage=age<.12?'early':age<=2?'ready':age<3.1?'late':'expired';
  const message=stage==='early'?tr('Let the paper settle…','先让纸网稳一稳……'):stage==='ready'?tr('Lift while a fish is inside the ring.','小鱼游进圈里就捞起。'):tr('Lift now before the paper tears.','快捞起，纸网快破了。');
  if(timing.textContent!==message)timing.textContent=message;
- timing.dataset.timing=stage;progress.value=Math.min(2.4,age);button.disabled=stage==='early'
+ timing.dataset.timing=stage;progress.max=3.1;progress.value=Math.min(3.1,age);button.disabled=false
 }
 const mbFishFrameBefore=drawActivity;
 drawActivity=function(){
@@ -3878,7 +3879,7 @@ function pawAmbientBounds(actor){
 }
 function pawAmbientClear(){pawAmbientActive=null;pawAmbientNode.hidden=true}
 function pawAmbientBlocked(){
- return document.hidden||avatar===null||!proposal.hidden||transitioning||talkOpen||!!activity||$('page').style.display==='block'||!$('arrival').hidden
+ return document.hidden||avatar===null||!proposal.hidden||transitioning||talkOpen||!!activity||$('page').style.display==='block'||($('arrival')&&!$('arrival').hidden)
 }
 function pawAmbientPlace(actor,actors){
  const bounds=pawAmbientBounds(actor);
@@ -4780,7 +4781,7 @@ drawActivity=function(...args){
 };
 // Use consistent adult standing heights, rather than each sprite's raw
 // dimensions. Draw the existing shopkeeper as a separate person at the counter.
-roomResidentStations.wishes.sc=1.08;
+roomResidentStations.wishes.sc=.8;
 const pawTeaPoseBefore=drawRitualPose;
 drawRitualPose=function(x,y,sc,opts={}){
  if(activity==='bubbleTea'&&room==='boba'&&sc>1.25)sc=1.18;
@@ -4810,9 +4811,8 @@ drawRoom=function(...args){
   target(actor.x-ww/2,yy-hh/2,ww,hh,()=>{
    const profile=pawAmbientProfile(actor);if(!profile)return;
    const now=Date.now(),line=pawAmbientPick(profile.id,pawAmbientLines[profile.id],pawAmbientRead(pawAmbientHistory,now),now);
-   if(!line){residentGreetingToast(tr('Lovely to see you around.','很高兴在这里遇见你。'));return}
+   if(!line||!pawRoomRemark(actor,profile,line))return;
    pawAmbientHistory.push([profile.id,line[0],now]);pawAmbientHistory=pawAmbientHistory.slice(-80);save(pawAmbientKey,pawAmbientHistory);
-   say(tr(...actor.n),tr(line[1],line[2]))
   })
  }
  return result
@@ -4932,5 +4932,152 @@ pawArrivalTicketCss.textContent=`
 @media(prefers-reduced-motion:reduce){#proposal[data-paw-entrance-step="3"] .gate-traveller{transition:none!important}}
 `;
 document.head.append(pawArrivalTicketCss);
+
+
+/* PAW_ROOM_LIFE_AND_SCOOP_BEGIN */
+function pawScoopProject(x,y){
+ if(!Number.isFinite(x)||!Number.isFinite(y))return null;
+ const dx=(x-400)/124,dy=(y-458)/63,k=Math.max(1,Math.hypot(dx,dy));
+ return {x:400+dx/k*124,y:458+dy/k*63}
+}
+function pawScoopInside(x,y){return Number.isFinite(x)&&Number.isFinite(y)&&Math.hypot((x-400)/138,(y-458)/74)<=1}
+function pawWalkStep(a,b,dt,speed=48){
+ const dx=b[0]-a.x,dy=b[1]-a.y,d=Math.hypot(dx,dy);
+ if(!Number.isFinite(d)||!Number.isFinite(dt)||dt<0)return {x:a.x,y:a.y,arrived:false};
+ const f=d<.01?1:Math.min(1,Math.max(0,speed)*Math.min(.08,dt)/d);
+ return {x:a.x+dx*f,y:a.y+dy*f,arrived:f===1}
+}
+function pawWalkFacing(a,b){const dx=b[0]-a.x,dy=b[1]-a.y;return Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')}
+function pawTypedCount(text,elapsed,reduced=false){
+ const n=Array.from(String(text)).length;
+ return reduced?n:Math.min(n,Math.max(1,Math.floor(Math.max(0,elapsed)/34)+1))
+}
+/* PAW_ROOM_LIFE_AND_SCOOP_END */
+let pawScoopPointer=null;
+function pawScoopActive(){return activity==='goldfishScoop'&&state.festivalFish&&!document.hidden&&!talkOpen&&!transitioning&&$('page').style.display!=='block'}
+function pawScoopCancel(){
+ const a=pawScoopPointer;pawScoopPointer=null;if(!a)return;
+ if(state.festivalFish===a.game&&a.game.phase==='dip'){
+  a.game.phase='aim';a.game.last=t;a.game.feedback=['The scoop is dry. Try again when ready.','纸网已提起，准备好了再试。'];refreshControls()
+ }
+ try{if(c.hasPointerCapture(a.id))c.releasePointerCapture(a.id)}catch{}
+}
+const pawScoopStartBefore=start;
+start=function(...args){pawScoopCancel();return pawScoopStartBefore(...args)};
+c.addEventListener('pointerdown',e=>{
+ if(!pawScoopActive()||e.button!==0||e.isPrimary===false)return;
+ const a=point(e),g=state.festivalFish;if(!pawScoopInside(a.x,a.y)||g.phase!=='aim')return;
+ e.preventDefault();e.stopImmediatePropagation();drag=null;
+ festivalAim(a.x,a.y);festivalDip();if(g.phase!=='dip')return;
+ pawScoopPointer={id:e.pointerId,game:g};try{c.setPointerCapture(e.pointerId)}catch{}
+},true);
+c.addEventListener('pointermove',e=>{
+ if(!pawScoopActive())return;
+ const g=state.festivalFish,a=point(e);
+ if(pawScoopPointer?.id===e.pointerId&&pawScoopPointer.game===g){
+  e.preventDefault();e.stopImmediatePropagation();if(g.phase==='dip')festivalAim(a.x,a.y);return
+ }
+ if(e.pointerType==='mouse'&&e.buttons===0&&g.phase==='aim'&&pawScoopInside(a.x,a.y))festivalAim(a.x,a.y)
+},true);
+c.addEventListener('pointerup',e=>{
+ const a=pawScoopPointer;if(!a||a.id!==e.pointerId)return;
+ e.preventDefault();e.stopImmediatePropagation();pawScoopPointer=null;
+ if(pawScoopActive()&&a.game===state.festivalFish&&a.game.phase==='dip'){
+  const pos=point(e);festivalAim(pos.x,pos.y);festivalLift()
+ }
+ try{if(c.hasPointerCapture(e.pointerId))c.releasePointerCapture(e.pointerId)}catch{}
+},true);
+for(const name of ['pointercancel','lostpointercapture'])c.addEventListener(name,e=>{if(pawScoopPointer?.id===e.pointerId)pawScoopCancel()},true);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pawScoopCancel()});
+window.addEventListener('blur',pawScoopCancel);
+const pawScoopControlsBefore=refreshControls;
+refreshControls=function(...args){
+ const result=pawScoopControlsBefore(...args);
+ if(activity!=='goldfishScoop'||!state.festivalFish)return result;
+ const g=state.festivalFish,el=$('gameControls'),controls=el.querySelector('.festivalFishButtons');
+ if(!controls||g.phase==='done')return result;
+ const status=el.querySelector('strong');if(status)status.textContent=tr('Paper ','纸网 ')+g.paper+'% · '+tr('Caught ','捞到 ')+g.caught.length+'/5';
+ controls.replaceChildren();
+ if(g.phase==='aim'||g.phase==='dip'){
+  const assist=b(controls,g.phase==='aim'?tr('Dip scoop','下网'):tr('Lift scoop','捞起'),()=>g.phase==='aim'?festivalDip():festivalLift());
+  if(assist?.setAttribute)assist.setAttribute('aria-label',tr('Keyboard scoop action. Arrow keys move the ring.','键盘捞鱼操作，方向键移动纸网。'));
+  element('small',tr('Keyboard: arrows + Space','键盘：方向键 + 空格'),controls,'pawScoopKeyGuide');
+ }else element('small',tr('Back into the water…','小鱼回水池啦……'),controls);
+ return result
+};
+document.addEventListener('keydown',e=>{
+ if(!pawScoopActive()||e.repeat||/INPUT|TEXTAREA|SELECT/.test(e.target?.tagName||''))return;
+ const g=state.festivalFish,delta={ArrowLeft:[-10,0],ArrowRight:[10,0],ArrowUp:[0,-10],ArrowDown:[0,10]}[e.key];
+ if(delta&&['aim','dip'].includes(g.phase)){e.preventDefault();e.stopImmediatePropagation();festivalAim(g.x+delta[0],g.y+delta[1])}
+ else if(e.code==='Space'&&!e.target?.closest?.('button')&&['aim','dip'].includes(g.phase)){e.preventDefault();e.stopImmediatePropagation();g.phase==='aim'?festivalDip():festivalLift()}
+},true);
+function pawRoomRemark(actor,profile,line){
+ if(!actor?.rect||pawAmbientBlocked())return false;
+ pawAmbientClear();const full=tr(line[1],line[2]);pawAmbientName.textContent=tr(...actor.n);pawAmbientText.textContent=full;pawAmbientNode.hidden=false;
+ if(!pawAmbientPlace(actor,pawAmbientIndoor)){pawAmbientNode.hidden=true;return false}
+ const now=performance.now();pawAmbientActive={id:profile.id,until:now+pawSpeechDuration(full)};pawAmbientNext=now+12000;return true
+}
+let pawTypedSpeech=null;
+const pawTypedBefore=pawAmbientTick;
+pawAmbientTick=function(now){
+ const result=pawTypedBefore(now);
+ if(!pawAmbientActive||pawAmbientNode.hidden){pawTypedSpeech=null;return result}
+ if(pawTypedSpeech?.active!==pawAmbientActive){
+  const full=pawAmbientText.textContent,letters=Array.from(full),shown=document.createElement('span'),pending=document.createElement('span');
+  shown.style.display='inline';pending.style.display='inline';pending.style.visibility='hidden';pending.setAttribute('aria-hidden','true');
+  pawAmbientText.replaceChildren(shown,pending);pawTypedSpeech={active:pawAmbientActive,full,letters,shown,pending,start:now,last:-1};
+  pawAmbientText.setAttribute('aria-label',full)
+ }
+ const q=pawTypedSpeech,count=pawTypedCount(q.full,now-q.start,residentReducedMotion.matches);
+ if(count!==q.last){q.last=count;q.shown.textContent=q.letters.slice(0,count).join('');q.pending.textContent=q.letters.slice(count).join('')}
+ return result
+};
+/* Fictional visitors are rendered locally, never advertised as online users. */
+const pawRoomVisitorSpecs={
+ wishes:{count:2,points:[[190,610],[390,600],[610,630],[490,700],[220,690]]},
+ tea:{count:2,points:[[180,660],[365,630],[610,680],[465,720]]},
+ park:{count:2,points:[[185,670],[380,610],[600,690],[335,720]]},
+ arcade:{count:1,points:[[190,680],[400,710],[610,670]]},
+ boba:{count:1,points:[[190,680],[395,700],[615,680]]}
+};
+let pawVisitorContext='',pawLocalVisitors=[],pawVisitorAt=0;
+function pawRoomWalkers(){
+ const spec=pawRoomVisitorSpecs[room];if(!spec||!indoorReady())return [];
+ const context=scene+'|'+room+'|'+avatar,obs=indoorObstacles(),safe=spec.points.filter(v=>indoorSafe(v[0],v[1],obs));
+ if(context!==pawVisitorContext||!pawLocalVisitors.length){
+  pawVisitorContext=context;pawVisitorAt=t;
+  const spawn=safe.filter(v=>Math.hypot(v[0]-indoor.x,v[1]-indoor.y)>85);
+  pawLocalVisitors=spawn.slice(0,spec.count).map((pos,i)=>({id:'fictional-visitor-'+i,fictionalVisitor:true,room,x:pos[0],y:pos[1],avatar:((avatar??0)+1+i)%4,facing:'down',walking:0,index:safe.indexOf(pos),route:[],wait:t+1.4+i*2}))
+ }
+ const dt=Math.max(0,Math.min(.08,t-pawVisitorAt));pawVisitorAt=t;
+ if(residentReducedMotion.matches)return pawLocalVisitors.map(a=>({...a,walking:0}));
+ for(const a of pawLocalVisitors){
+  a.walking=0;if(t<a.wait||safe.length<2)continue;
+  if(!a.route.length){a.index=(a.index+1)%safe.length;const route=indoorPath([a.x,a.y],safe[a.index],obs);if(!route?.length){a.wait=t+2;continue}a.route=route}
+  const dest=a.route[0],next=pawWalkStep(a,dest,dt);
+  if(!indoorSafe(next.x,next.y,obs)){a.route=[];a.wait=t+1.5;continue}
+  if(Math.hypot(next.x-indoor.x,next.y-indoor.y)<48||pawLocalVisitors.some(b=>b!==a&&Math.hypot(next.x-b.x,next.y-b.y)<43)){a.wait=t+.6;continue}
+  a.facing=pawWalkFacing(a,dest);a.walking=next.arrived?0:1;a.x=next.x;a.y=next.y;
+  if(next.arrived){a.route.shift();if(!a.route.length)a.wait=t+2.2+(a.avatar%3)}
+ }
+ return pawLocalVisitors
+}
+const pawVisitorEnterBefore=enter;
+enter=function(...args){pawVisitorContext='';pawLocalVisitors=[];return pawVisitorEnterBefore(...args)};
+const pawVisitorDrawBefore=drawSharedRoomActor;
+drawSharedRoomActor=function(a,scale){
+ if(a.fictionalVisitor){backHuman(a.x,a.y,a.avatar,a.walking===1,a.facing,scale);return}
+ return pawVisitorDrawBefore(a,scale)
+};
+const pawGardenScaleBefore=drawGatheringPainted;
+drawGatheringPainted=function(name,x,y,scale=1,facing='right'){
+ if(room==='wishes'&&!activity&&residentArtworkRecord(name)?.id==='garden-keeper'){
+  const record=residentArtworkRecord(name);scale=94*travellerRoomScale(H,cam.scale)/record.height
+ }
+ return pawGardenScaleBefore(name,x,y,scale,facing)
+};
+const pawRoomLifeCss=document.createElement('style');
+pawRoomLifeCss.textContent='#game #gameControls.festivalFishControls:not([hidden]){width:min(94vw,430px)!important;padding:9px 11px!important;gap:5px!important;background:#f2e5c8!important;border:1px solid #a9895d!important;border-radius:2px!important;box-shadow:0 4px 12px #30261d50!important}#game .festivalFishControls strong{font:600 15px/1.3 var(--paw-display,Georgia,serif)!important}#game .festivalFishControls progress{width:100%;height:7px;accent-color:#73865f}#game .festivalFishButtons{align-items:center}#game .festivalFishButtons button{min-height:44px!important;background:#e9d9b4;color:#3e523d;border-radius:2px!important}#game .pawScoopKeyGuide{font-size:11px!important;color:#6e634f}@media(pointer:coarse){#game .pawScoopKeyGuide{display:none!important}}@media(orientation:landscape) and (max-height:499px){#game #gameControls.festivalFishControls:not([hidden]){width:190px!important}}';
+document.head.append(pawRoomLifeCss);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
