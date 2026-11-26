@@ -63,7 +63,20 @@ const results=[],failures=[];
     for(const world of ['fortune','home','island','wonder']){
      await attempt(world+'-map',()=>prepare(world,null));
      for(const {id,actions} of registry.filter(r=>r.world===world)){
-      await attempt(world+'-'+id+'-room',()=>prepare(world,id));
+      await attempt(world+'-'+id+'-room',async()=>{
+       await prepare(world,id);
+       // Actual scene rendering, not merely the source list of room actions.
+       await page.waitForFunction(()=>continuityRoom===room&&roomGuideKey&&Math.hypot(indoor.x-indoor.tx,indoor.y-indoor.ty)<4,null,{timeout:8000});
+       const labels=await page.evaluate(()=>{
+        const entries=roomGuideEntries(),guide=[...roomGuide.querySelectorAll('button[data-station]')],rendered=[...pawVisibleStationLabels],button=roomGuideToggle.getBoundingClientRect();
+        const coverage=entries.map(([id,en,cn])=>({id,name:tr(en,cn),plaque:rendered.includes(id),directory:guide.some(b=>b.dataset.station===id&&b.textContent.trim()===tr(en,cn)),hit:hit.some(h=>h.stationId===id&&typeof h.fn==='function')}));
+        const style=getComputedStyle(roomGuideToggle),fallback=!roomGuideToggle.hidden&&roomGuideToggle.dataset.showDirectory==='true'&&button.width>=44&&button.height>=44&&style.clipPath==='none'&&style.pointerEvents!=='none';
+        return {coverage,fallback,missing:coverage.filter(v=>!v.plaque),expected:entries.length}
+       });
+       if(labels.coverage.some(v=>!v.directory||!v.hit)||labels.missing.length&&!labels.fallback)throw Error('Room activity label or live interaction missing: '+JSON.stringify(labels));
+       if(id==='arcade'&&!['bubbleArcade','goldfishScoop','blindBox'].every(k=>labels.coverage.some(v=>v.id===k)))throw Error('Arcade activity labels absent');
+       results.push({device,language,name:world+'-'+id+'-label-coverage',labels});
+      });
       for(const act of actions)await attempt(world+'-'+id+'-'+act,async()=>{await prepare(world,id);await page.evaluate(a=>action(a),act)});
      }
     }
