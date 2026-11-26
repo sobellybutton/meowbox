@@ -2836,4 +2836,191 @@ mobileRoomCamera=function(s,ox,oy){
 };
 const pawTopicHintBefore=activityHint;
 activityHint=function(){if(activity==='love'&&state.readStage==='topic'){hint('Choose a topic for your reading.','选择想占卜的主题。');return}return pawTopicHintBefore()};
+
+/* Three scene-first layouts. Coordinates describe furniture contact and
+   approach positions, not detached game icons. Existing activity IDs remain. */
+/* PAW_ROOM_LAYOUT_BEGIN */
+const pawTempleLayout={
+ templeWater:[205,542,205,682],
+ prayer:[400,342,400,492],
+ templeBell:[610,350,610,495],
+ sticks:[605,542,605,688],
+ moon:[190,350,190,495],
+ secretGarden:[690,430,525,502]
+};
+const pawArcadeLayout={
+ bubbleArcade:[210,432,210,615],
+ goldfishScoop:[400,432,400,615],
+ blindBox:[590,432,590,615],
+ claw:[210,432,210,615],rhythm:[400,432,400,615],woodenThree:[400,432,400,615]
+};
+/* PAW_ROOM_LAYOUT_END */
+Object.assign(indoorStages.temple.stations,pawTempleLayout);
+Object.assign(indoorStages.arcade.stations,pawArcadeLayout);
+groundedStations.temple.prayer=['altar',-7,172,100];
+groundedStations.temple.templeWater=['stone',-3,132,95];
+groundedStations.temple.templeBell=['bell',0,140,100];
+groundedStations.arcade.bubbleArcade=['cabinet',28,168,98];
+groundedStations.arcade.goldfishScoop=['table',52,164,98];
+groundedStations.arcade.blindBox=['counter',12,164,98];
+// The garden gate is scenery and a doorway, not a central floor obstruction.
+const pawThreeObstaclesBefore=indoorObstacles;
+indoorObstacles=function(){
+ const result=pawThreeObstaclesBefore();
+ if(room==='temple'&&!activity){
+  const [x,y]=pawTempleLayout.secretGarden;
+  return result.filter(o=>!(Math.abs((o.l+o.r)/2-x)<2&&Math.abs((o.u+o.d)/2-(y-9.5))<3))
+ }
+ return result
+};
+function pawSceneFloorShadow(x,y,w){
+ ellipse(x,y,w,8,'#362c2840')
+}
+function pawTempleSanctuary(){
+ // Main worship hall at the head of the central aisle. Keep the altar
+ // reachable from its visitor side, with the washing basin by the entrance.
+ const [x,y]=pawTempleLayout.prayer;
+ ctx.save();
+ const gold='#d4b17b',wood='#79513c';
+ round(x-103,y-133,206,130,3,'#735342','#4d3b31');
+ round(x-89,y-119,178,105,2,'#4e4940',gold);
+ for(const dx of [-105,105]){
+  round(x+dx-6,y-143,12,143,2,wood,'#5f4635');
+  line(x+dx-2,y-139,x+dx-2,y-4,'#c79c6c',1.5)
+ }
+ round(x-115,y-146,230,15,2,'#a87c50','#644632');
+ round(x-98,y-131,196,7,2,'#c2a16d');
+ // An understated shrine niche and two candle stands; no baked lettering.
+ round(x-37,y-108,74,77,2,'#6b5b46',gold);
+ ellipse(x,y-78,19,23,'#bda175');
+ round(x-26,y-47,52,13,3,'#a48455','#d0b17b');
+ for(const dx of [-67,67]){
+  line(x+dx,y-24,x+dx,y-47,'#a99062',5);
+  round(x+dx-4,y-59,8,16,2,'#e6d3a2');
+  ellipse(x+dx,y-63,3,6,'#f4c275')
+ }
+ const matY=y+137;round(x-48,matY-11,96,22,3,'#8b6e62','#ad9278');
+ for(let j=0;j<5;j++)line(x-43,matY-7+j*3,x+43,matY-7+j*3,'#baa087',.7);
+ ctx.restore()
+}
+function pawTempleSideGate(){
+ const [x,y]=pawTempleLayout.secretGarden;
+ ctx.save();
+ for(const dx of [-29,29]){line(x+dx,y-58,x+dx,y+34,'#74513b',8);line(x+dx-2,y-56,x+dx-2,y+30,'#c19a6c',1.5)}
+ round(x-42,y-64,84,10,3,'#946b49','#634833');
+ round(x-35,y-46,70,8,2,'#ad8b62','#74513b');
+ ctx.restore()
+}
+const pawTempleBackdropBefore=templeRitualBackground;
+templeRitualBackground=function(){
+ pawTempleBackdropBefore();
+ if(room==='temple'&&!activity){pawTempleSanctuary();pawTempleSideGate()}
+};
+const pawThreePropBefore=prop;
+prop=function(id,x,y){
+ if(activity)return pawThreePropBefore(id,x,y);
+ const spec=groundedStationSpec(room,id);
+ if(room==='arcade'&&['bubbleArcade','goldfishScoop','blindBox'].includes(id)&&spec){
+  const foot=y+spec[3];pawSceneFloorShadow(x,foot,82);
+  ctx.save();
+  if(id==='bubbleArcade'){
+   // Same cabinet used during play, scaled to its full standing footprint.
+   ctx.translate(x,y+11);ctx.scale(.5,.5);nostalgiaCabinet(0,0,false);
+   for(let j=0;j<5;j++)nostalgiaOrb(-72+j*35,-75+(j%2)*22,j%4,14);
+   line(-56,129,-56,107,'#b4a17b',6);ellipse(-56,104,11,9,'#a95149');
+   ellipse(65,123,14,9,'#d4af70')
+  }else if(id==='goldfishScoop'){
+   // Existing fish tank includes its own legs. No second table underneath.
+   festivalTank(x,y+63,.54);
+   line(x-57,y+36,x-20,y+10,'#b98f62',3);
+   ellipse(x-18,y+8,13,10,'#eee5d499')
+  }else{
+   // A shelf of boxes, with the selected parcel resting on the counter.
+   drawGroundedSupport(spec,x,y);
+   round(x-72,y-99,144,106,3,'#805d42','#594335');
+   round(x-63,y-90,126,81,2,'#b59870','#70533d');
+   for(const yy of [y-49,y-9]){
+    round(x-66,yy,132,7,2,'#c3a87b','#71543f');
+    for(let j=0;j<3;j++)boxArt(x-42+j*42,yy-3,.37,(j+1)%3)
+   }
+   boxArt(x,y+6,.55,1)
+  }
+  ctx.restore();pawStationPlaque={room,id,x,y,spec,at:t};return
+ }
+ if(room==='wishes'&&id==='coin'&&spec){
+  // Reuse the painted stone basin instead of the generic star tile.
+  drawGroundedSupport(spec,x,y);
+  ctx.save();ctx.translate(x,y-15);ctx.scale(.66,.66);templeBasin(0,0);ctx.restore();
+  ctx.save();round(x-24,y+41,48,13,4,'#ba9868','#6b533d');ellipse(x,y+41,12,6,'#bc8f41');ellipse(x,y+40,9,4,'#e5bf66');ctx.restore();
+  pawStationPlaque={room,id,x,y,spec,at:t};return
+ }
+ return pawThreePropBefore(id,x,y)
+};
+const pawGateLabelBefore=label;
+label=function(name,x,y,fn){
+ if(room==='temple'&&!activity&&Math.abs(x-pawTempleLayout.secretGarden[0])<2){
+  const cy=pawTempleLayout.secretGarden[1]-33;
+  ctx.save();round(x-34,cy-10,68,20,2,'#65513a','#c5ac7c');activityFitText(tr('Garden','后院'),x,cy,12,60,'#f7ead0');ctx.restore();
+  target(x-40,cy-18,80,82,fn);return
+ }
+ return pawGateLabelBefore(name,x,y,fn)
+};
+/* Arcade art is a full backdrop, with separately interactive cabinets. */
+const pawArcadeArt=new Image();pawArcadeArt.src='assets/visual/arcade-interior-v2.svg';
+function pawArcadeBackdrop(){
+ const b=livingBounds();if(!pawArcadeArt.complete||!pawArcadeArt.naturalWidth)return false;
+ ctx.save();cover(pawArcadeArt,b.x,b.y,b.w,b.h);
+ // The old dark activity wash obscured the arcade. Keep warm peripheral light.
+ const g=ctx.createLinearGradient(b.x,b.y,b.x,b.y+b.h);g.addColorStop(0,'#b99c6c12');g.addColorStop(1,'#614d3212');ctx.fillStyle=g;ctx.fillRect(b.x,b.y,b.w,b.h);ctx.restore();return true
+}
+const pawArcadePortraitBefore=paintPortraitInterior;
+paintPortraitInterior=function(id){if(id==='arcade'&&pawArcadeBackdrop())return;return pawArcadePortraitBefore(id)};
+const pawArcadeLivingBefore=paintLivingBackdrop;
+paintLivingBackdrop=function(im){if(room==='arcade'&&pawArcadeBackdrop())return;return pawArcadeLivingBefore(im)};
+const pawArcadeWarmBefore=warmRoomArt;
+warmRoomArt=function(id){if(id==='arcade'&&pawArcadeBackdrop())return true;return pawArcadeWarmBefore(id)};
+const pawArcadeShadeBefore=shadeLivingBackdrop;
+shadeLivingBackdrop=function(g){
+ if(room==='arcade'&&activity&&typeof g==='string'&&/^#[0-9a-f]{8}$/i.test(g))g=g.slice(0,7)+'26';
+ return pawArcadeShadeBefore(g)
+};
+/* Wishing garden: retain the actual aiming physics and koi simulation, but
+   remove the cream document layout. Water, park art and controls coexist in
+   a single full-viewport scene. The original garden composition is interim. */
+const pawGardenPageBefore=wishPond9;
+wishPond9=function(...args){
+ const result=pawGardenPageBefore(...args),q=$('content'),stage=q.querySelector('.pawWishGarden'),pond=q.querySelector('.wishRitual');
+ if(!stage||!pond)return result;
+ const art=portraitInteriorImage('wishes');
+ if(art?.src)stage.style.setProperty('--pawGardenArt','url("'+art.src+'")');
+ const footer=element('div','',q,'pawGardenFooter');
+ const message=stage.querySelector('.wishMessage'),power=stage.querySelector('.wishPower'),guide=stage.querySelector('.wishThrowGuide');
+ if(message)footer.append(message);if(power)footer.append(power);
+ if(guide){guide.textContent=tr('Flick the coin towards the bowl.','向许愿碗滑动铜钱。');footer.prepend(guide)}
+ const actions=element('div','',footer,'pawGardenActions');
+ for(const node of [...q.children])if(node.tagName==='DETAILS'||node.tagName==='BUTTON')actions.append(node);
+ const tray=element('i','',pond,'pawCoinTray');tray.setAttribute('aria-hidden','true');
+ return result
+};
+const pawThreeSceneCss=document.createElement('style');
+pawThreeSceneCss.textContent=`
+#game #page:has(.pawWishGarden){position:absolute!important;inset:0!important;height:100%!important;overflow:hidden!important;background:#42594b!important}
+#game #content:has(.pawWishGarden){position:relative!important;display:block!important;box-sizing:border-box!important;width:100%!important;max-width:none!important;height:100%!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;isolation:isolate;color:#fff1d4!important}
+#game #content:has(.pawWishGarden)>.row{position:absolute;z-index:4;top:max(8px,env(safe-area-inset-top,0px));left:12px;right:12px;margin:0!important;display:flex;justify-content:space-between}
+#game #content:has(.pawWishGarden)>.row button{background:#35493eea!important;color:#fff1d4!important;border:1px solid #b69c71!important;min-height:44px}
+#game #content:has(.pawWishGarden)>h1{position:absolute;z-index:2;top:61px;left:14px;right:14px;margin:0!important;text-align:center;color:#fff2d3!important;font:600 clamp(22px,5vw,34px)/1.2 Georgia,"Songti SC",serif;text-shadow:0 2px 5px #24382e;border:0!important;pointer-events:none}
+#game #content:has(.pawWishGarden)>p{display:none!important}
+#game #content .pawWishGarden{position:absolute!important;inset:0!important;display:grid!important;place-items:center;width:100%!important;height:100%!important;max-width:none!important;box-sizing:border-box!important;margin:0!important;padding:58px 8px 105px!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:linear-gradient(#253a2d22,#283d3155),var(--pawGardenArt,url('assets/visual/daydream-park.svg')) center/cover no-repeat!important}
+#game #content .pawWishGarden .wishRitual{box-sizing:border-box!important;width:min(90%,calc((100dvh - 200px) * .8),460px)!important;height:auto!important;max-height:none!important;min-height:0!important;aspect-ratio:4/5!important;margin:0!important;border:clamp(7px,2vw,13px) solid #999781!important;border-radius:45% 45% 27% 27% / 19% 19% 17% 17%!important;box-shadow:0 10px 20px #263b2c80,inset 0 0 15px #203b31aa!important;background-color:#345f56!important}
+#game #content .pawGardenFooter{position:absolute;z-index:3;left:0;right:0;bottom:0;padding:9px max(12px,env(safe-area-inset-left,0px)) max(10px,env(safe-area-inset-bottom,0px));box-sizing:border-box;background:linear-gradient(transparent,#263a30ed 28%);text-align:center;color:#fff0d1}
+#game #content .pawGardenFooter .wishThrowGuide,#game #content .pawGardenFooter .wishMessage{margin:3px auto!important;padding:0!important;min-height:0!important;max-width:620px;color:#fff0d1!important;background:none!important;border:0!important;font:500 13px/1.35 Georgia,"Songti SC",serif!important;text-shadow:0 1px 3px #24342b}
+#game #content .pawGardenFooter .wishPower{height:5px!important;width:min(45%,240px)!important;margin:5px auto!important}
+#game #content .pawGardenActions{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+#game #content .pawGardenActions>button,#game #content .pawGardenActions summary{background:transparent!important;color:#fff0d1!important;border:0!important;border-radius:0!important;box-shadow:none!important;min-height:44px;padding:6px;text-decoration:underline;text-underline-offset:3px;font:500 13px/1.25 Georgia,"Songti SC",serif;cursor:pointer}
+#game #content .pawGardenActions>button[hidden]{display:none!important}
+#game #content .pawGardenActions details[open]{position:absolute;bottom:100%;left:12px;right:12px;background:#35493ef7;padding:8px;border:1px solid #b49a70;max-height:35dvh;overflow:auto}
+#game #content .pawCoinTray{position:absolute;left:50%;top:86%;width:clamp(58px,18%,85px);height:clamp(28px,8%,40px);transform:translate(-50%,-50%);background:linear-gradient(165deg,#d2b88a,#967449);border:2px solid #7f684e;border-radius:45%;box-shadow:0 4px 6px #26382f66;z-index:2;pointer-events:none}
+@media(orientation:landscape){#game #content .pawWishGarden{padding:45px 8px 95px!important}#game #content .pawWishGarden .wishRitual{width:min(80%,calc((100dvh - 158px) * 1.77),760px)!important;aspect-ratio:16/9!important}#game #content:has(.pawWishGarden)>h1{top:12px;font-size:22px;left:90px;right:90px}}
+@media(max-height:530px) and (orientation:portrait){#game #content .pawWishGarden{padding-top:50px!important}#game #content:has(.pawWishGarden)>h1{font-size:19px;top:49px}#game #content .pawGardenFooter .wishThrowGuide{display:none!important}}
+`;document.head.append(pawThreeSceneCss);
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
