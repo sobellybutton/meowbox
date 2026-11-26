@@ -1000,7 +1000,15 @@ function incenseStem(x,y,angle=0,lit=false,length=65,smoke=false){
  for(let j=0;j<3;j++){const f=(clock*.55+j/3)%1;ctx.globalAlpha=(1-f)*.18;ellipse(Math.sin(clock*1.5+j)*f*7,-length-4-f*24,2+f*4,3+f*5,'#f7e9ce')}
  }}ctx.restore()
 }
-function incenseBundle(x,y,count,angle,lit){for(let j=0;j<count;j++){const offset=j-(count-1)/2;incenseStem(x+offset*4,y,angle+offset*.055,lit,65,j===Math.floor(count/2))}}
+function incenseBundle(x,y,count,angle,lit){for(let j=0;j<count;j++){const offset=j-(count-1)/2;incenseStem(x+offset*3,y,angle+offset*.045,lit,53,j===Math.floor(count/2))}}
+/* MBINCENSE_GRIP_BEGIN */
+function incenseGripPosition(actorX,actorY,scale,pose){
+ return {x:actorX+pose.wrist.x*scale,y:actorY+pose.wrist.y*scale}
+}
+function incensePlacementActor(burnerX,burnerY,scale,pose){
+ return {x:burnerX-pose.wrist.x*scale,y:burnerY-pose.wrist.y*scale}
+}
+/* MBINCENSE_GRIP_END */
 function incenseTray(){
  // A shallow wooden incense rack and a candle on their own low side table.
  const wood=ctx.createLinearGradient(0,468,0,527);wood.addColorStop(0,'#bc9669');wood.addColorStop(1,'#826044');
@@ -1047,16 +1055,23 @@ const prayerDraw=drawActivity;drawActivity=function(){
  if(stage==='walkMat'){x=228+112*smooth(age/1.25);y=557+16*smooth(age/1.25);walking=true}
  if(['hold','bow','offer','complete'].includes(stage)){x=340;y=573}
  if(stage==='bow'){const f=clamp(age/1.8,0,1);bow=f<.42?smooth(f/.42):f<.58?1:smooth((1-f)/.42);angle=bow*.22}
- if(stage==='placing'){const f=smooth(age/1.15);x=340+143*f;y=573-6*f;reach={x:510,y:493}}
- if(stage==='returnMat'){x=483-143*smooth(age/1.1);y=567+6*smooth(age/1.1);walking=true}
- let wrist;
- if(walking){backHuman(x,y,avatar??0,true,stage==='returnMat'?'left':'right',1.65);wrist={x:x+(stage==='returnMat'?-25:25),y:y-68}}
- else wrist=drawRitualPose(x,y,1.65,{bow,praying:['hold','bow','offer','complete'].includes(stage),reach});
- const held=state.prayerHeld||0,lit=state.prayerLit||(stage==='lighting'&&age>.82);
- if(stage==='placing'&&age>=1.15){
-  const f=smooth((age-1.15)/1.10),xx=wrist.x+(510-wrist.x)*f,yy=wrist.y+(493-wrist.y)*f;incenseBundle(xx,yy,held,0,true);
- }else if(held)incenseBundle(wrist.x,wrist.y,held,angle,lit);
- if(stage==='taking'){const f=smooth(age/.72),sx=242+held*12,sy=474;incenseStem(sx+(wrist.x+held*2-sx)*f,sy+(wrist.y-sy)*f,0,false)}
+ const sc=1.65,held=state.prayerHeld||0,lit=state.prayerLit||(stage==='lighting'&&age>.82);
+ const endPose=ritualSpritePose({praying:true}),end=incensePlacementActor(510,493,sc,endPose);
+ if(stage==='placing'){const f=smooth(age/1.85);x=340+(end.x-340)*f;y=573+(end.y-573)*f;walking=age<1.15}
+ if(stage==='returnMat'){x=end.x+(340-end.x)*smooth(age/1.1);y=end.y+(573-end.y)*smooth(age/1.1);walking=true}
+ if(walking&&!held){backHuman(x,y,avatar??0,true,stage==='returnMat'?'left':'right',sc)}
+ else{
+  // Carried incense and the hand use the same transformed sprite anchor on every frame.
+  const bob=walking&&stage!=='placing'?(residentReducedMotion.matches?0:Math.abs(Math.sin(age*12))*2):0;
+  const opts={bow,praying:['hold','bow','offer','complete','placing','walkMat'].includes(stage),reach};
+  const localReach=reach?{x:(reach.x-x)/sc,y:(reach.y-(y-bob))/sc}:null;
+  const pose=ritualSpritePose(opts,localReach),wrist=incenseGripPosition(x,y-bob,sc,pose);
+  const taking=stage==='taking',extra=taking&&age>=.36?1:0;
+  // Paint the sticks first, then the illustrated body/sleeve over the grip.
+  if(held+extra)incenseBundle(wrist.x,wrist.y,held+extra,angle,lit);
+  if(taking&&!extra){const f=smooth(age/.36),sx=242+held*12,sy=474;incenseStem(sx+(wrist.x-sx)*f,sy+(wrist.y-sy)*f,0,false,53)}
+  drawRitualPose(x,y-bob,sc,opts);
+ }
  if(stage==='collect')target(219,403,78,88,()=>requestIncenseAction('take'));
  if(stage==='lightReady')target(290,418,42,65,()=>requestIncenseAction('light'));
  if(stage==='hold')target(290,400,115,176,beginQuietBow);
@@ -6776,34 +6791,67 @@ function bagArt(v){
  if(kind==='ticket')return '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M5 19H59V28Q50 32 59 36V45H5V36Q14 32 5 28Z" fill="#dfc491" stroke="#93724f"/><path d="M17 20v24M23 26h28M23 34h17" stroke="#a18564" stroke-dasharray="3 2"/></svg>';
  return albumIcon(kind)
 }
+/* MBCHAPTER_BEGIN */
+const bagChapterIds=['fortune','home','island','wonder','travel'];
+function bagChapterFor(name,kind){
+ if(/^Arrival:|^Travel |^Railway |^Journey |^Passport /i.test(name))return 'travel';
+ if(/^(Soul Cat|Personality Lab|Inner motive|Inner motives|Café discovery|Parallel life|Compatibility)/i.test(name))return 'wonder';
+ if(/^(Office escape cat|Meeting escape ticket|Meeting survivor|Imperial no.overtime decree|Certified worry shredder|Let it drift|River echo|Deer postcard|Cat friendship|Tea with |Friend of Kopi)/i.test(name))return 'home';
+ if(/^(Fortune |Daily Tarot|Three.card reading|Observatory destiny|Heaven.s approval|Wishing |Temple cat|Quiet garden)/i.test(name))return 'fortune';
+ if(kind==='figures'||/recipe|soup|milk tea|bubble tea|broth|arcade|rhythm|claw|plush|figurine|Pearl & Pause|three.in.a.row/i.test(name))return 'island';
+ return 'travel';
+}
+function bagChapterCounts(entries,id){const rows=entries.filter(v=>v.chapter===id);return {total:rows.length,owned:rows.filter(v=>v.owned).length}}
+function bagPageSlice(rows,index,size=9){const pages=Math.max(1,Math.ceil(rows.length/size)),page=Math.max(0,Math.min(pages-1,index));return {page,pages,rows:rows.slice(page*size,(page+1)*size)}}
+/* MBCHAPTER_END */
+let bagChapter=null,bagPageIndex=0;
+function bagChapterName(id){return id==='travel'?tr('Travel memories','旅途回忆'):tr(...maps[id].n)}
+function bagChapterDescription(id){return tr(...({fortune:['Prayers, wishes and little answers.','祈愿、签文与小小答案。'],home:['A little less stress, a little more company.','烦恼少一点，陪伴多一点。'],island:['Good food, good games and tiny treasures.','好吃、好玩，还有小宝藏。'],wonder:['Discover more about yourself.','慢慢认识自己。'],travel:['Stamps, encounters and treasured memories.','印章、偶遇与珍藏的回忆。']}[id]))}
+function bagChapterImage(id){return destinationPortrait(id==='travel'?'fortune':id)}
 function renderTravellerBag(){
  activePage='room';page(tr('Traveller’s bag','旅人的背包'),tr('Little treasures from your escape.','把摸鱼路上的小宝贝收好。'),q=>{
-  const wrap=element('section','',q,'travellerBagV2'),all=bagEntries(),owned=all.filter(v=>v.owned),head=element('div','',wrap,'bagHeader');
+  const wrap=element('section','',q,'travellerBagV2'),all=bagEntries().map(v=>({...v,chapter:bagChapterFor(v.item[0],bagClass(v.item))})),owned=all.filter(v=>v.owned),head=element('div','',wrap,'bagHeader');
   const pic=element('img','',head);pic.src=ART['badge'+(avatar??0)];pic.alt='';
   const info=element('div','',head);element('strong',playerName||tr('Traveller','旅人'),info);element('small',owned.length+' '+tr('keepsakes','件收藏')+' · '+hideoutBalance()+' '+tr('meow coins','喵币'),info);
   const profile=b(head,tr('Profile','资料'),()=>hideoutProfilePage({origin:renderTravellerBag}));profile.className='bagProfileButton';
   const tabs=element('div','',wrap,'bagModes');
-  for(const [key,en,cn] of [['owned','My bag','背包'],['catalog','Collection','图鉴'],['favorites','Favourites','喜欢']]){const btn=b(tabs,tr(en,cn),()=>{bagMode=key;bagSelected=null;draw()});btn.dataset.mode=key}
+  for(const [key,en,cn] of [['owned','My bag','背包'],['catalog','Collection','图鉴'],['favorites','Favourites','喜欢']]){const btn=b(tabs,tr(en,cn),()=>{bagMode=key;bagSelected=null;bagChapter=null;bagCategory='all';bagQuery='';search.value='';bagPageIndex=0;draw()});btn.dataset.mode=key}
   const category=element('div','',wrap,'bagCategories');
-  for(const [key,en,cn] of bagCats){const btn=b(category,tr(en,cn),()=>{bagCategory=key;bagSelected=null;draw()});btn.dataset.category=key}
-  const tools=element('div','',wrap,'bagTools'),search=element('input','',tools);search.type='search';search.placeholder=tr('Find a treasure','找一件宝贝');search.setAttribute('aria-label',search.placeholder);search.value=bagQuery;search.oninput=()=>{bagQuery=search.value;draw()};
-  const sort=element('select','',tools);sort.setAttribute('aria-label',tr('Sort items','排序'));for(const [key,en,cn] of [['recent','Recent','最近'],['name','Name','名称']]){const opt=element('option',tr(en,cn),sort);opt.value=key}sort.value=bagSort;sort.onchange=()=>{bagSort=sort.value;draw()};
-  const body=element('div','',wrap,'bagBody'),grid=element('div','',body,'bagSlots'),detail=element('section','',body,'bagDetail');
+  for(const [key,en,cn] of bagCats){const btn=b(category,tr(en,cn),()=>{bagCategory=key;bagSelected=null;bagPageIndex=0;draw()});btn.dataset.category=key}
+  const tools=element('div','',wrap,'bagTools'),search=element('input','',tools);search.type='search';search.placeholder=tr('Find a treasure','找一件宝贝');search.setAttribute('aria-label',search.placeholder);search.value=bagQuery;search.oninput=()=>{bagQuery=search.value;bagSelected=null;bagPageIndex=0;draw()};
+  const sort=element('select','',tools);sort.setAttribute('aria-label',tr('Sort items','排序'));for(const [key,en,cn] of [['recent','Recent','最近'],['name','Name','名称']]){const opt=element('option',tr(en,cn),sort);opt.value=key}sort.value=bagSort;sort.onchange=()=>{bagSort=sort.value;bagPageIndex=0;draw()};
+  const body=element('div','',wrap,'bagBody'),chapters=element('div','',body,'bagChapterShelf'),trail=element('div','',body,'bagChapterTrail'),grid=element('div','',body,'bagSlots'),detail=element('section','',body,'bagDetail'),pagination=element('div','',body,'bagPagination');
   const foot=element('div','',wrap,'bagFooter');b(foot,tr('My room','我的小窝'),hideoutPage);b(foot,tr('Passport','护照'),passport);b(foot,tr('Stamp rewards','印章奖励'),hideoutClaimPage);
   function draw(){
    tabs.querySelectorAll('button').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.mode===bagMode)));
    category.querySelectorAll('button').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.category===bagCategory)));
-   const query=bagQuery.trim().toLowerCase(),shown=all.filter(v=>(bagMode==='catalog'||v.owned)&&(bagMode!=='favorites'||bagFavorites.includes(v.item[0]))&&(bagCategory==='all'||bagClass(v.item)===bagCategory)&&(!query||v.item.some(n=>String(n).toLowerCase().includes(query))));
+   const query=bagQuery.trim().toLowerCase(),shelf=!bagChapter&&!query&&bagCategory==='all',shown=all.filter(v=>(!bagChapter||v.chapter===bagChapter)&&(bagMode==='catalog'||v.owned)&&(bagMode!=='favorites'||bagFavorites.includes(v.item[0]))&&(bagCategory==='all'||bagClass(v.item)===bagCategory)&&(!query||v.item.some(n=>String(n).toLowerCase().includes(query))));
    shown.sort((a,b)=>bagSort==='name'?tr(...a.item).localeCompare(tr(...b.item)):b.order-a.order);
-   if(!shown.some(v=>v.item[0]===bagSelected))bagSelected=shown[0]?.item[0]||null;
-   grid.replaceChildren();
-   for(const v of shown){const button=b(grid,'',()=>{bagSelected=v.item[0];draw()});button.className='bagSlot';button.dataset.owned=String(v.owned);button.setAttribute('aria-pressed',String(bagSelected===v.item[0]));button.setAttribute('aria-label',v.owned?tr(...v.item):tr('Undiscovered item','未发现的物品'));const art=element('span','',button,'bagSlotArt');art.innerHTML=bagArt(v);const prize=boxPrizes.find(p=>p[0]===v.item[0]);element('small',v.owned?tr(...v.item):prize?.[4]==='secret'?tr('Secret','隐藏款'):tr('Not found','未发现'),button);if(bagFavorites.includes(v.item[0]))element('span','★',button,'bagStar')}
-   if(!shown.length)element('p',tr('Nothing in this pocket yet.','这个口袋还空空的。'),grid,'bagEmpty');
-   detail.replaceChildren();const v=shown.find(v=>v.item[0]===bagSelected);detail.hidden=!v;if(!v)return;
+   if(!shown.some(v=>v.item[0]===bagSelected))bagSelected=null;
+   const selected=shown.find(v=>v.item[0]===bagSelected),paged=bagPageSlice(shown,bagPageIndex);bagPageIndex=paged.page;
+   chapters.replaceChildren();trail.replaceChildren();grid.replaceChildren();pagination.replaceChildren();
+   chapters.hidden=!shelf;trail.hidden=shelf;grid.hidden=shelf||!!selected;pagination.hidden=shelf||!!selected||paged.pages<=1;
+   if(shelf){
+    for(const id of bagChapterIds){const count=bagChapterCounts(all,id),available=shown.filter(v=>v.chapter===id).length;
+     const card=b(chapters,'',()=>{bagChapter=id;bagSelected=null;bagPageIndex=0;draw()});card.className='bagChapterCard';card.dataset.chapter=id;
+     const art=element('img','',card);art.src=bagChapterImage(id);art.alt='';art.loading='lazy';
+     const copy=element('div','',card,'bagChapterCopy');element('small',tr('Chapter ','章节 ')+(bagChapterIds.indexOf(id)+1),copy);element('strong',bagChapterName(id),copy);
+     element('span',bagChapterDescription(id),copy);element('small',count.owned+' / '+count.total+' '+tr('known keepsakes','件已知收藏')+(bagMode==='favorites'?' · '+available+' '+tr('liked','喜欢'):''),copy);
+     const meter=element('progress','',copy);meter.max=Math.max(1,count.total);meter.value=count.owned;meter.setAttribute('aria-label',bagChapterName(id));
+    }
+    detail.hidden=true;return
+   }
+   b(trail,tr('‹ Chapters','‹ 全部章节'),()=>{bagChapter=null;bagCategory='all';bagQuery='';search.value='';bagSelected=null;bagPageIndex=0;draw()});
+   element('strong',bagChapter?bagChapterName(bagChapter):tr('Search & filters','搜索与筛选'),trail);
+   if(!selected)for(const v of paged.rows){const button=b(grid,'',()=>{bagSelected=v.item[0];draw();detail.scrollIntoView({block:'nearest'})});button.className='bagSlot';button.dataset.owned=String(v.owned);button.setAttribute('aria-pressed',String(bagSelected===v.item[0]));button.setAttribute('aria-label',v.owned?tr(...v.item):tr('Undiscovered item','未发现的物品'));const art=element('span','',button,'bagSlotArt');art.innerHTML=bagArt(v);const prize=boxPrizes.find(p=>p[0]===v.item[0]);element('small',v.owned?tr(...v.item):prize?.[4]==='secret'?tr('Secret','隐藏款'):tr('Not found','未发现'),button);if(bagFavorites.includes(v.item[0]))element('span','★',button,'bagStar')}
+   if(!shown.length){element('p',tr('Nothing in this pocket yet.','这个口袋还空空的。'),grid,'bagEmpty');if(bagMode==='owned')b(grid,tr('See undiscovered keepsakes','看看待发现的收藏'),()=>{bagMode='catalog';bagPageIndex=0;draw()})}
+   if(!selected&&paged.pages>1){const prev=b(pagination,tr('‹ Previous','‹ 上一页'),()=>{bagPageIndex--;draw()});prev.disabled=paged.page===0;element('span',(paged.page+1)+' / '+paged.pages,pagination);const next=b(pagination,tr('Next ›','下一页 ›'),()=>{bagPageIndex++;draw()});next.disabled=paged.page===paged.pages-1}
+   detail.replaceChildren();const v=selected;detail.hidden=!v;if(!v)return;
+   b(detail,tr('‹ Back to keepsakes','‹ 返回收藏'),()=>{bagSelected=null;draw()});
    const art=element('div','',detail,'bagHeroArt');art.innerHTML=bagArt(v);if(!v.owned)art.classList.add('bagUnknown');
    const prize=boxPrizes.find(p=>p[0]===v.item[0]),secret=!v.owned&&prize?.[4]==='secret';
    element('h2',secret?tr('Mystery figure','神秘手办'):tr(...v.item),detail);
-   element('small',v.owned?tr('In your bag','已放入背包'):tr('Still to discover','等待发现'),detail);
+   element('small',v.owned?tr('In your bag','已放入背包'):tr('Still to discover','等待发现'),detail);element('small',bagChapterName(v.chapter),detail);
    if(prize)element('small',tr(prize[4]==='secret'?'Secret':prize[4]==='rare'?'Rare':prize[4]==='uncommon'?'Uncommon':'Common',prize[4]==='secret'?'隐藏款':prize[4]==='rare'?'稀有款':prize[4]==='uncommon'?'特别款':'普通款'),detail,'bagRarity');
    element('p',tr(...(v.owned?keepsakeStory(v.item):keepsakeClue(v.item))),detail);
    if(v.owned){const fav=b(detail,bagFavorites.includes(v.item[0])?tr('★ Remove favourite','★ 取消喜欢'):tr('☆ Keep as favourite','☆ 加入喜欢'),()=>{bagFavorites=bagFavorites.includes(v.item[0])?bagFavorites.filter(x=>x!==v.item[0]):[...bagFavorites,v.item[0]];save('bagFavoritesV1',bagFavorites);draw()});fav.setAttribute('aria-pressed',String(bagFavorites.includes(v.item[0])))}
@@ -6812,7 +6860,24 @@ function renderTravellerBag(){
  });
  journalLanguage(renderTravellerBag);
 }
-myRoom=renderTravellerBag;$('dockRoom').onclick=myRoom;$('profileHud').onclick=myRoom;
+myRoom=()=>{bagChapter=null;bagCategory='all';bagQuery='';bagSelected=null;bagPageIndex=0;renderTravellerBag()};$('dockRoom').onclick=myRoom;$('profileHud').onclick=myRoom;
+const bagChapterStyle=document.createElement('style');bagChapterStyle.textContent=`
+#content .bagChapterShelf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;grid-column:1/-1}
+#content .bagChapterCard{position:relative;display:block;min-height:158px;isolation:isolate;overflow:hidden;padding:0!important;text-align:left;color:#fff2d9!important;background:#435a4b!important;border:1px solid #9a8059!important;border-radius:8px}
+#content .bagChapterCard img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+#content .bagChapterCard:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(transparent 5%,#23382bd9 56%,#203129fa)}
+#content .bagChapterCopy{min-height:158px;display:flex;flex-direction:column;justify-content:flex-end;padding:12px;gap:4px}
+#content .bagChapterCopy strong{font:600 17px/1.15 Georgia,"Songti SC",serif}
+#content .bagChapterCopy span,#content .bagChapterCopy small{font-size:11px;line-height:1.35}
+#content .bagChapterCopy progress{width:100%;height:7px;accent-color:#d6b977}
+#content .bagChapterTrail,#content .bagPagination{display:flex;align-items:center;gap:8px;justify-content:space-between;grid-column:1/-1}
+#content .bagBody{grid-template-columns:minmax(0,1fr)!important}
+#content .bagBody [hidden]{display:none!important}
+#content .bagPagination button{flex:1}
+#content .bagDetail>button:first-child{display:block;margin-bottom:12px!important}
+#content .bagDetail .bagHeroArt{margin:10px auto}
+@media(max-width:380px){#content .bagChapterCopy{padding:9px}#content .bagChapterCopy strong{font-size:15px}}
+`;document.head.append(bagChapterStyle);
 const bagV2CSS=document.createElement('style');bagV2CSS.textContent=`
 #content .travellerBagV2{max-width:880px;margin:0 auto;color:#594a3b;font-family:system-ui,"PingFang SC",sans-serif}
 .travellerBagV2 .bagHeader{display:flex;align-items:center;gap:10px;background:linear-gradient(130deg,#f2dfb9,#e7d1a9);border:1px solid #b6986d;border-radius:13px 13px 5px 5px;padding:12px;box-shadow:inset 0 0 0 3px #f9ecd3}
@@ -7736,7 +7801,7 @@ function pawWalletPage(){
  element('p',tr('Discoveries, daily activities and the daily wheel earn Meow Coins. Purchased blind box figures do not earn coins back.','探索纪念品、每日活动和转盘都能攒喵币。购买的盲盒手办不返喵币。'),card);
  element('p',tr('Blind boxes: 40 Meow Coins each, up to three per Singapore day.','盲盒40喵币一盒，每个新加坡日最多三盒。'),card);
  element('p',tr('Today’s stock: ','今日剩余：')+blindStockRemaining()+'/'+blindStock,card);
- b(q,tr('My collectible cabinet','我的收藏柜'),()=>{bagCategory='figures';bagMode='catalog';renderTravellerBag()});
+ b(q,tr('My collectible cabinet','我的收藏柜'),()=>{bagChapter='island';bagPageIndex=0;bagSelected=null;bagQuery='';bagCategory='figures';bagMode='catalog';renderTravellerBag()});
  b(q,tr('Room themes','小窝主题'),()=>{hideoutEditing=true;hideoutPage()});
  b(q,tr('Keep exploring','继续逛小镇'),()=>{$('page').style.display='none'})
  })

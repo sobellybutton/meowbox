@@ -26,6 +26,7 @@ jobs:
       - run: node scripts/resident-story-test.cjs
       - run: node scripts/guest-roster-test.cjs
       - run: node scripts/daily-guide-wallet-test.cjs
+      - run: node scripts/chapter-grip-test.cjs
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps chromium
       - name: Test all four villages and actual doorway taps
@@ -281,7 +282,14 @@ jobs:
                 const collection=page.locator('.bagModes').getByRole('button',{name:'Collection',exact:true});
                 await collection.click();
                 if(await collection.getAttribute('aria-pressed')!=='true')throw Error('Collection tab did not activate');
+                await page.locator('.bagChapterCard[data-chapter="fortune"]').click();
                 await page.locator('.bagSlot[data-owned="true"]').first().waitFor();
+                if(await page.locator('.bagSlot').count()>9)throw Error('Collection chapter exceeds one page');
+                await page.locator('.bagSlot[data-owned="true"]').first().click();
+                if(!await page.locator('.bagDetail').isVisible()||await page.locator('.bagSlots').isVisible())throw Error('Keepsake detail did not open separately');
+                await page.locator('.bagDetail').getByRole('button',{name:'‹ Back to keepsakes',exact:true}).click();
+                await page.locator('.bagChapterTrail').getByRole('button',{name:'‹ Chapters',exact:true}).click();
+                if(await page.locator('.bagChapterCard').count()!==5)throw Error('Chapter shelf did not restore');
                 await page.locator('.bagFooter').getByRole('button',{name:'Passport',exact:true}).click();
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
                 await page.getByRole('button',{name:'Open my bag',exact:true}).click();
