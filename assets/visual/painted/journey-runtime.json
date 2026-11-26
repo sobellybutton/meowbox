@@ -1,4 +1,23 @@
 {
   "version": 1,
-  "rail": {}
+  "rail": {
+    "portrait": {
+      "path": "assets/visual/painted/journey/portrait.webp",
+      "width": 880,
+      "height": 1320,
+      "sha256": "72137615ee12e65bb35961cafc5cd456f5eaabe935a9a5c6248d7534b23dd34c"
+    },
+    "landscape": {
+      "path": "assets/visual/painted/journey/landscape.webp",
+      "width": 1440,
+      "height": 810,
+      "sha256": "bea0aac8aee1360fc37ef0ccee4f7032d7932bb27a7a15f89ebc36d1afb63829"
+    }
+  },
+  "gate": {
+    "path": "assets/visual/painted/journey/gate.webp",
+    "width": 880,
+    "height": 1320,
+    "sha256": "05111907c8d40c58caafbb46e40b095fc87e52ad98bf58331dba5e0a0b7712a2"
+  }
 }

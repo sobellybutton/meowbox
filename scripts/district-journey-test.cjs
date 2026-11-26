@@ -73,7 +73,12 @@ async function travelLoop(page,name,touch){
  await press(page.locator('#proposal .ticket-confirm'));
  await press(page.locator('#proposal footer button.next'));
  await press(page.locator('#proposal footer .actions button').first());
+ const layout=touch?'portrait':'landscape';
+ await page.locator('#proposal .rail-cabin .mbPaintedRail[data-layout="'+layout+'"]:visible').waitFor();
+ await shot('train');
  await press(page.locator('#proposal .rail-arrive'));
+ await page.locator('#proposal .mbGatePainting:visible').waitFor();
+ await shot('gate');
  await press(page.locator('#proposal .shrine-enter'));
  await page.waitForFunction(()=>proposal.hidden&&valleyRevealAt<0);
  await enterDoor('tarot');
@@ -92,14 +97,20 @@ async function travelLoop(page,name,touch){
 
  for(const [district,doors] of [['home',['fish']],['island',['boba']],['wonder',['quiz','story','match']],['fortune',[]]]){
   await press(page.locator('#nextStopShortcut'));
+  const scenery=page.locator('.districtRailCabin .mbRailPane > span').first();
+  await scenery.waitFor();
+  await press(page.locator('.mbRailPause'));
+  assert.equal(await scenery.evaluate(el=>getComputedStyle(el).animationPlayState),'paused');
   await press(page.locator('.railJourneyActions button').first());
+  await page.locator('.mbTransferHolding[data-painted-rail="true"]').waitFor();
+  await shot(district+'-transfer');
   await page.waitForFunction(d=>scene===d&&!transitioning,district,{timeout:15000});
   await shot(district+'-arrival');
   for(const id of doors){
    await enterDoor(id);
    if(id==='quiz'){
     await station('quiz');
-    await page.locator('#choices').getByRole('button',{name:/Four preferences/}).waitFor();
+    await page.locator('#choices').getByRole('button',{name:'MBTI-inspired preferences',exact:true}).waitFor();
     await press(page.locator('#choices').getByRole('button',{name:/Keep exploring/}));
    }
    await backOutside();

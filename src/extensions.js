@@ -3321,6 +3321,7 @@ action=function(id){if(room==='destiny'&&id==='destiny')return destinyConsultMen
 
 /* Ambient residents walk within the painted path, not the full image.
    Fortune samples are conservative stair-centre anchors; calibrate against final art. */
+const valleyResidentWalkLimit=1370;
 const valleyNpcPath=[[180,590,35],[300,560,35],[500,545,38],[720,540,42],[950,535,44],[1180,515,42],[1400,500,43],[1680,500,43]];
 /* MBPAINTED_LANE_BEGIN */
 // Foot positions traced against the three native portrait paintings (1000 world units wide).
@@ -4997,7 +4998,7 @@ initNPC=function(){
  npc.forEach((n,i)=>{const q=slots[i%slots.length],y=q.y-(Math.floor(i/slots.length)*55),lane=residentLane('fortune',y);n.x=n.tx=lane.x+lane.half*q.side*.72;n.y=n.ty=y;n.pathReady=false;n.walkDirection=i%2?1:-1;n.pauseUntil=t+.2+i*.08})
 };
 const entranceNpcTargetBefore=residentTarget;
-residentTarget=function(n,i){entranceNpcTargetBefore(n,i);if(scene==='fortune'){n.ty=Math.min(n.ty,1370);const lane=residentLane(scene,n.ty);n.tx=lane.x+(i%2?1:-1)*lane.half*.72}};
+residentTarget=function(n,i){entranceNpcTargetBefore(n,i);if(scene==='fortune'){n.ty=Math.min(n.ty,valleyResidentWalkLimit);const lane=residentLane(scene,n.ty);n.tx=lane.x+(i%2?1:-1)*lane.half*.72}};
 const entranceSignStyle=document.createElement('style');entranceSignStyle.textContent=`
 #game>#worldSigns>.worldSign{background:transparent!important;border:0!important;box-shadow:none!important;padding:8px 5px!important;max-width:130px!important;font:600 12px/1.12 "Georgia","Songti SC",serif!important;letter-spacing:.015em!important;color:#f9edcf!important}
 #game>#worldSigns>.worldSign .doorPlaque{display:block;padding:5px 9px;background:linear-gradient(155deg,#5d5849ed,#3e5046ef);border:1px solid #dfc69a99;border-radius:2px;box-shadow:0 2px 4px #241f193b;text-shadow:0 1px 1px #352a22;white-space:normal;pointer-events:none}

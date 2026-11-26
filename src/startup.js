@@ -2000,7 +2000,7 @@ initNPC=function(...args){
  const r=mbSpreadInitBefore(...args);
  const path=scene==='fortune'?valleyNpcPath:paintedResidentPaths[scene];
  if(!path||room)return r;
- const low=Math.max(minY()+24,path[0][0]),high=Math.min(maxY()-24,path.at(-1)[0]);
+ const low=Math.max(minY()+24,path[0][0]),high=Math.min(maxY()-24,path.at(-1)[0],scene==='fortune'?valleyResidentWalkLimit:Infinity);
  if(high<=low)return r;
  const gap=Math.min(160,(high-low)/Math.max(1,npc.length+1)),occupied=[p.y];
  for(const [i,n] of [...npc].sort((a,b)=>Math.abs(a.y-p.y)-Math.abs(b.y-p.y)).entries()){
@@ -2287,62 +2287,113 @@ const mbIdentityVisualStyle=document.createElement('style');mbIdentityVisualStyl
 `;document.head.append(mbIdentityVisualStyle);
 
 
-/* Optional original railway paintings, kept separate from live text, routes,
-   controls and the selected human avatar. The current artwork remains fallback. */
-function mbValidateJourneyPaintings(data){
- if(data?.version!==1||!data.rail)return null;
- const out={};
- for(const mode of ['portrait','landscape']){
-  const v=data.rail[mode],expected='assets/visual/painted/journey/'+mode+'.webp';
-  if(v?.path!==expected||!Number.isInteger(v.width)||!Number.isInteger(v.height)||v.width<400||v.height<400||v.width>2048||v.height>2048||!/^[a-f0-9]{64}$/.test(v.sha256||''))return null;
-  if(mode==='portrait'?v.height/v.width<1.35:v.width/v.height<1.35)return null;
-  out[mode]={path:v.path,width:v.width,height:v.height,sha256:v.sha256}
- }
- return out
+/* Painted railway and gate plates. Routes, travelers and copy stay independent. */
+function mbJourneyPainting(record,name,portrait){
+ const expected='assets/visual/painted/journey/'+name+'.webp';
+ if(record?.path!==expected||!Number.isInteger(record.width)||!Number.isInteger(record.height)||record.width<400||record.height<400||record.width>2048||record.height>2048)return null;
+ return (portrait?record.height/record.width:record.width/record.height)>=1.35?record:null
 }
 let mbJourneyPaintingsPromise;
 function mbJourneyPaintings(){
- return mbJourneyPaintingsPromise??=fetch('assets/visual/painted/journey-runtime.json',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(mbValidateJourneyPaintings).catch(()=>null)
+ return mbJourneyPaintingsPromise??=fetch('assets/visual/painted/journey-runtime.json',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(data=>{
+  if(data?.version!==1)return null;
+  return {portrait:mbJourneyPainting(data.rail?.portrait,'portrait',true),landscape:mbJourneyPainting(data.rail?.landscape,'landscape',false),gate:mbJourneyPainting(data.gate,'gate',true)}
+ }).catch(()=>null)
 }
 async function mbMountRailPainting(host,mode){
  if(!host||host.querySelector('.mbPaintedRail'))return;
- const art=await mbJourneyPaintings();if(!art||!host.isConnected)return;
- if(host.querySelector('.mbPaintedRail'))return;
- const picture=element('picture','',host,'mbPaintedRail');
- picture.dataset.use=mode;picture.hidden=true;picture.setAttribute('aria-hidden','true');
+ const art=await mbJourneyPaintings();
+ if(!art?.portrait||!art.landscape||!host.isConnected||host.querySelector('.mbPaintedRail'))return;
+ const stage=element('div','',host,'mbPaintedRail');
+ stage.dataset.use=mode;stage.hidden=true;stage.setAttribute('aria-hidden','true');
+ const picture=element('picture','',stage);
  const wide=element('source','',picture);wide.media='(min-width:760px) and (min-aspect-ratio: 1/1)';wide.srcset=art.landscape.path;
  const im=element('img','',picture);im.alt='';im.decoding='async';
+ if(mode!=='transfer'){
+  for(const pane of ['upper','lower']){
+   const mask=element('span','',stage,'mbRailPane');mask.dataset.pane=pane;
+   element('span','',mask)
+  }
+ }
  const verify=()=>{
-  if(!picture.isConnected)return;
-  const loaded=Object.values(art).some(v=>v.width===im.naturalWidth&&v.height===im.naturalHeight);
-  picture.hidden=!loaded;host.dataset.paintedRail=String(loaded)
+  const layout=['portrait','landscape'].find(key=>art[key].width===im.naturalWidth&&art[key].height===im.naturalHeight);
+  stage.hidden=!layout;host.dataset.paintedRail=String(!!layout);
+  if(!layout)return;
+  if(mode==='entrance')proposal.dataset.paintedShot='train';
+  stage.dataset.layout=layout;
+  stage.style.setProperty('--rail-aspect',String(im.naturalWidth/im.naturalHeight));
+  stage.style.setProperty('--rail-painting','url("'+art[layout].path+'")')
  };
- im.addEventListener('load',verify);im.addEventListener('error',()=>{picture.hidden=true;host.dataset.paintedRail='false'});
+ im.addEventListener('load',verify);im.addEventListener('error',()=>{stage.hidden=true;host.dataset.paintedRail='false'});
  im.src=art.portrait.path;
- host.prepend(picture);if(im.complete&&im.naturalWidth)verify()
+ host.prepend(stage);if(im.complete&&im.naturalWidth)verify()
 }
+async function mbMountGatePainting(hero){
+ const art=(await mbJourneyPaintings())?.gate;
+ if(!art||!hero.isConnected)return;
+ const plate=new Image();
+ plate.alt='';plate.className='mbGatePainting';plate.src=art.path;
+ try{await plate.decode()}catch{return}
+ if(!hero.isConnected||plate.naturalWidth!==art.width||plate.naturalHeight!==art.height)return;
+ hero.prepend(plate);hero.dataset.paintedGate='true';proposal.dataset.paintedShot='shrine';
+}
+const mbRailEntranceBefore=proRender;
+proRender=function(...args){
+ delete proposal.dataset.paintedShot;
+ const r=mbRailEntranceBefore(...args);
+ if(proStep===5)mbMountRailPainting(proposal.querySelector('.rail-cabin'),'entrance');
+ if(proStep===3)mbMountGatePainting(proposal.querySelector('.hero'));
+ return r
+};
 const mbPaintedRailPreviewBefore=openRailStop;
 openRailStop=function(...args){
- const r=mbPaintedRailPreviewBefore(...args),cabin=$('content').querySelector('.districtRailCabin');
- if(cabin)mbMountRailPainting(cabin,'preview');return r
+ const r=mbPaintedRailPreviewBefore(...args);
+ mbMountRailPainting($('content').querySelector('.districtRailCabin'),'preview');return r
 };
 const mbPaintedRailTransferBefore=mbTransferHolding;
 mbTransferHolding=function(...args){
- const r=mbPaintedRailTransferBefore(...args),overlay=$('game').querySelector('.mbTransferHolding');
- if(overlay)mbMountRailPainting(overlay,'transfer');return r
+ const r=mbPaintedRailTransferBefore(...args);
+ mbMountRailPainting($('game').querySelector('.mbTransferHolding'),'transfer');return r
 };
 const mbRailArtworkStyle=document.createElement('style');mbRailArtworkStyle.textContent=`
-.mbPaintedRail[hidden]{display:none!important}
-#content .districtRailCabin .mbPaintedRail[data-use=preview]{display:block;border:3px solid #faf0d9;border-radius:4px;overflow:hidden;background:#e1d2b6;margin:4px auto 8px;max-width:100%}
-#content .mbPaintedRail[data-use=preview] img{display:block;width:100%;height:clamp(160px,35dvh,410px);object-fit:contain;object-position:center}
-#content .districtRailCabin[data-painted-rail=true] .mbRailPostcard{height:clamp(65px,11dvh,105px)!important;max-width:170px;margin:auto!important}
-#content .districtRailCabin[data-painted-rail=true] .mbRailPostcard img{height:100%;object-fit:contain!important;animation:none!important}
-#game .mbTransferHolding .mbPaintedRail[data-use=transfer]{position:absolute;inset:0;display:block;overflow:hidden;z-index:0}
-#game .mbTransferHolding .mbPaintedRail[data-use=transfer] img{width:100%;height:100%;object-fit:cover;object-position:center}
+.mbPaintedRail[hidden],.mbGatePainting[hidden]{display:none!important}
+.mbPaintedRail{position:relative;overflow:hidden;isolation:isolate}
+.mbPaintedRail picture,.mbPaintedRail picture img{display:block;width:100%;height:100%}
+.mbPaintedRail:not([data-use=transfer]){width:min(100%,calc(var(--rail-height) * var(--rail-aspect)));aspect-ratio:var(--rail-aspect);margin:auto}
+.mbRailPane,.mbRailPane>span{position:absolute;inset:0;pointer-events:none}
+.mbRailPane>span{background:var(--rail-painting) center/100% 100%;animation:mbRailPaneGlide 8s ease-in-out infinite alternate}
+.mbRailPane[data-pane=upper]>span{transform-origin:30% 34%;animation-duration:12s}
+.mbRailPane[data-pane=lower]>span{transform-origin:34% 49%}
+.mbPaintedRail[data-layout=portrait] .mbRailPane[data-pane=upper]{clip-path:polygon(22% 24%,65% 30%,67% 33%,67% 40%,14.5% 37.5%)}
+.mbPaintedRail[data-layout=portrait] .mbRailPane[data-pane=lower]{clip-path:polygon(10% 41.5%,68% 43.5%,68% 53.5%,66% 55.5%,12.5% 58.5%,7.7% 49%)}
+.mbPaintedRail[data-layout=landscape] .mbRailPane[data-pane=upper]{clip-path:polygon(10% 9%,37% 22.5%,38% 26%,38.5% 40.5%,7.5% 37.5%)}
+.mbPaintedRail[data-layout=landscape] .mbRailPane[data-pane=lower]{clip-path:polygon(6% 43%,38.5% 45.5%,38.5% 62%,37.5% 64%,4.5% 75.5%,2.5% 61%)}
+@keyframes mbRailPaneGlide{from{transform:translateX(0) scale(1)}to{transform:translateX(-.85%) scale(1.035)}}
+#proposal[data-painted-shot] .cinema-world{display:none}
+#proposal[data-painted-shot=train]{background:#30362a}
+#proposal[data-shot=train] .rail-cabin[data-painted-rail=true]{display:grid;place-items:center;container-type:size;border:0;max-width:1000px;height:100%!important;background:none}
+#proposal .mbPaintedRail[data-use=entrance]{--rail-height:100cqh}
+#proposal .rail-cabin[data-painted-rail=true] :is(.train-window,.rail-window-sill,.rail-seat,.rail-table,.rail-passenger){display:none}
+#proposal .rail-cabin[data-painted-rail=true] .rail-car-number{display:none}
+#content .districtRailCabin[data-painted-rail=true]{height:auto!important;max-height:none!important;aspect-ratio:auto!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+#content .mbPaintedRail[data-use=preview]{--rail-height:clamp(195px,31dvh,370px);border-radius:3px}
+#content .districtRailCabin[data-painted-rail=true] :is(.mbRailPostcard,.districtRailSeat,.railRouteCar){display:none!important}
+#content .districtRailCabin[data-scenery-paused=true] .mbRailPane>span{animation-play-state:paused}
+#game .mbTransferHolding .mbPaintedRail[data-use=transfer]{position:absolute;inset:0;z-index:0}
+#game .mbTransferHolding .mbPaintedRail[data-use=transfer] img{object-fit:cover;object-position:center}
 #game .mbTransferHolding .mbTransferTicket{position:relative;z-index:1}
-#game .mbTransferHolding[data-painted-rail=true]{background:#534939}
-#game .mbTransferHolding[data-painted-rail=true] .mbTransferTicket{align-self:end;margin-bottom:clamp(10px,4dvh,36px);box-shadow:0 3px 18px #2c231b77;background:#f4e6cbf5}
-@media(min-width:760px) and (min-aspect-ratio:1/1){#game .mbTransferHolding[data-painted-rail=true] .mbTransferTicket{justify-self:end;margin-right:clamp(14px,4vw,65px)}}
+#game .mbTransferHolding[data-painted-rail=true]{animation:none}
+#game .mbTransferHolding[data-painted-rail=true] .mbTransferTicket{width:min(100%,380px);align-self:end;margin-bottom:clamp(6px,3dvh,28px);box-shadow:0 3px 18px #2c231b77;background:#f4e6cbf5}
+#game .mbTransferHolding[data-painted-rail=true] .mbTransferAvatar{height:clamp(64px,15dvh,120px)}
+#proposal[data-shot=shrine] .hero[data-painted-gate=true]{container-type:size;width:100%;height:100%;min-height:0!important;align-self:stretch}
+#proposal .mbGatePainting{position:absolute;inset:0;margin:auto;width:100%;height:100%;object-fit:contain;object-position:center;border-radius:3px}
+#proposal .hero[data-painted-gate=true] .shrine-ambient-lantern{display:none}
+#proposal[data-shot=shrine] .hero[data-painted-gate=true] .gate-traveller{height:clamp(54px,24cqh,118px)!important;bottom:5%!important;object-position:bottom}
+#proposal[data-shot=shrine] .hero[data-painted-gate=true] .gate-traveller.go{transform:translateY(-80%) scale(.59)!important;opacity:0}
+@media(min-width:760px) and (min-aspect-ratio:1/1){
+ #game .mbTransferHolding[data-painted-rail=true] .mbTransferTicket{justify-self:end;margin-right:clamp(14px,4vw,65px)}
+}
+@media(prefers-reduced-motion:reduce){.mbRailPane{display:none}}
 `;document.head.append(mbRailArtworkStyle);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
