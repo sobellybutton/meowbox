@@ -2546,9 +2546,9 @@ async function mbMountRailPainting(host,mode){
  if(!art?.portrait||!art.landscape||!host.isConnected||host.querySelector('.mbPaintedRail'))return;
  // Prefetch route layers while carriage artwork loads. A missing route never
  // blocks boarding; only a complete pair may replace the shared scenery.
- let routeLayers=null;
  const route=mode==='ride'?art.routes?.[host.dataset.to]:null;
- if(route)Promise.all([pawRailRouteLoad(route.far),pawRailRouteLoad(route.near)]).then(([far,near])=>{if(far&&near)routeLayers={far,near}});
+ const routeReady=route?Promise.all([pawRailRouteLoad(route.far),pawRailRouteLoad(route.near)]).then(([far,near])=>far&&near?{far,near}:null):null;
+ let motionVersion=0;
  const stage=element('div','',host,'mbPaintedRail');
  stage.dataset.use=mode;stage.hidden=true;stage.setAttribute('aria-hidden','true');
  const picture=element('picture','',stage);
@@ -2563,7 +2563,12 @@ async function mbMountRailPainting(host,mode){
   stage.dataset.layout=layout;
   stage.style.setProperty('--rail-aspect',String(im.naturalWidth/im.naturalHeight));
   stage.style.setProperty('--rail-painting','url("'+art[layout].path+'")');
-  pawRailMountMotion(stage,im,layout,host,mode,routeLayers)
+  const version=++motionVersion;
+  const mount=layers=>{
+   if(version===motionVersion&&stage.isConnected&&!stage.hidden&&stage.dataset.layout===layout)pawRailMountMotion(stage,im,layout,host,mode,layers)
+  };
+  if(routeReady)Promise.race([routeReady,new Promise(resolve=>setTimeout(()=>resolve(null),350))]).then(mount);
+  else mount(null)
  };
  im.addEventListener('load',verify);im.addEventListener('error',()=>{pawRailMotionJobs.get(stage)?.stop();stage.hidden=true;host.dataset.paintedRail='false'});
  im.src=art.portrait.path;
@@ -6136,7 +6141,7 @@ const pawGateCompositionCSS=document.createElement('style');
 pawGateCompositionCSS.textContent=`
 #proposal[data-paw-entrance-step="3"]>.hero{background:#293c32!important;container-type:size}
 #proposal[data-paw-entrance-step="3"] .mbGatePainting{object-fit:contain!important;object-position:center!important;backdrop-filter:none!important;background:none!important}
-#proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded{position:absolute!important;left:var(--paw-gate-x)!important;top:var(--paw-gate-y)!important;bottom:auto!important;width:auto!important;height:var(--paw-gate-height)!important;max-width:none!important;max-height:none!important;translate:-50% -100%!important;transform:none!important;transition:none!important;opacity:1!important;object-fit:contain!important}
+#proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded{position:absolute!important;left:var(--paw-gate-x)!important;top:var(--paw-gate-y)!important;bottom:auto!important;width:auto!important;height:var(--paw-gate-height)!important;max-width:none!important;max-height:none!important;translate:var(--paw-gate-pivot-x,-50%) var(--paw-gate-pivot-y,-100%)!important;transform:none!important;transition:none!important;opacity:1!important;object-fit:contain!important}
 #proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded.go{opacity:0!important;transition:opacity .13s linear!important}
 `;
 document.head.append(pawGateCompositionCSS);
@@ -6161,6 +6166,8 @@ async function pawGateWalk(hero,traveller){
    start??=now;const v=Math.min(1,(now-start)/720);
    const i=Math.min(frames.length-1,Math.floor(v*frames.length*2)%frames.length);
    if(traveller.getAttribute('src')!==frames[i].path)traveller.src=frames[i].path;
+   traveller.style.setProperty('--paw-gate-pivot-x',(-100*frames[i].foot[0]/frames[i].width)+'%');
+   traveller.style.setProperty('--paw-gate-pivot-y',(-100*frames[i].foot[1]/frames[i].height)+'%');
    pawGatePlace(hero,traveller,v);
    if(v>=1){finish();return}requestAnimationFrame(tick)
   }
