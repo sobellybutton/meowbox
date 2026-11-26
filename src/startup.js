@@ -2554,7 +2554,7 @@ travel=function(...args){
  if(room||activity)return result;
  const q=$('content'),grid=q.querySelector('.portraitTravelGrid');
  if(!grid||q.querySelector('.pawExploreRail'))return result;
- const section=element('section','',null,'pawExploreRail');
+ const section=element('section','',q,'pawExploreRail');
  element('strong',tr('Explore at your own pace','慢慢逛，不着急'),section);
  element('small',tr('Visit the little shops here first if you like. The railway is at the far end of town, and you can travel any time.','可以先逛逛这里的小店。铁路在小镇尽头，想出发时再去。'),section);
  const station=maps[scene]?.st.find(s=>s[0]==='station');
