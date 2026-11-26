@@ -1261,4 +1261,109 @@ const sceneryFirstStyle=document.createElement('style');sceneryFirstStyle.textCo
 @media(max-width:380px){#game #hudName{max-width:64px!important}#game #hudStats #hudCoins{font-size:11px!important;padding:5px!important}}
 `;document.head.append(sceneryFirstStyle);syncTownSettings();
 
+
+/* Shared action clock, first used by the paper-worry ritual.
+   Keep the established painted host and avatar art; dedicated arm/action
+   frames are still required before visual approval. Time is the render clock. */
+function townActionPhase(age,contact=.23,duration=.46){
+ if(!Number.isFinite(age)||age<0||age>=duration)return 'ready';
+ if(age<contact*.55)return 'anticipation';
+ if(age<contact)return 'swing';
+ if(age<contact+.065)return 'impact';
+ return 'recovery'
+}
+const paperRitualImpactBefore=smack;
+function paperRitualBusy(){return !!state?.paperAction}
+function paperRitualAllowed(){return activity==='hit'&&room==='fish'&&!state.paperFinished&&!document.hidden&&!talkOpen&&$('page').style.display!=='block'&&!transitioning}
+function paperRitualSyncButtons(){
+ const el=$('gameControls');if(!el||activity!=='hit')return;
+ const busy=paperRitualBusy();
+ for(const button of el.querySelectorAll('button'))button.disabled=busy;
+}
+function paperRitualCancel(){
+ if(activity!=='hit'||!state.paperAction)return;
+ state.paperAction=null;stressSwingAt=-10;paperRitualSyncButtons()
+}
+function paperRitualRequest(){
+ if(!paperRitualAllowed()||paperRitualBusy())return false;
+ state.paperAction={at:t,landed:false};
+ stressSwingAt=t;paperRitualSyncButtons();return true
+}
+smack=function(){
+ if(activity==='hit'&&room==='fish')return paperRitualRequest();
+ return paperRitualImpactBefore()
+};
+function paperRitualAdvance(){
+ if(activity!=='hit'||room!=='fish'||!state.paperAction)return;
+ const move=state.paperAction,age=t-move.at;
+ if(!paperRitualAllowed()||!Number.isFinite(age)||age<0){paperRitualCancel();return}
+ if(age>=.23&&!move.landed){
+  move.landed=true;
+  // Existing reward, sound, joke and paper-debris handlers run at contact.
+  paperRitualImpactBefore();stressSwingAt=move.at;
+ }
+ if(age>=.46){
+  state.paperAction=null;refreshControls()
+ }
+}
+const paperRitualPaperBefore=paperWorryAt;
+paperWorryAt=function(x,y,impact){
+ if(activity==='hit'&&room==='fish'){
+  const age=state.paperAction?.landed?t-state.paperAction.at-.23:-1;
+  impact=age<0?0:Math.sin(age*29)*Math.exp(-age*11)*.65
+ }
+ return paperRitualPaperBefore(x,y,impact)
+};
+const paperRitualDrawBefore=drawActivity;
+drawActivity=function(){paperRitualAdvance();return paperRitualDrawBefore()};
+const paperRitualStartBefore=start;
+start=function(id){
+ const result=paperRitualStartBefore(id);
+ if(id==='hit'&&room==='fish'){
+  const name=String(playerName||'').trim().slice(0,24);
+  const en=name?name+', take your time. Choose a worry or give the paper a tap.':'Take your time. Choose a worry or give the paper a tap.';
+  const cn=(name?name+'，':'')+'慢慢来。选个烦恼，或者先拍拍纸小人。';
+  hint('Ah Ma: '+en,'阿嬷：'+cn);refreshControls()
+ }
+ return result
+};
+const paperRitualChooseBefore=chooseStressTarget;
+chooseStressTarget=function(index){
+ if(room==='fish'&&activity==='hit'&&(paperRitualBusy()||state.paperFinished))return false;
+ return paperRitualChooseBefore(index)
+};
+const paperRitualEndings=[
+ ["Enough for today. The slipper is officially off duty. Go get some tea.","今天够啦。拖鞋正式下班，去喝口茶吧。"],
+ ["The paper can keep the overtime. You can keep your evening.","加班留给纸小人，今晚留给你自己。"],
+ ["No paperwork, no performance review. Just a little room to breathe.","不用填表，不用考核。给自己留点喘气的空间。"],
+ ["The worries do not have to disappear for you to take a break.","烦恼不必全部消失，你也可以先休息一下。"]
+];
+function paperRitualFinish(){
+ if(!paperRitualAllowed()||paperRitualBusy()||!state.count)return;
+ state.paperFinished=true;
+ const line=townReaction('paper-finish',paperRitualEndings);
+ say(tr('Ah Ma','阿嬷'),tr(...line),[
+  [tr('Another round','再来一轮'),()=>start('hit')],
+  [tr('Back to pier','返回码头'),()=>{closeTalk();$('back').click()}]
+ ]);
+ refreshControls()
+}
+const paperRitualControlsBefore=refreshControls;
+refreshControls=function(){
+ const result=paperRitualControlsBefore();
+ if(activity!=='hit'||room!=='fish')return result;
+ const el=$('gameControls');if(!el)return result;
+ if(state.paperFinished){
+  el.replaceChildren();
+  b(el,tr('Another round','再来一轮'),()=>start('hit'));
+  b(el,tr('Back to pier','返回码头'),()=>{closeTalk();$('back').click()})
+ }else if(state.count>0){
+  // Keep the existing compact two-row layout on narrow phones.
+  const options=el.querySelectorAll('button');
+  if(options.length===3){const finish=b(el,tr('Finish for now','今天就到这'),paperRitualFinish);options[2].replaceWith(finish)}
+ }
+ paperRitualSyncButtons();return result
+};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)paperRitualCancel()});
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

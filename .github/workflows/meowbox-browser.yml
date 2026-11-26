@@ -474,8 +474,12 @@ jobs:
                 await page.evaluate(()=>action('hit'));
                 await page.waitForTimeout(650);
                 await page.locator('#gameControls .paperWhack').click();
-                await page.waitForFunction(()=>state.count>=1,{},{timeout:3000});
+                await page.waitForFunction(()=>state.count===1&&!state.paperAction,{},{timeout:3000});
                 await page.screenshot({path:'test-results/'+name+'-pier-auntie.png'});
+                await page.locator('#gameControls').getByRole('button',{name:'Finish for now',exact:true}).click();
+                await page.waitForFunction(()=>state.paperFinished&&talkOpen,{},{timeout:3000});
+                await page.locator('#choices').getByRole('button',{name:'Back to pier',exact:true}).click();
+                await page.waitForFunction(()=>room==='fish'&&!activity,{},{timeout:5000});
                 await page.evaluate(()=>{scene='fortune';room=null;activity=null;state={};closeTalk();updateHUD()});
                 await page.evaluate(()=>{scene='home';room='office';activity=null;state={};closeTalk();updateHUD();action('officeSketch')});
                 await page.locator('#choices').getByRole('button',{name:'Ask for an agenda',exact:true}).click();
