@@ -840,21 +840,17 @@ yueZodiacAlmanac=function(birth='',selection=null,options={}){
  const toolbar=q.querySelector('.yueChartTools');if(toolbar){b(toolbar,tr('Full birth chart','完整命盘'),()=>destinyPage());b(toolbar,tr('Weekly star signs','本周星座'),()=>starSignPage())}
 };
 destinyConsultMenu=function(){closeTalk();yueZodiacAlmanac()};
+// Stable text, not a per-frame DOM rebuild. Full destination remains accessible.
 const compactRailLabelBefore=travellerRailLabel;
-travellerRailLabel=function(){return compactRailLabelBefore()};
-function compactRailTicket(){
- const label=compactRailLabelBefore(),route=travellerSuggestedRoute,local=route&&travellerRouteDoor(route)&&route.district===scene;
- const destination=local?travellerRouteName(route):tr(...maps[route&&travellerRouteDoor(route)?route.district:railNextDistrict(scene)].n);
- const short=local?tr('Explore','去探索'):tr('Next stop','下一站');
- const key=short+'|'+destination+'|'+label;
- if(nextStopButton.dataset.compactRail!==key){nextStopButton.dataset.compactRail=key;nextStopButton.replaceChildren();element('small',short,nextStopButton,'railShortcutCaption');element('strong',destination,nextStopButton,'railShortcutDestination');element('span','›',nextStopButton,'railShortcutArrow');nextStopButton.setAttribute('aria-label',label);nextStopButton.title=label}
-}
+travellerRailLabel=function(){
+ const route=travellerSuggestedRoute,valid=route&&travellerRouteDoor(route),local=valid&&route.district===scene;
+ const destination=local?travellerRouteName(route):tr(...maps[valid?route.district:railNextDistrict(scene)].n);
+ return (local?tr('Explore','去探索'):tr('Next stop','下一站'))+'\n'+destination+' ›'
+};
 const compactRailHUDBefore=updateHUD;
-updateHUD=function(){compactRailHUDBefore();compactRailTicket()};
-// Legacy frame update writes textContent, so keep the richer markup alive
-// without replacing nodes every frame. Full accessible name is unchanged.
-const compactRailFrameBefore=drawMap;
-drawMap=function(){const result=compactRailFrameBefore();if(!nextStopButton.querySelector('.railShortcutCaption'))nextStopButton.dataset.compactRail='';compactRailTicket();return result};
+updateHUD=function(){compactRailHUDBefore();const label=compactRailLabelBefore();if(nextStopButton.getAttribute('aria-label')!==label)nextStopButton.setAttribute('aria-label',label);nextStopButton.title=label};
+const compactConsultPageBefore=page;
+page=function(...args){$('content').classList.remove('yueCompactConsult');return compactConsultPageBefore(...args)};
 const compactConsultStyle=document.createElement('style');compactConsultStyle.textContent=`
 #content.yueCompactConsult .yueStickyNav{position:sticky;top:0;z-index:2;background:#f2e6cd;padding:5px 0;border-bottom:1px solid #b6a07b}
 #content.yueCompactConsult>h1{font-size:clamp(22px,5.5vw,32px)!important;margin:8px 0 4px!important;line-height:1.2}
@@ -867,10 +863,8 @@ const compactConsultStyle=document.createElement('style');compactConsultStyle.te
 .yueCompactConsult .astroForm input,.yueCompactConsult .astroForm select,.yueCompactConsult .yueAlmanacForm input,.yueCompactConsult .yueAlmanacForm select{font-size:16px!important;min-height:44px;max-width:100%;box-sizing:border-box}
 .yueCompactConsult .yuePrimarySubmit{min-height:48px;background:#425c4d!important;color:#fff0d0!important}
 .yueCompactConsult .destinyChamber[hidden]{display:none!important}.yueReadingOutput{scroll-margin-top:68px}
-#nextStopShortcut:not([hidden]){position:absolute!important;right:10px!important;top:auto!important;bottom:calc(env(safe-area-inset-bottom,0px) + 122px)!important;max-width:132px!important;width:auto!important;min-height:44px!important;display:grid!important;grid-template-columns:minmax(0,1fr) 12px;column-gap:4px;align-items:center;text-align:left;background:#efe0bc!important;border:1px solid #a88b5e!important;border-radius:4px!important;padding:5px 8px!important;box-shadow:0 2px 8px #2c261e40!important;color:#3e5849!important}
-#nextStopShortcut .railShortcutCaption{grid-column:1;line-height:1.2;font:10px/1.2 system-ui;letter-spacing:.04em}
-#nextStopShortcut .railShortcutDestination{grid-column:1;font:600 12px/1.2 Georgia,"Songti SC",serif;overflow-wrap:anywhere}
-#nextStopShortcut .railShortcutArrow{grid-column:2;grid-row:1/3;font:20px/1 Georgia,serif}
+#nextStopShortcut:not([hidden]){position:absolute!important;right:10px!important;top:auto!important;bottom:calc(env(safe-area-inset-bottom,0px) + 122px)!important;max-width:132px!important;width:auto!important;min-height:44px!important;display:block!important;white-space:pre-line!important;text-align:left;background:#efe0bc!important;border:1px solid #a88b5e!important;border-radius:4px!important;padding:5px 8px!important;box-shadow:0 2px 8px #2c261e40!important;color:#3e5849!important}
+#nextStopShortcut:not([hidden]){font:600 12px/1.2 Georgia,"Songti SC",serif!important;overflow-wrap:anywhere}
 @media(max-height:500px) and (orientation:landscape){#nextStopShortcut:not([hidden]){bottom:68px!important;right:8px!important;max-width:120px!important}}
 `;document.head.append(compactConsultStyle);
 
