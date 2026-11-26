@@ -1,5 +1,190 @@
 {
   "version": 1,
-  "players": {},
+  "players": {
+    "0": {
+      "walk": {
+        "up": [
+          {
+            "path": "assets/visual/painted/player-0/walk/up-0.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "2b3dffa66873805e45582b990f664b1eade2ed9da4b7c71ea2a9b83b32d849a1",
+            "foot": [
+              76,
+              231
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-0/walk/up-1.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "9b9c02f680d7fcba4c842f93a1fc6b785e14a3da525ad55285427e43c3fb04a3",
+            "foot": [
+              76,
+              231
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-0/walk/up-2.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "7b3b984c36cfef2fd4bd746ca7c5b15acdec6327b209ff93e7072a2cae958a6a",
+            "foot": [
+              76,
+              231
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-0/walk/up-3.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "218aa20c3cf4a1fb46a699959894a62ffee3d546c86e123810a406c57620675c",
+            "foot": [
+              76,
+              231
+            ]
+          }
+        ]
+      }
+    },
+    "1": {
+      "walk": {
+        "up": [
+          {
+            "path": "assets/visual/painted/player-1/walk/up-0.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "e8b7f81b867590580109e1c1db271794c99aada6f0d7487b34f1ef32c5d419f2",
+            "foot": [
+              76,
+              231
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-1/walk/up-1.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "982551ad69fadb2263404c9bdd2804fa363a860bef65e451392ee14b4f75d7ae",
+            "foot": [
+              76,
+              231
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-1/walk/up-2.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "ccd8d352e4cc8a44b8e2fc9fef8da1b7b6d723fd8bf8f12bbf449e0e96f54ff1",
+            "foot": [
+              76,
+              231
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-1/walk/up-3.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "038b0d2c4e0f03f080bb5232efd5ded22e1f145b3b9c67a5bf7c2b8643c87c6d",
+            "foot": [
+              76,
+              231
+            ]
+          }
+        ]
+      }
+    },
+    "2": {
+      "walk": {
+        "up": [
+          {
+            "path": "assets/visual/painted/player-2/walk/up-0.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "60212123c80fa2926ca984e44e9bb5cdc9792092b362e4d0cf92d2bafceb2434",
+            "foot": [
+              76,
+              231
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-2/walk/up-1.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "65ccc8e766422da51bfc692181c0db405ce001521d73f6ed2d426a876a9c8184",
+            "foot": [
+              76,
+              231
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-2/walk/up-2.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "643b2e7e849c9faa9d83b43e76e8016fde4511868465827335119194059b742e",
+            "foot": [
+              76,
+              231
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-2/walk/up-3.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "924e62727a49f7dc7d7d81e8d7fa3114806dfaaa9d0f8f332fa887ed006e7f61",
+            "foot": [
+              76,
+              231
+            ]
+          }
+        ]
+      }
+    },
+    "3": {
+      "walk": {
+        "up": [
+          {
+            "path": "assets/visual/painted/player-3/walk/up-0.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "3ac999afe45c71a04778eeabda5391eec6e7683694b6129e1c7c6a42e2c21a87",
+            "foot": [
+              76,
+              231
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-3/walk/up-1.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "13eb1e15f98731cd0a88f258cd6a6008d5f368cb81e4132be1670619af1d0b8b",
+            "foot": [
+              76,
+              231
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-3/walk/up-2.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "1c947205102f87db297560c36f04535430056015304fe89f5cb7ae4ce0149354",
+            "foot": [
+              76,
+              231
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-3/walk/up-3.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "de6e3c8543e874b06e07f6031535546cbaac6777c435212b28fa6cb49252cb2a",
+            "foot": [
+              76,
+              231
+            ]
+          }
+        ]
+      }
+    }
+  },
   "rooms": {}
 }

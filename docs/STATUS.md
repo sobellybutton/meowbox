@@ -717,3 +717,7 @@ Replaced legacy displayed product names across the canonical engine, extensions,
 - Added separate painted WebP sprites for the bronze bell, cedar striker, stone basin and bamboo ladle. The bell pivots at its hanger, the short striker rises on its ropes as it is pulled and the ladle carries water as it moves. Existing targets, reward accounting and saves are preserved.
 - Chromium shrine checks exercised a real striker pull and water drag, verified all four painted props were drawn, and completed incense collection, lighting, three bows and placement on phone and desktop. The altar, incense, cup, moon blocks and wishing props still need painted production artwork.
 - Broader local Chromium checks passed the 56 doorway cases, all three main activity viewports and both organic four-district journeys. No local HTTP error was observed in the district journeys.
+
+## Original traveller walking frames (26 November)
+- Added four separately anchored rear walking frames for each of the four original identities. Original outfits, accessories, avatar IDs and standing artwork are preserved. The existing runtime switches to the painted frames only when the complete set for that direction is loaded.
+- Verified in real Chromium map movement that each traveller uses all four frames, across 360 px, 390 px, tablet and desktop. Front and side walking, seated and kneeling poses, and other painted action frames remain open.
