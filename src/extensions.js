@@ -2273,7 +2273,7 @@ syncSigns=function(){
  // Clamping independently made neighbouring doors share the same screen position.
  const blockers=[],placed=[],items=[];
  const rootRect=signRoot.getBoundingClientRect();
- for(const el of document.querySelectorAll('#hud>*,#small button,#dock,#gameControls,#movePad,#moveGuide,#dialogue,#lunarBtn,#lunarRibbon,#walkHelp,#nextStopShortcut,#back,#ritualActionBar,#destinyAccess')){
+ for(const el of document.querySelectorAll('#hud>*,#small button,#dock,#gameControls,#movePad,#dialogue,#lunarBtn,#lunarRibbon,#walkHelp,#nextStopShortcut,#back,#ritualActionBar,#destinyAccess')){
   if(el.hidden||!el.getClientRects().length)continue;
   const b=el.getBoundingClientRect(),style=getComputedStyle(el);
   if(style.visibility==='hidden'||style.display==='none'||Number(style.opacity)===0||!b.width||!b.height)continue;
@@ -2299,11 +2299,12 @@ syncSigns=function(){
   const {btn,sx,sy,w,h}=item;
   const avoid=[...blockers,...placed],maxShift=Math.min(62,W*.16);let choice=null;
   if(btn._signOffset){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
-  if(!choice)choice=meowPlaceText(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,maxShift);
+  if(!choice){const bx=clamp(sx,6+w/2+4,W-6-w/2-4),by=clamp(sy,top+h/2+4,bottom-h/2-4);choice=meowPlaceText(bx,by,w,h,{left:6,right:W-6,top,bottom},avoid,maxShift)}
   if(!choice){btn._clearAt=0;if(!btn.hidden)btn.hidden=true;continue}
   if(btn.hidden){if(!btn._clearAt)btn._clearAt=now;if(now-btn._clearAt<125){placed.push(choice.rect);continue}}
   btn._signOffset={x:choice.x-sx,y:choice.y-sy};
-  const left=Math.round(choice.x)+'px',topPx=Math.round(choice.y)+'px';
+  const dpr=Math.max(1,Math.min(3,globalThis.devicePixelRatio||1)),snap=v=>Math.round(v*dpr)/dpr;
+  const left=snap(choice.x)+'px',topPx=snap(choice.y)+'px';
   if(btn.style.left!==left)btn.style.left=left;if(btn.style.top!==topPx)btn.style.top=topPx;if(btn.hidden)btn.hidden=false;placed.push(choice.rect);
  }
 };
@@ -3580,10 +3581,10 @@ function renderResidentNoticeboard(q){
  element('small',tr('Written by the fictional town residents. Real visitor posts are in the shared square.','以下为虚构小镇居民的趣味留言，真人留言请到共享广场。'),wrap,'wallDisclosure');
  const publicBtn=b(wrap,communityURL()?tr('Read or leave a real visitor post','看看真人留言 / 留句话'):tr('Shared square · not open yet','共享广场 · 尚未开放'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink';
  const list=element('div','',wrap,'townPostList'),nav=element('div','',wrap,'townPostNav');
- let shown=6,lastCount=-1;
+ let shown=6,lastCount=-1,lastNoticeSignature='';
  function render(){
   const open=new Set([...list.querySelectorAll('.wallReplies[open]')].map(el=>el.dataset.noticeId));
-  const entries=townPublishedNotices();lastCount=entries.length;list.replaceChildren();nav.replaceChildren();
+  const entries=townPublishedNotices();lastCount=entries.length;lastNoticeSignature=entries.map(v=>v.id).join('|');list.replaceChildren();nav.replaceChildren();
   for(const {thread:m,date,id} of entries.slice(0,shown)){const post=element('article','',list,'townResidentNote');post.dataset.noticeId=id;
    element('strong',tr(...m[0]),post);if(date)element('small',new Date(date).toLocaleDateString(zh?'zh-CN':'en-SG',{month:'short',day:'numeric',timeZone:'Asia/Singapore'}),post,'townNoticeDate');element('p',tr(...m[1]),post);
    const replies=element('details','',post,'wallReplies');replies.dataset.noticeId=id;replies.open=open.has(id);element('summary',tr('Read replies','看看楼下怎么说')+' ('+m[2].length+')',replies);
@@ -3592,7 +3593,7 @@ function renderResidentNoticeboard(q){
   element('span',Math.min(shown,entries.length)+' / '+entries.length+' '+tr('notices','条见闻'),nav);
   const more=b(nav,tr('Read older notices','翻翻以前的留言'),()=>{shown+=6;render()});more.disabled=shown>=entries.length;
  }render();
- const timer=setInterval(()=>{if(!wrap.isConnected||$('page').style.display!=='block'){clearInterval(timer);return}const n=townPublishedNotices().length;if(n!==lastCount){shown+=Math.max(0,n-lastCount);render()}},60000)
+ const timer=setInterval(()=>{if(!wrap.isConnected||$('page').style.display!=='block'){clearInterval(timer);return}const next=townPublishedNotices(),n=next.length;if(n!==lastCount||next.map(v=>v.id).join('|')!==lastNoticeSignature){shown+=Math.max(0,n-lastCount);render()}},60000)
 }
 
 /* A local character lounge, not a simulated online-player population.

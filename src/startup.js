@@ -5994,22 +5994,7 @@ function pawReadyMap(key){
   if(im.complete)onLoad()
  })
 }
-const pawAnchoredSignBefore=syncSigns;
-syncSigns=function(...args){
- const result=pawAnchoredSignBefore(...args);
- if(signRoot.hidden||room||transitioning||!maps[scene]||!Number.isFinite(cam.ox)||!Number.isFinite(cam.oy)||!Number.isFinite(cam.scale))return result;
- const dpr=Math.max(1,Math.min(3,devicePixelRatio||1)),snap=n=>Math.round(n*dpr)/dpr;
- for(const [id,x,y] of maps[scene].st){
-  const node=signButtons.get(id);if(!node)continue;
-  const [ax,ay]=housePlaqueAnchor(scene,id,x,y);
-  const sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
-  const left=snap(sx)+'px',top=snap(sy)+'px';
-  if(node.style.left!==left)node.style.left=left;
-  if(node.style.top!==top)node.style.top=top;
-  node.hidden=sy<82||sy>H-75||sx<0||sx>W;
- }
- return result
-};
+// The original plaque layout owns position and visibility. Do not overwrite it after each frame.
 const pawPresentationCSS=document.createElement('style');
 pawPresentationCSS.textContent=`
 #game #worldSigns .worldSign,#game #worldSigns .doorPlaque{transition:none!important;animation:none!important}
@@ -6025,7 +6010,106 @@ pawPresentationCSS.textContent=`
 #proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>footer{align-self:end!important;min-height:0!important;position:relative!important;transform:none!important;margin:0!important}
 @media(max-width:700px) and (orientation:portrait){#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"]):not([hidden]){grid-template-rows:auto minmax(150px,1fr) auto!important;overflow-y:auto!important;gap:8px!important}}
 `;document.head.append(pawPresentationCSS);
-const pawWarmDistricts=()=>{for(const key of Object.keys(maps))if(key!=='fortune')pawReadyMap(key)};
+const pawWarmDistricts=()=>{for(const key of Object.keys(maps))pawReadyMap(key)};
 if(typeof requestIdleCallback==='function')requestIdleCallback(pawWarmDistricts,{timeout:2000});else setTimeout(pawWarmDistricts,800);
+
+
+/* PAW_GATE_READINESS: preserve the actual admission callback and wait for
+   the real Fortune Valley image before letting the gateway disappear. */
+const pawDecodedGateBefore=proRender;
+proRender=function(...args){
+ const result=pawDecodedGateBefore(...args);
+ if(proStep!==3)return result;
+ const button=proposal.querySelector('.shrine-enter'),gate=proposal.querySelector('.gate');
+ if(!button||typeof button.onclick!=='function')return result;
+ const admit=button.onclick;let waiting=false;
+ const enter=async event=>{
+  if(waiting||proBusy||!button.isConnected)return;
+  waiting=true;const original=button.textContent;
+  button.disabled=true;button.textContent=tr('Preparing the path…','正在准备山间小路…');
+  const ready=await pawReadyMap('fortune');
+  if(!button.isConnected||proStep!==3)return;
+  waiting=false;button.disabled=false;button.textContent=original;
+  if(!ready){button.textContent=tr('Try again','再试一次');const im=pics.valleyClean;if(im.complete&&!im.naturalWidth)im.src=ART.valleyClean;return}
+  admit.call(button,event)
+ };
+ button.onclick=enter;if(gate)gate.onclick=enter;return result
+};
+/* PAW_CURATED_CONTENT_BEGIN: adapted from supplied modules 06–10 and 11–25.
+   Every entry is fictional. No actual news is asserted, no new locations
+   or currency, and existing topic cooldowns and relationship memory apply. */
+const pawFictionNotices=[
+ ['monday-buffer',{days:[1]},'Monday buffer zone','周一缓冲区','Please spare tired travellers the weekend interrogation until 11:30. Pastries are an acceptable exception.','上午十一点半前，请勿追问旅人的周末过得如何。带点心来的除外。'],
+ ['friday-eve',{days:[4]},'Friday is on its way','周五正在派送','The town has declared Thursday to be Friday eve. Extra pearls are optional; no need to refresh the calendar.','小镇宣布周四正式进入周五前夜。奶茶可以加料，日历不必反复刷新。'],
+ ['cat-traffic',{hours:[12,18]},'Sunbeam congestion','阳光区发生拥堵','Several cats have adopted the croissant sleeping position along the garden path. Please give the little pastries some space.','花园石径上，几只猫摆出了同步牛角包睡姿。请给这些小面包留点空间。'],
+ ['bench-etiquette',{days:[0,6]},'A note about chope etiquette','长椅占座温馨提醒','One tissue packet does not reserve an entire bench. Neither does an umbrella, a flowerpot or emotional baggage.','一包纸巾占不了整张长椅。雨伞、花盆和精神内耗也不算。'],
+ ['sunday-bell',{days:[0],hours:[18,24]},'Tomorrow can wait','明天的事明天再说','The temple bell is ready for anyone whose thoughts have already wandered into Monday.','心思已经跑到周一的旅人，可以来寺里听一声钟。'],
+ ['lost-lanyard',{},'Lost and found','失物招领','A blue office lanyard was found near the flowers. The town will not ask awkward questions.','花丛旁捡到一条蓝色工牌挂绳。小镇不会追问尴尬的问题。'],
+ ['rain-reading',{weather:'rain'},'A quieter afternoon','下雨天，慢慢来','The tea room has a dry seat and a warm cup for anyone caught in the rain.','淋到雨的话，茶馆里有干爽的座位和一杯热茶。']
+];
+const pawFictionGazette=[
+ ['biscuit','The lighter biscuit tin','饼干铁盒轻量化','A fictional biscuit maker has announced a tin with fewer biscuits and more premium mountain air. Grandma is unimpressed.','某虚构饼干商推出轻量版铁盒：饼干少了，山间空气多了。外婆表示不买账。'],
+ ['iced-water','Artisanal water','手冲冰水','A visitor claims clockwise-stirred water tastes more expensive. The tea keeper offers them a normal glass instead.','有旅人坚称顺时针搅拌的水比较高级。茶馆店主递给他一杯普通的水。'],
+ ['qr-bun','One bun, three QR codes','一个包子，三个二维码','A fictional food stall has invented a login screen for extra chilli. Grandma has responded by handing over the chilli jar.','某虚构小摊推出加辣登录流程。外婆的回应是把辣椒罐直接递过去。'],
+ ['turnip','The rare turnip','隐藏款萝卜','A blind box collector claims a tiny turnip with sunglasses is a rare investment. The souvenir keeper says it is a very nice toy.','有盲盒玩家说戴墨镜的小萝卜很有投资价值。手信店主说，它就是个挺可爱的玩具。'],
+ ['kettle','Kettle update','烧水壶正在更新','A traveller missed breakfast because their clever kettle insisted on updating first. The tea room still uses a perfectly ordinary kettle.','有旅人的智能水壶坚持先升级，结果错过了早餐。茶馆依旧用普通水壶。'],
+ ['offline','The offline retreat','离线生活实录','A group visiting for a digital detox spent the afternoon filming how offline they were.','一群来戒手机的旅人，花了一整个下午拍摄自己有多离线。'],
+ ['auntie-ai','The helpful auntie algorithm','安娣智能助手','A fictional helpdesk answers every question by asking whether the visitor has eaten and brought a cardigan.','某虚构智能助手无论听到什么问题，都先问吃饭了没、外套带了没。'],
+ ['queue','A very popular queue','排队本身就是景点','A visitor joined a queue because it looked popular. It turned out to be the queue for the railway ticket office.','有旅人见队伍很长就跟着排，结果发现是火车站售票队。']
+];
+function pawFictionEdition(now,weather=''){
+ const clock=new Date(now+8*3600000);
+ if(!Number.isFinite(clock.getTime()))return [];
+ const key=clock.toISOString().slice(0,10),weekday=clock.getUTCDay(),hour=clock.getUTCHours(),ordinal=Math.floor(clock.getTime()/86400000);
+ const eligible=pawFictionNotices.filter(v=>{
+  const r=v[1];return (!r.days||r.days.includes(weekday))&&(!r.hours||hour>=r.hours[0]&&hour<r.hours[1])&&(!r.weather||r.weather===weather)
+ });
+ const timely=eligible.filter(v=>Object.keys(v[1]).length),pool=timely.length?timely:eligible;
+ const n=pool[((ordinal%pool.length)+pool.length)%pool.length],g=pawFictionGazette[((ordinal%pawFictionGazette.length)+pawFictionGazette.length)%pawFictionGazette.length];
+ const stamp=Date.parse(key+'T00:00:00+08:00');
+ return [
+  {id:'fiction-notice-'+key+'-'+n[0],date:stamp,thread:[['Town notice · fictional','小镇公告 · 虚构'],[n[2]+': '+n[4],n[3]+'：'+n[5]],[]]},
+  {id:'fiction-gazette-'+key+'-'+g[0],date:stamp,thread:[['Pawradise Gazette · satire','Pawradise 小镇日报 · 讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
+ ]
+}
+const pawFictionPublishedBefore=townPublishedNotices;
+townPublishedNotices=function(now=Date.now()){
+ const weather=typeof atmosphere==='object'?atmosphere.weather:'';
+ return [...pawFictionEdition(now,weather),...pawFictionPublishedBefore(now)]
+};
+// Reuse the existing optional, proximity-limited exchange engine.
+pawOverheard.push(
+ ['gem-title','hong','lin','My nephew has a very impressive new job title.','我外甥最近升职了，头衔特别气派。','Aiyah, ask him whether the salary got promoted too.','哎呀，你倒是问问他的工资升了没有。'],
+ ['gem-tarts','grandma','mei','You said you came for one bun. How did you end up with three egg tarts?','不是说只买一个包子吗，怎么还拿了三个蛋挞？','They looked lonely. I had to adopt them.','它们看起来太孤单了，只好全部领养回家。'],
+ ['gem-travel-plug','wang','hong','I packed three charging cables and two power banks.','我带了三根充电线和两个充电宝。','Very good. Did you remember the plug?','准备得真齐全。插头呢？'],
+ ['gem-queue','mei','lin','Someone spent an hour queuing for a bun today.','今天有人为了一个包子排了一小时。','The bun must have a very good marketing department.','这个包子的宣传部门一定很厉害。'],
+ ['gem-cat-translation','lin','hong','A visitor says he can translate everything a cat says.','有位旅人说他听得懂所有猫语。','Then ask why mine wants a different dinner every day.','那请他帮我问问，为什么我家的猫每天都要换菜单。'],
+ ['gem-umbrella-price','wang','mei','A visitor suggested raising umbrella prices whenever it rains.','有个旅人建议一下雨就提高雨伞价格。','Tell him the tea room lends them for free.','你告诉他，茶馆免费借伞。']
+);
+const pawCuratedRemarks={
+ hong:[['gem-peach','I heard the vending machine has a secret peach tea. Even the rumour has a waiting list.','听说有台售货机藏着神秘桃茶。连这个传闻都要排队。'],['gem-sunset','Someone took forty-seven photos of the same sunset. Still choosing.','有人拍了四十七张一模一样的夕阳，还在选照片。']],
+ lin:[['gem-chope','The tissue packet on the bench is not a land deed.','长椅上的纸巾不是地契。'],['gem-quiet','I came out for fresh air. The gossip was a bonus.','本来出门透透气，没想到还有瓜吃。']],
+ mei:[['gem-unplug','A visitor came to switch off their phone. We have not heard a word from them all afternoon. Lovely.','有位旅人说要关手机，整个下午都没看消息。挺好。']],
+ grandma:[['gem-cookie','The biscuit tin is getting bigger and the biscuits are getting smaller. I shall bake my own.','饼干盒越来越大，饼干越来越少。我还是自己烤吧。']],
+ boba:[['gem-plain-tea','No need to invent a fancy name for water. It is already quite good.','水不用取什么高级名字，解渴就很好。']],
+ wang:[['gem-kettle','My clever kettle asked for an update. I asked it for hot water. We are still negotiating.','智能水壶要求更新，我要求热水。双方还在协商。']]
+};
+for(const [id,lines] of Object.entries(pawCuratedRemarks))pawAmbientLines[id]?.push(...lines);
+const pawRelationshipBefore=residentHospitalityWelcome;
+residentHospitalityWelcome=function(profile,visits,...args){
+ // Existing persisted actual visits, no invented affinity, orders or gifts.
+ if(visits===7){
+  const lines={mei:['You know where the cups are by now. Make yourself at home.','来这么多次了，杯子放哪儿你都知道啦，别客气。'],lin:['I am beginning to recognise your footsteps.','我现在都快认得你的脚步声了。'],hong:['A familiar face! I have saved the good stories for tea.','熟面孔来啦！好故事都留着喝茶时讲。'],wang:['You have become a regular. That is one title worth having.','你都成常客了，这个头衔才值得拥有。']};
+  if(lines[profile.id])return tr(...lines[profile.id])
+ }
+ if(visits===5&&profile.id==='boba'&&residentRecipeValid(residentHospitality.drink))return tr('I remember your last drink. Shall we make that one again?','上次那杯我还记得，要不要再来一杯？');
+ return pawRelationshipBefore(profile,visits,...args)
+};
+pawTownStories.push({id:'chope-bench',title:['The great tissue-packet debate','纸巾占座之争'],episodes:[
+ ['Auntie Lin','林姨','I left one tissue packet on the shady bench. Someone says it only reserves one seat. What a complicated afternoon!','我在阴凉长椅上放了一包纸巾，有人说只能占一个座位。一个下午怎么变得这么复杂！'],
+ ['Wang Laoban','王老板','I brought folding stools. The disputed bench has become a tiny tea gathering.','我搬来几把折叠凳，抢座的地方变成了小小茶话会。'],
+ ['Auntie Hong','红姐','Four cats took over the bench this morning. Everyone agreed their nap came first.','今天早上四只猫占领了长椅。大家一致同意，猫咪午睡优先。']
+]});
+/* PAW_CURATED_CONTENT_END */
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
