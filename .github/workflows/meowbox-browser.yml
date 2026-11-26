@@ -19,6 +19,7 @@ jobs:
         with:
           node-version: '22'
       - run: node scripts/build.cjs
+      - run: node scripts/action-refinement-test.cjs
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps chromium
       - name: Test all four villages and actual doorway taps
@@ -346,13 +347,15 @@ jobs:
                 await page.waitForFunction(()=>state.paperStage==='open',{},{timeout:5000});
                 await page.screenshot({path:'test-results/'+name+'-temple-drawn-paper.png'});
                 await page.evaluate(()=>templePaperKeep(false));
-                await page.evaluate(()=>{start('templeBell');templeReleaseBell(95)});
+                await page.evaluate(()=>start('templeBell'));
+                await page.locator('#gameControls').getByRole('button',{name:'Ring the bell',exact:true}).click();
                 await page.waitForFunction(()=>state.bellRung,{},{timeout:5000});
                 await page.screenshot({path:'test-results/'+name+'-temple-bell.png'});
-                await page.evaluate(()=>{start('templeWater');templeReleaseWater({x:470,y:485})});
+                await page.evaluate(()=>start('templeWater'));
+                await page.locator('#gameControls').getByRole('button',{name:'Scoop water',exact:true}).click();
                 if(await page.evaluate(()=>state.waterStage)!==1)throw Error('Ladle did not fill');
                 await page.waitForTimeout(1100);
-                await page.evaluate(()=>templeReleaseWater({x:340,y:440}));
+                await page.locator('#gameControls').getByRole('button',{name:'Pour water',exact:true}).click();
                 await page.waitForFunction(()=>state.waterStage===3,{},{timeout:5000});
                 await page.screenshot({path:'test-results/'+name+'-temple-water.png'});
                 await page.evaluate(()=>{templePaperOpen(3);templePaperTap()});
@@ -406,7 +409,8 @@ jobs:
                 for(let i=0;i<3;i++){if(await page.evaluate(()=>state.done))break;await dragWorld(circles);}
                 await page.waitForFunction(()=>state.done&&state.ingredients.length===2,{},{timeout:4000});
                 if(!await page.evaluate(()=>state.recipe[0]===(state.vegetarian?'Mushroom and tofu soup':'Tomato and egg soup')))throw Error('Recipe does not reflect actual ingredients');
-                await page.evaluate(()=>soupTaste());
+                if(await page.locator('#choices').getByRole('button',{name:'Continue',exact:true}).isVisible())await page.locator('#choices').getByRole('button',{name:'Continue',exact:true}).click();
+                await page.locator('#gameControls').getByRole('button',{name:'Taste the soup',exact:true}).click();
                 await page.waitForFunction(()=>state.tasted===true,{},{timeout:7000});
                 await page.screenshot({path:'test-results/'+name+'-soup-tasting.png'});
                 await page.evaluate(()=>{room='temple';activity=null;start('secretGarden')});
@@ -473,6 +477,9 @@ jobs:
                 await page.waitForFunction(()=>room==='fish'&&!activity,{},{timeout:5000});
                 await page.evaluate(()=>action('hit'));
                 await page.waitForTimeout(650);
+                await page.locator('#gameControls').getByRole('button',{name:'Choose a worry',exact:true}).click();
+                await page.getByRole('button',{name:"Boss's endless demands",exact:true}).click();
+                await page.waitForFunction(()=>state.paperPrepared&&!state.paperPrepAt,{},{timeout:4000});
                 await page.locator('#gameControls .paperWhack').click();
                 await page.waitForFunction(()=>state.count===1&&!state.paperAction,{},{timeout:3000});
                 await page.screenshot({path:'test-results/'+name+'-pier-auntie.png'});

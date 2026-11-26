@@ -1366,4 +1366,187 @@ refreshControls=function(){
 };
 document.addEventListener('visibilitychange',()=>{if(document.hidden)paperRitualCancel()});
 
+
+/* MB5_ACTION_BEGIN: five physical interaction slices, no new art. */
+function mb5PrepProgress(now,started){return Number.isFinite(started)?Math.max(0,Math.min(1,(now-started)/.62)):1}
+const mb5BusyBefore=paperRitualBusy;
+paperRitualBusy=function(){return mb5BusyBefore()||Number.isFinite(state?.paperPrepAt)};
+const mb5ChooseBefore=chooseStressTarget;
+chooseStressTarget=function(index){
+ const ok=mb5ChooseBefore(index);
+ if(ok&&activity==='hit'&&room==='fish'){
+  state.paperPrepAt=t;state.paperPrepared=false;
+  hint('Ah Ma: Let me lay out a fresh sheet.','阿嬷：来，先铺好这张纸。');refreshControls()
+ }
+ return ok
+};
+function mb5PrepareAdvance(){
+ if(activity!=='hit'||room!=='fish'||!Number.isFinite(state.paperPrepAt))return;
+ if(document.hidden||talkOpen||transitioning||$('page').style.display==='block'){
+  delete state.paperPrepAt;refreshControls();return
+ }
+ if(mb5PrepProgress(t,state.paperPrepAt)>=1){
+  delete state.paperPrepAt;state.paperPrepared=true;
+  hint('Ah Ma: Ready. Take your time.','阿嬷：准备好啦，慢慢来。');refreshControls()
+ }
+}
+const mb5SheetBefore=paperWorryAt;
+paperWorryAt=function(x,y,impact){
+ if(activity!=='hit'||room!=='fish'||!Number.isFinite(state.paperPrepAt))return mb5SheetBefore(x,y,impact);
+ const f=poseEase(mb5PrepProgress(t,state.paperPrepAt));
+ ctx.save();try{ctx.translate(x,y);ctx.scale(.28+.72*f,.10+.90*f);ctx.translate(-x,-y);return mb5SheetBefore(x,y,0)}finally{ctx.restore()}
+};
+const mb5PaperControlBefore=paperRitualSyncButtons;
+paperRitualSyncButtons=function(){
+ mb5PaperControlBefore();if(activity!=='hit'||room!=='fish')return;
+ const button=$('gameControls')?.querySelector('.paperWhack');if(!button)return;
+ const phase=Number.isFinite(state.paperPrepAt)?'prepare':state.paperAction?townActionPhase(t-state.paperAction.at):'ready';
+ const words={prepare:['Preparing the paper…','铺好纸小人……'],anticipation:['Raise the slipper…','举起拖鞋……'],swing:['Swing…','挥下拖鞋……'],impact:['Whack!','啪！'],recovery:['Ready in a moment…','稍等一下……'],ready:['Whack!','打走烦恼！']};
+ const label=tr(...words[phase]);if(button.textContent!==label)button.textContent=label
+};
+
+/* Accessible alternatives to canvas controls; the same action handlers run. */
+function mb5AssistSpec(kind,q,now){
+ if(kind==='templeBell'){
+  const busy=Number.isFinite(q.bellAt)&&now-q.bellAt<2.5;
+  return {key:busy?'bell-resonance':'bell-ready',label:busy?['Listen to the bell…','静听钟声……']:['Ring the bell','敲钟'],disabled:busy,action:'bell'}
+ }
+ if(kind==='templeWater'){
+  if(q.waterStage===0)return {key:'water-scoop',label:['Scoop water','舀水'],action:'scoop'};
+  if(q.waterStage===1)return {key:'water-rinse',label:['Pour water','倒水'],action:'rinse'};
+  if(q.waterStage===2)return {key:'water-flow',label:['Let the water flow…','让清水流过手掌……'],disabled:true};
+  if(q.waterStage===3)return {key:'water-done',label:['Back to temple','返回寺庙'],action:'back'}
+ }
+ if(kind==='cook'&&q.done){
+  if(q.tasted)return {key:'soup-done',label:['Back to kitchen','返回厨房'],action:'back'};
+  if(q.tasteAt!==undefined)return {key:'soup-tasting',label:['Enjoy the soup…','慢慢喝汤……'],disabled:true};
+  return {key:'soup-taste',label:['Taste the soup','尝一口汤'],action:'taste'}
+ }
+ return null
+}
+function mb5AssistPerform(action){
+ const spec=mb5AssistSpec(activity,state,t);
+ if(!spec||spec.disabled||spec.action!==action||document.hidden||talkOpen||transitioning||$('page').style.display==='block')return;
+ if(action==='bell')templeReleaseBell(65);
+ else if(action==='scoop')templeReleaseWater({x:440,y:486});
+ else if(action==='rinse')templeReleaseWater({x:375,y:430});
+ else if(action==='taste')soupTaste();
+ else if(action==='back')$('back').click();
+ mb5AssistSync()
+}
+let mb5AssistKey='',mb5AssistState=null;
+function mb5AssistSync(force=false){
+ const el=$('gameControls');if(!el)return;
+ const spec=mb5AssistSpec(activity,state,t);
+ if(!spec){el.classList.remove('mb5ActivityAssist');mb5AssistKey='';mb5AssistState=null;return}
+ el.classList.add('mb5ActivityAssist');
+ if(talkOpen||transitioning||$('page').style.display==='block'){el.hidden=true;return}
+ const key=spec.key+'|'+zh;
+ if(!force&&key===mb5AssistKey&&state===mb5AssistState&&el.querySelector('.mb5ActivityButton')){el.hidden=false;return}
+ mb5AssistKey=key;mb5AssistState=state;el.replaceChildren();el.hidden=false;
+ const button=b(el,tr(...spec.label),()=>mb5AssistPerform(spec.action));button.className='mb5ActivityButton';button.disabled=!!spec.disabled
+}
+const mb5AssistCSS=document.createElement('style');
+mb5AssistCSS.textContent='#game #gameControls.mb5ActivityAssist:not([hidden]){width:min(82vw,290px);padding:4px;border-radius:5px;background:#f2e5cce8;border:1px solid #ad9470}#game #gameControls.mb5ActivityAssist .mb5ActivityButton{width:100%;min-height:44px;white-space:normal;font-size:14px}';
+document.head.append(mb5AssistCSS);
+
+/* Reject out-of-stage inputs and pause active sequences on a hidden tab. */
+const mb5ShakeBefore=teaShake;
+teaShake=function(amount){
+ if(activity!=='bubbleTea'||state.teaStage!=='mix'||!Number.isFinite(amount)||amount<=0||state.teaMix>=100)return;
+ return mb5ShakeBefore(amount)
+};
+const mb5ScoopBefore=teaAddPearls;
+teaAddPearls=function(){
+ if(activity!=='bubbleTea'||state.teaStage!=='pearls'||state.teaTopping===0||state.teaToppingCount>=2)return;
+ return mb5ScoopBefore()
+};
+const mb5SipBefore=teaSip;
+teaSip=function(){
+ if(activity!=='bubbleTea'||state.teaStage!=='ready'||state.teaSealed!==true)return;
+ return mb5SipBefore()
+};
+function mb5ClockField(kind,q){
+ if(kind==='prayer'&&['approach','taking','lighting','walkMat','bow','placing','returnMat'].includes(q.prayerStage))return 'prayerAt';
+ if(kind==='templeWater'&&q.waterStage===2)return 'waterAt';
+ if(kind==='templeBell'&&Number.isFinite(q.bellAt)&&q.bellAt>=0)return 'bellAt';
+ if(kind==='bubbleTea'&&['pouring','seasoning','sealing','sip'].includes(q.teaStage))return 'teaAt';
+ if(kind==='cook'&&q.tasteAt!==undefined&&!q.tasted)return 'tasteAt';
+ if(kind==='deerVisit'&&['bow','feed','watch'].includes(q.deerPhase))return 'deerAt';
+ return null
+}
+let mb5Sleep=null;
+function mb5Visibility(hidden,now){
+ if(!Number.isFinite(now))return;
+ if(hidden){
+  const field=mb5ClockField(activity,state);
+  mb5Sleep=field&&Number.isFinite(state[field])?{kind:activity,run:state,field,at:now}:null;
+  return
+ }
+ const asleep=mb5Sleep;mb5Sleep=null;
+ if(!asleep||asleep.run!==state||asleep.kind!==activity||mb5ClockField(activity,state)!==asleep.field)return;
+ state[asleep.field]+=Math.max(0,now-asleep.at)
+}
+document.addEventListener('visibilitychange',()=>mb5Visibility(document.hidden,performance.now()/1000));
+
+/* Give the deer time to respond to the player instead of mirroring instantly. */
+function mb5BowCurve(age,delay,duration){
+ if(!Number.isFinite(age)||age<=delay||age>=delay+duration)return 0;
+ return Math.sin(Math.PI*(age-delay)/duration)
+}
+const mb5PlayerPoseBefore=drawRitualPose;
+drawRitualPose=function(x,y,scale,opts={}){
+ if(activity==='deerVisit'&&state.deerPhase==='bow')opts={...opts,bow:mb5BowCurve(t-state.deerAt,0,1.45)};
+ return mb5PlayerPoseBefore(x,y,scale,opts)
+};
+const mb5AnimalPoseBefore=drawMeadowDeer;
+drawMeadowDeer=function(x,y,profile,bow=0,chew=0,scale=1){
+ if(activity==='deerVisit'&&state.deerPhase==='bow'&&profile===state.deerProfile&&scale>.9)bow=state.deerBows?.8*mb5BowCurve(t-state.deerAt,.95,1.65):0;
+ return mb5AnimalPoseBefore(x,y,profile,bow,chew,scale)
+};
+const mb5BowBefore=deerBow;
+deerBow=function(){
+ if(activity==='deerVisit'&&state.deerPhase==='ready')state.deerPhase='greet';
+ return mb5BowBefore()
+};
+function mb5DeerControls(){
+ if(activity!=='deerVisit'||state.deerPhase!=='ready')return;
+ const bow=$('gameControls')?.querySelector('.deerMeadowButtons button');if(bow)bow.disabled=false
+}
+
+/* Return to the exact safe visitor-side position, not a generic room spawn. */
+function mb5Anchor(id,pos,safe){
+ if(!id||!pos||!Number.isFinite(pos.x)||!Number.isFinite(pos.y)||!Number.isFinite(pos.tx)||!Number.isFinite(pos.ty)||Math.hypot(pos.x-pos.tx,pos.y-pos.ty)>3||!safe(pos.x,pos.y))return null;
+ return {room:id,x:pos.x,y:pos.y,facing:['up','down','left','right'].includes(pos.facing)?pos.facing:'up'}
+}
+let mb5Return=null;
+const mb5StartBefore=start;
+start=function(id){
+ if(room&&!activity&&continuityRoom===room&&indoorReady())mb5Return=mb5Anchor(room,indoor,indoorSafe);
+ return mb5StartBefore(id)
+};
+const mb5RoomBefore=drawRoom;
+drawRoom=function(){
+ if(mb5Return&&!activity){
+  const anchor=mb5Return;mb5Return=null;
+  if(room===anchor.room&&continuityRoom===room&&indoorSafe(anchor.x,anchor.y)){
+   Object.assign(indoor,{x:anchor.x,y:anchor.y,tx:anchor.x,ty:anchor.y,facing:anchor.facing,last:t,goal:null,route:[]});
+   continuityActivity=null
+  }
+ }
+ return mb5RoomBefore()
+};
+const mb5EnterBefore=enter;
+enter=function(...args){mb5Return=null;return mb5EnterBefore(...args)};
+const mb5RefreshBefore=refreshControls;
+refreshControls=function(){const result=mb5RefreshBefore();mb5AssistSync(true);mb5DeerControls();return result};
+const mb5DrawBefore=drawActivity;
+drawActivity=function(){
+ mb5PrepareAdvance();
+ const result=mb5DrawBefore();
+ if(activity==='hit'&&room==='fish')paperRitualSyncButtons();
+ mb5AssistSync();mb5DeerControls();return result
+};
+/* MB5_ACTION_END */
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
