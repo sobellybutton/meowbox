@@ -227,13 +227,13 @@ prop=function(id,x,y){
  if(room!=='tea')return gatheringPropBefore(id,x,y);
  if(id==='chat'){
   ctx.save();
-  // Rear guests have stable feet; the table partly occludes their lower bodies.
-  gatheringStool(x-48,y-10);gatheringStool(x+48,y-10);
-  gatheringResident(['Auntie Mei','梅姨'],x-48,y-8,1.16,'right',0);
-  gatheringResident(['Grandma','外婆'],x+48,y-8,1.16,'left',1);
+  // Keep standing illustrations on the floor, not floating over seats.
+  // The table occludes the rear guests; both stools are visibly empty.
+  gatheringResident(['Auntie Mei','梅姨'],x-53,y-10,1.06,'right',0);
+  gatheringResident(['Grandma','外婆'],x+53,y-10,1.06,'left',1);
   gatheringTeaTable(x,y);
   gatheringResident(['Wang Laoban','王老板'],x+116,y+32,.96,'left',2);
-  gatheringStool(x-99,y+36);
+  gatheringStool(x-102,y+38);gatheringStool(x+39,y+54);
   ctx.restore();return
  }
  if(id==='board'){gatheringPropBefore(id,x,y);gatheringResident(['Master Yue','月师傅'],x+90,y+3,.95,'left',3);return}
@@ -761,10 +761,10 @@ function residentArtworkRect(record,im,x,y,scale){
  if(!record||!im?.naturalWidth||!im.naturalHeight||![x,y,scale].every(Number.isFinite)||scale<=0)return null;
  const h=record.height*scale,w=h*im.naturalWidth/im.naturalHeight;return {x:x-w/2,y:y-h,w,h}
 }
-function drawResidentRaster(im,x,y,height,facing='right'){
+function drawResidentRaster(im,x,y,height,facing='right',breath=0){
  if(!im?.complete||!im.naturalWidth||!im.naturalHeight||![x,y,height].every(Number.isFinite)||height<=0)return false;
  const w=height*im.naturalWidth/im.naturalHeight;
- ctx.save();try{ellipse(x,y+1,Math.min(25,w*.32),Math.max(2,height*.035),'#342e2540');ctx.translate(x,y);ctx.scale(facing==='left'?-1:1,1);ctx.drawImage(im,-w/2,-height,w,height)}finally{ctx.restore()}return true
+ ctx.save();try{ellipse(x,y+1,Math.min(25,w*.32),Math.max(2,height*.035),'#342e2540');ctx.translate(x,y);ctx.scale(facing==='left'?-1:1,1);const h=height*(1+Math.max(-.006,Math.min(.006,breath)));ctx.drawImage(im,-w/2,-h,w,h)}finally{ctx.restore()}return true
 }
 const residentOriginalMapDraw=drawPaintedResident;
 drawPaintedResident=function(n,scale,moving,facing){
@@ -772,7 +772,9 @@ drawPaintedResident=function(n,scale,moving,facing){
  if(!record)return residentOriginalMapDraw(n,scale,moving,facing);
  const im=residentArtworkImage(record);
  if(facing==='left'||facing==='right')n.paintedFacing=facing;
- if(drawResidentRaster(im,n.x,n.y,94*scale,n.paintedFacing||facing))return true;
+ // A tiny anchored idle breath is not a walking animation.
+ const breath=!moving&&!residentReducedMotion.matches?Math.sin(t*1.8+n.x*.013)*.004:0;
+ if(drawResidentRaster(im,n.x,n.y,94*scale,n.paintedFacing||facing,breath))return true;
  // Existing raster atlas is the same identity and may finish loading first.
  if(residentOriginalMapDraw(n,scale,moving,facing))return true;
  // Existing optional hosts keep their interim rendering until original art loads.
@@ -1099,6 +1101,45 @@ npcTalk=function(n){
  if(residentVisitorWelcome.size>=80&&!residentVisitorWelcome.has(key))residentVisitorWelcome.delete(residentVisitorWelcome.keys().next().value);
  residentVisitorWelcome.set(key,now);line.textContent=tr('Hi '+chosen+'! ',chosen+'，')+line.textContent;
  requestAnimationFrame(syncCharacterSpeech);return result
+};
+
+
+/* Use the actual installed sprite aspect ratio when reserving text space.
+   These bounds cover the rendered image including its foot pivot. */
+function paintedScreenEnvelope(bounds,im,height){
+ if(!im?.complete||!im.naturalWidth||!im.naturalHeight||!Number.isFinite(height)||height<=0)return bounds;
+ const center=(bounds.left+bounds.right)/2,half=Math.max(19,height*im.naturalWidth/im.naturalHeight/2)+7;
+ return {...bounds,left:Math.min(bounds.left,center-half),right:Math.max(bounds.right,center+half)}
+}
+const residentBoundsBefore=characterScreenBounds;
+characterScreenBounds=function(actor,player=false){
+ const bounds=residentBoundsBefore(actor,player);
+ if(player||actor?.kind===2||!actor?.n)return bounds;
+ const record=residentArtworkRecord(actor.n),im=residentArtworkImage(record);
+ return paintedScreenEnvelope(bounds,im,Math.max(0,bounds.bottom-bounds.top-14))
+};
+// Reserve real UI, door plaques and nearby actors for short outdoor bubbles.
+// Long conversations stay in the normal dialogue panel.
+syncCharacterSpeech=function(){
+ const el=$('dialogue');if(!el)return;
+ el.classList.remove('characterSpeech');el.querySelector('.washiSpeechArt')?.remove();
+ for(const k of ['--speech-left','--speech-top','--speech-tail'])el.style.removeProperty(k);
+ delete el.dataset.above;delete el.dataset.tailSide;
+ if(!talkOpen||room||activity||!greetingNPC?.n)return;
+ const speaker=$('speaker').textContent,identity=greetingNPC.n.some(n=>speaker===n||speaker===n+' · '+tr('Guest','客串'));
+ if(!identity||$('line').textContent.length>160||$('choices').children.length>1)return;
+ el.classList.add('characterSpeech');
+ const w=el.offsetWidth,h=el.offsetHeight,root=$('game').getBoundingClientRect();
+ const blocks=[];
+ for(const node of document.querySelectorAll('#hud,#small,#dock,#back,#hint,#nextStopShortcut,#movePad,#moveGuide,#walkHelp,#lunarRibbon,#worldSigns .worldSign:not([hidden])')){
+  if(node.hidden||!node.getClientRects().length)continue;
+  const css=getComputedStyle(node);if(css.visibility==='hidden'||css.display==='none'||Number(css.opacity)<.05)continue;
+  const b=node.getBoundingClientRect();if(b.width&&b.height)blocks.push({left:b.left-root.left,top:b.top-root.top,right:b.right-root.left,bottom:b.bottom-root.top})
+ }
+ for(const n of [...npc,...sharedTownActors()])if(n!==greetingNPC)blocks.push(characterScreenBounds(n));
+ const pos=chooseSpeechPosition(w,h,W,H,characterScreenBounds(greetingNPC),characterScreenBounds(p,true),blocks);
+ if(!pos){el.classList.remove('characterSpeech');return}
+ el.style.setProperty('--speech-left',pos.left+'px');el.style.setProperty('--speech-top',pos.top+'px');el.style.setProperty('--speech-tail',pos.tailX+'px');el.dataset.above=String(pos.above);el.dataset.tailSide=pos.side;drawWashiSpeech(el,w,h,pos)
 };
 
 /* Keep the daily fortune easy to discover, without opening the long secondary journal. */
