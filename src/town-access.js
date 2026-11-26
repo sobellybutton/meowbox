@@ -231,7 +231,7 @@ function yueReadingHub(){
   element('p',profile.date?tr('Birth details available for this visit.','本次已填写生辰资料。'):tr('No birth details entered yet.','尚未填写生辰资料。'),q,'yueSessionNote');
   const list=element('div','',q,'yueReadingMenu');
   for(const [name,desc,fn] of [
-   [profile.chart?['Continue my personal chart','继续查看个人命盘']:['Personal birth chart','个人生辰命盘'],['Zi Wei Dou Shu and Western Big Three; date, time and birthplace.','紫微斗数与西洋三大星座；需要出生日期、时间和地点。'],()=>destinyPage()],
+   [profile.chart?['Continue the personal chart','继续查看个人命盘']:['Personal birth chart','个人生辰命盘'],['Zi Wei Dou Shu and Western Big Three; date, time and birthplace.','紫微斗数与西洋三大星座；需要出生日期、时间和地点。'],()=>destinyPage()],
    [['Chinese zodiac & Tai Sui','生肖流年 · 犯太岁'],['Explore a lunar year. Birth date only.','看看生肖流年，只需出生日期。'],()=>yueZodiacAlmanac()],
    [['Weekly star signs','本周十二星座'],['Choose a sun sign. No birth details needed.','直接选星座，无需填写生辰。'],()=>starSignPage()]
   ]){const btn=b(list,'',fn);element('strong',tr(...name),btn);element('small',tr(...desc),btn)}
@@ -242,15 +242,16 @@ function yueReadingHub(){
 }
 destinyConsultMenu=function(){closeTalk();yueReadingHub()};
 const yueSessionChartBefore=destinyPage;
-destinyPage=function(edit=false,selectedTopic=null){
+destinyPage=function(edit=false,selectedTopic=null,draft=null){
  yueSessionChartBefore();const q=$('content'),profile=yueProfile(),form=q.querySelector('.astroForm'),out=q.querySelector('.astroResult');if(!form||!out)return;
  const fields=[form.querySelector('input[type=date]'),form.querySelector('input[type=time]'),...form.querySelectorAll('input[type=number]')];
  if(fields.length!==5||fields.some(v=>!v))return;
  fields[0].max=shrineClock().day;
  if(profile.date)fields[0].value=profile.date;
  if(profile.chart){const values=['date','time','tz','lat','lon'].map(k=>profile.chart[k]);fields.forEach((v,i)=>v.value=values[i])}
+ if(Array.isArray(draft)&&draft.length===5)fields.forEach((v,i)=>v.value=draft[i]);
  const details=form.querySelector('details'),city=details?.querySelector('select');
- if(profile.chart&&city){
+ if((profile.chart||draft)&&city){
   const locations=[[8,1.35,103.82],[8,30.27,120.16],[8,31.23,121.47],[8,39.9,116.4],[8,22.32,114.17],[8,3.14,101.69],[8,25.03,121.57],[9,35.68,139.69]];
   const k=locations.findIndex(v=>v.every((n,i)=>Number(fields[i+2].value)===n));city.value=k<0?'custom':String(k);
   const summary=details.querySelector('summary');if(summary)summary.textContent=tr('Birthplace: ','出生地：')+(city.selectedOptions[0]?.textContent||tr('Saved coordinates','已填写经纬度'));
@@ -263,7 +264,7 @@ destinyPage=function(edit=false,selectedTopic=null){
   if(selectedTopic!==null)out.querySelector('.chartTopics [data-topic="'+selectedTopic+'"]')?.click()
  };
  form.addEventListener('submit',remember);
- yueReturnControls(q,()=>{const topic=out.querySelector('.chartTopics [aria-pressed="true"]')?.dataset.topic??null;destinyPage(!form.hidden,topic)});
+ yueReturnControls(q,()=>{const topic=out.querySelector('.chartTopics [aria-pressed="true"]')?.dataset.topic??null;destinyPage(!form.hidden,topic,form.hidden?null:fields.map(v=>v.value))});
  if(profile.chart&&!edit&&form.checkValidity()){form.requestSubmit()}else form.hidden=false
 };
 const yueSessionZodiacBefore=yueZodiacAlmanac;
@@ -272,14 +273,14 @@ yueZodiacAlmanac=function(birth='',selection=null){
  yueSessionZodiacBefore(birth||profile.date,selection??profile.year);
  const q=$('content'),form=q.querySelector('.yueAlmanacForm'),out=q.querySelector('.yueAlmanacPaper');if(!form||!out)return;
  const date=form.querySelector('input[type=date]'),year=form.querySelector('select');if(!date||!year)return;
- if(profile.date)date.value=profile.date;
+ if(profile.date&&!birth)date.value=profile.date;
  date.min='1900-01-02';
  const toolbar=element('div','',q,'yueChartTools');form.before(toolbar);
  const edit=b(toolbar,tr('Change birth date','修改出生日期'),()=>{date.closest('label').hidden=false;edit.hidden=true;date.focus()});edit.hidden=true;
  function remember(){if(!out.querySelector('.yueReadingFront')||!yueAcceptDate(profile,date.value,shrineClock().day))return;profile.almanacReady=true;profile.year=Number(year.value);date.closest('label').hidden=true;edit.hidden=false}
  form.addEventListener('submit',remember);
  year.addEventListener('change',()=>{if(profile.date&&date.value===profile.date&&form.checkValidity())form.requestSubmit()});
- yueReturnControls(q,()=>yueZodiacAlmanac(profile.date,Number(year.value)));
+ yueReturnControls(q,()=>yueZodiacAlmanac(date.value,Number(year.value)));
  if(profile.date&&date.value===profile.date&&form.checkValidity())form.requestSubmit()
 };
 const yueSessionStarsBefore=starSignPage;
