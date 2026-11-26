@@ -560,3 +560,21 @@ Five improvements: water reward granted only on completed rinse animation; empty
 
 ## Resident continuity and story batch (26 November)
 Five changes: four recurring residents recall the specific previous topic on a later Singapore calendar day; repeat dialogue rotates topic-specific jokes/advice, with no repeated reward; two new bilingual gossip episodes and same-day recap, rollover resets prior choice; fictional guest records validate prior choice and recall it on later visits; Tea Room has direct conversations with Mei and Wang and completed topics use existing capped friendship logic. No fake real-player presence or private user data added. Existing visual assets unchanged. JavaScript syntax checked. New browser verification pending. Previous 53a9113 Pages and Master Yue passed; broad browser still in progress at batch start. Graphify matched previous main.
+
+## Reading rooms and shareable results (26 November)
+
+Code and artwork are in bd7548c2ca925266c4994739365383661550ff02, based on b20c705. Graphify was at 53a9113 at the start. The intervening GitHub changes were checked before editing.
+
+1. Tarot's one and three card readings share a bilingual result page. The spread connects the situation, what needs attention and a next step. The optional topic and card specific humour appears in the individual interpretation and the full reading.
+2. The Passport reading journal opens the last reading in one tap and restores the selected tone after reload. Existing entries open with the gentle default. The older five card archive stays available.
+3. Tarot postcards use a new original watercolor style still life and the actual card orientations. An illustrated cover sits above short meanings and a takeaway. Shared images omit the private topic and tone.
+4. Personality preferences show the answer counts on all four axes, including even splits. The share card displays the four pairs on separate rows.
+5. Nine Inner Motives shows all nine scores and prompts for close results. The existing scoring and mixed result rules are preserved.
+6. Master Yue explains the stars in the selected palace, with additional context when the Body palace coincides, two main stars appear, or the opposite palace is relevant. Follow-up questions with multiple matches offer a choice. Questions are cleared on submission.
+7. The last topic is remembered independently for each person in the current tab and resets if their birth details change. Birth data and typed questions are not persisted or sent to a server.
+
+Updated `src/extensions.js`, `src/startup.js`, `src/release-fixes.js`, `src/town-access.js`, `assets/visual/painted/tarot-journal.webp`, `scripts/reading-journey-test.cjs`, `scripts/yue-journey-test.cjs` and the browser workflow. The new WebP is 1200×400 and about 104 KiB.
+
+The build and isolated checks passed. Locally, Chromium ran the 390×844 touch and 1440×900 mouse journeys for tarot, journal reload, English and Chinese PNG exports, the preference and motives results and Master Yue. Tarot and assessment tests use deterministic setups with real result controls. Master Yue uses real forms and topic choices after entering the room directly. The existing export suite also encoded 176 combinations per viewport. Reviewed rendered phone and desktop screenshots and English and Chinese tarot PNG files. Full organic navigation, physical devices, WebKit, live Pages and the full GitHub Actions suite are separate checks. The existing Zi Wei calculation has not been independently reviewed.
+
+Next batch: create and integrate Ah Ma's seated and scolding poses, then give Auntie Lin, Auntie Hong and the remaining shopkeepers distinct painted identities. Verify full walks to the Tarot House and Destiny House and review their native portrait and landscape framing. Check Graphify against main again before editing.
