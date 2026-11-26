@@ -5031,19 +5031,62 @@ const pawRoomLifeCss=document.createElement('style');
 pawRoomLifeCss.textContent='#game #gameControls.festivalFishControls:not([hidden]){width:min(94vw,430px)!important;padding:9px 11px!important;gap:5px!important;background:#f2e5c8!important;border:1px solid #a9895d!important;border-radius:2px!important;box-shadow:0 4px 12px #30261d50!important}#game .festivalFishControls strong{font:600 15px/1.3 var(--paw-display,Georgia,serif)!important}#game .festivalFishControls progress{width:100%;height:7px;accent-color:#73865f}#game .festivalFishButtons{align-items:center}#game .festivalFishButtons button{min-height:44px!important;background:#e9d9b4;color:#3e523d;border-radius:2px!important}#game .pawScoopKeyGuide{font-size:11px!important;color:#6e634f}@media(pointer:coarse){#game .pawScoopKeyGuide{display:none!important}}@media(orientation:landscape) and (max-height:499px){#game #gameControls.festivalFishControls:not([hidden]){width:190px!important}}';
 document.head.append(pawRoomLifeCss);
 
-/* Prevent manual or queued player movement into the Fortune Valley skyline.
-   Full polygon routing remains a separate calibrated change. */
+/* PAW_STAIR_ROUTING_BEGIN
+   Player foot coordinates use the traced stair corridor rather than a fixed
+   screen-centre rectangle. Extend the route to the existing arrival landing.
+   These are conservative authored coordinates, pending device screenshot review. */
+const pawPlayerStairs=[...pawStairPath,[1515,500,55],[1680,500,55]];
+function pawStairLane(y,points=pawPlayerStairs){
+ const yy=Math.max(points[0][0],Math.min(points.at(-1)[0],Number.isFinite(y)?y:points[0][0]));
+ let i=1;while(i<points.length-1&&points[i][0]<yy)i++;
+ const a=points[i-1],b=points[i],f=(yy-a[0])/(b[0]-a[0]);
+ return {y:yy,x:a[1]+(b[1]-a[1])*f,half:(a[2]+(b[2]-a[2])*f)*1.5}
+}
+function pawStairFoot(x,y){
+ const lane=pawStairLane(y);return{x:Math.max(lane.x-lane.half,Math.min(lane.x+lane.half,Number.isFinite(x)?x:lane.x)),y:lane.y}
+}
+function pawStairRoute(from,to){
+ const start=pawStairFoot(from.x,from.y),end=pawStairFoot(to.x,to.y),dir=Math.sign(end.y-start.y);
+ const knots=pawPlayerStairs.filter(q=>dir*(q[0]-start.y)>0&&dir*(end.y-q[0])>0);
+ if(dir<0)knots.reverse();
+ const path=[{x:pawStairLane(start.y).x,y:start.y},...knots.map(q=>({x:q[1],y:q[0]})),{x:pawStairLane(end.y).x,y:end.y},end];
+ return path.filter((q,i)=>i===0||Math.hypot(q.x-path[i-1].x,q.y-path[i-1].y)>.1)
+}
+/* PAW_STAIR_ROUTING_END */
 const pawGroundLimitBefore=minY;
-minY=function(){return scene==='fortune'&&!room?Math.max(pawGroundLimitBefore(),350):pawGroundLimitBefore()};
+minY=function(){return scene==='fortune'&&!room?Math.max(pawGroundLimitBefore(),pawPlayerStairs[0][0]):pawGroundLimitBefore()};
 const pawGroundStepBefore=step;
 step=function(n,dt,speed){
- if(scene==='fortune'&&!room&&n===p){n.y=Math.max(350,n.y);n.ty=Math.max(350,n.ty)}
- return pawGroundStepBefore(n,dt,speed)
+ if(scene!=='fortune'||room||n!==p)return pawGroundStepBefore(n,dt,speed);
+ const start=pawStairFoot(n.x,n.y),end=pawStairFoot(n.tx,n.ty);
+ n.x=start.x;n.y=start.y;n.tx=end.x;n.ty=end.y;
+ // Door navigation follows its own authored queue. Free taps and joystick
+ // motion follow the same corridor through each bend instead of cutting across.
+ if(pending)return pawGroundStepBefore(n,dt,speed);
+ const dir=Math.sign(end.y-start.y);
+ const knots=pawPlayerStairs.filter(q=>dir*(q[0]-start.y)>1&&dir*(end.y-q[0])>0);
+ if(dir<0)knots.reverse();
+ const next=knots.length?{x:knots[0][1],y:knots[0][0]}:end;
+ const dx=next.x-start.x,dy=next.y-start.y,d=Math.hypot(dx,dy);
+ if(d<2){n.x=next.x;n.y=next.y;n.motionSpeed=0;return Math.hypot(end.x-n.x,end.y-n.y)>2}
+ const delta=Math.max(0,Math.min(.05,Number.isFinite(dt)?dt:0));
+ const vertical=Math.abs(dy)>Math.abs(dx)*.8;
+ const wanted=Math.min(Number.isFinite(speed)?speed:150,vertical?155:190,Math.max(40,d*7));
+ n.motionSpeed=(n.motionSpeed||0)+(wanted-(n.motionSpeed||0))*Math.min(1,delta*10);
+ const amount=Math.min(d,n.motionSpeed*delta);
+ const point=pawStairFoot(start.x+dx/d*amount,start.y+dy/d*amount);
+ n.x=point.x;n.y=point.y;
+ if(amount>0){n.facing=vertical?(dy<0?'up':'down'):(dx<0?'left':'right');const travel=Math.hypot(n.x-start.x,n.y-start.y);pawWalkDistance+=travel;pawGaitTravel.set(n,(pawGaitTravel.get(n)||0)+travel)}
+ return Math.hypot(end.x-n.x,end.y-n.y)>2||amount>0
 };
 const pawGroundDoorBefore=walkDoor;
 walkDoor=function(...args){
- const result=pawGroundDoorBefore(...args);
- if(scene==='fortune'&&!room&&pending){for(const q of walkQueue)q.y=Math.max(350,q.y);p.ty=Math.max(350,p.ty)}
+ const previous=pending,result=pawGroundDoorBefore(...args);
+ if(scene==='fortune'&&!room&&pending&&pending!==previous&&walkQueue.length){
+  const end=walkQueue.at(-1),start=pawStairFoot(p.x,p.y);
+  walkQueue=pawStairRoute(start,end);
+  if(walkQueue.length){p.tx=walkQueue[0].x;p.ty=walkQueue[0].y}
+ }
  return result
 };
 /* Equal screen-height targets for the same depth; no artificial player size bonus. */
