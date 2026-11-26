@@ -2439,13 +2439,14 @@ const mbRailArtworkStyle=document.createElement('style');mbRailArtworkStyle.text
 /* Physical station staging: preserve existing prop art and input anchors.
    Furniture is a temporary in-world support layer pending painted replacements. */
 const groundedStations={
- temple:{templeWater:['stone',-0,112,95],prayer:['altar',-7,126,100],templeBell:['bell',0,128,100],sticks:['table',40,104,98],moon:['table',3,120,98]},
- tarot:{tarot:['table',0,144,98],love:['table',0,144,98]},
- kitchen:{cook:['counter',7,222,100]},
+ temple:{templeWater:['stone',-3,118,95],prayer:['altar',-7,126,100],templeBell:['bell',0,128,100],sticks:['table',40,104,98],moon:['table',0,120,98]},
+ tarot:{tarot:['table',-10,168,98],love:['table',-10,168,98]},
+ destiny:{destiny:['table',-2,150,98]},
+ kitchen:{cook:['counter',21,250,100]},
  boba:{bubbleTea:['counter',-16,138,98]},
- arcade:{claw:['cabinet',30,132,98],rhythm:['cabinet',-15,114,98],blindBox:['counter',-16,116,98],woodenThree:['table',-8,132,98],goldfishScoop:['table',12,142,98],bubbleArcade:['cabinet',18,120,98]},
+ arcade:{claw:['cabinet',30,132,98],rhythm:['cabinet',-15,114,98],blindBox:['counter',-16,116,98],woodenThree:['table',-8,132,98],goldfishScoop:['table',5,150,98],bubbleArcade:['cabinet',-1,118,98]},
  wishes:{wishes:['rack',0,120,98],coin:['stone',12,118,98]},
- fish:{hit:['ritual',26,112,75]},
+ fish:{hit:['ritual',26,112,75],pier:['table',38,112,98],riverShout:['rack',8,110,98]},
  tea:{board:['notice',28,172,95],news:['notice',28,172,95]},
  office:{officeSketch:['table',28,130,98]},
  quiz:{quiz:['table',28,138,98],soulcat:['table',28,138,98]},
@@ -2474,7 +2475,7 @@ function drawGroundedSupport(spec,x,y){
    line(x+hw-40,y+6,x+hw-8,y+6,'#785137',8);
    line(x+hw-38,y+4,x+hw-10,y+4,'#b58a55',2)
   }
-  if(kind==='rack')line(x-hw+12,y-68,x+hw-12,y-68,'#8b6948',5);
+  if(kind==='rack'&&room==='wishes')line(x-hw+12,y-107,x+hw-12,y-107,'#8b6948',5);
  }else if(kind==='stone'){
   const stone=ctx.createLinearGradient(x-hw,surface,x+hw,base);stone.addColorStop(0,'#a6aa94');stone.addColorStop(1,'#656e61');
   round(x-hw*.64,surface,hw*1.28,Math.max(12,base-surface-6),5,stone,'#77796a');
@@ -2505,9 +2506,22 @@ function drawGroundedSupport(spec,x,y){
  ctx.restore()
 }
 const groundedPropBefore=prop;
+function pawDeskBook(x,y,kind){
+ const cover=kind==='story'?'#836c80':kind==='match'?'#af887a':'#718775';
+ ctx.save();ellipse(x,y+1,47,7,'#49362830');
+ round(x-42,y-27,84,27,3,cover,'#5d5042');
+ round(x-39,y-30,78,24,2,'#e7d5b1','#9b8668');
+ line(x,y-29,x,y-7,'#8e785b',1.6);
+ for(const d of [-1,1])for(let j=0;j<3;j++)line(x+d*5,y-24+j*5,x+d*33,y-24+j*5,'#a49173',1.1);
+ ctx.restore()
+}
 prop=function(id,x,y){
  const spec=!activity&&groundedStationSpec(room,id);
  if(spec)drawGroundedSupport(spec,x,y);
+ if(!activity&&spec&&['quiz','story','match','officeSketch'].includes(id)){pawDeskBook(x,y+spec[1],id);return}
+ if(!activity&&room==='fish'&&id==='riverShout'){
+  ctx.save();line(x-46,y-76,x+46,y-76,'#72553c',5);round(x-37,y-76,74,36,3,'#986b4c','#5e4632');line(x-30,y-69,x+30,y-69,'#ceb087',2);ctx.restore();return
+ }
  return groundedPropBefore(id,x,y)
 };
 /* Keep the collision footprint on the actual support's floor contact. */
@@ -2795,4 +2809,31 @@ travel=function(...args){
  return result
 };
 $('travel').onclick=travel;$('dockTravel').onclick=travel;
+/* PAW_TOPIC_LAYOUT_BEGIN */
+function pawReadingTopicSlots(){
+ return Array.from({length:4},(_,i)=>({x:305+(i%2)*190,cy:419+Math.floor(i/2)*148,w:58,h:82,captionY:488+Math.floor(i/2)*148,captionW:166,captionH:42}))
+}
+/* PAW_TOPIC_LAYOUT_END */
+function drawPawReadingTopics(){
+ txt(tr('What brings you here?','今天想问什么？'),400,354,22,'#fff0d0');
+ for(const [i,slot] of pawReadingTopicSlots().entries()){
+  const {x,cy,w,h,captionY,captionW,captionH}=slot;
+  ctx.save();ctx.shadowColor='#1f232c55';ctx.shadowBlur=5;card(x-w/2,cy-h/2,w,h,false);ctx.restore();
+  const name=tr(...readingTopics[i]);ctx.save();ctx.font='600 15px Georgia,"Songti SC",serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff0d0';
+  const words=name.includes(' ')?name.split(/ +/):Array.from(name),sep=name.includes(' ')?' ':'';
+  const rows=[];let row='';for(const word of words){const v=row?row+sep+word:word;if(row&&ctx.measureText(v).width>captionW-12){rows.push(row);row=word}else row=v}if(row)rows.push(row);
+  const lines=rows.length>2?[rows[0],rows.slice(1).join(sep)]:rows;
+  lines.forEach((v,j)=>ctx.fillText(v,x,captionY+(j-(lines.length-1)/2)*17,captionW-10));
+  ctx.restore();
+  target(x-captionW/2,cy-h/2,captionW,captionY+captionH/2-(cy-h/2),()=>readingTopic(i))
+ }
+}
+const pawTopicCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(s,ox,oy){
+ const base=pawTopicCameraBefore(s,ox,oy);
+ if(activity==='love'&&state.readStage==='topic'&&W<H)return mbVisualFitStage(base,[210,590,335,670],W,H<680?100:124,H-132);
+ return base
+};
+const pawTopicHintBefore=activityHint;
+activityHint=function(){if(activity==='love'&&state.readStage==='topic'){hint('Choose a topic for your reading.','选择想占卜的主题。');return}return pawTopicHintBefore()};
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

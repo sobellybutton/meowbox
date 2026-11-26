@@ -38,3 +38,18 @@ assert(box.left===0&&box.top===0&&box.right===16&&box.bottom===16,'Opaque image 
 return checks;
 `);
 console.log('PASS: '+footChecks()+' resident foot-pivot checks');
+
+const ta=src.indexOf('/* PAW_TOPIC_LAYOUT_BEGIN */'),tb=src.indexOf('/* PAW_TOPIC_LAYOUT_END */');
+if(ta<0||tb<ta)throw Error('Missing tarot topic layout');
+const topicChecks=new Function(src.slice(ta,tb)+`
+const slots=pawReadingTopicSlots();let count=0;
+for(const a of slots){
+ if(a.cy+a.h/2>=a.captionY-a.captionH/2)throw Error('Card touches its own caption');
+ for(const b of slots){if(a===b)continue;
+ const overlap=Math.abs(a.x-b.x)<(a.w+b.captionW)/2&&a.cy+a.h/2>b.captionY-b.captionH/2&&a.cy-a.h/2<b.captionY+b.captionH/2;
+ if(overlap)throw Error('Card covers another caption');count++;
+ }
+}
+return count+slots.length;
+`);
+console.log('PASS: '+topicChecks()+' tarot topic separation checks');

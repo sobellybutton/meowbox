@@ -162,10 +162,10 @@ teaScoopArt=function(x,y,tilt=0,loaded=false){townScoopBefore(x,y,tilt,loaded);c
 /* Wishing pool: dedicated vertical stage and a separate wide composition.
    Keep the original percentage-based physics, fish movement and bowl centre. */
 function wishingPoolScene(portrait){
- const w=portrait?400:800,h=portrait?700:450;
+ const w=portrait?560:800,h=portrait?700:450;
  const stones=Array.from({length:24},(_,i)=>{const a=i*Math.PI/12,x=w*.5+Math.cos(a)*w*.455,y=h*.5+Math.sin(a)*h*.461;return '<ellipse cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" rx="'+(portrait?15:22)+'" ry="'+(portrait?23:15)+'" transform="rotate('+(a*180/Math.PI).toFixed(1)+' '+x.toFixed(1)+' '+y.toFixed(1)+')" fill="'+['#a79b80','#c1b59a','#908b76'][i%3]+'" stroke="#776f5c" stroke-width="1.2"/>'}).join('');
  const ripples=Array.from({length:30},(_,i)=>{const x=w*.14+(i*73%(w*.72)),y=h*.12+(i*119%(h*.76));return '<path d="M'+x.toFixed(1)+' '+y.toFixed(1)+'q12 -3 26 0" fill="none" stroke="#c5d6b8" opacity=".14" stroke-width="1.2"/>'}).join('');
- return '<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'"><defs><radialGradient id="water"><stop stop-color="#78998a"/><stop offset=".48" stop-color="#4c8078"/><stop offset="1" stop-color="#294f4b"/></radialGradient><linearGradient id="light" x2="1" y2="1"><stop stop-color="#f7e5b4" stop-opacity=".3"/><stop offset=".6" stop-color="#bfd8c1" stop-opacity="0"/></linearGradient></defs><rect width="'+w+'" height="'+h+'" fill="url(#water)"/><path d="M0 0L'+w+' 0L0 '+h+'Z" fill="url(#light)"/>'+ripples+'<g opacity=".67">'+stones+'</g></svg>'
+ return '<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none"><defs><radialGradient id="water"><stop stop-color="#78998a"/><stop offset=".48" stop-color="#4c8078"/><stop offset="1" stop-color="#294f4b"/></radialGradient><linearGradient id="light" x2="1" y2="1"><stop stop-color="#f7e5b4" stop-opacity=".3"/><stop offset=".6" stop-color="#bfd8c1" stop-opacity="0"/></linearGradient></defs><rect width="'+w+'" height="'+h+'" fill="url(#water)"/><path d="M0 0L'+w+' 0L0 '+h+'Z" fill="url(#light)"/>'+ripples+'<g opacity=".67">'+stones+'</g></svg>'
 }
 const wishPortraitCSS=document.createElement('style');
 wishPortraitCSS.textContent=`
@@ -234,7 +234,7 @@ animateWishKoi=function(pond){
  return {collision(x,y){return wishFishCollision(fish,x,y)},splash(x,y,hit,bumped){impact=!hit&&bumped?{fish:bumped,x,y,at:performance.now()}:null},reset(){impact=null;pond.querySelectorAll('.wishFishSpeech').forEach(v=>v.remove())}}
 };
 wishPond9=function(){page(tr('The wishing pool','锦鲤许愿池'),tr('Hold a wish in your heart. No need to tell anyone.','在心里默默许个愿，不必告诉任何人。'),q=>{
- const pond=pond9(q);pond.classList.add('wishRitual');const koiLife=animateWishKoi(pond);element('div','',pond,'wishBowl');const aim=element('i','',pond,'wishAim');aim.hidden=true;const coin=element('img','',pond,'ritualCoin');coin.src=art9.coin;coin.alt=tr('Swipe the coin toward the centre bowl','将铜钱向中央许愿碗滑动');coin.draggable=false;
+ const pond=pond9(q);pond.classList.add('wishRitual');const stage=element('section','',q,'pawWishGarden');pond.before(stage);stage.append(pond);const koiLife=animateWishKoi(pond);element('div','',pond,'wishBowl');const aim=element('i','',pond,'wishAim');aim.hidden=true;const coin=element('img','',pond,'ritualCoin');coin.src=art9.coin;coin.alt=tr('Swipe the coin toward the centre bowl','将铜钱向中央许愿碗滑动');coin.draggable=false;
  const instruction=element('p',tr('Swipe up from the coin towards the bowl. A faster swipe throws farther.','从铜钱向许愿碗滑动，滑得越快，投得越远。'),q,'wishThrowGuide');pond.before(instruction);const powerBar=element('div','',q,'wishPower');const powerFill=element('i','',powerBar);powerBar.setAttribute('aria-label',tr('Throw strength','投币力度'));const message=element('p',tr('Ready? Aim for the small bowl in the centre.','准备好了吗？瞄准中央的小碗。'),q,'wishMessage');message.setAttribute('aria-live','polite');message.setAttribute('role','status');pond.before(message);pond.before(powerBar);
  let busy=false,done=false,misses=0,origin=null;const home=()=>{coin.style.left='50%';coin.style.top='86%';coin.style.opacity='1';coin.style.transform='translate(-50%,-50%)';coin.hidden=false};
  const clampWish=(v,min,max)=>Math.max(min,Math.min(max,v));
@@ -381,3 +381,13 @@ const yueSessionStyle=document.createElement('style');yueSessionStyle.textConten
 `;document.head.append(yueSessionStyle);
 
 const yueFriendlyCSS=document.createElement('style');yueFriendlyCSS.textContent=`.yueSessionMast{background:#f2e5ca!important;border:0!important;box-shadow:none!important;gap:12px;padding:10px 0!important}.yueSessionMast img{width:clamp(96px,29vw,145px);height:auto;aspect-ratio:120/98;object-fit:contain;mix-blend-mode:multiply}.yueSessionMast strong{font:600 22px Georgia,'Songti SC',serif}.yueSessionMast p{font-size:15px;line-height:1.5}.yueSubjectStrip{flex-wrap:wrap;gap:6px!important}.yueInlinePeople{display:flex;gap:4px;flex:1;justify-content:flex-end}.yueInlinePeople button{font-size:13px;min-height:44px;padding:6px 9px}.yueInlinePeople button[aria-pressed=true]{background:#f4e5c3!important;color:#314d40!important}.yueSubjectStrip>strong{font-size:13px}.yueReadingMenu button{border-radius:3px!important;background:#f3e6cc!important;color:#344d41!important;box-shadow:none!important}`;document.head.append(yueFriendlyCSS);
+
+const pawWishGardenCss=document.createElement('style');pawWishGardenCss.textContent=`
+#content:has(.pawWishGarden){background:linear-gradient(#f4e8d2f4,#eee1c8f5),url('assets/art/025.webp') center/cover!important;color:#493e30}
+#content .pawWishGarden{position:relative;box-sizing:border-box;width:min(100%,740px);margin:12px auto;padding:clamp(10px,3vw,24px);background:linear-gradient(#342f2533,#393b2c50),url('assets/art/025.webp') center/cover;border:1px solid #977e58;border-radius:5px;box-shadow:0 4px 14px #3b302c3b}
+#content:has(.pawWishGarden) .wishRitual{background-size:100% 100%!important;background-repeat:no-repeat!important;background-color:#345f56!important;border:clamp(6px,1.7vw,11px) solid #a99b7d!important;box-shadow:0 7px 15px #251f1c70,inset 0 0 16px #1c3b3688!important}
+#content .pawWishGarden .wishRitual:before,#content .pawWishGarden .wishRitual:after{display:none!important}
+#content .pawWishGarden .wishThrowGuide,#content .pawWishGarden .wishMessage{font:500 14px/1.4 Georgia,"Songti SC",serif!important;color:#f9edce!important;background:#354b3ee8!important;border:1px solid #bba278!important;border-radius:3px;padding:9px 11px!important;margin:0 auto 8px!important;max-width:620px;min-height:0!important}
+#content .pawWishGarden .wishPower{background:#d7c9ac!important}
+#content .pawWishGarden .wishRitual .ritualCoin{filter:drop-shadow(0 2px 1px #213d35bb)}
+`;document.head.append(pawWishGardenCss);
