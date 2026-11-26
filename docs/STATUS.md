@@ -729,3 +729,7 @@ Replaced legacy displayed product names across the canonical engine, extensions,
 ## Small-screen shrine interaction (26 November)
 - A 360 px touch trace found that the camera shifted between taps as the ritual opened, moving the ladle out of the expected hit position. Bell and purification now use a fixed portrait stage sized around the real control bar. Removed the duplicate on-canvas water button and kept the existing accessible control.
 - Chrome passed actual striker and water drags, invalid-drop rejection and the full incense sequence at 360 px, 390 px, tablet and desktop. The four sizes now run in the shrine workflow.
+
+## Parallel Lives and Personality Lab (26 November)
+- Parallel Lives now draws each branch’s existing illustration instead of the same room behind every chapter. The opening shows both choices on a 360 px screen, and the floating traveller portrait has been removed from the scenery. The Lab title clears the Back button and its host stands behind the table.
+- Clicked through all four choices and verified distinct illustrations plus the ending on 360 px, 390 px, tablet and desktop in Chromium. Dedicated new branch paintings and a broader Discovery redesign remain open.
