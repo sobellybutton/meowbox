@@ -82,10 +82,10 @@ async function travelLoop(page,name,touch){
  await press(page.locator('#proposal .shrine-enter'));
  await page.waitForFunction(()=>proposal.hidden&&valleyRevealAt<0);
  await press(page.locator('#dockTravel'));
- const local=page.locator('.pawLocalDoors');await local.waitFor();
- assert.equal(await local.locator('button').count(),await page.evaluate(()=>maps[scene].st.filter(v=>v[0]!=='station').length));
+ const local=page.locator('.pawSketchPlaces');await local.waitFor();
+ assert.equal(await local.locator('.pawSketchGo').count(),await page.evaluate(()=>maps[scene].st.filter(v=>v[0]!=='station').length));
  await shot('local-map-guide');
- await press(local.getByRole('button',{name:'Tarot House',exact:true}));
+ await press(local.locator('.pawSketchPlace').filter({has:page.getByText('Moonlight Tarot',{exact:true})}).getByRole('button',{name:'Visit ›',exact:true}));
  await page.waitForFunction(()=>room==='tarot'&&!transitioning&&continuityRoom==='tarot'&&Math.hypot(indoor.x-indoor.tx,indoor.y-indoor.ty)<4,null,{timeout:21000});
  await shot('tarot');
  await station('tarot');
@@ -116,10 +116,11 @@ async function travelLoop(page,name,touch){
  for(const [district,doors] of [['home',['fish']],['island',['boba','arcade']],['wonder',['quiz','story','match']],['fortune',[]]]){
   assert.equal(await page.locator('#nextStopShortcut').isVisible(),false,'No permanent next-stop shortcut');
   await press(page.locator('#dockTravel'));
-  await page.locator('.pawExploreRail').waitFor();
-  assert(await page.locator('.pawLocalDoors button').count()>0,'Local shops are available before travel');
-  assert(await page.locator('.pawExploreRail').evaluate(el=>el.getBoundingClientRect().top<document.querySelector('.portraitTravelGrid').getBoundingClientRect().top),'Local exploration precedes destination choices');
-  await press(page.locator('.portraitTravelGrid .portraitDestination').nth(['fortune','home','island','wonder'].indexOf(district)));
+  await page.locator('.pawSketchbook').waitFor();
+  assert(await page.locator('.pawSketchPlaces .pawSketchGo').count()>0,'Local shops are available before travel');
+  await press(page.locator('.pawSketchTabs button').nth(['fortune','home','island','wonder'].indexOf(district)));
+  assert.equal(await page.locator('.pawSketchSpread').getAttribute('data-page-turn'),district==='fortune'?'back':'forward');
+  await press(page.locator('.pawSketchBoard'));
   const ride=page.locator('.pawRailJourney[data-painted-rail="true"]');
   await ride.waitFor();
   assert.equal(await page.locator('.districtRailCabin').isVisible(),false,'Map selection boards directly');
@@ -143,10 +144,10 @@ async function travelLoop(page,name,touch){
  }
  // The physical railway boards directly, without the old confirmation page.
  await press(page.locator('#dockTravel'));
- await press(page.locator('.pawExploreRail').getByRole('button',{name:'Walk to the railway',exact:true}));
+ await press(page.locator('.pawJournalDeparture').getByRole('button',{name:'Walk to station',exact:true}));
  await page.locator('.pawRailJourney').waitFor({state:'visible',timeout:21000});
  assert.equal(await page.locator('.districtRailCabin').isVisible(),false,'Physical railway should not open a preview');
- assert.match(await page.locator('.pawRailCaption strong').innerText(),/Lazy Island/);
+ assert.equal(await page.locator('.pawRailCaption strong').innerText(),await page.evaluate(()=>maps.home.n[0]));
  await shot('direct-railway');
  await page.waitForFunction(()=>scene==='home'&&!transitioning,null,{timeout:12000});
  assert.equal(await page.evaluate(()=>playerName),'June');
