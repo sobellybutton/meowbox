@@ -2068,4 +2068,89 @@ const mbHomeReadability=document.createElement('style');mbHomeReadability.textCo
 #content .hideoutRoomView .hideoutTools button,#content .komorebiRoomTabs button{font-size:14px!important;white-space:normal!important;min-height:44px!important}
 @media(min-width:760px){#content .komorebiGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
 `;document.head.append(mbHomeReadability);
+
+/* Furniture catalogue: a physical swatch book rather than an unrelated map
+   postcard. Retain the existing asset source, ownership and purchase handlers. */
+function mbFurnitureMatches(name,query){
+ const normalize=v=>String(v||'').normalize('NFKC').toLocaleLowerCase().trim();
+ const q=normalize(query);return !q||normalize(name).includes(q)
+}
+const mbCatalogueVisualBefore=furnitureMarket;
+furnitureMarket=function(back='shop'){
+ const result=mbCatalogueVisualBefore(back),book=$('content').querySelector('.komorebiBook');
+ if(!book)return result;
+ book.querySelector('.mbFurnitureShopArt')?.remove();
+ const head=book.querySelector('.komorebiHead'),grid=book.querySelector('.komorebiGrid');
+ if(!head||!grid)return result;
+ const catalogue=furnitureCatalogue();
+ const caption=element('p',tr('Choose a piece to see it up close before buying.','挑一件喜欢的家具，先看细节再决定。'),head,'mbCatalogueCaption');
+ const filters=book.querySelectorAll('.journalFilterTabs');
+ if(filters[0]){filters[0].setAttribute('role','group');filters[0].setAttribute('aria-label',tr('Furniture style','家具风格'))}
+ if(filters[1]){filters[1].setAttribute('role','group');filters[1].setAttribute('aria-label',tr('Furniture category','家具分类'))}
+ const searchRow=element('div','',book,'mbCatalogueSearch');
+ const label=element('label',tr('Find furniture','找家具'),searchRow);label.htmlFor='mbFurnitureSearch';
+ const input=element('input','',searchRow);input.id='mbFurnitureSearch';input.type='search';input.placeholder=tr('e.g. lamp, futon','例如：台灯、床铺');input.autocomplete='off';
+ const count=element('small','',searchRow,'mbCatalogueCount');count.setAttribute('aria-live','polite');
+ grid.before(searchRow);
+ const tiles=[...grid.querySelectorAll('.komorebiTile')].map(tile=>{
+  const name=tile.querySelector('strong')?.textContent||'',v=catalogue.find(v=>tr(v[1],v[2])===name);
+  const image=tile.querySelector('img');
+  if(image){const mat=element('div','',tile,'mbFurnitureMat');image.before(mat);mat.append(image);image.loading='lazy';image.decoding='async';image.alt=name}
+  if(v){tile.dataset.furnitureId=v[0];tile.dataset.owned=String(furnitureOwned(v[0]));const style=furnitureStyle(v[0]);if(style==='japanese'||style==='chinese'){const tag=element('small',style==='japanese'?tr('Japanese style','和风'):tr('Chinese style','中式'),tile,'mbFurnitureStyleTag');tile.querySelector('strong')?.after(tag)}}
+  return {tile,hidden:tile.hidden,name:v?v[1]+' '+v[2]+' '+name:name};
+ });
+ const empty=element('p','',grid,'mbCatalogueNoResults');
+ function filter(){
+  let visible=0;for(const entry of tiles){entry.tile.hidden=entry.hidden||!mbFurnitureMatches(entry.name,input.value);if(!entry.tile.hidden)visible++}
+  count.textContent=tr('Pieces shown: ','显示家具：')+visible;
+  empty.hidden=visible>0||!input.value.trim();
+  empty.textContent=tr('No matching furniture. Try a different name.','没找到这件家具，换个名字试试。');
+  const existing=grid.querySelector('.mbArtEmpty');if(existing)existing.hidden=!!input.value.trim();
+ }
+ input.addEventListener('input',filter);filter();
+ return result
+};
+const mbFurnitureDetailBefore=furnitureConfirm;
+furnitureConfirm=function(id,back='shop'){
+ const result=mbFurnitureDetailBefore(id,back),card=$('content').querySelector('.komorebiConfirm');
+ if(!card)return result;
+ const image=card.querySelector('img'),v=furnitureCatalogue().find(v=>v[0]===id);
+ if(image){const mat=element('div','',card,'mbFurnitureDetailMat');image.before(mat);mat.append(image);image.alt=v?tr(v[1],v[2]):''}
+ if(v){const note=element('p',v[4]==='extension'?tr('Adds a new room to your home.','给小窝扩建一个新房间。'):v[4]==='finish'||v[4]==='floor'?tr('Apply this finish in the room editor after purchase.','购买后可在小窝布置中更换。'):tr('Arrange this piece in your room after purchase.','购买后可在小窝里自由摆放。'),card,'mbFurnitureUseNote');card.querySelector('h2')?.after(note)}
+ return result
+};
+const mbHomeVisualBefore=hideoutPage;
+hideoutPage=function(...args){
+ const result=mbHomeVisualBefore(...args),q=$('content'),sceneEl=q.querySelector('.hideoutScene');
+ if(!sceneEl)return result;
+ const view=q.querySelector('.hideoutRoomView');
+ if(view){view.dataset.editing=String(!!hideoutEditing);const tools=view.querySelector('.hideoutTools');if(tools){tools.setAttribute('role','group');tools.setAttribute('aria-label',tr('Room editing tools','小窝布置工具'))}}
+ return result
+};
+const mbCatalogueVisualStyle=document.createElement('style');
+mbCatalogueVisualStyle.textContent=`
+#content .komorebiBook .komorebiHead{padding:12px!important;border:1px solid #b69a70;border-left:4px solid #927354;background:var(--town-grain),#f6ead1!important}
+#content .komorebiHead .mbCatalogueCaption{margin:6px 0 0;font:14px/1.5 system-ui;color:#594936}
+#content .mbCatalogueSearch{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin:12px 0}
+#content .mbCatalogueSearch label{font:600 14px/1.4 system-ui;color:#4e3e2d}
+#content .mbCatalogueSearch input{grid-column:1/-1;grid-row:2;box-sizing:border-box;width:100%;min-height:44px;border:1px solid #aa906b;border-radius:4px;background:#fff7e7;color:#372e22;font:16px/1.4 system-ui;padding:8px 12px}
+#content .mbCatalogueCount{color:#594936;font:12px/1.35 system-ui}
+#content .mbFurnitureMat,#content .mbFurnitureDetailMat{display:grid;place-items:center;background:radial-gradient(ellipse at 50% 80%,#d7c09c66,transparent 70%),var(--town-grain),#f2e5cc;border:1px solid #cdb48c;border-radius:3px;box-sizing:border-box;padding:6px}
+#content .mbFurnitureMat{height:clamp(92px,26vw,150px)}
+#content .komorebiTile .mbFurnitureMat img{width:100%!important;height:100%!important;max-height:138px;object-fit:contain!important}
+#content .komorebiTile{align-content:start!important;box-shadow:0 2px 0 #a88d6725!important}
+#content .komorebiTile[data-owned=true]{border-color:#8b987c!important}
+#content .komorebiTile .mbFurnitureStyleTag{font-size:12px!important;color:#655741!important}
+#content .mbCatalogueNoResults{grid-column:1/-1;line-height:1.5;padding:12px;color:#594936}
+#content .mbCatalogueNoResults[hidden],#content .mbArtEmpty[hidden]{display:none!important}
+#content .mbFurnitureDetailMat{min-height:180px;margin:0 0 12px}
+#content .komorebiConfirm .mbFurnitureDetailMat img{display:block;width:min(100%,340px)!important;height:clamp(170px,38dvh,310px)!important;object-fit:contain!important}
+#content .mbFurnitureUseNote{font:14px/1.5 system-ui;color:#594936}
+#content .hideoutRoomView[data-editing=true] .hideoutTools{padding:7px;background:var(--town-grain),#f3e5cb;border:1px solid #bea37b;border-radius:4px;gap:6px}
+#content .hideoutRoomView .hideoutTools button{flex:1 1 auto}
+#content .hideoutFurnitureTray{scroll-padding-inline:10px}
+@media(min-width:760px){#content .mbFurnitureMat{height:150px}#content .mbCatalogueSearch{grid-template-columns:minmax(0,1fr) auto;max-width:560px}}
+`;
+document.head.append(mbCatalogueVisualStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
