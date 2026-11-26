@@ -25,7 +25,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
    const proposal=page.locator('#proposal'),next=proposal.locator('footer button.next');
    await next.waitFor({timeout:45000});
    await proposal.locator('.languageChoice').getByRole('button',{name:language,exact:true}).click();
-   await shot('station');await next.click();
+   await proposal.locator('.pawFirstRailPainting img').evaluate(im=>im.decode());assert.equal(await proposal.locator('.cinema-world').isVisible(),false,'Passport backdrop still visible');await shot('station');await next.click();
    const ticket=proposal.locator('.rail-ticket'),input=ticket.locator('input'),go=ticket.locator('.ticket-confirm');
    await ticket.waitFor();
    assert.equal(await proposal.locator('.rail-platform-coach').count(),0,'Legacy coach present');
@@ -42,7 +42,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
     assert(await page.evaluate(i=>proAvatar===i,i),'Wrong selected avatar');
     const image=proposal.locator('.pawEntranceAvatar');
     await image.evaluate(im=>im.decode());
-    const bounds=await image.boundingBox();assert(bounds&&bounds.width>40&&bounds.height>100,'Avatar not fully sized');
+    await image.evaluate(im=>im.decode());await page.waitForFunction(()=>document.querySelector('.pawEntranceAvatar')?.dataset.pawArtReady==='true');const bounds=await image.boundingBox();assert(bounds&&bounds.width>40&&bounds.height>=(width>=850?180:115),'Avatar not fully sized');const thumb=choice.locator('img');await thumb.evaluate(im=>im.decode());await page.waitForFunction(i=>document.querySelector('.pawAvatarOption[data-avatar="'+i+'"] img')?.dataset.pawArtReady==='true',i);const tb=await thumb.boundingBox();assert(tb&&tb.height>=48,'Avatar thumbnail undersized');
     assert(await proposal.evaluate(n=>n.scrollWidth<=n.clientWidth+1),'Character screen horizontal overflow');
     await shot('avatar-'+i);
    }
@@ -55,7 +55,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
    const gate=proposal.locator('.shrine-enter');await gate.waitFor({timeout:20000});await reachable(gate,'Enter valley');await shot('gate');
    await gate.click();await proposal.waitFor({state:'hidden',timeout:30000});
    assert(await page.evaluate(()=>avatar===3&&playerName==='Traveller 旅人'),'Player identity not preserved');
-   assert.deepEqual(errors,[],'Page errors');
+   await page.locator('#dock').waitFor({state:'visible'});await shot('first-walk');const dock=await page.locator('#dock').boundingBox();assert(dock&&dock.y>=0&&dock.y+dock.height<=height+1,'Dock clipped');assert.deepEqual(errors,[],'Page errors');
    console.log('PASS '+name);
   }catch(e){failures.push(name+': '+e.message);await shot('FAIL').catch(()=>{});console.error(name,e.message)}
   finally{await page.close()}

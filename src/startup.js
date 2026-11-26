@@ -4552,4 +4552,134 @@ pawEntranceLayoutCss.textContent=
  '@media(prefers-reduced-motion:reduce){#proposal *{animation:none!important;transition:none!important}}';
 document.head.append(pawEntranceLayoutCss);
 
+
+/* PAW_ENTRANCE_ART_FIT_BEGIN */
+function pawAvatarCropBounds(data,w,h){
+ if(!data||data.length!==w*h*4||w<2||h<2)return null;
+ const rows=new Uint32Array(h),cols=new Uint32Array(w);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(data[(y*w+x)*4+3]>=72){rows[y]++;cols[x]++}
+ const rowMin=Math.max(2,Math.ceil(w*.008)),colMin=Math.max(2,Math.ceil(h*.008));
+ let l=w,r=-1,u=h,d=-1;
+ for(let y=0;y<h;y++)if(rows[y]>=rowMin){u=Math.min(u,y);d=y}
+ for(let x=0;x<w;x++)if(cols[x]>=colMin){l=Math.min(l,x);r=x}
+ if(r-l<2||d-u<2)return null;
+ const pad=Math.max(2,Math.ceil((d-u)*.035));
+ l=Math.max(0,l-pad);u=Math.max(0,u-pad);r=Math.min(w,r+1+pad);d=Math.min(h,d+1+pad);
+ return {x:l,y:u,w:r-l,h:d-u}
+}
+function pawAvatarArtSize(width,height,role){
+ if(![width,height].every(v=>Number.isFinite(v)&&v>0))return 0;
+ if(role==='option')return width<480?Math.max(48,Math.min(74,height*.12)):Math.max(72,Math.min(116,height*.14));
+ if(width>=850)return Math.max(180,Math.min(520,height*.59));
+ return Math.max(115,Math.min(340,height*.36))
+}
+/* PAW_ENTRANCE_ART_FIT_END */
+const pawAvatarCropCache=new Map();
+function pawCropEntranceImage(im){
+ if(!im||!im.src)return;
+ const original=im.getAttribute('src');
+ if(!original||im.dataset.pawCropSource===original)return;
+ im.dataset.pawCropSource=original;
+ const apply=src=>{
+  if(im.isConnected&&im.getAttribute('src')===original&&src){im.src=src;im.dataset.pawArtReady='true'}
+ };
+ if(!pawAvatarCropCache.has(original)){
+  const ready=new Promise(resolve=>{
+   const src=new Image();
+   src.onload=()=>{
+    try{
+     const w=src.naturalWidth,h=src.naturalHeight,work=document.createElement('canvas');work.width=w;work.height=h;
+     const ctx=work.getContext('2d',{willReadFrequently:true});ctx.drawImage(src,0,0);
+     const b=pawAvatarCropBounds(ctx.getImageData(0,0,w,h).data,w,h);
+     if(!b||b.w===w&&b.h===h){resolve(original);return}
+     const out=document.createElement('canvas');out.width=b.w;out.height=b.h;
+     out.getContext('2d').drawImage(src,b.x,b.y,b.w,b.h,0,0,b.w,b.h);
+     resolve(out.toDataURL('image/png'))
+    }catch{resolve(original)}
+   };
+   src.onerror=()=>resolve(original);src.src=original;
+  });
+  pawAvatarCropCache.set(original,ready);
+ }
+ pawAvatarCropCache.get(original).then(apply)
+}
+function pawEntranceResize(){
+ if(proposal.hidden)return;
+ const w=proposal.clientWidth||innerWidth,h=proposal.clientHeight||innerHeight;
+ proposal.style.setProperty('--paw-avatar-main',pawAvatarArtSize(w,h,'main')+'px');
+ proposal.style.setProperty('--paw-avatar-thumb',pawAvatarArtSize(w,h,'option')+'px')
+}
+window.addEventListener('resize',pawEntranceResize,{passive:true});
+const pawEntranceArtBefore=proRender;
+proRender=function(...args){
+ const result=pawEntranceArtBefore(...args),hero=proposal.querySelector('.hero'),foot=proposal.querySelector('footer');
+ if(!hero||!foot)return result;
+ pawEntranceResize();
+ if(proStep===0){
+  // The station placeholder is a travel passport graphic, not scenery.
+  // Show the existing painted railway interior as an explicitly labelled
+  // preview of the journey until a dedicated station painting is available.
+  hero.querySelector('.rail-platform-sign')?.remove();
+  const preview=element('picture','',hero,'pawFirstRailPainting');
+  const wide=element('source','',preview);wide.media='(min-aspect-ratio: 1/1)';wide.srcset='assets/visual/painted/journey/landscape.webp';
+  const art=element('img','',preview);art.src='assets/visual/painted/journey/portrait.webp';art.alt=tr('A painted preview of the mountain railway carriage','山间列车车厢的画面预览');
+  const heading=foot.querySelector('h1');if(heading){const tag=element('p',tr('Pawradise railway','Pawradise 铁路'),foot,'pawFirstRailLabel');heading.before(tag)}
+ }
+ if(proStep===1||proStep===2){
+  const player=hero.querySelector('.pawEntranceAvatar');if(player)pawCropEntranceImage(player);
+  for(const button of foot.querySelectorAll('.pawAvatarOption')){
+   const im=button.querySelector('img'),name=button.querySelector('span');
+   if(im&&name){button.replaceChildren(im,name);pawCropEntranceImage(im)}
+  }
+  if(proStep===1){
+   const back=element('button',tr('‹ Ticket','‹ 车票'),foot,'pawEntranceBack');back.type='button';back.onclick=()=>{if(proBusy)return;proStep=4;proRender()};
+   const turn=foot.querySelector('.pawAvatarTurn button');if(turn)turn.setAttribute('aria-label',tr('Turn around','转身'));
+  }else{
+   const back=element('button',tr('‹ Change traveller','‹ 更换旅人'),foot,'pawEntranceBack');back.type='button';back.onclick=()=>{if(proBusy)return;proStep=1;proDir=0;proRender()};
+  }
+ }
+ return result
+};
+const pawEntranceFitStyle=document.createElement('style');
+pawEntranceFitStyle.textContent=
+ '#proposal[data-paw-entrance-step="0"]>.cinema-world,#proposal[data-paw-entrance-step="0"]>.speck{display:none!important}'+
+ '#proposal[data-paw-entrance-step="0"]:not([hidden]){display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto minmax(170px,1fr) auto!important;gap:12px;background:radial-gradient(ellipse at 50% 40%,#52684d,#20352c 80%)!important;overflow:auto!important}'+
+ '#proposal[data-paw-entrance-step="0"]>.hero{display:grid!important;place-items:center;min-height:170px!important;overflow:hidden!important;width:100%;height:100%!important}'+
+ '#proposal .pawFirstRailPainting{display:block;height:100%;max-height:650px;width:100%;min-height:0;min-width:0;overflow:hidden}'+
+ '#proposal .pawFirstRailPainting img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;max-width:100%;max-height:100%}'+
+ '#proposal .pawFirstRailLabel{color:#e9d2a2;font:13px/1.3 Georgia,"Songti SC",serif!important;letter-spacing:.1em}'+
+ '#proposal[data-paw-entrance-step="0"]>footer{max-width:460px!important;min-width:0;padding:6px 0 12px!important;gap:8px!important}'+
+ '#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>.hero{min-height:var(--paw-avatar-main,180px)!important;align-content:center!important}'+
+ '#proposal .pawEntranceAvatar{display:block!important;width:auto!important;max-width:90%!important;height:var(--paw-avatar-main,180px)!important;max-height:var(--paw-avatar-main,180px)!important;align-self:center!important;justify-self:center!important;object-fit:contain!important;object-position:center!important}'+
+ '#proposal .pawAvatarGallery{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important;padding:4px!important;background:none!important;border-bottom:0!important}'+
+ '#proposal .pawAvatarOption{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-end!important;gap:5px!important;height:auto!important;min-height:0!important;padding:8px 3px!important;border:1px solid #b69c70!important;background:#ead9b5!important;color:#3e4c3b!important;border-radius:3px!important;box-shadow:0 2px 4px #172d2444!important}'+
+ '#proposal .pawAvatarOption[aria-pressed=true]{background:#fff0cc!important;border:2px solid #f0cd86!important;box-shadow:0 0 0 2px #a58a59!important}'+
+ '#proposal .pawAvatarOption img{display:block!important;width:100%!important;height:var(--paw-avatar-thumb,64px)!important;min-height:var(--paw-avatar-thumb,64px)!important;max-height:var(--paw-avatar-thumb,64px)!important;object-fit:contain!important;object-position:center bottom!important;flex:none!important}'+
+ '#proposal .pawAvatarOption span{display:block!important;color:#384d3c!important;font:600 11px/1.25 system-ui,sans-serif!important;text-align:center!important;min-height:2.5em;align-content:center;max-width:100%;overflow-wrap:anywhere!important}'+
+ '#proposal .pawEntranceBack{justify-self:center!important;width:max-content!important;max-width:100%;min-height:44px!important;padding:6px 12px!important;background:transparent!important;color:#f1ddad!important;border:0!important;box-shadow:none!important;text-decoration:underline;text-underline-offset:3px;font:13px system-ui,sans-serif!important}'+
+ '#proposal .pawAvatarTurn button{background:#3d5346!important;color:#fff1d0!important;border:1px solid #a99570!important}'+
+ '#proposal .pawPersonaChoices button{background:#ead9b5!important;color:#394c3b!important;font-weight:600!important}'+
+ '@media(min-width:850px) and (min-height:480px){#proposal[data-paw-entrance-step="0"]:not([hidden]){grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)!important;grid-template-rows:auto minmax(240px,1fr)!important;gap:20px;padding-inline:clamp(16px,5vw,90px)!important}#proposal[data-paw-entrance-step="0"]>footer{align-self:center;justify-self:start}#proposal .pawAvatarGallery{gap:8px!important}#proposal .pawAvatarOption span{font-size:13px!important}}'+
+ '@media(max-height:660px) and (orientation:portrait){#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>footer{gap:4px!important}#proposal .pawAvatarOption{padding:5px 2px!important}#proposal .pawAvatarKicker{font-size:12px!important}}'+
+ '@media(max-width:370px){#proposal .pawAvatarGallery{gap:4px!important;padding:2px!important}#proposal .pawAvatarOption span{font-size:10px!important}}';
+document.head.append(pawEntranceFitStyle);
+/* Desktop has keyboard movement, not a touch joystick. Avoid putting the
+   introductory guide directly over the avatar on the central playable path. */
+const pawGuideCopyBefore=movementUI;
+movementUI=function(...args){
+ const result=pawGuideCopyBefore(...args);
+ if(!moveGuide.hidden&&guideStage===0){
+  const touch='ontouchstart' in window||navigator.maxTouchPoints>0;
+  moveCopy.textContent=touch?tr('Tap the glowing spot or use the joystick to walk.','点击光圈或使用摇杆行走。'):tr('Click the path or use arrow keys to walk.','点击小路或使用方向键行走。')
+ }
+ return result
+};
+const pawDesktopGuideStyle=document.createElement('style');
+pawDesktopGuideStyle.textContent=
+ '#game #dock:not([hidden]){bottom:max(8px,env(safe-area-inset-bottom,0px))!important;max-width:calc(100% - 16px)!important;box-sizing:border-box!important}'+
+ '#game #dock>button:not([hidden]){min-height:50px!important;height:auto!important;gap:2px!important}'+
+ '#game #dock>button:not([hidden])>span:last-child{display:block!important;line-height:1.15!important;max-width:100%;overflow-wrap:anywhere}'+
+ '@media(min-width:1100px) and (min-aspect-ratio:3/2){#moveGuide:not([hidden]){left:14px!important;right:auto!important;bottom:24px!important;top:auto!important;transform:none!important;width:min(22vw,290px)!important;max-width:290px!important;font-size:13px!important}}';
+document.head.append(pawDesktopGuideStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
