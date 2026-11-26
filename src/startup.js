@@ -2344,11 +2344,36 @@ function mbJourneyPainting(record,name,portrait){
  if(record?.path!==expected||!Number.isInteger(record.width)||!Number.isInteger(record.height)||record.width<400||record.height<400||record.width>2048||record.height>2048)return null;
  return (portrait?record.height/record.width:record.width/record.height)>=1.35?record:null
 }
+function pawRailRouteRecord(raw,id){
+ if(!['fortune','home','island','wonder'].includes(id))return null;
+ const layers={};
+ for(const kind of ['far','near']){
+  const record=raw?.[kind],path='assets/visual/painted/journey/routes/'+id+'/'+kind+'.webp';
+  if(record?.path!==path||!Number.isInteger(record.width)||!Number.isInteger(record.height)||record.width<1000||record.width>4096||record.height<280||record.height>1400||record.width/record.height<2.5||!/^[a-f0-9]{64}$/.test(record.sha256||''))return null;
+  layers[kind]=record
+ }
+ return layers.far.width===layers.near.width&&layers.far.height===layers.near.height?layers:null
+}
+const pawRailRouteImages=new Map();
+function pawRailRouteLoad(record){
+ if(!record)return Promise.resolve(null);
+ const key=record.path;
+ if(!pawRailRouteImages.has(key)){
+  const promise=new Promise(resolve=>{
+   const im=new Image();im.decoding='async';
+   const done=ok=>resolve(ok&&im.naturalWidth===record.width&&im.naturalHeight===record.height?im:null);
+   im.onload=()=>done(true);im.onerror=()=>done(false);im.src=key;
+  }).then(im=>{if(!im)pawRailRouteImages.delete(key);return im});
+  pawRailRouteImages.set(key,promise)
+ }
+ return pawRailRouteImages.get(key)
+}
 let mbJourneyPaintingsPromise;
 function mbJourneyPaintings(){
  if(!mbJourneyPaintingsPromise)mbJourneyPaintingsPromise=fetch('assets/visual/painted/journey-runtime.json',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(data=>{
   if(data?.version!==1)return null;
-  return {portrait:mbJourneyPainting(data.rail?.portrait,'portrait',true),landscape:mbJourneyPainting(data.rail?.landscape,'landscape',false),gate:mbJourneyPainting(data.gate,'gate',true)}
+  const routes=Object.fromEntries(['fortune','home','island','wonder'].map(id=>[id,pawRailRouteRecord(data.routes?.[id],id)]).filter(([,v])=>v));
+  return {portrait:mbJourneyPainting(data.rail?.portrait,'portrait',true),landscape:mbJourneyPainting(data.rail?.landscape,'landscape',false),gate:mbJourneyPainting(data.gate,'gate',true),routes}
  }).catch(()=>null).then(data=>{
   if(!data?.portrait||!data?.landscape)mbJourneyPaintingsPromise=null;
   return data
@@ -2412,6 +2437,10 @@ function pawRailTravel(elapsed,mode){
  if(phase<=8)return {a:travel,b:0,mix:0};
  const k=phase-8;return {a:.13,b:0,mix:k*k*(3-2*k)}
 }
+function pawRailLayerCrop(w,h,progress,speed){
+ const span=Math.min(w,Math.max(1,h*1.8)),travel=Math.max(0,Math.min(1,progress))*Math.max(0,Math.min(1,speed));
+ return {x:(w-span)*travel,width:span,height:h}
+}
 /* PAW_WINDOW_MOTION_END */
 const pawRailMotionJobs=new WeakMap();
 function pawRailMakePane(pane,ratio,source,w,h){
@@ -2437,7 +2466,7 @@ function pawRailMakePane(pane,ratio,source,w,h){
  }
  return {tw,texture,pixels:Int32Array.from(pixels),cols:Float32Array.from(cols),rows:Int32Array.from(rows),alphas:Uint8Array.from(alphas),speed:pane.speed}
 }
-function pawRailMountMotion(stage,im,layout,host,mode){
+function pawRailMountMotion(stage,im,layout,host,mode,routeLayers=null){
  const old=pawRailMotionJobs.get(stage);if(old){old.stop();pawRailMotionJobs.delete(stage)}
  stage.dataset.railMotion='still';
  const cfg=pawRailWindows[layout],reduce=matchMedia('(prefers-reduced-motion: reduce)');
@@ -2455,10 +2484,34 @@ function pawRailMountMotion(stage,im,layout,host,mode){
   canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;canvas.className='pawMovingGlass';canvas.setAttribute('aria-hidden','true');
   const g=canvas.getContext('2d');if(!g)return;
   const frame=g.createImageData(w,h),out=frame.data;
+  // Optional true parallax: use independent painted landscape and transparent
+  // foreground layers. Sample both through one global glass mask so split
+  // panes share the same horizon. Never include furniture or carriage art.
+  let routeMask=null,routeCanvas=null,routeG=null;
+  if(routeLayers?.far&&routeLayers?.near){
+   routeCanvas=document.createElement('canvas');routeCanvas.width=w;routeCanvas.height=h;routeG=routeCanvas.getContext('2d',{willReadFrequently:true});
+   if(routeG){
+    routeMask=new Uint8ClampedArray(w*h);
+    for(const p of panes)for(let i=0;i<p.pixels.length;i++)routeMask[p.pixels[i]/4]=p.alphas[i]
+   }
+  }
+  function drawRoute(progress){
+   routeG.clearRect(0,0,w,h);
+   for(const [key,speed] of [['far',.32],['near',1]]){
+    const art=routeLayers[key],crop=pawRailLayerCrop(art.naturalWidth,art.naturalHeight,progress,speed);
+    routeG.drawImage(art,crop.x,0,crop.width,crop.height,0,0,w,h)
+   }
+   const view=routeG.getImageData(0,0,w,h).data;
+   for(let p=0;p<routeMask.length;p++){
+    const i=p*4;
+    out[i]=view[i];out[i+1]=view[i+1];out[i+2]=view[i+2];out[i+3]=Math.round(routeMask[p]*view[i+3]/255)
+   }
+  }
   function draw(){
    const motion=pawRailTravel(elapsed,mode),sample=motion.a.toFixed(5)+'|'+motion.mix.toFixed(4);
    if(sample===lastSample)return;lastSample=sample;
-   for(const p of panes){
+   if(routeMask&&mode==='ride')drawRoute(Math.min(1,elapsed/3.6));
+   else for(const p of panes){
     const limit=p.tw-1,travel=motion.a*p.speed,reset=motion.b*p.speed;
     for(let i=0;i<p.pixels.length;i++){
      const base=.15+.70*(p.cols[i]/limit),u=(base-travel)*limit,k=Math.floor(u),f=u-k,ix=p.rows[i]+k*4,next=p.rows[i]+Math.min(limit,k+1)*4,to=p.pixels[i];
@@ -2483,7 +2536,7 @@ function pawRailMountMotion(stage,im,layout,host,mode){
    }
    raf=requestAnimationFrame(tick)
   }
-  draw();stage.append(canvas);stage.dataset.railMotion='painted-window';pawRailMotionJobs.set(stage,{stop});raf=requestAnimationFrame(tick)
+  draw();stage.append(canvas);stage.dataset.railMotion=routeMask&&mode==='ride'?'route-parallax':'painted-window';pawRailMotionJobs.set(stage,{stop});raf=requestAnimationFrame(tick)
  }catch(e){stop();stage.dataset.railMotion='still'}
 }
 
@@ -2491,6 +2544,11 @@ async function mbMountRailPainting(host,mode){
  if(!host||host.querySelector('.mbPaintedRail'))return;
  const art=await mbJourneyPaintings();
  if(!art?.portrait||!art.landscape||!host.isConnected||host.querySelector('.mbPaintedRail'))return;
+ // Prefetch route layers while carriage artwork loads. A missing route never
+ // blocks boarding; only a complete pair may replace the shared scenery.
+ let routeLayers=null;
+ const route=mode==='ride'?art.routes?.[host.dataset.to]:null;
+ if(route)Promise.all([pawRailRouteLoad(route.far),pawRailRouteLoad(route.near)]).then(([far,near])=>{if(far&&near)routeLayers={far,near}});
  const stage=element('div','',host,'mbPaintedRail');
  stage.dataset.use=mode;stage.hidden=true;stage.setAttribute('aria-hidden','true');
  const picture=element('picture','',stage);
@@ -2505,7 +2563,7 @@ async function mbMountRailPainting(host,mode){
   stage.dataset.layout=layout;
   stage.style.setProperty('--rail-aspect',String(im.naturalWidth/im.naturalHeight));
   stage.style.setProperty('--rail-painting','url("'+art[layout].path+'")');
-  pawRailMountMotion(stage,im,layout,host,mode)
+  pawRailMountMotion(stage,im,layout,host,mode,routeLayers)
  };
  im.addEventListener('load',verify);im.addEventListener('error',()=>{pawRailMotionJobs.get(stage)?.stop();stage.hidden=true;host.dataset.paintedRail='false'});
  im.src=art.portrait.path;
@@ -6116,8 +6174,19 @@ proRender=function(...args){
  const button=proposal.querySelector('.shrine-enter'),gate=proposal.querySelector('.gate');
  if(!button||typeof button.onclick!=='function')return result;
  const hero=proposal.querySelector('.hero'),traveller=hero?.querySelector('.gate-traveller');
- if(hero&&traveller){pawGatePlace(hero,traveller);requestAnimationFrame(()=>{if(traveller.isConnected&&!traveller.classList.contains('go'))pawGatePlace(hero,traveller)})}
- const admit=button.onclick;let waiting=false;
+ let waiting=false;
+ if(hero&&traveller){
+  pawGatePlace(hero,traveller);
+  requestAnimationFrame(()=>{if(traveller.isConnected&&!waiting&&!traveller.classList.contains('go'))pawGatePlace(hero,traveller)});
+  if(typeof ResizeObserver==='function'){
+   const observer=new ResizeObserver(()=>{if(!hero.isConnected){observer.disconnect();return}if(!waiting)pawGatePlace(hero,traveller)});
+   observer.observe(hero);
+   // Unsubscribe when the onboarding scene is replaced.
+   const cleanup=new MutationObserver(()=>{if(!hero.isConnected){observer.disconnect();cleanup.disconnect()}});
+   cleanup.observe(proposal,{childList:true,subtree:true})
+  }
+ }
+ const admit=button.onclick;
  const enter=async event=>{
   if(waiting||proBusy||!button.isConnected)return;
   waiting=true;const original=button.textContent;
