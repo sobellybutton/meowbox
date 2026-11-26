@@ -1,0 +1,19 @@
+# Gemini Batch 4 reference review (26 November 2026)
+Owner supplied pawradise-batch4-living-world.zip as reference, not a replacement for the existing game. Reviewed extracted source and ran npm test: 3 of 4 tests passed. No image or audio assets are included. Do not install these modules directly or replace existing gameplay, artwork, location IDs, NPCs, save keys or economy.
+
+## Useful ideas to adapt into existing systems
+- Resident routines: use the existing game clock/weather and existing painted residents. A rainy tea room, a resident quietly reading, and familiar food orders can add life without mandatory dialogue. Use actual visible actors and safe movement anchors, not invented presences.
+- Ambient exchanges: adapt the dry clock disagreement, book sorting, rainy tea and quiet conversation patterns to existing characters and actual places. Maintain the current topic history, cooldowns, nonblocking bubbles and bilingual quality.
+- Discoveries: a lost brass key, pressed ginkgo leaf, cat taking a train, old recipe ledger, star-shaped ticket punch and a half-played shogi board are useful physical storytelling references. Integrate only with authored visible objects/hotspots and the existing travel journal, without duplicate quest menus.
+- Home: reading, resting, watering plants, making tea and displaying souvenirs are good physical furniture interactions. Preserve existing ownership and furniture IDs; add original painted art and grounded poses before representing them as completed.
+- Railway: rice terraces, misty cedar hills, coastal seawall, train bento and stamp notebooks are good art/ambience references. Keep current districts and route logic; no invented destinations or reused map backgrounds.
+- Culture: kopi ordering, Cantonese tea etiquette, Hong Kong tea cafes, Taiwanese night market tokens and Japanese bathhouse details are candidate references; verify cultural details before implementation. Japanese nostalgic visual identity stays primary.
+- Sound: use rain under the eaves, kettle simmering, train bells and footsteps as sound design references; wire to existing mute/volume settings and actual events. The archive contains descriptions, not recordings.
+
+## Concrete review findings
+- 29 schedule records, six NPC definitions and six background conversation scripts. The rain test fails because Kenji is scheduled in kissaten and Mei-Ling in kopitiam, two different IDs; they cannot have the asserted co-located conversation. Do not automatically merge fictional locations or add six conflicting NPCs.
+- 30 story records, but only 10 have more than one stage. 50 secret records have only 20 distinct English text bodies. 60 furniture records have only 20 distinct descriptions; many are numbered variants. Nine audio cue specifications, not the 18 claimed in manifest. Counts do not establish quality or live implementation.
+- Reducer permits advancing completed stories indefinitely and accepts unrecognized secret IDs. It also does not enforce hotspot context on story advance. One secret uses period "rain" instead of a weather condition. Fix validation, idempotency, real trigger matching and repeat suppression before adapting engine behavior.
+- No actual render integration, movement sprites, seating poses, shop graphics, painted furniture, scene backgrounds, sound recordings or browser UI validation supplied.
+- Keep original host world and save format. Extract individual useful content/algorithms, adapt and test against host systems. Do not duplicate existing cooking, parallel life, furniture, festival, journal or community experiences.
+- Prioritize entrance and actual cross-device visual acceptance per GAME_EXPERIENCE_STANDARD.md. Passing module tests is not visual acceptance. This document records reference material only; it adds no runtime features.
