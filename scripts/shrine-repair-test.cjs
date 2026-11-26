@@ -26,8 +26,20 @@ const fs=require('node:fs');
     await page.locator('#proposal .shrine-enter').click();
     await page.waitForFunction(()=>proposal.hidden&&valleyRevealAt<0,{},{timeout:15000});
     // Room is set up as a test fixture; actions below use the actual pointer input.
-    await page.evaluate(()=>{room='temple';start('templeWater');});
-    await page.waitForFunction(()=>activity==='templeWater'&&hit.some(h=>h.id==='templeLadle'),{},{timeout:10000});
+    const props=new Set();
+    await page.exposeFunction('recordPaintedTempleProp',name=>props.add(name));
+    await page.evaluate(()=>{
+     const draw=ctx.drawImage.bind(ctx),painted=new Set();
+     ctx.drawImage=(im,...args)=>{
+      const path=im?.currentSrc||im?.src||'';
+      if(path.includes('/painted/temple/')&&!painted.has(path)){
+       painted.add(path);void recordPaintedTempleProp(path.split('/').at(-1));
+      }
+      return draw(im,...args)
+     };
+     room='temple';start('templeWater');
+    });
+    await page.waitForFunction(()=>activity==='templeWater'&&pics.templeBasinPaint.naturalWidth>0&&pics.templeLadlePaint.naturalWidth>0&&hit.some(h=>h.id==='templeLadle'),{},{timeout:10000});
     const screen=async(x,y)=>page.evaluate(([x,y])=>{const r=c.getBoundingClientRect();return {x:r.left+cam.ox+x*cam.scale,y:r.top+cam.oy+y*cam.scale}},[x,y]);
     const drag=async(x,y,toX,toY)=>{const a=await screen(x,y),b=await screen(toX,toY);if(options.hasTouch&&engine===chromium){const client=await page.context().newCDPSession(page);try{await client.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:a.x,y:a.y}]});for(let i=1;i<=15;i++){await client.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:a.x+(b.x-a.x)*i/15,y:a.y+(b.y-a.y)*i/15}]})}await client.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]})}finally{await client.detach()}}else{await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:15});await page.mouse.up()}};
     await page.screenshot({path:'test-results/'+name+'-water-empty.png'});
@@ -44,8 +56,8 @@ const fs=require('node:fs');
     if(!await page.evaluate(()=>state.waterRewarded===true))throw Error('Completed rinse did not grant reward');
     await page.screenshot({path:'test-results/'+name+'-water-done.png'});
     await page.evaluate(()=>start('templeBell'));
-    await page.waitForFunction(()=>hit.some(h=>h.id==='templeStriker'));
-    await page.evaluate(()=>templeReleaseBell(55));
+    await page.waitForFunction(()=>pics.templeBronze.naturalWidth>0&&pics.templeStrikerPaint.naturalWidth>0&&hit.some(h=>h.id==='templeStriker'));
+    await drag(277,467,225,467);
     await page.waitForFunction(()=>state.bellRung);
     const bellAt=await page.evaluate(()=>state.bellAt);
     await page.evaluate(()=>templeReleaseBell(100));
@@ -59,12 +71,17 @@ const fs=require('node:fs');
     await bar.getByRole('button',{name:/^Bow/}).click();
     await page.waitForFunction(()=>state.prayerStage==='bow'&&state.prayerHeld===3&&state.prayerLit);
     await page.waitForTimeout(600);await page.screenshot({path:'test-results/'+name+'-grounded-bow.png'});
+    await bar.getByRole('button',{name:'Bow 2/3',exact:true}).click();
+    await bar.getByRole('button',{name:'Bow 3/3',exact:true}).click();
+    await bar.getByRole('button',{name:'Place incense in burner',exact:true}).click();
+    await page.waitForFunction(()=>state.prayerStage==='complete'&&state.prayerHeld===0&&state.prayerOffered===3&&state.prayerRewarded);
     await page.evaluate(()=>{room='park';activity=null;roomIntro();updateHUD();});
     await page.waitForTimeout(700);await page.screenshot({path:'test-results/'+name+'-park-hosts.png'});
     await page.evaluate(()=>{room='tea';activity=null;roomIntro();updateHUD();action('chat')});
     await page.locator('#choices').getByRole('button',{name:'Hear the latest gossip',exact:true}).click();
     await page.locator('#choices').getByRole('button',{name:'Wait, what happened?',exact:true}).click();
     if(!await page.evaluate(()=>parkProgress().beat===1))throw Error('Gossip did not progress');
+    if(props.size!==4)throw Error('Expected four painted props to render: '+[...props].join(', '));
     if(errors.length)throw Error(errors.join('; '));
     console.log(name+': arrival, return ticket, actual water pointer drag, prayer and gossip passed');
    }finally{await page.close()}
