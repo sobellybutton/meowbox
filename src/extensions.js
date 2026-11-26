@@ -649,8 +649,15 @@ function parallelSelect(i){let node=parallelScenes[parallelNode];if(!node||paral
 function parallelBack(){if(activity!=='story'||scene!=='wonder'||parallelTurning||!parallelScenes[parallelNode]||!parallelTrail.length)return false;parallelToken++;parallelNode=parallelTrail.pop();parallelPick=-1;parallelAt=t;parallelTurning=false;hint('Read the letter again and choose another path.','再读一次信，换条路试试。');return true}
 function parallelPaper(x,y,j,selected){ctx.save();ctx.translate(x,y+(selected?-13:Math.sin(t*1.5+j)*2));ctx.rotate(selected?.1:j===0?-.06:.06);ellipse(0,32,48,8,'#30272066');round(-57,-40,114,74,3,'#eed9af','#9e8056');ctx.strokeStyle='#b69b72';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-57,-40);ctx.lineTo(0,2);ctx.lineTo(57,-40);ctx.moveTo(-57,34);ctx.lineTo(-15,-5);ctx.moveTo(57,34);ctx.lineTo(15,-5);ctx.stroke();ellipse(0,0,10,10,j===0?'#a75f4c':'#738d75');ctx.strokeStyle='#e8c79a';ctx.beginPath();ctx.arc(0,0,5,0,TAU);ctx.stroke();ctx.restore()}
 const parallelPriorDraw=drawActivity;drawActivity=function(){if(activity!=='story'||scene!=='wonder')return parallelPriorDraw();let n=parallelScenes[parallelNode],end=parallelEndings[parallelNode],art=n?.art||end?.[4]||'streetStation';ctx.save();let im=pics[art]||pics.readingInterior;paintLivingBackdrop(im);let shade=ctx.createLinearGradient(0,222,0,675);shade.addColorStop(0,'#34423e45');shade.addColorStop(.55,'#3c312a66');shade.addColorStop(1,'#463228b0');ctx.fillStyle=shade;shadeLivingBackdrop(shade);glow(218,280,60,1);glow(580,270,55,2);for(let i=0;i<14;i++){ctx.save();ctx.globalAlpha=.18+.18*Math.sin(t+i);ellipse(180+(i*71)%440+Math.sin(t*.7+i)*4,240+(i*31)%170,1.5,1.5,'#ffe7b0');ctx.restore()}
- if(n){human(400,385,n.host,false,1,1.65);if(W<=540&&W<H){parallelPaper(400,442,0,parallelTurning);ctx.restore();return}txt(tr('Parallel Lives','平行人生'),400,250,22,'#fff2d7');let wood=ctx.createLinearGradient(0,395,0,670);wood.addColorStop(0,'#b58b61');wood.addColorStop(1,'#75513a');ctx.beginPath();ctx.moveTo(215,395);ctx.lineTo(585,395);ctx.lineTo(780,1800);ctx.lineTo(20,1800);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle='#bd986c';ctx.stroke();for(let i=0;i<13;i++)line(190,415+i*20,610,417+i*20,'#e2bc8725',1);let f=Math.min(1,Math.max(.1,(t-parallelAt)/.3));ctx.globalAlpha=parallelTurning?1:f;wonderSceneText(tr(...n.title),400,412,385,21,'#fff0d5',2);wonderSceneText(tr(...n.text),400,448,390,17,'#fff2d8',4);for(let i=0;i<2;i++){let x=300+i*200;parallelPaper(x,553,i,parallelTurning&&parallelPick===i);wonderSceneText(tr(n.choices[i][0],n.choices[i][1]),x,602,175,15,'#fff4df',3);if(!parallelTurning)target(x-82,510,164,127,()=>parallelSelect(i))}ctx.globalAlpha=1;txt(tr('Keys 1 / 2 · Backspace to revisit','按 1 / 2 选择 · 退格键返回'),400,656,13,'#f8e4c5')}
- else if(end){let f=Math.min(1,Math.max(.03,(t-parallelAt)/.7));ctx.save();ctx.translate(400,468);ctx.rotate((1-f)*-.12);ctx.scale(f,1);round(-166,-112,332,224,3,'#f3dfb6','#9d784f');round(-158,-104,316,208,2,null,'#b39766');let img=pics[end[4]];if(img?.naturalWidth)cover(img,-140,-92,280,84);wonderSceneText(tr(end[0],end[1]),0,13,292,23,'#604b37',2);wonderSceneText(tr(end[2],end[3]),0,47,285,15,'#604b37',3);ctx.restore();txt(tr('Parallel life collected','平行人生已收藏')+' · '+parallelFound.filter(id=>Object.hasOwn(parallelEndings,id)).length+'/'+Object.keys(parallelEndings).length,400,600,15,'#fff1d5');label(tr('Another life','再试一种人生'),310,639,()=>start('story'));label(tr('Share memory','分享回忆'),490,639,()=>openMeowShare({kind:'story',title:end.slice(0,2),lines:[end.slice(2,4)],accent:'#869e9b'}))}
+ if(n){
+  // Both screen modes use the same real letter controls. The scene remains animated behind the letter.
+  const wide=parallelWideLetter(W,H),x=wide?(W*.31-cam.ox)/Math.max(.05,cam.scale):400;
+  const y=wide?(H*.49-cam.oy)/Math.max(.05,cam.scale):385;
+  backHuman(x,y,n.host,false,'down',1.65);
+  parallelPaper(x,wide?(H*.61-cam.oy)/Math.max(.05,cam.scale):442,Math.max(0,parallelPick),parallelTurning);
+  ctx.restore();return
+ }
+ else if(end){let f=Math.min(1,Math.max(.03,(t-parallelAt)/.7));ctx.save();ctx.translate(400,468);ctx.rotate((1-f)*-.12);ctx.scale(f,1);round(-166,-112,332,224,3,'#f3dfb6','#9d784f');round(-158,-104,316,208,2,null,'#b39766');let img=pics[end[4]];if(img?.naturalWidth)cover(img,-140,-92,280,84);wonderSceneText(tr(end[0],end[1]),0,13,292,23,'#604b37',2);wonderSceneText(tr(end[2],end[3]),0,47,285,15,'#604b37',3);ctx.restore();txt(tr('Parallel life collected','平行人生已收藏')+' · '+parallelFound.filter(id=>Object.hasOwn(parallelEndings,id)).length+'/'+Object.keys(parallelEndings).length,400,600,15,'#fff1d5');/* Ending actions are real letter buttons in syncStorySheet. */}
  ctx.restore()};
 
 /* Shared stage polish: world-sized backgrounds and a short illustrated crossfade. */
@@ -3067,15 +3074,35 @@ $('dockPassport').onclick=passport;
 
 const storySheet=element('section','',$('game'),'storyReadingSheet');storySheet.id='storyReadingSheet';storySheet.hidden=true;
 let storySheetKey='';
+function parallelWideLetter(width,height){return width>=900&&width/Math.max(1,height)>=1.25}
+function parallelLetterVisible(activityId,district,node,ending,blocked){
+ return activityId==='story'&&district==='wonder'&&!!(node||ending)&&!blocked
+}
 function syncStorySheet(){
- const n=parallelScenes[parallelNode],show=activity==='story'&&scene==='wonder'&&!!n&&W<=540&&W<H&&proposal.hidden&&$('page').style.display!=='block';
+ const n=parallelScenes[parallelNode],ending=parallelEndings[parallelNode];
+ const show=parallelLetterVisible(activity,scene,n,ending,talkOpen||transitioning||!proposal.hidden||$('page').style.display==='block');
  if(!show){storySheet.hidden=true;storySheetKey='';return}
- const key=[parallelToken,parallelNode,parallelTurning,zh].join('|');if(key===storySheetKey&&!storySheet.hidden)return;
- storySheetKey=key;storySheet.hidden=false;storySheet.replaceChildren();
- element('small',tr('Parallel Lives','平行人生')+' · '+(parallelTrail.length+1),storySheet);
- element('h3',tr(...n.title),storySheet);element('p',tr(...n.text),storySheet);
- n.choices.forEach((v,i)=>{const button=b(storySheet,tr(v[0],v[1]),()=>parallelSelect(i));button.disabled=parallelTurning});
- if(parallelTrail.length){const previous=b(storySheet,tr('Previous choice','返回上一个选择'),parallelBack);previous.disabled=parallelTurning;previous.className='storyPrevious'}
+ const wide=parallelWideLetter(W,H),key=[parallelToken,parallelNode,parallelTurning,zh,wide].join('|');
+ if(key===storySheetKey&&!storySheet.hidden)return;
+ storySheetKey=key;storySheet.hidden=false;storySheet.dataset.wide=String(wide);storySheet.dataset.ending=String(!!ending);storySheet.replaceChildren();
+ const token=parallelToken,nodeId=parallelNode;
+ const current=()=>activity==='story'&&scene==='wonder'&&parallelToken===token&&parallelNode===nodeId&&!parallelTurning&&!talkOpen&&!transitioning&&$('page').style.display!=='block';
+ if(n){
+  element('small',tr('Parallel Lives','平行人生')+' · '+(parallelTrail.length+1),storySheet);
+  element('h3',tr(...n.title),storySheet);element('p',tr(...n.text),storySheet);
+  n.choices.forEach((v,i)=>{
+   const button=b(storySheet,tr(v[0],v[1]),()=>{if(current())parallelSelect(i)});
+   button.disabled=parallelTurning;button.dataset.storyChoice=String(i)
+  });
+  if(parallelTrail.length){
+   const previous=b(storySheet,tr('Previous choice','返回上一个选择'),()=>{if(current())parallelBack()});
+   previous.disabled=parallelTurning;previous.className='storyPrevious'
+  }
+ }else if(ending){
+  element('small',tr('A life remembered','收藏一段人生')+' · '+parallelFound.filter(id=>Object.hasOwn(parallelEndings,id)).length+'/'+Object.keys(parallelEndings).length,storySheet);
+  const again=b(storySheet,tr('Another life','再试一种人生'),()=>{if(current())start('story')});again.dataset.storyEnding='again';
+  const share=b(storySheet,tr('Share memory','分享回忆'),()=>{if(current())openMeowShare({kind:'story',title:ending.slice(0,2),lines:[ending.slice(2,4)],accent:'#869e9b'})});share.dataset.storyEnding='share'
+ }
 }
 const storySheetStyle=document.createElement('style');storySheetStyle.textContent='#storyReadingSheet{position:absolute;z-index:5;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 65px);width:min(94vw,440px);max-height:48dvh;overflow:auto;padding:12px 15px;background:#f0e3c7;color:#554534;border:1px solid #a78b64;border-radius:3px;box-shadow:0 4px 12px #28261b44}#storyReadingSheet[hidden]{display:none!important}#storyReadingSheet small{font-size:12px}#storyReadingSheet h3{font:600 19px/1.25 Georgia,"Songti SC",serif;margin:7px 0}#storyReadingSheet p{font:15px/1.45 system-ui;margin:5px 0 10px}#storyReadingSheet button{display:block;width:100%;min-height:44px;text-align:left;white-space:normal;margin:5px 0;padding:8px 10px;background:#faf0dc;border:1px solid #c2ab81;border-radius:3px;box-shadow:none;font-size:14px}';document.head.append(storySheetStyle);
 const storySheetDraw=drawActivity;drawActivity=function(){storySheetDraw();syncStorySheet()};

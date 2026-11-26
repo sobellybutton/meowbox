@@ -20,6 +20,7 @@ jobs:
           node-version: '22'
       - run: node scripts/build.cjs
       - run: node scripts/action-refinement-test.cjs
+      - run: node scripts/parallel-letter-test.cjs
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps chromium
       - name: Test all four villages and actual doorway taps
@@ -522,13 +523,25 @@ jobs:
                 if(!await page.locator('#choices').getByRole('button',{name:'先问议程',exact:true}).isVisible())throw Error('Chinese office choices missing');
                 await page.evaluate(()=>{toggleLang();closeTalk()});
                 await page.evaluate(()=>{scene='wonder';room='story';activity=null;state={};closeTalk();start('story')});
+                const letter=page.locator('#storyReadingSheet');
+                await letter.waitFor({state:'visible'});
+                if(!options.hasTouch){
+                  const initial=await page.evaluate(()=>parallelNode);
+                  const second=await page.evaluate(()=>parallelScenes[parallelNode].choices[1][2]);
+                  await letter.locator('[data-story-choice="1"]').click();
+                  await page.waitForFunction(id=>parallelNode===id&&!parallelTurning,second,{timeout:4000});
+                  await letter.getByRole('button',{name:'Previous choice',exact:true}).click();
+                  await page.waitForFunction(id=>parallelNode===id&&!parallelTurning,initial,{timeout:4000});
+                  await page.screenshot({path:'test-results/'+name+'-parallel-life-letter.png'});
+                }
                 for(let i=0;i<4;i++){
                   const expected=await page.evaluate(()=>parallelScenes[parallelNode].choices[0][2]);
-                  if(options.hasTouch&&options.viewport.width<=540){
-                    await page.locator('#storyReadingSheet button').first().tap();
-                  }else{await tapWorld(300,553)}
+                  const choice=letter.locator('[data-story-choice="0"]');
+                  if(options.hasTouch){await choice.tap()}else{await choice.click()}
                   await page.waitForFunction(id=>parallelNode===id&&!parallelTurning,expected,{timeout:4000});
                 }
+                await letter.locator('[data-story-ending="again"]').waitFor({state:'visible'});
+                await letter.locator('[data-story-ending="share"]').waitFor({state:'visible'});
                 if(!await page.evaluate(()=>parallelNode==='endLight'&&parallelFound.includes('endLight')))throw Error('Story ending not saved');
                 await page.screenshot({path:'test-results/'+name+'-parallel-life-ending.png'});
                 await page.locator('#back').click();

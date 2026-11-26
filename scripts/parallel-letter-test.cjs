@@ -1,0 +1,5 @@
+const fs=require('node:fs'),path=require('node:path');
+const source=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+const begin=source.indexOf('function parallelWideLetter('),end=source.indexOf('function syncStorySheet(){',begin);
+if(begin<0||end<begin)throw Error('Missing responsive letter logic');
+console.log(new Function(source.slice(begin,end)+"\nconst assert=(ok,msg)=>{if(!ok)throw Error(msg)};\nassert(parallelWideLetter(1440,900),'desktop side letter');\nassert(!parallelWideLetter(390,844)&&!parallelWideLetter(768,1024)&&!parallelWideLetter(844,390),'phone and tablet letter');\nassert(parallelLetterVisible('story','wonder',{},null,false),'choice shown');\nassert(parallelLetterVisible('story','wonder',null,{},false),'ending shown');\nassert(!parallelLetterVisible('story','wonder',{},null,true),'overlay hidden');\nassert(!parallelLetterVisible('tarot','wonder',{},null,false)&&!parallelLetterVisible('story','home',{},null,false),'no stale letter');\nreturn 'PASS: six responsive letter logic checks';\n")());

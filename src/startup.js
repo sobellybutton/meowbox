@@ -1728,4 +1728,19 @@ furnitureMarket=function(back='shop'){
 let mbArtAffordable=false;
 const mbArtUi=document.createElement('style');mbArtUi.textContent='.mbArtSlipperChoice{padding:10px 0;border-bottom:1px solid #b99e74}.mbArtSlipperButtons{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}.mbArtSlipperButtons button{min-height:44px;white-space:normal}.mbArtSlipperButtons button[aria-pressed=true]{background:#52674f;color:#fff3d8}.komorebiTile[hidden]{display:none!important}.mbArtShortfall{color:#70513b}.mbArtEmpty{grid-column:1/-1}';document.head.append(mbArtUi);
 
+
+/* Shared desktop and mobile letter: no canvas-only choices or duplicate text. */
+const parallelResponsiveLetterStyle=document.createElement('style');
+parallelResponsiveLetterStyle.textContent=
+ '#game #storyReadingSheet:not([hidden]){max-height:47dvh;overscroll-behavior:contain}' +
+ '#game #storyReadingSheet[data-wide="true"][data-ending="false"]{left:auto;right:clamp(20px,6vw,100px);top:50%;bottom:auto;transform:translateY(-50%);width:min(40vw,460px);max-height:68dvh;padding:20px 24px;border:3px double #b0986b;box-shadow:0 8px 25px #2c241c50}' +
+ '#game #storyReadingSheet[data-wide="true"] h3{font-size:clamp(19px,2vw,25px)}' +
+ '#game #storyReadingSheet[data-wide="true"] p{font-size:16px;line-height:1.55}' +
+ '#game #storyReadingSheet[data-ending="true"]{max-height:25dvh;width:min(90vw,390px);padding:6px 10px;display:grid;grid-template-columns:1fr 1fr;gap:6px}' +
+ '#game #storyReadingSheet[data-ending="true"] small{grid-column:1/-1;text-align:center}' +
+ '#game #storyReadingSheet[data-ending="true"] button{text-align:center;margin:0}' +
+ '#game #storyReadingSheet button:focus-visible{outline:3px solid #52674f;outline-offset:2px}' +
+ '@media(max-height:480px){#game #storyReadingSheet[data-wide="false"][data-ending="false"]{max-height:43dvh;padding:7px 10px}#game #storyReadingSheet[data-wide="false"] p{font-size:13px}}';
+document.head.append(parallelResponsiveLetterStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
