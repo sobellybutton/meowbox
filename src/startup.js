@@ -325,11 +325,11 @@ function festivalNewRound(now,seed=0){
 }
 function festivalFishOutcome(game,now){
  const elapsed=now-game.last;
- if(game.phase!=='dip'||elapsed<.32)return null;
+ if(game.phase!=='dip'||elapsed<.12)return null;
  let nearest=-1,distance=Infinity;
  for(let i=0;i<festivalFishKinds.length;i++){if(game.caught.includes(i))continue;const p=festivalFishPosition(i,now-game.at,game.seed),d=Math.hypot(p.x-game.x,p.y-game.y);if(d<distance){distance=d;nearest=i}}
- const gentle=elapsed<=1.2,hit=gentle&&distance<=29;
- const wear=Math.min(100,(hit?18:gentle?12:28)+Math.max(0,Math.floor((elapsed-1.2)*16)));
+ const gentle=elapsed<=2.0,hit=gentle&&distance<=39;
+ const wear=Math.min(100,(hit?18:gentle?12:28)+Math.max(0,Math.floor((elapsed-2.0)*16)));
  return {caught:hit?nearest:-1,wear}
 }
 function festivalFinish(g){
@@ -339,7 +339,7 @@ function festivalFinish(g){
  refreshControls()
 }
 function festivalAim(x,y){
- const g=state.festivalFish;if(activity!=='goldfishScoop'||g?.phase!=='aim'||!Number.isFinite(x)||!Number.isFinite(y))return;
+ const g=state.festivalFish;if(activity!=='goldfishScoop'||!['aim','dip'].includes(g?.phase)||!Number.isFinite(x)||!Number.isFinite(y))return;
  g.x=clamp(x,270,530);g.y=clamp(y,390,525)
 }
 function festivalDip(){
@@ -348,10 +348,10 @@ function festivalDip(){
 }
 function festivalLift(){
  const g=state.festivalFish;if(activity!=='goldfishScoop'||g?.phase!=='dip')return;
- const elapsed=t-g.last,result=festivalFishOutcome(g,t);if(!result)return;
+ const elapsed=t-g.last,result=festivalFishOutcome(g,Math.max(t,g.last+.12));if(!result)return;
  g.attempts++;g.paper=Math.max(0,g.paper-result.wear);g.phase='lift';g.last=t;
  if(result.caught>=0){const i=result.caught,k=festivalFishKinds[i];g.caught.push(i);addItem('Goldfish postcard: '+k.name[0],'金鱼明信片：'+k.name[1]);g.feedback=['A gentle catch! '+k.name[0]+' is going back in the water.','轻轻捞到了'+k.name[1]+'！一会儿放回水里。'];physicalFx('water',.8)}
- else{g.feedback=elapsed>1.2?['The paper soaked too long. Lift a little sooner.','纸网泡太久了，下次早点捞起来。']:['The fish dodged the ring. Aim where it is swimming.','小鱼躲开了，试着瞄准它游去的方向。'];physicalFx('splash',.4)}
+ else{g.feedback=elapsed>2.0?['The paper soaked too long. Lift a little sooner.','纸网泡太久了，下次早点捞起来。']:['The fish dodged the ring. Aim where it is swimming.','小鱼躲开了，试着瞄准它游去的方向。'];physicalFx('splash',.4)}
  refreshControls()
 }
 const festivalStartBefore=start;
@@ -390,8 +390,8 @@ const festivalDrawBefore=drawActivity;
 drawActivity=function(){
  if(activity!=='goldfishScoop'||!state.festivalFish)return festivalDrawBefore();
  const g=state.festivalFish,age=t-g.at;
- if(g.phase==='dip'&&t-g.last>=2.4)festivalLift();
- if(g.phase==='lift'&&t-g.last>=.65){if(g.paper<=0||g.caught.length===festivalFishKinds.length||g.attempts>=8)festivalFinish(g);else{g.phase='aim';refreshControls()}}
+ if(g.phase==='dip'&&t-g.last>=3.1)festivalLift();
+ if(g.phase==='lift'&&t-g.last>=.4){if(g.paper<=0||g.caught.length===festivalFishKinds.length||g.attempts>=8)festivalFinish(g);else{g.phase='aim';refreshControls()}}
  ctx.save();paintLivingBackdrop(pics.arcade||pics.tea);
  const b=livingBounds(),shade=ctx.createLinearGradient(0,325,0,650);shade.addColorStop(0,'#332e2620');shade.addColorStop(1,'#4f382c9c');ctx.fillStyle=shade;ctx.fillRect(b.x,b.y,b.w,b.h);
  // The actual tank rests on its own wooden legs, with separate moving fish.
@@ -403,7 +403,7 @@ drawActivity=function(){
   ctx.beginPath();ctx.ellipse(0,0,24,20,0,0,TAU);ctx.strokeStyle='#cba26d';ctx.lineWidth=4;ctx.stroke();ctx.restore();
  }
  backHuman(228,575,avatar??0,false,'right',.86);
- if(g.phase==='aim')for(let ix=0;ix<5;ix++)for(let iy=0;iy<3;iy++){const x=280+ix*60,y=404+iy*54;target(x-30,y-27,60,54,()=>festivalAim(x,y))}
+ if(['aim','dip'].includes(g.phase))for(let ix=0;ix<5;ix++)for(let iy=0;iy<3;iy++){const x=280+ix*60,y=404+iy*54;target(x-30,y-27,60,54,()=>festivalAim(x,y))}
  ctx.restore()
 };
 const festivalControlsBefore=refreshControls;
@@ -418,7 +418,7 @@ refreshControls=function(){
  if(g.phase==='aim'){
   for(const [label,cn,dx,dy] of [['Left','左',-30,0],['Right','右',30,0],['Up','上',0,-27],['Down','下',0,27]])b(controls,tr(label,cn),()=>festivalAim(g.x+dx,g.y+dy));
   b(controls,tr('Dip','下网'),festivalDip)
- }else if(g.phase==='dip')b(controls,tr('Lift gently','轻轻捞起'),festivalLift);
+ }else if(g.phase==='dip'){for(const [en,cn,dx,dy] of [['Left','左',-20,0],['Right','右',20,0],['Up','上',0,-18],['Down','下',0,18]])b(controls,tr(en,cn),()=>festivalAim(g.x+dx,g.y+dy));b(controls,tr('Lift gently','轻轻捞起'),festivalLift)}
  else element('small',tr('Returning the fish…','让小鱼回水池……'),controls)
 };
 const festivalCameraBefore=mobileRoomCamera;
@@ -785,7 +785,7 @@ function yueCompactPage(q,form,out){
  if(!title){title=element('h1',tr('Master Yue · Birth chart','月师傅 · 生辰命盘'),q);navRow?.after(title)}
  if(hero)title.textContent=tr('Master Yue · Birth chart','月师傅 · 生辰命盘');
  const header=element('div','',q,'yueCompactHost'),im=element('img','',header);
- im.src='assets/visual/painted/master-yue/expressions/warm.webp';im.alt='';im.width=68;im.height=68;im.onerror=()=>im.remove();
+ im.src='assets/visual/painted/master-yue/standing.webp';im.alt=tr('Master Yue','月师傅');im.width=108;im.height=146;im.onerror=()=>im.remove();
  const words=element('div','',header);element('strong',tr('Master Yue','月师傅'),words);
  element('small',residentNamedGreeting('Sit, have some tea. The stars can wait, unlike your boss.','坐下喝杯茶。星星不催你，老板就不一定了。'),words);
  const strip=q.querySelector('.yueSubjectStrip');if(strip){title.after(strip);strip.after(header)}else title.after(header);
@@ -1111,7 +1111,7 @@ const roomPlaqueShortNames={
  quiz:{quiz:['Discover yourself','认识自己']},
  match:{match:['Conversation cards','相处话题卡']},
  tea:{chat:['Join the table','来茶桌坐坐'],board:['Noticeboard','留言墙']},
- arcade:{goldfishScoop:['Scoop goldfish','捞金鱼']},
+ arcade:{goldfishScoop:['Scoop goldfish','捞金鱼'],claw:['Claw machine','抓娃娃'],rhythm:['Rhythm game','节奏游戏'],blindBox:['Blind boxes','抽盲盒'],bubbleArcade:['Bubble pop','戳泡泡'],woodenThree:['Wooden board game','木棋']},park:{deerVisit:['Feed & bow to deer','喂鹿与鞠躬'],pet:['Meet the cats','和猫咪玩']},
  fish:{riverShout:['Shout it out','喊走烦恼']}
 };
 const roomCompactPlaqueBefore=label;
@@ -3446,7 +3446,7 @@ todayHub=function(...args){
  const gratitude=element('section','',q,'pawDiaryGratitude');goodCompanyPage(gratitude);
  pawDiaryFold(q,gratitude,'gratitude',tr('One good thing','今日小确幸'),day.keys.includes('gratitude')?tr('Saved today','今日已记录'):tr('Optional private reflection','随心记录，仅自己可见'));
  const calendar=q.querySelector('.townCalendarLink'),occasion=q.querySelector('.townOccasion');
- if(calendar||occasion){const panel=element('section','',q);if(occasion)panel.append(occasion);if(calendar)panel.append(calendar);pawDiaryFold(q,panel,'calendar',tr('Lunar calendar','农历日历'))}
+ if(calendar)calendar.remove();if(occasion)occasion.remove();
  q.querySelector('.travellerMoodBook')?.remove();
  journalLanguage(todayHub);return result
 };
@@ -3527,7 +3527,7 @@ renderTravellerBag=function(...args){
 const pawTownFinalBefore=townChatPage;
 communityTabs=function(q){
  const tabs=element('nav','',q,'communityTabs pawTownNotebookTabs');tabs.setAttribute('aria-label',tr('Community spaces','社区空间'));
- for(const [key,en,cn] of [['board','Noticeboard','留言墙'],['lounge','NPC chat','居民闲聊'],['public','Traveller lobby','旅人聊天室']]){
+ for(const [key,en,cn] of [['board','Noticeboard','留言墙'],['lounge','Tea table','茶桌闲聊'],['public','Travellers','旅人聊天室'],['gratitude','Little Joys','小确幸墙']]){
   const btn=b(tabs,tr(en,cn),()=>{communityTab=key;townChatPage()});btn.setAttribute('aria-pressed',String(communityTab===key||key==='public'&&communityTab==='stroll'))
  }
 };
@@ -4681,5 +4681,56 @@ pawDesktopGuideStyle.textContent=
  '#game #dock>button:not([hidden])>span:last-child{display:block!important;line-height:1.15!important;max-width:100%;overflow-wrap:anywhere}'+
  '@media(min-width:1100px) and (min-aspect-ratio:3/2){#moveGuide:not([hidden]){left:14px!important;right:auto!important;bottom:24px!important;top:auto!important;transform:none!important;width:min(22vw,290px)!important;max-width:290px!important;font-size:13px!important}}';
 document.head.append(pawDesktopGuideStyle);
+
+
+/* Owner feedback: keep the temple keeper inside, not in the arrival street. */
+const pawKeeperInitBefore=initNPC;
+initNPC=function(...args){const result=pawKeeperInitBefore(...args);if(scene==='fortune')for(let i=npc.length-1;i>=0;i--)if(npc[i].n?.some(v=>v==='Temple keeper'||v==='庙祝'))npc.splice(i,1);return result};
+function pawFocusView(){const open=$('page').style.display==='block';$('game').classList.toggle('pawFocusedView',!!room||!!activity||open||talkOpen||transitioning||!proposal.hidden);$('game').classList.toggle('pawExitView',!!room&&!activity&&!open&&!talkOpen&&!transitioning&&proposal.hidden)}
+const pawFocusBefore=loop;
+loop=function(...args){const result=pawFocusBefore(...args);pawFocusView();return result};
+const pawFocusHUD=updateHUD;
+updateHUD=function(...args){const result=pawFocusHUD(...args);pawFocusView();if(room&&!activity&&!$('back').hidden)$('back').textContent=tr('Step outside','走出门口');return result};
+const pawPreloadDoor=walkDoor;
+walkDoor=function(id,...args){try{const im=portraitInteriorImage(id);im?.decode?.().catch(()=>{});const wide=landscapeRoomImage(id);wide?.decode?.().catch(()=>{})}catch{}return pawPreloadDoor(id,...args)};
+const pawMaterialSound=sound;
+sound=function(f=420){if(activity==='moon'){if(!muted&&!document.hidden)physicalFx('wood',.72);return}if(activity==='sticks'){if(!muted&&!document.hidden)physicalFx('shake',.42);return}if(activity==='prayer'){if(!muted&&!document.hidden)physicalFx('paper',.28);return}return pawMaterialSound(f)};
+const pawJoySeeds=[
+ [['Auntie Mei','梅姨'],['My neighbour saved me the last red bean bun. We ate it together by the window.','邻居给我留了最后一个红豆包，我们坐在窗边一起吃。']],
+ [['Grandma','外婆'],['Someone asked for my soup recipe today. Little things can be passed down.','今天有人问我汤的做法，原来这些小小的事情也能传下去。']],
+ [['Wang Laoban','王老板'],['I took the long way home and noticed the sunset for the first time in weeks.','今天绕了点路回家，终于看了一次好久没留意的晚霞。']],
+ [['Auntie Lin','林姨'],['The little cat that used to hide from me came to sit beside me today.','以前总躲着我的小猫，今天主动坐到了我旁边。']],
+ [['Master Yue','月师傅'],['An old friend called just to ask how I was doing. No other reason.','老朋友打来电话，只是问问我最近过得怎样，没有别的事。']]
+];
+const pawJoyKey='pawLittleJoysLocalV1';
+function pawJoyRead(){const v=load(pawJoyKey,[]);return Array.isArray(v)?v.filter(n=>n&&typeof n.text==='string'&&n.text.trim()&&typeof n.day==='string').slice(-30):[]}
+const pawJoyPageBefore=townChatPage;
+townChatPage=function(...args){
+ if(communityTab!=='gratitude')return pawJoyPageBefore(...args);
+ ++communityView;++townChatGeneration;
+ page(tr('Town Hall','小镇广场'),tr('Little Joys','小确幸墙'),q=>{
+  communityTabs(q);const wall=element('section','',q,'pawJoyWall');
+  element('h2',tr('A little good in today','今天的一点小美好'),wall);
+  element('p',tr('Leave something you are thankful for. No achievement is too small.','写下一件值得感恩的小事，再小也值得记住。'),wall);
+  const form=element('form','',wall,'pawJoyForm'),input=element('textarea','',form);input.maxLength=240;input.required=true;input.rows=3;input.placeholder=tr('Today I am grateful for…','今天我很感恩……');input.setAttribute('aria-label',input.placeholder);
+  const post=element('button',tr('Pin a private note','贴上私人便签'),form);post.type='submit';
+  const status=element('small',tr('Your notes stay on this device. Resident examples are fictional.','便签仅保存在本设备。居民留言为虚构示例。'),form);status.setAttribute('role','status');
+  const notes=element('div','',wall,'pawJoyNotes');
+  function render(){notes.replaceChildren();for(const n of pawJoyRead().slice().reverse()){const a=element('article','',notes,'pawJoyNote');element('strong',tr('My note','我的便签'),a);element('small',n.day,a);element('p',n.text,a)}for(const [name,copy] of pawJoySeeds){const a=element('article','',notes,'pawJoyNote');element('strong',tr(...name),a);element('small',tr('Fictional resident','虚构居民'),a);element('p',tr(...copy),a)}}
+  form.onsubmit=e=>{e.preventDefault();const value=input.value.trim().slice(0,240);if(!value)return;save(pawJoyKey,[...pawJoyRead(),{day:day(),text:value}].slice(-30));input.value='';render();status.textContent=tr('Pinned privately.','已贴上私人便签。')};
+  b(wall,tr('Share a good thing with travellers','与旅人分享一件好事'),()=>goodCompanyPublic());render()
+ });journalLanguage(townChatPage)
+};
+/* Readable editorial type, shared by both languages; no external font download. */
+const pawFeedbackStyle=document.createElement('style');
+pawFeedbackStyle.textContent=
+ 'html{--paw-body:"Avenir Next","Noto Sans","Segoe UI",system-ui,sans-serif;--paw-display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif}html[lang^="zh"]{--paw-body:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;--paw-display:"Songti SC","Noto Serif CJK SC","STSong","SimSun",serif}body,#game,#proposal,button,input,textarea,select{font-family:var(--paw-body)!important}#content :is(h1,h2,h3),#proposal :is(h1,h2),#game .worldSign,#game #location,#game .pawPlaceName,#content .pawStoryVoice strong{font-family:var(--paw-display)!important;font-weight:600!important}#content p,#line,#content li{line-height:1.65}html[lang^="zh"] #content :is(h1,h2,h3),html[lang^="zh"] #proposal h1{letter-spacing:.035em}'+
+ '#game.pawFocusedView #dock{display:none!important}#game.pawExitView #back:not([hidden]){position:fixed!important;top:auto!important;bottom:max(12px,env(safe-area-inset-bottom,0px))!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;min-height:44px!important;z-index:8!important}'+
+ '#game.pawFocusedView #gameControls:not([hidden]){bottom:max(10px,env(safe-area-inset-bottom,0px))!important}#game #content .yueCompactHost img{width:108px!important;height:146px!important;max-width:33%!important;object-fit:contain!important;object-position:center bottom!important}'+
+ '#game #content .komorebiTile{min-width:0;overflow:hidden}#game #content .komorebiTile img,#game #content .komorebiTile svg{max-width:100%!important;object-fit:contain!important;box-sizing:border-box}#game #content .komorebiTile strong,#game #content .komorebiTile small{min-width:0;overflow-wrap:anywhere;white-space:normal!important}'+
+ '#content .pawJoyWall{margin:12px 0;padding:10px;background:#b59b73;color:#453d31;border:5px solid #876b48}#content .pawJoyForm{background:#f5e9c9;padding:12px;display:grid;gap:9px}#content .pawJoyForm textarea{width:100%;min-height:80px;box-sizing:border-box;font-size:16px}#content .pawJoyForm small{font-size:12px;line-height:1.5}#content .pawJoyNotes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px;margin-top:13px}#content .pawJoyNote{position:relative;background:#f7e9c8;padding:14px 11px 10px;box-shadow:2px 4px 5px #5e482d44;overflow-wrap:anywhere}#content .pawJoyNote:before{content:"";position:absolute;top:3px;left:50%;width:6px;height:6px;background:#985e44;border-radius:50%}#content .pawJoyNote strong,#content .pawJoyNote small{display:block}#content .pawJoyNote small{font-size:11px;color:#756751}';
+document.head.append(pawFeedbackStyle);
+const pawYueYearBefore=yueZodiacAlmanac;
+yueZodiacAlmanac=function(...args){const result=pawYueYearBefore(...args),q=$('content'),title=q.querySelector(':scope > h1'),intro=q.querySelector(':scope > p');if(title)title.textContent=tr('Chinese zodiac & year ahead','生肖与流年');if(intro){intro.hidden=false;intro.textContent=tr('Your birth-year animal and traditional yearly themes. For reflection, not a prediction.','出生年份的生肖与传统流年主题，仅供参考，并非预测。')}return result};
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
