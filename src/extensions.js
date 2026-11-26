@@ -6831,9 +6831,11 @@ function bagChapterImage(id){return destinationPortrait(id==='travel'?'fortune':
 function renderTravellerBag(){
  activePage='room';page(tr('Traveller’s bag','旅人的背包'),tr('Little treasures from your escape.','把摸鱼路上的小宝贝收好。'),q=>{
   const wrap=element('section','',q,'travellerBagV2'),all=bagEntries().map(v=>({...v,chapter:bagChapterFor(v.item[0],bagClass(v.item))})),owned=all.filter(v=>v.owned),head=element('div','',wrap,'bagHeader');
-  const pic=element('img','',head);pic.src=ART['badge'+(avatar??0)];pic.alt='';
+  const pic=element('img','',head);pic.src=mbAvatarStanding(avatar??0);pic.alt='';
   const info=element('div','',head);element('strong',playerName||tr('Traveller','旅人'),info);element('small',owned.length+' '+tr('keepsakes','件收藏')+' · '+hideoutBalance()+' '+tr('meow coins','喵币'),info);
-  const profile=b(head,tr('Profile','资料'),()=>hideoutProfilePage({origin:renderTravellerBag}));profile.className='bagProfileButton';
+  const actions=element('div','',head,'bagHeaderActions');
+  const profile=b(actions,tr('Profile','资料'),()=>hideoutProfilePage({origin:renderTravellerBag}));profile.className='bagProfileButton';
+  const home=b(actions,tr('Visit my home','回我的小窝'),()=>mbOpenOwnHome(renderTravellerBag,['‹ Bag','‹ 返回背包']));home.className='mbHomeDirect';
   const tabs=element('div','',wrap,'bagModes');
   for(const [key,en,cn] of [['owned','My bag','背包'],['catalog','Collection','图鉴'],['favorites','Favourites','喜欢']]){const btn=b(tabs,tr(en,cn),()=>{bagMode=key;bagSelected=null;bagChapter=null;bagCategory='all';bagQuery='';search.value='';bagPageIndex=0;draw()});btn.dataset.mode=key}
   const category=element('div','',wrap,'bagCategories');
@@ -6901,8 +6903,8 @@ const bagChapterStyle=document.createElement('style');bagChapterStyle.textConten
 `;document.head.append(bagChapterStyle);
 const bagV2CSS=document.createElement('style');bagV2CSS.textContent=`
 #content .travellerBagV2{max-width:880px;margin:0 auto;color:#594a3b;font-family:system-ui,"PingFang SC",sans-serif}
-.travellerBagV2 .bagHeader{display:flex;align-items:center;gap:10px;background:linear-gradient(130deg,#f2dfb9,#e7d1a9);border:1px solid #b6986d;border-radius:13px 13px 5px 5px;padding:12px;box-shadow:inset 0 0 0 3px #f9ecd3}
-.bagHeader img{width:54px;height:54px;object-fit:contain;border:1px solid #b79b78;border-radius:50%;background:#f7e8cf}.bagHeader div{flex:1;min-width:0}.bagHeader strong,.bagHeader small{display:block;overflow-wrap:anywhere}.bagHeader small{font-size:12px;color:#79654d}
+.travellerBagV2 .bagHeader{display:grid;grid-template-columns:54px minmax(0,1fr);align-items:center;gap:10px;background:linear-gradient(130deg,#f2dfb9,#e7d1a9);border:1px solid #b6986d;border-radius:13px 13px 5px 5px;padding:12px;box-shadow:inset 0 0 0 3px #f9ecd3}
+.bagHeader img{width:54px;height:70px;object-fit:contain;object-position:center bottom;border:1px solid #b79b78;border-radius:5px;background:#f7e8cf}.bagHeader div{min-width:0}.bagHeaderActions{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:8px}#content .bagHeaderActions button{min-width:0;min-height:44px;margin:0!important;white-space:normal}.bagHeader strong,.bagHeader small{display:block;overflow-wrap:anywhere}.bagHeader small{font-size:12px;color:#79654d}
 .travellerBagV2 button{min-height:44px;white-space:normal!important;box-sizing:border-box;margin:0!important;min-width:0!important}
 .bagModes,.bagCategories,.bagTools,.bagFooter{display:flex;gap:5px;margin:9px 0}.bagModes button,.bagFooter button{flex:1;font-size:13px}.bagCategories{overflow-x:auto;padding:2px 0 5px}.bagCategories button{flex:0 0 auto;font-size:12px;padding:5px 10px!important}
 .travellerBagV2 button[aria-pressed=true]{background:#536d58!important;color:#fff1d6!important;border-color:#536d58!important}

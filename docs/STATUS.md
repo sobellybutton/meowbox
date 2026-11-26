@@ -721,3 +721,7 @@ Replaced legacy displayed product names across the canonical engine, extensions,
 ## Original traveller walking frames (26 November)
 - Added four separately anchored rear walking frames for each of the four original identities. Original outfits, accessories, avatar IDs and standing artwork are preserved. The existing runtime switches to the painted frames only when the complete set for that direction is loaded.
 - Verified in real Chromium map movement that each traveller uses all four frames, across 360 px, 390 px, tablet and desktop. Front and side walking, seated and kneeling poses, and other painted action frames remain open.
+
+## Bag and home navigation (26 November)
+- Fixed the narrow Bag header so names wrap normally and use the original full-body traveller picture. Profile and Home now have a separate row of controls. Returning from the Profile, Home or Home furniture catalogue restores the same collection chapter.
+- Tested long nicknames, profile return, home entry, furniture catalogue return and chapter persistence at 360 px, 390 px, 768 px and 1440 px in Chromium. The bilingual screenshot sweep captured 432 named states over the four sizes with zero runtime or entry failures. The sweep used Chromium on all sizes and does not establish visual approval of every room.

@@ -2026,16 +2026,25 @@ step=function(n,dt,speed){
 
 /* Personal home access and contextual navigation. */
 function mbHomePageBack(label,fn){const back=$('content').querySelector(':scope > .row button:first-child');if(back){back.textContent=label;back.onclick=fn}}
-function mbHomeExit(){saveHideout();hideoutEditing=false;$('page').style.display='none';updateHUD()}
-function mbOpenOwnHome(){hideoutEditing=false;hideoutSelected=-1;hideoutPage()}
-const mbHomeNav=element('button','',$('dock'));mbHomeNav.id='dockOwnHome';mbHomeNav.type='button';mbHomeNav.innerHTML='<span class="dockIcon" aria-hidden="true"><svg viewBox="0 0 28 28" width="25" height="25" fill="none" stroke="#805c43" stroke-width="1.5"><path d="M3 13 14 4l11 9-3 1v11H6V14z" fill="#d3aa78"/><path d="M2 13 14 3l12 10M10 25V16h8v9M8 10v-5h3"/></svg></span><span></span>';$('dockValley').after(mbHomeNav);mbHomeNav.onclick=mbOpenOwnHome;
+let mbHomeOrigin=null;
+function mbHomeExit(){
+ saveHideout();hideoutEditing=false;
+ const origin=mbHomeOrigin;mbHomeOrigin=null;
+ if(origin)origin.open();
+ else{$('page').style.display='none';updateHUD()}
+}
+function mbOpenOwnHome(open=null,label=null){
+ mbHomeOrigin=open?{open,label}:null;
+ hideoutEditing=false;hideoutSelected=-1;hideoutPage()
+}
+const mbHomeNav=element('button','',$('dock'));mbHomeNav.id='dockOwnHome';mbHomeNav.type='button';mbHomeNav.innerHTML='<span class="dockIcon" aria-hidden="true"><svg viewBox="0 0 28 28" width="25" height="25" fill="none" stroke="#805c43" stroke-width="1.5"><path d="M3 13 14 4l11 9-3 1v11H6V14z" fill="#d3aa78"/><path d="M2 13 14 3l12 10M10 25V16h8v9M8 10v-5h3"/></svg></span><span></span>';$('dockValley').after(mbHomeNav);mbHomeNav.onclick=()=>mbOpenOwnHome();
 const mbHomeHudBefore=updateHUD;updateHUD=function(...args){const r=mbHomeHudBefore(...args),label=tr('My home','小窝');mbHomeNav.lastElementChild.textContent=label;mbHomeNav.setAttribute('aria-label',label);const photo=$('hudPortrait'),src=ART['walker'+(avatar??0)+'0'];if(src&&photo.getAttribute('src')!==src)photo.src=src;return r};
-const mbHomeViewBefore=hideoutPage;hideoutPage=function(...args){const r=mbHomeViewBefore(...args),q=$('content');if(q.querySelector('.hideoutScene')){mbHomePageBack(hideoutEditing?tr('‹ My room','‹ 返回小窝'):tr('‹ Town','‹ 返回小镇'),()=>{if(hideoutEditing){saveHideout();hideoutEditing=false;hideoutPage()}else mbHomeExit()});const rewards=[...q.querySelectorAll('.hideoutPrimary button')].find(b=>b.textContent===tr('Stamps & rewards','印章与奖励'));if(rewards)rewards.onclick=()=>{hideoutClaimPage();mbHomePageBack(tr('‹ My room','‹ 返回小窝'),hideoutPage)}}return r};
+const mbHomeViewBefore=hideoutPage;hideoutPage=function(...args){const r=mbHomeViewBefore(...args),q=$('content');if(q.querySelector('.hideoutScene')){mbHomePageBack(hideoutEditing?tr('‹ My room','‹ 返回小窝'):tr(...(mbHomeOrigin?.label||['‹ Town','‹ 返回小镇'])),()=>{if(hideoutEditing){saveHideout();hideoutEditing=false;hideoutPage()}else mbHomeExit()});const rewards=[...q.querySelectorAll('.hideoutPrimary button')].find(b=>b.textContent===tr('Stamps & rewards','印章与奖励'));if(rewards)rewards.onclick=()=>{hideoutClaimPage();mbHomePageBack(tr('‹ My room','‹ 返回小窝'),hideoutPage)}}return r};
 const mbHomeMarketBefore=furnitureMarket;furnitureMarket=function(back='shop'){const r=mbHomeMarketBefore(back),q=$('content'),book=q.querySelector('.komorebiBook');if(!book)return r;mbHomePageBack(back==='room'?tr('‹ My room','‹ 返回小窝'):back==='wallet'?tr('‹ My purse','‹ 返回钱包'):tr('‹ Shop','‹ 返回店里'),()=>{if(back==='room')hideoutPage();else if(back==='wallet')pawWalletPage();else {$('page').style.display='none';updateHUD()}});const header=book.querySelector('.komorebiHead');if(header){const art=element('img','',header,'mbFurnitureShopArt');art.src=destinationPortrait('island');art.alt='';art.loading='lazy';header.prepend(art)}return r};
 const mbHomeConfirmBefore=furnitureConfirm;furnitureConfirm=function(id,back='shop'){const r=mbHomeConfirmBefore(id,back);mbHomePageBack(tr('‹ Catalogue','‹ 返回家具目录'),()=>furnitureMarket(back));return r};
-const mbHomeProfileBefore=hideoutProfilePage;hideoutProfilePage=function(draft=null){const origin=draft?.origin||lifeProfile,r=mbHomeProfileBefore(draft);mbHomePageBack(origin===hideoutPage?tr('‹ My room','‹ 返回小窝'):tr('‹ Profile','‹ 返回档案'),origin);return r};
-const mbHomeProfileBookBefore=lifeProfile;lifeProfile=function(...args){const r=mbHomeProfileBookBefore(...args),book=$('content').querySelector('.journalProfileBook');if(book){const direct=b(book,tr('Visit my home','回我的小窝'),mbOpenOwnHome);direct.className='mbHomeDirect';book.querySelector('.journalQuickStats')?.after(direct)}return r};$('profileHud').onclick=lifeProfile;
-const mbHomeBagBefore=myRoom;myRoom=function(...args){const r=mbHomeBagBefore(...args),head=$('content').querySelector('.bagHeader');if(head){const direct=b(head,tr('Visit my home','回我的小窝'),mbOpenOwnHome);direct.className='mbHomeDirect'}return r};$('dockRoom').onclick=myRoom;
+const mbHomeProfileBefore=hideoutProfilePage;hideoutProfilePage=function(draft=null){const origin=draft?.origin||lifeProfile,r=mbHomeProfileBefore(draft);mbHomePageBack(origin===hideoutPage?tr('‹ My room','‹ 返回小窝'):origin===renderTravellerBag?tr('‹ Bag','‹ 返回背包'):tr('‹ Profile','‹ 返回档案'),origin);return r};
+const mbHomeProfileBookBefore=lifeProfile;lifeProfile=function(...args){const r=mbHomeProfileBookBefore(...args),book=$('content').querySelector('.journalProfileBook');if(book){const direct=b(book,tr('Visit my home','回我的小窝'),()=>mbOpenOwnHome(lifeProfile,['‹ Profile','‹ 返回档案']));direct.className='mbHomeDirect';book.querySelector('.journalQuickStats')?.after(direct)}return r};$('profileHud').onclick=lifeProfile;
+$('dockRoom').onclick=myRoom;
 const mbHomeReadability=document.createElement('style');mbHomeReadability.textContent=`
 #game #dock{width:min(620px,calc(100% - 12px))!important;gap:2px!important}
 #game #dock button{min-width:0!important;flex:1 1 0!important;white-space:normal!important;font-size:clamp(10px,2.7vw,13px)!important;line-height:1.2!important;padding:4px 1px!important}

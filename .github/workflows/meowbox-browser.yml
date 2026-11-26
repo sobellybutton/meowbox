@@ -310,6 +310,13 @@ jobs:
                 await page.locator('.bagSlot[data-owned="true"]').first().click();
                 if(!await page.locator('.bagDetail').isVisible()||await page.locator('.bagSlots').isVisible())throw Error('Keepsake detail did not open separately');
                 await page.locator('.bagDetail').getByRole('button',{name:'‹ Back to keepsakes',exact:true}).click();
+                const bagName=await page.locator('.bagHeader strong').boundingBox();
+                if(!bagName||bagName.width<150||bagName.height>55)throw Error('Traveller name does not fit the bag header');
+                await page.locator('.bagHeader').getByRole('button',{name:'Visit my home',exact:true}).click();
+                await page.getByRole('button',{name:'Furniture shop',exact:true}).click();
+                await page.locator('#content > .row').getByRole('button',{name:'‹ My room',exact:true}).click();
+                await page.locator('#content > .row').getByRole('button',{name:'‹ Bag',exact:true}).click();
+                await page.locator('.bagSlot[data-owned="true"]').first().waitFor();
                 await page.locator('.bagChapterTrail').getByRole('button',{name:'‹ Chapters',exact:true}).click();
                 if(await page.locator('.bagChapterCard').count()!==5)throw Error('Chapter shelf did not restore');
                 await page.locator('.bagFooter').getByRole('button',{name:'Passport',exact:true}).click();
