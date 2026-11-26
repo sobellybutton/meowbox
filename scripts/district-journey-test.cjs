@@ -127,6 +127,14 @@ async function travelLoop(page,name,touch){
    await backOutside();
   }
  }
+ // The physical railway boards directly, without the old confirmation page.
+ await press(page.locator('#dockTravel'));
+ await press(page.locator('.pawExploreRail').getByRole('button',{name:'Walk to the railway',exact:true}));
+ await page.locator('.pawRailJourney').waitFor({state:'visible',timeout:21000});
+ assert.equal(await page.locator('.districtRailCabin').isVisible(),false,'Physical railway should not open a preview');
+ assert.match(await page.locator('.pawRailCaption strong').innerText(),/Lazy Island/);
+ await shot('direct-railway');
+ await page.waitForFunction(()=>scene==='home'&&!transitioning,null,{timeout:12000});
  assert.equal(await page.evaluate(()=>playerName),'June');
  assert.deepEqual(failures,[]);
  console.log(name+': real entrance, doors, reading stations and four district rail loop PASS');
