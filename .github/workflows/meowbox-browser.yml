@@ -228,6 +228,9 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-village.png'});
                 if(await page.locator('#dock').isHidden())throw Error('Navigation hidden');
                 await page.locator('#dockScoop').click();
+                const tasksFold=page.locator('.pawDiaryFold').filter({has:page.locator('.journalDailyTasks')});
+                await tasksFold.locator('summary').waitFor({state:'visible'});
+                if(await tasksFold.getAttribute('open')===null)await tasksFold.locator('summary').click();
                 await page.locator('.journalDailyTasks').waitFor({state:'visible'});
                 await page.locator('.journalCheckin button').first().click();
                 await page.locator('.mbFestivalScene .dailyWheelSpin').waitFor({state:'visible'});
@@ -241,6 +244,7 @@ jobs:
                 }
                 await page.screenshot({path:'test-results/'+name+'-festival-wheel.png'});
                 await page.getByRole('button',{name:'Back to Today',exact:true}).click();
+                if(await tasksFold.getAttribute('open')===null)await tasksFold.locator('summary').click();
                 await page.locator('.journalDailyTasks').waitFor({state:'visible'});
                 const dailyPlay=page.locator('.journalDailyTask').filter({hasText:'Play a little'});
                 await dailyPlay.getByRole('button',{name:/Train/}).click();
@@ -251,12 +255,14 @@ jobs:
                 await page.evaluate(()=>{travellerSuggestedRoute=null;updateHUD()});
                 if(await page.locator('#nextStopShortcut').isVisible())throw Error('Removed next-stop shortcut is visible');
                 await page.locator('#dockTravel').click();
-                await page.locator('.pawExploreRail').waitFor({state:'visible'});
-                await page.locator('.portraitTravelGrid .portraitDestination').nth(1).click();
+                await page.locator('.pawSketchbook').waitFor({state:'visible'});
+                await page.locator('.pawSketchTabs button').nth(1).click();
+                await page.locator('.pawSketchBoard').click();
                 const ride=page.locator('.pawRailJourney[data-painted-rail="true"]');
                 await ride.waitFor({state:'visible'});
                 if(await page.locator('.districtRailCabin').isVisible())throw Error('Direct ride opened a preview');
-                if(await ride.locator('.mbRailPane').count()!==2)throw Error('Shared carriage window animation missing');
+                if(await ride.locator('.mbRailPane').count()!==0)throw Error('Broken composite railway layers reintroduced');
+                if(!await ride.locator('.mbPaintedRail img').evaluate(im=>im.complete&&im.naturalWidth>0))throw Error('Painted carriage missing');
                 await page.screenshot({path:'test-results/'+name+'-rail-scenery.png'});
                 await page.waitForFunction(()=>scene==='home'&&!transitioning,null,{timeout:15000});
                 await page.evaluate(()=>journey('fortune'));
@@ -588,8 +594,9 @@ jobs:
                 await page.evaluate(()=>{room=null;activity=null;state={};closeTalk();updateHUD()});
                 if(await page.locator('#nextStopShortcut').isVisible())throw Error('Removed next-stop shortcut is visible');
                 await page.locator('#dockTravel').click();
-                await page.locator('.pawExploreRail').waitFor({state:'visible'});
-                await page.locator('.portraitTravelGrid .portraitDestination').nth(2).click();
+                await page.locator('.pawSketchbook').waitFor({state:'visible'});
+                await page.locator('.pawSketchTabs button').nth(2).click();
+                await page.locator('.pawSketchBoard').click();
                 await page.locator('.pawRailJourney').waitFor({state:'visible'});
                 await page.waitForFunction(()=>scene==='island'&&!transitioning,null,{timeout:15000});
                 await page.evaluate(()=>{scene='home';room='park';activity=null;state={};closeTalk();start('pet')});
@@ -612,6 +619,7 @@ jobs:
                 await page.locator('#choices').getByRole('button',{name:'See you around',exact:true}).click();
                 if(!await page.evaluate(()=>popGuestRecord(popGuestFor('home',0))?.choices.includes(0)))throw Error('Guest did not remember the conversation');
                 await page.evaluate(()=>{closeTalk();passport()});
+                await page.getByRole('button',{name:'Travel memories ›',exact:true}).click();
                 const guestMemory=page.locator('.popGuestAlbum .mbGuestMemory').first();
                 await guestMemory.locator('summary').click();
                 if(!await guestMemory.locator('p').isVisible())throw Error('Guest conversation not visible in passport');
