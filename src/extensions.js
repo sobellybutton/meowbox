@@ -6647,7 +6647,7 @@ function meowIndoorActorBounds(a,scale=travellerRoomScale(H,cam.scale)){
 function meowBeginTextFrame(inside){
  meowTextFrameRects=[];
  const now=performance.now();
- if(now-meowUILast>100){meowUILast=now;meowUIRects=meowVisibleRects('#hud>*,#small button,#dock,#back,#hint,#gameControls,#movePad,#moveGuide,#walkHelp,#ritualActionBar,#pearlRecipePanel,#dialogue,#nextStopShortcut,#lunarRibbon,#destinyAccess')}
+ if(now-meowUILast>100){meowUILast=now;meowUIRects=meowVisibleRects('#hud>*,#small button,#dock,#back,#hint,#gameControls,#movePad,#moveGuide,#walkHelp,#ritualActionBar,#pearlRecipePanel,#dialogue,#nextStopShortcut,#lunarRibbon,#destinyAccess,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet,#threeBoardAccess')}
  meowFrameBlockers=[...meowUIRects];
  if(inside){
   if(continuityRoom===room)meowFrameBlockers.push(meowIndoorActorBounds(indoor));
@@ -7254,7 +7254,10 @@ function drawAmbientBackgroundVisit(){
  const size=Math.min(86,52/Math.max(.08,cam.scale));if(size*cam.scale<26)return;
  const rect=screenWorldRect(x-size*.36,x+size*.36,y-size,y+4),host=ambientBackgroundHostRegions[activity];
  const blockers=meowVisibleRects('#hud,#small,#dock,#back,#hint,#gameControls,#ritualActionBar,#pearlRecipePanel,#dialogue,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet');
- if(!ambientVisitSafe(rect,host?screenWorldRect(...host):null,[],blockers,W,H))return;
+ // The background route may be decorative, but it must still avoid the
+ // principal actor and activity envelope. Do not trade visual clarity for a cameo.
+ const main=activityProtectedStage[activity],protectedRects=[host&&screenWorldRect(...host),main&&screenWorldRect(...main)].filter(Boolean);
+ if(!ambientVisitSafe(rect,null,protectedRects,blockers,W,H))return;
  const n={x,y,n:ambientResidentPool[a.index]};ctx.save();
  ctx.globalAlpha=residentReducedMotion.matches?1:Math.min(1,f*5,(1-f)*5)*.88;
  if(drawPaintedResident(n,size/94,!residentReducedMotion.matches,a.reverse?'left':'right'))ambientVisit.drawnAt=t;

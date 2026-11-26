@@ -1946,4 +1946,43 @@ mobileRoomCamera=function(s,ox,oy){
  const controls=$('gameControls'),reserve=Math.max(175,(controls?.offsetHeight||100)+85);
  return shorePortraitFit(W,H,shorePortraitBounds.deerVisit,reserve)
 };
+/* MBVISUAL_FIT_BEGIN */
+// Use authored stage bounds, never the visible animal/body centre alone.
+// Shrink only as necessary to fit the ACTUAL control band.
+function mbVisualFitStage(view,bounds,width,top,bottom){
+ const [l,r,u,d]=bounds;
+ if(![view.s,view.ox,view.oy,l,r,u,d,width,top,bottom].every(Number.isFinite)||bottom<=top||r<=l||d<=u||view.s<=0)return view;
+ const actual={left:view.ox+l*view.s,right:view.ox+r*view.s,top:view.oy+u*view.s,bottom:view.oy+d*view.s};
+ if(actual.left>=8&&actual.right<=width-8&&actual.top>=top&&actual.bottom<=bottom)return view;
+ const scale=Math.min(view.s,(width-16)/(r-l),(bottom-top)/(d-u));
+ if(scale<=0)return view;
+ return {s:scale,ox:width/2-(l+r)/2*scale,oy:(top+bottom)/2-(u+d)/2*scale};
+}
+/* MBVISUAL_FIT_END */
+const mbStageCameraBefore=mobileRoomCamera;
+let mbStagePanelMeasure={key:'',at:0,top:0,bottom:0},mbLastStageCamera=null;
+mobileRoomCamera=function(s,ox,oy){
+ const original=mbStageCameraBefore(s,ox,oy);
+ if(!activity||W>=H||!room){mbLastStageCamera=null;return original}
+ const bounds=activity==='bubbleTea'?[180,610,310,635]:
+ activity==='goldfishScoop'?[207,593,345,605]:
+ activity==='bubbleArcade'?[217,583,258,680]:
+ activity==='woodenThree'?[215,585,260,675]:
+ activity==='love'&&['deal','cards'].includes(state.readStage)?[185,615,230,800]:
+ shorePortraitBounds[activity]||portraitActivityBounds[activity]||foodArcadePortraitBounds[activity];
+ if(!bounds){mbLastStageCamera=null;return original}
+ const key=activity+'|'+W+'|'+H+'|'+zh+'|'+bounds.join(',');
+ // A touch gesture must retain the same world coordinate conversion.
+ if((drag||state?.care?.drag)&&mbLastStageCamera?.key===key)return mbLastStageCamera.view;
+ const clock=performance.now();
+ if(mbStagePanelMeasure.key!==key||clock-mbStagePanelMeasure.at>120){
+  const panels=meowVisibleRects('#gameControls,#ritualActionBar,#pearlRecipePanel,#threeBoardAccess');
+  const bottomPanels=panels.filter(r=>r.left<W/2&&r.right>W/2&&r.top>H*.32);
+  mbStagePanelMeasure={key,at:clock,top:H<680?95:115,bottom:Math.min(H-85,...bottomPanels.map(r=>r.top-8))};
+ }
+ const {top,bottom}=mbStagePanelMeasure;
+ const view=bottom-top>=70?mbVisualFitStage(original,bounds,W,top,bottom):original;
+ mbLastStageCamera={key,view};return view;
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
