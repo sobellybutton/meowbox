@@ -1500,6 +1500,7 @@ function mb5ClockField(kind,q){
  if(kind==='templeBell'&&Number.isFinite(q.bellAt)&&q.bellAt>=0)return 'bellAt';
  if(kind==='bubbleTea'&&['pouring','seasoning','sealing','sip'].includes(q.teaStage))return 'teaAt';
  if(kind==='cook'&&q.tasteAt!==undefined&&!q.tasted)return 'tasteAt';
+ if(kind==='claw'&&q.dropping&&Number.isFinite(q.clawAt))return 'clawAt';
  if(kind==='deerVisit'&&['bow','feed','watch'].includes(q.deerPhase))return 'deerAt';
  return null
 }
@@ -2085,8 +2086,10 @@ function mbFurnitureMatches(name,query){
  const normalize=v=>String(v||'').normalize('NFKC').toLocaleLowerCase().trim();
  const q=normalize(query);return !q||normalize(name).includes(q)
 }
+let mbFurnitureQueryContext=null,mbFurnitureQuery='';
 const mbCatalogueVisualBefore=furnitureMarket;
 furnitureMarket=function(back='shop'){
+ if(mbFurnitureQueryContext!==back){mbFurnitureQueryContext=back;mbFurnitureQuery=''}
  const result=mbCatalogueVisualBefore(back),book=$('content').querySelector('.komorebiBook');
  if(!book)return result;
  book.querySelector('.mbFurnitureShopArt')?.remove();
@@ -2099,7 +2102,7 @@ furnitureMarket=function(back='shop'){
  if(filters[1]){filters[1].setAttribute('role','group');filters[1].setAttribute('aria-label',tr('Furniture category','家具分类'))}
  const searchRow=element('div','',book,'mbCatalogueSearch');
  const label=element('label',tr('Find furniture','找家具'),searchRow);label.htmlFor='mbFurnitureSearch';
- const input=element('input','',searchRow);input.id='mbFurnitureSearch';input.type='search';input.placeholder=tr('e.g. lamp, futon','例如：台灯、床铺');input.autocomplete='off';
+ const input=element('input','',searchRow);input.id='mbFurnitureSearch';input.type='search';input.placeholder=tr('e.g. lamp, futon','例如：台灯、床铺');input.autocomplete='off';input.value=mbFurnitureQuery;
  const count=element('small','',searchRow,'mbCatalogueCount');count.setAttribute('aria-live','polite');
  grid.before(searchRow);
  const tiles=[...grid.querySelectorAll('.komorebiTile')].map(tile=>{
@@ -2117,16 +2120,19 @@ furnitureMarket=function(back='shop'){
   empty.textContent=tr('No matching furniture. Try a different name.','没找到这件家具，换个名字试试。');
   const existing=grid.querySelector('.mbArtEmpty');if(existing)existing.hidden=!!input.value.trim();
  }
- input.addEventListener('input',filter);filter();
+ input.addEventListener('input',()=>{mbFurnitureQuery=input.value;filter()});filter();
  return result
 };
+function mbFurnitureQuote(balance,cost,owned){if(!Number.isFinite(balance)||!Number.isFinite(cost)||balance<0||cost<0)return null;return {remaining:owned?balance:Math.max(0,balance-cost),shortage:owned?0:Math.max(0,cost-balance)}}
 const mbFurnitureDetailBefore=furnitureConfirm;
 furnitureConfirm=function(id,back='shop'){
  const result=mbFurnitureDetailBefore(id,back),card=$('content').querySelector('.komorebiConfirm');
  if(!card)return result;
  const image=card.querySelector('img'),v=furnitureCatalogue().find(v=>v[0]===id);
  if(image){const mat=element('div','',card,'mbFurnitureDetailMat');image.before(mat);mat.append(image);image.alt=v?tr(v[1],v[2]):''}
- if(v){const note=element('p',v[4]==='extension'?tr('Adds a new room to your home.','给小窝扩建一个新房间。'):v[4]==='finish'||v[4]==='floor'?tr('Apply this finish in the room editor after purchase.','购买后可在小窝布置中更换。'):tr('Arrange this piece in your room after purchase.','购买后可在小窝里自由摆放。'),card,'mbFurnitureUseNote');card.querySelector('h2')?.after(note)}
+ if(v){const note=element('p',v[4]==='extension'?tr('Adds a new room to your home.','给小窝扩建一个新房间。'):v[4]==='finish'||v[4]==='floor'?tr('Apply this finish in the room editor after purchase.','购买后可在小窝布置中更换。'):tr('Arrange this piece in your room after purchase.','购买后可在小窝里自由摆放。'),card,'mbFurnitureUseNote');card.querySelector('h2')?.after(note);
+  const quote=mbFurnitureQuote(hideoutBalance(),v[3],furnitureOwned(id));if(quote&&!furnitureOwned(id)){const line=element('p',quote.shortage?tr('Still needed: ','还差：')+quote.shortage+' '+tr('Meow Coins','喵币'):tr('Balance after purchase: ','购买后余额：')+quote.remaining+' '+tr('Meow Coins','喵币'),card,'mbFurnitureQuote');line.dataset.shortage=String(quote.shortage>0);card.querySelector('h2')?.after(line)}
+ }
  return result
 };
 const mbHomeVisualBefore=hideoutPage;
@@ -2154,6 +2160,7 @@ mbCatalogueVisualStyle.textContent=`
 #content .mbCatalogueNoResults{grid-column:1/-1;line-height:1.5;padding:12px;color:#594936}
 #content .mbCatalogueNoResults[hidden],#content .mbArtEmpty[hidden]{display:none!important}
 #content .mbFurnitureDetailMat{min-height:180px;margin:0 0 12px}
+#content .mbFurnitureQuote{color:#48604b;background:#e6e8ce;border-left:3px solid #8c9a73;padding:8px 10px;font:600 14px/1.4 system-ui}#content .mbFurnitureQuote[data-shortage=true]{color:#7b4838;background:#f1dfc8;border-color:#b68b69}
 #content .komorebiConfirm .mbFurnitureDetailMat img{display:block;width:min(100%,340px)!important;height:clamp(170px,38dvh,310px)!important;object-fit:contain!important}
 #content .mbFurnitureUseNote{font:14px/1.5 system-ui;color:#594936}
 #content .hideoutRoomView[data-editing=true] .hideoutTools{padding:7px;background:var(--town-grain),#f3e5cb;border:1px solid #bea37b;border-radius:4px;gap:6px}

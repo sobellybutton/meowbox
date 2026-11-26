@@ -461,9 +461,13 @@ jobs:
                   }
                 };
                 const pearl=page.locator('#pearlRecipePanel');
-                for(const label of ['Make my own drink','Milk tea','No sugar','Regular ice','Tapioca pearls','Pour tea']){
+                for(const label of ['Make my own drink','Milk tea','No sugar','Regular ice','Coconut jelly']){
                   await pearl.getByRole('button',{name:label,exact:true}).click({timeout:8000});
                 }
+                await pearl.getByRole('button',{name:'Change previous choice',exact:true}).click();
+                await pearl.getByRole('button',{name:'Tapioca pearls',exact:true}).click();
+                if(!await page.evaluate(()=>state.teaTopping===1&&state.teaIce===3&&state.teaSugar===0))throw Error('Recipe correction lost earlier choices');
+                await pearl.getByRole('button',{name:'Pour tea',exact:true}).click();
                 await page.waitForFunction(()=>state.teaStage==='pearls',{},{timeout:5000});
                 await dragWorld([[530,520],[510,500],[470,480],[420,480]]);
                 if(await page.evaluate(()=>state.teaPearls)!==5)throw Error('First physical pearl scoop failed');
@@ -742,13 +746,15 @@ jobs:
                 await furnitureSearch.fill(furnitureName);
                 await extensionTile.waitFor({state:'visible'});
                 if(!await extensionTile.locator('.mbFurnitureMat img').isVisible())throw Error('Furniture artwork preview missing');
-                await furnitureSearch.fill('');
                 await page.locator('.komorebiTile[data-furniture-id="roomExtension"] button').click();
                 await page.locator('.komorebiConfirm').waitFor();
                 await page.locator('.mbFurnitureDetailMat img').waitFor({state:'visible'});
+                if(!await page.evaluate(()=>furnitureOwned('roomExtension')||!!document.querySelector('.mbFurnitureQuote')))throw Error('Purchase balance preview missing');
                 await page.screenshot({path:'test-results/'+name+'-home-furniture-detail.png'});
                 await page.locator('#content > .row button').first().click();
                 await page.locator('.komorebiTile[data-furniture-id="roomExtension"]').waitFor();
+                if(await furnitureSearch.inputValue()!==furnitureName)throw Error('Returning from furniture detail lost search');
+                await furnitureSearch.fill('');
                 await page.screenshot({path:'test-results/'+name+'-home-expansion-catalogue.png'});
                 await page.locator('#content > .row button').first().click();
                 await page.locator('.hideoutScene').waitFor();
