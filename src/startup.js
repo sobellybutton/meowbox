@@ -800,12 +800,19 @@ const destinyCompactChartBefore=destinyPage, destinyCompactAlmanacBefore=yueZodi
 function yueCompactPage(q,form,out){
  q.classList.add('yueCompactConsult');
  const intro=q.querySelector(':scope > p');if(intro)intro.classList.add('yueCompactIntro');
- const hero=q.querySelector('.destinyChamber');if(hero)hero.hidden=true;
+ // Keep the chamber node for existing chart styling, but remove the obsolete
+ // full-height vector room and actor. The reading is the primary activity.
+ const hero=q.querySelector('.destinyChamber');
+ if(hero){hero.hidden=true;hero.querySelectorAll('.roomArtWrap,.yueActor').forEach(node=>node.remove())}
+ const navRow=q.querySelector(':scope > .row');
+ let title=q.querySelector(':scope > h1');
+ if(!title){title=element('h1',tr('Master Yue · Birth chart','月师傅 · 生辰命盘'),q);navRow?.after(title)}
+ if(hero)title.textContent=tr('Master Yue · Birth chart','月师傅 · 生辰命盘');
  const header=element('div','',q,'yueCompactHost'),im=element('img','',header);
- im.src='assets/visual/painted/master-yue/expressions/warm.webp';im.alt='';im.onerror=()=>im.remove();
- const words=element('div','',header);element('strong',tr('Come, sit with me.','来，坐坐。'),words);
- element('small',tr('No need to have life figured out.','不用把人生都想明白才来。'),words);
- const strip=q.querySelector('.yueSubjectStrip');if(strip)strip.after(header);else form.before(header);
+ im.src='assets/visual/painted/master-yue/expressions/warm.webp';im.alt='';im.width=68;im.height=68;im.onerror=()=>im.remove();
+ const words=element('div','',header);element('strong',tr('Master Yue','月师傅'),words);
+ element('small',tr('Sit, have some tea. The stars can wait, unlike your boss.','坐下喝杯茶。星星不催你，老板就不一定了。'),words);
+ const strip=q.querySelector('.yueSubjectStrip');if(strip){title.after(strip);strip.after(header)}else title.after(header);
  const nav=q.querySelector('.row');if(nav)nav.classList.add('yueStickyNav');
  const submit=form.querySelector('button[type=submit]');
  if(submit)submit.classList.add('yuePrimarySubmit');
@@ -856,7 +863,9 @@ const compactConsultStyle=document.createElement('style');compactConsultStyle.te
 #content.yueCompactConsult>h1{font-size:clamp(22px,5.5vw,32px)!important;margin:8px 0 4px!important;line-height:1.2}
 #content.yueCompactConsult>.yueCompactIntro{font-size:12px!important;line-height:1.35!important;margin:4px 0 8px!important}
 .yueCompactHost{display:flex;gap:9px;align-items:center;padding:5px 0 8px;border-bottom:1px solid #b6a07b;margin:3px 0 7px;color:#455d4e}
-.yueCompactHost img{width:54px;height:54px;object-fit:contain;flex:none}.yueCompactHost strong,.yueCompactHost small{display:block;line-height:1.35}.yueCompactHost small{font-size:12px}
+.yueCompactHost img{width:68px;height:68px;max-width:24%;object-fit:contain;flex:none;mix-blend-mode:multiply}.yueCompactHost>div{min-width:0}.yueCompactHost strong,.yueCompactHost small{display:block;line-height:1.35}.yueCompactHost strong{font:600 16px Georgia,'Songti SC',serif}.yueCompactHost small{font-size:13px;overflow-wrap:anywhere}
+#content.yueCompactConsult .destinyChamber,#content.yueCompactConsult .destinyChamber .roomArtWrap{display:none!important;height:0!important;min-height:0!important}
+@media(max-width:480px){#content.yueCompactConsult{padding:10px!important}.yueCompactHost{margin:3px 0 5px;padding:4px 0 6px}.yueCompactHost img{width:60px;height:60px}#content.yueCompactConsult>h1{margin:5px 0 3px!important}.yueCompactConsult .yueChartTools button{flex:1 1 94px}}
 #content.yueCompactConsult .yueSubjectStrip{padding:4px 7px;margin:5px 0!important;gap:4px}.yueCompactConsult .yueSubjectStrip button{min-height:44px}
 #content.yueCompactConsult .yueChartTools{margin:5px 0!important;gap:5px}.yueCompactConsult .yueChartTools button{padding:6px 8px!important;font-size:12px!important;min-height:44px}
 #content.yueCompactConsult .astroForm,#content.yueCompactConsult .yueAlmanacForm{margin:8px 0!important;padding:10px!important;gap:8px!important}
