@@ -2565,4 +2565,119 @@ travel=function(...args){
 };
 $('travel').onclick=travel;$('dockTravel').onclick=travel;
 
+
+/* Physical labels and visible foot pivots: use the same stage on phone and web. */
+/* PAW_FOOT_BOUNDS_BEGIN */
+function pawVisibleBounds(data,w,h){
+ if(!data||data.length!==w*h*4||w<2||h<2)return null;
+ let left=w,right=-1,top=h,bottom=-1;
+ const rows=Array(h).fill(0),cols=Array(w).fill(0);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(data[(y*w+x)*4+3]>=100){rows[y]++;cols[x]++}
+ const rowMin=Math.max(2,Math.ceil(w*.012)),colMin=Math.max(2,Math.ceil(h*.012));
+ for(let y=0;y<h;y++)if(rows[y]>=rowMin){top=Math.min(top,y);bottom=y}
+ for(let x=0;x<w;x++)if(cols[x]>=colMin){left=Math.min(left,x);right=x}
+ if(right<left||bottom<top||(bottom-top+1)<h*.35||(right-left+1)<w*.12)return null;
+ return {left:Math.max(0,left-1),right:Math.min(w,right+2),top:Math.max(0,top-1),bottom:Math.min(h,bottom+2)}
+}
+/* PAW_FOOT_BOUNDS_END */
+const pawResidentTrim=new WeakMap();
+function pawResidentCrop(im){
+ if(pawResidentTrim.has(im))return pawResidentTrim.get(im);
+ let result=null;
+ try{
+  const max=256,ratio=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),w=Math.max(2,Math.round(im.naturalWidth*ratio)),h=Math.max(2,Math.round(im.naturalHeight*ratio));
+  const scan=document.createElement('canvas');scan.width=w;scan.height=h;const g=scan.getContext('2d',{willReadFrequently:true});
+  g.drawImage(im,0,0,w,h);const bounds=pawVisibleBounds(g.getImageData(0,0,w,h).data,w,h);
+  if(bounds&&(bounds.bottom<h-1||bounds.top>1||bounds.left>1||bounds.right<w-1)){
+   const sx=im.naturalWidth/w,sy=im.naturalHeight/h;
+   result={x:bounds.left*sx,y:bounds.top*sy,w:(bounds.right-bounds.left)*sx,h:(bounds.bottom-bounds.top)*sy}
+  }
+ }catch(e){/* Untainted local raster art is expected; preserve fallback if unavailable. */}
+ pawResidentTrim.set(im,result);return result
+}
+const pawResidentRasterBefore=drawResidentRaster;
+drawResidentRaster=function(im,x,y,height,facing='right',breath=0){
+ if(!im?.complete||!im.naturalWidth||!im.naturalHeight||![x,y,height].every(Number.isFinite)||height<=0)return false;
+ const crop=pawResidentCrop(im);
+ if(!crop)return pawResidentRasterBefore(im,x,y,height,facing,breath);
+ const w=height*crop.w/crop.h,h=height*(1+Math.max(-.006,Math.min(.006,breath)));
+ ctx.save();try{
+  ellipse(x,y+1,Math.min(25,w*.32),Math.max(2,height*.035),'#342e2540');
+  ctx.translate(x,y);ctx.scale(facing==='left'?-1:1,1);
+  ctx.drawImage(im,crop.x,crop.y,crop.w,crop.h,-w/2,-h,w,h)
+ }finally{ctx.restore()}return true
+};
+// Avoid excessive transparent padding in existing full-size resident art.
+// Do not change resident identity, movement coordinates, storage or pose assets.
+
+let pawStationPlaque=null;
+const pawPhysicalPropBefore=prop;
+prop=function(id,x,y){
+ const result=pawPhysicalPropBefore(id,x,y),spec=!activity&&groundedStationSpec(room,id);
+ pawStationPlaque=spec?{room,id,x,y,spec,at:t}:null;
+ return result
+};
+function pawStationPlaqueY(y,spec){
+ const [kind,top,,foot]=spec;
+ if(['bell','rack','notice'].includes(kind))return y+foot*.57;
+ return y+Math.min(foot-13,top+(foot-top)*.48)
+}
+const pawPhysicalLabelBefore=label;
+label=function(name,x,y,fn){
+ const station=pawStationPlaque;pawStationPlaque=null;
+ if(!station||station.room!==room||station.at!==t||activity||Math.abs(station.x-x)>2||y<station.y||y>station.y+80)return pawPhysicalLabelBefore(name,x,y,fn);
+ const {id,spec}=station,short=roomPlaqueShortNames[room]?.[id];
+ if(short)name=tr(...short);
+ const scale=Math.max(.08,cam.scale),cy=pawStationPlaqueY(station.y,spec),width=spec[2]-16;
+ const font=Math.min(21,Math.max(14,12/scale));
+ ctx.save();try{
+  ctx.font='600 '+font+'px Georgia, "Songti SC", serif';
+  const sep=name.includes(' ')?' ':'',tokens=sep?name.split(/ +/):Array.from(name);
+  const rows=[];let lineText='';
+  for(const token of tokens){const candidate=lineText?lineText+sep+token:token;if(lineText&&ctx.measureText(candidate).width>width-10){rows.push(lineText);lineText=token}else lineText=candidate}
+  if(lineText)rows.push(lineText);if(rows.length>2)rows.splice(1,rows.length-1,rows.slice(1).join(sep));
+  const w=Math.min(width,Math.max(56,...rows.map(v=>ctx.measureText(v).width+12))),h=rows.length*font*1.06+8;
+  const hitW=Math.max(w,44/scale),hitH=Math.max(h,44/scale);
+  const place=pawFixedPlaque(cam.ox+x*scale,cam.oy+cy*scale,hitW*scale,hitH*scale,{left:5,right:W-5,top:4,bottom:H-4},[...meowFrameBlockers,...meowTextFrameRects]);
+  if(!place)return; // Existing object hit box and keyboard station guide still work.
+  meowTextFrameRects.push(place.rect);
+  // A bracket physically attaches frame signs to both upright posts.
+  if(['bell','rack','notice'].includes(spec[0]))line(x-spec[2]/2+10,cy,x+spec[2]/2-10,cy,'#72553c',5);
+  round(x-w/2,cy-h/2,w,h,3,'#66513c','#d2b881');
+  for(const dx of [-w/2+4,w/2-4])ellipse(x+dx,cy-h/2+4,1.3,1.3,'#d4b987');
+  ctx.fillStyle='#fff1d4';ctx.textAlign='center';ctx.textBaseline='middle';
+  rows.forEach((v,i)=>{ctx.font='600 '+font+'px Georgia, "Songti SC", serif';const size=Math.min(font,font*(w-10)/Math.max(1,ctx.measureText(v).width));ctx.font='600 '+size+'px Georgia, "Songti SC", serif';ctx.fillText(v,x,cy+(i-(rows.length-1)/2)*font*1.06)});
+  target(x-hitW/2,cy-hitH/2,hitW,hitH,fn)
+ }finally{ctx.restore()}
+};
+// Use canonical names at source so the DOM sign does not alternate between
+// an old Next Stop label and the replacement on each layout frame.
+for(const map of Object.values(maps)){const station=map.st.find(v=>v[0]==='station');if(station){station[3]='Railway';station[4]='铁路车站'}}
+const pawLocalMapBefore=travel;
+travel=function(...args){
+ const result=pawLocalMapBefore(...args);
+ if(room||activity)return result;
+ const panel=$('content').querySelector('.pawExploreRail');if(!panel||panel.querySelector('.pawLocalPlaces'))return result;
+ const details=element('details','',panel,'pawLocalPlaces');details.open=true;
+ element('summary',tr('Places in this town','这座小镇有什么'),details);
+ const list=element('div','',details,'pawLocalDoors');
+ for(const [id,x,y,en,cn] of maps[scene].st){
+  if(id==='station')continue;
+  b(list,tr(en,cn),()=>{$('page').style.display='none';updateHUD();walkDoor(id,x,y)})
+ }
+ const railway=panel.querySelector(':scope > button');
+ if(railway)details.after(railway);
+ if(railway){const caption=element('small',tr('Onward railway: ','下一班列车：')+tr(...maps[railNextDistrict(scene)].n),panel);railway.before(caption)}
+ return result
+};
+$('travel').onclick=travel;$('dockTravel').onclick=travel;
+const pawLocalMapCss=document.createElement('style');pawLocalMapCss.textContent=`
+.pawLocalPlaces{margin:7px 0 12px;border-top:1px solid #c5ac86;padding-top:5px}
+.pawLocalPlaces summary{min-height:44px;align-content:center;font-weight:600;cursor:pointer}
+.pawLocalDoors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.pawLocalDoors button{min-width:0;min-height:44px;white-space:normal;overflow-wrap:anywhere;text-align:left;line-height:1.25}
+@media(min-width:760px){.pawLocalDoors{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:340px){.pawLocalDoors{grid-template-columns:1fr}}
+`;document.head.append(pawLocalMapCss);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
