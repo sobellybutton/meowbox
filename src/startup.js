@@ -2845,7 +2845,7 @@ function pawJournalRender(district=scene){
   rail.setAttribute('aria-label',tr('Choose a district page','选择小镇书页'));
   pawJournalKeys.forEach((k,i)=>{
    const btn=b(rail,String(i+1).padStart(2,'0')+' '+tr(...maps[k].n),()=>pawJournalRender(k));
-   btn.setAttribute('aria-current',k===district?'page':'false')
+   btn.setAttribute('aria-current',k===district?'page':'false');btn.dataset.district=k
   });
   const spread=element('article','',book,'pawSketchSpread'),cover=element('div','',spread,'pawSketchCover');
   const im=element('img','',cover);im.src=destinationPortrait(district);im.alt=tr(...maps[district].n);
@@ -3387,7 +3387,7 @@ hideoutPage=function(...args){
  return result
 };
 const pawLegacyPassport=passport;
-let pawMemoryDistrict=null;
+let pawMemoryDistrict=null,pawMemoryScroll=0;
 function pawTravelMemories(){
  pawLegacyPassport();const q=$('content'),album=q.querySelector('.travelAlbum');
  if(album){
@@ -3396,7 +3396,7 @@ function pawTravelMemories(){
  }
  q.querySelector('.townAnchorBook')?.remove();
  const h=q.querySelector('h1');if(h)h.textContent=tr('Travel memories','旅途回忆');
- mbHomePageBack(tr('‹ Explore','‹ 返回探索'),()=>pawJournalRender(pawMemoryDistrict||scene));journalLanguage(pawTravelMemories)
+ mbHomePageBack(tr('‹ Explore','‹ 返回探索'),()=>{pawJournalRender(pawMemoryDistrict||scene);requestAnimationFrame(()=>{if($('content').querySelector('.pawSketchbook'))$('page').scrollTop=pawMemoryScroll})});journalLanguage(pawTravelMemories)
 }
 const pawJournalSingleBefore=pawJournalRender;
 pawJournalRender=function(district=scene){
@@ -3406,7 +3406,7 @@ pawJournalRender=function(district=scene){
   if(signature&&visitedHere)element('p',tr(...signature.memory),info,'pawJourneyMemory');
   const stamp=element('small',hideoutStampCount()+'/4 '+tr('railway stamps collected','枚铁路印章已收集'),info);
   const links=element('div','',book,'pawTravelMemoryLink');
-  b(links,tr('Travel memories ›','旅途回忆 ›'),()=>{pawMemoryDistrict=district;pawTravelMemories()}).className='pawTownTextLink';
+  b(links,tr('Travel memories ›','旅途回忆 ›'),()=>{pawMemoryDistrict=district;pawMemoryScroll=$('page').scrollTop;pawTravelMemories()}).className='pawTownTextLink';
  }
  return result
 };
@@ -3745,7 +3745,7 @@ const pawPhysicalHeaderBefore=pawVisualHeader;
 pawVisualHeader=function(q,theme){
  // A chapter postcard belongs in the travel book, not on the resident
  // identity card, diary, collection cabinet or furniture shelf.
- if(['shop','collection','daily','profile'].includes(theme))return;
+ if(['shop','collection','daily','profile','paper'].includes(theme))return;
  return pawPhysicalHeaderBefore(q,theme)
 };
 function pawPageTurnDirection(oldIndex,newIndex){
@@ -3894,7 +3894,8 @@ function pawAmbientPlace(actor,actors){
  const player=room&&typeof indoor!=='undefined'&&Number.isFinite(indoor.x)?{left:cam.ox+(indoor.x-34)*cam.scale,top:cam.oy+(indoor.y-120)*cam.scale,right:cam.ox+(indoor.x+34)*cam.scale,bottom:cam.oy+indoor.y*cam.scale}:characterScreenBounds(p,true);
  const pos=chooseSpeechPosition(pawAmbientNode.offsetWidth,pawAmbientNode.offsetHeight,W,H,bounds,player,blocks);
  if(!pos)return false;
- pawAmbientNode.style.left=pos.left+'px';pawAmbientNode.style.top=pos.top+'px';return true
+ pawAmbientNode.style.left=pos.left+'px';pawAmbientNode.style.top=pos.top+'px';
+ pawAmbientNode.dataset.above=String(pos.above===true);pawAmbientNode.style.setProperty('--paw-tail-x',pawSpeechAnchor(Number(pos.tailX),pawAmbientNode.offsetWidth)+'px');return true
 }
 function pawAmbientTick(now){
  if(now<pawAmbientCheck)return;pawAmbientCheck=now+180;
@@ -4079,7 +4080,8 @@ function pawJournalWalkToDoor(id,x,y){
  const token=++pawJournalWalkToken,district=scene,deadline=performance.now()+5000;
  let exits=0,lastRoom=room,lastActivity=activity,waiting=false;
  const proceed=()=>{
-  if(token!==pawJournalWalkToken||scene!==district||$('page').style.display==='block'||performance.now()>deadline)return;
+  if(token!==pawJournalWalkToken||scene!==district||$('page').style.display==='block'||document.hidden)return;
+  if(performance.now()>deadline){hint('Choose a doorway to continue.','点选店门继续逛。');return}
   if(transitioning){requestAnimationFrame(proceed);return}
   if(!room){walkDoor(id,x,y);return}
   if(waiting&&room===lastRoom&&activity===lastActivity){requestAnimationFrame(proceed);return}
@@ -4092,7 +4094,7 @@ function pawJournalWalkToDoor(id,x,y){
 // Stop the animation without invoking a queued furniture action if the
 // player leaves the room, switches tabs or hides the browser.
 const pawHomeMotionPageBefore=page;
-page=function(...args){pawHomeStop();return pawHomeMotionPageBefore(...args)};
+page=function(...args){pawHomeStop();pawJournalWalkToken++;return pawHomeMotionPageBefore(...args)};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){pawHomeStop();pawJournalWalkToken++}});
 const pawHomeMotionJourneyBefore=journey;
 journey=function(...args){pawHomeStop();pawJournalWalkToken++;return pawHomeMotionJourneyBefore(...args)};
@@ -4189,7 +4191,7 @@ function pawHomeStageBlocks(stage){
 }
 function pawHomeActorPosition(player,stage,point){
  player.style.left=point.x+'%';player.style.top=point.y+'%';player.style.right='auto';player.style.bottom='auto';
- player.style.zIndex=String(20+Math.round(point.y*4));
+ player.style.zIndex=String(pawHomeLayer(point.y));
 }
 function pawHomeActorArt(player,direction,walking,distance){
  const kind=avatar??0,dir=direction==='left'?'right':direction;
@@ -4235,15 +4237,15 @@ hideoutPage=function(...args){
  pawHomeStop();const result=pawHomeWalkPageBefore(...args),q=$('content'),stage=q.querySelector('.hideoutScene'),player=stage?.querySelector('.hideoutPlayer');
  if(hideoutEditing||!stage||!player)return result;
  const key=String(komorebiZone),blocks=pawHomeStageBlocks(stage);
- const style=getComputedStyle(player),fallback={x:parseFloat(player.style.left)||parseFloat(style.left)/Math.max(1,stage.clientWidth)*100||67,y:parseFloat(player.style.top)||parseFloat(style.top)/Math.max(1,stage.clientHeight)*100||92};
+ const style=getComputedStyle(player),fallback={x:pawHomePixelPercent(player.style.left,style.left,stage.clientWidth,67),y:pawHomePixelPercent(player.style.top,style.top,stage.clientHeight,92)};
  const previous=pawHomePositions.get(key)||fallback,point=pawHomeSafe(previous,blocks)?{...previous}:pawHomeNearest(previous,pawHomeGrid(blocks));
- if(!point)return result;
+ if(!point){const note=element('small',tr('Move a little furniture to make room for walking.','挪一挪家具，就有地方走动啦。'),q,'pawHomeWalkHint');stage.after(note);return result}
  stage.dataset.pawWalkable='true';player.classList.add('pawHomeWalker');pawHomeActorPosition(player,stage,point);
  // Keep the existing furniture and item click handlers. Only an empty floor
  // tap moves the player, and no saved furniture record is changed.
  for(const im of stage.querySelectorAll('.hideoutPlaced,.figureCabinetInRoom')){
   const id=im.dataset.furnitureId,y=parseFloat(im.style.top);
-  if(Number.isFinite(y))im.style.zIndex=String(id==='rug'?1:20+Math.round(y*4))
+  if(Number.isFinite(y))im.style.zIndex=String(pawHomeLayer(y,id==='rug'?'rug':y<65?'wall':'floor'))
  }
  const shelf=stage.querySelector('.hideoutPlaced[data-furniture-id="shelf"]'),shelfY=parseFloat(shelf?.style.top);
  for(const display of stage.querySelectorAll('.hideoutDisplay')){const y=Number.isFinite(shelfY)?shelfY:parseFloat(display.style.top);if(Number.isFinite(y))display.style.zIndex=String(21+Math.round(y*4))}
@@ -4324,5 +4326,141 @@ const pawAdditionalRemarks={
  cafe:[['spoon','The smallest spoon always disappears first.','店里最小的那把勺子总是第一个不见。'],['music','I turned the music down. The rain sounds nicer.','把音乐调小了，雨声其实更好听。']]
 };
 for(const [id,entries] of Object.entries(pawAdditionalRemarks))pawAmbientLines[id]?.push(...entries);
+
+
+/* PAW_LIVING_POLISH_BEGIN */
+// Stable, authored story IDs and ordered episodes. Fictional town notices
+// are not user posts and never depend on a public community service.
+const pawTownStories=[
+ {id:'lost-umbrella',title:['The blue umbrella','那把蓝伞'],episodes:[
+  ['Station keeper','站长','A blue umbrella is waiting at the station. It has a little bird charm on its handle.','车站有把蓝伞等人认领，伞柄上挂着一只小鸟。'],
+  ['Auntie Hong','红姐','Three people claimed it. None could describe the charm. I am becoming invested in this umbrella.','三个人来认领，都说不出挂件长什么样。我已经开始追这把伞的连续剧了。'],
+  ['Wang Laoban','王老板','It was mine. The bird charm was a gift from my daughter. Thank you for looking after it.','是我的。小鸟是女儿送的，谢谢大家帮我保管。']
+ ]},
+ {id:'tea-room-record',title:['A tune for the tea room','茶馆里的老唱片'],episodes:[
+  ['Auntie Mei','梅姨','I found a record at the market. Does anyone remember the tune on the faded label?','集市淘到一张旧唱片，标签褪色了，还有人记得这首曲子吗？'],
+  ['Grandma','外婆','I recognise it. We used to hear it on the radio while making dinner.','这首我认得。以前做晚饭时，收音机里常放。'],
+  ['Auntie Mei','梅姨','We played it over tea. Nobody hurried home. I think that is the best kind of afternoon.','今天喝茶时放了那首歌，谁也没急着走。这样的下午真好。']
+ ]},
+ {id:'little-pot',title:['A plant outgrows its home','花盆不够大啦'],episodes:[
+  ['Wang Laoban','王老板','My office plant is leaning out of its pot. It appears to be resigning.','办公室的植物都长出花盆了，看样子是准备辞职。'],
+  ['Auntie Lin','林姨','I have a clay pot you can use. Leave it by the window, not beside the air conditioner.','我有个陶盆可以给你，摆窗边吧，别再放空调旁了。'],
+  ['Wang Laoban','王老板','The plant has moved into a larger home. Its work-life balance is now better than mine.','植物搬进大房子了，现在它的生活质量比我还好。']
+ ]},
+ {id:'postcard',title:['A postcard to nowhere','寄给自己的明信片'],episodes:[
+  ['Souvenir keeper','手信店主','There is a postcard at the counter with no address. Just the words: see you again, someday.','柜台有张没写地址的明信片，只写着：有一天再见。'],
+  ['Master Yue','月师傅','Perhaps the person it is meant for is the one who wrote it.','或许这张明信片，本来就是写给自己看的。'],
+  ['Souvenir keeper','手信店主','The owner came back and addressed it to their future self. I found them an envelope.','主人回来，把收件人写成了未来的自己。我给他找了个信封。']
+ ]},
+ {id:'soup-table',title:['An extra bowl','多出来的一碗汤'],episodes:[
+  ['Grandma','外婆','I made too much mushroom soup again. Bring a bowl if you are passing.','蘑菇汤又煮多了，路过的话带个碗来。'],
+  ['Auntie Hong','红姐','Someone brought three bowls. Apparently the neighbours were also invited.','有人带了三个碗，原来连邻居也叫上了。'],
+  ['Grandma','外婆','The pot is empty. Next time I will make even more.','锅见底啦。下次我再多煮一点。']
+ ]}
+];
+function pawTownDayNumber(date){
+ if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date))return null;
+ const n=Date.parse(date+'T00:00:00Z');
+ return Number.isFinite(n)&&new Date(n).toISOString().slice(0,10)===date?Math.floor(n/86400000):null
+}
+function pawTownEpisode(day,first,stories=pawTownStories){
+ const a=pawTownDayNumber(day),b=pawTownDayNumber(first);
+ if(a===null||b===null||!stories.length)return null;
+ const age=Math.max(0,a-b),index=Math.floor(age/3)%stories.length;
+ const story=stories[index],episode=age%3;
+ return {story,episode,total:story.episodes.length,entry:story.episodes[episode]}
+}
+function pawHomeLayer(y,kind='floor'){
+ if(kind==='rug')return 1;if(kind==='wall')return 2;
+ return Number.isFinite(y)?20+Math.round(y*4):20
+}
+function pawHomePixelPercent(inline,computed,size,fallback){
+ if(typeof inline==='string'&&inline.trim().endsWith('%')&&Number.isFinite(parseFloat(inline)))return parseFloat(inline);
+ const px=parseFloat(computed);return Number.isFinite(px)&&Number.isFinite(size)&&size>0?px/size*100:fallback
+}
+function pawSpeechAnchor(value,width){
+ return Math.max(12,Math.min(Math.max(12,width-12),Number.isFinite(value)?value:width/2))
+}
+/* PAW_LIVING_POLISH_END */
+const pawTownStoryKey='pawTownStoryStartV1';
+function pawTownStoryToday(){
+ const today=day(),stored=load(pawTownStoryKey,null);
+ // A first visit starts the story, not the installation date of the game.
+ let first=pawTownDayNumber(stored)!==null&&stored<=today?stored:today;
+ if(first!==stored)save(pawTownStoryKey,first);
+ return pawTownEpisode(today,first)
+}
+const pawStoryBoardBefore=townChatPage;
+townChatPage=function(...args){
+ const result=pawStoryBoardBefore(...args),q=$('content');
+ if(communityTab!=='board'||!q.querySelector('.communityTabs'))return result;
+ const current=pawTownStoryToday();if(!current)return result;
+ const {story,episode,total,entry}=current;
+ const note=element('article','',q,'pawTownStoryNote');
+ element('small',tr('Resident stories · fictional town','居民小故事 · 虚构小镇'),note,'pawStoryKicker');
+ element('h2',tr(...story.title),note);
+ element('small',tr('Part ','第 ')+(episode+1)+' / '+total,note,'pawStoryPart');
+ const voice=element('p','',note,'pawStoryVoice');element('strong',tr(entry[0],entry[1]),voice);
+ element('span',tr(entry[2],entry[3]),voice);
+ if(episode>0){
+  const earlier=element('details','',note,'pawStoryEarlier');element('summary',tr('Earlier in this story','前情回顾'),earlier);
+  for(const v of story.episodes.slice(0,episode)){
+   const p=element('p','',earlier);element('strong',tr(v[0],v[1])+': ',p);element('span',tr(v[2],v[3]),p)
+  }
+ }
+ q.querySelector('.communityTabs').after(note);
+ return result
+};
+const pawStoryCss=document.createElement('style');
+pawStoryCss.textContent='#content .pawTownStoryNote{position:relative;background:#f5e8cb;color:#4c4334;padding:16px 13px 12px;margin:13px 0 18px;border:1px solid #c3ab82;border-radius:1px;box-shadow:2px 4px 5px #60452d26;overflow-wrap:anywhere}#content .pawTownStoryNote:before{content:"";position:absolute;top:-5px;left:calc(50% - 4px);width:8px;height:8px;border-radius:50%;background:#8c654b;box-shadow:0 2px 2px #47332155}#content .pawTownStoryNote h2{font:600 clamp(19px,5vw,26px)/1.25 Georgia,"Songti SC",serif;color:#4f644e;margin:6px 0}#content .pawStoryKicker,#content .pawStoryPart{font-size:11px;color:#74644c}#content .pawStoryVoice strong,#content .pawStoryVoice span{display:block}#content .pawStoryVoice strong{font-size:13px;margin:0 0 4px;color:#52684e}#content .pawStoryVoice{font-size:15px;line-height:1.55}#content .pawStoryEarlier{border-top:1px dashed #baa17a;padding-top:3px}#content .pawStoryEarlier summary{min-height:44px;align-content:center;color:#51654e;cursor:pointer}#content .pawStoryEarlier p{font-size:13px;line-height:1.5}#game .pawAmbientSpeech{overflow:visible}#game .pawAmbientSpeech:after{content:"";position:absolute;left:var(--paw-tail-x,50%);width:9px;height:9px;transform:translateX(-50%) rotate(45deg);background:#fff3dc;border:solid #9b815c;border-width:0 1px 1px 0;bottom:-5px}#game .pawAmbientSpeech[data-above=false]:after{top:-5px;bottom:auto;transform:translateX(-50%) rotate(225deg)}';
+document.head.append(pawStoryCss);
+// Canonical active dock state follows the actual screen, not the destination
+// on the town map. Preserve the four existing nav buttons and actions.
+function pawSyncDockSelection(){
+ const q=$('content'),open=$('page').style.display==='block';
+ const selected=!open?'':q.querySelector('.pawSketchbook,.travelAlbum')?'travel':q.querySelector('.hideoutScene,.travellerBagV2,.komorebiBook,.komorebiConfirm,.figureCabinetBook,.pawPersonalShelf')?'home':q.querySelector('.communityTabs,.townWall,.townChatTranscript')?'town':q.querySelector('.pawDiaryFold,.journalDailyTasks,.goodCompanyBook')?'today':'';
+ for(const [key,button] of [['travel',$('dockTravel')],['today',$('dockScoop')],['town',pawTownDock],['home',mbHomeNav]]){
+  button.classList.toggle('pawDockSelected',selected===key);
+  if(selected===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')
+ }
+}
+const pawDockSyncBefore=updateHUD;
+updateHUD=function(...args){const result=pawDockSyncBefore(...args);pawSyncDockSelection();return result};
+const pawDockPageBefore=page;
+page=function(...args){const result=pawDockPageBefore(...args);queueMicrotask(pawSyncDockSelection);return result};
+const pawDockObserver=new MutationObserver(pawSyncDockSelection);pawDockObserver.observe($('page'),{attributes:true,attributeFilter:['style','hidden']});
+const pawDockStateCss=document.createElement('style');pawDockStateCss.textContent='#game #dock>button.pawDockSelected{background:#d7d7b6!important;color:#36533f!important;border-color:#839274!important;box-shadow:inset 0 -2px 0 #829374!important}#game #dock>button:focus-visible{outline:2px solid #547056;outline-offset:1px}';
+document.head.append(pawDockStateCss);
+// Keyboard journal traversal moves focus to the selected tab after a rebuild.
+const pawJournalKeysBefore=pawJournalRender;
+pawJournalRender=function(district=scene){
+ const result=pawJournalKeysBefore(district),nav=$('content').querySelector('.pawSketchTabs');
+ if(!nav)return result;
+ nav.addEventListener('keydown',e=>{
+  const key=e.target?.dataset?.district,index=pawJournalKeys.indexOf(key);
+  if(index<0||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+  e.preventDefault();e.stopPropagation();
+  const next=e.key==='Home'?0:e.key==='End'?pawJournalKeys.length-1:Math.max(0,Math.min(pawJournalKeys.length-1,index+(e.key==='ArrowLeft'?-1:1)));
+  pawJournalRender(pawJournalKeys[next]);$('content').querySelector('.pawSketchTabs button[data-district="'+pawJournalKeys[next]+'"]')?.focus({preventScroll:true})
+ });
+ return result
+};
+// Keep interaction text tied to its actual scene. The existing scenery
+// remains shared, pending original route-specific painted landscapes.
+const pawRailRouteNotes={
+ fortune:['Into the hills','开往山间'],home:['Towards the tea room district','开往茶香小镇'],island:['Towards the food and fun district','开往吃喝玩乐街'],wonder:['Towards the discovery district','开往奇遇驿站']
+};
+const pawRailContextBefore=mbTransferHolding;
+mbTransferHolding=function(from,to){
+ const result=pawRailContextBefore(from,to),overlay=$('game').querySelector('.pawRailJourney');
+ if(overlay){
+  overlay.dataset.from=from;overlay.dataset.to=to;
+  const caption=overlay.querySelector('.pawRailCaption span');if(caption)caption.textContent=tr(...(pawRailRouteNotes[to]||['Pawradise railway','Pawradise 铁路']));
+  const skip=overlay.querySelector('.pawRailSkip');if(skip)skip.setAttribute('aria-label',tr('Skip ride and arrive','跳过旅程，直接抵达'))
+ }
+ return result
+};
+// Route/story dates and progress remain local, and new interfaces use only
+// existing visual primitives. No account, purchase or reward changes.
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
