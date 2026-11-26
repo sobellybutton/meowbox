@@ -4074,4 +4074,203 @@ const pawRoomAccessStyle=document.createElement('style');pawRoomAccessStyle.text
 
 /* PAW_AMBIENT_RESIDENTS_END */
 
+
+/* PAW_HOME_WALK_BEGIN */
+const pawHomeBounds={l:10,r:90,u:68,d:94};
+function pawHomeSafe(point,blocks,bounds=pawHomeBounds){
+ return Number.isFinite(point.x)&&Number.isFinite(point.y)&&point.x>=bounds.l&&point.x<=bounds.r&&point.y>=bounds.u&&point.y<=bounds.d&&!blocks.some(b=>point.x>b.l&&point.x<b.r&&point.y>b.u&&point.y<b.d)
+}
+function pawHomeSegment(a,b,blocks,bounds=pawHomeBounds){
+ const d=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(1,Math.ceil(d/.6));
+ for(let i=0;i<=n;i++){const t=i/n;if(!pawHomeSafe({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t},blocks,bounds))return false}
+ return true
+}
+function pawHomeGrid(blocks,bounds=pawHomeBounds){
+ const grid=[];
+ for(let y=bounds.u;y<=bounds.d;y+=2)for(let x=bounds.l;x<=bounds.r;x+=2){
+  const p={x,y};if(pawHomeSafe(p,blocks,bounds))grid.push(p)
+ }
+ return grid
+}
+function pawHomeNearest(point,grid){
+ return grid.reduce((best,p)=>!best||Math.hypot(p.x-point.x,p.y-point.y)<Math.hypot(best.x-point.x,best.y-point.y)?p:best,null)
+}
+function pawHomeRoute(start,goal,blocks,bounds=pawHomeBounds){
+ if(!pawHomeSafe(start,blocks,bounds)||!Number.isFinite(goal.x)||!Number.isFinite(goal.y))return null;
+ const grid=pawHomeGrid(blocks,bounds);if(!grid.length)return null;
+ const end=pawHomeSafe(goal,blocks,bounds)?goal:pawHomeNearest(goal,grid);
+ if(!end)return null;
+ if(pawHomeSegment(start,end,blocks,bounds))return [end];
+ const nodes=new Map(grid.map(v=>[v.x+','+v.y,v])),keys=[...nodes.keys()],near=keys.filter(k=>pawHomeSegment(start,nodes.get(k),blocks,bounds)).sort((a,b)=>Math.hypot(nodes.get(a).x-start.x,nodes.get(a).y-start.y)-Math.hypot(nodes.get(b).x-start.x,nodes.get(b).y-start.y));
+ if(!near.length)return null;
+ const parent=new Map(),queue=[];
+ for(const k of near){parent.set(k,null);queue.push(k)}
+ let found=null;
+ for(let i=0;i<queue.length;i++){
+  const k=queue[i],a=nodes.get(k);
+  if(pawHomeSegment(a,end,blocks,bounds)){found=k;break}
+  for(const [dx,dy] of [[2,0],[-2,0],[0,2],[0,-2],[2,2],[-2,2],[2,-2],[-2,-2]]){
+   const next=(a.x+dx)+','+(a.y+dy),b=nodes.get(next);
+   if(!b||parent.has(next)||!pawHomeSegment(a,b,blocks,bounds))continue;
+   parent.set(next,k);queue.push(next)
+  }
+ }
+ if(found===null)return null;
+ const path=[end];for(let k=found;k!==null;k=parent.get(k))path.unshift(nodes.get(k));
+ // Remove unnecessary turns while preserving tested clearance.
+ const smooth=[];let at=start;
+ for(let i=0;i<path.length;){let j=path.length-1;while(j>i&&!pawHomeSegment(at,path[j],blocks,bounds))j--;smooth.push(path[j]);at=path[j];i=j+1}
+ return smooth
+}
+function pawHomeFootprint(x,y,width,kind,id,aspect=1){
+ if(![x,y,width,aspect].every(Number.isFinite)||width<=0||kind==='wall'||kind==='floor'||kind==='finish'||id==='rug'||y<65)return null;
+ const half=Math.min(46,Math.max(5,width*.43+3)),depth=Math.min(12,Math.max(3,width*.21*aspect));
+ return {l:x-half,r:x+half,u:y-depth-2,d:y+3}
+}
+function pawHomeDirection(a,b,aspect=1){
+ const dx=(b.x-a.x)*aspect,dy=b.y-a.y;
+ return Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')
+}
+/* PAW_HOME_WALK_END */
+const pawHomePositions=new Map();
+let pawHomeWalk=null;
+function pawHomeStop(){if(pawHomeWalk){cancelAnimationFrame(pawHomeWalk.frame);pawHomeWalk=null}}
+function pawHomeStageBlocks(stage){
+ const aspect=stage.clientWidth/Math.max(1,stage.clientHeight),catalogue=furnitureCatalogue(),blocks=[];
+ for(const im of stage.querySelectorAll('.hideoutPlaced,.figureCabinetInRoom')){
+  const id=im.dataset.furnitureId||(im.classList.contains('figureCabinetInRoom')?'displayCabinet':'');
+  if(!id||im.hidden)continue;
+  const kind=catalogue.find(v=>v[0]===id)?.[4],x=parseFloat(im.style.left),y=parseFloat(im.style.top),width=im.style.width.endsWith('%')?parseFloat(im.style.width):im.offsetWidth/Math.max(1,stage.clientWidth)*100;
+  const b=pawHomeFootprint(x,y,width,kind,id,aspect);if(b)blocks.push(b)
+ }
+ return blocks
+}
+function pawHomeActorPosition(player,stage,point){
+ player.style.left=point.x+'%';player.style.top=point.y+'%';player.style.right='auto';player.style.bottom='auto';
+ player.style.zIndex=String(20+Math.round(point.y*4));
+}
+function pawHomeActorArt(player,direction,walking,distance){
+ const kind=avatar??0,dir=direction==='left'?'right':direction;
+ let src=ART['walker'+kind+(dir==='up'?1:dir==='down'?0:2)]||mbAvatarStanding(kind);
+ if(walking&&!residentReducedMotion.matches){
+  mbArtLoad();const frames=mbArtRegistry.players[kind]?.walk?.[dir];
+  if(frames?.length){
+   const frame=frames[Math.floor(distance/2.1)%frames.length],im=mbArtImage(frame);
+   if(im?.complete&&im.naturalWidth)src=im.src
+  }
+ }
+ if(src&&player.getAttribute('src')!==src)player.src=src;
+ player.style.setProperty('--paw-home-facing',direction==='left'?'-1':'1')
+}
+function pawHomeMoveTo(stage,player,point,key,goal,announce){
+ pawHomeStop();
+ const blocks=pawHomeStageBlocks(stage),route=pawHomeRoute(point,goal,blocks);
+ if(!route?.length)return false;
+ const motion={frame:0,at:0,distance:0,direction:'down',point};
+ pawHomeWalk=motion;const reduced=residentReducedMotion.matches;
+ function finish(){
+  pawHomeActorPosition(player,stage,point);pawHomeActorArt(player,motion.direction,false,motion.distance);
+  pawHomePositions.set(key,{...point});if(pawHomeWalk===motion)pawHomeWalk=null;
+  if(announce)announce.textContent=tr('Arrived','到啦')
+ }
+ if(reduced){Object.assign(point,route.at(-1));motion.direction=pawHomeDirection(point,goal);finish();return true}
+ function frame(now){
+  if(pawHomeWalk!==motion||!stage.isConnected||hideoutEditing||$('page').style.display!=='block'){if(pawHomeWalk===motion)pawHomeStop();return}
+  const next=route[0];if(!next){finish();return}
+  const aspect=stage.clientWidth/Math.max(1,stage.clientHeight),dx=next.x-point.x,dy=next.y-point.y,d=Math.hypot(dx*aspect,dy);
+  if(d<.12){Object.assign(point,next);route.shift()}
+  else{
+   const dt=motion.at?Math.min(.05,(now-motion.at)/1000):.016,move=Math.min(d,22*dt);
+   motion.direction=pawHomeDirection(point,next,aspect);point.x+=dx*move/d;point.y+=dy*move/d;motion.distance+=move;
+  }
+  motion.at=now;pawHomePositions.set(key,{...point});pawHomeActorPosition(player,stage,point);pawHomeActorArt(player,motion.direction,true,motion.distance);
+  motion.frame=requestAnimationFrame(frame)
+ }
+ motion.frame=requestAnimationFrame(frame);return true
+}
+const pawHomeWalkPageBefore=hideoutPage;
+hideoutPage=function(...args){
+ pawHomeStop();const result=pawHomeWalkPageBefore(...args),q=$('content'),stage=q.querySelector('.hideoutScene'),player=stage?.querySelector('.hideoutPlayer');
+ if(hideoutEditing||!stage||!player)return result;
+ const key=String(komorebiZone),blocks=pawHomeStageBlocks(stage);
+ const style=getComputedStyle(player),fallback={x:parseFloat(player.style.left)||parseFloat(style.left)/Math.max(1,stage.clientWidth)*100||67,y:parseFloat(player.style.top)||parseFloat(style.top)/Math.max(1,stage.clientHeight)*100||92};
+ const previous=pawHomePositions.get(key)||fallback,point=pawHomeSafe(previous,blocks)?{...previous}:pawHomeNearest(previous,pawHomeGrid(blocks));
+ if(!point)return result;
+ stage.dataset.pawWalkable='true';player.classList.add('pawHomeWalker');pawHomeActorPosition(player,stage,point);
+ // Keep the existing furniture and item click handlers. Only an empty floor
+ // tap moves the player, and no saved furniture record is changed.
+ for(const im of stage.querySelectorAll('.hideoutPlaced,.figureCabinetInRoom')){
+  const id=im.dataset.furnitureId,y=parseFloat(im.style.top);
+  if(Number.isFinite(y))im.style.zIndex=String(id==='rug'?1:20+Math.round(y*4))
+ }
+ for(const display of stage.querySelectorAll('.hideoutDisplay')){const y=parseFloat(display.style.top);if(Number.isFinite(y))display.style.zIndex=String(25+Math.round(y*4))}
+ const note=element('small',tr('Tap the floor to walk around.','点地板，走走自己的小窝。'),q,'pawHomeWalkHint');stage.after(note);
+ note.setAttribute('role','status');note.setAttribute('aria-live','polite');
+ stage.tabIndex=0;stage.setAttribute('aria-label',tr('My room. Tap the floor or use arrow keys to walk.','我的小窝。点击地板或使用方向键行走。'));
+ stage.addEventListener('click',e=>{
+  if(e.target.closest('.hideoutPlaced,.hideoutDisplay,.figureCabinetInRoom,.hideoutPlayer,button,[role=button]'))return;
+  const r=stage.getBoundingClientRect(),goal={x:(e.clientX-r.left)/r.width*100,y:(e.clientY-r.top)/r.height*100};
+  if(goal.y<pawHomeBounds.u||goal.y>pawHomeBounds.d+3)return;
+  if(!pawHomeMoveTo(stage,player,point,key,goal,note))note.textContent=tr('A piece of furniture is in the way.','这边被家具挡住啦。')
+ });
+ stage.addEventListener('keydown',e=>{
+  if(e.target!==stage)return;const dir={ArrowLeft:[-5,0],ArrowRight:[5,0],ArrowUp:[0,-5],ArrowDown:[0,5]}[e.key];if(!dir)return;e.preventDefault();e.stopPropagation();
+  pawHomeMoveTo(stage,player,point,key,{x:Math.max(pawHomeBounds.l,Math.min(pawHomeBounds.r,point.x+dir[0])),y:Math.max(pawHomeBounds.u,Math.min(pawHomeBounds.d,point.y+dir[1]))},note)
+ });
+ return result
+};
+const pawHomeWalkStyle=document.createElement('style');pawHomeWalkStyle.textContent='#content .hideoutScene[data-paw-walkable=true]{cursor:default}#content .hideoutScene .pawHomeWalker{position:absolute!important;transform:translate(-50%,-100%) scaleX(var(--paw-home-facing,1))!important;transform-origin:50% 100%!important;animation:none!important;transition:none!important;filter:drop-shadow(0 2px 1px #342d2844);object-fit:contain!important}#content .pawHomeWalkHint{display:block;font-size:12px;color:#64543e;margin:5px 0 8px}#content .hideoutScene:focus-visible{outline:2px solid #6c805d;outline-offset:2px}';document.head.append(pawHomeWalkStyle);
+/* Keep generic ambient remarks out of the active game's conversation path
+   and provide a single optional quiet setting in the existing settings menu. */
+let pawAmbientEnabled=load('pawAmbientEnabledV1',true)!==false;
+const pawAmbientQuietBefore=pawAmbientBlocked;
+pawAmbientBlocked=function(){return !pawAmbientEnabled||pawAmbientQuietBefore()};
+const pawAmbientToggle=element('button','',townSettingsExtra);
+function pawAmbientSetting(){pawAmbientToggle.textContent=pawAmbientEnabled?tr('Resident chatter on','居民闲聊：开'):tr('Resident chatter off','居民闲聊：关');pawAmbientToggle.setAttribute('aria-pressed',String(pawAmbientEnabled))}
+pawAmbientToggle.onclick=()=>{pawAmbientEnabled=!pawAmbientEnabled;save('pawAmbientEnabledV1',pawAmbientEnabled);pawAmbientClear();pawAmbientSetting()};
+const pawAmbientSettingsBefore=syncTownSettings;
+syncTownSettings=function(...args){const result=pawAmbientSettingsBefore(...args);pawAmbientSetting();return result};
+pawAmbientSetting();
+/* PAW_DIALOGUE_VARIETY_BEGIN */
+const pawAmbientTopics={
+ 'hong:bouquet':'flowers','exchange:flowers':'flowers','mei:letter':'postcards','souvenir:postcard':'postcards','exchange:postcard':'postcards',
+ 'hong:umbrella':'umbrella','exchange:umbrella':'umbrella','grandma:soup':'soup','exchange:soup':'soup',
+ 'garden:ribbon':'wish-ribbons','exchange:ribbon':'wish-ribbons','boba:blend':'tea-blend','exchange:tea':'tea-blend',
+ 'lin:cat':'park-cat','exchange:cat':'park-cat','wang:plant':'plant','exchange:plant':'plant'
+};
+function pawTopicFor(resident,id){return pawAmbientTopics[resident+':'+id]||resident+':'+id}
+function pawTopicSeen(resident,id,history,now){
+ const topic=pawTopicFor(resident,id);
+ return history.some(v=>now-v[2]<86400000&&pawTopicFor(v[0],v[1])===topic)
+}
+function pawTopicCandidates(resident,lines,history,now){return lines.filter(v=>!pawTopicSeen(resident,v[0],history,now))}
+/* PAW_DIALOGUE_VARIETY_END */
+const pawTopicSoloBefore=pawAmbientPick;
+pawAmbientPick=function(id,lines,history,now,rng=Math.random){return Array.isArray(lines)?pawTopicSoloBefore(id,pawTopicCandidates(id,lines,history,now),history,now,rng):null};
+const pawTopicExchangeBefore=pawOverheardChoose;
+pawOverheardChoose=function(actors,origin,history,now,rng=Math.random){
+ const suppressed=pawOverheard.filter(e=>pawTopicSeen('exchange',e[0],history,now)).map(e=>['exchange',e[0],now]);
+ return pawTopicExchangeBefore(actors,origin,[...history,...suppressed],now,rng)
+};
+// More ordinary life and resident-specific details, not repeated boss jokes.
+const pawAdditionalRemarks={
+ temple:[['moss','Moss is growing along the old stone lantern.','旧石灯笼边上长出了一层青苔。'],['sandals','A visitor left their sandals neatly by the steps.','有位香客把鞋子整整齐齐地摆在台阶旁。']],
+ tarot:[['journal','I keep a notebook of questions I want to think about.','我有本笔记，专门记那些值得慢慢想的问题。'],['shuffle','These cards are much older than this table.','这副牌的年纪可比这张桌子大多了。']],
+ yue:[['calendar','The new almanac smells of fresh paper.','新历书带着一股纸墨香。'],['window','The swallows have returned to the roof.','屋檐下的燕子又回来了。']],
+ garden:[['bridge','The little bridge creaks, but it is still quite sturdy.','小桥踩上去吱呀响，其实结实得很。'],['seed','I planted seeds by the gate. Now we wait.','门边撒了些种子，接下来就等它们发芽啦。']],
+ grandma:[['rice','I washed enough rice for an unexpected guest.','米多淘了一碗，万一有人来吃饭呢。'],['pickle','The pickles should be ready by the weekend.','这坛腌菜周末应该就能吃了。']],
+ mei:[['music','I found an old record at the market.','在集市淘到一张旧唱片。'],['knitting','I made one sleeve longer than the other. Back to the beginning.','毛衣一只袖子织长了，又得拆了重来。']],
+ hong:[['ticket','Someone framed a train ticket. Must have been quite a journey.','有人把车票裱起来了，那趟旅程一定不一般。'],['secret','The shopkeeper learned to bake. Nobody knows who taught him.','店主居然学会烤面包了，不知道师傅是谁。']],
+ wang:[['socks','I wore mismatched socks today. Nobody noticed.','今天两只袜子不一样，竟然没人发现。'],['window','My favourite part of the train is that nobody expects a reply.','最喜欢坐火车的时候，不用立刻回任何人的消息。']],
+ ahma:[['fan','This old fan has survived three summers and countless complaints.','这把蒲扇陪我过了三个夏天，听了无数牢骚。'],['knot','Some things cannot be untied in a day.','有些心结，一天解不开也正常。']],
+ lin:[['bird','A little bird keeps visiting the fence at the same hour.','有只小鸟每天差不多这个时候来栅栏上站一会儿。'],['bench','The bench under the tree is my favourite place to read.','树下那张长椅是我最喜欢的看书地方。']],
+ arcade:[['token','I found an old arcade token while cleaning the floor.','扫地时捡到一枚以前的游戏币。'],['machine','The cabinet is older than some of my regular customers.','这台游戏机比我有些熟客的年纪还大。']],
+ boba:[['straw','I keep finding straws in my apron pockets.','围裙口袋里老是莫名其妙多出几根吸管。'],['tea-leaves','The new tea leaves have a lovely roasted fragrance.','新茶叶有股很好闻的烘焙香。']],
+ souvenir:[['wrapping','I saved a lovely scrap of wrapping paper. It is too pretty to waste.','留了一小块包装纸，花纹太好看了，舍不得扔。'],['clock','The little clock in the shop runs five minutes slow.','店里那只小钟慢了五分钟。']],
+ lab:[['margin','The notes in the margin are often more interesting than the answers.','有时候，页边的笔记比答案还更有意思。'],['books','I have been rearranging the bookshelf by colour.','最近在按颜色重新排书架。']],
+ story:[['station','An old timetable gave me an idea for a story.','看见一张旧时刻表，突然有了写故事的灵感。'],['ending-two','I wrote two endings and liked neither.','写了两个结局，结果哪个都不满意。']],
+ cafe:[['spoon','The smallest spoon always disappears first.','店里最小的那把勺子总是第一个不见。'],['music','I turned the music down. The rain sounds nicer.','把音乐调小了，雨声其实更好听。']]
+};
+for(const [id,entries] of Object.entries(pawAdditionalRemarks))pawAmbientLines[id]?.push(...entries);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
