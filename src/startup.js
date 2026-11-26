@@ -264,10 +264,12 @@ action=function(id){
   ])
  }
  if(room==='quiz'&&id==='quiz'){
-  closeTalk();return say(tr('Lab keeper','研究所店主'),tr('Three ways to explore yourself. Choose a playful character quiz, four personality preferences (16 questions), or Enneagram-inspired motives (27 questions). These are for reflection, not diagnosis.','三种自我探索：趣味猫灵测试、四种性格偏好（16题）、九型人格动力探索（27题）。仅供自我反思，并非诊断。'),[
+  closeTalk();return say(tr('Lab keeper','研究所店主'),tr('Choose a little discovery. Each is for self-reflection, not diagnosis.','选一个小小的自我探索。仅供自我反思，并非诊断。'),[
    [tr('Soul Cat · playful character','猫灵 · 趣味性格'),()=>{closeTalk();wonderSceneOpen('soul')}],
    [tr('MBTI-inspired preferences','MBTI 四种性格偏好'),()=>{closeTalk();wonderSceneOpen('type')}],
    [tr('Enneagram-inspired · nine motives','九型人格 · 九种内在动力'),()=>{closeTalk();wonderSceneOpen('motive')}],
+   [tr('Five personality tendencies','五大性格倾向'),()=>{closeTalk();wonderSceneOpen('bigfive')}],
+   [tr('Relationship values','关系价值观'),()=>{closeTalk();wonderSceneOpen('values')}],
    [tr('Keep exploring','继续逛逛'),closeTalk]
   ])
  }
@@ -7665,7 +7667,7 @@ function pawRecoveredTarotLayout(box,count){
 const pawRecoveredLayouts=Object.freeze({"spectrum4_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"score_rows":[[84,381,912,152.25],[84,542.25,912,152.25],[84,703.5,912,152.25],[84,864.75,912,152.25]]},"big_five_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"score_rows":[[84,381,912,120],[84,510,912,120],[84,639,912,120],[84,768,912,120],[84,897,912,120]]},"nine_motives_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"score_rows":[[84,381,912,62.666666666666664],[84,452.66666666666663,912,62.666666666666664],[84,524.3333333333333,912,62.666666666666664],[84,596,912,62.666666666666664],[84,667.6666666666666,912,62.666666666666664],[84,739.3333333333333,912,62.666666666666664],[84,811,912,62.666666666666664],[84,882.6666666666666,912,62.666666666666664],[84,954.3333333333333,912,62.666666666666664]]},"values_relationship_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"tiles":[[84,381,449,311],[547,381,449,311],[84,706,449,311],[547,706,449,311]]},"playful_result_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"illustration":[84,381,912,362.52],"summary":[84,757.52,912,259.48]},"tarot_1_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"cards":[[414.92,381,250.15999999999997,375.23999999999995]],"reading":[84,770.24,912,246.76000000000005]},"tarot_3_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"cards":[[152.76000000000005,381,250.15999999999997,375.23999999999995],[414.92,381,250.15999999999997,375.23999999999995],[677.0799999999999,381,250.15999999999997,375.23999999999995]],"reading":[84,770.24,912,246.76000000000005]},"tarot_5_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"cards":[[83.99999999999989,381,172.80000000000004,259.20000000000005],[268.79999999999995,381,172.80000000000004,259.20000000000005],[453.59999999999997,381,172.80000000000004,259.20000000000005],[638.4,381,172.80000000000004,259.20000000000005],[823.2,381,172.80000000000004,259.20000000000005]],"reading":[84,654.2,912,362.79999999999995]},"zi_wei_12_palaces_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"palace_cells":[[224,383,155,155],[383,383,155,155],[542,383,155,155],[701,383,155,155],[224,542,155,155],[701,542,155,155],[224,701,155,155],[701,701,155,155],[224,860,155,155],[383,860,155,155],[542,860,155,155],[701,860,155,155]],"chart_summary":[384,543,312,312]},"fortune_slip_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"illustration":[84,381,912,362.52],"summary":[84,757.52,912,259.48]},"story_ending_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"illustration":[84,381,912,362.52],"summary":[84,757.52,912,259.48]},"spectrum4_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"score_rows":[[84,399,912,166.75],[84,574.75,912,166.75],[84,750.5,912,166.75],[84,926.25,912,166.75]]},"big_five_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"score_rows":[[84,399,912,131.6],[84,539.6,912,131.6],[84,680.2,912,131.6],[84,820.8,912,131.6],[84,961.4,912,131.6]]},"nine_motives_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"score_rows":[[84,399,912,69.11111111111111],[84,477.1111111111111,912,69.11111111111111],[84,555.2222222222222,912,69.11111111111111],[84,633.3333333333334,912,69.11111111111111],[84,711.4444444444445,912,69.11111111111111],[84,789.5555555555555,912,69.11111111111111],[84,867.6666666666667,912,69.11111111111111],[84,945.7777777777778,912,69.11111111111111],[84,1023.8888888888889,912,69.11111111111111]]},"values_relationship_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"tiles":[[84,399,449,340],[547,399,449,340],[84,753,449,340],[547,753,449,340]]},"playful_result_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"illustration":[84,399,912,395.58],"summary":[84,808.5799999999999,912,284.42]},"tarot_1_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"cards":[[403.5133333333333,399,272.9733333333333,409.46]],"reading":[84,822.46,912,270.54]},"tarot_3_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"cards":[[118.54000000000008,399,272.9733333333333,409.46],[403.5133333333334,399,272.9733333333333,409.46],[688.4866666666667,399,272.9733333333333,409.46]],"reading":[84,822.46,912,270.54]},"tarot_5_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"cards":[[83.99999999999989,399,172.80000000000004,259.20000000000005],[268.79999999999995,399,172.80000000000004,259.20000000000005],[453.59999999999997,399,172.80000000000004,259.20000000000005],[638.4,399,172.80000000000004,259.20000000000005],[823.2,399,172.80000000000004,259.20000000000005]],"reading":[84,672.2,912,420.79999999999995]},"zi_wei_12_palaces_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"palace_cells":[[195,401,169.5,169.5],[368.5,401,169.5,169.5],[542,401,169.5,169.5],[715.5,401,169.5,169.5],[195,574.5,169.5,169.5],[715.5,574.5,169.5,169.5],[195,748,169.5,169.5],[715.5,748,169.5,169.5],[195,921.5,169.5,169.5],[368.5,921.5,169.5,169.5],[542,921.5,169.5,169.5],[715.5,921.5,169.5,169.5]],"chart_summary":[369.5,575.5,341,341]},"fortune_slip_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"illustration":[84,399,912,395.58],"summary":[84,808.5799999999999,912,284.42]},"story_ending_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"illustration":[84,399,912,395.58],"summary":[84,808.5799999999999,912,284.42]},"spectrum4_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"score_rows":[[84,490,912,244.75],[84,743.75,912,244.75],[84,997.5,912,244.75],[84,1251.25,912,244.75]]},"big_five_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"score_rows":[[84,490,912,194],[84,693,912,194],[84,896,912,194],[84,1099,912,194],[84,1302,912,194]]},"nine_motives_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"score_rows":[[84,490,912,103.77777777777777],[84,602.7777777777778,912,103.77777777777777],[84,715.5555555555555,912,103.77777777777777],[84,828.3333333333333,912,103.77777777777777],[84,941.1111111111111,912,103.77777777777777],[84,1053.888888888889,912,103.77777777777777],[84,1166.6666666666665,912,103.77777777777777],[84,1279.4444444444443,912,103.77777777777777],[84,1392.2222222222222,912,103.77777777777777]]},"values_relationship_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"tiles":[[84,490,449,496],[547,490,449,496],[84,1000,449,496],[547,1000,449,496]]},"playful_result_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"illustration":[84,490,912,573.42],"summary":[84,1077.42,912,418.58000000000004]},"tarot_1_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"cards":[[342.1533333333333,490,395.6933333333333,593.54]],"reading":[84,1097.54,912,398.46000000000004]},"tarot_3_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"cards":[[84,490,296,444],[392,490,296,444],[700,490,296,444]],"reading":[84,948,912,548]},"tarot_5_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"cards":[[83.99999999999989,490,172.80000000000004,259.20000000000005],[268.79999999999995,490,172.80000000000004,259.20000000000005],[453.59999999999997,490,172.80000000000004,259.20000000000005],[638.4,490,172.80000000000004,259.20000000000005],[823.2,490,172.80000000000004,259.20000000000005]],"reading":[84,763.2,912,732.8]},"zi_wei_12_palaces_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"palace_cells":[[86,492,224,224],[314,492,224,224],[542,492,224,224],[770,492,224,224],[86,720,224,224],[770,720,224,224],[86,948,224,224],[770,948,224,224],[86,1176,224,224],[314,1176,224,224],[542,1176,224,224],[770,1176,224,224]],"chart_summary":[315,721,450,450],"reading":[84,1412,912,84]},"fortune_slip_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"illustration":[84,490,912,573.42],"summary":[84,1077.42,912,418.58000000000004]},"story_ending_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"illustration":[84,490,912,573.42],"summary":[84,1077.42,912,418.58000000000004]},"spectrum4_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"score_rows":[[84,318.64,912,113.61000000000001],[84,441.25,912,113.61000000000001],[84,563.86,912,113.61000000000001],[84,686.47,912,113.61000000000001]]},"big_five_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"score_rows":[[84,318.64,912,89.08800000000001],[84,416.728,912,89.08800000000001],[84,514.816,912,89.08800000000001],[84,612.904,912,89.08800000000001],[84,710.992,912,89.08800000000001]]},"nine_motives_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"score_rows":[[84,318.64,912,45.49333333333334],[84,373.1333333333333,912,45.49333333333334],[84,427.62666666666667,912,45.49333333333334],[84,482.12,912,45.49333333333334],[84,536.6133333333333,912,45.49333333333334],[84,591.1066666666667,912,45.49333333333334],[84,645.6,912,45.49333333333334],[84,700.0933333333334,912,45.49333333333334],[84,754.5866666666667,912,45.49333333333334]]},"values_relationship_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"tiles":[[84,318.64,449,233.72000000000003],[547,318.64,449,233.72000000000003],[84,566.36,449,233.72000000000003],[547,566.36,449,233.72000000000003]]},"playful_result_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"illustration":[84,318.64,912,274.4208],"summary":[84,607.0608,912,193.01920000000007]},"tarot_1_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"cards":[[445.3168,318.64,189.3664,284.0496]],"reading":[84,616.6895999999999,912,183.39040000000006]},"tarot_3_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"cards":[[243.9504,318.64,189.3664,284.0496],[445.3168,318.64,189.3664,284.0496],[646.6831999999999,318.64,189.3664,284.0496]],"reading":[84,616.6895999999999,912,183.39040000000006]},"tarot_5_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"cards":[[83.99999999999989,318.64,172.80000000000004,259.20000000000005],[268.79999999999995,318.64,172.80000000000004,259.20000000000005],[453.59999999999997,318.64,172.80000000000004,259.20000000000005],[638.4,318.64,172.80000000000004,259.20000000000005],[823.2,318.64,172.80000000000004,259.20000000000005]],"reading":[84,591.84,912,208.24]},"zi_wei_12_palaces_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"palace_cells":[[301.28,320.64,116.36000000000001,116.36000000000001],[421.64,320.64,116.36000000000001,116.36000000000001],[542,320.64,116.36000000000001,116.36000000000001],[662.36,320.64,116.36000000000001,116.36000000000001],[301.28,441,116.36000000000001,116.36000000000001],[662.36,441,116.36000000000001,116.36000000000001],[301.28,561.36,116.36000000000001,116.36000000000001],[662.36,561.36,116.36000000000001,116.36000000000001],[301.28,681.72,116.36000000000001,116.36000000000001],[421.64,681.72,116.36000000000001,116.36000000000001],[542,681.72,116.36000000000001,116.36000000000001],[662.36,681.72,116.36000000000001,116.36000000000001]],"chart_summary":[422.64,442,234.72000000000003,234.72000000000003]},"fortune_slip_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"illustration":[84,318.64,912,274.4208],"summary":[84,607.0608,912,193.01920000000007]},"story_ending_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"illustration":[84,318.64,912,274.4208],"summary":[84,607.0608,912,193.01920000000007]}});
 function pawRecoveredLayoutKey(data,format){
  if(!pawRecoveredShareBounds(format))return null;
- const kind=data?.kind==='tarot'&&[1,3,5].includes(data.cards?.length)?'tarot_'+data.cards.length:data?.kind==='fortune'?'fortune_slip':data?.kind==='story'?'story_ending':data?.kind==='type'&&data.scoreRows?.length===4?'spectrum4':data?.kind==='motive'&&data.scoreRows?.length===9?'nine_motives':data?.kind==='soul'||data?.kind==='cafe'?'playful_result':data?.kind==='zwds_chart'&&data.palaces?.length===12?'zi_wei_12_palaces':null;
+ const kind=data?.kind==='tarot'&&[1,3,5].includes(data.cards?.length)?'tarot_'+data.cards.length:data?.kind==='fortune'?'fortune_slip':data?.kind==='story'?'story_ending':data?.kind==='type'&&data.scoreRows?.length===4?'spectrum4':data?.kind==='motive'&&data.scoreRows?.length===9?'nine_motives':data?.kind==='soul'||data?.kind==='cafe'?'playful_result':data?.kind==='zwds_chart'&&data.palaces?.length===12?'zi_wei_12_palaces':data?.kind==='bigfive'&&data.scoreRows?.length===5?'big_five':data?.kind==='values'&&data.scoreRows?.length===4?'values_relationship':null;
  const key=kind?kind+'_'+format:null;
  return key&&Object.hasOwn(pawRecoveredLayouts,key)?key:null
 }
@@ -7687,7 +7689,7 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
  const slots=pawRecoveredLayouts[key],overlay=pawRecoveredImage('templates/'+key+'.svg');
  if(!overlay?.complete||!overlay.naturalWidth||overlay.naturalWidth!==box.width||overlay.naturalHeight!==box.height)return false;
  const tarot=data.kind==='tarot',art=tarot?readingArtwork():pawRecoveredResultIllustration(data);
- if(!slots.score_rows&&!slots.palace_cells&&(!art?.complete||!art.naturalWidth||!art.naturalHeight||(tarot&&(art.naturalWidth!==1024||art.naturalHeight!==2180))))return false;
+ if(!slots.score_rows&&!slots.tiles&&!slots.palace_cells&&(!art?.complete||!art.naturalWidth||!art.naturalHeight||(tarot&&(art.naturalWidth!==1024||art.naturalHeight!==2180))))return false;
  cv.width=box.width;cv.height=box.height;
  const g=cv.getContext('2d'),locale=v=>String(v?.[Number(cn)]||''),font=cn?'"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif':'Georgia,serif';
  const ink='#4d3a2c',accent='#795741',muted='#54684e';
@@ -7720,6 +7722,11 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
    textIn([x,y+head,w,h-head],p.stars.length?p.stars.map(locale):[cn?'无主星':'No main star'],20,'normal',ink)
   });
   textIn(slots.chart_summary,[cn?'十四主星':'14 main stars',cn?'传统文化小记':'Traditional symbolism',cn?'仅供反思':'For reflection'],30,'normal',accent)
+ }else if(slots.tiles){
+  slots.tiles.forEach((rect,i)=>{const [x,y,w,h]=rect,r=data.scoreRows[i];
+   textIn([x+10,y+5,w-20,h*.47],[locale(r.label)],30,'bold',muted);
+   textIn([x+10,y+h*.48,w-20,h*.46],[locale(r.value)],36,'normal',accent)
+  });
  }else if(slots.score_rows){
   slots.score_rows.forEach((rect,i)=>{
    const row=data.scoreRows[i],[x,y,w,h]=rect;
@@ -7736,7 +7743,74 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
  g.restore();return true
 }
 /* Share only the computed result, never individual answers or private input. */
+/* PAW_EXTRA_DISCOVERY_BEGIN */
+const pawExtraDiscoveries={
+ bigfive:{title:['Five personality tendencies','五大性格倾向'],axes:[
+  {name:['Openness','开放性'],questions:[[['I enjoy learning something unfamiliar.','我喜欢学习陌生的新事物。'],false],[['I would rather try a different route sometimes.','我有时喜欢尝试不同的路线。'],false],[['I usually avoid ideas that challenge my habits.','我通常回避挑战自己习惯的想法。'],true]]},
+  {name:['Conscientiousness','尽责性'],questions:[[['I keep track of promises I make.','我会记住自己做过的承诺。'],false],[['I prepare before an important task.','重要任务之前，我会提前准备。'],false],[['I often leave simple tasks unfinished.','我经常让简单的事情半途而废。'],true]]},
+  {name:['Extraversion','外向性'],questions:[[['I feel energised by friendly group conversations.','轻松的群体聊天会让我充满活力。'],false],[['I enjoy starting conversations with new people.','我喜欢主动与新认识的人交谈。'],false],[['After a social event, I prefer a long quiet break.','社交活动之后，我更喜欢长时间独处。'],true]]},
+  {name:['Agreeableness','宜人性'],questions:[[['I try to understand other people before judging.','评价别人之前，我会试着理解对方。'],false],[['I look for a fair way to resolve disagreements.','意见不合时，我会寻找公平的解决办法。'],false],[['I rarely consider how my decisions affect others.','我很少考虑自己的决定对他人的影响。'],true]]},
+  {name:['Emotional sensitivity','情绪敏感度'],questions:[[['Small uncertainties can stay on my mind.','小小的不确定也可能让我久久惦记。'],false],[['My feelings change noticeably under pressure.','压力大时，我的情绪变化会很明显。'],false],[['I generally remain calm when plans change.','计划改变时，我通常能保持平静。'],true]]}
+ ]},
+ values:{title:['Relationship values','关系价值观'],axes:[
+  {name:['Connection','陪伴与连接'],questions:[[['I value regular time together.','我重视经常一起度过的时间。'],false],[['Small gestures help me feel connected.','小小的心意能让我感到亲近。'],false],[['Sharing ordinary daily experiences matters to me.','分享平凡的日常对我很重要。'],false]]},
+  {name:['Autonomy','独立与空间'],questions:[[['I need time for my own interests.','我需要留时间给自己的兴趣。'],false],[['I value the freedom to make my own choices.','我重视自己做决定的自由。'],false],[['I feel comfortable asking for personal space.','我愿意坦然表达自己需要独处空间。'],false]]},
+  {name:['Communication','坦诚沟通'],questions:[[['I value discussing needs openly.','我重视坦诚讨论彼此的需要。'],false],[['I prefer addressing misunderstandings calmly.','我希望平静地处理误会。'],false],[['I appreciate direct but kind feedback.','我欣赏直接但善意的反馈。'],false]]},
+  {name:['Reliability','信任与可靠'],questions:[[['Keeping promises is important to me.','遵守承诺对我很重要。'],false],[['I value consistency in how people show up.','我重视对方持续而稳定的陪伴。'],false],[['I appreciate knowing what I can count on.','我希望清楚哪些事情可以彼此依靠。'],false]]}
+ ]}
+};
+function pawExtraScore(mode,rows,answers){
+ const cfg=pawExtraDiscoveries[mode];if(!cfg||!Array.isArray(rows)||!Array.isArray(answers)||rows.length!==cfg.axes.length*3||answers.length!==rows.length)return null;
+ const counts=Array(cfg.axes.length).fill(0),scores=counts.slice(),seen=new Set();
+ for(let i=0;i<rows.length;i++){const q=rows[i],v=answers[i];if(!Number.isInteger(q.dimension)||q.dimension<0||q.dimension>=counts.length||!Number.isInteger(q.id)||q.id<0||q.id>=rows.length||Math.floor(q.id/3)!==q.dimension||seen.has(q.id)||!Number.isInteger(v)||v<0||v>2)return null;seen.add(q.id);counts[q.dimension]++;scores[q.dimension]+=cfg.axes[q.dimension].questions[q.id%3][1]?2-v:v}
+ return counts.every(v=>v===3)?scores:null
+}
+function pawExtraRows(mode,scores){
+ const cfg=pawExtraDiscoveries[mode];if(!cfg||!Array.isArray(scores)||scores.length!==cfg.axes.length||scores.some(v=>!Number.isInteger(v)||v<0||v>6))return null;
+ return scores.map((v,i)=>({label:cfg.axes[i].name,value:[v+' / 6',v+' / 6']}))
+}
+/* PAW_EXTRA_DISCOVERY_END */
+for(const [mode,cfg] of Object.entries(pawExtraDiscoveries)){wonderSceneNames[mode]=cfg.title;shareKinds[mode]=cfg.title}
+const pawExtraQuestionBefore=prepareWonderQuestions;
+prepareWonderQuestions=function(mode){
+ const cfg=pawExtraDiscoveries[mode];if(!cfg)return pawExtraQuestionBefore(mode);
+ const rows=cfg.axes.flatMap((a,k)=>a.questions.map(([prompt],j)=>({prompt,dimension:k,id:k*3+j,opts:[['Not much like me','不太像我',0],['Sometimes','有时像我',1],['Very much like me','很像我',2]]})));
+ for(let i=rows.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[rows[i],rows[j]]=[rows[j],rows[i]]}return rows
+};
+const pawExtraFinishBefore=wonderSceneFinish;
+wonderSceneFinish=function(){
+ const mode=wonderSceneMode,cfg=pawExtraDiscoveries[mode];if(!cfg)return pawExtraFinishBefore();
+ const scores=pawExtraScore(mode,wonderQuestionOrder,wonderSceneAnswers);if(!scores)return;
+ wonderSaved[mode]={scores,version:1};save('wonderTestsV1',wonderSaved);
+ wonderSceneResult={name:cfg.title,desc:mode==='values'?['Your priorities can coexist. None is a relationship grade.','不同的关系需求可以共存，这不是关系评分。']:['A snapshot of your tendencies today, not a fixed label.','此刻的性格倾向小画像，不是固定标签。'],color:'#92a79a'};
+ wonderScenePhase='result';wonderSceneAt=t;sound(660)
+};
+const pawExtraResultBefore=openWonderResult;
+openWonderResult=function(mode,result){
+ const cfg=pawExtraDiscoveries[mode],rows=pawExtraRows(mode,wonderSaved[mode]?.scores);if(!cfg||!rows)return pawExtraResultBefore(mode,result);
+ page(tr(...cfg.title),tr('Your illustrated reflection','你的自我探索小记'),q=>{
+  const body=element('section','',q,'readingNotes');
+  const im=element('img','',body,'pawExtraResultArt');im.src=ART.readingInterior;im.alt='';im.style.cssText='width:100%;max-height:24vh;object-fit:contain';
+  element('p',tr(...result.desc),body);
+  element('p',tr('Three statements per theme, scored from 0 to 6. This is an original informal reflection, not a validated psychological measure.','每项由三道题组成，分数为0至6。此为原创趣味探索，非经验证的心理量表。'),body);
+  rows.forEach(row=>{const item=element('article','',body,'readingNote');element('h2',tr(...row.label),item);element('p',tr(...row.value),item)});
+  b(body,tr('Share keepsake','分享纪念卡'),()=>wonderSceneShare(()=>openWonderResult(mode,result)));
+  b(body,tr('Try again','再测一次'),()=>wonderSceneOpen(mode))
+ });journalLanguage(()=>openWonderResult(mode,result))
+};
+const pawExtraQuoteBefore=socialResultQuote;
+socialResultQuote=function(data){
+ if(data.kind==='bigfive')return ['A personality is more than a number.','性格不止是一组数字。'];
+ if(data.kind==='values')return ['There is room for both closeness and space.','亲密与空间，都值得被尊重。'];
+ return pawExtraQuoteBefore(data)
+};
+const pawExtraCaptionBefore=meowSocialCaption;
+meowSocialCaption=function(data,format,cn){
+ if(!pawExtraDiscoveries[data.kind])return pawExtraCaptionBefore(data,format,cn);
+ const i=Number(cn);return ['Pawradise · '+data.title[i],...(data.scoreRows||[]).map(r=>r.label[i]+' '+r.value[i]),socialResultQuote(data)[i],cn?'趣味探索，非心理诊断。':'Informal reflection, not a psychological assessment.'].join('\n')
+};
 function pawPublicWonderScores(kind,scores,labels){
+ if(pawExtraDiscoveries[kind])return pawExtraRows(kind,scores);
  if(kind==='type'){
   if(!Array.isArray(scores)||scores.length!==4||scores.some(v=>!Number.isInteger(v)||v< -4||v>4||v%2!==0))return null;
   const axes=[['Social / quiet recharge','社交 / 独处'],['Details / possibilities','细节 / 可能性'],['Logic / values','逻辑 / 感受'],['Plans / flexibility','计划 / 随性']];
@@ -7787,13 +7861,13 @@ sharePublicData=function(raw){
  const rows=pawPublicWonderScores(data.kind,raw?.computedScores,wonderMotives);
  return rows?{...data,scoreRows:rows}:data
 };
-wonderSceneShare=function(){
+wonderSceneShare=function(back=null){
  const v=wonderSceneResult;if(!v)return;
- const mode=wonderSceneMode;let scores=null;
+ const mode=wonderSceneMode;let scores=pawExtraDiscoveries[mode]?pawExtraScore(mode,wonderQuestionOrder,wonderSceneAnswers):null;
  if((mode==='type'||mode==='motive')&&wonderQuestionOrder.length===wonderSceneAnswers.length){
   try{scores=scoreWonder(mode,wonderQuestionOrder,wonderSceneAnswers).scores}catch{}
  }
- openMeowShare({kind:mode,title:v.name,lines:[v.desc],accent:v.color,computedScores:scores})
+ openMeowShare({kind:mode,title:v.name,lines:[v.desc],accent:v.color,computedScores:scores},back)
 };
 const pawRecoveredShareBefore=shareCardArt;
 shareCardArt=function(cv,data,format,cn){
