@@ -5413,7 +5413,7 @@ function pawGuestCount(max,visit,roomId){
  return (key+visit)%4===0?0:Math.min(max,1+((key+visit)%3===0?1:0))
 }
 /* PAW_VISITOR_LIFECYCLE_BEGIN */
-function pawVisitorDoorRoute(from,to,anchors,safe,path,clearance=52){
+function pawVisitorDoorRoute(from,to,anchors,safe,path,clearance=52,segment=null){
  if(!Array.isArray(from)||!Array.isArray(to)||![...from,...to].every(Number.isFinite)||!safe(...from)||!safe(...to))return null;
  const point=v=>Array.isArray(v)&&v.length===2&&safe(...v)&&pawGuestClear(v[0],v[1],anchors,clearance);
  const valid=(route,start,end)=>Array.isArray(route)&&route.length&&route.every((v,i)=>point(v)&&pawGuestSegment(i?route[i-1]:start,v,anchors,clearance))&&Math.hypot(route.at(-1)[0]-end[0],route.at(-1)[1]-end[1])<.01;
@@ -5435,7 +5435,9 @@ function pawVisitorDoorRoute(from,to,anchors,safe,path,clearance=52){
   done.add(u);
   for(let v=1;v<nodes.length;v++){
    if(done.has(v)||!pawGuestSegment(nodes[u],nodes[v],anchors,clearance))continue;
-   const edge=path(nodes[u],nodes[v]);if(!valid(edge,nodes[u],nodes[v]))continue;
+   // In the live room, test the cheap straight physical segment rather than
+   // nesting a full pathfinder inside every candidate graph edge.
+   const edge=segment?(segment(nodes[u],nodes[v])?[nodes[v]]:null):path(nodes[u],nodes[v]);if(!valid(edge,nodes[u],nodes[v]))continue;
    const length=edge.reduce((sum,p,i)=>{const q=i?edge[i-1]:nodes[u];return sum+Math.hypot(p[0]-q[0],p[1]-q[1])},0);
    if(dist[u]+length<dist[v]){dist[v]=dist[u]+length;prev[v]={from:u,route:edge}}
   }
@@ -5480,7 +5482,7 @@ function pawRoomWalkers(){
  for(const a of pawLocalVisitors){
   a.walking=0;if(a.guest||a.visitingResident||a.phase==='gone'||a.phase==='stationary'||t<a.wait)continue;
   const others=pawLocalVisitors.filter(b=>b!==a),clearDoor=()=>pawVisitorDoorClear(door,indoor,[...others,...pawAmbientIndoor]);
-  const routeTo=(from,to)=>pawVisitorDoorRoute(from,to,stationFeet,(x,y)=>indoorSafe(x,y,obs),(f,d)=>indoorPath(f,d,obs));
+  const routeTo=(from,to)=>pawVisitorDoorRoute(from,to,stationFeet,(x,y)=>indoorSafe(x,y,obs),(f,d)=>indoorPath(f,d,obs),52,(f,d)=>indoorSegment(f,d,obs));
   if(a.phase==='waiting'){
    if(!a.identitySettled||!clearDoor()){a.wait=t+.7;continue}
    const route=routeTo(door,a.destination);
@@ -5489,9 +5491,9 @@ function pawRoomWalkers(){
   }
   if(a.phase==='roaming'){
    a.elapsed+=dt;
-   if(a.elapsed>=35+((a.avatar+1)*7)&&clearDoor()){
+   if(a.elapsed>=35+((a.avatar+1)*7)&&clearDoor()&&t>=(a.exitRetry||0)){
     const route=routeTo([a.x,a.y],door);
-    if(route){a.route=route;a.phase='departing'}
+    if(route){a.route=route;a.phase='departing'}else a.exitRetry=t+5
    }
   }
   if(!a.route.length){
@@ -5505,7 +5507,7 @@ function pawRoomWalkers(){
    for(let attempt=0;attempt<safe.length;attempt++){
     a.index=(a.index+1)%safe.length;const end=safe[a.index];
     if(Math.hypot(a.x-end[0],a.y-end[1])<10)continue;
-    const route=pawVisitorDoorRoute([a.x,a.y],end,protectedFeet,(x,y)=>indoorSafe(x,y,obs),(f,d)=>indoorPath(f,d,obs));
+    const route=pawVisitorDoorRoute([a.x,a.y],end,protectedFeet,(x,y)=>indoorSafe(x,y,obs),(f,d)=>indoorPath(f,d,obs),52,(f,d)=>indoorSegment(f,d,obs));
     if(route?.length){found=route;break}
    }
    if(!found){a.wait=t+5;continue}a.route=found
