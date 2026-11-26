@@ -15,3 +15,21 @@ console.log('PASS '+pawGroundChecks+' painted-window and four-district ground as
 
 const pawPreviewChecks=new Function(pawWindowMath+"let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};\nfor(const mode of ['entrance','preview','ride','transfer'])for(let i=0;i<=2000;i++){\n const v=pawRailTravel(i*.01,mode);\n ck(v.a>=0&&v.a<=.13&&v.mix>=0&&v.mix<=1,'travel bounds');\n for(const speed of [1,.74,.62,.35])for(const x of [0,.5,1])ck(.15+.70*x-v.a*speed>=0&&.15+.70*x-v.a*speed<=1,'sample stays inside glass')\n}\nck(pawRailTravel(3.6,'ride').a===pawRailTravel(30,'ride').a,'stop drawing once ride crop reaches limit');\nck(pawRailTravel(4,'preview').a!==pawRailTravel(5,'preview').a,'preview stays moving');\nck(pawRailTravel(8.9999,'preview').mix>.999,'blend reset');\nck(pawRailTravel(9,'preview').a===0,'loop restart');\nreturn n;")();
 console.log('PASS '+pawPreviewChecks+' rail motion bounds and preview continuity checks');
+
+const pawRouteValidation=pawSlice(pawStartup,'function pawRailRouteRecord(','const pawRailRouteImages');
+const pawLayerMath=pawSlice(pawStartup,'function pawRailLayerCrop(','/* PAW_WINDOW_MOTION_END */');
+console.log(new Function(pawRouteValidation+pawLayerMath+`let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+for(const id of ['fortune','home','island','wonder']){
+ const layer=k=>({path:'assets/visual/painted/journey/routes/'+id+'/'+k+'.webp',width:2400,height:800,sha256:'a'.repeat(64)});
+ const far=layer('far'),near=layer('near');
+ ck(!!pawRailRouteRecord({far,near},id),'valid layers');
+ ck(!pawRailRouteRecord({far},id),'reject missing foreground');
+ ck(!pawRailRouteRecord({far,near:{...near,width:2200}},id),'reject mismatched dimensions');
+ ck(!pawRailRouteRecord({far,near:{...near,path:'assets/art/map.webp'}},id),'reject unrelated map');
+ for(const aspect of [2/3,16/9,1])for(let i=0;i<=100;i++){
+  const t=i/100,a=pawRailLayerCrop(2400,800,t,.32,aspect),b=pawRailLayerCrop(2400,800,t,1,aspect);
+  ck(a.x<=b.x&&b.x+b.width<=2400&&a.x>=0,'parallax bounded');
+  ck(Math.abs(a.width/a.height-aspect)<.00001,'undistorted scenery');
+ }
+}
+return 'PASS '+n+' independent route artwork and parallax assertions';`)());
