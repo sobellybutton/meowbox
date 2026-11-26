@@ -974,11 +974,12 @@ say=function(name,line,...rest){
  const profile=residentWelcomeFor(name),chosen=residentPlayerDisplayName(),now=Date.now();
  if(profile&&residentPendingWelcome?.room===room&&residentPendingWelcome.id===profile.id&&typeof line==='string'){
   const pending=residentPendingWelcome;residentPendingWelcome=null;residentWelcomeSpoken.add(profile.id);
-  line=residentHospitalityWelcome(profile,pending.visits)+'\n\n'+line;
+  // Preserve the actual intentional conversation; avoid prepending a second scripted greeting.
+   if(pending.visits>1&&pending.visits%4===0&&['grandma','boba'].includes(profile.id))line=residentHospitalityWelcome(profile,pending.visits)+'\n\n'+line;
  }
  if(profile&&chosen&&typeof line==='string'&&!line.startsWith('Hi '+chosen+'!')&&!line.startsWith(chosen+'，')){
   const already=room?residentWelcomeSpoken.has(profile.id):(now-(residentOutdoorWelcome.get(profile.id)||0)<300000);
-  if(!already){line=tr('Hi '+chosen+'! ',chosen+'，')+line;if(room)residentWelcomeSpoken.add(profile.id);else residentOutdoorWelcome.set(profile.id,now)}
+  if(!already){if(room)residentWelcomeSpoken.add(profile.id);else residentOutdoorWelcome.set(profile.id,now)}
  }
  const result=residentPersonalSayBefore(name,line,...rest);
  // Generic avatar badges are not portraits of residents. Until the actual
@@ -1030,7 +1031,7 @@ npcTalk=function(n){
  const key=String(n.n[0]),now=Date.now();if(now-(residentVisitorWelcome.get(key)||0)<300000)return result;
  if(line.textContent.startsWith('Hi '+chosen+'!')||line.textContent.startsWith(chosen+'，'))return result;
  if(residentVisitorWelcome.size>=80&&!residentVisitorWelcome.has(key))residentVisitorWelcome.delete(residentVisitorWelcome.keys().next().value);
- residentVisitorWelcome.set(key,now);line.textContent=tr('Hi '+chosen+'! ',chosen+'，')+line.textContent;
+ residentVisitorWelcome.set(key,now);
  requestAnimationFrame(syncCharacterSpeech);return result
 };
 
@@ -3815,5 +3816,133 @@ pawPhysicalUI.textContent=
  '@media(max-width:380px){#game #content[data-paw-visual-theme="shop"] .komorebiGrid{gap:0 5px!important;padding:6px 4px 0;border-width:4px}#game #content[data-paw-visual-theme="shop"] .komorebiTile{padding:4px 3px 9px!important}.pawSketchTabs button{font-size:11px!important;line-height:1.25!important}}'+
  '@media(prefers-reduced-motion:reduce){#game #content .pawSketchSpread[data-page-turn]{animation:none!important}}';
 document.head.append(pawPhysicalUI);
+
+
+/* PAW_AMBIENT_RESIDENTS: autonomous remarks, separate from intentional
+   dialogue. Rendered residents only; never simulate a real online visitor. */
+const pawAmbientLines={
+ temple:[['incense','The incense has just been lit.','刚点上的香，闻起来很清淡。'],['leaves','I swept the courtyard this morning. The leaves had other plans.','早上才扫过院子，树叶又落了一地。'],['silence','The courtyard is lovely when nobody is in a hurry.','没人赶时间的时候，院子格外安静。'],['bell','I like the silence just after the bell fades.','我喜欢钟声散去后的那片安静。']],
+ tarot:[['deck','I repaired the corners of this old deck yesterday.','昨天把这副旧牌的边角修好了。'],['window','The light by the window is lovely for reading.','窗边的光线很适合看牌。'],['angle','A card offers a new angle, not an answer to everything.','塔罗可以让人换个角度思考，但不是万能答案。'],['tea','My tea has gone cold again.','我的茶又放凉了。']],
+ yue:[['stars','The sky was unusually clear last night.','昨晚的星空特别清亮。'],['note','I found a little note tucked inside an old almanac.','翻历书的时候，发现里面夹着一张旧字条。'],['time','Some questions become clearer with time.','有些问题，放一放反而更明白。'],['brush','This writing brush has served me well. It may be time to retire it.','这支毛笔陪了我好多年，也该退休了。']],
+ garden:[['buds','There are new buds beside the stone path.','石径旁边冒出了新芽。'],['wind','The wind turned all the wish tags around.','风把祈愿牌都吹转了方向。'],['pond','The pond is especially lovely in the late afternoon.','傍晚的池塘特别好看。'],['ribbon','Someone tied a loose ribbon back onto the wishing rack. How thoughtful.','有人把松了的红绳重新系好了，真贴心。']],
+ grandma:[['soup','The soup is nearly ready. A slow simmer makes all the difference.','汤快好了，慢慢熬才够味。'],['market','The market had lovely mushrooms this morning.','今天早市的菇特别新鲜。'],['bowl','My favourite bowl has a chip. I still cannot bear to throw it away.','我最喜欢的碗缺了个口，还是舍不得丢。'],['ginger','A little ginger makes this broth much warmer.','汤里放点姜，喝下去暖暖的。']],
+ mei:[['seat','I moved to this seat. The breeze is nicer here.','我换到这边坐，风吹着舒服。'],['letter','A postcard from the coast came this morning.','今天早上收到一张海边寄来的明信片。'],['tea','The second pot of tea always tastes better.','第二泡茶总是更香。'],['flower','I brought a few flowers for the table.','我带了几枝花，给桌上添点颜色。']],
+ hong:[['bouquet','Someone bought flowers and refused to say who they were for. Interesting.','有人买了花，却不肯说送给谁。有点意思。'],['umbrella','The station keeper found one very lonely umbrella.','站长捡到一把落单的雨伞。'],['cake','There was a cake in the tea room yesterday. Gone in six minutes.','昨天茶馆有蛋糕，六分钟就没了。'],['promise','I promised not to gossip today. It has been a difficult morning.','我答应今天不吃瓜，整个上午都很煎熬。']],
+ wang:[['leave','I took annual leave today and still checked my email. A terrible habit.','今天休年假，我居然还在看邮件。坏习惯。'],['plant','My office plant is thriving. It has never attended a meeting.','办公室那盆植物长得很好，毕竟它不用开会。'],['lunch','I finally had lunch before three. A personal record.','今天终于在三点前吃上午饭，破纪录了。'],['tea','I came here for tea, not a networking opportunity.','我今天就来喝茶，不拓展人脉。']],
+ ahma:[['slipper','I bought these slippers for comfort. They found a second career.','这双拖鞋本来是买来穿的，没想到还有第二份工作。'],['river','The river does not ask for an explanation. That is why I like it.','河水不会追问原因，我就喜欢这点。'],['chair','Sit if your feet are tired. Standing all day fixes nothing.','脚累了就坐，站一天也解决不了什么。'],['paper','There is spare paper if there is something you want to let go.','想放下什么的话，我这里还有纸。']],
+ lin:[['deer','That deer has been watching the same tree for ages.','那只鹿盯着同一棵树看了好久。'],['cat','The cat chose the sunniest spot, as usual.','猫又抢到了阳光最好的位置。'],['grass','The grass smells lovely after the morning dew.','清晨露水过后的草地特别好闻。'],['bow','Sometimes the deer bows first. Sometimes it just wants a snack.','有时候鹿会先鞠躬，有时候只是想吃饼干。']],
+ arcade:[['prize','The yellow prize has been surprisingly popular today.','今天黄色的奖品特别受欢迎。'],['repair','I tightened the cabinet controls this morning.','今天早上把游戏机的摇杆修紧了。'],['score','Someone left very mysterious initials on the score board.','排行榜上有个神秘的名字缩写。'],['sound','I love that little victory sound.','我最喜欢听过关时那一小段音乐。']],
+ boba:[['pearls','Fresh pearls are ready. The first batch smells wonderful.','珍珠刚煮好，第一锅特别香。'],['warm','Someone ordered warm milk tea on a hot day. Fair enough.','大热天有人点了热奶茶，也挺有道理。'],['cup','I finally found cups that do not leak at the seam.','终于找到封口不漏的杯子了。'],['blend','I am trying a different tea blend this week.','这星期想试试新的拼配茶底。']],
+ souvenir:[['postcard','The coastal postcards arrived this morning.','海边那批明信片今天早上到了。'],['box','This little wooden box took ages to polish.','这个小木盒打磨了好久。'],['shelf','I left the new pieces on the lower shelf.','新到的小东西放在下面那层了。'],['wrap','I like wrapping gifts, even the tiny ones.','我很喜欢包礼物，再小的也一样。']],
+ lab:[['notes','Two people answered the same question in completely different ways.','同一道题，两个人给了完全不同的答案。'],['change','People change. That is the interesting part.','人是会变的，这才有意思。'],['pencil','I keep losing my favourite pencil.','我总是找不到那支最喜欢的铅笔。']],
+ story:[['page','A loose page turned up between two old books.','两本旧书中间夹着一张散页。'],['ending','I like stories that leave a little room for the reader.','我喜欢给读者留点想象空间的故事。'],['letter','A letter can change the direction of a whole story.','一封信就能改变整个故事的走向。']],
+ cafe:[['cup','These cups never quite match. I like them that way.','这些杯子都不成套，我倒挺喜欢。'],['table','There is space at the table by the window.','窗边那张桌子还有空位。'],['quiet','Two people can enjoy tea without filling every silence.','两个人喝茶，也不必一直找话说。']]
+};
+const pawAmbientKey='pawAmbientHistoryV1';
+function pawAmbientRead(raw,now){
+ return Array.isArray(raw)?raw.filter(v=>Array.isArray(v)&&typeof v[0]==='string'&&typeof v[1]==='string'&&Number.isFinite(v[2])&&v[2]<=now&&now-v[2]<86400000).slice(-80):[]
+}
+function pawAmbientPick(id,lines,history,now,rng=Math.random){
+ if(!Array.isArray(lines)||!lines.length)return null;
+ const recent=history.filter(v=>v[0]===id&&now-v[2]<86400000);
+ const available=lines.filter(v=>!recent.some(h=>h[1]===v[0]));
+ return available.length?available[Math.min(available.length-1,Math.max(0,Math.floor(rng()*available.length)))]:null
+}
+let pawAmbientHistory=pawAmbientRead(load(pawAmbientKey,[]),Date.now());
+let pawAmbientIndoor=[],pawAmbientActive=null,pawAmbientNext=0,pawAmbientCheck=0,pawAmbientContext='';
+let pawAmbientBudget=0;
+const pawAmbientNode=element('div','',$('game'),'pawAmbientSpeech');pawAmbientNode.hidden=true;
+pawAmbientNode.setAttribute('role','status');pawAmbientNode.setAttribute('aria-live','polite');pawAmbientNode.setAttribute('aria-atomic','true');
+const pawAmbientName=element('strong','',pawAmbientNode),pawAmbientText=element('span','',pawAmbientNode);
+const pawAmbientStyle=document.createElement('style');
+pawAmbientStyle.textContent='#game .pawAmbientSpeech{position:absolute;z-index:8;box-sizing:border-box;max-width:min(220px,62%);padding:7px 10px;border:1px solid #9b815c;border-radius:9px;background:#fff3dcf7;color:#483d2e;box-shadow:0 2px 5px #443b2e33;pointer-events:none;line-height:1.35;font-size:clamp(12px,3.2vw,14px);overflow-wrap:anywhere}#game .pawAmbientSpeech[hidden]{display:none!important}#game .pawAmbientSpeech strong{display:block;font-size:.8em;color:#526a50;margin-bottom:2px}#game .pawAmbientSpeech span{display:block}';
+document.head.append(pawAmbientStyle);
+const pawAmbientDrawGathering=drawGatheringPainted;
+drawGatheringPainted=function(name,x,y,scale=1,facing='right'){
+ const result=pawAmbientDrawGathering(name,x,y,scale,facing);
+ if(result&&room&&!activity){
+  const record=residentArtworkRecord(name),im=residentArtworkImage(record),rect=residentArtworkRect(record,im,x,y,scale);
+  if(rect)pawAmbientIndoor.push({n:Array.isArray(name)?name:[name,name],x,y,rect})
+ }
+ return result
+};
+const pawAmbientRoomDraw=drawRoom;
+drawRoom=function(...args){pawAmbientIndoor=[];return pawAmbientRoomDraw(...args)};
+function pawAmbientProfile(actor){
+ if(!actor?.n||actor.sharedPeer||actor.kind===2)return null;
+ return actor.n.map(residentWelcomeFor).find(v=>v&&pawAmbientLines[v.id])||null
+}
+function pawAmbientBounds(actor){
+ if(!room)return characterScreenBounds(actor);
+ const r=actor.rect,s=cam.scale;
+ return {left:cam.ox+r.x*s,top:cam.oy+r.y*s,right:cam.ox+(r.x+r.w)*s,bottom:cam.oy+(r.y+r.h)*s}
+}
+function pawAmbientClear(){pawAmbientActive=null;pawAmbientNode.hidden=true}
+function pawAmbientBlocked(){
+ return document.hidden||avatar===null||!proposal.hidden||transitioning||talkOpen||!!activity||$('page').style.display==='block'||!$('arrival').hidden
+}
+function pawAmbientPlace(actor,actors){
+ const bounds=pawAmbientBounds(actor);
+ if(!bounds||bounds.right<12||bounds.left>W-12||bounds.bottom<100||bounds.top>H-110)return false;
+ const root=$('game').getBoundingClientRect(),blocks=[];
+ for(const n of document.querySelectorAll('#hud,#small,#dock,#back,#hint,#gameControls,#movePad,#moveGuide,#walkHelp,#worldSigns .worldSign:not([hidden]),#pawPlaceName')){
+  if(n.hidden||!n.getClientRects().length)continue;
+  const css=getComputedStyle(n);if(css.visibility==='hidden'||css.display==='none'||Number(css.opacity)<.05)continue;
+  const r=n.getBoundingClientRect();if(r.width&&r.height)blocks.push({left:r.left-root.left,top:r.top-root.top,right:r.right-root.left,bottom:r.bottom-root.top})
+ }
+ for(const n of actors)if(n!==actor)blocks.push(pawAmbientBounds(n));
+ const player=room&&typeof indoor!=='undefined'&&Number.isFinite(indoor.x)?{left:cam.ox+(indoor.x-34)*cam.scale,top:cam.oy+(indoor.y-120)*cam.scale,right:cam.ox+(indoor.x+34)*cam.scale,bottom:cam.oy+indoor.y*cam.scale}:characterScreenBounds(p,true);
+ const pos=chooseSpeechPosition(pawAmbientNode.offsetWidth,pawAmbientNode.offsetHeight,W,H,bounds,player,blocks);
+ if(!pos)return false;
+ pawAmbientNode.style.left=pos.left+'px';pawAmbientNode.style.top=pos.top+'px';return true
+}
+function pawAmbientTick(now){
+ if(now<pawAmbientCheck)return;pawAmbientCheck=now+180;
+ const context=scene+'|'+(room||'outside')+'|'+zh;
+ if(context!==pawAmbientContext){pawAmbientContext=context;pawAmbientClear();pawAmbientNext=now+4500+Math.random()*4500}
+ if(pawAmbientBlocked()){pawAmbientClear();pawAmbientNext=Math.max(pawAmbientNext,now+3000);return}
+ const actors=room?pawAmbientIndoor:npc.filter(n=>!n.sharedPeer&&n.kind!==2);
+ if(pawAmbientActive){
+  const actor=actors.find(n=>pawAmbientProfile(n)?.id===pawAmbientActive.id);
+  if(now>=pawAmbientActive.until||!actor||!pawAmbientPlace(actor,actors))pawAmbientClear();
+  return
+ }
+ if(now<pawAmbientNext||pawAmbientBudget>=35)return;
+ pawAmbientNext=now+7000+Math.random()*11000;
+ const clock=Date.now();pawAmbientHistory=pawAmbientRead(pawAmbientHistory,clock);
+ const origin=room&&typeof indoor!=='undefined'?indoor:p;
+ const candidates=actors.filter(n=>Math.hypot(n.x-origin.x,n.y-origin.y)<270).sort((a,b)=>Math.hypot(a.x-origin.x,a.y-origin.y)-Math.hypot(b.x-origin.x,b.y-origin.y));
+ for(const actor of candidates){
+  const profile=pawAmbientProfile(actor);if(!profile)continue;
+  if(pawAmbientHistory.some(h=>h[0]===profile.id&&clock-h[2]<120000))continue;
+  const line=pawAmbientPick(profile.id,pawAmbientLines[profile.id],pawAmbientHistory,clock);if(!line)continue;
+  pawAmbientName.textContent=tr(...actor.n);pawAmbientText.textContent=tr(line[1],line[2]);pawAmbientNode.hidden=false;
+  if(!pawAmbientPlace(actor,actors)){pawAmbientNode.hidden=true;continue}
+  pawAmbientActive={id:profile.id,until:now+Math.min(9500,Math.max(4200,2400+Array.from(pawAmbientText.textContent).length*65))};
+  pawAmbientHistory.push([profile.id,line[0],clock]);pawAmbientHistory=pawAmbientHistory.slice(-80);
+  save(pawAmbientKey,pawAmbientHistory);pawAmbientBudget++;return
+ }
+}
+const pawAmbientLoopBefore=loop;
+loop=function(ms){
+ const result=pawAmbientLoopBefore(ms);
+ try{pawAmbientTick(ms)}catch(e){pawAmbientClear();pawAmbientNext=ms+30000;console.warn('Ambient speech skipped',e)}
+ return result
+};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pawAmbientClear()});
+// Intentional conversation still has its existing choices; stop automatically
+// prefixing every first meeting with the same name or a generic office joke.
+residentNamedGreeting=function(en,cn){return tr(en,cn)};
+residentHospitalityWelcome=function(profile,visits){
+ if(profile.id==='boba'&&residentHospitality.drink&&visits>1&&visits%4===0){
+  const base=teaChoices[residentHospitality.drink.base];return tr('I remember your '+base[0]+'.','我还记得你上次点的'+base[1]+'。')
+ }
+ if(profile.id==='grandma'&&residentHospitality.soup&&visits>1&&visits%4===0){
+  const [en,cn]=residentHospitality.soup;return tr('Last time you had '+en+'.','上次你喝的是'+cn+'。')
+ }
+ const pair=profile.lines[Math.max(0,visits-1)%profile.lines.length];
+ return tr(...pair)
+};
+/* PAW_AMBIENT_RESIDENTS_END */
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
