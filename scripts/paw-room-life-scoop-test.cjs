@@ -135,6 +135,11 @@ for(let i=0;i<12;i++){
  ck(route.at(-1).join()===to.join(),'exact destination');
 }
 ck(pawGuestStationFeet({stations:{a:[0,0,1,2],b:[0,0,3,4]}},['a','a','removed']).join()==='1,2','active station anchors only');
+for(let i=0;i<30;i++){
+ let calls=0;const path=(a,b)=>{calls++;return [b]},anchor=[300+i,300],from=[100,300],to=[600,300];
+ const route=pawVisitorDoorRoute(from,to,[anchor],safe,path,52,()=>true);
+ ck(route&&calls===1&&route.every((v,k)=>pawGuestSegment(k?route[k-1]:from,v,[anchor])),'bounded physical pathfinder');
+}
 return n;`)();
 console.log('PASS '+lifeCount+' visitor doorway, route, visibility and pause checks');
 
