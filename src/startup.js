@@ -1985,4 +1985,43 @@ mobileRoomCamera=function(s,ox,oy){
  mbLastStageCamera={key,view};return view;
 };
 
+/* Keep initial town residents distributed along the walkable path.
+   Do not teleport them after the map has become visible. */
+function mbResidentSpawnY(desired,low,high,occupied,gap){
+ const candidates=[Math.max(low,Math.min(high,desired))];
+ for(let i=1;i<=Math.ceil((high-low)/gap)+1;i++){
+  for(const sign of [-1,1])candidates.push(Math.max(low,Math.min(high,desired+sign*i*gap)));
+ }
+ candidates.sort((a,b)=>Math.abs(a-desired)-Math.abs(b-desired));
+ return candidates.find(y=>occupied.every(v=>Math.abs(v-y)>=gap))??candidates.reduce((best,y)=>Math.min(...occupied.map(v=>Math.abs(v-y)))>Math.min(...occupied.map(v=>Math.abs(v-best)))?y:best,candidates[0])
+}
+const mbSpreadInitBefore=initNPC;
+initNPC=function(...args){
+ const r=mbSpreadInitBefore(...args);
+ const path=scene==='fortune'?valleyNpcPath:paintedResidentPaths[scene];
+ if(!path||room)return r;
+ const low=Math.max(minY()+24,path[0][0]),high=Math.min(maxY()-24,path.at(-1)[0]);
+ if(high<=low)return r;
+ const gap=Math.min(160,(high-low)/Math.max(1,npc.length+1)),occupied=[p.y];
+ for(const [i,n] of [...npc].sort((a,b)=>Math.abs(a.y-p.y)-Math.abs(b.y-p.y)).entries()){
+  const y=mbResidentSpawnY(n.y,low,high,occupied,gap),lane=residentLane(scene,y);
+  n.y=n.ty=y;n.x=n.tx=lane.x+(i%2?1:-1)*lane.half*.65;
+  n.pathReady=false;n.pauseUntil=t+1.3+i*.45;occupied.push(y)
+ }
+ return r
+};
+const mbResidentSpacingStepBefore=step;
+step=function(n,dt,speed){
+ if(n===p||room||!npc.includes(n)||talkOpen)return mbResidentSpacingStepBefore(n,dt,speed);
+ const before={x:n.x,y:n.y};
+ const result=mbResidentSpacingStepBefore(n,dt,speed);
+ // Avoid closing a small gap between residents; use an alternate direction
+ // after yielding. The player's movement is never restricted by this rule.
+ const crowded=npc.some(a=>a!==n&&Math.abs(n.y-a.y)<88&&Math.abs(n.x-a.x)<65&&Math.hypot(n.x-a.x,n.y-a.y)<Math.hypot(before.x-a.x,before.y-a.y));
+ if(crowded){
+  n.x=before.x;n.y=before.y;n.tx=n.x;n.ty=n.y;n.walkDirection=-(n.walkDirection||1);n.pathReady=false;n.pauseUntil=t+.7;return true
+ }
+ return result
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

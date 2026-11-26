@@ -6205,7 +6205,9 @@ const adaptivePageStyle=document.createElement('style');adaptivePageStyle.textCo
 function stableResidentFallback(n){
  const name=String(n?.popGuest?.id||n?.n?.[0]||n?.kind||'resident');
  let h=2166136261;for(const ch of name){h^=ch.codePointAt(0);h=Math.imul(h,16777619)}
- return Number.isInteger(n?.visitor)&&n.visitor>=0&&n.visitor<4?n.visitor:(h>>>0)%4
+ const preferred=Number.isInteger(n?.visitor)&&n.visitor>=0&&n.visitor<4?n.visitor:(h>>>0)%4;
+ // Generic fallback guests must not look identical to the selected player.
+ return preferred===(avatar??0)?(preferred+1+(h>>>0)%3)%4:preferred
 }
 function houseSignMaterial(id){
  if(['temple','sticks','moon','destiny','tarot','daily'].includes(id))return 'ritual';
