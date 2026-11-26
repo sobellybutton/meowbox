@@ -879,4 +879,34 @@ destinyConsultMenu=function(){
 };
 const destinySubjectStyle=document.createElement('style');destinySubjectStyle.textContent='.destinySubjectStrip{margin:12px 0;padding:12px 0;border-block:1px solid #b6a17d}.destinySubjectStrip small,.destinyBirthNote{display:block;line-height:1.5;overflow-wrap:anywhere;margin:8px 0;color:#62553d}.destinySubjectChoices{display:flex;gap:8px;margin:8px 0}.destinySubjectChoices button{flex:1;min-height:44px;white-space:normal}.destinySubjectChoices button[aria-pressed=true]{background:#536b5a;color:#fff5de}.astroForm details select{width:100%;min-height:44px}.astroForm input{font-size:16px;max-width:100%;box-sizing:border-box}';document.head.append(destinySubjectStyle);
 
+
+/* A single consultation desk: the simple birthday form opens immediately.
+   A full chart is one optional switch, not another dialogue tree. */
+function yueFriendlyHeader(q,form){
+ const header=element('section','',q,'yueFriendlyWelcome'),im=element('img','',header);
+ im.src='assets/visual/painted/master-yue/expressions/warm.webp';im.alt=tr('Master Yue','月师傅');im.onerror=()=>im.remove();
+ const words=element('div','',header);
+ element('strong',tr('Come, sit with me.','来，坐坐。'),words);
+ element('p',tr('The tea is warm. No need to have life figured out before we begin.','茶还热着呢。不用把人生都想明白了才来。'),words);
+ form.before(header);
+}
+const yueQuickBirthBefore=destinyPage;
+destinyPage=function(options={}){
+ yueQuickBirthBefore(options);const q=$('content'),form=q.querySelector('.astroForm');
+ if(!form)return;
+ const art=q.querySelector('.roomArtWrap');if(art)art.hidden=true;
+ const hero=q.querySelector('.destinyChamber');if(hero)hero.hidden=true;
+ yueFriendlyHeader(q,form);
+};
+const yueQuickAlmanacBefore=yueZodiacAlmanac;
+yueZodiacAlmanac=function(birth='',selection=null,options={}){
+ yueQuickAlmanacBefore(birth,selection,options);const q=$('content'),form=q.querySelector('.yueAlmanacForm');if(!form)return;
+ yueFriendlyHeader(q,form);
+ const title=form.querySelector('button[type=submit]');if(title)title.textContent=tr('Read my year','看看流年');
+ const full=[...q.querySelectorAll('button')].find(v=>v.textContent===tr('Birth time unknown? Explore the date-only almanac','不知道出生时间？查看生肖流年小册')||v.textContent===tr('Full chart with known birth time','知道出生时间？查看完整命盘'));
+ if(full){full.textContent=tr('Explore a full birth chart instead','想看完整命盘');full.classList.add('yueModeLink');form.before(full)}
+};
+destinyConsultMenu=function(){closeTalk();yueZodiacAlmanac()};
+const yueFriendlyCSS=document.createElement('style');yueFriendlyCSS.textContent='.yueFriendlyWelcome{display:grid;grid-template-columns:86px minmax(0,1fr);align-items:center;gap:14px;padding:12px 0;margin:8px 0;border-bottom:1px solid #b9a480}.yueFriendlyWelcome img{width:86px;height:108px;object-fit:contain;object-position:center bottom}.yueFriendlyWelcome strong{font:600 20px/1.25 Georgia,"Songti SC",serif;color:#506650}.yueFriendlyWelcome p{margin:6px 0;font-size:14px;line-height:1.45}.yueModeLink{display:block;min-height:44px;width:100%;margin:8px 0}.destinyChamber[hidden],.roomArtWrap[hidden]{display:none!important}@media(min-width:650px){.yueFriendlyWelcome{grid-template-columns:108px minmax(0,1fr)}.yueFriendlyWelcome img{width:108px;height:126px}}';document.head.append(yueFriendlyCSS);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
