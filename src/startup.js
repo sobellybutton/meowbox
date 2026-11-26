@@ -2680,4 +2680,8 @@ const pawLocalMapCss=document.createElement('style');pawLocalMapCss.textContent=
 @media(max-width:340px){.pawLocalDoors{grid-template-columns:1fr}}
 `;document.head.append(pawLocalMapCss);
 
+/* Display-only Paw Coins branding. Keep all wallet keys and balances. */
+const pawCoinDisplay=(value)=>typeof value==='string'?value.replace(/Meow Coins?/gi,v=>v.toLowerCase().endsWith('coins')?'Paw Coins':'Paw Coin').replace(/喵币/g,'爪爪币'):value;
+const pawCoinHudBefore=updateHUD;
+updateHUD=function(...args){const result=pawCoinHudBefore(...args);const el=$('hudCoins');el.textContent=pawCoinDisplay(el.textContent);el.title=pawCoinDisplay(el.title);el.setAttribute('aria-label',pawCoinDisplay(el.getAttribute('aria-label')||el.textContent));return result};
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
