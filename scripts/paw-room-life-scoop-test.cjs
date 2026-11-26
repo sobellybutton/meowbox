@@ -118,7 +118,7 @@ const lifeCount=new Function(clearance+s.slice(lifeA,lifeB)+`
 let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
 const safe=(x,y)=>x>=0&&y>=0&&x<=800&&y<=800,path=(a,b)=>[b];
 ck(!!pawVisitorDoorRoute([100,100],[200,200],[],safe,path),'direct');
-ck(!pawVisitorDoorRoute([100,100],[200,200],[[150,150]],safe,path),'station blocked');
+ck(!pawVisitorDoorRoute([100,100],[200,200],[[150,150]],(x,y)=>x===y,path),'station blocks sole corridor');
 ck(!pawVisitorDoorRoute([-1,100],[200,200],[],safe,path),'invalid start');
 ck(!pawVisitorDoorRoute([100,100],[200,200],[],safe,()=>[[199,199]]),'wrong endpoint');
 ck(!pawVisitorDoorRoute([100,100],[200,200],[],safe,()=>[[NaN,100]]),'invalid waypoint');
@@ -128,6 +128,13 @@ ck(!pawVisitorDoorClear([100,100],{x:200,y:200},[{x:100,y:100,phase:'roaming'}])
 ck(pawVisitorDoorClear([100,100],{x:200,y:200},[{x:100,y:100,phase:'waiting'}]),'hidden visitor not blocking');
 for(const phase of ['waiting','gone','stationary','roaming','arriving','departing'])ck(pawVisitorVisible({phase})===!['waiting','gone'].includes(phase),'visibility');
 const list=[{walking:1,phase:'arriving'}];ck(pawVisitorHold(list)===list&&list[0].walking===0,'preserve actor references');
+for(let i=0;i<12;i++){
+ const anchor=[300+i*4,300],from=[100,300],to=[600,300],route=pawVisitorDoorRoute(from,to,[anchor],safe,path);
+ ck(route&&route.length>1,'station detour');
+ ck(route.every((v,j)=>pawGuestSegment(j?route[j-1]:from,v,[anchor])),'entire detour clear');
+ ck(route.at(-1).join()===to.join(),'exact destination');
+}
+ck(pawGuestStationFeet({stations:{a:[0,0,1,2],b:[0,0,3,4]}},['a','a','removed']).join()==='1,2','active station anchors only');
 return n;`)();
 console.log('PASS '+lifeCount+' visitor doorway, route, visibility and pause checks');
 
