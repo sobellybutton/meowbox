@@ -811,7 +811,7 @@ function yueCompactPage(q,form,out){
  const header=element('div','',q,'yueCompactHost'),im=element('img','',header);
  im.src='assets/visual/painted/master-yue/expressions/warm.webp';im.alt='';im.width=68;im.height=68;im.onerror=()=>im.remove();
  const words=element('div','',header);element('strong',tr('Master Yue','月师傅'),words);
- element('small',tr('Sit, have some tea. The stars can wait, unlike your boss.','坐下喝杯茶。星星不催你，老板就不一定了。'),words);
+ element('small',residentNamedGreeting('Sit, have some tea. The stars can wait, unlike your boss.','坐下喝杯茶。星星不催你，老板就不一定了。'),words);
  const strip=q.querySelector('.yueSubjectStrip');if(strip){title.after(strip);strip.after(header)}else title.after(header);
  const nav=q.querySelector('.row');if(nav)nav.classList.add('yueStickyNav');
  const submit=form.querySelector('button[type=submit]');
@@ -876,5 +876,67 @@ const compactConsultStyle=document.createElement('style');compactConsultStyle.te
 #nextStopShortcut:not([hidden]){font:600 12px/1.2 Georgia,"Songti SC",serif!important;overflow-wrap:anywhere}
 @media(max-height:500px) and (orientation:landscape){#nextStopShortcut:not([hidden]){bottom:68px!important;right:8px!important;max-width:120px!important}}
 `;document.head.append(compactConsultStyle);
+
+
+/* Resident recognition: local player name, contextual greetings, no fake
+   shared presence or private birth-data references. One welcome per visit. */
+const residentWelcomeProfiles=[
+ {id:'temple',names:['Temple keeper','庙祝'],rooms:['temple','sticks','moon'],lines:[['Leave your worries by the door.','烦恼先放门口吧。'],['The incense is ready. Take your time.','香已备好，慢慢来。']]},
+ {id:'tarot',names:['Fortune Teller','占卜师'],rooms:['tarot','daily'],lines:[['The cards are ready. Your inbox can wait.','牌都准备好了，工作消息先放一放。'],['What is on your mind today?','今天想问点什么呢？']]},
+ {id:'yue',names:['Master Yue','月师傅','Astrologer','命理师'],rooms:['destiny'],lines:[['Come, have some tea. The stars can wait.','来，喝口茶，星星不催你。'],['Love, work, or a little clarity today?','今天想聊感情、工作，还是理理思绪？']]},
+ {id:'garden',names:['Garden keeper','守园人','Caretaker','管理员'],rooms:['wishes'],lines:[['There is room for another wish.','这里还有地方挂你的心愿。'],['No wish is too small.','小小的心愿也值得被记住。']]},
+ {id:'grandma',names:['Grandma','外婆','奶奶'],rooms:['kitchen'],lines:[['Come eat. You look like someone who skipped lunch.','来吃饭啦。忙起来是不是又忘了吃饭？'],['I saved you a bowl.','给你留了一碗呢。']]},
+ {id:'mei',names:['Auntie Mei','梅姨'],rooms:['tea'],lines:[['Sit here. I have tea and possibly too much news.','来坐这边，有茶，还有一点点八卦。'],['Good to see you. How has your day been?','见到你真好，今天过得怎样？']]},
+ {id:'wang',names:['Wang Laoban','王老板'],rooms:['office'],lines:[['Relax. This meeting could have been an email.','放轻松，这个会本来发封邮件就行。'],['No performance review today. Promise.','今天不谈绩效，说好了。']]},
+ {id:'ahma',names:['Ah Ma','阿嬷','阿嫲','阿嬤','打小人阿姨','Auntie','打小人阿婆'],rooms:['fish'],lines:[['Who has been making your blood boil today?','今天又是谁惹你生气啦？'],['Sit down. We can leave the drama here.','来坐坐，把那些破事留在这里。']]},
+ {id:'lin',names:['Auntie Lin','林姨'],rooms:['park'],lines:[['The animals are taking their sweet time. So can you.','小动物都慢悠悠的，你也可以。'],['Come see who is out in the meadow today.','来看看今天草地上有哪些小可爱。']]},
+ {id:'arcade',names:['Keeper','店主','Arcade keeper','游戏厅老板','Arcade host','游戏厅店主'],rooms:['arcade'],lines:[['Ready to beat your own score?','今天要不要刷新自己的纪录？'],['The claw owes you nothing. But give it a go.','夹爪可不欠你的，不过试试嘛。']]},
+ {id:'boba',names:['Boba keeper','奶茶店主','Pearl & Pause','珍珠摸鱼铺','Barista','店员'],rooms:['boba'],lines:[['A little tea break? You have earned one.','喝杯奶茶歇一歇吧。'],['Less ice, more peace?','少冰，多一点好心情？']]},
+ {id:'souvenir',names:['Souvenir keeper','手信店主','Furniture keeper','家具店主'],rooms:['mystery'],lines:[['Come browse. No need to buy anything.','随便看看，不买也没关系。'],['Find something that makes you smile.','看看有没有让你会心一笑的小东西。']]},
+ {id:'lab',names:['Personality guide','人格向导','Researcher','研究员'],rooms:['quiz'],lines:[['Curious about yourself? No homework here.','想多了解自己？这里不交作业。'],['There is no perfect answer.','没有标准答案，做自己就好。']]},
+ {id:'story',names:['Storyteller','说书人','故事向导'],rooms:['story'],lines:[['Another little adventure awaits.','又有一段小故事等着你。'],['What would you do differently this time?','这一次，你会怎么选呢？']]},
+ {id:'cafe',names:['Café keeper','Cafe keeper','咖啡店主'],rooms:['match'],lines:[['Let us make some space for the heart.','给心里的人留一点时间吧。'],['Tea first, overthinking later.','先喝茶，晚点再胡思乱想。']]}
+];
+const residentWelcomeVisits=new Map(),residentWelcomeSpoken=new Set(),residentOutdoorWelcome=new Map();
+function residentPlayerDisplayName(){
+ return Array.from(String(playerName||'').replace(/[\\u0000-\\u001f\\u007f]/g,'').trim()).slice(0,24).join('')
+}
+function residentNamedGreeting(en,cn){
+ const name=residentPlayerDisplayName();return name?tr('Hi '+name+'! '+en,name+'，'+cn):tr(en,cn)
+}
+function residentWelcomeFor(name){
+ const key=String(name).trim().toLowerCase();
+ return residentWelcomeProfiles.find(v=>v.names.some(n=>n.toLowerCase()===key))||null
+}
+function residentWelcomeLine(profile,count){
+ const pair=profile.lines[Math.max(0,count-1)%profile.lines.length];return residentNamedGreeting(...pair)
+}
+const residentPersonalIntroBefore=roomIntro;
+roomIntro=function(){
+ const result=residentPersonalIntroBefore();residentWelcomeSpoken.clear();
+ if(!room||activity)return result;
+ const profile=residentWelcomeProfiles.find(v=>v.rooms.includes(room));if(!profile)return result;
+ const visits=(residentWelcomeVisits.get(profile.id)||0)+1;residentWelcomeVisits.set(profile.id,visits);
+ if((room==='temple'||room==='kitchen')&&typeof lunarMenu==='function'&&lunarMenu()){
+  const existing=$('toast')?.textContent;if(existing)toast(residentNamedGreeting(existing,existing));return result
+ }
+ // Preserve the instructional hint and use the existing non-blocking toast.
+ toast(tr(...profile.names.slice(0,2))+'：'+residentWelcomeLine(profile,visits));return result
+};
+const residentPersonalSayBefore=say;
+say=function(name,line,...rest){
+ const profile=residentWelcomeFor(name),chosen=residentPlayerDisplayName(),now=Date.now();
+ if(profile&&chosen&&typeof line==='string'&&!line.includes(chosen)){
+  const already=room?residentWelcomeSpoken.has(profile.id):(now-(residentOutdoorWelcome.get(profile.id)||0)<300000);
+  if(!already){line=tr('Hi '+chosen+'! ',chosen+'，')+line;if(room)residentWelcomeSpoken.add(profile.id);else residentOutdoorWelcome.set(profile.id,now)}
+ }
+ const result=residentPersonalSayBefore(name,line,...rest);
+ // Generic avatar badges are not portraits of residents. Until the actual
+ // host's painted asset is available, use a named, text-only conversation.
+ if(profile&&!residentArtworkRecord(name)){
+  const portrait=$('talkPortrait');if(portrait){portrait.hidden=true;portrait.classList.remove('paintedResidentPortrait')}
+ }
+ return result
+};
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
