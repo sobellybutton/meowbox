@@ -82,6 +82,11 @@ async function travelLoop(page,name,touch){
  await press(page.locator('#proposal footer .actions button').first());
  const layout=touch?'portrait':'landscape';
  await page.locator('#proposal .rail-cabin .mbPaintedRail[data-layout="'+layout+'"]:visible').waitFor();
+ const glass=page.locator('#proposal .mbPaintedRail .pawMovingGlass');
+ await glass.waitFor({state:'visible',timeout:5000});
+ const firstFrame=Number(await glass.getAttribute('data-frame'));
+ await page.waitForFunction(n=>Number(document.querySelector('#proposal .pawMovingGlass')?.dataset.frame)>n,firstFrame,{timeout:3000});
+ assert(await glass.evaluate(el=>{const p=el.getContext('2d').getImageData(0,0,1,1).data;return p[3]===0}),'Carriage foreground must remain transparent in moving layer');
  await shot('train');
  await press(page.locator('#proposal .rail-arrive'));
  await page.locator('#proposal .mbGatePainting:visible').waitFor();
@@ -134,6 +139,9 @@ async function travelLoop(page,name,touch){
   assert.equal(await page.locator('.districtRailCabin').isVisible(),false,'Map selection boards directly');
   assert.equal(await ride.locator('.mbRailPane').count(),0,'Do not reintroduce broken composite windows');
   assert(await ride.locator('.mbPaintedRail img').evaluate(im=>im.complete&&im.naturalWidth>0),'Painted carriage loaded');
+  const moving=ride.locator('.pawMovingGlass');
+  assert.equal(await moving.count(),1,'One glass-only motion layer');
+  assert.equal(await ride.locator('.mbPaintedRail').getAttribute('data-rail-motion'),'painted-window');
   assert(await ride.evaluate(el=>{
     const r=el.getBoundingClientRect(),g=document.querySelector('#game').getBoundingClientRect(),a=el.querySelector('.mbPaintedRail').getBoundingClientRect();
     return r.width>=g.width-2&&r.height>=g.height-2&&a.width>=g.width-2&&a.height>=g.height-2;

@@ -2349,6 +2349,125 @@ function mbJourneyPaintings(){
   return {portrait:mbJourneyPainting(data.rail?.portrait,'portrait',true),landscape:mbJourneyPainting(data.rail?.landscape,'landscape',false),gate:mbJourneyPainting(data.gate,'gate',true)}
  }).catch(()=>null)
 }
+
+/* PAW_WINDOW_MOTION_BEGIN
+   Window polygons are traced against the actual 880x1320 and 1440x810
+   painted carriage files. The exterior samples are taken ONLY from glass.
+   Keep the complete original painting underneath; no duplicate frame,
+   divider, curtain, seat or village-map texture enters the moving layer. */
+const pawRailWindows={
+ portrait:{width:880,height:1320,panes:[
+  {q:[[174,312],[565,392],[594,535],[98,504]],speed:1},
+  {q:[[88,541],[598,562],[590,731],[104,778]],speed:1},
+  {q:[[726,432],[776,449],[785,544],[710,542]],speed:.62},
+  {q:[[713,569],[785,572],[788,645],[706,656]],speed:.62},
+  {q:[[854,468],[867,475],[870,550],[853,550]],speed:.40},
+  {q:[[854,574],[874,575],[874,642],[853,645]],speed:.40}
+ ]},
+ landscape:{width:1440,height:810,panes:[
+  {q:[[144,100],[542,186],[558,330],[89,305]],speed:1},
+  {q:[[72,343],[559,357],[553,516],[58,601]],speed:1},
+  {q:[[705,235],[826,267],[839,346],[685,340]],speed:.74},
+  {q:[[679,359],[838,365],[836,448],[665,455]],speed:.74},
+  {q:[[920,285],[960,300],[965,355],[910,353]],speed:.50},
+  {q:[[910,370],[965,374],[965,428],[909,435]],speed:.50},
+  {q:[[1008,307],[1026,314],[1029,359],[1005,359]],speed:.35},
+  {q:[[1005,372],[1030,374],[1030,415],[1003,416]],speed:.35}
+ ]}
+};
+function pawRailQuad(q,u,v){
+ const [a,b,c,d]=q,aa=(1-u)*(1-v),bb=u*(1-v),cc=u*v,dd=(1-u)*v;
+ return [a[0]*aa+b[0]*bb+c[0]*cc+d[0]*dd,a[1]*aa+b[1]*bb+c[1]*cc+d[1]*dd]
+}
+function pawRailUV(q,x,y){
+ // Invert the bilinear projection of each trapezoidal window.
+ const [a,b,c,d]=q,ax=b[0]-a[0],ay=b[1]-a[1],bx=d[0]-a[0],by=d[1]-a[1],cx=a[0]-b[0]+c[0]-d[0],cy=a[1]-b[1]+c[1]-d[1];
+ let u=.5,v=.5;
+ for(let i=0;i<5;i++){
+  const dx=a[0]+ax*u+bx*v+cx*u*v-x,dy=a[1]+ay*u+by*v+cy*u*v-y;
+  const xu=ax+cx*v,yu=ay+cy*v,xv=bx+cx*u,yv=by+cy*u,det=xu*yv-xv*yu;
+  if(Math.abs(det)<.00001)return null;
+  u-=(dx*yv-dy*xv)/det;v-=(dy*xu-dx*yu)/det;
+ }
+ return Number.isFinite(u)&&Number.isFinite(v)?[u,v]:null
+}
+function pawRailReflect(value){
+ if(!Number.isFinite(value))return 0;
+ const f=((value%2)+2)%2;return f<=1?f:2-f
+}
+function pawRailPaneSize(q){
+ const edge=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+ return [Math.max(2,Math.ceil((edge(q[0],q[1])+edge(q[3],q[2]))*.5)),Math.max(2,Math.ceil((edge(q[0],q[3])+edge(q[1],q[2]))*.5))]
+}
+/* PAW_WINDOW_MOTION_END */
+const pawRailMotionJobs=new WeakMap();
+function pawRailMakePane(pane,ratio,source,w,h){
+ const q=pane.q.map(p=>p.map(v=>v*ratio)),[tw,th]=pawRailPaneSize(q);
+ const texture=new Uint8ClampedArray(tw*th*4);
+ // Rectify the painted glass to its own image strip once, before animation.
+ // Samples can never come from outside this pane's original glass.
+ for(let j=0;j<th;j++)for(let i=0;i<tw;i++){
+  const [x,y]=pawRailQuad(q,i/(tw-1),j/(th-1));
+  const at=(Math.min(h-1,Math.max(0,Math.floor(y)))*w+Math.min(w-1,Math.max(0,Math.floor(x))))*4;
+  const to=(j*tw+i)*4;texture[to]=source[at];texture[to+1]=source[at+1];texture[to+2]=source[at+2];texture[to+3]=255
+ }
+ const left=Math.max(0,Math.floor(Math.min(...q.map(p=>p[0])))),right=Math.min(w-1,Math.ceil(Math.max(...q.map(p=>p[0]))));
+ const top=Math.max(0,Math.floor(Math.min(...q.map(p=>p[1])))),bottom=Math.min(h-1,Math.ceil(Math.max(...q.map(p=>p[1]))));
+ const pixels=[],cols=[],rows=[],alphas=[];
+ for(let y=top;y<=bottom;y++)for(let x=left;x<=right;x++){
+  const uv=pawRailUV(q,x+.5,y+.5);if(!uv)continue;
+  const [u,v]=uv;if(u<0||u>1||v<0||v>1)continue;
+  const edge=Math.min(u*(tw-1),(1-u)*(tw-1),v*(th-1),(1-v)*(th-1));
+  if(edge<.15)continue;
+  pixels.push((y*w+x)*4);cols.push(u*(tw-1));rows.push(Math.round(v*(th-1))*tw*4);
+  alphas.push(Math.round(255*Math.min(1,edge/2.4)))
+ }
+ return {tw,texture,pixels:Int32Array.from(pixels),cols:Float32Array.from(cols),rows:Int32Array.from(rows),alphas:Uint8Array.from(alphas),speed:pane.speed}
+}
+function pawRailMountMotion(stage,im,layout,host,mode){
+ const old=pawRailMotionJobs.get(stage);if(old){old.stop();pawRailMotionJobs.delete(stage)}
+ stage.dataset.railMotion='still';
+ const cfg=pawRailWindows[layout],reduce=matchMedia('(prefers-reduced-motion: reduce)');
+ if(!cfg||reduce.matches||mode==='transfer'||!stage.isConnected||im.naturalWidth!==cfg.width||im.naturalHeight!==cfg.height)return;
+ let canvas,raf=0,dead=false,elapsed=0,last=0,lastDraw=-Infinity,frames=0;
+ const stop=()=>{dead=true;cancelAnimationFrame(raf);canvas?.remove()};
+ try{
+  // Bounded raster work on mobile; the high resolution carriage stays sharp.
+  const ratio=Math.min(1,640/cfg.width),w=Math.round(cfg.width*ratio),h=Math.round(cfg.height*ratio);
+  const buffer=document.createElement('canvas');buffer.width=w;buffer.height=h;
+  const bg=buffer.getContext('2d',{willReadFrequently:true});if(!bg)return;
+  bg.drawImage(im,0,0,w,h);const source=bg.getImageData(0,0,w,h).data;
+  const panes=cfg.panes.map(p=>pawRailMakePane(p,ratio,source,w,h)).filter(p=>p.pixels.length);
+  if(!panes.length)return;
+  canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;canvas.className='pawMovingGlass';canvas.setAttribute('aria-hidden','true');
+  const g=canvas.getContext('2d');if(!g)return;
+  const frame=g.createImageData(w,h),out=frame.data;
+  function draw(){
+   for(const p of panes){
+    // One continuous clock across top and bottom of each window; the
+    // reflected texture extends past its edge without a hard repeat seam.
+    const travel=elapsed*.13*p.speed,limit=p.tw-1;
+    for(let i=0;i<p.pixels.length;i++){
+     const u=pawRailReflect(p.cols[i]/limit+travel)*limit,k=Math.floor(u),f=u-k,ix=p.rows[i]+k*4,next=p.rows[i]+Math.min(limit,k+1)*4,to=p.pixels[i];
+     out[to]=p.texture[ix]+(p.texture[next]-p.texture[ix])*f;
+     out[to+1]=p.texture[ix+1]+(p.texture[next+1]-p.texture[ix+1])*f;
+     out[to+2]=p.texture[ix+2]+(p.texture[next+2]-p.texture[ix+2])*f;out[to+3]=p.alphas[i]
+    }
+   }
+   g.putImageData(frame,0,0);canvas.dataset.frame=String(++frames);
+  }
+  function tick(now){
+   if(dead||!stage.isConnected||stage.dataset.layout!==layout||reduce.matches){stop();stage.dataset.railMotion='still';return}
+   const dt=last?Math.min(.075,Math.max(0,(now-last)/1000)):0;last=now;
+   if(!document.hidden&&host.dataset.sceneryPaused!=='true'){
+    elapsed+=dt;if(now-lastDraw>=42){draw();lastDraw=now}
+   }
+   raf=requestAnimationFrame(tick)
+  }
+  draw();stage.append(canvas);stage.dataset.railMotion='painted-window';pawRailMotionJobs.set(stage,{stop});raf=requestAnimationFrame(tick)
+ }catch(e){stop();stage.dataset.railMotion='still'}
+}
+
 async function mbMountRailPainting(host,mode){
  if(!host||host.querySelector('.mbPaintedRail'))return;
  const art=await mbJourneyPaintings();
@@ -2358,8 +2477,7 @@ async function mbMountRailPainting(host,mode){
  const picture=element('picture','',stage);
  const wide=element('source','',picture);wide.media='(min-aspect-ratio: 1/1)';wide.srcset=art.landscape.path;
  const im=element('img','',picture);im.alt='';im.decoding='async';
- // One complete painting until separately authored exterior scenery exists.
- // Never composite a second copy of the carriage into its own window.
+ // The original carriage remains the stationary frame of the window animation.
  const verify=()=>{
   const layout=['portrait','landscape'].find(key=>art[key].width===im.naturalWidth&&art[key].height===im.naturalHeight);
   stage.hidden=!layout;host.dataset.paintedRail=String(!!layout);
@@ -2367,9 +2485,10 @@ async function mbMountRailPainting(host,mode){
   if(mode==='entrance')proposal.dataset.paintedShot='train';
   stage.dataset.layout=layout;
   stage.style.setProperty('--rail-aspect',String(im.naturalWidth/im.naturalHeight));
-  stage.style.setProperty('--rail-painting','url("'+art[layout].path+'")')
+  stage.style.setProperty('--rail-painting','url("'+art[layout].path+'")');
+  pawRailMountMotion(stage,im,layout,host,mode)
  };
- im.addEventListener('load',verify);im.addEventListener('error',()=>{stage.hidden=true;host.dataset.paintedRail='false'});
+ im.addEventListener('load',verify);im.addEventListener('error',()=>{pawRailMotionJobs.get(stage)?.stop();stage.hidden=true;host.dataset.paintedRail='false'});
  im.src=art.portrait.path;
  host.prepend(stage);if(im.complete&&im.naturalWidth)verify()
 }
@@ -2403,6 +2522,8 @@ const mbRailArtworkStyle=document.createElement('style');mbRailArtworkStyle.text
 .mbPaintedRail[hidden],.mbGatePainting[hidden]{display:none!important}
 .mbPaintedRail{position:relative;overflow:hidden;isolation:isolate}
 .mbPaintedRail picture,.mbPaintedRail picture img{display:block;width:100%;height:100%}
+.mbPaintedRail .pawMovingGlass{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:1}
+@media(prefers-reduced-motion:reduce){.mbPaintedRail .pawMovingGlass{display:none!important}}
 .mbPaintedRail:not([data-use=transfer]){width:min(100%,calc(var(--rail-height) * var(--rail-aspect)));aspect-ratio:var(--rail-aspect);margin:auto}
 .mbRailPane,.mbRailPane>span{position:absolute;inset:0;pointer-events:none}
 .mbRailPane>span{background:var(--rail-painting) center/100% 100%;animation:mbRailPaneGlide 8s ease-in-out infinite alternate}
@@ -5145,39 +5266,86 @@ function pawStairRoute(from,to){
  return path.filter((q,i)=>i===0||Math.hypot(q.x-path[i-1].x,q.y-path[i-1].y)>.1)
 }
 /* PAW_STAIR_ROUTING_END */
-const pawGroundLimitBefore=minY;
-minY=function(){return scene==='fortune'&&!room?Math.max(pawGroundLimitBefore(),pawPlayerStairs[0][0]):pawGroundLimitBefore()};
-const pawGroundStepBefore=step;
-step=function(n,dt,speed){
- if(scene!=='fortune'||room||n!==p)return pawGroundStepBefore(n,dt,speed);
- const start=pawStairFoot(n.x,n.y),end=pawStairFoot(n.tx,n.ty);
- n.x=start.x;n.y=start.y;n.tx=end.x;n.ty=end.y;
- // Door navigation follows its own authored queue. Free taps and joystick
- // motion follow the same corridor through each bend instead of cutting across.
- if(pending)return pawGroundStepBefore(n,dt,speed);
- const dir=Math.sign(end.y-start.y);
- const knots=pawPlayerStairs.filter(q=>dir*(q[0]-start.y)>1&&dir*(end.y-q[0])>0);
+
+/* PAW_DISTRICT_GROUND_BEGIN
+   Walkable centre lines already traced on the actual four portrait paintings.
+   Limit feet, not the whole body rectangle, and route along every bend. */
+function pawDistrictFoot(points,x,y){
+ const lane=pawStairLane(y,points);
+ return {x:Math.max(lane.x-lane.half,Math.min(lane.x+lane.half,Number.isFinite(x)?x:lane.x)),y:lane.y}
+}
+function pawDistrictRoute(points,from,to){
+ const start=pawDistrictFoot(points,from.x,from.y),end=pawDistrictFoot(points,to.x,to.y),dir=Math.sign(end.y-start.y);
+ const knots=points.filter(q=>dir*(q[0]-start.y)>.01&&dir*(end.y-q[0])>.01);
  if(dir<0)knots.reverse();
+ const path=[{x:pawStairLane(start.y,points).x,y:start.y},...knots.map(q=>({x:q[1],y:q[0]})),{x:pawStairLane(end.y,points).x,y:end.y},end];
+ return path.filter((q,i)=>i===0||Math.hypot(q.x-path[i-1].x,q.y-path[i-1].y)>.05)
+}
+function pawDistrictFacing(previous,dx,dy){
+ if(Math.hypot(dx,dy)<.035)return previous||'down';
+ const ax=Math.abs(dx),ay=Math.abs(dy);
+ if(ax>ay*1.18)return dx<0?'left':'right';
+ if(ay>ax*1.10)return dy<0?'up':'down';
+ if(previous==='left'&&dx<0||previous==='right'&&dx>0||previous==='up'&&dy<0||previous==='down'&&dy>0)return previous;
+ return ay>=ax?(dy<0?'up':'down'):(dx<0?'left':'right')
+}
+function pawDistrictAdvance(points,from,to,dt,speed,velocity=0,queued=false){
+ const start=pawDistrictFoot(points,from.x,from.y),end=pawDistrictFoot(points,to.x,to.y);
+ const dir=Math.sign(end.y-start.y);
+ const knots=points.filter(q=>dir*(q[0]-start.y)>.02&&dir*(end.y-q[0])>.02);if(dir<0)knots.reverse();
  const next=knots.length?{x:knots[0][1],y:knots[0][0]}:end;
  const dx=next.x-start.x,dy=next.y-start.y,d=Math.hypot(dx,dy);
- if(d<2){n.x=next.x;n.y=next.y;n.motionSpeed=0;return Math.hypot(end.x-n.x,end.y-n.y)>2}
- const delta=Math.max(0,Math.min(.05,Number.isFinite(dt)?dt:0));
- const vertical=Math.abs(dy)>Math.abs(dx)*.8;
- const wanted=Math.min(Number.isFinite(speed)?speed:150,vertical?155:190,Math.max(40,d*7));
- n.motionSpeed=(n.motionSpeed||0)+(wanted-(n.motionSpeed||0))*Math.min(1,delta*10);
- const amount=Math.min(d,n.motionSpeed*delta);
- const point=pawStairFoot(start.x+dx/d*amount,start.y+dy/d*amount);
- n.x=point.x;n.y=point.y;
- if(amount>0){n.facing=vertical?(dy<0?'up':'down'):(dx<0?'left':'right');const travel=Math.hypot(n.x-start.x,n.y-start.y);pawWalkDistance+=travel;pawGaitTravel.set(n,(pawGaitTravel.get(n)||0)+travel)}
- return Math.hypot(end.x-n.x,end.y-n.y)>2||amount>0
+ if(d<=1.25)return {x:next.x,y:next.y,tx:end.x,ty:end.y,velocity:Math.hypot(end.x-next.x,end.y-next.y)>1.25?velocity:0,walking:Math.hypot(end.x-next.x,end.y-next.y)>1.25};
+ const delta=Math.max(0,Math.min(.05,Number.isFinite(dt)?dt:0)),vertical=Math.abs(dy)>Math.abs(dx)*.8;
+ const cap=queued?(vertical?190:205):(vertical?145:175);
+ const wanted=Math.min(Number.isFinite(speed)&&speed>0?speed:cap,cap,Math.max(35,d*8));
+ const current=Number.isFinite(velocity)?Math.max(0,velocity):0;
+ const v=current+(wanted-current)*Math.min(1,delta*12),amount=Math.min(d,v*delta);
+ const point=pawDistrictFoot(points,start.x+dx/d*amount,start.y+dy/d*amount);
+ return {...point,tx:end.x,ty:end.y,velocity:v,walking:Math.hypot(end.x-point.x,end.y-point.y)>1.25||amount>.035}
+}
+/* PAW_DISTRICT_GROUND_END */
+const pawDistrictSpines={fortune:pawPlayerStairs,home:paintedResidentPaths.home,island:paintedResidentPaths.island,wonder:paintedResidentPaths.wonder};
+const pawGroundLimitBefore=minY,pawGroundMaxBefore=maxY;
+minY=function(){const points=pawDistrictSpines[scene];return points&&!room?Math.max(pawGroundLimitBefore(),points[0][0]):pawGroundLimitBefore()};
+maxY=function(){const points=pawDistrictSpines[scene];return points&&!room?Math.min(pawGroundMaxBefore(),points.at(-1)[0]):pawGroundMaxBefore()};
+const pawGroundResetBefore=resetPosition;
+resetPosition=function(...args){
+ const result=pawGroundResetBefore(...args),points=pawDistrictSpines[scene];
+ if(points&&!room){
+  const q=pawDistrictFoot(points,p.x,p.y);Object.assign(p,{x:q.x,y:q.y,tx:q.x,ty:q.y,motionSpeed:0,pawFacing:'up'});cam.x=q.x;cam.y=q.y;
+  pawWalkDistance=0;pawGaitTravel.set(p,0)
+ }return result
+};
+const pawGroundStepBefore=step,pawResidentFootMotion=new WeakMap();
+const pawResidentMovingBefore=residentMoving;
+residentMoving=function(n){return pawResidentMovingBefore(n)&&(!pawResidentFootMotion.has(n)||pawResidentFootMotion.get(n))};
+step=function(n,dt,speed){
+ const points=pawDistrictSpines[scene];
+ if(n!==p||room||!points){
+  const x=n.x,y=n.y,result=pawGroundStepBefore(n,dt,speed);
+  if(n!==p)pawResidentFootMotion.set(n,Math.hypot(n.x-x,n.y-y)>.035);
+  return result
+ }
+ const start=pawDistrictFoot(points,n.x,n.y),goal=pawDistrictFoot(points,n.tx,n.ty);
+ const next=pawDistrictAdvance(points,start,goal,dt,speed,n.motionSpeed,!!pending);
+ n.x=next.x;n.y=next.y;n.tx=next.tx;n.ty=next.ty;n.motionSpeed=next.velocity;
+ const dx=n.x-start.x,dy=n.y-start.y,travel=Math.hypot(dx,dy);
+ if(travel>.035){n.pawFacing=pawDistrictFacing(n.pawFacing||n.facing,dx,dy);n.facing=n.pawFacing;pawWalkDistance+=travel;pawGaitTravel.set(n,(pawGaitTravel.get(n)||0)+travel)}
+ else if(n.pawFacing)n.facing=n.pawFacing;
+ // Preserve the original grumpy resident's contextual bump joke.
+ if(scene==='home'&&!transitioning&&!talkOpen&&proposal.hidden&&$('page').style.display!=='block'&&travel>.035&&t-grannyBumpAt>=7){
+  const ma=npc.find(v=>v.grumpy);if(ma&&Math.hypot(n.x-ma.x,n.y-ma.y)<38){grannyBumpAt=t;ma.pauseUntil=t+1.6;toast(tr(...townReaction('granny-bump',grumpyBumps)))}
+ }
+ return next.walking
 };
 const pawGroundDoorBefore=walkDoor;
 walkDoor=function(...args){
- const previous=pending,result=pawGroundDoorBefore(...args);
- if(scene==='fortune'&&!room&&pending&&pending!==previous&&walkQueue.length){
-  const end=walkQueue.at(-1),start=pawStairFoot(p.x,p.y);
-  walkQueue=pawStairRoute(start,end);
-  if(walkQueue.length){p.tx=walkQueue[0].x;p.ty=walkQueue[0].y}
+ const previous=pending,result=pawGroundDoorBefore(...args),points=pawDistrictSpines[scene];
+ if(points&&!room&&pending&&pending!==previous&&walkQueue.length){
+  const end=walkQueue.at(-1),start=pawDistrictFoot(points,p.x,p.y);
+  walkQueue=pawDistrictRoute(points,start,end);
+  if(walkQueue.length){p.tx=walkQueue[0].x;p.ty=walkQueue[0].y;p.motionSpeed=0}
  }
  return result
 };
@@ -5196,8 +5364,8 @@ pawVisualCleanStyle.textContent=`
 #game .pawRailJourney .pawRailCaption{background:#28392dc9;border:0;border-radius:2px;box-shadow:none;padding:9px 15px}
 #game .pawRailJourney .pawRailSkip{background:#28392daa;border:1px solid #e6cf9b66;font:500 13px var(--paw-body,system-ui,sans-serif)}
 `;document.head.append(pawVisualCleanStyle);
-/* A complete painted carriage is preferable to misaligned fragments. The next
-   art pass needs independently painted scenery behind a transparent frame. */
+/* Keep the obsolete duplicate carriage layers disabled. The moving glass
+   canvas is a separate, clipped exterior-only overlay. */
 const pawRailSeamStyle=document.createElement('style');pawRailSeamStyle.textContent='#game .mbPaintedRail .mbRailPane,#proposal .mbPaintedRail .mbRailPane{display:none!important}';document.head.append(pawRailSeamStyle);
 /* Visitor calendar belongs in Town Hall, not a fifth dock or a duplicate
    Today page. Only show existing scripted roster and earned conversation memory. */
