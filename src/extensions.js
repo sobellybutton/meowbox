@@ -319,6 +319,40 @@ const tarotBeforeDetails=tarotDetails;
 tarotDetails=function(d,rev){tarotBeforeDetails(d,rev);let lineEl=$('line');if(lineEl){let phrases=[['The card is not your manager. You can disagree.','牌卡又不是老板，你当然可以不同意。'],['A little reflection, then back to your tea.','想一想，再喝口茶。'],['The future is not a deadline.','未来又不是截止日期。']];lineEl.textContent+='\n\n'+tr(...phrases[hash(d[0]+day())%phrases.length])}};
 
 function templeMoon(x,y,angle,flat){ctx.save();ctx.translate(x,y);ctx.rotate(angle);let g=ctx.createLinearGradient(-35,-24,30,28);g.addColorStop(0,flat?'#f1c191':'#d17e55');g.addColorStop(.45,flat?'#d5a16e':'#a74635');g.addColorStop(1,flat?'#b57750':'#743d32');ctx.beginPath();ctx.moveTo(-33,-11);ctx.bezierCurveTo(-37,28,18,42,34,-10);ctx.bezierCurveTo(16,6,-11,8,-33,-11);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#784b35';ctx.lineWidth=2;ctx.stroke();ctx.beginPath();ctx.moveTo(-30,-11);ctx.bezierCurveTo(-8,8,18,5,32,-10);ctx.strokeStyle=flat?'#f3d4a0':'#e5a27b';ctx.stroke();if(flat){for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(-20+i*5,10+i*3);ctx.quadraticCurveTo(0,24+i*2,21-i*3,10+i*3);ctx.strokeStyle='#a8784b55';ctx.lineWidth=.8;ctx.stroke()}}ctx.restore()}
+/* PAW_RITUAL_CLOCK_BEGIN */
+function pawRitualInputAllowed(){return !document.hidden&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block'}
+function pawMoonToss(moved=0,tap=false){
+ if(activity!=='moon'||!pawRitualInputAllowed()||state.moonPending||state.tossUntil>t||!Number.isFinite(moved)||(!tap&&moved<=12))return false;
+ state.moonDuration=.62+Math.min(.38,Math.max(0,moved)/260);state.moonHeight=45+Math.min(90,Math.max(0,moved)*.58);
+ state.tossUntil=t+state.moonDuration;state.count++;state.result=Math.floor(Math.random()*3);state.noStreak=state.result===1?(state.noStreak||0)+1:0;
+ state.moonPending=true;physicalFx('wood',.45);return true
+}
+function pawMoonFlat(result,index,count){return !count||result===2||(result===0&&index===0)}
+function pawMoonMotion(f,index,flat,height){
+ f=Math.max(0,Math.min(1,f));const sign=index?1:-1,settled=sign*.25;
+ const main=Math.sin(Math.PI*f)*height,hop=f>.78?Math.sin(Math.PI*(f-.78)/.22)*4:0;
+ const turns=(index?2:1)+(flat?0:.5),spin=sign*turns*2*Math.PI*(1-f);
+ return {x:350+index*100+sign*Math.sin(Math.PI*f)*21,lift:Math.max(0,main+hop),angle:settled+spin,flat:f>=.90?flat:Math.cos(spin)>0}
+}
+function pawRitualAdvance(){
+ if(document.hidden||talkOpen||transitioning||!proposal.hidden||$('page').style.display==='block')return;
+ if(activity==='moon'&&state.moonPending&&t>=state.tossUntil){
+  state.moonPending=false;physicalFx('wood',.8);
+  const r=state.result;
+  if(r===0)addItem('Heaven’s approval','圣杯祝福');
+  react(['Yes!','No.','Try again.'][r],['圣杯！','阴杯。','笑杯。'][r]);return
+ }
+ if(activity!=='sticks')return;
+ if(state.drawing&&t-state.stickDrawAt>=1.25){
+  state.drawing=false;state.fallenStick=state.stickNumber;physicalFx('wood',.45);
+  hint('Pick up the numbered stick to receive your fortune paper.','拾起落下的签，领取签文。')
+ }
+ if(state.stickPicked&&!state.stickDelivered&&t-state.stickPickAt>=.85){
+  state.stickDelivered=true;const n=state.fallenStick;
+  addItem('Fortune stick '+n,'签文 '+n);physicalFx('paper',.55);sound(520);templePaperOpen(n)
+ }
+}
+/* PAW_RITUAL_CLOCK_END */
 const shrineBeforeDraw=drawActivity;
 drawActivity=function(){
  if(activity!=='moon'&&activity!=='sticks')return shrineBeforeDraw();
@@ -326,9 +360,9 @@ drawActivity=function(){
  table();ctx.save();let g=ctx.createRadialGradient(400,470,20,400,470,210);g.addColorStop(0,'#d4a56d');g.addColorStop(1,'#986747');ellipse(400,482,179,122,'#62412b70');ellipse(400,475,175,119,g);ctx.strokeStyle='#e4c18b';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(400,475,163,109,0,0,TAU);ctx.stroke();ctx.restore();
  if(activity==='moon'){
  let airborne=state.tossUntil>t,f=airborne?Math.max(0,Math.min(1,1-(state.tossUntil-t)/(state.moonDuration||.55))):1,lift=airborne?Math.sin(f*Math.PI)*(state.moonHeight||95):0;
- for(let i=0;i<2;i++){let x=350+i*100+(i?1:-1)*Math.sin(f*Math.PI)*21;let bounce=airborne&&f>.76?Math.abs(Math.sin((f-.76)/.24*Math.PI*2))*11*(1-f):0;ellipse(x,499,Math.max(8,30-lift*.12),7,'#52352455');let flat=state.count===0||state.result===2||(state.result===0&&i===0);templeMoon(x,480-lift-bounce,airborne?(i?1:-1)*f*TAU*(i?1.7:1.2):((i?1:-1)*.25),airborne?Math.cos(f*TAU)>0:flat)}
+ for(let i=0;i<2;i++){const flat=pawMoonFlat(state.result,i,state.count),m=pawMoonMotion(f,i,flat,state.moonHeight||95);ellipse(m.x,499,Math.max(8,30-m.lift*.12),7,'#52352455');templeMoon(m.x,480-m.lift,m.angle,m.flat)}
  let name=state.count?tr(...[['Holy blocks · Yes','圣杯 · 一阴一阳'],['No · both rounded','阴杯 · 两个凸面'],['Laughing blocks · ask again','笑杯 · 两个平面']][state.result]):tr('Ask a question quietly','在心里默念一个问题');
- txt(airborne?tr('Listening…','静候回应……'):name,400,603,18,'#fff2d8');txt(tr('Tosses: ','次数：')+state.count,400,633,13,'#fff2d8');target(270,390,260,160,()=>{},'moon');
+ txt(airborne||state.moonPending?tr('Listening…','静候回应……'):name,400,603,18,'#fff2d8');txt(tr('Tosses: ','次数：')+state.count,400,633,13,'#fff2d8');target(270,390,260,160,()=>{},'moon');
  }else{
  let held=drag?.id==='sticks',shaking=(state.shakeUntil||0)>t;
  const movement=held?clamp((drag.x-drag.sx)*.45,-35,35):shaking?Math.sin(t*24)*17:0;
@@ -346,7 +380,7 @@ drawActivity=function(){
  if(age>=.38||state.fallenStick){
   const pickupLift=picking&&stickHand?poseEase((t-state.stickPickAt-.34)/.46):0;const sx=((state.stickLaunchX??400)*(1-f)+510*f)*(1-pickupLift)+(stickHand?.x??510)*pickupLift,sy=(382-92*Math.sin(Math.PI*f)+f*142)*(1-pickupLift)+(stickHand?.y??524)*pickupLift;
   ellipse(sx,527,18+20*f,4,'#56352155');
-  ctx.save();ctx.translate(sx,sy);ctx.rotate(f*1.37+Math.sin(f*Math.PI)*.24);
+  ctx.save();ctx.translate(sx,sy);ctx.rotate((f*1.37+Math.sin(f*Math.PI)*.24)*(1-pickupLift)+.10*pickupLift);
   let grain=ctx.createLinearGradient(-6,0,6,0);grain.addColorStop(0,'#b68b51');grain.addColorStop(.45,'#f3d69e');grain.addColorStop(1,'#d1a56d');
   round(-6,-52,12,104,2,grain,'#a57743');line(-4,-45,4,-45,'#ad4f3d',2);line(-2,-32,-2,45,'#b38d5d55',.8);
   if(f>.88){ctx.fillStyle='#8d4938';ctx.font='bold 10px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(state.fallenStick||state.stickNumber||''),0,-30)}
@@ -361,7 +395,7 @@ const shrineReact=react;react=function(en,cn){if(activity==='moon'&&state.count>
 
 let gardenWishes=load('gardenWishesV1',[]);if(!Array.isArray(gardenWishes))gardenWishes=[];
 const gardenColors=['#dca15d','#c87962','#e4c17c','#a3ab8b','#b69aa7'];
-function gardenLantern(x,y,i,sc=1){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(Math.sin(t*1.35+i)*.045);glow(0,0,48,i);line(0,-47,0,-27,'#94704c',1.5);let g=ctx.createRadialGradient(-7,-8,1,0,0,35);g.addColorStop(0,'#fff0bd');g.addColorStop(.5,gardenColors[i%5]);g.addColorStop(1,'#916144');ctx.beginPath();ctx.moveTo(-18,-28);ctx.bezierCurveTo(-37,-12,-29,22,-15,29);ctx.lineTo(15,29);ctx.bezierCurveTo(29,22,37,-12,18,-28);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#92613e';ctx.stroke();for(let j of [-13,0,13]){ctx.beginPath();ctx.moveTo(j*.8,-26);ctx.quadraticCurveTo(j*1.6,0,j*.8,27);ctx.strokeStyle='#a6764c88';ctx.stroke()}round(-16,-32,32,6,2,'#78553e');round(-15,28,30,6,2,'#78553e');line(0,34,0,46,'#ab7352',2);ctx.restore()}
+function gardenLantern(x,y,i,sc=1){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(residentReducedMotion.matches?0:Math.sin(t*1.35+i)*.045);glow(0,0,48,i);line(0,-47,0,-27,'#94704c',1.5);let g=ctx.createRadialGradient(-7,-8,1,0,0,35);g.addColorStop(0,'#fff0bd');g.addColorStop(.5,gardenColors[i%5]);g.addColorStop(1,'#916144');ctx.beginPath();ctx.moveTo(-18,-28);ctx.bezierCurveTo(-37,-12,-29,22,-15,29);ctx.lineTo(15,29);ctx.bezierCurveTo(29,22,37,-12,18,-28);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#92613e';ctx.stroke();for(let j of [-13,0,13]){ctx.beginPath();ctx.moveTo(j*.8,-26);ctx.quadraticCurveTo(j*1.6,0,j*.8,27);ctx.strokeStyle='#a6764c88';ctx.stroke()}round(-16,-32,32,6,2,'#78553e');round(-15,28,30,6,2,'#78553e');line(0,34,0,46,'#ab7352',2);ctx.restore()}
 function gardenPosition(i){return {x:205+(i%6)*78,y:337+Math.floor(i/6)*68+Math.sin(i*1.8)*15}}
 function gardenWishBook(){
  page(tr('Letters to the evening sky','寄给夜空的信'),tr('Your wishes are stored only on this device.','心愿仅保存在这台设备上。'),q=>{if(!gardenWishes.length)element('p',tr('Your garden is waiting for its first lantern.','花园还在等第一盏灯。'),q);gardenWishes.slice().reverse().forEach(w=>{let a=element('article','',q);a.style.cssText='padding:14px;margin:10px 0;background:#f3e4c6;color:#654b36;border-left:3px solid #b78254';element('small',w.date,a);let p=element('p',w.text,a);p.style.whiteSpace='pre-wrap';b(a,tr('Remove this wish','取下这盏灯'),()=>{gardenWishes=gardenWishes.filter(v=>v.id!==w.id);save('gardenWishesV1',gardenWishes);gardenWishBook()})});b(q,tr('Return to the garden','回到花园'),()=>{$('page').style.display='none'})})
@@ -1983,17 +2017,14 @@ function readingPositionCaption(name,x,y,w){
  }finally{ctx.restore()}
 }
 function shakeFortuneStick(){
- if(activity!=='sticks'||state.drawing||state.fallenStick)return;
- const run=state;state.shakeUntil=t+.38;state.stickDrawAt=t;state.stickLaunchX=400;state.drawing=true;
- state.stickNumber=1+Math.floor(Math.random()*12);
- sound(350);hint('One stick is finding its way out…','一支签正在慢慢落下……');
- setTimeout(()=>{if(activity!=='sticks'||state!==run)return;state.drawing=false;state.fallenStick=state.stickNumber;sound(480);hint('Pick up the numbered stick to receive your fortune paper.','拾起落下的签，领取签文。')},1250)
+ if(activity!=='sticks'||!pawRitualInputAllowed()||state.drawing||state.fallenStick)return false;
+ state.shakeUntil=t+.38;state.stickDrawAt=t;state.stickLaunchX=400;state.drawing=true;state.stickNumber=1+Math.floor(Math.random()*12);
+ physicalFx('wood',.45);sound(350);hint('One stick is finding its way out…','一支签正在慢慢落下……');return true
 }
 function pickupFortuneStick(){
- if(activity!=='sticks'||state.drawing||!state.fallenStick||state.stickPicked)return;
- state.stickPicked=true;state.stickPickAt=t;const n=state.fallenStick,run=state;
- sound(420);hint('Pick up the stick and take it to the fortune paper.','拾起竹签，去领对应的签纸。');
- setTimeout(()=>{if(activity!=='sticks'||state!==run)return;addItem('Fortune stick '+n,'签文 '+n);sound(520);templePaperOpen(n)},850)
+ if(activity!=='sticks'||!pawRitualInputAllowed()||state.drawing||!state.fallenStick||state.stickPicked)return false;
+ state.stickPicked=true;state.stickPickAt=t;state.stickDelivered=false;
+ sound(420);hint('Pick up the stick and take it to the fortune paper.','拾起竹签，去领对应的签纸。');return true
 }
 
 /* Original portrait-composed destinations. All coordinates refer to the new artwork,
@@ -4553,7 +4584,7 @@ function actionFxContext(){
 }
 function physicalFx(type,strength=1){
  if(!actionFxContext())return;
- const settings={whack:[950,1.2,.12,.15],water:[1600,.8,.35,.045],paper:[2300,.9,.15,.06],scoop:[1100,1.7,.16,.055],shake:[1800,.9,.24,.07],paw:[650,.8,.10,.035],claw:[1200,2,.24,.06],splash:[900,.7,.45,.08],step:[170,.8,.08,.035]};
+ const settings={wood:[520,2.2,.10,.065],whack:[950,1.2,.12,.15],water:[1600,.8,.35,.045],paper:[2300,.9,.15,.06],scoop:[1100,1.7,.16,.055],shake:[1800,.9,.24,.07],paw:[650,.8,.10,.035],claw:[1200,2,.24,.06],splash:[900,.7,.45,.08],step:[170,.8,.08,.035]};
  const p=settings[type];if(!p)return;const now=audio.currentTime,n=audio.createBufferSource(),f=audio.createBiquadFilter(),g=audio.createGain();n.buffer=actionFxNoise;f.type='bandpass';f.frequency.value=p[0];f.Q.value=p[1];g.gain.setValueAtTime(Math.max(.001,p[3]*clamp(strength,.25,1.4)),now);g.gain.exponentialRampToValueAtTime(.0001,now+p[2]);n.connect(f).connect(g).connect(actionFxBus);n.start(now);n.stop(now+p[2]+.015);
  if(type==='whack'){const o=audio.createOscillator(),a=audio.createGain();o.type='triangle';o.frequency.setValueAtTime(145,now);o.frequency.exponentialRampToValueAtTime(57,now+.075);a.gain.setValueAtTime(.12*clamp(strength,.25,1.4),now);a.gain.exponentialRampToValueAtTime(.0001,now+.1);o.connect(a).connect(actionFxBus);o.start(now);o.stop(now+.11)}
 }

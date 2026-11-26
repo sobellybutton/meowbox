@@ -1436,6 +1436,13 @@ paperRitualSyncButtons=function(){
 
 /* Accessible alternatives to canvas controls; the same action handlers run. */
 function mb5AssistSpec(kind,q,now){
+ if(kind==='moon')return q.moonPending||q.tossUntil>now?{key:'moon-busy',label:['Let the blocks settle…','静候筊杯落定……'],disabled:true}:{key:'moon-ready',label:['Toss the moon blocks','掷筊'],action:'moon'};
+ if(kind==='sticks'){
+  if(q.drawing)return {key:'sticks-falling',label:['Let the stick fall…','静候签落下……'],disabled:true};
+  if(q.stickPicked)return {key:'sticks-picking',label:['Collecting the fortune…','正在拾签……'],disabled:true};
+  if(q.fallenStick)return {key:'sticks-pick',label:['Pick up the numbered stick','拾起落下的签'],action:'stick-pick'};
+  return {key:'sticks-shake',label:['Shake the fortune sticks','摇签筒'],action:'stick-shake'}
+ }
  if(kind==='templeBell'){
   const busy=Number.isFinite(q.bellAt)&&now-q.bellAt<2.5;
   return {key:busy?'bell-resonance':'bell-ready',label:busy?['Listen to the bell…','静听钟声……']:['Ring the bell','敲钟'],disabled:busy,action:'bell'}
@@ -1456,7 +1463,10 @@ function mb5AssistSpec(kind,q,now){
 function mb5AssistPerform(action){
  const spec=mb5AssistSpec(activity,state,t);
  if(!spec||spec.disabled||spec.action!==action||document.hidden||talkOpen||transitioning||$('page').style.display==='block')return;
- if(action==='bell')templeReleaseBell(65);
+ if(action==='moon')pawMoonToss(65,true);
+ else if(action==='stick-shake')shakeFortuneStick();
+ else if(action==='stick-pick')pickupFortuneStick();
+ else if(action==='bell')templeReleaseBell(65);
  else if(action==='scoop')templeReleaseWater({x:440,y:486});
  else if(action==='rinse')templeReleaseWater({x:375,y:430});
  else if(action==='taste')soupTaste();
@@ -1496,6 +1506,9 @@ teaSip=function(){
  return mb5SipBefore()
 };
 function mb5ClockField(kind,q){
+ if(kind==='moon'&&q.moonPending&&Number.isFinite(q.tossUntil))return 'tossUntil';
+ if(kind==='sticks'&&q.drawing&&Number.isFinite(q.stickDrawAt))return 'stickDrawAt';
+ if(kind==='sticks'&&q.stickPicked&&!q.stickDelivered&&Number.isFinite(q.stickPickAt))return 'stickPickAt';
  if(kind==='prayer'&&['approach','taking','lighting','walkMat','bow','placing','returnMat'].includes(q.prayerStage))return 'prayerAt';
  if(kind==='templeWater'&&q.waterStage===2)return 'waterAt';
  if(kind==='templeBell'&&Number.isFinite(q.bellAt)&&q.bellAt>=0)return 'bellAt';
@@ -1517,7 +1530,8 @@ function mb5Visibility(hidden,now){
  }
  const asleep=mb5Sleep;mb5Sleep=null;
  if(!asleep||asleep.run!==state||asleep.kind!==activity||mb5ClockField(activity,state)!==asleep.field)return;
- state[asleep.field]+=Math.max(0,now-asleep.at)
+ const elapsed=Math.max(0,now-asleep.at);state[asleep.field]+=elapsed;
+ if(asleep.field==='stickDrawAt'&&Number.isFinite(state.shakeUntil))state.shakeUntil+=elapsed
 }
 document.addEventListener('visibilitychange',()=>mb5Visibility(document.hidden,performance.now()/1000));
 
@@ -1575,6 +1589,7 @@ refreshControls=function(){const result=mb5RefreshBefore();mb5AssistSync(true);m
 const mb5DrawBefore=drawActivity;
 drawActivity=function(){
  mb5PrepareAdvance();
+ if(typeof pawRitualAdvance==='function')pawRitualAdvance();
  const result=mb5DrawBefore();
  if(activity==='hit'&&room==='fish')paperRitualSyncButtons();
  mb5AssistSync();mb5DeerControls();return result
