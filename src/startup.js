@@ -2881,8 +2881,8 @@ const pawSketchCss=document.createElement('style');pawSketchCss.textContent=`
 #game #content:has(.pawSketchbook)>h1{color:#fff2d6!important;font:600 clamp(23px,5vw,36px)/1.2 Georgia,serif!important;text-align:center;margin:7px 0!important}
 #game #content:has(.pawSketchbook)>p{display:none}
 .pawSketchbook{box-sizing:border-box;position:relative;padding:12px clamp(10px,3vw,24px) 8px;background:repeating-linear-gradient(0deg,#dfcead33 0 1px,transparent 1px 22px),linear-gradient(90deg,#e2c9a0,#fff1d4 8%,#f7e7c7 96%,#ddc39c);color:#53452f;box-shadow:0 4px 0 #b39970,0 7px 0 #e5caa0,0 10px 0 #866e50,0 12px 22px #33281e55;border-radius:3px 10px 10px 3px;border-left:5px solid #8c6d4e}
-.pawSketchTabs{display:flex;gap:3px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid #bda783;padding-bottom:5px}
-.pawSketchTabs button{flex:1 0 84px;min-width:0;min-height:44px;white-space:normal!important;font:600 11px/1.2 Georgia,"Songti SC",serif!important;background:transparent!important;color:#796244!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:4px 5px!important}
+.pawSketchTabs{display:flex;gap:2px;overflow-x:visible;scrollbar-width:none;border-bottom:1px solid #bda783;padding-bottom:5px}
+.pawSketchTabs button{flex:1 1 0;min-width:0;overflow-wrap:anywhere;min-height:44px;white-space:normal!important;font:600 11px/1.2 Georgia,"Songti SC",serif!important;background:transparent!important;color:#796244!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:4px 5px!important}
 .pawSketchTabs button[aria-current=page]{border-bottom:2px solid #627956!important;color:#344d3c!important}
 .pawSketchSpread{display:grid;gap:9px;padding:12px 0 0}
 .pawSketchCover{position:relative;overflow:hidden;min-height:180px;aspect-ratio:1.4;border:5px solid #fff3d9;outline:1px solid #b5a17e;box-shadow:1px 3px 6px #58482c33;transform:rotate(-.45deg)}
@@ -2956,7 +2956,7 @@ groundedStations.temple.prayer=['altar',-7,172,100];
 groundedStations.temple.templeWater=['stone',-3,132,95];
 groundedStations.temple.templeBell=['bell',0,102,86];
 groundedStations.temple.sticks=['table',-12,112,80];
-roomResidentStations.temple={station:'prayer',x:311,y:614,n:['Temple keeper','庙祝'],sc:.88,facing:'right'};
+roomResidentStations.temple={station:'prayer',x:311,y:614,n:['Temple keeper','庙祝'],sc:1.03,facing:'right'};
 groundedStations.arcade.bubbleArcade=['cabinet',28,168,98];
 groundedStations.arcade.goldfishScoop=['table',52,164,98];
 groundedStations.arcade.blindBox=['counter',12,164,98];
@@ -3004,13 +3004,13 @@ function pawTempleSideGate(){
  const [x,y]=pawTempleLayout.secretGarden;
  // A visible opening to the garden, not a label at the edge of the room.
  ctx.save();
- const left=x-37,top=y-47,w=74,base=y+48;
+ const left=x-37,top=y-47,w=74,base=y+125;
  ctx.beginPath();ctx.moveTo(left,base);ctx.lineTo(left,top+19);ctx.quadraticCurveTo(left,top,x,top);ctx.quadraticCurveTo(x+w/2,top,x+w/2,top+19);ctx.lineTo(x+w/2,base);ctx.closePath();
  ctx.save();ctx.clip();
  const sky=ctx.createLinearGradient(x,top,x,base);sky.addColorStop(0,'#d9dcb2');sky.addColorStop(.45,'#91b39a');sky.addColorStop(1,'#526f57');ctx.fillStyle=sky;ctx.fillRect(left,top,w,base-top);
  for(let i=0;i<7;i++){const xx=left+9+(i*23)%60,yy=top+27+(i*11)%35;ellipse(xx,yy,11+i%3,14,['#607d59','#8b9d71','#a4b48b'][i%3]);line(xx,yy+6,xx,yy+25,'#716c4e',1.5)}
  ellipse(x-22,y+15,20,18,'#526f53');ellipse(x+25,y+10,21,25,'#678b61');
- ctx.beginPath();ctx.moveTo(x-6,y+9);ctx.lineTo(x+5,y+9);ctx.lineTo(x+26,base);ctx.lineTo(x-25,base);ctx.closePath();ctx.fillStyle='#d3c5a3';ctx.fill();
+ ctx.beginPath();ctx.moveTo(x-6,y+30);ctx.lineTo(x+5,y+30);ctx.lineTo(x+30,base);ctx.lineTo(x-29,base);ctx.closePath();ctx.fillStyle='#d3c5a3';ctx.fill();
  ctx.restore();ctx.strokeStyle='#704b35';ctx.lineWidth=7;ctx.stroke();
  for(const dx of [-37,37]){line(x+dx,top+15,x+dx,base,'#805a3c',6);line(x+dx-1,top+17,x+dx-1,base-2,'#c9aa77',1)}
  round(x-44,top-8,88,9,2,'#956b49','#5e4734');round(x-42,base-1,84,7,2,'#ad9d7a','#776d55');
@@ -3085,7 +3085,7 @@ label=function(name,x,y,fn){
  if(room==='temple'&&!activity&&Math.abs(x-pawTempleLayout.secretGarden[0])<2){
   const cy=pawTempleLayout.secretGarden[1]-65;
   ctx.save();round(x-45,cy-15,90,30,3,'#4e6048','#e1c58a');activityFitText(tr('Garden →','后院 →'),x,cy,16,80,'#fff2d6');ctx.restore();
-  target(x-45,cy-18,90,132,fn);return
+  target(x-45,cy-18,90,208,fn);return
  }
  return pawGateLabelBefore(name,x,y,fn)
 };
