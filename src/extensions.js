@@ -3731,10 +3731,27 @@ const popGuestStories=[
 ];
 function popGuestPool(world){return popGuestStories.filter(g=>g.world===world)}
 // A guest stays the same for the local calendar day, including on re-entry.
+
+/* MBGUEST_ROSTER_BEGIN */
+function mbGuestOrdinal(date){
+ if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date))return null;
+ const ms=Date.parse(date+'T00:00:00Z');
+ return Number.isFinite(ms)&&new Date(ms).toISOString().slice(0,10)===date?Math.floor(ms/86400000):null
+}
+function mbGuestIndex(date,offset,slot,count){
+ const ordinal=mbGuestOrdinal(date);
+ if(ordinal===null||!Number.isInteger(offset)||!Number.isInteger(slot)||slot<0||!Number.isInteger(count)||count<1)return -1;
+ return ((ordinal+offset+slot)%count+count)%count
+}
+function mbGuestSafeRotate(previous,today,blocked,covered,distances){
+ if(!previous||previous===today||mbGuestOrdinal(today)===null||blocked)return false;
+ return covered||distances.every(d=>Number.isFinite(d)&&d>320)
+}
+/* MBGUEST_ROSTER_END */
+
 function popGuestFor(world,slot,date=shrineClock().day){
- const pool=popGuestPool(world);if(!pool.length)return null;
- const ordinal=Math.floor(Date.parse(date+'T00:00:00Z')/86400000);
- return pool[((ordinal+hash(world)+slot)%pool.length+pool.length)%pool.length]
+ const pool=popGuestPool(world),index=mbGuestIndex(date,hash(world),slot,pool.length);
+ return index<0?null:pool[index]
 }
 let popGuestMemory=load('popGuestMemoryV1',{});
 if(!popGuestMemory||typeof popGuestMemory!=='object'||Array.isArray(popGuestMemory))popGuestMemory={};
@@ -3804,6 +3821,14 @@ passport=function(){
   const row=element('article','',section,'popGuestRow');element('strong',tr(...g.name),row);
   element('small',tr(...maps[g.world].n),row);
   if(items.some(x=>x[0]===g.gift[0]))element('p',tr(...g.gift),row);
+  const rec=popGuestRecord(g);
+  if(rec?.last!==null&&rec?.last!==undefined){
+   const memories=element('details','',row,'mbGuestMemory');
+   element('summary',tr('Our last conversation','上次聊过的事'),memories);
+   element('small',tr(...g.choices[rec.last][0]),memories);
+   element('p',tr(...g.choices[rec.last][1]),memories);
+   if(mbGuestOrdinal(rec.lastDay)!==null)element('small',rec.lastDay,memories);
+  }
  }
 };
 $('dockPassport').onclick=passport;
@@ -7108,9 +7133,14 @@ todayHub=function(){
  element('p',tr('Fictional town guests come and go. No need to chase them or finish every story.','小镇客串角色随缘出现，不用追着找，也不必集齐所有故事。'),section);
  for(const district of ['fortune','home','island','wonder']){
   const row=element('article','',section,'guestVisitRow');element('strong',tr(...maps[district].n),row);
-  const names=[0,1].map(i=>popGuestFor(district,i)).filter(Boolean).map(g=>tr(...g.name));
-  element('p',names.join(' · '),row);
-  if(district!==scene)b(row,tr('Visit district','去逛逛'),()=>journey(district));else element('small',tr('Current district · look along the main path','当前区域 · 沿小路偶遇'),row)
+  const guests=mbGuestRoster(district);
+  for(const g of guests){
+   const guest=element('div','',row,'mbGuestLine');element('span',tr(...g.name),guest);
+   const rec=popGuestRecord(g);element('small',rec?.lastDay===shrineClock().day?tr('Chatted today','今天聊过'):rec?tr('Familiar face','熟面孔'):tr('New acquaintance','还没见过'),guest);
+  }
+  if(district!==scene){
+   const go=b(row,tr('Take the train','搭列车去'),()=>openRailStop(district));go.dataset.guestDistrict=district
+  }else element('small',tr('Current district · look along the main path','当前区域 · 沿小路偶遇'),row)
  }
  const first=q.querySelector('.communityWelcome');if(first)first.after(section)
 };$('dockScoop').onclick=todayHub;

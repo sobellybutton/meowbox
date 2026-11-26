@@ -1828,4 +1828,50 @@ const mbFriendJournalStyle=document.createElement('style');
 mbFriendJournalStyle.textContent='#content .friendEntry .mbFriendJournal{grid-column:1/-1;width:100%;margin-top:4px;padding:6px 9px;background:#f7ecd4;border:1px solid #c7af87;border-radius:4px;box-sizing:border-box}#content .mbFriendJournal summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:600;color:#69513e}#content .mbFriendJournal small{display:block;margin:5px 0;white-space:normal}#content .mbFriendJournal p{font-size:13px;line-height:1.5;margin:8px 0 2px}';
 document.head.append(mbFriendJournalStyle);
 
+
+/* Keep the actual two visitor slots and the Today roster in agreement.
+   Rotate offscreen or behind a full-page journal, never during a chat. */
+let mbGuestDate='',mbGuestScene='',mbGuestCheck=-Infinity;
+const mbGuestInitBefore=initNPC;
+initNPC=function(...args){
+ const result=mbGuestInitBefore(...args);mbGuestDate=shrineClock().day;mbGuestScene=scene;mbGuestCheck=t;return result
+};
+function mbGuestSync(force=false){
+ if(!force&&t-mbGuestCheck<15)return false;
+ mbGuestCheck=t;
+ if(mbGuestScene!==scene)return false;
+ const today=shrineClock().day,slots=npc.filter(n=>n.popGuest);
+ const blocked=!!room||!!activity||talkOpen||transitioning||!proposal.hidden;
+ const covered=$('page').style.display==='block';
+ if(!mbGuestSafeRotate(mbGuestDate,today,blocked,covered,slots.map(n=>Math.hypot(n.x-p.x,n.y-p.y))))return false;
+ // Update names and IDs together while preserving actor positions and walk paths.
+ slots.forEach((n,i)=>{const g=popGuestFor(scene,i,today);if(g){n.popGuest=g.id;n.n=g.name}});
+ mbGuestDate=today;return true
+}
+function mbGuestRoster(district){
+ if(district===scene&&mbGuestScene===scene){
+  mbGuestSync(true);
+  const actual=npc.filter(n=>n.popGuest).map(n=>popGuestStories.find(g=>g.id===n.popGuest)).filter(Boolean);
+  if(actual.length)return actual.filter((g,i)=>actual.findIndex(v=>v.id===g.id)===i)
+ }
+ const count=Math.min(2,popGuestPool(district).length);
+ return Array.from({length:count},(_,i)=>popGuestFor(district,i)).filter(Boolean)
+}
+const mbGuestDrawMapBefore=drawMap;
+drawMap=function(){mbGuestSync();return mbGuestDrawMapBefore()};
+const mbGuestTodayBefore=todayHub;
+todayHub=function(...args){
+ const result=mbGuestTodayBefore(...args);
+ const panel=$('content').querySelector('.guestVisitPanel');if(panel){
+  const previous=panel.querySelector('p');
+  if(previous)previous.textContent=tr('Fictional visitors rotate with the town calendar. A familiar face may remember your last conversation.','虚构客串角色随小镇日历轮换。熟面孔也许还记得上次的聊天。');
+  const title=panel.querySelector('h2');
+  if(title)title.textContent=tr('Who is around town?','今天谁来摸鱼？')
+ }
+ journalLanguage(todayHub);return result
+};
+const mbGuestUi=document.createElement('style');
+mbGuestUi.textContent='#content .mbGuestLine{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:5px 0;font-size:14px}#content .mbGuestLine small{flex-shrink:0;font-size:11px}#content .mbGuestMemory{margin-top:7px;padding:4px 9px;border:1px solid #c5ae88;background:#f8ecd5;border-radius:4px}#content .mbGuestMemory summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;color:#6d533a}#content .mbGuestMemory p{line-height:1.5}';
+document.head.append(mbGuestUi);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

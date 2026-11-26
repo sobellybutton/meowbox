@@ -24,6 +24,7 @@ jobs:
       - run: node scripts/home-placement-test.cjs
       - run: node scripts/rail-fish-test.cjs
       - run: node scripts/resident-story-test.cjs
+      - run: node scripts/guest-roster-test.cjs
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps chromium
       - name: Test all four villages and actual doorway taps
@@ -544,6 +545,12 @@ jobs:
                 await page.locator('#choices button').first().click();
                 await page.locator('#choices').getByRole('button',{name:'See you around',exact:true}).click();
                 if(!await page.evaluate(()=>popGuestRecord(popGuestFor('home',0))?.choices.includes(0)))throw Error('Guest did not remember the conversation');
+                await page.evaluate(()=>{closeTalk();passport()});
+                const guestMemory=page.locator('.popGuestAlbum .mbGuestMemory').first();
+                await guestMemory.locator('summary').click();
+                if(!await guestMemory.locator('p').isVisible())throw Error('Guest conversation not visible in passport');
+                await page.evaluate(()=>{$('page').style.display='none'});
+
                 await page.evaluate(()=>{closeTalk();toggleLang()});
                 if(await page.locator('#back').innerText()!=='‹ 出门逛逛')throw Error('Chinese back label incorrect');
                 await page.evaluate(()=>{room='office';activity=null;action('officeSketch')});
