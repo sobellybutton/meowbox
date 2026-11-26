@@ -2445,9 +2445,9 @@ function pawRailMountMotion(stage,im,layout,host,mode){
    for(const p of panes){
     // One continuous clock across top and bottom of each window; the
     // reflected texture extends past its edge without a hard repeat seam.
-    const travel=elapsed*.34*p.speed,limit=p.tw-1;
+    const travel=Math.min(1,elapsed/3.6)*.13*p.speed,limit=p.tw-1;
     for(let i=0;i<p.pixels.length;i++){
-     const u=pawRailReflect(p.cols[i]/limit+travel)*limit,k=Math.floor(u),f=u-k,ix=p.rows[i]+k*4,next=p.rows[i]+Math.min(limit,k+1)*4,to=p.pixels[i];
+     const u=(.15+.70*(p.cols[i]/limit)-travel)*limit,k=Math.floor(u),f=u-k,ix=p.rows[i]+k*4,next=p.rows[i]+Math.min(limit,k+1)*4,to=p.pixels[i];
      out[to]=p.texture[ix]+(p.texture[next]-p.texture[ix])*f;
      out[to+1]=p.texture[ix+1]+(p.texture[next+1]-p.texture[ix+1])*f;
      out[to+2]=p.texture[ix+2]+(p.texture[next+2]-p.texture[ix+2])*f;out[to+3]=p.alphas[i]
@@ -2877,18 +2877,26 @@ fade=function(fn,kind='gust',destination=null){
  transitioning=true;
  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
  const game=$('game'),rideTime=reduce?650:3600,arrivalFade=reduce?0:220;
+ const destinationReady=pawReadyMap(destination);
  const old=$('fade');old.className='';old.replaceChildren();old.style.opacity='';
  game.classList.add('pawRailJourneyActive');game.querySelectorAll('.mbTransferHolding').forEach(el=>el.remove());
  // Show the carriage in the same interaction, even if the painting is still decoding.
  mbTransferHolding(scene,destination);
  const overlay=game.querySelector('.pawRailJourney');if(overlay)overlay.dataset.riding='true';
  let arrived=false,timer;
- function arrive(){
-  if(arrived)return;arrived=true;clearTimeout(timer);
-  try{fn()}catch(err){console.error('Rail arrival',err)}
-  if(overlay){overlay.dataset.arriving='true';overlay.querySelector('.pawRailCaption small').textContent=tr('Arrived at','已抵达')}
-  setTimeout(()=>{game.classList.remove('pawRailJourneyActive');transitioning=false;game.querySelectorAll('.pawRailJourney').forEach(el=>el.remove());updateHUD()},arrivalFade)
- }
+ async function arrive(){
+   if(arrived)return;arrived=true;clearTimeout(timer);
+   const finish=()=>{game.classList.remove('pawRailJourneyActive');transitioning=false;game.querySelectorAll('.pawRailJourney').forEach(el=>el.remove());updateHUD()};
+   const skip=overlay?.querySelector('.pawRailSkip'),label=overlay?.querySelector('.pawRailCaption small');
+   if(skip){skip.disabled=true;skip.textContent=tr('Arriving…','即将抵达…')}
+   if(label)label.textContent=tr('Approaching','即将到达');
+   const ready=await destinationReady;
+   if(!ready){finish();toast(tr('The next station is temporarily unavailable. Try boarding again.','下一站暂时无法抵达，请重新上车。'));return}
+   try{fn()}catch(err){console.error('Rail arrival',err);finish();return}
+   await new Promise(resolve=>{let done=false;const finishFrame=()=>{if(!done){done=true;resolve()}};setTimeout(finishFrame,250);requestAnimationFrame(()=>requestAnimationFrame(finishFrame))});
+   if(overlay){overlay.dataset.arriving='true';if(label)label.textContent=tr('Arrived at','已抵达')}
+   setTimeout(finish,arrivalFade)
+  }
  overlay?.querySelector('.pawRailSkip')?.addEventListener('click',arrive,{once:true});
  timer=setTimeout(arrive,rideTime)
 };
@@ -2910,10 +2918,10 @@ const pawRailJourneyStyle=document.createElement('style');pawRailJourneyStyle.te
 #game.pawRailJourneyActive #toast{visibility:hidden!important}
 #game .pawRailJourney{padding:0!important;overflow:hidden;isolation:isolate;background:#303c36!important;animation:none!important;opacity:1;transition:opacity .48s ease-out,transform .48s ease-out}
 #game .pawRailJourney{container-type:size;pointer-events:auto}
-#game .pawRailJourney .pawRailFallback{position:absolute;inset:0;background:#303c36 url('assets/visual/painted/journey/portrait.webp') center/cover no-repeat}
+#game .pawRailJourney .pawRailFallback{position:absolute;inset:0;background:#303c36 url('assets/visual/painted/journey/portrait.webp') center/contain no-repeat}
 @media(min-aspect-ratio:1/1){#game .pawRailJourney .pawRailFallback{background-image:url('assets/visual/painted/journey/landscape.webp')}}
 #game .pawRailJourney[data-painted-rail=true] .pawRailFallback{display:none}
-#game .pawRailJourney .mbPaintedRail{position:absolute;inset:auto;left:50%;top:50%;margin:0;transform:translate(-50%,-50%);width:max(100cqw,calc(100cqh * var(--rail-aspect,.667)))!important;height:auto!important;aspect-ratio:var(--rail-aspect,.667);max-width:none!important;max-height:none!important;border-radius:0!important}
+#game .pawRailJourney .mbPaintedRail{position:absolute;inset:auto;left:50%;top:50%;margin:0;transform:translate(-50%,-50%);width:min(100cqw,calc(100cqh * var(--rail-aspect,.667)))!important;height:auto!important;aspect-ratio:var(--rail-aspect,.667);max-width:none!important;max-height:none!important;border-radius:0!important}
 #game .pawRailJourney .mbPaintedRail picture img{object-fit:fill}
 #game .pawRailJourney .mbRailPane>span{animation:pawTravelWindow 2.1s linear infinite}#game .pawRailJourney .mbRailPane[data-pane=upper]>span{animation-duration:3.1s!important}#proposal .mbPaintedRail[data-use=entrance] .mbRailPane>span{animation: pawTrainScenery 5.5s linear infinite alternate}@keyframes pawTravelWindow{from{transform:translateX(8%) scale(1.24)}to{transform:translateX(-8%) scale(1.24)}}
 #game .pawRailJourney .mbRailPane[data-pane=upper]>span,#proposal .mbPaintedRail[data-use=entrance] .mbRailPane[data-pane=upper]>span{animation-duration:7.5s}
@@ -5970,5 +5978,54 @@ initNPC=function(...args){
  if(extras.size)for(let i=npc.length-1;i>=0;i--)if(extras.has(npc[i]))npc.splice(i,1);
  return result
 };
+
+
+/* PAW_PRESENTATION_REPAIR */
+function pawReadyMap(key){
+ const im=key==='fortune'?pics.valleyClean:portraitImages[key];
+ if(!im)return Promise.resolve(false);
+ return new Promise(resolve=>{
+  let settled=false;
+  const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);im.removeEventListener('load',onLoad);im.removeEventListener('error',onError);resolve(value)};
+  const onError=()=>finish(false);
+  const onLoad=()=>{if(!im.naturalWidth)return finish(false);if(typeof im.decode==='function')im.decode().then(()=>finish(true),onError);else finish(true)};
+  const timer=setTimeout(onError,6500);
+  im.addEventListener('load',onLoad);im.addEventListener('error',onError);
+  if(im.complete)onLoad()
+ })
+}
+const pawAnchoredSignBefore=syncSigns;
+syncSigns=function(...args){
+ const result=pawAnchoredSignBefore(...args);
+ if(signRoot.hidden||room||transitioning||!maps[scene]||!Number.isFinite(cam.ox)||!Number.isFinite(cam.oy)||!Number.isFinite(cam.scale))return result;
+ const dpr=Math.max(1,Math.min(3,devicePixelRatio||1)),snap=n=>Math.round(n*dpr)/dpr;
+ for(const [id,x,y] of maps[scene].st){
+  const node=signButtons.get(id);if(!node)continue;
+  const [ax,ay]=housePlaqueAnchor(scene,id,x,y);
+  const sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
+  const left=snap(sx)+'px',top=snap(sy)+'px';
+  if(node.style.left!==left)node.style.left=left;
+  if(node.style.top!==top)node.style.top=top;
+  node.hidden=sy<82||sy>H-75||sx<0||sx>W;
+ }
+ return result
+};
+const pawPresentationCSS=document.createElement('style');
+pawPresentationCSS.textContent=`
+#game #worldSigns .worldSign,#game #worldSigns .doorPlaque{transition:none!important;animation:none!important}
+#proposal[data-paw-entrance-step="0"]:not([hidden]){position:absolute!important;inset:0!important;isolation:isolate;display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;overflow:hidden!important;background:#27362f!important}
+#proposal[data-paw-entrance-step="0"]>.hero{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;z-index:0!important;overflow:hidden!important;pointer-events:none}
+#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-height:none!important}
+#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center}
+#proposal[data-paw-entrance-step="0"]>.hero:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#182a247d,transparent 22%,transparent 48%,#172923ec 100%);pointer-events:none}
+#proposal[data-paw-entrance-step="0"]>header{z-index:3!important;grid-row:1}
+#proposal[data-paw-entrance-step="0"]>footer{z-index:3!important;grid-row:3;position:relative!important;align-self:end!important;justify-self:center!important;width:min(100%,480px)!important;max-width:480px!important;padding:10px 0 max(12px,env(safe-area-inset-bottom,0px))!important;text-shadow:0 1px 5px #18241e}
+#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>.hero{min-height:0!important;height:auto!important;max-height:none!important;overflow:hidden!important;padding:8px 0;box-sizing:border-box;display:grid!important;place-items:center!important}
+#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"]) .pawEntranceAvatar{height:min(var(--paw-avatar-main,180px),100%)!important;max-height:100%!important;max-width:88%!important;align-self:center!important;justify-self:center!important;object-fit:contain!important}
+#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>footer{align-self:end!important;min-height:0!important;position:relative!important;transform:none!important;margin:0!important}
+@media(max-width:700px) and (orientation:portrait){#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"]):not([hidden]){grid-template-rows:auto minmax(150px,1fr) auto!important;overflow-y:auto!important;gap:8px!important}}
+`;document.head.append(pawPresentationCSS);
+const pawWarmDistricts=()=>{for(const key of Object.keys(maps))if(key!=='fortune')pawReadyMap(key)};
+if(typeof requestIdleCallback==='function')requestIdleCallback(pawWarmDistricts,{timeout:2000});else setTimeout(pawWarmDistricts,800);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

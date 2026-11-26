@@ -916,3 +916,10 @@ Owner screenshot showed a tiny portrait gate on desktop, a large dark empty surr
 
 ## Temporal release audit and passerby diversity (26 November)
 - Added 100ms runtime sampler to visual audit and organic district journeys; exported timestamped records and anomaly screenshots. Updated obsolete Town Hall test entry. Eight pure appearance assignment checks pass; bounded unique non-player looks and fewer duplicate generic fillers, named cameo IDs retained. Actual individual cameo art still missing. Red dot source unverified. Browser execution pending. See docs/PAW_RELEASE_AUDIT.md.
+
+
+## Owner mobile rendering repair (26 November)
+- Start decoding the destination before playback ends; skip awaits readiness. Keep carriage visible until two animation-frame opportunities after committing destination. On artwork failure stay in previous district with retry guidance. Warm other district portrait art in idle time.
+- Shared aspect-preserving fit for carriage stage and fallback. Replace mirrored pane travel with bounded unidirectional crop as an interim mitigation; no new route-specific video or panorama.
+- Anchor plaques to authored positions, snap to physical pixels and remove plaque transitions. Full viewport entrance preview with overlay text; constrain avatar stage independently of footer. Greeting frames and coherent gate artwork remain pending.
+- Connector-only editing: no local GitHub DNS or browser execution. Graphify stale (53a9113). CI and real device playback required before visual acceptance. No save-key or route changes.
