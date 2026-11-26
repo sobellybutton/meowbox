@@ -77,3 +77,19 @@ for(room of ['temple','arcade']){
 return count;
 `);
 console.log('PASS: '+sceneGeometry()+' redesigned temple and arcade ordered routes');
+
+const orientationMath=section(src,'/* PAW_DEVICE_ART_BEGIN */','/* PAW_DEVICE_ART_END */');
+const orientationChecks=new Function(orientationMath+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};const pair={portrait:{name:'tall'},landscape:{name:'wide'}};
+for(const [w,h,wanted] of [[320,568,'portrait'],[390,844,'portrait'],[430,932,'portrait'],[768,1024,'portrait'],[1024,768,'landscape'],[1440,900,'landscape'],[1920,1080,'landscape'],[844,390,'landscape'],[400,400,'portrait'],[575,500,'landscape'],[574,500,'portrait'],[0,0,'portrait']]){
+ ck(pawArtworkOrientation(w,h)===wanted,'wrong orientation '+w+'x'+h);
+ ck(pawArtworkRecord(pair,w,h)===pair[wanted],'select native');
+ ck(pawArtworkRecord({[wanted==='portrait'?'landscape':'portrait']:{}},w,h)===null,'no wrong-orientation art');
+ if(w&&h)for(const [iw,ih] of [[1024,1536],[1440,810],[1080,1920]]){
+  const f=pawArtworkContain(iw,ih,w,h);
+  ck(f.dx>=-.00001&&f.dy>=-.00001&&f.w<=w+.00001&&f.h<=h+.00001,'no crop');
+  ck(Math.abs(f.w/f.h-iw/ih)<.00001,'no distortion');
+ }
+}
+return n;`);
+console.log('PASS: '+orientationChecks()+' responsive native-art selection and fit checks');
