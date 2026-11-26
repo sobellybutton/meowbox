@@ -2270,7 +2270,8 @@ const mbIdentityVisualStyle=document.createElement('style');mbIdentityVisualStyl
 #game .mbTransferStatus{margin:2px 0;font:14px/1.4 system-ui;color:#594b37}
 @keyframes mbTransferReveal{from{opacity:0}to{opacity:1}}
 @keyframes mbTransferMove{from{transform:translateX(-100%)}to{transform:translateX(290%)}}
-#content .mbUncroppedPostcard{object-fit:contain!important;object-position:center!important;background:#e2d3b6;animation:none!important}
+#content .mbUncroppedPostcard{object-fit:contain!important;object-position:center!important;background:#e2d3b6;animation:mbWholePostcardDrift 22s ease-in-out infinite alternate!important}
+@keyframes mbWholePostcardDrift{from{transform:scale(.97)}to{transform:scale(1)}}
 #content .mbRailTicketRoute{font:600 14px/1.5 system-ui;color:#524735;overflow-wrap:anywhere;background:#f8ecd5;border:1px dashed #b39a72;padding:10px 12px;border-radius:3px;text-align:center}
 #content .travellerEditChoices,#proposal .mbTravellerRoster{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
 #content .mbTravellerChoice,#proposal .mbTravellerChoice{display:flex!important;flex-direction:column;align-items:center;justify-content:flex-start;min-width:0!important;padding:8px!important;gap:5px!important;border:1px solid #b89c72!important;border-radius:5px!important;background:var(--town-grain),#f7ead1!important;color:#493b2c!important;white-space:normal!important;box-shadow:0 2px 0 #947a5125!important}
@@ -2282,7 +2283,7 @@ const mbIdentityVisualStyle=document.createElement('style');mbIdentityVisualStyl
 #content .journalIdentity>.mbFullTraveller,#content .lifeIntro>.mbFullTraveller{width:clamp(70px,23vw,130px)!important;height:clamp(110px,32vw,190px)!important;object-fit:contain!important;background:transparent!important}
 #content .mbIdentityCaption{font:13px/1.45 system-ui;color:#64533f}
 @media(min-width:760px){#content .travellerEditChoices,#proposal .mbTravellerRoster{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
-@media(prefers-reduced-motion:reduce){#game .mbTransferHolding,#game .mbTransferLine:after{animation:none!important}}
+@media(prefers-reduced-motion:reduce){#game .mbTransferHolding,#game .mbTransferLine:after,#content .mbUncroppedPostcard{animation:none!important}}
 `;document.head.append(mbIdentityVisualStyle);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
