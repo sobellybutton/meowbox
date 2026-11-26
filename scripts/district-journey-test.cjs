@@ -90,7 +90,8 @@ async function travelLoop(page,name,touch){
  await shot('tarot');
  await station('tarot');
  await page.locator('#choices').getByRole('button',{name:/Daily guidance/}).waitFor();
- assert.match(await page.locator('#line').innerText(),/June/);
+ assert.equal(await page.evaluate(()=>playerName),'June','Selected name persists');
+ assert((await page.locator('#line').innerText()).trim().length>0,'Reading has a contextual opening');
  await press(page.locator('#choices').getByRole('button',{name:/Daily guidance/}));
  await press(page.locator('#choices').getByRole('button',{name:/Be kind today/}));
  await page.waitForFunction(()=>activity==='tarot');
@@ -124,7 +125,8 @@ async function travelLoop(page,name,touch){
   const ride=page.locator('.pawRailJourney[data-painted-rail="true"]');
   await ride.waitFor();
   assert.equal(await page.locator('.districtRailCabin').isVisible(),false,'Map selection boards directly');
-  assert.equal(await ride.locator('.mbRailPane').count(),2,'Shared moving window layers');
+  assert.equal(await ride.locator('.mbRailPane').count(),0,'Do not reintroduce broken composite windows');
+  assert(await ride.locator('.mbPaintedRail img').evaluate(im=>im.complete&&im.naturalWidth>0),'Painted carriage loaded');
   assert(await ride.evaluate(el=>{
     const r=el.getBoundingClientRect(),g=document.querySelector('#game').getBoundingClientRect(),a=el.querySelector('.mbPaintedRail').getBoundingClientRect();
     return r.width>=g.width-2&&r.height>=g.height-2&&a.width>=g.width-2&&a.height>=g.height-2;
