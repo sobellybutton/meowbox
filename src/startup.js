@@ -8141,4 +8141,129 @@ const pawRecoveredGardenCss=document.createElement('style');
 pawRecoveredGardenCss.textContent='@media (orientation:portrait){#game #content .pawWishGarden[data-paw-recovered-garden="true"]{background:linear-gradient(#253a2d22,#283d3155),url("assets/visual/painted/recovered/scenes/wishing_garden_portrait.webp") center/cover no-repeat!important}}';
 document.head.append(pawRecoveredGardenCss);
 
+
+/* PAW_TEMPLE_CONTACT_BEGIN */
+function pawIncenseFrame(stage,age,held=0,reduced=false){
+ const ease=v=>{v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)};
+ const mix=(a,b,v)=>a+(b-a)*v,sc=1.65;
+ const f=(duration)=>ease(age/duration);
+ let x=228,y=557,bow=0,walking=false,dir='right',angle=0,pick=null,touch=false;
+ if(stage==='approach'){x=mix(185,228,f(1.1));walking=age<1.1}
+ if(stage==='walkMat'){x=mix(228,340,f(1.25));y=mix(557,573,f(1.25));walking=age<1.25}
+ if(['hold','bow','offer','complete'].includes(stage)){x=340;y=573}
+ if(stage==='bow'){const p=Math.max(0,Math.min(1,age/1.8));bow=p<.42?ease(p/.42):p<.58?1:ease((1-p)/.42)}
+ // A single hand anchor travels with the torso. Both sleeves end at it.
+ let grip={x:x+25+bow*27,y:y-68+bow*22};
+ if(stage==='lighting'){
+  const v=age<.65?ease(age/.65):age<1.05?1:ease((1.65-age)/.6);
+  x=228+34*v;angle=.18*v;
+  grip={x:mix(x+25,303-53*Math.sin(angle),v),y:mix(y-68,430+53*Math.cos(angle),v)};
+ }
+ if(stage==='placing'){
+  const p=f(1.85);x=mix(340,480,p);y=mix(573,558,p);walking=age<1.45;
+  grip={x:mix(365,510,p),y:mix(505,493,p)}
+ }
+ if(stage==='returnMat'){x=mix(480,340,f(1.1));y=mix(558,573,f(1.1));dir='left';walking=age<1.1;grip={x:x+25,y:y-68}}
+ const bob=walking&&!reduced&&stage==='walkMat'?Math.abs(Math.sin(age*12))*1.6:0;
+ grip.y-=bob;y-=bob;
+ if(stage==='taking'){
+  const rack={x:242+held*12,y:474};
+  const reach=age<.32?ease(age/.32):1-ease((age-.32)/.4);
+  pick={x:mix(grip.x,rack.x,reach),y:mix(grip.y,rack.y,reach)};
+  touch=age>=.32;
+ }
+ return {x,y,sc,bow,walking,dir,angle,grip,pick,touch}
+}
+/* PAW_TEMPLE_CONTACT_END */
+// Use the recovered original Guanyin painting, cropped above its baked-in
+// incense burner. The actual interactive burner remains separate and empty.
+function pawGuanyinAltar(x,y,w,h){
+ const im=pawRecoveredImage('scenes/temple_hall_portrait.webp');
+ if(!pawRoomImageReady(im))return false;
+ const sx=im.naturalWidth*.31,sy=im.naturalHeight*.245,sw=im.naturalWidth*.38,sh=im.naturalHeight*.204;
+ ctx.save();try{
+  ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();
+  const k=Math.min(w/sw,h/sh),dw=sw*k,dh=sh*k;
+  ctx.drawImage(im,sx,sy,sw,sh,x+(w-dw)/2,y+(h-dh)/2,dw,dh)
+ }finally{ctx.restore()}return true
+}
+const pawTempleSanctuaryArtBefore=pawTempleSanctuary;
+pawTempleSanctuary=function(){
+ pawTempleSanctuaryArtBefore();
+ const [x,y]=pawTempleLayout.prayer;
+ pawGuanyinAltar(x-57,y-122,114,107)
+};
+function pawIncenseArm(shoulder,hand,scale,far=false,skin='#e7bb98'){
+ const palette=[['#eee0c7','#957e68'],['#b0b8bc','#576575'],['#71859a','#485764'],['#bca78c','#78634f']];
+ const [cloth,edge]=palette[((avatar??0)%4+4)%4];
+ const elbow={x:shoulder.x+(hand.x-shoulder.x)*.46-3*scale,y:shoulder.y+(hand.y-shoulder.y)*.62+5*scale};
+ const cuff={x:hand.x+(elbow.x-hand.x)*.17,y:hand.y+(elbow.y-hand.y)*.17};
+ ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+ const sleeve=(width,color)=>{ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(shoulder.x,shoulder.y);ctx.quadraticCurveTo(elbow.x,elbow.y,cuff.x,cuff.y);ctx.stroke()};
+ sleeve(8.5*scale,edge);sleeve(6.7*scale,cloth);sleeve(2.0*scale,'#fff1ce44');
+ ctx.strokeStyle='#98765d';ctx.lineWidth=5.2*scale;ctx.beginPath();ctx.moveTo(cuff.x,cuff.y);ctx.lineTo(hand.x,hand.y);ctx.stroke();
+ ctx.strokeStyle=skin;ctx.lineWidth=4.2*scale;ctx.stroke();
+ ellipse(hand.x,hand.y,3.4*scale,4*scale,skin);
+ if(!far){ctx.strokeStyle='#a37a60';ctx.lineWidth=.65*scale;ctx.beginPath();ctx.moveTo(hand.x-2*scale,hand.y-1.5*scale);ctx.lineTo(hand.x+2*scale,hand.y-.7*scale);ctx.stroke()}
+ ctx.restore()
+}
+function pawHeldIncense(q,held,lit){
+ const {x,y,sc,bow,grip,pick,touch,angle}=q,shoulder={x:x+9*sc+bow*17,y:y-58*sc+bow*12};
+ // First paint the body, then the rear sleeve, incense, and near fingers.
+ // Thus the sticks visibly sit between two hands instead of over the face.
+ drawRitualPose(x,y,sc,{bow,praying:true});
+ const backHand={x:grip.x-3,y:grip.y+2};
+ if(held||pick){
+  pawIncenseArm({x:shoulder.x-6,y:shoulder.y+3},backHand,sc,true);
+  if(held)incenseBundle(grip.x,grip.y+2,held,angle,lit);
+  if(pick&&touch)incenseStem(pick.x,pick.y+1,0,false,53);
+  pawIncenseArm(shoulder,pick||grip,sc,false);
+  if(held&&pick)ellipse(backHand.x,backHand.y,4.5,5.5,'#e7bb98');
+ }
+}
+function pawPrayerStep(){
+ const blocked=document.hidden||talkOpen||transitioning||$('page').style.display==='block'||!proposal.hidden;
+ if(blocked){if(!Number.isFinite(state.pawPrayerPause))state.pawPrayerPause=t}
+ else if(Number.isFinite(state.pawPrayerPause)){state.prayerAt+=Math.max(0,t-state.pawPrayerPause);delete state.pawPrayerPause}
+ const next=blocked?null:incenseRitualTick(state,t);
+ if(next&&incenseStagePrompts[next])hint(...incenseStagePrompts[next]);
+ if(next==='walkMat')physicalFx('step',.45);
+ if(next==='returnMat')physicalFx('wood',.42);
+ if(next==='complete'&&!state.prayerRewarded){state.prayerRewarded=true;lifeEarn('ritual:prayer',{calm:2},true);lifeHUDRefresh()}
+ const stage=state.prayerStage,age=Math.max(0,(state.pawPrayerPause??t)-state.prayerAt),held=state.prayerHeld||0,lit=state.prayerLit||(stage==='lighting'&&age>=.82);
+ const q=pawIncenseFrame(stage,age,held,residentReducedMotion.matches);
+ ctx.save();
+ paintLivingBackdrop(pics.streetTemple||pics.sticks);
+ // The deity is physically above the altar, facing the worshipper.
+ pawGuanyinAltar(416,249,188,220);
+ const wood=ctx.createLinearGradient(0,480,0,550);wood.addColorStop(0,'#aa815b');wood.addColorStop(1,'#654737');
+ ctx.beginPath();ctx.moveTo(431,480);ctx.lineTo(580,480);ctx.lineTo(608,535);ctx.lineTo(411,535);ctx.closePath();ctx.fillStyle=wood;ctx.fill();
+ line(423,535,423,575,'#624536',9);line(592,535,592,575,'#624536',9);
+ templeIncense(510,502,false,0);
+ if(state.prayerOffered)incenseBundle(510,493,state.prayerOffered,0,true);
+ for(const xx of [447,573]){round(xx-4,454,8,32,2,'#c6a77a','#8b6e4c');ellipse(xx,449,3.2,7,'#f8d18a')}
+ // Keep the next stick in the rack until a fingertip actually reaches it.
+ if(stage==='taking'&&!q.touch){state.prayerStage='collect';try{incenseTray()}finally{state.prayerStage=stage}}else incenseTray();
+ ctx.beginPath();ctx.moveTo(304,550);ctx.lineTo(389,550);ctx.lineTo(403,579);ctx.lineTo(290,579);ctx.closePath();ctx.fillStyle='#b7a07b';ctx.fill();ctx.strokeStyle='#88765b';ctx.stroke();
+ if(q.walking&&!held)backHuman(q.x,q.y,avatar??0,true,q.dir,q.sc);
+ else pawHeldIncense(q,held,lit);
+ if(stage==='collect')target(219,403,78,88,()=>requestIncenseAction('take'));
+ if(stage==='lightReady')target(290,418,42,65,()=>requestIncenseAction('light'));
+ if(stage==='hold')target(290,400,115,176,beginQuietBow);
+ if(stage==='offer')target(469,430,84,91,()=>requestIncenseAction('offer'));
+ if(stage==='complete'){
+  label(tr('Visit the garden','去后院走走'),400,608,()=>start('secretGarden'));
+  label(tr('Draw a fortune','求签'),310,650,()=>start('sticks'));
+  label(tr('Moon blocks','掷筊'),490,650,()=>start('moon'))
+ }
+ ctx.restore();syncRitualBar()
+}
+const pawPhysicalPrayerBefore=drawActivity;
+drawActivity=function(...args){if(activity==='prayer')return pawPrayerStep();return pawPhysicalPrayerBefore(...args)};
+const pawTempleFlowGuideBefore=roomGuideEntries;
+roomGuideEntries=function(){
+ if(room==='temple')return [['templeWater','Purification basin','净手池'],['prayer','Incense & Guanyin altar','上香与观音殿'],['secretGarden','Rear garden','后院'],['sticks','Fortune sticks','求签'],['moon','Moon blocks','掷筊'],['templeBell','Bronze bell','敲钟']];
+ return pawTempleFlowGuideBefore()
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
