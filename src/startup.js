@@ -3486,4 +3486,84 @@ const pawFourDockCSS=document.createElement('style');pawFourDockCSS.textContent=
 #game #content .pawTravelMemoryLink{text-align:center;border-top:1px dashed #bda783;margin-top:7px}
 `;document.head.append(pawFourDockCSS);
 
+
+/* PAW_NAV_REVIEW: no profile or map inside personal room. Preserve private
+   notebooks and readings that previously lived on the room's mixed shelf. */
+const pawPersonalRoomBefore=hideoutPage;
+hideoutPage=function(...args){
+ const result=pawPersonalRoomBefore(...args),q=$('content'),primary=q.querySelector('.hideoutPrimary');
+ if(primary&&!hideoutEditing){
+  const shelf=element('details','',q,'pawPersonalShelf');element('summary',tr('My private shelf','我的私人书架'),shelf);
+  for(const [en,cn,fn] of [['Saved readings','收藏的解读',album9],['Private notes','私人便笺',myNotes9]]){
+   b(shelf,tr(en,cn),()=>{fn();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),hideoutPage)})
+  }
+ }
+ return result
+};
+const pawProfileFinalBefore=lifeProfile;
+lifeProfile=function(...args){
+ const result=pawProfileFinalBefore(...args),q=$('content'),book=q.querySelector('.journalProfileBook');
+ q.querySelectorAll('.mbHomeDirect,.pawProfileStat').forEach(n=>n.remove());
+ if(book){
+  const rank=lifeRank(),stats=book.querySelector('.journalQuickStats');
+  if(stats){
+   const xp=element('div','',stats,'pawProfileXP');element('strong',rank.total+' '+tr('XP','经验值'),xp);
+   const floor=lifeRanks[rank.index][0],ceil=rank.next;
+   const meter=element('progress','',xp);meter.max=ceil?ceil-floor:1;meter.value=ceil?Math.max(0,rank.total-floor):1;meter.setAttribute('aria-label',tr('Progress to next level','距离下一级的进度'));
+   element('small',ceil?tr('Next level: ','下一级：')+ceil:tr('Maximum level','已满级'),xp)
+  }
+ }
+ return result
+};
+$('profileHud').onclick=()=>{if(avatar!==null&&proposal.hidden&&!transitioning&&!talkOpen&&!activity)lifeProfile()};
+const pawRoomCollectionBefore=renderTravellerBag;
+renderTravellerBag=function(...args){
+ const result=pawRoomCollectionBefore(...args),q=$('content');q.querySelectorAll('.mbKeepsakeOrigin,.mbKeepsakeOriginCaption').forEach(n=>n.remove());return result
+};
+// Board and lobby do not render the same public messages twice. The existing
+// moderated public composer remains exclusively in the lobby.
+const pawTownFinalBefore=townChatPage;
+communityTabs=function(q){
+ const tabs=element('nav','',q,'communityTabs pawTownNotebookTabs');tabs.setAttribute('aria-label',tr('Community spaces','社区空间'));
+ for(const [key,en,cn] of [['board','Noticeboard','留言墙'],['lounge','NPC chat','居民闲聊'],['public','Traveller lobby','旅人聊天室']]){
+  const btn=b(tabs,tr(en,cn),()=>{communityTab=key;townChatPage()});btn.setAttribute('aria-pressed',String(communityTab===key||key==='public'&&communityTab==='stroll'))
+ }
+};
+townChatPage=function(...args){
+ if(communityTab==='board'){
+  ++communityView;++townChatGeneration;
+  page(tr('Town Square','摸鱼广场'),tr('A little gossip never hurt anyone. Probably.','吃点小瓜，应该没什么大碍。'),q=>{communityTabs(q);renderResidentNoticeboard(q);q.querySelector('.townBoardPublicLink')?.remove()});
+  journalLanguage(townChatPage);return
+ }
+ const result=pawTownFinalBefore(...args),q=$('content'),tabs=q.querySelector('.communityTabs');
+ if(tabs){for(const btn of [...tabs.querySelectorAll('button')])if(btn.textContent===tr('Meet','结伴'))btn.remove()}
+ if(communityTab==='public'){b(q,tr('Meet travellers for a walk ›','结伴散步 ›'),()=>{communityTab='stroll';townChatPage()}).className='pawTownTextLink'}
+ return result
+};
+const pawGratitudeFinalBefore=goodCompanyPage;
+goodCompanyPage=function(q){
+ const result=pawGratitudeFinalBefore(q),book=q.querySelector('.goodCompanyBook');
+ if(book){
+  const share=b(book,tr('Share a good thing in the lobby ›','去旅人聊天室分享好事 ›'),()=>{goodCompanyPublic()});share.className='pawTownTextLink';
+  book.addEventListener('click',()=>{const status=q.closest('details')?.querySelector(':scope > summary small');if(status&&townPawToday().keys.includes('gratitude'))status.textContent=tr('Saved today','今日已记录')});
+ }
+ return result
+};
+// Only one daily fortune entrance. Balance is visible, but no additional
+// passport shortcut, profile mirror or wallet directory in the HUD.
+$('luck').onclick=()=>{pawDiaryOpen.add('fortune');todayHub()};
+$('hudStamps').tabIndex=-1;$('hudStamps').removeAttribute('role');$('hudStamps').onclick=null;$('hudStamps').onkeydown=null;
+$('hudCoins').onclick=null;$('hudCoins').onkeydown=null;$('hudCoins').tabIndex=-1;$('hudCoins').removeAttribute('role');
+const pawNavReviewStyle=document.createElement('style');pawNavReviewStyle.textContent=`
+#game #hudStamps,#game #luck{display:none!important}
+#game #hudCoins{cursor:default!important}
+#game #content .pawProfileXP{min-width:0;display:grid;align-content:center;gap:4px;padding:5px 9px}
+#game #content .pawProfileXP progress{width:100%;accent-color:#6d8461}
+#game #content .journalQuickStats{grid-template-columns:minmax(0,1fr) minmax(0,2fr)!important}
+#game #content .pawPersonalShelf{padding:8px 0;border-top:1px dashed #bba27a}
+#game #content .pawPersonalShelf summary{min-height:44px;align-content:center;color:#50634b;cursor:pointer}
+#game #content .pawPersonalShelf button{min-height:44px;margin:3px 6px 3px 0}
+#game #content .mbKeepsakeOrigin,#game #content .mbKeepsakeOriginCaption{display:none!important}
+`;document.head.append(pawNavReviewStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
