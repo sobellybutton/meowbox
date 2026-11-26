@@ -2153,4 +2153,136 @@ mbCatalogueVisualStyle.textContent=`
 `;
 document.head.append(mbCatalogueVisualStyle);
 
+
+/* The short transfer is a station ticket, not an extra loading step.
+   Preserve the existing journey and all arrival/save logic. */
+const mbIdentityCopy=[
+ ['Always planning the next escape.','上班的时候，心早就去旅行了。'],
+ ['Powered by coffee and annual leave.','靠咖啡续命，靠年假撑下去。'],
+ ['Collects experiences, not KPIs.','只收集快乐，不收集绩效。'],
+ ['No rush. The best detours are unplanned.','不赶路，随心走。']
+];
+function mbAvatarStanding(i){return Number.isInteger(i)&&i>=0&&i<4?(ART['walker'+i+'0']||ART['portrait'+i]):null}
+function mbTravellerImage(im,i){
+ const src=mbAvatarStanding(i);if(!im||!src)return;
+ if(im.getAttribute('src')!==src)im.src=src;
+ im.alt=tr(...names[i]);im.classList.add('mbFullTraveller');
+}
+function mbProfileIndex(im){
+ const src=im.getAttribute('src')||'';
+ return [0,1,2,3].find(i=>[ART['portrait'+i],ART['walker'+i+'0'],ART['badge'+i]].includes(src))
+}
+function mbStyleTravellerChoices(root){
+ if(!root)return;
+ const choices=[...root.querySelectorAll('button')].filter(btn=>btn.querySelector('img'));
+ if(choices.length!==4)return;
+ choices.forEach((btn,index)=>{
+  const im=btn.querySelector('img'),i=mbProfileIndex(im)??index;
+  mbTravellerImage(im,i);btn.classList.add('mbTravellerChoice');
+  if(!btn.querySelector('.mbTravellerCaption')){
+   const old=btn.querySelector('small');
+   if(old){old.textContent=tr(...mbIdentityCopy[i]);old.classList.add('mbTravellerCaption')}
+   else element('small',tr(...mbIdentityCopy[i]),btn,'mbTravellerCaption')
+  }
+ });
+}
+const mbProfileVisualBefore=hideoutProfilePage;
+hideoutProfilePage=function(...args){
+ const result=mbProfileVisualBefore(...args),q=$('content'),choices=q.querySelector('.travellerEditChoices'),preview=q.querySelector('.travellerEditHeading img');
+ if(!choices||!preview)return result;
+ mbStyleTravellerChoices(choices);
+ const buttons=[...choices.querySelectorAll('button')];
+ function sync(){
+  const index=buttons.findIndex(btn=>btn.getAttribute('aria-pressed')==='true');
+  mbTravellerImage(preview,index>=0?index:(avatar??0))
+ }
+ sync();choices.addEventListener('click',sync);
+ return result
+};
+const mbProfileIdentityBefore=lifeProfile;
+lifeProfile=function(...args){
+ const result=mbProfileIdentityBefore(...args),q=$('content'),identity=q.querySelector('.journalIdentity,.lifeIntro');
+ if(!identity)return result;
+ const i=avatar??0;mbTravellerImage(identity.querySelector('img'),i);
+ const bio=identity.querySelector('div')||identity;
+ if(!bio.querySelector('.mbIdentityCaption'))element('p',tr(...mbIdentityCopy[i]),bio,'mbIdentityCaption');
+ return result
+};
+$('profileHud').onclick=()=>{if(avatar!==null&&proposal.hidden&&!transitioning&&!talkOpen&&!activity)lifeProfile()};
+const mbRegistrationArtObserver=new MutationObserver(()=>{
+ if(proposal.hidden)return;
+ // Only upgrade an actual four-choice avatar group, never a personality quiz.
+ const imgs=[...proposal.querySelectorAll('button img')];
+ const buttons=imgs.filter(im=>mbProfileIndex(im)!==undefined).map(im=>im.closest('button'));
+ if(buttons.length!==4||new Set(buttons).size!==4)return;
+ const indices=buttons.map(btn=>mbProfileIndex(btn.querySelector('img')));
+ if(new Set(indices).size!==4)return;
+ const parent=buttons[0].parentElement;
+ if(buttons.every(btn=>btn.parentElement===parent)){parent.classList.add('mbTravellerRoster');mbStyleTravellerChoices(parent)}
+});
+mbRegistrationArtObserver.observe(proposal,{childList:true,subtree:true,attributes:true,attributeFilter:['src','hidden']});
+let mbTransferToken=0;
+function mbTransferHolding(from,to){
+ const token=++mbTransferToken,overlay=element('section','',$('game'),'mbTransferHolding');
+ overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
+ const ticket=element('div','',overlay,'mbTransferTicket');
+ element('small',tr('MeowBox railway · transfer ticket','摸鱼铁路 · 换乘车票'),ticket,'mbTransferEyebrow');
+ const portrait=element('img','',ticket,'mbTransferAvatar');mbTravellerImage(portrait,avatar??0);
+ const route=element('div','',ticket,'mbTransferRoute');
+ const departure=element('div','',route);element('small',tr('From','出发站'),departure);element('strong',tr(...maps[from].n),departure);
+ const arrival=element('div','',route);element('small',tr('Next stop','下一站'),arrival);element('strong',tr(...maps[to].n),arrival);
+ element('div','',ticket,'mbTransferLine');
+ const status=element('p',tr('On our way. No emails allowed.','正在前往下一站，禁止回工作消息。'),ticket,'mbTransferStatus');
+ const began=performance.now();
+ function tick(){
+  if(token!==mbTransferToken||!transitioning||performance.now()-began>12000){overlay.remove();return}
+  if(scene===to&&status.dataset.arrived!=='true'){status.dataset.arrived='true';status.textContent=tr('Welcome to your next stop.','下一站到了，欢迎下车。')}
+  requestAnimationFrame(tick)
+ }
+ requestAnimationFrame(tick)
+}
+const mbTransferBefore=journey;
+journey=function(destination,...args){
+ const from=scene,valid=!!maps[from]&&!!maps[destination]&&from!==destination&&!transitioning;
+ const result=mbTransferBefore(destination,...args);
+ if(valid&&transitioning){$('game').querySelectorAll('.mbTransferHolding').forEach(el=>el.remove());mbTransferHolding(from,destination)}
+ return result
+};
+const mbRailHoldingBefore=openRailStop;
+openRailStop=function(...args){
+ const result=mbRailHoldingBefore(...args),q=$('content'),cabin=q.querySelector('.districtRailCabin');
+ if(!cabin)return result;
+ const im=cabin.querySelector('.mbRailPostcard img');if(im){im.classList.add('mbUncroppedPostcard')}
+ const route=q.querySelector('.railRouteTicket');if(route)route.classList.add('mbRailTicketRoute');
+ return result
+};
+const mbIdentityVisualStyle=document.createElement('style');mbIdentityVisualStyle.textContent=`
+#game .mbTransferHolding{position:absolute;inset:0;z-index:40;pointer-events:none;display:grid;place-items:center;padding:16px;background:var(--town-grain),radial-gradient(ellipse at 50% 30%,#c6d1ad,#80917a 55%,#495d50);animation:mbTransferReveal .18s ease-out}
+#game .mbTransferTicket{box-sizing:border-box;display:grid;gap:8px;width:min(100%,480px);max-height:94%;padding:clamp(14px,4vw,27px);background:var(--town-grain),#f4e6cb;border:1px solid #b59b74;outline:1px solid #cab28b;outline-offset:-7px;border-radius:5px;box-shadow:0 5px 24px #26372b55;color:#4b4030;text-align:center}
+#game .mbTransferEyebrow{font:600 12px/1.4 system-ui;color:#755c40}
+#game .mbTransferAvatar{display:block;height:clamp(80px,25dvh,220px);max-width:100%;object-fit:contain;margin:0 auto}
+#game .mbTransferRoute{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left}
+#game .mbTransferRoute>div+div{border-left:1px dashed #bca47e;padding-left:10px}
+#game .mbTransferRoute small{display:block;color:#755c40;font:12px/1.4 system-ui;margin-bottom:4px}
+#game .mbTransferRoute strong{display:block;font:600 clamp(17px,4.1vw,25px)/1.25 var(--town-title);overflow-wrap:anywhere}
+#game .mbTransferLine{height:4px;background:#b7a180;position:relative;border-radius:2px;overflow:hidden;margin:4px 0}
+#game .mbTransferLine:after{content:'';position:absolute;inset:0 auto 0 0;width:35%;background:#657e60;animation:mbTransferMove .95s ease-in-out infinite}
+#game .mbTransferStatus{margin:2px 0;font:14px/1.4 system-ui;color:#594b37}
+@keyframes mbTransferReveal{from{opacity:0}to{opacity:1}}
+@keyframes mbTransferMove{from{transform:translateX(-100%)}to{transform:translateX(290%)}}
+#content .mbUncroppedPostcard{object-fit:contain!important;object-position:center!important;background:#e2d3b6;animation:none!important}
+#content .mbRailTicketRoute{font:600 14px/1.5 system-ui;color:#524735;overflow-wrap:anywhere;background:#f8ecd5;border:1px dashed #b39a72;padding:10px 12px;border-radius:3px;text-align:center}
+#content .travellerEditChoices,#proposal .mbTravellerRoster{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+#content .mbTravellerChoice,#proposal .mbTravellerChoice{display:flex!important;flex-direction:column;align-items:center;justify-content:flex-start;min-width:0!important;padding:8px!important;gap:5px!important;border:1px solid #b89c72!important;border-radius:5px!important;background:var(--town-grain),#f7ead1!important;color:#493b2c!important;white-space:normal!important;box-shadow:0 2px 0 #947a5125!important}
+#content .mbTravellerChoice[aria-pressed=true],#proposal .mbTravellerChoice[aria-pressed=true],#proposal .mbTravellerChoice.selected{outline:2px solid #667e63;outline-offset:-3px;background:var(--town-grain),#e5e7c8!important}
+#content .mbTravellerChoice img,#proposal .mbTravellerChoice img{display:block;width:100%!important;height:clamp(96px,25vw,156px)!important;object-fit:contain!important;object-position:center!important;background:transparent!important;max-height:none!important}
+#content .mbTravellerChoice strong,#proposal .mbTravellerChoice strong{font:600 14px/1.35 system-ui!important;overflow-wrap:anywhere}
+#content .mbTravellerCaption,#proposal .mbTravellerCaption{display:block;font:12px/1.4 system-ui!important;color:#64533f!important;overflow-wrap:anywhere;text-align:center}
+#content .travellerEditHeading .mbFullTraveller{width:100%!important;height:clamp(155px,30dvh,240px)!important;background:transparent!important;object-fit:contain!important}
+#content .journalIdentity>.mbFullTraveller,#content .lifeIntro>.mbFullTraveller{width:clamp(70px,23vw,130px)!important;height:clamp(110px,32vw,190px)!important;object-fit:contain!important;background:transparent!important}
+#content .mbIdentityCaption{font:13px/1.45 system-ui;color:#64533f}
+@media(min-width:760px){#content .travellerEditChoices,#proposal .mbTravellerRoster{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+@media(prefers-reduced-motion:reduce){#game .mbTransferHolding,#game .mbTransferLine:after{animation:none!important}}
+`;document.head.append(mbIdentityVisualStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
