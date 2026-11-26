@@ -9,3 +9,13 @@ console.log(new Function(guest+`let n=0;for(const room of ['temple','tarot','des
   n++;
  }
 }return 'PASS '+n+' guest variety and occupancy cases';`)());
+
+const candidate=s.match(/function pawGuestRoomCandidates[^\n]+/)?.[0];
+if(!candidate)throw Error('Missing indoor guest candidate helper');
+console.log(new Function(candidate+`const p=[{id:'a',world:'fortune'},{id:'b',world:'fortune'},{id:'c',world:'home'},{id:'d',world:'fortune'}];
+const select=(active,world,valid)=>pawGuestRoomCandidates(p,active,world,valid).map(g=>g.id).join(',');
+if(select(['a'],'fortune',g=>g.id!=='d')!=='b')throw Error('Exclude outdoor identities and unavailable art');
+if(select(['a','b','d'],'fortune',()=>true)!=='')throw Error('Do not duplicate outdoor guests');
+if(select([],'home',()=>true)!=='c')throw Error('Respect district');
+if(select([],'fortune',()=>false)!=='')throw Error('Missing artwork must not produce a named guest');
+return 'PASS four indoor cameo selection cases';`)());
