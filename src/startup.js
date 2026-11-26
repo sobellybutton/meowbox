@@ -5223,4 +5223,235 @@ const pawGuestNoticeCss=document.createElement('style');pawGuestNoticeCss.textCo
 
 
 
+/* PAW_GEMINI_VISITORS_BEGIN */
+const pawGeminiVisitorRows=[
+ [
+  "celeb_parody_03_elon_meowsk",
+  "island",
+  "Elon Meowsk",
+  "埃隆·马斯克喵",
+  "I just bought your town's vending machine, renamed it 'X-Box', and laid off 80% of the drink buttons for maximum efficiency. You're welcome.",
+  "我刚收购了你们镇口的自动贩卖机，把它改名叫‘X’，并裁掉了80%的饮料按钮以实现极致的降本增效。不用谢。",
+  "Napping on a park bench isn't slacking—it's first-principles biological hardware optimization. Also, we are colonizing Mars with orange tabbies by Q4.",
+  "在长椅上睡觉不叫摸鱼，这叫第一性原理的生物硬件优化。顺便一提，第四季度我们就会送第一批橘猫登陆火星。",
+  "Offer a dried fish",
+  "递上一条小鱼干",
+  "This dried fish has tremendous upside potential. Can I pay you in a volatile meme coin that crashes whenever I tweet?",
+  "这条小鱼干具有巨大的上升空间。我能用一种我一发推文就会暴跌的空气币跟你结算吗？"
+ ],
+ [
+  "celeb_parody_05_uncle_rojen",
+  "home",
+  "Uncle Rojen",
+  "罗杰叔叔",
+  "Haiyaa! Why you look so stressed? Your boss promise you 'fast-paced learning environment' instead of pay raise? So weak! Put leg down from chair!",
+  "哎呀！你怎么一脸苦相？老板给你画‘快速成长空间’的大饼代替涨薪？太弱了！我都气得把脚从凳子上放下来了！",
+  "Working unpaid overtime is like draining cooked rice with a colander—you ruin the texture and get nothing out of it. Pure emotional damage!",
+  "无偿加班就像用漏勺沥干煮熟的米饭——既毁了口感又捞不到半点好处，纯纯的精神内耗！",
+  "Offer a bowl of fried rice",
+  "递上一碗炒饭",
+  "Fuiyoh! Now this has proper MSG—Make Salary Grow! You know how to treat yourself properly.",
+  "哇哦！这才叫真正的味精——‘工资见涨精’！你总算学会怎么善待自己了。"
+ ],
+ [
+  "celeb_parody_06_marie_clutter",
+  "island",
+  "Marie Clutter-No",
+  "近藤麻理不理",
+  "Hold this 2016 micro-USB cable in both hands. Ask yourself: does it spark joy, or does it just remind you of your old company laptop?",
+  "双手捧起这根2016年的安卓旧数据线，问问自己：它让你心动了吗，还是只会让你想起前公司的破电脑？",
+  "I tried to thank my inbox for its service before deleting 4,000 unread newsletters, and then I accidentally archived my own tax filing.",
+  "我本来想在清空四千封未读邮件前对收件箱说声‘谢谢你的陪伴’，结果一不小心把自己的年度报税单也一起归档了。",
+  "Offer a postcard",
+  "送上一张明信片",
+  "This sparks immediate joy! Mainly because it doesn't require assembly or a warranty registration form.",
+  "这个瞬间就让我心动了！主要是因为它既不用自己动手组装，也不用填繁琐的保修登记表。"
+ ],
+ [
+  "net_culture_01_chope_auntie",
+  "home",
+  "Tissue-Packet Linda",
+  "纸巾占座林阿姨",
+  "Excuse me ah, I already put one packet of 3-ply tissue on that park bench. Don't sit—I chope until Thursday afternoon.",
+  "不好意思啊，那张长椅我已经放了一包三层抽纸占座了。千万别坐，我一路占到周四下午呢。",
+  "Nowadays young people spend $8 on oat milk latte, then complain BTO take forever. Last time we only drink kopi-o kosong and queue outside HDB Hub at 5 AM!",
+  "现在年轻人天天买三十多块的燕麦拿铁，转头又抱怨买房排队久。我们当年只喝不加糖的黑咖啡，凌晨五点就去售楼处门口排队了！",
+  "Offer a packet of tissues",
+  "递上一包纸巾",
+  "Wah, so thoughtful! Keep this wet tissue packet—in case you drop curry puff on your office shirt before client presentation.",
+  "哇，真懂事！这包湿纸巾你拿着——万一见客户前咖喱角掉在白衬衫上还能救急。"
+ ],
+ [
+  "net_culture_02_moyu_master",
+  "island",
+  "Brother Moyu",
+  "摸鱼宗师小王",
+  "Shh! Keep your voice down. I have 42 minutes of pure freedom.",
+  "嘘！小点声。我现在拥有整整42分钟的绝对自由。",
+  "If you earn $30 an hour and spend 15 minutes every day staring at a stray cat on company time, that's $1,950 a year in feline mental health subsidies.",
+  "按时薪两百算，每天带薪发呆看猫十五分钟，一年下来相当于从老板那里合法领取了一万三千块的‘精神抚慰金’。",
+  "Offer a snack",
+  "送上一包零食",
+  "This goes straight into my desk drawer emergency stash, right next to my spare mechanical keyboard.",
+  "这东西我直接锁进办公桌最深处的应急抽屉，就放在我的静音机械键盘旁边。"
+ ],
+ [
+  "net_culture_03_mc_king",
+  "home",
+  "MC King Darren",
+  "病假战神达伦",
+  "Good morning! Don't tag me on Slack today. Fresh sea breeze is doctor's orders.",
+  "早啊！今天千万别在工作群里艾特我。吹海风是医生嘱咐的。",
+  "Public holiday on Tuesday means Monday is practically a bridge day. My calendar has other ideas.",
+  "周二放假，周一就该拼假嘛。可我的日程表偏偏不这么想。",
+  "Offer a cold drink",
+  "递上一杯冰饮",
+  "Steady lah! Just don't post me on your Instagram story—my manager follows three meme pages and has hawk eyes.",
+  "够意思！千万别把我拍进你朋友圈——我直属领导天天视奸朋友圈，眼神比雷达还尖。"
+ ],
+ [
+  "net_culture_04_buzzword_vivi",
+  "fortune",
+  "Ex-Big-Tech Vivi",
+  "大厂毕业薇薇",
+  "I quit 996 to heal my nervous system, so today I'm here to build a holistic cat-petting matrix and empower end-to-end dopamine delivery—wait, stop me!",
+  "我辞掉996就是为了治愈精神内耗，所以今天我想打通撸猫的底层逻辑，赋能多巴胺的端到端交付——停！快把我的嘴缝上！",
+  "My therapist told me to stop treating weekend naps like a Q3 deliverable. I still accidentally made a Gantt chart for my laundry.",
+  "心理咨询师劝我别把周末睡懒觉当成第三季度核心KPI来推进，但我洗衣服时还是顺手画了个甘特图。",
+  "Offer a little gift",
+  "送上一份小礼物",
+  "Zero alignment needed. Zero follow-up action items. Just a nice gift. My soul is healing.",
+  "不需要对齐颗粒度，不需要输出复盘文档，就是一份纯粹的礼物。我的灵魂正在被治愈。"
+ ],
+ [
+  "net_culture_05_kiasu_kenneth",
+  "island",
+  "Kiasu Kenneth",
+  "怕输肯尼斯",
+  "Eh, why nobody queuing here? Never mind, I stand first! Once three cats walk past, confirm got people join behind me, then I feel safe.",
+  "哎，这里怎么没人排队？不管了，我先站第一个！只要等下有三只猫路过，肯定就会有人跟在我后面排，那样我才踏实。",
+  "I brought three tote bags, two portable power banks, and a foldable stool. What am I waiting for? Don't know, but the discount looks limited!",
+  "我带了三个环保袋、两个充电宝外加一把折叠凳。至于在等什么？不知道，但看架势肯定是限量抢购！",
+  "Offer a free sample",
+  "送上一份免费试吃",
+  "Free one ah?! Confirm worth queuing 40 minutes for! Wait—is there a second one if I bring a friend?",
+  "免费的啊？！那这四十分钟队排得太值了！等等——如果我拉个朋友一起来，能再领一份吗？"
+ ],
+ [
+  "net_culture_06_void_deck_ahboy",
+  "home",
+  "Slipper Philosopher Ah Boy",
+  "人字拖哲学家阿Boy",
+  "Bro, why still wearing lanyard after 7 PM? Take it off lah. Once you step out of MRT gantry, your corporate title expire until tomorrow 9 AM.",
+  "兄弟，晚上七点多了还挂着工牌干嘛？快摘了吧。只要走出地铁闸机，你的职场头衔就已经自动过期到明天早上九点了。",
+  "Boss shout at you, you just say 'Noted with thanks.' Your CPF still earn interest every month, his hairline recede every week. Fair trade.",
+  "老板冲你发火，你只需微笑回复‘收到，感谢指正’。你的公积金每个月照样涨利息，他的发际线可是每周都在后退，这买卖不亏。",
+  "Offer a kopi peng",
+  "请他喝杯冰咖啡",
+  "Swee lah! Come sit on the curb—no KPI, no ERP, just sea wind and cold kopi peng.",
+  "漂亮！来路边坐着吹吹海风——这里没有KPI，没有拥堵费，只有晚风和冰镇炼乳咖啡。"
+ ],
+ [
+  "traveller_01_sven_flatpack",
+  "island",
+  "Sven Lindqvist",
+  "斯文·林德奎斯特",
+  "Hello. I quit my engineering job in Sweden after a single missing wooden dowel caused a 48-hour family feud. I now travel the world with only one Allen key.",
+  "你好。因为在瑞典工作时漏装了一根小木榫引发了长达48小时的家庭冷战，我辞职了。现在我只带一把内六角扳手环游世界。",
+  "I inspected your town's wooden pier. The builder used actual metal nails instead of cam-lock screws. Barbaric, yet surprisingly sturdy.",
+  "我刚才检查了你们镇上的木栈道。建造者居然用了真铁钉而不是偏心轮螺丝，虽然野蛮，但意外地结实。",
+  "Offer a ready-made snack",
+  "送上一份现成点心",
+  "Remarkable! Not a single cryptic wordless diagram required to enjoy this. I am deeply moved.",
+  "太了不起了！享用这个居然不需要看任何一张没有文字的抽象安装说明书，我深受感动。"
+ ],
+ [
+  "traveller_02_claire_auditor",
+  "home",
+  "Claire Moreau",
+  "克莱尔·莫罗",
+  "Bonjour. I left corporate tax auditing in Paris to judge pastries purely by emotional crunch—though I still log every receipt into a color-coded spreadsheet.",
+  "你好。我辞掉了巴黎的税务审计工作，只为用‘灵魂酥脆度’来评判各地糕点——虽然我还是习惯把每张小票录入分色Excel表格。",
+  "Your local convenience store melonpan scored 9.3 out of 10 on flakiness, with zero pretentiousness overhead. Truly tax-deductible joy.",
+  "你们便利店的菠萝包在酥脆度上拿到了9.3的高分，而且完全没有溢价泡沫，属于纯纯的‘免税级快乐’。",
+  "Offer a pastry",
+  "送上一块糕点",
+  "How do I categorize a gift of pure kindness in my expense tracker? Under 'Non-Recoverable Soul Assets,' I suppose.",
+  "这份纯粹的善意在我的记账软件里该归哪一类呢？大概得算进‘不可折旧的灵魂资产’吧。"
+ ],
+ [
+  "traveller_03_kenji_dispatcher",
+  "wonder",
+  "Kenji Takahashi",
+  "高桥健二",
+  "After 38 years managing Tokyo commuter schedules, I retired to slow down. Yet I still instinctively apologize when the ferry arrives 15 seconds early.",
+  "在东京管了38年通勤列车时刻表后，我退休想过慢生活。结果渡轮哪怕早到15秒，我还是会条件反射地鞠躬道歉。",
+  "Notice how that calico cat sits precisely behind the yellow platform line? Better commuter etiquette than the 8:15 AM Yamanote Line.",
+  "看到那只三花猫端端正正坐在黄线后面了吗？它的乘车礼仪比早高峰八点十五分的山手线乘客还要规范。",
+  "Offer a warm cup of tea",
+  "递上一杯热茶",
+  "Punctual, warm, and zero signal delays. Five-star service from Pawradise Station.",
+  "准点、温暖、零信号故障。给猫岛车站打五星好评。"
+ ],
+ [
+  "traveller_04_mateo_barista",
+  "island",
+  "Mateo Vargas",
+  "马特奥·巴尔加斯",
+  "I travel the globe testing mineral hardness in local tap water for pour-over coffee. Please don't tell anyone I keep 3-in-1 instant sachets in my camera bag.",
+  "我环球旅行是为了测试各地自来水的矿物质硬度是否适合手冲咖啡。千万别告诉别人，我相机包里其实藏着三合一速溶咖啡。",
+  "Sometimes at 3 PM, you don't want 'washed heirloom beans with bergamot notes.' You just want hot brown sugar water that keeps your eyelids open.",
+  "有时候到了下午三点，打工人根本不需要什么‘水洗瑰夏配佛手柑尾韵’，你只想要一杯能撑住眼皮的热甜水。",
+  "Offer a cookie",
+  "递上一块饼干",
+  "This pairs wonderfully with pretending I didn't just drink canned vending-machine coffee behind the shrine.",
+  "这东西配着我刚才躲在神社后面偷喝的自动贩卖机罐装咖啡，风味简直绝配。"
+ ],
+ [
+  "traveller_05_priya_actuary",
+  "fortune",
+  "Priya Nair",
+  "普里亚·奈尔",
+  "I ran a Monte Carlo risk model across 400 holiday destinations to find the lowest probability of bumping into my London coworkers. Pawradise won by 0.4%.",
+  "我用蒙特卡洛风险模型测算了400个度假地，只为找出偶遇伦敦同事概率最低的地方。猫岛以0.4%的微弱优势胜出。",
+  "According to my calculations, there is a 94% chance a seagull will steal your snack if you look at a work email on the pier.",
+  "根据我的精算模型，如果你在码头边低头回工作邮件，零食被海鸥抢走的概率高达94%。",
+  "Offer a snack",
+  "送上一份点心",
+  "Statistically, spontaneous generosity like this is an outlier—and the exact reason I took two weeks of unpaid leave.",
+  "从统计学角度看，这种不求回报的慷慨属于异常值——也正是我请两周无薪假出来散心的原因。"
+ ],
+ [
+  "traveller_06_tomas_lighthouse",
+  "home",
+  "Tomás Ferreira",
+  "托马斯·费雷拉",
+  "I spent four years alone on an Atlantic weather station. Frankly, three cats meowing at once here feels a bit like Friday rush hour in Shibuya.",
+  "我在大西洋气象浮标站独自待了四年。说实话，你们这儿三只猫同时叫唤的场面，对我来说已经有点像周五晚高峰的涉谷十字路口了。",
+  "Barometric pressure is dropping, which means two things: light drizzle by dusk, and a sudden urge to ignore everyone until tomorrow.",
+  "气压正在下降，这意味着两件事：黄昏前会有小雨，以及人类会突然产生一种‘明天再回消息’的强烈冲动。",
+  "Share a quiet moment",
+  "安静地陪他坐一会儿",
+  "Quiet company and no small talk about 'what do you do for a living.' You are a true sailor at heart.",
+  "安静的陪伴，还不追问‘你是做什么工作的’。你骨子里就是个真正的航海家。"
+ ]
+];
+function pawGeminiGuest(row){
+ const [id,world,en,cn,introEn,introZh,idleEn,idleZh,offerEn,offerZh,replyEn,replyZh]=row;
+ return {id,world,name:[en,cn],intro:[introEn,introZh],prompt:['A little conversation before we get back to doing nothing?','继续摸鱼之前，聊几句吧？'],choices:[[['Tell me more','再聊聊'],[idleEn,idleZh]],[[offerEn,offerZh],[replyEn,replyZh]]],tip:[idleEn,idleZh],gift:['Visitor postcard: '+en,'来客明信片：'+cn],source:'gemini-modules-01-03'}
+}
+function pawGeminiMerge(original,rows){
+ const ids=new Set(original.map(g=>g.id)),names=new Set(original.map(g=>g.name[0].toLowerCase()));
+ const added=[];
+ for(const row of rows){
+  if(row.length!==12||row.some(v=>typeof v!=='string'||!v.trim())||!['fortune','home','island','wonder'].includes(row[1]))continue;
+  const guest=pawGeminiGuest(row);if(ids.has(guest.id)||names.has(guest.name[0].toLowerCase()))continue;
+  ids.add(guest.id);names.add(guest.name[0].toLowerCase());added.push(guest)
+ }return added
+}
+/* PAW_GEMINI_VISITORS_END */
+// Extend the existing daily fictional roster, not the artwork registry or online presence.
+// Offering a gift is a story choice only. No inventory or coins are charged.
+popGuestStories.push(...pawGeminiMerge(popGuestStories,pawGeminiVisitorRows));
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
