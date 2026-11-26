@@ -764,4 +764,119 @@ roomIntro=function(){
  return paintedGatheringIntroBefore()
 };
 
+
+/* Destiny House: a reading subject is deliberately local to the open page.
+   A date-only reading must not quietly invent a time or birthplace. */
+function destinyBirthValid(date,min,today){
+ if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<min||date>today)return false;
+ const v=new Date(date+'T12:00:00Z');return Number.isFinite(+v)&&v.toISOString().slice(0,10)===date
+}
+function destinyFullValid(v,today){
+ return destinyBirthValid(v.date,'1900-01-02',today)&&/^([01]\d|2[0-3]):[0-5]\d$/.test(v.time||'')&&!!v.place&&
+ [v.offset,v.lat,v.lon].every(n=>typeof n==='string'&&n.trim()!==''&&Number.isFinite(Number(n)))&&
+ Number(v.offset)>=-12&&Number(v.offset)<=14&&Number(v.lat)>=-66&&Number(v.lat)<=66&&Number(v.lon)>=-180&&Number(v.lon)<=180
+}
+const yueFriendsPalace=chartConsultTopics.find(v=>v.name?.[0]==='Friends & support');
+if(yueFriendsPalace)yueFriendsPalace.k=7;
+function destinySubjectControls(parent,subject,onSelect){
+ const strip=element('section','',parent,'destinySubjectStrip');
+ element('small',tr('Who are we reading for?','今天替谁看？'),strip);
+ const row=element('div','',strip,'destinySubjectChoices');
+ for(const [id,en,cn] of [['self','Myself','我自己'],['other','Someone else','其他人']]){
+  const button=b(row,tr(en,cn),()=>{if(id!==subject)onSelect(id)});
+  button.type='button';button.setAttribute('aria-pressed',String(id===subject));
+ }
+ element('small',subject==='other'?tr('Use their details only with permission. No names are needed.','请先征得对方同意，不需要填写姓名。'):tr('A private moment to explore your own chart.','给自己一点时间，私下探索自己的命盘。'),strip);
+ return strip
+}
+function destinyChartValues(form){
+ const date=form.querySelector('input[type=date]'),time=form.querySelector('input[type=time]'),place=form.querySelector('details select'),nums=[...form.querySelectorAll('input[type=number]')];
+ return {date:date?.value||'',time:time?.value||'',place:place?.value||'',offset:nums[0]?.value||'',lat:nums[1]?.value||'',lon:nums[2]?.value||''}
+}
+const destinySubjectPageBefore=destinyPage;
+destinyPage=function(options={}){
+ const subject=options?.subject==='other'?'other':'self',draft=options?.draft||{},today=shrineClock().day;
+ destinySubjectPageBefore();
+ const q=$('content'),form=q.querySelector('.astroForm'),out=q.querySelector('.astroResult');
+ if(!form||!out)return;
+ const strip=destinySubjectControls(q,subject,next=>destinyPage({subject:next}));form.before(strip);
+ const dates=form.querySelector('input[type=date]'),time=form.querySelector('input[type=time]'),location=form.querySelector('details'),place=location?.querySelector('select'),nums=[...form.querySelectorAll('input[type=number]')];
+ if(!dates||!time||!location||!place||nums.length!==3)return;
+ dates.max=today;dates.value=draft.date||'';time.value=draft.time||'';
+ const empty=element('option',tr('Select actual birthplace','选择实际出生地'),place);empty.value='';place.prepend(empty);place.required=true;place.value='';
+ const oldChange=place.onchange;
+ function summary(){
+  const label=place.selectedOptions[0]?.textContent||'';
+  location.querySelector('summary').textContent=place.value?tr('Birthplace: ','出生地：')+label:tr('Choose a birthplace to continue','请选择出生地');
+ }
+ function clearNumbers(){for(const n of nums)n.value=''}
+ place.onchange=function(e){
+  if(!place.value){clearNumbers();summary();return}
+  if(place.value==='custom'){clearNumbers();summary();location.open=true;return}
+  if(typeof oldChange==='function')oldChange.call(this,e);summary()
+ };
+ clearNumbers();
+ if(draft.place&&[...place.options].some(v=>v.value===draft.place)){
+  place.value=draft.place;if(draft.place!=='custom')place.onchange();
+  [draft.offset,draft.lat,draft.lon].forEach((v,i)=>{if(typeof v==='string')nums[i].value=v})
+ }
+ summary();location.open=true;
+ const submit=form.querySelector('button[type=submit]');
+ if(submit)submit.textContent=subject==='other'?tr('Unroll their birth chart','展开对方的命盘'):tr('Unroll my birth chart','展开我的命盘');
+ const note=element('small',tr('Use the actual local birth time and historical UTC offset. City presets are starting values, not historical time-zone verification. If the birth time is unknown, use the date-only almanac instead.','请使用实际当地出生时间及当时的时区差。城市预设仅供起始参考，并未核验历史时区。若不清楚出生时间，请使用仅需生日的生肖小册。'),q,'destinyBirthNote');form.before(note);
+ let rendered=false;
+ function invalidate(){if(out.childElementCount){out.replaceChildren();element('p',tr('Birth details changed. Unroll a fresh chart.','生辰资料已更改，请重新排盘。'),out)}rendered=false}
+ form.addEventListener('input',invalidate);form.addEventListener('change',invalidate);
+ form.addEventListener('submit',e=>{
+  if(!destinyFullValid(destinyChartValues(form),today)){
+   e.preventDefault();e.stopImmediatePropagation();out.replaceChildren();element('p',tr('Enter a valid birth date, known local birth time and birthplace.','请填写有效出生日期、已知的当地出生时间及出生地。'),out);return
+  }
+ },true);
+ form.addEventListener('submit',()=>{
+  rendered=!!out.querySelector('.ziGrid');
+  if(!rendered)return;
+  const context=element('p',subject==='other'?tr('Reading for someone else. These themes are prompts, not knowledge of their feelings or future.','正在查看他人的命盘。以下仅为反思主题，并不能读出对方的真实感受或未来。'):tr('Your birth chart · a moment of reflection','我的命盘 · 自我探索'),out,'destinyBirthNote');out.prepend(context);
+  if(subject==='other'){
+   const follow=out.querySelector('.chartFollowForm input');if(follow)follow.placeholder=tr('Choose a chart topic to explore','想了解命盘中的哪个主题？')
+  }
+ });
+ const alternate=b(q,tr('Birth time unknown? Explore the date-only almanac','不知道出生时间？查看生肖流年小册'),()=>yueZodiacAlmanac(dates.value,null,{subject}));
+ alternate.type='button';form.after(alternate);
+ const clear=b(q,tr('Start a different reading','清空资料，重新查看'),()=>destinyPage({subject}));clear.type='button';
+ const row=q.querySelector('.row');
+ if(row?.lastElementChild)row.lastElementChild.onclick=()=>{const d=destinyChartValues(form),done=rendered;zh=!zh;save('zh',zh);updateHUD();destinyPage({subject,draft:d,render:done})};
+ if(options?.render&&destinyFullValid(destinyChartValues(form),today)&&form.checkValidity())form.requestSubmit()
+};
+const destinySubjectAlmanacBefore=yueZodiacAlmanac;
+yueZodiacAlmanac=function(birth='',selection=null,options={}){
+ const subject=options?.subject==='other'?'other':'self',today=shrineClock().day;
+ destinySubjectAlmanacBefore(destinyBirthValid(birth,'1901-01-01',today)?birth:'',selection);
+ const q=$('content'),form=q.querySelector('.yueAlmanacForm'),out=q.querySelector('.yueAlmanacPaper');
+ if(!form||!out)return;
+ const date=form.querySelector('input[type=date]'),year=form.querySelector('select');
+ if(!date||!year)return;
+ const strip=destinySubjectControls(q,subject,next=>yueZodiacAlmanac('',null,{subject:next}));form.before(strip);
+ const note=element('small',tr('Birth date only. No birth time is assumed, and no Moon, Rising or Zi Wei palace chart is calculated.','仅需出生日期。不假设出生时间，也不计算月亮、上升星座或紫微十二宫命盘。'),q,'destinyBirthNote');form.before(note);
+ let rendered=false;
+ function invalidate(){if(out.childElementCount)out.replaceChildren();rendered=false}
+ form.addEventListener('input',invalidate);form.addEventListener('change',invalidate);
+ form.addEventListener('submit',e=>{if(!destinyBirthValid(date.value,'1901-01-01',today)){e.preventDefault();e.stopImmediatePropagation();out.replaceChildren();element('p',tr('Please enter a valid birth date.','请输入有效出生日期。'),out)}},true);
+ form.addEventListener('submit',()=>{rendered=!!out.querySelector('.yueReadingFront');if(rendered&&subject==='other'){const v=element('small',tr('Reading for someone else · folklore, not personal predictions','为他人查看 · 民俗趣味提示，并非个人预测'),out,'destinyBirthNote');out.prepend(v)}});
+ const row=q.querySelector('.row');
+ if(row?.lastElementChild)row.lastElementChild.onclick=()=>{const d=date.value,y=Number(year.value),done=rendered;zh=!zh;save('zh',zh);updateHUD();yueZodiacAlmanac(d,y,{subject,render:done})};
+ const link=[...q.querySelectorAll('button')].find(v=>v.textContent===tr('Personal birth chart','个人生辰命盘'));
+ if(link){link.textContent=tr('Full chart with known birth time','知道出生时间？查看完整命盘');link.onclick=()=>destinyPage({subject,draft:{date:date.value}})}
+ b(q,tr('Start a different reading','清空资料，重新查看'),()=>yueZodiacAlmanac('',null,{subject}));
+ if(options?.render&&form.checkValidity())form.requestSubmit()
+};
+destinyConsultMenu=function(){
+ closeTalk();say(tr('Master Yue','月师傅'),tr('For yourself or someone else? A birthday is enough for the zodiac almanac. A full chart needs a known birth time and place.','想看自己，还是替别人看？生肖流年只需要生日；完整命盘则需要准确出生时间和地点。'),[
+ [tr('Date only · Zodiac & Tai Sui','只知道生日 · 生肖与太岁'),()=>{closeTalk();yueZodiacAlmanac()}],
+ [tr('Birth date, time & place · Personal chart','生辰与出生地 · 完整命盘'),()=>{closeTalk();destinyPage()}],
+ [tr('Weekly star signs','本周十二星座'),()=>{closeTalk();starSignPage()}],
+ [tr('Maybe later','改天再聊'),closeTalk]
+ ])
+};
+const destinySubjectStyle=document.createElement('style');destinySubjectStyle.textContent='.destinySubjectStrip{margin:12px 0;padding:12px 0;border-block:1px solid #b6a17d}.destinySubjectStrip small,.destinyBirthNote{display:block;line-height:1.5;overflow-wrap:anywhere;margin:8px 0;color:#62553d}.destinySubjectChoices{display:flex;gap:8px;margin:8px 0}.destinySubjectChoices button{flex:1;min-height:44px;white-space:normal}.destinySubjectChoices button[aria-pressed=true]{background:#536b5a;color:#fff5de}.astroForm details select{width:100%;min-height:44px}.astroForm input{font-size:16px;max-width:100%;box-sizing:border-box}';document.head.append(destinySubjectStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
