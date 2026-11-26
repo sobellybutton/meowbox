@@ -5377,9 +5377,16 @@ function pawRoomGuestProfile(visit){const active=npc.filter(n=>n.popGuest).map(n
 function pawGuestClear(x,y,anchors,clearance=52){
  return Number.isFinite(x)&&Number.isFinite(y)&&anchors.every(([ax,ay])=>!Number.isFinite(ax)||!Number.isFinite(ay)||Math.hypot(x-ax,y-ay)>=clearance)
 }
+function pawGuestStationFeet(spec,ids){
+ return [...new Set(ids)].map(id=>spec.stations?.[id]).filter(v=>Array.isArray(v)&&v.length>=4&&v.slice(2,4).every(Number.isFinite)).map(v=>v.slice(2,4))
+}
+function pawGuestActiveFeet(){
+ const spec=indoorSpec(),ids=room==='temple'?Object.keys(spec.stations||{}):(roomActions[room]||[]).map(v=>v[0]);
+ return pawGuestStationFeet(spec,ids)
+}
 function pawGuestProtected(){
  const spec=indoorSpec(),entry=spec.entry;
- return [entry,[entry[0],entry[1]-35],spec.arrival,...Object.values(spec.stations||{}).map(v=>v.slice(2,4))].filter(v=>Array.isArray(v)&&v.length>=2)
+ return [entry,[entry[0],entry[1]-35],spec.arrival,...pawGuestActiveFeet()].filter(v=>Array.isArray(v)&&v.length>=2)
 }
 function pawGuestWaypoints(points,anchors,safe,clearance=52){
  return points.filter(([x,y])=>safe(x,y)&&pawGuestClear(x,y,anchors,clearance))
@@ -5408,10 +5415,32 @@ function pawGuestCount(max,visit,roomId){
 /* PAW_VISITOR_LIFECYCLE_BEGIN */
 function pawVisitorDoorRoute(from,to,anchors,safe,path,clearance=52){
  if(!Array.isArray(from)||!Array.isArray(to)||![...from,...to].every(Number.isFinite)||!safe(...from)||!safe(...to))return null;
- const route=path(from,to);
- if(!Array.isArray(route)||!route.length||!route.every((v,i)=>Array.isArray(v)&&v.length===2&&safe(...v)&&pawGuestSegment(i?route[i-1]:from,v,anchors,clearance)))return null;
- const end=route.at(-1);
- return Math.hypot(end[0]-to[0],end[1]-to[1])<.01?route:null
+ const point=v=>Array.isArray(v)&&v.length===2&&safe(...v)&&pawGuestClear(v[0],v[1],anchors,clearance);
+ const valid=(route,start,end)=>Array.isArray(route)&&route.length&&route.every((v,i)=>point(v)&&pawGuestSegment(i?route[i-1]:start,v,anchors,clearance))&&Math.hypot(route.at(-1)[0]-end[0],route.at(-1)[1]-end[1])<.01;
+ if(!point(from)||!point(to))return null;
+ const direct=path(from,to);if(valid(direct,from,to))return direct;
+ // If the ordinary room path crosses a reserved station, find a detour
+ // around its clearance ring. Each edge still uses the physical pathfinder.
+ // Bound graph size and search work: this is only run when choosing a route.
+ const nodes=[from,to],seen=new Set(nodes.map(v=>v.join(','))),radius=clearance*1.18+2;
+ for(const [x,y] of anchors.slice(0,12))for(let i=0;i<8;i++){
+  const v=[Math.round(x+Math.cos(i*Math.PI/4)*radius),Math.round(y+Math.sin(i*Math.PI/4)*radius)],key=v.join(',');
+  if(point(v)&&!seen.has(key)){seen.add(key);nodes.push(v)}
+ }
+ const dist=nodes.map(()=>Infinity),prev=nodes.map(()=>null),done=new Set();dist[0]=0;
+ while(done.size<nodes.length&&done.size<24){
+  let u=-1;for(let i=0;i<nodes.length;i++)if(!done.has(i)&&(u<0||dist[i]<dist[u]))u=i;
+  if(u<0||!Number.isFinite(dist[u]))break;
+  if(u===1){const pieces=[];for(let at=1;at!==0;){const p=prev[at];if(!p)return null;pieces.unshift(p.route);at=p.from}return pieces.flat()}
+  done.add(u);
+  for(let v=1;v<nodes.length;v++){
+   if(done.has(v)||!pawGuestSegment(nodes[u],nodes[v],anchors,clearance))continue;
+   const edge=path(nodes[u],nodes[v]);if(!valid(edge,nodes[u],nodes[v]))continue;
+   const length=edge.reduce((sum,p,i)=>{const q=i?edge[i-1]:nodes[u];return sum+Math.hypot(p[0]-q[0],p[1]-q[1])},0);
+   if(dist[u]+length<dist[v]){dist[v]=dist[u]+length;prev[v]={from:u,route:edge}}
+  }
+ }
+ return null
 }
 function pawVisitorVisible(a){return a.phase!=='waiting'&&a.phase!=='gone'}
 function pawVisitorHold(roster){for(const a of roster)a.walking=0;return roster}
@@ -5423,7 +5452,7 @@ function pawRoomWalkers(){
  const spec=pawRoomVisitorSpecs[room];if(!spec||activity)return [];
  const context=scene+'|'+room+'|'+avatar;
  if(!indoorReady()){pawVisitorAt=t;return context===pawVisitorContext?pawVisitorHold(pawLocalVisitors):[]}
- const obs=indoorObstacles(),protectedFeet=pawGuestProtected(),door=indoorSpec().entry,stationFeet=Object.values(indoorSpec().stations||{}).map(v=>v.slice(2,4));
+ const obs=indoorObstacles(),protectedFeet=pawGuestProtected(),door=indoorSpec().entry,stationFeet=pawGuestActiveFeet();
  const safe=pawGuestWaypoints(spec.points,protectedFeet,(x,y)=>indoorSafe(x,y,obs));
  if(context!==pawVisitorContext){
   pawVisitorContext=context;pawVisitorAt=t;pawVisitSerial++;
@@ -5476,8 +5505,8 @@ function pawRoomWalkers(){
    for(let attempt=0;attempt<safe.length;attempt++){
     a.index=(a.index+1)%safe.length;const end=safe[a.index];
     if(Math.hypot(a.x-end[0],a.y-end[1])<10)continue;
-    const route=indoorPath([a.x,a.y],end,obs);
-    if(route?.length&&route.every((v,i)=>pawGuestSegment(i?route[i-1]:[a.x,a.y],v,protectedFeet))){found=route;break}
+    const route=pawVisitorDoorRoute([a.x,a.y],end,protectedFeet,(x,y)=>indoorSafe(x,y,obs),(f,d)=>indoorPath(f,d,obs));
+    if(route?.length){found=route;break}
    }
    if(!found){a.wait=t+5;continue}a.route=found
   }
