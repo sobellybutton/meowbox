@@ -72,15 +72,16 @@ const figureStyle=document.createElement('style');figureStyle.textContent=`
 `;document.head.append(figureStyle);
 
 /* Saved gossip can continue from park to tea house. */
+parkSerials.push(...[{"title":["The bubble tea audit","奶茶审计风波"],"opening":["Wang ordered zero sugar, then asked for extra pearls. Mei says the accounts do not balance.","王老板点了无糖奶茶，又要求双倍珍珠。梅姨说这账对不上。"],"twist":["He has categorised the pearls as business expenses. Grandma has requested the receipts.","他把珍珠列为办公支出。外婆要求出示发票。"],"choices":[["Audit the pearls","审计珍珠"],["Declare a tea break","宣布茶歇"]],"outcomes":[["The evidence was consumed. The auditor requests a refill.","证物已经被喝掉。审计员要求续杯。"],["The audit is suspended for tapioca-related reasons.","因珍珠相关原因，审计暂停。"]],"after":["The new policy: drinks are personal, gossip is a shared resource.","新规出台：奶茶自理，八卦共享。"]},{"title":["The unread message","未读消息悬案"],"opening":["Lin has left a message unread for 48 hours. Half the tea room has theories.","林姨有条消息两天没读。半个茶馆都在推理。"],"twist":["It turns out the message is from the delivery company. The parcel is a foot bath.","结果是快递公司的短信，包裹是个泡脚桶。"],"choices":[["Celebrate the delivery","庆祝收货"],["Investigate the sender","调查发件人"]],"outcomes":[["Everyone agrees warm feet beat mixed signals.","大家一致认为，脚暖比暧昧靠谱。"],["The delivery uncle has been cleared of romantic intentions.","快递阿叔已排除暧昧嫌疑。"]],"after":["Lin is soaking her feet. The group chat can wait.","林姨泡脚去了，群消息晚点再回。"]}]);
 parkSerialTalk=function(){
- if(room!=='park'&&room!=='tea')return;const q=parkProgress(),today=day();
- if(q.beat===3&&q.day!==today){q.episode=(q.episode+1)%parkSerials.length;q.beat=0;save('parkSerialV1',q)}
+ if(room!=='park'&&room!=='tea')return;const q=parkProgress(),today=shrineClock().day;
+ if(q.beat===3&&q.day<today){q.episode=(q.episode+1)%parkSerials.length;q.beat=0;q.choice=0;save('parkSerialV1',q)}
  const ep=parkSerials[q.episode],mei=['Auntie Mei','梅姨'],lin=['Auntie Lin','林姨'],leave=[tr('Continue later','下次接着聊'),closeTalk];
  const next=(beat,choice=q.choice)=>{save('parkSerialV1',{...q,beat,choice,day:beat===3?today:q.day});if(beat===3){lifeFriend(mei);lifeFriend(lin)}parkSerialTalk()};
  if(q.beat===0)say(tr(...mei),tr(...ep.opening),[[tr('Wait, what happened?','等等，怎么回事？'),()=>next(1)],leave]);
  else if(q.beat===1)say(tr(...lin),tr(...ep.twist),[...ep.choices.map((v,i)=>[tr(...v),()=>next(2,i)]),leave]);
  else if(q.beat===2)say(tr(...mei),tr(...ep.outcomes[q.choice]),[[tr('And then?','然后呢？'),()=>next(3)],leave]);
- else say(tr(...lin),tr(...ep.after),[[tr('See you tomorrow','明天见'),closeTalk]]);
+ else say(tr(...lin),tr(...ep.after)+' '+tr('A new story tomorrow.','明天再来听新瓜。'),[[tr('Remind me what happened','回顾这个瓜'),()=>say(tr(...mei),tr(...ep.outcomes[q.choice]),[[tr('Back to the table','回茶桌'),closeTalk]])],[tr('See you tomorrow','明天见'),closeTalk]]);
 };
 const townContinuityBefore=action;
 action=function(id){
@@ -127,6 +128,7 @@ action=function(id){
    [tr('Meet & chat','认识新朋友'),()=>{closeTalk();communityTab=communityURL()?'public':'lounge';townChatPage()}],
    [tr('Celebrate a good thing','庆祝小确幸'),()=>{closeTalk();communityTab='celebrate';townChatPage()}],
    [tr('Hear the latest gossip','听听最新的瓜'),parkSerialTalk],
+   [tr('Chat with a regular','跟熟客聊聊'),()=>say(tr('Auntie Mei','梅姨'),tr('Who would you like to sit with?','想跟谁坐坐？'),[[tr('Auntie Mei','梅姨'),()=>residentConversation('auntie',{n:residentProfiles.auntie.name})],[tr('Wang Laoban','王老板'),()=>residentConversation('wang',{n:residentProfiles.wang.name})],[tr('Back to the table','回茶桌'),()=>action('chat')]])],
    [tr('Office comedy','职场小剧场'),gatheringOfficeStory],
    [tr('Play a table game','来局井字棋'),()=>{closeTalk();start('woodenThree')}],
    [tr('Keep wandering','继续逛'),closeTalk]

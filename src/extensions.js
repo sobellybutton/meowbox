@@ -2082,23 +2082,28 @@ function residentTip(id){
  if(scene==='wonder')return ['The Personality Lab is for fun. Nobody needs to fit inside a personality box.','人格研究所就是图个开心，人不需要被一种性格框住。'];
  return null;
 }
+const residentTopicReturns={"keeper":[["The incense stand is still there. No renovation committee required.","香台还在原处，不用开会讨论装修。"],["I hope you found a moment to rest since our last chat.","上次聊过之后，希望你有好好休息。"],["The little garden is waiting whenever you need somewhere quiet.","想清静一下的时候，后院一直都在。"]],"auntie":[["I saved you some gossip. The kettle has heard all of it.","给你留了点新瓜，水壶已经听完了。"],["Did you find a new favourite corner of town?","上次说到逛小镇，你找到喜欢的地方了吗？"],["Thank you for asking about me last time. Tea tastes better with company.","上次还惦记着我呢。有人陪着喝茶，茶都更香。"]],"wang":[["Our meeting cancellation committee has not met. A great success.","取消会议委员会一次都没开会，项目圆满成功。"],["Have you managed to take a proper break?","上次聊到休息，你有好好摸鱼吗？"],["Still accepting applications for professional tea tasters.","专业试茶员还在招人呢。"]],"mochi":[["Mrrp. The imaginary snacks were surprisingly filling.","喵。上次的虚拟零食居然挺饱。"],["Mrrp. Ear scratches are still accepted as tribute.","喵。挠耳朵依然可以进贡。"],["Mochi makes room beside the cushion.","麻薯往旁边挪了挪，给你留了个位子。"]]};
+const residentTopicAlternates={"keeper":[["No need to finish every ritual. A quiet visit is enough.","不必每项仪式都做完，静静来坐坐就好。"],["Some problems need time more than answers.","有些烦恼需要的是时间，不一定是答案。"],["Try listening for the wind before looking for another activity.","先听听风声，再想要不要做下一件事。"]],"auntie":[["The committee has now arranged a meeting to discuss the last meeting. My tea is getting cold.","他们又约了个会讨论上次的会。我的茶都凉了。"],["Try the deer meadow. At least the deer do not send voice messages.","去小鹿森野吧，至少小鹿不会发六十秒语音。"],["I have decided to retire from worrying. The paperwork is pending.","我决定从操心这件事退休，手续还没批下来。"]],"wang":[["A meeting without slides? Let us not get too ambitious.","开会不用PPT？别一下子定这么高的目标。"],["Take a walk without measuring the steps. Radical, I know.","散个步，不计步数。是不是太大胆了？"],["My new business plan is a four-day weekend. Investors are welcome.","我的新商业计划是每周休四天。欢迎投资。"]],"mochi":[["Mochi sniffs your empty palm with great suspicion.","麻薯满脸怀疑地闻了闻你的空手掌。"],["Mrrp. The ear-scratching department approves.","喵。挠耳朵部门审核通过。"],["Mochi has fallen asleep. This is a compliment.","麻薯睡着了。这是对你的最高评价。"]]};
 function residentReply(id,n,index){
  const profile=residentProfiles[id],record=residentRecord(id),fresh=!record.topics.includes(index);
  if(fresh)record.topics.push(index);
  record.last=index;residentMemory[id]=record;save('residentMemoryV1',residentMemory);
- const reply=index===1&&id!=='keeper'&&id!=='mochi'&&id==='auntie'?(residentTip(id)||profile.topics[index].reply):index===1&&id==='wang'?(residentTip(id)||profile.topics[index].reply):profile.topics[index].reply;
+ const local=index===1&&['auntie','wang'].includes(id)?residentTip(id):null;
+ const reply=local||(!fresh&&hash(shrineClock().day+id+index)%2===0?residentTopicAlternates[id]?.[index]:null)||profile.topics[index].reply;
+ lifeFriend(profile.name);
  let extra='';
  if(fresh&&record.topics.length===3){
   extra=' '+tr('Here, keep this little reminder of our chats.','来，把这份聊天的小纪念收好。');
   addItem(...profile.reward);
- }else if(!fresh)extra=' '+tr('We have talked about this before. Still a good topic.','这个我们聊过啦，不过再聊一次也挺好。');
+ }
  say(tr(...n.n),tr(...reply)+extra,[[tr('Chat a little more','再聊一会儿'),()=>residentConversation(id,n,false)],[tr('See you around','下次见'),closeTalk]]);
 }
 function residentConversation(id,n,arrived=true){
- const profile=residentProfiles[id],record=residentRecord(id);
- if(arrived){record.visits++;record.lastDay=day();residentMemory[id]=record;save('residentMemoryV1',residentMemory)}
- const welcome=arrived&&record.visits===1?profile.greeting:profile.returning;
- const remembered=arrived&&record.last!==null?' '+tr('I remember our last chat.','上次聊的事我还记得呢。'):'';
+ const profile=residentProfiles[id],record=residentRecord(id),today=shrineClock().day,previousDay=record.lastDay;
+ if(arrived){record.visits=Math.min(100000,record.visits+1);record.lastDay=today;residentMemory[id]=record;save('residentMemoryV1',residentMemory)}
+ const welcome=arrived?(record.visits===1?profile.greeting:profile.returning):['Anything else on your mind?','还想聊点什么？'];
+ const follow=residentTopicReturns[id]?.[record.last];
+ const remembered=arrived&&previousDay!==today&&follow?' '+tr(...follow):'';
  const options=profile.topics.map((topic,index)=>[tr(...topic.label),()=>residentReply(id,n,index)]);
  options.push([tr('Keep exploring','继续逛逛'),closeTalk]);
  say(tr(...n.n),tr(...welcome)+remembered,options);
@@ -3484,7 +3489,11 @@ function popGuestFor(world,slot,date=shrineClock().day){
 }
 let popGuestMemory=load('popGuestMemoryV1',{});
 if(!popGuestMemory||typeof popGuestMemory!=='object'||Array.isArray(popGuestMemory))popGuestMemory={};
-function popGuestRecord(g){return Object.hasOwn(popGuestMemory,g.id)?popGuestMemory[g.id]:null}
+function popGuestRecord(g){
+ const raw=Object.hasOwn(popGuestMemory,g.id)?popGuestMemory[g.id]:null;if(!raw||typeof raw!=='object')return null;
+ const choices=Array.isArray(raw.choices)?[...new Set(raw.choices.filter(i=>Number.isInteger(i)&&i>=0&&i<g.choices.length))]:[];
+ return {visits:Math.max(0,Math.min(100000,Math.floor(Number(raw.visits)||0))),choices,last:Number.isInteger(raw.last)&&choices.includes(raw.last)?raw.last:null,lastDay:typeof raw.lastDay==='string'?raw.lastDay:''}
+}
 function popGuestSay(g,line,opts){
  say(tr(...g.name),line,opts);
  // Distinct fictional identity, with no false endorsement.
@@ -3492,8 +3501,9 @@ function popGuestSay(g,line,opts){
 }
 function popGuestMeet(g,n=null){
  if(n){greetingNPC=n;greetingUntil=t+.9;stopRoute();p.tx=p.x;p.ty=p.y;p.facing=Math.abs(n.x-p.x)>Math.abs(n.y-p.y)?(n.x<p.x?'left':'right'):(n.y<p.y?'up':'down')}
- const rec=popGuestRecord(g)||{visits:0,choices:[]};rec.visits++;popGuestMemory[g.id]=rec;save('popGuestMemoryV1',popGuestMemory);
- const repeat=rec.visits>1?' '+tr('You again! No autograph queue today.','又见面了！今天不用排签名队。'):'';
+ const rec=popGuestRecord(g)||{visits:0,choices:[],last:null,lastDay:''},today=shrineClock().day,previous=rec.lastDay;
+ rec.visits=Math.min(100000,rec.visits+1);rec.lastDay=today;popGuestMemory[g.id]=rec;save('popGuestMemoryV1',popGuestMemory);
+ const repeat=rec.visits>1?' '+(rec.last!==null&&previous!==today?tr('I remember our conversation about “'+tr(...g.choices[rec.last][0])+'”.','上次聊到「'+tr(...g.choices[rec.last][0])+'」，我还记得呢。'):tr('Back again? Nice to see a familiar face.','又见面啦，熟面孔真好。')):'';
  popGuestSay(g,tr(...g.intro)+repeat,[
   [tr('What are you up to?','你在忙什么？'),()=>popGuestScene(g)],
   [tr('Any local tips?','附近有什么好玩的？'),()=>popGuestSay(g,tr(...g.tip),[[tr('Thanks, see you!','谢啦，回头见！'),closeTalk]])],
@@ -3503,7 +3513,7 @@ function popGuestMeet(g,n=null){
 function popGuestScene(g){
  popGuestSay(g,tr(...g.prompt),g.choices.map(([label,reply],i)=>[tr(...label),()=>{
   const rec=popGuestRecord(g)||{visits:1,choices:[]};
-  if(!rec.choices.includes(i))rec.choices.push(i);popGuestMemory[g.id]=rec;save('popGuestMemoryV1',popGuestMemory);
+  if(!rec.choices.includes(i))rec.choices.push(i);rec.last=i;popGuestMemory[g.id]=rec;save('popGuestMemoryV1',popGuestMemory);lifeFriend(g.name);
   if(!items.some(x=>x[0]===g.gift[0]))addItem(...g.gift);
   popGuestSay(g,tr(...reply),[[tr('See you around','下次见'),closeTalk]])
  }]).concat([[tr('Maybe later','下次再聊'),closeTalk]]))
