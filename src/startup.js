@@ -5010,6 +5010,26 @@ let pawVisitorContext='',pawLocalVisitors=[],pawVisitorAt=0,pawVisitSerial=0,paw
 function pawGuestRoomCandidates(profiles,active,world,valid){return profiles.filter(g=>g.world===world&&!active.includes(g.id)&&valid(g))}
 function pawGuestAtlasSlot(g){const i=guestAtlasIndex({popGuest:g.id,n:g.name});return i>=0&&i<16&&![6,8,9].includes(i)?i:-1}
 function pawRoomGuestProfile(visit){const active=npc.filter(n=>n.popGuest).map(n=>n.popGuest),pool=pawGuestRoomCandidates(popGuestStories,active,scene,g=>pawGuestAtlasSlot(g)>=0);return pool.length?pool[visit%pool.length]:null}
+/* Guest feet must never occupy the doorway or the player's action anchors.
+   Use existing room data; do not change player collision geometry. */
+function pawGuestClear(x,y,anchors,clearance=52){
+ return Number.isFinite(x)&&Number.isFinite(y)&&anchors.every(([ax,ay])=>!Number.isFinite(ax)||!Number.isFinite(ay)||Math.hypot(x-ax,y-ay)>=clearance)
+}
+function pawGuestProtected(){
+ const spec=indoorSpec(),entry=spec.entry;
+ return [entry,[entry[0],entry[1]-35],spec.arrival,...Object.values(spec.stations||{}).map(v=>v.slice(2,4))].filter(v=>Array.isArray(v)&&v.length>=2)
+}
+function pawGuestWaypoints(points,anchors,safe,clearance=52){
+ return points.filter(([x,y])=>safe(x,y)&&pawGuestClear(x,y,anchors,clearance))
+}
+function pawGuestSegment(a,b,anchors,clearance=52){
+ const dx=b[0]-a[0],dy=b[1]-a[1],d=dx*dx+dy*dy;
+ return anchors.every(([x,y])=>{
+  if(!Number.isFinite(x)||!Number.isFinite(y))return true;
+  const f=d?Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/d)):0;
+  return Math.hypot(x-(a[0]+f*dx),y-(a[1]+f*dy))>=clearance
+ })
+}
 function pawGuestCount(max,visit,roomId){
  const key=Array.from(String(roomId)).reduce((a,c)=>a+c.codePointAt(0),0);
  // Some visits are quiet, and some have an extra guest. Stable within a visit.
@@ -5019,11 +5039,12 @@ function pawRoomWalkers(){
  const spec=pawRoomVisitorSpecs[room];if(!spec||activity)return [];
  const context=scene+'|'+room+'|'+avatar;
  if(!indoorReady())return context===pawVisitorContext?pawLocalVisitors.map(a=>({...a,walking:0})):[];
- const obs=indoorObstacles(),safe=spec.points.filter(v=>indoorSafe(v[0],v[1],obs));
+ const obs=indoorObstacles(),protectedFeet=pawGuestProtected();
+ const safe=pawGuestWaypoints(spec.points,protectedFeet,(x,y)=>indoorSafe(x,y,obs));
  if(context!==pawVisitorContext){
   pawVisitorContext=context;pawVisitorAt=t;pawVisitSerial++;
-  const entry=indoorSpec().entry;
-  const spawn=safe.filter(v=>Math.hypot(v[0]-indoor.x,v[1]-indoor.y)>90&&Math.hypot(v[0]-entry[0],v[1]-entry[1])>65&&!pawAmbientIndoor.some(a=>Math.hypot(v[0]-a.x,v[1]-a.y)<68));
+  const residents=pawAmbientIndoor.map(a=>[a.x,a.y]),entry=indoorSpec().entry;
+  const spawn=safe.filter(v=>pawGuestClear(v[0],v[1],[[indoor.x,indoor.y]],90)&&pawGuestClear(v[0],v[1],[entry],65)&&pawGuestClear(v[0],v[1],residents,68));
   const offset=spawn.length?pawVisitSerial%spawn.length:0,ordered=[...spawn.slice(offset),...spawn.slice(0,offset)];
   pawLocalVisitors=ordered.slice(0,pawGuestCount(spec.count,pawVisitSerial,room)).map((pos,i)=>({id:'fictional-visitor-'+i,fictionalVisitor:true,room,x:pos[0],y:pos[1],avatar:((avatar??0)+1+i+pawVisitSerial%2)%4,facing:'down',walking:0,index:safe.indexOf(pos),route:[],wait:t+2+i*2.5}));
   // Use existing original cameo identities, conversation branches and keepsakes.
@@ -5036,9 +5057,20 @@ function pawRoomWalkers(){
  if(residentReducedMotion.matches)return pawLocalVisitors.map(a=>({...a,walking:0}));
  for(const a of pawLocalVisitors){
   a.walking=0;if(a.guest||t<a.wait||safe.length<2)continue;
-  if(!a.route.length){a.index=(a.index+1)%safe.length;const route=indoorPath([a.x,a.y],safe[a.index],obs);if(!route?.length){a.wait=t+3;continue}a.route=route}
+  if(!a.route.length){
+   // Try several quiet waypoints before waiting. Never take a shortcut
+   // through a reserved interaction point just because its endpoints are safe.
+   let found=null;
+   for(let attempt=0;attempt<safe.length;attempt++){
+    a.index=(a.index+1)%safe.length;const end=safe[a.index];
+    if(Math.hypot(a.x-end[0],a.y-end[1])<10)continue;
+    const route=indoorPath([a.x,a.y],end,obs);
+    if(route?.length&&route.every((v,i)=>pawGuestSegment(i?route[i-1]:[a.x,a.y],v,protectedFeet))){found=route;break}
+   }
+   if(!found){a.wait=t+5;continue}a.route=found
+  }
   const dest=a.route[0],next=pawWalkStep(a,dest,dt,40+(a.avatar%3)*4);
-  if(!indoorSafe(next.x,next.y,obs)){a.route=[];a.wait=t+2;continue}
+  if(!indoorSafe(next.x,next.y,obs)||!pawGuestClear(next.x,next.y,protectedFeet)||!pawGuestClear(next.x,next.y,pawAmbientIndoor.map(v=>[v.x,v.y]),60)){a.route=[];a.wait=t+2;continue}
   if(Math.hypot(next.x-indoor.x,next.y-indoor.y)<55||pawLocalVisitors.some(b=>b!==a&&Math.hypot(next.x-b.x,next.y-b.y)<50)){a.route=[];a.wait=t+1.1;continue}
   const distance=Math.hypot(next.x-a.x,next.y-a.y);
   if(distance>.01){a.facing=pawWalkFacing(a,dest);pawGaitTravel.set(a,(pawGaitTravel.get(a)||0)+distance);a.walking=1}
@@ -5056,12 +5088,15 @@ drawSharedRoomActor=function(a,scale){
    const height=94*scale,drawn=drawGuestAtlasActor(pawGuestAtlasSlot(a.guest),a.x,a.y,height,a.facing);
    if(drawn){
     if(indoorReady()&&Math.hypot(a.x-indoor.x,a.y-indoor.y)<150){
-     const w=Math.max(36,48/Math.max(.2,cam.scale)),h=Math.max(height*.8,44/Math.max(.2,cam.scale));
-     target(a.x-w/2,a.y-h,w,h,()=>{
+     const w=Math.max(36,44/Math.max(.2,cam.scale)),h=Math.max(height*.8,44/Math.max(.2,cam.scale));
+     const x=a.x-w/2,y=a.y-h;
+     // Station hit zones always win. A cameo never steals a gameplay tap.
+     if(hit.some(z=>z.stationId&&x<z.x+z.w&&x+w>z.x&&y<z.y+z.h&&y+h>z.y))return;
+     target(x,y,w,h,()=>{
       if(!indoorReady()||Math.hypot(a.x-indoor.x,a.y-indoor.y)>=150)return;
       releaseWalkKeys();joystickReset();indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y;
       indoor.facing=pawWalkFacing(indoor,[a.x,a.y]);popGuestMeet(a.guest)
-     })
+     },'paw-cameo:'+a.guest.id)
     }
     return
    }
