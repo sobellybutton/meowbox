@@ -317,17 +317,19 @@ const festivalFishKinds=[
 ];
 function festivalFishPosition(i,age,seed=0){
  const k=festivalFishKinds[i],a=age*.8*k.speed+i*1.73+seed;
- return {x:400+Math.cos(a)*111+Math.sin(a*1.7+i)*24,y:458+Math.sin(a*.84+i)*61,dir:-Math.sin(a)>=0?1:-1}
+ const pos=pawScoopProject(400+Math.cos(a)*111+Math.sin(a*1.7+i)*24,458+Math.sin(a*.84+i)*61);
+ return {...pos,dir:-Math.sin(a)>=0?1:-1}
 }
 function festivalNewRound(now,seed=0){
  return {at:now,seed,x:400,y:458,paper:100,phase:'aim',caught:[],attempts:0,last:now,resultAt:0,feedback:['Hold in the water, follow a fish and release to lift.','按住水面，跟着小鱼移动，松手捞起。']}
 }
 function festivalFishOutcome(game,now){
  const elapsed=now-game.last;
- if(game.phase!=='dip'||elapsed<.12)return null;
+ if(game.phase!=='dip'||!Number.isFinite(elapsed)||elapsed<0)return null;
+ if(elapsed<.12)return {caught:-1,wear:4,tooQuick:true};
  let nearest=-1,distance=Infinity;
  for(let i=0;i<festivalFishKinds.length;i++){if(game.caught.includes(i))continue;const p=festivalFishPosition(i,now-game.at,game.seed),d=Math.hypot(p.x-game.x,p.y-game.y);if(d<distance){distance=d;nearest=i}}
- const gentle=elapsed<=2.0,hit=gentle&&distance<=39;
+ const gentle=mbFishTiming(elapsed)==='ready',hit=gentle&&distance<=39;
  const wear=Math.min(100,(hit?18:gentle?12:28)+Math.max(0,Math.floor((elapsed-2.0)*16)));
  return {caught:hit?nearest:-1,wear}
 }
@@ -347,10 +349,10 @@ function festivalDip(){
 }
 function festivalLift(){
  const g=state.festivalFish;if(activity!=='goldfishScoop'||g?.phase!=='dip')return;
- const elapsed=t-g.last,result=festivalFishOutcome(g,Math.max(t,g.last+.12));if(!result)return;
+ const elapsed=t-g.last,result=festivalFishOutcome(g,t);if(!result)return;
  g.attempts++;g.paper=Math.max(0,g.paper-result.wear);g.phase='lift';g.last=t;
  if(result.caught>=0){const i=result.caught,k=festivalFishKinds[i];g.caught.push(i);addItem('Goldfish postcard: '+k.name[0],'金鱼明信片：'+k.name[1]);g.feedback=['A gentle catch! '+k.name[0]+' is going back in the water.','轻轻捞到了'+k.name[1]+'！一会儿放回水里。'];physicalFx('water',.8)}
- else{g.feedback=elapsed>2.0?['The paper soaked too long. Lift a little sooner.','纸网泡太久了，下次早点捞起来。']:['The fish dodged the ring. Aim where it is swimming.','小鱼躲开了，试着瞄准它游去的方向。'];physicalFx('splash',.4)}
+ else{g.feedback=result.tooQuick?['Let the paper settle before lifting.','先让纸网稳一稳，再捞起来。']:elapsed>2.0?['The paper soaked too long. Lift a little sooner.','纸网泡太久了，下次早点捞起来。']:['The fish dodged the ring. Aim where it is swimming.','小鱼躲开了，试着瞄准它游去的方向。'];physicalFx('splash',.4)}
  refreshControls()
 }
 const festivalStartBefore=start;
@@ -1843,9 +1845,9 @@ document.head.append(mbHomeStyle);
 
 /* MBFISH_REFINEMENT_BEGIN */
 function mbFishTiming(age){
- if(!Number.isFinite(age)||age<.32)return 'early';
- if(age<=1.2)return 'ready';
- if(age<2.4)return 'late';
+ if(!Number.isFinite(age)||age<.12)return 'early';
+ if(age<=2)return 'ready';
+ if(age<3.1)return 'late';
  return 'expired'
 }
 function mbFishPauseGame(game,elapsed){
@@ -1892,7 +1894,7 @@ function mbFishSyncTiming(){
  if(activity!=='goldfishScoop'||state.festivalFish?.phase!=='dip')return;
  const controls=$('gameControls'),g=state.festivalFish,timing=controls?.querySelector('.mbFishTiming'),progress=controls?.querySelector('.mbFishProgress'),button=controls?.querySelector('.festivalFishButtons button');
  if(!timing||!progress||!button)return;
- const age=Math.max(0,t-g.last),stage=age<.12?'early':age<=2?'ready':age<3.1?'late':'expired';
+ const age=Math.max(0,t-g.last),stage=mbFishTiming(age);
  const message=stage==='early'?tr('Let the paper settle…','先让纸网稳一稳……'):stage==='ready'?tr('Lift while a fish is inside the ring.','小鱼游进圈里就捞起。'):tr('Lift now before the paper tears.','快捞起，纸网快破了。');
  if(timing.textContent!==message)timing.textContent=message;
  timing.dataset.timing=stage;progress.max=3.1;progress.value=Math.min(3.1,age);button.disabled=false
@@ -6214,8 +6216,9 @@ festivalAim=function(x,y){
 };
 const pawFishDipBefore=festivalDip;
 festivalDip=function(...args){
+ const g=state.festivalFish,wasAiming=activity==='goldfishScoop'&&g?.phase==='aim';
  const result=pawFishDipBefore(...args);
- if(activity==='goldfishScoop'&&state.festivalFish?.phase==='dip')state.festivalFish.travel=0;
+ if(wasAiming&&state.festivalFish===g&&g.phase==='dip')g.travel=0;
  return result
 };
 const pawFishOutcomeBefore=festivalFishOutcome;
@@ -6226,9 +6229,11 @@ festivalFishOutcome=function(g,now){
 };
 const pawFishLiftBefore=festivalLift;
 festivalLift=function(...args){
- const g=state.festivalFish,at=g?.caught.length,elapsed=g?t-g.last:0,quality=g?pawFishTechnique(elapsed,g.travel||0,g.streak||0):null;
+ const g=state.festivalFish;
+ if(activity!=='goldfishScoop'||g?.phase!=='dip')return pawFishLiftBefore(...args);
+ const at=g.caught.length,elapsed=t-g.last,quality=pawFishTechnique(elapsed,g.travel||0,g.streak||0);
  const result=pawFishLiftBefore(...args);
- if(!g||g.phase!=='lift'||at===undefined)return result;
+ if(state.festivalFish!==g||g.phase!=='lift')return result;
  if(g.caught.length>at){
   g.streak=(g.streak||0)+1;g.bestStreak=Math.max(g.bestStreak||0,g.streak);
   const rare=g.caught.at(-1)===4,points=10+(quality.ideal?10:0)+(rare?15:0)+Math.min(3,g.streak-1)*5;
