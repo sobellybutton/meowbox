@@ -899,7 +899,7 @@ const residentWelcomeProfiles=[
 ];
 const residentWelcomeVisits=new Map(),residentWelcomeSpoken=new Set(),residentOutdoorWelcome=new Map();
 function residentPlayerDisplayName(){
- return Array.from(String(playerName||'').replace(/[\\u0000-\\u001f\\u007f]/g,'').trim()).slice(0,24).join('')
+ return Array.from(Array.from(String(playerName||'')).filter(ch=>ch.codePointAt(0)>=32&&ch.codePointAt(0)!==127).join('').trim()).slice(0,24).join('')
 }
 function residentNamedGreeting(en,cn){
  const name=residentPlayerDisplayName();return name?tr('Hi '+name+'! '+en,name+'，'+cn):tr(en,cn)
