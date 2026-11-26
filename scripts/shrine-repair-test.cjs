@@ -26,10 +26,26 @@ const fs=require('node:fs');
     if(entry.y<entry.max-160||entry.nearest<130||!entry.signs)throw Error('Entrance crowd or framing: '+JSON.stringify(entry));
     await page.screenshot({path:'test-results/'+name+'-valley-arrival.png'});
     await page.reload({waitUntil:'domcontentloaded'});
-    await page.locator('#proposal .shrine-ticket-reminder').waitFor({timeout:60000});
-    await page.screenshot({path:'test-results/'+name+'-return-ticket.png'});
+    await page.locator('#proposal .pawGateEnter').waitFor({timeout:60000});
+    const gate=await page.evaluate(()=>{
+     const root=proposal.getBoundingClientRect(),hero=proposal.querySelector('.hero').getBoundingClientRect(),button=proposal.querySelector('.pawGateEnter').getBoundingClientRect();
+     return {cover:Math.abs(root.width-hero.width)<2&&Math.abs(root.height-hero.height)<2,ticket:!!proposal.querySelector('.pawReturnTicket,.shrine-ticket-reminder'),visible:button.top>=root.top&&button.bottom<=root.bottom,action:button.height>=44}
+    });
+    if(!gate.cover||gate.ticket||!gate.visible||!gate.action)throw Error('Returning gate composition: '+JSON.stringify(gate));
+    await page.screenshot({path:'test-results/'+name+'-return-gateway.png'});
     await page.locator('#proposal .shrine-enter').click();
     await page.waitForFunction(()=>proposal.hidden&&valleyRevealAt<0,{},{timeout:15000});
+    // Exercise the real movement integrator with an invalid skyline goal, then
+    // sample every step. Restore the existing arrival state for the ritual tests.
+    const ground=await page.evaluate(()=>{
+     const prior={...p};let escaped=false;let moved=false;
+     try{
+      stopRoute();p.tx=500;p.ty=0;
+      for(let i=0;i<800;i++){step(p,.05,330);const q=pawStairFoot(p.x,p.y);escaped||=Math.abs(q.x-p.x)>.01||Math.abs(q.y-p.y)>.01;moved||=Math.abs(p.y-prior.y)>10}
+      return {escaped,moved,y:p.y}
+     }finally{Object.assign(p,prior)}
+    });
+    if(ground.escaped||!ground.moved||ground.y<350)throw Error('Player escaped stair corridor: '+JSON.stringify(ground));
     // Room is set up as a test fixture; actions below use the actual pointer input.
     const props=new Set();
     await page.exposeFunction('recordPaintedTempleProp',name=>props.add(name));
@@ -88,7 +104,7 @@ const fs=require('node:fs');
     if(!await page.evaluate(()=>parkProgress().beat===1))throw Error('Gossip did not progress');
     if(props.size!==4)throw Error('Expected four painted props to render: '+[...props].join(', '));
     if(errors.length)throw Error(errors.join('; '));
-    console.log(name+': arrival, return ticket, actual water pointer drag, prayer and gossip passed');
+    console.log(name+': arrival, return gateway, actual water pointer drag, prayer and gossip passed');
    }finally{await page.close()}
   }
  }finally{await browser.close()}
