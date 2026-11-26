@@ -953,27 +953,29 @@ syncPearlPanel=function(){
 };
 const residentHospitalityStyle=document.createElement('style');residentHospitalityStyle.textContent='.residentUsualDrink{border-top:1px solid #bd9e85;margin-top:7px;padding-top:4px;display:grid;grid-template-columns:1fr 1fr;gap:5px}.residentUsualDrink small{grid-column:1/-1}.residentUsualDrink button{min-height:44px;white-space:normal}';document.head.append(residentHospitalityStyle);
 
-let residentEntryPending=null,residentLastWelcomeRoom=null;
+let residentEntryPending=null,residentLastWelcomeRoom=null,residentPendingWelcome=null;
 const residentWelcomeEnterBefore=enter;
-enter=function(id){if(id!=='station')residentEntryPending=id;return residentWelcomeEnterBefore(id)};
+enter=function(id){residentPendingWelcome=null;if(id!=='station')residentEntryPending=id;return residentWelcomeEnterBefore(id)};
 const residentPersonalIntroBefore=roomIntro;
 roomIntro=function(){
  const result=residentPersonalIntroBefore();
  if(!room||activity)return result;
+ clearTimeout(toastTimer);$('toast').classList.remove('on','residentArrival');
  const profile=residentWelcomeProfiles.find(v=>v.rooms.includes(room));if(!profile)return result;
  const fresh=residentEntryPending===room||residentLastWelcomeRoom!==room;
  if(!fresh)return result;
  residentEntryPending=null;residentLastWelcomeRoom=room;residentWelcomeSpoken.clear();
  const visits=Math.min(9999,(residentHospitality.visits[profile.id]||0)+1);residentHospitality.visits[profile.id]=visits;residentWelcomeVisits.set(profile.id,visits);residentHospitalitySave();
- if((room==='temple'||room==='kitchen')&&typeof lunarMenu==='function'&&lunarMenu()){
-  const existing=$('toast')?.textContent;if(existing)toast(residentNamedGreeting(existing,existing));return result
- }
- // Preserve the instructional hint and use the existing non-blocking toast.
- residentGreetingToast(tr(...profile.names.slice(0,2))+tr(': ','：')+residentHospitalityWelcome(profile,visits));return result
+ // Keep the greeting for the first deliberate conversation, never overlay the room.
+ residentPendingWelcome={room,id:profile.id,visits};return result
 };
 const residentPersonalSayBefore=say;
 say=function(name,line,...rest){
  const profile=residentWelcomeFor(name),chosen=residentPlayerDisplayName(),now=Date.now();
+ if(profile&&residentPendingWelcome?.room===room&&residentPendingWelcome.id===profile.id&&typeof line==='string'){
+  const pending=residentPendingWelcome;residentPendingWelcome=null;residentWelcomeSpoken.add(profile.id);
+  line=residentHospitalityWelcome(profile,pending.visits)+'\n\n'+line;
+ }
  if(profile&&chosen&&typeof line==='string'&&!line.startsWith('Hi '+chosen+'!')&&!line.startsWith(chosen+'，')){
   const already=room?residentWelcomeSpoken.has(profile.id):(now-(residentOutdoorWelcome.get(profile.id)||0)<300000);
   if(!already){line=tr('Hi '+chosen+'! ',chosen+'，')+line;if(room)residentWelcomeSpoken.add(profile.id);else residentOutdoorWelcome.set(profile.id,now)}
@@ -2161,6 +2163,7 @@ hideoutPage=function(...args){
  if(view){view.dataset.editing=String(!!hideoutEditing);const tools=view.querySelector('.hideoutTools');if(tools){tools.setAttribute('role','group');tools.setAttribute('aria-label',tr('Room editing tools','小窝布置工具'))}}
  return result
 };
+const pawNoticeStyle=document.createElement('style');pawNoticeStyle.textContent='#content .pawWeeklyNotice{padding:8px 10px;margin:8px 0;border-left:3px solid #809374;background:#e9e4cb;color:#514638;font:14px/1.5 Georgia,serif}';document.head.append(pawNoticeStyle);
 const pawReturnPolish=document.createElement('style');pawReturnPolish.textContent='#content .pawFurnitureLocation{display:block;font:11px/1.3 system-ui;color:#65533d;overflow-wrap:anywhere}#content [data-furniture-tray][data-placed=true] .pawFurnitureLocation{color:#476146}#content .pawBagReset{grid-column:1/-1;min-height:44px}#content .pawPassportNext{padding:7px 10px;border-left:3px solid #819477;background:#e7e2cb;color:#514638}#content .pawPassportUnvisited{color:#735d46}';document.head.append(pawReturnPolish);
 const mbCatalogueVisualStyle=document.createElement('style');
 mbCatalogueVisualStyle.textContent=`

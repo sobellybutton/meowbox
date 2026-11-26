@@ -1726,7 +1726,7 @@ drawRoom=function(){
    if(indoor.route.length){[indoor.tx,indoor.ty]=indoor.route.shift()}
    else if(indoor.goal){const fn=indoor.goal,expectedRoom=room;indoor.goal=null;indoor.facing=indoor.goalFacing||'up';if(indoorReady()&&room===expectedRoom)fn()}
   }
-  if(dist>5){ctx.save();ctx.globalAlpha=.4;ellipse(indoor.tx,indoor.ty,9,3,'#ead3a4');ctx.restore()}
+  // Movement destination is communicated by the walking character, not a floating marker.
  }
  const scale=travellerRoomScale(H,cam.scale);
  ctx.save();const visitors=sharedTownActors().filter(a=>a.room===room&&indoorSafe(a.x,a.y));const drawSelf=()=>backHuman(indoor.x,indoor.y,avatar,Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3,indoor.facing,scale);
@@ -3536,23 +3536,42 @@ const townNoticeEditions=[
  [['Tomorrow department','明天事务局'],['I have moved all non-essential worrying to tomorrow. Tomorrow has filed a complaint.','我把不必要的焦虑都移到明天，明天已经投诉了。'],[['Anonymous','匿名','One day at a time, please.','一天一天来嘛。']]]
 ];
 const townNoticeStart=Date.UTC(2026,10,25,23,0),townNoticeInterval=12*3600000;
+const pawNoticeSerial=[
+ [['Auntie Hong','红姐'],['Day 1: An unsigned memo declared the tea room a meeting-free zone. Someone immediately booked a meeting to discuss it.','第一天：茶馆收到匿名通知，宣布从此不开会。结果马上有人约会讨论这件事。'],[['Wang Laoban','王老板','It was only a five-minute alignment.','只是简单对齐五分钟。'],['Mochi','麻薯','The reserved seat is now occupied by me.','预约座位已被本猫占领。']]],
+ [['Kopi Uncle','咖啡叔'],['Day 2: Yesterday’s meeting has been moved outdoors. The cat retained the chair and refused to hand over the minutes.','第二天：昨天的会改到室外开了。猫咪保住了椅子，拒绝交出会议纪要。'],[['Office Intern','实习生','The action item says buy cat snacks.','行动事项：购买猫条。'],['Auntie Hong','红姐','At last, a useful meeting outcome.','总算有个有用的会议结果。']]],
+ [['Lady Clocked Out','甄摸鱼'],['Day 3: By royal decree, the meeting is cancelled. The chair belongs to Mochi. All remaining agenda items may be eaten with biscuits.','第三天：本宫下旨，会议取消，椅子归麻薯。剩余议程一律配饼干消化。'],[['Wang Laoban','王老板','Approved. Please do not schedule a follow-up.','同意。请不要约跟进会。'],['Mochi','麻薯','Justice has been served. So has dinner.','正义得到伸张，晚饭也到了。']]]
+];
+const pawSerialStart=Date.UTC(2026,10,25,16);
+function pawSerialPublished(now){return pawNoticeSerial.map((thread,i)=>({thread,date:pawSerialStart+i*86400000,id:'serial-'+i})).filter(v=>v.date<=now)}
 function townPublishedNotices(now=Date.now()){
  const count=Math.max(0,Math.min(townNoticeEditions.length,1+Math.floor((now-townNoticeStart)/townNoticeInterval)));
- return [...townNoticeEditions.slice(0,count).map((thread,i)=>({thread,date:townNoticeStart+i*townNoticeInterval})).reverse(),...wallThreads.map(thread=>({thread,date:0})).reverse()]
+ return [...townNoticeEditions.slice(0,count).map((thread,i)=>({thread,date:townNoticeStart+i*townNoticeInterval,id:'edition-'+i})),...pawSerialPublished(now),...wallThreads.map((thread,i)=>({thread,date:0,id:'archive-'+i})).reverse()].sort((a,b)=>b.date-a.date)
 }
+const pawWeekNotes=[
+ ['Sunday: Tomorrow is a problem for tomorrow’s human.','周日：明天的烦恼交给明天的人类。'],
+ ['Monday: The town accepts your resignation from pretending to enjoy Mondays.','周一：小镇批准你辞去假装喜欢周一的职务。'],
+ ['Tuesday: Still not Friday. Investigations are ongoing.','周二：还没到周五，正在调查原因。'],
+ ['Wednesday: Halfway to the weekend. The cat has been there since Monday.','周三：周末进度过半，猫咪从周一就放假了。'],
+ ['Thursday: Friday is in transit. No need to refresh the tracking page.','周四：周五正在派送，不必反复查物流。'],
+ ['Friday: Please submit all remaining drama to next week.','周五：剩余的破事请转交下周。'],
+ ['Saturday: Today’s agenda is intentionally blank.','周六：今日日程故意留空。']
+];
+function pawWeekNote(now=Date.now()){const day=new Date(now+8*3600000).getUTCDay();return pawWeekNotes[day]}
 function renderResidentNoticeboard(q){
  const wrap=element('section','',q,'townWall');
  element('h2',tr('Overheard in town','摸鱼留言墙'),wrap,'board-heading');
  element('p',tr('New town notices arrive over time. Old favourites stay in the archive.','小镇见闻陆续更新，旧瓜也能慢慢翻。'),wrap,'wallIntro');
+ element('p',tr(...pawWeekNote()),wrap,'pawWeeklyNotice');
  element('small',tr('Written by the fictional town residents. Real visitor posts are in the shared square.','以下为虚构小镇居民的趣味留言，真人留言请到共享广场。'),wrap,'wallDisclosure');
- const publicBtn=b(wrap,tr('Read or leave a real visitor post','看看真人留言 / 留句话'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink';
+ const publicBtn=b(wrap,communityURL()?tr('Read or leave a real visitor post','看看真人留言 / 留句话'):tr('Shared square · not open yet','共享广场 · 尚未开放'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink';
  const list=element('div','',wrap,'townPostList'),nav=element('div','',wrap,'townPostNav');
  let shown=6,lastCount=-1;
  function render(){
+  const open=new Set([...list.querySelectorAll('.wallReplies[open]')].map(el=>el.dataset.noticeId));
   const entries=townPublishedNotices();lastCount=entries.length;list.replaceChildren();nav.replaceChildren();
-  for(const {thread:m,date} of entries.slice(0,shown)){const post=element('article','',list,'townResidentNote');
+  for(const {thread:m,date,id} of entries.slice(0,shown)){const post=element('article','',list,'townResidentNote');post.dataset.noticeId=id;
    element('strong',tr(...m[0]),post);if(date)element('small',new Date(date).toLocaleDateString(zh?'zh-CN':'en-SG',{month:'short',day:'numeric',timeZone:'Asia/Singapore'}),post,'townNoticeDate');element('p',tr(...m[1]),post);
-   const replies=element('details','',post,'wallReplies');element('summary',tr('Read replies','看看楼下怎么说'),replies);
+   const replies=element('details','',post,'wallReplies');replies.dataset.noticeId=id;replies.open=open.has(id);element('summary',tr('Read replies','看看楼下怎么说')+' ('+m[2].length+')',replies);
    for(const reply of m[2]){const row=element('div','',replies,'wallReply');element('strong',tr(reply[0],reply[1]),row);element('p',tr(reply[2],reply[3]),row)}
   }
   element('span',Math.min(shown,entries.length)+' / '+entries.length+' '+tr('notices','条见闻'),nav);
@@ -3596,8 +3615,24 @@ const townChatReplies={
  [['Auntie Hong','红姐'],['Tell me more? I am better at gossip than guessing.','再说说？我擅长吃瓜，不太擅长猜谜。']],
  [['MRT Uncle','地铁阿叔'],['My expertise is mostly kopi, lunch and getting home on time. Which one shall we discuss?','我的专长是咖啡、午饭和准时下班。聊哪个？']]]
 };
+const pawRelationshipReplies=[
+ [['Auntie Hong','红姐'],['Three hours without a reply? Drink your tea before it joins the cold cases.','三个小时没回？先喝茶吧，不然茶也成冷案了。']],
+ [['Kopi Uncle','咖啡叔'],['If the chat is one-sided, at least your kopi comes with two sides of toast.','聊天单向就算了，咖椰吐司好歹有两片。']],
+ [['Mochi','麻薯'],['I leave people on read too. Usually because I am asleep. You deserve a rest as well.','本猫也已读不回，一般是睡着了。你也该休息一下。']]
+];
+const pawPaydayReplies=[
+ [['Master Payrise','周薪驰'],['Payday is the shortest long-distance relationship in town. Hello salary, goodbye salary.','工资是小镇最短暂的异地恋，刚见面就分开。']],
+ [['Grandma','外婆'],['Put aside the bills, then put aside a little something for yourself.','账单的钱留好，也给自己留点小零花。']]
+];
+const pawWeekendReplies=[
+ [['Lady Clocked Out','甄摸鱼'],['By royal decree, the weekend begins emotionally right now.','本宫宣布，精神周末即刻生效。']],
+ [['MRT Uncle','地铁阿叔'],['No rush. The weekend is not a train you have to chase.','不用赶啦，周末又不是末班地铁。']]
+];
 function townChatTopic(value){
  const v=String(value).toLowerCase();
+ if(/\b(ghost(?:ed|ing)?|situationship|crush|dating|breakup|boyfriend|girlfriend)\b|unanswered message|no reply|didn.t reply|已读不回|暧昧|分手|对象|暗恋|不回消息/.test(v))return 'relationship';
+ if(/\b(payday|salary|pay rise|paycheck)\b|工资|发薪|发工资|加薪/.test(v))return 'payday';
+ if(/\b(friday|weekend|saturday|sunday)\b|周五|星期五|周末|礼拜五/.test(v))return 'weekend';
  if(/cute|beautiful|pretty|love this|好可爱|可爱|好看|漂亮|喜欢这个/.test(v))return 'cute';
  if(/gossip|八卦|吃瓜|有瓜/.test(v))return 'gossip';
  if(/food|eat|lunch|dinner|hungry|kopi|奶茶|吃|饿|午饭|晚饭|咖啡/.test(v))return 'food';
@@ -3608,7 +3643,7 @@ function townChatTopic(value){
  if(/^(hi\b|hello\b|hey\b|你好|哈喽|嗨|大家好)/.test(v.trim()))return 'greeting';
  return 'other'
 }
-function townChatReply(value,turn){const pool=townChatReplies[townChatTopic(value)];return pool[((turn%pool.length)+pool.length)%pool.length]}
+function townChatReply(value,turn){const topic=townChatTopic(value),pool=({relationship:pawRelationshipReplies,payday:pawPaydayReplies,weekend:pawWeekendReplies})[topic]||townChatReplies[topic];return pool[((turn%pool.length)+pool.length)%pool.length]}
 function pawChatNearEnd(top,height,total){return total-top-height<=48}
 function townChatPage(){
  const generation=++townChatGeneration;
@@ -3617,7 +3652,7 @@ function townChatPage(){
   const status=element('small','',q,'townChatStatus');status.setAttribute('aria-live','polite');
   const form=element('form','',q,'townChatCompose'),input=element('input','',form);input.type='text';input.maxLength=180;input.placeholder=tr('Say something…','说点什么……');input.setAttribute('aria-label',tr('Your message','你的消息'));input.autocomplete='off';
   const send=element('button',tr('Send','发送'),form);send.type='submit';
-  const topics=[['Anyone else still at work?','还有谁没下班？'],['What should I eat?','今天吃什么？'],['Any good gossip?','今天有瓜吗？'],['I need a break.','想摸会儿鱼。']];
+  const topics=[['Anyone else still at work?','还有谁没下班？'],['What should I eat?','今天吃什么？'],['Any good gossip?','今天有瓜吗？'],['I need a break.','想摸会儿鱼。'],['Still no reply…','还没回消息……'],['Is it Friday yet?','到周五了吗？']];
   const initial=townMessages.slice(0,3).map(m=>({name:[m[0],m[1]],line:[m[3],m[4]]}));
   let pendingReply=false,ambientCount=0;
   const active=()=>generation===townChatGeneration&&transcript.isConnected&&$('page').style.display==='block';
@@ -6068,6 +6103,13 @@ const speechStyle=document.createElement('style');speechStyle.textContent=`
 
 /* Indoor station signs use the same visual vocabulary as the outdoor plaques.
    Keep the established label measurement and accessible hit target geometry. */
+function pawFixedPlaque(cx,cy,w,h,bounds,blockers){
+ if(![cx,cy,w,h].every(Number.isFinite)||w<=0||h<=0)return null;
+ const rect={left:cx-w/2-4,right:cx+w/2+4,top:cy-h/2-4,bottom:cy+h/2+4};
+ if(rect.left<bounds.left||rect.right>bounds.right||rect.top<bounds.top||rect.bottom>bounds.bottom)return null;
+ if(blockers.some(b=>b&&rect.left<b.right&&rect.right>b.left&&rect.top<b.bottom&&rect.bottom>b.top))return null;
+ return {x:cx,y:cy,rect}
+}
 const roomPlaqueLabelBefore=label;
 label=function(name,x,y,fn){
  if(!room||activity)return roomPlaqueLabelBefore(name,x,y,fn);
@@ -6081,7 +6123,7 @@ label=function(name,x,y,fn){
   if(row)rows.push(row);if(rows.length>2)rows=[rows[0],rows.slice(1).join(sep)];
   const w=Math.min(limit,Math.max(75,...rows.map(v=>ctx.measureText(v).width+20))),h=Math.max(32,rows.length*size*1.14+12);
   const hitW=Math.max(w,44/scale),hitH=Math.max(h,44/scale);
-  const spot=meowPlaceText(cam.ox+x*scale,cam.oy+y*scale,hitW*scale,hitH*scale,{left:5,right:W-5,top:4,bottom:H-4},[...meowFrameBlockers,...meowTextFrameRects],36);
+  const spot=pawFixedPlaque(cam.ox+x*scale,cam.oy+y*scale,hitW*scale,hitH*scale,{left:5,right:W-5,top:4,bottom:H-4},[...meowFrameBlockers,...meowTextFrameRects]);
   if(!spot)return;
   meowTextFrameRects.push(spot.rect);x=(spot.x-cam.ox)/scale;y=(spot.y-cam.oy)/scale;
   const left=x-w/2,top=y-h/2;
