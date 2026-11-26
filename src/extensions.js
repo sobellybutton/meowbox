@@ -3828,7 +3828,7 @@ todayHub=function(){
 $('dockScoop').onclick=todayHub;
 // Preserve earned progress, but make the otherwise cryptic number legible.
 const communityHUDPrevious=updateHUD;
-updateHUD=function(){communityHUDPrevious();const coins=$('hudCoins');coins.textContent=tr('Meow Coins ','喵币 ')+(items.length*10);coins.title=tr('Meow Coins from discoveries; not real money.','探索所得喵币，不是真实货币。');coins.setAttribute('aria-label',coins.title+' '+items.length*10)};
+updateHUD=function(){communityHUDPrevious();const coins=$('hudCoins');coins.textContent=tr('Paw Coins ','爪爪币 ')+(items.length*10);coins.title=tr('Paw Coins from discoveries; not real money.','探索所得爪爪币，不是真实货币。');coins.setAttribute('aria-label',coins.title+' '+items.length*10)};
 const communityProfileOriginal=myRoom;
 myRoom=function(){communityProfileOriginal();const q=$('content'),profile=q.querySelector('.albumProfile');if(profile){
  const editor=element('details','',profile.parentElement,'communityNameEditor');profile.after(editor);element('summary',tr('Edit traveller nickname','修改旅人昵称'),editor);
@@ -4176,8 +4176,8 @@ function hideoutPage(){
      })
     }
    }
-   element('h2',tr('Room atmosphere','小窝氛围'),q);element('p',tr('Available paws: ','可用喵币：')+hideoutBalance()+' · '+tr('Use them for optional room themes.','可兑换自选小窝主题。'),q);
-   const themes=element('div','',q,'hideoutActions');for(const theme of hideoutThemes){const unlocked=hideoutThemeUnlocked(theme);const btn=b(themes,tr(...theme.name)+(unlocked?'':theme.cost?' · '+theme.cost+' '+tr('meow coins','喵币'):' · '+theme.need+' '+tr('stamps','枚印章')),()=>{if(!unlocked){if(!theme.cost||!buyHideoutTheme(theme))return}hideoutPrefs.theme=theme.id;saveHideout();hideoutPage()});btn.disabled=!unlocked&&(!theme.cost||hideoutBalance()<theme.cost);btn.setAttribute('aria-pressed',String(hideoutPrefs.theme===theme.id))}
+   element('h2',tr('Room atmosphere','小窝氛围'),q);element('p',tr('Available paws: ','可用爪爪币：')+hideoutBalance()+' · '+tr('Use them for optional room themes.','可兑换自选小窝主题。'),q);
+   const themes=element('div','',q,'hideoutActions');for(const theme of hideoutThemes){const unlocked=hideoutThemeUnlocked(theme);const btn=b(themes,tr(...theme.name)+(unlocked?'':theme.cost?' · '+theme.cost+' '+tr('paw coins','爪爪币'):' · '+theme.need+' '+tr('stamps','枚印章')),()=>{if(!unlocked){if(!theme.cost||!buyHideoutTheme(theme))return}hideoutPrefs.theme=theme.id;saveHideout();hideoutPage()});btn.disabled=!unlocked&&(!theme.cost||hideoutBalance()<theme.cost);btn.setAttribute('aria-pressed',String(hideoutPrefs.theme===theme.id))}
   }
   const links=element('div','',q,'hideoutActions hideoutLibrary');for(const [art,en,cn,fn,descEn,descCn] of [['board','Noticeboard','留言板',myNotes9,'Private thoughts and reminders','私人心事与提醒'],['frame','Readings album','占卜记录',album9,'Revisit saved readings','重温收藏的解读'],['card','Memories','旅途回忆',passport,'Stamps and little discoveries','印章与旅途小发现'],['bag','My bag','我的背包',myRoom,'Your collected keepsakes','珍藏的小物件']]){const tile=b(links,'',fn);const im=element('span','',tile,'hideoutLibraryArt');if(Object.hasOwn(art9,art)){const icon=element('img','',im);icon.src=art9[art];icon.alt=''}else im.innerHTML=albumIcon(art);const label=element('span','',tile);element('strong',tr(en,cn),label);element('small',tr(descEn,descCn),label)}
   const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();hideoutPage()}
@@ -4373,7 +4373,7 @@ function hideoutStampArt(k,got){
  return '<svg viewBox="0 0 64 64" aria-hidden="true" style="color:'+color+';opacity:'+(got?1:.48)+'"><circle cx="32" cy="32" r="28" fill="#e9d7ac" stroke="'+color+'" stroke-width="3" stroke-dasharray="2 1"/><circle cx="32" cy="32" r="23" fill="none" stroke="'+color+'" stroke-width="1"/>'+mark+'</svg>'
 }
 const pawsHudBefore=updateHUD;
-updateHUD=function(){pawsHudBefore();const paws=$('hudCoins');paws.textContent=tr('Meow Coins ','喵币 ')+hideoutBalance();paws.title=tr('Meow Coins available for room themes.','可兑换小窝主题的喵币。');paws.setAttribute('aria-label',paws.title+' '+hideoutBalance())};
+updateHUD=function(){pawsHudBefore();const paws=$('hudCoins');paws.textContent=tr('Paw Coins ','爪爪币 ')+hideoutBalance();paws.title=tr('Paw Coins available for room themes.','可兑换小窝主题的爪爪币。');paws.setAttribute('aria-label',paws.title+' '+hideoutBalance())};
 function openHudReward(fn){if(avatar===null||!proposal.hidden||transitioning||activity||talkOpen)return;fn()}
 for(const [id,fn] of [['hudStamps',hideoutClaimPage],['hudCoins',()=>{hideoutEditing=true;hideoutPage()}]]){
  const el=$(id);el.setAttribute('role','button');el.tabIndex=0;el.style.cursor='pointer';
@@ -4405,7 +4405,7 @@ function dailyWheelPage(){
   const stage=element('div','',q,'dailyWheelStage'),wheel=element('div','',stage,'dailyWheelDisk');wheel.innerHTML=dailyWheelArt();
   const pin=element('div','',stage,'dailyWheelPointer');pin.setAttribute('aria-hidden','true');
   if(claimed)wheel.style.transform='rotate('+(-last.index*45)+'deg)';
-  const result=element('p',claimed?tr('Already collected today: ','今日已领取：')+last.amount+' '+tr('meow coins','喵币'):tr('Every slice wins. 10 to 30 virtual meow coins.','格格有奖，10至30枚虚拟喵币。'),q,'dailyWheelResult');result.setAttribute('role','status');
+  const result=element('p',claimed?tr('Already collected today: ','今日已领取：')+last.amount+' '+tr('paw coins','爪爪币'):tr('Every slice wins. 10 to 30 virtual paw coins.','格格有奖，10至30枚虚拟爪爪币。'),q,'dailyWheelResult');result.setAttribute('role','status');
   let busy=false;
   const spin=b(q,claimed?tr('Come back tomorrow','明天再来'):tr('Spin for free','免费转一次'),()=>{
    if(busy)return;
@@ -4413,7 +4413,7 @@ function dailyWheelPage(){
    const index=Math.floor(crypto.getRandomValues(new Uint32Array(1))[0]/4294967296*dailyWheelPrizes.length);
    const record=dailyWheelClaim(current,index);if(!record){dailyWheelPage();return}
    busy=true;spin.disabled=true;updateHUD();
-   const finish=()=>{if(!result.isConnected)return;result.textContent=tr('You won ','恭喜获得 ')+record.amount+' '+tr('meow coins! Your boss cannot claim them.','枚喵币！老板不能报销。');spin.textContent=tr('Come back tomorrow','明天再来')};
+   const finish=()=>{if(!result.isConnected)return;result.textContent=tr('You won ','恭喜获得 ')+record.amount+' '+tr('paw coins! Your boss cannot claim them.','枚爪爪币！老板不能报销。');spin.textContent=tr('Come back tomorrow','明天再来')};
    const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
    wheel.style.transition=reduced?'none':'transform 2.6s cubic-bezier(.12,.7,.18,1)';
    wheel.style.transform='rotate('+(360*5-index*45)+'deg)';
@@ -4429,7 +4429,7 @@ todayHub=function(){
  dailyWheelTodayBefore();const q=$('content'),social=q.querySelector('.communityWelcome'),offer=element('section','',q,'dailyWheelOffer');
  const available=dailyWheelRecord().day<shrineClock().day;
  element('h2',tr('Today’s little bonus','今日摸鱼福利'),offer);
- element('p',available?tr('Spin for a little pocket money. The town is funding your escape.','转个小零花钱，小镇资助你摸鱼。'):tr('Your daily meow coins are collected. Go spend them on something silly.','今天的喵币已到账，买点喜欢的吧。'),offer);
+ element('p',available?tr('Spin for a little pocket money. The town is funding your escape.','转个小零花钱，小镇资助你摸鱼。'):tr('Your daily paw coins are collected. Go spend them on something silly.','今天的爪爪币已到账，买点喜欢的吧。'),offer);
  b(offer,available?tr('Spin the wheel','转转乐'):tr('View today’s wheel','查看今日转转乐'),dailyWheelPage);
  if(social)social.after(offer)
 };
@@ -4566,7 +4566,7 @@ function careCatArt(a){
  const kind=state.petKind??0,fur=['#cb975f','#e3d8bc','#615c60','#c99c78','#929da5'][kind%5],light=['#e4ba85','#f6ead0','#858089','#e5c5a0','#bcc5c7'][kind%5];
  const eating=(a.phase==='feed'||a.phase==='water')&&t-a.at>.9,sleep=a.phase==='rest',playing=a.phase==='play',petting=a.phase==='pet',walk=(a.phase==='feed'||a.phase==='water')&&t-a.at<.9||playing&&(!!a.drag||a.assisted),dir=(a.phase==='feed'||playing&&a.drag?.x<a.x)?-1:1,step=walk?Math.sin(t*11)*8:0,bob=sleep?Math.sin(t*2)*1.5:walk?Math.abs(step)*.22:Math.sin(t*2)*.8;
  ctx.save();ctx.translate(a.x,a.y);ellipse(0,6,72,13,'#393d2f44');ctx.scale(dir,1);ctx.translate(0,-bob);
- // Curved body and articulated tail, then four meow coins on the same ground plane.
+ // Curved body and articulated tail, then four paw coins on the same ground plane.
  ctx.strokeStyle=fur;ctx.lineWidth=16;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-38,-23);ctx.bezierCurveTo(-78,-38,-83,-65+Math.sin(t*2)*8,-59,-76+Math.sin(t*2)*6);ctx.stroke();
  if(!sleep){for(const [x,z] of [[-32,1],[-14,-1],[22,-1],[39,1]]){line(x,-27,x+step*z,-3,fur,13);ellipse(x+step*z+2,-2,10,5,light)}}
  const g=ctx.createLinearGradient(0,-70,0,5);g.addColorStop(0,light);g.addColorStop(.5,fur);g.addColorStop(1,fur);
@@ -5245,7 +5245,7 @@ const comedyBoxBefore=boxAward;
 boxAward=function(){const active=state.boxStage==='opening';comedyBoxBefore();if(active&&state.boxStage==='result')hint(...townReaction('box-comedy',activityComedy.box))};
 
 const koiComedy={"hit":[["Koi: Finally! Even my scales were getting nervous.","锦鲤：终于进了！看得我鱼鳞都紧张了。"],["Koi: Approved. No supporting documents required.","锦鲤：审批通过，不用补交材料。"],["Koi: A wish, not another meeting invitation. Wonderful.","锦鲤：是心愿，不是会议邀请，太好了。"]],"fish":[["Koi: Oi! This is a pond, not a bowling alley.","锦鲤：喂！这里是鱼池，不是保龄球馆。"],["Koi: I am on leave. Please stop assigning me wishes.","锦鲤：我在休假，别再给我派心愿了。"],["Koi: My head is not a coin deposit machine.","锦鲤：我的头不是投币机！"],["Koi: I shall be reporting this to fish resources.","锦鲤：我要向鱼事部投诉。"]],"rim":[["Clink! The bowl has rejected your application. Try again.","叮！许愿碗退回了你的申请，再试试。"],["Almost. The bowl insists on another round of approval.","差一点，许愿碗要求再审批一次。"]],"short":[["That coin is working from home. A little more strength.","铜钱在居家办公。再用一点力。"],["Your coin needs a little more motivation.","铜钱的工作积极性不足，再用点力。"]],"long":[["That coin is applying for an overseas posting. Try less force.","铜钱申请外派了，轻一点。"],["Congratulations on the long-distance wish. Try a gentler throw.","恭喜解锁异地许愿。再轻一点。"]],"miss":[["Koi: The bowl is over there. I even drew you a mental map.","锦鲤：碗在那边啊，我脑内地图都画好了。"],["The wish has taken a scenic detour. Aim towards the bowl.","心愿去兜风了，往碗心瞄准。"]]};
-const catComedy={"feed":[["The cat has accepted your edible apology.","猫猫接受了你的食物道歉。"],["No notes. Just more dinner tomorrow.","没有改进意见，明天继续供饭。"],["Finally, someone understands the benefits package.","终于有人搞懂我的福利待遇了。"]],"water":[["No ice, no sugar, no unnecessary conversation.","不加冰，不加糖，不加废话。"],["Hydration department: satisfactory.","饮水部门：表现合格。"],["Not bad. You may operate the water bowl again.","不错，下次还准你负责水碗。"]],"play":[["The feather is now wanted by the cat police.","羽毛已被猫警察通缉。"],["A cardio session nobody asked for but everyone enjoyed.","一场没人要求却很快乐的有氧运动。"],["The cat will need a fifteen-minute break from its break.","猫猫需要从休息中再休息十五分钟。"]],"pet":[["Your hand is now a licensed massage therapist.","你的手获得了按摩师执照。"],["The cat rates your service five meow coins out of five.","猫猫给你的服务打了五爪满分。"],["Congratulations. You are not allowed to move now.","恭喜，你现在不能动了。"]],"rest":[["This nap could not have been an email.","这一觉不能用邮件代替。"],["The cat is unavailable for all meetings, including imaginary ones.","猫猫拒绝所有会议，包括想象中的会议。"],["Dreaming of a world without vacuum cleaners.","正在梦见一个没有吸尘器的世界。"]]};
+const catComedy={"feed":[["The cat has accepted your edible apology.","猫猫接受了你的食物道歉。"],["No notes. Just more dinner tomorrow.","没有改进意见，明天继续供饭。"],["Finally, someone understands the benefits package.","终于有人搞懂我的福利待遇了。"]],"water":[["No ice, no sugar, no unnecessary conversation.","不加冰，不加糖，不加废话。"],["Hydration department: satisfactory.","饮水部门：表现合格。"],["Not bad. You may operate the water bowl again.","不错，下次还准你负责水碗。"]],"play":[["The feather is now wanted by the cat police.","羽毛已被猫警察通缉。"],["A cardio session nobody asked for but everyone enjoyed.","一场没人要求却很快乐的有氧运动。"],["The cat will need a fifteen-minute break from its break.","猫猫需要从休息中再休息十五分钟。"]],"pet":[["Your hand is now a licensed massage therapist.","你的手获得了按摩师执照。"],["The cat rates your service five paw coins out of five.","猫猫给你的服务打了五爪满分。"],["Congratulations. You are not allowed to move now.","恭喜，你现在不能动了。"]],"rest":[["This nap could not have been an email.","这一觉不能用邮件代替。"],["The cat is unavailable for all meetings, including imaginary ones.","猫猫拒绝所有会议，包括想象中的会议。"],["Dreaming of a world without vacuum cleaners.","正在梦见一个没有吸尘器的世界。"]]};
 
 
 /* Petty, locally adapted satire. Fictional residents, never impersonated players.
@@ -5711,7 +5711,7 @@ const lifeStyle=document.createElement('style');lifeStyle.textContent=`
 `;document.head.append(lifeStyle);
 lifeBackfill();
 
-/* Align the journal, bag and passport progression; maintain existing Meow Coins/stamp balance. */
+/* Align the journal, bag and passport progression; maintain existing Paw Coins/stamp balance. */
 const lifeAlbumPrior=albumProfile;
 albumProfile=function(q){
  lifeAlbumPrior(q);const v=lifeRank(),p=q.querySelector('.albumProfile p');
@@ -5745,7 +5745,7 @@ lifeHUDRefresh=function(){
 const lifeContextHUDBefore=updateHUD;
 updateHUD=function(){
  lifeContextHUDBefore();$('game').dataset.lifeActivity=String(!!activity);
- $('hudCoins').setAttribute('aria-label',tr('Meow Coins for hideout decorations','用于兑换小窝装饰的喵币')+' '+hideoutBalance());
+ $('hudCoins').setAttribute('aria-label',tr('Paw Coins for hideout decorations','用于兑换小窝装饰的爪爪币')+' '+hideoutBalance());
 };
 const lifeLayoutCSS=document.createElement('style');lifeLayoutCSS.textContent=`
 #lifeAwardStatus{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
@@ -6424,7 +6424,7 @@ lifeDailyIdeas=function(){
  const ideas=dailyMoreIdeasBefore(),keys=lifeJournal.daily.day===shrineClock().day?lifeJournal.daily.keys:[];
  return [...ideas.slice(0,1).map(v=>({...v,desc:['Finish a Bubble Pop, Tic Tac Toe or claw machine round. Winning is optional.','玩完一局泡泡龙、井字棋或夹娃娃，输赢都算。'],done:v.done||keys.includes('round:claw')})),...ideas.slice(1),
  {title:['Something delicious','给自己加个餐'],desc:['Finish a bowl of soup or make and sip bubble tea.','煮好一碗汤，或者摇好奶茶再喝一口。'],done:keys.some(k=>k.startsWith('kitchen:'))},
- {title:['A tiny surprise','拆个小惊喜'],desc:['Optional: open a blind box for 40 earned coins, if you feel like it.','可选：想拆盲盒时再花40个攒来的喵币。'],done:keys.includes('arcade:box')}]
+ {title:['A tiny surprise','拆个小惊喜'],desc:['Optional: open a blind box for 40 earned coins, if you feel like it.','可选：想拆盲盒时再花40个攒来的爪爪币。'],done:keys.includes('arcade:box')}]
 };
 
 
@@ -6746,7 +6746,7 @@ hideoutPage=function(){
  const intro=head?.nextElementSibling;if(intro?.tagName==='P')intro.classList.add('hideoutIntro');
  const ribbon=element('div','',q,'hideoutRibbon');ribbon.append(profile,primary);stage.before(ribbon);
  const footer=element('div','',q,'hideoutRoomCaption');element('span',tr(hideoutEditing?'Decorating · drag to place':'Your private little retreat',hideoutEditing?'布置中 · 拖动摆放':'自己的安静小天地'),footer);
- element('span',tr('Meow Coins ','喵币 ')+hideoutBalance(),footer);stage.after(footer);
+ element('span',tr('Paw Coins ','爪爪币 ')+hideoutBalance(),footer);stage.after(footer);
  if(hideoutEditing){const tools=q.querySelector('.hideoutTools');if(tools){footer.after(tools);const move=b(tools,tr('Move','移动'),()=>toast(tr('Select a piece and drag it to its new place.','点选家具，再拖到新位置。')));tools.prepend(move);b(tools,tr('Preview','预览'),()=>{hideoutEditing=false;hideoutPage()})}}
  const pageEl=$('page');pageEl.dataset.roomView='true';
 };
@@ -6996,7 +6996,7 @@ function renderTravellerBag(){
  activePage='room';page(tr('Traveller’s bag','旅人的背包'),tr('Little treasures from your escape.','把摸鱼路上的小宝贝收好。'),q=>{
   const wrap=element('section','',q,'travellerBagV2'),all=bagEntries().map(v=>({...v,chapter:bagChapterFor(v.item[0],bagClass(v.item))})),owned=all.filter(v=>v.owned),head=element('div','',wrap,'bagHeader');
   const pic=element('img','',head);pic.src=mbAvatarStanding(avatar??0);pic.alt='';
-  const info=element('div','',head);element('strong',playerName||tr('Traveller','旅人'),info);element('small',owned.length+' '+tr('keepsakes','件收藏')+' · '+hideoutBalance()+' '+tr('meow coins','喵币'),info);
+  const info=element('div','',head);element('strong',playerName||tr('Traveller','旅人'),info);element('small',owned.length+' '+tr('keepsakes','件收藏')+' · '+hideoutBalance()+' '+tr('paw coins','爪爪币'),info);
   const actions=element('div','',head,'bagHeaderActions');
   const profile=b(actions,tr('Profile','资料'),()=>hideoutProfilePage({origin:renderTravellerBag}));profile.className='bagProfileButton';
   const home=b(actions,tr('Visit my home','回我的小窝'),()=>mbOpenOwnHome(renderTravellerBag,['‹ Bag','‹ 返回背包']));home.className='mbHomeDirect';
@@ -7939,7 +7939,7 @@ keepsakeStory=function(item){const i=boxPrizes.findIndex(v=>v[0]===item[0]);retu
 
 /* Pocket companions: 20 saved collectible identities. A paid draw is recorded
    before delivery, so leaving the animation cannot lose a purchased keepsake.
-   Meow Coins are virtual and no external payment or monetisation is supported. */
+   Paw Coins are virtual and no external payment or monetisation is supported. */
 boxPrizes.push(
  ['Kopi otter','咖啡水獭','#b89775',0,'common','otter'],
  ['Dumpling blanket','被窝饺子','#ead9b7',0,'common','dumpling'],
@@ -7976,8 +7976,8 @@ function blindShopCanOpen(){return hideoutBalance()>=blindPrice&&blindStockRemai
 function blindShopMessage(){
  if(!blindUnowned().length)return ['Your cabinet is complete. Enjoy your little companions!','收藏柜满啦，好好陪陪你的小伙伴吧！'];
  if(!blindStockRemaining())return ['Today’s three boxes have found homes. Restocked tomorrow.','今天三盒都找到主人啦，明天再补货。'];
- if(hideoutBalance()<blindPrice)return ['Explore for more Meow Coins. A box costs 40; no real money.','去小镇逛逛攒喵币吧。一盒40喵币，不用花真钱。'];
- return ['Choose a box on the shelf. 40 Meow Coins when you open it.','挑一个架上的盒子。开盒时扣40喵币。']
+ if(hideoutBalance()<blindPrice)return ['Explore for more Paw Coins. A box costs 40; no real money.','去小镇逛逛攒爪爪币吧。一盒40爪爪币，不用花真钱。'];
+ return ['Choose a box on the shelf. 40 Paw Coins when you open it.','挑一个架上的盒子。开盒时扣40爪爪币。']
 }
 function blindShopExplain(){hint(...blindShopMessage())}
 function openPaidBlindBox(){
@@ -8000,15 +8000,15 @@ recoverBlindPurchases();
 const blindShopStartBefore=start;
 start=function(a){const result=blindShopStartBefore(a);if(a==='blindBox')blindShopExplain();return result};
 const blindShopHudBefore=updateHUD;
-updateHUD=function(){blindShopHudBefore();const paws=$('hudCoins');paws.textContent=tr('Meow Coins ','喵币 ')+hideoutBalance();paws.title=tr('Meow Coins: blind boxes and room themes. Earn them by exploring.','喵币可兑换盲盒和小窝主题，探索小镇即可获得。');paws.setAttribute('aria-label',paws.title+' '+hideoutBalance());const progress=$('hudProgress');progress.textContent=tr('Town traveller','小镇旅人');progress.title=tr('Open your journal for ranks and life points.','在人生档案查看等级与积分。')};
+updateHUD=function(){blindShopHudBefore();const paws=$('hudCoins');paws.textContent=tr('Paw Coins ','爪爪币 ')+hideoutBalance();paws.title=tr('Paw Coins: blind boxes and room themes. Earn them by exploring.','爪爪币可兑换盲盒和小窝主题，探索小镇即可获得。');paws.setAttribute('aria-label',paws.title+' '+hideoutBalance());const progress=$('hudProgress');progress.textContent=tr('Town traveller','小镇旅人');progress.title=tr('Open your journal for ranks and life points.','在人生档案查看等级与积分。')};
 const blindJournalRefreshBefore=lifeHUDRefresh;
 lifeHUDRefresh=function(){blindJournalRefreshBefore();const p=$('hudProgress');if(p)p.textContent=tr('Town traveller','小镇旅人')};
 function pawWalletPage(){
- page(tr('Meow Coin purse','喵币小钱包'),tr('Little treats earned by exploring. Never real money.','逛小镇攒来的小零花，不是真钱。'),q=>{
+ page(tr('Paw Coin purse','爪爪币小钱包'),tr('Little treats earned by exploring. Never real money.','逛小镇攒来的小零花，不是真钱。'),q=>{
  const card=element('section','',q,'blindAlbumProgress mbPurseBook');
- const pocket=element('div','',card,'mbPursePocket');element('small',tr('Traveller’s pocket money','旅人的零花钱'),pocket);element('h2',String(hideoutBalance())+' '+tr('Meow Coins','喵币'),pocket);
- element('p',tr('Discoveries, daily activities and the daily wheel earn Meow Coins. Purchased blind box figures do not earn coins back.','探索纪念品、每日活动和转盘都能攒喵币。购买的盲盒手办不返喵币。'),card);
- element('p',tr('Blind boxes: 40 Meow Coins each, up to three per Singapore day.','盲盒40喵币一盒，每个新加坡日最多三盒。'),card);
+ const pocket=element('div','',card,'mbPursePocket');element('small',tr('Traveller’s pocket money','旅人的零花钱'),pocket);element('h2',String(hideoutBalance())+' '+tr('Paw Coins','爪爪币'),pocket);
+ element('p',tr('Discoveries, daily activities and the daily wheel earn Paw Coins. Purchased blind box figures do not earn coins back.','探索纪念品、每日活动和转盘都能攒爪爪币。购买的盲盒手办不返爪爪币。'),card);
+ element('p',tr('Blind boxes: 40 Paw Coins each, up to three per Singapore day.','盲盒40爪爪币一盒，每个新加坡日最多三盒。'),card);
  element('p',tr('Today’s stock: ','今日剩余：')+blindStockRemaining()+'/'+blindStock,card);
  b(q,tr('My collectible cabinet','我的收藏柜'),()=>{bagChapter='island';bagPageIndex=0;bagSelected=null;bagQuery='';bagCategory='figures';bagMode='catalog';renderTravellerBag()});
  b(q,tr('Room themes','小窝主题'),()=>{hideoutEditing=true;hideoutPage()});
@@ -8031,7 +8031,7 @@ function drawBlindShopStage(){
  // room painting remains behind this vector staging draft.
  round(245,230,310,61,5,'#e9d8b6','#92734e');
  activityFitText(tr('The Little Keepsake Shop','小小收藏铺'),400,250,20,290,'#594a38');
- activityFitText(tr('40 Meow Coins / box · ','40喵币 / 盒 · ')+hideoutBalance()+tr(' in purse',' 可用'),400,274,15,285,'#52664f');
+ activityFitText(tr('40 Paw Coins / box · ','40爪爪币 / 盒 · ')+hideoutBalance()+tr(' in purse',' 可用'),400,274,15,285,'#52664f');
  if(stage==='choose'){
  if(portrait){blindShopCounter(326,400,148);blindShopCounter(237,582,326)}else blindShopCounter(202,538,396);
  for(let i=0;i<3;i++){
@@ -8058,12 +8058,12 @@ function drawBlindShopStage(){
  }
  boxArt(x,y,1.15,state.boxPick,0,held?Math.sin(t*20)*.12:0);
  if(stage==='shake'){target(330,420,140,130,()=>{},'boxShake');activityFitText(tr('Shake ','摇动 ')+Math.round(state.boxShake)+'%',400,594,17,300,'#fff1d0');label(tr('Shake gently','轻轻摇晃'),400,642,()=>boxShake(70))}
- if(stage==='ready'){target(330,420,140,130,boxOpen);label(tr('Open · 40 Meow Coins','开盒 · 40喵币'),400,620,boxOpen)}
+ if(stage==='ready'){target(330,420,140,130,boxOpen);label(tr('Open · 40 Paw Coins','开盒 · 40爪爪币'),400,620,boxOpen)}
 }
 const blindCabinetPageBefore=blindCollectionPage;
 blindCollectionPage=function(){
  blindCabinetPageBefore();const q=$('content'),progress=q.querySelector('.blindAlbumProgress');if(!progress)return;
- element('small',tr('40 Meow Coins each · Today’s stock ','每盒40喵币 · 今日剩余 ')+blindStockRemaining()+'/'+blindStock+' · '+tr('Balance ','余额 ')+hideoutBalance(),progress);
+ element('small',tr('40 Paw Coins each · Today’s stock ','每盒40爪爪币 · 今日剩余 ')+blindStockRemaining()+'/'+blindStock+' · '+tr('Balance ','余额 ')+hideoutBalance(),progress);
 };
 const blindBagEntriesBefore=bagEntries;
 bagEntries=function(){const entries=blindBagEntriesBefore(),existing=new Set(entries.map(v=>v.item[0]));for(const v of boxPrizes){if(!existing.has(v[0]))entries.push({item:v.slice(0,2),kind:'figure',owned:false,order:-1})}return entries};
@@ -8139,7 +8139,7 @@ function townPawToday(){
 let townPawNoticeTimer=0;
 function townPawNotice(category){
  const notice=$('townPawNotice');if(!notice)return;
- notice.textContent=tr('A little treat · +','小小奖励 · +')+category.amount+' '+tr('Meow Coins','喵币');
+ notice.textContent=tr('A little treat · +','小小奖励 · +')+category.amount+' '+tr('Paw Coins','爪爪币');
  notice.hidden=false;clearTimeout(townPawNoticeTimer);townPawNoticeTimer=setTimeout(()=>{notice.hidden=true},2300)
 }
 const townPawLifeBefore=lifeEarn;
@@ -8154,11 +8154,11 @@ const townPawNoticeEl=element('div','',$('game'),'townPawNotice');townPawNoticeE
 function appendTownPawLedger(parent){
  const day=townPawToday(),book=element('section','',parent,'townPawLedger');
  const heading=element('header','',book,'townPawLedgerHead');
- element('h2',tr('A little pocket money','今日摸鱼零花钱'),heading);element('strong',day.earned+' / '+day.maximum+' '+tr('Meow Coins','喵币'),heading);
+ element('h2',tr('A little pocket money','今日摸鱼零花钱'),heading);element('strong',day.earned+' / '+day.maximum+' '+tr('Paw Coins','爪爪币'),heading);
  element('p',tr('Pick whatever feels good. No streaks, no lost rewards, no need to do them all.','想做什么就做什么。不用打卡，不怕漏签，不必做完。'),book);
  for(const item of townPawCategories()){
   const got=day.keys.includes(item.id),row=element('article','',book,'townPawLedgerRow');row.dataset.earned=String(got);
-  const stamp=element('span',got?'✓':'+'+item.amount,row,'townPawStamp');stamp.setAttribute('aria-label',got?tr('Collected','已领取'):item.amount+' '+tr('Meow Coins','喵币'));
+  const stamp=element('span',got?'✓':'+'+item.amount,row,'townPawStamp');stamp.setAttribute('aria-label',got?tr('Collected','已领取'):item.amount+' '+tr('Paw Coins','爪爪币'));
   const copy=element('div','',row);element('strong',tr(...item.name),copy);element('small',tr(...item.description),copy);
   if(got)element('small',tr('Collected today','今日已到账'),copy,'townPawCollected')
  }
@@ -8168,12 +8168,12 @@ const townPawWalletBefore=pawWalletPage;
 pawWalletPage=function(){
  townPawWalletBefore();const q=$('content'),card=q.querySelector('.blindAlbumProgress');
  if(card){const ledger=appendTownPawLedger(q);card.after(ledger)}
- const wheel=element('section','',q,'townPawWheelLink');element('p',tr('Your daily free wheel gives 10 to 30 more Meow Coins.','每日免费转盘另送10至30喵币。'),wheel);
+ const wheel=element('section','',q,'townPawWheelLink');element('p',tr('Your daily free wheel gives 10 to 30 more Paw Coins.','每日免费转盘另送10至30爪爪币。'),wheel);
  b(wheel,tr('Visit the daily wheel','去转转乐'),dailyWheelPage);
  const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{zh=!zh;save('zh',zh);updateHUD();pawWalletPage()}
 };
 const townPawTodayBefore=todayHub;
-todayHub=function(){townPawTodayBefore();const q=$('content'),section=appendTownPawLedger(q),welcome=q.querySelector('.communityWelcome');if(welcome)welcome.after(section);b(section,tr('Open my coin purse','打开喵币小钱包'),pawWalletPage)};
+todayHub=function(){townPawTodayBefore();const q=$('content'),section=appendTownPawLedger(q),welcome=q.querySelector('.communityWelcome');if(welcome)welcome.after(section);b(section,tr('Open my coin purse','打开爪爪币小钱包'),pawWalletPage)};
 $('dockScoop').onclick=todayHub;
 $('hudCoins').onclick=()=>openHudReward(pawWalletPage);
 
@@ -8306,7 +8306,7 @@ lifeProfile=function(){
  const bio=element('div','',intro);element('small',tr('Pawradise resident card','Pawradise 旅人证'),bio);element('h2',playerName||tr('Traveller','旅人'),bio);element('strong',tr(...rank.label),bio);
  b(bio,tr('Edit profile','编辑资料'),()=>hideoutProfilePage());
  const stats=element('div','',book,'journalQuickStats');
- for(const [value,label,fn] of [[hideoutBalance(),tr('Meow Coins','喵币'),pawWalletPage],[hideoutStampCount()+'/4',tr('Travel stamps','旅行印章'),passport],[rank.index+1,tr('Level','等级'),lifeAttributesBook]]){
+ for(const [value,label,fn] of [[hideoutBalance(),tr('Paw Coins','爪爪币'),pawWalletPage],[hideoutStampCount()+'/4',tr('Travel stamps','旅行印章'),passport],[rank.index+1,tr('Level','等级'),lifeAttributesBook]]){
  const btn=b(stats,'',fn);element('strong',String(value),btn);element('small',label,btn)
  }
  const rows=journalAchievementRows(),earned=rows.filter(v=>v.done),next=rows.filter(v=>!v.done).sort((a,b)=>b.value/b.need-a.value/a.need),preview=[...earned,...next].slice(0,3);
@@ -8347,12 +8347,12 @@ function journalDailyGuide(id){
 function journalDailyTaskList(parent,all=false){
  const state=townPawToday(),categories=townPawCategories(),ordered=[...categories.filter(v=>!state.keys.includes(v.id)),...categories.filter(v=>state.keys.includes(v.id))];
  const box=element('section','',parent,'journalDailyTasks');element('h2',tr('Things to do today','今天可以做什么'),box);
- element('p',state.keys.length+'/'+categories.length+' '+tr('done · ','已完成 · ')+state.earned+'/'+state.maximum+' '+tr('Meow Coins earned','喵币到账'),box);
+ element('p',state.keys.length+'/'+categories.length+' '+tr('done · ','已完成 · ')+state.earned+'/'+state.maximum+' '+tr('Paw Coins earned','爪爪币到账'),box);
  const list=element('div','',box),draw=expanded=>{
  list.replaceChildren();
  for(const item of ordered.slice(0,expanded?categories.length:3)){
  const got=state.keys.includes(item.id),row=element('article','',list,'journalDailyTask');row.dataset.earned=String(got);
- const mark=element('span',got?'✓':'+'+item.amount,row,'townPawStamp');mark.setAttribute('aria-label',got?tr('Completed','已完成'):item.amount+' '+tr('Meow Coins','喵币'));
+ const mark=element('span',got?'✓':'+'+item.amount,row,'townPawStamp');mark.setAttribute('aria-label',got?tr('Completed','已完成'):item.amount+' '+tr('Paw Coins','爪爪币'));
  const copy=element('div','',row);element('strong',tr(...item.name),copy);element('small',tr(...item.description),copy);
  if(!got){const route=journalDailyRoute(item.id,scene,maps);const label=route&&route.district!==scene?tr('Train','搭列车'):tr('Go','去看看');const go=b(row,label,()=>journalDailyGuide(item.id));if(route)go.setAttribute('aria-label',label+' · '+travellerRouteName(route));}else element('small',tr('Done','已完成'),row)
  }
@@ -8370,7 +8370,7 @@ todayHub=function(){
  const badge=element('span',claimed?tr('Stamped','已签到'):tr('Today','今日'),lead,'journalCheckinSeal');
  const art=element('img','',lead,'mbFestivalInvitationArt');art.src=destinationPortrait('island');art.alt='';art.loading='lazy';
  const copy=element('div','',lead,'journalCheckinCopy');element('small',shrineClock().day,copy);element('h2',claimed?tr('Welcome back, traveller','旅人，欢迎回来'):tr('Your daily little treat','今日小小签到'),copy);
- element('p',claimed?tr('Today’s free spin added ','今日签到已获得 ')+dailyWheelRecord().amount+' '+tr('Meow Coins','喵币'):tr('One free lucky spin, 10 to 30 Meow Coins.','每天免费转一次，10至30喵币。'),copy);
+ element('p',claimed?tr('Today’s free spin added ','今日签到已获得 ')+dailyWheelRecord().amount+' '+tr('Paw Coins','爪爪币'):tr('One free lucky spin, 10 to 30 Paw Coins.','每天免费转一次，10至30爪爪币。'),copy);
  b(lead,claimed?tr('See today’s prize','查看今日奖励'):tr('Check in & spin','签到转转乐'),dailyWheelPage);
  const tasks=journalDailyTaskList(q);
  const intro=q.querySelector(':scope > p');if(intro){intro.after(lead);lead.after(tasks)}
@@ -8399,7 +8399,7 @@ dailyWheelPage=function(){
   const art=element('img','',sceneCard,'mbFestivalPainting');art.src=destinationPortrait('island');art.alt='';art.decoding='async';
   const sign=element('header','',sceneCard,'mbFestivalSign');
   element('small',tr('MUNCH & PLAY · DAILY FESTIVAL','吃喝玩乐街 · 每日小摊'),sign);
-  element('strong',tr('Paid leave, in coin form','把年假变成喵币'),sign);
+  element('strong',tr('Paid leave, in coin form','把年假变成爪爪币'),sign);
   const stall=element('div','',sceneCard,'mbFestivalStall');stall.append(stage);
   const counter=element('div','',sceneCard,'mbFestivalCounter');
   const copy=element('div','',counter);element('small',tr('The stall keeper says','摊主说'),copy);copy.append(result);
@@ -8551,7 +8551,7 @@ function furnitureStyle(id){return ['chineseTeaTable','chineseScreen','chineseLa
 function furnitureMarket(back='shop'){
  page(tr('Komorebi Living','木漏日杂货铺'),tr('Small comforts for a home that feels like yours.','一点点布置，把小窝变成喜欢的样子。'),q=>{
  const shelf=element('section','',q,'komorebiBook'),head=element('header','',shelf,'komorebiHead');
- element('strong',tr('Meow Coin purse','喵币小钱包')+' · '+hideoutBalance(),head);
+ element('strong',tr('Paw Coin purse','爪爪币小钱包')+' · '+hideoutBalance(),head);
  element('small',tr('Buy once, keep forever. No real money.','买一次，永久拥有。不用真钱。'),head);
  const styles=element('div','',shelf,'journalFilterTabs');for(const [id,en,cn] of [['all','All styles','全部风格'],['japanese','Japanese','和风'],['chinese','Chinese','中式']]){const btn=b(styles,tr(en,cn),()=>{komorebiStyleFilter=id;furnitureMarket(back)});btn.setAttribute('aria-pressed',String(komorebiStyleFilter===id))}
  const tabs=element('div','',shelf,'journalFilterTabs');
@@ -8561,7 +8561,7 @@ function furnitureMarket(back='shop'){
  const grid=element('div','',shelf,'komorebiGrid');
  for(const v of furnitureCatalogue().filter(v=>(komorebiCategory==='all'||v[4]===komorebiCategory)&&(komorebiStyleFilter==='all'||furnitureStyle(v[0])==='shared'||furnitureStyle(v[0])===komorebiStyleFilter))){
  const [id,en,cn,cost]=v,owned=furnitureOwned(id),tile=element('article','',grid,'komorebiTile'),im=element('img','',tile);tile.dataset.furnitureId=id;im.src=art9[id];im.alt='';
- element('strong',tr(en,cn),tile);element('small',owned?tr('In your furniture collection','已拥有'):cost+' '+tr('Meow Coins','喵币'),tile);
+ element('strong',tr(en,cn),tile);element('small',owned?tr('In your furniture collection','已拥有'):cost+' '+tr('Paw Coins','爪爪币'),tile);
  const buy=b(tile,owned?tr('Owned','已拥有'):tr('View & buy','看看再买'),()=>{if(owned)return;furnitureConfirm(id,back)});
  buy.disabled=owned;
  }
@@ -8575,10 +8575,10 @@ function furnitureConfirm(id,back){
  const v=furnitureCatalogue().find(x=>x[0]===id);if(!v)return;
  page(tr(v[1],v[2]),tr('A little piece of home.','给小窝添一点温柔。'),q=>{
  const card=element('section','',q,'komorebiConfirm'),im=element('img','',card);im.src=art9[id];im.alt='';
- element('h2',v[3]+' '+tr('Meow Coins','喵币'),card);element('p',tr('Your balance: ','目前余额：')+hideoutBalance(),card);
- const btn=b(card,furnitureOwned(id)?tr('Already owned','已拥有'):tr('Buy for ','购买 · ')+v[3]+' '+tr('Meow Coins','喵币'),()=>{if(buyFurniture(id)){toast(tr('Delivered to your furniture collection.','已送到你的小窝家具库。'));if(v[4]==='extension'){komorebiZone=id==='roomExtension'?1:2;hideoutSelected=-1;hideoutEditing=false;hideoutPage()}else furnitureMarket(back)}});
+ element('h2',v[3]+' '+tr('Paw Coins','爪爪币'),card);element('p',tr('Your balance: ','目前余额：')+hideoutBalance(),card);
+ const btn=b(card,furnitureOwned(id)?tr('Already owned','已拥有'):tr('Buy for ','购买 · ')+v[3]+' '+tr('Paw Coins','爪爪币'),()=>{if(buyFurniture(id)){toast(tr('Delivered to your furniture collection.','已送到你的小窝家具库。'));if(v[4]==='extension'){komorebiZone=id==='roomExtension'?1:2;hideoutSelected=-1;hideoutEditing=false;hideoutPage()}else furnitureMarket(back)}});
  btn.disabled=furnitureOwned(id)||hideoutBalance()<v[3]||(id==='roomStudio'&&!furnitureOwned('roomExtension'));if(id==='roomStudio'&&!furnitureOwned('roomExtension'))element('p',tr('Build the reading room first.','请先扩建阅读小室。'),card);
- if(!furnitureOwned(id)&&hideoutBalance()<v[3])element('p',tr('A little more exploring will get you there.','再逛逛小镇，攒一点喵币就够啦。'),card);
+ if(!furnitureOwned(id)&&hideoutBalance()<v[3])element('p',tr('A little more exploring will get you there.','再逛逛小镇，攒一点爪爪币就够啦。'),card);
  b(q,tr('Keep browsing','继续看看'),()=>furnitureMarket(back));journalLanguage(()=>furnitureConfirm(id,back))
  })
 }
@@ -8843,7 +8843,7 @@ function pawWalletTotals(v){
 const receiptWalletBefore=pawWalletPage;
 pawWalletPage=function(){
  receiptWalletBefore();const q=$('content'),v=pawWalletBreakdown(),book=element('details','',q,'townPawLedger');
- element('summary',tr('My coin receipts','喵币收支手账'),book);
+ element('summary',tr('My coin receipts','爪爪币收支手账'),book);
  const totals=pawWalletTotals(v),summary=element('p','',book,'pawReceiptSummary');
  summary.textContent=tr('Earned ','累计收入 ')+totals.earned+tr(' · Spent ',' · 累计支出 ')+totals.spent+tr(' · Available ',' · 可用 ')+totals.balance;
  const today=townPawToday();element('p',tr('Today’s activity coins: ','今日活动收入：')+today.earned+' / '+today.maximum,book);
@@ -8962,7 +8962,7 @@ function goodCompanyPage(q){
  for(const k of goodCompanyKinds){const btn=b(picks,tr(...k.name),()=>choose(k.id));btn.dataset.kind=k.id}choose(selected);
  const label=element('label',tr('A little note to remember','写一句想记住的话'),book);label.htmlFor='goodCompanyNote';
  const input=element('textarea','',book);input.id='goodCompanyNote';input.maxLength=300;input.value=goodCompanyDraft?.text||'';input.placeholder=tr('Today I am grateful for…','今天，我很感恩……');input.oninput=()=>{goodCompanyDraft={kind:selected,text:input.value}};
- const reward=element('small',townPawToday().keys.includes('gratitude')?tr('Today’s reward is collected. You can still celebrate.','今日奖励已领取，依然可以庆祝。'):tr('First reflection today: 12 Meow Coins. No public post required.','今日首次记录：12喵币，不必公开。'),book,'goodCompanyReward');
+ const reward=element('small',townPawToday().keys.includes('gratitude')?tr('Today’s reward is collected. You can still celebrate.','今日奖励已领取，依然可以庆祝。'):tr('First reflection today: 12 Paw Coins. No public post required.','今日首次记录：12爪爪币，不必公开。'),book,'goodCompanyReward');
  const feedback=element('div','',book,'goodCompanyCheer');feedback.hidden=true;feedback.setAttribute('role','status');
  let busy=false;
  const submit=b(book,tr('Celebrate & save privately','庆祝并私藏这份回忆'),()=>{
@@ -8970,7 +8970,7 @@ function goodCompanyPage(q){
   element('strong',tr('Here’s to you!','为你喝彩！'),feedback);
   const reply=element('div','',feedback,'goodCompanyReply'),src=paintedDialoguePortrait(k.resident[0]);if(src){const img=element('img','',reply);img.src=src;img.alt=''}
   const copy=element('div','',reply);element('small',tr(...k.resident)+' · '+tr('Town resident','小镇居民'),copy);element('p',tr(...k.cheer),copy);
-  element('small',category?tr('12 Meow Coins earned.','已获得12喵币。'):tr('Every joy counts, even without extra coins.','不重复奖励喵币，但每份快乐都算数。'),feedback);
+  element('small',category?tr('12 Paw Coins earned.','已获得12爪爪币。'):tr('Every joy counts, even without extra coins.','不重复奖励爪爪币，但每份快乐都算数。'),feedback);
   reward.textContent=tr('Today’s reward is collected. You can still celebrate.','今日奖励已领取，依然可以庆祝。');
   updateHUD();if(category)townPawNotice(category);goodCompanyApplause();renderMemories();busy=false
  });

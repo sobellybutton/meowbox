@@ -27,7 +27,7 @@ function figureCabinetPage(back='room'){
   const ids=figureCabinetIds(),n=figureTokenCount(),wrap=element('section','',q,'figureCabinetBook');
   fillFigureShelf(element('div','',wrap,'figureCabinetPreview'));
   element('p',ids.length+'/6 '+tr('on display','件展示中')+' · '+n+' '+tr('exchange tokens','兑换券'),wrap);
-  element('p',tr('New boxes contain unowned figures for 40 Meow Coins. Any old exchange tokens can still unlock common or uncommon figures at three tokens each.','新盲盒40喵币一盒，不会抽到已收藏款。旧兑换券仍可用三枚兑换普通或特别款。'),wrap,'figureHelp');
+  element('p',tr('New boxes contain unowned figures for 40 Paw Coins. Any old exchange tokens can still unlock common or uncommon figures at three tokens each.','新盲盒40爪爪币一盒，不会抽到已收藏款。旧兑换券仍可用三枚兑换普通或特别款。'),wrap,'figureHelp');
   const grid=element('div','',wrap,'figureCabinetGrid');for(const v of boxPrizes){
    const owned=items.some(i=>i[0]===v[0]),shown=ids.includes(v[0]),secret=!owned&&v[4]==='secret',tile=element('article','',grid,'figureCabinetTile');tile.dataset.owned=String(owned);const im=element('div','',tile,'figureTileArt');im.innerHTML=secret?'<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M11 53V28Q11 8 32 8Q53 8 53 28V53Z" fill="#8b806e"/><text x="32" y="42" fill="#f0e3ca" font-size="25" text-anchor="middle">?</text></svg>':bagFigureIcon(v);element('strong',secret?tr('Secret silhouette','隐藏款剪影'):tr(v[0],v[1]),tile);
    const eligible=['common','uncommon'].includes(v[4]);const btn=b(tile,owned?(shown?tr('Put away','收起'):tr('Display','摆放')):eligible?tr('Exchange 3','兑换 · 3券'):tr('Find in a box','盲盒限定'),()=>{if(owned?toggleFigureDisplay(v[0]):exchangeFigure(v[0]))figureCabinetPage(back)});btn.disabled=!owned&&(!eligible||n<3)||owned&&!shown&&ids.length>=6;
@@ -1767,7 +1767,7 @@ furnitureMarket=function(back='shop'){
  for(const tile of grid.querySelectorAll('.komorebiTile')){
   const name=tile.querySelector('strong')?.textContent,v=catalogue.find(v=>tr(v[1],v[2])===name);if(!v)continue;
   const owned=furnitureOwned(v[0]),short=mbArtShortfall(v[3],balance),locked=v[0]==='roomStudio'&&!furnitureOwned('roomExtension');
-  if(!owned&&short)element('small',tr('Save ','还差 ')+short+tr(' more coins',' 喵币'),tile,'mbArtShortfall');
+  if(!owned&&short)element('small',tr('Save ','还差 ')+short+tr(' more coins',' 爪爪币'),tile,'mbArtShortfall');
   if(!owned&&locked)element('small',tr('Reading room first','先扩建阅读小室'),tile,'mbArtShortfall');
   tile.hidden=mbArtAffordable&&(owned||short>0||locked);
  }
@@ -2151,7 +2151,7 @@ furnitureConfirm=function(id,back='shop'){
  const image=card.querySelector('img'),v=furnitureCatalogue().find(v=>v[0]===id);
  if(image){const mat=element('div','',card,'mbFurnitureDetailMat');image.before(mat);mat.append(image);image.alt=v?tr(v[1],v[2]):''}
  if(v){const note=element('p',v[4]==='extension'?tr('Adds a new room to your home.','给小窝扩建一个新房间。'):v[4]==='finish'||v[4]==='floor'?tr('Apply this finish in the room editor after purchase.','购买后可在小窝布置中更换。'):tr('Arrange this piece in your room after purchase.','购买后可在小窝里自由摆放。'),card,'mbFurnitureUseNote');card.querySelector('h2')?.after(note);
-  const quote=mbFurnitureQuote(hideoutBalance(),v[3],furnitureOwned(id));if(quote&&!furnitureOwned(id)){const line=element('p',quote.shortage?tr('Still needed: ','还差：')+quote.shortage+' '+tr('Meow Coins','喵币'):tr('Balance after purchase: ','购买后余额：')+quote.remaining+' '+tr('Meow Coins','喵币'),card,'mbFurnitureQuote');line.dataset.shortage=String(quote.shortage>0);card.querySelector('h2')?.after(line)}
+  const quote=mbFurnitureQuote(hideoutBalance(),v[3],furnitureOwned(id));if(quote&&!furnitureOwned(id)){const line=element('p',quote.shortage?tr('Still needed: ','还差：')+quote.shortage+' '+tr('Paw Coins','爪爪币'):tr('Balance after purchase: ','购买后余额：')+quote.remaining+' '+tr('Paw Coins','爪爪币'),card,'mbFurnitureQuote');line.dataset.shortage=String(quote.shortage>0);card.querySelector('h2')?.after(line)}
  }
  return result
 };
@@ -2680,8 +2680,4 @@ const pawLocalMapCss=document.createElement('style');pawLocalMapCss.textContent=
 @media(max-width:340px){.pawLocalDoors{grid-template-columns:1fr}}
 `;document.head.append(pawLocalMapCss);
 
-/* Display-only Paw Coins branding. Keep all wallet keys and balances. */
-const pawCoinDisplay=(value)=>typeof value==='string'?value.replace(/Meow Coins?/gi,v=>v.toLowerCase().endsWith('coins')?'Paw Coins':'Paw Coin').replace(/喵币/g,'爪爪币'):value;
-const pawCoinHudBefore=updateHUD;
-updateHUD=function(...args){const result=pawCoinHudBefore(...args);const el=$('hudCoins');el.textContent=pawCoinDisplay(el.textContent);el.title=pawCoinDisplay(el.title);el.setAttribute('aria-label',pawCoinDisplay(el.getAttribute('aria-label')||el.textContent));return result};
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

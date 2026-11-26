@@ -246,7 +246,10 @@ jobs:
                 if(!await page.evaluate(()=>scene==='fortune'&&!transitioning))throw Error('Daily guide travelled without confirmation');
                 await page.getByRole('button',{name:'Stay here a little longer',exact:true}).click();
                 await page.evaluate(()=>{travellerSuggestedRoute=null;updateHUD()});
-                await page.locator('#nextStopShortcut').click();
+                if(await page.locator('#nextStopShortcut').isVisible())throw Error('Removed next-stop shortcut is visible');
+                await page.locator('#dockTravel').click();
+                await page.locator('.pawExploreRail').waitFor({state:'visible'});
+                await page.locator('.portraitTravelGrid .portraitDestination').nth(1).click();
                 await page.locator('.districtRailCabin').waitFor({state:'visible'});
                 const cabin=page.locator('.districtRailCabin');
                 const pause=page.locator('.mbRailPause');
@@ -586,8 +589,10 @@ jobs:
                 await page.locator('#choices').getByRole('button',{name:'I have a train to catch',exact:true}).click();
                 if(!await page.evaluate(()=>items.some(v=>v[0]==='Meeting escape ticket')))throw Error('Office comedy route incomplete');
                 await page.evaluate(()=>{room=null;activity=null;state={};closeTalk();updateHUD()});
-                if(!await page.locator('#nextStopShortcut').isVisible())throw Error('Next stop shortcut missing');
-                await page.locator('#nextStopShortcut').click();
+                if(await page.locator('#nextStopShortcut').isVisible())throw Error('Removed next-stop shortcut is visible');
+                await page.locator('#dockTravel').click();
+                await page.locator('.pawExploreRail').waitFor({state:'visible'});
+                await page.locator('.portraitTravelGrid .portraitDestination').nth(2).click();
                 await page.waitForFunction(()=>$('page').style.display==='block',{},{timeout:3000});
                 await page.getByRole('button',{name:'‹ Back',exact:true}).click();
                 await page.evaluate(()=>{scene='home';room='park';activity=null;state={};closeTalk();start('pet')});
