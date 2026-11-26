@@ -570,7 +570,7 @@ const wonderCanvasPrior=drawActivity;drawActivity=function(){if(activity!=='wond
  let wood=ctx.createLinearGradient(0,395,0,670);wood.addColorStop(0,'#ae8761');wood.addColorStop(1,'#72513b');ctx.beginPath();ctx.moveTo(211,399);ctx.lineTo(589,399);ctx.lineTo(780,1800);ctx.lineTo(20,1800);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle='#c4a071';ctx.stroke();for(let i=0;i<12;i++)line(188,416+i*20,612,418+i*20,'#e5bc8922',1);
  txt(tr(...wonderSceneNames[mode]),400,251,21,'#fff1d5');
  if(phase==='welcome'){wonderSceneText(tr('Take your time. Answer as you are, not as you wish to be.','慢慢来，按真实的自己作答就好。'),400,420,385,19);wonderSceneObject(400,516,0,mode,false);label(tr('Begin our conversation','开始我们的对话'),400,606,()=>{wonderScenePhase='question';wonderSceneAt=t;sound(480)});txt(tr('For fun, at your own pace.','趣味探索，慢慢来。'),400,644,13,'#f8e4c6')}
- else if(phase==='result'){let v=wonderSceneResult,f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.65));ctx.save();ctx.translate(400,493);ctx.scale(Math.max(.02,f),1);round(-147,-103,294,207,4,'#f5e3ba','#b88b5e');round(-139,-95,278,191,2,null,'#b88b5e');if(mode==='soul'){const illustration=soulResultIllustration(v);if(illustration)ctx.drawImage(illustration,-90,-94,180,80);else cat(0,-19,0,false,.86)}else{ellipse(0,-55,28,28,v.color);ctx.strokeStyle='#b28c5b';ctx.beginPath();ctx.arc(0,-55,35,0,TAU);ctx.stroke()}wonderSceneText(tr(...v.name),0,-1,260,23,'#654b39',2);wonderSceneText(tr(...v.desc),0,29,262,16,'#654b39',4);ctx.restore();label(tr('Share keepsake','分享纪念卡'),330,623,wonderSceneShare);label(tr('Try again','再测一次'),486,623,()=>wonderSceneOpen(mode));txt(tr('Back to lab · for fun only','返回研究所 · 仅供娱乐'),400,655,13,'#fff1d5')}
+ else if(phase==='result'){let v=wonderSceneResult,f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.65));ctx.save();ctx.translate(400,493);ctx.scale(Math.max(.02,f),1);round(-147,-103,294,207,4,'#f5e3ba','#b88b5e');round(-139,-95,278,191,2,null,'#b88b5e');if(mode==='soul'){const illustration=soulResultIllustration(v);if(illustration)ctx.drawImage(illustration,-90,-94,180,80);else cat(0,-19,0,false,.86)}else{ellipse(0,-55,28,28,v.color);ctx.strokeStyle='#b28c5b';ctx.beginPath();ctx.arc(0,-55,35,0,TAU);ctx.stroke()}wonderSceneText(tr(...v.name),0,-1,260,23,'#654b39',2);wonderSceneText(tr(...v.desc),0,29,262,16,'#654b39',4);ctx.restore();label(tr('Share keepsake','分享纪念卡'),330,623,wonderSceneShare);label(tr('View details','看看解读'),486,623,()=>openWonderResult(mode,v));txt(tr('Back to lab · for fun only','返回研究所 · 仅供娱乐'),400,655,13,'#fff1d5')}
  else{let d=wonderSceneData();if(d){if(W<=540&&W<H){wonderSceneObject(400,413,Math.max(0,wonderScenePick),mode,phase==='turn');ctx.restore();return}let n=d.opts.length;let f=Math.min(1,Math.max(0,(t-wonderSceneAt)/.3));ctx.globalAlpha=phase==='turn'?1:Math.max(.15,f);wonderSceneText(tr(...d.prompt),400,402,395,21,'#fff1d5',3);for(let j=0;j<n;j++){let x=n===4?250+j*100:n===3?278+j*122:327+j*146,y=528;wonderSceneObject(x,y,j,mode,phase==='turn'&&wonderScenePick===j);wonderSceneText(tr(d.opts[j][0],d.opts[j][1]),x,579,n===4?93:117,16,'#fff5df',4);if(phase==='question')target(x-48,470,96,160,()=>wonderSceneChoose(j))}ctx.globalAlpha=1;txt((wonderSceneAnswers.length+1)+' / '+d.total,400,654,14,'#fff1d5')}}
  ctx.restore();
 };
@@ -1354,7 +1354,22 @@ function readingShuffle(){if(state.readStage!=='deck')return;state.readStage='sh
 function readingDeal(){if(state.readStage!=='deck'||!state.readShuffle)return;state.readStage='deal';state.readAt=t;let count=activity==='love'?3:1,pool=tarotDeck.map((_,i)=>i);if(activity==='tarot'){let d=dailyCard();state.readCards=[{i:Math.max(0,tarotDeck.indexOf(d)),rev:tarotReversed('daily')}]}
 else{state.readCards=Array.from({length:count},()=>{let j=Math.floor(Math.random()*pool.length);return {i:pool.splice(j,1)[0],rev:Math.random()<.5}})}state.readFlip=Array(count).fill(-1);state.readCards.forEach(v=>readingArtwork(v.i));sound(460)}
 function readingReveal(i){if(!['tarot','love'].includes(activity)||state.readStage!=='cards'||!state.readCards[i]||state.readFlip[i]>=0)return;state.readFlip[i]=t;sound(490+i*90);const count=state.readFlip.filter(v=>v>=0).length,total=state.readCards.length;hint(count===total?'All cards revealed. Tap a card again to read its meaning.':'Card '+count+' of '+total+' revealed. Take your time. ',count===total?'牌已翻完。再次点击牌面，查看解读。':'已翻开 '+count+'/'+total+' 张牌，慢慢来。')}
-function readingSave(){if(!['tarot','love'].includes(activity)||state.readSaved||!Array.isArray(state.readCards)||!state.readCards.length||!Array.isArray(state.readFlip)||state.readCards.length!==state.readFlip.length||!state.readCards.every(v=>Number.isInteger(v.i)&&tarotDeck[v.i])||!state.readFlip.every(v=>Number.isFinite(v)&&v>=0&&t-v>.6))return;state.readSaved=true;let entry={date:shrineClock().day,topic:state.readTopic,cards:state.readCards.map(v=>({...v}))};let key=JSON.stringify(entry);if(!readingJournal.some(v=>JSON.stringify(v)===key)){readingJournal.unshift(entry);readingJournal=readingJournal.slice(0,40);save('readingJournalV1',readingJournal)}if(activity==='tarot'){let d=tarotDeck[state.readCards[0].i];addItem('Daily Tarot: '+d[0],'今日塔罗：'+d[1])}else addItem('Three-card reading','三张牌占卜');hint('Your reading is tucked into your passport.','这份牌意已经收进旅人护照。')}
+function readingSave(){
+ if(!['tarot','love'].includes(activity)||state.readSaved||!Array.isArray(state.readCards)||!Array.isArray(state.readFlip))return;
+ const entry=tarotShareSnapshot(state);
+ if(!entry||entry.cards.length!==state.readFlip.length||!state.readFlip.every(v=>Number.isFinite(v)&&v>=0&&t-v>.6))return;
+ state.readSaved=true;
+ entry.date=shrineClock().day;
+ const same=v=>v?.date===entry.date&&(v.topic??-1)===entry.topic&&JSON.stringify(v.cards)===JSON.stringify(entry.cards);
+ const existing=readingJournal.find(same);
+ if(!existing||existing.tone!==entry.tone){
+  readingJournal=[entry,...readingJournal.filter(v=>!same(v))].slice(0,40);
+  save('readingJournalV1',readingJournal);
+ }
+ if(activity==='tarot'){const d=tarotDeck[entry.cards[0].i];addItem('Daily Tarot: '+d[0],'今日塔罗：'+d[1])}
+ else addItem('Three-card reading','三张牌占卜');
+ hint('Your reading is tucked into your passport.','这份牌意已经收进旅人护照。')
+}
 function readingShow(i){
  if(!['tarot','love'].includes(activity)||state.readStage!=='cards')return;
  let v=state.readCards[i];if(!v||!Number.isFinite(state.readFlip[i])||state.readFlip[i]<0||t-state.readFlip[i]<.72)return;
@@ -1363,7 +1378,14 @@ function readingShow(i){
 }
 function readingFocusMeaning(){
  const i=state.readFocus,v=state.readCards[i];if(!v)return;
- tarotDetails(tarotDeck[v.i],v.rev);const prompt=topicReflection(state.readTopic,i);if(prompt)$('line').textContent+='\n\n'+prompt;
+ const d=tarotDeck[v.i],prompt=topicReflection(state.readTopic,i);
+ const aside=tarotCommentary(d[0],v.rev,state.readTopic,state.tarotTone);
+ tarotDetails(d,v.rev);
+ $('line').textContent=[tr(d[0],d[1])+' · '+orient(v.rev),arcanaReading(d,v.rev),prompt,aside&&tr(...aside)].filter(Boolean).join('\n\n');
+ if(state.readFlip.every(v=>v>=0&&t-v>.72)){
+  const entry=tarotShareSnapshot(state);
+  if(entry&&entry.cards.length!==5)b($('choices'),tr('Read the full spread','查看完整解读'),()=>openTarotReading(entry));
+ }
 }
 function readingReturnSpread(){
  closeTalk();state.readStage='cards';state.readAt=t;
@@ -1383,9 +1405,87 @@ else if(stage==='focus'){
  label(tr('Back to spread','返回牌阵'),490,647,readingReturnSpread);
 }
 else if(stage==='deal'||stage==='cards'){let n=state.readCards.length,portraitSpread=n===3&&W<H;for(let i=0;i<n;i++){let slot=readingActivitySlot(i,n,portraitSpread),endX=slot.x,sc=slot.scale,deal=stage==='deal'?poseEase((age-i*.22)/.65):1,x=400+(endX-400)*deal,y=465+(slot.y-465)*deal-18*Math.sin(Math.PI*deal),flip=state.readFlip[i]<0?0:Math.min(1,(t-state.readFlip[i])/.72),face=flip>=.5,w=92*sc*(flip>0&&flip<1?Math.max(.045,Math.abs(Math.cos(Math.PI*flip))):1),h=145*sc,v=state.readCards[i],d=tarotDeck[v.i];ctx.save();ctx.translate(x,y);ctx.rotate((1-deal)*.14*(i-1));if(face){drawReadingCard(-w/2,-h/2,w,h,v.i,v.rev)}else card(-w/2,-h/2,w,h,false);ctx.restore();if(stage==='cards'){target(endX-slot.hitW/2,y-h/2,slot.hitW,h,()=>state.readFlip[i]<0?readingReveal(i):readingShow(i));if(n===3)readingPositionCaption(tr(...readingPositions[i]),endX,slot.captionY,slot.hitW);if(face)txt(orient(v.rev),endX,slot.orientationY,13,'#f1ddad')}}
-if(stage==='deal'&&age>.65+(n-1)*.22){state.readStage='cards';state.readAt=t;hint('Turn the cards over one by one.','一张一张慢慢翻开。')}let complete=state.readFlip.every(v=>v>=0&&t-v>.72);if(stage==='cards'&&complete){if(!state.readSaved)readingSave();txt(tr('Tap a revealed card for a closer look','轻触已翻开的牌，放大查看'),400,portraitSpread?720:618,13,'#f8e9cc');label(tr('Share card','分享牌卡'),502,portraitSpread?755:650,()=>shareReadingResult({cards:state.readCards}));label(tr('Read the cards','查看牌意'),298,portraitSpread?755:650,()=>{let lines=state.readCards.map((v,i)=>{let d=tarotDeck[v.i];return (n===3?tr(...readingPositions[i])+': ':'')+tr(d[0],d[1])+' · '+orient(v.rev)+'\n'+arcanaReading(d,v.rev)+(topicReflection(state.readTopic,i)?'\n'+topicReflection(state.readTopic,i):'')});say(tr('Fortune Teller','占卜师'),lines.join('\n\n')+'\n\n'+tr('The future is not a deadline.','未来又不是截止日期。'))})}else if(stage==='cards')txt(tr('Choose a card to turn','点击牌面翻开'),400,portraitSpread?735:622,16,'#fff0d2')}
+if(stage==='deal'&&age>.65+(n-1)*.22){state.readStage='cards';state.readAt=t;hint('Turn the cards over one by one.','一张一张慢慢翻开。')}let complete=state.readFlip.every(v=>v>=0&&t-v>.72);if(stage==='cards'&&complete){if(!state.readSaved)readingSave();txt(tr('Tap a revealed card for a closer look','轻触已翻开的牌，放大查看'),400,portraitSpread?720:618,13,'#f8e9cc');label(tr('Share card','分享牌卡'),502,portraitSpread?755:650,()=>shareReadingResult(tarotShareSnapshot(state)));
+ label(tr('Read the cards','查看牌意'),298,portraitSpread?755:650,()=>openTarotReading(tarotShareSnapshot(state)))
+}else if(stage==='cards')txt(tr('Choose a card to turn','点击牌面翻开'),400,portraitSpread?735:622,16,'#fff0d2')}
 ctx.restore()};
-function openReadingJournal(){activePage='readingJournal';page(tr('Reading journal','塔罗手记'),tr('Reflections from your visits, not predictions.','每次来访的心情记录，并非预言。'),q=>{let book=element('section','',q,'travelAlbum');if(!readingJournal.length)element('p',tr('Your first reading will appear here.','第一次占卜之后，手记会出现在这里。'),book);for(let v of readingJournal){let a=element('article','',book,'albumCard');element('strong',v.date+' · '+(v.topic<0||v.topic===null?tr('Daily tarot','今日塔罗'):tr(...(readingTopics[v.topic]||readingTopics[3]))),a);for(let [i,d] of (v.cards||[]).entries()){let cardData=tarotDeck[d.i];if(!cardData)continue;let item=element('div','',a);element('p',tr(cardData[0],cardData[1])+' · '+orient(d.rev),item);element('small',arcanaReading(cardData,d.rev),item);const prompt=topicReflection(v.topic,i);if(prompt)element('p',prompt,item)}b(a,tr('Share card','分享牌卡'),()=>shareReadingResult(v,openReadingJournal))}b(book,tr('Back to passport','返回护照'),passport)})}
+const tarotJournalArt='assets/visual/painted/tarot-journal.webp';
+function readingTitle(entry){
+ return entry.cards.length===1?tr('Daily tarot','今日塔罗'):tr(...(readingTopics[entry.topic]||['Three-card reading','三张牌占卜']));
+}
+function readingTakeaway(cards){
+ const focus=cards[cards.length-1],meaning=arcanaMeanings[focus.i];
+ return focus.rev?meaning.slice(2,4):meaning.slice(0,2);
+}
+function readingConnection(entry){
+ const [situation,attention,next]=entry.cards;
+ const notice=attention.rev
+  ?tr('Read the middle card as something to spot in your own habits or expectations.','把中间这张牌当成一面镜子，看看自己的习惯或期待。')
+  :tr('Read the middle card as a pattern worth noticing in the situation.','中间这张牌提醒你留意当下正在重复的某种模式。');
+ const action=next.rev
+  ?tr('Try a smaller version of the last card’s idea. What could you pause or simplify first?','把最后一张牌的建议缩小一点。可以先暂停或简化哪件事？')
+  :tr('Pick one action from the last card that you could try today.','从最后一张牌的建议里，选一件今天就能试试的小事。');
+ return tr('Start with what feels familiar in ','先想想你在哪些地方看见了')+tr(...tarotDeck[situation.i].slice(0,2))+tr('. ','。')+notice+' '+action;
+}
+function openTarotReading(entry,back=()=>{$('page').style.display='none'}){
+ if(!entry)return;
+ page(readingTitle(entry),entry.date||tr('From the Tarot House','来自塔罗小屋'),q=>{
+  const book=element('section','',q,'readingNotes');
+  entry.cards.forEach((v,i)=>{
+   const d=tarotDeck[v.i],item=element('article','',book,'readingNote');
+   if(entry.cards.length===3)element('small',tr(...readingPositions[i]),item);
+   element('h2',tr(d[0],d[1])+' · '+orient(v.rev),item);
+   element('p',arcanaReading(d,v.rev),item);
+   const prompt=topicReflection(entry.topic,i);
+   if(prompt)element('p',prompt,item,'readingPrompt');
+  });
+  if(entry.cards.length===3){
+   element('h2',tr('Put the cards together','把三张牌串起来'),book);
+   element('p',readingConnection(entry),book);
+  }
+  const focus=entry.cards[entry.cards.length-1],aside=tarotCommentary(tarotDeck[focus.i][0],focus.rev,entry.topic,entry.tone);
+  if(aside)element('p',tr('The fortune teller adds','占卜师补一句')+' · '+tr(...aside),book,'readingAside');
+  b(book,tr('Share card','分享牌卡'),()=>shareReadingResult(entry,()=>openTarotReading(entry,back)));
+  q.querySelector('.row').firstElementChild.onclick=back;
+ });
+ journalLanguage(()=>openTarotReading(entry,back));
+}
+function openReadingJournal(){
+ activePage='readingJournal';
+ page(tr('Reading journal','塔罗手记'),tr('Past readings are kept in this browser.','以往的解读保存在此浏览器中。'),q=>{
+  const book=element('section','',q,'readingNotes');
+  const art=element('img','',book,'readingJournalArt');
+  art.width=1200;art.height=400;art.src=tarotJournalArt;art.alt='';
+  art.onerror=()=>art.remove();
+  const entries=readingJournal.flatMap(v=>{
+   const entry=v&&tarotShareSnapshot(v);
+   return entry&&entry.cards.length!==5?[{...entry,date:v.date}]:[];
+  });
+  if(!entries.length)element('p',tr('Your first reading will appear here.','第一次占卜之后，手记会出现在这里。'),book);
+  entries.forEach((entry,i)=>{
+   const item=element('article','',book,'readingNote');
+   if(i===0)element('small',tr('Last reading','上次的解读'),item);
+   element('h2',readingTitle(entry),item);
+   element('p',entry.date+' · '+entry.cards.map(({i})=>tr(...tarotDeck[i].slice(0,2))).join(' / '),item);
+   b(item,tr('Read again','重温解读'),()=>openTarotReading(entry,openReadingJournal));
+  });
+  b(book,tr('Back to passport','返回护照'),passport);
+  q.querySelector('.row').firstElementChild.onclick=passport;
+ });
+ journalLanguage(openReadingJournal);
+}
+const readingNotesStyle=document.createElement('style');
+readingNotesStyle.textContent=`
+.readingNotes{max-width:620px;margin:auto;line-height:1.5;color:#4d4539}
+#content:has(>.readingNotes)>:is(.row,h1,p){max-width:620px;margin-inline:auto}
+.readingJournalArt{display:block;width:100%;height:auto;aspect-ratio:3/1;border-radius:4px}
+.readingNote{padding:12px 0;border-bottom:1px solid #baaa89}
+.readingNotes h2{font:600 19px/1.3 Georgia,"Songti SC",serif;margin:6px 0;color:#3c554b}
+.readingNotes p{margin:5px 0 8px}
+.readingNotes button{min-height:44px;white-space:normal;margin:5px 0}
+.readingNotes .readingPrompt,.readingNotes .readingAside{border-left:2px solid #9c9d77;padding-left:10px;margin:10px 0;color:#40594b}
+`;
+document.head.append(readingNotesStyle);
 const readingPassport=passport;passport=function(){readingPassport();let book=$('content').querySelector('.travelAlbum');if(book)b(book,tr('Reading journal','塔罗手记')+' ('+readingJournal.length+')',openReadingJournal)};$('dockPassport').onclick=passport;
 const collectionMore=[['Quiet garden postcard','静谧后院明信片','stamp'],['Temple cat blessing','庙猫的祝福','cat'],['After-hours rhythm ticket','下班节拍门票','stamp'],['Golden rhythm badge','金色节拍徽章','stamp'],...boxPrizes.map(v=>[v[0],v[1],'cat']),...teaChoices.map(v=>[v[0]+' recipe',v[1]+'配方','stamp'])];for(let item of collectionMore)if(!keepsakes.some(v=>v[0]===item[0]))keepsakes.push(item);
 const collectionClue=keepsakeClue;keepsakeClue=function(item){let n=item[0];if(boxPrizes.some(v=>v[0]===n))return ['Open a blind box in the arcade','去游戏厅开盲盒'];if(/recipe$/.test(n))return ['Make a drink at Pearl & Pause','去珍珠摸鱼铺摇杯奶茶'];if(n==='Quiet garden postcard')return ['Feed the koi in the hidden garden','去后院喂锦鲤'];if(n==='Temple cat blessing')return ['Befriend the temple cat','和庙猫做朋友'];if(n.includes('rhythm'))return ['Try the arcade rhythm floor','试试游戏厅节奏舞台'];return collectionClue(item)};
@@ -2802,8 +2902,8 @@ const chartConsultTopics=[
  {k:11,name:['Family & boundaries','父母宫与家庭'],question:['How can I care for family while keeping my own space?','怎样关心家人，同时保留自己的空间？'],practice:['Choose one small boundary you can communicate kindly and clearly.','选一个小小的界限，试着温和而清楚地表达。']}
 ];
 function chartConsultData(z,topic){
- const index=mod(z.life-topic.k,12),stars=z.stars[index]||[];
- return {index,stars:stars.map(st=>tr(...st)),themes:stars.map(st=>chartStarThemes[st[1]]).filter(Boolean).map(v=>tr(...v)),opposite:(z.stars[mod(index+6,12)]||[]).map(st=>tr(...st))}
+ const index=mod(z.life-topic.k,12),stars=z.stars[index]||[],oppositeIndex=mod(index+6,12);
+ return {index,stars:stars.map(st=>tr(...st)),themes:stars.map(st=>chartStarThemes[st[1]]).filter(Boolean).map(v=>tr(...v)),opposite:(z.stars[oppositeIndex]||[]).map(st=>tr(...st)),oppositeIndex,bodyHere:z.body===index}
 }
 function renderChartConsultation(out,z){
  const section=element('section','',out,'chartConsultation');
@@ -2815,16 +2915,21 @@ function renderChartConsultation(out,z){
   const data=chartConsultData(z,topic);answer.replaceChildren();
   element('h3',tr(...topic.question),answer);
   element('p',tr('Your palace: ','你的宫位：')+tr(...topic.name)+' · '+branches[data.index],answer);
-  element('p',data.stars.length?tr('Main stars: ','主星：')+data.stars.join(' · '):tr('No main star in this palace. A fuller reading would consider the opposite palace and other factors. No missing-star judgement is made here.','此宫无主星。完整解读还需参考对宫和其他因素，这里不据此判断吉凶。'),answer);
-  if(!data.stars.length&&data.opposite.length)element('p',tr('Opposite palace main stars (context only): ','对宫主星（仅供参考）：')+data.opposite.join(' · '),answer);
-  if(data.themes.length)element('p',tr('Symbolic themes for reflection: ','可供反思的象征主题：')+data.themes.join(' / '),answer);
+  if(data.stars.length)element('strong',tr('Main stars','主星'),answer);
+  else element('p',tr('This palace has no main star. The opposite palace offers some context in a fuller reading.','此宫无主星。完整解读时，可以参考对宫。'),answer);
+  if(!data.stars.length&&data.opposite.length){
+   element('p',tr('Across the chart','看看对宫')+' · '+branches[data.oppositeIndex]+' · '+data.opposite.join(' / '),answer);
+  }
+  if(data.bodyHere)element('p',tr('Your Body palace is here too. You might use this topic to compare what matters to you with how you spend your time.','你的身宫也在这里。可以借这个主题，看看自己重视的事和实际投入时间的事是否一致。'),answer);
+  data.stars.forEach((star,i)=>element('p',data.themes[i]?star+' · '+data.themes[i]:star,answer));
+  if(data.themes.length>1)element('p',tr('Think of a recent decision in this area. When did these two approaches help each other, and when did one take over?','回想这个领域最近的一次决定。这两种做法何时互相帮忙？又有什么时候，其中一种压过了另一种？'),answer);
   element('p',tr(...topic.practice),answer,'chartPractice');
   for(const button of topics.querySelectorAll('button'))button.setAttribute('aria-pressed',String(button.dataset.topic===String(topic.k)));
  };
  for(const topic of chartConsultTopics){const button=b(topics,tr(...topic.name),()=>show(topic));button.dataset.topic=String(topic.k);button.setAttribute('aria-pressed','false')}
  show(chartConsultTopics[0])
 }
-const consultStyle=document.createElement('style');consultStyle.textContent='.chartConsultation{margin:24px 0;padding:17px;border-top:2px solid #a38a61;background:#eee3ca;color:#544436}.chartConsultation h2,.chartConsultation h3{font-family:Georgia,"Songti SC",serif}.chartConsultation h3{font-size:19px;line-height:1.4;margin:4px 0 10px}.chartTopics{display:flex;flex-wrap:wrap;gap:6px}.chartTopics button{flex:1 1 125px;min-height:44px;font-size:14px;white-space:normal}.chartTopics button[aria-pressed=true]{background:#536b5a;color:#fff5de}.chartReply{margin:16px 0 0;border-top:1px solid #bdab8b;padding:14px 0 0;overflow-wrap:anywhere}.chartPractice{font-style:italic;color:#4f634e}';document.head.append(consultStyle);
+const consultStyle=document.createElement('style');consultStyle.textContent='.chartConsultation{margin:24px 0;padding:17px;border-top:2px solid #a38a61;background:#eee3ca;color:#544436}.chartConsultation h2,.chartConsultation h3{font-family:Georgia,"Songti SC",serif}.chartConsultation h3{font-size:19px;line-height:1.4;margin:4px 0 10px}.chartTopics{display:flex;flex-wrap:wrap;gap:6px}.chartConsultation>.chartTopics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}@media(min-width:760px){.chartConsultation>.chartTopics{grid-template-columns:repeat(4,minmax(0,1fr))}}.chartTopics button{flex:1 1 125px;min-height:44px;font-size:14px;white-space:normal}.chartTopics button[aria-pressed=true]{background:#536b5a;color:#fff5de}.chartReply{margin:16px 0 0;border-top:1px solid #bdab8b;padding:14px 0 0;overflow-wrap:anywhere}.chartPractice{font-style:italic;color:#4f634e}';document.head.append(consultStyle);
 
 
 function townFortuneMessage(f){
@@ -4350,9 +4455,10 @@ function sharePublicData(data){
  const pair=v=>Array.isArray(v)&&v.length>=2?[String(v[0]).slice(0,240),String(v[1]).slice(0,240)]:['',''];
  const kind=Object.hasOwn(shareKinds,data.kind)?data.kind:'type';
  const title=pair(data.title),lines=(Array.isArray(data.lines)?data.lines:[]).slice(0,4).map(pair);let accent=/^#[0-9a-f]{6}$/i.test(data.accent||'')?data.accent:'#829a89';
- if(kind==='type'&&/^[EIX][SNX][TFX][JPX]$/.test(title[0])){const traits={E:['Social recharge','社交充电'],I:['Quiet recharge','独处充电'],S:['Practical details','务实细节'],N:['Possibilities','灵感联想'],T:['Logical comparison','理性比较'],F:['People and values','感受与价值'],J:['Plans','偏好计划'],P:['Flexibility','随心应变'],X:['Balanced','偏好持平']};const labels=Array.from(title[0],k=>traits[k]);lines.unshift([labels.slice(0,2).map(v=>v[0]).join(' · '),labels.slice(0,2).map(v=>v[1]).join(' · ')],[labels.slice(2).map(v=>v[0]).join(' · '),labels.slice(2).map(v=>v[1]).join(' · ')]);accent=title[0][1]==='N'?'#a493b4':title[0][1]==='S'?'#849c8a':'#b69d78'}
+ if(kind==='type'&&lines.length<4&&/^[EIX][SNX][TFX][JPX]$/.test(title[0])){const traits={E:['Social recharge','社交充电'],I:['Quiet recharge','独处充电'],S:['Practical details','务实细节'],N:['Possibilities','灵感联想'],T:['Logical comparison','理性比较'],F:['People and values','感受与价值'],J:['Plans','偏好计划'],P:['Flexibility','随心应变'],X:['Balanced','偏好持平']};const labels=Array.from(title[0],k=>traits[k]);lines.unshift([labels.slice(0,2).map(v=>v[0]).join(' · '),labels.slice(0,2).map(v=>v[1]).join(' · ')],[labels.slice(2).map(v=>v[0]).join(' · '),labels.slice(2).map(v=>v[1]).join(' · ')]);accent=title[0][1]==='N'?'#a493b4':title[0][1]==='S'?'#849c8a':'#b69d78'}
+ const takeaway=kind==='tarot'&&Array.isArray(data.takeaway)?pair(data.takeaway):null;
  const cards=kind==='tarot'&&Array.isArray(data.cards)?data.cards.slice(0,3).filter(v=>Number.isInteger(v?.i)&&tarotDeck[v.i]).map(v=>({i:v.i,rev:!!v.rev})):[];
- return {kind,title,lines:lines.slice(0,4),accent,cards}
+ return {kind,title,lines:lines.slice(0,4),accent,cards,takeaway}
 }
 function shareTextLines(c,text,max){
  const chars=/[\u3400-\u9fff]/.test(text),sep=chars?'':' ',parts=chars?Array.from(text.trim()):text.trim().split(/\s+/),lines=[];let row='';
@@ -4380,6 +4486,7 @@ const socialCatCover=[
  {name:'Lucky Opportunist',sky:['#ccb887','#f0dfa9'],coat:'#d6b171',prop:'coin',quote:['Good luck, preferably paid leave.','好运来，最好是带薪假。']}
 ];
 function socialResultQuote(data){
+ if(data.takeaway)return data.takeaway;
  if(data.kind==='tarot'&&data.cards?.length)return shareTarotMood(data.cards).quote;
  if(data.kind==='type'&&/^[EIX][SNX][TFX][JPX]$/.test(data.title[0]))return shareTypeMood(data.title[0]).quote;
  if(data.kind==='soul'){const found=socialCatCover.find(x=>x.name===data.title[0]);if(found)return found.quote}
@@ -4387,7 +4494,7 @@ function socialResultQuote(data){
  return ({type:['My personality is more than my job title.','我的人格，不止工牌上的职位。'],motive:['A tiny discovery about myself.','摸鱼的时候，顺便认识了自己。'],tarot:['The future is not a deadline.','未来不是截止日期。'],fortune:['Today, I am taking a little break.','今天宜摸鱼，也宜善待自己。'],cafe:['Good company. No agenda.','好好相处，不必列议程。'],story:['In another life, I clocked out.','平行人生里，我准时下班了。'],soul:['There is more than one side to this cat.','一只猫，也可以有好多面。']})[data.kind]
 }
 function meowSocialCaption(data,format,cn){
- const mood=data.kind==='tarot'&&data.cards?.length?shareTarotMood(data.cards):data.kind==='type'&&/^[EIX][SNX][TFX][JPX]$/.test(data.title[0])?shareTypeMood(data.title[0]):null;const title=(mood?.title||data.title)[cn?1:0],quote=socialResultQuote(data)[cn?1:0];
+ const mood=data.kind==='tarot'&&data.cards?.length?shareTarotMood(data.cards):data.kind==='type'&&/^[EIX][SNX][TFX][JPX]$/.test(data.title[0])?shareTypeMood(data.title[0]):null;const title=((data.takeaway&&data.title)||mood?.title||data.title)[cn?1:0],quote=socialResultQuote(data)[cn?1:0];
  const invites={soul:['Which cat are you when nobody is watching?','没人在看时，你是哪种摸鱼猫？'],type:['Send this to someone who knows your real personality.','发给那个最懂你的人，看看他说准不准。'],motive:['What secretly keeps you going?','支撑你继续打工的，到底是什么？'],tarot:['What would your cards remind you to make time for?','如果抽到你的牌，它会提醒你留点时间做什么？'],fortune:['What little good thing would make your day?','今天遇到哪件小事，你就会觉得很幸运？'],cafe:['Tag the person you could sit in silence with.','想起了哪个可以一起安静喝茶的人？'],story:['What would you be doing in a parallel life?','平行人生里的你，正在做什么？']};const invite=invites[data.kind][cn?1:0];
  const tags=cn?'#摸鱼小镇 #趣味测试 #治愈系':'#MeowBox #CozyGames #TakeABreak';
  return [cn?'我在摸鱼小镇测到：'+title:'My MeowBox result: '+title,quote,...(data.kind==='tarot'?data.lines.map(v=>v[cn?1:0]):[]),invite,tags,...(format==='xhs'||format==='story'?[]:[meowShareUrl])].join('\n')
@@ -4497,7 +4604,7 @@ function shareTypeMood(code){
 function socialLayout(format){
  const [w,h]=shareFormats[format];return {w,h,left:format==='story'?84:62,right:format==='story'?142:62,top:format==='story'?170:52,bottom:format==='story'?265:42,artH:format==='story'?490:format==='square'?255:format==='xhs'?370:345}
 }
-function sharePaintedKey(data){return ({tarot:'readingInterior',fortune:'valleyClean',soul:'valleyClean',type:'valleyClean',motive:'valleyClean',cafe:'tea',story:'valleyClean'})[data.kind]||'valleyClean'}
+function sharePaintedKey(data){if(data.kind==='tarot'&&data.takeaway)return 'tarotJournal';return ({tarot:'readingInterior',fortune:'valleyClean',soul:'valleyClean',type:'valleyClean',motive:'valleyClean',cafe:'tea',story:'valleyClean'})[data.kind]||'valleyClean'}
 function shareCardArt(cv,data,format,cn){
  const L=socialLayout(format),{w,h,left,right,top,bottom,artH}=L;cv.width=w;cv.height=h;const g=cv.getContext('2d'),width=w-left-right,cx=left+width/2,end=h-bottom,locale=v=>String(v?.[cn?1:0]||''),font=cn?'"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif':'Georgia,serif';
  const accent=data.kind==='tarot'?'#674b80':data.accent,ink='#473749',paper='#fff3dc';
@@ -4511,20 +4618,43 @@ function shareCardArt(cv,data,format,cn){
  const mood=data.kind==='tarot'&&data.cards.length?shareTarotMood(data.cards):data.kind==='type'&&/^[EIX][SNX][TFX][JPX]$/.test(data.title[0])?shareTypeMood(data.title[0]):null;
  const panelTop=top+44;frame(left-12,panelTop,width+24,end-panelTop,26,paper,'#d8b77d');
  line('MEOWBOX  /  '+(cn?'摸鱼小镇':'LITTLE ESCAPE CLUB'),cx,top-2,30,'bold','#fff0c9');
- const artY=panelTop+18;g.save();g.beginPath();g.rect(left+7,artY,width-14,artH);g.clip();if(data.kind==='soul'||data.kind==='tarot'||data.kind==='cafe'||!crop(left+7,artY,width-14,artH))socialCoverIllustration(g,data,left+7,artY,width-14,artH);g.restore();
+ const artY=panelTop+18;g.save();g.beginPath();g.rect(left+7,artY,width-14,artH);g.clip();if(data.kind==='soul'||(data.kind==='tarot'&&!data.takeaway)||data.kind==='cafe'||!crop(left+7,artY,width-14,artH))socialCoverIllustration(g,data,left+7,artY,width-14,artH);g.restore();
  // Print a small editorial label over a reserved strip, never over the result text.
  const chip=locale(shareKinds[data.kind]);frame(left+23,artY+17,Math.min(width-46,390),52,14,'#fff1d9f5','#d8ba89');g.font='bold 27px '+font;g.textAlign='left';g.textBaseline='middle';g.fillStyle=ink;g.fillText(chip,left+40,artY+43,Math.min(width-78,350));
  let y=artY+artH+22;
- if(mood){y=block(locale(mood.title),y,width-45,format==='square'?49:60,2,ink,'bold');y+=5;if(data.kind==='type')line(locale(data.title),cx,y+17,31,'bold',accent),y+=40}
+ if(mood){y=block(locale(data.takeaway?data.title:mood.title),y,width-45,format==='square'?49:60,2,ink,'bold');y+=5;if(data.kind==='type')line(locale(data.title),cx,y+17,31,'bold',accent),y+=40}
  else y=block(locale(data.title),y,width-45,format==='square'?46:58,2,ink,'bold');
  const quote=locale(socialResultQuote(data));y=block(quote,y+5,width-56,format==='square'?30:37,2,'#875040','bold')+12;
  const footerY=end-50,bodyEnd=footerY-15;
  if(data.kind==='tarot'&&data.cards.length){
-  const roles=data.cards.length===3?[['Situation','现状'],['Obstacle','阻碍'],['Advice','建议']]:[['Your card','今日之牌']];
-  const count=data.cards.length,rowH=Math.min(format==='square'?56:70,Math.max(43,(bodyEnd-y- (format==='square'?0:76))/count));
-  for(let i=0;i<count;i++){const card=data.cards[i],d=tarotDeck[card.i],yy=y+i*rowH;frame(left+14,yy,width-28,rowH-6,10,i%2?'#f0dfed':'#ebdfd3',null);const role=locale(roles[i]),name=locale(d)+(card.rev?(cn?' · 逆位':' · Reversed'):(cn?' · 正位':' · Upright'));g.font='bold 23px '+font;g.textBaseline='middle';g.textAlign='left';g.fillStyle='#7e527b';g.fillText(role,left+30,yy+(rowH-6)/2,125);g.font='bold '+(format==='square'?30:34)+'px '+font;g.fillStyle=ink;g.fillText(name,left+166,yy+(rowH-6)/2,width-194)}
+  const roles=data.cards.length===3?[['Situation','现状'],['Notice','留意'],['Next step','下一步']]:[['Your card','今日之牌']];
+  const count=data.cards.length;
+  const rich=Boolean(data.takeaway)&&bodyEnd-y>=count*83;
+  const rowH=rich?Math.min(135,Math.floor((bodyEnd-y-16)/count)):Math.min(format==='square'?56:70,Math.max(43,(bodyEnd-y-(format==='square'?0:76))/count));
+  if(rich)y+=Math.min(48,Math.max(0,(bodyEnd-y-count*rowH)/2));
+  for(let i=0;i<count;i++){
+   const card=data.cards[i],d=tarotDeck[card.i],yy=y+i*rowH;
+   frame(left+14,yy,width-28,rowH-6,10,i%2?'#f0dfed':'#ebdfd3',null);
+   const role=locale(roles[i]),name=locale(d)+(card.rev?(cn?' · 逆位':' · Reversed'):(cn?' · 正位':' · Upright'));
+   const titleY=rich?yy+rowH*.29:yy+(rowH-6)/2;
+   g.font='bold 23px '+font;g.textBaseline='middle';g.textAlign='left';g.fillStyle='#7e527b';
+   g.fillText(role,left+30,titleY,125);g.font='bold '+(format==='square'?30:34)+'px '+font;g.fillStyle=ink;
+   g.fillText(name,left+166,titleY,width-194);
+   if(rich){
+    const meaning=arcanaMeanings[card.i][(card.rev?2:0)+Number(cn)].split(/[.。!?！？]/)[0];
+    block(meaning,yy+rowH*.49,width-116,format==='square'?23:27,rowH>=105?2:1,ink);
+   }
+  }
   y+=count*rowH+5;
-  if(mood?.meaning&&bodyEnd-y>=42)block(locale(mood.meaning),y,width-52,format==='square'?24:30,Math.max(1,Math.min(3,Math.floor((bodyEnd-y)/30))),ink);
+  if(!data.takeaway&&mood?.meaning&&bodyEnd-y>=42)block(locale(mood.meaning),y,width-52,format==='square'?24:30,Math.max(1,Math.min(3,Math.floor((bodyEnd-y)/30))),ink);
+ }else if(data.kind==='type'&&data.lines.length===4){
+  const rowH=Math.min(106,Math.floor((bodyEnd-y)/4));
+  y+=Math.min(40,Math.max(0,(bodyEnd-y-4*rowH)/2));
+  data.lines.forEach((pair,i)=>{
+   const yy=y+i*rowH;
+   frame(left+14,yy,width-28,rowH-6,10,i%2?'#e5e9d9':'#eee3d0',null);
+   line(locale(pair),cx,yy+(rowH-6)/2,format==='square'?26:32,'bold',ink,width-66);
+  });
  }else{
   const body=data.lines.map(locale).filter(Boolean).join('  •  ');if(body&&bodyEnd-y>=30)block(body,y,width-54,format==='square'?30:37,Math.max(1,Math.min(7,Math.floor((bodyEnd-y)/36))),ink)
  }
@@ -4560,7 +4690,14 @@ function openMeowShare(raw,back=null){
 }
 wonderSceneShare=function(){const v=wonderSceneResult;if(v)openMeowShare({kind:wonderSceneMode,title:v.name,lines:[v.desc],accent:v.color})};
 shareTownFortune=function(f){openMeowShare({kind:'fortune',title:f.theme.title,lines:[f.theme.work,f.theme.rest,['Lucky colour: '+f.colour[0]+' · '+f.number,'幸运色：'+f.colour[1]+' · '+f.number]],accent:f.colour[2]},todayHub)};
-function shareReadingResult(v,back=null){const cards=(v.cards||[]).slice(0,3).filter(x=>tarotDeck[x.i]);if(!cards.length)return;const pair=x=>{const d=tarotDeck[x.i];return [d[0]+(x.rev?' · Reversed':' · Upright'),d[1]+(x.rev?' · 逆位':' · 正位')]};const title=cards.length===1?pair(cards[0]):['Three-card reflection','三张牌小记'];openMeowShare({kind:'tarot',title,cards,lines:cards.length===1?(cards[0].rev?[['A moment to reconsider and reflect.','给自己一点重新思考的时间。']]:[tarotDeck[cards[0].i].slice(2,4)]):cards.map(pair),accent:'#9a8295'},back)}
+function shareReadingResult(entry,back=null){
+ if(!entry||![1,3].includes(entry.cards.length))return;
+ if(!pics.tarotJournal){const art=new Image();art.src=tarotJournalArt;pics.tarotJournal=art}
+ const pair=v=>{const d=tarotDeck[v.i];return [d[0]+(v.rev?' · Reversed':' · Upright'),d[1]+(v.rev?' · 逆位':' · 正位')]};
+ const {cards}=entry;
+ const title=cards.length===1?tarotDeck[cards[0].i].slice(0,2):['Three-card reflection','三张牌小记'];
+ openMeowShare({kind:'tarot',title,cards,lines:cards.map(pair),takeaway:readingTakeaway(cards),accent:'#9a8295'},back);
+}
 const shareStyles=document.createElement('style');shareStyles.textContent='.meowSharePanel{display:flex;flex-direction:column;align-items:stretch;gap:9px;max-width:440px;margin:auto}.meowShareTabs{display:flex;flex-wrap:wrap;gap:6px}.meowShareTabs button{flex:1;min-width:70px}.meowSharePanel button{min-height:44px;white-space:normal;line-height:1.3}.meowShareTabs button[aria-pressed=true]{background:#4d6556;color:#fff2d5}.meowSharePreview{display:block;width:auto;max-width:100%;max-height:48dvh;object-fit:contain;margin:3px auto;border:1px solid #ac9773}.meowShareStatus{font-size:13px;min-height:1.4em;margin:0}.meowShareHelp{line-height:1.5;font-size:12px;color:#655843}';document.head.append(shareStyles);
 
 /* Entry composition and quiet signage. Keep the existing door ids and 44px hit boxes. */
@@ -6048,19 +6185,12 @@ npcTalk=function(n){
  if(choices&&choices.children.length<4)b(choices,tr('Anything happening today?','今天有什么热闹？'),()=>say(tr(...n.n),tr(...v.line),[[tr('Visit the area','去看看'),()=>journey(v.place)],[tr('Keep wandering','继续逛'),closeTalk]]));
  return result
 };
-/* Chart follow-ups use a local, explicit topic matcher and never send or save typed text. */
-function chartFollowTopic(text){
- const s=String(text).toLowerCase();
- const groups=[
- [8,/career|job|work|promotion|boss|事业|工作|升职|老板/iu],
- [2,/relationship|love|partner|marriage|爱情|感情|婚姻|对象/iu],
- [4,/money|finance|salary|save|budget|金钱|财运|薪水|存钱/iu],
- [6,/travel|move|relocat|旅行|搬家|迁移/iu],
- [9,/friend|support|朋友|人际|贵人/iu],
- [11,/family|parent|家庭|父母|家人/iu],
- [10,/rest|stress|sleep|wellbeing|休息|压力|睡眠|放松/iu],
- [0,/character|personality|identity|性格|自己|命宫/iu]];
- return groups.find(([,pattern])=>pattern.test(s))?.[0]??null
+/* Language-dependent chart topics: match complete English words instead
+   of accidental substrings (e.g. networking is not work). */
+function chartFollowTopics(value){
+ const v=String(value).trim().toLowerCase();if(!v||v.length>160)return [];
+ const terms=[[8,/\b(career|jobs?|work|promotion|boss|office)\b|事业|工作|升职|老板/iu],[2,/\b(relationship|love|partner|marriage|dating)\b|爱情|感情|婚姻|对象/iu],[4,/\b(money|finance|salary|savings?|budget)\b|金钱|财运|薪水|存钱/iu],[6,/\b(travel|moving|move|relocat\w*)\b|旅行|搬家|迁移/iu],[7,/\b(friends?|friendship|support|networking)\b|朋友|人际|贵人/iu],[11,/\b(family|parents?)\b|家庭|父母|家人/iu],[10,/\b(rest|stress|sleep|wellbeing|relax)\b|休息|压力|睡眠|放松/iu],[0,/\b(character|personality|identity)\b|性格|自己|命宫/iu]];
+ return terms.filter(([,re])=>re.test(v)).map(([k])=>k);
 }
 const chartFollowBefore=renderChartConsultation;
 renderChartConsultation=function(out,z){
@@ -6068,10 +6198,26 @@ renderChartConsultation=function(out,z){
  const form=element('form','',section,'chartFollowForm'),label=element('label',tr('Ask a follow-up question','继续问月师傅'),form);
  const field=element('input','',label);field.maxLength=160;field.required=true;field.placeholder=tr('What is on your mind?','你还想了解什么？');
  const send=element('button',tr('Explore','继续了解'),form);send.type='submit';
- const reply=element('p','',section,'chartPractice');reply.setAttribute('role','status');
- element('small',tr('Local topic matching only, not AI. Do not enter private details. Your question is cleared after use.','仅在本机匹配主题，并非AI。请勿输入个人资料，提问后会清空。'),section);
- form.onsubmit=e=>{e.preventDefault();const k=chartFollowTopic(field.value);field.value='';if(k===null){reply.textContent=tr('Choose a chart topic above. This local guide cannot answer every question.','可以先选择上方命盘主题，本地解读无法回答所有问题。');return}
-  const button=section.querySelector('[data-topic="'+k+'"]');if(button)button.click();reply.textContent=tr('I have opened the closest chart topic for reflection.','已为你打开最接近的命盘主题，供你思考。')};
+ const reply=element('div','',section,'chartFollowReply');
+ const status=element('p','',reply,'chartPractice');status.setAttribute('role','status');
+ const matches=element('div','',reply,'chartTopics');
+ element('small',tr('The guide matches topics on this device. Your question is cleared after use.','小馆会在本机匹配主题，提问后会清空。'),section);
+ function openTopic(k){
+  section.querySelector('.chartTopics [data-topic="'+k+'"]')?.click();
+  const result=section.querySelector('.chartReply h3');
+  if(result){result.tabIndex=-1;result.focus({preventScroll:true});result.scrollIntoView({block:'center',behavior:'instant'})}
+ }
+ form.onsubmit=e=>{
+  e.preventDefault();
+  const topics=chartFollowTopics(field.value);field.value='';matches.replaceChildren();
+  if(!topics.length){status.textContent=tr('Try a topic like work, friendships or rest.','可以试试工作、朋友或休息等主题。');return}
+  if(topics.length===1){status.textContent='';openTopic(topics[0]);return}
+  status.textContent=tr('I heard a few topics. Which should we start with?','听起来有几个方向。你想先聊哪一个？');
+  topics.forEach(k=>{
+   const topic=chartConsultTopics.find(v=>v.k===k);
+   if(topic)b(matches,tr(...topic.name),()=>openTopic(k));
+  });
+ };
 };
 let indoorStepAt=-100;
 const footstepsRoomBefore=drawRoom;

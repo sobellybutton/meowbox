@@ -608,6 +608,7 @@ jobs:
         run: |
           python3 -m http.server 8767 >/tmp/meowbox-share-server.log 2>&1 &
           node scripts/share-export-test.cjs
+          node scripts/reading-journey-test.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

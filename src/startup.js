@@ -537,7 +537,6 @@ openReadingJournal=function(){
  fiveJournalBefore();const q=$('content'),archive=fiveReadingArchive();if(!archive.length)return;
  const wrap=element('section','',q,'fiveReadingBook');element('h2',tr('Five-card readings','五张牌手记'),wrap);
  for(const v of archive){const row=element('article','',wrap,'fiveReadingEntry');element('strong',v.date,row);element('p',v.cards.map(c=>tr(tarotDeck[c.i][0],tarotDeck[c.i][1])).join(' · '),row);b(row,tr('Read again','重温解读'),()=>fiveReadingResult(v,openReadingJournal))}
- const back=q.querySelector('.row button:first-child');const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();openReadingJournal()}
 };
 const fiveReadingStyle=document.createElement('style');fiveReadingStyle.textContent='.fiveReadingBook{background:#f2e4c9;color:#514638;border:3px double #a99168;padding:12px;margin:12px 0}.fiveReadingEntry{border-bottom:1px dashed #b49d77;padding:10px 0;overflow-wrap:anywhere}.fiveReadingEntry strong,.fiveReadingEntry small{display:block}.fiveReadingEntry strong{font:600 17px/1.4 Georgia,"Songti SC",serif;color:#53674e}.fiveReadingEntry p{line-height:1.6}.fiveReadingBook button{min-height:44px;white-space:normal}';document.head.append(fiveReadingStyle);
 
@@ -643,17 +642,8 @@ readingTopic=function(i){
  [tr('Back to the topics','返回主题'),closeTalk]
  ])
 };
-const tarotCommentShowBefore=readingShow;
-readingShow=function(i){
- const v=state.readCards?.[i];const result=tarotCommentShowBefore(i);
- if(!v||!talkOpen||state.readFlip?.[i]<0||t-state.readFlip[i]<.72)return result;
- const joke=tarotCommentary(tarotDeck[v.i]?.[0]||'',v.rev,state.readTopic,state.tarotTone);const line=$('line');
- if(joke&&line)line.textContent+='\n\n'+tr('A little cosmic side-eye: ','宇宙轻轻吐槽：')+tr(...joke);
- if(state.readCards?.length&&state.readFlip?.every(v=>v>=0&&t-v>=.72)){const snapshot=tarotShareSnapshot(state);if(snapshot)b($('choices'),tr('Make a keepsake card','制作纪念卡'),()=>tarotKeepsakePage(snapshot))}
- return result
-};
 function tarotShareSnapshot(source){
- const cards=source.readCards||source.cards;if(!Array.isArray(cards)||![1,3,5].includes(cards.length)||!cards.every(v=>Number.isInteger(v.i)&&tarotDeck[v.i]&&typeof v.rev==='boolean'))return null;
+ const cards=source.readCards||source.cards;if(!Array.isArray(cards)||![1,3,5].includes(cards.length)||!cards.every(v=>Number.isInteger(v?.i)&&tarotDeck[v.i]&&typeof v.rev==='boolean'))return null;
  return {cards:cards.map(v=>({i:v.i,rev:v.rev})),tone:source.tarotTone||source.tone||'gentle',topic:Number.isInteger(source.readTopic)?source.readTopic:Number.isInteger(source.topic)?source.topic:-1}
 }
 /* Keep headline, artwork, labels and footer in distinct reserved bands. */

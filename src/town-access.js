@@ -208,7 +208,9 @@ function yueAcceptDate(profile,date,today){
 function yueAcceptChart(profile,values,today){
  const [date,time,tz,lat,lon]=values;
  if(!yueValidDate(date,today)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)||[tz,lat,lon].some(v=>v===''||!Number.isFinite(Number(v)))||Number(tz)<-12||Number(tz)>14||Number(lat)<-66||Number(lat)>66||Math.abs(Number(lon))>180)return false;
- yueAcceptDate(profile,date,today);profile.chart={date,time,tz,lat,lon};return true
+ const same=profile.chart&&[date,time,tz,lat,lon].every((v,i)=>v===profile.chart[['date','time','tz','lat','lon'][i]]);
+ const topic=same?profile.chart.topic:null;
+ yueAcceptDate(profile,date,today);profile.chart={date,time,tz,lat,lon,topic};return true
 }
 function yueClearProfile(subject){if(!Object.hasOwn(yueSessionProfiles,subject))return;yueSessionProfiles[subject]={date:'',chart:null,year:null,sign:null,almanacReady:false}}
 function yueSubjectName(){return yueSubject==='self'?tr('My reading','我的命盘'):tr('Someone else’s reading','帮别人看看')}
@@ -261,10 +263,15 @@ destinyPage=function(edit=false,selectedTopic=null,draft=null){
  b(toolbar,tr('Zodiac & Tai Sui','生肖流年'),()=>yueZodiacAlmanac());b(toolbar,tr('Weekly star signs','每周星座'),()=>starSignPage());
  const remember=()=>{if(!out.querySelector('.ziGrid'))return;const values=fields.map(v=>v.value);if(!yueAcceptChart(profile,values,shrineClock().day))return;
   form.hidden=true;editButton.hidden=false;const illustration=q.querySelector('.destinyChamber');if(illustration)illustration.classList.add('yueChartReadMode');
-  if(selectedTopic!==null)out.querySelector('.chartTopics [data-topic="'+selectedTopic+'"]')?.click()
+  const topic=selectedTopic??profile.chart.topic;
+  if(topic!=null)out.querySelector('.chartTopics [data-topic="'+topic+'"]')?.click()
  };
  form.addEventListener('submit',remember);
- yueReturnControls(q,()=>{const topic=out.querySelector('.chartTopics [aria-pressed="true"]')?.dataset.topic??null;destinyPage(!form.hidden,topic,form.hidden?null:fields.map(v=>v.value))},()=>destinyPage());
+ out.addEventListener('click',e=>{
+  const topic=e.target.closest('button[data-topic]')?.dataset.topic;
+  if(profile.chart&&topic!==undefined)profile.chart.topic=topic;
+ });
+ yueReturnControls(q,()=>{destinyPage(!form.hidden,null,form.hidden?null:fields.map(v=>v.value))},()=>destinyPage());
  if(profile.chart&&!edit&&form.checkValidity()){form.requestSubmit()}else form.hidden=false
 };
 const yueSessionZodiacBefore=yueZodiacAlmanac;

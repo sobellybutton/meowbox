@@ -7,7 +7,6 @@ ziChart=function(date,hr){
  return z
 };
 const friendPalaceRelease=chartConsultTopics.find(v=>v.k===9);if(friendPalaceRelease)friendPalaceRelease.k=7;
-const chartFollowRelease=chartFollowTopic;chartFollowTopic=function(v){const k=chartFollowRelease(v);return k===9?7:k};
 let releaseSignViewport='';const releaseSignBefore=syncSigns;
 syncSigns=function(){const key=W+'x'+H;if(key!==releaseSignViewport){releaseSignViewport=key;for(const btn of signButtons.values()){btn._signSize=null;btn._signOffset=null;btn._clearAt=0}lastDoorLayoutAt=-Infinity}return releaseSignBefore()};
 
@@ -72,18 +71,62 @@ renderChartConsultation=function(out,z){
  section.prepend(panel);
 };
 /* All playable results retain the original short reflective description on share. */
-const releaseWonderShareBefore=wonderSceneShare;
-wonderSceneShare=function(){
- if(!wonderSceneResult||wonderSceneMode!=='type')return releaseWonderShareBefore();
- const data=releaseAssessmentBalance('type',wonderSaved.type);if(!data)return releaseWonderShareBefore();
- const lines=data.map(v=>[v.axis[0]+' '+v.first+'/4 · '+v.axis[1]+' '+v.second+'/4',v.axis[0]+' '+v.first+'/4 · '+v.axis[1]+' '+v.second+'/4']);
- openMeowShare({kind:'type',title:wonderSceneResult.name,lines,accent:wonderSceneResult.color})
-};
-/* Language-dependent chart topics: match complete English words instead
-   of accidental substrings (e.g. networking is not work). */
-chartFollowTopic=function(value){
- const v=String(value).trim().toLowerCase();if(!v||v.length>160)return null;
- const terms=[[8,/\b(career|jobs?|work|promotion|boss|office)\b|事业|工作|升职|老板/iu],[2,/\b(relationship|love|partner|marriage|dating)\b|爱情|感情|婚姻|对象/iu],[4,/\b(money|finance|salary|savings?|budget)\b|金钱|财运|薪水|存钱/iu],[6,/\b(travel|moving|move|relocat\w*)\b|旅行|搬家|迁移/iu],[7,/\b(friends?|friendship|support|networking)\b|朋友|人际|贵人/iu],[11,/\b(family|parents?)\b|家庭|父母|家人/iu],[10,/\b(rest|stress|sleep|wellbeing|relax)\b|休息|压力|睡眠|放松/iu],[0,/\b(character|personality|identity)\b|性格|自己|命宫/iu]];
- return terms.find(([,re])=>re.test(v))?.[0]??null
+const preferenceResultAxes=[
+ [['Where you recharge','如何恢复精力'],['With people','和别人相处'],['Quiet time','独处'],['Think of your last busy day. What actually helped you recover?','想想上一次忙完以后，做什么真的让你恢复了精力？']],
+ [['What you notice','你先注意什么'],['Concrete details','具体细节'],['New possibilities','新的可能'],['With a new idea, do you want an example first or room to explore?','遇到新点子时，你想先看例子，还是先自己探索？']],
+ [['How you decide','你怎么做决定'],['Consistent criteria','一致的标准'],['People and values','人和价值观'],['Recall a tricky decision. Which consideration was easiest to overlook?','回想一个难做的决定。当时最容易漏掉哪方面的考虑？']],
+ [['How you make plans','你怎么安排事情'],['A clear plan','先定计划'],['Room to adapt','保留弹性'],['Where would a little structure help, and where would it get in your way?','哪些事有个计划会更轻松？哪些事留点弹性更好？']]
+];
+const motiveReflectionPrompts=[
+ ['Pick one task that can be good enough today.','选一件今天做到够好就可以的事。'],
+ ['Before offering help, ask yourself what support you need too.','帮忙之前，也问问自己需要什么支持。'],
+ ['Name something you enjoyed even though nobody kept score.','想一件没人打分、你却做得开心的事。'],
+ ['What did you enjoy recently without feeling the need to explain it?','最近有没有哪件事，你喜欢就喜欢，不用解释？'],
+ ['Where would sharing one unfinished thought make something easier?','有没有哪件事，只要说出一个还没想完整的点子，就会轻松一点？'],
+ ['Pick one uncertainty you can leave without a backup plan today.','挑一件今天可以不准备备用方案的事。'],
+ ['What is one good option worth staying with for a little longer?','有没有一个还不错的选择，值得多试一会儿？'],
+ ['Recall when you felt heard without having to push for it.','回想一次不用争取也有人认真听你说话的时候。'],
+ ['Practise saying one preference before asking what everyone else wants.','在问大家想要什么之前，先说出自己的一个偏好。']
+];
+function openWonderResult(mode,result){
+ page(tr(...wonderSceneNames[mode]),tr(...result.name),q=>{
+  const body=element('section','',q,'readingNotes');
+  const saved=wonderSaved[mode],balance=releaseAssessmentBalance(mode,saved);
+  if(mode==='type'&&balance){
+   element('p',tr('Each pair shows four answers from this visit. An even split can reflect different situations.','每一组来自这次的四个回答。两边持平，可能只是你在不同情境下会有不同做法。'),body);
+   balance.forEach(({first,second},i)=>{
+    const item=element('article','',body,'readingNote'),[title,a,b,prompt]=preferenceResultAxes[i];
+    element('h2',tr(...title),item);
+    element('p',tr(...a)+' '+first+'/4 · '+tr(...b)+' '+second+'/4',item);
+    element('p',tr(...prompt),item,'readingPrompt');
+   });
+  }else if(mode==='motive'&&balance){
+   element('p',tr('Each motive has three statements. Where scores are close, read the themes side by side.','每种动力对应三道题。分数接近时，可以把它们放在一起看。'),body);
+   const leaders=balance.flat?[]:balance.close;
+   const list=element('ol','',body,'wonderMotiveScores');
+   balance.ranked.forEach(({index,score})=>element('li',tr(...wonderMotives[index].slice(0,2))+' · '+score+'/6',list));
+   if(balance.flat)element('p',tr(...result.desc),body);
+   leaders.slice(0,3).forEach(({index})=>element('p',tr(...motiveReflectionPrompts[index]),body,'readingPrompt'));
+  }else element('p',tr(...result.desc),body);
+  b(body,tr('Share keepsake','分享纪念卡'),()=>wonderSceneShare(()=>openWonderResult(mode,result)));
+  b(body,tr('Try again','再测一次'),()=>wonderSceneOpen(mode));
+ });
+ journalLanguage(()=>openWonderResult(mode,result));
+}
+wonderSceneShare=function(back=null){
+ const result=wonderSceneResult,mode=wonderSceneMode;if(!result)return;
+ let lines=[result.desc];
+ if(mode==='type'){
+  const balance=releaseAssessmentBalance(mode,wonderSaved.type);
+  if(balance)lines=balance.map(({first,second},i)=>{
+   const [,a,b]=preferenceResultAxes[i];
+   return a.map((label,j)=>label+' '+first+'/4 · '+b[j]+' '+second+'/4');
+  });
+ }
+ if(mode==='motive'){
+  const balance=releaseAssessmentBalance(mode,wonderSaved.motive),lead=balance?.ranked[0];
+  if(lead&&!balance.flat&&balance.close.length===1)lines=[wonderMotives[lead.index].slice(2,4),motiveReflectionPrompts[lead.index]];
+ }
+ openMeowShare({kind:mode,title:result.name,lines,accent:result.color},back);
 };
 const releaseChartStyle=document.createElement('style');releaseChartStyle.textContent='.releaseChartDetails{padding:12px;border:1px solid #b7a17c;border-radius:5px;background:#f6ead3;margin:0 0 14px;line-height:1.45}.releaseChartDetails p{margin:5px 0}.releaseChartDetails small{display:block;font-size:12px}';document.head.append(releaseChartStyle);

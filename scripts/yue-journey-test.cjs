@@ -33,6 +33,15 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
    await click(p.locator('.chartTopics [data-topic="8"]'));
    assert(await p.locator('.chartTopics [data-topic="8"]').getAttribute('aria-pressed')==='true','Career topic not selected');
    await p.screenshot({path:'test-results/'+name+'-yue-chart.png'});
+   const question=p.locator('.chartFollowForm input');
+   await question.fill('How do I balance work and sleep?');
+   await click(p.locator('.chartFollowForm button'));
+   assert(await question.inputValue()==='', 'Private question retained after submission');
+   assert(await p.locator('.chartFollowReply button').count()===2,'Ambiguous question should offer two topics');
+   await click(p.locator('.chartFollowReply button').last());
+   assert(await p.locator('.chartTopics [data-topic="10"]').getAttribute('aria-pressed')==='true','Rest topic not selected');
+   await p.screenshot({path:'test-results/'+name+'-yue-follow-up.png'});
+
    await click(p.locator('.yueInlinePeople').getByRole('button',{name:'Someone else',exact:true}));
    assert(await p.locator('.astroForm input[type=date]').inputValue()==='','Other profile inherited own birth date');
    await p.locator('.astroForm input[type=date]').fill('1995-05-06');
@@ -45,6 +54,8 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
    await p.locator('.chartConsultation').waitFor();
    assert(await p.locator('.astroForm').isHidden(),'Switching back required form');
    assert(await p.evaluate(()=>yueSessionProfiles.self.chart?.date==='1990-06-15'),'Own chart changed');
+   assert(await p.locator('.chartTopics [data-topic="10"]').getAttribute('aria-pressed')==='true','Own topic was not restored');
+
    await click(p.locator('.yueChartTools').getByRole('button',{name:'Zodiac & Tai Sui',exact:true}));
    await p.locator('.yueReadingFront').waitFor();
    assert(await p.locator('.yueAlmanacForm input[type=date]').inputValue()==='1990-06-15','Date not reused');
