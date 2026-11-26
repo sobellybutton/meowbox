@@ -1410,8 +1410,9 @@ chooseStressTarget=function(index){
 };
 function mb5PrepareAdvance(){
  if(activity!=='hit'||room!=='fish'||!Number.isFinite(state.paperPrepAt))return;
- if(document.hidden||talkOpen||transitioning||$('page').style.display==='block'){
-  delete state.paperPrepAt;refreshControls();return
+ if(document.hidden)return;
+ if(talkOpen||transitioning||$('page').style.display==='block'){
+  delete state.paperPrepAt;state.paperPrepared=true;refreshControls();return
  }
  if(mb5PrepProgress(t,state.paperPrepAt)>=1){
   delete state.paperPrepAt;state.paperPrepared=true;
@@ -1501,6 +1502,8 @@ function mb5ClockField(kind,q){
  if(kind==='bubbleTea'&&['pouring','seasoning','sealing','sip'].includes(q.teaStage))return 'teaAt';
  if(kind==='cook'&&q.tasteAt!==undefined&&!q.tasted)return 'tasteAt';
  if(kind==='claw'&&q.dropping&&Number.isFinite(q.clawAt))return 'clawAt';
+ if(kind==='blindBox'&&q.boxStage==='opening'&&Number.isFinite(q.boxAt))return 'boxAt';
+ if(kind==='hit'&&Number.isFinite(q.paperPrepAt))return 'paperPrepAt';
  if(kind==='deerVisit'&&['bow','feed','watch'].includes(q.deerPhase))return 'deerAt';
  return null
 }

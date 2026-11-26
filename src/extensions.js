@@ -1013,7 +1013,7 @@ function incenseRitualTick(q,now){
  if(next){q.prayerStage=next;q.prayerAt=now}return next
 }
 function requestIncenseAction(action){
- if(activity!=='prayer'||talkOpen||transitioning||$('page').style.display==='block'||!incenseRitualAction(state,action,t))return;
+ if(activity!=='prayer'||document.hidden||!proposal.hidden||talkOpen||transitioning||$('page').style.display==='block'||!incenseRitualAction(state,action,t))return;
  if(action==='take')sound(460);if(action==='bow')hint('Keep your wish in your heart.','把心愿放在心里。');
  if(action==='offer')hint('Place the three sticks upright in the incense burner.','将三炷香轻轻插入香炉。');
  syncRitualBar()
@@ -3251,18 +3251,22 @@ function todayHub(){
 $('dockScoop').onclick=todayHub;
 const ritualActionBar=element('div','',$('game'),'ritualActionBar');ritualActionBar.id='ritualActionBar';ritualActionBar.hidden=true;
 let ritualActionKey='';
+function pawRitualPhase(stage){return ['approach','collect','taking'].includes(stage)?1:['lightReady','lighting'].includes(stage)?2:['walkMat','hold','bow'].includes(stage)?3:['offer','placing','returnMat','complete'].includes(stage)?4:0}
 function syncRitualBar(){
- const show=activity==='prayer'&&!talkOpen&&proposal.hidden&&$('page').style.display!=='block';
+ const show=activity==='prayer'&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block';
  if(!show){ritualActionBar.hidden=true;ritualActionKey='';return}
  const stage=state.prayerStage,held=state.prayerHeld||0,bows=state.bows||0;
  const key=[stage,held,bows,zh].join('|');if(key===ritualActionKey)return;ritualActionKey=key;ritualActionBar.replaceChildren();
  const steps={collect:[tr('Take a joss stick','取一炷香')+' ('+held+'/3)','take'],lightReady:[tr('Light the three sticks','点燃三炷香'),'light'],hold:[tr('Bow','鞠躬')+' '+(bows+1)+'/3','bow'],offer:[tr('Place incense in burner','将香插入香炉'),'offer']};
  ritualActionBar.hidden=stage==='complete';
  if(ritualActionBar.hidden)return;
+ const phase=pawRitualPhase(stage),names=[['Collect incense','取香'],['Light incense','点香'],['Bow three times','三次鞠躬'],['Offer incense','上香']];
+ if(phase)element('small',phase+'/4 · '+tr(...names[phase-1]),ritualActionBar,'pawRitualPhase');
  if(steps[stage]){const [label,action]=steps[stage];b(ritualActionBar,label,()=>requestIncenseAction(action))}
  else {const messages={approach:['Walking to the incense stand…','走向香台……'],taking:['Picking up the incense…','正在取香……'],lighting:['Lighting incense…','正在点香……'],walkMat:['Walking to the altar…','走到香案前……'],bow:['A quiet bow…','静心行礼……'],placing:['Offering incense…','正在上香……'],returnMat:['Stepping back…','退后一步……']};const status=element('p',tr(...(messages[stage]||['A quiet moment','片刻静心'])),ritualActionBar,'incenseRitualStatus');status.setAttribute('role','status')}
 }
 const quietUiStyle=document.createElement('style');quietUiStyle.textContent='#ritualActionBar{position:absolute;z-index:5;bottom:calc(env(safe-area-inset-bottom,0px) + 75px);left:50%;transform:translateX(-50%);width:min(80vw,260px);text-align:center}#ritualActionBar[hidden]{display:none!important}#ritualActionBar button{width:100%;min-height:48px;background:#f2e4c6;color:#584732;font-size:16px;border:1px solid #a28b61;border-radius:5px}body.meow-dialogue #movePad,body.meow-dialogue #moveGuide,body.meow-dialogue #walkHelp,body.meow-dialogue #gameControls,body.meow-dialogue #ritualActionBar,body.meow-dialogue #hint{display:none!important;pointer-events:none!important}#dialogue{z-index:12!important}#luck{display:none!important}#dockScoop .dockIcon{font-size:21px}';document.head.append(quietUiStyle);
+const pawRitualStyle=document.createElement('style');pawRitualStyle.textContent='#ritualActionBar .pawRitualPhase{display:block;font:600 11px/1.4 system-ui;color:#574532;background:#f1e4c9;border:1px solid #ac9774;border-radius:3px;width:max-content;max-width:100%;margin:0 auto 3px;padding:2px 8px}';document.head.append(pawRitualStyle);
 const sayBeforeQuiet=say,closeBeforeQuiet=closeTalk;
 say=function(...args){joystickReset();drag=null;const result=sayBeforeQuiet(...args);document.body.classList.add('meow-dialogue');movePad.hidden=true;moveGuide.hidden=true;return result};
 closeTalk=function(...args){const result=closeBeforeQuiet(...args);document.body.classList.remove('meow-dialogue');return result};
@@ -4404,7 +4408,20 @@ function careStart(action){
  const messages={feed:['The cat is inspecting dinner.','猫猫正在检查晚饭。'],water:['Fresh water is on the way.','新鲜水来了。'],play:['Move the feather across the grass.','在草地上轻轻拖动羽毛。'],pet:['Stroke along the back, slowly.','顺着背部慢慢摸。'],rest:['Let the cat settle down in peace.','让猫猫安静地睡一会儿。']};
  careMessage(...messages[action]);careSync()
 }
+let pawCareSleep=null;
+function pawCareVisibility(hidden,now){
+ if(!Number.isFinite(now))return;
+ const a=activity==='pet'?state.care:null;
+ if(hidden){pawCareSleep=a&&a.phase!=='idle'?{a,phase:a.phase,at:now}:null;return}
+ const p=pawCareSleep;pawCareSleep=null;if(!p||p.a!==a||p.phase!==a.phase)return;
+ const elapsed=Math.max(0,now-p.at);
+ if(Number.isFinite(a.at))a.at+=elapsed;
+ if(Number.isFinite(a.returnAt))a.returnAt+=elapsed;
+ if(Number.isFinite(a.tickAt))a.tickAt+=elapsed;
+}
+document.addEventListener('visibilitychange',()=>pawCareVisibility(document.hidden,performance.now()/1000));
 function careTick(){
+ if(document.hidden)return;
  const a=state.care,age=t-a.at,dt=clamp(t-(a.tickAt??t),0,.05);a.tickAt=t;
  if(a.phase==='return'){const f=poseEase(clamp((t-a.returnAt)/.7,0,1));a.x=a.returnFromX+(400-a.returnFromX)*f;a.y=a.returnFromY+(535-a.returnFromY)*f;if(f>=1){a.phase='idle';careSync()}return}
  if(a.phase==='feed'||a.phase==='water'){
@@ -4627,12 +4644,13 @@ function parkCatFrame(phase,age,clock,assisted=false,moving=false,trust=50){
  if(phase==='pet'||clock%5.2<.17||trust>65&&clock%6<.5)return 1;
  return 0
 }
+function pawCatDirection(a){if(a.phase==='return')return a.returnFromX>400?-1:1;if(a.phase==='feed')return -1;if(a.phase==='water')return 1;if(a.phase==='play'&&a.drag&&Number.isFinite(a.drag.x))return a.drag.x<a.x?-1:1;if(a.phase==='play'&&a.assisted&&Number.isFinite(a.x)&&Number.isFinite(a.pawPreviousX))return a.x<a.pawPreviousX?-1:a.x>a.pawPreviousX?1:(a.pawFacing||1);return a.pawFacing||1}
 const catArtDraft=careCatArt;
 careCatArt=function(a){
  const im=productionVisual('parkCats');if(!im)return catArtDraft(a);
  const kind=Math.max(0,Math.min(4,state.petKind??0)),age=Math.max(0,t-a.at);
  const frame=residentReducedMotion.matches?(a.phase==='rest'?6:['feed','water'].includes(a.phase)&&age>=.9?4:a.phase==='pet'?1:0):parkCatFrame(a.phase,age,t,a.assisted,!!a.drag,a.values.trust);
- const dir=a.phase==='return'?(a.returnFromX>400?-1:1):a.phase==='feed'?-1:a.phase==='play'&&a.drag&&a.drag.x<a.x?-1:1;
+ const dir=pawCatDirection(a);a.pawFacing=dir;a.pawPreviousX=a.x;
  const resting=frame===6,pounce=frame===7,bob=pounce?-Math.abs(Math.sin(age*5))*5:resting?Math.sin(t*2)*.6:0;
  ctx.save();ctx.translate(a.x,a.y);ellipse(0,3,resting?58:72,resting?10:12,'#393d2f38');ctx.scale(dir,1);
  ctx.drawImage(im,frame*220,kind*140,220,140,-110,-120+bob,220,140);
@@ -7904,6 +7922,8 @@ function blindShopCounter(x,y,w){
  for(let i=0;i<3;i++)line(x+12,y+19+i*9,x+w-12,y+19+i*9,'#bd9973',1);
  ctx.restore()
 }
+function pawBoxReveal(age,reduced=false){if(reduced||age>=.95)return {lid:1,figure:1,done:true};return {lid:Math.max(0,age/.95),figure:Math.max(0,(age-.30)/.65),done:false}}
+function pawFigureRarity(kind){return ({common:['Everyday','日常款'],uncommon:['Special','特别款'],rare:['Rare','稀有款'],secret:['Secret','隐藏款']})[kind]||['Companion','小伙伴']}
 function drawBlindShopStage(){
  const stage=state.boxStage,age=t-state.boxAt,portrait=W<H,stock=blindStockRemaining();
  // One authored shop sign, grounded shelves, and a work counter. The existing
@@ -7922,16 +7942,17 @@ function drawBlindShopStage(){
  label(tr('Collection','收藏册'),400,665,blindCollectionPage);return
  }
  const held=drag?.id==='boxShake'&&stage==='shake',x=held?Math.max(335,Math.min(465,drag.x)):400,y=held?Math.max(450,Math.min(535,drag.y)):515;
- const opening=stage==='opening'?poseEase(age/.95):stage==='result'?1:0;
+ const reveal=stage==='opening'?pawBoxReveal(age,residentReducedMotion.matches):stage==='result'?{lid:1,figure:1,done:true}:{lid:0,figure:0,done:false};
+ const opening=poseEase(reveal.lid);
  drawRitualPose(270,560,1.15,{reach:held?{x:x-38,y:y-35}:null});
  blindShopCounter(245,525,310);
  if(stage==='opening'||stage==='result'){
  const v=boxPrizes[state.boxPrize];
  boxArt(332,515,.82,state.boxPick,opening,0);
  ellipse(458,522,48,8,'#5f49383c');round(408,507,100,17,4,'#d7bb8b','#98724e');
- if(v){ctx.save();ctx.globalAlpha=Math.max(.12,opening);drawBlindCollectible(458,508,v,1.42);ctx.restore()}
- if(stage==='opening'&&age>=.95){boxAward();if(v)toast(tr('Meet '+v[0],'遇见'+v[1]))}
- if(stage==='result'&&v){activityFitText(tr(v[0],v[1]),400,584,19,310,'#fff1d0');activityFitText(tr(...blindFigureLore[state.boxPrize]),400,610,13,320,'#fff1d0');label(tr('Back to shelf','回到货架'),310,650,()=>start('blindBox'));label(tr('Collection','收藏册'),500,650,blindCollectionPage)}
+ if(v&&reveal.figure>0){ctx.save();ctx.globalAlpha*=poseEase(reveal.figure);drawBlindCollectible(458,508+(1-reveal.figure)*10,v,1.42);ctx.restore()}
+ if(stage==='opening'&&reveal.done&&!document.hidden){boxAward();if(v)toast(tr('Meet '+v[0],'遇见'+v[1]))}
+ if(stage==='result'&&v){activityFitText(tr(...pawFigureRarity(v[4])),400,558,12,310,'#ffe5ad');activityFitText(tr(v[0],v[1]),400,584,19,310,'#fff1d0');activityFitText(tr(...blindFigureLore[state.boxPrize]),400,610,13,320,'#fff1d0');label(tr('Back to shelf','回到货架'),310,650,()=>start('blindBox'));label(tr('Collection','收藏册'),500,650,blindCollectionPage)}
  return
  }
  boxArt(x,y,1.15,state.boxPick,0,held?Math.sin(t*20)*.12:0);
