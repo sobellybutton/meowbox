@@ -7359,4 +7359,88 @@ Object.assign(pawGuestWindows,{
  'traveller_01_sven_flatpack':{every:3,hours:[9,17]}
 });
 
+
+/* PAW_ZWDS_SHARE_BEGIN */
+const pawZwdsStarNames=Object.freeze({
+ '紫微':'Zi Wei','天机':'Tian Ji','太阳':'Tai Yang','武曲':'Wu Qu','天同':'Tian Tong','廉贞':'Lian Zhen','天府':'Tian Fu','太阴':'Tai Yin','贪狼':'Tan Lang','巨门':'Ju Men','天相':'Tian Xiang','天梁':'Tian Liang','七杀':'Qi Sha','破军':'Po Jun'
+});
+function pawZwdsPublic(raw,topics=chartConsultTopics,themes=chartStarThemes){
+ const topic=topics.find(v=>v.k===raw?.topicId);if(!topic)return null;
+ const keys=Array.isArray(raw.starKeys)?[...new Set(raw.starKeys.filter(k=>typeof k==='string'&&Object.hasOwn(pawZwdsStarNames,k)))].slice(0,3):[];
+ const stars=keys.length?[keys.map(k=>pawZwdsStarNames[k]).join(' · '),keys.join(' · ')]:['No main star in this palace','此宫无主星'];
+ const lines=[stars,...keys.filter(k=>Array.isArray(themes[k])).slice(0,2).map(k=>[...themes[k]]),[...topic.practice]];
+ return {kind:'zwds',title:[...topic.name],lines,accent:'#7c8c72',cards:[],takeaway:[...topic.question]};
+}
+function pawZwdsTopicSnapshot(chart,topicId,topics=chartConsultTopics){
+ if(!chart||!Number.isInteger(chart.life)||chart.life<0||chart.life>11||!Array.isArray(chart.stars)||chart.stars.length!==12||!topics.some(v=>v.k===topicId))return null;
+ const index=((chart.life-topicId)%12+12)%12,stars=chart.stars[index];
+ if(!Array.isArray(stars))return null;
+ return {kind:'zwds',topicId,starKeys:stars.filter(v=>Array.isArray(v)&&Object.hasOwn(pawZwdsStarNames,v[1])).map(v=>v[1])};
+}
+/* PAW_ZWDS_SHARE_END */
+shareKinds.zwds=['Zi Wei Dou Shu reflection','紫微斗数小记'];
+const pawSharePublicBefore=sharePublicData;
+sharePublicData=function(raw){
+ if(raw?.kind==='zwds')return pawZwdsPublic(raw)||pawSharePublicBefore({kind:'fortune',title:['A quiet moment','片刻清静'],lines:[]});
+ return pawSharePublicBefore(raw)
+};
+const pawShareArtKeyBefore=sharePaintedKey;
+sharePaintedKey=function(data){return data.kind==='zwds'?'readingInterior':pawShareArtKeyBefore(data)};
+const pawShareCaptionBefore=meowSocialCaption;
+meowSocialCaption=function(data,format,cn){
+ if(data.kind!=='zwds')return pawShareCaptionBefore(data,format,cn);
+ const i=Number(cn),title=data.title[i];
+ return [cn?'Pawradise · 紫微斗数小记':'Pawradise · Zi Wei Dou Shu reflection',title,data.takeaway[i],...data.lines.map(v=>v[i]),cn?'传统文化与自我反思，不是预测。':'Traditional symbolism for reflection, not a forecast.',cn?'#Pawradise #紫微斗数 #自我探索':'#Pawradise #SelfReflection',...(format==='xhs'||format==='story'?[]:[meowShareUrl])].join('\n')
+};
+const pawShareCardBefore=shareCardArt;
+shareCardArt=function(cv,data,format,cn){
+ if(data.kind!=='zwds')return pawShareCardBefore(cv,data,format,cn);
+ const L=socialLayout(format),{w,h,left,right,top,bottom}=L;cv.width=w;cv.height=h;
+ const g=cv.getContext('2d'),i=Number(cn),width=w-left-right,cx=left+width/2,end=h-bottom,locale=v=>String(v?.[i]||'');
+ const font=cn?'"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif':'Georgia,serif';
+ g.fillStyle='#eaddc3';g.fillRect(0,0,w,h);
+ g.strokeStyle='#9b896a';g.lineWidth=3;g.strokeRect(left,top,width,end-top);
+ function line(text,y,size,weight='normal',color='#453b32'){
+  g.font=weight+' '+size+'px '+font;g.textAlign='center';g.textBaseline='middle';g.fillStyle=color;g.fillText(text,cx,y,width-70)
+ }
+ function block(text,y,size,maxLines,color='#453b32',weight='normal'){
+  let rows;do{g.font=weight+' '+size+'px '+font;rows=shareTextLines(g,text,width-76);if(rows.length<=maxLines||size<=23)break;size-=2}while(true);
+  if(rows.length>maxLines){rows=rows.slice(0,maxLines);let last=rows.at(-1);while(last.length&&g.measureText(last+'…').width>width-76)last=last.slice(0,-1);rows[rows.length-1]=last+'…'}
+  const lh=size*1.28;rows.forEach((v,k)=>line(v,y+lh*(k+.5),size,weight,color));return y+rows.length*lh;
+ }
+ line('Pawradise · '+(cn?'月师傅小记':'MASTER YUE'),top+34,27,'bold','#55694f');
+ const im=pics[sharePaintedKey(data)],artY=top+65,artH=Math.min(L.artH,Math.floor((end-top)*.26));
+ let y=artY;
+ if(im?.complete&&im.naturalWidth>0&&im.naturalHeight>0){
+  const scale=Math.min((width-52)/im.naturalWidth,artH/im.naturalHeight),iw=im.naturalWidth*scale,ih=im.naturalHeight*scale;
+  g.drawImage(im,cx-iw/2,artY+(artH-ih)/2,iw,ih);y+=artH+16
+ }
+ y=block(locale(shareKinds.zwds),y,28,1,'#55694f','bold')+10;
+ y=block(locale(data.title),y,format==='square'?44:52,2,'#453b32','bold')+8;
+ y=block(locale(data.takeaway),y,32,2,'#805b46')+15;
+ const floor=end-76;const remaining=Math.max(0,floor-y),n=data.lines.length;
+ for(let k=0;k<n;k++){
+  const rowH=Math.floor((floor-y)/(n-k));
+  if(rowH<29)break;
+  y=block(locale(data.lines[k]),y,format==='square'?26:30,Math.max(1,Math.min(3,Math.floor(rowH/39))),'#453b32',k===0?'bold':'normal')+Math.min(12,Math.max(0,rowH-42));
+ }
+ line(cn?'传统文化 · 自我反思 · 非预测':'Traditional symbolism · Reflection, not prediction',end-44,23,'normal','#55694f');
+ line(cn?'不含生辰、时间或地点':'No birth date, time or birthplace included',end-17,21,'normal','#705e50')
+};
+const pawZwdsConsultBefore=renderChartConsultation;
+renderChartConsultation=function(out,z){
+ const result=pawZwdsConsultBefore(out,z),section=out.querySelector('.chartConsultation');
+ if(!section||yueSubject!=='self')return result;
+ const btn=b(section,tr('Share this palace reflection','分享此宫位小记'),()=>{
+  if(yueSubject!=='self'||!section.isConnected)return;
+  const selected=section.querySelector('.chartTopics button[data-topic][aria-pressed="true"]');
+  if(!selected)return;
+  const topic=Number(selected.dataset.topic),data=pawZwdsTopicSnapshot(z,topic);
+  if(data)openMeowShare(data,()=>{destinyPage(false,topic)})
+ });
+ btn.className='pawZwdsShareButton';
+ element('small',tr('Only this palace’s main stars and reflection are included. Birth details and the full chart stay private.','仅分享此宫位主星与反思小记，不包含生辰、出生地或完整命盘。'),section,'pawZwdsShareNote');
+ return result
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
