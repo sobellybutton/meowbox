@@ -4231,18 +4231,80 @@ const pawOverheard=[
  ['cat','lin','mei','A cat followed me all the way to the park.','有只猫一路跟着我走到公园。','Perhaps it has decided you are its person.','说不定它已经认定你是它的人了。'],
  ['cup','boba','wang','You left your reusable cup here last time.','你上次把随行杯落在店里了。','That explains why my desk has been unusually tidy.','难怪我桌面最近格外整洁。']
 ];
+function pawSocialPairReady(a,b,origin,maxPlayer=270,maxPair=260){
+ return !!a&&!!b&&a!==b&&[a.x,a.y,b.x,b.y,origin?.x,origin?.y].every(Number.isFinite)&&Math.hypot(a.x-origin.x,a.y-origin.y)<maxPlayer&&Math.hypot(b.x-origin.x,b.y-origin.y)<maxPlayer&&Math.hypot(a.x-b.x,a.y-b.y)<=maxPair
+}
+function pawSocialOnscreen(bounds,w,h){
+ return !!bounds&&[bounds.left,bounds.right,bounds.top,bounds.bottom,w,h].every(Number.isFinite)&&bounds.right>12&&bounds.left<w-12&&bounds.bottom>90&&bounds.top<h-90&&bounds.right>bounds.left&&bounds.bottom>bounds.top
+}
 function pawOverheardChoose(actors,origin,history,now,rng=Math.random){
  const close=actors.filter(a=>Math.hypot(a.x-origin.x,a.y-origin.y)<270);
  const possible=[];
  for(const e of pawOverheard){
   if(history.some(h=>h[0]==='exchange'&&h[1]===e[0]&&now-h[2]<86400000))continue;
   const a=close.find(v=>v.id===e[1]),b=close.find(v=>v.id===e[2]);
-  if(!a||!b||a===b||Math.hypot(a.x-b.x,a.y-b.y)>260)continue;
+  if(!pawSocialPairReady(a,b,origin))continue;
   if(history.some(h=>(h[0]===a.id||h[0]===b.id)&&now-h[2]<120000))continue;
   possible.push({entry:e,a,b})
  }
  return possible.length?possible[Math.min(possible.length-1,Math.max(0,Math.floor(rng()*possible.length)))]:null
 }
+pawOverheard.push(...[
+ [
+  "guest-lyrics",
+  "guest:jay-conclusion",
+  "temple",
+  "The bell has a lovely rhythm. Is there a quiet time to listen?",
+  "这钟声真有节奏，什么时候来听最清静？",
+  "Early morning, before everyone arrives.",
+  "清晨人还没来齐的时候。"
+ ],
+ [
+  "guest-rain",
+  "guest:raincheck",
+  "guest:traveller_03_kenji_dispatcher",
+  "Would you wait for the light to change?",
+  "你会等光线变一变再走吗？",
+  "Only if you promise to catch the next train.",
+  "可以，不过得说好坐下一班。"
+ ],
+ [
+  "guest-noodles",
+  "guest:gordon-ramen",
+  "guest:traveller_01_sven_flatpack",
+  "Is that a portable stool or a kitchen contraption?",
+  "这是折叠凳，还是厨房新发明？",
+  "A stool. Your noodles are much harder to assemble.",
+  "是凳子。你的拉面可比它难组装多了。"
+ ],
+ [
+  "guest-kopi",
+  "guest:merlion-host",
+  "guest:raincheck",
+  "Kopi peng? The ice is melting already.",
+  "冰咖啡要吗？冰都快化了。",
+  "Then we had better enjoy the scene before the next one.",
+  "那就趁下一幕还没开始，好好享受这一幕。"
+ ],
+ [
+  "guest-taylor-tea",
+  "guest:taylor-shift",
+  "guest:dilitea",
+  "I need a title for a song about ignoring notifications.",
+  "我想给一首不回消息的歌取个名字。",
+  "Read at 5:59, reply tomorrow.",
+  "五点五十九已读，明天再回。"
+ ],
+ [
+  "guest-rest",
+  "guest:andy-leisure",
+  "guest:jj-leave",
+  "Do you have anything planned for the afternoon?",
+  "下午有什么安排吗？",
+  "No. I am quite proud of that.",
+  "没有。我还挺为这件事骄傲的。"
+ ]
+]);
 /* PAW_OVERHEARD_END */
 let pawOverheardPending=null;
 const pawOverheardClearBefore=pawAmbientClear;
@@ -4266,7 +4328,7 @@ pawAmbientTick=function(now){
   if(now<pawAmbientCheck)return;
   pawAmbientCheck=now+180;
   const pending=pawOverheardPending,actor=actors.find(n=>pawAmbientProfile(n)?.id===pending.id),other=actors.find(n=>pawAmbientProfile(n)?.id===pending.other);
-  if(!actor||!other||Math.hypot(actor.x-origin.x,actor.y-origin.y)>270||Math.hypot(actor.x-other.x,actor.y-other.y)>260){
+  if(!pawSocialPairReady(actor,other,origin)||!pawSocialOnscreen(pawAmbientBounds(actor),W,H)||!pawSocialOnscreen(pawAmbientBounds(other),W,H)){
    pawAmbientClear();pawAmbientNext=now+7000;return
   }
   if(now<pending.at){
@@ -4275,17 +4337,19 @@ pawAmbientTick=function(now){
   }
   pawOverheardPending=null;pawAmbientActive=null;
   if(!pawOverheardShow(actor,actors,pending.text,pending.id,now))pawAmbientClear();
+  else {pawRememberExchange(pending.entry,Date.now());pawAmbientBudget++}
   pawAmbientNext=now+15000;return
  }
  if(!pawAmbientActive&&now>=pawAmbientCheck&&now>=pawAmbientNext&&pawAmbientBudget<=33&&Math.random()<.32){
   const clock=Date.now();pawAmbientHistory=pawAmbientRead(pawAmbientHistory,clock);
-  const indexed=actors.map(a=>({id:pawAmbientProfile(a)?.id,x:a.x,y:a.y,actor:a})).filter(a=>a.id);
+  const indexed=actors.filter(a=>pawSocialOnscreen(pawAmbientBounds(a),W,H)).map(a=>({id:pawAmbientProfile(a)?.id,x:a.x,y:a.y,actor:a})).filter(a=>a.id);
   const chosen=pawOverheardChoose(indexed,origin,pawAmbientHistory,clock);
   if(chosen){
    const e=chosen.entry;
    if(pawOverheardShow(chosen.a.actor,actors,tr(e[3],e[4]),e[1],now)){
-    pawOverheardPending={id:e[2],other:e[1],text:tr(e[5],e[6]),at:pawAmbientActive.until};
-    pawRememberExchange(e,clock);pawAmbientBudget+=2;return
+    pawOverheardPending={id:e[2],other:e[1],text:tr(e[5],e[6]),at:pawAmbientActive.until,entry:e};
+    // Only a successfully displayed second line consumes the exchange for the day.
+    pawAmbientHistory.push([e[1],'exchange-start:'+e[0],clock]);pawAmbientHistory=pawAmbientHistory.slice(-80);save(pawAmbientKey,pawAmbientHistory);pawAmbientBudget++;return
    }
   }
  }
