@@ -3175,8 +3175,9 @@ function syncStorySheet(){
  const token=parallelToken,nodeId=parallelNode;
  const current=()=>activity==='story'&&scene==='wonder'&&parallelToken===token&&parallelNode===nodeId&&!parallelTurning&&!talkOpen&&!transitioning&&$('page').style.display!=='block';
  if(n){
-  element('small',tr('Parallel Lives','平行人生')+' · '+(parallelTrail.length+1),storySheet);
-  element('h3',tr(...n.title),storySheet);element('p',tr(...n.text),storySheet);
+  element('small',tr('Parallel Lives · Chapter ','平行人生 · 第')+(parallelTrail.length+1)+tr(' of 4',' / 4 章'),storySheet);
+  if(nodeId==='station')element('p',tr('Imagine stepping into a different life. Make four choices, discover one possible ending and keep its memory. There are no right answers.','想象自己走进另一种人生。做四次选择，体验一个结局，并收藏这段回忆。没有标准答案。'),storySheet,'mbStoryIntro');
+  element('h3',tr(...n.title),storySheet);element('p',tr(...n.text),storySheet);element('small',tr('What would you do next?','接下来，你会怎么做？'),storySheet);
   n.choices.forEach((v,i)=>{
    const button=b(storySheet,tr(v[0],v[1]),()=>{if(current())parallelSelect(i)});
    button.disabled=parallelTurning;button.dataset.storyChoice=String(i)
@@ -3187,6 +3188,8 @@ function syncStorySheet(){
   }
  }else if(ending){
   element('small',tr('A life remembered','收藏一段人生')+' · '+parallelFound.filter(id=>Object.hasOwn(parallelEndings,id)).length+'/'+Object.keys(parallelEndings).length,storySheet);
+  element('h3',tr(ending[0],ending[1]),storySheet);element('p',tr(ending[2],ending[3]),storySheet);
+  element('p',tr('This is a fictional ending shaped by your choices, not a personality result or prediction. Your keepsake is in the Wonder Valley chapter.','这是由你的选择决定的虚构故事结局，不是性格测试或未来预测。纪念品已收入奇遇谷章节。'),storySheet,'mbStoryIntro');
   const again=b(storySheet,tr('Another life','再试一种人生'),()=>{if(current())start('story')});again.dataset.storyEnding='again';
   const share=b(storySheet,tr('Share memory','分享回忆'),()=>{if(current())openMeowShare({kind:'story',title:ending.slice(0,2),lines:[ending.slice(2,4)],accent:'#869e9b'})});share.dataset.storyEnding='share'
  }
@@ -3319,8 +3322,17 @@ action=function(id){if(room==='destiny'&&id==='destiny')return destinyConsultMen
 /* Ambient residents walk within the painted path, not the full image.
    Fortune samples are conservative stair-centre anchors; calibrate against final art. */
 const valleyNpcPath=[[180,590,35],[300,560,35],[500,545,38],[720,540,42],[950,535,44],[1180,515,42],[1400,500,43],[1680,500,43]];
+/* MBPAINTED_LANE_BEGIN */
+// Foot positions traced against the three native portrait paintings (1000 world units wide).
+const paintedResidentPaths={
+ home:[[450,726,22],[530,680,25],[600,598,25],[750,538,33],[900,513,40],[1050,547,38],[1200,735,38],[1370,692,35],[1420,685,28]],
+ island:[[300,628,22],[450,594,29],[650,568,35],[850,516,38],[1050,499,43],[1250,465,43],[1400,482,48]],
+ wonder:[[450,428,20],[600,462,25],[750,445,25],[900,514,35],[1050,539,32],[1200,411,35],[1350,351,38],[1440,420,38]]
+};
+function paintedResidentY(world,y){const path=paintedResidentPaths[world];return path?Math.max(path[0][0],Math.min(path.at(-1)[0],y)):y}
+/* MBPAINTED_LANE_END */
 function residentLane(world,y){
- const points=world==='fortune'?valleyNpcPath:portraitWorlds[world]?.route?.map(([yy,x])=>[yy,x,45]);
+ const points=world==='fortune'?valleyNpcPath:paintedResidentPaths[world]||portraitWorlds[world]?.route?.map(([yy,x])=>[yy,x,45]);
  if(!points)return {x:500,half:35};
  if(y<=points[0][0])return{x:points[0][1],half:points[0][2]};
  for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i];if(y<=b[0]){const f=(y-a[0])/(b[0]-a[0]);return{x:a[1]+(b[1]-a[1])*f,half:a[2]+(b[2]-a[2])*f}}}
@@ -7514,12 +7526,12 @@ function openRailStop(destination=railNextDistrict(scene),settings={}){
   const cabin=element('div','',q,'districtRailCabin');
   cabin.dataset.sceneryPaused=String(motion.paused);
   const copy=mbRailCaption(destination);
-  element('small',tr(copy[0],copy[1]),cabin,'railRouteCar');
+  element('small',tr('A postcard from your next stop','来自下一站的明信片'),cabin,'railRouteCar');
   const frame=element('div','',cabin,'districtRailWindow train-window'),im=element('img','',frame);
-  im.src=railSceneryURL(destination);im.alt=tr('Landscape passing the train window','车窗外流动的风景');installRailParallax(frame);
-  const seat=element('div','',cabin,'districtRailSeat');element('span',tr('Reserved for doing nothing','摸鱼专座'),seat);
+  im.src=destinationPortrait(destination);im.alt=tr('Illustrated preview of the next destination','下一站的风景预览');frame.classList.add('mbRailPostcard');
+  const seat=element('div','',cabin,'districtRailSeat');element('span',tr(...maps[destination].n),seat);
   const scenery=element('div','',q,'mbRailScenery');
-  element('p',tr(copy[2],copy[3]),scenery);
+  element('p',tr('A little glimpse of where you are going. No rush.','先看看下一站的模样，不必赶时间。'),scenery);
   const toggle=b(scenery,'',()=>{motion.paused=!motion.paused;syncMotion()});
   toggle.className='mbRailPause';
   function syncMotion(){
@@ -7531,7 +7543,8 @@ function openRailStop(destination=railNextDistrict(scene),settings={}){
   const actions=element('div','',q,'railJourneyActions');let boarded=false;
   const arrival=b(actions,tr('Arrive at ','抵达')+tr(...maps[destination].n),()=>{if(!mbRailCanArrive(scene,destination,room,transitioning,boarded)||!actions.isConnected)return;boarded=true;arrival.disabled=true;$('page').style.display='none';journey(destination)});
   b(actions,tr('Choose another stop','选择其他站'),travel);
-  b(actions,tr('Stay here a little longer','再逛一会儿'),()=>{$('page').style.display='none';updateHUD()})
+  b(actions,tr('Stay here a little longer','再逛一会儿'),()=>{$('page').style.display='none';updateHUD()});
+  cabin.after(actions)
  });
  journalLanguage(()=>openRailStop(destination,motion))
 }

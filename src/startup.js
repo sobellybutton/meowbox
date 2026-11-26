@@ -265,10 +265,10 @@ action=function(id){
   ])
  }
  if(room==='quiz'&&id==='quiz'){
-  closeTalk();return say(tr('Lab keeper','研究所店主'),tr('Three different lenses, not three versions of the same test. Which part of yourself are you curious about?','三种不同的自我探索，不是把同一份题做三遍。今天想认识自己的哪一面？'),[
+  closeTalk();return say(tr('Lab keeper','研究所店主'),tr('Three ways to explore yourself. Choose a playful character quiz, four personality preferences (16 questions), or Enneagram-inspired motives (27 questions). These are for reflection, not diagnosis.','三种自我探索：趣味猫灵测试、四种性格偏好（16题）、九型人格动力探索（27题）。仅供自我反思，并非诊断。'),[
    [tr('Soul Cat · playful character','猫灵 · 趣味性格'),()=>{closeTalk();wonderSceneOpen('soul')}],
-   [tr('Four preferences · how I think','四种偏好 · 我怎样思考'),()=>{closeTalk();wonderSceneOpen('type')}],
-   [tr('Inner motives · what matters to me','内在动力 · 我在乎什么'),()=>{closeTalk();wonderSceneOpen('motive')}],
+   [tr('MBTI-inspired preferences','MBTI 四种性格偏好'),()=>{closeTalk();wonderSceneOpen('type')}],
+   [tr('Enneagram-inspired · nine motives','九型人格 · 九种内在动力'),()=>{closeTalk();wonderSceneOpen('motive')}],
    [tr('Keep exploring','继续逛逛'),closeTalk]
   ])
  }
@@ -1901,5 +1901,30 @@ todayHub=function(...args){
 const mbGuestUi=document.createElement('style');
 mbGuestUi.textContent='#content .mbGuestLine{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:5px 0;font-size:14px}#content .mbGuestLine small{flex-shrink:0;font-size:11px}#content .mbGuestMemory{margin-top:7px;padding:4px 9px;border:1px solid #c5ae88;background:#f8ecd5;border-radius:4px}#content .mbGuestMemory summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;color:#6d533a}#content .mbGuestMemory p{line-height:1.5}';
 document.head.append(mbGuestUi);
+const mbRailPostcardStyle=document.createElement('style');mbRailPostcardStyle.textContent=`
+#content .districtRailCabin{padding:12px!important;background:#e7d2a9!important;border:1px solid #ac8a63!important;box-shadow:0 3px 9px #56452a33!important;border-radius:5px!important}
+#content .districtRailCabin .railRouteCar{color:#68503c!important}
+#content .districtRailCabin .mbRailPostcard{height:clamp(155px,29dvh,330px)!important;border:4px solid #faf0d9!important;border-radius:3px!important;background:#c7af85!important;box-shadow:0 2px 5px #5b463b40}
+#content .districtRailCabin .mbRailPostcard img{object-position:50% 42%!important;animation:mbPostcardDrift 22s ease-in-out infinite alternate!important}
+#content .districtRailCabin[data-scenery-paused="true"] .mbRailPostcard img{animation-play-state:paused!important}
+@keyframes mbPostcardDrift{from{object-position:50% 32%}to{object-position:50% 62%}}
+#content .districtRailCabin .districtRailSeat{height:auto!important;min-height:0!important;background:transparent!important;border:0!important;padding:6px!important;color:#5f4937!important}
+#content .railJourneyActions{margin:8px 0!important;gap:5px!important}
+#content .railAnchorNote{display:none}
+#content .railRouteNodes{gap:4px!important}
+#content .railRouteNodes>span{font-size:11px!important;overflow-wrap:anywhere}
+#storyReadingSheet .mbStoryIntro{font-size:12px;line-height:1.4;color:#665642}
+@media(prefers-reduced-motion:reduce){#content .districtRailCabin .mbRailPostcard img{animation:none!important}}
+`;document.head.append(mbRailPostcardStyle);
 
+/* Apply the traced path after all guest and map overrides. Only NPCs are
+   constrained here; existing player and doorway route behaviour is unchanged. */
+function mbGroundResident(n){
+ if(!paintedResidentPaths[scene]||room)return;
+ n.y=paintedResidentY(scene,n.y);n.ty=paintedResidentY(scene,n.ty);
+ n.x=residentGround(scene,n.x,n.y);n.tx=residentGround(scene,n.tx,n.ty);
+}
+const mbPaintedPathInit=initNPC;initNPC=function(...args){const r=mbPaintedPathInit(...args);npc.forEach(mbGroundResident);return r};
+const mbPaintedPathTarget=residentTarget;residentTarget=function(n,i){mbPaintedPathTarget(n,i);mbGroundResident(n);if(Math.abs(n.ty-n.y)<5&&paintedResidentPaths[scene]){n.walkDirection=-(n.walkDirection||1);n.ty=paintedResidentY(scene,n.y+n.walkDirection*75);n.tx=residentGround(scene,n.tx,n.ty)}};
+const mbPaintedPathStep=step;step=function(n,dt,speed){if(n!==p)mbGroundResident(n);const r=mbPaintedPathStep(n,dt,speed);if(n!==p)mbGroundResident(n);return r};
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
