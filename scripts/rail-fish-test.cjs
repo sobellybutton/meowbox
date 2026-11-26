@@ -1,6 +1,6 @@
 const fs=require('node:fs'),path=require('node:path');
 function block(file,name){const s=fs.readFileSync(path.join(__dirname,'../src',file),'utf8'),a=s.indexOf('/* '+name+'_BEGIN'),b=s.indexOf('/* '+name+'_END */');if(a<0||b<a)throw Error('Missing '+name);return s.slice(a,b)}
-console.log(new Function(block('extensions.js','MBRAIL_REFINEMENT')+block('startup.js','MBFISH_REFINEMENT')+"\nconst assert=(ok,msg)=>{if(!ok)throw Error(msg)};\nassert(mbRailStops('fortune','wonder',['fortune','home']).map(v=>v.id).join(',')==='fortune,home,island,wonder','route order');\nassert(mbRailStops('fortune','wonder',['fortune','home']).filter(v=>v.destination)[0].id==='wonder','target distinct');\nassert(mbRailCanArrive('fortune','wonder',null,false,false)&&!mbRailCanArrive('fortune','wonder',null,true,false)&&!mbRailCanArrive('fortune','wonder',null,false,true),'arrival guard');\nassert(!mbRailCanArrive('fortune','fortune',null,false,false)&&mbRailCanArrive('fortune','fortune','tea',false,false),'same stop');\nassert(['fortune','home','island','wonder'].every(k=>mbRailCaption(k).length===4)&&!mbRailCaption('unknown'),'bilingual route copy');\nassert([0,.31,.32,1.2,1.21,2.4].map(mbFishTiming).join(',')==='early,early,ready,ready,late,expired','scoop timing');\nconst game={at:1,last:2,resultAt:0};assert(mbFishPauseGame(game,3)&&game.at===4&&game.last===5&&game.resultAt===0,'pause active scoop');\nassert(!mbFishPauseGame(game,-1)&&game.last===5,'invalid pause');\nreturn 'PASS: eight rail and goldfish interaction checks';\n")());
+console.log(new Function(block('extensions.js','MBRAIL_REFINEMENT')+block('startup.js','MBFISH_REFINEMENT')+"\nconst assert=(ok,msg)=>{if(!ok)throw Error(msg)};\nassert(mbRailStops('fortune','wonder',['fortune','home']).map(v=>v.id).join(',')==='fortune,home,island,wonder','route order');\nassert(mbRailStops('fortune','wonder',['fortune','home']).filter(v=>v.destination)[0].id==='wonder','target distinct');\nassert(mbRailCanArrive('fortune','wonder',null,false,false)&&!mbRailCanArrive('fortune','wonder',null,true,false)&&!mbRailCanArrive('fortune','wonder',null,false,true),'arrival guard');\nassert(!mbRailCanArrive('fortune','fortune',null,false,false)&&mbRailCanArrive('fortune','fortune','tea',false,false),'same stop');\nassert(['fortune','home','island','wonder'].every(k=>mbRailCaption(k).length===4)&&!mbRailCaption('unknown'),'bilingual route copy');\nassert([0,.119,.12,2,2.001,3.1].map(mbFishTiming).join(',')==='early,early,ready,ready,late,expired','scoop timing');\nconst game={at:1,last:2,resultAt:0};assert(mbFishPauseGame(game,3)&&game.at===4&&game.last===5&&game.resultAt===0,'pause active scoop');\nassert(!mbFishPauseGame(game,-1)&&game.last===5,'invalid pause');\nreturn 'PASS: eight rail and goldfish interaction checks';\n")());
 
 const pawStartup=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
 const pawExtensions=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
@@ -33,3 +33,21 @@ for(const id of ['fortune','home','island','wonder']){
  }
 }
 return 'PASS '+n+' independent route artwork and parallax assertions';`)());
+
+const fishSource=pawSlice(pawStartup,'const festivalFishKinds=','function festivalFinish(');
+const scoopMath=pawSlice(pawStartup,'function pawScoopProject(','function pawResidentTempo(');
+const fishTiming=pawSlice(pawStartup,'function mbFishTiming(','function mbFishPauseGame(');
+console.log(new Function(fishSource+scoopMath+fishTiming+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+for(let i=0;i<5;i++)for(let t=0;t<60;t+=.1){const p=festivalFishPosition(i,t,0);ck(pawScoopInside(p.x,p.y),'fish inside reach')}
+const g=festivalNewRound(0,0);g.phase='dip';g.last=1;
+const p=festivalFishPosition(0,1.01,g.seed);g.x=p.x;g.y=p.y;
+ck(festivalFishOutcome(g,1.01).caught===-1,'no premature catch');
+ck(festivalFishOutcome(g,1.01).wear===4,'light early wear');
+ck(festivalFishOutcome(g,0)===null,'negative time');
+ck([0,.119,.12,2,2.001,3.1].map(mbFishTiming).join(',')==='early,early,ready,ready,late,expired','matching timing');
+for(const age of [.12,.5,1.35,2,2.001,3.1]){
+ const p=festivalFishPosition(0,1+age,g.seed);g.x=p.x;g.y=p.y;
+ ck((festivalFishOutcome(g,1+age).caught>=0)===(age>=.12&&age<=2),'actual catch window');
+}
+return 'PASS '+n+' goldfish position and timing checks';`)());
