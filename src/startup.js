@@ -7194,7 +7194,8 @@ popGuestMeet=function(g,n=null){
   if(!items.some(x=>x[0]===g.gift[0]))addItem(...g.gift);
   popGuestSay(g,tr(...g.choices[i][1]),[[tr('See you around','下次见'),closeTalk]])
  };
- popGuestSay(g,tr(...plan.line),[
+ const greeting=tr(...plan.line)+(g.source==='gemini-modules-01-03'?'':'\n\n'+tr(...g.prompt));
+ popGuestSay(g,greeting,[
   [tr(...plan.topic),()=>respond(0)],
   [tr(...g.choices[1][0]),()=>respond(1)],
   [tr('Keep exploring','继续逛逛'),closeTalk]
