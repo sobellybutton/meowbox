@@ -2843,9 +2843,9 @@ activityHint=function(){if(activity==='love'&&state.readStage==='topic'){hint('C
 const pawTempleLayout={
  templeWater:[205,542,205,682],
  prayer:[400,342,400,492],
- templeBell:[610,350,610,495],
+ templeBell:[610,350,520,495],
  sticks:[605,542,605,688],
- moon:[190,350,190,495],
+ moon:[190,350,285,495],
  secretGarden:[690,430,525,502]
 };
 const pawArcadeLayout={
