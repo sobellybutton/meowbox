@@ -3566,4 +3566,145 @@ const pawNavReviewStyle=document.createElement('style');pawNavReviewStyle.textCo
 #game #content .mbKeepsakeOrigin,#game #content .mbKeepsakeOriginCaption{display:none!important}
 `;document.head.append(pawNavReviewStyle);
 
+
+/* PAW_ILLUSTRATED_INTERFACE: the existing painted world is part of each
+   interface. The DOM still owns text, keyboard controls and scrolling. */
+const pawVisualPageBefore=page;
+function pawVisualTheme(q,title){
+ if(q.querySelector('.hideoutScene,.hideoutRoomView'))return 'room';
+ if(q.querySelector('.pawSketchbook,.travelAlbum'))return 'travel';
+ if(q.querySelector('.communityTabs,.townWall,.townChatTranscript,.pawTownFront'))return 'town';
+ if(q.querySelector('.journalCheckin,.journalDailyTasks,.goodCompanyBook,.townFortuneSlip'))return 'daily';
+ if(q.querySelector('.journalProfileBook,.travellerEditBook'))return 'profile';
+ if(q.querySelector('.travellerBagV2'))return 'collection';
+ if(q.querySelector('.komorebiBook,.komorebiConfirm'))return 'shop';
+ if(q.querySelector('.dailyWheelStage'))return 'daily';
+ return 'paper'
+}
+function pawVisualImage(theme){
+ if(theme==='town')return pawJournalPicture('tea','home');
+ if(theme==='daily')return destinationPortrait('fortune');
+ if(theme==='collection'||theme==='shop')return destinationPortrait('island');
+ if(theme==='profile')return destinationPortrait('wonder');
+ return destinationPortrait(scene)
+}
+function pawVisualHeader(q,theme){
+ const h=q.querySelector(':scope > h1'),intro=q.querySelector(':scope > p');
+ if(!h||!intro||['room','travel'].includes(theme))return;
+ const art=pawVisualImage(theme);
+ if(!art)return;
+ const header=element('header','',q,'pawIllustratedHeading');h.before(header);
+ const im=element('img','',header);im.src=art;im.alt='';im.decoding='async';
+ im.onerror=()=>{im.onerror=null;header.classList.add('pawImageUnavailable');im.remove()};
+ const text=element('div','',header,'pawIllustratedCaption');text.append(h,intro);
+}
+function pawVisualChatPortraits(q){
+ const log=q.querySelector('.townChatTranscript');if(!log||communityTab!=='lounge')return;
+ const decorate=()=>{
+  for(const line of log.querySelectorAll('.townChatLine:not(.self)')){
+   if(line.dataset.pawPortrait)continue;
+   line.dataset.pawPortrait='true';const name=line.querySelector('strong')?.textContent;
+   if(!name)continue;
+   const src=paintedDialoguePortrait(name);
+   if(!src)continue;
+   const im=element('img','',line,'pawChatPortrait');im.src=src;im.alt='';im.onerror=()=>im.remove();line.prepend(im)
+  }
+ };
+ decorate();const observer=new MutationObserver(decorate);observer.observe(log,{childList:true,subtree:true});
+ const cleaner=new MutationObserver(()=>{if(!log.isConnected){observer.disconnect();cleaner.disconnect()}});
+ cleaner.observe(q,{childList:true})
+}
+page=function(title,sub,body){
+ const result=pawVisualPageBefore(title,sub,body),q=$('content');
+ // The final decorators run after callers have moved or added content.
+ const first=q.firstElementChild;
+ queueMicrotask(()=>{
+  if(first!==q.firstElementChild||!first?.isConnected)return;
+  const theme=pawVisualTheme(q,title);q.dataset.pawVisualTheme=theme;
+  pawVisualHeader(q,theme);if(theme==='town')pawVisualChatPortraits(q)
+ });
+ return result
+};
+const pawIllustratedCSS=document.createElement('style');pawIllustratedCSS.textContent=`
+#game #content[data-paw-visual-theme]{--paw-paper:#f3e6c9;--paw-ink:#4c5746;--paw-wood:#876749}
+#game #content[data-paw-visual-theme]>.row{position:relative;z-index:2;padding:0 0 6px}
+#game #content .pawIllustratedHeading{position:relative;isolation:isolate;overflow:hidden;min-height:155px;margin:4px 0 16px;border:4px solid #f9efd8;outline:1px solid #b69b73;box-shadow:0 4px 10px #59432e33;background:#526852}
+#game #content .pawIllustratedHeading>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 44%;z-index:-2}
+#game #content .pawIllustratedHeading:after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#263e30f2 0%,#273e30ad 42%,transparent 92%);z-index:-1}
+#game #content .pawIllustratedCaption{padding:64px 13px 12px;color:#fff3d8;display:flex;flex-direction:column;justify-content:end;min-height:155px}
+#game #content .pawIllustratedCaption h1{color:#fff3d8!important;border:0!important;padding:0!important;margin:0 0 5px!important;font-size:clamp(23px,6vw,36px);text-shadow:0 1px 3px #20342a}
+#game #content .pawIllustratedCaption p{color:#fff3d8!important;margin:0!important;font-size:13px;line-height:1.4;text-shadow:0 1px 2px #20342a}
+#game #content[data-paw-visual-theme="daily"]{background:linear-gradient(90deg,#bda17830,transparent 6%,transparent 94%,#bda17822),repeating-linear-gradient(0deg,transparent 0 29px,#a4875e0a 30px),#f5ead1;padding:10px 12px 18px;border:1px solid #c3ab83;box-shadow:0 3px 0 #d3bc95}
+#game #content[data-paw-visual-theme="daily"] .journalCheckin{background:#e9ddbb!important;border:0!important;border-bottom:1px dashed #b9a079!important;box-shadow:none!important;border-radius:0!important}
+#game #content[data-paw-visual-theme="daily"] .pawDiaryFold{background:transparent!important}
+#game #content[data-paw-visual-theme="daily"] .pawDiaryFold>summary{padding:12px 0!important}
+#game #content[data-paw-visual-theme="town"] .pawTownNotebook{background:transparent!important;padding:0!important;border:0!important;box-shadow:none!important}
+#game #content[data-paw-visual-theme="town"] .townWall{background:repeating-linear-gradient(0deg,#795b3e12 0 1px,transparent 1px 68px),linear-gradient(98deg,#94714e,#c09c6d 45%,#a88459);border:6px solid #77583d;box-shadow:inset 0 0 9px #5f422c66,0 3px 7px #48362422;padding:12px!important;border-radius:3px;color:#fff2db}
+#game #content[data-paw-visual-theme="town"] .townWall .board-heading{color:#fff3d8!important;text-shadow:0 1px 2px #5d412f}
+#game #content[data-paw-visual-theme="town"] .wallIntro,#game #content[data-paw-visual-theme="town"] .wallDisclosure{color:#fff3d8!important}
+#game #content[data-paw-visual-theme="town"] .pawWeeklyNotice{color:#58462f;background:#efdb9e;padding:10px;box-shadow:1px 2px 3px #4b332f44}
+#game #content[data-paw-visual-theme="town"] .townResidentNote{position:relative;min-width:0;padding:15px 11px 10px!important;margin:10px 0 14px!important;border:0!important;border-radius:1px!important;background:linear-gradient(110deg,#f5e9ce,#fff3d9 65%,#eddec0)!important;color:#514331!important;box-shadow:2px 4px 5px #49311e50!important}
+#game #content[data-paw-visual-theme="town"] .townResidentNote:nth-child(3n+2){background:linear-gradient(120deg,#e5e7cb,#f4efdb)!important}
+#game #content[data-paw-visual-theme="town"] .townResidentNote:before{content:'';position:absolute;top:-5px;left:calc(50% - 21px);width:42px;height:13px;background:#e4cf9da8;box-shadow:0 1px 1px #59442d44;transform:rotate(-3deg);pointer-events:none}
+#game #content[data-paw-visual-theme="town"] .townPostList{display:grid;gap:4px}
+#game #content[data-paw-visual-theme="town"] .townResidentNote p{font-size:15px;line-height:1.55}
+#game #content[data-paw-visual-theme="town"] .townPostNav{color:#fff3db}
+#game #content[data-paw-visual-theme="town"] .townChatTranscript{background:linear-gradient(120deg,#eadfc1,#f5e9d0);border:1px solid #b59b74!important;border-radius:3px!important}
+#game #content .townChatLine:has(.pawChatPortrait){display:grid;grid-template-columns:38px minmax(0,1fr);column-gap:8px;align-items:start}
+#game #content .pawChatPortrait{grid-row:1/3;width:38px;height:44px;object-fit:contain;background:#e6d6b4;border:1px solid #b9a079;border-radius:3px}
+#game #content .townChatLine:has(.pawChatPortrait)>strong,#game #content .townChatLine:has(.pawChatPortrait)>p{grid-column:2}
+#game #content[data-paw-visual-theme="profile"] .journalProfileBook{background:linear-gradient(90deg,#d5bd9229,#f5ead2 5%,#f5ead2 95%,#d5bd9229);border:1px solid #b8a17a;border-radius:3px;box-shadow:0 3px 0 #cbb58c}
+#game #content[data-paw-visual-theme="collection"] .bagSlots{background:repeating-linear-gradient(0deg,#7b593b11 0 2px,transparent 2px 92px),#b5966b;padding:8px;border:5px solid #795b3d;border-radius:3px}
+#game #content[data-paw-visual-theme="collection"] .bagSlot{background:linear-gradient(#e9d8b5,#f5e9d0)!important;border-radius:2px!important;border:1px solid #a38860!important}
+#game #content[data-paw-visual-theme="room"] .hideoutScene{border:5px solid #9f8058!important;box-shadow:0 3px 6px #4b372f33}
+@media(min-width:700px){#game #content .pawIllustratedHeading{min-height:205px}#game #content .pawIllustratedCaption{min-height:205px;padding:90px 22px 16px}#game #content[data-paw-visual-theme="town"] .townPostList{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}}
+@media(max-width:380px){#game #content .pawIllustratedHeading,#game #content .pawIllustratedCaption{min-height:128px}#game #content .pawIllustratedCaption{padding:45px 9px 10px}#game #content[data-paw-visual-theme="daily"]{padding:7px}#game #content[data-paw-visual-theme="town"] .townWall{padding:8px!important}}
+`;document.head.append(pawIllustratedCSS);
+
+/* Distance-driven animation. The existing rear walk drawings are retained.
+   Front and profile fallbacks animate lower-body pixels from their painted
+   standing source until dedicated frames are installed in action-runtime. */
+let pawWalkDistance=0;
+const pawWalkStepBefore=step;
+step=function(n,dt,speed){
+ const x=n.x,y=n.y,vertical=n===p&&Math.abs(n.ty-y)>Math.abs(n.tx-x);
+ const result=pawWalkStepBefore(n,dt,n===p&&vertical?speed*.68:speed);
+ if(n===p){const d=Math.hypot(n.x-x,n.y-y);if(result&&Number.isFinite(d))pawWalkDistance+=d}
+ return result
+};
+const pawWalkRenderBefore=backHuman;
+function pawGaitPhase(distance,scale){return distance/Math.max(22,36*scale)*Math.PI}
+function pawPaintedGait(im,x,y,scale,facing,phase){
+ const sw=im.naturalWidth,sh=im.naturalHeight,h=94*scale,w=h*sw/sh;
+ // Keep the body and head intact. The two lower body strips overlap the
+ // waist seam; one planted foot remains on the actual world ground.
+ const split=Math.round(sh*.76),legH=h*(sh-split)/sh,topH=h-legH,half=Math.floor(sw/2);
+ const s=Math.sin(phase),a=Math.abs(s),side=facing==='left'||facing==='right';
+ ctx.save();try{
+  ellipse(x,y+1,Math.max(10,w*.31),Math.max(2,scale*4),'#302a2448');
+  ctx.translate(x,y);if(facing==='left')ctx.scale(-1,1);
+  const widthL=w*half/sw,widthR=w-widthL,overlap=Math.min(3,split),lift=3.5*scale;
+  const hips=-legH-a*scale*.8;
+  function lower(sx,ww,dx,dw,sign){
+   const forward=sign*s,raising=Math.max(0,forward)*lift,shift=side?forward*3.5*scale:sign*a*1.25*scale;
+   ctx.save();ctx.translate(dx+dw/2,hips);ctx.rotate(side?forward*.13:sign*a*.035);
+   const legHeight=legH+a*scale*.8-raising;
+   ctx.drawImage(im,sx,split-overlap,ww,sh-split+overlap,-dw/2+shift,-overlap*h/sh,dw,legHeight+overlap*h/sh);ctx.restore()
+  }
+  if(side&&s>0){lower(half,sw-half,-w/2+widthL,widthR,1);lower(0,half,-w/2,widthL,-1)}
+  else{lower(0,half,-w/2,widthL,-1);lower(half,sw-half,-w/2+widthL,widthR,1)}
+  ctx.drawImage(im,0,0,sw,split,-w/2,hips-topH,w,topH+.35)
+ }finally{ctx.restore()}
+}
+backHuman=function(x,y,kind,walking,facing,scale=1){
+ if(!walking||kind<0||kind>3)return pawWalkRenderBefore(x,y,kind,walking,facing,scale);
+ mbArtLoad();const dir=facing==='left'?'right':facing,frames=mbArtRegistry.players[kind]?.walk?.[dir];
+ const isPlayer=kind===avatar&&Math.hypot(x-p.x,y-p.y)<4;
+ const phase=pawGaitPhase(isPlayer?pawWalkDistance:t*115,scale),reduced=actorReduce||residentReducedMotion.matches;
+ if(frames){const loaded=frames.map(mbArtImage);if(loaded.every(Boolean)){const i=reduced?0:((Math.floor(phase/Math.PI*frames.length/2)%frames.length)+frames.length)%frames.length;mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}}
+ const im=pics['walker'+kind+(dir==='up'?1:dir==='down'?0:2)];
+ if(im?.naturalWidth&&im.naturalHeight&&!reduced&&(dir==='down'||dir==='right')){pawPaintedGait(im,x,y,scale,facing,phase);return}
+ return pawWalkRenderBefore(x,y,kind,walking,facing,scale)
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
