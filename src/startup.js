@@ -1660,7 +1660,7 @@ function mbArtVisitRecord(raw,day){
 }
 /* MBART_VALIDATION_END */
 let mbArtRegistry=mbArtValidate(null),mbArtRequested=false,mbArtRetryAt=0;
-const mbArtImages=new Map();
+const mbArtImages=new Map(),mbArtFailures=new Map();
 function mbArtLoad(){
  if(mbArtRequested||Date.now()<mbArtRetryAt)return;
  mbArtRequested=true;
@@ -1671,8 +1671,14 @@ function mbArtLoad(){
 }
 function mbArtImage(record){
  if(!record)return null;
- if(!mbArtImages.has(record.path)){const im=new Image();im.decoding='async';mbArtImages.set(record.path,im);im.src=record.path}
- const im=mbArtImages.get(record.path);return im.complete&&im.naturalWidth===record.width&&im.naturalHeight===record.height?im:null
+ if((mbArtFailures.get(record.path)||0)>Date.now())return null;
+ if(!mbArtImages.has(record.path)){
+  const im=new Image();im.decoding='async';mbArtImages.set(record.path,im);
+  const failed=()=>{if(mbArtImages.get(record.path)===im){mbArtImages.delete(record.path);mbArtFailures.set(record.path,Date.now()+12000)}};
+  im.addEventListener('error',failed,{once:true});
+  im.addEventListener('load',()=>{if(im.naturalWidth!==record.width||im.naturalHeight!==record.height)failed();else mbArtFailures.delete(record.path)},{once:true});im.src=record.path
+ }
+ const im=mbArtImages.get(record.path);return im?.complete&&im.naturalWidth===record.width&&im.naturalHeight===record.height?im:null
 }
 function mbArtDrawFrame(record,im,x,y,scale,flip=false){
  const k=94*scale/record.height,dx=-record.foot[0]*k,dy=-record.foot[1]*k;
@@ -2478,7 +2484,65 @@ function pawRailLayerCrop(w,h,progress,speed,aspect=1.8){
  return {x:(w-span)*travel,width:span,height:h}
 }
 /* PAW_WINDOW_MOTION_END */
+/* PAW_GLASS_PROJECTION_BEGIN */
+const pawRailGlassOutlines={
+ portrait:[
+ [[165,305],[554,387],[580,396],[592,414],[596,439],[596,539],[96,509],[120,452],[144,381]],
+ [[79,536],[600,560],[600,707],[596,723],[579,738],[101,782],[87,754],[54,628],[58,583]],
+ [[724,426],[773,443],[781,452],[786,548],[708,545]],
+ [[710,566],[787,570],[789,646],[706,654]],
+ [[854,463],[865,471],[871,551],[851,552]],[[853,571],[874,574],[874,643],[852,647]]
+ ],
+ landscape:[
+ [[139,95],[542,186],[552,195],[560,214],[560,334],[89,306],[110,244],[129,167]],
+ [[73,343],[562,358],[562,504],[557,520],[543,532],[57,611],[24,467],[29,426]],
+ [[700,231],[825,263],[836,274],[841,347],[684,340]],
+ [[677,358],[840,366],[841,450],[664,456]],
+ [[918,281],[959,296],[966,356],[910,354]],[[909,370],[966,374],[966,430],[908,436]],
+ [[1007,305],[1026,312],[1030,360],[1004,359]],[[1004,372],[1031,375],[1031,415],[1003,419]]
+ ]
+};
+function pawGlassExtent(outlines){
+ const points=outlines.flat(),xs=points.map(p=>p[0]),ys=points.map(p=>p[1]);
+ const x=Math.min(...xs),y=Math.min(...ys);
+ return {x,y,w:Math.max(...xs)-x,h:Math.max(...ys)-y}
+}
+function pawGlassCrop(iw,ih,w,h,progress,speed=1){
+ if(![iw,ih,w,h].every(v=>Number.isFinite(v)&&v>0))return null;
+ const scale=Math.max(w/iw,h/ih),sw=Math.min(iw,w/scale),sh=Math.min(ih,h/scale);
+ const p=Math.max(0,Math.min(1,Number.isFinite(progress)?progress:0)),v=Math.max(0,Math.min(1,speed));
+ return {x:(iw-sw)*(.08+.84*p*v),y:(ih-sh)*.5,w:sw,h:sh}
+}
+/* PAW_GLASS_PROJECTION_END */
 const pawRailMotionJobs=new WeakMap();
+function pawMountRouteGlass(stage,layout,host,layers){
+ const cfg=pawRailWindows[layout],outlines=pawRailGlassOutlines[layout],reduce=matchMedia('(prefers-reduced-motion: reduce)');
+ if(!cfg||!outlines||!layers?.far||reduce.matches)return false;
+ const box=pawGlassExtent(outlines),canvas=document.createElement('canvas'),ratio=Math.min(1,1200/cfg.width);
+ canvas.width=Math.round(cfg.width*ratio);canvas.height=Math.round(cfg.height*ratio);
+ canvas.className='pawMovingGlass';canvas.setAttribute('aria-hidden','true');
+ const g=canvas.getContext('2d');if(!g)return false;
+ g.scale(canvas.width/cfg.width,canvas.height/cfg.height);g.beginPath();
+ for(const poly of outlines){g.moveTo(...poly[0]);for(const p of poly.slice(1))g.lineTo(...p);g.closePath()}
+ g.clip();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
+ let raf=0,dead=false,last=null,elapsed=0,frames=0;
+ const draw=()=>{g.clearRect(box.x,box.y,box.w,box.h);
+  for(const [key,speed] of [['far',layers.near?.naturalWidth ? .32 : 1],['near',1]]){
+   const im=layers[key];if(!im?.naturalWidth)continue;
+   const c=pawGlassCrop(im.naturalWidth,im.naturalHeight,box.w,box.h,Math.min(1,elapsed/3.6),speed);
+   if(c)g.drawImage(im,c.x,c.y,c.w,c.h,box.x,box.y,box.w,box.h)
+  }
+  canvas.dataset.frame=String(++frames);canvas.dataset.travel=elapsed.toFixed(3)
+ };
+ const stop=()=>{dead=true;cancelAnimationFrame(raf);canvas.remove()};
+ const tick=now=>{
+  if(dead||!stage.isConnected||stage.hidden||stage.dataset.layout!==layout||reduce.matches){stop();return}
+  const dt=last===null?0:Math.min(.1,Math.max(0,(now-last)/1000));last=now;
+  if(!document.hidden&&host.dataset.sceneryPaused!=='true'){elapsed=Math.min(3.6,elapsed+dt);draw()}
+  if(elapsed<3.6)raf=requestAnimationFrame(tick)
+ };
+ draw();stage.append(canvas);stage.dataset.railMotion=layers.near?'route-parallax':'route-panorama';pawRailMotionJobs.set(stage,{stop});raf=requestAnimationFrame(tick);return true
+}
 function pawRailMakePane(pane,ratio,source,w,h){
  const q=pane.q.map(p=>p.map(v=>v*ratio)),[tw,th]=pawRailPaneSize(q);
  const texture=new Uint8ClampedArray(tw*th*4);
@@ -2507,6 +2571,7 @@ function pawRailMountMotion(stage,im,layout,host,mode,routeLayers=null){
  stage.dataset.railMotion='still';
  const cfg=pawRailWindows[layout],reduce=matchMedia('(prefers-reduced-motion: reduce)');
  if(!cfg||reduce.matches||!stage.isConnected||im.naturalWidth!==cfg.width||im.naturalHeight!==cfg.height)return;
+ if(mode==='ride'){if(routeLayers?.far)pawMountRouteGlass(stage,layout,host,routeLayers);return}
  let canvas,raf=0,dead=false,elapsed=0,last=null,lastDraw=-Infinity,frames=0,lastSample='';
  const stop=()=>{dead=true;cancelAnimationFrame(raf);canvas?.remove()};
  try{
@@ -2611,7 +2676,7 @@ async function mbMountRailPainting(host,mode){
   const mount=layers=>{
    if(version===motionVersion&&stage.isConnected&&!stage.hidden&&stage.dataset.layout===layout)pawRailMountMotion(stage,im,layout,host,mode,layers)
   };
-  if(routeReady)Promise.race([routeReady,new Promise(resolve=>setTimeout(()=>resolve(null),350))]).then(mount);
+  if(routeReady){mount(null);routeReady.then(layers=>{if(layers?.far)mount(layers)})}
   else mount(null)
  };
  im.addEventListener('load',verify);im.addEventListener('error',()=>{pawRailMotionJobs.get(stage)?.stop();stage.hidden=true;host.dataset.paintedRail='false'});
@@ -6329,11 +6394,13 @@ initNPC=function(...args){
 function pawReadyMap(key){
  const im=key==='fortune'?pics.valleyClean:portraitImages[key];
  if(!im)return Promise.resolve(false);
+ if(im.complete&&im.naturalWidth>0)return Promise.resolve(true);
+ if(im.complete&&!im.naturalWidth&&im.src){const src=im.src;im.src='';im.src=src}
  return new Promise(resolve=>{
   let settled=false;
   const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);im.removeEventListener('load',onLoad);im.removeEventListener('error',onError);resolve(value)};
   const onError=()=>finish(false);
-  const onLoad=()=>{if(!im.naturalWidth)return finish(false);if(typeof im.decode==='function')im.decode().then(()=>finish(true),onError);else finish(true)};
+  const onLoad=()=>{if(!im.naturalWidth)return finish(false);if(typeof im.decode==='function')im.decode().then(()=>finish(true),()=>finish(im.naturalWidth>0));else finish(true)};
   const timer=setTimeout(onError,6500);
   im.addEventListener('load',onLoad);im.addEventListener('error',onError);
   if(im.complete)onLoad()
