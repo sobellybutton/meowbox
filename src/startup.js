@@ -3707,4 +3707,45 @@ backHuman=function(x,y,kind,walking,facing,scale=1){
  return pawWalkRenderBefore(x,y,kind,walking,facing,scale)
 };
 
+
+/* PAW_PHYSICAL_UI_PASS: keep existing painted assets and game handlers.
+   This is an interface construction pass, not new room artwork. */
+const pawPhysicalHeaderBefore=pawVisualHeader;
+pawVisualHeader=function(q,theme){
+ // A destination postcard is meaningful in the travel journal, not on an
+ // identity card, diary or furniture shelf. Keep the actual page title.
+ if(['shop','collection','daily','profile'].includes(theme))return;
+ return pawPhysicalHeaderBefore(q,theme)
+};
+const pawPhysicalJournalBefore=pawJournalRender;
+pawJournalRender=function(district=scene){
+ const q=$('content'),old=q.querySelector('.pawSketchTabs button[aria-current="page"]');
+ const oldIndex=old?Array.from(old.parentElement.children).indexOf(old):-1;
+ const result=pawPhysicalJournalBefore(district);
+ const spread=q.querySelector('.pawSketchSpread'),next=q.querySelector('.pawSketchTabs button[aria-current="page"]');
+ const newIndex=next?Array.from(next.parentElement.children).indexOf(next):-1;
+ if(spread&&oldIndex>=0&&newIndex>=0&&oldIndex!==newIndex){
+  spread.dataset.pageTurn=newIndex>oldIndex?'forward':'back';
+ }
+ return result
+};
+const pawPhysicalUI=document.createElement('style');
+pawPhysicalUI.textContent=
+ '#game #content[data-paw-visual-theme="shop"]>.row,#game #content[data-paw-visual-theme="collection"]>.row,#game #content[data-paw-visual-theme="daily"]>.row,#game #content[data-paw-visual-theme="profile"]>.row{margin-bottom:4px}'+
+ '#game #content[data-paw-visual-theme="shop"]>h1,#game #content[data-paw-visual-theme="collection"]>h1,#game #content[data-paw-visual-theme="daily"]>h1,#game #content[data-paw-visual-theme="profile"]>h1{font:600 clamp(22px,5vw,32px)/1.2 Georgia,"Songti SC",serif;color:#4c5946;margin:5px 0 8px}'+
+ '#game #content[data-paw-visual-theme="shop"] .komorebiGrid{gap:0 8px!important;padding:10px 8px 0;background:linear-gradient(90deg,#73563d,#b79769 7%,#bb9e74 93%,#73563d);border:5px solid #73563d;border-top:9px solid #836448;border-radius:2px;align-items:stretch}'+
+ '#game #content[data-paw-visual-theme="shop"] .komorebiTile{min-width:0;position:relative;margin:0!important;padding:7px 4px 13px!important;background:#eadcbe!important;border:0!important;border-radius:0!important;border-bottom:9px solid #795a3c!important;box-shadow:0 4px 2px #4b352b50!important;color:#433729!important}'+
+ '#game #content[data-paw-visual-theme="shop"] .komorebiTile .mbFurnitureMat{border:0;background:radial-gradient(ellipse at 50% 85%,#a88a5a35,transparent 65%);box-shadow:none;padding:3px}'+
+ '#game #content[data-paw-visual-theme="shop"] .komorebiTile strong{overflow-wrap:anywhere;line-height:1.25}'+
+ '#game #content[data-paw-visual-theme="collection"] .bagSlots{border-width:6px;border-top-width:10px;gap:8px}'+
+ '#game #content[data-paw-visual-theme="collection"] .bagSlot{border-bottom:5px solid #8d6d4a!important;box-shadow:0 3px 2px #64492e30!important}'+
+ '#game #content[data-paw-visual-theme="room"] .hideoutScene{margin-inline:auto;border:0!important;box-shadow:0 4px 10px #4b372f33;max-width:100%}'+
+ '#game #content .pawSketchSpread[data-page-turn]{transform-origin:center left;animation:pawPaperNext .24s ease-out both}'+
+ '#game #content .pawSketchSpread[data-page-turn="back"]{transform-origin:center right;animation-name:pawPaperPrev}'+
+ '@keyframes pawPaperNext{from{opacity:.65;transform:perspective(1000px) rotateY(-8deg) translateX(4px)}to{opacity:1;transform:none}}'+
+ '@keyframes pawPaperPrev{from{opacity:.65;transform:perspective(1000px) rotateY(8deg) translateX(-4px)}to{opacity:1;transform:none}}'+
+ '@media(max-width:380px){#game #content[data-paw-visual-theme="shop"] .komorebiGrid{gap:0 5px!important;padding:6px 4px 0;border-width:4px}#game #content[data-paw-visual-theme="shop"] .komorebiTile{padding:4px 3px 9px!important}}'+
+ '@media(prefers-reduced-motion:reduce){#game #content .pawSketchSpread[data-page-turn]{animation:none!important}}';
+document.head.append(pawPhysicalUI);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
