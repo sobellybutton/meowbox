@@ -71,6 +71,54 @@ async function run(page,name,touch){
  await click(page.locator('#content .row').getByRole('button',{name:'中文'}));
  await page.locator('.readingAside').filter({hasText:/拒绝会议邀请/}).waitFor({timeout:5000});
 
+ // Open the extended spread at the table and flip each card with actual input.
+ await showGame();
+ await page.evaluate(()=>{
+  room='tarot';start('love');
+  Object.assign(state,{readSpreadSize:5,readTopic:1,tarotTone:'playful',readStage:'cards',
+   readCards:[0,1,2,4,5].map(i=>({i,rev:i===2})),readFlip:Array(5).fill(-1)});
+ });
+ const extendedSlots=await page.evaluate(()=>fiveReadingLayout(W<H));
+ for(const [i,{x,y}] of extendedSlots.entries()){
+  await page.waitForFunction(({x,y})=>at({x,y})?.fn.toString().includes('fiveReadingDetail'),{x,y});
+  await world(x,y);
+  await page.waitForFunction(i=>state.readFlip[i]>=0,i,{timeout:5000});
+ }
+ await page.waitForFunction(()=>state.readSaved);
+ await world(400,touch?700:625);
+ await page.getByRole('heading',{name:'Put the cards together'}).waitFor();
+ assert.equal(await page.locator('.readingNote').count(),5);
+ await shot('five-reading');
+ await click(page.getByRole('button',{name:'Share card',exact:true}));
+ await click(page.getByRole('button',{name:/WeChat/}));
+ await page.locator('.meowShareStatus').getByText('Ready to share or save.').waitFor();
+ const extendedExport=page.waitForEvent('download');
+ await click(page.getByRole('button',{name:'Save PNG image'}));
+ await (await extendedExport).saveAs('test-results/'+name+'-five-card-square.png');
+
+ await page.evaluate(()=>openReadingJournal());
+ assert.equal(await page.locator('.readingNote').count(),2);
+ const archive=page.locator('.readingNote').last();
+ await click(archive.getByRole('button',{name:'Delete reading',exact:true}));
+ await click(archive.getByRole('button',{name:'Keep it',exact:true}));
+ assert.equal(await page.locator('.readingNote').count(),2);
+ await click(archive.getByRole('button',{name:'Delete reading',exact:true}));
+ await click(archive.getByRole('button',{name:'Delete this reading',exact:true}));
+ assert(await page.evaluate(()=>fiveReadingArchive().length===0&&readingJournal.length===1));
+ await click(page.getByRole('checkbox',{name:'Automatically save completed readings'}));
+ await showGame();
+ await page.evaluate(()=>{
+  start('tarot');Object.assign(state,{readCards:[{i:15,rev:false}],readFlip:[t-1],readStage:'cards'});
+ });
+ await page.waitForFunction(()=>state.readSaved);
+ assert(await page.evaluate(()=>readingJournal.length===1&&!journalAutoSave()));
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>typeof openReadingJournal==='function'&&typeof openWonderResult==='function');
+ await showGame();
+ await page.evaluate(()=>openReadingJournal());
+ assert.equal(await page.locator('.readingNote').count(),1);
+ assert.equal(await page.locator('.readingPrivacy input').isChecked(),false);
+
  // Exercise real scoring for an even split, then open the details on the table.
  await showGame();
  await page.evaluate(()=>{
@@ -98,6 +146,14 @@ async function run(page,name,touch){
  await openAssessmentDetails();
  assert.equal(await page.locator('.wonderMotiveScores li').count(),9);
  assert.equal(await page.locator('.readingPrompt').count(),2);
+ const valid=await page.evaluate(()=>{
+  const rows=prepareWonderQuestions('type'),answers=rows.map(()=>0);
+  const max=scoreWonder('type',rows,answers).scores.every(v=>v===4);
+  const invalid=rows.slice();invalid[0]=invalid[1];
+  try{scoreWonder('type',invalid,answers);return false}catch{return max}
+ });
+ assert(valid,'Inconsistent or duplicate assessment items accepted');
+
  assert.deepEqual(errors,[]);
 }
 

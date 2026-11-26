@@ -53,9 +53,14 @@ wonderSceneFinish=function(){
 /* Batch 15A: assessment integrity, clear chart details and safer input. */
 const releaseScoreBefore=scoreWonder;
 scoreWonder=function(mode,rows,answers){
- if(!['type','motive','soul'].includes(mode)||!Array.isArray(rows)||!Array.isArray(answers)||answers.some(v=>!Number.isInteger(v)))throw Error('Invalid assessment');
- if(mode==='type'||mode==='motive'){const count=mode==='type'?4:9;if(rows.some(q=>!Number.isInteger(q.dimension)||q.dimension<0||q.dimension>=count))throw Error('Invalid dimension')}
- else if(rows.some(q=>!Number.isInteger(q.id)||q.id<0||q.id>=soulQs.length))throw Error('Invalid soul question');
+ const count={type:16,motive:27,soul:soulQs.length}[mode];
+ if(!Number.isInteger(count)||!Array.isArray(rows)||!Array.isArray(answers)||rows.length!==count||answers.length!==count)throw Error('Incomplete assessment');
+ const seen=new Set(),perDimension=mode==='type'?4:3;
+ for(const [i,q] of rows.entries()){
+  if(!Number.isInteger(q?.id)||q.id<0||q.id>=count||seen.has(q.id)||!Number.isInteger(answers[i]))throw Error('Invalid assessment item');
+  seen.add(q.id);
+  if(mode!=='soul'&&q.dimension!==Math.floor(q.id/perDimension))throw Error('Invalid assessment dimension');
+ }
  return releaseScoreBefore(mode,rows,answers)
 };
 const releaseChartDetailsBefore=renderChartConsultation;

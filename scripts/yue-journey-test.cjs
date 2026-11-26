@@ -28,6 +28,21 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
    await p.locator('.astroForm details select').selectOption('0');
    await click(p.locator('.astroForm button[type=submit]'));
    await p.locator('.chartConsultation').waitFor();
+   // Reference fixtures cross-checked with iztro 2.5.8. These test only the
+   // civil-time main-star calculations shared by both implementations.
+   const check=await p.evaluate(()=>{
+    const refs=[
+     ['1990-06-15',0,6,'天府/武曲|太阳/太阴|贪狼|天机/巨门|天相/紫微|天梁|七杀||廉贞||破军|天同'],
+     ['1990-07-06',0,6,'天相/廉贞|天梁|七杀|天同|武曲|太阳|破军|天机|天府/紫微|太阴|贪狼|巨门'],
+     ['1990-07-09',1,6,'太阳|天府|天机/太阴|紫微/贪狼|巨门|天相|天梁|七杀/廉贞|||天同|武曲/破军']
+    ];
+    return refs.every(([date,life,bureau,stars])=>{
+     const z=ziChart(date,12);
+     return z.life===life&&z.body===life&&z.bureau===bureau&&z.stars.map(v=>v.map(s=>s[1]).sort().join('/')).join('|')===stars;
+    });
+   });
+   assert(check,'Reference main-star chart diverged');
+
    assert(await p.locator('.astroForm').isHidden(),'Form did not collapse');
    assert(await p.evaluate(()=>yueSessionProfiles.self.chart?.date==='1990-06-15'),'Own chart not retained');
    await click(p.locator('.chartTopics [data-topic="8"]'));

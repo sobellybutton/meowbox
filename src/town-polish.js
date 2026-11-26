@@ -43,18 +43,8 @@ function townAhMaMood(game,age,releaseAge,combo,phase){
 }
 const townAhMaBefore=drawProductionAhMa;
 drawProductionAhMa=function(x,y,sc=1){
- if(productionVisual('guestAtlasV2'))return townAhMaBefore(x,y,sc);
  const mood=townAhMaMood(activity,t-stressSwingAt,t-(state?.riverAt??-100),stressCombo,state?.riverPhase),im=townResidentImage(mood);
  if(!im.complete||!im.naturalWidth)return townAhMaBefore(x,y,sc);
  ctx.save();ellipse(x,y+2,35*sc,7*sc,'#3b322842');ctx.drawImage(im,x-90*sc,y-205*sc,180*sc,220*sc);ctx.restore();return true
 };
-const townParkHostBefore=prop;
-prop=function(id,x,y){
- if(room!=='park'||id!=='chat')return townParkHostBefore(id,x,y);
- const im=townResidentImage('lin');if(!im.complete||!im.naturalWidth)return townParkHostBefore(id,x,y);
- ctx.save();line(x-52,y-5,x-56,y+22,'#735842',5);line(x+52,y-5,x+56,y+22,'#735842',5);round(x-61,y-26,122,17,3,'#a78a62','#715940');round(x-61,y-54,122,23,2,'#9e805b','#715940');line(x-55,y-43,x+55,y-43,'#d5b38a',1.5);
- if(!drawPaintedResident({x:x-48,y:y+12,n:['Auntie Mei','梅姨']},.95,false,'right'))backHuman(x-48,y+12,1,false,'right',.87);
- const k=.45;ellipse(x+47,y+14,17,4,'#3b32283b');ctx.translate(x+47,y+12);ctx.scale(-1,1);ctx.drawImage(im,-90*k,-205*k,180*k,220*k);ctx.restore()
-};
-// Do not promote interim SVG heads into resident dialogue portraits.
-for(const kind of ['idle','scold','laugh','lin'])townResidentImage(kind);
+for(const kind of ['idle','scold','laugh'])townResidentImage(kind);

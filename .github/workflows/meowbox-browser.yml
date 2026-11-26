@@ -38,7 +38,7 @@ jobs:
               ['desktop',{viewport:{width:1440,height:900}}]
             ]){
               const page=await browser.newPage(options);
-              const errors=[];page.on('pageerror',e=>errors.push(e.message));
+              const errors=[];page.on('pageerror',e=>errors.push(e.stack||e.message));
               page.on('console',m=>{if(m.type()==='error'&&/frame error|Room transition/.test(m.text()))errors.push(m.text())});
               try{
                 const coldStart=Date.now();
@@ -181,9 +181,10 @@ jobs:
             ]){
               const page=await browser.newPage(options);
               const errors=[];
-              page.on('pageerror',e=>errors.push(e.message));
+              page.on('pageerror',e=>errors.push(e.stack||e.message));
               page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});
               page.on('requestfailed',r=>errors.push('request: '+r.url()+' '+r.failure()?.errorText));
+              page.on('response',r=>{if(r.status()>=400)errors.push('response: '+r.status()+' '+r.url())});
               try{
                 await page.addInitScript(()=>{
                   if(!localStorage.getItem('meowbox-preview-items'))localStorage.setItem('meowbox-preview-items',JSON.stringify([['Love reading','感情占卜'],['Migration test keepsake','迁移测试纪念品']]));
@@ -245,7 +246,14 @@ jobs:
                 if(!await page.evaluate(()=>{const a=townReaction('test-only',auntieHitReplies),b=townReaction('test-only',auntieHitReplies);return a!==b}))throw Error('Repeated reaction did not vary');
                 await page.screenshot({path:'test-results/'+name+'-passport.png'});
                 await page.getByRole('button',{name:'Open my bag',exact:true}).click();
+                await page.locator('.travellerBagV2').waitFor({timeout:8000});
+                const collection=page.locator('.bagModes').getByRole('button',{name:'Collection',exact:true});
+                await collection.click();
+                if(await collection.getAttribute('aria-pressed')!=='true')throw Error('Collection tab did not activate');
+                await page.locator('.bagSlot[data-owned="true"]').first().waitFor();
+                await page.locator('.bagFooter').getByRole('button',{name:'Passport',exact:true}).click();
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
+                await page.getByRole('button',{name:'Open my bag',exact:true}).click();
                 await page.screenshot({path:'test-results/'+name+'-bag.png'});
                 await page.reload({waitUntil:'load'});
                 await page.locator('#proposal .shrine-enter').waitFor({timeout:45000});
@@ -270,7 +278,7 @@ jobs:
                 // Direct activity integration check, separate from the normal entrance flow.
                 // The lab is one house with three choices, not three destinations.
                 await page.evaluate(()=>{scene='wonder';room='quiz';activity=null;action('quiz')});
-                for(const [label,mode] of [['Soul Cat','soul'],['Four personality preferences','type'],['Nine inner motives','motive']]){
+                for(const [label,mode] of [['Soul Cat · playful character','soul'],['Four preferences · how I think','type'],['Inner motives · what matters to me','motive']]){
                   await page.locator('#choices').getByRole('button',{name:label,exact:true}).click();
                   await page.waitForFunction(mode=>scene==='wonder'&&room==='quiz'&&activity==='wonderScene'&&wonderSceneMode===mode,mode,{timeout:3000});
                   if(options.hasTouch&&options.viewport.width<=540){
@@ -352,7 +360,7 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-temple-paper.png'});
                 await page.evaluate(()=>templePaperKeep(true));
                 if(await page.evaluate(()=>templeTies.at(-1))!==3)throw Error('Tied paper not recorded');
-                await page.evaluate(()=>{room='kitchen';activity=null;start('bubbleTea')});
+                await page.evaluate(()=>{scene='island';room='boba';activity=null;start('bubbleTea')});
                 await page.waitForTimeout(700);
                 const dragWorld=async(points)=>{
                   const coords=await page.evaluate(points=>{const r=c.getBoundingClientRect();return points.map(([x,y])=>({x:r.left+cam.ox+x*cam.scale,y:r.top+cam.oy+y*cam.scale}))},points);
@@ -369,19 +377,26 @@ jobs:
                     await page.mouse.up();
                   }
                 };
-                await tapWorld(400,570);
-                await page.waitForFunction(()=>state.teaStage==='pearls',{},{timeout:3000});
-                await page.waitForTimeout(1150);
+                const pearl=page.locator('#pearlRecipePanel');
+                for(const label of ['Make my own drink','Milk tea','No sugar','Regular ice','Tapioca pearls','Pour tea']){
+                  await pearl.getByRole('button',{name:label,exact:true}).click({timeout:8000});
+                }
+                await page.waitForFunction(()=>state.teaStage==='pearls',{},{timeout:5000});
                 await dragWorld([[530,520],[510,500],[470,480],[420,480]]);
                 if(await page.evaluate(()=>state.teaPearls)!==5)throw Error('First physical pearl scoop failed');
                 await dragWorld([[530,520],[510,500],[470,480],[420,480]]);
                 if(await page.evaluate(()=>state.teaStage)!=='mix')throw Error('Second physical pearl scoop failed');
-                for(let i=0;i<2;i++)await dragWorld([[420,480],[480,480],[360,480],[480,480],[420,480]]);
-                if(await page.evaluate(()=>state.teaStage)!=='ready')throw Error('Physical tea mixing failed');
+                for(let i=0;i<4&&await page.evaluate(()=>state.teaStage==='mix');i++){
+                  await page.waitForFunction(()=>at({x:420,y:480})?.id==='teaMix');
+                  await dragWorld([[420,480],[473,480],[373,480],[473,480],[420,480]]);
+                }
+                if(await page.evaluate(()=>state.teaStage)!=='seal')throw Error('Physical tea mixing failed');
+                await pearl.getByRole('button',{name:'Press to seal',exact:true}).click();
+                await pearl.getByRole('button',{name:'Take a sip',exact:true}).waitFor();
                 await page.screenshot({path:'test-results/'+name+'-bubble-tea.png'});
-                await tapWorld(420,480);
+                await pearl.getByRole('button',{name:'Take a sip',exact:true}).click();
                 await page.waitForFunction(()=>state.teaStage==='done',{},{timeout:7000});
-                await page.evaluate(()=>start('cook'));
+                await page.evaluate(()=>{room='kitchen';start('cook')});
                 await page.waitForTimeout(700);
                 await dragWorld([[270,600],[320,560],[360,520],[400,480]]);
                 if(!await page.evaluate(()=>state.ingredients.includes(0)))throw Error('First ingredient drag failed');
@@ -473,9 +488,9 @@ jobs:
                 await page.getByRole('button',{name:'‹ Back',exact:true}).click();
                 await page.evaluate(()=>{scene='home';room='park';activity=null;state={};closeTalk();start('pet')});
                 await page.waitForFunction(()=>activity==='pet'&&Number.isInteger(state.petKind),{},{timeout:4000});
-                const parkVisit=await page.evaluate(()=>({kind:state.petKind,visit:parkBonds[parkCats[state.petKind].name[0]].visits,trust:state.pet}));
-                await tapWorld(400,455);
-                await page.waitForFunction(v=>state.pet>v,parkVisit.trust,{timeout:3000});
+                const petTrust=await page.evaluate(()=>state.care.values.trust);
+                await page.locator('#gameControls').getByRole('button',{name:'Stroke',exact:true}).click();
+                await page.waitForFunction(v=>state.care.values.trust>v,petTrust,{timeout:6000});
                 await page.screenshot({path:'test-results/'+name+'-named-park-cat.png'});
                 await page.locator('#back').click();
                 await page.waitForFunction(()=>room==='park'&&!activity,{},{timeout:3000});
@@ -486,9 +501,10 @@ jobs:
                 await page.goBack();
                 await page.waitForFunction(()=>room==='park'&&!talkOpen,{},{timeout:4000});
                 await page.evaluate(()=>cameo9('home'));
-                await page.locator('#choices').getByRole('button',{name:'Work',exact:true}).click();
-                await page.locator('#choices').getByRole('button',{name:'Keep chatting',exact:true}).click();
-                if(!await page.locator('#choices').getByRole('button',{name:'Just sit together',exact:true}).isVisible())throw Error('Cameo conversation cannot continue');
+                await page.locator('#choices').getByRole('button',{name:'What are you up to?',exact:true}).click();
+                await page.locator('#choices button').first().click();
+                await page.locator('#choices').getByRole('button',{name:'See you around',exact:true}).click();
+                if(!await page.evaluate(()=>popGuestRecord(popGuestFor('home',0))?.choices.includes(0)))throw Error('Guest did not remember the conversation');
                 await page.evaluate(()=>{closeTalk();toggleLang()});
                 if(await page.locator('#back').innerText()!=='‹ 出门逛逛')throw Error('Chinese back label incorrect');
                 await page.evaluate(()=>{room='office';activity=null;action('officeSketch')});
@@ -546,8 +562,10 @@ jobs:
                   await page.waitForFunction(()=>(()=>{const im=requestReadingRoomPortrait();return im?.naturalWidth===800&&im?.naturalHeight===1400})(),{},{timeout:10000});
                   await page.screenshot({path:'test-results/'+name+'-portrait-tarot-room.png'});
                 }
-                await page.evaluate(()=>{start('love');readingTopic(1);readingShuffle()});
-                await page.waitForFunction(()=>state.readStage==='deck',{},{timeout:5000});
+                await page.evaluate(()=>{start('love');readingTopic(1)});
+                await page.locator('#choices').getByRole('button',{name:'My own question, quietly',exact:true}).click();
+                await page.evaluate(()=>readingShuffle());
+                await page.waitForFunction(()=>state.readStage==='deck'&&state.readShuffle>0,{},{timeout:5000});
                 await page.evaluate(()=>readingDeal());
                 await page.waitForFunction(()=>state.readStage==='cards',{},{timeout:5000});
                 await page.evaluate(()=>{readingReveal(0);readingReveal(1);readingReveal(2)});
@@ -555,7 +573,8 @@ jobs:
                 if(!await page.evaluate(()=>readingJournal.some(v=>v.topic===1&&v.cards.length===3)))throw Error('Tarot journal missing');
                 if(!await page.evaluate(()=>items.some(x=>x[0]==='Three-card reading')&&readingPrompts.length===4&&readingPrompts.every(t=>t.length===3)))throw Error('Topic-specific reading collection or prompts missing');
                 await page.screenshot({path:'test-results/'+name+'-tarot-spread.png'});
-                await tapWorld(400,465);
+                const tarotMiddle=await page.evaluate(()=>readingActivitySlot(1,3,W<H));
+                await tapWorld(tarotMiddle.x,tarotMiddle.y);
                 await page.waitForFunction(()=>state.readStage==='focus'&&state.readFocus===1,{},{timeout:3000});
                 await page.waitForTimeout(500);
                 await page.screenshot({path:'test-results/'+name+'-tarot-closeup.png'});
@@ -580,7 +599,7 @@ jobs:
                 if(!await page.evaluate(()=>residentRecord('mochi').topics.length===3&&items.filter(x=>x[0]===residentProfiles.mochi.reward[0]).length===1))throw Error('Resident progress did not survive reload');
                 if(errors.length)throw Error(errors.join('; '));
                 console.log(name+': PASS');
-              }catch(e){failed=true;console.error(name+': FAIL '+e.message+' | page errors: '+errors.join('; '));console.error('Visible page: '+(await page.locator('body').innerText().catch(()=>'' )).slice(0,500));await page.screenshot({path:'test-results/'+name+'-failure.png'}).catch(()=>{});}
+              }catch(e){failed=true;console.error(name+': FAIL '+e.stack+' | page errors: '+errors.join('; '));console.error('Visible page: '+(await page.locator('body').innerText().catch(()=>'' )).slice(0,500));await page.screenshot({path:'test-results/'+name+'-failure.png'}).catch(()=>{});}
               finally{await page.close();}
             }
             await browser.close();
@@ -642,6 +661,7 @@ jobs:
         run: |
           python3 -m http.server 8768 >/tmp/meowbox-device-server.log 2>&1 &
           node scripts/device-journey-test.cjs
+          if [ "$MEOW_BROWSER" = chromium ]; then node scripts/district-journey-test.cjs; fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

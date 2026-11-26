@@ -828,8 +828,15 @@ drawActivity=function(){
  ellipse(400,580,190,37,'#302a2440');ellipse(272,548,50,12,'#302a2444');
  // Real seat and foot anchors: stool at y504, feet at y550.
  const stoolWood=ctx.createLinearGradient(0,499,0,551);stoolWood.addColorStop(0,'#c9a878');stoolWood.addColorStop(1,'#71543e');
- const seatY=550-54*(W<H?.67:.70);if(room==='fish'&&productionVisual('guestAtlasV2')){ellipse(272,550,44,12,'#bda57c');ellipse(272,548,40,9,'#d8c39b');for(let j=0;j<5;j++)line(242+j*15,545,245+j*15,553,'#a98e6570',1)}else{line(247,seatY+5,242,552,'#70513c',7);line(297,seatY+5,302,552,'#70513c',7);line(248,535,298,535,'#70513c',4);ellipse(272,seatY,35,8,stoolWood);ellipse(272,seatY-3,34,6,'#b4956c')}
- if(room==='fish'){if(!drawProductionAhMa(272,550,W<H?.67:.70))riverAuntie(272,550,W<H?.67:.68)}else backHuman(272,550,0,false,'right',1.1);
+ const sc=W<H?.67:.70;
+ if(room==='fish'){
+  if(!drawProductionAhMa(272,550,sc))riverAuntie(272,550,sc);
+ }else{
+  const seatY=550-54*sc;
+  line(247,seatY+5,242,552,'#70513c',7);line(297,seatY+5,302,552,'#70513c',7);
+  line(248,535,298,535,'#70513c',4);ellipse(272,seatY,35,8,stoolWood);ellipse(272,seatY-3,34,6,'#b4956c');
+  backHuman(272,550,0,false,'right',1.1);
+ }
  // Low ritual block: the paper is on the working surface, rather than floating on an enormous table.
  const wood=ctx.createLinearGradient(0,505,0,557);wood.addColorStop(0,'#bca078');wood.addColorStop(.5,'#9f805e');wood.addColorStop(1,'#795d42');
  ctx.fillStyle=wood;ctx.beginPath();ctx.moveTo(335,506);ctx.lineTo(421,506);ctx.lineTo(443,540);ctx.lineTo(318,540);ctx.closePath();ctx.fill();ctx.strokeStyle='#806448';ctx.stroke();
@@ -1362,13 +1369,13 @@ function readingSave(){
  entry.date=shrineClock().day;
  const same=v=>v?.date===entry.date&&(v.topic??-1)===entry.topic&&JSON.stringify(v.cards)===JSON.stringify(entry.cards);
  const existing=readingJournal.find(same);
- if(!existing||existing.tone!==entry.tone){
+ if(journalAutoSave()&&(!existing||existing.tone!==entry.tone)){
   readingJournal=[entry,...readingJournal.filter(v=>!same(v))].slice(0,40);
   save('readingJournalV1',readingJournal);
  }
  if(activity==='tarot'){const d=tarotDeck[entry.cards[0].i];addItem('Daily Tarot: '+d[0],'今日塔罗：'+d[1])}
  else addItem('Three-card reading','三张牌占卜');
- hint('Your reading is tucked into your passport.','这份牌意已经收进旅人护照。')
+ readingJournalHint()
 }
 function readingShow(i){
  if(!['tarot','love'].includes(activity)||state.readStage!=='cards')return;
@@ -1410,11 +1417,16 @@ if(stage==='deal'&&age>.65+(n-1)*.22){state.readStage='cards';state.readAt=t;hin
 }else if(stage==='cards')txt(tr('Choose a card to turn','点击牌面翻开'),400,portraitSpread?735:622,16,'#fff0d2')}
 ctx.restore()};
 const tarotJournalArt='assets/visual/painted/tarot-journal.webp';
+function journalAutoSave(){return load('tarotJournalAutoSaveV1',true)!==false}
+function readingJournalHint(){
+ const message=journalAutoSave()?['Your reading is tucked into your passport.','这份牌意已经收进旅人护照。']:['Your spread is ready. Automatic saving is off.','牌阵已解开，自动保存目前关闭。'];
+ hint(...message);
+}
 function readingTitle(entry){
- return entry.cards.length===1?tr('Daily tarot','今日塔罗'):tr(...(readingTopics[entry.topic]||['Three-card reading','三张牌占卜']));
+ return entry.cards.length===1?tr('Daily tarot','今日塔罗'):tr(...(readingTopics[entry.topic]||(entry.cards.length===5?['Five-card reading','五张牌解读']:['Three-card reading','三张牌占卜'])));
 }
 function readingTakeaway(cards){
- const focus=cards[cards.length-1],meaning=arcanaMeanings[focus.i];
+ const focus=cards[cards.length===5?3:cards.length-1],meaning=arcanaMeanings[focus.i];
  return focus.rev?meaning.slice(2,4):meaning.slice(0,2);
 }
 function readingConnection(entry){
@@ -1429,21 +1441,24 @@ function readingConnection(entry){
 }
 function openTarotReading(entry,back=()=>{$('page').style.display='none'}){
  if(!entry)return;
+ const extended=entry.cards.length===5;
  page(readingTitle(entry),entry.date||tr('From the Tarot House','来自塔罗小屋'),q=>{
   const book=element('section','',q,'readingNotes');
   entry.cards.forEach((v,i)=>{
    const d=tarotDeck[v.i],item=element('article','',book,'readingNote');
-   if(entry.cards.length===3)element('small',tr(...readingPositions[i]),item);
+   const position=extended?fiveReadingPositions[i]:readingPositions[i];
+   if(position&&entry.cards.length>1)element('small',tr(...position),item);
    element('h2',tr(d[0],d[1])+' · '+orient(v.rev),item);
    element('p',arcanaReading(d,v.rev),item);
-   const prompt=topicReflection(entry.topic,i);
+   const prompt=extended?fiveReadingPrompt(entry.topic,i):topicReflection(entry.topic,i);
    if(prompt)element('p',prompt,item,'readingPrompt');
   });
-  if(entry.cards.length===3){
-   element('h2',tr('Put the cards together','把三张牌串起来'),book);
-   element('p',readingConnection(entry),book);
+  if(entry.cards.length>1){
+   element('h2',tr('Put the cards together',extended?'把五张牌串起来':'把三张牌串起来'),book);
+   const bridge=extended?tr('Compare what helps with the challenge card. Use the next step to pick one thing you can try, and the last card to decide what is worth remembering.','对照助力牌和挑战牌。用行动牌找一件可以尝试的小事，再看看最后一张牌有什么值得记下。'):readingConnection(entry);
+   element('p',bridge,book);
   }
-  const focus=entry.cards[entry.cards.length-1],aside=tarotCommentary(tarotDeck[focus.i][0],focus.rev,entry.topic,entry.tone);
+  const focus=entry.cards[extended?3:entry.cards.length-1],aside=tarotCommentary(tarotDeck[focus.i][0],focus.rev,entry.topic,entry.tone);
   if(aside)element('p',tr('The fortune teller adds','占卜师补一句')+' · '+tr(...aside),book,'readingAside');
   b(book,tr('Share card','分享牌卡'),()=>shareReadingResult(entry,()=>openTarotReading(entry,back)));
   q.querySelector('.row').firstElementChild.onclick=back;
@@ -1457,10 +1472,17 @@ function openReadingJournal(){
   const art=element('img','',book,'readingJournalArt');
   art.width=1200;art.height=400;art.src=tarotJournalArt;art.alt='';
   art.onerror=()=>art.remove();
-  const entries=readingJournal.flatMap(v=>{
-   const entry=v&&tarotShareSnapshot(v);
-   return entry&&entry.cards.length!==5?[{...entry,date:v.date}]:[];
-  });
+  const autosave=element('input','',element('label','',book,'readingPrivacy'));
+  autosave.type='checkbox';autosave.checked=journalAutoSave();
+  element('span',tr('Automatically save completed readings','自动保存已完成的解读'),autosave.parentElement);
+  autosave.onchange=()=>save('tarotJournalAutoSaveV1',autosave.checked);
+  const entries=[
+   ...readingJournal.map((record,index)=>({record,index,extended:false})),
+   ...fiveReadingArchive().map((record,index)=>({record,index,extended:true}))
+  ].flatMap(({record,index,extended})=>{
+   const entry=record&&tarotShareSnapshot(record);
+   return entry?[{...entry,date:record.date,index,extended}]:[];
+  }).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   if(!entries.length)element('p',tr('Your first reading will appear here.','第一次占卜之后，手记会出现在这里。'),book);
   entries.forEach((entry,i)=>{
    const item=element('article','',book,'readingNote');
@@ -1468,6 +1490,20 @@ function openReadingJournal(){
    element('h2',readingTitle(entry),item);
    element('p',entry.date+' · '+entry.cards.map(({i})=>tr(...tarotDeck[i].slice(0,2))).join(' / '),item);
    b(item,tr('Read again','重温解读'),()=>openTarotReading(entry,openReadingJournal));
+   const confirm=element('div','',item,'readingDeletePrompt');
+   confirm.hidden=true;
+   element('p',tr('Remove this reading from this browser?','要从此浏览器删除这次解读吗？'),confirm);
+   const remove=b(item,tr('Delete reading','删除解读'),()=>{confirm.hidden=false;yes.focus()});
+   remove.before(confirm);
+   const yes=b(confirm,tr('Delete this reading','确认删除这次解读'),()=>{
+    if(entry.extended)save('fiveReadingJournalV1',fiveReadingArchive().filter((_,i)=>i!==entry.index));
+    else{
+     readingJournal=readingJournal.filter((_,i)=>i!==entry.index);
+     save('readingJournalV1',readingJournal);
+    }
+    openReadingJournal();
+   });
+   b(confirm,tr('Keep it','保留解读'),()=>{confirm.hidden=true;remove.focus()});
   });
   b(book,tr('Back to passport','返回护照'),passport);
   q.querySelector('.row').firstElementChild.onclick=passport;
@@ -1483,10 +1519,14 @@ readingNotesStyle.textContent=`
 .readingNotes h2{font:600 19px/1.3 Georgia,"Songti SC",serif;margin:6px 0;color:#3c554b}
 .readingNotes p{margin:5px 0 8px}
 .readingNotes button{min-height:44px;white-space:normal;margin:5px 0}
+.readingPrivacy{display:flex;align-items:center;gap:9px;min-height:44px;margin-top:6px}
+.readingPrivacy input{width:18px;height:18px;accent-color:#536d58}
+.readingDeletePrompt{padding:8px 12px;background:#f3e1cf;border:1px solid #bc997b}
+.readingDeletePrompt button+button,.readingNote button+button{margin-inline-start:8px}
 .readingNotes .readingPrompt,.readingNotes .readingAside{border-left:2px solid #9c9d77;padding-left:10px;margin:10px 0;color:#40594b}
 `;
 document.head.append(readingNotesStyle);
-const readingPassport=passport;passport=function(){readingPassport();let book=$('content').querySelector('.travelAlbum');if(book)b(book,tr('Reading journal','塔罗手记')+' ('+readingJournal.length+')',openReadingJournal)};$('dockPassport').onclick=passport;
+const readingPassport=passport;passport=function(){readingPassport();let book=$('content').querySelector('.travelAlbum');if(book)b(book,tr('Reading journal','塔罗手记')+' ('+(readingJournal.length+fiveReadingArchive().length)+')',openReadingJournal)};$('dockPassport').onclick=passport;
 const collectionMore=[['Quiet garden postcard','静谧后院明信片','stamp'],['Temple cat blessing','庙猫的祝福','cat'],['After-hours rhythm ticket','下班节拍门票','stamp'],['Golden rhythm badge','金色节拍徽章','stamp'],...boxPrizes.map(v=>[v[0],v[1],'cat']),...teaChoices.map(v=>[v[0]+' recipe',v[1]+'配方','stamp'])];for(let item of collectionMore)if(!keepsakes.some(v=>v[0]===item[0]))keepsakes.push(item);
 const collectionClue=keepsakeClue;keepsakeClue=function(item){let n=item[0];if(boxPrizes.some(v=>v[0]===n))return ['Open a blind box in the arcade','去游戏厅开盲盒'];if(/recipe$/.test(n))return ['Make a drink at Pearl & Pause','去珍珠摸鱼铺摇杯奶茶'];if(n==='Quiet garden postcard')return ['Feed the koi in the hidden garden','去后院喂锦鲤'];if(n==='Temple cat blessing')return ['Befriend the temple cat','和庙猫做朋友'];if(n.includes('rhythm'))return ['Try the arcade rhythm floor','试试游戏厅节奏舞台'];return collectionClue(item)};
 
@@ -1561,7 +1601,7 @@ function markIndoorStation(id,from,anchor){
 }
 const continuityRoomDraw=drawRoom;
 drawRoom=function(){
- const first=hit.length;if(room==='fish'){riverSceneBackdrop();riverAuntie(147,466,.78)}continuityRoomDraw();
+ const first=hit.length;if(room==='fish'){riverSceneBackdrop();riverAuntie(159,474,.78)}continuityRoomDraw();
  if(!room||avatar===null)return;
  if(continuityRoom!==room){continuityRoom=room;const spec=indoorSpec();indoor={x:spec.entry[0],y:spec.entry[1],tx:spec.entry[0],ty:spec.entry[1],facing:'up',last:t,goal:null,route:[]};indoorDestination(...spec.arrival)}
  if(continuityActivity!==null){continuityActivity=null;indoor.last=t;indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y}
@@ -1945,7 +1985,10 @@ drawMap=function(){
   if(n.kind===2){cat(n.x,n.y,0,moving,.65*sc);continue}
   const dir=Math.abs(n.ty-n.y)>Math.abs(n.tx-n.x)?(n.ty<n.y?'up':'down'):(n.tx<n.x?'left':'right');
   const actorScale=travellerOutdoorScale(sc,cam.scale,W,H,false),grannyScale=actorScale*94/150;
-  if(n.grumpy){if(!drawGuestAtlasActor(0,n.x,n.y,94*actorScale,dir))drawWalkingGranny(n.x,n.y,grannyScale,moving,dir)}else if(!drawPaintedResident(n,actorScale,moving,dir))backHuman(n.x,n.y,stableResidentFallback(n),moving,dir,actorScale);
+  if(!drawPaintedResident(n,actorScale,moving,dir)){
+   if(n.grumpy)drawWalkingGranny(n.x,n.y,grannyScale,moving,dir);
+   else backHuman(n.x,n.y,stableResidentFallback(n),moving,dir,actorScale);
+  }
   const actorHeight=94*actorScale;
   if(n.popGuest||n.grumpy)drawMeowActorName(n,tr(...n.n));
   if(Math.hypot(n.x-p.x,n.y-p.y)<(n.popGuest?175:150)){
@@ -2105,7 +2148,7 @@ syncSigns=function(){
   }
  }
  signRoot.classList.remove('quiet');
- const top=Math.min(164,H*.25),bottom=H-130;
+ const top=Math.min(112,H*.20),bottom=H-130;
  // Reserve real interactive UI and give each sign its own touch target.
  // Clamping independently made neighbouring doors share the same screen position.
  const blockers=[],placed=[],items=[];
@@ -4275,7 +4318,6 @@ const productionPortraitBefore=portraitInteriorImage;
 portraitInteriorImage=function(id){return productionVisual(id)||productionPortraitBefore(id)};
 function drawProductionAhMa(x,y,scale=1){
  const age=t-stressSwingAt,releaseAge=t-(state?.riverAt??-100),scold=(activity==='hit'&&age>=0&&age<.46)||(activity==='riverShout'&&state.riverPhase==='walk'&&releaseAge>1.1&&releaseAge<2.8);
- if(drawGuestAtlasActor(activity==='hit'?(scold?2:1):0,x,y,174*scale,'right'))return true;
  const im=productionVisual(scold?'ahMaScold':'ahMaIdle')||productionVisual('ahMaIdle');
  if(!im)return false;
  ctx.save();ellipse(x,y+2,37*scale,8*scale,'#3b322842');
@@ -4457,7 +4499,7 @@ function sharePublicData(data){
  const title=pair(data.title),lines=(Array.isArray(data.lines)?data.lines:[]).slice(0,4).map(pair);let accent=/^#[0-9a-f]{6}$/i.test(data.accent||'')?data.accent:'#829a89';
  if(kind==='type'&&lines.length<4&&/^[EIX][SNX][TFX][JPX]$/.test(title[0])){const traits={E:['Social recharge','社交充电'],I:['Quiet recharge','独处充电'],S:['Practical details','务实细节'],N:['Possibilities','灵感联想'],T:['Logical comparison','理性比较'],F:['People and values','感受与价值'],J:['Plans','偏好计划'],P:['Flexibility','随心应变'],X:['Balanced','偏好持平']};const labels=Array.from(title[0],k=>traits[k]);lines.unshift([labels.slice(0,2).map(v=>v[0]).join(' · '),labels.slice(0,2).map(v=>v[1]).join(' · ')],[labels.slice(2).map(v=>v[0]).join(' · '),labels.slice(2).map(v=>v[1]).join(' · ')]);accent=title[0][1]==='N'?'#a493b4':title[0][1]==='S'?'#849c8a':'#b69d78'}
  const takeaway=kind==='tarot'&&Array.isArray(data.takeaway)?pair(data.takeaway):null;
- const cards=kind==='tarot'&&Array.isArray(data.cards)?data.cards.slice(0,3).filter(v=>Number.isInteger(v?.i)&&tarotDeck[v.i]).map(v=>({i:v.i,rev:!!v.rev})):[];
+ const cards=kind==='tarot'&&Array.isArray(data.cards)?data.cards.slice(0,5).filter(v=>Number.isInteger(v?.i)&&tarotDeck[v.i]).map(v=>({i:v.i,rev:!!v.rev})):[];
  return {kind,title,lines:lines.slice(0,4),accent,cards,takeaway}
 }
 function shareTextLines(c,text,max){
@@ -4627,10 +4669,10 @@ function shareCardArt(cv,data,format,cn){
  const quote=locale(socialResultQuote(data));y=block(quote,y+5,width-56,format==='square'?30:37,2,'#875040','bold')+12;
  const footerY=end-50,bodyEnd=footerY-15;
  if(data.kind==='tarot'&&data.cards.length){
-  const roles=data.cards.length===3?[['Situation','现状'],['Notice','留意'],['Next step','下一步']]:[['Your card','今日之牌']];
+  const roles=data.cards.length===5?fiveReadingPositions:data.cards.length===3?[['Situation','现状'],['Notice','留意'],['Next step','下一步']]:[['Your card','今日之牌']];
   const count=data.cards.length;
   const rich=Boolean(data.takeaway)&&bodyEnd-y>=count*83;
-  const rowH=rich?Math.min(135,Math.floor((bodyEnd-y-16)/count)):Math.min(format==='square'?56:70,Math.max(43,(bodyEnd-y-(format==='square'?0:76))/count));
+  const rowH=rich?Math.min(135,Math.floor((bodyEnd-y-16)/count)):data.takeaway?Math.min(70,Math.floor((bodyEnd-y-4)/count)):Math.min(format==='square'?56:70,Math.max(43,(bodyEnd-y-(format==='square'?0:76))/count));
   if(rich)y+=Math.min(48,Math.max(0,(bodyEnd-y-count*rowH)/2));
   for(let i=0;i<count;i++){
    const card=data.cards[i],d=tarotDeck[card.i],yy=y+i*rowH;
@@ -4691,11 +4733,11 @@ function openMeowShare(raw,back=null){
 wonderSceneShare=function(){const v=wonderSceneResult;if(v)openMeowShare({kind:wonderSceneMode,title:v.name,lines:[v.desc],accent:v.color})};
 shareTownFortune=function(f){openMeowShare({kind:'fortune',title:f.theme.title,lines:[f.theme.work,f.theme.rest,['Lucky colour: '+f.colour[0]+' · '+f.number,'幸运色：'+f.colour[1]+' · '+f.number]],accent:f.colour[2]},todayHub)};
 function shareReadingResult(entry,back=null){
- if(!entry||![1,3].includes(entry.cards.length))return;
+ if(!entry||![1,3,5].includes(entry.cards.length))return;
  if(!pics.tarotJournal){const art=new Image();art.src=tarotJournalArt;pics.tarotJournal=art}
  const pair=v=>{const d=tarotDeck[v.i];return [d[0]+(v.rev?' · Reversed':' · Upright'),d[1]+(v.rev?' · 逆位':' · 正位')]};
  const {cards}=entry;
- const title=cards.length===1?tarotDeck[cards[0].i].slice(0,2):['Three-card reflection','三张牌小记'];
+ const title=cards.length===1?tarotDeck[cards[0].i].slice(0,2):cards.length===3?['Three-card reflection','三张牌小记']:['Five-card reflection','五张牌小记'];
  openMeowShare({kind:'tarot',title,cards,lines:cards.map(pair),takeaway:readingTakeaway(cards),accent:'#9a8295'},back);
 }
 const shareStyles=document.createElement('style');shareStyles.textContent='.meowSharePanel{display:flex;flex-direction:column;align-items:stretch;gap:9px;max-width:440px;margin:auto}.meowShareTabs{display:flex;flex-wrap:wrap;gap:6px}.meowShareTabs button{flex:1;min-width:70px}.meowSharePanel button{min-height:44px;white-space:normal;line-height:1.3}.meowShareTabs button[aria-pressed=true]{background:#4d6556;color:#fff2d5}.meowSharePreview{display:block;width:auto;max-width:100%;max-height:48dvh;object-fit:contain;margin:3px auto;border:1px solid #ac9773}.meowShareStatus{font-size:13px;min-height:1.4em;margin:0}.meowShareHelp{line-height:1.5;font-size:12px;color:#655843}';document.head.append(shareStyles);
@@ -4727,7 +4769,7 @@ prop=function(id,x,y){
  if(room!=='park'||id!=='chat')return parkHostPropBefore(id,x,y);
  // Two visible hosts, grounded near a bench, no invisible conversation target.
  ctx.save();line(x-52,y-5,x-56,y+22,'#735842',5);line(x+52,y-5,x+56,y+22,'#735842',5);round(x-61,y-26,122,17,3,'#a78a62','#715940');round(x-61,y-54,122,23,2,'#9e805b','#715940');line(x-55,y-43,x+55,y-43,'#d5b38a',1.5);
- if(!drawPaintedResident({x:x-48,y:y+12,n:['Auntie Mei','梅姨']},.95,false,'right'))backHuman(x-48,y+12,1,false,'right',.87);if(!drawGuestAtlasActor(3,x+47,y+12,82,'left'))backHuman(x+47,y+12,3,false,'left',.87);if(talkOpen){const who=$('speaker').textContent,mei=who===tr('Auntie Mei','梅姨'),lin=who===tr('Auntie Lin','林姨');if(mei||lin){const hx=x+(mei?-48:47);ellipse(hx,y-88,14,9,'#f5e5c8');for(let j=0;j<3;j++)ellipse(hx-6+j*6,y-88+Math.sin(t*4+j)*1.2,1.4,1.4,'#82755e')}}
+ if(!drawPaintedResident({x:x-92,y:y+12,n:['Auntie Mei','梅姨']},.90,false,'right'))backHuman(x-92,y+12,1,false,'right',.87);if(!drawPaintedResident({x:x+86,y:y+12,n:['Auntie Lin','林姨']},.87,false,'left'))backHuman(x+86,y+12,3,false,'left',.87);if(talkOpen){const who=$('speaker').textContent,mei=who===tr('Auntie Mei','梅姨'),lin=who===tr('Auntie Lin','林姨');if(mei||lin){const hx=x+(mei?-92:86);ellipse(hx,y-88,14,9,'#f5e5c8');for(let j=0;j<3;j++)ellipse(hx-6+j*6,y-88+Math.sin(t*4+j)*1.2,1.4,1.4,'#82755e')}}
  const sway=Math.sin(t*2)*.10;ctx.save();ctx.translate(x+27,y-31);ctx.rotate(sway);ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(-24,-34,0,-32);ctx.quadraticCurveTo(24,-34,0,0);ctx.fillStyle='#e2caa0';ctx.fill();ctx.strokeStyle='#a28a65';ctx.stroke();ctx.restore();ctx.restore()
 };
 /* Fictional park serials, with saved episode, scene and player choice. */
@@ -5079,7 +5121,7 @@ drawActivity=function(){
  threeWood(224,373,352,267,'#6d4b37');
  round(235,396,330,218,8,'#68786a','#4a5b50');
  for(let j=0;j<30;j++){const y=399+j*7;line(239,y,561,y,'#f9e6b30b',1)}
- if(g.opponent==='auntie'){const im=productionVisual(g.result?.who===2?'ahMaScold':'ahMaIdle')||productionVisual('ahMaIdle');if(!drawGuestAtlasActor(g.result?.who===2?2:1,400,373,103,'right')){if(im)ctx.drawImage(im,358,270,84,103);else riverAuntie(400,373,.70)}}
+ if(g.opponent==='auntie')riverAuntie(400,373,.53);
  else{cat(400,361,0,false,1.25)}
  ellipse(400,374,45,5,'#3f382d44');
  threeBoard(286,388,228,g.board,g);
@@ -6362,6 +6404,7 @@ function meowBeginTextFrame(inside){
  meowFrameBlockers=[...meowUIRects];
  if(inside){
   if(continuityRoom===room)meowFrameBlockers.push(meowIndoorActorBounds(indoor));
+  for(const actor of roomResidentActors())meowFrameBlockers.push(meowIndoorActorBounds(actor,actor.sc));
   for(const a of sharedTownActors())meowFrameBlockers.push(meowIndoorActorBounds(a));
  }else{
   for(const a of [p,...npc,...sharedTownActors()])meowFrameBlockers.push(characterScreenBounds(a,a===p));
@@ -6518,7 +6561,7 @@ function renderTravellerBag(){
   const wrap=element('section','',q,'travellerBagV2'),all=bagEntries(),owned=all.filter(v=>v.owned),head=element('div','',wrap,'bagHeader');
   const pic=element('img','',head);pic.src=ART['badge'+(avatar??0)];pic.alt='';
   const info=element('div','',head);element('strong',playerName||tr('Traveller','旅人'),info);element('small',owned.length+' '+tr('keepsakes','件收藏')+' · '+hideoutBalance()+' '+tr('meow coins','喵币'),info);
-  const profile=b(head,tr('Profile','资料'),()=>hideoutProfilePage());profile.className='bagProfileButton';
+  const profile=b(head,tr('Profile','资料'),()=>hideoutProfilePage({origin:renderTravellerBag}));profile.className='bagProfileButton';
   const tabs=element('div','',wrap,'bagModes');
   for(const [key,en,cn] of [['owned','My bag','背包'],['catalog','Collection','图鉴'],['favorites','Favourites','喜欢']]){const btn=b(tabs,tr(en,cn),()=>{bagMode=key;bagSelected=null;draw()});btn.dataset.mode=key}
   const category=element('div','',wrap,'bagCategories');
@@ -6546,8 +6589,8 @@ function renderTravellerBag(){
    if(v.owned){const fav=b(detail,bagFavorites.includes(v.item[0])?tr('★ Remove favourite','★ 取消喜欢'):tr('☆ Keep as favourite','☆ 加入喜欢'),()=>{bagFavorites=bagFavorites.includes(v.item[0])?bagFavorites.filter(x=>x!==v.item[0]):[...bagFavorites,v.item[0]];save('bagFavoritesV1',bagFavorites);draw()});fav.setAttribute('aria-pressed',String(bagFavorites.includes(v.item[0])))}
    if(prize)element('small',boxPrizes.filter(p=>owned.some(o=>o.item[0]===p[0])).length+'/'+boxPrizes.length+' '+tr('figures collected','款手办已收集'),detail)
   }draw();
-  const lang=q.querySelector('.row button:nth-child(2)');if(lang)lang.onclick=()=>{toggleLang();renderTravellerBag()}
- })
+ });
+ journalLanguage(renderTravellerBag);
 }
 myRoom=renderTravellerBag;$('dockRoom').onclick=myRoom;$('profileHud').onclick=myRoom;
 const bagV2CSS=document.createElement('style');bagV2CSS.textContent=`
@@ -6780,39 +6823,6 @@ const finalInterfaceStyle=document.createElement('style');finalInterfaceStyle.te
 `;document.head.append(finalInterfaceStyle);
 
 
-/* Distinct guest/resident sprites. The original 4x4 transparent WebP atlas
-   is an optional production asset; never label its fallback as painted art. */
-const guestAtlasNames=[['Grumpy Ah Ma','暴躁阿嬷'],['Ah Ma','阿嬷'],['Ah Ma scolding','阿嬷发火'],['Auntie Lin','林姨'],...popGuestStories.map(g=>g.name)];
-productionVisualManifest.guestAtlasV2={path:'assets/visual/painted/meowbox-resident-guest-atlas.webp',width:1024,height:1024};
-function guestAtlasIndex(n){
- if(n?.popGuest){const i=popGuestStories.findIndex(g=>g.id===n.popGuest);return i>=0?4+i:-1}
- return guestAtlasNames.findIndex(v=>v.includes(n?.n?.[0])||v.includes(n?.n?.[1]))
-}
-function drawGuestAtlasActor(i,x,y,height,dir='right'){
- if(i<0||i>=16||[6,8,9].includes(i))return false;const im=productionVisual('guestAtlasV2');
- if(!im||im.naturalWidth!==1024||im.naturalHeight!==1024)return false;
- const cell=256;ctx.save();ellipse(x,y+1,height*.19,Math.max(2,height*.035),'#352c2438');
- ctx.translate(x,y);ctx.scale(dir==='left'?-1:1,1);
- ctx.drawImage(im,i%4*cell,Math.floor(i/4)*cell,cell,cell,-height/2,-height,height,height);
- ctx.restore();return true
-}
-const guestResidentPaintBefore=drawPaintedResident;
-drawPaintedResident=function(n,sc,moving,dir){
- const index=guestAtlasIndex(n);
- if(index>=0&&drawGuestAtlasActor(index,n.x,n.y,94*sc,dir))return true;
- return guestResidentPaintBefore(n,sc,moving,dir)
-};
-const guestThumbCache=new Map(),guestSayBefore=say;
-say=function(...args){
- const result=guestSayBefore(...args),name=String(args[0]),i=guestAtlasNames.findIndex(v=>v.includes(name));
- if(i<0||[6,8,9].includes(i))return result;const portrait=$('talkPortrait');if(!portrait)return result;
- function apply(){if(!talkOpen||!$('speaker').textContent.startsWith(name))return;const im=productionVisual('guestAtlasV2');if(!im)return;
-  if(!guestThumbCache.has(i)){const c=document.createElement('canvas');c.width=c.height=160;const g=c.getContext('2d');if(!g)return;g.drawImage(im,i%4*256,Math.floor(i/4)*256,256,256,0,0,160,160);guestThumbCache.set(i,c.toDataURL('image/png'))}
-  portrait.src=guestThumbCache.get(i);portrait.hidden=false;portrait.classList.add('paintedResidentPortrait')
- }
- apply();const im=productionVisualCache.get('guestAtlasV2');if(im&&!im.complete)im.addEventListener('load',apply,{once:true});return result
-};
-
 /* Two visible guest slots on every district. Existing hosts and cats keep
    their roles. First guest begins near the arrival path; the other explores. */
 function guestSpawnY(spawnY,min,max,slot,random=Math.random){
@@ -6875,7 +6885,7 @@ function ambientVisitState(){
  if(!eligible)return null;
  if(!ambientVisit.active&&t>=ambientVisit.next){
   const pool=ambientResidentsByRoom[room]||[0,1,2,3,4,5],available=pool.filter(i=>i!==ambientVisit.last),pick=(available.length?available:pool)[Math.floor(Math.random()*(available.length||pool.length))];
-  ambientVisit.last=pick;const guests=npc.filter(n=>n.popGuest),guest=guests.length&&productionVisual('guestAtlasV2')&&Math.random()<.35?guests[Math.floor(Math.random()*guests.length)]:null;ambientVisit.active={start:t,duration:6+Math.random()*6,index:pick,guest,reverse:Math.random()<.5};ambientVisit.mode=W<H&&backgroundGuestPaths[activity]?'background':activityVisitorPaths[activity]?'edge':'background';
+  ambientVisit.last=pick;ambientVisit.active={start:t,duration:6+Math.random()*6,index:pick,reverse:Math.random()<.5};ambientVisit.mode=W<H&&backgroundGuestPaths[activity]?'background':activityVisitorPaths[activity]?'edge':'background';
   ambientVisit.next=t+ambientVisit.active.duration+ambientVisitDelay()
  }
  const a=ambientVisit.active;if(!a)return null;
@@ -6895,7 +6905,7 @@ function ambientActivityGuest(){
  const targets=hit.map(h=>screenWorldRect(h.x-5,h.x+h.w+5,h.y-5,h.y+h.h+5));
  const ui=meowVisibleRects('#hud,#small,#dock,#back,#hint,#gameControls,#ritualActionBar,#pearlRecipePanel,#dialogue,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet,#threeBoardAccess');
  if(!ambientVisitSafe(rect,protectedRect,targets,ui,W,H))return;
- const n=a.guest?{...a.guest,x,y}:{x,y,n:ambientResidentPool[a.index]};ctx.save();
+ const n={x,y,n:ambientResidentPool[a.index]};ctx.save();
  ctx.globalAlpha=residentReducedMotion.matches?1:Math.min(1,f*6,(1-f)*6)*.92;
  drawPaintedResident(n,size/94,!residentReducedMotion.matches,a.reverse?'up':'down');ctx.restore()
 }
@@ -6942,7 +6952,7 @@ function drawAmbientBackgroundVisit(){
  const rect=screenWorldRect(x-size*.36,x+size*.36,y-size,y+4),host=ambientBackgroundHostRegions[activity];
  const blockers=meowVisibleRects('#hud,#small,#dock,#back,#hint,#gameControls,#ritualActionBar,#pearlRecipePanel,#dialogue,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet');
  if(!ambientVisitSafe(rect,host?screenWorldRect(...host):null,[],blockers,W,H))return;
- const n=a.guest?{...a.guest,x,y}:{x,y,n:ambientResidentPool[a.index]};ctx.save();
+ const n={x,y,n:ambientResidentPool[a.index]};ctx.save();
  ctx.globalAlpha=residentReducedMotion.matches?1:Math.min(1,f*5,(1-f)*5)*.88;
  if(drawPaintedResident(n,size/94,!residentReducedMotion.matches,a.reverse?'left':'right'))ambientVisit.drawnAt=t;
  ctx.restore()
@@ -7011,20 +7021,13 @@ updateHUD=function(){
 function dialogueSpeakerMatches(name,n){
  return !!n?.n?.some(v=>name===v||name.startsWith(v+' · '))
 }
-function parkDialogueActors(){
- if(room!=='park'||activity)return [];
- const [x,y]=indoorStation('chat');return [
- {x:x-48,y:y+12,n:['Auntie Mei','梅姨'],sc:.95},
- {x:x+47,y:y+12,n:['Auntie Lin','林姨'],sc:.87}
- ]
-}
 const unifiedCloseBefore=closeTalk;
 closeTalk=function(...args){const result=unifiedCloseBefore(...args),el=$('dialogue');el?.classList.remove('paperConversation','characterSpeech');el?.removeAttribute('data-sign-material');return result};
 syncCharacterSpeech=function(){
  const el=$('dialogue');if(!el||!talkOpen)return;
  const name=$('speaker').textContent||'',line=$('line').textContent||'',options=$('choices').children.length;
  el.dataset.signMaterial=houseSignMaterial(room||'station');
- const actors=parkDialogueActors();
+ const actors=roomResidentActors();
  const actor=room?actors.find(a=>dialogueSpeakerMatches(name,a)):dialogueSpeakerMatches(name,greetingNPC)?greetingNPC:null;
  const short=!!actor&&!activity&&line.length<=160&&options<=2;
  if(short){
@@ -7339,8 +7342,6 @@ function yueZodiacAlmanac(birth='',selection=null){
  element('small',tr('Folklore and playful reflections, not predictions. Lunar New Year convention; other traditions use Li Chun or different Tai Sui rules. Birth date stays in this page and is not saved or uploaded.','仅为民俗与趣味提示，并非预测。以农历正月初一为年界，其他流派或采用立春及不同太岁规则。出生日期仅在此页面使用，不保存、不上传。'),out);
  }catch(err){element('p',tr('Please check your birth date and browser calendar support.','请检查出生日期及浏览器农历支持。'),out)}};
  const row=q.querySelector('.row');if(row?.lastElementChild)row.lastElementChild.onclick=()=>{const d=date.value,y=Number(year.value);zh=!zh;save('zh',zh);updateHUD();yueZodiacAlmanac(d,y)};
- b(q,tr('Personal birth chart','个人生辰命盘'),()=>destinyPage());
- b(q,tr('Weekly star signs','本周十二星座'),()=>starSignPage());
  })
 }
 const yueAlmanacStyle=document.createElement('style');yueAlmanacStyle.textContent='.yueAlmanacForm{display:grid;gap:12px;margin:16px 0}.yueAlmanacForm label{display:grid;gap:5px}.yueAlmanacForm input,.yueAlmanacForm select,.yueAlmanacForm button{min-height:44px;max-width:100%;box-sizing:border-box;font:inherit}.yueAlmanacPaper{margin:12px 0;padding:18px;border:1px solid #ab9066;background:#f2e3c4;color:#514338;box-shadow:inset 0 0 0 4px #e5d4ae;overflow-wrap:anywhere}.yueAlmanacPaper:empty{display:none}.yueAlmanacSeal{display:grid;place-items:center;width:64px;height:64px;border:3px double #9b4b3d;color:#9b4b3d;font:36px Georgia,serif;border-radius:4px}.yueAlmanacPaper p{line-height:1.6}.yueAlmanacPaper small{display:block;line-height:1.5}';document.head.append(yueAlmanacStyle);

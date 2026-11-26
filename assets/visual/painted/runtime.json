@@ -84,6 +84,116 @@
         "height": 98,
         "sha256": "4048a13f47d1f94b3ae21fa8b430d9a7717a59c5b9a224a3ce2e2a00b83e51c9"
       }
+    },
+    "ah-ma": {
+      "standing": {
+        "path": "assets/visual/painted/ah-ma/standing.webp",
+        "width": 160,
+        "height": 510,
+        "sha256": "3bf08893a8f11468ae4998afc61994fa86ad7b48fcd500be0dd30dd7a872505b"
+      },
+      "warm": {
+        "path": "assets/visual/painted/ah-ma/expressions/warm.webp",
+        "width": 142,
+        "height": 156,
+        "sha256": "2f7949c01d04596cda2972e50daf9da38411734342e31b5854ae7bebfb1d2f25"
+      },
+      "seated": {
+        "path": "assets/visual/painted/ah-ma/poses/seated.webp",
+        "width": 347,
+        "height": 510,
+        "sha256": "975908fd030f6fe18a4366fe65eb35c2323a48853f9a395252cad6fc885b260b"
+      },
+      "scolding": {
+        "path": "assets/visual/painted/ah-ma/poses/scolding.webp",
+        "width": 344,
+        "height": 510,
+        "sha256": "c5ea077b800c72edcbb9059b1712326be11554b3a1b88def4de66334d30d5592"
+      }
+    },
+    "auntie-lin": {
+      "standing": {
+        "path": "assets/visual/painted/auntie-lin/standing.webp",
+        "width": 155,
+        "height": 510,
+        "sha256": "4e71b5f635d2a4b520b74653aff6cd7535910c3da75b0653bf492758865a470e"
+      },
+      "warm": {
+        "path": "assets/visual/painted/auntie-lin/expressions/warm.webp",
+        "width": 148,
+        "height": 156,
+        "sha256": "0ebb20c8fcb1bab80d20378a891e317f147a56f5213dc47497eebebecefd056b"
+      }
+    },
+    "auntie-hong": {
+      "standing": {
+        "path": "assets/visual/painted/auntie-hong/standing.webp",
+        "width": 212,
+        "height": 510,
+        "sha256": "93b727175fdf48b988b48cccd00ebefc7f3a5773ef40b69fe08162593c7d19f0"
+      },
+      "warm": {
+        "path": "assets/visual/painted/auntie-hong/expressions/warm.webp",
+        "width": 156,
+        "height": 143,
+        "sha256": "29aa4d786466527d9e80582a68fec7014eb1503ee44feccf9f6b58d742107348"
+      }
+    },
+    "garden-keeper": {
+      "standing": {
+        "path": "assets/visual/painted/garden-keeper/standing.webp",
+        "width": 229,
+        "height": 510,
+        "sha256": "fecf23cf55d0112e041a57eaae8aa4d2bedccd8057edcae1479d8b0fab9768e1"
+      },
+      "warm": {
+        "path": "assets/visual/painted/garden-keeper/expressions/warm.webp",
+        "width": 156,
+        "height": 142,
+        "sha256": "0f35c940cd6a1fd122483c703f91ad82af04231478ca8a848b587b867034c55d"
+      }
+    },
+    "boba-keeper": {
+      "standing": {
+        "path": "assets/visual/painted/boba-keeper/standing.webp",
+        "width": 201,
+        "height": 510,
+        "sha256": "43c39a0b24af2a27677e60468470164966079e0727925d94814913e0e80456da"
+      },
+      "warm": {
+        "path": "assets/visual/painted/boba-keeper/expressions/warm.webp",
+        "width": 156,
+        "height": 144,
+        "sha256": "22b28d9abd3bcd373901b5147bfd242075b23237b84fb476257c6b4815e3793c"
+      }
+    },
+    "arcade-keeper": {
+      "standing": {
+        "path": "assets/visual/painted/arcade-keeper/standing.webp",
+        "width": 248,
+        "height": 510,
+        "sha256": "839ced9e1edf7b050f5d3f850d8623eb3fb3d04d21517a715ac96a8965e80797"
+      },
+      "warm": {
+        "path": "assets/visual/painted/arcade-keeper/expressions/warm.webp",
+        "width": 156,
+        "height": 156,
+        "sha256": "226d541ffdba34902846a7500e9a78b0e6d75d8ddf33220886027f8807694869"
+      }
+    },
+    "souvenir-keeper": {
+      "standing": {
+        "path": "assets/visual/painted/souvenir-keeper/standing.webp",
+        "width": 184,
+        "height": 510,
+        "sha256": "52eade3e33c6d2a915a4cce1fd7aab640bcdeb7e3390e1db229cdf52b9372cfe"
+      },
+      "warm": {
+        "path": "assets/visual/painted/souvenir-keeper/expressions/warm.webp",
+        "width": 147,
+        "height": 156,
+        "sha256": "2f2835b28f8c5ab69814c626f4002429bacfc3b0fd7131085caa2558b3f325bd"
+      }
     }
   }
 }
