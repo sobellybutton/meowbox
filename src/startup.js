@@ -3943,6 +3943,135 @@ residentHospitalityWelcome=function(profile,visits){
  const pair=profile.lines[Math.max(0,visits-1)%profile.lines.length];
  return tr(...pair)
 };
+
+/* PAW_OVERHEARD_BEGIN: fictional residents exchange brief remarks only if
+   both are actually rendered and nearby. No simulated public user messages. */
+const pawOverheard=[
+ ['flowers','hong','mei','Someone left flowers by the station. No name on the card.','车站有人放了一束花，卡片上没署名。','Maybe they just wanted to brighten somebody’s day.','也许只是想让某个人今天开心一点。'],
+ ['soup','grandma','mei','I made too much soup again.','汤又煮多了。','Bring it over. I have enough bowls for everyone.','端过来吧，我这儿的碗够大家用。'],
+ ['postcard','mei','wang','Have you ever sent yourself a postcard?','你有没有给自己寄过明信片？','Not yet. At least I would finally get a pleasant email.','还没。总算能收到点工作以外的消息了。'],
+ ['umbrella','hong','wang','There is an umbrella at the station waiting for its owner.','车站有把伞，还在等主人认领呢。','If it is blue, I have been wondering where mine went.','蓝色的话可能是我的，我找了好久。'],
+ ['recipe','grandma','boba','Have you tried adding a little roasted rice to your tea?','茶里加点炒过的米试过吗？','Not yet. I will make you the first cup.','还没，第一杯留给您。'],
+ ['nap','wang','grandma','I thought about going home for a nap.','本来想回家睡个午觉。','Eat first. You can nap properly on a full stomach.','先吃饭，吃饱了才能睡得香。'],
+ ['ribbon','temple','garden','The wind loosened some of the wish tags.','风把几块祈愿牌吹松了。','I brought extra cord. We can tie them back.','我带了红绳，待会儿一起系好。'],
+ ['book','yue','mei','I found an old travel diary in my cupboard.','柜子里翻出一本旧旅行日记。','Bring it to the tea room sometime. We would love to see it.','哪天带来茶馆吧，大家一定想看看。'],
+ ['tea','hong','grandma','Did you hear the shopkeeper is trying a new blend?','听说店主要试一种新的茶底？','Then I had better bring some biscuits.','那我得带点饼干过来。'],
+ ['plant','wang','mei','My plant has outgrown its little pot.','我那盆植物都快把花盆挤破了。','I have a spare one. Take it when you leave.','我有个闲置的花盆，走的时候拿去。'],
+ ['cat','lin','mei','A cat followed me all the way to the park.','有只猫一路跟着我走到公园。','Perhaps it has decided you are its person.','说不定它已经认定你是它的人了。'],
+ ['cup','boba','wang','You left your reusable cup here last time.','你上次把随行杯落在店里了。','That explains why my desk has been unusually tidy.','难怪我桌面最近格外整洁。']
+];
+function pawOverheardChoose(actors,origin,history,now,rng=Math.random){
+ const close=actors.filter(a=>Math.hypot(a.x-origin.x,a.y-origin.y)<270);
+ const possible=[];
+ for(const e of pawOverheard){
+  if(history.some(h=>h[0]==='exchange'&&h[1]===e[0]&&now-h[2]<86400000))continue;
+  const a=close.find(v=>v.id===e[1]),b=close.find(v=>v.id===e[2]);
+  if(!a||!b||a===b||Math.hypot(a.x-b.x,a.y-b.y)>260)continue;
+  if(history.some(h=>(h[0]===a.id||h[0]===b.id)&&now-h[2]<120000))continue;
+  possible.push({entry:e,a,b})
+ }
+ return possible.length?possible[Math.min(possible.length-1,Math.max(0,Math.floor(rng()*possible.length)))]:null
+}
+/* PAW_OVERHEARD_END */
+let pawOverheardPending=null;
+const pawOverheardClearBefore=pawAmbientClear;
+pawAmbientClear=function(){pawOverheardPending=null;return pawOverheardClearBefore()};
+function pawSpeechDuration(str){return Math.min(9500,Math.max(4200,2400+Array.from(str).length*65))}
+function pawOverheardShow(actor,actors,text,id,now){
+ pawAmbientName.textContent=tr(...actor.n);pawAmbientText.textContent=text;pawAmbientNode.hidden=false;
+ if(!pawAmbientPlace(actor,actors)){pawAmbientNode.hidden=true;return false}
+ pawAmbientActive={id,until:now+pawSpeechDuration(text)};return true
+}
+function pawRememberExchange(entry,clock){
+ pawAmbientHistory.push(['exchange',entry[0],clock],[entry[1],'exchange:'+entry[0],clock],[entry[2],'exchange:'+entry[0],clock]);
+ pawAmbientHistory=pawAmbientHistory.slice(-80);save(pawAmbientKey,pawAmbientHistory)
+}
+const pawSocialTickBefore=pawAmbientTick;
+pawAmbientTick=function(now){
+ // The original tick owns all blocking/context decisions and solo speech.
+ if(pawAmbientBlocked()||pawAmbientContext!==scene+'|'+(room||'outside')+'|'+zh)return pawSocialTickBefore(now);
+ const actors=room?pawAmbientIndoor:npc.filter(n=>!n.sharedPeer&&n.kind!==2),origin=room&&typeof indoor!=='undefined'?indoor:p;
+ if(pawOverheardPending){
+  if(now<pawAmbientCheck)return;
+  pawAmbientCheck=now+180;
+  const pending=pawOverheardPending,actor=actors.find(n=>pawAmbientProfile(n)?.id===pending.id),other=actors.find(n=>pawAmbientProfile(n)?.id===pending.other);
+  if(!actor||!other||Math.hypot(actor.x-origin.x,actor.y-origin.y)>270||Math.hypot(actor.x-other.x,actor.y-other.y)>260){
+   pawAmbientClear();pawAmbientNext=now+7000;return
+  }
+  if(now<pending.at){
+   if(pawAmbientActive&&!pawAmbientPlace(other,actors))pawAmbientClear();
+   return
+  }
+  pawOverheardPending=null;pawAmbientActive=null;
+  if(!pawOverheardShow(actor,actors,pending.text,pending.id,now))pawAmbientClear();
+  pawAmbientNext=now+15000;return
+ }
+ if(!pawAmbientActive&&now>=pawAmbientCheck&&now>=pawAmbientNext&&pawAmbientBudget<=33&&Math.random()<.32){
+  const clock=Date.now();pawAmbientHistory=pawAmbientRead(pawAmbientHistory,clock);
+  const indexed=actors.map(a=>({id:pawAmbientProfile(a)?.id,x:a.x,y:a.y,actor:a})).filter(a=>a.id);
+  const chosen=pawOverheardChoose(indexed,origin,pawAmbientHistory,clock);
+  if(chosen){
+   const e=chosen.entry;
+   if(pawOverheardShow(chosen.a.actor,actors,tr(e[3],e[4]),e[1],now)){
+    pawOverheardPending={id:e[2],other:e[1],text:tr(e[5],e[6]),at:pawAmbientActive.until};
+    pawRememberExchange(e,clock);pawAmbientBudget+=2;return
+   }
+  }
+ }
+ return pawSocialTickBefore(now)
+};
+/* Return from a cabinet or private item to the room that opened it. */
+const pawCabinetReturnBefore=figureCabinetPage;
+figureCabinetPage=function(back='room'){
+ const result=pawCabinetReturnBefore(back);
+ mbHomePageBack(back==='bag'?tr('‹ Collections','‹ 返回收藏'):back==='arcade'?tr('‹ Blind boxes','‹ 返回盲盒'):tr('‹ My Room','‹ 返回小窝'),()=>{
+  if(back==='bag')renderTravellerBag();
+  else if(back==='arcade'){$('page').style.display='none';if(activity!=='blindBox')start('blindBox')}
+  else hideoutPage()
+ });return result
+};
+/* Preserve catalogue position after inspecting one piece. Save no additional
+   purchase data and leave the existing filter and ownership logic intact. */
+let pawCatalogueResume=null;
+const pawCatalogueDetailBefore=furnitureConfirm;
+furnitureConfirm=function(id,back='shop'){
+ if($('content').querySelector('.komorebiGrid'))pawCatalogueResume={id,back,scroll:$('page').scrollTop};
+ return pawCatalogueDetailBefore(id,back)
+};
+const pawCatalogueReturnBefore=furnitureMarket;
+furnitureMarket=function(back='shop'){
+ const result=pawCatalogueReturnBefore(back),resume=pawCatalogueResume;
+ if(resume&&resume.back===back){
+  pawCatalogueResume=null;
+  const q=$('content'),tile=[...q.querySelectorAll('[data-furniture-id]')].find(n=>n.dataset.furnitureId===resume.id);
+  requestAnimationFrame(()=>{if(!q.querySelector('.komorebiGrid'))return;$('page').scrollTop=resume.scroll;if(tile&&!tile.hidden)tile.focus({preventScroll:true})})
+ }
+ return result
+};
+const pawHomeObjectsBefore=hideoutPage;
+hideoutPage=function(...args){
+ const result=pawHomeObjectsBefore(...args),q=$('content'),stage=q.querySelector('.hideoutScene');
+ if(!stage||hideoutEditing)return result;
+ // Existing room objects already have actions; give their physical hit
+ // targets keyboard semantics and contextual returns as well.
+ for(const item of stage.querySelectorAll('.hideoutPlaced,.figureCabinetInRoom')){
+  const id=item.dataset.furnitureId;
+  if(typeof item.onclick!=='function'||item.tagName==='BUTTON')continue;
+  if(!['board','frame','shelf','lamp','shojiLamp','retroTV','displayCabinet','bed','futon'].includes(id))continue;
+  item.tabIndex=0;item.setAttribute('role','button');item.setAttribute('aria-label',item.alt||id);
+  item.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();item.click()}});
+  if(['board','frame','shelf','retroTV','displayCabinet'].includes(id)){
+   const old=item.onclick;item.onclick=function(...a){
+    const r=old.apply(this,a);
+    if(!$('content').querySelector('.hideoutScene'))mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),hideoutPage);
+    return r
+   }
+  }
+ }
+ return result
+};
+const pawRoomAccessStyle=document.createElement('style');pawRoomAccessStyle.textContent='#content .hideoutScene [role=button]:focus-visible,#content .figureCabinetInRoom:focus-visible{outline:2px solid #f9e3ad;outline-offset:3px}#content .hideoutScene .hideoutPlaced[role=button]{cursor:pointer}#content .komorebiTile:focus-visible{outline:3px solid #526a50;outline-offset:-3px}';document.head.append(pawRoomAccessStyle);
+
 /* PAW_AMBIENT_RESIDENTS_END */
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
