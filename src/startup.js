@@ -1125,6 +1125,9 @@ label=function(name,x,y,fn){
    guide becomes visible when focused, not as another permanent HUD button.
    Selecting a station uses the same path/arrival logic as a canvas tap. */
 const roomGuide=document.createElement('section');roomGuide.id='roomStationGuide';roomGuide.hidden=true;roomGuide.setAttribute('aria-label','Room activities');$('game').append(roomGuide);
+const roomGuideToggle=element('button','', $('game'));roomGuideToggle.id='pawRoomGuideToggle';roomGuideToggle.hidden=true;roomGuideToggle.setAttribute('aria-controls','roomStationGuide');roomGuideToggle.setAttribute('aria-expanded','false');
+function closeRoomGuide(){roomGuide.classList.remove('pawGuideOpen');roomGuideToggle.setAttribute('aria-expanded','false')}
+roomGuideToggle.onclick=()=>{const open=roomGuide.classList.toggle('pawGuideOpen');roomGuideToggle.setAttribute('aria-expanded',String(open));if(open)roomGuide.querySelector('button')?.focus()};
 let roomGuideKey='';
 function roomGuideEntries(){
  if(room==='temple')return [['templeWater','Water pavilion','手水亭'],['prayer','Prayer altar','祈愿香案'],['templeBell','Bronze bell','山寺钟声'],['sticks','Fortune sticks','求签'],['moon','Moon blocks','掷筊'],['secretGarden','Garden','后院']];
@@ -1133,7 +1136,9 @@ function roomGuideEntries(){
 function syncRoomGuide(){
  const visible=!!room&&!activity&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block'&&avatar!==null;
  if(roomGuide.hidden===visible)roomGuide.hidden=!visible;
- if(!visible){roomGuideKey='';return}
+ roomGuideToggle.hidden=!visible;
+ if(!visible){closeRoomGuide();roomGuideKey='';return}
+ const guideName=tr('Activities','体验');if(roomGuideToggle.textContent!==guideName)roomGuideToggle.textContent=guideName;
  const entries=roomGuideEntries(),key=room+'|'+zh+'|'+entries.map(v=>v[0]).join(',');
  if(key===roomGuideKey)return;
  roomGuideKey=key;roomGuide.replaceChildren();roomGuide.setAttribute('aria-label',tr('Room activities','小屋体验'));
@@ -1143,7 +1148,7 @@ function syncRoomGuide(){
    if(!indoorReady())return;
    // Reuse a live authored hit function, including the walking guard.
    const target=hit.find(h=>h.stationId===id&&typeof h.fn==='function');
-   if(target){target.fn();btn.blur()}
+   if(target){closeRoomGuide();target.fn();btn.blur()}
    else hint('Tap the station when it comes into view.','等体验区进入视野后再点击。')
   });btn.dataset.station=id
  }
@@ -1154,7 +1159,9 @@ const roomGuideStartBefore=start;start=function(...args){roomGuide.hidden=true;r
 const roomGuideUIBefore=updateHUD;updateHUD=function(...args){const result=roomGuideUIBefore(...args);syncRoomGuide();return result};
 const roomLayoutCss=document.createElement('style');roomLayoutCss.textContent=`
 #roomStationGuide{position:absolute;z-index:5;left:12px;top:120px;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-#roomStationGuide:focus-within{clip-path:none;width:min(260px,85vw);height:auto;max-height:55dvh;overflow:auto;padding:9px;background:#f2e5c9;border:1px solid #a48b64;box-shadow:0 3px 12px #38291d44;display:grid;gap:5px;white-space:normal}
+#roomStationGuide:focus-within,#roomStationGuide.pawGuideOpen{clip-path:none;width:min(245px,74vw);height:auto;max-height:min(46dvh,350px);overflow:auto;padding:9px;background:#f2e5c9;border:1px solid #a48b64;box-shadow:0 3px 12px #38291d44;display:grid;gap:5px;white-space:normal;left:auto;right:12px;top:150px;z-index:9}
+#pawRoomGuideToggle{position:absolute;z-index:5;right:max(12px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 103px);min-height:44px;padding:5px 11px!important;color:#f9ead1;background:#574b3de8;border:1px solid #bca480;border-radius:5px;box-shadow:0 2px 4px #38291d44;font:600 12px/1.2 Georgia,'Songti SC',serif}
+#pawRoomGuideToggle[hidden]{display:none!important}
 #roomStationGuide[hidden]{display:none!important}
 #roomStationGuide button{min-height:44px;white-space:normal;overflow-wrap:anywhere;text-align:left;font:600 13px/1.35 Georgia,"Songti SC",serif}
 @media(max-width:600px) and (orientation:portrait){
@@ -2462,14 +2469,14 @@ function drawGroundedSupport(spec,x,y){
  const wood=ctx.createLinearGradient(x-hw,surface,x+hw,base);
  wood.addColorStop(0,'#a38662');wood.addColorStop(.48,'#79583f');wood.addColorStop(1,'#4d3c30');
  if(kind==='bell'||kind==='rack'||kind==='notice'){
-  const high=kind==='bell'?y-121:kind==='rack'?y-113:y-110;
+  const high=kind==='bell'?y-(room==='temple'?100:121):kind==='rack'?y-113:y-110;
   for(const dx of [-hw+10,hw-10]){
    round(x+dx-5,high,10,base-high,2,wood,'#5d4938');
    line(x+dx-2,high+4,x+dx-2,base-5,'#c5a77b',1.5)
   }
   round(x-hw,high-5,w,12,3,wood,'#584638');
   if(kind==='bell'){
-   line(x,high+6,x,y-95,'#6b5039',4);
+   line(x,high+6,x,y-(room==='temple'?72:95),'#6b5039',4);
    // Suspended striker beside the bell, not another floating icon.
    line(x+hw-12,high+7,x+hw-23,y+6,'#92734f',1.8);
    line(x+hw-40,y+6,x+hw-8,y+6,'#785137',8);
@@ -2633,7 +2640,8 @@ prop=function(id,x,y){
 };
 function pawStationPlaqueY(y,spec){
  const [kind,top,,foot]=spec;
- if(['bell','rack','notice'].includes(kind))return y+foot*.57;
+ if(kind==='bell')return y+foot*.80;
+ if(['rack','notice'].includes(kind))return y+foot*.57;
  return y+Math.min(foot-13,top+(foot-top)*.48)
 }
 const pawPhysicalLabelBefore=label;
@@ -2843,7 +2851,7 @@ activityHint=function(){if(activity==='love'&&state.readStage==='topic'){hint('C
 const pawTempleLayout={
  templeWater:[205,542,205,682],
  prayer:[400,342,400,492],
- templeBell:[610,350,520,495],
+ templeBell:[600,360,520,495],
  sticks:[605,542,605,688],
  moon:[190,350,285,495],
  secretGarden:[690,430,525,502]
@@ -2859,7 +2867,7 @@ Object.assign(indoorStages.temple.stations,pawTempleLayout);
 Object.assign(indoorStages.arcade.stations,pawArcadeLayout);
 groundedStations.temple.prayer=['altar',-7,172,100];
 groundedStations.temple.templeWater=['stone',-3,132,95];
-groundedStations.temple.templeBell=['bell',0,140,100];
+groundedStations.temple.templeBell=['bell',0,112,100];
 groundedStations.arcade.bubbleArcade=['cabinet',28,168,98];
 groundedStations.arcade.goldfishScoop=['table',52,164,98];
 groundedStations.arcade.blindBox=['counter',12,164,98];
@@ -2918,6 +2926,10 @@ templeRitualBackground=function(){
 };
 const pawThreePropBefore=prop;
 prop=function(id,x,y){
+ if(room==='temple'&&!activity&&id==='templeBell'){
+  const spec=groundedStationSpec(room,id);drawGroundedSupport(spec,x,y);
+  templeBellArt(x,y-20,.45);pawStationPlaque={room,id,x,y,spec,at:t};return
+ }
  if(activity)return pawThreePropBefore(id,x,y);
  const spec=groundedStationSpec(room,id);
  if(room==='arcade'&&['bubbleArcade','goldfishScoop','blindBox'].includes(id)&&spec){
@@ -2956,6 +2968,9 @@ prop=function(id,x,y){
  }
  return pawThreePropBefore(id,x,y)
 };
+// Keep the room-scale bell below the roof lanterns; during the ritual keep the rim at striker height.
+const pawBellFitBefore=templeBellArt;
+templeBellArt=function(x,y,sc=1,angle=0){if(activity==='templeBell'&&sc>1){const small=.86,base=y+(sc-small)*52;ctx.save();line(x,y-104*sc,x,base-104*small,'#77614a',4);ctx.restore();return pawBellFitBefore(x,base,small,angle)}return pawBellFitBefore(x,y,sc,angle)};
 const pawGateLabelBefore=label;
 label=function(name,x,y,fn){
  if(room==='temple'&&!activity&&Math.abs(x-pawTempleLayout.secretGarden[0])<2){
