@@ -3180,8 +3180,7 @@ const pawNotebookPageBefore=page;
 page=function(title,sub,body){
  return pawNotebookPageBefore(title,sub,q=>{
   const result=body(q);
-  const isSocial=typeof activePage!=='undefined'&&['community','townChat','townSquare','chat','board'].includes(activePage)
-   ||title===tr('Town Square','小镇广场')||title==='Town Square';
+  const isSocial=title===tr('Town Square','摸鱼广场')||title==='Town Square';
   if(isSocial){
    const notebook=element('section','',q,'pawTownNotebook');
    const children=[...q.children].filter(n=>n!==notebook&&!n.matches(':scope > .row,:scope > h1,:scope > p:first-of-type'));
@@ -3209,5 +3208,110 @@ const pawRoomClarityStyle=document.createElement('style');pawRoomClarityStyle.te
 #game #content .pawTownNotebook summary{min-height:44px;align-content:center;color:#51624b}
 @media(max-width:400px){#game #content .pawTownNotebookTabs{gap:0 9px!important}#game #content .pawTownNotebookTabs>button{font-size:13px!important}}
 `;document.head.append(pawRoomClarityStyle);
+
+
+/* PAW_TOWN_FRONT_DOOR: daily journal, map and community have separate jobs. */
+let pawTownFromDock=false;
+function pawOpenTownSpace(key){pawTownFromDock=true;communityTab=key;return townChatPage()}
+function pawTownLink(parent,key,en,cn,detailEn,detailCn){
+ const btn=b(parent,'',()=>pawOpenTownSpace(key));btn.className='pawTownLink';
+ const copy=element('span','',btn);element('strong',tr(en,cn),copy);element('small',tr(detailEn,detailCn),copy);
+ element('span','›',btn,'pawTownArrow').setAttribute('aria-hidden','true');return btn
+}
+function pawTownFront(){
+ if(transitioning)return;
+ pawTownFromDock=true;activePage='pawTownFront';
+ page(tr('Town Square','摸鱼广场'),tr('Pull up a chair. There is always something to read or someone to talk to.','来坐坐吧，总有故事可看，也有话可聊。'),q=>{
+  const front=element('section','',q,'pawTownFront');
+  const photo=element('figure','',front,'pawTownFrontPhoto'),im=element('img','',photo);im.src=pawJournalPicture('tea','home');im.alt=tr('The Tea Room','吃瓜茶馆');element('figcaption',tr('A little company between adventures','逛累了，就来聊两句'),photo);
+  const chat=element('section','',front,'pawTownSection');
+  element('h2',tr('Come sit with us','来坐坐吧'),chat);
+  pawTownLink(chat,'lounge','Tea chat','茶馆闲聊','Chat with fictional town residents, anytime.','随时跟小镇的虚构居民聊两句。');
+  pawTownLink(chat,'public','Traveller lobby','旅人聊天室',communityURL()?'Chat with real visitors.':'Live chat is not open yet.',communityURL()?'和真实旅人聊聊天。':'真人聊天室尚未开放。');
+  const news=element('section','',front,'pawTownSection pawTownPinned');
+  element('h2',tr('On the noticeboard','留言墙上'),news);
+  element('small',tr('From fictional town residents','来自虚构小镇居民'),news);
+  element('p',tr(...pawWeekNote()),news,'pawTownWeek');
+  const latest=townPublishedNotices().slice(0,2);
+  for(const {thread:m} of latest){const note=element('article','',news,'pawTownPreview');element('strong',tr(...m[0]),note);element('p',tr(...m[1]),note);element('small',m[2].length+' '+tr('replies','条回复'),note)}
+  b(news,tr('Read the noticeboard & replies ›','看看留言和回复 ›'),()=>pawOpenTownSpace('board')).className='pawTownTextLink';
+  const more=element('section','',front,'pawTownSection');
+  element('h2',tr('A little more company','还有这些小热闹'),more);
+  pawTownLink(more,'celebrate','Good things','小确幸','Share a little win or celebrate privately.','分享小胜利，也可以自己庆祝。');
+  pawTownLink(more,'stroll','Meet travellers','结伴散步','Optional shared walks, when available.','联机开放时，可自愿结伴散步。');
+  const paper=b(more,tr('Town paper & private notes ›','小镇日报与私密留言 ›'),()=>todayScoopBefore.call($('dockScoop')));paper.className='pawTownTextLink';
+ });
+ const q=$('content'),back=q.querySelector(':scope > .row button:first-child');
+ if(back)back.onclick=()=>{pawTownFromDock=false;$('page').style.display='none'};
+ journalLanguage(pawTownFront)
+}
+const pawTownChatBefore=townChatPage;
+townChatPage=function(...args){
+ const result=pawTownChatBefore(...args),q=$('content');
+ // The lounge renderer inserts its own header after page() completes.
+ // Apply a notebook class without moving its transcript or compose form.
+ q.querySelector('.communityTabs')?.classList.add('pawTownNotebookTabs');
+ if(communityTab==='lounge')q.querySelector('.townChatTranscript')?.classList.add('pawTownLoungeLog');
+ if(pawTownFromDock){
+  const back=q.querySelector(':scope > .row button:first-child');
+  if(back){back.textContent=tr('‹ Town','‹ 广场');back.onclick=pawTownFront}
+ }
+ return result
+};
+communityTabs=function(q){
+ const tabs=element('nav','',q,'communityTabs pawTownNotebookTabs');tabs.setAttribute('aria-label',tr('Community spaces','社区空间'));
+ for(const [key,en,cn] of [['lounge','Tea chat','茶馆闲聊'],['public','Lobby','旅人聊天'],['board','Noticeboard','留言墙']]){
+  const btn=b(tabs,tr(en,cn),()=>{communityTab=key;townChatPage()});btn.setAttribute('aria-pressed',String(communityTab===key))
+ }
+ if(['celebrate','stroll'].includes(communityTab)){const key=communityTab;const selected=b(tabs,key==='celebrate'?tr('Good things','小确幸'):tr('Meet travellers','结伴散步'),()=>{});selected.setAttribute('aria-pressed','true');selected.disabled=true}
+};
+const pawTownTodayBefore=todayHub;
+todayHub=function(...args){
+ const result=pawTownTodayBefore(...args),q=$('content');
+ // Keep daily check-in, tasks, fortune, calendar and mood suggestions.
+ const secondary=q.querySelector('.journalTownMore');
+ if(secondary){
+  for(const el of [...secondary.children])if(el.matches('.townFortuneSlip,.townOccasion')){if(el.matches('.townOccasion')){el.querySelectorAll('button').forEach(b=>b.remove());q.append(el)}else q.append(el)}
+  secondary.remove()
+ }
+ q.querySelectorAll('.journalTownJump,.goodCompanyInvitation,.communityWelcome,.guestVisitPanel').forEach(el=>el.remove());
+ journalLanguage(todayHub);return result
+};
+$('dockScoop').onclick=()=>{pawTownFromDock=false;todayHub()};
+const pawTownDock=$('dockValley');
+pawTownDock.onclick=pawTownFront;
+pawTownDock.querySelector('.dockIcon').innerHTML='<svg viewBox="0 0 28 28" aria-hidden="true"><g stroke="#775f48" stroke-width="1.2" stroke-linejoin="round"><path fill="#d5b58b" d="M2 5h18v12H9l-5 4v-4H2z"/><path fill="#e7d7b2" d="M11 12h15v11h-3v3l-5-3h-7z"/><path fill="none" d="M6 9h10M6 12h7m1 4h8m-8 3h8"/></g></svg>';
+$('dockTravel').after(pawTownDock);
+const pawTownHudBefore=updateHUD;
+updateHUD=function(...args){
+ const result=pawTownHudBefore(...args),label=tr('Town','广场');
+ pawTownDock.lastElementChild.textContent=label;pawTownDock.setAttribute('aria-label',label);pawTownDock.classList.remove('active');return result
+};
+const pawTownFrontStyle=document.createElement('style');pawTownFrontStyle.textContent=`
+#game #content:has(.pawTownFront){max-width:760px!important}
+#game #content .pawTownFront{display:grid;gap:14px}
+#game #content .pawTownFrontPhoto{position:relative;margin:0;overflow:hidden;aspect-ratio:2.5;border:4px solid #fff3d9;outline:1px solid #b9a17a;box-shadow:0 3px 6px #58452d26}
+#game #content .pawTownFrontPhoto img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 42%}
+#game #content .pawTownFrontPhoto figcaption{position:absolute;bottom:0;left:0;right:0;padding:19px 8px 6px;color:#fff2d5;background:linear-gradient(transparent,#304435e8);font:600 13px Georgia,"Songti SC",serif}
+#game #content .pawTownSection{min-width:0;padding:8px 0;border-bottom:1px dashed #b6a17c}
+#game #content .pawTownSection h2{font-size:clamp(20px,5vw,26px);margin:0 0 6px!important;color:#48624e}
+#game #content .pawTownLink{display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;width:100%;min-height:54px;white-space:normal;padding:9px 2px!important;border:0!important;border-bottom:1px solid #c6b18d!important;border-radius:0!important;background:none!important;box-shadow:none!important;color:#4d5c48!important}
+#game #content .pawTownLink strong,#game #content .pawTownLink small{display:block;overflow-wrap:anywhere}
+#game #content .pawTownLink strong{font:600 17px/1.3 Georgia,"Songti SC",serif}
+#game #content .pawTownLink small{font:12px/1.4 system-ui;color:#675b49;margin-top:3px}
+#game #content .pawTownArrow{font-size:24px}
+#game #content .pawTownPinned{padding:12px 14px;background:linear-gradient(90deg,#e1cfaa,#f7ebd0 5%,#f3e2bc);border:1px solid #bba27a;box-shadow:0 3px 0 #c6ab80}
+#game #content .pawTownWeek{font:italic 15px/1.5 Georgia,"Songti SC",serif;padding:7px 0;border-bottom:1px dashed #bba27a}
+#game #content .pawTownPreview{padding:8px 0;border-bottom:1px dashed #c4ac83}
+#game #content .pawTownPreview strong{color:#596d4d;font-size:13px}
+#game #content .pawTownPreview p{margin:4px 0!important;font-size:14px}
+#game #content .pawTownPreview small{color:#78674f;font-size:11px}
+#game #content .pawTownTextLink{min-height:44px;background:transparent!important;border:0!important;box-shadow:none!important;color:#365d48!important;padding:5px 0!important;text-decoration:underline;text-underline-offset:3px;text-align:left}
+#game #content .pawTownNotebookTabs{display:flex!important;flex-wrap:wrap!important;gap:0 12px!important;background:none!important;box-shadow:none!important;border-bottom:1px solid #bda783}
+#game #content .pawTownNotebookTabs button{flex:0 1 auto!important;min-width:0!important;min-height:44px;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:none!important;box-shadow:none!important;color:#635846!important;padding:5px 2px!important}
+#game #content .pawTownNotebookTabs button[aria-pressed=true]{color:#365d48!important;border-bottom-color:#547354!important}
+#game #content .pawTownLoungeLog{min-height:clamp(170px,36dvh,380px)}
+@media(min-width:680px){#game #content .pawTownFront{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;column-gap:22px}#game #content .pawTownFrontPhoto{grid-column:1/-1;aspect-ratio:3.7}#game #content .pawTownPinned{grid-column:2;grid-row:2/span 2}}
+`;document.head.append(pawTownFrontStyle);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
