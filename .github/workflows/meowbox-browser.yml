@@ -277,8 +277,9 @@ jobs:
                 await page.locator('#dockScoop').click();
                 await page.locator('.townFortuneSlip').waitFor({timeout:8000});
                 if(!await page.locator('#luck').isHidden())throw Error('Obsolete luck shortcut visible');
-                await page.getByRole('button',{name:'News & town chat',exact:true}).click();
-                await page.getByRole('button',{name:'Read the town paper',exact:true}).click();
+                await page.locator('#dockValley').click();
+                await page.locator('.pawTownFront').waitFor();
+                await page.getByRole('button',{name:'Read the noticeboard & replies ›',exact:true}).click();
                 await page.locator('.townWall').waitFor({timeout:5000});
                 if(await page.locator('.townResidentNote').count()!==6)throw Error('Noticeboard page incomplete');
                 const initialNotices=await page.locator('.townResidentNote').count();
@@ -289,9 +290,9 @@ jobs:
                 else if(!await page.locator('.townPostNav span').innerText().then(v=>/^6 \/ 6 notices$/.test(v)))throw Error('Older notices disabled despite more notices');
                 await page.screenshot({path:'test-results/'+name+'-town-wall.png'});
                 await page.getByRole('button',{name:'‹ Back',exact:true}).click();
-                await page.locator('#dockScoop').click();
-                await page.getByRole('button',{name:'News & town chat',exact:true}).click();
-                await page.getByRole('button',{name:'Town chat',exact:true}).click();
+                await page.locator('#dockValley').click();
+                await page.locator('.pawTownFront').waitFor();
+                await page.getByRole('button',{name:/Tea chat/}).click();
                 await page.getByRole('button',{name:'What should I eat?',exact:true}).click();
                 if(await page.locator('.townChatLine.self').count()===0)throw Error('Local chat prompt missing');
                 await page.screenshot({path:'test-results/'+name+'-town-chat.png'});

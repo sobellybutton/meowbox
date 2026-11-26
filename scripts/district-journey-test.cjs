@@ -1,16 +1,18 @@
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
+const {attachFrameAudit}=require('./paw-frame-audit.cjs');
 
 async function travelLoop(page,name,touch){
  const failures=[];
+ const frameAudit=await attachFrameAudit(page,'test-results',name+'-organic');
  page.on('pageerror',error=>failures.push(error.message));
  page.on('console',m=>{if(m.type()==='error'&&/frame error|Room transition/i.test(m.text()))failures.push(m.text())});
  page.on('response',r=>{
   if(r.status()>=400&&new URL(r.url()).origin==='http://127.0.0.1:8768')failures.push(r.status()+' '+r.url());
  });
  const press=locator=>touch?locator.tap({timeout:12000}):locator.click({timeout:12000});
- const shot=id=>page.screenshot({path:'test-results/'+name+'-district-'+id+'.png'});
+ const shot=async id=>{await page.screenshot({path:'test-results/'+name+'-district-'+id+'.png'});await frameAudit.flush(id)};
  async function point(x,y){
   if(touch)await page.touchscreen.tap(x,y);
   else await page.mouse.click(x,y);
@@ -177,6 +179,7 @@ async function travelLoop(page,name,touch){
  await page.waitForFunction(()=>scene==='home'&&!transitioning,null,{timeout:12000});
  assert.equal(await page.evaluate(()=>playerName),'June');
  assert.deepEqual(failures,[]);
+ await frameAudit.stop();
  console.log(name+': real entrance, doors, reading stations and four district rail loop PASS');
 }
 

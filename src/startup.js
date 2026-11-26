@@ -5939,4 +5939,36 @@ refreshControls=function(...args){
  return result
 };
 
+
+/* PAW_PASSERBY_IDENTITY_BEGIN */
+function pawAssignPasserbyLooks(ids,player){
+ const available=[0,1,2,3].filter(i=>i!==player),assigned=new Map();
+ for(const id of [...new Set(ids)]){
+  if(!available.length)break;
+  let h=2166136261;for(const ch of String(id)){h^=ch.codePointAt(0);h=Math.imul(h,16777619)}
+  assigned.set(id,available.splice((h>>>0)%available.length,1)[0])
+ }
+ return assigned
+}
+/* PAW_PASSERBY_IDENTITY_END */
+const pawFallbackAppearanceBefore=stableResidentFallback;
+let pawPasserbyLookCache={key:'',map:new Map()};
+function pawPasserbyIdentity(n){return String(n.popGuest||n.n?.[0]||'traveller-'+npc.indexOf(n))}
+function pawPasserbyLooks(){
+ const candidates=npc.filter(n=>n.kind!==2&&!residentArtworkRecord(n.n)&&!n.grumpy),ids=candidates.map(pawPasserbyIdentity);
+ const key=scene+'|'+avatar+'|'+ids.join('|');
+ if(pawPasserbyLookCache.key!==key)pawPasserbyLookCache={key,map:pawAssignPasserbyLooks(ids,avatar??0)};
+ return pawPasserbyLookCache.map
+}
+stableResidentFallback=function(n){return pawPasserbyLooks().get(pawPasserbyIdentity(n))??pawFallbackAppearanceBefore(n)};
+const pawDistinctNPCBefore=initNPC;
+initNPC=function(...args){
+ const result=pawDistinctNPCBefore(...args);pawPasserbyLookCache={key:'',map:new Map()};
+ const unillustrated=npc.filter(n=>n.kind!==2&&!n.grumpy&&!residentArtworkRecord(n.n));
+ const order=[...unillustrated.filter(n=>n.popGuest),...unillustrated.filter(n=>!n.popGuest)];
+ const extras=new Set(order.slice(3).filter(n=>!n.popGuest));
+ if(extras.size)for(let i=npc.length-1;i>=0;i--)if(extras.has(npc[i]))npc.splice(i,1);
+ return result
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

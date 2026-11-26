@@ -912,3 +912,7 @@ Owner screenshot showed a tiny portrait gate on desktop, a large dark empty surr
 - Railway window canvas is explicitly above stationary painting, including transfer mode; stronger glass motion, 3.6 second district ride with skip, reduced motion respected. Added actual pixel-change browser assertion. This is an attempted visibility repair, not evidence of a confirmed live visual fix.
 - Rotate existing illustrated resident neighbours into safe indoor visitor slots (exclude resident host and current outdoor identities), maintaining true identity art. No dedicated cameo art installed; all 27 named cameo portraits still require individual assets.
 - Goldfish scooping adds movement-sensitive paper damage, timing-based gentle catch bonus, points, rare golden fish bonus, catch streaks and round summaries. Existing postcard and fish release mechanics retained. 10 helper checks passed; current code and tests parse. Browser/deployment verification pending.
+
+
+## Temporal release audit and passerby diversity (26 November)
+- Added 100ms runtime sampler to visual audit and organic district journeys; exported timestamped records and anomaly screenshots. Updated obsolete Town Hall test entry. Eight pure appearance assignment checks pass; bounded unique non-player looks and fewer duplicate generic fillers, named cameo IDs retained. Actual individual cameo art still missing. Red dot source unverified. Browser execution pending. See docs/PAW_RELEASE_AUDIT.md.

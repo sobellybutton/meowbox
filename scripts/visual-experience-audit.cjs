@@ -1,6 +1,7 @@
 /* Full visual evidence sweep. This is a staging/coverage check, not a
    substitute for a human review of the screenshot pixels or real user flows. */
 const {chromium,webkit}=require('playwright'),fs=require('node:fs'),path=require('node:path');
+const {attachFrameAudit}=require('./paw-frame-audit.cjs');
 const root=process.env.MB_AUDIT_URL||'http://127.0.0.1:8769/index.html',out='visual-review';
 fs.mkdirSync(out,{recursive:true});
 const jobs=[
@@ -15,6 +16,7 @@ const results=[],failures=[];
   const browser=await engine.launch();
   try{for(const language of ['en','zh']){
    const page=await browser.newPage(options),prefix=device+'-'+language;
+   const frameAudit=await attachFrameAudit(page,out,prefix);
    const errors=[];
    page.on('pageerror',e=>errors.push(e.message));
    page.on('console',m=>{if(m.type()==='error'&&/frame error|Room transition/i.test(m.text()))errors.push(m.text())});
@@ -24,6 +26,7 @@ const results=[],failures=[];
     const file=prefix+'-'+name+'.png',errorCount=errors.length;
     await settle();
     await page.screenshot({path:path.join(out,file)});
+    await frameAudit.flush(name);
     const data=await page.evaluate(()=>{
      const visible=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return !e.hidden&&s.visibility!=='hidden'&&s.display!=='none'&&r.width>0&&r.height>0&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth};
      const pageOpen=$('page').style.display==='block',root=pageOpen?$('page'):$('game');
@@ -87,7 +90,7 @@ const results=[],failures=[];
      await attempt(name,async()=>{await prepare('fortune',null);await page.evaluate(id=>{const pages={myRoom,passport,todayHub,pawWalletPage,dailyWheelPage,hideoutPage,rail:()=>openRailStop('home')};pages[id]()},open)});
     }
    }catch(e){failures.push(prefix+' setup: '+e.message)}
-   finally{for(const error of [...new Set(errors)])failures.push(prefix+' runtime: '+error);await page.close()}
+   finally{await frameAudit.stop();for(const error of [...new Set(errors)])failures.push(prefix+' runtime: '+error);await page.close()}
   }}finally{await browser.close()}
  }
  fs.writeFileSync(path.join(out,'report.json'),JSON.stringify({results,failures},null,2));
