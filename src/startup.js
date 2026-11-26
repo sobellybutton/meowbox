@@ -1086,7 +1086,7 @@ function roomExplorationFrame(width,height,bounds){
 const roomExplorationCameraBefore=mobileRoomCamera;
 mobileRoomCamera=function(s,ox,oy){
  if(!room||activity||!indoorStages[room])return roomExplorationCameraBefore(s,ox,oy);
- const bounds=room==='temple'?[108,692,252,750]:[110,690,300,750];
+ const bounds=room==='temple'?[108,704,235,750]:[110,690,300,750];
  return roomExplorationFrame(W,H,bounds)
 };
 
@@ -1102,6 +1102,7 @@ indoorObstacles=function(){
 
 // Short, readable station signs; the full activity name is retained elsewhere.
 const roomPlaqueShortNames={
+ temple:{templeWater:['Water basin','净手池'],templeBell:['Bell','敲钟'],sticks:['Fortune sticks','求签'],moon:['Moon blocks','掷筊'],prayer:['Prayer altar','祈愿']},
  kitchen:{cook:['Cook with Grandma','跟外婆煮汤']},
  boba:{bubbleTea:['Make bubble tea','摇杯奶茶']},
  mystery:{mystery:['Furniture & gifts','家具与手信']},
@@ -2849,12 +2850,12 @@ activityHint=function(){if(activity==='love'&&state.readStage==='topic'){hint('C
    approach positions, not detached game icons. Existing activity IDs remain. */
 /* PAW_ROOM_LAYOUT_BEGIN */
 const pawTempleLayout={
- templeWater:[205,542,205,682],
- prayer:[400,342,400,492],
- templeBell:[600,360,520,495],
- sticks:[605,542,605,688],
- moon:[190,350,285,495],
- secretGarden:[690,430,525,502]
+ templeWater:[198,548,198,682],
+ prayer:[355,335,355,492],
+ templeBell:[532,413,492,543],
+ sticks:[586,590,586,710],
+ moon:[188,353,270,495],
+ secretGarden:[641,330,640,490]
 };
 const pawArcadeLayout={
  bubbleArcade:[210,432,210,615],
@@ -2867,7 +2868,9 @@ Object.assign(indoorStages.temple.stations,pawTempleLayout);
 Object.assign(indoorStages.arcade.stations,pawArcadeLayout);
 groundedStations.temple.prayer=['altar',-7,172,100];
 groundedStations.temple.templeWater=['stone',-3,132,95];
-groundedStations.temple.templeBell=['bell',0,112,100];
+groundedStations.temple.templeBell=['bell',0,102,86];
+groundedStations.temple.sticks=['table',-12,112,80];
+roomResidentStations.temple={station:'prayer',x:311,y:614,n:['Temple keeper','庙祝'],sc:.88,facing:'right'};
 groundedStations.arcade.bubbleArcade=['cabinet',28,168,98];
 groundedStations.arcade.goldfishScoop=['table',52,164,98];
 groundedStations.arcade.blindBox=['counter',12,164,98];
@@ -2913,10 +2916,18 @@ function pawTempleSanctuary(){
 }
 function pawTempleSideGate(){
  const [x,y]=pawTempleLayout.secretGarden;
+ // A visible opening to the garden, not a label at the edge of the room.
  ctx.save();
- for(const dx of [-29,29]){line(x+dx,y-58,x+dx,y+34,'#74513b',8);line(x+dx-2,y-56,x+dx-2,y+30,'#c19a6c',1.5)}
- round(x-42,y-64,84,10,3,'#946b49','#634833');
- round(x-35,y-46,70,8,2,'#ad8b62','#74513b');
+ const left=x-37,top=y-47,w=74,base=y+48;
+ ctx.beginPath();ctx.moveTo(left,base);ctx.lineTo(left,top+19);ctx.quadraticCurveTo(left,top,x,top);ctx.quadraticCurveTo(x+w/2,top,x+w/2,top+19);ctx.lineTo(x+w/2,base);ctx.closePath();
+ ctx.save();ctx.clip();
+ const sky=ctx.createLinearGradient(x,top,x,base);sky.addColorStop(0,'#d9dcb2');sky.addColorStop(.45,'#91b39a');sky.addColorStop(1,'#526f57');ctx.fillStyle=sky;ctx.fillRect(left,top,w,base-top);
+ const garden=pics.park||pics.streetTemple;if(garden?.complete&&garden.naturalWidth)cover(garden,left,top,w,base-top);
+ ellipse(x-22,y+15,20,18,'#526f53');ellipse(x+25,y+10,21,25,'#678b61');
+ ctx.beginPath();ctx.moveTo(x-6,y+9);ctx.lineTo(x+5,y+9);ctx.lineTo(x+26,base);ctx.lineTo(x-25,base);ctx.closePath();ctx.fillStyle='#d3c5a3';ctx.fill();
+ ctx.restore();ctx.strokeStyle='#704b35';ctx.lineWidth=7;ctx.stroke();
+ for(const dx of [-37,37]){line(x+dx,top+15,x+dx,base,'#805a3c',6);line(x+dx-1,top+17,x+dx-1,base-2,'#c9aa77',1)}
+ round(x-44,top-8,88,9,2,'#956b49','#5e4734');round(x-42,base-1,84,7,2,'#ad9d7a','#776d55');
  ctx.restore()
 }
 const pawTempleBackdropBefore=templeRitualBackground;
@@ -2928,7 +2939,7 @@ const pawThreePropBefore=prop;
 prop=function(id,x,y){
  if(room==='temple'&&!activity&&id==='templeBell'){
   const spec=groundedStationSpec(room,id);drawGroundedSupport(spec,x,y);
-  templeBellArt(x,y-20,.45);pawStationPlaque={room,id,x,y,spec,at:t};return
+  templeBellArt(x,y-16,.37);pawStationPlaque={room,id,x,y,spec,at:t};return
  }
  if(activity)return pawThreePropBefore(id,x,y);
  const spec=groundedStationSpec(room,id);
@@ -2971,12 +2982,24 @@ prop=function(id,x,y){
 // Keep the room-scale bell below the roof lanterns; during the ritual keep the rim at striker height.
 const pawBellFitBefore=templeBellArt;
 templeBellArt=function(x,y,sc=1,angle=0){if(activity==='templeBell'&&sc>1){const small=.86,base=y+(sc-small)*52;ctx.save();line(x,y-104*sc,x,base-104*small,'#77614a',4);ctx.restore();return pawBellFitBefore(x,base,small,angle)}return pawBellFitBefore(x,y,sc,angle)};
+// Make the existing painted keeper part of the shrine, with a clear floor position.
+const pawShrineResidentDraw=drawRoom;
+drawRoom=function(){
+ const result=pawShrineResidentDraw();
+ if(room==='temple'&&!activity&&indoorReady()){
+  const actor=roomResidentStations.temple;
+  if(actor&&residentArtworkImage(residentArtworkRecord(actor.n))?.complete){
+   target(actor.x-24,actor.y-101,48,103,()=>{if(!indoorReady())return;indoorDestination(340,630,()=>{hint('The keeper welcomes you. The garden is through the right-hand doorway.','庙祝欢迎你。后院就在右边的小门。');residentGreetingToast(residentNamedGreeting('The garden is open. Take your time here.','后院开着呢，慢慢走。'))},'left')})
+  }
+ }
+ return result
+};
 const pawGateLabelBefore=label;
 label=function(name,x,y,fn){
  if(room==='temple'&&!activity&&Math.abs(x-pawTempleLayout.secretGarden[0])<2){
-  const cy=pawTempleLayout.secretGarden[1]-33;
-  ctx.save();round(x-34,cy-10,68,20,2,'#65513a','#c5ac7c');activityFitText(tr('Garden','后院'),x,cy,12,60,'#f7ead0');ctx.restore();
-  target(x-40,cy-18,80,82,fn);return
+  const cy=pawTempleLayout.secretGarden[1]-65;
+  ctx.save();round(x-45,cy-15,90,30,3,'#4e6048','#e1c58a');activityFitText(tr('Garden →','后院 →'),x,cy,16,80,'#fff2d6');ctx.restore();
+  target(x-45,cy-18,90,132,fn);return
  }
  return pawGateLabelBefore(name,x,y,fn)
 };
