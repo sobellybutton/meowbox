@@ -1,0 +1,218 @@
+[
+  {
+    "id": "fortune-cats/classic-white",
+    "file": "fortune-cats/classic-white.png",
+    "width": 379,
+    "height": 441,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.966
+    ],
+    "anchor_kind": "bottom-center standing",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "fortune-cats/gold",
+    "file": "fortune-cats/gold.png",
+    "width": 385,
+    "height": 443,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.9661
+    ],
+    "anchor_kind": "bottom-center standing",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "fortune-cats/pink-love",
+    "file": "fortune-cats/pink-love.png",
+    "width": 388,
+    "height": 448,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.9665
+    ],
+    "anchor_kind": "bottom-center standing",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "fortune-cats/black",
+    "file": "fortune-cats/black.png",
+    "width": 374,
+    "height": 449,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.9666
+    ],
+    "anchor_kind": "bottom-center standing",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "fortune-cats/sleepy",
+    "file": "fortune-cats/sleepy.png",
+    "width": 442,
+    "height": 365,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.9589
+    ],
+    "anchor_kind": "bottom-center standing",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "fortune-cats/sakura",
+    "file": "fortune-cats/sakura.png",
+    "width": 376,
+    "height": 446,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.9664
+    ],
+    "anchor_kind": "bottom-center standing",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "fortune-cats/moonlight",
+    "file": "fortune-cats/moonlight.png",
+    "width": 384,
+    "height": 457,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.9672
+    ],
+    "anchor_kind": "bottom-center standing",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "fortune-cats/guardian",
+    "file": "fortune-cats/guardian.png",
+    "width": 413,
+    "height": 455,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.967
+    ],
+    "anchor_kind": "bottom-center standing",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "blessing-charms/peace",
+    "file": "blessing-charms/peace.png",
+    "width": 429,
+    "height": 449,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.0334
+    ],
+    "anchor_kind": "top-center hanging",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "blessing-charms/health",
+    "file": "blessing-charms/health.png",
+    "width": 413,
+    "height": 450,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.0333
+    ],
+    "anchor_kind": "top-center hanging",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "blessing-charms/safe-travels",
+    "file": "blessing-charms/safe-travels.png",
+    "width": 421,
+    "height": 455,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.033
+    ],
+    "anchor_kind": "top-center hanging",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "blessing-charms/love",
+    "file": "blessing-charms/love.png",
+    "width": 431,
+    "height": 457,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.0263
+    ],
+    "anchor_kind": "top-center hanging",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "blessing-charms/career",
+    "file": "blessing-charms/career.png",
+    "width": 403,
+    "height": 461,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.0325
+    ],
+    "anchor_kind": "top-center hanging",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "blessing-charms/studies",
+    "file": "blessing-charms/studies.png",
+    "width": 420,
+    "height": 459,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.0327
+    ],
+    "anchor_kind": "top-center hanging",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "blessing-charms/happiness",
+    "file": "blessing-charms/happiness.png",
+    "width": 410,
+    "height": 457,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.0328
+    ],
+    "anchor_kind": "top-center hanging",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "blessing-charms/rest",
+    "file": "blessing-charms/rest.png",
+    "width": 430,
+    "height": 462,
+    "alpha": true,
+    "suggested_anchor": [
+      0.5,
+      0.0325
+    ],
+    "anchor_kind": "top-center hanging",
+    "status": "extracted candidate; runtime alignment not tested"
+  },
+  {
+    "id": "railway-station-landscape",
+    "file": "backgrounds/railway-station-landscape.webp",
+    "width": 1672,
+    "height": 941,
+    "alpha": false,
+    "status": "candidate background; baked decor, standing/boarding anchors not tested"
+  }
+]

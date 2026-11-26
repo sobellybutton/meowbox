@@ -1,0 +1,2463 @@
+{
+  "version": 1,
+  "status": "candidate artwork; not integrated or runtime-tested",
+  "text_policy": "All text and results must be rendered live. No sample values or fixed branding.",
+  "signs": {
+    "hanging_wood": {
+      "file": "signs/hanging_wood.png",
+      "size": [
+        504,
+        348
+      ],
+      "padding_px": 16,
+      "transparent_fraction": 0.399,
+      "text_safe_rect_normalized": [
+        0.23,
+        0.49,
+        0.56,
+        0.3
+      ],
+      "note": "Candidate; verify rendered text fit; use stretchable dialogue frame for long text."
+    },
+    "ornate_wood": {
+      "file": "signs/ornate_wood.png",
+      "size": [
+        493,
+        283
+      ],
+      "padding_px": 16,
+      "transparent_fraction": 0.33,
+      "text_safe_rect_normalized": [
+        0.19,
+        0.34,
+        0.57,
+        0.41
+      ],
+      "note": "Candidate; verify rendered text fit; use stretchable dialogue frame for long text."
+    },
+    "hanging_parchment": {
+      "file": "signs/hanging_parchment.png",
+      "size": [
+        400,
+        332
+      ],
+      "padding_px": 16,
+      "transparent_fraction": 0.447,
+      "text_safe_rect_normalized": [
+        0.19,
+        0.43,
+        0.63,
+        0.37
+      ],
+      "note": "Candidate; verify rendered text fit; use stretchable dialogue frame for long text."
+    },
+    "roof_plaque": {
+      "file": "signs/roof_plaque.png",
+      "size": [
+        426,
+        339
+      ],
+      "padding_px": 16,
+      "transparent_fraction": 0.439,
+      "text_safe_rect_normalized": [
+        0.25,
+        0.49,
+        0.5,
+        0.32
+      ],
+      "note": "Candidate; verify rendered text fit; use stretchable dialogue frame for long text."
+    },
+    "speech_left": {
+      "file": "signs/speech_left.png",
+      "size": [
+        490,
+        346
+      ],
+      "padding_px": 16,
+      "transparent_fraction": 0.372,
+      "text_safe_rect_normalized": [
+        0.19,
+        0.25,
+        0.68,
+        0.48
+      ],
+      "note": "Candidate; verify rendered text fit; use stretchable dialogue frame for long text."
+    },
+    "speech_right": {
+      "file": "signs/speech_right.png",
+      "size": [
+        471,
+        340
+      ],
+      "padding_px": 16,
+      "transparent_fraction": 0.373,
+      "text_safe_rect_normalized": [
+        0.14,
+        0.24,
+        0.64,
+        0.48
+      ],
+      "note": "Candidate; verify rendered text fit; use stretchable dialogue frame for long text."
+    },
+    "thought": {
+      "file": "signs/thought.png",
+      "size": [
+        360,
+        336
+      ],
+      "padding_px": 16,
+      "transparent_fraction": 0.483,
+      "text_safe_rect_normalized": [
+        0.22,
+        0.24,
+        0.59,
+        0.39
+      ],
+      "note": "Candidate; verify rendered text fit; use stretchable dialogue frame for long text."
+    },
+    "ribbon": {
+      "file": "signs/ribbon.png",
+      "size": [
+        538,
+        196
+      ],
+      "padding_px": 16,
+      "transparent_fraction": 0.428,
+      "text_safe_rect_normalized": [
+        0.23,
+        0.27,
+        0.54,
+        0.43
+      ],
+      "note": "Candidate; verify rendered text fit; use stretchable dialogue frame for long text."
+    }
+  },
+  "formats": {
+    "feed": {
+      "size": [
+        1080,
+        1350
+      ],
+      "background": "templates/paper_feed.webp",
+      "safe_y": [
+        271,
+        1119
+      ]
+    },
+    "xhs": {
+      "size": [
+        1080,
+        1440
+      ],
+      "background": "templates/paper_xhs.webp",
+      "safe_y": [
+        289,
+        1195
+      ]
+    },
+    "story": {
+      "size": [
+        1080,
+        1920
+      ],
+      "background": "templates/paper_story.webp",
+      "safe_y": [
+        380,
+        1598
+      ]
+    },
+    "square": {
+      "size": [
+        1080,
+        1080
+      ],
+      "background": "templates/paper_square.webp",
+      "safe_y": [
+        220,
+        892
+      ]
+    }
+  },
+  "templates": {
+    "spectrum4_feed": {
+      "overlay": "templates/spectrum4_feed.svg",
+      "background": "templates/paper_feed.webp",
+      "slots": {
+        "title": [
+          84,
+          271,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1035,
+          912,
+          84
+        ],
+        "score_rows": [
+          [
+            84,
+            381.0,
+            912,
+            152.25
+          ],
+          [
+            84,
+            542.25,
+            912,
+            152.25
+          ],
+          [
+            84,
+            703.5,
+            912,
+            152.25
+          ],
+          [
+            84,
+            864.75,
+            912,
+            152.25
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "big_five_feed": {
+      "overlay": "templates/big_five_feed.svg",
+      "background": "templates/paper_feed.webp",
+      "slots": {
+        "title": [
+          84,
+          271,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1035,
+          912,
+          84
+        ],
+        "score_rows": [
+          [
+            84,
+            381.0,
+            912,
+            120.0
+          ],
+          [
+            84,
+            510.0,
+            912,
+            120.0
+          ],
+          [
+            84,
+            639.0,
+            912,
+            120.0
+          ],
+          [
+            84,
+            768.0,
+            912,
+            120.0
+          ],
+          [
+            84,
+            897.0,
+            912,
+            120.0
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "nine_motives_feed": {
+      "overlay": "templates/nine_motives_feed.svg",
+      "background": "templates/paper_feed.webp",
+      "slots": {
+        "title": [
+          84,
+          271,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1035,
+          912,
+          84
+        ],
+        "score_rows": [
+          [
+            84,
+            381.0,
+            912,
+            62.666666666666664
+          ],
+          [
+            84,
+            452.66666666666663,
+            912,
+            62.666666666666664
+          ],
+          [
+            84,
+            524.3333333333333,
+            912,
+            62.666666666666664
+          ],
+          [
+            84,
+            596.0,
+            912,
+            62.666666666666664
+          ],
+          [
+            84,
+            667.6666666666666,
+            912,
+            62.666666666666664
+          ],
+          [
+            84,
+            739.3333333333333,
+            912,
+            62.666666666666664
+          ],
+          [
+            84,
+            811.0,
+            912,
+            62.666666666666664
+          ],
+          [
+            84,
+            882.6666666666666,
+            912,
+            62.666666666666664
+          ],
+          [
+            84,
+            954.3333333333333,
+            912,
+            62.666666666666664
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "values_relationship_feed": {
+      "overlay": "templates/values_relationship_feed.svg",
+      "background": "templates/paper_feed.webp",
+      "slots": {
+        "title": [
+          84,
+          271,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1035,
+          912,
+          84
+        ],
+        "tiles": [
+          [
+            84.0,
+            381.0,
+            449.0,
+            311.0
+          ],
+          [
+            547.0,
+            381.0,
+            449.0,
+            311.0
+          ],
+          [
+            84.0,
+            706.0,
+            449.0,
+            311.0
+          ],
+          [
+            547.0,
+            706.0,
+            449.0,
+            311.0
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "playful_result_feed": {
+      "overlay": "templates/playful_result_feed.svg",
+      "background": "templates/paper_feed.webp",
+      "slots": {
+        "title": [
+          84,
+          271,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1035,
+          912,
+          84
+        ],
+        "illustration": [
+          84,
+          381,
+          912,
+          362.52
+        ],
+        "summary": [
+          84,
+          757.52,
+          912,
+          259.48
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "tarot_1_feed": {
+      "overlay": "templates/tarot_1_feed.svg",
+      "background": "templates/paper_feed.webp",
+      "slots": {
+        "title": [
+          84,
+          271,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1035,
+          912,
+          84
+        ],
+        "cards": [
+          [
+            414.92,
+            381,
+            250.15999999999997,
+            375.23999999999995
+          ]
+        ],
+        "reading": [
+          84,
+          770.24,
+          912,
+          246.76000000000005
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "tarot_3_feed": {
+      "overlay": "templates/tarot_3_feed.svg",
+      "background": "templates/paper_feed.webp",
+      "slots": {
+        "title": [
+          84,
+          271,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1035,
+          912,
+          84
+        ],
+        "cards": [
+          [
+            152.76000000000005,
+            381,
+            250.15999999999997,
+            375.23999999999995
+          ],
+          [
+            414.92,
+            381,
+            250.15999999999997,
+            375.23999999999995
+          ],
+          [
+            677.0799999999999,
+            381,
+            250.15999999999997,
+            375.23999999999995
+          ]
+        ],
+        "reading": [
+          84,
+          770.24,
+          912,
+          246.76000000000005
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "tarot_5_feed": {
+      "overlay": "templates/tarot_5_feed.svg",
+      "background": "templates/paper_feed.webp",
+      "slots": {
+        "title": [
+          84,
+          271,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1035,
+          912,
+          84
+        ],
+        "cards": [
+          [
+            83.99999999999989,
+            381,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            268.79999999999995,
+            381,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            453.59999999999997,
+            381,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            638.4,
+            381,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            823.2,
+            381,
+            172.80000000000004,
+            259.20000000000005
+          ]
+        ],
+        "reading": [
+          84,
+          654.2,
+          912,
+          362.79999999999995
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "zi_wei_12_palaces_feed": {
+      "overlay": "templates/zi_wei_12_palaces_feed.svg",
+      "background": "templates/paper_feed.webp",
+      "slots": {
+        "title": [
+          84,
+          271,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1035,
+          912,
+          84
+        ],
+        "palace_cells": [
+          [
+            224.0,
+            383.0,
+            155.0,
+            155.0
+          ],
+          [
+            383.0,
+            383.0,
+            155.0,
+            155.0
+          ],
+          [
+            542.0,
+            383.0,
+            155.0,
+            155.0
+          ],
+          [
+            701.0,
+            383.0,
+            155.0,
+            155.0
+          ],
+          [
+            224.0,
+            542.0,
+            155.0,
+            155.0
+          ],
+          [
+            701.0,
+            542.0,
+            155.0,
+            155.0
+          ],
+          [
+            224.0,
+            701.0,
+            155.0,
+            155.0
+          ],
+          [
+            701.0,
+            701.0,
+            155.0,
+            155.0
+          ],
+          [
+            224.0,
+            860.0,
+            155.0,
+            155.0
+          ],
+          [
+            383.0,
+            860.0,
+            155.0,
+            155.0
+          ],
+          [
+            542.0,
+            860.0,
+            155.0,
+            155.0
+          ],
+          [
+            701.0,
+            860.0,
+            155.0,
+            155.0
+          ]
+        ],
+        "chart_summary": [
+          384.0,
+          543.0,
+          312.0,
+          312.0
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "fortune_slip_feed": {
+      "overlay": "templates/fortune_slip_feed.svg",
+      "background": "templates/paper_feed.webp",
+      "slots": {
+        "title": [
+          84,
+          271,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1035,
+          912,
+          84
+        ],
+        "illustration": [
+          84,
+          381,
+          912,
+          362.52
+        ],
+        "summary": [
+          84,
+          757.52,
+          912,
+          259.48
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "story_ending_feed": {
+      "overlay": "templates/story_ending_feed.svg",
+      "background": "templates/paper_feed.webp",
+      "slots": {
+        "title": [
+          84,
+          271,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1035,
+          912,
+          84
+        ],
+        "illustration": [
+          84,
+          381,
+          912,
+          362.52
+        ],
+        "summary": [
+          84,
+          757.52,
+          912,
+          259.48
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "spectrum4_xhs": {
+      "overlay": "templates/spectrum4_xhs.svg",
+      "background": "templates/paper_xhs.webp",
+      "slots": {
+        "title": [
+          84,
+          289,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1111,
+          912,
+          84
+        ],
+        "score_rows": [
+          [
+            84,
+            399.0,
+            912,
+            166.75
+          ],
+          [
+            84,
+            574.75,
+            912,
+            166.75
+          ],
+          [
+            84,
+            750.5,
+            912,
+            166.75
+          ],
+          [
+            84,
+            926.25,
+            912,
+            166.75
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "big_five_xhs": {
+      "overlay": "templates/big_five_xhs.svg",
+      "background": "templates/paper_xhs.webp",
+      "slots": {
+        "title": [
+          84,
+          289,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1111,
+          912,
+          84
+        ],
+        "score_rows": [
+          [
+            84,
+            399.0,
+            912,
+            131.6
+          ],
+          [
+            84,
+            539.6,
+            912,
+            131.6
+          ],
+          [
+            84,
+            680.2,
+            912,
+            131.6
+          ],
+          [
+            84,
+            820.8,
+            912,
+            131.6
+          ],
+          [
+            84,
+            961.4,
+            912,
+            131.6
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "nine_motives_xhs": {
+      "overlay": "templates/nine_motives_xhs.svg",
+      "background": "templates/paper_xhs.webp",
+      "slots": {
+        "title": [
+          84,
+          289,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1111,
+          912,
+          84
+        ],
+        "score_rows": [
+          [
+            84,
+            399.0,
+            912,
+            69.11111111111111
+          ],
+          [
+            84,
+            477.1111111111111,
+            912,
+            69.11111111111111
+          ],
+          [
+            84,
+            555.2222222222222,
+            912,
+            69.11111111111111
+          ],
+          [
+            84,
+            633.3333333333334,
+            912,
+            69.11111111111111
+          ],
+          [
+            84,
+            711.4444444444445,
+            912,
+            69.11111111111111
+          ],
+          [
+            84,
+            789.5555555555555,
+            912,
+            69.11111111111111
+          ],
+          [
+            84,
+            867.6666666666667,
+            912,
+            69.11111111111111
+          ],
+          [
+            84,
+            945.7777777777778,
+            912,
+            69.11111111111111
+          ],
+          [
+            84,
+            1023.8888888888889,
+            912,
+            69.11111111111111
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "values_relationship_xhs": {
+      "overlay": "templates/values_relationship_xhs.svg",
+      "background": "templates/paper_xhs.webp",
+      "slots": {
+        "title": [
+          84,
+          289,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1111,
+          912,
+          84
+        ],
+        "tiles": [
+          [
+            84.0,
+            399.0,
+            449.0,
+            340.0
+          ],
+          [
+            547.0,
+            399.0,
+            449.0,
+            340.0
+          ],
+          [
+            84.0,
+            753.0,
+            449.0,
+            340.0
+          ],
+          [
+            547.0,
+            753.0,
+            449.0,
+            340.0
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "playful_result_xhs": {
+      "overlay": "templates/playful_result_xhs.svg",
+      "background": "templates/paper_xhs.webp",
+      "slots": {
+        "title": [
+          84,
+          289,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1111,
+          912,
+          84
+        ],
+        "illustration": [
+          84,
+          399,
+          912,
+          395.58
+        ],
+        "summary": [
+          84,
+          808.5799999999999,
+          912,
+          284.42
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "tarot_1_xhs": {
+      "overlay": "templates/tarot_1_xhs.svg",
+      "background": "templates/paper_xhs.webp",
+      "slots": {
+        "title": [
+          84,
+          289,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1111,
+          912,
+          84
+        ],
+        "cards": [
+          [
+            403.5133333333333,
+            399,
+            272.9733333333333,
+            409.46
+          ]
+        ],
+        "reading": [
+          84,
+          822.46,
+          912,
+          270.54
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "tarot_3_xhs": {
+      "overlay": "templates/tarot_3_xhs.svg",
+      "background": "templates/paper_xhs.webp",
+      "slots": {
+        "title": [
+          84,
+          289,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1111,
+          912,
+          84
+        ],
+        "cards": [
+          [
+            118.54000000000008,
+            399,
+            272.9733333333333,
+            409.46
+          ],
+          [
+            403.5133333333334,
+            399,
+            272.9733333333333,
+            409.46
+          ],
+          [
+            688.4866666666667,
+            399,
+            272.9733333333333,
+            409.46
+          ]
+        ],
+        "reading": [
+          84,
+          822.46,
+          912,
+          270.54
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "tarot_5_xhs": {
+      "overlay": "templates/tarot_5_xhs.svg",
+      "background": "templates/paper_xhs.webp",
+      "slots": {
+        "title": [
+          84,
+          289,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1111,
+          912,
+          84
+        ],
+        "cards": [
+          [
+            83.99999999999989,
+            399,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            268.79999999999995,
+            399,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            453.59999999999997,
+            399,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            638.4,
+            399,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            823.2,
+            399,
+            172.80000000000004,
+            259.20000000000005
+          ]
+        ],
+        "reading": [
+          84,
+          672.2,
+          912,
+          420.79999999999995
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "zi_wei_12_palaces_xhs": {
+      "overlay": "templates/zi_wei_12_palaces_xhs.svg",
+      "background": "templates/paper_xhs.webp",
+      "slots": {
+        "title": [
+          84,
+          289,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1111,
+          912,
+          84
+        ],
+        "palace_cells": [
+          [
+            195.0,
+            401.0,
+            169.5,
+            169.5
+          ],
+          [
+            368.5,
+            401.0,
+            169.5,
+            169.5
+          ],
+          [
+            542.0,
+            401.0,
+            169.5,
+            169.5
+          ],
+          [
+            715.5,
+            401.0,
+            169.5,
+            169.5
+          ],
+          [
+            195.0,
+            574.5,
+            169.5,
+            169.5
+          ],
+          [
+            715.5,
+            574.5,
+            169.5,
+            169.5
+          ],
+          [
+            195.0,
+            748.0,
+            169.5,
+            169.5
+          ],
+          [
+            715.5,
+            748.0,
+            169.5,
+            169.5
+          ],
+          [
+            195.0,
+            921.5,
+            169.5,
+            169.5
+          ],
+          [
+            368.5,
+            921.5,
+            169.5,
+            169.5
+          ],
+          [
+            542.0,
+            921.5,
+            169.5,
+            169.5
+          ],
+          [
+            715.5,
+            921.5,
+            169.5,
+            169.5
+          ]
+        ],
+        "chart_summary": [
+          369.5,
+          575.5,
+          341.0,
+          341.0
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "fortune_slip_xhs": {
+      "overlay": "templates/fortune_slip_xhs.svg",
+      "background": "templates/paper_xhs.webp",
+      "slots": {
+        "title": [
+          84,
+          289,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1111,
+          912,
+          84
+        ],
+        "illustration": [
+          84,
+          399,
+          912,
+          395.58
+        ],
+        "summary": [
+          84,
+          808.5799999999999,
+          912,
+          284.42
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "story_ending_xhs": {
+      "overlay": "templates/story_ending_xhs.svg",
+      "background": "templates/paper_xhs.webp",
+      "slots": {
+        "title": [
+          84,
+          289,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1111,
+          912,
+          84
+        ],
+        "illustration": [
+          84,
+          399,
+          912,
+          395.58
+        ],
+        "summary": [
+          84,
+          808.5799999999999,
+          912,
+          284.42
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "spectrum4_story": {
+      "overlay": "templates/spectrum4_story.svg",
+      "background": "templates/paper_story.webp",
+      "slots": {
+        "title": [
+          84,
+          380,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1514,
+          912,
+          84
+        ],
+        "score_rows": [
+          [
+            84,
+            490.0,
+            912,
+            244.75
+          ],
+          [
+            84,
+            743.75,
+            912,
+            244.75
+          ],
+          [
+            84,
+            997.5,
+            912,
+            244.75
+          ],
+          [
+            84,
+            1251.25,
+            912,
+            244.75
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "big_five_story": {
+      "overlay": "templates/big_five_story.svg",
+      "background": "templates/paper_story.webp",
+      "slots": {
+        "title": [
+          84,
+          380,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1514,
+          912,
+          84
+        ],
+        "score_rows": [
+          [
+            84,
+            490.0,
+            912,
+            194.0
+          ],
+          [
+            84,
+            693.0,
+            912,
+            194.0
+          ],
+          [
+            84,
+            896.0,
+            912,
+            194.0
+          ],
+          [
+            84,
+            1099.0,
+            912,
+            194.0
+          ],
+          [
+            84,
+            1302.0,
+            912,
+            194.0
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "nine_motives_story": {
+      "overlay": "templates/nine_motives_story.svg",
+      "background": "templates/paper_story.webp",
+      "slots": {
+        "title": [
+          84,
+          380,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1514,
+          912,
+          84
+        ],
+        "score_rows": [
+          [
+            84,
+            490.0,
+            912,
+            103.77777777777777
+          ],
+          [
+            84,
+            602.7777777777778,
+            912,
+            103.77777777777777
+          ],
+          [
+            84,
+            715.5555555555555,
+            912,
+            103.77777777777777
+          ],
+          [
+            84,
+            828.3333333333333,
+            912,
+            103.77777777777777
+          ],
+          [
+            84,
+            941.1111111111111,
+            912,
+            103.77777777777777
+          ],
+          [
+            84,
+            1053.888888888889,
+            912,
+            103.77777777777777
+          ],
+          [
+            84,
+            1166.6666666666665,
+            912,
+            103.77777777777777
+          ],
+          [
+            84,
+            1279.4444444444443,
+            912,
+            103.77777777777777
+          ],
+          [
+            84,
+            1392.2222222222222,
+            912,
+            103.77777777777777
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "values_relationship_story": {
+      "overlay": "templates/values_relationship_story.svg",
+      "background": "templates/paper_story.webp",
+      "slots": {
+        "title": [
+          84,
+          380,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1514,
+          912,
+          84
+        ],
+        "tiles": [
+          [
+            84.0,
+            490.0,
+            449.0,
+            496.0
+          ],
+          [
+            547.0,
+            490.0,
+            449.0,
+            496.0
+          ],
+          [
+            84.0,
+            1000.0,
+            449.0,
+            496.0
+          ],
+          [
+            547.0,
+            1000.0,
+            449.0,
+            496.0
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "playful_result_story": {
+      "overlay": "templates/playful_result_story.svg",
+      "background": "templates/paper_story.webp",
+      "slots": {
+        "title": [
+          84,
+          380,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1514,
+          912,
+          84
+        ],
+        "illustration": [
+          84,
+          490,
+          912,
+          573.42
+        ],
+        "summary": [
+          84,
+          1077.42,
+          912,
+          418.58000000000004
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "tarot_1_story": {
+      "overlay": "templates/tarot_1_story.svg",
+      "background": "templates/paper_story.webp",
+      "slots": {
+        "title": [
+          84,
+          380,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1514,
+          912,
+          84
+        ],
+        "cards": [
+          [
+            342.1533333333333,
+            490,
+            395.6933333333333,
+            593.54
+          ]
+        ],
+        "reading": [
+          84,
+          1097.54,
+          912,
+          398.46000000000004
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "tarot_3_story": {
+      "overlay": "templates/tarot_3_story.svg",
+      "background": "templates/paper_story.webp",
+      "slots": {
+        "title": [
+          84,
+          380,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1514,
+          912,
+          84
+        ],
+        "cards": [
+          [
+            84.0,
+            490,
+            296.0,
+            444.0
+          ],
+          [
+            392.0,
+            490,
+            296.0,
+            444.0
+          ],
+          [
+            700.0,
+            490,
+            296.0,
+            444.0
+          ]
+        ],
+        "reading": [
+          84,
+          948.0,
+          912,
+          548.0
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "tarot_5_story": {
+      "overlay": "templates/tarot_5_story.svg",
+      "background": "templates/paper_story.webp",
+      "slots": {
+        "title": [
+          84,
+          380,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1514,
+          912,
+          84
+        ],
+        "cards": [
+          [
+            83.99999999999989,
+            490,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            268.79999999999995,
+            490,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            453.59999999999997,
+            490,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            638.4,
+            490,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            823.2,
+            490,
+            172.80000000000004,
+            259.20000000000005
+          ]
+        ],
+        "reading": [
+          84,
+          763.2,
+          912,
+          732.8
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "zi_wei_12_palaces_story": {
+      "overlay": "templates/zi_wei_12_palaces_story.svg",
+      "background": "templates/paper_story.webp",
+      "slots": {
+        "title": [
+          84,
+          380,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1514,
+          912,
+          84
+        ],
+        "palace_cells": [
+          [
+            86.0,
+            492.0,
+            224.0,
+            224.0
+          ],
+          [
+            314.0,
+            492.0,
+            224.0,
+            224.0
+          ],
+          [
+            542.0,
+            492.0,
+            224.0,
+            224.0
+          ],
+          [
+            770.0,
+            492.0,
+            224.0,
+            224.0
+          ],
+          [
+            86.0,
+            720.0,
+            224.0,
+            224.0
+          ],
+          [
+            770.0,
+            720.0,
+            224.0,
+            224.0
+          ],
+          [
+            86.0,
+            948.0,
+            224.0,
+            224.0
+          ],
+          [
+            770.0,
+            948.0,
+            224.0,
+            224.0
+          ],
+          [
+            86.0,
+            1176.0,
+            224.0,
+            224.0
+          ],
+          [
+            314.0,
+            1176.0,
+            224.0,
+            224.0
+          ],
+          [
+            542.0,
+            1176.0,
+            224.0,
+            224.0
+          ],
+          [
+            770.0,
+            1176.0,
+            224.0,
+            224.0
+          ]
+        ],
+        "chart_summary": [
+          315.0,
+          721.0,
+          450.0,
+          450.0
+        ],
+        "reading": [
+          84,
+          1412,
+          912,
+          84
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "fortune_slip_story": {
+      "overlay": "templates/fortune_slip_story.svg",
+      "background": "templates/paper_story.webp",
+      "slots": {
+        "title": [
+          84,
+          380,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1514,
+          912,
+          84
+        ],
+        "illustration": [
+          84,
+          490,
+          912,
+          573.42
+        ],
+        "summary": [
+          84,
+          1077.42,
+          912,
+          418.58000000000004
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "story_ending_story": {
+      "overlay": "templates/story_ending_story.svg",
+      "background": "templates/paper_story.webp",
+      "slots": {
+        "title": [
+          84,
+          380,
+          912,
+          92
+        ],
+        "footer": [
+          84,
+          1514,
+          912,
+          84
+        ],
+        "illustration": [
+          84,
+          490,
+          912,
+          573.42
+        ],
+        "summary": [
+          84,
+          1077.42,
+          912,
+          418.58000000000004
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "spectrum4_square": {
+      "overlay": "templates/spectrum4_square.svg",
+      "background": "templates/paper_square.webp",
+      "slots": {
+        "title": [
+          84,
+          220,
+          912,
+          80.64
+        ],
+        "footer": [
+          84,
+          818.08,
+          912,
+          73.92
+        ],
+        "score_rows": [
+          [
+            84,
+            318.64,
+            912,
+            113.61000000000001
+          ],
+          [
+            84,
+            441.25,
+            912,
+            113.61000000000001
+          ],
+          [
+            84,
+            563.86,
+            912,
+            113.61000000000001
+          ],
+          [
+            84,
+            686.47,
+            912,
+            113.61000000000001
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "big_five_square": {
+      "overlay": "templates/big_five_square.svg",
+      "background": "templates/paper_square.webp",
+      "slots": {
+        "title": [
+          84,
+          220,
+          912,
+          80.64
+        ],
+        "footer": [
+          84,
+          818.08,
+          912,
+          73.92
+        ],
+        "score_rows": [
+          [
+            84,
+            318.64,
+            912,
+            89.08800000000001
+          ],
+          [
+            84,
+            416.728,
+            912,
+            89.08800000000001
+          ],
+          [
+            84,
+            514.816,
+            912,
+            89.08800000000001
+          ],
+          [
+            84,
+            612.904,
+            912,
+            89.08800000000001
+          ],
+          [
+            84,
+            710.992,
+            912,
+            89.08800000000001
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "nine_motives_square": {
+      "overlay": "templates/nine_motives_square.svg",
+      "background": "templates/paper_square.webp",
+      "slots": {
+        "title": [
+          84,
+          220,
+          912,
+          80.64
+        ],
+        "footer": [
+          84,
+          818.08,
+          912,
+          73.92
+        ],
+        "score_rows": [
+          [
+            84,
+            318.64,
+            912,
+            45.49333333333334
+          ],
+          [
+            84,
+            373.1333333333333,
+            912,
+            45.49333333333334
+          ],
+          [
+            84,
+            427.62666666666667,
+            912,
+            45.49333333333334
+          ],
+          [
+            84,
+            482.12,
+            912,
+            45.49333333333334
+          ],
+          [
+            84,
+            536.6133333333333,
+            912,
+            45.49333333333334
+          ],
+          [
+            84,
+            591.1066666666667,
+            912,
+            45.49333333333334
+          ],
+          [
+            84,
+            645.6,
+            912,
+            45.49333333333334
+          ],
+          [
+            84,
+            700.0933333333334,
+            912,
+            45.49333333333334
+          ],
+          [
+            84,
+            754.5866666666667,
+            912,
+            45.49333333333334
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "values_relationship_square": {
+      "overlay": "templates/values_relationship_square.svg",
+      "background": "templates/paper_square.webp",
+      "slots": {
+        "title": [
+          84,
+          220,
+          912,
+          80.64
+        ],
+        "footer": [
+          84,
+          818.08,
+          912,
+          73.92
+        ],
+        "tiles": [
+          [
+            84.0,
+            318.64,
+            449.0,
+            233.72000000000003
+          ],
+          [
+            547.0,
+            318.64,
+            449.0,
+            233.72000000000003
+          ],
+          [
+            84.0,
+            566.36,
+            449.0,
+            233.72000000000003
+          ],
+          [
+            547.0,
+            566.36,
+            449.0,
+            233.72000000000003
+          ]
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "playful_result_square": {
+      "overlay": "templates/playful_result_square.svg",
+      "background": "templates/paper_square.webp",
+      "slots": {
+        "title": [
+          84,
+          220,
+          912,
+          80.64
+        ],
+        "footer": [
+          84,
+          818.08,
+          912,
+          73.92
+        ],
+        "illustration": [
+          84,
+          318.64,
+          912,
+          274.4208
+        ],
+        "summary": [
+          84,
+          607.0608,
+          912,
+          193.01920000000007
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "tarot_1_square": {
+      "overlay": "templates/tarot_1_square.svg",
+      "background": "templates/paper_square.webp",
+      "slots": {
+        "title": [
+          84,
+          220,
+          912,
+          80.64
+        ],
+        "footer": [
+          84,
+          818.08,
+          912,
+          73.92
+        ],
+        "cards": [
+          [
+            445.3168,
+            318.64,
+            189.3664,
+            284.0496
+          ]
+        ],
+        "reading": [
+          84,
+          616.6895999999999,
+          912,
+          183.39040000000006
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "tarot_3_square": {
+      "overlay": "templates/tarot_3_square.svg",
+      "background": "templates/paper_square.webp",
+      "slots": {
+        "title": [
+          84,
+          220,
+          912,
+          80.64
+        ],
+        "footer": [
+          84,
+          818.08,
+          912,
+          73.92
+        ],
+        "cards": [
+          [
+            243.9504,
+            318.64,
+            189.3664,
+            284.0496
+          ],
+          [
+            445.3168,
+            318.64,
+            189.3664,
+            284.0496
+          ],
+          [
+            646.6831999999999,
+            318.64,
+            189.3664,
+            284.0496
+          ]
+        ],
+        "reading": [
+          84,
+          616.6895999999999,
+          912,
+          183.39040000000006
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "tarot_5_square": {
+      "overlay": "templates/tarot_5_square.svg",
+      "background": "templates/paper_square.webp",
+      "slots": {
+        "title": [
+          84,
+          220,
+          912,
+          80.64
+        ],
+        "footer": [
+          84,
+          818.08,
+          912,
+          73.92
+        ],
+        "cards": [
+          [
+            83.99999999999989,
+            318.64,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            268.79999999999995,
+            318.64,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            453.59999999999997,
+            318.64,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            638.4,
+            318.64,
+            172.80000000000004,
+            259.20000000000005
+          ],
+          [
+            823.2,
+            318.64,
+            172.80000000000004,
+            259.20000000000005
+          ]
+        ],
+        "reading": [
+          84,
+          591.84,
+          912,
+          208.24
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "zi_wei_12_palaces_square": {
+      "overlay": "templates/zi_wei_12_palaces_square.svg",
+      "background": "templates/paper_square.webp",
+      "slots": {
+        "title": [
+          84,
+          220,
+          912,
+          80.64
+        ],
+        "footer": [
+          84,
+          818.08,
+          912,
+          73.92
+        ],
+        "palace_cells": [
+          [
+            301.28,
+            320.64,
+            116.36000000000001,
+            116.36000000000001
+          ],
+          [
+            421.64,
+            320.64,
+            116.36000000000001,
+            116.36000000000001
+          ],
+          [
+            542.0,
+            320.64,
+            116.36000000000001,
+            116.36000000000001
+          ],
+          [
+            662.36,
+            320.64,
+            116.36000000000001,
+            116.36000000000001
+          ],
+          [
+            301.28,
+            441.0,
+            116.36000000000001,
+            116.36000000000001
+          ],
+          [
+            662.36,
+            441.0,
+            116.36000000000001,
+            116.36000000000001
+          ],
+          [
+            301.28,
+            561.36,
+            116.36000000000001,
+            116.36000000000001
+          ],
+          [
+            662.36,
+            561.36,
+            116.36000000000001,
+            116.36000000000001
+          ],
+          [
+            301.28,
+            681.72,
+            116.36000000000001,
+            116.36000000000001
+          ],
+          [
+            421.64,
+            681.72,
+            116.36000000000001,
+            116.36000000000001
+          ],
+          [
+            542.0,
+            681.72,
+            116.36000000000001,
+            116.36000000000001
+          ],
+          [
+            662.36,
+            681.72,
+            116.36000000000001,
+            116.36000000000001
+          ]
+        ],
+        "chart_summary": [
+          422.64,
+          442.0,
+          234.72000000000003,
+          234.72000000000003
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "fortune_slip_square": {
+      "overlay": "templates/fortune_slip_square.svg",
+      "background": "templates/paper_square.webp",
+      "slots": {
+        "title": [
+          84,
+          220,
+          912,
+          80.64
+        ],
+        "footer": [
+          84,
+          818.08,
+          912,
+          73.92
+        ],
+        "illustration": [
+          84,
+          318.64,
+          912,
+          274.4208
+        ],
+        "summary": [
+          84,
+          607.0608,
+          912,
+          193.01920000000007
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    },
+    "story_ending_square": {
+      "overlay": "templates/story_ending_square.svg",
+      "background": "templates/paper_square.webp",
+      "slots": {
+        "title": [
+          84,
+          220,
+          912,
+          80.64
+        ],
+        "footer": [
+          84,
+          818.08,
+          912,
+          73.92
+        ],
+        "illustration": [
+          84,
+          318.64,
+          912,
+          274.4208
+        ],
+        "summary": [
+          84,
+          607.0608,
+          912,
+          193.01920000000007
+        ]
+      },
+      "status": "blank reusable layout; live data required"
+    }
+  },
+  "scenes": {
+    "station_portrait": {
+      "file": "scenes/station_portrait.webp",
+      "size": [
+        941,
+        1672
+      ],
+      "status": "existing candidate, reused; geometry and baked interactive prop review pending"
+    },
+    "station_landscape": {
+      "file": "scenes/station_landscape.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "status": "existing candidate, reused; geometry and baked interactive prop review pending"
+    },
+    "temple_approach_portrait": {
+      "file": "scenes/temple_approach_portrait.webp",
+      "size": [
+        941,
+        1672
+      ],
+      "status": "existing candidate, reused; geometry and baked interactive prop review pending"
+    },
+    "temple_hall_portrait": {
+      "file": "scenes/temple_hall_portrait.webp",
+      "size": [
+        941,
+        1672
+      ],
+      "status": "existing candidate, reused; geometry and baked interactive prop review pending"
+    },
+    "wishing_garden_portrait": {
+      "file": "scenes/wishing_garden_portrait.webp",
+      "size": [
+        941,
+        1672
+      ],
+      "status": "existing candidate, reused; geometry and baked interactive prop review pending"
+    },
+    "blind_box_portrait": {
+      "file": "scenes/blind_box_portrait.webp",
+      "size": [
+        941,
+        1672
+      ],
+      "status": "existing candidate, reused; geometry and baked interactive prop review pending"
+    }
+  },
+  "ticket": {
+    "file": "ui/rail_ticket.svg",
+    "size": [
+      1000,
+      480
+    ],
+    "slots": {
+      "heading": [
+        65,
+        55,
+        680,
+        58
+      ],
+      "avatar": [
+        64,
+        122,
+        165,
+        258
+      ],
+      "name": [
+        260,
+        122,
+        473,
+        65
+      ],
+      "journey": [
+        260,
+        199,
+        473,
+        65
+      ],
+      "details": [
+        260,
+        276,
+        473,
+        65
+      ],
+      "stub": [
+        800,
+        65,
+        142,
+        210
+      ],
+      "stamp": [
+        811,
+        287,
+        110,
+        110
+      ]
+    },
+    "note": "All ticket fields live; no name or branding embedded."
+  }
+}
