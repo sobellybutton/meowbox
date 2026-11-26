@@ -1353,7 +1353,7 @@ function readingTopic(i){if(activity!=='love'||state.readStage!=='topic'||!Numbe
 function readingShuffle(){if(state.readStage!=='deck')return;state.readStage='shuffle';state.readShuffle++;state.readAt=t;sound(350);hint('Two halves of the deck come together.','两叠牌慢慢合在一起。')}
 function readingDeal(){if(state.readStage!=='deck'||!state.readShuffle)return;state.readStage='deal';state.readAt=t;let count=activity==='love'?3:1,pool=tarotDeck.map((_,i)=>i);if(activity==='tarot'){let d=dailyCard();state.readCards=[{i:Math.max(0,tarotDeck.indexOf(d)),rev:tarotReversed('daily')}]}
 else{state.readCards=Array.from({length:count},()=>{let j=Math.floor(Math.random()*pool.length);return {i:pool.splice(j,1)[0],rev:Math.random()<.5}})}state.readFlip=Array(count).fill(-1);state.readCards.forEach(v=>readingArtwork(v.i));sound(460)}
-function readingReveal(i){if(state.readStage!=='cards'||!state.readCards[i]||state.readFlip[i]>=0)return;state.readFlip[i]=t;sound(490+i*90);hint('The card has a thought for you.','这张牌，有句话想对你说。')}
+function readingReveal(i){if(!['tarot','love'].includes(activity)||state.readStage!=='cards'||!state.readCards[i]||state.readFlip[i]>=0)return;state.readFlip[i]=t;sound(490+i*90);const count=state.readFlip.filter(v=>v>=0).length,total=state.readCards.length;hint(count===total?'All cards revealed. Tap a card again to read its meaning.':'Card '+count+' of '+total+' revealed. Take your time. ',count===total?'牌已翻完。再次点击牌面，查看解读。':'已翻开 '+count+'/'+total+' 张牌，慢慢来。')}
 function readingSave(){if(!['tarot','love'].includes(activity)||state.readSaved||!Array.isArray(state.readCards)||!state.readCards.length||!Array.isArray(state.readFlip)||state.readCards.length!==state.readFlip.length||!state.readCards.every(v=>Number.isInteger(v.i)&&tarotDeck[v.i])||!state.readFlip.every(v=>Number.isFinite(v)&&v>=0&&t-v>.6))return;state.readSaved=true;let entry={date:shrineClock().day,topic:state.readTopic,cards:state.readCards.map(v=>({...v}))};let key=JSON.stringify(entry);if(!readingJournal.some(v=>JSON.stringify(v)===key)){readingJournal.unshift(entry);readingJournal=readingJournal.slice(0,40);save('readingJournalV1',readingJournal)}if(activity==='tarot'){let d=tarotDeck[state.readCards[0].i];addItem('Daily Tarot: '+d[0],'今日塔罗：'+d[1])}else addItem('Three-card reading','三张牌占卜');hint('Your reading is tucked into your passport.','这份牌意已经收进旅人护照。')}
 function readingShow(i){
  if(!['tarot','love'].includes(activity)||state.readStage!=='cards')return;
@@ -6983,7 +6983,9 @@ function syncPearlPanel(){
  else if(stage==='mix')btn(tr('Shake cup','摇奶茶')+' '+Math.floor(q.teaMix)+'%',()=>teaShake(80));
  else if(stage==='seal')btn(tr('Press to seal','按压封口'),pearlSeal);
  else if(stage==='ready')btn(q.teaOrder?tr('Serve the guest','递给客人'):tr('Take a sip','喝一口'),teaSip);
- else if(stage==='done'){element('p',q.teaScore===null?tr('Your own little recipe.','你的专属配方。'):tr('Order matched: ','订单完成度：')+q.teaScore+'/4',pearlPanel);btn(tr('Make another','再做一杯'),()=>start('bubbleTea'));btn(tr('Back to shop','返回奶茶铺'),()=>{activity=null;state={};updateHUD();roomIntro()})}
+ else if(stage==='done'){element('p',q.teaScore===null?tr('Your own little recipe.','你的专属配方。'):tr('Order matched: ','订单完成度：')+q.teaScore+'/4',pearlPanel);
+ if(q.teaOrder&&q.teaScore<4){const g=q.teaOrder,rows=[['Base','茶底',q.teaBase,g.base,teaChoices.map((v,i)=>[i,v[0],v[1]])],['Sugar','甜度',q.teaSugar,g.sugar,pearlSugar],['Ice','冰量',q.teaIce,g.ice,pearlIce],['Topping','小料',q.teaTopping,g.topping,pearlToppings]];const review=element('div','',pearlPanel,'pearlOrderReview');element('strong',tr('For next time','下次可以这样调'),review);for(const [en,cn,actual,wanted,options] of rows){if(actual!==wanted)element('small',tr(en,cn)+': '+pearlLabel(options,actual)+' → '+pearlLabel(options,wanted),review)}}
+ btn(tr('Make another','再做一杯'),()=>start('bubbleTea'));btn(tr('Back to shop','返回奶茶铺'),()=>{activity=null;state={};updateHUD();roomIntro()})}
  else {const busy={pouring:['Pouring…','正在倒茶……'],seasoning:['Adding sugar and ice…','正在加糖和冰……'],sealing:['Sealing…','正在封口……'],sip:['Enjoy the drink…','慢慢品尝……']};element('small',tr(...(busy[stage]||['Preparing…','准备中……'])),choices)}
 }
 const pearlPanelDrawBefore=drawActivity;drawActivity=function(){const result=pearlPanelDrawBefore();syncPearlPanel();return result};
@@ -7989,8 +7991,8 @@ const deerStartBefore=start;
 start=function(id){
  if(id!=='deerVisit')return deerStartBefore(id);
  deerStartBefore(id);const day=shrineClock().day,record=deerVisitRecord();
- state.deerProfile=deerForDay(day);state.deerPhase=record.day===day&&record.fed?'done':'greet';state.deerAt=t;state.deerBows=hash(day+'deer-bow')%3!==0;
- refreshControls();hint('Bow, offer a deer cracker, or simply watch.','鞠躬、喂鹿饼，或者安静地看看小鹿。')
+ state.deerProfile=deerForDay(day);state.deerPhase='greet';state.deerAt=t;state.deerBows=hash(day+'deer-bow')%3!==0;
+ refreshControls();if(record.day===day&&record.fed)hint('Welcome back. Your deer has eaten today, but you can still bow or watch.','又见面啦。小鹿今天吃过鹿饼了，还可以鞠躬或静静看它。');else hint('Bow, offer a deer cracker, or simply watch.','鞠躬、喂鹿饼，或者安静地看看小鹿。')
 };
 const deerControlsBefore=refreshControls;
 refreshControls=function(){

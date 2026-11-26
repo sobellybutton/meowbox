@@ -346,10 +346,10 @@ function festivalDip(){
 }
 function festivalLift(){
  const g=state.festivalFish;if(activity!=='goldfishScoop'||g?.phase!=='dip')return;
- const result=festivalFishOutcome(g,t);if(!result)return;
+ const elapsed=t-g.last,result=festivalFishOutcome(g,t);if(!result)return;
  g.attempts++;g.paper=Math.max(0,g.paper-result.wear);g.phase='lift';g.last=t;
  if(result.caught>=0){const i=result.caught,k=festivalFishKinds[i];g.caught.push(i);addItem('Goldfish postcard: '+k.name[0],'金鱼明信片：'+k.name[1]);g.feedback=['A gentle catch! '+k.name[0]+' is going back in the water.','轻轻捞到了'+k.name[1]+'！一会儿放回水里。'];physicalFx('water',.8)}
- else{g.feedback=['That fish has seen your performance review.','这条鱼显然看过你的绩效考核。'];physicalFx('splash',.4)}
+ else{g.feedback=elapsed>1.2?['The paper soaked too long. Lift a little sooner.','纸网泡太久了，下次早点捞起来。']:['The fish dodged the ring. Aim where it is swimming.','小鱼躲开了，试着瞄准它游去的方向。'];physicalFx('splash',.4)}
  refreshControls()
 }
 const festivalStartBefore=start;
@@ -412,7 +412,7 @@ refreshControls=function(){
  element('strong',tr('Paper ','纸网 ')+g.paper+'% · '+tr('Fish ','小鱼 ')+g.caught.length+'/5',el);
  element('small',tr(...g.feedback),el);
  const controls=element('div','',el,'festivalFishButtons');
- if(g.phase==='done'){b(controls,tr('Try again','再玩一局'),()=>start('goldfishScoop'));return}
+ if(g.phase==='done'){b(controls,tr('Try again','再玩一局'),()=>start('goldfishScoop'));b(controls,tr('Back to arcade','返回游戏厅'),()=>{activity=null;state={};updateHUD();roomIntro()});return}
  if(g.phase==='aim'){
   for(const [label,cn,dx,dy] of [['Left','左',-30,0],['Right','右',30,0],['Up','上',0,-27],['Down','下',0,27]])b(controls,tr(label,cn),()=>festivalAim(g.x+dx,g.y+dy));
   b(controls,tr('Dip','下网'),festivalDip)
@@ -1001,10 +1001,11 @@ pearlAdvance=function(){
  }
  return result
 };
-const residentSoupTasteBefore=soupTaste;
-soupTaste=function(){
- const q=state,before=q?.tasteAt,result=residentSoupTasteBefore();
- if(activity==='cook'&&q===state&&before===undefined&&q.tasteAt!==undefined&&q.done&&Array.isArray(q.recipe)&&q.recipe.length===2){
+// Remember only a soup that was actually tasted, not an interrupted animation.
+const residentTastedDrawBefore=drawActivity;
+drawActivity=function(){
+ const q=state,wasTasted=q?.tasted,result=residentTastedDrawBefore();
+ if(activity==='cook'&&q===state&&!wasTasted&&q.tasted&&q.done&&Array.isArray(q.recipe)&&q.recipe.length===2){
   residentHospitality.soup=q.recipe.slice(0,2);residentHospitalitySave()
  }
  return result
