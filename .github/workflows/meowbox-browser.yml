@@ -22,6 +22,7 @@ jobs:
       - run: node scripts/action-refinement-test.cjs
       - run: node scripts/parallel-letter-test.cjs
       - run: node scripts/home-placement-test.cjs
+      - run: node scripts/rail-fish-test.cjs
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps chromium
       - name: Test all four villages and actual doorway taps
@@ -217,6 +218,21 @@ jobs:
                 await page.waitForTimeout(3500);
                 await page.screenshot({path:'test-results/'+name+'-village.png'});
                 if(await page.locator('#dock').isHidden())throw Error('Navigation hidden');
+                await page.locator('#nextStopShortcut').click();
+                await page.locator('.districtRailCabin').waitFor({state:'visible'});
+                const cabin=page.locator('.districtRailCabin');
+                const pause=page.locator('.mbRailPause');
+                await pause.click();
+                if(await cabin.getAttribute('data-scenery-paused')!=='true')throw Error('Scenery did not pause');
+                const target=await page.locator('.mbRailDestination').getAttribute('data-rail-stop');
+                await page.locator('#content .row button').nth(1).click();
+                if(await page.locator('.mbRailDestination').getAttribute('data-rail-stop')!==target||await cabin.getAttribute('data-scenery-paused')!=='true')throw Error('Language change lost train destination or pause');
+                await page.locator('#content .row button').nth(1).click();
+                await pause.click();
+                if(await cabin.getAttribute('data-scenery-paused')!=='false')throw Error('Scenery did not resume');
+                await page.screenshot({path:'test-results/'+name+'-rail-scenery.png'});
+                await page.getByRole('button',{name:'Stay here a little longer',exact:true}).click();
+                if(!await page.evaluate(()=>scene==='fortune'&&!transitioning))throw Error('Preview caused unintended travel');
                 await page.locator('#dockScoop').click();
                 await page.locator('.townFortuneSlip').waitFor({timeout:8000});
                 if(!await page.locator('#luck').isHidden())throw Error('Obsolete luck shortcut visible');
@@ -425,6 +441,15 @@ jobs:
                 await page.evaluate(()=>gardenFeed());
                 if(!await page.evaluate(()=>items.some(x=>x[0]==='Quiet garden postcard')))throw Error('Garden keepsake not collected');
                 await page.screenshot({path:'test-results/'+name+'-secret-garden.png'});
+                await page.evaluate(()=>{room='arcade';activity=null;start('goldfishScoop')});
+                const fishControls=page.locator('#gameControls.festivalFishControls');
+                await fishControls.getByRole('button',{name:'Right',exact:true}).click();
+                if(!await page.evaluate(()=>state.festivalFish.x>400))throw Error('Goldfish aim control did not move ring');
+                await fishControls.getByRole('button',{name:'Dip',exact:true}).click();
+                await fishControls.getByRole('button',{name:'Lift gently',exact:true}).click({timeout:4000});
+                await page.waitForFunction(()=>state.festivalFish.attempts===1,{},{timeout:5000});
+                if(!await page.evaluate(()=>state.festivalFish.paper<100))throw Error('Scoop wear did not update');
+                await page.screenshot({path:'test-results/'+name+'-goldfish-scoop.png'});
                 await page.evaluate(()=>{room='arcade';activity=null;start('claw')});
                 await page.waitForTimeout(700);
                 const lower=page.locator('#gameControls').getByRole('button',{name:'Lower claw',exact:true});

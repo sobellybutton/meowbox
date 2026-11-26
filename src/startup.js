@@ -1748,4 +1748,80 @@ const mbHomeStyle=document.createElement('style');
 mbHomeStyle.textContent='#content .hideoutScene{isolation:isolate}#content .hideoutPlaced[role="button"]{touch-action:none;cursor:grab}#content .hideoutPlaced[role="button"]:active{cursor:grabbing}#content .hideoutPlaced:focus-visible{outline:3px solid #f8d395;outline-offset:3px}#content .mbHomeSelection{font-size:13px;color:#70513b;margin:2px 0 8px}#content .mbHomeTransfer{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}#content .mbHomeTransfer button{min-height:44px;white-space:normal}#content .hideoutTools{flex-wrap:wrap}#content .hideoutTools button{min-width:72px}';
 document.head.append(mbHomeStyle);
 
+
+/* MBFISH_REFINEMENT_BEGIN */
+function mbFishTiming(age){
+ if(!Number.isFinite(age)||age<.32)return 'early';
+ if(age<=1.2)return 'ready';
+ if(age<2.4)return 'late';
+ return 'expired'
+}
+function mbFishPauseGame(game,elapsed){
+ if(!game||!Number.isFinite(elapsed)||elapsed<0)return false;
+ if(Number.isFinite(game.at))game.at+=elapsed;
+ if(Number.isFinite(game.last))game.last+=elapsed;
+ if(Number.isFinite(game.resultAt)&&game.resultAt>0)game.resultAt+=elapsed;
+ return true
+}
+/* MBFISH_REFINEMENT_END */
+let mbFishSuspended=null;
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden){
+  mbFishSuspended=activity==='goldfishScoop'&&state.festivalFish?{game:state.festivalFish,at:performance.now()/1000}:null;return
+ }
+ const old=mbFishSuspended;mbFishSuspended=null;
+ if(old&&activity==='goldfishScoop'&&state.festivalFish===old.game)mbFishPauseGame(old.game,Math.max(0,performance.now()/1000-old.at))
+});
+const mbFishDipBefore=festivalDip;
+festivalDip=function(){
+ if(document.hidden||talkOpen||transitioning||$('page').style.display==='block')return;
+ return mbFishDipBefore()
+};
+const mbFishLiftBefore=festivalLift;
+festivalLift=function(){
+ if(document.hidden||talkOpen||transitioning||$('page').style.display==='block')return;
+ return mbFishLiftBefore()
+};
+const mbFishControlsBefore=refreshControls;
+refreshControls=function(){
+ const result=mbFishControlsBefore();
+ if(activity!=='goldfishScoop'||!state.festivalFish)return result;
+ const controls=$('gameControls');if(!controls?.classList.contains('festivalFishControls'))return result;
+ const g=state.festivalFish;
+ if(g.phase==='dip'){
+  const timing=element('small','',controls,'mbFishTiming');timing.setAttribute('role','status');timing.setAttribute('aria-live','polite');
+  const track=element('progress','',controls,'mbFishProgress');track.max=2.4;track.value=0;track.setAttribute('aria-label',tr('Time in water','纸网入水时间'));
+  controls.insertBefore(timing,controls.querySelector('.festivalFishButtons'));controls.insertBefore(track,controls.querySelector('.festivalFishButtons'));
+  mbFishSyncTiming()
+ }
+ return result
+};
+function mbFishSyncTiming(){
+ if(activity!=='goldfishScoop'||state.festivalFish?.phase!=='dip')return;
+ const controls=$('gameControls'),g=state.festivalFish,timing=controls?.querySelector('.mbFishTiming'),progress=controls?.querySelector('.mbFishProgress'),button=controls?.querySelector('.festivalFishButtons button');
+ if(!timing||!progress||!button)return;
+ const age=Math.max(0,t-g.last),stage=mbFishTiming(age);
+ const message=stage==='early'?tr('Let the paper settle…','先让纸网稳一稳……'):stage==='ready'?tr('Lift while a fish is inside the ring.','小鱼游进圈里就捞起。'):tr('Lift now before the paper tears.','快捞起，纸网快破了。');
+ if(timing.textContent!==message)timing.textContent=message;
+ timing.dataset.timing=stage;progress.value=Math.min(2.4,age);button.disabled=stage==='early'
+}
+const mbFishFrameBefore=drawActivity;
+drawActivity=function(){
+ const result=mbFishFrameBefore();
+ if(activity==='goldfishScoop'&&state.festivalFish?.phase==='dip')mbFishSyncTiming();
+ return result
+};
+const mbJourneyStyle=document.createElement('style');
+mbJourneyStyle.textContent=
+ '#content .railRouteNodes .mbRailDestination{border-color:#a76c47;color:#70492f;font-weight:700}'+
+ '#content .railRouteNodes .mbRailStatus{display:block;padding-top:4px;font-size:10px;line-height:1.2}'+
+ '#content .mbRailScenery{display:flex;gap:8px;align-items:center;justify-content:space-between;max-width:560px;margin:auto}'+
+ '#content .mbRailScenery p{font-size:13px;line-height:1.45;margin:3px 0;flex:1;color:#69513e}'+
+ '#content .mbRailPause{min-height:44px;max-width:42%;white-space:normal;font-size:12px}'+
+ '#content .districtRailCabin[data-scenery-paused="true"] .districtRailWindow img,#content .districtRailCabin[data-scenery-paused="true"] .railPassingTrees{animation-play-state:paused!important}'+
+ '#game .mbFishProgress{width:min(100%,210px);height:6px;margin:0 auto;accent-color:#71876c}'+
+ '#game .mbFishTiming[data-timing="late"]{color:#8b4c37}'+
+ '#game .mbFishTiming[data-timing="ready"]{color:#36583e}';
+document.head.append(mbJourneyStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

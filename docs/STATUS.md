@@ -639,3 +639,10 @@ Base c52600e. Its Pages deployment succeeded; full repaired Parallel Lives brows
 - Placed pieces are selectable from the catalogue, can be put away and reused, and can transfer to unlocked room extensions without buying duplicates. Capacity remains 24 per room.
 - The avatar chooses an unobstructed candidate floor anchor; the rug is walkable. If none is clear, the avatar is omitted from the room image instead of overlapping furniture; profile remains visible.
 - Added eight pure placement tests and full-suite editor checks using the real decorate, select, put-away, re-place and save controls. Combined script and workflow JS parse and isolated checks passed before push. Real browser/device layout and drag playback remain pending. No new paintings or animation frames installed. Graphify still indexed 53a9113.
+
+
+## Scenic rail and goldfish feedback (26 November)
+Base 8673476: full browser smoke suite 45751108202 (browser, Chromium/WebKit shrine and share exports), Pages 45751107880, and Master Yue 45751108205 all succeeded. Prior desktop Parallel Lives timeout is no longer a failing baseline.
+- Rail route distinguishes current and intended stop; destination-specific bilingual cabin commentary, pause/resume controls, reduced-motion default, language changes preserve destination and motion choice. Existing optional arrival path, four-district geography, scenic image, stamps and saved progress preserved. No forced waiting or extra rewards. No new painted panorama.
+- Goldfish scooping now shows the settling/ready/late timing window, water time and a temporarily disabled early lift button; uses the same existing fish positions, scoring and wear. Pauses time when the browser is hidden and rejects activity inputs during an overlay. No new fish or tool art.
+- Combined scripts and workflow syntax parsed; eight isolated rail/fish tests passed. Added real browser interaction checks for rail pause, language continuity, cancelled preview, scoop aim/dip/lift/wear. New deployment/browser verification and visual inspection pending. Graphify remains 53a9113.

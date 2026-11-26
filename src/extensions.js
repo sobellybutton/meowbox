@@ -7310,32 +7310,63 @@ function installRailParallax(frame){
 }
 const scenicEntranceBefore=proRender;
 proRender=function(){scenicEntranceBefore();if(proStep===5)installRailParallax(proposal.querySelector('.train-window'))};
-function renderRailRoute(q){
+/* MBRAIL_REFINEMENT_BEGIN */
+function mbRailStops(current,destination,seen){
+ return ['fortune','home','island','wonder'].map(id=>({id,current:id===current,destination:id===destination,visited:Array.isArray(seen)&&seen.includes(id)}))
+}
+function mbRailCanArrive(current,destination,inside,blocked,boarded){
+ return ['fortune','home','island','wonder'].includes(destination)&&!blocked&&!boarded&&(destination!==current||!!inside)
+}
+function mbRailCaption(k){
+ return ({
+  fortune:['Mountain service','山间列车','Clouds drift between the mountain ridges. Take the long way if you like.','云从山间慢慢飘过。想多坐一会儿也可以。'],
+  home:['Riverside service','河畔列车','Little houses line the river. No one is checking your attendance.','小屋沿河而建。这里没人查你的考勤。'],
+  island:['Coastal service','海岸列车','A little sea breeze, with absolutely no work emails.','吹一吹海风，工作消息先免打扰。'],
+  wonder:['Twilight service','暮色列车','The sky changes colour. There is still time for another adventure.','天色慢慢变了，还来得及再去冒个险。']
+ })[k]||null
+}
+/* MBRAIL_REFINEMENT_END */
+function renderRailRoute(q,destination=null){
  const section=element('section','',q,'railRouteStrip');element('small',tr('MEOWBOX RAILWAY · FOUR STOPS','摸鱼铁路 · 四站环线'),section);
  const list=element('div','',section,'railRouteNodes');
- for(const k of ['fortune','home','island','wonder']){
-  const stop=element('span',tr(...maps[k].n),list,k===scene?'railCurrent':visited.includes(k)?'railVisited':'');
-  if(k===scene)stop.setAttribute('aria-current','location')
+ for(const v of mbRailStops(scene,destination,visited)){
+  const stop=element('span',tr(...maps[v.id].n),list,v.current?'railCurrent':v.visited?'railVisited':'');
+  stop.dataset.railStop=v.id;
+  if(v.current){stop.setAttribute('aria-current','location');if(destination)element('small',tr('You are here','你在这里'),stop,'mbRailStatus')}
+  if(v.destination){stop.classList.add('mbRailDestination');element('small',tr('Next stop','下一站'),stop,'mbRailStatus')}
  }
 }
-function openRailStop(destination=railNextDistrict(scene)){
+function openRailStop(destination=railNextDistrict(scene),settings={}){
  if(transitioning||!Object.hasOwn(maps,destination)||!proposal.hidden)return;
  if(destination===scene&&!room){$('page').style.display='none';return}
+ const motion={paused:typeof settings.paused==='boolean'?settings.paused:matchMedia('(prefers-reduced-motion: reduce)').matches};
  activePage='travel';
  page(tr('Next stop: ','下一站：')+tr(...maps[destination].n),tr('Take a seat. Leave when you feel ready.','坐下来看看风景，准备好了再出发。'),q=>{
-  renderRailRoute(q);
+  renderRailRoute(q,destination);
   const featured=townAnchorPlaces[destination];if(featured){const note=element('div','',q,'railAnchorNote');element('strong',tr('Worth a visit: ','值得一去：')+tr(...featured.name),note);element('small',tr(...featured.purpose),note)}
   const cabin=element('div','',q,'districtRailCabin');
-  element('small',tr('MEOWBOX RAILWAY · SCENIC SERVICE','摸鱼铁路 · 观景列车'),cabin,'railRouteCar');
+  cabin.dataset.sceneryPaused=String(motion.paused);
+  const copy=mbRailCaption(destination);
+  element('small',tr(copy[0],copy[1]),cabin,'railRouteCar');
   const frame=element('div','',cabin,'districtRailWindow train-window'),im=element('img','',frame);
   im.src=railSceneryURL(destination);im.alt=tr('Landscape passing the train window','车窗外流动的风景');installRailParallax(frame);
   const seat=element('div','',cabin,'districtRailSeat');element('span',tr('Reserved for doing nothing','摸鱼专座'),seat);
+  const scenery=element('div','',q,'mbRailScenery');
+  element('p',tr(copy[2],copy[3]),scenery);
+  const toggle=b(scenery,'',()=>{motion.paused=!motion.paused;syncMotion()});
+  toggle.className='mbRailPause';
+  function syncMotion(){
+   cabin.dataset.sceneryPaused=String(motion.paused);toggle.textContent=motion.paused?tr('Resume scenery','继续看流动风景'):tr('Pause scenery','暂停风景');
+   toggle.setAttribute('aria-pressed',String(motion.paused))
+  }
+  syncMotion();
   element('p',tr(...maps[scene].n)+' → '+tr(...maps[destination].n),q,'railRouteTicket');
   const actions=element('div','',q,'railJourneyActions');let boarded=false;
-  b(actions,tr('Arrive at ','抵达')+tr(...maps[destination].n),()=>{if(boarded||transitioning)return;boarded=true;$('page').style.display='none';journey(destination)});
+  const arrival=b(actions,tr('Arrive at ','抵达')+tr(...maps[destination].n),()=>{if(!mbRailCanArrive(scene,destination,room,transitioning,boarded)||!actions.isConnected)return;boarded=true;arrival.disabled=true;$('page').style.display='none';journey(destination)});
   b(actions,tr('Choose another stop','选择其他站'),travel);
   b(actions,tr('Stay here a little longer','再逛一会儿'),()=>{$('page').style.display='none';updateHUD()})
- })
+ });
+ journalLanguage(()=>openRailStop(destination,motion))
 }
 const railNextHUDBefore=updateHUD;
 updateHUD=function(){railNextHUDBefore();const label=travellerRailLabel();if(nextStopButton.getAttribute('aria-label')!==label)nextStopButton.setAttribute('aria-label',label);nextStopButton.title=tr('Optional onward journey','随心选择下一站')};
