@@ -3671,7 +3671,7 @@ step=function(n,dt,speed){
  return result
 };
 const pawWalkRenderBefore=backHuman;
-function pawGaitPhase(distance,scale){return distance/Math.max(28,44*scale)*Math.PI}
+function pawGaitPhase(distance,scale){return Math.max(0,Number.isFinite(distance)?distance:0)/Math.max(34,52*(Number.isFinite(scale)?scale:1))*Math.PI}
 function pawPaintedGait(im,x,y,scale,facing,phase){
  const sw=im.naturalWidth,sh=im.naturalHeight,h=94*scale,w=h*sw/sh;
  // Keep the body and head intact. The two lower body strips overlap the
@@ -3681,12 +3681,12 @@ function pawPaintedGait(im,x,y,scale,facing,phase){
  ctx.save();try{
   ellipse(x,y+1,Math.max(10,w*.31),Math.max(2,scale*4),'#302a2448');
   ctx.translate(x,y);if(facing==='left')ctx.scale(-1,1);
-  const widthL=w*half/sw,widthR=w-widthL,overlap=Math.min(3,split),lift=3.5*scale;
-  const hips=-legH-a*scale*.8;
+  const widthL=w*half/sw,widthR=w-widthL,overlap=Math.min(3,split),lift=(side?3:1.8)*scale;
+  const hips=-legH-a*scale*.45;
   function lower(sx,ww,dx,dw,sign){
-   const forward=sign*s,raising=Math.max(0,forward)*lift,shift=side?forward*3.5*scale:sign*a*1.25*scale;
-   ctx.save();ctx.translate(dx+dw/2,hips);ctx.rotate(side?forward*.13:sign*a*.035);
-   const legHeight=legH+a*scale*.8-raising;
+   const forward=sign*s,raising=Math.max(0,forward)*lift,shift=side?forward*3.0*scale:sign*a*.65*scale;
+   ctx.save();ctx.translate(dx+dw/2,hips);ctx.rotate(side?forward*.10:sign*a*.018);
+   const legHeight=legH+a*scale*.45-raising;
    ctx.drawImage(im,sx,split-overlap,ww,sh-split+overlap,-dw/2+shift,-overlap*h/sh,dw,legHeight+overlap*h/sh);ctx.restore()
   }
   if(side&&s>0){lower(half,sw-half,-w/2+widthL,widthR,1);lower(0,half,-w/2,widthL,-1)}
@@ -3704,11 +3704,11 @@ backHuman=function(x,y,kind,walking,facing,scale=1){
  const actor=pawRenderedWalker||(!room&&!isPlayer?npc.find(n=>Math.hypot(x-n.x,y-n.y)<3):null);
  const indoorPlayer=!!room&&!actor&&kind===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<4;
  if(indoorPlayer){const key=scene+'|'+room;const previous=pawIndoorGait;
-  if(previous.key===key){const d=Math.hypot(x-previous.x,y-previous.y);if(d<60)previous.distance+=d}
+  if(previous.key===key){const d=Math.hypot(x-previous.x,y-previous.y);if(d>.02&&d<60)previous.distance+=d}
   else previous.distance=0;
   previous.key=key;previous.x=x;previous.y=y
  }
- const phase=pawGaitPhase(indoorPlayer?pawIndoorGait.distance:actor&&pawGaitTravel.has(actor)?pawGaitTravel.get(actor):isPlayer?pawWalkDistance:t*40,scale),reduced=actorReduce||residentReducedMotion.matches;
+ const phase=pawGaitPhase(indoorPlayer?pawIndoorGait.distance:actor?pawGaitTravel.get(actor)||0:isPlayer?pawWalkDistance:0,scale),reduced=actorReduce||residentReducedMotion.matches;
  if(frames){const loaded=frames.map(mbArtImage);if(loaded.every(Boolean)){const i=reduced?0:((Math.floor(phase/Math.PI*frames.length/2)%frames.length)+frames.length)%frames.length;mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}}
  const im=pics['walker'+kind+(dir==='up'?1:dir==='down'?0:2)];
  if(im?.naturalWidth&&im.naturalHeight&&!reduced&&(dir==='down'||dir==='right')){pawPaintedGait(im,x,y,scale,facing,phase);return}
@@ -5008,8 +5008,15 @@ const pawRoomVisitorSpecs={
 };
 let pawVisitorContext='',pawLocalVisitors=[],pawVisitorAt=0,pawVisitSerial=0,pawRenderedWalker=null;
 function pawGuestRoomCandidates(profiles,active,world,valid){return profiles.filter(g=>g.world===world&&!active.includes(g.id)&&valid(g))}
-function pawGuestAtlasSlot(g){const i=guestAtlasIndex({popGuest:g.id,n:g.name});return i>=0&&i<16&&![6,8,9].includes(i)?i:-1}
-function pawRoomGuestProfile(visit){const active=npc.filter(n=>n.popGuest).map(n=>n.popGuest),pool=pawGuestRoomCandidates(popGuestStories,active,scene,g=>pawGuestAtlasSlot(g)>=0);return pool.length?pool[visit%pool.length]:null}
+// The old guest atlas was removed from the live build. Resolve only actual
+// identity-specific installed art; never request guessed files or reuse a host.
+function pawGuestArt(g,resolve=residentArtworkRecord,loadImage=residentArtworkImage){
+ if(!g||!Array.isArray(g.name))return null;
+ const record=resolve(g.name);if(!record)return null;
+ const im=loadImage(record);
+ return im?.complete&&im.naturalWidth>0&&im.naturalHeight>0?im:null
+}
+function pawRoomGuestProfile(visit){const active=npc.filter(n=>n.popGuest).map(n=>n.popGuest),pool=pawGuestRoomCandidates(popGuestStories,active,scene,g=>!!pawGuestArt(g));return pool.length?pool[visit%pool.length]:null}
 /* Guest feet must never occupy the doorway or the player's action anchors.
    Use existing room data; do not change player collision geometry. */
 function pawGuestClear(x,y,anchors,clearance=52){
@@ -5048,7 +5055,7 @@ function pawRoomWalkers(){
   const offset=spawn.length?pawVisitSerial%spawn.length:0,ordered=[...spawn.slice(offset),...spawn.slice(0,offset)];
   pawLocalVisitors=ordered.slice(0,pawGuestCount(spec.count,pawVisitSerial,room)).map((pos,i)=>({id:'fictional-visitor-'+i,fictionalVisitor:true,room,x:pos[0],y:pos[1],avatar:((avatar??0)+1+i+pawVisitSerial%2)%4,facing:'down',walking:0,index:safe.indexOf(pos),route:[],wait:t+2+i*2.5}));
   // Use existing original cameo identities, conversation branches and keepsakes.
-  // Never duplicate an outdoor character. Existing atlas has standing art only.
+  // Never duplicate an outdoor character or use unrelated portrait art.
   if(pawLocalVisitors.length&&pawVisitSerial%2===1){
    const g=pawRoomGuestProfile(pawVisitSerial);if(g){const a=pawLocalVisitors[0];a.guest=g;a.id=g.id;a.facing=a.x<400?'right':'left'}
   }
@@ -5085,7 +5092,7 @@ const pawVisitorDrawBefore=drawSharedRoomActor;
 drawSharedRoomActor=function(a,scale){
  if(a.fictionalVisitor){
   if(a.guest){
-   const height=94*scale,drawn=drawGuestAtlasActor(pawGuestAtlasSlot(a.guest),a.x,a.y,height,a.facing);
+   const height=94*scale,drawn=drawResidentRaster(pawGuestArt(a.guest),a.x,a.y,height,a.facing);
    if(drawn){
     if(indoorReady()&&Math.hypot(a.x-indoor.x,a.y-indoor.y)<150){
      const w=Math.max(36,44/Math.max(.2,cam.scale)),h=Math.max(height*.8,44/Math.max(.2,cam.scale));
@@ -5202,7 +5209,7 @@ townChatPage=function(...args){
  if(!tabs||q.querySelector('.pawGuestNotice'))return result;
  const note=element('details','',q,'pawGuestNotice');tabs.after(note);
  element('summary',tr('Around town today','今日小镇来客'),note);
- element('p',tr('Fictional visitors in '+maps[scene].n[0]+'. Meet them while exploring; other familiar faces may turn up indoors.',''+maps[scene].n[1]+'的虚构来客。逛小镇时可以遇见他们，店里也可能有熟面孔。'),note);
+ element('p',tr('Fictional visitors in '+maps[scene].n[0]+'. Meet them while exploring the district.',''+maps[scene].n[1]+'的虚构来客。逛小镇时可以遇见他们。'),note);
  const roster=mbGuestRoster(scene);
  for(const g of roster){
   const line=element('div','',note,'pawGuestNoticeLine');element('strong',tr(...g.name),line);
