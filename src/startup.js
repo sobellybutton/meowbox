@@ -900,24 +900,25 @@ const compactConsultStyle=document.createElement('style');compactConsultStyle.te
 /* Resident recognition: local player name, contextual greetings, no fake
    shared presence or private birth-data references. One welcome per visit. */
 const residentWelcomeProfiles=[
- {id:'temple',names:['Temple keeper','庙祝'],rooms:['temple','sticks','moon'],lines:[['Leave your worries by the door.','烦恼先放门口吧。'],['The incense is ready. Take your time.','香已备好，慢慢来。']]},
- {id:'tarot',names:['Fortune Teller','占卜师'],rooms:['tarot','daily'],lines:[['The cards are ready. Your inbox can wait.','牌都准备好了，工作消息先放一放。'],['What is on your mind today?','今天想问点什么呢？']]},
- {id:'yue',names:['Master Yue','月师傅','Astrologer','命理师'],rooms:['destiny'],lines:[['Come, have some tea. The stars can wait.','来，喝口茶，星星不催你。'],['Love, work, or a little clarity today?','今天想聊感情、工作，还是理理思绪？']]},
+ {id:'temple',names:['Temple keeper','庙祝'],rooms:['temple','sticks','moon'],lines:[['Leave your worries by the door.','烦恼先放门口吧。'],['The incense is ready. Take your time.','香已备好，慢慢来。'],['No appointments with heaven today.','今天不用跟神明预约，慢慢来。'],['You can just breathe. No wish required.','不一定非要求什么，静静坐会儿也好。']]},
+ {id:'tarot',names:['Fortune Teller','占卜师'],rooms:['tarot','daily'],lines:[['The cards are ready. Your inbox can wait.','牌都准备好了，工作消息先放一放。'],['What is on your mind today?','今天想问点什么呢？'],['Still waiting for that reply? Cards cannot read minds.','还在等那条消息吗？牌可不会读心术。'],['Career, love, or a mysterious desire for a nap?','事业、感情，还是那股神秘的午睡欲望？']]},
+ {id:'yue',names:['Master Yue','月师傅','Astrologer','命理师'],rooms:['destiny'],lines:[['Come, have some tea. The stars can wait.','来，喝口茶，星星不催你。'],['Love, work, or a little clarity today?','今天想聊感情、工作，还是理理思绪？'],['The stars have no deadlines. A rare luxury.','星星没有截止日期，真是难得。'],['Read for yourself or someone else. Take your time.','看自己或别人都可以，慢慢来。']]},
  {id:'garden',names:['Garden keeper','守园人','Caretaker','管理员'],rooms:['wishes'],lines:[['There is room for another wish.','这里还有地方挂你的心愿。'],['No wish is too small.','小小的心愿也值得被记住。']]},
- {id:'grandma',names:['Grandma','外婆','奶奶'],rooms:['kitchen'],lines:[['Come eat. You look like someone who skipped lunch.','来吃饭啦。忙起来是不是又忘了吃饭？'],['I saved you a bowl.','给你留了一碗呢。']]},
+ {id:'grandma',names:['Grandma','外婆','奶奶'],rooms:['kitchen'],lines:[['Come eat. You look like someone who skipped lunch.','来吃饭啦。忙起来是不是又忘了吃饭？'],['I saved you a bowl.','给你留了一碗呢。'],['Soup first. Work problems can wait outside.','先喝汤，工作的烦心事在外面等着。'],['The only thing simmering here should be the soup.','在这里，只有汤需要慢慢熬。']]},
  {id:'mei',names:['Auntie Mei','梅姨'],rooms:['tea'],lines:[['Sit here. I have tea and possibly too much news.','来坐这边，有茶，还有一点点八卦。'],['Good to see you. How has your day been?','见到你真好，今天过得怎样？']]},
  {id:'hong',names:['Auntie Hong','红姐','洪姨'],rooms:[],lines:[['Come sit. I have a story for you.','来坐坐，有个故事跟你说。'],['What have I missed?','最近有什么新鲜事呀？']]},
  {id:'wang',names:['Wang Laoban','王老板'],rooms:['office'],lines:[['Relax. This meeting could have been an email.','放轻松，这个会本来发封邮件就行。'],['No performance review today. Promise.','今天不谈绩效，说好了。']]},
- {id:'ahma',names:['Ah Ma','阿嬷','阿嫲','阿嬤','打小人阿姨','打小人阿婆','Grumpy Ah Ma','暴躁阿嬷'],rooms:['fish'],lines:[['Who has been making your blood boil today?','今天又是谁惹你生气啦？'],['Sit down. We can leave the drama here.','来坐坐，把那些破事留在这里。']]},
+ {id:'ahma',names:['Ah Ma','阿嬷','阿嫲','阿嬤','打小人阿姨','打小人阿婆','Grumpy Ah Ma','暴躁阿嬷'],rooms:['fish'],lines:[['Who has been making your blood boil today?','今天又是谁惹你生气啦？'],['Sit down. We can leave the drama here.','来坐坐，把那些破事留在这里。'],['The slipper has office hours. Luckily, they are flexible.','拖鞋也有上班时间，不过可以弹性打卡。'],['No need to explain everything. The river can listen.','不用把来龙去脉都讲清楚，河水会听你说。']]},
  {id:'lin',names:['Auntie Lin','林姨'],rooms:['park'],lines:[['The animals are taking their sweet time. So can you.','小动物都慢悠悠的，你也可以。'],['Come see who is out in the meadow today.','来看看今天草地上有哪些小可爱。']]},
  {id:'arcade',names:['Keeper','店主','Arcade keeper','游戏厅老板','Arcade host','游戏厅店主'],rooms:['arcade'],lines:[['Ready to beat your own score?','今天要不要刷新自己的纪录？'],['The claw owes you nothing. But give it a go.','夹爪可不欠你的，不过试试嘛。']]},
- {id:'boba',names:['Boba keeper','奶茶店主','Pearl & Pause','珍珠摸鱼铺','Barista','店员'],rooms:['boba'],lines:[['A little tea break? You have earned one.','喝杯奶茶歇一歇吧。'],['Less ice, more peace?','少冰，多一点好心情？']]},
+ {id:'boba',names:['Boba keeper','奶茶店主','Pearl & Pause','珍珠摸鱼铺','Barista','店员'],rooms:['boba'],lines:[['A little tea break? You have earned one.','喝杯奶茶歇一歇吧。'],['Less ice, more peace?','少冰，多一点好心情？'],['The only thing we are shaking today is bubble tea.','今天只摇奶茶，不摇摆人生。'],['Your drink, your rules. No approval chain.','自己的奶茶自己做主，不用逐级审批。']]},
  {id:'souvenir',names:['Souvenir keeper','手信店主','Furniture keeper','家具店主'],rooms:['mystery'],lines:[['Come browse. No need to buy anything.','随便看看，不买也没关系。'],['Find something that makes you smile.','看看有没有让你会心一笑的小东西。']]},
  {id:'lab',names:['Personality guide','人格向导','Researcher','研究员'],rooms:[],lines:[['Curious about yourself? No homework here.','想多了解自己？这里不交作业。'],['There is no perfect answer.','没有标准答案，做自己就好。']]},
  {id:'story',names:['Storyteller','说书人','故事向导'],rooms:[],lines:[['Another little adventure awaits.','又有一段小故事等着你。'],['What would you do differently this time?','这一次，你会怎么选呢？']]},
  {id:'cafe',names:['Café keeper','Cafe keeper','咖啡店主'],rooms:[],lines:[['Let us make some space for the heart.','给心里的人留一点时间吧。'],['Tea first, overthinking later.','先喝茶，晚点再胡思乱想。']]}
 ];
 const residentWelcomeVisits=new Map(),residentWelcomeSpoken=new Set(),residentOutdoorWelcome=new Map();
+const residentVisitorWelcome=new Map();
 function residentPlayerDisplayName(){
  return Array.from(Array.from(String(playerName||'')).filter(ch=>ch.codePointAt(0)>=32&&ch.codePointAt(0)!==127).join('').trim()).slice(0,24).join('')
 }
@@ -1010,7 +1011,7 @@ roomIntro=function(){
   const existing=$('toast')?.textContent;if(existing)toast(residentNamedGreeting(existing,existing));return result
  }
  // Preserve the instructional hint and use the existing non-blocking toast.
- toast(tr(...profile.names.slice(0,2))+tr(': ','：')+residentHospitalityWelcome(profile,visits));return result
+ residentGreetingToast(tr(...profile.names.slice(0,2))+tr(': ','：')+residentHospitalityWelcome(profile,visits));return result
 };
 const residentPersonalSayBefore=say;
 say=function(name,line,...rest){
@@ -1026,6 +1027,51 @@ say=function(name,line,...rest){
   const portrait=$('talkPortrait');if(portrait){portrait.hidden=true;portrait.classList.remove('paintedResidentPortrait')}
  }
  return result
+};
+
+
+/* A room hello is readable, temporary and never intercepts movement. */
+const residentGreetingToastBefore=toast;
+toast=function(message){$('toast').classList.remove('residentArrival');return residentGreetingToastBefore(message)};
+function clearResidentGreeting(){
+ const el=$('toast');if(!el.classList.contains('residentArrival'))return;
+ clearTimeout(toastTimer);el.classList.remove('residentArrival','on')
+}
+function residentGreetingToast(message){
+ toast(message);const el=$('toast');el.classList.add('residentArrival');el.setAttribute('role','status');el.setAttribute('aria-live','polite');
+ clearTimeout(toastTimer);
+ toastTimer=setTimeout(()=>{el.classList.remove('on','residentArrival')},Math.min(6400,Math.max(3800,2200+Array.from(message).length*38)))
+}
+const residentGreetingStartBefore=start;
+start=function(...args){clearResidentGreeting();return residentGreetingStartBefore(...args)};
+const residentGreetingEnterBefore=enter;
+enter=function(...args){clearResidentGreeting();return residentGreetingEnterBefore(...args)};
+const residentGreetingSayBefore=say;
+say=function(...args){clearResidentGreeting();return residentGreetingSayBefore(...args)};
+const residentGreetingJourneyBefore=journey;
+journey=function(...args){clearResidentGreeting();return residentGreetingJourneyBefore(...args)};
+const residentGreetingBackBefore=$('back').onclick;
+$('back').onclick=function(...args){clearResidentGreeting();return residentGreetingBackBefore.apply(this,args)};
+const residentGreetingPageBefore=page;
+page=function(...args){clearResidentGreeting();return residentGreetingPageBefore(...args)};
+const residentGreetingCss=document.createElement('style');residentGreetingCss.textContent=`
+#game #toast.residentArrival{max-width:min(82vw,360px)!important;width:max-content!important;box-sizing:border-box;white-space:normal!important;overflow-wrap:anywhere;line-height:1.45!important;font-size:13px!important;padding:8px 12px!important;pointer-events:none!important;text-align:center}
+@media(max-width:380px){#game #toast.residentArrival{max-width:80vw!important;font-size:12px!important}}
+@media(prefers-reduced-motion:reduce){#game #toast.residentArrival{transition:none!important}}
+`;document.head.append(residentGreetingCss);
+
+// Fictional NPCs can recognise the local player. Never modify real peer dialogue.
+const residentVisitorTalkBefore=npcTalk;
+npcTalk=function(n){
+ const result=residentVisitorTalkBefore(n);
+ if(!n?.n||n.sharedPeer||n.kind===2||!talkOpen)return result;
+ const name=tr(...n.n),chosen=residentPlayerDisplayName(),speaker=$('speaker')?.textContent,line=$('line');
+ if(!chosen||residentWelcomeFor(name)||!line||!(speaker===name||speaker===name+' · '+tr('Guest','客串')))return result;
+ const key=String(n.n[0]),now=Date.now();if(now-(residentVisitorWelcome.get(key)||0)<300000)return result;
+ if(line.textContent.startsWith('Hi '+chosen+'!')||line.textContent.startsWith(chosen+'，'))return result;
+ if(residentVisitorWelcome.size>=80&&!residentVisitorWelcome.has(key))residentVisitorWelcome.delete(residentVisitorWelcome.keys().next().value);
+ residentVisitorWelcome.set(key,now);line.textContent=tr('Hi '+chosen+'! ',chosen+'，')+line.textContent;
+ requestAnimationFrame(syncCharacterSpeech);return result
 };
 
 /* Keep the daily fortune easy to discover, without opening the long secondary journal. */
