@@ -6499,4 +6499,418 @@ const pawTopicBoardBefore=townChatPage;
 townChatPage=function(...args){if(communityTab==='board')pawRefreshTopicFeed();return pawTopicBoardBefore(...args)};
 if(typeof requestIdleCallback==='function')requestIdleCallback(pawRefreshTopicFeed,{timeout:3500});else setTimeout(pawRefreshTopicFeed,1800);
 
+/* PAW_GUEST_PERSONALITY_BEGIN */
+// Authored bilingual variants for the fifteen imported characters. Visit count
+// and choice indices remain compatible with the existing guest journal.
+const pawGuestPersonalityRows=[
+ [
+  "celeb_parody_03_elon_meowsk",
+  "grand plans; fast speech; checks imaginary dashboard",
+  [
+   "Pitch me a vending machine upgrade",
+   "说说你的售货机改造计划"
+  ],
+  [
+   "Wang refused my subscription model. Apparently hot water is already a feature.",
+   "王老板拒绝了我的订阅制。原来热水本身就是个功能。"
+  ],
+  [
+   "I scheduled a nap for Q4. The nap has already missed its deadline.",
+   "我把午睡排在第四季度，结果午睡也延期了。"
+  ],
+  [
+   "The cats rejected my five-year plan by sitting on it.",
+   "猫咪们直接坐在我的五年计划上，以示反对。"
+  ],
+  [
+   "I came to test a silent mode. Nobody here needs my push notifications.",
+   "我来测试静音模式。这里没人需要我的推送通知。"
+  ]
+ ],
+ [
+  "celeb_parody_05_uncle_rojen",
+  "expressive; scrutinises food; loves kitchen gossip",
+  [
+   "Ask about fried rice",
+   "请教炒饭秘诀"
+  ],
+  [
+   "Grandma's wok has better uptime than the office server.",
+   "奶奶的炒锅比公司的服务器还稳定。"
+  ],
+  [
+   "If your boss says one more quick call, add one more egg. At least dinner improves.",
+   "老板每说一次开个短会，你就多加一个蛋，至少晚饭有进步。"
+  ],
+  [
+   "I inspected the rice. No spreadsheet required, just taste.",
+   "我检查过米饭了。不用表格，尝一口就知道。"
+  ],
+  [
+   "Even my imaginary rice cooker knows when to stop working.",
+   "连我家的虚构电饭锅都知道什么时候下班。"
+  ]
+ ],
+ [
+  "celeb_parody_06_marie_clutter",
+  "gentle; pauses to consider objects; tidy without pressure",
+  [
+   "Ask which keepsake to keep",
+   "问问哪件纪念品值得留下"
+  ],
+  [
+   "Keep the postcard that reminds you of today. The other nine can wait.",
+   "留下让你想起今天的明信片吧，另外九张不急。"
+  ],
+  [
+   "The bench has no drawers. How refreshing.",
+   "这张长椅居然没有抽屉，真清爽。"
+  ],
+  [
+   "I tried sorting my worries. They refused to fit into categories.",
+   "我试着给烦恼分类，结果它们全不配合。"
+  ],
+  [
+   "The best empty shelf is one you do not immediately have to fill.",
+   "空出来的架子，不一定要立刻塞满。"
+  ]
+ ],
+ [
+  "net_culture_01_chope_auntie",
+  "practical; sharp observer; protective of shared seats",
+  [
+   "Ask about bench etiquette",
+   "问问长椅的占座规矩"
+  ],
+  [
+   "Kenneth brought three tissue packets. I told him this is a bench, not an auction.",
+   "肯尼斯带了三包纸巾。我跟他说，这是长椅，不是拍卖会。"
+  ],
+  [
+   "I saved a seat for Grandma, not for my entire extended family.",
+   "我给奶奶留了个座，不是给全家族包场。"
+  ],
+  [
+   "Someone choped the shady seat with a receipt. At least use a clean tissue lah.",
+   "有人拿小票占阴凉座，至少用包干净纸巾嘛。"
+  ],
+  [
+   "Today I share the shade. Tomorrow we can negotiate the breeze.",
+   "今天一起乘凉，明天再商量风归谁。"
+  ]
+ ],
+ [
+  "net_culture_02_moyu_master",
+  "unhurried; dry wit; quietly watches the water",
+  [
+   "Learn a genuine rest technique",
+   "请教真正的休息秘诀"
+  ],
+  [
+   "My productivity trick is to stop calling every minute productive.",
+   "我的效率秘诀就是别把每一分钟都叫做生产力。"
+  ],
+  [
+   "Ah Boy and I held a meeting. Agenda: clouds. We finished early.",
+   "我和阿Boy开了个会，议题是看云，提前散会。"
+  ],
+  [
+   "I left my notifications on silent. The world continued, surprisingly.",
+   "我把通知调成静音，没想到世界照常运转。"
+  ],
+  [
+   "A good break does not need a certificate.",
+   "摸鱼摸得好，不需要颁发证书。"
+  ]
+ ],
+ [
+  "net_culture_03_mc_king",
+  "dramatic; exaggerated complaints; enjoys actual quiet",
+  [
+   "Ask how the recovery day is going",
+   "问问休息日过得怎样"
+  ],
+  [
+   "I have been diagnosed with chronic meeting fatigue. Rest is today's plan.",
+   "我得了慢性会议疲劳症。今天的计划就是休息。"
+  ],
+  [
+   "Grandma gave me soup. It did more than my calendar reminders.",
+   "奶奶给我盛了碗汤，比日历提醒管用多了。"
+  ],
+  [
+   "My out-of-office message is working harder than I am.",
+   "我的离岗自动回复比我还勤奋。"
+  ],
+  [
+   "Today I am genuinely resting. Please do not make it a group activity.",
+   "今天是真的休息，请不要组织成团建。"
+  ]
+ ],
+ [
+  "net_culture_04_buzzword_vivi",
+  "quick talker; catches own jargon; secretly enjoys plain language",
+  [
+   "Translate one office buzzword",
+   "翻译一个职场黑话"
+  ],
+  [
+   "Master Yue told me to circle back to the present moment. Fair enough.",
+   "月师傅让我闭环到当下，倒也有道理。"
+  ],
+  [
+   "I tried to align the incense with my quarterly objectives. The keeper just smiled.",
+   "我想让香火和季度目标对齐，庙祝只是笑笑。"
+  ],
+  [
+   "My new KPI is a warm cup of tea. No dashboard.",
+   "我的新KPI是一杯热茶，不用仪表盘。"
+  ],
+  [
+   "I have retired the phrase 'quick sync' for the afternoon.",
+   "今天下午，‘快速对齐一下’这句话正式退休。"
+  ]
+ ],
+ [
+  "net_culture_05_kiasu_kenneth",
+  "energetic; calculates queues; eventually laughs at himself",
+  [
+   "Ask where the shortest queue is",
+   "打听哪边排队最短"
+  ],
+  [
+   "Linda said the bench is free. I still calculated the opportunity cost.",
+   "林阿姨说长椅免费，我还是算了下机会成本。"
+  ],
+  [
+   "I arrived early for sunset. The sun did not appreciate my punctuality.",
+   "我提前来等日落，太阳并没有表扬我准时。"
+  ],
+  [
+   "I have a backup snack for my backup snack. Want one?",
+   "我的备用零食还有备用零食，来一份吗？"
+  ],
+  [
+   "Today I let someone go first. Nothing terrible happened.",
+   "今天我让别人先走，居然什么坏事都没发生。"
+  ]
+ ],
+ [
+  "net_culture_06_void_deck_ahboy",
+  "laid back; short observations; enjoys kopi and neighbours",
+  [
+   "Ask for void deck wisdom",
+   "请教楼下凉亭的人生智慧"
+  ],
+  [
+   "Moyu says nothing is urgent. I say the kopi is getting warm.",
+   "摸鱼宗师说什么都不急，我说冰咖啡快变温了。"
+  ],
+  [
+   "The cat sits wherever it wants. That is genuine seniority.",
+   "猫想坐哪里就坐哪里，这才是真正的资历。"
+  ],
+  [
+   "Some people bring work to the park. I bring slippers.",
+   "有人把工作带到公园，我只带拖鞋。"
+  ],
+  [
+   "If you cannot solve it today, at least finish your drink before the ice melts.",
+   "今天解决不了的事，至少先在冰化之前把咖啡喝完。"
+  ]
+ ],
+ [
+  "traveller_01_sven_flatpack",
+  "precise; inventive; amused by assembly instructions",
+  [
+   "Ask about his portable stool",
+   "问问他的便携折叠凳"
+  ],
+  [
+   "Wang lent me a stool. It had zero missing screws. A miracle.",
+   "王老板借我一把凳子，一颗螺丝都没少，奇迹。"
+  ],
+  [
+   "I built a shelf for my holiday souvenirs. Now the shelf needs a holiday.",
+   "我给旅行纪念品搭了个架子，现在架子也需要放假。"
+  ],
+  [
+   "The pier came fully assembled. My favourite kind of architecture.",
+   "码头居然不用自己组装，是我最喜欢的建筑。"
+  ],
+  [
+   "I packed one screwdriver. It is having a very peaceful vacation.",
+   "我带了一把螺丝刀，它度过了一个相当清闲的假期。"
+  ]
+ ],
+ [
+  "traveller_02_claire_auditor",
+  "observant; measured; notices small details",
+  [
+   "Ask about her bakery inspection",
+   "问问她的糕点检查"
+  ],
+  [
+   "Grandma's pastry accounts balance perfectly: one made, one eaten.",
+   "奶奶的糕点账目完全平衡：做一块，吃一块。"
+  ],
+  [
+   "I checked my holiday itinerary and removed three unnecessary appointments.",
+   "我核对了度假行程，删掉了三个没必要的预约。"
+  ],
+  [
+   "A cup of tea is the only receipt I need today.",
+   "今天只需要一张热茶的收据。"
+  ],
+  [
+   "The audit is complete. The town has an excellent surplus of calm.",
+   "审计结束：小镇的宁静储备十分充足。"
+  ]
+ ],
+ [
+  "traveller_03_kenji_dispatcher",
+  "punctual; soft spoken; attentive to trains",
+  [
+   "Ask about the next train",
+   "问问下一班列车"
+  ],
+  [
+   "I told the station attendant I am off duty. We watched a train leave without checking our watches.",
+   "我告诉站务员今天休假，然后一起不看表地目送列车离站。"
+  ],
+  [
+   "I like hearing the tracks settle after the last carriage passes.",
+   "我喜欢末节车厢经过后，轨道慢慢安静下来的声音。"
+  ],
+  [
+   "A timetable helps you arrive. It need not tell you how to enjoy the day.",
+   "时刻表帮你到达，却不用规定你怎么享受一天。"
+  ],
+  [
+   "The morning light is worth missing one train for.",
+   "为了清晨的光线，错过一班列车也值得。"
+  ]
+ ],
+ [
+  "traveller_04_mateo_barista",
+  "warm; curious about aromas; enjoys small rituals",
+  [
+   "Ask which coffee suits a slow morning",
+   "问问慢悠悠的早晨适合喝什么咖啡"
+  ],
+  [
+   "I asked the tea keeper about roasting leaves. We traded notes for half an hour.",
+   "我向茶馆老板请教烘茶，交流心得聊了半小时。"
+  ],
+  [
+   "The best coffee aroma is the one you have time to notice.",
+   "最好的咖啡香，是你有空认真闻的那一杯。"
+  ],
+  [
+   "I drew a leaf in my cup. The next one looked like a potato. Both tasted fine.",
+   "我在杯里拉了一片叶子，下一杯像土豆。两杯都好喝。"
+  ],
+  [
+   "No rush today. Let the first sip be a small ceremony.",
+   "今天不赶时间，让第一口成为小小的仪式。"
+  ]
+ ],
+ [
+  "traveller_05_priya_actuary",
+  "analytical; affectionate dry humour; likes probability puzzles",
+  [
+   "Ask about the odds of a good afternoon",
+   "问问下午过得开心的概率"
+  ],
+  [
+   "Master Yue and I agree that uncertainty is not a reason to skip lunch.",
+   "月师傅和我一致认为，未来不确定不是不吃午饭的理由。"
+  ],
+  [
+   "I calculated the expected value of a nap. Extremely favourable.",
+   "我算过午睡的期望收益，十分可观。"
+  ],
+  [
+   "A fortune slip is a reflection, not a statistically valid forecast.",
+   "签文适合用来反思，不是统计上有效的预测。"
+  ],
+  [
+   "My holiday risk register now has one entry: forgetting to relax.",
+   "我的假期风险清单只剩一项：忘记放松。"
+  ]
+ ],
+ [
+  "traveller_06_tomas_lighthouse",
+  "quiet; watches weather; comfortable with silence",
+  [
+   "Ask about a rainy evening at sea",
+   "问问海上雨夜的故事"
+  ],
+  [
+   "I told Grandma a fog story. She put another cup of tea on the table.",
+   "我给奶奶讲了个雾夜的故事，她又端了一杯茶。"
+  ],
+  [
+   "A rainy window is sometimes a better view than a clear horizon.",
+   "有时雨水滑过的窗，比晴朗的地平线更好看。"
+  ],
+  [
+   "I used to listen for the foghorn. Here I listen for the kettle.",
+   "以前我听雾笛，在这里我听烧水壶。"
+  ],
+  [
+   "You need not fill every silence. Some are very good company.",
+   "不是每段沉默都要填满，有些沉默本身就是陪伴。"
+  ]
+ ]
+];
+function pawGuestProfileMap(rows){
+ const out=new Map();
+ for(const [id,manner,topic,...lines] of rows){
+  if(typeof id!=='string'||out.has(id)||typeof manner!=='string'||lines.length!==4||![topic,...lines].every(pair=>Array.isArray(pair)&&pair.length===2&&pair.every(v=>typeof v==='string'&&v.trim())))throw Error('Invalid guest personality: '+id);
+  out.set(id,{manner,topic,lines});
+ }
+ return out
+}
+const pawGuestPersonalities=pawGuestProfileMap(pawGuestPersonalityRows);
+function pawGuestVisitLine(g,visits){
+ const profile=pawGuestPersonalities.get(g.id),pool=profile?[g.intro,...profile.lines]:[g.intro];
+ const n=Number.isSafeInteger(visits)&&visits>0?visits:1;
+ return pool[(n-1)%pool.length]
+}
+function pawGuestConversationPlan(g,visits){
+ const profile=pawGuestPersonalities.get(g.id);
+ // Every third visit is a brief remark, not another branching quiz.
+ return {line:pawGuestVisitLine(g,visits),topic:profile?.topic||null,brief:!!profile&&visits>1&&visits%3===0}
+}
+/* PAW_GUEST_PERSONALITY_END */
+for(const g of popGuestStories){
+ const profile=pawGuestPersonalities.get(g.id);if(!profile)continue;
+ g.choices[0][0]=profile.topic;
+}
+const pawCharacterMeetBefore=popGuestMeet;
+popGuestMeet=function(g,n=null){
+ if(!pawGuestPersonalities.has(g?.id))return pawCharacterMeetBefore(g,n);
+ if(n){greetingNPC=n;greetingUntil=t+.9;stopRoute();p.tx=p.x;p.ty=p.y;p.facing=Math.abs(n.x-p.x)>Math.abs(n.y-p.y)?(n.x<p.x?'left':'right'):(n.y<p.y?'up':'down')}
+ const rec=popGuestRecord(g)||{visits:0,choices:[]};
+ rec.visits=(Number.isSafeInteger(rec.visits)&&rec.visits>=0?rec.visits:0)+1;
+ popGuestMemory[g.id]=rec;save('popGuestMemoryV1',popGuestMemory);
+ const plan=pawGuestConversationPlan(g,rec.visits);
+ if(plan.brief){popGuestSay(g,tr(...plan.line),[]);return}
+ popGuestSay(g,tr(...plan.line),[
+  [tr(...plan.topic),()=>popGuestScene(g)],
+  [tr(...g.choices[1][0]),()=>{
+   if(!rec.choices.includes(1))rec.choices.push(1);
+   popGuestMemory[g.id]=rec;save('popGuestMemoryV1',popGuestMemory);
+   if(!items.some(x=>x[0]===g.gift[0]))addItem(...g.gift);
+   popGuestSay(g,tr(...g.choices[1][1]),[[tr('See you around','下次见'),closeTalk]])
+  }],
+  [tr('Keep exploring','继续逛逛'),closeTalk]
+ ])
+};
+// Replace the generic prompt while preserving original choice meanings.
+for(const g of popGuestStories){
+ const profile=pawGuestPersonalities.get(g.id);if(profile)g.prompt=profile.lines[0];
+}
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
