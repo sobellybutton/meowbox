@@ -1655,12 +1655,15 @@ function mbArtVisitRecord(raw,day){
  return {day:good?raw.day:day,total:good&&Number.isInteger(raw.total)?Math.max(0,Math.min(9999,raw.total)):0,today:good&&raw.day===day&&Number.isInteger(raw.today)?Math.max(0,Math.min(999,raw.today)):0}
 }
 /* MBART_VALIDATION_END */
-let mbArtRegistry=mbArtValidate(null),mbArtRequested=false;
+let mbArtRegistry=mbArtValidate(null),mbArtRequested=false,mbArtRetryAt=0;
 const mbArtImages=new Map();
 function mbArtLoad(){
- if(mbArtRequested)return;
+ if(mbArtRequested||Date.now()<mbArtRetryAt)return;
  mbArtRequested=true;
- fetch('assets/visual/painted/action-runtime.json',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(data=>{mbArtRegistry=mbArtValidate(data)}).catch(()=>{})
+ fetch('assets/visual/painted/action-runtime.json',{credentials:'same-origin'}).then(r=>{if(!r.ok)throw Error('Action artwork manifest');return r.json()}).then(data=>{
+  mbArtRegistry=mbArtValidate(data);
+  for(const player of Object.values(mbArtRegistry.players))for(const frames of Object.values(player.walk||{}))for(const frame of frames)mbArtImage(frame)
+ }).catch(()=>{mbArtRequested=false;mbArtRetryAt=Date.now()+15000})
 }
 function mbArtImage(record){
  if(!record)return null;
@@ -3830,12 +3833,17 @@ step=function(n,dt,speed){
 };
 const pawWalkRenderBefore=backHuman;
 function pawGaitPhase(distance,scale){return Math.max(0,Number.isFinite(distance)?distance:0)/Math.max(34,52*(Number.isFinite(scale)?scale:1))*Math.PI}
-function pawPaintedGait(im,x,y,scale,facing,phase){
+function pawGaitStrength(speed,scale){
+ const safe=Number.isFinite(speed)?Math.max(0,speed):0;
+ const k=Math.max(.35,Number.isFinite(scale)?scale:1);
+ return Math.max(0,Math.min(1,safe/(50*k)))
+}
+function pawPaintedGait(im,x,y,scale,facing,phase,strength=1){
  const sw=im.naturalWidth,sh=im.naturalHeight,h=94*scale,w=h*sw/sh;
  // Keep the body and head intact. The two lower body strips overlap the
  // waist seam; one planted foot remains on the actual world ground.
  const split=Math.round(sh*.76),legH=h*(sh-split)/sh,topH=h-legH,half=Math.floor(sw/2);
- const s=Math.sin(phase),a=Math.abs(s),side=facing==='left'||facing==='right';
+ const s=Math.sin(phase)*strength,a=Math.abs(s),side=facing==='left'||facing==='right';
  ctx.save();try{
   ellipse(x,y+1,Math.max(10,w*.31),Math.max(2,scale*4),'#302a2448');
   ctx.translate(x,y);if(facing==='left')ctx.scale(-1,1);
@@ -3858,7 +3866,7 @@ backHuman=function(x,y,kind,walking,facing,scale=1){
   return pawWalkRenderBefore(x,y,kind,walking,facing,scale)
  }
  mbArtLoad();const dir=facing==='left'?'right':facing,frames=mbArtRegistry.players[kind]?.walk?.[dir];
- const isPlayer=kind===avatar&&Math.hypot(x-p.x,y-p.y)<4;
+ const isPlayer=!room&&!pawRenderedWalker&&kind===avatar&&Math.hypot(x-p.x,y-p.y)<4;
  const actor=pawRenderedWalker||(!room&&!isPlayer?npc.find(n=>Math.hypot(x-n.x,y-n.y)<3):null);
  const indoorPlayer=!!room&&!actor&&kind===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<4;
  if(indoorPlayer){const key=scene+'|'+room;const previous=pawIndoorGait;
@@ -3869,7 +3877,10 @@ backHuman=function(x,y,kind,walking,facing,scale=1){
  const phase=pawGaitPhase(indoorPlayer?pawIndoorGait.distance:actor?pawGaitTravel.get(actor)||0:isPlayer?pawWalkDistance:0,scale),reduced=actorReduce||residentReducedMotion.matches;
  if(frames){const loaded=frames.map(mbArtImage);if(loaded.every(Boolean)){const i=reduced?0:((Math.floor(phase/Math.PI*frames.length/2)%frames.length)+frames.length)%frames.length;mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}}
  const im=pics['walker'+kind+(dir==='up'?1:dir==='down'?0:2)];
- if(im?.naturalWidth&&im.naturalHeight&&!reduced&&(dir==='down'||dir==='right')){pawPaintedGait(im,x,y,scale,facing,phase);return}
+ if(im?.naturalWidth&&im.naturalHeight&&!reduced&&(dir==='down'||dir==='right')){
+  const strength=isPlayer&&Number.isFinite(p.motionSpeed)?pawGaitStrength(p.motionSpeed,scale):1;
+  pawPaintedGait(im,x,y,scale,facing,phase,strength);return
+ }
  return pawWalkRenderBefore(x,y,kind,walking,facing,scale)
 };
 
@@ -5382,7 +5393,7 @@ step=function(n,dt,speed){
  }
  const start=pawDistrictFoot(points,n.x,n.y),goal=pawDistrictFoot(points,n.tx,n.ty);
  const next=pawDistrictAdvance(points,start,goal,dt,speed,n.motionSpeed,!!pending);
- n.x=next.x;n.y=next.y;n.tx=next.tx;n.ty=next.ty;n.motionSpeed=next.velocity;
+ n.x=next.x;n.y=next.y;n.tx=next.tx;n.ty=next.ty;n.motionSpeed=next.walking?next.velocity:0;
  const dx=n.x-start.x,dy=n.y-start.y,travel=Math.hypot(dx,dy);
  if(travel>.035){n.pawFacing=pawDistrictFacing(n.pawFacing||n.facing,dx,dy);n.facing=n.pawFacing;pawWalkDistance+=travel;pawGaitTravel.set(n,(pawGaitTravel.get(n)||0)+travel)}
  else if(n.pawFacing)n.facing=n.pawFacing;
@@ -5977,9 +5988,15 @@ refreshControls=function(...args){
 
 
 /* PAW_PASSERBY_IDENTITY_BEGIN */
-function pawAssignPasserbyLooks(ids,player){
- const available=[0,1,2,3].filter(i=>i!==player),assigned=new Map();
- for(const id of [...new Set(ids)]){
+function pawAssignPasserbyLooks(ids,player,previous=new Map()){
+ const available=[0,1,2,3].filter(i=>i!==player),assigned=new Map(),unique=[...new Set(ids)];
+ // Preserve every currently visible person's look before assigning a new arrival.
+ for(const id of unique){
+  const prior=previous.get(id),at=available.indexOf(prior);
+  if(at>=0){assigned.set(id,prior);available.splice(at,1)}
+ }
+ for(const id of unique){
+  if(assigned.has(id))continue;
   if(!available.length)break;
   let h=2166136261;for(const ch of String(id)){h^=ch.codePointAt(0);h=Math.imul(h,16777619)}
   assigned.set(id,available.splice((h>>>0)%available.length,1)[0])
@@ -5988,18 +6005,21 @@ function pawAssignPasserbyLooks(ids,player){
 }
 /* PAW_PASSERBY_IDENTITY_END */
 const pawFallbackAppearanceBefore=stableResidentFallback;
-let pawPasserbyLookCache={key:'',map:new Map()};
+let pawPasserbyLookCache={key:'',world:'',map:new Map()};
 function pawPasserbyIdentity(n){return String(n.popGuest||n.n?.[0]||'traveller-'+npc.indexOf(n))}
 function pawPasserbyLooks(){
  const candidates=npc.filter(n=>n.kind!==2&&!residentArtworkRecord(n.n)&&!n.grumpy),ids=candidates.map(pawPasserbyIdentity);
  const key=scene+'|'+avatar+'|'+ids.join('|');
- if(pawPasserbyLookCache.key!==key)pawPasserbyLookCache={key,map:pawAssignPasserbyLooks(ids,avatar??0)};
+ if(pawPasserbyLookCache.key!==key){
+  const world=scene+'|'+avatar,previous=pawPasserbyLookCache.world===world?pawPasserbyLookCache.map:new Map();
+  pawPasserbyLookCache={key,world,map:pawAssignPasserbyLooks(ids,avatar??0,previous)}
+ }
  return pawPasserbyLookCache.map
 }
 stableResidentFallback=function(n){return pawPasserbyLooks().get(pawPasserbyIdentity(n))??pawFallbackAppearanceBefore(n)};
 const pawDistinctNPCBefore=initNPC;
 initNPC=function(...args){
- const result=pawDistinctNPCBefore(...args);pawPasserbyLookCache={key:'',map:new Map()};
+ const result=pawDistinctNPCBefore(...args);pawPasserbyLookCache={key:'',world:'',map:new Map()};
  const unillustrated=npc.filter(n=>n.kind!==2&&!n.grumpy&&!residentArtworkRecord(n.n));
  const order=[...unillustrated.filter(n=>n.popGuest),...unillustrated.filter(n=>!n.popGuest)];
  const extras=new Set(order.slice(3).filter(n=>!n.popGuest));
@@ -6038,18 +6058,65 @@ pawPresentationCSS.textContent=`
 #proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>footer{align-self:end!important;min-height:0!important;position:relative!important;transform:none!important;margin:0!important}
 @media(max-width:700px) and (orientation:portrait){#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"]):not([hidden]){grid-template-rows:auto minmax(150px,1fr) auto!important;overflow-y:auto!important;gap:8px!important}}
 `;document.head.append(pawPresentationCSS);
-const pawWarmDistricts=()=>{for(const key of Object.keys(maps))pawReadyMap(key)};
+const pawWarmDistricts=()=>{mbArtLoad();for(const key of Object.keys(maps))pawReadyMap(key)};
 if(typeof requestIdleCallback==='function')requestIdleCallback(pawWarmDistricts,{timeout:2000});else setTimeout(pawWarmDistricts,800);
 
 
 /* PAW_GATE_READINESS: preserve the actual admission callback and wait for
    the real Fortune Valley image before letting the gateway disappear. */
+function pawGateFit(w,h){
+ if(!Number.isFinite(w)||!Number.isFinite(h)||w<=0||h<=0)return null;
+ const height=Math.min(h,w*1.5),width=height/1.5;
+ return {width,height,left:(w-width)/2,top:(h-height)/2}
+}
+function pawGateGround(w,h,progress=0){
+ const fit=pawGateFit(w,h);if(!fit)return null;
+ const v=Math.max(0,Math.min(1,Number.isFinite(progress)?progress:0));
+ return {x:fit.left+fit.width*(.50+.018*v),y:fit.top+fit.height*(.84-.23*v),height:fit.height*(.13-.055*v)}
+}
+const pawGateCompositionCSS=document.createElement('style');
+pawGateCompositionCSS.textContent=`
+#proposal[data-paw-entrance-step="3"]>.hero{background:#293c32!important;container-type:size}
+#proposal[data-paw-entrance-step="3"] .mbGatePainting{object-fit:contain!important;object-position:center!important;backdrop-filter:none!important;background:none!important}
+#proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded{position:absolute!important;left:var(--paw-gate-x)!important;top:var(--paw-gate-y)!important;bottom:auto!important;width:auto!important;height:var(--paw-gate-height)!important;max-width:none!important;max-height:none!important;translate:-50% -100%!important;transform:none!important;transition:none!important;opacity:1!important;object-fit:contain!important}
+#proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded.go{opacity:0!important;transition:opacity .13s linear!important}
+`;
+document.head.append(pawGateCompositionCSS);
+function pawGatePlace(hero,traveller,progress=0){
+ const ground=pawGateGround(hero.clientWidth,hero.clientHeight,progress);if(!ground)return;
+ traveller.classList.add('pawGateGrounded');
+ traveller.style.setProperty('--paw-gate-x',ground.x+'px');
+ traveller.style.setProperty('--paw-gate-y',ground.y+'px');
+ traveller.style.setProperty('--paw-gate-height',ground.height+'px')
+}
+async function pawGateWalk(hero,traveller){
+ if(!traveller||residentReducedMotion.matches)return;
+ mbArtLoad();const kind=proAvatar??avatar??0,frames=mbArtRegistry.players[kind]?.walk?.up;
+ const loaded=frames?.map(mbArtImage),hasFrames=!!loaded?.length&&loaded.every(Boolean);
+ // Do not fake a walk by sliding a stationary sprite.
+ if(!hasFrames)return;
+ await new Promise(resolve=>{
+  let start=null,done=false;const finish=()=>{if(!done){done=true;resolve()}};
+  setTimeout(finish,1000);
+  function tick(now){
+   if(done||!traveller.isConnected||proStep!==3||document.hidden){finish();return}
+   start??=now;const v=Math.min(1,(now-start)/720);
+   const i=Math.min(frames.length-1,Math.floor(v*frames.length*2)%frames.length);
+   if(traveller.getAttribute('src')!==frames[i].path)traveller.src=frames[i].path;
+   pawGatePlace(hero,traveller,v);
+   if(v>=1){finish();return}requestAnimationFrame(tick)
+  }
+  requestAnimationFrame(tick)
+ })
+}
 const pawDecodedGateBefore=proRender;
 proRender=function(...args){
  const result=pawDecodedGateBefore(...args);
  if(proStep!==3)return result;
  const button=proposal.querySelector('.shrine-enter'),gate=proposal.querySelector('.gate');
  if(!button||typeof button.onclick!=='function')return result;
+ const hero=proposal.querySelector('.hero'),traveller=hero?.querySelector('.gate-traveller');
+ if(hero&&traveller){pawGatePlace(hero,traveller);requestAnimationFrame(()=>{if(traveller.isConnected&&!traveller.classList.contains('go'))pawGatePlace(hero,traveller)})}
  const admit=button.onclick;let waiting=false;
  const enter=async event=>{
   if(waiting||proBusy||!button.isConnected)return;
@@ -6057,8 +6124,10 @@ proRender=function(...args){
   button.disabled=true;button.textContent=tr('Preparing the path…','正在准备山间小路…');
   const ready=await pawReadyMap('fortune');
   if(!button.isConnected||proStep!==3)return;
+  if(!ready){waiting=false;button.disabled=false;button.textContent=tr('Try again','再试一次');const im=pics.valleyClean;if(im.complete&&!im.naturalWidth)im.src=ART.valleyClean;return}
+  if(hero&&traveller)await pawGateWalk(hero,traveller);
+  if(!button.isConnected||proStep!==3)return;
   waiting=false;button.disabled=false;button.textContent=original;
-  if(!ready){button.textContent=tr('Try again','再试一次');const im=pics.valleyClean;if(im.complete&&!im.naturalWidth)im.src=ART.valleyClean;return}
   admit.call(button,event)
  };
  button.onclick=enter;if(gate)gate.onclick=enter;return result
