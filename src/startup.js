@@ -1142,6 +1142,99 @@ syncCharacterSpeech=function(){
  el.style.setProperty('--speech-left',pos.left+'px');el.style.setProperty('--speech-top',pos.top+'px');el.style.setProperty('--speech-tail',pos.tailX+'px');el.dataset.above=String(pos.above);el.dataset.tailSide=pos.side;drawWashiSpeech(el,w,h,pos)
 };
 
+
+/* Room composition: keep entry, action stations and the walking lane inside
+   a stable viewport. Do not alter activity-specific camera choreography. */
+function roomExplorationFrame(width,height,bounds){
+ const landscape=width>=height,short=landscape&&height<500;
+ const top=short?78:landscape?98:142,bottom=height-(short?88:landscape?106:143);
+ const [l,r,u,d]=bounds;
+ const scale=Math.max(.05,Math.min(Math.max(40,width-24)/(r-l),Math.max(40,bottom-top)/(d-u)));
+ return {s:scale,ox:width/2-(l+r)*scale/2,oy:(top+bottom)/2-(u+d)*scale/2}
+}
+const roomExplorationCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(s,ox,oy){
+ if(!room||activity||!indoorStages[room])return roomExplorationCameraBefore(s,ox,oy);
+ const bounds=room==='temple'?[108,692,252,750]:[110,690,300,750];
+ return roomExplorationFrame(W,H,bounds)
+};
+
+// Keep the tea table's actual legs and front stools in the floor obstacle
+// registry. Decorative objects above the walking lane need no extra collider.
+const roomFootprintsBefore=indoorObstacles;
+indoorObstacles=function(){
+ const obs=roomFootprintsBefore();if(room!=='tea')return obs;
+ const [x,y]=indoorStation('chat');
+ // This footprint ends above the approach anchor at y=615.
+ return [...obs,{l:x-104,r:x+105,u:y-35,d:y+78}]
+};
+
+// Short, readable station signs; the full activity name is retained elsewhere.
+const roomPlaqueShortNames={
+ kitchen:{cook:['Cook with Grandma','跟外婆煮汤']},
+ boba:{bubbleTea:['Make bubble tea','摇杯奶茶']},
+ mystery:{mystery:['Furniture & gifts','家具与手信']},
+ story:{story:['A different life','另一种人生']},
+ quiz:{quiz:['Discover yourself','认识自己']},
+ match:{match:['Conversation cards','相处话题卡']},
+ tea:{chat:['Join the table','来茶桌坐坐'],board:['Noticeboard','留言墙']},
+ arcade:{goldfishScoop:['Scoop goldfish','捞金鱼']},
+ fish:{riverShout:['Shout it out','喊走烦恼']}
+};
+const roomCompactPlaqueBefore=label;
+label=function(name,x,y,fn){
+ if(room&&!activity){
+  const entry=(roomActions[room]||[]).find(v=>tr(v[1],v[2])===name),short=entry&&roomPlaqueShortNames[room]?.[entry[0]];
+  if(short)name=tr(...short)
+ }
+ return roomCompactPlaqueBefore(name,x,y,fn)
+};
+
+/* Native keyboard/screen-reader access to authored stations. The compact
+   guide becomes visible when focused, not as another permanent HUD button.
+   Selecting a station uses the same path/arrival logic as a canvas tap. */
+const roomGuide=document.createElement('section');roomGuide.id='roomStationGuide';roomGuide.hidden=true;roomGuide.setAttribute('aria-label','Room activities');$('game').append(roomGuide);
+let roomGuideKey='';
+function roomGuideEntries(){
+ if(room==='temple')return [['templeWater','Water pavilion','手水亭'],['prayer','Prayer altar','祈愿香案'],['templeBell','Bronze bell','山寺钟声'],['sticks','Fortune sticks','求签'],['moon','Moon blocks','掷筊'],['secretGarden','Garden','后院']];
+ return (roomActions[room]||[]).filter(a=>indoorStages[room]?.stations[a[0]])
+}
+function syncRoomGuide(){
+ const visible=!!room&&!activity&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block'&&avatar!==null;
+ if(roomGuide.hidden===visible)roomGuide.hidden=!visible;
+ if(!visible){roomGuideKey='';return}
+ const entries=roomGuideEntries(),key=room+'|'+zh+'|'+entries.map(v=>v[0]).join(',');
+ if(key===roomGuideKey)return;
+ roomGuideKey=key;roomGuide.replaceChildren();roomGuide.setAttribute('aria-label',tr('Room activities','小屋体验'));
+ element('strong',tr('Where to?','想去哪里？'),roomGuide);
+ for(const [id,en,cn] of entries){
+  const btn=b(roomGuide,tr(en,cn),()=>{
+   if(!indoorReady())return;
+   // Reuse a live authored hit function, including the walking guard.
+   const target=hit.find(h=>h.stationId===id&&typeof h.fn==='function');
+   if(target){target.fn();btn.blur()}
+   else hint('Tap the station when it comes into view.','等体验区进入视野后再点击。')
+  });btn.dataset.station=id
+ }
+}
+const roomGuideDrawBefore=drawRoom;
+drawRoom=function(){const result=roomGuideDrawBefore();syncRoomGuide();return result};
+const roomGuideStartBefore=start;start=function(...args){roomGuide.hidden=true;roomGuideKey='';return roomGuideStartBefore(...args)};
+const roomGuideUIBefore=updateHUD;updateHUD=function(...args){const result=roomGuideUIBefore(...args);syncRoomGuide();return result};
+const roomLayoutCss=document.createElement('style');roomLayoutCss.textContent=`
+#roomStationGuide{position:absolute;z-index:5;left:12px;top:120px;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#roomStationGuide:focus-within{clip-path:none;width:min(260px,85vw);height:auto;max-height:55dvh;overflow:auto;padding:9px;background:#f2e5c9;border:1px solid #a48b64;box-shadow:0 3px 12px #38291d44;display:grid;gap:5px;white-space:normal}
+#roomStationGuide[hidden]{display:none!important}
+#roomStationGuide button{min-height:44px;white-space:normal;overflow-wrap:anywhere;text-align:left;font:600 13px/1.35 Georgia,"Songti SC",serif}
+@media(max-width:600px) and (orientation:portrait){
+ #game #gameControls:not([hidden]):is(.parkCareControls,.riverControls,.festivalFishControls,.nostalgiaControls,.threeControls){max-height:min(34dvh,240px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+ #game #gameControls:not([hidden]) button{flex-shrink:0}
+}
+@media(max-height:500px) and (orientation:landscape){
+ #game #gameControls:not([hidden]):is(.parkCareControls,.riverControls,.festivalFishControls,.nostalgiaControls,.threeControls){max-height:calc(100dvh - 166px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+}
+`;document.head.append(roomLayoutCss);
+
 /* Keep the daily fortune easy to discover, without opening the long secondary journal. */
 const visibleDailyFortuneBefore=todayHub;
 todayHub=function(){
