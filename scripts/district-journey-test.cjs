@@ -108,12 +108,14 @@ async function travelLoop(page,name,touch){
   assert(await page.locator('.pawLocalDoors button').count()>0,'Local shops are available before travel');
   assert(await page.locator('.pawExploreRail').evaluate(el=>el.getBoundingClientRect().top<document.querySelector('.portraitTravelGrid').getBoundingClientRect().top),'Local exploration precedes destination choices');
   await press(page.locator('.portraitTravelGrid .portraitDestination').nth(['fortune','home','island','wonder'].indexOf(district)));
-  const scenery=page.locator('.districtRailCabin .mbRailPane > span').first();
-  await scenery.waitFor();
-  await press(page.locator('.mbRailPause'));
-  assert.equal(await scenery.evaluate(el=>getComputedStyle(el).animationPlayState),'paused');
-  await press(page.locator('.railJourneyActions button').first());
-  await page.locator('.mbTransferHolding[data-painted-rail="true"]').waitFor();
+  const ride=page.locator('.pawRailJourney[data-painted-rail="true"]');
+  await ride.waitFor();
+  assert.equal(await page.locator('.districtRailCabin').isVisible(),false,'Map selection boards directly');
+  assert.equal(await ride.locator('.mbRailPane').count(),2,'Shared moving window layers');
+  assert(await ride.evaluate(el=>{
+    const r=el.getBoundingClientRect(),g=document.querySelector('#game').getBoundingClientRect(),a=el.querySelector('.mbPaintedRail').getBoundingClientRect();
+    return r.width>=g.width-2&&r.height>=g.height-2&&a.width>=g.width-2&&a.height>=g.height-2;
+  }),'Carriage must cover entire game viewport');
   await shot(district+'-transfer');
   await page.waitForFunction(d=>scene===d&&!transitioning,district,{timeout:15000});
   await shot(district+'-arrival');
