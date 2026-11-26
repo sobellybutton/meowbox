@@ -120,7 +120,7 @@ module.exports=function runQualityChecks(s,log=console.log){
  stored={episode:-1,beat:2};if(parkProgress().episode!==0)throw Error('Corrupt progress');return 7;`);
  // 17. Paid draws, unique prizes, daily stock and repeatable town rewards.
  const prizeDefs=range('const boxPrizes=','function boxSelect(')+range('boxPrizes.push(','blindFigureLore.push(');
- const walletDefs=range('function hideoutBalance()','function hideoutThemeUnlocked(')+range('function blindShopLedger()','function blindShopExplain()')+range('function openPaidBlindBox()','const blindShopStartBefore=')+range('function townPawCategories()','let townPawNoticeTimer=')+range('function furnitureCatalogue()','if(load(\'komorebiLegacyOwnedV1\',null)===null)');
+ const walletDefs=range('function hideoutBalance()','function hideoutThemeUnlocked(')+range('function pawWalletBreakdown()','const receiptWalletBefore=')+range('function blindShopLedger()','function blindShopExplain()')+range('function openPaidBlindBox()','const blindShopStartBefore=')+range('function townPawCategories()','let townPawNoticeTimer=')+range('function furnitureCatalogue()','if(load(\'komorebiLegacyOwnedV1\',null)===null)');
  results.blindBox=build(prizeDefs+`let activity='blindBox',state={boxStage:'ready'},t=0,day='2026-11-26',items=Array.from({length:20},(_,i)=>['earned'+i,'']);const store=new Map(),load=(k,d)=>store.get(k)??d,save=(k,v)=>store.set(k,v),hideoutPurchases=()=>[],dailyWheelRecord=()=>({total:0}),hideoutThemes=[],shrineClock=()=>({day}),addItem=(a,b)=>items.push([a,b]),updateHUD=()=>{},sound=()=>{},blindShopExplain=()=>{},$=()=>({classList:{remove(){}}});`+walletDefs+`
  const assert=(v,m)=>{if(!v)throw Error(m)};
  assert(boxPrizes.length===20&&new Set(boxPrizes.map(v=>v[0])).size===20,'Catalogue');

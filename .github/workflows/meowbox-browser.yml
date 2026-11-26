@@ -175,7 +175,6 @@ jobs:
           })().catch(e=>{console.error(e);process.exitCode=1});
           JS
       - name: Test entrance and responsive layout and activities
-        if: always()
         shell: bash
         run: |
           python3 -m http.server 8765 > /tmp/meowbox-server.log 2>&1 &
