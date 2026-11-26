@@ -130,3 +130,23 @@ for(const phase of ['waiting','gone','stationary','roaming','arriving','departin
 const list=[{walking:1,phase:'arriving'}];ck(pawVisitorHold(list)===list&&list[0].walking===0,'preserve actor references');
 return n;`)();
 console.log('PASS '+lifeCount+' visitor doorway, route, visibility and pause checks');
+
+const zwdsA=s.indexOf('/* PAW_ZWDS_SHARE_BEGIN */'),zwdsB=s.indexOf('/* PAW_ZWDS_SHARE_END */');
+if(zwdsA<0||zwdsB<=zwdsA)throw Error('Missing ZWDS privacy helpers');
+const zwdsChecks=new Function(s.slice(zwdsA,zwdsB)+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+const topics=Array.from({length:12},(_,k)=>({k,name:['Palace '+k,'宫'+k],question:['Question','问题'],practice:['Reflect','反思']}));
+const themes=Object.fromEntries(Object.keys(pawZwdsStarNames).map(k=>[k,['Theme','主题']]));
+for(let life=0;life<12;life++)for(let k=0;k<12;k++){
+ const keys=Object.keys(pawZwdsStarNames),stars=Array.from({length:12},(_,i)=>[['PRIVATE_BIRTH',keys[i]],['PRIVATE_TIME','PRIVATE_PLACE']]);
+ const raw=pawZwdsTopicSnapshot({life,stars,date:'PRIVATE_DATE',time:'PRIVATE_TIME'},k,topics);
+ const data=pawZwdsPublic({...raw,title:['PRIVATE','PRIVATE'],lines:[['PRIVATE','PRIVATE']],name:'PRIVATE'},topics,themes);
+ ck(data.lines[0][1]===keys[(life-k+12)%12],'actual palace');
+ ck(!JSON.stringify(data).includes('PRIVATE'),'private data excluded');
+ ck(data.title[0]==='Palace '+k,'actual topic');
+}
+ck(pawZwdsTopicSnapshot(null,0,topics)===null,'missing chart');
+ck(pawZwdsPublic({topicId:99},topics,themes)===null,'unknown topic');
+ck(pawZwdsPublic({topicId:0,starKeys:['fake']},topics,themes).lines[0][0]==='No main star in this palace','empty palace');
+return n;`)();
+console.log('PASS '+zwdsChecks+' ZWDS selected palace and privacy checks');
