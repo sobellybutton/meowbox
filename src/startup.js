@@ -2435,4 +2435,134 @@ const mbRailArtworkStyle=document.createElement('style');mbRailArtworkStyle.text
 @media(prefers-reduced-motion:reduce){.mbRailPane{display:none}}
 `;document.head.append(mbRailArtworkStyle);
 
+
+/* Physical station staging: preserve existing prop art and input anchors.
+   Furniture is a temporary in-world support layer pending painted replacements. */
+const groundedStations={
+ temple:{templeWater:['stone',-0,112,95],prayer:['altar',-7,126,100],templeBell:['bell',0,128,100],sticks:['table',40,104,98],moon:['table',3,120,98]},
+ tarot:{tarot:['table',0,144,98],love:['table',0,144,98]},
+ kitchen:{cook:['counter',7,222,100]},
+ boba:{bubbleTea:['counter',-16,138,98]},
+ arcade:{claw:['cabinet',30,132,98],rhythm:['cabinet',-15,114,98],blindBox:['counter',-16,116,98],woodenThree:['table',-8,132,98],goldfishScoop:['table',12,142,98],bubbleArcade:['cabinet',18,120,98]},
+ wishes:{wishes:['rack',0,120,98],coin:['stone',12,118,98]},
+ fish:{hit:['ritual',26,112,75]},
+ tea:{board:['notice',28,172,95],news:['notice',28,172,95]},
+ office:{officeSketch:['table',28,130,98]},
+ quiz:{quiz:['table',28,138,98],soulcat:['table',28,138,98]},
+ story:{story:['table',28,138,98]},
+ match:{match:['table',28,138,98]}
+};
+function groundedStationSpec(roomId,id){return groundedStations[roomId]?.[id]||null}
+function drawGroundedSupport(spec,x,y){
+ const [kind,top,w,foot]=spec,hw=w/2,base=y+foot,surface=y+top;
+ ctx.save();
+ // All supports share the actual station coordinates and end at the floor.
+ ellipse(x,base,hw+8,9,'#372c2838');
+ const wood=ctx.createLinearGradient(x-hw,surface,x+hw,base);
+ wood.addColorStop(0,'#a38662');wood.addColorStop(.48,'#79583f');wood.addColorStop(1,'#4d3c30');
+ if(kind==='bell'||kind==='rack'||kind==='notice'){
+  const high=kind==='bell'?y-121:kind==='rack'?y-113:y-110;
+  for(const dx of [-hw+10,hw-10]){
+   round(x+dx-5,high,10,base-high,2,wood,'#5d4938');
+   line(x+dx-2,high+4,x+dx-2,base-5,'#c5a77b',1.5)
+  }
+  round(x-hw,high-5,w,12,3,wood,'#584638');
+  if(kind==='bell'){
+   line(x,high+6,x,y-95,'#6b5039',4);
+   // Suspended striker beside the bell, not another floating icon.
+   line(x+hw-12,high+7,x+hw-23,y+6,'#92734f',1.8);
+   line(x+hw-40,y+6,x+hw-8,y+6,'#785137',8);
+   line(x+hw-38,y+4,x+hw-10,y+4,'#b58a55',2)
+  }
+  if(kind==='rack')line(x-hw+12,y-68,x+hw-12,y-68,'#8b6948',5);
+ }else if(kind==='stone'){
+  const stone=ctx.createLinearGradient(x-hw,surface,x+hw,base);stone.addColorStop(0,'#a6aa94');stone.addColorStop(1,'#656e61');
+  round(x-hw*.64,surface,hw*1.28,Math.max(12,base-surface-6),5,stone,'#77796a');
+  round(x-hw*.85,base-13,hw*1.7,13,3,'#8f9380','#686f62');
+  ellipse(x,surface,hw*.85,9,'#a9ab94')
+ }else if(kind==='ritual'){
+  round(x-29,surface-3,58,base-surface,4,'#827664','#5c5143');
+  line(x-24,surface+7,x+24,surface+7,'#a69a82',2)
+ }else{
+  // Small tables, counters and cabinet bases, not uniform menu tiles.
+  const solid=['altar','counter','cabinet'].includes(kind);
+  if(solid){
+   round(x-hw+6,surface+2,w-12,Math.max(9,base-surface-6),4,wood,'#584638');
+   if(kind!=='cabinet'){
+    round(x-hw+15,surface+12,w-30,Math.max(8,base-surface-24),3,'#8f6b4c','#674b35');
+    line(x,surface+14,x,base-13,'#674b35',1.5)
+   }
+  }else{
+   for(const dx of [-hw+12,hw-12]){
+    line(x+dx,surface+7,x+dx,base,'#604834',7);
+    line(x+dx-1,surface+10,x+dx-1,base-2,'#aa8962',1.8)
+   }
+   line(x-hw+12,base-15,x+hw-12,base-15,'#75583e',5)
+  }
+  round(x-hw,surface-5,w,12,3,'#b59a71','#785b40');
+  line(x-hw+7,surface-3,x+hw-7,surface-3,'#e1c39a',1.5)
+ }
+ ctx.restore()
+}
+const groundedPropBefore=prop;
+prop=function(id,x,y){
+ const spec=!activity&&groundedStationSpec(room,id);
+ if(spec)drawGroundedSupport(spec,x,y);
+ return groundedPropBefore(id,x,y)
+};
+/* Keep the collision footprint on the actual support's floor contact. */
+const groundedObstaclesBefore=indoorObstacles;
+indoorObstacles=function(){
+ const obstacles=groundedObstaclesBefore();
+ if(!room||activity)return obstacles;
+ const ids=room==='temple'?Object.keys(indoorSpec().stations):(roomActions[room]||[]).map(v=>v[0]);
+ for(const [i,id] of ids.entries()){
+  const spec=groundedStationSpec(room,id);if(!spec)continue;
+  const [x,y]=indoorStation(id,i,ids.length),w=spec[2],base=y+spec[3];
+  obstacles.push({l:x-w*.35,r:x+w*.35,u:base-8,d:base+4})
+ }
+ return obstacles
+};
+/* Exploration first: no fixed next-stop CTA on the walking screen.
+   Existing railway doorway and Map stay available; no progress gate. */
+const explorationRailStyle=document.createElement('style');
+explorationRailStyle.textContent=`
+#game #nextStopShortcut,#nextStopShortcut{display:none!important}
+#game #worldSigns .worldSign .doorPlaque{background:linear-gradient(165deg,#79634b,#554734)!important;border:1px solid #d2b881!important;color:#fff1d3!important;border-radius:4px!important;box-shadow:0 2px 3px #33281f55,inset 0 0 0 2px #edcb961f!important}
+.pawExploreRail{padding:10px 12px;border:1px solid #b5a07a;background:#f3e6cd;color:#514737;margin:10px 0;line-height:1.4}
+.pawExploreRail small{display:block;margin:4px 0 8px}.pawExploreRail button{min-height:44px;white-space:normal}
+`;document.head.append(explorationRailStyle);
+const explorationSignBefore=syncSigns;
+syncSigns=function(){
+ const result=explorationSignBefore();
+ nextStopButton.hidden=true;
+ const sign=signButtons.get('station');
+ if(sign&&!signRoot.hidden&&!sign.hidden){
+  const name=tr('Railway','铁路车站');
+  const plaque=sign.querySelector('.doorPlaque');
+  if(plaque&&plaque.textContent!==name)plaque.textContent=name;
+  if(sign.getAttribute('aria-label')!==name)sign.setAttribute('aria-label',name);
+  sign.title=tr('Optional train to ','随心搭车前往')+tr(...maps[railNextDistrict(scene)].n)
+ }
+ return result
+};
+const explorationHudBefore=updateHUD;
+updateHUD=function(...args){const result=explorationHudBefore(...args);nextStopButton.hidden=true;return result};
+const explorationTravelBefore=travel;
+travel=function(...args){
+ const result=explorationTravelBefore(...args);
+ if(room||activity)return result;
+ const q=$('content'),grid=q.querySelector('.portraitTravelGrid');
+ if(!grid||q.querySelector('.pawExploreRail'))return result;
+ const section=element('section','',null,'pawExploreRail');
+ element('strong',tr('Explore at your own pace','慢慢逛，不着急'),section);
+ element('small',tr('Visit the little shops here first if you like. The railway is at the far end of town, and you can travel any time.','可以先逛逛这里的小店。铁路在小镇尽头，想出发时再去。'),section);
+ const station=maps[scene]?.st.find(s=>s[0]==='station');
+ if(station)b(section,tr('Walk to the railway','步行去车站'),()=>{
+  $('page').style.display='none';updateHUD();walkDoor(station[0],station[1],station[2])
+ });
+ grid.before(section);return result
+};
+$('travel').onclick=travel;$('dockTravel').onclick=travel;
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
