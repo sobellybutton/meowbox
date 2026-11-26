@@ -975,11 +975,17 @@ syncPearlPanel=function(){
 };
 const residentHospitalityStyle=document.createElement('style');residentHospitalityStyle.textContent='.residentUsualDrink{border-top:1px solid #bd9e85;margin-top:7px;padding-top:4px;display:grid;grid-template-columns:1fr 1fr;gap:5px}.residentUsualDrink small{grid-column:1/-1}.residentUsualDrink button{min-height:44px;white-space:normal}';document.head.append(residentHospitalityStyle);
 
+let residentEntryPending=null,residentLastWelcomeRoom=null;
+const residentWelcomeEnterBefore=enter;
+enter=function(id){if(id!=='station')residentEntryPending=id;return residentWelcomeEnterBefore(id)};
 const residentPersonalIntroBefore=roomIntro;
 roomIntro=function(){
- const result=residentPersonalIntroBefore();residentWelcomeSpoken.clear();
+ const result=residentPersonalIntroBefore();
  if(!room||activity)return result;
  const profile=residentWelcomeProfiles.find(v=>v.rooms.includes(room));if(!profile)return result;
+ const fresh=residentEntryPending===room||residentLastWelcomeRoom!==room;
+ if(!fresh)return result;
+ residentEntryPending=null;residentLastWelcomeRoom=room;residentWelcomeSpoken.clear();
  const visits=Math.min(9999,(residentHospitality.visits[profile.id]||0)+1);residentHospitality.visits[profile.id]=visits;residentWelcomeVisits.set(profile.id,visits);residentHospitalitySave();
  if((room==='temple'||room==='kitchen')&&typeof lunarMenu==='function'&&lunarMenu()){
   const existing=$('toast')?.textContent;if(existing)toast(residentNamedGreeting(existing,existing));return result
