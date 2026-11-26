@@ -887,15 +887,16 @@ const residentWelcomeProfiles=[
  {id:'garden',names:['Garden keeper','守园人','Caretaker','管理员'],rooms:['wishes'],lines:[['There is room for another wish.','这里还有地方挂你的心愿。'],['No wish is too small.','小小的心愿也值得被记住。']]},
  {id:'grandma',names:['Grandma','外婆','奶奶'],rooms:['kitchen'],lines:[['Come eat. You look like someone who skipped lunch.','来吃饭啦。忙起来是不是又忘了吃饭？'],['I saved you a bowl.','给你留了一碗呢。']]},
  {id:'mei',names:['Auntie Mei','梅姨'],rooms:['tea'],lines:[['Sit here. I have tea and possibly too much news.','来坐这边，有茶，还有一点点八卦。'],['Good to see you. How has your day been?','见到你真好，今天过得怎样？']]},
+ {id:'hong',names:['Auntie Hong','红姐','洪姨'],rooms:[],lines:[['Come sit. I have a story for you.','来坐坐，有个故事跟你说。'],['What have I missed?','最近有什么新鲜事呀？']]},
  {id:'wang',names:['Wang Laoban','王老板'],rooms:['office'],lines:[['Relax. This meeting could have been an email.','放轻松，这个会本来发封邮件就行。'],['No performance review today. Promise.','今天不谈绩效，说好了。']]},
- {id:'ahma',names:['Ah Ma','阿嬷','阿嫲','阿嬤','打小人阿姨','Auntie','打小人阿婆'],rooms:['fish'],lines:[['Who has been making your blood boil today?','今天又是谁惹你生气啦？'],['Sit down. We can leave the drama here.','来坐坐，把那些破事留在这里。']]},
+ {id:'ahma',names:['Ah Ma','阿嬷','阿嫲','阿嬤','打小人阿姨','打小人阿婆','Grumpy Ah Ma','暴躁阿嬷'],rooms:['fish'],lines:[['Who has been making your blood boil today?','今天又是谁惹你生气啦？'],['Sit down. We can leave the drama here.','来坐坐，把那些破事留在这里。']]},
  {id:'lin',names:['Auntie Lin','林姨'],rooms:['park'],lines:[['The animals are taking their sweet time. So can you.','小动物都慢悠悠的，你也可以。'],['Come see who is out in the meadow today.','来看看今天草地上有哪些小可爱。']]},
  {id:'arcade',names:['Keeper','店主','Arcade keeper','游戏厅老板','Arcade host','游戏厅店主'],rooms:['arcade'],lines:[['Ready to beat your own score?','今天要不要刷新自己的纪录？'],['The claw owes you nothing. But give it a go.','夹爪可不欠你的，不过试试嘛。']]},
  {id:'boba',names:['Boba keeper','奶茶店主','Pearl & Pause','珍珠摸鱼铺','Barista','店员'],rooms:['boba'],lines:[['A little tea break? You have earned one.','喝杯奶茶歇一歇吧。'],['Less ice, more peace?','少冰，多一点好心情？']]},
  {id:'souvenir',names:['Souvenir keeper','手信店主','Furniture keeper','家具店主'],rooms:['mystery'],lines:[['Come browse. No need to buy anything.','随便看看，不买也没关系。'],['Find something that makes you smile.','看看有没有让你会心一笑的小东西。']]},
- {id:'lab',names:['Personality guide','人格向导','Researcher','研究员'],rooms:['quiz'],lines:[['Curious about yourself? No homework here.','想多了解自己？这里不交作业。'],['There is no perfect answer.','没有标准答案，做自己就好。']]},
- {id:'story',names:['Storyteller','说书人','故事向导'],rooms:['story'],lines:[['Another little adventure awaits.','又有一段小故事等着你。'],['What would you do differently this time?','这一次，你会怎么选呢？']]},
- {id:'cafe',names:['Café keeper','Cafe keeper','咖啡店主'],rooms:['match'],lines:[['Let us make some space for the heart.','给心里的人留一点时间吧。'],['Tea first, overthinking later.','先喝茶，晚点再胡思乱想。']]}
+ {id:'lab',names:['Personality guide','人格向导','Researcher','研究员'],rooms:[],lines:[['Curious about yourself? No homework here.','想多了解自己？这里不交作业。'],['There is no perfect answer.','没有标准答案，做自己就好。']]},
+ {id:'story',names:['Storyteller','说书人','故事向导'],rooms:[],lines:[['Another little adventure awaits.','又有一段小故事等着你。'],['What would you do differently this time?','这一次，你会怎么选呢？']]},
+ {id:'cafe',names:['Café keeper','Cafe keeper','咖啡店主'],rooms:[],lines:[['Let us make some space for the heart.','给心里的人留一点时间吧。'],['Tea first, overthinking later.','先喝茶，晚点再胡思乱想。']]}
 ];
 const residentWelcomeVisits=new Map(),residentWelcomeSpoken=new Set(),residentOutdoorWelcome=new Map();
 function residentPlayerDisplayName(){
@@ -921,12 +922,12 @@ roomIntro=function(){
   const existing=$('toast')?.textContent;if(existing)toast(residentNamedGreeting(existing,existing));return result
  }
  // Preserve the instructional hint and use the existing non-blocking toast.
- toast(tr(...profile.names.slice(0,2))+'：'+residentWelcomeLine(profile,visits));return result
+ toast(tr(...profile.names.slice(0,2))+tr(': ','：')+residentWelcomeLine(profile,visits));return result
 };
 const residentPersonalSayBefore=say;
 say=function(name,line,...rest){
  const profile=residentWelcomeFor(name),chosen=residentPlayerDisplayName(),now=Date.now();
- if(profile&&chosen&&typeof line==='string'&&!line.includes(chosen)){
+ if(profile&&chosen&&typeof line==='string'&&!line.startsWith('Hi '+chosen+'!')&&!line.startsWith(chosen+'，')){
   const already=room?residentWelcomeSpoken.has(profile.id):(now-(residentOutdoorWelcome.get(profile.id)||0)<300000);
   if(!already){line=tr('Hi '+chosen+'! ',chosen+'，')+line;if(room)residentWelcomeSpoken.add(profile.id);else residentOutdoorWelcome.set(profile.id,now)}
  }
