@@ -737,3 +737,7 @@ Replaced legacy displayed product names across the canonical engine, extensions,
 ## Grandma’s Kitchen ingredient artwork (26 November)
 - Added six separate WebP dishes for tomatoes, greens, eggs, mushrooms, tofu and the empty saucer. Loaded dishes now follow the existing drag and leave an empty saucer after a valid drop. Recipes, vegetarian substitutions, stir input and rewards retain their existing behavior.
 - Confirmed the actual dish moves, a drop registers, the used dish empties and both vegetarian alternatives render at 360 px, 390 px, tablet and desktop. New room, Boba and arcade production art remains open.
+
+## Deer Meadow paintings (26 November)
+- Mugi, Koyo and Sora have separate idle, reaching and bowing WebP poses. Hooves share an anchor and the feeding gesture follows the selected pose’s muzzle. The deer has room to approach the cracker while staying clear of the traveller’s body.
+- Bow, feeding and the existing once-daily record passed on 360 px, 390 px, tablet and desktop. The painted environment, cat interactions and Ah Ma's full movement sequence remain open.

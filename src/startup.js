@@ -1529,7 +1529,7 @@ drawRitualPose=function(x,y,scale,opts={}){
 };
 const mb5AnimalPoseBefore=drawMeadowDeer;
 drawMeadowDeer=function(x,y,profile,bow=0,chew=0,scale=1){
- if(activity==='deerVisit'&&state.deerPhase==='bow'&&profile===state.deerProfile&&scale>.9)bow=state.deerBows?.8*mb5BowCurve(t-state.deerAt,.95,1.65):0;
+ if(activity==='deerVisit'&&state.deerPhase==='bow'&&profile===state.deerProfile)bow=state.deerBows?.8*mb5BowCurve(t-state.deerAt,.95,1.65):0;
  return mb5AnimalPoseBefore(x,y,profile,bow,chew,scale)
 };
 const mb5BowBefore=deerBow;

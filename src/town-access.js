@@ -103,6 +103,45 @@ templeLadle=function(x,y,a=0){
  if(!pics.templeLadlePaint.naturalWidth)return townDryLadleBefore(x,y,a);
  waterLadleArt(x,y,a,false)
 };
+/* Deer paintings share a hoof anchor. The mouth point moves with each pose. */
+const townDeerMuzzles={
+ mugi:[[-108,-161],[-139,-121],[-122,-57]],
+ koyo:[[-110,-164],[-140,-129],[-115,-49]],
+ sora:[[-111,-170],[-139,-129],[-115,-48]]
+};
+const townDeerScale=.8;
+for(const [id,poses] of Object.entries(townDeerMuzzles)){
+ for(let i=0;i<poses.length;i++)ART['meadowDeer-'+id+'-'+i]='assets/visual/painted/deer/'+id+'-'+i+'.webp';
+}
+function townDeerFrame(profile,bow){
+ const positions=townDeerMuzzles[profile?.id];
+ if(!positions)return null;
+ const images=positions.map((_,i)=>pics['meadowDeer-'+profile.id+'-'+i]);
+ if(!images.every(im=>im.naturalWidth))return null;
+ const pose=clamp(Math.round(bow*2.25),0,2);
+ return {image:images[pose],mouth:positions[pose]}
+}
+const townDeerLayoutBefore=deerStageLayout;
+deerStageLayout=function(bow,feed){
+ const layout=townDeerLayoutBefore(bow,feed),frame=townDeerFrame(state.deerProfile,layout.lower);
+ if(!frame)return layout;
+ const mouthX=frame.mouth[0]*townDeerScale*layout.deerScale;
+ if(feed>0)layout.deerX=Math.max(layout.deerX-76*feed,layout.playerX+42-mouthX);
+ layout.muzzleX=layout.deerX+mouthX;
+ layout.muzzleY=layout.deerY+frame.mouth[1]*townDeerScale*layout.deerScale;
+ return layout
+};
+const townDeerBefore=drawMeadowDeer;
+drawMeadowDeer=function(x,y,profile,bow=0,chew=0,scale=1){
+ const frame=townDeerFrame(profile,bow);
+ if(!frame)return townDeerBefore(x,y,profile,bow,chew,scale);
+ ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
+ ellipse(0,3,66,7,'#414c3438');
+ const k=townDeerScale,{image}=frame;
+ ctx.drawImage(image,-150*k,-215*k,image.naturalWidth*k,image.naturalHeight*k);
+ ctx.restore()
+};
+
 const townTeaCupBefore=teaCup;
 teaCup=function(x,y,sc=1,base=0,pearls=0,fill=1,angle=0){townTeaCupBefore(x,y,sc,base,pearls,fill,angle);if(activity!=='bubbleTea'||fill<=0)return;ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(-33,-70);ctx.lineTo(33,-70);ctx.lineTo(25,-3);ctx.lineTo(-25,-3);ctx.closePath();ctx.clip();const y0=-69*clamp(fill,0,1),slosh=clamp(-angle*38,-10,10);ctx.strokeStyle='#fff0d1b0';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-27,y0-slosh);ctx.quadraticCurveTo(0,y0+(residentReducedMotion.matches?0:Math.sin(t*8)*Math.abs(slosh)*.25),27,y0+slosh);ctx.stroke();ctx.restore()};
 
