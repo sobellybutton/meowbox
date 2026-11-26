@@ -793,120 +793,85 @@ function destinyChartValues(form){
  const date=form.querySelector('input[type=date]'),time=form.querySelector('input[type=time]'),place=form.querySelector('details select'),nums=[...form.querySelectorAll('input[type=number]')];
  return {date:date?.value||'',time:time?.value||'',place:place?.value||'',offset:nums[0]?.value||'',lat:nums[1]?.value||'',lon:nums[2]?.value||''}
 }
-const destinySubjectPageBefore=destinyPage;
-destinyPage=function(options={}){
- const subject=options?.subject==='other'?'other':'self',draft=options?.draft||{},today=shrineClock().day;
- destinySubjectPageBefore();
- const q=$('content'),form=q.querySelector('.astroForm'),out=q.querySelector('.astroResult');
- if(!form||!out)return;
- const strip=destinySubjectControls(q,subject,next=>destinyPage({subject:next}));form.before(strip);
- const dates=form.querySelector('input[type=date]'),time=form.querySelector('input[type=time]'),location=form.querySelector('details'),place=location?.querySelector('select'),nums=[...form.querySelectorAll('input[type=number]')];
- if(!dates||!time||!location||!place||nums.length!==3)return;
- dates.max=today;dates.value=draft.date||'';time.value=draft.time||'';
- const empty=element('option',tr('Select actual birthplace','选择实际出生地'),place);empty.value='';place.prepend(empty);place.required=true;place.value='';
- const oldChange=place.onchange;
- function summary(){
-  const label=place.selectedOptions[0]?.textContent||'';
-  location.querySelector('summary').textContent=place.value?tr('Birthplace: ','出生地：')+label:tr('Choose a birthplace to continue','请选择出生地');
- }
- function clearNumbers(){for(const n of nums)n.value=''}
- place.onchange=function(e){
-  if(!place.value){clearNumbers();summary();return}
-  if(place.value==='custom'){clearNumbers();summary();location.open=true;return}
-  if(typeof oldChange==='function')oldChange.call(this,e);summary()
- };
- clearNumbers();
- if(draft.place&&[...place.options].some(v=>v.value===draft.place)){
-  place.value=draft.place;if(draft.place!=='custom')place.onchange();
-  [draft.offset,draft.lat,draft.lon].forEach((v,i)=>{if(typeof v==='string')nums[i].value=v})
- }
- summary();location.open=true;
- const submit=form.querySelector('button[type=submit]');
- if(submit)submit.textContent=subject==='other'?tr('Unroll their birth chart','展开对方的命盘'):tr('Unroll my birth chart','展开我的命盘');
- const note=element('small',tr('Use the actual local birth time and historical UTC offset. City presets are starting values, not historical time-zone verification. If the birth time is unknown, use the date-only almanac instead.','请使用实际当地出生时间及当时的时区差。城市预设仅供起始参考，并未核验历史时区。若不清楚出生时间，请使用仅需生日的生肖小册。'),q,'destinyBirthNote');form.before(note);
- let rendered=false;
- function invalidate(){if(out.childElementCount){out.replaceChildren();element('p',tr('Birth details changed. Unroll a fresh chart.','生辰资料已更改，请重新排盘。'),out)}rendered=false}
- form.addEventListener('input',invalidate);form.addEventListener('change',invalidate);
- form.addEventListener('submit',e=>{
-  if(!destinyFullValid(destinyChartValues(form),today)){
-   e.preventDefault();e.stopImmediatePropagation();out.replaceChildren();element('p',tr('Enter a valid birth date, known local birth time and birthplace.','请填写有效出生日期、已知的当地出生时间及出生地。'),out);return
-  }
- },true);
- form.addEventListener('submit',()=>{
-  rendered=!!out.querySelector('.ziGrid');
-  if(!rendered)return;
-  const context=element('p',subject==='other'?tr('Reading for someone else. These themes are prompts, not knowledge of their feelings or future.','正在查看他人的命盘。以下仅为反思主题，并不能读出对方的真实感受或未来。'):tr('Your birth chart · a moment of reflection','我的命盘 · 自我探索'),out,'destinyBirthNote');out.prepend(context);
-  if(subject==='other'){
-   const follow=out.querySelector('.chartFollowForm input');if(follow)follow.placeholder=tr('Choose a chart topic to explore','想了解命盘中的哪个主题？')
-  }
- });
- const alternate=b(q,tr('Birth time unknown? Explore the date-only almanac','不知道出生时间？查看生肖流年小册'),()=>yueZodiacAlmanac(dates.value,null,{subject}));
- alternate.type='button';form.after(alternate);
- const clear=b(q,tr('Start a different reading','清空资料，重新查看'),()=>destinyPage({subject}));clear.type='button';
- const row=q.querySelector('.row');
- if(row?.lastElementChild)row.lastElementChild.onclick=()=>{const d=destinyChartValues(form),done=rendered;zh=!zh;save('zh',zh);updateHUD();destinyPage({subject,draft:d,render:done})};
- if(options?.render&&destinyFullValid(destinyChartValues(form),today)&&form.checkValidity())form.requestSubmit()
-};
-const destinySubjectAlmanacBefore=yueZodiacAlmanac;
-yueZodiacAlmanac=function(birth='',selection=null,options={}){
- const subject=options?.subject==='other'?'other':'self',today=shrineClock().day;
- destinySubjectAlmanacBefore(destinyBirthValid(birth,'1901-01-01',today)?birth:'',selection);
- const q=$('content'),form=q.querySelector('.yueAlmanacForm'),out=q.querySelector('.yueAlmanacPaper');
- if(!form||!out)return;
- const date=form.querySelector('input[type=date]'),year=form.querySelector('select');
- if(!date||!year)return;
- const strip=destinySubjectControls(q,subject,next=>yueZodiacAlmanac('',null,{subject:next}));form.before(strip);
- const note=element('small',tr('Birth date only. No birth time is assumed, and no Moon, Rising or Zi Wei palace chart is calculated.','仅需出生日期。不假设出生时间，也不计算月亮、上升星座或紫微十二宫命盘。'),q,'destinyBirthNote');form.before(note);
- let rendered=false;
- function invalidate(){if(out.childElementCount)out.replaceChildren();rendered=false}
- form.addEventListener('input',invalidate);form.addEventListener('change',invalidate);
- form.addEventListener('submit',e=>{if(!destinyBirthValid(date.value,'1901-01-01',today)){e.preventDefault();e.stopImmediatePropagation();out.replaceChildren();element('p',tr('Please enter a valid birth date.','请输入有效出生日期。'),out)}},true);
- form.addEventListener('submit',()=>{rendered=!!out.querySelector('.yueReadingFront');if(rendered&&subject==='other'){const v=element('small',tr('Reading for someone else · folklore, not personal predictions','为他人查看 · 民俗趣味提示，并非个人预测'),out,'destinyBirthNote');out.prepend(v)}});
- const row=q.querySelector('.row');
- if(row?.lastElementChild)row.lastElementChild.onclick=()=>{const d=date.value,y=Number(year.value),done=rendered;zh=!zh;save('zh',zh);updateHUD();yueZodiacAlmanac(d,y,{subject,render:done})};
- const link=[...q.querySelectorAll('button')].find(v=>v.textContent===tr('Personal birth chart','个人生辰命盘'));
- if(link){link.textContent=tr('Full chart with known birth time','知道出生时间？查看完整命盘');link.onclick=()=>destinyPage({subject,draft:{date:date.value}})}
- b(q,tr('Start a different reading','清空资料，重新查看'),()=>yueZodiacAlmanac('',null,{subject}));
- if(options?.render&&form.checkValidity())form.requestSubmit()
-};
-destinyConsultMenu=function(){
- closeTalk();say(tr('Master Yue','月师傅'),tr('For yourself or someone else? A birthday is enough for the zodiac almanac. A full chart needs a known birth time and place.','想看自己，还是替别人看？生肖流年只需要生日；完整命盘则需要准确出生时间和地点。'),[
- [tr('Date only · Zodiac & Tai Sui','只知道生日 · 生肖与太岁'),()=>{closeTalk();yueZodiacAlmanac()}],
- [tr('Birth date, time & place · Personal chart','生辰与出生地 · 完整命盘'),()=>{closeTalk();destinyPage()}],
- [tr('Weekly star signs','本周十二星座'),()=>{closeTalk();starSignPage()}],
- [tr('Maybe later','改天再聊'),closeTalk]
- ])
-};
-const destinySubjectStyle=document.createElement('style');destinySubjectStyle.textContent='.destinySubjectStrip{margin:12px 0;padding:12px 0;border-block:1px solid #b6a17d}.destinySubjectStrip small,.destinyBirthNote{display:block;line-height:1.5;overflow-wrap:anywhere;margin:8px 0;color:#62553d}.destinySubjectChoices{display:flex;gap:8px;margin:8px 0}.destinySubjectChoices button{flex:1;min-height:44px;white-space:normal}.destinySubjectChoices button[aria-pressed=true]{background:#536b5a;color:#fff5de}.astroForm details select{width:100%;min-height:44px}.astroForm input{font-size:16px;max-width:100%;box-sizing:border-box}';document.head.append(destinySubjectStyle);
 
-
-/* A single consultation desk: the simple birthday form opens immediately.
-   A full chart is one optional switch, not another dialogue tree. */
-function yueFriendlyHeader(q,form){
- const header=element('section','',q,'yueFriendlyWelcome'),im=element('img','',header);
- im.src='assets/visual/painted/master-yue/expressions/warm.webp';im.alt=tr('Master Yue','月师傅');im.onerror=()=>im.remove();
- const words=element('div','',header);
- element('strong',tr('Come, sit with me.','来，坐坐。'),words);
- element('p',tr('The tea is warm. No need to have life figured out before we begin.','茶还热着呢。不用把人生都想明白了才来。'),words);
- form.before(header);
-}
-const yueQuickBirthBefore=destinyPage;
-destinyPage=function(options={}){
- yueQuickBirthBefore(options);const q=$('content'),form=q.querySelector('.astroForm');
- if(!form)return;
- const art=q.querySelector('.roomArtWrap');if(art)art.hidden=true;
+/* Single authoritative reading session. Retain explicit birthplace selection
+   and privacy, without rendering a second subject chooser or welcome panel. */
+const destinyCompactChartBefore=destinyPage, destinyCompactAlmanacBefore=yueZodiacAlmanac;
+function yueCompactPage(q,form,out){
+ q.classList.add('yueCompactConsult');
+ const intro=q.querySelector(':scope > p');if(intro)intro.classList.add('yueCompactIntro');
  const hero=q.querySelector('.destinyChamber');if(hero)hero.hidden=true;
- yueFriendlyHeader(q,form);
+ const header=element('div','',q,'yueCompactHost'),im=element('img','',header);
+ im.src='assets/visual/painted/master-yue/expressions/warm.webp';im.alt='';im.onerror=()=>im.remove();
+ const words=element('div','',header);element('strong',tr('Come, sit with me.','来，坐坐。'),words);
+ element('small',tr('No need to have life figured out.','不用把人生都想明白才来。'),words);
+ const strip=q.querySelector('.yueSubjectStrip');if(strip)strip.after(header);else form.before(header);
+ const nav=q.querySelector('.row');if(nav)nav.classList.add('yueStickyNav');
+ const submit=form.querySelector('button[type=submit]');
+ if(submit)submit.classList.add('yuePrimarySubmit');
+ if(out)out.classList.add('yueReadingOutput');
+ let manual=false;form.addEventListener('submit',()=>{if(!out?.querySelector('.ziGrid,.yueReadingFront'))return;if(!manual)return;requestAnimationFrame(()=>{if(out.isConnected)out.scrollIntoView({block:'start',behavior:residentReducedMotion.matches?'instant':'smooth'})})});
+ if(submit)submit.addEventListener('click',()=>{manual=true});
+ // Remove duplicate long introductory copy, not the chart or its disclaimer.
+ if(intro&&intro.textContent.length>140)intro.hidden=true;
+}
+destinyPage=function(edit=false,selectedTopic=null,draft=null){
+ if(edit&&typeof edit==='object'){const opt=edit;if(opt.subject==='self'||opt.subject==='other')yueSubject=opt.subject;const d=opt.draft;draft=d?[d.date||'',d.time||'',d.offset||'',d.lat||'',d.lon||'']:null;edit=!opt.render;selectedTopic=null}
+ destinyCompactChartBefore(edit,selectedTopic,draft);
+ const q=$('content'),form=q.querySelector('.astroForm'),out=q.querySelector('.astroResult');if(!form)return;
+ yueCompactPage(q,form,out);
+ const profile=yueProfile(),date=form.querySelector('input[type=date]'),time=form.querySelector('input[type=time]'),place=form.querySelector('details select'),nums=[...form.querySelectorAll('input[type=number]')];
+ if(!date||!time||!place||nums.length!==3)return;
+ if(!profile.chart&&!draft){
+  if(profile.date)date.value=profile.date;
+  const empty=element('option',tr('Select actual birthplace','选择实际出生地'),place);empty.value='';place.prepend(empty);place.value='';place.required=true;nums.forEach(n=>n.value='');
+  const oldChange=place.onchange;place.onchange=function(e){if(place.value==='custom'||!place.value){nums.forEach(n=>n.value='');place.closest('details').open=true}else if(oldChange)oldChange.call(place,e)};
+  const detail=place.closest('details');if(detail){detail.open=true;detail.querySelector('summary').textContent=tr('Birthplace','出生地')}
+ }
+ const note=element('small',tr('Use the actual local birth time and historical UTC offset. Preset cities are starting values.','请使用当地实际出生时间及当时的时区差。城市预设仅供参考。'),q,'yueSessionNote');form.after(note);
+ if(yueSubject==='other'&&out?.querySelector('.ziGrid'))out.setAttribute('aria-label',tr('Reading for someone else, not a prediction','他人命盘，仅供反思'));
 };
-const yueQuickAlmanacBefore=yueZodiacAlmanac;
 yueZodiacAlmanac=function(birth='',selection=null,options={}){
- yueQuickAlmanacBefore(birth,selection,options);const q=$('content'),form=q.querySelector('.yueAlmanacForm');if(!form)return;
- yueFriendlyHeader(q,form);
- const title=form.querySelector('button[type=submit]');if(title)title.textContent=tr('Read my year','看看流年');
- const full=[...q.querySelectorAll('button')].find(v=>v.textContent===tr('Birth time unknown? Explore the date-only almanac','不知道出生时间？查看生肖流年小册')||v.textContent===tr('Full chart with known birth time','知道出生时间？查看完整命盘'));
- if(full){full.textContent=tr('Explore a full birth chart instead','想看完整命盘');full.classList.add('yueModeLink');form.before(full)}
+ if(options.subject==='self'||options.subject==='other')yueSubject=options.subject;
+ destinyCompactAlmanacBefore(birth,selection);
+ const q=$('content'),form=q.querySelector('.yueAlmanacForm'),out=q.querySelector('.yueAlmanacPaper');if(!form)return;
+ yueCompactPage(q,form,out);
+ const submit=form.querySelector('button[type=submit]');if(submit)submit.textContent=yueSubject==='other'?tr('Read their year','看看对方流年'):tr('Read my year','看看我的流年');
+ const toolbar=q.querySelector('.yueChartTools');if(toolbar){b(toolbar,tr('Full birth chart','完整命盘'),()=>destinyPage());b(toolbar,tr('Weekly star signs','本周星座'),()=>starSignPage())}
 };
 destinyConsultMenu=function(){closeTalk();yueZodiacAlmanac()};
-const yueFriendlyCSS=document.createElement('style');yueFriendlyCSS.textContent='.yueFriendlyWelcome{display:grid;grid-template-columns:86px minmax(0,1fr);align-items:center;gap:14px;padding:12px 0;margin:8px 0;border-bottom:1px solid #b9a480}.yueFriendlyWelcome img{width:86px;height:108px;object-fit:contain;object-position:center bottom}.yueFriendlyWelcome strong{font:600 20px/1.25 Georgia,"Songti SC",serif;color:#506650}.yueFriendlyWelcome p{margin:6px 0;font-size:14px;line-height:1.45}.yueModeLink{display:block;min-height:44px;width:100%;margin:8px 0}.destinyChamber[hidden],.roomArtWrap[hidden]{display:none!important}@media(min-width:650px){.yueFriendlyWelcome{grid-template-columns:108px minmax(0,1fr)}.yueFriendlyWelcome img{width:108px;height:126px}}';document.head.append(yueFriendlyCSS);
+const compactRailLabelBefore=travellerRailLabel;
+travellerRailLabel=function(){return compactRailLabelBefore()};
+function compactRailTicket(){
+ const label=compactRailLabelBefore(),route=travellerSuggestedRoute,local=route&&travellerRouteDoor(route)&&route.district===scene;
+ const destination=local?travellerRouteName(route):tr(...maps[route&&travellerRouteDoor(route)?route.district:railNextDistrict(scene)].n);
+ const short=local?tr('Explore','去探索'):tr('Next stop','下一站');
+ const key=short+'|'+destination+'|'+label;
+ if(nextStopButton.dataset.compactRail!==key){nextStopButton.dataset.compactRail=key;nextStopButton.replaceChildren();element('small',short,nextStopButton,'railShortcutCaption');element('strong',destination,nextStopButton,'railShortcutDestination');element('span','›',nextStopButton,'railShortcutArrow');nextStopButton.setAttribute('aria-label',label);nextStopButton.title=label}
+}
+const compactRailHUDBefore=updateHUD;
+updateHUD=function(){compactRailHUDBefore();compactRailTicket()};
+// Legacy frame update writes textContent, so keep the richer markup alive
+// without replacing nodes every frame. Full accessible name is unchanged.
+const compactRailFrameBefore=drawMap;
+drawMap=function(){const result=compactRailFrameBefore();if(!nextStopButton.querySelector('.railShortcutCaption'))nextStopButton.dataset.compactRail='';compactRailTicket();return result};
+const compactConsultStyle=document.createElement('style');compactConsultStyle.textContent=`
+#content.yueCompactConsult .yueStickyNav{position:sticky;top:0;z-index:2;background:#f2e6cd;padding:5px 0;border-bottom:1px solid #b6a07b}
+#content.yueCompactConsult>h1{font-size:clamp(22px,5.5vw,32px)!important;margin:8px 0 4px!important;line-height:1.2}
+#content.yueCompactConsult>.yueCompactIntro{font-size:12px!important;line-height:1.35!important;margin:4px 0 8px!important}
+.yueCompactHost{display:flex;gap:9px;align-items:center;padding:5px 0 8px;border-bottom:1px solid #b6a07b;margin:3px 0 7px;color:#455d4e}
+.yueCompactHost img{width:54px;height:54px;object-fit:contain;flex:none}.yueCompactHost strong,.yueCompactHost small{display:block;line-height:1.35}.yueCompactHost small{font-size:12px}
+#content.yueCompactConsult .yueSubjectStrip{padding:4px 7px;margin:5px 0!important;gap:4px}.yueCompactConsult .yueSubjectStrip button{min-height:44px}
+#content.yueCompactConsult .yueChartTools{margin:5px 0!important;gap:5px}.yueCompactConsult .yueChartTools button{padding:6px 8px!important;font-size:12px!important;min-height:44px}
+#content.yueCompactConsult .astroForm,#content.yueCompactConsult .yueAlmanacForm{margin:8px 0!important;padding:10px!important;gap:8px!important}
+.yueCompactConsult .astroForm input,.yueCompactConsult .astroForm select,.yueCompactConsult .yueAlmanacForm input,.yueCompactConsult .yueAlmanacForm select{font-size:16px!important;min-height:44px;max-width:100%;box-sizing:border-box}
+.yueCompactConsult .yuePrimarySubmit{min-height:48px;background:#425c4d!important;color:#fff0d0!important}
+.yueCompactConsult .destinyChamber[hidden]{display:none!important}.yueReadingOutput{scroll-margin-top:68px}
+#nextStopShortcut:not([hidden]){position:absolute!important;right:10px!important;top:auto!important;bottom:calc(env(safe-area-inset-bottom,0px) + 122px)!important;max-width:132px!important;width:auto!important;min-height:44px!important;display:grid!important;grid-template-columns:minmax(0,1fr) 12px;column-gap:4px;align-items:center;text-align:left;background:#efe0bc!important;border:1px solid #a88b5e!important;border-radius:4px!important;padding:5px 8px!important;box-shadow:0 2px 8px #2c261e40!important;color:#3e5849!important}
+#nextStopShortcut .railShortcutCaption{grid-column:1;line-height:1.2;font:10px/1.2 system-ui;letter-spacing:.04em}
+#nextStopShortcut .railShortcutDestination{grid-column:1;font:600 12px/1.2 Georgia,"Songti SC",serif;overflow-wrap:anywhere}
+#nextStopShortcut .railShortcutArrow{grid-column:2;grid-row:1/3;font:20px/1 Georgia,serif}
+@media(max-height:500px) and (orientation:landscape){#nextStopShortcut:not([hidden]){bottom:68px!important;right:8px!important;max-width:120px!important}}
+`;document.head.append(compactConsultStyle);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
