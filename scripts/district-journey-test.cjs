@@ -152,10 +152,16 @@ async function travelLoop(page,name,touch){
   const frame=await moving.evaluate(el=>({frame:Number(el.dataset.frame),pixels:el.toDataURL()}));
   await page.waitForFunction(n=>Number(document.querySelector('.pawRailJourney .pawMovingGlass')?.dataset.frame)>n+2,frame.frame,{timeout:1400});
   assert.notEqual(await moving.evaluate(el=>el.toDataURL()),frame.pixels,'Window pixels must visibly change, not just frame counter');
-  assert(await ride.evaluate(el=>{
-    const r=el.getBoundingClientRect(),g=document.querySelector('#game').getBoundingClientRect(),a=el.querySelector('.mbPaintedRail').getBoundingClientRect();
-    return r.width>=g.width-2&&r.height>=g.height-2&&a.width>=g.width-2&&a.height>=g.height-2;
-  }),'Carriage must cover entire game viewport');
+  const fit=await ride.evaluate(el=>{
+    const r=el.getBoundingClientRect(),g=document.querySelector('#game').getBoundingClientRect(),a=el.querySelector('.mbPaintedRail').getBoundingClientRect(),im=el.querySelector('.mbPaintedRail img');
+    const ratio=im.naturalWidth/im.naturalHeight;
+    return {shell:Math.abs(r.width-g.width)<=3&&Math.abs(r.height-g.height)<=3,
+      inside:a.left>=r.left-3&&a.right<=r.right+3&&a.top>=r.top-3&&a.bottom<=r.bottom+3,
+      aspect:Math.abs(a.width/a.height-ratio)<.025,
+      fitted:Math.abs(a.width-r.width)<=3||Math.abs(a.height-r.height)<=3,
+      centered:Math.abs((a.left+a.right-r.left-r.right)/2)<=3&&Math.abs((a.top+a.bottom-r.top-r.bottom)/2)<=3};
+  });
+  assert(fit.shell&&fit.inside&&fit.aspect&&fit.fitted&&fit.centered,'Railway shell must fill viewport while painting is centered, uncropped and aspect-correct: '+JSON.stringify(fit));
   await shot(district+'-transfer');
   await page.waitForFunction(d=>scene===d&&!transitioning,district,{timeout:15000});
   await shot(district+'-arrival');
