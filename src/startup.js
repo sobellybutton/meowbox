@@ -7617,4 +7617,79 @@ renderTownFortune=function(book){
  return result
 };
 
+
+/* PAW_RECOVERED_SHARE_BEGIN */
+const pawRecoveredShareFormats=Object.freeze({
+ feed:[1080,1350,271,1119],xhs:[1080,1440,289,1195],
+ story:[1080,1920,380,1598],square:[1080,1080,220,892]
+});
+function pawRecoveredShareBounds(format){
+ const f=pawRecoveredShareFormats[format];if(!f)return null;
+ return {width:f[0],height:f[1],top:f[2],bottom:f[3],left:84,right:format==='story'?142:84};
+}
+function pawRecoveredTarotLayout(box,count){
+ if(![1,3,5].includes(count)||!box)return null;
+ const width=box.width-box.left-box.right,space=18,maxW=(width-(count-1)*space)/count;
+ const h=Math.min(box.height*.18,(box.bottom-box.top)*.34,maxW*218/128);
+ const w=h*128/218,total=count*w+(count-1)*space;
+ return {w,h,x:box.left+Math.max(0,(width-total)/2),step:w+space};
+}
+/* PAW_RECOVERED_SHARE_END */
+function pawPrepareRecoveredShare(format,data){
+ if(!pawRecoveredShareBounds(format))return Promise.resolve();
+ const images=[pawRecoveredImage('templates/paper_'+format+'.webp')];
+ if(data.kind==='tarot'&&data.cards?.length)images.push(readingArtwork());
+ const waits=images.filter(im=>im&&!im.complete).map(im=>im.decode().catch(()=>{}));
+ return Promise.race([Promise.all(waits),new Promise(resolve=>setTimeout(resolve,1800))])
+}
+const pawRecoveredShareBefore=shareCardArt;
+shareCardArt=function(cv,data,format,cn){
+ const box=pawRecoveredShareBounds(format),im=pawRecoveredImage('templates/paper_'+format+'.webp');
+ if(!box||!im?.complete||im.naturalWidth!==box.width||im.naturalHeight!==box.height)return pawRecoveredShareBefore(cv,data,format,cn);
+ const {width:w,height:h,top,bottom,left,right}=box,usable=w-left-right,cx=left+usable/2,locale=v=>String(v?.[Number(cn)]||'');
+ cv.width=w;cv.height=h;const g=cv.getContext('2d'),font=cn?'"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif':'Georgia,serif';
+ const ink='#4d3a2c',muted='#65765a',accent='#80593d';g.drawImage(im,0,0,w,h);
+ function line(value,y,size,weight='normal',color=ink,maxW=usable-24,x=cx){
+  g.font=weight+' '+size+'px '+font;g.textAlign='center';g.textBaseline='middle';g.fillStyle=color;g.fillText(value,x,y,maxW)
+ }
+ // Fit live text as a group, with measured line breaks and no silently omitted result rows.
+ function block(values,y,maxH,start=34,weight='normal',color=ink,maxW=usable-44){
+  const text=values.filter(v=>typeof v==='string'&&v.trim());if(!text.length||maxH<=0)return y;
+  let size=start,rows=[],lh=0,total=0;
+  for(;size>=18;size-=2){
+   g.font=weight+' '+size+'px '+font;rows=text.map(v=>shareTextLines(g,v,maxW));lh=size*1.26;
+   total=rows.reduce((n,a)=>n+a.length,0)*lh+(rows.length-1)*size*.38;
+   if(total<=maxH||size===18)break
+  }
+  const scale=Math.min(1,maxH/Math.max(1,total));
+  g.save();g.translate(cx,y);g.scale(1,scale);
+  let dy=0;for(const group of rows){for(const v of group){line(v,dy+lh/2,size,weight,color,maxW,0);dy+=lh}dy+=size*.38}
+  g.restore();return y+total*scale
+ }
+ const footer=bottom-65;
+ line('Pawradise · '+(cn?'偷得浮生半日闲':'A LITTLE ESCAPE'),top+20,27,'bold',muted);
+ let y=top+51;line(locale(shareKinds[data.kind]),y+13,25,'normal',accent);y+=33;
+ y=block([locale(data.title)],y,Math.min(120,(bottom-top)*.16),format==='square'?46:54,'bold',ink)+10;
+ if(data.kind==='tarot'&&[1,3,5].includes(data.cards.length)){
+  const layout=pawRecoveredTarotLayout(box,data.cards.length),atlas=readingArtwork(),usableAtlas=atlas.complete&&atlas.naturalWidth===1024&&atlas.naturalHeight===2180;
+  const cardHeight=Math.min(layout.h,Math.max(70,footer-y-135)),cardWidth=cardHeight*128/218,gap=18,total=data.cards.length*cardWidth+(data.cards.length-1)*gap,cardX=cx-total/2;
+  if(usableAtlas){
+   data.cards.forEach((card,i)=>{const x=cardX+i*(cardWidth+gap),sx=(card.i%8)*128,sy=Math.floor(card.i/8)*218;g.save();g.translate(x+cardWidth/2,y+cardHeight/2);if(card.rev)g.rotate(Math.PI);g.drawImage(atlas,sx,sy,128,218,-cardWidth/2,-cardHeight/2,cardWidth,cardHeight);g.restore()});y+=cardHeight+13
+  }
+  const roles=data.cards.length===5?fiveReadingPositions:data.cards.length===3?[['Situation','现状'],['Notice','留意'],['Next step','下一步']]:[['Your card','今日之牌']];
+  const names=data.cards.map((card,i)=>locale(roles[i])+' · '+locale(tarotDeck[card.i])+(card.rev?(cn?' · 逆位':' · Reversed'):(cn?' · 正位':' · Upright')));
+  const remaining=Math.max(65,footer-y-6),nameH=Math.min(remaining*.54,145);
+  y=block(names,y,nameH,format==='square'?26:30,'normal',ink)+9;
+  block([locale(data.takeaway||socialResultQuote(data))],y,Math.max(38,footer-y-7),format==='square'?30:36,'bold',accent)
+ }else{
+  const quote=locale(data.kind==='zwds'?data.takeaway:socialResultQuote(data));
+  const all=[quote,...data.lines.map(locale)].filter((v,i,a)=>v&&a.indexOf(v)===i);
+  block(all,y+Math.min(30,Math.max(0,(footer-y)/12)),Math.max(60,footer-y-30),format==='square'?34:42,'normal',ink)
+ }
+ g.strokeStyle='#a99772';g.lineWidth=2;g.beginPath();g.moveTo(left+28,footer);g.lineTo(w-right-28,footer);g.stroke();
+ line(cn?'趣味探索 · 仅供反思':'For fun and reflection · Pawradise',footer+24,23,'normal',muted);
+ if(data.kind==='zwds')line(cn?'不含生辰、时间或地点':'No birth date, time or birthplace included',footer+48,21,'normal',accent)
+ else line(cn?'给自己留一点摸鱼时光':'Make a little time for yourself',footer+48,22,'normal',accent)
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
