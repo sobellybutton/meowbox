@@ -8211,7 +8211,8 @@ function pawHeldIncense(q,held,lit){
  const {x,y,sc,bow,grip,pick,touch,angle}=q,shoulder={x:x+9*sc+bow*17,y:y-58*sc+bow*12};
  // First paint the body, then the rear sleeve, incense, and near fingers.
  // Thus the sticks visibly sit between two hands instead of over the face.
- drawRitualPose(x,y,sc,{bow,praying:true});
+ if(q.walking)backHuman(x,y,avatar??0,true,q.dir,sc);
+ else drawRitualPose(x,y,sc,{bow,praying:true});
  const backHand={x:grip.x-3,y:grip.y+2};
  if(held||pick){
   pawIncenseArm({x:shoulder.x-6,y:shoulder.y+3},backHand,sc,true);
@@ -8220,6 +8221,16 @@ function pawHeldIncense(q,held,lit){
   pawIncenseArm(shoulder,pick||grip,sc,false);
   if(held&&pick)ellipse(backHand.x,backHand.y,4.5,5.5,'#e7bb98');
  }
+}
+function pawTempleContinue(id){
+ if(room!=='temple'||activity!=='prayer'||state.prayerStage!=='complete'||transitioning||talkOpen)return;
+ activity=null;state={};roomIntro();updateHUD();
+ // Restore the actual temple position first, then walk along the existing aisle.
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  if(!indoorReady()||room!=='temple')return;
+  const [, ,ax,ay]=indoorStation(id);
+  if(indoorDestination(ax,ay,()=>start(id),'up'))hint('Walking to '+roomGuideEntries().find(v=>v[0]===id)?.[1]+'…','沿着寺内小径走过去……')
+ }))
 }
 function pawPrayerStep(){
  const blocked=document.hidden||talkOpen||transitioning||$('page').style.display==='block'||!proposal.hidden;
@@ -8252,14 +8263,69 @@ function pawPrayerStep(){
  if(stage==='hold')target(290,400,115,176,beginQuietBow);
  if(stage==='offer')target(469,430,84,91,()=>requestIncenseAction('offer'));
  if(stage==='complete'){
-  label(tr('Visit the garden','去后院走走'),400,608,()=>start('secretGarden'));
-  label(tr('Draw a fortune','求签'),310,650,()=>start('sticks'));
-  label(tr('Moon blocks','掷筊'),490,650,()=>start('moon'))
+  label(tr('Visit the garden','去后院走走'),400,608,()=>pawTempleContinue('secretGarden'));
+  label(tr('Draw a fortune','求签'),310,650,()=>pawTempleContinue('sticks'));
+  label(tr('Moon blocks','掷筊'),490,650,()=>pawTempleContinue('moon'))
  }
  ctx.restore();syncRitualBar()
 }
+/* The rack is a physical scene, not a list page. Preserve the current
+ fortune slip so returning does not redraw or lose the player's reading. */
+activityTitle.templeRack=['Fortune rack','签文架'];
+let pawRackReturn=null;
+const pawRackOpenBefore=pawFortuneRackPage;
+pawFortuneRackPage=function(){
+ if(room!=='temple'||activity!=='templePaper')return pawRackOpenBefore();
+ pawRackReturn={activity,state};
+ start('templeRack');state.rackSelected=null;state.rackAt=t;
+ hint('Tap a paper slip to unfold it.','点一张签纸，展开看看。')
+};
+function pawCloseTempleRack(){
+ if(activity!=='templeRack')return false;
+ const previous=pawRackReturn;pawRackReturn=null;
+ if(previous){activity=previous.activity;state=previous.state}
+ else{activity=null;state={}}
+ closeTalk();updateHUD();activityHint();return true
+}
+const pawTempleRackBackBefore=$('back').onclick;
+$('back').onclick=function(...args){if(pawCloseTempleRack())return;return pawTempleRackBackBefore.apply(this,args)};
+function pawTempleRackDraw(){
+ ctx.save();try{
+  paintLivingBackdrop(pics.streetTemple||pics.sticks);
+  const b=livingBounds(),veil=ctx.createLinearGradient(b.x,b.y,b.x,b.y+b.h);veil.addColorStop(0,'#34271d34');veil.addColorStop(1,'#2b241e9b');shadeLivingBackdrop(veil);
+  const entries=pawRackEntries(templeTies).slice(-21),sel=entries[state.rackSelected],cx=400;
+  // A wooden frame and real rows of tied paper, each with its own hit area.
+  round(192,278,416,330,5,'#79593e','#b99b70');
+  round(204,292,392,302,3,'#4d3a30','#c1a27b');
+  for(let j=0;j<3;j++){
+   const yy=338+j*82;line(215,yy,585,yy,'#b28f64',4);
+   for(let i=0;i<7;i++){
+    const idx=j*7+i,item=entries[idx];if(!item)continue;
+    const x=242+i*52;
+    ctx.save();ctx.translate(x,yy);ctx.rotate((i%3-1)*.055);
+    line(0,-4,0,8,'#bd936e',2);
+    round(-17,6,34,55,2,state.rackSelected===idx?'#f8e4a8':'#f0dfbe','#a88d69');
+    txt(String(item.number),0,25,15,'#76543c');line(-9,40,9,40,'#a68860',1);line(-9,46,5,46,'#a68860',1);
+    ctx.restore();
+    if(!sel)target(x-24,yy-8,48,73,()=>{state.rackSelected=idx;state.rackAt=t;physicalFx('paper',.42)})
+   }
+  }
+  if(sel){
+   const f=residentReducedMotion.matches?1:poseEase((t-state.rackAt)/.25);
+   ctx.save();ctx.translate(cx,447);ctx.scale(.7+.3*f,.15+.85*f);
+   round(-172,-118,344,236,6,'#ead9b3','#a1845e');round(-159,-105,318,210,3,null,'#b39668');
+   activityFitText(tr(...sel.name),0,-78,18,280,'#624b36');
+   txt(tr('Fortune ','第 ')+sel.number+(zh?' 签':''),0,-47,18,'#8b6447');
+   wonderSceneText(tr(...shrinePaperLines[sel.number-1]),0,-12,280,21,'#5e4937',4);
+   activityFitText(sel.fictional?tr('Fictional resident','虚构居民'):tr('Saved on this device','本设备记录'),0,75,13,280,'#856b51');
+   ctx.restore();
+   label(tr('Fold the paper','收起签纸'),400,590,()=>{state.rackSelected=null})
+  }else txt(tr('Choose a fortune to unfold','选一张签纸展开'),400,625,16,'#fff2d6');
+  label(tr('Return to your fortune','返回自己的签文'),400,660,pawCloseTempleRack);
+ }finally{ctx.restore()}
+}
 const pawPhysicalPrayerBefore=drawActivity;
-drawActivity=function(...args){if(activity==='prayer')return pawPrayerStep();return pawPhysicalPrayerBefore(...args)};
+drawActivity=function(...args){if(activity==='prayer')return pawPrayerStep();if(activity==='templeRack')return pawTempleRackDraw();return pawPhysicalPrayerBefore(...args)};
 const pawTempleFlowGuideBefore=roomGuideEntries;
 roomGuideEntries=function(){
  if(room==='temple')return [['templeWater','Purification basin','净手池'],['prayer','Incense & Guanyin altar','上香与观音殿'],['secretGarden','Rear garden','后院'],['sticks','Fortune sticks','求签'],['moon','Moon blocks','掷筊'],['templeBell','Bronze bell','敲钟']];
