@@ -33,6 +33,14 @@ const assert=(value,message)=>{if(!value)throw Error(message)};
     await page.waitForFunction(()=>continuityRoom===room&&Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)<3,null,{timeout:10000});
     const arrival=await page.evaluate(()=>({safe:indoorSafe(indoor.x,indoor.y),avatar,playerName,scale:cam.scale}));
     assert(arrival.safe&&arrival.avatar===before.avatar&&arrival.playerName===before.playerName&&arrival.scale>0,'Arrival or identity mismatch '+JSON.stringify(arrival));
+    // Organic arrival: verify the saved visit belongs to this room's named host.
+    const hospitality=await page.evaluate(()=>{const host=residentWelcomeProfiles.find(v=>v.rooms.includes(room));return host?{id:host.id,visits:residentHospitality.visits[host.id],saved:load(residentHospitalityKey,{}).visits?.[host.id]}:null});
+    if(hospitality)assert(hospitality.visits===1&&hospitality.saved===1,'Host visit was not persisted exactly once');
+    // Controlled greeting fixture: separate from the organic navigation result.
+    const hello=await page.evaluate(()=>{residentGreetingToast(residentNamedGreeting('Welcome.','欢迎。'));const el=$('toast');return {text:el.textContent,role:el.getAttribute('role'),pointer:getComputedStyle(el).pointerEvents,visible:el.classList.contains('residentArrival')}});
+    assert(hello.text==='Hi Device Tester! Welcome.'&&hello.role==='status'&&hello.pointer==='none'&&hello.visible,'Personal greeting is missing or blocks movement');
+    await page.screenshot({path:'test-results/'+name+'-resident-hello.png'});
+    await page.evaluate(()=>clearResidentGreeting());
     await page.screenshot({path:'test-results/'+name+'-organic-room.png'});
     await page.setViewportSize(rotated);
     await page.waitForFunction(({width,height})=>W===width&&H===height&&cam.scale>0&&Number.isFinite(cam.ox)&&Number.isFinite(cam.oy),rotated,{timeout:10000});
