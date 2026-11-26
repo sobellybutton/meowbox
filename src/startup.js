@@ -912,17 +912,80 @@ function residentWelcomeFor(name){
 function residentWelcomeLine(profile,count){
  const pair=profile.lines[Math.max(0,count-1)%profile.lines.length];return residentNamedGreeting(...pair)
 }
+
+/* Small local hospitality history; never store chat text or birth details. */
+const residentHospitalityKey='residentHospitalityV1';
+const residentHospitalityRaw=load(residentHospitalityKey,{});
+const residentHospitality={visits:Object.create(null),drink:null,soup:null};
+function residentRecipeValid(v){
+ return !!v&&Number.isInteger(v.base)&&v.base>=0&&v.base<teaChoices.length&&pearlSugar.some(a=>a[0]===v.sugar)&&pearlIce.some(a=>a[0]===v.ice)&&pearlToppings.some(a=>a[0]===v.topping)
+}
+if(residentHospitalityRaw&&typeof residentHospitalityRaw==='object'){
+ for(const p of residentWelcomeProfiles){const n=residentHospitalityRaw.visits?.[p.id];if(Number.isInteger(n)&&n>0)residentHospitality.visits[p.id]=Math.min(n,9999)}
+ if(residentRecipeValid(residentHospitalityRaw.drink))residentHospitality.drink=residentHospitalityRaw.drink;
+ const soup=residentHospitalityRaw.soup;
+ if(Array.isArray(soup)&&soup.length===2&&soup.every(v=>typeof v==='string'&&v.length<=60))residentHospitality.soup=soup;
+}
+function residentHospitalitySave(){save(residentHospitalityKey,residentHospitality)}
+function residentDrinkSummary(v){
+ if(!residentRecipeValid(v))return '';
+ return [tr(...teaChoices[v.base].slice(0,2)),pearlLabel(pearlSugar,v.sugar),pearlLabel(pearlIce,v.ice),pearlLabel(pearlToppings,v.topping)].join(' · ')
+}
+function residentHospitalityWelcome(profile,visits,hour=new Date().getHours()){
+ if(profile.id==='boba'&&residentHospitality.drink&&visits%2===0){
+  const v=residentHospitality.drink,base=teaChoices[v.base];return residentNamedGreeting('Fancy your '+tr(...base.slice(0,2))+' again?','上次喝的'+tr(...base.slice(0,2))+'，今天还想来一杯吗？')
+ }
+ if(profile.id==='grandma'&&residentHospitality.soup&&visits%2===0){
+  const recipe=tr(...residentHospitality.soup);return residentNamedGreeting('Another bowl of '+recipe+' today?','今天还想喝'+recipe+'吗？')
+ }
+ if(visits>1&&visits%3===0){
+  if(profile.id==='wang')return residentNamedGreeting('Back again? I will pretend I did not see you clock out.','又见面啦？就当我没看见你溜出来摸鱼。');
+  return residentNamedGreeting('Good to see you again. '+(hour<12?'A little break before lunch?':hour>=18?'Long day? Make yourself at home.':'Take your time today.'),hour<12?'又见面啦，午饭前偷个闲？':hour>=18?'回来啦，今天辛苦了，慢慢坐。':'又见面啦，今天慢慢来。')
+ }
+ return residentWelcomeLine(profile,visits)
+}
+const residentPearlFinishBefore=pearlAdvance;
+pearlAdvance=function(){
+ const q=state,wasSaved=q?.teaSaved,result=residentPearlFinishBefore();
+ if(activity==='bubbleTea'&&q===state&&!wasSaved&&q.teaSaved&&!q.teaOrder){
+  const v={base:q.teaBase,sugar:q.teaSugar,ice:q.teaIce,topping:q.teaTopping};if(residentRecipeValid(v)){residentHospitality.drink=v;residentHospitalitySave()}
+ }
+ return result
+};
+const residentSoupTasteBefore=soupTaste;
+soupTaste=function(){
+ const q=state,before=q?.tasteAt,result=residentSoupTasteBefore();
+ if(activity==='cook'&&q===state&&before===undefined&&q.tasteAt!==undefined&&q.done&&Array.isArray(q.recipe)&&q.recipe.length===2){
+  residentHospitality.soup=q.recipe.slice(0,2);residentHospitalitySave()
+ }
+ return result
+};
+const residentPearlPanelBefore=syncPearlPanel;
+syncPearlPanel=function(){
+ const result=residentPearlPanelBefore();
+ if(pearlPanel.hidden||state.teaStage!=='order'||!residentRecipeValid(residentHospitality.drink)||pearlPanel.querySelector('.residentUsualDrink'))return result;
+ const q=state,choice=residentHospitality.drink,group=element('div','',pearlPanel,'residentUsualDrink');
+ element('small',tr('Last drink: ','上次喝的：')+residentDrinkSummary(choice),group);
+ b(group,tr('Make my usual','再来上次那杯'),()=>{
+  if(state!==q||q.teaStage!=='order'||!residentRecipeValid(choice))return;
+  q.teaOrder=null;q.teaBase=choice.base;q.teaSugar=choice.sugar;q.teaIce=choice.ice;q.teaTopping=choice.topping;pearlStage('pourReady');sound(410);syncPearlPanel()
+ });
+ b(group,tr('Forget last drink','清除上次配方'),()=>{residentHospitality.drink=null;residentHospitalitySave();group.remove()});
+ return result
+};
+const residentHospitalityStyle=document.createElement('style');residentHospitalityStyle.textContent='.residentUsualDrink{border-top:1px solid #bd9e85;margin-top:7px;padding-top:4px;display:grid;grid-template-columns:1fr 1fr;gap:5px}.residentUsualDrink small{grid-column:1/-1}.residentUsualDrink button{min-height:44px;white-space:normal}';document.head.append(residentHospitalityStyle);
+
 const residentPersonalIntroBefore=roomIntro;
 roomIntro=function(){
  const result=residentPersonalIntroBefore();residentWelcomeSpoken.clear();
  if(!room||activity)return result;
  const profile=residentWelcomeProfiles.find(v=>v.rooms.includes(room));if(!profile)return result;
- const visits=(residentWelcomeVisits.get(profile.id)||0)+1;residentWelcomeVisits.set(profile.id,visits);
+ const visits=Math.min(9999,(residentHospitality.visits[profile.id]||0)+1);residentHospitality.visits[profile.id]=visits;residentWelcomeVisits.set(profile.id,visits);residentHospitalitySave();
  if((room==='temple'||room==='kitchen')&&typeof lunarMenu==='function'&&lunarMenu()){
   const existing=$('toast')?.textContent;if(existing)toast(residentNamedGreeting(existing,existing));return result
  }
  // Preserve the instructional hint and use the existing non-blocking toast.
- toast(tr(...profile.names.slice(0,2))+tr(': ','：')+residentWelcomeLine(profile,visits));return result
+ toast(tr(...profile.names.slice(0,2))+tr(': ','：')+residentHospitalityWelcome(profile,visits));return result
 };
 const residentPersonalSayBefore=say;
 say=function(name,line,...rest){
