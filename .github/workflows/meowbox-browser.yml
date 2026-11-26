@@ -708,8 +708,22 @@ jobs:
                 // Setup the home screen with the real starter layout, then use the actual editor controls.
                 await page.evaluate(()=>{hideoutEditing=false;komorebiZone=0;hideoutPage()});
                 await page.getByRole('button',{name:'Expand home',exact:true}).click();
+                const furnitureSearch=page.locator('#mbFurnitureSearch');
+                const extensionTile=page.locator('.komorebiTile[data-furniture-id="roomExtension"]');
+                await furnitureSearch.fill('zz-no-such-furniture-zz');
+                await extensionTile.waitFor({state:'hidden'});
+                await page.locator('.mbCatalogueNoResults').waitFor({state:'visible'});
+                await furnitureSearch.fill('');
+                await extensionTile.waitFor({state:'visible'});
+                const furnitureName=await extensionTile.locator('strong').textContent();
+                await furnitureSearch.fill(furnitureName);
+                await extensionTile.waitFor({state:'visible'});
+                if(!await extensionTile.locator('.mbFurnitureMat img').isVisible())throw Error('Furniture artwork preview missing');
+                await furnitureSearch.fill('');
                 await page.locator('.komorebiTile[data-furniture-id="roomExtension"] button').click();
                 await page.locator('.komorebiConfirm').waitFor();
+                await page.locator('.mbFurnitureDetailMat img').waitFor({state:'visible'});
+                await page.screenshot({path:'test-results/'+name+'-home-furniture-detail.png'});
                 await page.locator('#content > .row button').first().click();
                 await page.locator('.komorebiTile[data-furniture-id="roomExtension"]').waitFor();
                 await page.screenshot({path:'test-results/'+name+'-home-expansion-catalogue.png'});
