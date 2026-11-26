@@ -981,7 +981,7 @@ function incenseStem(x,y,angle=0,lit=false,length=65,smoke=false){
  for(let j=0;j<3;j++){const f=(clock*.55+j/3)%1;ctx.globalAlpha=(1-f)*.18;ellipse(Math.sin(clock*1.5+j)*f*7,-length-4-f*24,2+f*4,3+f*5,'#f7e9ce')}
  }}ctx.restore()
 }
-function incenseBundle(x,y,count,angle,lit){for(let j=0;j<count;j++)incenseStem(x+(j-1)*4,y,angle+(j-1)*.055,lit,65,j===1)}
+function incenseBundle(x,y,count,angle,lit){for(let j=0;j<count;j++){const offset=j-(count-1)/2;incenseStem(x+offset*4,y,angle+offset*.055,lit,65,j===Math.floor(count/2))}}
 function incenseTray(){
  // A shallow wooden incense rack and a candle on their own low side table.
  const wood=ctx.createLinearGradient(0,468,0,527);wood.addColorStop(0,'#bc9669');wood.addColorStop(1,'#826044');
@@ -1037,7 +1037,7 @@ const prayerDraw=drawActivity;drawActivity=function(){
  if(stage==='placing'&&age>=1.15){
   const f=smooth((age-1.15)/1.10),xx=wrist.x+(510-wrist.x)*f,yy=wrist.y+(493-wrist.y)*f;incenseBundle(xx,yy,held,0,true);
  }else if(held)incenseBundle(wrist.x,wrist.y,held,angle,lit);
- if(stage==='taking'){const f=smooth(age/.72),sx=242+held*12,sy=474;incenseStem(sx+(wrist.x+(held-1)*4-sx)*f,sy+(wrist.y-sy)*f,0,false)}
+ if(stage==='taking'){const f=smooth(age/.72),sx=242+held*12,sy=474;incenseStem(sx+(wrist.x+held*2-sx)*f,sy+(wrist.y-sy)*f,0,false)}
  if(stage==='collect')target(219,403,78,88,()=>requestIncenseAction('take'));
  if(stage==='lightReady')target(290,418,42,65,()=>requestIncenseAction('light'));
  if(stage==='hold')target(290,400,115,176,beginQuietBow);
@@ -1049,6 +1049,9 @@ const prayerDraw=drawActivity;drawActivity=function(){
  }else{
   const info=stage==='bow'?tr('Bow ','鞠躬 ')+(state.bows+1)+' / 3':
    ['hold','offer'].includes(stage)?tr('Bows ','鞠躬 ')+state.bows+' / 3':
+   stage==='placing'?tr('Offering 3 sticks','三炷香 · 上香中'):
+   stage==='returnMat'?tr('Offering complete','上香礼成'):
+   ['lighting','walkMat'].includes(stage)?tr('Three sticks of incense','已取三炷香'):
    tr('Incense ','取香 ')+(state.prayerHeld||0)+' / 3';
   txt(info,400,625,17,'#fff1d6')
  }
@@ -1070,7 +1073,7 @@ function templeBellArt(x,y,sc=1,angle=0){ctx.save();ctx.translate(x,y);ctx.scale
 function templeLadle(x,y,a=0){ctx.save();ctx.translate(x,y);ctx.rotate(a);line(-68,0,24,0,'#97734b',9);line(-66,-2,22,-2,'#d8bc80',3);ellipse(35,1,23,12,'#8d714b');ellipse(35,-2,21,10,'#d2bc86');ellipse(35,-2,15,6,'#72948c');ctx.restore()}
 function templeBasin(x,y){ctx.save();let g=ctx.createLinearGradient(0,y,0,y+85);g.addColorStop(0,'#a9aa91');g.addColorStop(1,'#616d61');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x-94,y);ctx.lineTo(x+94,y);ctx.lineTo(x+69,y+65);ctx.quadraticCurveTo(x,y+88,x-69,y+65);ctx.closePath();ctx.fill();ellipse(x,y,96,32,'#a6ad94');ellipse(x,y,82,25,'#526f68');ellipse(x,y,76,20,'#75948b');for(let i=0;i<5;i++){let f=(t*.38+i*.19)%1;ctx.strokeStyle='rgba(227,237,214,'+(1-f)*.55+')';ctx.beginPath();ctx.ellipse(x+22,y,8+f*48,2+f*13,0,0,TAU);ctx.stroke()}ctx.restore()}
 function templeRitualBackground(){paintLivingBackdrop(pics.streetTemple||pics.temple||pics.sticks);let g=ctx.createLinearGradient(0,270,0,680);g.addColorStop(0,'#243b3020');g.addColorStop(1,'#26392fa0');shadeLivingBackdrop(g)}
-function templeReleaseBell(moved){if(activity!=='templeBell'||!Number.isFinite(moved)||moved<=0||t-state.bellAt<1.0)return;state.bellStrength=Math.max(.15,Math.min(1,moved/120));state.bellAt=t;state.bellRung=false;hint('Listen as the sound travels through the valley.','听钟声慢慢传向山谷。')}
+function templeReleaseBell(moved){if(activity!=='templeBell'||!Number.isFinite(moved)||moved<=0||t-state.bellAt<2.5)return;state.bellStrength=Math.max(.15,Math.min(1,moved/120));state.bellAt=t;state.bellRung=false;hint('Listen as the sound travels through the valley.','听钟声慢慢传向山谷。')}
 function waterDropZone(stage,x,y){
  if(!Number.isFinite(x)||!Number.isFinite(y))return false;
  // Ladle coordinates are its handle centre; the bowl is 35 units to the right.
@@ -1097,7 +1100,7 @@ const templeProps=prop;prop=function(id,x,y){if(id==='templeBell'){templeBellArt
 const templeRoom=drawRoom;drawRoom=function(){if(room!=='temple')return templeRoom();ctx.save();templeRitualBackground();let locations=[['templeWater','Water pavilion','手水亭'],['prayer','Prayer altar','祈愿香案'],['templeBell','Bronze bell','山寺钟声'],['sticks','Fortune sticks','求签'],['moon','Moon blocks','掷筊']];for(let [id,en,cn] of locations){const [x,y,ax,ay]=indoorStation(id),first=hit.length;prop(id,x,y);label(tr(en,cn),x,y+34,()=>start(id));target(x-65,y-105,130,115,()=>start(id));markIndoorStation(id,first,[ax,ay])}ctx.restore()};
 const templeRitualDraw=drawActivity;drawActivity=function(){
  if(!['templeBell','templeWater','templePaper'].includes(activity))return templeRitualDraw();ctx.save();templeRitualBackground();
- if(activity==='templeBell'){let age=t-state.bellAt,held=drag?.id==='templeStriker',pull=held?Math.min(85,Math.abs(drag.x-drag.sx)):0,impact=age>.22&&age<4?Math.sin((age-.22)*16)*Math.exp(-(age-.22)*1.7)*state.bellStrength*.045:0;if(age>=.22&&age<4&&!state.bellRung){state.bellRung=true;sound(146+state.bellStrength*12);if(!muted&&ambientBus){ambientTone(146.83,.065*state.bellStrength,2.5,'sine');ambientTone(293.66,.025*state.bellStrength,1.6,'sine',.04)}}line(215,250,530,250,'#6c5239',16);line(400,250,400,272,'#5f5542',12);templeBellArt(400,438,1.05,impact);let swing=held?-pull:age<.22?-85*state.bellStrength*(1-age/.22):age<1.5?-Math.abs(Math.sin((age-.22)*5))*40*state.bellStrength*Math.exp(-age):0;let sx=bellStrikerGeometry(swing);line(250,255,sx+10,467,'#9a825d',3);line(300,255,sx+55,467,'#9a825d',3);ctx.save();ctx.translate(sx,467);round(0,-9,68,18,9,'#a8855b','#654c38');line(8,-4,59,-4,'#d0b082',2);ctx.restore();target(sx-18,433,104,68,()=>templeReleaseBell(55),'templeStriker');if(age>.22&&age<3){for(let j=0;j<3;j++){let f=(age-.22-j*.28)/2.3;if(f>0&&f<1){ctx.strokeStyle='rgba(246,221,158,'+(1-f)*.4*state.bellStrength+')';ctx.beginPath();ctx.ellipse(400,490,80+f*130,19+f*30,0,0,TAU);ctx.stroke()}}}drawRitualPose(211,570,1.8,{reach:held||age<1?{x:sx+8,y:467}:null,bow:held?.10:0});txt(tr('Pull the striker and let go','拉动木槌，再松手'),400,616,17,'#fff1d6');}
+ if(activity==='templeBell'){let age=t-state.bellAt,held=drag?.id==='templeStriker',pull=held?Math.min(85,Math.abs(drag.x-drag.sx)):0,impact=age>.22&&age<4?Math.sin((age-.22)*16)*Math.exp(-(age-.22)*1.7)*state.bellStrength*.045:0;if(age>=.22&&age<4&&!state.bellRung){state.bellRung=true;sound(146+state.bellStrength*12);if(!muted&&ambientBus){ambientTone(146.83,.065*state.bellStrength,2.5,'sine');ambientTone(293.66,.025*state.bellStrength,1.6,'sine',.04)}}line(215,250,530,250,'#6c5239',16);line(400,250,400,272,'#5f5542',12);templeBellArt(400,438,1.05,impact);let swing=held?-pull:age<.22?-85*state.bellStrength*(1-age/.22):age<1.5?-Math.abs(Math.sin((age-.22)*5))*40*state.bellStrength*Math.exp(-age):0;let sx=bellStrikerGeometry(swing);line(250,255,sx+10,467,'#9a825d',3);line(300,255,sx+55,467,'#9a825d',3);ctx.save();ctx.translate(sx,467);round(0,-9,68,18,9,'#a8855b','#654c38');line(8,-4,59,-4,'#d0b082',2);ctx.restore();if(age>=2.5)target(sx-18,433,104,68,()=>templeReleaseBell(55),'templeStriker');if(age>.22&&age<3){for(let j=0;j<3;j++){let f=(age-.22-j*.28)/2.3;if(f>0&&f<1){ctx.strokeStyle='rgba(246,221,158,'+(1-f)*.4*state.bellStrength+')';ctx.beginPath();ctx.ellipse(400,490,80+f*130,19+f*30,0,0,TAU);ctx.stroke()}}}drawRitualPose(211,570,1.8,{reach:held||age<1?{x:sx+8,y:467}:null,bow:held?.10:0});txt(age<2.5?tr('Let the sound settle…','静听钟声……'):tr('Pull and release the striker','拉动木槌，再松手'),400,616,17,'#fff1d6');}
  if(activity==='templeWater'){
   const stage=state.waterStage,age=t-state.waterAt,held=drag?.id==='templeLadle';templeBasin(475,486);
   const handX=410,handY=485;waterHandArt(handX,handY);
@@ -1105,9 +1108,10 @@ const templeRitualDraw=drawActivity;drawActivity=function(){
   if(held&&stage<2){lx=clamp(drag.x,250,560);ly=clamp(drag.y,350,565)}
   else if(stage===1&&age<.3&&state.waterFrom){const f=poseEase(age/.3);lx=state.waterFrom.x+(440-state.waterFrom.x)*f;ly=state.waterFrom.y+(447-state.waterFrom.y)*f}
   else if(stage===2){const f=poseEase(age/.4),from=state.waterFrom||{x:375,y:430};lx=from.x+(375-from.x)*f;ly=from.y+(430-from.y)*f;angle=.64*f*(1-poseEase((age-1.5)/.5))}
+  else if(stage===3){const f=poseEase(clamp(age/.55,0,1));lx=375+25*f;ly=430-4*f;angle=-.10*f}
   const filled=stage===1||stage===2&&age<1.6;waterLadleArt(lx,ly,angle,filled);
   if(stage===2&&age>.18&&age<1.8){const sx=lx+55*Math.cos(angle),sy=ly+55*Math.sin(angle);for(let j=0;j<13;j++){const f=(age*3+j/13)%1;const x=sx+(handX-sx)*f,y=sy+(handY-sy)*f+Math.sin(f*Math.PI)*5;ellipse(x+Math.sin(j)*1.5,y,1.8,3.8,'#d8eae2')}for(let j=0;j<5;j++){let f=(age*2+j*.2)%1;ellipse(handX+Math.sin(j*2)*17,handY+5+f*35,1.4,2.4,'#d9ede3')}}
-  if(stage===2&&age>=2){state.waterStage=3;hint('Hands rinsed. Continue to the altar when ready.','净手完成，准备好了就去香案。')}
+  if(stage===2&&age>=2){state.waterStage=3;state.waterAt=t;if(!state.waterRewarded){state.waterRewarded=true;lifeEarn('ritual:water',{calm:2},true);lifeHUDRefresh()}hint('Hands rinsed. Continue to the altar when ready.','净手完成，准备好了就去香案。')}
   if(stage<2){const zx=stage===0?475:410,zy=stage===0?486:430;ctx.save();ctx.strokeStyle='#f6e7ad';ctx.lineWidth=2.5;ctx.setLineDash([5,5]);ctx.beginPath();ctx.ellipse(zx,zy,37+Math.sin(t*3)*2,stage===0?19:23,0,0,TAU);ctx.stroke();ctx.restore();target(lx-79,ly-27,145,56,()=>{},'templeLadle');
    txt(stage===0?tr('1 · Scoop water','1 · 舀水'):tr('2 · Rinse your hand','2 · 净手'),400,602,18,'#fff2db');
    label(stage===0?tr('Scoop water','舀水'):tr('Pour water','倒水'),400,646,()=>templeReleaseWater({x:stage===0?440:375,y:stage===0?486:430}))
@@ -5402,13 +5406,7 @@ pot=function(x,y){
  }
  ctx.restore()
 };
-/* Reward completion, not opening a room or repeating the same button. */
-const ritualWaterRewardBefore=templeReleaseWater;
-templeReleaseWater=function(a){
- const was=activity==='templeWater'?state.waterStage:null;
- ritualWaterRewardBefore(a);
- if(was===1&&state.waterStage===2){lifeEarn('ritual:water',{calm:2},true);lifeHUDRefresh()}
-};
+/* Water reward is granted after the rinse animation reaches its completed state. */
 const ritualPaperRewardBefore=templePaperKeep;
 templePaperKeep=function(tie){
  const ok=activity==='templePaper'&&state.paperStage==='open';
