@@ -14,6 +14,7 @@ const fs=require('node:fs');
     await page.locator('#proposal .ticket-confirm').click();
     await page.locator('#proposal footer button.next').click();
     await page.locator('#proposal footer .actions button').first().click();
+    await page.locator('#proposal .rail-arrive').click({timeout:20000});
     await page.locator('#proposal .shrine-enter').click({timeout:20000});
     await page.waitForFunction(()=>proposal.hidden&&valleyRevealAt<0&&!signRoot.hidden&&[...signButtons.values()].some(b=>!b.hidden),{},{timeout:15000});
     const entry=await page.evaluate(()=>({y:p.y,max:maxY(),nearest:Math.min(...npc.map(n=>Math.hypot(n.x-p.x,n.y-p.y))),signs:[...signButtons.values()].filter(b=>!b.hidden).length}));

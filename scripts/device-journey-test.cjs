@@ -21,6 +21,7 @@ const assert=(value,message)=>{if(!value)throw Error(message)};
     await click(page.locator('#proposal .ticket-confirm'));
     await click(page.locator('#proposal footer button.next'));
     await click(page.locator('#proposal footer .actions button').first());
+    await click(page.locator('#proposal .rail-arrive'));
     await click(page.locator('#proposal .shrine-enter'));
     await page.waitForFunction(()=>proposal.hidden&&valleyRevealAt<0&&!signRoot.hidden&&[...signButtons.values()].some(b=>!b.hidden&&b.dataset.door!=='station'),null,{timeout:20000});
     // Use the actual nearest visible sign, without relocating the player.

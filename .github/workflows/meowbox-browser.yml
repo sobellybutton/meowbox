@@ -51,6 +51,7 @@ jobs:
                 await page.locator('#proposal .ticket-confirm').click();
                 await page.locator('#proposal footer button.next').click();
                 await page.locator('#proposal footer .actions button').first().click();
+                await page.locator('#proposal .rail-arrive').click({timeout:20000});
                 await page.locator('#proposal .shrine-enter').click({timeout:20000});
                 await page.locator('#proposal').waitFor({state:'hidden',timeout:30000});
                 await page.waitForTimeout(3500);
@@ -196,6 +197,7 @@ jobs:
                 await page.locator('#proposal .ticket-confirm').click();
                 await page.locator('#proposal footer button.next').click();
                 await page.locator('#proposal footer .actions button').first().click();
+                await page.locator('#proposal .rail-arrive').click({timeout:20000});
                 await page.locator('#proposal .shrine-enter').waitFor({timeout:15000});
                 await page.waitForTimeout(1200);
                 if(await page.locator('#proposal').isHidden())throw Error('Gate skipped for new player');
@@ -504,19 +506,25 @@ jobs:
                 await page.evaluate(()=>{scene='fortune';room='destiny';activity=null;state={};closeTalk();updateHUD()});
                 // The chart result uses fictional test birth details; no actual player data.
                 await page.evaluate(()=>action('destiny'));
-                await page.locator('#choices').getByRole('button',{name:'Weekly star signs',exact:true}).click();
+                await page.locator('.yueAlmanacForm').waitFor();
+                await page.locator('.yueChartTools').getByRole('button',{name:'Weekly star signs',exact:true}).click();
                 if(await page.locator('.signNotebookGrid button').count()!==12)throw Error('Missing zodiac signs');
                 await page.locator('.signNotebookGrid button').filter({hasText:'Virgo'}).click();
                 if(!await page.locator('.signNotebookResult').innerText().then(v=>v.includes('Virgo')))throw Error('Virgo result missing');
                 await page.screenshot({path:'test-results/'+name+'-weekly-zodiac.png'});
-                await page.getByRole('button',{name:'Personal birth chart',exact:true}).click();
+                await page.locator('#content .row button').first().click();
+                await page.locator('.yueReadingMenu button').first().click();
                 await page.locator('.astroForm input[type=date]').fill('1990-06-15');
+                await page.locator('.astroForm input[type=time]').fill('12:30');
+                await page.locator('.astroForm details select').selectOption('0');
                 await page.locator('.astroForm button[type=submit]').click();
                 await page.locator('.chartConsultation').waitFor({timeout:8000});
                 await page.locator('.chartTopics button[data-topic="8"]').click();
                 if(!await page.locator('.chartReply').innerText().then(v=>v.includes('Career')))throw Error('Chart-specific career explanation missing');
                 await page.screenshot({path:'test-results/'+name+'-chart-consultation.png'});
-                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                await page.locator('#content .row button').first().click();
+                await page.locator('.yueReadingMenu').waitFor();
+                await page.locator('#content .row button').first().click();
                 if(options.hasTouch){
                   await page.waitForFunction(()=>(()=>{const im=portraitInteriorImage('destiny');return im?.naturalWidth===800&&im?.naturalHeight===1400})(),{},{timeout:10000});
                   await page.screenshot({path:'test-results/'+name+'-portrait-destiny-room.png'});
