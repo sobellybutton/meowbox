@@ -725,3 +725,7 @@ Replaced legacy displayed product names across the canonical engine, extensions,
 ## Bag and home navigation (26 November)
 - Fixed the narrow Bag header so names wrap normally and use the original full-body traveller picture. Profile and Home now have a separate row of controls. Returning from the Profile, Home or Home furniture catalogue restores the same collection chapter.
 - Tested long nicknames, profile return, home entry, furniture catalogue return and chapter persistence at 360 px, 390 px, 768 px and 1440 px in Chromium. The bilingual screenshot sweep captured 432 named states over the four sizes with zero runtime or entry failures. The sweep used Chromium on all sizes and does not establish visual approval of every room.
+
+## Small-screen shrine interaction (26 November)
+- A 360 px touch trace found that the camera shifted between taps as the ritual opened, moving the ladle out of the expected hit position. Bell and purification now use a fixed portrait stage sized around the real control bar. Removed the duplicate on-canvas water button and kept the existing accessible control.
+- Chrome passed actual striker and water drags, invalid-drop rejection and the full incense sequence at 360 px, 390 px, tablet and desktop. The four sizes now run in the shrine workflow.

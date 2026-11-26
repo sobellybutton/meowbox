@@ -1153,7 +1153,6 @@ const templeRitualDraw=drawActivity;drawActivity=function(){
   if(stage===2&&age>=2){state.waterStage=3;state.waterAt=t;if(!state.waterRewarded){state.waterRewarded=true;lifeEarn('ritual:water',{calm:2},true);lifeHUDRefresh()}hint('Hands rinsed. Continue to the altar when ready.','净手完成，准备好了就去香案。')}
   if(stage<2){const zx=stage===0?475:410,zy=stage===0?486:430;ctx.save();ctx.strokeStyle='#f6e7ad';ctx.lineWidth=2.5;ctx.setLineDash([5,5]);ctx.beginPath();ctx.ellipse(zx,zy,37+Math.sin(t*3)*2,stage===0?19:23,0,0,TAU);ctx.stroke();ctx.restore();target(lx-79,ly-27,145,56,()=>{},'templeLadle');
    txt(stage===0?tr('1 · Scoop water','1 · 舀水'):tr('2 · Rinse your hand','2 · 净手'),400,602,18,'#fff2db');
-   label(stage===0?tr('Scoop water','舀水'):tr('Pour water','倒水'),400,646,()=>templeReleaseWater({x:stage===0?440:375,y:stage===0?486:430}))
   }else if(stage===3){label(tr('Visit the altar','前往香案'),400,620,()=>start('prayer'))}
  }
 

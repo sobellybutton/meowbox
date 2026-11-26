@@ -1962,14 +1962,15 @@ function mbVisualFitStage(view,bounds,width,top,bottom){
 const mbStageCameraBefore=mobileRoomCamera;
 let mbStagePanelMeasure={key:'',at:0,top:0,bottom:0},mbLastStageCamera=null;
 mobileRoomCamera=function(s,ox,oy){
- const original=mbStageCameraBefore(s,ox,oy);
+ const ritual=activity==='templeBell'?[155,555,242,625]:activity==='templeWater'?[233,581,348,623]:null;
+ const original=ritual&&W<H?shorePortraitFit(W,H,ritual,174):mbStageCameraBefore(s,ox,oy);
  if(!activity||W>=H||!room){mbLastStageCamera=null;return original}
- const bounds=activity==='bubbleTea'?[180,610,310,635]:
+ const bounds=ritual||(activity==='bubbleTea'?[180,610,310,635]:
  activity==='goldfishScoop'?[207,593,345,605]:
  activity==='bubbleArcade'?[217,583,258,680]:
  activity==='woodenThree'?[215,585,260,675]:
  activity==='love'&&['deal','cards'].includes(state.readStage)?[185,615,230,800]:
- shorePortraitBounds[activity]||portraitActivityBounds[activity]||foodArcadePortraitBounds[activity];
+ shorePortraitBounds[activity]||portraitActivityBounds[activity]||foodArcadePortraitBounds[activity]);
  if(!bounds){mbLastStageCamera=null;return original}
  const key=activity+'|'+W+'|'+H+'|'+zh+'|'+bounds.join(',');
  // A touch gesture must retain the same world coordinate conversion.

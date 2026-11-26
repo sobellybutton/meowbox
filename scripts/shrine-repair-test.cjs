@@ -4,7 +4,12 @@ const fs=require('node:fs');
  const engine=process.env.MEOW_BROWSER==='webkit'?webkit:chromium;
  const browser=await engine.launch();fs.mkdirSync('test-results',{recursive:true});
  try{
-  for(const [name,options] of [['phone',{viewport:{width:390,height:844},isMobile:true,hasTouch:true}],['desktop',{viewport:{width:1280,height:800}}]]){
+  for(const [name,options] of [
+   ['phone-360',{viewport:{width:360,height:640},isMobile:true,hasTouch:true}],
+   ['phone',{viewport:{width:390,height:844},isMobile:true,hasTouch:true}],
+   ['tablet',{viewport:{width:768,height:1024},hasTouch:true}],
+   ['desktop',{viewport:{width:1440,height:900}}]
+  ]){
    const page=await browser.newPage(options);const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&/frame error|Room transition/i.test(m.text()))errors.push(m.text())});
    try{
     await page.goto('http://127.0.0.1:8768/index.html',{waitUntil:'domcontentloaded'});
