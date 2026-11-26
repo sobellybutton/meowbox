@@ -212,23 +212,23 @@ function yueAcceptChart(profile,values,today){
 }
 function yueClearProfile(subject){if(!Object.hasOwn(yueSessionProfiles,subject))return;yueSessionProfiles[subject]={date:'',chart:null,year:null,sign:null,almanacReady:false}}
 function yueSubjectName(){return yueSubject==='self'?tr('My reading','我的命盘'):tr('Someone else’s reading','帮别人看看')}
-function yueReturnControls(q,render){
+function yueReturnControls(q,render,switchView=render){
  const nav=q.querySelector('.row'),back=nav?.firstElementChild,language=nav?.lastElementChild;
  if(back){back.textContent=tr('‹ Master Yue','‹ 月师傅');back.onclick=yueReadingHub}
  if(language)language.onclick=()=>{zh=!zh;save('zh',zh);document.documentElement.lang=zh?'zh':'en';updateHUD();render()};
  const strip=element('div','',q,'yueSubjectStrip');element('strong',yueSubjectName(),strip);
- b(strip,tr('Switch person','切换对象'),yueReadingHub);
+ const people=element('div','',strip,'yueInlinePeople');for(const [id,en,cn] of [['self','Me','自己'],['other','Someone else','别人']]){const btn=b(people,tr(en,cn),()=>{if(yueSubject===id)return;yueSubject=id;switchView()});btn.setAttribute('aria-pressed',String(id===yueSubject))}
  const title=q.querySelector('h1');if(title)title.after(strip)
 }
 function yueReadingHub(){
  page(tr('Master Yue’s reading room','月师傅的命理小馆'),tr('One visit, many questions. The heavens do not require duplicate paperwork.','来都来了，慢慢问。天庭不需要你重复填表。'),q=>{
   const profile=yueProfile(),mast=element('div','',q,'yueSessionMast'),img=element('img','',mast);img.src='assets/visual/painted/master-yue/expressions/warm.webp';img.alt='';
-  const words=element('div','',mast);element('strong',tr('Master Yue','月师傅'),words);element('p',tr('Whose reading are we exploring today?','今天想看看谁的命盘？'),words);
+  const words=element('div','',mast);element('strong',tr('Master Yue','月师傅'),words);element('p',tr('Come, sit down. Have a cup of tea first. What is on your mind?','来来来，坐下先喝杯茶。今天想聊些什么？'),words);
   const choices=element('div','',q,'yueSubjectChoices');
   for(const [id,en,cn] of [['self','My reading','我的命盘'],['other','Someone else’s reading','帮别人看看']]){
    const btn=b(choices,tr(en,cn),()=>{yueSubject=id;yueReadingHub()});btn.setAttribute('aria-pressed',String(id===yueSubject))
   }
-  element('p',profile.date?tr('Birth details available for this visit.','本次已填写生辰资料。'):tr('No birth details entered yet.','尚未填写生辰资料。'),q,'yueSessionNote');
+  if(profile.date)element('p',tr('I have your details for this visit. No need to fill them in again.','这次的生辰资料我记着呢，不用再填。'),q,'yueSessionNote');
   const list=element('div','',q,'yueReadingMenu');
   for(const [name,desc,fn] of [
    [profile.chart?['Continue the personal chart','继续查看个人命盘']:['Personal birth chart','个人生辰命盘'],['Zi Wei Dou Shu and Western Big Three; date, time and birthplace.','紫微斗数与西洋三大星座；需要出生日期、时间和地点。'],()=>destinyPage()],
@@ -264,7 +264,7 @@ destinyPage=function(edit=false,selectedTopic=null,draft=null){
   if(selectedTopic!==null)out.querySelector('.chartTopics [data-topic="'+selectedTopic+'"]')?.click()
  };
  form.addEventListener('submit',remember);
- yueReturnControls(q,()=>{const topic=out.querySelector('.chartTopics [aria-pressed="true"]')?.dataset.topic??null;destinyPage(!form.hidden,topic,form.hidden?null:fields.map(v=>v.value))});
+ yueReturnControls(q,()=>{const topic=out.querySelector('.chartTopics [aria-pressed="true"]')?.dataset.topic??null;destinyPage(!form.hidden,topic,form.hidden?null:fields.map(v=>v.value))},()=>destinyPage());
  if(profile.chart&&!edit&&form.checkValidity()){form.requestSubmit()}else form.hidden=false
 };
 const yueSessionZodiacBefore=yueZodiacAlmanac;
@@ -280,7 +280,7 @@ yueZodiacAlmanac=function(birth='',selection=null){
  function remember(){if(!out.querySelector('.yueReadingFront')||!yueAcceptDate(profile,date.value,shrineClock().day))return;profile.almanacReady=true;profile.year=Number(year.value);date.closest('label').hidden=true;edit.hidden=false}
  form.addEventListener('submit',remember);
  year.addEventListener('change',()=>{if(profile.date&&date.value===profile.date&&form.checkValidity())form.requestSubmit()});
- yueReturnControls(q,()=>yueZodiacAlmanac(date.value,Number(year.value)));
+ yueReturnControls(q,()=>yueZodiacAlmanac(date.value,Number(year.value)),()=>yueZodiacAlmanac());
  if(profile.date&&date.value===profile.date&&form.checkValidity())form.requestSubmit()
 };
 const yueSessionStarsBefore=starSignPage;
@@ -288,7 +288,7 @@ starSignPage=function(selected=null){
  const profile=yueProfile();yueSessionStarsBefore(selected??profile.sign);
  const q=$('content'),grid=q.querySelector('.signNotebookGrid');if(!grid)return;
  grid.querySelectorAll('button').forEach((btn,i)=>btn.addEventListener('click',()=>{profile.sign=i}));
- yueReturnControls(q,()=>starSignPage(profile.sign))
+ yueReturnControls(q,()=>starSignPage(profile.sign),()=>starSignPage())
 };
 const yueSessionStyle=document.createElement('style');yueSessionStyle.textContent=`
 .yueSessionMast{display:flex;align-items:center;gap:15px;background:#e9dcc0;padding:12px;margin:14px 0;color:#384f43}
@@ -300,3 +300,5 @@ const yueSessionStyle=document.createElement('style');yueSessionStyle.textConten
 #content .astroForm[hidden],#content .yueAlmanacForm label[hidden],#content .yueChartTools button[hidden]{display:none!important}
 #content .destinyChamber.yueChartReadMode .roomArtWrap{max-height:145px;overflow:hidden}#content .destinyChamber.yueChartReadMode .roomIllustration{height:145px!important;max-height:145px!important;object-fit:cover!important;aspect-ratio:auto!important}
 `;document.head.append(yueSessionStyle);
+
+const yueFriendlyCSS=document.createElement('style');yueFriendlyCSS.textContent=`.yueSessionMast{background:#f2e5ca!important;border:0!important;box-shadow:none!important;gap:12px;padding:10px 0!important}.yueSessionMast img{width:clamp(96px,29vw,145px);height:auto;aspect-ratio:120/98;object-fit:contain;mix-blend-mode:multiply}.yueSessionMast strong{font:600 22px Georgia,'Songti SC',serif}.yueSessionMast p{font-size:15px;line-height:1.5}.yueSubjectStrip{flex-wrap:wrap;gap:6px!important}.yueInlinePeople{display:flex;gap:4px;flex:1;justify-content:flex-end}.yueInlinePeople button{font-size:13px;min-height:44px;padding:6px 9px}.yueInlinePeople button[aria-pressed=true]{background:#f4e5c3!important;color:#314d40!important}.yueSubjectStrip>strong{font-size:13px}.yueReadingMenu button{border-radius:3px!important;background:#f3e6cc!important;color:#344d41!important;box-shadow:none!important}`;document.head.append(yueFriendlyCSS);
