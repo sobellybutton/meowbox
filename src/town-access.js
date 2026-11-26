@@ -188,3 +188,114 @@ const wishCompactVisual=document.createElement('style');wishCompactVisual.textCo
 #content:has(.wishRitual) .wishRitual .ritualCoin{width:44px!important;height:44px!important}
 @media(orientation:landscape){#content:has(.wishRitual) .wishRitual{width:min(100%,620px,110dvh)!important;aspect-ratio:16/9!important;max-height:62dvh!important}}
 `;document.head.append(wishCompactVisual);
+
+
+/* Master Yue: one consultation, two independent in-memory birth profiles.
+   No localStorage, sessionStorage, network or public posts for birth details.
+   Refreshing/closing this game tab clears them. Existing calculations stay. */
+const yueSessionProfiles={self:{date:'',chart:null,year:null,sign:null,almanacReady:false},other:{date:'',chart:null,year:null,sign:null,almanacReady:false}};
+let yueSubject='self';
+function yueProfile(){return yueSessionProfiles[yueSubject]}
+function yueValidDate(value,today){
+ if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value)||value<'1900-01-02'||value>today)return false;
+ const d=new Date(value+'T00:00:00Z');return Number.isFinite(+d)&&d.toISOString().slice(0,10)===value
+}
+function yueAcceptDate(profile,date,today){
+ if(!yueValidDate(date,today))return false;
+ if(profile.date!==date){profile.date=date;profile.chart=null;profile.sign=null;profile.almanacReady=false}
+ return true
+}
+function yueAcceptChart(profile,values,today){
+ const [date,time,tz,lat,lon]=values;
+ if(!yueValidDate(date,today)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)||[tz,lat,lon].some(v=>v===''||!Number.isFinite(Number(v)))||Number(tz)<-12||Number(tz)>14||Number(lat)<-66||Number(lat)>66||Math.abs(Number(lon))>180)return false;
+ yueAcceptDate(profile,date,today);profile.chart={date,time,tz,lat,lon};return true
+}
+function yueClearProfile(subject){if(!Object.hasOwn(yueSessionProfiles,subject))return;yueSessionProfiles[subject]={date:'',chart:null,year:null,sign:null,almanacReady:false}}
+function yueSubjectName(){return yueSubject==='self'?tr('My reading','我的命盘'):tr('Someone else’s reading','帮别人看看')}
+function yueReturnControls(q,render){
+ const nav=q.querySelector('.row'),back=nav?.firstElementChild,language=nav?.lastElementChild;
+ if(back){back.textContent=tr('‹ Master Yue','‹ 月师傅');back.onclick=yueReadingHub}
+ if(language)language.onclick=()=>{zh=!zh;save('zh',zh);document.documentElement.lang=zh?'zh':'en';updateHUD();render()};
+ const strip=element('div','',q,'yueSubjectStrip');element('strong',yueSubjectName(),strip);
+ b(strip,tr('Switch person','切换对象'),yueReadingHub);
+ const title=q.querySelector('h1');if(title)title.after(strip)
+}
+function yueReadingHub(){
+ page(tr('Master Yue’s reading room','月师傅的命理小馆'),tr('One visit, many questions. The heavens do not require duplicate paperwork.','来都来了，慢慢问。天庭不需要你重复填表。'),q=>{
+  const profile=yueProfile(),mast=element('div','',q,'yueSessionMast'),img=element('img','',mast);img.src='assets/visual/painted/master-yue/expressions/warm.webp';img.alt='';
+  const words=element('div','',mast);element('strong',tr('Master Yue','月师傅'),words);element('p',tr('Whose reading are we exploring today?','今天想看看谁的命盘？'),words);
+  const choices=element('div','',q,'yueSubjectChoices');
+  for(const [id,en,cn] of [['self','My reading','我的命盘'],['other','Someone else’s reading','帮别人看看']]){
+   const btn=b(choices,tr(en,cn),()=>{yueSubject=id;yueReadingHub()});btn.setAttribute('aria-pressed',String(id===yueSubject))
+  }
+  element('p',profile.date?tr('Birth details available for this visit.','本次已填写生辰资料。'):tr('No birth details entered yet.','尚未填写生辰资料。'),q,'yueSessionNote');
+  const list=element('div','',q,'yueReadingMenu');
+  for(const [name,desc,fn] of [
+   [profile.chart?['Continue my personal chart','继续查看个人命盘']:['Personal birth chart','个人生辰命盘'],['Zi Wei Dou Shu and Western Big Three; date, time and birthplace.','紫微斗数与西洋三大星座；需要出生日期、时间和地点。'],()=>destinyPage()],
+   [['Chinese zodiac & Tai Sui','生肖流年 · 犯太岁'],['Explore a lunar year. Birth date only.','看看生肖流年，只需出生日期。'],()=>yueZodiacAlmanac()],
+   [['Weekly star signs','本周十二星座'],['Choose a sun sign. No birth details needed.','直接选星座，无需填写生辰。'],()=>starSignPage()]
+  ]){const btn=b(list,'',fn);element('strong',tr(...name),btn);element('small',tr(...desc),btn)}
+  if(profile.date||profile.chart||profile.sign!==null)b(q,tr('Clear this person’s details','清除该对象资料'),()=>{yueClearProfile(yueSubject);yueReadingHub()});
+  element('small',tr('Details stay in this open game tab only. They are never saved to your account or uploaded. For someone else, use only details they agree to share.','生辰资料仅暂存在当前游戏页面，不会保存到账号或上传。替别人查看时，请使用对方同意提供的资料。'),q,'yueSessionNote');
+  const lang=q.querySelector('.row')?.lastElementChild;if(lang)lang.onclick=()=>{zh=!zh;save('zh',zh);document.documentElement.lang=zh?'zh':'en';updateHUD();yueReadingHub()}
+ })
+}
+destinyConsultMenu=function(){closeTalk();yueReadingHub()};
+const yueSessionChartBefore=destinyPage;
+destinyPage=function(edit=false,selectedTopic=null){
+ yueSessionChartBefore();const q=$('content'),profile=yueProfile(),form=q.querySelector('.astroForm'),out=q.querySelector('.astroResult');if(!form||!out)return;
+ const fields=[form.querySelector('input[type=date]'),form.querySelector('input[type=time]'),...form.querySelectorAll('input[type=number]')];
+ if(fields.length!==5||fields.some(v=>!v))return;
+ fields[0].max=shrineClock().day;
+ if(profile.date)fields[0].value=profile.date;
+ if(profile.chart){const values=['date','time','tz','lat','lon'].map(k=>profile.chart[k]);fields.forEach((v,i)=>v.value=values[i])}
+ const details=form.querySelector('details'),city=details?.querySelector('select');
+ if(profile.chart&&city){
+  const locations=[[8,1.35,103.82],[8,30.27,120.16],[8,31.23,121.47],[8,39.9,116.4],[8,22.32,114.17],[8,3.14,101.69],[8,25.03,121.57],[9,35.68,139.69]];
+  const k=locations.findIndex(v=>v.every((n,i)=>Number(fields[i+2].value)===n));city.value=k<0?'custom':String(k);
+  const summary=details.querySelector('summary');if(summary)summary.textContent=tr('Birthplace: ','出生地：')+(city.selectedOptions[0]?.textContent||tr('Saved coordinates','已填写经纬度'));
+ }
+ const toolbar=element('div','',q,'yueChartTools');form.before(toolbar);
+ const editButton=b(toolbar,tr('Edit birth details','修改生辰资料'),()=>{form.hidden=false;editButton.hidden=true;fields[0].focus()});editButton.hidden=true;
+ b(toolbar,tr('Zodiac & Tai Sui','生肖流年'),()=>yueZodiacAlmanac());b(toolbar,tr('Weekly star signs','每周星座'),()=>starSignPage());
+ const remember=()=>{if(!out.querySelector('.ziGrid'))return;const values=fields.map(v=>v.value);if(!yueAcceptChart(profile,values,shrineClock().day))return;
+  form.hidden=true;editButton.hidden=false;const illustration=q.querySelector('.destinyChamber');if(illustration)illustration.classList.add('yueChartReadMode');
+  if(selectedTopic!==null)out.querySelector('.chartTopics [data-topic="'+selectedTopic+'"]')?.click()
+ };
+ form.addEventListener('submit',remember);
+ yueReturnControls(q,()=>{const topic=out.querySelector('.chartTopics [aria-pressed="true"]')?.dataset.topic??null;destinyPage(!form.hidden,topic)});
+ if(profile.chart&&!edit&&form.checkValidity()){form.requestSubmit()}else form.hidden=false
+};
+const yueSessionZodiacBefore=yueZodiacAlmanac;
+yueZodiacAlmanac=function(birth='',selection=null){
+ const profile=yueProfile();
+ yueSessionZodiacBefore(birth||profile.date,selection??profile.year);
+ const q=$('content'),form=q.querySelector('.yueAlmanacForm'),out=q.querySelector('.yueAlmanacPaper');if(!form||!out)return;
+ const date=form.querySelector('input[type=date]'),year=form.querySelector('select');if(!date||!year)return;
+ if(profile.date)date.value=profile.date;
+ date.min='1900-01-02';
+ const toolbar=element('div','',q,'yueChartTools');form.before(toolbar);
+ const edit=b(toolbar,tr('Change birth date','修改出生日期'),()=>{date.closest('label').hidden=false;edit.hidden=true;date.focus()});edit.hidden=true;
+ function remember(){if(!out.querySelector('.yueReadingFront')||!yueAcceptDate(profile,date.value,shrineClock().day))return;profile.almanacReady=true;profile.year=Number(year.value);date.closest('label').hidden=true;edit.hidden=false}
+ form.addEventListener('submit',remember);
+ year.addEventListener('change',()=>{if(profile.date&&date.value===profile.date&&form.checkValidity())form.requestSubmit()});
+ yueReturnControls(q,()=>yueZodiacAlmanac(profile.date,Number(year.value)));
+ if(profile.date&&date.value===profile.date&&form.checkValidity())form.requestSubmit()
+};
+const yueSessionStarsBefore=starSignPage;
+starSignPage=function(selected=null){
+ const profile=yueProfile();yueSessionStarsBefore(selected??profile.sign);
+ const q=$('content'),grid=q.querySelector('.signNotebookGrid');if(!grid)return;
+ grid.querySelectorAll('button').forEach((btn,i)=>btn.addEventListener('click',()=>{profile.sign=i}));
+ yueReturnControls(q,()=>starSignPage(profile.sign))
+};
+const yueSessionStyle=document.createElement('style');yueSessionStyle.textContent=`
+.yueSessionMast{display:flex;align-items:center;gap:15px;background:#e9dcc0;padding:12px;margin:14px 0;color:#384f43}
+.yueSessionMast img{width:90px;height:100px;object-fit:contain;flex:none}.yueSessionMast p{margin:4px 0;line-height:1.4}
+.yueSubjectChoices,.yueChartTools{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.yueSubjectChoices button,.yueChartTools button{flex:1 1 120px;min-height:44px;white-space:normal}
+.yueSubjectChoices button[aria-pressed=true]{background:#385747!important;color:#fff1d3!important}
+.yueReadingMenu{display:grid;gap:10px;margin:14px 0}.yueReadingMenu button{padding:14px;text-align:left;min-height:72px;white-space:normal}.yueReadingMenu strong,.yueReadingMenu small{display:block;line-height:1.4}.yueReadingMenu strong{font-family:Georgia,"Songti SC",serif;font-size:19px}.yueReadingMenu small{font-size:13px;margin-top:5px}
+.yueSubjectStrip{display:flex;gap:10px;align-items:center;justify-content:space-between;background:#375347;color:#f8e8c9;padding:8px 12px;margin:8px 0}.yueSubjectStrip button{min-height:44px}.yueSessionNote{font-size:13px;line-height:1.5;display:block;margin:10px 0;color:#655943}
+#content .astroForm[hidden],#content .yueAlmanacForm label[hidden],#content .yueChartTools button[hidden]{display:none!important}
+#content .destinyChamber.yueChartReadMode .roomArtWrap{max-height:145px;overflow:hidden}#content .destinyChamber.yueChartReadMode .roomIllustration{height:145px!important;max-height:145px!important;object-fit:cover!important;aspect-ratio:auto!important}
+`;document.head.append(yueSessionStyle);
