@@ -111,3 +111,22 @@ for(const current of [['a','b'],['b','a']])for(const next of [['b','c'],['c','b'
 }
 return n;`)();
 console.log('PASS '+tempoTests+' resident pace, dwell, look and slot continuity checks');
+
+const lifeA=s.indexOf('/* PAW_VISITOR_LIFECYCLE_BEGIN */'),lifeB=s.indexOf('/* PAW_VISITOR_LIFECYCLE_END */');
+if(lifeA<0||lifeB<=lifeA)throw Error('Missing visitor lifecycle');
+const lifeCount=new Function(clearance+s.slice(lifeA,lifeB)+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+const safe=(x,y)=>x>=0&&y>=0&&x<=800&&y<=800,path=(a,b)=>[b];
+ck(!!pawVisitorDoorRoute([100,100],[200,200],[],safe,path),'direct');
+ck(!pawVisitorDoorRoute([100,100],[200,200],[[150,150]],safe,path),'station blocked');
+ck(!pawVisitorDoorRoute([-1,100],[200,200],[],safe,path),'invalid start');
+ck(!pawVisitorDoorRoute([100,100],[200,200],[],safe,()=>[[199,199]]),'wrong endpoint');
+ck(!pawVisitorDoorRoute([100,100],[200,200],[],safe,()=>[[NaN,100]]),'invalid waypoint');
+ck(!pawVisitorDoorRoute([100,100],[200,200],[],safe,()=>null),'no route');
+ck(!pawVisitorDoorClear([100,100],{x:120,y:100},[]),'player at entrance');
+ck(!pawVisitorDoorClear([100,100],{x:200,y:200},[{x:100,y:100,phase:'roaming'}]),'visitor at entrance');
+ck(pawVisitorDoorClear([100,100],{x:200,y:200},[{x:100,y:100,phase:'waiting'}]),'hidden visitor not blocking');
+for(const phase of ['waiting','gone','stationary','roaming','arriving','departing'])ck(pawVisitorVisible({phase})===!['waiting','gone'].includes(phase),'visibility');
+const list=[{walking:1,phase:'arriving'}];ck(pawVisitorHold(list)===list&&list[0].walking===0,'preserve actor references');
+return n;`)();
+console.log('PASS '+lifeCount+' visitor doorway, route, visibility and pause checks');
