@@ -28,6 +28,7 @@ jobs:
       - run: node scripts/paw-room-life-scoop-test.cjs
       - run: node scripts/resident-story-test.cjs
       - run: node scripts/guest-roster-test.cjs
+      - run: node scripts/guest-personality-test.cjs
       - run: node scripts/paw-curated-world-test.cjs
       - run: node scripts/daily-guide-wallet-test.cjs
       - run: node scripts/chapter-grip-test.cjs
