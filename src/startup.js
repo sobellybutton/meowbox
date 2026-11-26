@@ -3940,6 +3940,18 @@ step=function(n,dt,speed){
  return result
 };
 const pawWalkRenderBefore=backHuman;
+const pawScriptedGait={key:'',x:0,y:0,distance:0};
+/* PAW_SCRIPTED_GAIT_BEGIN */
+function pawTrackScriptedGait(q,key,x,y,walking){
+ if(!walking||!key||!Number.isFinite(x)||!Number.isFinite(y)){
+  q.key='';q.distance=0;return 0
+ }
+ const d=q.key===key?Math.hypot(x-q.x,y-q.y):Infinity;
+ if(d>65||!Number.isFinite(d))q.distance=0;
+ else if(d>.02)q.distance+=d;
+ q.key=key;q.x=x;q.y=y;return q.distance
+}
+/* PAW_SCRIPTED_GAIT_END */
 function pawGaitPhase(distance,scale){return Math.max(0,Number.isFinite(distance)?distance:0)/Math.max(34,52*(Number.isFinite(scale)?scale:1))*Math.PI}
 function pawGaitStrength(speed,scale){
  const safe=Number.isFinite(speed)?Math.max(0,speed):0;
@@ -3970,6 +3982,7 @@ function pawPaintedGait(im,x,y,scale,facing,phase,strength=1){
 }
 backHuman=function(x,y,kind,walking,facing,scale=1){
  if(!walking||kind<0||kind>3){
+  if(activity&&kind===avatar&&!pawRenderedWalker&&!walking)pawTrackScriptedGait(pawScriptedGait,'',x,y,false);
   if(room&&!pawRenderedWalker&&kind===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<4){pawIndoorGait.key=scene+'|'+room;pawIndoorGait.x=x;pawIndoorGait.y=y}
   return pawWalkRenderBefore(x,y,kind,walking,facing,scale)
  }
@@ -3982,7 +3995,9 @@ backHuman=function(x,y,kind,walking,facing,scale=1){
   else previous.distance=0;
   previous.key=key;previous.x=x;previous.y=y
  }
- const phase=pawGaitPhase(indoorPlayer?pawIndoorGait.distance:actor?pawGaitTravel.get(actor)||0:isPlayer?pawWalkDistance:0,scale),reduced=actorReduce||residentReducedMotion.matches;
+ const scripted=!!activity&&!actor&&!isPlayer&&kind===avatar;
+ const scriptedDistance=scripted?pawTrackScriptedGait(pawScriptedGait,scene+'|'+room+'|'+activity+'|'+kind,x,y,true):0;
+ const phase=pawGaitPhase(scripted?scriptedDistance:indoorPlayer?pawIndoorGait.distance:actor?pawGaitTravel.get(actor)||0:isPlayer?pawWalkDistance:0,scale),reduced=actorReduce||residentReducedMotion.matches;
  if(frames){const loaded=frames.map(mbArtImage);if(loaded.every(Boolean)){const i=reduced?0:((Math.floor(phase/Math.PI*frames.length/2)%frames.length)+frames.length)%frames.length;mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}}
  const im=pics['walker'+kind+(dir==='up'?1:dir==='down'?0:2)];
  if(im?.naturalWidth&&im.naturalHeight&&!reduced&&(dir==='down'||dir==='right')){
@@ -7560,11 +7575,12 @@ function pawRecoveredNineSlice(sw,sh,w,h,source=[94,96,118,71],target=[8,5,8,5])
 function pawRecoveredFigurePath(name){return Object.hasOwn(pawRecoveredFigures,name)?'fortune-cats/'+pawRecoveredFigures[name]+'.webp':null}
 function pawRecoveredCharmPath(index){return Number.isInteger(index)&&index>=0&&index<pawRecoveredDailyCharms.length?'blessing-charms/'+pawRecoveredDailyCharms[index]+'.webp':null}
 /* PAW_RECOVERED_ART_END */
-const pawRecoveredImages=new Map();
+const pawRecoveredImages=new Map(),pawRecoveredFailures=new Map();
 function pawRecoveredImage(path,ready=null){
  if(!path)return null;
+ if((pawRecoveredFailures.get(path)||0)>Date.now())return null;
  let im=pawRecoveredImages.get(path);
- if(!im){im=new Image();im.decoding='async';pawRecoveredImages.set(path,im);im.addEventListener('error',()=>{if(pawRecoveredImages.get(path)===im)pawRecoveredImages.delete(path)},{once:true});if(ready)im.addEventListener('load',ready,{once:true});im.src=pawRecoveredRoot+path}
+ if(!im){im=new Image();im.decoding='async';pawRecoveredImages.set(path,im);im.addEventListener('error',()=>{if(pawRecoveredImages.get(path)===im){pawRecoveredImages.delete(path);pawRecoveredFailures.set(path,Date.now()+10000)}},{once:true});im.addEventListener('load',()=>pawRecoveredFailures.delete(path),{once:true});if(ready)im.addEventListener('load',ready,{once:true});im.src=pawRecoveredRoot+path}
  else if(ready){if(im.complete&&im.naturalWidth>0)ready();else if(!im.complete)im.addEventListener('load',ready,{once:true})}
  return im
 }
@@ -7694,7 +7710,7 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
   data.cards.forEach((card,i)=>{
    const [x,y,w,h]=slots.cards[i],captionH=Math.min(56,h*.22),maxH=h-captionH-12,ch=Math.min(maxH,(w-14)*218/128),cw=ch*128/218;
    g.save();g.translate(x+w/2,y+6+ch/2);if(card.rev)g.rotate(Math.PI);g.drawImage(art,(card.i%8)*128,Math.floor(card.i/8)*218,128,218,-cw/2,-ch/2,cw,ch);g.restore();
-   textIn([x+2,y+h-captionH,w-4,captionH],[locale(roles[i]),locale(tarotDeck[card.i])+(card.rev?(cn?' 逆位':' · Rev.'):(cn?' 正位':' · Up.'))],data.cards.length===5?22:27,'normal',ink)
+   textIn([x+2,y+h-captionH,w-4,captionH],[locale(roles[i]),locale(tarotDeck[card.i])+(card.rev?(cn?' 逆位':' · Reversed'):(cn?' 正位':' · Upright'))],data.cards.length===5?22:27,'normal',ink)
   });
   textIn(slots.reading,[locale(data.takeaway||socialResultQuote(data))],format==='square'?32:38,'normal',ink)
  }else{
