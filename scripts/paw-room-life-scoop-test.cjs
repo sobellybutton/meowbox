@@ -178,3 +178,44 @@ ck(!pawBubbleCancelPointer(null,id=>released.push(id)),'empty pointer');
 ck(pawBubbleCancelPointer(0,id=>released.push(id))&&released[0]===0,'valid zero pointer');
 return n;`)();
 console.log('PASS '+bubbleChecks+' bubble shot, pause and pointer guards');
+
+const recoveredPart=(a,b)=>{const i=s.indexOf(a),j=s.indexOf(b,i);if(i<0||j<=i)throw Error('Missing '+a);return s.slice(i,j)};
+const recoveredChecks=new Function(recoveredPart('const pawRecoveredShareFormats=','function pawPrepareRecoveredShare')+recoveredPart('function pawDrawRecoveredLayout(','const pawRecoveredShareBefore=')+recoveredPart('/* PAW_SCRIPTED_GAIT_BEGIN */','/* PAW_SCRIPTED_GAIT_END */')+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+let size,strings,draws,depth;
+const g={font:'',save(){depth++},restore(){depth--},translate(){},scale(){},beginPath(){},rect(){},clip(){},rotate(){},measureText(v){return {width:Array.from(v).length*25}},fillText(v){strings.push(v)},drawImage(){draws++}};
+const cv={getContext(){return g}},atlas={complete:true,naturalWidth:1024,naturalHeight:2180};
+function readingArtwork(){return atlas}
+function pawRecoveredImage(){return {complete:true,naturalWidth:1080,naturalHeight:size}}
+const pics={valleyClean:{complete:true,naturalWidth:1440,naturalHeight:810}};
+function sharePaintedKey(){return 'valleyClean'}
+function shareTextLines(g,v,w){return [v]}
+const tarotDeck=Array.from({length:78},(_,i)=>['Card '+i,'牌 '+i]);
+const fiveReadingPositions=Array.from({length:5},(_,i)=>['Position '+i,'位置 '+i]);
+function socialResultQuote(){return ['Live reflection','真实结果']}
+const examples=[...[1,3,5].map(count=>({kind:'tarot',cards:Array.from({length:count},(_,i)=>({i,rev:i===1})),takeaway:['Actual reading','实际解读']})),{kind:'fortune',lines:[['Actual fortune','实际签文']]},{kind:'story',lines:[['Actual story','实际故事']]}];
+for(const format of Object.keys(pawRecoveredShareFormats)){
+ const box=pawRecoveredShareBounds(format);size=box.height;
+ for(const item of examples)for(const cn of [false,true]){
+  const data={...item,title:['Actual title','实际标题']};strings=[];draws=0;depth=0;
+  ck(pawDrawRecoveredLayout(cv,data,format,cn,box,{})===true,'draw '+format+' '+item.kind);
+  ck(cv.width===1080&&cv.height===size&&depth===0,'canvas size and balanced context');
+  ck(strings.join('').includes(cn?'实际标题':'Actual title'),'live title');
+  ck(strings.join('').includes(cn?'实际':'Actual'),'live data');
+  ck(draws===(item.kind==='tarot'?2+item.cards.length:3),'actual image slots');
+ }
+}
+ck(pawRecoveredLayoutKey({kind:'zwds'},'feed')===null,'no full birth chart invented');
+ck(pawRecoveredLayoutKey({kind:'type'},'feed')===null,'no score invented');
+const q={key:'',x:0,y:0,distance:0};
+ck(pawTrackScriptedGait(q,'prayer',10,10,true)===0,'start');
+ck(pawTrackScriptedGait(q,'prayer',13,14,true)===5,'distance');
+ck(pawTrackScriptedGait(q,'prayer',13,14,true)===5,'stationary');
+ck(pawTrackScriptedGait(q,'prayer',16,18,true)===10,'continuous');
+ck(pawTrackScriptedGait(q,'prayer',200,200,true)===0,'teleport');
+ck(pawTrackScriptedGait(q,'paper',204,203,true)===0,'new activity');
+ck(pawTrackScriptedGait(q,'paper',207,207,true)===5,'new motion');
+ck(pawTrackScriptedGait(q,'paper',207,207,false)===0,'idle');
+ck(pawTrackScriptedGait(q,'paper',NaN,4,true)===0,'invalid input');
+return n;`)();
+console.log('PASS '+recoveredChecks+' recovered share rendering and scripted gait checks');
