@@ -4322,7 +4322,7 @@ function pawRememberExchange(entry,clock){
 const pawSocialTickBefore=pawAmbientTick;
 pawAmbientTick=function(now){
  // The original tick owns all blocking/context decisions and solo speech.
- if(pawAmbientBlocked()||pawAmbientContext!==scene+'|'+(room||'outside')+'|'+zh)return pawSocialTickBefore(now);
+ if(pawAmbientBlocked()||pawAmbientContext!==scene+'|'+(room||'outside')+'|'+zh){pawAmbientClear();return pawSocialTickBefore(now)};
  const actors=room?pawAmbientIndoor:npc.filter(n=>!n.sharedPeer&&n.kind!==2),origin=room&&typeof indoor!=='undefined'?indoor:p;
  if(pawOverheardPending){
   if(now<pawAmbientCheck)return;
@@ -5405,11 +5405,25 @@ function pawGuestCount(max,visit,roomId){
  // Some visits are quiet, and some have an extra guest. Stable within a visit.
  return (key+visit)%4===0?0:Math.min(max,1+((key+visit)%3===0?1:0))
 }
+/* PAW_VISITOR_LIFECYCLE_BEGIN */
+function pawVisitorDoorRoute(from,to,anchors,safe,path,clearance=52){
+ if(!Array.isArray(from)||!Array.isArray(to)||![...from,...to].every(Number.isFinite)||!safe(...from)||!safe(...to))return null;
+ const route=path(from,to);
+ if(!Array.isArray(route)||!route.length||!route.every((v,i)=>Array.isArray(v)&&v.length===2&&safe(...v)&&pawGuestSegment(i?route[i-1]:from,v,anchors,clearance)))return null;
+ const end=route.at(-1);
+ return Math.hypot(end[0]-to[0],end[1]-to[1])<.01?route:null
+}
+function pawVisitorVisible(a){return a.phase!=='waiting'&&a.phase!=='gone'}
+function pawVisitorHold(roster){for(const a of roster)a.walking=0;return roster}
+function pawVisitorDoorClear(door,player,others,clearance=75){
+ return pawGuestClear(door[0],door[1],[[player.x,player.y],...others.filter(pawVisitorVisible).map(a=>[a.x,a.y])],clearance)
+}
+/* PAW_VISITOR_LIFECYCLE_END */
 function pawRoomWalkers(){
  const spec=pawRoomVisitorSpecs[room];if(!spec||activity)return [];
  const context=scene+'|'+room+'|'+avatar;
- if(!indoorReady())return context===pawVisitorContext?pawLocalVisitors.map(a=>({...a,walking:0})):[];
- const obs=indoorObstacles(),protectedFeet=pawGuestProtected();
+ if(!indoorReady()){pawVisitorAt=t;return context===pawVisitorContext?pawVisitorHold(pawLocalVisitors):[]}
+ const obs=indoorObstacles(),protectedFeet=pawGuestProtected(),door=indoorSpec().entry,stationFeet=Object.values(indoorSpec().stations||{}).map(v=>v.slice(2,4));
  const safe=pawGuestWaypoints(spec.points,protectedFeet,(x,y)=>indoorSafe(x,y,obs));
  if(context!==pawVisitorContext){
   pawVisitorContext=context;pawVisitorAt=t;pawVisitSerial++;
@@ -5423,18 +5437,38 @@ function pawRoomWalkers(){
   pawLocalVisitors=pawGuestSpaced(ordered,pawGuestCount(spec.count,pawVisitSerial,room)).map((pos,i)=>{
    const start=((avatar??0)+1+i+pawVisitSerial%2)%4,look=pawRoomVisitorLook([...used,...outdoor],start)??pawRoomVisitorLook(used,start);
    if(look===null)return null;used.push(look);
-   return {id:'fictional-visitor-'+i,fictionalVisitor:true,room,x:pos[0],y:pos[1],avatar:look,facing:'down',walking:0,index:safe.indexOf(pos),route:[],wait:t+2+i*2.5}
+   return {id:'fictional-visitor-'+i,fictionalVisitor:true,room,x:pos[0],y:pos[1],avatar:look,facing:'down',walking:0,index:safe.indexOf(pos),route:[],wait:t+2+i*2.5,phase:'waiting',destination:pos,elapsed:0}
   }).filter(Boolean);
   // Use existing original cameo identities, conversation branches and keepsakes.
   // Never duplicate an outdoor character or use unrelated portrait art.
   if(pawLocalVisitors.length&&pawVisitSerial%2===1){
-   const g=pawRoomGuestProfile(pawVisitSerial);if(g){const a=pawLocalVisitors[0];a.guest=g;a.id=g.id;a.facing=a.x<400?'right':'left'}
+   const g=pawRoomGuestProfile(pawVisitSerial);if(g){const a=pawLocalVisitors[0];a.guest=g;a.id=g.id;a.phase='stationary';a.facing=a.x<400?'right':'left'}
   }
  }
  const dt=Math.max(0,Math.min(.05,t-pawVisitorAt));pawVisitorAt=t;
- if(residentReducedMotion.matches||talkOpen||transitioning||document.hidden||$('page').style.display==='block')return pawLocalVisitors.map(a=>({...a,walking:0}));
+ if(talkOpen||transitioning||document.hidden||$('page').style.display==='block')return pawVisitorHold(pawLocalVisitors);
+ if(residentReducedMotion.matches){for(const a of pawLocalVisitors)if(a.phase==='waiting')a.phase='stationary';return pawVisitorHold(pawLocalVisitors)}
  for(const a of pawLocalVisitors){
-  a.walking=0;if(a.guest||t<a.wait||safe.length<2)continue;
+  a.walking=0;if(a.guest||a.visitingResident||a.phase==='gone'||a.phase==='stationary'||t<a.wait)continue;
+  const others=pawLocalVisitors.filter(b=>b!==a),clearDoor=()=>pawVisitorDoorClear(door,indoor,[...others,...pawAmbientIndoor]);
+  const routeTo=(from,to)=>pawVisitorDoorRoute(from,to,stationFeet,(x,y)=>indoorSafe(x,y,obs),(f,d)=>indoorPath(f,d,obs));
+  if(a.phase==='waiting'){
+   if(!a.identitySettled||!clearDoor()){a.wait=t+.7;continue}
+   const route=routeTo(door,a.destination);
+   if(!route){a.phase='gone';continue}
+   a.x=door[0];a.y=door[1];a.facing=pawWalkFacing(a,route[0]);a.route=route;a.phase='arriving';a.elapsed=0;
+  }
+  if(a.phase==='roaming'){
+   a.elapsed+=dt;
+   if(a.elapsed>=35+((a.avatar+1)*7)&&clearDoor()){
+    const route=routeTo([a.x,a.y],door);
+    if(route){a.route=route;a.phase='departing'}
+   }
+  }
+  if(!a.route.length){
+   if(a.phase==='arriving'||a.phase==='departing'){a.route=routeTo([a.x,a.y],a.phase==='arriving'?a.destination:door)||[];if(!a.route.length){a.wait=t+2;continue}}
+   if(a.route.length===0&&safe.length<2){a.wait=t+3;continue}
+  }
   if(!a.route.length){
    // Try several quiet waypoints before waiting. Never take a shortcut
    // through a reserved interaction point just because its endpoints are safe.
@@ -5448,12 +5482,13 @@ function pawRoomWalkers(){
    if(!found){a.wait=t+5;continue}a.route=found
   }
   const tempo=pawResidentTempo(a.id+'|'+a.avatar),dest=a.route[0],next=pawWalkStep(a,dest,dt,tempo.speed);
-  if(!indoorSafe(next.x,next.y,obs)||!pawGuestClear(next.x,next.y,protectedFeet)||!pawGuestClear(next.x,next.y,pawAmbientIndoor.map(v=>[v.x,v.y]),60)){a.route=[];a.wait=t+2;continue}
-  if(Math.hypot(next.x-indoor.x,next.y-indoor.y)<55||pawLocalVisitors.some(b=>b!==a&&Math.hypot(next.x-b.x,next.y-b.y)<50)){a.route=[];a.wait=t+1.1;continue}
+  const transit=a.phase==='arriving'||a.phase==='departing';
+  if(!indoorSafe(next.x,next.y,obs)||!pawGuestClear(next.x,next.y,transit?stationFeet:protectedFeet)||!pawGuestClear(next.x,next.y,pawAmbientIndoor.map(v=>[v.x,v.y]),60)){if(!transit)a.route=[];a.wait=t+2;continue}
+  if(Math.hypot(next.x-indoor.x,next.y-indoor.y)<55||others.some(b=>pawVisitorVisible(b)&&Math.hypot(next.x-b.x,next.y-b.y)<50)){if(!transit)a.route=[];a.wait=t+1.1;continue}
   const distance=Math.hypot(next.x-a.x,next.y-a.y);
   if(distance>.01){a.facing=pawWalkFacing(a,dest);pawGaitTravel.set(a,(pawGaitTravel.get(a)||0)+distance);a.walking=1}
   a.x=next.x;a.y=next.y;
-  if(next.arrived){a.route.shift();if(!a.route.length){a.walking=0;a.wait=t+(4+(a.avatar%3)*2)*tempo.dwell}}
+  if(next.arrived){a.route.shift();if(!a.route.length){a.walking=0;if(a.phase==='departing'){a.phase='gone';continue}if(a.phase==='arriving'){a.phase='roaming';a.elapsed=0}a.wait=t+(4+(a.avatar%3)*2)*tempo.dwell}}
  }
  return pawLocalVisitors
 }
@@ -5462,6 +5497,7 @@ enter=function(...args){pawVisitorContext='';pawLocalVisitors=[];return pawVisit
 const pawVisitorDrawBefore=drawSharedRoomActor;
 drawSharedRoomActor=function(a,scale){
  if(a.fictionalVisitor){
+  if(!pawVisitorVisible(a))return;
   if(a.guest){
    const height=94*scale,drawn=drawResidentRaster(pawGuestArt(a.guest),a.x,a.y,height,a.facing);
    if(drawn){
@@ -6113,9 +6149,9 @@ pawRoomWalkers=function(...args){
   // Make the visual identity decision once per visit. Late image loads
   // must never turn a visible generic walker into a different person.
   if(a.identitySettled)continue;a.identitySettled=true;
-  if(a.guest||a.visitingResident||!pool[i])continue;
+  if(a.guest||a.visitingResident||a.phase==='gone'||!pool[i])continue;
   const im=residentArtworkImage(pool[i]);
-  if(im?.complete&&im.naturalWidth){a.visitingResident=pool[i];a.id='visiting-'+pool[i].id;a.route=[];a.walking=0;a.wait=Number.MAX_SAFE_INTEGER;a.facing=a.x<400?'right':'left'}
+  if(im?.complete&&im.naturalWidth){a.visitingResident=pool[i];a.id='visiting-'+pool[i].id;a.phase='stationary';a.route=[];a.walking=0;a.wait=Number.MAX_SAFE_INTEGER;a.facing=a.x<400?'right':'left'}
  }
  return roster
 };
