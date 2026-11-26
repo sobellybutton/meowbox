@@ -37,3 +37,23 @@ check(pawSpeechAnchor(NaN,180)===90,'tail center fallback');
 check(pawSpeechAnchor(100,18)===12,'narrow bubble clamp');
 return n;`)();
 console.log('PASS: '+count+' story, room depth and speech anchor checks');
+
+const socialStart=s.indexOf('/* PAW_OVERHEARD_BEGIN'),socialEnd=s.indexOf('/* PAW_OVERHEARD_END */');
+if(socialStart<0||socialEnd<=socialStart)throw Error('Missing NPC exchange helpers');
+const socialCount=new Function(s.slice(socialStart,socialEnd)+`
+let n=0;const check=(v,m)=>{if(!v)throw Error(m);n++};
+const origin={x:0,y:0},a={x:20,y:30},b={x:30,y:40};
+check(pawSocialPairReady(a,b,origin),'nearby pair');
+check(!pawSocialPairReady(a,a,origin),'no self conversation');
+check(!pawSocialPairReady(a,{x:290,y:40},origin),'both actors near player');
+check(!pawSocialPairReady({x:NaN,y:0},b,origin),'finite coordinates');
+check(pawSocialOnscreen({left:20,right:90,top:100,bottom:190},390,844),'visible actor');
+check(!pawSocialOnscreen({left:400,right:450,top:100,bottom:190},390,844),'offscreen actor');
+for(const e of pawOverheard){
+ const actors=[{...a,id:e[1]},{...b,id:e[2]}];
+ check(!!pawOverheardChoose(actors,origin,[],1000000,()=>0),'eligible exchange');
+ check(!pawOverheardChoose([actors[0]],origin,[],1000000),'absent partner');
+ check(!pawOverheardChoose(actors,origin,[[e[1],'recent',999999]],1000000),'speaker cooldown');
+}
+return n;`)();
+console.log('PASS: '+socialCount+' social proximity and visibility checks');
