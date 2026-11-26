@@ -2376,14 +2376,13 @@ async function mbMountRailPainting(host,mode){
  im.src=art.portrait.path;
  host.prepend(stage);if(im.complete&&im.naturalWidth)verify()
 }
-async function mbMountGatePainting(hero){
- const art=(await mbJourneyPaintings())?.gate;
- if(!art||!hero.isConnected)return;
+function mbMountGatePainting(hero){
+ if(!hero||hero.querySelector('.mbGatePainting'))return;
+ // Same scene from first paint; no manifest round-trip or fallback image swap.
  const plate=new Image();
- plate.alt='';plate.className='mbGatePainting';plate.src=art.path;
- try{await plate.decode()}catch{return}
- if(!hero.isConnected||plate.naturalWidth!==art.width||plate.naturalHeight!==art.height)return;
- hero.prepend(plate);hero.dataset.paintedGate='true';proposal.dataset.paintedShot='shrine';
+ plate.alt='';plate.className='mbGatePainting';plate.loading='eager';plate.fetchPriority='high';
+ hero.dataset.paintedGate='true';proposal.dataset.paintedShot='shrine';
+ plate.src='assets/visual/painted/journey/gate.webp';hero.prepend(plate);
 }
 const mbRailEntranceBefore=proRender;
 proRender=function(...args){
@@ -4839,5 +4838,99 @@ pawOwnerFinishCss.textContent=
  '@media(prefers-reduced-motion:reduce){#game .pawRailJourney .mbRailPane>span,#proposal .mbPaintedRail .mbRailPane>span{animation:none!important}}'+
  '#content .pawReadableRack{display:grid;gap:10px;padding:14px 12px;background:repeating-linear-gradient(0deg,#b7996e 0px,#b7996e 6px,#bca37b 6px,#bca37b 8px);border:5px solid #866744}#content .pawReadableSlip{background:#f6e9ca;color:#4c4031;padding:6px 11px 10px;border:1px solid #b39a70;box-shadow:2px 3px 5px #58462c44}#content .pawReadableSlip summary{min-height:44px;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px}#content .pawReadableSlip summary strong{font-family:var(--paw-display);flex:1 1 140px}#content .pawReadableSlip small{font-size:11px;color:#78664f}#content .pawReadableSlip p{font-family:var(--paw-display);font-size:16px;line-height:1.55;margin:7px 0}';
 document.head.append(pawOwnerFinishCss);
+
+
+/* PAW_ARRIVAL_TICKET: a single painted scene, one admission action.
+   Preserve the original gate callback, ticket number and saved identity. */
+const pawArrivalTicketBefore=proRender;
+proRender=function(...args){
+ const result=pawArrivalTicketBefore(...args);
+ if(proStep!==3)return result;
+ const hero=proposal.querySelector('.hero'),foot=proposal.querySelector('footer'),enter=foot?.querySelector('.shrine-enter');
+ if(!hero||!foot||!enter)return result;
+ proposal.querySelectorAll('.rail-revisit,.shrine-speaker,.shrine-ticket-reminder,.speck').forEach(n=>n.remove());
+ const painting=hero.querySelector('.mbGatePainting');
+ if(painting){painting.alt=tr('The mountain gate and stone path into Fortune Valley','通往解忧谷的山门与石板小路');painting.setAttribute('aria-hidden','false')}
+ const traveller=hero.querySelector('.gate-traveller');
+ if(traveller){traveller.alt='';pawCropEntranceImage(traveller)}
+ const title=element('h1',shrineReturning?tr('Welcome back','欢迎回来'):tr('A little world awaits','小小世界，等你来'),foot,'pawArrivalTitle');
+ const subtitle=element('p',tr('Leave the busy world outside.','把忙碌留在山门外。'),foot,'pawArrivalSubtitle');
+ const ticket=element('section','',foot,'pawReturnTicket');
+ ticket.setAttribute('aria-label',tr('Your railway admission ticket','你的入谷车票'));
+ const head=element('div','',ticket,'pawReturnTicketHead');
+ element('strong','PAWRADISE RAILWAY',head);
+ element('span','乗車券',head).setAttribute('lang','ja');
+ const meta=element('div','',ticket,'pawReturnTicketMeta');
+ element('small',shrineReturning?tr('RETURN TICKET','回程车票'):tr('ONE WAY TICKET','单程车票'),meta);
+ const saved=load('originalRailTicketV1',null);
+ if(saved?.number)element('small',String(saved.number),meta);
+ const route=element('div','',ticket,'pawReturnTicketRoute');
+ element('small',tr('From','出发'),route);
+ element('strong',tr('Reality','现实世界'),route);
+ const arrow=element('span','→',route,'pawTicketArrow');arrow.setAttribute('aria-hidden','true');
+ element('small',tr('To','抵达'),route);
+ element('strong',tr('Fortune Valley','解忧谷'),route);
+ const strip=element('div','',ticket,'pawReturnTicketStub');
+ element('span',tr('Platform 01 · Free seat','01号站台 · 自由席'),strip);
+ const stamp=element('span','入谷',strip,'pawTicketStamp');stamp.setAttribute('lang','ja');
+ enter.textContent=tr('Enter the valley','走进解忧谷');
+ enter.classList.add('pawTicketEnter');ticket.append(enter);
+ foot.replaceChildren(title,subtitle,ticket);
+ return result
+};
+const pawArrivalTicketCss=document.createElement('style');
+pawArrivalTicketCss.textContent=`
+#proposal[data-paw-entrance-step="3"]:not([hidden]){display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto minmax(190px,1fr) auto!important;gap:0!important;overflow:auto!important;overflow-x:hidden!important;background:#253b33!important;padding:max(8px,env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) max(10px,env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))!important}
+#proposal[data-paw-entrance-step="3"]>.cinema-world,#proposal[data-paw-entrance-step="3"]>.speck,#proposal[data-paw-entrance-step="3"] .shrine-ambient-lantern,#proposal[data-paw-entrance-step="3"]:after{display:none!important}
+#proposal[data-paw-entrance-step="3"]>header{grid-column:1/-1;position:relative!important;z-index:6;margin:0 0 8px!important;min-height:44px;gap:8px}
+#proposal[data-paw-entrance-step="3"]>header>span{font-family:var(--paw-display,Georgia,serif)!important;font-size:clamp(11px,2.6vw,15px)!important;letter-spacing:.065em!important;line-height:1.25}
+#proposal[data-paw-entrance-step="3"]>.hero{position:relative!important;isolation:isolate;display:block!important;container-type:size;min-height:190px!important;height:100%!important;width:100%!important;max-width:none!important;overflow:hidden!important;align-self:stretch!important;justify-self:center;background:#52604b;border:1px solid #ab9872;border-radius:2px 2px 0 0;animation:none!important;box-shadow:0 4px 18px #17282055}
+#proposal[data-paw-entrance-step="3"] .mbGatePainting{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;object-position:50% 82%!important;border-radius:0!important;animation:none!important;opacity:1!important}
+#proposal[data-paw-entrance-step="3"] .hero:after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:linear-gradient(0deg,#26392b38,transparent 20%)}
+#proposal[data-paw-entrance-step="3"] .gate-traveller{position:absolute!important;z-index:3!important;width:auto!important;max-width:30%!important;height:clamp(64px,22cqh,158px)!important;left:50%!important;bottom:5%!important;top:auto!important;translate:-50% 0!important;transform:none;object-fit:contain!important;object-position:bottom;transition:transform .24s ease-in,opacity .24s ease-in!important}
+#proposal[data-paw-entrance-step="3"] .gate-traveller.go{transform:translateY(-36%) scale(.8)!important;opacity:0!important}
+#proposal[data-paw-entrance-step="3"]>footer{display:grid!important;width:100%!important;max-width:440px!important;min-width:0;justify-self:center;align-self:center;gap:6px!important;padding:10px 0 0!important;background:none!important;overflow:visible!important;animation:none!important;border:0!important;text-align:center}
+#proposal[data-paw-entrance-step="3"] .pawArrivalTitle{font:600 clamp(26px,5vw,46px)/1.13 var(--paw-display,Georgia,serif)!important;color:#f6eacb;margin:0}
+#proposal[data-paw-entrance-step="3"] .pawArrivalSubtitle{font:13px/1.45 var(--paw-body,system-ui,sans-serif)!important;color:#e0d7bf;margin:0 0 5px}
+#proposal .pawReturnTicket{position:relative;display:grid;gap:9px;box-sizing:border-box;text-align:left;color:#4e4939;background:linear-gradient(110deg,#f8eed2,#e9d7af);border:1px solid #b89d72;border-radius:2px;padding:13px 14px 12px;box-shadow:0 5px 16px #11251e60,inset 0 0 0 4px #f7eccf,inset 0 0 0 5px #c6af84;min-width:0}
+#proposal .pawReturnTicketHead,#proposal .pawReturnTicketMeta,#proposal .pawReturnTicketStub{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}
+#proposal .pawReturnTicketHead{border-bottom:1px solid #9d8c68;padding-bottom:6px;font-size:11px;letter-spacing:.09em}
+#proposal .pawReturnTicketHead span{font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif CJK JP",serif;font-size:14px;font-weight:bold;letter-spacing:.08em}
+#proposal .pawReturnTicketMeta{font-size:10px;color:#73694e;letter-spacing:.055em}
+#proposal .pawReturnTicketRoute{display:grid;grid-template-columns:minmax(0,1fr) 26px minmax(0,1.25fr);grid-template-rows:auto auto;column-gap:6px;align-items:center;padding:0 0 5px}
+#proposal .pawReturnTicketRoute small{font-size:11px;color:#796b51;grid-row:1}
+#proposal .pawReturnTicketRoute strong{font:600 clamp(18px,4.5vw,27px)/1.14 var(--paw-display,Georgia,serif);grid-row:2;overflow-wrap:anywhere}
+#proposal .pawReturnTicketRoute small:last-of-type,#proposal .pawReturnTicketRoute strong:last-of-type{grid-column:3}
+#proposal .pawTicketArrow{grid-column:2;grid-row:1/3;text-align:center;font-size:20px;color:#8c6748}
+#proposal .pawReturnTicketStub{border-top:1px dashed #b7a17a;padding-top:7px;font-size:11px;color:#6e6249}
+#proposal .pawTicketStamp{border:1.5px solid #aa5947;color:#aa5947;padding:4px 8px;font:600 15px/1 var(--paw-display,Georgia,serif);transform:rotate(-5deg)}
+#proposal .pawTicketEnter{display:block!important;box-sizing:border-box;min-height:48px!important;width:100%!important;max-width:100%;border:1px solid #3c5846!important;border-radius:2px!important;background:#456451!important;color:#fff2d4!important;font:600 16px/1.2 var(--paw-body,system-ui,sans-serif)!important;box-shadow:none!important;padding:9px 12px!important;position:relative!important;z-index:5!important}
+#proposal .pawTicketEnter:focus-visible{outline:3px solid #a05d3b;outline-offset:2px}
+@media(min-width:850px) and (min-height:480px),(orientation:landscape) and (max-height:479px){
+ #proposal[data-paw-entrance-step="3"]:not([hidden]){grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)!important;grid-template-rows:auto minmax(235px,1fr)!important;column-gap:clamp(16px,4vw,64px)!important;padding-inline:clamp(16px,8vw,145px)!important}
+ #proposal[data-paw-entrance-step="3"]>.hero{width:min(100%,calc((100dvh - 75px)*.84))!important;border-radius:3px;justify-self:end}
+ #proposal[data-paw-entrance-step="3"]>footer{justify-self:start;padding:0!important;gap:12px!important;text-align:left}
+ #proposal[data-paw-entrance-step="3"] .pawArrivalTitle{font-size:clamp(34px,4vw,54px)!important}
+ #proposal[data-paw-entrance-step="3"] .pawArrivalSubtitle{font-size:15px!important}
+ #proposal .pawReturnTicket{padding:19px 21px 17px;gap:13px}
+}
+@media(max-height:600px) and (orientation:portrait){
+ #proposal[data-paw-entrance-step="3"]:not([hidden]){grid-template-rows:auto minmax(165px,1fr) auto!important}
+ #proposal[data-paw-entrance-step="3"]>.hero{min-height:165px!important}
+ #proposal .pawReturnTicket{gap:5px;padding:9px 12px}
+ #proposal[data-paw-entrance-step="3"]>footer{gap:3px!important;padding-top:6px!important}
+ #proposal[data-paw-entrance-step="3"] .pawArrivalTitle{font-size:24px!important}
+ #proposal .pawTicketEnter{min-height:44px!important}
+}
+@media(max-height:479px) and (orientation:landscape){
+ #proposal[data-paw-entrance-step="3"]>.hero{width:100%!important}
+ #proposal[data-paw-entrance-step="3"]>footer{gap:4px!important}
+ #proposal[data-paw-entrance-step="3"] .pawArrivalTitle{font-size:25px!important}
+ #proposal .pawReturnTicket{gap:5px;padding:8px 12px}
+ #proposal .pawTicketEnter{min-height:44px!important}
+}
+@media(prefers-reduced-motion:reduce){#proposal[data-paw-entrance-step="3"] .gate-traveller{transition:none!important}}
+`;
+document.head.append(pawArrivalTicketCss);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

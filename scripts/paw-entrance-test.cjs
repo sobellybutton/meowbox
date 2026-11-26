@@ -52,11 +52,11 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
    const persona=proposal.locator('.pawPersonaChoices button').first();await reachable(persona,'Persona');await shot('persona');await persona.click();
    const arrive=proposal.locator('.rail-arrive');await arrive.waitFor({timeout:20000});await reachable(arrive,'Arrive');
    await shot('train');await arrive.click();
-   const gate=proposal.locator('.shrine-enter');await gate.waitFor({timeout:20000});await reachable(gate,'Enter valley');await shot('gate');
+   const gate=proposal.locator('.shrine-enter');await gate.waitFor({timeout:20000});await reachable(gate,'Enter valley');await proposal.locator('.mbGatePainting').evaluate(im=>im.decode());assert.equal(await proposal.locator('.cinema-world').isVisible(),false,'Old entrance artwork still visible');assert.equal(await proposal.locator('.rail-revisit,.shrine-speaker').count(),0,'Redundant gate content');const sceneBounds=await proposal.locator('.hero').boundingBox();assert(sceneBounds&&sceneBounds.height>=height*.28,'Gate illustration too small');assert(await proposal.evaluate(n=>n.scrollWidth<=n.clientWidth+1),'Gate horizontal overflow');await shot('gate');
    await gate.click();await proposal.waitFor({state:'hidden',timeout:30000});
    assert(await page.evaluate(()=>avatar===3&&playerName==='Traveller 旅人'),'Player identity not preserved');
    await page.locator('#dock').waitFor({state:'visible'});await shot('first-walk');const dock=await page.locator('#dock').boundingBox();assert(dock&&dock.y>=0&&dock.y+dock.height<=height+1,'Dock clipped');assert.deepEqual(errors,[],'Page errors');
-   console.log('PASS '+name);
+   await page.reload({waitUntil:'domcontentloaded'});const returnGate=proposal.locator('.shrine-enter');await returnGate.waitFor({timeout:45000});await proposal.locator('.mbGatePainting').evaluate(im=>im.decode());assert.equal(await proposal.locator('.rail-revisit,.shrine-speaker').count(),0,'Return screen still has redundant controls');assert.equal(await proposal.locator('.cinema-world').isVisible(),false,'Return shows fallback art');await reachable(returnGate,'Return ticket entry');await shot('return-ticket');await returnGate.click();await proposal.waitFor({state:'hidden',timeout:20000});assert(await page.evaluate(()=>avatar===3&&playerName==='Traveller 旅人'),'Return identity changed');assert.deepEqual(errors,[],'Return page errors');console.log('PASS '+name);
   }catch(e){failures.push(name+': '+e.message);await shot('FAIL').catch(()=>{});console.error(name,e.message)}
   finally{await page.close()}
  }
