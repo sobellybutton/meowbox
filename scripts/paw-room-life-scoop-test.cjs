@@ -85,3 +85,29 @@ ck(pawGaitStrength(0,1)===0,'stationary');
 ck(pawGaitStrength(25,1)===.5,'gradual stride');
 ck(pawGaitStrength(500,1)===1,'cap stride');
 return 'PASS '+n+' gate grounding, identity continuity and movement assertions';`)());
+
+const curatedA=s.indexOf('/* PAW_CURATED_RUNTIME_BEGIN */'),curatedB=s.indexOf('/* PAW_CURATED_RUNTIME_END */');
+if(curatedA<0||curatedB<=curatedA)throw Error('Missing guest schedule helpers');
+const tempoTests=new Function(s.slice(a,b)+s.slice(curatedA,curatedB)+`
+let n=0;const check=(v,m)=>{if(!v)throw Error(m);n++};
+const speeds=new Set();
+for(let i=0;i<150;i++){
+ const id='character-'+i,v=pawResidentTempo(id);
+ check(v.speed>=27&&v.speed<=40,'pace range');
+ check(v.dwell>=1&&v.dwell<=1.52,'pause range');
+ check(JSON.stringify(v)===JSON.stringify(pawResidentTempo(id)),'stable tempo');speeds.add(v.speed);
+}
+check(speeds.size>8,'varied pace');
+for(let p=0;p<4;p++)for(let start=0;start<4;start++){
+ const a=pawRoomVisitorLook([p],start),b=pawRoomVisitorLook([p,a],start);
+ check(a!==p&&b!==p&&b!==a,'unique indoor looks');
+}
+check(pawRoomVisitorLook([0,1,2,3],0)===null,'no capacity');
+const g=id=>({id});
+for(const current of [['a','b'],['b','a']])for(const next of [['b','c'],['c','b'],['a','b'],['b','a'],['c','d']]){
+ const v=pawGuestKeepSlots(current,next.map(g)).map(x=>x.id);
+ check(new Set(v).size===2&&next.every(x=>v.includes(x)),'same membership');
+ for(let i=0;i<2;i++)if(next.includes(current[i]))check(v[i]===current[i],'retained actor');
+}
+return n;`)();
+console.log('PASS '+tempoTests+' resident pace, dwell, look and slot continuity checks');
