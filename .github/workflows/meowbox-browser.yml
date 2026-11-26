@@ -21,6 +21,7 @@ jobs:
       - run: node scripts/build.cjs
       - run: node scripts/action-refinement-test.cjs
       - run: node scripts/parallel-letter-test.cjs
+      - run: node scripts/home-placement-test.cjs
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps chromium
       - name: Test all four villages and actual doorway taps
@@ -618,6 +619,22 @@ jobs:
                 await page.locator('#dockPassport').click();
                 await page.getByText('Trusted friend · 3/3 stories shared',{exact:true}).waitFor({timeout:5000});
                 await page.screenshot({path:'test-results/'+name+'-resident-friendship.png'});
+                // Setup the home screen with the real starter layout, then use the actual editor controls.
+                await page.evaluate(()=>{hideoutEditing=false;komorebiZone=0;hideoutPage()});
+                await page.getByRole('button',{name:'Decorate room',exact:true}).click();
+                const futon=page.locator('.hideoutPlaced[data-furniture-id="futon"]');
+                await futon.waitFor({state:'visible'});
+                await futon.focus();
+                await page.keyboard.press('Enter');
+                await page.keyboard.press('ArrowUp');
+                if(!await page.evaluate(()=>{const d=hideoutFurniture.find(d=>d.id==='futon');return d&&d.y>=67&&d.y<=93}))throw Error('Furniture escaped floor bounds');
+                await page.getByRole('button',{name:'Put away',exact:true}).click();
+                await futon.waitFor({state:'detached'});
+                await page.locator('[data-furniture-tray="futon"]').click();
+                await futon.waitFor({state:'visible'});
+                await page.screenshot({path:'test-results/'+name+'-home-placement.png'});
+                await page.getByRole('button',{name:'Save & view room',exact:true}).click();
+                await page.screenshot({path:'test-results/'+name+'-home-preview.png'});
                 await page.reload({waitUntil:'domcontentloaded'});
                 await page.locator('#proposal .shrine-enter').waitFor({timeout:45000});
                 if(!await page.evaluate(()=>residentRecord('mochi').topics.length===3&&items.filter(x=>x[0]===residentProfiles.mochi.reward[0]).length===1))throw Error('Resident progress did not survive reload');

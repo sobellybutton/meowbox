@@ -630,3 +630,12 @@ Both broad runs 45745703806 and 45747022718 completed with two full mobile viewp
 - Use one semantic, bilingual letter with actual buttons on all screens, preserve the illustrated host, animated envelope and background, and avoid duplicate choice labels. Wide screens have a separate right-hand letter layout; narrow/portrait layouts retain compact bottom sheet. The ending uses actual replay/share buttons, while its illustrated card remains on canvas.
 - Choice callbacks check the current node and run token so an outdated choice cannot advance the story. Hide the letter under dialogs, overlays and transitions.
 - Browser workflow now exercises alternate desktop branch, previous choice and the full four-choice route through real controls, plus actual ending button visibility. Six focused responsive logic checks and combined script parse passed. No new painted frames or backgrounds were generated/installed. Full new browser run and independent visual inspection remain pending. Graphify still indexed 53a9113.
+
+
+## Home editor placement and continuity (26 November)
+Base c52600e. Its Pages deployment succeeded; full repaired Parallel Lives browser suite was still running when this work began. Latest change keeps the existing home art, prices, inventory and saved layouts, but improves actual furniture editing:
+- Wall and floor pieces have different placement bounds, with horizontal margins based on item width. New items use a suggested open spot. Existing saved positions are not migrated or silently changed.
+- Drag keeps the initial grab offset; pointer cancellation restores the initial coordinates rather than committing a partial drag. Keyboard selection (Enter/Space) and arrow moves use the same bounds. Depth order follows the current floor position.
+- Placed pieces are selectable from the catalogue, can be put away and reused, and can transfer to unlocked room extensions without buying duplicates. Capacity remains 24 per room.
+- The avatar chooses an unobstructed candidate floor anchor; the rug is walkable. If none is clear, the avatar is omitted from the room image instead of overlapping furniture; profile remains visible.
+- Added eight pure placement tests and full-suite editor checks using the real decorate, select, put-away, re-place and save controls. Combined script and workflow JS parse and isolated checks passed before push. Real browser/device layout and drag playback remain pending. No new paintings or animation frames installed. Graphify still indexed 53a9113.

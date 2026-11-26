@@ -1743,4 +1743,9 @@ parallelResponsiveLetterStyle.textContent=
  '@media(max-height:480px){#game #storyReadingSheet[data-wide="false"][data-ending="false"]{max-height:43dvh;padding:7px 10px}#game #storyReadingSheet[data-wide="false"] p{font-size:13px}}';
 document.head.append(parallelResponsiveLetterStyle);
 
+
+const mbHomeStyle=document.createElement('style');
+mbHomeStyle.textContent='#content .hideoutScene{isolation:isolate}#content .hideoutPlaced[role="button"]{touch-action:none;cursor:grab}#content .hideoutPlaced[role="button"]:active{cursor:grabbing}#content .hideoutPlaced:focus-visible{outline:3px solid #f8d395;outline-offset:3px}#content .mbHomeSelection{font-size:13px;color:#70513b;margin:2px 0 8px}#content .mbHomeTransfer{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}#content .mbHomeTransfer button{min-height:44px;white-space:normal}#content .hideoutTools{flex-wrap:wrap}#content .hideoutTools button{min-width:72px}';
+document.head.append(mbHomeStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
