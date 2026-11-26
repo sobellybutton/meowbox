@@ -42,7 +42,7 @@ const assert=(value,message)=>{if(!value)throw Error(message)};
     if(hospitality)assert(hospitality.visits===1&&hospitality.saved===1,'Host visit was not persisted exactly once');
     // Controlled greeting fixture: separate from the organic navigation result.
     const hello=await page.evaluate(()=>{residentGreetingToast(residentNamedGreeting('Welcome.','欢迎。'));const el=$('toast');return {text:el.textContent,role:el.getAttribute('role'),pointer:getComputedStyle(el).pointerEvents,visible:el.classList.contains('residentArrival')}});
-    assert(hello.text==='Hi Device Tester! Welcome.'&&hello.role==='status'&&hello.pointer==='none'&&hello.visible,'Personal greeting is missing or blocks movement');
+    assert(hello.text==='Welcome.'&&hello.role==='status'&&hello.pointer==='none'&&hello.visible,'Natural greeting is missing or blocks movement');
     await page.screenshot({path:'test-results/'+name+'-resident-hello.png'});
     await page.evaluate(()=>clearResidentGreeting());
     await page.screenshot({path:'test-results/'+name+'-organic-room.png'});

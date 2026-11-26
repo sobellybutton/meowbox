@@ -4733,4 +4733,111 @@ document.head.append(pawFeedbackStyle);
 const pawYueYearBefore=yueZodiacAlmanac;
 yueZodiacAlmanac=function(...args){const result=pawYueYearBefore(...args),q=$('content'),title=q.querySelector(':scope > h1'),intro=q.querySelector(':scope > p');if(title)title.textContent=tr('Chinese zodiac & year ahead','生肖与流年');if(intro){intro.hidden=false;intro.textContent=tr('Your birth-year animal and traditional yearly themes. For reflection, not a prediction.','出生年份的生肖与传统流年主题，仅供参考，并非预测。')}return result};
 
+
+/* PAW_OWNER_REPAIR_2_BEGIN */
+const pawRackResidents=[
+ {id:'mei',name:['Auntie Mei','梅姨'],number:6},
+ {id:'grandma',name:['Grandma','外婆'],number:9},
+ {id:'wang',name:['Wang Laoban','王老板'],number:12},
+ {id:'lin',name:['Auntie Lin','林姨'],number:11}
+];
+function pawRackNumbers(raw,max=12){return Array.isArray(raw)?raw.filter(v=>Number.isInteger(v)&&v>=1&&v<=max).slice(-21):[]}
+function pawRackEntries(raw){
+ return [...pawRackResidents.map(v=>({...v,fictional:true})),...pawRackNumbers(raw).map((number,i)=>({id:'local-'+i,name:['My tied fortune','我的签纸'],number,fictional:false}))]
+}
+function pawRoomSpeechAllowed(room,activity,transitioning,pageOpen,talkOpen){return !!room&&!activity&&!transitioning&&!pageOpen&&!talkOpen}
+/* PAW_OWNER_REPAIR_2_END */
+function pawFortuneRackPage(){
+ page(tr('Fortunes left behind','留在这里的签文'),tr('Unfold a little reminder from the town.','打开一张留在小镇的签纸。'),q=>{
+  const rack=element('section','',q,'pawReadableRack');
+  for(const entry of pawRackEntries(templeTies)){
+   const fortune=shrinePaperLines[entry.number-1];if(!fortune)continue;
+   const slip=element('details','',rack,'pawReadableSlip');
+   const label=element('summary','',slip);
+   element('strong',tr(...entry.name),label);
+   element('small',tr('Fortune ','第 ')+entry.number+(zh?' 签':''),label);
+   element('small',entry.fictional?tr('Fictional resident','虚构居民'):tr('Saved on this device','本设备记录'),slip);
+   element('p',tr(...fortune),slip)
+  }
+  element('small',tr('These are fictional resident fortunes and your own local slips, not live traveller posts.','这里只展示虚构居民的签文和你在本设备留下的签纸，不是在线旅人的公开留言。'),q);
+ });
+ mbHomePageBack(tr('‹ Back to the fortune rack','‹ 返回签文架'),()=>{$('page').style.display='none';updateHUD()});
+ journalLanguage(pawFortuneRackPage)
+}
+const pawRackArtBefore=drawTemplePaperRack;
+drawTemplePaperRack=function(x,y,sc=1,hideLatest=0){
+ const own=templeTies;
+ try{templeTies=[...pawRackResidents.map(v=>v.number),...pawRackNumbers(own)].slice(-21);return pawRackArtBefore(x,y,sc,hideLatest)}
+ finally{templeTies=own}
+};
+const pawRackDrawBefore=drawActivity;
+drawActivity=function(...args){
+ const result=pawRackDrawBefore(...args);
+ if(activity==='templePaper'&&['open','kept','tied'].includes(state.paperStage)&&!talkOpen){
+  target(535,350,100,108,pawFortuneRackPage);
+  label(tr('Read the rack','看看签文架'),565,325,pawFortuneRackPage)
+ }
+ return result
+};
+// Use consistent adult standing heights, rather than each sprite's raw
+// dimensions. Draw the existing shopkeeper as a separate person at the counter.
+roomResidentStations.wishes.sc=1.08;
+const pawTeaPoseBefore=drawRitualPose;
+drawRitualPose=function(x,y,sc,opts={}){
+ if(activity==='bubbleTea'&&room==='boba'&&sc>1.25)sc=1.18;
+ return pawTeaPoseBefore(x,y,sc,opts)
+};
+const pawTeaCounterBefore=drawFoodCounter;
+drawFoodCounter=function(...args){
+ const result=pawTeaCounterBefore(...args);
+ if(room==='boba'&&activity==='bubbleTea'){
+  const record=residentArtworkRecord('Boba keeper'),im=residentArtworkImage(record);
+  if(im?.complete&&im.naturalWidth)drawResidentRaster(im,550,463,94,'left')
+ }
+ return result
+};
+// A small contextual speech cue uses the existing resident's actual
+// painted bounds. It does not require the player to stop or respond.
+const pawResidentCueBefore=drawRoom;
+drawRoom=function(...args){
+ const result=pawResidentCueBefore(...args);
+ if(!pawRoomSpeechAllowed(room,activity,transitioning,$('page').style.display==='block',talkOpen)||!indoorReady())return result;
+ for(const actor of pawAmbientIndoor){
+  if(!actor.rect||Math.hypot(actor.x-indoor.x,actor.y-indoor.y)>180||!pawAmbientProfile(actor))continue;
+  if(pawAmbientActive?.id===pawAmbientProfile(actor).id)continue;
+  const yy=actor.rect.y-13,scale=Math.max(.1,cam.scale),ww=Math.max(32,27/scale),hh=Math.max(22,18/scale);
+  if(cam.oy+yy*scale<100)continue;
+  ctx.save();round(actor.x-ww/2,yy-hh/2,ww,hh,hh/2,'#fff1d6','#8c7759');txt('···',actor.x,yy,Math.max(16,12/scale),'#53634b');ctx.restore();
+  target(actor.x-ww/2,yy-hh/2,ww,hh,()=>{
+   const profile=pawAmbientProfile(actor);if(!profile)return;
+   const now=Date.now(),line=pawAmbientPick(profile.id,pawAmbientLines[profile.id],pawAmbientRead(pawAmbientHistory,now),now);
+   if(!line){residentGreetingToast(tr('Lovely to see you around.','很高兴在这里遇见你。'));return}
+   pawAmbientHistory.push([profile.id,line[0],now]);pawAmbientHistory=pawAmbientHistory.slice(-80);save(pawAmbientKey,pawAmbientHistory);
+   say(tr(...actor.n),tr(line[1],line[2]))
+  })
+ }
+ return result
+};
+// Match the shared font direction in common canvas labels too.
+const pawCanvasTextBefore=txt;
+txt=function(value,x,y,size=18,color=C.ink,align='center'){
+ ctx.save();
+ try{
+  ctx.font=String(size)+'px '+(zh?'"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif':'"Avenir Next","Noto Sans","Segoe UI",system-ui,sans-serif');
+  ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillStyle=color;ctx.fillText(String(value),x,y)
+ }finally{ctx.restore()}
+};
+// Earlier independent rail-pane transforms moved a full carriage image
+// beneath each mask at different speeds. Keep both parts in phase and
+// restrict their motion to the existing window area. Dedicated scenery
+// assets are still needed for a fully convincing continuous journey.
+const pawOwnerFinishCss=document.createElement('style');
+pawOwnerFinishCss.textContent=
+ '#game #content .yueCompactHost{min-height:0!important;gap:9px!important;padding:3px 0 5px!important;align-items:center!important}#game #content .yueCompactHost img{width:78px!important;height:92px!important;max-width:28%!important;object-fit:contain!important;object-position:center bottom!important}#game #content .yueCompactHost small{font-size:12px!important;line-height:1.35!important}'+
+ '#game .pawRailJourney .mbRailPane>span,#proposal .mbPaintedRail[data-use=entrance] .mbRailPane>span{animation:pawTrainUnified 7s ease-in-out infinite alternate!important;transform-origin:50% 50%!important;background-repeat:no-repeat!important}'+
+ '@keyframes pawTrainUnified{from{transform:translateX(0) scale(1.025)}to{transform:translateX(-1.4%) scale(1.045)}}'+
+ '@media(prefers-reduced-motion:reduce){#game .pawRailJourney .mbRailPane>span,#proposal .mbPaintedRail .mbRailPane>span{animation:none!important}}'+
+ '#content .pawReadableRack{display:grid;gap:10px;padding:14px 12px;background:repeating-linear-gradient(0deg,#b7996e 0px,#b7996e 6px,#bca37b 6px,#bca37b 8px);border:5px solid #866744}#content .pawReadableSlip{background:#f6e9ca;color:#4c4031;padding:6px 11px 10px;border:1px solid #b39a70;box-shadow:2px 3px 5px #58462c44}#content .pawReadableSlip summary{min-height:44px;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px}#content .pawReadableSlip summary strong{font-family:var(--paw-display);flex:1 1 140px}#content .pawReadableSlip small{font-size:11px;color:#78664f}#content .pawReadableSlip p{font-family:var(--paw-display);font-size:16px;line-height:1.55;margin:7px 0}';
+document.head.append(pawOwnerFinishCss);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
