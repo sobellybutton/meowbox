@@ -6864,6 +6864,296 @@ const pawGuestPersonalityRows=[
   ]
  ]
 ];
+pawGuestPersonalityRows.push(...[
+ [
+  "jay-conclusion",
+  "soft-spoken; taps rhythms; observes rain",
+  [
+   "Rain on my keyboard",
+   "键盘上的雨"
+  ],
+  [
+   "The keeper rang the bell in perfect time. My inbox could learn from him.",
+   "庙祝敲钟很有节奏感，我的邮箱该学学。"
+  ],
+  [
+   "I heard a koi splash and accidentally wrote a chorus.",
+   "听见锦鲤扑通一声，莫名其妙写了段副歌。"
+  ],
+  [
+   "My notebook has twelve unfinished songs and one very finished lunch order.",
+   "笔记本里有十二首没写完的歌，还有一份写得很完整的午餐订单。"
+  ],
+  [
+   "The garden sounds lovely before anyone starts asking for an encore.",
+   "没人喊返场的时候，花园的声音就很好听。"
+  ]
+ ],
+ [
+  "jj-leave",
+  "cheerful; hums quietly; plans small outings",
+  [
+   "Annual leave world tour",
+   "年假世界巡演"
+  ],
+  [
+   "The train whistle hit a note I have been practising all week.",
+   "火车鸣笛那个音，我练了整整一星期。"
+  ],
+  [
+   "Master Yue said my schedule needed breathing room. Finally, vocal advice I can use.",
+   "月师傅说我的日程需要喘口气。这条声乐建议倒是很实用。"
+  ],
+  [
+   "I am practising saying no in three different keys.",
+   "我正在练习用三个不同的调说不。"
+  ],
+  [
+   "Today my only encore is another cup of tea.",
+   "今天唯一的返场，就是再喝一杯茶。"
+  ]
+ ],
+ [
+  "andy-leisure",
+  "courteous; deliberate stride; notices tired travellers",
+  [
+   "A nap on the scenic train",
+   "观景列车上睡午觉"
+  ],
+  [
+   "I helped the keeper straighten a mat. No cameras, very satisfying.",
+   "帮庙祝摆正了垫子，没人拍照，反而很满足。"
+  ],
+  [
+   "I used to rehearse every entrance. Now I am learning to leave on time.",
+   "以前每次出场都要排练，现在正在学习准时退场。"
+  ],
+  [
+   "My most difficult role is a man who finishes lunch before checking his phone.",
+   "最难演的角色，是一个吃完午饭才看手机的人。"
+  ],
+  [
+   "The station bench deserves a thank-you speech of its own.",
+   "车站那张长椅，值得一段专属感谢词。"
+  ]
+ ],
+ [
+  "lady-off",
+  "regal; dry wit; treats daily life as court ceremony",
+  [
+   "Send the eunuch",
+   "派总管公公代劳"
+  ],
+  [
+   "Auntie Mei has granted me a private audience with a pot of tea.",
+   "梅姨准许本宫与一壶茶单独觐见。"
+  ],
+  [
+   "The imperial calendar is full. I hereby declare an empty afternoon.",
+   "御用日程已满，本宫特赐今日午后空白。"
+  ],
+  [
+   "I have dismissed the court messenger. The cats may remain.",
+   "传旨的人已被本宫遣退，猫咪可以留下。"
+  ],
+  [
+   "No petition shall be read until the pastries are served.",
+   "点心未上，奏折一律不阅。"
+  ]
+ ],
+ [
+  "taylor-shift",
+  "wry; collects fragments of stories; listens before speaking",
+  [
+   "My calendar and I are taking a break",
+   "我和日程表暂时分开"
+  ],
+  [
+   "Auntie Hong heard my new title and immediately suggested three more verses.",
+   "红姐听了我的新歌名，立刻贡献了三段歌词。"
+  ],
+  [
+   "My notebook has an entire page titled Things I No Longer Need to Explain.",
+   "笔记本有一整页叫作《不必再解释的事》。"
+  ],
+  [
+   "I wrote down the sound of rain. It did not need a bridge.",
+   "我记下雨声，发现它根本不需要过渡段。"
+  ],
+  [
+   "The tea has gone cold because I forgot to look at the clock. A small victory.",
+   "因为忘了看时间，茶都凉了。小小的胜利。"
+  ]
+ ],
+ [
+  "dilitea",
+  "playful; discreet; enjoys tea and candid moments",
+  [
+   "No comment, extra pearls",
+   "无可奉告，多加珍珠"
+  ],
+  [
+   "Hong asked who I was meeting. I introduced her to my second cup of tea.",
+   "红姐问我和谁约会，我把第二杯茶介绍给了她。"
+  ],
+  [
+   "I ordered less ice and more peace. The shop understood half of that.",
+   "我点了少冰多清净，店家听懂了一半。"
+  ],
+  [
+   "The only filter I need today is the tea strainer.",
+   "今天唯一需要的滤镜，就是茶滤。"
+  ],
+  [
+   "A cat walked into my photo. Much better composition.",
+   "一只猫闯进照片，构图突然高级了。"
+  ]
+ ],
+ [
+  "gordon-ramen",
+  "energetic; precise about food; respects careful cooks",
+  [
+   "A pinch of salt",
+   "一撮盐"
+  ],
+  [
+   "Grandma and I agreed on one rule: taste first, argue later.",
+   "我和外婆达成共识：先尝味道，再争论。"
+  ],
+  [
+   "The noodles need room to breathe. So do the people waiting for them.",
+   "面条需要空间，等面条的人也一样。"
+  ],
+  [
+   "I timed the broth, not the person eating it.",
+   "我给熬汤计时，不给吃饭的人计时。"
+  ],
+  [
+   "The best compliment today is an empty bowl.",
+   "今天最好的赞美，是一只空碗。"
+  ]
+ ],
+ [
+  "jackie-cant",
+  "lively; observant; careful about safety",
+  [
+   "Rush home hour",
+   "下班时刻"
+  ],
+  [
+   "I tried the arcade. The machine beat me fairly, which is refreshing.",
+   "我去玩了街机，机器光明正大赢了我，倒挺痛快。"
+  ],
+  [
+   "My toughest stunt today was carrying tea without spilling it.",
+   "今天最难的特技，是端茶不洒。"
+  ],
+  [
+   "I gave way to a deer. It had a much better sense of direction.",
+   "我给一只鹿让了路，它方向感比我好多了。"
+  ],
+  [
+   "No stunt double needed for sitting quietly. I checked.",
+   "安安静静坐一会儿，不需要替身，我确认过了。"
+  ]
+ ],
+ [
+  "eason-rest",
+  "melancholy humour; hums between remarks; enjoys ordinary pleasures",
+  [
+   "One more pearl",
+   "再来一颗珍珠"
+  ],
+  [
+   "Mateo says the coffee has notes of chocolate. Mine has notes of Monday.",
+   "马特奥说咖啡有巧克力风味，我这杯倒有周一的味道。"
+  ],
+  [
+   "I found a song in the sound of the kettle. It was shorter than my commute.",
+   "我在烧水声里找到一首歌，比通勤时间短多了。"
+  ],
+  [
+   "Some afternoons do not need a dramatic chorus.",
+   "有些下午，不需要轰轰烈烈的副歌。"
+  ],
+  [
+   "I have decided that a quiet Friday deserves its own little melody.",
+   "我决定，安静的周五也值得一小段旋律。"
+  ]
+ ],
+ [
+  "raincheck",
+  "reflective; slow deliberate speech; notices light and weather",
+  [
+   "Two strangers share a coffee",
+   "两个陌生人喝咖啡"
+  ],
+  [
+   "Kenji told me when the train would arrive. I was more interested in the light on the platform.",
+   "健二告诉我列车到站时间，我却更在意站台上的光。"
+  ],
+  [
+   "A cup left on the windowsill tells a surprisingly complete story.",
+   "窗台上一只没收走的杯子，居然能讲完一个故事。"
+  ],
+  [
+   "The rain stopped before I finished my sentence. A very good edit.",
+   "我话还没说完，雨先停了。剪辑得不错。"
+  ],
+  [
+   "Today the ending can wait. The afternoon is still happening.",
+   "今天结局可以慢一点，下午还没过完呢。"
+  ]
+ ],
+ [
+  "kpop-lunch",
+  "upbeat ensemble; playful coordination; respects breaks",
+  [
+   "The Out of Officers",
+   "离线打工人"
+  ],
+  [
+   "The tea keeper asked for our formation. We formed a very orderly queue.",
+   "茶馆老板问我们的队形，我们排成了一条非常整齐的队伍。"
+  ],
+  [
+   "We rehearsed our greeting and forgot to order lunch. Never again.",
+   "排练问候语排到忘了点午饭，下次绝不这样。"
+  ],
+  [
+   "Our afternoon concept is comfortable shoes and no surprise rehearsals.",
+   "下午的主题是舒服的鞋，以及没有临时排练。"
+  ],
+  [
+   "The cats are our toughest audience. They slept through the entire rehearsal.",
+   "猫咪是最难取悦的观众，整场排练都在睡。"
+  ]
+ ],
+ [
+  "merlion-host",
+  "neighbourly; colloquial humour; appreciates practical comforts",
+  [
+   "A seat on the MRT",
+   "地铁座位"
+  ],
+  [
+   "Wang says the folding stool is free to borrow. Wah, premium service.",
+   "王老板说折叠凳免费借。哇，这才叫高级服务。"
+  ],
+  [
+   "I asked for kopi peng and a quiet afternoon. No need to upsize either.",
+   "我点了冰咖啡和安静的下午，两样都不用加大。"
+  ],
+  [
+   "Auntie Mei says the best seat is the one with a breeze. Correct lah.",
+   "梅姨说最好的位子是有风吹来的那个，讲得对啦。"
+  ],
+  [
+   "Today I walked without checking my step count. Still reached the coffee shop.",
+   "今天走路没看步数，照样走到了咖啡店。"
+  ]
+ ]
+]);
 function pawGuestProfileMap(rows){
  const out=new Map();
  for(const [id,manner,topic,...lines] of rows){
