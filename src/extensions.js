@@ -4651,7 +4651,18 @@ start=function(a){if(['prayer','templeWater','templeBell','templePaper','sticks'
 /* Kitchen: distinct preparation bench, ingredient plates and a real enamel pot.
    Keep the established interaction locations and completion/recipe rules. */
 const ingredientDraft=kitchenIngredientArt;
+const kitchenDishNames=['tomatoes','greens','eggs','mushrooms','tofu','empty'];
+const vegetarianDishNames=['mushrooms','greens','tofu'];
+for(const id of kitchenDishNames)ART['kitchenDish-'+id]='assets/visual/painted/kitchen/'+id+'.webp';
 kitchenIngredientArt=function(x,y,i,veg,used=false){
+ const id=used?'empty':(veg?vegetarianDishNames:kitchenDishNames)[i];
+ const painted=pics['kitchenDish-'+id];
+ if(painted?.naturalWidth){
+  const scale=Math.min(92/painted.naturalWidth,68/painted.naturalHeight);
+  const w=painted.naturalWidth*scale,h=painted.naturalHeight*scale;
+  ctx.drawImage(painted,x-w/2,y+12-h,w,h);
+  return
+ }
  const im=productionVisual('kitchenIngredients');if(!im)return ingredientDraft(x,y,i,veg,used);
  const cell=(veg?3:0)+i;ctx.save();ctx.globalAlpha=used?.50:1;
  ctx.drawImage(im,cell*120,0,120,100,x-54,y-55.8,108,90);ctx.restore()

@@ -733,3 +733,7 @@ Replaced legacy displayed product names across the canonical engine, extensions,
 ## Parallel Lives and Personality Lab (26 November)
 - Parallel Lives now draws each branch’s existing illustration instead of the same room behind every chapter. The opening shows both choices on a 360 px screen, and the floating traveller portrait has been removed from the scenery. The Lab title clears the Back button and its host stands behind the table.
 - Clicked through all four choices and verified distinct illustrations plus the ending on 360 px, 390 px, tablet and desktop in Chromium. Dedicated new branch paintings and a broader Discovery redesign remain open.
+
+## Grandma’s Kitchen ingredient artwork (26 November)
+- Added six separate WebP dishes for tomatoes, greens, eggs, mushrooms, tofu and the empty saucer. Loaded dishes now follow the existing drag and leave an empty saucer after a valid drop. Recipes, vegetarian substitutions, stir input and rewards retain their existing behavior.
+- Confirmed the actual dish moves, a drop registers, the used dish empties and both vegetarian alternatives render at 360 px, 390 px, tablet and desktop. New room, Boba and arcade production art remains open.
