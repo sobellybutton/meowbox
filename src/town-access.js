@@ -107,3 +107,84 @@ wishPortraitCSS.textContent=`
 @media(orientation:landscape){#content:has(.wishRitual) .wishRitual{width:min(100%,640px,115dvh)!important;aspect-ratio:16/9!important;background-image:url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(wishingPoolScene(false))}")!important;border-radius:30% 30% 20% 20% / 32% 32% 20% 20%!important}#content:has(.wishRitual) .wishBowl{height:21%}}
 @media(prefers-reduced-motion:reduce){#content .wishRipple,#content .fishWake{animation-duration:.3s!important}}
 `;document.head.append(wishPortraitCSS);
+
+
+/* Wishing pool interaction repair: one visible instruction, compact playable
+   stage, one affected fish per collision. Original flight/strength mechanics
+   retained. The art is still interim, not a finished painted pond. */
+function wishFishCollision(fish,x,y){
+ let best=null,score=1;
+ for(const f of fish){const d=((f.x-x)/8)**2+((f.y-y)/5)**2;if(d<score){best=f;score=d}}
+ return best
+}
+function wishFishGoal(f,age,impact){
+ const normal={x:50+Math.cos(f.angle)*31,y:45+Math.sin(f.angle)*27};
+ if(!impact||impact.fish!==f||age<0||age>1.15)return normal;
+ const dx=f.x-impact.x,dy=f.y-impact.y,dist=Math.max(1,Math.hypot(dx,dy)),strength=16*(1-age/1.15);
+ if(Math.abs(dx)+Math.abs(dy)<.01)return {x:normal.x+strength,y:normal.y};
+ return {x:f.x+dx/dist*strength,y:f.y+dy/dist*strength}
+}
+function wishFishSpeech(pond,fish,full){
+ pond.querySelectorAll('.wishFishSpeech').forEach(v=>v.remove());
+ const bubble=element('div',full,pond,'wishFishSpeech');
+ bubble.setAttribute('aria-hidden','true');
+ bubble.style.left=Math.max(24,Math.min(76,fish.x))+'%';
+ bubble.style.top=Math.max(13,Math.min(67,fish.y-11))+'%';
+ setTimeout(()=>bubble.remove(),2800)
+}
+animateWishKoi=function(pond){
+ pond.querySelectorAll('.v9koi').forEach(n=>n.remove());element('div','',pond,'waterLight');
+ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const fish=[];let impact=null,last=performance.now(),wake=last;
+ const count=Math.random()<.12?4:3;
+ for(let k=0;k<count;k++){const el=element('div','',pond,'livingKoi'+(k===3?' golden':''));const im=element('img','',el);im.src=art9.koi;im.alt='';im.style.animationDelay=(-k*.4)+'s';const angle=k*2*Math.PI/count;fish.push({el,x:50+Math.cos(angle)*29,y:43+Math.sin(angle)*24,angle,heading:angle*180/Math.PI+90,speed:.36+k*.045})}
+ const petals=Array.from({length:5},(_,k)=>({el:element('i','',pond,'floatingPetal'),x:15+k*17,y:15+(k*29)%64,phase:k*1.9}));
+ function tick(now){
+  if(!pond.isConnected)return;
+  if($('page').style.display==='none'){last=now;requestAnimationFrame(tick);return}
+  const dt=Math.min(.06,Math.max(0,(now-last)/1000));last=now;
+  const age=impact?(now-impact.at)/1000:0;
+  if(impact&&age>=1.15)impact=null;
+  for(const f of fish){
+   const prevX=f.x,prevY=f.y;f.angle+=dt*f.speed*(reduce?.35:1);
+   const goal=wishFishGoal(f,age,impact),reacting=impact?.fish===f&&!reduce,ease=Math.min(1,dt*(reacting?3:1.4));
+   const gx=reacting?goal.x:50+Math.cos(f.angle)*31,gy=reacting?goal.y:45+Math.sin(f.angle)*27;
+   f.x=Math.max(9,Math.min(91,f.x+(gx-f.x)*ease));f.y=Math.max(12,Math.min(77,f.y+(gy-f.y)*ease));
+   const dx=f.x-prevX,dy=f.y-prevY;
+   if(Math.hypot(dx,dy)>.001){const desired=Math.atan2(dy*pond.clientHeight,dx*pond.clientWidth)*180/Math.PI;const delta=((desired-f.heading+540)%360)-180;f.heading+=delta*Math.min(1,dt*5)}
+   f.el.style.left=f.x+'%';f.el.style.top=f.y+'%';f.el.style.transform='translate(-50%,-50%) rotate('+f.heading+'deg)';
+  }
+  if(!reduce&&now-wake>1900){wake=now;const f=fish[Math.floor(now/1900)%fish.length];const ripple=element('i','',pond,'fishWake');ripple.style.left=f.x+'%';ripple.style.top=f.y+'%';setTimeout(()=>ripple.remove(),1650)}
+  for(const petal of petals){if(!reduce){petal.x+=dt*.5;petal.y+=dt*Math.sin(now/4000+petal.phase)*.2;if(petal.x>90)petal.x=10}petal.el.style.left=petal.x+'%';petal.el.style.top=petal.y+'%';petal.el.style.transform='rotate('+(Math.sin(now/3200+petal.phase)*35)+'deg)'}
+  requestAnimationFrame(tick)
+ }
+ requestAnimationFrame(tick);
+ return {collision(x,y){return wishFishCollision(fish,x,y)},splash(x,y,hit,bumped){impact=!hit&&bumped?{fish:bumped,x,y,at:performance.now()}:null},reset(){impact=null;pond.querySelectorAll('.wishFishSpeech').forEach(v=>v.remove())}}
+};
+wishPond9=function(){page(tr('The wishing pool','锦鲤许愿池'),tr('Hold a wish in your heart. No need to tell anyone.','在心里默默许个愿，不必告诉任何人。'),q=>{
+ const pond=pond9(q);pond.classList.add('wishRitual');const koiLife=animateWishKoi(pond);element('div','',pond,'wishBowl');const aim=element('i','',pond,'wishAim');aim.hidden=true;const coin=element('img','',pond,'ritualCoin');coin.src=art9.coin;coin.alt=tr('Swipe the coin toward the centre bowl','将铜钱向中央许愿碗滑动');coin.draggable=false;
+ const instruction=element('p',tr('Swipe up from the coin towards the bowl. A faster swipe throws farther.','从铜钱向许愿碗滑动，滑得越快，投得越远。'),q,'wishThrowGuide');pond.before(instruction);const powerBar=element('div','',q,'wishPower');const powerFill=element('i','',powerBar);powerBar.setAttribute('aria-label',tr('Throw strength','投币力度'));const message=element('p',tr('Make a wish, then flick the coin. Direction and strength matter.','默默许愿，再滑动铜钱。方向和力度都很重要。'),q,'wishMessage');message.setAttribute('aria-live','polite');message.setAttribute('role','status');pond.before(message);pond.before(powerBar);
+ let busy=false,done=false,misses=0,origin=null;const home=()=>{coin.style.left='50%';coin.style.top='86%';coin.style.opacity='1';coin.style.transform='translate(-50%,-50%)';coin.hidden=false};
+ const clampWish=(v,min,max)=>Math.max(min,Math.min(max,v));
+ const destination=(dx,dy,ms)=>{const w=pond.clientWidth,h=pond.clientHeight,dist=Math.hypot(dx,dy)/h,velocity=dist/Math.max(.09,ms/1000),power=clampWish(dist*.65+velocity*.24,0,1.15),angle=Math.atan2(dy,dx);return {x:clampWish(50+Math.cos(angle)*power*100*h/w,4,96),y:clampWish(86+Math.sin(angle)*power*100,5,94),power}};
+ function throwWish(x,y){if(busy||done)return;busy=true;aim.hidden=true;let hit=Math.pow((x-50)/6.2,2)+Math.pow((y-39)/4.8,2)<=1;let startTime=performance.now();sound(520);const distance=Math.hypot((x-50)*pond.clientWidth/pond.clientHeight,y-86),duration=460+distance*5,arc=8+distance*.26;const rim=!hit&&Math.pow((x-50)/13.8,2)+Math.pow((y-39)/9.6,2)<=1;const landingX=rim?clampWish(x+(x>=50?1:-1)*(8+distance*.045),5,95):x,landingY=rim?clampWish(y+(y>=39?7:-7),5,93):y;let bounced=false;function frame(now){if(!pond.isConnected)return;let f=Math.min(1,(now-startTime)/duration);coin.style.left=(50+(x-50)*f)+'%';coin.style.top=(86+(y-86)*f-arc*Math.sin(Math.PI*f))+'%';coin.style.transform='translate(-50%,-50%) rotateY('+(f*720)+'deg) scale('+(1-.55*f)+')';if(f<1){requestAnimationFrame(frame);return}if(rim&&!bounced){bounced=true;sound(780);const bowl=pond.querySelector('.wishBowl');bowl.animate([{transform:'translate(-50%,-50%) rotate(0deg)'},{transform:'translate(-50%,-50%) rotate(3deg)'},{transform:'translate(-50%,-50%) rotate(-2deg)'},{transform:'translate(-50%,-50%) rotate(0deg)'}],{duration:260});const bounceAt=performance.now();function rebound(at){if(!pond.isConnected)return;const u=Math.min(1,(at-bounceAt)/310);coin.style.left=(x+(landingX-x)*u)+'%';coin.style.top=(y+(landingY-y)*u-7*Math.sin(Math.PI*u))+'%';coin.style.transform='translate(-50%,-50%) rotate('+(u*420)+'deg) scale(.45)';if(u<1)requestAnimationFrame(rebound);else{x=landingX;y=landingY;finish()}}requestAnimationFrame(rebound);return}finish()}function finish(){if(!pond.isConnected)return;coin.hidden=true;const bumped=!hit&&koiLife.collision(x,y);koiLife.splash(x,y,hit,bumped);sound(hit?660:bumped?410:280);wishLanding(pond,x,y,hit,bumped);for(let n=0;n<3;n++){setTimeout(()=>{if(!pond.isConnected)return;let ripple=element('i','',pond,'wishRipple'+(hit?' gold':''));ripple.style.left=x+'%';ripple.style.top=y+'%';setTimeout(()=>ripple.remove(),1100)},n*150)}if(hit){done=true;busy=false;const settled=element('img','',pond,'settledWishCoin');settled.src=art9.coin;settled.alt='';settled.style.left=x+'%';settled.style.top=y+'%';settled.animate([{transform:'translate(-50%,-50%) scale(.9)',opacity:1},{transform:'translate(-50%,-50%) scale(.65)',opacity:.85}],{duration:450,fill:'forwards'});message.textContent=tr(...townReaction('koi-hit',koiComedy.hit));addItem('Wishing coin','许愿铜钱');again.hidden=false}else{misses++;let lines=[['A little closer. Your wish is still yours.','差一点点，心愿还在。'],['The koi are curious. Try aiming a little higher.','锦鲤都来看热闹了，再往中间瞄一点。'],['Even the koi are cheering for you now. Take your time.','锦鲤都在替你加油了，慢慢来。']];const outcome=bumped?'fish':rim?'rim':y>48?'short':y<31?'long':'miss';message.textContent=tr(...townReaction('koi-'+outcome,koiComedy[outcome]));if(bumped)wishFishSpeech(pond,bumped,message.textContent);setTimeout(()=>{if(!pond.isConnected)return;home();busy=false},650)}}requestAnimationFrame(frame)}
+ coin.onpointerdown=e=>{if(busy||done)return;e.preventDefault();origin={x:e.clientX,y:e.clientY,at:performance.now()};coin.setPointerCapture(e.pointerId)};
+ coin.onpointermove=e=>{if(!origin||busy)return;let v=destination(e.clientX-origin.x,e.clientY-origin.y,performance.now()-origin.at);aim.hidden=false;aim.style.left=v.x+'%';aim.style.top=v.y+'%';powerFill.style.width=Math.min(100,v.power*100)+'%'};
+ coin.onpointerup=e=>{if(!origin)return;let dx=e.clientX-origin.x,dy=e.clientY-origin.y,elapsed=performance.now()-origin.at;origin=null;aim.hidden=true;if(Math.hypot(dx,dy)<12){message.textContent=tr('Swipe upward to send your coin toward the bowl.','向上滑动铜钱，让它飞向许愿碗。');return}let v=destination(dx,dy,elapsed);powerFill.style.width=Math.min(100,v.power*100)+'%';throwWish(v.x,v.y)};
+ coin.onpointercancel=coin.onlostpointercapture=()=>{origin=null;aim.hidden=true};
+ let keyboardAim=0,keyboardPower=36;const keyboard=element('details','',q);element('summary',tr('Alternative aiming controls','其他瞄准方式'),keyboard);const controls=element('div','',keyboard,'wishKeyboard');const readout=element('output','',controls);readout.setAttribute('aria-live','polite');function updateAim(){readout.textContent=tr('Angle ','角度 ')+keyboardAim+'° · '+tr('Power ','力度 ')+keyboardPower+'%';powerFill.style.width=keyboardPower+'%'};for(const [label,description,fn] of [['←',['Aim left','向左瞄准'],()=>keyboardAim=Math.max(-45,keyboardAim-5)],['→',['Aim right','向右瞄准'],()=>keyboardAim=Math.min(45,keyboardAim+5)],['−',['Less power','减小力度'],()=>keyboardPower=Math.max(10,keyboardPower-4)],['+',['More power','加大力度'],()=>keyboardPower=Math.min(90,keyboardPower+4)]]){const btn=b(controls,label,()=>{fn();updateAim()});btn.setAttribute('aria-label',tr(...description))}b(controls,tr('Throw','投币'),()=>{const a=keyboardAim*Math.PI/180;throwWish(clampWish(50+Math.sin(a)*keyboardPower*pond.clientHeight/pond.clientWidth,4,96),clampWish(86-Math.cos(a)*keyboardPower,5,94))});updateAim();
+let again=b(q,tr('Make another wish','再许一个愿'),()=>{done=false;misses=0;koiLife.reset();pond.querySelectorAll('.settledWishCoin').forEach(n=>n.remove());home();again.hidden=true;message.textContent=tr('Hold another wish in your heart, then toss.','再默默许个愿，然后投币。')});again.hidden=true;
+ b(q,tr('Hang a private wish','挂心愿牌'),()=>{$('page').style.display='none';start('wishes')});
+})};
+const wishCompactVisual=document.createElement('style');wishCompactVisual.textContent=`
+#content:has(.wishRitual) .wishRitual{width:min(100%,340px,calc(43dvh * 1.06))!important;aspect-ratio:4/5!important;max-height:50dvh!important;margin:6px auto!important;touch-action:none}
+#content:has(.wishRitual) .wishThrowGuide{font:600 14px/1.4 system-ui,sans-serif;color:#40594f;margin:8px 0 4px;max-width:560px}
+#content:has(.wishRitual) .wishMessage{font:500 14px/1.4 system-ui,sans-serif;color:#324d43;background:#e7e7d2;border-left:3px solid #83957b;padding:8px 10px;min-height:2.8em!important;margin:4px 0!important}
+#content:has(.wishRitual) .wishPower{height:6px;width:min(100%,340px);margin:5px auto!important}
+#content:has(.wishRitual) .wishRitual .livingKoi{width:16%;height:11%;filter:drop-shadow(0 2px 3px #102f3044)}
+#content:has(.wishRitual) .livingKoi img{animation:none!important}
+#content .wishFishSpeech{position:absolute;max-width:68%;width:max-content;transform:translate(-50%,-50%);background:#f9efd9;color:#344b42;border:1px solid #9d8969;border-radius:10px 10px 10px 2px;padding:6px 8px;font:600 12px/1.35 system-ui,sans-serif;box-shadow:0 2px 5px #203a3544;pointer-events:none;z-index:5;overflow-wrap:anywhere}
+#content .wishRitual .wishAim{z-index:2;box-shadow:0 0 0 5px #ffedb230}
+#content:has(.wishRitual) .wishRitual .ritualCoin{width:44px!important;height:44px!important}
+@media(orientation:landscape){#content:has(.wishRitual) .wishRitual{width:min(100%,620px,110dvh)!important;aspect-ratio:16/9!important;max-height:62dvh!important}}
+`;document.head.append(wishCompactVisual);
