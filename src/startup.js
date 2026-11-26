@@ -2680,4 +2680,83 @@ const pawLocalMapCss=document.createElement('style');pawLocalMapCss.textContent=
 @media(max-width:340px){.pawLocalDoors{grid-template-columns:1fr}}
 `;document.head.append(pawLocalMapCss);
 
+
+/* Fortune Valley: traced stair-only resident corridor on valleyClean (039).
+   World coordinates are 1000 x 1777; the upper skyline is never walkable. */
+const pawStairPath=[
+ [350,740,13],[405,675,21],[490,650,23],[535,574,13],
+ [590,517,11],[650,410,23],[715,420,18],[760,518,10],
+ [805,580,15],[880,625,24],[960,590,22],[1020,535,18],
+ [1090,390,28],[1170,380,32],[1300,400,34],[1370,425,34]
+];
+valleyNpcPath.splice(0,valleyNpcPath.length,...pawStairPath);
+function pawStairY(y){return clamp(Number.isFinite(y)?y:pawStairPath[0][0],pawStairPath[0][0],pawStairPath.at(-1)[0])}
+function pawStairResident(n){
+ if(scene!=='fortune'||room||n===p)return;
+ n.y=pawStairY(n.y);n.ty=pawStairY(n.ty);
+ n.x=residentGround(scene,n.x,n.y);n.tx=residentGround(scene,n.tx,n.ty);
+}
+const pawStairInitBefore=initNPC;
+initNPC=function(...args){const result=pawStairInitBefore(...args);if(scene==='fortune')npc.forEach(pawStairResident);return result};
+const pawStairTargetBefore=residentTarget;
+residentTarget=function(n,i){
+ if(scene!=='fortune'||room)return pawStairTargetBefore(n,i);
+ pawStairResident(n);
+ const low=pawStairPath[0][0],high=pawStairPath.at(-1)[0];
+ let direction=n.walkDirection===-1?-1:1;
+ if(n.y<=low+12)direction=1;if(n.y>=high-12)direction=-1;
+ n.walkDirection=direction;n.ty=pawStairY(n.y+direction*(75+12*(Math.max(0,i)%3)));
+ const lane=residentLane('fortune',n.ty);n.tx=lane.x+(i%2?1:-1)*lane.half*.36
+};
+const pawStairStepBefore=step;
+step=function(n,dt,speed){
+ if(scene!=='fortune'||room||n===p)return pawStairStepBefore(n,dt,speed);
+ pawStairResident(n);const result=pawStairStepBefore(n,dt,speed);pawStairResident(n);return result
+};
+/* The station is an intentional boarding action. Retain the existing Map
+   preview for deliberate destination browsing and optional daily suggestions. */
+const pawStationEnterBefore=enter;
+enter=function(id){
+ if(id!=='station')return pawStationEnterBefore(id);
+ if(transitioning||room||!proposal.hidden)return;
+ releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;
+ travellerSuggestedRoute=null;journey(railNextDistrict(scene))
+};
+const pawRailFadeBefore=fade;
+fade=function(fn,kind='gust',destination=null){
+ if(kind!=='postcard'||!maps[destination]||destination===scene)return pawRailFadeBefore(fn,kind,destination);
+ if(transitioning)return;
+ transitioning=true;
+ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const game=$('game'),total=reduce?750:2450,arrival=reduce?330:1850;
+ game.classList.add('pawRailJourneyActive');
+ const old=$('fade');old.className='';old.replaceChildren();old.style.opacity='';
+ setTimeout(()=>{
+  try{fn()}catch(err){console.error('Rail arrival',err)}
+  const overlay=game.querySelector('.pawRailJourney');if(overlay){overlay.dataset.arriving='true';overlay.querySelector('.pawRailCaption small').textContent=tr('Arriving at','即将抵达')}
+ },arrival);
+ setTimeout(()=>{game.classList.remove('pawRailJourneyActive');transitioning=false;game.querySelectorAll('.pawRailJourney').forEach(el=>el.remove());updateHUD()},total);
+};
+mbTransferHolding=function(from,to){
+ const overlay=element('section','',$('game'),'mbTransferHolding pawRailJourney');
+ overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
+ const caption=element('div','',overlay,'pawRailCaption');
+ element('small',tr('Next stop','下一站'),caption);
+ element('strong',tr(...maps[to].n),caption);
+ element('span',tr('Pawradise railway','Pawradise 铁路'),caption);
+ mbMountRailPainting(overlay,'preview');
+};
+mbJourneyPaintings().then(art=>{if(!art)return;for(const key of ['portrait','landscape'])if(art[key]){const im=new Image();im.src=art[key].path}});
+const pawRailJourneyStyle=document.createElement('style');pawRailJourneyStyle.textContent=`
+#game.pawRailJourneyActive #toast{visibility:hidden!important}
+#game .pawRailJourney{padding:0!important;overflow:hidden;isolation:isolate;background:#303c36!important;animation:none!important;opacity:1;transition:opacity .48s ease-out,transform .48s ease-out}
+#game .pawRailJourney .mbPaintedRail{position:absolute;inset:0;margin:auto;width:min(100%,calc(100dvh * var(--rail-aspect, .65)))!important;height:auto!important;aspect-ratio:var(--rail-aspect,.65);max-height:100%;border-radius:0!important}
+#game .pawRailJourney .mbPaintedRail picture img{object-fit:contain}
+#game .pawRailJourney .mbRailPane>span{animation-duration:2.4s}
+#game .pawRailJourney .pawRailCaption{position:absolute;z-index:2;left:50%;bottom:max(8%,env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:max-content;max-width:88%;padding:12px 22px;text-align:center;color:#fff2d3;background:#343c32df;border:1px solid #c4ab7b;border-radius:4px;box-shadow:0 3px 18px #25271f60;box-sizing:border-box}
+#game .pawRailJourney .pawRailCaption small,#game .pawRailJourney .pawRailCaption span{display:block;font:12px/1.4 Georgia,"Songti SC",serif}
+#game .pawRailJourney .pawRailCaption strong{display:block;font:600 clamp(22px,5vw,38px)/1.25 Georgia,"Songti SC",serif;margin:4px 0 5px;overflow-wrap:anywhere}
+#game .pawRailJourney[data-arriving=true]{opacity:0;transform:scale(1.055);pointer-events:none}
+@media(prefers-reduced-motion:reduce){#game .pawRailJourney{transition:none!important}#game .pawRailJourney[data-arriving=true]{transform:none}}
+`;document.head.append(pawRailJourneyStyle);
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
