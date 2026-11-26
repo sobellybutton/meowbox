@@ -1666,7 +1666,10 @@ function mbArtLoad(){
  mbArtRequested=true;
  fetch('assets/visual/painted/action-runtime.json',{credentials:'same-origin'}).then(r=>{if(!r.ok)throw Error('Action artwork manifest');return r.json()}).then(data=>{
   mbArtRegistry=mbArtValidate(data);
-  for(const player of Object.values(mbArtRegistry.players))for(const frames of Object.values(player.walk||{}))for(const frame of frames)mbArtImage(frame)
+  // Keep the mobile network available for district/room paintings. Sprite
+  // frames are requested by the actors actually being drawn.
+  const current=mbArtRegistry.players[avatar??0];
+  for(const frames of Object.values(current?.walk||{}))for(const frame of frames)mbArtImage(frame)
  }).catch(()=>{mbArtRequested=false;mbArtRetryAt=Date.now()+15000})
 }
 function mbArtImage(record){
@@ -6422,7 +6425,7 @@ pawPresentationCSS.textContent=`
 #proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>footer{align-self:end!important;min-height:0!important;position:relative!important;transform:none!important;margin:0!important}
 @media(max-width:700px) and (orientation:portrait){#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"]):not([hidden]){grid-template-rows:auto minmax(150px,1fr) auto!important;overflow-y:auto!important;gap:8px!important}}
 `;document.head.append(pawPresentationCSS);
-const pawWarmDistricts=()=>{mbArtLoad();for(const key of Object.keys(maps))pawReadyMap(key)};
+const pawWarmDistricts=async()=>{await pawReadyMap(scene);mbArtLoad();for(const key of Object.keys(maps))if(key!==scene)await pawReadyMap(key)};
 if(typeof requestIdleCallback==='function')requestIdleCallback(pawWarmDistricts,{timeout:2000});else setTimeout(pawWarmDistricts,800);
 
 
@@ -8041,10 +8044,82 @@ renderRailKeepsake=function(book){
 /* PAW_RECOVERED_ROOM_PLATES: use recovered native portrait paintings only
    behind existing close-up gameplay. Do not replace walking geometry or
    stretch these images to imitate independent landscape compositions. */
+/* Room background availability. Use the known original assets first and
+   never substitute an unrelated district map for an indoor scene. */
+const pawRoomFallbackKeys={
+ temple:['streetTemple','sticks'],tarot:['readingInterior','tarot'],destiny:['readingInterior','streetDestiny'],
+ wishes:['wishes'],secretGarden:['wishes','park'],tea:['tea'],office:['office'],park:['park'],
+ fish:['fish'],kitchen:['kitchen'],boba:['tea','kitchen'],arcade:['arcade'],mystery:['arcade','tea'],
+ quiz:['readingInterior','tea'],story:['readingInterior'],match:['tea']
+};
+const pawCloseupPaths={blindBox:'scenes/blind_box_portrait.webp',templePaper:'scenes/temple_hall_portrait.webp'};
+const pawRoomAlias={daily:'tarot',news:'tea',sticks:'temple',moon:'temple'};
+const pawRoomWarmJobs=new Map();
+function pawRoomImageReady(im){return !!(im?.complete&&im.naturalWidth>0&&im.naturalHeight>0)}
+function pawRoomKnownImage(id){return (pawRoomFallbackKeys[id]||[]).map(k=>pics[k]).find(pawRoomImageReady)||null}
+function pawWarmRoomAssets(id){
+ id=pawRoomAlias[id]||id;
+ if(!Object.hasOwn(pawRoomFallbackKeys,id)||pawRoomWarmJobs.has(id))return;
+ const images=new Set();
+ const add=im=>{if(im)images.add(im)};
+ try{
+  add(portraitInteriorImage(id));add(landscapeRoomImage(id));
+  if(productionVisualManifest[id]){productionVisual(id);add(productionVisualCache.get(id))}
+  if(id==='arcade'){add(pawArcadeArt);add(pawRecoveredImage(pawCloseupPaths.blindBox))}
+  if(id==='temple')add(pawRecoveredImage(pawCloseupPaths.templePaper));
+  if(id==='wishes')add(pawRecoveredImage('scenes/wishing_garden_portrait.webp'));
+  for(const k of pawRoomFallbackKeys[id])add(pics[k]);
+ }catch{}
+ const promises=[...images].filter(im=>!pawRoomImageReady(im)).map(im=>typeof im.decode==='function'?im.decode().catch(()=>{}):Promise.resolve());
+ const job=Promise.race([Promise.all(promises),new Promise(resolve=>setTimeout(resolve,2200))]).finally(()=>pawRoomWarmJobs.delete(id));
+ pawRoomWarmJobs.set(id,job)
+}
+function pawRoomPaintFallback(im){
+ if(!pawRoomImageReady(im))return false;
+ const b=livingBounds();ctx.save();try{cover(im,b.x,b.y,b.w,b.h)}finally{ctx.restore()}return true
+}
+// Boba was missing from both orientation registries, and its counter
+// explicitly requested a null backdrop. Keep the existing tea painting
+// while a dedicated boba room plate is not available.
+landscapeRoomProfiles.boba={wall:'#a59b80',floor:'#9c7d5e',accent:'#b78c65',keys:['tea','kitchen'],kind:'tea'};
+const pawStablePortraitBefore=paintPortraitInterior;
+paintPortraitInterior=function(id){
+ const im=portraitInteriorImage(id);
+ if(!pawRoomImageReady(im)&&id!=='arcade'&&pawRoomPaintFallback(pawRoomKnownImage(id)))return;
+ return pawStablePortraitBefore(id)
+};
+const pawStableWideBefore=paintLandscapeRoom;
+paintLandscapeRoom=function(id){
+ if(pawArtworkOrientation(W,H)!=='landscape'||!Object.hasOwn(landscapeRoomProfiles,id))return false;
+ const profile=landscapeRoomProfiles[id],installed=mbArtImage(mbArtRegistry.rooms[id]?.landscape),generated=landscapeRoomImage(id);
+ if(!installed&&!pawRoomImageReady(generated)&&!profile.keys.some(k=>pawRoomImageReady(pics[k]))){
+  return pawRoomPaintFallback(pawRoomKnownImage(id))
+ }
+ return pawStableWideBefore(id)
+};
+const pawWarmOnDoorBefore=walkDoor;
+walkDoor=function(id,...args){pawWarmRoomAssets(id);return pawWarmOnDoorBefore(id,...args)};
+const pawWarmOnEnterBefore=enter;
+enter=function(id,...args){pawWarmRoomAssets(id);return pawWarmOnEnterBefore(id,...args)};
+const pawWarmOnActivityBefore=start;
+start=function(id,...args){if(room)pawWarmRoomAssets(room);if(pawCloseupPaths[id])pawRecoveredImage(pawCloseupPaths[id]);return pawWarmOnActivityBefore(id,...args)};
+let pawWarmedDistrict='';
+function pawWarmNearbyRoom(){
+ if(room||activity||transitioning||!proposal.hidden)return;
+ const key=scene+'|'+Math.floor(p.y/280);if(key===pawWarmedDistrict)return;pawWarmedDistrict=key;
+ const nearest=(maps[scene]?.st||[]).filter(v=>v[0]!=='station').map(v=>({id:v[0],d:Math.hypot(v[1]-p.x,v[2]-p.y)})).sort((a,b)=>a.d-b.d).slice(0,2);
+ const work=()=>{for(const v of nearest)pawWarmRoomAssets(v.id)};
+ if(typeof requestIdleCallback==='function')requestIdleCallback(work,{timeout:1000});else setTimeout(work,100)
+}
+const pawWarmLoopBefore=loop;
+loop=function(...args){const result=pawWarmLoopBefore(...args);pawWarmNearbyRoom();return result};
 const pawRecoveredRoomBackdropBefore=paintLivingBackdrop;
 paintLivingBackdrop=function(...args){
- if(W<H&&(activity==='blindBox'||activity==='templePaper')){
-  const path=activity==='blindBox'?'scenes/blind_box_portrait.webp':'scenes/temple_hall_portrait.webp';
+ if(room==='boba'&&!args[0]){
+  if(pawRoomPaintFallback(pawRoomKnownImage('boba')))return
+ }
+ if(W<H&&Object.hasOwn(pawCloseupPaths,activity)){
+  const path=pawCloseupPaths[activity];
   const art=pawRecoveredImage(path);
   if(art?.complete&&art.naturalWidth>0&&art.naturalHeight>0){
    const bounds=livingBounds();ctx.save();cover(art,bounds.x,bounds.y,bounds.w,bounds.h);ctx.restore();return
