@@ -2863,7 +2863,7 @@ function pawJournalRender(district=scene){
    const seen=pawJournalSeen(district,id);const tag=element('small',seen?tr('✓ Visited','✓ 已到访'):tr('Yet to explore','尚未探索'),copy,'pawSketchVisited');tag.dataset.seen=String(seen);
    if(district===scene){const btn=b(copy,room===id?tr('Return to this room','返回这里'):tr('Visit ›','去逛逛 ›'),()=>{
     if(transitioning)return;$('page').style.display='none';
-    if(room===id)return;if(room){enter(id);return}walkDoor(id,x,y)
+    if(room===id)return;pawJournalWalkToDoor(id,x,y)
    });btn.className='pawSketchGo'}
   }
   const foot=element('div','',book,'pawSketchFoot'),idx=pawJournalKeys.indexOf(district);
@@ -4072,6 +4072,43 @@ hideoutPage=function(...args){
 };
 const pawRoomAccessStyle=document.createElement('style');pawRoomAccessStyle.textContent='#content .hideoutScene [role=button]:focus-visible,#content .figureCabinetInRoom:focus-visible{outline:2px solid #f9e3ad;outline-offset:3px}#content .hideoutScene .hideoutPlaced[role=button]{cursor:pointer}#content .komorebiTile:focus-visible{outline:3px solid #526a50;outline-offset:-3px}';document.head.append(pawRoomAccessStyle);
 
+
+/* A journal shortcut is a direction, not a teleport between interiors. */
+let pawJournalWalkToken=0;
+function pawJournalWalkToDoor(id,x,y){
+ const token=++pawJournalWalkToken,district=scene,deadline=performance.now()+5000;
+ let exits=0,lastRoom=room,lastActivity=activity,waiting=false;
+ const proceed=()=>{
+  if(token!==pawJournalWalkToken||scene!==district||$('page').style.display==='block'||performance.now()>deadline)return;
+  if(transitioning){requestAnimationFrame(proceed);return}
+  if(!room){walkDoor(id,x,y);return}
+  if(waiting&&room===lastRoom&&activity===lastActivity){requestAnimationFrame(proceed);return}
+  if(exits>=2)return;
+  lastRoom=room;lastActivity=activity;waiting=true;exits++;
+  $('back').click();requestAnimationFrame(proceed)
+ };
+ proceed()
+}
+// Stop the animation without invoking a queued furniture action if the
+// player leaves the room, switches tabs or hides the browser.
+const pawHomeMotionPageBefore=page;
+page=function(...args){pawHomeStop();return pawHomeMotionPageBefore(...args)};
+document.addEventListener('visibilitychange',()=>{if(document.hidden){pawHomeStop();pawJournalWalkToken++}});
+const pawHomeMotionJourneyBefore=journey;
+journey=function(...args){pawHomeStop();pawJournalWalkToken++;return pawHomeMotionJourneyBefore(...args)};
+const pawHomeMotionEnterBefore=enter;
+enter=function(...args){pawHomeStop();return pawHomeMotionEnterBefore(...args)};
+/* Existing ambient speech must fall silent if the listener walks away. */
+const pawAmbientDistanceBefore=pawAmbientTick;
+pawAmbientTick=function(now){
+ if(pawAmbientActive&&now>=pawAmbientCheck&&!pawAmbientBlocked()){
+  const origin=room&&typeof indoor!=='undefined'?indoor:p,actors=room?pawAmbientIndoor:npc;
+  const actor=actors.find(n=>pawAmbientProfile(n)?.id===pawAmbientActive.id);
+  if(!actor||Math.hypot(actor.x-origin.x,actor.y-origin.y)>300){pawAmbientClear();pawAmbientNext=now+7000}
+ }
+ return pawAmbientDistanceBefore(now)
+};
+
 /* PAW_AMBIENT_RESIDENTS_END */
 
 
@@ -4127,6 +4164,11 @@ function pawHomeFootprint(x,y,width,kind,id,aspect=1){
  const half=Math.min(46,Math.max(5,width*.43+3)),depth=Math.min(12,Math.max(3,width*.21*aspect));
  return {l:x-half,r:x+half,u:y-depth-2,d:y+3}
 }
+function pawHomeObjectApproach(start,anchor,blocks,bounds=pawHomeBounds){
+ const offsets=[[0,8],[-10,6],[10,6],[-16,0],[16,0],[0,-8],[-16,10],[16,10]];
+ const options=offsets.map(([x,y])=>({x:anchor.x+x,y:anchor.y+y})).filter(v=>pawHomeSafe(v,blocks,bounds)).sort((a,b)=>Math.hypot(a.x-start.x,a.y-start.y)-Math.hypot(b.x-start.x,b.y-start.y));
+ return options.find(v=>pawHomeRoute(start,v,blocks,bounds))||null
+}
 function pawHomeDirection(a,b,aspect=1){
  const dx=(b.x-a.x)*aspect,dy=b.y-a.y;
  return Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')
@@ -4162,7 +4204,7 @@ function pawHomeActorArt(player,direction,walking,distance){
  if(src&&player.getAttribute('src')!==src)player.src=src;
  player.style.setProperty('--paw-home-facing',direction==='left'?'-1':'1')
 }
-function pawHomeMoveTo(stage,player,point,key,goal,announce){
+function pawHomeMoveTo(stage,player,point,key,goal,announce,onArrival=null){
  pawHomeStop();
  const blocks=pawHomeStageBlocks(stage),route=pawHomeRoute(point,goal,blocks);
  if(!route?.length)return false;
@@ -4171,11 +4213,11 @@ function pawHomeMoveTo(stage,player,point,key,goal,announce){
  function finish(){
   pawHomeActorPosition(player,stage,point);pawHomeActorArt(player,motion.direction,false,motion.distance);
   pawHomePositions.set(key,{...point});if(pawHomeWalk===motion)pawHomeWalk=null;
-  if(announce)announce.textContent=tr('Arrived','到啦')
+  if(announce)announce.textContent='';if(typeof onArrival==='function'&&stage.isConnected&&!hideoutEditing)onArrival()
  }
- if(reduced){Object.assign(point,route.at(-1));motion.direction=pawHomeDirection(point,goal);finish();return true}
+ if(reduced){motion.direction=pawHomeDirection(point,route.at(-1),stage.clientWidth/Math.max(1,stage.clientHeight));Object.assign(point,route.at(-1));finish();return true}
  function frame(now){
-  if(pawHomeWalk!==motion||!stage.isConnected||hideoutEditing||$('page').style.display!=='block'){if(pawHomeWalk===motion)pawHomeStop();return}
+  if(pawHomeWalk!==motion||!stage.isConnected||hideoutEditing||$('page').style.display!=='block'||document.hidden){if(pawHomeWalk===motion)pawHomeStop();return}
   const next=route[0];if(!next){finish();return}
   const aspect=stage.clientWidth/Math.max(1,stage.clientHeight),dx=next.x-point.x,dy=next.y-point.y,d=Math.hypot(dx*aspect,dy);
   if(d<.12){Object.assign(point,next);route.shift()}
@@ -4203,7 +4245,8 @@ hideoutPage=function(...args){
   const id=im.dataset.furnitureId,y=parseFloat(im.style.top);
   if(Number.isFinite(y))im.style.zIndex=String(id==='rug'?1:20+Math.round(y*4))
  }
- for(const display of stage.querySelectorAll('.hideoutDisplay')){const y=parseFloat(display.style.top);if(Number.isFinite(y))display.style.zIndex=String(25+Math.round(y*4))}
+ const shelf=stage.querySelector('.hideoutPlaced[data-furniture-id="shelf"]'),shelfY=parseFloat(shelf?.style.top);
+ for(const display of stage.querySelectorAll('.hideoutDisplay')){const y=Number.isFinite(shelfY)?shelfY:parseFloat(display.style.top);if(Number.isFinite(y))display.style.zIndex=String(21+Math.round(y*4))}
  const note=element('small',tr('Tap the floor to walk around.','点地板，走走自己的小窝。'),q,'pawHomeWalkHint');stage.after(note);
  note.setAttribute('role','status');note.setAttribute('aria-live','polite');
  stage.tabIndex=0;stage.setAttribute('aria-label',tr('My room. Tap the floor or use arrow keys to walk.','我的小窝。点击地板或使用方向键行走。'));
@@ -4213,6 +4256,15 @@ hideoutPage=function(...args){
   if(goal.y<pawHomeBounds.u||goal.y>pawHomeBounds.d+3)return;
   if(!pawHomeMoveTo(stage,player,point,key,goal,note))note.textContent=tr('A piece of furniture is in the way.','这边被家具挡住啦。')
  });
+ for(const item of stage.querySelectorAll('.hideoutPlaced[role=button],.figureCabinetInRoom')){
+  const old=item.onclick;if(typeof old!=='function')continue;
+  item.onclick=function(...args){
+   const anchor={x:parseFloat(item.style.left),y:parseFloat(item.style.top)};
+   if(!Number.isFinite(anchor.x)||!Number.isFinite(anchor.y)||anchor.y<pawHomeBounds.u||Math.hypot(anchor.x-point.x,anchor.y-point.y)<13){pawHomeStop();return old.apply(this,args)}
+   const goal=pawHomeObjectApproach(point,anchor,pawHomeStageBlocks(stage));
+   if(!goal||!pawHomeMoveTo(stage,player,point,key,goal,note,()=>old.apply(item,args))){pawHomeStop();return old.apply(this,args)}
+  }
+ }
  stage.addEventListener('keydown',e=>{
   if(e.target!==stage)return;const dir={ArrowLeft:[-5,0],ArrowRight:[5,0],ArrowUp:[0,-5],ArrowDown:[0,5]}[e.key];if(!dir)return;e.preventDefault();e.stopPropagation();
   pawHomeMoveTo(stage,player,point,key,{x:Math.max(pawHomeBounds.l,Math.min(pawHomeBounds.r,point.x+dir[0])),y:Math.max(pawHomeBounds.u,Math.min(pawHomeBounds.d,point.y+dir[1]))},note)

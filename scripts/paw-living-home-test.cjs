@@ -29,6 +29,7 @@ check(pawHomeDirection(a,b)==='right','right facing');
 check(pawHomeDirection(b,a)==='left','left facing');
 check(pawHomeDirection(a,{x:15,y:80})==='up','up facing');
 check(pawHomeDirection(a,{x:15,y:94})==='down','down facing');
+const approach=pawHomeObjectApproach(a,{x:50,y:82},[{l:40,r:60,u:76,d:88}]);check(!!approach,'object approach found');check(pawHomeSafe(approach,[{l:40,r:60,u:76,d:88}]),'approach clear');check(!!pawHomeRoute(a,approach,[{l:40,r:60,u:76,d:88}]),'approach reachable');check(pawHomeObjectApproach(a,{x:50,y:82},[{l:0,r:100,u:60,d:100}])===null,'unreachable furniture');check(pawHomeObjectApproach(a,{x:NaN,y:82},[])===null,'invalid furniture position');
 const now=100000000;
 check(pawTopicSeen('exchange','flowers',[['hong','bouquet',now-1]],now),'semantic topic across dialogue modes');
 check(!pawTopicSeen('exchange','flowers',[['hong','bouquet',now-86400001]],now),'topic expires');
