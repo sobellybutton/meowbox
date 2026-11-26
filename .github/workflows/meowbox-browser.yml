@@ -708,7 +708,11 @@ jobs:
                 await page.evaluate(()=>readingShuffle());
                 await page.waitForFunction(()=>state.readStage==='deck'&&state.readShuffle>0,{},{timeout:5000});
                 await page.evaluate(()=>readingDeal());
+                await page.waitForFunction(()=>state.readStage==='choose',{},{timeout:5000});
+                const expectedCards=await page.evaluate(()=>[2,6,10].map(i=>state.pawCardPool[i]));
+                for(const i of [2,6,10]){const slot=await page.evaluate(i=>pawTarotChoiceSlots(W<H)[i],i);await tapWorld(slot.x,slot.y)}
                 await page.waitForFunction(()=>state.readStage==='cards',{},{timeout:5000});
+                if(JSON.stringify(await page.evaluate(()=>state.readCards))!==JSON.stringify(expectedCards))throw Error('Tarot selection did not preserve chosen cards');
                 await page.evaluate(()=>{readingReveal(0);readingReveal(1);readingReveal(2)});
                 await page.waitForFunction(()=>state.readSaved,{},{timeout:5000});
                 if(!await page.evaluate(()=>readingJournal.some(v=>v.topic===1&&v.cards.length===3)))throw Error('Tarot journal missing');

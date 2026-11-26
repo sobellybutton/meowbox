@@ -258,10 +258,9 @@ const curatedDiscoveryActionBefore=action;
 action=function(id){
  if(room==='tarot'&&id==='tarot'){
   closeTalk();return say(tr('Fortune Teller','占卜师'),tr('Something on your mind? Take your time. The cards aren’t going anywhere.','心里有事？慢慢来，牌又不会跑。'),[
-   [tr('Daily guidance · 1 card','今日指引 · 一张牌'),()=>{closeTalk();start('tarot');tarotToneChoice(()=>{})}],
+   [tr('Daily guidance · 1 card','今日指引 · 一张牌'),()=>{closeTalk();start('tarot')}],
    [tr('Find some clarity · 3 cards','三牌解惑 · 三张牌'),()=>{closeTalk();start('love')}],
-   [tr('Look a little deeper · 5 cards','深入解读 · 五张牌'),()=>{closeTalk();start('love');state.readSpreadSize=5}],
-   [tr('Maybe later','待会儿再来'),closeTalk]
+   [tr('Look a little deeper · 5 cards','深入解读 · 五张牌'),()=>{closeTalk();start('love');state.readSpreadSize=5}]
   ])
  }
  if(room==='quiz'&&id==='quiz'){
@@ -786,7 +785,7 @@ function yueCompactPage(q,form,out){
  if(!title){title=element('h1',tr('Master Yue · Birth chart','月师傅 · 生辰命盘'),q);navRow?.after(title)}
  if(hero)title.textContent=tr('Master Yue · Birth chart','月师傅 · 生辰命盘');
  const header=element('div','',q,'yueCompactHost'),im=element('img','',header);
- im.src='assets/visual/painted/master-yue/standing.webp';im.alt=tr('Master Yue','月师傅');im.width=108;im.height=146;im.onerror=()=>im.remove();
+ im.src=residentAssetPath('master-yue','warm');im.alt=tr('Master Yue','月师傅');im.width=120;im.height=98;im.onerror=()=>im.remove();
  const words=element('div','',header);element('strong',tr('Master Yue','月师傅'),words);
  element('small',residentNamedGreeting('Sit, have some tea. The stars can wait, unlike your boss.','坐下喝杯茶。星星不催你，老板就不一定了。'),words);
  const strip=q.querySelector('.yueSubjectStrip');if(strip){title.after(strip);strip.after(header)}else title.after(header);
@@ -2970,7 +2969,12 @@ function pawJournalRender(district=scene){
   const stamp=element('span',district===scene?tr('YOU ARE HERE','此刻在这里'):visited.includes(district)?tr('VISITED','已到访'):tr('TO EXPLORE','待探索'),cover,'pawSketchStamp');stamp.dataset.seen=String(district===scene||visited.includes(district));
   const info=element('div','',spread,'pawSketchNotes');element('p',tr(...pawJournalLines[district]),info);
   if(district!==scene)b(info,tr('Board train','上车'),()=>{if(!transitioning)journey(district)}).className='pawSketchBoard';
-  else element('small',tr('Choose a place to visit, or keep wandering.','点选一个地方，或继续随心漫步。'),info);
+  else{
+   element('small',tr('Choose a place to visit, or keep wandering.','点选一个地方，或继续随心漫步。'),info);
+   const station=maps[scene].st.find(v=>v[0]==='station');
+   if(station)b(info,tr('Walk to the railway station','走去火车站'),()=>{$('page').style.display='none';updateHUD();pawJournalWalkToDoor(station[0],station[1],station[2])}).className='pawRailWayfinding';
+   else element('small',tr('Choose another district above to take the train.','想坐火车，选择上方的其他小镇。'),info)
+  }
   const doors=maps[district].st.filter(v=>v[0]!=='station'),album=element('div','',spread,'pawSketchPlaces');
   element('h3',tr('Places to explore','可以逛逛的地方'),album);
   for(const [id,x,y,en,cn] of doors){
@@ -4813,7 +4817,7 @@ document.head.append(pawDesktopGuideStyle);
 /* Owner feedback: keep the temple keeper inside, not in the arrival street. */
 const pawKeeperInitBefore=initNPC;
 initNPC=function(...args){const result=pawKeeperInitBefore(...args);if(scene==='fortune')for(let i=npc.length-1;i>=0;i--)if(npc[i].n?.some(v=>v==='Temple keeper'||v==='庙祝'))npc.splice(i,1);return result};
-function pawFocusView(){const open=$('page').style.display==='block';$('game').classList.toggle('pawFocusedView',!!room||!!activity||open||talkOpen||transitioning||!proposal.hidden);$('game').classList.toggle('pawExitView',!!room&&!activity&&!open&&!talkOpen&&!transitioning&&proposal.hidden)}
+function pawFocusView(){const open=$('page').style.display==='block';$('game').classList.toggle('pawInRoom',!!room||!!activity);$('game').classList.toggle('pawFocusedView',!!room||!!activity||open||talkOpen||transitioning||!proposal.hidden);$('game').classList.toggle('pawExitView',!!room&&!activity&&!open&&!talkOpen&&!transitioning&&proposal.hidden)}
 const pawFocusBefore=loop;
 loop=function(...args){const result=pawFocusBefore(...args);pawFocusView();return result};
 const pawFocusHUD=updateHUD;
@@ -4925,22 +4929,31 @@ drawFoodCounter=function(...args){
 };
 // A small contextual speech cue uses the existing resident's actual
 // painted bounds. It does not require the player to stop or respond.
+
 const pawResidentCueBefore=drawRoom;
+let pawRoomGreetingKey='',pawRoomGreetingPending=true;
 drawRoom=function(...args){
- const result=pawResidentCueBefore(...args);
+ const result=pawResidentCueBefore(...args),key=scene+'|'+room+'|'+zh;
+ if(key!==pawRoomGreetingKey){pawRoomGreetingKey=key;pawRoomGreetingPending=true}
  if(!pawRoomSpeechAllowed(room,activity,transitioning,$('page').style.display==='block',talkOpen)||!indoorReady())return result;
  for(const actor of pawAmbientIndoor){
-  if(!actor.rect||Math.hypot(actor.x-indoor.x,actor.y-indoor.y)>180||!pawAmbientProfile(actor))continue;
-  if(pawAmbientActive?.id===pawAmbientProfile(actor).id)continue;
-  const yy=actor.rect.y-13,scale=Math.max(.1,cam.scale),ww=Math.max(32,27/scale),hh=Math.max(22,18/scale);
-  if(cam.oy+yy*scale<100)continue;
-  ctx.save();round(actor.x-ww/2,yy-hh/2,ww,hh,hh/2,'#fff1d6','#8c7759');txt('···',actor.x,yy,Math.max(16,12/scale),'#53634b');ctx.restore();
-  target(actor.x-ww/2,yy-hh/2,ww,hh,()=>{
-   const profile=pawAmbientProfile(actor);if(!profile)return;
-   const now=Date.now(),line=pawAmbientPick(profile.id,pawAmbientLines[profile.id],pawAmbientRead(pawAmbientHistory,now),now);
-   if(!line||!pawRoomRemark(actor,profile,line))return;
-   pawAmbientHistory.push([profile.id,line[0],now]);pawAmbientHistory=pawAmbientHistory.slice(-80);save(pawAmbientKey,pawAmbientHistory);
-  })
+  const profile=pawAmbientProfile(actor);if(!actor.rect||!profile||Math.hypot(actor.x-indoor.x,actor.y-indoor.y)>190)continue;
+  // Show an actual sentence on the first suitable frame, not an ellipsis.
+  if(pawRoomGreetingPending&&!pawAmbientActive){
+   const now=Date.now(),line=pawAmbientPick(profile.id,pawAmbientLines[profile.id],pawAmbientRead(pawAmbientHistory,now),now)||pawAmbientLines[profile.id][0];
+   if(line&&pawRoomRemark(actor,profile,line)){
+    pawRoomGreetingPending=false;pawAmbientHistory.push([profile.id,line[0],now]);pawAmbientHistory=pawAmbientHistory.slice(-80);save(pawAmbientKey,pawAmbientHistory)
+   }
+  }
+  // Character itself can be tapped to speak again. No floating icon.
+  const rect=actor.rect;
+  if(!hit.some(z=>z.stationId&&rect.x<z.x+z.w&&rect.x+rect.w>z.x&&rect.y<z.y+z.h&&rect.y+rect.h>z.y)){
+   target(rect.x,rect.y,rect.w,rect.h,()=>{
+    if(!indoorReady())return;
+    const now=Date.now(),line=pawAmbientPick(profile.id,pawAmbientLines[profile.id],pawAmbientRead(pawAmbientHistory,now),now)||pawAmbientLines[profile.id][0];
+    if(line&&pawRoomRemark(actor,profile,line)){pawAmbientHistory.push([profile.id,line[0],now]);pawAmbientHistory=pawAmbientHistory.slice(-80);save(pawAmbientKey,pawAmbientHistory)}
+   },'paw-resident-speech:'+profile.id)
+  }
  }
  return result
 };
@@ -4980,10 +4993,9 @@ proRender=function(...args){
  const traveller=hero.querySelector('.gate-traveller');
  if(traveller){traveller.alt='';pawCropEntranceImage(traveller)}
  const brand=proposal.querySelector('header>span');if(brand){brand.replaceChildren();element('strong','Pawradise',brand,'pawGateWordmark');element('small',tr('A LITTLE WORLD AWAY','偷得浮生半日闲'),brand,'pawGateMotto')}
- const title=element('h1',shrineReturning?tr('Welcome home.','回来了呀。'):tr('A little world awaits.','小小天地，等你来。'),foot,'pawArrivalTitle');
- const subtitle=element('p',tr('The world can wait a little longer.','外面的世界，等一等也无妨。'),foot,'pawArrivalSubtitle');
  enter.textContent=tr('Step inside','进小镇');enter.classList.add('pawGateEnter');
- foot.replaceChildren(title,subtitle,enter);return result
+ // The artwork and traveller occupy the scene; the footer is only a button.
+ foot.replaceChildren(enter);return result
 };
 const pawArrivalTicketCss=document.createElement('style');
 pawArrivalTicketCss.textContent=`
@@ -5621,5 +5633,129 @@ function pawGeminiMerge(original,rows){
 // Extend the existing daily fictional roster, not the artwork registry or online presence.
 // Offering a gift is a story choice only. No inventory or coins are charged.
 popGuestStories.push(...pawGeminiMerge(popGuestStories,pawGeminiVisitorRows));
+
+
+/* PAW_OWNER_TAROT_CHOICE_BEGIN */
+function pawTarotPool(length,random=Math.random){
+ const pool=Array.from({length},(_,i)=>i);
+ for(let i=pool.length-1;i>0;i--){const j=Math.min(i,Math.max(0,Math.floor(random()*(i+1))));[pool[i],pool[j]]=[pool[j],pool[i]]}
+ return pool.slice(0,Math.min(12,pool.length)).map(i=>({i,rev:random()<.5}))
+}
+function pawTarotPick(pool,chosen,index,count){
+ if(!Array.isArray(pool)||!Array.isArray(chosen)||!Number.isInteger(index)||index<0||index>=pool.length||chosen.includes(index)||chosen.length>=count)return null;
+ return [...chosen,index]
+}
+function pawTarotChoiceSlots(portrait){
+ const cols=portrait?4:6,rows=12/cols,w=portrait?77:68,h=portrait?111:105,dx=portrait?91:80,dy=portrait?126:125;
+ return Array.from({length:cols*rows},(_,i)=>({x:400+(i%cols-(cols-1)/2)*dx,y:portrait?388+Math.floor(i/cols)*dy:420+Math.floor(i/cols)*dy,w,h}))
+}
+/* PAW_OWNER_TAROT_CHOICE_END */
+function pawOpenCardChoice(){
+ if(!['tarot','love'].includes(activity))return false;
+ state.pawCardPool=pawTarotPool(tarotDeck.length);state.pawSelectedCards=[];state.readCards=[];state.readFlip=[];state.readSaved=false;
+ state.readStage='choose';state.readAt=t;state.readShuffle=Math.max(1,state.readShuffle||0);
+ const n=activity==='tarot'?1:state.readSpreadSize===5?5:3;
+ hint(tr('Choose '+n+' '+(n===1?'card':'cards')+' that draw your attention.','凭直觉选 '+n+' 张牌。'),tr('Choose '+n+' cards.','凭直觉选 '+n+' 张牌。'));
+ return true
+}
+function pawSelectTarotCard(index){
+ if(state.readStage!=='choose'||!['tarot','love'].includes(activity)||talkOpen)return false;
+ const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,chosen=pawTarotPick(state.pawCardPool,state.pawSelectedCards,index,count);
+ if(!chosen)return false;
+ state.pawSelectedCards=chosen;physicalFx('paper',.65);
+ if(chosen.length===count){
+  state.readCards=chosen.map(i=>state.pawCardPool[i]);state.readFlip=Array(count).fill(-1);
+  state.readStage='deal';state.readAt=t;state.readSaved=false;
+  hint('Turn your chosen cards over.','翻开你亲自选的牌。')
+ }
+ return true
+}
+const pawSelectStartBefore=start;
+start=function(id,...args){
+ const result=pawSelectStartBefore(id,...args);
+ if(id==='tarot'&&activity==='tarot'){state.tarotTone='gentle';pawOpenCardChoice()}
+ return result
+};
+const pawSelectDealBefore=readingDeal;
+readingDeal=function(){
+ if(['tarot','love'].includes(activity)&&state.readStage==='deck'&&state.readShuffle)return pawOpenCardChoice();
+ return pawSelectDealBefore()
+};
+const pawSelectDrawBefore=drawActivity;
+drawActivity=function(...args){
+ if(!['tarot','love'].includes(activity)||state.readStage!=='choose')return pawSelectDrawBefore(...args);
+ const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,slots=pawTarotChoiceSlots(W<H),chosen=state.pawSelectedCards||[];
+ ctx.save();try{
+  paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);
+  table();
+  // Twelve individual face-down cards form a physical spread. No card is
+  // assigned to the reading before the player selects it.
+  for(const [i,q] of slots.entries()){
+   const picked=chosen.includes(i);
+   ctx.save();ctx.globalAlpha=picked?.34:1;
+   if(picked){round(q.x-q.w/2,q.y-q.h/2,q.w,q.h,5,'#342a45','#bda16c');txt(String(chosen.indexOf(i)+1),q.x,q.y,27,'#eedcb2')}
+   else{ctx.shadowColor='#1b152e65';ctx.shadowBlur=4;ctx.shadowOffsetY=3;card(q.x-q.w/2,q.y-q.h/2,q.w,q.h,false)}
+   ctx.restore();
+   if(!picked)target(q.x-q.w/2-3,q.y-q.h/2-3,q.w+6,q.h+6,()=>pawSelectTarotCard(i),'paw-pick-card-'+i)
+  }
+  activityFitText(tr('Choose '+count+' '+(count===1?'card':'cards')+' · '+chosen.length+'/'+count,'选 '+count+' 张牌 · '+chosen.length+'/'+count),400,W<H?307:341,22,430,'#f6e6c8');
+  if(!chosen.length)label(tr('Shuffle again','重新洗牌'),400,W<H?745:655,()=>{pawOpenCardChoice();physicalFx('paper',.6)})
+ }finally{ctx.restore()}
+};
+const pawSelectCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(s,ox,oy){
+ if(['tarot','love'].includes(activity)&&state.readStage==='choose'){
+  const portrait=W<H,bounds=portrait?[215,585,290,780]:[155,645,320,690],top=44,bottom=H-64;
+  const [l,r,u,d]=bounds,z=Math.max(.08,Math.min((W-20)/(r-l),(bottom-top)/(d-u)));
+  return {s:z,ox:W/2-(l+r)/2*z,oy:(top+bottom)/2-(u+d)/2*z}
+ }
+ return pawSelectCameraBefore(s,ox,oy)
+};
+// Table cards rest on the tabletop, not suspended over a furniture drawing.
+const pawTablePropBefore=prop;
+prop=function(id,x,y){
+ if(room==='tarot'&&!activity&&id==='tarot'){
+  const spec=groundedStationSpec(room,id);if(spec){
+   drawGroundedSupport(spec,x,y);const top=y+spec[1];
+   ctx.save();
+   for(let i=0;i<7;i++){ctx.save();ctx.translate(x+(i-3)*16,top-9-Math.abs(i-3)*.7);ctx.rotate((i-3)*.065);card(-15,-22,30,44,false);ctx.restore()}
+   ctx.restore();pawStationPlaque={room,id,x,y,spec,at:t};return
+  }
+ }
+ return pawTablePropBefore(id,x,y)
+};
+// One optional text cue in the travel journal, not an always-visible rail CTA.
+// The first valley arrival is immediately walkable and uses actual map art.
+const pawBeginValleyBefore=beginValleyReveal;
+beginValleyReveal=function(...args){
+ const result=pawBeginValleyBefore(...args),points=pawDistrictSpines[scene];
+ if(points){
+  const q=pawDistrictFoot(points,p.x,p.y);Object.assign(p,{x:q.x,y:q.y,tx:q.x,ty:q.y,motionSpeed:0,pawFacing:'up',facing:'up'});cam.x=q.x;cam.y=q.y;
+  if(scene==='fortune'){
+   const ahead=pawDistrictFoot(points,q.x,q.y-78);
+   if(!residentReducedMotion.matches){p.tx=ahead.x;p.ty=ahead.y}
+   hint('Explore the shops, or open Explore to find the railway.','逛逛小店，或打开「探索」找到火车站。')
+  }
+ }
+ return result
+};
+// Arrival image stays fully visible. Room HUD is restored automatically on exit.
+const pawOwnerSceneCss=document.createElement('style');pawOwnerSceneCss.textContent=`
+#game.pawInRoom #hud,#game.pawInRoom #small,#game.pawInRoom #profileHud,#game.pawInRoom #hudStats{display:none!important}
+#game.pawInRoom #dock{display:none!important}
+#proposal[data-paw-entrance-step="3"] .gate-traveller{z-index:5!important;height:clamp(78px,19cqh,168px)!important;bottom:max(96px,16%)!important;max-width:27%!important;opacity:1!important}
+#proposal[data-paw-entrance-step="3"] .gate-traveller.go{transform:translateY(-55%) scale(.76)!important;opacity:0!important}
+#proposal[data-paw-entrance-step="3"]>footer{inset:auto 0 max(18px,env(safe-area-inset-bottom,0px))!important;gap:0!important;padding:0 12px!important}
+#proposal[data-paw-entrance-step="3"] .hero:after{background:linear-gradient(180deg,#15291f91 0%,transparent 24%,transparent 76%,#192b22c0 100%)!important}
+#proposal[data-paw-entrance-step="3"] .pawGateMotto{display:none}
+#game #content.yueCompactConsult .yueCompactHost{background:#e9dbc0!important;color:#3c493c!important;padding:9px 10px!important;border:1px solid #baa47d!important;align-items:center!important}
+#game #content.yueCompactConsult .yueCompactHost img{width:84px!important;height:72px!important;max-width:30%!important;object-fit:cover!important;object-position:center!important;mix-blend-mode:normal!important;border-radius:3px!important}
+#game #content.yueCompactConsult .yueCompactHost strong,#game #content.yueCompactConsult .yueCompactHost small{color:#394a3c!important}
+#game #content.yueCompactConsult :is(.yueSubjectStrip,.destinySubjectStrip){background:#f2e5ca!important;color:#4b4235!important;border-color:#b8a17b!important}
+#game #content.yueCompactConsult :is(.yueSubjectStrip,.destinySubjectStrip) :is(button,[role=button]){background:#f9efd8!important;color:#4c4031!important;border:1px solid #aa9069!important;font-weight:600!important;min-height:44px}
+#game #content.yueCompactConsult :is(.yueSubjectStrip,.destinySubjectStrip) :is(button,[role=button])[aria-pressed="true"]{background:#435b4c!important;color:#fff5de!important;border-color:#435b4c!important}
+#game #content.yueCompactConsult :is(.yueSubjectStrip,.destinySubjectStrip) :is(small,label){color:#524738!important}
+#game #content .pawRailWayfinding{min-height:44px!important;background:#51634e!important;color:#fff2d5!important;border:1px solid #bda779!important;padding:8px 12px!important;margin:5px 0!important}
+`;document.head.append(pawOwnerSceneCss);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

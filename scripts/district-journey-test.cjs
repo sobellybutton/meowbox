@@ -105,8 +105,13 @@ async function travelLoop(page,name,touch){
  assert.equal(await page.evaluate(()=>playerName),'June','Selected name persists');
  assert((await page.locator('#line').innerText()).trim().length>0,'Reading has a contextual opening');
  await press(page.locator('#choices').getByRole('button',{name:/Daily guidance/}));
- await press(page.locator('#choices').getByRole('button',{name:/Be kind today/}));
- await page.waitForFunction(()=>activity==='tarot');
+ await page.waitForFunction(()=>activity==='tarot'&&state.readStage==='choose');
+ assert.equal(await page.locator('#hud').isVisible(),false,'Room hides profile and coins');
+ assert.equal(await page.locator('#small').isVisible(),false,'Room hides settings');
+ const chosenCard=await page.evaluate(()=>({slot:pawTarotChoiceSlots(W<H)[7],value:state.pawCardPool[7]}));
+ await point(...await page.evaluate(q=>[cam.ox+q.x*cam.scale,cam.oy+q.y*cam.scale],chosenCard.slot));
+ await page.waitForFunction(()=>state.readStage==='cards');
+ assert.deepEqual(await page.evaluate(()=>state.readCards[0]),chosenCard.value,'Reading must use the exact chosen card');
  await backOutside();
  await enterDoor('temple');
  assert(await page.evaluate(()=>Object.entries(pawTempleLayout).every(([id,v])=>indoorSafe(v[2],v[3]))),'Temple stations have safe approaches');
