@@ -1,0 +1,34 @@
+name: Master Yue consultation click-through
+on:
+  push:
+    branches: [main]
+    paths: ['src/town-access.js','src/extensions.js','scripts/yue-journey-test.cjs','.github/workflows/yue-journey.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  consultation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Click through Master Yue readings
+        env:
+          MEOW_BROWSER: ${{ matrix.engine }}
+        run: |
+          python3 -m http.server 8770 >/tmp/meowbox-yue-server.log 2>&1 &
+          node scripts/yue-journey-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yue-journey-${{ matrix.engine }}
+          path: test-results/
