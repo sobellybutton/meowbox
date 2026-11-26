@@ -27,7 +27,7 @@ function figureCabinetPage(back='room'){
   const ids=figureCabinetIds(),n=figureTokenCount(),wrap=element('section','',q,'figureCabinetBook');
   fillFigureShelf(element('div','',wrap,'figureCabinetPreview'));
   element('p',ids.length+'/6 '+tr('on display','件展示中')+' · '+n+' '+tr('exchange tokens','兑换券'),wrap);
-  element('p',tr('New boxes contain unowned figures for 40 Paws. Any old exchange tokens can still unlock common or uncommon figures at three tokens each.','新盲盒40爪币一盒，不会抽到已收藏款。旧兑换券仍可用三枚兑换普通或特别款。'),wrap,'figureHelp');
+  element('p',tr('New boxes contain unowned figures for 40 Meow Coins. Any old exchange tokens can still unlock common or uncommon figures at three tokens each.','新盲盒40喵币一盒，不会抽到已收藏款。旧兑换券仍可用三枚兑换普通或特别款。'),wrap,'figureHelp');
   const grid=element('div','',wrap,'figureCabinetGrid');for(const v of boxPrizes){
    const owned=items.some(i=>i[0]===v[0]),shown=ids.includes(v[0]),secret=!owned&&v[4]==='secret',tile=element('article','',grid,'figureCabinetTile');tile.dataset.owned=String(owned);const im=element('div','',tile,'figureTileArt');im.innerHTML=secret?'<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M11 53V28Q11 8 32 8Q53 8 53 28V53Z" fill="#8b806e"/><text x="32" y="42" fill="#f0e3ca" font-size="25" text-anchor="middle">?</text></svg>':bagFigureIcon(v);element('strong',secret?tr('Secret silhouette','隐藏款剪影'):tr(v[0],v[1]),tile);
    const eligible=['common','uncommon'].includes(v[4]);const btn=b(tile,owned?(shown?tr('Put away','收起'):tr('Display','摆放')):eligible?tr('Exchange 3','兑换 · 3券'):tr('Find in a box','盲盒限定'),()=>{if(owned?toggleFigureDisplay(v[0]):exchangeFigure(v[0]))figureCabinetPage(back)});btn.disabled=!owned&&(!eligible||n<3)||owned&&!shown&&ids.length>=6;
@@ -1251,5 +1251,85 @@ $('dockScoop').onclick=()=>todayHub();
 const latestResidentPassport=passport;
 passport=function(){latestResidentPassport();const book=$('content').querySelector('.travelAlbum');if(book&&!book.querySelector('.townFortuneSlip')){renderTownFortune(book);const slip=book.lastElementChild;book.prepend(slip)}journalLanguage(passport)};
 $('dockPassport').onclick=()=>passport();
+
+
+/* Scenery-first HUD: preserve identity, true rank and spendable balance.
+   Other visitors' private balances and local profile data are not exposed. */
+function compactTownProfile(){
+ const rank=lifeRank(),progress=$('hudProgress'),name=residentPlayerDisplayName()||tr('Traveller','旅人');
+ $('hudName').textContent=name;progress.textContent=tr('Lv. ','等级 ')+(rank.index+1);
+ progress.title=tr(...rank.label)+' · '+rank.total+' '+tr('life points','人生积分');
+ $('profileHud').setAttribute('aria-label',name+' · '+progress.textContent+' · '+tr('Open profile','查看资料'));
+}
+const compactLifeRefreshBefore=lifeHUDRefresh;
+lifeHUDRefresh=function(...args){const v=compactLifeRefreshBefore(...args);compactTownProfile();return v};
+const townSettingsRoot=$('small'),townSettingsPanel=languageChoices.parentNode;
+townSettingsPanel.classList.add('townSettingsPanel');townSettingsPanel.id='townSettingsPanel';
+const townSettingsToggle=element('button','',townSettingsRoot,'townSettingsToggle');
+townSettingsToggle.id='townSettingsToggle';townSettingsToggle.setAttribute('aria-controls','townSettingsPanel');
+const townSettingsExtra=element('div','',townSettingsPanel,'townSettingsExtra');
+const townSoundSettings=element('button','',townSettingsExtra),townMapLabels=element('button','',townSettingsExtra),townHelp=element('button','',townSettingsExtra);
+let townSettingsOpen=false;
+function syncTownSettings(){
+ townSettingsRoot.dataset.open=String(townSettingsOpen);
+ townSettingsToggle.textContent=tr('Settings','设置');townSettingsToggle.setAttribute('aria-expanded',String(townSettingsOpen));
+ townSettingsPanel.hidden=!townSettingsOpen;
+ townSoundSettings.textContent=muted?tr('Sound off','声音已关闭'):tr('Sound on','声音已开启');
+ townSoundSettings.setAttribute('aria-pressed',String(!muted));
+ townMapLabels.textContent=quiet9?tr('Show map signs','显示地图路牌'):tr('Hide map signs','隐藏地图路牌');
+ townMapLabels.hidden=!!room||scene!=='fortune';
+ townHelp.textContent=tr('Walking help','行走指南');townHelp.hidden=!!room||!isRoute();
+}
+function closeTownSettings(){townSettingsOpen=false;syncTownSettings()}
+townSettingsToggle.onclick=()=>{townSettingsOpen=!townSettingsOpen;syncTownSettings()};
+townSoundSettings.onclick=()=>{$('mute').click();syncTownSettings()};
+townMapLabels.onclick=()=>{$('quietToggle').click();closeTownSettings()};
+townHelp.onclick=()=>{closeTownSettings();walkHelp.click()};
+for(const [,btn] of languageButtons)btn.addEventListener('click',closeTownSettings);
+document.addEventListener('pointerdown',e=>{if(townSettingsOpen&&!townSettingsRoot.contains(e.target))closeTownSettings()},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&townSettingsOpen){closeTownSettings();townSettingsToggle.focus()}});
+const townSettingsHUDBefore=updateHUD;updateHUD=function(...args){
+ const v=townSettingsHUDBefore(...args);compactTownProfile();
+ if(!proposal.hidden||talkOpen||activity)townSettingsOpen=false;
+ syncTownSettings();return v
+};
+const townSettingsPageBefore=page;page=function(...args){closeTownSettings();return townSettingsPageBefore(...args)};
+const townSettingsEnterBefore=enter;enter=function(...args){closeTownSettings();return townSettingsEnterBefore(...args)};
+const townSettingsSayBefore=say;say=function(...args){closeTownSettings();return townSettingsSayBefore(...args)};
+$('profileHud').onclick=()=>{if(avatar!==null&&proposal.hidden&&!transitioning&&!talkOpen)lifeProfile()};
+const townCalendarTodayBefore=todayHub;todayHub=function(...args){
+ const v=townCalendarTodayBefore(...args),q=$('content'),after=q.querySelector('.journalTownJump')||q.querySelector('.townFortuneSlip');
+ if(after){const link=b(q,tr('Lunar calendar','农历日历'),calendarPage);link.className='townCalendarLink';after.after(link)}
+ journalLanguage(todayHub);return v
+};$('dockScoop').onclick=()=>todayHub();
+const townGateWordsBefore=proRender;proRender=function(...args){const v=townGateWordsBefore(...args);const gate=proposal.querySelector('.shrine-enter');if(gate)gate.textContent=tr('Enter the valley','走进解忧谷');return v};
+let townMapHintTimer=0;
+const townHintBefore=hint;hint=function(...args){
+ clearTimeout(townMapHintTimer);const el=$('hint');el.classList.remove('townHintRest');
+ const v=townHintBefore(...args);
+ if(!room&&!activity&&/^(Tap a doorway to walk inside|Tap a place to enter|Explore the valley at your own pace)/.test(String(args[0])))townMapHintTimer=setTimeout(()=>{if(!room&&!activity)el.classList.add('townHintRest')},4500);
+ return v
+};
+const sceneryFirstStyle=document.createElement('style');sceneryFirstStyle.textContent=`
+#game #lunarBtn,#game #quietToggle,#walkHelp,#game #small #mute{display:none!important}
+#game #hud{justify-content:space-between!important;padding-right:63px!important;left:8px!important;right:8px!important;align-items:center}
+#game #profileHud{min-height:44px!important;max-width:56%!important;padding:3px 6px 3px 4px!important;gap:5px!important}
+#game #hudPortrait{width:31px!important;height:31px!important;flex:none}
+#game #hudName{font-size:12px!important;max-width:96px!important}
+#game #hudProgress{font-size:10px!important}
+#game #hudStats{margin-left:auto;min-width:0}
+#game #hudStats #hudCoins{white-space:nowrap;font-size:12px!important;padding:6px!important}
+#game #small{top:calc(env(safe-area-inset-top,0px) + 8px)!important;left:auto!important;right:8px!important;display:flex;align-items:flex-start;gap:5px}
+#game #small .townSettingsToggle{background:#f4e8d1!important;border:1px solid #ad9775!important;border-radius:6px!important;box-shadow:0 2px 4px #42331f30;min-height:44px!important;width:55px!important;font:600 11px/1.2 Georgia,"Songti SC",serif;padding:5px 3px!important}
+#game #small .townSettingsPanel{position:absolute;right:0;top:calc(100% + 5px);width:190px;max-width:calc(100vw - 24px);display:grid!important;gap:6px;padding:8px;border:1px solid #ad9775;background:#f4e8d1;border-radius:6px;box-shadow:0 4px 15px #31281940;pointer-events:auto;overflow:visible}
+#game #small .townSettingsPanel[hidden]{display:none!important}
+#game #small .townSettingsExtra{display:grid;gap:3px;background:transparent;border:0;overflow:visible}
+#game #small .townSettingsExtra button{min-height:44px!important;text-align:left;white-space:normal;font-size:13px;padding:6px 8px!important}
+#game #small .townSettingsExtra button[hidden]{display:none!important}
+#game #small .languageChoice{justify-content:center}
+#game #hint.townHintRest{opacity:0!important;visibility:hidden!important}
+.townCalendarLink{min-height:44px}
+@media(max-width:380px){#game #hudName{max-width:64px!important}#game #hudStats #hudCoins{font-size:11px!important;padding:5px!important}}
+`;document.head.append(sceneryFirstStyle);syncTownSettings();
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
