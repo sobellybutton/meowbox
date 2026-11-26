@@ -4953,13 +4953,13 @@ proRender=function(...args){
  if(!hero||!foot)return result;
  pawEntranceResize();
  if(proStep===0){
-  // The station placeholder is a travel passport graphic, not scenery.
-  // Show the existing painted railway interior as an explicitly labelled
-  // preview of the journey until a dedicated station painting is available.
+  // Recovered matching native station paintings. Keep the train interior
+  // for the actual ride; this scene is the station before boarding.
   hero.querySelector('.rail-platform-sign')?.remove();
   const preview=element('picture','',hero,'pawFirstRailPainting');
-  const wide=element('source','',preview);wide.media=pawWideArtworkMedia;wide.srcset='assets/visual/painted/journey/landscape.webp';
-  const art=element('img','',preview);art.src='assets/visual/painted/journey/portrait.webp';art.alt=tr('A painted preview of the mountain railway carriage','山间列车车厢的画面预览');
+  const wide=element('source','',preview);wide.media=pawWideArtworkMedia;wide.srcset='assets/visual/painted/recovered/scenes/station_landscape.webp';
+  const art=element('img','',preview);art.src='assets/visual/painted/recovered/scenes/station_portrait.webp';art.alt=tr('A nostalgic railway station, with a train waiting at the platform','怀旧火车站，列车正在站台等候');
+  art.onerror=()=>{art.onerror=null;wide.srcset='assets/visual/painted/journey/landscape.webp';art.src='assets/visual/painted/journey/portrait.webp'};
   const heading=foot.querySelector('h1');if(heading){const tag=element('p',tr('Pawradise railway','Pawradise 铁路'),foot,'pawFirstRailLabel');heading.before(tag)}
  }
  if(proStep===1||proStep===2){
@@ -7690,6 +7690,47 @@ shareCardArt=function(cv,data,format,cn){
  line(cn?'趣味探索 · 仅供反思':'For fun and reflection · Pawradise',footer+24,23,'normal',muted);
  if(data.kind==='zwds')line(cn?'不含生辰、时间或地点':'No birth date, time or birthplace included',footer+48,21,'normal',accent)
  else line(cn?'给自己留一点摸鱼时光':'Make a little time for yourself',footer+48,22,'normal',accent)
+};
+
+
+/* Recovered blank ticket frame. Registration remains a real editable form;
+   the saved ticket uses the wide illustration's measured slots. */
+const pawRecoveredTicketCss=document.createElement('style');
+pawRecoveredTicketCss.textContent=`
+#proposal[data-paw-entrance-step="4"]:not([hidden]){background:linear-gradient(#1c30278c,#20342cb0),url("assets/visual/painted/recovered/scenes/station_portrait.webp") center/cover no-repeat!important}
+@media(orientation:landscape){#proposal[data-paw-entrance-step="4"]:not([hidden]){background:linear-gradient(#1c302765,#20342c91),url("assets/visual/painted/recovered/scenes/station_landscape.webp") center/cover no-repeat!important}}
+#proposal[data-paw-entrance-step="4"] .rail-ticket{background:#f4e6c6 url("assets/visual/painted/recovered/ui/paper_texture.webp") center/320px auto repeat!important}
+#game #content .passportRailTicket.pawRecoveredTicket{position:relative!important;container-type:inline-size;aspect-ratio:1000/480;min-height:0!important;box-sizing:border-box;width:100%;padding:0!important;border:0!important;border-radius:0!important;background:#f3e5c7 url("assets/visual/painted/recovered/ui/rail_ticket.svg") center/100% 100% no-repeat!important;box-shadow:none!important;color:#4e3d2e;overflow:hidden}
+#game .pawRecoveredTicket .pawTicketField{position:absolute;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;box-sizing:border-box;margin:0!important;padding:2px 4px;overflow-wrap:anywhere;line-height:1.12;color:#4e3d2e;text-shadow:none;text-align:left;font-size:clamp(10px,3cqw,17px);overflow:hidden}
+#game .pawRecoveredTicket .pawTicketField strong{font-size:inherit;line-height:1.1;margin:0!important}
+#game .pawRecoveredTicket .pawTicketField small{font-size:clamp(9px,2.2cqw,13px);line-height:1.1;margin:0!important}
+#game .pawRecoveredTicket .pawTicketAvatar{position:absolute;left:6.4%;top:25.4%;width:16.5%;height:53.75%;object-fit:contain;object-position:center bottom}
+#game .pawRecoveredTicket [data-ticket-field="heading"]{left:6.5%;top:11.46%;width:68%;height:12.08%;font-weight:bold}
+#game .pawRecoveredTicket [data-ticket-field="name"]{left:26%;top:25.42%;width:47.3%;height:13.54%}
+#game .pawRecoveredTicket [data-ticket-field="journey"]{left:26%;top:41.46%;width:47.3%;height:13.54%}
+#game .pawRecoveredTicket [data-ticket-field="details"]{left:26%;top:57.5%;width:47.3%;height:13.54%;font-size:clamp(9px,2.45cqw,14px)}
+#game .pawRecoveredTicket [data-ticket-field="stub"]{left:80%;top:13.54%;width:14.2%;height:43.75%;align-items:center;text-align:center;font-size:clamp(8px,2.2cqw,14px)}
+#game .pawRecoveredTicket [data-ticket-field="stamp"]{left:81.1%;top:59.79%;width:11%;height:22.92%;align-items:center;text-align:center;color:#a04e3c;font-weight:bold;font-size:clamp(9px,2.6cqw,17px)}
+`;document.head.append(pawRecoveredTicketCss);
+const pawRecoveredRailKeepsakeBefore=renderRailKeepsake;
+renderRailKeepsake=function(book){
+ const data=load('originalRailTicketV1',null);
+ if(!data||typeof data!=='object')return pawRecoveredRailKeepsakeBefore(book);
+ const ticket=element('section','',book,'passportRailTicket pawRecoveredTicket');
+ ticket.setAttribute('aria-label',tr('Your original Pawradise railway ticket','你的 Pawradise 初次入境车票'));
+ function field(key,content,label=null){
+  const node=element('div','',ticket,'pawTicketField');node.dataset.ticketField=key;
+  if(label)element('small',label,node);element('strong',content,node);return node
+ }
+ field('heading',tr('Pawradise · Railway','Pawradise 铁路'));
+ const avatarIndex=Number(data.avatar),portrait=element('img','',ticket,'pawTicketAvatar');
+ portrait.src=ART['walker'+(Number.isInteger(avatarIndex)&&avatarIndex>=0&&avatarIndex<4?avatarIndex:0)+'0'];portrait.alt='';
+ field('name',String(data.name||tr('Traveller','旅人')),tr('Passenger','旅客'));
+ field('journey',tr('Reality → Fortune Valley','现实世界 → 解忧谷'));
+ field('details',tr('Valid whenever you need a little escape.','有效期：每一个想摸鱼的瞬间。'));
+ const stub=field('stub',String(data.number||'MB'),tr('Original ticket','初次车票'));
+ element('small',String(data.issued||tr('Date unknown','日期未记录')),stub);
+ field('stamp',tr('VALID','有效'));
 };
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
