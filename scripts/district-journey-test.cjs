@@ -95,13 +95,25 @@ async function travelLoop(page,name,touch){
  await press(page.locator('#choices').getByRole('button',{name:/Be kind today/}));
  await page.waitForFunction(()=>activity==='tarot');
  await backOutside();
+ await enterDoor('temple');
+ assert(await page.evaluate(()=>Object.entries(pawTempleLayout).every(([id,v])=>indoorSafe(v[2],v[3]))),'Temple stations have safe approaches');
+ await shot('temple-sanctuary');
+ await backOutside();
+ await enterDoor('wishes');
+ await station('coin');
+ const garden=page.locator('#content .pawWishGarden');
+ await garden.waitFor();
+ assert(await garden.evaluate(el=>{const r=el.getBoundingClientRect(),g=document.querySelector('#game').getBoundingClientRect();return r.width>=g.width-2&&r.height>=g.height-2}),'Garden must fill the game viewport');
+ assert(await page.locator('.pawGardenFooter').isVisible(),'Wishing controls belong to the garden');
+ await shot('wishing-garden');
+ await backOutside();
  await enterDoor('destiny');
  await station('destiny');
  await page.locator('.yueAlmanacForm').waitFor();
  await shot('yue-desk');
  await backOutside();
 
- for(const [district,doors] of [['home',['fish']],['island',['boba']],['wonder',['quiz','story','match']],['fortune',[]]]){
+ for(const [district,doors] of [['home',['fish']],['island',['boba','arcade']],['wonder',['quiz','story','match']],['fortune',[]]]){
   assert.equal(await page.locator('#nextStopShortcut').isVisible(),false,'No permanent next-stop shortcut');
   await press(page.locator('#dockTravel'));
   await page.locator('.pawExploreRail').waitFor();
