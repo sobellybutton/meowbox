@@ -60,3 +60,28 @@ for(const limit of [0,1,2,3])for(const space of [30,68,100])for(const points of 
  ck(picked.every(p=>points.includes(p)),'use authored waypoints')
 }
 return 'PASS '+n+' initial visitor separation checks';`)());
+
+const gateStart=s.indexOf('function pawGateFit('),gateEnd=s.indexOf('const pawGateCompositionCSS',gateStart);
+const lookStart=s.indexOf('/* PAW_PASSERBY_IDENTITY_BEGIN */'),lookEnd=s.indexOf('/* PAW_PASSERBY_IDENTITY_END */',lookStart);
+const strengthStart=s.indexOf('function pawGaitStrength('),strengthEnd=s.indexOf('function pawPaintedGait(',strengthStart);
+if([gateStart,gateEnd,lookStart,lookEnd,strengthStart,strengthEnd].some(v=>v<0))throw Error('Missing movement helpers');
+console.log(new Function(s.slice(gateStart,gateEnd)+s.slice(lookStart,lookEnd)+s.slice(strengthStart,strengthEnd)+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+for(const [w,h] of [[360,640],[390,844],[1440,900],[844,390],[768,1024],[280,450]]){
+ const f=pawGateFit(w,h);
+ ck(f.left>=0&&f.top>=0&&f.width<=w&&f.height<=h,'fit gateway');
+ for(let i=0;i<=100;i++){
+  const p=pawGateGround(w,h,i/100);
+  ck(p.x>=f.left&&p.x<=f.left+f.width&&p.y<=f.top+f.height&&p.y-p.height>=f.top,'grounded character inside artwork');
+  if(i)ck(p.y<pawGateGround(w,h,(i-1)/100).y,'forward approach');
+ }
+}
+for(let player=0;player<4;player++){
+ const a=pawAssignPasserbyLooks(['a','b','c'],player),b=pawAssignPasserbyLooks(['b','c','d'],player,a);
+ ck(a.get('b')===b.get('b')&&a.get('c')===b.get('c'),'keep visible identities during guest rotation');
+ ck(new Set(b.values()).size===3&&!Array.from(b.values()).includes(player),'unique appearances');
+}
+ck(pawGaitStrength(0,1)===0,'stationary');
+ck(pawGaitStrength(25,1)===.5,'gradual stride');
+ck(pawGaitStrength(500,1)===1,'cap stride');
+return 'PASS '+n+' gate grounding, identity continuity and movement assertions';`)());
