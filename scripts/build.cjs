@@ -26,6 +26,18 @@ function webpSize(b){
   o=i+n+(n%2);
  }throw Error('Unsupported WebP dimensions');
 }
+const journey=JSON.parse(read('assets/visual/painted/journey-runtime.json'));
+if(journey.version!==1||!journey.rail||typeof journey.rail!=='object'||Array.isArray(journey.rail)||Object.keys(journey.rail).some(k=>!['portrait','landscape'].includes(k)))throw Error('Invalid railway artwork manifest');
+if(Object.keys(journey.rail).length!==0){
+ if(Object.keys(journey.rail).length!==2)throw Error('Rail artwork requires separate portrait and landscape compositions');
+ for(const mode of ['portrait','landscape']){
+  const entry=journey.rail[mode],expected='assets/visual/painted/journey/'+mode+'.webp';
+  if(entry?.path!==expected||!Number.isInteger(entry.width)||!Number.isInteger(entry.height)||entry.width<400||entry.height<400||entry.width>2048||entry.height>2048||!/^[a-f0-9]{64}$/.test(entry.sha256||''))throw Error('Invalid railway asset record: '+mode);
+  const data=fs.readFileSync(path.join(root,expected)),[w,h]=webpSize(data);
+  if(w!==entry.width||h!==entry.height||(mode==='portrait'?h/w<1.35:w/h<1.35)||crypto.createHash('sha256').update(data).digest('hex')!==entry.sha256)throw Error('Railway asset failed validation: '+expected);
+ }
+}
+console.log('PASS: '+Object.keys(journey.rail).length+' registered railway compositions verified.');
 const deckFaces=webpSize(fs.readFileSync(path.join(root,'assets/visual/tarot-card-faces.webp')));
 if(deckFaces[0]!==1024||deckFaces[1]!==2180)throw Error('Unexpected tarot face atlas dimensions');
 let paintedCount=0;
