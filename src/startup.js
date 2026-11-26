@@ -2522,7 +2522,7 @@ function pawRailMountMotion(stage,im,layout,host,mode,routeLayers=null){
   // foreground layers. Sample both through one global glass mask so split
   // panes share the same horizon. Never include furniture or carriage art.
   let routeMask=null,routeCanvas=null,routeG=null;
-  if(routeLayers?.far&&routeLayers?.near){
+  if(routeLayers?.far){
    routeCanvas=document.createElement('canvas');routeCanvas.width=w;routeCanvas.height=h;routeG=routeCanvas.getContext('2d',{willReadFrequently:true});
    if(routeG){
     routeMask=new Uint8ClampedArray(w*h);
@@ -2532,7 +2532,8 @@ function pawRailMountMotion(stage,im,layout,host,mode,routeLayers=null){
   function drawRoute(progress){
    routeG.clearRect(0,0,w,h);
    for(const [key,speed] of [['far',.32],['near',1]]){
-    const art=routeLayers[key],crop=pawRailLayerCrop(art.naturalWidth,art.naturalHeight,progress,speed,w/h);
+    const art=routeLayers[key];if(!art)continue;
+    const crop=pawRailLayerCrop(art.naturalWidth,art.naturalHeight,progress,routeLayers.near?speed:.8,w/h);
     routeG.drawImage(art,crop.x,0,crop.width,crop.height,0,0,w,h)
    }
    const view=routeG.getImageData(0,0,w,h).data;
@@ -2570,10 +2571,17 @@ function pawRailMountMotion(stage,im,layout,host,mode,routeLayers=null){
    }
    raf=requestAnimationFrame(tick)
   }
-  draw();stage.append(canvas);stage.dataset.railMotion=routeMask&&mode==='ride'?'route-parallax':'painted-window';pawRailMotionJobs.set(stage,{stop});raf=requestAnimationFrame(tick)
+  draw();stage.append(canvas);stage.dataset.railMotion=routeMask&&mode==='ride'?(routeLayers.near?'route-parallax':'route-panorama'):'painted-window';pawRailMotionJobs.set(stage,{stop});raf=requestAnimationFrame(tick)
  }catch(e){stop();stage.dataset.railMotion='still'}
 }
 
+// Original recovered district paintings are opaque panoramas, not parallax layers.
+const pawRecoveredRailSizes={fortune:[1102,347],home:[1102,349],island:[1102,275],wonder:[1102,300]};
+function pawRecoveredRailRoute(id){
+ if(!Object.prototype.hasOwnProperty.call(pawRecoveredRailSizes,id))return Promise.resolve(null);
+ const [width,height]=pawRecoveredRailSizes[id];
+ return pawRailRouteLoad({path:'assets/visual/painted/recovered/candidate-railway/'+id+'/far.webp',width,height}).then(far=>far?{far}:null)
+}
 async function mbMountRailPainting(host,mode){
  if(!host||host.querySelector('.mbPaintedRail'))return;
  const art=await mbJourneyPaintings();
@@ -2581,7 +2589,7 @@ async function mbMountRailPainting(host,mode){
  // Prefetch route layers while carriage artwork loads. A missing route never
  // blocks boarding; only a complete pair may replace the shared scenery.
  const route=mode==='ride'?art.routes?.[host.dataset.to]:null;
- const routeReady=route?Promise.all([pawRailRouteLoad(route.far),pawRailRouteLoad(route.near)]).then(([far,near])=>far&&near?{far,near}:null):null;
+ const routeReady=mode==='ride'?(route?Promise.all([pawRailRouteLoad(route.far),pawRailRouteLoad(route.near)]).then(([far,near])=>far&&near?{far,near}:pawRecoveredRailRoute(host.dataset.to)):pawRecoveredRailRoute(host.dataset.to)):null;
  let motionVersion=0;
  const stage=element('div','',host,'mbPaintedRail');
  stage.dataset.use=mode;stage.hidden=true;stage.setAttribute('aria-hidden','true');
@@ -2996,6 +3004,7 @@ fade=function(fn,kind='gust',destination=null){
  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
  const game=$('game'),rideTime=reduce?650:3600,arrivalFade=reduce?0:220;
  const destinationReady=pawReadyMap(destination);
+ if(!reduce)pawRecoveredRailRoute(destination);
  const old=$('fade');old.className='';old.replaceChildren();old.style.opacity='';
  game.classList.add('pawRailJourneyActive');game.querySelectorAll('.mbTransferHolding').forEach(el=>el.remove());
  // Show the carriage in the same interaction, even if the painting is still decoding.
@@ -3020,6 +3029,7 @@ fade=function(fn,kind='gust',destination=null){
 };
 mbTransferHolding=function(from,to){
  const overlay=element('section','',$('game'),'mbTransferHolding pawRailJourney');
+ overlay.dataset.to=to;
  overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
  const caption=element('div','',overlay,'pawRailCaption');
  element('small',tr('Bound for','开往'),caption);
