@@ -96,7 +96,10 @@ async function travelLoop(page,name,touch){
  await backOutside();
 
  for(const [district,doors] of [['home',['fish']],['island',['boba']],['wonder',['quiz','story','match']],['fortune',[]]]){
-  await press(page.locator('#nextStopShortcut'));
+  assert.equal(await page.locator('#nextStopShortcut').isVisible(),false,'No permanent next-stop shortcut');
+  await press(page.locator('#dockTravel'));
+  await page.locator('.pawExploreRail').waitFor();
+  await press(page.locator('.portraitTravelGrid .portraitDestination').nth(['fortune','home','island','wonder'].indexOf(district)));
   const scenery=page.locator('.districtRailCabin .mbRailPane > span').first();
   await scenery.waitFor();
   await press(page.locator('.mbRailPause'));
