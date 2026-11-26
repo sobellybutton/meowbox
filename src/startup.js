@@ -3314,4 +3314,176 @@ const pawTownFrontStyle=document.createElement('style');pawTownFrontStyle.textCo
 @media(min-width:680px){#game #content .pawTownFront{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;column-gap:22px}#game #content .pawTownFrontPhoto{grid-column:1/-1;aspect-ratio:3.7}#game #content .pawTownPinned{grid-column:2;grid-row:2/span 2}}
 `;document.head.append(pawTownFrontStyle);
 
+
+/* PAW_SINGLE_HOME: four navigation intentions. Existing saves and unlocks
+   remain authoritative; legacy page functions are retained where useful. */
+renderTravellerBag=function(){
+ activePage='room';page(tr('My collection cabinet','我的收藏柜'),tr('Souvenirs, figures and little memories.','手信、手办和小小回忆。'),q=>{
+  const wrap=element('section','',q,'travellerBagV2'),all=bagEntries().map(v=>({...v,chapter:bagChapterFor(v.item[0],bagClass(v.item))})),owned=all.filter(v=>v.owned),head=element('div','',wrap,'bagHeader');
+  const pic=element('img','',head);pic.src=mbAvatarStanding(avatar??0);pic.alt='';
+  const info=element('div','',head);element('strong',playerName||tr('Traveller','旅人'),info);element('small',owned.length+' '+tr('keepsakes','件收藏')+' · '+hideoutBalance()+' '+tr('paw coins','爪爪币'),info);
+  const actions=element('div','',head,'bagHeaderActions');
+  const profile=b(actions,tr('Profile','资料'),()=>hideoutProfilePage({origin:renderTravellerBag}));profile.className='bagProfileButton';
+  const home=b(actions,tr('Visit my home','回我的小窝'),()=>mbOpenOwnHome(renderTravellerBag,['‹ Bag','‹ 返回背包']));home.className='mbHomeDirect';
+  const tabs=element('div','',wrap,'bagModes');
+  for(const [key,en,cn] of [['owned','Owned','已收藏'],['catalog','Collection','图鉴'],['favorites','Favourites','喜欢']]){const btn=b(tabs,tr(en,cn),()=>{bagMode=key;bagSelected=null;bagChapter=null;bagCategory='all';bagQuery='';search.value='';bagPageIndex=0;draw()});btn.dataset.mode=key}
+  const category=element('div','',wrap,'bagCategories');
+  for(const [key,en,cn] of bagCats){const btn=b(category,tr(en,cn),()=>{bagCategory=key;bagSelected=null;bagPageIndex=0;draw()});btn.dataset.category=key}
+  const tools=element('div','',wrap,'bagTools'),search=element('input','',tools);search.type='search';search.placeholder=tr('Find a treasure','找一件宝贝');search.setAttribute('aria-label',search.placeholder);search.value=bagQuery;search.oninput=()=>{bagQuery=search.value;bagSelected=null;bagPageIndex=0;draw()};
+  const sort=element('select','',tools);sort.setAttribute('aria-label',tr('Sort items','排序'));for(const [key,en,cn] of [['recent','Recent','最近'],['name','Name','名称']]){const opt=element('option',tr(en,cn),sort);opt.value=key}sort.value=bagSort;sort.onchange=()=>{bagSort=sort.value;bagPageIndex=0;draw()};
+  const body=element('div','',wrap,'bagBody'),chapters=element('div','',body,'bagChapterShelf'),trail=element('div','',body,'bagChapterTrail'),grid=element('div','',body,'bagSlots'),detail=element('section','',body,'bagDetail'),pagination=element('div','',body,'bagPagination');
+  const foot=element('div','',wrap,'bagFooter');b(foot,tr('My room','我的小窝'),hideoutPage);b(foot,tr('Passport','护照'),passport);b(foot,tr('Stamp rewards','印章奖励'),hideoutClaimPage);
+  function draw(){
+   tabs.querySelectorAll('button').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.mode===bagMode)));
+   category.querySelectorAll('button').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.category===bagCategory)));
+   const query=pawBagNormalize(bagQuery),shelf=false,shown=all.filter(v=>(bagMode==='catalog'||v.owned)&&(bagMode!=='favorites'||bagFavorites.includes(v.item[0]))&&(bagCategory==='all'||bagClass(v.item)===bagCategory)&&pawBagSearchMatch(v,query,boxPrizes.some(p=>p[0]===v.item[0]&&p[4]==='secret')));
+   const visibleName=v=>!v.owned&&boxPrizes.some(p=>p[0]===v.item[0]&&p[4]==='secret')?tr('Mystery figure','神秘手办'):tr(...v.item);
+   shown.sort((a,b)=>bagSort==='name'?visibleName(a).localeCompare(visibleName(b)):b.order-a.order);
+   if(!shown.some(v=>v.item[0]===bagSelected))bagSelected=null;
+   const selected=shown.find(v=>v.item[0]===bagSelected),paged=bagPageSlice(shown,bagPageIndex);bagPageIndex=paged.page;
+   chapters.replaceChildren();trail.replaceChildren();grid.replaceChildren();pagination.replaceChildren();
+   chapters.hidden=!shelf;trail.hidden=shelf;grid.hidden=shelf||!!selected;pagination.hidden=shelf||!!selected||paged.pages<=1;
+   if(shelf){
+    for(const id of bagChapterIds){const count=bagChapterCounts(all,id),available=shown.filter(v=>v.chapter===id).length;
+     const card=b(chapters,'',()=>{bagChapter=id;bagSelected=null;bagPageIndex=0;draw()});card.className='bagChapterCard';card.dataset.chapter=id;
+     const art=element('img','',card);art.src=bagChapterImage(id);art.alt='';art.loading='lazy';
+     const copy=element('div','',card,'bagChapterCopy');element('small',tr('Chapter ','章节 ')+(bagChapterIds.indexOf(id)+1),copy);element('strong',bagChapterName(id),copy);
+     element('span',bagChapterDescription(id),copy);element('small',bagMode==='favorites'?available+' '+tr('favourites in this chapter','件本章喜欢的收藏'):count.owned+' / '+count.total+' '+tr('known keepsakes','件已知收藏'),copy);
+     const meter=element('progress','',copy);meter.max=Math.max(1,bagMode==='favorites'?count.owned:count.total);meter.value=bagMode==='favorites'?available:count.owned;meter.setAttribute('aria-label',bagChapterName(id)+(bagMode==='favorites'?tr(' favourites',' 喜欢'):tr(' collection progress',' 收藏进度')));
+    }
+    detail.hidden=true;return
+   }
+   b(trail,tr('‹ Chapters','‹ 全部章节'),()=>{bagChapter=null;bagCategory='all';bagQuery='';search.value='';bagSelected=null;bagPageIndex=0;draw()});
+   element('strong',bagChapter?bagChapterName(bagChapter):tr('Search & filters','搜索与筛选'),trail);
+   if(!selected)for(const v of paged.rows){const button=b(grid,'',()=>{bagSelected=v.item[0];draw();detail.scrollIntoView({block:'nearest'})});button.className='bagSlot';button.dataset.owned=String(v.owned);button.setAttribute('aria-pressed',String(bagSelected===v.item[0]));button.setAttribute('aria-label',v.owned?tr(...v.item):tr('Undiscovered item','未发现的物品'));const art=element('span','',button,'bagSlotArt');art.innerHTML=bagArt(v);const prize=boxPrizes.find(p=>p[0]===v.item[0]);element('small',v.owned?tr(...v.item):prize?.[4]==='secret'?tr('Secret','隐藏款'):tr('Not found','未发现'),button);if(bagFavorites.includes(v.item[0]))element('span','★',button,'bagStar')}
+   if(!shown.length){element('p',query?tr('No treasures match this search.','没找到符合搜索的宝贝。'):tr('Nothing in this pocket yet.','这个口袋还空空的。'),grid,'bagEmpty');if(query||bagCategory!=='all'){const clear=b(grid,tr('Clear search & filters','清除搜索和筛选'),()=>{bagQuery='';search.value='';bagCategory='all';bagSelected=null;bagPageIndex=0;draw()});clear.className='pawBagReset'}if(bagMode==='owned')b(grid,tr('See undiscovered keepsakes','看看待发现的收藏'),()=>{bagMode='catalog';bagPageIndex=0;draw()})}
+   if(!selected&&paged.pages>1){const prev=b(pagination,tr('‹ Previous','‹ 上一页'),()=>{bagPageIndex--;draw()});prev.disabled=paged.page===0;element('span',(paged.page+1)+' / '+paged.pages,pagination);const next=b(pagination,tr('Next ›','下一页 ›'),()=>{bagPageIndex++;draw()});next.disabled=paged.page===paged.pages-1}
+   detail.replaceChildren();const v=selected;detail.hidden=!v;if(!v)return;
+   b(detail,tr('‹ Back to keepsakes','‹ 返回收藏'),()=>{bagSelected=null;draw()});
+   const art=element('div','',detail,'bagHeroArt');art.innerHTML=bagArt(v);if(!v.owned)art.classList.add('bagUnknown');
+   const prize=boxPrizes.find(p=>p[0]===v.item[0]),secret=!v.owned&&prize?.[4]==='secret';
+   element('h2',secret?tr('Mystery figure','神秘手办'):tr(...v.item),detail);
+   element('small',v.owned?tr('In your bag','已放入背包'):tr('Still to discover','等待发现'),detail);element('small',bagChapterName(v.chapter),detail);
+   if(v.owned){const photo=element('img','',detail,'mbKeepsakeOrigin');photo.src=bagChapterImage(v.chapter);photo.alt='';photo.loading='lazy';element('small',tr('A glimpse of this chapter','这一章节的风景'),detail,'mbKeepsakeOriginCaption')}
+   if(prize)element('small',tr(prize[4]==='secret'?'Secret':prize[4]==='rare'?'Rare':prize[4]==='uncommon'?'Uncommon':'Common',prize[4]==='secret'?'隐藏款':prize[4]==='rare'?'稀有款':prize[4]==='uncommon'?'特别款':'普通款'),detail,'bagRarity');
+   element('p',tr(...(v.owned?keepsakeStory(v.item):secret?['A secret companion awaits in the blind box collection.','盲盒收藏里藏着一位神秘小伙伴。']:keepsakeClue(v.item))),detail);
+   if(v.owned){const fav=b(detail,bagFavorites.includes(v.item[0])?tr('★ Remove favourite','★ 取消喜欢'):tr('☆ Keep as favourite','☆ 加入喜欢'),()=>{bagFavorites=bagFavorites.includes(v.item[0])?bagFavorites.filter(x=>x!==v.item[0]):[...bagFavorites,v.item[0]];save('bagFavoritesV1',bagFavorites);draw()});fav.setAttribute('aria-pressed',String(bagFavorites.includes(v.item[0])))}
+   if(prize)element('small',boxPrizes.filter(p=>owned.some(o=>o.item[0]===p[0])).length+'/'+boxPrizes.length+' '+tr('figures collected','款手办已收集'),detail)
+  }draw();
+ });
+ const q=$('content');q.querySelector('.bagHeader')?.remove();q.querySelector('.bagFooter')?.remove();q.querySelector('.bagChapterTrail')?.remove();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),hideoutPage);journalLanguage(renderTravellerBag);
+};
+myRoom=function(){bagChapter=null;bagCategory='all';bagQuery='';bagSelected=null;bagPageIndex=0;bagMode='owned';renderTravellerBag()};
+const pawHomeSingleBefore=hideoutPage;
+hideoutPage=function(...args){
+ const result=pawHomeSingleBefore(...args),q=$('content'),primary=q.querySelector('.hideoutPrimary');
+ if(!primary)return result;
+ q.querySelector('.hideoutProfile')?.remove();
+ q.querySelector('.hideoutLibrary')?.remove();
+ const reward=[...primary.querySelectorAll('button')].find(v=>v.textContent===tr('Stamps & rewards','印章与奖励'));
+ if(reward){reward.textContent=tr('Display rewards','摆放奖励');reward.onclick=()=>{hideoutClaimPage();const content=$('content');content.querySelector('.hideoutStampGrid')?.remove();const heading=content.querySelector('h2');if(heading)heading.textContent=tr('Unlocked decorations','已解锁装饰');mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),hideoutPage)}}
+ if(!hideoutEditing){b(primary,tr('My collections','我的收藏'),myRoom)}
+ return result
+};
+const pawLegacyPassport=passport;
+function pawTravelMemories(){
+ pawLegacyPassport();const q=$('content'),album=q.querySelector('.travelAlbum');
+ if(album){
+  album.querySelectorAll('.albumGrid,.albumProfile,.townFortuneSlip,.hideoutRewardCallout').forEach(n=>n.remove());
+  for(const btn of [...album.querySelectorAll(':scope > button')])if([tr('Open my bag','打开背包'),tr('Travel map','旅行地图')].includes(btn.textContent))btn.remove();
+ }
+ q.querySelector('.townAnchorBook')?.remove();
+ const h=q.querySelector('h1');if(h)h.textContent=tr('Travel memories','旅途回忆');
+ mbHomePageBack(tr('‹ Explore','‹ 返回探索'),()=>pawJournalRender(scene));journalLanguage(pawTravelMemories)
+}
+const pawJournalSingleBefore=pawJournalRender;
+pawJournalRender=function(district=scene){
+ const result=pawJournalSingleBefore(district),q=$('content'),book=q.querySelector('.pawSketchbook'),info=q.querySelector('.pawSketchNotes');
+ if(book&&info){
+  const signature=townAnchorPlaces[district],visitedHere=townAnchorVisits()[district];
+  if(signature&&visitedHere)element('p',tr(...signature.memory),info,'pawJourneyMemory');
+  const stamp=element('small',hideoutStampCount()+'/4 '+tr('railway stamps collected','枚铁路印章已收集'),info);
+  const links=element('div','',book,'pawTravelMemoryLink');
+  b(links,tr('Travel memories ›','旅途回忆 ›'),pawTravelMemories).className='pawTownTextLink';
+ }
+ return result
+};
+passport=function(){return pawJournalRender(scene)};
+travel=function(){return pawJournalRender(scene)};
+$('dockTravel').onclick=travel;$('travel').onclick=travel;
+const pawProfileSingleBefore=lifeProfile;
+lifeProfile=function(...args){
+ const result=pawProfileSingleBefore(...args),q=$('content');
+ for(const link of q.querySelectorAll('.journalBookshelf .journalBookLink'))if(!['friends','life'].includes(link.dataset.book))link.remove();
+ const stats=q.querySelector('.journalQuickStats');if(stats){for(const btn of [...stats.querySelectorAll('button')].slice(0,2)){const label=element('div','',stats,'pawProfileStat');label.innerHTML=btn.innerHTML;btn.remove()}}
+ return result
+};
+const pawAchievementSingleBefore=achievementBook;
+achievementBook=function(...args){
+ const result=pawAchievementSingleBefore(...args),q=$('content');
+ for(const el of q.querySelectorAll('.journalBookLink[data-book="passport"],.journalBookLink[data-book="decor"],.journalBookLink[data-book="figures"]'))el.remove();
+ for(const h of q.querySelectorAll('h2'))if(h.textContent===tr('Other little milestones','其他小小里程碑'))h.remove();
+ return result
+};
+const pawDiaryOpen=new Set(['fortune']);
+function pawDiaryFold(q,node,key,title,subtitle=''){
+ if(!node)return null;
+ const fold=element('details','',q,'pawDiaryFold');node.before(fold);
+ const summary=element('summary','',fold);element('strong',title,summary);if(subtitle)element('small',subtitle,summary);
+ fold.open=pawDiaryOpen.has(key);fold.ontoggle=()=>{if(fold.open)pawDiaryOpen.add(key);else pawDiaryOpen.delete(key)};
+ const h=node.querySelector(':scope > h2');if(h&&h.textContent===title)h.remove();fold.append(node);return fold
+}
+const pawGratitudeBefore=goodCompanyPage;
+goodCompanyPage=function(q){const result=pawGratitudeBefore(q);const book=q.querySelector('.goodCompanyBook');if(book){book.querySelector('.goodCompanyBanner')?.remove();book.querySelector('.goodCompanyActions')?.remove()}return result};
+const pawDiaryTodayBefore=todayHub;
+todayHub=function(...args){
+ const result=pawDiaryTodayBefore(...args),q=$('content'),day=townPawToday(),tasks=q.querySelector('.journalDailyTasks');
+ pawDiaryFold(q,q.querySelector('.townFortuneSlip'),'fortune',tr('Today’s fortune','今日运势'));
+ const fold=pawDiaryFold(q,tasks,'tasks',tr('Today’s tasks','今日小任务'),day.keys.length+'/'+townPawCategories().length+' '+tr('completed','已完成'));
+ if(fold)fold.querySelector('.journalDailyTasks > h2')?.remove();
+ const gratitude=element('section','',q,'pawDiaryGratitude');goodCompanyPage(gratitude);
+ pawDiaryFold(q,gratitude,'gratitude',tr('One good thing','今日小确幸'),day.keys.includes('gratitude')?tr('Saved today','今日已记录'):tr('Optional private reflection','随心记录，仅自己可见'));
+ const calendar=q.querySelector('.townCalendarLink'),occasion=q.querySelector('.townOccasion');
+ if(calendar||occasion){const panel=element('section','',q);if(occasion)panel.append(occasion);if(calendar)panel.append(calendar);pawDiaryFold(q,panel,'calendar',tr('Lunar calendar','农历日历'))}
+ q.querySelector('.travellerMoodBook')?.remove();
+ journalLanguage(todayHub);return result
+};
+const pawDailyGuideBefore=journalDailyGuide;
+journalDailyGuide=function(id){if(id==='gratitude'){pawDiaryOpen.add('gratitude');todayHub();$('content').querySelector('.pawDiaryGratitude')?.closest('details')?.scrollIntoView({block:'start'});return}return pawDailyGuideBefore(id)};
+const pawCommunitySingleBefore=townChatPage;
+townChatPage=function(...args){
+ if(communityTab==='celebrate'){pawTownFromDock=false;pawDiaryOpen.add('gratitude');return todayHub()}
+ const result=pawCommunitySingleBefore(...args),q=$('content');
+ const tabs=q.querySelector('.communityTabs');if(tabs){
+  const stroll=b(tabs,tr('Meet','结伴'),()=>{communityTab='stroll';townChatPage()});stroll.setAttribute('aria-pressed',String(communityTab==='stroll'))
+  for(const el of [...tabs.querySelectorAll('button')])if(el.disabled)el.remove()
+ }
+ if(communityTab==='board'){
+  q.querySelector('.townBoardPublicLink')?.remove();
+  for(const btn of q.querySelectorAll('button'))if(btn.textContent===tr('Open my private notes','打开我的私密留言'))btn.remove()
+ }
+ return result
+};
+pawTownDock.onclick=()=>{if(transitioning)return;pawTownFromDock=false;communityTab='board';townChatPage()};
+const pawFourDockBefore=updateHUD;
+updateHUD=function(...args){
+ const result=pawFourDockBefore(...args);
+ const label=tr('Explore','探索');$('dockTravel').lastElementChild.textContent=label;$('dockTravel').setAttribute('aria-label',label);
+ const home=tr('My Room','小窝');mbHomeNav.lastElementChild.textContent=home;mbHomeNav.setAttribute('aria-label',home);
+ return result
+};
+$('dockRoom').hidden=true;$('dockPassport').hidden=true;
+$('dock').append($('dockTravel'),$('dockScoop'),pawTownDock,mbHomeNav);
+const pawFourDockCSS=document.createElement('style');pawFourDockCSS.textContent=`
+#game #dock #dockRoom,#game #dock #dockPassport{display:none!important}
+#game #dock{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+#game #dock>button:not([hidden]){flex:1 1 0;min-width:0}
+#game #content .pawDiaryFold{margin:9px 0;padding:0 10px;background:transparent;border:0;border-bottom:1px solid #bfa882;box-shadow:none}
+#game #content .pawDiaryFold>summary{min-height:48px;padding:8px 0;color:#50634b;cursor:pointer;font:600 17px/1.35 Georgia,"Songti SC",serif}
+#game #content .pawDiaryFold>summary small{display:block;font:12px/1.4 system-ui;color:#77654e;margin:3px 0 0 15px}
+#game #content .pawDiaryFold .goodCompanyBook{border:0;background:transparent;padding:4px 0;box-shadow:none}
+#game #content .pawProfileStat{display:flex;flex-direction:column;justify-content:center;text-align:center;padding:6px 4px}
+#game #content .pawTravelMemoryLink{text-align:center;border-top:1px dashed #bda783;margin-top:7px}
+`;document.head.append(pawFourDockCSS);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
