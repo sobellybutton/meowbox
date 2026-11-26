@@ -53,3 +53,27 @@ for(const a of slots){
 return count+slots.length;
 `);
 console.log('PASS: '+topicChecks()+' tarot topic separation checks');
+
+const ext=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+function section(source,start,end){
+ const a=source.indexOf(start),b=source.indexOf(end,a+start.length);
+ if(a<0||b<a)throw Error('Missing scene geometry section '+start);
+ return source.slice(a,b);
+}
+const sceneGeometry=new Function("let room=null,activity=null;const roomActions={arcade:[['bubbleArcade'],['goldfishScoop'],['blindBox']]};"+
+ section(ext,'const indoorStages=','function indoorDestination')+
+ section(src,'const groundedStations=','function drawGroundedSupport')+
+ section(src,'const groundedObstaclesBefore=indoorObstacles;','/* Exploration first')+
+ section(src,'/* PAW_ROOM_LAYOUT_BEGIN */','function pawSceneFloorShadow')+`
+let count=0;
+for(room of ['temple','arcade']){
+ const spec=indoorStages[room],ids=room==='temple'?Object.keys(pawTempleLayout):['bubbleArcade','goldfishScoop','blindBox'];
+ const points=[spec.entry,spec.arrival,...ids.map(id=>spec.stations[id].slice(2))];
+ for(const a of points)for(const b of points){
+  if(!indoorSafe(...a)||!indoorPath(a,b))throw Error(room+' blocked approach '+a+' to '+b);
+  count++;
+ }
+}
+return count;
+`);
+console.log('PASS: '+sceneGeometry()+' redesigned temple and arcade ordered routes');
