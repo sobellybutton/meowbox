@@ -3666,7 +3666,7 @@ const pawIllustratedCSS=document.createElement('style');pawIllustratedCSS.textCo
 /* Distance-driven animation. The existing rear walk drawings are retained.
    Front and profile fallbacks animate lower-body pixels from their painted
    standing source until dedicated frames are installed in action-runtime. */
-let pawWalkDistance=0;const pawGaitTravel=new WeakMap();
+let pawWalkDistance=0;const pawGaitTravel=new WeakMap(),pawIndoorGait={key:'',x:0,y:0,distance:0};
 const pawWalkStepBefore=step;
 step=function(n,dt,speed){
  const x=n.x,y=n.y,vertical=n===p&&Math.abs(n.ty-y)>Math.abs(n.tx-x);
@@ -3699,11 +3699,20 @@ function pawPaintedGait(im,x,y,scale,facing,phase){
  }finally{ctx.restore()}
 }
 backHuman=function(x,y,kind,walking,facing,scale=1){
- if(!walking||kind<0||kind>3)return pawWalkRenderBefore(x,y,kind,walking,facing,scale);
+ if(!walking||kind<0||kind>3){
+  if(room&&!pawRenderedWalker&&kind===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<4){pawIndoorGait.key=scene+'|'+room;pawIndoorGait.x=x;pawIndoorGait.y=y}
+  return pawWalkRenderBefore(x,y,kind,walking,facing,scale)
+ }
  mbArtLoad();const dir=facing==='left'?'right':facing,frames=mbArtRegistry.players[kind]?.walk?.[dir];
  const isPlayer=kind===avatar&&Math.hypot(x-p.x,y-p.y)<4;
- const actor=!room&&!isPlayer?npc.find(n=>Math.hypot(x-n.x,y-n.y)<3):null;
- const phase=pawGaitPhase(isPlayer?pawWalkDistance:actor?(pawGaitTravel.get(actor)||0):t*52,scale),reduced=actorReduce||residentReducedMotion.matches;
+ const actor=pawRenderedWalker||(!room&&!isPlayer?npc.find(n=>Math.hypot(x-n.x,y-n.y)<3):null);
+ const indoorPlayer=!!room&&!actor&&kind===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<4;
+ if(indoorPlayer){const key=scene+'|'+room;const previous=pawIndoorGait;
+  if(previous.key===key){const d=Math.hypot(x-previous.x,y-previous.y);if(d<60)previous.distance+=d}
+  else previous.distance=0;
+  previous.key=key;previous.x=x;previous.y=y
+ }
+ const phase=pawGaitPhase(indoorPlayer?pawIndoorGait.distance:actor&&pawGaitTravel.has(actor)?pawGaitTravel.get(actor):isPlayer?pawWalkDistance:t*40,scale),reduced=actorReduce||residentReducedMotion.matches;
  if(frames){const loaded=frames.map(mbArtImage);if(loaded.every(Boolean)){const i=reduced?0:((Math.floor(phase/Math.PI*frames.length/2)%frames.length)+frames.length)%frames.length;mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}}
  const im=pics['walker'+kind+(dir==='up'?1:dir==='down'?0:2)];
  if(im?.naturalWidth&&im.naturalHeight&&!reduced&&(dir==='down'||dir==='right')){pawPaintedGait(im,x,y,scale,facing,phase);return}
@@ -4984,32 +4993,50 @@ pawAmbientTick=function(now){
  return result
 };
 /* Fictional visitors are rendered locally, never advertised as online users. */
+/* Fictional guests: quiet, visit-specific rosters. Never claim these are online players. */
 const pawRoomVisitorSpecs={
+ temple:{count:2,points:[[185,680],[325,710],[605,680],[510,730],[230,615]]},
+ tarot:{count:1,points:[[185,690],[610,700],[325,730]]},
+ destiny:{count:1,points:[[190,700],[610,690],[350,730]]},
  wishes:{count:2,points:[[190,610],[390,600],[610,630],[490,700],[220,690]]},
  tea:{count:2,points:[[180,660],[365,630],[610,680],[465,720]]},
  park:{count:2,points:[[185,670],[380,610],[600,690],[335,720]]},
- arcade:{count:1,points:[[190,680],[400,710],[610,670]]},
- boba:{count:1,points:[[190,680],[395,700],[615,680]]}
+ fish:{count:1,points:[[180,680],[620,690],[390,730]]},
+ kitchen:{count:1,points:[[180,680],[620,690],[400,730]]},
+ arcade:{count:2,points:[[190,680],[400,710],[610,670],[520,730]]},
+ boba:{count:1,points:[[190,680],[395,700],[615,680]]},
+ mystery:{count:1,points:[[190,680],[620,700],[400,730]]},
+ quiz:{count:1,points:[[190,700],[610,680],[400,730]]},
+ story:{count:1,points:[[190,680],[620,700],[400,730]]},
+ match:{count:1,points:[[190,700],[610,690],[400,730]]}
 };
-let pawVisitorContext='',pawLocalVisitors=[],pawVisitorAt=0;
+let pawVisitorContext='',pawLocalVisitors=[],pawVisitorAt=0,pawVisitSerial=0,pawRenderedWalker=null;
+function pawGuestCount(max,visit,roomId){
+ const key=Array.from(String(roomId)).reduce((a,c)=>a+c.codePointAt(0),0);
+ // Some visits are quiet, and some have an extra guest. Stable within a visit.
+ return (key+visit)%4===0?0:Math.min(max,1+((key+visit)%3===0?1:0))
+}
 function pawRoomWalkers(){
  const spec=pawRoomVisitorSpecs[room];if(!spec||!indoorReady())return [];
  const context=scene+'|'+room+'|'+avatar,obs=indoorObstacles(),safe=spec.points.filter(v=>indoorSafe(v[0],v[1],obs));
- if(context!==pawVisitorContext||!pawLocalVisitors.length){
-  pawVisitorContext=context;pawVisitorAt=t;
-  const spawn=safe.filter(v=>Math.hypot(v[0]-indoor.x,v[1]-indoor.y)>85);
-  pawLocalVisitors=spawn.slice(0,spec.count).map((pos,i)=>({id:'fictional-visitor-'+i,fictionalVisitor:true,room,x:pos[0],y:pos[1],avatar:((avatar??0)+1+i)%4,facing:'down',walking:0,index:safe.indexOf(pos),route:[],wait:t+1.4+i*2}))
+ if(context!==pawVisitorContext){
+  pawVisitorContext=context;pawVisitorAt=t;pawVisitSerial++;
+  const spawn=safe.filter(v=>Math.hypot(v[0]-indoor.x,v[1]-indoor.y)>90);
+  const offset=spawn.length?pawVisitSerial%spawn.length:0,ordered=[...spawn.slice(offset),...spawn.slice(0,offset)];
+  pawLocalVisitors=ordered.slice(0,pawGuestCount(spec.count,pawVisitSerial,room)).map((pos,i)=>({id:'fictional-visitor-'+i,fictionalVisitor:true,room,x:pos[0],y:pos[1],avatar:((avatar??0)+1+i+pawVisitSerial%2)%4,facing:'down',walking:0,index:safe.indexOf(pos),route:[],wait:t+2+i*2.5}))
  }
- const dt=Math.max(0,Math.min(.08,t-pawVisitorAt));pawVisitorAt=t;
+ const dt=Math.max(0,Math.min(.05,t-pawVisitorAt));pawVisitorAt=t;
  if(residentReducedMotion.matches)return pawLocalVisitors.map(a=>({...a,walking:0}));
  for(const a of pawLocalVisitors){
   a.walking=0;if(t<a.wait||safe.length<2)continue;
-  if(!a.route.length){a.index=(a.index+1)%safe.length;const route=indoorPath([a.x,a.y],safe[a.index],obs);if(!route?.length){a.wait=t+2;continue}a.route=route}
-  const dest=a.route[0],next=pawWalkStep(a,dest,dt);
-  if(!indoorSafe(next.x,next.y,obs)){a.route=[];a.wait=t+1.5;continue}
-  if(Math.hypot(next.x-indoor.x,next.y-indoor.y)<48||pawLocalVisitors.some(b=>b!==a&&Math.hypot(next.x-b.x,next.y-b.y)<43)){a.wait=t+.6;continue}
-  a.facing=pawWalkFacing(a,dest);a.walking=next.arrived?0:1;a.x=next.x;a.y=next.y;
-  if(next.arrived){a.route.shift();if(!a.route.length)a.wait=t+2.2+(a.avatar%3)}
+  if(!a.route.length){a.index=(a.index+1)%safe.length;const route=indoorPath([a.x,a.y],safe[a.index],obs);if(!route?.length){a.wait=t+3;continue}a.route=route}
+  const dest=a.route[0],next=pawWalkStep(a,dest,dt,40+(a.avatar%3)*4);
+  if(!indoorSafe(next.x,next.y,obs)){a.route=[];a.wait=t+2;continue}
+  if(Math.hypot(next.x-indoor.x,next.y-indoor.y)<55||pawLocalVisitors.some(b=>b!==a&&Math.hypot(next.x-b.x,next.y-b.y)<50)){a.route=[];a.wait=t+1.1;continue}
+  const distance=Math.hypot(next.x-a.x,next.y-a.y);
+  if(distance>.01){a.facing=pawWalkFacing(a,dest);pawGaitTravel.set(a,(pawGaitTravel.get(a)||0)+distance);a.walking=1}
+  a.x=next.x;a.y=next.y;
+  if(next.arrived){a.route.shift();if(!a.route.length){a.walking=0;a.wait=t+4+(a.avatar%3)*2}}
  }
  return pawLocalVisitors
 }
@@ -5017,8 +5044,8 @@ const pawVisitorEnterBefore=enter;
 enter=function(...args){pawVisitorContext='';pawLocalVisitors=[];return pawVisitorEnterBefore(...args)};
 const pawVisitorDrawBefore=drawSharedRoomActor;
 drawSharedRoomActor=function(a,scale){
- if(a.fictionalVisitor){backHuman(a.x,a.y,a.avatar,a.walking===1,a.facing,scale);return}
- return pawVisitorDrawBefore(a,scale)
+ if(a.fictionalVisitor){pawRenderedWalker=a;try{backHuman(a.x,a.y,a.avatar,a.walking===1,a.facing,scale)}finally{pawRenderedWalker=null}return}
+ pawRenderedWalker=a;try{return pawVisitorDrawBefore(a,scale)}finally{pawRenderedWalker=null}
 };
 const pawGardenScaleBefore=drawGatheringPainted;
 drawGatheringPainted=function(name,x,y,scale=1,facing='right'){
@@ -5104,5 +5131,9 @@ pawVisualCleanStyle.textContent=`
 #game .pawRailJourney .pawRailCaption{background:#28392dc9;border:0;border-radius:2px;box-shadow:none;padding:9px 15px}
 #game .pawRailJourney .pawRailSkip{background:#28392daa;border:1px solid #e6cf9b66;font:500 13px var(--paw-body,system-ui,sans-serif)}
 `;document.head.append(pawVisualCleanStyle);
+/* A complete painted carriage is preferable to misaligned fragments. The next
+   art pass needs independently painted scenery behind a transparent frame. */
+const pawRailSeamStyle=document.createElement('style');pawRailSeamStyle.textContent='#game .mbPaintedRail .mbRailPane,#proposal .mbPaintedRail .mbRailPane{display:none!important}';document.head.append(pawRailSeamStyle);
+
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
