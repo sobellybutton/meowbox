@@ -25,6 +25,7 @@ jobs:
       - run: node scripts/rail-fish-test.cjs
       - run: node scripts/resident-story-test.cjs
       - run: node scripts/guest-roster-test.cjs
+      - run: node scripts/daily-guide-wallet-test.cjs
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps chromium
       - name: Test all four villages and actual doorway taps
@@ -220,6 +221,15 @@ jobs:
                 await page.waitForTimeout(3500);
                 await page.screenshot({path:'test-results/'+name+'-village.png'});
                 if(await page.locator('#dock').isHidden())throw Error('Navigation hidden');
+                await page.locator('#dockScoop').click();
+                await page.locator('.journalDailyTasks').waitFor({state:'visible'});
+                const dailyPlay=page.locator('.journalDailyTask').filter({hasText:'Play a little'});
+                await dailyPlay.getByRole('button',{name:/Train/}).click();
+                await page.locator('.districtRailCabin').waitFor({state:'visible'});
+                if(await page.locator('.mbRailDestination').getAttribute('data-rail-stop')!=='island')throw Error('Daily activity did not open the correct railway preview');
+                if(!await page.evaluate(()=>scene==='fortune'&&!transitioning))throw Error('Daily guide travelled without confirmation');
+                await page.getByRole('button',{name:'Stay here a little longer',exact:true}).click();
+                await page.evaluate(()=>{travellerSuggestedRoute=null;updateHUD()});
                 await page.locator('#nextStopShortcut').click();
                 await page.locator('.districtRailCabin').waitFor({state:'visible'});
                 const cabin=page.locator('.districtRailCabin');

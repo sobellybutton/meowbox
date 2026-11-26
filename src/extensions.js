@@ -4191,7 +4191,7 @@ hideoutThemes.push(
  {id:'retro',name:['Old Hong Kong evening','港风黄昏'],wall:'#e4c7a5',floor:'#866354',sky:'#bf8f78',need:0,cost:120}
 );
 function hideoutPurchases(){const v=load('hideoutThemePurchasesV1',[]);return Array.isArray(v)?[...new Set(v.filter(id=>hideoutThemes.some(t=>t.id===id&&t.cost)))]:[]}
-function hideoutBalance(){const purchased=hideoutPurchases(),draws=blindShopLedger(),paidKeys=new Set(draws.map(v=>v.key));return Math.max(0,items.filter(v=>!paidKeys.has(v[0])).length*10+dailyWheelRecord().total+townPawRecord().total-hideoutThemes.filter(v=>purchased.includes(v.id)).reduce((sum,v)=>sum+(v.cost||0),0)-draws.reduce((sum,v)=>sum+v.cost,0)-furniturePurchaseTotal())}
+function hideoutBalance(){return pawWalletTotals(pawWalletBreakdown()).balance}
 function hideoutThemeUnlocked(theme){return theme.cost?hideoutPurchases().includes(theme.id):hideoutStampCount()>=theme.need}
 function buyHideoutTheme(theme){
  if(hideoutThemeUnlocked(theme))return true;
@@ -7728,7 +7728,7 @@ lifeHUDRefresh=function(){blindJournalRefreshBefore();const p=$('hudProgress');i
 function pawWalletPage(){
  page(tr('Meow Coin purse','喵币小钱包'),tr('Little treats earned by exploring. Never real money.','逛小镇攒来的小零花，不是真钱。'),q=>{
  const card=element('section','',q,'blindAlbumProgress');element('h2',String(hideoutBalance())+' '+tr('Meow Coins','喵币'),card);
- element('p',tr('Discoveries earn 10 Meow Coins each; purchased blind box figures do not earn coins back. The daily wheel also gives Meow Coins.','每件探索纪念品赚10喵币，购买的盲盒手办不返喵币。每日转盘也可攒喵币。'),card);
+ element('p',tr('Discoveries, daily activities and the daily wheel earn Meow Coins. Purchased blind box figures do not earn coins back.','探索纪念品、每日活动和转盘都能攒喵币。购买的盲盒手办不返喵币。'),card);
  element('p',tr('Blind boxes: 40 Meow Coins each, up to three per Singapore day.','盲盒40喵币一盒，每个新加坡日最多三盒。'),card);
  element('p',tr('Today’s stock: ','今日剩余：')+blindStockRemaining()+'/'+blindStock,card);
  b(q,tr('My collectible cabinet','我的收藏柜'),()=>{bagCategory='figures';bagMode='catalog';renderTravellerBag()});
@@ -8044,13 +8044,24 @@ lifeProfile=function(){
 };
 $('profileHud').onclick=lifeProfile;
 /* Daily activity destinations are optional navigation hints, not auto-completion. */
-function journalDailyDestination(id){return ({play:'island',food:'island',ritual:'fortune',care:'home',social:scene,release:'home'})[id]||scene}
-function journalDailyGuide(id){
- if(id==='gratitude'){communityTab='celebrate';townChatPage();return}
- const destination=journalDailyDestination(id),tips={play:['Visit the arcade.','去游戏厅玩一局。'],food:['Visit Grandma or Pearl & Pause.','去外婆厨房或珍珠摸鱼铺。'],ritual:['Visit the temple, Wishing Garden or Tarot House.','去庙里、许愿花园或塔罗屋。'],care:['Visit Daydream Park.','去白日梦公园。'],social:['Say hello to a resident nearby.','找附近的居民聊聊天。'],release:['Visit Worry-Free Pier.','去无忧码头。']};
- $('page').style.display='none';
- if(destination!==scene)journey(destination);else hint(...tips[id])
+/* MBDAILY_GUIDE_BEGIN */
+function journalDailyRoute(id,world,registry){
+ const routes={play:['island','arcade'],food:['island','kitchen'],ritual:['fortune','temple'],care:['home','park'],release:['home','fish']};
+ if(!Object.hasOwn(routes,id))return null;
+ const [district,door]=routes[id];
+ if(!registry[district]?.st.some(st=>st[0]===door))return null;
+ return {id:'daily:'+id,district,door};
 }
+function journalDailyGuide(id){
+ if(transitioning||activity||room||!proposal.hidden){
+  hint('Finish or step outside first. Your daily ideas will be here.','先完成手上的事，或出门再逛。今日小建议不会跑掉。');return;
+ }
+ if(id==='gratitude'){communityTab='celebrate';townChatPage();return}
+ if(id==='social'){$('page').style.display='none';hint('Say hello to a resident nearby.','找附近的居民聊聊天。');return}
+ const route=journalDailyRoute(id,scene,maps);
+ if(route)travellerFollowRoute(route);
+}
+/* MBDAILY_GUIDE_END */
 function journalDailyTaskList(parent,all=false){
  const state=townPawToday(),categories=townPawCategories(),ordered=[...categories.filter(v=>!state.keys.includes(v.id)),...categories.filter(v=>state.keys.includes(v.id))];
  const box=element('section','',parent,'journalDailyTasks');element('h2',tr('Things to do today','今天可以做什么'),box);
@@ -8061,7 +8072,7 @@ function journalDailyTaskList(parent,all=false){
  const got=state.keys.includes(item.id),row=element('article','',list,'journalDailyTask');row.dataset.earned=String(got);
  const mark=element('span',got?'✓':'+'+item.amount,row,'townPawStamp');mark.setAttribute('aria-label',got?tr('Completed','已完成'):item.amount+' '+tr('Meow Coins','喵币'));
  const copy=element('div','',row);element('strong',tr(...item.name),copy);element('small',tr(...item.description),copy);
- if(!got)b(row,tr('Go','去看看'),()=>journalDailyGuide(item.id));else element('small',tr('Done','已完成'),row)
+ if(!got){const route=journalDailyRoute(item.id,scene,maps);const label=route&&route.district!==scene?tr('Train','搭列车'):tr('Go','去看看');const go=b(row,label,()=>journalDailyGuide(item.id));if(route)go.setAttribute('aria-label',label+' · '+travellerRouteName(route));}else element('small',tr('Done','已完成'),row)
  }
  more.textContent=expanded?tr('Show less','收起'):tr('Show all activities','查看全部活动');more.setAttribute('aria-expanded',String(expanded))
  };
@@ -8483,10 +8494,20 @@ function pawWalletBreakdown(){
  themes:hideoutThemes.filter(v=>themes.includes(v.id)).reduce((sum,v)=>sum+(v.cost||0),0)
  }
 }
+/* MBWALLET_TOTALS_BEGIN */
+function pawWalletTotals(v){
+ const earned=v.discoveries+v.checkin+v.activities,spent=v.blind+v.furniture+v.themes;
+ return {earned,spent,balance:Math.max(0,earned-spent)};
+}
+/* MBWALLET_TOTALS_END */
 const receiptWalletBefore=pawWalletPage;
 pawWalletPage=function(){
  receiptWalletBefore();const q=$('content'),v=pawWalletBreakdown(),book=element('details','',q,'townPawLedger');
  element('summary',tr('My coin receipts','喵币收支手账'),book);
+ const totals=pawWalletTotals(v),summary=element('p','',book,'pawReceiptSummary');
+ summary.textContent=tr('Earned ','累计收入 ')+totals.earned+tr(' · Spent ',' · 累计支出 ')+totals.spent+tr(' · Available ',' · 可用 ')+totals.balance;
+ const today=townPawToday();element('p',tr('Today’s activity coins: ','今日活动收入：')+today.earned+' / '+today.maximum,book);
+ b(book,tr('See today’s optional activities','看看今日小建议'),todayHub);
  for(const [key,en,cn] of [['discoveries','Discovery gifts','探索奖励'],['checkin','Daily check-ins','每日签到'],['activities','Daily activities','每日活动'],['blind','Blind boxes','盲盒'],['furniture','Furniture & renovations','家具与装修'],['themes','Room atmospheres','小窝氛围']]){
  const row=element('div','',book,'pawReceiptRow');element('span',tr(en,cn),row);element('strong',(['blind','furniture','themes'].includes(key)?'−':'+')+v[key],row)
  }
