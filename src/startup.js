@@ -2437,8 +2437,9 @@ function pawRailTravel(elapsed,mode){
  if(phase<=8)return {a:travel,b:0,mix:0};
  const k=phase-8;return {a:.13,b:0,mix:k*k*(3-2*k)}
 }
-function pawRailLayerCrop(w,h,progress,speed){
- const span=Math.min(w,Math.max(1,h*1.8)),travel=Math.max(0,Math.min(1,progress))*Math.max(0,Math.min(1,speed));
+function pawRailLayerCrop(w,h,progress,speed,aspect=1.8){
+ const ratio=Number.isFinite(aspect)?Math.max(.4,Math.min(2.4,aspect)):1.8;
+ const span=Math.min(w,Math.max(1,h*ratio)),travel=Math.max(0,Math.min(1,progress))*Math.max(0,Math.min(1,speed));
  return {x:(w-span)*travel,width:span,height:h}
 }
 /* PAW_WINDOW_MOTION_END */
@@ -2498,7 +2499,7 @@ function pawRailMountMotion(stage,im,layout,host,mode,routeLayers=null){
   function drawRoute(progress){
    routeG.clearRect(0,0,w,h);
    for(const [key,speed] of [['far',.32],['near',1]]){
-    const art=routeLayers[key],crop=pawRailLayerCrop(art.naturalWidth,art.naturalHeight,progress,speed);
+    const art=routeLayers[key],crop=pawRailLayerCrop(art.naturalWidth,art.naturalHeight,progress,speed,w/h);
     routeG.drawImage(art,crop.x,0,crop.width,crop.height,0,0,w,h)
    }
    const view=routeG.getImageData(0,0,w,h).data;
