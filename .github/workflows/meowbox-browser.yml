@@ -93,7 +93,8 @@ jobs:
 
                 for(const map of ['fortune','home','island','wonder']){
                   // Use the normal travel engine; reposition near each door only as test setup.
-                  await page.evaluate(k=>journey(k),map);
+                  const transfer=await page.evaluate(k=>{const from=scene;journey(k);return {changed:from!==k,active:!!document.querySelector('.mbTransferHolding'),transitioning}},map);
+                  if(transfer.changed&&transfer.transitioning&&!transfer.active)throw Error('Transfer ticket missing during travel');
                   await page.waitForFunction(k=>scene===k&&!transitioning&&!room,map,{timeout:15000});
                   if(map!=='fortune'){
                     await page.waitForFunction(()=>portraitImages[scene]?.naturalWidth>0,{},{timeout:10000});
@@ -261,6 +262,13 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-rail-scenery.png'});
                 await page.getByRole('button',{name:'Stay here a little longer',exact:true}).click();
                 if(!await page.evaluate(()=>scene==='fortune'&&!transitioning))throw Error('Preview caused unintended travel');
+                await page.evaluate(()=>hideoutProfilePage());
+                await page.locator('.travellerEditChoices .mbTravellerChoice').first().waitFor({state:'visible'});
+                if(await page.locator('.travellerEditChoices .mbTravellerChoice').count()!==4)throw Error('Original four traveller choices missing');
+                await page.waitForFunction(()=>[...document.querySelectorAll('.travellerEditChoices .mbFullTraveller')].every(img=>img.naturalWidth>0),{},{timeout:8000});
+                if(!await page.evaluate(()=>[...document.querySelectorAll('.travellerEditChoices .mbFullTraveller')].every((img,i)=>img.getAttribute('src')===mbAvatarStanding(i))))throw Error('Profile artwork differs from selected traveller identity');
+                await page.screenshot({path:'test-results/'+name+'-four-travellers.png'});
+                await page.evaluate(()=>$('page').style.display='none');
                 await page.locator('#dockScoop').click();
                 await page.locator('.townFortuneSlip').waitFor({timeout:8000});
                 if(!await page.locator('#luck').isHidden())throw Error('Obsolete luck shortcut visible');
