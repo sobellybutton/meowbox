@@ -147,6 +147,9 @@ async function travelLoop(page,name,touch){
   const moving=ride.locator('.pawMovingGlass');
   assert.equal(await moving.count(),1,'One glass-only motion layer');
   assert.equal(await ride.locator('.mbPaintedRail').getAttribute('data-rail-motion'),'painted-window');
+  const frame=await moving.evaluate(el=>({frame:Number(el.dataset.frame),pixels:el.toDataURL()}));
+  await page.waitForFunction(n=>Number(document.querySelector('.pawRailJourney .pawMovingGlass')?.dataset.frame)>n+2,frame.frame,{timeout:1400});
+  assert.notEqual(await moving.evaluate(el=>el.toDataURL()),frame.pixels,'Window pixels must visibly change, not just frame counter');
   assert(await ride.evaluate(el=>{
     const r=el.getBoundingClientRect(),g=document.querySelector('#game').getBoundingClientRect(),a=el.querySelector('.mbPaintedRail').getBoundingClientRect();
     return r.width>=g.width-2&&r.height>=g.height-2&&a.width>=g.width-2&&a.height>=g.height-2;

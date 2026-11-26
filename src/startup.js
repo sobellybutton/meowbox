@@ -1133,7 +1133,7 @@ roomGuideToggle.onclick=()=>{const open=roomGuide.classList.toggle('pawGuideOpen
 let roomGuideKey='';
 function roomGuideEntries(){
  if(room==='temple')return [['templeWater','Water pavilion','手水亭'],['prayer','Prayer altar','祈愿香案'],['templeBell','Bronze bell','山寺钟声'],['sticks','Fortune sticks','求签'],['moon','Moon blocks','掷筊'],['secretGarden','Garden','后院']];
- return (roomActions[room]||[]).filter(a=>indoorStages[room]?.stations[a[0]])
+ return (roomActions[room]||[]).filter(a=>Array.isArray(a)&&a.length>=3&&a[1]&&a[2])
 }
 function syncRoomGuide(){
  const visible=!!room&&!activity&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block'&&avatar!==null;
@@ -2427,7 +2427,7 @@ function pawRailMountMotion(stage,im,layout,host,mode){
  const old=pawRailMotionJobs.get(stage);if(old){old.stop();pawRailMotionJobs.delete(stage)}
  stage.dataset.railMotion='still';
  const cfg=pawRailWindows[layout],reduce=matchMedia('(prefers-reduced-motion: reduce)');
- if(!cfg||reduce.matches||mode==='transfer'||!stage.isConnected||im.naturalWidth!==cfg.width||im.naturalHeight!==cfg.height)return;
+ if(!cfg||reduce.matches||!stage.isConnected||im.naturalWidth!==cfg.width||im.naturalHeight!==cfg.height)return;
  let canvas,raf=0,dead=false,elapsed=0,last=0,lastDraw=-Infinity,frames=0;
  const stop=()=>{dead=true;cancelAnimationFrame(raf);canvas?.remove()};
  try{
@@ -2445,7 +2445,7 @@ function pawRailMountMotion(stage,im,layout,host,mode){
    for(const p of panes){
     // One continuous clock across top and bottom of each window; the
     // reflected texture extends past its edge without a hard repeat seam.
-    const travel=elapsed*.13*p.speed,limit=p.tw-1;
+    const travel=elapsed*.34*p.speed,limit=p.tw-1;
     for(let i=0;i<p.pixels.length;i++){
      const u=pawRailReflect(p.cols[i]/limit+travel)*limit,k=Math.floor(u),f=u-k,ix=p.rows[i]+k*4,next=p.rows[i]+Math.min(limit,k+1)*4,to=p.pixels[i];
      out[to]=p.texture[ix]+(p.texture[next]-p.texture[ix])*f;
@@ -2453,11 +2453,11 @@ function pawRailMountMotion(stage,im,layout,host,mode){
      out[to+2]=p.texture[ix+2]+(p.texture[next+2]-p.texture[ix+2])*f;out[to+3]=p.alphas[i]
     }
    }
-   g.putImageData(frame,0,0);canvas.dataset.frame=String(++frames);
+   g.putImageData(frame,0,0);canvas.dataset.frame=String(++frames);canvas.dataset.travel=elapsed.toFixed(3);
   }
   function tick(now){
    if(dead||!stage.isConnected||stage.dataset.layout!==layout||reduce.matches){stop();stage.dataset.railMotion='still';return}
-   const dt=last?Math.min(.075,Math.max(0,(now-last)/1000)):0;last=now;
+   const dt=last?Math.min(.16,Math.max(0,(now-last)/1000)):0;last=now;
    if(!document.hidden&&host.dataset.sceneryPaused!=='true'){
     elapsed+=dt;if(now-lastDraw>=42){draw();lastDraw=now}
    }
@@ -2750,6 +2750,7 @@ drawResidentRaster=function(im,x,y,height,facing='right',breath=0){
 // Do not change resident identity, movement coordinates, storage or pose assets.
 
 let pawStationPlaque=null;
+const pawVisibleStationLabels=new Set();
 const pawPhysicalPropBefore=prop;
 prop=function(id,x,y){
  const result=pawPhysicalPropBefore(id,x,y),spec=!activity&&groundedStationSpec(room,id);
@@ -2778,16 +2779,23 @@ label=function(name,x,y,fn){
   if(lineText)rows.push(lineText);if(rows.length>2)rows.splice(1,rows.length-1,rows.slice(1).join(sep));
   const w=Math.min(width,Math.max(56,...rows.map(v=>ctx.measureText(v).width+12))),h=rows.length*font*1.06+8;
   const hitW=Math.max(w,44/scale),hitH=Math.max(h,44/scale);
-  const place=pawFixedPlaque(cam.ox+x*scale,cam.oy+cy*scale,hitW*scale,hitH*scale,{left:5,right:W-5,top:4,bottom:H-4},[...meowFrameBlockers,...meowTextFrameRects]);
-  if(!place)return; // Existing object hit box and keyboard station guide still work.
-  meowTextFrameRects.push(place.rect);
+  const cx=cam.ox+x*scale,sy=cam.oy+cy*scale,bounds={left:5,right:W-5,top:4,bottom:H-4};
+  const blockers=[...meowUIRects,...meowTextFrameRects];
+  // Reserve the visible sign itself, not its much larger touch padding.
+  // Nearby residents do not make an essential activity name disappear.
+  const sw=Math.max(44,w*scale),sh=Math.max(19,h*scale);
+  const place=pawFixedPlaque(cx,sy,sw,sh,bounds,blockers)||meowPlaceText(cx,sy,sw,sh,bounds,blockers,Math.min(85,W*.2));
+  if(!place)return;
+  const px=(place.x-cam.ox)/scale,py=(place.y-cam.oy)/scale;
+  meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(id);
+  ctx.translate(px-x,py-cy);
   // A bracket physically attaches frame signs to both upright posts.
   if(['bell','rack','notice'].includes(spec[0]))line(x-spec[2]/2+10,cy,x+spec[2]/2-10,cy,'#72553c',5);
   round(x-w/2,cy-h/2,w,h,3,'#66513c','#d2b881');
   for(const dx of [-w/2+4,w/2-4])ellipse(x+dx,cy-h/2+4,1.3,1.3,'#d4b987');
   ctx.fillStyle='#fff1d4';ctx.textAlign='center';ctx.textBaseline='middle';
   rows.forEach((v,i)=>{ctx.font='600 '+font+'px Georgia, "Songti SC", serif';const size=Math.min(font,font*(w-10)/Math.max(1,ctx.measureText(v).width));ctx.font='600 '+size+'px Georgia, "Songti SC", serif';ctx.fillText(v,x,cy+(i-(rows.length-1)/2)*font*1.06)});
-  target(x-hitW/2,cy-hitH/2,hitW,hitH,fn)
+  target(px-hitW/2,py-hitH/2,hitW,hitH,fn)
  }finally{ctx.restore()}
 };
 // Use canonical names at source so the DOM sign does not alternate between
@@ -2868,7 +2876,7 @@ fade=function(fn,kind='gust',destination=null){
  if(transitioning)return;
  transitioning=true;
  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
- const game=$('game'),rideTime=reduce?650:1950,arrivalFade=reduce?0:220;
+ const game=$('game'),rideTime=reduce?650:3600,arrivalFade=reduce?0:220;
  const old=$('fade');old.className='';old.replaceChildren();old.style.opacity='';
  game.classList.add('pawRailJourneyActive');game.querySelectorAll('.mbTransferHolding').forEach(el=>el.remove());
  // Show the carriage in the same interaction, even if the painting is still decoding.
@@ -3206,7 +3214,7 @@ const pawGateLabelBefore=label;
 label=function(name,x,y,fn){
  if(room==='temple'&&!activity&&Math.abs(x-pawTempleLayout.secretGarden[0])<2){
   const cy=pawTempleLayout.secretGarden[1]-65;
-  ctx.save();round(x-45,cy-15,90,30,3,'#4e6048','#e1c58a');activityFitText(tr('Garden →','后院 →'),x,cy,16,80,'#fff2d6');ctx.restore();
+  ctx.save();round(x-45,cy-15,90,30,3,'#4e6048','#e1c58a');activityFitText(tr('Garden →','后院 →'),x,cy,16,80,'#fff2d6');ctx.restore();pawVisibleStationLabels.add('secretGarden');
   target(x-45,cy-18,90,208,fn);return
  }
  return pawGateLabelBefore(name,x,y,fn)
@@ -5757,5 +5765,178 @@ const pawOwnerSceneCss=document.createElement('style');pawOwnerSceneCss.textCont
 #game #content.yueCompactConsult :is(.yueSubjectStrip,.destinySubjectStrip) :is(small,label){color:#524738!important}
 #game #content .pawRailWayfinding{min-height:44px!important;background:#51634e!important;color:#fff2d5!important;border:1px solid #bda779!important;padding:8px 12px!important;margin:5px 0!important}
 `;document.head.append(pawOwnerSceneCss);
+
+
+/* PAW_PARK_ARCADE_RELEASE_BEGIN */
+function pawMissingStations(entries,visible){return entries.filter(v=>!visible.has(v[0]))}
+function pawFishTechnique(elapsed,distance,streak){
+ const time=Math.max(.12,Number.isFinite(elapsed)?elapsed:0),movement=Math.max(0,Number.isFinite(distance)?distance:0),speed=movement/time;
+ const steady=speed<=105,ideal=time>=.32&&time<=1.35&&steady;
+ return {steady,ideal,bonus:ideal?Math.min(4,Math.max(0,streak))*5:0,extraWear:steady?0:Math.min(16,Math.ceil((speed-105)/18))}
+}
+function pawHerdSlots(){
+ return [[206,407,.45],[295,389,.38],[390,411,.45],[506,392,.36],[572,455,.48],[332,473,.52]];
+}
+function pawHerdTemperament(id){
+ return id==='koyo'?{en:'Curious and rather pushy. Give Koyo space if it crowds you.',zh:'枫枫好奇又有点急躁，靠得太近时就退一步。',bow:false}:id==='sora'?{en:'Shy. Sora prefers a little distance.',zh:'空空比较怕生，喜欢留一点距离。',bow:false}:{en:'Mugi is calm and often bows back.',zh:'麦麦很温顺，常常会回礼。',bow:true}
+}
+function pawResidentVisitPool(records,excluded,visit){
+ const pool=records.filter(v=>!excluded.includes(v.id));
+ if(!pool.length)return [];
+ const offset=((visit%pool.length)+pool.length)%pool.length;
+ return [...pool.slice(offset),...pool.slice(0,offset)]
+}
+/* PAW_PARK_ARCADE_RELEASE_END */
+// Every room has a real activity directory as a fallback for signs hidden
+// by a small screen or physical scene layout. No feature is omitted.
+const pawAllLabelsBefore=drawRoom;
+drawRoom=function(...args){
+ pawVisibleStationLabels.clear();
+ const result=pawAllLabelsBefore(...args);
+ if(room&&!activity&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block'){
+  const entries=roomGuideEntries(),missing=pawMissingStations(entries,pawVisibleStationLabels);
+  roomGuideToggle.dataset.missing=String(missing.length);
+  roomGuideToggle.dataset.showDirectory=String(missing.length>0);
+  if(missing.length)roomGuideToggle.textContent=tr('Activities · ','体验 · ')+entries.length;
+  roomGuideToggle.title=entries.map(v=>tr(v[1],v[2])).join(' · ');
+ }
+ return result
+};
+// Physical plaque in the viewport is primary; directory is only shown
+// if any room action lacks a visible authored plaque.
+const pawActivityDirectoryCss=document.createElement('style');
+pawActivityDirectoryCss.textContent=`
+#game #pawRoomGuideToggle[data-show-directory="true"]:not([hidden]){position:absolute!important;right:max(12px,env(safe-area-inset-right,0px));top:max(60px,calc(env(safe-area-inset-top,0px) + 60px));width:auto!important;height:auto!important;min-width:44px!important;min-height:44px!important;clip-path:none!important;overflow:visible!important;white-space:normal!important;pointer-events:auto!important;padding:7px 12px!important;background:#594b39f0!important;color:#fff1d4!important;border:1px solid #c9ad7c!important;z-index:10!important}
+#game #roomStationGuide.pawGuideOpen{top:max(108px,calc(env(safe-area-inset-top,0px) + 108px));z-index:12!important}
+#game .mbPaintedRail>canvas.pawMovingGlass,#proposal .mbPaintedRail>canvas.pawMovingGlass{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;z-index:4!important;opacity:1!important;visibility:visible!important;pointer-events:none!important;transform:none!important}
+@media(prefers-reduced-motion:reduce){#game .mbPaintedRail>canvas.pawMovingGlass,#proposal .mbPaintedRail>canvas.pawMovingGlass{display:none!important}}
+`;document.head.append(pawActivityDirectoryCss);
+
+// Multiple painted deer, using the already installed independent deer poses.
+const pawHerdImages=new Map();
+for(const profile of deerProfiles)for(let i=0;i<3;i++){const im=new Image();im.decoding='async';im.src='assets/visual/painted/deer/'+profile.id+'-'+i+'.webp';pawHerdImages.set(profile.id+':'+i,im)}
+let pawHerdDrawn=[];
+const pawHerdBackdropBefore=paintLivingBackdrop;
+paintLivingBackdrop=function(...args){
+ const result=pawHerdBackdropBefore(...args);
+ if(activity!=='deerVisit'||!state.deerProfile)return result;
+ const age=Math.max(0,t-(state.pawHerdAt??t)),reduced=residentReducedMotion.matches;
+ pawHerdDrawn=[];
+ for(const [i,[baseX,baseY,sc]] of pawHerdSlots().entries()){
+  const p=deerProfiles[(i+(state.pawHerdOffset||0))%deerProfiles.length];
+  const phase=age*.48+i*1.45,frame=reduced?0:Math.sin(phase)>.42?2:Math.sin(phase)<-.6?1:0;
+  const x=baseX+(reduced?0:Math.sin(phase*.58)*13),y=baseY+(reduced?0:Math.sin(phase*.39)*4),height=132*sc,im=pawHerdImages.get(p.id+':'+frame);
+  if(!drawResidentRaster(im,x,y,height,i%2?'left':'right'))continue;
+  pawHerdDrawn.push({id:p.id,x,y});
+  if(['greet','ready','done'].includes(state.deerPhase)){
+   const w=Math.max(26,height*.7);
+   target(x-w/2,y-height,w,height,()=>{
+    if(activity!=='deerVisit'||!['greet','ready','done'].includes(state.deerPhase))return;
+    state.deerProfile=p;state.deerPhase='greet';state.deerAt=t;state.deerBows=pawHerdTemperament(p.id).bow;
+    const q=pawHerdTemperament(p.id);hint(q.en,q.zh);refreshControls()
+   },'paw-deer-'+i)
+  }
+ }
+ return result
+};
+const pawHerdStartBefore=start;
+start=function(id,...args){
+ const result=pawHerdStartBefore(id,...args);
+ if(id==='deerVisit'&&activity==='deerVisit'){
+  state.pawHerdAt=t;state.pawHerdOffset=hash(shrineClock().day+'herd')%deerProfiles.length;
+  state.deerBows=pawHerdTemperament(state.deerProfile.id).bow;
+  hint('Meet the herd. Tap a deer to visit it, bow, or offer a cracker.','认识鹿群。点一只小鹿，鞠躬或喂鹿饼。')
+ }
+ if(id==='goldfishScoop'&&state.festivalFish){
+  Object.assign(state.festivalFish,{score:0,streak:0,bestStreak:0,travel:0,perfect:0});refreshControls()
+ }
+ return result
+};
+const pawHerdFeedBefore=deerFeed;
+deerFeed=function(){
+ const result=pawHerdFeedBefore();
+ if(activity==='deerVisit'&&state.deerPhase==='feed'&&state.deerProfile?.id==='koyo')hint('Koyo is rushing over for a cracker. Keep your space and offer it calmly.','枫枫急着跑来吃鹿饼。留一点距离，平静地递给它。');
+ return result
+};
+// Resident hosts stay at their workplace. Existing illustrated neighbours
+// can visit other rooms; their identity art is used only for themselves.
+const pawSocialResidents=['auntie-mei','auntie-lin','auntie-hong','wang-laoban','grandma','master-yue','ah-ma','souvenir-keeper','boba-keeper','fortune-teller'];
+for(const r of residentArtworkRecords)if(pawSocialResidents.includes(r.id))residentArtworkImage(r);
+const pawSocialRoomBefore=pawRoomWalkers;
+pawRoomWalkers=function(...args){
+ const roster=pawSocialRoomBefore(...args);
+ if(!roster.length||activity)return roster;
+ const excluded=[...roomResidentActors().map(a=>residentArtworkRecord(a.n)?.id),...pawAmbientIndoor.map(a=>residentArtworkRecord(a.n)?.id),...npc.map(a=>residentArtworkRecord(a.n)?.id)].filter(Boolean);
+ const pool=pawResidentVisitPool(residentArtworkRecords.filter(r=>pawSocialResidents.includes(r.id)&&(!r.optional||residentInstalledArt.has(r.id))),excluded,pawVisitSerial);
+ for(const [i,a] of roster.entries()){
+  if(a.guest||a.visitingResident||!pool[i])continue;
+  const im=residentArtworkImage(pool[i]);
+  if(im?.complete&&im.naturalWidth){a.visitingResident=pool[i];a.id='visiting-'+pool[i].id;a.route=[];a.walking=0;a.wait=Number.MAX_SAFE_INTEGER;a.facing=a.x<400?'right':'left'}
+ }
+ return roster
+};
+const pawSocialDrawBefore=drawSharedRoomActor;
+drawSharedRoomActor=function(a,scale){
+ if(a.fictionalVisitor&&a.visitingResident){
+  const r=a.visitingResident,im=residentArtworkImage(r),h=94*scale;
+  if(drawResidentRaster(im,a.x,a.y,h,a.facing)){
+   if(indoorReady()&&Math.hypot(a.x-indoor.x,a.y-indoor.y)<150){
+    const w=Math.max(34,h*.62),x=a.x-w/2,y=a.y-h;
+    if(!hit.some(z=>z.stationId&&x<z.x+z.w&&x+w>z.x&&y<z.y+z.h&&y+h>z.y)){
+     const en=r.names[0],cn=r.names[1]||en;
+     target(x,y,w,h,()=>{releaseWalkKeys();joystickReset();indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y;say(tr(en,cn),tr('Even shopkeepers need a little break. I thought I would wander somewhere different today.','开店的人也要休息嘛。今天出来换个地方逛逛。'),[[tr('Enjoy your break','慢慢逛'),closeTalk]])},'paw-neighbour:'+r.id)
+    }
+   }
+   return
+  }
+ }
+ return pawSocialDrawBefore(a,scale)
+};
+
+// More satisfying paper-net game: track real scoop distance, timing, net
+// wear, points and consecutive catches, while still returning all fish.
+const pawFishAimBefore=festivalAim;
+festivalAim=function(x,y){
+ const g=state.festivalFish,old=g&&{x:g.x,y:g.y},result=pawFishAimBefore(x,y);
+ if(g?.phase==='dip'&&old)g.travel=(g.travel||0)+Math.hypot(g.x-old.x,g.y-old.y);
+ return result
+};
+const pawFishDipBefore=festivalDip;
+festivalDip=function(...args){
+ const result=pawFishDipBefore(...args);
+ if(activity==='goldfishScoop'&&state.festivalFish?.phase==='dip')state.festivalFish.travel=0;
+ return result
+};
+const pawFishOutcomeBefore=festivalFishOutcome;
+festivalFishOutcome=function(g,now){
+ const result=pawFishOutcomeBefore(g,now);if(!result)return result;
+ const quality=pawFishTechnique(now-g.last,g.travel||0,g.streak||0);
+ return {...result,wear:Math.min(100,Math.max(4,result.wear+(quality.ideal&&result.caught>=0?-7:0)+quality.extraWear)),quality}
+};
+const pawFishLiftBefore=festivalLift;
+festivalLift=function(...args){
+ const g=state.festivalFish,at=g?.caught.length,elapsed=g?t-g.last:0,quality=g?pawFishTechnique(elapsed,g.travel||0,g.streak||0):null;
+ const result=pawFishLiftBefore(...args);
+ if(!g||g.phase!=='lift'||at===undefined)return result;
+ if(g.caught.length>at){
+  g.streak=(g.streak||0)+1;g.bestStreak=Math.max(g.bestStreak||0,g.streak);
+  const rare=g.caught.at(-1)===4,points=10+(quality.ideal?10:0)+(rare?15:0)+Math.min(3,g.streak-1)*5;
+  g.score=(g.score||0)+points;g.perfect=(g.perfect||0)+(quality.ideal?1:0);
+  g.feedback=[(quality.ideal?'Perfect scoop! ':'Nice catch! ')+'+'+points+' points. '+(g.streak>1?g.streak+' in a row. ':'')+'Back to the water!',(quality.ideal?'完美捞鱼！':'捞到了！')+' +'+points+' 分。'+(g.streak>1?'连续 '+g.streak+' 次！':'')+'小鱼回水啦！'];
+ }else{
+  g.streak=0;if(!quality.steady)g.feedback=['Too much swishing! A steady scoop protects the paper.','纸网晃得太厉害啦！稳稳地捞，才不容易破。']
+ }
+ refreshControls();return result
+};
+const pawFishScoreControlsBefore=refreshControls;
+refreshControls=function(...args){
+ const result=pawFishScoreControlsBefore(...args),g=state.festivalFish;
+ if(activity==='goldfishScoop'&&g){
+  const status=$('gameControls').querySelector('strong');
+  if(status)status.textContent=tr('Paper ','纸网 ')+g.paper+'% · '+tr('Fish ','小鱼 ')+g.caught.length+'/5 · '+tr('Score ','得分 ')+(g.score||0);
+  if(g.phase==='done')element('small',tr('Best streak: ','最高连捞：')+(g.bestStreak||0)+tr(' · Perfect scoops: ',' · 完美捞鱼：')+(g.perfect||0),$('gameControls'),'pawFishRoundSummary')
+ }
+ return result
+};
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
