@@ -2343,10 +2343,14 @@ function mbJourneyPainting(record,name,portrait){
 }
 let mbJourneyPaintingsPromise;
 function mbJourneyPaintings(){
- return mbJourneyPaintingsPromise??=fetch('assets/visual/painted/journey-runtime.json',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(data=>{
+ if(!mbJourneyPaintingsPromise)mbJourneyPaintingsPromise=fetch('assets/visual/painted/journey-runtime.json',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(data=>{
   if(data?.version!==1)return null;
   return {portrait:mbJourneyPainting(data.rail?.portrait,'portrait',true),landscape:mbJourneyPainting(data.rail?.landscape,'landscape',false),gate:mbJourneyPainting(data.gate,'gate',true)}
- }).catch(()=>null)
+ }).catch(()=>null).then(data=>{
+  if(!data?.portrait||!data?.landscape)mbJourneyPaintingsPromise=null;
+  return data
+ });
+ return mbJourneyPaintingsPromise
 }
 
 /* PAW_WINDOW_MOTION_BEGIN
@@ -2398,6 +2402,13 @@ function pawRailPaneSize(q){
  const edge=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
  return [Math.max(2,Math.ceil((edge(q[0],q[1])+edge(q[3],q[2]))*.5)),Math.max(2,Math.ceil((edge(q[0],q[3])+edge(q[1],q[2]))*.5))]
 }
+function pawRailTravel(elapsed,mode){
+ const t=Math.max(0,Number.isFinite(elapsed)?elapsed:0);
+ if(mode==='ride'||mode==='transfer')return {a:Math.min(1,t/3.6)*.13,b:0,mix:0};
+ const period=9,phase=t%period,travel=.13*Math.min(1,phase/8);
+ if(phase<=8)return {a:travel,b:0,mix:0};
+ const k=phase-8;return {a:.13,b:0,mix:k*k*(3-2*k)}
+}
 /* PAW_WINDOW_MOTION_END */
 const pawRailMotionJobs=new WeakMap();
 function pawRailMakePane(pane,ratio,source,w,h){
@@ -2428,7 +2439,7 @@ function pawRailMountMotion(stage,im,layout,host,mode){
  stage.dataset.railMotion='still';
  const cfg=pawRailWindows[layout],reduce=matchMedia('(prefers-reduced-motion: reduce)');
  if(!cfg||reduce.matches||!stage.isConnected||im.naturalWidth!==cfg.width||im.naturalHeight!==cfg.height)return;
- let canvas,raf=0,dead=false,elapsed=0,last=0,lastDraw=-Infinity,frames=0;
+ let canvas,raf=0,dead=false,elapsed=0,last=null,lastDraw=-Infinity,frames=0,lastSample='';
  const stop=()=>{dead=true;cancelAnimationFrame(raf);canvas?.remove()};
  try{
   // Bounded raster work on mobile; the high resolution carriage stays sharp.
@@ -2442,22 +2453,28 @@ function pawRailMountMotion(stage,im,layout,host,mode){
   const g=canvas.getContext('2d');if(!g)return;
   const frame=g.createImageData(w,h),out=frame.data;
   function draw(){
+   const motion=pawRailTravel(elapsed,mode),sample=motion.a.toFixed(5)+'|'+motion.mix.toFixed(4);
+   if(sample===lastSample)return;lastSample=sample;
    for(const p of panes){
-    // One continuous clock across top and bottom of each window; the
-    // reflected texture extends past its edge without a hard repeat seam.
-    const travel=Math.min(1,elapsed/3.6)*.13*p.speed,limit=p.tw-1;
+    const limit=p.tw-1,travel=motion.a*p.speed,reset=motion.b*p.speed;
     for(let i=0;i<p.pixels.length;i++){
-     const u=(.15+.70*(p.cols[i]/limit)-travel)*limit,k=Math.floor(u),f=u-k,ix=p.rows[i]+k*4,next=p.rows[i]+Math.min(limit,k+1)*4,to=p.pixels[i];
-     out[to]=p.texture[ix]+(p.texture[next]-p.texture[ix])*f;
-     out[to+1]=p.texture[ix+1]+(p.texture[next+1]-p.texture[ix+1])*f;
-     out[to+2]=p.texture[ix+2]+(p.texture[next+2]-p.texture[ix+2])*f;out[to+3]=p.alphas[i]
+     const base=.15+.70*(p.cols[i]/limit),u=(base-travel)*limit,k=Math.floor(u),f=u-k,ix=p.rows[i]+k*4,next=p.rows[i]+Math.min(limit,k+1)*4,to=p.pixels[i];
+     if(motion.mix>0){
+      const v=(base-reset)*limit,j=Math.floor(v),h=v-j,from=p.rows[i]+j*4,after=p.rows[i]+Math.min(limit,j+1)*4;
+      for(let c=0;c<3;c++){const a=p.texture[ix+c]+(p.texture[next+c]-p.texture[ix+c])*f,b=p.texture[from+c]+(p.texture[after+c]-p.texture[from+c])*h;out[to+c]=a+(b-a)*motion.mix}
+     }else{
+      out[to]=p.texture[ix]+(p.texture[next]-p.texture[ix])*f;
+      out[to+1]=p.texture[ix+1]+(p.texture[next+1]-p.texture[ix+1])*f;
+      out[to+2]=p.texture[ix+2]+(p.texture[next+2]-p.texture[ix+2])*f
+     }
+     out[to+3]=p.alphas[i]
     }
    }
    g.putImageData(frame,0,0);canvas.dataset.frame=String(++frames);canvas.dataset.travel=elapsed.toFixed(3);
   }
   function tick(now){
    if(dead||!stage.isConnected||stage.dataset.layout!==layout||reduce.matches){stop();stage.dataset.railMotion='still';return}
-   const dt=last?Math.min(.16,Math.max(0,(now-last)/1000)):0;last=now;
+   const dt=last===null?0:Math.min(.16,Math.max(0,(now-last)/1000));last=now;
    if(!document.hidden&&host.dataset.sceneryPaused!=='true'){
     elapsed+=dt;if(now-lastDraw>=42){draw();lastDraw=now}
    }
@@ -5186,6 +5203,14 @@ function pawGuestSegment(a,b,anchors,clearance=52){
   return Math.hypot(x-(a[0]+f*dx),y-(a[1]+f*dy))>=clearance
  })
 }
+function pawGuestSpaced(points,count,minDistance=68){
+ const chosen=[];
+ for(const point of points){
+  if(chosen.length>=count)break;
+  if(chosen.every(p=>Math.hypot(point[0]-p[0],point[1]-p[1])>=minDistance))chosen.push(point)
+ }
+ return chosen
+}
 function pawGuestCount(max,visit,roomId){
  const key=Array.from(String(roomId)).reduce((a,c)=>a+c.codePointAt(0),0);
  // Some visits are quiet, and some have an extra guest. Stable within a visit.
@@ -5202,7 +5227,7 @@ function pawRoomWalkers(){
   const residents=pawAmbientIndoor.map(a=>[a.x,a.y]),entry=indoorSpec().entry;
   const spawn=safe.filter(v=>pawGuestClear(v[0],v[1],[[indoor.x,indoor.y]],90)&&pawGuestClear(v[0],v[1],[entry],65)&&pawGuestClear(v[0],v[1],residents,68));
   const offset=spawn.length?pawVisitSerial%spawn.length:0,ordered=[...spawn.slice(offset),...spawn.slice(0,offset)];
-  pawLocalVisitors=ordered.slice(0,pawGuestCount(spec.count,pawVisitSerial,room)).map((pos,i)=>({id:'fictional-visitor-'+i,fictionalVisitor:true,room,x:pos[0],y:pos[1],avatar:((avatar??0)+1+i+pawVisitSerial%2)%4,facing:'down',walking:0,index:safe.indexOf(pos),route:[],wait:t+2+i*2.5}));
+  pawLocalVisitors=pawGuestSpaced(ordered,pawGuestCount(spec.count,pawVisitSerial,room)).map((pos,i)=>({id:'fictional-visitor-'+i,fictionalVisitor:true,room,x:pos[0],y:pos[1],avatar:((avatar??0)+1+i+pawVisitSerial%2)%4,facing:'down',walking:0,index:safe.indexOf(pos),route:[],wait:t+2+i*2.5}));
   // Use existing original cameo identities, conversation branches and keepsakes.
   // Never duplicate an outdoor character or use unrelated portrait art.
   if(pawLocalVisitors.length&&pawVisitSerial%2===1){
@@ -5877,6 +5902,9 @@ pawRoomWalkers=function(...args){
  const excluded=[...roomResidentActors().map(a=>residentArtworkRecord(a.n)?.id),...pawAmbientIndoor.map(a=>residentArtworkRecord(a.n)?.id),...npc.map(a=>residentArtworkRecord(a.n)?.id)].filter(Boolean);
  const pool=pawResidentVisitPool(residentArtworkRecords.filter(r=>pawSocialResidents.includes(r.id)&&(!r.optional||residentInstalledArt.has(r.id))),excluded,pawVisitSerial);
  for(const [i,a] of roster.entries()){
+  // Make the visual identity decision once per visit. Late image loads
+  // must never turn a visible generic walker into a different person.
+  if(a.identitySettled)continue;a.identitySettled=true;
   if(a.guest||a.visitingResident||!pool[i])continue;
   const im=residentArtworkImage(pool[i]);
   if(im?.complete&&im.naturalWidth){a.visitingResident=pool[i];a.id='visiting-'+pool[i].id;a.route=[];a.walking=0;a.wait=Number.MAX_SAFE_INTEGER;a.facing=a.x<400?'right':'left'}
