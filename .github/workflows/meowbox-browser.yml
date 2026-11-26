@@ -27,6 +27,7 @@ jobs:
       - run: node scripts/guest-roster-test.cjs
       - run: node scripts/daily-guide-wallet-test.cjs
       - run: node scripts/chapter-grip-test.cjs
+      - run: node scripts/deer-stage-test.cjs
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps chromium
       - name: Test all four villages and actual doorway taps

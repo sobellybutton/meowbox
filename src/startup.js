@@ -1916,6 +1916,17 @@ const mbRailPostcardStyle=document.createElement('style');mbRailPostcardStyle.te
 #storyReadingSheet .mbStoryIntro{font-size:12px;line-height:1.4;color:#665642}
 @media(prefers-reduced-motion:reduce){#content .districtRailCabin .mbRailPostcard img{animation:none!important}}
 `;document.head.append(mbRailPostcardStyle);
+const mbJournalFinish=document.createElement('style');mbJournalFinish.textContent=`
+#content .mbPurseBook{background:var(--town-grain),#f1e2c5;border:1px solid #a48b65;padding:12px;border-radius:5px;box-shadow:2px 3px 0 #bba17b44}
+#content .mbPursePocket{background:var(--town-grain),#927052;border:2px solid #77583d;outline:1px dashed #d7b98a;outline-offset:-6px;border-radius:12px 12px 19px 19px;color:#f9e8ca;text-align:center;padding:20px 10px;box-shadow:inset 0 -7px 0 #78533755}
+#content .mbPursePocket h2{font:600 clamp(22px,5vw,34px)/1.2 var(--town-title);color:#fff2d4!important;margin:5px 0!important}
+#content .mbPursePocket small{font:12px/1.4 system-ui}
+#content .townPawLedger{background:var(--town-grain),#fff1d7;border:1px solid #b59a73;padding:10px 14px;border-radius:3px;box-shadow:2px 3px 0 #c0a47b30}
+#content .townPawLedger summary{min-height:44px;align-content:center;cursor:pointer}
+#storyReadingSheet,#wonderQuestionSheet{background:linear-gradient(90deg,#d8c19b55,transparent 8%),var(--town-grain),#f5e8cc!important;border:1px solid #a98b63!important;border-left:5px solid #ad8c60!important;box-shadow:0 4px 12px #30241955!important}
+#storyReadingSheet button,#wonderQuestionSheet button{border-radius:3px!important;text-align:left;line-height:1.35}
+#game #gameControls.deerMeadowControls:not([hidden]){box-sizing:border-box;padding:6px 8px!important}
+`;document.head.append(mbJournalFinish);
 
 /* Apply the traced path after all guest and map overrides. Only NPCs are
    constrained here; existing player and doorway route behaviour is unchanged. */
@@ -1927,4 +1938,12 @@ function mbGroundResident(n){
 const mbPaintedPathInit=initNPC;initNPC=function(...args){const r=mbPaintedPathInit(...args);npc.forEach(mbGroundResident);return r};
 const mbPaintedPathTarget=residentTarget;residentTarget=function(n,i){mbPaintedPathTarget(n,i);mbGroundResident(n);if(Math.abs(n.ty-n.y)<5&&paintedResidentPaths[scene]){n.walkDirection=-(n.walkDirection||1);n.ty=paintedResidentY(scene,n.y+n.walkDirection*75);n.tx=residentGround(scene,n.tx,n.ty)}};
 const mbPaintedPathStep=step;step=function(n,dt,speed){if(n!==p)mbGroundResident(n);const r=mbPaintedPathStep(n,dt,speed);if(n!==p)mbGroundResident(n);return r};
+// Frame the entire encounter above the actual action panel, including on
+// short portrait screens. Use the same geometry for landscape.
+const mbDeerCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(s,ox,oy){
+ if(activity!=='deerVisit')return mbDeerCameraBefore(s,ox,oy);
+ const controls=$('gameControls'),reserve=Math.max(175,(controls?.offsetHeight||100)+85);
+ return shorePortraitFit(W,H,shorePortraitBounds.deerVisit,reserve)
+};
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

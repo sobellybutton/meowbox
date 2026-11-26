@@ -502,7 +502,7 @@ roomActions.quiz=[['quiz','Choose a discovery','选择性格探索']];
 /* Wonder Valley: continuous canvas interaction, no quiz page overlay. */
 activityTitle.wonderScene=['Inner discoveries','心灵奇遇'];
 let wonderSceneMode='soul',wonderSceneAnswers=[],wonderScenePhase='welcome',wonderSceneAt=0,wonderScenePick=-1,wonderSceneResult=null,wonderSceneToken=0;
-const wonderSceneNames={soul:['Soul Cat','猫灵测试'],type:['Personality preferences','四维性格探索'],motive:['Nine Inner Motives','九型动力探索']};
+const wonderSceneNames={soul:['Soul Cat','猫灵测试'],type:['MBTI-inspired preferences','MBTI 性格偏好'],motive:['Enneagram-inspired motives','九型人格动力探索']};
 const wonderSceneBeforeHint=activityHint;activityHint=function(){if(activity==='wonderScene'){hint('Choose an object on the table. Back to room returns to the Personality Lab.','点击桌上的物品。返回小屋可回到人格研究所。');return}return wonderSceneBeforeHint()};
 function wonderSceneOpen(mode){wonderSceneToken++;wonderSceneMode=mode;wonderSceneAnswers=[];wonderQuestionOrder=prepareWonderQuestions(mode);wonderScenePhase='welcome';wonderScenePick=-1;wonderSceneAt=t;wonderSceneResult=null;$('page').style.display='none';start('wonderScene');hint('Choose a little discovery on the table.','选一件桌上的小小奇遇。')}
 const preferenceExtras=[
@@ -6864,6 +6864,7 @@ function renderTravellerBag(){
    const prize=boxPrizes.find(p=>p[0]===v.item[0]),secret=!v.owned&&prize?.[4]==='secret';
    element('h2',secret?tr('Mystery figure','神秘手办'):tr(...v.item),detail);
    element('small',v.owned?tr('In your bag','已放入背包'):tr('Still to discover','等待发现'),detail);element('small',bagChapterName(v.chapter),detail);
+   if(v.owned){const photo=element('img','',detail,'mbKeepsakeOrigin');photo.src=bagChapterImage(v.chapter);photo.alt='';photo.loading='lazy';element('small',tr('A glimpse of this chapter','这一章节的风景'),detail,'mbKeepsakeOriginCaption')}
    if(prize)element('small',tr(prize[4]==='secret'?'Secret':prize[4]==='rare'?'Rare':prize[4]==='uncommon'?'Uncommon':'Common',prize[4]==='secret'?'隐藏款':prize[4]==='rare'?'稀有款':prize[4]==='uncommon'?'特别款':'普通款'),detail,'bagRarity');
    element('p',tr(...(v.owned?keepsakeStory(v.item):keepsakeClue(v.item))),detail);
    if(v.owned){const fav=b(detail,bagFavorites.includes(v.item[0])?tr('★ Remove favourite','★ 取消喜欢'):tr('☆ Keep as favourite','☆ 加入喜欢'),()=>{bagFavorites=bagFavorites.includes(v.item[0])?bagFavorites.filter(x=>x!==v.item[0]):[...bagFavorites,v.item[0]];save('bagFavoritesV1',bagFavorites);draw()});fav.setAttribute('aria-pressed',String(bagFavorites.includes(v.item[0])))}
@@ -6887,7 +6888,7 @@ const bagChapterStyle=document.createElement('style');bagChapterStyle.textConten
 #content .bagBody [hidden]{display:none!important}
 #content .bagPagination button{flex:1}
 #content .bagDetail>button:first-child{display:block;margin-bottom:12px!important}
-#content .bagDetail .bagHeroArt{margin:10px auto}
+#content .bagDetail .bagHeroArt{margin:10px auto}\n#content .mbKeepsakeOrigin{display:block;width:100%;height:clamp(85px,22vw,160px);object-fit:cover;object-position:50% 36%;border:4px solid #fbefd6;box-sizing:border-box;margin:10px 0 2px;box-shadow:0 2px 4px #5b463b44}\n#content .mbKeepsakeOriginCaption{font-size:11px;color:#78654d}
 @media(max-width:380px){#content .bagChapterCopy{padding:9px}#content .bagChapterCopy strong{font-size:15px}}
 `;document.head.append(bagChapterStyle);
 const bagV2CSS=document.createElement('style');bagV2CSS.textContent=`
@@ -7810,7 +7811,8 @@ const blindJournalRefreshBefore=lifeHUDRefresh;
 lifeHUDRefresh=function(){blindJournalRefreshBefore();const p=$('hudProgress');if(p)p.textContent=tr('Town traveller','小镇旅人')};
 function pawWalletPage(){
  page(tr('Meow Coin purse','喵币小钱包'),tr('Little treats earned by exploring. Never real money.','逛小镇攒来的小零花，不是真钱。'),q=>{
- const card=element('section','',q,'blindAlbumProgress');element('h2',String(hideoutBalance())+' '+tr('Meow Coins','喵币'),card);
+ const card=element('section','',q,'blindAlbumProgress mbPurseBook');
+ const pocket=element('div','',card,'mbPursePocket');element('small',tr('Traveller’s pocket money','旅人的零花钱'),pocket);element('h2',String(hideoutBalance())+' '+tr('Meow Coins','喵币'),pocket);
  element('p',tr('Discoveries, daily activities and the daily wheel earn Meow Coins. Purchased blind box figures do not earn coins back.','探索纪念品、每日活动和转盘都能攒喵币。购买的盲盒手办不返喵币。'),card);
  element('p',tr('Blind boxes: 40 Meow Coins each, up to three per Singapore day.','盲盒40喵币一盒，每个新加坡日最多三盒。'),card);
  element('p',tr('Today’s stock: ','今日剩余：')+blindStockRemaining()+'/'+blindStock,card);
@@ -8553,6 +8555,18 @@ refreshControls=function(){
  const watch=b(actions,tr('Just watch','静静看看'),deerWatch);watch.disabled=!['greet','ready','done'].includes(phase);
  element('small',tr('Free deer cracker · once a day. Give wild deer space.','每日免费鹿饼一份。给野生小鹿留点空间。'),el)
 };
+/* MBDEER_STAGE_BEGIN */
+// Left-facing deer: account for the widest lowered head, not merely the body.
+function deerMuzzleOffset(bow,scale){
+ const a=-bow*.82;return {x:(-43-46*Math.cos(a)+57*Math.sin(a))*scale,y:(-65-46*Math.sin(a)-57*Math.cos(a))*scale}
+}
+function deerStageLayout(bow,feed){
+ const playerX=250+feed*15,playerY=558,playerScale=1.08,deerScale=.84;
+ const lower=bow+feed*.85,muzzle=deerMuzzleOffset(lower,deerScale);
+ const deerX=Math.max(playerX+171,508-feed*65);
+ return {playerX,playerY,playerScale,deerX,deerY:554,deerScale,lower,muzzleX:deerX+muzzle.x,muzzleY:554+muzzle.y};
+}
+/* MBDEER_STAGE_END */
 function drawMeadowDeer(x,y,profile,bow=0,chew=0,sc=1){
  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ellipse(0,3,73,14,'#414c3438');
  const fur=profile.fur,light=profile.light;
@@ -8581,21 +8595,23 @@ drawActivity=function(){
  else if(phase==='watch'&&age>=4){deerVisitReward(false);if(!(deerVisitRecord().day===shrineClock().day&&deerVisitRecord().fed)){state.deerPhase='ready';refreshControls()}}
  const p=state.deerProfile,now=state.deerPhase,elapsed=t-state.deerAt;
  ctx.save();paintLivingBackdrop(pics.park||pics.home);
- // Low grassy ground, scattered leaves and a distant deer. No floating props.
- ellipse(400,565,172,42,'#617b4b77');ellipse(395,560,155,35,'#8d9e6d');
- for(let i=0;i<14;i++){const xx=248+i*23,yy=560+(i%3)*7;line(xx,yy,xx+3,yy-7,'#c0c399',1.3)}
- drawMeadowDeer(535,475,deerProfiles[(deerProfiles.indexOf(p)+1)%3],.25,0,.48);
+ // Keep the two actors on their own floor marks; no artificial oval lawn or
+ // extra background deer intersecting the foreground silhouettes.
  const bow=now==='bow'?Math.sin(Math.PI*clamp(elapsed/2.7,0,1)):0;
  const feed=now==='feed'?Math.sin(Math.PI*clamp(elapsed/2.5,0,1)):0;
- const deerLower=(state.deerBows?bow*.8:0)+feed*.85;
- const reach=feed>0?{x:350,y:465}:null;
- drawRitualPose(285,555,1.18,{bow,reach});
- drawMeadowDeer(450-feed*26,552,p,deerLower,feed?Math.sin(t*18)*1.5:0,1.03);
- if(now==='feed'&&elapsed<1.35){ellipse(346,468,11,5,'#cfab73');ellipse(346,467,8,3,'#e7c78c')}
- if(now==='greet'||now==='ready'){ellipse(324,577,28,7,'#6a553b33');round(302,563,44,14,3,'#c9ad83','#937650');ellipse(324,563,14,5,'#d9b986')}
+ const layout=deerStageLayout(state.deerBows?bow*.8:0,feed);
+ const reach=feed>0?{x:layout.muzzleX,y:layout.muzzleY}:null;
+ const wrist=drawRitualPose(layout.playerX,layout.playerY,layout.playerScale,{bow:bow*.72,reach});
+ drawMeadowDeer(layout.deerX,layout.deerY,p,layout.lower,feed?Math.sin(t*18)*1.5:0,layout.deerScale);
+ if(now==='feed'&&elapsed<1.35&&wrist){
+  // The cracker follows the sleeve anchor, rather than hovering at a fixed
+  // scene coordinate. The existing painted arm is still a provisional pose.
+  ellipse(wrist.x+4,wrist.y-1,7,3.5,'#cfab73');ellipse(wrist.x+4,wrist.y-2,5.5,2.4,'#e7c78c')
+ }
+ if(now==='greet'||now==='ready'){ellipse(309,574,21,5,'#6a553b33');round(293,563,32,10,3,'#c9ad83','#937650');ellipse(309,563,10,3,'#d9b986')}
  ctx.restore()
 };
-shorePortraitBounds.deerVisit=[220,580,350,585];
+shorePortraitBounds.deerVisit=[186,580,390,585];
 const deerPropBefore=prop;
 prop=function(id,x,y){if(id!=='deerVisit'||room!=='park')return deerPropBefore(id,x,y);drawMeadowDeer(x,y+4,deerProfiles[0],0,0,.55)};
 roomActions.park=[['pet','Meet the cats','认识小猫'],['deerVisit','Deer Meadow','小鹿森野'],['chat','Park gossip','树下吃瓜']];
