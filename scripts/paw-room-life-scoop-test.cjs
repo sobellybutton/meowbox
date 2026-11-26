@@ -180,7 +180,14 @@ return n;`)();
 console.log('PASS '+bubbleChecks+' bubble shot, pause and pointer guards');
 
 const recoveredPart=(a,b)=>{const i=s.indexOf(a),j=s.indexOf(b,i);if(i<0||j<=i)throw Error('Missing '+a);return s.slice(i,j)};
-const recoveredChecks=new Function(recoveredPart('const pawRecoveredShareFormats=','function pawPrepareRecoveredShare')+recoveredPart('function pawDrawRecoveredLayout(','const pawRecoveredShareBefore=')+recoveredPart('/* PAW_SCRIPTED_GAIT_BEGIN */','/* PAW_SCRIPTED_GAIT_END */')+`
+
+const recoveredChecks=new Function(
+ recoveredPart('const pawRecoveredShareFormats=','function pawPrepareRecoveredShare')+
+ recoveredPart('function pawDrawRecoveredLayout(','/* Share only the computed result')+
+ recoveredPart('/* PAW_SCRIPTED_GAIT_BEGIN */','/* PAW_SCRIPTED_GAIT_END */')+
+ recoveredPart('/* PAW_GLASS_PROJECTION_BEGIN */','/* PAW_GLASS_PROJECTION_END */')+
+ recoveredPart('/* PAW_EXTRA_DISCOVERY_BEGIN */','/* PAW_EXTRA_DISCOVERY_END */')+
+ `
 let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
 let size,strings,draws,depth;
 const g={font:'',save(){depth++},restore(){depth--},translate(){},scale(){},beginPath(){},rect(){},clip(){},rotate(){},measureText(v){return {width:Array.from(v).length*25}},fillText(v){strings.push(v)},drawImage(){draws++}};
@@ -193,7 +200,8 @@ function shareTextLines(g,v,w){return [v]}
 const tarotDeck=Array.from({length:78},(_,i)=>['Card '+i,'牌 '+i]);
 const fiveReadingPositions=Array.from({length:5},(_,i)=>['Position '+i,'位置 '+i]);
 function socialResultQuote(){return ['Live reflection','真实结果']}
-const examples=[...[1,3,5].map(count=>({kind:'tarot',cards:Array.from({length:count},(_,i)=>({i,rev:i===1})),takeaway:['Actual reading','实际解读']})),{kind:'fortune',lines:[['Actual fortune','实际签文']]},{kind:'story',lines:[['Actual story','实际故事']]}];
+const scoreRows=count=>Array.from({length:count},(_,i)=>({label:['Theme '+i,'主题 '+i],value:['3 / 6','3 / 6']}));
+const examples=[...[1,3,5].map(count=>({kind:'tarot',cards:Array.from({length:count},(_,i)=>({i,rev:i===1})),takeaway:['Actual reading','实际解读']})),{kind:'fortune',lines:[['Actual fortune','实际签文']]},{kind:'story',lines:[['Actual story','实际故事']]},{kind:'soul',lines:[['Actual cat','实际猫灵']]},{kind:'cafe',lines:[['Actual café','实际咖啡馆']]},{kind:'type',scoreRows:scoreRows(4)},{kind:'motive',scoreRows:scoreRows(9)},{kind:'bigfive',scoreRows:scoreRows(5)},{kind:'values',scoreRows:scoreRows(4)},{kind:'zwds_chart',palaces:Array.from({length:12},(_,i)=>({name:['Palace '+i,'宫位 '+i],stars:i%2?[['Zi Wei','紫微']]:[]}))}];
 for(const format of Object.keys(pawRecoveredShareFormats)){
  const box=pawRecoveredShareBounds(format);size=box.height;
  for(const item of examples)for(const cn of [false,true]){
@@ -202,7 +210,7 @@ for(const format of Object.keys(pawRecoveredShareFormats)){
   ck(cv.width===1080&&cv.height===size&&depth===0,'canvas size and balanced context');
   ck(strings.join('').includes(cn?'实际标题':'Actual title'),'live title');
   ck(strings.join('').includes(cn?'实际':'Actual'),'live data');
-  ck(draws===(item.kind==='tarot'?2+item.cards.length:3),'actual image slots');
+  ck(draws===(item.kind==='tarot'?2+item.cards.length:item.scoreRows||item.palaces?2:3),'actual image slots');
  }
 }
 ck(pawRecoveredLayoutKey({kind:'zwds'},'feed')===null,'no full birth chart invented');
@@ -217,5 +225,25 @@ ck(pawTrackScriptedGait(q,'paper',204,203,true)===0,'new activity');
 ck(pawTrackScriptedGait(q,'paper',207,207,true)===5,'new motion');
 ck(pawTrackScriptedGait(q,'paper',207,207,false)===0,'idle');
 ck(pawTrackScriptedGait(q,'paper',NaN,4,true)===0,'invalid input');
+for(const [key,p] of Object.entries(pawRailGlassOutlines)){
+ const box=pawGlassExtent(p),dims=key==='portrait'?[880,1320]:[1440,810];
+ ck(box.w>500&&box.h>300,'glass extent');
+ ck(p.flat().every(([x,y])=>x>=0&&y>=0&&x<=dims[0]&&y<=dims[1]),'mask bounds');
+ for(const [iw,ih] of [[1102,347],[1102,349],[1102,275],[1102,300],[1800,800]])for(let i=0;i<=36;i++){
+  const c=pawGlassCrop(iw,ih,box.w,box.h,i/36);
+  ck(c.x>=0&&c.y>=0&&c.x+c.w<=iw+1e-6&&c.y+c.h<=ih+1e-6,'source bounds');
+  ck(Math.abs(c.w/c.h-box.w/box.h)<1e-8,'no stretching')
+ }
+}
+for(const mode of Object.keys(pawExtraDiscoveries)){
+ const rows=pawExtraDiscoveries[mode].axes.flatMap((a,k)=>a.questions.map((q,j)=>({dimension:k,id:k*3+j})));
+ const scores=pawExtraScore(mode,rows,rows.map(()=>1));
+ ck(scores.every(v=>v===3),'balanced answers');
+ ck(pawExtraRows(mode,scores).length===rows.length/3,'result rows');
+ ck(pawExtraScore(mode,rows,rows.map(()=>3))===null,'invalid answer');
+ ck(pawExtraScore(mode,rows.slice(1),rows.map(()=>1))===null,'incomplete');
+ const answers=rows.map(q=>pawExtraDiscoveries[mode].axes[q.dimension].questions[q.id%3][1]?0:2);
+ ck(pawExtraScore(mode,rows,answers).every(v=>v===6),'reverse scores');
+}
 return n;`)();
-console.log('PASS '+recoveredChecks+' recovered share rendering and scripted gait checks');
+console.log('PASS '+recoveredChecks+' recovered artwork, railway projection and scripted gait checks');
