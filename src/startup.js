@@ -6112,4 +6112,174 @@ pawTownStories.push({id:'chope-bench',title:['The great tissue-packet debate','�
 ]});
 /* PAW_CURATED_CONTENT_END */
 
+
+/* PAW_CURATED_RUNTIME_BEGIN */
+const pawGuestWindows={
+ 'traveller_06_tomas_lighthouse':{every:2,hours:[17,24],weather:'rain'},
+ 'traveller_03_kenji_dispatcher':{every:4,hours:[6,12]},
+ 'traveller_04_mateo_barista':{every:3,hours:[7,12]},
+ 'traveller_05_priya_actuary':{every:3,hours:[12,18]},
+ 'lady-off':{every:3,hours:[18,24]},
+ 'jay-conclusion':{every:3,hours:[18,24]}
+};
+function pawStoryDate(value){
+ if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))return null;
+ const ms=Date.parse(value+'T00:00:00Z');
+ return Number.isFinite(ms)&&new Date(ms).toISOString().slice(0,10)===value?Math.floor(ms/86400000):null
+}
+function pawGuestEligible(id,date,hour,weather,offset=0){
+ const rule=pawGuestWindows[id];if(!rule)return true;
+ const n=pawStoryDate(date);
+ return n!==null&&Number.isFinite(hour)&&hour>=rule.hours[0]&&hour<rule.hours[1]&&(!rule.weather||rule.weather===weather)&&((n+offset)%rule.every+rule.every)%rule.every===0
+}
+function pawScheduledGuests(pool,date,hour,weather,offset=0){
+ const n=pawStoryDate(date);if(n===null||!Array.isArray(pool)||!pool.length)return [];
+ const regular=pool.filter(g=>!pawGuestWindows[g.id]),base=regular.length>=2?regular:pool;
+ const i=((n+offset)%base.length+base.length)%base.length,first=base[i];
+ const rare=pool.filter(g=>g.id!==first.id&&pawGuestWindows[g.id]&&pawGuestEligible(g.id,date,hour,weather,offset));
+ const second=rare.length?rare[((n+offset)%rare.length+rare.length)%rare.length]:base[(i+1)%base.length];
+ return second&&second.id!==first.id?[first,second]:[first]
+}
+function pawGuestRotationAllowed(current,next,blocked,covered,distances,offscreen){
+ if(blocked||current.length!==next.length||current.every((v,i)=>v===next[i]))return false;
+ return covered||current.every((v,i)=>v===next[i]||Number.isFinite(distances[i])&&distances[i]>320&&offscreen[i]===true)
+}
+const pawBenchFirst=['lin','kenneth','share'],pawBenchSecond=['clear','stools'];
+function pawBenchRead(raw,today){
+ const n=pawStoryDate(today),empty={first:null,firstDay:null,second:null,secondDay:null,endingSeen:false};
+ if(n===null||!raw||typeof raw!=='object'||!pawBenchFirst.includes(raw.first))return empty;
+ const a=pawStoryDate(raw.firstDay);if(a===null||a>n)return empty;
+ const record={...empty,first:raw.first,firstDay:raw.firstDay};
+ const b=pawStoryDate(raw.secondDay);
+ if(pawBenchSecond.includes(raw.second)&&b!==null&&b>a&&b<=n){record.second=raw.second;record.secondDay=raw.secondDay;record.endingSeen=raw.endingSeen===true&&n>b}
+ return record
+}
+function pawBenchView(raw,today){
+ const v=pawBenchRead(raw,today);
+ if(!v.first)return {stage:'first',record:v};
+ if(!v.second)return {stage:v.firstDay===today?'wait-first':'second',record:v};
+ if(v.secondDay===today)return {stage:'wait-second',record:v};
+ return {stage:'ending',record:v,ending:v.second==='clear'?'commons':v.first==='share'?'salon':'cats'}
+}
+function pawBenchChoose(raw,today,choice){
+ const v=pawBenchView(raw,today);
+ if(v.stage==='first'&&pawBenchFirst.includes(choice))return {...v.record,first:choice,firstDay:today};
+ if(v.stage==='second'&&pawBenchSecond.includes(choice))return {...v.record,second:choice,secondDay:today};
+ return null
+}
+function pawReviewedTopic(raw,today,known){
+ const now=pawStoryDate(today);
+ if(now===null||!Array.isArray(raw)||!Array.isArray(known))return null;
+ const valid=raw.filter(v=>{
+  if(!v||v.status!=='reviewed'||v.sensitivity!=='everyday'||typeof v.id!=='string'||!/^[-a-z0-9]{1,80}$/.test(v.id)||!known.includes(v.templateId))return false;
+  if(typeof v.source!=='string'||!/^https:\/\/[^\s/]+\/[^\s]+$/.test(v.source)||v.source.length>600)return false;
+  const p=pawStoryDate(v.publishedOn),r=pawStoryDate(v.reviewedOn),e=pawStoryDate(v.expiresOn);
+  return p!==null&&r!==null&&e!==null&&p<=r&&r<=now&&now<e&&e>p&&e-p<=7
+ });
+ valid.sort((a,b)=>b.reviewedOn.localeCompare(a.reviewedOn)||b.publishedOn.localeCompare(a.publishedOn)||a.id.localeCompare(b.id));
+ return valid[0]||null
+}
+/* PAW_CURATED_RUNTIME_END */
+
+
+function pawGuestNow(date){
+ const clock=shrineClock();if(clock.day!==date)return {hour:12,weather:'clear'};
+ refreshAtmosphere();return {hour:clock.hour,weather:atmosphere.weather}
+}
+const pawRegularGuestBefore=popGuestFor;
+popGuestFor=function(world,slot,date=shrineClock().day){
+ if(slot!==0&&slot!==1)return pawRegularGuestBefore(world,slot,date);
+ const c=pawGuestNow(date);
+ return pawScheduledGuests(popGuestPool(world),date,c.hour,c.weather,hash(world))[slot]||null
+};
+mbGuestSync=function(force=false){
+ if(!force&&t-mbGuestCheck<15)return false;mbGuestCheck=t;
+ if(mbGuestScene!==scene)return false;
+ const today=shrineClock().day,slots=npc.filter(n=>n.popGuest);
+ if(!slots.length)return false;
+ const next=slots.map((n,i)=>popGuestFor(scene,i,today));if(next.some(v=>!v))return false;
+ const blocked=!!room||!!activity||talkOpen||transitioning||!proposal.hidden,covered=$('page').style.display==='block';
+ const d=slots.map(n=>Math.hypot(n.x-p.x,n.y-p.y));
+ const offscreen=slots.map(n=>{
+  const x=cam.ox+n.x*cam.scale,y=cam.oy+n.y*cam.scale;
+  return Number.isFinite(x)&&Number.isFinite(y)&&(x<-130||x>W+130||y<-80||y>H+180)
+ });
+ if(!pawGuestRotationAllowed(slots.map(v=>v.popGuest),next.map(v=>v.id),blocked,covered,d,offscreen))return false;
+ slots.forEach((n,i)=>{n.popGuest=next[i].id;n.n=next[i].name});mbGuestDate=today;return true
+};
+pawRoomGuestProfile=function(visit){
+ const today=shrineClock().day,c=pawGuestNow(today),active=npc.filter(n=>n.popGuest).map(n=>n.popGuest);
+ const pool=pawGuestRoomCandidates(popGuestStories,active,scene,g=>pawGuestEligible(g.id,today,c.hour,c.weather,hash(scene))&&!!pawGuestArt(g));
+ return pool.length?pool[visit%pool.length]:null
+};
+// A three-visit story uses the existing featured Town Hall note, not a new menu.
+const pawBenchKey='pawBenchStoryV1';
+const pawBenchCopy={
+ first:{body:['Auntie Lin left a tissue packet on the shaded bench. Kenneth insists it only reserves one seat. Both want your verdict.','林姨在阴凉长椅上放了一包纸巾，肯尼斯坚持说只能占一个位。两人都等你来评理。'],choices:[['lin','The whole bench is choped.','整张长椅都算占好了。'],['kenneth','One packet, one seat.','一包纸巾只占一个位。'],['share','Share morning shade and afternoon breeze.','上午乘凉、下午吹风，分时共享。']]},
+ 'wait-first':{body:['The debate has adjourned. Come back another day to see what happens.','争论暂时休庭。改天再来看看后续吧。']},
+ second:{body:['The bench now has six tissue packets, an umbrella and a thermos guarding it. Three tired travellers have nowhere to sit.','长椅现在摆了六包纸巾、一把伞和一个保温杯，三位累坏的旅人却无处落座。'],choices:[['clear','Clear the props and invite the travellers to sit.','收起道具，请旅人先坐。'],['stools','Borrow folding stools from Wang Laoban.','找王老板借几把折叠凳。']]},
+ 'wait-second':{body:['The neighbours are working on your suggestion. The next chapter is for another day.','街坊们正在商量你的提议。下一集改天再看。']},
+ commons:{body:['Lin and Kenneth apologise for turning rest into a competition. Their spare tissue packets become a free public supply.','林姨和肯尼斯为把休息搞成比赛道歉，多余的纸巾也变成了免费便民用品。']},
+ salon:{body:['The shared bench and extra stools have become a little tea salon. Lin brings fruit and Kenneth tells visitors where there is no queue.','分时共享的长椅加上折叠凳，成了小茶会。林姨切水果，肯尼斯负责分享哪里不用排队。']},
+ cats:{body:['Four cats occupy the whole bench. Lin and Kenneth silently agree that the sleeping cats outrank everyone.','四只猫咪横躺整张长椅。林姨和肯尼斯默默达成共识：睡觉的猫咪优先。']}
+};
+function pawRenderBench(note){
+ if(!note?.isConnected)return;
+ const today=shrineClock().day,view=pawBenchView(load(pawBenchKey,null),today);
+ const copy=pawBenchCopy[view.ending||view.stage];if(!copy)return;
+ note.replaceChildren();
+ element('small',tr('Resident story · fictional town','居民小故事 · 虚构小镇'),note,'pawStoryKicker');
+ element('h2',tr('The great tissue-packet debate','纸巾占座之争'),note);
+ const chapter=view.stage==='first'?1:view.stage==='ending'||view.stage==='wait-second'?3:2;
+ element('small',tr('Chapter ','第 ')+chapter+' / 3',note,'pawStoryPart');
+ element('p',tr(...copy.body),note,'pawStoryVoice');
+ if(copy.choices){
+  const controls=element('div','',note,'pawBenchChoices');
+  for(const [id,en,cn] of copy.choices)b(controls,tr(en,cn),()=>{
+   const currentDay=shrineClock().day,next=pawBenchChoose(load(pawBenchKey,null),currentDay,id);
+   if(next)save(pawBenchKey,next);pawRenderBench(note)
+  });
+ }
+ if(view.stage==='ending'&&!view.record.endingSeen)save(pawBenchKey,{...view.record,endingSeen:true});
+}
+const pawBenchBoardBefore=townChatPage;
+townChatPage=function(...args){
+ const result=pawBenchBoardBefore(...args);
+ if(communityTab!=='board')return result;
+ const note=$('content').querySelector('.pawTownStoryNote');if(!note)return result;
+ const today=shrineClock().day,view=pawBenchView(load(pawBenchKey,null),today),featured=pawTownStoryToday()?.story?.id==='chope-bench';
+ const active=!!view.record.first&&!view.record.endingSeen;
+ if(active||featured){pawRenderBench(note);return result}
+ if(!view.record.first){
+  const link=b(note,tr('Hear the bench dispute','听听长椅占座的瓜'),()=>pawRenderBench(note));link.className='pawBenchLink'
+ }
+ return result
+};
+const pawBenchCss=document.createElement('style');pawBenchCss.textContent='#content .pawBenchChoices{display:grid;gap:6px;margin-top:8px}#content .pawBenchChoices button{min-height:44px!important;text-align:left!important;white-space:normal!important;background:#e8d7b5!important;color:#3e4d3c!important;border:1px solid #b6a17f!important;font:14px/1.35 Georgia,"Songti SC",serif!important}#content .pawBenchLink{min-height:44px;color:#52694d;background:transparent;border:0;text-decoration:underline;text-underline-offset:3px}';document.head.append(pawBenchCss);
+// Only reviewed, bounded-duration source metadata can select a prewritten
+// fictional joke. Never display the source, publisher headline, or article.
+let pawReviewedTopicFeed=[],pawTopicFetchAt=0,pawTopicFetchPending=false;
+function pawRefreshTopicFeed(){
+ const now=Date.now();
+ if(pawTopicFetchPending||now-pawTopicFetchAt<600000)return;
+ pawTopicFetchPending=true;pawTopicFetchAt=now;
+ const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),3000);
+ fetch('assets/content/pawradise-topical.json',{cache:'no-cache',credentials:'same-origin',signal:controller.signal})
+  .then(r=>r.ok?r.json():null).then(v=>{if(v?.version===1&&Array.isArray(v.entries)&&v.entries.length<=50)pawReviewedTopicFeed=v.entries})
+  .catch(()=>{}).finally(()=>{clearTimeout(timeout);pawTopicFetchPending=false})
+}
+const pawEvergreenEdition=pawFictionEdition;
+pawFictionEdition=function(now,weather=''){
+ const entries=pawEvergreenEdition(now,weather);if(entries.length!==2)return entries;
+ const today=new Date(now+8*3600000).toISOString().slice(0,10),topic=pawReviewedTopic(pawReviewedTopicFeed,today,pawFictionGazette.map(v=>v[0]));
+ if(topic){
+  const g=pawFictionGazette.find(v=>v[0]===topic.templateId);
+  entries[1]={id:'topic-fiction-'+today+'-'+topic.id,date:entries[1].date,thread:[['Pawradise Gazette · topical satire','Pawradise 小镇日报 · 时事讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
+ }
+ return entries
+};
+const pawTopicBoardBefore=townChatPage;
+townChatPage=function(...args){if(communityTab==='board')pawRefreshTopicFeed();return pawTopicBoardBefore(...args)};
+if(typeof requestIdleCallback==='function')requestIdleCallback(pawRefreshTopicFeed,{timeout:3500});else setTimeout(pawRefreshTopicFeed,1800);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

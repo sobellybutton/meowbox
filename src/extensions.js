@@ -3587,6 +3587,7 @@ function renderResidentNoticeboard(q){
   const entries=townPublishedNotices();lastCount=entries.length;lastNoticeSignature=entries.map(v=>v.id).join('|');list.replaceChildren();nav.replaceChildren();
   for(const {thread:m,date,id} of entries.slice(0,shown)){const post=element('article','',list,'townResidentNote');post.dataset.noticeId=id;
    element('strong',tr(...m[0]),post);if(date)element('small',new Date(date).toLocaleDateString(zh?'zh-CN':'en-SG',{month:'short',day:'numeric',timeZone:'Asia/Singapore'}),post,'townNoticeDate');element('p',tr(...m[1]),post);
+   if(!m[2].length)continue;
    const replies=element('details','',post,'wallReplies');replies.dataset.noticeId=id;replies.open=open.has(id);element('summary',tr('Read replies','看看楼下怎么说')+' ('+m[2].length+')',replies);
    for(const reply of m[2]){const row=element('div','',replies,'wallReply');element('strong',tr(reply[0],reply[1]),row);element('p',tr(reply[2],reply[3]),row)}
   }
