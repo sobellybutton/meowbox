@@ -2560,7 +2560,7 @@ syncSigns=function(){
  nextStopButton.hidden=true;
  const sign=signButtons.get('station');
  if(sign&&!signRoot.hidden&&!sign.hidden){
-  const name=tr('Railway','铁路车站');
+  const name=tr('Railway Station','火车站');
   const plaque=sign.querySelector('.doorPlaque');
   if(plaque&&plaque.textContent!==name)plaque.textContent=name;
   if(sign.getAttribute('aria-label')!==name)sign.setAttribute('aria-label',name);
@@ -2675,7 +2675,7 @@ label=function(name,x,y,fn){
 };
 // Use canonical names at source so the DOM sign does not alternate between
 // an old Next Stop label and the replacement on each layout frame.
-for(const map of Object.values(maps)){const station=map.st.find(v=>v[0]==='station');if(station){station[3]='Railway';station[4]='铁路车站'}}
+for(const map of Object.values(maps)){const station=map.st.find(v=>v[0]==='station');if(station){station[3]='Railway Station';station[4]='火车站'}}
 const pawLocalMapBefore=travel;
 travel=function(...args){
  const result=pawLocalMapBefore(...args);
@@ -2771,7 +2771,7 @@ mbTransferHolding=function(from,to){
  const overlay=element('section','',$('game'),'mbTransferHolding pawRailJourney');
  overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
  const caption=element('div','',overlay,'pawRailCaption');
- element('small',tr('Next stop','下一站'),caption);
+ element('small',tr('Bound for','开往'),caption);
  element('strong',tr(...maps[to].n),caption);
  element('span',tr('Pawradise railway','Pawradise 铁路'),caption);
  const skip=element('button',tr('Skip ride','跳过旅程'),overlay,'pawRailSkip');skip.type='button';
@@ -2851,16 +2851,16 @@ function pawJournalRender(district=scene){
   const caption=element('div','',cover,'pawSketchCaption');element('small',tr('Pawradise railway · stop ','Pawradise 铁路 · 第 ')+(pawJournalKeys.indexOf(district)+1),caption);element('h2',tr(...maps[district].n),caption);
   const stamp=element('span',district===scene?tr('YOU ARE HERE','此刻在这里'):visited.includes(district)?tr('VISITED','已到访'):tr('TO EXPLORE','待探索'),cover,'pawSketchStamp');stamp.dataset.seen=String(district===scene||visited.includes(district));
   const info=element('div','',spread,'pawSketchNotes');element('p',tr(...pawJournalLines[district]),info);
-  if(district!==scene)b(info,tr('Board the train','搭火车去这里'),()=>{if(!transitioning)journey(district)}).className='pawSketchBoard';
+  if(district!==scene)b(info,tr('Board train','上车'),()=>{if(!transitioning)journey(district)}).className='pawSketchBoard';
   else element('small',tr('Choose a place to visit, or keep wandering.','点选一个地方，或继续随心漫步。'),info);
   const doors=maps[district].st.filter(v=>v[0]!=='station'),album=element('div','',spread,'pawSketchPlaces');
-  element('h3',tr('Places along the way','一路上的小地方'),album);
+  element('h3',tr('Places to explore','可以逛逛的地方'),album);
   for(const [id,x,y,en,cn] of doors){
    const row=element('figure','',album,'pawSketchPlace'),pic=element('img','',row);pic.src=pawJournalPicture(id,district);pic.alt='';pic.loading='lazy';
    pic.onerror=()=>{pic.onerror=null;pic.src=destinationPortrait(district)};
    const copy=element('figcaption','',row);element('strong',tr(en,cn),copy);
    const seen=pawJournalSeen(district,id);const tag=element('small',seen?tr('✓ Visited','✓ 已到访'):tr('Yet to explore','尚未探索'),copy,'pawSketchVisited');tag.dataset.seen=String(seen);
-   if(district===scene){const btn=b(copy,room===id?tr('Return to this room','返回这里'):tr('Go here ›','去这里 ›'),()=>{
+   if(district===scene){const btn=b(copy,room===id?tr('Return to this room','返回这里'):tr('Visit ›','去逛逛 ›'),()=>{
     if(transitioning)return;$('page').style.display='none';
     if(room===id)return;if(room){enter(id);return}walkDoor(id,x,y)
    });btn.className='pawSketchGo'}
@@ -3386,6 +3386,7 @@ hideoutPage=function(...args){
  return result
 };
 const pawLegacyPassport=passport;
+let pawMemoryDistrict=null;
 function pawTravelMemories(){
  pawLegacyPassport();const q=$('content'),album=q.querySelector('.travelAlbum');
  if(album){
@@ -3394,7 +3395,7 @@ function pawTravelMemories(){
  }
  q.querySelector('.townAnchorBook')?.remove();
  const h=q.querySelector('h1');if(h)h.textContent=tr('Travel memories','旅途回忆');
- mbHomePageBack(tr('‹ Explore','‹ 返回探索'),()=>pawJournalRender(scene));journalLanguage(pawTravelMemories)
+ mbHomePageBack(tr('‹ Explore','‹ 返回探索'),()=>pawJournalRender(pawMemoryDistrict||scene));journalLanguage(pawTravelMemories)
 }
 const pawJournalSingleBefore=pawJournalRender;
 pawJournalRender=function(district=scene){
@@ -3404,7 +3405,7 @@ pawJournalRender=function(district=scene){
   if(signature&&visitedHere)element('p',tr(...signature.memory),info,'pawJourneyMemory');
   const stamp=element('small',hideoutStampCount()+'/4 '+tr('railway stamps collected','枚铁路印章已收集'),info);
   const links=element('div','',book,'pawTravelMemoryLink');
-  b(links,tr('Travel memories ›','旅途回忆 ›'),pawTravelMemories).className='pawTownTextLink';
+  b(links,tr('Travel memories ›','旅途回忆 ›'),()=>{pawMemoryDistrict=district;pawTravelMemories()}).className='pawTownTextLink';
  }
  return result
 };
@@ -3706,5 +3707,113 @@ backHuman=function(x,y,kind,walking,facing,scale=1){
  if(im?.naturalWidth&&im.naturalHeight&&!reduced&&(dir==='down'||dir==='right')){pawPaintedGait(im,x,y,scale,facing,phase);return}
  return pawWalkRenderBefore(x,y,kind,walking,facing,scale)
 };
+
+
+/* PAW_PHYSICAL_UI_20: a first implementation batch. Original painted
+   assets and all persistent IDs, prices, rewards and handlers remain. */
+const pawCanonicalNames={
+ tarot:['Moonlight Tarot','月光塔罗'],
+ destiny:['Master Yue’s Study','月师傅的书房'],
+ station:['Railway Station','火车站']
+};
+function pawApplyPlaceNames(world){
+ for(const m of Object.values(world))for(const door of m.st||[]){
+  const names=pawCanonicalNames[door[0]];
+  if(names){door[3]=names[0];door[4]=names[1]}
+ }
+}
+pawApplyPlaceNames(maps);
+function pawDisplayPlaceText(value){
+ const aliases=[['Tarot House','Moonlight Tarot'],['塔罗小屋','月光塔罗'],['Destiny House','Master Yue’s Study'],['命理小馆','月师傅的书房']];
+ let result=value;
+ for(const [oldName,newName] of aliases)if(typeof result==='string')result=result.split(oldName).join(newName);
+ return result
+}
+const pawPhysicalPageBefore=page;
+page=function(title,sub,body){
+ return pawPhysicalPageBefore(pawDisplayPlaceText(title),pawDisplayPlaceText(sub),q=>{
+  const r=body(q);
+  // Generic back/language buttons remain real controls, with short context
+  // labels only when the base page has not supplied a specific parent.
+  const back=q.querySelector(':scope > .row button:first-child');
+  if(back&&back.textContent===tr('‹ Back','‹ 返回'))back.textContent=tr('‹ Back to game','‹ 返回游戏');
+  return r
+ })
+};
+const pawPhysicalHeaderBefore=pawVisualHeader;
+pawVisualHeader=function(q,theme){
+ // A chapter postcard belongs in the travel book, not on the resident
+ // identity card, diary, collection cabinet or furniture shelf.
+ if(['shop','collection','daily','profile'].includes(theme))return;
+ return pawPhysicalHeaderBefore(q,theme)
+};
+function pawPageTurnDirection(oldIndex,newIndex){
+ return oldIndex<0||newIndex<0||oldIndex===newIndex?'':newIndex>oldIndex?'forward':'back'
+}
+const pawPhysicalJournalBefore=pawJournalRender;
+pawJournalRender=function(district=scene){
+ const q=$('content'),old=q.querySelector('.pawSketchTabs button[aria-current="page"]');
+ const oldIndex=old?Array.from(old.parentElement.children).indexOf(old):-1;
+ const result=pawPhysicalJournalBefore(district);
+ const spread=q.querySelector('.pawSketchSpread'),next=q.querySelector('.pawSketchTabs button[aria-current="page"]');
+ const newIndex=next?Array.from(next.parentElement.children).indexOf(next):-1;
+ const direction=pawPageTurnDirection(oldIndex,newIndex);
+ if(spread&&direction)spread.dataset.pageTurn=direction;
+ const info=q.querySelector('.pawSketchNotes'),station=maps[district]?.st.find(v=>v[0]==='station');
+ if(info&&station&&district===scene&&!room&&!activity){
+  const departure=element('section','',info,'pawJournalDeparture');
+  element('small',tr('Next train','下一班列车'),departure);
+  element('strong',tr(...maps[railNextDistrict(scene)].n),departure);
+  const go=b(departure,tr('Walk to station','步行去车站'),()=>{
+   if(transitioning||room||activity||scene!==district)return;
+   $('page').style.display='none';updateHUD();walkDoor(station[0],station[1],station[2])
+  });go.className='pawJournalStation';
+ }
+ return result
+};
+const pawPhysicalBagBefore=renderTravellerBag;
+renderTravellerBag=function(...args){
+ const result=pawPhysicalBagBefore(...args),q=$('content'),back=q.querySelector(':scope > .row button:first-child');
+ if(back){
+  const previous=back.onclick;
+  back.onclick=function(...a){
+   const detail=q.querySelector('.bagDetail');
+   if(detail&&!detail.hidden){
+    const close=detail.querySelector('button');if(close){close.click();return}
+   }
+   return previous?.apply(this,a)
+  }
+ }
+ return result
+};
+const pawPhysicalHudBefore=updateHUD;
+updateHUD=function(...args){
+ const result=pawPhysicalHudBefore(...args);
+ for(const [btn,en,cn] of [[$('dockScoop'),'Today','今日'],[pawTownDock,'Town Hall','小镇广场']]){
+  const label=tr(en,cn);btn.lastElementChild.textContent=label;btn.setAttribute('aria-label',label)
+ }
+ return result
+};
+const pawPhysicalUI=document.createElement('style');
+pawPhysicalUI.textContent=
+ '#game #content[data-paw-visual-theme="shop"]>.row,#game #content[data-paw-visual-theme="collection"]>.row,#game #content[data-paw-visual-theme="daily"]>.row,#game #content[data-paw-visual-theme="profile"]>.row{margin-bottom:4px}'+
+ '#game #content[data-paw-visual-theme="shop"]>h1,#game #content[data-paw-visual-theme="collection"]>h1,#game #content[data-paw-visual-theme="daily"]>h1,#game #content[data-paw-visual-theme="profile"]>h1{font:600 clamp(22px,5vw,32px)/1.2 Georgia,"Songti SC",serif;color:#4c5946;margin:5px 0 8px}'+
+ '#game #content[data-paw-visual-theme="shop"] .komorebiGrid{gap:0 8px!important;padding:10px 8px 0;background:linear-gradient(90deg,#73563d,#b79769 7%,#bb9e74 93%,#73563d);border:5px solid #73563d;border-top:9px solid #836448;border-radius:2px;align-items:stretch}'+
+ '#game #content[data-paw-visual-theme="shop"] .komorebiTile{min-width:0;position:relative;margin:0!important;padding:7px 4px 13px!important;background:#eadcbe!important;border:0!important;border-radius:0!important;border-bottom:9px solid #795a3c!important;box-shadow:0 4px 2px #4b352b50!important;color:#433729!important}'+
+ '#game #content[data-paw-visual-theme="shop"] .komorebiTile .mbFurnitureMat{border:0;background:radial-gradient(ellipse at 50% 85%,#a88a5a35,transparent 65%);box-shadow:none;padding:3px}'+
+ '#game #content[data-paw-visual-theme="shop"] .komorebiTile strong{overflow-wrap:anywhere;line-height:1.25}'+
+ '#game #content[data-paw-visual-theme="collection"] .bagSlots{border-width:6px;border-top-width:10px;gap:8px}'+
+ '#game #content[data-paw-visual-theme="collection"] .bagSlot{border-bottom:5px solid #8d6d4a!important;box-shadow:0 3px 2px #64492e30!important}'+
+ '#game #content[data-paw-visual-theme="room"] .hideoutScene{margin-inline:auto;border:0!important;box-shadow:0 4px 10px #4b372f33;max-width:100%}'+
+ '#game #content .pawSketchSpread[data-page-turn]{transform-origin:center left;animation:pawPaperNext .24s ease-out both}'+
+ '#game #content .pawSketchSpread[data-page-turn="back"]{transform-origin:center right;animation-name:pawPaperPrev}'+
+ '@keyframes pawPaperNext{from{opacity:.65;transform:perspective(1000px) rotateY(-8deg) translateX(4px)}to{opacity:1;transform:none}}'+
+ '@keyframes pawPaperPrev{from{opacity:.65;transform:perspective(1000px) rotateY(8deg) translateX(-4px)}to{opacity:1;transform:none}}'+
+ '#game #content .pawJournalDeparture{display:grid;gap:4px;padding:9px;margin-top:10px;border:3px solid #85674b;background:#405548;color:#fff3d9}'+
+ '#game #content .pawJournalDeparture small,#game #content .pawJournalDeparture strong{color:#fff3d9;overflow-wrap:anywhere}'+
+ '#game #content .pawJournalStation{min-height:44px;background:#f4e5c6!important;border:1px solid #b9a178!important;color:#3b5041!important}'+
+ '@media(max-width:380px){#game #content[data-paw-visual-theme="shop"] .komorebiGrid{gap:0 5px!important;padding:6px 4px 0;border-width:4px}#game #content[data-paw-visual-theme="shop"] .komorebiTile{padding:4px 3px 9px!important}.pawSketchTabs button{font-size:11px!important;line-height:1.25!important}}'+
+ '@media(prefers-reduced-motion:reduce){#game #content .pawSketchSpread[data-page-turn]{animation:none!important}}';
+document.head.append(pawPhysicalUI);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
