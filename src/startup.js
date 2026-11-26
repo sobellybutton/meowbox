@@ -7479,4 +7479,55 @@ renderChartConsultation=function(out,z){
  return result
 };
 
+
+/* PAW_BUBBLE_INPUT_BEGIN */
+function pawBubbleCanAct(game,blocked){
+ return !blocked&&!!game&&game.status==='play'&&!game.flight&&Number.isInteger(game.remaining)&&game.remaining>0&&Number.isFinite(game.angle)
+}
+function pawBubbleCancelPointer(pointer,release){
+ if(pointer===null||pointer===undefined)return false;
+ release(pointer);return true
+}
+function pawBubblePause(game,now){
+ if(!game||!Number.isFinite(now))return false;
+ const gap=Math.max(0,now-(Number.isFinite(game.last)?game.last:now));
+ if(Array.isArray(game.particles))for(const p of game.particles)if(Number.isFinite(p.at))p.at+=gap;
+ game.last=now;return true
+}
+/* PAW_BUBBLE_INPUT_END */
+function pawBubbleBlocked(){return document.hidden||talkOpen||transitioning||!proposal.hidden||$('page').style.display==='block'}
+function pawReleaseBubblePointer(){
+ const pointer=nostalgiaPointer;nostalgiaPointer=null;
+ pawBubbleCancelPointer(pointer,id=>{try{if(c.hasPointerCapture(id))c.releasePointerCapture(id)}catch{}})
+}
+const pawBubbleFireBefore=nostalgiaFire;
+nostalgiaFire=function(){
+ if(!nostalgiaActive()||!pawBubbleCanAct(state.bubbleGame,pawBubbleBlocked()))return;
+ state.bubbleGame.last=t;return pawBubbleFireBefore()
+};
+const pawBubbleTickBefore=nostalgiaTick;
+let pawBubblePaused=false;
+nostalgiaTick=function(g){
+ if(pawBubbleBlocked()){pawBubblePaused=true;pawBubblePause(g,t);pawReleaseBubblePointer();return}
+ if(pawBubblePaused){pawBubblePaused=false;pawBubblePause(g,t);return}
+ return pawBubbleTickBefore(g)
+};
+const pawBubbleStartBefore=start;
+start=function(...args){pawReleaseBubblePointer();pawBubblePaused=false;return pawBubbleStartBefore(...args)};
+const pawBubbleNewBefore=nostalgiaNew;
+nostalgiaNew=function(){pawReleaseBubblePointer();pawBubblePaused=false;return pawBubbleNewBefore()};
+document.addEventListener('visibilitychange',()=>{if(document.hidden){pawBubblePaused=nostalgiaActive();pawReleaseBubblePointer()}});
+window.addEventListener('blur',()=>{if(nostalgiaActive())pawReleaseBubblePointer()});
+c.addEventListener('lostpointercapture',e=>{if(nostalgiaPointer===e.pointerId)nostalgiaPointer=null});
+window.addEventListener('pointerdown',e=>{
+ if(e.target!==c||!nostalgiaActive())return;
+ if(e.button!==0||e.isPrimary===false||nostalgiaPointer!==null||pawBubbleBlocked()){
+  e.preventDefault();e.stopPropagation()
+ }
+},true);
+window.addEventListener('pointerup',e=>{
+ if(nostalgiaPointer!==e.pointerId)return;
+ if(!nostalgiaActive()||pawBubbleBlocked()){pawReleaseBubblePointer();e.stopPropagation()}
+},true);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
