@@ -81,7 +81,13 @@ async function travelLoop(page,name,touch){
  await shot('gate');
  await press(page.locator('#proposal .shrine-enter'));
  await page.waitForFunction(()=>proposal.hidden&&valleyRevealAt<0);
- await enterDoor('tarot');
+ await press(page.locator('#dockTravel'));
+ const local=page.locator('.pawLocalDoors');await local.waitFor();
+ assert.equal(await local.locator('button').count(),await page.evaluate(()=>maps[scene].st.filter(v=>v[0]!=='station').length));
+ await shot('local-map-guide');
+ await press(local.getByRole('button',{name:'Tarot House',exact:true}));
+ await page.waitForFunction(()=>room==='tarot'&&!transitioning&&continuityRoom==='tarot'&&Math.hypot(indoor.x-indoor.tx,indoor.y-indoor.ty)<4,null,{timeout:21000});
+ await shot('tarot');
  await station('tarot');
  await page.locator('#choices').getByRole('button',{name:/Daily guidance/}).waitFor();
  assert.match(await page.locator('#line').innerText(),/June/);
@@ -99,6 +105,8 @@ async function travelLoop(page,name,touch){
   assert.equal(await page.locator('#nextStopShortcut').isVisible(),false,'No permanent next-stop shortcut');
   await press(page.locator('#dockTravel'));
   await page.locator('.pawExploreRail').waitFor();
+  assert(await page.locator('.pawLocalDoors button').count()>0,'Local shops are available before travel');
+  assert(await page.locator('.pawExploreRail').evaluate(el=>el.getBoundingClientRect().top<document.querySelector('.portraitTravelGrid').getBoundingClientRect().top),'Local exploration precedes destination choices');
   await press(page.locator('.portraitTravelGrid .portraitDestination').nth(['fortune','home','island','wonder'].indexOf(district)));
   const scenery=page.locator('.districtRailCabin .mbRailPane > span').first();
   await scenery.waitFor();
