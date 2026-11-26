@@ -57,12 +57,13 @@ jobs:
                 await page.waitForTimeout(3500);
                 // Verify effective runtime registry, after all extensions and overrides.
                 const registry=await page.evaluate(()=>Object.entries(maps).flatMap(([world,m])=>m.st.map(([id])=>({world,id}))));
-                if(new Set(registry.map(v=>v.id)).size!==registry.length)throw Error('Duplicate runtime station ID');
+                if(new Set(registry.map(v=>v.world+':'+v.id)).size!==registry.length||new Set(registry.filter(v=>v.id!=='station').map(v=>v.id)).size!==registry.filter(v=>v.id!=='station').length)throw Error('Duplicate runtime destination');
+                for(const world of ['fortune','home','island','wonder'])if(registry.filter(v=>v.id==='station'&&v.world===world).length!==1)throw Error('Missing district station '+world);
                 for(const [id,world] of [['temple','fortune'],['fish','home'],['quiz','wonder'],['station','fortune']]){
                   if(registry.filter(v=>v.id===id&&v.world===world).length!==1)throw Error('Wrong station ownership: '+id);
                 }
                 if(!await page.evaluate(()=>roomActions.quiz.length===1&&roomActions.quiz[0][0]==='quiz'))throw Error('Personality Lab has duplicate entry points');
-                if(!await page.evaluate(()=>roomActions.arcade.map(v=>v[0]).join(',')==='bubbleArcade,woodenThree,blindBox'))throw Error('Visible arcade lineup differs from curated games');
+                if(!await page.evaluate(()=>roomActions.arcade.map(v=>v[0]).join(',')==='bubbleArcade,goldfishScoop,blindBox'))throw Error('Visible arcade lineup differs from curated games');
                 const assessmentCheck=await page.evaluate(()=>{let n=0;for(const mode of ['type','motive','soul']){const q=prepareWonderQuestions(mode),answers=q.map(v=>v.id%v.opts.length),expected={type:16,motive:27,soul:6}[mode];if(q.length!==expected)throw Error('Wrong question count '+mode);if(JSON.stringify(scoreWonder(mode,q,answers))!==JSON.stringify(scoreWonder(mode,q.slice().reverse(),answers.slice().reverse())))throw Error('Question order changed outcome '+mode);n++}const q=prepareWonderQuestions('motive');if(scoreWonder('motive',q,q.map(()=>1)).ties.length!==9)throw Error('Equal motive scores collapsed');return n+1});
                 console.log('ASSESSMENT_LOGIC '+assessmentCheck);
                 const poseCheck=await page.evaluate(()=>{let n=0;for(let i=0;i<=10;i++)for(let j=0;j<=10;j++){for(const opts of [{kneel:i/10,bow:j/10},{seat:i/10,bow:j/10}]){const p=ritualSpritePose(opts,{x:25,y:-20});if(!(p.hip.y<p.knee.y&&p.knee.y<p.foot.y&&Number.isFinite(p.wrist.x)&&Number.isFinite(p.wrist.y)))throw Error('Invalid action pose');n++}}return n});
@@ -210,6 +211,7 @@ jobs:
                 await page.locator('#dockScoop').click();
                 await page.locator('.townFortuneSlip').waitFor({timeout:8000});
                 if(!await page.locator('#luck').isHidden())throw Error('Obsolete luck shortcut visible');
+                await page.getByRole('button',{name:'News & town chat',exact:true}).click();
                 await page.getByRole('button',{name:'Read the town paper',exact:true}).click();
                 await page.locator('.townWall').waitFor({timeout:5000});
                 if(await page.locator('.townResidentNote').count()!==6)throw Error('Noticeboard page incomplete');
@@ -289,30 +291,23 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-wishing-pool.png'});
                 await page.getByRole('button',{name:'‹ Back',exact:true}).click();
                 await page.evaluate(()=>{room='temple';activity=null;action('prayer')});
-                await page.waitForFunction(()=>activity==='prayer'&&state.prayerStage==='ready',{},{timeout:10000});
+                await page.waitForFunction(()=>activity==='prayer'&&state.prayerStage==='collect',{},{timeout:10000});
                 if(options.hasTouch){
                   await page.waitForFunction(()=>(()=>{const im=portraitInteriorImage('temple');return im?.naturalWidth===800&&im?.naturalHeight===1400})(),{},{timeout:10000});
                 }
                 await page.screenshot({path:'test-results/'+name+'-temple-ready.png'});
-                const prayerTap=async(x,y)=>{
-                  const v=await page.evaluate(({x,y})=>{const r=c.getBoundingClientRect();return{x:r.left+cam.ox+x*cam.scale,y:r.top+cam.oy+y*cam.scale}}, {x,y});
-                  if(options.hasTouch)await page.touchscreen.tap(v.x,v.y);else await page.mouse.click(v.x,v.y);
-                };
-                await prayerTap(335,570);
-                if(await page.evaluate(()=>state.prayerStage)!=='ready')throw Error('Prayer started before incense');
-                await page.locator('#ritualActionBar').getByRole('button',{name:'Offer incense',exact:true}).click();
-                if(!await page.evaluate(()=>state.incense===true))throw Error('Incense did not light');
-                await page.waitForTimeout(450);
-                await page.screenshot({path:'test-results/'+name+'-temple-incense-reach.png'});
-                await page.locator('#ritualActionBar').getByRole('button',{name:'Make a wish',exact:true}).click();
-                // Standing bow is deliberate until dedicated kneeling art is available.
-                await page.waitForFunction(()=>state.prayerStage==='bow',{},{timeout:3000});
-                await page.waitForTimeout(600);
-                await page.screenshot({path:'test-results/'+name+'-temple-bow.png'});
-                await page.waitForFunction(()=>state.prayerStage==='silent',{},{timeout:10000});
-                await page.screenshot({path:'test-results/'+name+'-temple-prayer.png'});
+                const ritual=page.locator('#ritualActionBar');
+                if(await ritual.getByRole('button',{name:/^Bow/}).count())throw Error('Bow enabled before incense');
+                for(let n=0;n<3;n++)await ritual.getByRole('button',{name:/Take a joss stick/}).click();
+                await ritual.getByRole('button',{name:'Light the three sticks',exact:true}).click();
+                for(let n=0;n<3;n++){
+                  await ritual.getByRole('button',{name:/^Bow/}).click();
+                  if(n===0){await page.waitForTimeout(600);await page.screenshot({path:'test-results/'+name+'-temple-bow.png'})}
+                }
+                await ritual.getByRole('button',{name:'Place incense in burner',exact:true}).click();
                 await page.waitForFunction(()=>state.prayerStage==='complete',{},{timeout:10000});
-                if(await page.evaluate(()=>state.bows)!==3)throw Error('Prayer bow count incorrect');
+                if(!await page.evaluate(()=>state.bows===3&&state.prayerOffered===3&&state.prayerHeld===0))throw Error('Incorrect completed incense ritual');
+                await page.screenshot({path:'test-results/'+name+'-temple-prayer.png'});
                 await page.evaluate(()=>start('sticks'));
                 await page.waitForTimeout(650);
                 const tapWorld=async(x,y)=>{

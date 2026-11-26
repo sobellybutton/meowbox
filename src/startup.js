@@ -1028,4 +1028,21 @@ say=function(name,line,...rest){
  return result
 };
 
+/* Keep the daily fortune easy to discover, without opening the long secondary journal. */
+const visibleDailyFortuneBefore=todayHub;
+todayHub=function(){
+ visibleDailyFortuneBefore();const q=$('content'),lead=q.querySelector('.journalCheckin');
+ let slip=q.querySelector('.townFortuneSlip');if(!slip){renderTownFortune(q);slip=q.querySelector('.townFortuneSlip')}
+ if(slip&&lead)lead.after(slip);
+ const more=q.querySelector('.journalTownMore');if(more){
+  const jump=b(q,tr('News & town chat','小镇日报与聊天'),()=>{more.open=true;more.scrollIntoView({block:'start',behavior:'auto'})});jump.className='journalTownJump';
+  if(slip)slip.after(jump)
+ }
+ journalLanguage(todayHub)
+};
+$('dockScoop').onclick=()=>todayHub();
+const latestResidentPassport=passport;
+passport=function(){latestResidentPassport();const book=$('content').querySelector('.travelAlbum');if(book&&!book.querySelector('.townFortuneSlip')){renderTownFortune(book);const slip=book.lastElementChild;book.prepend(slip)}journalLanguage(passport)};
+$('dockPassport').onclick=()=>passport();
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
