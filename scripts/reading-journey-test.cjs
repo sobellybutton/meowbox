@@ -42,6 +42,8 @@ async function run(page,name,touch){
   await page.waitForFunction(i=>state.readFlip[i]>=0,i,{timeout:5000});
  }
  await page.waitForFunction(()=>state.readSaved);
+ await page.waitForFunction(()=>readingArtwork().naturalWidth===1024&&readingArtwork().naturalHeight===2180);
+ await shot('local-tarot-faces');
  await world(298,touch?755:650);
  await page.getByRole('heading',{name:'Put the cards together'}).waitFor();
  assert.equal(await page.locator('.readingNote').count(),3);

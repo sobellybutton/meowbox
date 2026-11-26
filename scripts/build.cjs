@@ -26,6 +26,8 @@ function webpSize(b){
   o=i+n+(n%2);
  }throw Error('Unsupported WebP dimensions');
 }
+const deckFaces=webpSize(fs.readFileSync(path.join(root,'assets/visual/tarot-card-faces.webp')));
+if(deckFaces[0]!==1024||deckFaces[1]!==2180)throw Error('Unexpected tarot face atlas dimensions');
 let paintedCount=0;
 for(const [key,entry] of Object.entries(painted.residents)){
  if(!allowedPainted.has(key))throw Error('Unexpected painted resident: '+key);

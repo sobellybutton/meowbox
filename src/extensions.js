@@ -1357,9 +1357,9 @@ function topicReflection(topic,position){const prompt=readingPrompts[topic]?.[po
 let readingJournal=load('readingJournalV1',[]);if(!Array.isArray(readingJournal))readingJournal=[];
 const readingStart=start;start=function(id){readingStart(id);if(id==='tarot'||id==='love'){state.readStage=id==='love'?'topic':'deck';state.readTopic=id==='love'?null:-1;state.readShuffle=0;state.readAt=t;state.readCards=[];state.readFlip=[];state.readSaved=false;hint(...(id==='love'?['What is on your mind today?','今天想问些什么？']:['Touch the deck, or drag it sideways to shuffle.','轻触牌堆，或左右拖动洗牌。']))}};
 function readingTopic(i){if(activity!=='love'||state.readStage!=='topic'||!Number.isInteger(i)||!readingTopics[i])return;state.readTopic=i;state.readStage='deck';state.readAt=t;hint('Shuffle the deck as much as you like.','想洗几次都可以。')}
-function readingShuffle(){if(state.readStage!=='deck')return;state.readStage='shuffle';state.readShuffle++;state.readAt=t;sound(350);hint('Two halves of the deck come together.','两叠牌慢慢合在一起。')}
+function readingShuffle(){if(state.readStage!=='deck')return;readingArtwork();state.readStage='shuffle';state.readShuffle++;state.readAt=t;sound(350);hint('Two halves of the deck come together.','两叠牌慢慢合在一起。')}
 function readingDeal(){if(state.readStage!=='deck'||!state.readShuffle)return;state.readStage='deal';state.readAt=t;let count=activity==='love'?3:1,pool=tarotDeck.map((_,i)=>i);if(activity==='tarot'){let d=dailyCard();state.readCards=[{i:Math.max(0,tarotDeck.indexOf(d)),rev:tarotReversed('daily')}]}
-else{state.readCards=Array.from({length:count},()=>{let j=Math.floor(Math.random()*pool.length);return {i:pool.splice(j,1)[0],rev:Math.random()<.5}})}state.readFlip=Array(count).fill(-1);state.readCards.forEach(v=>readingArtwork(v.i));sound(460)}
+else{state.readCards=Array.from({length:count},()=>{let j=Math.floor(Math.random()*pool.length);return {i:pool.splice(j,1)[0],rev:Math.random()<.5}})}state.readFlip=Array(count).fill(-1);sound(460)}
 function readingReveal(i){if(!['tarot','love'].includes(activity)||state.readStage!=='cards'||!state.readCards[i]||state.readFlip[i]>=0)return;state.readFlip[i]=t;sound(490+i*90);const count=state.readFlip.filter(v=>v>=0).length,total=state.readCards.length;hint(count===total?'All cards revealed. Tap a card again to read its meaning.':'Card '+count+' of '+total+' revealed. Take your time. ',count===total?'牌已翻完。再次点击牌面，查看解读。':'已翻开 '+count+'/'+total+' 张牌，慢慢来。')}
 function readingSave(){
  if(!['tarot','love'].includes(activity)||state.readSaved||!Array.isArray(state.readCards)||!Array.isArray(state.readFlip))return;
@@ -1477,11 +1477,11 @@ function openReadingJournal(){
   element('span',tr('Automatically save completed readings','自动保存已完成的解读'),autosave.parentElement);
   autosave.onchange=()=>save('tarotJournalAutoSaveV1',autosave.checked);
   const entries=[
-   ...readingJournal.map((record,index)=>({record,index,extended:false})),
-   ...fiveReadingArchive().map((record,index)=>({record,index,extended:true}))
-  ].flatMap(({record,index,extended})=>{
+   ...readingJournal.map(record=>({record,extended:false})),
+   ...fiveReadingArchive().map(record=>({record,extended:true}))
+  ].flatMap(({record,extended})=>{
    const entry=record&&tarotShareSnapshot(record);
-   return entry?[{...entry,date:record.date,index,extended}]:[];
+   return entry?[{...entry,date:record.date,record,extended}]:[];
   }).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   if(!entries.length)element('p',tr('Your first reading will appear here.','第一次占卜之后，手记会出现在这里。'),book);
   entries.forEach((entry,i)=>{
@@ -1496,9 +1496,12 @@ function openReadingJournal(){
    const remove=b(item,tr('Delete reading','删除解读'),()=>{confirm.hidden=false;yes.focus()});
    remove.before(confirm);
    const yes=b(confirm,tr('Delete this reading','确认删除这次解读'),()=>{
-    if(entry.extended)save('fiveReadingJournalV1',fiveReadingArchive().filter((_,i)=>i!==entry.index));
-    else{
-     readingJournal=readingJournal.filter((_,i)=>i!==entry.index);
+    if(entry.extended){
+     const archive=fiveReadingArchive(),key=JSON.stringify(entry.record);
+     const index=archive.findIndex(v=>JSON.stringify(v)===key);
+     if(index!==-1)save('fiveReadingJournalV1',archive.filter((_,i)=>i!==index));
+    }else{
+     readingJournal=readingJournal.filter(v=>v!==entry.record);
      save('readingJournalV1',readingJournal);
     }
     openReadingJournal();
@@ -1892,23 +1895,27 @@ function drawReadingCard(x,y,w,h,index,reversed){
 }
 /* The shared articulated pose above is authoritative; callers use its returned wrist coordinates. */
 
-/* Authentic public-domain Rider–Waite–Smith art, sourced from the verified 78-card set.
-   Lazy load only dealt cards; retain a local symbolic fallback if offline.
-   Pamela Colman Smith, 1909. Source: https://github.com/sixseeds/tarot-api */
-const readingImageFiles={"The Fool":"ar00.jpg","The Magician":"ar01.jpg","The High Priestess":"ar02.jpg","The Empress":"ar03.jpg","The Emperor":"ar04.jpg","The Hierophant":"ar05.jpg","The Lovers":"ar06.jpg","The Chariot":"ar07.jpg","Strength":"ar08.jpg","The Hermit":"ar09.jpg","Wheel of Fortune":"ar10.jpg","Justice":"ar11.jpg","The Hanged Man":"ar12.jpg","Death":"ar13.jpg","Temperance":"ar14.jpg","The Devil":"ar15.jpg","The Tower":"ar16.jpg","The Star":"ar17.jpg","The Moon":"ar18.jpg","The Sun":"ar19.jpg","Judgement":"ar20.jpg","The World":"ar21.jpg","Ace of Wands":"wa01.jpg","Two of Wands":"wa02.jpg","Three of Wands":"wa03.jpg","Four of Wands":"wa04.jpg","Five of Wands":"wa05.jpg","Six of Wands":"wa06.jpg","Seven of Wands":"wa07.jpg","Eight of Wands":"wa08.jpg","Nine of Wands":"wa09.jpg","Ten of Wands":"wa10.jpg","Page of Wands":"wa11.jpg","Knight of Wands":"wa12.jpg","Queen of Wands":"wa13.jpg","King of Wands":"wa14.jpg","Ace of Cups":"cu01.jpg","Two of Cups":"cu02.jpg","Three of Cups":"cu03.jpg","Four of Cups":"cu04.jpg","Five of Cups":"cu05.jpg","Six of Cups":"cu06.jpg","Seven of Cups":"cu07.jpg","Eight of Cups":"cu08.jpg","Nine of Cups":"cu09.jpg","Ten of Cups":"cu10.jpg","Page of Cups":"cu11.jpg","Knight of Cups":"cu12.jpg","Queen of Cups":"cu13.jpg","King of Cups":"cu14.jpg","Ace of Swords":"sw01.jpg","Two of Swords":"sw02.jpg","Three of Swords":"sw03.jpg","Four of Swords":"sw04.jpg","Five of Swords":"sw05.jpg","Six of Swords":"sw06.jpg","Seven of Swords":"sw07.jpg","Eight of Swords":"sw08.jpg","Nine of Swords":"sw09.jpg","Ten of Swords":"sw10.jpg","Page of Swords":"sw11.jpg","Knight of Swords":"sw12.jpg","Queen of Swords":"sw13.jpg","King of Swords":"sw14.jpg","Ace of Pentacles":"pe01.jpg","Two of Pentacles":"pe02.jpg","Three of Pentacles":"pe03.jpg","Four of Pentacles":"pe04.jpg","Five of Pentacles":"pe05.jpg","Six of Pentacles":"pe06.jpg","Seven of Pentacles":"pe07.jpg","Eight of Pentacles":"pe08.jpg","Nine of Pentacles":"pe09.jpg","Ten of Pentacles":"pe10.jpg","Page of Pentacles":"pe11.jpg","Knight of Pentacles":"pe12.jpg","Queen of Pentacles":"pe13.jpg","King of Pentacles":"pe14.jpg"};
-const readingImages=new Map();
-function readingArtwork(index){
- const name=tarotDeck[index]?.[0],file=readingImageFiles[name];if(!file)return null;
- if(!readingImages.has(file)){const im=new Image();im.crossOrigin='anonymous';im.decoding='async';im.src='https://raw.githubusercontent.com/sixseeds/tarot-api/main/cards/'+file;readingImages.set(file,im)}
- return readingImages.get(file)
+/* Pamela Colman Smith's 1909 Rider–Waite–Smith faces in tarotDeck order.
+   Source: https://github.com/sixseeds/tarot-api/tree/71825eed74683305b139a669b23ca5dc12f76857/cards */
+const readingFaceWidth=128,readingFaceHeight=218,readingFaceColumns=8,readingFaceRows=10;
+let readingFaceAtlas=null;
+function readingArtwork(){
+ if(!readingFaceAtlas){
+  readingFaceAtlas=new Image();
+  readingFaceAtlas.decoding='async';
+  readingFaceAtlas.src='assets/visual/tarot-card-faces.webp';
+ }
+ return readingFaceAtlas;
 }
 function paintReadingArtwork(x,y,w,h,i,rev){
- const im=readingArtwork(i);if(!im?.naturalWidth)return tarotArt(x,y,w,h,i,rev);
+ const im=readingArtwork();
+ if(im.naturalWidth!==readingFaceWidth*readingFaceColumns||im.naturalHeight!==readingFaceHeight*readingFaceRows)return tarotArt(x,y,w,h,i,rev);
  ctx.save();try{
- ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();ctx.fillStyle='#e7d6b3';ctx.fillRect(x,y,w,h);
- ctx.translate(x+w/2,y+h/2);if(rev)ctx.rotate(Math.PI);
- const scale=Math.min(w/im.naturalWidth,h/im.naturalHeight),iw=im.naturalWidth*scale,ih=im.naturalHeight*scale;
- ctx.drawImage(im,-iw/2,-ih/2,iw,ih);
+  ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();ctx.fillStyle='#e7d6b3';ctx.fillRect(x,y,w,h);
+  ctx.translate(x+w/2,y+h/2);if(rev)ctx.rotate(Math.PI);
+  const scale=Math.min(w/readingFaceWidth,h/readingFaceHeight),iw=readingFaceWidth*scale,ih=readingFaceHeight*scale;
+  const sx=(i%readingFaceColumns)*readingFaceWidth,sy=Math.floor(i/readingFaceColumns)*readingFaceHeight;
+  ctx.drawImage(im,sx,sy,readingFaceWidth,readingFaceHeight,-iw/2,-ih/2,iw,ih);
  }finally{ctx.restore()}
 }
 function readingPositionCaption(name,x,y,w){

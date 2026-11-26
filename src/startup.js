@@ -497,7 +497,7 @@ readingDeal=function(){
  if(state.readStage!=='deck'||!state.readShuffle)return;
  const cards=fiveReadingDraw(tarotDeck.length);if(cards.length!==5)return;
  state.readStage='deal';state.readAt=t;state.readCards=cards;state.readFlip=Array(5).fill(-1);state.readSaved=false;
- cards.forEach(v=>readingArtwork(v.i));sound(460)
+ sound(460)
 };
 const fiveDrawBefore=drawActivity;
 drawActivity=function(){
