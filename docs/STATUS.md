@@ -741,3 +741,7 @@ Replaced legacy displayed product names across the canonical engine, extensions,
 ## Deer Meadow paintings (26 November)
 - Mugi, Koyo and Sora have separate idle, reaching and bowing WebP poses. Hooves share an anchor and the feeding gesture follows the selected pose’s muzzle. The deer has room to approach the cracker while staying clear of the traveller’s body.
 - Bow, feeding and the existing once-daily record passed on 360 px, 390 px, tablet and desktop. The painted environment, cat interactions and Ah Ma's full movement sequence remain open.
+
+
+## Parallel Lives ending continuity (26 November)
+After Work's 6de38f7 painted deer batch, added distinct bilingual fictional epilogues to all sixteen original story endings, an expandable recap derived from the actual four choices, and a last-choice replay that preserves previously discovered endings. The story's existing choices, art, IDs, keepsake rewards and share text remain unchanged. Reduced motion skips the page-turn wait. Source and workflow scripts parse; exhaustive isolated graph traversal checks sixteen paths, alternate last-choice branches and recap accuracy. Added browser checks for recap, alternate ending and saved discovery persistence. Actual full browser execution and live visual verification pending. No new branch paintings, avatar action frames or other art files produced in this batch.

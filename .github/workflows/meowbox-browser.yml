@@ -638,6 +638,15 @@ jobs:
                 await letter.locator('[data-story-ending="share"]').waitFor({state:'visible'});
                 if(!await page.evaluate(()=>parallelNode==='endLight'&&parallelFound.includes('endLight')))throw Error('Story ending not saved');
                 await page.screenshot({path:'test-results/'+name+'-parallel-life-ending.png'});
+                if(await letter.locator('.parallelEpilogue').count()!==1)throw Error('Missing fictional epilogue');
+                await letter.locator('.parallelChoiceRecap summary').click();
+                if(await letter.locator('.parallelChoiceRecap li').count()!==4)throw Error('Ending choice recap incomplete');
+                await letter.locator('[data-story-ending="revisit"]').click();
+                await page.waitForFunction(()=>parallelNode==='coastStorm'&&!parallelTurning,{},{timeout:4000});
+                await letter.locator('[data-story-choice="1"]').click();
+                await page.waitForFunction(()=>parallelNode==='endHarbour'&&!parallelTurning,{},{timeout:4000});
+                if(!await page.evaluate(()=>parallelFound.includes('endLight')&&parallelFound.includes('endHarbour')))throw Error('Replaying last choice lost the previous ending');
+                await page.screenshot({path:'test-results/'+name+'-parallel-life-alternate.png'});
                 await page.locator('#back').click();
                 await page.evaluate(()=>{scene='fortune';room='destiny';activity=null;state={};closeTalk();updateHUD()});
                 // The chart result uses fictional test birth details; no actual player data.

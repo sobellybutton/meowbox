@@ -647,11 +647,39 @@ Object.assign(parallelEndings,{
 const parallelNext={coast:['coastStorm','coastGallery'],mountain:['mountainCat','mountainStars'],cafe:['cafeTea','cafeGossip'],books:['booksWriter','booksLetters']};
 for(const [node,ids] of Object.entries(parallelNext))parallelScenes[node].choices.forEach((choice,i)=>choice[2]=ids[i]);
 
+/* Branch-specific fictional epilogues: same ending IDs and keepsakes, more actual consequences. */
+const parallelEpilogues={
+ endLight:['The lamp finally turns. A ferry answers with one long horn; the keeper hands you the keys.','灯终于亮了，渡轮鸣笛回应。老灯塔员把钥匙交给你。'],
+ endHarbour:['Your signal brings the ferry safely into port. The harbour crew saves a lantern for you.','你发出的信号让渡轮平安靠岸。港口的人特意给你留了一盏灯。'],
+ endArt:['Your rainy postcards sell out. Someone buys one because it reminds them of home.','雨天明信片卖光了，有人说那幅画让他想起了家。'],
+ endTeacher:['The child returns with a crooked little painting of the sea. You hang it by the door.','小朋友带着一幅歪歪扭扭的海景画回来。你把它挂在门边。'],
+ endNap:['The last train leaves. You tuck a blanket around a sleeping traveller and the cat claims your lap.','末班车开走了。你给睡着的旅人盖好毯子，猫咪占领了你的膝盖。'],
+ endConductor:['You send the stranded travellers onward together. Tomorrow, the station asks you to help again.','你帮滞留的旅人一起出发。第二天，车站又来请你帮忙。'],
+ endStars:['The clouds part for one minute. Your visitor sees Saturn and forgets what they were worried about.','云层散开了一分钟。旅人终于看见土星，暂时忘了烦恼。'],
+ endGuide:['Your little stargazing guide becomes the first thing nervous visitors pick up at the door.','你的观星小手册成了新手旅人进门时最爱拿的一份指南。'],
+ endTea:['The crooked sign is fixed. Your first regular returns every Tuesday with a new story.','歪招牌修好了。第一位老顾客每逢周二都会带着新故事回来。'],
+ endCommunity:['The next visitor pays for two teas. The spare cup becomes a quiet tradition.','下一位客人付了两杯茶的钱。多出的那杯茶成了小小的传统。'],
+ endGossip:['The missing context changes the headline completely. Auntie Hong reluctantly issues a correction.','补上的来龙去脉彻底改变了头条。红姐不情不愿地发了更正。'],
+ endComedy:['Everyone laughs at the fictional office drama. Nobody has to apologise on Monday.','大家笑着看完虚构的办公室闹剧。周一不用向任何人道歉。'],
+ endWriter:['Your reader finishes the story, smiles, and buys a bun on the way home. An ordinary good day.','读者看完故事笑了笑，回家路上买了个面包。平凡又美好的一天。'],
+ endEditor:['The traveller writes a different ending on the blank page. You leave the notebook on the shelf.','旅人在空白页写下另一个结局。你把笔记本留在书架上。'],
+ endLetters:['You post the reply. A week later a letter arrives containing only a tiny drawing of a hammock.','你寄出回信。一周后收到一封新信，里面只有一张吊床小画。'],
+ endTicket:['The stranger takes the ticket and waves from the train window. You keep the empty envelope.','陌生人接过车票，从车窗向你挥手。你留下了空信封。']
+};
+function parallelChoiceRecap(trail,nodeId){
+ const route=[...trail,nodeId],out=[];
+ for(let i=0;i<route.length-1;i++){
+  const node=parallelScenes[route[i]],choice=node?.choices?.find(v=>v[2]===route[i+1]);
+  if(!choice)break;
+  out.push({node:route[i],next:route[i+1],label:choice.slice(0,2)})
+ }
+ return out
+}
 let parallelNode='station',parallelAt=0,parallelPick=-1,parallelToken=0,parallelTurning=false,parallelTrail=[];
 let parallelFound=load('parallelEndingsV1',[]);if(!Array.isArray(parallelFound))parallelFound=[];parallelFound=[...new Set(parallelFound.filter(id=>typeof id==='string'))];
 const parallelPriorStart=start;start=function(a){parallelPriorStart(a);if(a==='story'&&scene==='wonder'){parallelToken++;parallelNode='station';parallelAt=t;parallelPick=-1;parallelTurning=false;parallelTrail=[];hint('Follow the letter and choose your own path.','跟随这封信，选择属于你的路。')}};
-function parallelSelect(i){let node=parallelScenes[parallelNode];if(!node||parallelTurning||!node.choices[i])return;parallelTurning=true;parallelPick=i;parallelAt=t;let next=node.choices[i][2],token=parallelToken;parallelTrail.push(parallelNode);sound(490+i*80);setTimeout(()=>{if(activity!=='story'||scene!=='wonder'||token!==parallelToken)return;parallelNode=next;parallelAt=t;parallelPick=-1;parallelTurning=false;if(parallelEndings[next]){let end=parallelEndings[next];if(!parallelFound.includes(next)){parallelFound.push(next);save('parallelEndingsV1',parallelFound)}addItem('Parallel life: '+end[0],'平行人生：'+end[1]);sound(660)}},420)}
-function parallelBack(){if(activity!=='story'||scene!=='wonder'||parallelTurning||!parallelScenes[parallelNode]||!parallelTrail.length)return false;parallelToken++;parallelNode=parallelTrail.pop();parallelPick=-1;parallelAt=t;parallelTurning=false;hint('Read the letter again and choose another path.','再读一次信，换条路试试。');return true}
+function parallelSelect(i){let node=parallelScenes[parallelNode];if(!node||parallelTurning||!node.choices[i])return;parallelTurning=true;parallelPick=i;parallelAt=t;let next=node.choices[i][2],token=parallelToken;parallelTrail.push(parallelNode);sound(490+i*80);setTimeout(()=>{if(activity!=='story'||scene!=='wonder'||token!==parallelToken)return;parallelNode=next;parallelAt=t;parallelPick=-1;parallelTurning=false;if(parallelEndings[next]){let end=parallelEndings[next];if(!parallelFound.includes(next)){parallelFound.push(next);save('parallelEndingsV1',parallelFound)}addItem('Parallel life: '+end[0],'平行人生：'+end[1]);sound(660)}},matchMedia('(prefers-reduced-motion: reduce)').matches?0:420)}
+function parallelBack(){if(activity!=='story'||scene!=='wonder'||parallelTurning||!(parallelScenes[parallelNode]||parallelEndings[parallelNode])||!parallelTrail.length)return false;parallelToken++;parallelNode=parallelTrail.pop();parallelPick=-1;parallelAt=t;parallelTurning=false;hint('Read the letter again and choose another path.','再读一次信，换条路试试。');return true}
 function parallelPaper(x,y,j,selected){ctx.save();ctx.translate(x,y+(selected?-13:Math.sin(t*1.5+j)*2));ctx.rotate(selected?.1:j===0?-.06:.06);ellipse(0,32,48,8,'#30272066');round(-57,-40,114,74,3,'#eed9af','#9e8056');ctx.strokeStyle='#b69b72';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-57,-40);ctx.lineTo(0,2);ctx.lineTo(57,-40);ctx.moveTo(-57,34);ctx.lineTo(-15,-5);ctx.moveTo(57,34);ctx.lineTo(15,-5);ctx.stroke();ellipse(0,0,10,10,j===0?'#a75f4c':'#738d75');ctx.strokeStyle='#e8c79a';ctx.beginPath();ctx.arc(0,0,5,0,TAU);ctx.stroke();ctx.restore()}
 const parallelPriorDraw=drawActivity;drawActivity=function(){if(activity!=='story'||scene!=='wonder')return parallelPriorDraw();let n=parallelScenes[parallelNode],end=parallelEndings[parallelNode],art=n?.art||end?.[4]||'streetStation';ctx.save();const im=pics[art],view=livingBounds();
  if(im?.naturalWidth)cover(im,view.x,view.y,view.w,view.h);else paintLivingBackdrop(pics.readingInterior);let shade=ctx.createLinearGradient(0,222,0,675);shade.addColorStop(0,'#34423e45');shade.addColorStop(.55,'#3c312a66');shade.addColorStop(1,'#463228b0');ctx.fillStyle=shade;shadeLivingBackdrop(shade);glow(218,280,60,1);glow(580,270,55,2);for(let i=0;i<14;i++){ctx.save();ctx.globalAlpha=.18+.18*Math.sin(t+i);ellipse(180+(i*71)%440+Math.sin(t*.7+i)*4,240+(i*31)%170,1.5,1.5,'#ffe7b0');ctx.restore()}
@@ -3192,12 +3220,20 @@ function syncStorySheet(){
  }else if(ending){
   element('small',tr('A life remembered','收藏一段人生')+' · '+parallelFound.filter(id=>Object.hasOwn(parallelEndings,id)).length+'/'+Object.keys(parallelEndings).length,storySheet);
   element('h3',tr(ending[0],ending[1]),storySheet);element('p',tr(ending[2],ending[3]),storySheet);
+  const epilogue=parallelEpilogues[nodeId];if(epilogue)element('p',tr(...epilogue),storySheet,'parallelEpilogue');
   element('p',tr('This is a fictional ending shaped by your choices, not a personality result or prediction. Your keepsake is in the Wonder Valley chapter.','这是由你的选择决定的虚构故事结局，不是性格测试或未来预测。纪念品已收入奇遇谷章节。'),storySheet,'mbStoryIntro');
   const again=b(storySheet,tr('Another life','再试一种人生'),()=>{if(current())start('story')});again.dataset.storyEnding='again';
-  const share=b(storySheet,tr('Share memory','分享回忆'),()=>{if(current())openMeowShare({kind:'story',title:ending.slice(0,2),lines:[ending.slice(2,4)],accent:'#869e9b'})});share.dataset.storyEnding='share'
+  const share=b(storySheet,tr('Share memory','分享回忆'),()=>{if(current())openMeowShare({kind:'story',title:ending.slice(0,2),lines:[ending.slice(2,4)],accent:'#869e9b'})});share.dataset.storyEnding='share';
+  const recap=parallelChoiceRecap(parallelTrail,nodeId);
+  if(recap.length){
+   const revisit=b(storySheet,tr('Revisit last choice','重选最后一步'),()=>{if(current())parallelBack()});revisit.dataset.storyEnding='revisit';
+   const journal=element('details','',storySheet,'parallelChoiceRecap');element('summary',tr('How you got here','你是怎样走到这里的'),journal);
+   const list=element('ol','',journal);for(const step of recap)element('li',tr(...step.label),list);
+  }
  }
 }
 const storySheetStyle=document.createElement('style');storySheetStyle.textContent='#storyReadingSheet{position:absolute;z-index:5;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 65px);width:min(94vw,440px);max-height:48dvh;overflow:auto;padding:12px 15px;background:#f0e3c7;color:#554534;border:1px solid #a78b64;border-radius:3px;box-shadow:0 4px 12px #28261b44}#storyReadingSheet[hidden]{display:none!important}#storyReadingSheet small{font-size:12px}#storyReadingSheet h3{font:600 19px/1.25 Georgia,"Songti SC",serif;margin:7px 0}#storyReadingSheet p{font:15px/1.45 system-ui;margin:5px 0 10px}#storyReadingSheet button{display:block;width:100%;min-height:44px;text-align:left;white-space:normal;margin:5px 0;padding:8px 10px;background:#faf0dc;border:1px solid #c2ab81;border-radius:3px;box-shadow:none;font-size:14px}';document.head.append(storySheetStyle);
+const parallelRecapStyle=document.createElement('style');parallelRecapStyle.textContent='#storyReadingSheet .parallelEpilogue{font:14px/1.5 system-ui;color:#5a4632;padding:8px 0;border-top:1px solid #bca47e;border-bottom:1px solid #bca47e}#storyReadingSheet .parallelChoiceRecap{border-top:1px dashed #bca47e;margin-top:8px}#storyReadingSheet .parallelChoiceRecap summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font:600 13px/1.35 system-ui}#storyReadingSheet .parallelChoiceRecap ol{margin:3px 0 8px;padding-inline-start:22px;font:13px/1.5 system-ui}#storyReadingSheet .parallelChoiceRecap li{padding:3px 0}';document.head.append(parallelRecapStyle);
 const storySheetDraw=drawActivity;drawActivity=function(){storySheetDraw();syncStorySheet()};
 const storySheetHUD=updateHUD;updateHUD=function(){storySheetHUD();syncStorySheet()};
 
