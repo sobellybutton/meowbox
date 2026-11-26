@@ -2226,7 +2226,7 @@ function mbTransferHolding(from,to){
  const token=++mbTransferToken,overlay=element('section','',$('game'),'mbTransferHolding');
  overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
  const ticket=element('div','',overlay,'mbTransferTicket');
- element('small',tr('MeowBox railway · transfer ticket','摸鱼铁路 · 换乘车票'),ticket,'mbTransferEyebrow');
+ element('small',tr('Pawradise railway · transfer ticket','Pawradise 铁路 · 换乘车票'),ticket,'mbTransferEyebrow');
  const portrait=element('img','',ticket,'mbTransferAvatar');mbTravellerImage(portrait,avatar??0);
  const route=element('div','',ticket,'mbTransferRoute');
  const departure=element('div','',route);element('small',tr('From','出发站'),departure);element('strong',tr(...maps[from].n),departure);

@@ -1,6 +1,6 @@
-# MeowBox | 摸鱼盒
+# Pawradise
 
-[Play the live game](https://sobellybutton.github.io/meowbox/). Bilingual Japanese illustrated browser life sim for short breaks.
+[Play the live game](https://sobellybutton.github.io/meowbox/). Bilingual illustrated browser life sim for short breaks. Pawradise is the permanent in-world name. The future app brand can change without changing the world, artwork, or saved progress.
 
 ## AI developer quick start
 Read [AGENTS.md](AGENTS.md), [owner feedback and Work handover](docs/PRODUCT_REVIEW.md), and [development status](docs/STATUS.md). Query Graphify for relevant symbols, dependencies and tests; compare indexed commit with GitHub main. Retrieve only relevant lines; do not ingest legacy artwork or archived HTML. Graphify free plan indexes README among documents.

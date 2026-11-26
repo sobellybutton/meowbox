@@ -82,6 +82,11 @@ for(const [id,owner] of [['temple','fortune'],['station','fortune'],['fish','hom
  if(stationOwners.get(id)!==owner)throw Error('Station belongs in '+owner+': '+id);
 }
 console.log('PASS: four destinations, '+stationOwners.size+' unique base stations; temple and pier ownership correct.');
+// In-world identity is permanent; keep legacy lowercase storage/API identifiers and URLs intact.
+const visibleBrandSource=[scripts[0],scripts[1],scripts[5],shell,read('index.html')].join('\n');
+if(/\b(?:MeowBox|MEOWBOX|BrbLife)\b|摸鱼盒|摸鱼铁路/.test(visibleBrandSource))throw Error('Outdated player-facing world name');
+if(!visibleBrandSource.includes('Pawradise'))throw Error('Missing permanent world name');
+if(!scripts[0].includes("'meowbox-preview-'")||!scripts[1].includes("'meowbox-community'"))throw Error('Legacy data or community identity changed');
 const external=assembleMeowBox(shell,scripts),embedded=assembleMeowBox(shell,scripts,parts);
 for(const html of [external,embedded])new vm.Script(html.match(/<script>([\s\S]*?)<\/script>/)[1],{filename:'meowbox-assembled.js'});
 if(process.argv[2])fs.writeFileSync(path.resolve(process.argv[2]),embedded);
