@@ -3958,8 +3958,8 @@ function mbHomeDepth(id,y){return mbHomeKind(id)==='wall'?2:id==='rug'?1:10+Math
 function hideoutPage(){
  activePage='hideout';
  page(tr('My Room','我的小窝'),tr('The rent is imaginary. The peace is real.','房租是假的，清静是真的。'),q=>{
-  q.classList.add('hideoutRoomView');const profile=element('div','',q,'hideoutProfile'),pic=element('img','',profile);pic.src=ART['badge'+(avatar??0)];pic.alt='';
-  const identity=element('div','',profile);element('strong',playerName||tr('Traveller','旅人'),identity);element('small',tr(...names[avatar??0]),identity);b(profile,tr('Edit profile','编辑资料'),hideoutProfilePage);
+  q.classList.add('hideoutRoomView');const profile=element('div','',q,'hideoutProfile'),pic=element('img','',profile);pic.src=ART['walker'+(avatar??0)+'0'];pic.alt='';
+  const identity=element('div','',profile);element('strong',playerName||tr('Traveller','旅人'),identity);element('small',tr(...names[avatar??0]),identity);b(profile,tr('Edit profile','编辑资料'),()=>hideoutProfilePage({origin:hideoutPage}));
   const theme=hideoutThemes.find(v=>v.id===hideoutPrefs.theme&&hideoutThemeUnlocked(v))||hideoutThemes[0];
   const stage=element('div','',q,'hideoutScene');stage.innerHTML=hideoutSceneArt(theme);stage.dataset.roomTheme=theme.id;
   function render(){
@@ -4065,14 +4065,14 @@ function hideoutProfilePage(draft=null){
   let chosen=draft?.avatar??avatar??0;const limits=travellerProfileLimits(),nameWait=travellerProfileWait(limits.nameAt,7),avatarWait=travellerProfileWait(limits.avatarAt,14);
   const card=element('section','',q,'travellerEditBook');
   const heading=element('div','',card,'travellerEditHeading');element('small',tr('MEOWBOX RAILWAY · RESIDENT CARD','摸鱼铁路 · 旅人证'),heading);
-  const preview=element('img','',heading);preview.alt='';preview.src=ART['portrait'+chosen];
+  const preview=element('img','',heading);preview.alt='';preview.src=ART['walker'+chosen+'0'];
   const nameLabel=element('label',tr('Your nickname','你的昵称'),card);nameLabel.htmlFor='travellerEditName';
   const name=element('input','',card);name.id='travellerEditName';name.value=draft?.name??playerName??'';name.maxLength=24;name.autocomplete='off';name.className='hideoutName';
   name.readOnly=nameWait>0;element('small',nameWait?travellerProfileWaitLabel(nameWait):tr('Nickname changes are available every 7 days.','昵称每7天可修改一次。'),card);
   element('small',avatarWait?travellerProfileWaitLabel(avatarWait):tr('First avatar change is immediate. After that, change every 14 days for free.','首次换角色无需等待，之后每14天可免费更换一次。'),card);
   const choices=element('div','',card,'hideoutAvatarGrid travellerEditChoices');
   const lines=[['Head in the clouds','脑袋在云上'],['Surviving one meeting at a time','开完一个会，又来一个会'],['Plans? What plans?','计划？随缘吧'],['Collecting little escapes','收集小小的远方']];
-  for(let i=0;i<4;i++){const btn=b(choices,'',()=>{chosen=i;preview.src=ART['portrait'+i];choices.querySelectorAll('button').forEach((el,j)=>el.setAttribute('aria-pressed',String(j===chosen)))});btn.setAttribute('aria-pressed',String(i===chosen));btn.disabled=avatarWait>0&&i!==avatar;const im=element('img','',btn);im.src=ART['portrait'+i];im.alt='';element('strong',tr(...names[i]),btn);element('small',tr(...lines[i]),btn)}
+  for(let i=0;i<4;i++){const btn=b(choices,'',()=>{chosen=i;preview.src=ART['walker'+i+'0'];choices.querySelectorAll('button').forEach((el,j)=>el.setAttribute('aria-pressed',String(j===chosen)))});btn.setAttribute('aria-pressed',String(i===chosen));btn.disabled=avatarWait>0&&i!==avatar;const im=element('img','',btn);im.src=ART['walker'+i+'0'];im.alt='';element('strong',tr(...names[i]),btn);element('small',tr(...lines[i]),btn)}
   const message=element('p','',card,'travellerEditMessage');message.setAttribute('role','status');
   const actions=element('div','',card,'travellerEditActions');
   b(actions,tr('Save my traveller card','保存旅人证'),()=>{const v=name.value.trim();if(!v){message.textContent=tr('Give yourself a nickname first.','先给自己取个昵称吧。');name.focus();return}const current=travellerProfileLimits(),now=Date.now(),nameChanged=v!==playerName,avatarChanged=chosen!==avatar;if((nameChanged&&travellerProfileWait(current.nameAt,7,now))||(avatarChanged&&travellerProfileWait(current.avatarAt,14,now))){message.textContent=tr('That change is not available yet.','暂时还不能修改哦。');return}if(nameChanged){playerName=v;save('playerName',v);current.nameAt=now}if(avatarChanged){avatar=chosen;save('avatar',chosen);current.avatarAt=now}if(nameChanged||avatarChanged)save('travellerProfileLimitsV1',current);updateHUD();origin();if(nameChanged||avatarChanged)toast(tr('New look, same memories.','新模样，旧回忆。'))});
@@ -8110,7 +8110,7 @@ function lifeAttributesBook(){
 lifeProfile=function(){
  page(tr('Traveller’s profile','旅人档案'),tr('A small record of your time away from the busy world.','忙里偷闲，也值得好好记下来。'),q=>{
  const rank=lifeRank(),book=element('section','',q,'journalProfileBook'),intro=element('header','',book,'journalIdentity');
- const im=element('img','',intro);im.src=ART['portrait'+(avatar??0)];im.alt='';
+ const im=element('img','',intro);im.src=ART['walker'+(avatar??0)+'0'];im.alt='';
  const bio=element('div','',intro);element('small',tr('MeowBox resident card','摸鱼小镇旅人证'),bio);element('h2',playerName||tr('Traveller','旅人'),bio);element('strong',tr(...rank.label),bio);
  b(bio,tr('Edit profile','编辑资料'),()=>hideoutProfilePage());
  const stats=element('div','',book,'journalQuickStats');
@@ -8361,21 +8361,21 @@ function furnitureMarket(back='shop'){
  const shelf=element('section','',q,'komorebiBook'),head=element('header','',shelf,'komorebiHead');
  element('strong',tr('Meow Coin purse','喵币小钱包')+' · '+hideoutBalance(),head);
  element('small',tr('Buy once, keep forever. No real money.','买一次，永久拥有。不用真钱。'),head);
- const styles=element('div','',shelf,'journalFilterTabs');for(const [id,en,cn] of [['all','All styles','全部风格'],['japanese','Japanese','和风'],['chinese','Chinese','中式']]){const btn=b(styles,tr(en,cn),()=>{komorebiStyleFilter=id;komorebiCategory='all';furnitureMarket(back)});btn.setAttribute('aria-pressed',String(komorebiStyleFilter===id))}
+ const styles=element('div','',shelf,'journalFilterTabs');for(const [id,en,cn] of [['all','All styles','全部风格'],['japanese','Japanese','和风'],['chinese','Chinese','中式']]){const btn=b(styles,tr(en,cn),()=>{komorebiStyleFilter=id;furnitureMarket(back)});btn.setAttribute('aria-pressed',String(komorebiStyleFilter===id))}
  const tabs=element('div','',shelf,'journalFilterTabs');
  for(const [id,en,cn] of [['all','All','全部'],['rest','Rest','休息'],['storage','Furniture','家具'],['light','Lighting','灯具'],['green','Plants','绿植'],['wall','Wall decor','墙饰'],['finish','Wallpaper','壁纸'],['floor','Flooring','地板砖'],['extension','Expand','扩建']]){
  const btn=b(tabs,tr(en,cn),()=>{komorebiCategory=id;furnitureMarket(back)});btn.setAttribute('aria-pressed',String(komorebiCategory===id))
  }
  const grid=element('div','',shelf,'komorebiGrid');
  for(const v of furnitureCatalogue().filter(v=>(komorebiCategory==='all'||v[4]===komorebiCategory)&&(komorebiStyleFilter==='all'||furnitureStyle(v[0])==='shared'||furnitureStyle(v[0])===komorebiStyleFilter))){
- const [id,en,cn,cost]=v,owned=furnitureOwned(id),tile=element('article','',grid,'komorebiTile'),im=element('img','',tile);im.src=art9[id];im.alt='';
+ const [id,en,cn,cost]=v,owned=furnitureOwned(id),tile=element('article','',grid,'komorebiTile'),im=element('img','',tile);tile.dataset.furnitureId=id;im.src=art9[id];im.alt='';
  element('strong',tr(en,cn),tile);element('small',owned?tr('In your furniture collection','已拥有'):cost+' '+tr('Meow Coins','喵币'),tile);
  const buy=b(tile,owned?tr('Owned','已拥有'):tr('View & buy','看看再买'),()=>{if(owned)return;furnitureConfirm(id,back)});
  buy.disabled=owned;
  }
  b(shelf,tr('Decorate my room','布置我的小窝'),()=>{hideoutEditing=true;hideoutPage()});
  if(back==='shop')b(shelf,tr('Today’s souvenir','今日小手信'),()=>{ $('page').style.display='none';komorebiOldAction('mystery')});
- b(q,back==='room'?tr('Back to my room','返回小窝'):back==='wallet'?tr('Back to my purse','返回小钱包'):tr('Back to shop','返回店里'),()=>{if(back==='room'){hideoutEditing=true;hideoutPage()}else if(back==='wallet')pawWalletPage();else $('page').style.display='none'});
+ b(q,back==='room'?tr('Back to my room','返回小窝'):back==='wallet'?tr('Back to my purse','返回小钱包'):tr('Back to shop','返回店里'),()=>{if(back==='room'){hideoutPage()}else if(back==='wallet')pawWalletPage();else $('page').style.display='none'});
  journalLanguage(()=>furnitureMarket(back))
  })
 }
@@ -8384,7 +8384,7 @@ function furnitureConfirm(id,back){
  page(tr(v[1],v[2]),tr('A little piece of home.','给小窝添一点温柔。'),q=>{
  const card=element('section','',q,'komorebiConfirm'),im=element('img','',card);im.src=art9[id];im.alt='';
  element('h2',v[3]+' '+tr('Meow Coins','喵币'),card);element('p',tr('Your balance: ','目前余额：')+hideoutBalance(),card);
- const btn=b(card,furnitureOwned(id)?tr('Already owned','已拥有'):tr('Buy for ','购买 · ')+v[3]+' '+tr('Meow Coins','喵币'),()=>{if(buyFurniture(id)){toast(tr('Delivered to your furniture collection.','已送到你的小窝家具库。'));furnitureMarket(back)}});
+ const btn=b(card,furnitureOwned(id)?tr('Already owned','已拥有'):tr('Buy for ','购买 · ')+v[3]+' '+tr('Meow Coins','喵币'),()=>{if(buyFurniture(id)){toast(tr('Delivered to your furniture collection.','已送到你的小窝家具库。'));if(v[4]==='extension'){komorebiZone=id==='roomExtension'?1:2;hideoutSelected=-1;hideoutEditing=false;hideoutPage()}else furnitureMarket(back)}});
  btn.disabled=furnitureOwned(id)||hideoutBalance()<v[3]||(id==='roomStudio'&&!furnitureOwned('roomExtension'));if(id==='roomStudio'&&!furnitureOwned('roomExtension'))element('p',tr('Build the reading room first.','请先扩建阅读小室。'),card);
  if(!furnitureOwned(id)&&hideoutBalance()<v[3])element('p',tr('A little more exploring will get you there.','再逛逛小镇，攒一点喵币就够啦。'),card);
  b(q,tr('Keep browsing','继续看看'),()=>furnitureMarket(back));journalLanguage(()=>furnitureConfirm(id,back))

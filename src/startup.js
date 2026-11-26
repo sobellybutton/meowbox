@@ -2024,4 +2024,48 @@ step=function(n,dt,speed){
  return result
 };
 
+/* Personal home access and contextual navigation. */
+function mbHomePageBack(label,fn){const back=$('content').querySelector(':scope > .row button:first-child');if(back){back.textContent=label;back.onclick=fn}}
+function mbHomeExit(){saveHideout();hideoutEditing=false;$('page').style.display='none';updateHUD()}
+function mbOpenOwnHome(){hideoutEditing=false;hideoutSelected=-1;hideoutPage()}
+const mbHomeNav=element('button','',$('dock'));mbHomeNav.id='dockOwnHome';mbHomeNav.type='button';mbHomeNav.innerHTML='<span class="dockIcon" aria-hidden="true"><svg viewBox="0 0 28 28" width="25" height="25" fill="none" stroke="#805c43" stroke-width="1.5"><path d="M3 13 14 4l11 9-3 1v11H6V14z" fill="#d3aa78"/><path d="M2 13 14 3l12 10M10 25V16h8v9M8 10v-5h3"/></svg></span><span></span>';$('dockValley').after(mbHomeNav);mbHomeNav.onclick=mbOpenOwnHome;
+const mbHomeHudBefore=updateHUD;updateHUD=function(...args){const r=mbHomeHudBefore(...args),label=tr('My home','小窝');mbHomeNav.lastElementChild.textContent=label;mbHomeNav.setAttribute('aria-label',label);const photo=$('hudPortrait'),src=ART['walker'+(avatar??0)+'0'];if(src&&photo.getAttribute('src')!==src)photo.src=src;return r};
+const mbHomeViewBefore=hideoutPage;hideoutPage=function(...args){const r=mbHomeViewBefore(...args),q=$('content');if(q.querySelector('.hideoutScene')){mbHomePageBack(hideoutEditing?tr('‹ My room','‹ 返回小窝'):tr('‹ Town','‹ 返回小镇'),()=>{if(hideoutEditing){saveHideout();hideoutEditing=false;hideoutPage()}else mbHomeExit()});const rewards=[...q.querySelectorAll('.hideoutPrimary button')].find(b=>b.textContent===tr('Stamps & rewards','印章与奖励'));if(rewards)rewards.onclick=()=>{hideoutClaimPage();mbHomePageBack(tr('‹ My room','‹ 返回小窝'),hideoutPage)}}return r};
+const mbHomeMarketBefore=furnitureMarket;furnitureMarket=function(back='shop'){const r=mbHomeMarketBefore(back),q=$('content'),book=q.querySelector('.komorebiBook');if(!book)return r;mbHomePageBack(back==='room'?tr('‹ My room','‹ 返回小窝'):back==='wallet'?tr('‹ My purse','‹ 返回钱包'):tr('‹ Shop','‹ 返回店里'),()=>{if(back==='room')hideoutPage();else if(back==='wallet')pawWalletPage();else {$('page').style.display='none';updateHUD()}});const header=book.querySelector('.komorebiHead');if(header){const art=element('img','',header,'mbFurnitureShopArt');art.src=destinationPortrait('island');art.alt='';art.loading='lazy';header.prepend(art)}return r};
+const mbHomeConfirmBefore=furnitureConfirm;furnitureConfirm=function(id,back='shop'){const r=mbHomeConfirmBefore(id,back);mbHomePageBack(tr('‹ Catalogue','‹ 返回家具目录'),()=>furnitureMarket(back));return r};
+const mbHomeProfileBefore=hideoutProfilePage;hideoutProfilePage=function(draft=null){const origin=draft?.origin||lifeProfile,r=mbHomeProfileBefore(draft);mbHomePageBack(origin===hideoutPage?tr('‹ My room','‹ 返回小窝'):tr('‹ Profile','‹ 返回档案'),origin);return r};
+const mbHomeProfileBookBefore=lifeProfile;lifeProfile=function(...args){const r=mbHomeProfileBookBefore(...args),book=$('content').querySelector('.journalProfileBook');if(book){const direct=b(book,tr('Visit my home','回我的小窝'),mbOpenOwnHome);direct.className='mbHomeDirect';book.querySelector('.journalQuickStats')?.after(direct)}return r};$('profileHud').onclick=lifeProfile;
+const mbHomeBagBefore=myRoom;myRoom=function(...args){const r=mbHomeBagBefore(...args),head=$('content').querySelector('.bagHeader');if(head){const direct=b(head,tr('Visit my home','回我的小窝'),mbOpenOwnHome);direct.className='mbHomeDirect'}return r};$('dockRoom').onclick=myRoom;
+const mbHomeReadability=document.createElement('style');mbHomeReadability.textContent=`
+#game #dock{width:min(620px,calc(100% - 12px))!important;gap:2px!important}
+#game #dock button{min-width:0!important;flex:1 1 0!important;white-space:normal!important;font-size:clamp(10px,2.7vw,13px)!important;line-height:1.2!important;padding:4px 1px!important}
+#game #dockOwnHome .dockIcon{display:grid;place-items:center;height:25px}
+#game #hudPortrait{object-fit:contain!important;object-position:center!important;border-radius:5px!important;background:#edddbd!important}
+#content .mbHomeDirect{display:block;width:100%;min-height:48px;margin:9px 0!important;background:#526a55!important;color:#fff2db!important;border:1px solid #3f5944!important;font:600 15px/1.35 system-ui!important}
+#content .hideoutRibbon .hideoutProfile img{width:56px!important;height:76px!important;object-fit:contain!important;border-radius:5px!important;background:#e8d8b9!important}
+#content .journalIdentity>img,#content .travellerEditHeading>img,#content .travellerEditChoices img{object-fit:contain!important;object-position:center!important;border-radius:4px!important}
+#content .travellerEditHeading>img{height:135px!important;width:100px!important}
+#content .travellerEditChoices img{height:118px!important;width:100%!important}
+#content .komorebiBook,#content .komorebiConfirm{box-sizing:border-box;width:100%;max-width:850px;margin:0 auto;padding:clamp(9px,2.6vw,18px)!important;color:#3d3328!important;background:#f3e6cf!important}
+#content .komorebiHead{font:15px/1.45 system-ui!important;color:#40372b!important}
+#content .komorebiHead strong{font-size:17px!important}
+#content .komorebiHead small{font-size:13px!important}
+#content .mbFurnitureShopArt{display:block;width:100%;height:clamp(76px,19vw,125px);object-fit:cover;object-position:50% 40%;border:3px solid #fff4dd;box-sizing:border-box;margin:0 0 9px;border-radius:3px}
+#content .komorebiBook .journalFilterTabs{display:flex!important;flex-wrap:wrap!important;gap:5px!important;margin:10px 0!important}
+#content .komorebiBook .journalFilterTabs button{flex:0 1 auto!important;min-width:0!important;min-height:44px!important;padding:6px 10px!important;white-space:normal!important;font:14px/1.3 system-ui!important;color:#4a3d2e!important;background:#fdf1da!important;border:1px solid #ab8d62!important}
+#content .komorebiBook .journalFilterTabs button[aria-pressed=true]{color:#fff5df!important;background:#536c55!important}
+#content .komorebiGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+#content .komorebiTile{min-width:0!important;height:auto!important;box-sizing:border-box;padding:9px!important;gap:7px!important;background:#fff5df!important;color:#3d3328!important}
+#content .komorebiTile[hidden]{display:none!important}
+#content .komorebiTile img{display:block;height:clamp(85px,23vw,125px)!important;object-fit:contain!important;width:100%!important}
+#content .komorebiTile strong,#content .komorebiTile small{display:block!important;max-width:100%!important;white-space:normal!important;overflow:visible!important;overflow-wrap:anywhere!important;font:14px/1.35 system-ui!important;color:#493b2e!important}
+#content .komorebiTile strong{font-weight:650!important;font-size:15px!important}
+#content .komorebiTile button,#content .komorebiConfirm button{min-height:44px!important;min-width:0!important;width:100%!important;white-space:normal!important;overflow-wrap:anywhere!important;font:600 14px/1.35 system-ui!important;padding:8px 5px!important;color:#fff3dc!important;background:#526a55!important;border:1px solid #3f5944!important}
+#content .komorebiTile button:disabled,#content .komorebiConfirm button:disabled{background:#e4d6b9!important;color:#554c3c!important;opacity:1!important}
+#content .hideoutRoomView .hideoutFurnitureTray button{flex:0 0 116px!important;min-height:108px!important;white-space:normal!important;overflow-wrap:anywhere!important;padding:6px!important;color:#3d3328!important}
+#content .hideoutFurnitureTray small{font:14px/1.35 system-ui!important;color:#3d3328!important;display:block!important;white-space:normal!important}
+#content .hideoutRoomView .hideoutTools{flex-wrap:wrap!important}
+#content .hideoutRoomView .hideoutTools button,#content .komorebiRoomTabs button{font-size:14px!important;white-space:normal!important;min-height:44px!important}
+@media(min-width:760px){#content .komorebiGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+`;document.head.append(mbHomeReadability);
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

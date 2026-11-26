@@ -707,6 +707,18 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-resident-friendship.png'});
                 // Setup the home screen with the real starter layout, then use the actual editor controls.
                 await page.evaluate(()=>{hideoutEditing=false;komorebiZone=0;hideoutPage()});
+                await page.getByRole('button',{name:'Expand home',exact:true}).click();
+                await page.locator('.komorebiTile[data-furniture-id="roomExtension"] button').click();
+                await page.locator('.komorebiConfirm').waitFor();
+                await page.locator('#content > .row button').first().click();
+                await page.locator('.komorebiTile[data-furniture-id="roomExtension"]').waitFor();
+                await page.screenshot({path:'test-results/'+name+'-home-expansion-catalogue.png'});
+                await page.locator('#content > .row button').first().click();
+                await page.locator('.hideoutScene').waitFor();
+                if(!await page.evaluate(()=>komorebiZone===0&&!hideoutEditing))throw Error('Home navigation changed room or editing mode');
+                await page.locator('#content > .row button').first().click();
+                await page.locator('#dockOwnHome').click();
+                await page.locator('.hideoutScene').waitFor();
                 await page.getByRole('button',{name:'Decorate room',exact:true}).click();
                 const futon=page.locator('.hideoutPlaced[data-furniture-id="futon"]');
                 await futon.waitFor({state:'visible'});
