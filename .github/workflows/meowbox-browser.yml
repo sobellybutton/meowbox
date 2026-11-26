@@ -92,6 +92,33 @@ jobs:
 
                 const layoutCheck=await page.evaluate(()=>{const old=room,failures=[];let pairs=0;try{for(const [id,spec] of Object.entries(indoorStages)){room=id;const obs=indoorObstacles(),ids=id==='temple'?Object.keys(spec.stations):(roomActions[id]||[]).map(v=>v[0]);for(const k of ids)if(!spec.stations[k])failures.push(id+': missing '+k);const nodes=[spec.entry,spec.arrival,...ids.map(k=>indoorStation(k).slice(2))];for(const a of nodes)for(const b of nodes){pairs++;if(!indoorSafe(...a,obs)||!indoorPath(a,b,obs))failures.push(id+': '+a+' -> '+b)}}}finally{room=old}return {pairs,failures}});
                 if(layoutCheck.failures.length)throw Error('Indoor geometry: '+JSON.stringify(layoutCheck));console.log('INDOOR_GEOMETRY '+JSON.stringify(layoutCheck));
+                // Record actual candidate arrival/departure paths using the final room registry.
+                // Quiet rooms with no valid path are reported, never forced to spawn visitors.
+                const visitorGeometry=await page.evaluate(()=>{
+                  const old=room,records=[],failures=[];
+                  try{
+                    for(const [id,visitor] of Object.entries(pawRoomVisitorSpecs)){
+                      room=id;
+                      const obs=indoorObstacles(),door=indoorSpec().entry,anchors=pawGuestActiveFeet(),safe=(x,y)=>indoorSafe(x,y,obs);
+                      const points=pawGuestWaypoints(visitor.points,pawGuestProtected(),safe);
+                      let routes=0,maxLength=0;
+                      for(const point of points){
+                        const route=(a,b)=>pawVisitorDoorRoute(a,b,anchors,safe,(f,d)=>indoorPath(f,d,obs),52,(f,d)=>indoorSegment(f,d,obs));
+                        const incoming=route(door,point),outgoing=route(point,door);
+                        if(!incoming||!outgoing)continue;
+                        for(const [start,segments] of [[door,incoming],[point,outgoing]]){
+                          if(!segments.every((v,i)=>safe(...v)&&indoorSegment(i?segments[i-1]:start,v,obs)&&pawGuestSegment(i?segments[i-1]:start,v,anchors)))failures.push(id+': invalid visitor path');
+                        }
+                        routes++;
+                        maxLength=Math.max(maxLength,incoming.length,outgoing.length);
+                      }
+                      records.push({id,candidatePoints:points.length,bidirectionalRoutes:routes,maxLength});
+                    }
+                  }finally{room=old}
+                  return {records,failures};
+                });
+                console.log('VISITOR_GEOMETRY '+JSON.stringify(visitorGeometry));
+                if(visitorGeometry.failures.length)throw Error('Unsafe visitor routes '+JSON.stringify(visitorGeometry.failures));
                 const shoreCheck=await page.evaluate(()=>{let n=0;for(let power=15;power<=100;power++){const p=riverLanding(power);if(p.y>=riverBankY(p.x)||p.y<285)throw Error('Bottle lands outside water');n++}for(let i=0;i<=100;i++){const f=i/100,x=265+f*65,y=610-f*102;if(y<=riverBankY(x))throw Error('Avatar walks into water');n++}return n});
                 console.log('SHORE_GEOMETRY '+shoreCheck);
 
