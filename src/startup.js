@@ -2286,4 +2286,63 @@ const mbIdentityVisualStyle=document.createElement('style');mbIdentityVisualStyl
 @media(prefers-reduced-motion:reduce){#game .mbTransferHolding,#game .mbTransferLine:after,#content .mbUncroppedPostcard{animation:none!important}}
 `;document.head.append(mbIdentityVisualStyle);
 
+
+/* Optional original railway paintings, kept separate from live text, routes,
+   controls and the selected human avatar. The current artwork remains fallback. */
+function mbValidateJourneyPaintings(data){
+ if(data?.version!==1||!data.rail)return null;
+ const out={};
+ for(const mode of ['portrait','landscape']){
+  const v=data.rail[mode],expected='assets/visual/painted/journey/'+mode+'.webp';
+  if(v?.path!==expected||!Number.isInteger(v.width)||!Number.isInteger(v.height)||v.width<400||v.height<400||v.width>2048||v.height>2048||!/^[a-f0-9]{64}$/.test(v.sha256||''))return null;
+  if(mode==='portrait'?v.height/v.width<1.35:v.width/v.height<1.35)return null;
+  out[mode]={path:v.path,width:v.width,height:v.height,sha256:v.sha256}
+ }
+ return out
+}
+let mbJourneyPaintingsPromise;
+function mbJourneyPaintings(){
+ return mbJourneyPaintingsPromise??=fetch('assets/visual/painted/journey-runtime.json',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(mbValidateJourneyPaintings).catch(()=>null)
+}
+async function mbMountRailPainting(host,mode){
+ if(!host||host.querySelector('.mbPaintedRail'))return;
+ const art=await mbJourneyPaintings();if(!art||!host.isConnected)return;
+ if(host.querySelector('.mbPaintedRail'))return;
+ const picture=element('picture','',host,'mbPaintedRail');
+ picture.dataset.use=mode;picture.hidden=true;picture.setAttribute('aria-hidden','true');
+ const wide=element('source','',picture);wide.media='(min-width:760px) and (min-aspect-ratio: 1/1)';wide.srcset=art.landscape.path;
+ const im=element('img','',picture);im.alt='';im.decoding='async';
+ const verify=()=>{
+  if(!picture.isConnected)return;
+  const loaded=Object.values(art).some(v=>v.width===im.naturalWidth&&v.height===im.naturalHeight);
+  picture.hidden=!loaded;host.dataset.paintedRail=String(loaded)
+ };
+ im.addEventListener('load',verify);im.addEventListener('error',()=>{picture.hidden=true;host.dataset.paintedRail='false'});
+ im.src=art.portrait.path;
+ host.prepend(picture);if(im.complete&&im.naturalWidth)verify()
+}
+const mbPaintedRailPreviewBefore=openRailStop;
+openRailStop=function(...args){
+ const r=mbPaintedRailPreviewBefore(...args),cabin=$('content').querySelector('.districtRailCabin');
+ if(cabin)mbMountRailPainting(cabin,'preview');return r
+};
+const mbPaintedRailTransferBefore=mbTransferHolding;
+mbTransferHolding=function(...args){
+ const r=mbPaintedRailTransferBefore(...args),overlay=$('game').querySelector('.mbTransferHolding');
+ if(overlay)mbMountRailPainting(overlay,'transfer');return r
+};
+const mbRailArtworkStyle=document.createElement('style');mbRailArtworkStyle.textContent=`
+.mbPaintedRail[hidden]{display:none!important}
+#content .districtRailCabin .mbPaintedRail[data-use=preview]{display:block;border:3px solid #faf0d9;border-radius:4px;overflow:hidden;background:#e1d2b6;margin:4px auto 8px;max-width:100%}
+#content .mbPaintedRail[data-use=preview] img{display:block;width:100%;height:clamp(160px,35dvh,410px);object-fit:contain;object-position:center}
+#content .districtRailCabin[data-painted-rail=true] .mbRailPostcard{height:clamp(65px,11dvh,105px)!important;max-width:170px;margin:auto!important}
+#content .districtRailCabin[data-painted-rail=true] .mbRailPostcard img{height:100%;object-fit:contain!important;animation:none!important}
+#game .mbTransferHolding .mbPaintedRail[data-use=transfer]{position:absolute;inset:0;display:block;overflow:hidden;z-index:0}
+#game .mbTransferHolding .mbPaintedRail[data-use=transfer] img{width:100%;height:100%;object-fit:cover;object-position:center}
+#game .mbTransferHolding .mbTransferTicket{position:relative;z-index:1}
+#game .mbTransferHolding[data-painted-rail=true]{background:#534939}
+#game .mbTransferHolding[data-painted-rail=true] .mbTransferTicket{align-self:end;margin-bottom:clamp(10px,4dvh,36px);box-shadow:0 3px 18px #2c231b77;background:#f4e6cbf5}
+@media(min-width:760px) and (min-aspect-ratio:1/1){#game .mbTransferHolding[data-painted-rail=true] .mbTransferTicket{justify-self:end;margin-right:clamp(14px,4vw,65px)}}
+`;document.head.append(mbRailArtworkStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
