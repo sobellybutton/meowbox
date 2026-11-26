@@ -2908,10 +2908,11 @@ label=function(name,x,y,fn){
   ctx.translate(px-x,py-cy);
   // A bracket physically attaches frame signs to both upright posts.
   if(['bell','rack','notice'].includes(spec[0]))line(x-spec[2]/2+10,cy,x+spec[2]/2-10,cy,'#72553c',5);
-  round(x-w/2,cy-h/2,w,h,3,'#66513c','#d2b881');
-  for(const dx of [-w/2+4,w/2-4])ellipse(x+dx,cy-h/2+4,1.3,1.3,'#d4b987');
-  ctx.fillStyle='#fff1d4';ctx.textAlign='center';ctx.textBaseline='middle';
-  rows.forEach((v,i)=>{ctx.font='600 '+font+'px Georgia, "Songti SC", serif';const size=Math.min(font,font*(w-10)/Math.max(1,ctx.measureText(v).width));ctx.font='600 '+size+'px Georgia, "Songti SC", serif';ctx.fillText(v,x,cy+(i-(rows.length-1)/2)*font*1.06)});
+  const painted=pawRecoveredPlaque(ctx,x-w/2,cy-h/2,w,h);
+  if(!painted){round(x-w/2,cy-h/2,w,h,3,'#66513c','#d2b881');
+   for(const dx of [-w/2+4,w/2-4])ellipse(x+dx,cy-h/2+4,1.3,1.3,'#d4b987')}
+  ctx.fillStyle=painted?'#503622':'#fff1d4';ctx.textAlign='center';ctx.textBaseline='middle';
+  rows.forEach((v,i)=>{ctx.font='600 '+font+'px Georgia, "Songti SC", serif';const size=Math.min(font,font*(w-(painted?16:10))/Math.max(1,ctx.measureText(v).width));ctx.font='600 '+size+'px Georgia, "Songti SC", serif';ctx.fillText(v,x,cy+(i-(rows.length-1)/2)*font*1.06)});
   target(px-hitW/2,py-hitH/2,hitW,hitH,fn)
  }finally{ctx.restore()}
 };
@@ -7529,5 +7530,91 @@ window.addEventListener('pointerup',e=>{
  if(nostalgiaPointer!==e.pointerId)return;
  if(!nostalgiaActive()||pawBubbleBlocked()){pawReleaseBubblePointer();e.stopPropagation()}
 },true);
+
+
+/* PAW_RECOVERED_ART_BEGIN */
+// Recovered original illustrations. Dynamic labels and save IDs remain separate.
+const pawRecoveredRoot='assets/visual/painted/recovered/';
+const pawRecoveredFigures=Object.freeze({
+ 'Office escape cat':'black','Meeting survivor cat':'classic-white',
+ 'Annual leave cat':'sakura','Moonlight cat':'moonlight',
+ 'Golden payday cat':'gold','Strawberry mochi kitten':'pink-love','Toast loaf cat':'sleepy'
+});
+const pawRecoveredDailyCharms=['peace','safe-travels','health','peace','career','rest','happiness','rest','studies','health','rest','love'];
+function pawRecoveredNineSlice(sw,sh,w,h,source=[94,96,118,71],target=[8,5,8,5]){
+ if(![sw,sh,w,h,...source,...target].every(Number.isFinite)||sw<=source[0]+source[2]||sh<=source[1]+source[3]||w<=target[0]+target[2]||h<=target[1]+target[3])return [];
+ const sx=[0,source[0],sw-source[2],sw],sy=[0,source[1],sh-source[3],sh],dx=[0,target[0],w-target[2],w],dy=[0,target[1],h-target[3],h],pieces=[];
+ for(let j=0;j<3;j++)for(let i=0;i<3;i++)pieces.push([sx[i],sy[j],sx[i+1]-sx[i],sy[j+1]-sy[j],dx[i],dy[j],dx[i+1]-dx[i],dy[j+1]-dy[j]]);
+ return pieces
+}
+function pawRecoveredFigurePath(name){return Object.hasOwn(pawRecoveredFigures,name)?'fortune-cats/'+pawRecoveredFigures[name]+'.webp':null}
+function pawRecoveredCharmPath(index){return Number.isInteger(index)&&index>=0&&index<pawRecoveredDailyCharms.length?'blessing-charms/'+pawRecoveredDailyCharms[index]+'.webp':null}
+/* PAW_RECOVERED_ART_END */
+const pawRecoveredImages=new Map();
+function pawRecoveredImage(path,ready=null){
+ if(!path)return null;
+ let im=pawRecoveredImages.get(path);
+ if(!im){im=new Image();im.decoding='async';pawRecoveredImages.set(path,im);if(ready)im.addEventListener('load',ready,{once:true});im.src=pawRecoveredRoot+path}
+ else if(ready&&im.complete&&im.naturalWidth>0)ready();
+ return im
+}
+function pawRecoveredPlaque(g,x,y,w,h){
+ const im=pawRecoveredImage('signs/ornate_wood.webp');
+ if(!im?.complete||!im.naturalWidth)return false;
+ const parts=pawRecoveredNineSlice(im.naturalWidth,im.naturalHeight,w,h);
+ if(!parts.length)return false;
+ for(const [sx,sy,sw,sh,dx,dy,dw,dh] of parts)g.drawImage(im,sx,sy,sw,sh,x+dx,y+dy,dw,dh);
+ return true
+}
+const pawRecoveredCss=document.createElement('style');
+pawRecoveredCss.textContent=`
+#game[data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque{
+ background:transparent!important;border:solid transparent!important;border-width:9px 13px 8px!important;
+ border-image: url("assets/visual/painted/recovered/signs/ornate_wood.webp") 96 118 71 94 fill stretch!important;
+ color:#503622!important;text-shadow:none!important;box-shadow:none!important;border-radius:0!important;
+ padding:2px 4px!important;line-height:1.15!important;max-width:132px!important
+}
+#game[data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque::before{display:none!important}
+#game[data-recovered-speech="true"] .pawAmbientSpeech{
+ background:transparent!important;border:solid transparent!important;border-width:12px 12px 16px 17px!important;
+ border-image:url("assets/visual/painted/recovered/signs/speech_left.webp") 87 64 93 93 fill stretch!important;
+ border-radius:0!important;box-shadow:none!important;padding:3px 4px!important;max-width:min(220px,62%)!important
+}
+#game .pawRecoveredFigure{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;display:block}
+#game .bagSlotArt .pawRecoveredFigure,#game .figureTileArt .pawRecoveredFigure{width:64px;height:64px;margin:auto}
+#game .bagHeroArt .pawRecoveredFigure{width:140px;height:140px;margin:auto}
+#game .figureCubby .pawRecoveredFigure{width:100%;height:100%;max-height:65px}
+#game .townFortuneSlip .pawRecoveredCharm{float:right;width:58px;height:69px;object-fit:contain;margin:0 0 4px 10px;pointer-events:none}
+#game .townFortuneSlip:after{content:"";display:block;clear:both}
+`;document.head.append(pawRecoveredCss);
+pawRecoveredImage('signs/ornate_wood.webp',()=>$('game').dataset.recoveredPlaque='true');
+pawRecoveredImage('signs/speech_left.webp',()=>$('game').dataset.recoveredSpeech='true');
+const pawRecoveredFigureIconBefore=bagFigureIcon;
+bagFigureIcon=function(v){
+ const path=pawRecoveredFigurePath(v?.[0]);if(!path)return pawRecoveredFigureIconBefore(v);
+ return '<img class="pawRecoveredFigure" src="'+pawRecoveredRoot+path+'" alt="" loading="lazy" decoding="async">'
+};
+const pawRecoveredBagBefore=bagArt;
+bagArt=function(v){
+ const id=v?.item?.[0],path=id==='Temple cat blessing'?'fortune-cats/guardian.webp':id==='Keeper’s quiet blessing'?'blessing-charms/peace.webp':null;
+ if(path)return '<img class="pawRecoveredFigure" src="'+pawRecoveredRoot+path+'" alt="" loading="lazy" decoding="async">';
+ return pawRecoveredBagBefore(v)
+};
+const pawRecoveredDrawFigureBefore=drawBlindCollectible;
+drawBlindCollectible=function(x,y,v,sc=1){
+ const path=pawRecoveredFigurePath(v?.[0]),im=pawRecoveredImage(path);
+ if(!im?.complete||!im.naturalWidth||!im.naturalHeight)return pawRecoveredDrawFigureBefore(x,y,v,sc);
+ const scale=Math.min(60*sc/im.naturalWidth,68*sc/im.naturalHeight),w=im.naturalWidth*scale,h=im.naturalHeight*scale;
+ ctx.drawImage(im,x-w/2,y-h*(v[0]==='Toast loaf cat'?.9589:.966),w,h)
+};
+const pawRecoveredDailyBefore=renderTownFortune;
+renderTownFortune=function(book){
+ const result=pawRecoveredDailyBefore(book),slip=book.lastElementChild;
+ if(slip?.classList.contains('townFortuneSlip')){
+  const path=pawRecoveredCharmPath(Number(slip.dataset.theme));
+  if(path){const im=document.createElement('img');im.className='pawRecoveredCharm';im.src=pawRecoveredRoot+path;im.alt='';im.decoding='async';slip.prepend(im)}
+ }
+ return result
+};
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
