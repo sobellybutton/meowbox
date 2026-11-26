@@ -7564,8 +7564,8 @@ const pawRecoveredImages=new Map();
 function pawRecoveredImage(path,ready=null){
  if(!path)return null;
  let im=pawRecoveredImages.get(path);
- if(!im){im=new Image();im.decoding='async';pawRecoveredImages.set(path,im);if(ready)im.addEventListener('load',ready,{once:true});im.src=pawRecoveredRoot+path}
- else if(ready&&im.complete&&im.naturalWidth>0)ready();
+ if(!im){im=new Image();im.decoding='async';pawRecoveredImages.set(path,im);im.addEventListener('error',()=>{if(pawRecoveredImages.get(path)===im)pawRecoveredImages.delete(path)},{once:true});if(ready)im.addEventListener('load',ready,{once:true});im.src=pawRecoveredRoot+path}
+ else if(ready){if(im.complete&&im.naturalWidth>0)ready();else if(!im.complete)im.addEventListener('load',ready,{once:true})}
  return im
 }
 function pawRecoveredPlaque(g,x,y,w,h){
@@ -7645,17 +7645,72 @@ function pawRecoveredTarotLayout(box,count){
  return {w,h,x:box.left+Math.max(0,(width-total)/2),step:w+space};
 }
 /* PAW_RECOVERED_SHARE_END */
+/* Original blank overlays: only use layouts for result data the game actually produces. */
+const pawRecoveredLayouts=Object.freeze({"tarot_1_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"cards":[[414.92,381,250.15999999999997,375.23999999999995]],"reading":[84,770.24,912,246.76000000000005]},"tarot_3_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"cards":[[152.76000000000005,381,250.15999999999997,375.23999999999995],[414.92,381,250.15999999999997,375.23999999999995],[677.0799999999999,381,250.15999999999997,375.23999999999995]],"reading":[84,770.24,912,246.76000000000005]},"tarot_5_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"cards":[[83.99999999999989,381,172.80000000000004,259.20000000000005],[268.79999999999995,381,172.80000000000004,259.20000000000005],[453.59999999999997,381,172.80000000000004,259.20000000000005],[638.4,381,172.80000000000004,259.20000000000005],[823.2,381,172.80000000000004,259.20000000000005]],"reading":[84,654.2,912,362.79999999999995]},"fortune_slip_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"illustration":[84,381,912,362.52],"summary":[84,757.52,912,259.48]},"story_ending_feed":{"title":[84,271,912,92],"footer":[84,1035,912,84],"illustration":[84,381,912,362.52],"summary":[84,757.52,912,259.48]},"tarot_1_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"cards":[[403.5133333333333,399,272.9733333333333,409.46]],"reading":[84,822.46,912,270.54]},"tarot_3_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"cards":[[118.54000000000008,399,272.9733333333333,409.46],[403.5133333333334,399,272.9733333333333,409.46],[688.4866666666667,399,272.9733333333333,409.46]],"reading":[84,822.46,912,270.54]},"tarot_5_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"cards":[[83.99999999999989,399,172.80000000000004,259.20000000000005],[268.79999999999995,399,172.80000000000004,259.20000000000005],[453.59999999999997,399,172.80000000000004,259.20000000000005],[638.4,399,172.80000000000004,259.20000000000005],[823.2,399,172.80000000000004,259.20000000000005]],"reading":[84,672.2,912,420.79999999999995]},"fortune_slip_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"illustration":[84,399,912,395.58],"summary":[84,808.5799999999999,912,284.42]},"story_ending_xhs":{"title":[84,289,912,92],"footer":[84,1111,912,84],"illustration":[84,399,912,395.58],"summary":[84,808.5799999999999,912,284.42]},"tarot_1_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"cards":[[342.1533333333333,490,395.6933333333333,593.54]],"reading":[84,1097.54,912,398.46000000000004]},"tarot_3_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"cards":[[84,490,296,444],[392,490,296,444],[700,490,296,444]],"reading":[84,948,912,548]},"tarot_5_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"cards":[[83.99999999999989,490,172.80000000000004,259.20000000000005],[268.79999999999995,490,172.80000000000004,259.20000000000005],[453.59999999999997,490,172.80000000000004,259.20000000000005],[638.4,490,172.80000000000004,259.20000000000005],[823.2,490,172.80000000000004,259.20000000000005]],"reading":[84,763.2,912,732.8]},"fortune_slip_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"illustration":[84,490,912,573.42],"summary":[84,1077.42,912,418.58000000000004]},"story_ending_story":{"title":[84,380,912,92],"footer":[84,1514,912,84],"illustration":[84,490,912,573.42],"summary":[84,1077.42,912,418.58000000000004]},"tarot_1_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"cards":[[445.3168,318.64,189.3664,284.0496]],"reading":[84,616.6895999999999,912,183.39040000000006]},"tarot_3_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"cards":[[243.9504,318.64,189.3664,284.0496],[445.3168,318.64,189.3664,284.0496],[646.6831999999999,318.64,189.3664,284.0496]],"reading":[84,616.6895999999999,912,183.39040000000006]},"tarot_5_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"cards":[[83.99999999999989,318.64,172.80000000000004,259.20000000000005],[268.79999999999995,318.64,172.80000000000004,259.20000000000005],[453.59999999999997,318.64,172.80000000000004,259.20000000000005],[638.4,318.64,172.80000000000004,259.20000000000005],[823.2,318.64,172.80000000000004,259.20000000000005]],"reading":[84,591.84,912,208.24]},"fortune_slip_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"illustration":[84,318.64,912,274.4208],"summary":[84,607.0608,912,193.01920000000007]},"story_ending_square":{"title":[84,220,912,80.64],"footer":[84,818.08,912,73.92],"illustration":[84,318.64,912,274.4208],"summary":[84,607.0608,912,193.01920000000007]}});
+function pawRecoveredLayoutKey(data,format){
+ if(!pawRecoveredShareBounds(format))return null;
+ const kind=data?.kind==='tarot'&&[1,3,5].includes(data.cards?.length)?'tarot_'+data.cards.length:data?.kind==='fortune'?'fortune_slip':data?.kind==='story'?'story_ending':null;
+ const key=kind?kind+'_'+format:null;
+ return key&&Object.hasOwn(pawRecoveredLayouts,key)?key:null
+}
+function pawRecoveredResultIllustration(data){
+ if(data.kind==='fortune')return pawRecoveredImage('scenes/temple_approach_portrait.webp');
+ return pics[sharePaintedKey(data)]
+}
 function pawPrepareRecoveredShare(format,data){
  if(!pawRecoveredShareBounds(format))return Promise.resolve();
- const images=[pawRecoveredImage('templates/paper_'+format+'.webp')];
+ const images=[pawRecoveredImage('templates/paper_'+format+'.webp')],key=pawRecoveredLayoutKey(data,format);
+ if(key)images.push(pawRecoveredImage('templates/'+key+'.svg'));
  if(data.kind==='tarot'&&data.cards?.length)images.push(readingArtwork());
+ else if(key)images.push(pawRecoveredResultIllustration(data));
  const waits=images.filter(im=>im&&!im.complete).map(im=>im.decode().catch(()=>{}));
  return Promise.race([Promise.all(waits),new Promise(resolve=>setTimeout(resolve,1800))])
+}
+function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
+ const key=pawRecoveredLayoutKey(data,format);if(!key)return false;
+ const slots=pawRecoveredLayouts[key],overlay=pawRecoveredImage('templates/'+key+'.svg');
+ if(!overlay?.complete||!overlay.naturalWidth||overlay.naturalWidth!==box.width||overlay.naturalHeight!==box.height)return false;
+ const tarot=data.kind==='tarot',art=tarot?readingArtwork():pawRecoveredResultIllustration(data);
+ if(!art?.complete||!art.naturalWidth||!art.naturalHeight||(tarot&&(art.naturalWidth!==1024||art.naturalHeight!==2180)))return false;
+ cv.width=box.width;cv.height=box.height;
+ const g=cv.getContext('2d'),locale=v=>String(v?.[Number(cn)]||''),font=cn?'"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif':'Georgia,serif';
+ const ink='#4d3a2c',accent='#795741',muted='#54684e';
+ g.drawImage(paper,0,0,box.width,box.height);
+ // Compress only the overlay and its coordinate system for social story safe margins.
+ const scale=(box.width-box.left-box.right)/(box.width-168);
+ g.save();g.translate(box.left,0);g.scale(scale,1);g.translate(-84,0);g.drawImage(overlay,0,0,box.width,box.height);
+ function textIn(rect,values,initial=36,weight='normal',color=ink){
+  const [x,y,w,h]=rect,pad=Math.min(16,h*.1),maxW=w-2*pad,maxH=h-2*pad;
+  const v=values.filter(v=>typeof v==='string'&&v.trim());if(!v.length)return;
+  let size=initial,rows=[],lh,total;
+  for(;size>=16;size-=2){g.font=weight+' '+size+'px '+font;rows=v.flatMap(q=>shareTextLines(g,q,maxW));lh=size*1.22;total=rows.length*lh;if(total<=maxH||size<=17)break}
+  const shrink=Math.min(1,maxH/Math.max(1,total));
+  g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.translate(x+w/2,y+h/2);g.scale(1,shrink);g.font=weight+' '+size+'px '+font;g.textAlign='center';g.textBaseline='middle';g.fillStyle=color;
+  rows.forEach((q,i)=>g.fillText(q,0,(i-(rows.length-1)/2)*lh,maxW));g.restore()
+ }
+ textIn(slots.title,[locale(data.title)],format==='square'?38:46,'bold');
+ if(tarot){
+  const roles=data.cards.length===5?fiveReadingPositions:data.cards.length===3?[['Situation','现状'],['Notice','留意'],['Next step','下一步']]:[['Your card','今日之牌']];
+  data.cards.forEach((card,i)=>{
+   const [x,y,w,h]=slots.cards[i],captionH=Math.min(56,h*.22),maxH=h-captionH-12,ch=Math.min(maxH,(w-14)*218/128),cw=ch*128/218;
+   g.save();g.translate(x+w/2,y+6+ch/2);if(card.rev)g.rotate(Math.PI);g.drawImage(art,(card.i%8)*128,Math.floor(card.i/8)*218,128,218,-cw/2,-ch/2,cw,ch);g.restore();
+   textIn([x+2,y+h-captionH,w-4,captionH],[locale(roles[i]),locale(tarotDeck[card.i])+(card.rev?(cn?' 逆位':' · Rev.'):(cn?' 正位':' · Up.'))],data.cards.length===5?22:27,'normal',ink)
+  });
+  textIn(slots.reading,[locale(data.takeaway||socialResultQuote(data))],format==='square'?32:38,'normal',ink)
+ }else{
+  const [x,y,w,h]=slots.illustration,sc=Math.min((w-20)/art.naturalWidth,(h-16)/art.naturalHeight),iw=art.naturalWidth*sc,ih=art.naturalHeight*sc;
+  g.drawImage(art,x+(w-iw)/2,y+(h-ih)/2,iw,ih);
+  const lines=[locale(socialResultQuote(data)),...(data.lines||[]).map(locale)].filter((v,i,a)=>v&&a.indexOf(v)===i);
+  textIn(slots.summary,lines,format==='square'?30:36)
+ }
+ textIn(slots.footer,['Pawradise · '+(cn?'趣味探索，仅供反思':'For fun and reflection')],27,'normal',muted);
+ g.restore();return true
 }
 const pawRecoveredShareBefore=shareCardArt;
 shareCardArt=function(cv,data,format,cn){
  const box=pawRecoveredShareBounds(format),im=pawRecoveredImage('templates/paper_'+format+'.webp');
  if(!box||!im?.complete||im.naturalWidth!==box.width||im.naturalHeight!==box.height)return pawRecoveredShareBefore(cv,data,format,cn);
+ if(pawDrawRecoveredLayout(cv,data,format,cn,box,im))return;
  const {width:w,height:h,top,bottom,left,right}=box,usable=w-left-right,cx=left+usable/2,locale=v=>String(v?.[Number(cn)]||'');
  cv.width=w;cv.height=h;const g=cv.getContext('2d'),font=cn?'"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif':'Georgia,serif';
  const ink='#4d3a2c',muted='#65765a',accent='#80593d';g.drawImage(im,0,0,w,h);
@@ -7749,8 +7804,9 @@ renderRailKeepsake=function(book){
    stretch these images to imitate independent landscape compositions. */
 const pawRecoveredRoomBackdropBefore=paintLivingBackdrop;
 paintLivingBackdrop=function(...args){
- if(activity==='blindBox'&&W<H){
-  const art=pawRecoveredImage('scenes/blind_box_portrait.webp');
+ if(W<H&&(activity==='blindBox'||activity==='templePaper')){
+  const path=activity==='blindBox'?'scenes/blind_box_portrait.webp':'scenes/temple_hall_portrait.webp';
+  const art=pawRecoveredImage(path);
   if(art?.complete&&art.naturalWidth>0&&art.naturalHeight>0){
    const bounds=livingBounds();ctx.save();cover(art,bounds.x,bounds.y,bounds.w,bounds.h);ctx.restore();return
   }
