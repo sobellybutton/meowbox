@@ -1,4 +1,9 @@
-# MeowBox visual production brief
+# Pawradise visual production brief
+
+## Permanent in-world identity (owner clarification, 26 November 2026)
+
+Pawradise is the permanent name of the fictional world, irrespective of the eventual app or website brand. BrbLife is still under consideration as a possible app name, not an approved world name. Keep Pawradise consistent on in-world gateways, railway branding, passports, tickets, maps, welcome screens and signage when a world name is needed. A later app rename must not require repainting the world. Keep app branding, browser title, website logo and external marketing copy separate from the in-world identity. Prefer editable, localized text and removable sign layers for legibility and layout, but do not replace the permanent Pawradise identity with a future app name. Do not invent an approved Chinese world name or change the original four human avatars, existing district names, route IDs, asset paths, saved data, or repository name. Previous mockups using MeowBox or BrbLife as the world name are references only and are not approved production art.
+
 
 Owner clarification, 25 November 2026: the nostalgic painted redesign must preserve the current four-map game and every existing station. Previous concept sheets are mood references only; do not use them as a flattened playable map or invent duplicate shrines.
 
