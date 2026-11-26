@@ -724,17 +724,38 @@ const tarotKeepsakeCSS=document.createElement('style');tarotKeepsakeCSS.textCont
 const residentArtworkRecords=[
  {id:'temple-keeper',names:['Temple keeper','庙祝'],height:112},
  {id:'master-yue',names:['Master Yue','月师傅','Astrologer','命理师'],height:116},
- {id:'fortune-teller',names:['Fortune Teller','占卜师'],height:116},
+ {id:'fortune-teller',names:['Fortune Teller','占卜师','Luna','月见'],height:116},
  {id:'auntie-mei',names:['Auntie Mei','梅姨'],height:110},
  {id:'wang-laoban',names:['Wang Laoban','王老板'],height:119},
- {id:'grandma',names:['Grandma','外婆'],height:106}
+ {id:'grandma',names:['Grandma','外婆','奶奶'],height:106},
+ {"id":"ah-ma","names":["Ah Ma","Grumpy Ah Ma","阿嬷","暴躁阿嬷","阿嫲","阿嬤"],"height":104,"optional":true},
+ {"id":"auntie-lin","names":["Auntie Lin","林姨"],"height":110,"optional":true},
+ {"id":"auntie-hong","names":["Auntie Hong","红姐","洪姨"],"height":110,"optional":true},
+ {"id":"garden-keeper","names":["Garden keeper","守园人"],"height":112,"optional":true},
+ {"id":"boba-keeper","names":["Boba keeper","奶茶店主","Barista"],"height":110,"optional":true},
+ {"id":"arcade-keeper","names":["Arcade keeper","Arcade host","游戏厅老板","游戏厅店主"],"height":112,"optional":true},
+ {"id":"souvenir-keeper","names":["Souvenir keeper","手信店主","Furniture keeper","家具店主"],"height":110,"optional":true}
 ];
-const residentArtworkCache=new Map();
-function residentArtworkRecord(name){const names=Array.isArray(name)?name:[name];return residentArtworkRecords.find(v=>names.some(n=>v.names.some(a=>a.toLowerCase()===String(n).trim().toLowerCase())))||null}
+const residentArtworkCache=new Map(),residentInstalledArt=new Map();
+const residentIdentityKey=v=>String(v??'').normalize('NFKC').trim().toLowerCase();
+function residentArtworkRecord(name){const names=Array.isArray(name)?name:[name];return residentArtworkRecords.find(v=>(!v.optional||residentInstalledArt.has(v.id))&&names.some(n=>v.names.some(a=>residentIdentityKey(a)===residentIdentityKey(n))))||null}
+function residentAssetPath(id,kind){return 'assets/visual/painted/'+id+'/'+(kind==='standing'?'standing.webp':kind==='warm'?'expressions/warm.webp':'poses/'+kind+'.webp')}
+function registerResidentArtwork(data){
+ if(data?.version!==1||!data.residents||typeof data.residents!=='object')return 0;
+ let count=0;
+ for(const r of residentArtworkRecords){const row=data.residents[r.id];if(!row)continue;const checked={};
+  for(const kind of ['standing','warm','seated','scolding']){const v=row[kind];if(v?.path===residentAssetPath(r.id,kind)&&Number.isInteger(v.width)&&Number.isInteger(v.height)&&v.width>0&&v.height>0&&v.width<=2048&&v.height<=2048&&/^[a-f0-9]{64}$/.test(v.sha256||''))checked[kind]=v}
+  if(checked.standing&&checked.warm){residentInstalledArt.set(r.id,checked);count++}
+ }return count
+}
+// Optional characters are requested only after their validated manifest exists.
+fetch('assets/visual/painted/runtime.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(data=>registerResidentArtwork(data)).catch(()=>{});
 function residentArtworkImage(record,portrait=false){
- if(!record)return null;const key=record.id+(portrait?':portrait':':stand');
- if(!residentArtworkCache.has(key)){const im=new Image();im.decoding='async';im.src='assets/visual/painted/'+record.id+'/'+(portrait?'expressions/warm.webp':'standing.webp');residentArtworkCache.set(key,im)}
- return residentArtworkCache.get(key)
+ if(!record)return null;const kind=typeof portrait==='string'?portrait:portrait?'warm':'standing',meta=residentInstalledArt.get(record.id)?.[kind];
+ if((record.optional||!['standing','warm'].includes(kind))&&!meta)return null;
+ const key=record.id+':'+kind;
+ if(!residentArtworkCache.has(key)){const im=new Image();im.decoding='async';residentArtworkCache.set(key,im);im.src=residentAssetPath(record.id,kind)}
+ const im=residentArtworkCache.get(key);if(meta&&im.complete&&(im.naturalWidth!==meta.width||im.naturalHeight!==meta.height))return null;return im
 }
 function residentArtworkRect(record,im,x,y,scale){
  if(!record||!im?.naturalWidth||!im.naturalHeight||![x,y,scale].every(Number.isFinite)||scale<=0)return null;
@@ -750,12 +771,12 @@ drawPaintedResident=function(n,scale,moving,facing){
  const record=residentArtworkRecord(n?.n||[]);
  if(!record)return residentOriginalMapDraw(n,scale,moving,facing);
  const im=residentArtworkImage(record);
- if(moving&&(facing==='left'||facing==='right'))n.paintedFacing=facing;
+ if(facing==='left'||facing==='right')n.paintedFacing=facing;
  if(drawResidentRaster(im,n.x,n.y,94*scale,n.paintedFacing||facing))return true;
  // Existing raster atlas is the same identity and may finish loading first.
  if(residentOriginalMapDraw(n,scale,moving,facing))return true;
- // Never replace an identified resident with a different player's avatar.
- return true
+ // Existing optional hosts keep their interim rendering until original art loads.
+ return !record.optional
 };
 function drawGatheringPainted(name,x,y,scale=1,facing='right'){
  const record=residentArtworkRecord(name),im=residentArtworkImage(record),rect=residentArtworkRect(record,im,x,y,scale);
@@ -764,7 +785,7 @@ function drawGatheringPainted(name,x,y,scale=1,facing='right'){
 }
 const gatheringPaintedBefore=gatheringResident;
 gatheringResident=function(name,x,y,scale,facing,kind){
- if(residentArtworkRecord(name)){if(!drawGatheringPainted(name,x,y,scale,facing))drawPaintedResident({x,y,n:name},scale,false,facing);return}
+ if(residentArtworkRecord(name)){if(drawGatheringPainted(name,x,y,scale,facing)||drawPaintedResident({x,y,n:name},scale,false,facing))return}
  return gatheringPaintedBefore(name,x,y,scale,facing,kind)
 };
 let residentPortraitRequest=0;
@@ -772,16 +793,22 @@ const paintedGatheringSayBefore=say;
 say=function(name,...args){
  const request=++residentPortraitRequest;
  const result=paintedGatheringSayBefore(name,...args),record=residentArtworkRecord(name);
- if(!record)return result;const portrait=$('talkPortrait'),im=residentArtworkImage(record,true);if(!portrait||!im)return result;
+ if(!record)return result;const portrait=$('talkPortrait'),im=residentArtworkImage(record,true);if(!portrait)return result;
+ if(!im){portrait.hidden=true;return result}
  const apply=()=>{if(request===residentPortraitRequest&&talkOpen&&$('speaker').textContent===String(name)&&im.complete&&im.naturalWidth){portrait.src=im.src;portrait.hidden=false;portrait.classList.add('paintedResidentPortrait');requestAnimationFrame(syncCharacterSpeech)}};
  portrait.hidden=true;if(im.complete){if(im.naturalWidth)apply()}else im.addEventListener('load',apply,{once:true});return result
 };
 const paintedGatheringIntroBefore=roomIntro;
 roomIntro=function(){
- const residents={tea:['auntie-mei','grandma','wang-laoban','master-yue'],tarot:['fortune-teller'],destiny:['master-yue'],temple:['temple-keeper'],kitchen:['grandma'],office:['wang-laoban'],park:['auntie-mei'],boba:['auntie-mei','grandma','wang-laoban','master-yue']}[room]||[];
+ const residents={tea:['auntie-mei','auntie-lin','auntie-hong','grandma','wang-laoban','master-yue'],tarot:['fortune-teller'],destiny:['master-yue'],temple:['temple-keeper'],kitchen:['grandma'],office:['wang-laoban'],park:['auntie-mei','auntie-lin'],fish:['ah-ma'],wishes:['garden-keeper'],arcade:['arcade-keeper'],mystery:['souvenir-keeper'],boba:['boba-keeper','auntie-mei','grandma','wang-laoban','master-yue']}[room]||[];
  for(const key of residents){const record=residentArtworkRecords.find(v=>v.id===key);residentArtworkImage(record);residentArtworkImage(record,true)}
  return paintedGatheringIntroBefore()
 };
+// Only approved, dedicated seated/scolding artwork may replace the pier host.
+// Keep the existing seated placeholder if the matching pose is not installed.
+const originalAhMaPose=drawProductionAhMa;
+drawProductionAhMa=function(x,y,scale=1){const r=residentArtworkRecord('Ah Ma'),mood=townAhMaMood(activity,t-stressSwingAt,t-(state?.riverAt??-100),stressCombo,state?.riverPhase);const im=residentArtworkImage(r,mood==='scold'?'scolding':'seated');if(drawResidentRaster(im,x,y,205*scale,'right'))return true;return originalAhMaPose(x,y,scale)};
+
 
 
 /* Destiny House: a reading subject is deliberately local to the open page.

@@ -15,15 +15,27 @@ const scripts=['engine','extensions','release-fixes','town-polish','town-access'
 require('./quality-checks.cjs')(scripts[1]);
 const painted=JSON.parse(read('assets/visual/painted/runtime.json')),crypto=require('node:crypto');
 if(painted.version!==1||!painted.residents||Array.isArray(painted.residents)||typeof painted.residents!=='object')throw Error('Invalid painted runtime manifest');
-const allowedPainted=new Set(['temple-keeper','master-yue','fortune-teller','auntie-mei','wang-laoban','grandma']);
+const allowedPainted=new Set(["temple-keeper","master-yue","fortune-teller","auntie-mei","wang-laoban","grandma","ah-ma","auntie-lin","auntie-hong","garden-keeper","boba-keeper","arcade-keeper","souvenir-keeper"]);
+function webpSize(b){
+ if(b.length<30||b.toString('ascii',0,4)!=='RIFF'||b.toString('ascii',8,12)!=='WEBP'||b.readUInt32LE(4)+8!==b.length)throw Error('Invalid WebP');
+ for(let o=12;o+8<=b.length;){
+  const name=b.toString('ascii',o,o+4),n=b.readUInt32LE(o+4),i=o+8;if(i+n>b.length)throw Error('Broken WebP chunk');
+  if(name==='VP8X'&&n>=10)return [1+b.readUIntLE(i+4,3),1+b.readUIntLE(i+7,3)];
+  if(name==='VP8L'&&n>=5&&b[i]===47){const v=b.readUInt32LE(i+1);return [1+(v&16383),1+((v>>>14)&16383)]}
+  if(name==='VP8 '&&n>=10&&b[i+3]===157&&b[i+4]===1&&b[i+5]===42)return [b.readUInt16LE(i+6)&16383,b.readUInt16LE(i+8)&16383];
+  o=i+n+(n%2);
+ }throw Error('Unsupported WebP dimensions');
+}
 let paintedCount=0;
 for(const [key,entry] of Object.entries(painted.residents)){
  if(!allowedPainted.has(key))throw Error('Unexpected painted resident: '+key);
- for(const kind of ['standing','warm']){
-  const v=entry[kind],expected='assets/visual/painted/'+key+'/'+(kind==='standing'?'standing.webp':'expressions/warm.webp');
+ if(!entry.standing||!entry.warm||Object.keys(entry).some(k=>!['standing','warm','seated','scolding'].includes(k)))throw Error('Invalid painted poses for '+key);
+ for(const kind of Object.keys(entry)){
+  const v=entry[kind],expected='assets/visual/painted/'+key+'/'+(kind==='standing'?'standing.webp':kind==='warm'?'expressions/warm.webp':'poses/'+kind+'.webp');
   if(v?.path!==expected||!Number.isInteger(v.width)||!Number.isInteger(v.height)||v.width<1||v.height<1||v.width>2048||v.height>2048)throw Error('Invalid painted record '+expected);
   const raw=fs.readFileSync(path.join(root,expected));
   if(raw.subarray(0,4).toString()!=='RIFF'||raw.subarray(8,12).toString()!=='WEBP'||crypto.createHash('sha256').update(raw).digest('hex')!==v.sha256)throw Error('Painted artwork failed checksum: '+expected);
+  const [w,h]=webpSize(raw);if(w!==v.width||h!==v.height)throw Error('Painted dimensions mismatch: '+expected);
   paintedCount++;
  }
 }
