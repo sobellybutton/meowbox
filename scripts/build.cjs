@@ -42,6 +42,15 @@ for(const [key,entry] of Object.entries(painted.residents)){
  }
 }
 console.log('PASS: '+paintedCount+' optional full-size painted artworks checked (empty manifest retains existing atlas).');
+const actionData=JSON.parse(read('assets/visual/painted/action-runtime.json')),actionValidate=require('./painted-action-test.cjs'),actionManifest=actionValidate(actionData);
+const stable=v=>Array.isArray(v)?v.map(stable):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,stable(v[k])])):v;
+if(actionData.version!==1||JSON.stringify(stable(actionData))!==JSON.stringify(stable(actionManifest)))throw Error('Invalid or incomplete painted action manifest; normalize the manifest before build.');
+const actionAssets=[];
+for(const record of Object.values(actionManifest.players)){for(const list of Object.values(record.walk||{}))actionAssets.push(...list);actionAssets.push(...Object.values(record.strike||{}))}
+for(const record of Object.values(actionManifest.rooms))actionAssets.push(...Object.values(record));
+for(const v of actionAssets){const raw=fs.readFileSync(path.join(root,v.path));const [w,h]=webpSize(raw);if(w!==v.width||h!==v.height||crypto.createHash('sha256').update(raw).digest('hex')!==v.sha256)throw Error('Action artwork failed validation: '+v.path)}
+console.log('PASS: '+actionAssets.length+' registered painted action/room images verified.');
+
 
 // Validate the canonical registry before rendering or assigning later portrait anchors.
 const mapDeclaration=scripts[0].match(/const maps=(\{[^\n]+\});/);

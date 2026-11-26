@@ -1549,4 +1549,183 @@ drawActivity=function(){
 };
 /* MB5_ACTION_END */
 
+
+/* MBART_VALIDATION_BEGIN */
+function mbArtValidate(data){
+ const out={version:1,players:{},rooms:{}};
+ if(data?.version!==1)return out;
+ function frame(v,expected,grip=false){
+  if(!v||v.path!==expected||!Number.isInteger(v.width)||!Number.isInteger(v.height)||v.width<16||v.height<16||v.width>2048||v.height>2048||!/^[a-f0-9]{64}$/.test(v.sha256||''))return null;
+  function point(p){return Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)&&p[0]>=0&&p[0]<=v.width&&p[1]>=0&&p[1]<=v.height}
+  if(!point(v.foot)||(grip&&!point(v.grip)))return null;
+  return {path:v.path,width:v.width,height:v.height,sha256:v.sha256,foot:v.foot.slice(),...(grip?{grip:v.grip.slice()}: {})}
+ }
+ for(const id of ['0','1','2','3']){
+  const raw=data.players?.[id],record={};if(!raw)continue;
+  for(const direction of ['up','down','right']){
+   const list=raw.walk?.[direction];
+   if(!Array.isArray(list)||list.length<4||list.length>8)continue;
+   const frames=list.map((v,i)=>frame(v,'assets/visual/painted/player-'+id+'/walk/'+direction+'-'+i+'.webp'));
+   if(frames.every(Boolean))(record.walk??={})[direction]=frames
+  }
+  const phases=['ready','anticipation','swing','impact','recovery'];
+  const strike=Object.fromEntries(phases.map(phase=>[phase,frame(raw.strike?.[phase],'assets/visual/painted/player-'+id+'/strike/'+phase+'.webp',true)]));
+  if(Object.values(strike).every(Boolean))record.strike=strike;
+  if(Object.keys(record).length)out.players[id]=record
+ }
+ for(const id of ['tea','park','arcade','fish','temple','kitchen','boba','tarot','destiny','wishes','mystery','quiz','story','match','secretGarden']){
+  const record={};
+  for(const orientation of ['portrait','landscape']){
+   const v=data.rooms?.[id]?.[orientation],expected='assets/visual/painted/rooms/'+id+'/'+orientation+'.webp';
+   if(v?.path!==expected||!Number.isInteger(v.width)||!Number.isInteger(v.height)||v.width<320||v.height<320||v.width>2400||v.height>2400||!/^[a-f0-9]{64}$/.test(v.sha256||''))continue;
+   if(orientation==='portrait'?v.height/v.width<1.35:v.width/v.height<1.35)continue;
+   record[orientation]={path:v.path,width:v.width,height:v.height,sha256:v.sha256}
+  }
+  if(Object.keys(record).length)out.rooms[id]=record
+ }
+ return out
+}
+function mbArtFrameIndex(clock,count,reduced=false){
+ if(!Number.isFinite(clock)||!Number.isInteger(count)||count<1||reduced)return 0;
+ return ((Math.floor(clock*9)%count)+count)%count
+}
+function mbArtShortfall(cost,balance){
+ return Math.max(0,Math.max(0,Number.isFinite(cost)?cost:0)-Math.max(0,Number.isFinite(balance)?balance:0))
+}
+function mbArtVisitRecord(raw,day){
+ const good=raw&&typeof raw==='object'&&typeof raw.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(raw.day);
+ return {day:good?raw.day:day,total:good&&Number.isInteger(raw.total)?Math.max(0,Math.min(9999,raw.total)):0,today:good&&raw.day===day&&Number.isInteger(raw.today)?Math.max(0,Math.min(999,raw.today)):0}
+}
+/* MBART_VALIDATION_END */
+let mbArtRegistry=mbArtValidate(null),mbArtRequested=false;
+const mbArtImages=new Map();
+function mbArtLoad(){
+ if(mbArtRequested)return;
+ mbArtRequested=true;
+ fetch('assets/visual/painted/action-runtime.json',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(data=>{mbArtRegistry=mbArtValidate(data)}).catch(()=>{})
+}
+function mbArtImage(record){
+ if(!record)return null;
+ if(!mbArtImages.has(record.path)){const im=new Image();im.decoding='async';mbArtImages.set(record.path,im);im.src=record.path}
+ const im=mbArtImages.get(record.path);return im.complete&&im.naturalWidth===record.width&&im.naturalHeight===record.height?im:null
+}
+function mbArtDrawFrame(record,im,x,y,scale,flip=false){
+ const k=94*scale/record.height,dx=-record.foot[0]*k,dy=-record.foot[1]*k;
+ ctx.save();try{
+  ellipse(x,y,14*scale,3*scale,'#302a2438');ctx.translate(x,y);if(flip)ctx.scale(-1,1);
+  ctx.drawImage(im,dx,dy,record.width*k,record.height*k)
+ }finally{ctx.restore()}
+ return record.grip?{x:x+(flip?-1:1)*(record.grip[0]-record.foot[0])*k,y:y+(record.grip[1]-record.foot[1])*k}:null
+}
+const mbArtWalkBefore=backHuman;
+backHuman=function(x,y,kind,walking,facing,scale=1){
+ if(walking){
+  mbArtLoad();const frames=mbArtRegistry.players[kind]?.walk?.[facing==='left'?'right':facing];
+  if(frames){
+   const loaded=frames.map(mbArtImage);
+   if(loaded.every(Boolean)){const i=mbArtFrameIndex(t,frames.length,actorReduce||residentReducedMotion.matches);mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}
+  }
+ }
+ return mbArtWalkBefore(x,y,kind,walking,facing,scale)
+};
+const mbArtStrikeBefore=mirrorRitualPose;
+mirrorRitualPose=function(x,y,scale,opts){
+ if(activity==='hit'&&room==='fish'){
+  mbArtLoad();const poses=mbArtRegistry.players[avatar??0]?.strike;
+  if(poses){
+   const loaded=Object.fromEntries(Object.entries(poses).map(([key,v])=>[key,mbArtImage(v)]));
+   if(Object.values(loaded).every(Boolean)){
+    const phase=state.paperAction?townActionPhase(t-state.paperAction.at):'ready';
+    return mbArtDrawFrame(poses[phase],loaded[phase],x,y,scale,true)
+   }
+  }
+ }
+ return mbArtStrikeBefore(x,y,scale,opts)
+};
+/* The two native room compositions are independent. Only a verified matching
+   raster may replace the current background; never stretch it or load a
+   nonexistent guessed filename. */
+const mbArtPortraitBefore=portraitInteriorImage;
+portraitInteriorImage=function(id){
+ mbArtLoad();return mbArtImage(mbArtRegistry.rooms[id]?.portrait)||mbArtPortraitBefore(id)
+};
+const mbArtLandscapeBefore=paintLandscapeRoom;
+paintLandscapeRoom=function(id){
+ if(W/H<1.15)return mbArtLandscapeBefore(id);
+ mbArtLoad();const record=mbArtRegistry.rooms[id]?.landscape,im=mbArtImage(record);
+ if(!im)return mbArtLandscapeBefore(id);
+ const b=livingBounds(),fit=wideSceneFit(im.naturalWidth,im.naturalHeight,b.w,b.h);
+ if(!fit)return mbArtLandscapeBefore(id);
+ ctx.drawImage(im,b.x+fit.dx,b.y+fit.dy,fit.w,fit.h);return true
+};
+/* Use the actual installed seated/scolding paintings at the correct stage.
+   No pretend arm animation on the resident. */
+const mbArtAhMaBefore=drawProductionAhMa;
+drawProductionAhMa=function(x,y,scale=1){
+ if(activity!=='hit'||room!=='fish')return mbArtAhMaBefore(x,y,scale);
+ const phase=state.paperAction?townActionPhase(t-state.paperAction.at):'ready';
+ const r=residentArtworkRecord('Ah Ma'),pose=phase==='impact'||phase==='recovery'?'scolding':'seated';
+ const im=residentArtworkImage(r,pose)||residentArtworkImage(r,'seated');
+ if(drawResidentRaster(im,x,y,205*scale,'right'))return true;
+ return mbArtAhMaBefore(x,y,scale)
+};
+/* Remember only completed visits, never the symbolic grievance. */
+const mbArtFinishBefore=paperRitualFinish;
+paperRitualFinish=function(){
+ const run=state,was=run.paperFinished,result=mbArtFinishBefore();
+ if(activity==='hit'&&run===state&&!was&&run.paperFinished){
+  const day=shrineClock().day,record=mbArtVisitRecord(load('paperVisitsV1',null),day);
+  if(record.day<=day){record.day=day;record.total=Math.min(9999,record.total+1);record.today=Math.min(999,record.today+1);save('paperVisitsV1',record)}
+ }
+ return result
+};
+const mbArtStartBefore=start;
+start=function(id){
+ const result=mbArtStartBefore(id);
+ if(id==='hit'&&room==='fish'){
+  const day=shrineClock().day,record=mbArtVisitRecord(load('paperVisitsV1',null),day);
+  if(record.total>0&&record.day<=day){
+   const en=record.today?['Back already? My slipper has not even had lunch.','Another little break? No need to explain.']:['Good to see you again. The river saved you a seat.','Come sit. Some days are just a bit much.'];
+   const cn=record.today?['又来啦？我的拖鞋还没吃午饭呢。','又来歇会儿？不用解释。']:['又见面啦，河边给你留了个位置。','来坐坐，有些日子就是挺烦人的。'];
+   const i=record.total%2,name=residentPlayerDisplayName();
+   hint('Ah Ma: '+(name?name+', ':'')+en[i],'阿嬷：'+(name?name+'，':'')+cn[i])
+  }
+ }
+ return result
+};
+/* Restore slipper choice after the first strike without a larger permanent
+   control panel. Put it in the existing symbolic worry chooser. */
+const mbArtChoicesBefore=openStressChoices;
+openStressChoices=function(){
+ const result=mbArtChoicesBefore();
+ if(activity!=='hit'||room!=='fish')return result;
+ const book=$('content')?.querySelector('.stressChoiceBook');if(!book)return result;
+ const group=element('section','',book,'mbArtSlipperChoice');
+ element('strong',tr('Choose a slipper','选只拖鞋'),group);
+ const row=element('div','',group,'mbArtSlipperButtons');
+ for(const [index,en,cn] of [[0,'Rose slipper','玫红拖鞋'],[1,'Wood brown slipper','木棕拖鞋']]){
+  const btn=b(row,tr(en,cn),()=>{if(paperRitualBusy()||state.paperFinished)return;stressTool=index;for(const [i,v] of [...row.querySelectorAll('button')].entries())v.setAttribute('aria-pressed',String(i===index))});btn.setAttribute('aria-pressed',String(index===stressTool))
+ }
+ book.prepend(group);return result
+};
+/* Show actual purchasing power without changing existing prices or saves. */
+const mbArtShopBefore=furnitureMarket;
+furnitureMarket=function(back='shop'){
+ const result=mbArtShopBefore(back),shelf=$('content')?.querySelector('.komorebiBook');if(!shelf)return result;
+ const balance=hideoutBalance(),catalogue=furnitureCatalogue(),grid=shelf.querySelector('.komorebiGrid');if(!grid)return result;
+ const button=b(shelf,tr('Show items I can afford','只看买得起的'),()=>{mbArtAffordable=!mbArtAffordable;furnitureMarket(back)});
+ button.setAttribute('aria-pressed',String(mbArtAffordable));grid.before(button);
+ for(const tile of grid.querySelectorAll('.komorebiTile')){
+  const name=tile.querySelector('strong')?.textContent,v=catalogue.find(v=>tr(v[1],v[2])===name);if(!v)continue;
+  const owned=furnitureOwned(v[0]),short=mbArtShortfall(v[3],balance),locked=v[0]==='roomStudio'&&!furnitureOwned('roomExtension');
+  if(!owned&&short)element('small',tr('Save ','还差 ')+short+tr(' more coins',' 喵币'),tile,'mbArtShortfall');
+  if(!owned&&locked)element('small',tr('Reading room first','先扩建阅读小室'),tile,'mbArtShortfall');
+  tile.hidden=mbArtAffordable&&(owned||short>0||locked);
+ }
+ if(mbArtAffordable&&![...grid.querySelectorAll('.komorebiTile')].some(tile=>!tile.hidden))element('p',tr('Nothing to buy in this section yet. Try another category or keep exploring.','这一区暂时没有买得起的物品。换个分类看看，或继续逛逛小镇。'),grid,'mbArtEmpty');
+ return result
+};
+let mbArtAffordable=false;
+const mbArtUi=document.createElement('style');mbArtUi.textContent='.mbArtSlipperChoice{padding:10px 0;border-bottom:1px solid #b99e74}.mbArtSlipperButtons{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}.mbArtSlipperButtons button{min-height:44px;white-space:normal}.mbArtSlipperButtons button[aria-pressed=true]{background:#52674f;color:#fff3d8}.komorebiTile[hidden]{display:none!important}.mbArtShortfall{color:#70513b}.mbArtEmpty{grid-column:1/-1}';document.head.append(mbArtUi);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
