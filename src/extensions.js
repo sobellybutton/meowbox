@@ -8169,6 +8169,7 @@ todayHub=function(){
  old?.remove();wheel?.remove();
  const lead=element('section','',q,'journalCheckin'),claimed=dailyWheelRecord().day>=shrineClock().day;
  const badge=element('span',claimed?tr('Stamped','已签到'):tr('Today','今日'),lead,'journalCheckinSeal');
+ const art=element('img','',lead,'mbFestivalInvitationArt');art.src=destinationPortrait('island');art.alt='';art.loading='lazy';
  const copy=element('div','',lead,'journalCheckinCopy');element('small',shrineClock().day,copy);element('h2',claimed?tr('Welcome back, traveller','旅人，欢迎回来'):tr('Your daily little treat','今日小小签到'),copy);
  element('p',claimed?tr('Today’s free spin added ','今日签到已获得 ')+dailyWheelRecord().amount+' '+tr('Meow Coins','喵币'):tr('One free lucky spin, 10 to 30 Meow Coins.','每天免费转一次，10至30喵币。'),copy);
  b(lead,claimed?tr('See today’s prize','查看今日奖励'):tr('Check in & spin','签到转转乐'),dailyWheelPage);
@@ -8187,11 +8188,54 @@ function journalCheckinIndicator(){
 }
 const journalHUDPrevious=updateHUD;
 updateHUD=function(){journalHUDPrevious();journalCheckinIndicator()};
+/* The free daily check-in belongs to the festival, not the journal.
+   Preserve the original spin event, reward state and controls. */
 const journalWheelBefore=dailyWheelPage;
 dailyWheelPage=function(){
- journalWheelBefore();const q=$('content'),stage=q.querySelector('.dailyWheelStage');if(stage){const surround=element('div','',q,'journalWheelStand');stage.before(surround);surround.append(stage);const title=element('div',tr('The town’s lucky wheel','小镇幸运转盘'),surround,'journalWheelPlaque');surround.prepend(title)}
+ journalWheelBefore();
+ const q=$('content'),stage=q.querySelector('.dailyWheelStage'),spin=q.querySelector('.dailyWheelSpin'),result=q.querySelector('.dailyWheelResult');
+ if(stage&&spin&&result){
+  const sceneCard=element('section','',q,'mbFestivalScene');
+  stage.before(sceneCard);
+  const art=element('img','',sceneCard,'mbFestivalPainting');art.src=destinationPortrait('island');art.alt='';art.decoding='async';
+  const sign=element('header','',sceneCard,'mbFestivalSign');
+  element('small',tr('MUNCH & PLAY · DAILY FESTIVAL','吃喝玩乐街 · 每日小摊'),sign);
+  element('strong',tr('Paid leave, in coin form','把年假变成喵币'),sign);
+  const stall=element('div','',sceneCard,'mbFestivalStall');stall.append(stage);
+  const counter=element('div','',sceneCard,'mbFestivalCounter');
+  const copy=element('div','',counter);element('small',tr('The stall keeper says','摊主说'),copy);copy.append(result);
+  counter.append(spin);
+  const info=q.querySelector(':scope > .communityMuted');if(info){const details=element('details','',q,'mbFestivalRules');element('summary',tr('How the daily treat works','每日福利规则'),details);details.append(info);sceneCard.after(details)}
+  const heading=q.querySelector(':scope > h1');if(heading)heading.classList.add('mbFestivalPageTitle');
+  const intro=q.querySelector(':scope > p');if(intro)intro.classList.add('mbFestivalPageIntro');
+ }
  journalLanguage(dailyWheelPage);journalCheckinIndicator()
 };
+const mbFestivalStyle=document.createElement('style');mbFestivalStyle.textContent=`
+#content .journalCheckin .mbFestivalInvitationArt{width:100%;height:clamp(65px,16vw,110px);object-fit:cover;object-position:50% 31%;border-radius:3px;grid-column:1/-1;flex-basis:100%;order:-2}
+#content .mbFestivalScene{position:relative;isolation:isolate;overflow:hidden;max-width:680px;margin:10px auto 14px;border-radius:9px 9px 4px 4px;border:1px solid #96734f;background:#554635;box-shadow:0 4px 14px #352b2333;display:flex;flex-direction:column;align-items:center}
+#content .mbFestivalPainting{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 37%;z-index:-3;pointer-events:none}
+#content .mbFestivalScene:before{content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(180deg,#38291c3d,transparent 32%,#35281a22 68%,#3a2b20ba);pointer-events:none}
+#content .mbFestivalSign{margin:13px auto 0;padding:8px 18px 10px;background:var(--town-grain),#5c4132;color:#fff0ce;border:2px solid #c8a46b;box-shadow:0 3px 4px #2b201b77;text-align:center;border-radius:3px;max-width:90%;box-sizing:border-box}
+#content .mbFestivalSign small,#content .mbFestivalSign strong{display:block}
+#content .mbFestivalSign small{font:10px/1.3 system-ui;letter-spacing:.06em;color:#f3d6a6}
+#content .mbFestivalSign strong{font:600 clamp(16px,4vw,23px)/1.25 var(--town-title);margin-top:3px}
+#content .mbFestivalStall{position:relative;width:min(78%,300px);margin:20px auto 0;padding-bottom:20px;isolation:isolate}
+#content .mbFestivalStall:before{content:"";position:absolute;z-index:-1;top:12%;bottom:0;left:43%;width:14%;border:1px solid #563c29;border-radius:4px;background:linear-gradient(90deg,#694a34,#b38a58 34%,#82613e 76%,#503523);box-shadow:3px 3px 6px #31241788}
+#content .mbFestivalStall .dailyWheelStage{width:100%;max-width:100%;margin:0 auto!important}
+#content .mbFestivalStall .dailyWheelDisk{filter:drop-shadow(0 6px 5px #251a15b0)}
+#content .mbFestivalCounter{box-sizing:border-box;width:100%;padding:10px 14px 13px;display:grid;gap:8px;background:var(--town-grain),#f5e6c8;border-top:6px solid #a17a50;box-shadow:0 -3px 9px #34251955}
+#content .mbFestivalCounter>div{min-width:0}
+#content .mbFestivalCounter small{display:block;font-size:11px;color:#785a41}
+#content .mbFestivalCounter .dailyWheelResult{background:transparent!important;border:0!important;text-align:left;margin:3px 0!important;padding:0!important;font:15px/1.4 system-ui!important;color:#554432!important}
+#content .mbFestivalCounter .dailyWheelSpin{width:100%;margin:0!important;min-height:48px!important}
+#content .mbFestivalRules{max-width:680px;margin:8px auto 12px;padding:8px 12px;border:1px solid #b5a07a;background:#f6e9d1;border-radius:4px}
+#content .mbFestivalRules summary{min-height:44px;display:flex;align-items:center;cursor:pointer;color:#64543d;font-size:13px}
+#content .mbFestivalPageTitle{font-size:clamp(23px,5vw,34px)!important;margin-bottom:6px!important}
+#content .mbFestivalPageIntro{font-size:14px!important;margin:4px 0 8px!important}
+@media(min-width:700px){#content .mbFestivalScene{max-width:620px}#content .mbFestivalCounter{grid-template-columns:minmax(0,1fr) minmax(150px,210px);align-items:center}#content .mbFestivalStall{width:260px}}
+@media(max-height:670px) and (max-width:600px){#content .mbFestivalStall{width:min(68%,240px);margin-top:12px;padding-bottom:12px}#content .mbFestivalSign{margin-top:8px;padding:6px 12px}}
+`;document.head.append(mbFestivalStyle);
 const journalStyle=document.createElement('style');
 journalStyle.textContent=
 '.journalProfileBook,.journalShelfPage,.journalDailyTasks,.journalCheckin,.journalBookshelf{background:var(--town-grain),#f5e9cf;border:1px solid #b5a07a;border-radius:4px;padding:14px;margin:12px 0;color:#504638;box-shadow:2px 3px 0 #bba17b30}'+

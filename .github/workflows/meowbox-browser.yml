@@ -224,6 +224,19 @@ jobs:
                 if(await page.locator('#dock').isHidden())throw Error('Navigation hidden');
                 await page.locator('#dockScoop').click();
                 await page.locator('.journalDailyTasks').waitFor({state:'visible'});
+                await page.locator('.journalCheckin button').first().click();
+                await page.locator('.mbFestivalScene .dailyWheelSpin').waitFor({state:'visible'});
+                if(!await page.locator('.mbFestivalPainting').evaluate(im=>im.decode().then(()=>im.naturalWidth>0)))throw Error('Festival illustration missing');
+                const dailySpin=page.locator('.mbFestivalScene .dailyWheelSpin');
+                const beforeSpin=await page.evaluate(()=>dailyWheelRecord().total);
+                if(!await dailySpin.isDisabled()){
+                  await dailySpin.click();
+                  await page.waitForFunction(n=>dailyWheelRecord().total>n,beforeSpin);
+                  if(!await dailySpin.isDisabled())throw Error('Daily reward can be claimed twice');
+                }
+                await page.screenshot({path:'test-results/'+name+'-festival-wheel.png'});
+                await page.getByRole('button',{name:'Back to Today',exact:true}).click();
+                await page.locator('.journalDailyTasks').waitFor({state:'visible'});
                 const dailyPlay=page.locator('.journalDailyTask').filter({hasText:'Play a little'});
                 await dailyPlay.getByRole('button',{name:/Train/}).click();
                 await page.locator('.districtRailCabin').waitFor({state:'visible'});
