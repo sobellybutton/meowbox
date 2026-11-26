@@ -740,27 +740,46 @@ function residentArtworkRect(record,im,x,y,scale){
  if(!record||!im?.naturalWidth||!im.naturalHeight||![x,y,scale].every(Number.isFinite)||scale<=0)return null;
  const h=record.height*scale,w=h*im.naturalWidth/im.naturalHeight;return {x:x-w/2,y:y-h,w,h}
 }
-function drawGatheringPainted(name,x,y,scale=1){
+function drawResidentRaster(im,x,y,height,facing='right'){
+ if(!im?.complete||!im.naturalWidth||!im.naturalHeight||![x,y,height].every(Number.isFinite)||height<=0)return false;
+ const w=height*im.naturalWidth/im.naturalHeight;
+ ctx.save();try{ellipse(x,y+1,Math.min(25,w*.32),Math.max(2,height*.035),'#342e2540');ctx.translate(x,y);ctx.scale(facing==='left'?-1:1,1);ctx.drawImage(im,-w/2,-height,w,height)}finally{ctx.restore()}return true
+}
+const residentOriginalMapDraw=drawPaintedResident;
+drawPaintedResident=function(n,scale,moving,facing){
+ const record=residentArtworkRecord(n?.n||[]);
+ if(!record)return residentOriginalMapDraw(n,scale,moving,facing);
+ const im=residentArtworkImage(record);
+ if(moving&&(facing==='left'||facing==='right'))n.paintedFacing=facing;
+ if(drawResidentRaster(im,n.x,n.y,94*scale,n.paintedFacing||facing))return true;
+ // Existing raster atlas is the same identity and may finish loading first.
+ if(residentOriginalMapDraw(n,scale,moving,facing))return true;
+ // Never replace an identified resident with a different player's avatar.
+ return true
+};
+function drawGatheringPainted(name,x,y,scale=1,facing='right'){
  const record=residentArtworkRecord(name),im=residentArtworkImage(record),rect=residentArtworkRect(record,im,x,y,scale);
  if(!im?.complete||!rect)return false;
- ctx.save();ellipse(x,y+1,Math.min(20,rect.w*.32),4,'#342e2540');ctx.drawImage(im,rect.x,rect.y,rect.w,rect.h);ctx.restore();return true
+ return drawResidentRaster(im,x,y,rect.h,facing)
 }
 const gatheringPaintedBefore=gatheringResident;
 gatheringResident=function(name,x,y,scale,facing,kind){
- if(residentArtworkRecord(name)){drawGatheringPainted(name,x,y,scale);return}
+ if(residentArtworkRecord(name)){if(!drawGatheringPainted(name,x,y,scale,facing))drawPaintedResident({x,y,n:name},scale,false,facing);return}
  return gatheringPaintedBefore(name,x,y,scale,facing,kind)
 };
+let residentPortraitRequest=0;
 const paintedGatheringSayBefore=say;
 say=function(name,...args){
+ const request=++residentPortraitRequest;
  const result=paintedGatheringSayBefore(name,...args),record=residentArtworkRecord(name);
  if(!record)return result;const portrait=$('talkPortrait'),im=residentArtworkImage(record,true);if(!portrait||!im)return result;
- const apply=()=>{if(talkOpen&&$('speaker').textContent===String(name)&&im.complete&&im.naturalWidth){portrait.src=im.src;portrait.hidden=false;portrait.classList.add('paintedResidentPortrait');requestAnimationFrame(syncCharacterSpeech)}};
- if(im.complete){if(im.naturalWidth)apply();else portrait.hidden=true}else{portrait.hidden=true;im.addEventListener('load',apply,{once:true})}return result
+ const apply=()=>{if(request===residentPortraitRequest&&talkOpen&&$('speaker').textContent===String(name)&&im.complete&&im.naturalWidth){portrait.src=im.src;portrait.hidden=false;portrait.classList.add('paintedResidentPortrait');requestAnimationFrame(syncCharacterSpeech)}};
+ portrait.hidden=true;if(im.complete){if(im.naturalWidth)apply()}else im.addEventListener('load',apply,{once:true});return result
 };
 const paintedGatheringIntroBefore=roomIntro;
 roomIntro=function(){
- if(room==='tea'){for(const key of ['auntie-mei','grandma','wang-laoban','master-yue'])residentArtworkImage(residentArtworkRecords.find(v=>v.id===key))}
- if(room==='tarot')residentArtworkImage(residentArtworkRecords.find(v=>v.id==='fortune-teller'),true);
+ const residents={tea:['auntie-mei','grandma','wang-laoban','master-yue'],tarot:['fortune-teller'],destiny:['master-yue'],temple:['temple-keeper'],kitchen:['grandma'],office:['wang-laoban'],park:['auntie-mei'],boba:['auntie-mei','grandma','wang-laoban','master-yue']}[room]||[];
+ for(const key of residents){const record=residentArtworkRecords.find(v=>v.id===key);residentArtworkImage(record);residentArtworkImage(record,true)}
  return paintedGatheringIntroBefore()
 };
 
