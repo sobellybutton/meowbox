@@ -60,7 +60,7 @@ function section(source,start,end){
  if(a<0||b<a)throw Error('Missing scene geometry section '+start);
  return source.slice(a,b);
 }
-const sceneGeometry=new Function("let room=null,activity=null;const roomActions={arcade:[['bubbleArcade'],['goldfishScoop'],['blindBox']]};"+
+const sceneGeometry=new Function("let room=null,activity=null;const roomResidentStations={};const roomActions={arcade:[['bubbleArcade'],['goldfishScoop'],['blindBox']]};"+
  section(ext,'const indoorStages=','function indoorDestination')+
  section(src,'const groundedStations=','function drawGroundedSupport')+
  section(src,'const groundedObstaclesBefore=indoorObstacles;','/* Exploration first')+
