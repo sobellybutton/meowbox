@@ -1195,13 +1195,13 @@ lifeHUDRefresh=function(...args){const v=compactLifeRefreshBefore(...args);compa
 const townSettingsRoot=$('small'),townSettingsPanel=languageChoices.parentNode;
 townSettingsPanel.classList.add('townSettingsPanel');townSettingsPanel.id='townSettingsPanel';
 const townSettingsToggle=element('button','',townSettingsRoot,'townSettingsToggle');
-townSettingsToggle.id='townSettingsToggle';townSettingsToggle.setAttribute('aria-controls','townSettingsPanel');
+townSettingsToggle.id='townSettingsToggle';townSettingsToggle.setAttribute('aria-controls','townSettingsPanel');townSettingsToggle.innerHTML='<svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4l.7 2.5 2 .9 2.3-1.2 2 3.5-1.8 1.9v2.8l1.8 1.9-2 3.5-2.3-1.2-2 .9L14 21h-4l-.7-2.5-2-.9L5 18.8l-2-3.5 1.8-1.9v-2.8L3 8.7l2-3.5 2.3 1.2 2-.9z"/><circle cx="12" cy="12" r="3.2"/></svg>';
 const townSettingsExtra=element('div','',townSettingsPanel,'townSettingsExtra');
 const townSoundSettings=element('button','',townSettingsExtra),townMapLabels=element('button','',townSettingsExtra),townHelp=element('button','',townSettingsExtra);
 let townSettingsOpen=false;
 function syncTownSettings(){
  townSettingsRoot.dataset.open=String(townSettingsOpen);
- townSettingsToggle.textContent=tr('Settings','设置');townSettingsToggle.setAttribute('aria-expanded',String(townSettingsOpen));
+ townSettingsToggle.setAttribute('aria-label',tr('Settings','设置'));townSettingsToggle.title=tr('Settings','设置');townSettingsToggle.setAttribute('aria-expanded',String(townSettingsOpen));
  townSettingsPanel.hidden=!townSettingsOpen;
  townSoundSettings.textContent=muted?tr('Sound off','声音已关闭'):tr('Sound on','声音已开启');
  townSoundSettings.setAttribute('aria-pressed',String(!muted));
@@ -1231,7 +1231,35 @@ const townCalendarTodayBefore=todayHub;todayHub=function(...args){
  if(after){const link=b(q,tr('Lunar calendar','农历日历'),calendarPage);link.className='townCalendarLink';after.after(link)}
  journalLanguage(todayHub);return v
 };$('dockScoop').onclick=()=>todayHub();
-const townGateWordsBefore=proRender;proRender=function(...args){const v=townGateWordsBefore(...args);const gate=proposal.querySelector('.shrine-enter');if(gate)gate.textContent=tr('Enter the valley','走进解忧谷');return v};
+const townGateWordsBefore=proRender;proRender=function(...args){
+ const v=townGateWordsBefore(...args),enterButton=proposal.querySelector('.shrine-enter');
+ if(!enterButton)return v;
+ enterButton.textContent=tr('Enter the valley','走进解忧谷');
+ // Use the existing illustrated mountain approach, not an oversized vector door.
+ const gate=proposal.querySelector('.gate');if(gate)gate.hidden=true;
+ if(shrineReturning){
+  const choices=proposal.querySelector('header .languageChoice');
+  if(choices){const menu=document.createElement('details');menu.className='shrineLanguageMenu';const trigger=document.createElement('summary');trigger.textContent=tr('EN','中文')+' ▾';trigger.setAttribute('aria-label',tr('Change language','切换语言'));choices.before(menu);menu.append(trigger,choices)}
+ }
+ return v
+};
+const shrineArrivalStyle=document.createElement('style');shrineArrivalStyle.textContent=`
+#proposal[data-shot="shrine"] .gate[hidden]{display:none!important}
+#proposal[data-shot="shrine"] .hero{overflow:visible!important}
+#proposal[data-shot="shrine"] .gate-traveller{height:clamp(66px,19dvh,144px)!important;width:32%!important;left:50%!important;bottom:3%!important;translate:-50% 0;filter:drop-shadow(0 4px 3px #18271e55)!important;transition:transform .26s ease,opacity .26s ease!important}
+#proposal[data-shot="shrine"] .gate-traveller.go{transform:translateY(-12%) scale(.85)!important;opacity:0}
+#proposal[data-shot="shrine"] footer{animation:none!important;gap:7px!important;padding:12px 14px max(12px,env(safe-area-inset-bottom,0px))!important;background:linear-gradient(transparent,#24362ce8 25%,#24362cf7);border-radius:0!important}
+#proposal[data-shot="shrine"] footer .shrine-enter{min-height:48px}
+#proposal[data-shot="shrine"] footer .shrine-ticket-reminder{font-size:10px;padding:4px 6px;opacity:.85}
+#proposal[data-shot="shrine"] footer .rail-revisit{min-height:44px!important;background:transparent!important;font-size:12px!important}
+#proposal .shrineLanguageMenu{position:relative;flex:none;z-index:8}
+#proposal .shrineLanguageMenu summary{list-style:none;cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:center;padding:0 9px;border:1px solid #d1b989;background:#f2e1bc;color:#30483a;border-radius:5px;font-size:13px}
+#proposal .shrineLanguageMenu summary::-webkit-details-marker{display:none}
+#proposal .shrineLanguageMenu .languageChoice{position:absolute;right:0;top:calc(100% + 5px);background:#f2e1bc;padding:4px;border-radius:5px;box-shadow:0 3px 10px #1d292d66}
+#proposal .shrineLanguageMenu:not([open]) .languageChoice{display:none!important}
+@media(max-height:600px){#proposal[data-shot="shrine"] footer{gap:4px!important;padding:6px 10px!important}#proposal[data-shot="shrine"] footer .shrine-ticket-reminder{display:none}}
+@media(prefers-reduced-motion:reduce){#proposal[data-shot="shrine"] .gate-traveller{transition:none!important}}
+`;document.head.append(shrineArrivalStyle);
 let townMapHintTimer=0;
 const townHintBefore=hint;hint=function(...args){
  clearTimeout(townMapHintTimer);const el=$('hint');el.classList.remove('townHintRest');
@@ -1241,7 +1269,7 @@ const townHintBefore=hint;hint=function(...args){
 };
 const sceneryFirstStyle=document.createElement('style');sceneryFirstStyle.textContent=`
 #game #lunarBtn,#game #quietToggle,#walkHelp,#game #small #mute{display:none!important}
-#game #hud{justify-content:space-between!important;padding-right:63px!important;left:8px!important;right:8px!important;align-items:center}
+#game #hud{justify-content:space-between!important;padding-right:51px!important;left:8px!important;right:8px!important;align-items:center}
 #game #profileHud{min-height:44px!important;max-width:56%!important;padding:3px 6px 3px 4px!important;gap:5px!important}
 #game #hudPortrait{width:31px!important;height:31px!important;flex:none}
 #game #hudName{font-size:12px!important;max-width:96px!important}
@@ -1249,7 +1277,7 @@ const sceneryFirstStyle=document.createElement('style');sceneryFirstStyle.textCo
 #game #hudStats{margin-left:auto;min-width:0}
 #game #hudStats #hudCoins{white-space:nowrap;font-size:12px!important;padding:6px!important}
 #game #small{top:calc(env(safe-area-inset-top,0px) + 8px)!important;left:auto!important;right:8px!important;display:flex;align-items:flex-start;gap:5px}
-#game #small .townSettingsToggle{background:#f4e8d1!important;border:1px solid #ad9775!important;border-radius:6px!important;box-shadow:0 2px 4px #42331f30;min-height:44px!important;width:55px!important;font:600 11px/1.2 Georgia,"Songti SC",serif;padding:5px 3px!important}
+#game #small .townSettingsToggle{background:#f4e8d1!important;border:1px solid #ad9775!important;border-radius:6px!important;box-shadow:0 2px 4px #42331f30;min-height:44px!important;width:44px!important;display:grid!important;place-items:center;color:#65503a!important;font:600 11px/1.2 Georgia,"Songti SC",serif;padding:5px 3px!important}
 #game #small .townSettingsPanel{position:absolute;right:0;top:calc(100% + 5px);width:190px;max-width:calc(100vw - 24px);display:grid!important;gap:6px;padding:8px;border:1px solid #ad9775;background:#f4e8d1;border-radius:6px;box-shadow:0 4px 15px #31281940;pointer-events:auto;overflow:visible}
 #game #small .townSettingsPanel[hidden]{display:none!important}
 #game #small .townSettingsExtra{display:grid;gap:3px;background:transparent;border:0;overflow:visible}
