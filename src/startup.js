@@ -6897,20 +6897,38 @@ popGuestMeet=function(g,n=null){
  popGuestMemory[g.id]=rec;save('popGuestMemoryV1',popGuestMemory);
  const plan=pawGuestConversationPlan(g,rec.visits);
  if(plan.brief){popGuestSay(g,tr(...plan.line),[]);return}
+ const respond=i=>{
+  if(!Array.isArray(rec.choices))rec.choices=[];
+  if(!rec.choices.includes(i))rec.choices.push(i);
+  popGuestMemory[g.id]=rec;save('popGuestMemoryV1',popGuestMemory);
+  if(!items.some(x=>x[0]===g.gift[0]))addItem(...g.gift);
+  popGuestSay(g,tr(...g.choices[i][1]),[[tr('See you around','下次见'),closeTalk]])
+ };
  popGuestSay(g,tr(...plan.line),[
-  [tr(...plan.topic),()=>popGuestScene(g)],
-  [tr(...g.choices[1][0]),()=>{
-   if(!rec.choices.includes(1))rec.choices.push(1);
-   popGuestMemory[g.id]=rec;save('popGuestMemoryV1',popGuestMemory);
-   if(!items.some(x=>x[0]===g.gift[0]))addItem(...g.gift);
-   popGuestSay(g,tr(...g.choices[1][1]),[[tr('See you around','下次见'),closeTalk]])
-  }],
+  [tr(...plan.topic),()=>respond(0)],
+  [tr(...g.choices[1][0]),()=>respond(1)],
   [tr('Keep exploring','继续逛逛'),closeTalk]
  ])
 };
-// Replace the generic prompt while preserving original choice meanings.
-for(const g of popGuestStories){
- const profile=pawGuestPersonalities.get(g.id);if(profile)g.prompt=profile.lines[0];
+// Existing ambient speech scheduler supplies proximity, collision avoidance,
+// language selection, cooldown and daily repetition limits; no new overlay.
+for(const [id,profile] of pawGuestPersonalities){
+ pawAmbientLines['guest:'+id]=profile.lines.map((pair,i)=>['guest-'+i,...pair]);
 }
+const pawGuestAmbientBefore=pawAmbientProfile;
+pawAmbientProfile=function(actor){
+ if(actor?.popGuest&&pawGuestPersonalities.has(actor.popGuest))return {id:'guest:'+actor.popGuest};
+ return pawGuestAmbientBefore(actor)
+};
+// Rare guests have predictable local-hour windows. Keep ordinary visitors
+// eligible at all hours so the existing two-slot roster can still fill.
+Object.assign(pawGuestWindows,{
+ 'celeb_parody_03_elon_meowsk':{every:5,hours:[17,24]},
+ 'celeb_parody_05_uncle_rojen':{every:3,hours:[11,15]},
+ 'celeb_parody_06_marie_clutter':{every:4,hours:[9,15]},
+ 'net_culture_03_mc_king':{every:3,hours:[12,18]},
+ 'net_culture_04_buzzword_vivi':{every:3,hours:[17,24]},
+ 'traveller_01_sven_flatpack':{every:3,hours:[9,17]}
+});
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
