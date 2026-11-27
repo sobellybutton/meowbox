@@ -229,7 +229,10 @@
         "See ART-01 staged 20 recovered reach/tap candidates, no live integration yet.",
         "15 original frames reused for paper ritual phase rendering on travellers 0–2. Per-frame grip anchors visually inspected and alpha checked; exact blob match and current manifest validator pass. Player 3 camera overlap needs separate review. Rendered contact, cold load and other gestures remain pending."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-extract-visuals-20261127",
+        "until": 1795796757054
+      },
       "blocker": "Owner explicitly requests real visible waving and other natural gestures. Verify player-initiated wave, NPC response, greeting, sitting and context-specific interaction poses for all selectable travellers; use matching illustrated frames and anchored feet/hands, not a floating emoji, generic bob or detached limb. No final acceptance before rendered playback. Reuse recovered 4x5 tapping atlas and temple concept pose row noted in ART-01 before producing replacements. Do not treat reaching poses as waving or the single concept traveller's poses as complete animation sets for other identities."
     },
     {
@@ -243,7 +246,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-extract-visuals-20261127",
+        "until": 1795796757054
+      }
     },
     {
       "id": "NPC-01",
