@@ -104,3 +104,24 @@ q={paperPrepAt:5};pawPaperClock(q,5,false);pawPaperClock(q,6,true);pawPaperClock
 delete q.paperPrepAt;ck(pawPaperClock(q,9,false)===null&&!q.pawPaperClock,'clear finished clock');
 ck(pawNoticePageSize(6,20,6)===12,'page more');ck(pawNoticePageSize(12,13,6)===13,'bounded archive');ck(pawNoticePageSize(12,30,1)===13,'retain old notices after publication');ck(pawNoticePageSize(6,2,6)===6,'minimum page');
 return 'PASS '+n+' paper ritual and notice archive checks';`)());
+
+const careContinuity=between(source,'/* PAW_CARE_CONTINUITY_BEGIN */','/* PAW_CARE_CONTINUITY_END */');
+console.log(new Function(careContinuity+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+for(const phase of ['feed','water','rest','pet','play','return']){
+ let a={phase,at:10,returnAt:10,tickAt:10,assisted:true};const k=phase==='return'?'returnAt':'at';
+ pawCareActiveClock(a,10,false);pawCareActiveClock(a,10.5,true);pawCareActiveClock(a,20,true);pawCareActiveClock(a,21,false);
+ ck(a[k]===21,'pause '+phase);ck(a.tickAt===21,'tick '+phase);
+ pawCareActiveClock(a,22,false);ck(a[k]===21,'resume '+phase);
+ a[k]=40;pawCareActiveClock(a,23,true);ck(a[k]===40,'new action '+phase)
+}
+let a={phase:'idle'};ck(pawCareControlAllowed(a,a,'feed',false),'fresh');
+ck(!pawCareControlAllowed(a,{},'feed',false),'stale');ck(!pawCareControlAllowed(a,a,'bad',false),'invalid');ck(!pawCareControlAllowed(a,a,'feed',true),'covered');
+a.drag={id:7};ck(!pawCareControlAllowed(a,a,'feed',false),'dragging');
+a.phase='pet';a.x=400;a.y=535;ck(pawCareCancelDrag(a,10)===7&&a.phase==='return'&&a.returnAt===10&&!a.drag,'cancel drag without reward');
+ck(pawCareCancelDrag(a,11)===null,'idempotent');
+ck(!pawCareAssistedReady({phase:'pet',at:10,assisted:true},12,false),'early');
+ck(pawCareAssistedReady({phase:'pet',at:10,assisted:true},12.4,false),'pet ready');
+ck(!pawCareAssistedReady({phase:'play',at:10,assisted:true},15,true),'covered no award');
+ck(pawCareAssistedReady({phase:'play',at:10,assisted:true},13.3,false),'play ready');
+return 'PASS '+n+' cat care clock, control and cancellation assertions';`)());
