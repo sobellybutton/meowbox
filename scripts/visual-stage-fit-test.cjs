@@ -93,3 +93,25 @@ for(const [w,h,wanted] of [[320,568,'portrait'],[390,844,'portrait'],[430,932,'p
 }
 return n;`);
 console.log('PASS: '+orientationChecks()+' responsive native-art selection and fit checks');
+
+const hallGeometry=new Function(section(src,'/* PAW_TEMPLE_SCENE_BEGIN */','/* PAW_TEMPLE_SCENE_END */')+"let room='temple';"+section(ext,'function indoorSafe(','function indoorDestination(')+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};const points=[[400,735],[400,700],...Object.values(pawHallStations).map(v=>v.slice(2))];
+for(const a of points)for(const b of points)ck(indoorSafe(...a,pawHallFloorObstacles)&&indoorPath(a,b,pawHallFloorObstacles),'blocked '+a+' to '+b);
+ck(pawHallOverlap({left:1,right:10,top:1,bottom:10},{left:5,right:12,top:5,bottom:12}),'overlap');
+ck(!pawHallOverlap({left:1,right:10,top:1,bottom:10},{left:11,right:12,top:5,bottom:12}),'clear');
+ck(pawHallActorScale(94,112,.95)*112===94*.95,'height');
+ck(pawHallScreenRect({x:10,y:20,w:30,h:40},{s:2,ox:3,oy:4}).bottom===124,'projection');return n;`);
+console.log('PASS: '+hallGeometry()+' painted temple station, floor and overlap checks');
+const forecourtGeometry=new Function(section(src,'/* PAW_FORECOURT_BEGIN */','/* PAW_FORECOURT_END */')+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+for(const kind of ['cat','hall']){
+ let q={pos:pawForecourtStart.slice(),route:[],last:0};ck(pawForecourtRoute(q,kind),'route');ck(!pawForecourtRoute(q,'hall'),'busy');
+ let pos=q.pos.slice();pawForecourtTick(q,2,true);ck(q.pos.join()===pos.join(),'paused');let result=null;
+ for(let i=1;i<160;i++){result=pawForecourtTick(q,2+i*.05,false)||result;ck(q.pos[0]>=.45&&q.pos[0]<=.59&&q.pos[1]>=.58&&q.pos[1]<=.82,'foot remains on path')}
+ ck(result===kind,'destination');ck(q.pos.join()===(kind==='cat'?pawForecourtCat:pawForecourtLanding).join(),'landmark');
+}
+for(const [w,h] of [[320,568],[390,844],[844,390],[1440,900]]){
+ let p=pawForecourtCamera(w,h),r=pawForecourtPlate;ck(p.s*r.w<=w+.001&&p.s*r.h<=h+.001,'contain');ck(Math.abs(p.ox+r.x*p.s-(w-r.w*p.s)/2)<1e-8,'center');
+}
+return n;`);
+console.log('PASS: '+forecourtGeometry()+' lucky cat approach and camera assertions');
