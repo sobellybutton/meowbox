@@ -3759,7 +3759,7 @@ function pawTownFront(){
  pawTownFromDock=true;activePage='pawTownFront';
  page(tr('Town Square','摸鱼广场'),tr('Pull up a chair. There is always something to read or someone to talk to.','来坐坐吧，总有故事可看，也有话可聊。'),q=>{
   const front=element('section','',q,'pawTownFront');
-  const photo=element('figure','',front,'pawTownFrontPhoto'),im=element('img','',photo);im.src=pawJournalPicture('tea','home');im.alt=tr('The Tea Room','吃瓜茶馆');element('figcaption',tr('A little company between adventures','逛累了，就来聊两句'),photo);
+  const photo=element('figure','',front,'pawTownFrontPhoto'),im=element('img','',photo);im.src=pawTownPavilionPath;im.alt=tr('Town Hall pavilion','小镇广场长廊');element('figcaption',tr('A little company between adventures','逛累了，就来聊两句'),photo);
   const chat=element('section','',front,'pawTownSection');
   element('h2',tr('Come sit with us','来坐坐吧'),chat);
   pawTownLink(chat,'lounge','Tea chat','茶馆闲聊','Chat with fictional town residents, anytime.','随时跟小镇的虚构居民聊两句。');
@@ -4156,8 +4156,13 @@ function pawVisualTheme(q,title){
  if(q.querySelector('.dailyWheelStage'))return 'daily';
  return 'paper'
 }
-function pawVisualImage(theme){
- if(theme==='town')return pawJournalPicture('tea','home');
+/* PAW_DOCK_PAINT_BEGIN */
+const pawTownPavilionPath='assets/visual/staging/2026-11-27/interfaces/town-hall/portrait.webp';
+const pawTeaPavilionPath='assets/visual/staging/2026-11-27/rooms/tea/portrait.webp';
+function pawTownSceneArtwork(space){return space==='lounge'?pawTeaPavilionPath:pawTownPavilionPath}
+/* PAW_DOCK_PAINT_END */
+function pawVisualImage(theme,q){
+ if(theme==='town')return pawTownSceneArtwork(q?.querySelector('.townChatTranscript')&&communityTab==='lounge'?'lounge':'hall');
  if(theme==='daily')return destinationPortrait('fortune');
  if(theme==='collection'||theme==='shop')return destinationPortrait('island');
  if(theme==='profile')return destinationPortrait('wonder');
@@ -4165,10 +4170,11 @@ function pawVisualImage(theme){
 }
 function pawVisualHeader(q,theme){
  const h=q.querySelector(':scope > h1'),intro=q.querySelector(':scope > p');
- if(!h||!intro||['room','travel'].includes(theme))return;
- const art=pawVisualImage(theme);
+ if(!h||!intro||['room','travel'].includes(theme)||q.querySelector('.pawTownFrontPhoto'))return;
+ const art=pawVisualImage(theme,q);
  if(!art)return;
  const header=element('header','',q,'pawIllustratedHeading');h.before(header);
+ if(theme==='town')header.dataset.pawTownScene=art===pawTeaPavilionPath?'tea':'hall';
  const im=element('img','',header);im.src=art;im.alt='';im.decoding='async';
  im.onerror=()=>{im.onerror=null;header.classList.add('pawImageUnavailable');im.remove()};
  const text=element('div','',header,'pawIllustratedCaption');text.append(h,intro);
@@ -12143,4 +12149,21 @@ label=function(name,x,y,fn){
 };
 pawLoadReadingModule().then(api=>{if(!api)return;for(const id of pawReadingRoomIds){const q=api.rooms[id];if(q)pawRoomVisitorSpecs[id]={count:1,points:q.visitors.map(v=>pawReadingWorld(v))}}});
 
+// Use the inspected town pavilion as the full-page setting; the notice
+// surfaces stay readable and remain live HTML, never baked-in artwork.
+const pawDockPaintStyle=document.createElement('style');
+pawDockPaintStyle.textContent=`
+#game #page:has(#content[data-paw-visual-theme="town"]){background:linear-gradient(180deg,#34291d32,#312b2455),url('assets/visual/staging/2026-11-27/interfaces/town-hall/portrait.webp') center 43%/cover no-repeat,#766047!important}
+#game #page:has(#content[data-paw-visual-theme="town"] [data-paw-town-scene="tea"]){background-image:linear-gradient(180deg,#302d2633,#302d264d),url('assets/visual/staging/2026-11-27/rooms/tea/portrait.webp')!important}
+#game #content[data-paw-visual-theme="town"]{box-sizing:border-box;max-width:820px!important;padding:clamp(10px,2.6vw,20px)!important;background:#f5e9d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important;border:1px solid #bea37b;box-shadow:0 7px 24px #31261f55;color:#493f31}
+#game #content[data-paw-visual-theme="town"] .pawIllustratedHeading{min-height:clamp(185px,50vw,270px);border:0!important;outline:0!important;margin:4px 0 14px}
+#game #content[data-paw-visual-theme="town"] .pawIllustratedHeading>img{object-position:50% 35%}
+#game #content[data-paw-visual-theme="town"] .pawIllustratedCaption{min-height:clamp(185px,50vw,270px);box-sizing:border-box;padding:60px 14px 15px}
+#game #content[data-paw-visual-theme="town"] .pawTownFrontPhoto{aspect-ratio:1.5;border:0;outline:0}
+#game #content[data-paw-visual-theme="town"] .pawTownFrontPhoto img{object-position:50% 35%}
+#game #content[data-paw-visual-theme="daily"]{background-image:linear-gradient(90deg,#bda17822,transparent 6%,transparent 94%,#bda17822),url('assets/visual/painted/recovered/ui/paper_texture.webp')!important;background-repeat:no-repeat,repeat!important}
+#game #content .pawSketchbook,#game #content[data-paw-visual-theme="profile"] .journalProfileBook{background-image:linear-gradient(90deg,#c4a77a55,transparent 9%,transparent 91%,#d0b78b55),url('assets/visual/painted/recovered/ui/paper_texture.webp')!important;background-repeat:no-repeat,repeat!important}
+#game #content[data-paw-visual-theme="collection"] .bagSlot{background-image:linear-gradient(#fff6dc33,#fff6dc77),url('assets/visual/painted/recovered/ui/paper_texture.webp')!important;background-repeat:no-repeat,repeat!important}
+@media(min-width:700px){#game #content[data-paw-visual-theme="town"] .pawTownFrontPhoto{aspect-ratio:2.5}}
+`;document.head.append(pawDockPaintStyle);
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
