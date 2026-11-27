@@ -1220,3 +1220,8 @@ DISCOVERY-PARALLEL-LIVE-02 partial: efc3917c strengthens eight final decision sc
 ## Café conversation depth and balanced result (27 November 2026)
 
 DISCOVERY-CAFE-LIVE-02 partial: 1c673bf4 extends the existing four relational conversations to nine bilingual situations, validates input and displays all tied styles, with practical follow-up prompts, in one accessible paper reflection. Share and replay are explicit and token-guarded. Legacy collection IDs and save format remain unchanged; ties no longer present one style as the sole conclusion in the live reflection. cad793710d adds exhaustive nine-answer helper regression, executed against the current source in connector harness; source parsed. Native café illustration and staging, other relationship assessment banks, mutual consent and comparison, actual rendered gameplay and share export remain outstanding. The result-stage wrapper still requires browser review. Released claim; no acceptance increase.
+
+
+## Relationship assessment venue redistribution (27 November 2026)
+
+DISCOVERY-ASSESSMENTS-01 partial: d76e5fcf removes relationship values from the Personality Lab selection and makes it a distinct option at the café's conversation station, alongside the expanded conversation cards. Existing assessment saves and share identifiers remain unchanged. Four score-dependent, independently written bilingual reflection prompts supplement the numeric relationship priorities. da3db0c2 persists the venue-routing and score-range regression; source parsed and helper checks executed in connector harness. Complete assessment inventory, further distinct assessments, native staging and actual rendered gameplay remain outstanding. Released claim; no acceptance increase.
