@@ -74,6 +74,8 @@ for(const [w,h] of [[360,640],[390,844],[1440,900],[844,390],[768,1024],[280,450
   const p=pawGateGround(w,h,i/100);
   ck(p.x>=f.left&&p.x<=f.left+f.width&&p.y<=f.top+f.height&&p.y-p.height>=f.top,'grounded character inside artwork');
   if(i)ck(p.y<pawGateGround(w,h,(i-1)/100).y,'forward approach');
+  const nx=(p.x-f.left)/f.width,ny=(p.y-f.top)/f.height,nh=p.height/f.height;
+  ck(nx>=.48&&nx<=.51&&ny>=.729&&ny<=.866&&nh>=.099&&nh<=.119,'trace foreground stone paving without zoom');
  }
 }
 for(let player=0;player<4;player++){
