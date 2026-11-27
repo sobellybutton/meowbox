@@ -1074,6 +1074,24 @@
       "evidence": [],
       "lease": null,
       "blocker": "Enumerate every retained route and nested state from current source, not owner screenshots alone; no generic website-like screens or duplicate navigation."
+    },
+    {
+      "id": "UX-SIGN-PREVIEW-02",
+      "lane": "interface",
+      "priority": 1,
+      "summary": "Reduce ornate plaque visual noise with existing inspected painted sign materials and compact, distinct district styling; preserve geometry, touch targets and live bilingual text",
+      "resources": [
+        "src/shell.html",
+        "art:signage",
+        "scripts/sign-family-test.cjs"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-sign-preview-20261127",
+        "until": 1795791497133
+      }
     }
   ]
 }
