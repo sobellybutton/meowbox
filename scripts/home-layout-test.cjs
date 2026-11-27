@@ -43,3 +43,26 @@ for(const [extension,studio] of [[false,false],[false,true],[true,false],[true,t
  assert.equal(plans[2].owned,extension&&studio);
  assert.deepEqual(plans.map(p=>p.cells),[16,28,40]);
 }
+
+/* The live catalogue uses a direct painted URL on its first render.
+   Preview-only candidates must not silently change interactive room geometry. */
+const extensions=fs.readFileSync(path.resolve(__dirname,'../src/extensions.js'),'utf8');
+const previewBlock=extensions.match(/\/\* PAW_FURNITURE_PREVIEW_BEGIN \*\/([\s\S]*?)\/\* PAW_FURNITURE_PREVIEW_END \*\//);
+assert.ok(previewBlock);
+const previews=new Function(previewBlock[1]+';return {pawFurniturePaintedPath,pawFurniturePainted,pawFurniturePreviewOnly}')();
+for(const id of api.legacyIds){
+ assert.equal(previews.pawFurniturePaintedPath(id),api.legacyFurniture(id));
+ assert.ok(fs.existsSync(path.resolve(__dirname,'..',previews.pawFurniturePaintedPath(id))));
+}
+for(const id of ['shelf','displayCabinet','shojiLamp','roomExtension','roomStudio']){
+ assert.equal(previews.pawFurniturePaintedPath(id),null);
+ assert.ok(fs.existsSync(path.resolve(__dirname,'..',previews.pawFurniturePaintedPath(id,true))));
+}
+assert.equal(previews.pawFurniturePaintedPath('unknown',true),null);
+assert.equal(previews.pawFurniturePaintedPath('__proto__',true),null);
+assert.ok(extensions.includes('pawFurnitureSetImage(im,d.id)'));
+assert.equal((extensions.match(/pawFurnitureSetImage\(im,id,true\)/g)||[]).length,3);
+const shell=fs.readFileSync(path.resolve(__dirname,'../src/shell.html'),'utf8');
+assert.ok(shell.includes('.komorebiTile>.mbFurnitureMat>img'));
+assert.ok(shell.includes('.komorebiTile>strong'));
+console.log('Painted furniture first-render and preview-path checks passed.');
