@@ -1133,7 +1133,7 @@
       "id": "LIFE-AMBIENCE-01",
       "lane": "world",
       "priority": 2,
-      "summary": "Make entrance, districts and retained interiors feel inhabited with scene-specific painted motion layers, natural lighting, subtle weather and resident routines",
+      "summary": "Owner-approved living atmosphere: varied coherent clear/rain/mist/breeze, day/sunset/night lighting and seasonal accents; animated painted lanterns, foliage, curtains, water and inhabited interiors",
       "resources": [
         "art:ambience",
         "src/startup.js",
@@ -1145,7 +1145,7 @@
       "stage": "outstanding",
       "evidence": [],
       "lease": null,
-      "blocker": "Acceptance: Review stationary and moving player views; varied nonblocking activity, correct depth/contact, no repeated particle clutter, reduced motion and performance checks."
+      "blocker": "Acceptance: inspect actual entrance and all four districts in motion on mobile and desktop. Audit weather clock and long rain streaks; make clear weather common, use bounded coherent transitions across doors and visits, preserve guest/weather dependencies. Register painted moving props to actual attachment anchors; do not duplicate baked lanterns or move whole background; include wind-responsive lantern sway and subtle warm light, river ripples, foliage, flags, noren, smoke/steam and indoor sheltered behaviour where appropriate. Keep labels and paths unobstructed, reduce motion and bound frame cost. No final acceptance without rendered review."
     },
     {
       "id": "LIFE-RELATIONSHIPS-01",
@@ -1307,7 +1307,7 @@
       "id": "WORLD-STORY-FLOW-01",
       "lane": "world",
       "priority": 1,
-      "summary": "Make the four-district railway journey and all local visits tell a coherent voluntary story of leaving work, finding calm, unwinding, enjoying play and discovering new perspectives; reconcile district names, destinations, arrival/departure paths, contextual callbacks and travel memories; no forced completion or duplicate destination",
+      "summary": "Owner approved theme-led bilingual naming convention and coherent voluntary four-district railway journey; audit all district, venue, activity and signage names, especially discovery assessments/stories/relationship café",
       "resources": [
         "src/startup.js",
         "src/extensions.js",
@@ -1317,7 +1317,8 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": null,
+      "blocker": "Choose short evocative place names rather than generic test/menu labels; EN and Chinese independently natural, consistent across map plaques, doors, travel board, room titles, tasks, dialogue, accessible labels and share/history views. Keep existing world IDs, save data and exactly four maps; do not reintroduce retired activities or duplicate locations. Latest naming proposal exact wording not recovered in this session; reconcile prior owner discussion before final rename. Test mobile and desktop text fit and entire journey."
     },
     {
       "id": "RAIL-DESTINATION-COPY-01",
