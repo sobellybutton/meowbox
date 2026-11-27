@@ -1,0 +1,3 @@
+# New production source artwork
+
+Fourteen original generated sheets, losslessly converted to WebP and pixel-verified. These are sources, not production-ready sprites. Preserve existing working art and avatars. No sheet is registered automatically. Extract individual objects, verify alpha, identity, anchors, depth, perspective and physical interaction. RGB sources may contain baked white/checkerboard backgrounds; do not assume transparency. The alternate rosters are alternatives, not a commitment to every design. Small story/cafe illustrations are references, not native full-screen environments.
