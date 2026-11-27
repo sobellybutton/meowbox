@@ -8191,9 +8191,14 @@ function pawRecoveredFigurePath(name){return Object.hasOwn(pawRecoveredFigures,n
 function pawRecoveredCharmPath(index){return Number.isInteger(index)&&index>=0&&index<pawRecoveredDailyCharms.length?'blessing-charms/'+pawRecoveredDailyCharms[index]+'.webp':null}
 /* PAW_RECOVERED_ART_END */
 const pawRecoveredImages=new Map(),pawRecoveredFailures=new Map();
-function pawRecoveredImage(path,ready=null){
+/* PAW_RECOVERED_RETRY_BEGIN */
+function pawRecoveredMayRequest(until,now,retry=false){
+ return until<=now||(retry&&until-now<=9250)
+}
+/* PAW_RECOVERED_RETRY_END */
+function pawRecoveredImage(path,ready=null,retry=false){
  if(!path)return null;
- if((pawRecoveredFailures.get(path)||0)>Date.now())return null;
+ if(!pawRecoveredMayRequest(pawRecoveredFailures.get(path)||0,Date.now(),retry))return null;
  let im=pawRecoveredImages.get(path);
  if(!im){im=new Image();im.decoding='async';pawRecoveredImages.set(path,im);im.addEventListener('error',()=>{if(pawRecoveredImages.get(path)===im){pawRecoveredImages.delete(path);pawRecoveredFailures.set(path,Date.now()+10000)}},{once:true});im.addEventListener('load',()=>pawRecoveredFailures.delete(path),{once:true});if(ready)im.addEventListener('load',ready,{once:true});im.src=pawRecoveredRoot+path}
  else if(ready){if(im.complete&&im.naturalWidth>0)ready();else if(!im.complete)im.addEventListener('load',ready,{once:true})}
@@ -11585,7 +11590,7 @@ function pawFoodRoomAsset(id){
 }
 /* PAW_FOOD_PAINT_END */
 let pawFoodVisit=null;
-const pawFoodImage=id=>pawRecoveredImage(pawFoodRoomAsset(id));
+const pawFoodImage=(id,retry=false)=>pawRecoveredImage(pawFoodRoomAsset(id),null,retry);
 for(const id of Object.keys(pawFoodRoomSpecs))pawFoodImage(id);
 function pawFoodRoomActive(){return !!room&&!activity&&pawFoodVisit===room&&pawRoomImageReady(pawFoodImage(room))}
 const pawFoodDoorBefore=walkDoor;
@@ -11603,7 +11608,7 @@ enter=function(id,...args){
  if(room||activity||transitioning||pawArcadeInputBlocked())return;
  if(pawFoodAdmissionValid(pawFoodAdmission,pawFoodAdmission,pawFoodAdmissionView()))return;
  const request={scene,avatar,x:p.x,y:p.y};pawFoodAdmission=request;
- const im=pawFoodImage(id);
+ const im=pawFoodImage(id,true);
  releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;
  if(!pawRoomImageReady(im))hint('Getting the shop ready…','小店正在准备开门……');
  pawReadyPicture(im,4500).then(ready=>{
@@ -12024,7 +12029,7 @@ function pawWishLobbyCamera(w,h,p=pawWishLobbyPlate){
  return {s,ox:(w-p.w*s)/2-p.x*s,oy:(h-p.h*s)/2-p.y*s}
 }
 /* PAW_WISH_LOBBY_END */
-const pawWishLobbyArt=()=>pawRecoveredImage('scenes/wishing_garden_portrait.webp');
+const pawWishLobbyArt=(retry=false)=>pawRecoveredImage('scenes/wishing_garden_portrait.webp',null,retry);
 let pawWishLobbyVisit=false,pawWishLobbyAdmission=null;
 const pawWishLobbyActive=()=>room==='wishes'&&!activity&&pawWishLobbyVisit&&pawRoomImageReady(pawWishLobbyArt());
 const pawWishLobbyDoorBefore=walkDoor;
@@ -12037,7 +12042,7 @@ enter=function(id,...args){
  if(pawFoodAdmissionValid(pawWishLobbyAdmission,pawWishLobbyAdmission,view))return;
  const request={scene,avatar,x:p.x,y:p.y};pawWishLobbyAdmission=request;
  releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;
- const im=pawWishLobbyArt();
+ const im=pawWishLobbyArt(true);
  if(!pawRoomImageReady(im))hint('Getting the garden ready…','花园正在准备开放……');
  pawReadyPicture(im,4500).then(ready=>{
   if(!pawFoodAdmissionValid(request,pawWishLobbyAdmission,pawFoodAdmissionView())){if(pawWishLobbyAdmission===request)pawWishLobbyAdmission=null;return}
@@ -12141,7 +12146,7 @@ function pawLoadReadingModule(){
  }).finally(()=>pawReadingModuleJob=null);
  return pawReadingModuleJob
 }
-function pawReadingImage(api,id){const path=api?.asset(id);return path?pawRecoveredImage(path.replace('assets/visual/','../../')):null}
+function pawReadingImage(api,id,retry=false){const path=api?.asset(id);return path?pawRecoveredImage(path.replace('assets/visual/','../../'),null,retry):null}
 const pawReadingAPI=()=>globalThis.PawPaintedInteriors;
 function pawReadingActive(){return !activity&&room===pawReadingVisit&&pawReadingRoomIds.includes(room)&&pawRoomImageReady(pawReadingImage(pawReadingAPI(),room))}
 const pawReadingDoorBefore=walkDoor;
@@ -12158,7 +12163,7 @@ enter=function(id,...args){
  pawLoadReadingModule().then(async api=>{
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   const compatible=pawReadingCompatible(api,id,roomActions[id]||[]);
-  const im=compatible?pawReadingImage(api,id):null;
+  const im=compatible?pawReadingImage(api,id,true):null;
   const ready=compatible&&await pawReadyPicture(im,4500);
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   pawReadingAdmission=null;
@@ -12166,7 +12171,18 @@ enter=function(id,...args){
   pawReadingVisit=id;return pawReadingEnterBefore(id,...args)
  }).finally(()=>{if(pawReadingAdmission===request)pawReadingAdmission=null})
 };
-const pawReadingLoopBefore=loop;
+// Nearby outdoor warming should decode the actual selected lobby painting,
+ // not start several retired backgrounds for the same doorway.
+ const pawMappedWarmBefore=pawWarmRoomAssets;
+ pawWarmRoomAssets=function(id){
+  if(room||activity)return pawMappedWarmBefore(id);
+  const decode=im=>{if(im&&!pawRoomImageReady(im))pawReadyPicture(im,4500)};
+  if(pawReadingRoomIds.includes(id)){pawLoadReadingModule().then(api=>decode(pawReadingImage(api,id)));return}
+  if(Object.hasOwn(pawFoodRoomSpecs,id)){decode(pawFoodImage(id));return}
+  if(id==='wishes'){decode(pawWishLobbyArt());return}
+  return pawMappedWarmBefore(id)
+ };
+ const pawReadingLoopBefore=loop;
 loop=function(...args){if(pawReadingAdmission&&!pawFoodAdmissionValid(pawReadingAdmission,pawReadingAdmission,pawFoodAdmissionView()))pawReadingAdmission=null;return pawReadingLoopBefore(...args)};
 const pawReadingCameraBefore=mobileRoomCamera;
 mobileRoomCamera=function(...args){return pawReadingActive()?pawReadingCamera(pawReadingAPI(),W,H)||pawReadingCameraBefore(...args):pawReadingCameraBefore(...args)};
