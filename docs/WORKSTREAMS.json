@@ -551,11 +551,12 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-directory-2244",
-        "until": 1795792440000
-      }
+      "evidence": [
+        "ed9fd2ea: room activity directory now uses actual hidden state, Escape and focus restoration, rejects detached or stale room/language controls, preserves focused station on rebuilding and uses one consistent bilingual label.",
+        "f61bcee5: persistent helper tests executed against current source; source parsed."
+      ],
+      "lease": null,
+      "blocker": "Actual rendered keyboard/touch flow, assistive technology and all remaining accessibility, layout and deployment checks outstanding."
     },
     {
       "id": "PERF-01",
