@@ -7007,6 +7007,38 @@ townPublishedNotices=function(now=Date.now()){
  const weather=typeof atmosphere==='object'?atmosphere.weather:'';
  return [...pawFictionEdition(now,weather),...pawFictionPublishedBefore(now)]
 };
+/* PAW_TOWN_THREADS_BEGIN */
+const pawResidentThreads=[
+ ['meeting-minutes',['Wang Laoban','王老板'],['I took minutes at a meeting about reducing meetings. We ran over.','开了个减少会议的会。我负责记会议纪要，最后还超时了。'],[['Auntie Hong','洪姨','Good. Now schedule a meeting about that.','很好，再开个会检讨一下。']]],
+ ['tea-tax',['Auntie Mei','梅姨'],['Tea room policy: no work talk until the first cup is finished.','茶馆新规：第一杯茶喝完之前，不谈工作。'],[['Grandma','外婆','Then use a bigger cup.','那就换个大杯。']]],
+ ['cat-landlord',['Auntie Lin','林姨'],['The garden cat has inspected three benches and rejected all of them.','花园那只猫巡视了三张长椅，全都不满意。'],[['Ah Ma','阿嬷','Probably waiting for a sea view at the same rent.','大概想要海景房，还不肯加租。']]],
+ ['soup-revision',['Grandma','外婆'],['Today’s soup is version seven. The first six versions were also soup.','今天的汤是第七版。前六版也是汤。'],[['Wang Laoban','王老板','Please do not send me a change log.','千万别发我更新记录。']]],
+ ['fortune-envelope',['Temple keeper','庙祝'],['A traveller asked if the fortune slip could be sent as a calendar invite.','有位旅人问，求到的签能不能发成日历邀请。'],[['Master Yue','月师傅','Only if fate accepts the invitation.','得看命运接不接受邀请。']]],
+ ['pearl-budget',['Boba keeper','奶茶店主'],['Someone asked for a budget-friendly cup with executive-level pearls.','有人点了一杯平价奶茶，要求珍珠达到高管级别。'],[['Auntie Hong','洪姨','Did the pearls have to do a presentation?','珍珠还要做汇报吗？']]],
+ ['arcade-performance',['Arcade keeper','游戏厅店主'],['The claw missed again. It would like to schedule a performance review.','夹爪又没夹中，想约个绩效面谈。'],[['Wang Laoban','王老板','Give it a day off. No improvement plan.','给它放天假吧，别搞改进计划。']]],
+ ['letter-forward',['Letter keeper','信件保管员'],['Found a letter marked urgent. It was written to someone’s future self ten years ago.','捡到一封标着加急的信，是十年前写给未来自己的。'],[['Auntie Mei','梅姨','Deliver it with tea, not an apology.','送信时带杯茶，不用带道歉信。']]],
+ ['souvenir-inventory',['Souvenir keeper','手信店主'],['A customer asked if the little bookmark would improve their productivity.','有客人问小书签能不能提高生产力。'],[['Grandma','外婆','It will improve your chances of finding page twelve.','能提高你找到第十二页的概率。']]],
+ ['lab-findings',['Lab keeper','研究所店主'],['My latest research: people answer personality questions differently before lunch.','最新研究发现：大家午饭前后的性格答案不一样。'],[['Boba keeper','奶茶店主','Have you controlled for the presence of snacks?','有控制零食这个变量吗？']]],
+ ['cafe-no-wifi',['Café keeper','咖啡店主'],['Two visitors put their phones away and had an entire conversation. The router feels redundant.','两位旅人放下手机聊了很久，路由器突然觉得自己失业了。'],[['Auntie Mei','梅姨','Let it rest too.','让它也休息一下吧。']]],
+ ['laundry-forecast',['Ah Ma','阿嬷'],['The forecast said ten percent rain. My laundry apparently got the whole ten percent.','天气预报说下雨概率百分之十，我的衣服好像承包了全部的雨。'],[['Auntie Lin','林姨','I saved you a dry corner.','给你留了个干爽的角落。']]]
+];
+function pawTownResidentThreads(now){
+ if(!Number.isFinite(now))return [];
+ const offset=8*3600000,day=86400000,local=now+offset,ordinal=Math.floor(local/day),hours=[8,13,19],out=[];
+ for(let d=ordinal;d>=ordinal-4;d--)for(let j=hours.length-1;j>=0;j--){
+  const date=d*day+hours[j]*3600000-offset;if(date>now)continue;
+  const k=((d*3+j)%pawResidentThreads.length+pawResidentThreads.length)%pawResidentThreads.length;
+  const [key,name,body,replies]=pawResidentThreads[k];
+  out.push({id:'resident-thread-'+d+'-'+j+'-'+key,date,thread:[name,body,replies]})
+ }
+ return out.slice(0,12)
+}
+/* PAW_TOWN_THREADS_END */
+const pawThreadPublishedBefore=townPublishedNotices;
+townPublishedNotices=function(now=Date.now()){
+ const items=[...pawTownResidentThreads(now),...pawThreadPublishedBefore(now)],seen=new Set();
+ return items.filter(v=>v&&typeof v.id==='string'&&!seen.has(v.id)&&seen.add(v.id)).sort((a,b)=>(Number(b.date)||0)-(Number(a.date)||0))
+};
 // Reuse the existing optional, proximity-limited exchange engine.
 pawOverheard.push(
  ['gem-title','hong','lin','My nephew has a very impressive new job title.','我外甥最近升职了，头衔特别气派。','Aiyah, ask him whether the salary got promoted too.','哎呀，你倒是问问他的工资升了没有。'],
@@ -9073,12 +9105,12 @@ renderResidentNoticeboard=function(q){
  element('small',tr('Written by the fictional town residents. Real visitor posts are in the shared square.','以下为虚构小镇居民的趣味留言，真人留言请到共享广场。'),wrap,'wallDisclosure');
  const publicBtn=b(wrap,communityURL()?tr('Read or leave a real visitor post','看看真人留言 / 留句话'):tr('Shared square · not open yet','共享广场 · 尚未开放'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink';
  const list=element('div','',wrap,'townPostList'),nav=element('div','',wrap,'townPostNav');
- let shown=pawNoticeShown,lastCount=-1,lastSignature='';
+ let shown=pawNoticeShown,lastCount=-1,lastSignature='',lastIds=new Set();
  function render(){
   const focused=document.activeElement?.closest?.('.wallReplyToggle');
   const focusId=focused&&list.contains(focused)?focused.closest('.wallReplies')?.dataset.noticeId:null;
   const moreFocused=nav.contains(document.activeElement),top=$('page').scrollTop;
-  const entries=townPublishedNotices();lastCount=entries.length;lastSignature=entries.map(v=>v.id).join('|');
+  const entries=townPublishedNotices();lastCount=entries.length;lastSignature=entries.map(v=>v.id).join('|');lastIds=new Set(entries.map(v=>v.id));for(const id of pawNoticeExpanded)if(!lastIds.has(id))pawNoticeExpanded.delete(id);
   list.replaceChildren();nav.replaceChildren();let restore=null;
   for(const {thread:m,date,id} of entries.slice(0,shown)){
    const post=element('article','',list,'townResidentNote');post.dataset.noticeId=id;
@@ -9108,7 +9140,7 @@ renderResidentNoticeboard=function(q){
  const timer=setInterval(()=>{
   if(!wrap.isConnected||$('page').style.display!=='block'){clearInterval(timer);return}
   const next=townPublishedNotices(),n=next.length;
-  if(n!==lastCount||next.map(v=>v.id).join('|')!==lastSignature){shown=pawNoticeShown=pawNoticePageSize(shown,n,Math.max(0,n-lastCount));render()}
+  if(n!==lastCount||next.map(v=>v.id).join('|')!==lastSignature){shown=pawNoticeShown=pawNoticePageSize(shown,n,next.filter(v=>!lastIds.has(v.id)).length);render()}
  },60000)
 };
 const pawNoticeDisclosureStyle=document.createElement('style');
