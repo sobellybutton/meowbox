@@ -1469,12 +1469,12 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-parallel-reflection-2305",
-        "until": 1795793700000
-      },
-      "blocker": "Distinct journeys, authored choices and outcomes, reflection based on choices, camera framing, repeat and return; not another generic quiz form."
+      "evidence": [
+        "efc3917c: explicit tradeoffs in eight final-decision scenes and optional distinct EN/ZH reflection for all sixteen existing endings. Validates actual branch history, no personality diagnosis or added collection rewards.",
+        "92f6f05920ce09fc1cd5586f1d2e5d53e30807fc: regression covers all existing endings, unique bilingual reflections and invalid history; source parsed."
+      ],
+      "lease": null,
+      "blocker": "Illustrated short-film staging, new alternative-life scenarios, assessment redistribution, actual rendered mobile/desktop gameplay and deployment remain open."
     },
     {
       "id": "DISCOVERY-CAFE-LIVE-02",
