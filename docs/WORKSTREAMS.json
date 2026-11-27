@@ -867,12 +867,12 @@
         "SOUND-01",
         "CONTENT-RESIDENT-01"
       ],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-module-live-20261127-2216",
-        "until": 1795790761643
-      }
+      "stage": "tested",
+      "evidence": [
+        "89e79176 activates all three modules in browser/offline assembly and current runtime; 3462f651 guards sound/overlay/rail ownership and future-date ledger claims, registers regression and module tests in CI. Extracted runtime wiring and mocked movement/ledger regression passed."
+      ],
+      "lease": null,
+      "blocker": "Real browser audio playback, wallet layout, resident line cadence, full CI and deployment of current source remain unverified. No visual acceptance."
     },
     {
       "id": "HOME-CATALOGUE-AUDIT-01",
