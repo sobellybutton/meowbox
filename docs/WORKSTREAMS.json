@@ -657,6 +657,23 @@
       ],
       "lease": null,
       "blocker": "Live rendering and first-open artwork loading not visually tested. Grid-based dollhouse placement is not yet the active editor; actual room shell conversion, furniture anchors and migration of existing saved positions remain outstanding. Existing furniture layout retained to avoid loss; shelf and display cabinet art deliberately unchanged."
+    },
+    {
+      "id": "WORLD-VISITS-01",
+      "lane": "world",
+      "priority": 2,
+      "summary": "Record actual room visits and guide optional onward travel without forced completion",
+      "resources": [
+        "src/startup.js",
+        "scripts/world-visits-test.cjs"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-explore-route-20261127-i",
+        "until": 1795786652971
+      }
     }
   ]
 }
