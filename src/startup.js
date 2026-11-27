@@ -10874,4 +10874,159 @@ drawActivity=function(...args){
  continuityActivity=activity;ctx.save();try{pawAlcoveScene();if(activity==='sticks')pawDrawAlcoveSticks();else pawDrawAlcoveMoon()}finally{ctx.restore()}mb5AssistSync()
 };
 
+
+/* PAW_SLIP_COUNTER_BEGIN */
+function pawSlipGeometry(p=pawWaterPlate){
+ const pt=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
+ return {counter:pt(.235,.50),reading:pt(.50,.55),tie:pt(.605,.482),bag:pt(.50,.79),rackCenter:pt(.585,.455),
+  rows:[.419,.453,.486].map(v=>Array.from({length:7},(_,i)=>pt(.505+i*.030,v)))}
+}
+function pawSlipPose(stage,age,g=pawSlipGeometry()){
+ const ease=f=>{f=Math.max(0,Math.min(1,f));return f*f*(3-2*f)};
+ const mix=(a,b,f)=>({x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f});
+ const f=stage==='folded'?0:stage==='opening'?ease(age/.75):1;
+ let pos=mix(g.counter,g.reading,f),w=105+f*355,h=82+f*298,alpha=1;
+ if(stage==='tied'||stage==='kept'){
+  const u=ease(age/.7);pos=mix(g.reading,stage==='tied'?g.tie:g.bag,u);w*=1-.97*u;h*=1-.96*u;alpha=1-u;
+ }
+ return {...pos,w,h,alpha,open:f}
+}
+function pawSlipRackCamera(w,h,p=pawWaterPlate){
+ if(![w,h,p.x,p.y,p.w,p.h].every(Number.isFinite)||Math.min(w,h,p.w,p.h)<=0)return null;
+ const center=pawSlipGeometry(p).rackCenter,s=Math.min(w/(p.w*.44),h/(p.h*.40));
+ return {s,ox:w/2-center.x*s,oy:h*.48-center.y*s}
+}
+function pawSlipPage(all,page,size=21){
+ const pages=Math.max(1,Math.ceil(all.length/size));page=Math.max(0,Math.min(pages-1,Number.isInteger(page)?page:0));
+ return {page,pages,entries:all.slice(page*size,page*size+size)}
+}
+/* PAW_SLIP_COUNTER_END */
+const pawSlipCounterPath='../../staging/2026-11-27/rooms/temple/slip-counter.webp';
+pawRecoveredImage(pawSlipCounterPath);
+function pawSlipCounterArt(){return pawRecoveredImage(pawSlipCounterPath)}
+function pawSlipCounterActive(){return room==='temple'&&['templePaper','templeRack'].includes(activity)&&state.pawSlipCounterPainting&&pawRoomImageReady(pawSlipCounterArt())}
+const pawSlipCounterStartBefore=start;
+start=function(id,...args){
+ const result=pawSlipCounterStartBefore(id,...args);
+ if(['templePaper','templeRack'].includes(id)&&activity===id)state.pawSlipCounterPainting=pawRoomImageReady(pawSlipCounterArt());
+ return result
+};
+const pawSlipCounterCamBefore=mobileRoomCamera;
+mobileRoomCamera=function(...args){
+ if(!pawSlipCounterActive())return pawSlipCounterCamBefore(...args);
+ return (activity==='templeRack'&&state.rackSelected==null?pawSlipRackCamera(W,H):pawWaterCamera(W,H))||pawSlipCounterCamBefore(...args)
+};
+function pawSlipCounterScene(){
+ const p=pawWaterPlate,b=livingBounds();ctx.fillStyle='#473b30';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawSlipCounterArt(),p.x,p.y,p.w,p.h)
+}
+function pawSlipText(words,w,h){
+ // This is a reading close-up, not the tiny paper on the physical rack.
+ // Font follows the real camera and never draws outside the sheet.
+ const screenScale=Math.max(.1,cam.scale),start=Math.min(34,Math.max(23,15/screenScale));
+ let size=start,rows=[];
+ for(;size>=14;size-=1){ctx.font=size+'px Georgia,serif';rows=shareTextLines(ctx,words,w-56);if(rows.length*size*1.35<=h-160)break}
+ const lh=size*1.35;ctx.fillStyle='#584939';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=size+'px Georgia,serif';
+ rows.forEach((row,i)=>ctx.fillText(row,0,(i-(rows.length-1)/2)*lh,w-56))
+}
+function pawSlipDrawPaper(pose,number,words,subtitle=''){
+ if(pose.alpha<=.01)return;
+ ctx.save();try{
+  ctx.globalAlpha*=pose.alpha;ctx.translate(pose.x,pose.y);
+  const w=pose.w,h=pose.h;
+  ctx.shadowColor='#34281e88';ctx.shadowBlur=13;ctx.shadowOffsetY=5;
+  const paper=ctx.createLinearGradient(-w/2,-h/2,w/2,h/2);paper.addColorStop(0,'#f5e8c8');paper.addColorStop(.56,'#eee0bd');paper.addColorStop(1,'#e0cba1');
+  round(-w/2,-h/2,w,h,3,paper,'#ac9268');ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  if(pose.open<.9){line(-w/2+9,0,w/2-9,0,'#b4a07a',1);txt('籤',0,-4,24,'#986b44');return}
+  if(w<260||h<220)return;
+  round(-w/2+11,-h/2+11,w-22,h-22,2,null,'#b99d72');
+  ctx.save();ctx.beginPath();ctx.rect(-w/2+16,-h/2+16,w-32,h-32);ctx.clip();
+  txt(tr('Fortune No. ','第 ')+number+(zh?' 签':''),0,-h/2+47,27,'#70503d');
+  line(-w/2+38,-h/2+78,w/2-38,-h/2+78,'#ae926d',1);
+  pawSlipText(words,w,h);
+  txt(subtitle||tr('A reflection, not a promise','签文仅供自我反思'),0,h/2-43,20,'#80664a');ctx.restore()
+ }finally{ctx.restore()}
+}
+function pawDrawCounterFortune(){
+ const run=state,g=pawSlipGeometry(),age=Math.max(0,t-run.paperAt);
+ if(run.paperStage==='opening'&&age>=.75&&!pawArcadeInputBlocked())run.paperStage='open';
+ const pose=pawSlipPose(run.paperStage,age,g),words=shrinePaperLines[run.paperNumber-1];
+ if(Array.isArray(words))pawSlipDrawPaper(pose,run.paperNumber,tr(...words));
+ if(run.paperStage==='folded')target(pose.x-pose.w/2-15,pose.y-pose.h/2-15,pose.w+30,pose.h+30,()=>{if(run===state&&!pawArcadeInputBlocked())templePaperTap()});
+ // The controls below are the existing accessible open/keep/tie/rack/return
+ // controls; the paper animates into the real rack or the traveller's bag.
+}
+function pawCounterRackData(run){
+ const all=pawRackEntries(templeTies).filter(v=>Array.isArray(shrinePaperLines[v.number-1])).reverse(),data=pawSlipPage(all,run.rackPage);
+ run.rackPage=data.page;
+ if(!Number.isInteger(run.rackCursor)||run.rackCursor<0||run.rackCursor>=data.entries.length)run.rackCursor=0;
+ if(run.rackSelected!=null&&!data.entries[run.rackSelected])run.rackSelected=null;
+ return data
+}
+function pawCounterRackSelect(run,index,data){
+ if(state!==run||activity!=='templeRack'||pawArcadeInputBlocked()||!data.entries[index])return false;
+ run.rackCursor=index;run.rackSelected=index;run.rackAt=t;physicalFx('paper',.42);return true
+}
+let pawCounterRackRun=null,pawCounterRackKey='';
+function pawCounterRackClear(){
+ const el=$('gameControls');if(!el?.classList.contains('pawCounterRackControls'))return;
+ el.replaceChildren();el.classList.remove('pawCounterRackControls');el.hidden=true;pawCounterRackRun=null;pawCounterRackKey=''
+}
+function pawCounterRackSync(data){
+ const el=$('gameControls'),run=state;if(!el)return;
+ if(pawArcadeInputBlocked()){if(el.classList.contains('pawCounterRackControls'))el.hidden=true;return}
+ const key=[zh,run.rackSelected,run.rackCursor,data.page,data.pages,data.entries.length].join('|');
+ if(pawCounterRackRun===run&&pawCounterRackKey===key&&el.classList.contains('pawCounterRackControls')){el.hidden=false;return}
+ pawCounterRackRun=run;pawCounterRackKey=key;el.replaceChildren();el.classList.remove('pawTemplePaperControls','mb5ActivityAssist');el.classList.add('pawCounterRackControls');el.hidden=false;
+ const add=(words,fn,disabled=false)=>{const button=b(el,tr(...words),()=>{
+  if(button.isConnected&&!el.hidden&&state===run&&activity==='templeRack'&&!pawArcadeInputBlocked())fn()
+ });button.type='button';button.disabled=disabled};
+ if(run.rackSelected!=null)add(['Fold the slip','收起签纸'],()=>{run.rackSelected=null});
+ else{
+  const item=data.entries[run.rackCursor];
+  if(item){
+   add(['Previous slip','上一张签纸'],()=>{run.rackCursor=Math.max(0,run.rackCursor-1)},run.rackCursor===0);
+   add(['Read fortune '+item.number,'查看第 '+item.number+' 签'],()=>pawCounterRackSelect(run,run.rackCursor,data));
+   add(['Next slip','下一张签纸'],()=>{run.rackCursor=Math.min(data.entries.length-1,run.rackCursor+1)},run.rackCursor===data.entries.length-1)
+  }
+  if(data.pages>1){
+   add(['Previous page','上一页'],()=>{run.rackPage--;run.rackCursor=0},data.page===0);
+   add(['Next page','下一页'],()=>{run.rackPage++;run.rackCursor=0},data.page===data.pages-1)
+  }
+ }
+ add(['Return to your fortune','返回自己的签文'],()=>{pawCounterRackClear();pawCloseTempleRack()})
+}
+function pawDrawCounterRack(){
+ const run=state,g=pawSlipGeometry(),data=pawCounterRackData(run),selected=data.entries[run.rackSelected];
+ if(selected){
+  const f=Math.max(0,Math.min(1,(t-run.rackAt)/.25)),pose={...g.reading,w:460,h:380,open:1,alpha:Math.max(.2,f)};
+  const subtitle=selected.fictional?tr('Fictional resident','虚构居民'):tr('Saved on this device','本设备记录');
+  pawSlipDrawPaper(pose,selected.number,tr(...shrinePaperLines[selected.number-1]),subtitle);
+  // The owner is shown separately to avoid hiding the fortune text.
+  const b=livingBounds();ctx.fillStyle='#40352bc9';ctx.fillRect(g.reading.x-210,g.reading.y-240,420,37);
+  activityFitText(tr(...selected.name),g.reading.x,g.reading.y-221,22,390,'#fff1d5')
+ }else{
+  const slots=g.rows.flat(),active=slots[run.rackCursor];
+  if(active){ctx.save();ctx.strokeStyle='#fff0b0';ctx.lineWidth=2.2;ctx.beginPath();ctx.ellipse(active.x,active.y,13,10,0,0,TAU);ctx.stroke();ctx.restore()}
+  for(let i=0;i<data.entries.length;i++){
+   const a=slots[i];target(a.x-9,a.y-14,18,28,()=>pawCounterRackSelect(run,i,data))
+  }
+ }
+ pawCounterRackSync(data)
+}
+const pawSlipCounterDrawBefore=drawActivity;
+drawActivity=function(...args){
+ if(!pawSlipCounterActive())return pawSlipCounterDrawBefore(...args);
+ continuityActivity=activity;ctx.save();try{
+  pawSlipCounterScene();
+  if(activity==='templePaper'){pawCounterRackClear();pawDrawCounterFortune();pawPaperControlsSync()}
+  else pawDrawCounterRack()
+ }finally{ctx.restore()}
+};
+const pawSlipCounterLoopBefore=loop;
+loop=function(...args){if(activity!=='templeRack'||!pawSlipCounterActive())pawCounterRackClear();return pawSlipCounterLoopBefore(...args)};
+const pawCounterRackStyle=document.createElement('style');pawCounterRackStyle.textContent=`
+#game #gameControls.pawCounterRackControls:not([hidden]){display:grid!important;grid-template-columns:repeat(auto-fit,minmax(94px,1fr));width:min(92vw,430px);max-width:calc(100% - 20px);box-sizing:border-box;gap:4px;padding:5px;background:#f2e5cce8;border:1px solid #ad9470;border-radius:6px}
+#game #gameControls.pawCounterRackControls button{width:100%;min-width:0;min-height:44px;white-space:normal;overflow-wrap:anywhere;font-size:clamp(12px,3.3vw,14px);padding:5px}
+`;document.head.append(pawCounterRackStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
