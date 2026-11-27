@@ -1464,7 +1464,10 @@
         "ceae5d20 + b37dc632: distinct care preference exercise with 15 bilingual statements, consent-aware prompts, five-row share layout and exhaustive result-profile helper verification.",
         "fd4fb68a + ce08c360: twelve attachment-inspired scenario statements, four independent dimensions, three-tier bilingual reflection, safety-aware non-diagnostic language and exhaustive result-profile tests."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-discovery-priorities-2320",
+        "until": 1795794557169
+      },
       "blocker": "General life priorities, other curated assessment inventory, native staging, menu capacity, rendered browser and share export acceptance outstanding."
     },
     {
