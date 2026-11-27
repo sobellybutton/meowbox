@@ -12818,4 +12818,21 @@ function pawApplyApprovedNames(worlds,venueTables,activities,anchors){
 /* PAW_APPROVED_NAMES_END */
 pawApplyApprovedNames(maps,[unifiedHouseNames,housePlaqueNames],activityTitle,townAnchorPlaces);
 
+/* PAW_HUD_CORNER_STYLE_BEGIN */
+// Matching travel stationery: existing painted paper and original head artwork.
+const pawHudCornerStyle=document.createElement('style');
+pawHudCornerStyle.textContent=`
+#game #profileHud,#game #small .townSettingsToggle{box-sizing:border-box;background:#eadbc0 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 132px repeat!important;color:#534a37!important;border:1px solid #a99573!important;box-shadow:0 2px 5px #26382f45,inset 0 0 0 2px #fff5d952!important;min-height:44px!important}
+#game #profileHud{border-radius:13px 9px 12px 10px!important;padding:3px 8px 3px 4px!important;text-align:left;min-width:44px}
+#game #hudPortrait{width:35px!important;height:35px!important;flex:0 0 35px;background:transparent!important;border:0!important;border-radius:50%!important;object-fit:contain!important;object-position:center!important;box-shadow:none!important}
+#game #hudName,#game #hudProgress{color:#534a37!important;text-shadow:none}
+#game #small .townSettingsToggle{width:44px!important;height:44px!important;border-radius:12px 9px 11px 10px!important;padding:0!important}
+#game #small .townSettingsToggle svg{width:22px;height:22px;stroke-width:1.65}
+#game #small .townSettingsToggle[aria-expanded=true]{box-shadow:inset 0 0 0 2px #8d795d,0 2px 5px #26382f45!important}
+#game #small .townSettingsPanel{background:#eadbc0 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 180px repeat!important;border-color:#a99573!important;border-radius:12px 9px 12px 10px!important;color:#534a37!important}
+#game #profileHud:focus-visible,#game #small .townSettingsToggle:focus-visible{outline:2px solid #39594d!important;outline-offset:2px}
+@media(max-width:380px){#game #profileHud{padding-right:5px!important}#game #hudPortrait{width:31px!important;height:31px!important;flex-basis:31px}}
+`;document.head.append(pawHudCornerStyle);
+/* PAW_HUD_CORNER_STYLE_END */
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
