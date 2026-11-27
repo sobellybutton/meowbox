@@ -664,8 +664,19 @@ jobs:
                 await page.waitForFunction(()=>scene==='island'&&!transitioning,null,{timeout:15000});
                 await page.evaluate(()=>{scene='home';room='park';activity=null;state={};closeTalk();start('pet')});
                 await page.waitForFunction(()=>activity==='pet'&&Number.isInteger(state.petKind),{},{timeout:4000});
+                if(!await page.evaluate(()=>{
+                  const stale=$('gameControls').querySelector('[data-care="pet"]');
+                  start('pet');stale.click();
+                  return state.care.phase==='idle'
+                }))throw Error('Detached cat control changed a new care session');
                 const petTrust=await page.evaluate(()=>state.care.values.trust);
                 await page.locator('#gameControls').getByRole('button',{name:'Stroke',exact:true}).click();
+                await page.waitForFunction(()=>state.care.phase==='pet'&&state.care.assisted);
+                await page.evaluate(()=>window.page('Care interruption','Test overlay',()=>{}));
+                await page.locator('#page').waitFor({state:'visible'});
+                await page.waitForTimeout(2600);
+                if(!await page.evaluate(v=>state.care.phase==='pet'&&state.care.values.trust===v,petTrust))throw Error('Covered cat activity completed in the background');
+                await page.evaluate(()=>$('page').style.display='none');
                 await page.waitForFunction(v=>state.care.values.trust>v,petTrust,{timeout:6000});
                 await page.screenshot({path:'test-results/'+name+'-named-park-cat.png'});
                 await page.locator('#back').click();
