@@ -1421,7 +1421,10 @@
         "5baafcce persists focused scene handoff regression checks; executed against source in connector harness, not browser.",
         "Owner iPhone feedback 28 Nov 01:08 SGT: intermittent leg flicker, blank/delayed entrance, room labels and duplicate Activities controls, and website-like Master Yue form. 24afa31d implements in-scene consultation and stable local gait; prior current code moves Yue behind desk using clipped standing art and hides touch directory; do not mark actual visual acceptance without device playthrough. A real seated Yue sprite and desk contact/close-up are still required."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-many-1128-ready",
+        "until": 1795802508223
+      },
       "blocker": "Actual iPhone/WebKit cold/warm cache, all other room assets and visual acceptance remain open."
     },
     {
