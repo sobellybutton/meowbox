@@ -571,7 +571,10 @@
         "Latest world runtime check attempted after 3743443a; browser connector timed out without reporting viewport, image loads or JS state.",
         "27 Nov: attempted current deployment in isolated 390x844 browser with normal My Room navigation; connector timed out after 40 seconds without observable viewport, source, or interaction output."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-render-check-20261127-2233",
+        "until": 1795791580321
+      },
       "blocker": "Browser session timed out; actual current deployment, mobile/desktop playthrough, startup errors and appearance remain unverified."
     },
     {
