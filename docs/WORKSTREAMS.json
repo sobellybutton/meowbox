@@ -1433,7 +1433,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null,
+      "lease": {
+        "owner": "manual-social-guide-2302",
+        "until": 1795793520000
+      },
       "blocker": "Meaningful interaction, once per eligible task period, existing reward caps, no mandatory human interaction, spam farming, or new currency. Owner confirmed expectation of waving: natural approachable wave action and response, nearby NPC/consenting human, optional chat, no reward spam, distinct local vs shared interaction. Test actual animation and social task completion."
     },
     {
