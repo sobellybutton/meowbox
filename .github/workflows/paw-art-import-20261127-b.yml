@@ -1,0 +1,63 @@
+name: Import Pawradise room and railway assets
+on:
+  push:
+    branches: [main]
+    paths: [Pawradise_Room_and_Railway_Assets.zip]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: paw-art-import-20261127-b
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Verify and extract exact room and railway package
+        run: |
+          python3 <<'PY'
+          import hashlib, json, pathlib, zipfile
+          root=pathlib.Path.cwd()
+          p=root/'Pawradise_Room_and_Railway_Assets.zip'
+          prefix='assets/visual/staging/2026-11-27-b/'
+          manifests=[prefix+'room/manifest.json',prefix+'railway/manifest.json']
+          if not p.is_file():
+              rows=[a for m in manifests for a in json.loads((root/m).read_text())['assets']]
+              assert len(rows)==32 and len({a['path'] for a in rows})==32
+              assert all(hashlib.sha256((root/a['path']).read_bytes()).hexdigest()==a['sha256'] for a in rows)
+              raise SystemExit(0)
+          assert hashlib.sha256(p.read_bytes()).hexdigest()=='3408a41abf3c7103e833d64a0623e3e439a359c13c5dec4cd7fec757a6e4d1ff'
+          with zipfile.ZipFile(p) as z:
+              assert z.testzip() is None
+              rows=[a for m in manifests for a in json.loads(z.read(m))['assets']]
+              paths={a['path'] for a in rows}
+              assert len(rows)==len(paths)==32
+              assert len(z.namelist())==34 and set(z.namelist())==paths|set(manifests)
+              for a in rows:
+                  n=a['path']; raw=z.read(n)
+                  assert n.startswith(prefix) and n.endswith('.webp')
+                  assert len(raw)==a['bytes'] and hashlib.sha256(raw).hexdigest()==a['sha256']
+                  assert hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\x00'+raw).hexdigest()==a['git_blob_sha1']
+              for n in z.namelist():
+                  f=root/n
+                  assert f.resolve().is_relative_to(root) and not f.is_symlink()
+                  if f.exists(): assert f.is_file() and f.read_bytes()==z.read(n),'Conflicting existing asset: '+n
+              for n in z.namelist():
+                  f=root/n; f.parent.mkdir(parents=True,exist_ok=True); f.write_bytes(z.read(n))
+          assert all(hashlib.sha256((root/a['path']).read_bytes()).hexdigest()==a['sha256'] for a in rows)
+          print('Verified all 32 artwork files')
+          PY
+      - name: Commit staged assets without activating them
+        run: |
+          set -eu
+          if [ ! -f Pawradise_Room_and_Railway_Assets.zip ]; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- assets/visual/staging/2026-11-27-b/
+          git rm -- Pawradise_Room_and_Railway_Assets.zip
+          git commit -m "Import 32 verified room and railway candidate assets"
+          git push origin HEAD:main
