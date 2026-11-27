@@ -1259,11 +1259,12 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-spatial-signs-2241",
-        "until": 1795792260000
-      }
+      "evidence": [
+        "5dcd182f: painted temple and food shop plaques use bounded collision-aware placement and clear 44px touch rectangles; suppress hidden plaque targets while preserving original station access.",
+        "8a433040: persisted helper tests across five viewport sizes and four scales, executed against current source."
+      ],
+      "lease": null,
+      "blocker": "Actual deployed mobile/desktop scenes, other rooms, moving actors, both languages and complete overlap audit remain outstanding."
     },
     {
       "id": "SCENE-BLOCKING-01",
