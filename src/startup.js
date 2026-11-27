@@ -9849,7 +9849,7 @@ function pawGardenWalkTick(q,now,blocked,reduced=false){
  if(!q||!Number.isFinite(now))return null;
  const dt=Number.isFinite(q.last)?Math.max(0,Math.min(.05,now-q.last)):0;q.last=now;
  if(blocked||!q.route?.length)return null;
- const goal=q.route[0],dx=(goal[0]-q.pos[0])*600,dy=(goal[1]-q.pos[1])*(600*1648/928),dist=Math.hypot(dx,dy),step=reduced?dist:Math.min(dist,dt*145);
+ const goal=q.route[0],dx=(goal[0]-q.pos[0])*600,dy=(goal[1]-q.pos[1])*(q.painted?600*1631/960:600*1648/928),dist=Math.hypot(dx,dy),step=reduced?dist:Math.min(dist,dt*145);
  if(dist>0){q.pos[0]+=(goal[0]-q.pos[0])*step/dist;q.pos[1]+=(goal[1]-q.pos[1])*step/dist}
  if(dist<=step+.01){q.pos=goal.slice();q.route.shift();if(!q.route.length){const a=q.action;q.action=null;return a}}
  return null
@@ -9909,9 +9909,9 @@ function pawGardenControls(run){
  const el=$('gameControls');if(!el||run!==state||activity!=='secretGarden')return;
  if(pawArcadeInputBlocked()){el.hidden=true;return}
  const busy=!!run.pawGardenWalk?.route.length,key=String(zh)+'|'+run.gardenSitting+'|'+busy;
- if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===3){el.hidden=false;return}
+ if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===(run.pawRearGarden?4:3)){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawGardenControls');el.hidden=false;pawGardenControlsRun=run;pawGardenControlsKey=key;
- for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐'],['chime','Wind chime','听风铃']]){
+ for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐'],['chime','Wind chime','听风铃'],...(run.pawRearGarden?[['cats','Lucky cats','招财猫']]:[])]){
   const button=b(el,tr(en,cn),()=>pawGardenChoose(run,name));button.dataset.pawGardenControl=name;button.disabled=busy
  }
 }
@@ -11075,6 +11075,108 @@ fade=function(fn,kind='gust',destination=null){
  }
  return pawDoorPushFadeBefore(fn,kind,destination)
 };
+/* PAW_PAINTED_GARDEN_BEGIN */
+// The 960 x 1631 rear-garden plate has a different path, pond and bench
+// from the temporary wishing garden. Trace the actual stone paving.
+const pawRearGardenPlate={x:100,y:-145,w:600,h:600*1631/960};
+const pawRearGardenNodes={
+ entry:[.48,.78], bend:[.58,.70], fork:[.59,.655],
+ feed:[.55,.645], seat:[.79,.627], chime:[.64,.579], cats:[.53,.535], upper:[.51,.558]
+};
+const pawRearGardenEdges=[['entry','bend'],['bend','fork'],['fork','feed'],['fork','seat'],['fork','chime'],['chime','upper'],['upper','cats']];
+const pawRearGardenTargets={feed:[.32,.624,.18,.075],seat:[.79,.574,.23,.065],chime:[.78,.303,.11,.105],cats:[.65,.414,.23,.09]};
+function pawRearGardenRoute(from,action){
+ if(!Array.isArray(from)||from.length!==2||!from.every(Number.isFinite)||!Object.hasOwn(pawRearGardenTargets,action))return null;
+ const names=Object.keys(pawRearGardenNodes),distance=(a,b)=>Math.hypot((a[0]-b[0])*pawRearGardenPlate.w,(a[1]-b[1])*pawRearGardenPlate.h);
+ const origin=names.reduce((best,k)=>distance(from,pawRearGardenNodes[k])<distance(from,pawRearGardenNodes[best])?k:best,names[0]);
+ // All actions originate at completed route nodes, never across scenery.
+ if(distance(from,pawRearGardenNodes[origin])>1)return null;
+ const queue=[origin],parent=new Map([[origin,null]]);
+ for(let i=0;i<queue.length;i++){
+  const k=queue[i];if(k===action)break;
+  for(const [a,b] of pawRearGardenEdges){const next=a===k?b:b===k?a:null;if(next&&!parent.has(next)){parent.set(next,k);queue.push(next)}}
+ }
+ if(!parent.has(action))return null;
+ const route=[];for(let k=action;k!==origin;k=parent.get(k))route.unshift(pawRearGardenNodes[k].slice());
+ return route.length?route:[pawRearGardenNodes[action].slice()]
+}
+function pawRearGardenPellet(i,age){
+ if(!Number.isFinite(age)||age<0||age>.9)return null;
+ const f=Math.max(0,Math.min(1,(age-i*.035)/.65));if(f<=0||f>=1)return null;
+ const from=[.53,.598],to=[.31+i*.018,.617+(i%2)*.014];
+ return [from[0]+(to[0]-from[0])*f,from[1]+(to[1]-from[1])*f-.035*Math.sin(Math.PI*f)]
+}
+/* PAW_PAINTED_GARDEN_END */
+const pawRearGardenArtPath='../../staging/2026-11-27/rooms/temple/garden.webp';
+pawRecoveredImage(pawRearGardenArtPath);
+function pawRearGardenArt(){return pawRecoveredImage(pawRearGardenArtPath)}
+function pawRearGardenActive(){return room==='temple'&&activity==='secretGarden'&&!!state.pawRearGarden&&pawRoomImageReady(pawRearGardenArt())}
+const pawRearGardenStartBefore=start;
+start=function(id,...args){
+ const result=pawRearGardenStartBefore(id,...args);
+ if(id==='secretGarden'&&activity===id&&room==='temple'){
+  state.pawRearGarden=pawRoomImageReady(pawRearGardenArt());
+  if(state.pawRearGarden){
+   state.pawGardenWalk={painted:true,pos:pawRearGardenNodes.entry.slice(),route:[pawRearGardenNodes.bend.slice(),pawRearGardenNodes.fork.slice()],action:null,last:t,dir:'up'};
+   hint('Follow the stone path to the pond or lucky cats.','沿石径去看看锦鲤和招财猫。')
+  }
+ }
+ return result
+};
+const pawRearGardenCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(...args){return pawRearGardenActive()?pawWaterCamera(W,H,pawRearGardenPlate)||pawRearGardenCameraBefore(...args):pawRearGardenCameraBefore(...args)};
+const pawRearGardenRouteBefore=pawGardenRoute;
+pawGardenRoute=function(q,action){
+ if(!q?.painted)return pawRearGardenRouteBefore(q,action);
+ if(q.route?.length)return false;const route=pawRearGardenRoute(q.pos,action);
+ if(!route)return false;q.route=route;q.action=action;return true
+};
+const pawRearGardenChooseBefore=pawGardenChoose;
+pawGardenChoose=function(run,kind){
+ if(!run?.pawRearGarden)return pawRearGardenChooseBefore(run,kind);
+ if(run!==state||!pawRearGardenActive()||pawArcadeInputBlocked())return;
+ const q=run.pawGardenWalk;if(!q||q.route.length)return;
+ if(kind==='seat'&&run.gardenSitting){gardenSeat();return}
+ if(run.gardenSitting){gardenSeat();if(run.gardenSitting)return}
+ if(pawGardenRoute(q,kind))hint(...({feed:['Walking to the pond…','走向锦鲤池……'],seat:['Walking to the bench…','走向长椅……'],chime:['Walking to the chime…','走向风铃……'],cats:['Walking to the lucky cats…','走向招财猫……']}[kind]))
+};
+const pawRearGardenDrawBefore=drawActivity;
+drawActivity=function(...args){
+ if(!pawRearGardenActive())return pawRearGardenDrawBefore(...args);
+ const run=state,q=run.pawGardenWalk,p=pawRearGardenPlate,b=livingBounds(),xy=(u,v)=>[p.x+p.w*u,p.y+p.h*v];
+ const prior=q.pos.slice(),arrive=pawGardenWalkTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
+ if(arrive==='feed')gardenFeed();else if(arrive==='seat')gardenSeat();else if(arrive==='chime')gardenChime();
+ else if(arrive==='cats'){run.pawCatVisit=(run.pawCatVisit||0)+1;hint(...(run.pawCatVisit%2?['May the lucky cats bring you a little peace today.','愿招财猫送你一点清静。']:['They look very busy doing absolutely nothing.','它们忙着什么也不做，真让人羡慕。']))}
+ const dx=(q.pos[0]-prior[0])*p.w,dy=(q.pos[1]-prior[1])*p.h,moving=q.route.length>0;
+ if(Math.hypot(dx,dy)>.01)q.dir=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';
+ continuityActivity=activity;
+ ctx.save();try{
+  ctx.fillStyle='#344238';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawRearGardenArt(),p.x,p.y,p.w,p.h);
+  const age=t-run.gardenFeedAt;
+  if(age>=0&&age<2.8){
+   for(let j=0;j<5;j++){
+    const pt=pawRearGardenPellet(j,age);if(pt){const [px,py]=xy(...pt);ellipse(px,py,1.6,1.6,'#dfc28a')}
+    const f=Math.max(0,Math.min(1,(age-.65-j*.08)/1.65));
+    if(f>0&&f<1){const [rx,ry]=xy(.31+j*.018,.617+(j%2)*.014);ctx.strokeStyle='rgba(242,239,207,'+(.6*(1-f))+')';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(rx,ry,2+f*17,1+f*5,0,0,TAU);ctx.stroke()}
+   }
+  }
+  const [x,y]=xy(...q.pos),scale=.90+Math.max(0,q.pos[1]-.54)*.65;
+  if(run.gardenSitting&&!moving)drawRitualPose(x,y,scale,{seat:1});
+  else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale);
+  // Chime is already painted onto the real eave, so do not draw a second.
+  const chimeAge=t-run.gardenChimeAt;
+  if(chimeAge>=0&&chimeAge<1.5&&!residentReducedMotion.matches){
+   const [cx,cy]=xy(.78,.303),f=chimeAge/1.5;
+   ctx.strokeStyle='rgba(239,223,161,'+(.5*(1-f))+')';ctx.lineWidth=.8;
+   for(const side of [-1,1]){ctx.beginPath();ctx.arc(cx+side*(17+f*8),cy,5+f*7,side<0?Math.PI*.7:-Math.PI*.3,side<0?Math.PI*1.3:Math.PI*.3);ctx.stroke()}
+  }
+  if(!moving)for(const [kind,[u,v,ww,hh]] of Object.entries(pawRearGardenTargets)){
+   const [tx,ty]=xy(u,v);target(tx-ww*p.w/2,ty-hh*p.h/2,ww*p.w,hh*p.h,()=>pawGardenChoose(run,kind),'paw-rear-garden-'+kind)
+  }
+ }finally{ctx.restore()}
+ pawGardenControls(run)
+};
+
 /* PAW_RUNTIME_MODULES_BEGIN
    Existing resident scheduler, existing sound settings and wallet ledger own
    all timing, preferences and rewards. These modules add no save keys. */
