@@ -119,12 +119,13 @@
         "ENT-02",
         "MAP-01"
       ],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-fortune-20261127-e",
-        "until": 1795783547982
-      }
+      "stage": "tested",
+      "evidence": [
+        "909e55c0: selected gateway and Fortune Valley WebPs activated with matching geometry, actual doorway hit zones, fixed plaques, separate NPC lanes and ground spawn; helper-level route checks and JS parse passed",
+        "81e3ee7b: persisted geometry regression"
+      ],
+      "lease": null,
+      "blocker": "Actual rendered entrance and Fortune Valley mobile/desktop traversal, final art-scale and visual checks still pending. Approach points at stair bases are conservative; no final doorway/foreground mask acceptance."
     },
     {
       "id": "WORLD-INTEGRATION-HOME",
@@ -142,7 +143,10 @@
       ],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-districts-20261127-f",
+        "until": 1795783665638
+      }
     },
     {
       "id": "WORLD-INTEGRATION-ISLAND",
