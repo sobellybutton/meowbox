@@ -354,3 +354,8 @@ ROOM-FOOD-LIVE-01: dbaa0f0a activates independently inspected 928×1648 kitchen 
 ## Visitor continuity (27 November 2026)
 
 NPC-02: ddd0265d replaces eligible departed town guests independently when their own actor is offscreen and distant (or the map is fully covered). Continuing visitors retain their route and identity; duplicate identities and covered interactions remain guarded. 89ee7a97 adds the targeted rotation regression; current source syntax and helper checks passed in connector harness. Workstream released at tested stage. No real rendered visitor journey, artwork acceptance or latest deployment verified; no accepted count increase. Continue remaining room artwork, player flows and current browser verification. Hourly schedule unchanged.
+
+
+## Indoor guest movement and dwell (27 November 2026)
+
+NPC-03: 9e8c2e8c allows indoor visitors to retreat from existing player/resident/visitor proximity without worsening any unsafe gap. Room visitor waiting and departure retry deadlines are preserved when dialogue, overlays, transitions or suspended rendering interrupt play. 8ca85242 persists focused geometry and active dwell regression, executed against current source in a connector harness; source parsed. No actual rendered playthrough or deployment verification; local container cannot resolve GitHub. Art, contact and full phone/desktop verification remain open. Released lease; no acceptance increase. Hourly schedule unchanged.
