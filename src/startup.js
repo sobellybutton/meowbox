@@ -3098,7 +3098,10 @@ label=function(name,x,y,fn){
 };
 // Use canonical names at source so the DOM sign does not alternate between
 // an old Next Stop label and the replacement on each layout frame.
-for(const map of Object.values(maps)){const station=map.st.find(v=>v[0]==='station');if(station){station[3]='Railway Station';station[4]='火车站'}}
+for(const [id,map] of Object.entries(maps)){
+ const station=map.st.find(v=>v[0]==='station');
+ if(station){const copy=pawRailStationCopy(id,railNextDistrict(id));station[3]=copy[0];station[4]=copy[1]}
+}
 const pawLocalMapBefore=travel;
 travel=function(...args){
  const result=pawLocalMapBefore(...args);
@@ -3113,7 +3116,11 @@ travel=function(...args){
  }
  const railway=panel.querySelector(':scope > button');
  if(railway)details.after(railway);
- if(railway){const caption=element('small',tr('Onward railway: ','下一班列车：')+tr(...maps[railNextDistrict(scene)].n),panel);railway.before(caption)}
+ if(railway){
+ const dest=railNextDistrict(scene),caption=element('small',tr('Onward railway: ','下一班列车：')+tr(...maps[dest].n),panel);
+ railway.before(caption);
+ const note=pawRailChapterNote(scene,dest);if(note){const line=element('small',tr(...note),panel);railway.before(line)}
+}
  return result
 };
 $('travel').onclick=travel;$('dockTravel').onclick=travel;
@@ -3167,8 +3174,21 @@ step=function(n,dt,speed){
 function pawDirectBoardAllowed(flags){
  return !!flags.valid&&!flags.transitioning&&!flags.room&&!flags.activity&&!flags.entrance&&!flags.hidden&&!flags.page
 }
-function pawRailStationCopy(origin,destination){
- return origin==='wonder'?['Return train','返程列车']:['Next train','下一班列车']
+function pawRailStationCopy(origin,destination,worlds=maps){
+ const name=worlds?.[destination]?.n;
+ if(!Array.isArray(name)||typeof name[0]!=='string'||typeof name[1]!=='string')return ['Railway station','火车站'];
+ return ['To '+name[0],'前往'+name[1]]
+}
+function pawRailChapterNote(origin,destination){
+ const next={fortune:'home',home:'island',island:'wonder',wonder:'fortune'};
+ if(next[origin]!==destination)return null;
+ const notes={
+ fortune:['Leave your worries at the shrine, then take a little sea breeze.','把烦恼留在山间，下一站去吹吹海风。'],
+ home:['A little comfort awaits: something good to eat and time to play.','下一站有好吃的，也有不用赶时间的快乐。'],
+ island:['When you are ready for a change of pace, see what other stories await.','吃饱玩够了，去看看生活还有什么新故事。'],
+ wonder:['The valley is still here when you need another quiet moment.','想再清静一会儿，山谷一直在等你。']
+ };
+ return notes[origin]||null
 }
 /* PAW_DIRECT_BOARD_END */
 function pawPushDoorCamera(ms=260){

@@ -16,11 +16,16 @@ for(const key of Object.keys(valid))assert.equal(api.pawStationActionAllowed({..
 assert.equal(api.pawStationActionAllowed({}),false);
 const directBlock=source.match(/\/\* PAW_DIRECT_BOARD_BEGIN \*\/([\s\S]*?)\/\* PAW_DIRECT_BOARD_END \*\//);
 assert.ok(directBlock);
-const direct=new Function(directBlock[1]+';return {pawDirectBoardAllowed,pawRailStationCopy}')();
+const direct=new Function(directBlock[1]+';return {pawDirectBoardAllowed,pawRailStationCopy,pawRailChapterNote}')();
 const board={valid:true,transitioning:false,room:false,activity:false,entrance:false,hidden:false,page:false};
 assert.equal(direct.pawDirectBoardAllowed(board),true);
 for(const key of Object.keys(board))assert.equal(direct.pawDirectBoardAllowed({...board,[key]:!board[key]}),false,key);
-assert.deepEqual(direct.pawRailStationCopy('wonder','fortune'),['Return train','返程列车']);
-for(const id of ['fortune','home','island'])assert.deepEqual(direct.pawRailStationCopy(id,'wonder'),['Next train','下一班列车']);
+const worlds={fortune:{n:['Fortune Valley','解忧谷']},home:{n:['Lazy Island','懒人岛']},island:{n:['Munch & Play','吃喝玩乐岛']},wonder:{n:['Discovery Station','奇遇站']}};
+for(const [from,to] of [['fortune','home'],['home','island'],['island','wonder'],['wonder','fortune']]){
+ assert.deepEqual(direct.pawRailStationCopy(from,to,worlds),['To '+worlds[to].n[0],'前往'+worlds[to].n[1]]);
+ const note=direct.pawRailChapterNote(from,to);assert.ok(note&&note.every(v=>typeof v==='string'&&v.length>0));
+}
+assert.equal(direct.pawRailChapterNote('fortune','wonder'),null);
+assert.deepEqual(direct.pawRailStationCopy('fortune','missing',worlds),['Railway station','火车站']);
 assert.ok(!source.includes('pawStationPlatform(scene)'));
 console.log('District visit and direct station boarding regression passed');
