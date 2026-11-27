@@ -1,0 +1,6 @@
+// Run: node scripts/test-door-replan.cjs
+const fs=require('node:fs'),path=require('node:path');
+const source=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
+const a=source.indexOf('/* PAW_DOOR_REPLAN_BEGIN */'),b=source.indexOf('/* PAW_DOOR_REPLAN_END */',a);
+if(a<0||b<=a)throw Error('Missing door replan helpers');
+console.log('Door replan: '+new Function(source.slice(a,b)+"let count=0;function ok(v,m){if(!v)throw Error(m);count++}\nfor(const id of ['temple','tarot','tea','fish','kitchen','arcade','quiz','story','match','station']){\nconst q=[{x:50,y:100}],next=[{x:75,y:150}];\nok(pawDoorRepeat(id,id,q,null,false),'same door');\nok(!pawDoorRepeat(id,id,[],null,false),'empty queue');\nok(!pawDoorRepeat(id,'different',q,null,false),'new door');\nok(!pawDoorRepeat(id,id,q,'room',false),'room');\nok(!pawDoorRepeat(id,id,q,null,true),'transition');\nok(pawDoorNeedsGround(q,next,id,[[0,0,5]],null),'fresh queue same canonical id');\nok(!pawDoorNeedsGround(q,q,id,[[0,0,5]],null),'unchanged queue');\nok(!pawDoorNeedsGround(q,[],id,[[0,0,5]],null),'empty queue');\nok(!pawDoorNeedsGround(q,next,null,[[0,0,5]],null),'no pending');\nok(!pawDoorNeedsGround(q,next,id,null,null),'no geometry');\nok(!pawDoorNeedsGround(q,next,id,[[0,0,5]],'room'),'room');\n}return count;")()+' assertions passed');
