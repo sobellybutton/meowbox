@@ -902,12 +902,12 @@
       "depends": [
         "HOME-CATALOGUE-AUDIT-01"
       ],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-furniture-transfer-20261127",
-        "until": 1795790804671
-      }
+      "stage": "implemented",
+      "evidence": [
+        "01a34865: all 14 generated WebP files imported to main from owner transfer; all source SHA256 and Git blob SHA1 checks, RGBA decoding and dimensions verified; 14 committed paths independently checked against main tree. 11 missing catalogue assets at runtime paths, 3 alternates staged separately."
+      ],
+      "lease": null,
+      "blocker": "Eight wallpaper/floor material artworks and room masks still pending; image generation limit previously reached. New furniture art is imported but not yet mapped to live renderer or visually accepted. Preview/placement geometry and mobile/desktop verification pending."
     },
     {
       "id": "HOME-CATALOGUE-LIVE-02",
@@ -983,6 +983,22 @@
       ],
       "lease": null,
       "blocker": "Browser execution and actual art/contact acceptance pending."
+    },
+    {
+      "id": "HOME-FURNITURE-IMPORT-LIVE-01",
+      "lane": "interface",
+      "priority": 1,
+      "summary": "Integrate 11 imported furniture designs in catalogue/detail/tray and calibrated room placement independently of missing finish artwork",
+      "resources": [
+        "src/extensions.js",
+        "scripts/home-layout-test.cjs"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [
+        "01a34865: verified 11 unique imported designs and 3 alternates available; preserve all current IDs, prices and saves"
+      ],
+      "lease": null
     }
   ]
 }
