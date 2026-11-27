@@ -12667,4 +12667,93 @@ paintLivingBackdrop=function(...args){
  return pawTarotRoomBackdropBefore(...args)
 };
 
+
+/* PAW_WISH_INLINE_BEGIN */
+function pawWishInlineValid(run,current,house,kind,stage){
+ return !!run&&run===current&&house==='wishes'&&kind==='wishes'&&run.gardenStage===stage
+}
+function pawWishInlineText(value){
+ if(typeof value!=='string')return null;
+ const text=value.trim();return text&&text.length<=300?text:null
+}
+function pawWishInlineSelection(records,index){
+ if(!Array.isArray(records)||!records.length)return null;
+ const i=Math.min(records.length-1,Math.max(0,Number.isInteger(index)?index:0));
+ return {index:i,record:records[records.length-1-i]}
+}
+function pawPierPrivateActivity(house,kind){return house==='fish'&&['riverBottle','riverShout'].includes(kind)}
+/* PAW_WISH_INLINE_END */
+// The physical garden remains visible while writing. Use its existing
+// conversation surface, never page(), and preserve the original hook ritual.
+let pawWishComposer=null;
+function pawWishClearComposer(){
+ const old=pawWishComposer;pawWishComposer=null;
+ if(old){old.input.value='';old.paper.remove()}
+ $('dialogue').classList.remove('pawWishWriting')
+}
+const pawWishCloseBefore=closeTalk,pawWishSayBefore=say;
+closeTalk=function(...args){pawWishClearComposer();return pawWishCloseBefore(...args)};
+say=function(...args){pawWishClearComposer();return pawWishSayBefore(...args)};
+gardenWrite=function(){
+ const run=state;
+ if(!pawWishInlineValid(run,state,room,activity,'write')||pawArcadeInputBlocked())return;
+ let composer;
+ const fold=()=>{
+  if(pawWishComposer!==composer||!talkOpen||!pawWishInlineValid(run,state,room,activity,'write'))return;
+  const value=pawWishInlineText(composer.input.value);
+  if(!value){composer.input.focus();return}
+  run.pendingGardenWish=value;run.gardenStage='carry';closeTalk();
+  hint('Choose a glowing hook for your lantern.','选一个发光的挂钩，把心愿灯挂上去。')
+ };
+ say(tr('Wish paper','心愿纸'),tr('Only you can read this wish.','这份心愿只有你能看见。'),[
+  [tr('Fold into a lantern','折进心愿灯'),fold],
+  [tr('Leave it blank','暂时不写'),closeTalk]
+ ]);
+ const paper=document.createElement('div');paper.className='pawWishPaper';
+ const input=document.createElement('textarea');input.maxLength=300;input.rows=3;input.placeholder=tr('Dear universe…','亲爱的宇宙……');input.setAttribute('aria-label',tr('Your private wish','你的私人心愿'));input.autocomplete='off';
+ paper.append(input);$('dialogue').insertBefore(paper,$('choices'));$('dialogue').classList.add('pawWishWriting');
+ composer={run,paper,input};pawWishComposer=composer;
+ input.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeTalk()}else if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();fold()}});
+ input.focus({preventScroll:true})
+};
+const pawWishArchiveBefore=gardenWishBook;
+gardenWishBook=function(){
+ if(room!=='wishes'||activity!=='wishes')return pawWishArchiveBefore();
+ const run=state,valid=()=>run===state&&room==='wishes'&&activity==='wishes'&&run.gardenStage==='write';
+ if(!valid())return;
+ function read(index){
+  if(!valid())return;
+  const selected=pawWishInlineSelection(gardenWishes,index);
+  if(!selected){say(tr('My lanterns','我的心愿灯'),tr('Your first lantern is waiting to be written.','第一盏心愿灯正在等你写下心愿。'),[[tr('Back to the garden','回到花园'),closeTalk]]);return}
+  const {record,index:i}=selected,choices=[];
+  if(i>0)choices.push([tr('Newer lantern','较新的心愿灯'),()=>read(i-1)]);
+  if(i<gardenWishes.length-1)choices.push([tr('Older lantern','较早的心愿灯'),()=>read(i+1)]);
+  choices.push([tr('Take down this lantern','取下这盏灯'),()=>{
+   if(!valid())return;
+   say(tr('My lanterns','我的心愿灯'),tr('Remove this private wish from your device?','从这台设备删除这份私人心愿？'),[
+    [tr('Remove wish','删除心愿'),()=>{if(!valid())return;gardenWishes=gardenWishes.filter(w=>w.id!==record.id);save('gardenWishesV1',gardenWishes);read(i)}],
+    [tr('Keep it','保留'),()=>read(i)]
+   ])
+  }]);
+  choices.push([tr('Back to the garden','回到花园'),closeTalk]);
+  say(tr('My lanterns','我的心愿灯'),String(record.date||'')+' · '+(i+1)+'/'+gardenWishes.length+'\n\n'+String(record.text||''),choices)
+ }
+ read(0)
+};
+// Quiet release is a private activity. Keep Ah Ma at her ritual stall,
+// including the legacy fallback room and activity renderer paths.
+const pawPrivatePierAuntieBefore=riverAuntie;
+riverAuntie=function(...args){if(pawPierPrivateActivity(room,activity))return;return pawPrivatePierAuntieBefore(...args)};
+const pawPrivatePierPaintBefore=drawProductionAhMa;
+drawProductionAhMa=function(...args){if(pawPierPrivateActivity(room,activity))return false;return pawPrivatePierPaintBefore(...args)};
+const pawWishInlineStyle=document.createElement('style');
+pawWishInlineStyle.textContent=`
+#game #dialogue.pawWishWriting{max-height:65dvh!important;overflow-y:auto!important;overscroll-behavior:contain}
+#game #dialogue.pawWishWriting #dialogueTop{min-height:0}
+#game #dialogue.pawWishWriting #talkPortrait{display:none!important}
+#game #dialogue.pawWishWriting .pawWishPaper{padding:5px 0}
+#game #dialogue.pawWishWriting textarea{display:block;box-sizing:border-box;width:100%;min-height:84px;max-height:24dvh;resize:vertical;padding:10px 12px;border:1px solid #b89c70;border-radius:3px;background:#f7ebd3 url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat;color:#59442f;font:16px/1.5 Georgia,"Songti SC",serif}
+@media(orientation:landscape){#game #dialogue.pawWishWriting{max-height:70dvh!important}}
+`;document.head.append(pawWishInlineStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
