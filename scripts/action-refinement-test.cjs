@@ -203,3 +203,35 @@ for(const [stage,expected] of [['folded',['open']],['opening',[]],['open',['keep
 }
 ck(pawTemplePaperActions({paperStage:'kept',paperAt:0},.2).length===0,'animation');
 return n;`)()+' accessible fortune paper state assertions');
+
+/* Core assessments: execute actual question banks and scoring, not invented
+   fixtures. All possible preference and Soul Cat choices preserve ties. */
+{
+ const ext=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+ const release=fs.readFileSync(path.join(__dirname,'../src/release-fixes.js'),'utf8');
+ const take=(str,a,b)=>{const i=str.indexOf(a),j=str.indexOf(b,i+a.length);if(i<0||j<0)throw Error('Missing '+a);return str.slice(i,j)};
+ const base=take(ext,'const soulQs=[','let soulResult=')+take(ext,'const wonderTypes=[','const wonderMotives=')+take(ext,'const preferenceExtras=[','let wonderQuestionOrder=')+take(ext,'function prepareWonderQuestions(mode){','function wonderSceneData()')+take(ext,'function scoreWonder(mode,rows,answers){','function wonderSceneFinish(){');
+ const bits=take(release,'function releaseAssessmentBalance(mode,result){','const releaseWonderFinish=')+take(release,'const releaseScoreBefore=scoreWonder;','const releaseChartDetailsBefore=')+take(release,'/* PAW_CORE_RESULT_BEGIN */','/* PAW_CORE_RESULT_END */');
+ const api=new Function(base+bits+';return {soulQs,prepareWonderQuestions,scoreWonder,releaseAssessmentBalance,pawPreferenceReflection,pawSoulPortrait}')();
+ const ok=(v,m)=>{if(!v)throw Error(m)};
+ const rows=api.prepareWonderQuestions('type').sort((a,b)=>a.id-b.id);
+ for(let mask=0;mask<65536;mask++){
+  const answers=rows.map(q=>(mask>>q.id)&1),score=api.scoreWonder('type',rows,answers),balance=api.releaseAssessmentBalance('type',score);
+  ok(balance.every((q,i)=>q.first+q.second===4&&q.first===answers.slice(i*4,i*4+4).filter(x=>x===0).length&&!!api.pawPreferenceReflection(i,q.first,q.second)),'Preference count or reflection mismatch');
+ }
+ const cats=api.prepareWonderQuestions('soul').sort((a,b)=>a.id-b.id);
+ for(let mask=0;mask<4096;mask++){
+  const answers=cats.map(q=>(mask>>(q.id*2))&3),score=api.scoreWonder('soul',cats,answers),portrait=api.pawSoulPortrait(score,api.soulQs);
+  ok(portrait.leaders.map(x=>x.index).sort((a,b)=>a-b).join()===score.ties.join(),'Soul Cat ties misrepresented');
+ }
+ const motives=api.prepareWonderQuestions('motive');
+ for(let v=0;v<3;v++){
+  const score=api.scoreWonder('motive',motives,motives.map(()=>v)),balance=api.releaseAssessmentBalance('motive',score);
+  ok(balance.flat&&balance.ranked.every(x=>x.score===v*3),'Flat motives assigned a type');
+ }
+ const invalid=rows.map(q=>({...q,opts:q.opts.map(o=>[...o])}));invalid[0].opts[0][2]=2;
+ let rejected=false;try{api.scoreWonder('type',invalid,invalid.map(()=>0))}catch{rejected=true}ok(rejected,'Invalid choice accepted');
+ ok(api.releaseAssessmentBalance('type',{scores:[1,2,4,0]})===null,'Malformed preference scores accepted');
+ ok(api.pawSoulPortrait({scores:[100,0,0,0,0,0,0,0]},api.soulQs)===null,'Malformed Soul Cat scores accepted');
+ console.log('Core preference, motive and Soul Cat assessment checks passed.');
+}
