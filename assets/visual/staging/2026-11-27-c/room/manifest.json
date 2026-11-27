@@ -1,0 +1,90 @@
+{
+  "asset_count": 14,
+  "status": "Imported; runtime and rendered acceptance pending",
+  "assets": [
+    {
+      "id": "rug",
+      "path": "assets/visual/staging/2026-11-27-c/room/furniture-alternates/rug.webp",
+      "git_blob_sha1": "1f8c904493e8f7211367a24c1d5c2303a180a288",
+      "status": "candidate; not visually accepted"
+    },
+    {
+      "id": "shelf",
+      "path": "assets/visual/staging/2026-11-27-c/room/furniture-alternates/shelf.webp",
+      "git_blob_sha1": "3f811636f8172f35356b43118dee0945d1bbb72b",
+      "status": "candidate; not visually accepted"
+    },
+    {
+      "id": "board",
+      "path": "assets/visual/painted/home/furniture/board.webp",
+      "git_blob_sha1": "d160809c65d59bf87b0efd73b4dcf7a57fd52e00",
+      "status": "candidate; not visually accepted"
+    },
+    {
+      "id": "plant",
+      "path": "assets/visual/staging/2026-11-27-c/room/furniture-alternates/plant.webp",
+      "git_blob_sha1": "7588fa08928d235ddf46ae59a0296052ed505560",
+      "status": "candidate; not visually accepted"
+    },
+    {
+      "id": "frame",
+      "path": "assets/visual/painted/home/furniture/frame.webp",
+      "git_blob_sha1": "6cb99ed85b1ca31b3b4bbf28c7140852f0094865",
+      "status": "candidate; not visually accepted"
+    },
+    {
+      "id": "kotatsu",
+      "path": "assets/visual/painted/home/furniture/kotatsu.webp",
+      "git_blob_sha1": "dd0fd5ef997dbe2ada95656f0c1d91b735b5b178",
+      "status": "candidate; not visually accepted"
+    },
+    {
+      "id": "teaCabinet",
+      "path": "assets/visual/painted/home/furniture/teaCabinet.webp",
+      "git_blob_sha1": "18e12232e4f9719b6cbec446bb5197cf52519f55",
+      "status": "candidate; not visually accepted"
+    },
+    {
+      "id": "bonsai",
+      "path": "assets/visual/painted/home/furniture/bonsai.webp",
+      "git_blob_sha1": "7548e196713b523363e45a0a465d7516cc0bc6c3",
+      "status": "candidate; not visually accepted"
+    },
+    {
+      "id": "recordPlayer",
+      "path": "assets/visual/painted/home/furniture/recordPlayer.webp",
+      "git_blob_sha1": "2a2293eb2e36f7dcb0b39d8d33d61142f9d11667",
+      "status": "candidate; not visually accepted"
+    },
+    {
+      "id": "readingChair",
+      "path": "assets/visual/painted/home/furniture/readingChair.webp",
+      "git_blob_sha1": "1479f1f00fdf6f6f4d338648af7e31febac4a0ab",
+      "status": "candidate; not visually accepted"
+    },
+    {
+      "id": "chineseScreen",
+      "path": "assets/visual/painted/home/furniture/chineseScreen.webp",
+      "git_blob_sha1": "d6a74afe664524b8553d2cb33850b11f4756065c",
+      "status": "candidate; not visually accepted"
+    },
+    {
+      "id": "chineseLantern",
+      "path": "assets/visual/painted/home/furniture/chineseLantern.webp",
+      "git_blob_sha1": "e92b432d31fec4c9c17ffe0fd3d5832cd4556c67",
+      "status": "candidate; not visually accepted"
+    },
+    {
+      "id": "porcelainVase",
+      "path": "assets/visual/painted/home/furniture/porcelainVase.webp",
+      "git_blob_sha1": "705c6be5ec88b98e9dc0e1fdc95e749c970e69fe",
+      "status": "candidate; not visually accepted"
+    },
+    {
+      "id": "moonShelf",
+      "path": "assets/visual/painted/home/furniture/moonShelf.webp",
+      "git_blob_sha1": "ba996e3a50fb6a4448e429101cec1fbebaf3d1e2",
+      "status": "candidate; not visually accepted"
+    }
+  ]
+}
