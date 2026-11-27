@@ -138,7 +138,10 @@ async function travelLoop(page,name,touch){
  await backOutside();
  await enterDoor('destiny');
  await station('destiny');
- await page.locator('.yueAlmanacForm').waitFor();
+ await press(page.getByRole('button',{name:'My birth chart',exact:true}));
+ await press(page.getByRole('button',{name:'For me',exact:true}));
+ await page.locator('.astroForm').waitFor();
+ assert.equal(await page.locator('#page').getAttribute('data-paw-yue-desk'),'true','Consultation stays at the study desk');
  await shot('yue-desk');
  await backOutside();
 
