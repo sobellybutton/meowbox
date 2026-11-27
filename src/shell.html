@@ -65,4 +65,80 @@
 #game #content .hideoutFurnitureTray button>img{display:block!important;object-fit:contain!important;max-width:100%!important}
 @media(max-width:350px){#game #content .komorebiGrid .komorebiTile>.mbFurnitureMat{height:100px!important;padding:4px!important}#game #content .komorebiGrid .komorebiTile>strong{font-size:12px!important}}
 
+
+/* PAW_COMPACT_SIGN_MATERIALS_BEGIN
+   Existing painterly material crops, not final individually illustrated building signage.
+   Keep a 44px accessible target; the visible object can be much quieter.
+   Use stable door IDs rather than translation or transient map names. */
+html #game>#worldSigns>.worldSign[data-door]>.doorPlaque{
+ --sign-grain:url('assets/visual/painted/signage/paper-grain.webp');
+ --sign-tint:linear-gradient(#ece8d8a8,#d8d7c49c);
+ --sign-ink:#36493f;--sign-edge:#65796f;--sign-inner:#fff7de9e;
+ box-sizing:border-box!important;
+ background-image:var(--sign-tint),var(--sign-grain)!important;
+ background-color:#e6dbc3!important;background-size:100% 100%!important;
+ background-position:center!important;background-repeat:no-repeat!important;
+ border-image:none!important;border:1px solid var(--sign-edge)!important;border-radius:3px!important;
+ box-shadow:inset 0 0 0 1px var(--sign-inner),0 1px 3px #25312950!important;
+ color:var(--sign-ink)!important;text-shadow:none!important;
+ font-family:var(--paw-display,Georgia,serif)!important;font-weight:700!important;
+ font-size:clamp(12px,2.8vw,14px)!important;line-height:1.25!important;letter-spacing:.01em!important;
+ width:max-content!important;max-width:min(148px,42vw)!important;min-width:0!important;
+ padding:5px 8px!important;white-space:normal!important;overflow-wrap:normal!important;
+ word-break:normal!important;text-wrap:balance;text-align:center;pointer-events:none
+}
+html #game>#worldSigns>.worldSign[data-door]{
+ min-height:44px!important;min-width:44px!important
+}
+/* Fortune Valley: grounded, shrine-like timber and a quiet warm inscription. */
+html #game>#worldSigns>.worldSign:is([data-door="temple"],[data-door="tarot"],[data-door="destiny"],[data-door="wishes"],[data-door="secretGarden"])>.doorPlaque{
+ --sign-grain:url('assets/visual/painted/signage/wood-grain.webp');
+ --sign-tint:linear-gradient(#5a5345bc,#49483bd4);
+ --sign-ink:#fff0d0;--sign-edge:#c0ad83;--sign-inner:#f2d8aa2e;
+}
+/* Lazy Island: washed cream and sea-green shop trim. */
+html #game>#worldSigns>.worldSign:is([data-door="fish"],[data-door="tea"],[data-door="park"],[data-door="office"])>.doorPlaque{
+ --sign-grain:url('assets/visual/painted/signage/paper-grain.webp');
+ --sign-tint:linear-gradient(#e9eddfd9,#d7e3d2b8);
+ --sign-ink:#334e48;--sign-edge:#64877d;--sign-inner:#fff8e5d9;
+}
+/* Munch & Play: muted retro enamel/timber tones, not bright orange blossoms. */
+html #game>#worldSigns>.worldSign:is([data-door="arcade"],[data-door="mystery"],[data-door="kitchen"],[data-door="boba"])>.doorPlaque{
+ --sign-grain:url('assets/visual/painted/signage/wood-grain.webp');
+ --sign-tint:linear-gradient(#edd9bdde,#d9bda3d9);
+ --sign-ink:#593b30;--sign-edge:#946149;--sign-inner:#f9e8c794;
+}
+/* Discovery Station: soft indigo and aged brass. */
+html #game>#worldSigns>.worldSign:is([data-door="quiz"],[data-door="story"],[data-door="match"])>.doorPlaque{
+ --sign-grain:url('assets/visual/painted/signage/ribbon-paper.webp');
+ --sign-tint:linear-gradient(#40566ad9,#343d59df);
+ --sign-ink:#fff0ce;--sign-edge:#bfa575;--sign-inner:#f2d8aa33;
+}
+/* Route information has its own understated, shared railway identity. */
+html #game>#worldSigns>.worldSign[data-door="station"]>.doorPlaque{
+ --sign-grain:url('assets/visual/painted/signage/paper-grain.webp');
+ --sign-tint:linear-gradient(#e7dfc8d6,#d4d1b6c2);
+ --sign-ink:#34483e;--sign-edge:#78826a;
+ padding:4px 7px!important;white-space:normal!important;
+ border-image:url('assets/visual/painted/signage/washi-frame.webp') 38 44 37 44 stretch!important;
+ border-width:4px 6px!important;
+}
+html #game>.pawRailEdge{
+ background:linear-gradient(#e7dfc8c9,#d4d1b6c9),url('assets/visual/painted/signage/paper-grain.webp') center/100% 100%!important;
+ color:#34483e!important;border-color:#78826a!important;
+ font-family:var(--paw-display,Georgia,serif)!important;font-size:12px!important;
+}
+html #game>#worldSigns>.worldSign[data-door]:focus-visible>.doorPlaque{
+ outline:2px solid #faf0d2!important;outline-offset:2px!important;
+}
+@media(min-width:900px){
+ html #game>#worldSigns>.worldSign[data-door]>.doorPlaque{
+ font-size:14px!important;max-width:166px!important;
+ }
+}
+@media(max-width:350px){
+ html #game>#worldSigns>.worldSign[data-door]>.doorPlaque{padding:4px 6px!important}
+}
+ /* PAW_COMPACT_SIGN_MATERIALS_END */
+
 </style></head><body><main id="game"><canvas id="c" aria-label="Pawradise interactive world"></canvas><div id="worldSigns" hidden></div><button id="lunarBtn" hidden></button><div id="hud"><button id="profileHud" aria-label="Player profile"><img id="hudPortrait" alt=""><span><strong id="hudName"></strong><small id="hudProgress"></small></span></button><div id="location">Pawradise</div><div id="hudStats"><span id="hudCoins"></span><span id="hudStamps"></span></div><button id="travel">Travel</button></div><button id="back" hidden>Step Back</button><div id="small"><button id="luck">Daily Luck</button><div><button id="language">中文</button> <button id="mute">♪</button></div></div><div id="hint"></div><nav id="dock" aria-label="Game navigation"><button id="dockRoom"><span class="dockIcon">⌂</span><span></span></button><button id="dockPassport"><span class="dockIcon">▤</span><span></span></button><button id="dockValley"><span class="dockIcon">♧</span><span></span></button><button id="dockTravel"><span class="dockIcon">✈</span><span></span></button><button id="dockScoop"><span class="dockIcon">▧</span><span></span></button></nav><div id="gameControls" hidden></div><div id="dialogue"><div id="dialogueTop"><img id="talkPortrait" alt="" hidden><div id="speaker"></div></div><div id="line"></div><div id="choices"></div></div><div id="toast"></div><div id="page"><div class="inner" id="content"></div></div><div id="fade"></div><section id="arrival" class="intro" hidden><img class="introArt" id="arrivalArt" alt=""><div class="introDoors" id="introDoors"><div></div><div></div></div><div class="introCard" id="introCard"></div></section></main><meta name="meow-community-api" content=""><!--MEOW_GAME_SCRIPT--></body></html>
