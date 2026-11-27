@@ -392,12 +392,15 @@
         "src/extensions.js"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-yue-20261127-b",
-        "until": 1795780553691
-      }
+      "stage": "tested",
+      "evidence": [
+        "d92587d1: explicit birthplace and bilingual draft retention, input guard, per-subject clear; source parse + 38 helper assertions",
+        "3ca5e3d8: persistent unit test",
+        "cc9b848d: expanded browser regression, parsed only",
+        "8caa7e9c: workflow builds current source and runs input checks"
+      ],
+      "lease": null,
+      "blocker": "Latest browser workflow, rendered mobile/desktop result and Pages deployment not verified; existing art and chart method limits unchanged."
     },
     {
       "id": "READ-03",
