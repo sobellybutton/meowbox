@@ -10897,6 +10897,12 @@ function pawInstallHomeArt(){
   if(art9[id]===pawHomeOriginalArt.get(id)||art9[id]===path)art9[id]=path;
  }
 }
+/* PAW_FINISH_PREVIEW_BEGIN */
+const pawFinishIds=['wallLinen','wallSakura','wallMatcha','wallBlue','floorOak','floorTiles','floorTatami','floorChecker'];
+function pawFinishPreview(id){return pawFinishIds.includes(id)?'assets/visual/painted/home/finishes/'+id+'.webp':null}
+/* PAW_FINISH_PREVIEW_END */
+const pawFinishPathBefore=pawFurniturePaintedPath;
+pawFurniturePaintedPath=function(id,preview=false){return preview&&pawFinishPreview(id)||pawFinishPathBefore(id,preview)};
 const pawHomePlanNames={starter:['Cozy nook','初始小窝'],side:['Reading room','阅读小室'],studio:['Collection studio','收藏工作室']};
 function pawRenderExpansionPlans(root,api){
  if(!root?.isConnected||root.dataset.pawPlansReady==='true')return;
