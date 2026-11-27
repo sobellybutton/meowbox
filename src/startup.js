@@ -260,12 +260,11 @@ action=function(id){
   closeTalk();return say(tr('Fortune Teller','占卜师'),tr('Something on your mind? Take your time. The cards aren’t going anywhere.','心里有事？慢慢来，牌又不会跑。'),[
    [tr('Daily guidance · 1 card','今日指引 · 一张牌'),()=>{closeTalk();start('tarot')}],
    [tr('Find some clarity · 3 cards','三牌解惑 · 三张牌'),()=>{closeTalk();start('love')}],
-   [tr('Look a little deeper · 5 cards','深入解读 · 五张牌'),()=>{closeTalk();start('love');state.readSpreadSize=5}]
+   [tr('Keep exploring','继续逛逛'),closeTalk]
   ])
  }
  if(room==='quiz'&&id==='quiz'){
   closeTalk();return say(tr('Lab keeper','研究所店主'),tr('Choose a little discovery. Each is for self-reflection, not diagnosis.','选一个小小的自我探索。仅供自我反思，并非诊断。'),[
-   [tr('Soul Cat · playful character','猫灵 · 趣味性格'),()=>{closeTalk();wonderSceneOpen('soul')}],
    [tr('MBTI-inspired preferences','MBTI 四种性格偏好'),()=>{closeTalk();wonderSceneOpen('type')}],
    [tr('Enneagram-inspired · nine motives','九型人格 · 九种内在动力'),()=>{closeTalk();wonderSceneOpen('motive')}],
    [tr('Five personality tendencies','五大性格倾向'),()=>{closeTalk();wonderSceneOpen('bigfive')}],
@@ -1492,7 +1491,10 @@ let mb5AssistKey='',mb5AssistState=null;
 function mb5AssistSync(force=false){
  const el=$('gameControls');if(!el)return;
  const spec=mb5AssistSpec(activity,state,t);
- if(!spec){el.classList.remove('mb5ActivityAssist');mb5AssistKey='';mb5AssistState=null;return}
+ if(!spec){
+  if(el.classList.contains('mb5ActivityAssist')&&el.querySelector('.mb5ActivityButton')){el.replaceChildren();el.hidden=true}
+  el.classList.remove('mb5ActivityAssist');mb5AssistKey='';mb5AssistState=null;return
+ }
  el.classList.add('mb5ActivityAssist');
  if(talkOpen||transitioning||$('page').style.display==='block'){el.hidden=true;return}
  const key=spec.key+'|'+zh;
@@ -6073,17 +6075,20 @@ function pawTarotChoiceSlots(portrait){
  const cols=portrait?4:6,rows=12/cols,w=portrait?77:68,h=portrait?111:105,dx=portrait?91:80,dy=portrait?126:125;
  return Array.from({length:cols*rows},(_,i)=>({x:400+(i%cols-(cols-1)/2)*dx,y:portrait?388+Math.floor(i/cols)*dy:420+Math.floor(i/cols)*dy,w,h}))
 }
+function pawTarotFrameMatches(q,frame,portrait){
+ return !!(q&&frame&&q.readStage==='choose'&&q.pawCardPool===frame.pool&&q.pawChoiceFrame===frame&&frame.portrait===portrait)
+}
 /* PAW_OWNER_TAROT_CHOICE_END */
 function pawOpenCardChoice(){
  if(!['tarot','love'].includes(activity))return false;
- state.pawCardPool=pawTarotPool(tarotDeck.length);state.pawSelectedCards=[];state.readCards=[];state.readFlip=[];state.readSaved=false;
+ state.pawCardPool=pawTarotPool(tarotDeck.length);state.pawChoiceFrame=null;state.pawSelectedCards=[];state.readCards=[];state.readFlip=[];state.readSaved=false;
  state.readStage='choose';state.readAt=t;state.readShuffle=Math.max(1,state.readShuffle||0);
  const n=activity==='tarot'?1:state.readSpreadSize===5?5:3;
  hint(tr('Choose '+n+' '+(n===1?'card':'cards')+' that draw your attention.','凭直觉选 '+n+' 张牌。'),tr('Choose '+n+' cards.','凭直觉选 '+n+' 张牌。'));
  return true
 }
-function pawSelectTarotCard(index){
- if(state.readStage!=='choose'||!['tarot','love'].includes(activity)||talkOpen)return false;
+function pawSelectTarotCard(index,frame=state.pawChoiceFrame){
+ if(!['tarot','love'].includes(activity)||talkOpen||transitioning||document.hidden||!proposal.hidden||$('page').style.display==='block'||!pawTarotFrameMatches(state,frame,W<H))return false;
  const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,chosen=pawTarotPick(state.pawCardPool,state.pawSelectedCards,index,count);
  if(!chosen)return false;
  state.pawSelectedCards=chosen;physicalFx('paper',.65);
@@ -6108,7 +6113,11 @@ readingDeal=function(){
 const pawSelectDrawBefore=drawActivity;
 drawActivity=function(...args){
  if(!['tarot','love'].includes(activity)||state.readStage!=='choose')return pawSelectDrawBefore(...args);
- const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,slots=pawTarotChoiceSlots(W<H),chosen=state.pawSelectedCards||[];
+ const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,portrait=W<H,slots=pawTarotChoiceSlots(portrait),chosen=state.pawSelectedCards||[];
+ // Keep the displayed pool identity stable across ordinary frames; invalidate
+ // old hit callbacks if the deck is reshuffled or the viewport rotates.
+ if(!pawTarotFrameMatches(state,state.pawChoiceFrame,portrait))state.pawChoiceFrame={pool:state.pawCardPool,portrait};
+ const frame=state.pawChoiceFrame;
  ctx.save();try{
   paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);
   table();
@@ -6120,10 +6129,10 @@ drawActivity=function(...args){
    if(picked){round(q.x-q.w/2,q.y-q.h/2,q.w,q.h,5,'#342a45','#bda16c');txt(String(chosen.indexOf(i)+1),q.x,q.y,27,'#eedcb2')}
    else{ctx.shadowColor='#1b152e65';ctx.shadowBlur=4;ctx.shadowOffsetY=3;card(q.x-q.w/2,q.y-q.h/2,q.w,q.h,false)}
    ctx.restore();
-   if(!picked)target(q.x-q.w/2-3,q.y-q.h/2-3,q.w+6,q.h+6,()=>pawSelectTarotCard(i),'paw-pick-card-'+i)
+   if(!picked)target(q.x-q.w/2-3,q.y-q.h/2-3,q.w+6,q.h+6,()=>pawSelectTarotCard(i,frame),'paw-pick-card-'+i)
   }
   activityFitText(tr('Choose '+count+' '+(count===1?'card':'cards')+' · '+chosen.length+'/'+count,'选 '+count+' 张牌 · '+chosen.length+'/'+count),400,W<H?307:341,22,430,'#f6e6c8');
-  if(!chosen.length)label(tr('Shuffle again','重新洗牌'),400,W<H?745:655,()=>{pawOpenCardChoice();physicalFx('paper',.6)})
+  if(!chosen.length)label(tr('Shuffle again','重新洗牌'),400,W<H?745:655,()=>{if(!pawTarotFrameMatches(state,frame,W<H)||pawArcadeInputBlocked())return;pawOpenCardChoice();physicalFx('paper',.6)})
  }finally{ctx.restore()}
 };
 const pawSelectCameraBefore=mobileRoomCamera;

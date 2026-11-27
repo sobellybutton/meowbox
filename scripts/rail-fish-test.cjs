@@ -70,3 +70,5 @@ check(pawRailRideProgress(4)>pawRailRideProgress(3.6),'continues past normal arr
 check(pawRailRideProgress(16)>pawRailRideProgress(8),'no turnaround on extended ride');
 return 'PASS '+count+' directional ride timing assertions';
 `)());
+
+require('./arcade-input-test.cjs');

@@ -247,3 +247,16 @@ for(const mode of Object.keys(pawExtraDiscoveries)){
 }
 return n;`)();
 console.log('PASS '+recoveredChecks+' recovered artwork, railway projection and scripted gait checks');
+
+const pawFrameSelectSource=s.slice(pawSelectA,pawSelectB);
+console.log(new Function(pawFrameSelectSource+`
+const pool=pawTarotPool(78,()=>.4),frame={pool,portrait:true};
+const q={readStage:'choose',pawCardPool:pool,pawChoiceFrame:frame};
+const ck=(v,m)=>{if(!v)throw Error(m)};
+ck(pawTarotFrameMatches(q,frame,true),'rendered frame accepted');
+ck(!pawTarotFrameMatches(q,frame,false),'rotated frame rejected');
+ck(!pawTarotFrameMatches({...q,pawCardPool:pawTarotPool(78,()=>.5)},frame,true),'reshuffled pool rejected');
+ck(!pawTarotFrameMatches({...q,pawChoiceFrame:{pool,portrait:true}},frame,true),'retired frame rejected');
+ck(!pawTarotFrameMatches({...q,readStage:'deal'},frame,true),'completed choice rejected');
+return 'PASS 5 rendered tarot selection guards';
+`)());

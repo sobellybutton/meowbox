@@ -14,8 +14,10 @@ async function travelLoop(page,name,touch){
  const press=locator=>touch?locator.tap({timeout:12000}):locator.click({timeout:12000});
  const shot=async id=>{await page.screenshot({path:'test-results/'+name+'-district-'+id+'.png'});await frameAudit.flush(id)};
  async function point(x,y){
-  if(touch)await page.touchscreen.tap(x,y);
-  else await page.mouse.click(x,y);
+  const rect=await page.locator('canvas#cv,canvas#c,#game canvas').first().boundingBox();
+  if(!rect)throw Error('Game canvas unavailable');
+  if(touch)await page.touchscreen.tap(x+rect.x,y+rect.y);
+  else await page.mouse.click(x+rect.x,y+rect.y);
  }
  async function enterDoor(id){
   const sign=page.locator('#worldSigns [data-door="'+id+'"]');
@@ -110,10 +112,17 @@ async function travelLoop(page,name,touch){
  await page.waitForFunction(()=>activity==='tarot'&&state.readStage==='choose');
  assert.equal(await page.locator('#hud').isVisible(),false,'Room hides profile and coins');
  assert.equal(await page.locator('#small').isVisible(),false,'Room hides settings');
- const chosenCard=await page.evaluate(()=>({slot:pawTarotChoiceSlots(W<H)[7],value:state.pawCardPool[7]}));
- await point(...await page.evaluate(q=>[cam.ox+q.x*cam.scale,cam.oy+q.y*cam.scale],chosenCard.slot));
+ const chosenCard=await page.waitForFunction(()=>{
+  const h=hit.find(v=>v.id==='paw-pick-card-7');
+  if(!h||!pawTarotFrameMatches(state,state.pawChoiceFrame,W<H))return false;
+  const p={x:h.x+h.w/2,y:h.y+h.h/2};
+  if(at(p)!==h)return false;
+  return {point:[cam.ox+p.x*cam.scale,cam.oy+p.y*cam.scale],value:state.pawCardPool[7]}
+ });
+ const chosen=await chosenCard.jsonValue();
+ await point(...chosen.point);
  await page.waitForFunction(()=>state.readStage==='cards');
- assert.deepEqual(await page.evaluate(()=>state.readCards[0]),chosenCard.value,'Reading must use the exact chosen card');
+ assert.deepEqual(await page.evaluate(()=>state.readCards[0]),chosen.value,'Reading must use the exact chosen card');
  await backOutside();
  await enterDoor('temple');
  assert(await page.evaluate(()=>Object.entries(pawTempleLayout).every(([id,v])=>indoorSafe(v[2],v[3]))),'Temple stations have safe approaches');
