@@ -11462,6 +11462,63 @@ const pawLiveMotionLoopBefore=loop;
 loop=function(...args){const result=pawLiveMotionLoopBefore(...args);pawLiveMotionTick();return result};
 /* PAW_RUNTIME_MODULES_END */
 
+/* PAW_PARALLEL_VALUES_BEGIN */
+// Each decision has a real trade-off within the fictional scene. These
+// are authored reflections, never a score, diagnosis or prediction.
+const pawParallelStakes={
+ coastStorm:['The lamp needs hands-on repair; the shore needs someone to guide the boat. You can only take one post.','灯塔需要人动手修，岸边也缺个引航员。你只能守住一个岗位。'],
+ coastGallery:['You can finish your own painting before the rain stops, or give the child your time and the last dry sheet.','雨停前，你可以完成自己的画，也可以把时间和最后一张干画纸留给小朋友。'],
+ mountainCat:['The shelter needs someone to stay; the stranded travellers need someone to organise the next train.','驿站缺人照料，滞留的旅人又需要有人安排下一班车。'],
+ mountainStars:['There is one clear minute left. Share the telescope now, or record the route so others can find it tomorrow.','只剩一分钟晴空。你可以现在陪人观星，也可以记下路线，让明天的旅人自己找到这里。'],
+ cafeTea:['The sign repair solves today’s problem. A prepaid tea table could help people you haven’t met yet.','修好招牌能解决眼前的难题。留个待用茶位，也许能帮到还不认识的人。'],
+ cafeGossip:['Checking the story might spoil the scoop. Turning it into fiction means giving up the real names and the juicy detail.','查证可能会让独家新闻泡汤；改成虚构故事，就得舍掉真名和那些最劲爆的细节。'],
+ booksWriter:['The reader wants comfort, but leaving a blank page would let them imagine a different future.','读者想得到一点安慰。不过，留下一页空白，也能让他们自己想象另一种未来。'],
+ booksLetters:['You can use this quiet moment to write to yourself, or send the ticket onwards and change a stranger’s afternoon.','你可以趁此刻安静给自己写封信，也可以把车票送出去，改变陌生人的一个下午。']
+};
+const pawParallelReflections={
+ endLight:['You chose to make something dependable again. Is there one small responsibility you would actually enjoy carrying?','你选择亲手修好一件让人安心的东西。现实里，有没有一份你心甘情愿承担的小责任？'],
+ endHarbour:['You helped from a different place instead of taking the expected job. Where could your own contribution take a less obvious form?','你没有接下原本的岗位，却用另一种方式帮了忙。现实里，你是否也可以换个方式发挥所长？'],
+ endArt:['You made something personal out of an imperfect day. What would you create if it did not have to impress anyone?','你把不完美的一天画成自己的作品。不用取悦任何人的时候，你想创造些什么？'],
+ endTeacher:['You traded a finished work for someone else’s first attempt. What skill would you enjoy sharing without needing to be an expert?','你放下自己的作品，陪别人完成第一次尝试。有什么本领，即使不算专家，你也愿意分享？'],
+ endNap:['You chose shelter and company over the next train. What would a little more unhurried time look like this week?','你选择留下陪伴，而不是赶下一班车。这周，有哪一小段时间可以过得从容一点？'],
+ endConductor:['You helped others get moving. What would make the things you organise feel worthwhile rather than simply busy?','你帮大家重新启程。现实中，你忙着张罗的事情，怎样才会让自己觉得值得？'],
+ endStars:['You shared a brief moment of wonder instead of saving it for yourself. Who might enjoy a small discovery with you?','你把短暂的惊喜与人分享。生活里，有谁会愿意和你一起发现一点新鲜事？'],
+ endGuide:['You left something useful for visitors you may never meet. What knowledge could you make easier for someone else to find?','你给素未谋面的旅人留下了帮助。有什么你知道的事，可以让别人更容易找到答案？'],
+ endTea:['You made a fair exchange and found a regular customer. Which ordinary relationship would you like to give a little more time?','你选择公平交换，也结识了一位常客。有哪段平凡的关系，值得你多花一点时间？'],
+ endCommunity:['You made space for kindness to travel beyond the first cup. What is one small kindness that someone could pass on?','你让善意从第一杯茶慢慢传出去。有哪件小事，能让接受的人也愿意把善意传下去？'],
+ endGossip:['You checked before repeating a story. What assumption could you pause and question before your next conversation?','你选择先弄清楚再开口。下一次聊天时，有什么想当然的判断，可以先停一停？'],
+ endComedy:['You kept the humour and left real people out of the joke. What can you laugh at without making someone else the punchline?','你保留了笑点，却没有把真人当靶子。有什么事，可以一起笑，却不必让谁难堪？'],
+ endWriter:['You gave someone a gentle ordinary ending. What would a perfectly ordinary good day look like for you?','你给别人写了一个温柔而平凡的结局。对你来说，平凡的好日子会是什么样？'],
+ endEditor:['You left room for a different answer. Is there a decision you can afford not to settle today?','你留出了一点空间，让答案不只一种。有没有一个决定，其实不必今天就定下来？'],
+ endLetters:['You chose to listen to your future self. What would tomorrow’s you thank you for doing a little differently?','你选择听听未来的自己。今天做哪一点改变，会让明天的你感谢自己？'],
+ endTicket:['You passed a possibility on to someone else. What is something you could share without giving up what matters to you?','你把一种可能性送给了别人。有什么东西，分享出去也不会失去自己珍视的东西？']
+};
+function pawParallelReflection(trail,end,scenes,ends){
+ if(!Array.isArray(trail)||trail.length!==4||!Object.hasOwn(ends,end)||!Object.hasOwn(pawParallelReflections,end)||trail[0]!=='station')return null;
+ const route=[...trail,end];
+ for(let i=0;i<route.length-1;i++)if(!scenes[route[i]]?.choices?.some(c=>c[2]===route[i+1]))return null;
+ return pawParallelReflections[end]
+}
+/* PAW_PARALLEL_VALUES_END */
+for(const [id,stakes] of Object.entries(pawParallelStakes)){
+ const node=parallelScenes[id];if(node)node.text=node.text.map((v,i)=>v+' '+stakes[i])
+}
+const pawParallelSheetBefore=syncStorySheet;
+syncStorySheet=function(...args){
+ const result=pawParallelSheetBefore(...args);
+ if(storySheet.hidden||!parallelEndings[parallelNode]||storySheet.querySelector('.pawParallelReflection'))return result;
+ const reflection=pawParallelReflection(parallelTrail,parallelNode,parallelScenes,parallelEndings);
+ if(!reflection)return result;
+ const detail=element('details','',storySheet,'pawParallelReflection');
+ element('summary',tr('A thought to take home','带回家的一点思考'),detail);
+ element('p',tr(...reflection),detail);
+ const recap=storySheet.querySelector('.parallelChoiceRecap');if(recap)recap.before(detail);
+ return result
+};
+const pawParallelReflectionCss=document.createElement('style');
+pawParallelReflectionCss.textContent='#storyReadingSheet .pawParallelReflection{grid-column:1/-1;border-top:1px dashed #bca47e;margin-top:5px}#storyReadingSheet .pawParallelReflection summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font:600 13px/1.35 Georgia,"Songti SC",serif}#storyReadingSheet .pawParallelReflection p{font-size:14px;line-height:1.5;margin:0 0 8px}';
+document.head.append(pawParallelReflectionCss);
+
 // Warm the selected traveller during registration and the railway ride,
 // including returning players. Existing gate artwork stays visible until ready.
 const pawAdmissionRenderBefore=proRender;
