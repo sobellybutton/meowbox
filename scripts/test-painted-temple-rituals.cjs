@@ -15,3 +15,13 @@ for(let i=0;i<=100;i++){const p=api.pawSlipPose('opening',i*.0075,s);assert.ok(p
 for(const [w,h] of [[320,568],[390,844],[430,932],[768,1024],[1280,720],[1920,1080]]){const a=api.pawSlipRackCamera(w,h);for(const q of s.rows.flat())assert.ok(a.ox+q.x*a.s>=0&&a.ox+q.x*a.s<=w&&a.oy+q.y*a.s>=0&&a.oy+q.y*a.s<=h)}
 const data=Array.from({length:44},(_,i)=>i);assert.equal(api.pawSlipPage(data,99).entries.length,2);assert.equal(api.pawSlipPage(data,-1).entries[0],0);assert.equal(api.pawSlipPage([],5).pages,1);
 console.log('Painted ritual alcove and fortune counter checks passed.');
+
+const skin=new Function(get('PAINTED_SLIP_SKIN')+';return {pawSlipGrades,pawSlipMessageGrades,pawSlipSkin,pawSlipSkinPath,pawSlipSkinBox}')();
+for(const [words,grade] of Object.entries(skin.pawSlipMessageGrades))assert.equal(skin.pawSlipSkin(1,[[words,'']]),grade);
+assert.equal(skin.pawSlipSkin(99,[]),'moderate');
+assert.equal(skin.pawSlipSkin(1,[['unrecognized']]),'moderate');
+for(const grade of Object.keys(skin.pawSlipGrades))for(const folded of [false,true]){
+ const name=grade+'-'+(folded?'folded':'unfolded')+'.webp';assert.equal(skin.pawSlipSkinPath(grade,folded),'../temple/slips/'+name);assert.ok(fs.existsSync(path.join(root,'assets/visual/painted/temple/slips',name)));
+ const iw=folded?336:317,ih=folded?194:473;const b=skin.pawSlipSkinBox({w:460,h:380},iw,ih,folded);assert.ok(b.w<=460&&b.h<=380*(folded?1:1.38)+1e-8);assert.ok(Math.abs(b.w/b.h-iw/ih)<1e-8);
+}
+assert.equal(skin.pawSlipSkinBox({w:0,h:10},1,1,false),null);

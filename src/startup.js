@@ -11216,7 +11216,7 @@ function pawSlipCounterActive(){return room==='temple'&&['templePaper','templeRa
 const pawSlipCounterStartBefore=start;
 start=function(id,...args){
  const result=pawSlipCounterStartBefore(id,...args);
- if(['templePaper','templeRack'].includes(id)&&activity===id)state.pawSlipCounterPainting=pawRoomImageReady(pawSlipCounterArt());
+ if(['templePaper','templeRack'].includes(id)&&activity===id){state.pawSlipCounterPainting=pawRoomImageReady(pawSlipCounterArt());if(id==='templePaper'){pawPaintedSlipImage(state.paperNumber,true);pawPaintedSlipImage(state.paperNumber,false)}}
  return result
 };
 const pawSlipCounterCamBefore=mobileRoomCamera;
@@ -11236,11 +11236,58 @@ function pawSlipText(words,w,h){
  const lh=size*1.35;ctx.fillStyle='#584939';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=size+'px Georgia,serif';
  rows.forEach((row,i)=>ctx.fillText(row,0,(i-(rows.length-1)/2)*lh,w-56))
 }
+/* PAW_PAINTED_SLIP_SKIN_BEGIN */
+const pawSlipGrades=Object.freeze({
+ great:['Great Fortune','上上签'],good:['Good Fortune','上签'],moderate:['Moderate Fortune','中签'],challenging:['Challenging Fortune','下签'],difficult:['Difficult Fortune','下下签']
+});
+// Classify the authored reflections, not the random draw or its rewards.
+// Unknown or revised text defaults to a neutral reading.
+const pawSlipMessageGrades=Object.freeze({
+ 'A little patience goes a long way.':'moderate','Good fortune favours a break.':'good','A new opportunity may appear.':'great','Seek a trusted friend.':'good','Finish one thing before starting another.':'moderate','A quiet day can be a good day.':'good','Be generous without exhausting yourself.':'challenging','Wait until the path is clear.':'difficult','Small efforts add up.':'good','Kind words can open a door.':'good','Make room for unexpected joy.':'great','Do not mistake hurry for progress.':'challenging'
+});
+function pawSlipSkin(number,lines){
+ const english=Number.isInteger(number)&&number>0?lines?.[number-1]?.[0]:null;
+ return typeof english==='string'&&Object.hasOwn(pawSlipMessageGrades,english)?pawSlipMessageGrades[english]:'moderate'
+}
+function pawSlipSkinPath(grade,folded){
+ const key=Object.hasOwn(pawSlipGrades,grade)?grade:'moderate';
+ return '../temple/slips/'+key+'-'+(folded?'folded':'unfolded')+'.webp'
+}
+function pawSlipSkinBox(pose,iw,ih,folded){
+ if(![pose.w,pose.h,iw,ih].every(Number.isFinite)||Math.min(pose.w,pose.h,iw,ih)<=0)return null;
+ const scale=Math.min(pose.w/iw,pose.h*(folded?1:1.38)/ih);
+ return {w:iw*scale,h:ih*scale}
+}
+/* PAW_PAINTED_SLIP_SKIN_END */
+function pawPaintedSlipImage(number,folded){
+ const grade=pawSlipSkin(number,shrinePaperLines);
+ return pawRecoveredImage(pawSlipSkinPath(grade,folded))
+}
+function pawDrawPaintedSlip(pose,number,words,subtitle){
+ const folded=pose.open<.9,grade=pawSlipSkin(number,shrinePaperLines),im=pawPaintedSlipImage(number,folded);
+ if(!pawRoomImageReady(im))return false;
+ const box=pawSlipSkinBox(pose,im.naturalWidth,im.naturalHeight,folded);
+ if(!box)return false;
+ const {w,h}=box;
+ ctx.save();try{
+  // Remove tiny source edge residue outside the actual portrait paper body.
+  if(!folded){ctx.beginPath();ctx.rect(-w*.489,-h*.443,w*.978,h*.931);ctx.ellipse(0,-h*.438,w*.215,h*.058,0,0,TAU);ctx.clip()}
+  ctx.drawImage(im,-w/2,-h/2,w,h);
+  if(folded||w<200||h<250)return true;
+  const title=tr(...pawSlipGrades[grade]),note=subtitle||tr('A reflection, not a promise','签文仅供自我反思');
+  activityFitText(title,0,-h*.225,30,w*.72,'#684633');
+  activityFitText(tr('Fortune No. ','第 ')+number+(zh?' 签':''),0,-h*.153,22,w*.73,'#70503d');
+  pawSlipText(words,w*.85,h*.69);
+  activityFitText(note,0,h*.23,19,w*.73,'#80664a');
+ }finally{ctx.restore()}
+ return true
+}
 function pawSlipDrawPaper(pose,number,words,subtitle=''){
  if(pose.alpha<=.01)return;
  ctx.save();try{
   ctx.globalAlpha*=pose.alpha;ctx.translate(pose.x,pose.y);
   const w=pose.w,h=pose.h;
+  if(pawDrawPaintedSlip(pose,number,words,subtitle))return;
   ctx.shadowColor='#34281e88';ctx.shadowBlur=13;ctx.shadowOffsetY=5;
   const paper=ctx.createLinearGradient(-w/2,-h/2,w/2,h/2);paper.addColorStop(0,'#f5e8c8');paper.addColorStop(.56,'#eee0bd');paper.addColorStop(1,'#e0cba1');
   round(-w/2,-h/2,w,h,3,paper,'#ac9268');ctx.shadowBlur=0;ctx.shadowOffsetY=0;
