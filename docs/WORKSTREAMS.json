@@ -454,7 +454,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-1918-interface",
+        "until": 1795780153541
+      }
     },
     {
       "id": "UX-02",
