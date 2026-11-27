@@ -1245,3 +1245,11 @@ DISCOVERY-ASSESSMENTS-01 partial: 05988bd1 implements twelve bilingual paired li
 - SOCIAL-DAILY-01 partial: abad3290 and 2136b4c9 enable explicit indoor resident and visiting-neighbour conversation responses to count through the existing daily friend ledger; guide works indoors, proximity gates and station priority preserved, real peers excluded. c9994a1b persists helper checks, executed against current source. Physical gesture art, actual rendered conversation and real-player consent still pending.
 
 Three distinct workstreams advanced in this continuation. No workstream is claimed fully accepted and no accepted-count increase. Hourly cadence unchanged.
+
+## Three-workstream scene transition and frame continuity batch (27 November 2026)
+
+- ENT-ASSET-READY-01 partial: 7fdcfb2a checks selected traveller directional art before railway arrival, and preserves outdoor scenes until the actual kitchen or boba painting is decoded. Stale admission requests are canceled and failures give a contextual retry. Other rooms and actual device frame capture remain outstanding.
+- SCENE-CAMERA-01 partial: cbae8dbb sequences a visible doorway camera push before the existing interior transition and removes its canvas transform at handoff, with reduced-motion and stale-context guards. Actual zoom continuity, upper-map framing and complete painted coverage still require visual review.
+- PERF-01 partial: e6908e2a prevents unnecessary canvas backing-store resets when dimensions are unchanged or transiently zero, a possible contributor to mobile browser pauses. 5baafcce persists focused regression tests across all three changes; source parsed and extracted guards exercised in connector harness. The original iPhone blank-screen cause has not been reproduced or established; WebKit tests, actual frame timing and deployment remain unverified.
+
+Three distinct workstreams advanced. No final visual acceptance or accepted-count increase. Hourly cadence unchanged.
