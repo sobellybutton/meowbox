@@ -1463,13 +1463,11 @@
       "evidence": [
         "d76e5fcf: relocates relationship values from the personality laboratory to the café, preserves conversation cards and saved results, and adds eight practical bilingual prompts selected by four relationship-priority scores.",
         "da3db0c292c9335ab0b0d16b9e615f9409d59b1b: routing and exhaustive 2,401 valid score combination helper regression executed; source parsed.",
-        "ceae5d20 + b37dc632: distinct care preference exercise with 15 bilingual statements, consent-aware prompts, five-row share layout and exhaustive result-profile helper verification."
+        "ceae5d20 + b37dc632: distinct care preference exercise with 15 bilingual statements, consent-aware prompts, five-row share layout and exhaustive result-profile helper verification.",
+        "fd4fb68a + ce08c360: twelve attachment-inspired scenario statements, four independent dimensions, three-tier bilingual reflection, safety-aware non-diagnostic language and exhaustive result-profile tests."
       ],
-      "lease": {
-        "owner": "manual-discovery-attachment-2316",
-        "until": 1795794354943
-      },
-      "blocker": "Attachment and general life priorities assessments, complete historical inventory, native visual staging, real browser and share export acceptance remain outstanding."
+      "lease": null,
+      "blocker": "General life priorities, other curated assessment inventory, native staging, menu capacity, rendered browser and share export acceptance outstanding."
     },
     {
       "id": "DISCOVERY-PARALLEL-LIVE-02",
