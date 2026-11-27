@@ -359,3 +359,8 @@ NPC-02: ddd0265d replaces eligible departed town guests independently when their
 ## Indoor guest movement and dwell (27 November 2026)
 
 NPC-03: 9e8c2e8c allows indoor visitors to retreat from existing player/resident/visitor proximity without worsening any unsafe gap. Room visitor waiting and departure retry deadlines are preserved when dialogue, overlays, transitions or suspended rendering interrupt play. 8ca85242 persists focused geometry and active dwell regression, executed against current source in a connector harness; source parsed. No actual rendered playthrough or deployment verification; local container cannot resolve GitHub. Art, contact and full phone/desktop verification remain open. Released lease; no acceptance increase. Hourly schedule unchanged.
+
+
+## Painted indoor plaque clearance (27 November 2026)
+
+QA-SPATIAL-01 partial: 5dcd182f makes painted temple, kitchen and boba labels avoid existing actor, HUD and label bounds using the entire minimum 44px touch rectangle. A blocked plaque no longer creates an invisible tap target; original station body and directory access remain. Movement is limited to small nearby offsets to preserve station association. 8a433040 adds geometry regressions across five viewport sizes and four scales; source parsed and focused helper checks passed in connector harness. Actual deployed visual and normal-input verification remains outstanding, as do other scenes and full spatial acceptance. Released claim without marking task complete. Hourly schedule unchanged.
