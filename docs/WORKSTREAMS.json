@@ -260,12 +260,13 @@
         "src/extensions.js"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-npc-continuity-2235",
-        "until": 1795791960000
-      }
+      "stage": "tested",
+      "evidence": [
+        "ddd0265d: independent offscreen visitor replacements preserve continuing actors, avoid simultaneous offscreen requirement and duplicate identities; exact source syntax and focused helper checks passed.",
+        "89ee7a97: persistent rotation regression, executed against current source in connector harness."
+      ],
+      "lease": null,
+      "blocker": "Real rendered visitor departure and arrival, portrait art, mobile/desktop movement and deployment still require verification; no final acceptance."
     },
     {
       "id": "NPC-03",
