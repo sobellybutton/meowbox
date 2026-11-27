@@ -53,23 +53,31 @@ const fs=require('node:fs');
      const draw=ctx.drawImage.bind(ctx),painted=new Set();
      ctx.drawImage=(im,...args)=>{
       const path=im?.currentSrc||im?.src||'';
-      if(path.includes('/painted/temple/')&&!painted.has(path)){
+      if((path.includes('/painted/temple/')||path.includes('/staging/2026-11-27/rooms/temple/purification.webp'))&&!painted.has(path)){
        painted.add(path);void recordPaintedTempleProp(path.split('/').at(-1));
       }
       return draw(im,...args)
      };
-     room='temple';start('templeWater');
+     room='temple';
     });
-    await page.waitForFunction(()=>activity==='templeWater'&&pics.templeBasinPaint.naturalWidth>0&&pics.templeLadlePaint.naturalWidth>0&&hit.some(h=>h.id==='templeLadle'),{},{timeout:10000});
+    await page.waitForFunction(()=>pawRoomImageReady(pawWaterArt()),{},{timeout:10000});
+    await page.evaluate(()=>start('templeWater'));
+    await page.waitForFunction(()=>activity==='templeWater'&&pawWaterPaintingActive()&&pics.templeLadlePaint.naturalWidth>0&&hit.some(h=>h.id==='templeLadle'),{},{timeout:10000});
+    const waterTarget=()=>page.evaluate(()=>{const h=hit.find(h=>h.id==='templeLadle');if(!h)throw Error('Missing rendered ladle target');return {x:h.x+h.w/2,y:h.y+h.h/2}});
+    // Independent calibration from the courtyard plate, not legacy vector basin coordinates.
+    const plate={x:100,y:-145,w:600,h:600*1635/962};
+    const point=(u,v)=>({x:plate.x+u*plate.w,y:plate.y+v*plate.h});
+    const scoop=point(.383,.51),pour=point(.464,.545),miss=point(.25,.64);
+    const dragLadle=async(dest)=>{const from=await waterTarget();await drag(from.x,from.y,dest.x,dest.y)};
     const screen=async(x,y)=>page.evaluate(([x,y])=>{const r=c.getBoundingClientRect();return {x:r.left+cam.ox+x*cam.scale,y:r.top+cam.oy+y*cam.scale}},[x,y]);
     const drag=async(x,y,toX,toY)=>{const a=await screen(x,y),b=await screen(toX,toY);if(options.hasTouch&&engine===chromium){const client=await page.context().newCDPSession(page);try{await client.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:a.x,y:a.y}]});for(let i=1;i<=15;i++){await client.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:a.x+(b.x-a.x)*i/15,y:a.y+(b.y-a.y)*i/15}]})}await client.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]})}finally{await client.detach()}}else{await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:15});await page.mouse.up()}};
     await page.screenshot({path:'test-results/'+name+'-water-empty.png'});
-    await drag(400,426,250,486);
+    await dragLadle(miss);
     if(await page.evaluate(()=>state.waterStage)!==0)throw Error('Accepted a drop away from basin');
-    await drag(400,426,440,486);
+    await dragLadle(scoop);
     await page.waitForFunction(()=>state.waterStage===1,{},{timeout:2500});
     await page.waitForTimeout(450);await page.screenshot({path:'test-results/'+name+'-water-filled.png'});
-    await drag(440,447,375,430);
+    await dragLadle(pour);
     await page.waitForFunction(()=>state.waterStage===2,{},{timeout:2500});
     if(await page.evaluate(()=>!!state.waterRewarded))throw Error('Water reward granted before rinse completed');
     await page.waitForTimeout(700);await page.screenshot({path:'test-results/'+name+'-water-pouring.png'});
@@ -102,7 +110,9 @@ const fs=require('node:fs');
     await page.locator('#choices').getByRole('button',{name:'Hear the latest gossip',exact:true}).click();
     await page.locator('#choices').getByRole('button',{name:'Wait, what happened?',exact:true}).click();
     if(!await page.evaluate(()=>parkProgress().beat===1))throw Error('Gossip did not progress');
-    if(props.size!==4)throw Error('Expected four painted props to render: '+[...props].join(', '));
+    if(!props.has('purification.webp'))throw Error('The painted purification courtyard was never drawn');
+    const bellAndLadle=await page.evaluate(()=>[pics.templeBronze,pics.templeStrikerPaint,pics.templeLadlePaint].map(im=>(im.currentSrc||im.src).split('/').at(-1)));
+    if(!bellAndLadle.every(name=>props.has(name)))throw Error('Missing painted bell or ladle render: '+[...props].join(', '));
     if(errors.length)throw Error(errors.join('; '));
     console.log(name+': arrival, return gateway, actual water pointer drag, prayer and gossip passed');
    }finally{await page.close()}
