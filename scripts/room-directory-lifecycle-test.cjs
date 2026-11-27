@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const src=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
+const a=src.indexOf('function pawGuideActionAllowed('),b=src.indexOf('function closeRoomGuide(',a);
+assert.ok(a>=0&&b>a);
+const {allow,name}=new Function(src.slice(a,b)+';return {allow:pawGuideActionAllowed,name:pawGuideName}')();
+assert.equal(allow('room|en','room|en',true,true,true),true);
+for(const args of [['room|en','room|zh',true,true,true],['room','other',true,true,true],['room','room',false,true,true],['room','room',true,false,true],['room','room',true,true,false],['','',true,true,true]])assert.equal(allow(...args),false);
+assert.equal(name(6,2,true),'体验 · 6');
+assert.equal(name(6,2,false),'Activities · 6');
+assert.equal(name(3,0,true),'选择体验地点');
+assert.equal(name(3,0,false),'Choose a station');
+assert.ok(src.includes("roomGuide.classList.remove('pawGuideOpen');roomGuide.hidden=true"));
+assert.ok(src.includes("if(focused===id&&!roomGuide.hidden)btn.focus"));
+assert.ok(src.includes("event.preventDefault();event.stopPropagation();closeRoomGuide(true)"));
+console.log('Room directory lifecycle regression passed');
