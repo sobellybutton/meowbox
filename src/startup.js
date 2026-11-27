@@ -8542,24 +8542,63 @@ document.addEventListener('keydown',event=>{
  else if(event.key==='Backspace'&&wonderSceneAnswers.length){event.preventDefault();pawDiscoveryBack(frame)}
 });
 
-/* Noticeboard disclosures: explicit native details activation avoids a
-   swallowed browser default action when the town page handles gestures. */
-const pawNoticeboardDisclosureBefore=renderResidentNoticeboard;
+/* Noticeboard: explicit accessible reply disclosure, persistent per notice
+   while on the board, and focus-safe refresh. Fictional posts stay separate. */
+let pawNoticeDisclosureSerial=0;
+const pawNoticeExpanded=new Set();
+function pawNoticeReplyState(button,panel,expanded){
+ button.setAttribute('aria-expanded',String(expanded));
+ panel.hidden=!expanded;
+ button.closest('.wallReplies')?.toggleAttribute('open',expanded);
+}
 renderResidentNoticeboard=function(q){
- const result=pawNoticeboardDisclosureBefore(q),wall=q.querySelector('.townWall');
- if(!wall)return result;
- wall.addEventListener('click',event=>{
-  const summary=event.target?.closest?.('.wallReplies > summary');
-  if(!summary||!wall.contains(summary)||event.defaultPrevented)return;
-  const details=summary.parentElement;
-  if(!details||details.tagName!=='DETAILS')return;
-  event.preventDefault();event.stopPropagation();
-  details.open=!details.open;
- });
- return result
+ const wrap=element('section','',q,'townWall');
+ element('h2',tr('Overheard in town','摸鱼留言墙'),wrap,'board-heading');
+ element('p',tr('New town notices arrive over time. Old favourites stay in the archive.','小镇见闻陆续更新，旧瓜也能慢慢翻。'),wrap,'wallIntro');
+ element('p',tr(...pawWeekNote()),wrap,'pawWeeklyNotice');
+ element('small',tr('Written by the fictional town residents. Real visitor posts are in the shared square.','以下为虚构小镇居民的趣味留言，真人留言请到共享广场。'),wrap,'wallDisclosure');
+ const publicBtn=b(wrap,communityURL()?tr('Read or leave a real visitor post','看看真人留言 / 留句话'):tr('Shared square · not open yet','共享广场 · 尚未开放'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink';
+ const list=element('div','',wrap,'townPostList'),nav=element('div','',wrap,'townPostNav');
+ let shown=6,lastCount=-1,lastSignature='';
+ function render(){
+  const focused=document.activeElement?.closest?.('.wallReplyToggle');
+  const focusId=focused&&list.contains(focused)?focused.closest('.wallReplies')?.dataset.noticeId:null;
+  const moreFocused=nav.contains(document.activeElement),top=$('page').scrollTop;
+  const entries=townPublishedNotices();lastCount=entries.length;lastSignature=entries.map(v=>v.id).join('|');
+  list.replaceChildren();nav.replaceChildren();let restore=null;
+  for(const {thread:m,date,id} of entries.slice(0,shown)){
+   const post=element('article','',list,'townResidentNote');post.dataset.noticeId=id;
+   element('strong',tr(...m[0]),post);
+   if(date)element('small',new Date(date).toLocaleDateString(zh?'zh-CN':'en-SG',{month:'short',day:'numeric',timeZone:'Asia/Singapore'}),post,'townNoticeDate');
+   element('p',tr(...m[1]),post);if(!m[2].length)continue;
+   const replies=element('div','',post,'wallReplies');replies.dataset.noticeId=id;
+   const toggle=element('button',tr('Read replies','看看楼下怎么说')+' ('+m[2].length+')',replies,'wallReplyToggle');toggle.type='button';
+   const panel=element('div','',replies,'wallReplyGroup');panel.id='pawNoticeReplies-'+(++pawNoticeDisclosureSerial);toggle.setAttribute('aria-controls',panel.id);
+   for(const reply of m[2]){const row=element('div','',panel,'wallReply');element('strong',tr(reply[0],reply[1]),row);element('p',tr(reply[2],reply[3]),row)}
+   pawNoticeReplyState(toggle,panel,pawNoticeExpanded.has(id));
+   toggle.addEventListener('click',event=>{
+    event.preventDefault();event.stopPropagation();
+    if(!wrap.isConnected||$('page').style.display!=='block')return;
+    const open=toggle.getAttribute('aria-expanded')!=='true';
+    if(open)pawNoticeExpanded.add(id);else pawNoticeExpanded.delete(id);
+    pawNoticeReplyState(toggle,panel,open)
+   });
+   if(id===focusId)restore=toggle;
+  }
+  element('span',Math.min(shown,entries.length)+' / '+entries.length+' '+tr('notices','条见闻'),nav);
+  const more=b(nav,tr('Read older notices','翻翻以前的留言'),()=>{shown+=6;render()});more.type='button';more.disabled=shown>=entries.length;
+  if(restore)restore.focus({preventScroll:true});else if(moreFocused&&!more.disabled)more.focus({preventScroll:true});
+  $('page').scrollTop=top;
+ }
+ render();
+ const timer=setInterval(()=>{
+  if(!wrap.isConnected||$('page').style.display!=='block'){clearInterval(timer);return}
+  const next=townPublishedNotices(),n=next.length;
+  if(n!==lastCount||next.map(v=>v.id).join('|')!==lastSignature){shown+=Math.max(0,n-lastCount);render()}
+ },60000)
 };
 const pawNoticeDisclosureStyle=document.createElement('style');
-pawNoticeDisclosureStyle.textContent='#game #content .wallReplies>summary{min-height:44px;cursor:pointer;align-content:center;touch-action:manipulation}#game #content .wallReplies>summary:focus-visible{outline:2px solid #547056;outline-offset:2px}#game #content .wallReplies:not([open])>.wallReply{display:none!important}#game #content .wallReplies[open]>.wallReply{display:block!important}';
+pawNoticeDisclosureStyle.textContent='#game #content .wallReplyToggle{display:block;width:100%;min-height:44px;padding:8px 0;text-align:left;border:0;border-radius:0;background:transparent;color:#52684e;box-shadow:none;font:inherit;font-weight:600;touch-action:manipulation;transform:none}#game #content .wallReplyToggle:before{content:"▸";display:inline-block;margin-right:6px}#game #content .wallReplyToggle[aria-expanded=true]:before{content:"▾"}#game #content .wallReplyToggle:focus-visible{outline:2px solid #547056;outline-offset:2px}#game #content .wallReplyGroup[hidden]{display:none!important}#game #content .wallReplyGroup:not([hidden]){display:block!important}#game #page:has(.townWall){scroll-behavior:auto;overflow-anchor:none}';
 document.head.append(pawNoticeDisclosureStyle);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

@@ -314,8 +314,10 @@ jobs:
                 if(await page.locator('.townResidentNote').count()!==6)throw Error('Noticeboard page incomplete');
                 const initialNotices=await page.locator('.townResidentNote').count();
                 const noticeReplies=page.locator('.townWall .wallReplies').first();
-                const noticeSummary=noticeReplies.locator('summary');
+                const noticeSummary=noticeReplies.locator('.wallReplyToggle');
                 await noticeSummary.click();
+                if(!await page.locator('.townWall').isVisible())throw Error('Noticeboard navigated away on reply activation: '+await page.locator('#content h1').first().textContent());
+                if(await noticeSummary.getAttribute('aria-expanded')!=='true')throw Error('Reply button did not expand');
                 await noticeReplies.locator('.wallReply').first().waitFor({state:'visible',timeout:3000});
                 if(await noticeReplies.getAttribute('open')===null)throw Error('Noticeboard disclosure not open');
                 await noticeSummary.focus();
@@ -323,6 +325,13 @@ jobs:
                 await noticeReplies.locator('.wallReply').first().waitFor({state:'hidden',timeout:3000});
                 await noticeSummary.press('Space');
                 await noticeReplies.locator('.wallReply').first().waitFor({state:'visible',timeout:3000});
+                const noticeId=await noticeReplies.getAttribute('data-notice-id');
+                await page.locator('#content > .row button').nth(1).click();
+                await page.locator('.townWall').waitFor({state:'visible'});
+                const translated=page.locator('.townWall .wallReplies').filter({has:page.locator('.wallReplyToggle[aria-expanded=true]')});
+                if(!await translated.evaluateAll((els,id)=>els.some(e=>e.dataset.noticeId===id),noticeId))throw Error('Reply expansion lost on language switch');
+                await page.locator('#content > .row button').nth(1).click();
+                await page.locator('.townWall').waitFor({state:'visible'});
                 const older=page.locator('.townPostNav').getByRole('button',{name:'Read older notices',exact:true});
                 if(await older.isEnabled()){await older.click();if(await page.locator('.townResidentNote').count()<=initialNotices)throw Error('Older notices did not expand')}
                 else if(!await page.locator('.townPostNav span').innerText().then(v=>/^6 \/ 6 notices$/.test(v)))throw Error('Older notices disabled despite more notices');
