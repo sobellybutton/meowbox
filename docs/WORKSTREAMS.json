@@ -204,7 +204,8 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": null,
+      "blocker": "Owner wants more than four selectable newcomer avatars. Current engine names, onboarding and registered player walk art still use four IDs 0–3; audit all hardcoded limits and save/share/profile rendering, preserve existing IDs, recover coherent original candidates first. Propose eight diverse selectable human travellers as a working target, not a fixed owner count; each must have matching portrait, full body, directions and poses, no incomplete/duplicate choices. Verify new and existing saves, switching appearance without losing progress, mobile selection, and image decoding."
     },
     {
       "id": "ART-02",
@@ -217,7 +218,8 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": null,
+      "blocker": "Owner explicitly requests real visible waving and other natural gestures. Verify player-initiated wave, NPC response, greeting, sitting and context-specific interaction poses for all selectable travellers; use matching illustrated frames and anchored feet/hands, not a floating emoji, generic bob or detached limb. No final acceptance before rendered playback."
     },
     {
       "id": "ART-03",
@@ -1233,7 +1235,7 @@
       "stage": "outstanding",
       "evidence": [],
       "lease": null,
-      "blocker": "Acceptance: All nested states reviewed in both languages on mobile and desktop; consistent palette/materials, text fit, appropriate controls and context; no visible final vector substitutes or generic web-card grids."
+      "blocker": "Acceptance: All nested states reviewed in both languages on mobile and desktop; consistent palette/materials, text fit, appropriate controls and context; no visible final vector substitutes or generic web-card grids. Owner recalls odd character profile pictures. Audit actual HUD badge, onboarding thumbnails, profile, passport, notices/chat and share cards for consistent identity, crop, proportions, expression, frame, scale and legibility. Keep approved existing portraits where they work; recover/replace only mismatched or awkward images and verify mobile/desktop. Do not use arbitrary face crops or art from a different traveller."
     },
     {
       "id": "QA-PLAYER-LOOP-01",
@@ -1432,7 +1434,7 @@
       "stage": "outstanding",
       "evidence": [],
       "lease": null,
-      "blocker": "Meaningful interaction, once per eligible task period, existing reward caps, no mandatory human interaction, spam farming, or new currency."
+      "blocker": "Meaningful interaction, once per eligible task period, existing reward caps, no mandatory human interaction, spam farming, or new currency. Owner confirmed expectation of waving: natural approachable wave action and response, nearby NPC/consenting human, optional chat, no reward spam, distinct local vs shared interaction. Test actual animation and social task completion."
     },
     {
       "id": "DISCOVERY-ASSESSMENTS-01",
