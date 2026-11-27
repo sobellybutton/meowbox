@@ -11095,6 +11095,14 @@ function pawWaterGeometry(p=pawWaterPlate){
 function pawWaterDestination(stage,g){
  return stage===0?g.scoop:stage===1?g.pour:null
 }
+// Preserve the point where the traveller grabbed the ladle. Both the
+// moving bowl and its drop check use the same logical tool centre.
+function pawWaterGripPoint(point,gesture){
+ if(!Number.isFinite(point?.x)||!Number.isFinite(point?.y))return point;
+ const h=gesture?.h;
+ if(gesture?.id!=='templeLadle'||!h||![h.x,h.y,h.w,h.h,gesture.sx,gesture.sy].every(Number.isFinite))return {x:point.x,y:point.y};
+ return {x:point.x+h.x+h.w/2-gesture.sx,y:point.y+h.y+h.h/2-gesture.sy}
+}
 function pawWaterDropMatches(stage,x,y,g){
  const a=pawWaterDestination(stage,g);
  return !!a&&Number.isFinite(x)&&Number.isFinite(y)&&Math.hypot(x-a.x,y-a.y)<=25
@@ -11120,9 +11128,9 @@ start=function(id,...args){
 const pawWaterCameraBefore=mobileRoomCamera;
 mobileRoomCamera=function(...args){return pawWaterPaintingActive()?pawWaterCamera(W,H)||pawWaterCameraBefore(...args):pawWaterCameraBefore(...args)};
 const pawWaterReleaseBefore=templeReleaseWater;
-templeReleaseWater=function(a,...args){
- if(!pawWaterPaintingActive())return pawWaterReleaseBefore(a,...args);
- const run=state,stage=run.waterStage,g=pawWaterGeometry();
+templeReleaseWater=function(a,gesture,...args){
+ if(!pawWaterPaintingActive())return pawWaterReleaseBefore(a,gesture,...args);
+ const run=state,stage=run.waterStage,g=pawWaterGeometry();a=pawWaterGripPoint(a,gesture);
  if(pawArcadeInputBlocked()||![0,1].includes(stage))return;
  if(!pawWaterDropMatches(stage,a?.x,a?.y,g)){hint(stage===0?'Dip the ladle in the marked water.':'Move the filled ladle above your hand.',stage===0?'把竹勺放入亮起的水面。':'把盛满水的竹勺移到手掌上方。');return}
  // Retain the original action, audio, award and ownership contract.
@@ -11145,7 +11153,7 @@ function pawDrawWaterPainting(){
  ctx.fillStyle='#473e36';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawWaterArt(),p.x,p.y,p.w,p.h);
  const ready=stage===0?g.rest:stage===1?g.scoop:g.pour;
  let at=ready,angle=0;
- if(held)at={x:Math.max(p.x+p.w*.29,Math.min(p.x+p.w*.54,drag.x)),y:Math.max(p.y+p.h*.49,Math.min(p.y+p.h*.60,drag.y))};
+ if(held){const grip=pawWaterGripPoint(drag,drag);at={x:Math.max(p.x+p.w*.29,Math.min(p.x+p.w*.54,grip.x)),y:Math.max(p.y+p.h*.49,Math.min(p.y+p.h*.60,grip.y))}}
  else if(stage===1)at=pawWaterMix(run.pawWaterFrom||g.scoop,g.rest,poseEase(Math.min(1,age/.35)));
  else if(stage===2){at=pawWaterMix(run.pawWaterFrom||g.pour,g.pour,poseEase(Math.min(1,age/.35)));angle=.58*poseEase(Math.min(1,age/.4))*(1-poseEase(Math.max(0,Math.min(1,(age-1.5)/.5))))}
  else if(stage===3)at=pawWaterMix(g.pour,g.rack,poseEase(Math.min(1,age/.55)));
@@ -11165,7 +11173,7 @@ function pawDrawWaterPainting(){
  if(stage<2){
   const dest=pawWaterDestination(stage,g),x=dest.x-23,y=dest.y;
   ctx.save();ctx.strokeStyle='#fff3bd';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.ellipse(x,y,23+Math.sin(t*3),10,0,0,TAU);ctx.stroke();ctx.restore();
-  target(at.x-40,at.y-20,82,40,()=>{},'templeLadle');
+  target(at.x-41,at.y-20,82,40,()=>{},'templeLadle');
  }
  if(pawWaterProgress(run,t,pawArcadeInputBlocked())){
   run.waterStage=3;run.waterAt=t;
