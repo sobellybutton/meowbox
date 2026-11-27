@@ -22,6 +22,9 @@ jobs:
       - run: node scripts/action-refinement-test.cjs
       - run: node scripts/parallel-letter-test.cjs
       - run: node scripts/home-placement-test.cjs
+      - run: node scripts/home-layout-test.cjs
+      - run: node scripts/rail-foreground-test.cjs
+      - run: node scripts/world-visits-test.cjs
       - run: node scripts/paw-living-home-test.cjs
       - run: node scripts/paw-living-polish-test.cjs
       - run: node scripts/rail-fish-test.cjs
