@@ -878,12 +878,10 @@
       "stage": "tested",
       "evidence": [
         "1c786137: exact inspected counter art, folded-to-open and keep/tie animation, no duplicate rack, physical rack hit positions, actual entries/page controls and preserved prior slip. Source parsed and geometry checks passed.",
-        "4b170710: persisted combined temple geometry regression"
+        "4b170710: persisted combined temple geometry regression",
+        "94834d40: all ten uploaded fortune paper assets at stable runtime paths; five bilingual grades classified from authored reflection text (neutral fallback for changed text), original draw/save/keep/tie/rack intact; aspect-fit folded/portrait rendering and live text; exact source parsed, 45 focused helper assertions executed and durable test added. Browser legibility and live acceptance remain pending."
       ],
-      "lease": {
-        "owner": "manual-consolidated-slip",
-        "until": 1795800376679
-      },
+      "lease": null,
       "blocker": "Actual browser visual readability, rack hit areas, controls, language and return flow, Pages deployment not verified. No final acceptance."
     },
     {
