@@ -11,3 +11,12 @@ if(next.length!==15)throw Error('Expected 15 new guest profiles');
 if(pawGeminiMerge([...original,...next],pawGeminiVisitorRows).length)throw Error('Repeated import duplicated visitors');
 for(const g of next){if(g.choices.length!==2||g.name.length!==2||g.gift.length!==2||g.choices.some(v=>v.some(p=>p.length!==2)))throw Error('Incompatible bilingual guest '+g.id)}
 return 'PASS: 15 imported guests, existing identities retained and repeat import safe';`)(original));
+
+const groundA=startup.indexOf('function pawStairLane('),groundB=startup.indexOf('function pawStairFoot(',groundA),districtA=startup.indexOf('/* PAW_DISTRICT_GROUND_BEGIN'),districtB=startup.indexOf('/* PAW_DISTRICT_GROUND_END */'),pedA=startup.indexOf('/* PAW_PEDESTRIAN_BEGIN */'),pedB=startup.indexOf('/* PAW_PEDESTRIAN_END */');
+console.log(new Function(startup.slice(groundA,groundB)+startup.slice(districtA,districtB)+startup.slice(pedA,pedB)+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+let f={facing:'up',candidate:null,hold:0};f=pawPedestrianFace(f,1,0,.03);ck(f.facing==='up','one noisy sample');f=pawPedestrianFace(f,0,-1,.03);ck(f.candidate===null,'stable direction');for(let i=0;i<4;i++)f=pawPedestrianFace(f,1,0,.03);ck(f.facing==='right','confirmed turn');f=pawPedestrianFace(f,0,0,.05);ck(f.facing==='right','stationary retains heading');
+const o={x:60,y:0};ck(pawPedestrianCrowd({x:0,y:0},{x:4,y:0},o,72),'closing collision');ck(!pawPedestrianCrowd({x:0,y:0},{x:-4,y:0},o,72),'separation allowed');ck(!pawPedestrianCrowd({x:0,y:0},{x:4,y:0},{x:100,y:0},72),'far path');
+const sp=[[0,50,10],[100,100,10],[200,50,10]];
+let p=pawPedestrianLane(sp,{x:50,y:0},{x:50,y:200});ck(p.x===100&&p.y===100,'follow bend down');p=pawPedestrianLane(sp,{x:50,y:200},{x:50,y:0});ck(p.x===100&&p.y===100,'follow bend up');p=pawPedestrianLane(sp,{x:50,y:0},{x:60,y:0});ck(p.x===60&&p.y===0,'same landing');
+return 'PASS '+n+' resident facing, spacing and path bend assertions';`)());

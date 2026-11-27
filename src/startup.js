@@ -2097,9 +2097,9 @@ step=function(n,dt,speed){
  const result=mbResidentSpacingStepBefore(n,dt,speed);
  // Avoid closing a small gap between residents; use an alternate direction
  // after yielding. The player's movement is never restricted by this rule.
- const crowded=npc.some(a=>a!==n&&Math.abs(n.y-a.y)<88&&Math.abs(n.x-a.x)<65&&Math.hypot(n.x-a.x,n.y-a.y)<Math.hypot(before.x-a.x,before.y-a.y));
+ const crowded=npc.some(a=>a!==n&&pawPedestrianCrowd(before,n,a,n.kind===2||a.kind===2?37:72));
  if(crowded){
-  n.x=before.x;n.y=before.y;n.tx=n.x;n.ty=n.y;n.walkDirection=-(n.walkDirection||1);n.pathReady=false;n.pauseUntil=t+.7;return true
+  n.x=before.x;n.y=before.y;n.tx=n.x;n.ty=n.y;n.walkDirection=-(n.walkDirection||1);n.pathReady=false;n.pauseUntil=t+.7+pawResidentTempo(pawPasserbyIdentity(n)).dwell*.25;return true
  }
  return result
 };
@@ -5744,6 +5744,29 @@ resetPosition=function(...args){
   pawWalkDistance=0;pawGaitTravel.set(p,0)
  }return result
 };
+/* PAW_PEDESTRIAN_BEGIN */
+function pawPedestrianFace(prior,dx,dy,dt){
+ const q=prior||{facing:'up',candidate:null,hold:0};
+ if(![dx,dy,dt].every(Number.isFinite)||Math.hypot(dx,dy)<.035)return {...q,candidate:null,hold:0};
+ const next=pawDistrictFacing(q.facing,dx,dy);
+ if(next===q.facing)return {facing:q.facing,candidate:null,hold:0};
+ const hold=(q.candidate===next?q.hold:0)+Math.max(0,Math.min(.05,dt));
+ return hold>=.09?{facing:next,candidate:null,hold:0}:{facing:q.facing,candidate:next,hold}
+}
+function pawPedestrianCrowd(before,next,other,gap=58){
+ if(!before||!next||!other||![before.x,before.y,next.x,next.y,other.x,other.y].every(Number.isFinite))return false;
+ const a=Math.hypot(before.x-other.x,before.y-other.y),b=Math.hypot(next.x-other.x,next.y-other.y);
+ return b<gap&&b<a-.005
+}
+function pawPedestrianLane(points,from,to){
+ const a=pawDistrictFoot(points,from.x,from.y),b=pawDistrictFoot(points,to.x,to.y);
+ const sign=Math.sign(b.y-a.y);
+ const knot=sign>0?points.find(v=>v[0]>a.y+.02&&v[0]<b.y-.02):sign<0?[...points].reverse().find(v=>v[0]<a.y-.02&&v[0]>b.y+.02):null;
+ return knot?{x:knot[1],y:knot[0]}:b
+}
+/* PAW_PEDESTRIAN_END */
+const pawPedestrianFaces=new WeakMap();
+function pawResidentFacing(n){return pawPedestrianFaces.get(n)?.facing||n.facing||n.paintedFacing||'up'}
 const pawGroundStepBefore=step,pawResidentFootMotion=new WeakMap();
 const pawResidentMovingBefore=residentMoving;
 residentMoving=function(n){return pawResidentMovingBefore(n)&&(!pawResidentFootMotion.has(n)||pawResidentFootMotion.get(n))};
@@ -5759,10 +5782,15 @@ step=function(n,dt,speed){
     pawResidentFootMotion.set(n,false);return true
    }
   }
+  if(isResident&&talkOpen){pawResidentFootMotion.set(n,false);return true}
   const tempo=isResident?pawResidentTempo(pawPasserbyIdentity(n)):null,oldPause=n.pauseUntil||0;
   const result=pawGroundStepBefore(n,dt,tempo?Math.min(speed,tempo.speed):speed);
   if(isResident&&n.pauseUntil>Math.max(t,oldPause)&&n.pauseUntil-t>1.5)n.pauseUntil=t+(n.pauseUntil-t)*tempo.dwell;
-  if(n!==p)pawResidentFootMotion.set(n,Math.hypot(n.x-x,n.y-y)>.035);
+  if(n!==p){
+   const dx=n.x-x,dy=n.y-y,moving=Math.hypot(dx,dy)>.035;pawResidentFootMotion.set(n,moving);
+   if(isResident){const prior=pawPedestrianFaces.get(n)||{facing:n.facing||n.paintedFacing||(n.walkDirection<0?'up':'down'),candidate:null,hold:0};
+    const face=pawPedestrianFace(prior,dx,dy,dt);pawPedestrianFaces.set(n,face);n.facing=face.facing}
+  }
   return result
  }
  const start=pawDistrictFoot(points,n.x,n.y),goal=pawDistrictFoot(points,n.tx,n.ty);

@@ -2168,7 +2168,7 @@ drawMap=function(){
   if(n===p){backHuman(n.x,n.y,avatar??0,n.walk,n.facing||'up',travellerOutdoorScale(sc,cam.scale,W,H,true));continue}
   const moving=residentMoving(n);
   if(n.kind===2){cat(n.x,n.y,0,moving,.65*sc);continue}
-  const dir=Math.abs(n.ty-n.y)>Math.abs(n.tx-n.x)?(n.ty<n.y?'up':'down'):(n.tx<n.x?'left':'right');
+  const dir=pawResidentFacing(n);
   const actorScale=travellerOutdoorScale(sc,cam.scale,W,H,false),grannyScale=actorScale*94/150;
   if(!drawPaintedResident(n,actorScale,moving,dir)){
    if(n.grumpy)drawWalkingGranny(n.x,n.y,grannyScale,moving,dir);
@@ -3520,14 +3520,15 @@ step=function(n,dt,speed){
  if(n===p)return groundedStep(n,dt,speed);
  if(room)return false;
  n.y=clamp(n.y,minY(),maxY());n.x=residentGround(scene,n.x,n.y);
- if(talkOpen){n.tx=n.x;n.ty=n.y;return false}
+ if(talkOpen)return true;
  // Replace legacy random destinations with a continuous short path segment.
  if(!n.pathReady||n.pathWorld!==scene||Math.abs(n.ty-n.pathY)>1||Math.abs(n.tx-n.pathX)>1){n.pathReady=true;n.pathWorld=scene;residentTarget(n,npc.indexOf(n));n.pathY=n.ty;n.pathX=n.tx}
  if(t<(n.pauseUntil||0)){n.tx=n.pathX;n.ty=n.pathY;return true}
  if(Math.hypot(n.x-n.tx,n.y-n.ty)<=2){n.x=n.tx;n.y=n.ty;n.walkDirection=Math.random()<.25?-(n.walkDirection||1):n.walkDirection;residentTarget(n,npc.indexOf(n));n.pathY=n.ty;n.pathX=n.tx;n.pauseUntil=t+1.8+Math.random()*2.8;return true}
  // Hold position instead of walking through a visitor. Feet stay on the path at all times.
  if(Math.hypot(n.x-p.x,n.y-p.y)<55){n.pauseUntil=t+.45;return true}
- const dx=n.tx-n.x,dy=n.ty-n.y,d=Math.hypot(dx,dy),amount=Math.min(d,Math.min(42,speed)*Math.max(0,Math.min(.05,dt)));
+ const spine=scene==='fortune'?pawStairPath:paintedResidentPaths[scene],goal=spine?pawPedestrianLane(spine,n,{x:n.tx,y:n.ty}):{x:n.tx,y:n.ty};
+ const dx=goal.x-n.x,dy=goal.y-n.y,d=Math.hypot(dx,dy),amount=Math.min(d,Math.min(42,speed)*Math.max(0,Math.min(.05,dt)));
  if(d>0){n.y+=dy/d*amount;n.x=residentGround(scene,n.x+dx/d*amount,n.y)}
  return true
 };

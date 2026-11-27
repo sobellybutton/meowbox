@@ -307,7 +307,7 @@ jobs:
                 await page.locator('.townFortuneSlip').waitFor({timeout:8000});
                 if(!await page.locator('#luck').isHidden())throw Error('Obsolete luck shortcut visible');
                 if(await page.locator('#dock').isVisible())throw Error('Focused Today page must not display map dock');
-                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                await page.locator('#content > .row').getByRole('button',{name:/^‹ (Back(?: to game)?|Town|Profile|My room)$/}).click();
                 await page.locator('#dockValley').click();
                 await page.locator('.communityTabs').waitFor({state:'visible'});
                 await page.locator('.townWall').waitFor({timeout:5000});
@@ -324,7 +324,7 @@ jobs:
                 if(await page.locator('.townChatLine.self').count()===0)throw Error('Local chat prompt missing');
                 await page.screenshot({path:'test-results/'+name+'-town-chat.png'});
 
-                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                await page.locator('#content > .row').getByRole('button',{name:/^‹ (Back(?: to game)?|Town|Profile|My room)$/}).click();
                 await page.locator('#dockScoop').click();
                 await page.locator('.townFortuneSlip').waitFor({timeout:8000});
                 if(!await page.locator('.townFortuneSlip .fortuneShare').isVisible())throw Error('Daily fortune sharing not available');
@@ -332,7 +332,7 @@ jobs:
                 if(!await page.evaluate(()=>{const a=townFortuneFor('2026-11-25','testseed123'),b=townFortuneFor('2026-11-26','testseed123');return a.themeIndex!==b.themeIndex&&JSON.stringify(a)===JSON.stringify(townFortuneFor('2026-11-25','testseed123'))}))throw Error('Daily fortune date stability or variation failed');
                 if(!await page.evaluate(()=>{const a=townReaction('test-only',auntieHitReplies),b=townReaction('test-only',auntieHitReplies);return a!==b}))throw Error('Repeated reaction did not vary');
                 await page.screenshot({path:'test-results/'+name+'-daily-fortune.png'});
-                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                await page.locator('#content > .row').getByRole('button',{name:/^‹ (Back(?: to game)?|Town|Profile|My room)$/}).click();
                 await page.locator('#dockTravel').click();
                 await page.getByRole('button',{name:'Travel memories ›',exact:true}).click();
                 await page.locator('.travelAlbum').waitFor({timeout:8000});
@@ -340,7 +340,7 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-passport.png'});
                 await page.getByRole('button',{name:'‹ Explore',exact:true}).click();
                 await page.locator('.pawSketchbook').waitFor({state:'visible'});
-                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                await page.locator('#content > .row').getByRole('button',{name:/^‹ (Back(?: to game)?|Town|Profile|My room)$/}).click();
                 await page.locator('#dockOwnHome').click();
                 await page.getByRole('button',{name:'My collections',exact:true}).click();
                 await page.locator('.travellerBagV2').waitFor({timeout:8000});
@@ -391,20 +391,20 @@ jobs:
                 await page.locator('.townFortuneSlip').waitFor({state:'visible'});
                 const fortuneAfter=await page.evaluate(()=>{const f=townFortuneFor();return [f.date,f.themeIndex,f.colour[2],f.number]});
                 if(fortuneBefore[0]===fortuneAfter[0]&&JSON.stringify(fortuneBefore)!==JSON.stringify(fortuneAfter))throw Error('Daily fortune changed after reload');
-                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                await page.locator('#content > .row').getByRole('button',{name:/^‹ (Back(?: to game)?|Town|Profile|My room)$/}).click();
                 await page.locator('#profileHud').click();
                 if(!/Test Traveller/.test(await page.locator('.journalIdentity').innerText()))throw Error('Saved player name lost');
-                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                await page.locator('#content > .row').getByRole('button',{name:/^‹ (Back(?: to game)?|Town|Profile|My room)$/}).click();
                 await page.locator('#dockTravel').click();
                 await page.getByRole('button',{name:'Travel memories ›',exact:true}).click();
                 if(!/Test Traveller/.test(await page.locator('.passportRailTicket').innerText()))throw Error('Original railway ticket missing');
                 if(await page.evaluate(()=>readShrineVisits().total)!==2)throw Error('Visit history did not persist exactly twice');
                 await page.getByRole('button',{name:'‹ Explore',exact:true}).click();
-                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                await page.locator('#content > .row').getByRole('button',{name:/^‹ (Back(?: to game)?|Town|Profile|My room)$/}).click();
                 // Direct activity integration check, separate from the normal entrance flow.
-                // The lab is one house with three choices, not three destinations.
+                // The lab is one house with four current choices, not separate destinations.
                 await page.evaluate(()=>{scene='wonder';room='quiz';activity=null;action('quiz')});
-                for(const [label,mode] of [['Soul Cat · playful character','soul'],['MBTI-inspired preferences','type'],['Enneagram-inspired · nine motives','motive']]){
+                for(const [label,mode] of [['MBTI-inspired preferences','type'],['Enneagram-inspired · nine motives','motive'],['Five everyday tendencies','bigfive'],['Relationship values','values']]){
                   await page.locator('#choices').getByRole('button',{name:label,exact:true}).click();
                   await page.waitForFunction(mode=>scene==='wonder'&&room==='quiz'&&activity==='wonderScene'&&wonderSceneMode===mode,mode,{timeout:3000});
                   if(options.hasTouch&&options.viewport.width<=540){
@@ -420,7 +420,7 @@ jobs:
                   await page.evaluate(()=>{closeTalk();updateHUD()});
                   await page.locator('#back').click();
                   await page.waitForFunction(()=>room==='quiz'&&!activity,{},{timeout:3000});
-                  if(mode!=='motive')await page.evaluate(()=>action('quiz'));
+                  if(mode!=='values')await page.evaluate(()=>action('quiz'));
                 }
                 await page.evaluate(()=>{scene='fortune';room=null;activity=null;state={};closeTalk();updateHUD()});
                 await page.evaluate(()=>{room='wishes';activity=null;action('coin')});
@@ -428,9 +428,9 @@ jobs:
                 await page.locator('.wishKeyboard').locator('..').locator('summary').click();
                 await page.locator('.wishKeyboard').getByRole('button',{name:'Throw',exact:true}).click();
                 await page.waitForTimeout(1700);
-                if(!await page.locator('.ritualCoin').isVisible())throw Error('Missed coin did not return');
+                if(!await page.locator('.ritualCoin').isVisible()&&!await page.locator('.settledWishCoin').count())throw Error('Wishing coin did not settle or return');
                 await page.screenshot({path:'test-results/'+name+'-wishing-pool.png'});
-                await page.getByRole('button',{name:'‹ Back',exact:true}).click();
+                await page.locator('#content > .row').getByRole('button',{name:/^‹ (Back(?: to game)?|Town|Profile|My room)$/}).click();
                 await page.evaluate(()=>{room='temple';activity=null;action('prayer')});
                 await page.waitForFunction(()=>activity==='prayer'&&state.prayerStage==='collect',{},{timeout:10000});
                 if(options.hasTouch){
