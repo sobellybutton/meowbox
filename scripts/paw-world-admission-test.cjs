@@ -15,3 +15,14 @@ return (async()=>{
  return 'PASS: decode, retry cleanup, transit ownership and visible-time clocks';
 })()`);
 run(assert,setTimeout,clearTimeout).then(console.log,err=>{console.error(err);process.exitCode=1});
+
+{
+ const src=require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/startup.js'),'utf8');
+ const a=src.indexOf('/* PAW_RECOVERED_RETRY_BEGIN */'),z=src.indexOf('/* PAW_RECOVERED_RETRY_END */');
+ if(a<0||z<=a)throw Error('Missing image retry guard');
+ const mayRequest=new Function(src.slice(a,z)+';return pawRecoveredMayRequest')();
+ for(const [until,now,retry,want] of [[0,1000,false,true],[10000,0,false,false],[10000,749,true,false],[10000,750,true,true],[10000,1000,false,false],[10000,10000,false,true],[10000,9500,true,true]]){
+  if(mayRequest(until,now,retry)!==want)throw Error('Unexpected image retry permission');
+ }
+ console.log('Explicit image retry and background cooldown checks passed');
+}
