@@ -1,0 +1,53 @@
+{
+  "status": "Provisional reuse of inspected original painted art, not final district sign artwork",
+  "assets": [
+    {
+      "path": "assets/visual/painted/signage/wood-grain.webp",
+      "source": "assets/visual/painted/recovered/signs/hanging_wood.webp",
+      "source_crop": [
+        145,
+        192,
+        278,
+        102
+      ],
+      "git_blob_sha1": "4e44c505aeaf7ec0c10de74d219d6043103d68d4",
+      "status": "inspected source crop, provisional in-game style"
+    },
+    {
+      "path": "assets/visual/painted/signage/washi-frame.webp",
+      "source": "assets/visual/painted/recovered/signs/hanging_parchment.webp",
+      "source_crop": [
+        15,
+        98,
+        370,
+        219
+      ],
+      "git_blob_sha1": "4ef2db8806e3d2f1edba52d3d090278a6d1fb920",
+      "status": "inspected source crop, provisional in-game style"
+    },
+    {
+      "path": "assets/visual/painted/signage/paper-grain.webp",
+      "source": "assets/visual/painted/recovered/signs/hanging_parchment.webp",
+      "source_crop": [
+        91,
+        153,
+        205,
+        98
+      ],
+      "git_blob_sha1": "fde83eae6be9aae791906aa0da6761fee6803e86",
+      "status": "inspected source crop, provisional in-game style"
+    },
+    {
+      "path": "assets/visual/painted/signage/ribbon-paper.webp",
+      "source": "assets/visual/painted/recovered/signs/ribbon.webp",
+      "source_crop": [
+        146,
+        58,
+        246,
+        51
+      ],
+      "git_blob_sha1": "4f54c783593afbbe73ed6b45b678b2d2cd2e096e",
+      "status": "inspected source crop, provisional in-game style"
+    }
+  ]
+}
