@@ -154,9 +154,24 @@ jobs:
                       // Capture actual input targets for diagnosis; locator.tap waits for stable layout
                       // and dispatches a real touchscreen gesture, not a DOM click.
                       await page.evaluate(()=>{window.__doorEvents=[];if(!window.__doorTraceInstalled){window.__doorTraceInstalled=true;for(const type of ['pointerdown','pointerup','pointercancel','click','lostpointercapture'])document.addEventListener(type,e=>{window.__doorEvents.push({type,door:e.target.closest?.('.worldSign')?.dataset.door||null,target:e.target.id||e.target.tagName,pointer:e.pointerType,x:Math.round(e.clientX||0),y:Math.round(e.clientY||0)});if(window.__doorEvents.length>20)window.__doorEvents.shift()},true)}});
+                      if(st.id==='temple')await page.waitForFunction(()=>pawRoomImageReady(pawHallArt())&&pawRoomImageReady(pawRecoveredImage('scenes/temple_approach_portrait.webp')),null,{timeout:12000});
                       if(options.hasTouch)await door.tap({timeout:5000});
                       else await door.click({timeout:5000});
                       await page.waitForFunction(id=>pending===id||room===id,st.id,{timeout:2000}).catch(async()=>{throw Error('Door click did not start the requested walking route: '+JSON.stringify(await page.evaluate(()=>({events:window.__doorEvents,pending,room,transitioning,scene}))))});
+                      if(st.id==='temple'){
+                        await page.waitForFunction(()=>activity==='templeForecourt'&&!transitioning&&hit.some(h=>h.id==='paw-forecourt-cat'),null,{timeout:10000});
+                        await page.screenshot({path:'test-results/'+name+'-lucky-cat-forecourt.png'});
+                        const tapForecourt=async id=>{
+                          const q=await page.evaluate(id=>{const h=hit.find(v=>v.id===id),r=c.getBoundingClientRect();return h?{x:r.left+cam.ox+(h.x+h.w/2)*cam.scale,y:r.top+cam.oy+(h.y+h.h/2)*cam.scale}:null},id);
+                          if(!q)throw Error('Missing forecourt target '+id);
+                          if(options.hasTouch)await page.touchscreen.tap(q.x,q.y);else await page.mouse.click(q.x,q.y);
+                        };
+                        await tapForecourt('paw-forecourt-cat');
+                        await page.waitForFunction(()=>state.pawForecourt?.greeted&&!state.pawForecourt.route.length,null,{timeout:8000});
+                        await page.screenshot({path:'test-results/'+name+'-lucky-cat-greeting.png'});
+                        await tapForecourt('paw-forecourt-hall');
+                        await page.waitForFunction(()=>room==='temple'&&!activity&&pawHallEnabled(),null,{timeout:8000});
+                      }
                       await page.waitForFunction(id=>room===id&&!transitioning&&continuityRoom===id,st.id,{timeout:15000});
                       await page.waitForFunction(()=>!indoor.route.length&&Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)<=3,{},{timeout:5000});
                       const placement=await page.evaluate(()=>{const spec=indoorSpec();return {safe:indoorSafe(indoor.x,indoor.y),distance:Math.hypot(indoor.x-spec.arrival[0],indoor.y-spec.arrival[1]),x:cam.ox+indoor.x*cam.scale,y:cam.oy+indoor.y*cam.scale,w:W,h:H}});
