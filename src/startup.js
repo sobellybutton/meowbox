@@ -1550,7 +1550,7 @@ function mb5Visibility(hidden,now){
  const elapsed=Math.max(0,now-asleep.at);state[asleep.field]+=elapsed;
  if(asleep.field==='stickDrawAt'&&Number.isFinite(state.shakeUntil))state.shakeUntil+=elapsed
 }
-document.addEventListener('visibilitychange',()=>{if(activity==='bubbleTea'||activity==='cook'){mb5Sleep=null;return}mb5Visibility(document.hidden,performance.now()/1000)});
+document.addEventListener('visibilitychange',()=>{if(activity==='bubbleTea'||activity==='cook'||activity==='claw'){mb5Sleep=null;return}mb5Visibility(document.hidden,performance.now()/1000)});
 
 /* Give the deer time to respond to the player instead of mirroring instantly. */
 function mb5BowCurve(age,delay,duration){
@@ -8600,5 +8600,107 @@ renderResidentNoticeboard=function(q){
 const pawNoticeDisclosureStyle=document.createElement('style');
 pawNoticeDisclosureStyle.textContent='#game #content .wallReplyToggle{display:block;width:100%;min-height:44px;padding:8px 0;text-align:left;border:0;border-radius:0;background:transparent;color:#52684e;box-shadow:none;font:inherit;font-weight:600;touch-action:manipulation;transform:none}#game #content .wallReplyToggle:before{content:"▸";display:inline-block;margin-right:6px}#game #content .wallReplyToggle[aria-expanded=true]:before{content:"▾"}#game #content .wallReplyToggle:focus-visible{outline:2px solid #547056;outline-offset:2px}#game #content .wallReplyGroup[hidden]{display:none!important}#game #content .wallReplyGroup:not([hidden]){display:block!important}#game #page:has(.townWall){scroll-behavior:auto;overflow-anchor:none}';
 document.head.append(pawNoticeDisclosureStyle);
+
+/* PAW_CLAW_CONTROL_BEGIN */
+function pawClawAllowed(rendered,current,kind,blocked){
+ return !blocked&&kind==='claw'&&rendered===current&&!!current&&!current.dropping&&Number.isFinite(current.hook)
+}
+function pawClawMove(q,delta){
+ if(!q||!Number.isFinite(q.hook)||!Number.isFinite(delta)||q.dropping)return false;
+ q.hook=Math.max(0,Math.min(1,q.hook+delta));return true
+}
+function pawClawClock(q,now,blocked){
+ if(!q||!Number.isFinite(now))return false;
+ const active=q.dropping&&Number.isFinite(q.clawAt),result=q.clawResult&&Number.isFinite(q.clawResult.at);
+ if(!active&&!result){delete q.pawClawClock;return false}
+ const prior=q.pawClawClock;
+ if(prior&&now>=prior.at&&(prior.blocked||blocked)){
+  const elapsed=now-prior.at;
+  if(active&&prior.active)q.clawAt+=elapsed;
+  if(result&&prior.result===q.clawResult)q.clawResult.at+=elapsed
+ }
+ q.pawClawClock={at:now,blocked:!!blocked,active:!!active,result:result?q.clawResult:null};return true
+}
+function pawClawAlignment(q){
+ if(!q||!Number.isFinite(q.hook))return null;
+ const x=286+Math.max(0,Math.min(1,q.hook))*228;
+ const positions=[296,400,504];let i=0;
+ for(let j=1;j<positions.length;j++)if(Math.abs(positions[j]-x)<Math.abs(positions[i]-x))i=j;
+ return {i,distance:Math.abs(positions[i]-x),x}
+}
+/* PAW_CLAW_CONTROL_END */
+const pawClawDropBefore=doClaw;
+doClaw=function(){
+ if(!pawClawAllowed(state,state,activity,pawArcadeInputBlocked()))return false;
+ const run=state,result=pawClawDropBefore();
+ if(state===run&&run.dropping){pawClawClock(run,t,false);pawClawSync(true)}
+ return result
+};
+const pawClawFinishBefore=clawFinish;
+clawFinish=function(){
+ if(activity!=='claw'||!state.dropping||pawArcadeInputBlocked())return;
+ const result=pawClawFinishBefore();pawClawClock(state,t,false);pawClawSync(true);return result
+};
+const pawClawLoopBefore=loop;
+loop=function(ms,...args){
+ if(activity==='claw')pawClawClock(state,ms/1000,pawArcadeInputBlocked());
+ return pawClawLoopBefore(ms,...args)
+};
+document.addEventListener('visibilitychange',()=>{
+ if(activity==='claw')pawClawClock(state,performance.now()/1000,pawArcadeInputBlocked())
+});
+let pawClawRendered=null,pawClawLanguage=null;
+function pawClawSync(force=false){
+ const el=$('gameControls');if(!el)return;
+ if(activity!=='claw'){
+  el.classList.remove('pawClawControls');pawClawRendered=null;return
+ }
+ const run=state,blocked=pawArcadeInputBlocked();
+ if(blocked){el.hidden=true;return}
+ el.hidden=false;el.classList.add('pawClawControls');
+ if(force||pawClawRendered!==run||pawClawLanguage!==zh||!el.querySelector('.pawClawButtons')){
+  const old=document.activeElement?.dataset?.clawAction;
+  pawClawRendered=run;pawClawLanguage=zh;el.replaceChildren();
+  const status=element('small','',el,'pawClawStatus');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+  const buttons=element('div','',el,'pawClawButtons');
+  const actions=[
+   ['left',['Left','左移'],()=>pawClawMove(run,run.clawExpert?-.025:-.07)],
+   ['drop',['Lower claw','下夹'],()=>doClaw()],
+   ['right',['Right','右移'],()=>pawClawMove(run,run.clawExpert?.025:.07)]
+  ];
+  for(const [key,words,fn] of actions){const control=b(buttons,tr(...words),()=>{
+    if(!pawClawAllowed(run,state,activity,pawArcadeInputBlocked()))return;
+    fn();pawClawSync()
+   });control.type='button';control.dataset.clawAction=key}
+  const mode=b(el,'',()=>{
+   if(!pawClawAllowed(run,state,activity,pawArcadeInputBlocked()))return;
+   run.clawExpert=!run.clawExpert;run.clawResult=null;pawClawSync()
+  });mode.type='button';mode.className='pawClawMode';mode.dataset.clawAction='mode';
+  if(old)[...el.querySelectorAll('button')].find(v=>v.dataset.clawAction===old)?.focus({preventScroll:true})
+ }
+ for(const btn of el.querySelectorAll('button'))btn.disabled=!!run.dropping;
+ const mode=el.querySelector('.pawClawMode'),modeText=run.clawExpert?tr('Precision mode: on','精准模式：开'):tr('Precision mode: off','精准模式：关');
+ if(mode&&mode.textContent!==modeText){mode.textContent=modeText;mode.setAttribute('aria-pressed',String(!!run.clawExpert))}
+ const readout=el.querySelector('.pawClawStatus'),aim=pawClawAlignment(run);
+ const text=run.dropping?tr('Claw in motion…','抓取中……'):aim?tr('Nearest: ','最近的玩偶：')+tr(...clawPlushes[aim.i].slice(0,2))+' · '+(aim.distance<=5?tr('Centred','已对准'):aim.distance<=16?tr('Nearly centred','快对准了'):tr('Adjust aim','再调整一下')):'';
+ if(readout&&readout.textContent!==text)readout.textContent=text
+}
+const pawClawControlsBefore=refreshControls;
+refreshControls=function(...args){
+ const result=pawClawControlsBefore(...args);pawClawSync();return result
+};
+const pawClawDrawBefore=drawActivity;
+drawActivity=function(...args){
+ const result=pawClawDrawBefore(...args);if(activity==='claw')pawClawSync();return result
+};
+document.addEventListener('keydown',event=>{
+ if(!pawClawAllowed(state,state,activity,pawArcadeInputBlocked())||event.altKey||event.ctrlKey||event.metaKey||event.target?.matches?.('input,textarea,select,button,[contenteditable=true]'))return;
+ if(event.key==='ArrowLeft'||event.key==='ArrowRight'){
+  event.preventDefault();pawClawMove(state,(event.key==='ArrowLeft'?-1:1)*(state.clawExpert?.025:.07));pawClawSync()
+ }else if((event.key==='Enter'||event.key===' ')&&!event.repeat){event.preventDefault();doClaw()}
+});
+const pawClawCss=document.createElement('style');
+pawClawCss.textContent='#game #gameControls.pawClawControls:not([hidden]){display:flex;flex-direction:column;gap:4px;width:min(84vw,310px);padding:6px;background:#f2e5ccee;border:1px solid #ad9470;border-radius:6px}#game #gameControls .pawClawButtons{display:flex;gap:4px;width:100%}#game #gameControls .pawClawButtons button{flex:1;min-width:0;min-height:44px;padding:5px}#game #gameControls .pawClawStatus{color:#4c5a47;text-align:center;line-height:1.35}#game #gameControls .pawClawMode{min-height:36px;padding:4px 8px;font-size:12px}';
+document.head.append(pawClawCss);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

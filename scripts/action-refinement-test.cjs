@@ -49,3 +49,16 @@ let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};const row={id:2},frame={token
 ck(pawDiscoveryCurrent(frame,4,2,row,'question',false),'current question');ck(!pawDiscoveryCurrent(frame,5,2,row,'question',false),'new assessment');ck(!pawDiscoveryCurrent(frame,4,3,row,'question',false),'next question');ck(!pawDiscoveryCurrent(frame,4,2,{id:2},'question',false),'different row');ck(!pawDiscoveryCurrent(frame,4,2,row,'turn',false),'double answer');ck(!pawDiscoveryCurrent(frame,4,2,row,'question',true),'covered question');
 ck(pawDiscoveryStep(.2,100,101,true)===.2,'paused card');ck(pawDiscoveryStep(.2,100,1000,false)===.25,'bounded resume');ck(Math.abs(pawDiscoveryStep(.2,100,120,false)-.22)<1e-9,'visible progress');
 return 'PASS '+n+' assessment input and turn timing assertions';`)());
+
+const clawControl=between(source,'/* PAW_CLAW_CONTROL_BEGIN */','/* PAW_CLAW_CONTROL_END */');
+console.log(new Function(clawControl+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+const q={hook:.5};ck(pawClawAllowed(q,q,'claw',false),'current claw');ck(!pawClawAllowed(q,{},'claw',false),'stale');ck(!pawClawAllowed(q,q,'claw',true),'covered');ck(!pawClawAllowed(q,q,'cook',false),'other game');
+for(let i=0;i<100;i++){pawClawMove(q,-.07);ck(q.hook>=0,'left clamp')}ck(q.hook===0,'left stop');
+for(let i=0;i<100;i++){pawClawMove(q,.025);ck(q.hook<=1,'right clamp')}ck(q.hook===1,'right stop');
+for(const [i,x] of [296,400,504].entries()){q.hook=(x-286)/228;const a=pawClawAlignment(q);ck(a.i===i&&a.distance<1e-8,'actual plush position')}
+q.dropping=true;q.clawAt=5;ck(!pawClawMove(q,.1),'no moving during drop');ck(!pawClawAllowed(q,q,'claw',false),'no duplicate drop');
+pawClawClock(q,5,false);pawClawClock(q,5.2,true);pawClawClock(q,25,true);pawClawClock(q,26,false);ck(q.clawAt===26,'covered flight frozen');pawClawClock(q,27,false);ck(q.clawAt===26,'resume');
+q.dropping=false;q.clawResult={at:27};pawClawClock(q,27,false);pawClawClock(q,28,true);pawClawClock(q,30,false);ck(q.clawResult.at===30,'tray result remains visible after pause');
+ck(!pawClawMove(q,NaN),'reject invalid aim');
+return 'PASS '+n+' claw input, alignment and pause assertions';`)());
