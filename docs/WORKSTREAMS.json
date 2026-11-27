@@ -397,18 +397,17 @@
         "index.html",
         "scripts/build.cjs",
         "assets/visual/painted/interior-layouts.js",
-        "scripts/painted-interiors-test.cjs"
+        "scripts/painted-interior-layout-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
       "evidence": [
-        "fc01bfeb: inspected seven individual existing portrait scenes and implemented normalized floor lanes, station approach/label, resident placement, route and viewport geometry; 244 checks passed in connector harness. c969747a: persistent filesystem artwork hash and route regression; not yet run in full repo."
+        "fc01bfeb: inspected seven individual existing portrait scenes and implemented normalized floor lanes, station approach/label, resident placement, route and viewport geometry; 244 checks passed in connector harness. c969747a: persistent filesystem artwork hash and route regression; not yet run in full repo.",
+        "342be13e: actual runtime wiring for five single-station painted lobbies (Tarot, Destiny, Quiz, Story, Match), readiness, floor and camera adapters, duplicate furniture suppression; source parsed, 220 focused route/bounds/viewport checks.",
+        "c3827ccf: persisted mapped room runtime geometry regression."
       ],
-      "lease": {
-        "owner": "manual-seven-room-integration-20261128",
-        "until": 1795798711274
-      },
-      "blocker": "Live runtime wiring and actual rendered review pending: startup/extensions/shell/browser owned by concurrent runner. Verify effective station IDs (especially pier) and exact interaction contact, native landscape and nested activity art. Mystery painting depicts blind-box shop, not Komorebi furniture showroom; do not use as furniture art.\n\n28 Nov owner screenshot: Moonlight Tarot still shows flat legacy-looking room, floating card fan and awkward reading-table plaque. Verify active asset against approved painted artwork, correct table/card contact and label placement, camera and floor geometry before visual acceptance."
+      "lease": null,
+      "blocker": "Five single-station portrait lobbies wired; full deployed phone/desktop input and visual acceptance, dedicated native wide/nested activity staging remain outstanding. Tea and pier require multi-station routing, actual effective pier IDs, and no duplicate river geometry. Mystery artwork is a blind-box shop, not furniture showroom. Verify actual loaded art and physical interaction before acceptance."
     },
     {
       "id": "ART-INTEGRATION",
