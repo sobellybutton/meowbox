@@ -1210,3 +1210,8 @@ ENT-ASSET-READY-01 partial: e8c17843 warms the selected traveller's directional 
 ## Daily social task guidance (27 November 2026)
 
 SOCIAL-DAILY-01 partial: cf700a19 identifies a nearby named fictional resident from the current outdoor roster (excluding animals and actual shared peers), gives a bilingual tap-and-converse instruction, and restores lifeFriend credit only on a chosen response in the extended fictional guest dialogue. Existing daily category cap, reward ledger and saves are unchanged. 4f1d41d5 persists the candidate and credit regression; source parsed and extracted helper checks executed. Actual human consent and shared endpoint, visible physical gestures, indoor social navigation and rendered phone/desktop verification remain open. Released claim; no acceptance increase.
+
+
+## Parallel Lives decision consequences (27 November 2026)
+
+DISCOVERY-PARALLEL-LIVE-02 partial: efc3917c strengthens eight final decision scenes with concrete tradeoffs and adds optional, distinct bilingual reflection for each of the sixteen existing endings, based on a validated four-choice route. Existing ending IDs, keepsakes, share actions, privacy and saves are preserved. 92f6f059 adds an all-branch regression, executed against current source in connector harness; source parsed. The short-film visual staging, new alternative-life experiences, full assessment redistribution and actual rendered mobile/desktop testing remain outstanding. Released claim; no acceptance increase.
