@@ -614,6 +614,26 @@
       ],
       "lease": null,
       "blocker": "Independent module is not loaded by live game yet; concurrent garden task owns startup/extensions. Integrate into existing purchase/storage controller, verify real scene floor masks, wall anchors, rotation artwork, balcony connection, mobile/desktop rendering."
+    },
+    {
+      "id": "RAIL-LIVE-01",
+      "lane": "engineering",
+      "priority": 1,
+      "summary": "Use imported transparent carriage and moving painted foreground in actual landscape rides",
+      "resources": [
+        "src/startup.js",
+        "src/rail-foreground.js",
+        "art:rail"
+      ],
+      "depends": [
+        "RAIL-04"
+      ],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-rail-live-20261127-h",
+        "until": 1795786040338
+      }
     }
   ]
 }
