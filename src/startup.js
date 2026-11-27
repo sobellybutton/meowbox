@@ -2973,7 +2973,7 @@ syncSigns=function(){
  nextStopButton.hidden=true;
  const sign=signButtons.get('station');
  if(sign&&!signRoot.hidden&&!sign.hidden){
-  const name=tr('To station','前往车站'),accessible=tr('Walk to railway station','步行前往火车站');
+  const destination=railNextDistrict(scene),name=tr(...pawRailStationCopy(scene,destination)),accessible=tr('Walk to the train for ','步行前往列车：')+tr(...maps[destination].n);
   const plaque=sign.querySelector('.doorPlaque');
   if(plaque&&plaque.textContent!==name)plaque.textContent=name;
   if(sign.getAttribute('aria-label')!==accessible)sign.setAttribute('aria-label',accessible);
@@ -3163,39 +3163,42 @@ step=function(n,dt,speed){
    preview for deliberate destination browsing and optional daily suggestions. */
 // The map contains a wayfinding entrance, not a painted train platform.
 // Keep the actual boarding decision at a dedicated station scene.
-function pawStationPlatform(origin=scene){
- if(transitioning||room||activity||!proposal.hidden||origin!==scene||!maps[origin])return;
- const destination=railNextDistrict(origin);
- if(!maps[destination]||destination===origin)return;
- page(tr('Railway station','火车站'),tr('Next stop: ','下一站：')+tr(...maps[destination].n),q=>{
-  const panel=element('section','',q,'pawStationPlatform');
-  panel.dataset.origin=origin;panel.dataset.destination=destination;
-  const picture=element('picture','',panel,'pawStationPlatformArt');
-  const wide=element('source','',picture);wide.media='(orientation: landscape)';wide.srcset='assets/visual/painted/recovered/scenes/station_landscape.webp';
-  const art=element('img','',picture);art.src='assets/visual/painted/recovered/scenes/station_portrait.webp';art.alt=tr('Railway platform and waiting train','火车站台与等候中的列车');art.decoding='async';
-  const departure=element('div','',panel,'pawStationDeparture');
-  element('small',tr('Next departure','下一班列车'),departure);
-  element('h2',tr(...maps[destination].n),departure);
-  element('p',tr('Ready to leave? You can come back to this town any time.','准备出发了吗？随时可以回来继续逛。'),departure);
-  const controls=element('div','',departure,'pawStationControls');
-  let boarded=false;
-  const board=b(controls,tr('Board the train','上车出发'),()=>{
-   if(!pawStationActionAllowed({boarded,connected:panel.isConnected,open:$('page').style.display==='block',sameDistrict:scene===origin,transitioning,room,activity,entrance:!proposal.hidden,hidden:document.hidden}))return;
-   boarded=true;board.disabled=true;travellerSuggestedRoute=null;journey(destination)
-  });board.className='pawStationBoard';
-  b(controls,tr('Keep exploring','继续逛逛'),()=>{
-   if(!pawStationActionAllowed({boarded,connected:panel.isConnected,open:$('page').style.display==='block',sameDistrict:scene===origin,transitioning,room,activity,entrance:!proposal.hidden,hidden:document.hidden}))return;
-   $('page').style.display='none';updateHUD()
-  });
- });
- journalLanguage(()=>pawStationPlatform(origin))
+/* PAW_DIRECT_BOARD_BEGIN */
+function pawDirectBoardAllowed(flags){
+ return !!flags.valid&&!flags.transitioning&&!flags.room&&!flags.activity&&!flags.entrance&&!flags.hidden&&!flags.page
+}
+function pawRailStationCopy(origin,destination){
+ return origin==='wonder'?['Return train','返程列车']:['Next train','下一班列车']
+}
+/* PAW_DIRECT_BOARD_END */
+function pawPushDoorCamera(ms=260){
+ const canvas=$('c');
+ if(!canvas?.animate||matchMedia('(prefers-reduced-motion: reduce)').matches)return null;
+ const r=canvas.getBoundingClientRect(),x=cam.ox+p.x*cam.scale,y=cam.oy+p.y*cam.scale;
+ if(!r.width||!r.height||!Number.isFinite(x)||!Number.isFinite(y))return null;
+ const origin=Math.max(10,Math.min(90,x/r.width*100))+'% '+Math.max(10,Math.min(90,y/r.height*100))+'%';
+ return canvas.animate([{transform:'scale(1)',transformOrigin:origin},{transform:'scale(1.16)',transformOrigin:origin}],{duration:ms,easing:'ease-in-out',fill:'forwards'})
+}
+function pawBoardStation(origin=scene){
+ const destination=railNextDistrict(origin),allowed=()=>pawDirectBoardAllowed({valid:origin===scene&&!!maps[origin]&&!!maps[destination]&&destination!==origin,transitioning,room,activity,entrance:!proposal.hidden,hidden:document.hidden,page:$('page').style.display==='block'});
+ if(!allowed())return;
+ travellerSuggestedRoute=null;
+ const zoom=pawPushDoorCamera();
+ if(!zoom){journey(destination);return}
+ transitioning=true;$('game').classList.add('pawDoorCameraActive');
+ const finish=()=>{
+  zoom.cancel();$('game').classList.remove('pawDoorCameraActive');transitioning=false;
+  if(allowed())journey(destination)
+ };
+ // A timer also resolves when an animation frame is throttled.
+ setTimeout(finish,260)
 }
 const pawStationEnterBefore=enter;
 enter=function(id){
  if(id!=='station')return pawStationEnterBefore(id);
  if(transitioning||room||activity||!proposal.hidden||$('page').style.display==='block')return;
  releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;
- pawStationPlatform(scene)
+ pawBoardStation(scene)
 };
 const pawRailFadeBefore=fade;
 fade=function(fn,kind='gust',destination=null){
@@ -3247,10 +3250,10 @@ const pawRailJourneyStyle=document.createElement('style');pawRailJourneyStyle.te
 #game.pawRailJourneyActive #toast{visibility:hidden!important}
 #game .pawRailJourney{padding:0!important;overflow:hidden;isolation:isolate;background:#303c36!important;animation:none!important;opacity:1;transition:opacity .48s ease-out,transform .48s ease-out}
 #game .pawRailJourney{container-type:size;pointer-events:auto}
-#game .pawRailJourney .pawRailFallback{position:absolute;inset:0;background:#303c36 url('assets/visual/painted/journey/portrait.webp') center/contain no-repeat}
+#game .pawRailJourney .pawRailFallback{position:absolute;inset:0;background:#303c36 url('assets/visual/painted/journey/portrait.webp') center/cover no-repeat}
 @media(min-aspect-ratio:23/20){#game .pawRailJourney .pawRailFallback{background-image:url('assets/visual/painted/journey/landscape.webp')}}
 #game .pawRailJourney[data-painted-rail=true] .pawRailFallback{display:none}
-#game .pawRailJourney .mbPaintedRail{position:absolute;inset:auto;left:50%;top:50%;margin:0;transform:translate(-50%,-50%);width:min(100cqw,calc(100cqh * var(--rail-aspect,.667)))!important;height:auto!important;aspect-ratio:var(--rail-aspect,.667);max-width:none!important;max-height:none!important;border-radius:0!important}
+#game .pawRailJourney .mbPaintedRail{position:absolute;inset:auto;left:50%;top:50%;margin:0;transform:translate(-50%,-50%);width:max(100cqw,calc(100cqh * var(--rail-aspect,.667)))!important;height:auto!important;aspect-ratio:var(--rail-aspect,.667);max-width:none!important;max-height:none!important;border-radius:0!important}
 #game .pawRailJourney .mbPaintedRail picture img{object-fit:fill}
 #game .pawRailJourney .mbRailPane>span{animation:pawTravelWindow 2.1s linear infinite}#game .pawRailJourney .mbRailPane[data-pane=upper]>span{animation-duration:3.1s!important}#proposal .mbPaintedRail[data-use=entrance] .mbRailPane>span{animation: pawTrainScenery 5.5s linear infinite alternate}@keyframes pawTravelWindow{from{transform:translateX(8%) scale(1.24)}to{transform:translateX(-8%) scale(1.24)}}
 #game .pawRailJourney .mbRailPane[data-pane=upper]>span,#proposal .mbPaintedRail[data-use=entrance] .mbRailPane[data-pane=upper]>span{animation-duration:7.5s}
@@ -10355,7 +10358,7 @@ const pawNewDistricts={
    quiz:{approach:[725,461],plaque:[740,347],hit:[636,266,327,197]},
    story:{approach:[395,965],plaque:[232,760],hit:[55,701,336,237]},
    match:{approach:[510,1040],plaque:[812,945],hit:[642,858,329,242]},
-   station:{approach:[568,565],plaque:[470,498],hit:[407,467,141,87]}
+   station:{approach:[707,461],plaque:[550,415],hit:[480,378,140,80]}
   }
  },
  island:{
@@ -10385,7 +10388,7 @@ const pawNewDistricts={
    fish:{approach:[475,920],plaque:[202,925],hit:[65,865,342,240]},
    tea:{approach:[414,810],plaque:[798,676],hit:[597,660,376,225]},
    park:{approach:[626,460],plaque:[815,355],hit:[660,298,300,165]},
-   station:{approach:[515,400],plaque:[500,375],hit:[453,340,119,75]}
+   station:{approach:[515,400],plaque:[500,350],hit:[430,310,150,90]}
   }
  }
 };
@@ -10669,19 +10672,6 @@ function pawAppendVisitProgress(parent,district,links=false){
   });else li.textContent=name
  }
 }
-const pawVisitStationBefore=pawStationPlatform;
-pawStationPlatform=function(origin=scene){
- const result=pawVisitStationBefore(origin),panel=$('content').querySelector('.pawStationPlatform');
- if(panel?.dataset.origin===origin&&$('page').style.display==='block'){
-  const departure=panel.querySelector('.pawStationDeparture'),controls=panel.querySelector('.pawStationControls');
-  if(departure&&controls){
-   const holder=element('div','',departure);controls.before(holder);pawAppendVisitProgress(holder,origin,false);
-  }
-  const back=$('content').querySelector(':scope > .row button:first-child');
-  if(back)back.onclick=()=>{if(panel.isConnected&&$('page').style.display==='block'&&scene===origin&&!transitioning){$('page').style.display='none';updateHUD()}}
- }
- return result
-};
 const pawVisitJournalBefore=pawJournalRender;
 pawJournalRender=function(district=scene){
  const result=pawVisitJournalBefore(district),notes=$('content').querySelector('.pawSketchNotes');
@@ -11029,4 +11019,46 @@ const pawCounterRackStyle=document.createElement('style');pawCounterRackStyle.te
 #game #gameControls.pawCounterRackControls button{width:100%;min-width:0;min-height:44px;white-space:normal;overflow-wrap:anywhere;font-size:clamp(12px,3.3vw,14px);padding:5px}
 `;document.head.append(pawCounterRackStyle);
 
+/* Railway wayfinding: a single contextual edge sign only when the actual
+   map plaque has been clipped or displaced. No extra permanent next-stop CTA. */
+const pawRailEdge=element('button','',$('game'),'pawRailEdge');pawRailEdge.type='button';pawRailEdge.hidden=true;
+pawRailEdge.onclick=()=>{if(!pawRailEdge.hidden&&!transitioning&&!room&&!activity&&proposal.hidden&&$('page').style.display!=='block')walkDoor('station')};
+let pawRailEdgeAt=-Infinity;
+const pawRailEdgeSignsBefore=syncSigns;
+syncSigns=function(...args){
+ const result=pawRailEdgeSignsBefore(...args);
+ if(!proposal.hidden||room||activity||transitioning||pending||document.hidden||signRoot.hidden||$('page').style.display==='block'||!maps[scene]){pawRailEdge.hidden=true;return result}
+ if(performance.now()-pawRailEdgeAt<150)return result;pawRailEdgeAt=performance.now();
+ const sign=signButtons.get('station'),game=$('game'),g=game.getBoundingClientRect();
+ const r=sign?.getBoundingClientRect();
+ if(sign&&!sign.hidden&&r&&r.width>0&&r.height>0&&r.top>=g.top&&r.bottom<=g.bottom&&r.left>=g.left&&r.right<=g.right){pawRailEdge.hidden=true;return result}
+ const dest=railNextDistrict(scene);if(!maps[dest]){pawRailEdge.hidden=true;return result}
+ const copy=tr(...pawRailStationCopy(scene,dest));pawRailEdge.textContent='↑ '+copy;pawRailEdge.title=tr('Train to ','列车前往：')+tr(...maps[dest].n);pawRailEdge.setAttribute('aria-label',pawRailEdge.title);
+ pawRailEdge.hidden=false;
+ const obstacles=[...signRoot.querySelectorAll('.worldSign:not([hidden])'),...game.querySelectorAll('#hud button,#hudStats,#pawPlaceName,#dock')].filter(el=>el.getClientRects().length).map(el=>el.getBoundingClientRect());
+ const width=pawRailEdge.offsetWidth,height=pawRailEdge.offsetHeight;
+ const overlap=(a,b)=>a.left<b.right+5&&a.right>b.left-5&&a.top<b.bottom+5&&a.bottom>b.top-5;
+ let placed=false;
+ for(const top of [78,116,154,192]){for(const fraction of [.5,.27,.73]){
+  const left=Math.max(8,Math.min(g.width-width-8,g.width*fraction-width/2));
+  const box={left:g.left+left,right:g.left+left+width,top:g.top+top,bottom:g.top+top+height};
+  if(box.bottom>g.bottom-100||obstacles.some(r=>overlap(box,r)))continue;
+  pawRailEdge.style.left=left+'px';pawRailEdge.style.top=top+'px';placed=true;break
+ }if(placed)break}
+ pawRailEdge.hidden=!placed;return result
+};
+const pawRailEdgeStyle=document.createElement('style');pawRailEdgeStyle.textContent=`
+#game .pawRailEdge{position:absolute;z-index:13;min-height:44px;max-width:46%;padding:6px 12px;border:1px solid #c6aa7a;border-radius:5px;background:#efe0bddf;color:#4d4938;font:600 12px var(--paw-body,system-ui,sans-serif);box-shadow:0 2px 4px #29392d44}
+#game .pawRailEdge[hidden],#game.pawDoorCameraActive #worldSigns,#game.pawRailJourneyActive .pawRailEdge{display:none!important}
+`;document.head.append(pawRailEdgeStyle);
+// Ordinary shop doors push the camera towards the player's grounded approach
+// before the existing interior reveal. The legacy room lifecycle stays intact.
+const pawDoorPushFadeBefore=fade;
+fade=function(fn,kind='gust',destination=null){
+ if(!room&&!transitioning&&['door','curtain','gust'].includes(kind)&&!destination&&proposal.hidden&&$('page').style.display!=='block'){
+  const zoom=pawPushDoorCamera(320);
+  if(zoom){$('game').classList.add('pawDoorCameraActive');setTimeout(()=>{zoom.cancel();$('game').classList.remove('pawDoorCameraActive')},360)}
+ }
+ return pawDoorPushFadeBefore(fn,kind,destination)
+};
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
