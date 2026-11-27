@@ -422,12 +422,13 @@
         "browser"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-tarot-20261127-d",
-        "until": 1795782415955
-      }
+      "stage": "tested",
+      "evidence": [
+        "b503e517: five-card keyboard reveal/details and validated snapshot; five-card archive waits for valid complete visible spread; parsed source and helper regression passed",
+        "9dde6e38: persisted tarot snapshot and key regression"
+      ],
+      "lease": null,
+      "blocker": "Real rendered tarot, keyboard/touch flow, card artwork, share export/history acceptance and deployment still pending."
     },
     {
       "id": "SHARE-01",
