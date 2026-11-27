@@ -8995,4 +8995,171 @@ drawActivity=function(...args){
  return result
 };
 
+/* PAW_TEMPLE_SCENE_BEGIN */
+// World-space registration traced from the recovered portrait hall, not
+// from its former placeholder SVG. The painted cabinet, altar and door
+// already exist in the plate; never draw another copy on top of them.
+const pawHallPlate={x:100,y:-145,w:600,h:600*1648/928};
+const pawHallStations={
+ templeWater:[190,637,270,700],
+ prayer:[400,399,400,495],
+ templeBell:[610,629,530,700],
+ sticks:[155,386,280,535],
+ moon:[620,443,520,560],
+ secretGarden:[598,359,540,495]
+};
+const pawHallFloorObstacles=[
+ {l:100,r:243,u:430,d:628}, // left cabinet and flower stand
+ {l:558,r:700,u:440,d:645}, // right table and stools
+ {l:172,r:213,u:672,d:685}, // independent basin foot
+ {l:578,r:642,u:679,d:690} // bell frame foot
+];
+const pawHallLabels={
+ templeWater:[190,655,'Water basin','净手池'],
+ prayer:[400,429,'Incense & prayer','上香祈愿'],
+ templeBell:[610,650,'Bell','敲钟'],
+ sticks:[160,416,'Fortune sticks','求签'],
+ moon:[620,470,'Moon blocks','掷筊'],
+ secretGarden:[598,333,'Garden →','后院 →']
+};
+function pawHallScreenRect(rect,view){
+ const {x,y,w,h}=rect,{s,ox,oy}=view;
+ if(![x,y,w,h,s,ox,oy].every(Number.isFinite)||s<=0||w<=0||h<=0)return null;
+ return {left:ox+x*s,top:oy+y*s,right:ox+(x+w)*s,bottom:oy+(y+h)*s}
+}
+function pawHallOverlap(a,b){
+ return !!a&&!!b&&a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top
+}
+function pawHallActorScale(height,reference,ratio=1){
+ return Number.isFinite(height)&&height>0&&Number.isFinite(reference)&&reference>0?height/reference*Math.max(.75,Math.min(1.1,ratio)):1
+}
+/* PAW_TEMPLE_SCENE_END */
+const pawHallArtPath='scenes/temple_hall_portrait.webp';
+pawRecoveredImage(pawHallArtPath);
+pawRecoveredImage('scenes/temple_approach_portrait.webp');
+pawRecoveredImage('scenes/wishing_garden_portrait.webp');
+let pawHallVisit=false;
+function pawHallArt(){return pawRecoveredImage(pawHallArtPath)}
+function pawHallEnabled(){return room==='temple'&&!activity&&pawHallVisit&&pawRoomImageReady(pawHallArt())}
+const pawHallEnterBefore=enter;
+enter=function(id,...args){
+ if(id==='temple')pawHallVisit=pawRoomImageReady(pawHallArt());
+ return pawHallEnterBefore(id,...args)
+};
+const pawHallSpecBefore=indoorSpec;
+indoorSpec=function(){
+ const spec=pawHallSpecBefore();
+ if(pawHallEnabled())return {...spec,entry:[400,735],arrival:[400,700],stations:pawHallStations};
+ return spec
+};
+const pawHallObstaclesBefore=indoorObstacles;
+indoorObstacles=function(){
+ if(pawHallEnabled())return pawHallFloorObstacles.map(v=>({...v}));
+ return pawHallObstaclesBefore()
+};
+const pawHallBackgroundBefore=templeRitualBackground;
+templeRitualBackground=function(){
+ if(!pawHallEnabled())return pawHallBackgroundBefore();
+ const art=pawHallArt(),b=livingBounds(),p=pawHallPlate;
+ ctx.save();try{
+  ctx.fillStyle='#493b30';ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.drawImage(art,p.x,p.y,p.w,p.h)
+ }finally{ctx.restore()}
+};
+const pawHallPropBefore=prop;
+prop=function(id,x,y){
+ if(!pawHallEnabled()||!Object.hasOwn(pawHallStations,id))return pawHallPropBefore(id,x,y);
+ pawStationPlaque={room,id,x,y,spec:groundedStationSpec(room,id),at:t};
+ if(id==='prayer'){
+  // The hall image already contains Guanyin and the incense burner.
+  const a=roomResidentStations.temple;drawGatheringPainted(a.n,a.x,a.y,a.sc,a.facing);
+ }else if(id==='templeWater'){
+  ctx.save();try{ctx.translate(x,y);ctx.scale(.66,.66);drawGroundedSupport(['stone',0,100,65],0,0);templeBasin(0,-14);templeLadle(0,-45,-.1)}finally{ctx.restore()}
+ }else if(id==='templeBell'){
+  ctx.save();try{ctx.translate(x,y);ctx.scale(.70,.70);drawGroundedSupport(['bell',0,102,86],0,0);templeBellArt(0,-16,.37)}finally{ctx.restore()}
+ }else if(id==='moon'){
+  // Small wooden blocks on the already-painted side table.
+  ctx.save();try{ctx.translate(x,y);ctx.scale(.43,.43);block(-31,0,0);block(31,0,.15)}finally{ctx.restore()}
+ }
+ // The fortune tube and garden doorway are already visible in the artwork.
+};
+const pawHallLabelBefore=label;
+label=function(name,x,y,fn){
+ if(!pawHallEnabled())return pawHallLabelBefore(name,x,y,fn);
+ const id=pawStationPlaque?.id||(Math.abs(x-pawHallStations.secretGarden[0])<2?'secretGarden':null);
+ const q=pawHallLabels[id];if(!q)return pawHallLabelBefore(name,x,y,fn);
+ pawStationPlaque=null;
+ const [cx,cy,en,cn]=q,scale=Math.max(.08,cam.scale),font=Math.min(19,Math.max(14,11/scale));
+ ctx.save();try{
+  ctx.font='600 '+font+'px Georgia,"Songti SC",serif';
+  const value=tr(en,cn),w=Math.min(124,Math.max(55,ctx.measureText(value).width+12)),h=font+11;
+  const rect=pawHallScreenRect({x:cx-w/2,y:cy-h/2,w,h},{s:scale,ox:cam.ox,oy:cam.oy});
+  // Keep signs near the painted station, not on a visitor's face.
+  if(rect&&rect.left>=4&&rect.right<=W-4&&rect.top>=4&&rect.bottom<=H-4&&!meowTextFrameRects.some(b=>pawHallOverlap(rect,b))){
+   round(cx-w/2,cy-h/2,w,h,3,'#503b2ce8','#d7ba83');
+   activityFitText(value,cx,cy,font,w-8,'#fff1d7');
+   meowTextFrameRects.push(rect);pawVisibleStationLabels.add(id);
+  }
+  const hitW=Math.max(w,44/scale),hitH=Math.max(h,44/scale);
+  target(cx-hitW/2,cy-hitH/2,hitW,hitH,fn);
+ }finally{ctx.restore()}
+};
+// A keeper is a person at the edge of the aisle, not a decoration attached
+// to the basin. Preserve one optional visitor, with an uncluttered main path.
+Object.assign(roomResidentStations.temple,{x:300,y:615,sc:.88,facing:'right'});
+pawRoomVisitorSpecs.temple={count:1,points:[[480,625],[475,590],[325,675]]};
+const pawHallGatherBefore=drawGatheringPainted;
+drawGatheringPainted=function(name,x,y,scale=1,facing='right'){
+ if(room==='temple'&&!activity){
+  const record=residentArtworkRecord(name);
+  if(record)scale=pawHallActorScale(94*travellerRoomScale(H,cam.scale),record.height,.95)
+ }
+ return pawHallGatherBefore(name,x,y,scale,facing)
+};
+const pawHallActorsBefore=roomResidentActors;
+roomResidentActors=function(){
+ const actors=pawHallActorsBefore();
+ if(room!=='temple'||activity)return actors;
+ return actors.map(a=>({...a,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),residentArtworkRecord(a.n)?.height||112,.95)}))
+};
+// All rooms: reserve physical station hit regions and visible canvas labels
+// when placing an ambient speech bubble; suppress it if no safe space exists.
+const pawHallAmbientPlaceBefore=pawAmbientPlace;
+pawAmbientPlace=function(actor,actors){
+ if(!room)return pawHallAmbientPlaceBefore(actor,actors);
+ if(activity||!indoorReady()||indoor.goal||Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3)return false;
+ const root=$('game').getBoundingClientRect(),view={s:cam.scale,ox:cam.ox,oy:cam.oy};
+ const stationary=hit.filter(v=>v.stationId).map(v=>pawHallScreenRect(v,view)).filter(Boolean);
+ const visitors=pawLocalVisitors.filter(pawVisitorVisible).map(a=>meowIndoorActorBounds(a));
+ const blocks=[...stationary,...meowTextFrameRects,...visitors];
+ if(!pawHallAmbientPlaceBefore(actor,actors))return false;
+ const r=pawAmbientNode.getBoundingClientRect(),rect={left:r.left-root.left,top:r.top-root.top,right:r.right-root.left,bottom:r.bottom-root.top};
+ return !blocks.some(b=>pawHallOverlap(rect,b))
+};
+// Reuse an inspected original painting in the ritual close-ups rather than
+// the flat SVG. It is an interim shared plate; individual clean stations and
+// wide variants still need their own painting and contact-point calibration.
+const pawHallPortraitBefore=paintPortraitInterior;
+paintPortraitInterior=function(id){
+ if(room==='temple'&&['sticks','moon'].includes(activity)&&pawRoomImageReady(pawHallArt())){
+  const b=livingBounds();cover(pawHallArt(),b.x,b.y,b.w,b.h);return
+ }
+ return pawHallPortraitBefore(id)
+};
+const pawHallLivingBefore=paintLivingBackdrop;
+paintLivingBackdrop=function(...args){
+ if(room==='temple'&&['prayer','templePaper','templeRack','templeBell','templeWater'].includes(activity)){
+  const outdoor=['templeBell','templeWater'].includes(activity),art=pawRecoveredImage(outdoor?'scenes/temple_approach_portrait.webp':pawHallArtPath);
+  if(pawRoomImageReady(art)){const b=livingBounds();cover(art,b.x,b.y,b.w,b.h);return}
+ }
+ return pawHallLivingBefore(...args)
+};
+// Keep the agreed ritual order in the optional guide, without forcing
+// players to repeat rituals or blocking the garden.
+const pawHallGuideBefore=roomGuideEntries;
+roomGuideEntries=function(){
+ if(room!=='temple')return pawHallGuideBefore();
+ return [['templeWater','Purification basin','净手池'],['templeBell','Bronze bell','敲钟'],['prayer','Incense & Guanyin altar','上香与观音殿'],['sticks','Fortune sticks','求签'],['moon','Moon blocks','掷筊'],['secretGarden','Quiet garden','静谧后院']]
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
