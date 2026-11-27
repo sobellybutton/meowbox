@@ -485,12 +485,12 @@
         "scripts/action-refinement-test.cjs"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-assessment-1128",
-        "until": 1795803902980
-      }
+      "stage": "tested",
+      "evidence": [
+        "5c2ae169: core Personality Lab assessment implementation complete for the three existing Soul Cat, four preference and nine motive exercises: validates canonical options, rejects malformed saved result scores, score-dependent bilingual reflections for each preference axis and normalized tied Soul Cat result details. Executed all 65,536 preference combinations, 4,096 Soul Cat combinations, flat motives and invalid-data tests (69,638 focused cases) against actual source; syntax parsed. 89847df4 persists regression in existing CI suite."
+      ],
+      "lease": null,
+      "blocker": "Core question/scoring/bilingual-result implementation tested. Actual rendered phone/desktop journey, typography, sharing, artwork and broader Discovery assessment inventory remain open in DISCOVERY-ASSESSMENTS-01, SHARE-01 and QA-01. No visual or final acceptance."
     },
     {
       "id": "READ-02",
