@@ -1460,7 +1460,10 @@
         "d76e5fcf: relocates relationship values from the personality laboratory to the café, preserves conversation cards and saved results, and adds eight practical bilingual prompts selected by four relationship-priority scores.",
         "da3db0c292c9335ab0b0d16b9e615f9409d59b1b: routing and exhaustive 2,401 valid score combination helper regression executed; source parsed."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-discovery-2312",
+        "until": 1795794189876
+      },
       "blocker": "Complete historical assessment inventory, distinct general values/priorities story experience, love-language and attachment banks, scoring audit, native visual staging and rendered phone/desktop acceptance remain open."
     },
     {
