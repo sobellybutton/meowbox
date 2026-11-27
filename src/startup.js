@@ -10170,8 +10170,11 @@ function pawOutdoorYieldCandidates(y,x,low,high,amount,laneAt){
  return result
 }
 /* PAW_OUTDOOR_YIELD_END */
+const pawYieldMoving=new WeakSet(),pawYieldMovingBefore=residentMoving;
+residentMoving=function(n){return !talkOpen&&(pawYieldMoving.has(n)?pawResidentFootMotion.get(n)===true:pawYieldMovingBefore(n))};
 const pawYieldStepBefore=step;
 step=function(n,dt,speed){
+ pawYieldMoving.delete(n);
  const spine=scene==='fortune'?pawStairPath:paintedResidentPaths[scene];
  if(n===p||room||!spine||!npc.includes(n))return pawYieldStepBefore(n,dt,speed);
  const id=pawAmbientProfile(n)?.id;
@@ -10179,6 +10182,7 @@ step=function(n,dt,speed){
   pawResidentFootMotion.set(n,false);return true
  }
  const animal=n.kind===2,obstacles=[{x:p.x,y:p.y,gap:animal?42:61},...npc.filter(o=>o!==n).map(o=>({x:o.x,y:o.y,gap:animal||o.kind===2?37:72}))];
+ if(!obstacles.some(o=>Math.hypot(n.x-o.x,n.y-o.y)<o.gap))return pawYieldStepBefore(n,dt,speed);
  const amount=Math.min(42,Number.isFinite(speed)?Math.max(0,speed):0,pawResidentTempo(pawPasserbyIdentity(n)).speed)*Math.max(0,Math.min(.05,Number.isFinite(dt)?dt:0));
  const low=Math.max(minY(),spine[0][0]),high=Math.min(maxY(),spine.at(-1)[0]);
  const q=pawOutdoorYield(n,pawOutdoorYieldCandidates(n.y,n.x,low,high,amount,y=>residentLane(scene,y)),obstacles);
@@ -10190,6 +10194,7 @@ step=function(n,dt,speed){
  n.pauseUntil=Math.max(n.pauseUntil||0,t+.25);
  pawResidentFootMotion.set(n,travel>.035);
  if(travel>.035){
+  pawYieldMoving.add(n);
   pawGaitTravel.set(n,(pawGaitTravel.get(n)||0)+travel);
   const prior=pawPedestrianFaces.get(n)||{facing:n.facing||n.paintedFacing||'up',candidate:null,hold:0};
   const face=pawPedestrianFace(prior,dx,dy,dt);pawPedestrianFaces.set(n,face);n.facing=face.facing
