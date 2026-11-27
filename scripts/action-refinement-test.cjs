@@ -125,3 +125,26 @@ ck(pawCareAssistedReady({phase:'pet',at:10,assisted:true},12.4,false),'pet ready
 ck(!pawCareAssistedReady({phase:'play',at:10,assisted:true},15,true),'covered no award');
 ck(pawCareAssistedReady({phase:'play',at:10,assisted:true},13.3,false),'play ready');
 return 'PASS '+n+' cat care clock, control and cancellation assertions';`)());
+
+const tarotContinuity=between(source,'/* PAW_TAROT_CONTINUITY_BEGIN */','/* PAW_TAROT_CONTINUITY_END */');
+console.log(new Function(tarotContinuity+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+for(const stage of ['shuffle','deal','focus','cards']){
+ const q={readStage:stage,readAt:10,readFlip:[10,-1,8]};
+ pawTarotClock(q,10.2,false);pawTarotClock(q,10.3,true);pawTarotClock(q,20,true);pawTarotClock(q,21,false);
+ ck(Math.abs(q.readAt-20.8)<1e-8,'stage pause');ck(Math.abs(q.readFlip[0]-20.8)<1e-8,'flip pause');
+ ck(q.readFlip[1]===-1&&q.readFlip[2]===8,'untouched and settled');
+ pawTarotClock(q,22,false);ck(Math.abs(q.readAt-20.8)<1e-8,'resume');
+ q.readStage='deck';q.readAt=22;pawTarotClock(q,23,true);ck(q.readAt===22,'new stage')
+}
+const q={readStage:'cards'};
+ck(pawTarotActionAllowed(q,q,'love','love','cards',true,true,false),'current');
+ck(!pawTarotActionAllowed(q,{},'love','love','cards',true,true,false),'stale');
+ck(!pawTarotActionAllowed(q,q,'tarot','love','cards',true,true,false),'different activity');
+ck(!pawTarotActionAllowed(q,q,'love','love','focus',true,true,false),'stage');
+ck(!pawTarotActionAllowed(q,q,'love','love','cards',true,false,false),'rotation');
+ck(!pawTarotActionAllowed(q,q,'love','love','cards',true,true,true),'blocked');
+ck(pawTarotKeyFirst([0,1])===2,'first');ck(pawTarotKeyMove(0,'ArrowRight',true,[1,2])===3,'skip');
+ck(pawTarotKeyMove(0,'ArrowDown',true)===4,'portrait');ck(pawTarotKeyMove(0,'ArrowDown',false)===6,'wide');
+ck(pawTarotKeyMove(0,'ArrowLeft',true)===11,'wrap');ck(pawTarotKeyMove(0,'bad',true)===null,'invalid');
+return 'PASS '+n+' tarot active clock, hit ownership and keyboard navigation checks';`)());
