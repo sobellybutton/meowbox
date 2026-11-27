@@ -392,14 +392,22 @@
       "priority": 1,
       "summary": "Pier, discovery and reading interiors",
       "resources": [
-        "art:interiors"
+        "art:interiors",
+        "src/startup.js",
+        "index.html",
+        "scripts/build.cjs",
+        "assets/visual/painted/interior-layouts.js",
+        "scripts/painted-interiors-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
       "evidence": [
         "fc01bfeb: inspected seven individual existing portrait scenes and implemented normalized floor lanes, station approach/label, resident placement, route and viewport geometry; 244 checks passed in connector harness. c969747a: persistent filesystem artwork hash and route regression; not yet run in full repo."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-seven-room-integration-20261128",
+        "until": 1795798711274
+      },
       "blocker": "Live runtime wiring and actual rendered review pending: startup/extensions/shell/browser owned by concurrent runner. Verify effective station IDs (especially pier) and exact interaction contact, native landscape and nested activity art. Mystery painting depicts blind-box shop, not Komorebi furniture showroom; do not use as furniture art.\n\n28 Nov owner screenshot: Moonlight Tarot still shows flat legacy-looking room, floating card fan and awkward reading-table plaque. Verify active asset against approved painted artwork, correct table/card contact and label placement, camera and floor geometry before visual acceptance."
     },
     {
