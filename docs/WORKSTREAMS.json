@@ -452,12 +452,13 @@
         "src/shell.html"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-1918-interface",
-        "until": 1795780153541
-      }
+      "stage": "tested",
+      "evidence": [
+        "12a0f891: safe root dock switching; source parsed, 45 helper assertions",
+        "93ef6aa7: persistent regression"
+      ],
+      "lease": null,
+      "blocker": "Root dock layout, scroll, touch, keyboard, focus/draft protection and current deployment have not been verified in an actual browser; final illustrated icons and full interface redesign remain open."
     },
     {
       "id": "UX-02",
@@ -498,7 +499,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-1918-interface-qa",
+        "until": 1795779358391
+      }
     },
     {
       "id": "MAP-05",
