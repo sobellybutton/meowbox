@@ -1,0 +1,747 @@
+{
+  "version": 1,
+  "status": "staging only; no runtime replacements or workstream acceptance",
+  "upload_folder": "assets/visual/staging/2026-11-28-consolidated",
+  "asset_count": 44,
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/initial/rooms/wishing-pool.webp",
+      "workstream": "ROOM-02",
+      "source": "assets/visual/staging/2026-11-28-creative-batch/rooms/wishing-pool.png",
+      "width": 941,
+      "height": 1672,
+      "mode": "RGB",
+      "sha256": "774ef5c88ba4b3fc775d3813d46abab2ccf971f742826155e7b4da7f73e397a7",
+      "git_blob_sha1": "adb28f6e646403aa5c7d4e93bef7664f53db4a17",
+      "bytes": 572460,
+      "status": "candidate background; verify existing artwork, camera, interaction anchors and masks before activation"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/initial/rooms/temple-altar.webp",
+      "workstream": "ROOM-01",
+      "source": "assets/visual/staging/2026-11-28-creative-batch/rooms/temple-altar.png",
+      "width": 941,
+      "height": 1672,
+      "mode": "RGB",
+      "sha256": "393b505b1aae63723363d95b187828244e6815fdc2a1add8f548841fe1e541b7",
+      "git_blob_sha1": "45480730db41e55d632bb6bb5f9513d33fbaace6",
+      "bytes": 444072,
+      "status": "candidate background; verify existing artwork, camera, interaction anchors and masks before activation"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/initial/rooms/temple-bell-pavilion.webp",
+      "workstream": "ROOM-01",
+      "source": "assets/visual/staging/2026-11-28-creative-batch/rooms/temple-bell-pavilion.png",
+      "width": 941,
+      "height": 1672,
+      "mode": "RGB",
+      "sha256": "eb81ecc7976ff54b6c698b23d9ed3fbd952689ad45223cf388040b096d6f522a",
+      "git_blob_sha1": "eb472be51c78bd651dc60acf670dc05f08a4524b",
+      "bytes": 548592,
+      "status": "candidate background; verify existing artwork, camera, interaction anchors and masks before activation"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/initial/rooms/kitchen-candidate.webp",
+      "workstream": "ROOM-03",
+      "source": "assets/visual/staging/2026-11-28-creative-batch/rooms/kitchen-candidate.png",
+      "width": 941,
+      "height": 1672,
+      "mode": "RGB",
+      "sha256": "c62f8eb6ecca4b8f43f7ae2b2997d1597c6b127d8281c918eca1818922ae1dfc",
+      "git_blob_sha1": "e639e9eabb03eff474d78f98092626ac686c697c",
+      "bytes": 506372,
+      "status": "hold: alternate lobby; existing lobby integrated, do not replace without a demonstrated defect"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/initial/rooms/bubble-tea-candidate.webp",
+      "workstream": "ROOM-03",
+      "source": "assets/visual/staging/2026-11-28-creative-batch/rooms/bubble-tea-candidate.png",
+      "width": 941,
+      "height": 1672,
+      "mode": "RGB",
+      "sha256": "f4f751e6065f991e7e2f4d0cac3f58dfab3db2ed2655ed041378e1ab547c4075",
+      "git_blob_sha1": "bbdf2860a6b33393cd83384f8482ea41b99232c0",
+      "bytes": 570038,
+      "status": "hold: alternate lobby; existing lobby integrated, do not replace without a demonstrated defect"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/initial/rail/portrait-carriage-candidate.webp",
+      "workstream": "RAIL-04",
+      "source": "assets/visual/staging/2026-11-28-creative-batch/rail/portrait-carriage-candidate.png",
+      "width": 941,
+      "height": 1672,
+      "mode": "RGB",
+      "sha256": "e2d570f942d91b4bfe6273538a0214f6a71bbf987d4a46c1625dc560e451cc5d",
+      "git_blob_sha1": "964a0262619d7c86228ac4c8865e67b3df656479",
+      "bytes": 422518,
+      "status": "candidate portrait carriage; mask painted windows before parallax integration"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/initial/atlases/temple-offerings.webp",
+      "workstream": "ROOM-01",
+      "source": "assets/visual/staging/2026-11-28-creative-batch/atlases/temple-offerings.png",
+      "width": 1122,
+      "height": 1402,
+      "mode": "RGBA",
+      "sha256": "225be6095a32b5eb0246976b15e16e0149556088d5819c300f4426c6b7f90cfb",
+      "git_blob_sha1": "bc6439240d39a517a2566bc0d8d04bc0dc3f6a95",
+      "bytes": 559868,
+      "status": "source atlas; extract individual sprites and verify contact/alpha before activation",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/initial/atlases/temple-bell.webp",
+      "workstream": "ROOM-01",
+      "source": "assets/visual/staging/2026-11-28-creative-batch/atlases/temple-bell.png",
+      "width": 1122,
+      "height": 1402,
+      "mode": "RGBA",
+      "sha256": "731aa6f0b9a31330a44a3a2b9c189daa087ed2de824fd16d843227d0ca7907ee",
+      "git_blob_sha1": "816456f869e5f47e0888d363b2e726cc2c36146e",
+      "bytes": 713594,
+      "status": "source atlas; extract individual sprites and verify contact/alpha before activation",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/initial/atlases/waterfall-effects.webp",
+      "workstream": "ROOM-02",
+      "source": "assets/visual/staging/2026-11-28-creative-batch/atlases/waterfall-effects.png",
+      "width": 1122,
+      "height": 1402,
+      "mode": "RGBA",
+      "sha256": "660c72cdaa5d0ee198d9c0f48eb9ad5febf0137d0d69b50af1870d7da5e82698",
+      "git_blob_sha1": "036162865134821601a3918aa2ebd34741e4fbb1",
+      "bytes": 679904,
+      "status": "source atlas; extract individual sprites and verify contact/alpha before activation",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/initial/interface/paw-coin.webp",
+      "workstream": "UX-COHESION-01",
+      "source": "assets/visual/staging/2026-11-28-creative-batch/interface/paw-coin.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "a0d664cae0a822d75be95ecf7d6dbf3133a599ae10e050bbc1396203a97f179b",
+      "git_blob_sha1": "4b6cda9a05cc49e7ac4850b7a773f9f4006656a7",
+      "bytes": 459616,
+      "status": "isolated icon; check existing HUD and scale",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/fortune-slips/challenging-folded.webp",
+      "workstream": "TEMPLE-SLIP-01",
+      "source": "assets/visual/staging/2026-11-28-fortune-slips/challenging-folded.webp",
+      "width": 336,
+      "height": 194,
+      "mode": "RGBA",
+      "sha256": "93f4cf95b1e400d1a59d19f24954fd1995fc2d4cd23c83dc84d4b5d17d0b3e9f",
+      "git_blob_sha1": "6b36300707a59fc76a516305901ffbdc15eea761",
+      "bytes": 104102,
+      "status": "individual sprite; verify text safe zone and reveal sequence in runtime",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "grade": "challenging",
+      "state": "folded",
+      "text_safe_zone_normalized": null
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/fortune-slips/challenging-unfolded.webp",
+      "workstream": "TEMPLE-SLIP-01",
+      "source": "assets/visual/staging/2026-11-28-fortune-slips/challenging-unfolded.webp",
+      "width": 317,
+      "height": 473,
+      "mode": "RGBA",
+      "sha256": "8dbd2778a3bea1884805c8b753c38a106149565b6c50ff03766f689b4c09f746",
+      "git_blob_sha1": "2caa255eee4e7c0fd3dcc0da5e111be4bdd5ac3e",
+      "bytes": 210984,
+      "status": "individual sprite; verify text safe zone and reveal sequence in runtime",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "grade": "challenging",
+      "state": "unfolded",
+      "text_safe_zone_normalized": [
+        0.25,
+        0.26,
+        0.76,
+        0.73
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/fortune-slips/difficult-folded.webp",
+      "workstream": "TEMPLE-SLIP-01",
+      "source": "assets/visual/staging/2026-11-28-fortune-slips/difficult-folded.webp",
+      "width": 345,
+      "height": 195,
+      "mode": "RGBA",
+      "sha256": "7165bf4e17b21b83df39b62c5b7cce6179d875276e2f65d9379212b9832d296a",
+      "git_blob_sha1": "40002d34f1e481eb8afcca42fd4f64497222250b",
+      "bytes": 100752,
+      "status": "individual sprite; verify text safe zone and reveal sequence in runtime",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "grade": "difficult",
+      "state": "folded",
+      "text_safe_zone_normalized": null
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/fortune-slips/difficult-unfolded.webp",
+      "workstream": "TEMPLE-SLIP-01",
+      "source": "assets/visual/staging/2026-11-28-fortune-slips/difficult-unfolded.webp",
+      "width": 323,
+      "height": 473,
+      "mode": "RGBA",
+      "sha256": "5ef347b9b44005702d404525d74fb0afc8d782abde817821f1b793d546720903",
+      "git_blob_sha1": "3fe4a4c1ff510dd4d95cb091c45a36d32d48ab5d",
+      "bytes": 208814,
+      "status": "individual sprite; verify text safe zone and reveal sequence in runtime",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "grade": "difficult",
+      "state": "unfolded",
+      "text_safe_zone_normalized": [
+        0.25,
+        0.26,
+        0.76,
+        0.73
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/fortune-slips/good-folded.webp",
+      "workstream": "TEMPLE-SLIP-01",
+      "source": "assets/visual/staging/2026-11-28-fortune-slips/good-folded.webp",
+      "width": 340,
+      "height": 196,
+      "mode": "RGBA",
+      "sha256": "528c0e73e6d10394c70f10974ebe55411f43af95d30cf98a482f9d68024f4e73",
+      "git_blob_sha1": "5b7022e0fea0fdd2dacf1d272453fd6c8771f380",
+      "bytes": 101558,
+      "status": "individual sprite; verify text safe zone and reveal sequence in runtime",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "grade": "good",
+      "state": "folded",
+      "text_safe_zone_normalized": null
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/fortune-slips/good-unfolded.webp",
+      "workstream": "TEMPLE-SLIP-01",
+      "source": "assets/visual/staging/2026-11-28-fortune-slips/good-unfolded.webp",
+      "width": 312,
+      "height": 473,
+      "mode": "RGBA",
+      "sha256": "50e769d276afc8fcb4419826a856620a59bd344f0538a34763de80cf6d0d071e",
+      "git_blob_sha1": "1234b5578d15f1ef8a0377a481396961890e623d",
+      "bytes": 205110,
+      "status": "individual sprite; verify text safe zone and reveal sequence in runtime",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "grade": "good",
+      "state": "unfolded",
+      "text_safe_zone_normalized": [
+        0.25,
+        0.26,
+        0.76,
+        0.73
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/fortune-slips/great-folded.webp",
+      "workstream": "TEMPLE-SLIP-01",
+      "source": "assets/visual/staging/2026-11-28-fortune-slips/great-folded.webp",
+      "width": 339,
+      "height": 197,
+      "mode": "RGBA",
+      "sha256": "2886e34e57b3ad27f9d7a8a434b92f8b9c10c7ab98b1ded84fe380daf4cfed7e",
+      "git_blob_sha1": "ee59f67adc07748fff4378684572b120952e1f9b",
+      "bytes": 101330,
+      "status": "individual sprite; verify text safe zone and reveal sequence in runtime",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "grade": "great",
+      "state": "folded",
+      "text_safe_zone_normalized": null
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/fortune-slips/great-unfolded.webp",
+      "workstream": "TEMPLE-SLIP-01",
+      "source": "assets/visual/staging/2026-11-28-fortune-slips/great-unfolded.webp",
+      "width": 309,
+      "height": 474,
+      "mode": "RGBA",
+      "sha256": "7ee23638dc881f08d3e6bda5565e3ed7c13943466be02a5e9b9432375b104a42",
+      "git_blob_sha1": "eb3b85960ae1adcb463fdc2fc933b73b913301ed",
+      "bytes": 207782,
+      "status": "individual sprite; verify text safe zone and reveal sequence in runtime",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "grade": "great",
+      "state": "unfolded",
+      "text_safe_zone_normalized": [
+        0.25,
+        0.26,
+        0.76,
+        0.73
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/fortune-slips/moderate-folded.webp",
+      "workstream": "TEMPLE-SLIP-01",
+      "source": "assets/visual/staging/2026-11-28-fortune-slips/moderate-folded.webp",
+      "width": 328,
+      "height": 195,
+      "mode": "RGBA",
+      "sha256": "76e7ea32adad99d78780015fcac9ec0bb2b401a5ef4c99ad0d3ebb958862db60",
+      "git_blob_sha1": "323f73cf7bdc8392f619b9014c63d7466795e5a7",
+      "bytes": 97750,
+      "status": "individual sprite; verify text safe zone and reveal sequence in runtime",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "grade": "moderate",
+      "state": "folded",
+      "text_safe_zone_normalized": null
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/fortune-slips/moderate-unfolded.webp",
+      "workstream": "TEMPLE-SLIP-01",
+      "source": "assets/visual/staging/2026-11-28-fortune-slips/moderate-unfolded.webp",
+      "width": 313,
+      "height": 473,
+      "mode": "RGBA",
+      "sha256": "0966c316a02854508d35db6e3eb1bbf04f70868f35aec74b568ec66ee9a3c145",
+      "git_blob_sha1": "d1b6b7094b0663cf352d7d421d708db1a5a1e904",
+      "bytes": 207308,
+      "status": "individual sprite; verify text safe zone and reveal sequence in runtime",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "grade": "moderate",
+      "state": "unfolded",
+      "text_safe_zone_normalized": [
+        0.25,
+        0.26,
+        0.76,
+        0.73
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/waterfront/release-bottle-corked.webp",
+      "workstream": "ROOM-06",
+      "source": "assets/visual/staging/2026-11-28-waterfront/release-bottle-corked.webp",
+      "width": 307,
+      "height": 528,
+      "mode": "RGBA",
+      "sha256": "6a57298ee5d66621ccab56059c93084b641492b77c92c23414021a0a3c882fdf",
+      "git_blob_sha1": "54c5cd43a48634e2fb2047478e1fbda6c1a356f2",
+      "bytes": 69734,
+      "status": "individual sprite; alternate sealed bottle, use only if it matches chosen bottle sequence",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/atlases/waterfront-bottle-states.webp",
+      "workstream": "ROOM-06",
+      "source": "watercolor_bottle_release_props.png",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA",
+      "sha256": "e7d3802326d210aa13146c815640b9688dfdaa11e2fb0b52cb57ee806c9d9fd4",
+      "git_blob_sha1": "3cc5a00ea0747d16e1dc64aaa4ccecd5df5d4331",
+      "bytes": 569590,
+      "status": "source atlas; extract individual props, reuse existing mapped assets, reject baked labels and check alpha/physical contact",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/atlases/waterfront-villain-hitting.webp",
+      "workstream": "ROOM-06",
+      "source": "watercolor_hit_the_villain_prop_sheet.png",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA",
+      "sha256": "f5e47e93b236c1366939afbaf679bd739f4e5286d4a661e7b665af508c6d429c",
+      "git_blob_sha1": "a0c94b6fa66217bac9a2fd6d8fc57c3ecb650997",
+      "bytes": 601568,
+      "status": "source atlas; extract individual props, reuse existing mapped assets, reject baked labels and check alpha/physical contact",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/atlases/cooking.webp",
+      "workstream": "ROOM-03",
+      "source": "watercolor_japanese_cooking_essentials_sheet.png",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA",
+      "sha256": "4db02a1f7dcc7b5cb8708edca9109ed75a6bbd51aceeaab922e2923257532d34",
+      "git_blob_sha1": "27090431bdff7f0353931d81791ef43f7250448f",
+      "bytes": 557392,
+      "status": "source atlas; extract individual props, reuse existing mapped assets, reject baked labels and check alpha/physical contact",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/atlases/bubble-tea.webp",
+      "workstream": "ROOM-03",
+      "source": "watercolor_bubble_tea_ingredient_set.png",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA",
+      "sha256": "86bfbed568109523d9793a8d65dae87afa33930dd4687a03fc8dc1027d08480a",
+      "git_blob_sha1": "b73fb884534b5f4205b30867a61a7a4a258c88c2",
+      "bytes": 690292,
+      "status": "source atlas; extract individual props, reuse existing mapped assets, reject baked labels and check alpha/physical contact",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/atlases/arcade-claw.webp",
+      "workstream": "ROOM-04",
+      "source": "pawradise_kawaii_prize_machine_assets.png",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA",
+      "sha256": "3d6d4192c54e1aab8ec9c67ddbe70c411a01b93b37badf0c02bfd7ad19ffb1fd",
+      "git_blob_sha1": "7441e2d8babb722de08da761f4836866682f7356",
+      "bytes": 492918,
+      "status": "source atlas; extract individual props, reuse existing mapped assets, reject baked labels and check alpha/physical contact",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/atlases/arcade-rhythm.webp",
+      "workstream": "ROOM-04",
+      "source": "pawradise_retro_rhythm_icon_sheet.png",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA",
+      "sha256": "da5ef9e5d0b1335921b124de164c0e5d82f3833defbcd30f7fc3e81ff38b6f21",
+      "git_blob_sha1": "9a0b212eebc57cdffc7552a44f0fb312e4427f38",
+      "bytes": 856962,
+      "status": "source atlas; extract individual props, reuse existing mapped assets, reject baked labels and check alpha/physical contact; do not use baked English START control",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/atlases/animal-park.webp",
+      "workstream": "ROOM-05",
+      "source": "watercolor_animal_park_game_icons.png",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA",
+      "sha256": "9613ee40fdc0db0f06aab173971916de660104e147d93fc06c3256bedde1f166",
+      "git_blob_sha1": "ae8b9b9eb41c03fa3e479b218a11cb5eb7327401",
+      "bytes": 930826,
+      "status": "source atlas; extract individual props, reuse existing mapped assets, reject baked labels and check alpha/physical contact",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/atlases/tarot-props.webp",
+      "workstream": "ROOM-06",
+      "source": "japanese_inspired_tarot_fortune_telling_asset_shee.png",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA",
+      "sha256": "60d4118d473f2c31a18b374777f9b651474d1eb93f5f5b0ee2e1ed486e6302eb",
+      "git_blob_sha1": "d59074807f08619baec3ac06668c5594a0b5c62f",
+      "bytes": 865540,
+      "status": "source atlas; extract individual props, reuse existing mapped assets, reject baked labels and check alpha/physical contact; keep existing deck identities, decorative cards are not replacements for actual tarot faces",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/atlases/destiny-study-props.webp",
+      "workstream": "ROOM-06",
+      "source": "celestial_divination_prop_collection.png",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA",
+      "sha256": "b28a15d8eeb1538527774497f8f7162e59a815ad47980e9b59ebab89b57d7cf5",
+      "git_blob_sha1": "b9590950f3e67e1bbcd24c8643d307c49b0db1ef",
+      "bytes": 951562,
+      "status": "source atlas; extract individual props, reuse existing mapped assets, reject baked labels and check alpha/physical contact",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/atlases/compatibility-cafe.webp",
+      "workstream": "DISCOVERY-CAFE-LIVE-02",
+      "source": "pawradise_café_asset_collection.png",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA",
+      "sha256": "3f227df0643387f7ba543539358a6e79dd147dae0ec4bdfeb058d06fea33db3c",
+      "git_blob_sha1": "326fe37c9b14a6a2a751a6041aea636d8c5b97d5",
+      "bytes": 792298,
+      "status": "source atlas; extract individual props, reuse existing mapped assets, reject baked labels and check alpha/physical contact",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/room-alternates/destiny-study.webp",
+      "workstream": "ROOM-06",
+      "source": "master_yue_s_celestial_study.png",
+      "width": 941,
+      "height": 1672,
+      "mode": "RGB",
+      "sha256": "7b6cc9fd95da1fff5e7ff0e6757b6fcf745a5647590f02e06b494167e1a88800",
+      "git_blob_sha1": "7846633122b599a68b6b2633a692527d16acdcf0",
+      "bytes": 442306,
+      "status": "hold: room candidate; compare existing room, reject oversized walking area or train-like repeated layout; do not activate blindly"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/room-alternates/personality-lab.webp",
+      "workstream": "ROOM-06",
+      "source": "magical_paw_personality_lab.png",
+      "width": 941,
+      "height": 1672,
+      "mode": "RGB",
+      "sha256": "9c5d24b6f6f6162a4f0561018ae9fc4149b4522002361619e77c85b7a52cfb12",
+      "git_blob_sha1": "b120f564c378288116220b46cd6a2179d28d3819",
+      "bytes": 458250,
+      "status": "hold: room candidate; compare existing room, reject oversized walking area or train-like repeated layout; do not activate blindly"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/room-alternates/parallel-lives.webp",
+      "workstream": "DISCOVERY-PARALLEL-LIVE-02",
+      "source": "pawradise_parallel_lives_station.png",
+      "width": 941,
+      "height": 1672,
+      "mode": "RGB",
+      "sha256": "c3c4cfc0aea132f49e9d58498c92922cc4a10405af5189c8a2a60bba02386753",
+      "git_blob_sha1": "262a5fb387d5e25614f5306e51dde7dc8e7bb437",
+      "bytes": 420124,
+      "status": "hold: room candidate; compare existing room, reject oversized walking area or train-like repeated layout; do not activate blindly"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/room-alternates/compatibility-cafe.webp",
+      "workstream": "DISCOVERY-CAFE-LIVE-02",
+      "source": "sakura_café_conversation_nook.png",
+      "width": 941,
+      "height": 1672,
+      "mode": "RGB",
+      "sha256": "f2c7b3f68d5a4f35b2e0b87f97d326b17970dd943163905280a54ad41b4a5cd0",
+      "git_blob_sha1": "1945daa5df6d37a35177e0034a9136d9e7901f57",
+      "bytes": 427294,
+      "status": "hold: room candidate; compare existing room, reject oversized walking area or train-like repeated layout; do not activate blindly"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/room-alternates/waterfront-stall.webp",
+      "workstream": "ROOM-06",
+      "source": "sunset_ritual_stall_by_the_sea.png",
+      "width": 941,
+      "height": 1672,
+      "mode": "RGB",
+      "sha256": "cbaa52c1e7ce52dc10c15604b57ed7e56c5cc0145e99473e0a689f0fef6701a7",
+      "git_blob_sha1": "901bc240b1662ef1a54cdef573dd8ce9d2760cf7",
+      "bytes": 459706,
+      "status": "hold: room candidate; compare existing room, reject oversized walking area or train-like repeated layout; do not activate blindly"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/home-finishes/wallLinen.webp",
+      "workstream": "HOME-CATALOGUE-ART-02",
+      "source": "japanese_inspired_watercolor_texture_atlas.png",
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "sha256": "aadfd74cfe5d0ee123570f623bc0d5cc0af414d09b497c3767ecf4f5510e12dd",
+      "git_blob_sha1": "e2a3d953afaa66f734e72af7d65ca3fdf5d7269a",
+      "bytes": 25710,
+      "status": "individual material sample; test texture repetition, wall/floor projection and masks; not guaranteed seamless",
+      "catalogue_id": "wallLinen",
+      "crop_box": [
+        14,
+        190,
+        358,
+        535
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/home-finishes/wallSakura.webp",
+      "workstream": "HOME-CATALOGUE-ART-02",
+      "source": "japanese_inspired_watercolor_texture_atlas.png",
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "sha256": "ce0da74f2d98bd6114792d16ea1c7a68348fa34716bbbb33b116e022f4bb3ee8",
+      "git_blob_sha1": "65e2524df54d07a20fc985115fe0655f5b2f4fc3",
+      "bytes": 22614,
+      "status": "individual material sample; test texture repetition, wall/floor projection and masks; not guaranteed seamless",
+      "catalogue_id": "wallSakura",
+      "crop_box": [
+        372,
+        190,
+        716,
+        535
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/home-finishes/wallMatcha.webp",
+      "workstream": "HOME-CATALOGUE-ART-02",
+      "source": "japanese_inspired_watercolor_texture_atlas.png",
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "sha256": "e00d340d6e1b9448dfe84925cc2ff1ae45ac9ea5a35d790e1ed577eca7ee795a",
+      "git_blob_sha1": "021d60dcf7b434644a66344a25a3e2c0d8021143",
+      "bytes": 29452,
+      "status": "individual material sample; test texture repetition, wall/floor projection and masks; not guaranteed seamless",
+      "catalogue_id": "wallMatcha",
+      "crop_box": [
+        731,
+        190,
+        1075,
+        535
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/home-finishes/wallBlue.webp",
+      "workstream": "HOME-CATALOGUE-ART-02",
+      "source": "japanese_inspired_watercolor_texture_atlas.png",
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "sha256": "49bd535a713b6b8268db5b8b744c3bcc83256dd741077fce72288ab0f4a7cc6c",
+      "git_blob_sha1": "a47c062c1b22c4039e19c3113fc0cd902ff0d54b",
+      "bytes": 44580,
+      "status": "individual material sample; test texture repetition, wall/floor projection and masks; not guaranteed seamless",
+      "catalogue_id": "wallBlue",
+      "crop_box": [
+        1089,
+        190,
+        1435,
+        535
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/home-finishes/floorOak.webp",
+      "workstream": "HOME-CATALOGUE-ART-02",
+      "source": "japanese_inspired_watercolor_texture_atlas.png",
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "sha256": "b06cb8f6be6bee799131e1b1f423723c18d698db1a03595ea0846f061535f7d1",
+      "git_blob_sha1": "2b54a62fc3596a6502033b6b91da85c484341b78",
+      "bytes": 32862,
+      "status": "individual material sample; test texture repetition, wall/floor projection and masks; not guaranteed seamless",
+      "catalogue_id": "floorOak",
+      "crop_box": [
+        14,
+        549,
+        358,
+        896
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/home-finishes/floorTiles.webp",
+      "workstream": "HOME-CATALOGUE-ART-02",
+      "source": "japanese_inspired_watercolor_texture_atlas.png",
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "sha256": "6416f757eda77b6f9381cb2787814a7c0e826854f1469a459c5d3644f84f7cd8",
+      "git_blob_sha1": "3617507a69222f1e5cf9caba9cfa803af3401499",
+      "bytes": 37036,
+      "status": "individual material sample; test texture repetition, wall/floor projection and masks; not guaranteed seamless",
+      "catalogue_id": "floorTiles",
+      "crop_box": [
+        372,
+        549,
+        716,
+        896
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/home-finishes/floorTatami.webp",
+      "workstream": "HOME-CATALOGUE-ART-02",
+      "source": "japanese_inspired_watercolor_texture_atlas.png",
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "sha256": "c192244b35bf04c993f3414e4bb2650941aa11fae21ef2a7ad9d3398520096aa",
+      "git_blob_sha1": "99872d2010f76069f4489e0edab0931f9778e29d",
+      "bytes": 36068,
+      "status": "individual material sample; test texture repetition, wall/floor projection and masks; not guaranteed seamless",
+      "catalogue_id": "floorTatami",
+      "crop_box": [
+        731,
+        549,
+        1075,
+        896
+      ]
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-consolidated/home-finishes/floorChecker.webp",
+      "workstream": "HOME-CATALOGUE-ART-02",
+      "source": "japanese_inspired_watercolor_texture_atlas.png",
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "sha256": "adfeb269c7d9ae6d92fa8dbab07e0a3382ca47dd8891448829079a40e5956ba7",
+      "git_blob_sha1": "eb322148a1509018b2bc9aabf92e45ff107c99fc",
+      "bytes": 13266,
+      "status": "individual material sample; test texture repetition, wall/floor projection and masks; not guaranteed seamless",
+      "catalogue_id": "floorChecker",
+      "crop_box": [
+        1089,
+        549,
+        1435,
+        896
+      ]
+    }
+  ]
+}
