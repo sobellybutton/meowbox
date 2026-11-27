@@ -280,7 +280,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-room-visitor-2240",
+        "until": 1795792200000
+      }
     },
     {
       "id": "ROOM-01",
