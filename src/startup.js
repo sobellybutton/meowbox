@@ -6484,21 +6484,38 @@ initNPC=function(...args){
 
 
 /* PAW_PRESENTATION_REPAIR */
-function pawReadyMap(key){
- const im=key==='fortune'?pics.valleyClean:portraitImages[key];
+/* PAW_WORLD_ADMISSION_BEGIN */
+const pawImageReadiness=new WeakMap();
+function pawReadyPicture(im,limit=6500){
  if(!im)return Promise.resolve(false);
- if(im.complete&&im.naturalWidth>0)return Promise.resolve(true);
- if(im.complete&&!im.naturalWidth&&im.src){const src=im.src;im.src='';im.src=src}
- return new Promise(resolve=>{
-  let settled=false;
+ if(pawImageReadiness.has(im))return pawImageReadiness.get(im);
+ const task=new Promise(resolve=>{
+  let settled=false,decoding=false,timer;
   const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);im.removeEventListener('load',onLoad);im.removeEventListener('error',onError);resolve(value)};
   const onError=()=>finish(false);
-  const onLoad=()=>{if(!im.naturalWidth)return finish(false);if(typeof im.decode==='function')im.decode().then(()=>finish(true),()=>finish(im.naturalWidth>0));else finish(true)};
-  const timer=setTimeout(onError,6500);
+  const onLoad=()=>{
+   if(!im.naturalWidth||!im.naturalHeight){finish(false);return}
+   if(decoding||settled)return;decoding=true;
+   if(typeof im.decode==='function')Promise.resolve().then(()=>im.decode()).then(()=>finish(im.naturalWidth>0&&im.naturalHeight>0),onError);
+   else finish(true)
+  };
+  timer=setTimeout(onError,limit);
   im.addEventListener('load',onLoad);im.addEventListener('error',onError);
-  if(im.complete)onLoad()
- })
+  if(im.complete){
+   if(im.naturalWidth>0)onLoad();
+   else if(im.src){const src=im.src;im.removeAttribute('src');im.src=src}
+   else onError()
+  }
+ });
+ pawImageReadiness.set(im,task);
+ task.then(()=>{if(pawImageReadiness.get(im)===task)pawImageReadiness.delete(im)});
+ return task
 }
+function pawReadyMap(key){
+ if(!Object.hasOwn(maps,key))return Promise.resolve(false);
+ return pawReadyPicture(key==='fortune'?pics.valleyClean:portraitImages[key])
+}
+/* PAW_WORLD_ADMISSION_END */
 // The original plaque layout owns position and visibility. Do not overwrite it after each frame.
 const pawPresentationCSS=document.createElement('style');
 pawPresentationCSS.textContent=`
@@ -6610,13 +6627,16 @@ proRender=function(...args){
   if(waiting||proBusy||document.hidden||!button.isConnected||proposal.hidden)return;
   waiting=true;const original=button.textContent;
   button.disabled=true;button.textContent=tr('Preparing the path…','正在准备山间小路…');
-  const ready=await pawReadyMap('fortune');
+  const gateArt=hero?.querySelector('.mbGatePainting');
+  const [mapReady,gateReady]=await Promise.all([pawReadyMap('fortune'),pawReadyPicture(gateArt)]);
+  const ready=mapReady&&gateReady;
   if(!button.isConnected||proStep!==3||proposal.hidden)return;
   if(!ready||document.hidden){waiting=false;button.disabled=false;button.textContent=tr('Try again','再试一次');return}
+  const originalSprite=traveller?.getAttribute('src'),originalPivotX=traveller?.style.getPropertyValue('--paw-gate-pivot-x'),originalPivotY=traveller?.style.getPropertyValue('--paw-gate-pivot-y');
   const walked=hero&&traveller?await pawGateWalk(hero,traveller):true;
   if(!button.isConnected||proStep!==3||proposal.hidden)return;
   waiting=false;button.disabled=false;button.textContent=original;
-  if(!walked||document.hidden){if(hero&&traveller)pawGatePlace(hero,traveller);return}
+  if(!walked||document.hidden){if(hero&&traveller){if(originalSprite)traveller.src=originalSprite;traveller.style.setProperty('--paw-gate-pivot-x',originalPivotX||'-50%');traveller.style.setProperty('--paw-gate-pivot-y',originalPivotY||'-100%');pawGatePlace(hero,traveller)}return}
   admit.call(button,event)
  };
  button.onclick=enter;if(gate)gate.onclick=enter;return result
