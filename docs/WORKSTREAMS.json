@@ -562,7 +562,10 @@
         "Live Pages check 27 Nov: served script lacked pawDockRootChoice; no current dock gameplay review possible.",
         "Latest world runtime check attempted after 3743443a; browser connector timed out without reporting viewport, image loads or JS state."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-browser-20261127-i",
+        "until": 1795786545146
+      },
       "blocker": "Browser timed out; current deployment and actual input playthrough remain unverified."
     },
     {
