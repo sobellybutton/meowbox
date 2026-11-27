@@ -86,7 +86,15 @@ const fs=require('node:fs');
     await page.screenshot({path:'test-results/'+name+'-water-done.png'});
     await page.evaluate(()=>start('templeBell'));
     await page.waitForFunction(()=>pics.templeBronze.naturalWidth>0&&pics.templeStrikerPaint.naturalWidth>0&&hit.some(h=>h.id==='templeStriker'));
-    await drag(277,467,225,467);
+    // The striker now lives inside the painted hall, not at legacy canvas coordinates.
+    // Require the actual topmost striker target, then pull it through the live camera.
+    const striker=await page.waitForFunction(()=>{
+     const h=hit.find(v=>v.id==='templeStriker');if(!h)return false;
+     const x=h.x+h.w/2,y=h.y+h.h/2;
+     return at({x,y})===h?{x,y}:false
+    });
+    const {x:bellX,y:bellY}=await striker.jsonValue();
+    await drag(bellX,bellY,bellX-52,bellY);
     await page.waitForFunction(()=>state.bellRung);
     const bellAt=await page.evaluate(()=>state.bellAt);
     await page.evaluate(()=>templeReleaseBell(100));
