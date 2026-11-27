@@ -1236,7 +1236,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null,
+      "lease": {
+        "owner": "manual-ritual-input-1128",
+        "until": 1795803790802
+      },
       "blocker": "Acceptance: Organic entry, action, outcome, return and replay for each retained activity on phone and desktop. Real inputs affect outcomes; no duplicate or gratuitous games, reward farming or generic click/read/reward loop."
     },
     {
