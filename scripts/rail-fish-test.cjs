@@ -51,3 +51,22 @@ for(const age of [.12,.5,1.35,2,2.001,3.1]){
  ck((festivalFishOutcome(g,1+age).caught>=0)===(age>=.12&&age<=2),'actual catch window');
 }
 return 'PASS '+n+' goldfish position and timing checks';`)());
+
+const routeProgressSource=pawSlice(pawStartup,'function pawRailRideProgress(','function pawMountRouteGlass(');
+console.log(new Function(routeProgressSource+`
+let count=0;
+const check=(condition,message)=>{if(!condition)throw Error(message);count++};
+for(const duration of [.65,3.6,8,30]){
+ let prev=-1;
+ for(let i=0;i<=3000;i++){
+  const progress=pawRailRideProgress(i*.01,duration);
+  check(progress>=prev&&progress>=0&&progress<1,'one-way bounded motion');
+  if(i>0&&i<=Math.ceil(duration*100))check(progress>prev,'moving throughout the normal ride');
+  prev=progress;
+ }
+}
+check(pawRailRideProgress(NaN)===0&&pawRailRideProgress(-1)===0,'invalid time');
+check(pawRailRideProgress(4)>pawRailRideProgress(3.6),'continues past normal arrival during decoding');
+check(pawRailRideProgress(16)>pawRailRideProgress(8),'no turnaround on extended ride');
+return 'PASS '+count+' directional ride timing assertions';
+`)());

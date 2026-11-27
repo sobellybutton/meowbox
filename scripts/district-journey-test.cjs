@@ -147,8 +147,10 @@ async function travelLoop(page,name,touch){
   assert.equal(await ride.locator('.mbRailPane').count(),0,'Do not reintroduce broken composite windows');
   assert(await ride.locator('.mbPaintedRail img').evaluate(im=>im.complete&&im.naturalWidth>0),'Painted carriage loaded');
   const moving=ride.locator('.pawMovingGlass');
+  await moving.waitFor({timeout:2000});
   assert.equal(await moving.count(),1,'One glass-only motion layer');
-  assert.equal(await ride.locator('.mbPaintedRail').getAttribute('data-rail-motion'),'painted-window');
+  const motion=await ride.locator('.mbPaintedRail').getAttribute('data-rail-motion');
+  assert(['route-panorama','route-parallax'].includes(motion),'Installed district scenery must be used: '+motion);
   const frame=await moving.evaluate(el=>({frame:Number(el.dataset.frame),pixels:el.toDataURL()}));
   await page.waitForFunction(n=>Number(document.querySelector('.pawRailJourney .pawMovingGlass')?.dataset.frame)>n+2,frame.frame,{timeout:1400});
   assert.notEqual(await moving.evaluate(el=>el.toDataURL()),frame.pixels,'Window pixels must visibly change, not just frame counter');

@@ -3,7 +3,7 @@ const s=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
 const ext=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
 const x=ext.indexOf('const popGuestStories='),y=ext.indexOf('function popGuestPool',x);
 if(x<0||y<=x)throw Error('Missing original guests');
-const a=s.indexOf('/* PAW_GUEST_PERSONALITY_BEGIN */'),b=s.indexOf("if(!maps[scene])scene='fortune';",a);
+const a=s.indexOf('/* PAW_GUEST_PERSONALITY_BEGIN */'),b=s.indexOf('/* PAW_GUEST_PERSONALITY_RUNTIME_END */',a);
 if(a<0||b<=a)throw Error('Missing personality runtime');
 const run=new Function('assert',ext.slice(x,y)+s.slice(s.indexOf('const pawGeminiVisitorRows='),s.indexOf('/* PAW_GEMINI_VISITORS_END */'))+`
 popGuestStories.push(...pawGeminiMerge(popGuestStories,pawGeminiVisitorRows));

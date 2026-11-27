@@ -2518,6 +2518,13 @@ function pawGlassCrop(iw,ih,w,h,progress,speed=1){
 }
 /* PAW_GLASS_PROJECTION_END */
 const pawRailMotionJobs=new WeakMap();
+// Travel is one-directional for the entire ride, including delayed map decoding.
+function pawRailRideProgress(elapsed,duration=3.6){
+ const t=Math.max(0,Number.isFinite(elapsed)?elapsed:0);
+ const span=Number.isFinite(duration)&&duration>0?duration:3.6;
+ // Approach the far end without reversing or visibly freezing during a slow arrival.
+ return Math.min(1-Number.EPSILON,1-Math.exp(-t/(span*.65)))
+}
 function pawMountRouteGlass(stage,layout,host,layers){
  const cfg=pawRailWindows[layout],outlines=pawRailGlassOutlines[layout],reduce=matchMedia('(prefers-reduced-motion: reduce)');
  if(!cfg||!outlines||!layers?.far||reduce.matches)return false;
@@ -2528,20 +2535,20 @@ function pawMountRouteGlass(stage,layout,host,layers){
  g.scale(canvas.width/cfg.width,canvas.height/cfg.height);g.beginPath();
  for(const poly of outlines){g.moveTo(...poly[0]);for(const p of poly.slice(1))g.lineTo(...p);g.closePath()}
  g.clip();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
- let raf=0,dead=false,last=null,elapsed=0,frames=0;
+ let raf=0,dead=false,last=null,elapsed=0,frames=0,lastDraw=-Infinity;
  const draw=()=>{g.clearRect(box.x,box.y,box.w,box.h);
   for(const [key,speed] of [['far',layers.near?.naturalWidth ? .32 : 1],['near',1]]){
    const im=layers[key];if(!im?.naturalWidth)continue;
-   const c=pawGlassCrop(im.naturalWidth,im.naturalHeight,box.w,box.h,(.5-.5*Math.cos(Math.PI*elapsed/8)),speed);
+   const c=pawGlassCrop(im.naturalWidth,im.naturalHeight,box.w,box.h,pawRailRideProgress(elapsed,Number(host.dataset.rideSeconds)||3.6),speed);
    if(c)g.drawImage(im,c.x,c.y,c.w,c.h,box.x,box.y,box.w,box.h)
   }
   canvas.dataset.frame=String(++frames);canvas.dataset.travel=elapsed.toFixed(3)
  };
  const stop=()=>{dead=true;cancelAnimationFrame(raf);canvas.remove()};
  const tick=now=>{
-  if(dead||!stage.isConnected||stage.hidden||stage.dataset.layout!==layout||reduce.matches){stop();return}
+  if(dead||!stage.isConnected||stage.hidden||stage.dataset.layout!==layout||reduce.matches){stop();if(stage.isConnected)stage.dataset.railMotion='still';return}
   const dt=last===null?0:Math.min(.1,Math.max(0,(now-last)/1000));last=now;
-  if(!document.hidden&&host.dataset.sceneryPaused!=='true'){elapsed=(elapsed+dt)%16;draw()}
+  if(!document.hidden&&host.dataset.sceneryPaused!=='true'){elapsed+=dt;if(now-lastDraw>=33){draw();lastDraw=now}}
   raf=requestAnimationFrame(tick)
  };
  draw();stage.append(canvas);stage.dataset.railMotion=layers.near?'route-parallax':'route-panorama';pawRailMotionJobs.set(stage,{stop});raf=requestAnimationFrame(tick);return true
@@ -2574,7 +2581,7 @@ function pawRailMountMotion(stage,im,layout,host,mode,routeLayers=null){
  stage.dataset.railMotion='still';
  const cfg=pawRailWindows[layout],reduce=matchMedia('(prefers-reduced-motion: reduce)');
  if(!cfg||reduce.matches||!stage.isConnected||im.naturalWidth!==cfg.width||im.naturalHeight!==cfg.height)return;
- if(mode==='ride'){if(routeLayers?.far)pawMountRouteGlass(stage,layout,host,routeLayers);return}
+ if(mode==='ride'&&routeLayers?.far&&pawMountRouteGlass(stage,layout,host,routeLayers))return;
  let canvas,raf=0,dead=false,elapsed=0,last=null,lastDraw=-Infinity,frames=0,lastSample='';
  const stop=()=>{dead=true;cancelAnimationFrame(raf);canvas?.remove()};
  try{
@@ -2679,8 +2686,11 @@ async function mbMountRailPainting(host,mode){
   const mount=layers=>{
    if(version===motionVersion&&stage.isConnected&&!stage.hidden&&stage.dataset.layout===layout)pawRailMountMotion(stage,im,layout,host,mode,layers)
   };
-  if(routeReady){mount(null);routeReady.then(layers=>{if(layers?.far)mount(layers)})}
-  else mount(null)
+  if(routeReady){
+   // A short decode budget avoids switching landscapes mid-ride. A genuine
+   // fallback still animates only the original carriage glass if assets fail.
+   Promise.race([routeReady,new Promise(resolve=>setTimeout(()=>resolve(null),350))]).then(mount,()=>mount(null))
+  }else mount(null)
  };
  im.addEventListener('load',verify);im.addEventListener('error',()=>{pawRailMotionJobs.get(stage)?.stop();stage.hidden=true;host.dataset.paintedRail='false'});
  im.src=art.portrait.path;
@@ -3079,7 +3089,7 @@ fade=function(fn,kind='gust',destination=null){
  game.classList.add('pawRailJourneyActive');game.querySelectorAll('.mbTransferHolding').forEach(el=>el.remove());
  // Show the carriage in the same interaction, even if the painting is still decoding.
  mbTransferHolding(scene,destination);
- const overlay=game.querySelector('.pawRailJourney');if(overlay)overlay.dataset.riding='true';
+ const overlay=game.querySelector('.pawRailJourney');if(overlay){overlay.dataset.riding='true';overlay.dataset.rideSeconds=String(rideTime/1000)}
  let arrived=false,timer;
  async function arrive(){
    if(arrived)return;arrived=true;clearTimeout(timer);
@@ -7494,6 +7504,7 @@ Object.assign(pawGuestWindows,{
 });
 
 
+/* PAW_GUEST_PERSONALITY_RUNTIME_END */
 /* PAW_ZWDS_SHARE_BEGIN */
 const pawZwdsStarNames=Object.freeze({
  '紫微':'Zi Wei','天机':'Tian Ji','太阳':'Tai Yang','武曲':'Wu Qu','天同':'Tian Tong','廉贞':'Lian Zhen','天府':'Tian Fu','太阴':'Tai Yin','贪狼':'Tan Lang','巨门':'Ju Men','天相':'Tian Xiang','天梁':'Tian Liang','七杀':'Qi Sha','破军':'Po Jun'
