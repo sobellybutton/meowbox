@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "source": "docs/DEVELOPMENT_CHECKPOINT.md",
-  "policy": "Task stages describe this workstream deliverable, not overall game acceptance. Art-only tasks may be tested as assets but require integration and rendered acceptance before visual acceptance. Existing code-only verification remains open. Dependencies are ready at tested, visually verified or accepted stage; final acceptance requires the controlling release gates. Browser is conservatively a shared resource, not a guarantee of available slots.",
+  "policy": "Task stages describe this workstream deliverable, not overall game acceptance. Art-only tasks may be tested as assets but require integration and rendered acceptance before visual acceptance. Existing code-only verification remains open. Dependencies are ready at tested, visually verified or accepted stage; final acceptance requires the controlling release gates. Browser is conservatively a shared resource, not a guarantee of available slots. Keep unless a demonstrated defect, unmet mandatory product outcome or validated player-experience issue warrants a change. Verify existing work first; do not invent new work solely to increase progress counts. Optional refinements should not delay release after required gates pass.",
   "lanes": {
     "world": "Entrance, four map plates, interior artwork and staging",
     "actors": "Traveller and NPC art, animation and resident behaviours",
@@ -509,7 +509,7 @@
       "id": "LOC-01",
       "lane": "content",
       "priority": 3,
-      "summary": "Bilingual typography, humour and labels",
+      "summary": "Independent English and Chinese creative editorial review, bilingual terminology, satire, clarity and rendered typography",
       "resources": [
         "src/startup.js",
         "src/extensions.js",
@@ -518,7 +518,8 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": null,
+      "blocker": "Owner-approved editorial gate, 27 Nov: conduct independent English-language game copy/editorial and native Chinese-language creative editorial passes (AI review, not external human signoff), then bilingual parity and rendered text fit. Preserve good existing lines; do not rewrite merely for variation. Voice: playful, dry, absurd, occasionally warm, recognisable adult workplace/life satire, independently adapted EN/简体中文; distinguish residents by voice, let quiet observations breathe, no universal office jokes or forced internet slang. Clear, short, literal functional labels and safety/privacy/score explanations; put humour in reactions, flavour text, character conversations, newspaper and keepsakes, not in place of instructions. Verify name consistency across every entry, exit, HUD, task, result, notice and share. Source review: preserve strong examples such as Wang's plant/meeting line and Grandma's garlic line; revise stilted candidates such as ‘Choose a little discovery / 选一个小小的自我探索’, ‘Lab keeper / 研究所店主’, and MBTI-inspired label mismatch (‘MBTI 四种性格偏好’ can imply four types; clarify four preference dimensions). Verify effective runtime before changing older copy. Retain accurate informal assessment caveats, neutral answer wording and privacy disclosures. Review repetition, regionally comprehensible Chinese, punctuation, typography, actual phone/desktop layouts, all empty/error/loading states and human vs NPC disclosures. Record keep/change/verify evidence, not a quota of rewritten lines."
     },
     {
       "id": "UX-01",
@@ -1247,7 +1248,7 @@
       "stage": "outstanding",
       "evidence": [],
       "lease": null,
-      "blocker": "Acceptance: Inspect actual first minute and first meaningful activity through normal input, not state injection; verify all retained scenes, both languages and multiple viewports. Record unresolved defects and iterate; do not call technical checks final acceptance."
+      "blocker": "Acceptance: Inspect actual first minute and first meaningful activity through normal input, not state injection; verify all retained scenes, both languages and multiple viewports. Record unresolved defects and iterate; do not call technical checks final acceptance. Owner release readiness directive: apply 30 lenses as checks, not 30 mandatory changes. Keep functioning, coherent, enjoyable features and existing art/copy; verify uncertain ones before changing; fix demonstrated defects or genuine missing required outcomes; defer optional polish that delays release. Focus on actual build/deployment, all four district journeys, full room/ritual/activity and back/return flows, real+NPC community with honest identities, assessment differentiation, English/Chinese editorial and text fit, device accessibility, persistence, privacy, offline/failure recovery and performance. No expansion for its own sake, no numeric improvement quota, no acceptance from helper tests alone; once required product gates pass, stop revising. Record keep/fix/verify/defer decisions and actual rendered evidence."
     },
     {
       "id": "QA-SPATIAL-01",
