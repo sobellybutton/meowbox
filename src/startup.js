@@ -268,9 +268,18 @@ action=function(id){
    [tr('MBTI-inspired preferences','MBTI 四种性格偏好'),()=>{closeTalk();wonderSceneOpen('type')}],
    [tr('Enneagram-inspired · nine motives','九型人格 · 九种内在动力'),()=>{closeTalk();wonderSceneOpen('motive')}],
    [tr('Five personality tendencies','五大性格倾向'),()=>{closeTalk();wonderSceneOpen('bigfive')}],
-   [tr('Relationship values','关系价值观'),()=>{closeTalk();wonderSceneOpen('values')}],
    [tr('Keep exploring','继续逛逛'),closeTalk]
   ])
+ }
+ if(scene==='wonder'&&room==='match'&&id==='match'){
+  closeTalk();
+  const visit=room,run=state;
+  const choose=fn=>()=>{if(scene!=='wonder'||room!==visit||state!==run||activity||transitioning||!talkOpen)return;closeTalk();fn()};
+  return say(tr('Café keeper','咖啡店主'),tr('Take a seat. We can practise a conversation, or talk about what matters to you in a relationship. No perfect answers required.','坐吧。我们可以练习怎么聊天，也可以聊聊你在关系里看重什么。这里没有标准答案。'),[
+   [tr('Conversation cards','相处话题卡'),choose(()=>start('match'))],
+   [tr('Relationship values','关系价值观'),choose(()=>wonderSceneOpen('values'))],
+   [tr('Keep exploring','继续逛逛'),closeTalk]
+  ]);
  }
  return curatedDiscoveryActionBefore(id)
 };
@@ -8284,6 +8293,13 @@ function pawExtraScore(mode,rows,answers){
  for(let i=0;i<rows.length;i++){const q=rows[i],v=answers[i];if(!Number.isInteger(q.dimension)||q.dimension<0||q.dimension>=counts.length||!Number.isInteger(q.id)||q.id<0||q.id>=rows.length||Math.floor(q.id/3)!==q.dimension||seen.has(q.id)||!Number.isInteger(v)||v<0||v>2)return null;seen.add(q.id);counts[q.dimension]++;scores[q.dimension]+=cfg.axes[q.dimension].questions[q.id%3][1]?2-v:v}
  return counts.every(v=>v===3)?scores:null
 }
+/* PAW_VALUES_REFLECTION_BEGIN */
+const pawRelationshipQuestions=[[["Shared time can look different for each person. Which ordinary activity would you enjoy doing together?","每个人喜欢的陪伴方式都不同。你最想和对方一起做哪件平凡的小事？"],["If regular time together matters less to you, what helps you stay connected instead?","如果你没那么需要经常见面，什么方式能让你们保持联系？"]],[["Personal space is compatible with closeness. How could you express your need for it kindly?","独处和亲密并不矛盾。你可以怎样温和地表达自己需要空间？"],["What small interest or decision would you enjoy keeping for yourself?","有没有什么小爱好或决定，你希望留给自己？"]],[["What would help an important conversation feel safe enough for both of you?","怎样做，才能让彼此在重要谈话中都觉得安心？"],["If talking immediately is not your preference, would writing or a later conversation help?","如果你不喜欢马上谈开，写下来或晚点再聊，会不会更适合你？"]],[["Which promise or routine helps you feel that you can count on each other?","哪一种承诺或日常习惯，能让你感到彼此可以依靠？"],["If flexible plans suit you better, what would still help both people know where they stand?","如果你更喜欢灵活的安排，怎样才能让彼此仍然心里有数？"]]];
+function pawRelationshipReflection(scores){
+ if(!Array.isArray(scores)||scores.length!==4||scores.some(v=>!Number.isInteger(v)||v<0||v>6))return null;
+ return scores.map((v,i)=>pawRelationshipQuestions[i][v>=4?0:1])
+}
+/* PAW_VALUES_REFLECTION_END */
 function pawExtraRows(mode,scores){
  const cfg=pawExtraDiscoveries[mode];if(!cfg||!Array.isArray(scores)||scores.length!==cfg.axes.length||scores.some(v=>!Number.isInteger(v)||v<0||v>6))return null;
  return scores.map((v,i)=>({label:cfg.axes[i].name,value:[v+' / 6',v+' / 6']}))
@@ -8312,7 +8328,8 @@ openWonderResult=function(mode,result){
   const im=element('img','',body,'pawExtraResultArt');im.src=ART.readingInterior;im.alt='';im.style.cssText='width:100%;max-height:24vh;object-fit:contain';
   element('p',tr(...result.desc),body);
   element('p',tr('Three statements per theme, scored from 0 to 6. This is an original informal reflection, not a validated psychological measure.','每项由三道题组成，分数为0至6。此为原创趣味探索，非经验证的心理量表。'),body);
-  rows.forEach(row=>{const item=element('article','',body,'readingNote');element('h2',tr(...row.label),item);element('p',tr(...row.value),item)});
+  const prompts=mode==='values'?pawRelationshipReflection(wonderSaved[mode]?.scores):null;
+  rows.forEach((row,i)=>{const item=element('article','',body,'readingNote');element('h2',tr(...row.label),item);element('p',tr(...row.value),item);if(prompts)element('p',tr(...prompts[i]),item)});
   b(body,tr('Share keepsake','分享纪念卡'),()=>wonderSceneShare(()=>openWonderResult(mode,result)));
   b(body,tr('Try again','再测一次'),()=>wonderSceneOpen(mode))
  });journalLanguage(()=>openWonderResult(mode,result))
