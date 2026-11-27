@@ -1275,7 +1275,10 @@
         "6982ac4c: inspected and activated dedicated Town Hall pavilion, distinct Tea chat painting, original paper texture for Today/Explore/profile/collection, duplicate scene header suppression; exact source parse and five selector checks.",
         "d72ac9c9: persisted dock artwork routing and asset existence regression."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-consolidated-hud",
+        "until": 1795800300300
+      },
       "blocker": "Acceptance: All nested states reviewed in both languages on mobile and desktop; consistent palette/materials, text fit, appropriate controls and context; no visible final vector substitutes or generic web-card grids. Owner recalls odd character profile pictures. Audit actual HUD badge, onboarding thumbnails, profile, passport, notices/chat and share cards for consistent identity, crop, proportions, expression, frame, scale and legibility. Keep approved existing portraits where they work; recover/replace only mismatched or awkward images and verify mobile/desktop. Do not use arbitrary face crops or art from a different traveller.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Owner approved direction: replace visible 'Paw Coins' text in compact HUD with one detailed original illustrated gold/brass paw coin icon followed by the actual numeric balance. Use existing coherent painted art if available, not a photographic coin or emoji; keep accessible localized label, tap access and balance updates unchanged; reserve space for large counts. Replace tiny full-body HUD avatar with matching face/head-and-shoulders portrait for each selectable identity, large enough to read on phone; keep name, level and profile access, full-body artwork elsewhere. Respect safe area, avoid opaque full-width obstruction of map and fix first-frame missing icons. Verify all four maps and room/activity HUD variants, both languages and device sizes.\n28 Nov: Town Hall and tea interface source wiring committed. Native landscape, full actual phone/desktop visual review and remaining dedicated Today/My Room and nested scene art still open."
     },
     {
