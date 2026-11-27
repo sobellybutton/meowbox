@@ -3270,7 +3270,7 @@ fade=function(fn,kind='gust',destination=null){
  transitioning=true;
  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
  const game=$('game'),rideTime=reduce?650:3600,arrivalFade=reduce?0:220;
- const destinationReady=pawReadyMap(destination);
+ const destinationReady=Promise.all([pawReadyMap(destination),pawReadyTraveller(avatar??0)]).then(pawAdmissionReady);
  if(!reduce)pawRecoveredRailRoute(destination);
  const old=$('fade');old.className='';old.replaceChildren();old.style.opacity='';
  game.classList.add('pawRailJourneyActive');game.querySelectorAll('.mbTransferHolding').forEach(el=>el.remove());
@@ -11506,8 +11506,34 @@ for(const id of Object.keys(pawFoodRoomSpecs))pawFoodImage(id);
 function pawFoodRoomActive(){return !!room&&!activity&&pawFoodVisit===room&&pawRoomImageReady(pawFoodImage(room))}
 const pawFoodDoorBefore=walkDoor;
 walkDoor=function(id,...args){if(Object.hasOwn(pawFoodRoomSpecs,id))pawFoodImage(id);return pawFoodDoorBefore(id,...args)};
+/* PAW_FOOD_ADMISSION_BEGIN */
+function pawFoodAdmissionValid(request,current,view){
+ return !!request&&request===current&&request.scene===view.scene&&request.avatar===view.avatar&&!view.room&&!view.activity&&!view.transitioning&&!view.blocked&&!view.pending&&Math.hypot(view.x-request.x,view.y-request.y)<=12
+}
+/* PAW_FOOD_ADMISSION_END */
+let pawFoodAdmission=null;
+function pawFoodAdmissionView(){return {scene,avatar,room,activity,transitioning,blocked:pawArcadeInputBlocked(),pending,x:p.x,y:p.y}}
 const pawFoodEnterBefore=enter;
-enter=function(id,...args){pawFoodVisit=Object.hasOwn(pawFoodRoomSpecs,id)&&pawRoomImageReady(pawFoodImage(id))?id:null;return pawFoodEnterBefore(id,...args)};
+enter=function(id,...args){
+ if(!Object.hasOwn(pawFoodRoomSpecs,id)){pawFoodAdmission=null;pawFoodVisit=null;return pawFoodEnterBefore(id,...args)}
+ if(room||activity||transitioning||pawArcadeInputBlocked())return;
+ if(pawFoodAdmissionValid(pawFoodAdmission,pawFoodAdmission,pawFoodAdmissionView()))return;
+ const request={scene,avatar,x:p.x,y:p.y};pawFoodAdmission=request;
+ const im=pawFoodImage(id);
+ releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;
+ if(!pawRoomImageReady(im))hint('Getting the shop ready…','小店正在准备开门……');
+ pawReadyPicture(im,4500).then(ready=>{
+  if(!pawFoodAdmissionValid(request,pawFoodAdmission,pawFoodAdmissionView())){if(pawFoodAdmission===request)pawFoodAdmission=null;return}
+  pawFoodAdmission=null;
+  if(!ready||!pawRoomImageReady(im)){hint('The shop painting could not load. Tap its door to try again.','小店画面暂未加载成功，请再次点击门口重试。');return}
+  pawFoodVisit=id;return pawFoodEnterBefore(id,...args)
+ });
+};
+const pawFoodAdmissionLoopBefore=loop;
+loop=function(...args){
+ if(pawFoodAdmission&&!pawFoodAdmissionValid(pawFoodAdmission,pawFoodAdmission,pawFoodAdmissionView()))pawFoodAdmission=null;
+ return pawFoodAdmissionLoopBefore(...args)
+};
 const pawFoodCameraBefore=mobileRoomCamera;
 mobileRoomCamera=function(...args){return pawFoodRoomActive()?pawFoodCamera(W,H)||pawFoodCameraBefore(...args):pawFoodCameraBefore(...args)};
 const pawFoodSpecBefore=indoorSpec;
