@@ -217,14 +217,18 @@
       "priority": 2,
       "summary": "Illustrated seated, waving and contact poses",
       "resources": [
-        "art:travellers"
+        "art:travellers",
+        "assets/visual/painted/action-runtime.json"
       ],
       "depends": [],
       "stage": "outstanding",
       "evidence": [
         "See ART-01 staged 20 recovered reach/tap candidates, no live integration yet."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-paw-reach-assets-20261127",
+        "until": 1795795439775
+      },
       "blocker": "Owner explicitly requests real visible waving and other natural gestures. Verify player-initiated wave, NPC response, greeting, sitting and context-specific interaction poses for all selectable travellers; use matching illustrated frames and anchored feet/hands, not a floating emoji, generic bob or detached limb. No final acceptance before rendered playback. Reuse recovered 4x5 tapping atlas and temple concept pose row noted in ART-01 before producing replacements. Do not treat reaching poses as waving or the single concept traveller's poses as complete animation sets for other identities."
     },
     {
