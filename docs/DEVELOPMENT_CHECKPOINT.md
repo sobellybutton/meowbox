@@ -389,3 +389,8 @@ SOCIAL-DAILY-01 partial: cf700a19 identifies a nearby named fictional resident f
 ## Parallel Lives decision consequences (27 November 2026)
 
 DISCOVERY-PARALLEL-LIVE-02 partial: efc3917c strengthens eight final decision scenes with concrete tradeoffs and adds optional, distinct bilingual reflection for each of the sixteen existing endings, based on a validated four-choice route. Existing ending IDs, keepsakes, share actions, privacy and saves are preserved. 92f6f059 adds an all-branch regression, executed against current source in connector harness; source parsed. The short-film visual staging, new alternative-life experiences, full assessment redistribution and actual rendered mobile/desktop testing remain outstanding. Released claim; no acceptance increase.
+
+
+## Café conversation depth and balanced result (27 November 2026)
+
+DISCOVERY-CAFE-LIVE-02 partial: 1c673bf4 extends the existing four relational conversations to nine bilingual situations, validates input and displays all tied styles, with practical follow-up prompts, in one accessible paper reflection. Share and replay are explicit and token-guarded. Legacy collection IDs and save format remain unchanged; ties no longer present one style as the sole conclusion in the live reflection. cad793710d adds exhaustive nine-answer helper regression, executed against the current source in connector harness; source parsed. Native café illustration and staging, other relationship assessment banks, mutual consent and comparison, actual rendered gameplay and share export remain outstanding. The result-stage wrapper still requires browser review. Released claim; no acceptance increase.
