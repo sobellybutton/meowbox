@@ -8366,19 +8366,19 @@ function pawPrayerStep(){
   // Small incense sticks rest on the painted right counter, never in a second floating table.
   if(['approach','collect','taking','lightReady','lighting'].includes(stage)){
    for(let j=held+(reaching?1:0);j<3;j++){ctx.save();ctx.translate(rack.x+j*3,rack.y+10);ctx.rotate(.14);incenseStem(0,0,.03,false,25);ctx.restore()}
+   const candle={x:rack.x+18,y:rack.y+8};ellipse(candle.x,candle.y,5,2,'#5c4533');round(candle.x-2.4,candle.y-12,4.8,12,1,'#bc8053','#93633d');ellipse(candle.x,candle.y-13,2,4,'#ffcf81');
   }
   if(q.walking&&!shown)backHuman(foot.x,foot.y,avatar??0,true,dir,sc);
   else{
    // During the actual bow face the altar, rather than bowing towards
    // an invented side table. Keep the incense at the traveller's hands.
-   if(dir==='up'&&stage!=='bow')backHuman(foot.x,foot.y,avatar??0,q.walking,'up',sc);
+   if(stage!=='bow')backHuman(foot.x,foot.y,avatar??0,q.walking,dir,sc);
    else if(stage==='bow'){ctx.save();try{ctx.translate(foot.x,foot.y);ctx.scale(1,1-.14*q.bow);backHuman(0,0,avatar??0,false,'up',sc)}finally{ctx.restore()}}
-   else drawRitualPose(foot.x,foot.y,sc,{reach:grip,praying:shown>0});
    if(shown){
     const shoulder={x:foot.x+(dir==='left'?-6:7),y:foot.y-48+q.bow*9};
     ctx.save();try{
      pawIncenseArm(shoulder,grip,sc,true);
-     for(let j=0;j<shown;j++)incenseStem(grip.x+(j-(shown-1)/2)*2,grip.y,(j-(shown-1)/2)*.055,lit,32,j===0);
+     for(let j=0;j<shown;j++)incenseStem(grip.x+(j-(shown-1)/2)*3.8,grip.y,(j-(shown-1)/2)*.065,lit,34,j===0);
      pawIncenseArm(shoulder,grip,sc,false)
     }finally{ctx.restore()}
    }
@@ -9587,33 +9587,70 @@ mobileRoomCamera=function(...args){
  }
  return pawTempleFullCameraBefore(...args)
 };
+
+/* PAW_GARDEN_WALK_BEGIN */
+const pawGardenStations={feed:[.51,.55],seat:[.83,.64],chime:[.34,.61]};
+function pawGardenRoute(q,action){
+ if(!q||q.route?.length||!Object.hasOwn(pawGardenStations,action))return false;
+ const dest=pawGardenStations[action],from=q.pos,route=[];
+ if(from[0]>.68)route.push([.67,.69]);
+ else if(from[1]<.60)route.push([.51,.61]);
+ if(action==='seat')route.push([.67,.69],[.78,.68]);
+ if(action==='chime')route.push([.43,.62]);
+ if(action==='feed')route.push([.51,.61]);
+ route.push(dest.slice());q.route=route;q.action=action;return true
+}
+function pawGardenWalkTick(q,now,blocked,reduced=false){
+ if(!q||!Number.isFinite(now))return null;
+ const dt=Number.isFinite(q.last)?Math.max(0,Math.min(.05,now-q.last)):0;q.last=now;
+ if(blocked||!q.route?.length)return null;
+ const goal=q.route[0],dx=(goal[0]-q.pos[0])*600,dy=(goal[1]-q.pos[1])*(600*1648/928),dist=Math.hypot(dx,dy),step=reduced?dist:Math.min(dist,dt*145);
+ if(dist>0){q.pos[0]+=(goal[0]-q.pos[0])*step/dist;q.pos[1]+=(goal[1]-q.pos[1])*step/dist}
+ if(dist<=step+.01){q.pos=goal.slice();q.route.shift();if(!q.route.length){const a=q.action;q.action=null;return a}}
+ return null
+}
+/* PAW_GARDEN_WALK_END */
+function pawGardenChoose(run,kind){
+ if(run!==state||activity!=='secretGarden'||pawArcadeInputBlocked())return;
+ const q=run.pawGardenWalk;if(!q||q.route.length)return;
+ if(kind==='seat'&&run.gardenSitting){gardenSeat();return}
+ if(run.gardenSitting)gardenSeat();
+ if(pawGardenRoute(q,kind))hint(...({feed:['Walking to the koi pond…','走向锦鲤池……'],seat:['Walking to the bench…','走向长椅……'],chime:['Walking to the wind chime…','走向风铃……']}[kind]))
+}
 const pawGardenDrawBefore=drawActivity;
 drawActivity=function(...args){
  if(room!=='temple'||activity!=='secretGarden'||!pawRoomImageReady(pawTempleGardenArt))return pawGardenDrawBefore(...args);
  const run=state,p=pawGardenPlate,b=livingBounds(),xy=(u,v)=>[p.x+p.w*u,p.y+p.h*v];
- // One real pond, one bridge and one bench: all are already painted.
+ if(!run.pawGardenWalk)run.pawGardenWalk={pos:[.49,.72],route:[[.51,.61],[.51,.55]],action:null,last:t,dir:'up'};
+ const q=run.pawGardenWalk,prior=q.pos.slice(),arrive=pawGardenWalkTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
+ if(arrive==='feed')gardenFeed();else if(arrive==='seat')gardenSeat();else if(arrive==='chime')gardenChime();
+ const dx=(q.pos[0]-prior[0])*p.w,dy=(q.pos[1]-prior[1])*p.h;
+ if(Math.hypot(dx,dy)>.01)q.dir=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';
+ continuityActivity=activity;
  ctx.save();try{
-  ctx.fillStyle='#344238';ctx.fillRect(b.x,b.y,b.w,b.h);
-  ctx.drawImage(pawTempleGardenArt,p.x,p.y,p.w,p.h);
+  ctx.fillStyle='#344238';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawTempleGardenArt,p.x,p.y,p.w,p.h);
   const feedAge=Math.max(0,t-run.gardenFeedAt),water=xy(.57,.444);
-  for(let i=0;i<3;i++){
-   const [u,v]=pawGardenWaterPoint(i,residentReducedMotion.matches?0:t,feedAge),[x,y]=xy(u,v);
-   ctx.save();ctx.translate(x,y);ctx.scale(.23,.23);gardenKoi(0,0,i*1.7+t*.34,i);ctx.restore()
+  // The water and koi silhouettes in the original painting remain visible.
+  // Small moving surface ripples and food, not a second pond or flat fish.
+  if(feedAge<3){
+   for(let j=0;j<4;j++){
+    const f=Math.max(0,Math.min(1,(feedAge-j*.12)/2.1));
+    if(f>0&&f<1){ctx.strokeStyle='rgba(242,239,207,'+(.45*(1-f))+')';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(water[0]+j*5,water[1]+j%2*6,3+f*22,1+f*5,0,0,TAU);ctx.stroke()}
+   }
+   if(feedAge<.85)for(let j=0;j<5;j++){const f=Math.min(1,feedAge/.65);ellipse(water[0]-16+j*7,water[1]-(1-f)*32,1.6,1.6,'#d9c08d')}
   }
-  if(feedAge<2){
-   const f=feedAge/2;ctx.strokeStyle='rgba(240,239,204,'+(.48*(1-f))+')';ctx.lineWidth=1.1;ctx.beginPath();ctx.ellipse(water[0],water[1],4+f*24,2+f*6,0,0,TAU);ctx.stroke()
+  const [x,y]=xy(...q.pos),moving=q.route.length>0;
+  if(run.gardenSitting&&!moving)drawRitualPose(x,y,.85,{seat:1});
+  else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',.9);
+  // The wind chime is attached to the painted stall eave on the left.
+  const [wx,wy]=xy(.205,.385);
+  ctx.save();try{ctx.translate(wx,wy);ctx.scale(.30,.30);gardenWindChime(0,0)}finally{ctx.restore()}
+  const [bx,by]=xy(.83,.625);
+  if(!moving){
+   target(bx-36,by-34,72,68,()=>pawGardenChoose(run,'seat'));
+   target(water[0]-55,water[1]-20,110,40,()=>pawGardenChoose(run,'feed'));
+   target(wx-32,wy-24,64,62,()=>pawGardenChoose(run,'chime'))
   }
-  const age=Math.max(0,t-run.gardenAt),walk=!residentReducedMotion.matches&&age<1.2;
-  const [x,y]=xy(.49+.02*poseEase(age/1.2),.72-.17*poseEase(age/1.2));
-  if(walk)backHuman(x,y,avatar??0,true,'up',.9);
-  else if(run.gardenSitting){const a=xy(.84,.63);drawRitualPose(a[0],a[1],.80,{seat:1})}
-  else backHuman(x,y,avatar??0,false,'up',.9);
-  const [wx,wy]=xy(.15,.22);
-  if(t-run.gardenChimeAt<2){ctx.strokeStyle='rgba(245,225,174,'+(.35*(1-(t-run.gardenChimeAt)/2))+')';ctx.beginPath();ctx.arc(wx,wy,8+(t-run.gardenChimeAt)*12,0,TAU);ctx.stroke()}
-  const [bx,by]=xy(.85,.625);
-  target(bx-32,by-35,64,70,()=>{if(run===state&&!pawArcadeInputBlocked())gardenSeat()});
-  target(water[0]-55,water[1]-20,110,40,()=>{if(run===state&&!pawArcadeInputBlocked())gardenFeed()});
-  target(wx-40,wy-30,80,60,()=>{if(run===state&&!pawArcadeInputBlocked())gardenChime()})
  }finally{ctx.restore()}
  pawGardenControls(run)
 };
@@ -9626,11 +9663,11 @@ function pawGardenClearControls(){
 function pawGardenControls(run){
  const el=$('gameControls');if(!el||run!==state||activity!=='secretGarden')return;
  if(pawArcadeInputBlocked()){el.hidden=true;return}
- const key=String(zh)+'|'+run.gardenSitting;
+ const busy=!!run.pawGardenWalk?.route.length,key=String(zh)+'|'+run.gardenSitting+'|'+busy;
  if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===3){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawGardenControls');el.hidden=false;pawGardenControlsRun=run;pawGardenControlsKey=key;
- for(const [name,en,cn,fn] of [['feed','Feed koi','喂锦鲤',gardenFeed],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐',gardenSeat],['chime','Wind chime','听风铃',gardenChime]]){
-  const button=b(el,tr(en,cn),()=>{if(run===state&&activity==='secretGarden'&&!pawArcadeInputBlocked())fn()});button.dataset.pawGardenControl=name
+ for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐'],['chime','Wind chime','听风铃']]){
+  const button=b(el,tr(en,cn),()=>pawGardenChoose(run,name));button.dataset.pawGardenControl=name;button.disabled=busy
  }
 }
 const pawGardenCleanupBefore=loop;
