@@ -21,3 +21,20 @@ tick(paused,1,true);assert.deepEqual(paused.pos,n.entry);
 for(let i=0;i<5;i++)for(let age=.01;age<.9;age+=.02){const pt=pellet(i,age);if(pt){assert.ok(pt[0]>=.31&&pt[0]<=.53);assert.ok(pt[1]>.55&&pt[1]<.65)}}
 for(const [u,v,w,h] of Object.values(t))assert.ok(u-w/2>=0&&u+w/2<=1&&v-h/2>=0&&v+h/2<=1);
 console.log('Painted garden route, contact targets, pause and feeding geometry passed.');
+
+const lobby=extract('/* PAW_WISH_LOBBY_BEGIN */','/* PAW_WISH_LOBBY_END */');
+const {pawWishLobbyPlate:plate,pawWishLobbyStations:stations,pawWishLobbyLabels:labels,pawWishLobbySafe:safe,pawWishLobbyCamera:camera,pawWishLobbyEntry:entry,pawWishLobbyArrival:arrival,pawWishLobbyHost:host,pawWishLobbyVisitors:visitors}=new Function(lobby+';return {pawWishLobbyPlate,pawWishLobbyStations,pawWishLobbyLabels,pawWishLobbySafe,pawWishLobbyCamera,pawWishLobbyEntry,pawWishLobbyArrival,pawWishLobbyHost,pawWishLobbyVisitors}')();
+assert.ok(fs.existsSync(path.resolve(__dirname,'../assets/visual/painted/recovered/scenes/wishing_garden_portrait.webp')));
+assert.deepEqual(Object.keys(stations),['wishes','coin']);
+for(const pos of [entry,arrival,host,...visitors,...Object.values(stations).map(v=>v.slice(2))])assert.ok(safe(...pos));
+for(const [a,b] of [[entry,arrival],...Object.values(stations).flatMap(v=>[[arrival,v.slice(2)],[v.slice(2),entry]])])for(let i=0;i<=100;i++){let f=i/100;assert.ok(safe(a[0]+f*(b[0]-a[0]),a[1]+f*(b[1]-a[1])))}
+for(const [w,h] of [[320,568],[390,844],[430,932],[768,1024],[1280,720],[844,390]]){
+ const c=camera(w,h);assert.ok(c.s>0);
+ for(const pos of [entry,arrival,host,...visitors,...Object.values(stations).map(v=>v.slice(2)),...Object.values(labels).map(v=>v.slice(0,2))]){
+  const x=pos[0]*c.s+c.ox,y=pos[1]*c.s+c.oy;
+  assert.ok(x>=0&&x<=w&&y>=0&&y<=h);
+ }
+ if(w<h){assert.ok(plate.w*c.s>=w-.01);assert.ok(plate.h*c.s>=h-.01)}
+}
+assert.equal(safe(400,450),false);assert.equal(safe(250,650),false);assert.equal(safe(600,650),false);assert.equal(camera(0,800),null);
+console.log('Wishing Garden painted lobby, clear floor routes and viewport coverage passed.');
