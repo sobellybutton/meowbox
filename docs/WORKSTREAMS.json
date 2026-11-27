@@ -631,7 +631,10 @@
         "27 Nov: attempted current deployment in isolated 390x844 browser with normal My Room navigation; connector timed out after 40 seconds without observable viewport, source, or interaction output.",
         "27 Nov after dedicated garden commit: live browser Node environment lacked playwright, and browser-agent fallback failed to execute. No rendered proof."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-many-1128-qa",
+        "until": 1795802477943
+      },
       "blocker": "Browser connector unavailable for this attempt; actual mobile/desktop playthrough and visual acceptance remain unverified.\n\nOwner device acceptance clarification (27 Nov): Final deployed verification must record exact commit, browser/OS, dimensions, DPR, language, input, evidence and pass/fail/blocked per complete desktop and genuine phone journey. Actual physical iPhone Safari and Android Chrome evidence distinct from Playwright emulation; inaccessible hardware remains blocked."
     },
     {
