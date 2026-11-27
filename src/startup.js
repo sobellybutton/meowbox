@@ -3180,11 +3180,11 @@ function pawStationPlatform(origin=scene){
   const controls=element('div','',departure,'pawStationControls');
   let boarded=false;
   const board=b(controls,tr('Board the train','上车出发'),()=>{
-   if(boarded||!panel.isConnected||$('page').style.display!=='block'||scene!==origin||transitioning||room||activity||!proposal.hidden)return;
+   if(!pawStationActionAllowed({boarded,connected:panel.isConnected,open:$('page').style.display==='block',sameDistrict:scene===origin,transitioning,room,activity,entrance:!proposal.hidden,hidden:document.hidden}))return;
    boarded=true;board.disabled=true;travellerSuggestedRoute=null;journey(destination)
   });board.className='pawStationBoard';
   b(controls,tr('Keep exploring','继续逛逛'),()=>{
-   if(boarded||!panel.isConnected||scene!==origin||transitioning)return;
+   if(!pawStationActionAllowed({boarded,connected:panel.isConnected,open:$('page').style.display==='block',sameDistrict:scene===origin,transitioning,room,activity,entrance:!proposal.hidden,hidden:document.hidden}))return;
    $('page').style.display='none';updateHUD()
   });
  });
@@ -10613,5 +10613,89 @@ pawHomeExpansionCSS.textContent=`
 #game #content .pawExpansionAction{min-height:44px;width:100%;min-width:0;font-size:12px;padding:5px;white-space:normal;overflow-wrap:anywhere}
 @media(max-width:350px){#game #content .pawExpansionPlans{grid-template-columns:1fr}#game #content .pawExpansionPlan img{height:110px}}
 `;document.head.append(pawHomeExpansionCSS);
+
+
+/* PAW_ROOM_VISITS_BEGIN */
+function pawRoomVisitRows(world){
+ const rows=Array.isArray(world?.st)?world.st:[];
+ return rows.filter(row=>Array.isArray(row)&&typeof row[0]==='string'&&row[0]!=='station'&&typeof row[3]==='string'&&typeof row[4]==='string').filter((row,i,all)=>all.findIndex(v=>v[0]===row[0])===i)
+}
+function pawRoomVisitRead(raw,worlds){
+ const result={};
+ for(const [id,world] of Object.entries(worlds)){
+  const ids=new Set(pawRoomVisitRows(world).map(r=>r[0]));
+  const source=raw&&Object.hasOwn(raw,id)&&Array.isArray(raw[id])?raw[id]:[];
+  result[id]=[...new Set(source.filter(v=>ids.has(v)))]
+ }
+ return result
+}
+function pawRoomVisitProgress(world,seen){
+ const rows=pawRoomVisitRows(world),known=new Set(Array.isArray(seen)?seen:[]);
+ return {count:rows.filter(r=>known.has(r[0])).length,total:rows.length,remaining:rows.filter(r=>!known.has(r[0]))}
+}
+function pawStationActionAllowed(flags){
+ return !!flags.connected&&flags.open&&flags.sameDistrict&&!flags.boarded&&!flags.transitioning&&!flags.room&&!flags.activity&&!flags.entrance&&!flags.hidden
+}
+/* PAW_ROOM_VISITS_END */
+const pawRoomVisitKey='pawDistrictRoomVisitsV1';
+let pawRoomVisitMemory=pawRoomVisitRead(load(pawRoomVisitKey,{}),maps),pawRoomVisitContext='';
+const pawRoomVisitLoopBefore=loop;
+loop=function(...args){
+ const result=pawRoomVisitLoopBefore(...args);
+ if(!proposal.hidden||transitioning||!room||document.hidden){pawRoomVisitContext='';return result}
+ const context=scene+'|'+room;
+ if(context===pawRoomVisitContext)return result;
+ pawRoomVisitContext=context;
+ if(!pawRoomVisitMemory[scene]||!pawRoomVisitRows(maps[scene]).some(r=>r[0]===room))return result;
+ if(!pawRoomVisitMemory[scene].includes(room)){
+  pawRoomVisitMemory[scene].push(room);save(pawRoomVisitKey,pawRoomVisitMemory)
+ }
+ return result
+};
+function pawAppendVisitProgress(parent,district,links=false){
+ const progress=pawRoomVisitProgress(maps[district],pawRoomVisitMemory[district]);
+ if(!parent?.isConnected||!progress.total||parent.querySelector('.pawVisitProgress'))return;
+ const section=element('section','',parent,'pawVisitProgress');
+ element('strong',tr('Places explored: ','已探访地点：')+progress.count+' / '+progress.total,section);
+ const bar=element('progress','',section);bar.max=progress.total;bar.value=progress.count;bar.setAttribute('aria-label',tr('Places explored','已探访地点'));
+ element('p',progress.remaining.length?tr('Still to discover, whenever you feel like it:','还有这些地方，想去的时候再逛：'):tr('You have visited every place in this district. Stay a little longer or catch the next train.','这里的小店都逛过啦。可以再待一会儿，也可以搭下一班车。'),section);
+ if(!progress.remaining.length)return;
+ const list=element('ul','',section);
+ for(const row of progress.remaining){
+  const li=element('li','',list),name=tr(row[3],row[4]);
+  if(links)b(li,name,()=>{
+   if(!section.isConnected||$('page').style.display!=='block'||scene!==district||transitioning||room||activity||!proposal.hidden||document.hidden)return;
+   $('page').style.display='none';updateHUD();pawJournalWalkToDoor(row[0],row[1],row[2])
+  });else li.textContent=name
+ }
+}
+const pawVisitStationBefore=pawStationPlatform;
+pawStationPlatform=function(origin=scene){
+ const result=pawVisitStationBefore(origin),panel=$('content').querySelector('.pawStationPlatform');
+ if(panel?.dataset.origin===origin&&$('page').style.display==='block'){
+  const departure=panel.querySelector('.pawStationDeparture'),controls=panel.querySelector('.pawStationControls');
+  if(departure&&controls){
+   const holder=element('div','',departure);controls.before(holder);pawAppendVisitProgress(holder,origin,false);
+  }
+  const back=$('content').querySelector(':scope > .row button:first-child');
+  if(back)back.onclick=()=>{if(panel.isConnected&&$('page').style.display==='block'&&scene===origin&&!transitioning){$('page').style.display='none';updateHUD()}}
+ }
+ return result
+};
+const pawVisitJournalBefore=pawJournalRender;
+pawJournalRender=function(district=scene){
+ const result=pawVisitJournalBefore(district),notes=$('content').querySelector('.pawSketchNotes');
+ if(notes&&maps[district])pawAppendVisitProgress(notes,district,district===scene&&!room&&!activity);
+ return result
+};
+const pawVisitStyle=document.createElement('style');pawVisitStyle.textContent=`
+#game #content .pawVisitProgress{margin:12px 0;padding:10px 0;border-top:1px solid #bba582;color:#514737}
+#game #content .pawVisitProgress strong{font-size:14px;line-height:1.4}
+#game #content .pawVisitProgress progress{display:block;width:100%;height:9px;accent-color:#678266;margin:6px 0}
+#game #content .pawVisitProgress p{font-size:13px;line-height:1.5;margin:6px 0}
+#game #content .pawVisitProgress ul{margin:5px 0;padding-left:18px;font-size:13px;line-height:1.5}
+#game #content .pawVisitProgress li:has(button){list-style:none;margin:4px 0}
+#game #content .pawVisitProgress li button{width:100%;min-height:44px;text-align:left;white-space:normal}
+`;document.head.append(pawVisitStyle);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
