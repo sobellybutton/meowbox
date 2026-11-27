@@ -1326,7 +1326,10 @@
         "cbae8dbb: visible grounded doorway zoom precedes existing door transition; transform removed at interior handoff; canceled if context becomes invalid. Source parsed; visual motion and all camera bounds not verified.",
         "5baafcce persists focused scene handoff regression checks; executed against source in connector harness, not browser."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-visual-2340-camera",
+        "until": 1795795597460
+      },
       "blocker": "Actual iPhone and desktop doorway timings, painted coverage and upper-map framing still require visual review."
     },
     {
