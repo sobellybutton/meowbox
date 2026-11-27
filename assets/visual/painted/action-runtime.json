@@ -129,6 +129,78 @@
             ]
           }
         ]
+      },
+      "strike": {
+        "ready": {
+          "path": "assets/visual/painted/player-0/strike/ready.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "c8f40994238d0fbd27e51d303c14ef63cf5536c84d49269f06114c7d90b3a390",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            150,
+            170
+          ]
+        },
+        "anticipation": {
+          "path": "assets/visual/painted/player-0/strike/anticipation.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "f5cd969deb2721ceb92d9b6d28ce9f6049c5ed12ebbf50b8f0a4b66b8a9554d0",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            165,
+            101
+          ]
+        },
+        "swing": {
+          "path": "assets/visual/painted/player-0/strike/swing.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "afbad2e01399ed6b6f8e41a6098c577e27dc1e97e7af917b3ebfe71ba3959f9a",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            178,
+            125
+          ]
+        },
+        "impact": {
+          "path": "assets/visual/painted/player-0/strike/impact.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "fadd81882e43c2645727bda8d6e164747717ea0241d2d2de99bebb9e744261d3",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            190,
+            151
+          ]
+        },
+        "recovery": {
+          "path": "assets/visual/painted/player-0/strike/recovery.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "9f62febbc9e33d28bea0128fba0b1b8f2d133864d63b8390d843e83a311a216d",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            147,
+            146
+          ]
+        }
       }
     },
     "1": {
@@ -217,6 +289,78 @@
             ]
           }
         ]
+      },
+      "strike": {
+        "ready": {
+          "path": "assets/visual/painted/player-1/strike/ready.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "5847a9e086b18df2da49f68380cdd085da3be8edcaaf25d27a427f206a373564",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            150,
+            159
+          ]
+        },
+        "anticipation": {
+          "path": "assets/visual/painted/player-1/strike/anticipation.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "c38776218a73d9c8691670548caccd7ded3e64a11ce87f65fff4e36ea6d4db2f",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            163,
+            88
+          ]
+        },
+        "swing": {
+          "path": "assets/visual/painted/player-1/strike/swing.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "3f52ffde1377e8d468d2528e93b872e6ab3bb3cfaf511c2301bafc2e2080797f",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            181,
+            106
+          ]
+        },
+        "impact": {
+          "path": "assets/visual/painted/player-1/strike/impact.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "eba73b6f30e3a18ce95d9cf8ec1e3ba96f41cdadbfbd8c32e150c0b53b165146",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            193,
+            135
+          ]
+        },
+        "recovery": {
+          "path": "assets/visual/painted/player-1/strike/recovery.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "dc5e36b1a14a3bef2d25744008fa8e8f4dc3e9097e7dcd11be1cd7f09b6fa91b",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            145,
+            137
+          ]
+        }
       }
     },
     "2": {
@@ -347,6 +491,78 @@
             ]
           }
         ]
+      },
+      "strike": {
+        "ready": {
+          "path": "assets/visual/painted/player-2/strike/ready.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "e53ada62e7bf5d77885260fe65f5842bf7d558d9ff34dc834add0199c80ba15a",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            154,
+            176
+          ]
+        },
+        "anticipation": {
+          "path": "assets/visual/painted/player-2/strike/anticipation.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "6bfe28deaa6640d788f1cdddc73e1d0e960623e5d17992adb6bd37e07dbc27aa",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            164,
+            98
+          ]
+        },
+        "swing": {
+          "path": "assets/visual/painted/player-2/strike/swing.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "5f810d884c2e503c1a77652edba600b22d8bb24418711d1a074e0d38d98664c5",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            183,
+            123
+          ]
+        },
+        "impact": {
+          "path": "assets/visual/painted/player-2/strike/impact.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "e94b653679ef34f5e54db0f9d8de118ba7395aa91d1de6f6c1af61efc35a2c05",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            194,
+            150
+          ]
+        },
+        "recovery": {
+          "path": "assets/visual/painted/player-2/strike/recovery.webp",
+          "width": 224,
+          "height": 300,
+          "sha256": "d6878f922da827de41b4e0c91f014eb5c070ef0cbf33dbc27b082265a4a2c101",
+          "foot": [
+            112,
+            286
+          ],
+          "grip": [
+            148,
+            151
+          ]
+        }
       }
     },
     "3": {
