@@ -2793,7 +2793,7 @@ function mbMountGatePainting(hero){
  const plate=new Image();
  plate.alt='';plate.className='mbGatePainting';plate.loading='eager';plate.fetchPriority='high';
  hero.dataset.paintedGate='true';proposal.dataset.paintedShot='shrine';
- plate.src='assets/visual/painted/journey/gate.webp';hero.prepend(plate);
+ plate.src='assets/visual/painted/worlds/gateway/scene.webp';hero.prepend(plate);
 }
 const mbRailEntranceBefore=proRender;
 proRender=function(...args){
@@ -5474,7 +5474,7 @@ pawArrivalTicketCss.textContent=`
 #proposal .pawGateWordmark{font:500 clamp(27px,6vw,42px)/1.1 var(--paw-display,Georgia,serif);letter-spacing:.055em}
 #proposal .pawGateMotto{font:500 9px/1.3 var(--paw-body,system-ui,sans-serif);letter-spacing:.16em}
 #proposal[data-paw-entrance-step="3"] .shrineLanguageMenu summary{border:1px solid #f0dfb680!important;background:#273a31aa!important;color:#fff0d4!important;box-shadow:none!important;min-width:46px;border-radius:3px!important}
-#proposal[data-paw-entrance-step="3"]>.hero{position:absolute!important;inset:0!important;isolation:isolate;display:block!important;container-type:size;height:100%!important;width:100%!important;min-height:0!important;max-height:none!important;max-width:none!important;overflow:hidden!important;background:#52604b url('assets/visual/painted/journey/gate.webp') center/cover no-repeat;border:0!important;border-radius:0!important;animation:none!important;box-shadow:none!important;margin:0!important}
+#proposal[data-paw-entrance-step="3"]>.hero{position:absolute!important;inset:0!important;isolation:isolate;display:block!important;container-type:size;height:100%!important;width:100%!important;min-height:0!important;max-height:none!important;max-width:none!important;overflow:hidden!important;background:#293c32;border:0!important;border-radius:0!important;animation:none!important;box-shadow:none!important;margin:0!important}
 #proposal[data-paw-entrance-step="3"] .mbGatePainting{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;object-position:50% 74%!important;border-radius:0!important;animation:none!important;opacity:1!important}
 #proposal[data-paw-entrance-step="3"] .hero:after{content:"";position:absolute;inset:0;pointer-events:none;z-index:4;background:linear-gradient(180deg,#15291f91 0%,transparent 23%,transparent 56%,#192b22c2 82%,#192b22f7 100%)}
 #proposal[data-paw-entrance-step="3"] .gate-traveller{position:absolute!important;z-index:3!important;width:auto!important;max-width:24%!important;height:clamp(66px,15cqh,140px)!important;left:50%!important;bottom:29%!important;top:auto!important;translate:-50% 0!important;transform:none;object-fit:contain!important;object-position:bottom;filter:drop-shadow(0 4px 3px #24251c66)!important;transition:transform .36s ease-in,opacity .36s ease-in!important}
@@ -6695,15 +6695,15 @@ if(typeof requestIdleCallback==='function')requestIdleCallback(pawWarmDistricts,
    the real Fortune Valley image before letting the gateway disappear. */
 function pawGateFit(w,h){
  if(!Number.isFinite(w)||!Number.isFinite(h)||w<=0||h<=0)return null;
- const height=Math.min(h,w*1.5),width=height/1.5;
+ const aspect=962/1635,height=Math.min(h,w/aspect),width=height*aspect;
  return {width,height,left:(w-width)/2,top:(h-height)/2}
 }
 function pawGateGround(w,h,progress=0){
  const fit=pawGateFit(w,h);if(!fit)return null;
  const v=Math.max(0,Math.min(1,Number.isFinite(progress)?progress:0));
- // Ground points traced on the actual 880x1320 gate painting: lower stone
- // paving to the foreground threshold, never the distant vanishing point.
- const x=.50-.012*v,y=.865-.135*v,height=.118-.018*v;
+ // Trace the lower stone paving to the foreground gateway threshold
+ // on the committed 962 x 1635 painting. Keep the feet on the stone.
+ const x=.50-.004*v,y=.865-.165*v,height=.102-.019*v;
  return {x:fit.left+fit.width*x,y:fit.top+fit.height*y,height:fit.height*height}
 }
 const pawGateCompositionCSS=document.createElement('style');
@@ -10225,5 +10225,87 @@ step=function(n,dt,speed){
   const face=pawPedestrianFace(prior,dx,dy,dt);pawPedestrianFaces.set(n,face);n.facing=face.facing
  }
  return true
+};
+/* PAW_FORTUNE_PAINTING_BEGIN */
+// Geometry traced from the exact selected 962x1635 source mapped to
+// the existing 1000x1777 logical plane. Narrow stair sections and broad
+// stone landings are separate. Approach points are on the paving at the
+// base of each shop's steps, not inside painted walls or vegetation.
+const pawFortunePainting={
+ path:'assets/visual/painted/worlds/fortune/scene.webp',
+ size:[962,1635],
+ spawn:[500,1656],
+ player:[[365,568,14],[410,577,14],[470,567,19],[545,548,19],[605,532,22],
+ [665,512,30],[702,493,82],[727,492,95],[758,501,45],[805,530,29],
+ [870,528,39],[936,505,39],[1000,496,40],[1060,503,40],
+ [1100,506,72],[1135,505,174],[1165,505,142],[1200,502,74],
+ [1260,500,90],[1330,503,100],[1405,500,108],[1480,501,116],
+ [1570,500,102],[1656,500,91],[1680,500,87]],
+ residents:[[365,568,14],[410,577,14],[470,567,17],[545,548,18],[605,532,20],
+ [665,512,22],[702,493,26],[727,492,26],[758,501,24],[805,530,24],
+ [870,528,30],[936,505,31],[1000,496,31],[1060,503,31],[1135,505,40],
+ [1200,502,38],[1260,500,38],[1330,503,40],[1405,500,40],[1480,501,38]],
+ doors:{
+  tarot:{approach:[305,1135],plaque:[220,894],hit:[80,840,270,248]},
+  destiny:{approach:[755,1135],plaque:[834,896],hit:[665,846,310,248]},
+  temple:{approach:[375,702],plaque:[251,481],hit:[95,430,340,230]},
+  wishes:{approach:[630,727],plaque:[827,495],hit:[680,472,292,220]},
+  station:{approach:[568,365],plaque:[568,282],hit:[430,245,304,126]}
+ }
+};
+function pawFortuneDoorPlan(id,from,points=pawFortunePainting.player){
+ const entry=pawFortunePainting.doors[id];if(!entry)return null;
+ const end={x:entry.approach[0],y:entry.approach[1]};
+ const final=pawDistrictFoot(points,end.x,end.y);
+ if(Math.hypot(final.x-end.x,final.y-end.y)>.01)return null;
+ return pawDistrictRoute(points,from,end)
+}
+/* PAW_FORTUNE_PAINTING_END */
+ART.valleyClean=pawFortunePainting.path;
+pics.valleyClean=new Image();pics.valleyClean.decoding='async';pics.valleyClean.src=pawFortunePainting.path;
+pawStairPath.splice(0,pawStairPath.length,...pawFortunePainting.residents);
+valleyNpcPath.splice(0,valleyNpcPath.length,...pawFortunePainting.residents);
+pawPlayerStairs.splice(0,pawPlayerStairs.length,...pawFortunePainting.player);
+for(const row of maps.fortune.st){
+ const d=pawFortunePainting.doors[row[0]];if(!d)continue;
+ row[1]=d.approach[0];row[2]=d.approach[1];signAnchorsProposal[row[0]]=d.plaque.slice();doorZones[row[0]]=d.hit.slice()
+}
+const pawFortuneResetBefore=resetPosition;
+resetPosition=function(...args){
+ const result=pawFortuneResetBefore(...args);if(scene!=='fortune'||room)return result;
+ const [x,y]=pawFortunePainting.spawn;
+ Object.assign(p,{x,y,tx:x,ty:y,walk:false,motionSpeed:0,facing:'up',pawFacing:'up'});
+ cam.x=x;cam.y=y;petPos={x,y:y+24};return result
+};
+const pawFortuneValleyBefore=beginValleyReveal;
+beginValleyReveal=function(...args){
+ const result=pawFortuneValleyBefore(...args);
+ if(scene==='fortune'&&!room){const [x,y]=pawFortunePainting.spawn;Object.assign(p,{x,y,tx:x,ty:y,walk:false,motionSpeed:0,facing:'up',pawFacing:'up'});cam.x=x;cam.y=y;petPos={x,y:y+24}}
+ return result
+};
+const pawFortuneDoorBefore=walkDoor;
+walkDoor=function(id,...args){
+ if(scene!=='fortune'||!pawFortunePainting.doors[id])return pawFortuneDoorBefore(id,...args);
+ if(room||transitioning||pending===id||!proposal.hidden||document.hidden||talkOpen||$('page').style.display==='block')return;
+ const route=pawFortuneDoorPlan(id,p);if(!route?.length)return;
+ pawWarmRoomAssets(id);releaseWalkKeys();joystickReset();closeTalk();stopRoute();pending=id;
+ const d=pawFortunePainting.doors[id];lastDoor={x:d.approach[0],y:d.approach[1]};
+ guideDismissed=true;moveGuide.hidden=true;save('movementTutorialDone',true);
+ walkQueue=route;p.tx=route[0].x;p.ty=route[0].y;p.motionSpeed=0;
+ hint('Walking to '+roomName(id)[0]+'…','正在前往'+roomName(id)[1]+'…');sound(380);monitorDoorRoute(++doorAttempt,id)
+};
+// Suppress the old painting's hardcoded decorative glows; preserve all
+// actual actors, interaction targets, dialogue, footsteps and atmosphere.
+const pawFortuneDrawBefore=drawRoute;
+drawRoute=function(...args){
+ const previousGlow=glow;
+ glow=function(x,y,...rest){
+  if([[108,1280],[130,912],[475,918],[620,664],[960,594],[306,407],[855,267]].some(v=>v[0]===x&&v[1]===y))return;
+  return previousGlow(x,y,...rest)
+ };
+ try{
+  if(!pics.valleyClean?.naturalWidth){ctx.fillStyle='#31483d';ctx.fillRect(0,0,1000,routeHeight);return}
+  return pawFortuneDrawBefore(...args)
+ }finally{glow=previousGlow}
 };
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
