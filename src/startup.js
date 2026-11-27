@@ -9393,4 +9393,53 @@ paintLivingBackdrop=function(...args){
  return pawTempleGardenBackdropBefore(...args)
 };
 
+/* PAW_TEMPLE_ADMISSION_BEGIN */
+function pawTempleAdmissionValid(request,current,view){
+ return !!request&&request===current&&request.scene===view.scene&&!view.room&&!view.activity&&!view.transitioning&&!view.blocked&&!view.pending&&
+ Math.hypot(view.x-request.x,view.y-request.y)<=12
+}
+function pawTempleAssetsReady(approach,hall){
+ return [approach,hall].every(im=>!!im&&im.complete&&im.naturalWidth>0&&im.naturalHeight>0)
+}
+/* PAW_TEMPLE_ADMISSION_END */
+let pawTempleAdmission=null;
+function pawTempleAdmissionView(){
+ return {scene,room,activity,transitioning,blocked:pawArcadeInputBlocked(),pending,x:p.x,y:p.y}
+}
+function pawTempleDecode(im){
+ if(!im)return Promise.resolve(false);
+ if(im.complete)return Promise.resolve(im.naturalWidth>0);
+ return new Promise(resolve=>{
+  let done=false;const finish=ok=>{if(done)return;done=true;clearTimeout(timer);im.removeEventListener('load',load);im.removeEventListener('error',error);resolve(ok)};
+  const load=()=>finish(im.naturalWidth>0),error=()=>finish(false);
+  const timer=setTimeout(error,6000);
+  im.addEventListener('load',load);im.addEventListener('error',error);
+  if(im.complete)load()
+ })
+}
+const pawTempleDoorEnterBefore=enter;
+enter=function(id,...args){
+ if(id!=='temple'){pawTempleAdmission=null;return pawTempleDoorEnterBefore(id,...args)}
+ if(room||activity||transitioning||pawArcadeInputBlocked())return;
+ const approach=pawRecoveredImage('scenes/temple_approach_portrait.webp'),hall=pawHallArt();
+ if(pawTempleAssetsReady(approach,hall)){pawTempleAdmission=null;return pawTempleDoorEnterBefore(id,...args)}
+ if(pawTempleAdmissionValid(pawTempleAdmission,pawTempleAdmission,pawTempleAdmissionView()))return;
+ const request={scene,x:p.x,y:p.y};pawTempleAdmission=request;
+ releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;
+ hint('Preparing the painted temple…','正在准备寺庙的画卷……');
+ Promise.all([pawTempleDecode(approach),pawTempleDecode(hall)]).then(()=>{
+  if(!pawTempleAdmissionValid(request,pawTempleAdmission,pawTempleAdmissionView())){
+   if(pawTempleAdmission===request)pawTempleAdmission=null;return
+  }
+  pawTempleAdmission=null;
+  if(pawTempleAssetsReady(approach,hall))pawTempleDoorEnterBefore(id,...args);
+  else hint('The temple artwork could not load. Tap the doorway to try again.','寺庙画面暂未加载成功，请再次点击门口重试。')
+ })
+};
+const pawTempleAdmissionLoopBefore=loop;
+loop=function(...args){
+ if(pawTempleAdmission&&!pawTempleAdmissionValid(pawTempleAdmission,pawTempleAdmission,pawTempleAdmissionView()))pawTempleAdmission=null;
+ return pawTempleAdmissionLoopBefore(...args)
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
