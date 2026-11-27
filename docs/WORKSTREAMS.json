@@ -211,12 +211,13 @@
         "src/extensions.js"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-npc-20261127-c",
-        "until": 1795781655405
-      }
+      "stage": "tested",
+      "evidence": [
+        "c9bd1521 and 59325c23: grounded small-step crowd yielding, directional gait; parsed source",
+        "120d246b: persisted 2208 passing geometry assertions"
+      ],
+      "lease": null,
+      "blocker": "Current build and live rendered NPC movement, sprite/label overlap, mobile and desktop review remain unverified; redesigned maps and final actor art outstanding."
     },
     {
       "id": "NPC-02",
