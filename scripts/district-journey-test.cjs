@@ -167,12 +167,12 @@ async function travelLoop(page,name,touch){
     const r=el.getBoundingClientRect(),g=document.querySelector('#game').getBoundingClientRect(),a=el.querySelector('.mbPaintedRail').getBoundingClientRect(),im=el.querySelector('.mbPaintedRail img');
     const ratio=im.naturalWidth/im.naturalHeight;
     return {shell:Math.abs(r.width-g.width)<=3&&Math.abs(r.height-g.height)<=3,
-      inside:a.left>=r.left-3&&a.right<=r.right+3&&a.top>=r.top-3&&a.bottom<=r.bottom+3,
+      cover:a.left<=r.left+3&&a.right>=r.right-3&&a.top<=r.top+3&&a.bottom>=r.bottom-3,
       aspect:Math.abs(a.width/a.height-ratio)<.025,
       fitted:Math.abs(a.width-r.width)<=3||Math.abs(a.height-r.height)<=3,
       centered:Math.abs((a.left+a.right-r.left-r.right)/2)<=3&&Math.abs((a.top+a.bottom-r.top-r.bottom)/2)<=3};
   });
-  assert(fit.shell&&fit.inside&&fit.aspect&&fit.fitted&&fit.centered,'Railway shell must fill viewport while painting is centered, uncropped and aspect-correct: '+JSON.stringify(fit));
+  assert(fit.shell&&fit.cover&&fit.aspect&&fit.fitted&&fit.centered,'Carriage covers the viewport without distortion or letterboxing: '+JSON.stringify(fit));
   await shot(district+'-transfer');
   await page.waitForFunction(d=>scene===d&&!transitioning,district,{timeout:15000});
   await shot(district+'-arrival');
@@ -186,23 +186,13 @@ async function travelLoop(page,name,touch){
    await backOutside();
   }
  }
- // A physical station is a destination in its own right. Arrival does not board automatically.
+ // A deliberate station tap walks to the platform and boards in one action.
  await press(page.locator('#dockTravel'));
- await press(page.locator('.pawJournalDeparture').getByRole('button',{name:'Walk to station',exact:true}));
- const platform=page.locator('.pawStationPlatform');
- await platform.waitFor({state:'visible',timeout:21000});
- assert.equal(await page.locator('.pawRailJourney').isVisible(),false,'Station arrival must not board automatically');
- assert(await platform.locator('.pawVisitProgress progress').isVisible(),'Optional exploration progress is missing');
  assert(await page.evaluate(()=>pawRoomVisitProgress(maps.fortune,pawRoomVisitMemory.fortune).count>=4),'Physical room visits were not recorded');
- await shot('station-platform');
- await press(platform.getByRole('button',{name:'Keep exploring',exact:true}));
- await platform.waitFor({state:'hidden'});
- assert(await page.evaluate(()=>scene==='fortune'&&!transitioning),'Keeping exploring must retain the current district');
- await press(page.locator('#dockTravel'));
+ assert(await page.locator('.pawVisitProgress progress').isVisible(),'Optional exploration progress stays in the travel journal');
  await press(page.locator('.pawJournalDeparture').getByRole('button',{name:'Walk to station',exact:true}));
- await platform.waitFor({state:'visible',timeout:21000});
- await press(platform.locator('.pawStationBoard'));
- await page.locator('.pawRailJourney').waitFor({state:'visible',timeout:10000});
+ await page.locator('.pawRailJourney').waitFor({state:'visible',timeout:24000});
+ assert.equal(await page.locator('.pawStationPlatform').count(),0,'Station must not open a holding page');
  assert.equal(await page.locator('.districtRailCabin').isVisible(),false,'Boarding must not open the obsolete preview');
  assert.equal(await page.locator('.pawRailCaption strong').innerText(),await page.evaluate(()=>maps.home.n[0]));
  await shot('direct-railway');
