@@ -963,7 +963,10 @@
       "evidence": [
         "01a34865: all 14 generated WebP files imported to main from owner transfer; all source SHA256 and Git blob SHA1 checks, RGBA decoding and dimensions verified; 14 committed paths independently checked against main tree. 11 missing catalogue assets at runtime paths, 3 alternates staged separately."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-consolidated-home",
+        "until": 1795800657165
+      },
       "blocker": "Eight wallpaper/floor material artworks and room masks still pending; image generation limit previously reached. New furniture art is imported but not yet mapped to live renderer or visually accepted. Preview/placement geometry and mobile/desktop verification pending."
     },
     {
