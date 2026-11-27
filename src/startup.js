@@ -1553,6 +1553,11 @@ function mb5AssistPerform(action){
  else if(action==='back')$('back').click();
  mb5AssistSync()
 }
+/* PAW_ASSIST_OWNERSHIP_BEGIN */
+function pawAssistActionAllowed(owner,current,kind,currentKind,key,action,spec,blocked,connected){
+ return !blocked&&connected&&!!owner&&owner===current&&kind===currentKind&&!!spec&&!spec.disabled&&!!action&&spec.action===action&&spec.key===key
+}
+/* PAW_ASSIST_OWNERSHIP_END */
 let mb5AssistKey='',mb5AssistState=null;
 function mb5AssistSync(force=false){
  const el=$('gameControls');if(!el)return;
@@ -1562,11 +1567,15 @@ function mb5AssistSync(force=false){
   el.classList.remove('mb5ActivityAssist');mb5AssistKey='';mb5AssistState=null;return
  }
  el.classList.add('mb5ActivityAssist');
- if(talkOpen||transitioning||$('page').style.display==='block'){el.hidden=true;return}
- const key=spec.key+'|'+zh;
+ if(pawArcadeInputBlocked()){el.hidden=true;return}
+ const key=activity+'|'+spec.key+'|'+zh;
  if(!force&&key===mb5AssistKey&&state===mb5AssistState&&el.querySelector('.mb5ActivityButton')){el.hidden=false;return}
  mb5AssistKey=key;mb5AssistState=state;el.replaceChildren();el.hidden=false;
- const button=b(el,tr(...spec.label),()=>mb5AssistPerform(spec.action));button.className='mb5ActivityButton';button.disabled=!!spec.disabled
+ const run=state,kind=activity;
+ const button=b(el,tr(...spec.label),()=>{
+  if(!pawAssistActionAllowed(run,state,kind,activity,spec.key,spec.action,mb5AssistSpec(activity,state,t),pawArcadeInputBlocked(),button.isConnected&&!el.hidden))return;
+  mb5AssistPerform(spec.action)
+ });button.type='button';button.className='mb5ActivityButton';button.disabled=!!spec.disabled
 }
 const mb5AssistCSS=document.createElement('style');
 mb5AssistCSS.textContent='#game #gameControls.mb5ActivityAssist:not([hidden]){width:min(82vw,290px);padding:4px;border-radius:5px;background:#f2e5cce8;border:1px solid #ad9470}#game #gameControls.mb5ActivityAssist .mb5ActivityButton{width:100%;min-height:44px;white-space:normal;font-size:14px}';
@@ -9664,10 +9673,10 @@ mb5AssistSync=function(...args){
  const result=pawFortuneAssistSyncBefore(...args),el=$('gameControls'),run=state;
  if(!el)return result;
  const next=pawFortuneNext(run,activity,t,pawArcadeInputBlocked()),old=el.querySelector('[data-paw-fortune-skip]');
- if(!['choice','confirm'].includes(next)){old?.remove();return result}
+ if(el.hidden||!['choice','confirm'].includes(next)){old?.remove();return result}
  if(!old||old.pawRun!==run||old.pawLanguage!==zh){
   old?.remove();
-  const skip=b(el,tr('Receive slip without confirmation','直接领取签文'),()=>pawFortuneReceive(run));
+  const skip=b(el,tr('Receive slip without confirmation','直接领取签文'),()=>{if(skip.isConnected&&!el.hidden)pawFortuneReceive(run)});skip.type='button';
   skip.dataset.pawFortuneSkip='true';skip.pawRun=run;skip.pawLanguage=zh;skip.className='mb5ActivityButton'
  }
  return result
