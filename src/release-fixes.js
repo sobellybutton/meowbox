@@ -14,10 +14,11 @@ syncSigns=function(){const key=W+'x'+H;if(key!==releaseSignViewport){releaseSign
 function releaseAssessmentBalance(mode,result){
  if(!result||!Array.isArray(result.scores))return null;
  if(mode==='type'){
-  const axes=['EI','SN','TF','JP'];return axes.map((axis,i)=>{const score=result.scores[i];if(!Number.isFinite(score)||Math.abs(score)>4)throw Error('Invalid preference score');return {axis,first:(score+4)/2,second:(4-score)/2,tied:score===0}})
+  const axes=['EI','SN','TF','JP'];if(result.scores.length!==4||result.scores.some(v=>!Number.isInteger(v)||Math.abs(v)>4||v%2!==0))return null;
+  return axes.map((axis,i)=>{const score=result.scores[i];return {axis,first:(score+4)/2,second:(4-score)/2,tied:score===0}})
  }
  if(mode==='motive'){
-  const scores=result.scores;if(scores.length!==9||scores.some(v=>!Number.isInteger(v)||v<0||v>6))throw Error('Invalid motive score');
+  const scores=result.scores;if(scores.length!==9||scores.some(v=>!Number.isInteger(v)||v<0||v>6))return null;
   const ranked=scores.map((score,index)=>({score,index})).sort((a,b)=>b.score-a.score||a.index-b.index);
   return {ranked,flat:ranked[0].score===ranked[8].score,close:ranked.filter(v=>ranked[0].score-v.score<=1)}
  }
@@ -60,6 +61,9 @@ scoreWonder=function(mode,rows,answers){
   if(!Number.isInteger(q?.id)||q.id<0||q.id>=count||seen.has(q.id)||!Number.isInteger(answers[i]))throw Error('Invalid assessment item');
   seen.add(q.id);
   if(mode!=='soul'&&q.dimension!==Math.floor(q.id/perDimension))throw Error('Invalid assessment dimension');
+  const optionCount=mode==='type'?2:mode==='motive'?3:soulQs[q.id][1].length;
+  const values=Array.isArray(q.opts)?q.opts.map(o=>o?.[2]):[];
+  if(values.length!==optionCount||new Set(values).size!==optionCount||values.some(v=>!Number.isInteger(v)||v<0||v>=optionCount)||answers[i]<0||answers[i]>=optionCount)throw Error('Invalid assessment choices');
  }
  return releaseScoreBefore(mode,rows,answers)
 };
@@ -93,6 +97,27 @@ const motiveReflectionPrompts=[
  ['Recall when you felt heard without having to push for it.','回想一次不用争取也有人认真听你说话的时候。'],
  ['Practise saying one preference before asking what everyone else wants.','在问大家想要什么之前，先说出自己的一个偏好。']
 ];
+/* PAW_CORE_RESULT_BEGIN */
+// The prompts describe today's answers; none assigns a fixed trait.
+const pawPreferenceReflections=[
+ [['Company seems to restore your energy today. Leave room for quieter breaks, too.','这次的回答偏向从相处中充电，也记得给自己留一点安静时间。'],['Both company and solitude may help, depending on the day.','有人陪伴和独处都可能让你恢复精力，要看当天的状态。'],['Quiet time seems restorative today. Company can still be welcome on your terms.','这次的回答偏向独处充电，也可以按自己的节奏享受陪伴。']],
+ [['You leaned toward tangible details. Try connecting one detail to a bigger idea.','这次你更留意具体细节，可以试着把一个细节和更大的想法联系起来。'],['You made room for both evidence and possibilities.','你既留意具体事实，也愿意想象新的可能。'],['You leaned toward possibilities. Try grounding one promising idea in a small experiment.','这次你更关注新的可能，可以用一个小实验让好点子落地。']],
+ [['You leaned toward consistent criteria. Check whose needs might be missed.','这次你更看重一致的标准，也可以留意谁的需要可能被忽略。'],['Both clear criteria and personal values informed your choices.','你的选择同时考虑了明确的标准和个人价值。'],['You leaned toward people and values. Check which shared criteria would help everyone.','这次你更关注人和价值观，也可以想想什么共同标准能帮助大家。']],
+ [['You leaned toward a plan. Keep one small part of the day unscheduled.','这次你更喜欢提前安排，不妨给今天留一点空白。'],['You made room for structure and changes of plan.','你既需要一定的安排，也给变化留了空间。'],['You leaned toward flexibility. One simple anchor may make the day easier.','这次你更喜欢灵活安排，一个简单的小目标或许能让一天更轻松。']]
+];
+function pawPreferenceReflection(index,first,second){
+ if(!Number.isInteger(index)||index<0||index>=4||!Number.isInteger(first)||!Number.isInteger(second)||first<0||second<0||first+second!==4)return null;
+ return pawPreferenceReflections[index][first>second?0:first===second?1:2]
+}
+function pawSoulPortrait(saved,bank){
+ if(!Array.isArray(bank)||!bank.length||!Array.isArray(saved?.scores)||saved.scores.length!==8)return null;
+ const opportunities=Array(8).fill(0);
+ for(const row of bank){if(!Array.isArray(row?.[1]))return null;for(const k of new Set(row[1].flatMap(v=>v[2]))){if(!Number.isInteger(k)||k<0||k>=8)return null;opportunities[k]++}}
+ if(opportunities.some(v=>!v)||saved.scores.some((v,i)=>!Number.isInteger(v)||v<0||v>opportunities[i]))return null;
+ const ranked=saved.scores.map((score,index)=>({index,score,opportunity:opportunities[index],rate:score/opportunities[index]})).sort((a,b)=>b.rate-a.rate||a.index-b.index);
+ return {ranked,leaders:ranked.filter(v=>Math.abs(v.rate-ranked[0].rate)<1e-8)}
+}
+/* PAW_CORE_RESULT_END */
 function openWonderResult(mode,result){
  page(tr(...wonderSceneNames[mode]),tr(...result.name),q=>{
   const body=element('section','',q,'readingNotes');
@@ -103,6 +128,7 @@ function openWonderResult(mode,result){
     const item=element('article','',body,'readingNote'),[title,a,b,prompt]=preferenceResultAxes[i];
     element('h2',tr(...title),item);
     element('p',tr(...a)+' '+first+'/4 · '+tr(...b)+' '+second+'/4',item);
+    const reflection=pawPreferenceReflection(i,first,second);if(reflection)element('p',tr(...reflection),item);
     element('p',tr(...prompt),item,'readingPrompt');
    });
   }else if(mode==='motive'&&balance){
@@ -112,6 +138,11 @@ function openWonderResult(mode,result){
    balance.ranked.forEach(({index,score})=>element('li',tr(...wonderMotives[index].slice(0,2))+' · '+score+'/6',list));
    if(balance.flat)element('p',tr(...result.desc),body);
    leaders.slice(0,3).forEach(({index})=>element('p',tr(...motiveReflectionPrompts[index]),body,'readingPrompt'));
+  }else if(mode==='soul'&&pawSoulPortrait(saved,soulQs)){
+   const portrait=pawSoulPortrait(saved,soulQs);
+   element('p',tr('Six little choices can point to more than one cat. Each match is counted relative to the opportunities for that cat. This is a playful reflection, not a psychological test.','六个小选择可能指向不止一种猫灵。每只猫灵按出现机会计算匹配次数。这只是趣味探索，并非心理测评。'),body);
+   if(portrait.leaders.length>1)element('p',tr('These cats tied. There is no single winner.','这些猫灵并列，没有唯一答案。'),body);
+   portrait.leaders.forEach(({index,score,opportunity})=>{const cat=soulCats[index],item=element('article','',body,'readingNote');element('h2',tr(cat[0],cat[1]),item);element('p',score+'/'+opportunity,item);element('p',tr(cat[2],cat[3]),item)});
   }else element('p',tr(...result.desc),body);
   b(body,tr('Share keepsake','分享纪念卡'),()=>wonderSceneShare(()=>openWonderResult(mode,result)));
   b(body,tr('Try again','再测一次'),()=>wonderSceneOpen(mode));
