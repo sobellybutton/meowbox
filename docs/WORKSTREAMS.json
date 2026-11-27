@@ -291,13 +291,11 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [
-        "TEMPLE-WATER-01 delivered as helper-tested; remaining altar, slip, sticks, bell and articulated poses still open."
+        "TEMPLE-WATER-01 delivered as helper-tested; remaining altar, slip, sticks, bell and articulated poses still open.",
+        "TEMPLE-ALCOVE-01 and TEMPLE-SLIP-01 are implemented and helper-tested."
       ],
-      "lease": {
-        "owner": "manual-temple-paper-20261127-j",
-        "until": 1795786987598
-      },
-      "blocker": "Temple water integrated, all remaining dedicated scene art and visual review outstanding."
+      "lease": null,
+      "blocker": "Purification, alcove and slip counter integrated; altar painting lacks Guanyin statue and matching incense supply so retain current hall. Final bell pavilion, remaining garden and articulated character poses, browser and visual review outstanding."
     },
     {
       "id": "ROOM-02",
@@ -790,6 +788,44 @@
         "owner": "manual-ci-repair-20261127-k",
         "until": 1795787172597
       }
+    },
+    {
+      "id": "TEMPLE-ALCOVE-01",
+      "lane": "games",
+      "priority": 1,
+      "summary": "Use painted alcove and actual fortune stick and moon block trays",
+      "resources": [
+        "src/startup.js",
+        "art:temple",
+        "browser"
+      ],
+      "depends": [],
+      "stage": "tested",
+      "evidence": [
+        "05a7ce7c: actual inspected alcove plate, original tube with local shake motion, numbered stick animates to painted tray and hand, moon block landing aligned to painted tray. Source parsed and geometry checks passed.",
+        "4b170710: persisted combined temple geometry regression"
+      ],
+      "lease": null,
+      "blocker": "Actual mobile/desktop rendering, gesture and hand contact review, current deployment and final original pose art outstanding. Local painted tube shake is interim."
+    },
+    {
+      "id": "TEMPLE-SLIP-01",
+      "lane": "games",
+      "priority": 1,
+      "summary": "Painted fortune counter, readable unfolded slip and interactive actual tied-paper rack",
+      "resources": [
+        "src/startup.js",
+        "art:temple",
+        "browser"
+      ],
+      "depends": [],
+      "stage": "tested",
+      "evidence": [
+        "1c786137: exact inspected counter art, folded-to-open and keep/tie animation, no duplicate rack, physical rack hit positions, actual entries/page controls and preserved prior slip. Source parsed and geometry checks passed.",
+        "4b170710: persisted combined temple geometry regression"
+      ],
+      "lease": null,
+      "blocker": "Actual browser visual readability, rack hit areas, controls, language and return flow, Pages deployment not verified. No final acceptance."
     }
   ]
 }
