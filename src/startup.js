@@ -2532,7 +2532,7 @@ function pawMountRouteGlass(stage,layout,host,layers){
  const draw=()=>{g.clearRect(box.x,box.y,box.w,box.h);
   for(const [key,speed] of [['far',layers.near?.naturalWidth ? .32 : 1],['near',1]]){
    const im=layers[key];if(!im?.naturalWidth)continue;
-   const c=pawGlassCrop(im.naturalWidth,im.naturalHeight,box.w,box.h,Math.min(1,elapsed/3.6),speed);
+   const c=pawGlassCrop(im.naturalWidth,im.naturalHeight,box.w,box.h,(.5-.5*Math.cos(Math.PI*elapsed/8)),speed);
    if(c)g.drawImage(im,c.x,c.y,c.w,c.h,box.x,box.y,box.w,box.h)
   }
   canvas.dataset.frame=String(++frames);canvas.dataset.travel=elapsed.toFixed(3)
@@ -2541,8 +2541,8 @@ function pawMountRouteGlass(stage,layout,host,layers){
  const tick=now=>{
   if(dead||!stage.isConnected||stage.hidden||stage.dataset.layout!==layout||reduce.matches){stop();return}
   const dt=last===null?0:Math.min(.1,Math.max(0,(now-last)/1000));last=now;
-  if(!document.hidden&&host.dataset.sceneryPaused!=='true'){elapsed=Math.min(3.6,elapsed+dt);draw()}
-  if(elapsed<3.6)raf=requestAnimationFrame(tick)
+  if(!document.hidden&&host.dataset.sceneryPaused!=='true'){elapsed=(elapsed+dt)%16;draw()}
+  raf=requestAnimationFrame(tick)
  };
  draw();stage.append(canvas);stage.dataset.railMotion=layers.near?'route-parallax':'route-panorama';pawRailMotionJobs.set(stage,{stop});raf=requestAnimationFrame(tick);return true
 }
