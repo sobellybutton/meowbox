@@ -1240,6 +1240,89 @@
       "evidence": [],
       "lease": null,
       "blocker": "Acceptance: Inspect actual first minute and first meaningful activity through normal input, not state injection; verify all retained scenes, both languages and multiple viewports. Record unresolved defects and iterate; do not call technical checks final acceptance."
+    },
+    {
+      "id": "QA-SPATIAL-01",
+      "lane": "engineering",
+      "priority": 1,
+      "summary": "Eliminate unintended overlapping text, labels, actors, props and controls across scenes, changing cameras and nested screens in both languages",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/engine.js",
+        "src/shell.html",
+        "browser"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "SCENE-BLOCKING-01",
+      "lane": "engineering",
+      "priority": 1,
+      "summary": "Author actual room-specific entrances, safe ground, approach and return positions, orientation, perspective, depth and physically authentic kneeling, sitting, bowing and prop contact",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/engine.js",
+        "browser"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "SCENE-CAMERA-01",
+      "lane": "interface",
+      "priority": 1,
+      "summary": "Author purposeful camera framing and action closeups, readable result shots and continuous returns for each activity; independent mobile and desktop composition",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/engine.js",
+        "src/shell.html",
+        "browser"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "WORLD-STORY-FLOW-01",
+      "lane": "world",
+      "priority": 1,
+      "summary": "Make the four-district railway journey and all local visits tell a coherent voluntary story of leaving work, finding calm, unwinding, enjoying play and discovering new perspectives; reconcile district names, destinations, arrival/departure paths, contextual callbacks and travel memories; no forced completion or duplicate destination",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/engine.js",
+        "browser"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "RAIL-DESTINATION-COPY-01",
+      "lane": "interface",
+      "priority": 1,
+      "summary": "Show actual next district on railway signs before deliberate boarding and connect each district to the next through concise optional bilingual travel-journal copy",
+      "resources": [
+        "src/startup.js",
+        "scripts/world-visits-test.cjs"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-world-story-20261127",
+        "until": 1795792114511
+      }
     }
   ]
 }
