@@ -10312,6 +10312,22 @@ drawRoute=function(...args){
 // Independent art-calibrated world registrations. Preserve the legacy
 // district IDs, room actions, travel order and saved progression.
 const pawNewDistricts={
+ island:{
+  path:'assets/visual/painted/worlds/island/scene.webp',size:[962,1635],height:1777,spawn:[504,1640],
+  player:[[373,551,14],[420,550,18],[475,550,22],[525,551,30],
+   [565,553,55],[600,551,56],[645,557,42],[700,570,38],
+   [760,591,34],[820,591,37],[880,590,45],[940,574,45],
+   [1005,547,43],[1060,505,53],[1115,426,71],[1180,388,65],
+   [1250,350,65],[1320,366,69],[1390,440,106],[1450,498,99],
+   [1515,499,100],[1580,504,94],[1640,504,89],[1685,504,83]],
+  doors:{
+   mystery:{approach:[478,600],plaque:[255,350],hit:[100,345,325,190]},
+   arcade:{approach:[629,565],plaque:[829,338],hit:[657,329,315,231]},
+   kitchen:{approach:[439,1060],plaque:[255,835],hit:[85,799,397,249]},
+   boba:{approach:[588,1390],plaque:[779,1090],hit:[585,1080,385,300]},
+   station:{approach:[551,373],plaque:[551,329],hit:[496,300,115,85]}
+  }
+ },
  home:{
   path:'assets/visual/painted/worlds/home/scene.webp',size:[962,1635],height:1777,spawn:[465,1645],
   player:[[400,515,16],[430,548,28],[460,577,49],[505,574,40],
