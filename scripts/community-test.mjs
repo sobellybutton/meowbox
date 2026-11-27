@@ -47,6 +47,8 @@ try{
  assert.equal((await call('/presence',tokens[0],{...base,room:'tea'})).data.peers.length,0);
  assert.equal((await call('/presence',tokens[0],undefined,'DELETE')).status,200);
  step(19000);assert.equal((await call('/presence',tokens[2],base)).data.peers.length,0);
+ assert.equal((await call('/report',tokens[0],{id:'-'.repeat(36)})).status,400);
+ assert.equal((await call('/presence',tokens[0],[])).status,400);
  const post=await call('/messages',tokens[0],{name:'Tea Cat',text:'A little break',place:'square'});
  assert.equal(post.status,201);const id=post.data.id;
  assert.equal((await call('/reactions',tokens[2],{id,kind:'heart'})).status,429);
@@ -57,5 +59,13 @@ try{
  const feed=await call('/messages?place=square',tokens[2]);assert.equal(feed.data.messages[0].reactions.heart,2);assert.equal(feed.data.messages[0].myReaction,'heart');
  step();assert.equal((await call('/reactions',tokens[2],{id,kind:'laugh'})).status,200);
  const updated=await call('/messages?place=square',tokens[2]);assert.equal(updated.data.messages[0].reactions.heart,1);assert.equal(updated.data.messages[0].reactions.laugh,1);
+ assert.equal((await call('/messages',tokens[4],{name:'Guest',text:'A reply elsewhere',place:'home',replyTo:id})).status,409);
+ const reply=await call('/messages',tokens[4],{name:'Guest',text:'A reply here',place:'square',replyTo:id});
+ assert.equal(reply.status,201);
+ await call('/moderation/decide',tokens[0],{id:reply.data.id,status:'approved'},'POST',true);
+ assert.equal((await call('/messages?place=square',tokens[2])).data.messages.find(m=>m.id===reply.data.id).replyName,'Tea Cat');
+ step(31*86400000);
+ assert.equal((await call('/report',tokens[2],{id})).data.recorded,false);
+ assert.equal((await call('/messages?place=square',tokens[2])).data.messages.length,0);
  console.log('PASS: SQLite Worker integration, five sessions, rooms, blocking, reports, moderation, expiry and reactions');
 }finally{Date.now=realNow;sqlite.close()}
