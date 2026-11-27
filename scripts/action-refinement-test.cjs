@@ -157,7 +157,9 @@ console.log('PASS: '+new Function(between(source,'/* PAW_FORECOURT_BEGIN */','/*
 let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
 for(const pos of [pawForecourtStart,pawForecourtLanding,pawForecourtCat])for(const kind of ['cat','hall','exit'])for(const reduced of [true,false]){
  const q={pos:pos.slice(),route:[],last:0};ck(pawForecourtRoute(q,kind),'route');
- ck(!pawForecourtRoute(q,'exit'),'cannot replace active walk');
+ ck(!pawForecourtRoute(q,'cat')&&!pawForecourtRoute(q,'hall'),'cannot replace active walk with another visit');
+ if(kind==='exit')ck(!pawForecourtRoute(q,'exit'),'cannot replace active return');
+ else {const interrupt={pos:q.pos.slice(),route:q.route.map(v=>v.slice()),destination:q.destination,last:q.last};ck(pawForecourtRoute(interrupt,'exit'),'return can interrupt an approach');ck(!pawForecourtRoute(interrupt,'exit'),'cannot replace interrupted return')}
  const held=q.pos.slice();pawForecourtTick(q,.016,true,reduced);ck(q.pos.every((v,i)=>v===held[i]),'covered path frozen');
  let result;for(let i=2;i<5000&&!result;i++){result=pawForecourtTick(q,i*.016,false,reduced);ck(q.pos.every(Number.isFinite)&&q.pos[0]>=.45&&q.pos[0]<=.58&&q.pos[1]>=.57&&q.pos[1]<=.83,'on traced stone path')}
  ck(result===kind,'arrival');const goal=kind==='cat'?pawForecourtCat:kind==='hall'?pawForecourtLanding:pawForecourtStart;
