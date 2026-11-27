@@ -1214,11 +1214,10 @@
         "CONTENT-RESIDENT-01"
       ],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-code-1128-relationships",
-        "until": 1795803477631
-      },
+      "evidence": [
+        "4a099c07: explicit indoor resident chat responses now retain only recognized resident ID, distinct conversation-day count and date in existing local hospitality history; 16 unique bilingual returning-day replies, no free text or extra reward, no new storage key. Focused first/repeat/return/rollback/invalid/cap checks passed; startup parsed. Actual gameplay, broader interactions and preference controls remain open."
+      ],
+      "lease": null,
       "blocker": "Acceptance: Repeat visits and reloads demonstrate meaningful callbacks, differing resident voices and natural quiet intervals without sensitive-text retention, forced dialogue or fabricated real visitors."
     },
     {
