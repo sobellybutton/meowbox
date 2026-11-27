@@ -1074,3 +1074,9 @@ Owner screenshot showed a tiny portrait gate on desktop, a large dark empty surr
 - d7962ef, b09238f: pause cat-care state and return clocks while covered; replace wall-clock assisted pet/play rewards with visible-time progression; bind controls to the care session, cancel stale drags and release capture on exit/restart/interruptions. Existing reward, care and save keys retained.
 - 62ca49f persists 35 targeted assertions. Complete action-refinement, room-life/scoop, visual-stage-fit and painted-action scripts passed in connector harness using full extensions Git blob and current startup source; both sources parse. 8b3898c adds actual browser smoke for interrupted assisted care and detached controls. Latest browser/Pages verification still pending.
 - Original player 1 archive review: four front and four alternate left frames inspected; fourth frames have cropped/flattened hair. Preserve previously integrated art and do not install incomplete sequence. No new visual acceptance. Provisional 49/100, accepted baseline 9/100; ledger reconciliation outstanding.
+
+
+## Owner entrance and map mismatch escalation
+- Actual source images inspected: autumn gate vs spring Fortune Valley; all four prior map files remain active. Four-map redesign and matched entrance have NOT been installed. Prioritize separate clean native map paintings, recalibrated physical routes and actual device inspection; no concept board crops.
+- cf8a6e9: shorter traced foreground path, slower walking cadence, restrained size change, explicitly override inherited departure zoom, no second automatic map walk. 606 new gate samples passed; full room-life helper script passed.
+- 5177e3f: tarot clocks and stale targets, keyboard controls. 32 focused checks and complete action-refinement helper suite passed; regression scripts committed 022cecd/e453442. Latest browser and deployment not verified. Provisional tally 53/100; accepted baseline 9/100. See checkpoint.
