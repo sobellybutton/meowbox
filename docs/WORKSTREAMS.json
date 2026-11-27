@@ -1235,11 +1235,10 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-ritual-input-1128",
-        "until": 1795803790802
-      },
+      "evidence": [
+        "25084c7c + e49cfe8b: retain actual grab offset in painted water ladle drawing and release; 56 focused assertions executed against exact source, both source files parsed. 15a61ce9 persists regression. Existing action/reward/keyboard assist retained; actual water drag on rendered Chromium/WebKit still needs verification; no claim that prior failure is resolved."
+      ],
+      "lease": null,
       "blocker": "Acceptance: Organic entry, action, outcome, return and replay for each retained activity on phone and desktop. Real inputs affect outcomes; no duplicate or gratuitous games, reward farming or generic click/read/reward loop."
     },
     {
