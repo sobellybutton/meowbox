@@ -10698,4 +10698,101 @@ const pawVisitStyle=document.createElement('style');pawVisitStyle.textContent=`
 #game #content .pawVisitProgress li button{width:100%;min-height:44px;text-align:left;white-space:normal}
 `;document.head.append(pawVisitStyle);
 
+
+/* PAW_PURIFICATION_PAINT_BEGIN */
+// Traced from the imported purification courtyard: the original basin, rack,
+// bamboo spout and stone floor are part of the painting, not extra props.
+const pawWaterPlate={x:100,y:-145,w:600,h:600*1635/962};
+function pawWaterGeometry(p=pawWaterPlate){
+ const point=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
+ return {foot:point(.46,.645),basin:point(.345,.51),palm:point(.426,.565),
+  rest:point(.44,.55),scoop:point(.345+.038,.51),pour:point(.426+.038,.545),rack:point(.475,.535)}
+}
+function pawWaterDestination(stage,g){
+ return stage===0?g.scoop:stage===1?g.pour:null
+}
+function pawWaterDropMatches(stage,x,y,g){
+ const a=pawWaterDestination(stage,g);
+ return !!a&&Number.isFinite(x)&&Number.isFinite(y)&&Math.hypot(x-a.x,y-a.y)<=25
+}
+function pawWaterProgress(q,now,blocked){
+ return !blocked&&q?.waterStage===2&&Number.isFinite(q.waterAt)&&now-q.waterAt>=2
+}
+function pawWaterCamera(w,h,p=pawWaterPlate){
+ if(![w,h,p.x,p.y,p.w,p.h].every(Number.isFinite)||Math.min(w,h,p.w,p.h)<=0)return null;
+ const s=Math.min(w/p.w,h/p.h);return {s,ox:(w-p.w*s)/2-p.x*s,oy:(h-p.h*s)/2-p.y*s}
+}
+/* PAW_PURIFICATION_PAINT_END */
+const pawWaterArtPath='../../staging/2026-11-27/rooms/temple/purification.webp';
+pawRecoveredImage(pawWaterArtPath);
+function pawWaterArt(){return pawRecoveredImage(pawWaterArtPath)}
+function pawWaterPaintingActive(){return room==='temple'&&activity==='templeWater'&&state.pawWaterPainting&&pawRoomImageReady(pawWaterArt())}
+const pawWaterStartBefore=start;
+start=function(id,...args){
+ const result=pawWaterStartBefore(id,...args);
+ if(id==='templeWater'&&activity===id){state.pawWaterPainting=pawRoomImageReady(pawWaterArt());if(state.pawWaterPainting)hint('Lower the ladle into the painted basin.','将竹勺放入水池舀水。')}
+ return result
+};
+const pawWaterCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(...args){return pawWaterPaintingActive()?pawWaterCamera(W,H)||pawWaterCameraBefore(...args):pawWaterCameraBefore(...args)};
+const pawWaterReleaseBefore=templeReleaseWater;
+templeReleaseWater=function(a,...args){
+ if(!pawWaterPaintingActive())return pawWaterReleaseBefore(a,...args);
+ const run=state,stage=run.waterStage,g=pawWaterGeometry();
+ if(pawArcadeInputBlocked()||![0,1].includes(stage))return;
+ if(!pawWaterDropMatches(stage,a?.x,a?.y,g)){hint(stage===0?'Dip the ladle in the marked water.':'Move the filled ladle above your hand.',stage===0?'把竹勺放入亮起的水面。':'把盛满水的竹勺移到手掌上方。');return}
+ // Retain the original action, audio, award and ownership contract.
+ const result=pawWaterReleaseBefore(stage===0?{x:440,y:486}:{x:375,y:430},...args);
+ if(state===run&&run.waterStage===stage+1)run.pawWaterFrom={x:a.x,y:a.y};
+ return result
+};
+const pawWaterAssistBefore=mb5AssistPerform;
+mb5AssistPerform=function(action){
+ if(pawWaterPaintingActive()&&['scoop','rinse'].includes(action)){
+  const spec=mb5AssistSpec(activity,state,t);
+  if(!spec||spec.disabled||spec.action!==action||pawArcadeInputBlocked())return;
+  templeReleaseWater(pawWaterDestination(state.waterStage,pawWaterGeometry()));mb5AssistSync();return
+ }
+ return pawWaterAssistBefore(action)
+};
+function pawWaterMix(a,b,f){return {x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f}}
+function pawDrawWaterPainting(){
+ const run=state,g=pawWaterGeometry(),p=pawWaterPlate,b=livingBounds(),stage=run.waterStage,age=Math.max(0,t-run.waterAt),held=drag?.id==='templeLadle'&&stage<2;
+ ctx.fillStyle='#473e36';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawWaterArt(),p.x,p.y,p.w,p.h);
+ const ready=stage===0?g.rest:stage===1?g.scoop:g.pour;
+ let at=ready,angle=0;
+ if(held)at={x:Math.max(p.x+p.w*.29,Math.min(p.x+p.w*.54,drag.x)),y:Math.max(p.y+p.h*.49,Math.min(p.y+p.h*.60,drag.y))};
+ else if(stage===1)at=pawWaterMix(run.pawWaterFrom||g.scoop,g.rest,poseEase(Math.min(1,age/.35)));
+ else if(stage===2){at=pawWaterMix(run.pawWaterFrom||g.pour,g.pour,poseEase(Math.min(1,age/.35)));angle=.58*poseEase(Math.min(1,age/.4))*(1-poseEase(Math.max(0,Math.min(1,(age-1.5)/.5))))}
+ else if(stage===3)at=pawWaterMix(g.pour,g.rack,poseEase(Math.min(1,age/.55)));
+ const shoulder={x:g.foot.x-10,y:g.foot.y-61},grip={x:at.x+16,y:at.y};
+ // Reuse the chosen traveller, standing in front of the real basin.
+ backHuman(g.foot.x,g.foot.y,avatar??0,false,'left',1.14);
+ if(stage===1||stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,.9,true);
+ if(stage!==3||age<.55){
+  ctx.save();ctx.translate(at.x,at.y);ctx.scale(-.65,.65);waterLadleArt(0,0,-angle,stage===1||stage===2&&age<1.55);ctx.restore();
+  pawIncenseArm(shoulder,grip,.92,false)
+ }
+ if(stage===2&&age>.15&&age<1.8){
+  const bowl={x:at.x-23*Math.cos(angle),y:at.y+23*Math.sin(angle)};
+  for(let j=0;j<10;j++){const f=(age*2.8+j/10)%1;ellipse(bowl.x+(g.palm.x-bowl.x)*f+Math.sin(j)*1.5,bowl.y+(g.palm.y-bowl.y)*f,1.2,2.9,'#e0eee4')}
+  for(let j=0;j<4;j++){const f=(age*2+j*.25)%1;ellipse(g.palm.x+Math.sin(j*2)*6,g.palm.y+3+f*20,1.1,2.1,'#d7ece4')}
+ }
+ if(stage<2){
+  const dest=pawWaterDestination(stage,g),x=dest.x-23,y=dest.y;
+  ctx.save();ctx.strokeStyle='#fff3bd';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.ellipse(x,y,23+Math.sin(t*3),10,0,0,TAU);ctx.stroke();ctx.restore();
+  target(at.x-40,at.y-20,82,40,()=>{},'templeLadle');
+ }
+ if(pawWaterProgress(run,t,pawArcadeInputBlocked())){
+  run.waterStage=3;run.waterAt=t;
+  if(!run.waterRewarded){run.waterRewarded=true;lifeEarn('ritual:water',{calm:2},true);lifeHUDRefresh()}
+  hint('Hands rinsed. Continue to the altar when ready.','净手完成，准备好了就去香案。')
+ }
+}
+const pawWaterDrawBefore=drawActivity;
+drawActivity=function(...args){
+ if(!pawWaterPaintingActive())return pawWaterDrawBefore(...args);
+ continuityActivity=activity;ctx.save();try{pawDrawWaterPainting()}finally{ctx.restore()}mb5AssistSync()
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
