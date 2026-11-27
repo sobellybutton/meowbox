@@ -859,7 +859,8 @@
         "src/paw-motion-audio.js",
         "src/paw-economy.js",
         "src/extensions.js",
-        "scripts/runtime-module-live-test.cjs"
+        "scripts/runtime-module-live-test.cjs",
+        ".github/workflows/meowbox-browser.yml"
       ],
       "depends": [
         "ECON-01",
