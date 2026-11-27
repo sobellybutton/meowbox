@@ -1470,7 +1470,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null,
+      "lease": {
+        "owner": "manual-parallel-reflection-2305",
+        "until": 1795793700000
+      },
       "blocker": "Distinct journeys, authored choices and outcomes, reflection based on choices, camera framing, repeat and return; not another generic quiz form."
     },
     {
