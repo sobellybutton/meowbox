@@ -1035,7 +1035,8 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [
-        "Existing recovered ornate_wood, hanging_wood, hanging_parchment, roof_plaque, ribbon and speech sprites are present; inspect before commissioning replacements."
+        "Existing recovered ornate_wood, hanging_wood, hanging_parchment, roof_plaque, ribbon and speech sprites are present; inspect before commissioning replacements.",
+        "Inspected existing ornate wood, hanging wood, parchment, roof plaque and ribbon; 22101d9e and 310fb150 replace ornate treatment with quieter interim painted materials. Do not commission duplicate generic floral signs."
       ],
       "lease": null,
       "blocker": "Current effective building plaque uses the same ornate_wood border image; final district-specific art not approved."
@@ -1087,12 +1088,12 @@
         "scripts/sign-family-test.cjs"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-sign-preview-20261127",
-        "until": 1795791497133
-      }
+      "stage": "tested",
+      "evidence": [
+        "22101d9e: four original painted wood/paper material crops uploaded with provenance and blob hashes; inspected source art. 310fb150: compact district-specific bilingual sign styles, shared railway identity and 44px touch targets applied in shell without touching current garden runner. Controlled browser CSS probe at 360x640 and 1440x900 confirmed sample EN/ZH labels fit and 44px button targets; first visual probe corrected for synthetic layout positioning. Pages run 46016588647 reports success for this revision."
+      ],
+      "lease": null,
+      "blocker": "Controlled label probe used fallback background because the new assets had not yet deployed. Actual in-world signs, all door labels, collision with actors/UI, texture load, accessibility and organic mobile/desktop routes still require inspection. District-specific individual sign illustrations remain outstanding."
     }
   ]
 }
