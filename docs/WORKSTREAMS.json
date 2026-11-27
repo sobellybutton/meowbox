@@ -1372,7 +1372,10 @@
         "e8c17843: selected traveller directional base artwork is decoded during onboarding and required alongside the gateway and current Fortune Valley map before first admission. Optional action frames warmed without making unavailable final poses a hard dependency.",
         "1e8a9977: persistent selected-avatar readiness, missing image and retry regression; source parsed and asynchronous helper checks executed."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-visual-1127-ready",
+        "until": 1795795391591
+      },
       "blocker": "First-frame capture on actual cold/warm and failed network, signs and resident readiness, interdistrict/room admission, and deployment verification still open. Base directional art is interim where finished frames absent.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Issue #2 is a release blocker: no blank brown screen or partially initialized HUD on any transition. Preload/decode the target art, retain the last coherent scene pending readiness, instrument errors and latency, offer safe retry without losing progress. Audit cold/warm cache, failed loads, fast taps, back/reentry and rotation."
     },
     {
