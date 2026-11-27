@@ -9925,4 +9925,30 @@ const pawFirstRailCSS=document.createElement('style');pawFirstRailCSS.textConten
 @media(prefers-reduced-motion:reduce){#proposal[data-paw-entrance-step="5"] .train-window img{animation:none!important}}
 `;document.head.append(pawFirstRailCSS);
 
+// Keep registration in the same illustrated railway environment.
+const pawStationChoiceRenderBefore=proRender;
+proRender=function(...args){
+ const result=pawStationChoiceRenderBefore(...args);
+ if(![1,2].includes(proStep))return result;
+ const hero=proposal.querySelector('.hero'),foot=proposal.querySelector('footer'),player=hero?.querySelector('.pawEntranceAvatar');
+ if(!hero||!foot||!player)return result;
+ const picture=element('picture','',hero,'pawChoiceStation');
+ const wide=element('source','',picture);wide.media='(min-aspect-ratio: 6/5)';wide.srcset='assets/visual/painted/recovered/scenes/station_landscape.webp';
+ const art=element('img','',picture);art.alt='';art.src='assets/visual/painted/recovered/scenes/station_portrait.webp';art.decoding='async';
+ picture.setAttribute('aria-hidden','true');hero.prepend(picture);hero.classList.add('pawChoiceGrounded');
+ if(proStep===2){
+  const skip=element('button',tr('Just explore','随便逛逛'),foot,'pawIntentSkip');
+  skip.type='button';skip.onclick=()=>{if(!proBusy&&proStep===2)proposalBoard()};
+ }
+ return result
+};
+const pawChoiceSceneCSS=document.createElement('style');pawChoiceSceneCSS.textContent=`
+#proposal .pawChoiceGrounded{border-radius:4px;isolation:isolate}
+#proposal .pawChoiceStation{position:absolute;inset:0;z-index:-1;display:block;pointer-events:none;overflow:hidden}
+#proposal .pawChoiceStation img{width:100%;height:100%;display:block;object-fit:cover;object-position:50% 94%}
+#proposal .pawChoiceGrounded:before{display:none!important}
+#proposal .pawChoiceGrounded .pawEntranceAvatar{position:absolute!important;left:50%!important;top:auto!important;bottom:8%!important;transform:translateX(-50%)!important;translate:none!important;height:min(var(--paw-avatar-main,180px),68%)!important;max-height:68%!important;filter:drop-shadow(0 5px 3px #372b244d)!important}
+#proposal .pawIntentSkip{min-height:44px;max-width:100%;white-space:normal;padding:4px 12px;background:#2b4439;color:#fff3db;border:1px solid #bbac8b;border-radius:4px}
+@media(max-height:670px) and (orientation:portrait){#proposal .pawChoiceGrounded .pawEntranceAvatar{height:min(var(--paw-avatar-main,130px),85%)!important;max-height:85%!important;bottom:4%!important}}
+`;document.head.append(pawChoiceSceneCSS);
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
