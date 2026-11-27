@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const src=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
+const a=src.indexOf('/* PAW_SOCIAL_GUIDE_BEGIN */'),b=src.indexOf('/* PAW_SOCIAL_GUIDE_END */',a);
+assert.ok(a>=0&&b>a);
+const select=new Function(src.slice(a,b)+';return pawSocialCandidate')();
+const a1={x:20,y:5,n:['A','甲']},a2={x:80,y:0,n:['B','乙']},cat={x:1,y:0,n:['Cat','猫'],kind:2},peer={x:0,y:1,n:['Peer','旅伴'],sharedPeer:true};
+assert.equal(select([cat,peer,a2,a1],{x:0,y:0}),a1);
+assert.equal(select([a1],{x:1000,y:1000}),null);
+assert.equal(select([a1],{x:NaN,y:0}),null);
+assert.equal(select([{x:1,y:1,n:['bad']}],{x:0,y:0}),null);
+assert.ok(src.includes('lifeFriend(g.name);\n  if(!items.some(x=>x[0]===g.gift[0]))'));
+console.log('Social guide and guest credit regression passed');
