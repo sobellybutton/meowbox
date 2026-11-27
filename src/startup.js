@@ -2249,7 +2249,7 @@ function mbOpenOwnHome(open=null,label=null){
  hideoutEditing=false;hideoutSelected=-1;hideoutPage()
 }
 const mbHomeNav=element('button','',$('dock'));mbHomeNav.id='dockOwnHome';mbHomeNav.type='button';mbHomeNav.innerHTML='<span class="dockIcon" aria-hidden="true"><svg viewBox="0 0 28 28" width="25" height="25" fill="none" stroke="#805c43" stroke-width="1.5"><path d="M3 13 14 4l11 9-3 1v11H6V14z" fill="#d3aa78"/><path d="M2 13 14 3l12 10M10 25V16h8v9M8 10v-5h3"/></svg></span><span></span>';$('dockValley').after(mbHomeNav);mbHomeNav.onclick=()=>mbOpenOwnHome();
-const mbHomeHudBefore=updateHUD;updateHUD=function(...args){const r=mbHomeHudBefore(...args),label=tr('My home','小窝');mbHomeNav.lastElementChild.textContent=label;mbHomeNav.setAttribute('aria-label',label);const photo=$('hudPortrait'),src=ART['walker'+(avatar??0)+'0'];if(src&&photo.getAttribute('src')!==src)photo.src=src;return r};
+const mbHomeHudBefore=updateHUD;updateHUD=function(...args){const r=mbHomeHudBefore(...args),label=tr('My home','小窝');mbHomeNav.lastElementChild.textContent=label;mbHomeNav.setAttribute('aria-label',label);const photo=$('hudPortrait'),src=ART['head'+(avatar??0)]||ART['portrait'+(avatar??0)];if(src&&photo.getAttribute('src')!==src)photo.src=src;return r};
 const mbHomeViewBefore=hideoutPage;hideoutPage=function(...args){const r=mbHomeViewBefore(...args),q=$('content');if(q.querySelector('.hideoutScene')){mbHomePageBack(hideoutEditing?tr('‹ My room','‹ 返回小窝'):tr(...(mbHomeOrigin?.label||['‹ Town','‹ 返回小镇'])),()=>{if(hideoutEditing){saveHideout();hideoutEditing=false;hideoutPage()}else mbHomeExit()});const rewards=[...q.querySelectorAll('.hideoutPrimary button')].find(b=>b.textContent===tr('Stamps & rewards','印章与奖励'));if(rewards)rewards.onclick=()=>{hideoutClaimPage();mbHomePageBack(tr('‹ My room','‹ 返回小窝'),hideoutPage)}}return r};
 const mbHomeMarketBefore=furnitureMarket;furnitureMarket=function(back='shop'){const r=mbHomeMarketBefore(back),q=$('content'),book=q.querySelector('.komorebiBook');if(!book)return r;mbHomePageBack(back==='room'?tr('‹ My room','‹ 返回小窝'):back==='wallet'?tr('‹ My purse','‹ 返回钱包'):tr('‹ Shop','‹ 返回店里'),()=>{if(back==='room')hideoutPage();else if(back==='wallet')pawWalletPage();else {$('page').style.display='none';updateHUD()}});const header=book.querySelector('.komorebiHead');if(header){const art=element('img','',header,'mbFurnitureShopArt');art.src=destinationPortrait('island');art.alt='';art.loading='lazy';header.prepend(art)}return r};
 const mbHomeConfirmBefore=furnitureConfirm;furnitureConfirm=function(id,back='shop'){const r=mbHomeConfirmBefore(id,back);mbHomePageBack(tr('‹ Catalogue','‹ 返回家具目录'),()=>furnitureMarket(back));return r};
@@ -2260,7 +2260,7 @@ const mbHomeReadability=document.createElement('style');mbHomeReadability.textCo
 #game #dock{width:min(620px,calc(100% - 12px))!important;gap:2px!important}
 #game #dock button{min-width:0!important;flex:1 1 0!important;white-space:normal!important;font-size:clamp(10px,2.7vw,13px)!important;line-height:1.2!important;padding:4px 1px!important}
 #game #dockOwnHome .dockIcon{display:grid;place-items:center;height:25px}
-#game #hudPortrait{object-fit:contain!important;object-position:center!important;border-radius:5px!important;background:#edddbd!important}
+#game #hudPortrait{object-fit:contain!important;object-position:center!important;border-radius:50%!important;background:#edddbd!important;border:1px solid #b8a079;box-sizing:border-box}
 #content .mbHomeDirect{display:block;width:100%;min-height:48px;margin:9px 0!important;background:#526a55!important;color:#fff2db!important;border:1px solid #3f5944!important;font:600 15px/1.35 system-ui!important}
 #content .hideoutRibbon .hideoutProfile img{width:56px!important;height:76px!important;object-fit:contain!important;border-radius:5px!important;background:#e8d8b9!important}
 #content .journalIdentity>img,#content .travellerEditHeading>img,#content .travellerEditChoices img{object-fit:contain!important;object-position:center!important;border-radius:4px!important}
@@ -11908,6 +11908,17 @@ proRender=function(...args){
  if(!proposal.hidden){
   pawReadyMap('fortune');
   if(Number.isInteger(proAvatar??avatar))pawWarmSelectedTraveller(proAvatar??avatar)
+ }
+ return result
+};
+// Keep the compact HUD tied to the same ledger used by the shop and purse.
+const pawCompactHudBefore=updateHUD;
+updateHUD=function(...args){
+ const result=pawCompactHudBefore(...args),coin=$('hudCoins');
+ const balance=hideoutBalance();
+ if(Number.isFinite(balance)&&balance>=0){
+  const label=tr('Paw Coins','爪爪币')+': '+String(balance);
+  coin.setAttribute('aria-label',label);coin.title=label;
  }
  return result
 };
