@@ -2767,7 +2767,7 @@ const copyHUD=updateHUD;updateHUD=function(){
  copyHUD();
  if(room)$('back').textContent=activity?tr('‹ Back to room','‹ 返回小屋'):tr('‹ Back outside','‹ 出门逛逛');
  $('hudProgress').textContent=tr('Traveller','摸鱼旅人')+' · '+items.length+tr(' keepsakes',' 件纪念品');
- const routeLabel=travellerRailLabel();if(nextStopButton.textContent!==routeLabel)nextStopButton.textContent=routeLabel;nextStopButton.hidden=avatar===null||!!activity||!proposal.hidden||!!room||$('page').style.display==='block'||transitioning;
+ const routeLabel=travellerRailLabel();if(nextStopButton.textContent!==routeLabel)nextStopButton.textContent=routeLabel;nextStopButton.hidden=!pawShowRouteShortcut({suggestion:travellerSuggestedRoute,avatar,activity,room,proposalHidden:proposal.hidden,pageOpen:$('page').style.display==='block',transitioning,talkOpen});
 };
 const copyAlbumProfile=albumProfile;
 albumProfile=function(q){copyAlbumProfile(q);const a=q.querySelector('.albumProfile p');if(a)a.textContent=items.length+tr(' little discoveries',' 份小小回忆')};
@@ -6886,7 +6886,11 @@ function meowPlaceText(cx,cy,w,h,bounds,blockers,maxShift=40){
  }
  return options.sort((a,b)=>a.score-b.score)[0]||null
 }
-let meowTextFrameRects=[],meowFrameBlockers=[],meowUIRects=[],meowUILast=-Infinity;
+let meowTextFrameRects=[],meowFrameBlockers=[],meowUIRects=[],meowUILast=-Infinity,meowTextFrameContext=null;
+function pawSpeechSignRects(inside,frameContext,currentContext,rects,anchors,scale,ox,oy){
+ if(inside)return frameContext===currentContext?rects.filter(r=>r&&[r.left,r.right,r.top,r.bottom].every(Number.isFinite)):[];
+ return anchors.filter(a=>a&&a.every(Number.isFinite)).map(([x,y])=>({left:ox+x*scale-74,right:ox+x*scale+74,top:oy+y*scale-30,bottom:oy+y*scale+30}));
+}
 function meowVisibleRects(selector){
  const root=$('game').getBoundingClientRect(),out=[];
  for(const el of document.querySelectorAll(selector)){
@@ -6902,7 +6906,7 @@ function meowIndoorActorBounds(a,scale=travellerRoomScale(H,cam.scale)){
  return {left:x-w/2-5,right:x+w/2+5,top:y-h-5,bottom:y+6}
 }
 function meowBeginTextFrame(inside){
- meowTextFrameRects=[];
+ meowTextFrameRects=[];meowTextFrameContext=[scene,inside?room:'',activity||'',W,H,cam.scale,cam.ox,cam.oy].join('|');
  const now=performance.now();
  if(now-meowUILast>100){meowUILast=now;meowUIRects=meowVisibleRects('#hud>*,#small button,#dock,#back,#hint,#gameControls,#movePad,#moveGuide,#walkHelp,#ritualActionBar,#pearlRecipePanel,#dialogue,#nextStopShortcut,#lunarRibbon,#destinyAccess,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet,#threeBoardAccess')}
  meowFrameBlockers=[...meowUIRects];
@@ -6956,7 +6960,7 @@ function drawMeowActorName(a,value,indoorScale=null){
 }
 const meowTextMapBefore=drawMap;drawMap=function(){meowBeginTextFrame(false);return meowTextMapBefore()};
 const meowTextRoomBefore=drawRoom;drawRoom=function(){meowBeginTextFrame(true);return meowTextRoomBefore()};
-const meowTextActivityBefore=drawActivity;drawActivity=function(){meowTextFrameRects=[];return meowTextActivityBefore()};
+const meowTextActivityBefore=drawActivity;drawActivity=function(){meowTextFrameRects=[];meowTextFrameContext=null;return meowTextActivityBefore()};
 const meowTextCSS=document.createElement('style');meowTextCSS.textContent=`
 #game #hudName,#game #hudProgress{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #game #profileHud{min-width:0}
@@ -7607,6 +7611,9 @@ syncCharacterSpeech=function(){
  if(short){
   el.classList.add('characterSpeech');el.classList.remove('paperConversation');
   const w=el.offsetWidth,h=el.offsetHeight,blockers=meowVisibleRects('#hud>*,#small button,#dock,#back,#gameControls,#ritualActionBar,#nextStopShortcut,#worldSigns .worldSign');
+   const frameKey=[scene,room||'',activity||'',W,H,cam.scale,cam.ox,cam.oy].join('|');
+   const anchors=room?[]:maps[scene].st.map(([id,x,y])=>housePlaqueAnchor(scene,id,x,y));
+   blockers.push(...pawSpeechSignRects(!!room,meowTextFrameContext,frameKey,meowTextFrameRects,anchors,cam.scale,cam.ox,cam.oy));
   const player=room?meowIndoorActorBounds(indoor):characterScreenBounds(p,true);
   const speaker=room?meowIndoorActorBounds(actor,actor.sc):characterScreenBounds(actor);
   if(room){for(const a of actors)if(a!==actor)blockers.push(meowIndoorActorBounds(a,a.sc));for(const a of sharedTownActors())blockers.push(meowIndoorActorBounds(a))}
@@ -7875,7 +7882,7 @@ syncSigns=function(){
  stationNameSignBefore();
  if(signRoot.hidden)return;const btn=signButtons.get('station');
  if(btn&&!btn.hidden)btn.title=tr('Train to ','搭车前往')+tr(...maps[railNextDistrict(scene)].n);
- if(!room&&!activity&&!transitioning&&proposal.hidden&&avatar!==null&&!talkOpen&&$('page').style.display!=='block')nextStopButton.hidden=false;
+ nextStopButton.hidden=!pawShowRouteShortcut({suggestion:travellerSuggestedRoute,avatar,activity,room,proposalHidden:proposal.hidden,pageOpen:$('page').style.display==='block',transitioning,talkOpen});
 };
 function drawPearlSeasoning(age){
  if(state.teaSugar>0&&age<.68){const f=poseEase(clamp(age/.25,0,1));ctx.save();ctx.translate(473,399);ctx.rotate(-.65*f);
@@ -8968,6 +8975,10 @@ const travellerMoodRoutes=[
  {id:'play',district:'island',door:'arcade',ask:['I am bored out of my mind.','无聊到快发芽了。'],reason:['A quick round of arcade fun might help.','去游戏厅摸一会儿鱼。']}
 ];
 var travellerSuggestedRoute=null;
+/* Only show a shortcut for an explicitly selected route. Ordinary travel remains on the railway plaque and Explore. */
+function pawShowRouteShortcut({suggestion,avatar,activity,room,proposalHidden,pageOpen,transitioning,talkOpen}){
+ return !!suggestion&&avatar!==null&&avatar!==undefined&&!activity&&!room&&proposalHidden&&!pageOpen&&!transitioning&&!talkOpen;
+}
 function travellerRailLabel(){const v=travellerSuggestedRoute;if(v&&travellerRouteDoor(v))return v.district===scene?tr('Find: ','去找：')+travellerRouteName(v):tr('Train to: ','搭车去：')+tr(...maps[v.district].n);return tr('Next train: ','下一班：')+tr(...maps[railNextDistrict(scene)].n)}
 function travellerRouteDoor(v){return maps[v.district]?.st.find(st=>st[0]===v.door)}
 function travellerRouteName(v){const st=travellerRouteDoor(v);return st?tr(st[3],st[4]):tr(...maps[v.district].n)}
