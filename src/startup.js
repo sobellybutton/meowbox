@@ -9951,4 +9951,16 @@ const pawChoiceSceneCSS=document.createElement('style');pawChoiceSceneCSS.textCo
 #proposal .pawIntentSkip{min-height:44px;max-width:100%;white-space:normal;padding:4px 12px;background:#2b4439;color:#fff3db;border:1px solid #bbac8b;border-radius:4px}
 @media(max-height:670px) and (orientation:portrait){#proposal .pawChoiceGrounded .pawEntranceAvatar{height:min(var(--paw-avatar-main,130px),85%)!important;max-height:85%!important;bottom:4%!important}}
 `;document.head.append(pawChoiceSceneCSS);
+const pawMapSignFinishCss=document.createElement('style');
+pawMapSignFinishCss.textContent=`
+#game>#worldSigns>.worldSign{box-sizing:border-box!important;width:max-content!important;min-width:44px!important;max-width:min(148px,42vw)!important;padding:0!important;display:flex;justify-content:center;align-items:center;background:transparent!important;border:0!important;box-shadow:none!important}
+#game>#worldSigns>.worldSign[hidden]{display:none!important}
+#game>#worldSigns>.worldSign .doorPlaque,#game[data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque{box-sizing:border-box!important;display:block!important;width:max-content!important;max-width:100%!important;min-width:0!important;writing-mode:horizontal-tb!important;white-space:nowrap!important;overflow-wrap:normal!important;word-break:keep-all!important;font-size:clamp(11px,2.7vw,13px)!important}
+#game[data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque{border-width:6px 8px 6px!important;padding:3px 5px!important}
+#game:not([data-recovered-plaque="true"])>#worldSigns>.worldSign .doorPlaque{padding:5px 7px!important}
+`;document.head.append(pawMapSignFinishCss);
+// Measure and apply the DOM plaques immediately after the canvas camera has
+// been rendered. The separate legacy UI tick shares the cached projection.
+const pawMapSignFrameBefore=loop;
+loop=function(...args){const result=pawMapSignFrameBefore(...args);if(proposal.hidden&&!room&&!activity)syncSigns();return result};
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
