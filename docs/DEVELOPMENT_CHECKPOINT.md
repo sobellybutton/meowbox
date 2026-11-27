@@ -520,3 +520,7 @@ Registry: {"outstanding":40,"tested":41,"implemented":3}. All leases released at
 
 
 Host creative checkpoint: six reference-matched seated Yue/Tarot WebPs plus seven earlier Yue alternatives consolidated into one checked staging archive. No uploaded host candidate directory detected on current main; GitHub text writes remain available but full-resolution local binary transfer blocked. Continue environment work; after owner upload verify manifest hashes, select preferred poses, and test actual desk/table alignment and player-relative scale before runtime activation. See ART_BLOCKERS.md for exact paths and hashes.
+
+
+## In-world wishing and private pier release (28 November)
+08b327bc: removed the separate wish writing webpage; use existing compact garden dialogue with private paper input, preserve fold/carry/hook/rise and local save; view saved lanterns one at a time without a separate live archive page. Ah Ma draw paths now exclude both river release activities, keeping her at the villain-hitting stall. 24 focused helper assertions and source syntax passed; 48b629e2 persists checks. be972bf3 adds owner hard rule to AGENTS.md for all in-world activity flows and intentional exceptions. f6a47a78 records evidence and releases UX-FLOW-01 lease. Actual rendering, native keyboard behavior, physical paper contact/animation, remaining full activity audit and complete mobile/desktop gameplay are unverified. No workstream stage promotion.
