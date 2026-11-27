@@ -8359,4 +8359,71 @@ roomGuideEntries=function(){
  return pawTempleFlowGuideBefore()
 };
 
+/* PAW_ARCADE_INPUT_BEGIN */
+function pawArcadeRhythmClock(q,now,blocked){
+ if(!q||q.rhythmStage!=='play'||!Number.isFinite(now)||!Number.isFinite(q.rhythmAt))return false;
+ const prior=q.pawRhythmClock;
+ if(prior&&Number.isFinite(prior.at)&&now>=prior.at&&(blocked||prior.blocked)){
+  const elapsed=now-prior.at;q.rhythmAt+=elapsed;
+  if(Number.isFinite(q.rhythmFlash)&&q.rhythmFlash>=0)q.rhythmFlash+=elapsed;
+ }
+ q.pawRhythmClock={at:now,blocked:!!blocked};return true
+}
+function pawRhythmInputAllowed(q,lane,now,blocked){
+ if(blocked||!q||q.rhythmStage!=='play'||!Number.isInteger(lane)||lane<0||lane>3||!Number.isFinite(now)||!Number.isFinite(q.rhythmAt)||now-q.rhythmAt<-.29)return false;
+ const prior=q.pawRhythmTap;
+ if(prior&&prior.lane===lane&&now-prior.at<.08)return false;
+ q.pawRhythmTap={lane,at:now};return true
+}
+function pawBlindCanCancel(q,blocked){
+ return !blocked&&!!q&&['shake','ready'].includes(q.boxStage)
+}
+/* PAW_ARCADE_INPUT_END */
+function pawArcadeInputBlocked(){return document.hidden||talkOpen||transitioning||!proposal.hidden||$('page').style.display==='block'}
+const pawArcadeRhythmBeginBefore=rhythmBegin;
+rhythmBegin=function(){
+ if(activity!=='rhythm'||pawArcadeInputBlocked())return;
+ const result=pawArcadeRhythmBeginBefore();
+ if(state.rhythmStage==='play')pawArcadeRhythmClock(state,t,false);
+ return result
+};
+const pawArcadeRhythmHitBefore=rhythmHit;
+rhythmHit=function(lane){
+ if(activity!=='rhythm'||!pawRhythmInputAllowed(state,lane,t,pawArcadeInputBlocked()))return;
+ return pawArcadeRhythmHitBefore(lane)
+};
+function pawRhythmVisibility(){if(activity==='rhythm')pawArcadeRhythmClock(state,performance.now()/1000,pawArcadeInputBlocked())}
+document.addEventListener('visibilitychange',pawRhythmVisibility);
+const pawArcadeClockLoopBefore=loop;
+loop=function(ms,...args){
+ if(activity==='rhythm')pawArcadeRhythmClock(state,ms/1000,pawArcadeInputBlocked());
+ return pawArcadeClockLoopBefore(ms,...args)
+};
+function pawBlindCancel(){
+ if(activity!=='blindBox'||!pawBlindCanCancel(state,pawArcadeInputBlocked()))return false;
+ drag=null;start('blindBox');return true
+}
+const pawBlindSelectBefore=boxSelect, pawBlindShakeBefore=boxShake, pawBlindOpenBefore=boxOpen;
+boxSelect=function(i){if(!pawArcadeInputBlocked())return pawBlindSelectBefore(i)};
+boxShake=function(amount){if(!pawArcadeInputBlocked())return pawBlindShakeBefore(amount)};
+boxOpen=function(){if(pawArcadeInputBlocked())return false;return pawBlindOpenBefore()};
+const pawBlindAssistSpecBefore=mb5AssistSpec;
+mb5AssistSpec=function(kind,q,now){
+ if(kind==='blindBox'){
+  if(q.boxStage==='shake')return {key:'box-shake',label:['Shake the box','摇一摇盲盒'],action:'box-shake'};
+  if(q.boxStage==='ready')return {key:'box-open',label:['Open for 40 Paw Coins','花40爪爪币开盒'],action:'box-open'};
+  if(q.boxStage==='opening')return {key:'box-opening',label:['Opening your box…','正在打开盲盒……'],disabled:true}
+ }
+ return pawBlindAssistSpecBefore(kind,q,now)
+};
+const pawBlindAssistPerformBefore=mb5AssistPerform;
+mb5AssistPerform=function(action){
+ if(action!=='box-shake'&&action!=='box-open')return pawBlindAssistPerformBefore(action);
+ if(activity!=='blindBox'||pawArcadeInputBlocked())return;
+ const spec=mb5AssistSpec(activity,state,t);
+ if(spec?.action!==action||spec.disabled)return;
+ if(action==='box-shake')boxShake(70);else boxOpen();
+ mb5AssistSync()
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
