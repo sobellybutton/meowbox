@@ -142,3 +142,18 @@ Prior run [45961770598](https://github.com/sobellybutton/meowbox/actions/runs/45
 New startup and test scripts parsed; two embedded workflow JS blocks parsed. The 11 new pure helper checks and one mocked header-placement check passed; the first 16 existing action-refinement checks also passed in the connector harness. Full local helper run was blocked by an empty connector response for src/extensions.js (large file); no complete local build or new browser/deployment pass claimed. Push-triggered Actions are not exposed by the current commit workflow lookup, and combined status returned no checks. Inspect latest main CI and screenshots before acceptance.
 
 No new artwork integrated in this continuation. Preserve the three reviewed travellers' existing frames. Remaining bespectacled traveller crops, distinct resident/cameo art, physical pose art and independent railway foreground layers still require recovery/repair and actual visual inspection. Do not advance the accepted count from automated results alone.
+
+
+## Cat care continuity and original sprite archive inspection
+
+Provisional implementation tally: 49/100 (9 owner-supplied baseline + 40 committed outcomes), not reconciled to the missing original numbered ledger. Fully accepted baseline remains 9/100.
+
+| ID | Outcome | Evidence |
+|---|---|---|
+| CAT-01 | Feed, water, rest, petting, play and return motion use a shared active clock rather than advancing during covered or hidden gameplay. | d7962ef; 24 phase/clock assertions. |
+| CAT-02 | Accessible stroke and feather alternatives complete only after visible active play, not a background timeout; stale buttons cannot initiate a new session. | d7962ef; focused ownership/timing assertions, persisted 62ca49f. |
+| CAT-03 | Cancel interrupted physical drags without reward, clear pointer capture on interruption, resize, blur, exit or replacement, return the animal to its resting position when appropriate. | d7962ef, b09238f; cancellation assertions. |
+
+All 35 new cat-care helper assertions passed. Recovered the complete extensions source via its Git blob (the file-content endpoint returned empty), enabling the full action-refinement helper suite to run successfully in the connector harness. The room-life/scoop, visual-stage-fit and painted-action helper scripts also passed; startup and extensions parse. The browser smoke now checks a detached care control, a real overlay during assisted petting and resumption (8b3898c); its execution is not yet verified. No local browser/build or new Pages result claimed.
+
+Inspected all four original down and four alternate left frames from player-1-batch-1.zip. Alternate left-facing sequence has a visibly cropped fourth hair silhouette, and the fourth front frame has a flattened hair top. Do not activate these sequences or substitute copied frames without a corrected source and motion review. Existing player 1 back sequence and other three travellers' installed art are preserved; no new artwork was integrated. Remaining illustrated poses, room staging, visitor art, railway foreground layers and actual screenshot/playback acceptance stay open.
