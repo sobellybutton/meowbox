@@ -8347,11 +8347,11 @@ function pawPrayerStep(){
  // No second deity, table, burner, mat or furniture over the painting.
  if(pawRoomImageReady(pawHallArt())){
   const p=pawHallPlate,xy=(u,v)=>({x:p.x+p.w*u,y:p.y+p.h*v});
-  const side=xy(.72,.53),front=xy(.50,.51),offering=xy(.50,.444),rack=xy(.79,.425),burner=xy(.50,.352);
+  const side=xy(.72,.64),front=xy(.50,.65),offering=xy(.50,.572),rack=xy(.79,.536),burner=xy(.50,.495);
   const blend=(a,b,v)=>({x:a.x+(b.x-a.x)*v,y:a.y+(b.y-a.y)*v});
   const ratio=duration=>poseEase(Math.max(0,Math.min(1,age/duration)));
   let foot=side,dir='right';
-  if(stage==='approach'){foot=blend(xy(.51,.62),side,ratio(1.1));dir='right'}
+  if(stage==='approach'){foot=blend(xy(.51,.73),side,ratio(1.1));dir='right'}
   else if(stage==='walkMat'){foot=blend(side,front,ratio(1.25));dir='left'}
   else if(['hold','bow','offer','complete'].includes(stage)){foot=front;dir='up'}
   else if(stage==='placing'){foot=blend(front,offering,ratio(1.85));dir='up'}
@@ -9672,12 +9672,12 @@ function pawTemplePortableTube(x,y,angle=0){
  ctx.save();try{
   ctx.translate(x,y);ctx.rotate(angle);
   ctx.beginPath();ctx.moveTo(-16,-37);ctx.lineTo(15,-37);ctx.lineTo(15,-9);ctx.lineTo(17,18);ctx.quadraticCurveTo(0,24,-15,18);ctx.lineTo(-17,-9);ctx.closePath();ctx.clip();
-  ctx.drawImage(im,sx*.032,sy*.298,sx*.095,sy*.106,-18,-39,36,61)
+  ctx.drawImage(im,sx*.032,sy*.451,sx*.095,sy*.106,-18,-39,36,61)
  }finally{ctx.restore()}
 }
 function pawTempleDrawStick(){
  const run=state,p=pawHallPlate,pose=pawTempleStickPose(run,t),held=drag?.id==='sticks';
- const [fx,fy]=pawTemplePoint(p,.27,.51),[landX,landY]=pawTemplePoint(p,.37,.57);
+ const [fx,fy]=pawTemplePoint(p,.26,.64),[landX,landY]=pawTemplePoint(p,.37,.66);
  const a=pose.picked?poseEase(Math.min(1,pose.pick/.45)):0;
  const ax=fx+(landX-15-fx)*a,ay=fy+(landY+4-fy)*a;
  const grip={x:ax-14,y:ay-46},cup={x:grip.x-7,y:grip.y-2};
@@ -9706,7 +9706,7 @@ function pawTempleDrawStick(){
  if(run.fallenStick&&!run.stickPicked&&!run.drawing)target(landX-30,landY-28,60,56,()=>{if(run===state)pickupFortuneStick()},'paw-temple-pick-stick');
 }
 function pawTempleDrawMoon(){
- const run=state,p=pawHallPlate,[x,y]=pawTemplePoint(p,.86,.402),[fx,fy]=pawTemplePoint(p,.70,.52);
+ const run=state,p=pawHallPlate,[x,y]=pawTemplePoint(p,.86,.535),[fx,fy]=pawTemplePoint(p,.70,.64);
  backHuman(fx,fy,avatar??0,false,'right',.96);
  const airborne=run.tossUntil>t,f=airborne?Math.max(0,Math.min(1,1-(run.tossUntil-t)/(run.moonDuration||.55))):1;
  const sc=.30;
@@ -9719,8 +9719,8 @@ function pawTempleDrawMoon(){
  if(!run.moonPending&&!(run.tossUntil>t))target(x-38,y-35,76,70,()=>{if(run===state)pawMoonToss(65,true)},'moon');
 }
 function pawTempleDrawBell(){
- const run=state,p=pawHallPlate,[x,floor]=pawTemplePoint(p,.79,.72),y=floor-63;
- const [ax,ay]=pawTemplePoint(p,.64,.73),m=pawTempleBellMotion(run,t,drag?.id==='templeStriker'?Math.abs(drag.x-drag.sx):0);
+ const run=state,p=pawHallPlate,[x,floor]=pawTemplePoint(p,.72,.82),y=floor-63;
+ const [ax,ay]=pawTemplePoint(p,.56,.83),m=pawTempleBellMotion(run,t,drag?.id==='templeStriker'?Math.abs(drag.x-drag.sx):0);
  if(m.age>=.22&&m.age<4&&!run.bellRung&&!pawArcadeInputBlocked()){
   run.bellRung=true;sound(146+(run.bellStrength||0)*12);
   if(!muted&&ambientBus){ambientTone(146.83,.065*(run.bellStrength||0),2.5,'sine');ambientTone(293.66,.025*(run.bellStrength||0),1.6,'sine',.04)}
