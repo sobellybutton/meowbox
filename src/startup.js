@@ -4862,10 +4862,29 @@ pawStoryCss.textContent='#content .pawTownStoryNote{position:relative;background
 document.head.append(pawStoryCss);
 // Canonical active dock state follows the actual screen, not the destination
 // on the town map. Preserve the four existing nav buttons and actions.
+/* PAW_DOCK_ROOT_BEGIN */
+function pawDockRootChoice(flags){
+ if(!flags.open||flags.room||flags.activity||flags.talk||flags.transition||flags.entrance||flags.editing||flags.homeOrigin||flags.draft||flags.typing)return '';
+ if(flags.explore)return 'travel';
+ if(flags.today)return 'today';
+ if(flags.town)return 'town';
+ if(flags.home)return 'home';
+ return ''
+}
+/* PAW_DOCK_ROOT_END */
+let pawDockRootKey='';
+function pawDockButtons(){return [['travel',$('dockTravel')],['today',$('dockScoop')],['town',pawTownDock],['home',mbHomeNav]]}
 function pawSyncDockSelection(){
  const q=$('content'),open=$('page').style.display==='block';
- const selected=!open?'':q.querySelector('.pawSketchbook,.travelAlbum')?'travel':q.querySelector('.hideoutScene,.travellerBagV2,.komorebiBook,.komorebiConfirm,.figureCabinetBook,.pawPersonalShelf')?'home':q.querySelector('.communityTabs,.townWall,.townChatTranscript')?'town':q.querySelector('.pawDiaryFold,.journalDailyTasks,.goodCompanyBook')?'today':'';
- for(const [key,button] of [['travel',$('dockTravel')],['today',$('dockScoop')],['town',pawTownDock],['home',mbHomeNav]]){
+ const explore=!!q.querySelector('.pawSketchbook'),today=!!q.querySelector('.pawDiaryFold'),town=!!q.querySelector('.communityTabs')&&communityTab==='board',home=!!q.querySelector('.hideoutScene,.hideoutRoomView');
+ // A root can switch tabs; nested pages retain their contextual Back.
+ // Never abandon a draft, active keyboard, furniture edit or room visit.
+ const fields=open?[...q.querySelectorAll('textarea,input:not([type]),input[type="text"],input[type="search"],[contenteditable="true"]')].filter(n=>!n.disabled&&!n.hidden):[];
+ const draft=fields.some(n=>String(n.value??n.textContent??'').trim()!==''),typing=fields.includes(document.activeElement);
+ pawDockRootKey=pawDockRootChoice({open,room:!!room,activity:!!activity,talk:talkOpen,transition:transitioning,entrance:!proposal.hidden,editing:!!hideoutEditing,homeOrigin:home&&!!mbHomeOrigin,draft,typing,explore,today,town,home});
+ const selected=!open?'':explore||q.querySelector('.travelAlbum')?'travel':home||q.querySelector('.travellerBagV2,.komorebiBook,.komorebiConfirm,.figureCabinetBook,.pawPersonalShelf')?'home':q.querySelector('.communityTabs,.townWall,.townChatTranscript')?'town':today||q.querySelector('.journalDailyTasks,.goodCompanyBook')?'today':'';
+ $('game').classList.toggle('pawDockRoot',!!pawDockRootKey);
+ for(const [key,button] of pawDockButtons()){
   button.classList.toggle('pawDockSelected',selected===key);
   if(selected===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')
  }
@@ -4877,6 +4896,41 @@ page=function(...args){const result=pawDockPageBefore(...args);queueMicrotask(pa
 const pawDockObserver=new MutationObserver(pawSyncDockSelection);pawDockObserver.observe($('page'),{attributes:true,attributeFilter:['style','hidden']});
 const pawDockStateCss=document.createElement('style');pawDockStateCss.textContent='#game #dock>button.pawDockSelected{background:#d7d7b6!important;color:#36533f!important;border-color:#839274!important;box-shadow:inset 0 -2px 0 #829374!important}#game #dock>button:focus-visible{outline:2px solid #547056;outline-offset:1px}';
 document.head.append(pawDockStateCss);
+$('dock').setAttribute('aria-label',tr('Game navigation','小镇导航'));
+for(const [key,button] of pawDockButtons()){
+ const previous=button.onclick;
+ button.onclick=function(event){
+  if($('page').style.display==='block'){
+   pawSyncDockSelection();
+   if(!pawDockRootKey||pawDockRootKey===key)return;
+  }
+  const result=previous?.call(this,event);
+  queueMicrotask(pawSyncDockSelection);
+  return result
+ };
+}
+$('content').addEventListener('input',pawSyncDockSelection);
+$('content').addEventListener('focusin',pawSyncDockSelection);
+$('content').addEventListener('focusout',()=>queueMicrotask(pawSyncDockSelection));
+const pawDockRootObserve=new MutationObserver(()=>pawSyncDockSelection());
+pawDockRootObserve.observe($('content'),{childList:true});
+const pawDockRootHUD=updateHUD;
+updateHUD=function(...args){
+ const result=pawDockRootHUD(...args);
+ const label=tr('Town Hall','小镇广场');pawTownDock.lastElementChild.textContent=label;pawTownDock.setAttribute('aria-label',label);
+ $('dock').setAttribute('aria-label',tr('Game navigation','小镇导航'));
+ return result
+};
+const pawDockRootStyle=document.createElement('style');
+pawDockRootStyle.textContent=`
+#game.pawDockRoot.pawFocusedView:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){display:flex!important;z-index:7!important}
+#game.pawDockRoot #page{padding-bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 84px)!important;scroll-padding-bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 84px)!important}
+#game #dock>button:not([hidden]){border:1px solid transparent!important;border-radius:5px!important;box-shadow:none}
+#game #dock>button.pawDockSelected{border-color:#839274!important;box-shadow:inset 0 -2px 0 #829374!important}
+#game #dock>button:not([hidden])>span:last-child{font-size:clamp(10px,2.9vw,13px)!important;white-space:normal!important;text-align:center}
+#game #dock{border-radius:8px!important}
+`;document.head.append(pawDockRootStyle);
+
 // Keyboard journal traversal moves focus to the selected tab after a rebuild.
 const pawJournalKeysBefore=pawJournalRender;
 pawJournalRender=function(district=scene){
@@ -5132,7 +5186,7 @@ document.head.append(pawDesktopGuideStyle);
 /* Owner feedback: keep the temple keeper inside, not in the arrival street. */
 const pawKeeperInitBefore=initNPC;
 initNPC=function(...args){const result=pawKeeperInitBefore(...args);if(scene==='fortune')for(let i=npc.length-1;i>=0;i--)if(npc[i].n?.some(v=>v==='Temple keeper'||v==='庙祝'))npc.splice(i,1);return result};
-function pawFocusView(){const open=$('page').style.display==='block';$('game').classList.toggle('pawInRoom',!!room||!!activity);$('game').classList.toggle('pawFocusedView',!!room||!!activity||open||talkOpen||transitioning||!proposal.hidden);$('game').classList.toggle('pawExitView',!!room&&!activity&&!open&&!talkOpen&&!transitioning&&proposal.hidden)}
+function pawFocusView(){const open=$('page').style.display==='block';if(!open||room||activity||talkOpen||transitioning||!proposal.hidden){if(pawDockRootKey){pawDockRootKey='';$('game').classList.remove('pawDockRoot')}}$('game').classList.toggle('pawInRoom',!!room||!!activity);$('game').classList.toggle('pawFocusedView',!!room||!!activity||open||talkOpen||transitioning||!proposal.hidden);$('game').classList.toggle('pawExitView',!!room&&!activity&&!open&&!talkOpen&&!transitioning&&proposal.hidden)}
 const pawFocusBefore=loop;
 loop=function(...args){const result=pawFocusBefore(...args);pawFocusView();return result};
 const pawFocusHUD=updateHUD;
