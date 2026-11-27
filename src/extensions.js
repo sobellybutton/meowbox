@@ -2313,16 +2313,17 @@ function directSignClick(id,x,y){
  if(room||transitioning||!proposal.hidden||valleyRevealAt>=0||$('page').style.display==='block')return;
  walkDoor(id,x,y);
 }
-let lastDoorLayoutAt=-Infinity,lastDoorLayoutLanguage=null;
+let lastDoorLayoutAt=-Infinity,lastDoorLayoutLanguage=null,lastDoorCameraKey='',lastDoorUIAt=-Infinity,lastDoorUIRects=[],lastDoorUISize='';
 syncSigns=function(){
  const show=proposal.hidden&&!room&&!transitioning&&avatar!==null&&$('page').style.display!=='block'&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;
  const wasHidden=signRoot.hidden;if(wasHidden===show)signRoot.hidden=!show;if(!show)return;
  if(signPress?.scene===scene&&signPress.el.isConnected)return;
  const changed=signsForScene!==scene||signButtons.size!==maps[scene].st.length;
- const now=performance.now();
- // The canvas remains full frame rate; DOM measurements need not run 60 times a second.
- if(!changed&&!wasHidden&&lastDoorLayoutLanguage===zh&&now-lastDoorLayoutAt<32)return;
- lastDoorLayoutAt=now;lastDoorLayoutLanguage=zh;
+ const now=performance.now(),cameraKey=[scene,W,H,cam.scale,cam.ox,cam.oy].join('|');
+ // Reproject immediately when the painted world moves. Only the expensive
+ // DOM blocker measurements are throttled, never the plaque's camera position.
+ if(!changed&&!wasHidden&&lastDoorLayoutLanguage===zh&&cameraKey===lastDoorCameraKey&&now-lastDoorLayoutAt<32)return;
+ lastDoorLayoutAt=now;lastDoorLayoutLanguage=zh;lastDoorCameraKey=cameraKey;
  if(changed){
   signsForScene=scene;signButtons.clear();signRoot.replaceChildren();
   for(const [id,x,y,en,cn] of maps[scene].st){
@@ -2336,14 +2337,21 @@ syncSigns=function(){
  const top=Math.min(112,H*.20),bottom=H-130;
  // Reserve real interactive UI and give each sign its own touch target.
  // Clamping independently made neighbouring doors share the same screen position.
- const blockers=[],placed=[],items=[];
- const rootRect=signRoot.getBoundingClientRect();
- for(const el of document.querySelectorAll('#hud>*,#small button,#dock,#gameControls,#movePad,#dialogue,#lunarBtn,#lunarRibbon,#walkHelp,#nextStopShortcut,#back,#ritualActionBar,#destinyAccess')){
-  if(el.hidden||!el.getClientRects().length)continue;
-  const b=el.getBoundingClientRect(),style=getComputedStyle(el);
-  if(style.visibility==='hidden'||style.display==='none'||Number(style.opacity)===0||!b.width||!b.height)continue;
-  blockers.push({left:b.left-rootRect.left-6,right:b.right-rootRect.left+6,top:b.top-rootRect.top-6,bottom:b.bottom-rootRect.top+6});
+ const placed=[],items=[],uiSize=W+'|'+H+'|'+zh+'|'+scene;
+ if(now-lastDoorUIAt>=80||uiSize!==lastDoorUISize||changed||wasHidden){
+  lastDoorUIAt=now;lastDoorUISize=uiSize;lastDoorUIRects=[];
+  const rootRect=signRoot.getBoundingClientRect();
+  for(const el of document.querySelectorAll('#hud>*,#small button,#dock,#gameControls,#movePad,#dialogue,#lunarBtn,#lunarRibbon,#walkHelp,#nextStopShortcut,#back,#ritualActionBar,#destinyAccess')){
+   if(el.hidden||!el.getClientRects().length)continue;
+   const b=el.getBoundingClientRect(),style=getComputedStyle(el);
+   if(style.visibility==='hidden'||style.display==='none'||Number(style.opacity)===0||!b.width||!b.height)continue;
+   lastDoorUIRects.push({left:b.left-rootRect.left-6,right:b.right-rootRect.left+6,top:b.top-rootRect.top-6,bottom:b.bottom-rootRect.top+6});
+  }
  }
+ const blockers=[...lastDoorUIRects];
+ // Reserve actual visible character bodies, not floating name guesses. Keep
+ // the previous plaque offset while safe so a passerby cannot continuously drag it.
+ for(const actor of [p,...npc,...sharedTownActors()]){if(!actor||![actor.x,actor.y].every(Number.isFinite))continue;const rect=characterScreenBounds(actor,actor===p);if(rect.right>0&&rect.left<W&&rect.bottom>top&&rect.top<bottom)blockers.push(rect)}
  // House plaques are fixed to their buildings. Moving actors and transient name labels do not compete for these positions.
  for(const [id,x,y,en,cn] of maps[scene].st){
   const btn=signButtons.get(id),name=tr(en,cn);
@@ -2354,7 +2362,7 @@ syncSigns=function(){
   const inView=sx>=-30&&sx<=W+30&&sy>=top-125&&sy<=bottom+70;
   if(!inView){btn._clearAt=0;btn._signOffset=null;if(!btn.hidden)btn.hidden=true;continue}
   // Measure only when necessary; do not repeatedly unhide a blocked sign.
-  if(btn._measureName!==name||!btn._signSize){const hidden=btn.hidden;if(hidden)btn.hidden=false;btn._signSize=[Math.max(44,btn.offsetWidth),Math.max(44,btn.offsetHeight)];btn._measureName=name;if(hidden)btn.hidden=true}
+  if(btn._measureName!==name||btn._measureViewport!==uiSize||!btn._signSize){btn._measureViewport=uiSize;const hidden=btn.hidden;if(hidden)btn.hidden=false;btn._signSize=[Math.max(44,btn.offsetWidth),Math.max(44,btn.offsetHeight)];btn._measureName=name;if(hidden)btn.hidden=true}
   items.push({btn,sx,sy,w:btn._signSize[0],h:btn._signSize[1]});
  }
  // Keep the nearest doorway closest to its artwork; move other labels only
@@ -2363,8 +2371,8 @@ syncSigns=function(){
  for(const item of items){
   const {btn,sx,sy,w,h}=item;
   const avoid=[...blockers,...placed],maxShift=Math.min(62,W*.16);let choice=null;
-  if(btn._signOffset){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
-  if(!choice){const bx=clamp(sx,6+w/2+4,W-6-w/2-4),by=clamp(sy,top+h/2+4,bottom-h/2-4);choice=meowPlaceText(bx,by,w,h,{left:6,right:W-6,top,bottom},avoid,maxShift)}
+  if(btn._signOffset&&Math.hypot(btn._signOffset.x,btn._signOffset.y)<=maxShift+.01){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
+  if(!choice)choice=meowPlaceText(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,maxShift);
   if(!choice){btn._clearAt=0;if(!btn.hidden)btn.hidden=true;continue}
   if(btn.hidden){if(!btn._clearAt)btn._clearAt=now;if(now-btn._clearAt<125){placed.push(choice.rect);continue}}
   btn._signOffset={x:choice.x-sx,y:choice.y-sy};
