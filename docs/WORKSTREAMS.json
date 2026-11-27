@@ -1,0 +1,485 @@
+{
+  "schema": 1,
+  "source": "docs/DEVELOPMENT_CHECKPOINT.md",
+  "policy": "Task stages describe this workstream deliverable, not overall game acceptance. Art-only tasks may be tested as assets but require integration and rendered acceptance before visual acceptance. Existing code-only verification remains open.",
+  "lanes": {
+    "world": "Entrance, four map plates, interior artwork and staging",
+    "actors": "Traveller and NPC art, animation and resident behaviours",
+    "games": "Physical rituals, activities, controls and replayability",
+    "content": "Bilingual dialogue, readings, assessments and stories",
+    "interface": "Four docks, collections, share results and accessibility",
+    "engineering": "Build, runtime, browser QA, asset integration and performance"
+  },
+  "tasks": [
+    {
+      "id": "ENT-01",
+      "lane": "world",
+      "priority": 1,
+      "summary": "Entrance journey and return rendered acceptance",
+      "resources": [
+        "browser:entrance"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "ENT-02",
+      "lane": "world",
+      "priority": 1,
+      "summary": "Matching independent gateway painting and threshold",
+      "resources": [
+        "art:gateway"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "MAP-01",
+      "lane": "world",
+      "priority": 1,
+      "summary": "Fortune Valley replacement painting",
+      "resources": [
+        "art:fortune"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "MAP-02",
+      "lane": "world",
+      "priority": 2,
+      "summary": "Lazy Island replacement painting",
+      "resources": [
+        "art:home"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "MAP-03",
+      "lane": "world",
+      "priority": 2,
+      "summary": "Munch & Play replacement painting",
+      "resources": [
+        "art:island"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "MAP-04",
+      "lane": "world",
+      "priority": 2,
+      "summary": "Discovery Station replacement painting",
+      "resources": [
+        "art:wonder"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "WORLD-INTEGRATION",
+      "lane": "engineering",
+      "priority": 1,
+      "summary": "Integrate finished map/gateway art with traced paths, doors, masks and plaques",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/engine.js",
+        "browser:world"
+      ],
+      "depends": [
+        "ENT-02",
+        "MAP-01",
+        "MAP-02",
+        "MAP-03",
+        "MAP-04"
+      ],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "ART-01",
+      "lane": "actors",
+      "priority": 1,
+      "summary": "Directional traveller art recovery and frame correction",
+      "resources": [
+        "art:travellers"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "ART-02",
+      "lane": "actors",
+      "priority": 2,
+      "summary": "Illustrated seated, waving and contact poses",
+      "resources": [
+        "art:travellers"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "ART-03",
+      "lane": "actors",
+      "priority": 2,
+      "summary": "Distinct cameo and resident art",
+      "resources": [
+        "art:residents"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "NPC-01",
+      "lane": "actors",
+      "priority": 2,
+      "summary": "Natural movement, varied identities, quiet dialogue",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "NPC-02",
+      "lane": "actors",
+      "priority": 3,
+      "summary": "Visitor diversity and route continuity",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "NPC-03",
+      "lane": "actors",
+      "priority": 3,
+      "summary": "Resident contact, speech and room continuity",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "ROOM-01",
+      "lane": "world",
+      "priority": 1,
+      "summary": "Temple dedicated ritual art and spatial contact",
+      "resources": [
+        "art:temple"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "ROOM-02",
+      "lane": "world",
+      "priority": 2,
+      "summary": "Garden and wishing pool art and staging",
+      "resources": [
+        "art:garden"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "ROOM-03",
+      "lane": "world",
+      "priority": 2,
+      "summary": "Kitchen and tea preparation art",
+      "resources": [
+        "art:kitchen"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "ROOM-04",
+      "lane": "world",
+      "priority": 2,
+      "summary": "Arcade and retained game art",
+      "resources": [
+        "art:arcade"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "ROOM-05",
+      "lane": "world",
+      "priority": 2,
+      "summary": "Park and distinct animal art",
+      "resources": [
+        "art:park"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "ROOM-06",
+      "lane": "world",
+      "priority": 3,
+      "summary": "Pier, discovery and reading interiors",
+      "resources": [
+        "art:interiors"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "ART-INTEGRATION",
+      "lane": "engineering",
+      "priority": 2,
+      "summary": "Integrate finished room and actor assets, verify visible poses and contact",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/engine.js",
+        "browser:rooms"
+      ],
+      "depends": [
+        "ART-01",
+        "ROOM-01"
+      ],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "RAIL-04",
+      "lane": "world",
+      "priority": 2,
+      "summary": "Independent railway near scenery layers",
+      "resources": [
+        "art:rail"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "GAME-01",
+      "lane": "games",
+      "priority": 2,
+      "summary": "Physical activity input and restart acceptance",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "browser:games"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "READ-01",
+      "lane": "content",
+      "priority": 2,
+      "summary": "Personality questions, scoring and bilingual results",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "READ-02",
+      "lane": "content",
+      "priority": 2,
+      "summary": "ZWDS input, privacy and result checks",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "READ-03",
+      "lane": "content",
+      "priority": 2,
+      "summary": "Tarot accuracy and rendered share/history acceptance",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "browser:readings"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "SHARE-01",
+      "lane": "interface",
+      "priority": 2,
+      "summary": "Share template fit and exported visual checks",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/shell.html"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "LOC-01",
+      "lane": "content",
+      "priority": 3,
+      "summary": "Bilingual typography, humour and labels",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/shell.html"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "UX-01",
+      "lane": "interface",
+      "priority": 1,
+      "summary": "Four dock visual design and coherent navigation",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/shell.html"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "UX-02",
+      "lane": "interface",
+      "priority": 2,
+      "summary": "Focus, keyboard, accessible equivalents and safe areas",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/shell.html"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "PERF-01",
+      "lane": "engineering",
+      "priority": 2,
+      "summary": "Measure loading, memory and frame pacing",
+      "resources": [
+        "browser:performance"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "QA-01",
+      "lane": "engineering",
+      "priority": 1,
+      "summary": "Current main organic journeys, screenshots and deployment verification",
+      "resources": [
+        "browser:world",
+        "browser:entrance",
+        "browser:rooms",
+        "browser:games"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "MAP-05",
+      "lane": "engineering",
+      "priority": 2,
+      "summary": "Rendered verification of existing doorway repeat and route fix",
+      "resources": [
+        "browser:world"
+      ],
+      "depends": [],
+      "stage": "tested",
+      "evidence": [
+        "6564b826",
+        "555edd9a"
+      ],
+      "lease": null
+    },
+    {
+      "id": "RAIL-RECOVERY",
+      "lane": "engineering",
+      "priority": 2,
+      "summary": "Rendered verification of existing first railway recovery",
+      "resources": [
+        "browser:entrance"
+      ],
+      "depends": [],
+      "stage": "tested",
+      "evidence": [
+        "c1ae152",
+        "6a5b7c1"
+      ],
+      "lease": null
+    }
+  ]
+}
