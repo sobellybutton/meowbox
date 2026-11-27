@@ -857,7 +857,9 @@
         "scripts/build.cjs",
         "src/resident-remarks.js",
         "src/paw-motion-audio.js",
-        "src/paw-economy.js"
+        "src/paw-economy.js",
+        "src/extensions.js",
+        "scripts/runtime-module-live-test.cjs"
       ],
       "depends": [
         "ECON-01",
