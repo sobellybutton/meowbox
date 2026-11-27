@@ -157,3 +157,23 @@ Provisional implementation tally: 49/100 (9 owner-supplied baseline + 40 committ
 All 35 new cat-care helper assertions passed. Recovered the complete extensions source via its Git blob (the file-content endpoint returned empty), enabling the full action-refinement helper suite to run successfully in the connector harness. The room-life/scoop, visual-stage-fit and painted-action helper scripts also passed; startup and extensions parse. The browser smoke now checks a detached care control, a real overlay during assisted petting and resumption (8b3898c); its execution is not yet verified. No local browser/build or new Pages result claimed.
 
 Inspected all four original down and four alternate left frames from player-1-batch-1.zip. Alternate left-facing sequence has a visibly cropped fourth hair silhouette, and the fourth front frame has a flattened hair top. Do not activate these sequences or substitute copied frames without a corrected source and motion review. Existing player 1 back sequence and other three travellers' installed art are preserved; no new artwork was integrated. Remaining illustrated poses, room staging, visitor art, railway foreground layers and actual screenshot/playback acceptance stay open.
+
+
+## Owner escalation: entrance/map visual mismatch and tarot continuity
+
+Owner reports the entrance image looks wrong, traveller zooms towards the middle/sky rather than walking along the path, and all four maps still appear old. Directly inspected the actual repository raster images: entrance is an autumn timber mountain gateway, while Fortune Valley is a vivid spring cherry-blossom shrine village and the other three district scenes are the prior painted coastal village, food street and observatory village. Confirmed the active source still selects the following legacy map assets:
+- Fortune Valley: assets/art/039.webp (ART.valleyClean)
+- Home: assets/portrait/salted-fish-island.webp
+- Island: assets/portrait/food-and-fun-street.webp
+- Wonder: assets/portrait/wonder-valley.webp
+
+The recovered redesign concept boards are not production map layers. Library search located the existing Multi-Device Visual Blueprint, World Journey and production/asset boards; do not crop a board or a UI mockup as a playable background. Four new independent clean map paintings and a matching entrance are still outstanding. For each, trace physical path/door footprints, spawn/exit anchors and signs, camera extents and foreground occlusion before switching active artwork. Keep the four existing district IDs, activities, save keys, and routes. Prioritize this owner escalation above further unrelated gameplay breadth; no visual acceptance until actual device screenshots/playback have been inspected.
+
+| ID | Outcome | Evidence |
+|---|---|---|
+| TAROT-03 | Keep deal, shuffle, close-up and active flip timing across interruptions; do not save a covered reading. | 5177e3f, targeted tests. |
+| TAROT-04 | Bind all drawn card targets to current session, stage and orientation. | 5177e3f. |
+| TAROT-05 | Keyboard navigation/selection with drawn selection outline, number-key reveal and focus escape. | 5177e3f; 32 combined focused tests. |
+| ENT-03 | Trace a shorter approach on the foreground stone paving, moderate size change, disable inherited CSS zoom on departure, remove second forced map walk. | cf8a6e9; 606 added gate path samples across six viewports. |
+
+Persisted tests in 022cecd and e453442. Full action-refinement and room-life/scoop helper scripts passed in connector harness; 32 tarot checks, 1829 gate/identity/movement checks including 606 new gate samples. New browser CI/Pages unavailable via commit lookup at inspection; actual entrance playback still unverified. No new map or gate artwork integrated. Provisional tally 53/100 (9 baseline + 44 committed outcomes), still not reconciled to original ledger. Accepted baseline 9/100 unchanged. Do not count source artwork inspection as a new artwork deliverable.
