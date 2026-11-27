@@ -4190,7 +4190,7 @@ function hideoutPage(){
    pawSyncFurnitureTray(q);stage.querySelectorAll('.hideoutPlaced,.hideoutDisplay,.hideoutPlayer').forEach(el=>el.remove());
    const sorted=hideoutFurniture.map((d,i)=>({d,i})).filter(v=>Object.hasOwn(art9,v.d.id)&&furnitureZone(v.d)===komorebiZone).sort((a,b)=>(a.d.id==='rug'?-1:a.d.y)-(b.d.id==='rug'?-1:b.d.y));
    for(const {d,i} of sorted){
-    const im=element('img','',stage,'hideoutPlaced'+(hideoutEditing&&i===hideoutSelected?' selected':''));im.src=art9[d.id];im.alt=tr(...roomNames9[d.id]);im.style.left=clamp(Number(d.x)||50,8,92)+'%';im.style.top=clamp(Number(d.y)||50,12,91)+'%';im.style.rotate=(Number(d.r)||0)+'deg';im.style.width=furnitureWidth(d.id)+'%';im.dataset.furnitureId=d.id;
+    const im=element('img','',stage,'hideoutPlaced'+(hideoutEditing&&i===hideoutSelected?' selected':''));pawFurnitureSetImage(im,d.id);im.alt=tr(...roomNames9[d.id]);im.style.left=clamp(Number(d.x)||50,8,92)+'%';im.style.top=clamp(Number(d.y)||50,12,91)+'%';im.style.rotate=(Number(d.r)||0)+'deg';im.style.width=furnitureWidth(d.id)+'%';im.dataset.furnitureId=d.id;
     im.style.zIndex=String(mbHomeDepth(d.id,d.y));
     if(hideoutEditing){
      im.tabIndex=0;im.setAttribute('role','button');im.setAttribute('aria-pressed',String(i===hideoutSelected));im.draggable=false;
@@ -4248,7 +4248,7 @@ function hideoutPage(){
      if(hideoutFurniture.filter(d=>furnitureZone(d)===komorebiZone).length>=24){toast(tr('Your room is full. Even the cat needs space.','小窝满啦，猫猫也需要空间。'));return}
      const pos=mbHomeSuggest(mbHomeKind(id),furnitureWidth(id),mbHomeObjects(komorebiZone));
      hideoutFurniture.push({id,...pos,zone:komorebiZone});hideoutSelected=hideoutFurniture.length-1;saveHideout();render()
-    });btn.dataset.furnitureTray=id;const im=element('img','',btn);im.src=art9[id];im.alt='';element('small',tr(...name),btn);element('small','',btn,'pawFurnitureLocation');
+    });btn.dataset.furnitureTray=id;const im=element('img','',btn);pawFurnitureSetImage(im,id,true);im.alt='';element('small',tr(...name),btn);element('small','',btn,'pawFurnitureLocation');
    }
    pawSyncFurnitureTray(q);b(q,tr('Visit Komorebi Living','去木漏日杂货铺'),()=>furnitureMarket('room'));
    const tools=element('div','',q,'hideoutActions hideoutTools');stage.after(tools);
@@ -8645,7 +8645,28 @@ function komorebiArt(id){
  };
  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><ellipse cx="90" cy="153" rx="54" ry="9" fill="#59442e18"/>'+(shapes[id]||'')+'</svg>')
 }
-for(const [id,en,cn] of furnitureCatalogue()){if(furnitureIsPlaceable(id))roomNames9[id]=[en,cn];art9[id]=komorebiArt(id)}
+/* PAW_FURNITURE_PREVIEW_BEGIN */
+const pawFurnitureArtBase="assets/visual/staging/2026-11-27-b/room/";
+const pawFurniturePainted={"futon":"futon","bed":"single-bed","lamp":"paper-lamp","basicTable":"low-table","rug":"woven-rug","plant":"fern","zabuton":"floor-cushion","catBasket":"cat-bed","sakuraVase":"flower-vase","lowDesk":"desk","retroTV":"retro-tv","chineseTeaTable":"tea-table","chineseBench":"bench"};
+const pawFurniturePreviewOnly={"shelf":"furniture/bookcase.webp","displayCabinet":"furniture/display-cabinet.webp","shojiLamp":"furniture/floor-lantern.webp","roomExtension":"shells/side-extension.webp","roomStudio":"shells/l-shaped-extension.webp"};
+function pawFurniturePaintedPath(id,preview=false){
+ if(Object.hasOwn(pawFurniturePainted,id))return pawFurnitureArtBase+'furniture/'+pawFurniturePainted[id]+'.webp';
+ if(preview&&Object.hasOwn(pawFurniturePreviewOnly,id))return pawFurnitureArtBase+pawFurniturePreviewOnly[id];
+ return null
+}
+/* PAW_FURNITURE_PREVIEW_END */
+const pawFurnitureFallbackArt=new Map();
+function pawFurnitureSetImage(im,id,preview=false){
+ const source=pawFurniturePaintedPath(id,preview)||art9[id],fallback=pawFurnitureFallbackArt.get(id)||art9[id];
+ im.decoding='async';im.dataset.furnitureArt=pawFurniturePaintedPath(id,preview)?'painted-candidate':'interim';
+ if(source!==fallback)im.addEventListener('error',()=>{if(im.getAttribute('src')!==fallback){im.dataset.furnitureArt='interim';im.src=fallback}},{once:true});
+ im.src=source
+}
+for(const [id,en,cn] of furnitureCatalogue()){
+ if(furnitureIsPlaceable(id))roomNames9[id]=[en,cn];
+ const fallback=komorebiArt(id);pawFurnitureFallbackArt.set(id,fallback);
+ art9[id]=pawFurniturePaintedPath(id)||fallback
+}
 let komorebiCategory='all',komorebiStyleFilter='all';
 function furnitureStyle(id){return ['chineseTeaTable','chineseScreen','chineseLantern','porcelainVase','chineseBench','moonShelf'].includes(id)?'chinese':['futon','basicTable','kotatsu','zabuton','shojiLamp','bonsai','teaCabinet','floorTatami','retroTV','wallSakura'].includes(id)?'japanese':'shared'}
 function furnitureMarket(back='shop'){
@@ -8660,7 +8681,7 @@ function furnitureMarket(back='shop'){
  }
  const grid=element('div','',shelf,'komorebiGrid');
  for(const v of furnitureCatalogue().filter(v=>(komorebiCategory==='all'||v[4]===komorebiCategory)&&(komorebiStyleFilter==='all'||furnitureStyle(v[0])==='shared'||furnitureStyle(v[0])===komorebiStyleFilter))){
- const [id,en,cn,cost]=v,owned=furnitureOwned(id),tile=element('article','',grid,'komorebiTile'),im=element('img','',tile);tile.dataset.furnitureId=id;im.src=art9[id];im.alt='';
+ const [id,en,cn,cost]=v,owned=furnitureOwned(id),tile=element('article','',grid,'komorebiTile'),im=element('img','',tile);tile.dataset.furnitureId=id;pawFurnitureSetImage(im,id,true);im.alt='';
  element('strong',tr(en,cn),tile);element('small',owned?tr('In your furniture collection','已拥有'):cost+' '+tr('Paw Coins','爪爪币'),tile);
  const buy=b(tile,owned?tr('Owned','已拥有'):tr('View & buy','看看再买'),()=>{if(owned)return;furnitureConfirm(id,back)});
  buy.disabled=owned;
@@ -8674,7 +8695,7 @@ function furnitureMarket(back='shop'){
 function furnitureConfirm(id,back){
  const v=furnitureCatalogue().find(x=>x[0]===id);if(!v)return;
  page(tr(v[1],v[2]),tr('A little piece of home.','给小窝添一点温柔。'),q=>{
- const card=element('section','',q,'komorebiConfirm'),im=element('img','',card);im.src=art9[id];im.alt='';
+ const card=element('section','',q,'komorebiConfirm'),im=element('img','',card);pawFurnitureSetImage(im,id,true);im.alt='';
  element('h2',v[3]+' '+tr('Paw Coins','爪爪币'),card);element('p',tr('Your balance: ','目前余额：')+hideoutBalance(),card);
  const btn=b(card,furnitureOwned(id)?tr('Already owned','已拥有'):tr('Buy for ','购买 · ')+v[3]+' '+tr('Paw Coins','爪爪币'),()=>{if(buyFurniture(id)){toast(tr('Delivered to your furniture collection.','已送到你的小窝家具库。'));if(v[4]==='extension'){komorebiZone=id==='roomExtension'?1:2;hideoutSelected=-1;hideoutEditing=false;hideoutPage()}else furnitureMarket(back)}});
  btn.disabled=furnitureOwned(id)||hideoutBalance()<v[3]||(id==='roomStudio'&&!furnitureOwned('roomExtension'));if(id==='roomStudio'&&!furnitureOwned('roomExtension'))element('p',tr('Build the reading room first.','请先扩建阅读小室。'),card);
