@@ -86,11 +86,11 @@ async function travelLoop(page,name,touch){
  await press(page.locator('#proposal footer .actions button').first());
  const layout=touch?'portrait':'landscape';
  await page.locator('#proposal .rail-cabin .mbPaintedRail[data-layout="'+layout+'"]:visible').waitFor();
- const glass=page.locator('#proposal .mbPaintedRail .pawMovingGlass');
+ const glass=page.locator('#proposal .mbPaintedRail :is(.pawMovingGlass,.pawPaintedRailComposite)');
  await glass.waitFor({state:'visible',timeout:5000});
  const firstFrame=Number(await glass.getAttribute('data-frame'));
- await page.waitForFunction(n=>Number(document.querySelector('#proposal .pawMovingGlass')?.dataset.frame)>n,firstFrame,{timeout:3000});
- assert(await glass.evaluate(el=>{const p=el.getContext('2d').getImageData(0,0,1,1).data;return p[3]===0}),'Carriage foreground must remain transparent in moving layer');
+ await page.waitForFunction(n=>Number(document.querySelector('#proposal .mbPaintedRail :is(.pawMovingGlass,.pawPaintedRailComposite)')?.dataset.frame)>n,firstFrame,{timeout:3000});
+ if(await glass.evaluate(el=>el.classList.contains('pawMovingGlass')))assert(await glass.evaluate(el=>{const p=el.getContext('2d').getImageData(0,0,1,1).data;return p[3]===0}),'Carriage foreground must remain transparent in moving layer');
  await shot('train');
  await press(page.locator('#proposal .rail-arrive'));
  await page.locator('#proposal .mbGatePainting:visible').waitFor();
@@ -155,13 +155,13 @@ async function travelLoop(page,name,touch){
   assert.equal(await page.locator('.districtRailCabin').isVisible(),false,'Map selection boards directly');
   assert.equal(await ride.locator('.mbRailPane').count(),0,'Do not reintroduce broken composite windows');
   assert(await ride.locator('.mbPaintedRail img').evaluate(im=>im.complete&&im.naturalWidth>0),'Painted carriage loaded');
-  const moving=ride.locator('.pawMovingGlass');
+  const moving=ride.locator(':is(.pawMovingGlass,.pawPaintedRailComposite)');
   await moving.waitFor({timeout:2000});
-  assert.equal(await moving.count(),1,'One glass-only motion layer');
+  assert.equal(await moving.count(),1,'One railway motion layer');
   const motion=await ride.locator('.mbPaintedRail').getAttribute('data-rail-motion');
-  assert(['route-panorama','route-parallax'].includes(motion),'Installed district scenery must be used: '+motion);
+  assert(['route-panorama','route-parallax','painted-route-parallax'].includes(motion),'Installed district scenery must be used: '+motion);
   const frame=await moving.evaluate(el=>({frame:Number(el.dataset.frame),pixels:el.toDataURL()}));
-  await page.waitForFunction(n=>Number(document.querySelector('.pawRailJourney .pawMovingGlass')?.dataset.frame)>n+2,frame.frame,{timeout:1400});
+  await page.waitForFunction(n=>Number(document.querySelector('.pawRailJourney :is(.pawMovingGlass,.pawPaintedRailComposite)')?.dataset.frame)>n+2,frame.frame,{timeout:1400});
   assert.notEqual(await moving.evaluate(el=>el.toDataURL()),frame.pixels,'Window pixels must visibly change, not just frame counter');
   const fit=await ride.evaluate(el=>{
     const r=el.getBoundingClientRect(),g=document.querySelector('#game').getBoundingClientRect(),a=el.querySelector('.mbPaintedRail').getBoundingClientRect(),im=el.querySelector('.mbPaintedRail img');
@@ -186,11 +186,24 @@ async function travelLoop(page,name,touch){
    await backOutside();
   }
  }
- // The physical railway boards directly, without the old confirmation page.
+ // A physical station is a destination in its own right. Arrival does not board automatically.
  await press(page.locator('#dockTravel'));
  await press(page.locator('.pawJournalDeparture').getByRole('button',{name:'Walk to station',exact:true}));
- await page.locator('.pawRailJourney').waitFor({state:'visible',timeout:21000});
- assert.equal(await page.locator('.districtRailCabin').isVisible(),false,'Physical railway should not open a preview');
+ const platform=page.locator('.pawStationPlatform');
+ await platform.waitFor({state:'visible',timeout:21000});
+ assert.equal(await page.locator('.pawRailJourney').isVisible(),false,'Station arrival must not board automatically');
+ assert(await platform.locator('.pawVisitProgress progress').isVisible(),'Optional exploration progress is missing');
+ assert(await page.evaluate(()=>pawRoomVisitProgress(maps.fortune,pawRoomVisitMemory.fortune).count>=4),'Physical room visits were not recorded');
+ await shot('station-platform');
+ await press(platform.getByRole('button',{name:'Keep exploring',exact:true}));
+ await platform.waitFor({state:'hidden'});
+ assert(await page.evaluate(()=>scene==='fortune'&&!transitioning),'Keeping exploring must retain the current district');
+ await press(page.locator('#dockTravel'));
+ await press(page.locator('.pawJournalDeparture').getByRole('button',{name:'Walk to station',exact:true}));
+ await platform.waitFor({state:'visible',timeout:21000});
+ await press(platform.locator('.pawStationBoard'));
+ await page.locator('.pawRailJourney').waitFor({state:'visible',timeout:10000});
+ assert.equal(await page.locator('.districtRailCabin').isVisible(),false,'Boarding must not open the obsolete preview');
  assert.equal(await page.locator('.pawRailCaption strong').innerText(),await page.evaluate(()=>maps.home.n[0]));
  await shot('direct-railway');
  await page.waitForFunction(()=>scene==='home'&&!transitioning,null,{timeout:12000});
