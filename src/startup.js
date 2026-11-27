@@ -11519,6 +11519,178 @@ const pawParallelReflectionCss=document.createElement('style');
 pawParallelReflectionCss.textContent='#storyReadingSheet .pawParallelReflection{grid-column:1/-1;border-top:1px dashed #bca47e;margin-top:5px}#storyReadingSheet .pawParallelReflection summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font:600 13px/1.35 Georgia,"Songti SC",serif}#storyReadingSheet .pawParallelReflection p{font-size:14px;line-height:1.5;margin:0 0 8px}';
 document.head.append(pawParallelReflectionCss);
 
+/* PAW_CAFE_CONVERSATION_BEGIN */
+const pawCafeExtraQuestions=[
+  [
+    [
+      "A friend tells you they need a weekend alone.",
+      "朋友说这个周末想自己待着。"
+    ],
+    [
+      [
+        "Let them enjoy the weekend without checking in",
+        "让对方安静过个周末，不追着问"
+      ],
+      [
+        "Offer to help with an errand another day",
+        "改天帮对方分担一件小事"
+      ],
+      [
+        "Tell them you are happy to listen whenever they are ready",
+        "告诉对方，想聊的时候你都愿意听"
+      ]
+    ]
+  ],
+  [
+    [
+      "Someone remembers a small thing you mentioned weeks ago.",
+      "有人记得你几周前随口提过的一件小事。"
+    ],
+    [
+      [
+        "Enjoy being known without making a fuss",
+        "默默享受这种被记住的感觉"
+      ],
+      [
+        "Suggest doing that thing together",
+        "约对方一起去做那件事"
+      ],
+      [
+        "Tell them how much it meant to you",
+        "认真告诉对方，你很感动"
+      ]
+    ]
+  ],
+  [
+    [
+      "A shared plan feels tiring rather than exciting.",
+      "原本约好的活动，现在想想有点累。"
+    ],
+    [
+      [
+        "Ask for a quieter alternative or time alone",
+        "提出换个轻松安排，或留点独处时间"
+      ],
+      [
+        "Find one small change that makes it manageable",
+        "想个实际办法，让安排没那么累"
+      ],
+      [
+        "Explain your feelings and ask how they feel",
+        "说说自己的感受，也听听对方怎么想"
+      ]
+    ]
+  ],
+  [
+    [
+      "An old friend has not replied for a while.",
+      "老朋友有一阵子没回消息了。"
+    ],
+    [
+      [
+        "Give them time without reading into the silence",
+        "留点时间，不急着给沉默加戏"
+      ],
+      [
+        "Send a low-pressure invitation for another day",
+        "发个不催回复的改日邀约"
+      ],
+      [
+        "Send a short note saying you are thinking of them",
+        "发条简短消息，让对方知道你惦记着"
+      ]
+    ]
+  ],
+  [
+    [
+      "You realise you misunderstood something they said.",
+      "你发现自己误会了对方的话。"
+    ],
+    [
+      [
+        "Take a moment to settle before talking",
+        "先整理一下情绪，再开口"
+      ],
+      [
+        "Suggest a concrete way to put things right",
+        "提出一个实际的补救办法"
+      ],
+      [
+        "Acknowledge the misunderstanding and ask what they meant",
+        "坦诚承认误会，再问问对方原本的意思"
+      ]
+    ]
+  ]
+];
+const pawCafePrompts=[
+  [
+    "Would you prefer company, a little space, or help with something specific?",
+    "你想有人陪一会儿，想自己静静，还是需要我帮个具体的忙？"
+  ],
+  [
+    "Shall we make a small plan, or would you rather I just stay with you?",
+    "要不要一起做个小安排？还是我陪你待一会儿就好？"
+  ],
+  [
+    "I can listen. Would you like advice, or do you just need to be heard?",
+    "我可以听你说。你想听建议，还是只想有人听着？"
+  ]
+];
+function pawCafeAssess(answers,count){
+ if(!Array.isArray(answers)||!Number.isInteger(count)||count<1||answers.length!==count||answers.some(v=>!Number.isInteger(v)||v<0||v>2))return null;
+ const scores=[0,0,0];for(const a of answers)scores[a]++;
+ const max=Math.max(...scores),ties=scores.map((v,i)=>v===max?i:-1).filter(i=>i>=0);
+ return {index:ties[0],ties,scores};
+}
+function pawCafeResultCopy(result,kinds){
+ if(!result||!Array.isArray(result.ties)||!result.ties.length||!Array.isArray(kinds)||result.ties.some(i=>!Number.isInteger(i)||!kinds[i]||!pawCafePrompts[i])||new Set(result.ties).size!==result.ties.length)return null;
+ const ties=result.ties;
+ return {title:ties.length===1?kinds[ties[0]].slice(0,2):['A blend of ways to connect','不止一种相处方式'],lines:ties.map(i=>kinds[i].slice(2,4)),prompts:ties.map(i=>pawCafePrompts[i])};
+}
+/* PAW_CAFE_CONVERSATION_END */
+if(cafeQuestions.length===4)cafeQuestions.push(...pawCafeExtraQuestions);
+const pawCafeChooseBefore=cafeChoose;
+cafeChoose=function(i){
+ if(activity!=='match'||scene!=='wonder'||cafePhase!=='question'||talkOpen||transitioning||!proposal.hidden||$('page').style.display==='block'||!Number.isInteger(i)||i<0||i>2)return;
+ return pawCafeChooseBefore(i);
+};
+const pawCafeSheetBefore=syncCafeQuestionSheet;
+syncCafeQuestionSheet=function(...args){
+ const allowed=activity==='match'&&scene==='wonder'&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block';
+ if(!allowed){cafeQuestionSheet.hidden=true;cafeQuestionSheetKey='';return}
+ if(cafePhase!=='result'||!cafeResult)return pawCafeSheetBefore(...args);
+ const assessed=pawCafeAssess(cafeAnswers,cafeQuestions.length);
+ const copy=pawCafeResultCopy(assessed,cafeKinds);
+ if(!copy){cafeQuestionSheet.hidden=true;cafeQuestionSheetKey='';return}
+ const key=['result',cafeToken,zh].join('|');
+ if(cafeQuestionSheetKey===key&&!cafeQuestionSheet.hidden)return;
+ cafeQuestionSheetKey=key;cafeQuestionSheet.hidden=false;cafeQuestionSheet.replaceChildren();
+ const token=cafeToken,current=()=>activity==='match'&&scene==='wonder'&&cafePhase==='result'&&cafeToken===token&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block';
+ element('small',tr('A conversation to remember','这一杯茶，聊得刚刚好'),cafeQuestionSheet);
+ element('h3',tr(...copy.title),cafeQuestionSheet);
+ assessed.ties.forEach((id,i)=>{
+  if(copy.lines.length>1)element('strong',tr(cafeKinds[id][0],cafeKinds[id][1]),cafeQuestionSheet);
+  element('p',tr(...copy.lines[i]),cafeQuestionSheet);
+ });
+ const detail=element('details','',cafeQuestionSheet,'pawCafePrompt');
+ element('summary',tr('Something to try in real life','下次聊天，可以试着这样问'),detail);
+ for(const pair of copy.prompts)element('p',tr(...pair),detail);
+ element('small',tr('Your choices describe this fictional conversation, not a diagnosis or a compatibility score.','这些选项只反映这段虚构对话，不是性格诊断，也不算缘分分数。'),cafeQuestionSheet);
+ const share=b(cafeQuestionSheet,tr('Share reflection','分享这点心得'),()=>{if(current())openMeowShare({kind:'cafe',title:copy.title,lines:copy.lines,accent:'#ad8270'})});
+ share.dataset.cafeResult='share';
+ const retry=b(cafeQuestionSheet,tr('Try another conversation','再聊一次'),()=>{if(current())start('match')});
+ retry.dataset.cafeResult='retry';
+};
+const pawCafeResultDrawBefore=drawActivity;
+drawActivity=function(...args){
+ if(activity!=='match'||scene!=='wonder'||cafePhase!=='result'||!cafeResult)return pawCafeResultDrawBefore(...args);
+ ctx.save();try{cafeRoom();wonderSceneObject(400,430,cafeResult.index,'motive',false)}finally{ctx.restore()}
+ syncCafeQuestionSheet();
+};
+const pawCafeReflectionCss=document.createElement('style');
+pawCafeReflectionCss.textContent='#game #cafeQuestionSheet:has([data-cafe-result]){max-height:min(52dvh,410px);box-sizing:border-box}#cafeQuestionSheet h3{font:600 18px/1.3 Georgia,"Songti SC",serif;margin:4px 0}#cafeQuestionSheet .pawCafePrompt{border-top:1px dashed #bba079}#cafeQuestionSheet .pawCafePrompt summary{min-height:44px;display:flex;align-items:center;cursor:pointer}#cafeQuestionSheet:has([data-cafe-result]) p{font-weight:400;font-size:14px}@media(min-width:900px) and (min-aspect-ratio:5/4){#game #cafeQuestionSheet:has([data-cafe-result]){left:auto;right:clamp(16px,5vw,80px);top:50%;bottom:auto;transform:translateY(-50%);width:min(40vw,450px);max-height:70dvh}}';
+document.head.append(pawCafeReflectionCss);
+
 // Warm the selected traveller during registration and the railway ride,
 // including returning players. Existing gate artwork stays visible until ready.
 const pawAdmissionRenderBefore=proRender;
