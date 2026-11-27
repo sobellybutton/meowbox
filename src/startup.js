@@ -12021,4 +12021,126 @@ label=function(name,x,y,fn){
 };
 pawRoomVisitorSpecs.wishes={count:1,points:pawWishLobbyVisitors.map(v=>v.slice())};
 
+
+/* PAW_READING_LOBBIES_BEGIN */
+// The five single-station reading rooms use the individually reviewed paintings.
+// Keep the existing activity, save IDs and walking input; never draw a second
+// table or book on a table already present in the painted room.
+const pawReadingRoomIds=['tarot','destiny','quiz','story','match'];
+const pawReadingPlate={x:245,y:235,w:550*928/1648,h:550};
+function pawReadingWorld(point,p=pawReadingPlate){return [p.x+point[0]*p.w,p.y+point[1]*p.h]}
+function pawReadingNormalized(x,y,p=pawReadingPlate){return [(x-p.x)/p.w,(y-p.y)/p.h]}
+function pawReadingSpec(api,id){
+ const q=api?.rooms[id];if(!q)return null;
+ return {entry:pawReadingWorld(q.entry),arrival:pawReadingWorld(q.arrival),stations:Object.fromEntries(Object.entries(q.stations).map(([key,v])=>[key,[...pawReadingWorld(v.object),...pawReadingWorld(v.approach)]]))}
+}
+function pawReadingCamera(api,w,h,p=pawReadingPlate){
+ const c=api?.camera(w,h);if(!c)return null;
+ const s=c.w/p.w;return {s,ox:c.ox-p.x*s,oy:c.oy-p.y*s}
+}
+function pawReadingCompatible(api,id,entries){
+ return pawReadingRoomIds.includes(id)&&!!api?.rooms[id]&&entries.length===1&&Object.hasOwn(api.rooms[id].stations,entries[0][0])
+}
+/* PAW_READING_LOBBIES_END */
+let pawReadingModuleJob=null,pawReadingVisit=null,pawReadingAdmission=null;
+function pawLoadReadingModule(){
+ if(globalThis.PawPaintedInteriors)return Promise.resolve(globalThis.PawPaintedInteriors);
+ if(pawReadingModuleJob)return pawReadingModuleJob;
+ pawReadingModuleJob=new Promise(resolve=>{
+  const script=document.createElement('script');script.async=true;script.src='assets/visual/painted/interior-layouts.js';
+  let done=false;const finish=api=>{if(done)return;done=true;clearTimeout(timer);script.remove();resolve(api||null)};
+  const timer=setTimeout(()=>finish(null),4500);script.onload=()=>finish(globalThis.PawPaintedInteriors);script.onerror=()=>finish(null);document.head.append(script)
+ }).finally(()=>pawReadingModuleJob=null);
+ return pawReadingModuleJob
+}
+function pawReadingImage(api,id){const path=api?.asset(id);return path?pawRecoveredImage(path.replace('assets/visual/','../../')):null}
+const pawReadingAPI=()=>globalThis.PawPaintedInteriors;
+function pawReadingActive(){return !activity&&room===pawReadingVisit&&pawReadingRoomIds.includes(room)&&pawRoomImageReady(pawReadingImage(pawReadingAPI(),room))}
+const pawReadingDoorBefore=walkDoor;
+walkDoor=function(id,...args){if(pawReadingRoomIds.includes(id))pawLoadReadingModule().then(api=>pawReadingImage(api,id));return pawReadingDoorBefore(id,...args)};
+const pawReadingEnterBefore=enter;
+enter=function(id,...args){
+ if(!pawReadingRoomIds.includes(id)){pawReadingAdmission=null;pawReadingVisit=null;return pawReadingEnterBefore(id,...args)}
+ if(room||activity||transitioning||pawArcadeInputBlocked())return;
+ if(pawFoodAdmissionValid(pawReadingAdmission,pawReadingAdmission,pawFoodAdmissionView()))return;
+ const request={scene,avatar,x:p.x,y:p.y};pawReadingAdmission=request;
+ releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;
+ const readyApi=pawReadingAPI(),readyImage=pawReadingImage(readyApi,id);
+ if(!pawRoomImageReady(readyImage))hint('Getting the room ready…','小屋正在准备开门……');
+ pawLoadReadingModule().then(async api=>{
+  if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
+  const compatible=pawReadingCompatible(api,id,roomActions[id]||[]);
+  const im=compatible?pawReadingImage(api,id):null;
+  const ready=compatible&&await pawReadyPicture(im,4500);
+  if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
+  pawReadingAdmission=null;
+  if(!ready||!pawRoomImageReady(im)){hint('The room painting could not load. Tap its door to try again.','小屋画面暂未加载成功，请再次点击门口重试。');return}
+  pawReadingVisit=id;return pawReadingEnterBefore(id,...args)
+ }).finally(()=>{if(pawReadingAdmission===request)pawReadingAdmission=null})
+};
+const pawReadingLoopBefore=loop;
+loop=function(...args){if(pawReadingAdmission&&!pawFoodAdmissionValid(pawReadingAdmission,pawReadingAdmission,pawFoodAdmissionView()))pawReadingAdmission=null;return pawReadingLoopBefore(...args)};
+const pawReadingCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(...args){return pawReadingActive()?pawReadingCamera(pawReadingAPI(),W,H)||pawReadingCameraBefore(...args):pawReadingCameraBefore(...args)};
+const pawReadingSpecBefore=indoorSpec;
+indoorSpec=function(){return pawReadingActive()?pawReadingSpec(pawReadingAPI(),room):pawReadingSpecBefore()};
+const pawReadingObstacleBefore=indoorObstacles;
+indoorObstacles=function(){return pawReadingActive()?[]:pawReadingObstacleBefore()};
+const pawReadingSafeBefore=indoorSafe;
+indoorSafe=function(x,y,...args){return pawReadingActive()?pawReadingAPI().safe(room,pawReadingNormalized(x,y)):pawReadingSafeBefore(x,y,...args)};
+const pawReadingPathBefore=indoorPath;
+indoorPath=function(from,to,...args){
+ if(!pawReadingActive())return pawReadingPathBefore(from,to,...args);
+ return pawReadingAPI().route(room,pawReadingNormalized(...from),pawReadingNormalized(...to))?.map(v=>pawReadingWorld(v))||null
+};
+const pawReadingSegmentBefore=indoorSegment;
+indoorSegment=function(a,b,...args){return pawReadingActive()?pawReadingAPI().segment(room,pawReadingNormalized(...a),pawReadingNormalized(...b)):pawReadingSegmentBefore(a,b,...args)};
+function pawReadingBackdrop(){
+ if(!pawReadingActive())return false;
+ const p=pawReadingPlate,b=livingBounds(),im=pawReadingImage(pawReadingAPI(),room);
+ ctx.save();try{ctx.fillStyle='#42433c';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(im,p.x,p.y,p.w,p.h)}finally{ctx.restore()}return true
+}
+const pawReadingPortraitBefore=paintPortraitInterior;
+paintPortraitInterior=function(id,...args){return id===room&&pawReadingBackdrop()?true:pawReadingPortraitBefore(id,...args)};
+const pawReadingWideBefore=paintLandscapeRoom;
+paintLandscapeRoom=function(id,...args){return id===room&&pawReadingBackdrop()?true:pawReadingWideBefore(id,...args)};
+const pawReadingLivingBefore=paintLivingBackdrop;
+paintLivingBackdrop=function(...args){if(pawReadingBackdrop())return;return pawReadingLivingBefore(...args)};
+const pawReadingWarmBefore=warmRoomArt;
+warmRoomArt=function(id,...args){return id===room&&pawReadingBackdrop()?true:pawReadingWarmBefore(id,...args)};
+const pawReadingDrawBefore=drawRoom;
+drawRoom=function(...args){if(pawReadingActive())pawReadingBackdrop();return pawReadingDrawBefore(...args)};
+function pawReadingHost(){
+ const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:null;
+ if(!name)return null;const record=residentArtworkRecord(name);if(!record)return null;
+ const [x,y]=pawReadingWorld(pawReadingAPI().rooms[room].host);
+ return {station:room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record.height||112,.90),facing:'left'}
+}
+const pawReadingHostsBefore=roomResidentActors;
+roomResidentActors=function(){if(!pawReadingActive())return pawReadingHostsBefore();const a=pawReadingHost();return a?[a]:[]};
+const pawReadingPropBefore=prop;
+prop=function(id,x,y){
+ if(!pawReadingActive()||!Object.hasOwn(pawReadingAPI().rooms[room].stations,id))return pawReadingPropBefore(id,x,y);
+ const a=pawReadingHost();if(a)drawGatheringPainted(a.n,a.x,a.y,a.sc,a.facing);
+ // Artwork contains the table and props. Only the interactive sign remains.
+ pawStationPlaque={room,id,x,y,spec:groundedStationSpec(room,id),at:t}
+};
+const pawReadingLabelBefore=label;
+label=function(name,x,y,fn){
+ const station=pawStationPlaque,q=pawReadingActive()&&pawReadingAPI().rooms[room].stations[station?.id];
+ if(!q||station.room!==room||station.at!==t)return pawReadingLabelBefore(name,x,y,fn);
+ pawStationPlaque=null;
+ const [cx,cy]=pawReadingWorld(q.label),sc=Math.max(.08,cam.scale),font=Math.min(21,Math.max(10,13/sc));
+ ctx.save();try{
+  ctx.font='600 '+font+'px Georgia,"Songti SC",serif';
+  const w=Math.min(144,Math.max(60,ctx.measureText(name).width+12)),h=font+9;
+  const place=pawPaintedPlaquePlacement(cx,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
+  if(!place)return;
+  round(place.x-w/2,place.y-h/2,w,h,3,'#4e3d32ed','#d7bc88');activityFitText(name,place.x,place.y,font,w-7,'#fff0d5');
+  meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(station.id);
+  target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
+ }finally{ctx.restore()}
+};
+pawLoadReadingModule().then(api=>{if(!api)return;for(const id of pawReadingRoomIds){const q=api.rooms[id];if(q)pawRoomVisitorSpecs[id]={count:1,points:q.visitors.map(v=>pawReadingWorld(v))}}});
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
