@@ -1062,3 +1062,9 @@ Owner screenshot showed a tiny portrait gate on desktop, a large dark empty surr
 
 ## Ritual and blind box interruption handling (27 November)
 - RITUAL-01–03 and BOX-03: consolidated pause timing for moon/sticks/prayer/water/bell/box, removed double prayer visibility shift, bind ritual button to session/stage, guard bell/water and box award. Focused helper checks passed; real gameplay and artwork not yet accepted. Preserve previous rewards and save keys.
+
+
+## Paper ritual and Town Square continuation (27 November)
+- e537cd8: paper preparation/strike timing survives interruptions without silently ending the animation; preserve existing reward and active attempt. Notice archive depth survives language and board re-entry. Eleven targeted helper checks passed; 3f9ca00 persists tests. Existing first 16 checks passed; large extensions file returned empty in connector, blocking complete local test execution.
+- db0cfee: fixed incorrect per-child :scope matching in notebook wrapper that reparented the actual Town Square toolbar, title and subtitle. Header placement check passed. d593595 and 4c8f560 update actual browser language controls, check archive depth and assert direct toolbar. Source and embedded browser scripts parse.
+- Previous CI 45961770598: four-village doorway, build/helpers, share and visual capture, both shrine journeys passed; main browser smoke stopped at Town Square language selector after reply disclosure/keyboard checks passed. Latest push CI/deployment and screenshots unverified. No artwork or full visual acceptance claimed. Provisional count 46/100; baseline 9/100 remains unchanged; original ledger unavailable. See DEVELOPMENT_CHECKPOINT.md.
