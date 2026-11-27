@@ -6962,6 +6962,17 @@ function pawGuestRotationAllowed(current,next,blocked,covered,distances,offscree
  if(blocked||current.length!==next.length||current.every((v,i)=>v===next[i]))return false;
  return covered||current.every((v,i)=>v===next[i]||Number.isFinite(distances[i])&&distances[i]>320&&offscreen[i]===true)
 }
+// Replace only departed identities, independently when their own actor is
+// outside the camera. A continuing guest keeps its existing actor and route.
+function pawGuestRotationIndices(current,next,blocked,covered,distances,offscreen){
+ if(blocked||current.length!==next.length||new Set(current).size!==current.length||new Set(next).size!==next.length)return [];
+ const present=new Set(current),indices=[];
+ for(let i=0;i<current.length;i++){
+  if(!next[i]||current[i]===next[i]||present.has(next[i]))continue;
+  if(covered||(Number.isFinite(distances[i])&&distances[i]>320&&offscreen[i]===true))indices.push(i)
+ }
+ return indices
+}
 const pawBenchFirst=['lin','kenneth','share'],pawBenchSecond=['clear','stools'];
 function pawBenchRead(raw,today){
  const n=pawStoryDate(today),empty={first:null,firstDay:null,second:null,secondDay:null,endingSeen:false};
@@ -7023,8 +7034,11 @@ mbGuestSync=function(force=false){
   const x=cam.ox+n.x*cam.scale,y=cam.oy+n.y*cam.scale;
   return Number.isFinite(x)&&Number.isFinite(y)&&(x<-130||x>W+130||y<-80||y>H+180)
  });
- if(!pawGuestRotationAllowed(slots.map(v=>v.popGuest),next.map(v=>v.id),blocked,covered,d,offscreen))return false;
- slots.forEach((n,i)=>{if(n.popGuest===next[i].id)return;n.popGuest=next[i].id;n.n=next[i].name;n.pathReady=false;n.pauseUntil=t+1; pawGaitTravel.set(n,0);pawResidentFootMotion.set(n,false)});mbGuestDate=today;return true
+ const replacements=pawGuestRotationIndices(slots.map(v=>v.popGuest),next.map(v=>v.id),blocked,covered,d,offscreen);
+ if(!replacements.length)return false;
+ for(const i of replacements){const n=slots[i];n.popGuest=next[i].id;n.n=next[i].name;n.pathReady=false;n.pauseUntil=t+1;pawGaitTravel.set(n,0);pawResidentFootMotion.set(n,false)}
+ if(slots.every((n,i)=>n.popGuest===next[i].id))mbGuestDate=today;
+ return true
 };
 pawRoomGuestProfile=function(visit){
  const today=shrineClock().day,c=pawGuestNow(today),active=npc.filter(n=>n.popGuest).map(n=>n.popGuest);
