@@ -391,12 +391,12 @@
         "scripts/rail-foreground-test.cjs"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-rail-art-20261127-h",
-        "until": 1795785835467
-      }
+      "stage": "tested",
+      "evidence": [
+        "4caa3219 + 3c152ffd: independent landscape carriage composite with three trackside sprites, distinct route sequences, motion and reduced-motion controls; 4553 assertions executed on exact source with current repository-tree existence checks; local alpha and composite inspection"
+      ],
+      "lease": null,
+      "blocker": "Module not yet loaded into game; integrate with existing railway lifecycle after shared-source lease clears. New carriage landscape only; retain existing portrait fallback. Actual rendering, no gaps around windows, movement and journey acceptance pending."
     },
     {
       "id": "GAME-01",
