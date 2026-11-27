@@ -368,12 +368,14 @@
         "browser"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-game-20261127-d",
-        "until": 1795782206755
-      }
+      "stage": "tested",
+      "evidence": [
+        "3df167bd: phase and run-owned accessible ritual/arcade controls; source parse and exhaustive ownership checks",
+        "7dc677bc: persisted regression",
+        "Live browser served prior dock, Yue and NPC helpers; latest gameplay guard not deployed, desktop viewport despite mobile request; organic desktop journey timed out."
+      ],
+      "lease": null,
+      "blocker": "Latest gameplay source not served at time of browser check; real touch/mouse/keyboard and restart acceptance, visual overlap and mobile remain pending."
     },
     {
       "id": "READ-01",
