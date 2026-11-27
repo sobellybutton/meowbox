@@ -5807,10 +5807,21 @@ step=function(n,dt,speed){
  }
  return next.walking
 };
+/* PAW_DOOR_REPLAN_BEGIN */
+function pawDoorRepeat(id,pending,queue,room,transitioning){
+ return !room&&!transitioning&&id===pending&&!!queue?.length
+}
+function pawDoorNeedsGround(previousQueue,newQueue,pending,points,room){
+ return !!(points&&!room&&pending&&newQueue!==previousQueue&&newQueue?.length)
+}
+/* PAW_DOOR_REPLAN_END */
 const pawGroundDoorBefore=walkDoor;
 walkDoor=function(...args){
- const previous=pending,result=pawGroundDoorBefore(...args),points=pawDistrictSpines[scene];
- if(points&&!room&&pending&&pending!==previous&&walkQueue.length){
+ // Repeated taps must not restart the route. Redirected legacy doors
+ // may create a fresh queue for the same canonical destination.
+ if(pawDoorRepeat(args[0],pending,walkQueue,room,transitioning))return;
+ const previousQueue=walkQueue,result=pawGroundDoorBefore(...args),points=pawDistrictSpines[scene];
+ if(pawDoorNeedsGround(previousQueue,walkQueue,pending,points,room)){
   const end=walkQueue.at(-1),start=pawDistrictFoot(points,p.x,p.y);
   walkQueue=pawDistrictRoute(points,start,end);
   if(walkQueue.length){p.tx=walkQueue[0].x;p.ty=walkQueue[0].y;p.motionSpeed=0}
