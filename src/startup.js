@@ -9194,7 +9194,7 @@ paintLivingBackdrop=function(...args){
 const pawHallGuideBefore=roomGuideEntries;
 roomGuideEntries=function(){
  if(room!=='temple')return pawHallGuideBefore();
- return [['templeWater','Purification basin','净手池'],['templeBell','Bronze bell','敲钟'],['prayer','Incense & Guanyin altar','上香与观音殿'],['sticks','Fortune sticks','求签'],['moon','Moon blocks','掷筊'],['secretGarden','Quiet garden','静谧后院']]
+ return ['templeWater','templeBell','prayer','sticks','moon','secretGarden'].map(id=>[id,...pawHallLabels[id].slice(2).map(v=>v.replace(/\s*→$/,''))])
 };
 
 /* PAW_FORECOURT_BEGIN */
@@ -9805,5 +9805,56 @@ drawActivity=function(...args){
  }finally{ctx.restore()}
  mb5AssistSync()
 };
+
+
+/* PAW_TEMPLE_PAPER_ACCESS_BEGIN */
+function pawTemplePaperActions(q,now){
+ if(!q)return [];
+ if(q.paperStage==='folded')return ['open'];
+ if(q.paperStage==='opening')return [];
+ if(q.paperStage==='open')return ['keep','tie','rack'];
+ if(['kept','tied'].includes(q.paperStage)&&now-q.paperAt>=.8)return ['return','rack'];
+ return []
+}
+function pawTemplePaperAllowed(q,current,kind,now,blocked,id){
+ return !blocked&&kind==='templePaper'&&q===current&&pawTemplePaperActions(q,now).includes(id)
+}
+/* PAW_TEMPLE_PAPER_ACCESS_END */
+let pawPaperControlRun=null,pawPaperControlKey='';
+function pawPaperControlsClear(){
+ const el=$('gameControls');
+ if(!el?.classList.contains('pawTemplePaperControls'))return;
+ el.querySelectorAll('[data-paw-paper-action]').forEach(v=>v.remove());el.classList.remove('pawTemplePaperControls');
+ if(!el.children.length)el.hidden=true;
+ pawPaperControlRun=null;pawPaperControlKey=''
+}
+function pawPaperControlsSync(){
+ const el=$('gameControls'),run=state;
+ if(!el)return;
+ if(activity!=='templePaper'||room!=='temple'){pawPaperControlsClear();return}
+ if(pawArcadeInputBlocked()){if(el.classList.contains('pawTemplePaperControls'))el.hidden=true;return}
+ const actions=pawTemplePaperActions(run,t),key=actions.join('|')+'|'+zh;
+ if(pawPaperControlRun===run&&pawPaperControlKey===key&&el.querySelectorAll('[data-paw-paper-action]').length===actions.length){el.hidden=!actions.length;return}
+ el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawTemplePaperControls');
+ pawPaperControlRun=run;pawPaperControlKey=key;el.hidden=!actions.length;
+ const words={open:['Unfold fortune slip','展开签纸'],keep:['Keep in bag','收入背包'],tie:['Tie on rack','系上签纸'],rack:['Read other fortunes','看看其他签文'],return:['Back to hall','返回大殿']};
+ const action={open:templePaperTap,keep:()=>templePaperKeep(false),tie:()=>templePaperKeep(true),rack:pawFortuneRackPage,return:()=>$('back').click()};
+ for(const id of actions){const button=b(el,tr(...words[id]),()=>{
+  if(pawTemplePaperAllowed(run,state,activity,t,pawArcadeInputBlocked(),id))action[id]()
+ });button.dataset.pawPaperAction=id;button.type='button'}
+}
+const pawPaperControlsDrawBefore=drawActivity;
+drawActivity=function(...args){const result=pawPaperControlsDrawBefore(...args);if(activity==='templePaper')pawPaperControlsSync();return result};
+const pawPaperControlsLoopBefore=loop;
+loop=function(...args){if(activity!=='templePaper')pawPaperControlsClear();return pawPaperControlsLoopBefore(...args)};
+const pawPaperControlsCss=document.createElement('style');
+pawPaperControlsCss.textContent=`
+#game #gameControls.pawTemplePaperControls:not([hidden]){display:grid!important;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));width:min(92vw,390px);max-width:calc(100% - 24px);box-sizing:border-box;gap:5px;padding:5px;border:1px solid #ad9470;border-radius:7px;background:#f2e5ccea}
+#game #gameControls.pawTemplePaperControls button{min-width:0;width:100%;min-height:44px;white-space:normal;overflow-wrap:anywhere;font-size:clamp(12px,3.4vw,15px);padding:6px}
+`;
+document.head.append(pawPaperControlsCss);
+// Stale resident greetings must never compete with an activity instruction.
+const pawQuietSceneStartBefore=start;
+start=function(...args){clearResidentGreeting();pawAmbientClear();return pawQuietSceneStartBefore(...args)};
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
