@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "source": "docs/DEVELOPMENT_CHECKPOINT.md",
-  "policy": "Task stages describe this workstream deliverable, not overall game acceptance. Art-only tasks may be tested as assets but require integration and rendered acceptance before visual acceptance. Existing code-only verification remains open.",
+  "policy": "Task stages describe this workstream deliverable, not overall game acceptance. Art-only tasks may be tested as assets but require integration and rendered acceptance before visual acceptance. Existing code-only verification remains open. Dependencies are ready at tested, visually verified or accepted stage; final acceptance requires the controlling release gates. Browser is conservatively a shared resource, not a guarantee of available slots.",
   "lanes": {
     "world": "Entrance, four map plates, interior artwork and staging",
     "actors": "Traveller and NPC art, animation and resident behaviours",
@@ -17,7 +17,7 @@
       "priority": 1,
       "summary": "Entrance journey and return rendered acceptance",
       "resources": [
-        "browser:entrance"
+        "browser"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -90,21 +90,72 @@
       "lease": null
     },
     {
-      "id": "WORLD-INTEGRATION",
+      "id": "WORLD-INTEGRATION-FORTUNE",
       "lane": "engineering",
       "priority": 1,
-      "summary": "Integrate finished map/gateway art with traced paths, doors, masks and plaques",
+      "summary": "Integrate fortune painting with art-traced paths, doors, masks and plaques; verify full rendered journey",
       "resources": [
         "src/startup.js",
         "src/extensions.js",
         "src/engine.js",
-        "browser:world"
+        "browser"
       ],
       "depends": [
         "ENT-02",
-        "MAP-01",
-        "MAP-02",
-        "MAP-03",
+        "MAP-01"
+      ],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "WORLD-INTEGRATION-HOME",
+      "lane": "engineering",
+      "priority": 2,
+      "summary": "Integrate home painting with art-traced paths, doors, masks and plaques; verify full rendered journey",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/engine.js",
+        "browser"
+      ],
+      "depends": [
+        "MAP-02"
+      ],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "WORLD-INTEGRATION-ISLAND",
+      "lane": "engineering",
+      "priority": 2,
+      "summary": "Integrate island painting with art-traced paths, doors, masks and plaques; verify full rendered journey",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/engine.js",
+        "browser"
+      ],
+      "depends": [
+        "MAP-03"
+      ],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "WORLD-INTEGRATION-WONDER",
+      "lane": "engineering",
+      "priority": 2,
+      "summary": "Integrate wonder painting with art-traced paths, doors, masks and plaques; verify full rendered journey",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/engine.js",
+        "browser"
+      ],
+      "depends": [
         "MAP-04"
       ],
       "stage": "outstanding",
@@ -279,7 +330,7 @@
         "src/startup.js",
         "src/extensions.js",
         "src/engine.js",
-        "browser:rooms"
+        "browser"
       ],
       "depends": [
         "ART-01",
@@ -310,7 +361,7 @@
       "resources": [
         "src/startup.js",
         "src/extensions.js",
-        "browser:games"
+        "browser"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -353,7 +404,7 @@
       "resources": [
         "src/startup.js",
         "src/extensions.js",
-        "browser:readings"
+        "browser"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -426,7 +477,7 @@
       "priority": 2,
       "summary": "Measure loading, memory and frame pacing",
       "resources": [
-        "browser:performance"
+        "browser"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -439,10 +490,7 @@
       "priority": 1,
       "summary": "Current main organic journeys, screenshots and deployment verification",
       "resources": [
-        "browser:world",
-        "browser:entrance",
-        "browser:rooms",
-        "browser:games"
+        "browser"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -455,7 +503,7 @@
       "priority": 2,
       "summary": "Rendered verification of existing doorway repeat and route fix",
       "resources": [
-        "browser:world"
+        "browser"
       ],
       "depends": [],
       "stage": "tested",
@@ -471,7 +519,7 @@
       "priority": 2,
       "summary": "Rendered verification of existing first railway recovery",
       "resources": [
-        "browser:entrance"
+        "browser"
       ],
       "depends": [],
       "stage": "tested",
