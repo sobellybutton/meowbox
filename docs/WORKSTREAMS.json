@@ -394,7 +394,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-yue-20261127-b",
+        "until": 1795780553691
+      }
     },
     {
       "id": "READ-03",
