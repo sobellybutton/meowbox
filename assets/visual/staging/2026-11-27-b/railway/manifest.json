@@ -1,0 +1,45 @@
+{
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-27-b/railway/carriage-landscape.webp",
+      "sha256": "9bd03c94d77b1961ef90b2bcb6bf303c6794ea6ca7a4c682d2d0938b8a890cf6",
+      "git_blob_sha1": "0156ec1c86a6c770abfba866aae03b5894c2048e",
+      "bytes": 715462,
+      "width": 1672,
+      "height": 941,
+      "status": "candidate_not_activated",
+      "purpose": "fixed carriage overlay; transparent windows"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-b/railway/foreground/hydrangea-rocks.webp",
+      "sha256": "8a15ea5c73ee199bcd3d7015c0fd8ca039af56cdd6d2fa6f878e74cad31ec3d7",
+      "git_blob_sha1": "f0c8e39cbd49e7bce4cadbcdcda50ecb37391f1f",
+      "bytes": 44610,
+      "width": 195,
+      "height": 137,
+      "status": "candidate_not_activated",
+      "purpose": "small foreground sprite for scrolling parallax; verify in game"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-b/railway/foreground/vine-fence.webp",
+      "sha256": "47a240519e309647fb9af79981448054856e7fb88892b639abd16bfad2dda362",
+      "git_blob_sha1": "ff414af9b941e53ae3aa2e1412d302320888b78c",
+      "bytes": 35502,
+      "width": 181,
+      "height": 128,
+      "status": "candidate_not_activated",
+      "purpose": "small foreground sprite for scrolling parallax; verify in game"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-b/railway/foreground/stone-lantern.webp",
+      "sha256": "e76365aa303f6972922b9c811f903713fbd78347a0ff2b6fb79aee6ab53a64d3",
+      "git_blob_sha1": "2073add24d47e0f89721792fcb2d3b5b71ef357c",
+      "bytes": 20828,
+      "width": 103,
+      "height": 132,
+      "status": "candidate_not_activated",
+      "purpose": "small foreground sprite for scrolling parallax; verify in game"
+    }
+  ],
+  "status": "Partial railway pack. Existing four distant panoramas should be reused. Story and desktop room backgrounds still outstanding. Verify foreground sprites in rendered game."
+}
