@@ -310,12 +310,12 @@
         ".github/workflows/meowbox-browser.yml"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-garden-live-20261127-2227",
-        "until": 1795791401800
-      }
+      "stage": "tested",
+      "evidence": [
+        "c0afb1d1: inspected dedicated 960x1631 rear garden plate, mapped existing koi/seat/chime actions and optional lucky cat visit to traced ground routes; painted chime retained, feeding arc/ripple, new camera and controls, stable fallback; focused route/tick/target regression passed and wired into CI."
+      ],
+      "lease": null,
+      "blocker": "Rendered browser input, art fit, seated character contact, pond animation and mobile/desktop verification remain pending. Existing wishing pool (outside temple) unchanged. Final pose artwork still outstanding."
     },
     {
       "id": "ROOM-03",
