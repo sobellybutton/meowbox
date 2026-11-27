@@ -419,3 +419,8 @@ DISCOVERY-ASSESSMENTS-01 partial: 05988bd1 implements twelve bilingual paired li
 - SOCIAL-DAILY-01 partial: abad3290 and 2136b4c9 enable explicit indoor resident and visiting-neighbour conversation responses to count through the existing daily friend ledger; guide works indoors, proximity gates and station priority preserved, real peers excluded. c9994a1b persists helper checks, executed against current source. Physical gesture art, actual rendered conversation and real-player consent still pending.
 
 Three distinct workstreams advanced in this continuation. No workstream is claimed fully accepted and no accepted-count increase. Hourly cadence unchanged.
+
+
+## Discovery and tarot editorial refinement (27 November 2026)
+
+LOC-01 partial: seven targeted EN/ZH lines revised for natural humour and clarity. Existing assessment logic, IDs, saved progress and role aliases retained. Source parsed in connector harness; rendered text fit, full bilingual review and deployment unverified. Good existing dialogue preserved. No acceptance-count increase.

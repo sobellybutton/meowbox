@@ -264,8 +264,8 @@ action=function(id){
   ])
  }
  if(room==='quiz'&&id==='quiz'){
-  closeTalk();return say(tr('Lab keeper','研究所店主'),tr('Choose a little discovery. Each is for self-reflection, not diagnosis.','选一个小小的自我探索。仅供自我反思，并非诊断。'),[
-   [tr('MBTI-inspired preferences','MBTI 四种性格偏好'),()=>{closeTalk();wonderSceneOpen('type')}],
+  closeTalk();return say(tr('Lab keeper','研究所店主'),tr('Ever wondered what makes you tick? No grades, no diagnosis, and absolutely no group project.','想知道自己是什么样的人？不打分、不诊断，更不用做小组作业。'),[
+   [tr('Four personality preferences','MBTI 启发的四组性格偏好'),()=>{closeTalk();wonderSceneOpen('type')}],
    [tr('Enneagram-inspired · nine motives','九型人格 · 九种内在动力'),()=>{closeTalk();wonderSceneOpen('motive')}],
    [tr('Five personality tendencies','五大性格倾向'),()=>{closeTalk();wonderSceneOpen('bigfive')}],
    [tr('Keep exploring','继续逛逛'),closeTalk]
@@ -317,7 +317,7 @@ roomIntro=function(){
  curatedDiscoveryIntroBefore();
  if(activity)return;
  if(room==='tarot')hint('One table. Choose one, three or five cards.','一张牌桌，选一张、三张或五张牌。');
- if(room==='quiz')hint('Find out more about yourself. No diagnosis, no homework.','认识自己，不贴标签，也不交作业。');
+ if(room==='quiz')hint('A little self-discovery. No exam. The only person who needs your answers is you.','认识一下自己，不考试、不交卷，答案留给你自己。');
  if(room==='match')hint('Explore how you might respond to someone you care about. No compatibility score.','想想你会怎样回应在乎的人。不算缘分分数。');
  if(room==='story')hint('Follow a story, make choices and discover a different ending.','跟着故事走，自己做决定，探索不同结局。')
 };
@@ -963,7 +963,7 @@ const compactConsultStyle=document.createElement('style');compactConsultStyle.te
    shared presence or private birth-data references. One welcome per visit. */
 const residentWelcomeProfiles=[
  {id:'temple',names:['Temple keeper','庙祝'],rooms:['temple','sticks','moon'],lines:[['Leave your worries by the door.','烦恼先放门口吧。'],['The incense is ready. Take your time.','香已备好，慢慢来。'],['No appointments with heaven today.','今天不用跟神明预约，慢慢来。'],['You can just breathe. No wish required.','不一定非要求什么，静静坐会儿也好。']]},
- {id:'tarot',names:['Fortune Teller','占卜师'],rooms:['tarot','daily'],lines:[['The cards are ready. Your inbox can wait.','牌都准备好了，工作消息先放一放。'],['What is on your mind today?','今天想问点什么呢？'],['Still waiting for that reply? Cards cannot read minds.','还在等那条消息吗？牌可不会读心术。'],['Career, love, or a mysterious desire for a nap?','事业、感情，还是那股神秘的午睡欲望？']]},
+ {id:'tarot',names:['Fortune Teller','占卜师'],rooms:['tarot','daily'],lines:[['The cards are ready. No meeting minutes will be taken.','牌已备好，本次占卜不出会议纪要。'],['What is on your mind today?','今天想问点什么呢？'],['Still waiting for that reply? Cards cannot read minds.','还在等那条消息吗？牌可不会读心术。'],['Career, love, or a mysterious desire for a nap?','事业、感情，还是那股神秘的午睡欲望？']]},
  {id:'yue',names:['Master Yue','月师傅','Astrologer','命理师'],rooms:['destiny'],lines:[['Come, have some tea. The stars can wait.','来，喝口茶，星星不催你。'],['Love, work, or a little clarity today?','今天想聊感情、工作，还是理理思绪？'],['The stars have no deadlines. A rare luxury.','星星没有截止日期，真是难得。'],['Read for yourself or someone else. Take your time.','看自己或别人都可以，慢慢来。']]},
  {id:'garden',names:['Garden keeper','守园人','Caretaker','管理员'],rooms:['wishes'],lines:[['There is room for another wish.','这里还有地方挂你的心愿。'],['No wish is too small.','小小的心愿也值得被记住。']]},
  {id:'grandma',names:['Grandma','外婆','奶奶'],rooms:['kitchen'],lines:[['Come eat. You look like someone who skipped lunch.','来吃饭啦。忙起来是不是又忘了吃饭？'],['I saved you a bowl.','给你留了一碗呢。'],['Soup first. Work problems can wait outside.','先喝汤，工作的烦心事在外面等着。'],['The only thing simmering here should be the soup.','在这里，只有汤需要慢慢熬。']]},
@@ -975,7 +975,7 @@ const residentWelcomeProfiles=[
  {id:'arcade',names:['Keeper','店主','Arcade keeper','游戏厅老板','Arcade host','游戏厅店主'],rooms:['arcade'],lines:[['Ready to beat your own score?','今天要不要刷新自己的纪录？'],['The claw owes you nothing. But give it a go.','夹爪可不欠你的，不过试试嘛。']]},
  {id:'boba',names:['Boba keeper','奶茶店主','Pearl & Pause','珍珠摸鱼铺','Barista','店员'],rooms:['boba'],lines:[['A little tea break? You have earned one.','喝杯奶茶歇一歇吧。'],['Less ice, more peace?','少冰，多一点好心情？'],['The only thing we are shaking today is bubble tea.','今天只摇奶茶，不摇摆人生。'],['Your drink, your rules. No approval chain.','自己的奶茶自己做主，不用逐级审批。']]},
  {id:'souvenir',names:['Souvenir keeper','手信店主','Furniture keeper','家具店主'],rooms:['mystery'],lines:[['Come browse. No need to buy anything.','随便看看，不买也没关系。'],['Find something that makes you smile.','看看有没有让你会心一笑的小东西。']]},
- {id:'lab',names:['Lab keeper','研究所店主','Personality guide','人格向导','Researcher','研究员'],rooms:['quiz'],lines:[['Curious about yourself? No homework here.','想多了解自己？这里不交作业。'],['There is no perfect answer.','没有标准答案，做自己就好。']]},
+ {id:'lab',names:['Lab keeper','研究所店主','Personality guide','人格向导','Researcher','研究员'],rooms:['quiz'],lines:[['Curious about yourself? Excellent. The questionnaire has no manager approval field.','想研究一下自己？很好，这份问卷不用领导签字。'],['There is no perfect answer.','没有标准答案，做自己就好。']]},
  {id:'story',names:['Storyteller','说书人','故事向导'],rooms:[],lines:[['Another little adventure awaits.','又有一段小故事等着你。'],['What would you do differently this time?','这一次，你会怎么选呢？']]},
  {id:'cafe',names:['Café keeper','Cafe keeper','咖啡店主'],rooms:[],lines:[['Let us make some space for the heart.','给心里的人留一点时间吧。'],['Tea first, overthinking later.','先喝茶，晚点再胡思乱想。']]}
 ];
@@ -7036,7 +7036,7 @@ const pawResidentThreads=[
  ['arcade-performance',['Arcade keeper','游戏厅店主'],['The claw missed again. It would like to schedule a performance review.','夹爪又没夹中，想约个绩效面谈。'],[['Wang Laoban','王老板','Give it a day off. No improvement plan.','给它放天假吧，别搞改进计划。']]],
  ['letter-forward',['Letter keeper','信件保管员'],['Found a letter marked urgent. It was written to someone’s future self ten years ago.','捡到一封标着加急的信，是十年前写给未来自己的。'],[['Auntie Mei','梅姨','Deliver it with tea, not an apology.','送信时带杯茶，不用带道歉信。']]],
  ['souvenir-inventory',['Souvenir keeper','手信店主'],['A customer asked if the little bookmark would improve their productivity.','有客人问小书签能不能提高生产力。'],[['Grandma','外婆','It will improve your chances of finding page twelve.','能提高你找到第十二页的概率。']]],
- ['lab-findings',['Lab keeper','研究所店主'],['My latest research: people answer personality questions differently before lunch.','最新研究发现：大家午饭前后的性格答案不一样。'],[['Boba keeper','奶茶店主','Have you controlled for the presence of snacks?','有控制零食这个变量吗？']]],
+ ['lab-findings',['Lab keeper','研究所店主'],['My latest finding: hunger is a surprisingly powerful personality trait.','最新研究发现：饿肚子的时候，人格会自动切换。'],[['Boba keeper','奶茶店主','Have you considered a control group with biscuits?','对照组安排饼干了吗？']]],
  ['cafe-no-wifi',['Café keeper','咖啡店主'],['Two visitors put their phones away and had an entire conversation. The router feels redundant.','两位旅人放下手机聊了很久，路由器突然觉得自己失业了。'],[['Auntie Mei','梅姨','Let it rest too.','让它也休息一下吧。']]],
  ['laundry-forecast',['Ah Ma','阿嬷'],['The forecast said ten percent rain. My laundry apparently got the whole ten percent.','天气预报说下雨概率百分之十，我的衣服好像承包了全部的雨。'],[['Auntie Lin','林姨','I saved you a dry corner.','给你留了个干爽的角落。']]]
 ];
