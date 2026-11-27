@@ -1,0 +1,79 @@
+/* Pawradise modular home floor geometry.
+   Source: individually verified 27 Nov room shell artwork. No storage or
+   economy mutations: the existing room purchase/placement controller owns
+   those. Each logical cell persists across upgrades. */
+(function(root,factory){
+ const api=factory();
+ if(typeof module==='object'&&module.exports)module.exports=api;
+ else root.PawHomeLayout=api;
+})(typeof globalThis!=='undefined'?globalThis:this,function(){
+ 'use strict';
+ const base='assets/visual/staging/2026-11-27-b/room/';
+ const layouts={
+  starter:{width:4,depth:4,asset:'starter',origin:[.51,.44],left:[.065,.70],right:[.93,.70],front:[.50,.93]},
+  side:{width:7,depth:4,asset:'side-extension',origin:[.68,.407],left:[.045,.70],right:[.96,.65],front:[.30,.935]},
+  studio:{width:7,depth:7,asset:'l-shaped-extension',origin:[.56,.405],left:[.052,.748],right:[.96,.69],front:[.445,1.033],notch:[4,4]},
+  balcony:{width:4,depth:4,asset:'balcony',origin:[.59,.40],left:[.05,.69],right:[.94,.60],front:[.45,.91]}
+ };
+ const catalog={
+  futon:[2,3], 'single-bed':[2,3], sofa:[2,1], 'floral-armchair':[1,1], 'wood-chair':[1,1],
+  'low-table':[2,1], 'tea-table':[2,1], desk:[2,1], bench:[2,1], bookcase:[1,1],
+  'display-cabinet':[1,1], wardrobe:[1,1], nightstand:[1,1], 'retro-tv':[1,1],
+  'floor-cushion':[1,1], 'paper-lamp':[1,1], 'floor-lantern':[1,1], fern:[1,1],
+  'flower-vase':[1,1], 'cat-bed':[1,1], 'cat-tower':[1,1], 'woven-rug':[2,2],
+  'wall-shelf':[1,1], curtains:[1,1]
+ };
+ const wall=new Set(['wall-shelf','curtains']);
+ const flat=new Set(['woven-rug']);
+ function spec(id){return Object.hasOwn(layouts,id)?layouts[id]:null}
+ function shell(id){const l=spec(id);return l?base+'shells/'+l.asset+'.webp':null}
+ function furniture(id){return Object.hasOwn(catalog,id)?base+'furniture/'+id+'.webp':null}
+ function project(id,u,v){
+  const l=spec(id);if(!l||!Number.isFinite(u)||!Number.isFinite(v))return null;
+  const a=u/l.width,b=v/l.depth;
+  return {x:(1-a)*(1-b)*l.origin[0]+a*(1-b)*l.left[0]+(1-a)*b*l.right[0]+a*b*l.front[0],
+          y:(1-a)*(1-b)*l.origin[1]+a*(1-b)*l.left[1]+(1-a)*b*l.right[1]+a*b*l.front[1]}
+ }
+ function cellExists(id,u,v){
+  const l=spec(id);return !!l&&Number.isInteger(u)&&Number.isInteger(v)&&u>=0&&v>=0&&u<l.width&&v<l.depth&&(!l.notch||u<l.notch[0]||v<l.notch[1]);
+ }
+ function footprint(item){
+  if(!item||!Object.hasOwn(catalog,item.id)||!Number.isInteger(item.u)||!Number.isInteger(item.v)||![0,1,2,3].includes(item.turn??0))return null;
+  let [w,d]=catalog[item.id];if((item.turn??0)%2)[w,d]=[d,w];
+  return {w,d,layer:wall.has(item.id)?'wall':flat.has(item.id)?'rug':'floor'};
+ }
+ function cells(item){const f=footprint(item);if(!f)return null;const out=[];for(let u=item.u;u<item.u+f.w;u++)for(let v=item.v;v<item.v+f.d;v++)out.push([u,v]);return out}
+ function canPlace(layout,item,existing=[]){
+  const f=footprint(item),c=cells(item);if(!f||!c||!c.every(([u,v])=>cellExists(layout,u,v)))return false;
+  if(f.layer==='wall'&&item.u!==0&&item.v!==0)return false;
+  const occupied=new Set();
+  for(const x of existing){
+   if(item.key!=null&&x.key===item.key)continue;
+   const g=footprint(x);if(!g||g.layer!==f.layer)continue;
+   for(const [u,v] of cells(x))occupied.add(u+','+v)
+  }
+  return c.every(([u,v])=>!occupied.has(u+','+v))
+ }
+ function nearestCell(id,x,y){
+  const l=spec(id);if(!l||!Number.isFinite(x)||!Number.isFinite(y))return null;
+  let best=null;
+  for(let u=0;u<l.width;u++)for(let v=0;v<l.depth;v++){
+   if(!cellExists(id,u,v))continue;
+   const p=project(id,u+.5,v+.5),distance=Math.hypot(p.x-x,p.y-y);
+   if(!best||distance<best.distance)best={u,v,distance}
+  }
+  // Do not snap clicks on the painted walls or outside the floor.
+  const threshold=.065;
+  return best&&best.distance<=threshold?{u:best.u,v:best.v}:null
+ }
+ function anchor(id,item){
+  const f=footprint(item);if(!f||!canPlace(id,item))return null;
+  const p=project(id,item.u+f.w/2,item.v+f.d/2),front=project(id,item.u+f.w,item.v+f.d);
+  return {x:p.x,y:p.y,depth:front.y,layer:f.layer};
+ }
+ function upgradeAllowed(from,to,items){
+  if(![['starter','side'],['side','studio']].some(pair=>pair[0]===from&&pair[1]===to)||!Array.isArray(items))return false;
+  return items.every((item,i)=>canPlace(from,item,items.filter((_,j)=>j!==i))&&canPlace(to,item,items.filter((_,j)=>j!==i)));
+ }
+ return Object.freeze({shell,furniture,project,cellExists,footprint,canPlace,nearestCell,anchor,upgradeAllowed,layoutIds:Object.keys(layouts),furnitureIds:Object.keys(catalog)});
+});
