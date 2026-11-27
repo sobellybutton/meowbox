@@ -1212,8 +1212,29 @@ label=function(name,x,y,fn){
    Selecting a station uses the same path/arrival logic as a canvas tap. */
 const roomGuide=document.createElement('section');roomGuide.id='roomStationGuide';roomGuide.hidden=true;roomGuide.setAttribute('aria-label','Room activities');$('game').append(roomGuide);
 const roomGuideToggle=element('button','', $('game'));roomGuideToggle.id='pawRoomGuideToggle';roomGuideToggle.hidden=true;roomGuideToggle.setAttribute('aria-controls','roomStationGuide');roomGuideToggle.setAttribute('aria-expanded','false');
-function closeRoomGuide(){roomGuide.classList.remove('pawGuideOpen');roomGuideToggle.setAttribute('aria-expanded','false')}
-roomGuideToggle.onclick=()=>{const open=roomGuide.classList.toggle('pawGuideOpen');roomGuideToggle.setAttribute('aria-expanded',String(open));if(open)roomGuide.querySelector('button')?.focus()};
+function pawGuideActionAllowed(captured,current,open,connected,ready){
+ return !!captured&&captured===current&&open===true&&connected===true&&ready===true
+}
+function pawGuideName(count,missing,cn){
+ return missing>0?(cn?'体验 · ':'Activities · ')+count:cn?'选择体验地点':'Choose a station'
+}
+function closeRoomGuide(restore=false){
+ roomGuide.classList.remove('pawGuideOpen');roomGuide.hidden=true;
+ roomGuideToggle.setAttribute('aria-expanded','false');
+ if(restore&&!roomGuideToggle.hidden)roomGuideToggle.focus({preventScroll:true})
+}
+roomGuideToggle.onclick=()=>{
+ if(roomGuideToggle.hidden||!indoorReady())return;
+ if(roomGuide.classList.contains('pawGuideOpen')){closeRoomGuide(true);return}
+ roomGuide.hidden=false;roomGuide.classList.add('pawGuideOpen');
+ roomGuideToggle.setAttribute('aria-expanded','true');
+ roomGuide.querySelector('button')?.focus({preventScroll:true})
+};
+roomGuide.addEventListener('keydown',event=>{
+ if(event.key==='Escape'&&roomGuide.classList.contains('pawGuideOpen')){
+  event.preventDefault();event.stopPropagation();closeRoomGuide(true)
+ }
+});
 let roomGuideKey='';
 function roomGuideEntries(){
  if(room==='temple')return [['templeWater','Water pavilion','手水亭'],['prayer','Prayer altar','祈愿香案'],['templeBell','Bronze bell','山寺钟声'],['sticks','Fortune sticks','求签'],['moon','Moon blocks','掷筊'],['secretGarden','Garden','后院']];
@@ -1221,27 +1242,28 @@ function roomGuideEntries(){
 }
 function syncRoomGuide(){
  const visible=!!room&&!activity&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block'&&avatar!==null;
- if(roomGuide.hidden===visible)roomGuide.hidden=!visible;
  roomGuideToggle.hidden=!visible;
- if(!visible){closeRoomGuide();roomGuideKey='';return}
- const guideName=tr('Activities','体验');if(roomGuideToggle.textContent!==guideName)roomGuideToggle.textContent=guideName;
+ if(!visible){closeRoomGuide();roomGuideKey='';roomGuideToggle.dataset.missing='0';roomGuideToggle.dataset.showDirectory='false';return}
+ roomGuide.hidden=!roomGuide.classList.contains('pawGuideOpen');
  const entries=roomGuideEntries(),key=room+'|'+zh+'|'+entries.map(v=>v[0]).join(',');
  if(key===roomGuideKey)return;
+ const focused=roomGuide.contains(document.activeElement)?document.activeElement.dataset.station:null;
  roomGuideKey=key;roomGuide.replaceChildren();roomGuide.setAttribute('aria-label',tr('Room activities','小屋体验'));
  element('strong',tr('Where to?','想去哪里？'),roomGuide);
  for(const [id,en,cn] of entries){
   const btn=b(roomGuide,tr(en,cn),()=>{
-   if(!indoorReady())return;
+   if(!pawGuideActionAllowed(key,roomGuideKey,!roomGuide.hidden,btn.isConnected,indoorReady()))return;
    // Reuse a live authored hit function, including the walking guard.
    const target=hit.find(h=>h.stationId===id&&typeof h.fn==='function');
-   if(target){closeRoomGuide();target.fn();btn.blur()}
+   if(target){closeRoomGuide(true);target.fn()}
    else hint('Tap the station when it comes into view.','等体验区进入视野后再点击。')
-  });btn.dataset.station=id
+  });btn.dataset.station=id;
+  if(focused===id&&!roomGuide.hidden)btn.focus({preventScroll:true})
  }
 }
 const roomGuideDrawBefore=drawRoom;
 drawRoom=function(){const result=roomGuideDrawBefore();syncRoomGuide();return result};
-const roomGuideStartBefore=start;start=function(...args){roomGuide.hidden=true;roomGuideKey='';return roomGuideStartBefore(...args)};
+const roomGuideStartBefore=start;start=function(...args){closeRoomGuide();roomGuideKey='';return roomGuideStartBefore(...args)};
 const roomGuideUIBefore=updateHUD;updateHUD=function(...args){const result=roomGuideUIBefore(...args);syncRoomGuide();return result};
 const roomLayoutCss=document.createElement('style');roomLayoutCss.textContent=`
 #roomStationGuide{position:absolute;z-index:5;left:12px;top:120px;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
@@ -3654,7 +3676,7 @@ syncRoomGuide=function(){
   const name=room==='park'?tr('Daydream Park · Deer Grove','发呆公园 · 鹿苑'):room==='boba'?tr('Pearl & Pause','珍珠摸鱼铺'):door?tr(door[3],door[4]):'';
   if(pawPlaceName.textContent!==name)pawPlaceName.textContent=name;
   pawPlaceName.hidden=!name;
-  const label=tr('Choose a station','选择体验地点');
+  const label=pawGuideName(roomGuideEntries().length,Number(roomGuideToggle.dataset.missing)||0,zh);
   if(roomGuideToggle.textContent!==label)roomGuideToggle.textContent=label;
   roomGuideToggle.setAttribute('aria-label',label);
  }
@@ -6492,7 +6514,9 @@ drawRoom=function(...args){
   const entries=roomGuideEntries(),missing=pawMissingStations(entries,pawVisibleStationLabels);
   roomGuideToggle.dataset.missing=String(missing.length);
   roomGuideToggle.dataset.showDirectory=String(missing.length>0);
-  if(missing.length)roomGuideToggle.textContent=tr('Activities · ','体验 · ')+entries.length;
+  const guideName=pawGuideName(entries.length,missing.length,zh);
+  if(roomGuideToggle.textContent!==guideName)roomGuideToggle.textContent=guideName;
+  roomGuideToggle.setAttribute('aria-label',guideName);
   roomGuideToggle.title=entries.map(v=>tr(v[1],v[2])).join(' · ');
  }
  return result
