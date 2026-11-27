@@ -569,13 +569,11 @@
       "evidence": [
         "Live Pages check 27 Nov: served script lacked pawDockRootChoice; no current dock gameplay review possible.",
         "Latest world runtime check attempted after 3743443a; browser connector timed out without reporting viewport, image loads or JS state.",
-        "27 Nov: attempted current deployment in isolated 390x844 browser with normal My Room navigation; connector timed out after 40 seconds without observable viewport, source, or interaction output."
+        "27 Nov: attempted current deployment in isolated 390x844 browser with normal My Room navigation; connector timed out after 40 seconds without observable viewport, source, or interaction output.",
+        "27 Nov after dedicated garden commit: live browser Node environment lacked playwright, and browser-agent fallback failed to execute. No rendered proof."
       ],
-      "lease": {
-        "owner": "manual-render-check-20261127-2233",
-        "until": 1795791580321
-      },
-      "blocker": "Browser session timed out; actual current deployment, mobile/desktop playthrough, startup errors and appearance remain unverified."
+      "lease": null,
+      "blocker": "Browser connector unavailable for this attempt; actual mobile/desktop playthrough and visual acceptance remain unverified."
     },
     {
       "id": "MAP-05",
