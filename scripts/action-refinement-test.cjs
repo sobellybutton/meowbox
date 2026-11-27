@@ -173,4 +173,11 @@ for(const p of [{room:'tea'},{activity:'sticks'},{state:{}},{goal:()=>{}}])ck(pa
 q.started=true;ck(pawFortuneWalkPhase(q,{...v,goal:arrive})==='walking','walking');ck(pawFortuneWalkPhase(q,{...v,blocked:true})==='wait','covered');ck(pawFortuneWalkPhase(q,{...v,moving:true})==='wait','moving');ck(pawFortuneWalkPhase(q,v)==='restore','restore number');
 return n;`)()+' fortune walk handoff assertions');
 
-console.log('PASS: '+new Function(between(source,'/* PAW_TEMPLE_SCREENSHOT_REPAIR_BEGIN */','/* PAW_TEMPLE_SCREENSHOT_REPAIR_END */')+`let n=0;const ck=(x,m)=>{if(!x)throw Error(m);n++};const p={x:100,y:-145,w:600,h:600*1648/928};for(const [w,h] of [[320,568],[390,844],[430,932],[768,1024],[1280,720]]){let q=pawTempleFullCamera(w,h,p);ck(q.s*p.w+1e-6>=w&&q.s*p.h+1e-6>=h,'full camera');}for(let i=0;i<3;i++)for(let t=0;t<30;t+=.05){let [x,y]=pawGardenWaterPoint(i,t,t);ck(x>=.49&&x<=.65&&y>=.36&&y<=.39,'fish stays in painted water')}return n`)()+' painted temple viewport and garden water coordinate assertions');
+console.log('PASS: '+new Function(between(source,'/* PAW_TEMPLE_SCREENSHOT_REPAIR_BEGIN */','/* PAW_TEMPLE_SCREENSHOT_REPAIR_END */')+`let n=0;const ck=(x,m)=>{if(!x)throw Error(m);n++};const p={x:100,y:-145,w:600,h:600*1648/928};for(const [w,h] of [[320,568],[390,844],[430,932],[768,1024],[1280,720]]){let q=pawTempleFullCamera(w,h,p);ck(q.s*p.w+1e-6>=w&&q.s*p.h+1e-6>=h,'full camera');}for(let i=0;i<3;i++)for(let t=0;t<30;t+=.05){let [x,y]=pawGardenWaterPoint(i,t,t);ck(x>=.49&&x<=.65&&y>=.42&&y<=.47,'fish stays in painted water')}return n`)()+' painted temple viewport and garden water coordinate assertions');
+
+console.log('PASS: '+new Function(between(source,'/* PAW_TEMPLE_PHYSICAL_SCENES_BEGIN */','/* PAW_TEMPLE_PHYSICAL_SCENES_END */')+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};let q={drawing:true,stickDrawAt:10};
+for(let i=0;i<160;i++){let t=10+i/100,p=pawTempleStickPose(q,t);ck(p.fall>=0&&p.fall<=1,'fall');ck(p.show===(t-10>=.38),'show')}
+q={fallenStick:7,stickPicked:true,stickPickAt:10};for(let i=0;i<150;i++){const p=pawTempleStickPose(q,10+i/100);ck(p.pick>=0&&p.pick<=1&&p.fall===1,'pickup')}
+for(let i=0;i<450;i++){let m=pawTempleBellMotion({bellAt:10,bellStrength:1},10+i/100);ck(Number.isFinite(m.swing)&&Math.abs(m.swing)<=45&&Math.abs(m.impact)<=.045,'bell')}
+return n;`)()+' painted hall stick and bell motion assertions');
