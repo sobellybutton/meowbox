@@ -75,5 +75,15 @@
   if(![['starter','side'],['side','studio']].some(pair=>pair[0]===from&&pair[1]===to)||!Array.isArray(items))return false;
   return items.every((item,i)=>canPlace(from,item,items.filter((_,j)=>j!==i))&&canPlace(to,item,items.filter((_,j)=>j!==i)));
  }
- return Object.freeze({shell,furniture,project,cellExists,footprint,canPlace,nearestCell,anchor,upgradeAllowed,layoutIds:Object.keys(layouts),furnitureIds:Object.keys(catalog)});
+ // Only map matching furniture identities. Keep cabinet/shelf and special
+ // interactive fixtures on their current art until shelf contact is calibrated.
+ const legacyArt={futon:'futon',bed:'single-bed',lamp:'paper-lamp',basicTable:'low-table',rug:'woven-rug',plant:'fern',zabuton:'floor-cushion',catBasket:'cat-bed',sakuraVase:'flower-vase',lowDesk:'desk',retroTV:'retro-tv',chineseTeaTable:'tea-table',chineseBench:'bench'};
+ function legacyFurniture(id){return Object.hasOwn(legacyArt,id)?furniture(legacyArt[id]):null}
+ function plans(extension,studio){
+  const second=!!extension&&!!studio;
+  return [{id:'starter',purchase:null,owned:true,available:true,cells:16},
+          {id:'side',purchase:'roomExtension',owned:!!extension,available:true,cells:28},
+          {id:'studio',purchase:'roomStudio',owned:second,available:!!extension,cells:40}];
+ }
+ return Object.freeze({shell,furniture,legacyFurniture,legacyIds:Object.keys(legacyArt),plans,project,cellExists,footprint,canPlace,nearestCell,anchor,upgradeAllowed,layoutIds:Object.keys(layouts),furnitureIds:Object.keys(catalog)});
 });
