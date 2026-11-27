@@ -30,3 +30,16 @@ assert.equal(api.upgradeAllowed('starter','side',[bed,{id:'wood-chair',u:0,v:0}]
 assert.equal(api.canPlace('starter',{id:'unknown',u:0,v:0}),false);
 assert.ok(api.anchor('starter',bed).depth>api.anchor('starter',bed).y);
 console.log('Modular home asset, projection, placement and upgrade checks passed.');
+
+for(const id of api.legacyIds)assert.ok(fs.existsSync(path.resolve(__dirname,'..',api.legacyFurniture(id))));
+assert.equal(api.legacyFurniture('unknown'),null);
+assert.equal(api.legacyFurniture('shelf'),null);
+assert.equal(api.legacyFurniture('displayCabinet'),null);
+for(const [extension,studio] of [[false,false],[false,true],[true,false],[true,true]]){
+ const plans=api.plans(extension,studio);
+ assert.equal(plans[0].owned,true);
+ assert.equal(plans[1].owned,extension);
+ assert.equal(plans[2].available,extension);
+ assert.equal(plans[2].owned,extension&&studio);
+ assert.deepEqual(plans.map(p=>p.cells),[16,28,40]);
+}
