@@ -162,12 +162,12 @@
       "depends": [
         "MAP-03"
       ],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-districts-20261127-f",
-        "until": 1795783720836
-      }
+      "stage": "tested",
+      "evidence": [
+        "2d8eb003: selected Munch & Play art, preview, traced stair spine, separate resident limits, painted door zones and plaques; parsed and helper route checks passed"
+      ],
+      "lease": null,
+      "blocker": "Rendered desktop and mobile route, approach/return, labels and foreground occlusion still need verification."
     },
     {
       "id": "WORLD-INTEGRATION-WONDER",
@@ -185,7 +185,10 @@
       ],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-districts-20261127-f",
+        "until": 1795783764212
+      }
     },
     {
       "id": "ART-01",
