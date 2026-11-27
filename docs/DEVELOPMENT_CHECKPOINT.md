@@ -440,3 +440,8 @@ Three distinct workstreams advanced. No final visual acceptance or accepted-coun
 - QA-BUILD-01 tested: exact current extensions blob 41bb6bf2 and quality-checks blob 7de2729f passed the unmodified isolated quality-check suite in connector harness, including map sign stability. No test weakening or unnecessary rewrite. Complete build/deployment CI still unverified. 2391a716 records status and releases claim.
 
 Three workstreams advanced, two source changes and one targeted regression verified. Registry: 41 outstanding, 40 tested, 3 implemented. No final visual acceptance increase. Concurrent edits preserved; hourly schedule unchanged.
+
+
+## Wishing Garden painted lobby integration (28 November 2026 SGT)
+
+ROOM-02: 4211b656 activates the inspected recovered portrait painting in the actual Wishing Garden lobby, removes duplicate flat pond/rack geometry, adds traced central walkable lane, entry/exit and both station anchors, resident/visitor placement, painted-context labels, readiness-gated admission and portrait camera coverage. Existing coin toss and wish mechanics and saves remain untouched. fdb912f6 adds durable floor-route, bounds and six-viewport regression tests; extracted existing and new test logic passed 1,267 assertions in the connector harness (file existence independently checked through GitHub; harness stubs filesystem). Actual live source still lacked the new marker when checked; newer Pages deployment was in progress and prior runs were superseded. Need actual rendered entry, both stations, return, WebKit/touch and landscape review; landscape still uses portrait-fit fallback, activity pond itself still uses interim geometry. No final acceptance increase.
