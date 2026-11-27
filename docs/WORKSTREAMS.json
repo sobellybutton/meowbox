@@ -339,13 +339,11 @@
       "depends": [],
       "stage": "tested",
       "evidence": [
-        "c0afb1d1: inspected dedicated 960x1631 rear garden plate, mapped existing koi/seat/chime actions and optional lucky cat visit to traced ground routes; painted chime retained, feeding arc/ripple, new camera and controls, stable fallback; focused route/tick/target regression passed and wired into CI."
+        "c0afb1d1: inspected dedicated 960x1631 rear garden plate, mapped existing koi/seat/chime actions and optional lucky cat visit to traced ground routes; painted chime retained, feeding arc/ripple, new camera and controls, stable fallback; focused route/tick/target regression passed and wired into CI.",
+        "4211b656: painted Wishing Garden lobby, mapped floor/station anchors, label and actor placement, readiness gated admission. fdb912f6: durable regression tests; 1,267 assertions passed in isolated connector harness."
       ],
-      "lease": {
-        "owner": "manual-live-audit-garden-20261127",
-        "until": 1795796346265
-      },
-      "blocker": "Rendered browser input, art fit, seated character contact, pond animation and mobile/desktop verification remain pending. Existing wishing pool (outside temple) unchanged. Final pose artwork still outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD."
+      "lease": null,
+      "blocker": "Actual deployed browser entry, both stations, return, iPhone WebKit/touch and desktop review remain pending. Wishing pool activity itself uses interim geometry; landscape uses portrait-fit fallback; final pose artwork outstanding. Live source was still on earlier deployment during verification."
     },
     {
       "id": "ROOM-03",
