@@ -8359,7 +8359,7 @@ function pawPrayerStep(){
   const sc=.98,hand={x:foot.x+(dir==='left'?-13:17),y:foot.y-42+q.bow*10};
   const reaching=stage==='taking'&&q.touch;
   const grip=reaching?blend(hand,rack,.70):hand;
-  const shown=held+(reaching?1:0);
+  const shown=Math.min(3,held+(reaching?1:0));
   if(q.walking&&!shown)backHuman(foot.x,foot.y,avatar??0,true,dir,sc);
   else{
    // During the actual bow face the altar, rather than bowing towards
@@ -9114,10 +9114,11 @@ label=function(name,x,y,fn){
  const id=pawStationPlaque?.id||(Math.abs(x-pawHallStations.secretGarden[0])<2?'secretGarden':null);
  const q=pawHallLabels[id];if(!q)return pawHallLabelBefore(name,x,y,fn);
  pawStationPlaque=null;
- const [cx,cy,en,cn]=q,scale=Math.max(.08,cam.scale),font=Math.min(19,Math.max(14,11/scale));
+ const [anchorX,cy,en,cn]=q,scale=Math.max(.08,cam.scale),font=Math.min(19,Math.max(14,11/scale));
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';
   const value=tr(en,cn),w=Math.min(124,Math.max(55,ctx.measureText(value).width+12)),h=font+11;
+  const minX=(5-cam.ox)/scale+w/2,maxX=(W-5-cam.ox)/scale-w/2,cx=Math.max(minX,Math.min(maxX,anchorX));
   const rect=pawHallScreenRect({x:cx-w/2,y:cy-h/2,w,h},{s:scale,ox:cam.ox,oy:cam.oy});
   // Keep signs near the painted station, not on a visitor's face.
   if(rect&&rect.left>=4&&rect.right<=W-4&&rect.top>=4&&rect.bottom<=H-4&&![...meowTextFrameRects,...meowFrameBlockers].some(b=>pawHallOverlap(rect,b))){
@@ -9574,8 +9575,8 @@ mobileRoomCamera=function(...args){
  if(room==='temple'&&W<H&&(pawHallEnabled()||activity==='prayer'||activity==='secretGarden')){
   return pawTempleFullCamera(W,H,activity==='secretGarden'?pawGardenPlate:pawHallPlate)||pawTempleFullCameraBefore(...args)
  }
- if(room==='temple'&&activity==='prayer'){
-  const p=pawHallPlate,s=Math.min(W/p.w,H/p.h);return {s,ox:(W-p.w*s)/2-p.x*s,oy:(H-p.h*s)/2-p.y*s}
+ if(room==='temple'&&['prayer','secretGarden'].includes(activity)){
+  const p=activity==='secretGarden'?pawGardenPlate:pawHallPlate,s=Math.min(W/p.w,H/p.h);return {s,ox:(W-p.w*s)/2-p.x*s,oy:(H-p.h*s)/2-p.y*s}
  }
  return pawTempleFullCameraBefore(...args)
 };
@@ -9586,7 +9587,6 @@ drawActivity=function(...args){
  // One real pond, one bridge and one bench: all are already painted.
  ctx.save();try{
   ctx.fillStyle='#344238';ctx.fillRect(b.x,b.y,b.w,b.h);
-  if(W>=H)cover(pawTempleGardenArt,b.x,b.y,b.w,b.h);
   ctx.drawImage(pawTempleGardenArt,p.x,p.y,p.w,p.h);
   const feedAge=Math.max(0,t-run.gardenFeedAt),water=xy(.57,.374);
   for(let i=0;i<3;i++){
@@ -9631,6 +9631,7 @@ loop=function(...args){if(activity!=='secretGarden')pawGardenClearControls();ret
 const pawTempleLayoutCSS=document.createElement('style');
 pawTempleLayoutCSS.textContent=`
 #game #gameControls.mb5ActivityAssist:not([hidden]){display:grid!important;grid-template-columns:minmax(0,1fr)!important;box-sizing:border-box!important;width:min(92vw,360px)!important;max-width:calc(100% - 24px)!important;gap:5px!important}
+@media(max-height:540px){#game #gameControls.mb5ActivityAssist:not([hidden]){grid-template-columns:repeat(auto-fit,minmax(120px,1fr))!important;width:min(80vw,430px)!important}}
 #game #gameControls.mb5ActivityAssist .mb5ActivityButton{box-sizing:border-box!important;min-width:0!important;width:100%!important;white-space:normal!important;overflow-wrap:anywhere;font-size:clamp(12px,3.4vw,15px)!important}
 #game #gameControls.pawGardenControls:not([hidden]){display:flex!important;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 24px);box-sizing:border-box;width:max-content;gap:5px;border-radius:8px;background:#f1e4caed;border:1px solid #b69a70}
 #game #gameControls.pawGardenControls button{min-width:0;min-height:44px;white-space:normal;font-size:clamp(12px,3.3vw,14px);padding:6px 9px}
