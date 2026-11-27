@@ -3529,7 +3529,10 @@ page=function(title,sub,body){
   const isSocial=title===tr('Town Square','摸鱼广场')||title==='Town Square';
   if(isSocial){
    const notebook=element('section','',q,'pawTownNotebook');
-   const children=[...q.children].filter(n=>n!==notebook&&!n.matches(':scope > .row,:scope > h1,:scope > p:first-of-type'));
+   // These are already direct children. Element.matches(':scope > ...')
+   // scopes to each child, not q, and accidentally moves the page toolbar.
+   const subtitle=[...q.children].find(n=>n.tagName==='P');
+   const children=[...q.children].filter(n=>n!==notebook&&n!==subtitle&&!n.matches('.row,h1'));
    for(const child of children)notebook.append(child);
    const nav=[...notebook.querySelectorAll('div,nav,section')].find(el=>[...el.children].filter(v=>v.tagName==='BUTTON').length>=3);
    if(nav)nav.classList.add('pawTownNotebookTabs');
