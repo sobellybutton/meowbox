@@ -12105,10 +12105,10 @@ pawRoomVisitorSpecs.wishes={count:1,points:pawWishLobbyVisitors.map(v=>v.slice()
 
 
 /* PAW_READING_LOBBIES_BEGIN */
-// The five single-station reading rooms use the individually reviewed paintings.
+// The reading rooms and two-station tea lobby use individually reviewed paintings.
 // Keep the existing activity, save IDs and walking input; never draw a second
 // table or book on a table already present in the painted room.
-const pawReadingRoomIds=['tarot','destiny','quiz','story','match'];
+const pawReadingRoomIds=['tarot','destiny','quiz','story','match','tea'];
 const pawReadingPlate={x:245,y:235,w:550*928/1648,h:550};
 function pawReadingWorld(point,p=pawReadingPlate){return [p.x+point[0]*p.w,p.y+point[1]*p.h]}
 function pawReadingNormalized(x,y,p=pawReadingPlate){return [(x-p.x)/p.w,(y-p.y)/p.h]}
@@ -12121,7 +12121,8 @@ function pawReadingCamera(api,w,h,p=pawReadingPlate){
  const s=c.w/p.w;return {s,ox:c.ox-p.x*s,oy:c.oy-p.y*s}
 }
 function pawReadingCompatible(api,id,entries){
- return pawReadingRoomIds.includes(id)&&!!api?.rooms[id]&&entries.length===1&&Object.hasOwn(api.rooms[id].stations,entries[0][0])
+ const stations=api?.rooms[id]?.stations;
+ return pawReadingRoomIds.includes(id)&&!!stations&&entries.length===Object.keys(stations).length&&new Set(entries.map(e=>e[0])).size===entries.length&&entries.every(e=>Object.hasOwn(stations,e[0]))
 }
 /* PAW_READING_LOBBIES_END */
 let pawReadingModuleJob=null,pawReadingVisit=null,pawReadingAdmission=null;
@@ -12193,10 +12194,10 @@ warmRoomArt=function(id,...args){return id===room&&pawReadingBackdrop()?true:paw
 const pawReadingDrawBefore=drawRoom;
 drawRoom=function(...args){if(pawReadingActive())pawReadingBackdrop();return pawReadingDrawBefore(...args)};
 function pawReadingHost(){
- const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:null;
+ const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:room==='tea'?['Auntie Mei','梅姨']:null;
  if(!name)return null;const record=residentArtworkRecord(name);if(!record)return null;
  const [x,y]=pawReadingWorld(room==='destiny'?[.58,.446]:pawReadingAPI().rooms[room].host);
- return {station:room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record.height||112,.90),facing:'left'}
+ return {station:room==='tea'?'chat':room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record.height||112,.90),facing:'left'}
 }
 const pawReadingHostsBefore=roomResidentActors;
 roomResidentActors=function(){if(!pawReadingActive())return pawReadingHostsBefore();const a=pawReadingHost();return a?[a]:[]};
@@ -12239,7 +12240,7 @@ function pawDrawYueDeskPlaque(fn){
 const pawReadingPropBefore=prop;
 prop=function(id,x,y){
  if(!pawReadingActive()||!Object.hasOwn(pawReadingAPI().rooms[room].stations,id))return pawReadingPropBefore(id,x,y);
- const a=pawReadingHost();if(a){if(room==='destiny'){pawDrawYueAtDesk(a);pawDrawYueDeskPlaque(()=>action('destiny'))}else drawGatheringPainted(a.n,a.x,a.y,a.sc,a.facing)}
+ const a=pawReadingHost();if(a&&a.station===id){if(room==='destiny'){pawDrawYueAtDesk(a);pawDrawYueDeskPlaque(()=>action('destiny'))}else drawGatheringPainted(a.n,a.x,a.y,a.sc,a.facing)}
  // Artwork contains the table and props. Only the interactive sign remains.
  pawStationPlaque={room,id,x,y,spec:groundedStationSpec(room,id),at:t}
 };
