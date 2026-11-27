@@ -11919,13 +11919,25 @@ proRender=function(...args){
 };
 // Keep the compact HUD tied to the same ledger used by the shop and purse.
 const pawCompactHudBefore=updateHUD;
+const pawHudCoinPath='assets/visual/painted/interface/paw-coin-hud.webp';
+let pawHudCoinReady=false;
+const pawHudCoinImage=new Image();
+function pawPaintCoinBalance(coin,balance){
+ if(!coin||!Number.isFinite(balance)||balance<0)return;
+ const label=tr('Paw Coins','爪爪币')+': '+String(balance);
+ coin.setAttribute('aria-label',label);coin.title=label;
+ coin.classList.toggle('pawHudCoinPainted',pawHudCoinReady);
+ coin.textContent=(pawHudCoinReady?'':'◉ ')+String(balance);
+}
+pawHudCoinImage.onload=()=>{pawHudCoinReady=pawHudCoinImage.naturalWidth>0;pawPaintCoinBalance($('hudCoins'),hideoutBalance())};
+pawHudCoinImage.onerror=()=>{pawHudCoinReady=false;pawPaintCoinBalance($('hudCoins'),hideoutBalance())};
+pawHudCoinImage.src=pawHudCoinPath;
+const pawHudCoinCss=document.createElement('style');
+pawHudCoinCss.textContent=`#game #hudStats #hudCoins.pawHudCoinPainted{display:inline-flex;align-items:center;gap:3px;font-variant-numeric:tabular-nums}#game #hudStats #hudCoins.pawHudCoinPainted::before{content:'';width:19px;height:19px;flex:0 0 19px;background:url('${pawHudCoinPath}') center/contain no-repeat} @media(max-width:380px){#game #hudStats #hudCoins.pawHudCoinPainted::before{width:17px;height:17px;flex-basis:17px}}`;
+document.head.append(pawHudCoinCss);
 updateHUD=function(...args){
- const result=pawCompactHudBefore(...args),coin=$('hudCoins');
- const balance=hideoutBalance();
- if(Number.isFinite(balance)&&balance>=0){
-  const label=tr('Paw Coins','爪爪币')+': '+String(balance);
-  coin.setAttribute('aria-label',label);coin.title=label;
- }
+ const result=pawCompactHudBefore(...args);
+ pawPaintCoinBalance($('hudCoins'),hideoutBalance());
  return result
 };
 
