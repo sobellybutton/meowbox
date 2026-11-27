@@ -8797,4 +8797,92 @@ loop=function(ms,...args){
  return pawPaperLoopBefore(ms,...args)
 };
 
+/* PAW_CARE_CONTINUITY_BEGIN */
+function pawCareActiveClock(a,now,blocked){
+ if(!a||!Number.isFinite(now))return false;
+ const field=a.phase==='return'?'returnAt':a.phase==='idle'?null:'at';
+ if(!field||!Number.isFinite(a[field])){delete a.activeClock;return false}
+ const prior=a.activeClock;
+ if(prior&&prior.phase===a.phase&&prior.start===a[field]&&now>=prior.now&&(blocked||prior.blocked)){
+  const gap=now-prior.now;a[field]+=gap;
+  if(Number.isFinite(a.tickAt))a.tickAt+=gap
+ }
+ a.activeClock={phase:a.phase,start:a[field],now,blocked:!!blocked};return true
+}
+function pawCareControlAllowed(rendered,current,action,blocked){
+ return !blocked&&!!current&&rendered===current&&current.phase==='idle'&&!current.drag&&['feed','water','pet','play','rest'].includes(action)
+}
+function pawCareAssistedReady(a,now,blocked){
+ return !blocked&&!!a?.assisted&&Number.isFinite(a.at)&&Number.isFinite(now)&&
+ ((a.phase==='pet'&&now-a.at>=2.3)||(a.phase==='play'&&now-a.at>=3.2))
+}
+function pawCareCancelDrag(a,now){
+ if(!a?.drag)return null;
+ const id=a.drag.id;a.drag=null;a.stroke=0;
+ if((a.phase==='pet'||a.phase==='play')&&!a.assisted){
+  a.phase='return';a.returnFromX=a.x;a.returnFromY=a.y;a.returnAt=now
+ }
+ return id
+}
+/* PAW_CARE_CONTINUITY_END */
+function pawCareInterrupt(now){
+ if(!careIsActive())return;
+ const a=state.care,blocked=pawArcadeInputBlocked();
+ if(blocked)pawCareDropPointer(a,now);
+ pawCareActiveClock(a,now,blocked)
+}
+function pawCareDropPointer(a,now){
+ const id=pawCareCancelDrag(a,now);
+ if(id===null)return;
+ try{if(c.hasPointerCapture(id))c.releasePointerCapture(id)}catch{}
+ careSync()
+}
+// The existing visibility listener calls this dynamic function. One active
+// clock now owns timing; no independent visibility shift or wall-clock reward.
+pawCareVisibility=function(hidden,now){pawCareInterrupt(now)};
+const pawCareLoopBefore=loop;
+loop=function(ms,...args){pawCareInterrupt(ms/1000);return pawCareLoopBefore(ms,...args)};
+const pawCareTickBefore=careTick;
+careTick=function(){
+ if(!careIsActive()||pawArcadeInputBlocked())return;
+ const a=state.care;const result=pawCareTickBefore();
+ if(state.care===a&&pawCareAssistedReady(a,t,false))careComplete(a.phase);
+ return result
+};
+const pawCareStartActionBefore=careStart;
+careStart=function(action){
+ if(!careIsActive()||!pawCareControlAllowed(state.care,state.care,action,pawArcadeInputBlocked()))return;
+ return pawCareStartActionBefore(action)
+};
+const pawCareCompleteBefore=careComplete;
+careComplete=function(action){
+ if(!careIsActive()||pawArcadeInputBlocked()||state.care.phase!==action||!careCan(state.care.values,action))return;
+ const a=state.care,id=a.drag?.id,result=pawCareCompleteBefore(action);
+ if(id!==undefined&&id!==null)try{if(c.hasPointerCapture(id))c.releasePointerCapture(id)}catch{}
+ return result
+};
+const pawCareControlsBefore=refreshControls;
+refreshControls=function(...args){
+ const result=pawCareControlsBefore(...args);
+ if(!careIsActive())return result;
+ const rendered=state.care;
+ for(const button of $('gameControls').querySelectorAll('[data-care]')){
+  const action=button.dataset.care;
+  button.onclick=()=>{
+   if(!careIsActive()||!pawCareControlAllowed(rendered,state.care,action,pawArcadeInputBlocked())||!careCan(rendered.values,action))return;
+   careStart(action);
+   if(rendered.phase===action&&(action==='pet'||action==='play'))rendered.assisted=true
+  }
+ }
+ return result
+};
+const pawCareCaptureBefore=careCapture;
+careCapture=function(e){
+ if(!careIsActive())return false;
+ if(pawArcadeInputBlocked()){pawCareDropPointer(state.care,performance.now()/1000);return false}
+ return pawCareCaptureBefore(e)
+};
+window.addEventListener('blur',()=>{if(careIsActive())pawCareDropPointer(state.care,performance.now()/1000)});
+window.addEventListener('resize',()=>{if(careIsActive())pawCareDropPointer(state.care,performance.now()/1000)});
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
