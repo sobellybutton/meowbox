@@ -680,6 +680,27 @@
       ],
       "lease": null,
       "blocker": "Actual browser verification timed out; inspect room entry tracking, save/reload, bilingual labels, station layout and boarding on current mobile and desktop deployment."
+    },
+    {
+      "id": "QA-RAIL-HOME-01",
+      "lane": "engineering",
+      "priority": 2,
+      "summary": "Align automated smoke checks with new station and wide railway and home modules",
+      "resources": [
+        "scripts/district-journey-test.cjs",
+        ".github/workflows/meowbox-browser.yml"
+      ],
+      "depends": [
+        "RAIL-LIVE-01",
+        "HOME-LIVE-01",
+        "WORLD-VISITS-01"
+      ],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-regressions-20261127-i",
+        "until": 1795786790521
+      }
     }
   ]
 }
