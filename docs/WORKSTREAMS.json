@@ -768,12 +768,12 @@
         "scripts/resident-remarks-test.cjs"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-resident-content-20261127-k",
-        "until": 1795787029227
-      }
+      "stage": "tested",
+      "evidence": [
+        "124e2b6d: 48 original bilingual remarks for all 16 current resident profiles, stable IDs and idempotent merge; 148 regression assertions executed against current startup content."
+      ],
+      "lease": null,
+      "blocker": "Connect module to existing ambient scheduler when shared source lease clears; actual dialogue placement, cadence and bilingual review pending."
     }
   ]
 }
