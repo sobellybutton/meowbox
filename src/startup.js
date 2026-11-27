@@ -10460,4 +10460,66 @@ html[lang^="zh"]{--paw-body:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",s
 @media(orientation:landscape) and (min-width:760px){#game #content .pawStationPlatform{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);align-items:center}#game #content .pawStationPlatformArt img{height:auto;max-height:68dvh}}
 `;document.head.append(pawFinalTypeStyle);
 
+
+/* Reuse the verified transparent wide carriage and independent painted
+   trackside sprites. Legacy window motion remains the immediate fallback,
+   including portrait screens and cold/missing assets. Never switch art
+   mid-ride merely because a download finished. */
+const pawPaintedRailModuleReady=new Promise(resolve=>{
+ const tag=document.createElement('script');tag.src='src/rail-foreground.js';tag.async=true;
+ let done=false;const finish=api=>{if(done)return;done=true;clearTimeout(timer);resolve(api||null)};
+ const timer=setTimeout(()=>finish(null),7000);
+ tag.onload=()=>finish(globalThis.PawRailForeground);tag.onerror=()=>finish(null);document.head.append(tag)
+});
+let pawPaintedRailLoaded=null;
+function pawRailCandidateImage(record){
+ return new Promise(resolve=>{
+  const im=new Image();im.decoding='async';let done=false;
+  const finish=value=>{if(done)return;done=true;clearTimeout(timer);resolve(value)};
+  const timer=setTimeout(()=>finish(null),5000);
+  im.onload=()=>finish(im.naturalWidth===record.width&&im.naturalHeight===record.height?im:null);
+  im.onerror=()=>finish(null);im.src=record.path
+ })
+}
+pawPaintedRailModuleReady.then(async api=>{
+ if(!api)return;
+ const keys=['carriage',...Object.keys(api.sprites)],images=await Promise.all([pawRailCandidateImage(api.carriage),...Object.values(api.sprites).map(pawRailCandidateImage)]);
+ if(images.every(Boolean))pawPaintedRailLoaded={api,assets:Object.fromEntries(keys.map((key,i)=>[key,images[i]]))}
+}).catch(()=>{});
+function pawMountPaintedRailComposite(stage,layout,host,mode,layers){
+ const candidate=pawPaintedRailLoaded,destination=mode==='entrance'?'fortune':host.dataset.to;
+ if(!candidate||layout!=='landscape'||!['ride','entrance'].includes(mode)||!layers?.far||!Object.hasOwn(candidate.api.far,destination)||!stage.isConnected)return false;
+ const canvas=document.createElement('canvas'),g=canvas.getContext('2d');if(!g)return false;
+ const picture=stage.querySelector('picture');if(!picture)return false;
+ canvas.width=1200;canvas.height=Math.round(1200*candidate.api.carriage.height/candidate.api.carriage.width);
+ canvas.className='pawPaintedRailComposite';canvas.setAttribute('aria-hidden','true');
+ const assets={...candidate.assets,far:layers.far},reduce=matchMedia('(prefers-reduced-motion: reduce)');
+ let elapsed=0,raf=0,last=null,lastDraw=-Infinity,dead=false,frames=0;
+ function draw(){
+  g.clearRect(0,0,canvas.width,canvas.height);
+  const ok=candidate.api.draw(g,assets,destination,elapsed,canvas.width,canvas.height,reduce.matches);
+  if(ok){canvas.dataset.frame=String(++frames);canvas.dataset.travel=elapsed.toFixed(3)}
+  return ok
+ }
+ if(!draw())return false;
+ const stop=()=>{dead=true;cancelAnimationFrame(raf);canvas.remove();picture.style.visibility='';delete stage.dataset.paintedComposite};
+ const tick=now=>{
+  if(dead||!stage.isConnected||stage.hidden||stage.dataset.layout!==layout){stop();return}
+  const dt=last===null?0:Math.min(.1,Math.max(0,(now-last)/1000));last=now;
+  if(!document.hidden&&host.dataset.sceneryPaused!=='true'&&!reduce.matches){elapsed+=dt;if(now-lastDraw>=33){if(!draw()){stop();return}lastDraw=now}}
+  raf=requestAnimationFrame(tick)
+ };
+ picture.style.visibility='hidden';stage.append(canvas);stage.dataset.paintedComposite='true';stage.dataset.railMotion=reduce.matches?'still':'painted-route-parallax';
+ pawRailMotionJobs.set(stage,{stop});raf=requestAnimationFrame(tick);return true
+}
+const pawPaintedRailMotionBefore=pawRailMountMotion;
+pawRailMountMotion=function(stage,im,layout,host,mode,layers=null){
+ const old=pawRailMotionJobs.get(stage);if(old){old.stop();pawRailMotionJobs.delete(stage)}
+ try{if(pawMountPaintedRailComposite(stage,layout,host,mode,layers))return}catch(error){console.warn('Painted railway fallback',error)}
+ return pawPaintedRailMotionBefore(stage,im,layout,host,mode,layers)
+};
+const pawPaintedRailCompositeCss=document.createElement('style');
+pawPaintedRailCompositeCss.textContent='.mbPaintedRail .pawPaintedRailComposite{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:1}';
+document.head.append(pawPaintedRailCompositeCss);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
