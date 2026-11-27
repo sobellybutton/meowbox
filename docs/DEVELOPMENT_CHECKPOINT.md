@@ -125,3 +125,20 @@ Latest prior commit 0fc5771: Pages and entrance passed. Browser run [45939588481
 - RITUAL-03: bell and rinse timers pause, guard inputs against covered or wrong activity.
 - BOX-03: blind box reveal clock pauses and award is guarded by active opening and visible game, retains existing purchase and prize rules.
 - 35 focused clock and action ownership checks passed; source and test scripts parse. Full browser verification, visual rituals and character art remain pending. Provisional tally 43/100, baseline 9 accepted, original ledger unavailable. No new painted art or acceptance claimed.
+
+
+## Paper ritual, notice archive and Town Square toolbar continuation (27 November 2026)
+
+Provisional implementation tally: 46/100 (9 owner-supplied baseline + 37 committed outcomes); fully accepted baseline remains 9/100. Original numbered ledger is still unavailable. Three further outcomes await real-browser and visual acceptance.
+
+| ID | Outcome | Evidence |
+|---|---|---|
+| PAPER-01 | Paper preparation and strike animation preserve active elapsed time across hidden tabs, dialogs, transitions and other overlays; existing impact/reward occurs once, and the new run cannot inherit an old pause. | e537cd8; 11 combined focused assertions passed; persisted tests 3f9ca00. |
+| BOARD-02 | Previously loaded notice archive depth persists through language changes and returning to the board; bounds apply when more notices arrive. | e537cd8; focused paging assertions; browser archive-depth regression d593595. |
+| BOARD-03 | Keep actual page toolbar, title and subtitle outside the illustrated Town Square notebook, restoring direct-child language/back controls rather than silently moving them into the notebook. | db0cfee; focused header-placement check passed; direct toolbar and language regression 4c8f560. |
+
+Prior run [45961770598](https://github.com/sobellybutton/meowbox/actions/runs/45961770598): all 15 helper/build steps and the four-village doorway test succeeded; visual capture, share exports, WebKit and Chromium shrine/organic journeys succeeded. Main browser smoke failed on the direct-child language selector on three viewports after notice expansion and keyboard controls had passed. The notebook wrapper used Element.matches with :scope against each individual child, not the parent, so the toolbar was incorrectly reparented. The new browser tests use exact accessible language buttons and verify the direct toolbar remains in place.
+
+New startup and test scripts parsed; two embedded workflow JS blocks parsed. The 11 new pure helper checks and one mocked header-placement check passed; the first 16 existing action-refinement checks also passed in the connector harness. Full local helper run was blocked by an empty connector response for src/extensions.js (large file); no complete local build or new browser/deployment pass claimed. Push-triggered Actions are not exposed by the current commit workflow lookup, and combined status returned no checks. Inspect latest main CI and screenshots before acceptance.
+
+No new artwork integrated in this continuation. Preserve the three reviewed travellers' existing frames. Remaining bespectacled traveller crops, distinct resident/cameo art, physical pose art and independent railway foreground layers still require recovery/repair and actual visual inspection. Do not advance the accepted count from automated results alone.
