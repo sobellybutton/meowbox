@@ -551,7 +551,10 @@
       "evidence": [
         "Live Pages check 27 Nov: served script lacked pawDockRootChoice; no current dock gameplay review possible."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-world-qa-20261127-f",
+        "until": 1795783844470
+      },
       "blocker": "Latest dock source not yet served in browser. Recheck deployment before rendered review."
     },
     {
