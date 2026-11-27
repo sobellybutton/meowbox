@@ -1,0 +1,290 @@
+{
+  "version": 1,
+  "scope": "host artwork staging, no live acceptance",
+  "source_references": {
+    "master-yue": "36ae6db3436a00c8a428d225cff430db57918a94",
+    "fortune-teller": "fc1b97c859b7e95d2c3f59b568763498727860c6"
+  },
+  "preferred_count": 6,
+  "alternative_count": 7,
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-host-characters/reference-matched/master-yue/seated-brush-held.webp",
+      "character": "master-yue",
+      "pose": "seated-brush-held",
+      "source": "master_yue_celestial_calligrapher.png",
+      "reference_blob": "36ae6db3436a00c8a428d225cff430db57918a94",
+      "sha256": "6502f9d601ccca4a5108e0b43dd896c812145de243abef224435c8f45368c929",
+      "git_blob_sha1": "9c9aece3514188592a0264e56ad10c7cd42b067a",
+      "bytes": 102596,
+      "width": 728,
+      "height": 784,
+      "mode": "RGBA",
+      "visible_alpha_bbox": [
+        152,
+        16,
+        576,
+        768
+      ],
+      "status": "reference-matched candidate; staging only",
+      "placement_notes": "Brush held in preparation; not a verified writing contact or animation."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-host-characters/reference-matched/master-yue/seated-present-blank-parchment.webp",
+      "character": "master-yue",
+      "pose": "seated-present-blank-parchment",
+      "source": "master_yue_reveals_a_blank_celestial_scroll.png",
+      "reference_blob": "36ae6db3436a00c8a428d225cff430db57918a94",
+      "sha256": "b3a7bb81ccaeee35f1ca16c33ab511a67da110bec89436f87b538ceb2580be9e",
+      "git_blob_sha1": "69fd84bbe1809d675230c198cd6cc8ab18e98ede",
+      "bytes": 110302,
+      "width": 728,
+      "height": 784,
+      "mode": "RGBA",
+      "visible_alpha_bbox": [
+        130,
+        17,
+        597,
+        768
+      ],
+      "status": "reference-matched candidate; staging only",
+      "placement_notes": "Blank parchment; render the computed chart separately, never use baked symbols."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-host-characters/reference-matched/master-yue/seated-welcome-explain.webp",
+      "character": "master-yue",
+      "pose": "seated-welcome-explain",
+      "source": "master_yue_celestial_sage_in_watercolour.png",
+      "reference_blob": "36ae6db3436a00c8a428d225cff430db57918a94",
+      "sha256": "8ed2fc0c58f69ae85e72bc214940355ba8904e3710732182c8b5ae851a0d2a96",
+      "git_blob_sha1": "55b0825ce477aa196aafd04d94619475208a1cc5",
+      "bytes": 114056,
+      "width": 728,
+      "height": 784,
+      "mode": "RGBA",
+      "visible_alpha_bbox": [
+        123,
+        16,
+        605,
+        768
+      ],
+      "status": "reference-matched candidate; staging only",
+      "placement_notes": "Open palm welcoming or explaining; desk occlusion and arm clearance required."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-host-characters/reference-matched/fortune-teller/seated-idle.webp",
+      "character": "fortune-teller",
+      "pose": "seated-idle",
+      "source": "seated_tarot_reader_in_plum_robes.png",
+      "reference_blob": "fc1b97c859b7e95d2c3f59b568763498727860c6",
+      "sha256": "7f58b019c90bd4866761f6dd23226e4df3abf2f7d1c92e118d3c84156a635c38",
+      "git_blob_sha1": "b79a563c66338db88fe52b918d041806144cc8a6",
+      "bytes": 95504,
+      "width": 728,
+      "height": 784,
+      "mode": "RGBA",
+      "visible_alpha_bbox": [
+        152,
+        16,
+        576,
+        768
+      ],
+      "status": "reference-matched candidate; staging only",
+      "placement_notes": "Seated host candidate; fit seat height and head scale to painted table."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-host-characters/reference-matched/fortune-teller/seated-shuffle-held.webp",
+      "character": "fortune-teller",
+      "pose": "seated-shuffle-held",
+      "source": "watercolour_tarot_reader_shuffling_cards.png",
+      "reference_blob": "fc1b97c859b7e95d2c3f59b568763498727860c6",
+      "sha256": "9671da2bd200e277e7eb161f537b00e0e7fbf3167ce3176dad5478a44b8bf900",
+      "git_blob_sha1": "bf7c0c347afd4dba76e1c069ac0d94f33830ccb0",
+      "bytes": 107302,
+      "width": 728,
+      "height": 784,
+      "mode": "RGBA",
+      "visible_alpha_bbox": [
+        128,
+        16,
+        600,
+        768
+      ],
+      "status": "reference-matched candidate; staging only",
+      "placement_notes": "Single shuffle pose, not a complete motion cycle. Match game deck design."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-host-characters/reference-matched/fortune-teller/seated-present-card.webp",
+      "character": "fortune-teller",
+      "pose": "seated-present-card",
+      "source": "seated_tarot_reader_revealing_a_card.png",
+      "reference_blob": "fc1b97c859b7e95d2c3f59b568763498727860c6",
+      "sha256": "a07dcc9b259509d22ace03da2585bbd4b1fe8cfb3f27c922a7a0358693503c4b",
+      "git_blob_sha1": "44f95fabb2403b409a85866b9647888a1eec9bff",
+      "bytes": 117018,
+      "width": 728,
+      "height": 784,
+      "mode": "RGBA",
+      "visible_alpha_bbox": [
+        115,
+        16,
+        612,
+        768
+      ],
+      "status": "reference-matched candidate; staging only",
+      "placement_notes": "Blank decorative card; display the actual selected card separately."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-host-characters/earlier-alternatives/master-yue/master-yue-brush-candidate.webp",
+      "character": "master-yue",
+      "pose": "master-yue-brush-candidate",
+      "source": "master-yue-brush-candidate.webp",
+      "reference_blob": "36ae6db3436a00c8a428d225cff430db57918a94",
+      "sha256": "bad0b9a79d54b95ad65b44adebd78de9b2df6416f355dda2e36932717a255e76",
+      "git_blob_sha1": "7ef1787d8903cdeb0074192053208fbb1f25245c",
+      "bytes": 164066,
+      "width": 545,
+      "height": 784,
+      "mode": "RGBA",
+      "visible_alpha_bbox": [
+        8,
+        8,
+        537,
+        776
+      ],
+      "status": "earlier alternative; do not auto-activate",
+      "placement_notes": "Different robe trim and facial treatment. Use only after matching continuity and testing; not a substitute for a reference-matched idle pose."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-host-characters/earlier-alternatives/master-yue/master-yue-closeup-idle.webp",
+      "character": "master-yue",
+      "pose": "master-yue-closeup-idle",
+      "source": "master-yue-closeup-idle.webp",
+      "reference_blob": "36ae6db3436a00c8a428d225cff430db57918a94",
+      "sha256": "1c689681ac2fc3f2aed517764bce94a1c0d66b65b33cdebaa9f5021339fae71f",
+      "git_blob_sha1": "8a306274c010fd3875f5f317a68c91beaeef4191",
+      "bytes": 71520,
+      "width": 378,
+      "height": 474,
+      "mode": "RGBA",
+      "visible_alpha_bbox": [
+        9,
+        9,
+        370,
+        465
+      ],
+      "status": "earlier alternative; do not auto-activate",
+      "placement_notes": "Different robe trim and facial treatment. Use only after matching continuity and testing; not a substitute for a reference-matched idle pose."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-host-characters/earlier-alternatives/master-yue/master-yue-closeup-reading-book.webp",
+      "character": "master-yue",
+      "pose": "master-yue-closeup-reading-book",
+      "source": "master-yue-closeup-reading-book.webp",
+      "reference_blob": "36ae6db3436a00c8a428d225cff430db57918a94",
+      "sha256": "103b39300bac21497da47154801e27f109d2afb01d31219a02eefeb4f720050e",
+      "git_blob_sha1": "7ab1347587e730599dddc96d82c2418f549871f6",
+      "bytes": 80666,
+      "width": 396,
+      "height": 496,
+      "mode": "RGBA",
+      "visible_alpha_bbox": [
+        11,
+        9,
+        388,
+        485
+      ],
+      "status": "earlier alternative; do not auto-activate",
+      "placement_notes": "Different robe trim and facial treatment. Use only after matching continuity and testing; not a substitute for a reference-matched idle pose."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-host-characters/earlier-alternatives/master-yue/master-yue-closeup-tea.webp",
+      "character": "master-yue",
+      "pose": "master-yue-closeup-tea",
+      "source": "master-yue-closeup-tea.webp",
+      "reference_blob": "36ae6db3436a00c8a428d225cff430db57918a94",
+      "sha256": "31a8e3f5b1e7df3f5423d63b601f33f82d6d77778ec18618e0079ee99d270b41",
+      "git_blob_sha1": "f8332b8705b5f7cc9ec1a75a946c46b6a57c4098",
+      "bytes": 75988,
+      "width": 356,
+      "height": 496,
+      "mode": "RGBA",
+      "visible_alpha_bbox": [
+        9,
+        9,
+        345,
+        486
+      ],
+      "status": "earlier alternative; do not auto-activate",
+      "placement_notes": "Different robe trim and facial treatment. Use only after matching continuity and testing; not a substitute for a reference-matched idle pose."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-host-characters/earlier-alternatives/master-yue/master-yue-closeup-thinking.webp",
+      "character": "master-yue",
+      "pose": "master-yue-closeup-thinking",
+      "source": "master-yue-closeup-thinking.webp",
+      "reference_blob": "36ae6db3436a00c8a428d225cff430db57918a94",
+      "sha256": "b094fd5c7f586e9f55c3676c5798acda5244270371dd3532948b4f4f88b9761d",
+      "git_blob_sha1": "db637c94b1abf5a62747479aa4e1a70e8c9cd3d4",
+      "bytes": 72532,
+      "width": 382,
+      "height": 473,
+      "mode": "RGBA",
+      "visible_alpha_bbox": [
+        8,
+        9,
+        370,
+        462
+      ],
+      "status": "earlier alternative; do not auto-activate",
+      "placement_notes": "Different robe trim and facial treatment. Use only after matching continuity and testing; not a substitute for a reference-matched idle pose."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-host-characters/earlier-alternatives/master-yue/master-yue-closeup-welcome.webp",
+      "character": "master-yue",
+      "pose": "master-yue-closeup-welcome",
+      "source": "master-yue-closeup-welcome.webp",
+      "reference_blob": "36ae6db3436a00c8a428d225cff430db57918a94",
+      "sha256": "d4e051598c33063cf0692e195faf3091993230e6dd00b9605367c862b498aa1e",
+      "git_blob_sha1": "81b9df287cd18a747aae3fdc132f004946b271d0",
+      "bytes": 78862,
+      "width": 415,
+      "height": 476,
+      "mode": "RGBA",
+      "visible_alpha_bbox": [
+        8,
+        9,
+        407,
+        465
+      ],
+      "status": "earlier alternative; do not auto-activate",
+      "placement_notes": "Different robe trim and facial treatment. Use only after matching continuity and testing; not a substitute for a reference-matched idle pose."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-host-characters/earlier-alternatives/master-yue/master-yue-seated-candidate.webp",
+      "character": "master-yue",
+      "pose": "master-yue-seated-candidate",
+      "source": "master-yue-seated-candidate.webp",
+      "reference_blob": "36ae6db3436a00c8a428d225cff430db57918a94",
+      "sha256": "b04b269c21935407506e3e0069fb6f3da4837819660eb78b290432fafb6acd38",
+      "git_blob_sha1": "ac94256a686d9c8a07887e0ac328d75f47a3583a",
+      "bytes": 156662,
+      "width": 544,
+      "height": 784,
+      "mode": "RGBA",
+      "visible_alpha_bbox": [
+        10,
+        10,
+        534,
+        774
+      ],
+      "status": "earlier alternative; do not auto-activate",
+      "placement_notes": "Different robe trim and facial treatment. Use only after matching continuity and testing; not a substitute for a reference-matched idle pose."
+    }
+  ],
+  "notes": [
+    "Reference matched images have a common 728x784 transparent canvas, with bottom aligned artwork; runtime scale must be calibrated to visible bounds and head size.",
+    "Seat, brush, card and desk anchors not yet verified. No animation cycles are asserted.",
+    "Keep earlier alternatives separate; no automatic overwrite of standing reference art."
+  ]
+}
