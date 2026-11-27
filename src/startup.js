@@ -10522,4 +10522,96 @@ const pawPaintedRailCompositeCss=document.createElement('style');
 pawPaintedRailCompositeCss.textContent='.mbPaintedRail .pawPaintedRailComposite{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:1}';
 document.head.append(pawPaintedRailCompositeCss);
 
+
+/* Painted home furniture and expansion artwork: preserve the existing
+   catalogue IDs, purchase ledger, room positions and all saved finishes. */
+let pawHomeArtAPI=null,pawHomeArtLoading=null;
+const pawHomeDecodedArt=new Map(),pawHomeOriginalArt=new Map();
+function pawLoadHomePaintings(){
+ if(pawHomeArtLoading)return pawHomeArtLoading;
+ pawHomeArtLoading=new Promise(resolve=>{
+  const tag=document.createElement('script');tag.src='src/home-layout.js';tag.async=true;
+  let done=false;const finish=api=>{if(done)return;done=true;clearTimeout(timer);resolve(api||null)};
+  const timer=setTimeout(()=>finish(null),5000);
+  tag.onload=()=>finish(globalThis.PawHomeLayout);tag.onerror=()=>finish(null);document.head.append(tag)
+ }).then(api=>{
+  if(!api){pawHomeArtLoading=null;return null}
+  pawHomeArtAPI=api;
+  // Do not re-render the page, lose a drag, or change saved positions on load.
+  for(const id of api.legacyIds){
+   if(!Object.hasOwn(art9,id)||pawHomeDecodedArt.has(id))continue;
+   const old=art9[id],path=api.legacyFurniture(id),im=new Image();im.decoding='async';
+   pawHomeOriginalArt.set(id,old);
+   im.onload=()=>{if(im.naturalWidth>0&&im.naturalHeight>0)pawHomeDecodedArt.set(id,path)};
+   im.src=path
+  }
+  return api
+ }).catch(()=>{pawHomeArtLoading=null;return null});
+ return pawHomeArtLoading
+}
+function pawInstallHomeArt(){
+ for(const [id,path] of pawHomeDecodedArt){
+  if(art9[id]===pawHomeOriginalArt.get(id)||art9[id]===path)art9[id]=path;
+ }
+}
+const pawHomePlanNames={starter:['Cozy nook','初始小窝'],side:['Reading room','阅读小室'],studio:['Collection studio','收藏工作室']};
+function pawRenderExpansionPlans(root,api){
+ if(!root?.isConnected||root.dataset.pawPlansReady==='true')return;
+ root.dataset.pawPlansReady='true';
+ const catalogue=furnitureCatalogue(),plans=api.plans(furnitureOwned('roomExtension'),furnitureOwned('roomStudio'));
+ const list=element('div','',root,'pawExpansionPlans');
+ for(const plan of plans){
+  const card=element('article','',list,'pawExpansionPlan'),name=pawHomePlanNames[plan.id];
+  const art=element('img','',card);art.src=api.shell(plan.id);art.alt=tr(...name);art.decoding='async';art.loading='lazy';
+  element('strong',tr(...name),card);
+  const item=catalogue.find(x=>x[0]===plan.purchase);
+  const status=plan.owned?tr('Unlocked','已解锁'):!plan.available?tr('Reading room required','需先扩建阅读小室'):item?item[3]+' '+tr('Paw Coins','爪爪币'):tr('Coming later','暂未开放');
+  element('small',status,card);
+  if(!plan.owned&&plan.available&&item){
+   const btn=b(card,tr('View expansion','查看扩建'),()=>{if(root.isConnected&&$('page').style.display==='block')furnitureConfirm(item[0],'room')});
+   btn.className='pawExpansionAction'
+  }
+ }
+}
+const pawPaintedHomeBefore=hideoutPage;
+hideoutPage=function(...args){
+ pawInstallHomeArt();const result=pawPaintedHomeBefore(...args);
+ const q=$('content'),stage=q.querySelector('.hideoutScene'),actions=q.querySelector('.hideoutPrimary');
+ if(!stage||!actions)return result;
+ if(hideoutEditing){pawLoadHomePaintings();return result}
+ const section=element('section','',q,'pawHomeExpansion');
+ const heading=element('h2',tr('Room expansions','小窝扩建'),section);
+ const details=element('p',tr('Unlock extra rooms with Paw Coins. Your existing furniture stays yours.','用爪爪币解锁更多房间，原有家具会保留。'),section);
+ actions.after(section);
+ pawLoadHomePaintings().then(api=>{if(api&&section.isConnected&&$('content').contains(section))pawRenderExpansionPlans(section,api)});
+ return result
+};
+const pawPaintedCatalogueBefore=furnitureMarket;
+furnitureMarket=function(...args){
+ pawInstallHomeArt();const result=pawPaintedCatalogueBefore(...args);
+ pawLoadHomePaintings();return result
+};
+const pawPaintedConfirmBefore=furnitureConfirm;
+furnitureConfirm=function(id,...args){
+ pawInstallHomeArt();const result=pawPaintedConfirmBefore(id,...args),card=$('content').querySelector('.komorebiConfirm');
+ if(card&&['roomExtension','roomStudio'].includes(id)){
+  const img=card.querySelector('img'),key=id==='roomExtension'?'side':'studio';
+  pawLoadHomePaintings().then(api=>{if(!api||!card.isConnected||!img)return;const previous=img.src;img.addEventListener('error',()=>{img.src=previous},{once:true});img.src=api.shell(key);img.alt=tr(...pawHomePlanNames[key])})
+ }else pawLoadHomePaintings();
+ return result
+};
+const pawHomeExpansionCSS=document.createElement('style');
+pawHomeExpansionCSS.textContent=`
+#game #content .pawHomeExpansion{margin:16px 0 20px;padding:12px 0;border-top:1px solid #bfa782;border-bottom:1px solid #bfa782}
+#game #content .pawHomeExpansion h2{margin:0 0 5px}
+#game #content .pawHomeExpansion p{margin:0 0 10px;color:#63543f;font-size:14px}
+#game #content .pawExpansionPlans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#game #content .pawExpansionPlan{display:grid;align-content:start;justify-items:center;gap:6px;min-width:0;padding:6px 3px;text-align:center;color:#514334}
+#game #content .pawExpansionPlan img{width:100%;height:clamp(85px,23vw,160px);object-fit:contain}
+#game #content .pawExpansionPlan strong{font-size:13px;line-height:1.3;overflow-wrap:anywhere}
+#game #content .pawExpansionPlan small{font-size:12px;line-height:1.35;overflow-wrap:anywhere;color:#64553f}
+#game #content .pawExpansionAction{min-height:44px;width:100%;min-width:0;font-size:12px;padding:5px;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:350px){#game #content .pawExpansionPlans{grid-template-columns:1fr}#game #content .pawExpansionPlan img{height:110px}}
+`;document.head.append(pawHomeExpansionCSS);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
