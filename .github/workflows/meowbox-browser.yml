@@ -312,6 +312,7 @@ jobs:
                 await page.locator('.communityTabs').waitFor({state:'visible'});
                 await page.locator('.townWall').waitFor({timeout:5000});
                 if(await page.locator('.townResidentNote').count()!==6)throw Error('Noticeboard page incomplete');
+                if(await page.locator('#content > .row').count()!==1)throw Error('Town Square toolbar moved into the notebook');
                 const initialNotices=await page.locator('.townResidentNote').count();
                 const noticeReplies=page.locator('.townWall .wallReplies').first();
                 const noticeSummary=noticeReplies.locator('.wallReplyToggle');
