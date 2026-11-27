@@ -1493,12 +1493,12 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-cafe-reflection-2308",
-        "until": 1795793880000
-      },
-      "blocker": "Love languages, attachment, communication, friendship/romance reflections; specific non-diagnostic insights, no deterministic match claim, consent before sharing, preserve private answers, meaningful repeat."
+      "evidence": [
+        "1c673bf4: expands four café choices to nine situations, displays all tied relationship styles and practical conversation prompts in a single accessible result sheet; validates answers and guards selection/share/retry actions.",
+        "cad793710d2bf3f522dd94257d54f940b754dce5: exhaustive pure helper checks covering 19,683 nine-answer sequences; source parsed."
+      ],
+      "lease": null,
+      "blocker": "Native illustrated café staging, other relationship assessment banks, explicit mutual consent and human/fictional comparison, actual rendered mobile/desktop journey and share export remain open. Legacy collection ID retained for ties; visual result wrapper requires browser review."
     },
     {
       "id": "UX-WAYFINDING-INTERACTION-01",
