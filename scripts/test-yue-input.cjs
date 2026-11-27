@@ -1,0 +1,13 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const s=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
+const start=s.indexOf('function destinyBirthValid'),end=s.indexOf('const yueFriendsPalace');
+assert.ok(start>=0&&end>start,'find current validation block');
+const {valid,place}=new Function(s.slice(start,end)+';return {valid:destinyFullValid,place:pawYueDraftPlace}')();
+const base={date:'1990-06-15',time:'12:30',place:'0',offset:'8',lat:'1.35',lon:'103.82'},today='2026-11-27';let n=0;
+const ck=(condition,message)=>{assert.ok(condition,message);n++};
+ck(valid(base,today),'known preset');
+ck(valid({...base,date:'2000-02-29',time:'00:00',place:'custom',offset:'5.75',lat:'-66',lon:'180'},today),'leap day and fractional offset');
+for(const [field,vals] of Object.entries({date:['','1990-02-30','2026-11-28','1899-12-31','1900-01-01'],time:['','24:00','12:60','9:00'],place:['','-1','8','bogus'],offset:['',' ','NaN','-12.25','14.25','5.1','Infinity'],lat:['','-66.1','66.1','Infinity'],lon:['','-180.1','180.1','NaN']}))for(const val of vals)ck(!valid({...base,[field]:val},today),field+' '+val);
+for(const [draft,stored,values,hasDraft,want] of [['','0',['8','1.35','103.82'],true,''],['custom','0',['8','',''],true,'custom'],['1',null,['8','30.27','120.16'],true,'1'],[null,'custom',['8','1.35','103.82'],false,'custom'],[null,null,['8','1.35','103.82'],false,'0'],[null,null,['8','0','0'],false,'custom'],[null,null,['','',''],false,''],[null,null,[' ','0','0'],false,'']])ck(place(draft,stored,values,hasDraft)===want,'restore selected place');
+console.log('Master Yue validation and draft selection: '+n+' assertions passed');
