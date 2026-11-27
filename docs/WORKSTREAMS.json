@@ -1215,7 +1215,10 @@
       ],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null,
+      "lease": {
+        "owner": "manual-code-1128-relationships",
+        "until": 1795803477631
+      },
       "blocker": "Acceptance: Repeat visits and reloads demonstrate meaningful callbacks, differing resident voices and natural quiet intervals without sensitive-text retention, forced dialogue or fabricated real visitors."
     },
     {
