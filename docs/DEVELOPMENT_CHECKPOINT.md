@@ -374,3 +374,8 @@ UX-02 partial: ed9fd2ea hides closed directory content from focus order, provide
 ## Continuous temple return (27 November 2026)
 
 UX-WAYFINDING-INTERACTION-01 partial: 1cc2b251 removes the second exit tap after walking out of the hall, continuing down the authored forecourt route. Return interrupts an in-progress cat/hall approach from the current location without triggering its arrival or changing position abruptly. Repeated return commands are rejected; accessible Return remains available while approaching. 463a5c5a persists focused route interruption, blocked-state and reduced-motion regression tests, executed against current source in a connector harness; source parsed. Actual deployed phone/desktop journey, visual alignment, all other public room exits and full acceptance remain open. Released claim; hourly schedule unchanged.
+
+
+## Entrance first-frame traveller readiness (27 November 2026)
+
+ENT-ASSET-READY-01 partial: e8c17843 warms the selected traveller's directional base paintings during onboarding and railway travel, prioritizes Fortune Valley, and requires all three directional base sprites, the current map and gate painting to decode before entry. Failed readiness keeps the gate visible and offers a retry; optional action frames are warmed without requiring absent production artwork. 1e8a9977 persists asynchronous readiness and retry regressions, exercised in connector harness; source parsed. No actual cold/warm network frame capture or latest deployed verification. Resident/sign admission, later scene transitions, final directional art and complete first-frame acceptance remain open. Lease released; hourly schedule unchanged.
