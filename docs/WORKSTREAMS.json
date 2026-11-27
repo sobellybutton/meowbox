@@ -1317,12 +1317,12 @@
         "scripts/world-visits-test.cjs"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-world-story-20261127",
-        "until": 1795792114511
-      }
+      "stage": "tested",
+      "evidence": [
+        "89694e44: actual next district names on station plaque and offscreen wayfinding, optional bilingual connective journal note on each existing onward route; source parses and world visit/boarding/copy regression ran successfully against current source. Product brief specifies coherent voluntary holiday narrative."
+      ],
+      "lease": null,
+      "blocker": "Actual map plaque width, actor/label clearance, journal layout, every ordinary railway journey and mobile/desktop rendered review remain outstanding; current district naming and full story/room continuity audit still open."
     }
   ]
 }
