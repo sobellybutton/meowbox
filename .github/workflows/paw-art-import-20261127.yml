@@ -1,0 +1,71 @@
+name: Import Pawradise artwork package
+on:
+  push:
+    branches: [main]
+    paths:
+      - Pawradise_Artwork_Repository_Transfer.zip
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: paw-art-import-20261127
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Verify exact package and extract approved paths
+        run: |
+          python3 <<'PY'
+          import hashlib, json, pathlib, zipfile
+          root=pathlib.Path.cwd()
+          package=root/'Pawradise_Artwork_Repository_Transfer.zip'
+          manifest='assets/visual/staging/2026-11-27/transfer-manifest.json'
+          expected='e9c13d5ce58b5836d80d5e2025b5c4f219c1f161412679dd703d7a939316d5f6'
+          metadata={manifest,'assets/visual/staging/2026-11-27/README.md','scripts/verify-art-transfer-20261127.py'}
+          if not package.is_file():
+              if (root/manifest).is_file():
+                  rows=json.loads((root/manifest).read_text())['assets']
+                  assert len(rows)==44 and all(hashlib.sha256((root/a['path']).read_bytes()).hexdigest()==a['sha256'] for a in rows), 'Existing import incomplete'
+                  print('All 44 files already imported and verified')
+                  raise SystemExit(0)
+              raise SystemExit('Upload Pawradise_Artwork_Repository_Transfer.zip to the repository root first')
+          assert hashlib.sha256(package.read_bytes()).hexdigest()==expected, 'Unexpected archive digest'
+          with zipfile.ZipFile(package) as z:
+              assert z.testzip() is None
+              rows=json.loads(z.read(manifest))['assets']
+              paths={a['path'] for a in rows}
+              assert len(rows)==len(paths)==44
+              assert len(z.namelist())==47 and set(z.namelist())==paths|metadata
+              for a in rows:
+                  n=a['path']
+                  assert n.endswith('.webp') and n.startswith(('assets/visual/painted/worlds/','assets/visual/staging/2026-11-27/'))
+                  assert hashlib.sha256(z.read(n)).hexdigest()==a['sha256'],n
+              for n in z.namelist():
+                  p=root/n
+                  assert p.resolve().is_relative_to(root) and not p.is_symlink(),n
+                  if p.exists():
+                      assert p.is_file() and p.read_bytes()==z.read(n),'Conflicting existing file: '+n
+              for n in z.namelist():
+                  p=root/n
+                  p.parent.mkdir(parents=True,exist_ok=True)
+                  p.write_bytes(z.read(n))
+          assert all(hashlib.sha256((root/a['path']).read_bytes()).hexdigest()==a['sha256'] for a in rows)
+          print('Verified 44 of 44 artwork files')
+          PY
+      - name: Commit verified artwork without activating it
+        run: |
+          set -euo pipefail
+          if [ ! -f Pawradise_Artwork_Repository_Transfer.zip ]; then exit 0; fi
+          python3 scripts/verify-art-transfer-20261127.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- assets/visual/painted/worlds/ assets/visual/staging/2026-11-27/ scripts/verify-art-transfer-20261127.py
+          git rm -- Pawradise_Artwork_Repository_Transfer.zip
+          git commit -m "Import and verify 44 Pawradise artwork files; preserve runtime references"
+          git push origin HEAD:main
+          echo "All artwork committed; runtime integration and rendered acceptance remain separate."
