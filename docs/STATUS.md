@@ -1080,3 +1080,20 @@ Owner screenshot showed a tiny portrait gate on desktop, a large dark empty surr
 - Actual source images inspected: autumn gate vs spring Fortune Valley; all four prior map files remain active. Four-map redesign and matched entrance have NOT been installed. Prioritize separate clean native map paintings, recalibrated physical routes and actual device inspection; no concept board crops.
 - cf8a6e9: shorter traced foreground path, slower walking cadence, restrained size change, explicitly override inherited departure zoom, no second automatic map walk. 606 new gate samples passed; full room-life helper script passed.
 - 5177e3f: tarot clocks and stale targets, keyboard controls. 32 focused checks and complete action-refinement helper suite passed; regression scripts committed 022cecd/e453442. Latest browser and deployment not verified. Provisional tally 53/100; accepted baseline 9/100. See checkpoint.
+
+
+
+## Owner correction: Fortune Temple, lucky cat forecourt and ritual scenery
+
+Owner screenshot showed mixed flat and painted artwork, oversized ritual objects, visitor overlap with activity stations, a speech bubble obscuring the temple and inconsistent actor scale. The owner reiterated the agreed scene-first Japanese temple journey and game references (Shin chan: Shiro and the Coal Town, Animal Crossing, Classic Pokémon, MapleStory and other spatial games). Canonical temple sequence from the recovered design boards: gate → lucky cat forecourt → purification → incense offering → Guanyin hall → fortune sticks → moon blocks → fortune slips → tie or keep → quiet garden. No mandatory forced completion of optional rituals. Every nested scene must be individually considered, not a generic background with floating objects.
+
+| ID | Outcome | Evidence |
+|---|---|---|
+| TEMPLE-01 | Use the recovered original painted hall as the room itself on decoded-art visits; register its actual altar, cabinet and doorway, eliminate duplicate painted objects, revise physical footprints, approach points and compact station plaques. | 2fe69b3, 68 focused checks. |
+| TEMPLE-02 | Normalize keeper height to player-relative scale, limit temple visitors to one with quiet floor waypoints, and reject ambient speech overlapping stations, labels or visitors; suppress automatic speech while approaching an activity. | 2fe69b3, 809a5bc. |
+| TEMPLE-03 | Replace flat inner scenery with existing inspected temple hall/approach paintings for sticks, moon blocks, prayer, slips, rack, bell and basin. This is provisional shared art, not final dedicated clean ritual plates; overlays and actual hand/prop contact still need visual inspection. | 2fe69b3. |
+| TEMPLE-04 | Connect actual temple entrance to recovered lucky cat approach with separate optional cat greeting and physical step-by-step hall arrival. Pause movement during interruptions; preserve actual hall entrance and existing visit/save keys. | 809a5bc, 336 focused route/camera assertions. |
+
+Tests persisted in 3ea2f8c; full action refinement, room life/scoop, stage geometry and painted-art helper suites passed in connector harness; both large sources parse. d43501b adds actual doorway, cat approach, hall arrival and screenshot browser regression. Latest full browser run and deployment not verified. Recovered paintings were visually inspected as files, not rendered game screenshots. Forecourt/hall uses existing portrait art; dedicated landscape compositions and complete clean ritual plates are still required. A slow artwork load can still use the old entrance/hall fallback. Actual temple/garden/fortune-stick sequence visual acceptance remains outstanding, including walking and sitting poses, tool contact and uncluttered garden placement. Do not declare the full shrine flow finished.
+
+Provisional outcome tally 57/100 (9 baseline + 48 committed outcomes); original numbered ledger unavailable. Accepted baseline remains 9/100. All four district maps are still older production art and need independent new map layers and door/path registration; prioritize this and the remaining temple/garden visual work over adding unrelated game breadth.
