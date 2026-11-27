@@ -695,12 +695,12 @@
         "HOME-LIVE-01",
         "WORLD-VISITS-01"
       ],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-regressions-20261127-i",
-        "until": 1795786790521
-      }
+      "stage": "implemented",
+      "evidence": [
+        "a1677190: actual input regression updated for station cancel/board, room visits and both carriage motion renderers; test source parses. 4fd9eea7: home, rail and room visit helper tests added to browser CI."
+      ],
+      "lease": null,
+      "blocker": "Browser CI execution and screenshots not yet verified. Live browser timed out; do not claim successful playthrough."
     }
   ]
 }
