@@ -386,12 +386,17 @@
       "priority": 2,
       "summary": "Independent railway near scenery layers",
       "resources": [
-        "art:rail"
+        "art:rail",
+        "src/rail-foreground.js",
+        "scripts/rail-foreground-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-rail-art-20261127-h",
+        "until": 1795785835467
+      }
     },
     {
       "id": "GAME-01",
