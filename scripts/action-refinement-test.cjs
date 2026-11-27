@@ -172,3 +172,5 @@ for(const p of [{blocked:true},{ready:false}])ck(pawFortuneWalkPhase(q,{...v,...
 for(const p of [{room:'tea'},{activity:'sticks'},{state:{}},{goal:()=>{}}])ck(pawFortuneWalkPhase(q,{...v,...p})==='cancel','cancel');
 q.started=true;ck(pawFortuneWalkPhase(q,{...v,goal:arrive})==='walking','walking');ck(pawFortuneWalkPhase(q,{...v,blocked:true})==='wait','covered');ck(pawFortuneWalkPhase(q,{...v,moving:true})==='wait','moving');ck(pawFortuneWalkPhase(q,v)==='restore','restore number');
 return n;`)()+' fortune walk handoff assertions');
+
+console.log('PASS: '+new Function(between(source,'/* PAW_TEMPLE_SCREENSHOT_REPAIR_BEGIN */','/* PAW_TEMPLE_SCREENSHOT_REPAIR_END */')+`let n=0;const ck=(x,m)=>{if(!x)throw Error(m);n++};const p={x:100,y:-145,w:600,h:600*1648/928};for(const [w,h] of [[320,568],[390,844],[430,932],[768,1024],[1280,720]]){let q=pawTempleFullCamera(w,h,p);ck(q.s*p.w+1e-6>=w&&q.s*p.h+1e-6>=h,'full camera');}for(let i=0;i<3;i++)for(let t=0;t<30;t+=.05){let [x,y]=pawGardenWaterPoint(i,t,t);ck(x>=.49&&x<=.65&&y>=.36&&y<=.39,'fish stays in painted water')}return n`)()+' painted temple viewport and garden water coordinate assertions');
