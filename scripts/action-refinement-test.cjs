@@ -164,3 +164,11 @@ for(const pos of [pawForecourtStart,pawForecourtLanding,pawForecourtCat])for(con
  ck(q.pos.every((v,i)=>v===goal[i]),'same endpoint');
 }
 return n;`)()+' two-way forecourt route assertions');
+
+console.log('PASS: '+new Function(between(source,'/* PAW_FORTUNE_WALK_BEGIN */','/* PAW_FORTUNE_WALK_END */')+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};const hallState={},arrive=()=>{},q={hallState,arrive,started:false},v={room:'temple',activity:null,state:hallState,blocked:false,ready:true,goal:null,moving:false};
+ck(pawFortuneWalkPhase(q,v)==='route','route');
+for(const p of [{blocked:true},{ready:false}])ck(pawFortuneWalkPhase(q,{...v,...p})==='wait','wait');
+for(const p of [{room:'tea'},{activity:'sticks'},{state:{}},{goal:()=>{}}])ck(pawFortuneWalkPhase(q,{...v,...p})==='cancel','cancel');
+q.started=true;ck(pawFortuneWalkPhase(q,{...v,goal:arrive})==='walking','walking');ck(pawFortuneWalkPhase(q,{...v,blocked:true})==='wait','covered');ck(pawFortuneWalkPhase(q,{...v,moving:true})==='wait','moving');ck(pawFortuneWalkPhase(q,v)==='restore','restore number');
+return n;`)()+' fortune walk handoff assertions');
