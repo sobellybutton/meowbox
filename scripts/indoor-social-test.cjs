@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const s=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
+const start=s.indexOf('/* PAW_SOCIAL_GUIDE_BEGIN */'),end=s.indexOf('/* PAW_SOCIAL_GUIDE_END */',start);
+assert.ok(start>=0&&end>start);
+const a=new Function(s.slice(start,end)+';return {pawIndoorSocialEligible,pawSocialResponseAllowed}')();
+const p={x:0,y:0},actor={x:40,y:20},run={};
+assert.ok(a.pawIndoorSocialEligible(actor,p,true));
+for(const v of [{...actor,sharedPeer:true},{...actor,kind:2},{x:150,y:0},{x:NaN,y:0},null])assert.equal(a.pawIndoorSocialEligible(v,p,true),false);
+assert.equal(a.pawIndoorSocialEligible(actor,p,false),false);
+const v={run,scene:'home',originScene:'home',room:'tea',originRoom:'tea',talk:true};
+assert.ok(a.pawSocialResponseAllowed(run,v,false));
+for(const patch of [{run:{}},{scene:'fortune'},{room:'park'},{talk:false},{activity:'cook'},{transitioning:true}])assert.equal(a.pawSocialResponseAllowed(run,{...v,...patch},false),false);
+assert.equal(a.pawSocialResponseAllowed(run,v,true),false);
+console.log('Indoor social eligibility and explicit response guards checked');
