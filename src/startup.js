@@ -1550,7 +1550,7 @@ function mb5Visibility(hidden,now){
  const elapsed=Math.max(0,now-asleep.at);state[asleep.field]+=elapsed;
  if(asleep.field==='stickDrawAt'&&Number.isFinite(state.shakeUntil))state.shakeUntil+=elapsed
 }
-document.addEventListener('visibilitychange',()=>{if(activity==='bubbleTea'||activity==='cook'||activity==='claw'){mb5Sleep=null;return}mb5Visibility(document.hidden,performance.now()/1000)});
+document.addEventListener('visibilitychange',()=>{if(['bubbleTea','cook','claw','moon','sticks','prayer','templeWater','templeBell','blindBox'].includes(activity)){mb5Sleep=null;return}mb5Visibility(document.hidden,performance.now()/1000)});
 
 /* Give the deer time to respond to the player instead of mirroring instantly. */
 function mb5BowCurve(age,delay,duration){
@@ -8328,14 +8328,13 @@ function pawTempleContinue(id){
 }
 function pawPrayerStep(){
  const blocked=document.hidden||talkOpen||transitioning||$('page').style.display==='block'||!proposal.hidden;
- if(blocked){if(!Number.isFinite(state.pawPrayerPause))state.pawPrayerPause=t}
- else if(Number.isFinite(state.pawPrayerPause)){state.prayerAt+=Math.max(0,t-state.pawPrayerPause);delete state.pawPrayerPause}
+ // The shared quiet-activity clock already excludes covered and hidden intervals.
  const next=blocked?null:incenseRitualTick(state,t);
  if(next&&incenseStagePrompts[next])hint(...incenseStagePrompts[next]);
  if(next==='walkMat')physicalFx('step',.45);
  if(next==='returnMat')physicalFx('wood',.42);
  if(next==='complete'&&!state.prayerRewarded){state.prayerRewarded=true;lifeEarn('ritual:prayer',{calm:2},true);lifeHUDRefresh()}
- const stage=state.prayerStage,age=Math.max(0,(state.pawPrayerPause??t)-state.prayerAt),held=state.prayerHeld||0,lit=state.prayerLit||(stage==='lighting'&&age>=.82);
+ const stage=state.prayerStage,age=Math.max(0,t-state.prayerAt),held=state.prayerHeld||0,lit=state.prayerLit||(stage==='lighting'&&age>=.82);
  const q=pawIncenseFrame(stage,age,held,residentReducedMotion.matches);
  ctx.save();
  paintLivingBackdrop(pics.streetTemple||pics.sticks);
@@ -8702,5 +8701,69 @@ document.addEventListener('keydown',event=>{
 const pawClawCss=document.createElement('style');
 pawClawCss.textContent='#game #gameControls.pawClawControls:not([hidden]){display:flex;flex-direction:column;gap:4px;width:min(84vw,310px);padding:6px;background:#f2e5ccee;border:1px solid #ad9470;border-radius:6px}#game #gameControls .pawClawButtons{display:flex;gap:4px;width:100%}#game #gameControls .pawClawButtons button{flex:1;min-width:0;min-height:44px;padding:5px}#game #gameControls .pawClawStatus{color:#4c5a47;text-align:center;line-height:1.35}#game #gameControls .pawClawMode{min-height:36px;padding:4px 8px;font-size:12px}';
 document.head.append(pawClawCss);
+
+/* PAW_RITUAL_PAUSE_BEGIN */
+function pawQuietPhase(kind,q){
+ if(!q)return null;
+ if(kind==='moon'&&q.moonPending)return ['moon','tossUntil'];
+ if(kind==='sticks'&&q.drawing)return ['fall','stickDrawAt','shakeUntil'];
+ if(kind==='sticks'&&q.stickPicked&&!q.stickDelivered)return ['pick','stickPickAt'];
+ if(kind==='prayer'&&['approach','taking','lighting','walkMat','bow','placing','returnMat'].includes(q.prayerStage))return [q.prayerStage,'prayerAt'];
+ if(kind==='templeWater'&&q.waterStage===2)return ['rinse','waterAt'];
+ if(kind==='templeBell'&&Number.isFinite(q.bellAt)&&q.bellAt>=0)return ['ring','bellAt'];
+ if(kind==='blindBox'&&q.boxStage==='opening')return ['open','boxAt'];
+ return null
+}
+function pawQuietClock(q,kind,now,blocked){
+ if(!q||!Number.isFinite(now))return false;
+ const phase=pawQuietPhase(kind,q),prior=q.pawQuietClock;
+ if(!phase||!Number.isFinite(q[phase[1]])){delete q.pawQuietClock;return false}
+ const key=kind+'|'+phase[0],primary=phase[1];
+ if(prior&&prior.key===key&&prior.value===q[primary]&&now>=prior.at&&(blocked||prior.blocked)){
+  const elapsed=now-prior.at;
+  for(const field of phase.slice(1))if(Number.isFinite(q[field]))q[field]+=elapsed
+ }
+ q.pawQuietClock={key,at:now,value:q[primary],blocked:!!blocked};return true
+}
+function pawQuietActionMatches(rendered,current,kind,expectedKind,phase,expectedPhase,blocked){
+ return !blocked&&!!current&&rendered===current&&kind===expectedKind&&phase===expectedPhase
+}
+/* PAW_RITUAL_PAUSE_END */
+const pawQuietKinds=new Set(['moon','sticks','prayer','templeWater','templeBell','blindBox']);
+const pawQuietLoopBefore=loop;
+loop=function(ms,...args){
+ if(pawQuietKinds.has(activity))pawQuietClock(state,activity,ms/1000,pawArcadeInputBlocked());
+ return pawQuietLoopBefore(ms,...args)
+};
+document.addEventListener('visibilitychange',()=>{
+ if(pawQuietKinds.has(activity))pawQuietClock(state,activity,performance.now()/1000,pawArcadeInputBlocked())
+});
+const pawQuietBellBefore=templeReleaseBell,pawQuietWaterBefore=templeReleaseWater;
+templeReleaseBell=function(...args){
+ if(activity!=='templeBell'||pawArcadeInputBlocked())return;
+ return pawQuietBellBefore(...args)
+};
+templeReleaseWater=function(...args){
+ if(activity!=='templeWater'||pawArcadeInputBlocked())return;
+ return pawQuietWaterBefore(...args)
+};
+const pawQuietRitualBarBefore=syncRitualBar;
+syncRitualBar=function(...args){
+ const result=pawQuietRitualBarBefore(...args);
+ if(activity!=='prayer'||ritualActionBar.hidden)return result;
+ const control=ritualActionBar.querySelector('button');
+ if(!control||control.dataset.pawQuietGuard)return result;
+ control.dataset.pawQuietGuard='true';
+ const run=state,stage=run.prayerStage,action=control.onclick;
+ control.onclick=function(event){
+  if(pawQuietActionMatches(run,state,activity,'prayer',state.prayerStage,stage,pawArcadeInputBlocked()))return action?.call(this,event)
+ };
+ return result
+};
+const pawQuietBoxAwardBefore=boxAward;
+boxAward=function(...args){
+ if(activity!=='blindBox'||state.boxStage!=='opening'||pawArcadeInputBlocked())return;
+ return pawQuietBoxAwardBefore(...args)
+};
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

@@ -116,3 +116,12 @@ Latest prior commit 0fc5771: Pages and entrance passed. Browser run [45939588481
 - BOARD-01: 4f1a922 replaces failing notice reply disclosure with native buttons, aria-expanded, session expansion by notice ID, and refresh focus/scroll preservation; Pages and entrance regression succeeded. Full browser run 45961770598 queued at inspection.
 - CLAW-01/02/03: pause claw animation and prize-tray clock for hidden/covered screens without double shifting; reject stale/covered drops and moves; add precise aim steps, nearest plush readout, native controls and keyboard aiming/drop. Targeted pure helper checks passed; physical cabinet art and browser touch/keyboard review pending. No new art created in this batch.
 - Count remains provisional: original 100-item ledger unavailable; 39/100 code-level tally (9 baseline + 30 implementation outcomes), not 39 accepted. All six new outcomes await full visual/browser acceptance. Do not treat test-only or documentation work as completed product features.
+
+
+## Quiet ritual and collectible timing continuation
+
+- RITUAL-01: shared active clock for moon blocks, fortune stick fall and pickup, keeps visible animation intervals across hidden tabs and covered views; stick shake deadline moves with its fall clock.
+- RITUAL-02: incense prayer clock replaces duplicated pause logic, binds accessible controls to exact run and stage, and retains normal ritual sequence and reward.
+- RITUAL-03: bell and rinse timers pause, guard inputs against covered or wrong activity.
+- BOX-03: blind box reveal clock pauses and award is guarded by active opening and visible game, retains existing purchase and prize rules.
+- 35 focused clock and action ownership checks passed; source and test scripts parse. Full browser verification, visual rituals and character art remain pending. Provisional tally 43/100, baseline 9 accepted, original ledger unavailable. No new painted art or acceptance claimed.

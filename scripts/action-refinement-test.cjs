@@ -62,3 +62,32 @@ pawClawClock(q,5,false);pawClawClock(q,5.2,true);pawClawClock(q,25,true);pawClaw
 q.dropping=false;q.clawResult={at:27};pawClawClock(q,27,false);pawClawClock(q,28,true);pawClawClock(q,30,false);ck(q.clawResult.at===30,'tray result remains visible after pause');
 ck(!pawClawMove(q,NaN),'reject invalid aim');
 return 'PASS '+n+' claw input, alignment and pause assertions';`)());
+
+const quietClock=between(source,'/* PAW_RITUAL_PAUSE_BEGIN */','/* PAW_RITUAL_PAUSE_END */');
+console.log(new Function(quietClock+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+const cases=[
+ ['moon',{moonPending:true,tossUntil:11},'tossUntil'],
+ ['sticks',{drawing:true,stickDrawAt:10,shakeUntil:11},'stickDrawAt'],
+ ['sticks',{stickPicked:true,stickDelivered:false,stickPickAt:10},'stickPickAt'],
+ ['prayer',{prayerStage:'bow',prayerAt:10},'prayerAt'],
+ ['templeWater',{waterStage:2,waterAt:10},'waterAt'],
+ ['templeBell',{bellAt:10},'bellAt'],
+ ['blindBox',{boxStage:'opening',boxAt:10},'boxAt']
+];
+for(const [kind,run,field] of cases){
+ const original=run[field],shake=run.shakeUntil;
+ ck(pawQuietClock(run,kind,10,false),'active '+kind);
+ pawQuietClock(run,kind,10.5,true);pawQuietClock(run,kind,20,true);pawQuietClock(run,kind,21,false);
+ ck(run[field]===original+11,'pause '+kind);
+ if(shake!==undefined)ck(run.shakeUntil===shake+11,'secondary stick clock');
+ pawQuietClock(run,kind,22,false);ck(run[field]===original+11,'resume '+kind);
+ run[field]=40;pawQuietClock(run,kind,23,true);ck(run[field]===40,'new attempt is not shifted '+kind)
+}
+const q={prayerStage:'hold',prayerAt:10};ck(!pawQuietClock(q,'prayer',10,true),'idle stage not paused');
+ck(pawQuietActionMatches(q,q,'prayer','prayer','hold','hold',false),'live ritual control');
+ck(!pawQuietActionMatches(q,{},'prayer','prayer','hold','hold',false),'stale ritual control');
+ck(!pawQuietActionMatches(q,q,'prayer','prayer','offer','hold',false),'wrong stage');
+ck(!pawQuietActionMatches(q,q,'prayer','prayer','hold','hold',true),'covered ritual');
+ck(!pawQuietActionMatches(q,q,'claw','prayer','hold','hold',false),'wrong activity');
+return 'PASS '+n+' quiet ritual and blind box timing assertions';`)());

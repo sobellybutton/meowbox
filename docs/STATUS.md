@@ -1058,3 +1058,7 @@ Owner screenshot showed a tiny portrait gate on desktop, a large dark empty surr
 - f6619dc: 16 reviewed original front and side walking assets for players 2 and 3 integrated; Pages passed. Player 1 side pose faces wrong direction and top hair is visibly cropped, so retained earlier runtime art. No new synthetic sprites.
 - 4f1a922: rebuilt notice reply buttons with session expansion, native keyboard semantics and focus-safe refresh. Pages/entrance passed; full browser test queued.
 - CLAW-01–03: guard attempt and aim ownership, pause active flight and prize tray across hidden and covered intervals, add precise aiming and accessible controls with bilingual readout. Focused helper checks passed. Full gameplay and art acceptance pending. See checkpoint for open work.
+
+
+## Ritual and blind box interruption handling (27 November)
+- RITUAL-01–03 and BOX-03: consolidated pause timing for moon/sticks/prayer/water/bell/box, removed double prayer visibility shift, bind ritual button to session/stage, guard bell/water and box award. Focused helper checks passed; real gameplay and artwork not yet accepted. Preserve previous rewards and save keys.
