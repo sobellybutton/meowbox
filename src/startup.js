@@ -12609,4 +12609,62 @@ pawYueDeskCSS.textContent=`
 #game #pawRoomGuideToggle:not(:focus-visible),#destinyAccess:not(:focus-visible){clip-path:inset(50%)!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;overflow:hidden!important;pointer-events:none!important;padding:0!important;border:0!important}
 `;document.head.append(pawYueDeskCSS);
 
+
+// Preserve the live table, exact card identities, orientation and reading
+// state; the passport's historical reading remains a separate notebook.
+ /* PAW_LIVE_TAROT_READING_BEGIN */
+function pawLiveTarotSnapshot(entry,q,kind,currentRoom,deckLength){
+ if(currentRoom!=='tarot'||!['tarot','love'].includes(kind)||!q||!['cards','focus'].includes(q.readStage))return null;
+ const live=tarotShareSnapshot(q,deckLength),requested=tarotShareSnapshot(entry,deckLength);
+ if(!live||!requested||JSON.stringify(live)!==JSON.stringify(requested))return null;
+ if(!Array.isArray(q.readFlip)||q.readFlip.length!==live.cards.length||q.readFlip.some(v=>!Number.isFinite(v)||v<0))return null;
+ return live
+}
+function pawLiveTarotStep(count,index,delta){
+ if(![1,3,5].includes(count)||!Number.isInteger(index)||!Number.isInteger(delta))return 0;
+ return Math.max(0,Math.min(count,index+delta))
+}
+/* PAW_LIVE_TAROT_READING_END */
+const pawJournalReadingBefore=openTarotReading;
+openTarotReading=function(entry,back){
+ const live=pawLiveTarotSnapshot(entry,state,activity,room,tarotDeck.length);
+ if(!live||!state.readFlip.every(v=>t-v>=.72))return pawJournalReadingBefore(entry,back);
+ const run=state,kind=activity,count=live.cards.length;
+ const valid=()=>run===state&&room==='tarot'&&activity===kind;
+ const returnTable=()=>{if(!valid())return;closeTalk();$('page').style.display='none';if(run.readStage==='focus')readingReturnSpread()};
+ function explain(index){
+  if(!valid())return;
+  $('page').style.display='none';closeTalk();
+  const choices=[];let words='';
+  if(index<count){
+   const c=live.cards[index],d=tarotDeck[c.i],position=count===5?fiveReadingPositions[index]:readingPositions[index];
+   if(count>1&&position)words+=tr(...position)+' · '+String(index+1)+'/'+count+'\n';
+   words+=tr(d[0],d[1])+' · '+orient(c.rev)+'\n\n'+arcanaReading(d,c.rev);
+   const reflection=count===5?fiveReadingPrompt(live.topic,index):topicReflection(live.topic,index);
+   if(reflection)words+='\n\n'+reflection;
+   const aside=tarotCommentary(d[0],c.rev,live.topic,live.tone);
+   if(aside)words+='\n\n'+tr(...aside);
+   choices.push([index+1<count?tr('Next card','下一张牌'):tr('What does it mean together?','整体意味着什么？'),()=>explain(pawLiveTarotStep(count,index,1))]);
+  }else{
+   words=count===5?tr('Compare what helps with the challenge card. Choose one small action from the next-step card, and keep the last card as a reminder.','对照助力牌和挑战牌。从行动牌里选一件小事，再把最后一张牌当作提醒。'):count===3?readingConnection(live):tr('Take what resonates with you. A card is a moment for reflection, not a prediction or an instruction.','把有共鸣的部分留在心里。牌意是自我反思，不是预言，也不是指令。');
+   choices.push([tr('Make a keepsake','制作纪念牌卡'),()=>{if(!valid())return;closeTalk();shareReadingResult(live,()=>{if(valid())explain(index);else $('page').style.display='none'})}]);
+  }
+  if(index>0)choices.push([tr('Previous card','上一张牌'),()=>explain(pawLiveTarotStep(count,index,-1))]);
+  choices.push([tr('Back to the table','回到牌桌'),returnTable]);
+  say(tr('Fortune Teller','占卜师'),words,choices)
+ }
+ explain(0)
+};
+// Keep the established painting in the live consultation, rather than
+// substituting the generic reading-room image. Existing card/table geometry
+// remains unchanged pending final calibrated closeup and seated host art.
+const pawTarotRoomBackdropBefore=paintLivingBackdrop;
+paintLivingBackdrop=function(...args){
+ if(room==='tarot'&&pawReadingVisit==='tarot'&&['tarot','love'].includes(activity)){
+  const im=pawReadingImage(pawReadingAPI(),'tarot');
+  if(pawRoomImageReady(im)){const b=livingBounds();ctx.save();try{cover(im,b.x,b.y,b.w,b.h)}finally{ctx.restore()}return}
+ }
+ return pawTarotRoomBackdropBefore(...args)
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
