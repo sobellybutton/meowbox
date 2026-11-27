@@ -5549,7 +5549,7 @@ drawRoom=function(...args){
   }
   // Character itself can be tapped to speak again. No floating icon.
   const rect=actor.rect;
-  if(!hit.some(z=>z.stationId&&rect.x<z.x+z.w&&rect.x+rect.w>z.x&&rect.y<z.y+z.h&&rect.y+rect.h>z.y)){
+  if(pawIndoorSocialEligible(actor,indoor,indoorReady())&&!hit.some(z=>z.stationId&&rect.x<z.x+z.w&&rect.x+rect.w>z.x&&rect.y<z.y+z.h&&rect.y+rect.h>z.y)){
    target(rect.x,rect.y,rect.w,rect.h,()=>{
     if(!indoorReady())return;
     const now=Date.now(),line=pawAmbientPick(profile.id,pawAmbientLines[profile.id],pawAmbientRead(pawAmbientHistory,now),now)||pawAmbientLines[profile.id][0];
