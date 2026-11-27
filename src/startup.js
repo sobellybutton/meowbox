@@ -4266,6 +4266,15 @@ function pawTrackScriptedGait(q,key,x,y,walking){
  q.key=key;q.x=x;q.y=y;return q.distance
 }
 /* PAW_SCRIPTED_GAIT_END */
+/* PAW_MAIN_GAIT_BEGIN */
+function pawMainGaitAdvance(q,key,dir,distance,scale,ready){
+ if(!key||!Number.isFinite(distance))return null;
+ if(q.key!==key||!Number.isFinite(q.distance)||distance<q.distance||distance-q.distance>65){Object.assign(q,{key,dir,distance,cycles:0,ready:!!ready})}
+ else{q.cycles=(q.cycles+Math.max(0,distance-q.distance)/Math.max(68,104*Math.max(.35,Number.isFinite(scale)?scale:1)))%1;q.distance=distance;if(q.dir!==dir){q.dir=dir;q.ready=!!ready}}
+ return {cycle:q.cycles,ready:q.ready}
+}
+/* PAW_MAIN_GAIT_END */
+const pawMainGaitState={key:'',dir:'',distance:0,cycles:0,ready:false};
 function pawGaitPhase(distance,scale){return Math.max(0,Number.isFinite(distance)?distance:0)/Math.max(34,52*(Number.isFinite(scale)?scale:1))*Math.PI}
 function pawGaitStrength(speed,scale){
  const safe=Number.isFinite(speed)?Math.max(0,speed):0;
@@ -4296,6 +4305,7 @@ function pawPaintedGait(im,x,y,scale,facing,phase,strength=1){
 }
 backHuman=function(x,y,kind,walking,facing,scale=1){
  if(!walking||kind<0||kind>3){
+  if(!walking&&kind===avatar&&!pawRenderedWalker&&(!room?Math.hypot(x-p.x,y-p.y)<4:Math.hypot(x-indoor.x,y-indoor.y)<4))pawMainGaitState.key='';
   if(activity&&kind===avatar&&!pawRenderedWalker&&!walking)pawTrackScriptedGait(pawScriptedGait,'',x,y,false);
   if(room&&!pawRenderedWalker&&kind===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<4){pawIndoorGait.key=scene+'|'+room;pawIndoorGait.x=x;pawIndoorGait.y=y}
   return pawWalkRenderBefore(x,y,kind,walking,facing,scale)
@@ -4311,8 +4321,14 @@ backHuman=function(x,y,kind,walking,facing,scale=1){
  }
  const scripted=!!activity&&!actor&&!isPlayer&&kind===avatar;
  const scriptedDistance=scripted?pawTrackScriptedGait(pawScriptedGait,scene+'|'+room+'|'+activity+'|'+kind,x,y,true):0;
- const phase=pawGaitPhase(scripted?scriptedDistance:indoorPlayer?pawIndoorGait.distance:actor?pawGaitTravel.get(actor)||0:isPlayer?pawWalkDistance:0,scale),reduced=actorReduce||residentReducedMotion.matches;
- if(frames){const loaded=frames.map(mbArtImage);if(loaded.every(Boolean)){const i=reduced?0:((Math.floor(phase/Math.PI*frames.length/2)%frames.length)+frames.length)%frames.length;mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}}
+ const distance=scripted?scriptedDistance:indoorPlayer?pawIndoorGait.distance:actor?pawGaitTravel.get(actor)||0:isPlayer?pawWalkDistance:0,phase=pawGaitPhase(distance,scale),reduced=actorReduce||residentReducedMotion.matches;
+ const loaded=frames?.map(mbArtImage),ready=!!loaded?.length&&loaded.every(Boolean);
+ if((isPlayer||indoorPlayer)&&!scripted){
+  const gait=pawMainGaitAdvance(pawMainGaitState,scene+'|'+(room||'outside')+'|'+kind,dir,distance,scale,ready);
+  if(ready&&gait?.ready){const i=reduced?0:Math.min(frames.length-1,Math.floor(gait.cycle*frames.length));mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}
+  return pawWalkRenderBefore(x,y,kind,false,facing,scale)
+ }
+ if(ready){const i=reduced?0:((Math.floor(phase/Math.PI*frames.length/2)%frames.length)+frames.length)%frames.length;mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}
  const im=pics['walker'+kind+(dir==='up'?1:dir==='down'?0:2)];
  if(im?.naturalWidth&&im.naturalHeight&&!reduced&&(dir==='down'||dir==='right')){
   const strength=isPlayer&&Number.isFinite(p.motionSpeed)?pawGaitStrength(p.motionSpeed,scale):1;
@@ -12330,5 +12346,82 @@ pawRoomOwnerPresentation.textContent=`
 #game{width:100%;height:100dvh!important;max-width:none!important;max-height:none!important}
 #proposal[data-paw-entrance-step="3"]:not([hidden]){height:100%!important;width:100%!important;max-width:none!important;max-height:none!important}
 `;document.head.append(pawRoomOwnerPresentation);
+
+
+// Preserve the existing reading engines and temporary, local personal data.
+// The study remains the setting instead of a separate full-screen website.
+const pawYueVisitIntroBefore=roomIntro;
+roomIntro=function(...args){
+ const result=pawYueVisitIntroBefore(...args);
+ if(room==='destiny'&&!activity&&residentPendingWelcome?.id==='yue'){
+  const profile=residentWelcomeProfiles.find(v=>v.id==='yue');
+  if(profile){const welcome=residentHospitalityWelcome(profile,residentPendingWelcome.visits);residentPendingWelcome=null;residentGreetingToast(tr('Master Yue: ','月师傅：')+welcome)}
+ }
+ return result
+};
+const pawYueDeskHubBefore=yueReadingHub;
+function pawYueDeskChoose(kind){
+ if(room!=='destiny')return;
+ function open(subject){if(room!=='destiny')return;yueSubject=subject;closeTalk();if(kind==='chart')destinyPage();else if(kind==='year')yueZodiacAlmanac();else starSignPage()}
+ say(tr('Master Yue','月师傅'),tr('Is this reading for you, or someone else?','这次是想看看自己，还是替别人看看？'),[[tr('For me','看自己'),()=>open('self')],[tr('For someone else','帮别人看看'),()=>open('other')],[tr('Back','返回'),()=>yueReadingHub()]])
+}
+yueReadingHub=function(...args){
+ if(room!=='destiny')return pawYueDeskHubBefore(...args);
+ $('page').style.display='none';delete $('page').dataset.pawYueDesk;closeTalk();
+ say(tr('Master Yue','月师傅'),tr('Ah, you have arrived. Have some tea. What would you like to know today?','来啦？坐，先喝口茶。今天想问些什么？'),[
+ [tr('My year ahead','生肖流年'),()=>pawYueDeskChoose('year')],
+ [tr('My birth chart','生辰命盘'),()=>pawYueDeskChoose('chart')],
+ [tr('Weekly star signs','本周星座'),()=>pawYueDeskChoose('stars')],
+ [tr('Just visiting','只是来坐坐'),closeTalk]])
+};
+destinyConsultMenu=function(){closeTalk();return yueReadingHub()};
+const pawYueDeskPageBefore=page;
+page=function(...args){delete $('page').dataset.pawYueDesk;return pawYueDeskPageBefore(...args)};
+function pawYueQuestionSteps(form,out,kind){
+ if(!form||form.hidden||out?.children.length)return;
+ const date=form.querySelector('input[type=date]')?.closest('label'),time=form.querySelector('input[type=time]')?.closest('label'),details=form.querySelector('details'),year=form.querySelector('select')?.closest('label'),submit=form.querySelector('button[type=submit]');
+ if(!date||!submit||date.hidden)return;
+ const steps=kind==='year'?[[date],[year]]:[[date],[time],[details,...[...form.querySelectorAll('input[type=number]')].filter(n=>!details?.contains(n)).map(n=>n.closest('label'))]];
+ if(steps.some(group=>!group.length||group.some(n=>!n||n===form)))return;
+ const questions=kind==='year'?[['First, when were you born?','先告诉我，你是哪一天出生的？'],['Which year shall we look at?','想看看哪一年的流年呢？']]:[['First, when were you born?','先告诉我，你是哪一天出生的？'],['Do you know your local birth time?','知道你出生时的当地时间吗？'],['Where were you born? Check the historical time zone too.','你在哪里出生？也请核对当时的时区。']];
+ let index=0,finished=false;
+ const question=element('p','',form,'pawYueQuestion');form.prepend(question);question.setAttribute('aria-live','polite');
+ const controls=element('div','',form,'pawYueStepNav'),back=b(controls,tr('Previous','上一步'),()=>show(index-1)),next=b(controls,tr('Continue','继续'),advance);back.type=next.type='button';submit.before(controls);
+ function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));question.textContent=tr(...questions[index]);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1)}
+ function advance(){if(finished||index>=steps.length-1)return;for(const field of steps[index].flatMap(n=>[...n.querySelectorAll('input,select')]))if(!field.checkValidity()){field.reportValidity();return}show(index+1)}
+ form.addEventListener('keydown',e=>{if(!finished&&index<steps.length-1&&e.key==='Enter'&&e.target.matches('input')){e.preventDefault();advance()}});
+ form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();controls.remove()}});
+ show(0)
+}
+function pawYueDeskPresent(kind){
+ if(room!=='destiny')return;
+ const q=$('content'),pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
+ pane.dataset.pawYueDesk='true';
+ q.querySelector('.yueCompactHost')?.remove();
+ const nav=q.querySelector(':scope > .row button:first-child');if(nav){nav.textContent=tr('‹ Talk to Yue','‹ 与月师傅聊');nav.onclick=()=>yueReadingHub()}
+ if(form&&['year','chart'].includes(kind))pawYueQuestionSteps(form,out,kind);
+}
+const pawYueDeskChartBefore=destinyPage;
+destinyPage=function(...args){const result=pawYueDeskChartBefore(...args);pawYueDeskPresent('chart');return result};
+const pawYueDeskYearBefore=yueZodiacAlmanac;
+yueZodiacAlmanac=function(...args){const result=pawYueDeskYearBefore(...args);pawYueDeskPresent('year');return result};
+const pawYueDeskStarsBefore=starSignPage;
+starSignPage=function(...args){const result=pawYueDeskStarsBefore(...args);pawYueDeskPresent('stars');return result};
+const pawYueDeskCSS=document.createElement('style');
+pawYueDeskCSS.textContent=`
+#game #page[data-paw-yue-desk="true"]{position:absolute!important;inset:auto 0 0!important;height:auto!important;max-height:64dvh!important;min-height:0!important;max-width:none!important;width:100%!important;overflow:auto!important;overscroll-behavior:contain;padding:8px max(12px,env(safe-area-inset-left,0px)) max(12px,env(safe-area-inset-bottom,0px))!important;background:#f0e4cdeb url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important;border-radius:10px 10px 0 0;border-top:2px solid #b69a70;box-shadow:0 -5px 24px #251e1950}
+#game #page[data-paw-yue-desk="true"] #content{width:min(100%,640px)!important;max-width:640px!important;padding:3px 0!important;margin:0 auto!important;border:0!important;box-shadow:none!important;background:transparent!important}
+#game #page[data-paw-yue-desk="true"] #content>.row{position:static!important;background:none!important;margin:0 0 6px!important;padding:0!important}
+#game #page[data-paw-yue-desk="true"] #content>h1{font-size:clamp(18px,4.5vw,25px)!important;margin:5px 0!important}
+#game #page[data-paw-yue-desk="true"] #content>.yueCompactIntro{font-size:12px!important}
+#game #page[data-paw-yue-desk="true"] .yueSubjectStrip{font-size:12px!important;gap:3px!important;padding:5px!important}
+#game #page[data-paw-yue-desk="true"] .yueChartTools{gap:4px!important;margin:3px 0!important}
+#game #page[data-paw-yue-desk="true"] .pawYueStepHidden,#game #page[data-paw-yue-desk="true"] .pawYueStepNav button[hidden]{display:none!important}
+#game #page[data-paw-yue-desk="true"] .pawYueQuestion{font:600 17px/1.35 var(--paw-display,Georgia,serif);color:#42584a;margin:4px 0 8px!important}
+#game #page[data-paw-yue-desk="true"] .pawYueStepNav{display:flex;gap:6px;justify-content:flex-end}
+#game #page[data-paw-yue-desk="true"] .pawYueStepNav button{min-height:44px}
+@media(orientation:landscape){#game #page[data-paw-yue-desk="true"]{inset:0 0 0 auto!important;max-height:100%!important;width:min(54%,620px)!important;border-radius:0;border-top:0;border-left:2px solid #b69a70}}
+#game #pawRoomGuideToggle:not(:focus-visible),#destinyAccess:not(:focus-visible){clip-path:inset(50%)!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;overflow:hidden!important;pointer-events:none!important;padding:0!important;border:0!important}
+`;document.head.append(pawYueDeskCSS);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

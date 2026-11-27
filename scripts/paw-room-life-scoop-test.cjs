@@ -265,3 +265,6 @@ ck(!pawTarotFrameMatches({...q,pawChoiceFrame:{pool,portrait:true}},frame,true),
 ck(!pawTarotFrameMatches({...q,readStage:'deal'},frame,true),'completed choice rejected');
 return 'PASS 5 rendered tarot selection guards';
 `)());
+
+const mainGait=new Function(s.split('/* PAW_MAIN_GAIT_BEGIN */')[1].split('/* PAW_MAIN_GAIT_END */')[0]+';return pawMainGaitAdvance')();
+{const q={};let a=mainGait(q,'map','up',0,1,false);if(a.ready)throw Error('unexpected loaded mode');a=mainGait(q,'map','up',20,1,true);if(a.ready||!(a.cycle>0))throw Error('mid-stride sprite swap');let old=a.cycle;a=mainGait(q,'map','up',20,2,true);if(a.cycle!==old)throw Error('camera scale changed stride without movement');a=mainGait(q,'map','right',25,2,true);if(!a.ready||a.cycle<=old)throw Error('direction transition');a=mainGait(q,'room','right',0,1,true);if(!a.ready||a.cycle!==0)throw Error('room stride reset');}
