@@ -327,8 +327,11 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": null
+      "evidence": [
+        "ROOM-FOOD-LIVE-01 lobby integration implemented and helper-tested in dbaa0f0a"
+      ],
+      "lease": null,
+      "blocker": "Dedicated ingredient, preparation, pouring, serving and tasting artwork, pose contact and actual browser verification remain outstanding."
     },
     {
       "id": "ROOM-04",
@@ -1107,12 +1110,12 @@
         ".github/workflows/meowbox-browser.yml"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-food-room-live-20261127",
-        "until": 1795791792724
-      }
+      "stage": "tested",
+      "evidence": [
+        "dbaa0f0a: inspected independent kitchen and boba paintings and activated them for loaded room visits, with same-coordinate aisle constraints, host positioning, station approach/labels, stable fallback, native activity entry; source parse and focused path/viewport regression passed."
+      ],
+      "lease": null,
+      "blocker": "Actual rendered phone/desktop gameplay and native wide composition unverified. Cooking and drink preparation closeups retain existing art pending dedicated physical counter assets. No visual acceptance."
     }
   ]
 }
