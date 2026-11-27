@@ -6230,6 +6230,18 @@ function pawFishTechnique(elapsed,distance,streak){
 function pawHerdSlots(){
  return [[206,407,.45],[295,389,.38],[390,411,.45],[506,392,.36],[572,455,.48],[332,473,.52]];
 }
+/* PAW_HERD_EXCHANGE_BEGIN */
+function pawHerdRoster(profiles,offset){
+ if(!Array.isArray(profiles)||profiles.length<3)return [];
+ const start=((offset%profiles.length)+profiles.length)%profiles.length;
+ return pawHerdSlots().map((slot,i)=>({slot:i,profile:profiles[(i+start)%profiles.length],named:i<3,position:slot}))
+}
+function pawHerdExchangePose(age,stage,oldSlot,newSlot){
+ const sec=Math.max(0,Number.isFinite(age)?age:0),leaving=sec<.95,f=Math.max(0,Math.min(1,leaving?sec/.95:(sec-.95)/1.15)),p=f*f*(3-2*f);
+ const a=leaving?stage:newSlot,b=leaving?oldSlot:stage;
+ return {leg:leaving?'leave':'arrive',x:a.x+(b.x-a.x)*p,y:a.y+(b.y-a.y)*p,scale:a.scale+(b.scale-a.scale)*p,done:sec>=2.1}
+}
+/* PAW_HERD_EXCHANGE_END */
 function pawHerdTemperament(id){
  return id==='koyo'?{en:'Curious and rather pushy. Give Koyo space if it crowds you.',zh:'枫枫好奇又有点急躁，靠得太近时就退一步。',bow:false}:id==='sora'?{en:'Shy. Sora prefers a little distance.',zh:'空空比较怕生，喜欢留一点距离。',bow:false}:{en:'Mugi is calm and often bows back.',zh:'麦麦很温顺，常常会回礼。',bow:true}
 }
@@ -6269,25 +6281,53 @@ pawActivityDirectoryCss.textContent=`
 const pawHerdImages=new Map();
 for(const profile of deerProfiles)for(let i=0;i<3;i++){const im=new Image();im.decoding='async';im.src='assets/visual/painted/deer/'+profile.id+'-'+i+'.webp';pawHerdImages.set(profile.id+':'+i,im)}
 let pawHerdDrawn=[];
+function pawHerdSlotPose(entry){
+ const [x,y,sc]=entry.position,im=pawHerdImages.get(entry.profile.id+':0');
+ return {x,y,scale:132*sc/(Math.max(1,im?.naturalHeight||240)*townDeerScale)}
+}
+function pawHerdSelect(entry,run){
+ if(activity!=='deerVisit'||state!==run||!entry.named||!['greet','ready','done'].includes(state.deerPhase)||pawArcadeInputBlocked()||entry.profile.id===state.deerProfile.id)return false;
+ const old=pawHerdRoster(deerProfiles,state.pawHerdOffset||0).find(v=>v.named&&v.profile.id===state.deerProfile.id);
+ if(!old)return false;
+ state.pawHerdTravel={old:old.profile,next:entry.profile,from:pawHerdSlotPose(old),to:pawHerdSlotPose(entry),elapsed:0,last:t};
+ state.deerPhase='approach';state.deerAt=t;hint('Give them a moment to change places.','给小鹿一点时间，让它们换个位置。');refreshControls();return true
+}
+function pawHerdTick(){
+ const a=state.pawHerdTravel;if(activity!=='deerVisit'||state.deerPhase!=='approach'||!a)return;
+ const dt=Math.max(0,Math.min(.05,t-a.last));a.last=t;if(pawArcadeInputBlocked())return;
+ a.elapsed+=residentReducedMotion.matches?2.1:dt;
+ if(a.elapsed>=.95&&state.deerProfile!==a.next){state.deerProfile=a.next;state.deerBows=pawHerdTemperament(a.next.id).bow}
+ if(a.elapsed>=2.1){state.pawHerdTravel=null;state.deerPhase='greet';state.deerAt=t;const q=pawHerdTemperament(state.deerProfile.id);hint(q.en,q.zh);refreshControls()}
+}
+const pawHerdLayoutBefore=deerStageLayout;
+deerStageLayout=function(bow,feed){
+ const q=pawHerdLayoutBefore(bow,feed),a=state.pawHerdTravel;
+ if(activity==='deerVisit'&&state.deerPhase==='approach'&&a){
+  const p=pawHerdExchangePose(a.elapsed,{x:q.deerX,y:q.deerY,scale:q.deerScale},a.from,a.to);
+  q.deerX=p.x;q.deerY=p.y;q.deerScale=p.scale;q.lower=0
+ }return q
+};
+const pawHerdDrawBefore=drawActivity;
+drawActivity=function(...args){if(activity==='deerVisit')pawHerdTick();return pawHerdDrawBefore(...args)};
 const pawHerdBackdropBefore=paintLivingBackdrop;
 paintLivingBackdrop=function(...args){
  const result=pawHerdBackdropBefore(...args);
  if(activity!=='deerVisit'||!state.deerProfile)return result;
- const age=Math.max(0,t-(state.pawHerdAt??t)),reduced=residentReducedMotion.matches;
+ const age=Math.max(0,t-(state.pawHerdAt??t)),reduced=residentReducedMotion.matches,run=state;
  pawHerdDrawn=[];
- for(const [i,[baseX,baseY,sc]] of pawHerdSlots().entries()){
-  const p=deerProfiles[(i+(state.pawHerdOffset||0))%deerProfiles.length];
-  const phase=age*.48+i*1.45,frame=reduced?0:Math.sin(phase)>.42?2:Math.sin(phase)<-.6?1:0;
-  const x=baseX+(reduced?0:Math.sin(phase*.58)*13),y=baseY+(reduced?0:Math.sin(phase*.39)*4),height=132*sc,im=pawHerdImages.get(p.id+':'+frame);
-  if(!drawResidentRaster(im,x,y,height,i%2?'left':'right'))continue;
-  pawHerdDrawn.push({id:p.id,x,y});
-  if(['greet','ready','done'].includes(state.deerPhase)){
-   const w=Math.max(26,height*.7);
-   target(x-w/2,y-height,w,height,()=>{
-    if(activity!=='deerVisit'||!['greet','ready','done'].includes(state.deerPhase))return;
-    state.deerProfile=p;state.deerPhase='greet';state.deerAt=t;state.deerBows=pawHerdTemperament(p.id).bow;
-    const q=pawHerdTemperament(p.id);hint(q.en,q.zh);refreshControls()
-   },'paw-deer-'+i)
+ for(const entry of pawHerdRoster(deerProfiles,state.pawHerdOffset||0)){
+  const {slot:i,profile:p,position:[baseX,baseY,sc],named}=entry;
+  // The named individual in the foreground must not simultaneously appear in the herd.
+  if(named&&p.id===state.deerProfile.id)continue;
+  const phase=age*.48+i*1.45,frame=named||reduced?0:Math.sin(phase)>.42?2:Math.sin(phase)<-.6?1:0;
+  const x=baseX+(named||reduced?0:Math.sin(phase*.58)*13),y=baseY+(named||reduced?0:Math.sin(phase*.39)*4),height=132*sc,im=pawHerdImages.get(p.id+':'+frame);
+  if(!im?.complete||!im.naturalWidth)continue;
+  if(named&&townDeerFrame(p,0)){const pose=pawHerdSlotPose(entry);drawMeadowDeer(x,y,p,0,0,pose.scale)}
+  else if(!drawResidentRaster(im,x,y,height,i%2?'left':'right'))continue;
+  pawHerdDrawn.push({id:named?p.id:'wild-'+i,x,y,named});
+  if(named&&['greet','ready','done'].includes(state.deerPhase)){
+   const w=Math.max(32,height*.78);
+   target(x-w/2,y-height,w,height,()=>pawHerdSelect(entry,run),'paw-deer-'+i)
   }
  }
  return result

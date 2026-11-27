@@ -15,7 +15,7 @@ bagFigureIcon=function(v){
 const townNameBefore=drawMeowActorName;
 drawMeowActorName=function(a,value,indoorScale=null){
  if(!a||!Number.isFinite(a.x)||!Number.isFinite(a.y))return;
- const q=meowPasserLabels.get(a);if(q?.offset&&Math.hypot(q.offset.x,q.offset.y)>25)q.offset=null;
+ // Retain a valid displaced label rather than jumping between anchors every frame.
  return townNameBefore(a,value,indoorScale)
 };
 const townThreeBefore=threeMove;

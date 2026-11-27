@@ -6938,6 +6938,8 @@ function drawMeowActorName(a,value,indoorScale=null){
   const h=24,cx=(bounds.left+bounds.right)/2,cy=bounds.top-h/2-9,blockers=[...meowFrameBlockers,bounds,...meowTextFrameRects],q=indoorScale===null?meowPasserLabels.get(a):null;
   let spot=null;
   if(q?.offset){const x=cx+q.offset.x,y=cy+q.offset.y,rect={left:x-w/2,right:x+w/2,top:y-h/2,bottom:y+h/2};if(rect.left>=5&&rect.right<=W-5&&rect.top>=5&&rect.bottom<=H-5&&!blockers.some(b=>speechOverlap(rect,b)))spot={x,y,rect}}
+  if(q?.offset&&!spot){const now=performance.now();q.invalidSince??=now;if(now-q.invalidSince<150)return;q.offset=null;q.invalidSince=null}
+  else if(q)q.invalidSince=null;
   if(!spot)spot=meowPlaceText(cx,cy,w,h,{left:5,right:W-5,top:5,bottom:H-5},blockers,25);
   if(!spot){if(q)q.blockedAt=performance.now();return}if(q){q.offset={x:spot.x-cx,y:spot.y-cy};if(q.blockedAt&&performance.now()-q.blockedAt<160)return;if(q.blockedAt){q.reappearAt=performance.now();q.blockedAt=0}}meowTextFrameRects.push(spot.rect);ctx.globalAlpha*=alpha*(q?.reappearAt?clamp((performance.now()-q.reappearAt)/220,0,1):1);
   const x=(spot.x-cam.ox)/scale,y=(spot.y-cam.oy)/scale;

@@ -404,7 +404,7 @@ jobs:
                 // Direct activity integration check, separate from the normal entrance flow.
                 // The lab is one house with four current choices, not separate destinations.
                 await page.evaluate(()=>{scene='wonder';room='quiz';activity=null;action('quiz')});
-                for(const [label,mode] of [['MBTI-inspired preferences','type'],['Enneagram-inspired · nine motives','motive'],['Five everyday tendencies','bigfive'],['Relationship values','values']]){
+                for(const [label,mode] of [['MBTI-inspired preferences','type'],['Enneagram-inspired · nine motives','motive'],['Five personality tendencies','bigfive'],['Relationship values','values']]){
                   await page.locator('#choices').getByRole('button',{name:label,exact:true}).click();
                   await page.waitForFunction(mode=>scene==='wonder'&&room==='quiz'&&activity==='wonderScene'&&wonderSceneMode===mode,mode,{timeout:3000});
                   if(options.hasTouch&&options.viewport.width<=540){
