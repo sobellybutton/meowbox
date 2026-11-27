@@ -1,0 +1,17 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const source=fs.readFileSync(path.resolve(__dirname,'../src/startup.js'),'utf8');
+const block=source.match(/\/\* PAW_ROOM_VISITS_BEGIN \*\/([\s\S]*?)\/\* PAW_ROOM_VISITS_END \*\//);
+assert.ok(block);
+const api=new Function(block[1]+';return {pawRoomVisitRows,pawRoomVisitRead,pawRoomVisitProgress,pawStationActionAllowed}')();
+const world={st:[['temple',2,4,'Temple','寺庙'],['station',1,2,'Station','车站'],['tea',3,4,'Tea room','茶馆'],['tea',7,8,'Tea room','茶馆'],null,['bad']]};
+assert.deepEqual(api.pawRoomVisitRows(world).map(r=>r[0]),['temple','tea']);
+assert.deepEqual(api.pawRoomVisitRead({fortune:['temple','temple','station','bad'],unknown:['x']},{fortune:world,home:{}}),{fortune:['temple'],home:[]});
+assert.deepEqual(api.pawRoomVisitRead(null,{fortune:world}),{fortune:[]});
+assert.deepEqual(api.pawRoomVisitProgress(world,['temple','station','tea','tea']),{count:2,total:2,remaining:[]});
+assert.equal(api.pawRoomVisitProgress(world,[]).remaining.length,2);
+const valid={connected:true,open:true,sameDistrict:true,boarded:false,transitioning:false,room:false,activity:false,entrance:false,hidden:false};
+assert.equal(api.pawStationActionAllowed(valid),true);
+for(const key of Object.keys(valid))assert.equal(api.pawStationActionAllowed({...valid,[key]:!valid[key]}),false,key);
+assert.equal(api.pawStationActionAllowed({}),false);
+console.log('District visit and station action regression passed');
