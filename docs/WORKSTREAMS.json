@@ -297,12 +297,17 @@
       "priority": 2,
       "summary": "Garden and wishing pool art and staging",
       "resources": [
-        "art:garden"
+        "art:garden",
+        "src/startup.js",
+        "src/extensions.js"
       ],
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-garden-20261127-g",
+        "until": 1795784209599
+      }
     },
     {
       "id": "ROOM-03",
