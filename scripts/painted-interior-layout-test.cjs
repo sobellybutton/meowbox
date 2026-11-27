@@ -16,3 +16,23 @@ for(const [id,q] of Object.entries(api.rooms)){
 }
 assert.equal(api.asset('__proto__'),null);assert.equal(api.camera(0,844),null);
 console.log('Seven painted-room artwork hashes, connected safe lanes and camera checks passed.');
+
+const source=fs.readFileSync(path.resolve(__dirname,'../src/startup.js'),'utf8');
+const start=source.indexOf('/* PAW_READING_LOBBIES_BEGIN */'),end=source.indexOf('/* PAW_READING_LOBBIES_END */');
+assert.ok(start>=0&&end>start,'runtime integration missing');
+const helpers=new Function(source.slice(start,end)+';return {pawReadingWorld,pawReadingNormalized,pawReadingSpec,pawReadingCamera,pawReadingCompatible};')();
+for(const id of ['tarot','destiny','quiz','story','match']){
+ const spec=helpers.pawReadingSpec(api,id),points=[spec.entry,spec.arrival,...Object.values(spec.stations).map(v=>v.slice(2)),[spec.entry[0],spec.entry[1]-35]];
+ assert.ok(helpers.pawReadingCompatible(api,id,[[id,'en','zh']]));
+ assert.ok(!helpers.pawReadingCompatible(api,id,[[id],['unmapped']]));
+ for(const a of points){
+  assert.ok(a[0]>=145&&a[0]<=655&&a[1]>=565&&a[1]<=738,id+' legacy input bounds');
+  assert.ok(api.safe(id,helpers.pawReadingNormalized(...a)),id+' mapped floor');
+  for(const b of points)assert.ok(api.route(id,helpers.pawReadingNormalized(...a),helpers.pawReadingNormalized(...b)),id+' mapped route');
+ }
+ for(const [w,h] of [[320,640],[390,844],[430,932],[768,1024],[1280,720]]){
+  const c=helpers.pawReadingCamera(api,w,h);
+  for(const [px,py] of points.slice(0,3)){const x=c.ox+px*c.s,y=c.oy+py*c.s;assert.ok(x>=0&&x<=w&&y>=0&&y<=h,id+' mapped camera');}
+ }
+}
+console.log('Five live reading-room coordinate adapters, entrances, exits and station anchors passed.');
