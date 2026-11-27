@@ -528,7 +528,10 @@
         "b503e517: five-card keyboard reveal/details and validated snapshot; five-card archive waits for valid complete visible spread; parsed source and helper regression passed",
         "9dde6e38: persisted tarot snapshot and key regression"
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-tarot-room-continuity",
+        "until": 1795804040083
+      },
       "blocker": "Real rendered tarot, keyboard/touch flow, card artwork, share export/history acceptance and deployment still pending."
     },
     {
