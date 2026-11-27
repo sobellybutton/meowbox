@@ -1,0 +1,71 @@
+name: Import new Pawradise visual source sheets
+on:
+  push:
+    branches: [main]
+    paths: [Pawradise_New_Visual_Assets.zip]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: paw-new-visual-import
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - run: python3 -m pip install Pillow
+      - name: Verify and stage original visual sheets without activating them
+        run: |
+          set -euo pipefail
+          cat > /tmp/paw-new-visual-import.py <<'PY'
+          import hashlib,json,pathlib,zipfile
+          from PIL import Image
+          from io import BytesIO
+          root=pathlib.Path.cwd()
+          package=root/'Pawradise_New_Visual_Assets.zip'
+          prefix='assets/visual/staging/2026-11-27-production-sources/'
+          manifest=prefix+'manifest.json'
+          readme=prefix+'README.md'
+          if not package.exists():
+              rows=json.loads((root/manifest).read_text())['assets']
+              assert len(rows)==14 and all(hashlib.sha256((root/a['path']).read_bytes()).hexdigest()==a['sha256'] for a in rows)
+              raise SystemExit(0)
+          assert hashlib.sha256(package.read_bytes()).hexdigest()=='38f8ab318552a130fa5ca89dbc72402ad71dac460066f7bad82127d0ec33ac21'
+          with zipfile.ZipFile(package) as z:
+              assert z.testzip() is None
+              rows=json.loads(z.read(manifest))['assets']
+              names={a['path'] for a in rows}
+              assert len(rows)==len(names)==14 and len(z.namelist())==16 and set(z.namelist())==names|{manifest,readme}
+              for a in rows:
+                  n=a['path']; raw=z.read(n)
+                  assert n.startswith(prefix) and n.endswith('.webp') and '/' not in n[len(prefix):]
+                  assert len(raw)==a['bytes'] and hashlib.sha256(raw).hexdigest()==a['sha256']
+                  assert hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\x00'+raw).hexdigest()==a['git_blob_sha1']
+                  im=Image.open(BytesIO(raw)); im.load()
+                  assert im.format=='WEBP' and im.size==(a['width'],a['height']) and im.mode==a['mode']
+              for n in z.namelist():
+                  p=root/n
+                  assert p.resolve().is_relative_to(root) and not p.is_symlink()
+                  if p.exists(): assert p.is_file() and p.read_bytes()==z.read(n),'Conflicting source: '+n
+              for n in z.namelist():
+                  p=root/n; p.parent.mkdir(parents=True,exist_ok=True); p.write_bytes(z.read(n))
+          print('All 14 source sheets decoded and verified. No runtime manifests changed.')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard FETCH_HEAD
+            python3 /tmp/paw-new-visual-import.py
+            if [ ! -f Pawradise_New_Visual_Assets.zip ]; then exit 0; fi
+            git add -- assets/visual/staging/2026-11-27-production-sources/
+            git rm -- Pawradise_New_Visual_Assets.zip
+            git commit -m "Archive 14 verified new Pawradise visual source sheets"
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
