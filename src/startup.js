@@ -10308,4 +10308,69 @@ drawRoute=function(...args){
   return pawFortuneDrawBefore(...args)
  }finally{glow=previousGlow}
 };
+/* PAW_NEW_DISTRICTS_BEGIN */
+// Independent art-calibrated world registrations. Preserve the legacy
+// district IDs, room actions, travel order and saved progression.
+const pawNewDistricts={
+ home:{
+  path:'assets/visual/painted/worlds/home/scene.webp',size:[962,1635],height:1777,spawn:[465,1645],
+  player:[[400,515,16],[430,548,28],[460,577,49],[505,574,40],
+   [570,488,36],[620,405,30],[690,356,34],[750,333,37],[810,364,44],
+   [865,440,51],[920,510,42],[970,568,42],[1030,661,39],[1090,715,39],
+   [1180,727,47],[1260,728,46],[1330,694,46],[1400,660,46],[1480,601,45],
+   [1550,540,44],[1645,465,50],[1685,435,41]],
+  doors:{
+   fish:{approach:[475,920],plaque:[202,925],hit:[65,865,342,240]},
+   tea:{approach:[414,810],plaque:[798,676],hit:[597,660,376,225]},
+   park:{approach:[626,460],plaque:[815,355],hit:[660,298,300,165]},
+   station:{approach:[515,400],plaque:[500,375],hit:[453,340,119,75]}
+  }
+ }
+};
+function pawNewDistrictPlan(key,id,from){
+ const d=pawNewDistricts[key],v=d?.doors[id];if(!v)return null;
+ const end={x:v.approach[0],y:v.approach[1]},ground=pawDistrictFoot(d.player,end.x,end.y);
+ if(Math.hypot(end.x-ground.x,end.y-ground.y)>.01)return null;
+ return pawDistrictRoute(d.player,from,end)
+}
+/* PAW_NEW_DISTRICTS_END */
+for(const [key,data] of Object.entries(pawNewDistricts)){
+ const world=portraitWorlds[key];world.h=data.height;world.spawn=data.spawn.slice();
+ world.route=data.player.map(([y,x])=>[y,x]);
+ const residents=data.player.map(([y,x,half])=>[y,x,Math.min(half,30)]);
+ paintedResidentPaths[key].splice(0,paintedResidentPaths[key].length,...residents);
+ pawDistrictSpines[key]=data.player;
+ for(const row of maps[key].st){const d=data.doors[row[0]];if(!d)continue;row[1]=d.approach[0];row[2]=d.approach[1];world.stations[row[0]]=d.approach.slice()}
+ const im=new Image();im.decoding='async';im.src=data.path;portraitImages[key]=im
+}
+const pawNewDistrictPreviewBefore=destinationPortrait;
+destinationPortrait=function(key){return pawNewDistricts[key]?.path||pawNewDistrictPreviewBefore(key)};
+const pawNewDistrictPlaqueBefore=housePlaqueAnchor;
+housePlaqueAnchor=function(world,id,x,y){return pawNewDistricts[world]?.doors[id]?.plaque||pawNewDistrictPlaqueBefore(world,id,x,y)};
+const pawNewDistrictDoorBefore=walkDoor;
+walkDoor=function(id,...args){
+ const data=pawNewDistricts[scene];if(!data)return pawNewDistrictDoorBefore(id,...args);
+ if(scene==='home'&&id==='office')id='tea';
+ const d=data.doors[id];if(!d)return pawNewDistrictDoorBefore(id,...args);
+ if(room||transitioning||pending===id||!proposal.hidden||document.hidden||talkOpen||$('page').style.display==='block')return;
+ const route=pawNewDistrictPlan(scene,id,p);if(!route?.length)return;
+ pawWarmRoomAssets(id);releaseWalkKeys();joystickReset();closeTalk();stopRoute();pending=id;
+ lastDoor={x:d.approach[0],y:d.approach[1]};guideDismissed=true;moveGuide.hidden=true;save('movementTutorialDone',true);
+ walkQueue=route;p.tx=route[0].x;p.ty=route[0].y;p.motionSpeed=0;
+ hint('Walking to '+roomName(id)[0]+'…','正在前往'+roomName(id)[1]+'…');sound(380);monitorDoorRoute(++doorAttempt,id)
+};
+const pawNewDistrictDrawBefore=drawMap;
+drawMap=function(...args){
+ const d=pawNewDistricts[scene];if(!d||room)return pawNewDistrictDrawBefore(...args);
+ const prior=target;
+ target=function(x,y,w,h,fn,id){
+  if(w===170&&h===150){
+   const row=maps[scene].st.find(v=>v[1]-85===x&&v[2]-110===y);
+   const zone=row&&d.doors[row[0]]?.hit;
+   if(zone)return prior(...zone,fn,id)
+  }
+  return prior(x,y,w,h,fn,id)
+ };
+ try{return pawNewDistrictDrawBefore(...args)}finally{target=prior}
+};
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
