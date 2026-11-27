@@ -8896,4 +8896,99 @@ $('back').onclick=function(...args){
 };
 
 
+/* PAW_TAROT_CONTINUITY_BEGIN */
+function pawTarotActive(q,kind){return !!q&&['tarot','love'].includes(kind)&&typeof q.readStage==='string'}
+function pawTarotClock(q,now,blocked){
+ if(!q||!Number.isFinite(now))return false;
+ const prior=q.pawReadClock,flips=Array.isArray(q.readFlip)?q.readFlip:null;
+ if(prior&&now>=prior.now&&(blocked||prior.blocked)){
+  const gap=now-prior.now;
+  if(prior.stage===q.readStage&&prior.start===q.readAt&&Number.isFinite(q.readAt))q.readAt+=gap;
+  if(flips&&prior.flips===flips)for(let i=0;i<flips.length;i++){
+   if(Number.isFinite(flips[i])&&flips[i]>=0&&flips[i]===prior.values[i]&&prior.now-flips[i]<.73)flips[i]+=gap
+  }
+ }
+ q.pawReadClock={now,blocked:!!blocked,stage:q.readStage,start:q.readAt,flips,values:flips?flips.slice():[]};return true
+}
+function pawTarotActionAllowed(rendered,current,kind,expectedKind,stage,portrait,expectedPortrait,blocked){
+ return !blocked&&pawTarotActive(current,kind)&&rendered===current&&kind===expectedKind&&current.readStage===stage&&portrait===expectedPortrait
+}
+function pawTarotKeyMove(index,key,portrait,chosen=[]){
+ const cols=portrait?4:6,delta={ArrowLeft:-1,ArrowRight:1,ArrowUp:-cols,ArrowDown:cols}[key];
+ if(!Number.isInteger(delta))return null;
+ let next=Number.isInteger(index)&&index>=0&&index<12?index:0;
+ for(let n=0;n<12;n++){
+  next=(next+delta+12)%12;
+  if(!chosen.includes(next))return next
+ }
+ return null
+}
+function pawTarotKeyFirst(chosen=[]){
+ for(let i=0;i<12;i++)if(!chosen.includes(i))return i;
+ return null
+}
+/* PAW_TAROT_CONTINUITY_END */
+const pawTarotLoopBefore=loop;
+loop=function(ms,...args){
+ if(pawTarotActive(state,activity))pawTarotClock(state,ms/1000,pawArcadeInputBlocked());
+ return pawTarotLoopBefore(ms,...args)
+};
+document.addEventListener('visibilitychange',()=>{
+ if(pawTarotActive(state,activity))pawTarotClock(state,performance.now()/1000,pawArcadeInputBlocked())
+});
+// Capture the exact session, stage and viewport for rendered tarot hit areas.
+const pawTarotTargetBefore=target;
+target=function(x,y,w,h,fn,id){
+ if(!pawTarotActive(state,activity)||typeof fn!=='function')return pawTarotTargetBefore(x,y,w,h,fn,id);
+ const run=state,kind=activity,stage=run.readStage,portrait=W<H;
+ return pawTarotTargetBefore(x,y,w,h,function(...args){
+  if(pawTarotActionAllowed(run,state,activity,kind,stage,W<H,portrait,pawArcadeInputBlocked()))return fn.apply(this,args)
+ },id)
+};
+const pawTarotShuffleGuard=readingShuffle,pawTarotDealGuard=readingDeal,pawTarotRevealGuard=readingReveal,pawTarotShowGuard=readingShow,pawTarotSaveGuard=readingSave;
+readingShuffle=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked())return pawTarotShuffleGuard(...args)};
+readingDeal=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked())return pawTarotDealGuard(...args)};
+readingReveal=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked())return pawTarotRevealGuard(...args)};
+readingShow=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked())return pawTarotShowGuard(...args)};
+readingSave=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked())return pawTarotSaveGuard(...args)};
+const pawTarotKeyboard=new WeakMap();
+document.addEventListener('keydown',event=>{
+ if(!pawTarotActive(state,activity)||pawArcadeInputBlocked()||event.repeat||event.altKey||event.ctrlKey||event.metaKey||event.target?.matches?.('input,textarea,select,button,[contenteditable=true]'))return;
+ const q=state,key=event.key,stage=q.readStage;
+ if(stage==='choose'){
+  const frame=q.pawChoiceFrame,chosen=q.pawSelectedCards||[];
+  if(!pawTarotFrameMatches(q,frame,W<H))return;
+  let index=pawTarotKeyboard.get(q);
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(key)){
+   event.preventDefault();
+   index=index===undefined?pawTarotKeyFirst(chosen):pawTarotKeyMove(index,key,W<H,chosen);
+   if(index!==null)pawTarotKeyboard.set(q,index);
+  }else if(key==='Enter'||key===' '){
+   event.preventDefault();
+   const pick=index!==undefined&&!chosen.includes(index)?index:pawTarotKeyFirst(chosen);
+   if(pick!==null&&pawSelectTarotCard(pick,frame)){
+    const next=pawTarotKeyFirst(q.pawSelectedCards);if(next!==null)pawTarotKeyboard.set(q,next)
+   }
+  }
+ }else if(stage==='deck'&&(key==='Enter'||key===' ')){
+  event.preventDefault();if(q.readShuffle)readingDeal();else readingShuffle()
+ }else if(stage==='cards'&&/^[1-3]$/.test(key)){
+  const i=Number(key)-1;if(!q.readCards?.[i])return;
+  event.preventDefault();if(q.readFlip[i]<0)readingReveal(i);else readingShow(i)
+ }else if(stage==='focus'&&key==='Escape'){
+  event.preventDefault();readingReturnSpread()
+ }
+});
+const pawTarotKeyboardDrawBefore=drawActivity;
+drawActivity=function(...args){
+ const result=pawTarotKeyboardDrawBefore(...args);
+ if(pawTarotActive(state,activity)&&state.readStage==='choose'&&pawTarotKeyboard.has(state)){
+  const index=pawTarotKeyboard.get(state),q=pawTarotChoiceSlots(W<H)[index];
+  if(q&&!state.pawSelectedCards?.includes(index)){
+   ctx.save();try{ctx.strokeStyle='#fff3bf';ctx.lineWidth=3;ctx.strokeRect(q.x-q.w/2-5,q.y-q.h/2-5,q.w+10,q.h+10)}finally{ctx.restore()}
+  }
+ }
+ return result
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
