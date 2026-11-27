@@ -141,12 +141,12 @@
       "depends": [
         "MAP-02"
       ],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-districts-20261127-f",
-        "until": 1795783665638
-      }
+      "stage": "tested",
+      "evidence": [
+        "bb333138: selected Lazy Island art, native preview, traced coastal spine, separate resident limits, painted door zones and plaques; parsed and helper route checks passed"
+      ],
+      "lease": null,
+      "blocker": "Rendered desktop and mobile route, approach/return, labels and foreground occlusion still need verification."
     },
     {
       "id": "WORLD-INTEGRATION-ISLAND",
@@ -164,7 +164,10 @@
       ],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-districts-20261127-f",
+        "until": 1795783720836
+      }
     },
     {
       "id": "WORLD-INTEGRATION-WONDER",
