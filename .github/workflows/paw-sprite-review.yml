@@ -1,0 +1,71 @@
+name: Pawradise recovered sprite review
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/paw-sprite-review.yml', 'assets/visual/staging/recovered/player-0-batch-*.zip']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-front-and-side:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install --quiet pillow
+      - name: Decode original candidate frames without activating them
+        shell: bash
+        run: |
+          mkdir -p sprite-review
+          python3 <<'PY'
+          import base64, hashlib, io, json, pathlib, re, zipfile
+          from PIL import Image, ImageDraw
+          source=pathlib.Path('assets/visual/staging/recovered')
+          rows={}
+          for archive in sorted(source.glob('player-0-batch-*.zip')):
+              with zipfile.ZipFile(archive) as z:
+                  for entry in z.infolist():
+                      if entry.is_dir(): continue
+                      print('MEMBER',archive.name,entry.filename,entry.file_size)
+                      m=re.fullmatch(r'(down|right)-([0-3])\.webp',pathlib.PurePosixPath(entry.filename).name)
+                      if not m: continue
+                      key=(m[1],int(m[2]))
+                      if key in rows or entry.file_size>1000000: raise ValueError('Duplicate or oversized candidate')
+                      raw=z.read(entry)
+                      im=Image.open(io.BytesIO(raw)).convert('RGBA')
+                      if im.size!=(152,244): raise ValueError('Unexpected sprite dimensions')
+                      alpha=im.getchannel('A')
+                      visible=alpha.point(lambda a: 255 if a>=64 else 0)
+                      box=visible.getbbox()
+                      if not box or box[0]<2 or box[1]<2 or box[2]>150 or box[3]>242: raise ValueError('Possible clipped candidate: '+str(key)+' '+str(box))
+                      if alpha.getextrema()[0]!=0: raise ValueError('No transparency')
+                      rows[key]=(raw,im,box)
+          expected=[(d,i) for d in ('down','right') for i in range(4)]
+          if set(rows)!=set(expected): raise ValueError('Missing frame: '+str(set(expected)-set(rows)))
+          sheet=Image.new('RGB',(4*192,2*282),'#e8deca')
+          draw=ImageDraw.Draw(sheet)
+          manifest=[]
+          for k,(d,i) in enumerate(expected):
+              raw,im,box=rows[d,i]
+              x=(k%4)*192+20;y=(k//4)*282+14
+              draw.line((x,y+231,x+152,y+231),fill='#a9a18a',width=1)
+              sheet.paste(im,(x,y),im)
+              draw.text((x,y+247),d+' '+str(i),fill='#3b372d')
+              meta={'direction':d,'frame':i,'width':152,'height':244,'foot':[76,231],'bbox':box,'sha256':hashlib.sha256(raw).hexdigest()}
+              manifest.append(meta)
+              name=d+'-'+str(i)+'.webp'
+              pathlib.Path('sprite-review',name).write_bytes(raw)
+              # Split long lines to keep runner log records bounded; these
+              # are repository artwork bytes, never credentials.
+              encoded=base64.b64encode(raw).decode()
+              for n in range(0,len(encoded),6000): print('SPRITE_BYTES|'+name+'|'+str(n//6000)+'|'+encoded[n:n+6000])
+          sheet.save('sprite-review/contact.webp',quality=88)
+          pathlib.Path('sprite-review/manifest.json').write_text(json.dumps(manifest,indent=2))
+          print('SPRITE_META|'+json.dumps(manifest,separators=(',',':')))
+          encoded=base64.b64encode(pathlib.Path('sprite-review/contact.webp').read_bytes()).decode()
+          for n in range(0,len(encoded),6000): print('SPRITE_SHEET|'+str(n//6000)+'|'+encoded[n:n+6000])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: original-player-0-front-side-review
+          path: sprite-review
