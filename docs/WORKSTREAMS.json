@@ -262,7 +262,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-npc-continuity-2235",
+        "until": 1795791960000
+      }
     },
     {
       "id": "NPC-03",
