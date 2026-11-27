@@ -628,12 +628,12 @@
       "depends": [
         "RAIL-04"
       ],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-rail-live-20261127-h",
-        "until": 1795786040338
-      }
+      "stage": "tested",
+      "evidence": [
+        "845b8ee5: wide ride integration, preloaded candidate assets, portrait/failed-load fallback, reduced motion and cleanup; parsed exact startup and 10 mocked lifecycle assertions passed"
+      ],
+      "lease": null,
+      "blocker": "Actual deployed wide and portrait train rides, cold loads, asset fit and mobile/desktop visual acceptance not verified."
     }
   ]
 }
