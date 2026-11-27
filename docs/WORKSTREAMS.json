@@ -1423,12 +1423,11 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-three-town-1127",
-        "until": 1795794784698
-      },
-      "blocker": "Distinct bilingual resident identities, believable cadence, bounded persistent history, no spam or fictional posts represented as human."
+      "evidence": [
+        "64235160 + 3820f535: twelve fictional bilingual resident threads with named replies, three releases per Singapore day, twelve-item bounded rolling archive, stable IDs and refresh handling; focused deterministic archive tests executed."
+      ],
+      "lease": null,
+      "blocker": "Actual phone/desktop board rendering, scroll/focus behavior and real human feed integration remain unverified."
     },
     {
       "id": "SOCIAL-DAILY-01",
@@ -1447,7 +1446,10 @@
         "cf700a19: daily social task identifies a nearby fictional resident and explains choosing a conversation topic; restored existing lifeFriend credit on chosen cameo responses, not passive greeting.",
         "4f1d41d51f860b4fc7fdc8203a7a5490b2fb36e7: persistent candidate/credit regression; source parsed and checks executed in connector harness."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-three-social-1127",
+        "until": 1795794844856
+      },
       "blocker": "Human consent, actual shared endpoint, gesture animation, room social navigation and rendered mobile/desktop acceptance remain outstanding."
     },
     {
