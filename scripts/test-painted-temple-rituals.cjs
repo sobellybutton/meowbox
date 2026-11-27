@@ -25,3 +25,20 @@ for(const grade of Object.keys(skin.pawSlipGrades))for(const folded of [false,tr
  const iw=folded?336:317,ih=folded?194:473;const b=skin.pawSlipSkinBox({w:460,h:380},iw,ih,folded);assert.ok(b.w<=460&&b.h<=380*(folded?1:1.38)+1e-8);assert.ok(Math.abs(b.w/b.h-iw/ih)<1e-8);
 }
 assert.equal(skin.pawSlipSkinBox({w:0,h:10},1,1,false),null);
+
+/* Off-centre grips must follow the same illustrated ladle point during
+   drag and release. Assist input has no drag and uses the authored target. */
+const water=new Function(get('PURIFICATION_PAINT')+';return {pawWaterGeometry,pawWaterGripPoint,pawWaterDropMatches,pawWaterDestination}')();
+const waterGeo=water.pawWaterGeometry();
+for(const stage of [0,1])for(const dx of [-35,0,35])for(const dy of [-15,0,15]){
+ const h={x:300,y:400,w:82,h:40},gesture={id:'templeLadle',h,sx:341+dx,sy:420+dy};
+ const dest=water.pawWaterDestination(stage,waterGeo);
+ const p=water.pawWaterGripPoint({x:dest.x+dx,y:dest.y+dy},gesture);
+ assert.ok(Math.hypot(p.x-dest.x,p.y-dest.y)<1e-8);
+ assert.ok(water.pawWaterDropMatches(stage,p.x,p.y,waterGeo));
+ const miss=water.pawWaterGripPoint({x:dest.x+dx+70,y:dest.y+dy},gesture);
+ assert.equal(water.pawWaterDropMatches(stage,miss.x,miss.y,waterGeo),false);
+}
+assert.deepEqual(water.pawWaterGripPoint(waterGeo.scoop,null),waterGeo.scoop);
+assert.equal(water.pawWaterDropMatches(2,waterGeo.pour.x,waterGeo.pour.y,waterGeo),false);
+console.log('Painted water grip and drop alignment checks passed.');
