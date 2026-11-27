@@ -1094,6 +1094,25 @@
       ],
       "lease": null,
       "blocker": "Controlled label probe used fallback background because the new assets had not yet deployed. Actual in-world signs, all door labels, collision with actors/UI, texture load, accessibility and organic mobile/desktop routes still require inspection. District-specific individual sign illustrations remain outstanding."
+    },
+    {
+      "id": "ROOM-FOOD-LIVE-01",
+      "lane": "world",
+      "priority": 1,
+      "summary": "Activate kitchen and boba painted lobby artwork, calibrated walk lanes, resident and counter contact; preserve cooking closeups",
+      "resources": [
+        "src/startup.js",
+        "art:kitchen",
+        "scripts/food-room-paint-test.cjs",
+        ".github/workflows/meowbox-browser.yml"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-food-room-live-20261127",
+        "until": 1795791792724
+      }
     }
   ]
 }
