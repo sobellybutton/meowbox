@@ -1,0 +1,96 @@
+name: Import recovered front walk and portraits
+on:
+  push:
+    branches: [main]
+    paths: [Pawradise_Front_and_Portrait_Assets.zip]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: pawradise-character-import
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - run: python3 -m pip install Pillow
+      - name: Verify and import exact recovered artwork
+        run: |
+          set -euo pipefail
+          cat > /tmp/paw-front-import.py <<'PY'
+          import hashlib,json,pathlib,time,zipfile
+          from PIL import Image
+          from io import BytesIO
+          root=pathlib.Path.cwd()
+          p=root/'Pawradise_Front_and_Portrait_Assets.zip'
+          prefix='assets/visual/staging/2026-11-26-recovered-front/'
+          manifest=prefix+'manifest.json'
+          if not p.exists():
+              rows=json.loads((root/manifest).read_text())['assets']
+              assert len(rows)==8
+              assert all(hashlib.sha256((root/a['path']).read_bytes()).hexdigest()==a['sha256'] for a in rows)
+              raise SystemExit(0)
+          assert hashlib.sha256(p.read_bytes()).hexdigest()=='e17c208cf53b496d3165b0442451ce41dfcb0d883851a5de906103072ccb7cf7'
+          regpath=root/'docs/WORKSTREAMS.json'
+          reg=json.loads(regpath.read_text())
+          for task in reg['tasks']:
+              lease=task.get('lease') or {}
+              if lease.get('until',0)>time.time()*1000 and set(task['resources']) & {'art:travellers','assets/visual/painted/action-runtime.json'}:
+                  raise SystemExit('Active character artwork lease; retry after it is released.')
+          expected={prefix+f'player-1/walk/down-{i}.webp' for i in range(4)}|{prefix+f'player-{i}/portrait.webp' for i in range(4)}
+          copies={}
+          with zipfile.ZipFile(p) as z:
+              assert z.testzip() is None and len(z.namelist())==9 and set(z.namelist())==expected|{manifest}
+              rows=json.loads(z.read(manifest))['assets']
+              assert len(rows)==8 and {a['path'] for a in rows}==expected
+              for a in rows:
+                  n=a['path']; raw=z.read(n)
+                  assert len(raw)==a['bytes'] and hashlib.sha256(raw).hexdigest()==a['sha256']
+                  assert hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\x00'+raw).hexdigest()==a['git_blob_sha1']
+                  im=Image.open(BytesIO(raw));im.load()
+                  assert im.format=='WEBP' and im.mode=='RGBA' and im.size==(a['width'],a['height'])
+                  box=im.getchannel('A').getbbox(); assert box
+                  if a['kind']=='down-walk':
+                      assert im.size==(224,300) and a['foot']==[112,286] and box[0]>0 and box[1]>0 and box[2]<224 and box[3]<300
+                      dst=f"assets/visual/painted/player-1/walk/down-{a['frame']}.webp"
+                  else:
+                      assert a['kind']=='profile-portrait' and im.size==(192,192)
+                      dst=f"assets/visual/painted/player-{a['player']}/profile.webp"
+                  copies[n]=raw; copies[dst]=raw
+              copies[manifest]=z.read(manifest)
+          rt=root/'assets/visual/painted/action-runtime.json'
+          live=json.loads(rt.read_text())
+          walk=live['players']['1']['walk']
+          down=[dict(path=f"assets/visual/painted/player-1/walk/down-{a['frame']}.webp",width=a['width'],height=a['height'],sha256=a['sha256'],foot=a['foot']) for a in sorted((a for a in rows if a['kind']=='down-walk'),key=lambda a:a['frame'])]
+          assert len(down)==4 and (not walk.get('down') or walk['down']==down),'Existing front walk differs; preserve it'
+          for n,raw in copies.items():
+              f=root/n
+              assert f.resolve().is_relative_to(root) and not f.is_symlink()
+              if f.exists(): assert f.is_file() and f.read_bytes()==raw,'Conflicting file: '+n
+          for n,raw in copies.items():
+              f=root/n;f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes(raw)
+          walk['down']=down
+          rt.write_text(json.dumps(live,indent=2)+'\n')
+          task=next(t for t in reg['tasks'] if t['id']=='ART-01')
+          task['evidence'].append('Verified and imported all 8 recovered front/portrait assets; player 1 now has four registered down frames. Four matching profile portraits await source integration and rendered review.')
+          regpath.write_text(json.dumps(reg,indent=2,ensure_ascii=False)+'\n')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard FETCH_HEAD
+            python3 /tmp/paw-front-import.py
+            if [ ! -f Pawradise_Front_and_Portrait_Assets.zip ]; then exit 0; fi
+            node -e "const fs=require('node:fs'),v=require('./scripts/painted-action-test.cjs')(JSON.parse(fs.readFileSync('assets/visual/painted/action-runtime.json')));if(v.players[1].walk.down.length!==4)throw Error('Front walk rejected')"
+            git add -- assets/visual/staging/2026-11-26-recovered-front/ assets/visual/painted/player-*/profile.webp assets/visual/painted/player-1/walk/ assets/visual/painted/action-runtime.json docs/WORKSTREAMS.json
+            git rm -- Pawradise_Front_and_Portrait_Assets.zip
+            git commit -m "Import missing front walk and four matching profile portraits"
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
