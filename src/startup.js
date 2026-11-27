@@ -8224,12 +8224,18 @@ function pawHeldIncense(q,held,lit){
 }
 function pawTempleContinue(id){
  if(room!=='temple'||activity!=='prayer'||state.prayerStage!=='complete'||transitioning||talkOpen)return;
- activity=null;state={};roomIntro();updateHUD();
+ const entry=roomGuideEntries().find(v=>v[0]===id);
+ if(!entry)return;
+ activity=null;state={};roomIntro();updateHUD();const returnState=state;
  // Restore the actual temple position first, then walk along the existing aisle.
  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-  if(!indoorReady()||room!=='temple')return;
-  const [, ,ax,ay]=indoorStation(id);
-  if(indoorDestination(ax,ay,()=>start(id),'up'))hint('Walking to '+roomGuideEntries().find(v=>v[0]===id)?.[1]+'…','沿着寺内小径走过去……')
+  if(!indoorReady()||room!=='temple'||activity||transitioning||talkOpen||state!==returnState)return;
+  const station=indoorStation(id);
+  if(!station||!Number.isFinite(station[2])||!Number.isFinite(station[3]))return;
+  const [, ,ax,ay]=station;
+  if(indoorDestination(ax,ay,()=>{
+   if(room==='temple'&&!activity&&!transitioning&&!talkOpen)start(id)
+  },'up'))hint('Walking to '+entry[1]+'…','正在走向'+entry[2]+'……')
  }))
 }
 function pawPrayerStep(){
