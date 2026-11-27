@@ -42,3 +42,10 @@ const fresh={teaStage:'base'};ck(!pawFoodActionAllowed(q,fresh,'seasoning','bubb
 const soup={tasteAt:5};pawFoodClock(soup,'cook',5,false);pawFoodClock(soup,'cook',6,true);pawFoodClock(soup,'cook',9,false);ck(soup.tasteAt===9,'soup tasting pause');
 soup.tasted=true;ck(!pawFoodClock(soup,'cook',10,true)&&!soup.pawFoodClock,'no clock after tasting');
 return 'PASS '+count+' guest delivery, preparation clock and stale control assertions';`)());
+
+const discovery=between(extSource,'/* PAW_DISCOVERY_INPUT_BEGIN */','/* PAW_DISCOVERY_INPUT_END */');
+console.log(new Function(discovery+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};const row={id:2},frame={token:4,index:2,row};
+ck(pawDiscoveryCurrent(frame,4,2,row,'question',false),'current question');ck(!pawDiscoveryCurrent(frame,5,2,row,'question',false),'new assessment');ck(!pawDiscoveryCurrent(frame,4,3,row,'question',false),'next question');ck(!pawDiscoveryCurrent(frame,4,2,{id:2},'question',false),'different row');ck(!pawDiscoveryCurrent(frame,4,2,row,'turn',false),'double answer');ck(!pawDiscoveryCurrent(frame,4,2,row,'question',true),'covered question');
+ck(pawDiscoveryStep(.2,100,101,true)===.2,'paused card');ck(pawDiscoveryStep(.2,100,1000,false)===.25,'bounded resume');ck(Math.abs(pawDiscoveryStep(.2,100,120,false)-.22)<1e-9,'visible progress');
+return 'PASS '+n+' assessment input and turn timing assertions';`)());

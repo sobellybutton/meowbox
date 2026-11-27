@@ -69,3 +69,21 @@ The original 91 individual IDs are unavailable; these are newly assigned stable 
 ## Constraints
 
 Use existing original recovered assets and manifests rather than recreate satisfactory art. No independent near railway layers were recovered; current route art is a single panorama, not true parallax. Do not activate unreviewed clipped sprite frames. Keep the Pawradise name, repository URL, save keys and historical results; BrbLife is undecided. The local execution environment cannot clone GitHub directly or run a real browser against the repository, so connector unit tests are not equivalent to visual review. Preserve existing progress and do not count test-only changes.
+
+## Continuation: 27 November 2026
+
+The prior source revision 0a5c2a24 deployed successfully. Its browser run [45928123077](https://github.com/sobellybutton/meowbox/actions/runs/45928123077) passed both shrine repair browser jobs (including Chromium organic four-district journey and exact selected tarot card), share exports and visual capture. The main browser job stopped at an outdated DOM mock, not a completed gameplay failure. Fixed that mock and reran the complete action-refinement helper suite successfully. Entrance regression and Master Yue consultation also succeeded. Screenshot appearance remains unreviewed.
+
+Seven additional player-facing implementation outcomes, targeted tests passed, pending full visual acceptance. Provisional code-level count 26/100 (9 baseline + 17 new, original ledger still unavailable). No additional fully visually accepted items claimed. The previous 10 and these 7 remain tracked until acceptance.
+
+| ID | Outcome | Verification |
+|---|---|---|
+| WISH-01 | Live landing preview for flick and alternative aiming, bounded physics, readable strength meter. | 63 combined wish/kitchen assertions; d1e2970 |
+| WISH-02 | Single pointer, canceled stale gestures, pause across hidden intervals, reduced motion landing and koi, no artificial post-miss delay. | Same helper suite; d1e2970; real motion review pending |
+| COOK-01 | Reject repeated, invalid and post-completion ingredients; reset stirring for a changed unfinished recipe. | Same suite; d1e2970 |
+| TEA-01 | Ordered drink moves to guest and stays full at guest location, with visible guest through service/result. | 253 combined delivery/clock/input checks; 5ed2af1; artwork/prop hand contact unapproved |
+| FOOD-01 | Pause pouring, seasoning, sealing, sipping and soup tasting on interruptions; stale recipe actions cannot mutate another cup. | Same suite; 5ed2af1 |
+| DISC-01 | Assessment answer bound to exact question/session; interrupted card-turn waits for visible play, no double answers. | 9 focused assessment guards in current source; browser pending |
+| DISC-02 | Previous question on desktop as well as mobile, number keys and Backspace while answering, stale previous controls rejected. | Same focused checks; browser keyboard and visual review pending |
+
+All source changes preserve branding, save keys, existing user results, original art and URL. No new painted art produced. Remaining workstream IDs above remain open, with WISH/COOK/TEA/FOOD/DISC IDs awaiting acceptance. Do not count the CI mock repair as product work. Full browser suite for d1e2970/5ed2af1/current commit is not yet verified; earlier tests were superseded by subsequent commits. Continue with current CI failure review, actual screenshot/playback review, then original asset recovery, character art and geometry alignment; do not activate unreviewed clipped sprite frames.

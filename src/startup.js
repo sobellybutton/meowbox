@@ -8467,4 +8467,10 @@ teaShake=function(...args){if(!pawArcadeInputBlocked())return pawFoodShakeBefore
 teaSip=function(...args){if(!pawArcadeInputBlocked())return pawFoodSipBefore(...args)};
 soupTaste=function(...args){if(!pawArcadeInputBlocked())return pawFoodTasteBefore(...args)};
 
+document.addEventListener('keydown',event=>{
+ if(activity!=='wonderScene'||wonderScenePhase!=='question'||event.repeat||event.altKey||event.ctrlKey||event.metaKey||event.target?.matches?.('input,textarea,select,button,[contenteditable=true]')||pawArcadeInputBlocked())return;
+ const frame=pawDiscoveryFrame();
+ if(/^[1-4]$/.test(event.key)&&wonderSceneData()?.opts[Number(event.key)-1]){event.preventDefault();wonderSceneChoose(Number(event.key)-1,frame)}
+ else if(event.key==='Backspace'&&wonderSceneAnswers.length){event.preventDefault();pawDiscoveryBack(frame)}
+});
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

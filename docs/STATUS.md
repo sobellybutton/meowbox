@@ -1038,3 +1038,10 @@ Owner screenshot showed a tiny portrait gate on desktop, a large dark empty surr
 - 0a81d7d: exact rendered tarot deck ownership/rotation checks, remove obsolete visible five-card and Soul Cat launch options while preserving old data; repair browser coordinate mapping and clear stale accessible controls. Room-life suite and five new tarot guard tests passed.
 - 0a5c2a2: shared canvas pointer/context ownership, interrupt cleanup and special tea/indoor/pet entry guards. 13 focused assertions passed. Real multi-touch browser ordering not yet verified.
 - Pages succeeded through 0a81d7d; earlier entrance visual workflows and Master Yue consultation passed. Latest source full browser/deployment pending at inspection; no visual acceptance or inflated completion claim. See checkpoint for links and blockers.
+
+
+## Wishing pond, food preparation and assessment continuation (27 November)
+- WISH-01/02 and COOK-01, d1e2970: aiming marker, pointer ownership, reduced motion and uninterrupted toss timing; no finished recipe mutation. 63 new assertions passed and complete action-refinement helper suite ran after fixing outdated DOM mock.
+- TEA-01 and FOOD-01, 5ed2af1: monotonic guest drink delivery, full cup stays with recipient, tea and soup clocks freeze while interrupted, stale controls blocked. 253 targeted assertions passed.
+- DISC-01/02: question identity and token validation, interrupt-aware card turn, desktop previous question and keyboard answers. Nine focused assertions passed. Source parses. Actual browser/visual acceptance pending.
+- Latest previous source run 45928123077: Chromium and WebKit shrine journeys, share exports and visual capture succeeded; main browser stopped at DOM mock. Pages deployment succeeded on d1e2970; later deployments pending at inspection. See DEVELOPMENT_CHECKPOINT.md for durable IDs and evidence. Original numbered ledger not found, provisional 26/100 code-level count only; baseline 9/100 fully accepted as supplied by owner. No new painted art or final visual acceptance.
