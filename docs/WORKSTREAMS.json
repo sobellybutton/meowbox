@@ -290,11 +290,11 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-temple-20261127-j",
-        "until": 1795786779259
-      }
+      "evidence": [
+        "TEMPLE-WATER-01 delivered as helper-tested; remaining altar, slip, sticks, bell and articulated poses still open."
+      ],
+      "lease": null,
+      "blocker": "Temple water integrated, all remaining dedicated scene art and visual review outstanding."
     },
     {
       "id": "ROOM-02",
@@ -735,6 +735,25 @@
         "owner": "manual-independent-20261127-k",
         "until": 1795786958761
       }
+    },
+    {
+      "id": "TEMPLE-WATER-01",
+      "lane": "games",
+      "priority": 1,
+      "summary": "Integrate painted purification courtyard with grounded avatar, ladle and basin",
+      "resources": [
+        "src/startup.js",
+        "art:temple",
+        "browser"
+      ],
+      "depends": [],
+      "stage": "tested",
+      "evidence": [
+        "68a3dd0c: imported purification plate directly inspected; activated on new ritual run if loaded. Reprojected existing drag, native accessible controls, shared state and reward, avatar and ladle alignment; exact source parsed and geometry/phase assertions passed.",
+        "16afa40c: persistent regression"
+      ],
+      "lease": null,
+      "blocker": "Actual browser input, contact art, phone/desktop screenshot and Pages verification outstanding; painted pose remains interim. Existing initial hall and other ritual scenes unchanged."
     }
   ]
 }
