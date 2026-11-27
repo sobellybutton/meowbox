@@ -36,3 +36,20 @@ for(const id of ['tarot','destiny','quiz','story','match']){
  }
 }
 console.log('Five live reading-room coordinate adapters, entrances, exits and station anchors passed.');
+
+const tea=helpers.pawReadingSpec(api,'tea'),teaEntries=[['chat','Join the table','来茶桌坐坐'],['board','Town noticeboard','小镇留言墙']];
+assert.ok(helpers.pawReadingCompatible(api,'tea',teaEntries));
+assert.ok(!helpers.pawReadingCompatible(api,'tea',[teaEntries[0],teaEntries[0]]));
+assert.ok(!helpers.pawReadingCompatible(api,'tea',[teaEntries[0]]));
+assert.ok(!helpers.pawReadingCompatible(api,'tea',[teaEntries[0],['unknown']]));
+const teaPoints=[tea.entry,tea.arrival,...Object.values(tea.stations).map(v=>v.slice(2)),[tea.entry[0],tea.entry[1]-35]];
+for(const a of teaPoints){
+ assert.ok(a[0]>=145&&a[0]<=655&&a[1]>=565&&a[1]<=738,'tea input bounds');
+ assert.ok(api.safe('tea',helpers.pawReadingNormalized(...a)));
+ for(const b of teaPoints)assert.ok(api.route('tea',helpers.pawReadingNormalized(...a),helpers.pawReadingNormalized(...b)),'tea station route');
+ for(const [w,h] of [[320,640],[390,844],[430,932],[768,1024],[1280,720]]){
+  const c=helpers.pawReadingCamera(api,w,h),x=c.ox+a[0]*c.s,y=c.oy+a[1]*c.s;
+  assert.ok(x>=0&&x<=w&&y>=0&&y<=h,'tea mapped camera');
+ }
+}
+console.log('Tea room two-station compatibility, walkable approach, exit and viewport checks passed.');
