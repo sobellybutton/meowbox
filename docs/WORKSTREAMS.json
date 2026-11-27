@@ -1351,7 +1351,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null,
+      "lease": {
+        "owner": "manual-entrance-ready-2248",
+        "until": 1795792680000
+      },
       "blocker": "Cold/warm cache, throttled/failed loading, mobile and desktop frame review; keep last valid painted frame or continuous themed transition until current scene, actor, label and geometry ready; bounded recovery."
     },
     {
