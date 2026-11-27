@@ -1490,7 +1490,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null,
+      "lease": {
+        "owner": "manual-cafe-reflection-2308",
+        "until": 1795793880000
+      },
       "blocker": "Love languages, attachment, communication, friendship/romance reflections; specific non-diagnostic insights, no deterministic match claim, consent before sharing, preserve private answers, meaningful repeat."
     },
     {
