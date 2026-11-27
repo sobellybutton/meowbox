@@ -166,8 +166,13 @@ jobs:
                           if(!q)throw Error('Missing forecourt target '+id);
                           if(options.hasTouch)await page.touchscreen.tap(q.x,q.y);else await page.mouse.click(q.x,q.y);
                         };
+                        const catVisitsBefore=await page.evaluate(()=>templeCatVisits);
                         await tapForecourt('paw-forecourt-cat');
                         await page.waitForFunction(()=>state.pawForecourt?.greeted&&!state.pawForecourt.route.length,null,{timeout:8000});
+                        if(!await page.evaluate(v=>state.pawForecourt.catVisited&&templeCatVisits===v+1,catVisitsBefore))throw Error('Forecourt cat visit missing');
+                        await tapForecourt('paw-forecourt-cat');
+                        await page.waitForFunction(()=>!state.pawForecourt.route.length,null,{timeout:8000});
+                        if(await page.evaluate(()=>templeCatVisits)!==catVisitsBefore+1)throw Error('Repeated tap counted as another cat visit');
                         await page.screenshot({path:'test-results/'+name+'-lucky-cat-greeting.png'});
                         await tapForecourt('paw-forecourt-hall');
                         await page.waitForFunction(()=>room==='temple'&&!activity&&pawHallEnabled(),null,{timeout:8000});
@@ -504,6 +509,17 @@ jobs:
                 await page.waitForFunction(()=>activity==='sticks'&&state.stickPicked,{},{timeout:3000});
                 if(await page.evaluate(n=>items.some(x=>x[0]==='Fortune stick '+n),drawn))throw Error('Stick awarded before pickup animation completed');
                 await page.screenshot({path:'test-results/'+name+'-fortune-pickup.png'});
+                await page.waitForFunction(n=>activity==='sticks'&&state.stickDelivered&&state.pawFortuneNumber===n,drawn,{timeout:5000});
+                if(options.hasTouch){
+                  await page.locator('#gameControls').getByRole('button',{name:'Receive slip without confirmation',exact:true}).click();
+                }else{
+                  await page.locator('#gameControls').getByRole('button',{name:'Confirm with moon blocks',exact:true}).click();
+                  await page.waitForFunction(n=>activity==='moon'&&state.pawFortuneNumber===n,drawn,{timeout:12000});
+                  await page.locator('#gameControls').getByRole('button',{name:'Toss the moon blocks',exact:true}).click();
+                  await page.waitForFunction(()=>activity==='moon'&&state.count===1&&!state.moonPending,{},{timeout:5000});
+                  await page.screenshot({path:'test-results/'+name+'-fortune-confirmation.png'});
+                  await page.locator('#gameControls').getByRole('button',{name:'Receive your fortune slip',exact:true}).click();
+                }
                 await page.waitForFunction(n=>activity==='templePaper'&&state.paperNumber===n,drawn,{timeout:5000});
                 if(!await page.evaluate(n=>items.some(x=>x[0]==='Fortune stick '+n),drawn))throw Error('Picked-up stick missing from inventory');
                 await page.waitForTimeout(650);
