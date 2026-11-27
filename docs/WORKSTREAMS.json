@@ -370,7 +370,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-game-20261127-d",
+        "until": 1795782206755
+      }
     },
     {
       "id": "READ-01",
