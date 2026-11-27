@@ -1289,7 +1289,10 @@
         "7287f2f2: owner iPhone feedback addressed: removed automatic Activities tab reveal for all rooms, retained keyboard-focus station navigation, moved room title to top center, placed Master Yue at painted desk with clipped existing upper body until matching seated sprite is available and compact Consult plaque, switched preload to actual gateway image and portrait cover framing with calibrated foot coordinates. Exact startup source parsed and 707 path/viewport checks executed; durable gate test updated. Live iPhone/desktop timing and visual review pending.",
         "24afa31d: owner iPhone feedback addressed with Master Yue arrival greeting, in-scene branching dialogue, self/other selection, compact study reading pane, progressive date/year or date/time/place questions using original validated forms, back-to-dialogue navigation, and local player distance-accumulated gait with latched sprite readiness to avoid mid-stride fallback swaps. Existing calculator and session privacy unchanged. Source parsed and five gait helper assertions run. Actual iPhone/desktop rendered flow, seated sprite and reading presentation remain unverified."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-code-1128-catalogue",
+        "until": 1795803336523
+      },
       "blocker": "Owner iPhone screenshot fixes implemented in 7287f2f2; actual current Pages deployment, cold entrance timing and all-room label/character occlusion, genuine phone and desktop visual review remain pending. Master Yue requires matching seated sprite for full pose animation; current desk-occlusion uses existing standing art. Preserve keyboard station access without permanent Activities tab.\n\nOwner-approved host and character-scale requirements (28 Nov): Owner approved conversation-first host flow. Use a distinct in-world reading object for ZWDS (overview, tap palace, detailed stars, ask Yue, return); preserve computed chart rather than illustrative placeholder. No permanent Activities button or duplicate portrait/navigation bars. Across rooms, hosts are physical and visibly comparable in scale to player; not tiny decoration. Check label and dialogue occlusion and consent/privacy in all reading flows."
     },
     {
