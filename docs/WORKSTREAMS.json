@@ -1260,7 +1260,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-spatial-signs-2241",
+        "until": 1795792260000
+      }
     },
     {
       "id": "SCENE-BLOCKING-01",
