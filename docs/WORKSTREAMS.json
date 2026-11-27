@@ -278,12 +278,13 @@
         "src/extensions.js"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-room-visitor-2240",
-        "until": 1795792200000
-      }
+      "stage": "tested",
+      "evidence": [
+        "9e8c2e8c: indoor guests can move out of existing overlaps without worsening proximity to player, residents or visitors; waiting and departure retry clocks pause across blocked or suspended room rendering.",
+        "8ca85242: persistent clearance and active dwell regression executed against current source in connector harness; source parsed."
+      ],
+      "lease": null,
+      "blocker": "Actual rendered room walking, interaction contact, pose artwork, mobile/desktop and deployment not verified; no acceptance."
     },
     {
       "id": "ROOM-01",
