@@ -69,7 +69,7 @@ console.log(new Function(s.slice(gateStart,gateEnd)+s.slice(lookStart,lookEnd)+s
 let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
 for(const [w,h] of [[360,640],[390,844],[1440,900],[844,390],[768,1024],[280,450]]){
  const f=pawGateFit(w,h);
- ck(f.left>=0&&f.top>=0&&f.width<=w&&f.height<=h,'fit gateway');
+ ck(w<h?f.left<=1e-8&&f.top<=1e-8&&f.width>=w-1e-8&&f.height>=h-1e-8:f.left>=0&&f.top>=0&&f.width<=w+1e-8&&f.height<=h+1e-8,'fit gateway');
  for(let i=0;i<=100;i++){
   const p=pawGateGround(w,h,i/100);
   ck(p.x>=f.left&&p.x<=f.left+f.width&&p.y<=f.top+f.height&&p.y-p.height>=f.top,'grounded character inside artwork');

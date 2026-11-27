@@ -1237,7 +1237,7 @@ function pawGuideActionAllowed(captured,current,open,connected,ready){
  return !!captured&&captured===current&&open===true&&connected===true&&ready===true
 }
 function pawGuideName(count,missing,cn){
- return missing>0?(cn?'体验 · ':'Activities · ')+count:cn?'选择体验地点':'Choose a station'
+ return cn?'选择体验地点':'Choose a station'
 }
 function closeRoomGuide(restore=false){
  roomGuide.classList.remove('pawGuideOpen');roomGuide.hidden=true;
@@ -2834,7 +2834,7 @@ function mbMountGatePainting(hero){
  if(!hero||hero.querySelector('.mbGatePainting'))return;
  // Same scene from first paint; no manifest round-trip or fallback image swap.
  const plate=new Image();
- plate.alt='';plate.className='mbGatePainting';plate.loading='eager';plate.fetchPriority='high';
+ plate.alt='';plate.className='mbGatePainting';plate.loading='eager';plate.fetchPriority='high';plate.decoding='async';
  hero.dataset.paintedGate='true';proposal.dataset.paintedShot='shrine';
  plate.src='assets/visual/painted/worlds/gateway/scene.webp';hero.prepend(plate);
 }
@@ -6578,7 +6578,7 @@ drawRoom=function(...args){
  if(room&&!activity&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block'){
   const entries=roomGuideEntries(),missing=pawMissingStations(entries,pawVisibleStationLabels);
   roomGuideToggle.dataset.missing=String(missing.length);
-  roomGuideToggle.dataset.showDirectory=String(missing.length>0);
+  roomGuideToggle.dataset.showDirectory='false';
   const guideName=pawGuideName(entries.length,missing.length,zh);
   if(roomGuideToggle.textContent!==guideName)roomGuideToggle.textContent=guideName;
   roomGuideToggle.setAttribute('aria-label',guideName);
@@ -6590,7 +6590,7 @@ drawRoom=function(...args){
 // if any room action lacks a visible authored plaque.
 const pawActivityDirectoryCss=document.createElement('style');
 pawActivityDirectoryCss.textContent=`
-#game #pawRoomGuideToggle[data-show-directory="true"]:not([hidden]){position:absolute!important;right:max(12px,env(safe-area-inset-right,0px));top:max(60px,calc(env(safe-area-inset-top,0px) + 60px));width:auto!important;height:auto!important;min-width:44px!important;min-height:44px!important;clip-path:none!important;overflow:visible!important;white-space:normal!important;pointer-events:auto!important;padding:7px 12px!important;background:#594b39f0!important;color:#fff1d4!important;border:1px solid #c9ad7c!important;z-index:10!important}
+#game #pawRoomGuideToggle:focus-visible:not([hidden]){position:absolute!important;right:max(12px,env(safe-area-inset-right,0px));top:max(60px,calc(env(safe-area-inset-top,0px) + 60px));width:auto!important;height:auto!important;min-width:44px!important;min-height:44px!important;clip-path:none!important;overflow:visible!important;white-space:normal!important;pointer-events:auto!important;padding:7px 12px!important;background:#594b39f0!important;color:#fff1d4!important;border:1px solid #c9ad7c!important;z-index:10!important}
 #game #roomStationGuide.pawGuideOpen{top:max(108px,calc(env(safe-area-inset-top,0px) + 108px));z-index:12!important}
 #game .mbPaintedRail>canvas.pawMovingGlass,#proposal .mbPaintedRail>canvas.pawMovingGlass{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;z-index:4!important;opacity:1!important;visibility:visible!important;pointer-events:none!important;transform:none!important}
 @media(prefers-reduced-motion:reduce){#game .mbPaintedRail>canvas.pawMovingGlass,#proposal .mbPaintedRail>canvas.pawMovingGlass{display:none!important}}
@@ -6874,8 +6874,8 @@ if(typeof requestIdleCallback==='function')requestIdleCallback(pawWarmDistricts,
    the real Fortune Valley image before letting the gateway disappear. */
 function pawGateFit(w,h){
  if(!Number.isFinite(w)||!Number.isFinite(h)||w<=0||h<=0)return null;
- const aspect=962/1635,height=Math.min(h,w/aspect),width=height*aspect;
- return {width,height,left:(w-width)/2,top:(h-height)/2}
+ const aspect=962/1635,portrait=w<h,height=portrait?Math.max(h,w/aspect):Math.min(h,w/aspect),width=height*aspect;
+ return {width,height,left:(w-width)/2,top:portrait?h-height:(h-height)/2}
 }
 function pawGateGround(w,h,progress=0){
  const fit=pawGateFit(w,h);if(!fit)return null;
@@ -6887,8 +6887,9 @@ function pawGateGround(w,h,progress=0){
 }
 const pawGateCompositionCSS=document.createElement('style');
 pawGateCompositionCSS.textContent=`
-#proposal[data-paw-entrance-step="3"]>.hero{background:#293c32!important;container-type:size}
-#proposal[data-paw-entrance-step="3"] .mbGatePainting{object-fit:contain!important;object-position:center!important;backdrop-filter:none!important;background:none!important}
+#proposal[data-paw-entrance-step="3"]>.hero{background:#293c32 url('assets/visual/painted/worlds/gateway/scene.webp') center bottom/cover no-repeat!important;container-type:size}
+#proposal[data-paw-entrance-step="3"] .mbGatePainting{object-fit:cover!important;object-position:center bottom!important;backdrop-filter:none!important;background:none!important;display:block!important;visibility:visible!important;z-index:1!important}
+@media(orientation:landscape){#proposal[data-paw-entrance-step="3"] .mbGatePainting{object-fit:contain!important;object-position:center!important}}
 #proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded{position:absolute!important;left:var(--paw-gate-x)!important;top:var(--paw-gate-y)!important;bottom:auto!important;width:auto!important;height:var(--paw-gate-height)!important;max-width:none!important;max-height:none!important;translate:var(--paw-gate-pivot-x,-50%) var(--paw-gate-pivot-y,-100%)!important;transform:none!important;transition:none!important;opacity:1!important;object-fit:contain!important;filter:none!important}
 #proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded.go{transform:none!important;translate:var(--paw-gate-pivot-x,-50%) var(--paw-gate-pivot-y,-100%)!important;opacity:0!important;transition:opacity .18s linear!important}
 `;
@@ -12178,20 +12179,57 @@ drawRoom=function(...args){if(pawReadingActive())pawReadingBackdrop();return paw
 function pawReadingHost(){
  const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:null;
  if(!name)return null;const record=residentArtworkRecord(name);if(!record)return null;
- const [x,y]=pawReadingWorld(pawReadingAPI().rooms[room].host);
+ const [x,y]=pawReadingWorld(room==='destiny'?[.58,.446]:pawReadingAPI().rooms[room].host);
  return {station:room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record.height||112,.90),facing:'left'}
 }
 const pawReadingHostsBefore=roomResidentActors;
 roomResidentActors=function(){if(!pawReadingActive())return pawReadingHostsBefore();const a=pawReadingHost();return a?[a]:[]};
+/* PAW_YUE_DESK_BEGIN */
+// The chair and table are already painted. Use the same resident identity,
+// keep visible torso above the table, and never draw a shadow or feet on it.
+// Until the proper seated sprite is registered this is a desk-occlusion
+// treatment, not a new animation pose.
+function pawYueDeskBox(p=pawReadingPlate){
+ return {x:p.x+p.w*.581,y:p.y+p.h*.447,height:p.h*.104,clipTop:p.y+p.h*.31,clipBottom:p.y+p.h*.447}
+}
+function pawYueDeskPlaque(p=pawReadingPlate){
+ return {x:p.x+p.w*.5,y:p.y+p.h*.552}
+}
+/* PAW_YUE_DESK_END */
+function pawDrawYueAtDesk(a){
+ const record=residentArtworkRecord(a.n),seated=residentArtworkImage(record,'seated'),standing=residentArtworkImage(record);
+ const im=pawRoomImageReady(seated)?seated:standing;
+ if(!pawRoomImageReady(im))return false;
+ const q=pawYueDeskBox(),crop=pawResidentCrop(im)||{x:0,y:0,w:im.naturalWidth,h:im.naturalHeight};
+ const actualHeight=q.height*(pawRoomImageReady(seated)?.78:1),w=actualHeight*crop.w/crop.h;
+ ctx.save();try{
+  ctx.beginPath();ctx.rect(q.x-w/2,q.clipTop,w,q.clipBottom-q.clipTop);ctx.clip();
+  ctx.drawImage(im,crop.x,crop.y,crop.w,crop.h,q.x-w/2,q.y-actualHeight*(pawRoomImageReady(seated)?1:.57),w,actualHeight);
+ }finally{ctx.restore()}
+ return true
+}
+function pawDrawYueDeskPlaque(fn){
+ const q=pawYueDeskPlaque(),scale=Math.max(.08,cam.scale),font=Math.max(9,12/scale),name=tr('Consult','问事');
+ ctx.save();try{
+  ctx.font='600 '+font+'px Georgia,"Songti SC",serif';
+  const w=Math.max(58/scale,ctx.measureText(name).width+12/scale),h=22/scale;
+  const place=pawPaintedPlaquePlacement(q.x,q.y,w,h,{s:scale,ox:cam.ox,oy:cam.oy},{w:W,h:H},meowTextFrameRects);
+  if(!place)return false;
+  round(place.x-w/2,place.y-h/2,w,h,2/scale,'#4b392ceb','#c9a979');activityFitText(name,place.x,place.y,font,w-6/scale,'#fff1d8');
+  meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add('destiny');
+  target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn);return true
+ }finally{ctx.restore()}
+}
 const pawReadingPropBefore=prop;
 prop=function(id,x,y){
  if(!pawReadingActive()||!Object.hasOwn(pawReadingAPI().rooms[room].stations,id))return pawReadingPropBefore(id,x,y);
- const a=pawReadingHost();if(a)drawGatheringPainted(a.n,a.x,a.y,a.sc,a.facing);
+ const a=pawReadingHost();if(a){if(room==='destiny'){pawDrawYueAtDesk(a);pawDrawYueDeskPlaque(()=>action('destiny'))}else drawGatheringPainted(a.n,a.x,a.y,a.sc,a.facing)}
  // Artwork contains the table and props. Only the interactive sign remains.
  pawStationPlaque={room,id,x,y,spec:groundedStationSpec(room,id),at:t}
 };
 const pawReadingLabelBefore=label;
 label=function(name,x,y,fn){
+ if(pawReadingActive()&&room==='destiny'&&/consult|master yue|月师傅|咨询|问事/i.test(name)){pawStationPlaque=null;return}
  const station=pawStationPlaque,q=pawReadingActive()&&pawReadingAPI().rooms[room].stations[station?.id];
  if(!q||station.room!==room||station.at!==t)return pawReadingLabelBefore(name,x,y,fn);
  pawStationPlaque=null;
@@ -12282,5 +12320,15 @@ pawPaintedPoolCss.textContent=`
 @keyframes pawPoolWaterFlow{from{background-position:0 0}to{background-position:0 80px}}
 @media(prefers-reduced-motion:reduce){#game #content .pawWishGarden .pawWaterfallMotion{animation:none!important;opacity:.15}}
 `;document.head.append(pawPaintedPoolCss);
+
+
+// Keep the room itself as the navigation, not a permanent activity menu.
+const pawRoomOwnerPresentation=document.createElement('style');
+pawRoomOwnerPresentation.textContent=`
+#game #pawPlaceName{top:max(10px,env(safe-area-inset-top,0px))!important;right:auto!important;left:50%!important;transform:translateX(-50%);max-width:calc(100% - 28px)!important;width:max-content;font:600 clamp(12px,3.1vw,16px)/1.3 var(--paw-display,Georgia,serif)!important;letter-spacing:.02em;text-align:center!important;color:#fff5df;background:#322d25b8;padding:5px 11px!important;border-radius:3px;box-shadow:0 1px 5px #2b261c30}
+#game #pawRoomGuideToggle:not(:focus-visible){clip-path:inset(50%)!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;overflow:hidden!important;pointer-events:none!important;padding:0!important;border:0!important}
+#game{width:100%;height:100dvh!important;max-width:none!important;max-height:none!important}
+#proposal[data-paw-entrance-step="3"]:not([hidden]){height:100%!important;width:100%!important;max-width:none!important;max-height:none!important}
+`;document.head.append(pawRoomOwnerPresentation);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
