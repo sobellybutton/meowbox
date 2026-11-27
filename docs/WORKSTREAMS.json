@@ -901,7 +901,10 @@
       ],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-furniture-transfer-20261127",
+        "until": 1795790804671
+      }
     },
     {
       "id": "HOME-CATALOGUE-LIVE-02",
