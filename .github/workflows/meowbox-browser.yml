@@ -622,15 +622,22 @@ jobs:
                 await page.waitForFunction(()=>state.tasted===true,{},{timeout:7000});
                 await page.screenshot({path:'test-results/'+name+'-soup-tasting.png'});
                 await page.evaluate(()=>{room='temple';activity=null;start('secretGarden')});
-                await page.waitForTimeout(1300);
-                await page.evaluate(()=>{gardenSeat();gardenChime();gardenFeed()});
-                await page.waitForTimeout(1000);
-                if(!await page.evaluate(()=>state.gardenSitting&&state.gardenFeedCount===1))throw Error('Garden interactions failed');
-                await page.evaluate(()=>gardenFeed());
-                await page.waitForTimeout(1000);
-                await page.evaluate(()=>gardenFeed());
+                const garden=page.locator('#gameControls.pawGardenControls');
+                await garden.waitFor({timeout:12000});
+                for(let n=1;n<=3;n++){
+                  await garden.getByRole('button',{name:'Feed koi',exact:true}).click({timeout:10000});
+                  await page.waitForFunction(n=>state.gardenFeedCount===n,n,{timeout:10000});
+                  await page.waitForTimeout(900);
+                }
                 if(!await page.evaluate(()=>items.some(x=>x[0]==='Quiet garden postcard')))throw Error('Garden keepsake not collected');
+                await garden.getByRole('button',{name:'Wind chime',exact:true}).click();
+                await page.waitForFunction(()=>t-state.gardenChimeAt<2,null,{timeout:10000});
+                await garden.getByRole('button',{name:'Sit by pond',exact:true}).click();
+                await page.waitForFunction(()=>state.gardenSitting&&state.pawGardenWalk?.pos[0]===pawGardenStations.seat[0]&&!state.pawGardenWalk.route.length,null,{timeout:10000});
                 await page.screenshot({path:'test-results/'+name+'-secret-garden.png'});
+                await page.waitForTimeout(800);
+                await garden.getByRole('button',{name:'Stand up',exact:true}).click();
+                await page.waitForFunction(()=>!state.gardenSitting,null,{timeout:5000});
                 await page.evaluate(()=>{room='arcade';activity=null;start('goldfishScoop')});
                 const fishControls=page.locator('#gameControls.festivalFishControls');
                 await fishControls.getByRole('button',{name:'Right',exact:true}).click();
