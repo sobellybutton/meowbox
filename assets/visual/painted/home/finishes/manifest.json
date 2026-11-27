@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "source_manifest": "assets/visual/staging/2026-11-28-consolidated/manifest.json",
+  "assets": [
+    {
+      "id": "wallLinen",
+      "path": "assets/visual/painted/home/finishes/wallLinen.webp",
+      "source": "assets/visual/staging/2026-11-28-consolidated/home-finishes/wallLinen.webp",
+      "sha256": "aadfd74cfe5d0ee123570f623bc0d5cc0af414d09b497c3767ecf4f5510e12dd",
+      "git_blob_sha1": "e2a3d953afaa66f734e72af7d65ca3fdf5d7269a",
+      "bytes": 25710,
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "status": "verified material swatch, room projection and repeat seams pending"
+    },
+    {
+      "id": "wallSakura",
+      "path": "assets/visual/painted/home/finishes/wallSakura.webp",
+      "source": "assets/visual/staging/2026-11-28-consolidated/home-finishes/wallSakura.webp",
+      "sha256": "ce0da74f2d98bd6114792d16ea1c7a68348fa34716bbbb33b116e022f4bb3ee8",
+      "git_blob_sha1": "65e2524df54d07a20fc985115fe0655f5b2f4fc3",
+      "bytes": 22614,
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "status": "verified material swatch, room projection and repeat seams pending"
+    },
+    {
+      "id": "wallMatcha",
+      "path": "assets/visual/painted/home/finishes/wallMatcha.webp",
+      "source": "assets/visual/staging/2026-11-28-consolidated/home-finishes/wallMatcha.webp",
+      "sha256": "e00d340d6e1b9448dfe84925cc2ff1ae45ac9ea5a35d790e1ed577eca7ee795a",
+      "git_blob_sha1": "021d60dcf7b434644a66344a25a3e2c0d8021143",
+      "bytes": 29452,
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "status": "verified material swatch, room projection and repeat seams pending"
+    },
+    {
+      "id": "wallBlue",
+      "path": "assets/visual/painted/home/finishes/wallBlue.webp",
+      "source": "assets/visual/staging/2026-11-28-consolidated/home-finishes/wallBlue.webp",
+      "sha256": "49bd535a713b6b8268db5b8b744c3bcc83256dd741077fce72288ab0f4a7cc6c",
+      "git_blob_sha1": "a47c062c1b22c4039e19c3113fc0cd902ff0d54b",
+      "bytes": 44580,
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "status": "verified material swatch, room projection and repeat seams pending"
+    },
+    {
+      "id": "floorOak",
+      "path": "assets/visual/painted/home/finishes/floorOak.webp",
+      "source": "assets/visual/staging/2026-11-28-consolidated/home-finishes/floorOak.webp",
+      "sha256": "b06cb8f6be6bee799131e1b1f423723c18d698db1a03595ea0846f061535f7d1",
+      "git_blob_sha1": "2b54a62fc3596a6502033b6b91da85c484341b78",
+      "bytes": 32862,
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "status": "verified material swatch, room projection and repeat seams pending"
+    },
+    {
+      "id": "floorTiles",
+      "path": "assets/visual/painted/home/finishes/floorTiles.webp",
+      "source": "assets/visual/staging/2026-11-28-consolidated/home-finishes/floorTiles.webp",
+      "sha256": "6416f757eda77b6f9381cb2787814a7c0e826854f1469a459c5d3644f84f7cd8",
+      "git_blob_sha1": "3617507a69222f1e5cf9caba9cfa803af3401499",
+      "bytes": 37036,
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "status": "verified material swatch, room projection and repeat seams pending"
+    },
+    {
+      "id": "floorTatami",
+      "path": "assets/visual/painted/home/finishes/floorTatami.webp",
+      "source": "assets/visual/staging/2026-11-28-consolidated/home-finishes/floorTatami.webp",
+      "sha256": "c192244b35bf04c993f3414e4bb2650941aa11fae21ef2a7ad9d3398520096aa",
+      "git_blob_sha1": "99872d2010f76069f4489e0edab0931f9778e29d",
+      "bytes": 36068,
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "status": "verified material swatch, room projection and repeat seams pending"
+    },
+    {
+      "id": "floorChecker",
+      "path": "assets/visual/painted/home/finishes/floorChecker.webp",
+      "source": "assets/visual/staging/2026-11-28-consolidated/home-finishes/floorChecker.webp",
+      "sha256": "adfeb269c7d9ae6d92fa8dbab07e0a3382ca47dd8891448829079a40e5956ba7",
+      "git_blob_sha1": "eb322148a1509018b2bc9aabf92e45ff107c99fc",
+      "bytes": 13266,
+      "width": 344,
+      "height": 344,
+      "mode": "RGB",
+      "status": "verified material swatch, room projection and repeat seams pending"
+    }
+  ]
+}
