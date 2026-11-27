@@ -668,12 +668,13 @@
         "scripts/world-visits-test.cjs"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-explore-route-20261127-i",
-        "until": 1795786652971
-      }
+      "stage": "tested",
+      "evidence": [
+        "f33b9633: physical room visit history, journal and station remaining-place guidance, optional travel, safe boarding/cancel guards, contextual return. 17 regression assertions and exact source parse passed.",
+        "38880b0f781cdce12053b00303e16f5380717960: persisted helper tests"
+      ],
+      "lease": null,
+      "blocker": "Actual browser verification timed out; inspect room entry tracking, save/reload, bilingual labels, station layout and boarding on current mobile and desktop deployment."
     }
   ]
 }
