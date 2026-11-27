@@ -25,6 +25,10 @@ jobs:
       - run: node scripts/home-layout-test.cjs
       - run: node scripts/rail-foreground-test.cjs
       - run: node scripts/world-visits-test.cjs
+      - run: node scripts/paw-economy-test.cjs
+      - run: node scripts/paw-motion-audio-test.cjs
+      - run: node scripts/resident-remarks-test.cjs
+      - run: node scripts/runtime-module-live-test.cjs
       - run: node scripts/paw-living-home-test.cjs
       - run: node scripts/paw-living-polish-test.cjs
       - run: node scripts/rail-fish-test.cjs

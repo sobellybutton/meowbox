@@ -11089,7 +11089,9 @@ function pawLiveEconomySnapshot(){
  const catalogue=furnitureCatalogue(),owned=catalogue.filter(v=>furnitureOwned(v[0])).map(v=>v[0]);
  const goals=PawEconomy.expansionGoals(hideoutBalance(),catalogue,owned);
  const day=shrineClock().day,record=townPawRecord();
- const earn=PawEconomy.rewards(townPawCategories(),record.day>=day?record.keys:[],dailyWheelPrizes,dailyWheelRecord().day>=day);
+ const categories=townPawCategories();
+ const claimed=record.day>day?categories.map(v=>v.id):record.day===day?record.keys:[];
+ const earn=PawEconomy.rewards(categories,claimed,dailyWheelPrizes,dailyWheelRecord().day>=day);
  return {goals,earn,catalogue}
 }
 const pawLiveWalletBefore=pawWalletPage;
@@ -11117,11 +11119,11 @@ function pawLiveMotionTick(){
  const flags={enabled:meowSoundPrefs.effects!==false,muted,hidden:document.hidden,overlay:false,paused:false};
  const pageOpen=$('page').style.display==='block',game=$('game');
  const first=!proposal.hidden&&proStep===5&&pawFirstRailState&&!pawFirstRailState.completed&&!pawFirstRailState.paused&&pawFirstRailState.phase==='riding';
- const ride=game.querySelector('.pawRailJourney[data-riding="true"]:not([data-arriving="true"])');
+ const ride=proposal.hidden&&transitioning?game.querySelector('.pawRailJourney[data-riding="true"]:not([data-arriving="true"])'):null;
  const inter=proposal.hidden&&transitioning&&ride&&!ride.querySelector('.pawRailSkip')?.disabled;
  const mode=first||inter?'rail':proposal.hidden&&!transitioning&&!talkOpen&&!pageOpen&&!activity&&avatar!==null&&(!room||indoorReady())?'walk':'';
  if(mode!==pawLiveMotionMode){pawLiveStepper.reset();pawLiveMotionPlayer?.reset();pawLiveMotionMode=mode}
- if(!mode||!PawMotionAudio.permitted(flags)||audio?.state!=='running'){pawLiveStepper.reset();return}
+ if(!mode||!PawMotionAudio.permitted(flags)||audio?.state!=='running'){pawLiveStepper.reset();pawLiveMotionPlayer?.reset();return}
  if(!actionFxBus&&!actionFxContext())return;
  if(!pawLiveMotionPlayer||pawLiveMotionContext!==audio||pawLiveMotionBus!==actionFxBus){
   pawLiveMotionContext=audio;pawLiveMotionBus=actionFxBus;pawLiveMotionPlayer=PawMotionAudio.createPlayer(audio,actionFxBus)
