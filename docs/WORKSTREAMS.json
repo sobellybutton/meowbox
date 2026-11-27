@@ -337,13 +337,11 @@
       "stage": "tested",
       "evidence": [
         "c0afb1d1: inspected dedicated 960x1631 rear garden plate, mapped existing koi/seat/chime actions and optional lucky cat visit to traced ground routes; painted chime retained, feeding arc/ripple, new camera and controls, stable fallback; focused route/tick/target regression passed and wired into CI.",
-        "4211b656: painted Wishing Garden lobby, mapped floor/station anchors, label and actor placement, readiness gated admission. fdb912f6: durable regression tests; 1,267 assertions passed in isolated connector harness."
+        "4211b656: painted Wishing Garden lobby, mapped floor/station anchors, label and actor placement, readiness gated admission. fdb912f6: durable regression tests; 1,267 assertions passed in isolated connector harness.",
+        "a33e1f42 + 254d0294: uploaded wishing pool artwork installed at stable path, existing toss DOM positioned in calibrated water/stone-bank region, old oval/tray hidden, actual hit target and coin origin retained, waterfall highlight motion and reduced-motion support. Eight viewport geometry cases executed, durable regression added; actual browser/deployment and complete input/visual acceptance remain open."
       ],
-      "lease": {
-        "owner": "manual-consolidated-pool",
-        "until": 1795800688137
-      },
-      "blocker": "Actual deployed browser entry, both stations, return, iPhone WebKit/touch and desktop review remain pending. Wishing pool activity itself uses interim geometry; landscape uses portrait-fit fallback; final pose artwork outstanding. Live source was still on earlier deployment during verification."
+      "lease": null,
+      "blocker": "Painted garden lobby and pool activity wired. Current phone/desktop visual playthrough, waterfall motion/coin/contact/aiming inspection, resize during gestures, cold admission and full return flow remain pending. Browser interaction failed in this session. Do not regenerate pool artwork unless rendered evidence demonstrates a defect."
     },
     {
       "id": "ROOM-03",
