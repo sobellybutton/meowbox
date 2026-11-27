@@ -21,9 +21,10 @@ jobs:
           ref: main
       - name: Install image verification dependency
         run: python3 -m pip install Pillow
-      - name: Verify and import character assets
+      - name: Verify import and retry safely on concurrent pushes
         run: |
-          python3 <<'PY'
+          set -euo pipefail
+          cat > /tmp/paw-import-characters.py <<'PY'
           import hashlib,json,pathlib,zipfile,time
           from PIL import Image
           from io import BytesIO
@@ -87,15 +88,20 @@ jobs:
           registry.write_text(json.dumps(reg,indent=2,ensure_ascii=False)+'\n')
           print('Verified 24 recovered candidates and registered 4 side-walk frames')
           PY
-      - name: Check runtime contract and commit
-        run: |
-          set -euo pipefail
-          if [ ! -f Pawradise_Recovered_Character_Assets.zip ]; then exit 0; fi
-          python3 scripts/verify-recovered-characters.py
-          node -e "const fs=require('node:fs'),validate=require('./scripts/painted-action-test.cjs');const m=JSON.parse(fs.readFileSync('assets/visual/painted/action-runtime.json'));const v=validate(m);if(v.players[1].walk.right.length!==4)throw Error('Missing right walk');for(const a of v.players[1].walk.right){if(require('node:crypto').createHash('sha256').update(fs.readFileSync(a.path)).digest('hex')!==a.sha256)throw Error('hash mismatch')}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- assets/visual/staging/2026-11-26-recovered-characters/ assets/visual/painted/player-1/walk/ assets/visual/painted/action-runtime.json scripts/verify-recovered-characters.py docs/WORKSTREAMS.json
-          git rm -- Pawradise_Recovered_Character_Assets.zip
-          git commit -m "Import 24 recovered character assets and register missing side walk"
-          git push origin HEAD:main
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard FETCH_HEAD
+            python3 /tmp/paw-import-characters.py
+            if [ ! -f Pawradise_Recovered_Character_Assets.zip ]; then exit 0; fi
+            python3 scripts/verify-recovered-characters.py
+            node -e "const fs=require('node:fs'),validate=require('./scripts/painted-action-test.cjs');const m=JSON.parse(fs.readFileSync('assets/visual/painted/action-runtime.json'));const v=validate(m);if(v.players[1].walk.right.length!==4)throw Error('Missing right walk');for(const a of v.players[1].walk.right){if(require('node:crypto').createHash('sha256').update(fs.readFileSync(a.path)).digest('hex')!==a.sha256)throw Error('hash mismatch')}"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -- assets/visual/staging/2026-11-26-recovered-characters/ assets/visual/painted/player-1/walk/ assets/visual/painted/action-runtime.json scripts/verify-recovered-characters.py docs/WORKSTREAMS.json
+            git rm -- Pawradise_Recovered_Character_Assets.zip
+            git commit -m "Import 24 recovered character assets and register missing side walk"
+            if git push origin HEAD:main; then exit 0; fi
+            echo "Concurrent main update; rechecking latest files and lease before retry"
+            sleep 2
+          done
+          exit 1
