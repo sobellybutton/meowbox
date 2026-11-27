@@ -181,3 +181,14 @@ for(let i=0;i<160;i++){let t=10+i/100,p=pawTempleStickPose(q,t);ck(p.fall>=0&&p.
 q={fallenStick:7,stickPicked:true,stickPickAt:10};for(let i=0;i<150;i++){const p=pawTempleStickPose(q,10+i/100);ck(p.pick>=0&&p.pick<=1&&p.fall===1,'pickup')}
 for(let i=0;i<450;i++){let m=pawTempleBellMotion({bellAt:10,bellStrength:1},10+i/100);ck(Number.isFinite(m.swing)&&Math.abs(m.swing)<=45&&Math.abs(m.impact)<=.045,'bell')}
 return n;`)()+' painted hall stick and bell motion assertions');
+
+console.log('PASS: '+new Function(between(source,'/* PAW_GARDEN_WALK_BEGIN */','/* PAW_GARDEN_WALK_END */')+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+for(const from of Object.values(pawGardenStations))for(const action of Object.keys(pawGardenStations))for(const reduced of [true,false]){
+ const q={pos:from.slice(),route:[],last:0};ck(pawGardenRoute(q,action),'route');
+ ck(!pawGardenRoute(q,action),'owned route');const before=q.pos.slice();
+ pawGardenWalkTick(q,.01,true,reduced);ck(q.pos.every((v,i)=>v===before[i]),'covered');
+ let arrive;for(let i=2;i<5000&&!arrive;i++){arrive=pawGardenWalkTick(q,i*.016,false,reduced);ck(q.pos[0]>=.33&&q.pos[0]<=.84&&q.pos[1]>=.54&&q.pos[1]<=.70,'walkway bounds')}
+ ck(arrive===action&&q.pos.every((v,i)=>v===pawGardenStations[action][i]),'station arrival');
+}
+return n;`)()+' garden route and station-arrival assertions');
