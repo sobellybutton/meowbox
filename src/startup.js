@@ -3965,7 +3965,27 @@ todayHub=function(...args){
  journalLanguage(todayHub);return result
 };
 const pawDailyGuideBefore=journalDailyGuide;
-journalDailyGuide=function(id){if(id==='gratitude'){pawDiaryOpen.add('gratitude');todayHub();$('content').querySelector('.pawDiaryGratitude')?.closest('details')?.scrollIntoView({block:'start'});return}return pawDailyGuideBefore(id)};
+/* PAW_SOCIAL_GUIDE_BEGIN */
+function pawSocialCandidate(actors,player,radius=210){
+ if(!Array.isArray(actors)||!Number.isFinite(player?.x)||!Number.isFinite(player?.y))return null;
+ let best=null,dist=radius;
+ for(const a of actors){
+  if(!a||a.kind===2||a.sharedPeer||!Array.isArray(a.n)||a.n.length<2||!a.n.every(v=>typeof v==='string'&&v.trim())||!Number.isFinite(a.x)||!Number.isFinite(a.y))continue;
+  const d=Math.hypot(a.x-player.x,a.y-player.y);
+  if(d<dist){dist=d;best=a}
+ }
+ return best
+}
+/* PAW_SOCIAL_GUIDE_END */
+journalDailyGuide=function(id){
+ if(id==='gratitude'){pawDiaryOpen.add('gratitude');todayHub();$('content').querySelector('.pawDiaryGratitude')?.closest('details')?.scrollIntoView({block:'start'});return}
+ if(id!=='social'||transitioning||activity||room||!proposal.hidden||talkOpen)return pawDailyGuideBefore(id);
+ $('page').style.display='none';
+ const next=pawSocialCandidate(npc,p);
+ if(next)hint('Tap '+next.n[0]+' nearby, then choose something to talk about.','点击附近的'+next.n[1]+'，选个话题聊聊。');
+ else hint('Follow the path until you meet a resident. Tap them and choose a conversation topic.','沿小路走走，遇见居民就点一下，选个话题聊聊。');
+ return
+};
 const pawCommunitySingleBefore=townChatPage;
 townChatPage=function(...args){
  if(communityTab==='celebrate'){pawTownFromDock=false;pawDiaryOpen.add('gratitude');return todayHub()}
@@ -7888,6 +7908,8 @@ popGuestMeet=function(g,n=null){
   if(!Array.isArray(rec.choices))rec.choices=[];
   if(!rec.choices.includes(i))rec.choices.push(i);
   popGuestMemory[g.id]=rec;save('popGuestMemoryV1',popGuestMemory);
+  // Match the original guest conversation reward: only a chosen response counts.
+  lifeFriend(g.name);
   if(!items.some(x=>x[0]===g.gift[0]))addItem(...g.gift);
   popGuestSay(g,tr(...g.choices[i][1]),[[tr('See you around','下次见'),closeTalk]])
  };
