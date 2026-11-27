@@ -1494,12 +1494,12 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-forecourt-return-2246",
-        "until": 1795792560000
-      },
-      "blocker": "Physically anchored destination labels distinct from prompts; actual door route, threshold crossing, same building safe outside position, correct facing; no overlapping text, obscured actions or arbitrary centre spawn. Review all venues in EN/ZH and phone/desktop."
+      "evidence": [
+        "1cc2b251: temple hall exit walks down the forecourt automatically; return can interrupt a hall/cat approach at its current position without teleporting or triggering an unwanted arrival. Repeated exit commands guarded; accessible Return remains available while approaching.",
+        "463a5c5a: persisted route, interruption, reduced-motion and blocked-state tests, executed against current source."
+      ],
+      "lease": null,
+      "blocker": "Full district/room exit audit, actual deployed mobile/desktop playthrough, artwork contact and visual verification remain outstanding."
     }
   ]
 }
