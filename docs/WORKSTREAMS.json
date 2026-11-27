@@ -1003,6 +1003,75 @@
       ],
       "lease": null,
       "blocker": "Rendered mobile/desktop review, actual placement, material finishes and complete painted home shell remain open. Hanging lantern uses existing ceiling beam; shelf, display cabinet and floor lantern retain old in-room geometry; no final visual acceptance."
+    },
+    {
+      "id": "UX-DESKTOP-01",
+      "lane": "interface",
+      "priority": 1,
+      "summary": "Redesign native desktop and landscape experience across entrance, four districts, interiors, gameplay, railway, dock and all nested screens; dedicated framing and interaction layout, not enlarged mobile or narrow webpage",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/shell.html",
+        "browser"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null,
+      "blocker": "Existing desktop rules are partial; inspect actual rendered 1280x720, 1440x900, 1920x1080, tablet and short landscape before design; preserve portrait and state."
+    },
+    {
+      "id": "UX-SIGN-ART-01",
+      "lane": "world",
+      "priority": 1,
+      "summary": "Audit and select/create coherent district-specific painted signage families, railway wayfinding, NPC names, speech, action prompts and HUD iconography; reusable materials and bilingual text safe zones",
+      "resources": [
+        "art:signage"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [
+        "Existing recovered ornate_wood, hanging_wood, hanging_parchment, roof_plaque, ribbon and speech sprites are present; inspect before commissioning replacements."
+      ],
+      "lease": null,
+      "blocker": "Current effective building plaque uses the same ornate_wood border image; final district-specific art not approved."
+    },
+    {
+      "id": "UX-SIGN-LIVE-01",
+      "lane": "interface",
+      "priority": 1,
+      "summary": "Replace generic plaques with context-aware painted signs physically registered to doors/gates/stations; preserve stable accessible targets, typography, localised names, occlusion and offscreen route guidance",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/shell.html",
+        "browser"
+      ],
+      "depends": [
+        "UX-SIGN-ART-01"
+      ],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
+    },
+    {
+      "id": "UX-FLOW-01",
+      "lane": "interface",
+      "priority": 1,
+      "summary": "Audit and implement every complete player journey and nested page, remove redundant clicks/holding screens, use contextual in-world transitions and restore correct parent scroll/filter/selection/room state; verify in both languages on phone and desktop",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/engine.js",
+        "src/shell.html",
+        "browser"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null,
+      "blocker": "Enumerate every retained route and nested state from current source, not owner screenshots alone; no generic website-like screens or duplicate navigation."
     }
   ]
 }
