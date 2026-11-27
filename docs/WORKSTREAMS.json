@@ -838,12 +838,13 @@
         "scripts/world-visits-test.cjs"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-direct-rail-20261127",
-        "until": 1795787548080
-      }
+      "stage": "tested",
+      "evidence": [
+        "ecae54c4 direct boarding with reduced-motion guard, camera push, full-bleed carriage, contextual offscreen sign, final return station at upper landing; exact source parsed, four station routes checked for walkability and order",
+        "e432af08 browser regression adjusted for direct boarding and full-bleed; 8eaa474d 31 room visit/direct boarding helper assertions executed"
+      ],
+      "lease": null,
+      "blocker": "Actual mobile/desktop rendered game, edge sign collision and carriage crop/zoom review and deployment pending; existing artwork lacks dedicated visible platform on some maps."
     }
   ]
 }
