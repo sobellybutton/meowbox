@@ -630,12 +630,10 @@
         "Latest world runtime check attempted after 3743443a; browser connector timed out without reporting viewport, image loads or JS state.",
         "27 Nov: attempted current deployment in isolated 390x844 browser with normal My Room navigation; connector timed out after 40 seconds without observable viewport, source, or interaction output.",
         "27 Nov after dedicated garden commit: live browser Node environment lacked playwright, and browser-agent fallback failed to execute. No rendered proof.",
-        "Run 46042274956 failed Chromium/WebKit at old expectation that initial consultation opens yueAlmanacForm immediately. Owner-approved conversation-first entry now shows reading choice and subject. 2510b57e updates actual click-through to read choice, progressive date/time/place, chart fold/unfold while retaining chart fixture, consent, draft and privacy assertions. New test source parses; subsequent browser run not verified."
+        "Run 46042274956 failed Chromium/WebKit at old expectation that initial consultation opens yueAlmanacForm immediately. Owner-approved conversation-first entry now shows reading choice and subject. 2510b57e updates actual click-through to read choice, progressive date/time/place, chart fold/unfold while retaining chart fixture, consent, draft and privacy assertions. New test source parses; subsequent browser run not verified.",
+        "Pages 46043592256 succeeded at 2a0078cf; consultation Chromium/WebKit 46042608530 succeeded at 403101ca. Browser run 46042654230 at 87cbc4fd failed on old forecourt return guard, shrine water/bell and organic journey timeouts, and share export timeout. 26965337 corrects contradictory forecourt assertion to preserve both deliberate return interruption and rejection of overlapping new visits; 758 isolated route checks passed. Other failures require actual input/scene diagnosis, not test weakening."
       ],
-      "lease": {
-        "owner": "manual-code-1128-qa",
-        "until": 1795803401814
-      },
+      "lease": null,
       "blocker": "Browser connector unavailable for this attempt; actual mobile/desktop playthrough and visual acceptance remain unverified.\n\nOwner device acceptance clarification (27 Nov): Final deployed verification must record exact commit, browser/OS, dimensions, DPR, language, input, evidence and pass/fail/blocked per complete desktop and genuine phone journey. Actual physical iPhone Safari and Android Chrome evidence distinct from Playwright emulation; inaccessible hardware remains blocked."
     },
     {
