@@ -552,7 +552,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-directory-2244",
+        "until": 1795792440000
+      }
     },
     {
       "id": "PERF-01",
