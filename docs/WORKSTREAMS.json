@@ -725,7 +725,10 @@
         "a39375ab + 1fd6ddf0: painted legacy furniture IDs, actual shell previews in My Room and existing expansion purchase page; preserve all prices, ownership, room coordinates and finishes. 291 helper/asset checks passed, startup syntax passed.",
         "05d75d5bd22c008d86049f83fc4a44ca4fc32293: persisted tests"
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-home-load-1128-0148",
+        "until": 1795803559045
+      },
       "blocker": "Live rendering and first-open artwork loading not visually tested. Grid-based dollhouse placement is not yet the active editor; actual room shell conversion, furniture anchors and migration of existing saved positions remain outstanding. Existing furniture layout retained to avoid loss; shelf and display cabinet art deliberately unchanged."
     },
     {
