@@ -37,7 +37,7 @@ async function run(page,name,touch){
  await page.waitForFunction(()=>cam.scale>0&&activity==='love');
  const slots=await page.evaluate(()=>Array.from({length:3},(_,i)=>readingActivitySlot(i,3,W<H)));
  for(const [i,{x,y}] of slots.entries()){
-  await page.waitForFunction(({x,y})=>at({x,y})?.fn.toString().includes('readingReveal'),{x,y});
+  await page.waitForFunction(({x,y,i})=>{const h=at({x,y});return activity==='love'&&state.readStage==='cards'&&state.readFlip[i]<0&&h&&Math.abs(h.x+h.w/2-x)<8&&Math.abs(h.y+h.h/2-y)<8},{x,y,i});
   await world(x,y);
   await page.waitForFunction(i=>state.readFlip[i]>=0,i,{timeout:5000});
  }
@@ -82,7 +82,7 @@ async function run(page,name,touch){
  });
  const extendedSlots=await page.evaluate(()=>fiveReadingLayout(W<H));
  for(const [i,{x,y}] of extendedSlots.entries()){
-  await page.waitForFunction(({x,y})=>at({x,y})?.fn.toString().includes('fiveReadingDetail'),{x,y});
+  await page.waitForFunction(({x,y,i})=>{const h=at({x,y});return activity==='love'&&state.readSpreadSize===5&&state.readStage==='cards'&&state.readFlip[i]<0&&h&&Math.abs(h.x+h.w/2-x)<8&&Math.abs(h.y+h.h/2-y)<8},{x,y,i});
   await world(x,y);
   await page.waitForFunction(i=>state.readFlip[i]>=0,i,{timeout:5000});
  }
