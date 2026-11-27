@@ -33,9 +33,12 @@
         "art:gateway"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": null
+      "stage": "tested",
+      "evidence": [
+        "9d71b834 + ad8b934b: exact selected WebP committed and verified by manifest blob hashes; inspected matching local package painting"
+      ],
+      "lease": null,
+      "blocker": "Runtime geometry and rendered acceptance still pending."
     },
     {
       "id": "MAP-01",
@@ -46,9 +49,12 @@
         "art:fortune"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": null
+      "stage": "tested",
+      "evidence": [
+        "9d71b834 + ad8b934b: exact selected WebP committed and verified by manifest blob hashes; inspected matching local package painting"
+      ],
+      "lease": null,
+      "blocker": "Runtime geometry and rendered acceptance still pending."
     },
     {
       "id": "MAP-02",
@@ -59,9 +65,12 @@
         "art:home"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": null
+      "stage": "tested",
+      "evidence": [
+        "9d71b834 + ad8b934b: exact selected WebP committed and verified by manifest blob hashes; inspected matching local package painting"
+      ],
+      "lease": null,
+      "blocker": "Runtime geometry and rendered acceptance still pending."
     },
     {
       "id": "MAP-03",
@@ -72,9 +81,12 @@
         "art:island"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": null
+      "stage": "tested",
+      "evidence": [
+        "9d71b834 + ad8b934b: exact selected WebP committed and verified by manifest blob hashes; inspected matching local package painting"
+      ],
+      "lease": null,
+      "blocker": "Runtime geometry and rendered acceptance still pending."
     },
     {
       "id": "MAP-04",
@@ -85,9 +97,12 @@
         "art:wonder"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": null
+      "stage": "tested",
+      "evidence": [
+        "9d71b834 + ad8b934b: exact selected WebP committed and verified by manifest blob hashes; inspected matching local package painting"
+      ],
+      "lease": null,
+      "blocker": "Runtime geometry and rendered acceptance still pending."
     },
     {
       "id": "WORLD-INTEGRATION-FORTUNE",
@@ -106,7 +121,10 @@
       ],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-fortune-20261127-e",
+        "until": 1795783369427
+      }
     },
     {
       "id": "WORLD-INTEGRATION-HOME",
