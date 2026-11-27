@@ -10795,4 +10795,83 @@ drawActivity=function(...args){
  continuityActivity=activity;ctx.save();try{pawDrawWaterPainting()}finally{ctx.restore()}mb5AssistSync()
 };
 
+
+/* PAW_ALCOVE_PAINT_BEGIN */
+// Shared alcove plate, separate authored stations for the tube, numbered
+// stick tray and moon-block tray. The painted furniture is the only furniture.
+function pawAlcoveGeometry(p=pawWaterPlate){
+ const pt=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
+ return {tube:pt(.397,.473),tubeGrip:pt(.411,.499),tubeTop:pt(.397,.426),
+  stickTray:pt(.523,.509),stickFoot:pt(.41,.65),stickPickFoot:pt(.51,.65),
+  moonTray:pt(.743,.508),moonFoot:pt(.707,.667),moonHand:pt(.70,.54)}
+}
+function pawAlcoveStickPoint(g,pose){
+ const f=Math.max(0,Math.min(1,pose.fall)),pick=pose.picked?Math.max(0,Math.min(1,(pose.pick-.45)/.55)):0;
+ const x=g.tubeTop.x+(g.stickTray.x-g.tubeTop.x)*f;
+ const y=g.tubeTop.y+(g.stickTray.y-g.tubeTop.y)*f-Math.sin(Math.PI*f)*25;
+ return {x:x+(g.stickPickFoot.x+14-x)*pick,y:y+(g.stickPickFoot.y-64-y)*pick,angle:Math.PI*.46*f*(1-pick)}
+}
+function pawAlcoveMoonPoint(g,m){
+ return {x:g.moonTray.x+(m.x-400)*.26,y:g.moonTray.y-m.lift*.32}
+}
+/* PAW_ALCOVE_PAINT_END */
+const pawAlcovePath='../../staging/2026-11-27/rooms/temple/sticks.webp';
+pawRecoveredImage(pawAlcovePath);
+function pawAlcoveArt(){return pawRecoveredImage(pawAlcovePath)}
+function pawAlcoveActive(){return room==='temple'&&['sticks','moon'].includes(activity)&&state.pawAlcovePainting&&pawRoomImageReady(pawAlcoveArt())}
+const pawAlcoveStartBefore=start;
+start=function(id,...args){
+ const result=pawAlcoveStartBefore(id,...args);
+ if(['sticks','moon'].includes(id)&&activity===id)state.pawAlcovePainting=pawRoomImageReady(pawAlcoveArt());
+ return result
+};
+const pawAlcoveCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(...args){return pawAlcoveActive()?pawWaterCamera(W,H)||pawAlcoveCameraBefore(...args):pawAlcoveCameraBefore(...args)};
+function pawAlcoveScene(){
+ const p=pawWaterPlate,b=livingBounds();ctx.fillStyle='#493e35';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawAlcoveArt(),p.x,p.y,p.w,p.h)
+}
+function pawAlcoveTubeShake(shake){
+ if(!shake)return;
+ // Move the existing painted tube inside its own local patch; never add a
+ // second cup. This small interim motion stays inside the painted counter.
+ const p=pawWaterPlate,im=pawAlcoveArt(),sx=.345,sy=.419,sw=.104,sh=.105,dx=Math.sin(t*24)*.0018;
+ ctx.drawImage(im,(sx+dx)*im.naturalWidth,sy*im.naturalHeight,sw*im.naturalWidth,sh*im.naturalHeight,p.x+sx*p.w,p.y+sy*p.h,sw*p.w,sh*p.h)
+}
+function pawDrawAlcoveSticks(){
+ const run=state,g=pawAlcoveGeometry(),pose=pawTempleStickPose(run,t),held=drag?.id==='sticks';
+ pawAlcoveTubeShake(held||pose.shake);
+ const move=pose.picked?poseEase(Math.min(1,pose.pick/.45)):0,foot=pawWaterMix(g.stickFoot,g.stickPickFoot,move);
+ backHuman(foot.x,foot.y,avatar??0,move>0&&move<1,'up',1.44);
+ if(!pose.picked||pose.pick<.85){
+  const shoulder={x:foot.x+8,y:foot.y-79},hand=!pose.picked?g.tubeGrip:pawWaterMix(g.stickTray,{x:foot.x+14,y:foot.y-64},poseEase(Math.max(0,(pose.pick-.45)/.55)));
+  pawIncenseArm(shoulder,hand,1.05,false)
+ }
+ if(pose.show){
+  const pt=pawAlcoveStickPoint(g,pose);ctx.save();try{ctx.translate(pt.x,pt.y);ctx.rotate(pt.angle);
+   round(-2.8,-17,5.6,34,1,'#d7b47c','#9c7447');line(-1,-15,-1,15,'#f1dba6',.7);
+   if(pose.fall>.9){ctx.fillStyle='#7f4437';ctx.font='bold 7px Georgia';ctx.textAlign='center';ctx.fillText(String(run.fallenStick||run.stickNumber),0,-8)}
+  }finally{ctx.restore()}
+ }
+ if(!run.drawing&&!run.fallenStick)target(g.tube.x-32,g.tube.y-55,64,92,()=>{if(run===state&&!pawArcadeInputBlocked())shakeFortuneStick()},'sticks');
+ if(run.fallenStick&&!run.stickPicked&&!run.drawing)target(g.stickTray.x-36,g.stickTray.y-24,72,48,()=>{if(run===state&&!pawArcadeInputBlocked())pickupFortuneStick()},'paw-temple-pick-stick')
+}
+function pawDrawAlcoveMoon(){
+ const run=state,g=pawAlcoveGeometry(),airborne=run.tossUntil>t,f=airborne?Math.max(0,Math.min(1,1-(run.tossUntil-t)/(run.moonDuration||.55))):1;
+ backHuman(g.moonFoot.x,g.moonFoot.y,avatar??0,false,'up',1.44);
+ if(airborne)pawIncenseArm({x:g.moonFoot.x-8,y:g.moonFoot.y-79},g.moonHand,1.05,false);
+ for(let i=0;i<2;i++){
+  const flat=pawMoonFlat(run.result,i,run.count),m=pawMoonMotion(f,i,flat,run.moonHeight||95),pt=pawAlcoveMoonPoint(g,m);
+  ellipse(pt.x,g.moonTray.y+5,Math.max(3,9-m.lift*.035),2.5,'#342b2355');
+  ctx.save();ctx.translate(pt.x,pt.y);ctx.scale(.30,.30);templeMoon(0,0,m.angle,m.flat);ctx.restore()
+ }
+ if(!run.moonPending&&!(run.tossUntil>t))target(g.moonTray.x-46,g.moonTray.y-30,92,60,()=>{if(run===state&&!pawArcadeInputBlocked())pawMoonToss(65,true)},'moon')
+}
+const pawAlcoveDrawBefore=drawActivity;
+drawActivity=function(...args){
+ if(!pawAlcoveActive())return pawAlcoveDrawBefore(...args);
+ pawRitualAdvance();
+ if(!pawAlcoveActive())return pawAlcoveDrawBefore(...args);
+ continuityActivity=activity;ctx.save();try{pawAlcoveScene();if(activity==='sticks')pawDrawAlcoveSticks();else pawDrawAlcoveMoon()}finally{ctx.restore()}mb5AssistSync()
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
