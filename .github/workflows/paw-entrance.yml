@@ -2,7 +2,7 @@ name: Pawradise entrance visual regression
 on:
   push:
     branches: [main]
-    paths: ['src/**', 'assets/**', 'scripts/paw-entrance-test.cjs', '.github/workflows/paw-entrance.yml']
+    paths: ['src/**', 'assets/**', 'scripts/paw-entrance-test.cjs', 'scripts/paw-world-admission-test.cjs', '.github/workflows/paw-entrance.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,10 +20,11 @@ jobs:
         with:
           node-version: '22'
       - run: node scripts/build.cjs
+      - run: node scripts/paw-world-admission-test.cjs
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
-      - name: Test complete first arrival on eight viewport sizes and both languages
+      - name: Test first arrival on eight viewport sizes, both languages and motion modes
         env:
           PAW_BROWSER: ${{ matrix.browser }}
         run: |
