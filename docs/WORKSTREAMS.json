@@ -397,7 +397,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null,
+      "lease": {
+        "owner": "manual-room-art-20261128",
+        "until": 1795796969593
+      },
       "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD."
     },
     {
