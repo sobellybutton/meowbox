@@ -192,3 +192,12 @@ for(const from of Object.values(pawGardenStations))for(const action of Object.ke
  ck(arrive===action&&q.pos.every((v,i)=>v===pawGardenStations[action][i]),'station arrival');
 }
 return n;`)()+' garden route and station-arrival assertions');
+
+console.log('PASS: '+new Function(between(source,'/* PAW_TEMPLE_PAPER_ACCESS_BEGIN */','/* PAW_TEMPLE_PAPER_ACCESS_END */')+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+for(const [stage,expected] of [['folded',['open']],['opening',[]],['open',['keep','tie','rack']],['kept',['return','rack']],['tied',['return','rack']]]){
+ const q={paperStage:stage,paperAt:0};ck(JSON.stringify(pawTemplePaperActions(q,1))===JSON.stringify(expected),stage);
+ for(const id of ['open','keep','tie','rack','return']){ck(pawTemplePaperAllowed(q,q,'templePaper',1,false,id)===expected.includes(id),'action');ck(!pawTemplePaperAllowed(q,{},'templePaper',1,false,id),'stale');ck(!pawTemplePaperAllowed(q,q,'templePaper',1,true,id),'covered')}
+}
+ck(pawTemplePaperActions({paperStage:'kept',paperAt:0},.2).length===0,'animation');
+return n;`)()+' accessible fortune paper state assertions');
