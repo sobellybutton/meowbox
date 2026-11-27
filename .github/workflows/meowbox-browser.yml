@@ -30,6 +30,7 @@ jobs:
       - run: node scripts/resident-remarks-test.cjs
       - run: node scripts/runtime-module-live-test.cjs
       - run: node scripts/garden-painted-test.cjs
+      - run: node scripts/food-room-paint-test.cjs
       - run: node scripts/paw-living-home-test.cjs
       - run: node scripts/paw-living-polish-test.cjs
       - run: node scripts/rail-fish-test.cjs

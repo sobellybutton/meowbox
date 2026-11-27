@@ -11177,6 +11177,101 @@ drawActivity=function(...args){
  pawGardenControls(run)
 };
 
+/* PAW_FOOD_PAINT_BEGIN */
+// Both independently inspected food shop paintings are 928 × 1648.
+// The path is the clear aisle between painted furniture, not the countertop.
+const pawFoodPlate={x:100,y:-145,w:600,h:600*1648/928};
+const pawFoodRoomSpecs={
+ kitchen:{station:'cook',entry:[400,735],arrival:[400,690],anchor:[290,420,350,580],resident:[465,605],visitors:[[365,715],[435,730],[400,660]],label:['Cook with Grandma','跟外婆煮汤'],labelY:467},
+ boba:{station:'bubbleTea',entry:[400,735],arrival:[400,675],anchor:[400,345,400,565],resident:[290,615],visitors:[[470,705],[340,720],[435,640]],label:['Make bubble tea','手摇奶茶'],labelY:397}
+};
+function pawFoodSafe(id,x,y){
+ if(!Object.hasOwn(pawFoodRoomSpecs,id)||![x,y].every(Number.isFinite)||y<565||y>738)return false;
+ // The kitchen foreground islands narrow the upper aisle; the boba shop
+ // has a wide floor but its pots and flowers still occupy the edges.
+ const grow=Math.max(0,Math.min(1,(y-630)/108));
+ const l=id==='kitchen'?325-44*grow:250-32*grow,r=id==='kitchen'?485+40*grow:550+32*grow;
+ return x>=l&&x<=r
+}
+function pawFoodCamera(w,h,p=pawFoodPlate){
+ if(![w,h,p.x,p.y,p.w,p.h].every(Number.isFinite)||Math.min(w,h,p.w,p.h)<=0)return null;
+ const s=Math.min(w/p.w,h/p.h);
+ return {s,ox:(w-p.w*s)/2-p.x*s,oy:(h-p.h*s)/2-p.y*s}
+}
+function pawFoodRoomAsset(id){
+ return Object.hasOwn(pawFoodRoomSpecs,id)?'../../staging/2026-11-27/rooms/'+id+'/portrait.webp':null
+}
+/* PAW_FOOD_PAINT_END */
+let pawFoodVisit=null;
+const pawFoodImage=id=>pawRecoveredImage(pawFoodRoomAsset(id));
+for(const id of Object.keys(pawFoodRoomSpecs))pawFoodImage(id);
+function pawFoodRoomActive(){return !!room&&!activity&&pawFoodVisit===room&&pawRoomImageReady(pawFoodImage(room))}
+const pawFoodDoorBefore=walkDoor;
+walkDoor=function(id,...args){if(Object.hasOwn(pawFoodRoomSpecs,id))pawFoodImage(id);return pawFoodDoorBefore(id,...args)};
+const pawFoodEnterBefore=enter;
+enter=function(id,...args){pawFoodVisit=Object.hasOwn(pawFoodRoomSpecs,id)&&pawRoomImageReady(pawFoodImage(id))?id:null;return pawFoodEnterBefore(id,...args)};
+const pawFoodCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(...args){return pawFoodRoomActive()?pawFoodCamera(W,H)||pawFoodCameraBefore(...args):pawFoodCameraBefore(...args)};
+const pawFoodSpecBefore=indoorSpec;
+indoorSpec=function(){
+ if(!pawFoodRoomActive())return pawFoodSpecBefore();
+ const q=pawFoodRoomSpecs[room];return {entry:q.entry.slice(),arrival:q.arrival.slice(),stations:{[q.station]:q.anchor.slice()}}
+};
+const pawFoodObstaclesBefore=indoorObstacles;
+indoorObstacles=function(){return pawFoodRoomActive()?[]:pawFoodObstaclesBefore()};
+const pawFoodSafeBefore=indoorSafe;
+indoorSafe=function(x,y,...args){return pawFoodRoomActive()?pawFoodSafe(room,x,y):pawFoodSafeBefore(x,y,...args)};
+function pawFoodBackdrop(){
+ if(!pawFoodRoomActive())return false;
+ const p=pawFoodPlate,b=livingBounds(),im=pawFoodImage(room);ctx.save();try{
+  ctx.fillStyle=room==='kitchen'?'#554337':'#5d3f3d';ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.drawImage(im,p.x,p.y,p.w,p.h)
+ }finally{ctx.restore()}return true
+}
+const pawFoodPortraitBefore=paintPortraitInterior;
+paintPortraitInterior=function(id,...args){if(id===room&&pawFoodBackdrop())return true;return pawFoodPortraitBefore(id,...args)};
+const pawFoodWideBefore=paintLandscapeRoom;
+paintLandscapeRoom=function(id,...args){if(id===room&&pawFoodBackdrop())return true;return pawFoodWideBefore(id,...args)};
+const pawFoodLivingBefore=paintLivingBackdrop;
+paintLivingBackdrop=function(...args){if(pawFoodBackdrop())return;return pawFoodLivingBefore(...args)};
+const pawFoodWarmBefore=warmRoomArt;
+warmRoomArt=function(id,...args){if(id===room&&pawFoodBackdrop())return true;return pawFoodWarmBefore(id,...args)};
+const pawFoodRoomDrawBefore=drawRoom;
+drawRoom=function(...args){if(pawFoodRoomActive())pawFoodBackdrop();return pawFoodRoomDrawBefore(...args)};
+function pawFoodHost(){
+ const q=pawFoodRoomSpecs[room],n=room==='kitchen'?['Grandma','外婆']:['Boba keeper','奶茶店主'];
+ const record=residentArtworkRecord(n),scale=pawHallActorScale(94*travellerRoomScale(H,cam.scale),record?.height||112,.94);
+ return {station:q.station,n,x:q.resident[0],y:q.resident[1],sc:scale,facing:room==='kitchen'?'left':'right'}
+}
+const pawFoodHostBefore=roomResidentActors;
+roomResidentActors=function(){return pawFoodRoomActive()?[pawFoodHost()]:pawFoodHostBefore()};
+const pawFoodPropBefore=prop;
+prop=function(id,x,y){
+ if(!pawFoodRoomActive()||id!==pawFoodRoomSpecs[room].station)return pawFoodPropBefore(id,x,y);
+ // The cooker and dispensers are already in the illustration. Only the
+ // shopkeeper is a live actor; the old duplicate counter is not drawn.
+ const a=pawFoodHost();drawGatheringPainted(a.n,a.x,a.y,a.sc,a.facing);
+ pawStationPlaque={room,id,x,y,spec:groundedStationSpec(room,id),at:t}
+};
+const pawFoodLabelBefore=label;
+label=function(name,x,y,fn){
+ if(!pawFoodRoomActive())return pawFoodLabelBefore(name,x,y,fn);
+ const q=pawFoodRoomSpecs[room],station=pawStationPlaque;
+ if(station?.id!==q.station||station.room!==room||station.at!==t)return pawFoodLabelBefore(name,x,y,fn);
+ pawStationPlaque=null;
+ const sc=Math.max(.08,cam.scale),font=Math.min(26,Math.max(17,12/sc)),cy=q.labelY,value=tr(...q.label);
+ ctx.save();try{
+  ctx.font='600 '+font+'px Georgia,"Songti SC",serif';const w=Math.min(190,Math.max(75,ctx.measureText(value).width+18)),h=font+13;
+  const rect=pawHallScreenRect({x:x-w/2,y:cy-h/2,w,h},{s:sc,ox:cam.ox,oy:cam.oy});
+  if(rect&&rect.left>=4&&rect.right<=W-4&&rect.top>=4&&rect.bottom<=H-4&&![...meowTextFrameRects,...meowFrameBlockers].some(v=>pawHallOverlap(rect,v))){
+   round(x-w/2,cy-h/2,w,h,4,'#523c2dec','#d7b982');activityFitText(value,x,cy,font,w-10,'#fff0d5');
+   meowTextFrameRects.push(rect);pawVisibleStationLabels.add(q.station)
+  }
+  const hw=Math.max(w,44/sc),hh=Math.max(h,44/sc);target(x-hw/2,cy-hh/2,hw,hh,fn)
+ }finally{ctx.restore()}
+};
+for(const id of Object.keys(pawFoodRoomSpecs))pawRoomVisitorSpecs[id]={count:1,points:pawFoodRoomSpecs[id].visitors.map(v=>v.slice())};
+
 /* PAW_RUNTIME_MODULES_BEGIN
    Existing resident scheduler, existing sound settings and wallet ledger own
    all timing, preferences and rewards. These modules add no save keys. */
