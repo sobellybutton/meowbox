@@ -1588,7 +1588,10 @@
         "463a5c5a: persisted route, interruption, reduced-motion and blocked-state tests, executed against current source.",
         "Owner iPhone feedback 28 Nov 01:08 SGT: intermittent leg flicker, blank/delayed entrance, room labels and duplicate Activities controls, and website-like Master Yue form. 24afa31d implements in-scene consultation and stable local gait; prior current code moves Yue behind desk using clipped standing art and hides touch directory; do not mark actual visual acceptance without device playthrough. A real seated Yue sprite and desk contact/close-up are still required."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-many-1128-wayfinding",
+        "until": 1795802424196
+      },
       "blocker": "Full district/room exit audit, actual deployed mobile/desktop playthrough, artwork contact and visual verification remain outstanding."
     }
   ]
