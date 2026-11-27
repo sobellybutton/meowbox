@@ -6766,6 +6766,24 @@ function pawReadyMap(key){
  if(!Object.hasOwn(maps,key))return Promise.resolve(false);
  return pawReadyPicture(key==='fortune'?pics.valleyClean:portraitImages[key])
 }
+// The first visible walking frame must use the same illustrated traveller
+// as the gate. Decode the existing directional base art, not just the map.
+function pawAdmissionTravellerKeys(kind){
+ return Number.isInteger(kind)&&kind>=0&&kind<4?[0,1,2].map(dir=>'walker'+kind+dir):[]
+}
+function pawAdmissionReady(results){
+ return Array.isArray(results)&&results.length>0&&results.every(v=>v===true)
+}
+function pawReadyTraveller(kind){
+ const keys=pawAdmissionTravellerKeys(kind);
+ if(!keys.length)return Promise.resolve(false);
+ return Promise.all(keys.map(key=>pawReadyPicture(pics[key]))).then(pawAdmissionReady)
+}
+function pawWarmSelectedTraveller(kind){
+ pawReadyTraveller(kind);
+ mbArtLoad();
+ for(const frames of Object.values(mbArtRegistry.players[kind]?.walk||{}))for(const frame of frames)mbArtImage(frame)
+}
 /* PAW_WORLD_ADMISSION_END */
 // The original plaque layout owns position and visibility. Do not overwrite it after each frame.
 const pawPresentationCSS=document.createElement('style');
@@ -6783,7 +6801,7 @@ pawPresentationCSS.textContent=`
 #proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>footer{align-self:end!important;min-height:0!important;position:relative!important;transform:none!important;margin:0!important}
 @media(max-width:700px) and (orientation:portrait){#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"]):not([hidden]){grid-template-rows:auto minmax(150px,1fr) auto!important;overflow-y:auto!important;gap:8px!important}}
 `;document.head.append(pawPresentationCSS);
-const pawWarmDistricts=async()=>{await pawReadyMap(scene);mbArtLoad();for(const key of Object.keys(maps))if(key!==scene)await pawReadyMap(key)};
+const pawWarmDistricts=async()=>{await pawReadyMap('fortune');mbArtLoad();for(const key of Object.keys(maps))if(key!=='fortune')await pawReadyMap(key)};
 if(typeof requestIdleCallback==='function')requestIdleCallback(pawWarmDistricts,{timeout:2000});else setTimeout(pawWarmDistricts,800);
 
 
@@ -6893,10 +6911,10 @@ proRender=function(...args){
   waiting=true;const original=button.textContent;
   button.disabled=true;button.textContent=tr('Preparing the path…','正在准备山间小路…');
   const gateArt=hero?.querySelector('.mbGatePainting');
-  const [mapReady,gateReady]=await Promise.all([pawReadyMap('fortune'),pawReadyPicture(gateArt)]);
-  const ready=mapReady&&gateReady;
+  const kind=proAvatar??avatar??0;
+  const ready=await Promise.all([pawReadyMap('fortune'),pawReadyPicture(gateArt),pawReadyTraveller(kind)]).then(pawAdmissionReady);
   if(!button.isConnected||proStep!==3||proposal.hidden)return;
-  if(!ready||document.hidden){waiting=false;button.disabled=false;button.textContent=tr('Try again','再试一次');return}
+  if(!ready||document.hidden){waiting=false;button.disabled=false;button.textContent=tr('Retry arrival','重新入镇');return}
   const originalSprite=traveller?.getAttribute('src'),originalPivotX=traveller?.style.getPropertyValue('--paw-gate-pivot-x'),originalPivotY=traveller?.style.getPropertyValue('--paw-gate-pivot-y');
   const walked=hero&&traveller?await pawGateWalk(hero,traveller):true;
   if(!button.isConnected||proStep!==3||proposal.hidden)return;
@@ -11422,4 +11440,15 @@ const pawLiveMotionLoopBefore=loop;
 loop=function(...args){const result=pawLiveMotionLoopBefore(...args);pawLiveMotionTick();return result};
 /* PAW_RUNTIME_MODULES_END */
 
+// Warm the selected traveller during registration and the railway ride,
+// including returning players. Existing gate artwork stays visible until ready.
+const pawAdmissionRenderBefore=proRender;
+proRender=function(...args){
+ const result=pawAdmissionRenderBefore(...args);
+ if(!proposal.hidden){
+  pawReadyMap('fortune');
+  if(Number.isInteger(proAvatar??avatar))pawWarmSelectedTraveller(proAvatar??avatar)
+ }
+ return result
+};
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
