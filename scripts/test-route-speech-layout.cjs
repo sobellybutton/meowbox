@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const s=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+const extract=(start,end)=>{const a=s.indexOf(start),b=s.indexOf(end,a);assert(a>=0&&b>a);return s.slice(a,b)};
+const {pawShowRouteShortcut,pawSpeechSignRects}=new Function(extract('function pawShowRouteShortcut(','function travellerRailLabel(')+extract('function pawSpeechSignRects(','function meowVisibleRects(')+'return {pawShowRouteShortcut,pawSpeechSignRects}')();
+const base={suggestion:{door:'temple'},avatar:0,activity:null,room:null,proposalHidden:true,pageOpen:false,transitioning:false,talkOpen:false};
+assert.equal(pawShowRouteShortcut(base),true);
+for(const [k,v] of Object.entries({suggestion:null,avatar:null,activity:'pet',room:'temple',proposalHidden:false,pageOpen:true,transitioning:true,talkOpen:true}))assert.equal(pawShowRouteShortcut({...base,[k]:v}),false,k);
+const r={left:1,right:2,top:3,bottom:4};
+assert.deepEqual(pawSpeechSignRects(true,'a','a',[r,null,{left:NaN}],[],1,0,0),[r]);
+assert.deepEqual(pawSpeechSignRects(true,'a','b',[r],[],1,0,0),[]);
+assert.deepEqual(pawSpeechSignRects(false,'a','b',[],[[100,200],[NaN,0]],.5,10,20),[{left:-14,right:134,top:90,bottom:150}]);
+console.log('12 route shortcut and speech layout checks passed');
