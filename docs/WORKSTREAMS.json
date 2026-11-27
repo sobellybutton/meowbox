@@ -920,6 +920,27 @@
       "stage": "outstanding",
       "evidence": [],
       "lease": null
+    },
+    {
+      "id": "HOME-PREVIEW-03",
+      "lane": "interface",
+      "priority": 1,
+      "summary": "Fix cold-load painted catalogue, reusable candidate previews and reserved label-safe art slots independently of runtime lease",
+      "resources": [
+        "src/extensions.js",
+        "src/shell.html",
+        "src/home-layout.js",
+        "scripts/home-layout-test.cjs"
+      ],
+      "depends": [
+        "HOME-CATALOGUE-AUDIT-01"
+      ],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-home-preview-20261127",
+        "until": 1795788313391
+      }
     }
   ]
 }
