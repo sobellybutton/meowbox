@@ -1147,13 +1147,11 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [
-        "383f5b7b: expand actual computed twelve-palace chart into a larger study parchment only after valid chart exists; fold/unfold and return-to-Yue dialogue, preserve existing palace handlers and privacy, clear expanded state on page changes. Exact startup syntax parsed and seven chart guard cases passed. Browser rendering and desk camera remain unverified."
+        "383f5b7b: expand actual computed twelve-palace chart into a larger study parchment only after valid chart exists; fold/unfold and return-to-Yue dialogue, preserve existing palace handlers and privacy, clear expanded state on page changes. Exact startup syntax parsed and seven chart guard cases passed. Browser rendering and desk camera remain unverified.",
+        "08b327bc: wish paper uses existing in-scene dialogue with native textarea, no page(); fold returns to original physical hook selection, local wishes read one at a time and can be removed with confirmation. Ah Ma excluded from both river release activities, retained at villain-hitting. Source parsed and 24 focused assertions executed. Actual device interaction, wish paper/lantern art, camera and private pier staging remain unverified."
       ],
-      "lease": {
-        "owner": "manual-wish-flow-1128",
-        "until": 1795804466847
-      },
-      "blocker": "Enumerate every retained route and nested state from current source, not owner screenshots alone; no generic website-like screens or duplicate navigation.\n\n28 Nov owner questions redundant Activities tab in most rooms. Recommended default: remove visible generic Activities tab where physical props/stations already provide access; single-action rooms use direct contextual interaction, multi-action rooms use distinct in-world stations. Preserve accessible equivalent controls and only retain a contextual chooser when necessary (e.g. one/three/five tarot cards). Audit for orphaned actions and regression in both languages. Owner has not explicitly approved universal removal; implement only where redundant under existing curated product rules."
+      "lease": null,
+      "blocker": "Enumerate every retained route and nested state from current source, not owner screenshots alone; no generic website-like screens or duplicate navigation.\n\n28 Nov owner questions redundant Activities tab in most rooms. Recommended default: remove visible generic Activities tab where physical props/stations already provide access; single-action rooms use direct contextual interaction, multi-action rooms use distinct in-world stations. Preserve accessible equivalent controls and only retain a contextual chooser when necessary (e.g. one/three/five tarot cards). Audit for orphaned actions and regression in both languages. Owner has not explicitly approved universal removal; implement only where redundant under existing curated product rules.\n\nOwner 28 Nov: apply hard continuous in-world experience rule from AGENTS.md across every game flow; write wish, Bottle It Up and Shout It Out are first priorities. No generic second webpage. Keep Ah Ma exclusively at the villain-hitting stall, both river releases intentionally private. Audit all remaining nested activity and result flows on desktop and phone."
     },
     {
       "id": "UX-SIGN-PREVIEW-02",
