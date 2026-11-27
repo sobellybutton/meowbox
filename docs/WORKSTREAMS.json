@@ -757,6 +757,23 @@
       ],
       "lease": null,
       "blocker": "Actual browser input, contact art, phone/desktop screenshot and Pages verification outstanding; painted pose remains interim. Existing initial hall and other ritual scenes unchanged."
+    },
+    {
+      "id": "CONTENT-RESIDENT-01",
+      "lane": "content",
+      "priority": 2,
+      "summary": "Distinct new bilingual resident remarks for existing contextual cooldown system",
+      "resources": [
+        "src/resident-remarks.js",
+        "scripts/resident-remarks-test.cjs"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-resident-content-20261127-k",
+        "until": 1795787029227
+      }
     }
   ]
 }
