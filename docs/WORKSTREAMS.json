@@ -305,7 +305,9 @@
       "resources": [
         "art:garden",
         "src/startup.js",
-        "src/extensions.js"
+        "src/extensions.js",
+        "scripts/garden-painted-test.cjs",
+        ".github/workflows/meowbox-browser.yml"
       ],
       "depends": [],
       "stage": "outstanding",
