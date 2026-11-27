@@ -870,6 +870,23 @@
         "owner": "manual-runtime-integrate-20261127-l",
         "until": 1795787828269
       }
+    },
+    {
+      "id": "HOME-CATALOGUE-AUDIT-01",
+      "lane": "world",
+      "priority": 1,
+      "summary": "Audit every current furniture, finish and expansion against existing painted artwork and production requirements",
+      "resources": [
+        "docs/FURNITURE_ART_AUDIT.md",
+        "scripts/furniture-art-audit.cjs"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-furniture-audit-20261127",
+        "until": 1795788136955
+      }
     }
   ]
 }
