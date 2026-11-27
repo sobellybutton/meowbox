@@ -8347,19 +8347,26 @@ function pawPrayerStep(){
  // No second deity, table, burner, mat or furniture over the painting.
  if(pawRoomImageReady(pawHallArt())){
   const p=pawHallPlate,xy=(u,v)=>({x:p.x+p.w*u,y:p.y+p.h*v});
-  const side=xy(.22,.61),front=xy(.50,.65),offering=xy(.50,.54),rack=xy(.15,.48);
+  const side=xy(.72,.53),front=xy(.50,.51),offering=xy(.50,.444),rack=xy(.79,.425),burner=xy(.50,.352);
   const blend=(a,b,v)=>({x:a.x+(b.x-a.x)*v,y:a.y+(b.y-a.y)*v});
   const ratio=duration=>poseEase(Math.max(0,Math.min(1,age/duration)));
-  let foot=side,dir='left';
-  if(stage==='approach')foot=blend(xy(.38,.73),side,ratio(1.1));
-  else if(stage==='walkMat'){foot=blend(side,front,ratio(1.25));dir='right'}
+  let foot=side,dir='right';
+  if(stage==='approach'){foot=blend(xy(.51,.62),side,ratio(1.1));dir='right'}
+  else if(stage==='walkMat'){foot=blend(side,front,ratio(1.25));dir='left'}
   else if(['hold','bow','offer','complete'].includes(stage)){foot=front;dir='up'}
   else if(stage==='placing'){foot=blend(front,offering,ratio(1.85));dir='up'}
   else if(stage==='returnMat'){foot=blend(offering,front,ratio(1.1));dir='down'}
-  const sc=.98,hand={x:foot.x+(dir==='left'?-13:17),y:foot.y-42+q.bow*10};
-  const reaching=stage==='taking'&&q.touch;
-  const grip=reaching?blend(hand,rack,.70):hand;
-  const shown=Math.min(3,held+(reaching?1:0));
+  const sc=.91,hand={x:foot.x+(dir==='left'?-15:dir==='up'?9:17),y:foot.y-47+q.bow*9};
+  // The right-side incense supply is separate from the red fortune tube on the left.
+  const reach=stage==='taking'?Math.sin(Math.PI*Math.min(1,age/.72)):stage==='lighting'?Math.sin(Math.PI*Math.min(1,age/1.65)):0;
+  const reaching=stage==='taking'&&age>=.32;
+  const supply={x:rack.x,y:rack.y+10};
+  const grip=stage==='placing'?blend(hand,burner,poseEase(Math.max(0,Math.min(1,(age-1.25)/.65)))):blend(hand,supply,Math.min(1,reach*.82));
+  const shown=stage==='placing'&&age>=1.98?0:Math.min(3,held+(reaching?1:0));
+  // Small incense sticks rest on the painted right counter, never in a second floating table.
+  if(['approach','collect','taking','lightReady','lighting'].includes(stage)){
+   for(let j=held+(reaching?1:0);j<3;j++){ctx.save();ctx.translate(rack.x+j*3,rack.y+10);ctx.rotate(.14);incenseStem(0,0,.03,false,25);ctx.restore()}
+  }
   if(q.walking&&!shown)backHuman(foot.x,foot.y,avatar??0,true,dir,sc);
   else{
    // During the actual bow face the altar, rather than bowing towards
@@ -8376,7 +8383,7 @@ function pawPrayerStep(){
     }finally{ctx.restore()}
    }
   }
-  if(state.prayerOffered){const burner=xy(.50,.48);for(let j=0;j<state.prayerOffered;j++)incenseStem(burner.x+(j-1)*3,burner.y,0,true,25,j===1)}
+  if(state.prayerOffered||stage==='placing'&&age>=1.98){for(let j=0;j<3;j++)incenseStem(burner.x+(j-1)*3,burner.y,0,true,25,j===1)}
   if(stage==='collect')target(rack.x-27,rack.y-40,54,65,()=>requestIncenseAction('take'));
   if(stage==='lightReady')target(rack.x-25,rack.y-35,65,80,()=>requestIncenseAction('light'));
   if(stage==='hold')target(front.x-32,front.y-90,64,100,beginQuietBow);
@@ -9040,12 +9047,12 @@ const pawHallFloorObstacles=[
  {l:578,r:642,u:679,d:690} // bell frame foot
 ];
 const pawHallLabels={
- templeWater:[190,655,'Water basin','净手池'],
- prayer:[400,429,'Incense & prayer','上香祈愿'],
- templeBell:[610,650,'Bell','敲钟'],
- sticks:[160,416,'Fortune sticks','求签'],
- moon:[620,470,'Moon blocks','掷筊'],
- secretGarden:[598,333,'Garden →','后院 →']
+ templeWater:[190,655,'Rinse hands','净手'],
+ prayer:[400,429,'Offer incense','上香祈福'],
+ templeBell:[610,650,'Ring bell','敲钟'],
+ sticks:[160,416,'Draw a fortune','求签'],
+ moon:[620,470,'Cast moon blocks','掷筊'],
+ secretGarden:[598,333,'Rear garden →','后院 →']
 };
 function pawHallScreenRect(rect,view){
  const {x,y,w,h}=rect,{s,ox,oy}=view;
@@ -9566,7 +9573,7 @@ function pawTempleFullCamera(w,h,plate){
 }
 function pawGardenWaterPoint(i,time,feedAge){
  const f=Math.max(0,Math.min(1,1-feedAge/4)),angle=time*(.32+i*.04)+i*2.094;
- return [.57+Math.cos(angle)*.075*(1-f*.65),.374+Math.sin(angle)*.012*(1-f*.65)]
+ return [.57+Math.cos(angle)*.075*(1-f*.65),.444+Math.sin(angle)*.022*(1-f*.65)]
 }
 /* PAW_TEMPLE_SCREENSHOT_REPAIR_END */
 const pawGardenPlate={...pawHallPlate};
@@ -9588,7 +9595,7 @@ drawActivity=function(...args){
  ctx.save();try{
   ctx.fillStyle='#344238';ctx.fillRect(b.x,b.y,b.w,b.h);
   ctx.drawImage(pawTempleGardenArt,p.x,p.y,p.w,p.h);
-  const feedAge=Math.max(0,t-run.gardenFeedAt),water=xy(.57,.374);
+  const feedAge=Math.max(0,t-run.gardenFeedAt),water=xy(.57,.444);
   for(let i=0;i<3;i++){
    const [u,v]=pawGardenWaterPoint(i,residentReducedMotion.matches?0:t,feedAge),[x,y]=xy(u,v);
    ctx.save();ctx.translate(x,y);ctx.scale(.23,.23);gardenKoi(0,0,i*1.7+t*.34,i);ctx.restore()
@@ -9597,9 +9604,9 @@ drawActivity=function(...args){
    const f=feedAge/2;ctx.strokeStyle='rgba(240,239,204,'+(.48*(1-f))+')';ctx.lineWidth=1.1;ctx.beginPath();ctx.ellipse(water[0],water[1],4+f*24,2+f*6,0,0,TAU);ctx.stroke()
   }
   const age=Math.max(0,t-run.gardenAt),walk=!residentReducedMotion.matches&&age<1.2;
-  const [x,y]=xy(.55+.23*poseEase(age/1.2),.70-.035*poseEase(age/1.2));
-  if(walk)backHuman(x,y,avatar??0,true,'right',.9);
-  else if(run.gardenSitting){const a=xy(.84,.635);drawRitualPose(a[0],a[1],.80,{seat:1})}
+  const [x,y]=xy(.49+.02*poseEase(age/1.2),.72-.17*poseEase(age/1.2));
+  if(walk)backHuman(x,y,avatar??0,true,'up',.9);
+  else if(run.gardenSitting){const a=xy(.84,.63);drawRitualPose(a[0],a[1],.80,{seat:1})}
   else backHuman(x,y,avatar??0,false,'up',.9);
   const [wx,wy]=xy(.15,.22);
   if(t-run.gardenChimeAt<2){ctx.strokeStyle='rgba(245,225,174,'+(.35*(1-(t-run.gardenChimeAt)/2))+')';ctx.beginPath();ctx.arc(wx,wy,8+(t-run.gardenChimeAt)*12,0,TAU);ctx.stroke()}
