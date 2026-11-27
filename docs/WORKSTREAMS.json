@@ -845,6 +845,31 @@
       ],
       "lease": null,
       "blocker": "Actual mobile/desktop rendered game, edge sign collision and carriage crop/zoom review and deployment pending; existing artwork lacks dedicated visible platform on some maps."
+    },
+    {
+      "id": "MODULE-LIVE-01",
+      "lane": "engineering",
+      "priority": 1,
+      "summary": "Connect existing resident, movement audio and economy modules to actual runtime",
+      "resources": [
+        "src/startup.js",
+        "index.html",
+        "scripts/build.cjs",
+        "src/resident-remarks.js",
+        "src/paw-motion-audio.js",
+        "src/paw-economy.js"
+      ],
+      "depends": [
+        "ECON-01",
+        "SOUND-01",
+        "CONTENT-RESIDENT-01"
+      ],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-runtime-integrate-20261127-l",
+        "until": 1795787828269
+      }
     }
   ]
 }
