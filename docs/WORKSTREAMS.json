@@ -881,12 +881,45 @@
         "scripts/furniture-art-audit.cjs"
       ],
       "depends": [],
+      "stage": "tested",
+      "evidence": [
+        "f85db2d1: current 37-ID catalogue audit cross-checked against current home-layout mapping and recursive repository tree; 13 mapped, 3 existing candidates, 3 unimported chat candidates, 8 missing unique furniture, 8 procedural finishes, 2 partially integrated expansions."
+      ],
+      "lease": null,
+      "blocker": "Audit only, not visual acceptance. Complete art creation/import, renderer integration and actual mobile/desktop verification."
+    },
+    {
+      "id": "HOME-CATALOGUE-ART-02",
+      "lane": "world",
+      "priority": 1,
+      "summary": "Create/import missing furniture and finish art against full 37-ID audit, reuse existing candidates",
+      "resources": [
+        "art:home-room"
+      ],
+      "depends": [
+        "HOME-CATALOGUE-AUDIT-01"
+      ],
       "stage": "outstanding",
       "evidence": [],
-      "lease": {
-        "owner": "manual-furniture-audit-20261127",
-        "until": 1795788136955
-      }
+      "lease": null
+    },
+    {
+      "id": "HOME-CATALOGUE-LIVE-02",
+      "lane": "interface",
+      "priority": 1,
+      "summary": "Apply complete reviewed art to shop, purchase, tray, room placement and finishes; fix title overlap and cold-load fallback",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/home-layout.js",
+        "browser"
+      ],
+      "depends": [
+        "HOME-CATALOGUE-ART-02"
+      ],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null
     }
   ]
 }
