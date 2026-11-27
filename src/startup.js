@@ -8343,23 +8343,48 @@ function pawPrayerStep(){
  const q=pawIncenseFrame(stage,age,held,residentReducedMotion.matches);
  ctx.save();
  paintLivingBackdrop(pics.streetTemple||pics.sticks);
- // The deity is physically above the altar, facing the worshipper.
- pawGuanyinAltar(416,249,188,220);
- const wood=ctx.createLinearGradient(0,480,0,550);wood.addColorStop(0,'#aa815b');wood.addColorStop(1,'#654737');
- ctx.beginPath();ctx.moveTo(431,480);ctx.lineTo(580,480);ctx.lineTo(608,535);ctx.lineTo(411,535);ctx.closePath();ctx.fillStyle=wood;ctx.fill();
- line(423,535,423,575,'#624536',9);line(592,535,592,575,'#624536',9);
- templeIncense(510,502,false,0);
- if(state.prayerOffered)incenseBundle(510,493,state.prayerOffered,0,true);
- for(const xx of [447,573]){round(xx-4,454,8,32,2,'#c6a77a','#8b6e4c');ellipse(xx,449,3.2,7,'#f8d18a')}
- // Keep the next stick in the rack until a fingertip actually reaches it.
- if(stage==='taking'&&!q.touch){state.prayerStage='collect';try{incenseTray()}finally{state.prayerStage=stage}}else incenseTray();
- ctx.beginPath();ctx.moveTo(304,550);ctx.lineTo(389,550);ctx.lineTo(403,579);ctx.lineTo(290,579);ctx.closePath();ctx.fillStyle='#b7a07b';ctx.fill();ctx.strokeStyle='#88765b';ctx.stroke();
- if(q.walking&&!held)backHuman(q.x,q.y,avatar??0,true,q.dir,q.sc);
- else pawHeldIncense(q,held,lit);
- if(stage==='collect')target(219,403,78,88,()=>requestIncenseAction('take'));
- if(stage==='lightReady')target(290,418,42,65,()=>requestIncenseAction('light'));
- if(stage==='hold')target(290,400,115,176,beginQuietBow);
- if(stage==='offer')target(469,430,84,91,()=>requestIncenseAction('offer'));
+ // Register the character and incense against the actual painted hall.
+ // No second deity, table, burner, mat or furniture over the painting.
+ if(pawRoomImageReady(pawHallArt())){
+  const p=pawHallPlate,xy=(u,v)=>({x:p.x+p.w*u,y:p.y+p.h*v});
+  const side=xy(.22,.61),front=xy(.50,.65),offering=xy(.50,.54),rack=xy(.15,.48);
+  const blend=(a,b,v)=>({x:a.x+(b.x-a.x)*v,y:a.y+(b.y-a.y)*v});
+  const ratio=duration=>poseEase(Math.max(0,Math.min(1,age/duration)));
+  let foot=side,dir='left';
+  if(stage==='approach')foot=blend(xy(.38,.73),side,ratio(1.1));
+  else if(stage==='walkMat'){foot=blend(side,front,ratio(1.25));dir='right'}
+  else if(['hold','bow','offer','complete'].includes(stage)){foot=front;dir='up'}
+  else if(stage==='placing'){foot=blend(front,offering,ratio(1.85));dir='up'}
+  else if(stage==='returnMat'){foot=blend(offering,front,ratio(1.1));dir='down'}
+  const sc=.98,hand={x:foot.x+(dir==='left'?-13:17),y:foot.y-42+q.bow*10};
+  const reaching=stage==='taking'&&q.touch;
+  const grip=reaching?blend(hand,rack,.70):hand;
+  const shown=held+(reaching?1:0);
+  if(q.walking&&!shown)backHuman(foot.x,foot.y,avatar??0,true,dir,sc);
+  else{
+   // During the actual bow face the altar, rather than bowing towards
+   // an invented side table. Keep the incense at the traveller's hands.
+   if(dir==='up'&&stage!=='bow')backHuman(foot.x,foot.y,avatar??0,q.walking,'up',sc);
+   else if(stage==='bow'){ctx.save();try{ctx.translate(foot.x,foot.y);ctx.scale(1,1-.14*q.bow);backHuman(0,0,avatar??0,false,'up',sc)}finally{ctx.restore()}}
+   else drawRitualPose(foot.x,foot.y,sc,{reach:grip,praying:shown>0});
+   if(shown){
+    const shoulder={x:foot.x+(dir==='left'?-6:7),y:foot.y-48+q.bow*9};
+    ctx.save();try{
+     pawIncenseArm(shoulder,grip,sc,true);
+     for(let j=0;j<shown;j++)incenseStem(grip.x+(j-(shown-1)/2)*2,grip.y,(j-(shown-1)/2)*.055,lit,32,j===0);
+     pawIncenseArm(shoulder,grip,sc,false)
+    }finally{ctx.restore()}
+   }
+  }
+  if(state.prayerOffered){const burner=xy(.50,.48);for(let j=0;j<state.prayerOffered;j++)incenseStem(burner.x+(j-1)*3,burner.y,0,true,25,j===1)}
+  if(stage==='collect')target(rack.x-27,rack.y-40,54,65,()=>requestIncenseAction('take'));
+  if(stage==='lightReady')target(rack.x-25,rack.y-35,65,80,()=>requestIncenseAction('light'));
+  if(stage==='hold')target(front.x-32,front.y-90,64,100,beginQuietBow);
+  if(stage==='offer')target(offering.x-36,offering.y-85,72,95,()=>requestIncenseAction('offer'));
+ }else{
+  // No duplicate pasted altar while an image is being decoded.
+  pawHeldIncense(q,held,lit)
+ }
  if(stage==='complete'){
   label(tr('Visit the garden','去后院走走'),400,608,()=>pawTempleContinue('secretGarden'));
   label(tr('Draw a fortune','求签'),310,650,()=>pawTempleContinue('sticks'));
@@ -9150,7 +9175,7 @@ const pawHallLivingBefore=paintLivingBackdrop;
 paintLivingBackdrop=function(...args){
  if(room==='temple'&&['prayer','templePaper','templeRack','templeBell','templeWater'].includes(activity)){
   const outdoor=['templeBell','templeWater'].includes(activity),art=pawRecoveredImage(outdoor?'scenes/temple_approach_portrait.webp':pawHallArtPath);
-  if(pawRoomImageReady(art)){const b=livingBounds();cover(art,b.x,b.y,b.w,b.h);return}
+  if(pawRoomImageReady(art)){const b=livingBounds();if(activity==='prayer'){const p=pawHallPlate;ctx.fillStyle='#493b30';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(art,p.x,p.y,p.w,p.h)}else cover(art,b.x,b.y,b.w,b.h);return}
  }
  return pawHallLivingBefore(...args)
 };
@@ -9530,5 +9555,86 @@ loop=function(...args){
  if(pawTempleAdmission&&!pawTempleAdmissionValid(pawTempleAdmission,pawTempleAdmission,pawTempleAdmissionView()))pawTempleAdmission=null;
  return pawTempleAdmissionLoopBefore(...args)
 };
+
+
+/* PAW_TEMPLE_SCREENSHOT_REPAIR_BEGIN */
+function pawTempleFullCamera(w,h,plate){
+ if(![w,h,plate?.w,plate?.h].every(Number.isFinite)||w<=0||h<=0||plate.w<=0||plate.h<=0)return null;
+ const s=Math.max(w/plate.w,h/plate.h);
+ return {s,ox:(w-plate.w*s)/2-plate.x*s,oy:(h-plate.h*s)/2-plate.y*s}
+}
+function pawGardenWaterPoint(i,time,feedAge){
+ const f=Math.max(0,Math.min(1,1-feedAge/4)),angle=time*(.32+i*.04)+i*2.094;
+ return [.57+Math.cos(angle)*.075*(1-f*.65),.374+Math.sin(angle)*.012*(1-f*.65)]
+}
+/* PAW_TEMPLE_SCREENSHOT_REPAIR_END */
+const pawGardenPlate={...pawHallPlate};
+const pawTempleFullCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(...args){
+ if(room==='temple'&&W<H&&(pawHallEnabled()||activity==='prayer'||activity==='secretGarden')){
+  return pawTempleFullCamera(W,H,activity==='secretGarden'?pawGardenPlate:pawHallPlate)||pawTempleFullCameraBefore(...args)
+ }
+ if(room==='temple'&&activity==='prayer'){
+  const p=pawHallPlate,s=Math.min(W/p.w,H/p.h);return {s,ox:(W-p.w*s)/2-p.x*s,oy:(H-p.h*s)/2-p.y*s}
+ }
+ return pawTempleFullCameraBefore(...args)
+};
+const pawGardenDrawBefore=drawActivity;
+drawActivity=function(...args){
+ if(room!=='temple'||activity!=='secretGarden'||!pawRoomImageReady(pawTempleGardenArt))return pawGardenDrawBefore(...args);
+ const run=state,p=pawGardenPlate,b=livingBounds(),xy=(u,v)=>[p.x+p.w*u,p.y+p.h*v];
+ // One real pond, one bridge and one bench: all are already painted.
+ ctx.save();try{
+  ctx.fillStyle='#344238';ctx.fillRect(b.x,b.y,b.w,b.h);
+  if(W>=H)cover(pawTempleGardenArt,b.x,b.y,b.w,b.h);
+  ctx.drawImage(pawTempleGardenArt,p.x,p.y,p.w,p.h);
+  const feedAge=Math.max(0,t-run.gardenFeedAt),water=xy(.57,.374);
+  for(let i=0;i<3;i++){
+   const [u,v]=pawGardenWaterPoint(i,residentReducedMotion.matches?0:t,feedAge),[x,y]=xy(u,v);
+   ctx.save();ctx.translate(x,y);ctx.scale(.23,.23);gardenKoi(0,0,i*1.7+t*.34,i);ctx.restore()
+  }
+  if(feedAge<2){
+   const f=feedAge/2;ctx.strokeStyle='rgba(240,239,204,'+(.48*(1-f))+')';ctx.lineWidth=1.1;ctx.beginPath();ctx.ellipse(water[0],water[1],4+f*24,2+f*6,0,0,TAU);ctx.stroke()
+  }
+  const age=Math.max(0,t-run.gardenAt),walk=!residentReducedMotion.matches&&age<1.2;
+  const [x,y]=xy(.55+.23*poseEase(age/1.2),.70-.035*poseEase(age/1.2));
+  if(walk)backHuman(x,y,avatar??0,true,'right',.9);
+  else if(run.gardenSitting){const a=xy(.84,.635);drawRitualPose(a[0],a[1],.80,{seat:1})}
+  else backHuman(x,y,avatar??0,false,'up',.9);
+  const [wx,wy]=xy(.15,.22);
+  if(t-run.gardenChimeAt<2){ctx.strokeStyle='rgba(245,225,174,'+(.35*(1-(t-run.gardenChimeAt)/2))+')';ctx.beginPath();ctx.arc(wx,wy,8+(t-run.gardenChimeAt)*12,0,TAU);ctx.stroke()}
+  const [bx,by]=xy(.85,.625);
+  target(bx-32,by-35,64,70,()=>{if(run===state&&!pawArcadeInputBlocked())gardenSeat()});
+  target(water[0]-55,water[1]-20,110,40,()=>{if(run===state&&!pawArcadeInputBlocked())gardenFeed()});
+  target(wx-40,wy-30,80,60,()=>{if(run===state&&!pawArcadeInputBlocked())gardenChime()})
+ }finally{ctx.restore()}
+ pawGardenControls(run)
+};
+let pawGardenControlsRun=null,pawGardenControlsKey='';
+function pawGardenClearControls(){
+ const el=$('gameControls');if(!el?.classList.contains('pawGardenControls'))return;
+ el.querySelectorAll('[data-paw-garden-control]').forEach(v=>v.remove());el.classList.remove('pawGardenControls');if(!el.children.length)el.hidden=true;
+ pawGardenControlsRun=null;pawGardenControlsKey=''
+}
+function pawGardenControls(run){
+ const el=$('gameControls');if(!el||run!==state||activity!=='secretGarden')return;
+ if(pawArcadeInputBlocked()){el.hidden=true;return}
+ const key=String(zh)+'|'+run.gardenSitting;
+ if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===3){el.hidden=false;return}
+ el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawGardenControls');el.hidden=false;pawGardenControlsRun=run;pawGardenControlsKey=key;
+ for(const [name,en,cn,fn] of [['feed','Feed koi','喂锦鲤',gardenFeed],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐',gardenSeat],['chime','Wind chime','听风铃',gardenChime]]){
+  const button=b(el,tr(en,cn),()=>{if(run===state&&activity==='secretGarden'&&!pawArcadeInputBlocked())fn()});button.dataset.pawGardenControl=name
+ }
+}
+const pawGardenCleanupBefore=loop;
+loop=function(...args){if(activity!=='secretGarden')pawGardenClearControls();return pawGardenCleanupBefore(...args)};
+const pawTempleLayoutCSS=document.createElement('style');
+pawTempleLayoutCSS.textContent=`
+#game #gameControls.mb5ActivityAssist:not([hidden]){display:grid!important;grid-template-columns:minmax(0,1fr)!important;box-sizing:border-box!important;width:min(92vw,360px)!important;max-width:calc(100% - 24px)!important;gap:5px!important}
+#game #gameControls.mb5ActivityAssist .mb5ActivityButton{box-sizing:border-box!important;min-width:0!important;width:100%!important;white-space:normal!important;overflow-wrap:anywhere;font-size:clamp(12px,3.4vw,15px)!important}
+#game #gameControls.pawGardenControls:not([hidden]){display:flex!important;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 24px);box-sizing:border-box;width:max-content;gap:5px;border-radius:8px;background:#f1e4caed;border:1px solid #b69a70}
+#game #gameControls.pawGardenControls button{min-width:0;min-height:44px;white-space:normal;font-size:clamp(12px,3.3vw,14px);padding:6px 9px}
+`;
+document.head.append(pawTempleLayoutCSS);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
