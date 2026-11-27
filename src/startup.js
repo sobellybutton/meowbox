@@ -484,8 +484,9 @@ function fiveReadingArchive(){
  const raw=load('fiveReadingJournalV1',[]);return Array.isArray(raw)?raw.filter(v=>typeof v?.date==='string'&&Array.isArray(v.cards)&&v.cards.length===5&&new Set(v.cards.map(c=>c?.i)).size===5&&v.cards.every(c=>Number.isInteger(c?.i)&&c.i>=0&&c.i<tarotDeck.length&&typeof c.rev==='boolean')).slice(0,40):[]
 }
 function fiveReadingSave(){
- if(state.readSaved||state.readCards.length!==5||!state.readFlip.every(v=>v>=0&&t-v>=.72))return;
- const entry={...tarotShareSnapshot(state),date:shrineClock().day};
+ if(activity!=='love'||pawArcadeInputBlocked()||state.readSaved||state.readCards?.length!==5||state.readFlip?.length!==5||!state.readFlip.every(v=>Number.isFinite(v)&&v>=0&&t-v>=.72))return;
+ const snapshot=tarotShareSnapshot(state);if(!snapshot)return;
+ const entry={...snapshot,date:shrineClock().day};
  const archive=fiveReadingArchive(),key=JSON.stringify(entry);
  if(journalAutoSave()&&!archive.some(v=>JSON.stringify(v)===key))save('fiveReadingJournalV1',[entry,...archive].slice(0,40));
  state.readSaved=true;addItem('Five-card reading','五张牌占卜');lifeEarn('ritual:reading',{wisdom:2,calm:1},true);readingJournalHint()
@@ -623,10 +624,22 @@ readingTopic=function(i){
  [tr('Back to the topics','返回主题'),closeTalk]
  ])
 };
-function tarotShareSnapshot(source){
- const cards=source.readCards||source.cards;if(!Array.isArray(cards)||![1,3,5].includes(cards.length)||!cards.every(v=>Number.isInteger(v?.i)&&tarotDeck[v.i]&&typeof v.rev==='boolean'))return null;
- return {cards:cards.map(v=>({i:v.i,rev:v.rev})),tone:source.tarotTone||source.tone||'gentle',topic:Number.isInteger(source.readTopic)?source.readTopic:Number.isInteger(source.topic)?source.topic:-1}
+/* PAW_TAROT_SNAPSHOT_BEGIN */
+function tarotShareSnapshot(source,deckLength=tarotDeck.length){
+ const cards=source?.readCards||source?.cards;
+ if(!Array.isArray(cards)||![1,3,5].includes(cards.length)||!cards.every(v=>Number.isInteger(v?.i)&&v.i>=0&&v.i<deckLength&&typeof v.rev==='boolean')||new Set(cards.map(v=>v.i)).size!==cards.length)return null;
+ const tone=source.tarotTone||source.tone,topic=Number.isInteger(source.readTopic)?source.readTopic:source.topic;
+ return {cards:cards.map(v=>({i:v.i,rev:v.rev})),tone:tone==='playful'?'playful':'gentle',topic:Number.isInteger(topic)&&topic>=0&&topic<=3?topic:-1}
 }
+function pawTarotNumberAction(q,key,now){
+ if(q?.readStage!=='cards'||typeof key!=='string'||!/^[1-5]$/.test(key)||!Number.isFinite(now)||!Array.isArray(q.readCards)||!Array.isArray(q.readFlip)||q.readCards.length!==q.readFlip.length)return null;
+ const i=Number(key)-1,flip=q.readFlip[i];
+ if(!q.readCards[i]||!Number.isFinite(flip))return null;
+ if(flip<0)return {i,action:'reveal'};
+ if(now-flip<.72)return null;
+ return {i,action:q.readCards.length===5?'five-detail':'focus'}
+}
+/* PAW_TAROT_SNAPSHOT_END */
 /* Painted assets are scene objects, not background decorations. Six original
    residents already have transparent WebP standing and portrait assets.
    Do not substitute another resident or the player's avatar when loading. */
@@ -9203,9 +9216,12 @@ document.addEventListener('keydown',event=>{
   }
  }else if(stage==='deck'&&(key==='Enter'||key===' ')){
   event.preventDefault();if(q.readShuffle)readingDeal();else readingShuffle()
- }else if(stage==='cards'&&/^[1-3]$/.test(key)){
-  const i=Number(key)-1;if(!q.readCards?.[i])return;
-  event.preventDefault();if(q.readFlip[i]<0)readingReveal(i);else readingShow(i)
+ }else if(stage==='cards'&&/^[1-5]$/.test(key)){
+  const move=pawTarotNumberAction(q,key,t);if(!move)return;
+  event.preventDefault();
+  if(move.action==='reveal')readingReveal(move.i);
+  else if(move.action==='five-detail')fiveReadingDetail(q.readCards[move.i],move.i);
+  else readingShow(move.i)
  }else if(stage==='focus'&&key==='Escape'){
   event.preventDefault();readingReturnSpread()
  }
