@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "source": "docs/DEVELOPMENT_CHECKPOINT.md",
-  "policy": "Task stages describe this workstream deliverable, not overall game acceptance. Art-only tasks may be tested as assets but require integration and rendered acceptance before visual acceptance. Existing code-only verification remains open. Dependencies are ready at tested, visually verified or accepted stage; final acceptance requires the controlling release gates. Browser is conservatively a shared resource, not a guarantee of available slots. Keep unless a demonstrated defect, unmet mandatory product outcome or validated player-experience issue warrants a change. Verify existing work first; do not invent new work solely to increase progress counts. Optional refinements should not delay release after required gates pass. Manual continue/resume/proceed targets three distinct actionable workstreams per session, subject to resource leases, dependencies, verification and session limits; see AGENTS.md.",
+  "policy": "Task stages describe this workstream deliverable, not overall game acceptance. Art-only tasks may be tested as assets but require integration and rendered acceptance before visual acceptance. Existing code-only verification remains open. Dependencies are ready at tested, visually verified or accepted stage; final acceptance requires the controlling release gates. Browser is conservatively a shared resource, not a guarantee of available slots. Keep unless a demonstrated defect, unmet mandatory product outcome or validated player-experience issue warrants a change. Verify existing work first; do not invent new work solely to increase progress counts. Optional refinements should not delay release after required gates pass. Manual continue/resume/proceed targets three distinct actionable workstreams per session, subject to resource leases, dependencies, verification and session limits; see AGENTS.md. Issue #2 and the owner-approved HUD/camera refinements are release-critical: prioritize independently actionable painted room integration, coherent first frames, bounded camera/door transitions and HUD legibility before optional feature expansion; respect active leases and existing dependencies. Do not count backlog edits as implementation.",
   "lanes": {
     "world": "Entrance, four map plates, interior artwork and staging",
     "actors": "Traveller and NPC art, animation and resident behaviours",
@@ -125,12 +125,12 @@
         "81e3ee7b: persisted geometry regression"
       ],
       "lease": null,
-      "blocker": "Actual rendered entrance and Fortune Valley mobile/desktop traversal, final art-scale and visual checks still pending. Approach points at stair bases are conservative; no final doorway/foreground mask acceptance."
+      "blocker": "Actual rendered entrance and Fortune Valley mobile/desktop traversal, final art-scale and visual checks still pending. Approach points at stair bases are conservative; no final doorway/foreground mask acceptance.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Walk to every extreme of the actual painted map (especially upper station approach, both sides and bottom), pan and zoom in/out on phone and desktop. Bound camera by native artwork and walkable geometry, keep full viewport covered, retain deliberate HUD safe areas without exposed/uncomposed bands or duplicated plaques. If artwork genuinely cannot cover required framing, recover or extend matching original painted composition; otherwise preserve the approved image. No stretched, repeated or blank background. Record screenshots at extremes, arrival and return."
     },
     {
       "id": "WORLD-INTEGRATION-HOME",
       "lane": "engineering",
-      "priority": 2,
+      "priority": 1,
       "summary": "Integrate home painting with art-traced paths, doors, masks and plaques; verify full rendered journey",
       "resources": [
         "src/startup.js",
@@ -147,12 +147,12 @@
         "751e1023: shared three-district geometry regression"
       ],
       "lease": null,
-      "blocker": "Rendered desktop and mobile route, approach/return, labels and foreground occlusion still need verification."
+      "blocker": "Rendered desktop and mobile route, approach/return, labels and foreground occlusion still need verification.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Walk to every extreme of the actual painted map (especially upper station approach, both sides and bottom), pan and zoom in/out on phone and desktop. Bound camera by native artwork and walkable geometry, keep full viewport covered, retain deliberate HUD safe areas without exposed/uncomposed bands or duplicated plaques. If artwork genuinely cannot cover required framing, recover or extend matching original painted composition; otherwise preserve the approved image. No stretched, repeated or blank background. Record screenshots at extremes, arrival and return."
     },
     {
       "id": "WORLD-INTEGRATION-ISLAND",
       "lane": "engineering",
-      "priority": 2,
+      "priority": 1,
       "summary": "Integrate island painting with art-traced paths, doors, masks and plaques; verify full rendered journey",
       "resources": [
         "src/startup.js",
@@ -169,12 +169,12 @@
         "751e1023: shared three-district geometry regression"
       ],
       "lease": null,
-      "blocker": "Rendered desktop and mobile route, approach/return, labels and foreground occlusion still need verification."
+      "blocker": "Rendered desktop and mobile route, approach/return, labels and foreground occlusion still need verification.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Walk to every extreme of the actual painted map (especially upper station approach, both sides and bottom), pan and zoom in/out on phone and desktop. Bound camera by native artwork and walkable geometry, keep full viewport covered, retain deliberate HUD safe areas without exposed/uncomposed bands or duplicated plaques. If artwork genuinely cannot cover required framing, recover or extend matching original painted composition; otherwise preserve the approved image. No stretched, repeated or blank background. Record screenshots at extremes, arrival and return."
     },
     {
       "id": "WORLD-INTEGRATION-WONDER",
       "lane": "engineering",
-      "priority": 2,
+      "priority": 1,
       "summary": "Integrate wonder painting with art-traced paths, doors, masks and plaques; verify full rendered journey",
       "resources": [
         "src/startup.js",
@@ -191,7 +191,7 @@
         "751e1023: persisted three-district geometry regression"
       ],
       "lease": null,
-      "blocker": "Actual rendered route, approach/return, labels, masks and mobile/desktop acceptance pending."
+      "blocker": "Actual rendered route, approach/return, labels, masks and mobile/desktop acceptance pending.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Walk to every extreme of the actual painted map (especially upper station approach, both sides and bottom), pan and zoom in/out on phone and desktop. Bound camera by native artwork and walkable geometry, keep full viewport covered, retain deliberate HUD safe areas without exposed/uncomposed bands or duplicated plaques. If artwork genuinely cannot cover required framing, recover or extend matching original painted composition; otherwise preserve the approved image. No stretched, repeated or blank background. Record screenshots at extremes, arrival and return."
     },
     {
       "id": "ART-01",
@@ -311,12 +311,12 @@
         "TEMPLE-ALCOVE-01 and TEMPLE-SLIP-01 are implemented and helper-tested."
       ],
       "lease": null,
-      "blocker": "Purification, alcove and slip counter integrated; altar painting lacks Guanyin statue and matching incense supply so retain current hall. Final bell pavilion, remaining garden and articulated character poses, browser and visual review outstanding."
+      "blocker": "Purification, alcove and slip counter integrated; altar painting lacks Guanyin statue and matching incense supply so retain current hall. Final bell pavilion, remaining garden and articulated character poses, browser and visual review outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD."
     },
     {
       "id": "ROOM-02",
       "lane": "world",
-      "priority": 2,
+      "priority": 1,
       "summary": "Garden and wishing pool art and staging",
       "resources": [
         "art:garden",
@@ -331,12 +331,12 @@
         "c0afb1d1: inspected dedicated 960x1631 rear garden plate, mapped existing koi/seat/chime actions and optional lucky cat visit to traced ground routes; painted chime retained, feeding arc/ripple, new camera and controls, stable fallback; focused route/tick/target regression passed and wired into CI."
       ],
       "lease": null,
-      "blocker": "Rendered browser input, art fit, seated character contact, pond animation and mobile/desktop verification remain pending. Existing wishing pool (outside temple) unchanged. Final pose artwork still outstanding."
+      "blocker": "Rendered browser input, art fit, seated character contact, pond animation and mobile/desktop verification remain pending. Existing wishing pool (outside temple) unchanged. Final pose artwork still outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD."
     },
     {
       "id": "ROOM-03",
       "lane": "world",
-      "priority": 2,
+      "priority": 1,
       "summary": "Kitchen and tea preparation art",
       "resources": [
         "art:kitchen"
@@ -347,12 +347,12 @@
         "ROOM-FOOD-LIVE-01 lobby integration implemented and helper-tested in dbaa0f0a"
       ],
       "lease": null,
-      "blocker": "Dedicated ingredient, preparation, pouring, serving and tasting artwork, pose contact and actual browser verification remain outstanding."
+      "blocker": "Dedicated ingredient, preparation, pouring, serving and tasting artwork, pose contact and actual browser verification remain outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD."
     },
     {
       "id": "ROOM-04",
       "lane": "world",
-      "priority": 2,
+      "priority": 1,
       "summary": "Arcade and retained game art",
       "resources": [
         "art:arcade"
@@ -360,12 +360,13 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": null,
+      "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD."
     },
     {
       "id": "ROOM-05",
       "lane": "world",
-      "priority": 2,
+      "priority": 1,
       "summary": "Park and distinct animal art",
       "resources": [
         "art:park"
@@ -373,12 +374,13 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": null,
+      "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD."
     },
     {
       "id": "ROOM-06",
       "lane": "world",
-      "priority": 3,
+      "priority": 1,
       "summary": "Pier, discovery and reading interiors",
       "resources": [
         "art:interiors"
@@ -386,12 +388,13 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": null,
+      "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD."
     },
     {
       "id": "ART-INTEGRATION",
       "lane": "engineering",
-      "priority": 2,
+      "priority": 1,
       "summary": "Integrate finished room and actor assets, verify visible poses and contact",
       "resources": [
         "src/startup.js",
@@ -405,7 +408,8 @@
       ],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": null,
+      "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Audit actual effective background for every room and activity (including Wishing Garden's old green fallback). Register and activate existing approved native portrait/landscape artwork, preserve room-specific geometry, grounded feet, prop alignment and walkable areas. Do not wait for an unrelated avatar art task to do independently actionable room-specific work under ROOM tasks."
     },
     {
       "id": "RAIL-04",
@@ -572,7 +576,7 @@
     {
       "id": "PERF-01",
       "lane": "engineering",
-      "priority": 2,
+      "priority": 1,
       "summary": "Measure loading, memory and frame pacing",
       "resources": [
         "browser"
@@ -580,7 +584,8 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": null,
+      "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Investigate intermittent blank screen/pauses on iPhone using actual error traces and image decode/frame timing; distinguish load delays, animation timing, exceptions and memory pressure. No assumed root cause."
     },
     {
       "id": "QA-01",
@@ -1243,7 +1248,7 @@
       "stage": "outstanding",
       "evidence": [],
       "lease": null,
-      "blocker": "Acceptance: All nested states reviewed in both languages on mobile and desktop; consistent palette/materials, text fit, appropriate controls and context; no visible final vector substitutes or generic web-card grids. Owner recalls odd character profile pictures. Audit actual HUD badge, onboarding thumbnails, profile, passport, notices/chat and share cards for consistent identity, crop, proportions, expression, frame, scale and legibility. Keep approved existing portraits where they work; recover/replace only mismatched or awkward images and verify mobile/desktop. Do not use arbitrary face crops or art from a different traveller."
+      "blocker": "Acceptance: All nested states reviewed in both languages on mobile and desktop; consistent palette/materials, text fit, appropriate controls and context; no visible final vector substitutes or generic web-card grids. Owner recalls odd character profile pictures. Audit actual HUD badge, onboarding thumbnails, profile, passport, notices/chat and share cards for consistent identity, crop, proportions, expression, frame, scale and legibility. Keep approved existing portraits where they work; recover/replace only mismatched or awkward images and verify mobile/desktop. Do not use arbitrary face crops or art from a different traveller.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Owner approved direction: replace visible 'Paw Coins' text in compact HUD with one detailed original illustrated gold/brass paw coin icon followed by the actual numeric balance. Use existing coherent painted art if available, not a photographic coin or emoji; keep accessible localized label, tap access and balance updates unchanged; reserve space for large counts. Replace tiny full-body HUD avatar with matching face/head-and-shoulders portrait for each selectable identity, large enough to read on phone; keep name, level and profile access, full-body artwork elsewhere. Respect safe area, avoid opaque full-width obstruction of map and fix first-frame missing icons. Verify all four maps and room/activity HUD variants, both languages and device sizes."
     },
     {
       "id": "QA-PLAYER-LOOP-01",
@@ -1258,7 +1263,7 @@
       "stage": "outstanding",
       "evidence": [],
       "lease": null,
-      "blocker": "Acceptance: Inspect actual first minute and first meaningful activity through normal input, not state injection; verify all retained scenes, both languages and multiple viewports. Record unresolved defects and iterate; do not call technical checks final acceptance. Owner release readiness directive: apply 30 lenses as checks, not 30 mandatory changes. Keep functioning, coherent, enjoyable features and existing art/copy; verify uncertain ones before changing; fix demonstrated defects or genuine missing required outcomes; defer optional polish that delays release. Focus on actual build/deployment, all four district journeys, full room/ritual/activity and back/return flows, real+NPC community with honest identities, assessment differentiation, English/Chinese editorial and text fit, device accessibility, persistence, privacy, offline/failure recovery and performance. No expansion for its own sake, no numeric improvement quota, no acceptance from helper tests alone; once required product gates pass, stop revising. Record keep/fix/verify/defer decisions and actual rendered evidence."
+      "blocker": "Acceptance: Inspect actual first minute and first meaningful activity through normal input, not state injection; verify all retained scenes, both languages and multiple viewports. Record unresolved defects and iterate; do not call technical checks final acceptance. Owner release readiness directive: apply 30 lenses as checks, not 30 mandatory changes. Keep functioning, coherent, enjoyable features and existing art/copy; verify uncertain ones before changing; fix demonstrated defects or genuine missing required outcomes; defer optional polish that delays release. Focus on actual build/deployment, all four district journeys, full room/ritual/activity and back/return flows, real+NPC community with honest identities, assessment differentiation, English/Chinese editorial and text fit, device accessibility, persistence, privacy, offline/failure recovery and performance. No expansion for its own sake, no numeric improvement quota, no acceptance from helper tests alone; once required product gates pass, stop revising. Record keep/fix/verify/defer decisions and actual rendered evidence.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Regression acceptance matrix: all four districts, every public and private room and nested activity; all camera limits including upper edges, actual doorway transitions, first rendered frame, return/revisit, icon/portrait clarity, large coin values, both languages and mobile Safari/WebKit plus desktop. Inspect screenshots and motion, not assertions alone; close issue #2 only after actual deployed verification."
     },
     {
       "id": "QA-SPATIAL-01",
@@ -1279,7 +1284,7 @@
         "8a433040: persisted helper tests across five viewport sizes and four scales, executed against current source."
       ],
       "lease": null,
-      "blocker": "Actual deployed mobile/desktop scenes, other rooms, moving actors, both languages and complete overlap audit remain outstanding."
+      "blocker": "Actual deployed mobile/desktop scenes, other rooms, moving actors, both languages and complete overlap audit remain outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Check top HUD coverage, background boundaries and foreground masks throughout pan/zoom and avatar/coin legibility; no station sign floating into another doorway or obscuring player."
     },
     {
       "id": "SCENE-BLOCKING-01",
@@ -1312,7 +1317,8 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": null,
+      "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Apply the same bounded-camera and full-frame painted coverage rule to every interior, nested activity, entry, close-up and exit, including short/tall portrait and landscape. Approach actual door, zoom purposefully, reveal only ready scene, restore natural previous position on return. Reduced motion remains accessible. No unexplained pauses, uncovered edges, floating actors or camera clipping."
     },
     {
       "id": "WORLD-STORY-FLOW-01",
@@ -1367,7 +1373,7 @@
         "1e8a9977: persistent selected-avatar readiness, missing image and retry regression; source parsed and asynchronous helper checks executed."
       ],
       "lease": null,
-      "blocker": "First-frame capture on actual cold/warm and failed network, signs and resident readiness, interdistrict/room admission, and deployment verification still open. Base directional art is interim where finished frames absent."
+      "blocker": "First-frame capture on actual cold/warm and failed network, signs and resident readiness, interdistrict/room admission, and deployment verification still open. Base directional art is interim where finished frames absent.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Issue #2 is a release blocker: no blank brown screen or partially initialized HUD on any transition. Preload/decode the target art, retain the last coherent scene pending readiness, instrument errors and latency, offer safe retry without losing progress. Audit cold/warm cache, failed loads, fast taps, back/reentry and rotation."
     },
     {
       "id": "LIFE-OCCUPANCY-01",
