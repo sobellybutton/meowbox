@@ -10312,6 +10312,22 @@ drawRoute=function(...args){
 // Independent art-calibrated world registrations. Preserve the legacy
 // district IDs, room actions, travel order and saved progression.
 const pawNewDistricts={
+ wonder:{
+  path:'assets/visual/painted/worlds/wonder/scene.webp',size:[962,1635],height:1777,spawn:[500,1640],
+  player:[[461,725,18],[495,712,23],[530,649,28],[565,578,34],
+   [595,544,33],[620,591,27],[652,642,24],[687,604,24],
+   [720,539,28],[758,503,32],[800,505,31],[845,559,33],
+   [890,568,34],[935,525,47],[965,471,56],[1005,425,61],
+   [1040,409,68],[1090,399,47],[1150,390,53],[1210,484,64],
+   [1280,503,82],[1360,501,90],[1440,502,91],[1530,499,94],
+   [1640,500,92],[1685,500,87]],
+  doors:{
+   quiz:{approach:[725,461],plaque:[740,347],hit:[636,266,327,197]},
+   story:{approach:[395,965],plaque:[232,760],hit:[55,701,336,237]},
+   match:{approach:[510,1040],plaque:[812,945],hit:[642,858,329,242]},
+   station:{approach:[568,565],plaque:[470,498],hit:[407,467,141,87]}
+  }
+ },
  island:{
   path:'assets/visual/painted/worlds/island/scene.webp',size:[962,1635],height:1777,spawn:[504,1640],
   player:[[373,551,14],[420,550,18],[475,550,22],[525,551,30],
