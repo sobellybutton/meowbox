@@ -12784,4 +12784,38 @@ pawWishInlineStyle.textContent=`
 @media(orientation:landscape){#game #dialogue.pawWishWriting{max-height:70dvh!important}}
 `;document.head.append(pawWishInlineStyle);
 
+/* PAW_APPROVED_NAMES_BEGIN */
+// Display identities only: retain world, door, action and persisted IDs.
+const pawDistrictNames=Object.freeze({
+ fortune:Object.freeze(['Fortune Valley','解忧谷']),
+ home:Object.freeze(['Sea Breeze Island','海风岛']),
+ island:Object.freeze(['Lantern Lane','灯火小街']),
+ wonder:Object.freeze(['Starlight Valley','星语谷'])
+});
+const pawVenueNames=Object.freeze({
+ destiny:Object.freeze(['Master Yue’s Study','月师傅的书房']),
+ quiz:Object.freeze(['The Inner Observatory','心灵观星台']),
+ story:Object.freeze(['The House of What If','如果人生馆']),
+ match:Object.freeze(['The Heart Café','心语咖啡馆']),
+ curiosity:Object.freeze(['The Curiosity Club','奇想俱乐部'])
+});
+function pawApplyApprovedNames(worlds,venueTables,activities,anchors){
+ for(const [id,name] of Object.entries(pawDistrictNames)){
+  if(worlds[id])worlds[id].n=[...name];
+ }
+ for(const world of Object.values(worlds))for(const door of world.st){
+  const name=pawVenueNames[door[0]];if(name){door[3]=name[0];door[4]=name[1]}
+ }
+ for(const table of venueTables)for(const [id,name] of Object.entries(pawVenueNames)){
+  // Do not register a new room by adding a display name.
+  if(Object.hasOwn(table,id)||Object.values(worlds).some(w=>w.st.some(d=>d[0]===id)))table[id]=[...name]
+ }
+ for(const id of ['quiz','story','match'])if(Object.hasOwn(activities,id))activities[id]=[...pawVenueNames[id]];
+ for(const anchor of Object.values(anchors)){
+  if(pawVenueNames[anchor.door])anchor.name=[...pawVenueNames[anchor.door]];
+ }
+}
+/* PAW_APPROVED_NAMES_END */
+pawApplyApprovedNames(maps,[unifiedHouseNames,housePlaqueNames],activityTitle,townAnchorPlaces);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
