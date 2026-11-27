@@ -498,11 +498,11 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-1918-interface-qa",
-        "until": 1795779358391
-      }
+      "evidence": [
+        "Live Pages check 27 Nov: served script lacked pawDockRootChoice; no current dock gameplay review possible."
+      ],
+      "lease": null,
+      "blocker": "Latest dock source not yet served in browser. Recheck deployment before rendered review."
     },
     {
       "id": "MAP-05",
