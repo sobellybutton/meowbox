@@ -1316,7 +1316,7 @@ function townActionPhase(age,contact=.23,duration=.46){
 }
 const paperRitualImpactBefore=smack;
 function paperRitualBusy(){return !!state?.paperAction}
-function paperRitualAllowed(){return activity==='hit'&&room==='fish'&&!state.paperFinished&&!document.hidden&&!talkOpen&&$('page').style.display!=='block'&&!transitioning}
+function paperRitualAllowed(){return activity==='hit'&&room==='fish'&&!state.paperFinished&&!pawArcadeInputBlocked()}
 function paperRitualSyncButtons(){
  const el=$('gameControls');if(!el||activity!=='hit')return;
  const busy=paperRitualBusy();
@@ -1338,7 +1338,8 @@ smack=function(){
 function paperRitualAdvance(){
  if(activity!=='hit'||room!=='fish'||!state.paperAction)return;
  const move=state.paperAction,age=t-move.at;
- if(!paperRitualAllowed()||!Number.isFinite(age)||age<0){paperRitualCancel();return}
+ if(!paperRitualAllowed())return;
+ if(!Number.isFinite(age)||age<0){paperRitualCancel();return}
  if(age>=.23&&!move.landed){
   move.landed=true;
   // Existing reward, sound, joke and paper-debris handlers run at contact.
@@ -1406,7 +1407,7 @@ refreshControls=function(){
  }
  paperRitualSyncButtons();return result
 };
-document.addEventListener('visibilitychange',()=>{if(document.hidden)paperRitualCancel()});
+document.addEventListener('visibilitychange',()=>{if(activity==='hit'&&room==='fish')pawPaperSyncClock(performance.now()/1000)});
 
 
 /* MB5_ACTION_BEGIN: five physical interaction slices, no new art. */
@@ -1424,10 +1425,7 @@ chooseStressTarget=function(index){
 };
 function mb5PrepareAdvance(){
  if(activity!=='hit'||room!=='fish'||!Number.isFinite(state.paperPrepAt))return;
- if(document.hidden)return;
- if(talkOpen||transitioning||$('page').style.display==='block'){
-  delete state.paperPrepAt;state.paperPrepared=true;refreshControls();return
- }
+ if(pawArcadeInputBlocked())return;
  if(mb5PrepProgress(t,state.paperPrepAt)>=1){
   delete state.paperPrepAt;state.paperPrepared=true;
   hint('Ah Ma: Ready. Take your time.','阿嬷：准备好啦，慢慢来。');refreshControls()
@@ -8545,6 +8543,7 @@ document.addEventListener('keydown',event=>{
    while on the board, and focus-safe refresh. Fictional posts stay separate. */
 let pawNoticeDisclosureSerial=0;
 const pawNoticeExpanded=new Set();
+let pawNoticeShown=6;
 function pawNoticeReplyState(button,panel,expanded){
  button.setAttribute('aria-expanded',String(expanded));
  panel.hidden=!expanded;
@@ -8558,7 +8557,7 @@ renderResidentNoticeboard=function(q){
  element('small',tr('Written by the fictional town residents. Real visitor posts are in the shared square.','以下为虚构小镇居民的趣味留言，真人留言请到共享广场。'),wrap,'wallDisclosure');
  const publicBtn=b(wrap,communityURL()?tr('Read or leave a real visitor post','看看真人留言 / 留句话'):tr('Shared square · not open yet','共享广场 · 尚未开放'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink';
  const list=element('div','',wrap,'townPostList'),nav=element('div','',wrap,'townPostNav');
- let shown=6,lastCount=-1,lastSignature='';
+ let shown=pawNoticeShown,lastCount=-1,lastSignature='';
  function render(){
   const focused=document.activeElement?.closest?.('.wallReplyToggle');
   const focusId=focused&&list.contains(focused)?focused.closest('.wallReplies')?.dataset.noticeId:null;
@@ -8585,7 +8584,7 @@ renderResidentNoticeboard=function(q){
    if(id===focusId)restore=toggle;
   }
   element('span',Math.min(shown,entries.length)+' / '+entries.length+' '+tr('notices','条见闻'),nav);
-  const more=b(nav,tr('Read older notices','翻翻以前的留言'),()=>{shown+=6;render()});more.type='button';more.disabled=shown>=entries.length;
+  const more=b(nav,tr('Read older notices','翻翻以前的留言'),()=>{shown=pawNoticeShown=pawNoticePageSize(shown,entries.length,6);render()});more.type='button';more.disabled=shown>=entries.length;
   if(restore)restore.focus({preventScroll:true});else if(moreFocused&&!more.disabled)more.focus({preventScroll:true});
   $('page').scrollTop=top;
  }
@@ -8593,7 +8592,7 @@ renderResidentNoticeboard=function(q){
  const timer=setInterval(()=>{
   if(!wrap.isConnected||$('page').style.display!=='block'){clearInterval(timer);return}
   const next=townPublishedNotices(),n=next.length;
-  if(n!==lastCount||next.map(v=>v.id).join('|')!==lastSignature){shown+=Math.max(0,n-lastCount);render()}
+  if(n!==lastCount||next.map(v=>v.id).join('|')!==lastSignature){shown=pawNoticeShown=pawNoticePageSize(shown,n,Math.max(0,n-lastCount));render()}
  },60000)
 };
 const pawNoticeDisclosureStyle=document.createElement('style');
@@ -8764,6 +8763,35 @@ const pawQuietBoxAwardBefore=boxAward;
 boxAward=function(...args){
  if(activity!=='blindBox'||state.boxStage!=='opening'||pawArcadeInputBlocked())return;
  return pawQuietBoxAwardBefore(...args)
+};
+
+/* PAW_PAPER_BOARD_BEGIN */
+function pawPaperClock(run,now,blocked){
+ if(!run||!Number.isFinite(now))return null;
+ const action=run.paperAction,prep=Number.isFinite(run.paperPrepAt),owner=action||null;
+ const start=action? action.at : prep?run.paperPrepAt:null;
+ if(!Number.isFinite(start)){delete run.pawPaperClock;return null}
+ const phase=action?'strike':'prep',prior=run.pawPaperClock;
+ let shift=0;
+ if(prior&&prior.phase===phase&&prior.owner===owner&&prior.start===start&&now>=prior.now&&(blocked||prior.blocked)){
+  shift=now-prior.now;
+  if(action)action.at+=shift;else run.paperPrepAt+=shift
+ }
+ run.pawPaperClock={phase,owner,start:start+shift,now,blocked:!!blocked};
+ return action?{strikeAt:action.at,shift}:null
+}
+function pawNoticePageSize(shown,total,increment){
+ return Math.max(6,Math.min(Math.max(0,total),Math.max(6,shown)+Math.max(0,increment)))
+}
+/* PAW_PAPER_BOARD_END */
+function pawPaperSyncClock(now){
+ const value=pawPaperClock(state,now,pawArcadeInputBlocked());
+ if(value)stressSwingAt=value.strikeAt
+}
+const pawPaperLoopBefore=loop;
+loop=function(ms,...args){
+ if(activity==='hit'&&room==='fish')pawPaperSyncClock(ms/1000);
+ return pawPaperLoopBefore(ms,...args)
 };
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
