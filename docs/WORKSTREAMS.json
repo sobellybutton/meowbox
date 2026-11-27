@@ -1456,12 +1456,12 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-assessment-routing-2310",
-        "until": 1795794000000
-      },
-      "blocker": "Lab: preferences/Big Five/Enneagram; Parallel: values/priorities, alternate lives and distinct humorous self-discovery; Cafe: love languages, attachment reflection, communication/friendship/romance. Audit all earlier humorous tests, one venue per test, preserve Soul Cat saves; informal not diagnostic; scoring, ties, privacy, replay."
+      "evidence": [
+        "d76e5fcf: relocates relationship values from the personality laboratory to the café, preserves conversation cards and saved results, and adds eight practical bilingual prompts selected by four relationship-priority scores.",
+        "da3db0c292c9335ab0b0d16b9e615f9409d59b1b: routing and exhaustive 2,401 valid score combination helper regression executed; source parsed."
+      ],
+      "lease": null,
+      "blocker": "Complete historical assessment inventory, distinct general values/priorities story experience, love-language and attachment banks, scoring audit, native visual staging and rendered phone/desktop acceptance remain open."
     },
     {
       "id": "DISCOVERY-PARALLEL-LIVE-02",
