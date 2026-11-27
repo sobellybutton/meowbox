@@ -1280,7 +1280,10 @@
         "64c95ef6: uploaded source coin independently decoded and reduced to 48×48 RGBA WebP (1278 bytes, exact blob d5183cb6). Actual HUD uses painted icon after decode, real hideoutBalance, bilingual accessible label and numeric fallback; source parsed and 12 isolated balance/readiness/language assertions passed. Browser/phone review pending.",
         "7287f2f2: owner iPhone feedback addressed: removed automatic Activities tab reveal for all rooms, retained keyboard-focus station navigation, moved room title to top center, placed Master Yue at painted desk with clipped existing upper body until matching seated sprite is available and compact Consult plaque, switched preload to actual gateway image and portrait cover framing with calibrated foot coordinates. Exact startup source parsed and 707 path/viewport checks executed; durable gate test updated. Live iPhone/desktop timing and visual review pending."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-yue-conversation-gait",
+        "until": 1795801433893
+      },
       "blocker": "Owner iPhone screenshot fixes implemented in 7287f2f2; actual current Pages deployment, cold entrance timing and all-room label/character occlusion, genuine phone and desktop visual review remain pending. Master Yue requires matching seated sprite for full pose animation; current desk-occlusion uses existing standing art. Preserve keyboard station access without permanent Activities tab."
     },
     {
