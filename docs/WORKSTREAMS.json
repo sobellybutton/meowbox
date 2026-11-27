@@ -1432,12 +1432,12 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-social-guide-2302",
-        "until": 1795793520000
-      },
-      "blocker": "Meaningful interaction, once per eligible task period, existing reward caps, no mandatory human interaction, spam farming, or new currency. Owner confirmed expectation of waving: natural approachable wave action and response, nearby NPC/consenting human, optional chat, no reward spam, distinct local vs shared interaction. Test actual animation and social task completion."
+      "evidence": [
+        "cf700a19: daily social task identifies a nearby fictional resident and explains choosing a conversation topic; restored existing lifeFriend credit on chosen cameo responses, not passive greeting.",
+        "4f1d41d51f860b4fc7fdc8203a7a5490b2fb36e7: persistent candidate/credit regression; source parsed and checks executed in connector harness."
+      ],
+      "lease": null,
+      "blocker": "Human consent, actual shared endpoint, gesture animation, room social navigation and rendered mobile/desktop acceptance remain outstanding."
     },
     {
       "id": "DISCOVERY-ASSESSMENTS-01",
