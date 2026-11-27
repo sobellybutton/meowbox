@@ -9532,7 +9532,9 @@ function pawForecourtWorld(p){
  return [pawForecourtPlate.x+p[0]*pawForecourtPlate.w,pawForecourtPlate.y+p[1]*pawForecourtPlate.h]
 }
 function pawForecourtRoute(q,kind){
- if(!q||q.route?.length||!['cat','hall','exit'].includes(kind))return false;
+ if(!q||!Array.isArray(q.pos)||!Array.isArray(q.route)||!['cat','hall','exit'].includes(kind))return false;
+ // Return is a deliberate interruption, not a teleport or a second visit.
+ if(q.route.length&&(kind!=='exit'||q.destination==='exit'))return false;
  const [x,y]=q.pos;
  if(![x,y].every(Number.isFinite))return false;
  // The paving narrows towards the torii. Both destinations stay on the
@@ -9639,7 +9641,7 @@ document.addEventListener('keydown',event=>{
 const pawForecourtBackBefore=$('back').onclick;
 $('back').onclick=function(...args){
  if(activity==='templeForecourt'){
-  if(!pawArcadeInputBlocked()&&!state.pawForecourt?.route?.length)pawForecourtChoose('exit');
+  if(!pawArcadeInputBlocked())pawForecourtChoose('exit');
   return
  }
  if(pawHallEnabled()&&indoorReady()&&continuityRoom==='temple'){
@@ -9649,7 +9651,8 @@ $('back').onclick=function(...args){
   const enterForecourt=()=>{
    if(room!=='temple'||activity)return;
    start('templeForecourt');state.pawForecourt={pos:pawForecourtLanding.slice(),route:[],destination:null,last:t,greeted:false,catVisited:true};
-   hint('Walk down the path to return to Fortune Valley.','沿石阶走下去，回到福运谷。');
+   pawForecourtRoute(state.pawForecourt,'exit');
+   hint('Heading back down to Fortune Valley…','沿石阶返回福运谷……');
    updateHUD()
   };
   if(Math.hypot(indoor.x-x,indoor.y-y)<=4)enterForecourt();
@@ -9660,7 +9663,7 @@ $('back').onclick=function(...args){
 };
 function pawForecourtControlModel(q,blocked){
  if(!q||!Array.isArray(q.route))return null;
- return {busy:!!q.route.length||!!blocked,greeted:!!q.greeted}
+ return {busy:!!q.route.length||!!blocked,greeted:!!q.greeted,canReturn:!blocked&&(!q.route.length||q.destination!=='exit')}
 }
 let pawForecourtControlsRun=null,pawForecourtControlsKey='';
 function pawForecourtClearControls(){
@@ -9675,12 +9678,12 @@ function pawForecourtSyncControls(run){
  const el=$('gameControls'),model=pawForecourtControlModel(run?.pawForecourt,pawArcadeInputBlocked());
  if(!el||run!==state||activity!=='templeForecourt'||!model){pawForecourtClearControls();return}
  if(pawArcadeInputBlocked()){if(el.classList.contains('pawForecourtControls'))el.hidden=true;return}
- const key=String(zh)+'|'+model.busy+'|'+model.greeted;
+ const key=String(zh)+'|'+model.busy+'|'+model.greeted+'|'+model.canReturn;
  if(pawForecourtControlsRun===run&&pawForecourtControlsKey===key&&el.querySelectorAll('[data-paw-forecourt-control]').length===3){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawForecourtControls');el.hidden=false;
  pawForecourtControlsRun=run;pawForecourtControlsKey=key;
  for(const [id,en,cn] of [['cat',model.greeted?'Greet again':'Greet lucky cat',model.greeted?'再次招呼':'拜访招福猫'],['hall','Enter hall','进入大殿'],['exit','Return to valley','返回福运谷']]){
-  const button=b(el,tr(en,cn),()=>pawForecourtChoose(id,run));button.dataset.pawForecourtControl=id;button.disabled=model.busy
+  const button=b(el,tr(en,cn),()=>pawForecourtChoose(id,run));button.dataset.pawForecourtControl=id;button.disabled=id==='exit'?!model.canReturn:model.busy
  }
 }
 const pawForecourtControlCSS=document.createElement('style');
