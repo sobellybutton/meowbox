@@ -5184,7 +5184,7 @@ const pawRackResidents=[
 ];
 function pawRackNumbers(raw,max=12){return Array.isArray(raw)?raw.filter(v=>Number.isInteger(v)&&v>=1&&v<=max).slice(-21):[]}
 function pawRackEntries(raw){
- return [...pawRackResidents.map(v=>({...v,fictional:true})),...pawRackNumbers(raw).map((number,i)=>({id:'local-'+i,name:['My tied fortune','我的签纸'],number,fictional:false}))]
+ return [...pawRackResidents.map(v=>({...v,fictional:true})),...(Array.isArray(raw)?raw.filter(v=>Number.isInteger(v)&&v>=1&&v<=12):[]).map((number,i)=>({id:'local-'+i,name:['My tied fortune','我的签纸'],number,fictional:false}))]
 }
 function pawRoomSpeechAllowed(room,activity,transitioning,pageOpen,talkOpen){return !!room&&!activity&&!transitioning&&!pageOpen&&!talkOpen}
 /* PAW_OWNER_REPAIR_2_END */
@@ -8316,7 +8316,7 @@ function pawTempleRackDraw(){
     round(-17,6,34,55,2,state.rackSelected===idx?'#f8e4a8':'#f0dfbe','#a88d69');
     txt(String(item.number),0,25,15,'#76543c');line(-9,40,9,40,'#a68860',1);line(-9,46,5,46,'#a68860',1);
     ctx.restore();
-    if(!sel)target(x-24,yy-8,48,73,()=>{state.rackSelected=idx;state.rackAt=t;physicalFx('paper',.42)})
+    if(!sel)target(x-24,yy-8,48,73,()=>{if(activity!=='templeRack'||talkOpen||transitioning)return;state.rackSelected=idx;state.rackAt=t;physicalFx('paper',.42)})
    }
   }
   if(sel){
