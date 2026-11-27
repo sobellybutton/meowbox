@@ -3997,11 +3997,29 @@ function pawSocialCandidate(actors,player,radius=210){
  }
  return best
 }
+function pawIndoorSocialEligible(actor,player,ready,radius=150){
+ return ready===true&&!!actor&&!actor.sharedPeer&&actor.kind!==2&&Number.isFinite(actor.x)&&Number.isFinite(actor.y)&&Number.isFinite(player?.x)&&Number.isFinite(player?.y)&&Math.hypot(actor.x-player.x,actor.y-player.y)<radius
+}
+function pawSocialResponseAllowed(open,current,used){
+ return !used&&open===current.run&&current.scene===current.originScene&&current.room===current.originRoom&&current.talk===true&&!current.activity&&!current.transitioning
+}
 /* PAW_SOCIAL_GUIDE_END */
+function pawIndoorSocialTalk(actor,name,line){
+ if(!pawIndoorSocialEligible(actor,indoor,indoorReady())||!Array.isArray(name)||name.length!==2||!name.every(v=>typeof v==='string'&&v.trim()))return false;
+ const run=state,originScene=scene,originRoom=room;let used=false;
+ releaseWalkKeys();joystickReset();indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y;indoor.facing=pawWalkFacing(indoor,[actor.x,actor.y]);pawAmbientClear();
+ const respond=()=>{
+  if(!pawSocialResponseAllowed(run,{run:state,scene,room,originScene,originRoom,talk:talkOpen,activity,transitioning},used))return;
+  used=true;lifeFriend(name);say(tr(...name),tr('Glad we crossed paths today. Enjoy the rest of your little escape.','今天碰见你挺开心的。接着慢慢享受你的小假期吧。'),[[tr('See you around','回头见'),closeTalk]])
+ };
+ say(tr(...name),tr(...line),[[tr('Stay for a little chat','留下聊两句'),respond],[tr('See you around','回头见'),closeTalk]]);
+ return true
+}
 journalDailyGuide=function(id){
  if(id==='gratitude'){pawDiaryOpen.add('gratitude');todayHub();$('content').querySelector('.pawDiaryGratitude')?.closest('details')?.scrollIntoView({block:'start'});return}
- if(id!=='social'||transitioning||activity||room||!proposal.hidden||talkOpen)return pawDailyGuideBefore(id);
+ if(id!=='social'||transitioning||activity||!proposal.hidden||talkOpen)return pawDailyGuideBefore(id);
  $('page').style.display='none';
+ if(room){hint('Walk up to a resident or visiting neighbour, tap them and choose to chat.','走到居民或来访邻居身边，点击对方并选择聊天。');return}
  const next=pawSocialCandidate(npc,p);
  if(next)hint('Tap '+next.n[0]+' nearby, then choose something to talk about.','点击附近的'+next.n[1]+'，选个话题聊聊。');
  else hint('Follow the path until you meet a resident. Tap them and choose a conversation topic.','沿小路走走，遇见居民就点一下，选个话题聊聊。');
@@ -5535,7 +5553,7 @@ drawRoom=function(...args){
    target(rect.x,rect.y,rect.w,rect.h,()=>{
     if(!indoorReady())return;
     const now=Date.now(),line=pawAmbientPick(profile.id,pawAmbientLines[profile.id],pawAmbientRead(pawAmbientHistory,now),now)||pawAmbientLines[profile.id][0];
-    if(line&&pawRoomRemark(actor,profile,line)){pawAmbientHistory.push([profile.id,line[0],now]);pawAmbientHistory=pawAmbientHistory.slice(-80);save(pawAmbientKey,pawAmbientHistory)}
+    if(line){const record=residentArtworkRecord(actor.n),name=record?[record.names[0],record.names.find(v=>/[\u3400-\u9fff]/u.test(v))||record.names[0]]:actor.n;if(pawIndoorSocialTalk(actor,name,[line[1],line[2]])){pawAmbientHistory.push([profile.id,line[0],now]);pawAmbientHistory=pawAmbientHistory.slice(-80);save(pawAmbientKey,pawAmbientHistory)}}
    },'paw-resident-speech:'+profile.id)
   }
  }
@@ -6674,8 +6692,8 @@ drawSharedRoomActor=function(a,scale){
    if(indoorReady()&&Math.hypot(a.x-indoor.x,a.y-indoor.y)<150){
     const w=Math.max(34,h*.62),x=a.x-w/2,y=a.y-h;
     if(!hit.some(z=>z.stationId&&x<z.x+z.w&&x+w>z.x&&y<z.y+z.h&&y+h>z.y)){
-     const en=r.names[0],cn=r.names[1]||en;
-     target(x,y,w,h,()=>{releaseWalkKeys();joystickReset();indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y;say(tr(en,cn),tr('Even shopkeepers need a little break. I thought I would wander somewhere different today.','开店的人也要休息嘛。今天出来换个地方逛逛。'),[[tr('Enjoy your break','慢慢逛'),closeTalk]])},'paw-neighbour:'+r.id)
+     const en=r.names[0],cn=r.names.find(v=>/[\u3400-\u9fff]/u.test(v))||en;
+     target(x,y,w,h,()=>{if(!pawLocalVisitors.includes(a)||!pawVisitorVisible(a))return;pawIndoorSocialTalk(a,[en,cn],['Even shopkeepers need a little break. I thought I would wander somewhere different today.','开店的人也要休息嘛。今天出来换个地方逛逛。'])},'paw-neighbour:'+r.id)
     }
    }
    return
