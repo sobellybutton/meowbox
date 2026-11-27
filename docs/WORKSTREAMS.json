@@ -942,6 +942,23 @@
       ],
       "lease": null,
       "blocker": "Actual browser rendering, load failures and overlap verification pending. Three interactive fixture candidates are preview-only until in-room shelf contact/geometry is checked. Missing furniture, material art and room scene conversion still open."
+    },
+    {
+      "id": "ENT-GROUND-02",
+      "lane": "engineering",
+      "priority": 1,
+      "summary": "Fix gateway avatar ground alignment and landscape sizing regression",
+      "resources": [
+        "src/startup.js",
+        "scripts/paw-room-life-scoop-test.cjs"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-gateway-regression-20261127-2212",
+        "until": 1795790546183
+      }
     }
   ]
 }
