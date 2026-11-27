@@ -227,12 +227,10 @@
       "stage": "outstanding",
       "evidence": [
         "See ART-01 staged 20 recovered reach/tap candidates, no live integration yet.",
-        "15 original frames reused for paper ritual phase rendering on travellers 0–2. Per-frame grip anchors visually inspected and alpha checked; exact blob match and current manifest validator pass. Player 3 camera overlap needs separate review. Rendered contact, cold load and other gestures remain pending."
+        "15 original frames reused for paper ritual phase rendering on travellers 0–2. Per-frame grip anchors visually inspected and alpha checked; exact blob match and current manifest validator pass. Player 3 camera overlap needs separate review. Rendered contact, cold load and other gestures remain pending.",
+        "24 matching original character gesture sprites extracted and committed: wave, open arms, celebrate, seated, kneel/pray and bow for four identities. Transparent WebP, local contact sheet inspected, 6px alpha margin, source checksums and remote paths verified at ff1ca2dc. Key poses only; anchor calibration, runtime hookup and transitions pending."
       ],
-      "lease": {
-        "owner": "manual-extract-visuals-20261127",
-        "until": 1795796757054
-      },
+      "lease": null,
       "blocker": "Owner explicitly requests real visible waving and other natural gestures. Verify player-initiated wave, NPC response, greeting, sitting and context-specific interaction poses for all selectable travellers; use matching illustrated frames and anchored feet/hands, not a floating emoji, generic bob or detached limb. No final acceptance before rendered playback. Reuse recovered 4x5 tapping atlas and temple concept pose row noted in ART-01 before producing replacements. Do not treat reaching poses as waving or the single concept traveller's poses as complete animation sets for other identities."
     },
     {
@@ -245,11 +243,10 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-extract-visuals-20261127",
-        "until": 1795796757054
-      }
+      "evidence": [
+        "8 transparent resident candidates extracted and committed at ff1ca2dc; identity matching, role assignment and runtime verification pending."
+      ],
+      "lease": null
     },
     {
       "id": "NPC-01",
@@ -1175,7 +1172,9 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
+      "evidence": [
+        "15 independently extracted transparent lantern, curtain, chime, prayer-string, window and banner assets committed ff1ca2dc; scene-specific attachment and motion still pending."
+      ],
       "lease": null,
       "blocker": "Acceptance: inspect actual entrance and all four districts in motion on mobile and desktop. Audit weather clock and long rain streaks; make clear weather common, use bounded coherent transitions across doors and visits, preserve guest/weather dependencies. Register painted moving props to actual attachment anchors; do not duplicate baked lanterns or move whole background; include wind-responsive lantern sway and subtle warm light, river ripples, foliage, flags, noren, smoke/steam and indoor sheltered behaviour where appropriate. Keep labels and paths unobstructed, reduce motion and bound frame cost. No final acceptance without rendered review. Owner follow-up: prefer optional real-world synchronization. Use device local clock/time zone for day/night without location permission; weather sync only after explicit opt-in via approximate browser location or manual city, never persist precise coordinates or expose them to other players. Cache/rate-limit weather fetches, handle denied permission/offline/API errors with a pleasant fictional weather cycle, and preserve shared gameplay/NPC fairness across local visuals. Verify suitable free weather data provider terms and privacy before integration. Do not force day/night tint or seasonal effects onto paintings that cannot support them; prioritize scene-specific light variants/anchored overlays and sheltered interiors, with no rain through roofs. Match local climate, not a universal four-season calendar. Allow disabling sync at any time; no permission prompt on entry. Treat as design direction pending implementation and visual acceptance."
     },
