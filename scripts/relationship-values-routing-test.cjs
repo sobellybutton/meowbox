@@ -11,3 +11,26 @@ const lab=menu.slice(menu.indexOf("if(room==='quiz'"),menu.indexOf("if(scene==='
 const cafe=menu.slice(menu.indexOf("if(scene==='wonder'&&room==='match'"));
 assert.ok(!lab.includes("wonderSceneOpen('values')"));assert.ok(cafe.includes("wonderSceneOpen('values')")&&cafe.includes("start('match')"));
 console.log('Relationship values routing and reflection checks passed');
+
+const start=s.indexOf('/* PAW_EXTRA_DISCOVERY_BEGIN */'),end=s.indexOf('/* PAW_EXTRA_DISCOVERY_END */',start);
+const api=new Function(s.slice(start,end)+';return {pawExtraDiscoveries,pawExtraScore,pawExtraRows,pawCareReflection}')();
+const care=api.pawExtraDiscoveries.care;
+const rows=care.axes.flatMap((axis,k)=>axis.questions.map((q,j)=>({id:k*3+j,dimension:k})));
+assert.equal(rows.length,15);
+assert.ok(!lab.includes("wonderSceneOpen('care')")&&cafe.includes("wonderSceneOpen('care')"));
+assert.ok(care.axes.every(a=>a.questions.filter(q=>q[1]).length===1&&a.questions.every(q=>q[0].length===2&&q[0].every(Boolean))));
+const high=rows.map(r=>care.axes[r.dimension].questions[r.id%3][1]?0:2),low=high.map(v=>2-v);
+assert.deepEqual(api.pawExtraScore('care',rows,high),[6,6,6,6,6]);
+assert.deepEqual(api.pawExtraScore('care',rows,low),[0,0,0,0,0]);
+assert.deepEqual(api.pawExtraScore('care',rows.slice().reverse(),high.slice().reverse()),[6,6,6,6,6]);
+assert.equal(api.pawExtraScore('care',[null,...rows.slice(1)],high),null);
+assert.equal(api.pawExtraScore('care',[rows[1],...rows.slice(1)],high),null);
+assert.equal(api.pawExtraScore('care',rows,[3,...high.slice(1)]),null);
+assert.equal(api.pawCareReflection([0,0,0,0,7]),null);
+for(let k=0;k<16807;k++){
+ let v=k;const scores=Array.from({length:5},()=>{const n=v%7;v=Math.floor(v/7);return n});
+ const out=api.pawExtraRows('care',scores),prompts=api.pawCareReflection(scores);
+ assert.equal(out.length,5);assert.equal(prompts.length,5);assert.ok(prompts.every(p=>p.length===2&&p.every(Boolean)));
+}
+assert.ok(api.pawCareReflection([0,0,0,0,0])[4][0]!==api.pawCareReflection([6,6,6,6,6])[4][0]);
+console.log('Care preferences scoring, routing and reflection checks passed');
