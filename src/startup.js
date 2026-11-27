@@ -750,11 +750,23 @@ function destinyBirthValid(date,min,today){
  if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<min||date>today)return false;
  const v=new Date(date+'T12:00:00Z');return Number.isFinite(+v)&&v.toISOString().slice(0,10)===date
 }
+/* PAW_YUE_INPUT_BEGIN */
 function destinyFullValid(v,today){
- return destinyBirthValid(v.date,'1900-01-02',today)&&/^([01]\d|2[0-3]):[0-5]\d$/.test(v.time||'')&&!!v.place&&
- [v.offset,v.lat,v.lon].every(n=>typeof n==='string'&&n.trim()!==''&&Number.isFinite(Number(n)))&&
- Number(v.offset)>=-12&&Number(v.offset)<=14&&Number(v.lat)>=-66&&Number(v.lat)<=66&&Number(v.lon)>=-180&&Number(v.lon)<=180
+ if(!v||!destinyBirthValid(v.date,'1900-01-02',today)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(v.time||'')||!/^(?:[0-7]|custom)$/.test(v.place||''))return false;
+ const values=[v.offset,v.lat,v.lon];
+ if(!values.every(n=>typeof n==='string'&&n.trim()!==''&&Number.isFinite(Number(n))))return false;
+ const [offset,lat,lon]=values.map(Number);
+ return offset>=-12&&offset<=14&&Number.isInteger(offset*4)&&lat>=-66&&lat<=66&&lon>=-180&&lon<=180
 }
+function pawYueDraftPlace(draftPlace,storedPlace,values,hasDraft){
+ if(hasDraft)return /^(?:[0-7]|custom)$/.test(draftPlace||'')?draftPlace:'';
+ if(storedPlace&&/^(?:[0-7]|custom)$/.test(storedPlace))return storedPlace;
+ if(!values.every(n=>typeof n==='string'&&n.trim()!==''&&Number.isFinite(Number(n))))return '';
+ const locations=[[8,1.35,103.82],[8,30.27,120.16],[8,31.23,121.47],[8,39.9,116.4],[8,22.32,114.17],[8,3.14,101.69],[8,25.03,121.57],[9,35.68,139.69]];
+ const i=locations.findIndex(row=>row.every((v,k)=>v===Number(values[k])));
+ return i<0?'custom':String(i)
+}
+/* PAW_YUE_INPUT_END */
 const yueFriendsPalace=chartConsultTopics.find(v=>v.name?.[0]==='Friends & support');
 if(yueFriendsPalace)yueFriendsPalace.k=7;
 function destinySubjectControls(parent,subject,onSelect){
@@ -773,6 +785,20 @@ function destinyChartValues(form){
  return {date:date?.value||'',time:time?.value||'',place:place?.value||'',offset:nums[0]?.value||'',lat:nums[1]?.value||'',lon:nums[2]?.value||''}
 }
 
+// Direct controls on every consultation page; no need to return to the hub
+// just to remove the current person's private details.
+const pawYueReturnPrivacyBefore=yueReturnControls;
+yueReturnControls=function(q,render,switchView=render){
+ const result=pawYueReturnPrivacyBefore(q,render,switchView),strip=q.querySelector('.yueSubjectStrip');
+ if(!strip)return result;
+ const note=element('small',yueSubject==='other'?tr('Use their birth details only with permission. They stay in this open tab.','请先征得对方同意。生辰资料只暂存在此页面。'):tr('Birth details stay in this open tab.','生辰资料只暂存在此页面。'),strip,'pawYuePrivacy');
+ const subject=yueSubject;
+ const clear=b(strip,tr('Clear this reading','清除本次资料'),()=>{
+  if(!strip.isConnected||yueSubject!==subject)return;
+  yueClearProfile(subject);switchView()
+ });
+ clear.type='button';clear.className='pawYueClear';return result
+};
 /* Single authoritative reading session. Retain explicit birthplace selection
    and privacy, without rendering a second subject chooser or welcome panel. */
 const destinyCompactChartBefore=destinyPage, destinyCompactAlmanacBefore=yueZodiacAlmanac;
@@ -802,19 +828,56 @@ function yueCompactPage(q,form,out){
  if(intro&&intro.textContent.length>140)intro.hidden=true;
 }
 destinyPage=function(edit=false,selectedTopic=null,draft=null){
- if(edit&&typeof edit==='object'){const opt=edit;if(opt.subject==='self'||opt.subject==='other')yueSubject=opt.subject;const d=opt.draft;draft=d?[d.date||'',d.time||'',d.offset||'',d.lat||'',d.lon||'']:null;edit=!opt.render;selectedTopic=null}
+ let draftPlace=null;
+ if(edit&&typeof edit==='object'){
+  const opt=edit;if(opt.subject==='self'||opt.subject==='other')yueSubject=opt.subject;
+  const d=opt.draft;draftPlace=d?.place??null;
+  draft=d?[d.date||'',d.time||'',d.offset||'',d.lat||'',d.lon||'']:null;edit=!opt.render;selectedTopic=null
+ }
  destinyCompactChartBefore(edit,selectedTopic,draft);
  const q=$('content'),form=q.querySelector('.astroForm'),out=q.querySelector('.astroResult');if(!form)return;
  yueCompactPage(q,form,out);
- const profile=yueProfile(),date=form.querySelector('input[type=date]'),time=form.querySelector('input[type=time]'),place=form.querySelector('details select'),nums=[...form.querySelectorAll('input[type=number]')];
+ const profile=yueProfile(),subject=yueSubject,date=form.querySelector('input[type=date]'),time=form.querySelector('input[type=time]'),place=form.querySelector('details select'),nums=[...form.querySelectorAll('input[type=number]')];
  if(!date||!time||!place||nums.length!==3)return;
- if(!profile.chart&&!draft){
-  if(profile.date)date.value=profile.date;
-  const empty=element('option',tr('Select actual birthplace','选择实际出生地'),place);empty.value='';place.prepend(empty);place.value='';place.required=true;nums.forEach(n=>n.value='');
-  const oldChange=place.onchange;place.onchange=function(e){if(place.value==='custom'||!place.value){nums.forEach(n=>n.value='');place.closest('details').open=true}else if(oldChange)oldChange.call(place,e)};
-  const detail=place.closest('details');if(detail){detail.open=true;detail.querySelector('summary').textContent=tr('Birthplace','出生地')}
- }
+ const hasDraft=Array.isArray(draft)&&draft.length===5,detail=place.closest('details'),summary=detail?.querySelector('summary');
+ if(!profile.chart&&!hasDraft){if(profile.date)date.value=profile.date;time.value='';nums.forEach(n=>n.value='')}
+ const empty=element('option',tr('Select actual birthplace','选择实际出生地'),place);empty.value='';place.prepend(empty);place.required=true;
+ place.value=pawYueDraftPlace(draftPlace,profile.chart?.place,nums.map(n=>n.value),hasDraft);
+ const syncPlace=()=>{
+  if(summary)summary.textContent=place.value?tr('Birthplace: ','出生地：')+(place.selectedOptions[0]?.textContent||''):tr('Birthplace','出生地');
+ };
+ syncPlace();if(detail&&(!profile.chart||hasDraft||!place.value))detail.open=true;
+ const oldChange=place.onchange;
+ place.onchange=function(e){
+  if(place.value==='custom'||!place.value){nums.forEach(n=>n.value='');if(detail)detail.open=true}
+  else if(oldChange)oldChange.call(place,e);
+  syncPlace()
+ };
  const note=element('small',tr('Use the actual local birth time and historical UTC offset. Preset cities are starting values.','请使用当地实际出生时间及当时的时区差。城市预设仅供参考。'),q,'yueSessionNote');form.after(note);
+ const status=element('p','',form,'pawYueInputError');status.setAttribute('role','alert');status.hidden=true;
+ function clearError(){status.hidden=true;status.textContent=''}
+ form.addEventListener('input',clearError);form.addEventListener('change',clearError);
+ // Capture before the legacy calculator and its submit listeners. Invalid
+ // input never produces or replaces a chart, including synthetic submits.
+ form.addEventListener('submit',e=>{
+  if(!form.isConnected||yueSubject!==subject||yueProfile()!==profile||!destinyFullValid(destinyChartValues(form),shrineClock().day)){
+   e.preventDefault();e.stopImmediatePropagation();
+   status.hidden=false;status.textContent=tr('Enter a valid birth date, known local time, birthplace and historical UTC offset.','请填写有效出生日期、已知当地出生时间、出生地及当时的时区差。');
+   if(detail)detail.open=true;return
+  }
+  clearError()
+ },true);
+ form.addEventListener('submit',()=>{
+  if(profile.chart&&out?.querySelector('.ziGrid'))profile.chart.place=place.value
+ });
+ const language=q.querySelector('.row')?.lastElementChild;
+ if(language)language.onclick=()=>{
+  const d=form.hidden?null:destinyChartValues(form);
+  zh=!zh;save('zh',zh);document.documentElement.lang=zh?'zh':'en';updateHUD();
+  if(d)destinyPage({subject,draft:d});else destinyPage()
+ };
+ const editButton=[...q.querySelectorAll('.yueChartTools button')].find(v=>v.textContent===tr('Edit birth details','修改生辰资料'));
+ if(editButton)editButton.addEventListener('click',()=>{if(out)out.replaceChildren()});
  if(yueSubject==='other'&&out?.querySelector('.ziGrid'))out.setAttribute('aria-label',tr('Reading for someone else, not a prediction','他人命盘，仅供反思'));
 };
 yueZodiacAlmanac=function(birth='',selection=null,options={}){
@@ -838,6 +901,11 @@ updateHUD=function(){compactRailHUDBefore();const label=compactRailLabelBefore()
 const compactConsultPageBefore=page;
 page=function(...args){$('content').classList.remove('yueCompactConsult');return compactConsultPageBefore(...args)};
 const compactConsultStyle=document.createElement('style');compactConsultStyle.textContent=`
+#content .pawYuePrivacy{flex-basis:100%;font-size:12px;line-height:1.45}
+#content .pawYueClear{min-height:44px;font-size:12px;white-space:normal}
+#content .pawYueInputError{margin:0;color:#843d32;font-size:13px;line-height:1.45}
+#content .pawYueInputError[hidden]{display:none!important}
+
 #content.yueCompactConsult .yueStickyNav{position:sticky;top:0;z-index:2;background:#f2e6cd;padding:5px 0;border-bottom:1px solid #b6a07b}
 #content.yueCompactConsult>h1{font-size:clamp(22px,5.5vw,32px)!important;margin:8px 0 4px!important;line-height:1.2}
 #content.yueCompactConsult>.yueCompactIntro{font-size:12px!important;line-height:1.35!important;margin:4px 0 8px!important}
