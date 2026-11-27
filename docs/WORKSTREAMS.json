@@ -1317,7 +1317,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null,
+      "lease": {
+        "owner": "manual-visual-1127-camera",
+        "until": 1795795426259
+      },
       "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Apply the same bounded-camera and full-frame painted coverage rule to every interior, nested activity, entry, close-up and exit, including short/tall portrait and landscape. Approach actual door, zoom purposefully, reveal only ready scene, restore natural previous position on return. Reduced motion remains accessible. No unexplained pauses, uncovered edges, floating actors or camera clipping."
     },
     {
@@ -1370,13 +1373,11 @@
       "stage": "outstanding",
       "evidence": [
         "e8c17843: selected traveller directional base artwork is decoded during onboarding and required alongside the gateway and current Fortune Valley map before first admission. Optional action frames warmed without making unavailable final poses a hard dependency.",
-        "1e8a9977: persistent selected-avatar readiness, missing image and retry regression; source parsed and asynchronous helper checks executed."
+        "1e8a9977: persistent selected-avatar readiness, missing image and retry regression; source parsed and asynchronous helper checks executed.",
+        "7fdcfb2a: railway arrival checks selected traveller art; kitchen/boba preserve outdoor scene until decoded painting is ready with stale request guard and retry. Source parsed, admission guard exercised."
       ],
-      "lease": {
-        "owner": "manual-visual-1127-ready",
-        "until": 1795795391591
-      },
-      "blocker": "First-frame capture on actual cold/warm and failed network, signs and resident readiness, interdistrict/room admission, and deployment verification still open. Base directional art is interim where finished frames absent.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Issue #2 is a release blocker: no blank brown screen or partially initialized HUD on any transition. Preload/decode the target art, retain the last coherent scene pending readiness, instrument errors and latency, offer safe retry without losing progress. Audit cold/warm cache, failed loads, fast taps, back/reentry and rotation."
+      "lease": null,
+      "blocker": "Actual iPhone/WebKit cold/warm cache, all other room assets and visual acceptance remain open."
     },
     {
       "id": "LIFE-OCCUPANCY-01",
