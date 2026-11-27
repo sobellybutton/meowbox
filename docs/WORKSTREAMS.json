@@ -293,7 +293,10 @@
       "evidence": [
         "TEMPLE-WATER-01 delivered as helper-tested; remaining altar, slip, sticks, bell and articulated poses still open."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-temple-paper-20261127-j",
+        "until": 1795786987598
+      },
       "blocker": "Temple water integrated, all remaining dedicated scene art and visual review outstanding."
     },
     {
