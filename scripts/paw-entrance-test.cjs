@@ -7,9 +7,9 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
 (async()=>{
  const browser=await engine.launch();
  const failures=[];
- for(const [width,height] of sizes)for(const language of ['EN','中文']){
-  const name=width+'x'+height+'-'+(language==='EN'?'en':'zh');
-  const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1,hasTouch:width<900,reducedMotion:'reduce'});
+ for(const [width,height] of sizes)for(const language of ['EN','中文'])for(const motion of ['reduce','no-preference']){
+  const name=width+'x'+height+'-'+(language==='EN'?'en':'zh')+'-'+motion;
+  const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1,hasTouch:width<900,reducedMotion:motion});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const shot=stage=>page.screenshot({path:'test-results/entrance/'+name+'-'+stage+'.png'});
   async function reachable(locator,label){
@@ -46,14 +46,20 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
     assert(await proposal.evaluate(n=>n.scrollWidth<=n.clientWidth+1),'Character screen horizontal overflow');
     await shot('avatar-'+i);
    }
+   const backTicket=proposal.locator('.pawEntranceBack');await reachable(backTicket,'Back to ticket');await backTicket.click();assert.equal(await input.inputValue(),'Traveller 旅人','Ticket signature lost');await go.click();await choices.nth(3).waitFor();assert.equal(await choices.nth(3).getAttribute('aria-pressed'),'true','Avatar lost on back');
    const turn=proposal.locator('.pawAvatarTurn button');await reachable(turn,'Turn around');await turn.click();
    assert(await page.evaluate(()=>proDir===1),'Turn did not change view');
    await reachable(next,'Confirm avatar');await next.click();
-   const persona=proposal.locator('.pawPersonaChoices button').first();await reachable(persona,'Persona');await shot('persona');await persona.click();
+   const persona=proposal.locator('.pawPersonaChoices button').first();await reachable(persona,'Persona');await shot('persona');if(motion==='no-preference'){const skip=proposal.locator('.pawIntentSkip');await reachable(skip,'Optional travel intention');await skip.click()}else await persona.click();
    const arrive=proposal.locator('.rail-arrive');await arrive.waitFor({timeout:20000});await reachable(arrive,'Arrive');
-   await shot('train');await arrive.click();
+   await shot('train');
+   const pause=proposal.locator('.pawFirstRailPause');await reachable(pause,'Pause journey');await pause.click();
+   assert.equal(await pause.getAttribute('aria-pressed'),'true');const elapsed=await page.evaluate(()=>pawFirstRailState.elapsed);
+   await page.waitForTimeout(800);assert(await page.evaluate(before=>pawFirstRailState.paused&&Math.abs(pawFirstRailState.elapsed-before)<1,elapsed),'Paused train clock advanced');
+   await shot('train-paused');await pause.click();assert.equal(await pause.getAttribute('aria-pressed'),'false');
+   if(motion==='no-preference'){await page.waitForTimeout(600);await shot('train-moving');await proposal.locator('.shrine-enter').waitFor({timeout:30000})}else await arrive.click();
    const gate=proposal.locator('.shrine-enter');await gate.waitFor({timeout:20000});await reachable(gate,'Enter valley');await proposal.locator('.mbGatePainting').evaluate(im=>im.decode());assert.equal(await proposal.locator('.cinema-world').isVisible(),false,'Old entrance artwork still visible');assert.equal(await proposal.locator('.rail-revisit,.shrine-speaker').count(),0,'Redundant gate content');const sceneBounds=await proposal.locator('.hero').boundingBox();assert(sceneBounds&&sceneBounds.height>=height*.28,'Gate illustration too small');assert(await proposal.evaluate(n=>n.scrollWidth<=n.clientWidth+1),'Gate horizontal overflow');await shot('gate');
-   await gate.click();await proposal.waitFor({state:'hidden',timeout:30000});
+   await gate.click();if(motion==='no-preference'){await page.waitForTimeout(450);await shot('gate-walk')}await proposal.waitFor({state:'hidden',timeout:30000});
    assert(await page.evaluate(()=>avatar===3&&playerName==='Traveller 旅人'),'Player identity not preserved');
    await page.locator('#dock').waitFor({state:'visible'});await shot('first-walk');const dock=await page.locator('#dock').boundingBox();assert(dock&&dock.y>=0&&dock.y+dock.height<=height+1,'Dock clipped');assert.deepEqual(errors,[],'Page errors');
    await page.reload({waitUntil:'domcontentloaded'});const returnGate=proposal.locator('.shrine-enter');await returnGate.waitFor({timeout:45000});await proposal.locator('.mbGatePainting').evaluate(im=>im.decode());assert.equal(await proposal.locator('.rail-revisit,.shrine-speaker').count(),0,'Return screen still has redundant controls');assert.equal(await proposal.locator('.cinema-world').isVisible(),false,'Return shows fallback art');await reachable(returnGate,'Return ticket entry');await shot('return-ticket');await returnGate.click();await proposal.waitFor({state:'hidden',timeout:20000});assert(await page.evaluate(()=>avatar===3&&playerName==='Traveller 旅人'),'Return identity changed');assert.deepEqual(errors,[],'Return page errors');console.log('PASS '+name);
