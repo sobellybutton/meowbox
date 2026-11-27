@@ -59,3 +59,23 @@ assert.ok(lo[0][0].includes('easier')&&hi[0][0].includes('late reply'));
 assert.ok(lo[2][0].includes('starting small')&&hi[2][0].includes('comfortable asking'));
 assert.ok(lo.every((p,i)=>new Set([p[0],mid[i][0],hi[i][0]]).size===3));
 console.log('Attachment reflection scoring, tiered responses and café routing checks passed');
+
+const priorities=new Function(s.slice(start,end)+';return {pawPriorityRows,pawPriorityScore,pawPriorityReflection,pawExtraRows}')();
+const priorityRows=priorities.pawPriorityRows();
+assert.equal(priorityRows.length,12);
+const exposures=[0,0,0,0],pairs={};
+for(const row of priorityRows){const ks=row.opts.map(o=>o[2]);ks.forEach(k=>exposures[k]++);const key=ks.sort().join(':');pairs[key]=(pairs[key]||0)+1}
+assert.deepEqual(exposures,[6,6,6,6]);assert.equal(Object.keys(pairs).length,6);assert.ok(Object.values(pairs).every(n=>n===2));
+for(let i=0;i<4096;i++){
+ const answers=priorityRows.map((r,j)=>r.opts[(i>>j)&1][2]);
+ const result=priorities.pawPriorityScore(priorityRows,answers);
+ assert.equal(result.reduce((a,b)=>a+b,0),12);assert.equal(priorities.pawPriorityReflection(result).length,4);
+ assert.deepEqual(priorities.pawPriorityScore(priorityRows.slice().reverse(),answers.slice().reverse()),result);
+ assert.equal(priorities.pawExtraRows('priorities',result).length,4);
+}
+assert.equal(priorities.pawPriorityScore(priorityRows,[3,...priorityRows.slice(1).map(r=>r.opts[0][2])]),null);
+assert.equal(priorities.pawPriorityReflection([6,6,6,6]),null);
+assert.equal(priorities.pawExtraRows('priorities',[6,6,6,6]),null);
+const storyMenu=menu.slice(menu.indexOf("if(scene==='wonder'&&room==='story'"),menu.indexOf("if(scene==='wonder'&&room==='match'"));
+assert.ok(storyMenu.includes("start('story')")&&storyMenu.includes("wonderSceneOpen('priorities')"));
+console.log('Life priorities balanced choice and route checks passed');
