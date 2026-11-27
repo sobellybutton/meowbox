@@ -634,6 +634,27 @@
       ],
       "lease": null,
       "blocker": "Actual deployed wide and portrait train rides, cold loads, asset fit and mobile/desktop visual acceptance not verified."
+    },
+    {
+      "id": "HOME-LIVE-01",
+      "lane": "interface",
+      "priority": 1,
+      "summary": "Integrate painted home assets with existing catalogue, placement and purchase flow",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/home-layout.js",
+        "art:home-room"
+      ],
+      "depends": [
+        "HOME-ASSET-01"
+      ],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-home-integration-20261127-i",
+        "until": 1795786207490
+      }
     }
   ]
 }
