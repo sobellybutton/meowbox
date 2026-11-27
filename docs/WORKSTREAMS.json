@@ -996,14 +996,13 @@
         "src/home-layout.js"
       ],
       "depends": [],
-      "stage": "outstanding",
+      "stage": "tested",
       "evidence": [
-        "01a34865: verified 11 unique imported designs and 3 alternates available; preserve all current IDs, prices and saves"
+        "01a34865: verified 11 unique imported designs and 3 alternates available; preserve all current IDs, prices and saves",
+        "89334473: all eleven imported painted furniture assets mapped into catalogue, purchase confirmation, tray and placed room art; current home-layout projection, assets, and imported anchors passed in connector harness. c8b056ac chooses usable ceiling mount points without changing ownership, prices or saved positions on render."
       ],
-      "lease": {
-        "owner": "manual-furniture-live-20261127-2221",
-        "until": 1795791051222
-      }
+      "lease": null,
+      "blocker": "Rendered mobile/desktop review, actual placement, material finishes and complete painted home shell remain open. Hanging lantern uses existing ceiling beam; shelf, display cabinet and floor lantern retain old in-room geometry; no final visual acceptance."
     }
   ]
 }
