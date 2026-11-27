@@ -4168,9 +4168,11 @@ function pawFurniturePlacement(id,x,y){
  return pos
 }
 function pawFurnitureSuggested(id,objects){
- const pos=mbHomeSuggest(mbHomeKind(id),furnitureWidth(id),objects);
- if(id==='chineseLantern')pos.y=35;
- return pos
+ const width=furnitureWidth(id),kind=mbHomeKind(id);
+ if(id!=='chineseLantern')return mbHomeSuggest(kind,width,objects);
+ // Score only mounting points that can actually be used by the lantern.
+ const points=[23,77,35,65,50].map(x=>pawFurniturePlacement(id,x,35));
+ return points.reduce((best,p)=>mbHomeGap(p,objects,width,kind)>mbHomeGap(best,objects,width,kind)?p:best,points[0]);
 }
 function mbHomeObjects(zone,excluded=-1){
  return hideoutFurniture.map((d,i)=>({d,i})).filter(({d,i})=>d&&i!==excluded&&furnitureZone(d)===zone).map(({d})=>({id:d.id,x:Number(d.x),y:d.id==='chineseLantern'?35:Number(d.y),width:furnitureWidth(d.id),kind:mbHomeKind(d.id)}))
