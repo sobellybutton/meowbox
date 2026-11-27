@@ -1253,3 +1253,11 @@ Three distinct workstreams advanced in this continuation. No workstream is claim
 - PERF-01 partial: e6908e2a prevents unnecessary canvas backing-store resets when dimensions are unchanged or transiently zero, a possible contributor to mobile browser pauses. 5baafcce persists focused regression tests across all three changes; source parsed and extracted guards exercised in connector harness. The original iPhone blank-screen cause has not been reproduced or established; WebKit tests, actual frame timing and deployment remain unverified.
 
 Three distinct workstreams advanced. No final visual acceptance or accepted-count increase. Hourly cadence unchanged.
+
+## Valley camera, compact HUD and build regression (27 November 2026)
+
+- SCENE-CAMERA-01 partial: be041feb clamps the Valley camera to actual vertical artwork coverage, including tall portrait screens, after character visibility correction. Source parsed and focused boundary cases exercised. Actual top/bottom composition and mobile/desktop visual acceptance still pending.
+- UX-COHESION-01 partial: f34982b6 switches compact HUD from a miniature full-body sprite to existing selected-avatar indexed head artwork, with a circular frame and accessible actual wallet balance label. Painted paw coin icon, artwork identity and visual fit remain unverified.
+- QA-BUILD-01 tested: exact current extensions blob 41bb6bf2 and quality-checks blob 7de2729f passed the unmodified isolated quality-check suite in connector harness, including map sign stability. No test weakening or unnecessary rewrite. Complete build/deployment CI still unverified. 2391a716 records status and releases claim.
+
+Three workstreams advanced, two source changes and one targeted regression verified. Registry: 41 outstanding, 40 tested, 3 implemented. No final visual acceptance increase. Concurrent edits preserved; hourly schedule unchanged.
