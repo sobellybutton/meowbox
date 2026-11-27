@@ -701,6 +701,40 @@
       ],
       "lease": null,
       "blocker": "Browser CI execution and screenshots not yet verified. Live browser timed out; do not claim successful playthrough."
+    },
+    {
+      "id": "ECON-01",
+      "lane": "games",
+      "summary": "Read-only saving goals and affordable room expansions using existing Paw Coin ledger",
+      "resources": [
+        "src/paw-economy.js",
+        "scripts/paw-economy-test.cjs"
+      ],
+      "priority": 2,
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-independent-20261127-k",
+        "until": 1795786958760
+      }
+    },
+    {
+      "id": "SOUND-01",
+      "lane": "engineering",
+      "summary": "Grounded walking sounds and distinct railway motion audio with quiet-mode safeguards",
+      "resources": [
+        "src/paw-motion-audio.js",
+        "scripts/paw-motion-audio-test.cjs"
+      ],
+      "priority": 2,
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-independent-20261127-k",
+        "until": 1795786958761
+      }
     }
   ]
 }
