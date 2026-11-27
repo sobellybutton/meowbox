@@ -1,0 +1,52 @@
+name: Extract reviewed Pawradise sprites
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/paw-extract-reviewed-visuals.yml
+      - scripts/paw-extract-reviewed-visuals.py
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: paw-reviewed-visual-extraction
+  cancel-in-progress: false
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - run: python3 -m pip install pillow numpy scipy
+      - name: Extract approved source regions and commit without overwriting concurrent work
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard FETCH_HEAD
+            python3 scripts/paw-extract-reviewed-visuals.py
+            python3 - <<'PY'
+          import hashlib,json,pathlib
+          from PIL import Image
+          root=pathlib.Path('assets/visual/staging/2026-11-27-extracted')
+          rows=json.loads((root/'manifest.json').read_text())['assets']
+          assert len(rows)==47
+          for a in rows:
+              p=pathlib.Path(a['path'])
+              assert hashlib.sha256(p.read_bytes()).hexdigest()==a['sha256']
+              with Image.open(p) as im:
+                  assert im.mode=='RGBA' and im.size==(a['width'],a['height'])
+                  assert im.getchannel('A').getbbox()==(6,6,im.width-6,im.height-6)
+          print('Verified 47 extracted candidate files')
+          PY
+            git add -- assets/visual/staging/2026-11-27-extracted/
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m "Extract 47 reviewed original-character resident and environment sprites"
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
