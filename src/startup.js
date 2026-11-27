@@ -2476,7 +2476,7 @@ function pawRailPaneSize(q){
 }
 function pawRailTravel(elapsed,mode){
  const t=Math.max(0,Number.isFinite(elapsed)?elapsed:0);
- if(mode==='ride'||mode==='transfer')return {a:Math.min(1,t/3.6)*.13,b:0,mix:0};
+ if(mode==='ride'||mode==='transfer'||mode==='entrance')return {a:Math.min(1,t/(mode==='entrance'?8.5:3.6))*.13,b:0,mix:0};
  const period=9,phase=t%period,travel=.13*Math.min(1,phase/8);
  if(phase<=8)return {a:travel,b:0,mix:0};
  const k=phase-8;return {a:.13,b:0,mix:k*k*(3-2*k)}
@@ -2581,7 +2581,7 @@ function pawRailMountMotion(stage,im,layout,host,mode,routeLayers=null){
  stage.dataset.railMotion='still';
  const cfg=pawRailWindows[layout],reduce=matchMedia('(prefers-reduced-motion: reduce)');
  if(!cfg||reduce.matches||!stage.isConnected||im.naturalWidth!==cfg.width||im.naturalHeight!==cfg.height)return;
- if(mode==='ride'&&routeLayers?.far&&pawMountRouteGlass(stage,layout,host,routeLayers))return;
+ if((mode==='ride'||mode==='entrance')&&routeLayers?.far&&pawMountRouteGlass(stage,layout,host,routeLayers))return;
  let canvas,raf=0,dead=false,elapsed=0,last=null,lastDraw=-Infinity,frames=0,lastSample='';
  const stop=()=>{dead=true;cancelAnimationFrame(raf);canvas?.remove()};
  try{
@@ -2665,8 +2665,9 @@ async function mbMountRailPainting(host,mode){
  if(!art?.portrait||!art.landscape||!host.isConnected||host.querySelector('.mbPaintedRail'))return;
  // Prefetch route layers while carriage artwork loads. A missing route never
  // blocks boarding; only a complete pair may replace the shared scenery.
- const route=mode==='ride'?art.routes?.[host.dataset.to]:null;
- const routeReady=mode==='ride'?(route?Promise.all([pawRailRouteLoad(route.far),pawRailRouteLoad(route.near)]).then(([far,near])=>far&&near?{far,near}:pawRecoveredRailRoute(host.dataset.to)):pawRecoveredRailRoute(host.dataset.to)):null;
+ const destination=mode==='entrance'?'fortune':host.dataset.to;
+ const route=['ride','entrance'].includes(mode)?art.routes?.[destination]:null;
+ const routeReady=['ride','entrance'].includes(mode)?(route?Promise.all([pawRailRouteLoad(route.far),pawRailRouteLoad(route.near)]).then(([far,near])=>far&&near?{far,near}:pawRecoveredRailRoute(destination)):pawRecoveredRailRoute(destination)):null;
  let motionVersion=0;
  const stage=element('div','',host,'mbPaintedRail');
  stage.dataset.use=mode;stage.hidden=true;stage.setAttribute('aria-hidden','true');
@@ -9885,6 +9886,7 @@ function pawFirstRailAttach(){
  const run=pawFirstRailState??={elapsed:0,last:null,paused:false,completed:false};run.last=null;
  const original=arrive.onclick;if(typeof original!=='function')return;
  const reduced=residentReducedMotion.matches,duration=reduced?6500:8500;
+ cabin.dataset.rideSeconds=String(duration/1000);
  const status=element('small','',foot,'pawFirstRailStatus');
  status.setAttribute('role','status');status.setAttribute('aria-live','polite');
  const pause=element('button','',foot,'pawFirstRailPause');pause.type='button';
@@ -9892,6 +9894,7 @@ function pawFirstRailAttach(){
   pause.textContent=run.paused?tr('Resume journey','继续旅程'):tr('Pause journey','暂停旅程');
   pause.setAttribute('aria-pressed',String(run.paused));
   cabin.classList.toggle('pawRailPaused',run.paused);
+  cabin.dataset.sceneryPaused=String(run.paused);
   status.textContent=run.paused?tr('Journey paused','旅程已暂停'):tr('Next stop: Fortune Valley','下一站：解忧谷')
  }
  function finish(event){
@@ -9917,7 +9920,9 @@ document.addEventListener('visibilitychange',()=>{if(pawFirstRailState)pawFirstR
 const pawFirstRailCSS=document.createElement('style');pawFirstRailCSS.textContent=`
 #proposal .pawFirstRailStatus{color:#f7e9ce;line-height:1.3;display:block;font-size:12px}
 #proposal .pawFirstRailPause{min-height:44px;white-space:normal;max-width:100%;padding:7px 14px;color:#fff3db;background:#2c463ac9;border:1px solid #d1be9066;border-radius:4px}
+#proposal[data-paw-entrance-step="5"] .train-window img{animation:trainLandscape 8.5s linear 1 both!important}
 #proposal .rail-cabin.pawRailPaused *,#proposal .rail-cabin.pawRailPaused .mbRailPane>span{animation-play-state:paused!important}
+@media(prefers-reduced-motion:reduce){#proposal[data-paw-entrance-step="5"] .train-window img{animation:none!important}}
 `;document.head.append(pawFirstRailCSS);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
