@@ -174,6 +174,48 @@
               231
             ]
           }
+        ],
+        "right": [
+          {
+            "path": "assets/visual/painted/player-1/walk/right-0.webp",
+            "width": 224,
+            "height": 300,
+            "sha256": "dd6309dda26281292bc080c044726cff365ca46735be0ba571783d2c0d7cb2cb",
+            "foot": [
+              112,
+              286
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-1/walk/right-1.webp",
+            "width": 224,
+            "height": 300,
+            "sha256": "ccbf3a412f76ae0a84c8c4cab4c2096f6d1d676d26151d3487806cfee662d241",
+            "foot": [
+              112,
+              286
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-1/walk/right-2.webp",
+            "width": 224,
+            "height": 300,
+            "sha256": "0501646e875de1d7e171f7aab5fe498b5e08690c6bba1edff3baf91d35d6a860",
+            "foot": [
+              112,
+              286
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-1/walk/right-3.webp",
+            "width": 224,
+            "height": 300,
+            "sha256": "ae6e422edf490b92b855e6ab58e417a4872fe7506877bc9c3b6693b1734a5176",
+            "foot": [
+              112,
+              286
+            ]
+          }
         ]
       }
     },

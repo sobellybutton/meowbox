@@ -1,0 +1,668 @@
+{
+  "version": 1,
+  "purpose": "Recovered original missing right-walk and reach/tap pose candidates; existing live assets unchanged. Not wave or validated strike animations.",
+  "source_pngs": [
+    {
+      "name": "Four travelers, four-frame walk cycle.png",
+      "sha256": "9b300fa671a274cf1b68e28b224a36db5a0f7e41a894b06e5e3d5c2833a238ae"
+    },
+    {
+      "name": "Four-Row Watercolor Traveler Sprite Atlas.png",
+      "sha256": "e88ba36f3fa16b3f926f0ff925ba656bd74c5a6bf179ac5bc2425fb46ec9efa0"
+    },
+    {
+      "name": "Watercolor traveler tapping sprite atlas.png",
+      "sha256": "b70617372d8a375d32b357490f676b53c428c31fd9af3cb6a6b389160e6ab3f6"
+    }
+  ],
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-1/walk/right-0.webp",
+      "player": 1,
+      "kind": "right-walk",
+      "frame": 0,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "dd6309dda26281292bc080c044726cff365ca46735be0ba571783d2c0d7cb2cb",
+      "git_blob_sha1": "6a314fad975fe915a6b4b874e0b79450e3646a2d",
+      "bytes": 40300,
+      "source": "Four travelers, four-frame walk cycle.png",
+      "source_cell": [
+        1,
+        0
+      ],
+      "source_cell_alpha_bbox": [
+        93,
+        20,
+        233,
+        291
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-1/walk/right-1.webp",
+      "player": 1,
+      "kind": "right-walk",
+      "frame": 1,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "ccbf3a412f76ae0a84c8c4cab4c2096f6d1d676d26151d3487806cfee662d241",
+      "git_blob_sha1": "97aa1d553edf7c5b5fa004ce4b31fee626c0ef83",
+      "bytes": 38508,
+      "source": "Four travelers, four-frame walk cycle.png",
+      "source_cell": [
+        1,
+        1
+      ],
+      "source_cell_alpha_bbox": [
+        101,
+        20,
+        238,
+        290
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-1/walk/right-2.webp",
+      "player": 1,
+      "kind": "right-walk",
+      "frame": 2,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "0501646e875de1d7e171f7aab5fe498b5e08690c6bba1edff3baf91d35d6a860",
+      "git_blob_sha1": "6d12096d45a14ab60d3dde95acaf1bd742e4ee2e",
+      "bytes": 37846,
+      "source": "Four travelers, four-frame walk cycle.png",
+      "source_cell": [
+        1,
+        2
+      ],
+      "source_cell_alpha_bbox": [
+        92,
+        21,
+        219,
+        291
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-1/walk/right-3.webp",
+      "player": 1,
+      "kind": "right-walk",
+      "frame": 3,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "ae6e422edf490b92b855e6ab58e417a4872fe7506877bc9c3b6693b1734a5176",
+      "git_blob_sha1": "a4517092f1169f2eabb9696993ac1556b60a77d6",
+      "bytes": 37212,
+      "source": "Four travelers, four-frame walk cycle.png",
+      "source_cell": [
+        1,
+        3
+      ],
+      "source_cell_alpha_bbox": [
+        100,
+        19,
+        231,
+        292
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-0/reach-tap/frame-0.webp",
+      "player": 0,
+      "kind": "reach-tap",
+      "frame": 0,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "c8f40994238d0fbd27e51d303c14ef63cf5536c84d49269f06114c7d90b3a390",
+      "git_blob_sha1": "267673924dac30cd291f29a608f26bc85ba0c208",
+      "bytes": 38320,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        0,
+        0
+      ],
+      "source_cell_alpha_bbox": [
+        97,
+        13,
+        207,
+        271
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-0/reach-tap/frame-1.webp",
+      "player": 0,
+      "kind": "reach-tap",
+      "frame": 1,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "f5cd969deb2721ceb92d9b6d28ce9f6049c5ed12ebbf50b8f0a4b66b8a9554d0",
+      "git_blob_sha1": "b075cbe72524bbc20230d61cf104373ece1e9d25",
+      "bytes": 40108,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        0,
+        1
+      ],
+      "source_cell_alpha_bbox": [
+        95,
+        13,
+        215,
+        271
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-0/reach-tap/frame-2.webp",
+      "player": 0,
+      "kind": "reach-tap",
+      "frame": 2,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "afbad2e01399ed6b6f8e41a6098c577e27dc1e97e7af917b3ebfe71ba3959f9a",
+      "git_blob_sha1": "f34f23167860e89e953a216d507f2c5bbe96dce6",
+      "bytes": 39924,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        0,
+        2
+      ],
+      "source_cell_alpha_bbox": [
+        88,
+        13,
+        220,
+        271
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-0/reach-tap/frame-3.webp",
+      "player": 0,
+      "kind": "reach-tap",
+      "frame": 3,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "fadd81882e43c2645727bda8d6e164747717ea0241d2d2de99bebb9e744261d3",
+      "git_blob_sha1": "bb020cb1a0d935c7955e2f9833835e76f95f4979",
+      "bytes": 40198,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        0,
+        3
+      ],
+      "source_cell_alpha_bbox": [
+        71,
+        13,
+        216,
+        271
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-0/reach-tap/frame-4.webp",
+      "player": 0,
+      "kind": "reach-tap",
+      "frame": 4,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "9f62febbc9e33d28bea0128fba0b1b8f2d133864d63b8390d843e83a311a216d",
+      "git_blob_sha1": "722325d7be6efb3a3fbd1520e5429e4ca5615767",
+      "bytes": 38116,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        0,
+        4
+      ],
+      "source_cell_alpha_bbox": [
+        70,
+        13,
+        178,
+        271
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-1/reach-tap/frame-0.webp",
+      "player": 1,
+      "kind": "reach-tap",
+      "frame": 0,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "5847a9e086b18df2da49f68380cdd085da3be8edcaaf25d27a427f206a373564",
+      "git_blob_sha1": "66129876105dc3fac02b8cf1182442d9b8a21439",
+      "bytes": 30414,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        1,
+        0
+      ],
+      "source_cell_alpha_bbox": [
+        102,
+        14,
+        197,
+        267
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-1/reach-tap/frame-1.webp",
+      "player": 1,
+      "kind": "reach-tap",
+      "frame": 1,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "c38776218a73d9c8691670548caccd7ded3e64a11ce87f65fff4e36ea6d4db2f",
+      "git_blob_sha1": "bd5586331dd0a1d7b1f5b85f9fa2501593b24548",
+      "bytes": 32328,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        1,
+        1
+      ],
+      "source_cell_alpha_bbox": [
+        100,
+        12,
+        204,
+        267
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-1/reach-tap/frame-2.webp",
+      "player": 1,
+      "kind": "reach-tap",
+      "frame": 2,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "3f52ffde1377e8d468d2528e93b872e6ab3bb3cfaf511c2301bafc2e2080797f",
+      "git_blob_sha1": "d01a134a2595ab07f39bdc995cc03a3f6b33fc17",
+      "bytes": 32726,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        1,
+        2
+      ],
+      "source_cell_alpha_bbox": [
+        91,
+        13,
+        216,
+        267
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-1/reach-tap/frame-3.webp",
+      "player": 1,
+      "kind": "reach-tap",
+      "frame": 3,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "eba73b6f30e3a18ce95d9cf8ec1e3ba96f41cdadbfbd8c32e150c0b53b165146",
+      "git_blob_sha1": "9f034820ff106d1befdb8d3a760755fd99836750",
+      "bytes": 32434,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        1,
+        3
+      ],
+      "source_cell_alpha_bbox": [
+        80,
+        13,
+        220,
+        267
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-1/reach-tap/frame-4.webp",
+      "player": 1,
+      "kind": "reach-tap",
+      "frame": 4,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "dc5e36b1a14a3bef2d25744008fa8e8f4dc3e9097e7dcd11be1cd7f09b6fa91b",
+      "git_blob_sha1": "9b8d260cdb90c01e52d3f2f6bbd12519ccc9ab5f",
+      "bytes": 30982,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        1,
+        4
+      ],
+      "source_cell_alpha_bbox": [
+        76,
+        13,
+        171,
+        267
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-2/reach-tap/frame-0.webp",
+      "player": 2,
+      "kind": "reach-tap",
+      "frame": 0,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "e53ada62e7bf5d77885260fe65f5842bf7d558d9ff34dc834add0199c80ba15a",
+      "git_blob_sha1": "78ee2131bd11a3ed47fd55792ef294499a0f4a48",
+      "bytes": 39086,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        2,
+        0
+      ],
+      "source_cell_alpha_bbox": [
+        95,
+        13,
+        210,
+        261
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-2/reach-tap/frame-1.webp",
+      "player": 2,
+      "kind": "reach-tap",
+      "frame": 1,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "6bfe28deaa6640d788f1cdddc73e1d0e960623e5d17992adb6bd37e07dbc27aa",
+      "git_blob_sha1": "dce84c69d40a52d452df63aab44c0d05ab40909f",
+      "bytes": 40590,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        2,
+        1
+      ],
+      "source_cell_alpha_bbox": [
+        92,
+        13,
+        214,
+        261
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-2/reach-tap/frame-2.webp",
+      "player": 2,
+      "kind": "reach-tap",
+      "frame": 2,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "5f810d884c2e503c1a77652edba600b22d8bb24418711d1a074e0d38d98664c5",
+      "git_blob_sha1": "fbf12624d14d9aae76c42d0c7ade470693341044",
+      "bytes": 41262,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        2,
+        2
+      ],
+      "source_cell_alpha_bbox": [
+        83,
+        12,
+        225,
+        261
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-2/reach-tap/frame-3.webp",
+      "player": 2,
+      "kind": "reach-tap",
+      "frame": 3,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "e94b653679ef34f5e54db0f9d8de118ba7395aa91d1de6f6c1af61efc35a2c05",
+      "git_blob_sha1": "f13f33dabe757cfe22e4a0f0fc80cc05bc8d02d4",
+      "bytes": 41816,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        2,
+        3
+      ],
+      "source_cell_alpha_bbox": [
+        70,
+        14,
+        225,
+        261
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-2/reach-tap/frame-4.webp",
+      "player": 2,
+      "kind": "reach-tap",
+      "frame": 4,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "d6878f922da827de41b4e0c91f014eb5c070ef0cbf33dbc27b082265a4a2c101",
+      "git_blob_sha1": "1e4d9544c86edd4346a0b3b22120b4414035b2c2",
+      "bytes": 39132,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        2,
+        4
+      ],
+      "source_cell_alpha_bbox": [
+        68,
+        14,
+        182,
+        261
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-3/reach-tap/frame-0.webp",
+      "player": 3,
+      "kind": "reach-tap",
+      "frame": 0,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "41e4de2c281fb70652962ce8d3e7a1839eab7dbbc5577f59e4a1e3e45ef5bfda",
+      "git_blob_sha1": "933f2e974e919a7373fe9786ad6d18473a9f964b",
+      "bytes": 39298,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        3,
+        0
+      ],
+      "source_cell_alpha_bbox": [
+        89,
+        11,
+        206,
+        268
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-3/reach-tap/frame-1.webp",
+      "player": 3,
+      "kind": "reach-tap",
+      "frame": 1,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "45f60516ea1fd543956ebb6ff9d73931a11aea2eed7a8cc1b4cc3a9b06b88c7a",
+      "git_blob_sha1": "94357c625b4e34c808aa8d1731a589cbc1e48a25",
+      "bytes": 41056,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        3,
+        1
+      ],
+      "source_cell_alpha_bbox": [
+        90,
+        10,
+        211,
+        269
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-3/reach-tap/frame-2.webp",
+      "player": 3,
+      "kind": "reach-tap",
+      "frame": 2,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "5f074f77b6461b55f58dac3f1150ff4df374ad97474fd30eae9c20d57da764f6",
+      "git_blob_sha1": "a273d4c2ed228fabb203e5c17817c1e74fa219ca",
+      "bytes": 40874,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        3,
+        2
+      ],
+      "source_cell_alpha_bbox": [
+        83,
+        10,
+        215,
+        268
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-3/reach-tap/frame-3.webp",
+      "player": 3,
+      "kind": "reach-tap",
+      "frame": 3,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "a7d92af365b38b09f1fda6f5808472d03ed34474e4a7f6fa06320659b9254234",
+      "git_blob_sha1": "b9859f196dfbd939a2d6862818c8587fe60c544e",
+      "bytes": 41760,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        3,
+        3
+      ],
+      "source_cell_alpha_bbox": [
+        70,
+        11,
+        220,
+        268
+      ],
+      "status": "staged; gameplay review required"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-26-recovered-characters/player-3/reach-tap/frame-4.webp",
+      "player": 3,
+      "kind": "reach-tap",
+      "frame": 4,
+      "width": 224,
+      "height": 300,
+      "foot": [
+        112,
+        286
+      ],
+      "sha256": "5bbb74b379924a2619c93a7973869d9f482170a324ffacdc8812771fe9362b4f",
+      "git_blob_sha1": "011cc57ef53a06f5ffbc2667efacff98a60900e6",
+      "bytes": 39250,
+      "source": "Watercolor traveler tapping sprite atlas.png",
+      "source_cell": [
+        3,
+        4
+      ],
+      "source_cell_alpha_bbox": [
+        68,
+        10,
+        174,
+        268
+      ],
+      "status": "staged; gameplay review required"
+    }
+  ]
+}
