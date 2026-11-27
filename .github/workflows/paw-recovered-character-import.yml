@@ -1,0 +1,101 @@
+name: Import recovered Pawradise characters
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/paw-recovered-character-import.yml
+      - Pawradise_Recovered_Character_Assets.zip
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: paw-recovered-character-import
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Install image verification dependency
+        run: python3 -m pip install Pillow
+      - name: Verify and import character assets
+        run: |
+          python3 <<'PY'
+          import hashlib,json,pathlib,zipfile,time
+          from PIL import Image
+          from io import BytesIO
+          root=pathlib.Path.cwd()
+          package=root/'Pawradise_Recovered_Character_Assets.zip'
+          prefix='assets/visual/staging/2026-11-26-recovered-characters/'
+          manifest=prefix+'manifest.json'
+          registry=root/'docs/WORKSTREAMS.json'
+          runtime=root/'assets/visual/painted/action-runtime.json'
+          reg=json.loads(registry.read_text())
+          task=next(t for t in reg['tasks'] if t['id']=='ART-01')
+          if not package.exists():
+              assert (root/manifest).exists(),'Archive missing'
+              rows=json.loads((root/manifest).read_text())['assets']
+              assert len(rows)==24
+              assert all(hashlib.sha256((root/a['path']).read_bytes()).hexdigest()==a['sha256'] for a in rows)
+              print('Already imported')
+              raise SystemExit(0)
+          lease=task.get('lease') or {}
+          assert lease.get('owner')=='manual-recovered-char-import-20261127' and lease['until']>time.time()*1000,'Character workstream lease unavailable'
+          assert hashlib.sha256(package.read_bytes()).hexdigest()=='5e277f0c19798df01af6713682838211047ff4bb5a041b381558d290e46a0618'
+          expected={prefix+f'player-1/walk/right-{i}.webp' for i in range(4)}|{prefix+f'player-{p}/reach-tap/frame-{i}.webp' for p in range(4) for i in range(5)}
+          with zipfile.ZipFile(package) as z:
+              assert z.testzip() is None
+              rows=json.loads(z.read(manifest))['assets']
+              assert len(rows)==24 and {a['path'] for a in rows}==expected
+              assert len(z.namelist())==27 and set(z.namelist())==expected|{manifest,'RECOVERY_README.md','verify_recovered_characters.py'}
+              copies={}
+              for a in rows:
+                  n=a['path'];raw=z.read(n)
+                  assert len(raw)==a['bytes'] and hashlib.sha256(raw).hexdigest()==a['sha256']
+                  assert hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\x00'+raw).hexdigest()==a['git_blob_sha1']
+                  im=Image.open(BytesIO(raw));im.load()
+                  assert im.format=='WEBP' and im.mode=='RGBA' and im.size==(a['width'],a['height'])==(224,300)
+                  box=im.getchannel('A').getbbox()
+                  assert box and box[0]>0 and box[1]>0 and box[2]<im.width and box[3]<im.height and a['foot']==[112,286]
+                  copies[n]=raw
+              copies[manifest]=z.read(manifest)
+              copies[prefix+'README.md']=z.read('RECOVERY_README.md')
+              copies['scripts/verify-recovered-characters.py']=z.read('verify_recovered_characters.py')
+          live=json.loads(runtime.read_text())
+          walk=live['players']['1']['walk']
+          right=[]
+          for a in sorted((a for a in rows if a['path'] in {prefix+f'player-1/walk/right-{i}.webp' for i in range(4)}),key=lambda a:a['frame']):
+              dst=f"assets/visual/painted/player-1/walk/right-{a['frame']}.webp"
+              copies[dst]=copies[a['path']]
+              right.append(dict(path=dst,width=a['width'],height=a['height'],sha256=a['sha256'],foot=a['foot']))
+          assert len(right)==4
+          assert not walk.get('right') or walk['right']==right,'Existing right walk differs; preserve it'
+          for n,raw in copies.items():
+              p=root/n
+              assert p.resolve().is_relative_to(root) and not p.is_symlink()
+              if p.exists():assert p.is_file() and p.read_bytes()==raw,'Conflicting existing asset: '+n
+          for n,raw in copies.items():
+              p=root/n;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(raw)
+          walk['right']=right
+          runtime.write_text(json.dumps(live,indent=2)+'\n')
+          task['evidence'].append('Imported and hash-verified all 24 original recovered candidates. Four matching right-walk frames for player 1 registered in the live manifest; left mirrors right. The 20 reaching/tapping poses are staged, not mislabelled as waving or strike animations. Rendered gait, contact and visual acceptance remain pending.')
+          task['blocker']+=' Uploaded archive imported. Check live direction changes, scale, foot contact and image readiness; finish player 1 front walk and review remaining roster/poses. No new playable avatar or wave claimed.'
+          task['lease']=None
+          registry.write_text(json.dumps(reg,indent=2,ensure_ascii=False)+'\n')
+          print('Verified 24 recovered candidates and registered 4 side-walk frames')
+          PY
+      - name: Check runtime contract and commit
+        run: |
+          set -euo pipefail
+          if [ ! -f Pawradise_Recovered_Character_Assets.zip ]; then exit 0; fi
+          python3 scripts/verify-recovered-characters.py
+          node -e "const fs=require('node:fs'),validate=require('./scripts/painted-action-test.cjs');const m=JSON.parse(fs.readFileSync('assets/visual/painted/action-runtime.json'));const v=validate(m);if(v.players[1].walk.right.length!==4)throw Error('Missing right walk');for(const a of v.players[1].walk.right){if(require('node:crypto').createHash('sha256').update(fs.readFileSync(a.path)).digest('hex')!==a.sha256)throw Error('hash mismatch')}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- assets/visual/staging/2026-11-26-recovered-characters/ assets/visual/painted/player-1/walk/ assets/visual/painted/action-runtime.json scripts/verify-recovered-characters.py docs/WORKSTREAMS.json
+          git rm -- Pawradise_Recovered_Character_Assets.zip
+          git commit -m "Import 24 recovered character assets and register missing side walk"
+          git push origin HEAD:main
