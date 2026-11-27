@@ -20,7 +20,7 @@ console.log('Seven painted-room artwork hashes, connected safe lanes and camera 
 const source=fs.readFileSync(path.resolve(__dirname,'../src/startup.js'),'utf8');
 const start=source.indexOf('/* PAW_READING_LOBBIES_BEGIN */'),end=source.indexOf('/* PAW_READING_LOBBIES_END */');
 assert.ok(start>=0&&end>start,'runtime integration missing');
-const helpers=new Function(source.slice(start,end)+';return {pawReadingWorld,pawReadingNormalized,pawReadingSpec,pawReadingCamera,pawReadingCompatible};')();
+const helpers=new Function(source.slice(start,end)+';return {pawReadingWorld,pawReadingNormalized,pawReadingSpec,pawReadingCamera,pawReadingCompatible,pawReadingDestination};')();
 for(const id of ['tarot','destiny','quiz','story','match']){
  const spec=helpers.pawReadingSpec(api,id),points=[spec.entry,spec.arrival,...Object.values(spec.stations).map(v=>v.slice(2)),[spec.entry[0],spec.entry[1]-35]];
  assert.ok(helpers.pawReadingCompatible(api,id,[[id,'en','zh']]));
@@ -53,3 +53,24 @@ for(const a of teaPoints){
  }
 }
 console.log('Tea room two-station compatibility, walkable approach, exit and viewport checks passed.');
+
+const pier=helpers.pawReadingSpec(api,'fish');
+assert.ok(helpers.pawReadingCompatible(api,'fish',[['hit'],['pier'],['riverShout']]));
+assert.ok(!helpers.pawReadingCompatible(api,'fish',[['hit'],['bottle'],['riverShout']]));
+assert.ok(!helpers.pawReadingCompatible(api,'fish',[['hit'],['pier']]));
+const pierPoints=[pier.entry,pier.arrival,...Object.values(pier.stations).map(v=>v.slice(2))];
+assert.ok(pier.stations.riverShout[3]<565,'pier must bypass legacy indoor y clamp');
+for(const a of pierPoints){
+ assert.ok(api.safe('fish',helpers.pawReadingNormalized(...a)));
+ for(const b of pierPoints){
+  const route=helpers.pawReadingDestination(api,'fish',a,...b);
+  assert.ok(route?.length,'curved pier route');
+  assert.ok(Math.hypot(route.at(-1)[0]-b[0],route.at(-1)[1]-b[1])<1e-7);
+ }
+ for(const [w,h] of [[320,640],[390,844],[430,932],[768,1024],[1280,720]]){
+  const c=helpers.pawReadingCamera(api,w,h),x=c.ox+a[0]*c.s,y=c.oy+a[1]*c.s;
+  assert.ok(x>=0&&x<=w&&y>=0&&y<=h,'pier mapped camera');
+ }
+}
+assert.equal(helpers.pawReadingDestination(api,'fish',pier.entry,400,200),null);
+console.log('Pier actual action IDs, curved path, legacy clamp bypass and camera checks passed.');
