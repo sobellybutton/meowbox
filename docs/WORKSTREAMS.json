@@ -774,6 +774,22 @@
       ],
       "lease": null,
       "blocker": "Connect module to existing ambient scheduler when shared source lease clears; actual dialogue placement, cadence and bilingual review pending."
+    },
+    {
+      "id": "QA-BUILD-01",
+      "lane": "engineering",
+      "priority": 1,
+      "summary": "Repair build failure in instrumented map sign collision quality test without weakening coverage",
+      "resources": [
+        "scripts/quality-checks.cjs"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-ci-repair-20261127-k",
+        "until": 1795787172597
+      }
     }
   ]
 }
