@@ -288,6 +288,48 @@
               286
             ]
           }
+        ],
+        "down": [
+          {
+            "path": "assets/visual/painted/player-1/walk/down-0.webp",
+            "width": 224,
+            "height": 300,
+            "sha256": "80c5617f28756a71c40175400056baed7823874e37b80b15521eb894d1d6c130",
+            "foot": [
+              112,
+              286
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-1/walk/down-1.webp",
+            "width": 224,
+            "height": 300,
+            "sha256": "bbf93c490c874091b6e2e835bacce523f4e64c171a0b48d3cafc36f79a56fc7e",
+            "foot": [
+              112,
+              286
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-1/walk/down-2.webp",
+            "width": 224,
+            "height": 300,
+            "sha256": "90b0777ace6ef858409f6092fa0a1894c9dca33fec546f5b13733d0e8dd8be4f",
+            "foot": [
+              112,
+              286
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-1/walk/down-3.webp",
+            "width": 224,
+            "height": 300,
+            "sha256": "51d1dd8d67ef1fe7ac3ebc8ac882a77a639e9041dc367cb9b450117f5f3ca99a",
+            "foot": [
+              112,
+              286
+            ]
+          }
         ]
       },
       "strike": {
