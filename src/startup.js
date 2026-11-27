@@ -4753,7 +4753,7 @@ function pawHomeStageBlocks(stage){
  for(const im of stage.querySelectorAll('.hideoutPlaced,.figureCabinetInRoom')){
   const id=im.dataset.furnitureId||(im.classList.contains('figureCabinetInRoom')?'displayCabinet':'');
   if(!id||im.hidden)continue;
-  const kind=catalogue.find(v=>v[0]===id)?.[4],x=parseFloat(im.style.left),y=parseFloat(im.style.top),width=im.style.width.endsWith('%')?parseFloat(im.style.width):im.offsetWidth/Math.max(1,stage.clientWidth)*100;
+  const kind=mbHomeKind(id),x=parseFloat(im.style.left),y=parseFloat(im.style.top),width=im.style.width.endsWith('%')?parseFloat(im.style.width):im.offsetWidth/Math.max(1,stage.clientWidth)*100;
   const b=pawHomeFootprint(x,y,width,kind,id,aspect);if(b)blocks.push(b)
  }
  return blocks

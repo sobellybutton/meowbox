@@ -49,7 +49,7 @@ for(const [extension,studio] of [[false,false],[false,true],[true,false],[true,t
 const extensions=fs.readFileSync(path.resolve(__dirname,'../src/extensions.js'),'utf8');
 const previewBlock=extensions.match(/\/\* PAW_FURNITURE_PREVIEW_BEGIN \*\/([\s\S]*?)\/\* PAW_FURNITURE_PREVIEW_END \*\//);
 assert.ok(previewBlock);
-const previews=new Function(previewBlock[1]+';return {pawFurniturePaintedPath,pawFurniturePainted,pawFurniturePreviewOnly}')();
+const previews=new Function(previewBlock[1]+';return {pawFurniturePaintedPath,pawFurniturePainted,pawFurniturePreviewOnly,pawFurnitureImported,pawFurnitureRoomPose}')();
 for(const id of api.legacyIds){
  assert.equal(previews.pawFurniturePaintedPath(id),api.legacyFurniture(id));
  assert.ok(fs.existsSync(path.resolve(__dirname,'..',previews.pawFurniturePaintedPath(id))));
@@ -66,3 +66,33 @@ const shell=fs.readFileSync(path.resolve(__dirname,'../src/shell.html'),'utf8');
 assert.ok(shell.includes('.komorebiTile>.mbFurnitureMat>img'));
 assert.ok(shell.includes('.komorebiTile>strong'));
 console.log('Painted furniture first-render and preview-path checks passed.');
+
+const imported=["board","frame","kotatsu","teaCabinet","bonsai","recordPlayer","readingChair","chineseScreen","chineseLantern","porcelainVase","moonShelf"];
+assert.deepEqual([...previews.pawFurnitureImported],imported);
+for(const id of imported){
+ const expected='assets/visual/painted/home/furniture/'+id+'.webp';
+ assert.equal(previews.pawFurniturePaintedPath(id),expected);
+ assert.equal(previews.pawFurniturePaintedPath(id,true),expected);
+ assert.equal(api.furniture(id),expected);
+ assert.ok(fs.existsSync(path.resolve(__dirname,'..',expected)));
+ const pose=previews.pawFurnitureRoomPose(id,45,78,30);
+ assert.equal(pose.left,45);
+ assert.equal(pose.anchor,id==='chineseLantern'?'top':'bottom');
+ if(id==='chineseLantern'){
+  assert.equal(pose.top,3.2);assert.equal(pose.logicalY,35);assert.equal(pose.rotation,0);
+  assert.equal(api.footprint({id,u:0,v:0}).layer,'wall');
+ }else if(id==='board'||id==='frame'){
+  assert.equal(pose.top,54);assert.ok(pose.maxHeight<=pose.top-4);
+  assert.equal(api.footprint({id,u:0,v:0}).layer,'wall');
+ }else{
+  assert.equal(pose.top,78);assert.equal(pose.rotation,30);
+  assert.equal(api.footprint({id,u:0,v:0}).layer,'floor');
+ }
+}
+assert.equal(previews.pawFurnitureRoomPose('shelf',30,80,15).anchor,'legacy');
+assert.equal(previews.pawFurnitureRoomPose('board',50,18).maxHeight,14);
+assert.equal(previews.pawFurnitureRoomPose('chineseLantern',0,90).left,12);
+assert.equal(previews.pawFurnitureRoomPose('chineseLantern',100,90).left,88);
+assert.ok(extensions.includes('d.x=old.x;d.y=old.y;pawFurnitureApplyRoomPose(im,d)'));
+assert.ok(extensions.includes("id==='chineseLantern'?'wall'"));
+console.log('Imported furniture paths and placement anchors verified.');

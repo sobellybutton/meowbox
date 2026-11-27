@@ -21,13 +21,14 @@
   'display-cabinet':[1,1], wardrobe:[1,1], nightstand:[1,1], 'retro-tv':[1,1],
   'floor-cushion':[1,1], 'paper-lamp':[1,1], 'floor-lantern':[1,1], fern:[1,1],
   'flower-vase':[1,1], 'cat-bed':[1,1], 'cat-tower':[1,1], 'woven-rug':[2,2],
-  'wall-shelf':[1,1], curtains:[1,1]
+  'wall-shelf':[1,1], curtains:[1,1], board:[1,1],frame:[1,1],kotatsu:[2,2],teaCabinet:[2,1],bonsai:[1,1],recordPlayer:[1,1],readingChair:[1,1],chineseScreen:[2,1],chineseLantern:[1,1],porcelainVase:[1,1],moonShelf:[2,1]
  };
- const wall=new Set(['wall-shelf','curtains']);
+ const imported=new Set(["board","frame","kotatsu","teaCabinet","bonsai","recordPlayer","readingChair","chineseScreen","chineseLantern","porcelainVase","moonShelf"]);
+ const wall=new Set(['wall-shelf','curtains','board','frame','chineseLantern']);
  const flat=new Set(['woven-rug']);
  function spec(id){return Object.hasOwn(layouts,id)?layouts[id]:null}
  function shell(id){const l=spec(id);return l?base+'shells/'+l.asset+'.webp':null}
- function furniture(id){return Object.hasOwn(catalog,id)?base+'furniture/'+id+'.webp':null}
+ function furniture(id){return imported.has(id)?'assets/visual/painted/home/furniture/'+id+'.webp':Object.hasOwn(catalog,id)?base+'furniture/'+id+'.webp':null}
  function project(id,u,v){
   const l=spec(id);if(!l||!Number.isFinite(u)||!Number.isFinite(v))return null;
   const a=u/l.width,b=v/l.depth;
