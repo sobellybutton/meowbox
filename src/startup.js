@@ -11368,8 +11368,22 @@ const pawRailEdgeStyle=document.createElement('style');pawRailEdgeStyle.textCont
 const pawDoorPushFadeBefore=fade;
 fade=function(fn,kind='gust',destination=null){
  if(!room&&!transitioning&&['door','curtain','gust'].includes(kind)&&!destination&&proposal.hidden&&$('page').style.display!=='block'){
-  const zoom=pawPushDoorCamera(320);
-  if(zoom){$('game').classList.add('pawDoorCameraActive');setTimeout(()=>{zoom.cancel();$('game').classList.remove('pawDoorCameraActive')},360)}
+  const zoom=pawPushDoorCamera(240);
+  if(zoom){
+   const origin=scene,game=$('game');transitioning=true;game.classList.add('pawDoorCameraActive');
+   // Complete the visible approach before the door panels begin to close.
+   // Cancel the transform before the first interior frame, not mid-approach.
+   setTimeout(()=>{
+    const clear=()=>{zoom.cancel();game.classList.remove('pawDoorCameraActive')};
+    if(scene!==origin||room||activity||!proposal.hidden||document.hidden||$('page').style.display==='block'){transitioning=false;clear();return}
+    transitioning=false;
+    try{
+     return pawDoorPushFadeBefore(()=>{clear();return fn()},kind,destination)
+    }catch(error){clear();transitioning=false;throw error}
+    finally{setTimeout(clear,1000)}
+   },240);
+   return
+  }
  }
  return pawDoorPushFadeBefore(fn,kind,destination)
 };
