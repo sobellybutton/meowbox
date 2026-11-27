@@ -2973,11 +2973,12 @@ syncSigns=function(){
  nextStopButton.hidden=true;
  const sign=signButtons.get('station');
  if(sign&&!signRoot.hidden&&!sign.hidden){
-  const name=tr('Railway Station','火车站');
+  const name=tr('To station','前往车站'),accessible=tr('Walk to railway station','步行前往火车站');
   const plaque=sign.querySelector('.doorPlaque');
   if(plaque&&plaque.textContent!==name)plaque.textContent=name;
-  if(sign.getAttribute('aria-label')!==name)sign.setAttribute('aria-label',name);
-  sign.title=tr('Optional train to ','随心搭车前往')+tr(...maps[railNextDistrict(scene)].n)
+  if(sign.getAttribute('aria-label')!==accessible)sign.setAttribute('aria-label',accessible);
+  sign.dataset.pawWayfinding='railway';
+  sign.title=tr('Next train to ','下一班列车前往')+tr(...maps[railNextDistrict(scene)].n)
  }
  return result
 };
@@ -3160,12 +3161,41 @@ step=function(n,dt,speed){
 };
 /* The station is an intentional boarding action. Retain the existing Map
    preview for deliberate destination browsing and optional daily suggestions. */
+// The map contains a wayfinding entrance, not a painted train platform.
+// Keep the actual boarding decision at a dedicated station scene.
+function pawStationPlatform(origin=scene){
+ if(transitioning||room||activity||!proposal.hidden||origin!==scene||!maps[origin])return;
+ const destination=railNextDistrict(origin);
+ if(!maps[destination]||destination===origin)return;
+ page(tr('Railway station','火车站'),tr('Next stop: ','下一站：')+tr(...maps[destination].n),q=>{
+  const panel=element('section','',q,'pawStationPlatform');
+  panel.dataset.origin=origin;panel.dataset.destination=destination;
+  const picture=element('picture','',panel,'pawStationPlatformArt');
+  const wide=element('source','',picture);wide.media='(orientation: landscape)';wide.srcset='assets/visual/painted/recovered/scenes/station_landscape.webp';
+  const art=element('img','',picture);art.src='assets/visual/painted/recovered/scenes/station_portrait.webp';art.alt=tr('Railway platform and waiting train','火车站台与等候中的列车');art.decoding='async';
+  const departure=element('div','',panel,'pawStationDeparture');
+  element('small',tr('Next departure','下一班列车'),departure);
+  element('h2',tr(...maps[destination].n),departure);
+  element('p',tr('Ready to leave? You can come back to this town any time.','准备出发了吗？随时可以回来继续逛。'),departure);
+  const controls=element('div','',departure,'pawStationControls');
+  let boarded=false;
+  const board=b(controls,tr('Board the train','上车出发'),()=>{
+   if(boarded||!panel.isConnected||$('page').style.display!=='block'||scene!==origin||transitioning||room||activity||!proposal.hidden)return;
+   boarded=true;board.disabled=true;travellerSuggestedRoute=null;journey(destination)
+  });board.className='pawStationBoard';
+  b(controls,tr('Keep exploring','继续逛逛'),()=>{
+   if(boarded||!panel.isConnected||scene!==origin||transitioning)return;
+   $('page').style.display='none';updateHUD()
+  });
+ });
+ journalLanguage(()=>pawStationPlatform(origin))
+}
 const pawStationEnterBefore=enter;
 enter=function(id){
  if(id!=='station')return pawStationEnterBefore(id);
- if(transitioning||room||!proposal.hidden)return;
+ if(transitioning||room||activity||!proposal.hidden||$('page').style.display==='block')return;
  releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;
- travellerSuggestedRoute=null;journey(railNextDistrict(scene))
+ pawStationPlatform(scene)
 };
 const pawRailFadeBefore=fade;
 fade=function(fn,kind='gust',destination=null){
@@ -10405,4 +10435,29 @@ drawMap=function(...args){
  };
  try{return pawNewDistrictDrawBefore(...args)}finally{target=prior}
 };
+
+/* Unified, language-aware type system; labels remain live localized text. */
+const pawFinalTypeStyle=document.createElement('style');
+pawFinalTypeStyle.textContent=`
+html{--paw-body:"Avenir Next","Segoe UI","Trebuchet MS","Noto Sans",system-ui,sans-serif;--paw-display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif}
+html[lang^="zh"]{--paw-body:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",system-ui,sans-serif;--paw-display:"Songti SC","Noto Serif CJK SC","STSong","SimSun",serif}
+#game,#proposal,#game :is(button,input,select,textarea,summary),#proposal :is(button,input,select,textarea,summary),#game #dock button span,#proposal .pawAvatarOption span{font-family:var(--paw-body)!important}
+#game #content :is(h1,h2,h3),#game #content .pawTownNotebook :is(h1,h2,h3),#proposal :is(h1,h2,h3),#game #location,#game #dialogue #speaker,#game .pawPlaceName{font-family:var(--paw-display)!important;font-weight:600!important;line-height:1.25;letter-spacing:0}
+#game #content :is(p,li),#game #dialogue #line{line-height:1.55;overflow-wrap:anywhere}
+#game #content :is(button,summary),#proposal button{letter-spacing:0;line-height:1.3}
+#game>#worldSigns>.worldSign,#game>#worldSigns>.worldSign .doorPlaque,#game[data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque{font-family:var(--paw-body)!important;font-weight:650!important;letter-spacing:0!important;line-height:1.22!important}
+#game>#worldSigns>.worldSign .doorPlaque,#game[data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque{font-size:clamp(12px,2.8vw,14px)!important;max-width:min(148px,42vw)!important;white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;text-align:center;text-wrap:balance}
+#game>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque{white-space:nowrap!important}
+#game #content .pawStationPlatform{display:grid;gap:0;max-width:960px;margin:12px auto 22px;border:1px solid #b39a73;border-radius:8px;overflow:hidden;background:#f4ead5;color:#4c4939}
+#game #content .pawStationPlatformArt{display:block;min-width:0;background:#334d43}
+#game #content .pawStationPlatformArt img{display:block;width:100%;height:clamp(240px,46dvh,520px);object-fit:contain;object-position:center}
+#game #content .pawStationDeparture{padding:clamp(12px,3vw,22px);min-width:0}
+#game #content .pawStationDeparture h2{margin:4px 0 7px;color:#4a624c}
+#game #content .pawStationDeparture p{margin:8px 0 14px}
+#game #content .pawStationControls{display:flex;flex-wrap:wrap;gap:8px}
+#game #content .pawStationControls button{flex:1 1 140px;min-width:0;min-height:44px;white-space:normal}
+#game #content .pawStationControls .pawStationBoard{background:#49664e;color:#fff2d9;border-color:#49664e}
+@media(orientation:landscape) and (min-width:760px){#game #content .pawStationPlatform{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);align-items:center}#game #content .pawStationPlatformArt img{height:auto;max-height:68dvh}}
+`;document.head.append(pawFinalTypeStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
