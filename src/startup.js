@@ -6194,8 +6194,9 @@ beginValleyReveal=function(...args){
  if(points){
   const q=pawDistrictFoot(points,p.x,p.y);Object.assign(p,{x:q.x,y:q.y,tx:q.x,ty:q.y,motionSpeed:0,pawFacing:'up',facing:'up'});cam.x=q.x;cam.y=q.y;
   if(scene==='fortune'){
-   const ahead=pawDistrictFoot(points,q.x,q.y-78);
-   if(!residentReducedMotion.matches){p.tx=ahead.x;p.ty=ahead.y}
+   // Arrival stays on the foot of the actual map path. No second forced
+   // walk or camera pull immediately after the entrance transition.
+   p.tx=q.x;p.ty=q.y;
    hint('Explore the shops, or open Explore to find the railway.','逛逛小店，或打开「探索」找到火车站。')
   }
  }
@@ -6527,14 +6528,17 @@ function pawGateFit(w,h){
 function pawGateGround(w,h,progress=0){
  const fit=pawGateFit(w,h);if(!fit)return null;
  const v=Math.max(0,Math.min(1,Number.isFinite(progress)?progress:0));
- return {x:fit.left+fit.width*(.50+.018*v),y:fit.top+fit.height*(.84-.23*v),height:fit.height*(.13-.055*v)}
+ // Ground points traced on the actual 880x1320 gate painting: lower stone
+ // paving to the foreground threshold, never the distant vanishing point.
+ const x=.50-.012*v,y=.865-.135*v,height=.118-.018*v;
+ return {x:fit.left+fit.width*x,y:fit.top+fit.height*y,height:fit.height*height}
 }
 const pawGateCompositionCSS=document.createElement('style');
 pawGateCompositionCSS.textContent=`
 #proposal[data-paw-entrance-step="3"]>.hero{background:#293c32!important;container-type:size}
 #proposal[data-paw-entrance-step="3"] .mbGatePainting{object-fit:contain!important;object-position:center!important;backdrop-filter:none!important;background:none!important}
-#proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded{position:absolute!important;left:var(--paw-gate-x)!important;top:var(--paw-gate-y)!important;bottom:auto!important;width:auto!important;height:var(--paw-gate-height)!important;max-width:none!important;max-height:none!important;translate:var(--paw-gate-pivot-x,-50%) var(--paw-gate-pivot-y,-100%)!important;transform:none!important;transition:none!important;opacity:1!important;object-fit:contain!important}
-#proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded.go{opacity:0!important;transition:opacity .13s linear!important}
+#proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded{position:absolute!important;left:var(--paw-gate-x)!important;top:var(--paw-gate-y)!important;bottom:auto!important;width:auto!important;height:var(--paw-gate-height)!important;max-width:none!important;max-height:none!important;translate:var(--paw-gate-pivot-x,-50%) var(--paw-gate-pivot-y,-100%)!important;transform:none!important;transition:none!important;opacity:1!important;object-fit:contain!important;filter:none!important}
+#proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded.go{transform:none!important;translate:var(--paw-gate-pivot-x,-50%) var(--paw-gate-pivot-y,-100%)!important;opacity:0!important;transition:opacity .18s linear!important}
 `;
 document.head.append(pawGateCompositionCSS);
 function pawGatePlace(hero,traveller,progress=0){
@@ -6552,11 +6556,11 @@ async function pawGateWalk(hero,traveller){
  if(!hasFrames)return;
  await new Promise(resolve=>{
   let start=null,done=false;const finish=()=>{if(!done){done=true;resolve()}};
-  setTimeout(finish,1000);
+  setTimeout(finish,1650);
   function tick(now){
    if(done||!traveller.isConnected||proStep!==3||document.hidden){finish();return}
-   start??=now;const v=Math.min(1,(now-start)/720);
-   const i=Math.min(frames.length-1,Math.floor(v*frames.length*2)%frames.length);
+   start??=now;const v=Math.min(1,(now-start)/1200);
+   const i=Math.floor(v*frames.length*2)%frames.length;
    if(traveller.getAttribute('src')!==frames[i].path)traveller.src=frames[i].path;
    traveller.style.setProperty('--paw-gate-pivot-x',(-100*frames[i].foot[0]/frames[i].width)+'%');
    traveller.style.setProperty('--paw-gate-pivot-y',(-100*frames[i].foot[1]/frames[i].height)+'%');
