@@ -284,12 +284,17 @@
       "priority": 1,
       "summary": "Temple dedicated ritual art and spatial contact",
       "resources": [
-        "art:temple"
+        "art:temple",
+        "src/startup.js",
+        "src/extensions.js"
       ],
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-temple-20261127-j",
+        "until": 1795786779259
+      }
     },
     {
       "id": "ROOM-02",
