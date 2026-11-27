@@ -12291,6 +12291,37 @@ label=function(name,x,y,fn){
  }finally{ctx.restore()}
 };
 pawLoadReadingModule().then(api=>{if(!api)return;for(const id of pawReadingRoomIds){const q=api.rooms[id];if(q)pawRoomVisitorSpecs[id]={count:1,points:q.visitors.map(v=>pawReadingWorld(v))}}});
+/* PAW_MAPPED_EXIT_BEGIN */
+function pawMappedExitPlan(api,id,position){
+ const spec=pawReadingSpec(api,id);
+ if(!spec||!Array.isArray(position)||!position.every(Number.isFinite))return null;
+ const entry=spec.entry;
+ if(Math.hypot(position[0]-entry[0],position[1]-entry[1])<=4)return {entry,arrived:true};
+ const route=pawReadingDestination(api,id,position,...entry);
+ return route?.length?{entry,arrived:false}:null
+}
+/* PAW_MAPPED_EXIT_END */
+// The painted lobby has a real threshold. Back walks to it before the
+// existing outdoor transition, rather than vanishing beside the table.
+const pawMappedExitBefore=$('back').onclick;
+let pawMappedExitGoal=null;
+$('back').onclick=function(...args){
+ if(!pawReadingActive()||!indoorReady()||continuityRoom!==room)return pawMappedExitBefore.apply(this,args);
+ if(pawMappedExitGoal&&indoor.goal===pawMappedExitGoal)return;
+ const expected=room,visit=pawReadingVisit,plan=pawMappedExitPlan(pawReadingAPI(),room,[indoor.x,indoor.y]);
+ if(!plan){hint('Follow the clear path to the doorway.','请沿小路走向门口。');return}
+ releaseWalkKeys();joystickReset();
+ const finish=()=>{
+  if(pawMappedExitGoal===finish)pawMappedExitGoal=null;
+  if(room!==expected||pawReadingVisit!==visit||!indoorReady())return;
+  return pawMappedExitBefore.apply(this,args)
+ };
+ if(plan.arrived)return finish();
+ pawMappedExitGoal=finish;
+ if(indoorDestination(...plan.entry,finish,'down'))hint('Heading to the doorway…','正在走向门口……');
+ else pawMappedExitGoal=null
+};
+
 
 // Use the inspected town pavilion as the full-page setting; the notice
 // surfaces stay readable and remain live HTML, never baked-in artwork.
