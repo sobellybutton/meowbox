@@ -1457,7 +1457,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null,
+      "lease": {
+        "owner": "manual-assessment-routing-2310",
+        "until": 1795794000000
+      },
       "blocker": "Lab: preferences/Big Five/Enneagram; Parallel: values/priorities, alternate lives and distinct humorous self-discovery; Cafe: love languages, attachment reflection, communication/friendship/romance. Audit all earlier humorous tests, one venue per test, preserve Soul Cat saves; informal not diagnostic; scoring, ties, privacy, replay."
     },
     {
