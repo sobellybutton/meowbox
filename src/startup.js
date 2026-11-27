@@ -9095,7 +9095,7 @@ label=function(name,x,y,fn){
   const value=tr(en,cn),w=Math.min(124,Math.max(55,ctx.measureText(value).width+12)),h=font+11;
   const rect=pawHallScreenRect({x:cx-w/2,y:cy-h/2,w,h},{s:scale,ox:cam.ox,oy:cam.oy});
   // Keep signs near the painted station, not on a visitor's face.
-  if(rect&&rect.left>=4&&rect.right<=W-4&&rect.top>=4&&rect.bottom<=H-4&&!meowTextFrameRects.some(b=>pawHallOverlap(rect,b))){
+  if(rect&&rect.left>=4&&rect.right<=W-4&&rect.top>=4&&rect.bottom<=H-4&&![...meowTextFrameRects,...meowFrameBlockers].some(b=>pawHallOverlap(rect,b))){
    round(cx-w/2,cy-h/2,w,h,3,'#503b2ce8','#d7ba83');
    activityFitText(value,cx,cy,font,w-8,'#fff1d7');
    meowTextFrameRects.push(rect);pawVisibleStationLabels.add(id);
@@ -9160,6 +9160,113 @@ const pawHallGuideBefore=roomGuideEntries;
 roomGuideEntries=function(){
  if(room!=='temple')return pawHallGuideBefore();
  return [['templeWater','Purification basin','净手池'],['templeBell','Bronze bell','敲钟'],['prayer','Incense & Guanyin altar','上香与观音殿'],['sticks','Fortune sticks','求签'],['moon','Moon blocks','掷筊'],['secretGarden','Quiet garden','静谧后院']]
+};
+
+/* PAW_FORECOURT_BEGIN */
+const pawForecourtPlate={x:100,y:-145,w:600,h:600*1648/928};
+const pawForecourtStart=[.49,.82],pawForecourtLanding=[.47,.58],pawForecourtCat=[.57,.64];
+function pawForecourtWorld(p){
+ return [pawForecourtPlate.x+p[0]*pawForecourtPlate.w,pawForecourtPlate.y+p[1]*pawForecourtPlate.h]
+}
+function pawForecourtRoute(q,kind){
+ if(!q||q.route?.length||!['cat','hall'].includes(kind))return false;
+ const [x,y]=q.pos;
+ if(![x,y].every(Number.isFinite))return false;
+ // The paving narrows towards the torii. Both destinations stay on the
+ // actual stone steps, on the inside of the right-hand railing.
+ const goal=kind==='cat'?pawForecourtCat:pawForecourtLanding;
+ const route=[];
+ if(y>.73)route.push([.47,.73]);
+ if(kind==='hall'&&x>.52)route.push([.48,.64]);
+ route.push(goal.slice());
+ q.route=route;q.destination=kind;return true
+}
+function pawForecourtTick(q,now,blocked,reduced=false){
+ if(!q||!Number.isFinite(now))return null;
+ const elapsed=Number.isFinite(q.last)?Math.max(0,Math.min(.05,now-q.last)):0;q.last=now;
+ if(blocked||!q.route?.length)return null;
+ const from=pawForecourtWorld(q.pos),next=q.route[0],to=pawForecourtWorld(next),d=Math.hypot(to[0]-from[0],to[1]-from[1]);
+ const step=reduced?d:Math.min(d,elapsed*120);
+ if(d>0)q.pos=[q.pos[0]+(next[0]-q.pos[0])*step/d,q.pos[1]+(next[1]-q.pos[1])*step/d];
+ if(d<=step+.01){q.pos=next.slice();q.route.shift();if(!q.route.length){const kind=q.destination;q.destination=null;return kind}}
+ return null
+}
+function pawForecourtCamera(w,h){
+ const p=pawForecourtPlate;
+ if(!Number.isFinite(w)||!Number.isFinite(h)||w<=0||h<=0)return null;
+ const s=Math.min(w/p.w,h/p.h);
+ return {s,ox:(w-p.w*s)/2-p.x*s,oy:(h-p.h*s)/2-p.y*s}
+}
+/* PAW_FORECOURT_END */
+activityTitle.templeForecourt=['Lucky cat forecourt','招福猫参道'];
+let pawForecourtPending=false;
+const pawForecourtEnterBefore=enter;
+enter=function(id,...args){
+ pawForecourtPending=id==='temple'&&pawRoomImageReady(pawRecoveredImage('scenes/temple_approach_portrait.webp'));
+ return pawForecourtEnterBefore(id,...args)
+};
+const pawForecourtIntroBefore=roomIntro;
+roomIntro=function(...args){
+ const result=pawForecourtIntroBefore(...args);
+ if(!pawForecourtPending||room!=='temple'||activity)return result;
+ pawForecourtPending=false;
+ start('templeForecourt');state.pawForecourt={pos:pawForecourtStart.slice(),route:[],destination:null,last:t};
+ hint('Follow the stone path. The lucky cat is on your right.','沿着石阶向前走，右侧是招福猫。');
+ return result
+};
+function pawForecourtChoose(kind,run=state){
+ if(activity!=='templeForecourt'||room!=='temple'||run!==state||pawArcadeInputBlocked())return;
+ const q=run.pawForecourt;if(!pawForecourtRoute(q,kind))return;
+ hint(...(kind==='cat'?['Walking over to the lucky cat.','走近招福猫。']:['Follow the stone steps to the hall.','沿着石阶走进大殿。']))
+}
+const pawForecourtCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(...args){
+ if(activity==='templeForecourt')return pawForecourtCamera(W,H)||pawForecourtCameraBefore(...args);
+ return pawForecourtCameraBefore(...args)
+};
+const pawForecourtDrawBefore=drawActivity;
+drawActivity=function(...args){
+ if(activity!=='templeForecourt')return pawForecourtDrawBefore(...args);
+ const art=pawRecoveredImage('scenes/temple_approach_portrait.webp'),q=state.pawForecourt;
+ if(!q||!pawRoomImageReady(art))return;
+ const run=state,p=pawForecourtPlate;
+ const arrival=pawForecourtTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
+ if(arrival==='hall'){
+  // Preserve the actual hall visit and return to its real entrance point.
+  if(run===state){pawHallVisit=pawRoomImageReady(pawHallArt());activity=null;state={};continuityRoom=null;roomIntro();updateHUD()}
+  return
+ }
+ if(arrival==='cat'){
+  q.greeted=true;
+  hint('The lucky cat wishes you a quiet, unhurried day.','招福猫祝你今天从容自在，不必匆忙。');
+  if(!muted)physicalFx('wood',.25)
+ }
+ const b=livingBounds();
+ ctx.save();try{
+  ctx.fillStyle='#344338';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(art,p.x,p.y,p.w,p.h);
+  const [x,y]=pawForecourtWorld(q.pos),moving=q.route.length>0,d=q.route[0];
+  const dir=moving?(Math.abs((d[0]-q.pos[0])*p.w)>Math.abs((d[1]-q.pos[1])*p.h)?(d[0]>q.pos[0]?'right':'left'):(d[1]<q.pos[1]?'up':'down')):(q.greeted?'right':'up');
+  backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,dir,.92+(q.pos[1]-.58)*1.05);
+  if(!moving){
+   const cat=pawForecourtWorld([.69,.34]),catEnd=pawForecourtWorld([.97,.55]);
+   target(cat[0],cat[1],catEnd[0]-cat[0],catEnd[1]-cat[1],()=>pawForecourtChoose('cat',run),'paw-forecourt-cat');
+   const landing=pawForecourtWorld([.47,.51]),left=pawForecourtWorld([.30,.46]),right=pawForecourtWorld([.65,.61]);
+   target(left[0],left[1],right[0]-left[0],right[1]-left[1],()=>pawForecourtChoose('hall',run),'paw-forecourt-hall');
+   // Compact directions live on the stair path, never on the cat or traveller.
+   label(tr('Temple hall ↑','大殿 ↑'),landing[0],landing[1],()=>pawForecourtChoose('hall',run))
+  }
+ }finally{ctx.restore()}
+};
+document.addEventListener('keydown',event=>{
+ if(activity!=='templeForecourt'||pawArcadeInputBlocked()||event.repeat||event.altKey||event.ctrlKey||event.metaKey||event.target?.matches?.('input,textarea,select,button,[contenteditable=true]'))return;
+ if(event.key==='Enter'||event.key==='ArrowUp'){event.preventDefault();pawForecourtChoose('hall')}
+ if(event.key.toLowerCase()==='c'){event.preventDefault();pawForecourtChoose('cat')}
+});
+// Back from the forecourt means the village, not skipping into the hall.
+const pawForecourtBackBefore=$('back').onclick;
+$('back').onclick=function(...args){
+ if(activity==='templeForecourt'){activity=null;state={};pawForecourtPending=false;continuityRoom=null;return pawForecourtBackBefore.apply(this,args)}
+ return pawForecourtBackBefore.apply(this,args)
 };
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
