@@ -1444,13 +1444,11 @@
       "stage": "outstanding",
       "evidence": [
         "cf700a19: daily social task identifies a nearby fictional resident and explains choosing a conversation topic; restored existing lifeFriend credit on chosen cameo responses, not passive greeting.",
-        "4f1d41d51f860b4fc7fdc8203a7a5490b2fb36e7: persistent candidate/credit regression; source parsed and checks executed in connector harness."
+        "4f1d41d51f860b4fc7fdc8203a7a5490b2fb36e7: persistent candidate/credit regression; source parsed and checks executed in connector harness.",
+        "abad3290 + 2136b4c9 + c9994a1b: indoor resident and visiting-neighbour explicit conversation credit; proximity and context checks tested; source parsed."
       ],
-      "lease": {
-        "owner": "manual-three-social-1127",
-        "until": 1795794844856
-      },
-      "blocker": "Human consent, actual shared endpoint, gesture animation, room social navigation and rendered mobile/desktop acceptance remain outstanding."
+      "lease": null,
+      "blocker": "Actual browser interaction, physical wave/contact art, genuine shared peer consent and live service remain outstanding."
     },
     {
       "id": "DISCOVERY-ASSESSMENTS-01",
