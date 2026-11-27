@@ -349,3 +349,8 @@ UX-SIGN-PREVIEW-02: 22101d9e uploads four inspected original wood/washi crops, w
 ## Painted kitchen and milk tea shop lobbies (27 November 2026)
 
 ROOM-FOOD-LIVE-01: dbaa0f0a activates independently inspected 928×1648 kitchen and boba portraits during a loaded visit, with stable fallback, camera containment, actual aisle geometry, counter approach, grounded Grandma and Boba keeper, bilingual station labels, and existing visitor scheduling. Removes duplicate lobby furniture/props; existing cooking and drink activity lifecycle and earned recipes remain unchanged. Source parsed, assets verified in tree, and sampled path/counter/host/viewport checks executed and added to CI. Dedicated close-up cooking and tea preparation art, actual phone/desktop play, character contact, wide artwork and deployment verification remain open. ROOM-03 remains outstanding. No final acceptance increase. Lease released; concurrent signage work preserved.
+
+
+## Visitor continuity (27 November 2026)
+
+NPC-02: ddd0265d replaces eligible departed town guests independently when their own actor is offscreen and distant (or the map is fully covered). Continuing visitors retain their route and identity; duplicate identities and covered interactions remain guarded. 89ee7a97 adds the targeted rotation regression; current source syntax and helper checks passed in connector harness. Workstream released at tested stage. No real rendered visitor journey, artwork acceptance or latest deployment verified; no accepted count increase. Continue remaining room artwork, player flows and current browser verification. Hourly schedule unchanged.
