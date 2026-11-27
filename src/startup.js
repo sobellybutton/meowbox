@@ -9645,4 +9645,125 @@ pawTempleLayoutCSS.textContent=`
 `;
 document.head.append(pawTempleLayoutCSS);
 
+
+/* PAW_TEMPLE_PHYSICAL_SCENES_BEGIN */
+function pawTemplePoint(plate,u,v){return [plate.x+u*plate.w,plate.y+v*plate.h]}
+function pawTempleStickPose(q,now){
+ const age=Math.max(0,now-(q.stickDrawAt??now)),picked=!!q.stickPicked,done=!!q.stickDelivered;
+ const fall=q.fallenStick?1:Math.max(0,Math.min(1,(age-.38)/.87));
+ const pick=picked?Math.max(0,Math.min(1,(now-q.stickPickAt)/.85)):0;
+ return {fall,pick,picked,done,shake:!!q.drawing&&age<.38,show:!!(q.fallenStick||q.drawing&&age>=.38)}
+}
+function pawTempleBellMotion(q,now,dragged=0){
+ const age=now-q.bellAt,pull=Math.min(45,Math.max(0,dragged)),strength=q.bellStrength||0;
+ const swing=pull?-pull:age>=0&&age<.22?-34*strength*(1-age/.22):age>=.22&&age<1.5?-Math.abs(Math.sin((age-.22)*5))*18*strength*Math.exp(-age):0;
+ return {age,swing,impact:age>=.22&&age<4?Math.sin((age-.22)*16)*Math.exp(-(age-.22)*1.7)*strength*.045:0}
+}
+/* PAW_TEMPLE_PHYSICAL_SCENES_END */
+function pawTempleScenePlate(){
+ const b=livingBounds(),p=pawHallPlate,im=pawHallArt();
+ ctx.fillStyle='#493b30';ctx.fillRect(b.x,b.y,b.w,b.h);
+ ctx.drawImage(im,p.x,p.y,p.w,p.h)
+}
+// Isolate a small portable painted bamboo tube from the existing original
+// art, without a giant vector cup, invented foreground or detached table.
+function pawTemplePortableTube(x,y,angle=0){
+ const im=pawHallArt(),sx=im.naturalWidth,sy=im.naturalHeight;
+ ctx.save();try{
+  ctx.translate(x,y);ctx.rotate(angle);
+  ctx.beginPath();ctx.moveTo(-16,-37);ctx.lineTo(15,-37);ctx.lineTo(15,-9);ctx.lineTo(17,18);ctx.quadraticCurveTo(0,24,-15,18);ctx.lineTo(-17,-9);ctx.closePath();ctx.clip();
+  ctx.drawImage(im,sx*.032,sy*.298,sx*.095,sy*.106,-18,-39,36,61)
+ }finally{ctx.restore()}
+}
+function pawTempleDrawStick(){
+ const run=state,p=pawHallPlate,pose=pawTempleStickPose(run,t),held=drag?.id==='sticks';
+ const [fx,fy]=pawTemplePoint(p,.27,.51),[landX,landY]=pawTemplePoint(p,.37,.57);
+ const a=pose.picked?poseEase(Math.min(1,pose.pick/.45)):0;
+ const ax=fx+(landX-15-fx)*a,ay=fy+(landY+4-fy)*a;
+ const grip={x:ax-14,y:ay-46},cup={x:grip.x-7,y:grip.y-2};
+ const tilt=held?Math.max(-.24,Math.min(.24,(drag.x-drag.sx)*.007)):pose.shake?Math.sin(t*24)*.18:0;
+ const lift=pose.shake||held?Math.sin(t*24)*3:0;
+ if(pose.picked&&pose.pick<.45)backHuman(ax,ay,avatar??0,true,'right',.96);
+ else if(pose.picked&&!pose.done&&pose.pick<.8)drawRitualPose(ax,ay,.96,{bow:.3*Math.sin(Math.PI*pose.pick),kneel:.24*Math.sin(Math.PI*pose.pick),reach:{x:landX,y:landY-2}});
+ else backHuman(ax,ay,avatar??0,false,pose.picked?'right':'left',.96);
+ if(!pose.picked){
+  pawTemplePortableTube(cup.x,cup.y+lift,tilt);
+  pawIncenseArm({x:ax-7,y:ay-51},{x:cup.x+7,y:cup.y+6+lift},.80,false);
+ }
+ if(pose.show){
+  const f=pose.fall,pick=pose.picked?poseEase(Math.max(0,(pose.pick-.45)/.55)):0;
+  const end={x:ax+15,y:ay-43};
+  const x=(cup.x+(landX-cup.x)*f)*(1-pick)+end.x*pick;
+  const y=(cup.y-32+(landY-(cup.y-32))*f-Math.sin(f*Math.PI)*47)*(1-pick)+end.y*pick;
+  ctx.save();try{
+   ctx.translate(x,y);ctx.rotate((Math.PI*.46*f)*(1-pick)-.08*pick);
+   round(-2.8,-21,5.6,42,1,'#d7b47c','#9c7447');line(-1,-19,-1,18,'#f0d9a3',.7);
+   if(f>.9){ctx.fillStyle='#7f4437';ctx.font='bold 7px Georgia';ctx.textAlign='center';ctx.fillText(String(run.fallenStick||run.stickNumber),0,-12)}
+  }finally{ctx.restore()}
+  if(pose.picked&&pick>0)pawIncenseArm({x:ax+8,y:ay-48},end,.78,false)
+ }
+ if(!run.drawing&&!run.fallenStick)target(cup.x-36,cup.y-44,72,92,()=>{if(run===state)shakeFortuneStick()},'sticks');
+ if(run.fallenStick&&!run.stickPicked&&!run.drawing)target(landX-30,landY-28,60,56,()=>{if(run===state)pickupFortuneStick()},'paw-temple-pick-stick');
+}
+function pawTempleDrawMoon(){
+ const run=state,p=pawHallPlate,[x,y]=pawTemplePoint(p,.86,.402),[fx,fy]=pawTemplePoint(p,.70,.52);
+ backHuman(fx,fy,avatar??0,false,'right',.96);
+ const airborne=run.tossUntil>t,f=airborne?Math.max(0,Math.min(1,1-(run.tossUntil-t)/(run.moonDuration||.55))):1;
+ const sc=.30;
+ for(let i=0;i<2;i++){
+  const flat=pawMoonFlat(run.result,i,run.count),m=pawMoonMotion(f,i,flat,run.moonHeight||95);
+  const bx=x+(m.x-400)*sc,by=y+5-m.lift*sc;
+  ellipse(bx,y+8,Math.max(3,9-m.lift*.036),2.5,'#342b2355');
+  ctx.save();ctx.translate(bx,by);ctx.scale(sc,sc);templeMoon(0,0,m.angle,m.flat);ctx.restore()
+ }
+ if(!run.moonPending&&!(run.tossUntil>t))target(x-38,y-35,76,70,()=>{if(run===state)pawMoonToss(65,true)},'moon');
+}
+function pawTempleDrawBell(){
+ const run=state,p=pawHallPlate,[x,floor]=pawTemplePoint(p,.79,.72),y=floor-63;
+ const [ax,ay]=pawTemplePoint(p,.64,.73),m=pawTempleBellMotion(run,t,drag?.id==='templeStriker'?Math.abs(drag.x-drag.sx):0);
+ if(m.age>=.22&&m.age<4&&!run.bellRung&&!pawArcadeInputBlocked()){
+  run.bellRung=true;sound(146+(run.bellStrength||0)*12);
+  if(!muted&&ambientBus){ambientTone(146.83,.065*(run.bellStrength||0),2.5,'sine');ambientTone(293.66,.025*(run.bellStrength||0),1.6,'sine',.04)}
+ }
+ // A small two-post wooden stand sits on the same hall floor; no beam
+ // suspended above the torii or player feet on the stone railing.
+ ctx.save();try{
+  ellipse(x,floor+1,43,8,'#3d2e2444');
+  for(const dx of [-37,37]){
+   const wood=ctx.createLinearGradient(x+dx-4,0,x+dx+5,0);wood.addColorStop(0,'#6e4832');wood.addColorStop(.48,'#bd8b58');wood.addColorStop(1,'#65432c');
+   ctx.fillStyle=wood;ctx.fillRect(x+dx-4,floor-140,9,140);line(x+dx-2,floor-135,x+dx-2,floor-5,'#e0b28355',1);
+   ellipse(x+dx,floor+1,9,3,'#43342766')
+  }
+  round(x-46,floor-145,92,10,2,'#8a5b39','#64422c');line(x-42,floor-141,x+42,floor-141,'#c69b69',1.4);
+  line(x,floor-135,x,y-42,'#6f6047',3);templeBellArt(x+10,y,.36,m.impact);
+  const sx=x-42+m.swing*.40,sy=y+13-Math.abs(m.swing)*.08;
+  line(x-34,floor-135,sx+5,sy,'#ab8e66',1.3);line(x-15,floor-135,sx+29,sy,'#ab8e66',1.3);
+  if(pics.templeStrikerPaint?.naturalWidth)ctx.drawImage(pics.templeStrikerPaint,sx,sy-4,36,9);
+  else round(sx,sy-4,36,9,4,'#9d7046','#68462f');
+  backHuman(ax,ay,avatar??0,false,'right',.96);
+  if(drag?.id==='templeStriker'||m.age<.6)pawIncenseArm({x:ax+9,y:ay-48},{x:sx+7,y:sy},.80,false);
+  if(m.age>=2.5)target(sx-24,sy-29,80,58,()=>{if(run===state)templeReleaseBell(55)},'templeStriker');
+ }finally{ctx.restore()}
+}
+const pawPhysicalTempleCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(...args){
+ if(room==='temple'&&['sticks','moon','templeBell'].includes(activity)&&pawRoomImageReady(pawHallArt())){
+  const p=pawHallPlate;if(W<H)return pawTempleFullCamera(W,H,p);
+  const s=Math.min(W/p.w,H/p.h);return {s,ox:(W-p.w*s)/2-p.x*s,oy:(H-p.h*s)/2-p.y*s}
+ }
+ return pawPhysicalTempleCameraBefore(...args)
+};
+const pawPhysicalTempleDrawBefore=drawActivity;
+drawActivity=function(...args){
+ if(room!=='temple'||!['sticks','moon','templeBell'].includes(activity)||!pawRoomImageReady(pawHallArt()))return pawPhysicalTempleDrawBefore(...args);
+ pawRitualAdvance();continuityActivity=activity;
+ ctx.save();try{
+  pawTempleScenePlate();
+  if(activity==='sticks')pawTempleDrawStick();
+  else if(activity==='moon')pawTempleDrawMoon();
+  else if(activity==='templeBell')pawTempleDrawBell();
+ }finally{ctx.restore()}
+ mb5AssistSync()
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
