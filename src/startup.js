@@ -9383,25 +9383,50 @@ function pawFortuneReceive(run=state){
  delete run.pawFortuneNumber;
  pawOriginalFortunePaper(n);return true
 }
+/* PAW_FORTUNE_WALK_BEGIN */
+function pawFortuneWalkPhase(q,v){
+ if(!q||v.room!=='temple'||v.activity||v.state!==q.hallState)return 'cancel';
+ if(v.blocked||!v.ready)return 'wait';
+ if(v.goal&&v.goal!==q.arrive)return 'cancel';
+ if(v.goal===q.arrive)return 'walking';
+ if(q.started)return v.moving?'wait':'restore';
+ return 'route'
+}
+/* PAW_FORTUNE_WALK_END */
+let pawFortuneWalk=null;
+function pawFortuneRestoreWalk(q){
+ if(pawFortuneWalk!==q||state!==q.hallState||room!=='temple'||activity)return;
+ pawFortuneWalk=null;
+ activity='sticks';state=q.run;updateHUD();mb5AssistSync(true);
+ hint('Your numbered stick is safe. Continue to moon blocks, or receive the slip here.','签号已保留。可以继续前往筊杯处，也可以直接领取签文。')
+}
+function pawFortuneWalkTick(){
+ const q=pawFortuneWalk;if(!q)return;
+ const phase=pawFortuneWalkPhase(q,{room,activity,state,blocked:pawArcadeInputBlocked(),ready:indoorReady()&&continuityRoom==='temple'&&continuityActivity===null,goal:indoor.goal,moving:Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3});
+ if(phase==='cancel'){pawFortuneWalk=null;return}
+ if(phase==='restore'){pawFortuneRestoreWalk(q);return}
+ if(phase!=='route')return;
+ const station=indoorStation('moon');
+ q.started=true;
+ if(!indoorDestination(station[2],station[3],q.arrive,'up'))pawFortuneRestoreWalk(q)
+}
 function pawFortuneConfirm(run=state){
  if(!pawFortuneAction(run,state,activity,t,pawArcadeInputBlocked(),'confirm'))return false;
  const n=run.pawFortuneNumber;
- activity=null;state={};roomIntro();updateHUD();const walkingState=state;
- requestAnimationFrame(()=>requestAnimationFrame(()=>{
-  if(room!=='temple'||activity||state!==walkingState||pawArcadeInputBlocked())return;
-  const station=indoorStation('moon');
-  if(!indoorDestination(station[2],station[3],()=>{
-   if(room!=='temple'||activity||state!==walkingState||pawArcadeInputBlocked())return;
-   start('moon');state.pawFortuneNumber=n;
-   hint('If you wish, toss the moon blocks once. Your fortune is still yours regardless of the result.','可以掷一次筊杯确认。无论结果如何，都能领取自己的签文。');
-   mb5AssistSync(true)
-  },'up')){
-   activity='sticks';state=run;updateHUD();mb5AssistSync(true);
-   hint('The path is busy. Receive the slip here, or try again.','路上暂时不便通行，可以在这里领签，或再试一次。')
-  }
- }));
+ releaseWalkKeys();joystickReset();
+ activity=null;state={};roomIntro();updateHUD();
+ const q={run,hallState:state,started:false,arrive:null};
+ q.arrive=()=>{
+  if(pawFortuneWalk!==q||room!=='temple'||activity||state!==q.hallState||pawArcadeInputBlocked())return;
+  pawFortuneWalk=null;start('moon');state.pawFortuneNumber=n;
+  hint('If you wish, toss the moon blocks once. Your fortune is still yours regardless of the result.','可以掷一次筊杯确认。无论结果如何，都能领取自己的签文。');
+  mb5AssistSync(true)
+ };
+ pawFortuneWalk=q;
  return true
 }
+const pawFortuneWalkLoopBefore=loop;
+loop=function(...args){const result=pawFortuneWalkLoopBefore(...args);pawFortuneWalkTick();return result};
 const pawFortuneAssistSpecBefore=mb5AssistSpec;
 mb5AssistSpec=function(kind,q,now){
  const next=pawFortuneNext(q,kind,now,false);
