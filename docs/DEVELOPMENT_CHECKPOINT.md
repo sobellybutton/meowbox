@@ -489,3 +489,7 @@ All 44 owner-uploaded assets matched manifest paths, Git SHA-1 and byte counts o
 - ENT-ASSET-READY-01 partial: 403101ca predecodes actual selected room plate for outdoor nearby warmup, avoids retired background fetches for mapped reading, tea, pier, food and garden lobbies, allows bounded explicit retry 750ms after a failed image while background cooldown remains 10s. Seven focused guard cases passed; 87cbc4fd persists retry test. Actual cold/warm load timing not measured.
 
 Four workstreams advanced, no complete outstanding workstream cleared. Registry: 41 outstanding, 40 tested, 3 implemented. Current source/deployment, actual phone and desktop rendering, chart and exit playback remain unverified. CI/deployment runs were in progress or superseded at inspection. All leases released. Continue actual room/asset integration and verify latest browser results, do not claim visual acceptance.
+
+
+## Character artwork reference gate
+Current ART-01/02/03 and ROOM-06 remain open. Original Yue and Tarot standing art inspected; existing seven-file Yue candidate archive checked for integrity and RGBA transparency, pending import. New Tarot seated artwork blocked by unavailable attachable source image in the generation tool. Await the original character reference attachment; do not generate substitutes or repeat failed attempts. No new artwork or visual acceptance claimed. Environment integration remains independent.
