@@ -6548,26 +6548,41 @@ function pawGatePlace(hero,traveller,progress=0){
  traveller.style.setProperty('--paw-gate-y',ground.y+'px');
  traveller.style.setProperty('--paw-gate-height',ground.height+'px')
 }
+/* PAW_ITEM1_TRANSIT_BEGIN */
+function pawTransitClock(clock,now,active,duration){
+ if(!clock||!Number.isFinite(now)||!Number.isFinite(duration)||duration<=0)return 0;
+ const dt=Number.isFinite(clock.last)?Math.max(0,Math.min(100,now-clock.last)):0;
+ clock.last=now;
+ if(active)clock.elapsed=Math.min(duration,(clock.elapsed||0)+dt);
+ return (clock.elapsed||0)/duration
+}
+function pawTransitOwned(view,stage){
+ return !!view&&view.stage===stage&&view.connected&&!view.hidden&&!view.proposalHidden
+}
+/* PAW_ITEM1_TRANSIT_END */
 async function pawGateWalk(hero,traveller){
- if(!traveller||residentReducedMotion.matches)return;
+ if(!traveller||residentReducedMotion.matches)return true;
  mbArtLoad();const kind=proAvatar??avatar??0,frames=mbArtRegistry.players[kind]?.walk?.up;
  const loaded=frames?.map(mbArtImage),hasFrames=!!loaded?.length&&loaded.every(Boolean);
- // Do not fake a walk by sliding a stationary sprite.
- if(!hasFrames)return;
- await new Promise(resolve=>{
-  let start=null,done=false;const finish=()=>{if(!done){done=true;resolve()}};
-  setTimeout(finish,1650);
+ // Keep the current art if the matching walk sequence has not been produced.
+ // Do not fake walking by sliding a stationary cutout.
+ if(!hasFrames)return true;
+ return new Promise(resolve=>{
+  let done=false,raf=0;const clock={elapsed:0,last:null};
+  const finish=ok=>{if(done)return;done=true;cancelAnimationFrame(raf);document.removeEventListener('visibilitychange',onVisibility);resolve(ok)};
+  const onVisibility=()=>{clock.last=null;if(document.hidden)finish(false)};
+  document.addEventListener('visibilitychange',onVisibility);
   function tick(now){
-   if(done||!traveller.isConnected||proStep!==3||document.hidden){finish();return}
-   start??=now;const v=Math.min(1,(now-start)/1200);
-   const i=Math.floor(v*frames.length*2)%frames.length;
+   if(done)return;
+   if(!pawTransitOwned({stage:proStep,connected:traveller.isConnected,hidden:document.hidden,proposalHidden:proposal.hidden},3)){finish(false);return}
+   const v=pawTransitClock(clock,now,true,1200),i=Math.min(frames.length-1,Math.floor(v*frames.length*2)%frames.length);
    if(traveller.getAttribute('src')!==frames[i].path)traveller.src=frames[i].path;
    traveller.style.setProperty('--paw-gate-pivot-x',(-100*frames[i].foot[0]/frames[i].width)+'%');
    traveller.style.setProperty('--paw-gate-pivot-y',(-100*frames[i].foot[1]/frames[i].height)+'%');
    pawGatePlace(hero,traveller,v);
-   if(v>=1){finish();return}requestAnimationFrame(tick)
+   if(v>=1){finish(true);return}raf=requestAnimationFrame(tick)
   }
-  requestAnimationFrame(tick)
+  raf=requestAnimationFrame(tick)
  })
 }
 const pawDecodedGateBefore=proRender;
@@ -6591,15 +6606,16 @@ proRender=function(...args){
  }
  const admit=button.onclick;
  const enter=async event=>{
-  if(waiting||proBusy||!button.isConnected)return;
+  if(waiting||proBusy||document.hidden||!button.isConnected||proposal.hidden)return;
   waiting=true;const original=button.textContent;
   button.disabled=true;button.textContent=tr('Preparing the path…','正在准备山间小路…');
   const ready=await pawReadyMap('fortune');
-  if(!button.isConnected||proStep!==3)return;
-  if(!ready){waiting=false;button.disabled=false;button.textContent=tr('Try again','再试一次');const im=pics.valleyClean;if(im.complete&&!im.naturalWidth)im.src=ART.valleyClean;return}
-  if(hero&&traveller)await pawGateWalk(hero,traveller);
-  if(!button.isConnected||proStep!==3)return;
+  if(!button.isConnected||proStep!==3||proposal.hidden)return;
+  if(!ready||document.hidden){waiting=false;button.disabled=false;button.textContent=tr('Try again','再试一次');return}
+  const walked=hero&&traveller?await pawGateWalk(hero,traveller):true;
+  if(!button.isConnected||proStep!==3||proposal.hidden)return;
   waiting=false;button.disabled=false;button.textContent=original;
+  if(!walked||document.hidden){if(hero&&traveller)pawGatePlace(hero,traveller);return}
   admit.call(button,event)
  };
  button.onclick=enter;if(gate)gate.onclick=enter;return result
@@ -9856,5 +9872,52 @@ document.head.append(pawPaperControlsCss);
 // Stale resident greetings must never compete with an activity instruction.
 const pawQuietSceneStartBefore=start;
 start=function(...args){clearResidentGreeting();pawAmbientClear();return pawQuietSceneStartBefore(...args)};
+
+/* First arrival railway: advance after a complete visible journey, rather
+   than requiring another confirmation. Pause and skip are genuine controls. */
+let pawFirstRailState=null,pawFirstRailFrame=0;
+function pawFirstRailDispose(){cancelAnimationFrame(pawFirstRailFrame);pawFirstRailFrame=0}
+function pawFirstRailAttach(){
+ pawFirstRailDispose();
+ if(proStep!==5){pawFirstRailState=null;return}
+ const cabin=proposal.querySelector('.rail-cabin'),arrive=proposal.querySelector('.rail-arrive'),foot=proposal.querySelector('footer');
+ if(!cabin||!arrive||!foot)return;
+ const run=pawFirstRailState??={elapsed:0,last:null,paused:false,completed:false};run.last=null;
+ const original=arrive.onclick;if(typeof original!=='function')return;
+ const reduced=residentReducedMotion.matches,duration=reduced?6500:8500;
+ const status=element('small','',foot,'pawFirstRailStatus');
+ status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+ const pause=element('button','',foot,'pawFirstRailPause');pause.type='button';
+ function syncPause(){
+  pause.textContent=run.paused?tr('Resume journey','继续旅程'):tr('Pause journey','暂停旅程');
+  pause.setAttribute('aria-pressed',String(run.paused));
+  cabin.classList.toggle('pawRailPaused',run.paused);
+  status.textContent=run.paused?tr('Journey paused','旅程已暂停'):tr('Next stop: Fortune Valley','下一站：解忧谷')
+ }
+ function finish(event){
+  if(run.completed||pawFirstRailState!==run||!pawTransitOwned({stage:proStep,connected:cabin.isConnected,hidden:document.hidden,proposalHidden:proposal.hidden},5))return;
+  run.completed=true;pawFirstRailDispose();original.call(arrive,event)
+ }
+ arrive.textContent=tr('Skip to arrival','跳过旅程');arrive.onclick=finish;
+ pause.onclick=()=>{if(pawFirstRailState!==run||run.completed)return;run.paused=!run.paused;run.last=null;syncPause()};
+ syncPause();
+ function tick(now){
+  if(pawFirstRailState!==run||run.completed||proStep!==5||!cabin.isConnected||proposal.hidden)return;
+  const active=!document.hidden&&!run.paused;
+  const painting=cabin.querySelector('.mbPaintedRail:not([hidden]) img'),fallback=cabin.querySelector('.train-window img');
+  const artReady=!!(painting?.complete&&painting.naturalWidth||fallback?.complete&&fallback.naturalWidth);
+  if(pawTransitClock(run,now,active&&artReady,duration)>=1){finish();return}
+  pawFirstRailFrame=requestAnimationFrame(tick)
+ }
+ pawFirstRailFrame=requestAnimationFrame(tick)
+}
+const pawFirstRailRenderBefore=proRender;
+proRender=function(...args){const result=pawFirstRailRenderBefore(...args);pawFirstRailAttach();return result};
+document.addEventListener('visibilitychange',()=>{if(pawFirstRailState)pawFirstRailState.last=null});
+const pawFirstRailCSS=document.createElement('style');pawFirstRailCSS.textContent=`
+#proposal .pawFirstRailStatus{color:#f7e9ce;line-height:1.3;display:block;font-size:12px}
+#proposal .pawFirstRailPause{min-height:44px;white-space:normal;max-width:100%;padding:7px 14px;color:#fff3db;background:#2c463ac9;border:1px solid #d1be9066;border-radius:4px}
+#proposal .rail-cabin.pawRailPaused *,#proposal .rail-cabin.pawRailPaused .mbRailPane>span{animation-play-state:paused!important}
+`;document.head.append(pawFirstRailCSS);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
