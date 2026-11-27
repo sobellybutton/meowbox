@@ -128,7 +128,7 @@ drawRoute=function(){if(pics.valleyClean?.naturalWidth)ctx.drawImage(pics.valley
 let lanternMemories=load('proposalLanternCount',0);
 const worldActivityDraw=drawActivity;drawActivity=function(){worldActivityDraw();if(activity==='wishes'){for(let i=0;i<Math.min(lanternMemories,7);i++){let x=185+i*66,y=295+(i%3)*28;ctx.save();ctx.translate(x+Math.sin(t*.9+i)*3,y);ctx.rotate(Math.sin(t*.9+i)*.04);glow(0,0,38,i);line(0,-35,0,-18,'#a68a61',1.5);round(-14,-18,28,35,8,'#db9b51','#875534');line(-5,-15,-5,14,'#ad6d3a');line(5,-15,5,14,'#ad6d3a');ctx.restore()}}};
 const finalGuideStart=start;start=function(id){finalGuideStart(id);if(id==='wishes')state.lanternAt=undefined};
-window.addEventListener('blur',()=>{for(let k in keys)keys[k]=false;drag=null});c.addEventListener('pointercancel',()=>{drag=null});
+window.addEventListener('blur',()=>{for(let k in keys)keys[k]=false;drag=null});
 const dayReadings=tarotDetails;tarotDetails=function(d,rev){dayReadings(d,rev);let opts=$('choices');for(let [en,cn,advice,adviceZh] of [['Love','感情','Consider how the card relates to mutual understanding, boundaries and what you need from a relationship.','想想这张牌与你的相处方式、界限，以及感情需求有什么关联。'],['Career','事业','Consider the choices you can make at work and what is outside your control.','想想工作中有哪些选择是你能掌握的，哪些并非你能控制。'],['Money','财运','Reflect on spending habits and practical priorities; this is not financial advice.','想想消费习惯与实际需要；这不是投资建议。']]){let btn=element('button',tr(en,cn),opts);btn.onclick=()=>say(tr('Luna','月见'),tr(d[0],d[1])+' · '+orient(rev)+'\n'+arcanaReading(d,rev)+'\n'+tr(advice,adviceZh),[[tr('Back to reading','返回解读'),()=>tarotDetails(d,rev)],[tr('Close','关闭'),closeTalk]])}};
 
 const destinyChamberStyle=document.createElement('style');
@@ -1358,7 +1358,7 @@ function teaScoopRelease(a){
  hint('Tip the scoop into the cup.','把珍珠倒进奶茶杯里。');
 }
 c.addEventListener('pointerup',e=>{
- if(activity!=='bubbleTea'||drag?.id!=='teaPearlScoop')return;
+ if(activity!=='bubbleTea'||drag?.id!=='teaPearlScoop'||!pawCanvasDragValid(e))return;
  const d=drag,a=point(e);drag=null;e.preventDefault();e.stopImmediatePropagation();
  if(d.moved<12)teaAddPearls();else teaScoopRelease(a);
 },true);
@@ -1732,7 +1732,7 @@ drawRoom=function(){
  ctx.save();const visitors=[...sharedTownActors().filter(a=>a.room===room&&indoorSafe(a.x,a.y)),...(typeof pawRoomWalkers==='function'?pawRoomWalkers():[])];const drawSelf=()=>backHuman(indoor.x,indoor.y,avatar,Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3,indoor.facing,scale);
  for(const a of visitors.filter(a=>a.y<indoor.y).sort((a,b)=>a.y-b.y))drawSharedRoomActor(a,scale);drawSelf();for(const a of visitors.filter(a=>a.y>=indoor.y).sort((a,b)=>a.y-b.y))drawSharedRoomActor(a,scale);ctx.restore();
 };
-c.addEventListener('pointerup',e=>{if(!indoorReady()||!drag||drag.moved>30||drag.h)return;const a=point(e);indoorDestination(a.x,a.y)},true);
+c.addEventListener('pointerup',e=>{if(!indoorReady()||!pawCanvasDragValid(e)||drag.moved>30||drag.h)return;const a=point(e);indoorDestination(a.x,a.y)},true);
 const indoorControlStyle=document.createElement('style');indoorControlStyle.textContent='#movePad[data-indoor="true"]{bottom:calc(env(safe-area-inset-bottom,0px) + 76px);z-index:4}';document.head.append(indoorControlStyle);
 function indoorControls(){const mode=String(indoorReady());if(movePad.dataset.indoor!==mode)movePad.dataset.indoor=mode;if(!room)continuityRoom=null;setTimeout(indoorControls,100)}setTimeout(indoorControls,0);
 const continuityActivityDraw=drawActivity;
@@ -4620,7 +4620,7 @@ drawActivity=function(){
 // Dedicated canvas gestures. Capture before legacy canvas listeners.
 function careCapture(e){if(!careIsActive()||$('page').style.display==='block'||talkOpen||transitioning)return false;e.preventDefault();e.stopImmediatePropagation();return true}
 c.addEventListener('pointerdown',e=>{
- if(!careCapture(e))return;const a=state.care;if(a.phase!=='idle'||a.drag)return;const q=point(e);
+ if(!careCapture(e))return;const a=state.care;if(!pawCanvasCanStart(e,a.drag,document.hidden||!proposal.hidden)||a.phase!=='idle')return;const q=point(e);
  let kind=null;if(Math.hypot(q.x-285,q.y-620)<43)kind='feed';else if(Math.hypot(q.x-400,q.y-620)<43)kind='water';else if(Math.hypot(q.x-510,q.y-615)<46)kind='play';else if(Math.hypot(q.x-a.x,q.y-(a.y-42))<85)kind='pet';
  if(!kind||!careCan(a.values,kind))return;
  if(kind==='play'||kind==='pet')careStart(kind);a.drag={kind,x:q.x,y:q.y,last:performance.now(),id:e.pointerId};a.stroke=0;c.setPointerCapture(e.pointerId)
