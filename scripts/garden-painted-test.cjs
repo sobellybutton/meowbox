@@ -38,3 +38,17 @@ for(const [w,h] of [[320,568],[390,844],[430,932],[768,1024],[1280,720],[844,390
 }
 assert.equal(safe(400,450),false);assert.equal(safe(250,650),false);assert.equal(safe(600,650),false);assert.equal(camera(0,800),null);
 console.log('Wishing Garden painted lobby, clear floor routes and viewport coverage passed.');
+
+const pool=new Function(extract('/* PAW_PAINTED_POOL_LAYOUT_BEGIN */','/* PAW_PAINTED_POOL_LAYOUT_END */')+';return pawPaintedPoolLayout')();
+assert.ok(fs.existsSync(path.resolve(__dirname,'../assets/visual/painted/garden/wishing-pool.webp')));
+for(const [w,h,f] of [[320,568,115],[390,844,120],[430,932,140],[768,1024,130],[1280,720,100],[1920,1080,105],[844,390,92],[360,900,160]]){
+ const a=pool(w,h,f);assert.ok(a);
+ assert.ok(a.ox<=0&&a.oy<=0&&a.ox+a.iw>=w-.01&&a.oy+a.ih>=h-.01);
+ assert.ok(a.x>=0&&a.x+a.w<=w+.01&&a.w>=160);
+ assert.ok(a.y+a.h*.39>=(w>h?48:90)-.01);
+ assert.ok(a.y+a.h*.86<=h-Math.max(f,70)-24);
+ assert.ok(Math.abs((a.y+a.h*.39-a.oy)/a.ih-(.333+.159*.39))<1e-8);
+ assert.ok(Math.abs((a.y+a.h*.86-a.oy)/a.ih-(.333+.159*.86))<1e-8);
+}
+assert.equal(pool(0,844,100),null);assert.equal(pool(320,300,250),null);
+console.log('Painted wishing-pool target, coin origin and viewport coverage passed.');
