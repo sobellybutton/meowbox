@@ -10134,4 +10134,66 @@ pawMapSignFinishCss.textContent=`
 // been rendered. The separate legacy UI tick shares the cached projection.
 const pawMapSignFrameBefore=loop;
 loop=function(...args){const result=pawMapSignFrameBefore(...args);if(proposal.hidden&&!room&&!activity)syncSigns();return result};
+/* PAW_OUTDOOR_YIELD_BEGIN */
+// Score a tiny real walking step, not a relocation. A resident already
+// inside a safety radius may move out, but may not close that gap further.
+function pawOutdoorYield(current,candidates,obstacles){
+ const near=obstacles.filter(o=>Math.hypot(current.x-o.x,current.y-o.y)<o.gap);
+ if(!near.length)return {needed:false,point:null};
+ const score=point=>Math.min(...near.map(o=>Math.hypot(point.x-o.x,point.y-o.y)/o.gap));
+ const base=score(current);let best=null,bestScore=base;
+ for(const q of candidates){
+  if(!q||![q.x,q.y].every(Number.isFinite))continue;
+  const safe=obstacles.every(o=>{
+   const a=Math.hypot(current.x-o.x,current.y-o.y),b=Math.hypot(q.x-o.x,q.y-o.y);
+   return a<o.gap?b>=a-.001:b>=o.gap
+  });
+  if(!safe)continue;
+  const value=score(q);
+  if(value>bestScore+.00001){best=q;bestScore=value}
+ }
+ return {needed:true,point:best}
+}
+function pawOutdoorYieldCandidates(y,x,low,high,amount,laneAt){
+ if(![x,y,low,high,amount].every(Number.isFinite)||amount<=0||low>high)return [];
+ const from=laneAt(y),fraction=Math.max(-.72,Math.min(.72,(x-from.x)/Math.max(1,from.half)));
+ const result=[];
+ for(const dir of [-1,1]){
+  const destY=Math.max(low,Math.min(high,y+dir*amount)),lane=laneAt(destY);
+  for(const fractionTo of [fraction,-.68,.68,0]){
+   const dx=lane.x+lane.half*fractionTo-x,dy=destY-y,d=Math.hypot(dx,dy),ratio=d>0?Math.min(1,amount/d):0;
+   const nextY=y+dy*ratio,nextLane=laneAt(nextY);
+   const nextX=Math.max(nextLane.x-nextLane.half,Math.min(nextLane.x+nextLane.half,x+dx*ratio));
+   if(Math.hypot(nextX-x,nextY-y)<=amount+.001)result.push({x:nextX,y:nextY})
+  }
+ }
+ return result
+}
+/* PAW_OUTDOOR_YIELD_END */
+const pawYieldStepBefore=step;
+step=function(n,dt,speed){
+ const spine=scene==='fortune'?pawStairPath:paintedResidentPaths[scene];
+ if(n===p||room||!spine||!npc.includes(n))return pawYieldStepBefore(n,dt,speed);
+ const id=pawAmbientProfile(n)?.id;
+ if(talkOpen||transitioning||!proposal.hidden||document.hidden||$('page').style.display==='block'||id&&(pawAmbientActive?.id===id||pawOverheardPending?.id===id||pawOverheardPending?.other===id)){
+  pawResidentFootMotion.set(n,false);return true
+ }
+ const animal=n.kind===2,obstacles=[{x:p.x,y:p.y,gap:animal?42:61},...npc.filter(o=>o!==n).map(o=>({x:o.x,y:o.y,gap:animal||o.kind===2?37:72}))];
+ const amount=Math.min(42,Number.isFinite(speed)?Math.max(0,speed):0,pawResidentTempo(pawPasserbyIdentity(n)).speed)*Math.max(0,Math.min(.05,Number.isFinite(dt)?dt:0));
+ const low=Math.max(minY(),spine[0][0]),high=Math.min(maxY(),spine.at(-1)[0]);
+ const q=pawOutdoorYield(n,pawOutdoorYieldCandidates(n.y,n.x,low,high,amount,y=>residentLane(scene,y)),obstacles);
+ if(!q.needed)return pawYieldStepBefore(n,dt,speed);
+ if(!q.point){pawResidentFootMotion.set(n,false);return true}
+ const dx=q.point.x-n.x,dy=q.point.y-n.y,travel=Math.hypot(dx,dy);
+ n.x=q.point.x;n.y=q.point.y;n.tx=n.x;n.ty=n.y;n.pathReady=false;
+ if(Math.abs(dy)>.005)n.walkDirection=dy<0?-1:1;
+ n.pauseUntil=Math.max(n.pauseUntil||0,t+.25);
+ pawResidentFootMotion.set(n,travel>.035);
+ if(travel>.035){
+  pawGaitTravel.set(n,(pawGaitTravel.get(n)||0)+travel);
+  const prior=pawPedestrianFaces.get(n)||{facing:n.facing||n.paintedFacing||'up',candidate:null,hold:0};
+  const face=pawPedestrianFace(prior,dx,dy,dt);pawPedestrianFaces.set(n,face);n.facing=face.facing
+ }
+ return true
+};
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
