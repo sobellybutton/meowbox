@@ -589,12 +589,11 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-visual-1127-perf",
-        "until": 1795795470975
-      },
-      "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Investigate intermittent blank screen/pauses on iPhone using actual error traces and image decode/frame timing; distinguish load delays, animation timing, exceptions and memory pressure. No assumed root cause."
+      "evidence": [
+        "e6908e2a + 5baafcce: avoid redundant and zero-size canvas backing-store resets; focused resize and scene admission regression executed in connector harness."
+      ],
+      "lease": null,
+      "blocker": "Actual iPhone Safari blank-screen cause, performance traces, real frame timings, deployed browser verification and artwork coverage remain unresolved."
     },
     {
       "id": "QA-01",
@@ -1326,7 +1325,8 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [
-        "cbae8dbb: visible grounded doorway zoom precedes existing door transition; transform removed at interior handoff; canceled if context becomes invalid. Source parsed; visual motion and all camera bounds not verified."
+        "cbae8dbb: visible grounded doorway zoom precedes existing door transition; transform removed at interior handoff; canceled if context becomes invalid. Source parsed; visual motion and all camera bounds not verified.",
+        "5baafcce persists focused scene handoff regression checks; executed against source in connector harness, not browser."
       ],
       "lease": null,
       "blocker": "Actual iPhone and desktop doorway timings, painted coverage and upper-map framing still require visual review."
@@ -1382,7 +1382,8 @@
       "evidence": [
         "e8c17843: selected traveller directional base artwork is decoded during onboarding and required alongside the gateway and current Fortune Valley map before first admission. Optional action frames warmed without making unavailable final poses a hard dependency.",
         "1e8a9977: persistent selected-avatar readiness, missing image and retry regression; source parsed and asynchronous helper checks executed.",
-        "7fdcfb2a: railway arrival checks selected traveller art; kitchen/boba preserve outdoor scene until decoded painting is ready with stale request guard and retry. Source parsed, admission guard exercised."
+        "7fdcfb2a: railway arrival checks selected traveller art; kitchen/boba preserve outdoor scene until decoded painting is ready with stale request guard and retry. Source parsed, admission guard exercised.",
+        "5baafcce persists focused scene handoff regression checks; executed against source in connector harness, not browser."
       ],
       "lease": null,
       "blocker": "Actual iPhone/WebKit cold/warm cache, all other room assets and visual acceptance remain open."
