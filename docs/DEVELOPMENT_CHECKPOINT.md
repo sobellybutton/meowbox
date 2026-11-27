@@ -364,3 +364,8 @@ NPC-03: 9e8c2e8c allows indoor visitors to retreat from existing player/resident
 ## Painted indoor plaque clearance (27 November 2026)
 
 QA-SPATIAL-01 partial: 5dcd182f makes painted temple, kitchen and boba labels avoid existing actor, HUD and label bounds using the entire minimum 44px touch rectangle. A blocked plaque no longer creates an invisible tap target; original station body and directory access remain. Movement is limited to small nearby offsets to preserve station association. 8a433040 adds geometry regressions across five viewport sizes and four scales; source parsed and focused helper checks passed in connector harness. Actual deployed visual and normal-input verification remains outstanding, as do other scenes and full spatial acceptance. Released claim without marking task complete. Hourly schedule unchanged.
+
+
+## Room activity directory lifecycle (27 November 2026)
+
+UX-02 partial: ed9fd2ea hides closed directory content from focus order, provides Escape and focus restoration, rejects stale room/language or detached controls, preserves focused station on language rebuild, and unifies bilingual toggle labels. Existing authored station walking/arrival callbacks are unchanged. f61bcee5 adds focused lifecycle tests executed against current source in connector harness; source parsed. Actual rendered keyboard, touch, assistive technology, layout and deployment verification remain open. Released claim without marking entire accessibility task complete. Hourly schedule unchanged.
