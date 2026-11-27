@@ -935,12 +935,13 @@
       "depends": [
         "HOME-CATALOGUE-AUDIT-01"
       ],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-home-preview-20261127",
-        "until": 1795788313391
-      }
+      "stage": "tested",
+      "evidence": [
+        "194880ab: activate existing 13 mapped painted URLs at first render, reuse existing bookcase, floor lantern, glass cabinet, and two room shell candidates in shop/detail/tray previews, with load fallback; bounded image row and wrapping names; exact current extension source parsed and repository paths verified.",
+        "4373fd6d: persisted home module and first-render preview coverage; 334 focused assertions executed against current source and repository tree using mocked fs."
+      ],
+      "lease": null,
+      "blocker": "Actual browser rendering, load failures and overlap verification pending. Three interactive fixture candidates are preview-only until in-room shelf contact/geometry is checked. Missing furniture, material art and room scene conversion still open."
     }
   ]
 }
