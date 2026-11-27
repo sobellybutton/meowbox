@@ -5758,11 +5758,28 @@ function pawVisitorHold(roster){for(const a of roster)a.walking=0;return roster}
 function pawVisitorDoorClear(door,player,others,clearance=75){
  return pawGuestClear(door[0],door[1],[[player.x,player.y],...others.filter(pawVisitorVisible).map(a=>[a.x,a.y])],clearance)
 }
+// A player may walk into an existing visitor's clearance radius. Let the
+// visitor move away, but never approach any actor more closely inside it.
+function pawVisitorStepClear(before,next,actors,gap){
+ if(![before?.x,before?.y,next?.x,next?.y,gap].every(Number.isFinite)||gap<=0)return false;
+ return actors.every(a=>{
+  if(![a?.x,a?.y].every(Number.isFinite))return false;
+  const from=Math.hypot(before.x-a.x,before.y-a.y),to=Math.hypot(next.x-a.x,next.y-a.y);
+  return to>=gap||to>from+.001
+ })
+}
+function pawVisitorPauseTimers(roster,elapsed){
+ if(!Number.isFinite(elapsed)||elapsed<=0)return;
+ for(const a of roster){
+  if(Number.isFinite(a.wait))a.wait+=elapsed;
+  if(Number.isFinite(a.exitRetry))a.exitRetry+=elapsed
+ }
+}
 /* PAW_VISITOR_LIFECYCLE_END */
 function pawRoomWalkers(){
  const spec=pawRoomVisitorSpecs[room];if(!spec||activity)return [];
  const context=scene+'|'+room+'|'+avatar;
- if(!indoorReady()){pawVisitorAt=t;return context===pawVisitorContext?pawVisitorHold(pawLocalVisitors):[]}
+ if(!indoorReady()){if(context===pawVisitorContext)pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,t-pawVisitorAt));pawVisitorAt=t;return context===pawVisitorContext?pawVisitorHold(pawLocalVisitors):[]}
  const obs=indoorObstacles(),protectedFeet=pawGuestProtected(),door=indoorSpec().entry,stationFeet=pawGuestActiveFeet();
  const safe=pawGuestWaypoints(spec.points,protectedFeet,(x,y)=>indoorSafe(x,y,obs));
  if(context!==pawVisitorContext){
@@ -5785,8 +5802,10 @@ function pawRoomWalkers(){
    const g=pawRoomGuestProfile(pawVisitSerial);if(g){const a=pawLocalVisitors[0];a.guest=g;a.id=g.id;a.phase='stationary';a.facing=a.x<400?'right':'left'}
   }
  }
- const dt=Math.max(0,Math.min(.05,t-pawVisitorAt));pawVisitorAt=t;
- if(talkOpen||transitioning||document.hidden||$('page').style.display==='block')return pawVisitorHold(pawLocalVisitors);
+ const elapsed=Math.max(0,t-pawVisitorAt),dt=Math.min(.05,elapsed);pawVisitorAt=t;
+ if(talkOpen||transitioning||document.hidden||$('page').style.display==='block'){pawVisitorPauseTimers(pawLocalVisitors,elapsed);return pawVisitorHold(pawLocalVisitors)}
+ // A suspended tab or inactive renderer must not consume a visitor's dwell.
+ pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,elapsed-dt));
  if(residentReducedMotion.matches){for(const a of pawLocalVisitors)if(a.phase==='waiting')a.phase='stationary';return pawVisitorHold(pawLocalVisitors)}
  for(const a of pawLocalVisitors){
   a.walking=0;if(a.guest||a.visitingResident||a.phase==='gone'||a.phase==='stationary'||t<a.wait)continue;
@@ -5823,8 +5842,8 @@ function pawRoomWalkers(){
   }
   const tempo=pawResidentTempo(a.id+'|'+a.avatar),dest=a.route[0],next=pawWalkStep(a,dest,dt,tempo.speed);
   const transit=a.phase==='arriving'||a.phase==='departing';
-  if(!indoorSafe(next.x,next.y,obs)||!pawGuestClear(next.x,next.y,transit?stationFeet:protectedFeet)||!pawGuestClear(next.x,next.y,pawAmbientIndoor.map(v=>[v.x,v.y]),60)){if(!transit)a.route=[];a.wait=t+2;continue}
-  if(Math.hypot(next.x-indoor.x,next.y-indoor.y)<55||others.some(b=>pawVisitorVisible(b)&&Math.hypot(next.x-b.x,next.y-b.y)<50)){if(!transit)a.route=[];a.wait=t+1.1;continue}
+  if(!indoorSafe(next.x,next.y,obs)||!pawGuestClear(next.x,next.y,transit?stationFeet:protectedFeet)||!pawVisitorStepClear(a,next,pawAmbientIndoor,60)){if(!transit)a.route=[];a.wait=t+2;continue}
+  if(!pawVisitorStepClear(a,next,[indoor],55)||!pawVisitorStepClear(a,next,others.filter(pawVisitorVisible),50)){if(!transit)a.route=[];a.wait=t+1.1;continue}
   const distance=Math.hypot(next.x-a.x,next.y-a.y);
   if(distance>.01){a.facing=pawWalkFacing(a,dest);pawGaitTravel.set(a,(pawGaitTravel.get(a)||0)+distance);a.walking=1}
   a.x=next.x;a.y=next.y;
