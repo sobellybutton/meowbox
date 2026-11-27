@@ -826,6 +826,24 @@
       ],
       "lease": null,
       "blocker": "Actual browser visual readability, rack hit areas, controls, language and return flow, Pages deployment not verified. No final acceptance."
+    },
+    {
+      "id": "RAIL-DIRECT-01",
+      "lane": "engineering",
+      "priority": 1,
+      "summary": "Owner mobile feedback: direct boarding, onward/return station sequence, visible wayfinding and full-screen camera transitions",
+      "resources": [
+        "src/startup.js",
+        "scripts/district-journey-test.cjs",
+        "scripts/world-visits-test.cjs"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-direct-rail-20261127",
+        "until": 1795787548080
+      }
     }
   ]
 }
