@@ -2,12 +2,18 @@ name: Pawradise recovered sprite review
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/paw-sprite-review.yml', 'assets/visual/staging/recovered/player-0-batch-*.zip']
+    paths: ['.github/workflows/paw-sprite-review.yml', 'assets/visual/staging/recovered/player-*-batch-*.zip']
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   original-front-and-side:
+    strategy:
+      fail-fast: false
+      matrix:
+        player: [0, 1, 2, 3]
+    env:
+      PLAYER: ${{ matrix.player }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -18,11 +24,12 @@ jobs:
         run: |
           mkdir -p sprite-review
           python3 <<'PY'
-          import base64, hashlib, io, json, pathlib, re, zipfile
+          import base64, hashlib, io, json, os, pathlib, re, zipfile
+          player=int(os.environ['PLAYER'])
           from PIL import Image, ImageDraw
           source=pathlib.Path('assets/visual/staging/recovered')
           rows={}
-          for archive in sorted(source.glob('player-0-batch-*.zip')):
+          for archive in sorted(source.glob(f'player-{player}-batch-*.zip')):
               with zipfile.ZipFile(archive) as z:
                   for entry in z.infolist():
                       if entry.is_dir(): continue
@@ -37,7 +44,7 @@ jobs:
                       alpha=im.getchannel('A')
                       visible=alpha.point(lambda a: 255 if a>=64 else 0)
                       box=visible.getbbox()
-                      if not box or box[0]<2 or box[1]<2 or box[2]>150 or box[3]>242: raise ValueError('Possible clipped candidate: '+str(key)+' '+str(box))
+                      if not box: raise ValueError('Empty candidate: '+str(key))
                       if alpha.getextrema()[0]!=0: raise ValueError('No transparency')
                       rows[key]=(raw,im,box)
           expected=[(d,i) for d in ('down','right') for i in range(4)]
@@ -48,10 +55,12 @@ jobs:
           for k,(d,i) in enumerate(expected):
               raw,im,box=rows[d,i]
               x=(k%4)*192+20;y=(k//4)*282+14
-              draw.line((x,y+231,x+152,y+231),fill='#a9a18a',width=1)
+              clipped=box[0]<2 or box[1]<2 or box[2]>150 or box[3]>242
+              foot=[76,box[3]-1]
+              draw.line((x,y+foot[1],x+152,y+foot[1]),fill='#a9a18a',width=1)
               sheet.paste(im,(x,y),im)
-              draw.text((x,y+247),d+' '+str(i),fill='#3b372d')
-              meta={'direction':d,'frame':i,'width':152,'height':244,'foot':[76,231],'bbox':box,'sha256':hashlib.sha256(raw).hexdigest()}
+              draw.text((x,y+247),d+' '+str(i)+(' EDGE' if clipped else ' OK'),fill='#a13d32' if clipped else '#3b372d')
+              meta={'direction':d,'frame':i,'width':152,'height':244,'player':player,'foot':foot,'bbox':box,'potential_clipping':clipped,'sha256':hashlib.sha256(raw).hexdigest()}
               manifest.append(meta)
               name=d+'-'+str(i)+'.webp'
               pathlib.Path('sprite-review',name).write_bytes(raw)
@@ -67,5 +76,5 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: original-player-0-front-side-review
+          name: original-player-${{ matrix.player }}-front-side-review
           path: sprite-review

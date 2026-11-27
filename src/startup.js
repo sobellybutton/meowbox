@@ -8541,4 +8541,25 @@ document.addEventListener('keydown',event=>{
  if(/^[1-4]$/.test(event.key)&&wonderSceneData()?.opts[Number(event.key)-1]){event.preventDefault();wonderSceneChoose(Number(event.key)-1,frame)}
  else if(event.key==='Backspace'&&wonderSceneAnswers.length){event.preventDefault();pawDiscoveryBack(frame)}
 });
+
+/* Noticeboard disclosures: explicit native details activation avoids a
+   swallowed browser default action when the town page handles gestures. */
+const pawNoticeboardDisclosureBefore=renderResidentNoticeboard;
+renderResidentNoticeboard=function(q){
+ const result=pawNoticeboardDisclosureBefore(q),wall=q.querySelector('.townWall');
+ if(!wall)return result;
+ wall.addEventListener('click',event=>{
+  const summary=event.target?.closest?.('.wallReplies > summary');
+  if(!summary||!wall.contains(summary)||event.defaultPrevented)return;
+  const details=summary.parentElement;
+  if(!details||details.tagName!=='DETAILS')return;
+  event.preventDefault();event.stopPropagation();
+  details.open=!details.open;
+ });
+ return result
+};
+const pawNoticeDisclosureStyle=document.createElement('style');
+pawNoticeDisclosureStyle.textContent='#game #content .wallReplies>summary{min-height:44px;cursor:pointer;align-content:center;touch-action:manipulation}#game #content .wallReplies>summary:focus-visible{outline:2px solid #547056;outline-offset:2px}#game #content .wallReplies:not([open])>.wallReply{display:none!important}#game #content .wallReplies[open]>.wallReply{display:block!important}';
+document.head.append(pawNoticeDisclosureStyle);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
