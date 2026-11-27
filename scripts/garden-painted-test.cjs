@@ -52,3 +52,15 @@ for(const [w,h,f] of [[320,568,115],[390,844,120],[430,932,140],[768,1024,130],[
 }
 assert.equal(pool(0,844,100),null);assert.equal(pool(320,300,250),null);
 console.log('Painted wishing-pool target, coin origin and viewport coverage passed.');
+
+const wish=new Function(extract('/* PAW_WISH_INLINE_BEGIN */','/* PAW_WISH_INLINE_END */')+';return {pawWishInlineValid,pawWishInlineText,pawWishInlineSelection,pawPierPrivateActivity}')();
+const current={gardenStage:'write'};
+assert.ok(wish.pawWishInlineValid(current,current,'wishes','wishes','write'));
+for(const args of [[current,{},'wishes','wishes','write'],[current,current,'fish','wishes','write'],[current,current,'wishes','riverShout','write'],[current,current,'wishes','wishes','carry']])assert.equal(wish.pawWishInlineValid(...args),false);
+for(const value of ['', '  ',null,'x'.repeat(301)])assert.equal(wish.pawWishInlineText(value),null);
+assert.equal(wish.pawWishInlineText('  希望平安  '),'希望平安');assert.equal(wish.pawWishInlineText('x'.repeat(300)).length,300);
+const saved=[{id:1},{id:2},{id:3}];for(let i=-2;i<5;i++)assert.equal(wish.pawWishInlineSelection(saved,i).record.id,3-Math.max(0,Math.min(i,2)));
+assert.equal(wish.pawWishInlineSelection([],0),null);
+for(const kind of ['riverBottle','riverShout','hit',null])assert.equal(wish.pawPierPrivateActivity('fish',kind),['riverBottle','riverShout'].includes(kind));
+assert.equal(wish.pawPierPrivateActivity('wishes','riverBottle'),false);
+console.log('Inline wish validation, private lantern archive and pier host scope passed.');
