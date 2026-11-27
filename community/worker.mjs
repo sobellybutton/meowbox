@@ -33,7 +33,7 @@ function validatePost(value){
  const place=value?.place??'square';if(!['square','fortune','home','island','wonder'].includes(place))return null;
  return {name,text,replyTo,place}
 }
-function validId(v){return typeof v==='string'&&/^[a-f0-9-]{36}$/.test(v)}
+function validId(v){return typeof v==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(v)}
 function json(value,status=200,headers={}){
  return new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}})
 }
@@ -43,7 +43,7 @@ async function readBody(req){
  const reader=req.body?.getReader();if(!reader)throw Error('empty');
  const chunks=[];let size=0;for(;;){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>4096){await reader.cancel();throw Error('size')}chunks.push(value)}
  const buf=new Uint8Array(size);let at=0;for(const chunk of chunks){buf.set(chunk,at);at+=chunk.byteLength}
- return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(buf))
+ const value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(buf));if(!value||typeof value!=='object'||Array.isArray(value))throw Error('object required');return value
 }
 async function secureEqual(a,b){const x=await digest(a),y=await digest(b);let diff=0;for(let i=0;i<x.length;i++)diff|=x.charCodeAt(i)^y.charCodeAt(i);return diff===0}
 async function handle(req,env){
@@ -112,7 +112,7 @@ async function handle(req,env){
  }
  if(req.method==='GET'&&u.pathname==='/messages'){
   const place=u.searchParams.get('place')||'square';if(!['square','fortune','home','island','wonder'].includes(place))return reply({error:'invalid place'},400);
-  const r=await db.prepare("SELECT m.id,m.name,m.text,m.created,m.reply_to AS replyTo,p.name AS replyName FROM messages m LEFT JOIN messages p ON p.id=m.reply_to AND p.status='approved' AND p.created>=? WHERE m.status='approved' AND m.created>=? AND m.place=? ORDER BY m.created DESC LIMIT 60").bind(cutoff,cutoff,place).all();
+  const r=await db.prepare("SELECT m.id,m.name,m.text,m.created,m.reply_to AS replyTo,p.name AS replyName FROM messages m LEFT JOIN messages p ON p.id=m.reply_to AND p.status='approved' AND p.created>=? AND p.place=m.place WHERE m.status='approved' AND m.created>=? AND m.place=? ORDER BY m.created DESC LIMIT 60").bind(cutoff,cutoff,place).all();
   const messages=r.results.reverse();
   try{
    const reactions=await db.prepare("SELECT r.message_id,r.kind,COUNT(*) AS count,MAX(CASE WHEN r.owner=? THEN 1 ELSE 0 END) AS mine FROM reactions r JOIN messages m ON m.id=r.message_id WHERE m.status='approved' AND m.created>=? AND m.place=? GROUP BY r.message_id,r.kind").bind(owner,cutoff,place).all();
@@ -138,10 +138,10 @@ async function handle(req,env){
   const ip=req.headers.get('CF-Connecting-IP')||'unknown',rate=await rateHash(env.RATE_SECRET,ip+'|'+Math.floor(now/DAY)),id=crypto.randomUUID();
   // Atomic write condition enforces session and daily network limits.
   const [limit,r]=await db.batch([
-   db.prepare("INSERT INTO submission_events(id,owner,rate_key,created) SELECT ?,?,?,? WHERE (SELECT COUNT(*) FROM submission_events WHERE owner=? AND created>?)<5 AND (SELECT COUNT(*) FROM submission_events WHERE rate_key=? AND created>?)<20 AND (SELECT COUNT(*) FROM submission_events WHERE owner=? AND created>?)=0").bind(id,owner,rate,now,owner,now-DAY,rate,now-DAY,owner,now-15000),
+   db.prepare("INSERT INTO submission_events(id,owner,rate_key,created) SELECT ?,?,?,? WHERE (SELECT COUNT(*) FROM submission_events WHERE owner=? AND created>?)<5 AND (SELECT COUNT(*) FROM submission_events WHERE rate_key=? AND created>?)<20 AND (SELECT COUNT(*) FROM submission_events WHERE owner=? AND created>?)=0 AND (? IS NULL OR EXISTS(SELECT 1 FROM messages WHERE id=? AND status='approved' AND created>=? AND place=?))").bind(id,owner,rate,now,owner,now-DAY,rate,now-DAY,owner,now-15000,value.replyTo,value.replyTo,cutoff,value.place),
    db.prepare("INSERT INTO messages(id,owner,rate_key,name,text,created,status,reply_to,place) SELECT ?,?,?,?,?,?,'pending',?,? WHERE EXISTS(SELECT 1 FROM submission_events WHERE id=?)").bind(id,owner,rate,value.name,value.text,now,value.replyTo,value.place,id)
   ]);
-  if(!limit.meta.changes||!r.meta.changes)return reply({error:'rate limited'},429);
+  if(!limit.meta.changes||!r.meta.changes){if(value.replyTo&&!await db.prepare("SELECT id FROM messages WHERE id=? AND status='approved' AND created>=? AND place=?").bind(value.replyTo,cutoff,value.place).first())return reply({error:'reply unavailable'},409);return reply({error:'rate limited'},429)}
   return reply({id,status:'pending'},201);
  }
  if(req.method==='DELETE'&&u.pathname==='/mine'){
@@ -152,7 +152,7 @@ async function handle(req,env){
  if(req.method==='POST'&&u.pathname==='/report'){
   let body;try{body=await readBody(req)}catch{return reply({error:'invalid body'},400)}
   if(!validId(body?.id))return reply({error:'invalid id'},400);
-  const r=await db.prepare("INSERT OR IGNORE INTO reports(message_id,reporter,created) SELECT id,?,? FROM messages WHERE id=? AND status='approved' AND owner<>? AND (SELECT COUNT(*) FROM reports WHERE reporter=? AND created>?)<10").bind(owner,now,body.id,owner,owner,now-DAY).run();
+  const r=await db.prepare("INSERT OR IGNORE INTO reports(message_id,reporter,created) SELECT id,?,? FROM messages WHERE id=? AND status='approved' AND created>=? AND owner<>? AND (SELECT COUNT(*) FROM reports WHERE reporter=? AND created>?)<10").bind(owner,now,body.id,cutoff,owner,owner,now-DAY).run();
   return reply({ok:true,recorded:!!r.meta.changes})
  }
  if(req.method==='GET'&&u.pathname==='/moderation/queue'){
