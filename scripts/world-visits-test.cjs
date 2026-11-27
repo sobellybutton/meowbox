@@ -14,4 +14,13 @@ const valid={connected:true,open:true,sameDistrict:true,boarded:false,transition
 assert.equal(api.pawStationActionAllowed(valid),true);
 for(const key of Object.keys(valid))assert.equal(api.pawStationActionAllowed({...valid,[key]:!valid[key]}),false,key);
 assert.equal(api.pawStationActionAllowed({}),false);
-console.log('District visit and station action regression passed');
+const directBlock=source.match(/\/\* PAW_DIRECT_BOARD_BEGIN \*\/([\s\S]*?)\/\* PAW_DIRECT_BOARD_END \*\//);
+assert.ok(directBlock);
+const direct=new Function(directBlock[1]+';return {pawDirectBoardAllowed,pawRailStationCopy}')();
+const board={valid:true,transitioning:false,room:false,activity:false,entrance:false,hidden:false,page:false};
+assert.equal(direct.pawDirectBoardAllowed(board),true);
+for(const key of Object.keys(board))assert.equal(direct.pawDirectBoardAllowed({...board,[key]:!board[key]}),false,key);
+assert.deepEqual(direct.pawRailStationCopy('wonder','fortune'),['Return train','返程列车']);
+for(const id of ['fortune','home','island'])assert.deepEqual(direct.pawRailStationCopy(id,'wonder'),['Next train','下一班列车']);
+assert.ok(!source.includes('pawStationPlatform(scene)'));
+console.log('District visit and direct station boarding regression passed');
