@@ -953,12 +953,12 @@
         "scripts/paw-room-life-scoop-test.cjs"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-gateway-regression-20261127-2212",
-        "until": 1795790546183
-      }
+      "stage": "tested",
+      "evidence": [
+        "4951355e: allocate landscape station stage explicitly; retain new gateway coordinates, verify 2,441 extracted geometry/identity assertions and source parse."
+      ],
+      "lease": null,
+      "blocker": "Current Chromium/WebKit rendered avatar sizing and gateway appearance not yet verified."
     },
     {
       "id": "QA-WATER-02",
@@ -971,12 +971,12 @@
       "depends": [
         "TEMPLE-WATER-01"
       ],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-shrine-regression-20261127-2215",
-        "until": 1795790663913
-      }
+      "stage": "implemented",
+      "evidence": [
+        "470aad94: shrine test loads actual painted courtyard, drags current ladle with calibrated destinations and verifies actual drawn assets; script parses."
+      ],
+      "lease": null,
+      "blocker": "Browser execution and actual art/contact acceptance pending."
     }
   ]
 }
