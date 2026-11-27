@@ -493,3 +493,12 @@ Four workstreams advanced, no complete outstanding workstream cleared. Registry:
 
 ## Character artwork reference gate
 Current ART-01/02/03 and ROOM-06 remain open. Original Yue and Tarot standing art inspected; existing seven-file Yue candidate archive checked for integrity and RGBA transparency, pending import. New Tarot seated artwork blocked by unavailable attachable source image in the generation tool. Await the original character reference attachment; do not generate substitutes or repeat failed attempts. No new artwork or visual acceptance claimed. Environment integration remains independent.
+
+
+## Parallel code development during owner creative production (28 November)
+
+- UX-COHESION-01 partial: b918b069 activates all eight already-imported painted wallpaper/floor swatches in real catalogue and purchase previews, retains fallback and existing ownership. Manifest path, byte count and Git blob hash verified against current tree for all eight, unknown IDs rejected, startup parsed. Actual applied floor/wall material perspective still open.
+- QA-01 partial: Pages run 46043592256 succeeded at 2a0078cf; Master Yue Chromium/WebKit run 46042608530 succeeded at 403101ca. Wider run 46042654230 failed forecourt helper guard, water/bell input, organic entry and share timeout. 26965337 fixes the contradictory forecourt assertion while retaining deliberate return interruption and active route guards; 758 isolated assertions passed. Remaining failures not waived; inspect current browser artifacts and actual interaction before acceptance.
+- LIFE-RELATIONSHIPS-01 partial: 4a099c07 adds 16 character-specific bilingual replies for a deliberate indoor conversation on a subsequent day. Existing local hospitality record retains only recognized character ID, bounded distinct-day count and last date, never free text or birth details; no extra reward or new storage key. First/repeated/returning-day, rollback, malformed and cap cases passed in focused harness, source parsed. Actual rendered interaction, broader resident callbacks and preference controls still pending.
+
+No new artwork generated or altered in this session; preserve owner's separate creative production and check current asset manifests before integration. Concurrent main update reconciled after guarded-write conflict. Registry remains 41 outstanding, 40 tested, 3 implemented; no complete workstream cleared. Leases released. Newest commits not yet verified by full browser or deployed device journeys.
