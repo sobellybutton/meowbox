@@ -959,6 +959,24 @@
         "owner": "manual-gateway-regression-20261127-2212",
         "until": 1795790546183
       }
+    },
+    {
+      "id": "QA-WATER-02",
+      "lane": "engineering",
+      "priority": 1,
+      "summary": "Run physical purification regression against the newly painted courtyard",
+      "resources": [
+        "scripts/shrine-repair-test.cjs"
+      ],
+      "depends": [
+        "TEMPLE-WATER-01"
+      ],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-shrine-regression-20261127-2215",
+        "until": 1795790663913
+      }
     }
   ]
 }
