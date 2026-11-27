@@ -463,7 +463,7 @@ const rooms={
           0.31
         ]
       },
-      "bottle": {
+      "pier": {
         "object": [
           0.69,
           0.44
