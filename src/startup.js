@@ -11922,4 +11922,103 @@ updateHUD=function(...args){
  }
  return result
 };
+
+/* PAW_WISH_LOBBY_BEGIN */
+// The recovered garden is a complete scene, with a painted pond, wish kiosk
+// and central stone lane. Keep feet on that lane, not on the pond or bench.
+const pawWishLobbyPlate={x:100,y:-65,w:600,h:600*1648/928};
+const pawWishLobbyStations={wishes:[245,565,325,615],coin:[435,485,425,565]};
+const pawWishLobbyLabels={wishes:[245,535,'Write a wish','写下心愿'],coin:[435,485,'Toss a coin','投币许愿']};
+const pawWishLobbyEntry=[400,735],pawWishLobbyArrival=[400,690];
+const pawWishLobbyHost=[470,650],pawWishLobbyVisitors=[[365,675],[430,715],[340,705]];
+function pawWishLobbySafe(x,y){
+ return Number.isFinite(x)&&Number.isFinite(y)&&y>=565&&y<=738&&x>=310&&x<=490
+}
+function pawWishLobbyCamera(w,h,p=pawWishLobbyPlate){
+ if(![w,h,p.x,p.y,p.w,p.h].every(Number.isFinite)||Math.min(w,h,p.w,p.h)<=0)return null;
+ // Portrait covers the full frame; use the wide-fit fallback until a
+ // native landscape plate has been approved.
+ const s=w<h?Math.max(w/p.w,h/p.h):Math.min(w/p.w,h/p.h);
+ return {s,ox:(w-p.w*s)/2-p.x*s,oy:(h-p.h*s)/2-p.y*s}
+}
+/* PAW_WISH_LOBBY_END */
+const pawWishLobbyArt=()=>pawRecoveredImage('scenes/wishing_garden_portrait.webp');
+let pawWishLobbyVisit=false,pawWishLobbyAdmission=null;
+const pawWishLobbyActive=()=>room==='wishes'&&!activity&&pawWishLobbyVisit&&pawRoomImageReady(pawWishLobbyArt());
+const pawWishLobbyDoorBefore=walkDoor;
+walkDoor=function(id,...args){if(id==='wishes')pawWishLobbyArt();return pawWishLobbyDoorBefore(id,...args)};
+const pawWishLobbyEnterBefore=enter;
+enter=function(id,...args){
+ if(id!=='wishes'){pawWishLobbyVisit=false;pawWishLobbyAdmission=null;return pawWishLobbyEnterBefore(id,...args)}
+ if(room||activity||transitioning||pawArcadeInputBlocked())return;
+ const view=pawFoodAdmissionView();
+ if(pawFoodAdmissionValid(pawWishLobbyAdmission,pawWishLobbyAdmission,view))return;
+ const request={scene,avatar,x:p.x,y:p.y};pawWishLobbyAdmission=request;
+ releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;
+ const im=pawWishLobbyArt();
+ if(!pawRoomImageReady(im))hint('Getting the garden ready…','花园正在准备开放……');
+ pawReadyPicture(im,4500).then(ready=>{
+  if(!pawFoodAdmissionValid(request,pawWishLobbyAdmission,pawFoodAdmissionView())){if(pawWishLobbyAdmission===request)pawWishLobbyAdmission=null;return}
+  pawWishLobbyAdmission=null;
+  if(!ready||!pawRoomImageReady(im)){hint('The garden painting could not load. Tap its gate to try again.','花园画面暂未加载成功，请再次点击入口重试。');return}
+  pawWishLobbyVisit=true;return pawWishLobbyEnterBefore(id,...args)
+ })
+};
+const pawWishLobbyLoopBefore=loop;
+loop=function(...args){if(pawWishLobbyAdmission&&!pawFoodAdmissionValid(pawWishLobbyAdmission,pawWishLobbyAdmission,pawFoodAdmissionView()))pawWishLobbyAdmission=null;return pawWishLobbyLoopBefore(...args)};
+const pawWishLobbyCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(...args){return pawWishLobbyActive()?pawWishLobbyCamera(W,H)||pawWishLobbyCameraBefore(...args):pawWishLobbyCameraBefore(...args)};
+const pawWishLobbySpecBefore=indoorSpec;
+indoorSpec=function(){return pawWishLobbyActive()?{entry:pawWishLobbyEntry.slice(),arrival:pawWishLobbyArrival.slice(),stations:pawWishLobbyStations}:pawWishLobbySpecBefore()};
+const pawWishLobbyObstaclesBefore=indoorObstacles;
+indoorObstacles=function(){return pawWishLobbyActive()?[]:pawWishLobbyObstaclesBefore()};
+const pawWishLobbySafeBefore=indoorSafe;
+indoorSafe=function(x,y,...args){return pawWishLobbyActive()?pawWishLobbySafe(x,y):pawWishLobbySafeBefore(x,y,...args)};
+function pawWishLobbyBackdrop(){
+ if(!pawWishLobbyActive())return false;
+ const p=pawWishLobbyPlate,b=livingBounds(),im=pawWishLobbyArt();
+ ctx.save();try{ctx.fillStyle='#526b57';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(im,p.x,p.y,p.w,p.h)}finally{ctx.restore()}
+ return true
+}
+const pawWishLobbyPortraitBefore=paintPortraitInterior;
+paintPortraitInterior=function(id,...args){return id==='wishes'&&pawWishLobbyBackdrop()?true:pawWishLobbyPortraitBefore(id,...args)};
+const pawWishLobbyWideBefore=paintLandscapeRoom;
+paintLandscapeRoom=function(id,...args){return id==='wishes'&&pawWishLobbyBackdrop()?true:pawWishLobbyWideBefore(id,...args)};
+const pawWishLobbyLivingBefore=paintLivingBackdrop;
+paintLivingBackdrop=function(...args){if(pawWishLobbyBackdrop())return;return pawWishLobbyLivingBefore(...args)};
+const pawWishLobbyWarmBefore=warmRoomArt;
+warmRoomArt=function(id,...args){return id==='wishes'&&pawWishLobbyBackdrop()?true:pawWishLobbyWarmBefore(id,...args)};
+const pawWishLobbyDrawBefore=drawRoom;
+drawRoom=function(...args){if(pawWishLobbyActive())pawWishLobbyBackdrop();return pawWishLobbyDrawBefore(...args)};
+function pawWishLobbyActor(){
+ const n=['Garden keeper','守园人'],record=residentArtworkRecord(n);
+ return {station:'wishes',n,x:pawWishLobbyHost[0],y:pawWishLobbyHost[1],sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record?.height||112,.94),facing:'left'}
+}
+const pawWishLobbyHostsBefore=roomResidentActors;
+roomResidentActors=function(){return pawWishLobbyActive()?[pawWishLobbyActor()]:pawWishLobbyHostsBefore()};
+const pawWishLobbyPropBefore=prop;
+prop=function(id,x,y){
+ if(!pawWishLobbyActive()||!Object.hasOwn(pawWishLobbyStations,id))return pawWishLobbyPropBefore(id,x,y);
+ if(id==='wishes'){const a=pawWishLobbyActor();drawGatheringPainted(a.n,a.x,a.y,a.sc,a.facing)}
+ // Do not overlay old geometric rack, basin or pond on the painting.
+ pawStationPlaque={room,id,x,y,spec:groundedStationSpec(room,id),at:t}
+};
+const pawWishLobbyLabelBefore=label;
+label=function(name,x,y,fn){
+ const station=pawStationPlaque,q=pawWishLobbyLabels[station?.id];
+ if(!pawWishLobbyActive()||station?.room!==room||station.at!==t||!q)return pawWishLobbyLabelBefore(name,x,y,fn);
+ pawStationPlaque=null;
+ const [cx,cy,en,cn]=q,sc=Math.max(.08,cam.scale),font=Math.min(24,Math.max(17,12/sc)),value=tr(en,cn);
+ ctx.save();try{
+  ctx.font='600 '+font+'px Georgia,"Songti SC",serif';
+  const w=Math.min(160,Math.max(75,ctx.measureText(value).width+18)),h=font+13;
+  const place=pawPaintedPlaquePlacement(cx,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
+  if(!place)return;
+  round(place.x-w/2,place.y-h/2,w,h,4,'#523c2dec','#d7b982');activityFitText(value,place.x,place.y,font,w-10,'#fff0d5');
+  meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(station.id);
+  target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
+ }finally{ctx.restore()}
+};
+pawRoomVisitorSpecs.wishes={count:1,points:pawWishLobbyVisitors.map(v=>v.slice())};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
