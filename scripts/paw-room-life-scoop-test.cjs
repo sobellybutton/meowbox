@@ -75,7 +75,10 @@ for(const [w,h] of [[360,640],[390,844],[1440,900],[844,390],[768,1024],[280,450
   ck(p.x>=f.left&&p.x<=f.left+f.width&&p.y<=f.top+f.height&&p.y-p.height>=f.top,'grounded character inside artwork');
   if(i)ck(p.y<pawGateGround(w,h,(i-1)/100).y,'forward approach');
   const nx=(p.x-f.left)/f.width,ny=(p.y-f.top)/f.height,nh=p.height/f.height;
-  ck(nx>=.48&&nx<=.51&&ny>=.729&&ny<=.866&&nh>=.099&&nh<=.119,'trace foreground stone paving without zoom');
+  ck(nx>=.495&&nx<=.501&&ny>=.699&&ny<=.866&&nh>=.082&&nh<=.103,'trace current gateway paving and perspective scale');
+  if(i===0)ck(Math.abs(ny-.865)<1e-9&&Math.abs(nh-.102)<1e-9,'start at lower stone paving');
+  if(i===100)ck(Math.abs(ny-.700)<1e-9&&Math.abs(nh-.083)<1e-9,'finish at calibrated threshold');
+  if(i){const previous=pawGateGround(w,h,(i-1)/100);ck(p.height<previous.height,'perspective reduces silhouette size')}
  }
 }
 for(let player=0;player<4;player++){

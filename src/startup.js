@@ -10179,6 +10179,20 @@ const pawChoiceSceneCSS=document.createElement('style');pawChoiceSceneCSS.textCo
 #proposal .pawChoiceGrounded .pawEntranceAvatar{position:absolute!important;left:50%!important;top:auto!important;bottom:8%!important;transform:translateX(-50%)!important;translate:none!important;height:min(var(--paw-avatar-main,180px),68%)!important;max-height:68%!important;filter:drop-shadow(0 5px 3px #372b244d)!important}
 #proposal .pawIntentSkip{min-height:44px;max-width:100%;white-space:normal;padding:4px 12px;background:#2b4439;color:#fff3db;border:1px solid #bbac8b;border-radius:4px}
 @media(max-height:670px) and (orientation:portrait){#proposal .pawChoiceGrounded .pawEntranceAvatar{height:min(var(--paw-avatar-main,130px),85%)!important;max-height:85%!important;bottom:4%!important}}
+/* The grounded avatar and station picture are both absolute children.
+   Explicitly allocate the illustrated stage rather than sizing from them. */
+@media (min-width:850px) and (min-height:480px),(orientation:landscape) and (max-height:479px){
+ #proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"]):not([hidden]){grid-template-rows:auto minmax(240px,1fr)!important;align-items:stretch!important}
+ #proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>header{grid-row:1!important;grid-column:1/-1!important}
+ #proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>.hero.pawChoiceGrounded{grid-row:2!important;grid-column:1!important;min-height:240px!important;height:100%!important;align-self:stretch!important}
+ #proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>footer{grid-row:2!important;grid-column:2!important;align-self:center!important;max-width:100%!important}
+ #proposal .pawChoiceGrounded .pawEntranceAvatar{height:min(var(--paw-avatar-main,180px),82%)!important;max-height:82%!important;bottom:8%!important}
+}
+@media (orientation:landscape) and (max-height:479px){
+ #proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"]):not([hidden]){grid-template-rows:auto minmax(190px,1fr)!important;padding-inline:clamp(12px,3vw,36px)!important;gap:8px!important}
+ #proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>.hero.pawChoiceGrounded{min-height:190px!important}
+}
+
 `;document.head.append(pawChoiceSceneCSS);
 const pawMapSignFinishCss=document.createElement('style');
 pawMapSignFinishCss.textContent=`
