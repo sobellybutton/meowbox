@@ -379,3 +379,8 @@ UX-WAYFINDING-INTERACTION-01 partial: 1cc2b251 removes the second exit tap after
 ## Entrance first-frame traveller readiness (27 November 2026)
 
 ENT-ASSET-READY-01 partial: e8c17843 warms the selected traveller's directional base paintings during onboarding and railway travel, prioritizes Fortune Valley, and requires all three directional base sprites, the current map and gate painting to decode before entry. Failed readiness keeps the gate visible and offers a retry; optional action frames are warmed without requiring absent production artwork. 1e8a9977 persists asynchronous readiness and retry regressions, exercised in connector harness; source parsed. No actual cold/warm network frame capture or latest deployed verification. Resident/sign admission, later scene transitions, final directional art and complete first-frame acceptance remain open. Lease released; hourly schedule unchanged.
+
+
+## Daily social task guidance (27 November 2026)
+
+SOCIAL-DAILY-01 partial: cf700a19 identifies a nearby named fictional resident from the current outdoor roster (excluding animals and actual shared peers), gives a bilingual tap-and-converse instruction, and restores lifeFriend credit only on a chosen response in the extended fictional guest dialogue. Existing daily category cap, reward ledger and saves are unchanged. 4f1d41d5 persists the candidate and credit regression; source parsed and extracted helper checks executed. Actual human consent and shared endpoint, visible physical gestures, indoor social navigation and rendered phone/desktop verification remain open. Released claim; no acceptance increase.
