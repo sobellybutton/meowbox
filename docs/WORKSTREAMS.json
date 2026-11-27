@@ -1405,7 +1405,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null,
+      "lease": {
+        "owner": "manual-three-community-1127",
+        "until": 1795794735471
+      },
       "blocker": "Endpoint is blank; provision Worker/D1 and moderation, verify zero/one/five actual clients, opt-out, expiry, blocking, abuse controls and reconnect; never fake humans or online counts."
     },
     {
