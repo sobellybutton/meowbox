@@ -12835,4 +12835,101 @@ pawHudCornerStyle.textContent=`
 `;document.head.append(pawHudCornerStyle);
 /* PAW_HUD_CORNER_STYLE_END */
 
+/* PAW_NATIVE_REFLECTION_BEGIN */
+function pawReflectionOwns(view,current){
+ return !!view&&!!current&&view.run===current.run&&view.token===current.token&&view.mode===current.mode&&view.result===current.result&&view.room===current.room&&current.activity==='wonderScene'&&current.phase==='result'
+}
+function pawReflectionStep(length,index,delta){
+ if(!Number.isInteger(length)||length<1||!Number.isInteger(index)||!Number.isInteger(delta))return 0;
+ return Math.max(0,Math.min(length-1,index+delta))
+}
+function pawReflectionRoomTitle(id){
+ return id==='match'?['The Heart Café','心语咖啡馆']:id==='story'?['The House of What If','如果人生馆']:id==='curiosity'?['The Curiosity Club','奇想俱乐部']:['The Inner Observatory','心灵观星台']
+}
+function pawStressGroupPage(groups,group,page,size=4){
+ if(!Array.isArray(groups)||!Number.isInteger(size)||size<1||!Number.isInteger(group)||group<0||group>=groups.length||!Number.isInteger(page)||page<0)return null;
+ const entries=groups[group]?.targets;if(!Array.isArray(entries)||!entries.length||page*size>=entries.length)return null;
+ const offset=groups.slice(0,group).reduce((n,g)=>n+g.targets.length,0);
+ return {entries:entries.slice(page*size,(page+1)*size).map((label,i)=>({label,index:offset+page*size+i})),previous:page>0,next:(page+1)*size<entries.length}
+}
+/* PAW_NATIVE_REFLECTION_END */
+function pawReflectionView(){
+ return {run:state,token:wonderSceneToken,mode:wonderSceneMode,result:wonderSceneResult,room,activity,phase:wonderScenePhase}
+}
+function pawNativeReflectionNotes(mode,result){
+ const notes=[{title:tr(...result.name),words:tr(...result.desc)}],saved=wonderSaved[mode],balance=releaseAssessmentBalance(mode,saved);
+ const add=(title,...parts)=>notes.push({title,words:parts.filter(Boolean).join('\n\n')});
+ if(mode==='type'&&balance){
+  add(tr('Reading the notebook','如何阅读这份小记'),tr('Each pair shows four answers from this visit. An even split can reflect different situations.','每一组来自这次的四个回答。两边持平，可能只是你在不同情境下会有不同做法。'));
+  balance.forEach(({first,second},i)=>{const [title,a,b,prompt]=preferenceResultAxes[i],reflection=pawPreferenceReflection(i,first,second);add(tr(...title),tr(...a)+' '+first+'/4 · '+tr(...b)+' '+second+'/4',reflection&&tr(...reflection),tr(...prompt))})
+ }else if(mode==='motive'&&balance){
+  add(tr('Nine inner motives','九种内在动力'),tr('Each motive has three statements. Where scores are close, read the themes side by side.','每种动力对应三道题。分数接近时，可以把它们放在一起看。'));
+  const leaders=balance.flat?[]:balance.close.slice(0,3).map(v=>v.index);
+  balance.ranked.forEach(({index,score})=>add(tr(...wonderMotives[index].slice(0,2)),score+'/6',leaders.includes(index)?tr(...motiveReflectionPrompts[index]):''))
+ }else if(mode==='soul'){
+  const portrait=pawSoulPortrait(saved,soulQs);
+  if(portrait){add(tr('Reading your cat portrait','读读你的猫灵画像'),tr('Six choices can point to more than one cat. Matches are counted relative to each cat’s opportunities. This is playful reflection, not a psychological test.','六个小选择可能指向不止一种猫灵。每只猫灵按出现机会计算匹配次数。这只是趣味探索，并非心理测评。'),portrait.leaders.length>1?tr('These cats tied. There is no single winner.','这些猫灵并列，没有唯一答案。'):'');
+   portrait.leaders.forEach(({index,score,opportunity})=>{const cat=soulCats[index];add(tr(cat[0],cat[1]),score+'/'+opportunity,tr(cat[2],cat[3]))})}
+ }else{
+  const rows=pawExtraRows(mode,saved?.scores);
+  if(rows){
+   add(tr('Reading this reflection','如何阅读这份小记'),mode==='priorities'?tr('Each theme appears six times. The totals add up to twelve. Equal scores are equally represented. There are no correct answers.','每个主题出现六次，四项得分合计为十二。同分表示选择次数相同，没有标准答案。'):tr('Three statements per theme, scored from 0 to 6. This is an original informal reflection, not a validated psychological measure.','每项由三道题组成，分数为0至6。此为原创趣味探索，非经验证的心理量表。'),mode==='attachment'?tr('A higher score means that response feels more familiar, not that you are better or worse at relationships.','分数越高，表示这种反应越符合你的体验，并不代表你更擅长或不擅长经营关系。'):'');
+   const prompts=mode==='priorities'?pawPriorityReflection(saved.scores):mode==='values'?pawRelationshipReflection(saved.scores):mode==='care'?pawCareReflection(saved.scores):mode==='attachment'?pawAttachmentReflection(saved.scores):null;
+   rows.forEach((row,i)=>add(tr(...row.label),tr(...row.value),prompts?.[i]&&tr(...prompts[i])))
+  }
+ }
+ return notes
+}
+const pawArchiveReflectionBefore=openWonderResult;
+openWonderResult=function(mode,result){
+ const view=pawReflectionView();
+ if(view.activity!=='wonderScene'||view.phase!=='result')return pawArchiveReflectionBefore(mode,result);
+ if(view.mode!==mode||view.result!==result||!result)return;
+ const valid=()=>pawReflectionOwns(view,pawReflectionView());
+ const returnTable=()=>{if(valid()){closeTalk();$('page').style.display='none'}};
+ function read(index){
+  if(!valid())return;
+  const notes=pawNativeReflectionNotes(mode,result),i=pawReflectionStep(notes.length,index,0),note=notes[i];
+  $('page').style.display='none';closeTalk();
+  const choices=[];
+  if(i<notes.length-1)choices.push([tr('Turn the page','翻到下一页'),()=>read(i+1)]);
+  if(i>0)choices.push([tr('Previous page','上一页'),()=>read(i-1)]);
+  choices.push([tr('Make a keepsake','制作纪念卡'),()=>{if(!valid())return;closeTalk();wonderSceneShare(()=>{if(valid())read(i);else $('page').style.display='none'})}]);
+  if(i===notes.length-1)choices.push([tr('Try again','再试一次'),()=>{if(valid()){closeTalk();wonderSceneOpen(mode)}}]);
+  choices.push([tr('Close the notebook','合上小记'),returnTable]);
+  say(tr(...pawReflectionRoomTitle(view.room)),note.title+' · '+(i+1)+'/'+notes.length+'\n\n'+note.words,choices)
+ }
+ read(0)
+};
+// Keep Ah Ma's choices in her stall. Preserve existing targets, slipper
+// selection, action/reward state and the original chooseStressTarget guard.
+const pawOldStressChooser=openStressChoices;
+openStressChoices=function(){
+ if(activity!=='hit'||room!=='fish')return pawOldStressChooser();
+ if(paperRitualBusy()||state.paperFinished||pawArcadeInputBlocked())return;
+ const run=state,valid=()=>run===state&&room==='fish'&&activity==='hit'&&!paperRitualBusy()&&!run.paperFinished;
+ const choose=index=>{if(valid()){closeTalk();chooseStressTarget(index)}};
+ function tools(){
+  if(!valid())return;
+  say(tr('Ah Ma','阿嬷'),tr('Pick a slipper. Same skill, different colour.','选只拖鞋。功力一样，颜色不同。'),[[tr('Rose slipper','玫红拖鞋'),()=>{if(valid()){stressTool=0;groups(0)}}],[tr('Wood brown slipper','木棕拖鞋'),()=>{if(valid()){stressTool=1;groups(0)}}],[tr('Back to worries','返回烦恼纸'),()=>groups(0)]])
+ }
+ function targets(group,page){
+  if(!valid())return;const row=pawStressGroupPage(stressGroups,group,page);if(!row)return;
+  const choices=row.entries.map(v=>[tr(...v.label),()=>choose(v.index)]);
+  if(row.next)choices.push([tr('More slips','更多纸条'),()=>targets(group,page+1)]);
+  if(row.previous)choices.push([tr('Previous slips','上一组纸条'),()=>targets(group,page-1)]);
+  choices.push([tr('Other worries','其他烦恼'),()=>groups(0)]);
+  say(tr('Ah Ma','阿嬷'),tr(...stressGroups[group].label),choices)
+ }
+ function groups(page){
+  if(!valid())return;const size=3,first=Math.max(0,page)*size;
+  const choices=stressGroups.slice(first,first+size).map((g,i)=>[tr(...g.label),()=>targets(first+i,0)]);
+  if(first+size<stressGroups.length)choices.push([tr('More worries','更多烦恼'),()=>groups(page+1)]);
+  if(page>0)choices.push([tr('Previous worries','上一组烦恼'),()=>groups(page-1)]);
+  choices.push([tr('Choose a slipper','选只拖鞋'),tools],[tr('Surprise me','随机挑一个'),()=>{const n=stressTargets.length;if(n)choose(n===1?0:(stressTarget+1+Math.floor(Math.random()*(n-1)))%n)}],[tr('Back to the stall','回到摊位'),()=>{if(valid())closeTalk()}]);
+  say(tr('Ah Ma','阿嬷'),tr('Pick a worry, not a real person. My slippers have no paperwork.','挑个烦恼，不打真人。阿嬷的拖鞋不用填表。'),choices)
+ }
+ groups(0)
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
