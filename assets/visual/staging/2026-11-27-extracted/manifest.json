@@ -1,0 +1,710 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/1/wave.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-social-poses.webp",
+      "source_sha256": "f71a88315b5c8f3b51eff38a97e4d6f46f4b28d435eda215dfd84b729573835c",
+      "crop": [
+        297,
+        8,
+        421,
+        262
+      ],
+      "width": 136,
+      "height": 266,
+      "sha256": "da323ce8b79bd8ddec1231fd27bd34d166294aa7be99e48a3c9ab1a1a63e01e5",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/1/open-arms.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-social-poses.webp",
+      "source_sha256": "f71a88315b5c8f3b51eff38a97e4d6f46f4b28d435eda215dfd84b729573835c",
+      "crop": [
+        617,
+        8,
+        825,
+        262
+      ],
+      "width": 220,
+      "height": 266,
+      "sha256": "4b82b38d9fb0eb7abe728a016154696f0dbad00ac7471ea0af28a4c81ebe97c6",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/1/celebrate.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-social-poses.webp",
+      "source_sha256": "f71a88315b5c8f3b51eff38a97e4d6f46f4b28d435eda215dfd84b729573835c",
+      "crop": [
+        995,
+        10,
+        1106,
+        262
+      ],
+      "width": 123,
+      "height": 264,
+      "sha256": "12d71aa9d4a62d6c6708ddf16e4a5ca5f47326d55e95874974fe20ee121e46ff",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/0/wave.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-social-poses.webp",
+      "source_sha256": "f71a88315b5c8f3b51eff38a97e4d6f46f4b28d435eda215dfd84b729573835c",
+      "crop": [
+        302,
+        276,
+        444,
+        534
+      ],
+      "width": 153,
+      "height": 270,
+      "sha256": "842fb8b135b804ebff74faea434ed379c0640b1d96c689ad4d068aab105fb29e",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/0/open-arms.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-social-poses.webp",
+      "source_sha256": "f71a88315b5c8f3b51eff38a97e4d6f46f4b28d435eda215dfd84b729573835c",
+      "crop": [
+        633,
+        276,
+        816,
+        533
+      ],
+      "width": 195,
+      "height": 269,
+      "sha256": "4e4df512764b8666f1d6c3b011fcca987ee2cdd9b5b6aeec1182c174e0eb29bb",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/0/celebrate.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-social-poses.webp",
+      "source_sha256": "f71a88315b5c8f3b51eff38a97e4d6f46f4b28d435eda215dfd84b729573835c",
+      "crop": [
+        984,
+        281,
+        1112,
+        532
+      ],
+      "width": 139,
+      "height": 263,
+      "sha256": "8263b94f51609f1d8c87bbfe53bf0d6b19bd7d80fdf0e07cd7249d3932a97555",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/2/wave.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-social-poses.webp",
+      "source_sha256": "f71a88315b5c8f3b51eff38a97e4d6f46f4b28d435eda215dfd84b729573835c",
+      "crop": [
+        293,
+        544,
+        428,
+        792
+      ],
+      "width": 147,
+      "height": 260,
+      "sha256": "09ce44d5196ee15bc42ec27f43fd82508ac694c21097b62c75aec679739db0f7",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/2/open-arms.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-social-poses.webp",
+      "source_sha256": "f71a88315b5c8f3b51eff38a97e4d6f46f4b28d435eda215dfd84b729573835c",
+      "crop": [
+        626,
+        544,
+        823,
+        792
+      ],
+      "width": 208,
+      "height": 260,
+      "sha256": "0ea8d6951ebf359298134971742fc35df515d4ec51dbf635c14f9a210f0c15bc",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/2/celebrate.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-social-poses.webp",
+      "source_sha256": "f71a88315b5c8f3b51eff38a97e4d6f46f4b28d435eda215dfd84b729573835c",
+      "crop": [
+        1002,
+        546,
+        1114,
+        792
+      ],
+      "width": 124,
+      "height": 258,
+      "sha256": "44bfbd4a3446ba0678e24660dfb5323f86725a3cfe565ea2947bc4b6556ad57d",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/3/wave.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-social-poses.webp",
+      "source_sha256": "f71a88315b5c8f3b51eff38a97e4d6f46f4b28d435eda215dfd84b729573835c",
+      "crop": [
+        285,
+        809,
+        431,
+        1075
+      ],
+      "width": 158,
+      "height": 278,
+      "sha256": "ba69a638035b7bb97d00411b090400afe240431b157038e1d67142bb332d3f2c",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/3/open-arms.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-social-poses.webp",
+      "source_sha256": "f71a88315b5c8f3b51eff38a97e4d6f46f4b28d435eda215dfd84b729573835c",
+      "crop": [
+        611,
+        810,
+        823,
+        1075
+      ],
+      "width": 224,
+      "height": 277,
+      "sha256": "c0646e3faa406839ccce44148c40183021e78b8902014f3932b98d1fa5cdce79",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/3/celebrate.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-social-poses.webp",
+      "source_sha256": "f71a88315b5c8f3b51eff38a97e4d6f46f4b28d435eda215dfd84b729573835c",
+      "crop": [
+        998,
+        809,
+        1118,
+        1075
+      ],
+      "width": 132,
+      "height": 278,
+      "sha256": "72ce46b485a7ca06f57a1ddb2b4519355f2f8977a3d8b925422d44c418e62a1f",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/1/seated.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-ritual-seated-poses.webp",
+      "source_sha256": "62649d53cee4541977850d090e89010c979e911863d3c21cedba11ef1041b200",
+      "crop": [
+        270,
+        9,
+        473,
+        280
+      ],
+      "width": 215,
+      "height": 283,
+      "sha256": "9452925f97223bb702aa22e5bf03581abb6a1d776cfafb16681bc3286dffa8a8",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/1/kneel-prayer.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-ritual-seated-poses.webp",
+      "source_sha256": "62649d53cee4541977850d090e89010c979e911863d3c21cedba11ef1041b200",
+      "crop": [
+        655,
+        18,
+        789,
+        264
+      ],
+      "width": 146,
+      "height": 258,
+      "sha256": "d8871a72f098220c92acf9008d627bc60d46172217b2623480f94e690f6f423a",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/1/bow.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-ritual-seated-poses.webp",
+      "source_sha256": "62649d53cee4541977850d090e89010c979e911863d3c21cedba11ef1041b200",
+      "crop": [
+        1012,
+        10,
+        1189,
+        264
+      ],
+      "width": 189,
+      "height": 266,
+      "sha256": "d44447935a9d9cd6f4d3d59aacdec680efa8d0d6b2de12f0bc3ea712177fa2a3",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/0/seated.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-ritual-seated-poses.webp",
+      "source_sha256": "62649d53cee4541977850d090e89010c979e911863d3c21cedba11ef1041b200",
+      "crop": [
+        267,
+        279,
+        461,
+        547
+      ],
+      "width": 206,
+      "height": 280,
+      "sha256": "3f134c7b54c389d8d69e3eead351279440e1774c891e9f588b8a287f3c3e2627",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/0/kneel-prayer.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-ritual-seated-poses.webp",
+      "source_sha256": "62649d53cee4541977850d090e89010c979e911863d3c21cedba11ef1041b200",
+      "crop": [
+        656,
+        286,
+        796,
+        534
+      ],
+      "width": 152,
+      "height": 260,
+      "sha256": "89ea1e5b5ba348909e142c6970db5161b7caad94a7c2b35fb2120821b00c9e25",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/0/bow.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-ritual-seated-poses.webp",
+      "source_sha256": "62649d53cee4541977850d090e89010c979e911863d3c21cedba11ef1041b200",
+      "crop": [
+        1009,
+        280,
+        1175,
+        538
+      ],
+      "width": 178,
+      "height": 270,
+      "sha256": "c25e3ab96ba386e998a2188013178808c1897c02dee9645c2367e049b4b27d3c",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/2/seated.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-ritual-seated-poses.webp",
+      "source_sha256": "62649d53cee4541977850d090e89010c979e911863d3c21cedba11ef1041b200",
+      "crop": [
+        268,
+        544,
+        478,
+        812
+      ],
+      "width": 222,
+      "height": 280,
+      "sha256": "87bee4bad3c85c3cc2d6c2cd8eadac7efd65285705522c9d3ba5d8cf9bed780b",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/2/kneel-prayer.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-ritual-seated-poses.webp",
+      "source_sha256": "62649d53cee4541977850d090e89010c979e911863d3c21cedba11ef1041b200",
+      "crop": [
+        639,
+        556,
+        792,
+        798
+      ],
+      "width": 165,
+      "height": 254,
+      "sha256": "f0c202b2000275e769700d20103f1975b759b19f48e5572a5739dbb4b62adc29",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/2/bow.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-ritual-seated-poses.webp",
+      "source_sha256": "62649d53cee4541977850d090e89010c979e911863d3c21cedba11ef1041b200",
+      "crop": [
+        1004,
+        544,
+        1172,
+        803
+      ],
+      "width": 180,
+      "height": 271,
+      "sha256": "d970fc4376d3c2ec75af3474cc7c0870ab43fa1ac858d16f18c09a6f0f5b6fbb",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/3/seated.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-ritual-seated-poses.webp",
+      "source_sha256": "62649d53cee4541977850d090e89010c979e911863d3c21cedba11ef1041b200",
+      "crop": [
+        246,
+        811,
+        473,
+        1078
+      ],
+      "width": 239,
+      "height": 279,
+      "sha256": "175b1e62bd8507a143a2e1163f29a1f9065ff9d95f536d54f36410682e1fd8ab",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/3/kneel-prayer.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-ritual-seated-poses.webp",
+      "source_sha256": "62649d53cee4541977850d090e89010c979e911863d3c21cedba11ef1041b200",
+      "crop": [
+        654,
+        820,
+        797,
+        1069
+      ],
+      "width": 155,
+      "height": 261,
+      "sha256": "80aaae773ebf0feb04090a000bb7b8f3ca769d27d0fcafb3ba30cf307b737d4a",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/players/3/bow.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/original-four-ritual-seated-poses.webp",
+      "source_sha256": "62649d53cee4541977850d090e89010c979e911863d3c21cedba11ef1041b200",
+      "crop": [
+        1006,
+        813,
+        1179,
+        1072
+      ],
+      "width": 185,
+      "height": 271,
+      "sha256": "915e4cfa4bbe66509a812bcbad8a8053ceb7f8e1dcdd8cea71cfa38c61107627",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/residents/grandma-cooking.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/resident-visitor-candidates.webp",
+      "source_sha256": "85b6cf935ab67502ab57f1ac5dd16eea798491e1e347915a4ddeaa9b422f7085",
+      "crop": [
+        82,
+        35,
+        335,
+        504
+      ],
+      "width": 265,
+      "height": 481,
+      "sha256": "7ba01707230ee73ba5789804da6bfaf0a0ffeabb15d62b309d9c91313fbacb8c",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/residents/gossip-auntie.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/resident-visitor-candidates.webp",
+      "source_sha256": "85b6cf935ab67502ab57f1ac5dd16eea798491e1e347915a4ddeaa9b422f7085",
+      "crop": [
+        410,
+        12,
+        688,
+        506
+      ],
+      "width": 289,
+      "height": 506,
+      "sha256": "deceb20b4d12f1a6cbcc1244a5c6792921e8d6049d3387654d3d2e3334d5e3ad",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/residents/temple-keeper.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/resident-visitor-candidates.webp",
+      "source_sha256": "85b6cf935ab67502ab57f1ac5dd16eea798491e1e347915a4ddeaa9b422f7085",
+      "crop": [
+        788,
+        36,
+        1021,
+        504
+      ],
+      "width": 245,
+      "height": 480,
+      "sha256": "b9a222fb7cac642679a69e4a11ef71b63f7314aaf0046e40ea01d116742257c0",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/residents/fortune-teller.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/resident-visitor-candidates.webp",
+      "source_sha256": "85b6cf935ab67502ab57f1ac5dd16eea798491e1e347915a4ddeaa9b422f7085",
+      "crop": [
+        1083,
+        29,
+        1384,
+        499
+      ],
+      "width": 312,
+      "height": 481,
+      "sha256": "f935333c3f5b429efa41aecf0a4f681ff9c9bfeb9a3d721fea9a7250c0a3fa44",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/residents/boba-keeper.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/resident-visitor-candidates.webp",
+      "source_sha256": "85b6cf935ab67502ab57f1ac5dd16eea798491e1e347915a4ddeaa9b422f7085",
+      "crop": [
+        79,
+        547,
+        347,
+        1066
+      ],
+      "width": 279,
+      "height": 531,
+      "sha256": "776382a04feb67a85b6f1b5e9a66d9efb474cd9d3f450d234c9542ce0b24d653",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/residents/arcade-keeper.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/resident-visitor-candidates.webp",
+      "source_sha256": "85b6cf935ab67502ab57f1ac5dd16eea798491e1e347915a4ddeaa9b422f7085",
+      "crop": [
+        415,
+        543,
+        701,
+        1066
+      ],
+      "width": 297,
+      "height": 534,
+      "sha256": "9afb4dadaf626fc6cac7fbb8c9bd2ca1bc196a1109bc6c660c07a7ee33dc0460",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/residents/office-worker.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/resident-visitor-candidates.webp",
+      "source_sha256": "85b6cf935ab67502ab57f1ac5dd16eea798491e1e347915a4ddeaa9b422f7085",
+      "crop": [
+        792,
+        548,
+        991,
+        1068
+      ],
+      "width": 211,
+      "height": 532,
+      "sha256": "62daf7dd34ec5da342e3793e498f068423f83d6b106416ffd8ebebbadfedb7c6",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/residents/camera-tourist.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/resident-visitor-candidates.webp",
+      "source_sha256": "85b6cf935ab67502ab57f1ac5dd16eea798491e1e347915a4ddeaa9b422f7085",
+      "crop": [
+        1098,
+        543,
+        1370,
+        1067
+      ],
+      "width": 284,
+      "height": 536,
+      "sha256": "c24b0f0814b44bfb1a9e04acb702fa9b5a1fc90e7f462ba94a0fb1ef12215c76",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/wood-wall-lantern.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        233,
+        41,
+        407,
+        228
+      ],
+      "width": 186,
+      "height": 198,
+      "sha256": "10a8a9861dbf064159b4807f70211c5513818ece1cc5ef8f58784f122f0c702b",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/lantern-string.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        729,
+        31,
+        1133,
+        198
+      ],
+      "width": 416,
+      "height": 178,
+      "sha256": "8b01bc989901634e2a8cc5de39ca3225f2101737b6a6f1aa4bb55fccd786947f",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/noren-indigo.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        7,
+        287,
+        356,
+        475
+      ],
+      "width": 361,
+      "height": 200,
+      "sha256": "a380df15be02e889ecf35ca6e18477e7d48ec1e109c6a3e54dfa1d0d3acab495",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/noren-coral.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        368,
+        288,
+        707,
+        472
+      ],
+      "width": 351,
+      "height": 196,
+      "sha256": "c8d3ba08032877ce5d66cebc91f886021d21f7c9fccf4cce8a7a931d6cbb2237",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/noren-wisteria.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        719,
+        285,
+        1047,
+        470
+      ],
+      "width": 340,
+      "height": 197,
+      "sha256": "0cfa6d75b9d41cfb9d2ff5e93b1c5bcb1d6659e1a3e23a3399cecbb6a64aebe3",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/chime-sakura.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        1064,
+        230,
+        1174,
+        494
+      ],
+      "width": 122,
+      "height": 276,
+      "sha256": "9f8ec220d88ea81c95575fd8d0288883c6e5dcd3fe38dea9e80ef3750293e415",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/chime-maple.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        1196,
+        232,
+        1306,
+        487
+      ],
+      "width": 122,
+      "height": 267,
+      "sha256": "48b7918f1bde554cf3e7d1a39a1b26601cb14702d4bdb1e849a237db86b7a4e6",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/chime-paw.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        1329,
+        231,
+        1438,
+        487
+      ],
+      "width": 121,
+      "height": 268,
+      "sha256": "984942428a6d9252f4591547650ac49259e5a7521a4434091c61260a8c6dedd2",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/prayer-string.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        9,
+        498,
+        411,
+        661
+      ],
+      "width": 414,
+      "height": 175,
+      "sha256": "007570a6389db69ac92e761eb4a8bba739d70ce0d79ae9642ac76cc1a7a7a3d3",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/window-square.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        511,
+        876,
+        646,
+        1037
+      ],
+      "width": 147,
+      "height": 173,
+      "sha256": "db800697987606693b152bfa855d5f7863d591c297db90361820aedfddccbb02",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/window-wide.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        659,
+        888,
+        871,
+        1016
+      ],
+      "width": 224,
+      "height": 140,
+      "sha256": "ebbbaff141d52a23d3b496a1beb52c640ee9fcf6b80cd2290b20dca56f568af4",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/window-round.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        876,
+        857,
+        1056,
+        1045
+      ],
+      "width": 192,
+      "height": 200,
+      "sha256": "64aeab06dfe21a6d6cb5b597ee9d17d7db440e39e36fab3ab8fd2a00c5f19a8b",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/banner-indigo.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        1075,
+        835,
+        1186,
+        1073
+      ],
+      "width": 122,
+      "height": 249,
+      "sha256": "f0e5fce7a9f0321461b041d31ac84473dc380471010f58d4a78795edb4f8e570",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/banner-sakura.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        1197,
+        833,
+        1307,
+        1073
+      ],
+      "width": 122,
+      "height": 251,
+      "sha256": "9b75214544ba390629068cfb512e4862fb0356806a32b29b6015d0508d59e086",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-27-extracted/environment/banner-maple.webp",
+      "source": "assets/visual/staging/2026-11-27-production-sources/environment-props.webp",
+      "source_sha256": "cfc1bf4055ff8a88bed2f54d5e0be328ca994c4824c8523365cdecaf45107d2b",
+      "crop": [
+        1317,
+        830,
+        1431,
+        1073
+      ],
+      "width": 126,
+      "height": 254,
+      "sha256": "e84caca0f8c2767f325914ed5720f754e1b8d981c3be0ddde67a105d4868e1fb",
+      "status": "extracted candidate; requires identity, anchors and rendered acceptance"
+    }
+  ]
+}
