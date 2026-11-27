@@ -591,6 +591,24 @@
         "6a5b7c1"
       ],
       "lease": null
+    },
+    {
+      "id": "HOME-ASSET-01",
+      "lane": "world",
+      "priority": 2,
+      "summary": "Validate imported modular home assets and produce reusable floor projection and placement runtime",
+      "resources": [
+        "art:home-room",
+        "src/home-layout.js",
+        "scripts/home-layout-test.cjs"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": {
+        "owner": "manual-room-art-20261127-h",
+        "until": 1795785698227
+      }
     }
   ]
 }
