@@ -12525,12 +12525,13 @@ function pawYueQuestionSteps(form,out,kind){
  if(steps.some(group=>!group.length||group.some(n=>!n||n===form)))return;
  const questions=kind==='year'?[['First, when were you born?','先告诉我，你是哪一天出生的？'],['Which year shall we look at?','想看看哪一年的流年呢？']]:[['First, when were you born?','先告诉我，你是哪一天出生的？'],['Do you know your local birth time?','知道你出生时的当地时间吗？'],['Where were you born? Check the historical time zone too.','你在哪里出生？也请核对当时的时区。']];
  let index=0,finished=false;
+ form.classList.add('pawYueGuidedForm');
  const question=element('p','',form,'pawYueQuestion');form.prepend(question);question.setAttribute('aria-live','polite');
  const controls=element('div','',form,'pawYueStepNav'),back=b(controls,tr('Previous','上一步'),()=>show(index-1)),next=b(controls,tr('Continue','继续'),advance);back.type=next.type='button';submit.before(controls);
  function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));question.textContent=tr(...questions[index]);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1)}
  function advance(){if(finished||index>=steps.length-1)return;for(const field of steps[index].flatMap(n=>[...n.querySelectorAll('input,select')]))if(!field.checkValidity()){field.reportValidity();return}show(index+1)}
  form.addEventListener('keydown',e=>{if(!finished&&index<steps.length-1&&e.key==='Enter'&&e.target.matches('input')){e.preventDefault();advance()}});
- form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();controls.remove()}});
+ form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();controls.remove()}});
  show(0)
 }
 /* PAW_YUE_PARCHMENT_BEGIN */
@@ -12576,7 +12577,21 @@ function pawYueDeskPresent(kind){
  pane.dataset.pawYueDesk='true';
  q.querySelector('.yueCompactHost')?.remove();
  const nav=q.querySelector(':scope > .row button:first-child');if(nav){nav.textContent=tr('‹ Talk to Yue','‹ 与月师傅聊');nav.onclick=()=>yueReadingHub()}
- if(form&&['year','chart'].includes(kind))pawYueQuestionSteps(form,out,kind);
+ if(form&&['year','chart'].includes(kind)){
+  pawYueQuestionSteps(form,out,kind);
+  // A consultation starts with the relevant question, not repeated menus.
+  // Keep subject, deletion, language and other-reading actions available.
+  const strip=q.querySelector('.yueSubjectStrip'),tools=q.querySelector('.yueChartTools');
+  const note=[...q.querySelectorAll(':scope > .yueSessionNote')].find(n=>n.textContent.includes('UTC')||n.textContent.includes('时区差'));
+  if(note){
+   const details=form.querySelector('details');
+   if(details)details.append(note);
+  }
+  if(form.classList.contains('pawYueGuidedForm')){
+   if(strip)form.after(strip);
+   if(tools)(strip||form).after(tools);
+  }
+ }
  if(kind==='chart')pawYueChartParchment(q,pane,form,out);
 }
 const pawYueDeskChartBefore=destinyPage;
@@ -12607,6 +12622,19 @@ pawYueDeskCSS.textContent=`
 #game #page[data-paw-yue-desk="true"] .pawYueParchmentTools button{flex:1;min-height:44px}
 #game #page[data-paw-yue-expanded="true"] .ziGrid article:not(.blank){overflow-wrap:anywhere;min-width:0}
 #game #pawRoomGuideToggle:not(:focus-visible),#destinyAccess:not(:focus-visible){clip-path:inset(50%)!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;overflow:hidden!important;pointer-events:none!important;padding:0!important;border:0!important}
+
+/* A single question occupies the reading surface on narrow screens.
+   Explicit one-column tracks prevent legacy two-column form overflow. */
+#game #page[data-paw-yue-desk="true"] .pawYueGuidedForm{display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:start!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;padding:10px 12px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+#game #page[data-paw-yue-desk="true"] .pawYueGuidedForm>*{grid-column:1/-1!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+#game #page[data-paw-yue-desk="true"] .pawYueGuidedForm label{display:grid;grid-template-columns:minmax(0,1fr)!important;min-width:0!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+#game #page[data-paw-yue-desk="true"] .pawYueGuidedForm :is(input,select){display:block;box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:100%!important;font-size:16px!important}
+#game #page[data-paw-yue-desk="true"] .pawYueGuidedForm .pawYueStepHidden{display:none!important}
+#game #page[data-paw-yue-desk="true"] .pawYueGuidedForm .pawYueStepNav{justify-content:flex-end!important;flex-wrap:wrap}
+#game #page[data-paw-yue-desk="true"] .pawYueGuidedForm .pawYueQuestion{font-size:clamp(17px,4.5vw,22px)!important}
+#game #page[data-paw-yue-desk="true"] #content:has(.pawYueGuidedForm)>.yueSubjectStrip{background:transparent!important;border:0!important;box-shadow:none!important;padding:8px 0!important;margin:3px 0!important}
+#game #page[data-paw-yue-desk="true"] #content:has(.pawYueGuidedForm)>.yueChartTools button{font-size:12px!important;box-shadow:none!important;background:transparent!important}
+@media(orientation:portrait){#game #page[data-paw-yue-desk="true"]:has(.pawYueGuidedForm):not([data-paw-yue-expanded="true"]){max-height:44dvh!important}}
 `;document.head.append(pawYueDeskCSS);
 
 
