@@ -12225,4 +12225,62 @@ pawDockPaintStyle.textContent=`
 #game #content[data-paw-visual-theme="collection"] .bagSlot{background-image:linear-gradient(#fff6dc33,#fff6dc77),url('assets/visual/painted/recovered/ui/paper_texture.webp')!important;background-repeat:no-repeat,repeat!important}
 @media(min-width:700px){#game #content[data-paw-visual-theme="town"] .pawTownFrontPhoto{aspect-ratio:2.5}}
 `;document.head.append(pawDockPaintStyle);
+/* PAW_PAINTED_POOL_LAYOUT_BEGIN */
+function pawPaintedPoolLayout(w,h,footer=100){
+ if(![w,h,footer].every(Number.isFinite)||Math.min(w,h)<=0||footer<0)return null;
+ const scale=Math.max(w/941,h/1672),iw=941*scale,ih=1672*scale,ox=(w-iw)/2;
+ const top=w>h?48:90,bottom=h-Math.max(footer,70)-25;
+ const waterY=.333,depth=.159,aimY=waterY+depth*.39,coinY=waterY+depth*.86;
+ const lower=Math.max(h-ih,top-aimY*ih),upper=Math.min(0,bottom-coinY*ih);
+ if(lower>upper)return null;
+ const oy=Math.max(lower,Math.min(upper,(top+bottom)/2-.426*ih)),pw=Math.min(iw*.75,w-20);
+ if(pw<160||depth*ih<75)return null;
+ return {ox,oy,iw,ih,x:(w-pw)/2,y:oy+waterY*ih,w:pw,h:depth*ih,fallX:ox+iw*.39,fallY:oy+ih*.145,fallW:iw*.34,fallH:ih*.215};
+}
+/* PAW_PAINTED_POOL_LAYOUT_END */
+const pawPaintedPoolPath='../../painted/garden/wishing-pool.webp';
+const pawPaintedPoolArt=ready=>pawRecoveredImage(pawPaintedPoolPath,ready);
+let pawPoolObserver=null;
+const pawPoolAdmissionBefore=walkDoor;
+walkDoor=function(id,...args){if(id==='wishes')pawPaintedPoolArt();return pawPoolAdmissionBefore(id,...args)};
+const pawPaintedPoolPageBefore=wishPond9;
+wishPond9=function(...args){
+ pawPoolObserver?.disconnect();pawPoolObserver=null;
+ const result=pawPaintedPoolPageBefore(...args),q=$('content'),stage=q.querySelector('.pawWishGarden'),pond=stage?.querySelector('.wishRitual');
+ if(!stage||!pond)return result;
+ const footer=q.querySelector('.pawGardenFooter'),coin=pond.querySelector('.ritualCoin');
+ let applied=false,activated=false;
+ // Never replace the play plane while the player's gesture or coin is in flight.
+ function layout(){
+  if(!stage.isConnected){pawPoolObserver?.disconnect();pawPoolObserver=null;return}
+  if(!pawRoomImageReady(pawPaintedPoolArt()))return;
+  if(pond.getAttribute('aria-busy')==='true'||pond.classList.contains('wishDragging'))return;
+  if(!applied&&activated)return;
+  const a=pawPaintedPoolLayout(stage.clientWidth,stage.clientHeight,footer?.offsetHeight||100);
+  if(!a){delete stage.dataset.pawPaintedPool;applied=false;return}
+  for(const [k,v] of Object.entries(a))stage.style.setProperty('--paw-pool-'+k,v+'px');
+  stage.dataset.pawPaintedPool='true';applied=true;
+  if(!stage.querySelector('.pawWaterfallMotion')){const f=element('i','',stage,'pawWaterfallMotion');f.setAttribute('aria-hidden','true')}
+  if(coin){coin.src='assets/visual/painted/interface/paw-coin-hud.webp';coin.draggable=false}
+ }
+ pond.addEventListener('pointerdown',()=>{activated=true},{capture:true,once:true});
+ footer?.addEventListener('click',()=>{activated=true},{capture:true,once:true});
+ pawPaintedPoolArt(layout);
+ if(typeof ResizeObserver==='function'){pawPoolObserver=new ResizeObserver(layout);pawPoolObserver.observe(stage);if(footer)pawPoolObserver.observe(footer)}
+ layout();return result
+};
+const pawPaintedPoolCss=document.createElement('style');
+pawPaintedPoolCss.textContent=`
+#game #content .pawWishGarden[data-paw-painted-pool="true"]{background:url('assets/visual/painted/garden/wishing-pool.webp') var(--paw-pool-ox) var(--paw-pool-oy)/var(--paw-pool-iw) var(--paw-pool-ih) no-repeat!important;background-color:#486357!important}
+#game #content .pawWishGarden[data-paw-painted-pool="true"] .wishRitual{position:absolute!important;left:var(--paw-pool-x)!important;top:var(--paw-pool-y)!important;width:var(--paw-pool-w)!important;height:var(--paw-pool-h)!important;min-height:0!important;max-height:none!important;aspect-ratio:auto!important;transform:none!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;overflow:visible!important;z-index:2!important}
+#game #content .pawWishGarden[data-paw-painted-pool="true"] .pawCoinTray,#game #content .pawWishGarden[data-paw-painted-pool="true"] .waterLight{display:none!important}
+#game #content .pawWishGarden[data-paw-painted-pool="true"] .wishBowl{left:50%!important;top:39%!important;width:16.8%!important;height:12%!important;min-height:0!important}
+#game #content .pawWishGarden[data-paw-painted-pool="true"] .livingKoi{width:12%!important;height:17%!important}
+#game #content .pawWishGarden[data-paw-painted-pool="true"] .ritualCoin{width:44px!important;height:44px!important;object-fit:contain!important}
+#game #content .pawWishGarden .pawWaterfallMotion{display:none}
+#game #content .pawWishGarden[data-paw-painted-pool="true"] .pawWaterfallMotion{display:block;position:absolute;pointer-events:none;left:var(--paw-pool-fallX);top:var(--paw-pool-fallY);width:var(--paw-pool-fallW);height:var(--paw-pool-fallH);background:repeating-linear-gradient(180deg,transparent 0px,#fff8dc48 18px,transparent 40px);background-size:100% 80px;clip-path:polygon(23% 4%,88% 1%,76% 20%,57% 24%,64% 38%,67% 61%,59% 74%,77% 95%,14% 97%,28% 73%,31% 47%,21% 30%);mix-blend-mode:screen;opacity:.42;animation:pawPoolWaterFlow 2.5s linear infinite;z-index:1}
+@keyframes pawPoolWaterFlow{from{background-position:0 0}to{background-position:0 80px}}
+@media(prefers-reduced-motion:reduce){#game #content .pawWishGarden .pawWaterfallMotion{animation:none!important;opacity:.15}}
+`;document.head.append(pawPaintedPoolCss);
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
