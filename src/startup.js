@@ -9359,6 +9359,18 @@ function pawHallScreenRect(rect,view){
 function pawHallOverlap(a,b){
  return !!a&&!!b&&a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top
 }
+// Keep the full touch rectangle clear of actors, other signs and HUD.
+function pawPaintedPlaquePlacement(x,y,w,h,view,screen,blockers=[]){
+ const {s,ox,oy}=view,{w:W,h:H}=screen;
+ if(![x,y,w,h,s,ox,oy,W,H].every(Number.isFinite)||Math.min(w,h,s,W,H)<=0)return null;
+ const tw=Math.max(44,w*s),th=Math.max(44,h*s),ax=ox+x*s,ay=oy+y*s;
+ for(const [dx,dy] of [[0,0],[0,-12],[0,12],[-12,0],[12,0],[0,-24],[0,24],[-18,-12],[18,-12],[-18,12],[18,12]]){
+  const cx=ax+dx,cy=ay+dy,rect={left:cx-tw/2,top:cy-th/2,right:cx+tw/2,bottom:cy+th/2};
+  if(rect.left<4||rect.right>W-4||rect.top<4||rect.bottom>H-4||blockers.some(b=>pawHallOverlap(rect,b)))continue;
+  return {x:(cx-ox)/s,y:(cy-oy)/s,hitW:tw/s,hitH:th/s,rect}
+ }
+ return null
+}
 function pawHallActorScale(height,reference,ratio=1){
  return Number.isFinite(height)&&height>0&&Number.isFinite(reference)&&reference>0?height/reference*Math.max(.75,Math.min(1.1,ratio)):1
 }
@@ -9422,16 +9434,13 @@ label=function(name,x,y,fn){
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';
   const value=tr(en,cn),w=Math.min(124,Math.max(55,ctx.measureText(value).width+12)),h=font+11;
-  const minX=(5-cam.ox)/scale+w/2,maxX=(W-5-cam.ox)/scale-w/2,cx=Math.max(minX,Math.min(maxX,anchorX));
-  const rect=pawHallScreenRect({x:cx-w/2,y:cy-h/2,w,h},{s:scale,ox:cam.ox,oy:cam.oy});
-  // Keep signs near the painted station, not on a visitor's face.
-  if(rect&&rect.left>=4&&rect.right<=W-4&&rect.top>=4&&rect.bottom<=H-4&&![...meowTextFrameRects,...meowFrameBlockers].some(b=>pawHallOverlap(rect,b))){
-   round(cx-w/2,cy-h/2,w,h,3,'#503b2ce8','#d7ba83');
-   activityFitText(value,cx,cy,font,w-8,'#fff1d7');
-   meowTextFrameRects.push(rect);pawVisibleStationLabels.add(id);
-  }
-  const hitW=Math.max(w,44/scale),hitH=Math.max(h,44/scale);
-  target(cx-hitW/2,cy-hitH/2,hitW,hitH,fn);
+  const place=pawPaintedPlaquePlacement(anchorX,cy,w,h,{s:scale,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
+  // Original station body target and room directory remain available.
+  if(!place)return;
+  round(place.x-w/2,place.y-h/2,w,h,3,'#503b2ce8','#d7ba83');
+  activityFitText(value,place.x,place.y,font,w-8,'#fff1d7');
+  meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(id);
+  target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn);
  }finally{ctx.restore()}
 };
 // A keeper is a person at the edge of the aisle, not a decoration attached
@@ -11315,12 +11324,11 @@ label=function(name,x,y,fn){
  const sc=Math.max(.08,cam.scale),font=Math.min(26,Math.max(17,12/sc)),cy=q.labelY,value=tr(...q.label);
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';const w=Math.min(190,Math.max(75,ctx.measureText(value).width+18)),h=font+13;
-  const rect=pawHallScreenRect({x:x-w/2,y:cy-h/2,w,h},{s:sc,ox:cam.ox,oy:cam.oy});
-  if(rect&&rect.left>=4&&rect.right<=W-4&&rect.top>=4&&rect.bottom<=H-4&&![...meowTextFrameRects,...meowFrameBlockers].some(v=>pawHallOverlap(rect,v))){
-   round(x-w/2,cy-h/2,w,h,4,'#523c2dec','#d7b982');activityFitText(value,x,cy,font,w-10,'#fff0d5');
-   meowTextFrameRects.push(rect);pawVisibleStationLabels.add(q.station)
-  }
-  const hw=Math.max(w,44/sc),hh=Math.max(h,44/sc);target(x-hw/2,cy-hh/2,hw,hh,fn)
+  const place=pawPaintedPlaquePlacement(x,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
+  if(!place)return;
+  round(place.x-w/2,place.y-h/2,w,h,4,'#523c2dec','#d7b982');activityFitText(value,place.x,place.y,font,w-10,'#fff0d5');
+  meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(q.station);
+  target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
  }finally{ctx.restore()}
 };
 for(const id of Object.keys(pawFoodRoomSpecs))pawRoomVisitorSpecs[id]={count:1,points:pawFoodRoomSpecs[id].visitors.map(v=>v.slice())};
