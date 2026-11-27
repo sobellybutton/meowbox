@@ -424,7 +424,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-tarot-20261127-d",
+        "until": 1795782415955
+      }
     },
     {
       "id": "SHARE-01",
