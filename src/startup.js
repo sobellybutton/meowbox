@@ -9269,4 +9269,128 @@ $('back').onclick=function(...args){
  return pawForecourtBackBefore.apply(this,args)
 };
 
+/* PAW_TEMPLE_JOURNEY_BEGIN */
+function pawFortuneSlipNumber(v){return Number.isInteger(v)&&v>=1&&v<=12?v:null}
+function pawFortuneNext(q,kind,now,blocked){
+ if(blocked||!q||!pawFortuneSlipNumber(q.pawFortuneNumber))return null;
+ if(kind==='sticks'&&q.stickDelivered)return 'choice';
+ if(kind==='moon'&&!q.moonPending&&!(q.tossUntil>now))return q.count>0?'receive':'confirm';
+ return null
+}
+function pawFortuneAction(q,current,kind,now,blocked,action){
+ if(q!==current)return false;
+ const next=pawFortuneNext(q,kind,now,blocked);
+ return action==='receive'?['choice','receive','confirm'].includes(next):action==='confirm'&&next==='choice'
+}
+function pawTempleCatVisit(q){
+ if(!q||q.catVisited)return false;
+ q.catVisited=true;return true
+}
+function pawTemplePaperClock(q,now,blocked){
+ if(!q||!Number.isFinite(now))return false;
+ if(!['opening','kept','tied'].includes(q.paperStage)||!Number.isFinite(q.paperAt)){delete q.pawPaperPause;return false}
+ const prev=q.pawPaperPause;
+ if(prev&&prev.stage===q.paperStage&&prev.start===q.paperAt&&now>=prev.now&&(prev.blocked||blocked))q.paperAt+=now-prev.now;
+ q.pawPaperPause={stage:q.paperStage,start:q.paperAt,now,blocked:!!blocked};return true
+}
+/* PAW_TEMPLE_JOURNEY_END */
+// One meaningful encounter per forecourt visit, using the existing local
+// cat memories and blessing keepsake. No second reward for repeated taps.
+const pawForecourtBlessingTickBefore=pawForecourtTick;
+pawForecourtTick=function(q,...args){
+ const arrival=pawForecourtBlessingTickBefore(q,...args);
+ if(arrival==='cat'&&pawTempleCatVisit(q))meetTempleCat();
+ return arrival
+};
+// Keep the actual number picked up by the player. Confirmation is optional,
+// not a new random draw and not a condition for receiving a fortune.
+const pawOriginalFortunePaper=templePaperOpen;
+templePaperOpen=function(n){
+ if(room==='temple'&&activity==='sticks'&&state.stickDelivered&&pawFortuneSlipNumber(n)){
+  state.pawFortuneNumber=n;
+  hint('Your numbered stick is ready. Confirm with moon blocks, or receive the slip directly.','已拾到签号。可以掷筊确认，也可以直接领取签文。');
+  mb5AssistSync(true);return
+ }
+ return pawOriginalFortunePaper(n)
+};
+function pawFortuneReceive(run=state){
+ if(!pawFortuneAction(run,state,activity,t,pawArcadeInputBlocked(),'receive'))return false;
+ const n=run.pawFortuneNumber;
+ delete run.pawFortuneNumber;
+ pawOriginalFortunePaper(n);return true
+}
+function pawFortuneConfirm(run=state){
+ if(!pawFortuneAction(run,state,activity,t,pawArcadeInputBlocked(),'confirm'))return false;
+ const n=run.pawFortuneNumber;
+ activity=null;state={};roomIntro();updateHUD();const walkingState=state;
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  if(room!=='temple'||activity||state!==walkingState||pawArcadeInputBlocked())return;
+  const station=indoorStation('moon');
+  if(!indoorDestination(station[2],station[3],()=>{
+   if(room!=='temple'||activity||state!==walkingState||pawArcadeInputBlocked())return;
+   start('moon');state.pawFortuneNumber=n;
+   hint('If you wish, toss the moon blocks once. Your fortune is still yours regardless of the result.','可以掷一次筊杯确认。无论结果如何，都能领取自己的签文。');
+   mb5AssistSync(true)
+  },'up')){
+   activity='sticks';state=run;updateHUD();mb5AssistSync(true);
+   hint('The path is busy. Receive the slip here, or try again.','路上暂时不便通行，可以在这里领签，或再试一次。')
+  }
+ }));
+ return true
+}
+const pawFortuneAssistSpecBefore=mb5AssistSpec;
+mb5AssistSpec=function(kind,q,now){
+ const next=pawFortuneNext(q,kind,now,false);
+ if(next==='choice')return {key:'fortune-confirm',label:['Confirm with moon blocks','掷筊确认'],action:'fortune-confirm'};
+ if(next==='receive')return {key:'fortune-receive',label:['Receive your fortune slip','领取签文'],action:'fortune-receive'};
+ return pawFortuneAssistSpecBefore(kind,q,now)
+};
+const pawFortuneAssistPerformBefore=mb5AssistPerform;
+mb5AssistPerform=function(action){
+ if(action==='fortune-confirm')return pawFortuneConfirm();
+ if(action==='fortune-receive')return pawFortuneReceive();
+ return pawFortuneAssistPerformBefore(action)
+};
+const pawFortuneAssistSyncBefore=mb5AssistSync;
+mb5AssistSync=function(...args){
+ const result=pawFortuneAssistSyncBefore(...args),el=$('gameControls'),run=state;
+ if(!el)return result;
+ const next=pawFortuneNext(run,activity,t,pawArcadeInputBlocked()),old=el.querySelector('[data-paw-fortune-skip]');
+ if(!['choice','confirm'].includes(next)){old?.remove();return result}
+ if(!old||old.pawRun!==run||old.pawLanguage!==zh){
+  old?.remove();
+  const skip=b(el,tr('Receive slip without confirmation','直接领取签文'),()=>pawFortuneReceive(run));
+  skip.dataset.pawFortuneSkip='true';skip.pawRun=run;skip.pawLanguage=zh;skip.className='mb5ActivityButton'
+ }
+ return result
+};
+const pawFortuneMoonTossBefore=pawMoonToss;
+pawMoonToss=function(...args){
+ if(activity==='moon'&&pawFortuneSlipNumber(state.pawFortuneNumber)&&state.count>0)return false;
+ return pawFortuneMoonTossBefore(...args)
+};
+// Pause the complete paper reveal and keep/tie motion during interruptions.
+const pawTemplePaperLoopBefore=loop;
+loop=function(ms,...args){
+ if(activity==='templePaper')pawTemplePaperClock(state,ms/1000,pawArcadeInputBlocked());
+ return pawTemplePaperLoopBefore(ms,...args)
+};
+document.addEventListener('visibilitychange',()=>{
+ if(activity==='templePaper')pawTemplePaperClock(state,performance.now()/1000,pawArcadeInputBlocked())
+});
+const pawTemplePaperTapBefore=templePaperTap,pawTemplePaperKeepBefore=templePaperKeep;
+templePaperTap=function(...args){if(activity==='templePaper'&&!pawArcadeInputBlocked())return pawTemplePaperTapBefore(...args)};
+templePaperKeep=function(...args){if(activity==='templePaper'&&!pawArcadeInputBlocked())return pawTemplePaperKeepBefore(...args)};
+// Use the recovered painted garden, rather than the generic park, on both
+// mobile and desktop. The existing koi/chime/seat interaction coordinates
+// remain unchanged; a clean independent garden plate is still needed.
+const pawTempleGardenArt=pawRecoveredImage('scenes/wishing_garden_portrait.webp');
+const pawTempleGardenBackdropBefore=paintLivingBackdrop;
+paintLivingBackdrop=function(...args){
+ if(room==='temple'&&activity==='secretGarden'&&pawRoomImageReady(pawTempleGardenArt)){
+  const b=livingBounds();cover(pawTempleGardenArt,b.x,b.y,b.w,b.h);return
+ }
+ return pawTempleGardenBackdropBefore(...args)
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
