@@ -145,7 +145,7 @@ module.exports=function runQualityChecks(s,log=console.log){
  // doubles. Walking past a stationary camera must not mutate plaque positions.
  results.mapSignStability=build(`
  let now=0,scene='fortune',room=null,transitioning=false,avatar=0,quiet9=false,valleyRevealAt=-1,signPress=null,signsForScene=null,zh=false,W=390,H=844,p={x:0,y:0},cam={ox:0,oy:0,scale:1},syncSigns;
- let mutations=0;const signButtons=new Map(),proposal={hidden:true},signRoot={hidden:true,classList:{remove(){}},replaceChildren(){},getBoundingClientRect(){return {left:0,top:0}}};
+ let mutations=0,npc=[],peers=[];const sharedTownActors=()=>peers;const characterScreenBounds=(a,player)=>({left:cam.ox+a.x*cam.scale-24,right:cam.ox+a.x*cam.scale+24,top:cam.oy+a.y*cam.scale-76,bottom:cam.oy+a.y*cam.scale+8});const signButtons=new Map(),proposal={hidden:true},signRoot={hidden:true,classList:{remove(){}},replaceChildren(){},getBoundingClientRect(){return {left:0,top:0}}};
  const performance={now:()=>now},document={querySelectorAll:()=>[]},$=()=>({hidden:true,style:{display:'none'}}),tr=(a,b)=>zh?b:a,houseSignMaterial=()=> 'wood',directSignClick=()=>{};
  const maps=Object.fromEntries(['fortune','home','island','wonder'].map(k=>[k,{st:[['a',100,365,'Tea room','茶馆'],['b',290,445,'Park','公园'],['c',110,625,'Arcade','游戏厅']]}]));
  const signAnchorsProposal={};const speechOverlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
@@ -156,8 +156,22 @@ module.exports=function runQualityChecks(s,log=console.log){
  for(const k of ['fortune','home','island','wonder']){
  scene=k;for(let i=0;i<8;i++){now+=40;syncSigns()}
  if(signButtons.size!==3||[...signButtons.values()].some(v=>v.hidden))throw Error('Missing map signs '+scene);
- const before=mutations;for(let i=0;i<40;i++){now+=40;p.x=90+i*5;p.y=300+i*2;syncSigns()}
+ const before=mutations;for(let i=0;i<40;i++){now+=40;p.x=10+i*.4;p.y=20+i*.2;syncSigns()}
  if(mutations!==before)throw Error('Stationary plaques moved while walking '+scene);checks+=40;
+ // A passerby actually crossing a plaque must never cover its touch target.
+ // Hiding the sign temporarily is legitimate; drifting far from the house is not.
+ const a=signButtons.get('a'),x=parseFloat(a.style.left),y=parseFloat(a.style.top);
+ for(const actors of ['local','shared']){
+  const walker={x,y:y+22};npc=actors==='local'?[walker]:[];peers=actors==='shared'?[walker]:[];
+  for(let i=0;i<8;i++){now+=40;syncSigns();for(const btn of signButtons.values()){
+   if(btn.hidden)continue;const bx=parseFloat(btn.style.left),by=parseFloat(btn.style.top),body=characterScreenBounds(walker,false);
+   const rect={left:bx-btn._signSize[0]/2,right:bx+btn._signSize[0]/2,top:by-btn._signSize[1]/2,bottom:by+btn._signSize[1]/2};
+   if(speechOverlap(rect,body))throw Error('Sign overlaps '+actors+' actor in '+scene);
+   if(!btn._signOffset||Math.hypot(btn._signOffset.x,btn._signOffset.y)>Math.min(62,W*.16)+.02)throw Error('Sign drifts away from its door');
+  }checks++}
+  npc=[];peers=[];for(let i=0;i<8;i++){now+=40;syncSigns()}
+  if([...signButtons.values()].some(v=>v.hidden))throw Error('Sign failed to recover after actor left '+scene);
+ }
  zh=!zh;now+=40;syncSigns();if([...signButtons.values()].some(v=>v.plaque.textContent!==tr(...maps[scene].st.find(d=>d[0]===v.dataset.door).slice(3))))throw Error('Language update failed');
  checks++;
  }return checks;`);
