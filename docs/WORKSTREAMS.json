@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "source": "docs/DEVELOPMENT_CHECKPOINT.md",
-  "policy": "Task stages describe this workstream deliverable, not overall game acceptance. Art-only tasks may be tested as assets but require integration and rendered acceptance before visual acceptance. Existing code-only verification remains open. Dependencies are ready at tested, visually verified or accepted stage; final acceptance requires the controlling release gates. Browser is conservatively a shared resource, not a guarantee of available slots. Keep unless a demonstrated defect, unmet mandatory product outcome or validated player-experience issue warrants a change. Verify existing work first; do not invent new work solely to increase progress counts. Optional refinements should not delay release after required gates pass.",
+  "policy": "Task stages describe this workstream deliverable, not overall game acceptance. Art-only tasks may be tested as assets but require integration and rendered acceptance before visual acceptance. Existing code-only verification remains open. Dependencies are ready at tested, visually verified or accepted stage; final acceptance requires the controlling release gates. Browser is conservatively a shared resource, not a guarantee of available slots. Keep unless a demonstrated defect, unmet mandatory product outcome or validated player-experience issue warrants a change. Verify existing work first; do not invent new work solely to increase progress counts. Optional refinements should not delay release after required gates pass. Manual continue/resume/proceed targets three distinct actionable workstreams per session, subject to resource leases, dependencies, verification and session limits; see AGENTS.md.",
   "lanes": {
     "world": "Entrance, four map plates, interior artwork and staging",
     "actors": "Traveller and NPC art, animation and resident behaviours",
@@ -1462,13 +1462,11 @@
         "d76e5fcf: relocates relationship values from the personality laboratory to the café, preserves conversation cards and saved results, and adds eight practical bilingual prompts selected by four relationship-priority scores.",
         "da3db0c292c9335ab0b0d16b9e615f9409d59b1b: routing and exhaustive 2,401 valid score combination helper regression executed; source parsed.",
         "ceae5d20 + b37dc632: distinct care preference exercise with 15 bilingual statements, consent-aware prompts, five-row share layout and exhaustive result-profile helper verification.",
-        "fd4fb68a + ce08c360: twelve attachment-inspired scenario statements, four independent dimensions, three-tier bilingual reflection, safety-aware non-diagnostic language and exhaustive result-profile tests."
+        "fd4fb68a + ce08c360: twelve attachment-inspired scenario statements, four independent dimensions, three-tier bilingual reflection, safety-aware non-diagnostic language and exhaustive result-profile tests.",
+        "05988bd1 + 0a7b0a2b: balanced twelve-scenario life priorities reflection in Parallel Lives; all choice combinations and shuffled scoring tested."
       ],
-      "lease": {
-        "owner": "manual-discovery-priorities-2320",
-        "until": 1795794557169
-      },
-      "blocker": "General life priorities, other curated assessment inventory, native staging, menu capacity, rendered browser and share export acceptance outstanding."
+      "lease": null,
+      "blocker": "Other historical assessment inventory, native staging, menu capacity, browser playthrough and share export acceptance outstanding."
     },
     {
       "id": "DISCOVERY-PARALLEL-LIVE-02",
