@@ -8360,8 +8360,10 @@ function pawPrayerStep(){
   // The right-side incense supply is separate from the red fortune tube on the left.
   const reach=stage==='taking'?Math.sin(Math.PI*Math.min(1,age/.72)):stage==='lighting'?Math.sin(Math.PI*Math.min(1,age/1.65)):0;
   const reaching=stage==='taking'&&age>=.32;
-  const supply={x:rack.x,y:rack.y+10};
-  const grip=stage==='placing'?blend(hand,burner,poseEase(Math.max(0,Math.min(1,(age-1.25)/.65)))):blend(hand,supply,Math.min(1,reach*.82));
+  const supply={x:rack.x,y:rack.y+10},flame={x:rack.x+18,y:rack.y-5};
+  const lightAngle=stage==='lighting'?1.05*reach:0;
+  const lightGrip={x:flame.x-Math.sin(lightAngle)*34,y:flame.y+Math.cos(lightAngle)*34};
+  const grip=stage==='placing'?blend(hand,burner,poseEase(Math.max(0,Math.min(1,(age-1.25)/.65)))):stage==='lighting'?blend(hand,lightGrip,reach):blend(hand,supply,Math.min(1,reach*.82));
   const shown=stage==='placing'&&age>=1.98?0:Math.min(3,held+(reaching?1:0));
   // Small incense sticks rest on the painted right counter, never in a second floating table.
   if(['approach','collect','taking','lightReady','lighting'].includes(stage)){
@@ -8378,7 +8380,7 @@ function pawPrayerStep(){
     const shoulder={x:foot.x+(dir==='left'?-6:7),y:foot.y-48+q.bow*9};
     ctx.save();try{
      pawIncenseArm(shoulder,grip,sc,true);
-     for(let j=0;j<shown;j++)incenseStem(grip.x+(j-(shown-1)/2)*3.8,grip.y,(j-(shown-1)/2)*.065,lit,34,j===0);
+     for(let j=0;j<shown;j++)incenseStem(grip.x+(j-(shown-1)/2)*3.8,grip.y,lightAngle+(j-(shown-1)/2)*.065,lit,34,j===0);
      pawIncenseArm(shoulder,grip,sc,false)
     }finally{ctx.restore()}
    }
@@ -9593,6 +9595,7 @@ const pawGardenStations={feed:[.51,.55],seat:[.83,.64],chime:[.34,.61]};
 function pawGardenRoute(q,action){
  if(!q||q.route?.length||!Object.hasOwn(pawGardenStations,action))return false;
  const dest=pawGardenStations[action],from=q.pos,route=[];
+ if(Math.hypot(from[0]-dest[0],from[1]-dest[1])<.012){q.route=[dest.slice()];q.action=action;return true}
  if(from[0]>.68)route.push([.67,.69]);
  else if(from[1]<.60)route.push([.51,.61]);
  if(action==='seat')route.push([.67,.69],[.78,.68]);
@@ -9614,7 +9617,7 @@ function pawGardenChoose(run,kind){
  if(run!==state||activity!=='secretGarden'||pawArcadeInputBlocked())return;
  const q=run.pawGardenWalk;if(!q||q.route.length)return;
  if(kind==='seat'&&run.gardenSitting){gardenSeat();return}
- if(run.gardenSitting)gardenSeat();
+ if(run.gardenSitting){gardenSeat();if(run.gardenSitting)return}
  if(pawGardenRoute(q,kind))hint(...({feed:['Walking to the koi pond…','走向锦鲤池……'],seat:['Walking to the bench…','走向长椅……'],chime:['Walking to the wind chime…','走向风铃……']}[kind]))
 }
 const pawGardenDrawBefore=drawActivity;
