@@ -28,3 +28,17 @@ ck(pawWishDestination(0,-50,100,0,100)===null,'invalid dimensions');ck(!pawWishO
 for(const i of [-1,0,1,2,3,NaN])ck(pawKitchenCanAdd({ingredients:[1]},i)===[0,2].includes(i),'valid unique ingredients');
 ck(!pawKitchenCanAdd({ingredients:[],done:true},0),'finished dish cannot change');ck(!pawKitchenCanAdd({ingredients:[],tasteAt:0},0),'tasting dish cannot change');
 return 'PASS '+n+' wish aiming and kitchen state assertions';`)());
+
+const serveMath=between(extSource,'/* PAW_TEA_SERVE_BEGIN */','/* PAW_TEA_SERVE_END */'),foodClock=between(source,'/* PAW_FOOD_CLOCK_BEGIN */','/* PAW_FOOD_CLOCK_END */');
+console.log(new Function(serveMath+foodClock+`
+let count=0;const ck=(v,m)=>{if(!v)throw Error(m);count++};
+let prev=420;for(let i=0;i<=240;i++){const p=pawTeaDeliveryPose('sip',i/100,true);ck(p.x>=prev-1e-8&&p.x<=524&&p.fill===1,'cup travels to guest without returning');prev=p.x}
+const done=pawTeaDeliveryPose('done',100,true);ck(done.x===524&&done.fill===1&&done.delivered,'guest keeps full drink');
+ck(pawTeaDeliveryPose('sip',1,false)===null,'own drink keeps sip animation');
+ck(pawTeaDeliveryPose('done',0,true,true).x===524,'reduced motion delivery');
+let q={teaStage:'pouring',teaAt:10};pawFoodClock(q,'bubbleTea',10,false);pawFoodClock(q,'bubbleTea',10.5,true);pawFoodClock(q,'bubbleTea',30,true);pawFoodClock(q,'bubbleTea',31,false);ck(q.teaAt===31,'hidden or covered time frozen');pawFoodClock(q,'bubbleTea',32,false);ck(q.teaAt===31,'resume clock');
+q.teaStage='seasoning';q.teaAt=32;pawFoodClock(q,'bubbleTea',32.5,false);ck(q.teaAt===32,'new phase resets pause');
+const fresh={teaStage:'base'};ck(!pawFoodActionAllowed(q,fresh,'seasoning','bubbleTea',false),'old control cannot affect new cup');ck(!pawFoodActionAllowed(fresh,fresh,'order','bubbleTea',false),'stale stage');ck(!pawFoodActionAllowed(fresh,fresh,'base','bubbleTea',true),'covered control');ck(pawFoodActionAllowed(fresh,fresh,'base','bubbleTea',false),'live control');
+const soup={tasteAt:5};pawFoodClock(soup,'cook',5,false);pawFoodClock(soup,'cook',6,true);pawFoodClock(soup,'cook',9,false);ck(soup.tasteAt===9,'soup tasting pause');
+soup.tasted=true;ck(!pawFoodClock(soup,'cook',10,true)&&!soup.pawFoodClock,'no clock after tasting');
+return 'PASS '+count+' guest delivery, preparation clock and stale control assertions';`)());

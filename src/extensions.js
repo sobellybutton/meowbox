@@ -1388,17 +1388,27 @@ c.addEventListener('pointerup',e=>{
  const d=drag,a=point(e);drag=null;e.preventDefault();e.stopImmediatePropagation();
  if(d.moved<12)teaAddPearls();else teaScoopRelease(a);
 },true);
+/* PAW_TEA_SERVE_BEGIN */
+function pawTeaDeliveryPose(stage,age,guest,reduced=false){
+ const p=stage==='done'?1:stage==='sip'?Math.max(0,Math.min(1,age/2.4)):0;
+ if(!guest)return null;
+ const x=reduced?(stage==='done'?1:0):Math.min(1,p/.72),f=x*x*(3-2*x);
+ return {x:420+104*f,y:525-25*Math.sin(Math.PI*f),angle:.06*Math.sin(Math.PI*f),fill:1,delivered:p>=.72}
+}
+/* PAW_TEA_SERVE_END */
 const foodReleaseDraw=drawActivity;drawActivity=function(){
  if(activity!=='bubbleTea')return foodReleaseDraw();
  pearlAdvance();ctx.save();drawFoodCounter();
  const stage=state.teaStage,age=Math.max(0,t-state.teaAt),prepared=['seasoning','pearls','mix','seal','sealing','ready','sip','done'].includes(stage);
  let cx=420,cy=525,angle=0,fill=prepared?1:stage==='pouring'?poseEase(clamp((age-.25)/1.1,0,1)):0;
  if(stage==='mix'&&drag?.id==='teaMix'){cx=clamp(drag.x,335,505);cy=clamp(drag.y,470,550);angle=clamp((drag.x-drag.sx)/230,-.32,.32)}
- if(stage==='sip'){const f=Math.sin(Math.PI*clamp(age/2.4,0,1));if(state.teaOrder){cx=420+104*f;cy=525-25*f;angle=.06*f;fill=1}else{cx=420-104*f;cy=525-100*f;angle=-.12*f;fill=Math.max(.35,1-age*.25)}}
- if(stage==='done')fill=.35;
- const wrist=drawRitualPose(260,492,1.65,{reach:stage==='sip'||stage==='pouring'||drag?.id==='teaMix'?{x:cx-25,y:cy-35}:null});
+ const guestDelivery=pawTeaDeliveryPose(stage,age,!!state.teaOrder,matchMedia('(prefers-reduced-motion: reduce)').matches);
+ if(stage==='sip'&&!state.teaOrder){const f=Math.sin(Math.PI*clamp(age/2.4,0,1));cx=420-104*f;cy=525-100*f;angle=-.12*f;fill=Math.max(.35,1-age*.25)}
+ if(guestDelivery&&['sip','done'].includes(stage)){cx=guestDelivery.x;cy=guestDelivery.y;angle=guestDelivery.angle;fill=guestDelivery.fill}
+ else if(stage==='done')fill=.35;
+ const wrist=drawRitualPose(260,492,1.65,{reach:(stage==='sip'&&(!guestDelivery||!guestDelivery.delivered))||stage==='pouring'||drag?.id==='teaMix'?{x:cx-25,y:cy-35}:null});
  if(stage==='sip'&&!state.teaOrder){const lift=Math.sin(Math.PI*clamp(age/2.4,0,1));cx+=(wrist.x+22-cx)*lift;cy+=(wrist.y+27-cy)*lift}
- if(stage==='sip'&&state.teaOrder)drawPaintedResident({x:555,y:510,n:state.teaOrder.resident||['Wang Laoban','王老板']},1.18,false,'left');
+ if(['ready','sip','done'].includes(stage)&&state.teaOrder)drawPaintedResident({x:555,y:510,n:state.teaOrder.resident||['Wang Laoban','王老板']},1.18,false,'left');
  teaCup(cx,cy,1.12,state.teaBase,state.teaPearls,fill,angle);
  if(stage==='pouring'){
   const f=poseEase(clamp(age/.3,0,1)),px=495-45*f,py=414-25*f;teaPitcher(px,py,state.teaBase,-.72*f);
@@ -1425,7 +1435,7 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
  ctx.restore();
 };
 function soupTaste(){if(activity!=='cook'||!state.done||state.tasteAt!==undefined)return;state.tasteAt=t;sound(390);closeTalk();hint('Careful, it is hot.','慢慢喝，小心烫。')}
-const foodTasteDraw=drawActivity;drawActivity=function(){foodTasteDraw();if(activity!=='cook'||!state.done)return;ctx.save();let age=t-(state.tasteAt??-100),active=state.tasteAt!==undefined&&age<2.7,f=active?Math.sin(Math.PI*Math.min(1,age/2.7)):0;let bx=510-130*f,by=422-33*f;drawRitualPose(290,495,1.6,{kneel:.4,reach:active?{x:bx-25,y:by}:null});ellipse(bx,by+9,32,10,'#58483c66');ellipse(bx,by,32,13,'#e7d8b9');ellipse(bx,by-2,27,8,'#ac8050');if(age>=2.7&&state.tasteAt!==undefined&&!state.tasted){state.tasted=true;react(...townReaction('soup-taste',activityComedy.soup))}if(state.tasteAt===undefined){label(tr('Taste the soup','尝一口汤'),510,390,soupTaste);target(478,397,64,42,soupTaste)}ctx.restore()};
+const foodTasteDraw=drawActivity;drawActivity=function(){foodTasteDraw();if(activity!=='cook'||!state.done)return;ctx.save();let age=t-(state.tasteAt??-100),active=state.tasteAt!==undefined&&age<2.7,f=active?Math.sin(Math.PI*Math.min(1,age/2.7)):0;let bx=510-130*f,by=422-33*f;drawRitualPose(290,495,1.6,{kneel:.4,reach:active?{x:bx-25,y:by}:null});ellipse(bx,by+9,32,10,'#58483c66');ellipse(bx,by,32,13,'#e7d8b9');ellipse(bx,by-2,27,8,'#ac8050');if(age>=2.7&&state.tasteAt!==undefined&&!state.tasted&&!pawArcadeInputBlocked()){state.tasted=true;react(...townReaction('soup-taste',activityComedy.soup))}if(state.tasteAt===undefined){label(tr('Taste the soup','尝一口汤'),510,390,soupTaste);target(478,397,64,42,soupTaste)}ctx.restore()};
 
 /* Fortune Valley: a quiet garden beyond the temple courtyard. */
 activityTitle.secretGarden=['Behind the temple','寺后小径'];
@@ -7667,7 +7677,7 @@ function syncPearlPanel(){
  if(q.teaOrder){const g=q.teaOrder;const ticket=element('small',tr(...g.guest)+' · '+tr(...teaChoices[g.base].slice(0,2))+' · '+pearlLabel(pearlSugar,g.sugar)+' · '+pearlLabel(pearlIce,g.ice)+' · '+pearlLabel(pearlToppings,g.topping),pearlPanel,'pearlOrderTicket');ticket.title=tr(...g.line);if(stage==='base')element('span',tr(...g.line),ticket,'pearlGuestLine')}
  const parts=[q.teaBase>=0?tr(...teaChoices[q.teaBase].slice(0,2)):'',pearlLabel(pearlSugar,q.teaSugar),pearlLabel(pearlIce,q.teaIce),pearlLabel(pearlToppings,q.teaTopping)].filter(Boolean);
  if(parts.length)element('small',parts.join(' · '),pearlPanel,'pearlRecipeSummary');
- const choices=element('div','',pearlPanel,'pearlRecipeChoices'),btn=(text,fn)=>b(choices,text,fn);
+ const choices=element('div','',pearlPanel,'pearlRecipeChoices'),btn=(text,fn)=>b(choices,text,()=>{if(pawFoodActionAllowed(q,state,stage,activity,pawArcadeInputBlocked()))fn()});
  if(stage==='order'){
   btn(tr('Make my own drink','自己喝'),()=>{if(q.teaStage!=='order')return;q.teaOrder=null;pearlStage('base')});
   btn(tr('Make a guest order','接客人订单'),()=>{if(q.teaStage!=='order')return;q.teaOrder=pearlOrders[Math.floor(Math.random()*pearlOrders.length)];pearlStage('base')});
@@ -7684,7 +7694,7 @@ function syncPearlPanel(){
  if(q.teaOrder&&q.teaScore<4){const g=q.teaOrder,rows=[['Base','茶底',q.teaBase,g.base,teaChoices.map((v,i)=>[i,v[0],v[1]])],['Sugar','甜度',q.teaSugar,g.sugar,pearlSugar],['Ice','冰量',q.teaIce,g.ice,pearlIce],['Topping','小料',q.teaTopping,g.topping,pearlToppings]];const review=element('div','',pearlPanel,'pearlOrderReview');element('strong',tr('For next time','下次可以这样调'),review);for(const [en,cn,actual,wanted,options] of rows){if(actual!==wanted)element('small',tr(en,cn)+': '+pearlLabel(options,actual)+' → '+pearlLabel(options,wanted),review)}}
  btn(tr('Make another','再做一杯'),()=>start('bubbleTea'));btn(tr('Back to shop','返回奶茶铺'),()=>{activity=null;state={};updateHUD();roomIntro()})}
  else {const busy={pouring:['Pouring…','正在倒茶……'],seasoning:['Adding sugar and ice…','正在加糖和冰……'],sealing:['Sealing…','正在封口……'],sip:['Enjoy the drink…','慢慢品尝……']};element('small',tr(...(busy[stage]||['Preparing…','准备中……'])),choices)}
- if(pearlPreviousStage(stage)){const back=b(pearlPanel,tr('Change previous choice','修改上一步'),()=>{if(q!==state||q.teaStage!==stage||document.hidden||talkOpen||transitioning)return;const previous=pearlRewindRecipe(q);if(previous)pearlStage(previous)});back.className='pearlPreviousChoice'}
+ if(pearlPreviousStage(stage)){const back=b(pearlPanel,tr('Change previous choice','修改上一步'),()=>{if(!pawFoodActionAllowed(q,state,stage,activity,pawArcadeInputBlocked()))return;const previous=pearlRewindRecipe(q);if(previous)pearlStage(previous)});back.className='pearlPreviousChoice'}
 }
 const pearlPanelDrawBefore=drawActivity;drawActivity=function(){const result=pearlPanelDrawBefore();syncPearlPanel();return result};
 const pearlPanelHUDBefore=updateHUD;updateHUD=function(){pearlPanelHUDBefore();syncPearlPanel()};

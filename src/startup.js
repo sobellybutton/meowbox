@@ -948,10 +948,10 @@ syncPearlPanel=function(){
  const q=state,choice=residentHospitality.drink,group=element('div','',pearlPanel,'residentUsualDrink');
  element('small',tr('Last drink: ','上次喝的：')+residentDrinkSummary(choice),group);
  b(group,tr('Make my usual','再来上次那杯'),()=>{
-  if(state!==q||q.teaStage!=='order'||!residentRecipeValid(choice))return;
+  if(!pawFoodActionAllowed(q,state,'order',activity,pawArcadeInputBlocked())||!residentRecipeValid(choice))return;
   q.teaOrder=null;q.teaBase=choice.base;q.teaSugar=choice.sugar;q.teaIce=choice.ice;q.teaTopping=choice.topping;pearlStage('pourReady');sound(410);syncPearlPanel()
  });
- b(group,tr('Forget last drink','清除上次配方'),()=>{residentHospitality.drink=null;residentHospitalitySave();group.remove()});
+ b(group,tr('Forget last drink','清除上次配方'),()=>{if(!pawFoodActionAllowed(q,state,'order',activity,pawArcadeInputBlocked()))return;residentHospitality.drink=null;residentHospitalitySave();group.remove()});
  return result
 };
 const residentHospitalityStyle=document.createElement('style');residentHospitalityStyle.textContent='.residentUsualDrink{border-top:1px solid #bd9e85;margin-top:7px;padding-top:4px;display:grid;grid-template-columns:1fr 1fr;gap:5px}.residentUsualDrink small{grid-column:1/-1}.residentUsualDrink button{min-height:44px;white-space:normal}';document.head.append(residentHospitalityStyle);
@@ -1550,7 +1550,7 @@ function mb5Visibility(hidden,now){
  const elapsed=Math.max(0,now-asleep.at);state[asleep.field]+=elapsed;
  if(asleep.field==='stickDrawAt'&&Number.isFinite(state.shakeUntil))state.shakeUntil+=elapsed
 }
-document.addEventListener('visibilitychange',()=>mb5Visibility(document.hidden,performance.now()/1000));
+document.addEventListener('visibilitychange',()=>{if(activity==='bubbleTea'||activity==='cook'){mb5Sleep=null;return}mb5Visibility(document.hidden,performance.now()/1000)});
 
 /* Give the deer time to respond to the player instead of mirroring instantly. */
 function mb5BowCurve(age,delay,duration){
@@ -8434,5 +8434,37 @@ mb5AssistPerform=function(action){
  if(action==='box-shake')boxShake(70);else boxOpen();
  mb5AssistSync()
 };
+
+/* PAW_FOOD_CLOCK_BEGIN */
+function pawFoodActionAllowed(rendered,current,stage,kind,blocked){
+ return !blocked&&kind==='bubbleTea'&&rendered===current&&current?.teaStage===stage
+}
+function pawFoodClock(q,kind,now,blocked){
+ if(!q||!Number.isFinite(now))return false;
+ const phase=kind==='bubbleTea'?q.teaStage:kind==='cook'&&q.tasteAt!==undefined&&!q.tasted?'taste':null;
+ const field=['pouring','seasoning','sealing','sip'].includes(phase)?'teaAt':phase==='taste'?'tasteAt':null;
+ if(!field||!Number.isFinite(q[field])){delete q.pawFoodClock;return false}
+ const prior=q.pawFoodClock;
+ if(prior&&prior.phase===phase&&prior.field===field&&Number.isFinite(prior.at)&&now>=prior.at&&(blocked||prior.blocked))q[field]+=now-prior.at;
+ q.pawFoodClock={at:now,phase,field,blocked:!!blocked};return true
+}
+/* PAW_FOOD_CLOCK_END */
+const pawFoodLoopBefore=loop;
+loop=function(ms,...args){
+ if(activity==='bubbleTea'||activity==='cook')pawFoodClock(state,activity,ms/1000,pawArcadeInputBlocked());
+ return pawFoodLoopBefore(ms,...args)
+};
+document.addEventListener('visibilitychange',()=>{if(activity==='bubbleTea'||activity==='cook')pawFoodClock(state,activity,performance.now()/1000,pawArcadeInputBlocked())});
+const pawFoodAdvanceBefore=pearlAdvance;
+pearlAdvance=function(...args){if(activity==='bubbleTea'&&!pawArcadeInputBlocked())return pawFoodAdvanceBefore(...args)};
+const pawFoodBaseBefore=selectTeaBase,pawFoodPickBefore=pearlPick,pawFoodPourBefore=pearlPour,pawFoodSealBefore=pearlSeal,pawFoodPearlsBefore=teaAddPearls,pawFoodShakeBefore=teaShake,pawFoodSipBefore=teaSip,pawFoodTasteBefore=soupTaste;
+selectTeaBase=function(...args){if(!pawArcadeInputBlocked())return pawFoodBaseBefore(...args)};
+pearlPick=function(...args){if(!pawArcadeInputBlocked())return pawFoodPickBefore(...args)};
+pearlPour=function(...args){if(!pawArcadeInputBlocked())return pawFoodPourBefore(...args)};
+pearlSeal=function(...args){if(!pawArcadeInputBlocked())return pawFoodSealBefore(...args)};
+teaAddPearls=function(...args){if(!pawArcadeInputBlocked())return pawFoodPearlsBefore(...args)};
+teaShake=function(...args){if(!pawArcadeInputBlocked())return pawFoodShakeBefore(...args)};
+teaSip=function(...args){if(!pawArcadeInputBlocked())return pawFoodSipBefore(...args)};
+soupTaste=function(...args){if(!pawArcadeInputBlocked())return pawFoodTasteBefore(...args)};
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
