@@ -170,12 +170,16 @@ jobs:
                         await tapForecourt('paw-forecourt-cat');
                         await page.waitForFunction(()=>state.pawForecourt?.greeted&&!state.pawForecourt.route.length,null,{timeout:8000});
                         if(!await page.evaluate(v=>state.pawForecourt.catVisited&&templeCatVisits===v+1,catVisitsBefore))throw Error('Forecourt cat visit missing');
-                        await tapForecourt('paw-forecourt-cat');
+                        const catControl=page.locator('[data-paw-forecourt-control="cat"]');
+                        if(!await catControl.isVisible()||await catControl.evaluate(el=>el.getBoundingClientRect().height)<44)throw Error('Lucky cat accessible control is missing or too small');
+                        if(options.hasTouch)await catControl.tap();else await catControl.click();
                         await page.waitForFunction(()=>!state.pawForecourt.route.length,null,{timeout:8000});
                         if(await page.evaluate(()=>templeCatVisits)!==catVisitsBefore+1)throw Error('Repeated tap counted as another cat visit');
                         await page.screenshot({path:'test-results/'+name+'-lucky-cat-greeting.png'});
-                        await tapForecourt('paw-forecourt-hall');
+                        const hallControl=page.locator('[data-paw-forecourt-control="hall"]');
+                        if(options.hasTouch)await hallControl.tap();else await hallControl.click();
                         await page.waitForFunction(()=>room==='temple'&&!activity&&pawHallEnabled(),null,{timeout:8000});
+                        if(await page.locator('[data-paw-forecourt-control]').count())throw Error('Forecourt controls leaked into hall');
                       }
                       await page.waitForFunction(id=>room===id&&!transitioning&&continuityRoom===id,st.id,{timeout:15000});
                       await page.waitForFunction(()=>!indoor.route.length&&Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)<=3,{},{timeout:5000});
@@ -201,8 +205,14 @@ jobs:
                         await page.screenshot({path:'test-results/'+name+'-tarot-return-anchor.png'});
                       }
                       await page.locator('#back').click();
-                      // A room exit now has a real walk to the doorway; don't repeatedly restart it.
-                      await page.waitForFunction(()=>!room||transitioning||!!indoor.goal,{},{timeout:3000});
+                      // The temple is a two-way journey through its forecourt, not a teleport to the village.
+                      if(st.id==='temple'){
+                        await page.waitForFunction(()=>activity==='templeForecourt'&&state.pawForecourt&&!state.pawForecourt.route.length,null,{timeout:8000});
+                        await page.screenshot({path:'test-results/'+name+'-temple-return-forecourt.png'});
+                        const exit=page.locator('[data-paw-forecourt-control="exit"]');
+                        if(options.hasTouch)await exit.tap();else await exit.click();
+                        await page.waitForFunction(()=>activity==='templeForecourt'&&state.pawForecourt?.destination==='exit'||!room||transitioning,null,{timeout:3000});
+                      }else await page.waitForFunction(()=>!room||transitioning||!!indoor.goal,{},{timeout:3000});
                       await page.waitForFunction(()=>!room&&!transitioning,{},{timeout:10000});
                       await page.waitForFunction(()=>!room&&!transitioning,{},{timeout:10000});
                       console.log(name+' '+map+'/'+st.id+' PASS');
