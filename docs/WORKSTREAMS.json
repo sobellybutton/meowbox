@@ -991,14 +991,19 @@
       "summary": "Integrate 11 imported furniture designs in catalogue/detail/tray and calibrated room placement independently of missing finish artwork",
       "resources": [
         "src/extensions.js",
-        "scripts/home-layout-test.cjs"
+        "scripts/home-layout-test.cjs",
+        "src/startup.js",
+        "src/home-layout.js"
       ],
       "depends": [],
       "stage": "outstanding",
       "evidence": [
         "01a34865: verified 11 unique imported designs and 3 alternates available; preserve all current IDs, prices and saves"
       ],
-      "lease": null
+      "lease": {
+        "owner": "manual-furniture-live-20261127-2221",
+        "until": 1795791051222
+      }
     }
   ]
 }
