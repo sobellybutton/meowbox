@@ -480,12 +480,17 @@
       "summary": "Personality questions, scoring and bilingual results",
       "resources": [
         "src/startup.js",
-        "src/extensions.js"
+        "src/extensions.js",
+        "src/release-fixes.js",
+        "scripts/action-refinement-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-assessment-1128",
+        "until": 1795803902980
+      }
     },
     {
       "id": "READ-02",
