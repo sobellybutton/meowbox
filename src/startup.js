@@ -11075,4 +11075,64 @@ fade=function(fn,kind='gust',destination=null){
  }
  return pawDoorPushFadeBefore(fn,kind,destination)
 };
+/* PAW_RUNTIME_MODULES_BEGIN
+   Existing resident scheduler, existing sound settings and wallet ledger own
+   all timing, preferences and rewards. These modules add no save keys. */
+const pawLiveRemarkCount=PawResidentRemarks.merge(pawAmbientLines);
+function pawLiveSurface(world,inside){
+ if(inside==='temple'||inside==='wishes')return 'stone';
+ if(inside==='park')return 'grass';
+ if(inside)return 'wood';
+ return world==='home'?'sand':world==='wonder'?'grass':'stone'
+}
+function pawLiveEconomySnapshot(){
+ const catalogue=furnitureCatalogue(),owned=catalogue.filter(v=>furnitureOwned(v[0])).map(v=>v[0]);
+ const goals=PawEconomy.expansionGoals(hideoutBalance(),catalogue,owned);
+ const day=shrineClock().day,record=townPawRecord();
+ const earn=PawEconomy.rewards(townPawCategories(),record.day>=day?record.keys:[],dailyWheelPrizes,dailyWheelRecord().day>=day);
+ return {goals,earn,catalogue}
+}
+const pawLiveWalletBefore=pawWalletPage;
+pawWalletPage=function(...args){
+ const result=pawLiveWalletBefore(...args),q=$('content'),card=q?.querySelector('.mbPurseBook');
+ if(!card)return result;
+ const {goals,earn,catalogue}=pawLiveEconomySnapshot();
+ const open=goals.filter(g=>!g.owned);if(!open.length&&!earn?.possible)return result;
+ const note=element('details','',card,'pawSavingsNote');
+ element('summary',tr('Saving for my room','给小窝攒点钱'),note);
+ for(const g of open){
+  const item=catalogue.find(v=>v[0]===g.id),row=element('p','',note);
+  element('strong',tr(item[1],item[2]),row);
+  element('small',g.requires?tr('Unlock the reading room first.','先扩建阅读小室。'):g.needed?tr('Still to save: ','还差 ')+g.needed+tr(' Paw Coins',' 爪爪币'):tr('You have enough coins.','爪爪币已经够啦。'),row);
+ }
+ if(earn?.possible)element('p',tr('Up to ','今天还可获得最多 ')+earn.possible+tr(' more coins today, if you feel like playing. No need to finish everything.',' 爪爪币。有空就玩，不必全部完成。'),note);
+ return result
+};
+const pawLiveSavingsCss=document.createElement('style');pawLiveSavingsCss.textContent='.pawSavingsNote{border-top:1px solid #ad956c;margin-top:10px;padding-top:9px}.pawSavingsNote summary{cursor:pointer;min-height:44px;display:flex;align-items:center}.pawSavingsNote p{margin:8px 0}.pawSavingsNote small{display:block;font-size:12px;line-height:1.4}';document.head.append(pawLiveSavingsCss);
+const pawLiveStepper=PawMotionAudio.createStepper(42);
+let pawLiveMotionPlayer=null,pawLiveMotionContext=null,pawLiveMotionBus=null,pawLiveMotionMode='';
+ // Disable only superseded legacy distance-independent footsteps.
+ambientLastFoot=Infinity;indoorStepAt=Infinity;
+function pawLiveMotionTick(){
+ const flags={enabled:meowSoundPrefs.effects!==false,muted,hidden:document.hidden,overlay:false,paused:false};
+ const pageOpen=$('page').style.display==='block',game=$('game');
+ const first=!proposal.hidden&&proStep===5&&pawFirstRailState&&!pawFirstRailState.completed&&!pawFirstRailState.paused&&pawFirstRailState.phase==='riding';
+ const ride=game.querySelector('.pawRailJourney[data-riding="true"]:not([data-arriving="true"])');
+ const inter=proposal.hidden&&transitioning&&ride&&!ride.querySelector('.pawRailSkip')?.disabled;
+ const mode=first||inter?'rail':proposal.hidden&&!transitioning&&!talkOpen&&!pageOpen&&!activity&&avatar!==null&&(!room||indoorReady())?'walk':'';
+ if(mode!==pawLiveMotionMode){pawLiveStepper.reset();pawLiveMotionPlayer?.reset();pawLiveMotionMode=mode}
+ if(!mode||!PawMotionAudio.permitted(flags)||audio?.state!=='running'){pawLiveStepper.reset();return}
+ if(!actionFxBus&&!actionFxContext())return;
+ if(!pawLiveMotionPlayer||pawLiveMotionContext!==audio||pawLiveMotionBus!==actionFxBus){
+  pawLiveMotionContext=audio;pawLiveMotionBus=actionFxBus;pawLiveMotionPlayer=PawMotionAudio.createPlayer(audio,actionFxBus)
+ }
+ if(mode==='rail'){pawLiveMotionPlayer.railway(flags);return}
+ const actor=room?indoor:p,walking=room?Math.hypot(actor.tx-actor.x,actor.ty-actor.y)>2:!!actor.walk;
+ const step=pawLiveStepper.update({enabled:true,walking,x:actor.x,y:actor.y,context:scene+'|'+(room||'outdoors'),surface:pawLiveSurface(scene,room)});
+ if(step)pawLiveMotionPlayer.footstep(step,flags)
+}
+const pawLiveMotionLoopBefore=loop;
+loop=function(...args){const result=pawLiveMotionLoopBefore(...args);pawLiveMotionTick();return result};
+/* PAW_RUNTIME_MODULES_END */
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

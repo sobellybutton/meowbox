@@ -11,7 +11,7 @@ for(let i=0;i<original.length;i++){
  if(!extracted.equals(Buffer.from(original[i][1],'base64')))throw Error('Artwork differs: '+name);
  bytes+=extracted.length;
 }
-const scripts=['engine','extensions','release-fixes','town-polish','town-access','startup'].map(x=>read('src/'+x+'.js')),shell=read('src/shell.html');
+const scripts=['engine','extensions','release-fixes','town-polish','town-access','resident-remarks','paw-motion-audio','paw-economy','startup'].map(x=>read('src/'+x+'.js')),shell=read('src/shell.html');
 require('./quality-checks.cjs')(scripts[1]);
 const painted=JSON.parse(read('assets/visual/painted/runtime.json')),crypto=require('node:crypto');
 if(painted.version!==1||!painted.residents||Array.isArray(painted.residents)||typeof painted.residents!=='object')throw Error('Invalid painted runtime manifest');
@@ -85,7 +85,7 @@ for(const [id,owner] of [['temple','fortune'],['station','fortune'],['fish','hom
 }
 console.log('PASS: four destinations, '+stationOwners.size+' unique base stations; temple and pier ownership correct.');
 // In-world identity is permanent; keep legacy lowercase storage/API identifiers and URLs intact.
-const visibleBrandSource=[scripts[0],scripts[1],scripts[5],shell,read('index.html')].join('\n');
+const visibleBrandSource=[scripts[0],scripts[1],scripts.at(-1),shell,read('index.html')].join('\n');
 if(/\b(?:MeowBox|MEOWBOX|BrbLife)\b|摸鱼盒|摸鱼铁路/.test(visibleBrandSource))throw Error('Outdated player-facing world name');
 if(!visibleBrandSource.includes('Pawradise'))throw Error('Missing permanent world name');
 if(!scripts[0].includes("'meowbox-preview-'")||!scripts[1].includes("'meowbox-community'"))throw Error('Legacy data or community identity changed');
