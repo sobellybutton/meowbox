@@ -10902,26 +10902,41 @@ document.head.append(pawPaintedRailCompositeCss);
 /* Painted home furniture and expansion artwork: preserve the existing
    catalogue IDs, purchase ledger, room positions and all saved finishes. */
 let pawHomeArtAPI=null,pawHomeArtLoading=null;
-const pawHomeDecodedArt=new Map(),pawHomeOriginalArt=new Map();
+const pawHomeDecodedArt=new Map(),pawHomeOriginalArt=new Map(),pawHomeArtPending=new Set(),pawHomeArtFailed=new Map();
+/* Failed image fetches are retryable on later visits, not permanently cached.
+   Existing room nodes and saved placement are deliberately left untouched. */
+function pawWarmHomeFurniture(api){
+ if(!api)return;
+ for(const id of api.legacyIds){
+  if(!Object.hasOwn(art9,id)||pawHomeDecodedArt.has(id)||pawHomeArtPending.has(id))continue;
+  if((pawHomeArtFailed.get(id)||0)>Date.now())continue;
+  const path=api.legacyFurniture(id);if(!path)continue;
+  if(!pawHomeOriginalArt.has(id))pawHomeOriginalArt.set(id,art9[id]);
+  const im=new Image();im.decoding='async';pawHomeArtPending.add(id);
+  let done=false;
+  const settle=ok=>{
+   if(done)return;done=true;clearTimeout(timer);pawHomeArtPending.delete(id);
+   if(ok){pawHomeArtFailed.delete(id);pawHomeDecodedArt.set(id,path)}
+   else pawHomeArtFailed.set(id,Date.now()+1500)
+  };
+  const timer=setTimeout(()=>settle(false),8000);
+  im.onload=()=>settle(im.naturalWidth>0&&im.naturalHeight>0);
+  im.onerror=()=>settle(false);im.src=path
+ }
+}
 function pawLoadHomePaintings(){
+ const existing=pawHomeArtAPI||globalThis.PawHomeLayout;
+ if(existing){pawHomeArtAPI=existing;pawWarmHomeFurniture(existing);return Promise.resolve(existing)}
  if(pawHomeArtLoading)return pawHomeArtLoading;
  pawHomeArtLoading=new Promise(resolve=>{
   const tag=document.createElement('script');tag.src='src/home-layout.js';tag.async=true;
-  let done=false;const finish=api=>{if(done)return;done=true;clearTimeout(timer);resolve(api||null)};
+  let done=false;const finish=api=>{if(done)return;done=true;clearTimeout(timer);tag.onload=null;tag.onerror=null;if(!api)tag.remove();resolve(api||null)};
   const timer=setTimeout(()=>finish(null),5000);
   tag.onload=()=>finish(globalThis.PawHomeLayout);tag.onerror=()=>finish(null);document.head.append(tag)
  }).then(api=>{
-  if(!api){pawHomeArtLoading=null;return null}
-  pawHomeArtAPI=api;
-  // Do not re-render the page, lose a drag, or change saved positions on load.
-  for(const id of api.legacyIds){
-   if(!Object.hasOwn(art9,id)||pawHomeDecodedArt.has(id))continue;
-   const old=art9[id],path=api.legacyFurniture(id),im=new Image();im.decoding='async';
-   pawHomeOriginalArt.set(id,old);
-   im.onload=()=>{if(im.naturalWidth>0&&im.naturalHeight>0)pawHomeDecodedArt.set(id,path)};
-   im.src=path
-  }
-  return api
+  pawHomeArtLoading=null;
+  if(!api)return null;
+  pawHomeArtAPI=api;pawWarmHomeFurniture(api);return api
  }).catch(()=>{pawHomeArtLoading=null;return null});
  return pawHomeArtLoading
 }
