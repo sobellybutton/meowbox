@@ -823,12 +823,12 @@
         "scripts/quality-checks.cjs"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-visual-2340-build",
-        "until": 1795795695991
-      }
+      "stage": "tested",
+      "evidence": [
+        "Current exact extensions blob 41bb6bf2 and quality-checks blob 7de2729f: executed unmodified full isolated quality-check suite in connector harness; mapSignStability and other suites passed. No further test rewrite needed on this revision."
+      ],
+      "lease": null,
+      "blocker": "Complete build and deployed browser CI not executed in this session; the earlier isolated map sign regression no longer reproduces."
     },
     {
       "id": "TEMPLE-ALCOVE-01",
