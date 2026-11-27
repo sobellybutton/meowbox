@@ -369,3 +369,8 @@ QA-SPATIAL-01 partial: 5dcd182f makes painted temple, kitchen and boba labels av
 ## Room activity directory lifecycle (27 November 2026)
 
 UX-02 partial: ed9fd2ea hides closed directory content from focus order, provides Escape and focus restoration, rejects stale room/language or detached controls, preserves focused station on language rebuild, and unifies bilingual toggle labels. Existing authored station walking/arrival callbacks are unchanged. f61bcee5 adds focused lifecycle tests executed against current source in connector harness; source parsed. Actual rendered keyboard, touch, assistive technology, layout and deployment verification remain open. Released claim without marking entire accessibility task complete. Hourly schedule unchanged.
+
+
+## Continuous temple return (27 November 2026)
+
+UX-WAYFINDING-INTERACTION-01 partial: 1cc2b251 removes the second exit tap after walking out of the hall, continuing down the authored forecourt route. Return interrupts an in-progress cat/hall approach from the current location without triggering its arrival or changing position abruptly. Repeated return commands are rejected; accessible Return remains available while approaching. 463a5c5a persists focused route interruption, blocked-state and reduced-motion regression tests, executed against current source in a connector harness; source parsed. Actual deployed phone/desktop journey, visual alignment, all other public room exits and full acceptance remain open. Released claim; hourly schedule unchanged.
