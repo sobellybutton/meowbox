@@ -6577,6 +6577,20 @@ function pawTransitClock(clock,now,active,duration){
 function pawTransitOwned(view,stage){
  return !!view&&view.stage===stage&&view.connected&&!view.hidden&&!view.proposalHidden
 }
+// Loading consumes visible, unpaused time only. Once a scenery choice is
+// available, keep the journey clock independent of transient image swaps.
+function pawFirstRailProgress(run,now,active,artReady,duration){
+ const dt=Number.isFinite(run.last)?Math.max(0,Math.min(100,now-run.last)):0;
+ if(!active){run.last=null;return 'held'}
+ if(!run.artStarted){
+  if(!artReady){
+   run.last=now;run.loadElapsed=(run.loadElapsed||0)+dt;
+   return run.loadElapsed>=5000?'unavailable':'loading'
+  }
+  run.artStarted=true;run.last=null
+ }
+ return pawTransitClock(run,now,true,duration)>=1?'arrived':'riding'
+}
 /* PAW_ITEM1_TRANSIT_END */
 async function pawGateWalk(hero,traveller){
  if(!traveller||residentReducedMotion.matches)return true;
@@ -9903,7 +9917,7 @@ function pawFirstRailAttach(){
  if(proStep!==5){pawFirstRailState=null;return}
  const cabin=proposal.querySelector('.rail-cabin'),arrive=proposal.querySelector('.rail-arrive'),foot=proposal.querySelector('footer');
  if(!cabin||!arrive||!foot)return;
- const run=pawFirstRailState??={elapsed:0,last:null,paused:false,completed:false};run.last=null;
+ const run=pawFirstRailState??={elapsed:0,last:null,paused:false,completed:false,loadElapsed:0,artStarted:false};run.last=null;
  const original=arrive.onclick;if(typeof original!=='function')return;
  const reduced=residentReducedMotion.matches,duration=reduced?6500:8500;
  cabin.dataset.rideSeconds=String(duration/1000);
@@ -9915,13 +9929,15 @@ function pawFirstRailAttach(){
   pause.setAttribute('aria-pressed',String(run.paused));
   cabin.classList.toggle('pawRailPaused',run.paused);
   cabin.dataset.sceneryPaused=String(run.paused);
-  status.textContent=run.paused?tr('Journey paused','旅程已暂停'):tr('Next stop: Fortune Valley','下一站：解忧谷')
+  status.textContent=run.paused?tr('Journey paused','旅程已暂停'):run.phase==='unavailable'?tr('Scenery could not load. Continue to arrival, or wait for it to return.','窗外景色暂时无法加载，可以直接到站或稍候。'):run.phase==='loading'?tr('Preparing the railway scenery…','正在准备沿途风景…'):tr('Next stop: Fortune Valley','下一站：解忧谷')
  }
  function finish(event){
   if(run.completed||pawFirstRailState!==run||!pawTransitOwned({stage:proStep,connected:cabin.isConnected,hidden:document.hidden,proposalHidden:proposal.hidden},5))return;
   run.completed=true;pawFirstRailDispose();original.call(arrive,event)
  }
  arrive.textContent=tr('Skip to arrival','跳过旅程');arrive.onclick=finish;
+ // Avoid announcing a stale loading state after changing language.
+ run.phase=run.artStarted?'riding':run.loadElapsed>=5000?'unavailable':'loading';
  pause.onclick=()=>{if(pawFirstRailState!==run||run.completed)return;run.paused=!run.paused;run.last=null;syncPause()};
  syncPause();
  function tick(now){
@@ -9929,7 +9945,9 @@ function pawFirstRailAttach(){
   const active=!document.hidden&&!run.paused;
   const painting=cabin.querySelector('.mbPaintedRail:not([hidden]) img'),fallback=cabin.querySelector('.train-window img');
   const artReady=!!(painting?.complete&&painting.naturalWidth||fallback?.complete&&fallback.naturalWidth);
-  if(pawTransitClock(run,now,active&&artReady,duration)>=1){finish();return}
+  const phase=pawFirstRailProgress(run,now,active,artReady,duration);
+  if(phase==='arrived'){finish();return}
+  if(phase!=='held'&&phase!==run.phase){run.phase=phase;syncPause()}
   pawFirstRailFrame=requestAnimationFrame(tick)
  }
  pawFirstRailFrame=requestAnimationFrame(tick)
