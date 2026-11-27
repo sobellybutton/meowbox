@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "source": "docs/DEVELOPMENT_CHECKPOINT.md",
-  "policy": "Task stages describe this workstream deliverable, not overall game acceptance. Art-only tasks may be tested as assets but require integration and rendered acceptance before visual acceptance. Existing code-only verification remains open. Dependencies are ready at tested, visually verified or accepted stage; final acceptance requires the controlling release gates. Browser is conservatively a shared resource, not a guarantee of available slots. Keep unless a demonstrated defect, unmet mandatory product outcome or validated player-experience issue warrants a change. Verify existing work first; do not invent new work solely to increase progress counts. Optional refinements should not delay release after required gates pass. Manual continue/resume/proceed targets as many genuinely completed outstanding workstream deliverables as the session permits, without a fixed batch cap. Automatically proceed after each committed completion until all actionable work is done or an actual session/tool limit is reached. Select finishable release-critical work; verify full implementation scope before promoting stage, preserve separate visual and final acceptance gates, skip genuinely blocked tasks, and report actual clears and remaining count. See AGENTS.md. Issue #2 and the owner-approved HUD/camera refinements are release-critical: prioritize independently actionable painted room integration, coherent first frames, bounded camera/door transitions and HUD legibility before optional feature expansion; respect active leases and existing dependencies. Do not count backlog edits as implementation.",
+  "policy": "Task stages describe this workstream deliverable, not overall game acceptance. Art-only tasks may be tested as assets but require integration and rendered acceptance before visual acceptance. Existing code-only verification remains open. Dependencies are ready at tested, visually verified or accepted stage; final acceptance requires the controlling release gates. Browser is conservatively a shared resource, not a guarantee of available slots. Keep unless a demonstrated defect, unmet mandatory product outcome or validated player-experience issue warrants a change. Verify existing work first; do not invent new work solely to increase progress counts. Optional refinements should not delay release after required gates pass. Manual continue/resume/proceed targets as many genuinely completed outstanding workstream deliverables as the session permits, without a fixed batch cap. Automatically proceed after each committed completion until all actionable work is done or an actual session/tool limit is reached. Select finishable release-critical work; verify full implementation scope before promoting stage, preserve separate visual and final acceptance gates, skip genuinely blocked tasks, and report actual clears and remaining count. See AGENTS.md. Issue #2 and the owner-approved HUD/camera refinements are release-critical: prioritize independently actionable painted room integration, coherent first frames, bounded camera/door transitions and HUD legibility before optional feature expansion; respect active leases and existing dependencies. Do not count backlog edits as implementation. Full desktop and genuine phone journey acceptance is mandatory under GAME_EXPERIENCE_STANDARD.md section 10; distinguish actual hardware, emulation and deployed browser evidence; apply existing QA tasks rather than creating duplicates.",
   "lanes": {
     "world": "Entrance, four map plates, interior artwork and staging",
     "actors": "Traveller and NPC art, animation and resident behaviours",
@@ -22,7 +22,8 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": null,
+      "blocker": "\n\nOwner device acceptance clarification (27 Nov): Both genuine phone and desktop entrance, returning player, train, first coherent frame and normal movement acceptance; cold/warm cache, slow/failed network, cancellation and reload. Apply section 10."
     },
     {
       "id": "ENT-02",
@@ -595,7 +596,7 @@
         "e6908e2a + 5baafcce: avoid redundant and zero-size canvas backing-store resets; focused resize and scene admission regression executed in connector harness."
       ],
       "lease": null,
-      "blocker": "Actual iPhone Safari blank-screen cause, performance traces, real frame timings, deployed browser verification and artwork coverage remain unresolved."
+      "blocker": "Actual iPhone Safari blank-screen cause, performance traces, real frame timings, deployed browser verification and artwork coverage remain unresolved.\n\nOwner device acceptance clarification (27 Nov): Record actual frame timing, asset failures, blank-screen diagnosis, iPhone Safari browser chrome and app resume/orientation, desktop resize, and device/browser/commit provenance. Distinguish simulated and physical hardware evidence. Apply section 10."
     },
     {
       "id": "QA-01",
@@ -614,7 +615,7 @@
         "27 Nov after dedicated garden commit: live browser Node environment lacked playwright, and browser-agent fallback failed to execute. No rendered proof."
       ],
       "lease": null,
-      "blocker": "Browser connector unavailable for this attempt; actual mobile/desktop playthrough and visual acceptance remain unverified."
+      "blocker": "Browser connector unavailable for this attempt; actual mobile/desktop playthrough and visual acceptance remain unverified.\n\nOwner device acceptance clarification (27 Nov): Final deployed verification must record exact commit, browser/OS, dimensions, DPR, language, input, evidence and pass/fail/blocked per complete desktop and genuine phone journey. Actual physical iPhone Safari and Android Chrome evidence distinct from Playwright emulation; inaccessible hardware remains blocked."
     },
     {
       "id": "MAP-05",
@@ -1063,7 +1064,7 @@
       "stage": "outstanding",
       "evidence": [],
       "lease": null,
-      "blocker": "Existing desktop rules are partial; inspect actual rendered 1280x720, 1440x900, 1920x1080, tablet and short landscape before design; preserve portrait and state."
+      "blocker": "Existing desktop rules are partial; inspect actual rendered 1280x720, 1440x900, 1920x1080, tablet and short landscape before design; preserve portrait and state.\n\nOwner device acceptance clarification (27 Nov): Desktop independently composed and tested through complete normal mouse/keyboard journeys, not a stretched mobile layout: 1280x720, 1440x900, 1920x1080, Chromium and Safari/WebKit, Firefox compatibility, keyboard focus and resizing. Apply section 10."
     },
     {
       "id": "UX-SIGN-ART-01",
@@ -1275,7 +1276,7 @@
       "stage": "outstanding",
       "evidence": [],
       "lease": null,
-      "blocker": "Acceptance: Inspect actual first minute and first meaningful activity through normal input, not state injection; verify all retained scenes, both languages and multiple viewports. Record unresolved defects and iterate; do not call technical checks final acceptance. Owner release readiness directive: apply 30 lenses as checks, not 30 mandatory changes. Keep functioning, coherent, enjoyable features and existing art/copy; verify uncertain ones before changing; fix demonstrated defects or genuine missing required outcomes; defer optional polish that delays release. Focus on actual build/deployment, all four district journeys, full room/ritual/activity and back/return flows, real+NPC community with honest identities, assessment differentiation, English/Chinese editorial and text fit, device accessibility, persistence, privacy, offline/failure recovery and performance. No expansion for its own sake, no numeric improvement quota, no acceptance from helper tests alone; once required product gates pass, stop revising. Record keep/fix/verify/defer decisions and actual rendered evidence.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Regression acceptance matrix: all four districts, every public and private room and nested activity; all camera limits including upper edges, actual doorway transitions, first rendered frame, return/revisit, icon/portrait clarity, large coin values, both languages and mobile Safari/WebKit plus desktop. Inspect screenshots and motion, not assertions alone; close issue #2 only after actual deployed verification."
+      "blocker": "Acceptance: Inspect actual first minute and first meaningful activity through normal input, not state injection; verify all retained scenes, both languages and multiple viewports. Record unresolved defects and iterate; do not call technical checks final acceptance. Owner release readiness directive: apply 30 lenses as checks, not 30 mandatory changes. Keep functioning, coherent, enjoyable features and existing art/copy; verify uncertain ones before changing; fix demonstrated defects or genuine missing required outcomes; defer optional polish that delays release. Focus on actual build/deployment, all four district journeys, full room/ritual/activity and back/return flows, real+NPC community with honest identities, assessment differentiation, English/Chinese editorial and text fit, device accessibility, persistence, privacy, offline/failure recovery and performance. No expansion for its own sake, no numeric improvement quota, no acceptance from helper tests alone; once required product gates pass, stop revising. Record keep/fix/verify/defer decisions and actual rendered evidence.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Regression acceptance matrix: all four districts, every public and private room and nested activity; all camera limits including upper edges, actual doorway transitions, first rendered frame, return/revisit, icon/portrait clarity, large coin values, both languages and mobile Safari/WebKit plus desktop. Inspect screenshots and motion, not assertions alone; close issue #2 only after actual deployed verification.\n\nOwner device acceptance clarification (27 Nov): Mandatory section 10 device/route matrix: implement missing scripts/player-loop-test.cjs and extend organic journey/frame audit, then execute full normal-input journeys on independent desktop and genuine physical phone interfaces, EN and ZH, every retained venue/activity, first/returning visit, save, back/reload, failure recovery and interruption. CI Chromium/WebKit emulation is separately labelled and cannot stand in for hardware. Inspect screenshots and motion at actual current deployed commit. Existing district journey is Chromium-only and uses CDP for sustained touch; adapt supported input for WebKit without claiming hardware results."
     },
     {
       "id": "QA-SPATIAL-01",
@@ -1296,7 +1297,7 @@
         "8a433040: persisted helper tests across five viewport sizes and four scales, executed against current source."
       ],
       "lease": null,
-      "blocker": "Actual deployed mobile/desktop scenes, other rooms, moving actors, both languages and complete overlap audit remain outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Check top HUD coverage, background boundaries and foreground masks throughout pan/zoom and avatar/coin legibility; no station sign floating into another doorway or obscuring player."
+      "blocker": "Actual deployed mobile/desktop scenes, other rooms, moving actors, both languages and complete overlap audit remain outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Check top HUD coverage, background boundaries and foreground masks throughout pan/zoom and avatar/coin legibility; no station sign floating into another doorway or obscuring player.\n\nOwner device acceptance clarification (27 Nov): Inspect rendered screenshots and motion through full routes on both device families and both languages, including physical safe areas/browser chrome, real gesture hit regions, text and character/prop overlap. Apply section 10."
     },
     {
       "id": "SCENE-BLOCKING-01",
@@ -1334,7 +1335,7 @@
         "be041feb: clamp Valley camera to actual vertical artwork coverage, including tall portrait; focused boundary cases executed. Visual acceptance pending."
       ],
       "lease": null,
-      "blocker": "Actual iPhone and desktop doorway timings, painted coverage and upper-map framing still require visual review."
+      "blocker": "Actual iPhone and desktop doorway timings, painted coverage and upper-map framing still require visual review.\n\nOwner device acceptance clarification (27 Nov): Inspect independent desktop and phone camera composition at entrance, approach, action, result and exit, every room and camera boundary, normal touch/mouse and reduced motion. Apply section 10."
     },
     {
       "id": "WORLD-STORY-FLOW-01",
