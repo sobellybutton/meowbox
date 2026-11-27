@@ -1116,6 +1116,126 @@
       ],
       "lease": null,
       "blocker": "Actual rendered phone/desktop gameplay and native wide composition unverified. Cooking and drink preparation closeups retain existing art pending dedicated physical counter assets. No visual acceptance."
+    },
+    {
+      "id": "LIFE-AMBIENCE-01",
+      "lane": "world",
+      "priority": 2,
+      "summary": "Make entrance, districts and retained interiors feel inhabited with scene-specific painted motion layers, natural lighting, subtle weather and resident routines",
+      "resources": [
+        "art:ambience",
+        "src/startup.js",
+        "src/extensions.js",
+        "src/engine.js",
+        "browser"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null,
+      "blocker": "Acceptance: Review stationary and moving player views; varied nonblocking activity, correct depth/contact, no repeated particle clutter, reduced motion and performance checks."
+    },
+    {
+      "id": "LIFE-RELATIONSHIPS-01",
+      "lane": "content",
+      "priority": 2,
+      "summary": "Implement persistent optional resident memories, recurring relationships and contextual callbacks using stable authored bilingual dialogue and existing saves",
+      "resources": [
+        "src/resident-remarks.js",
+        "src/extensions.js",
+        "src/startup.js",
+        "browser"
+      ],
+      "depends": [
+        "CONTENT-RESIDENT-01"
+      ],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null,
+      "blocker": "Acceptance: Repeat visits and reloads demonstrate meaningful callbacks, differing resident voices and natural quiet intervals without sensitive-text retention, forced dialogue or fabricated real visitors."
+    },
+    {
+      "id": "GAME-DEPTH-01",
+      "lane": "games",
+      "priority": 1,
+      "summary": "Strengthen each retained physical activity through distinct meaningful input, reactions, optional mastery and satisfying results; start with temple, pier and kitchen, then arcade, park and decorating",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "src/engine.js",
+        "browser"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null,
+      "blocker": "Acceptance: Organic entry, action, outcome, return and replay for each retained activity on phone and desktop. Real inputs affect outcomes; no duplicate or gratuitous games, reward farming or generic click/read/reward loop."
+    },
+    {
+      "id": "STORY-DEPTH-01",
+      "lane": "content",
+      "priority": 2,
+      "summary": "Deepen Parallel Lives and other retained narrative encounters with authored choices, distinct endings, contextual clues and meaningful keepsakes; preserve curated destinations",
+      "resources": [
+        "src/extensions.js",
+        "src/startup.js",
+        "browser"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null,
+      "blocker": "Acceptance: At least two genuinely different outcomes for each reviewed branch story, coherent English/Chinese writing, repeat and return behavior; do not duplicate assessment experiences."
+    },
+    {
+      "id": "DISCOVERY-01",
+      "lane": "games",
+      "priority": 2,
+      "summary": "Introduce optional environmental discoveries, rare fictional visitors, hidden keepsakes and seasonal encounters inside existing places, linked to existing collections rather than chores",
+      "resources": [
+        "src/startup.js",
+        "src/extensions.js",
+        "art:discoveries",
+        "browser"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null,
+      "blocker": "Acceptance: Discoveries emerge organically, are accessible without time pressure, have varied authored stories, preserve rewards and saves; never invent real visitor presence or add a duplicate map."
+    },
+    {
+      "id": "UX-COHESION-01",
+      "lane": "interface",
+      "priority": 1,
+      "summary": "Finish shared painted design system for all HUD, icons, controls, dialogs, journals, collections, purchase screens, results and empty/loading/error states; coordinate district signage and desktop tasks",
+      "resources": [
+        "src/shell.html",
+        "src/startup.js",
+        "src/extensions.js",
+        "art:interface",
+        "browser"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null,
+      "blocker": "Acceptance: All nested states reviewed in both languages on mobile and desktop; consistent palette/materials, text fit, appropriate controls and context; no visible final vector substitutes or generic web-card grids."
+    },
+    {
+      "id": "QA-PLAYER-LOOP-01",
+      "lane": "engineering",
+      "priority": 1,
+      "summary": "Run first-time and returning player journeys as complete enjoyable vertical slices, including intentional pauses, cancellation, repeat visits and optional discoveries; capture actual deployed screenshots",
+      "resources": [
+        "browser",
+        "scripts/player-loop-test.cjs"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [],
+      "lease": null,
+      "blocker": "Acceptance: Inspect actual first minute and first meaningful activity through normal input, not state injection; verify all retained scenes, both languages and multiple viewports. Record unresolved defects and iterate; do not call technical checks final acceptance."
     }
   ]
 }
