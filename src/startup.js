@@ -8283,7 +8283,7 @@ const pawRackOpenBefore=pawFortuneRackPage;
 pawFortuneRackPage=function(){
  if(room!=='temple'||activity!=='templePaper')return pawRackOpenBefore();
  pawRackReturn={activity,state};
- start('templeRack');state.rackSelected=null;state.rackAt=t;
+ start('templeRack');state.rackSelected=null;state.rackPage=0;state.rackAt=t;
  hint('Tap a paper slip to unfold it.','点一张签纸，展开看看。')
 };
 function pawCloseTempleRack(){
@@ -8294,12 +8294,15 @@ function pawCloseTempleRack(){
  closeTalk();updateHUD();activityHint();return true
 }
 const pawTempleRackBackBefore=$('back').onclick;
-$('back').onclick=function(...args){if(pawCloseTempleRack())return;return pawTempleRackBackBefore.apply(this,args)};
+$('back').onclick=function(...args){if(activity==='templeRack'&&state.rackSelected!==null&&state.rackSelected!==undefined){state.rackSelected=null;return}if(pawCloseTempleRack())return;return pawTempleRackBackBefore.apply(this,args)};
 function pawTempleRackDraw(){
  ctx.save();try{
   paintLivingBackdrop(pics.streetTemple||pics.sticks);
   const b=livingBounds(),veil=ctx.createLinearGradient(b.x,b.y,b.x,b.y+b.h);veil.addColorStop(0,'#34271d34');veil.addColorStop(1,'#2b241e9b');shadeLivingBackdrop(veil);
-  const entries=pawRackEntries(templeTies).slice(-21),sel=entries[state.rackSelected],cx=400;
+  const all=pawRackEntries(templeTies).filter(v=>Array.isArray(shrinePaperLines[v.number-1])).reverse();
+  const pages=Math.max(1,Math.ceil(all.length/21));
+  state.rackPage=Math.max(0,Math.min(pages-1,Number.isInteger(state.rackPage)?state.rackPage:0));
+  const entries=all.slice(state.rackPage*21,state.rackPage*21+21),sel=entries[state.rackSelected],cx=400;
   // A wooden frame and real rows of tied paper, each with its own hit area.
   round(192,278,416,330,5,'#79593e','#b99b70');
   round(204,292,392,302,3,'#4d3a30','#c1a27b');
@@ -8326,7 +8329,14 @@ function pawTempleRackDraw(){
    activityFitText(sel.fictional?tr('Fictional resident','虚构居民'):tr('Saved on this device','本设备记录'),0,75,13,280,'#856b51');
    ctx.restore();
    label(tr('Fold the paper','收起签纸'),400,590,()=>{state.rackSelected=null})
-  }else txt(tr('Choose a fortune to unfold','选一张签纸展开'),400,625,16,'#fff2d6');
+  }else{
+   txt(tr('Choose a fortune to unfold','选一张签纸展开'),400,625,16,'#fff2d6');
+   if(pages>1){
+    txt((state.rackPage+1)+' / '+pages,400,601,14,'#fff2d6');
+    if(state.rackPage>0)label(tr('Previous','上一页'),245,601,()=>{state.rackPage--;state.rackSelected=null});
+    if(state.rackPage<pages-1)label(tr('Next','下一页'),555,601,()=>{state.rackPage++;state.rackSelected=null});
+   }
+  }
   label(tr('Return to your fortune','返回自己的签文'),400,660,pawCloseTempleRack);
  }finally{ctx.restore()}
 }
