@@ -72,3 +72,19 @@ return 'PASS '+count+' directional ride timing assertions';
 `)());
 
 require('./arcade-input-test.cjs');
+
+console.log(new Function(pawSlice(pawStartup,'/* PAW_ITEM1_TRANSIT_BEGIN */','/* PAW_ITEM1_TRANSIT_END */')+pawWindowMath+`
+let count=0;const ck=(v,m)=>{if(!v)throw Error(m);count++};
+let clock={elapsed:0,last:null};ck(pawTransitClock(clock,0,true,8500)===0,'first frame');
+for(let i=1;i<=20;i++)pawTransitClock(clock,i*50,true,8500);
+ck(clock.elapsed===1000,'active elapsed');
+for(let i=21;i<=220;i++)pawTransitClock(clock,i*50,false,8500);
+ck(clock.elapsed===1000,'paused or hidden unchanged');
+clock.last=null;ck(pawTransitClock(clock,120000,true,8500)===1000/8500,'resume ignores hidden interval');
+for(let i=1;i<=180;i++)pawTransitClock(clock,120000+i*50,true,8500);
+ck(clock.elapsed===8500,'arrival exactly once at duration');
+let prior=-1;for(let i=0;i<=1000;i++){const q=pawRailTravel(i*.01,'entrance');ck(q.a>=prior&&q.mix===0,'first ride never reverses or resets');prior=q.a}
+const v={stage:5,connected:true,hidden:false,proposalHidden:false};ck(pawTransitOwned(v,5),'active arrival owns screen');
+for(const p of [{stage:3},{hidden:true},{proposalHidden:true},{connected:false}])ck(!pawTransitOwned({...v,...p},5),'stale screen cannot arrive');
+return 'PASS '+count+' first journey active-clock and direction checks';
+`)());
