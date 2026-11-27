@@ -1045,3 +1045,10 @@ Owner screenshot showed a tiny portrait gate on desktop, a large dark empty surr
 - TEA-01 and FOOD-01, 5ed2af1: monotonic guest drink delivery, full cup stays with recipient, tea and soup clocks freeze while interrupted, stale controls blocked. 253 targeted assertions passed.
 - DISC-01/02: question identity and token validation, interrupt-aware card turn, desktop previous question and keyboard answers. Nine focused assertions passed. Source parses. Actual browser/visual acceptance pending.
 - Latest previous source run 45928123077: Chromium and WebKit shrine journeys, share exports and visual capture succeeded; main browser stopped at DOM mock. Pages deployment succeeded on d1e2970; later deployments pending at inspection. See DEVELOPMENT_CHECKPOINT.md for durable IDs and evidence. Original numbered ledger not found, provisional 26/100 code-level count only; baseline 9/100 fully accepted as supplied by owner. No new painted art or final visual acceptance.
+
+
+## Map movement, park and original walking art (27 November)
+- 450699f: traced resident bends, actual-motion facing and route-preserving pauses; crowd spacing; 10 new helper checks plus existing roster checks passed. Correct obsolete Back and assessment browser selectors.
+- b87f294: stable label anchors and six-deer scene with distinct named encounters and continuous exchange; 202 existing geometry and 221 new checks passed. Motion visual acceptance pending.
+- Original asset recovery workflow 45939339995 passed. Inspected original player 0 front/right contact sheet, installed eight verified archive frames and per-frame sole pivots in action-runtime.json. Left direction mirrors right; other avatars retain existing art pending clipping repair. No recreated art.
+- Provisional code-level tally 33/100; 9/100 owner-supplied fully accepted baseline remains unchanged. See DEVELOPMENT_CHECKPOINT.md for seven stable IDs, blockers and test status. Pages succeeded on 450699f; final asset integration awaits build/deployment and device review.

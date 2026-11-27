@@ -87,3 +87,20 @@ Seven additional player-facing implementation outcomes, targeted tests passed, p
 | DISC-02 | Previous question on desktop as well as mobile, number keys and Backspace while answering, stale previous controls rejected. | Same focused checks; browser keyboard and visual review pending |
 
 All source changes preserve branding, save keys, existing user results, original art and URL. No new painted art produced. Remaining workstream IDs above remain open, with WISH/COOK/TEA/FOOD/DISC IDs awaiting acceptance. Do not count the CI mock repair as product work. Full browser suite for d1e2970/5ed2af1/current commit is not yet verified; earlier tests were superseded by subsequent commits. Continue with current CI failure review, actual screenshot/playback review, then original asset recovery, character art and geometry alignment; do not activate unreviewed clipped sprite frames.
+
+
+## Map, park and original directional art continuation (27 November 2026)
+
+Seven further provisional implementation outcomes: 33/100 code-level tally (9 supplied accepted baseline + 24 implemented awaiting full acceptance). The original numbered ledger is still unavailable; this is not 33 fully accepted items. Preserve all earlier IDs.
+
+| ID | Outcome | Evidence |
+|---|---|---|
+| MAP-NPC-01 | Pedestrians follow bends of traced walkable paths across four districts. | 450699f, targeted path checks |
+| MAP-NPC-02 | Actual movement controls facing, with direction hysteresis and stable idle orientation. | 450699f, targeted orientation checks |
+| NPC-04 | Conversation pauses preserve route; radial spacing and varied yielding reduce crowding. | 450699f, guest roster and ten combined pedestrian checks |
+| UX-LABEL-01 | Valid displaced labels retain their anchor; invalid anchors use retry delay instead of frame-by-frame reset. | b87f294, code checks; visual review pending |
+| PARK-01 | Six deer in scene including three distinct named encounters; selected foreground deer is not duplicated in herd. | b87f294, 221 combined identity/exchange assertions |
+| PARK-02 | Old deer returns to its herd slot before new deer approaches; pause and reduced-motion behaviour retained. | b87f294, same suite; 202 existing deer geometry checks |
+| ART-04 | Original pink-haired player front and right walking sequences, eight recovered WebP frames, mirrored left through existing renderer. Foot anchor uses measured silhouette bottom. | Original contact sheet inspected; workflow 45939339995, job 140309796937; deployed runtime manifest updated with original SHA256 values. Full motion acceptance pending. |
+
+Browser regression for 5ee959c: shrine organic journeys, share exports and screenshot capture passed; main run stopped at obsolete Back selector. Selector and revised active assessment expectations corrected without skipping gameplay checks. Pages, entrance and consultation succeeded on 450699f. Subsequent deployment and full browser verification must be checked. Original candidate frames for other avatars remain blocked where clipping was detected. No new synthetic artwork, changes to save keys or claims of completed parallax. Continue remaining original artwork, physical room interactions and full visual acceptance.

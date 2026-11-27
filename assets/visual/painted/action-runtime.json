@@ -44,6 +44,90 @@
               231
             ]
           }
+        ],
+        "down": [
+          {
+            "path": "assets/visual/painted/player-0/walk/down-0.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "7c8e27e0b9af94f6e544cf95a14b4b0ac0d69733ca94ad182be41fb3b358f249",
+            "foot": [
+              76,
+              230
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-0/walk/down-1.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "04b1e9aed66fa72c8aa99d0d31378626e7c97cdf0d93857b1c8b0fc2de88756a",
+            "foot": [
+              76,
+              226
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-0/walk/down-2.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "e2e5c18eb20cddf58e655516ca7bef6be3b26b24f7d9e7f60b2a26e513609855",
+            "foot": [
+              76,
+              225
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-0/walk/down-3.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "505acccd70c07f8b64d2729946dc0352a16eeb4231e44190f6aaf959428c9f27",
+            "foot": [
+              76,
+              231
+            ]
+          }
+        ],
+        "right": [
+          {
+            "path": "assets/visual/painted/player-0/walk/right-0.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "477f2f6f0edfca9a96ca9bdd1008b6fa6d9bed5d57fa4d13f6cc2301f328609b",
+            "foot": [
+              76,
+              231
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-0/walk/right-1.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "52f087ed1766a728c29a0c86fe9ccfb808e6900c0fa9e6dd09dcd0986523254e",
+            "foot": [
+              76,
+              231
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-0/walk/right-2.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "07e61bd64f9323c94d6e74f60e092f9b726ac6704cda1642a39eb24089460122",
+            "foot": [
+              76,
+              230
+            ]
+          },
+          {
+            "path": "assets/visual/painted/player-0/walk/right-3.webp",
+            "width": 152,
+            "height": 244,
+            "sha256": "7d8aa05fc42832f3c8a632392ec5c8735a562914b5e2b130a29636bdb6d7f915",
+            "foot": [
+              76,
+              231
+            ]
+          }
         ]
       }
     },
