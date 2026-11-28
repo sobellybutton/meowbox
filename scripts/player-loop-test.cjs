@@ -21,14 +21,17 @@ async function frame(page){
 async function installPaintProbe(page){
  await page.addInitScript(()=>{
   const original=CanvasRenderingContext2D.prototype.drawImage;
-  const observed={count:0,last:-1};
+  const observed={count:0,last:-1,retiredCount:0,lastRetired:-1};
   Object.defineProperty(window,'__pawTarotPaintProbe',{value:observed});
   CanvasRenderingContext2D.prototype.drawImage=function(source,...args){
    const result=Reflect.apply(original,this,[source,...args]);
    if(this.canvas.id==='c'&&source instanceof HTMLImageElement){
     const src=source.currentSrc||source.src;
-    if(src&&new URL(src,location.href).pathname.endsWith('/rooms/tarot/portrait.webp')){
+    const path=src?new URL(src,location.href).pathname:'';
+    if(path.endsWith('/rooms/tarot/portrait.webp')){
      observed.count++;observed.last=performance.now();
+    }else if(path.endsWith('/assets/visual/tarot-reading.svg')){
+     observed.retiredCount++;observed.lastRetired=performance.now();
     }
    }
    return result;
@@ -45,7 +48,7 @@ async function tarotLobby(page,click,tag){
  const result=await page.evaluate(start=>{
   const p=window.__pawTarotPaintProbe;
   return {paintedSinceEntry:!!p&&p.last>=start,drawCount:p?.count??0,
-   lastDrawMs:p?.last??-1,legacyPageOpen:getComputedStyle(document.querySelector('#page')).display!=='none',
+   lastDrawMs:p?.last??-1,retiredDrawCount:p?.retiredCount??0,retiredSinceEntry:!!p&&p.lastRetired>=start,legacyPageOpen:getComputedStyle(document.querySelector('#page')).display!=='none',
    requestedPortrait:performance.getEntriesByType('resource').some(e=>new URL(e.name,location.href).pathname.endsWith('/rooms/tarot/portrait.webp'))};
  },start);
  await page.screenshot({path:path.join(out,tag+'-tarot-lobby.png')});
@@ -102,7 +105,10 @@ async function tarotLobby(page,click,tag){
     assert.deepEqual(errors,[],'Uncaught page errors');
     const coverage={rail:full(rail.rail,rail.viewport),gate:full(gate.gate,gate.viewport),returningGate:full(returningGate.gate,returningGate.viewport)};
     report.push({tag,entryMs,totalMs:Date.now()-t,coverage,rail,gate,map,returningGate,tarot});
-    if(strict)assert.ok(tarot.paintedSinceEntry,tag+' Tarot painted lobby was not drawn: '+JSON.stringify(tarot));
+    if(strict){
+     assert.ok(tarot.paintedSinceEntry,tag+' Tarot painted lobby was not drawn: '+JSON.stringify(tarot));
+     assert.equal(tarot.retiredSinceEntry,false,tag+' retired geometric Tarot art drawn during lobby: '+JSON.stringify(tarot));
+    }
     if(strict)assert.ok(Object.values(coverage).every(Boolean),tag+' incomplete artwork coverage '+JSON.stringify(coverage));
    }catch(error){
     const failure={tag,message:String(error?.message||error),pageErrors:errors.slice()};
