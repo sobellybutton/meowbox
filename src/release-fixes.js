@@ -299,6 +299,7 @@ function pawDiscoveryPlateKind(district,id,act,visit,ready){
  if(district!=='wonder'||id!==visit||!ready)return null;
  if(['quiz','story','match'].includes(id)&&act==='wonderScene')return 'wonder';
  if(id==='match'&&act==='match')return 'cafe';
+ if(id==='story'&&act==='story')return 'story';
  return null
 }
 function pawDiscoveryPlateFrame(base,foot,width,height){
@@ -309,7 +310,7 @@ function pawDiscoveryPlateFrame(base,foot,width,height){
 /* PAW_MAPPED_DISCOVERY_PLATE_END */
 function pawDiscoveryPlateActive(){
  // These mapped-room helpers are defined by startup before the first frame.
- if(!['quiz','story','match'].includes(room)||scene!=='wonder'||!['wonderScene','match'].includes(activity))return null;
+ if(!['quiz','story','match'].includes(room)||scene!=='wonder'||!['wonderScene','match','story'].includes(activity))return null;
  const api=pawReadingAPI(),im=api&&pawReadingImage(api,room);
  return pawDiscoveryPlateKind(scene,room,activity,pawReadingVisit,pawRoomImageReady(im))
 }
@@ -387,6 +388,35 @@ syncCafeQuestionSheet=function(...args){
   q[1].forEach((o,i)=>{const btn=b(panel,tr(...o),()=>{if(current())cafeChoose(i)});btn.disabled=phase!=='question';btn.setAttribute('aria-pressed',String(cafePick===i))})
  }else panel.hidden=true
 };
+/* PAW_STORY_LETTER_ART_BEGIN */
+function pawStoryLetterArt(node,scenes,endings){
+ if(Object.hasOwn(scenes,node))return scenes[node]?.art||null;
+ if(Object.hasOwn(endings,node))return endings[node]?.[4]||null;
+ return null
+}
+function pawStoryLetterCurrent(origin,live){
+ return !!origin&&!!live&&origin.run===live.run&&origin.token===live.token&&origin.node===live.node&&live.room==='story'&&live.activity==='story'&&live.scene==='wonder'
+}
+/* PAW_STORY_LETTER_ART_END */
+const pawPlateStoryPrior=syncStorySheet;
+syncStorySheet=function(...args){
+ const panel=storySheet,active=pawDiscoveryPlateActive()==='story';
+ if(!active){pawDiscoveryPlateClear(panel);return pawPlateStoryPrior(...args)}
+ const value=pawPlateStoryPrior(...args);
+ if(panel.hidden)return value;
+ panel.dataset.pawDiscoveryPlate='true';
+ const origin=pawStoryTurnContext(),art=pawStoryLetterArt(parallelNode,parallelScenes,parallelEndings);
+ const existing=panel.querySelector('.pawStoryLetterIllustration');
+ if(existing&&existing.dataset.chapter===parallelNode)return value;
+ if(existing)existing.remove();
+ const im=art&&pics[art];
+ if(!im?.naturalWidth||!im.src)return value;
+ const picture=element('img','',panel,'pawStoryLetterIllustration');
+ picture.alt='';picture.src=im.src;picture.dataset.chapter=parallelNode;
+ const heading=panel.querySelector('h3');if(heading)heading.after(picture);
+ if(!pawStoryLetterCurrent(origin,pawStoryTurnContext()))picture.remove();
+ return value
+};
 const pawDiscoveryPlateDrawPrior=drawActivity;
 drawActivity=function(...args){
  const kind=pawDiscoveryPlateActive();
@@ -400,6 +430,12 @@ cafeRoom=function(...args){if(pawDiscoveryPlateActive()==='cafe'){pawDrawDiscove
 wonderSceneObject=function(...args){if(pawDiscoveryPlateActive()==='cafe'&&cafePhase==='result')return;return pawDiscoveryPlateObjectPrior(...args)};
 const pawDiscoveryPlateStyle=document.createElement('style');
 pawDiscoveryPlateStyle.textContent=`
-#game :is(#wonderQuestionSheet,#cafeQuestionSheet)[data-paw-discovery-plate]{max-height:42dvh;bottom:calc(env(safe-area-inset-bottom,0px) + 65px);box-sizing:border-box}
-@media(min-width:900px) and (min-aspect-ratio:5/4){#game :is(#wonderQuestionSheet,#cafeQuestionSheet)[data-paw-discovery-plate]{left:auto;right:clamp(16px,4vw,65px);top:50%;bottom:auto;transform:translateY(-50%);width:min(39vw,440px);max-height:70dvh}}
+#game :is(#wonderQuestionSheet,#cafeQuestionSheet,#storyReadingSheet)[data-paw-discovery-plate]{max-height:42dvh;bottom:calc(env(safe-area-inset-bottom,0px) + 65px);box-sizing:border-box}
+@media(min-width:900px) and (min-aspect-ratio:5/4){#game :is(#wonderQuestionSheet,#cafeQuestionSheet,#storyReadingSheet)[data-paw-discovery-plate]{left:auto;right:clamp(16px,4vw,65px);top:50%;bottom:auto;transform:translateY(-50%);width:min(39vw,440px);max-height:70dvh}}
+#game #storyReadingSheet[data-paw-discovery-plate]{display:block;max-height:47dvh}
+#game #storyReadingSheet[data-paw-discovery-plate][hidden]{display:none!important}
+#game #storyReadingSheet[data-paw-discovery-plate] .pawStoryLetterIllustration{display:block;width:100%;height:clamp(72px,12dvh,130px);object-fit:cover;object-position:center 45%;border:1px solid #b9a27c;box-sizing:border-box;border-radius:3px;margin:5px 0 8px;animation:pawLetterReveal .32s ease-out both}
+@keyframes pawLetterReveal{from{opacity:.3;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+@media(min-width:900px) and (min-aspect-ratio:5/4){#game #storyReadingSheet[data-paw-discovery-plate]{max-height:70dvh;display:block}}
+@media(prefers-reduced-motion:reduce){#game #storyReadingSheet .pawStoryLetterIllustration{animation:none}}
 `;document.head.append(pawDiscoveryPlateStyle);
