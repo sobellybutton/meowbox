@@ -59,4 +59,21 @@ for(const id of ['kitchen_wooden_ladle','kitchen_small_ladle','kitchen_wooden_sp
  }
 }
 ck(!motion.stirPlan({}),'invalid stir plan');
+// Read the actual runtime clock rather than a duplicate implementation.
+const startup=require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/startup.js'),'utf8');
+const liveBlock=startup.split('/* PAW_KITCHEN_LADLE_BEGIN */')[1]?.split('/* PAW_KITCHEN_LADLE_END */')[0];
+ck(liveBlock,'live kitchen block');
+const tick=new Function(liveBlock+';return pawKitchenLadleTick')();
+const clock={travel:0,angle:0,last:0};
+for(let i=1;i<=40;i++){tick(clock,i*.016,true,i*.2,false,false);ck(clock.travel>=0&&clock.travel<=.25,'bounded clock')}
+ck(clock.travel===.25,'working position');
+const angle=clock.angle;tick(clock,1,false,100,true,false);ck(clock.travel===.25&&clock.angle===angle,'paused');
+for(let i=1;i<=40;i++)tick(clock,1+i*.016,false,0,false,false);
+ck(clock.travel===0,'returns to counter');
+tick(clock,2,true,1,false,true);ck(clock.travel===.25&&clock.angle===1,'reduced motion pickup');
+tick(clock,3,false,0,false,true);ck(clock.travel===0,'reduced motion return');
+const kitchen=motion.stirPlan({id:'kitchen_wooden_ladle',rest:[253,536],center:[400,481],radius:[27,10],height:92,clearance:24,angle:-1.68});
+ck(kitchen,'live plan');
+for(let i=0;i<360;i++){const a=i*Math.PI/180,f=motion.stirFrame(kitchen,.25,a);ck(near(f.tip,[400+27*Math.cos(a),481+10*Math.sin(a)]),'tip stays inside actual pot');ck(f.hand[0]<f.tip[0]&&f.hand[1]<f.tip[1],'grip faces cook')}
+ck(!motion.stirPlan({id:'kitchen_wooden_ladle',rest:[253,536],center:[400,481],radius:[27,10],height:92,clearance:24,angle:4}),'invalid working angle');
 console.log('PASS '+n+' food contact geometry, phase and source assertions; no rendered contact acceptance');
