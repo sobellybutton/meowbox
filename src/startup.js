@@ -14309,7 +14309,7 @@ function pawWarmFoodProps(id){
  if(!['kitchen','boba'].includes(id))return;
  if(id==='kitchen')pawKitchenStockImages();
  pawLoadFoodProps().then(q=>{if(!q)return;
-  q.cache.request(id==='boba'?['boba_tea_pot','boba_milk_pitcher','boba_cup_empty']:['kitchen_small_bowl','kitchen_stock_pot','kitchen_wooden_ladle','kitchen_bamboo_steamer','kitchen_frying_pan','kitchen_wooden_spatula'])
+  q.cache.request(id==='boba'?['boba_tea_pot','boba_milk_pitcher','boba_cup_empty','boba_flat_lid']:['kitchen_small_bowl','kitchen_stock_pot','kitchen_wooden_ladle','kitchen_bamboo_steamer','kitchen_frying_pan','kitchen_wooden_spatula'])
  })
 }
 const pawLiveFoodWarmBefore=pawWarmRoomAssets;
@@ -14339,6 +14339,29 @@ teaPitcher=function(x,y,base,tilt=0){
  if(activity==='bubbleTea'&&state.teaStage==='pourReady'&&pawPaintFoodProp('boba_tea_pot',x,y,70))return;
  return pawLiveTeaPitcherBefore(x,y,base,tilt)
 };
+/* PAW_BOBA_LID_BEGIN */
+// The original cup remains the source of liquid/ice/topping state.
+// A painted flat lid travels from the counter to its actual lip.
+function pawBobaLidPose(stage,age,cx=420,cy=525,angle=0,reduced=false){
+ if(!['seal','sealing','ready','sip','done'].includes(stage)||![age,cx,cy,angle].every(Number.isFinite))return null;
+ const lip=[cx+Math.sin(angle)*74*1.12,cy-Math.cos(angle)*74*1.12];
+ const base=[lip[0]-Math.sin(angle)*8,lip[1]+Math.cos(angle)*8];
+ const rest=[530,516],clamp01=x=>Math.min(1,Math.max(0,x));
+ const p=stage==='seal'?0:stage==='sealing'?(reduced?1:clamp01((age-.10)/.86)):1;
+ const f=p*p*(3-2*p);
+ return {x:rest[0]+(base[0]-rest[0])*f,y:rest[1]+(base[1]-rest[1])*f-(reduced?0:Math.sin(Math.PI*f)*38),angle:angle*f,height:29.5,attached:p===1,grip:[rest[0]+(base[0]-rest[0])*f-22,rest[1]+(base[1]-rest[1])*f-(reduced?0:Math.sin(Math.PI*f)*38)-13]}
+}
+function pawBobaLidAvailable(){
+ const q=pawFoodLive,id='boba_flat_lid';
+ return !!(q?.manifest?.assets?.[id]&&q.placement.ready(q.cache.image(id),q.manifest.assets[id].size))
+}
+function pawBobaPaintLid(p){
+ if(!p||!pawBobaLidAvailable())return false;
+ const q=pawFoodLive,id='boba_flat_lid',im=q.cache.image(id);
+ const b=q.cache.geometry(id,p.x,p.y,p.height);if(!b)return false;
+ ctx.save();try{ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.translate(-p.x,-p.y);return q.placement.draw(ctx,im,b)}finally{ctx.restore()}
+}
+/* PAW_BOBA_LID_END */
 /* PAW_KITCHEN_LADLE_BEGIN */
 // The same pose is read by the counter actor and spoon renderer in one frame.
 // Preserve the original stir input/reward state; animation never adds progress.
