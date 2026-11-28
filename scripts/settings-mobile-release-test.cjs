@@ -25,6 +25,22 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
    assert.equal(await page.locator('#quietToggle').isVisible(),false);
    const style=await cog.evaluate(e=>({svg:[...e.querySelectorAll('svg')].filter(x=>getComputedStyle(x).display!=='none').length,images:e.querySelectorAll('img').length,before:getComputedStyle(e,'::before').content,after:getComputedStyle(e,'::after').content,w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height}));
    assert.deepEqual([style.svg,style.images,style.before,style.after],[1,0,'none','none']);assert.ok(style.w>=44&&style.h>=44);
+   // Actual rendered hierarchy, not merely existence of CSS strings.
+   const mapStyle=await page.evaluate(()=>{
+    const profile=document.querySelector('#profileHud'),name=document.querySelector('#hudName'),coin=document.querySelector('#hudCoins'),gear=document.querySelector('#townSettingsToggle'),dock=document.querySelector('#dock');
+    const rect=e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
+    const art=e=>getComputedStyle(e).backgroundImage;
+    const plaque=[...document.querySelectorAll('#worldSigns .worldSign[data-door] .doorPlaque')].find(e=>e.getClientRects().length&&!e.closest('[hidden]'));
+    return {profile:rect(profile),name:name.textContent,nameFits:name.scrollWidth<=name.clientWidth+1,coin:rect(coin),gear:rect(gear),dock:rect(dock),profileArt:art(profile),coinArt:art(coin),gearArt:art(gear),dockArt:art(dock),plaque:plaque?{art:art(plaque),borderImage:getComputedStyle(plaque).borderImageSource,hit:rect(plaque.parentElement)}:null};
+   });
+   if(process.env.PAW_MAP_STATIONERY==='1'){
+    assert(mapStyle.nameFits,'Normal-length traveller name should fit: '+JSON.stringify(mapStyle));
+    assert(mapStyle.profile.right<=mapStyle.coin.left+1&&mapStyle.coin.right<=mapStyle.gear.left+1,'HUD surfaces overlap');
+    assert(Math.abs(mapStyle.profile.top-mapStyle.gear.top)<=4,'Top corners should align');
+    assert(mapStyle.gear.width>=44&&mapStyle.gear.height>=44,'Settings touch target');
+    for(const art of [mapStyle.profileArt,mapStyle.coinArt,mapStyle.gearArt,mapStyle.dockArt])assert(art.includes('paper_texture.webp'),'Shared painted paper must render');
+    assert(mapStyle.plaque&&mapStyle.plaque.borderImage==='none'&&mapStyle.plaque.hit.height>=44,'Slim plaque must retain accessible target');
+   }
    await page.screenshot({path:'test-results/settings-'+name+'-map.png'});
    await page.evaluate(()=>{localStorage.setItem('meowbox-preview-resetProbe','keep until confirmed');localStorage.setItem('other-app-settings-test','preserve')});
    const language=await page.evaluate(()=>localStorage.getItem('meowbox-preview-zh'));
