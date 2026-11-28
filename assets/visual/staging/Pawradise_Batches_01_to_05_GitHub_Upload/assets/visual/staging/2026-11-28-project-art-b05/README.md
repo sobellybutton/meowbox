@@ -1,0 +1,2 @@
+Batch 5/10: Tea House, Retro Arcade, blind box and souvenir shop.
+Two aligned WebP layers from one new open carton painting. Draw open carton, actual selected prize, then front occlusion. Use same transform for both layers. The front mask is a hand-traced candidate; verify seams, reveal path and mobile/desktop framing. No baked prize or result. Matching closed state and other interactions remain pending. Two unrelated composite generations excluded. Not uploaded or integrated.

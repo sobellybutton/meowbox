@@ -1,0 +1,70 @@
+{
+  "task": "ROOM-06 / GAME-DEPTH-01",
+  "character": "ah-ma",
+  "reference": "assets/visual/painted/ah-ma/poses/seated.webp",
+  "reference_blob": "50a762586f2977b547d96bc750dbc68b541a37fc",
+  "status": "candidate, not live",
+  "notes": "Four discrete poses; proposed common foot baseline y=672 and approximate stool alignment. Calibrate seat, scale, target impact and occlusion against existing room; stool is baked into sprite, suppress duplicate stool. Existing seated pose remains canonical. Not a tested animation.",
+  "frames": [
+    {
+      "path": "assets/visual/staging/2026-11-28-ah-ma-strike/ready.webp",
+      "phase": "ready",
+      "width": 680,
+      "height": 704,
+      "alpha_bounds": [
+        112,
+        35,
+        472,
+        671
+      ],
+      "sha256": "7dc585a28154e8c36ffc923ce309db9b8001e6ac12ec4f2b02fa9d6986f66337",
+      "git_blob_sha1": "e1b77d9eb88625f381cc93c9c425a03fe4b1dc5f",
+      "bytes": 103764
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-ah-ma-strike/windup.webp",
+      "phase": "windup",
+      "width": 680,
+      "height": 704,
+      "alpha_bounds": [
+        91,
+        27,
+        488,
+        672
+      ],
+      "sha256": "d6ecd1ce61c8f0b44725e5779e5a71fd11f98a416d438c71cb6701fe7e8b6932",
+      "git_blob_sha1": "0536ab3f835b4ceb6f7ece9655ac2644baf1e48c",
+      "bytes": 115572
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-ah-ma-strike/impact.webp",
+      "phase": "impact",
+      "width": 680,
+      "height": 704,
+      "alpha_bounds": [
+        112,
+        60,
+        592,
+        672
+      ],
+      "sha256": "0a661e2bef2a18f4908c76c8ecf48663f924b4567c48d3a17120f3027c4cd230",
+      "git_blob_sha1": "fc2ee4762ed88d5b68b92f7813174ae6ea07a943",
+      "bytes": 118428
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-ah-ma-strike/recovery.webp",
+      "phase": "recovery",
+      "width": 680,
+      "height": 704,
+      "alpha_bounds": [
+        112,
+        40,
+        486,
+        672
+      ],
+      "sha256": "bc458cc90c8b7cd7fee119adcf04bb224c792be3c383d0e6a5266504bc80d591",
+      "git_blob_sha1": "7f3c8342e49fb93a65240f4553b40c2f8ab4a16b",
+      "bytes": 106732
+    }
+  ]
+}

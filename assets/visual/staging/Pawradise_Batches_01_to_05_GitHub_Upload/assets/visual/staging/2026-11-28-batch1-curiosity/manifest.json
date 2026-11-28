@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "character": "curiosity-club-keeper",
+  "status": "candidate artwork only; new unregistered identity",
+  "source": "a_clean_illustration_set_on_a_transparent_checkerb.png",
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-curiosity/standing-welcome.webp",
+      "width": 640,
+      "height": 760,
+      "sha256": "ef8d682b2dc089f12d795a37de823cc7fde2611f94172b149a9f97a6d9b3d0c8",
+      "git_blob_sha1": "fbb72e57460a222275f600511ec01109ef43db68",
+      "visible_alpha_bounds": [
+        139,
+        55,
+        501,
+        744
+      ],
+      "status": "candidate pose; seat/feet calibration and motion verification pending"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-curiosity/standing-inspect.webp",
+      "width": 640,
+      "height": 760,
+      "sha256": "42b09996453e5ab055482d1d6a83e9b9eb5b9ca30bbcd290982e67fad56c820e",
+      "git_blob_sha1": "588c8cd270992877d5971ef6b2ff58a962b13f0f",
+      "visible_alpha_bounds": [
+        164,
+        59,
+        475,
+        744
+      ],
+      "status": "candidate pose; seat/feet calibration and motion verification pending"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-curiosity/seated-listen.webp",
+      "width": 640,
+      "height": 760,
+      "sha256": "55da88e2a6399c7d66991a26ec4cf98d46fdebd05814add2b37cfd01950ebe1b",
+      "git_blob_sha1": "b4d9c2abc9b08f95476e9571143b080507b13544",
+      "visible_alpha_bounds": [
+        183,
+        144,
+        457,
+        744
+      ],
+      "status": "candidate pose; seat/feet calibration and motion verification pending"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-curiosity/seated-point.webp",
+      "width": 640,
+      "height": 760,
+      "sha256": "cc8e50bd727e469fd1b235a70b03577809e80798f4f18ec3f068015a945738f0",
+      "git_blob_sha1": "f6f382e98cb7caa22eeba734606c23b6e93624c5",
+      "visible_alpha_bounds": [
+        145,
+        142,
+        495,
+        744
+      ],
+      "status": "candidate pose; seat/feet calibration and motion verification pending"
+    }
+  ]
+}

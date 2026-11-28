@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "character": "what-if-storyteller",
+  "status": "new identity candidate; not registered or approved",
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-storyteller/standing-book.webp",
+      "width": 728,
+      "height": 784,
+      "alpha_bounds": [
+        228,
+        16,
+        500,
+        768
+      ],
+      "sha256": "41ef23bfd30142b604db46954549fe1438c841f78119191a9e8ac914df3cf9f8",
+      "git_blob_sha1": "597db0796762eaa20bc5366608e942b78de7c1bd",
+      "notes": "Full body standing candidate with held closed book. Calibrate head and body scale to existing cast. Seated and directional poses not yet supplied."
+    }
+  ]
+}

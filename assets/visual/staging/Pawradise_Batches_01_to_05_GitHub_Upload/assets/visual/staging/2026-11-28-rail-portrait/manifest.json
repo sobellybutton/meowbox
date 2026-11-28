@@ -1,0 +1,18 @@
+{
+  "task": "RAIL-04 / RAIL-LIVE-01",
+  "status": "candidate; not live integrated",
+  "path": "assets/visual/staging/2026-11-28-rail-portrait/carriage-portrait-window.webp",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "window_transparent_bbox": [
+    119,
+    322,
+    906,
+    831
+  ],
+  "sha256": "d1e9e8f1fb0804e671649c58cb31fe3d7451e4a5c05fd8f88fee98f6009d2126",
+  "git_blob_sha1": "2285df2d89341d602572537f779fdbcfcd877dc5",
+  "bytes": 369380,
+  "integration": "Use native portrait camera and render independent moving route scenery behind actual alpha window; retain existing landscape carriage. Adjust window band, do not reuse fixed landscape band without checking. Compare existing portrait candidate and verify mobile ride transitions."
+}

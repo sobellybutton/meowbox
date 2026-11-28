@@ -1,0 +1,1 @@
+Ah Ma ritual candidates. Use the existing Ah Ma identity and native pier scene. Player sits on a separate stool; Ah Ma performs the ritual on a symbolic paper target. Reuse existing target and scenery. Preserve the seated scale and fixed stool pivot, align impact to target, test mobile and desktop. Do not mark accepted before rendered review.

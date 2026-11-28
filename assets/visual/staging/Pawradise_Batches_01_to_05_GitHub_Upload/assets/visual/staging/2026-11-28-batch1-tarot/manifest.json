@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "character": "fortune-teller",
+  "status": "candidate only, no runtime registration",
+  "reference_blob": "bf7c0c347afd4dba76e1c069ac0d94f33830ccb0",
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-tarot/seated-deal-extended.webp",
+      "width": 728,
+      "height": 784,
+      "alpha_bounds": [
+        75,
+        16,
+        653,
+        768
+      ],
+      "sha256": "41da6d5490b2b553eb36ac1cbc87d8e6538bf7831b5bc2de76cd696646cf535a",
+      "git_blob_sha1": "08fcf277714cc9c53c1ab8c85b3b8f91c2438168",
+      "notes": "Single extended dealing pose, not a complete animation. Match face, head size, seat pivot and card reach to existing references. Baked generic card back differs from existing deck; render correct runtime deck at contact or mask held card. Do not use as result artwork."
+    }
+  ]
+}

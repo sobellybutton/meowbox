@@ -1,0 +1,99 @@
+{
+  "batch": 2,
+  "status": "partial",
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b02/garden/koi-direction-01.webp",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        18,
+        23,
+        109,
+        105
+      ],
+      "sha256": "cd82c64f89fcfe731732d490f0621c998d08da914a64d908127960170510b0b1",
+      "git_blob_sha1": "a92a25a6865f8b5acbcab3f012b921b120f39713",
+      "status": "low-resolution directional koi candidate; not a coherent same-identity cycle; compare against existing art before replacing"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b02/garden/koi-direction-02.webp",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        34,
+        15,
+        93,
+        112
+      ],
+      "sha256": "68ae4b59710a75469cfee3e42a47f50bd8c57968de68e32b9a93e04572ba4aa5",
+      "git_blob_sha1": "73432620088611a3dca7a7e66d18c9cb3a789392",
+      "status": "low-resolution directional koi candidate; not a coherent same-identity cycle; compare against existing art before replacing"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b02/garden/koi-direction-03.webp",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        39,
+        19,
+        89,
+        109
+      ],
+      "sha256": "29585dbf5484b204dd5a9dda8b3dfdc2d36274cef281e987677cd37bb8e94eb9",
+      "git_blob_sha1": "d786266c1eb820c5444e9e4f660b92450b7d1ab8",
+      "status": "low-resolution directional koi candidate; not a coherent same-identity cycle; compare against existing art before replacing"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b02/garden/koi-direction-04.webp",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        28,
+        20,
+        99,
+        108
+      ],
+      "sha256": "96fe2db364c5933c681cd5ea713e4a39b100a30c13794afdc03ebf53c9cd5a5f",
+      "git_blob_sha1": "408f805d5a76adfa032cd07b35e9557d44140468",
+      "status": "low-resolution directional koi candidate; not a coherent same-identity cycle; compare against existing art before replacing"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b02/garden/koi-direction-05.webp",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        28,
+        31,
+        99,
+        96
+      ],
+      "sha256": "0dd1de4d4edf779ff36e2314f7db68476dc03e5b050737bd31abcb5c7d2f30b3",
+      "git_blob_sha1": "5677ad11f02273fc92cdad3a09af7909654a3590",
+      "status": "low-resolution directional koi candidate; not a coherent same-identity cycle; compare against existing art before replacing"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b02/garden/koi-direction-06.webp",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        21,
+        20,
+        107,
+        107
+      ],
+      "sha256": "e04c067ec99d820fbb157e4a1b5c9dad20ec36f341c6f0b819ae4238a4f06a89",
+      "git_blob_sha1": "ed73875044bc3b11d56c423839ae386827a81827",
+      "status": "low-resolution directional koi candidate; not a coherent same-identity cycle; compare against existing art before replacing"
+    }
+  ],
+  "open": [
+    "koi-feed supply and scoop",
+    "consistent swimming motion and feeding contact",
+    "wish writing/attachment contact",
+    "temple-specific actor poses as needed after existing references inspected"
+  ],
+  "reuse": [
+    "existing altar, bell, striker, incense box, pool, fortune slips, existing ambient props and avatar gestures"
+  ]
+}
