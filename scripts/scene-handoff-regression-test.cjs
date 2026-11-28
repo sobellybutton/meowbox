@@ -21,3 +21,23 @@ for(const patch of [{scene:'home'},{avatar:2},{room:'tea'},{activity:'cook'},{tr
 assert.ok(startup.includes('Promise.all([pawReadyMap(destination),pawReadyTraveller(avatar??0)]).then(pawAdmissionReady)'));
 assert.ok(startup.includes('pawDoorPushFadeBefore(()=>{clear();return fn()},kind,destination)'));
 console.log('Scene readiness, stale admissions, door handoff wiring and resize regression passed');
+
+{
+ const begin=startup.indexOf('function pawRoomActivityArtKeys'),end=startup.indexOf('function pawRoomPaintFallback',begin);
+ assert.ok(begin>=0&&end>begin);
+ const keys=Array.from({length:8},(_,i)=>'parkKayaPet'+i);
+ const requested=[],decoded=[],cache=new Map(),jobs=new Map();
+ const create=id=>({complete:false,naturalWidth:0,naturalHeight:0,decode(){decoded.push(id);return Promise.resolve()}});
+ const manifest=Object.fromEntries(['park','parkCats','parkCareFilledBowl','parkCareFeather',...keys,'parkKayaSleep','tea'].map(k=>[k,{}]));
+ const api=new Function('pawRoomAlias','pawRoomFallbackKeys','pawRoomWarmJobs','productionVisualManifest','productionVisualCache','productionVisual','pawKayaKeys','portraitInteriorImage','landscapeRoomImage','pics','pawRoomImageReady','setTimeout',startup.slice(begin,end)+';return {keys:pawRoomActivityArtKeys,warm:pawWarmRoomAssets}')({}, {park:[],tea:[]},jobs,manifest,cache,id=>{requested.push(id);if(!cache.has(id))cache.set(id,create(id))},keys,()=>null,()=>null,{},()=>false,()=>{});
+ assert.deepEqual(api.keys('park',keys),['parkCats','parkCareFilledBowl','parkCareFeather',...keys,'parkKayaSleep']);
+ for(const id of ['tea','tarot','quiz','home',''])assert.deepEqual(api.keys(id,keys),[]);
+ assert.equal(api.warm('park'),undefined,'optional art must not delay room entry');
+ const expected=['park',...api.keys('park',keys)];
+ assert.deepEqual(requested,expected);
+ assert.deepEqual(decoded,expected);
+ api.warm('park');assert.deepEqual(requested,expected,'coalesce in-flight requests');
+ api.warm('tea');assert.deepEqual(requested,[...expected,'tea']);
+ assert.ok(jobs.has('park')&&jobs.has('tea'));
+ console.log('Park admission: 12 existing activity assets warmed before entry, no blocking or duplicate in-flight requests');
+}

@@ -21,12 +21,16 @@ async function travelLoop(page,name,touch){
  }
  async function enterDoor(id){
   const sign=page.locator('#worldSigns [data-door="'+id+'"]');
-  for(let walks=0;walks<5&&!await sign.isVisible();walks++){
-   const {direction,from}=await page.evaluate(id=>{
-    const y=maps[scene].st.find(v=>v[0]===id)[2]+110;
-    return {direction:Math.sign(y-p.y)||1,from:p.y};
+  // A full-length painted district can require more than five walking
+  // steps. Keep real joystick/keyboard input and require actual progress.
+  for(let walks=0;walks<15&&!await sign.isVisible();walks++){
+   const {direction,from,distance}=await page.evaluate(id=>{
+    const row=maps[scene].st.find(v=>v[0]===id);
+    const goal=Math.max(minY(),Math.min(maxY(),row[2]));
+    const delta=goal-p.y;
+    return {direction:Math.sign(delta)||-1,from:p.y,distance:Math.max(18,Math.min(160,Math.abs(delta)))};
    },id);
-   const waitForWalk=()=>page.waitForFunction(({direction,from,id})=>Math.abs(p.y-from)>160||!signButtons.get(id)?.hidden,{direction,from,id},{timeout:10000});
+   const waitForWalk=()=>page.waitForFunction(({direction,from,id,distance})=>direction*(p.y-from)>=distance-3||!signButtons.get(id)?.hidden,{direction,from,id,distance},{timeout:10000});
    if(touch){
     await page.locator('#movePad').waitFor();
     const box=await page.locator('#movePad').boundingBox();
@@ -44,19 +48,28 @@ async function travelLoop(page,name,touch){
     try{await waitForWalk();}finally{await page.keyboard.up(key);}
    }
   }
+  if(!await sign.isVisible()){
+   const detail=await page.evaluate(id=>{
+    const row=maps[scene].st.find(v=>v[0]===id),btn=signButtons.get(id);
+    return {scene,player:[p.x,p.y],approach:row.slice(1,3),anchor:housePlaqueAnchor(scene,id,row[1],row[2]),camera:{scale:cam.scale,ox:cam.ox,oy:cam.oy},viewport:[W,H],hidden:btn?.hidden,size:btn?._signSize,offset:btn?._signOffset};
+   },id);
+   throw Error('Doorway plaque unreachable by actual walking: '+id+' '+JSON.stringify(detail));
+  }
   await press(sign);
   if(id==='temple'){
-   await page.waitForFunction(()=>activity==='templeForecourt'&&!transitioning,null,{timeout:21000});
-   await shot('temple-forecourt');
-   const hall=page.locator('[data-paw-forecourt-control="hall"]');
-   await press(hall);
+   // One doorway tap must initiate the walk without a second hall tap.
+   await page.waitForFunction(()=>room==='temple'&&!transitioning&&(activity==='templeForecourt'||(!activity&&continuityRoom==='temple')),null,{timeout:21000});
+   if(await page.evaluate(()=>activity==='templeForecourt'))await shot('temple-forecourt');
   }
-  await page.waitForFunction(id=>room===id&&!transitioning&&continuityRoom===id&&Math.hypot(indoor.x-indoor.tx,indoor.y-indoor.ty)<4,id,{timeout:21000});
+  await page.waitForFunction(id=>room===id&&!activity&&!transitioning&&continuityRoom===id&&Math.hypot(indoor.x-indoor.tx,indoor.y-indoor.ty)<4,id,{timeout:21000});
   assert(await page.evaluate(()=>indoorSafe(indoor.x,indoor.y)),'Arrival is outside walkable floor');
   // Inspect actual rendered room actors, not an artificial guest count.
   const visitors=await page.evaluate(()=>{
-   const reserved=pawGuestProtected(),obs=indoorObstacles();
-   return pawLocalVisitors.map(a=>({id:a.id,clear:pawGuestClear(a.x,a.y,reserved),safe:indoorSafe(a.x,a.y,obs),duplicate:!!a.guest&&npc.some(n=>n.popGuest===a.guest.id)}))
+   const reserved=pawGuestProtected(),stations=pawGuestActiveFeet(),obs=indoorObstacles(),gap=pawMappedGuestGaps(pawReadingActive()).station;
+   return pawLocalVisitors.map(a=>{
+    const transit=a.phase==='arriving'||a.phase==='departing';
+    return {id:a.id,phase:a.phase,gap,clear:pawGuestClear(a.x,a.y,transit?stations:reserved,gap),safe:indoorSafe(a.x,a.y,obs),duplicate:!!a.guest&&npc.some(n=>n.popGuest===a.guest.id)}
+   })
   });
   assert(visitors.every(a=>a.clear&&a.safe&&!a.duplicate),'Room visitor blocked a station, floor or existing identity: '+JSON.stringify(visitors));
   assert.equal(new Set(visitors.map(a=>a.id)).size,visitors.length,'Duplicate indoor visitor IDs');
@@ -155,9 +168,34 @@ async function travelLoop(page,name,touch){
  await station('destiny');
  await press(page.getByRole('button',{name:'My birth chart',exact:true}));
  await press(page.getByRole('button',{name:'For me',exact:true}));
- await page.locator('.astroForm').waitFor();
- assert.equal(await page.locator('#page').getAttribute('data-paw-yue-desk'),'true','Consultation stays at the study desk');
+ // The single guided consultation paper remains anchored to the study.
+ const birth=page.locator('.astroForm input[type=date]');
+ await birth.waitFor({state:'visible'});
+ assert.equal(await page.locator('#page').getAttribute('data-paw-yue-desk'),'true','Reading must remain in the study');
+ assert.equal(await page.locator('.pawYueGuidedForm').count(),1,'Only one birth form');
+ assert.equal(await page.locator('#choices .pawDeskField').count(),0,'No cloned dialogue fields');
+ assert.equal(await page.evaluate(()=>room),'destiny');
  await shot('yue-desk');
+ const next=()=>press(page.locator('.pawYueStepNav').getByRole('button',{name:'Continue',exact:true}));
+ await birth.fill('1990-06-15');
+ await next();
+ const birthTime=page.locator('.astroForm input[type=time]');
+ await birthTime.waitFor({state:'visible'});
+ await birthTime.fill('12:30');
+ await next();
+ const place=page.locator('.astroForm details select');
+ await place.waitFor({state:'visible'});
+ assert.equal(await place.inputValue(),'','Birthplace must not be assumed');
+ await place.selectOption('0');
+ await press(page.locator('.astroForm button[type=submit]'));
+ await page.locator('.chartConsultation').waitFor({state:'visible'});
+ assert.equal(await page.locator('.ziGrid article:not(.blank)').count(),12,'The chart must contain twelve palaces');
+ assert.equal(await page.locator('#page').getAttribute('data-paw-yue-desk'),'true','Consultation result stays anchored to the study');
+ assert.equal(await page.evaluate(()=>room),'destiny');
+ assert(await page.evaluate(()=>!JSON.stringify(localStorage).includes('1990-06-15')),'Private birth data must not persist');
+ await shot('yue-chart');
+ await press(page.getByRole('button',{name:'Finish consultation',exact:true}));
+ await page.waitForFunction(()=>room==='destiny'&&!activity&&document.getElementById('page').style.display==='none');
  await backOutside();
 
  for(const [district,doors] of [['home',['fish']],['island',['boba','arcade']],['wonder',['quiz','story','match']],['fortune',[]]]){
@@ -198,7 +236,11 @@ async function travelLoop(page,name,touch){
    await enterDoor(id);
    if(id==='quiz'){
     await station('quiz');
-    await page.locator('#choices').getByRole('button',{name:'MBTI-inspired preferences',exact:true}).waitFor();
+    // Assert the current authored Observatory dialogue, not the retired label.
+    await page.locator('#choices').getByRole('button',{name:'Four personality preferences',exact:true}).waitFor();
+    assert(await page.locator('#choices').getByRole('button',{name:'Enneagram-inspired · nine motives',exact:true}).isVisible());
+    assert(await page.locator('#choices').getByRole('button',{name:'Five personality tendencies',exact:true}).isVisible());
+    assert.equal(await page.evaluate(()=>room),'quiz','Station dialogue belongs to the Observatory');
     await press(page.locator('#choices').getByRole('button',{name:/Keep exploring/}));
    }
    await backOutside();
