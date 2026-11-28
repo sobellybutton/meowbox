@@ -25,4 +25,15 @@ assert.ok(startup.includes("$('dock').append($('dockTravel'),$('dockScoop'),pawT
 assert.ok(startup.includes("$('dockRoom').hidden=true;$('dockPassport').hidden=true"));
 assert.ok(extensions.includes('const travelTabIllustrations='));
 assert.ok(shell.includes('id="profileHud"')&&shell.includes('id="hudPortrait"'));
-console.log('PASS 22 map HUD single-icon, accessible control and navigation source checks');
+assert.ok(css.includes('#townSettingsPanel[hidden]{display:none!important}'));
+assert.ok(css.includes('#townSettingsPanel .townSettingsExtra button[hidden]{display:none!important}'));
+assert.ok(css.includes('#townSettingsPanel>.languageChoice'));
+assert.ok(css.includes('grid-template-columns:repeat(2,minmax(0,1fr))'));
+assert.ok(css.includes('#townSettingsPanel .languageChoice button[aria-pressed=true]'));
+assert.ok(css.includes('#townSettingsPanel .townSettingsExtra button[aria-pressed=true]::after'));
+assert.ok(css.includes('overflow-y:auto!important;overscroll-behavior:contain!important'));
+assert.ok(css.includes('#townSettingsPanel button:focus-visible'));
+assert.ok(startup.includes("townSoundSettings.onclick=()=>{$('mute').click();syncTownSettings()}"));
+assert.ok(startup.includes("townMapLabels.onclick=()=>{$('quietToggle').click();closeTownSettings()}"));
+assert.ok(startup.includes('pawAmbientToggle.onclick=()=>'));
+console.log('PASS 33 map HUD and settings popover source checks');
