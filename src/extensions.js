@@ -871,14 +871,23 @@ const streetDrawBefore=drawActivity;drawActivity=function(){streetDrawBefore();i
 /* Ambient village atmosphere. Local daylight, fictional weather, no gameplay penalties. */
 let atmosphereLast=-Infinity,atmosphere={hour:12,weather:'clear',season:11};
 function refreshAtmosphere(){if(t-atmosphereLast<30)return;atmosphereLast=t;let parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Singapore',hour:'2-digit',hourCycle:'h23',month:'numeric',day:'numeric'}).formatToParts(new Date());let get=k=>Number(parts.find(v=>v.type===k)?.value||0);let hour=get('hour'),month=get('month'),date=get('day');let roll=hash(day()+'sky'+Math.floor(hour/3))%10;atmosphere={hour,season:month,weather:roll<2?'rain':roll<4?'mist':'clear'};}
-const atmosphereReduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-function villageAtmosphere(){refreshAtmosphere();let h=atmosphere.hour,w=1000,height=mapWorldHeight(),night=h>=19||h<6,dusk=h>=17&&h<19,dawn=h>=6&&h<8;ctx.save();if(night||dusk||dawn){let light=ctx.createLinearGradient(0,0,0,height);light.addColorStop(0,night?'#2238554d':dusk?'#b36b452f':'#e8ac5626');light.addColorStop(1,night?'#20394b29':'#d5ad6c10');ctx.fillStyle=light;ctx.fillRect(0,0,w,height)}
+const atmosphereMotionPreference=matchMedia('(prefers-reduced-motion: reduce)');
+// The authored interior renderer owns mapped fixture animation. Do not
+// scatter the same floating particle layer over residents and furniture.
+function pawAtmosphereMotionPolicy(hidden,reduced,roomId,mapped){
+ return {draw:!hidden,moving:!hidden&&!reduced,legacyMotes:!hidden&&!reduced&&!mapped&&['temple','wishes'].includes(roomId)}
+}
+function pawAtmospherePolicy(roomId=null){
+ const mapped=roomId&&typeof pawSceneLights!=='undefined'&&Object.hasOwn(pawSceneLights,roomId);
+ return pawAtmosphereMotionPolicy(document.hidden,atmosphereMotionPreference.matches,roomId,mapped)
+}
+function villageAtmosphere(){const policy=pawAtmospherePolicy();if(!policy.draw)return;refreshAtmosphere();let h=atmosphere.hour,w=1000,height=mapWorldHeight(),night=h>=19||h<6,dusk=h>=17&&h<19,dawn=h>=6&&h<8;ctx.save();if(night||dusk||dawn){let light=ctx.createLinearGradient(0,0,0,height);light.addColorStop(0,night?'#2238554d':dusk?'#b36b452f':'#e8ac5626');light.addColorStop(1,night?'#20394b29':'#d5ad6c10');ctx.fillStyle=light;ctx.fillRect(0,0,w,height)}
  if(atmosphere.weather==='mist'){let fog=ctx.createLinearGradient(0,0,0,height);fog.addColorStop(0,'#e9e5d938');fog.addColorStop(.55,'#e0e6d710');fog.addColorStop(1,'#eff0e61a');ctx.fillStyle=fog;ctx.fillRect(0,0,w,height)}
- if(!atmosphereReduced){let drift=atmosphere.weather==='rain';if(drift){ctx.strokeStyle='#e1ebea66';ctx.lineWidth=1.2;for(let i=0;i<78;i++){let x=((i*113-t*35)%w+w)%w,y=((i*97+t*310)%height+height)%height;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-8,y+23);ctx.stroke()}for(let i=0;i<8;i++){let f=(t*.8+i*.17)%1,x=310+(i*71)%370,y=height-45-(i*83)%(height*.55);ctx.strokeStyle='rgba(225,240,230,'+(.35*(1-f))+')';ctx.beginPath();ctx.ellipse(x,y,3+f*18,1+f*5,0,0,TAU);ctx.stroke()}}else if(night){for(let i=0;i<27;i++){let x=60+(i*131)%880+Math.sin(t*.5+i)*12,y=140+(i*83)%(height-160)+Math.sin(t*.8+i)*9;ctx.globalAlpha=.35+.28*Math.sin(t*1.6+i);ellipse(x,y,2.2,2.2,'#f6e8a5')}}else{for(let i=0;i<13;i++){let x=((i*97+t*14)%w+w)%w,y=80+(i*73)%(height-90)+Math.sin(t*.7+i)*13;ctx.globalAlpha=.45;petal(x,y,3+i%3,i)}}}
+ if(policy.moving){let drift=atmosphere.weather==='rain';if(drift){ctx.strokeStyle='#e1ebea66';ctx.lineWidth=1.2;for(let i=0;i<78;i++){let x=((i*113-t*35)%w+w)%w,y=((i*97+t*310)%height+height)%height;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-8,y+23);ctx.stroke()}for(let i=0;i<8;i++){let f=(t*.8+i*.17)%1,x=310+(i*71)%370,y=height-45-(i*83)%(height*.55);ctx.strokeStyle='rgba(225,240,230,'+(.35*(1-f))+')';ctx.beginPath();ctx.ellipse(x,y,3+f*18,1+f*5,0,0,TAU);ctx.stroke()}}else if(night){for(let i=0;i<27;i++){let x=60+(i*131)%880+Math.sin(t*.5+i)*12,y=140+(i*83)%(height-160)+Math.sin(t*.8+i)*9;ctx.globalAlpha=.35+.28*Math.sin(t*1.6+i);ellipse(x,y,2.2,2.2,'#f6e8a5')}}else{for(let i=0;i<13;i++){let x=((i*97+t*14)%w+w)%w,y=80+(i*73)%(height-90)+Math.sin(t*.7+i)*13;ctx.globalAlpha=.45;petal(x,y,3+i%3,i)}}}
  ctx.restore()
 }
 const atmosphereMapBefore=drawMap;drawMap=function(){atmosphereMapBefore();villageAtmosphere()};
-const atmosphereRoomBefore=drawRoom;drawRoom=function(){atmosphereRoomBefore();if(!atmosphereReduced){ctx.save();for(let i=0;i<9;i++){let x=190+(i*67)%430+Math.sin(t*.6+i)*6,y=220+(i*37)%155;ctx.globalAlpha=.18+.13*Math.sin(t+i);ellipse(x,y,1.8,1.8,'#ffe4ac')}ctx.restore()}};
+const atmosphereRoomBefore=drawRoom;drawRoom=function(){atmosphereRoomBefore();if(pawAtmospherePolicy(room).legacyMotes){ctx.save();for(let i=0;i<9;i++){let x=190+(i*67)%430+Math.sin(t*.6+i)*6,y=220+(i*37)%155;ctx.globalAlpha=.18+.13*Math.sin(t+i);ellipse(x,y,1.8,1.8,'#ffe4ac')}ctx.restore()}};
 const weatherIndicator=document.createElement('span');weatherIndicator.id='weatherIndicator';weatherIndicator.style.cssText='display:block;font:10px system-ui;opacity:.9;letter-spacing:.03em;margin-top:2px';let lastSkyLabel='';function atmosphereHUD(){if(!$('location'))return;refreshAtmosphere();let h=atmosphere.hour,label=atmosphere.weather==='rain'?tr('Passing shower','阵雨'):atmosphere.weather==='mist'?tr('Gentle mist','薄雾'):h>=19||h<6?tr('Starlit evening','星夜'):tr('Clear skies','晴空');if(!room&&!activity&&proposal.hidden){if(weatherIndicator.parentNode!==$('location'))$('location').append(weatherIndicator);if(label!==lastSkyLabel){weatherIndicator.textContent=label;lastSkyLabel=label}}else if(weatherIndicator.parentNode)weatherIndicator.remove();setTimeout(atmosphereHUD,500)}
 setTimeout(atmosphereHUD,0);
 
@@ -1453,7 +1462,49 @@ const foodReleaseStart=start;start=function(id){foodReleaseStart(id);if(id==='bu
 const teaChoices=[['Milk tea','经典奶茶','#b68965'],['Jasmine milk tea','茉莉奶茶','#d7c59b'],['Brown sugar tea','黑糖奶茶','#976843']];
 function teaCup(x,y,sc=1,base=0,pearls=0,fill=1,angle=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(-36,-74);ctx.lineTo(36,-74);ctx.lineTo(26,0);ctx.lineTo(-26,0);ctx.closePath();ctx.fillStyle='#e6e3cf';ctx.fill();ctx.save();ctx.clip();let level=-69*Math.max(0,Math.min(1,fill));ctx.fillStyle=teaChoices[Math.max(0,base)][2];ctx.fillRect(-38,level,76,75);for(let i=0;i<Math.min(16,pearls);i++){let xx=-20+(i*17)%42,yy=-5-Math.floor(i/5)*7+Math.sin(t*6+i)*Math.min(3,Math.abs(angle)*12);ellipse(xx,yy,4.2,4.2,'#4b342e')}ctx.restore();ctx.strokeStyle='#c8b999';ctx.lineWidth=2;ctx.stroke();ellipse(0,-74,37,7,'#eee1c7');line(9,-78,16,-110,'#a66357',5);line(-24,-63,-19,-12,'#fff3da66',3);ctx.restore()}
 function selectTeaBase(i){if(activity!=='bubbleTea'||state.teaStage!=='base'||!Number.isInteger(i)||!teaChoices[i])return;state.teaBase=i;pearlStage('sugar');sound(440)}
-function teaAddPearls(){if(activity!=='bubbleTea'||state.teaStage!=='pearls'||state.teaTopping===0)return;state.teaToppingCount=Math.min(2,state.teaToppingCount+1);state.teaPearls=state.teaToppingCount*5;state.teaAt=t;sound(280+state.teaPearls*12);if(state.teaToppingCount===2){pearlStage('mix')}}
+// Finish each visible scoop before another one can begin.
+function pawTeaScoopBusy(q){
+ return q?.teaStage==='pearls'&&q.pawScoopPending===true
+}
+function pawTeaScoopOrigin(a){
+ return a&&Number.isFinite(a.x)&&Number.isFinite(a.y)&&Math.hypot(a.x-420,a.y-480)<65?{x:a.x,y:a.y}:null
+}
+function pawTeaScoopFrame(age,reduced=false,origin=null){
+ const p=Math.max(0,Math.min(1,Number.isFinite(age)?age/.85:0)),ease=u=>u*u*(3-2*u);
+ const going=p<.55,rest={x:530,y:520},lip={x:428,y:437};
+ const from=going?(pawTeaScoopOrigin(origin)||rest):lip,to=going?lip:rest;
+ const phase=going?p/.55:(p-.55)/.45,u=reduced?(phase===0?0:1):ease(phase);
+ const startAngle=going?(pawTeaScoopOrigin(origin)?-.13:0):-.22,endAngle=going?-.22:0;
+ return {x:from.x+(to.x-from.x)*u,y:from.y+(to.y-from.y)*u-(reduced?0:Math.sin(Math.PI*u)*(going&&origin?6:20)),angle:startAngle+(endAngle-startAngle)*u,loaded:p<.55,drop:p>=.55,done:p>=1}
+}
+/* PAW_TEA_POUR_CONTINUITY_BEGIN */
+function pawTeaPourAdmission(q,ready){
+ if(q.pawTeaPourPainted===undefined)q.pawTeaPourPainted=!!ready;
+ return q.pawTeaPourPainted
+}
+function pawTeaPourTiming(age,reduced=false){
+ const p=Math.max(0,Math.min(1,Number.isFinite(age)?age/1.55:0));
+ const ease=x=>x*x*(3-2*x);
+ const stream=p>=.35&&p<.70;
+ const travel=p<.35?p/.35:stream?1:(1-p)/.30;
+ const u=reduced?(p>0&&p<1?1:0):ease(Math.max(0,Math.min(1,travel)));
+ const fill=Math.max(0,Math.min(1,(p-.35)/.35));
+ return {p,u,fill,stream}
+}
+// Fallback vessel shares the painted pot's rest position, cup lip,
+// pouring window and end position. The stream begins at its real spout.
+function pawTeaFallbackPour(age,reduced=false){
+ const f=pawTeaPourTiming(age,reduced),angle=-.72*f.u;
+ const lip=[420,445],gap=34,spout=[34,-66],c=Math.cos(-.72),s=Math.sin(-.72);
+ const end=[lip[0]-(spout[0]*c-spout[1]*s),lip[1]-gap-(spout[0]*s+spout[1]*c)];
+ const x=530+(end[0]-530)*f.u,y=516+(end[1]-516)*f.u;
+ return {...f,x,y,angle,from:[x+spout[0]*Math.cos(angle)-spout[1]*Math.sin(angle),y+spout[0]*Math.sin(angle)+spout[1]*Math.cos(angle)],to:lip}
+}
+/* PAW_TEA_POUR_CONTINUITY_END */
+function teaAddPearls(origin=null){
+ if(activity!=='bubbleTea'||state.teaStage!=='pearls'||state.teaTopping===0||state.teaToppingCount>=2||pawTeaScoopBusy(state))return;
+ state.pawScoopOrigin=pawTeaScoopOrigin(origin);state.pawScoopPending=true;state.pawScoopDropped=false;state.teaAt=t
+}
 function teaShake(amount){if(activity!=='bubbleTea'||state.teaStage!=='mix'||!Number.isFinite(amount)||amount<=0)return;state.teaMix=Math.min(100,state.teaMix+Math.min(36,Math.max(0,amount*.42)));state.teaAt=t;if(state.teaMix>=100){pearlStage('seal');sound(630)}}
 function teaSip(){if(activity!=='bubbleTea'||state.teaStage!=='ready')return;state.teaStage='sip';state.teaAt=t;sound(380)}
 function drawFoodCounter(){paintLivingBackdrop(room==='boba'?null:(pics.kitchen||pics.streetKitchen||pics.tea||pics.sticks));let g=ctx.createLinearGradient(0,410,0,690);g.addColorStop(0,room==='boba'?'#d2b393':'#a8835b');g.addColorStop(1,room==='boba'?'#a17d66':'#654c39');ctx.beginPath();ctx.moveTo(180,466);ctx.lineTo(620,466);ctx.lineTo(690,690);ctx.lineTo(110,690);ctx.closePath();ctx.fillStyle=g;ctx.fill();for(let i=0;i<5;i++)line(175-i*12,482+i*39,625+i*12,482+i*39,'#e0b98230',2)}
@@ -1468,15 +1519,20 @@ function teaPitcher(x,y,base,tilt=0){
  ellipse(0,-55,23,5,'#bba389');line(-17,-45,-14,-5,'#fff2df80',2);ctx.restore();
 }
 function teaScoopArt(x,y,tilt=0,loaded=false){
+ // The original transparent small ladle is registered at its source bowl
+ // point. Keep its painted/fallback family stable for this topping stage.
+ const painted=state.pawToppingScoopPainted&&typeof pawPaintFoodProp==='function'&&pawPaintFoodProp('kitchen_small_ladle',x-8*Math.cos(tilt)-5*Math.sin(tilt),y-8*Math.sin(tilt)+5*Math.cos(tilt),56,{anchor:[32,68],angle:tilt+.5});
  ctx.save();ctx.translate(x,y);ctx.rotate(tilt);
- line(0,0,50,-29,'#765f45',8);line(1,-2,48,-31,'#d1ad79',3);
- ellipse(-8,5,22,12,'#ad936b');ellipse(-8,2,18,8,'#e2c697');
+ if(!painted){
+  line(0,0,50,-29,'#765f45',8);line(1,-2,48,-31,'#d1ad79',3);
+  ellipse(-8,5,22,12,'#ad936b');ellipse(-8,2,18,8,'#e2c697');
+ }
  if(loaded)for(let i=0;i<5;i++){const xx=-18+i*5,yy=1+(i%2)*4;if(activity==='bubbleTea'&&state.teaTopping===2){round(xx-3.5,yy-3.5,7,7,1,'#e5caa0','#aa8966');line(xx-2,yy-2,xx+1,yy-2,'#faf1dc',1)}else{ellipse(xx,yy,4,4,'#4b342e');ellipse(xx-1,yy-1,1,1,'#ab8870')}}
  ctx.restore();
 }
 function teaScoopRelease(a){
  if(activity!=='bubbleTea'||state.teaStage!=='pearls'||!Number.isFinite(a?.x)||!Number.isFinite(a?.y))return;
- if(Math.hypot(a.x-420,a.y-480)<65){teaAddPearls();return}
+ if(pawTeaScoopOrigin(a)){teaAddPearls(a);return}
  hint('Tip the scoop into the cup.','把珍珠倒进奶茶杯里。');
 }
 c.addEventListener('pointerup',e=>{
@@ -1496,13 +1552,14 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
  if(activity!=='bubbleTea')return foodReleaseDraw();
  pearlAdvance();ctx.save();drawFoodCounter();
  const stage=state.teaStage,age=Math.max(0,t-state.teaAt),prepared=['seasoning','pearls','mix','seal','sealing','ready','sip','done'].includes(stage);
- let cx=420,cy=525,angle=0,fill=prepared?1:stage==='pouring'?poseEase(clamp((age-.25)/1.1,0,1)):0;
+ let cx=420,cy=525,angle=0,fill=prepared?1:stage==='pouring'?pawTeaPourTiming(age).fill:0;
  if(stage==='mix'&&drag?.id==='teaMix'){cx=clamp(drag.x,335,505);cy=clamp(drag.y,470,550);angle=clamp((drag.x-drag.sx)/230,-.32,.32)}
  const guestDelivery=pawTeaDeliveryPose(stage,age,!!state.teaOrder,matchMedia('(prefers-reduced-motion: reduce)').matches);
  if(stage==='sip'&&!state.teaOrder){const f=Math.sin(Math.PI*clamp(age/2.4,0,1));cx=420-104*f;cy=525-100*f;angle=-.12*f;fill=Math.max(.35,1-age*.25)}
  if(guestDelivery&&['sip','done'].includes(stage)){cx=guestDelivery.x;cy=guestDelivery.y;angle=guestDelivery.angle;fill=guestDelivery.fill}
  else if(stage==='done')fill=.35;
- const paintedFrame=stage==='pouring'&&typeof pawFoodPourFrame==='function'&&pawFoodLive&&pawFoodLive.placement.ready(pawFoodLive.cache.image('boba_tea_pot'),pawFoodLive.manifest.assets.boba_tea_pot.size)?pawFoodPourFrame(pawFoodLive,age,residentReducedMotion.matches):null;
+ if(stage==='pourReady'||stage==='pouring')pawTeaPourAdmission(state,typeof pawFoodPropReady==='function'&&pawFoodPropReady('boba_tea_pot'));
+ const paintedFrame=stage==='pouring'&&state.pawTeaPourPainted&&typeof pawFoodPourFrame==='function'&&pawFoodLive&&pawFoodPropReady('boba_tea_pot')?pawFoodPourFrame(pawFoodLive,age,residentReducedMotion.matches):null;
  if(stage==='seal'&&state.pawBobaLidMode===undefined)state.pawBobaLidMode=typeof pawBobaLidAvailable==='function'&&pawBobaLidAvailable();
  const lid=state.pawBobaLidMode&&typeof pawBobaLidPose==='function'?pawBobaLidPose(stage,age,cx,cy,angle,residentReducedMotion.matches):null;
  const reach=lid&&stage==='sealing'&&!lid.attached?{x:lid.grip[0],y:lid.grip[1]}:paintedFrame?{x:paintedFrame.grip[0],y:paintedFrame.grip[1]}:(stage==='sip'&&(!guestDelivery||!guestDelivery.delivered))||stage==='pouring'||drag?.id==='teaMix'?{x:cx-25,y:cy-35}:null;
@@ -1512,19 +1569,24 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
  teaCup(cx,cy,1.12,state.teaBase,state.teaPearls,fill,angle);
  const paintedLid=lid&&pawBobaPaintLid(pawBobaLidPose(stage,age,cx,cy,angle,residentReducedMotion.matches));
  if(stage==='pouring'&&!(paintedFrame&&pawPaintFoodPour(paintedFrame))){
-  const f=poseEase(clamp(age/.3,0,1)),px=495-45*f,py=414-25*f;teaPitcher(px,py,state.teaBase,-.72*f);
-  if(age>.25&&age<1.35){ctx.save();ctx.strokeStyle=teaChoices[state.teaBase][2];ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(px-19,py-35);ctx.quadraticCurveTo(420,py+5,420,445);ctx.stroke();ctx.restore()}
+  const f=pawTeaFallbackPour(age,residentReducedMotion.matches);teaPitcher(f.x,f.y,state.teaBase,f.angle);
+  if(f.stream){ctx.save();try{ctx.strokeStyle=teaChoices[state.teaBase][2];ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(...f.from);ctx.lineTo(...f.to);ctx.stroke()}finally{ctx.restore()}}
  }
  if(stage==='seasoning')drawPearlSeasoning(age);
  if(stage==='base')teaChoices.forEach((v,i)=>{const x=285+i*115;teaPitcher(x,611,i);target(x-42,544,84,75,()=>selectTeaBase(i))});
  if(stage==='pourReady'){teaPitcher(530,516,state.teaBase);target(480,440,104,90,()=>pearlPour())}
  if(stage==='pearls'){
-  ellipse(530,540,36,15,'#e5caa0');ellipse(530,537,30,10,'#986b53');
-  for(let i=0;i<12;i++)ellipse(511+(i*13)%39,532+(i%3)*5,4,4,state.teaTopping===2?'#c8a271':'#50362e');
+  const bowlId=state.teaTopping===2?'boba_jelly_bowl':'boba_pearls_bowl';
+  if(state.pawToppingBowlPainted===undefined)state.pawToppingBowlPainted=typeof pawFoodPropReady==='function'&&pawFoodPropReady(bowlId);
+  if(state.pawToppingScoopPainted===undefined)state.pawToppingScoopPainted=typeof pawFoodPropReady==='function'&&pawFoodPropReady('kitchen_small_ladle');
+  if(!state.pawToppingBowlPainted||!pawPaintFoodProp(bowlId,530,552,42)){
+   ellipse(530,540,36,15,'#e5caa0');ellipse(530,537,30,10,'#986b53');
+   for(let i=0;i<12;i++)ellipse(511+(i*13)%39,532+(i%3)*5,4,4,state.teaTopping===2?'#c8a271':'#50362e')
+  }
   if(drag?.id==='teaPearlScoop')teaScoopArt(drag.x,drag.y,-.13,true);
-  else if(age<.52&&state.teaPearls){const f=poseEase(age/.52);teaScoopArt(530-110*f,521-63*Math.sin(f*Math.PI),-.6*f,false)}
+  else if(pawTeaScoopBusy(state)){const f=pawTeaScoopFrame(age,residentReducedMotion.matches,state.pawScoopOrigin);teaScoopArt(f.x,f.y,f.angle,f.loaded)}
   else teaScoopArt(530,520,0,true);
-  target(487,480,90,80,()=>{},'teaPearlScoop');
+  if(!pawTeaScoopBusy(state,t)&&state.teaToppingCount<2)target(487,480,90,80,()=>{},'teaPearlScoop');
  }
  if(stage==='mix'){target(325,415,185,145,()=>{},'teaMix');const live=Math.min(100,state.teaMix+(drag?.id==='teaMix'?Math.min(36,drag.moved*.42):0));round(315,595,170,12,5,'#e8d4b7','#b99b7e');if(live>0)round(317,597,166*live/100,8,3,'#91a58b');txt(Math.round(live)+'%',400,623,16,'#fff4dc')}
  if((stage==='seal'||stage==='sealing')&&paintedLid){if(stage==='seal')target(480,440,104,90,()=>pearlSeal())}
@@ -1576,7 +1638,7 @@ function gardenChime(){if(activity!=='secretGarden'||t-state.gardenChimeAt<.6)re
 function gardenFeed(x=435,y=480){if(activity!=='secretGarden'||t-state.gardenFeedAt<.8)return;state.gardenFeedAt=t;state.gardenFeedX=Math.max(320,Math.min(570,x));state.gardenFeedY=Math.max(430,Math.min(545,y));state.gardenFeedCount++;sound(320);if(state.gardenFeedCount===3){addItem('Quiet garden postcard','静谧后院明信片');hint('Three feedings and the koi have sent you a postcard. Apparently you\'re a regular now.','喂了三回，锦鲤送你一张明信片。看来已经把你当熟客啦。')}else hint(...(state.gardenFeedCount%2?['Lunch! Look how quickly the koi remembered how to swim.','开饭啦！刚才还慢悠悠的，怎么一下子全游过来了？']:['One koi is clearly running the buffet.','有一条锦鲤显然承包了整个自助餐。']))}
 function gardenSeat(){if(activity!=='secretGarden'||t-state.gardenSeatAt<.75)return;state.gardenSitting=!state.gardenSitting;state.gardenSeatAt=t;hint(...(state.gardenSitting?['Sit a little longer. The view isn\'t going anywhere.','再坐会儿吧。风景又不会跑。']:['Take the quiet with you.','把这一份清静带走吧。']))}
 function gardenKoi(x,y,angle,kind){ctx.save();ctx.translate(x,y);ctx.rotate(angle);let col=['#d99b62','#e4d9ba','#d16b48','#e2bf75'][kind%4];ctx.globalAlpha=.88;ctx.beginPath();ctx.moveTo(-17,0);ctx.quadraticCurveTo(-30,Math.sin(t*6+kind)*9-7,-36,-12);ctx.lineTo(-29,0);ctx.lineTo(-36,12);ctx.quadraticCurveTo(-28,7,-17,0);ctx.fillStyle=col;ctx.fill();ellipse(0,0,23,9,col);ellipse(2,0,15,6,kind===1?'#c66b48':'#f2dbb7');ellipse(-6,2,6,4,col);ellipse(16,-3,1.6,1.6,'#514638');ellipse(16,3,1.6,1.6,'#514638');ctx.restore()}
-function gardenWindChime(x,y){let age=t-state.gardenChimeAt,ang=Math.sin(t*1.4)*.07+(age<3?Math.sin(age*12)*.35*Math.exp(-age*1.4):0);ctx.save();ctx.translate(x,y);line(0,-65,0,-22,'#ad9470',2);ctx.rotate(ang);let g=ctx.createLinearGradient(-20,0,20,0);g.addColorStop(0,'#829e9b80');g.addColorStop(.48,'#e5eddbcc');g.addColorStop(1,'#648f8d90');ctx.beginPath();ctx.arc(0,0,19,Math.PI,0);ctx.lineTo(19,11);ctx.quadraticCurveTo(0,21,-19,11);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#a8c3ad';ctx.stroke();line(0,5,0,40,'#bca681',1.5);ellipse(0,12,3,4,'#d8b47a');ctx.rotate(Math.sin(t*1.9)*.14);round(-8,40,16,40,1,'#d9bd89','#8e7856');line(-4,48,4,66,'#a8644a',1);ctx.restore()}
+function gardenWindChime(x,y){let age=t-state.gardenChimeAt,moving=pawAtmospherePolicy('temple').moving,ang=moving?Math.sin(t*1.4)*.07+(age>=0&&age<3?Math.sin(age*12)*.35*Math.exp(-age*1.4):0):0;ctx.save();ctx.translate(x,y);line(0,-65,0,-22,'#ad9470',2);ctx.rotate(ang);let g=ctx.createLinearGradient(-20,0,20,0);g.addColorStop(0,'#829e9b80');g.addColorStop(.48,'#e5eddbcc');g.addColorStop(1,'#648f8d90');ctx.beginPath();ctx.arc(0,0,19,Math.PI,0);ctx.lineTo(19,11);ctx.quadraticCurveTo(0,21,-19,11);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#a8c3ad';ctx.stroke();line(0,5,0,40,'#bca681',1.5);ellipse(0,12,3,4,'#d8b47a');ctx.rotate(moving?Math.sin(t*1.9)*.14:0);round(-8,40,16,40,1,'#d9bd89','#8e7856');line(-4,48,4,66,'#a8644a',1);ctx.restore()}
 const gardenRoomDraw=drawRoom;drawRoom=function(){gardenRoomDraw();if(room!=='temple')return;ctx.save();let [x,y,ax,ay]=indoorStation('secretGarden'),first=hit.length;label(tr('Garden →','后院 →'),x,480,()=>start('secretGarden'));markIndoorStation('secretGarden',first,[ax,ay]);ctx.restore()};
 const gardenDraw=drawActivity;drawActivity=function(){if(activity!=='secretGarden')return gardenDraw();ctx.save();paintLivingBackdrop(pics.park||pics.streetTemple||pics.temple);let shade=ctx.createLinearGradient(0,280,0,690);shade.addColorStop(0,'#304b3030');shade.addColorStop(1,'#27392d80');shadeLivingBackdrop(shade);
 let age=t-state.gardenAt,walk=age<1.2,seatAge=t-state.gardenSeatAt,seat=state.gardenSitting?poseEase(seatAge/.75):seatAge<.75?1-poseEase(seatAge/.75):0;
@@ -1634,7 +1696,7 @@ function readingSave(){
  const entry=tarotShareSnapshot(state);
  if(!entry||entry.cards.length!==state.readFlip.length||!state.readFlip.every(v=>Number.isFinite(v)&&v>=0&&t-v>.6))return;
  state.readSaved=true;
- entry.date=shrineClock().day;
+ entry.date=activity==='tarot'&&typeof state.pawDailyDay==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(state.pawDailyDay)?state.pawDailyDay:shrineClock().day;
  const same=v=>v?.date===entry.date&&(v.topic??-1)===entry.topic&&JSON.stringify(v.cards)===JSON.stringify(entry.cards);
  const existing=readingJournal.find(same);
  if(journalAutoSave()&&(!existing||existing.tone!==entry.tone)){
@@ -1662,9 +1724,15 @@ function readingFocusMeaning(){
   if(entry&&entry.cards.length!==5)b($('choices'),tr('Read the full spread','查看完整解读'),()=>openTarotReading(entry));
  }
 }
+function pawReadingNextHint(run,now,autoSave){
+ const complete=Array.isArray(run?.readCards)&&run.readCards.length>0&&Array.isArray(run.readFlip)&&run.readCards.length===run.readFlip.length&&run.readFlip.every(v=>Number.isFinite(v)&&v>=0&&now-v>=.72);
+ if(!complete)return ['Turn the remaining cards over, or revisit a revealed card.','继续翻开剩下的牌，或再看看已翻开的牌。'];
+ if(!run.readSaved)return ['Your cards are ready. Read the spread or return to the room when ready.','牌已翻好，可以解读牌阵，或准备好后回到小屋。'];
+ return autoSave?['Saved in your passport. Read the spread or return to the room when ready.','已收进旅人护照。可以解读牌阵，或准备好后回到小屋。']:['Read the spread, make a keepsake, or return to the room when ready.','可以解读牌阵、制作纪念牌卡，或准备好后回到小屋。'];
+}
 function readingReturnSpread(){
  closeTalk();state.readStage='cards';state.readAt=t;
- hint('Turn the remaining cards over, or revisit any revealed card.','可以继续翻牌，也可以再看看已经翻开的牌。');
+ hint(...pawReadingNextHint(state,t,journalAutoSave()));
 }
 const readingDraw=drawActivity;drawActivity=function(){if(!['tarot','love'].includes(activity)||!state.readStage)return readingDraw();ctx.save();paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);let g=ctx.createLinearGradient(0,250,0,690);g.addColorStop(0,'#40373220');g.addColorStop(1,'#2a332c50');shadeLivingBackdrop(g);table();let stage=state.readStage,age=t-state.readAt;
 if(stage==='topic'){drawPawReadingTopics()}
@@ -1687,8 +1755,7 @@ ctx.restore()};
 const tarotJournalArt='assets/visual/painted/tarot-journal.webp';
 function journalAutoSave(){return load('tarotJournalAutoSaveV1',true)!==false}
 function readingJournalHint(){
- const message=journalAutoSave()?['Your reading is tucked into your passport.','这份牌意已经收进旅人护照。']:['Your spread is ready. Automatic saving is off.','牌阵已解开，自动保存目前关闭。'];
- hint(...message);
+ hint(...pawReadingNextHint(state,t,journalAutoSave()));
 }
 function readingTitle(entry){
  return entry.cards.length===1?tr('Daily tarot','今日塔罗'):tr(...(readingTopics[entry.topic]||(entry.cards.length===5?['Five-card reading','五张牌解读']:['Three-card reading','三张牌占卜'])));
@@ -2443,6 +2510,43 @@ function directSignClick(id,x,y){
  if(room||transitioning||!proposal.hidden||valleyRevealAt>=0||$('page').style.display==='block')return;
  walkDoor(id,x,y);
 }
+// A nearby house can be partly cropped at the end of a winding path.
+// Keep the label within the visible part of the same house, not over a
+// resident or HUD. Far-away destinations retain their tight anchor range.
+function pawNearbyDoorPlaque(cx,cy,w,h,bounds,blockers,near,screenWidth,approach=null){
+ if(!near||!Number.isFinite(screenWidth)||screenWidth<=0)return null;
+ const first=meowPlaceText(cx,cy,w,h,bounds,blockers,Math.min(120,screenWidth*.34));
+ if(first)return first;
+ // At the end of a narrow painted path, the building's roof anchor may
+ // be under the HUD. Search a bounded grid beside the actual door approach,
+ // keeping the target on the same local screen and clear of all actors/UI.
+ if(!approach||![...approach,w,h].every(Number.isFinite))return null;
+ const [ax,ay]=approach,pad=4,loX=bounds.left+w/2+pad,hiX=bounds.right-w/2-pad,loY=bounds.top+h/2+pad,hiY=bounds.bottom-h/2-pad;
+ if(loX>hiX||loY>hiY)return null;
+ const radius=Math.min(160,screenWidth*.44);let best=null;
+ const xs=[loX,hiX,clamp(ax,loX,hiX)],ys=[loY,hiY,clamp(ay,loY,hiY)];
+ for(let x=loX;x<=hiX;x+=8)xs.push(x);
+ for(let y=loY;y<=hiY;y+=8)ys.push(y);
+ for(const x of xs)for(const y of ys){
+  const distance=Math.hypot(x-ax,y-ay);if(distance>radius)continue;
+  const rect={left:x-w/2-pad,right:x+w/2+pad,top:y-h/2-pad,bottom:y+h/2+pad};
+  if(blockers.some(v=>v&&speechOverlap(rect,v)))continue;
+  const score=distance+Math.hypot(x-cx,y-cy)*.2;
+  if(!best||score<best.score)best={x,y,rect,score}
+ }
+ return best
+}
+// Prefer the painted building anchor. A temporary obstruction may move the
+// sign, but cannot permanently detach it from its facade. Wait for a clear
+// interval before returning so passing residents do not cause flicker.
+function pawArchitecturalPlaqueHome(btn,exact,now,delay=350){
+ if(!exact){btn._anchorClearAt=null;return null}
+ const offset=btn._signOffset,displaced=offset&&Math.hypot(offset.x,offset.y)>.75;
+ if(!displaced||btn.hidden){btn._anchorClearAt=null;return exact}
+ if(!Number.isFinite(btn._anchorClearAt))btn._anchorClearAt=now;
+ if(now-btn._anchorClearAt>=delay){btn._anchorClearAt=null;return exact}
+ return null
+}
 let lastDoorLayoutAt=-Infinity,lastDoorLayoutLanguage=null,lastDoorCameraKey='',lastDoorUIAt=-Infinity,lastDoorUIRects=[],lastDoorUISize='';
 syncSigns=function(){
  const show=proposal.hidden&&!room&&!transitioning&&avatar!==null&&$('page').style.display!=='block'&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;
@@ -2489,20 +2593,25 @@ syncSigns=function(){
   if(btn.getAttribute('aria-label')!==name)btn.setAttribute('aria-label',name);const material=houseSignMaterial(id);if(btn.dataset.signMaterial!==material)btn.dataset.signMaterial=material;
   const [ax,ay]=housePlaqueAnchor(scene,id,x,y);
   const sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
+  const near=id!=='station'&&Math.hypot(p.x-x,p.y-y)<=210;
   const inView=sx>=-30&&sx<=W+30&&sy>=top-125&&sy<=bottom+70;
-  if(!inView){btn._clearAt=0;btn._signOffset=null;if(!btn.hidden)btn.hidden=true;continue}
+  if(!inView){btn._clearAt=0;btn._anchorClearAt=null;btn._signOffset=null;if(!btn.hidden)btn.hidden=true;continue}
   // Measure only when necessary; do not repeatedly unhide a blocked sign.
   if(btn._measureName!==name||btn._measureViewport!==uiSize||!btn._signSize){btn._measureViewport=uiSize;const hidden=btn.hidden;if(hidden)btn.hidden=false;btn._signSize=[Math.max(44,btn.offsetWidth),Math.max(44,btn.offsetHeight)];btn._measureName=name;if(hidden)btn.hidden=true}
-  items.push({btn,sx,sy,w:btn._signSize[0],h:btn._signSize[1]});
+  items.push({btn,sx,sy,near,approach:[cam.ox+x*cam.scale,cam.oy+y*cam.scale],w:btn._signSize[0],h:btn._signSize[1]});
  }
  // Keep the nearest doorway closest to its artwork; move other labels only
  // as far as necessary to avoid an overlapping sign or navigation control.
  // Preserve authored map order so walking past a house cannot reshuffle the other labels.
  for(const item of items){
-  const {btn,sx,sy,w,h}=item;
-  const avoid=[...blockers,...placed],maxShift=Math.min(62,W*.16);let choice=null;
-  if(btn._signOffset&&Math.hypot(btn._signOffset.x,btn._signOffset.y)<=maxShift+.01){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
+  const {btn,sx,sy,w,h,near,approach}=item;
+  const avoid=[...blockers,...placed],maxShift=Math.min(62,W*.16),offsetLimit=near?Math.min(120,W*.34):maxShift;
+  const rect={left:sx-w/2-4,right:sx+w/2+4,top:sy-h/2-4,bottom:sy+h/2+4};
+  const exact=rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v))?{x:sx,y:sy,rect}:null;
+  let choice=pawArchitecturalPlaqueHome(btn,exact,now);
+  if(!choice&&btn._signOffset&&Math.hypot(btn._signOffset.x,btn._signOffset.y)<=offsetLimit+.01){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
   if(!choice)choice=meowPlaceText(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,maxShift);
+  if(!choice)choice=pawNearbyDoorPlaque(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,near,W,approach);
   if(!choice){btn._clearAt=0;if(!btn.hidden)btn.hidden=true;continue}
   if(btn.hidden){if(!btn._clearAt)btn._clearAt=now;if(now-btn._clearAt<125){placed.push(choice.rect);continue}}
   btn._signOffset={x:choice.x-sx,y:choice.y-sy};
@@ -4740,14 +4849,18 @@ function pawCareActorTarget(phase){
 function pawCareActorStep(a,dt,reduced=false){
  const q=a.traveller||(a.traveller={x:pawCareActorHome[0],y:pawCareActorHome[1],facing:'up',kneel:0,moving:false});
  const [tx,ty]=pawCareActorTarget(a.phase);
- const dx=tx-q.x,dy=ty-q.y,dist=Math.hypot(dx,dy),step=Math.min(dist,260*Math.max(0,Math.min(.05,dt)));
+ const elapsed=Number.isFinite(dt)?Math.max(0,Math.min(.05,dt)):0;
+ const dx=tx-q.x,dy=ty-q.y,dist=Math.hypot(dx,dy),step=Math.min(dist,260*elapsed);
  const moving=dist>2;
+ // Stand at the existing foot anchor before starting a new walking leg.
+ // Do not slide a crouched body across the ground.
+ if(moving&&!reduced&&q.kneel>.001){q.kneel=Math.max(0,q.kneel-elapsed*3);q.moving=false;return q}
  if(moving){q.facing=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')}
  if(reduced){q.x=tx;q.y=ty}else if(dist>0){q.x+=dx/dist*step;q.y+=dy/dist*step}
  q.moving=!reduced&&Math.hypot(tx-q.x,ty-q.y)>2;
  const active=Object.hasOwn(pawCareActorTargets,a.phase)&&!q.moving;
  const goal=active?(a.phase==='rest'?.4:.68):0;
- q.kneel=reduced?goal:q.kneel+Math.sign(goal-q.kneel)*Math.min(Math.abs(goal-q.kneel),dt*3);
+ q.kneel=reduced?goal:q.kneel+Math.sign(goal-q.kneel)*Math.min(Math.abs(goal-q.kneel),elapsed*3);
  return q
 }
 function pawDrawCareTraveller(a){
@@ -4764,6 +4877,19 @@ function pawCareSupplySetup(kind,from){
 }
 function pawCareActionAge(a,now){
  return now-a.at-(a.supply?.kind===a.phase?pawCarePrepSeconds:0)
+}
+// A bowl first receives its contents during transfer and stays filled
+// during approach and drinking, clearing only at the end of the action.
+function pawCareBowlFilled(a,now){
+ if(!a||!['feed','water'].includes(a.phase)||!Number.isFinite(now)||!Number.isFinite(a.at))return false;
+ const age=now-a.at;
+ return age>=(a.supply?.kind===a.phase?pawCareWalkSeconds+.45+.45*.15:0)&&pawCareActionAge(a,now)<3.1
+}
+function pawCarePetContact(a){
+ const q=a?.traveller;
+ if(!q||a.phase!=='pet'||q.moving||q.kneel<=.25)return false;
+ const [x,y]=pawCareActorTarget('pet');
+ return Math.hypot(q.x-x,q.y-y)<=2
 }
 function pawCareSupplyPose(supply,age,reduced=false){
  if(!supply||!Number.isFinite(age))return null;
@@ -4903,7 +5029,7 @@ drawActivity=function(){
  // Leaf-strewn woven picnic mat, warm light and moving leaves give a grounded foreground.
  ellipse(400,550,162,48,'#34443144');ellipse(400,544,148,39,'#c3af81');for(let i=0;i<7;i++)line(278+i*35,537,280+i*35,555,'#8d7e5d55',1.5);
  for(let i=0;i<9;i++){const x=240+(i*83)%320,y=380+(i*37)%170;ellipse(x+Math.sin(t*.8+i)*7,y+Math.cos(t*.6+i)*4,3,1.5,'#e5d7a79c')}
- const age=pawCareActionAge(a,t),filled=age>=0&&age<3;
+ const filled=pawCareBowlFilled(a,t);
  careBowl(295,548,false,a.phase==='feed'&&filled);careBowl(505,548,true,a.phase==='water'&&filled);
  careCatArt(a);pawDrawCareTraveller(a);
  const d=a.drag,food=d?.kind==='feed'?d:{x:285,y:620},water=d?.kind==='water'?d:{x:400,y:620},toy=d?.kind==='play'?d:a.phase==='play'&&a.assisted?{x:400+Math.sin((t-a.at)*2.3+.7)*95,y:465}:{x:510,y:615};
@@ -4938,7 +5064,8 @@ c.addEventListener('pointerdown',e=>{
 c.addEventListener('pointermove',e=>{
  if(!careCapture(e))return;const a=state.care,d=a.drag;if(!d||d.id!==e.pointerId)return;const q=pawParkCareDragPoint(d,point(e)),delta=Math.hypot(q.x-d.x,q.y-d.y),now=performance.now(),elapsed=Math.max(16,now-d.last);d.x=q.x;d.y=q.y;d.last=now;
  if(d.kind==='pet'){
-  if(Math.hypot(q.x-a.x,q.y-(a.y-38))>85)return;
+  // A fast swipe before the traveller reaches the cat is not a stroke.
+  if(!pawCarePetContact(a)||Math.hypot(q.x-a.x,q.y-(a.y-38))>85)return;
   if(delta/elapsed>1.5/(parkCats[state.petKind??0].sensitivity)||delta>42){a.stroke=Math.max(0,a.stroke-8);careMessage('Oi, gentle! I am not a dirty frying pan.','喂！轻点，我又不是待刷的锅！');return}
   a.stroke+=Math.min(12,delta);if(a.stroke>=110&&t-a.at>.65)careComplete('pet')
  }else if(d.kind==='play'&&q.x>=250&&q.x<=550&&q.y>=410&&q.y<=620&&delta<=90){a.stroke+=Math.min(14,delta)}
@@ -5090,7 +5217,7 @@ function pawDrawKaya(a,kind,phase,age,dir,reduced){
  if(!a.pawKayaImages)return false;
  const stationaryReturn=phase==='return'&&Math.abs((a.returnFromX??400)-400)<1&&Math.abs((a.returnFromY??535)-535)<1;
  if(!['idle','pet','rest'].includes(phase)&&!stationaryReturn){a.pawKayaContactAt=null;return false}
- const contact=phase==='pet'&&!!a.traveller&&!a.traveller.moving&&a.traveller.kneel>.25;
+ const contact=phase==='pet'&&pawCarePetContact(a);
  if(!contact)a.pawKayaContactAt=null;else if(a.pawKayaContactAt==null)a.pawKayaContactAt=age;
  const frame=pawKayaFrame(phase,age-(a.pawKayaContactAt??age),contact,reduced);
  const b=pawKayaBox(0,0,frame,t,reduced);
@@ -5103,13 +5230,25 @@ function pawDrawKaya(a,kind,phase,age,dir,reduced){
 const pawKayaIntroBefore=roomIntro;
 roomIntro=function(...args){if(room==='park'&&!activity)pawKayaPrepare();return pawKayaIntroBefore(...args)};
 /* PAW_KAYA_PAINTED_END */
+/* PAW_PARK_VISUAL_PHASE_BEGIN */
+// Arrival and preparation are not yet petting/drinking. A stationary
+// return after stroking/resting must not animate four walking paws.
+function pawParkVisualPhase(a,rawAge){
+ if(rawAge<0)return 'idle';
+ if(a.phase==='pet'&&(!a.traveller||a.traveller.moving||a.traveller.kneel<=.25))return 'idle';
+ if(a.phase==='return'&&Math.hypot(a.x-400,a.y-535)<1)return 'idle';
+ return a.phase
+}
+/* PAW_PARK_VISUAL_PHASE_END */
 const catArtDraft=careCatArt;
 careCatArt=function(a){
- const im=productionVisual('parkCats');if(!im)return catArtDraft(a);
- const kind=Math.max(0,Math.min(4,state.petKind??0)),rawAge=pawCareActionAge(a,t),age=Math.max(0,rawAge),phase=rawAge<0?'idle':a.phase;
+ const kind=Math.max(0,Math.min(4,state.petKind??0)),rawAge=pawCareActionAge(a,t),age=Math.max(0,rawAge),phase=pawParkVisualPhase(a,rawAge);
  const frame=residentReducedMotion.matches?(phase==='rest'?6:['feed','water'].includes(phase)&&age>=.9?4:phase==='pet'?1:0):parkCatFrame(phase,age,t,a.assisted,!!a.drag,a.values.trust);
  const dir=pawCatDirection(a);a.pawFacing=dir;a.pawPreviousX=a.x;
  if(pawDrawKaya(a,kind,phase,age,dir,residentReducedMotion.matches))return;
+ // The isolated ginger-tabby set does not depend on the larger atlas.
+ const im=productionVisual('parkCats');
+ if(!im)return catArtDraft({...a,phase});
  const resting=frame===6,pounce=frame===7,bob=pounce?-Math.abs(Math.sin(age*5))*5:resting?Math.sin(t*2)*.6:0;
  ctx.save();ctx.translate(a.x,a.y);ellipse(0,3,resting?58:72,resting?10:12,'#393d2f38');ctx.scale(dir,1);
  ctx.drawImage(im,frame*220,kind*140,220,140,-110,-120+bob,220,140);
@@ -5606,7 +5745,7 @@ const stressChoiceStyle=document.createElement('style');stressChoiceStyle.textCo
 /* Petty paper curses: original, harmless everyday inconveniences. One per valid hit,
    without actual threats, real names, or changing the rewards. */
 const pettyPaperCurses=[["May every public toilet you enter be out of paper.","祝你每次上公厕，厕纸刚好用完。"],["May your phone charger work only at a very specific angle.","祝你充电线只有扭成麻花才充得进电。"],["May your bubble tea straw miss every pearl.","祝你喝奶茶，一颗珍珠都吸不到。"],["May your trousers feel tight immediately after lunch.","祝你午饭刚吃完，裤头就开始抗议。"],["May your socks always slide down inside your shoes.","祝你的袜子走两步就滑进鞋里。"],["May your boss's slides have the wrong font on every page.","祝老板的PPT每一页都字体错乱。"],["May your meeting room booking disappear just as the meeting starts.","祝你会议刚开始，会议室就被别人订了。"],["May your favourite snack contain ninety percent air.","祝你买的薯片，九成都是空气。"],["May your noodles come with a fork that bends.","祝你吃面的时候，叉子一用就弯。"],["May your lift stop on every floor.","祝你搭电梯，层层都停。"],["May your online delivery arrive just after you leave.","祝你刚出门，快递就到了。"],["May your umbrella turn inside out on a sunny day.","祝你撑伞没下雨，伞还自己翻了。"],["May your coffee always be lukewarm.","祝你喝热咖啡不够热，喝冰咖啡不够冰。"],["May your Wi-Fi disconnect at ninety-nine percent.","祝你下载到百分之九十九，网络断了。"],["May the last piece of toilet paper tear diagonally.","祝你最后一格厕纸，一撕就裂成三角形。"],["May your favourite pen run out halfway through your signature.","祝你签名签到一半，笔没墨了。"],["May every queue you switch to become the slow one.","祝你每次换队，换完原来的队就快了。"],["May your takeaway sauce be on the other side of the bag.","祝你外卖酱料藏在袋子最底下。"],["May the last dumpling always belong to someone else.","祝你想吃最后一个饺子，别人已经夹走了。"],["May your printer demand magenta to print a black page.","祝你打印黑白文件，打印机偏偏说缺红墨。"],["May autocorrect turn your serious email into nonsense.","祝你发严肃邮件，自动纠错比你还会加戏。"],["May your earbuds always end up in the wrong pocket.","祝你找耳机，永远先摸错口袋。"],["May your rice cooker finish just when you have to leave.","祝你饭刚煮好，人就得出门。"],["May your shopping cart have that one squeaky wheel.","祝你每次推购物车，都碰上那个吱吱叫的轮子。"],["May your alarm go off during your day off.","祝你休假那天，闹钟忘了关。"],["May your toast land jam-side down.","祝你面包掉地上，永远是果酱那一面。"],["May the aircon remote always be just out of reach.","祝你躺下才发现空调遥控器在另一头。"],["May your bank app log out just as you need to pay.","祝你付款的时候，银行App突然要求重新登录。"],["May your food delivery say 'arriving soon' for twenty minutes.","祝你外卖的马上到，永远还有二十分钟。"],["May your perfectly folded laundry unfold itself.","祝你叠好的衣服，拿一件倒一摞。"],["May your calendar invite have no meeting link.","祝你开线上会，邀请里偏偏没链接。"],["May your ice cream cone drip before you find a tissue.","祝你纸巾还没找到，冰淇淋先滴下来。"],["May every vending machine reject your perfectly good coin.","祝你投个完好无损的硬币，机器偏不认。"],["May your video buffer at the punchline.","祝你看视频，笑点前一秒卡住。"],["May your favourite seat always be occupied by a very comfortable cat.","祝你最爱的座位，永远被一只睡熟的猫霸占。"],["May your keyboard space bar squeak during a quiet meeting.","祝你开会全场安静时，空格键吱吱响。"]];
-const activityComedy={"clawMiss":[["The claw caught a whole lot of absolutely nothing.","恭喜你，成功夹到了空气。"],["That plush has better escape skills than my colleagues at 6pm.","这玩偶下班逃跑的速度，比我同事还快。"],["The claw came up empty. Try lining it up directly over the toy next time.","这回夹空啦。下次让夹爪对准玩偶的正上方试试。"],["The claw is doing the bare minimum. Relatable.","夹爪正在消极怠工，懂了。"],["The plush just dodged another responsibility.","玩偶又成功逃避了一项责任。"]],"clawWin":[["Congratulations. Your new colleague has never sent an email.","恭喜，新同事不会发邮件。"],["Finally, a colleague who sits quietly.","终于有个安静的同事了。"],["The plush has accepted your offer. No probation required.","玩偶已接受录用，不用试用期。"]],"soup":[["Grandma: Smells lovely. Here, let me get you a bowl.","外婆：闻起来真香。来，外婆给你拿个碗。"],["Grandma: That's a good pot of soup. Who taught you to cook so well, ah?","外婆：这锅汤煮得不错嘛！谁教你的呀？"],["Grandma: Soup first. Your inbox doesn't need feeding.","外婆：先喝汤。邮件又不用吃饭。"],["Grandma: Wah, this soup can make me retire. For five minutes.","外婆：哎哟，这汤煮得我都能退休了。退五分钟。"],["Grandma: You feed everyone else. This bowl is yours, ah!","外婆：平时净顾着别人。这碗归你，趁热吃！"]],"tea":[["The pearls have settled. One good sip coming right up!","珍珠落到底啦，第一口准备开喝！"],["Wah, even the pearls have more work-life balance now.","哇，连珍珠都比你会劳逸结合。"],["First sip approved. No supporting documents needed.","第一口奶茶审批通过，不用补交材料。"],["The boss may control your calendar, not your sugar level.","老板管得了日历，管不了几分糖。"]],"rhythmHigh":[["Your dance moves have been approved. Unlike your leave.","舞步审批通过，年假还是没有。"],["HR would like to know where you learned those moves.","人事部想知道你从哪儿学的舞步。"]],"rhythmLow":[["Your feet held two separate dance parties. Try following the next beat.","两只脚各开各的舞会啦。下一轮跟着节拍来试试。"],["The dance floor survived. So did you.","舞池没事，你也没事，算赢。"],["Lost the beat? Pick it up again on the next arrow.","节奏跟丢啦？下一支箭头再跟上就好。"]],"box":[["A tiny new friend! It looks remarkably pleased with its new home.","新的小伙伴来啦！看起来对新家相当满意。"],["A new resident with no rent, no deadlines and no CV.","新居民：不用交房租，不用赶工，也没有简历。"],["Plot twist: your toy is better rested than you.","剧情反转：玩偶休息得比你好。"]]};
+const activityComedy={"clawMiss":[["The claw caught a whole lot of absolutely nothing.","恭喜你，成功夹到了空气。"],["It slipped out right at the top! That little rascal.","都夹到顶了，居然还能溜走！这个小坏蛋。"],["The claw came up empty. Try lining it up directly over the toy next time.","这回夹空啦。下次让夹爪对准玩偶的正上方试试。"],["Aiyo, the claw barely hugged it. Try the middle.","哎哟，夹爪就轻轻抱了一下。再往中间瞄瞄。"],["So close! That plush has clearly decided to stay put.","就差一点！看来这娃娃还不想搬家。"]],"clawWin":[["Look who's coming home with you!","看看是谁要跟你回家啦！"],["Caught it! Now find it a nice little spot at home.","夹到了！回家给它找个好位置吧。"],["The plush has packed its bags. It's moving in!","小家伙收拾好行李啦，准备搬进你家！"]],"soup":[["Grandma: Smells lovely. Here, let me get you a bowl.","外婆：闻起来真香。来，外婆给你拿个碗。"],["Grandma: That's a good pot of soup. Who taught you to cook so well, ah?","外婆：这锅汤煮得不错嘛！谁教你的呀？"],["Grandma: Drink it while it's warm. Don't leave it there to grow cold.","外婆：趁热喝呀！放凉了又得给你热一遍。"],["Grandma: Wah, this soup can make me retire. For five minutes.","外婆：哎哟，这汤煮得我都能退休了。退五分钟。"],["Grandma: You feed everyone else. This bowl is yours, ah!","外婆：平时净顾着别人。这碗归你，趁热吃！"]],"tea":[["The pearls have settled. One good sip coming right up!","珍珠落到底啦，第一口准备开喝！"],["Wah, look at those pearls. Don't swallow them all at once!","哇，这珍珠圆滚滚的！慢慢嚼，别一口全吸上来。"],["First sip! Was it the tea or the pearls that won you over?","第一口好喝吗？是茶香，还是珍珠先收买了你？"],["Just the way you like it. That is the best recipe.","自己喜欢的甜度，就是最好喝的配方。"]],"rhythmHigh":[["Wah, look at you go! Even the arrows couldn't keep up.","哇，跳得这么厉害！箭头都快跟不上你了。"],["That was quite a show. One more song?","可以啊，刚才那段有点帅！再来一首？"]],"rhythmLow":[["Your feet held two separate dance parties. Try following the next beat.","两只脚各开各的舞会啦。下一轮跟着节拍来试试。"],["The dance floor survived. So did you.","舞池没事，你也没事，算赢。"],["Lost the beat? Pick it up again on the next arrow.","节奏跟丢啦？下一支箭头再跟上就好。"]],"box":[["A tiny new friend! It looks remarkably pleased with its new home.","新的小伙伴来啦！看起来对新家相当满意。"],["A tiny new roommate. Good thing it doesn't take up much space.","新室友报到！幸好这小家伙不占地方。"],["Plot twist: your toy is better rested than you.","剧情反转：玩偶休息得比你好。"]]};
 /* Contextual ritual dialogue, keyed to existing target labels, never to real people. */
 const pawAhMaTopicLines={
   "Boss's endless demands": [
@@ -6786,8 +6925,10 @@ const houseSignStyle=document.createElement('style');houseSignStyle.textContent=
 
 function speechOverlap(a,b){return a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top}
 function chooseSpeechPosition(w,h,width,height,speaker,player,blockers=[]){
- const center=(speaker.left+speaker.right)/2;
- const candidates=[{left:center-w/2,top:speaker.top-h-14},{left:speaker.right+12,top:speaker.top+5},{left:speaker.left-w-12,top:speaker.top+5},{left:center-w/2,top:speaker.bottom+12}];
+ if(!speaker||![w,h,width,height,speaker.left,speaker.right,speaker.top,speaker.bottom].every(Number.isFinite)||Math.min(w,h,width,height)<=0||speaker.right<=speaker.left||speaker.bottom<=speaker.top||speaker.right<0||speaker.left>width||speaker.bottom<0||speaker.top>height)return null;
+ const center=(speaker.left+speaker.right)/2,mid=(speaker.top+speaker.bottom)/2;
+ const candidates=[{left:center-w/2,top:speaker.top-h-14},{left:speaker.right+12,top:speaker.top+5},{left:speaker.left-w-12,top:speaker.top+5},{left:center-w/2,top:speaker.bottom+12},
+ {left:speaker.right+12,top:mid-h/2},{left:speaker.left-w-12,top:mid-h/2}];
  for(const v of candidates){const left=Math.max(8,Math.min(width-w-8,v.left)),top=v.top,rect={left,top,right:left+w,bottom:top+h};
  if(w>width-16||top<10||rect.bottom>height-74||[speaker,player,...blockers].some(b=>b&&speechOverlap(rect,b)))continue;
  const side=rect.bottom<=speaker.top?'bottom':rect.top>=speaker.bottom?'top':rect.left>=speaker.right?'left':'right';
@@ -7614,22 +7755,54 @@ const meowTextCSS=document.createElement('style');meowTextCSS.textContent=`
 `;document.head.append(meowTextCSS);
 /* Suppress only a hint that collides with a higher-priority control. Keep it in
    the accessible DOM and restore it as soon as the area is clear. */
+// Prefer the quiet lower edge. If a recipe or reading sheet occupies it,
+// use the nearest clear stage space instead of hiding the only instruction.
+function pawHintClearSpot(preferred,width,height,screen,blockers,active=false){
+ const {w,h}=screen;
+ if(![preferred.left,preferred.right,preferred.top,preferred.bottom,width,height,w,h].every(Number.isFinite)||Math.min(width,height,w,h)<=0)return null;
+ const cx=(preferred.left+preferred.right)/2,cy=(preferred.top+preferred.bottom)/2;
+ const fits=r=>r.left>=6&&r.right<=w-6&&r.top>=6&&r.bottom<=h-6&&!blockers.some(v=>speechOverlap(r,v));
+ if(fits(preferred))return {x:cx,y:cy,rect:preferred,original:true};
+ const lower=meowPlaceText(cx,cy,width,height,{left:6,right:w-6,top:h*.55,bottom:h-6},blockers,Math.min(140,h*.23));
+ if(lower)return lower;
+ if(!active)return null;
+ // No overlap with HUD, action buttons or reading sheet even on short phones.
+ // A bounded grid avoids the limited candidate list of meowPlaceText.
+ const loX=10+width/2,hiX=w-10-width/2,loY=Math.max(10,h*.20)+height/2,hiY=h-10-height/2;
+ if(loX>hiX||loY>hiY)return null;
+ let best=null;
+ const xs=[loX,hiX,clamp(cx,loX,hiX)],ys=[loY,hiY,clamp(cy,loY,hiY)];
+ for(let x=loX;x<=hiX;x+=12)xs.push(x);
+ for(let y=loY;y<=hiY;y+=12)ys.push(y);
+ for(const x of xs)for(const y of ys){
+  const rect={left:x-width/2-4,right:x+width/2+4,top:y-height/2-4,bottom:y+height/2+4};
+  if(!fits(rect))continue;
+  const score=Math.abs(x-cx)*1.4+Math.abs(y-cy);
+  if(!best||score<best.score)best={x,y,rect,score}
+ }
+ return best
+}
+function pawSamePrompt(hintText,visibleCopies){
+ const normalize=value=>String(value??'').normalize('NFKC').trim().replace(/\s+/g,' ').replace(/[.!?。！？…]+$/u,'').trim().toLowerCase();
+ const text=normalize(hintText);
+ return !!text&&visibleCopies.some(v=>normalize(v)===text)
+}
 let meowHintLayoutKey='';
 function meowHintSpacing(){
  const hintEl=$('hint'),root=$('game').getBoundingClientRect();
- const blockers=meowVisibleRects('#dock,#movePad,#gameControls,#ritualActionBar,#dialogue,#back,#nextStopShortcut');
- // Recalculate only when actual layout/text changes; never remove and reapply
- // the same classes on every polling tick (Safari visibly repaints them).
- const key=[room,activity,zh,hintEl.textContent,Math.round(root.width),Math.round(root.height),getComputedStyle(hintEl).display,...blockers.map(b=>[b.left,b.top,b.right,b.bottom].map(v=>Math.round(v/3)).join(':'))].join('|');
+ const blockers=meowVisibleRects('#hud>*,#small button,#dock,#movePad,#moveGuide,#walkHelp,#gameControls,#ritualActionBar,#dialogue,#back,#nextStopShortcut,#pearlRecipePanel,#destinyAccess,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet,#threeBoardAccess,#lunarRibbon');
+ const copies=activity?[...document.querySelectorAll('#gameControls button,#ritualActionBar button,#ritualActionBar [role="status"],#pearlRecipePanel button')].filter(el=>!el.hidden&&el.getClientRects().length&&getComputedStyle(el).visibility==='visible'&&getComputedStyle(el).display!=='none'&&Number(getComputedStyle(el).opacity)>0).map(el=>el.textContent):[];
+ const duplicate=pawSamePrompt(hintEl.textContent,copies);
+ const key=[scene,room,activity,zh,duplicate,hintEl.textContent,Math.round(root.width),Math.round(root.height),getComputedStyle(hintEl).display,...blockers.map(b=>[b.left,b.top,b.right,b.bottom].map(v=>Math.round(v/3)).join(':'))].join('|');
  if(key!==meowHintLayoutKey){
   meowHintLayoutKey=key;
   hintEl.classList.remove('meowHintMoved','meowHintBlocked');
   const base=hintEl.getBoundingClientRect(),preferred={left:base.left-root.left,right:base.right-root.left,top:base.top-root.top,bottom:base.bottom-root.top};
-  if(base.width>0&&base.height>0&&blockers.some(v=>speechOverlap(preferred,v))){
-   const dock=meowVisibleRects('#dock')[0],lower=Math.min(root.height-5,dock?.top??root.height-5);
-   const spot=meowPlaceText((preferred.left+preferred.right)/2,(preferred.top+preferred.bottom)/2,base.width,base.height,{left:6,right:root.width-6,top:root.height*.55,bottom:lower},blockers,Math.min(140,root.height*.23));
-   if(spot){hintEl.style.setProperty('--meow-hint-x',spot.x+'px');hintEl.style.setProperty('--meow-hint-y',spot.y+'px');hintEl.classList.add('meowHintMoved')}
-   else hintEl.classList.add('meowHintBlocked')
+  if(duplicate)hintEl.classList.add('meowHintBlocked');
+  else if(base.width>0&&base.height>0){
+   const spot=pawHintClearSpot(preferred,base.width,base.height,{w:root.width,h:root.height},blockers,!!activity);
+   if(spot&&!spot.original){hintEl.style.setProperty('--meow-hint-x',spot.x+'px');hintEl.style.setProperty('--meow-hint-y',spot.y+'px');hintEl.classList.add('meowHintMoved')}
+   else if(!spot)hintEl.classList.add('meowHintBlocked')
   }
  }
  setTimeout(meowHintSpacing,150)
@@ -8332,13 +8505,19 @@ function pearlPick(field,value){
  if(activity!=='bubbleTea'||!v||state.teaStage!==v[0]||!v[1].some(a=>a[0]===value))return;
  state[field]=value;pearlStage(v[2]);sound(410)
 }
-function pearlPour(){if(activity==='bubbleTea'&&state.teaStage==='pourReady'){pearlStage('pouring');physicalFx('water',.55)}}
+function pearlPour(){if(activity==='bubbleTea'&&state.teaStage==='pourReady'){pawTeaPourAdmission(state,typeof pawFoodPropReady==='function'&&pawFoodPropReady('boba_tea_pot'));pearlStage('pouring');physicalFx('water',.55)}}
 function pearlSeal(){if(activity==='bubbleTea'&&state.teaStage==='seal'){pearlStage('sealing');sound(390)}}
 function pearlScore(q){if(!q.teaOrder)return null;const g=q.teaOrder;return ['base','sugar','ice','topping'].reduce((n,k)=>n+Number(q['tea'+k[0].toUpperCase()+k.slice(1)]===g[k]),0)}
 function pearlAdvance(){
  const age=t-state.teaAt;
  if(state.teaStage==='pouring'&&age>=1.55){pearlStage('seasoning');return}
  if(state.teaStage==='seasoning'&&age>=1.35){pearlStage(state.teaTopping===0?'mix':'pearls');return}
+ if(pawTeaScoopBusy(state)){
+  const f=pawTeaScoopFrame(age);
+  if(f.drop&&!state.pawScoopDropped){state.pawScoopDropped=true;state.teaToppingCount++;state.teaPearls=state.teaToppingCount*5;sound(280+state.teaPearls*12)}
+  if(f.done){state.pawScoopPending=false;state.pawScoopOrigin=null;if(state.teaToppingCount===2)pearlStage('mix')}
+  return
+ }
  if(state.teaStage==='sealing'&&age>=1.25){state.teaSealed=true;pearlStage('ready');sound(580)}
  if(state.teaStage==='sip'&&age>=2.4){
   pearlStage('done');if(state.teaSaved)return;state.teaSaved=true;
@@ -8354,7 +8533,7 @@ function pearlLabel(options,value){const a=options.find(v=>v[0]===value);return 
 function syncPearlPanel(){
  const show=activity==='bubbleTea'&&room==='boba'&&!talkOpen&&proposal.hidden&&$('page').style.display!=='block'&&!transitioning;
  if(!show){pearlPanel.hidden=true;pearlPanelKey='';return}
- const q=state,stage=q.teaStage,key=[stage,q.teaBase,q.teaSugar,q.teaIce,q.teaTopping,q.teaToppingCount,Math.floor(q.teaMix/10),zh].join('|');
+ const q=state,stage=q.teaStage,key=[stage,q.teaBase,q.teaSugar,q.teaIce,q.teaTopping,q.teaToppingCount,Math.floor(q.teaMix/10),pawTeaScoopBusy(q,t),zh].join('|');
  if(key===pearlPanelKey&&q===pearlPanelRun&&!pearlPanel.hidden)return;
  pearlPanelKey=key;pearlPanelRun=q;pearlPanel.hidden=false;pearlPanel.replaceChildren();
  const title=element('strong',tr('Pearl & Pause','珍珠摸鱼铺'),pearlPanel,'pearlRecipeTitle');
@@ -8371,7 +8550,7 @@ function syncPearlPanel(){
  else if(stage==='ice')pearlIce.forEach(v=>btn(tr(v[1],v[2]),()=>pearlPick('teaIce',v[0])));
  else if(stage==='topping')pearlToppings.forEach(v=>btn(tr(v[1],v[2]),()=>pearlPick('teaTopping',v[0])));
  else if(stage==='pourReady')btn(tr('Pour tea','倒茶'),pearlPour);
- else if(stage==='pearls')btn(tr('Scoop topping','舀小料')+' '+q.teaToppingCount+'/2',teaAddPearls);
+ else if(stage==='pearls'){const scoop=btn(pawTeaScoopBusy(q)?tr('Adding topping…','正在加小料……'):tr('Scoop topping','舀小料')+' '+q.teaToppingCount+'/2',teaAddPearls);scoop.disabled=pawTeaScoopBusy(q,t)||q.teaToppingCount>=2}
  else if(stage==='mix')btn(tr('Shake cup','摇奶茶')+' '+Math.floor(q.teaMix)+'%',()=>teaShake(80));
  else if(stage==='seal')btn(tr('Press to seal','按压封口'),pearlSeal);
  else if(stage==='ready')btn(q.teaOrder?tr('Serve the guest','递给客人'):tr('Take a sip','喝一口'),teaSip);
@@ -8981,6 +9160,13 @@ document.head.append(townDetailMaterials);
 function journalBookLink(parent,title,description,kind,fn){
  const button=b(parent,'',fn);button.className='journalBookLink';button.dataset.book=kind;
  const spine=element('span','',button,'journalBookSpine');spine.setAttribute('aria-hidden','true');
+ // The recovered cover replaces, rather than accompanies, the plain spine.
+ if(kind==='life'){
+  const art=element('img','',spine,'pawRecoveredJournalCover');art.alt='';art.width=544;art.height=544;art.decoding='async';
+  art.onload=()=>{if(art.naturalWidth===544&&art.naturalHeight===544)button.classList.add('pawHasRecoveredJournalCover');else art.remove()};
+  art.onerror=()=>{button.classList.remove('pawHasRecoveredJournalCover');art.remove()};
+  art.src='assets/visual/staging/2026-11-28-project-batch10-interface/journal-cover.webp'
+ }
  const copy=element('span','',button,'journalBookCopy');element('strong',title,copy);element('small',description,copy);return button
 }
 function journalLanguage(render){
@@ -9178,7 +9364,7 @@ journalStyle.textContent=
 '.journalProfileBook,.journalShelfPage,.journalDailyTasks,.journalCheckin,.journalBookshelf{background:var(--town-grain),#f5e9cf;border:1px solid #b5a07a;border-radius:4px;padding:14px;margin:12px 0;color:#504638;box-shadow:2px 3px 0 #bba17b30}'+
 '.journalIdentity{display:flex;align-items:center;gap:12px;border-bottom:1px dashed #bda47d;padding-bottom:12px}.journalIdentity>img{width:90px;height:110px;object-fit:contain;background:#e7d6b7;border:1px solid #c2a87c;border-radius:45% 45% 4px 4px}.journalIdentity>div{flex:1;min-width:0}.journalIdentity h2{margin:4px 0!important;overflow-wrap:anywhere}.journalIdentity small,.journalIdentity strong{display:block;line-height:1.4}.journalIdentity button{margin-top:7px;min-height:44px}'+
 '.journalQuickStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:12px 0}.journalQuickStats button{min-width:0;padding:7px 4px;background:#ead8b5;border:1px solid #b89e73;border-radius:3px}.journalQuickStats strong,.journalQuickStats small{display:block}.journalQuickStats strong{font:600 21px var(--town-title);color:#536b56}.journalQuickStats small{font-size:11px;line-height:1.4}'+
-'.journalBookLink{width:100%;display:flex!important;align-items:stretch;gap:10px;margin:8px 0;padding:0!important;text-align:left;min-height:58px;border:1px solid #b39b75!important;background:#f9eed7!important;border-radius:3px!important;overflow:hidden;color:#514638!important}.journalBookSpine{width:13px;background:#78907c;flex:none;border-right:1px solid #657761}.journalBookLink[data-book="daily"] .journalBookSpine,.journalBookLink[data-book="figures"] .journalBookSpine{background:#ae8079}.journalBookLink[data-book="passport"] .journalBookSpine,.journalBookLink[data-book="decor"] .journalBookSpine{background:#ac8b5e}.journalBookCopy{display:block;min-width:0;padding:9px 7px 9px 0}.journalBookCopy strong,.journalBookCopy small{display:block;line-height:1.4;overflow-wrap:anywhere}.journalBookCopy small{font-size:12px;color:#77654d}'+
+'.journalBookLink{width:100%;display:flex!important;align-items:stretch;gap:10px;margin:8px 0;padding:0!important;text-align:left;min-height:58px;border:1px solid #b39b75!important;background:#f9eed7!important;border-radius:3px!important;overflow:hidden;color:#514638!important}.journalBookSpine{width:13px;background:#78907c;flex:none;border-right:1px solid #657761}.journalBookLink[data-book="daily"] .journalBookSpine,.journalBookLink[data-book="figures"] .journalBookSpine{background:#ae8079}.journalBookLink[data-book="passport"] .journalBookSpine,.journalBookLink[data-book="decor"] .journalBookSpine{background:#ac8b5e}.journalBookCopy{display:block;min-width:0;padding:9px 7px 9px 0}.journalBookCopy strong,.journalBookCopy small{display:block;line-height:1.4;overflow-wrap:anywhere}.journalBookCopy small{font-size:12px;color:#77654d}.journalBookLink[data-book="life"] .pawRecoveredJournalCover{display:none}.journalBookLink[data-book="life"].pawHasRecoveredJournalCover{align-items:center!important}.journalBookLink[data-book="life"].pawHasRecoveredJournalCover .journalBookSpine{width:64px;height:64px;background:none!important;border:0!important;display:grid;place-items:center;flex:none;margin:4px 0 4px 5px}.journalBookLink[data-book="life"].pawHasRecoveredJournalCover .pawRecoveredJournalCover{display:block;width:100%;height:100%;object-fit:contain;clip-path:polygon(10% 19%,16% 15%,30% 11%,55% 5%,69% 2%,73% 4%,80% 10%,86% 30%,91% 34%,94% 39%,94% 47%,89% 50%,92% 65%,91% 70%,90% 77%,86% 83%,55% 87%,52% 97%,48% 96%,43% 98%,40% 93%,27% 92%,22% 89%,18% 83%,16% 73%,13% 59%,11% 44%,9% 30%)}'+
 '.journalAchievementTile,.journalDailyTask,.journalFriendRow{display:flex;align-items:center;gap:9px;padding:10px 0;border-bottom:1px solid #c7b18b77}.journalAchievementTile>div,.journalDailyTask>div,.journalFriendRow>div{min-width:0;flex:1}.journalAchievementTile strong,.journalAchievementTile small,.journalDailyTask strong,.journalDailyTask small,.journalFriendRow strong,.journalFriendRow small{display:block;line-height:1.45;overflow-wrap:anywhere}.journalAchievementTile small,.journalDailyTask small,.journalFriendRow small{font-size:12px;color:#78654d}.journalAchievementSeal{display:grid;place-items:center;flex:none;width:41px;height:41px;border:2px double #a98d69;color:#8a765a;font:12px var(--town-title);transform:rotate(-5deg)}.journalAchievementTile[data-earned="true"] .journalAchievementSeal{color:#a35c49;border-color:#a35c49}.journalAchievementTile progress,.journalAttribute progress{width:100%;height:7px;accent-color:#84947c}.journalFilterTabs{display:flex;gap:5px;flex-wrap:wrap}.journalFilterTabs button{flex:1;min-height:44px}.journalFilterTabs button[aria-pressed="true"]{background:#536b56;color:#fff3d7}.journalFriendRow img{width:48px;height:48px;object-fit:contain;border:1px solid #ba9e75;border-radius:50%}.journalAttribute{padding:8px 0;border-bottom:1px solid #ccb68d}.journalAttribute>div{display:flex;justify-content:space-between;gap:8px}.journalAttribute small{font-size:12px}'+
 '.journalCheckin{display:flex;align-items:center;flex-wrap:wrap;gap:10px;background:var(--town-grain),#eedab3}.journalCheckinSeal{flex:none;display:grid;place-items:center;width:53px;height:53px;border:3px double #a15c49;color:#a15c49;font:600 12px var(--town-title);transform:rotate(-6deg)}.journalCheckinCopy{flex:1;min-width:0}.journalCheckinCopy h2{margin:3px 0!important;font-size:20px}.journalCheckinCopy p{margin:4px 0;font-size:13px}.journalCheckin>button{width:100%;min-height:44px;background:#536b56;color:#fff4da;border:1px solid #405947;border-radius:4px}.journalDailyTask button{min-height:44px;max-width:90px;flex:none;padding:6px 8px}.journalDailyTasks>button{width:100%;margin:9px 0}.journalTownMore{margin:12px 0;padding:10px;border:1px solid #bba47e;background:#f0e1c6}.journalTownMore summary{min-height:44px;display:list-item;padding:8px 0;font-weight:600;color:#536550;cursor:pointer}'+
 '#dockScoop{position:relative}#dockScoop[data-checkin="true"]::after{content:"";position:absolute;top:5px;right:8px;width:7px;height:7px;background:#a85b4a;border:1px solid #f9edd0;border-radius:50%;pointer-events:none}'+
@@ -9285,9 +9471,9 @@ function komorebiArt(id){
 }
 /* PAW_FURNITURE_PREVIEW_BEGIN */
 const pawFurnitureArtBase="assets/visual/staging/2026-11-27-b/room/";
-const pawFurniturePainted={"futon":"futon","bed":"single-bed","lamp":"paper-lamp","basicTable":"low-table","rug":"woven-rug","plant":"fern","zabuton":"floor-cushion","catBasket":"cat-bed","sakuraVase":"flower-vase","lowDesk":"desk","retroTV":"retro-tv","chineseTeaTable":"tea-table","chineseBench":"bench"};
+const pawFurniturePainted={"futon":"futon","bed":"single-bed","lamp":"paper-lamp","basicTable":"low-table","rug":"woven-rug","plant":"fern","zabuton":"floor-cushion","catBasket":"cat-bed","sakuraVase":"flower-vase","lowDesk":"desk","retroTV":"retro-tv","chineseTeaTable":"tea-table","chineseBench":"bench","shojiLamp":"floor-lantern"};
 const pawFurnitureImported=new Set(["board","frame","kotatsu","teaCabinet","bonsai","recordPlayer","readingChair","chineseScreen","chineseLantern","porcelainVase","moonShelf"]);
-const pawFurniturePreviewOnly={"shelf":"furniture/bookcase.webp","displayCabinet":"furniture/display-cabinet.webp","shojiLamp":"furniture/floor-lantern.webp","roomExtension":"shells/side-extension.webp","roomStudio":"shells/l-shaped-extension.webp"};
+const pawFurniturePreviewOnly={"shelf":"furniture/bookcase.webp","displayCabinet":"furniture/display-cabinet.webp","roomExtension":"shells/side-extension.webp","roomStudio":"shells/l-shaped-extension.webp"};
 function pawFurniturePaintedPath(id,preview=false){
  if(pawFurnitureImported.has(id))return 'assets/visual/painted/home/furniture/'+id+'.webp';
  if(Object.hasOwn(pawFurniturePainted,id))return pawFurnitureArtBase+'furniture/'+pawFurniturePainted[id]+'.webp';
@@ -9300,6 +9486,10 @@ function pawFurnitureRoomPose(id,x,y,r=0){
  const clamp=(v,a,b,f)=>Math.max(a,Math.min(b,Number.isFinite(Number(v))&&v!==null?Number(v):f));
  const left=clamp(x,8,92,50),rotation=Number.isFinite(Number(r))?Number(r):0;
  if(id==='chineseLantern')return {left:clamp(x,12,88,50),top:3.2,logicalY:35,rotation:0,anchor:'top',maxHeight:32};
+ if(id==='shojiLamp'){
+  const top=clamp(y,12,91,80);
+  return {left,top,logicalY:top,rotation,anchor:'bottom',maxHeight:38}
+ }
  if(pawFurnitureImported.has(id)){
   const wall=id==='board'||id==='frame',top=clamp(y,wall?18:12,wall?54:91,wall?35:80);
   return {left,top,logicalY:top,rotation,anchor:'bottom',maxHeight:wall?Math.min(38,top-4):38}

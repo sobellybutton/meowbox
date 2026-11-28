@@ -108,3 +108,52 @@ assert.ok(catalogueReturn.pawCollectionReturnMatches(collectionOrigin,{...collec
 for(const [key,value] of Object.entries({run:{},room:'arcade',district:'home',activity:'claw'}))assert.equal(catalogueReturn.pawCollectionReturnMatches(collectionOrigin,{...collectionOrigin,[key]:value}),false);
 assert.equal(catalogueReturn.pawCollectionReturnMatches(collectionOrigin,null),false);
 console.log('Catalogue return and blind box scene ownership passed.');
+
+/* A throw belongs to the exact active pond visit, even while the old DOM
+   remains attached behind the room or a newer activity. */
+{
+ const src=fs.readFileSync(path.resolve(__dirname,'../src/town-access.js'),'utf8');
+ const guard=new Function(src.split('/* PAW_WISH_VISIT_BEGIN */')[1].split('/* PAW_WISH_VISIT_END */')[0]+';return pawWishVisitCurrent')();
+ let count=0;
+ for(const connected of [true,false])for(const display of ['block','none'])for(const sameRoom of [true,false])for(const sameActivity of [true,false])for(const sameState of [true,false]){
+  const run={};assert.equal(guard(connected,display,'wishes',sameRoom?'wishes':'park',null,sameActivity?null:'wishes',run,sameState?run:{}),connected&&display==='block'&&sameRoom&&sameActivity&&sameState);count++
+ }
+ for(const callback of ['function frame(now)','function rebound(at)','function finish()'])assert.ok(src.includes(callback+'{if(!current()){cancelFlight();return;}'));
+ assert.ok(src.includes("tr('Return to the garden','回到花园')"));
+ console.log('PASS '+count+' wishing-pool visit ownership combinations and 4 runtime wiring checks');
+}
+
+{
+ const source=fs.readFileSync(path.resolve(__dirname,'../src/town-access.js'),'utf8');
+ const f=new Function(source.split('/* PAW_WISH_BANK_BEGIN */')[1].split('/* PAW_WISH_BANK_END */')[0]+';return {pawWishBankGeometry,pawWishCoinOrigin,pawWishApproach}')();
+ let n=0;
+ for(const [width,height] of [[320,568],[390,844],[430,932],[768,1024],[1440,900],[844,390]]){
+  const pond={x:width*.13,y:height*.3,w:width*.74,h:height*.24},g=f.pawWishBankGeometry({width,height},pond),o=f.pawWishCoinOrigin(g,pond);
+  assert.ok(g.foot.y>pond.y+pond.h);assert.ok(g.keeper.y>pond.y+pond.h);
+  assert.ok(Math.abs(pond.x+o.x*pond.w/100-g.hand.x)<1e-8);
+  assert.ok(Math.abs(pond.y+o.y*pond.h/100-g.hand.y)<1e-8);n+=4
+ }
+ for(const [age,reduced,want] of [[-1,false,0],[475,false,.5],[950,false,1],[1500,false,1],[0,true,1]]){assert.equal(f.pawWishApproach(age,reduced),want);n++}
+ for(const needle of ["!bankReady||!held||busy||done","coin.hidden=!bankReady||!held||done","tr('Take a Paw Coin','取一枚爪爪币')","from.x+(x-from.x)*f","from.y+(y-from.y)*f","garden-keeper/standing.webp"]){assert.ok(source.includes(needle));n++}
+ console.log('PASS '+n+' bank anchor, approach, pickup and launch checks');
+}
+
+
+// Every throw input shares the same pickup/flight/completion state.
+{
+ const source=fs.readFileSync(path.resolve(__dirname,'../src/town-access.js'),'utf8');
+ const sync=source.split('const syncToss=()=>{')[1].split('};')[0];
+ const apply=new Function('busy','done','bankReady','held','gentle','takeCoin','keyboardButtons','pond',sync);
+ let n=0;
+ for(const busy of [false,true])for(const done of [false,true])for(const bankReady of [false,true])for(const held of [false,true]){
+  const gentle={},takeCoin={},keyboardButtons=Array.from({length:5},()=>({})),pond={setAttribute(k,v){this[k]=v}};
+  apply(busy,done,bankReady,held,gentle,takeCoin,keyboardButtons,pond);
+  const unavailable=busy||done||!bankReady||!held;
+  assert.equal(gentle.disabled,unavailable);n++;
+  for(const button of keyboardButtons){assert.equal(button.disabled,unavailable);n++}
+  assert.equal(takeCoin.hidden,held||done);assert.equal(takeCoin.disabled,!bankReady||busy);assert.equal(pond['aria-busy'],String(busy));n+=3
+ }
+ assert.ok(source.includes("keyboardButtons.push(btn)"));
+ assert.ok(source.includes("keyboardButtons.push(b(controls,tr('Throw','投币')"));
+ console.log('PASS '+n+' pickup/throw control state checks and keyboard wiring');
+}
