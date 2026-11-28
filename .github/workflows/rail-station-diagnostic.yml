@@ -1,0 +1,44 @@
+name: Railway iOS station diagnostic
+# Focused diagnostic only: unrelated gameplay commits must not supersede
+# this exact failing-device reproduction. The broad nine-profile matrix
+# remains the normal regression gate.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/rail-mobile-matrix-test.cjs'
+      - '.github/workflows/rail-station-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  station:
+    concurrency:
+      group: rail-station-diagnostic-${{ github.sha }}-${{ matrix.profile }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [ios-tall, ios-large]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps webkit
+      - name: Reproduce station plaque and edge handoff with ordinary touch
+        env:
+          RAIL_PROFILE: ${{ matrix.profile }}
+        run: |
+          python3 -m http.server 8771 >/tmp/rail-mobile.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8771/ -o /dev/null && break; sleep 1; done
+          node scripts/rail-mobile-matrix-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: station-${{ matrix.profile }}-${{ github.sha }}
+          path: test-results/rail-mobile/
