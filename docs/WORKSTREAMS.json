@@ -824,12 +824,10 @@
       "stage": "tested",
       "evidence": [
         "39875d96 + a13ca31c: four shell art-calibrated floor projections, 24 furniture paths, footprint collision/layers, upgrade retention; committed test executed against current source with repository-tree existence checks: 255 assertions",
-        "7d808c60 + 4bf1d174: live home surface raster temporary atlas allocation reduced by 75% for wall, 25% for floor at ordinary sizes; oversized imports bounded. 1,974 exact-source mocked canvas allocation and sample bounds checks passed."
+        "7d808c60 + 4bf1d174: live home surface raster temporary atlas allocation reduced by 75% for wall, 25% for floor at ordinary sizes; oversized imports bounded. 1,974 exact-source mocked canvas allocation and sample bounds checks passed.",
+        "83694491 + 11e92ac8: live home finish raster now samples contiguous projected source bands for each floor output row rather than skipping source texture pixels, intended to reduce distant floor stripes and aliasing. 2240 direct row checks and 6734 persisted focused mocked-canvas assertions passed against exact module; no actual screenshot/CI/build/deployment verification."
       ],
-      "lease": {
-        "owner": "manual-home-finish-sampling-1317",
-        "until": 1795844092286
-      },
+      "lease": null,
       "blocker": "Live finish raster consumer confirmed in startup. Actual rendered surface comparison, full room geometry/placement/expansion integration, mobile/desktop performance, build and deployment remain unverified."
     },
     {
