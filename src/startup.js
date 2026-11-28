@@ -12115,22 +12115,39 @@ function pawSlipSkinBox(pose,iw,ih,folded){
  const scale=Math.min(pose.w/iw,pose.h*(folded?1:1.38)/ih);
  return {w:iw*scale,h:ih*scale}
 }
+function pawSlipRevealLayers(pose){
+ const ease=f=>{f=Math.max(0,Math.min(1,f));return f*f*(3-2*f)};
+ const reveal=ease((pose.open-.25)/.65);
+ return {folded:1-reveal,unfolded:reveal,words:ease((pose.open-.8)/.2),
+  foldedPose:{w:Math.min(pose.w,145),h:Math.min(pose.h,105)}};
+}
 /* PAW_PAINTED_SLIP_SKIN_END */
 function pawPaintedSlipImage(number,folded){
  const grade=pawSlipSkin(number,shrinePaperLines);
  return pawRecoveredImage(pawSlipSkinPath(grade,folded))
 }
 function pawDrawPaintedSlip(pose,number,words,subtitle){
- const folded=pose.open<.9,grade=pawSlipSkin(number,shrinePaperLines),im=pawPaintedSlipImage(number,folded);
- if(!pawRoomImageReady(im))return false;
- const box=pawSlipSkinBox(pose,im.naturalWidth,im.naturalHeight,folded);
+ const grade=pawSlipSkin(number,shrinePaperLines),layers=pawSlipRevealLayers(pose);
+ const folded=layers.folded>0?pawPaintedSlipImage(number,true):null;
+ const unfolded=layers.unfolded>0?pawPaintedSlipImage(number,false):null;
+ if((folded&&!pawRoomImageReady(folded))||(unfolded&&!pawRoomImageReady(unfolded)))return false;
+ if(layers.folded>0){
+  const box=pawSlipSkinBox(layers.foldedPose,folded.naturalWidth,folded.naturalHeight,true);
+  if(!box)return false;
+  ctx.save();try{ctx.globalAlpha*=layers.folded;ctx.drawImage(folded,-box.w/2,-box.h/2,box.w,box.h)}finally{ctx.restore()}
+ }
+ if(layers.unfolded<=0)return true;
+ const box=pawSlipSkinBox(pose,unfolded.naturalWidth,unfolded.naturalHeight,false);
  if(!box)return false;
  const {w,h}=box;
  ctx.save();try{
-  // Remove tiny source edge residue outside the actual portrait paper body.
-  if(!folded){ctx.beginPath();ctx.rect(-w*.489,-h*.443,w*.978,h*.931);ctx.ellipse(0,-h*.438,w*.215,h*.058,0,0,TAU);ctx.clip()}
-  ctx.drawImage(im,-w/2,-h/2,w,h);
-  if(folded||w<200||h<250)return true;
+  const alpha=ctx.globalAlpha;
+  // Preserve the portrait paper's actual aspect ratio through the reveal.
+  ctx.globalAlpha=alpha*layers.unfolded;
+  ctx.beginPath();ctx.rect(-w*.489,-h*.443,w*.978,h*.931);ctx.ellipse(0,-h*.438,w*.215,h*.058,0,0,TAU);ctx.clip();
+  ctx.drawImage(unfolded,-w/2,-h/2,w,h);
+  if(layers.words<=0||w<200||h<250)return true;
+  ctx.globalAlpha=alpha*layers.words;
   const title=tr(...pawSlipGrades[grade]),note=subtitle||tr('A reflection, not a promise','签文仅供自我反思');
   activityFitText(title,0,-h*.225,30,w*.72,'#684633');
   activityFitText(tr('Fortune No. ','第 ')+number+(zh?' 签':''),0,-h*.153,22,w*.73,'#70503d');
