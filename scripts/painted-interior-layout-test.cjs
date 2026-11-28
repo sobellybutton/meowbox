@@ -15,7 +15,7 @@ for(const [id,q] of Object.entries(api.rooms)){
  assert.equal(api.route(id,[0,0],q.entry),null);
 }
 assert.equal(api.asset('__proto__'),null);assert.equal(api.camera(0,844),null);
-console.log('Seven painted-room artwork hashes, connected safe lanes and camera checks passed.');
+console.log('Painted-room artwork hashes, connected safe lanes and camera checks passed.');
 
 const source=fs.readFileSync(path.resolve(__dirname,'../src/startup.js'),'utf8');
 const start=source.indexOf('/* PAW_READING_LOBBIES_BEGIN */'),end=source.indexOf('/* PAW_READING_LOBBIES_END */');
@@ -74,3 +74,13 @@ for(const a of pierPoints){
 }
 assert.equal(helpers.pawReadingDestination(api,'fish',pier.entry,400,200),null);
 console.log('Pier actual action IDs, curved path, legacy clamp bypass and camera checks passed.');
+
+// Arcade art contains inactive claw and rhythm decorations. Only these three
+// curated stations are eligible for interaction after runtime integration.
+const arcade=api.rooms.arcade;
+assert.deepEqual(Object.keys(arcade.stations),['bubbleArcade','goldfishScoop','blindBox']);
+assert.ok(!api.safe('arcade',[.82,.65]),'do not walk inside the fish tank');
+assert.ok(!api.safe('arcade',[.18,.52]),'do not walk inside the cabinets');
+assert.ok(api.safe('arcade',arcade.entry));
+for(const s of Object.values(arcade.stations))assert.ok(api.route('arcade',arcade.entry,s.approach));
+console.log('Arcade painted floor, three curated stations and fixture exclusion checks passed.');
