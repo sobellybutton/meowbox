@@ -114,9 +114,11 @@ function pawInstallNativeConsultation(){
  const choicePrior=pawOpenCardChoice;
  pawOpenCardChoice=function(...args){
   const result=choicePrior(...args);
-  if(result&&room==='tarot'){
+  // Only the live fan owns the selection cue. A restored daily card is
+  // already on the table; retain its exact turn-over instruction.
+  if(result&&room==='tarot'&&state.readStage==='choose'){
    const n=activity==='tarot'?1:state.readSpreadSize===5?5:3;
-   hint(n===1?'Choose a card, or shuffle again.':'Choose '+n+' cards, or shuffle again before choosing.',n===1?'选一张有感觉的牌，也可以重新洗牌。':'选 '+n+' 张牌，也可以先重新洗牌。')
+   hint(n===1?'When the cards settle, choose one, or shuffle again.':'When the cards settle, choose '+n+', or shuffle again before choosing.',n===1?'等牌铺好，选一张有感觉的牌，也可以重新洗牌。':'等牌铺好，选 '+n+' 张牌，也可以先重新洗牌。')
   }
   return result
  };
