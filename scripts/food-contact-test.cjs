@@ -76,4 +76,29 @@ const kitchen=motion.stirPlan({id:'kitchen_wooden_ladle',rest:[253,536],center:[
 ck(kitchen,'live plan');
 for(let i=0;i<360;i++){const a=i*Math.PI/180,f=motion.stirFrame(kitchen,.25,a);ck(near(f.tip,[400+27*Math.cos(a),481+10*Math.sin(a)]),'tip stays inside actual pot');ck(f.hand[0]<f.tip[0]&&f.hand[1]<f.tip[1],'grip faces cook')}
 ck(!motion.stirPlan({id:'kitchen_wooden_ladle',rest:[253,536],center:[400,481],radius:[27,10],height:92,clearance:24,angle:4}),'invalid working angle');
+const serveBlock=startup.split('/* PAW_KITCHEN_SERVE_BEGIN */')[1]?.split('/* PAW_KITCHEN_SERVE_END */')[0];
+ck(serveBlock,'live serving block');
+const serveMotion=new Function(serveBlock+';return pawKitchenServeMotion')();
+const bowl=placement.geometry(manifest,'kitchen_small_bowl',510,437,34);
+for(const reduced of [false,true]){
+ let lastFill=0;
+ for(let i=0;i<=220;i++){
+  const q=serveMotion(i/100,reduced);
+  ck(q.u>=0&&q.u<=1&&q.fill>=lastFill-1e-9&&q.fill<=1,'bounded serving and monotonic fill');
+  ck(near(q.lip,bowl.point(44,24)),'stream ends at bowl opening');
+  ck(q.stream===(q.phase==='pour'),'stream only while pouring');
+  lastFill=q.fill;
+ }
+ const first=serveMotion(0,reduced),last=serveMotion(2.2,reduced);
+ ck(first.u===0&&first.fill===0&&!first.done,'empty bowl and utensil at rest');
+ ck(last.u===0&&last.fill===1&&last.done&&!last.stream,'filled bowl and utensil returned');
+}
+const clockBlock=startup.split('/* PAW_FOOD_CLOCK_BEGIN */')[1]?.split('/* PAW_FOOD_CLOCK_END */')[0];
+ck(clockBlock,'food pause clock');
+const foodClock=new Function(clockBlock+';return pawFoodClock')();
+const serving={pawSoupServeAt:10};
+foodClock(serving,'cook',10,false);foodClock(serving,'cook',11,true);foodClock(serving,'cook',15,true);foodClock(serving,'cook',16,false);
+ck(serving.pawSoupServeAt===16,'serving clock freezes during interruption');
+serving.pawSoupServed=true;serving.tasteAt=16;foodClock(serving,'cook',17,false);
+ck(serving.pawFoodClock.phase==='taste','tasting resumes original clock');
 console.log('PASS '+n+' food contact geometry, phase and source assertions; no rendered contact acceptance');
