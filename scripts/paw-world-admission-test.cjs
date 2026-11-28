@@ -26,3 +26,40 @@ run(assert,setTimeout,clearTimeout).then(console.log,err=>{console.error(err);pr
  }
  console.log('Explicit image retry and background cooldown checks passed');
 }
+
+
+// Download completion is not proof that the current image is decoded.
+const templeCode=section('/* PAW_TEMPLE_ADMISSION_BEGIN */','/* PAW_TEMPLE_ADMISSION_END */');
+const decodeCode=section('/* PAW_WORLD_ADMISSION_BEGIN */','/* PAW_WORLD_ADMISSION_END */');
+const verifyDecoded=new Function('assert','setTimeout','clearTimeout',decodeCode+templeCode+`
+return (async()=>{
+ const im=src=>({src,complete:true,naturalWidth:800,naturalHeight:1200,events:new Map(),addEventListener(k,fn){let a=this.events.get(k)||new Set();a.add(fn);this.events.set(k,a)},removeEventListener(k,fn){this.events.get(k)?.delete(fn)},decode(){this.calls=(this.calls||0)+1;return Promise.resolve()}});
+ const approach=im('approach.webp'),hall=im('hall.webp');
+ assert.equal(pawTempleAssetsReady(approach,hall),false);
+ assert.equal(pawPictureDecoded(approach),false);
+ assert(await pawReadyPicture(approach));
+ assert.equal(pawTempleAssetsReady(approach,hall),false);
+ assert(await pawReadyPicture(hall));
+ assert(pawTempleAssetsReady(approach,hall));
+ assert(await pawReadyPicture(approach));assert.equal(approach.calls,1);
+ hall.src='different.webp';
+ assert.equal(pawTempleAssetsReady(approach,hall),false);
+ assert(await pawReadyPicture(hall));
+ assert(pawTempleAssetsReady(approach,hall));
+ const delayed=im('old.webp');let release;
+ delayed.decode=()=>new Promise(resolve=>{release=resolve});
+ const old=pawReadyPicture(delayed);await Promise.resolve();
+ delayed.src='new.webp';release();assert.equal(await old,false);
+ assert.equal(pawPictureDecoded(delayed),false);
+ delayed.decode=()=>Promise.resolve();assert(await pawReadyPicture(delayed));assert(pawPictureDecoded(delayed));
+ const waiting=im('prior.webp');waiting.complete=false;waiting.naturalWidth=waiting.naturalHeight=0;
+ const stale=pawReadyPicture(waiting);
+ waiting.src='next.webp';waiting.naturalWidth=800;waiting.naturalHeight=1200;waiting.complete=true;
+ for(const fn of [...waiting.events.get('load')])fn();
+ assert.equal(await stale,false);assert.equal(waiting.calls,undefined);
+ assert(await pawReadyPicture(waiting));assert.equal(waiting.calls,1);
+ const broken=im('broken.webp');broken.decode=()=>Promise.reject(Error('decode failure'));
+ assert.equal(await pawReadyPicture(broken),false);assert.equal(pawTempleAssetsReady(approach,broken),false);
+ return 'PASS: exact-source decode, temple pair admission and stale source rejection';
+})()`);
+verifyDecoded(assert,setTimeout,clearTimeout).then(console.log,e=>{console.error(e);process.exitCode=1});
