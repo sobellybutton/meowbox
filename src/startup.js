@@ -12926,11 +12926,30 @@ function pawWarmReadingHost(id){
  }).catch(()=>null).finally(()=>pawHostWarmJobs.delete(id));
  pawHostWarmJobs.set(id,job)
 }
+/* PAW_YUE_INK_RUNTIME_BEGIN */
+function pawYueInkState(cache,grid,api,now,blocked,reduced){
+ if(!grid||typeof api?.chartPalaces!=='function'||typeof api?.parchmentClock!=='function')return null;
+ let entry=cache.get(grid);
+ if(!entry){
+  const palaces=api.chartPalaces(grid);if(!palaces)return null;
+  entry={palaces,clock:{}};cache.set(grid,entry)
+ }
+ const progress=api.parchmentClock(entry.clock,now,blocked,reduced);
+ return {palaces:entry.palaces,progress}
+}
+/* PAW_YUE_INK_RUNTIME_END */
+const pawYueInkCache=new WeakMap();
+let pawYueInkCurrent=null;
+document.addEventListener('visibilitychange',()=>{
+ if(pawYueInkCurrent&&pawHostLibrary?.api?.parchmentClock)pawHostLibrary.api.parchmentClock(pawYueInkCurrent.clock,performance.now()/1000,document.hidden,residentReducedMotion.matches)
+});
 function pawDrawReadingSeated(id,plate){
  if(pawHostVisit?.id!==id||!pawHostVisit.ready||!pawHostLibrary)return false;
  const desk=id==='destiny'&&$('page').dataset.pawYueDesk==='true'&&$('page').style.display!=='none';
- const grid=desk?$('content').querySelector('.ziGrid'):null;
- const almanac=desk?$('content').querySelector('.yueReadingFront,.signNotebookResult'):null;
+ const activeForm=desk?$('content').querySelector('.astroForm,.yueAlmanacForm'):null;
+ const editing=!!activeForm&&!activeForm.hidden&&activeForm.style.display!=='none';
+ const grid=desk&&!editing?$('content').querySelector('.ziGrid'):null;
+ const almanac=desk&&!editing?$('content').querySelector('.yueReadingFront,.signNotebookResult'):null;
  const result=!!(grid||almanac),phase=pawReadingHostPhase(id,state,activity,desk,result);
  const plan=pawReadingSeatPlan(id,plate,phase);if(!plan)return false;
  const {api,manifest}=pawHostLibrary,fr=api.contacts(manifest,plan.host,plan.pose,plan.center,plan.span);
@@ -12944,12 +12963,10 @@ function pawDrawReadingSeated(id,plate){
    if(v&&Number.isInteger(v.i)&&v.i>=0&&v.i<tarotDeck.length)api.drawHeldCard(ctx,fr,atlas,[(v.i%readingFaceColumns)*readingFaceWidth,Math.floor(v.i/readingFaceColumns)*readingFaceHeight,readingFaceWidth,readingFaceHeight],v.rev);
   }
   if(id==='destiny'&&phase==='result'&&grid){
-   const cells=[...grid.querySelectorAll('article:not(.blank)')];
-   if(cells.length===12)api.drawHeldParchment(ctx,fr,g=>{
-    g.strokeStyle='#8e674b';g.lineWidth=.008;g.fillStyle='#674e3b';g.font='.065px Georgia,"Songti SC",serif';g.textAlign='center';g.textBaseline='middle';
-    cells.forEach((cell,i)=>{const x=(i%4)/4,y=Math.floor(i/4)/3;g.strokeRect(x,y,.25,1/3);const title=cell.querySelector('h3,h4,strong,b')?.textContent?.trim();if(title)g.fillText(title,x+.125,y+1/6,.23)})
-   })
-  }
+   const ink=pawYueInkState(pawYueInkCache,grid,api,performance.now()/1000,document.hidden||!proposal.hidden||transitioning,residentReducedMotion.matches);
+   pawYueInkCurrent=pawYueInkCache.get(grid)||null;
+   if(ink&&typeof api.paintChartPalaces==='function')api.drawHeldParchment(ctx,fr,g=>api.paintChartPalaces(g,ink.palaces,ink.progress))
+  }else if(id==='destiny'){pawYueInkCurrent=null}
   return true
  }finally{ctx.restore()}
 }
