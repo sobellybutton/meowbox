@@ -4812,16 +4812,24 @@ drawActivity=function(){
  txt(tr(...parkCats[state.petKind??0].name),400,375,24,'#fff4d9');
  ctx.restore()
 };
+const pawParkCareHome=Object.freeze({feed:[285,620],water:[400,620],play:[510,615]});
+function pawParkCareGrab(kind,q,id,now){
+ const home=pawParkCareHome[kind]||[q.x,q.y];
+ return {kind,x:home[0],y:home[1],offsetX:home[0]-q.x,offsetY:home[1]-q.y,last:now,id}
+}
+function pawParkCareDragPoint(d,q){
+ return {x:q.x+(d.offsetX||0),y:q.y+(d.offsetY||0)}
+}
 // Dedicated canvas gestures. Capture before legacy canvas listeners.
 function careCapture(e){if(!careIsActive()||$('page').style.display==='block'||talkOpen||transitioning)return false;e.preventDefault();e.stopImmediatePropagation();return true}
 c.addEventListener('pointerdown',e=>{
  if(!careCapture(e))return;const a=state.care;if(!pawCanvasCanStart(e,a.drag,document.hidden||!proposal.hidden)||a.phase!=='idle')return;const q=point(e);
  let kind=null;if(Math.hypot(q.x-285,q.y-620)<43)kind='feed';else if(Math.hypot(q.x-400,q.y-620)<43)kind='water';else if(Math.hypot(q.x-510,q.y-615)<46)kind='play';else if(Math.hypot(q.x-a.x,q.y-(a.y-42))<85)kind='pet';
  if(!kind||!careCan(a.values,kind))return;
- if(kind==='play'||kind==='pet')careStart(kind);a.drag={kind,x:q.x,y:q.y,last:performance.now(),id:e.pointerId};a.stroke=0;c.setPointerCapture(e.pointerId)
+ if(kind==='play'||kind==='pet')careStart(kind);a.drag=pawParkCareGrab(kind,q,e.pointerId,performance.now());a.stroke=0;c.setPointerCapture(e.pointerId)
 },true);
 c.addEventListener('pointermove',e=>{
- if(!careCapture(e))return;const a=state.care,d=a.drag;if(!d||d.id!==e.pointerId)return;const q=point(e),delta=Math.hypot(q.x-d.x,q.y-d.y),now=performance.now(),elapsed=Math.max(16,now-d.last);d.x=q.x;d.y=q.y;d.last=now;
+ if(!careCapture(e))return;const a=state.care,d=a.drag;if(!d||d.id!==e.pointerId)return;const q=pawParkCareDragPoint(d,point(e)),delta=Math.hypot(q.x-d.x,q.y-d.y),now=performance.now(),elapsed=Math.max(16,now-d.last);d.x=q.x;d.y=q.y;d.last=now;
  if(d.kind==='pet'){
   if(Math.hypot(q.x-a.x,q.y-(a.y-38))>85)return;
   if(delta/elapsed>1.5/(parkCats[state.petKind??0].sensitivity)||delta>42){a.stroke=Math.max(0,a.stroke-8);careMessage('Oi, gentle! I am not a dirty frying pan.','喂！轻点，我又不是待刷的锅！');return}
@@ -4829,7 +4837,7 @@ c.addEventListener('pointermove',e=>{
  }else if(d.kind==='play'&&q.x>=250&&q.x<=550&&q.y>=410&&q.y<=620&&delta<=90){a.stroke+=Math.min(14,delta)}
 },true);
 function careRelease(e,cancel=false){
- if(!careCapture(e))return;const a=state.care,d=a.drag;if(!d||d.id!==e.pointerId)return;const q=point(e);a.drag=null;
+ if(!careCapture(e))return;const a=state.care,d=a.drag;if(!d||d.id!==e.pointerId)return;const q=pawParkCareDragPoint(d,point(e));a.drag=null;
  if(!cancel&&d.kind==='feed'&&Math.hypot(q.x-295,q.y-548)<55){careStart('feed');return}
  if(!cancel&&d.kind==='water'&&Math.hypot(q.x-505,q.y-548)<55){careStart('water');return}
  if(!cancel&&d.kind==='feed'){careMessage('Drag the food into the left bowl.','把猫粮拖进左边的碗。');return}
