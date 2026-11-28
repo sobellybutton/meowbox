@@ -8,7 +8,7 @@ const api=new Function(block+walk+';return {pawRearGardenPlate,pawRearGardenNode
 const {pawRearGardenPlate:p,pawRearGardenNodes:n,pawRearGardenEdges:e,pawRearGardenTargets:t,pawRearGardenRoute:route,pawRearGardenPellet:pellet,pawGardenWalkTick:tick}=api;
 assert.ok(fs.existsSync(path.resolve(__dirname,'../assets/visual/staging/2026-11-27/rooms/temple/garden.webp')));
 assert.equal(p.h/p.w,1631/960);
-for(const [key,point] of Object.entries(n))for(const action of Object.keys(t)){
+for(const [key,point] of Object.entries(n))for(const action of [...Object.keys(t),'entry']){
  const steps=route(point,action);assert.ok(steps.length);assert.deepEqual(steps.at(-1),n[action]);
  let last=key;for(const v of steps){const next=Object.keys(n).find(k=>n[k][0]===v[0]&&n[k][1]===v[1]);assert.ok(next);assert.ok(next===last||e.some(([a,b])=>a===last&&b===next||a===next&&b===last));last=next}
  const q={painted:true,pos:point.slice(),route:steps.map(v=>v.slice()),action,last:0};let found=null;
@@ -20,6 +20,9 @@ const paused={painted:true,pos:n.entry.slice(),route:route(n.entry,'feed'),actio
 tick(paused,1,true);assert.deepEqual(paused.pos,n.entry);
 for(let i=0;i<5;i++)for(let age=.01;age<.9;age+=.02){const pt=pellet(i,age);if(pt){assert.ok(pt[0]>=.31&&pt[0]<=.53);assert.ok(pt[1]>.39&&pt[1]<.50)}}
 for(const [u,v,w,h] of Object.values(t))assert.ok(u-w/2>=0&&u+w/2<=1&&v-h/2>=0&&v+h/2<=1);
+const controls=extract('function pawGardenControls(run){','const pawGardenCleanupBefore=loop;');
+assert(!controls.includes("'chime'")&&!controls.includes("'cats'"),'Decorative objects must not be separate activities');
+assert(s.includes("if(arrive==='entry'){pawGardenClearControls();return pawRearGardenExitBefore"),'Return must complete the physical path before restoring hall');
 console.log('Painted garden route, contact targets, pause and feeding geometry passed.');
 
 const lobby=extract('/* PAW_WISH_LOBBY_BEGIN */','/* PAW_WISH_LOBBY_END */');
