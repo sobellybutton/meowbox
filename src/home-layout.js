@@ -114,7 +114,11 @@
   if(kind==='wall')g.drawImage(atlas,0,0,tile*2.5,tile*1.875,0,0,spec.width,spec.height);
   else for(let y=0;y<spec.height;y++){
    const p=floorSample((y+.5)/spec.height);
-   g.drawImage(atlas,p.left*tile,p.v*tile,p.span*tile,1,0,y,spec.width,1)
+   // Integrate the complete projected source band for each output row.
+   // Sampling a single source pixel skips paint at the distant edge and
+   // creates stripes when the floor texture is compressed by perspective.
+   const v0=floorSample(y/spec.height).v,v1=floorSample((y+1)/spec.height).v;
+   g.drawImage(atlas,p.left*tile,v0*tile,p.span*tile,(v1-v0)*tile,0,y,spec.width,1)
   }
   return out
  }
