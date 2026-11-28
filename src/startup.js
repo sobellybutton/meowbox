@@ -11084,9 +11084,9 @@ function pawGardenControls(run){
  const el=$('gameControls');if(!el||run!==state||activity!=='secretGarden')return;
  if(pawArcadeInputBlocked()){el.hidden=true;return}
  const busy=!!run.pawGardenWalk?.route.length,key=String(zh)+'|'+run.gardenSitting+'|'+busy;
- if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===(run.pawRearGarden?4:3)){el.hidden=false;return}
+ if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===(run.pawRearGarden?2:3)){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawGardenControls');el.hidden=false;pawGardenControlsRun=run;pawGardenControlsKey=key;
- for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐'],['chime','Wind chime','听风铃'],...(run.pawRearGarden?[['cats','Greet the lucky cats','拜访招财猫']]:[])]){
+ for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐'],...(run.pawRearGarden?[]:[['chime','Wind chime','听风铃']])]){
   const button=b(el,tr(en,cn),()=>pawGardenChoose(run,name));button.dataset.pawGardenControl=name;button.disabled=busy
  }
 }
@@ -12516,11 +12516,11 @@ fade=function(fn,kind='gust',destination=null){
 // from the temporary wishing garden. Trace the actual stone paving.
 const pawRearGardenPlate={x:100,y:-145,w:600,h:600*1631/960};
 const pawRearGardenNodes={
- entry:[.48,.78], bend:[.58,.60], fork:[.60,.48],
- feed:[.53,.49], seat:[.78,.475], chime:[.70,.355], cats:[.58,.351], upper:[.59,.389]
+ entry:[.48,.78], bend:[.59,.70], fork:[.61,.63],
+ feed:[.53,.63], seat:[.78,.60]
 };
-const pawRearGardenEdges=[['entry','bend'],['bend','fork'],['fork','feed'],['fork','seat'],['fork','chime'],['chime','upper'],['upper','cats']];
-const pawRearGardenTargets={feed:[.30,.459,.25,.095],seat:[.79,.415,.23,.065],chime:[.78,.17,.11,.12],cats:[.65,.25,.23,.09]};
+const pawRearGardenEdges=[['entry','bend'],['bend','fork'],['fork','feed'],['fork','seat']];
+const pawRearGardenTargets={feed:[.30,.62,.25,.095],seat:[.79,.55,.23,.065]};
 function pawRearGardenRoute(from,action){
  if(!Array.isArray(from)||from.length!==2||!from.every(Number.isFinite)||!Object.hasOwn(pawRearGardenTargets,action))return null;
  const names=Object.keys(pawRearGardenNodes),distance=(a,b)=>Math.hypot((a[0]-b[0])*pawRearGardenPlate.w,(a[1]-b[1])*pawRearGardenPlate.h);
@@ -12571,13 +12571,13 @@ function pawDrawRearSeated(im,id,hip,scale){
  }finally{ctx.restore()}return true
 }
 function pawRearBenchPose(p,scale){
- const hip={x:p.x+p.w*.78,y:p.y+p.h*.407};
+ const hip={x:p.x+p.w*.78,y:p.y+p.h*.55};
  return {hip,x:hip.x-9*scale,y:hip.y+32*scale,scale}
 }
 // The bench hip and adjacent paving establish a world-space body size.
 // Keep that size when the viewport or camera changes; the camera alone zooms.
 function pawRearGardenActorScale(p,seat=pawRearGardenNodes.seat){
- const rise=p.h*(seat[1]-.407);
+ const rise=p.h*(seat[1]-.55);
  return Number.isFinite(rise)&&rise>0?Math.max(1.35,Math.min(2.25,rise/32)):1.72
 }
 function pawRearGardenSeatAmount(run,now,reduced,atBench){
@@ -12611,22 +12611,22 @@ function pawRearGardenSway(age,reduced=false,kind='chime'){
 }
 function pawRearPondGlint(i,now,reduced=false){
  const phase=reduced?.45:((now*.22+i*.271)%1+1)%1;
- return {u:.315+i*.021+Math.sin(phase*Math.PI*2+i)*.007,v:.454+(i%2)*.014+(phase-.5)*.012,rx:5+phase*10,ry:1.3+phase*1.7,alpha:.26*Math.sin(Math.PI*phase)}
+ return {u:.315+i*.021+Math.sin(phase*Math.PI*2+i)*.007,v:.62+(i%2)*.014+(phase-.5)*.012,rx:5+phase*10,ry:1.3+phase*1.7,alpha:.26*Math.sin(Math.PI*phase)}
 }
 // Traced against the inspected 960x1631 rear garden plate. The animated
 // stream follows the bamboo spout and the ripples stay within open water.
 function pawRearWaterFlow(i,now,reduced=false){
  const f=reduced?(i+.5)/7:((now*.92+i/7)%1+1)%1;
- return {u:.167+.032*f+.006*Math.sin(f*Math.PI),v:.334+.073*f,alpha:.35+.50*Math.sin(Math.PI*f),length:.005+.008*f};
+ return {u:.167+.032*f+.006*Math.sin(f*Math.PI),v:.47+.073*f,alpha:.35+.50*Math.sin(Math.PI*f),length:.005+.008*f};
 }
 function pawRearWaterRipple(i,now,reduced=false){
  const f=reduced?(i+.5)/4:((now*.55+i/4)%1+1)%1;
- return {u:.198,v:.409,rx:.007+.037*f,ry:.0017+.009*f,alpha:.52*Math.sin(Math.PI*f)};
+ return {u:.198,v:.55,rx:.007+.037*f,ry:.0017+.009*f,alpha:.52*Math.sin(Math.PI*f)};
 }
 function pawRearGardenPellet(i,age){
  if(!Number.isFinite(age)||age<0||age>.9)return null;
  const f=Math.max(0,Math.min(1,(age-i*.035)/.65));if(f<=0||f>=1)return null;
- const from=[.53,.443],to=[.31+i*.018,.453+(i%2)*.014];
+ const from=[.53,.56],to=[.31+i*.018,.62+(i%2)*.014];
  return [from[0]+(to[0]-from[0])*f,from[1]+(to[1]-from[1])*f-.035*Math.sin(Math.PI*f)]
 }
 /* PAW_PAINTED_GARDEN_END */
@@ -12642,7 +12642,7 @@ start=function(id,...args){
   if(state.pawRearGarden)pawRearSeatedImage(avatar??0);
   if(state.pawRearGarden){
    state.pawGardenWalk={painted:true,pos:pawRearGardenNodes.entry.slice(),route:[pawRearGardenNodes.bend.slice(),pawRearGardenNodes.fork.slice()],action:null,last:t,dir:'up'};
-   hint('Follow the stone path to the pond or lucky cats.','沿石径去看看锦鲤和招财猫。')
+   hint('Follow the stone path to the pond or the bench.','沿石径去看看锦鲤，或在长椅上歇一歇。')
   }
  }
  return result
@@ -12658,7 +12658,7 @@ pawGardenRoute=function(q,action){
 const pawRearGardenChooseBefore=pawGardenChoose;
 pawGardenChoose=function(run,kind){
  if(!run?.pawRearGarden)return pawRearGardenChooseBefore(run,kind);
- if(run!==state||!pawRearGardenActive()||pawArcadeInputBlocked())return;
+ if(run!==state||!pawRearGardenActive()||pawArcadeInputBlocked()||!Object.hasOwn(pawRearGardenTargets,kind))return;
  const q=run.pawGardenWalk;if(!q||q.route.length)return;
  if(!Object.hasOwn(pawRearGardenTargets,kind))return;
  if(run.gardenSitting||pawRearGardenSeatAmount(run,t,residentReducedMotion.matches,pawRearGardenAtBench(q))>0){
@@ -12696,8 +12696,7 @@ drawActivity=function(...args){
   const next=q.pawAfterStand;delete q.pawAfterStand;pawGardenChoose(run,next)
  }
  const prior=q.pos.slice(),arrive=pawGardenWalkTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
- if(arrive==='feed')gardenFeed();else if(arrive==='seat'){gardenSeat();q.dir='left'}else if(arrive==='chime')gardenChime();
- else if(arrive==='cats'){run.pawCatAt=t;const i=Number.isInteger(run.pawCatPending)?run.pawCatPending:(Number.isInteger(run.pawCatChoice)?(run.pawCatChoice+1)%6:1);delete run.pawCatPending;sound(520);hint(...pawRearCatChoice(run,i))}
+ if(arrive==='feed')gardenFeed();else if(arrive==='seat'){gardenSeat();q.dir='left'}
  const dx=(q.pos[0]-prior[0])*p.w,dy=(q.pos[1]-prior[1])*p.h,moving=q.route.length>0;
  if(Math.hypot(dx,dy)>.01)q.dir=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';
  continuityActivity=activity;
@@ -12725,7 +12724,7 @@ drawActivity=function(...args){
    for(let j=0;j<5;j++){
     const pt=pawRearGardenPellet(j,age);if(pt){const [px,py]=xy(...pt);ellipse(px,py,1.6,1.6,'#dfc28a')}
     const f=Math.max(0,Math.min(1,(age-.65-j*.08)/1.65));
-    if(f>0&&f<1){const [rx,ry]=xy(.31+j*.018,.453+(j%2)*.014);ctx.strokeStyle='rgba(242,239,207,'+(.6*(1-f))+')';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(rx,ry,2+f*17,1+f*5,0,0,TAU);ctx.stroke()}
+    if(f>0&&f<1){const [rx,ry]=xy(.31+j*.018,.62+(j%2)*.014);ctx.strokeStyle='rgba(242,239,207,'+(.6*(1-f))+')';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(rx,ry,2+f*17,1+f*5,0,0,TAU);ctx.stroke()}
    }
   }
   const [x,y]=xy(...q.pos),scale=pawRearGardenActorScale(p);
@@ -12738,19 +12737,11 @@ drawActivity=function(...args){
    const painted=seatAmount>=.98&&run.pawRearSeatArt&&pawDrawRearSeated(im,id,a.hip,scale);
    if(!painted){ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}}
   }else{delete run.pawRearSeatArt;backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale)}
-  const chimeAge=t-run.gardenChimeAt,catAge=t-run.pawCatAt,reduced=residentReducedMotion.matches;
-  // Only the hanging paper tail moves. The beam, chain, bell and ceramic figures stay rigid.
-  const breeze=reduced?0:Math.sin(t*1.45)*.42+Math.sin(t*.83)*.18;
-  pawRearGardenWarp(pawRearGardenArt(),p,[.75,.169,.808,.224],breeze+pawRearGardenSway(chimeAge,reduced)*.36);
-  if(catAge>=0&&catAge<2.2&&Number.isInteger(run.pawCatChoice)){
-   const [u,v]=pawRearCatFigurines[run.pawCatChoice],[gx,gy]=xy(u,v+.012);
-   ctx.save();ctx.globalAlpha=.48*(1-catAge/2.2);ellipse(gx,gy,12,2.6,'#ffdc94');ctx.restore()
-  }
+  // Wind moves the existing paper strip. The cats remain scenery.
+  const breeze=residentReducedMotion.matches?0:Math.sin(t*1.45)*.65+Math.sin(t*.83)*.26;
+  pawRearGardenWarp(pawRearGardenArt(),p,[.75,.30,.81,.37],breeze);
   if(!moving)for(const [kind,[u,v,ww,hh]] of Object.entries(pawRearGardenTargets)){
    const [tx,ty]=xy(u,v);target(tx-ww*p.w/2,ty-hh*p.h/2,ww*p.w,hh*p.h,()=>pawGardenChoose(run,kind),'paw-rear-garden-'+kind)
-  }
-  if(!moving)for(let i=0;i<pawRearCatFigurines.length;i++){
-   const [cx,cy]=xy(...pawRearCatFigurines[i]);target(cx-14,cy-15,28,30,()=>{if(run!==state||pawArcadeInputBlocked()||q.route.length)return;run.pawCatPending=i;pawGardenChoose(run,'cats')},'paw-rear-cat-'+i)
   }
  }finally{ctx.restore()}
  pawGardenControls(run)

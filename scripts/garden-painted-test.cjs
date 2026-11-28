@@ -18,7 +18,7 @@ for(const [key,point] of Object.entries(n))for(const action of Object.keys(t)){
 assert.equal(route([.1,.1],'feed'),null);assert.equal(route(n.entry,'__proto__'),null);
 const paused={painted:true,pos:n.entry.slice(),route:route(n.entry,'feed'),action:'feed',last:0};
 tick(paused,1,true);assert.deepEqual(paused.pos,n.entry);
-for(let i=0;i<5;i++)for(let age=.01;age<.9;age+=.02){const pt=pellet(i,age);if(pt){assert.ok(pt[0]>=.31&&pt[0]<=.53);assert.ok(pt[1]>.39&&pt[1]<.50)}}
+for(let i=0;i<5;i++)for(let age=.01;age<.9;age+=.02){const pt=pellet(i,age);if(pt){assert.ok(pt[0]>=.31&&pt[0]<=.53);assert.ok(pt[1]>.52&&pt[1]<.65)}}
 for(const [u,v,w,h] of Object.values(t))assert.ok(u-w/2>=0&&u+w/2<=1&&v-h/2>=0&&v+h/2<=1);
 console.log('Painted garden route, contact targets, pause and feeding geometry passed.');
 
@@ -108,6 +108,12 @@ assert.ok(catalogueReturn.pawCollectionReturnMatches(collectionOrigin,{...collec
 for(const [key,value] of Object.entries({run:{},room:'arcade',district:'home',activity:'claw'}))assert.equal(catalogueReturn.pawCollectionReturnMatches(collectionOrigin,{...collectionOrigin,[key]:value}),false);
 assert.equal(catalogueReturn.pawCollectionReturnMatches(collectionOrigin,null),false);
 console.log('Catalogue return and blind box scene ownership passed.');
+
+assert.deepEqual(Object.keys(t),['feed','seat']);
+assert.equal(route(n.entry,'cats'),null);assert.equal(route(n.entry,'chime'),null);
+assert.ok(n.feed[1]>=.60&&n.seat[1]>=.59&&n.fork[1]>=.60,'Feet stay on foreground paving');
+assert.ok(s.includes('pawRearGardenWarp(pawRearGardenArt(),p,[.75,.30,.81,.37],breeze)'),'Ambient wind without interaction');
+assert.ok(!s.includes("'paw-rear-cat-'+i"),'No individual cat hit targets');
 
 /* A throw belongs to the exact active pond visit, even while the old DOM
    remains attached behind the room or a newer activity. */

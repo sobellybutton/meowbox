@@ -1327,3 +1327,7 @@ Main railway run 46135838241 passed eight profiles; WebKit tablet failed after r
 
 ### Owner temple correction convergence, 28 November
 Reconciled #124 moon clearance and purification scale/occlusion into #125 without reverting the newer physical ladle transform. Exact candidate sources and test scripts parsed. Focused temple result and clearance checks executed against candidate source: PASS 2021 temple result, physical walk and resident copy checks; PASS 4877 moon clearance, contact, walk and viewport checks; minimum world gap 3.38. Full browser, screenshot and live acceptance pending. Garden and optional station portions of #124 still require reconciliation. No main write; #123 CI preserved.
+
+
+### Rear garden convergence, 28 November
+Reconciled #124 foreground paving routes, pond effects and ambient wind chime into #125 while retaining painted seated pose, stable actor scale and deferred stand/route transitions. Only feed and sit remain interactive on the painted garden. Exact JS parsed; focused garden and bench connector tests passed (asset existence checks stubbed). Rendered visual acceptance pending; no main write. Parent #123 CI preserved.
