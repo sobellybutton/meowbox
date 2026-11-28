@@ -26,7 +26,9 @@ assert.equal(api.pawRearGardenSeatAmount({gardenSeatAt:10,gardenSitting:false},1
 assert.equal(api.pawRearGardenSeatAmount({gardenSeatAt:-100,gardenSitting:false},10,false,true),0);
 const c=src.indexOf('pawGardenChoose=function(run,kind)',b),d=src.indexOf('// Deform a small region',c);
 assert.ok(c>b&&d>c);
-const make=new Function(src.slice(a,b)+`
+const targetStart=src.indexOf('const pawRearGardenTargets='),targetEnd=src.indexOf('function pawRearGardenRoute(',targetStart);
+assert.ok(targetStart>=0&&targetEnd>targetStart);
+const make=new Function(src.slice(targetStart,targetEnd)+src.slice(a,b)+`
 const pawRearGardenNodes={seat:[.78,.475]},state={pawRearGarden:true,gardenSeatAt:0,gardenSitting:true,pawGardenWalk:{pos:[.78,.475],route:[]}};
 let t=1,blocked=false,room='temple',activity='secretGarden',calls=[];
 const residentReducedMotion={matches:false},pawRearGardenActive=()=>true,pawArcadeInputBlocked=()=>blocked;
