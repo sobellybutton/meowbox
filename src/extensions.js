@@ -1476,6 +1476,30 @@ function pawTeaScoopFrame(age,reduced=false,origin=null){
  const startAngle=going?(pawTeaScoopOrigin(origin)?-.13:0):-.22,endAngle=going?-.22:0;
  return {x:from.x+(to.x-from.x)*u,y:from.y+(to.y-from.y)*u-(reduced?0:Math.sin(Math.PI*u)*(going&&origin?6:20)),angle:startAngle+(endAngle-startAngle)*u,loaded:p<.55,drop:p>=.55,done:p>=1}
 }
+/* PAW_TEA_POUR_CONTINUITY_BEGIN */
+function pawTeaPourAdmission(q,ready){
+ if(q.pawTeaPourPainted===undefined)q.pawTeaPourPainted=!!ready;
+ return q.pawTeaPourPainted
+}
+function pawTeaPourTiming(age,reduced=false){
+ const p=Math.max(0,Math.min(1,Number.isFinite(age)?age/1.55:0));
+ const ease=x=>x*x*(3-2*x);
+ const stream=p>=.35&&p<.70;
+ const travel=p<.35?p/.35:stream?1:(1-p)/.30;
+ const u=reduced?(p>0&&p<1?1:0):ease(Math.max(0,Math.min(1,travel)));
+ const fill=Math.max(0,Math.min(1,(p-.35)/.35));
+ return {p,u,fill,stream}
+}
+// Fallback vessel shares the painted pot's rest position, cup lip,
+// pouring window and end position. The stream begins at its real spout.
+function pawTeaFallbackPour(age,reduced=false){
+ const f=pawTeaPourTiming(age,reduced),angle=-.72*f.u;
+ const lip=[420,445],gap=34,spout=[34,-66],c=Math.cos(-.72),s=Math.sin(-.72);
+ const end=[lip[0]-(spout[0]*c-spout[1]*s),lip[1]-gap-(spout[0]*s+spout[1]*c)];
+ const x=530+(end[0]-530)*f.u,y=516+(end[1]-516)*f.u;
+ return {...f,x,y,angle,from:[x+spout[0]*Math.cos(angle)-spout[1]*Math.sin(angle),y+spout[0]*Math.sin(angle)+spout[1]*Math.cos(angle)],to:lip}
+}
+/* PAW_TEA_POUR_CONTINUITY_END */
 function teaAddPearls(origin=null){
  if(activity!=='bubbleTea'||state.teaStage!=='pearls'||state.teaTopping===0||state.teaToppingCount>=2||pawTeaScoopBusy(state))return;
  state.pawScoopOrigin=pawTeaScoopOrigin(origin);state.pawScoopPending=true;state.pawScoopDropped=false;state.teaAt=t
@@ -1527,13 +1551,14 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
  if(activity!=='bubbleTea')return foodReleaseDraw();
  pearlAdvance();ctx.save();drawFoodCounter();
  const stage=state.teaStage,age=Math.max(0,t-state.teaAt),prepared=['seasoning','pearls','mix','seal','sealing','ready','sip','done'].includes(stage);
- let cx=420,cy=525,angle=0,fill=prepared?1:stage==='pouring'?poseEase(clamp((age-.25)/1.1,0,1)):0;
+ let cx=420,cy=525,angle=0,fill=prepared?1:stage==='pouring'?pawTeaPourTiming(age).fill:0;
  if(stage==='mix'&&drag?.id==='teaMix'){cx=clamp(drag.x,335,505);cy=clamp(drag.y,470,550);angle=clamp((drag.x-drag.sx)/230,-.32,.32)}
  const guestDelivery=pawTeaDeliveryPose(stage,age,!!state.teaOrder,matchMedia('(prefers-reduced-motion: reduce)').matches);
  if(stage==='sip'&&!state.teaOrder){const f=Math.sin(Math.PI*clamp(age/2.4,0,1));cx=420-104*f;cy=525-100*f;angle=-.12*f;fill=Math.max(.35,1-age*.25)}
  if(guestDelivery&&['sip','done'].includes(stage)){cx=guestDelivery.x;cy=guestDelivery.y;angle=guestDelivery.angle;fill=guestDelivery.fill}
  else if(stage==='done')fill=.35;
- const paintedFrame=stage==='pouring'&&typeof pawFoodPourFrame==='function'&&pawFoodLive&&pawFoodLive.placement.ready(pawFoodLive.cache.image('boba_tea_pot'),pawFoodLive.manifest.assets.boba_tea_pot.size)?pawFoodPourFrame(pawFoodLive,age,residentReducedMotion.matches):null;
+ if(stage==='pourReady'||stage==='pouring')pawTeaPourAdmission(state,typeof pawFoodPropReady==='function'&&pawFoodPropReady('boba_tea_pot'));
+ const paintedFrame=stage==='pouring'&&state.pawTeaPourPainted&&typeof pawFoodPourFrame==='function'&&pawFoodLive&&pawFoodPropReady('boba_tea_pot')?pawFoodPourFrame(pawFoodLive,age,residentReducedMotion.matches):null;
  if(stage==='seal'&&state.pawBobaLidMode===undefined)state.pawBobaLidMode=typeof pawBobaLidAvailable==='function'&&pawBobaLidAvailable();
  const lid=state.pawBobaLidMode&&typeof pawBobaLidPose==='function'?pawBobaLidPose(stage,age,cx,cy,angle,residentReducedMotion.matches):null;
  const reach=lid&&stage==='sealing'&&!lid.attached?{x:lid.grip[0],y:lid.grip[1]}:paintedFrame?{x:paintedFrame.grip[0],y:paintedFrame.grip[1]}:(stage==='sip'&&(!guestDelivery||!guestDelivery.delivered))||stage==='pouring'||drag?.id==='teaMix'?{x:cx-25,y:cy-35}:null;
@@ -1543,8 +1568,8 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
  teaCup(cx,cy,1.12,state.teaBase,state.teaPearls,fill,angle);
  const paintedLid=lid&&pawBobaPaintLid(pawBobaLidPose(stage,age,cx,cy,angle,residentReducedMotion.matches));
  if(stage==='pouring'&&!(paintedFrame&&pawPaintFoodPour(paintedFrame))){
-  const f=poseEase(clamp(age/.3,0,1)),px=495-45*f,py=414-25*f;teaPitcher(px,py,state.teaBase,-.72*f);
-  if(age>.25&&age<1.35){ctx.save();ctx.strokeStyle=teaChoices[state.teaBase][2];ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(px-19,py-35);ctx.quadraticCurveTo(420,py+5,420,445);ctx.stroke();ctx.restore()}
+  const f=pawTeaFallbackPour(age,residentReducedMotion.matches);teaPitcher(f.x,f.y,state.teaBase,f.angle);
+  if(f.stream){ctx.save();try{ctx.strokeStyle=teaChoices[state.teaBase][2];ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(...f.from);ctx.lineTo(...f.to);ctx.stroke()}finally{ctx.restore()}}
  }
  if(stage==='seasoning')drawPearlSeasoning(age);
  if(stage==='base')teaChoices.forEach((v,i)=>{const x=285+i*115;teaPitcher(x,611,i);target(x-42,544,84,75,()=>selectTeaBase(i))});
@@ -8479,7 +8504,7 @@ function pearlPick(field,value){
  if(activity!=='bubbleTea'||!v||state.teaStage!==v[0]||!v[1].some(a=>a[0]===value))return;
  state[field]=value;pearlStage(v[2]);sound(410)
 }
-function pearlPour(){if(activity==='bubbleTea'&&state.teaStage==='pourReady'){pearlStage('pouring');physicalFx('water',.55)}}
+function pearlPour(){if(activity==='bubbleTea'&&state.teaStage==='pourReady'){pawTeaPourAdmission(state,typeof pawFoodPropReady==='function'&&pawFoodPropReady('boba_tea_pot'));pearlStage('pouring');physicalFx('water',.55)}}
 function pearlSeal(){if(activity==='bubbleTea'&&state.teaStage==='seal'){pearlStage('sealing');sound(390)}}
 function pearlScore(q){if(!q.teaOrder)return null;const g=q.teaOrder;return ['base','sugar','ice','topping'].reduce((n,k)=>n+Number(q['tea'+k[0].toUpperCase()+k.slice(1)]===g[k]),0)}
 function pearlAdvance(){
