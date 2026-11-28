@@ -27,6 +27,21 @@ for(const id of ['kitchen_wooden_ladle','kitchen_wooden_spatula','kitchen_small_
  ck(q&&near(q.prop.point(...contacts.assets[id].grip),q.hand),'hand grip locked');
  ck(near(q.tip,q.prop.point(...contacts.assets[id].workingTip)),'working tip derived from same transform');
 }
+// Exact live boba counter coordinates from pawFoodPourFrame. Preserve
+// upright vertical lift and upright lowering before/after lateral reach.
+const lip=placement.geometry(manifest,'boba_cup_empty',420,525,82).point(...contacts.assets.boba_cup_empty.receiver);
+const live=motion.pourPlan({vessel:'boba_tea_pot',receiver:'boba_cup_empty',rest:[530,516],receiverBase:[840-lip[0],970-lip[1]],vesselHeight:70,receiverHeight:82,gap:34});
+ck(live,'actual counter plan');
+for(let i=0;i<=1000;i++){
+ const p=i/1000,q=motion.pourFrame(live,p);
+ ck(q&&near(q.vessel.point(...live.grip),q.grip),'actual pot grip');
+ if(p<=.35*.45||p>=1-.30*.45){
+  ck(Math.abs(q.vessel.angle)<1e-7,'lift/lower upright');
+  ck(Math.abs(q.grip[0]-live.startGrip[0])<1e-7,'vertical lift/lower at original counter');
+  ck(q.vessel.visibleAABB[0]>live.receive.visibleAABB[2],'upright vessel stays clear of cup');
+ }
+ if(q.stream)ck(near(q.stream.to,[420,445])&&Math.abs(q.stream.from[0]-420)<1e-7&&Math.abs(q.stream.to[1]-q.stream.from[1]-34)<1e-7,'actual cup lip contact');
+}
 ck(!motion.pourPlan({}),'invalid plan');
 ck(!motion.utensilPose('unknown',[0,0],10,0),'unknown tool');
 ck(!api.landmarks(manifest,{...contacts,assets:{boba_tea_pot:{sourceBlob:'wrong',grip:[1,1]}}},'boba_tea_pot'),'stale artwork');
