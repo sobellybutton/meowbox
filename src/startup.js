@@ -14694,7 +14694,7 @@ function pawLoadFoodProps(){
  return pawFoodLiveJob
 }
 function pawFoodWarmKeys(id){
- return id==='boba'?['boba_tea_pot','boba_milk_pitcher','boba_cup_empty','boba_flat_lid','boba_pearls_bowl','boba_jelly_bowl']:id==='kitchen'?['kitchen_small_bowl','kitchen_stock_pot','kitchen_wooden_ladle','kitchen_bamboo_steamer','kitchen_frying_pan','kitchen_wooden_spatula']:[]
+ return id==='boba'?['boba_tea_pot','boba_milk_pitcher','boba_cup_empty','boba_flat_lid','boba_pearls_bowl','boba_jelly_bowl','kitchen_small_ladle']:id==='kitchen'?['kitchen_small_bowl','kitchen_stock_pot','kitchen_wooden_ladle','kitchen_bamboo_steamer','kitchen_frying_pan','kitchen_wooden_spatula']:[]
 }
 function pawWarmFoodProps(id){
  const keys=pawFoodWarmKeys(id);if(!keys.length)return;

@@ -6,7 +6,7 @@ const advance=ext.slice(ext.indexOf('function pearlAdvance(){'),ext.indexOf('con
 const clock=startup.slice(startup.indexOf('function pawFoodClock('),startup.indexOf('/* PAW_FOOD_CLOCK_END */'));
 const api=new Function(scoop+advance+clock+`
 let state,activity='bubbleTea',t=0;const sound=()=>{},pearlStage=stage=>{state.teaStage=stage;state.teaAt=t};
-return {reset(topping){state={teaStage:'pearls',teaTopping:topping,teaToppingCount:0,teaPearls:0,teaAt:0};t=0;return state},scoop:()=>teaAddPearls(),step(now,blocked=false){t=now;pawFoodClock(state,activity,t,blocked);if(!blocked)pearlAdvance()},frame:pawTeaScoopFrame}
+return {reset(topping){state={teaStage:'pearls',teaTopping:topping,teaToppingCount:0,teaPearls:0,teaAt:0};t=0;return state},scoop:(origin)=>teaAddPearls(origin),step(now,blocked=false){t=now;pawFoodClock(state,activity,t,blocked);if(!blocked)pearlAdvance()},frame:pawTeaScoopFrame}
 `)();
 let checks=0;const ck=(v,m)=>{assert.ok(v,m);checks++};
 for(const topping of [1,2]){
@@ -31,3 +31,23 @@ ck(keys('park').length===0,'room-specific art');
 ck(startup.includes("for(const dish of kitchenDishNames)"),'ingredient plates requested before activity');
 ck(ext.includes("state.pawToppingBowlPainted=typeof pawFoodPropReady"),'stable selected painted bowl');
 console.log('PASS '+checks+' scoop transfer, hidden-time, repeated input and food asset readiness checks.');
+
+const near=(a,b)=>Math.abs(a-b)<1e-7;
+for(const origin of [{x:420,y:480},{x:392,y:450},{x:450,y:490},null]){
+ const rest=api.frame(0,false,origin),drop=api.frame(.85*.55,false,origin),done=api.frame(.85,false,origin);
+ ck(near(rest.x,origin?.x??530)&&near(rest.y,origin?.y??520),'drag begins at actual release position');
+ ck(near(drop.x,428)&&near(drop.y,437)&&drop.drop,'same cup transfer anchor');
+ ck(near(done.x,530)&&near(done.y,520)&&done.done,'return to storage bowl');
+ for(let i=0;i<=100;i++){
+  const f=api.frame(.85*i/100,false,origin);ck(Number.isFinite(f.x)&&Number.isFinite(f.y)&&Number.isFinite(f.angle),'finite motion');
+ }
+}
+for(const origin of [{x:NaN,y:0},{x:1000,y:1000},null]){
+ const f=api.frame(0,false,origin);ck(f.x===530&&f.y===520,'invalid origins use rest');
+}
+const drag=api.reset(1);api.scoop({x:420,y:480});ck(drag.pawScoopOrigin.x===420,'accepted release stored');api.step(.5);ck(drag.teaToppingCount===1,'single deposit after drag');api.step(.9);ck(drag.pawScoopOrigin===null,'clear drag origin after return');
+const reducedEnd=api.frame(.85,true,{x:420,y:480});ck(reducedEnd.x===530&&reducedEnd.y===520,'reduced motion returns to storage');
+ck(keys('boba').includes('kitchen_small_ladle'),'existing painted scoop prewarmed');
+ck(ext.includes("state.pawToppingScoopPainted=typeof pawFoodPropReady"),'stable scoop artwork admission');
+ck(ext.includes("anchor:[32,68],angle:tilt+.5"),'source bowl anchor');
+console.log('PASS '+checks+' combined scoop transfer and painted asset checks');

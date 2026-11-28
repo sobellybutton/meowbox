@@ -1456,14 +1456,20 @@ function selectTeaBase(i){if(activity!=='bubbleTea'||state.teaStage!=='base'||!N
 function pawTeaScoopBusy(q){
  return q?.teaStage==='pearls'&&q.pawScoopPending===true
 }
-function pawTeaScoopFrame(age,reduced=false){
- const p=Math.max(0,Math.min(1,age/.85)),ease=u=>u*u*(3-2*u);
- const f=p<.55?ease(p/.55):1-ease((p-.55)/.45),u=reduced?1:f;
- return {x:530-102*u,y:520-83*u-(reduced?0:Math.sin(Math.PI*u)*20),angle:-.22*u,loaded:p<.55,drop:p>=.55,done:p>=1}
+function pawTeaScoopOrigin(a){
+ return a&&Number.isFinite(a.x)&&Number.isFinite(a.y)&&Math.hypot(a.x-420,a.y-480)<65?{x:a.x,y:a.y}:null
 }
-function teaAddPearls(){
+function pawTeaScoopFrame(age,reduced=false,origin=null){
+ const p=Math.max(0,Math.min(1,Number.isFinite(age)?age/.85:0)),ease=u=>u*u*(3-2*u);
+ const going=p<.55,rest={x:530,y:520},lip={x:428,y:437};
+ const from=going?(pawTeaScoopOrigin(origin)||rest):lip,to=going?lip:rest;
+ const phase=going?p/.55:(p-.55)/.45,u=reduced?(phase===0?0:1):ease(phase);
+ const startAngle=going?(pawTeaScoopOrigin(origin)?-.13:0):-.22,endAngle=going?-.22:0;
+ return {x:from.x+(to.x-from.x)*u,y:from.y+(to.y-from.y)*u-(reduced?0:Math.sin(Math.PI*u)*(going&&origin?6:20)),angle:startAngle+(endAngle-startAngle)*u,loaded:p<.55,drop:p>=.55,done:p>=1}
+}
+function teaAddPearls(origin=null){
  if(activity!=='bubbleTea'||state.teaStage!=='pearls'||state.teaTopping===0||state.teaToppingCount>=2||pawTeaScoopBusy(state))return;
- state.pawScoopPending=true;state.pawScoopDropped=false;state.teaAt=t
+ state.pawScoopOrigin=pawTeaScoopOrigin(origin);state.pawScoopPending=true;state.pawScoopDropped=false;state.teaAt=t
 }
 function teaShake(amount){if(activity!=='bubbleTea'||state.teaStage!=='mix'||!Number.isFinite(amount)||amount<=0)return;state.teaMix=Math.min(100,state.teaMix+Math.min(36,Math.max(0,amount*.42)));state.teaAt=t;if(state.teaMix>=100){pearlStage('seal');sound(630)}}
 function teaSip(){if(activity!=='bubbleTea'||state.teaStage!=='ready')return;state.teaStage='sip';state.teaAt=t;sound(380)}
@@ -1479,15 +1485,20 @@ function teaPitcher(x,y,base,tilt=0){
  ellipse(0,-55,23,5,'#bba389');line(-17,-45,-14,-5,'#fff2df80',2);ctx.restore();
 }
 function teaScoopArt(x,y,tilt=0,loaded=false){
+ // The original transparent small ladle is registered at its source bowl
+ // point. Keep its painted/fallback family stable for this topping stage.
+ const painted=state.pawToppingScoopPainted&&typeof pawPaintFoodProp==='function'&&pawPaintFoodProp('kitchen_small_ladle',x-8*Math.cos(tilt)-5*Math.sin(tilt),y-8*Math.sin(tilt)+5*Math.cos(tilt),56,{anchor:[32,68],angle:tilt+.5});
  ctx.save();ctx.translate(x,y);ctx.rotate(tilt);
- line(0,0,50,-29,'#765f45',8);line(1,-2,48,-31,'#d1ad79',3);
- ellipse(-8,5,22,12,'#ad936b');ellipse(-8,2,18,8,'#e2c697');
+ if(!painted){
+  line(0,0,50,-29,'#765f45',8);line(1,-2,48,-31,'#d1ad79',3);
+  ellipse(-8,5,22,12,'#ad936b');ellipse(-8,2,18,8,'#e2c697');
+ }
  if(loaded)for(let i=0;i<5;i++){const xx=-18+i*5,yy=1+(i%2)*4;if(activity==='bubbleTea'&&state.teaTopping===2){round(xx-3.5,yy-3.5,7,7,1,'#e5caa0','#aa8966');line(xx-2,yy-2,xx+1,yy-2,'#faf1dc',1)}else{ellipse(xx,yy,4,4,'#4b342e');ellipse(xx-1,yy-1,1,1,'#ab8870')}}
  ctx.restore();
 }
 function teaScoopRelease(a){
  if(activity!=='bubbleTea'||state.teaStage!=='pearls'||!Number.isFinite(a?.x)||!Number.isFinite(a?.y))return;
- if(Math.hypot(a.x-420,a.y-480)<65){teaAddPearls();return}
+ if(pawTeaScoopOrigin(a)){teaAddPearls(a);return}
  hint('Tip the scoop into the cup.','把珍珠倒进奶茶杯里。');
 }
 c.addEventListener('pointerup',e=>{
@@ -1532,12 +1543,13 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
  if(stage==='pearls'){
   const bowlId=state.teaTopping===2?'boba_jelly_bowl':'boba_pearls_bowl';
   if(state.pawToppingBowlPainted===undefined)state.pawToppingBowlPainted=typeof pawFoodPropReady==='function'&&pawFoodPropReady(bowlId);
+  if(state.pawToppingScoopPainted===undefined)state.pawToppingScoopPainted=typeof pawFoodPropReady==='function'&&pawFoodPropReady('kitchen_small_ladle');
   if(!state.pawToppingBowlPainted||!pawPaintFoodProp(bowlId,530,552,42)){
    ellipse(530,540,36,15,'#e5caa0');ellipse(530,537,30,10,'#986b53');
    for(let i=0;i<12;i++)ellipse(511+(i*13)%39,532+(i%3)*5,4,4,state.teaTopping===2?'#c8a271':'#50362e')
   }
   if(drag?.id==='teaPearlScoop')teaScoopArt(drag.x,drag.y,-.13,true);
-  else if(pawTeaScoopBusy(state)){const f=pawTeaScoopFrame(age,residentReducedMotion.matches);teaScoopArt(f.x,f.y,f.angle,f.loaded)}
+  else if(pawTeaScoopBusy(state)){const f=pawTeaScoopFrame(age,residentReducedMotion.matches,state.pawScoopOrigin);teaScoopArt(f.x,f.y,f.angle,f.loaded)}
   else teaScoopArt(530,520,0,true);
   if(!pawTeaScoopBusy(state,t)&&state.teaToppingCount<2)target(487,480,90,80,()=>{},'teaPearlScoop');
  }
@@ -8438,7 +8450,7 @@ function pearlAdvance(){
  if(pawTeaScoopBusy(state)){
   const f=pawTeaScoopFrame(age);
   if(f.drop&&!state.pawScoopDropped){state.pawScoopDropped=true;state.teaToppingCount++;state.teaPearls=state.teaToppingCount*5;sound(280+state.teaPearls*12)}
-  if(f.done){state.pawScoopPending=false;if(state.teaToppingCount===2)pearlStage('mix')}
+  if(f.done){state.pawScoopPending=false;state.pawScoopOrigin=null;if(state.teaToppingCount===2)pearlStage('mix')}
   return
  }
  if(state.teaStage==='sealing'&&age>=1.25){state.teaSealed=true;pearlStage('ready');sound(580)}
