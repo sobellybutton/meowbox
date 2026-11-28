@@ -32,3 +32,14 @@ ck(state(cache,{valid:false},mock,1,false,false)===null,'invalid chart');
 ck(state(cache,null,mock,1,false,false)===null,'no chart');
 ck(state(cache,first,{},1,false,false)===null,'old library');
 console.log('PASS '+n+' combined parchment and runtime cache checks');
+
+const locationBlock=source.match(/\/\* PAW_YUE_PARCHMENT_BEGIN \*\/([\s\S]*?)\/\* PAW_YUE_PARCHMENT_END \*\//)[1];
+const locationMode=new Function(locationBlock+';return pawYueLocationMode')();
+let locationChecks=0;
+for(const place of ['0','1','2','3','4','5','6','7','custom','',null,'99']){
+ for(const [values,valid] of [[['8','1.35','103.82'],true],[['5.75','27.7','85.3'],true],[['','1','1'],false],[['8.1','1','1'],false],[['14.25','1','1'],false],[['8','67','1'],false],[['8','1','181'],false],[['8','0','0'],true]]){
+  const expected=/^[0-7]$/.test(place||'')&&valid?'preset':'manual';
+  assert.equal(locationMode(place,values),expected);locationChecks++
+ }
+}
+console.log('PASS '+locationChecks+' birthplace disclosure mode checks');
