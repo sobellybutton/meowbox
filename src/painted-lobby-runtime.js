@@ -600,6 +600,11 @@ function pawInstallEditorialShare(){
  const artBefore=pawRecoveredResultIllustration;
  pawRecoveredResultIllustration=function(data){
   const path=pawEditorialFortuneCharm(data,townFortunes,pawRecoveredCharmPath);
+  // Export-only candidate illustrations, not active room/host replacements.
+  // Inspect the rendered artwork before release; never return to the
+  // unrelated labelled tea-house scene or Tarot host for Master Yue.
+  const resultArt={cafe:'../../staging/2026-11-28-consolidated/room-alternates/compatibility-cafe.webp',story:'../../staging/2026-11-28-consolidated/room-alternates/parallel-lives.webp',zwds:'../master-yue/standing.webp'};
+  if(Object.hasOwn(resultArt,data?.kind))return pawRecoveredImage(resultArt[data.kind]);
   return (path&&pawRecoveredImage(path))||artBefore(data)
  };
  const prior=shareCardArt;
