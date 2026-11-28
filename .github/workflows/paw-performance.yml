@@ -1,0 +1,43 @@
+name: Pawradise measured performance
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/performance-budget-test.cjs'
+      - 'scripts/frame-pacing-test.cjs'
+      - '.github/workflows/paw-performance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  performance:
+    concurrency:
+      group: paw-performance-${{ github.sha }}-${{ matrix.browser }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: node scripts/frame-pacing-test.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Record frame pacing and resource growth during normal play
+        env:
+          PAW_BROWSER: ${{ matrix.browser }}
+        run: |
+          python3 -m http.server 8776 >/tmp/paw-performance.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8776/ -o /dev/null && break; sleep 1; done
+          node scripts/performance-budget-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-${{ matrix.browser }}-${{ github.sha }}
+          path: test-results/performance/
