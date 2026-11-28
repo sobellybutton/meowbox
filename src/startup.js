@@ -13036,6 +13036,15 @@ function pawReadingHostFamilyReady(id,manifest,api,ready){
  const poses=host&&manifest?.characters?.[host]?.poses;
  return !!api&&!!poses&&Object.keys(poses).length===3&&Object.entries(poses).every(([pose,a])=>!!api.contacts(manifest,host,pose,[0,0],10)&&ready(a.path,a.canvas))
 }
+// A late-decoded family is adopted only at an intentional consultation
+// boundary, never halfway through a drawing or a parchment reveal.
+function pawYueAdoptSeatedVisit(visit,id,kind,transition,ready){
+ if(!visit||visit.id!=='destiny'||id!=='destiny'||kind||transition||visit.ready||!ready())return false;
+ visit.ready=true;return true
+}
+function pawYueConsultPlaqueVisible(talking,pageOpen,transition){
+ return !talking&&!pageOpen&&!transition
+}
 /* PAW_READING_SEATED_HOST_END */
 let pawHostLibrary=null,pawHostLibraryJob=null,pawHostWarmJobs=new Map(),pawHostVisit=null;
 function pawLoadHostLibrary(){
@@ -13262,6 +13271,7 @@ function pawDrawYueAtDesk(a){
  return true
 }
 function pawDrawYueDeskPlaque(fn){
+ if(!pawYueConsultPlaqueVisible(talkOpen,$('page').style.display==='block',transitioning))return false;
  const q=pawYueDeskPlaque(),scale=Math.max(.08,cam.scale),font=Math.max(9,12/scale),name=tr('Consult','问事');
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';
@@ -13524,6 +13534,8 @@ function pawYueDeskChoose(kind){
 yueReadingHub=function(...args){
  if(room!=='destiny')return pawYueDeskHubBefore(...args);
  $('page').style.display='none';pawYueChartObserver?.disconnect();pawYueChartObserver=null;delete $('page').dataset.pawYueDesk;delete $('page').dataset.pawYueExpanded;closeTalk();
+ pawYueAdoptSeatedVisit(pawHostVisit,room,activity,transitioning,()=>pawHostFamilyReady('destiny'));
+ if(!pawHostVisit?.ready)pawWarmReadingHost('destiny');
  say(tr('Master Yue','月师傅'),tr("Ah, sit and have some tea. The stars are not going anywhere. What shall we explore?","来啦？坐，先喝口茶。星星又不会跑。今天想问些什么？"),[
  [tr('My year ahead','生肖流年'),()=>pawYueDeskChoose('year')],
  [tr('My birth chart','生辰命盘'),()=>pawYueDeskChoose('chart')],
@@ -13666,6 +13678,7 @@ function pawYueCompactLocation(form){
 }
 function pawYueDeskPresent(kind){
  if(room!=='destiny')return;
+ pawYueAdoptSeatedVisit(pawHostVisit,room,activity,transitioning,()=>pawHostFamilyReady('destiny'));
  const q=$('content'),pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
  pane.dataset.pawYueDesk='true';
  q.querySelector('.yueCompactHost')?.remove();
