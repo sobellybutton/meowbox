@@ -574,7 +574,10 @@
         "cc9b848d: expanded browser regression, parsed only",
         "8caa7e9c: workflow builds current source and runs input checks"
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-yue-native-1238",
+        "until": 1795842480000
+      },
       "blocker": "Latest browser workflow, rendered mobile/desktop result and Pages deployment not verified; existing art and chart method limits unchanged.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay."
     },
     {
