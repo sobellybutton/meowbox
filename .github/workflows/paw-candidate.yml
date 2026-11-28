@@ -1,0 +1,51 @@
+name: Pawradise isolated candidate checks
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'src/**'
+      - 'assets/**'
+      - 'scripts/**'
+      - '.github/workflows/paw-candidate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+# Candidate checks are deliberately independent of the main release jobs.
+# A newer PR revision can replace a pending job, not an executing one.
+concurrency:
+  group: paw-candidate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Identify tested revision
+        run: git rev-parse HEAD
+      - name: Build and focused regression checks
+        run: |
+          node scripts/build.cjs
+          node scripts/action-refinement-test.cjs
+          node scripts/visitor-clearance-test.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Organic device journey and rendered HUD regression
+        env:
+          MEOW_BROWSER: chromium
+        run: |
+          python3 -m http.server 8768 >/tmp/paw-candidate-server.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8768/index.html -o /dev/null && break; sleep 1; done
+          node scripts/device-journey-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: candidate-evidence-${{ github.run_id }}
+          path: |
+            test-results/
+            /tmp/paw-candidate-server.log
+          if-no-files-found: warn
