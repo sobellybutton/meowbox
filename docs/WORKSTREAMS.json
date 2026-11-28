@@ -21,11 +21,10 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-entrance-live-1314",
-        "until": 1795843837282
-      },
+      "evidence": [
+        "28 Nov live isolated Chromium entrance: ordinary ticket/signature/turn avatar/motivation/train skip/Step inside controls. At 390×844 initial first-contentful paint 68ms (browser nav sample, not full coherent load); entrance train native canvas and image rect 351.36×527.03 at x19.31 y61.06, not full viewport. Gate art decoded with cover and 390×844 rect; Step inside to map text took 1814ms. Warm returning 1440×900 reload skipped ticket, FCP 108ms, decoded gateway 1440×900; Step inside restored Test Traveller and 10 coins, map canvas full viewport. Desktop timing predicate looked for absent district title and timed out despite successful entry. No physical phone, cold cache controlled trial, screenshot inspection or new game code. Rail startup separately leased; coordinate initial train full-bleed frame."
+      ],
+      "lease": null,
       "blocker": "\n\nOwner device acceptance clarification (27 Nov): Both genuine phone and desktop entrance, returning player, train, first coherent frame and normal movement acceptance; cold/warm cache, slow/failed network, cancellation and reload. Apply section 10.\n\n28 Nov owner iPhone screenshot: entrance image has horizontal bands inside game viewport; camera feels static/wide. Verify full-bleed coverage, safe area and Safari dynamic viewport; grounded character approach and purposeful camera push through gate without dead pause. Do not hide browser/system chrome.\n\nEnd-to-end critique, 28 Nov: Measure cold and warm time to first coherent frame, first usable input and first enjoyable action, including first-time and returning launch. No forced tutorial or redundant confirmation. Apply section 12."
     },
     {
