@@ -62,7 +62,8 @@ console.log('PASS '+n+' blind-box placement, reveal and layer assertions.');
   ck(requests.length===2&&prepare(first)===a,'initial pair requested only once');
   requests[0].onerror();await flush();
   ck(a.failed&&prepare(first)===a&&requests.length===2,'no repeated failed requests during a visit');
-  const b=prepare(second);
+  ck(prepare(second,false)===a&&requests.length===2,'no retry after leaving shelf');
+  const b=prepare(second,true);
   ck(b!==a&&requests.length===4,'next shelf visit retries');
   for(const im of requests.slice(2)){im.naturalWidth=896;im.naturalHeight=671;im.onload()}
   await flush();
