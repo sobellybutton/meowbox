@@ -203,7 +203,7 @@ const routeCases=[
  [{room:'tarot',activity:'love'},'tarot',true,'tarot'],
  [{room:'match',activity:'match',scene:'wonder',phase:'result'},'cafe',false,'cafe'],
  [{room:'story',activity:'story',scene:'wonder',phase:'result'},'story',false,'story'],
- ...['quiz','curiosity','observatory'].flatMap(room=>['type','motive','bigfive','care','values','attachment','priorities'].map(mode=>[{room,activity:'wonderScene',scene:'wonder',phase:'result',mode,result:{}},mode,true,'notebook']))
+ ...['quiz','curiosity','observatory'].flatMap(room=>['type','motive','bigfive','care','values','attachment','priorities','soul'].map(mode=>[{room,activity:'wonderScene',scene:'wonder',phase:'result',mode,result:{}},mode,true,'notebook']))
 ];
 for(const [v,kind,back,id] of routeCases){
  assert.equal(liveRoutes.pawKeepsakeRoomRoute(v,kind,back)?.id,id);
