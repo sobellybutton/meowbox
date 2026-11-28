@@ -379,14 +379,16 @@ function decodeCutawayArt(path,expected=null){
  }).then(ok=>{if(!ok)cutawayDecoded.delete(key);return ok});
  cutawayDecoded.set(key,job);return job
 }
+let pendingCutawayReturn=null;
 function mountCutaway(q,legacyStage){
- const launch=element('div','',q,'pawCutawayLaunch');legacyStage.before(launch);
- const button=b(launch,tr('Cutaway room','立体小窝'),open);
+ const resume=pendingCutawayReturn;pendingCutawayReturn=null;
+ const launch=element('div','',q,'pawCutawayLaunch');legacyStage.after(launch);
+ const button=b(launch,tr('Explore the room','走进小窝'),()=>open());
  let opened=false;
- async function open(){
+ async function open(resumeState=null){
   if(opened)return;opened=true;button.disabled=true;button.textContent=tr('Opening your room…','正在打开小窝…');
   const active=()=>q.contains(legacyStage)&&legacyStage.isConnected&&$('page').style.display==='block';
-  const reset=()=>{opened=false;button.disabled=false;button.textContent=tr('Cutaway room','立体小窝')};
+  const reset=()=>{opened=false;button.disabled=false;button.textContent=tr('Explore the room','走进小窝')};
   const api=await pawLoadHomePaintings();
   if(!active()){reset();return}
   if(!api){reset();toast(tr('The painted room could not load. Your original room is unchanged.','立体小窝暂时无法载入，原本的小窝不会改变。'));return}
@@ -405,8 +407,14 @@ function mountCutaway(q,legacyStage){
   const controls=element('div','',panel,'pawCutawayControls');
   const status=element('small','',panel,'pawCutawayStatus');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const oldHidden=legacyStage.hidden;
+  let closed=false;
   function close(){
-   stop();drag.clear();seatResize?.disconnect();observer.disconnect();document.removeEventListener('visibilitychange',onVisibility);panel.remove();legacyStage.hidden=oldHidden;q.classList.remove('pawCutawayOpen');reset();if(button.isConnected&&$('page').style.display==='block')button.focus({preventScroll:true})
+   if(closed)return;closed=true;
+   stop();drag.clear();seatResize?.disconnect();observer.disconnect();document.removeEventListener('visibilitychange',onVisibility);panel.remove();legacyStage.hidden=oldHidden;if(!q.querySelector('.pawCutawayPanel'))q.classList.remove('pawCutawayOpen');reset();if(button.isConnected&&$('page').style.display==='block')button.focus({preventScroll:true})
+  }
+  function returnToCutaway(){
+   pendingCutawayReturn={zone,fingerprint,actor:{...actor}};
+   try{return hideoutPage()}finally{pendingCutawayReturn=null}
   }
   function fail(){if(!panel.isConnected)return;close();toast(tr('The painted room could not load. Your original room is unchanged.','立体小窝暂时无法载入，原本的小窝不会改变。'))}
   shell.onerror=fail;shell.onload=()=>{if(shell.naturalWidth&&shell.naturalHeight)stage.style.aspectRatio=shell.naturalWidth+'/'+shell.naturalHeight};
@@ -419,7 +427,9 @@ function mountCutaway(q,legacyStage){
    if(editing||seatedKey||!visibleFoot||Math.hypot(visibleFoot.x-point(actor).x,visibleFoot.y-point(actor).y)<=.0001)toggle();
    else walk(actor,toggle)
   });
-  let editing=false,selected=null,actor=cutawayFree(api,layout,items).at(-1),raf=0,epoch=0;
+  const freeCells=cutawayFree(api,layout,items);
+  const prior=resumeState?.zone===zone&&resumeState.fingerprint===fingerprint?freeCells.find(cell=>cell.u===resumeState.actor?.u&&cell.v===resumeState.actor?.v):null;
+  let editing=false,selected=null,actor=prior||freeCells.at(-1),raf=0,epoch=0;
   const drag=cutawayDragOwner();
   let seatedKey=null,seatStandingRatio=0,seatResize=null,visibleFoot=null,actorFacing='down';
   const seatFrame=cutawaySeatFrame(avatar??0);let seatReady=false;
@@ -518,9 +528,9 @@ function mountCutaway(q,legacyStage){
      if(lights.has(item.key))lights.delete(item.key);else lights.add(item.key);
      persist();render();status.textContent=lights.has(item.key)?tr('A little warmth for the room.','小窝又暖和了一点。'):tr('Time for a quiet evening.','享受安静的夜晚吧。');return
     }
-    if(item.key==='board'){close();myNotes9();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),hideoutPage)}
-    else if(item.key==='frame'){close();album9();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),hideoutPage)}
-    else if(item.key==='shelf'){close();hideoutClaimPage();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),hideoutPage)}
+    if(item.key==='board'){close();myNotes9();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),returnToCutaway)}
+    else if(item.key==='frame'){close();album9();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),returnToCutaway)}
+    else if(item.key==='shelf'){close();hideoutClaimPage();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),returnToCutaway)}
     else if(item.key==='displayCabinet'){close();figureCabinetPage()}
     else if(item.key==='retroTV'){close();komorebiTVPage()}
    })
@@ -575,6 +585,9 @@ function mountCutaway(q,legacyStage){
    }
   });
  }
+ // Explicit returns from physical room objects restore the same walkable
+ // layout and last safe cell; ordinary room opening keeps the proven fallback.
+ if(resume)open(resume);
 }
 const homeBefore=hideoutPage;
 let pawRoomMaterialsOpen=false;
@@ -626,6 +639,8 @@ hideoutPage=function(...args){
 };
 const style=document.createElement('style');style.textContent=`
 #game #content .pawCutawayLaunch{display:flex;justify-content:center;margin:4px 0}
+#game #content .pawCutawayLaunch button{background:none!important;border:0!important;box-shadow:none!important;color:#536346!important;text-decoration:underline;text-underline-offset:3px}
+#game #content .pawCutawayPanel{margin:0 auto;width:min(100%,clamp(240px,calc(85dvh - 130px),600px))!important}
 #game #content .pawCutawayLaunch button,#game #content .pawCutawayControls button{min-height:44px}
 #game #content .pawCutawayPanel{margin:0 auto;width:min(100%,530px)}
 #game #content .pawCutawayStage{position:relative;width:100%;aspect-ratio:1;isolation:isolate;overflow:hidden;background:#eadfc8}
