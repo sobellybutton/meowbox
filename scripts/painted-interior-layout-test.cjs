@@ -129,13 +129,28 @@ console.log('Park live admission, animal staging and threshold exit checks passe
 const visitorStart=source.indexOf('/* PAW_MAPPED_VISITORS_BEGIN */'),visitorEnd=source.indexOf('/* PAW_MAPPED_VISITORS_END */');
 const guestStart=source.indexOf('function pawGuestClear('),guestEnd=source.indexOf('function pawGuestStationFeet(');
 assert.ok(visitorStart>=0&&visitorEnd>visitorStart&&guestStart>=0&&guestEnd>guestStart);
-const visitor=new Function(source.slice(start,end)+source.slice(guestStart,guestEnd)+source.slice(visitorStart,visitorEnd)+';return {pawMappedGuestGaps,pawMappedVisitorPoints,pawReadingNormalized,pawReadingSpec,pawGuestClear};')();
+const segmentStart=source.indexOf('function pawGuestSegment('),segmentEnd=source.indexOf('function pawGuestSpaced(');
+const routeStart=source.indexOf('function pawVisitorDoorRoute('),routeEnd=source.indexOf('function pawVisitorVisible(');
+assert.ok(segmentStart>=0&&segmentEnd>segmentStart&&routeStart>=0&&routeEnd>routeStart);
+const visitor=new Function(source.slice(start,end)+source.slice(guestStart,guestEnd)+source.slice(segmentStart,segmentEnd)+source.slice(routeStart,routeEnd)+source.slice(visitorStart,visitorEnd)+';return {pawMappedGuestGaps,pawMappedVisitorPoints,pawReadingNormalized,pawReadingSpec,pawGuestClear,pawGuestSegment,pawVisitorDoorRoute,pawReadingDestination,pawReadingWorld,pawChooseConnectedGuestPoints};')();
 const gap=visitor.pawMappedGuestGaps(true),legacyGap=visitor.pawMappedGuestGaps(false);
 assert.equal(legacyGap.station,52);assert.equal(legacyGap.spawn,90);
 for(const id of Object.keys(api.rooms)){
  const spec=visitor.pawReadingSpec(api,id),points=visitor.pawMappedVisitorPoints(api,id);
  assert.ok(points.length>0&&points.length<=8,id+' room has safe guest candidates');
  assert.deepEqual(points,visitor.pawMappedVisitorPoints(api,id),'stable guest candidates');
+ const safe=(x,y)=>api.safe(id,visitor.pawReadingNormalized(x,y));
+ const segment=(a,b)=>api.segment(id,visitor.pawReadingNormalized(...a),visitor.pawReadingNormalized(...b));
+ const route=(a,b)=>visitor.pawReadingDestination(api,id,a,...b);
+ const stations=Object.values(spec.stations).map(v=>v.slice(2));
+ const reserved=[spec.entry,[spec.entry[0],spec.entry[1]-35],spec.arrival,...stations];
+ const host=['quiz','story','match'].includes(id)?[]:[visitor.pawReadingWorld(id==='destiny'?[.58,.446]:api.rooms[id].host)];
+ assert.ok(visitor.pawVisitorDoorRoute(spec.entry,points[0],stations,safe,route,gap.station,segment),id+' guest seed can enter and leave');
+ for(let i=1;i<points.length;i++){
+  assert.ok(points.slice(0,i).some(p=>segment(p,points[i])&&visitor.pawGuestSegment(p,points[i],reserved,gap.station)&&visitor.pawGuestSegment(p,points[i],host,gap.host)),id+' connected guest stops');
+  assert.ok(visitor.pawGuestClear(...points[i],points.slice(0,i),18),id+' spread walking stops');
+ }
+
  for(const p of points){
   assert.ok(api.safe(id,visitor.pawReadingNormalized(...p)),id+' guest floor');
   assert.ok(visitor.pawGuestClear(...p,[spec.entry],gap.entry),id+' threshold clearance');
