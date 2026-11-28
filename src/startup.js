@@ -9847,7 +9847,6 @@ document.addEventListener('keydown',event=>{
    while on the board, and focus-safe refresh. Fictional posts stay separate. */
 let pawNoticeDisclosureSerial=0;
 const pawNoticeExpanded=new Set();
-let pawNoticeShown=6;
 function pawNoticeReplyState(button,panel,expanded){
  button.setAttribute('aria-expanded',String(expanded));
  panel.hidden=!expanded;
@@ -9856,19 +9855,19 @@ function pawNoticeReplyState(button,panel,expanded){
 renderResidentNoticeboard=function(q){
  const wrap=element('section','',q,'townWall');
  element('h2',tr('Overheard in town','摸鱼留言墙'),wrap,'board-heading');
- element('p',tr('New town notices arrive over time. Old favourites stay in the archive.','小镇见闻陆续更新，旧瓜也能慢慢翻。'),wrap,'wallIntro');
+ element('p',tr('Ten little notes from around town. Come back tomorrow for a new selection.','每天十条小镇见闻，明天再来看看新鲜事。'),wrap,'wallIntro');
  element('p',tr(...pawWeekNote()),wrap,'pawWeeklyNotice');
  element('small',tr('Notes from around town. The shared square is a separate public space.','来自小镇的留言。共享广场是另一个公共空间。'),wrap,'wallDisclosure');
- const publicBtn=b(wrap,communityURL()?tr('Read or leave a real visitor post','看看真人留言 / 留句话'):tr('Shared square · not open yet','共享广场 · 尚未开放'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink';
+ if(communityURL()){const publicBtn=b(wrap,tr('Read or leave a real visitor post','看看真人留言 / 留句话'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink'}
  const list=element('div','',wrap,'townPostList'),nav=element('div','',wrap,'townPostNav');
- let shown=pawNoticeShown,lastCount=-1,lastSignature='',lastIds=new Set();
+ let lastSignature='';
  function render(){
   const focused=document.activeElement?.closest?.('.wallReplyToggle');
   const focusId=focused&&list.contains(focused)?focused.closest('.wallReplies')?.dataset.noticeId:null;
-  const moreFocused=nav.contains(document.activeElement),top=$('page').scrollTop;
-  const entries=townPublishedNotices();lastCount=entries.length;lastSignature=entries.map(v=>v.id).join('|');lastIds=new Set(entries.map(v=>v.id));for(const id of pawNoticeExpanded)if(!lastIds.has(id))pawNoticeExpanded.delete(id);
+  const top=$('page').scrollTop;
+  const entries=pawDailyTownNotices();lastSignature=entries.map(v=>v.id).join('|');const ids=new Set(entries.map(v=>v.id));for(const id of pawNoticeExpanded)if(!ids.has(id))pawNoticeExpanded.delete(id);
   list.replaceChildren();nav.replaceChildren();let restore=null;
-  for(const {thread:m,date,id} of entries.slice(0,shown)){
+  for(const {thread:m,date,id} of entries){
    const post=element('article','',list,'townResidentNote');post.dataset.noticeId=id;
    element('strong',tr(...m[0]),post);
    if(date)element('small',new Date(date).toLocaleDateString(zh?'zh-CN':'en-SG',{month:'short',day:'numeric',timeZone:'Asia/Singapore'}),post,'townNoticeDate');
@@ -9887,16 +9886,15 @@ renderResidentNoticeboard=function(q){
    });
    if(id===focusId)restore=toggle;
   }
-  element('span',Math.min(shown,entries.length)+' / '+entries.length+' '+tr('notices','条见闻'),nav);
-  const more=b(nav,tr('Read older notices','翻翻以前的留言'),()=>{shown=pawNoticeShown=pawNoticePageSize(shown,entries.length,6);render()});more.type='button';more.disabled=shown>=entries.length;
-  if(restore)restore.focus({preventScroll:true});else if(moreFocused&&!more.disabled)more.focus({preventScroll:true});
+  element('span',entries.length+' '+tr('notices today','条今日留言'),nav);
+  if(restore)restore.focus({preventScroll:true});
   $('page').scrollTop=top;
  }
  render();
  const timer=setInterval(()=>{
   if(!wrap.isConnected||$('page').style.display!=='block'){clearInterval(timer);return}
-  const next=townPublishedNotices(),n=next.length;
-  if(n!==lastCount||next.map(v=>v.id).join('|')!==lastSignature){shown=pawNoticeShown=pawNoticePageSize(shown,n,next.filter(v=>!lastIds.has(v.id)).length);render()}
+  const next=pawDailyTownNotices();
+  if(next.map(v=>v.id).join('|')!==lastSignature)render()
  },60000)
 };
 const pawNoticeDisclosureStyle=document.createElement('style');
