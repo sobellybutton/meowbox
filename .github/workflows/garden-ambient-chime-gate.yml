@@ -1,0 +1,18 @@
+name: Pawradise ambient garden chime gate
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  garden:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/quiet-garden-ambient-chime-20261128'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: node scripts/garden-painted-test.cjs

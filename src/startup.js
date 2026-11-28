@@ -11082,7 +11082,7 @@ drawActivity=function(...args){
   else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',.9);
   // The wind chime is attached to the painted stall eave on the left.
   const [wx,wy]=xy(.205,.385);
-  ctx.save();try{ctx.translate(wx,wy);ctx.scale(.30,.30);gardenWindChime(0,0)}finally{ctx.restore()}
+  ctx.save();try{ctx.translate(wx,wy);if(!residentReducedMotion.matches)ctx.rotate(Math.sin(t*1.45)*.035+Math.sin(t*.83)*.014);ctx.scale(.30,.30);gardenWindChime(0,0)}finally{ctx.restore()}
   const [bx,by]=xy(.83,.625);
   if(!moving){
    target(bx-36,by-34,72,68,()=>pawGardenChoose(run,'seat'));
