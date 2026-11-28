@@ -301,14 +301,16 @@ if(typeof document!=='undefined')queueMicrotask(pawInstallNativeConsultation);
 
 
 /* PAW_TAROT_HOST_CONTINUITY_BEGIN */
-function pawTarotConsultationPlate(b,iw,ih){
- if(!b||![b.x,b.y,b.w,b.h,iw,ih].every(Number.isFinite)||Math.min(b.w,b.h,iw,ih)<=0)return null;
+function pawTarotConsultationPlate(b,iw,ih,screenScale=1){
+ if(!b||![b.x,b.y,b.w,b.h,iw,ih].every(Number.isFinite)||Math.min(b.w,b.h,iw,ih)<=0||!Number.isFinite(screenScale)||screenScale<=0)return null;
  // Use the same physical framing as the lobby. Covering a wide screen
  // with a portrait painting enlarges the host independently of the room.
  if(b.w<b.h){
   const q=pawTarotLobbyFrame(b.w,b.h,{x:0,y:0,w:iw,h:ih});
   return q?{x:b.x+q.ox,y:b.y+q.oy,w:iw*q.s,h:ih*q.s}:null
  }
+ const wide=pawReadingWideFrame(b.w*screenScale,b.h*screenScale,{x:0,y:0,w:iw,h:ih});
+ if(wide)return {x:b.x+wide.ox/screenScale,y:b.y+wide.oy/screenScale,w:iw*wide.s/screenScale,h:ih*wide.s/screenScale};
  const s=Math.min(b.w/iw,b.h/ih),w=iw*s,h=ih*s;
  return {x:b.x+(b.w-w)/2,y:b.y+(b.h-h)/2,w,h}
 }
@@ -319,7 +321,7 @@ function pawInstallTarotHostContinuity(){
   if(room==='tarot'&&pawReadingVisit==='tarot'&&['tarot','love'].includes(activity)){
    const im=pawReadingImage(pawReadingAPI(),'tarot');
    if(pawRoomImageReady(im)){
-    const b=livingBounds(),plate=pawTarotConsultationPlate(b,im.naturalWidth,im.naturalHeight);
+    const b=livingBounds(),plate=pawTarotConsultationPlate(b,im.naturalWidth,im.naturalHeight,W/b.w);
     if(plate){
      ctx.save();try{
       ctx.fillStyle='#42433c';ctx.fillRect(b.x,b.y,b.w,b.h);
