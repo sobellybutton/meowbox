@@ -1001,13 +1001,11 @@
       "stage": "implemented",
       "evidence": [
         "01a34865: all 14 generated WebP files imported to main from owner transfer; all source SHA256 and Git blob SHA1 checks, RGBA decoding and dimensions verified; 14 committed paths independently checked against main tree. 11 missing catalogue assets at runtime paths, 3 alternates staged separately.",
-        "81dcbdae: eight exact catalogue finish IDs imported to assets/visual/painted/home/finishes/ with manifest, local source and remote file hashes/sizes/dimensions confirmed. Room surface masks, repeat seams and renderer projection remain open."
+        "81dcbdae: eight exact catalogue finish IDs imported to assets/visual/painted/home/finishes/ with manifest, local source and remote file hashes/sizes/dimensions confirmed. Room surface masks, repeat seams and renderer projection remain open.",
+        "7016abe7: imported all eight exact material swatches into current room SVG surface rendering with mirrored edge tiling, depth-scaled floor scanlines, original wall/floor mask anchors, async fallback and stale room guards. 3345 focused assertions passed against mocked canvas and source syntax; actual rendered pixels not inspected. 5d1af91f adds actual editor selection, all eight decoded material surfaces and saved choice reload checks to existing Chromium/WebKit device journey; browser run pending."
       ],
-      "lease": {
-        "owner": "manual-20261128-home-projection",
-        "until": 1795835191815
-      },
-      "blocker": "All eight finish swatches now imported at stable runtime paths; room surface masks and perspective-correct texture projection, repeat seams, actual phone/desktop catalogue and room acceptance pending. Do not regenerate these textures."
+      "lease": null,
+      "blocker": "All eight finishes are imported and wired to current 400x500 room renderer. Actual phone/desktop browser screenshot, repeated texture visual quality, architectural projection on future painted room shells, and full catalogue acceptance remain pending. Do not regenerate these textures."
     },
     {
       "id": "HOME-CATALOGUE-LIVE-02",
@@ -1024,7 +1022,9 @@
         "HOME-CATALOGUE-ART-02"
       ],
       "stage": "outstanding",
-      "evidence": [],
+      "evidence": [
+        "7016abe7/5d1af91f: live existing room material selection and persistence regression implemented; dependency remains open until actual rendering verified."
+      ],
       "lease": null
     },
     {

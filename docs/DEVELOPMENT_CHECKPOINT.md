@@ -541,3 +541,6 @@ ROOM-04 partial: a7ac348a and 6518a032 trace inspected arcade portrait aisle and
 
 ## Daydream Park painted path (28 November)
 ROOM-05 partial: d47ae2c2 maps the inspected existing park portrait with curved walkable stone path, entry/arrival, cat bench and deer feeder approach, and safe visitor positions; 234 route, segment and viewport checks passed. c74aec92 persists bend and obstacle checks. Registry 06fd3cb0 records the work. Runtime activation pending verification of the current effective station list and shared startup lease; the current extensions fetch returned no text, so the indexed deerVisit ID alone was not treated as confirmation. No final visual acceptance or stage promotion. Concurrent home projection work preserved.
+
+## Painted home materials (28 November)
+7016abe7 connects all eight imported finish swatches to the current room's bounded SVG wall/floor, with reflected tile edges, perspective-scaled floor sampling, fallback and stale-view protection. 3345 isolated assertions exercised mocked canvas and projected bounds; 5d1af91f adds editor choice, decoded raster and reload persistence browser checks. Actual phone and desktop rendering and future painted shell masks remain pending. No workstream accepted; hourly automation unchanged.
