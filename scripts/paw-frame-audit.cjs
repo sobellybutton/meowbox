@@ -25,6 +25,33 @@ async function attachFrameAudit(page,out,prefix){
     const walkers=!room&&!intro&&!overlay?npc.filter(n=>n.kind!==2&&!n.grumpy&&!residentArtworkRecord(n.n)).map(n=>({name:n.n?.[0],kind:stableResidentFallback(n),x:Math.round(n.x),y:Math.round(n.y)})):[];
     if(walkers.some(a=>a.kind===avatar))issues.push('npc-player-copy');
     for(let i=0;i<walkers.length;i++)for(let j=i+1;j<walkers.length;j++)if(walkers[i].kind===walkers[j].kind&&Math.hypot(walkers[i].x-walkers[j].x,walkers[i].y-walkers[j].y)<240)issues.push('nearby-identical-walkers');
+    // Canvas actors are not DOM controls. Audit their projected envelopes
+    // against actual visible UI, rather than relying on hit-test coverage.
+    if(mode==='map'&&!transitioning&&!talkOpen&&typeof characterScreenBounds==='function'){
+     const actor=characterScreenBounds(p,true);
+     const localRect=e=>{const r=e.getBoundingClientRect();return {left:r.left-g.left,right:r.right-g.left,top:r.top-g.top,bottom:r.bottom-g.top}};
+     const intersection=(a,b)=>Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))*Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+     const area=a=>Math.max(0,a.right-a.left)*Math.max(0,a.bottom-a.top);
+     const overlaps=(a,b)=>intersection(a,b)>Math.max(24,area(a)*.08);
+     const valid=a=>a&&[a.left,a.top,a.right,a.bottom].every(Number.isFinite)&&area(a)>0;
+     if(valid(actor)){
+      if(actor.left<0||actor.right>g.width||actor.top<0||actor.bottom>g.height)issues.push('projected-player-clipped-by-viewport');
+      for(const id of ['dock','profileHud','hudStats','townSettingsToggle','movePad']){
+       const control=document.getElementById(id);
+       if(visible(control)&&overlaps(actor,localRect(control)))issues.push('projected-player-overlap:'+id);
+      }
+      for(const plaque of document.querySelectorAll('#worldSigns .worldSign:not([hidden]) .doorPlaque')){
+       if(visible(plaque)&&overlaps(actor,localRect(plaque)))issues.push('projected-player-overlap:sign:'+plaque.closest('.worldSign')?.dataset.door);
+      }
+     }
+     const settings=document.getElementById('townSettingsToggle');
+     if(visible(settings)){
+      const paintedCog=getComputedStyle(settings,'::before'),svg=settings.querySelector('svg');
+      const cogVisible=paintedCog.content!=='none'&&paintedCog.content!=='normal'&&paintedCog.display!=='none'&&paintedCog.backgroundImage!=='none';
+      if(cogVisible&&visible(svg))issues.push('duplicate-settings-icon');
+      if(!cogVisible&&!visible(svg))issues.push('missing-settings-icon');
+     }
+    }
     const labels=room&&!activity&&!overlay&&!intro&&!transitioning&&!talkOpen&&typeof roomGuideEntries==='function'?roomGuideEntries().map(v=>v[0]):[];
     const missing=labels.filter(id=>!hit.some(h=>h.stationId===id&&typeof h.fn==='function'));
     if(missing.length)issues.push('missing-station-target:'+missing.join(','));
