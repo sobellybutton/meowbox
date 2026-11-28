@@ -887,12 +887,10 @@
       "depends": [],
       "stage": "tested",
       "evidence": [
-        "39f30e29: original surface-specific footstep noise, distance-based alternating cadence and train rhythm; 25 mocked audio/guard assertions passed."
+        "39f30e29: original surface-specific footstep noise, distance-based alternating cadence and train rhythm; 25 mocked audio/guard assertions passed.",
+        "Project batch 26: a71fff06 + bc42d4bb alternate quieter and stronger railway wheel pulses, reset phase at ride lifecycle and preserve mute/pause gates. Real listening and device verification pending."
       ],
-      "lease": {
-        "owner": "manual-global-next",
-        "until": 1795841147115
-      },
+      "lease": null,
       "blocker": "Connect to existing audio bus and movement lifecycle after shared startup lease clears; real listening/mobile mute and background checks outstanding."
     },
     {
@@ -926,12 +924,10 @@
       "depends": [],
       "stage": "tested",
       "evidence": [
-        "124e2b6d: 48 original bilingual remarks for all 16 current resident profiles, stable IDs and idempotent merge; 148 regression assertions executed against current startup content."
+        "124e2b6d: 48 original bilingual remarks for all 16 current resident profiles, stable IDs and idempotent merge; 148 regression assertions executed against current startup content.",
+        "Project batch 25: e5e3d4a1 + 8a27f680 add 32 original bilingual lines across 16 resident profiles (128 module remarks), preserving keys and live idempotent merge. Rendered cadence and typography unverified."
       ],
-      "lease": {
-        "owner": "manual-global-next",
-        "until": 1795841147115
-      },
+      "lease": null,
       "blocker": "Connect module to existing ambient scheduler when shared source lease clears; actual dialogue placement, cadence and bilingual review pending."
     },
     {
@@ -1615,12 +1611,10 @@
         "5baafcce persists focused scene handoff regression checks; executed against source in connector harness, not browser.",
         "Owner iPhone feedback 28 Nov 01:08 SGT: intermittent leg flicker, blank/delayed entrance, room labels and duplicate Activities controls, and website-like Master Yue form. 24afa31d implements in-scene consultation and stable local gait; prior current code moves Yue behind desk using clipped standing art and hides touch directory; do not mark actual visual acceptance without device playthrough. A real seated Yue sprite and desk contact/close-up are still required.",
         "403101ca: nearby outdoor prewarming now chooses mapped lobby painting for seven reviewed rooms, kitchen/boba and wishing garden instead of retired backgrounds; explicit re-entry may retry failed images after 750ms while background cooldown remains 10s. Seven focused retry cases passed; 87cbc4fd persists regression. Actual load duration, device network and deployment not verified.",
-        "Owner 28 Nov 11:17 SGT: entrance loading still lacking; prioritize real cold/warm timing, coherent first frame, avoid waiting for optional room artwork, branded entrance state rather than blank or generic web loader."
+        "Owner 28 Nov 11:17 SGT: entrance loading still lacking; prioritize real cold/warm timing, coherent first frame, avoid waiting for optional room artwork, branded entrance state rather than blank or generic web loader.",
+        "Project batch 1: 378b1a11 caches same-source successful image decode, deduplicates pending decode, rejects changed-source results and avoids eager unrelated district decoding and stale nearby-room warm jobs. 8 isolated exact readiness assertions passed; device timings unverified."
       ],
-      "lease": {
-        "owner": "manual-global-next",
-        "until": 1795841147115
-      },
+      "lease": null,
       "blocker": "Actual iPhone/WebKit cold/warm cache, all other room assets and visual acceptance remain open."
     },
     {
