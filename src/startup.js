@@ -15272,7 +15272,7 @@ drawActivity=function(...args){
  if(room==='tarot'&&['tarot','love'].includes(activity)&&state.readStage==='focus'&&talkOpen&&$('dialogue').hasAttribute('data-paw-tarot-conversation')){
   const v=state.readCards?.[state.readFocus],im=pawReadingImage(pawReadingAPI(),'tarot');
   if(v&&pawRoomImageReady(im)){
-   const b=livingBounds(),w=Math.min(b.w*.34,b.h*.22),h=w*218/128,x=b.x+b.w*.69-w/2,y=b.y+b.h*.33-h/2;
+   const b=livingBounds(),w=Math.min(b.w*.28,b.h*.19),h=w*218/128,x=b.x+b.w*.72-w/2,y=b.y+b.h*.49-h;
    ctx.save();try{paintLivingBackdrop(im);ctx.save();ctx.shadowColor='#29282280';ctx.shadowBlur=8;round(x-2,y-2,w+4,h+4,2,'#e5d1a6','#a78c64');ctx.restore();paintReadingArtwork(x,y,w,h,v.i,v.rev)}finally{ctx.restore()}
    return
   }
@@ -15314,16 +15314,25 @@ pawYueDeskPresent=function(kind){
  const place=form.querySelector('details select');
  if(place){
   const nums=[...form.querySelectorAll('input[type=number]')],labels=nums.map(n=>n.closest('label')).filter(Boolean);
-  // Existing historical offset and custom coordinates remain accessible.
-  const update=()=>{const preset=!!place.value&&place.value!=='custom';form.dataset.pawBirthPreset=preset?'true':'false'};
-  place.addEventListener('change',update);update();
-  // Move only the coordinate inputs into a disclosure, never remove or disable them.
-  const coordLabels=labels.slice(1);
-  if(coordLabels.length===2&&coordLabels.every(n=>n.parentElement===form)){
-   const disclosure=element('details','',form,'pawYueCoordinates');element('summary',tr('Check coordinates','核对坐标'),disclosure);coordLabels[0].before(disclosure);disclosure.append(...coordLabels);
-   // The original guided controller owns their visibility; the disclosure follows location.
-   const show=()=>{const active=!place.closest('details').classList.contains('pawYueStepHidden');disclosure.hidden=!active;disclosure.open=active&&(!place.value||place.value==='custom')};
-   const observer=new MutationObserver(show);observer.observe(place.closest('details'),{attributes:true,attributeFilter:['class']});place.addEventListener('change',show);form.addEventListener('submit',()=>{if(!form.classList.contains('pawYueGuidedForm')){observer.disconnect();disclosure.hidden=false}});show()
+  const location=place.closest('details');
+  if(labels.length===3&&location){
+   const disclosure=element('details','',form,'pawYueCoordinates');
+   const summary=element('summary','',disclosure);
+   location.after(disclosure);
+   const anchors=labels.map(n=>{const a=document.createComment('birth detail');n.before(a);disclosure.append(n);return {a,n}});
+   function sync(){
+    const active=!location.classList.contains('pawYueStepHidden'),custom=place.value==='custom';
+    disclosure.hidden=!active;
+    const offset=nums[0].value;
+    summary.textContent=offset?tr('Check UTC offset & location: ','核对时区和地点：')+(Number(offset)>=0?'+':'')+offset:tr('Check time zone & coordinates','核对时区及坐标');
+    if(!active)disclosure.open=false;
+   }
+   const changed=()=>{sync();disclosure.open=place.value==='custom'};
+   place.addEventListener('change',changed);nums[0].addEventListener('input',sync);
+   const observer=new MutationObserver(sync);observer.observe(location,{attributes:true,attributeFilter:['class']});
+   form.addEventListener('invalid',e=>{if(disclosure.contains(e.target)){disclosure.hidden=false;disclosure.open=true}},true);
+   form.addEventListener('submit',()=>{if(!form.classList.contains('pawYueGuidedForm')){observer.disconnect();for(const {a,n} of anchors)if(a.isConnected)a.replaceWith(n);disclosure.remove()}});
+   sync();disclosure.open=place.value==='custom'
   }
  }
  return result
@@ -15357,6 +15366,18 @@ html #game #dialogue.pawWishWriting[data-paw-chat-bar] #choices button{backgroun
 @media(orientation:landscape){html #game #dialogue[data-paw-chat-bar]:not(.pawWishWriting){max-height:46dvh!important;padding-top:16px!important}html #game #dialogue.pawWishWriting[data-paw-chat-bar]{max-height:44dvh!important}}
 @media(forced-colors:active){html #game #dialogue[data-paw-chat-bar]{background:Canvas!important;color:CanvasText!important}html #game #dialogue[data-paw-chat-bar] :is(#speaker,#line,.pawYueQuestion){color:CanvasText!important}html #game #dialogue[data-paw-chat-bar] #choices button{color:ButtonText!important;background:ButtonFace!important;border:1px solid ButtonText!important}}
 `;document.head.append(pawChatBarStyle);
+
+// Keep every reply visible without a hidden horizontal control.
+const pawRitualFinishStyle=document.createElement('style');
+pawRitualFinishStyle.textContent=`
+html #game #dialogue[data-paw-chat-bar] #choices{flex-wrap:wrap!important;overflow-x:visible!important;gap:5px!important}
+html #game #dialogue[data-paw-chat-bar] #choices button{flex:1 1 auto!important;min-width:44px!important;max-width:100%!important;font-size:12px!important;padding:6px 8px!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueCoordinates:not([open])>*:not(summary){display:none!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueCoordinates summary{font-size:12px!important;min-height:36px!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueCoordinates[hidden]{display:none!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueStepNav button{min-width:44px!important}
+html #game:has(#dialogue[data-paw-chat-bar]) #back:not([hidden]){top:max(10px,env(safe-area-inset-top,0px))!important;left:10px!important;bottom:auto!important;right:auto!important;transform:none!important;background:#253b34d4!important;color:#fff0d3!important;border:1px solid #d7c09c85!important;border-radius:4px!important;box-shadow:none!important;font-size:12px!important}
+`;document.head.append(pawRitualFinishStyle);
 /* PAW_RITUAL_CHAT_BAR_END */
 /* PAW_IN_WORLD_CONSULTATION_END */
 
