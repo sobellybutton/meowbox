@@ -1687,21 +1687,58 @@ const townSettingsToggle=element('button','',townSettingsRoot,'townSettingsToggl
 townSettingsToggle.id='townSettingsToggle';townSettingsToggle.setAttribute('aria-controls','townSettingsPanel');townSettingsToggle.innerHTML='<svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4l.7 2.5 2 .9 2.3-1.2 2 3.5-1.8 1.9v2.8l1.8 1.9-2 3.5-2.3-1.2-2 .9L14 21h-4l-.7-2.5-2-.9L5 18.8l-2-3.5 1.8-1.9v-2.8L3 8.7l2-3.5 2.3 1.2 2-.9z"/><circle cx="12" cy="12" r="3.2"/></svg>';
 const townSettingsExtra=element('div','',townSettingsPanel,'townSettingsExtra');
 const townSoundSettings=element('button','',townSettingsExtra),townMapLabels=element('button','',townSettingsExtra),townHelp=element('button','',townSettingsExtra);
+/* PAW_LOCAL_RESET_BEGIN */
+// Clear only this game's local progress, not other sites, language or the
+// shared community session. Snapshot first so failures can be rolled back.
+function pawLocalReset(storage){
+ const prefix='meowbox-preview-',keep=new Set([prefix+'zh',prefix+'communitySessionV1']),snapshot=[];
+ try{
+  for(let i=0;i<storage.length;i++){const key=storage.key(i);if(key?.startsWith(prefix)&&!keep.has(key))snapshot.push([key,storage.getItem(key)])}
+ }catch{return false}
+ try{for(const [key] of snapshot)storage.removeItem(key);return true}
+ catch{for(const [key,value] of snapshot){try{if(value!==null)storage.setItem(key,value)}catch{}}return false}
+}
+/* PAW_LOCAL_RESET_END */
+const townResetButton=element('button','',townSettingsExtra);
+const townResetConfirm=element('div','',townSettingsExtra,'pawResetConfirm');
+townResetConfirm.hidden=true;
+const townResetCopy=element('p','',townResetConfirm),townResetDo=element('button','',townResetConfirm),townResetCancel=element('button','',townResetConfirm);
+townResetButton.type=townResetDo.type=townResetCancel.type='button';
+townResetButton.setAttribute('aria-expanded','false');
+townResetConfirm.id='pawResetConfirm';townResetButton.setAttribute('aria-controls',townResetConfirm.id);
+let townResetArmed=false,townResetFailed=false;
+townResetButton.onclick=()=>{townResetArmed=!townResetArmed;townResetFailed=false;syncTownSettings();if(townResetArmed)townResetCancel.focus()};
+townResetCancel.onclick=()=>{townResetArmed=false;townResetFailed=false;syncTownSettings();townResetButton.focus()};
+townResetDo.onclick=()=>{
+ if(!townSettingsOpen||!townResetArmed)return;
+ let ok=false;try{ok=pawLocalReset(localStorage)}catch{}
+ if(ok){townResetArmed=false;townResetDo.disabled=true;location.reload()}
+ else{townResetFailed=true;syncTownSettings()}
+};
+const townResetStyle=document.createElement('style');
+townResetStyle.textContent='#game #small #townSettingsPanel .pawResetConfirm{display:grid;gap:4px;padding:7px;border-top:1px solid #ac9670;background:#f2e5cb;color:#514634;border-radius:5px}#game #small #townSettingsPanel .pawResetConfirm[hidden]{display:none!important}#game #small #townSettingsPanel .pawResetConfirm p{font-size:12px;line-height:1.4;margin:2px 0;white-space:normal}#game #small #townSettingsPanel .pawResetConfirm button{min-height:44px!important;white-space:normal!important}#game #small #townSettingsPanel .pawResetConfirm button:first-of-type{color:#894d3f!important}';
+document.head.append(townResetStyle);
 let townSettingsOpen=false;
 function syncTownSettings(){
  townSettingsRoot.dataset.open=String(townSettingsOpen);
  townSettingsToggle.setAttribute('aria-label',tr('Settings','设置'));townSettingsToggle.title=tr('Settings','设置');townSettingsToggle.setAttribute('aria-expanded',String(townSettingsOpen));
  townSettingsPanel.hidden=!townSettingsOpen;
+ if(!townSettingsOpen){townResetArmed=false;townResetFailed=false}
+ townResetButton.textContent=tr('Reset data','重置游戏数据');
+ townResetButton.setAttribute('aria-expanded',String(townResetArmed));
+ townResetConfirm.hidden=!townResetArmed;
+ townResetCopy.textContent=townResetFailed?tr('Could not reset local progress. Check browser storage and try again.','无法重置本地进度，请检查浏览器存储后重试。'):tr('This clears your saved traveller, coins, room, collections and local history on this browser. Close other game tabs first. Shared posts and your language setting stay.','这将清除本浏览器内的旅人、爪爪币、小窝、收藏和本地记录。请先关闭其他游戏标签页。公开留言和语言设置会保留。');
+ townResetDo.textContent=tr('Erase local progress','清除本地进度');
+ townResetCancel.textContent=tr('Keep my progress','保留我的进度');
  townSoundSettings.textContent=muted?tr('Sound off','声音已关闭'):tr('Sound on','声音已开启');
  townSoundSettings.setAttribute('aria-pressed',String(!muted));
- townMapLabels.textContent=quiet9?tr('Show map signs','显示地图路牌'):tr('Hide map signs','隐藏地图路牌');
- townMapLabels.hidden=!!room||scene!=='fortune';
+ townMapLabels.hidden=true;
  townHelp.textContent=tr('Walking help','行走指南');townHelp.hidden=!!room||!isRoute();
 }
 function closeTownSettings(){townSettingsOpen=false;syncTownSettings()}
 townSettingsToggle.onclick=()=>{townSettingsOpen=!townSettingsOpen;syncTownSettings()};
 townSoundSettings.onclick=()=>{$('mute').click();syncTownSettings()};
-townMapLabels.onclick=()=>{$('quietToggle').click();closeTownSettings()};
+townMapLabels.onclick=null;
 townHelp.onclick=()=>{closeTownSettings();walkHelp.click()};
 for(const [,btn] of languageButtons)btn.addEventListener('click',closeTownSettings);
 document.addEventListener('pointerdown',e=>{if(townSettingsOpen&&!townSettingsRoot.contains(e.target))closeTownSettings()},true);
