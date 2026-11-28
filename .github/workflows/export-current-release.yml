@@ -1,0 +1,41 @@
+name: Pawradise actual export verification
+on:
+  pull_request:
+    branches: [main]
+    paths: ['src/startup.js','scripts/export-current-render-test.cjs','scripts/export-native-scale-test.cjs','.github/workflows/export-current-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  actual-exports:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/export-native-proportions-current-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: node scripts/export-native-scale-test.cjs
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 8768 >/tmp/paw-export.log 2>&1 &
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8768/index.html >/dev/null && break; sleep 1; done
+          node scripts/export-current-render-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: actual-export-images
+          path: test-results/editorial-chromium/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phone-scale-review-sheets
+          path: |
+            test-results/editorial-chromium/contact-*.jpg
+            test-results/editorial-chromium/manifest.json
