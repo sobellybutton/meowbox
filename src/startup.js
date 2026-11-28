@@ -9485,6 +9485,12 @@ function pawTempleContactScale(camera,base=1.55){
  const c=Number.isFinite(camera)&&camera>0?camera:.65;
  return Math.max(base,Math.min(2.15,100/(94*c)))
 }
+// The painted action stations use authored world dimensions. Zoom changes
+// the whole scene, never just the person or the sleeve.
+function pawTemplePaintedActorScale(){return 1.92}
+function pawTempleReachGeometry(foot,scale,side=1){
+ return {shoulder:{x:foot.x+side*5*scale,y:foot.y-63*scale},grip:{x:foot.x+side*8*scale,y:foot.y-48*scale},sleeve:.72*scale,maxReach:48*scale}
+}
 function pawIncenseSupply(p,held,stage,age){
  const rack={x:p.x+p.w*.866,y:p.y+p.h*.543},count=Math.max(0,Math.min(3,Math.floor(held||0)));
  const taking=stage==='taking'&&count<3,removed=taking&&age>=.32;
@@ -9540,7 +9546,7 @@ function pawPrayerStep(){
   else if(['hold','bow','offer','complete'].includes(stage)){foot=front;dir='up'}
   else if(stage==='placing'){foot=blend(front,offering,ratio(1.85));dir='up'}
   else if(stage==='returnMat'){foot=pawIncenseReturnFoot(p,age);dir=age<.75?'down':'left'}
-  const sc=pawTempleContactScale(cam.scale,1.55),hand={x:foot.x+(dir==='left'?-15:dir==='up'?9:17)*sc,y:foot.y-48*sc+q.bow*9};
+  const sc=pawTemplePaintedActorScale(),hand={x:foot.x+(dir==='left'?-15:dir==='up'?9:17)*sc,y:foot.y-48*sc+q.bow*9};
   // The right-side incense supply is separate from the red fortune tube on the left.
   const reach=stage==='taking'?Math.sin(Math.PI*Math.min(1,age/.72)):stage==='lighting'?Math.sin(Math.PI*Math.min(1,age/1.65)):0;
   const reaching=stage==='taking',flame=supply.flame,pick=reaching?pawIncensePickup(hand,supply.pick,age):null;
@@ -9562,7 +9568,7 @@ function pawPrayerStep(){
    if(shown||pick){
     const shoulder={x:foot.x+(dir==='left'?-6:7)*sc,y:foot.y-48*sc+q.bow*9};
     ctx.save();try{
-     if(shown){pawIncenseArm(shoulder,grip,sc,true);for(let j=0;j<shown;j++)incenseStem(grip.x+(j-(shown-1)/2)*3.8,grip.y,lightAngle+(j-(shown-1)/2)*.065,lit,39,j===0)}
+     if(shown){if(pick)pawIncenseArm(shoulder,grip,sc,true);for(let j=0;j<shown;j++)incenseStem(grip.x+(j-(shown-1)/2)*3.8,grip.y,lightAngle+(j-(shown-1)/2)*.065,lit,39,j===0)}
      if(pick&&supply.removed)incenseStem(pick.x,pick.y,0,false,39);
      pawIncenseArm(shoulder,pick||grip,sc,false)
     }finally{ctx.restore()}
@@ -11788,7 +11794,7 @@ function pawDrawWaterPainting(){
  else if(stage===1)at=pawWaterMix(run.pawWaterFrom||g.scoop,g.rest,poseEase(Math.min(1,age/.35)));
  else if(stage===2){at=pawWaterMix(run.pawWaterFrom||g.pour,g.pour,poseEase(Math.min(1,age/.35)));angle=.58*poseEase(Math.min(1,age/.4))*(1-poseEase(Math.max(0,Math.min(1,(age-1.5)/.5))))}
  else if(stage===3)at=pawWaterMix(g.pour,g.rack,poseEase(Math.min(1,age/.55)));
- const sc=pawTempleContactScale(cam.scale,1.72),shoulder={x:g.foot.x-8*sc,y:g.foot.y-52*sc},grip={x:at.x+16,y:at.y};
+ const sc=pawTemplePaintedActorScale(),shoulder={x:g.foot.x-8*sc,y:g.foot.y-52*sc},grip={x:at.x+16,y:at.y};
  // Reuse the chosen traveller, standing in front of the real basin.
  backHuman(g.foot.x,g.foot.y,avatar??0,false,'left',sc);
  if(stage===1||stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.80,true);
@@ -11830,11 +11836,16 @@ function pawAlcoveGeometry(p=pawWaterPlate){
   moonTray:pt(.743,.508),moonFoot:pt(.707,.64),moonHand:pt(.70,.54)}
 }
 function pawAlcoveActorScale(){return 1.92}
+function pawAlcoveReach(foot,side=1){
+ const scale=pawAlcoveActorScale();
+ return {shoulder:{x:foot.x+side*5*scale,y:foot.y-63*scale},grip:{x:foot.x+side*8*scale,y:foot.y-48*scale},sleeve:.72*scale,maxReach:48*scale}
+}
 function pawAlcoveStickPoint(g,pose){
  const f=Math.max(0,Math.min(1,pose.fall)),pick=pose.picked?Math.max(0,Math.min(1,(pose.pick-.45)/.55)):0;
  const x=g.tubeTop.x+(g.stickTray.x-g.tubeTop.x)*f;
  const y=g.tubeTop.y+(g.stickTray.y-g.tubeTop.y)*f-Math.sin(Math.PI*f)*25;
- return {x:x+(g.stickPickFoot.x+14-x)*pick,y:y+(g.stickPickFoot.y-64-y)*pick,angle:Math.PI*.46*f*(1-pick)}
+ const grip=pawAlcoveReach(g.stickPickFoot).grip;
+ return {x:x+(grip.x-x)*pick,y:y+(grip.y-y)*pick,angle:Math.PI*.46*f*(1-pick)}
 }
 function pawAlcoveMoonPoint(g,m){
  return {x:g.moonTray.x+(m.x-400)*.26,y:g.moonTray.y-m.lift*.32}
@@ -11869,8 +11880,8 @@ function pawDrawAlcoveSticks(){
  const sc=pawAlcoveActorScale();
  // The whole actor is proportioned to the counter. Only expose the reaching hand during contact.
  if((held||pose.shake||pose.picked&&pose.pick<.85)&&(!pose.picked||pose.pick<.85)){
-  const shoulder={x:foot.x+8,y:foot.y-63*sc},hand=!pose.picked?g.tubeGrip:pawWaterMix(g.stickTray,{x:foot.x+14,y:foot.y-64},poseEase(Math.max(0,(pose.pick-.45)/.55)));
-  if(Math.hypot(hand.x-shoulder.x,hand.y-shoulder.y)<=38) pawIncenseArm(shoulder,hand,1.12,false)
+  const {shoulder,grip,sleeve,maxReach}=pawAlcoveReach(foot),hand=!pose.picked?g.tubeGrip:pawWaterMix(g.stickTray,grip,poseEase(Math.max(0,(pose.pick-.45)/.55)));
+  if(Math.hypot(hand.x-shoulder.x,hand.y-shoulder.y)<=maxReach)pawIncenseArm(shoulder,hand,sleeve,false)
  }
  backHuman(foot.x,foot.y,avatar??0,move>0&&move<1,'up',sc);
  if(pose.show){
@@ -11884,8 +11895,8 @@ function pawDrawAlcoveSticks(){
 }
 function pawDrawAlcoveMoon(){
  const run=state,g=pawAlcoveGeometry(),airborne=run.tossUntil>t,f=airborne?Math.max(0,Math.min(1,1-(run.tossUntil-t)/(run.moonDuration||.55))):1;
- const sc=pawAlcoveActorScale(),shoulder={x:g.moonFoot.x-8,y:g.moonFoot.y-63*sc};
- if(airborne&&Math.hypot(g.moonHand.x-shoulder.x,g.moonHand.y-shoulder.y)<=38)pawIncenseArm(shoulder,g.moonHand,1.12,false);
+ const sc=pawAlcoveActorScale(),{shoulder,sleeve,maxReach}=pawAlcoveReach(g.moonFoot,-1);
+ if(airborne&&Math.hypot(g.moonHand.x-shoulder.x,g.moonHand.y-shoulder.y)<=maxReach)pawIncenseArm(shoulder,g.moonHand,sleeve,false);
  backHuman(g.moonFoot.x,g.moonFoot.y,avatar??0,false,'up',sc);
  for(let i=0;i<2;i++){
   const flat=pawMoonFlat(run.result,i,run.count),m=pawMoonMotion(f,i,flat,run.moonHeight||95),pt=pawAlcoveMoonPoint(g,m);
