@@ -927,12 +927,26 @@ drawActivity=function(){
  if(room==='fish'){riverSceneBackdrop()}else paintLivingBackdrop(pics.office||pics.tea);
  const bounds=livingBounds(),shade=ctx.createLinearGradient(0,270,0,740);shade.addColorStop(0,'#40372b19');shade.addColorStop(1,'#2b342c70');shadeLivingBackdrop(shade);
  // Ground plane and compact wooden stool, separate from the background.
- ellipse(400,580,190,37,'#302a2440');ellipse(272,548,50,12,'#302a2444');
+ ellipse(400,580,190,37,'#302a2440');
+ // Lock artwork availability for this visit so decoding cannot move the host
+ // between the visitor's arrival and the first strike.
+ const motionApi=room==='fish'?globalThis.PawAuntieRitualMotion:null;
+ const hostRecord=motionApi?residentArtworkRecord('Ah Ma'):null;
+ const raised=hostRecord?residentArtworkImage(hostRecord,'scolding'):null;
+ const seated=hostRecord?residentArtworkImage(hostRecord,'seated'):null;
+ const matched=!!(motionApi&&raised?.complete&&raised.naturalWidth===motionApi.art.width&&raised.naturalHeight===motionApi.art.height&&seated?.complete&&seated.naturalWidth===347&&seated.naturalHeight===510&&residentInstalledArt.get(hostRecord.id)?.scolding?.sha256===motionApi.art.sha256);
+ if(room==='fish'&&typeof state.pawAuntieArticulation!=='boolean')state.pawAuntieArticulation=matched;
+ const motionSpec=state.pawAuntieArticulation&&matched?motionApi.sceneLayout():null;
+ const motionPose=motionSpec&&state.paperAction?motionApi.frame(motionSpec,t-state.paperAction.at,residentReducedMotion.matches):null;
+ if(motionSpec)ellipse(motionSpec.foot[0],motionSpec.foot[1],39,9,'#302a2444');
+ else ellipse(272,548,50,12,'#302a2444');
  // Real seat and foot anchors: stool at y504, feet at y550.
  const stoolWood=ctx.createLinearGradient(0,499,0,551);stoolWood.addColorStop(0,'#c9a878');stoolWood.addColorStop(1,'#71543e');
  const sc=W<H?.67:.70;
  if(room==='fish'){
-  if(!drawProductionAhMa(272,550,sc))riverAuntie(272,550,sc);
+  if(motionSpec){
+   if(!motionPose||!motionApi.drawBody(ctx,raised,motionSpec))drawResidentRaster(seated,...motionSpec.foot,motionSpec.height,'right');
+  }else if(!drawProductionAhMa(272,550,sc))riverAuntie(272,550,sc);
  }else{
   const seatY=550-54*sc;
   line(247,seatY+5,242,552,'#70513c',7);line(297,seatY+5,302,552,'#70513c',7);
@@ -945,7 +959,11 @@ drawActivity=function(){
  round(318,540,125,12,2,'#866746','#654c37');line(333,552,329,577,'#654c37',6);line(428,552,433,577,'#654c37',6);
  for(let i=0;i<3;i++)line(331,515+i*7,427,516+i*7,'#e0c09a55',1);
  const f=clamp((t-stressSwingAt)/.46,0,1),impact=(1-f)*Math.sin(f*13),swing=Math.sin(Math.PI*f);
- paperWorryAt(381,494,impact);
+ if(motionSpec){
+  ctx.save();try{ctx.translate(...motionApi.station.paper);ctx.scale(1,motionApi.station.paperScaleY);paperWorryAt(0,0,impact)}finally{ctx.restore()}
+  // The painted slipper crosses the foreground after the block and paper.
+  if(motionPose)motionApi.drawArm(ctx,raised,motionSpec,motionPose)
+ }else paperWorryAt(381,494,impact);
  const playerX=490,playerY=572;
  if(room==='fish'){
   // Customer seat: actual support behind the seated visitor. The old
@@ -962,7 +980,7 @@ drawActivity=function(){
   ctx.save();ctx.translate(wrist.x-9,wrist.y-6);ctx.scale(.43,.43);stressSlipper(0,0,-.40+1.45*swing);ctx.restore();
  }
  target(333,445,95,112,()=>{},'hit');
- stressPieces=stressPieces.filter(v=>t-v.at<.65);for(const v of stressPieces){const d=t-v.at;ctx.save();ctx.globalAlpha=1-d/.65;ctx.translate(v.x-19+v.vx*d*.6,v.y+20+v.vy*d*.6+70*d*d);ctx.rotate(v.angle+d*3);ctx.fillStyle='#f0d8a3';ctx.fillRect(-2,-1.5,4,3);ctx.restore()}
+ stressPieces=stressPieces.filter(v=>t-v.at<.65);for(const v of stressPieces){const d=t-v.at;ctx.save();ctx.globalAlpha=1-d/.65;ctx.translate(v.x-19+(motionSpec?9:0)+v.vx*d*.6,v.y+20+(motionSpec?24:0)+v.vy*d*.6+70*d*d);ctx.rotate(v.angle+d*3);ctx.fillStyle='#f0d8a3';ctx.fillRect(-2,-1.5,4,3);ctx.restore()}
  wonderSceneText(tr(...stressTargets[stressTarget]),400,580,220,15,'#fff0d4',1);
  if(room!=='fish')txt(tr('Worries released: ','打走的烦恼：')+state.count,400,605,17,'#fff0d4');
  ctx.restore()

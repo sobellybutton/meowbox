@@ -1,14 +1,14 @@
 /* Interim articulation of the inspected original Ah Ma painting.
- * No generated geometry, duplicate slipper or player-held tool. Not live
- * until the room renderer and actual phone/desktop composition are verified.
+ * No generated geometry, duplicate slipper or player-held tool. Interim
+ * articulated raster requires actual phone/desktop visual review.
  */
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.PawAuntieRitualMotion=api})(typeof globalThis==='object'?globalThis:this,function(){
+;(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.PawAuntieRitualMotion=api})(typeof globalThis==='object'?globalThis:this,function(){
 'use strict';
 const art=Object.freeze({width:344,height:510,sha256:'c5ea077b800c72edcbb9059b1712326be11554b3a1b88def4de66334d30d5592'});
 // Coordinates traced on the existing 344x510 raised-slipper image.
 // The cut follows the outer sleeve and retains the shoulder seam.
 const shoulder=Object.freeze([102,194]),tip=Object.freeze([45,34]);
-const arm=Object.freeze([[0,0],[91,0],[91,139],[99,158],[114,179],[110,207],[98,238],[86,260],[0,265]].map(Object.freeze));
+const arm=Object.freeze([[0,18],[78,18],[85,46],[85,109],[80,143],[91,164],[114,179],[110,207],[98,238],[86,260],[0,265]].map(Object.freeze));
 const timing=Object.freeze({contact:.23,duration:.46});
 const finite=point=>Array.isArray(point)&&point.length===2&&point.every(Number.isFinite);
 const ease=f=>{f=Math.max(0,Math.min(1,f));return f*f*(3-2*f)};
@@ -42,16 +42,24 @@ function frame(spec,age,reduced=false){
  return {phase,angle,strike,tip:[spec.pivot[0]+Math.cos(a)*reach,spec.pivot[1]+Math.sin(a)*reach]}
 }
 function path(ctx,polygon){ctx.moveTo(polygon[0][0],polygon[0][1]);for(const p of polygon.slice(1))ctx.lineTo(p[0],p[1]);ctx.closePath()}
-function draw(ctx,im,spec,pose){
- if(!ctx||!im?.complete||im.naturalWidth!==art.width||im.naturalHeight!==art.height||!spec||!pose||!Number.isFinite(pose.angle))return false;
- ctx.save();
- try{
-  ctx.translate(spec.left,spec.top);ctx.scale(spec.scale,spec.scale);
-  // Body remains grounded; only the original painted arm and attached tool move.
-  ctx.save();try{ctx.beginPath();ctx.rect(0,0,art.width,art.height);path(ctx,arm);ctx.clip('evenodd');ctx.drawImage(im,0,0)}finally{ctx.restore()}
-  ctx.save();try{ctx.translate(...shoulder);ctx.rotate(pose.angle);ctx.translate(-shoulder[0],-shoulder[1]);ctx.beginPath();path(ctx,arm);ctx.clip();ctx.drawImage(im,0,0)}finally{ctx.restore()}
- }finally{ctx.restore()}
+// Fixed logical coordinates for both viewport orientations. The contact point is
+// inside the paper's left arm on the low block, not the air above it.
+const station=Object.freeze({paper:Object.freeze([390,518]),contact:Object.freeze([360,518]),paperScaleY:.36,height:150,direction:.55});
+function sceneLayout(){return fit(station.contact,station.height,station.direction)}
+function validDraw(ctx,im,spec){return !!(ctx&&im?.complete&&im.naturalWidth===art.width&&im.naturalHeight===art.height&&spec)}
+function drawBody(ctx,im,spec){
+ if(!validDraw(ctx,im,spec))return false;
+ ctx.save();try{ctx.translate(spec.left,spec.top);ctx.scale(spec.scale,spec.scale);ctx.beginPath();ctx.rect(0,0,art.width,art.height);path(ctx,arm);ctx.clip('evenodd');ctx.drawImage(im,0,0)}finally{ctx.restore()}
  return true
 }
-return Object.freeze({art,shoulder,tip,timing,layout,fit,frame,draw})
+function drawArm(ctx,im,spec,pose){
+ if(!validDraw(ctx,im,spec)||!pose||!Number.isFinite(pose.angle))return false;
+ ctx.save();try{ctx.translate(spec.left,spec.top);ctx.scale(spec.scale,spec.scale);ctx.translate(...shoulder);ctx.rotate(pose.angle);ctx.translate(-shoulder[0],-shoulder[1]);ctx.beginPath();path(ctx,arm);ctx.clip();ctx.drawImage(im,0,0)}finally{ctx.restore()}
+ return true
+}
+function draw(ctx,im,spec,pose){
+ if(!validDraw(ctx,im,spec)||!pose||!Number.isFinite(pose.angle))return false;
+ return drawBody(ctx,im,spec)&&drawArm(ctx,im,spec,pose)
+}
+return Object.freeze({art,shoulder,tip,timing,layout,fit,frame,station,sceneLayout,drawBody,drawArm,draw})
 });

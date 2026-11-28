@@ -89,7 +89,8 @@ const visibleBrandSource=[scripts[0],scripts[1],scripts.at(-1),shell,read('index
 if(/\b(?:MeowBox|MEOWBOX|BrbLife)\b|摸鱼盒|摸鱼铁路/.test(visibleBrandSource))throw Error('Outdated player-facing world name');
 if(!visibleBrandSource.includes('Pawradise'))throw Error('Missing permanent world name');
 if(!scripts[0].includes("'meowbox-preview-'")||!scripts[1].includes("'meowbox-community'"))throw Error('Legacy data or community identity changed');
-const external=assembleMeowBox(shell,scripts),embedded=assembleMeowBox(shell,scripts,parts);
+const assembledScripts=[scripts[0],read('assets/visual/painted/ah-ma/ritual-motion.js'),...scripts.slice(1)];
+const external=assembleMeowBox(shell,assembledScripts),embedded=assembleMeowBox(shell,assembledScripts,parts);
 for(const html of [external,embedded])new vm.Script(html.match(/<script>([\s\S]*?)<\/script>/)[1],{filename:'meowbox-assembled.js'});
 if(process.argv[2])fs.writeFileSync(path.resolve(process.argv[2]),embedded);
 console.log('PASS: all '+MEOW_ART_COUNT+' extracted images byte-identical ('+bytes+' bytes); external and embedded game syntax valid. External HTML '+Buffer.byteLength(external)+' bytes; embedded '+Buffer.byteLength(embedded)+' bytes.');

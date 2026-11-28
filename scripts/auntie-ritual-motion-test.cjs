@@ -18,4 +18,10 @@ const ctx=Object.fromEntries(['save','restore','translate','scale','beginPath','
 ok(api.draw(ctx,{complete:true,naturalWidth:344,naturalHeight:510},spec,pose));
 ok(calls.filter(v=>v[0]==='drawImage').length===2);ok(calls.filter(v=>v[0]==='save').length===calls.filter(v=>v[0]==='restore').length);
 ok(calls.some(v=>v[0]==='clip'&&v[1]==='evenodd'));ok(api.draw(ctx,{complete:true,naturalWidth:347,naturalHeight:510},spec,pose)===false);
+const live=api.sceneLayout();ok(live);ok(near(api.frame(live,api.timing.contact).tip,api.station.contact));
+ok(live.foot[0]>300&&live.foot[0]<350&&live.foot[1]>560&&live.foot[1]<600);
+ok(api.station.paper[0]>api.station.contact[0]&&api.station.paper[1]===api.station.contact[1]);
+const layerCalls=[];const layerCtx=Object.fromEntries(['save','restore','translate','scale','beginPath','rect','moveTo','lineTo','closePath','clip','drawImage','rotate'].map(k=>[k,(...args)=>layerCalls.push([k,...args])]));
+const painted={complete:true,naturalWidth:344,naturalHeight:510};
+ok(api.drawBody(layerCtx,painted,live));ok(layerCalls.filter(v=>v[0]==='drawImage').length===1);ok(api.drawArm(layerCtx,painted,live,api.frame(live,.23)));ok(layerCalls.filter(v=>v[0]==='drawImage').length===2);ok(layerCalls.filter(v=>v[0]==='save').length===layerCalls.filter(v=>v[0]==='restore').length);
 console.log('Ah Ma motion: '+checks+' assertions passed; geometry only, no rendered visual approval');
