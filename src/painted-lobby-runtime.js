@@ -407,7 +407,7 @@ function pawEditorialTarotPlan(box,count){
  const top=box.top,story=box.height>=1800,rows=story&&count===5?[3,2]:[count];
  const header=H>=900?148:116,footer=56,summary=Math.max(150,Math.min(224,H*.22)),gap=24;
  const area=H-header-footer-summary-gap*3,perRow=(area-(rows.length-1)*gap)/rows.length;
- const caption=112,slots=[];let y=top+header+gap;
+ const caption=118,slots=[];let y=top+header+gap;
  for(const n of rows){
   const cellW=(w-(n-1)*gap)/n,cardH=Math.min(perRow-caption-8,(cellW-12)*218/128, count===1?(story?660:590):(story?540:475)),cardW=cardH*128/218;
   if(cardH<100)return null;
@@ -473,8 +473,8 @@ function pawEditorialTarot(cv,data,format,cn,box,paper,atlas,deck,positions){
   }finally{g.restore()}
   const role=locale(positions[i]);
   text([lx,ly,lw,30],role,28,23,1,'normal',ink);
-  text([lx,ly+30,lw,54],locale(deck[c.i]),data.cards.length===5?31:40,23,2,'bold');
-  text([lx,ly+84,lw,28],c.rev?(cn?'逆位':'Reversed'):(cn?'正位':'Upright'),27,23,1,'normal',ink);
+  text([lx,ly+30,lw,58],locale(deck[c.i]),data.cards.length===5?31:40,22,2,'bold');
+  text([lx,ly+90,lw,28],c.rev?(cn?'逆位':'Reversed'):(cn?'正位':'Upright'),27,23,1,'normal',ink);
  });
  const [rx,ry,rw,rh]=plan.reading;
  g.strokeStyle='#bca17d';g.lineWidth=2;g.beginPath();g.moveTo(rx+rw*.38,ry);g.lineTo(rx+rw*.62,ry);g.stroke();
@@ -555,9 +555,9 @@ function pawEditorialOther(cv,data,format,cn,box,paper,art,quote){
  }else if(scores){
   plan.rows.forEach((rect,i)=>{
    const [a,b,c,d]=rect,row=data.scoreRows[i],label=locale(row.label),value=locale(row.value);
-   const split=c*.72,bar=pawEditorialScoreRatio(value),labelH=bar?d*.62:d-8;
+   const split=c*.67,bar=pawEditorialScoreRatio(value),labelH=bar?d*.66:d-8;
    text([a,b,split-8,labelH],label,data.scoreRows.length>=7?36:44,28,2,'normal',ink,'left');
-   text([a+split,b,c-split,labelH],value,42,29,2,'bold',ink,'right');
+   text([a+split,b,c-split,labelH],value,40,24,2,'bold',ink,'right');
    if(bar){const bx=a+5,by=b+labelH+4,bw=c-10,bh=Math.min(18,d*.16);g.globalAlpha=.19;g.fillStyle=accent;g.fillRect(bx,by,bw,bh);g.globalAlpha=1;g.fillStyle=accent;if(bar.ratio>0)g.fillRect(bx,by,bw*bar.ratio,bh);if(bar.split){g.fillStyle=ink;g.globalAlpha=.35;g.fillRect(bx+bw/2-1,by-3,2,bh+6);g.globalAlpha=1}}
    else rule(a,b+d-2,c);
   });
