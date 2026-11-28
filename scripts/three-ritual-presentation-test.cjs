@@ -61,7 +61,11 @@ fs.mkdirSync(out,{recursive:true});
   await shot('wish-walking');
   await page.waitForFunction(count=>gardenWishes.length===count+1&&state.gardenStage==='write',count,{timeout:15000});
   assert(await page.evaluate(()=>!state.pendingGardenWish&&gardenWishes.at(-1).slot===0));
+  await page.waitForFunction(()=>talkOpen&&$('speaker').textContent===tr('Garden keeper','守园人'),null,{timeout:8000});
+  assert.match(await page.locator('#dialogue #line').textContent,zhMode?/心愿已经有了归处/:/Your wish has found its place/);
   await shot('wish-hung-returned');
+  await tapText('Thank you','谢谢你');
+  assert(await noPage());
   await fixture('tarot');
   // Known flipped card fixture: tests interpretation rather than random draw.
   await page.evaluate(()=>{start('tarot');state.readCards=[{i:0,rev:false}];state.readFlip=[t-2];state.readFocus=0;state.readStage='focus';state.readAt=t-1;readingFocusMeaning()});
