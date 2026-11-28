@@ -46,3 +46,33 @@ console.log('Motion cadence, mute, surface and audio lifecycle checks passed');
   assert.equal(stops,3);assert.equal(disconnects,12);
  }
  console.log('Movement audio cancellation and late-end cleanup checks passed');
+
+ // Delayed frames cross multiple footfalls without replaying a sound burst.
+ for(const stride of [8,20,40,42,90]){
+  const step=a.createStepper(stride),sample=x=>({x,y:0,context:'garden',walking:true,enabled:true,surface:'wood'});
+  assert.equal(step.update(sample(0)),null);
+  assert.equal(step.update(sample(stride*.75)),null);
+  assert.equal(step.update(sample(stride*2.25)).foot,0);
+  assert.equal(step.update(sample(stride*3.05)).foot,1);
+  assert.equal(step.update(sample(stride*10)),null);
+  assert.equal(step.update(sample(stride*11)).foot,0);
+ }
+ // Every playback gate must stop existing pulses without waiting for a
+ // separate reset, and late onended notifications must be harmless.
+ for(const key of Object.keys(flags)){
+  let stops=0,disconnects=0;
+  const voices=[],node=()=>({connect(){},disconnect(){disconnects++}});
+  const live={...ctx,state:'running',currentTime:0,
+   createBufferSource:()=>{const v={...node(),start(){},stop(at){if(at===undefined)stops++}};voices.push(v);return v},
+   createBiquadFilter:()=>({...node(),frequency:{},Q:{}}),
+   createGain:()=>({...node(),gain:param})};
+  const p=a.createPlayer(live,{},()=>.5);
+  assert.ok(p.footstep({foot:0,surface:'wood'},flags));
+  assert.ok(p.railway(flags));
+  const late=voices[0].onended;
+  assert.equal(p.railway({...flags,[key]:!flags[key]}),false);
+  assert.equal(stops,2);assert.equal(disconnects,6);
+  late();p.reset();
+  assert.equal(stops,2);assert.equal(disconnects,6);
+ }
+ console.log('Delayed-frame footfall phase and immediate sound-gate cancellation verified');
