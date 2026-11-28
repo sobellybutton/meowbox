@@ -1,0 +1,121 @@
+name: Pawradise isolated candidate checks
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'src/**'
+      - 'assets/**'
+      - 'scripts/**'
+      - '.github/workflows/paw-candidate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+# Candidate checks are deliberately independent of the main release jobs.
+# A newer PR revision can replace a pending job, not an executing one.
+concurrency:
+  group: paw-candidate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Identify tested revision
+        run: git rev-parse HEAD
+      - name: Build
+        run: node scripts/build.cjs
+      - name: Action regression checks
+        run: node scripts/action-refinement-test.cjs
+      - name: Visitor clearance regression checks
+        if: always() && !cancelled()
+        run: node scripts/visitor-clearance-test.cjs
+      - name: Keyboard continuity regression
+        if: always() && !cancelled()
+        run: node scripts/world-key-continuity-test.cjs
+      - name: Release correction regressions
+        if: always() && !cancelled()
+        run: |
+          node scripts/portrait-dock-camera-test.cjs
+          node scripts/wish-pond-animation-lifecycle-test.cjs
+          node scripts/painted-plaque-clearance-test.cjs
+          node scripts/indoor-standing-actor-scale-test.cjs
+          node scripts/tarot-host-continuity-test.cjs
+          node scripts/rear-garden-bench-scale-test.cjs
+          node scripts/yue-seated-host-continuity-test.cjs
+          node scripts/test-painted-temple-rituals.cjs
+          node scripts/minimal-map-hud-test.cjs
+          node scripts/auntie-seat-interruption-test.cjs
+          node scripts/single-scene-activity-surface-test.cjs
+          node scripts/discovery-single-leaf-test.cjs
+          node scripts/home-layout-test.cjs
+          node scripts/compact-town-home-test.cjs
+          node scripts/painted-lobby-runtime-test.cjs
+          node scripts/indoor-social-test.cjs
+          node scripts/tarot-fan-test.cjs
+          node scripts/scene-ambience-test.cjs
+          node scripts/recurring-room-visitors-test.cjs
+  district:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Identify tested revision
+        run: git rev-parse HEAD
+      - run: node scripts/build.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Organic four-district and doorway journey
+        run: |
+          python3 -m http.server 8768 >/tmp/paw-district-server.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8768/index.html -o /dev/null && break; sleep 1; done
+          node scripts/district-journey-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: candidate-district-${{ github.run_id }}
+          path: |
+            test-results/
+            /tmp/paw-district-server.log
+          if-no-files-found: warn
+  device:
+    # Independent evidence: a failed focused assertion remains red, but does
+    # not prevent the actual browser/device journey from being exercised.
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Identify tested revision
+        run: git rev-parse HEAD
+      - run: node scripts/build.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Organic device journey and rendered HUD regression
+        env:
+          MEOW_BROWSER: ${{ matrix.engine }}
+        run: |
+          python3 -m http.server 8768 >/tmp/paw-candidate-server.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8768/index.html -o /dev/null && break; sleep 1; done
+          node scripts/device-journey-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: candidate-evidence-${{ matrix.engine }}-${{ github.run_id }}
+          path: |
+            test-results/
+            /tmp/paw-candidate-server.log
+          if-no-files-found: warn
