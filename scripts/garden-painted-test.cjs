@@ -122,3 +122,18 @@ console.log('Catalogue return and blind box scene ownership passed.');
  assert.ok(src.includes("tr('Return to the garden','回到花园')"));
  console.log('PASS '+count+' wishing-pool visit ownership combinations and 4 runtime wiring checks');
 }
+
+{
+ const source=fs.readFileSync(path.resolve(__dirname,'../src/town-access.js'),'utf8');
+ const f=new Function(source.split('/* PAW_WISH_BANK_BEGIN */')[1].split('/* PAW_WISH_BANK_END */')[0]+';return {pawWishBankGeometry,pawWishCoinOrigin,pawWishApproach}')();
+ let n=0;
+ for(const [width,height] of [[320,568],[390,844],[430,932],[768,1024],[1440,900],[844,390]]){
+  const pond={x:width*.13,y:height*.3,w:width*.74,h:height*.24},g=f.pawWishBankGeometry({width,height},pond),o=f.pawWishCoinOrigin(g,pond);
+  assert.ok(g.foot.y>pond.y+pond.h);assert.ok(g.keeper.y>pond.y+pond.h);
+  assert.ok(Math.abs(pond.x+o.x*pond.w/100-g.hand.x)<1e-8);
+  assert.ok(Math.abs(pond.y+o.y*pond.h/100-g.hand.y)<1e-8);n+=4
+ }
+ for(const [age,reduced,want] of [[-1,false,0],[475,false,.5],[950,false,1],[1500,false,1],[0,true,1]]){assert.equal(f.pawWishApproach(age,reduced),want);n++}
+ for(const needle of ["!bankReady||!held||busy||done","coin.hidden=!bankReady||!held||done","tr('Take a Paw Coin','取一枚爪爪币')","from.x+(x-from.x)*f","from.y+(y-from.y)*f","garden-keeper/standing.webp"]){assert.ok(source.includes(needle));n++}
+ console.log('PASS '+n+' bank anchor, approach, pickup and launch checks');
+}
