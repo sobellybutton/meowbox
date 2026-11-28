@@ -6441,6 +6441,8 @@ function pawVisitorPauseTimers(roster,elapsed){
 }
 /* PAW_VISITOR_LIFECYCLE_END */
 function pawRoomWalkers(){
+ // Private consultations retain only the traveller and resident host.
+ if(room==='destiny'||room==='tarot')return [];
  const spec=pawRoomVisitorSpecs[room];if(!spec||activity)return [];
  const context=scene+'|'+room+'|'+avatar;
  if(!indoorReady()){if(context===pawVisitorContext)pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,t-pawVisitorAt));pawVisitorAt=t;return context===pawVisitorContext?pawVisitorHold(pawLocalVisitors):[]}
@@ -15555,8 +15557,8 @@ html #game #dialogue[data-paw-chat-bar] #dialogueTop{display:flex!important;min-
 html #game #dialogue[data-paw-chat-bar] #talkPortrait{display:none!important}
 html #game #dialogue[data-paw-chat-bar] #speaker{color:#e7ca8e!important;font:600 11px/1.3 var(--paw-display,Georgia,serif)!important;letter-spacing:.04em;text-shadow:none!important}
 html #game #dialogue[data-paw-chat-bar] #line{color:#fff2d8!important;font:15px/1.38 var(--paw-body,system-ui,sans-serif)!important;white-space:pre-line!important;margin:0 0 5px!important;padding:0!important;text-shadow:none!important}
-html #game #dialogue[data-paw-chat-bar] #choices{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;gap:6px!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:2px 0 0!important;scrollbar-width:thin}
-html #game #dialogue[data-paw-chat-bar] #choices button{flex:0 0 auto!important;width:auto!important;min-width:44px!important;min-height:44px!important;max-width:86vw!important;padding:6px 11px!important;border:1px solid #e2c99980!important;border-radius:16px!important;box-shadow:none!important;background:#f0dfba12!important;color:#fff2d8!important;font:500 12px/1.25 var(--paw-body,system-ui,sans-serif)!important;text-align:center!important;white-space:normal!important}
+html #game #dialogue[data-paw-chat-bar] #choices{display:flex!important;flex-wrap:wrap!important;justify-content:flex-start!important;overflow-x:hidden!important;gap:6px!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:2px 0 0!important;scrollbar-width:thin}
+html #game #dialogue[data-paw-chat-bar] #choices button{flex:0 1 auto!important;width:auto!important;min-width:44px!important;min-height:44px!important;max-width:100%!important;padding:6px 11px!important;border:1px solid #e2c99980!important;border-radius:16px!important;box-shadow:none!important;background:#f0dfba12!important;color:#fff2d8!important;font:500 12px/1.25 var(--paw-body,system-ui,sans-serif)!important;text-align:center!important;white-space:normal!important}
 html #game #dialogue[data-paw-chat-bar] #choices button:first-child{background:#e6d2a8!important;color:#33473c!important;border-color:#e6d2a8!important}
 html #game #dialogue[data-paw-chat-bar][data-paw-yue-question] #line:empty{display:none!important}
 html #game #dialogue[data-paw-chat-bar][data-paw-yue-question] .pawYueGuidedForm{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:4px!important;margin:0!important;padding:0!important}
