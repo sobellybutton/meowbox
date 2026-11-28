@@ -14423,10 +14423,13 @@ const pawAuntieSeatDrawBefore=drawActivity;
 drawActivity=function(...args){
  const visit=room==='fish'&&activity==='hit'?state.pawAuntieVisit:null;
  if(visit){
-  pawAuntieSeatAdvance(visit,t,pawArcadeInputBlocked());
-  const frame=pawAuntieSeatFrame(visit.phase,visit.age,residentReducedMotion.matches);
-  if(visit.phase==='arrival'&&frame.done){visit.phase='seated';visit.age=0;refreshControls();hint('Ah Ma: What is bothering you today?','阿嬷：今天有什么烦心事？')}
-  else if(visit.phase==='departure'&&frame.done){
+  const blocked=pawArcadeInputBlocked();
+  pawAuntieSeatAdvance(visit,t,blocked);
+  // Reduced motion may complete a pose immediately, but never complete
+  // an arrival or leave the room under a covered or hidden scene.
+  const frame=pawAuntieSeatFrame(visit.phase,visit.age,residentReducedMotion.matches&&!blocked);
+  if(!blocked&&visit.phase==='arrival'&&frame.done){visit.phase='seated';visit.age=0;refreshControls();hint('Ah Ma: What is bothering you today?','阿嬷：今天有什么烦心事？')}
+  else if(!blocked&&visit.phase==='departure'&&frame.done){
    return pawAuntieSeatBackBefore.apply($('back'),visit.backArgs||[])
   }
  }
