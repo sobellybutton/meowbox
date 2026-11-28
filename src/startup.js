@@ -13924,7 +13924,7 @@ function pawYueQuestionSteps(form,out,kind){
  form.classList.add('pawYueGuidedForm');
  const question=element('p','',form,'pawYueQuestion');form.prepend(question);question.setAttribute('aria-live','polite');
  const controls=element('div','',form,'pawYueStepNav'),back=b(controls,tr('Previous','上一步'),()=>show(index-1)),next=b(controls,tr('Continue','继续'),advance);back.type=next.type='button';submit.before(controls);
- function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));question.textContent=tr(...questions[index]);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1)}
+ function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));question.textContent=tr(...questions[index]);form.dataset.pawYueTurn=String(index);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1);if(form.closest('#dialogue'))pawYueSpeakCurrentQuestion(form)}
  function advance(){if(finished||index>=steps.length-1)return;for(const field of steps[index].flatMap(n=>[...n.querySelectorAll('input,select')]))if(!field.checkValidity()){field.reportValidity();return}show(index+1)}
  form.addEventListener('keydown',e=>{if(!finished&&index<steps.length-1&&e.key==='Enter'&&e.target.matches('input')){e.preventDefault();advance()}});
  form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();if(controls.contains(submit))controls.before(submit);controls.remove()}});
@@ -15279,11 +15279,24 @@ function pawYueRestoreInline(){
  pawYueInline=null;visit.observer?.disconnect();
  if(visit.anchor.isConnected)visit.anchor.replaceWith(visit.form);else visit.form.remove();
  $('dialogue').removeAttribute('data-paw-yue-question');
+ $('dialogue').removeAttribute('data-paw-yue-reply');
+ $('line').removeAttribute('aria-live');
 }
 const pawYueInlineClose=closeTalk;
 closeTalk=function(...args){pawYueRestoreInline();return pawYueInlineClose(...args)};
 const pawYueInlineSay=say;
 say=function(...args){pawYueRestoreInline();return pawYueInlineSay(...args)};
+// The same conversation surface speaks the question; the original form is
+// only the private input/calculation transport, not another visible panel.
+function pawYueSpeakCurrentQuestion(form){
+ const panel=$('dialogue'),question=form.querySelector('.pawYueQuestion');
+ if(!question||!panel.contains(form))return;
+ $('line').textContent=question.textContent;
+ $('line').setAttribute('aria-live','polite');
+ panel.dataset.pawYueReply='true';
+ const details=form.querySelector('details');
+ if(details&&form.dataset.pawYueTurn==='2')details.open=true;
+}
 function pawYueInlineForm(kind){
  const q=$('content'),pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
  if(room!=='destiny'||!form||!out||form.hidden||form.style.display==='none'||!form.classList.contains('pawYueGuidedForm'))return false;
@@ -15293,6 +15306,7 @@ function pawYueInlineForm(kind){
  say(tr('Master Yue','月师傅'),'',[[tr('Return to our conversation','回到茶叙'),()=>{closeTalk();yueReadingHub()}]]);
  const panel=$('dialogue');panel.dataset.pawYueQuestion='true';
  panel.insertBefore(form,$('choices'));
+ pawYueSpeakCurrentQuestion(form);
  const visit={form,anchor,out,kind,observer:null,scene,room};
  pawYueInline=visit;
  visit.observer=new MutationObserver(()=>{
@@ -15431,11 +15445,15 @@ function pawYueLocalBirth(city,date,time){
  }catch{return null}
 }
 /* PAW_YUE_LOCAL_BIRTH_END */
-const pawChatYuePresent=pawYueDeskPresent;
-pawYueDeskPresent=function(kind){
- const result=pawChatYuePresent(kind),visit=pawYueInline;
- if(!visit||visit.kind!==kind)return result;
+const pawChatYueInlineForm=pawYueInlineForm;
+pawYueInlineForm=function(kind){
+ const result=pawChatYueInlineForm(kind),visit=pawYueInline;
+ if(!result||!visit||visit.kind!==kind)return result;
  const form=visit.form,controls=form.querySelector('.pawYueStepNav'),submit=form.querySelector('button[type=submit]');
+ if(form.dataset.pawYueReplyReady==='true')return result;
+ form.dataset.pawYueReplyReady='true';
+ if(submit)submit.textContent=kind==='chart'?tr('Prepare my chart','请师傅排盘'):tr('Tell me about my year','请师傅看看流年');
+ if(controls){const buttons=controls.querySelectorAll('button');if(buttons[1])buttons[1].textContent=tr('Continue','继续')}
  if(controls&&submit)controls.append(submit);
  const place=form.querySelector('details select');
  if(place){
@@ -15447,7 +15465,7 @@ pawYueDeskPresent=function(kind){
   if(custom)custom.textContent=tr('Another city (advanced)','其他城市（进阶选项）');
   const details=place.closest('details');
   details.querySelector('.yueSessionNote')?.remove();
-  const reply=element('small','',details,'pawYuePlaceReply');
+  const reply=element('small','',details,'pawYuePlaceReply');reply.setAttribute('aria-live','polite');
   const update=()=>{
    const preset=/^[0-7]$/.test(place.value),manual=place.value==='custom';
    form.dataset.pawBirthPreset=preset?'true':'false';
@@ -15690,3 +15708,24 @@ html #game #dialogue[data-paw-yue-question] .pawYueGuidedForm .yueSessionNote{di
 html #game #dialogue[data-paw-yue-question] .pawYueGuidedForm .pawYueStepNav{flex-wrap:wrap!important}
 html #game #dialogue[data-paw-yue-question] .pawYueGuidedForm select{margin-block:2px!important}
 html #game #dialogue[data-paw-yue-question] #choices button{min-height:44px!important}`;document.head.append(pawYueQuietDetailsStyle);
+
+/* PAW_RESIDENT_REPLY_TURN_BEGIN */
+// Compact in-world conversation; never expose the internal form as a second box.
+const pawResidentReplyTurnStyle=document.createElement('style');
+pawResidentReplyTurnStyle.textContent=`
+html #game #dialogue[data-paw-yue-reply][data-paw-chat-bar]{max-height:44dvh!important;overflow:visible!important;padding-top:8px!important;background:linear-gradient(180deg,transparent,#1d2927c9 48%,#1b2928fa 100%)!important}
+html #game #dialogue[data-paw-yue-reply] #dialogueTop{margin:0 0 3px!important}
+html #game #dialogue[data-paw-yue-reply] #line{display:block!important;width:fit-content;max-width:94%;box-sizing:border-box;background:#f1e6cf!important;color:#3d4b3d!important;border:1px solid #b6a17b;border-radius:11px 11px 11px 3px;padding:8px 11px!important;margin:0 0 6px!important;font:15px/1.35 var(--paw-body,system-ui,sans-serif)!important;box-shadow:0 2px 6px #252b2440!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm{display:contents!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm .pawYueQuestion{display:none!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm>label:not(.pawYueStepHidden),html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm>details:not(.pawYueStepHidden){width:min(100%,300px)!important;max-width:100%!important;margin:0 0 0 auto!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm details summary{display:none!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm :is(input,select){border-radius:10px 10px 3px 10px!important;background:#f5e8cc!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueStepNav{justify-content:flex-end!important}
+html #game #dialogue[data-paw-yue-reply] #choices{justify-content:flex-end!important}
+html #game #dialogue[data-paw-yue-reply] #choices button{background:transparent!important;color:#ead9b7!important;border-color:#c6b68b80!important;font-size:11px!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm[data-paw-birth-preset="false"]:has(select option[value="custom"]:checked){display:grid!important;max-height:31dvh;overflow:auto}
+@media(orientation:landscape){html #game #dialogue[data-paw-yue-reply][data-paw-chat-bar]{max-height:65dvh!important}}
+@media(forced-colors:active){html #game #dialogue[data-paw-yue-reply] #line{background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText}}
+`;document.head.append(pawResidentReplyTurnStyle);
+/* PAW_RESIDENT_REPLY_TURN_END */
