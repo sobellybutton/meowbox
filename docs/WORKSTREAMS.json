@@ -1359,12 +1359,16 @@
       "resources": [
         "src/extensions.js",
         "src/startup.js",
-        "browser"
+        "browser",
+        "scripts/office-story-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null,
+      "lease": {
+        "owner": "parallel-office-stories-1795838294587",
+        "until": 1795840094587
+      },
       "blocker": "Acceptance: At least two genuinely different outcomes for each reviewed branch story, coherent English/Chinese writing, repeat and return behavior; do not duplicate assessment experiences."
     },
     {
