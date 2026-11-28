@@ -54,7 +54,7 @@ for(const id of api.legacyIds){
  assert.equal(previews.pawFurniturePaintedPath(id),api.legacyFurniture(id));
  assert.ok(fs.existsSync(path.resolve(__dirname,'..',previews.pawFurniturePaintedPath(id))));
 }
-for(const id of ['shelf','displayCabinet','shojiLamp','roomExtension','roomStudio']){
+for(const id of ['shelf','displayCabinet','roomExtension','roomStudio']){
  assert.equal(previews.pawFurniturePaintedPath(id),null);
  assert.ok(fs.existsSync(path.resolve(__dirname,'..',previews.pawFurniturePaintedPath(id,true))));
 }
@@ -90,6 +90,10 @@ for(const id of imported){
  }
 }
 assert.equal(previews.pawFurnitureRoomPose('shelf',30,80,15).anchor,'legacy');
+assert.equal(previews.pawFurniturePaintedPath('shojiLamp'),api.furniture('floor-lantern'));
+assert.deepEqual(previews.pawFurnitureRoomPose('shojiLamp',45,78,30),{left:45,top:78,logicalY:78,rotation:30,anchor:'bottom',maxHeight:38});
+assert.equal(previews.pawFurnitureRoomPose('shojiLamp',45,100).top,91);
+assert.equal(previews.pawFurnitureRoomPose('shojiLamp',45,NaN).top,80);
 assert.equal(previews.pawFurnitureRoomPose('board',50,18).maxHeight,14);
 assert.equal(previews.pawFurnitureRoomPose('chineseLantern',0,90).left,12);
 assert.equal(previews.pawFurnitureRoomPose('chineseLantern',100,90).left,88);
