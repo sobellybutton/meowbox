@@ -13,6 +13,17 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
   const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1,hasTouch:width<900,reducedMotion:motion});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const shot=async stage=>{
+   if(process.env.PAW_CHINESE_BRAND==='1'&&!stage.includes('FAIL')){
+    const expected=language==='中文'?'摸鱼小镇':'Pawradise';
+    assert.equal(await page.evaluate(()=>pawBrand()),expected,'Wrong active brand at '+stage);
+    assert((await page.title()).startsWith(expected),'Wrong browser title at '+stage);
+    assert.equal(await page.locator('html').getAttribute('lang'),language==='中文'?'zh':'en');
+    if(await page.locator('#proposal').isVisible()){
+     const brand=await page.locator('#proposal header>span').innerText();
+     assert(brand.includes(expected),'Wrong entrance wordmark at '+stage+': '+brand);
+     if(language==='中文')assert(!brand.includes('Pawradise'),'English brand in Chinese entrance');
+    }
+   }
    if(process.env.PAW_FOUNDATION==='1'){
     const words=await page.locator('body').innerText();
     assert(!/\bNPCs?\b|non.player character|fictional (?:residents?|guests?|visitors?|characters?)|虚构(?:居民|来客|角色|客串角色)|非玩家角色|电脑对手/i.test(words),'Out-of-world wording visible at '+stage);
@@ -124,6 +135,16 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
      assert.equal(after.scene,before.scene,'Dock return changed district');
      assert(Math.hypot(after.x-before.x,after.y-before.y)<3,'Dock return moved traveller');
     }
+   }
+   if(process.env.PAW_CHINESE_BRAND==='1'){
+    const gear=page.locator('#townSettingsToggle');await gear.tap();
+    const panel=page.locator('#townSettingsPanel');await panel.waitFor({state:'visible'});
+    await panel.getByRole('button',{name:language==='中文'?'EN':'中文',exact:true}).tap();
+    await page.waitForFunction(expected=>pawBrand()===expected,language==='中文'?'Pawradise':'摸鱼小镇');
+    assert((await page.title()).startsWith(language==='中文'?'Pawradise':'摸鱼小镇'));
+    await gear.tap();await panel.getByRole('button',{name:language,exact:true}).tap();
+    await page.waitForFunction(expected=>pawBrand()===expected,language==='中文'?'摸鱼小镇':'Pawradise');
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('meowbox-preview-zh'))),language==='中文');
    }
    await page.reload({waitUntil:'domcontentloaded'});const returnGate=proposal.locator('.shrine-enter');await returnGate.waitFor({timeout:45000});await proposal.locator('.mbGatePainting').evaluate(im=>im.decode());assert.equal(await proposal.locator('.rail-revisit,.shrine-speaker').count(),0,'Return screen still has redundant controls');assert.equal(await proposal.locator('.cinema-world').isVisible(),false,'Return shows fallback art');await reachable(returnGate,'Return ticket entry');await shot('return-ticket');await returnGate.click();await proposal.waitFor({state:'hidden',timeout:20000});assert(await page.evaluate(()=>avatar===3&&playerName==='Traveller 旅人'),'Return identity changed');assert.deepEqual(errors,[],'Return page errors');console.log('PASS '+name);
   }catch(e){failures.push(name+': '+e.message);await shot('FAIL').catch(()=>{});console.error(name,e.message)}
