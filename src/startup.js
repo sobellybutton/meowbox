@@ -13934,4 +13934,55 @@ teaPitcher=function(x,y,base,tilt=0){
  return pawLiveTeaPitcherBefore(x,y,base,tilt)
 };
 /* PAW_FOOD_LIVE_PROPS_END */
+
+/* PAW_DISCOVERY_DIALOGUE_CONTINUITY_BEGIN */
+// Preserve the current visit and its exact activity when a resident offers
+// another page of a reading. Do not dispatch a detached choice after leaving.
+const pawVisitDialogueRooms=new Set(['quiz','curiosity','story','match','tarot','destiny']);
+let pawVisitDialogueSequence=0;
+function pawVisitChoiceMatches(origin,current){
+ return !!origin&&!!current&&origin.sequence===current.sequence&&origin.scene===current.scene&&origin.room===current.room&&origin.activity===current.activity&&(!origin.activity||origin.run===current.run)&&current.open&&!current.transitioning;
+}
+function pawVisitDialogueContext(){
+ return {sequence:pawVisitDialogueSequence,scene,room,activity,run:state,open:talkOpen,transitioning}
+}
+const pawVisitSayPrior=say,pawVisitClosePrior=closeTalk;
+say=function(name,words,choices=[],...rest){
+ const panel=$('dialogue'),scoped=pawVisitDialogueRooms.has(room),keyboard=panel.contains(document.activeElement)&&document.activeElement.matches(':focus-visible');
+ const sequence=++pawVisitDialogueSequence;
+ panel.toggleAttribute('data-paw-visit-dialogue',scoped);
+ if(!scoped)return pawVisitSayPrior(name,words,choices,...rest);
+ const origin={...pawVisitDialogueContext(),sequence};
+ const guarded=Array.isArray(choices)?choices.map(choice=>{
+  if(!Array.isArray(choice)||typeof choice[1]!=='function')return choice;
+  const [label,callback,...extra]=choice;
+  return [label,(...args)=>{if(pawVisitChoiceMatches(origin,pawVisitDialogueContext()))return callback(...args)},...extra]
+ }):choices;
+ const value=pawVisitSayPrior(name,words,guarded,...rest);
+ panel.setAttribute('role','group');panel.setAttribute('aria-labelledby','speaker');
+ $('line').setAttribute('aria-live','polite');
+ panel.scrollTop=0;
+ if(keyboard)requestAnimationFrame(()=>{
+  if(pawVisitChoiceMatches(origin,pawVisitDialogueContext()))$('choices').querySelector('button:not([disabled])')?.focus({preventScroll:true})
+ });
+ return value
+};
+closeTalk=function(...args){
+ ++pawVisitDialogueSequence;
+ const panel=$('dialogue');panel.removeAttribute('data-paw-visit-dialogue');panel.removeAttribute('role');panel.removeAttribute('aria-labelledby');$('line').removeAttribute('aria-live');
+ return pawVisitClosePrior(...args)
+};
+const pawVisitDialogueStyle=document.createElement('style');
+pawVisitDialogueStyle.textContent=`
+#game #dialogue[data-paw-visit-dialogue]{box-sizing:border-box;width:min(calc(100% - 24px),560px)!important;max-height:min(48dvh,440px);padding:10px 14px;background:#f1e4cef5 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat;border:1px solid #b6a17e;border-radius:9px 7px 10px 7px;box-shadow:0 3px 12px #30282055;color:#4b4437;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#game #dialogue[data-paw-visit-dialogue] #speaker{color:#4e6555}
+#game #dialogue[data-paw-visit-dialogue] #line{white-space:pre-wrap;font-size:clamp(14px,3.7vw,17px);line-height:1.48}
+#game #dialogue[data-paw-visit-dialogue] #choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:6px}
+#game #dialogue[data-paw-visit-dialogue] #choices button{min-width:0;min-height:44px;white-space:normal;text-align:left;overflow-wrap:anywhere;padding:7px 10px;color:#4b4437;background:#f7edd9;border:1px solid #b9a17c;border-radius:5px;box-shadow:none}
+#game #dialogue[data-paw-visit-dialogue] #choices button:focus-visible{outline:2px solid #3b6553;outline-offset:-3px}
+@media(orientation:landscape) and (max-height:550px){#game #dialogue[data-paw-visit-dialogue]{max-height:52dvh;padding:8px 11px}}
+`;
+document.head.append(pawVisitDialogueStyle);
+/* PAW_DISCOVERY_DIALOGUE_CONTINUITY_END */
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
