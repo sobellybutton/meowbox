@@ -482,11 +482,12 @@ jobs:
                 await page.getByRole('button',{name:'‹ Explore',exact:true}).click();
                 await page.locator('#content > .row').getByRole('button',{name:/^‹ (Back(?: to game)?|Town|Profile|My room)$/}).click();
                 // Direct activity integration check, separate from the normal entrance flow.
-                // The lab is one house with four current choices, not separate destinations.
-                await page.evaluate(()=>{scene='wonder';room='quiz';activity=null;action('quiz')});
-                for(const [label,mode] of [['MBTI-inspired preferences','type'],['Enneagram-inspired · nine motives','motive'],['Five personality tendencies','bigfive'],['Relationship values','values']]){
+                // Test the actual authored host and return destination for each assessment.
+                // The Observatory offers personality reflections; relationship values belong in the Heart Café.
+                for(const [house,label,mode] of [['quiz','Four personality preferences','type'],['quiz','Enneagram-inspired · nine motives','motive'],['quiz','Five personality tendencies','bigfive'],['match','Relationship values','values']]){
+                  await page.evaluate(house=>{scene='wonder';room=house;activity=null;action(house)},house);
                   await page.locator('#choices').getByRole('button',{name:label,exact:true}).click();
-                  await page.waitForFunction(mode=>scene==='wonder'&&room==='quiz'&&activity==='wonderScene'&&wonderSceneMode===mode,mode,{timeout:3000});
+                  await page.waitForFunction(({house,mode})=>scene==='wonder'&&room===house&&activity==='wonderScene'&&wonderSceneMode===mode,{house,mode},{timeout:3000});
                   if(options.hasTouch&&options.viewport.width<=540){
                     await page.evaluate(()=>{wonderScenePhase='question';wonderSceneAt=t;syncWonderSheet()});
                     const question=page.locator('#wonderQuestionSheet');
@@ -499,8 +500,7 @@ jobs:
                   }
                   await page.evaluate(()=>{closeTalk();updateHUD()});
                   await page.locator('#back').click();
-                  await page.waitForFunction(()=>room==='quiz'&&!activity,{},{timeout:3000});
-                  if(mode!=='values')await page.evaluate(()=>action('quiz'));
+                  await page.waitForFunction(house=>room===house&&!activity,house,{timeout:3000});
                 }
                 await page.evaluate(()=>{scene='fortune';room=null;activity=null;state={};closeTalk();updateHUD()});
                 await page.evaluate(()=>{room='wishes';activity=null;action('coin')});
