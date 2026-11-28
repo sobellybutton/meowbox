@@ -39,7 +39,13 @@ fs.mkdirSync(out,{recursive:true});
  try{
   await setup();
   await fixture('wishes');
-  await page.evaluate(()=>{start('wishes');gardenWrite()});
+  await page.evaluate(()=>start('wishes'));
+  await page.waitForFunction(()=>room==='wishes'&&activity==='wishes'&&!transitioning&&pawRoomImageReady(pawWishLobbyArt())&&state.gardenStage==='write'&&hit.some(h=>h.fn===gardenWrite),null,{timeout:15000});
+  const tapWishPoint=async(point)=>{
+   const pos=await page.evaluate(point=>{const im=pawWishLobbyArt(),plate=pawReadingCoverPlate(livingBounds(),im.naturalWidth,im.naturalHeight),q=pawWishGroundPoint(plate,point),r=document.querySelector('canvas').getBoundingClientRect();return {x:r.left+cam.ox+q.x*cam.scale,y:r.top+cam.oy+q.y*cam.scale}},point);
+   await page.touchscreen.tap(pos.x,pos.y);
+  };
+  await tapWishPoint(await page.evaluate(()=>pawWishGroundPaper));
   const paper=page.locator('#dialogue.pawWishWriting .pawWishPaper textarea');
   await paper.waitFor({timeout:10000});assert(await noPage(),'Wish opened external page');
   await chatGeometry('wish',.28);await shot('wish-blank');
@@ -49,6 +55,13 @@ fs.mkdirSync(out,{recursive:true});
   assert(await noPage());await shot('wish-carry');
   const wishGeometry=await page.evaluate(()=>{const im=pawWishLobbyArt(),plate=pawReadingCoverPlate(livingBounds(),im.naturalWidth,im.naturalHeight);return {foot:pawWishGroundFoot,paper:pawWishGroundPaper,hook:pawWishRackPoint(0),plate:!!plate}});
   assert(wishGeometry.plate&&wishGeometry.foot[1]>wishGeometry.paper[1]&&wishGeometry.hook[0]>.7&&wishGeometry.hook[1]<.3,'Wish staging must follow the painted kiosk and rack');
+  const count=await page.evaluate(()=>gardenWishes.length);
+  await tapWishPoint(wishGeometry.hook);
+  await page.waitForFunction(()=>!!state.pawWishWalk,null,{timeout:8000});
+  await shot('wish-walking');
+  await page.waitForFunction(count=>gardenWishes.length===count+1&&state.gardenStage==='write',count,{timeout:15000});
+  assert(await page.evaluate(()=>!state.pendingGardenWish&&gardenWishes.at(-1).slot===0));
+  await shot('wish-hung-returned');
   await fixture('tarot');
   // Known flipped card fixture: tests interpretation rather than random draw.
   await page.evaluate(()=>{start('tarot');state.readCards=[{i:0,rev:false}];state.readFlip=[t-2];state.readFocus=0;state.readStage='focus';state.readAt=t-1;readingFocusMeaning()});
@@ -71,6 +84,8 @@ fs.mkdirSync(out,{recursive:true});
   await place.selectOption(choice);
   assert.equal(await form.locator('input[type=number]:visible').count(),0,'Known birthplace must not expose technical fields');
   assert(await form.locator('.pawYuePlaceReply').isVisible());
+  assert.equal(await form.locator('.yueSessionNote:visible').count(),0,'No technical offset note in dialogue');
+  assert.deepEqual(await page.evaluate(()=>pawYueLocalBirth('0','1980-05-15','09:30')),[7.5,1.35,103.82]);
   assert.deepEqual(await form.locator('input[type=number]').evaluateAll(nodes=>nodes.map(n=>Number(n.value))),[8,1.35,103.82]);
   await shot('yue-place-confirmed');
   await form.locator('button[type=submit]').tap();
