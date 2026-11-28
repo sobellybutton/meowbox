@@ -96,3 +96,25 @@ assert.equal(previews.pawFurnitureRoomPose('chineseLantern',100,90).left,88);
 assert.ok(extensions.includes('d.x=old.x;d.y=old.y;pawFurnitureApplyRoomPose(im,d)'));
 assert.ok(extensions.includes("id==='chineseLantern'?'wall'"));
 console.log('Imported furniture paths and placement anchors verified.');
+
+for(const [kind,ids] of [['wall',['wallLinen','wallSakura','wallMatcha','wallBlue']],['floor',['floorOak','floorTiles','floorTatami','floorChecker']]]){
+ for(const id of ids){
+  const spec=api.finishSpec(kind,id);assert.ok(fs.existsSync(path.resolve(__dirname,'..',spec.path)));
+  assert.equal(spec.box[1],kind==='wall'?0:300);assert.equal(spec.box[3],kind==='wall'?300:200);
+  assert.equal(api.finishSpec(kind==='wall'?'floor':'wall',id),null);
+  const canvases=[],source={naturalWidth:344,naturalHeight:344};
+  const result=api.finishRaster(kind,id,source,(width,height)=>{
+   const calls=[],c={width,height,calls,getContext:()=>({save(){},restore(){},translate(){},scale(){},drawImage(...args){calls.push(args)}})};canvases.push(c);return c
+  });
+  assert.equal(result,canvases[0]);assert.equal(canvases[1].calls.length,24);
+  assert.equal(result.calls.length,kind==='wall'?1:320);
+  for(const [im,x,y,w,h] of result.calls)assert.ok(x>=0&&y>=0&&x+w<=im.width+1e-6&&y+h<=im.height+1e-6);
+ }
+}
+for(let i=0;i<=1000;i++){
+ const q=api.floorSample(i/1000);assert.ok(q.left>=0&&q.left+q.span<=6&&q.v>=0&&q.v<4);
+ if(i){const prior=api.floorSample((i-1)/1000);assert.ok(q.span<prior.span&&q.v>prior.v)}
+}
+assert.equal(api.finishSpec('wall','__proto__'),null);assert.equal(api.finishSpec('floor','plain'),null);
+assert.equal(api.floorSample(-1),null);assert.equal(api.floorSample(NaN),null);
+console.log('Eight home finish paths, mirror tiling, floor sampling and surface bounds verified.');

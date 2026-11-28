@@ -86,5 +86,33 @@
           {id:'side',purchase:'roomExtension',owned:!!extension,available:true,cells:28},
           {id:'studio',purchase:'roomStudio',owned:second,available:!!extension,cells:40}];
  }
- return Object.freeze({shell,furniture,legacyFurniture,legacyIds:Object.keys(legacyArt),plans,project,cellExists,footprint,canPlace,nearestCell,anchor,upgradeAllowed,layoutIds:Object.keys(layouts),furnitureIds:Object.keys(catalog)});
+ // Material swatches are square, not room backgrounds. Reflect adjoining
+ // tiles at their common edges and project floor depth before compositing.
+ const finishIds={wall:['wallLinen','wallSakura','wallMatcha','wallBlue'],floor:['floorOak','floorTiles','floorTatami','floorChecker']};
+ function finishSpec(kind,id){
+  if(!Object.hasOwn(finishIds,kind)||!finishIds[kind].includes(id))return null;
+  return {path:'assets/visual/painted/home/finishes/'+id+'.webp',width:640,height:kind==='wall'?480:320,box:kind==='wall'?[0,0,400,300]:[0,300,400,200]}
+ }
+ function floorSample(depth){
+  if(!Number.isFinite(depth)||depth<0||depth>1)return null;
+  const scale=.48+.52*depth,span=2.4/scale;
+  return {left:3-span/2,span,v:.1+2.6*depth/scale}
+ }
+ function finishRaster(kind,id,source,makeCanvas){
+  const spec=finishSpec(kind,id);if(!spec||!source||typeof makeCanvas!=='function')return null;
+  const size=source.naturalWidth||source.width,height=source.naturalHeight||source.height;
+  if(!Number.isInteger(size)||size<1||size!==height||size>2048)return null;
+  const out=makeCanvas(spec.width,spec.height),g=out.getContext('2d');if(!g)return null;
+  const atlas=makeCanvas(size*6,size*4),ag=atlas.getContext('2d');if(!ag)return null;
+  for(let y=0;y<4;y++)for(let x=0;x<6;x++){
+   ag.save();ag.translate((x+(x%2))*size,(y+(y%2))*size);ag.scale(x%2?-1:1,y%2?-1:1);ag.drawImage(source,0,0,size,size);ag.restore()
+  }
+  if(kind==='wall')g.drawImage(atlas,0,0,size*2.5,size*1.875,0,0,spec.width,spec.height);
+  else for(let y=0;y<spec.height;y++){
+   const p=floorSample((y+.5)/spec.height);
+   g.drawImage(atlas,p.left*size,p.v*size,p.span*size,1,0,y,spec.width,1)
+  }
+  return out
+ }
+ return Object.freeze({finishSpec,floorSample,finishRaster,shell,furniture,legacyFurniture,legacyIds:Object.keys(legacyArt),plans,project,cellExists,footprint,canPlace,nearestCell,anchor,upgradeAllowed,layoutIds:Object.keys(layouts),furnitureIds:Object.keys(catalog)});
 });

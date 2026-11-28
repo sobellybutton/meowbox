@@ -13210,4 +13210,54 @@ keepsakeClue=function(...args){const pair=pawDisplayCluePrior(...args);return Ar
 const pawDisplayResidentTipPrior=residentTip;
 residentTip=function(...args){const pair=pawDisplayResidentTipPrior(...args);return Array.isArray(pair)?pair.map(pawDisplayPlaceText):pair};
 
+// Paint only the selected existing room surfaces. Wait for the swatch and
+// retain the original SVG as fallback; never rebuild the furniture stage.
+const pawHomeFinishCache=new Map();
+function pawHomeFinishImage(api,kind,id){
+ const spec=api.finishSpec(kind,id);if(!spec)return Promise.resolve(null);
+ const key=kind+':'+id;if(pawHomeFinishCache.has(key))return pawHomeFinishCache.get(key);
+ const promise=new Promise(resolve=>{
+  const im=new Image();let settled=false;
+  const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);im.onload=im.onerror=null;resolve(value)};
+  const timer=setTimeout(()=>finish(null),8000);
+  im.onerror=()=>finish(null);
+  im.onload=()=>{try{
+   const raster=api.finishRaster(kind,id,im,(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c});
+   finish(raster?raster.toDataURL('image/png'):null)
+  }catch{finish(null)}};
+  im.src=spec.path
+ });
+ pawHomeFinishCache.set(key,promise);
+ promise.then(value=>{if(!value&&pawHomeFinishCache.get(key)===promise)pawHomeFinishCache.delete(key)});
+ return promise
+}
+function pawApplyHomeFinish(stage,svg,api,kind,id,zone){
+ const spec=api.finishSpec(kind,id);if(!spec)return;
+ pawHomeFinishImage(api,kind,id).then(data=>{
+  if(!data||!stage.isConnected||stage.querySelector(':scope > svg')!==svg||komorebiZone!==zone||komorebiFinishes()[kind]!==id)return;
+  if(svg.getAttribute('viewBox')!=='0 0 400 500')return;
+  const anchor=kind==='wall'?svg.querySelector(':scope > rect[y="300"][width="400"][height="200"]'):svg.querySelector(':scope > path[d="M0 291H400V302H0Z"]');
+  if(!anchor||anchor.parentNode!==svg)return;
+  const previous=svg.querySelector('[data-paw-home-finish="'+kind+'"]');
+  if(previous?.getAttribute('data-material')===id)return;
+  const art=document.createElementNS('http://www.w3.org/2000/svg','image');
+  const [x,y,w,h]=spec.box;
+  for(const [k,v] of Object.entries({x,y,width:w,height:h,preserveAspectRatio:'none','pointer-events':'none','data-paw-home-finish':kind,'data-material':id}))art.setAttribute(k,String(v));
+  art.setAttribute('href',data);
+  previous?.remove();svg.insertBefore(art,anchor)
+ })
+}
+const pawHomeFinishPageBefore=hideoutPage;
+hideoutPage=function(...args){
+ const result=pawHomeFinishPageBefore(...args),stage=$('content').querySelector('.hideoutScene'),svg=stage?.querySelector(':scope > svg'),zone=komorebiZone;
+ if(!svg||svg.getAttribute('viewBox')!=='0 0 400 500')return result;
+ const finishes=komorebiFinishes();
+ if(finishes.wall==='plain'&&finishes.floor==='plain')return result;
+ pawLoadHomePaintings().then(api=>{
+  if(!api?.finishSpec||!stage.isConnected||komorebiZone!==zone)return;
+  for(const kind of ['wall','floor'])if(finishes[kind]!=='plain')pawApplyHomeFinish(stage,svg,api,kind,finishes[kind],zone)
+ });
+ return result
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
