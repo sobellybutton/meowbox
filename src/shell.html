@@ -341,4 +341,17 @@ html #game #dock>button.pawDockSelected:not([hidden]){color:#395846!important}
 @media(forced-colors:active){html #game #dock>button:not([hidden]){color:ButtonText!important}html #game #dock>button.pawDockSelected:not([hidden]){color:HighlightText!important}}
 /* PAW_MAP_CHROME_FIT_END */
 
+/* Short landscape screens: the room is the main scene, not a long form.
+   Keep its original aspect ratio and place secondary actions alongside. */
+@media (orientation:landscape) and (max-height:540px){
+ html #game #page:has(#content > .hideoutScene){padding-top:6px!important}
+ html #game #content:has(> .hideoutScene):not(:has(.hideoutPlaced.selected)){
+   display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);grid-auto-flow:row;align-items:start;align-content:start;gap:4px 12px!important;padding:6px 10px!important;max-width:860px!important
+ }
+ html #game #content:has(> .hideoutScene):not(:has(.hideoutPlaced.selected)) > *{grid-column:2;min-width:0}
+ html #game #content:has(> .hideoutScene):not(:has(.hideoutPlaced.selected)) > .row{grid-column:1/-1;grid-row:1;margin:0!important}
+ html #game #content:has(> .hideoutScene):not(:has(.hideoutPlaced.selected)) > .hideoutScene{grid-column:1;grid-row:2/span 6;align-self:start;justify-self:center;width:min(100%,48dvh)!important;height:auto!important;aspect-ratio:4/5!important;max-height:none!important;margin:0!important}
+ html #game #content:has(> .hideoutScene) > h1{font-size:clamp(20px,3.5vw,28px)!important;margin:2px 0!important}
+ html #game #content:has(> .hideoutScene) > p{margin:2px 0!important;font-size:13px!important;line-height:1.3!important}
+}
 </style></head><body><main id="game"><canvas id="c" aria-label="Pawradise interactive world"></canvas><div id="worldSigns" hidden></div><button id="lunarBtn" hidden></button><div id="hud"><button id="profileHud" aria-label="Player profile"><span class="pawPaintedPortrait"><img id="hudPortrait" alt=""></span><span><strong id="hudName"></strong><small id="hudProgress"></small></span></button><div id="location">Pawradise</div><div id="hudStats"><span id="hudCoins"></span><span id="hudStamps"></span></div><button id="travel">Travel</button></div><button id="back" hidden>Step Back</button><div id="small"><button id="luck">Daily Luck</button><div><button id="language">中文</button> <button id="mute">♪</button></div></div><div id="hint" role="status" aria-live="polite" aria-atomic="true"></div><nav id="dock" aria-label="Game navigation"><button id="dockRoom"><span class="dockIcon">⌂</span><span></span></button><button id="dockPassport"><span class="dockIcon">▤</span><span></span></button><button id="dockValley"><span class="dockIcon">♧</span><span></span></button><button id="dockTravel"><span class="dockIcon">✈</span><span></span></button><button id="dockScoop"><span class="dockIcon">▧</span><span></span></button></nav><div id="gameControls" hidden></div><div id="dialogue"><div id="dialogueTop"><img id="talkPortrait" alt="" hidden><div id="speaker"></div></div><div id="line"></div><div id="choices"></div></div><div id="toast" role="status" aria-live="polite" aria-atomic="true"></div><div id="page"><div class="inner" id="content"></div></div><div id="fade"></div><section id="arrival" class="intro" hidden><img class="introArt" id="arrivalArt" alt=""><div class="introDoors" id="introDoors"><div></div><div></div></div><div class="introCard" id="introCard"></div></section></main><meta name="meow-community-api" content=""><!--MEOW_GAME_SCRIPT--></body></html>
