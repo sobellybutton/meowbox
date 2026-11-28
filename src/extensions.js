@@ -1661,9 +1661,15 @@ function readingFocusMeaning(){
   if(entry&&entry.cards.length!==5)b($('choices'),tr('Read the full spread','查看完整解读'),()=>openTarotReading(entry));
  }
 }
+function pawReadingNextHint(run,now,autoSave){
+ const complete=Array.isArray(run?.readCards)&&run.readCards.length>0&&Array.isArray(run.readFlip)&&run.readCards.length===run.readFlip.length&&run.readFlip.every(v=>Number.isFinite(v)&&v>=0&&now-v>=.72);
+ if(!complete)return ['Turn the remaining cards over, or revisit a revealed card.','继续翻开剩下的牌，或再看看已翻开的牌。'];
+ if(!run.readSaved)return ['Your cards are ready. Read the spread or return to the room when ready.','牌已翻好，可以解读牌阵，或准备好后回到小屋。'];
+ return autoSave?['Saved in your passport. Read the spread or return to the room when ready.','已收进旅人护照。可以解读牌阵，或准备好后回到小屋。']:['Read the spread, make a keepsake, or return to the room when ready.','可以解读牌阵、制作纪念牌卡，或准备好后回到小屋。'];
+}
 function readingReturnSpread(){
  closeTalk();state.readStage='cards';state.readAt=t;
- hint('Turn the remaining cards over, or revisit any revealed card.','可以继续翻牌，也可以再看看已经翻开的牌。');
+ hint(...pawReadingNextHint(state,t,journalAutoSave()));
 }
 const readingDraw=drawActivity;drawActivity=function(){if(!['tarot','love'].includes(activity)||!state.readStage)return readingDraw();ctx.save();paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);let g=ctx.createLinearGradient(0,250,0,690);g.addColorStop(0,'#40373220');g.addColorStop(1,'#2a332c50');shadeLivingBackdrop(g);table();let stage=state.readStage,age=t-state.readAt;
 if(stage==='topic'){drawPawReadingTopics()}
@@ -1686,8 +1692,7 @@ ctx.restore()};
 const tarotJournalArt='assets/visual/painted/tarot-journal.webp';
 function journalAutoSave(){return load('tarotJournalAutoSaveV1',true)!==false}
 function readingJournalHint(){
- const message=journalAutoSave()?['Your reading is tucked into your passport.','这份牌意已经收进旅人护照。']:['Your spread is ready. Automatic saving is off.','牌阵已解开，自动保存目前关闭。'];
- hint(...message);
+ hint(...pawReadingNextHint(state,t,journalAutoSave()));
 }
 function readingTitle(entry){
  return entry.cards.length===1?tr('Daily tarot','今日塔罗'):tr(...(readingTopics[entry.topic]||(entry.cards.length===5?['Five-card reading','五张牌解读']:['Three-card reading','三张牌占卜'])));
@@ -6827,8 +6832,10 @@ const houseSignStyle=document.createElement('style');houseSignStyle.textContent=
 
 function speechOverlap(a,b){return a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top}
 function chooseSpeechPosition(w,h,width,height,speaker,player,blockers=[]){
- const center=(speaker.left+speaker.right)/2;
- const candidates=[{left:center-w/2,top:speaker.top-h-14},{left:speaker.right+12,top:speaker.top+5},{left:speaker.left-w-12,top:speaker.top+5},{left:center-w/2,top:speaker.bottom+12}];
+ if(!speaker||![w,h,width,height,speaker.left,speaker.right,speaker.top,speaker.bottom].every(Number.isFinite)||Math.min(w,h,width,height)<=0||speaker.right<=speaker.left||speaker.bottom<=speaker.top||speaker.right<0||speaker.left>width||speaker.bottom<0||speaker.top>height)return null;
+ const center=(speaker.left+speaker.right)/2,mid=(speaker.top+speaker.bottom)/2;
+ const candidates=[{left:center-w/2,top:speaker.top-h-14},{left:speaker.right+12,top:speaker.top+5},{left:speaker.left-w-12,top:speaker.top+5},{left:center-w/2,top:speaker.bottom+12},
+ {left:speaker.right+12,top:mid-h/2},{left:speaker.left-w-12,top:mid-h/2},{left:center-w/2,top:speaker.bottom+14},{left:center-w/2,top:speaker.top-h-14}];
  for(const v of candidates){const left=Math.max(8,Math.min(width-w-8,v.left)),top=v.top,rect={left,top,right:left+w,bottom:top+h};
  if(w>width-16||top<10||rect.bottom>height-74||[speaker,player,...blockers].some(b=>b&&speechOverlap(rect,b)))continue;
  const side=rect.bottom<=speaker.top?'bottom':rect.top>=speaker.bottom?'top':rect.left>=speaker.right?'left':'right';
