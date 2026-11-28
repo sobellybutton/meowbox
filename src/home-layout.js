@@ -90,9 +90,9 @@
   if(![['starter','side'],['side','studio']].some(pair=>pair[0]===from&&pair[1]===to)||!Array.isArray(items))return false;
   return items.every((item,i)=>canPlace(from,item,items.filter((_,j)=>j!==i))&&canPlace(to,item,items.filter((_,j)=>j!==i)));
  }
- // Only map matching furniture identities. Keep cabinet/shelf and special
- // interactive fixtures on their current art until shelf contact is calibrated.
- const legacyArt={futon:'futon',bed:'single-bed',lamp:'paper-lamp',basicTable:'low-table',rug:'woven-rug',plant:'fern',zabuton:'floor-cushion',catBasket:'cat-bed',sakuraVase:'flower-vase',lowDesk:'desk',retroTV:'retro-tv',chineseTeaTable:'tea-table',chineseBench:'bench'};
+ // Map matching furniture identities; preserve the separate display cabinet
+ // and special interactive fixtures until their contact is calibrated.
+ const legacyArt={futon:'futon',bed:'single-bed',lamp:'paper-lamp',basicTable:'low-table',rug:'woven-rug',plant:'fern',zabuton:'floor-cushion',catBasket:'cat-bed',sakuraVase:'flower-vase',lowDesk:'desk',retroTV:'retro-tv',chineseTeaTable:'tea-table',chineseBench:'bench',shelf:'bookcase',shojiLamp:'floor-lantern'};
  function legacyFurniture(id){return Object.hasOwn(legacyArt,id)?furniture(legacyArt[id]):null}
  function plans(extension,studio){
   const second=!!extension&&!!studio;
