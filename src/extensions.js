@@ -9067,7 +9067,7 @@ function deerFeed(){
  if(activity!=='deerVisit'||!['greet','ready'].includes(state.deerPhase))return;
  if(deerVisitRecord().day===shrineClock().day&&deerVisitRecord().fed)return;
  state.deerPhase='feed';state.deerAt=t;refreshControls();
- hint('Offer the deer cracker straight away.','把鹿饼直接递给小鹿。')
+ hint('Collect one cracker and offer it calmly.','取一块鹿饼，平静地递给小鹿。')
 }
 function deerWatch(){
  if(activity!=='deerVisit'||!['greet','ready','done'].includes(state.deerPhase))return;
@@ -9106,6 +9106,19 @@ function deerStageLayout(bow,feed){
  return {playerX,playerY,playerScale,deerX,deerY:554,deerScale,lower,muzzleX:deerX+muzzle.x,muzzleY:554+muzzle.y};
 }
 /* MBDEER_STAGE_END */
+/* PAW_DEER_OFFER_BEGIN */
+const pawDeerOfferDuration=3.8;
+function pawDeerOfferPose(age,reduced=false){
+ const sec=Math.max(0,Math.min(pawDeerOfferDuration,Number.isFinite(age)?age:0));
+ const ease=v=>{v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)};
+ const pickAt=.65,offerAt=1.3,consumeAt=2.65;
+ const retrieve=sec<pickAt?ease(sec/.35):1-ease((sec-.85)/.45);
+ const kneel=sec<.65?ease((sec-.35)/.3):1-ease((sec-.65)/.2);
+ const feed=sec<offerAt?0:Math.sin(Math.PI*Math.min(1,(sec-offerAt)/2.5));
+ const held=sec>=pickAt&&sec<consumeAt;
+ return {retrieve:reduced?0:retrieve,kneel:reduced?0:kneel,walking:!reduced&&(sec>0&&sec<.35||sec>.85&&sec<offerAt),facing:sec>.85&&sec<offerAt?'left':'right',feed,held,stock:sec<pickAt,done:sec>=pawDeerOfferDuration}
+}
+/* PAW_DEER_OFFER_END */
 function drawMeadowDeer(x,y,profile,bow=0,chew=0,sc=1){
  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ellipse(0,3,73,14,'#414c3438');
  const fur=profile.fur,light=profile.light;
@@ -9130,24 +9143,28 @@ drawActivity=function(){
  if(activity!=='deerVisit'||!state.deerProfile)return deerDrawBefore();
  const phase=state.deerPhase,age=t-state.deerAt;
  if(phase==='bow'&&age>=2.7){state.deerPhase='ready';state.deerAt=t;refreshControls();hint(...(state.deerBows?['A little bow in return!','小鹿也鞠了个躬！']:['This deer would rather look at the grass. Fair enough.','小鹿更想看看草地，也挺好。']))}
- else if(phase==='feed'&&age>=2.5)deerVisitReward();
+ else if(phase==='feed'&&age>=pawDeerOfferDuration&&!document.hidden)deerVisitReward();
  else if(phase==='watch'&&age>=4){deerVisitReward(false);if(!(deerVisitRecord().day===shrineClock().day&&deerVisitRecord().fed)){state.deerPhase='ready';refreshControls()}}
  const p=state.deerProfile,now=state.deerPhase,elapsed=t-state.deerAt;
  ctx.save();paintLivingBackdrop(pics.park||pics.home);
  // Keep the two actors on their own floor marks; no artificial oval lawn or
  // extra background deer intersecting the foreground silhouettes.
  const bow=now==='bow'?Math.sin(Math.PI*clamp(elapsed/2.7,0,1)):0;
- const feed=now==='feed'?Math.sin(Math.PI*clamp(elapsed/2.5,0,1)):0;
+ const offer=now==='feed'?pawDeerOfferPose(elapsed,residentReducedMotion.matches):null,feed=offer?.feed||0;
  const layout=deerStageLayout(state.deerBows?bow*.8:0,feed);
  const reach=feed>0?{x:layout.muzzleX,y:layout.muzzleY}:null;
- const wrist=drawRitualPose(layout.playerX,layout.playerY,layout.playerScale,{bow:bow*.72,reach});
+ const actorX=layout.playerX+30*(offer?.retrieve||0),actorY=layout.playerY+7*(offer?.retrieve||0);
+ // Tray remains grounded throughout retrieval. Only its cracker is removed.
+ if(now==='feed'||now==='greet'||now==='ready'){ellipse(309,574,21,5,'#6a553b33');round(293,563,32,10,3,'#c9ad83','#937650');if(!offer||offer.stock)ellipse(309,563,10,3,'#d9b986')}
+ let wrist;
+ if(offer?.walking){backHuman(actorX,actorY,avatar??0,true,offer.facing,layout.playerScale);wrist={x:actorX+(offer.facing==='left'?-16:16)*layout.playerScale,y:actorY-39*layout.playerScale}}
+ else wrist=drawRitualPose(actorX,actorY,layout.playerScale,{bow:bow*.72+(offer?.kneel||0)*.2,kneel:(offer?.kneel||0)*.85,reach:offer?.kneel?{x:309,y:563}:reach});
  drawMeadowDeer(layout.deerX,layout.deerY,p,layout.lower,feed?Math.sin(t*18)*1.5:0,layout.deerScale);
- if(now==='feed'&&elapsed<1.35&&wrist){
+ if(offer?.held&&wrist){
   // The cracker follows the sleeve anchor, rather than hovering at a fixed
   // scene coordinate. The existing painted arm is still a provisional pose.
   ellipse(wrist.x+4,wrist.y-1,7,3.5,'#cfab73');ellipse(wrist.x+4,wrist.y-2,5.5,2.4,'#e7c78c')
  }
- if(now==='greet'||now==='ready'){ellipse(309,574,21,5,'#6a553b33');round(293,563,32,10,3,'#c9ad83','#937650');ellipse(309,563,10,3,'#d9b986')}
  ctx.restore()
 };
 shorePortraitBounds.deerVisit=[186,580,390,585];
