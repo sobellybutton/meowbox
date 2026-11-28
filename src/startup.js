@@ -1789,6 +1789,7 @@ const shrineArrivalStyle=document.createElement('style');shrineArrivalStyle.text
 let townMapHintTimer=0;
 const townHintBefore=hint;hint=function(...args){
  clearTimeout(townMapHintTimer);const el=$('hint');el.classList.remove('townHintRest');
+ if(!room&&!activity&&!guideDismissed&&/^(Tap a doorway to walk inside|Tap a place to enter|Explore the valley at your own pace)/.test(String(args[0]))){el.classList.add('townHintRest');return}
  const v=townHintBefore(...args);
  if(!room&&!activity&&/^(Tap a doorway to walk inside|Tap a place to enter|Explore the valley at your own pace)/.test(String(args[0])))townMapHintTimer=setTimeout(()=>{if(!room&&!activity)el.classList.add('townHintRest')},4500);
  return v
@@ -5611,7 +5612,8 @@ function pawSyncDockSelection(){
  // A root can switch tabs; nested pages retain their contextual Back.
  // Never abandon a draft, active keyboard, furniture edit or room visit.
  const fields=open?[...q.querySelectorAll('textarea,input:not([type]),input[type="text"],input[type="search"],[contenteditable="true"]')].filter(n=>!n.disabled&&!n.hidden):[];
- const draft=fields.some(n=>String(n.value??n.textContent??'').trim()!==''),typing=fields.includes(document.activeElement);
+ const recoverable=n=>n.id==='goodCompanyNote'&&typeof goodCompanyDraft?.text==='string'&&goodCompanyDraft.text===n.value;
+ const draft=fields.some(n=>String(n.value??n.textContent??'').trim()!==''&&!recoverable(n)),typing=fields.includes(document.activeElement);
  pawDockRootKey=pawDockRootChoice({open,room:!!room,activity:!!activity,talk:talkOpen,transition:transitioning,entrance:!proposal.hidden,editing:!!hideoutEditing,homeOrigin:home&&!!mbHomeOrigin,draft,typing,explore,today,town,home});
  const selected=!open?'':explore||q.querySelector('.travelAlbum')?'travel':home||q.querySelector('.travellerBagV2,.komorebiBook,.komorebiConfirm,.figureCabinetBook,.pawPersonalShelf')?'home':q.querySelector('.pawTownFront,.communityTabs,.townWall,.townChatTranscript')?'town':today||q.querySelector('.journalDailyTasks,.goodCompanyBook')?'today':'';
  $('game').classList.toggle('pawDockRoot',!!pawDockRootKey);
@@ -5659,7 +5661,7 @@ updateHUD=function(...args){
 };
 const pawDockRootStyle=document.createElement('style');
 pawDockRootStyle.textContent=`
-#game.pawDockRoot.pawFocusedView:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){display:flex!important;z-index:7!important}
+#game.pawDockRoot.pawFocusedView:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){display:flex!important;z-index:24!important;pointer-events:auto!important}
 #game.pawDockRoot #page{padding-bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 84px)!important;scroll-padding-bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 84px)!important}
 #game #dock>button:not([hidden]){border:1px solid transparent!important;border-radius:5px!important;box-shadow:none}
 #game #dock>button.pawDockSelected{border-color:#839274!important;box-shadow:inset 0 -2px 0 #829374!important}
@@ -5949,7 +5951,7 @@ movementUI=function(...args){
  const result=pawGuideCopyBefore(...args);
  if(!moveGuide.hidden&&guideStage===0){
   const touch='ontouchstart' in window||navigator.maxTouchPoints>0;
-  moveCopy.textContent=touch?tr('Tap the glowing spot or use the joystick to walk.','点击光圈或使用摇杆行走。'):tr('Click the path or use arrow keys to walk.','点击小路或使用方向键行走。')
+  moveCopy.textContent=touch?tr('Tap the path or use the joystick.','点击小路或使用摇杆。'):tr('Click the path or use arrow keys.','点击小路或使用方向键。')
  }
  return result
 };
@@ -14457,10 +14459,10 @@ function pawHomeFinishImage(api,kind,id){
  promise.then(value=>{if(!value&&pawHomeFinishCache.get(key)===promise)pawHomeFinishCache.delete(key)});
  return promise
 }
-function pawApplyHomeFinish(stage,svg,api,kind,id,zone){
+function pawApplyHomeFinish(stage,svg,api,kind,id,zone,selection=id){
  const spec=api.finishSpec(kind,id);if(!spec)return;
  pawHomeFinishImage(api,kind,id).then(data=>{
-  if(!data||!stage.isConnected||stage.querySelector(':scope > svg')!==svg||komorebiZone!==zone||komorebiFinishes()[kind]!==id)return;
+  if(!data||!stage.isConnected||stage.querySelector(':scope > svg')!==svg||komorebiZone!==zone||komorebiFinishes()[kind]!==selection)return;
   if(svg.getAttribute('viewBox')!=='0 0 400 500')return;
   const anchor=kind==='wall'?svg.querySelector(':scope > rect[y="300"][width="400"][height="200"]'):svg.querySelector(':scope > path[d="M0 291H400V302H0Z"]');
   if(!anchor||anchor.parentNode!==svg)return;
@@ -14478,10 +14480,10 @@ hideoutPage=function(...args){
  const result=pawHomeFinishPageBefore(...args),stage=$('content').querySelector('.hideoutScene'),svg=stage?.querySelector(':scope > svg'),zone=komorebiZone;
  if(!svg||svg.getAttribute('viewBox')!=='0 0 400 500')return result;
  const finishes=komorebiFinishes();
- if(finishes.wall==='plain'&&finishes.floor==='plain')return result;
+ // Default room uses existing painted linen and oak without changing saved selections.
  pawLoadHomePaintings().then(api=>{
   if(!api?.finishSpec||!stage.isConnected||komorebiZone!==zone)return;
-  for(const kind of ['wall','floor'])if(finishes[kind]!=='plain')pawApplyHomeFinish(stage,svg,api,kind,finishes[kind],zone)
+  for(const kind of ['wall','floor'])pawApplyHomeFinish(stage,svg,api,kind,finishes[kind]==='plain'?(kind==='wall'?'wallLinen':'floorOak'):finishes[kind],zone,finishes[kind])
  });
  return result
 };
@@ -15129,3 +15131,17 @@ pawValleyArrivalCss.textContent=`
 `;document.head.append(pawValleyArrivalCss);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
+
+/* Visual continuity: retain real hit areas and let the illustration breathe. */
+const pawVisualContinuityStyle=document.createElement('style');pawVisualContinuityStyle.textContent=`
+#game button,#game summary,#game canvas,#game [role="button"]{-webkit-tap-highlight-color:transparent}
+#game button:focus-visible,#game summary:focus-visible{outline:2px solid #64816a;outline-offset:2px}
+#game #moveGuide:not([hidden]){font-family:Georgia,"Songti SC",serif!important;background:#32483eea!important;border:1px solid #c8bba08c!important;border-radius:7px!important;padding:8px 10px!important;max-width:calc(100% - 32px)!important;box-shadow:0 2px 6px #28332740!important}
+#game #content[data-paw-visual-theme="daily"] .journalCheckin{background:transparent!important;padding:10px 2px!important}
+#game #content[data-paw-visual-theme="daily"] .pawDiaryFold .goodCompanyBook{background:transparent!important;padding:6px 0!important}
+#game #content .pawDiaryFold .goodCompanyPicks button{border-radius:5px!important;box-shadow:none!important;border:1px solid #ae9e7f!important;background:#f3e7cc!important;color:#514a37!important}
+#game #content .pawDiaryFold .goodCompanyPicks button[aria-pressed="true"]{background:#d7dfc6!important;border-color:#64816a!important;color:#384f3d!important}
+#game #content .hideoutScene{border:1px solid #a69272!important;box-shadow:0 3px 10px #52443138!important;border-radius:5px!important}
+#game #content .hideoutPrimary button{border-radius:5px!important;box-shadow:none!important}
+#game.pawDockRoot.pawFocusedView:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){z-index:24!important;background:#eee5d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 145px repeat!important;box-shadow:0 3px 10px #2e352c55!important}
+`;document.head.append(pawVisualContinuityStyle);
