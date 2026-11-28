@@ -102,3 +102,18 @@ for(const d of [1,3.6,6])for(const route of Object.keys(a.far))for(const [w,h] o
  for(let i=0;i<100;i++)bc(JSON.stringify(a.frame(route,i*.05,w,h,true,d))===JSON.stringify(a.frame(route,0,w,h,true,d)),'reduced motion stable');
 }
 console.log('PASS '+brakingChecks+' railway braking assertions; finite ride integration and visual acceptance separate.');
+
+let alphaChecks=0;
+const ac=(v,msg)=>{assert.ok(v,msg);alphaChecks++};
+for(const [w,h] of [[320,568],[390,844],[430,932],[720,1080],[1440,900],[1920,1080]])for(const layout of ['portrait','landscape']){
+ const box=a.fit(w,h,layout),win=a.windowBox(box,layout),asset=layout==='portrait'?a.portrait:a.carriage;
+ // Measured in decoded deployed WebP: portrait alpha < 255 and
+ // landscape visible glass alpha < 240 (exclusive right/bottom).
+ const measured=layout==='portrait'?[114,319,911,836]:[0,0,1672,551];
+ ac(win.x<=measured[0]/asset.width*box.width+1e-8,'left alpha coverage');
+ ac(win.y<=measured[1]/asset.height*box.height+1e-8,'top alpha coverage');
+ ac(win.x+win.w>=measured[2]/asset.width*box.width-1e-8,'right alpha coverage');
+ ac(win.y+win.h>=measured[3]/asset.height*box.height-1e-8,'bottom alpha coverage');
+ ac(win.x>=0&&win.y>=0&&win.x+win.w<=box.width+1e-8&&win.y+win.h<=box.height+1e-8,'underpaint confined to frame');
+}
+console.log('PASS '+alphaChecks+' measured alpha coverage assertions.');
