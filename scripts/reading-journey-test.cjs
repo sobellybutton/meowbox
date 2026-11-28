@@ -81,7 +81,18 @@ async function run(page,name,touch){
  await shot('tarot-journal');
  await click(page.getByRole('button',{name:'Read again',exact:true}));
  assert.match(await page.locator('.readingAside').innerText(),/meeting invite/);
- await click(page.locator('#content .row').getByRole('button',{name:'中文'}));
+ // Language belongs in profile settings; verify a saved reading survives the switch.
+ assert.equal(await page.locator('#content .row').getByRole('button',{name:'中文'}).count(),0);
+ await showGame();
+ await page.evaluate(()=>{closeTalk();room=null;activity=null;state={};updateHUD()});
+ await click(page.locator('#profileHud'));
+ await click(page.locator('.pawProfileSettingsEntry'));
+ await click(page.locator('#content #townSettingsPanel .languageChoice').getByRole('button',{name:'中文',exact:true}));
+ assert(await page.evaluate(()=>zh&&document.documentElement.lang==='zh'));
+ await click(page.locator('#content > .row button:first-child'));
+ await click(page.locator('#content > .row button:first-child'));
+ await page.evaluate(()=>openReadingJournal());
+ await click(page.getByRole('button',{name:'重温解读',exact:true}));
  await page.locator('.readingAside').filter({hasText:/拒绝会议邀请/}).waitFor({timeout:5000});
 
  // Open the extended spread at the table and flip each card with actual input.
