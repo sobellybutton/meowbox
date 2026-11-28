@@ -1253,14 +1253,20 @@
         "src/startup.js",
         "src/extensions.js",
         "src/engine.js",
-        "browser"
+        "browser",
+        "scripts/test-purification-painting.cjs",
+        "scripts/shrine-repair-test.cjs",
+        "scripts/district-journey-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
       "evidence": [
         "25084c7c + e49cfe8b: retain actual grab offset in painted water ladle drawing and release; 56 focused assertions executed against exact source, both source files parsed. 15a61ce9 persists regression. Existing action/reward/keyboard assist retained; actual water drag on rendered Chromium/WebKit still needs verification; no claim that prior failure is resolved."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-20261128-temple-input",
+        "until": 1795834849244
+      },
       "blocker": "Acceptance: Organic entry, action, outcome, return and replay for each retained activity on phone and desktop. Real inputs affect outcomes; no duplicate or gratuitous games, reward farming or generic click/read/reward loop.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n\nEnd-to-end critique, 28 Nov: Evaluate distinct actions, meaningful outcome and repeat variation in short/long sessions. Keep enjoyable existing activities; avoid gratuitous added tasks, identical mechanics or reward farming. Apply section 12."
     },
     {
