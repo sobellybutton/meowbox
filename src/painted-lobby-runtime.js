@@ -86,6 +86,17 @@ function pawConsultReadingFocus(q,words,labels,cardLine,now){
  }
  return null
 }
+// Destinations are suggestions for a PNG, not promises of direct posting.
+function pawKeepsakeFormatGuide(format,cn,formats){
+ const map={feed:['Instagram / Facebook feed · 4:5','Instagram / Facebook 动态 · 4:5'],xhs:['Xiaohongshu · 3:4','小红书 · 3:4'],story:['Instagram Stories / TikTok · 9:16','Instagram 限时动态 / TikTok · 9:16'],square:['WeChat / square posts · 1:1','微信 / 方形动态 · 1:1']};
+ const dims=Object.hasOwn(map,format)&&formats?.[format];
+ if(!Array.isArray(dims)||dims.length!==2||!dims.every(v=>Number.isInteger(v)&&v>0))return '';
+ return map[format][Number(!!cn)]+' · '+dims.join(' × ')+' px'
+}
+function pawKeepsakeShareMode(nav,file){
+ if(!file||typeof nav?.share!=='function'||typeof nav?.canShare!=='function')return false;
+ try{return nav.canShare({files:[file]})===true}catch{return false}
+}
 /* PAW_NATIVE_CONSULT_END */
 function pawInstallNativeConsultation(){
  const scalePrior=travellerRoomScale;
@@ -268,6 +279,8 @@ function pawInstallNativeConsultation(){
   preview.setAttribute('role','img');preview.hidden=true;
   const status=element('p','',panel,'meowShareStatus');status.setAttribute('role','status');
   const tabs=element('div','',panel,'meowShareTabs'),langs=element('div','',panel,'meowShareTabs');
+  const guide=element('p','',panel,'pawKeepsakeGuide');
+  const how=element('p','',panel,'pawKeepsakeGuide');
   const actions=element('div','',panel,'pawKeepsakeActions');
   tabs.setAttribute('role','group');tabs.setAttribute('aria-label',tr('Image format','图片尺寸'));
   langs.setAttribute('role','group');langs.setAttribute('aria-label',tr('Image language','图片语言'));
@@ -277,14 +290,17 @@ function pawInstallNativeConsultation(){
   });
   const send=b(actions,tr('Share image','分享图片'),async()=>{
    if(!ready||!current())return;
-   try{if(typeof File==='function'&&navigator.share&&navigator.canShare?.({files:[ready]})){await navigator.share({files:[ready],title:'Pawradise'});return}}catch(e){if(e?.name==='AbortError')return}
-   if(current())status.textContent=tr('Save the image to share it in your app.','先保存图片，再到想分享的应用。')
+   const token=version,file=ready;
+   try{if(pawKeepsakeShareMode(navigator,file)){await navigator.share({files:[file],title:'Pawradise'});return}}catch(e){if(e?.name==='AbortError')return}
+   if(current()&&token===version)status.textContent=tr('Save the PNG, then upload it in your chosen app.','请保存 PNG 图片，再到想分享的应用上传。')
   });
   const keys=Object.keys(shareFormats),formatButtons=keys.map(k=>b(tabs,k==='feed'?'IG / FB':k==='xhs'?'小红书':k==='story'?'Story / TikTok':tr('WeChat','微信'),()=>{format=k;render()}));
   const languages=[b(langs,'English',()=>{cn=false;render()}),b(langs,'中文',()=>{cn=true;render()})];
   async function render(){
    const token=++version,selectedFormat=format,selectedLanguage=cn;ready=null;preview.hidden=true;panel.setAttribute('aria-busy','true');saveButton.disabled=send.disabled=true;
    formatButtons.forEach((x,i)=>x.setAttribute('aria-pressed',String(keys[i]===format)));languages.forEach((x,i)=>x.setAttribute('aria-pressed',String(i===Number(cn))));
+   guide.textContent=pawKeepsakeFormatGuide(selectedFormat,zh,shareFormats);
+   how.textContent=tr('Save the PNG, then add it to your post. If your device supports it, Share image opens the system share menu.','保存 PNG 后可在对应平台发布。如果设备支持，点击「分享图片」会打开系统分享菜单。');
    status.textContent=tr('Preparing your keepsake…','正在准备纪念卡……');
    try{
     await pawPrepareRecoveredShare(selectedFormat,data);if(!current()||token!==version)return;
@@ -309,7 +325,8 @@ function pawInstallNativeConsultation(){
  #game #dialogue[data-paw-keepsake]{max-height:min(82dvh,calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 24px))!important;overflow-y:auto!important;overflow-x:hidden!important}
  #game #dialogue[data-paw-keepsake] #choices{grid-template-columns:minmax(0,1fr)!important}
  #game #dialogue[data-paw-keepsake] #choices>button{width:100%;text-align:center!important}
- #game #dialogue[data-paw-keepsake] .meowShareStatus{margin:0;font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+ #game #dialogue[data-paw-keepsake] :is(.meowShareStatus,.pawKeepsakeGuide){margin:0;font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+ #game #dialogue[data-paw-keepsake] .pawKeepsakeGuide{color:#5b5143}
  #game #dialogue[data-paw-keepsake] .pawTarotKeepsake{grid-column:1/-1;display:grid;gap:5px;min-width:0}
  #game #dialogue[data-paw-keepsake] .meowSharePreview{max-height:35dvh;width:auto;height:auto;max-width:100%;margin:auto;object-fit:contain}
  #game #dialogue[data-paw-keepsake] .meowSharePreview[hidden]{display:none!important}
