@@ -132,6 +132,7 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
    await click(p.locator('.chartFollowReply button').last());
    assert(await p.locator('.chartTopics [data-topic="10"]').getAttribute('aria-pressed')==='true','Rest topic not selected');
    await p.screenshot({path:'test-results/'+name+'-yue-follow-up.png'});
+   await p.locator('.pawZwdsShareButton').scrollIntoViewIfNeeded();
    const priorShare=await p.evaluate(()=>({topic:document.querySelector('.chartTopics [aria-pressed="true"]')?.dataset.topic,scroll:$('page').scrollTop,x:indoor.x,y:indoor.y}));
    await click(p.locator('.pawZwdsShareButton'));
    await p.locator('.meowShareStatus').getByText('Ready to share or save.').waitFor({timeout:15000});
@@ -141,6 +142,7 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
    await p.waitForFunction(()=>document.querySelector('.chartTopics [data-topic="10"]')?.getAttribute('aria-pressed')==='true');
    assert(await p.evaluate(q=>room==='destiny'&&Math.hypot(indoor.x-q.x,indoor.y-q.y)<2,priorShare),'Share return moved traveller');
    assert(await p.locator('.chartTopics [data-topic="10"]').getAttribute('aria-pressed')==='true','Share return lost selected palace');
+   await p.waitForFunction(q=>{const pane=$('page');return Math.abs(pane.scrollTop-Math.min(q.scroll,Math.max(0,pane.scrollHeight-pane.clientHeight)))<8},priorShare,{timeout:5000});
    await p.screenshot({path:'test-results/'+name+'-yue-share-return.png'});
 
    await openOptions();
