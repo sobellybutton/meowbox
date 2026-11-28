@@ -837,26 +837,37 @@ jobs:
                 await page.locator('#back').click();
                 await page.evaluate(()=>{scene='fortune';room='destiny';activity=null;state={};closeTalk();updateHUD()});
                 // The chart result uses fictional test birth details; no actual player data.
+                // Follow the current native consultation, not the retired detached menu.
+                const yueChoice=label=>page.locator('#choices').getByRole('button',{name:label,exact:true});
                 await page.evaluate(()=>action('destiny'));
-                await page.locator('.yueAlmanacForm').waitFor();
-                await page.locator('.yueChartTools').getByRole('button',{name:'Weekly star signs',exact:true}).click();
+                await yueChoice('Weekly star signs').click();
+                await yueChoice('For me').click();
                 if(await page.locator('.signNotebookGrid button').count()!==12)throw Error('Missing zodiac signs');
+                if(await page.locator('#page').getAttribute('data-paw-yue-desk')!=='true')throw Error('Zodiac left the study');
                 await page.locator('.signNotebookGrid button').filter({hasText:'Virgo'}).click();
                 if(!await page.locator('.signNotebookResult').innerText().then(v=>v.includes('Virgo')))throw Error('Virgo result missing');
                 await page.screenshot({path:'test-results/'+name+'-weekly-zodiac.png'});
                 await page.locator('#content .row button').first().click();
-                await page.locator('.yueReadingMenu button').first().click();
-                await page.locator('.astroForm input[type=date]').fill('1990-06-15');
-                await page.locator('.astroForm input[type=time]').fill('12:30');
-                await page.locator('.astroForm details select').selectOption('0');
-                await page.locator('.astroForm button[type=submit]').click();
+                await yueChoice('My birth chart').click();
+                await yueChoice('For me').click();
+                const yueForm=page.locator('.astroForm'),yueNext=page.locator('.pawYueStepNav').getByRole('button',{name:'Continue',exact:true});
+                await yueForm.waitFor();
+                if(await page.locator('.pawYueDeskOptions').evaluate(el=>el.open))throw Error('Secondary controls obscure initial birth question');
+                await yueForm.locator('input[type=date]').fill('1990-06-15');
+                await yueNext.click();
+                await yueForm.locator('input[type=time]').fill('12:30');
+                await yueNext.click();
+                await yueForm.locator('details select').selectOption('0');
+                await yueForm.locator('button[type=submit]').click();
                 await page.locator('.chartConsultation').waitFor({timeout:8000});
+                if(await page.locator('.ziGrid article:not(.blank)').count()!==12)throw Error('Incomplete birth chart');
+                if(!await yueForm.isHidden())throw Error('Birth questions still cover the reading');
                 await page.locator('.chartTopics button[data-topic="8"]').click();
                 if(!await page.locator('.chartReply').innerText().then(v=>v.includes('Career')))throw Error('Chart-specific career explanation missing');
                 await page.screenshot({path:'test-results/'+name+'-chart-consultation.png'});
                 await page.locator('#content .row button').first().click();
-                await page.locator('.yueReadingMenu').waitFor();
-                await page.locator('#content .row button').first().click();
+                await yueChoice('Just visiting').click();
+                if(await page.locator('#page').isVisible()||!await page.evaluate(()=>room==='destiny'&&!talkOpen))throw Error('Consultation did not return to the study');
                 if(options.hasTouch){
                   await page.waitForFunction(()=>(()=>{const im=portraitInteriorImage('destiny');return im?.naturalWidth===800&&im?.naturalHeight===1400})(),{},{timeout:10000});
                   await page.screenshot({path:'test-results/'+name+'-portrait-destiny-room.png'});
