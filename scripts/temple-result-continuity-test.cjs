@@ -9,3 +9,43 @@ const q={pawFortuneNumber:4,count:1,result:1,pawFortuneSettledAt:10,tossUntil:10
 const g={moonFoot:{x:500,y:400},stickPickFoot:{x:350,y:390},stickFoot:{x:250,y:390}};
 for(const action of ['retry','confirm']){const q={pawFortuneNumber:3,pawFortuneTransfer:action,pawFortuneTransferAt:10,stickDelivered:true};const start=h.pawFortuneTransferFrame(q,10,g),end=h.pawFortuneTransferFrame(q,20,g);ck(start.x===(action==='retry'?500:350),'start from actual station');ck(end.x===(action==='retry'?250:500)&&end.done,'arrive at target');let prev=start.x;for(let i=1;i<=200;i++){const f=h.pawFortuneTransferFrame(q,10+i/100,g);ck(action==='retry'?f.x<=prev:f.x>=prev,'continuous directional walk');prev=f.x;ck(h.pawFortuneNext(q,action==='retry'?'moon':'sticks',10+i/100,false)===null,'prevent repeated route');}h.pawQuietClock(q,action==='retry'?'moon':'sticks',10,false);h.pawQuietClock(q,action==='retry'?'moon':'sticks',10.2,true);h.pawQuietClock(q,action==='retry'?'moon':'sticks',50,true);ck(!h.pawFortuneTransferFrame(q,50,g).done,'hidden travel pauses')}
 ck(e.includes('state.pawFortuneSettledAt=t'),'actual landing clock');ck(s.includes("key:'fortune-settled'"),'visible settled state');ck(s.includes('pawAlcoveScene();if(!pawDrawAlcoveFortuneTransfer())'),'same painted scene');ck(!s.includes("tr('Fictional resident','虚构居民')"),'no rack immersion-breaking label');ck(!e.includes('Town residents · fictional companions'),'no town banner label');ck(!engine.includes('Fictional town news'),'no news label');console.log('PASS '+checks+' temple result, physical walk and resident copy checks');
+
+// Owner reported block/character overlap. Exercise exact rendered geometry and
+// actual toss trajectories, not just the nominal tray center.
+const moonApi=new Function(block('PAW_PURIFICATION_PAINT')+block('PAW_ALCOVE_PAINT')+e.slice(e.indexOf('function pawMoonFlat('),e.indexOf('function pawRitualAdvance('))+';return {pawAlcoveGeometry,pawAlcoveMoonReach,pawAlcoveMoonPoint,pawAlcoveMoonContact,pawAlcoveMoonClearance,pawWaterCamera,pawMoonFlat,pawMoonMotion}')();
+const moonGeo=moonApi.pawAlcoveGeometry();
+let clearanceChecks=0,minClearance=Infinity;
+for(const result of [0,1,2])for(const height of [45,95,135])for(let frame=0;frame<=200;frame++){
+ const f=frame/200;
+ for(let index=0;index<2;index++){
+  const m=moonApi.pawMoonMotion(f,index,moonApi.pawMoonFlat(result,index,1),height);
+  const gap=moonApi.pawAlcoveMoonClearance(moonGeo,m);
+  assert.ok(gap>=3,'Crescent crosses traveller silhouette');minClearance=Math.min(minClearance,gap);clearanceChecks++;
+  if(index===0){const hand=moonApi.pawAlcoveMoonContact(moonGeo,f,m),reach=moonApi.pawAlcoveMoonReach(moonGeo);
+   if(hand){assert.ok(Math.hypot(hand.x-reach.shoulder.x,hand.y-reach.shoulder.y)<=reach.maxReach);clearanceChecks++}
+   if(f===0){assert.deepEqual(hand,moonApi.pawAlcoveMoonPoint(moonGeo,m));clearanceChecks++}
+  }
+ }
+}
+for(const action of ['retry','confirm'])for(let frame=0;frame<=200;frame++){
+ const pose=h.pawFortuneTransferFrame({pawFortuneTransfer:action,pawFortuneTransferAt:10},10+frame/100,moonGeo);
+ for(let index=0;index<2;index++){
+  const m=moonApi.pawMoonMotion(1,index,false,95);
+  assert.ok(moonApi.pawAlcoveMoonClearance(moonGeo,m,pose)>=3,'Retry/approach crosses blocks');clearanceChecks++;
+ }
+}
+for(const [w,h] of [[320,568],[390,844],[430,932],[768,1024],[1440,900]]){
+ const c=moonApi.pawWaterCamera(w,h);
+ assert.ok(c.ox+moonGeo.moonTray.x*c.s<w&&c.ox+moonGeo.moonFoot.x*c.s>0);clearanceChecks++;
+}
+console.log('PASS '+clearanceChecks+' moon clearance, contact, walk and viewport checks; minimum world gap '+minClearance.toFixed(2));
+
+// Railway visibility uses player distance, not viewport clipping.
+{
+ const block=s.match(/\/\* PAW_RAIL_NEAR_STATION_BEGIN \*\/([\s\S]*?)\/\* PAW_RAIL_NEAR_STATION_END \*\//)[1];
+ const near=new Function(block+';return pawRailNearStation')();
+ let n=0;for(let x=-240;x<=240;x+=5)for(let y=-240;y<=240;y+=5){assert.equal(near({x:500+x,y:200+y},['station',500,200]),Math.hypot(x,y)<=180);n++}
+ assert.equal(near({x:500,y:200},null),false);assert.equal(near({x:NaN,y:200},['station',500,200]),false);
+ assert.ok(s.includes('if(sign)sign.hidden=true;'));assert.ok(!s.includes('There is still plenty to discover in the valley.'));
+ console.log('PASS '+(n+4)+' proximity and direct departure checks');
+}
