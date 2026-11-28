@@ -37,6 +37,14 @@ jobs:
       - name: Keyboard continuity regression
         if: always() && !cancelled()
         run: node scripts/world-key-continuity-test.cjs
+      - name: Release correction regressions
+        if: always() && !cancelled()
+        run: |
+          node scripts/portrait-dock-camera-test.cjs
+          node scripts/wish-pond-animation-lifecycle-test.cjs
+          node scripts/painted-plaque-clearance-test.cjs
+          node scripts/indoor-standing-actor-scale-test.cjs
+          node scripts/tarot-host-continuity-test.cjs
   district:
     runs-on: ubuntu-latest
     timeout-minutes: 30
