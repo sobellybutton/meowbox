@@ -1,0 +1,46 @@
+name: Pawradise organic player loop
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'src/**'
+      - 'assets/visual/painted/**'
+      - 'assets/portrait/**'
+      - 'scripts/player-loop-test.cjs'
+      - '.github/workflows/paw-player-loop.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  organic:
+    concurrency:
+      group: paw-player-loop-${{ matrix.engine }}-${{ github.ref }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Test organic entrance, Tarot lobby and returning identity
+        env:
+          MEOW_BROWSER: ${{ matrix.engine }}
+          PAW_STRICT_VISUAL: '1'
+        run: |
+          python3 -m http.server 8768 >/tmp/paw-player-loop.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8768/ -o /dev/null && break; sleep 1; done
+          node scripts/player-loop-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: player-loop-${{ matrix.engine }}-${{ github.sha }}
+          path: test-results/player-loop/
