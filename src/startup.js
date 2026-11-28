@@ -1965,6 +1965,8 @@ function mb5AssistSpec(kind,q,now){
   if(q.waterStage===2)return {key:'water-flow',label:['Let the water flow…','让清水流过手掌……'],disabled:true};
   if(q.waterStage===3)return {key:'water-done',label:['Back to temple','返回寺庙'],action:'back'}
  }
+ if(kind==='cook'&&q.pawSteam)return pawKitchenSteamSpec(q.pawSteam);
+ if(kind==='cook'&&q.pawSteamReady&&!q.done&&q.ingredients?.length===0)return {key:'steam-option',label:['Steam greens instead','改做蒸青菜'],action:'steam-select'};
  if(kind==='cook'&&q.done){
   if(q.tasted)return {key:'soup-done',label:['Back to kitchen','返回厨房'],action:'back'};
   if(q.pawSoupServeMode&&!q.pawSoupServed)return q.pawSoupServeAt!==undefined?{key:'soup-serving',label:['Serving the soup…','正在盛汤……'],disabled:true}:{key:'soup-serve',label:['Serve the soup','盛一碗汤'],action:'serve-soup'};
@@ -1982,6 +1984,7 @@ function mb5AssistPerform(action){
  else if(action==='bell')templeReleaseBell(65);
  else if(action==='scoop')templeReleaseWater({x:440,y:486});
  else if(action==='rinse')templeReleaseWater({x:375,y:430});
+ else if(action.startsWith('steam-'))pawKitchenSteamAction(action,state);
  else if(action==='serve-soup')pawKitchenServeRequest();
  else if(action==='taste')soupTaste();
  else if(action==='back')$('back').click();
@@ -14203,7 +14206,7 @@ function pawLoadFoodProps(){
 function pawWarmFoodProps(id){
  if(!['kitchen','boba'].includes(id))return;
  pawLoadFoodProps().then(q=>{if(!q)return;
-  q.cache.request(id==='boba'?['boba_tea_pot','boba_milk_pitcher','boba_cup_empty']:['kitchen_small_bowl','kitchen_stock_pot','kitchen_wooden_ladle'])
+  q.cache.request(id==='boba'?['boba_tea_pot','boba_milk_pitcher','boba_cup_empty']:['kitchen_small_bowl','kitchen_stock_pot','kitchen_wooden_ladle','kitchen_bamboo_steamer'])
  })
 }
 const pawLiveFoodWarmBefore=pawWarmRoomAssets;
@@ -14247,7 +14250,7 @@ function pawKitchenLadleTick(m,now,held,angle,blocked,reduced){
 }
 function pawKitchenLadleFrame(){
  const q=pawFoodLive,id='kitchen_wooden_ladle';
- if(activity!=='cook'||room!=='kitchen'||!q?.api?.stirPlan||!q.placement.ready(q.cache.image(id),q.manifest.assets[id].size))return null;
+ if(activity!=='cook'||room!=='kitchen'||state.pawSteam||!q?.api?.stirPlan||!q.placement.ready(q.cache.image(id),q.manifest.assets[id].size))return null;
  const m=state.pawKitchenLadle||(state.pawKitchenLadle={travel:0,angle:0,last:t});
  const held=drag?.id==='stir'&&!state.done&&!!state.ingredients?.length;
  const angle=held?Math.atan2(drag.y-480,drag.x-400):m.angle;
@@ -14315,6 +14318,91 @@ function pawKitchenServeRequest(){
  state.pawSoupServeAt=t;closeTalk();sound(330);hint('Ladle the soup into a bowl.','把热汤盛进碗里。');
 }
 /* PAW_KITCHEN_SERVE_END */
+
+/* PAW_KITCHEN_STEAM_BEGIN */
+// Optional second recipe, on the same counter. No soup reward/state changes.
+const pawSteamTransitions={
+ prep:{action:'steam-load',next:'loading',label:['Put greens in the steamer','青菜放入蒸笼']},
+ loading:{next:'loaded',duration:.75,label:['Preparing the greens…','正在备菜……']},
+ loaded:{action:'steam-cook',next:'steaming',label:['Steam the greens','开始蒸菜']},
+ steaming:{next:'ready',duration:4,label:['Let the greens steam…','静候青菜蒸熟……']},
+ ready:{action:'steam-serve',next:'serving',label:['Serve the greens','青菜上桌']},
+ serving:{next:'served',duration:.9,label:['Serving the greens…','正在上菜……']},
+ served:{action:'steam-taste',next:'eating',label:['Taste the greens','尝尝青菜']},
+ eating:{next:'done',duration:1.5,label:['Enjoy the greens…','慢慢品尝……']},
+ done:{action:'back',label:['Back to kitchen','返回厨房']}
+};
+function pawKitchenSteamSpec(q){
+ const p=Object.hasOwn(pawSteamTransitions,q?.phase)?pawSteamTransitions[q.phase]:null;
+ return p?{key:'greens-'+q.phase,label:p.label,action:p.action,disabled:!p.action}:null
+}
+function pawKitchenSteamAdvance(q,now,blocked,action){
+ if(!q||!Number.isFinite(now)||!Object.hasOwn(pawSteamTransitions,q.phase))return false;
+ const p=pawSteamTransitions[q.phase],dt=Number.isFinite(q.last)?Math.max(0,Math.min(.1,now-q.last)):0;
+ const previousBlocked=q.blocked;q.last=now;q.blocked=!!blocked;
+ if(blocked)return false;
+ if(action&&p.action===action&&p.next){q.phase=p.next;q.age=0;return true}
+ if(p.duration&&!action&&!previousBlocked){
+  q.age=Math.min(p.duration,q.age+dt);
+  if(q.age>=p.duration-1e-8){q.phase=p.next;q.age=0;return true}
+ }
+ return false
+}
+function pawKitchenSteamPlate(q,reduced=false){
+ const e=x=>x*x*(3-2*x),mix=(a,b,u)=>a+(b-a)*u;
+ if(q.phase==='prep')return {x:530,y:600,used:false};
+ if(q.phase==='loading'){const f=reduced?0:e(Math.min(1,q.age/.75));return {x:mix(530,400,f),y:mix(600,465,f),used:false}}
+ if(q.phase==='serving'){const f=reduced?1:e(Math.min(1,q.age/.9));return {x:mix(400,510,f),y:mix(465,437,f),used:false}}
+ if(['served','eating','done'].includes(q.phase)){
+  const f=q.phase==='eating'&&!reduced?Math.sin(Math.PI*Math.min(1,q.age/1.5)):0;
+  return {x:510-166*f,y:437-60*f,used:q.phase==='done'}
+ }
+ return {x:530,y:600,used:true}
+}
+function pawKitchenSteamAvailable(){
+ const q=pawFoodLive,id='kitchen_bamboo_steamer';
+ return !!(q&&q.placement.ready(q.cache.image(id),q.manifest.assets[id].size)&&pics['kitchenDish-greens']?.naturalWidth&&pics['kitchenDish-empty']?.naturalWidth)
+}
+function pawKitchenSteamAction(action,run){
+ if(room!=='kitchen'||activity!=='cook'||state!==run||pawArcadeInputBlocked())return false;
+ if(action==='steam-select'){
+  if(run.pawSteam||run.done||run.ingredients?.length!==0||!pawKitchenSteamAvailable())return false;
+  run.pawSteam={phase:'prep',age:0,last:t,blocked:false};drag=null;hint('Choose the greens beside the bamboo steamer.','把竹蒸笼旁的青菜拿来。');mb5AssistSync(true);return true
+ }
+ if(!run.pawSteam||!pawKitchenSteamAdvance(run.pawSteam,t,false,action))return false;
+ sound(350);mb5AssistSync(true);return true
+}
+const pawKitchenSteamBefore=drawActivity;
+drawActivity=function(...args){
+ if(room!=='kitchen'||activity!=='cook')return pawKitchenSteamBefore(...args);
+ const run=state;
+ if(!run.pawSteam){
+  run.pawSteamReady=pawKitchenSteamAvailable();
+  const result=pawKitchenSteamBefore(...args);mb5AssistSync();return result
+ }
+ const q=run.pawSteam,changed=pawKitchenSteamAdvance(q,t,pawArcadeInputBlocked());
+ if(changed&&q.phase==='ready'){sound(540);hint('The greens are ready. Grandma says the colour is just right.','青菜蒸好了，外婆说这个颜色刚刚好。')}
+ if(changed&&q.phase==='done'){hint('Grandma: Fresh, simple and very good.','外婆：清清爽爽，好吃得很。');sound(480)}
+ continuityActivity=activity;ctx.save();try{
+  table();
+  const plate=pawKitchenSteamPlate(q,residentReducedMotion.matches);
+  const reach=['loading','serving','eating'].includes(q.phase)?{x:plate.x-20,y:plate.y-10}:null;
+  drawRitualPose(290,495,1.35,{reach});
+  pawPaintFoodProp('kitchen_bamboo_steamer',400,535,112);
+  if(q.phase==='steaming'&&!residentReducedMotion.matches){
+   for(let i=0;i<4;i++){const f=(q.age*.65+i/4)%1;ctx.save();ctx.globalAlpha=.18*(1-f);ellipse(383+i*11+Math.sin(f*5+i)*6,414-38*f,5+f*7,9+f*5,'#fff5dd');ctx.restore()}
+  }
+  kitchenIngredientArt(plate.x,plate.y,1,true,plate.used);
+  const spec=pawKitchenSteamSpec(q);
+  if(spec?.action&&spec.action!=='back'){
+   const at=q.phase==='prep'?{x:530,y:600}:q.phase==='served'?{x:510,y:437}:{x:400,y:477};
+   target(at.x-45,at.y-48,90,86,()=>pawKitchenSteamAction(spec.action,run));
+  }
+  txt(tr('Steamed garden greens','清蒸青菜'),400,350,18,'#fff1c8');
+ }finally{ctx.restore()}
+ mb5AssistSync()
+};
+/* PAW_KITCHEN_STEAM_END */
 
 /* PAW_FOOD_LIVE_PROPS_END */
 
