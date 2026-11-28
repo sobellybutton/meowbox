@@ -1246,7 +1246,74 @@ function residentWelcomeLine(profile,count){
 /* Small local hospitality history; never store chat text or birth details. */
 const residentHospitalityKey='residentHospitalityV1';
 const residentHospitalityRaw=load(residentHospitalityKey,{});
-const residentHospitality={visits:Object.create(null),drink:null,soup:null,chats:Object.create(null)};
+const residentHospitality={visits:Object.create(null),drink:null,soup:null,chats:Object.create(null),welcomes:Object.create(null)};
+/* PAW_VALLEY_DAILY_WELCOME_BEGIN */
+const pawValleyDailyVoices={
+ temple:{daily:[
+ ['Morning or evening, the steps could always use another sweep.','早晚都一样，这石阶是扫不完的。'],
+ ['Come in. That cat has already claimed the sunny spot.','进来吧。晒太阳的位置已经被那只猫占了。'],
+ ['A quiet moment is a perfectly good reason to visit.','来清静一会儿，也挺好。'],
+ ['Someone left an orange here yesterday. Nobody seems willing to claim it.','昨天有人落了个橘子，问了一圈都说不是自己的。'],
+ ['Mind the last step. It has been there longer than I have.','小心最后一级台阶，它比我来得还早。'],
+ ['The incense is ready. No need to rush.','香备好了，慢慢来。'],
+ ['There was a bird here earlier that sounded rather offended.','刚才有只鸟叫得特别委屈，也不知道谁惹它了。'],
+ ['The garden is lovely today. I have done very little to deserve the credit.','今天后院挺漂亮的，说实话也没我什么功劳。'],
+ ['You look as though a little peace would suit you.','看你这样子，来歇会儿正合适。'],
+ ['I found a leaf in the bell. Quite the little hiding place.','钟里居然有片叶子，还挺会藏。'],
+ ['You may sit for as long as you like.','想坐多久就坐多久。'],
+ ['Ah, a visitor. I was beginning to have conversations with the broom.','总算来人了，我都快跟扫帚聊上了。']
+ ],again:[['Back already? The cat has not moved.','又回来了？猫还没挪窝呢。'],['Come, the door is still open.','来吧，门一直开着。'],['Something else on your mind?','还有件心事？'],['Make yourself comfortable.','随意些，不必拘礼。']]},
+ tarot:{daily:[
+ ['The cards are behaving themselves. So far.','今天的牌还挺老实的，暂时。'],
+ ['I opened the window. Even mysterious rooms get stuffy.','我开了窗。再神秘的屋子也得通通风。'],
+ ['Sit anywhere you like.','找个舒服的位置坐吧。'],
+ ['One card fell out while I was shuffling. Very eager, that one.','刚洗牌掉出来一张，看来它挺着急。'],
+ ['I have tea, cards and an excellent view of the rain when it rains.','有茶有牌，下雨的时候还能看雨。'],
+ ['No need to know the perfect question.','不必想好一个多厉害的问题才来。'],
+ ['I think the candle is leaning to the left. It has no opinion on your love life.','蜡烛好像歪了。跟你的感情运没关系。'],
+ ['You are welcome to look around before we begin.','先随便看看，不急着占卜。'],
+ ['The moon looked particularly round last night. Quite pleased with itself, I thought.','昨晚月亮特别圆，看着还挺得意。'],
+ ['The cards have been waiting in their little box.','牌一直在小盒子里等着呢。'],
+ ['Someone asked me about their cat yesterday. I rather liked that question.','昨天有人问自家猫的事，我还挺喜欢这个问题。'],
+ ['I rearranged the table. It looks exactly the same.','我重新布置了桌子。看起来跟原来一模一样。']
+ ],again:[['Forgot to ask something?','刚才是不是漏问了一件事？'],['There you are. The cards are still here.','又见面啦，牌还在呢。'],['We can try a different question.','换个问题也行。'],['Back for company? That works too.','回来坐坐？也好。']]},
+ yue:{daily:[
+ ['Come, sit. I finally found my glasses.','来，坐。老夫总算找到眼镜了。'],
+ ['The tea is fresh. I make no promises about the biscuits.','茶是新泡的，点心就不好说了。'],
+ ['The ink is still wet. Careful with your sleeves.','墨还没干，小心衣袖。'],
+ ['Sit wherever you like. The chair with the papers is spoken for.','随便坐。堆着书的那把椅子先别碰。'],
+ ['I was reading an old almanac. It seems I owe someone a book.','刚翻了本旧历书，才想起来好像还欠人一本书。'],
+ ['Ah, you have caught me between cups of tea.','来得巧，老夫刚喝完一盏茶。'],
+ ['No need to have everything figured out before you sit down.','不必什么都想明白了才来。'],
+ ['Someone moved my brush. I suspect it was me.','有人动了我的笔。仔细一想，可能是我自己。'],
+ ['It is good to have a little company.','有人来坐坐，挺好。'],
+ ['The stars are in no hurry. Neither am I.','星星不急，老夫也不急。'],
+ ['I tried a new tea today. The old one was better.','今天换了种茶。还是原来的好喝。'],
+ ['You can tell me as much or as little as you like.','想说多少就说多少，不必勉强。']
+ ],again:[['Left something behind?','落东西了？'],['Another question? Let me put the kettle back on.','还有一问？那我再烧壶水。'],['Ah, the chair is still warm.','椅子还没凉呢。'],['Come back in.','来吧，接着坐。']]},
+ garden:{daily:[
+ ['That vine has finally decided to grow in the right direction.','那根藤总算肯往该长的地方长了。'],
+ ['The pond is especially quiet today.','今天池子格外安静。'],
+ ['I left a little room for new lanterns.','特意给新灯笼腾了点位置。'],
+ ['A little flower opened where I did not plant one.','有朵小花开了，我可没在那儿种过。'],
+ ['You can wander. The plants do not mind.','随便走走，花草不介意。'],
+ ['Watch the stepping stones. A frog has opinions about them.','留心石板路，有只蛙觉得那是它的地盘。'],
+ ['Someone tied a very elaborate bow here. I am still impressed.','有人在这里打了个特别复杂的结，我到现在还挺佩服。'],
+ ['The garden looks different every time the light changes.','光线一变，园子就又是另一个样子。'],
+ ['Have a look at the little buds by the path.','看看路边那些小花苞吧。'],
+ ['I have been negotiating with the weeds. No agreement yet.','我跟杂草谈了半天，暂时没谈拢。'],
+ ['There is space for you here, wish or no wish.','许不许愿都好，这里有你的位置。'],
+ ['The wind chime has been particularly talkative.','今天风铃倒是挺爱说话。']
+ ],again:[['Back for another stroll?','回来再走一圈？'],['The pond is still here.','池子还在呢。'],['Take your time.','慢慢来。'],['Did you spot something on the way out?','刚才出去的时候看到什么啦？']]}
+};
+function pawValleyWelcomePick(id,day,prior){
+ const voice=pawValleyDailyVoices[id];if(!voice||typeof day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(day))return null;
+ const ms=Date.parse(day+'T00:00:00Z');if(!Number.isFinite(ms)||new Date(ms).toISOString().slice(0,10)!==day)return null;
+ const same=prior?.day===day,old=same&&Number.isInteger(prior.count)&&prior.count>0?Math.min(prior.count,9998):0;
+ const count=old+1,ordinal=Math.floor(ms/86400000),index=((ordinal%voice.daily.length)+voice.daily.length)%voice.daily.length;
+ return {pair:old?voice.again[(old-1)%voice.again.length]:voice.daily[index],row:{day,count}}
+}
+/* PAW_VALLEY_DAILY_WELCOME_END */
 /* PAW_RESIDENT_CHAT_MEMORY_BEGIN */
 function pawResidentChatDate(day){
  if(typeof day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(day))return false;
@@ -1355,6 +1422,7 @@ function residentRecipeValid(v){
 }
 if(residentHospitalityRaw&&typeof residentHospitalityRaw==='object'){
  for(const p of residentWelcomeProfiles){const n=residentHospitalityRaw.visits?.[p.id];if(Number.isInteger(n)&&n>0)residentHospitality.visits[p.id]=Math.min(n,9999);const chat=pawResidentChatRow(residentHospitalityRaw.chats?.[p.id]);if(chat)residentHospitality.chats[p.id]=chat}
+ for(const id of Object.keys(pawValleyDailyVoices)){const v=residentHospitalityRaw.welcomes?.[id];if(v&&pawResidentChatDate(v.day)&&Number.isInteger(v.count)&&v.count>0&&v.count<=9999)residentHospitality.welcomes[id]={day:v.day,count:v.count}}
  if(residentRecipeValid(residentHospitalityRaw.drink))residentHospitality.drink=residentHospitalityRaw.drink;
  const soup=residentHospitalityRaw.soup;
  if(Array.isArray(soup)&&soup.length===2&&soup.every(v=>typeof v==='string'&&v.length<=60))residentHospitality.soup=soup;
@@ -1431,7 +1499,9 @@ say=function(name,line,...rest){
  if(profile&&residentPendingWelcome?.room===room&&residentPendingWelcome.id===profile.id&&typeof line==='string'){
   const pending=residentPendingWelcome;residentPendingWelcome=null;residentWelcomeSpoken.add(profile.id);
   // Preserve the actual intentional conversation; avoid prepending a second scripted greeting.
-   if(pending.visits>1&&pending.visits%4===0&&['grandma','boba'].includes(profile.id))line=residentHospitalityWelcome(profile,pending.visits)+'\n\n'+line;
+   const welcome=pawValleyWelcomePick(profile.id,shrineClock().day,residentHospitality.welcomes[profile.id]);
+   if(welcome){residentHospitality.welcomes[profile.id]=welcome.row;residentHospitalitySave();line=tr(...welcome.pair)+'\n\n'+line}
+   else if(pending.visits>1&&pending.visits%4===0&&['grandma','boba'].includes(profile.id))line=residentHospitalityWelcome(profile,pending.visits)+'\n\n'+line;
  }
  if(profile&&chosen&&typeof line==='string'&&!line.startsWith('Hi '+chosen+'!')&&!line.startsWith(chosen+'，')){
   const already=room?residentWelcomeSpoken.has(profile.id):(now-(residentOutdoorWelcome.get(profile.id)||0)<300000);
@@ -13960,7 +14030,7 @@ yueReadingHub=function(...args){
  pawCloseYueDesk();$('page').style.display='none';closeTalk();
  pawYueAdoptSeatedVisit(pawHostVisit,room,activity,transitioning,()=>pawHostFamilyReady('destiny'));
  if(!pawHostVisit?.ready)pawWarmReadingHost('destiny');
- say(tr('Master Yue','月师傅'),tr("Ah, sit and have some tea. The stars are not going anywhere. What shall we explore?","来啦？坐，先喝口茶。星星又不会跑。今天想问些什么？"),[
+ say(tr('Master Yue','月师傅'),tr('What shall we look at today?','今天想看些什么？'),[
  [tr('My year ahead','生肖流年'),()=>pawYueDeskChoose('year')],
  [tr('My birth chart','生辰命盘'),()=>pawYueDeskChoose('chart')],
  [tr('Weekly star signs','本周星座'),()=>pawYueDeskChoose('stars')],
