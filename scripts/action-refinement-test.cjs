@@ -243,3 +243,40 @@ return n;`)()+' accessible fortune paper state assertions');
  const wrappers=between(source,'// A drawn number is provisional','// Pause the complete paper reveal');
  console.log('PASS: '+new Function("let room='temple',activity='sticks',state={},t=10,blocked=false,items=[],papers=[],talkOpen=false,transitioning=false,proposal={hidden:true},document={hidden:false},continuityRoom='temple',continuityActivity=null,indoor={x:400,y:700,tx:400,ty:700,goal:null};\nconst $=()=>({style:{display:'none'}}),physicalFx=()=>{},sound=()=>{},hint=()=>{},react=()=>{},addItem=(v)=>items.push(v),releaseWalkKeys=()=>{},joystickReset=()=>{},roomIntro=()=>{},updateHUD=()=>{},mb5AssistSync=()=>{},indoorReady=()=>true,pawArcadeInputBlocked=()=>blocked,indoorStation=()=>[0,0,400,500],indoorDestination=(x,y,cb)=>{indoor.goal=cb;return true};\nlet loop=()=>{},mb5AssistSpec=()=>null,mb5AssistPerform=()=>{};\nfunction start(id){activity=id;state=id==='moon'?{count:0}:{}}\nfunction templePaperOpen(n){papers.push(n);start('templePaper')}\n"+journey+ritual+wrappers+"let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};\nconst walk=()=>{pawFortuneWalkTick();const cb=indoor.goal;ck(typeof cb==='function','physical walk exists');indoor.goal=null;cb()};\nfor(const result of [1,2,0]){\n activity='sticks';state={stickPicked:true,stickPickAt:0,fallenStick:7,stickNumber:7};t=10;items=[];papers=[];\n pawRitualAdvance();const draw=state;ck(draw.pawFortuneNumber===7&&items.length===0&&papers.length===0,'draw provisional');\n ck(!pawFortuneReceive(),'no direct receive');ck(pawFortuneConfirm(),'confirm walk');walk();\n ck(activity==='moon'&&state.pawFortuneNumber===7,'same stick');\n ck(!pawFortuneReceive(),'not tossed');ck(pawMoonToss(65,true),'toss');state.result=result;const moon=state;\n ck(!pawFortuneReceive()&&!pawFortuneRetry(),'no airborne action');\n t=state.tossUntil+.1;pawRitualAdvance();\n if(result===0){ck(pawFortuneReceive(),'confirmed receive');ck(papers.join()==='7'&&items.includes('Fortune stick 7'),'exact confirmed slip');ck(!pawFortuneReceive(moon),'no duplicate');}\n else{ck(!pawFortuneReceive()&&papers.length===0&&items.length===0,'no failed reward');ck(!pawMoonToss(65,true),'cannot retoss same stick');ck(pawFortuneRetry(),'retry walk');walk();ck(activity==='sticks'&&!state.pawFortuneNumber&&!state.fallenStick,'fresh draw');ck(!pawFortuneReceive(moon),'stale failure rejected');}\n}\nreturn n;")()+' mandatory fortune journey state checks');
 }
+
+/* Exercise the exact entrance image assignment, including late image loads. */
+{
+ const crop=between(source,'/* PAW_ENTRANCE_CROP_COMMIT_BEGIN */','function pawEntranceResize(){');
+ const run=new Function(crop+`
+ let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+ let proStep=1;
+ const ART=Object.fromEntries(Array.from({length:12},(_,i)=>['walker'+Math.floor(i/3)+i%3,'art'+i]));
+ const sources=pawEntranceCropSources();
+ ck(sources.length===12,'all traveller directions');
+ for(let mask=0;mask<4096;mask++){
+  const cache=new Map(sources.filter((_,i)=>mask&(1<<i)).map(src=>[src,{ready:true,src:'crop:'+src}]));
+  const selected=pawEntranceCropChoice(sources,cache);
+  ck(selected===(mask===4095),'no partial family');
+  for(const src of sources)ck(pawEntranceCropSource(src,cache,selected)===(selected?'crop:'+src:src),'consistent source');
+ }
+ const image=(src,complete=true)=>({src,complete,naturalWidth:complete?100:0,isConnected:true,dataset:{},getAttribute(k){return this[k]},addEventListener(k,cb){this.loaded=cb}});
+ pawEntranceCropFamily=false;
+ const original=image(sources[0]);pawCropEntranceImage(original);
+ ck(original.src===sources[0]&&original.dataset.pawArtReady==='true','cold selection ready');
+ for(const src of sources)pawAvatarCropCache.set(src,{ready:true,src:'crop:'+src});
+ pawCropEntranceImage(original);ck(original.src===sources[0],'late crop did not replace image');
+ for(const step of [1,2,3]){
+  proStep=step;const turned=image(sources[1]);pawCropEntranceImage(turned);
+  ck(turned.src===sources[1]&&turned.dataset.pawCropFamily==='original','family held through arrival');
+ }
+ pawEntranceCropFamily=true;proStep=1;
+ const warm=image(sources[2]);pawCropEntranceImage(warm);
+ ck(warm.src==='crop:'+sources[2]&&warm.dataset.pawCropFamily==='cropped','warm crop chosen synchronously');
+ const detached=image(sources[3],false);pawCropEntranceImage(detached);detached.isConnected=false;detached.naturalWidth=100;detached.loaded();
+ ck(!detached.dataset.pawArtReady,'detached image not marked ready');
+ const pending=image(sources[4],false);pawCropEntranceImage(pending);pending.naturalWidth=100;pending.loaded();
+ ck(pending.dataset.pawArtReady==='true','actual load marks image ready');
+ return n;
+ `)();
+ console.log('PASS: '+run+' entrance artwork family and image lifecycle assertions');
+}
