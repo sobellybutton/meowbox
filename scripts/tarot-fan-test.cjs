@@ -28,6 +28,14 @@ for(const portrait of [true,false])for(const [i,q] of pawTarotChoiceSlots(portra
  }
  ck(near(wash(i,0).x,wash(i,1,true).x),'gather matches deck');
 }
+const washComplete=new Function(block+';return pawTarotWashComplete')();
+for(const reduced of [true,false])for(const blocked of [true,false])for(const age of [0,.5,1.449,1.45,1.451,10]){
+ const q={readStage:'shuffle',readAt:0};
+ ck(washComplete(q,age,reduced,blocked)===(!blocked&&(reduced||age>=1.45)),'wash advances once active and ready');
+ ck(!washComplete({...q,readStage:'choose'},age,reduced,blocked),'no repeat after fan starts');
+}
+ck(!washComplete({readStage:'shuffle'},2),'invalid clock');
+ck(source.includes('if(pawTarotWashComplete(state,t,reduced,pawArcadeInputBlocked()))pawOpenCardChoice(false);'),'physical wash directly continues to fan');
 const finish=new Function(source.slice(source.indexOf('function pawTarotFinishSelection('),source.indexOf('const pawSelectStartBefore'))+';return pawTarotFinishSelection')();
 for(const count of [1,3,5]){
  const pool=Array.from({length:12},(_,i)=>({i,rev:!!(i%2)}));

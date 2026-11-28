@@ -7006,6 +7006,10 @@ function pawTarotWashPose(index,progress,reduced=false){
  const side=index<6?-1:1,phase=(index%6)*Math.PI/3+side*p*2*Math.PI,rad=38+(index%3)*15;
  return {x:400+(index-5.5)*1.8+spread*(side*55+rad*Math.cos(phase)),y:475-index*1.2+spread*rad*.68*Math.sin(phase),w:92,h:136,angle:spread*(side*.38+.32*Math.sin(phase)),visible:true}
 }
+// Both reading routes use the same tabletop wash; do not expose a second deck gate.
+function pawTarotWashComplete(q,now,reduced=false,blocked=false){
+ return !!q&&q.readStage==='shuffle'&&!blocked&&Number.isFinite(now)&&Number.isFinite(q.readAt)&&(reduced||now-q.readAt>=1.45)
+}
 function pawTarotTrayPose(slot,rank,count,portrait,progress){
  const p=Math.max(0,Math.min(1,progress)),e=p*p*(3-2*p),x=400+(rank-(count-1)/2)*(portrait?43:55),y=portrait?713:645;
  return {x:slot.x+(x-slot.x)*e,y:slot.y+(y-slot.y)*e,w:slot.w+(43-slot.w)*e,h:slot.h+(61-slot.h)*e,angle:(slot.angle||0)*(1-e)}
@@ -7017,7 +7021,7 @@ function pawOpenCardChoice(washFirst=false){
  state.pawCardPool=pawTarotPool(tarotDeck.length);state.pawChoiceFrame=null;state.pawSelectedCards=[];state.readCards=[];state.readFlip=[];state.readSaved=false;
  state.readStage='choose';state.readAt=t+(washFirst&&!residentReducedMotion.matches?1.45:0);state.pawFanActive=true;state.pawPickedAt={};state.pawPickFinishAt=null;state.readShuffle=Math.max(1,state.readShuffle||0);
  const n=activity==='tarot'?1:state.readSpreadSize===5?5:3;
- hint(tr('Choose '+n+' '+(n===1?'card':'cards')+' that draw your attention.','凭直觉选 '+n+' 张牌。'),tr('Choose '+n+' cards.','凭直觉选 '+n+' 张牌。'));
+ hint('When the cards settle, choose '+n+' '+(n===1?'card':'cards')+' that draw your attention.','等牌铺好，再凭直觉选 '+n+' 张。');
  return true
 }
 function pawSelectTarotCard(index,frame=state.pawChoiceFrame){
@@ -7053,7 +7057,7 @@ drawActivity=function(...args){
    for(let i=0;i<12;i++){const q=pawTarotWashPose(i,age/1.45,reduced);ctx.save();try{ctx.translate(q.x,q.y);ctx.rotate(q.angle);ctx.shadowColor='#1b152e55';ctx.shadowBlur=3;ctx.shadowOffsetY=2;card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}}
    activityFitText(tr('Mixing the cards…','正在洗牌……'),400,600,20,340,'#fff0d2');
   }finally{ctx.restore()}
-  if(age>=1.45||reduced){state.readStage='deck';state.readAt=t;hint('The cards are ready. Shall we spread them?','牌洗好了，来铺牌吧？')}
+  if(pawTarotWashComplete(state,t,reduced,pawArcadeInputBlocked()))pawOpenCardChoice(false);
   return
  }
  if(state.readStage!=='choose')return pawSelectDrawBefore(...args);
@@ -13231,7 +13235,8 @@ function pawReadingSeatPlan(id,plate,phase){
  return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.447]}
 }
 function pawReadingHostPhase(id,q,kind,desk,result,now=Infinity){
- if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle'||q.readStage==='choose'&&Number.isFinite(q.readAt)&&now<q.readAt)return 'shuffle';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
+ // The animated cloth already owns the deck during either wash route. The old in-hand shuffle sprite would show a second deck. Keep the seated host stable until an identity-matched tabletop contact pose is available.
+ if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle'||q.readStage==='choose'&&Number.isFinite(q.readAt)&&now<q.readAt)return 'table-wash';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
  if(id==='destiny'&&desk)return result?'result':'question';
  return 'idle'
 }
