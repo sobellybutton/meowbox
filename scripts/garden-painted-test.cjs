@@ -88,3 +88,11 @@ for(let count=1;count<12;count++)for(let i=0;i<count;i++)for(let d=-5;d<=5;d++)a
 for(const [w,t,p,expected] of [[true,false,null,'wallet'],[false,true,'wallet','today'],[false,false,'wallet','wallet'],[false,false,null,'today']])assert.equal(localTV.pawWheelReturnKind(w,t,p),expected);
 assert.equal(localTV.pawHomeTVChannel(0,0,1),0);
 console.log('Local television channel bounds and daily wheel parent resolution passed.');
+
+const discoveryReturn=new Function(extract('/* PAW_DISCOVERY_RETURN_BEGIN */','/* PAW_DISCOVERY_RETURN_END */')+';return {pawDiscoveryReturnMatches,pawDiscoveryScroll}')();
+const storyOrigin={kind:'story',room:'story',run:{},token:3,result:'endTea',district:'wonder',finished:true};
+assert.ok(discoveryReturn.pawDiscoveryReturnMatches(storyOrigin,{...storyOrigin}));
+for(const [key,value] of Object.entries({kind:'cafe',room:'match',run:{},token:4,result:'endNap',district:'home',finished:false}))assert.equal(discoveryReturn.pawDiscoveryReturnMatches(storyOrigin,{...storyOrigin,[key]:value}),false);
+for(const sh of [0,100,400,1000])for(const ch of [0,80,600])for(const y of [-100,0,50,500,1500])assert.equal(discoveryReturn.pawDiscoveryScroll(y,sh,ch),Math.max(0,Math.min(y,Math.max(0,sh-ch))));
+assert.equal(discoveryReturn.pawDiscoveryScroll(NaN,100,20),0);
+console.log('Discovery share return ownership and scroll restoration bounds passed.');
