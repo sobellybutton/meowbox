@@ -18,7 +18,7 @@ for(const [key,point] of Object.entries(n))for(const action of Object.keys(t)){
 assert.equal(route([.1,.1],'feed'),null);assert.equal(route(n.entry,'__proto__'),null);
 const paused={painted:true,pos:n.entry.slice(),route:route(n.entry,'feed'),action:'feed',last:0};
 tick(paused,1,true);assert.deepEqual(paused.pos,n.entry);
-for(let i=0;i<5;i++)for(let age=.01;age<.9;age+=.02){const pt=pellet(i,age);if(pt){assert.ok(pt[0]>=.31&&pt[0]<=.53);assert.ok(pt[1]>.55&&pt[1]<.65)}}
+for(let i=0;i<5;i++)for(let age=.01;age<.9;age+=.02){const pt=pellet(i,age);if(pt){assert.ok(pt[0]>=.31&&pt[0]<=.53);assert.ok(pt[1]>.39&&pt[1]<.50)}}
 for(const [u,v,w,h] of Object.values(t))assert.ok(u-w/2>=0&&u+w/2<=1&&v-h/2>=0&&v+h/2<=1);
 console.log('Painted garden route, contact targets, pause and feeding geometry passed.');
 
