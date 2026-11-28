@@ -2925,7 +2925,7 @@ function mbTransferHolding(from,to){
  const token=++mbTransferToken,overlay=element('section','',$('game'),'mbTransferHolding');
  overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
  const ticket=element('div','',overlay,'mbTransferTicket');
- element('small',tr('Pawradise railway · transfer ticket','Pawradise 铁路 · 换乘车票'),ticket,'mbTransferEyebrow');
+ element('small',tr('Pawradise railway · transfer ticket','摸鱼小镇铁路 · 换乘车票'),ticket,'mbTransferEyebrow');
  const portrait=element('img','',ticket,'mbTransferAvatar');mbTravellerImage(portrait,avatar??0);
  const route=element('div','',ticket,'mbTransferRoute');
  const departure=element('div','',route);element('small',tr('From','出发站'),departure);element('strong',tr(...maps[from].n),departure);
@@ -3781,7 +3781,7 @@ mbTransferHolding=function(from,to){
  const caption=element('div','',overlay,'pawRailCaption');
  element('small',tr('Bound for','开往'),caption);
  element('strong',tr(...maps[to].n),caption);
- element('span',tr('Pawradise railway','Pawradise 铁路'),caption);
+ element('span',tr('Pawradise railway','摸鱼小镇铁路'),caption);
  const skip=element('button',tr('Skip ride','跳过旅程'),overlay,'pawRailSkip');skip.type='button';
  // A cached painted fallback fills the viewport before the responsive source
  // finishes decoding. The shared entrance renderer adds the moving panes.
@@ -3856,7 +3856,7 @@ function pawJournalRender(district=scene){
   });
   const spread=element('article','',book,'pawSketchSpread'),cover=element('div','',spread,'pawSketchCover');
   const im=element('img','',cover);im.src=destinationPortrait(district);im.alt=tr(...maps[district].n);
-  const caption=element('div','',cover,'pawSketchCaption');element('small',tr('Pawradise railway · stop ','Pawradise 铁路 · 第 ')+(pawJournalKeys.indexOf(district)+1),caption);element('h2',tr(...maps[district].n),caption);
+  const caption=element('div','',cover,'pawSketchCaption');element('small',tr('Pawradise railway · stop ','摸鱼小镇铁路 · 第 ')+(pawJournalKeys.indexOf(district)+1),caption);element('h2',tr(...maps[district].n),caption);
   const stamp=element('span',district===scene?tr('YOU ARE HERE','此刻在这里'):visited.includes(district)?tr('VISITED','已到访'):tr('TO EXPLORE','待探索'),cover,'pawSketchStamp');stamp.dataset.seen=String(district===scene||visited.includes(district));
   const info=element('div','',spread,'pawSketchNotes');element('p',tr(...pawJournalLines[district]),info);
   if(district!==scene)b(info,tr('Board train','上车'),()=>{if(!transitioning)journey(district)}).className='pawSketchBoard';
@@ -5695,7 +5695,7 @@ mbTransferHolding=function(from,to){
  const result=pawRailContextBefore(from,to),overlay=$('game').querySelector('.pawRailJourney');
  if(overlay){
   overlay.dataset.from=from;overlay.dataset.to=to;
-  const caption=overlay.querySelector('.pawRailCaption span');if(caption)caption.textContent=tr(...(pawRailRouteNotes[to]||['Pawradise railway','Pawradise 铁路']));
+  const caption=overlay.querySelector('.pawRailCaption span');if(caption)caption.textContent=tr(...(pawRailRouteNotes[to]||['Pawradise railway','摸鱼小镇铁路']));
   const skip=overlay.querySelector('.pawRailSkip');if(skip)skip.setAttribute('aria-label',tr('Skip ride and arrive','跳过旅程，直接抵达'))
  }
  return result
@@ -5717,7 +5717,7 @@ proRender=function(...args){
   foot.hidden=true;
   const ticket=hero.querySelector('.rail-ticket');
   if(ticket){
-   ticket.setAttribute('aria-label',tr('Pawradise railway ticket','Pawradise 铁路车票'));
+   ticket.setAttribute('aria-label',tr('Pawradise railway ticket','摸鱼小镇铁路车票'));
    const input=ticket.querySelector('input');if(input){input.setAttribute('aria-label',tr('Passenger signature','旅客签名'));input.enterKeyHint='go';input.autocomplete='nickname'}
   }
  }
@@ -5902,7 +5902,7 @@ proRender=function(...args){
   const wide=element('source','',preview);wide.media=pawWideArtworkMedia;wide.srcset='assets/visual/painted/recovered/scenes/station_landscape.webp';
   const art=element('img','',preview);art.src='assets/visual/painted/recovered/scenes/station_portrait.webp';art.alt=tr('A nostalgic railway station, with a train waiting at the platform','怀旧火车站，列车正在站台等候');
   art.onerror=()=>{art.onerror=null;wide.srcset='assets/visual/painted/journey/landscape.webp';art.src='assets/visual/painted/journey/portrait.webp'};
-  const heading=foot.querySelector('h1');if(heading){const tag=element('p',tr('Pawradise railway','Pawradise 铁路'),foot,'pawFirstRailLabel');heading.before(tag)}
+  const heading=foot.querySelector('h1');if(heading){const tag=element('p',tr('Pawradise railway','摸鱼小镇铁路'),foot,'pawFirstRailLabel');heading.before(tag)}
  }
  if(proStep===1||proStep===2){
   const player=hero.querySelector('.pawEntranceAvatar');if(player)pawCropEntranceImage(player);
@@ -6149,7 +6149,7 @@ proRender=function(...args){
  if(painting){painting.alt=tr('A mountain gateway and stone path into Fortune Valley','通往解忧谷的山门与石板小路');painting.setAttribute('aria-hidden','false')}
  const traveller=hero.querySelector('.gate-traveller');
  if(traveller){traveller.alt='';pawCropEntranceImage(traveller)}
- const brand=proposal.querySelector('header>span');if(brand){brand.replaceChildren();element('strong','Pawradise',brand,'pawGateWordmark');element('small',tr('A LITTLE WORLD AWAY','偷得浮生半日闲'),brand,'pawGateMotto')}
+ const brand=proposal.querySelector('header>span');if(brand){brand.replaceChildren();element('strong',pawBrand(),brand,'pawGateWordmark');element('small',tr('A LITTLE WORLD AWAY','偷得浮生半日闲'),brand,'pawGateMotto')}
  enter.textContent=tr('Step inside','进小镇');enter.classList.add('pawGateEnter');
  // The artwork and traveller occupy the scene; the footer is only a button.
  foot.replaceChildren(enter);return result
@@ -6927,7 +6927,7 @@ const pawGeminiVisitorRows=[
   "Offer a warm cup of tea",
   "递上一杯热茶",
   "Punctual, warm, and zero signal delays. Five-star service from Pawradise Station.",
-  "准点、温暖、零信号故障。给猫岛车站打五星好评。"
+  "准点、温暖、零信号故障。给摸鱼小镇车站打五星好评。"
  ],
  [
   "traveller_04_mateo_barista",
@@ -6949,7 +6949,7 @@ const pawGeminiVisitorRows=[
   "Priya Nair",
   "普里亚·奈尔",
   "I ran a Monte Carlo risk model across 400 holiday destinations to find the lowest probability of bumping into my London coworkers. Pawradise won by 0.4%.",
-  "我用蒙特卡洛风险模型测算了400个度假地，只为找出偶遇伦敦同事概率最低的地方。猫岛以0.4%的微弱优势胜出。",
+  "我用蒙特卡洛风险模型测算了400个度假地，只为找出偶遇伦敦同事概率最低的地方。摸鱼小镇以0.4%的微弱优势胜出。",
   "According to my calculations, there is a 94% chance a seagull will steal your snack if you look at a work email on the pier.",
   "根据我的精算模型，如果你在码头边低头回工作邮件，零食被海鸥抢走的概率高达94%。",
   "Offer a snack",
@@ -7647,7 +7647,7 @@ function pawFictionEdition(now,weather=''){
  const stamp=Date.parse(key+'T00:00:00+08:00');
  return [
   {id:'fiction-notice-'+key+'-'+n[0],date:stamp,thread:[['Town notice','小镇公告'],[n[2]+': '+n[4],n[3]+'：'+n[5]],[]]},
-  {id:'fiction-gazette-'+key+'-'+g[0],date:stamp,thread:[['Pawradise Gazette · satire','Pawradise 小镇日报 · 讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
+  {id:'fiction-gazette-'+key+'-'+g[0],date:stamp,thread:[['Pawradise Gazette · satire','摸鱼小镇日报 · 讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
  ]
 }
 const pawFictionPublishedBefore=townPublishedNotices;
@@ -7909,7 +7909,7 @@ pawFictionEdition=function(now,weather=''){
  const today=new Date(now+8*3600000).toISOString().slice(0,10),topic=pawReviewedTopic(pawReviewedTopicFeed,today,pawFictionGazette.map(v=>v[0]));
  if(topic){
   const g=pawFictionGazette.find(v=>v[0]===topic.templateId);
-  entries[1]={id:'topic-fiction-'+today+'-'+topic.id,date:entries[1].date,thread:[['Pawradise Gazette · topical satire','Pawradise 小镇日报 · 时事讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
+  entries[1]={id:'topic-fiction-'+today+'-'+topic.id,date:entries[1].date,thread:[['Pawradise Gazette · topical satire','摸鱼小镇日报 · 时事讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
  }
  return entries
 };
@@ -8674,7 +8674,7 @@ const pawShareCaptionBefore=meowSocialCaption;
 meowSocialCaption=function(data,format,cn){
  if(data.kind!=='zwds')return pawShareCaptionBefore(data,format,cn);
  const i=Number(cn),title=data.title[i];
- return [cn?'Pawradise · 紫微斗数小记':'Pawradise · Zi Wei Dou Shu reflection',title,data.takeaway[i],...data.lines.map(v=>v[i]),cn?'传统文化与自我反思，不是预测。':'Traditional symbolism for reflection, not a forecast.',cn?'#Pawradise #紫微斗数 #自我探索':'#Pawradise #SelfReflection',...(format==='xhs'||format==='story'?[]:[meowShareUrl])].join('\n')
+ return [cn?'摸鱼小镇 · 紫微斗数小记':'Pawradise · Zi Wei Dou Shu reflection',title,data.takeaway[i],...data.lines.map(v=>v[i]),cn?'传统文化与自我反思，不是预测。':'Traditional symbolism for reflection, not a forecast.',cn?'#摸鱼小镇 #紫微斗数 #自我探索':'#Pawradise #SelfReflection',...(format==='xhs'||format==='story'?[]:[meowShareUrl])].join('\n')
 };
 const pawShareCardBefore=shareCardArt;
 shareCardArt=function(cv,data,format,cn){
@@ -8692,7 +8692,7 @@ shareCardArt=function(cv,data,format,cn){
   if(rows.length>maxLines){rows=rows.slice(0,maxLines);let last=rows.at(-1);while(last.length&&g.measureText(last+'…').width>width-76)last=last.slice(0,-1);rows[rows.length-1]=last+'…'}
   const lh=size*1.28;rows.forEach((v,k)=>line(v,y+lh*(k+.5),size,weight,color));return y+rows.length*lh;
  }
- line('Pawradise · '+(cn?'月师傅小记':'MASTER YUE'),top+34,27,'bold','#55694f');
+ line(pawBrand(cn)+' · '+(cn?'月师傅小记':'MASTER YUE'),top+34,27,'bold','#55694f');
  const im=pics[sharePaintedKey(data)],artY=top+65,artH=Math.min(L.artH,Math.floor((end-top)*.26));
  let y=artY;
  if(im?.complete&&im.naturalWidth>0&&im.naturalHeight>0){
@@ -8977,7 +8977,7 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
   const lines=[locale(socialResultQuote(data)),...(data.lines||[]).map(locale)].filter((v,i,a)=>v&&a.indexOf(v)===i);
   textIn(slots.summary,lines,format==='square'?30:36)
  }
- textIn(slots.footer,['Pawradise · '+(cn?'趣味探索，仅供反思':'For fun and reflection')],27,'normal',muted);
+ textIn(slots.footer,[pawBrand(cn)+' · '+(cn?'趣味探索，仅供反思':'For fun and reflection')],27,'normal',muted);
  g.restore();return true
 }
 /* Share only the computed result, never individual answers or private input. */
@@ -9143,7 +9143,7 @@ socialResultQuote=function(data){
 const pawExtraCaptionBefore=meowSocialCaption;
 meowSocialCaption=function(data,format,cn){
  if(!pawExtraDiscoveries[data.kind])return pawExtraCaptionBefore(data,format,cn);
- const i=Number(cn);return ['Pawradise · '+data.title[i],...(data.scoreRows||[]).map(r=>r.label[i]+' '+r.value[i]),socialResultQuote(data)[i],cn?'趣味探索，非心理诊断。':'Informal reflection, not a psychological assessment.'].join('\n')
+ const i=Number(cn);return [pawBrand(cn)+' · '+data.title[i],...(data.scoreRows||[]).map(r=>r.label[i]+' '+r.value[i]),socialResultQuote(data)[i],cn?'趣味探索，非心理诊断。':'Informal reflection, not a psychological assessment.'].join('\n')
 };
 function pawPublicWonderScores(kind,scores,labels){
  if(pawExtraDiscoveries[kind])return pawExtraRows(kind,scores);
@@ -9173,7 +9173,7 @@ function pawPublicChartShare(raw){
 shareKinds.zwds_chart=['Twelve palace keepsake','十二宫纪念卡'];
 const pawChartCaptionBefore=meowSocialCaption;
 meowSocialCaption=function(data,format,cn){
- if(data.kind==='zwds_chart')return cn?'Pawradise · 十二宫纪念卡\n传统文化探索，仅供反思。':'Pawradise · Twelve palace keepsake\nTraditional symbolism, for reflection.';
+ if(data.kind==='zwds_chart')return cn?'摸鱼小镇 · 十二宫纪念卡\n传统文化探索，仅供反思。':'Pawradise · Twelve palace keepsake\nTraditional symbolism, for reflection.';
  return pawChartCaptionBefore(data,format,cn)
 };
 const pawChartArtKeyBefore=sharePaintedKey;
@@ -9240,7 +9240,7 @@ shareCardArt=function(cv,data,format,cn){
   g.restore();return y+total*scale
  }
  const footer=bottom-65;
- line('Pawradise · '+(cn?'偷得浮生半日闲':'A LITTLE ESCAPE'),top+20,27,'bold',muted);
+ line(pawBrand(cn)+' · '+(cn?'偷得浮生半日闲':'A LITTLE ESCAPE'),top+20,27,'bold',muted);
  let y=top+51;line(locale(shareKinds[data.kind]),y+13,25,'normal',accent);y+=33;
  y=block([locale(data.title)],y,Math.min(120,(bottom-top)*.16),format==='square'?46:54,'bold',ink)+10;
  if(data.kind==='tarot'&&[1,3,5].includes(data.cards.length)){
@@ -9290,12 +9290,12 @@ renderRailKeepsake=function(book){
  const data=load('originalRailTicketV1',null);
  if(!data||typeof data!=='object')return pawRecoveredRailKeepsakeBefore(book);
  const ticket=element('section','',book,'passportRailTicket pawRecoveredTicket');
- ticket.setAttribute('aria-label',tr('Your original Pawradise railway ticket','你的 Pawradise 初次入境车票'));
+ ticket.setAttribute('aria-label',tr('Your original Pawradise railway ticket','你的摸鱼小镇初次入境车票'));
  function field(key,content,label=null){
   const node=element('div','',ticket,'pawTicketField');node.dataset.ticketField=key;
   if(label)element('small',label,node);element('strong',content,node);return node
  }
- field('heading',tr('Pawradise · Railway','Pawradise 铁路'));
+ field('heading',tr('Pawradise · Railway','摸鱼小镇铁路'));
  const avatarIndex=Number(data.avatar),portrait=element('img','',ticket,'pawTicketAvatar');
  portrait.src=ART['walker'+(Number.isInteger(avatarIndex)&&avatarIndex>=0&&avatarIndex<4?avatarIndex:0)+'0'];portrait.alt='';
  field('name',String(data.name||tr('Traveller','旅人')),tr('Passenger','旅客'));
@@ -15127,5 +15127,89 @@ pawValleyArrivalCss.textContent=`
 }
 @media(max-height:620px) and (orientation:portrait){#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{object-fit:contain!important;object-position:center!important}}
 `;document.head.append(pawValleyArrivalCss);
+
+/* PAW_OPENING_EXPERIENCE_BEGIN
+   One illustrated railway journey, rather than a succession of onboarding forms.
+   Keep original controls, hit areas, saved identity and current painted frames. */
+let pawOpeningLastStep=null;
+const pawOpeningRenderBefore=proRender;
+proRender=function(...args){
+ const result=pawOpeningRenderBefore(...args);
+ if(proposal.hidden)return result;
+ const changed=pawOpeningLastStep!==proStep;
+ pawOpeningLastStep=proStep;
+ proposal.dataset.pawOpeningEnter=changed?'true':'false';
+ const header=proposal.querySelector('header>span'),foot=proposal.querySelector('footer');
+ if([0,1,2,4].includes(proStep)&&header){
+  header.replaceChildren();
+  element('strong',tr('Pawradise','摸鱼小镇'),header,'pawOpeningWordmark');
+  if(proStep===0)element('small',tr('A LITTLE WORLD AWAY','偷得浮生半日闲'),header,'pawOpeningMotto');
+ }
+ if(proStep===0&&foot){
+  const heading=foot.querySelector('h1'),copy=foot.querySelector('p:not(.pawFirstRailLabel)'),next=foot.querySelector('button.next');
+  foot.querySelector('.pawFirstRailLabel')?.remove();
+  if(heading)heading.textContent=tr('Your little escape awaits','今天，去摸个鱼吧');
+  if(copy)copy.textContent=tr('A train to somewhere softer. Leave your deadlines on the platform.','有一班列车，开往没有催促的小镇。把待办事项留在站台吧。');
+  if(next)next.textContent=tr('Catch the train','搭上这班列车')+'  ›';
+ }
+ if(proStep===1&&foot){
+  const title=foot.querySelector('h1');
+  if(title)title.classList.add('pawOpeningCharacterName');
+  const kicker=foot.querySelector('.pawAvatarKicker');
+  if(kicker)kicker.textContent=tr('Who are you on this little adventure?','这趟旅程，你想当谁？');
+ }
+ if(proStep===4){
+  const ticket=proposal.querySelector('.rail-ticket');
+  if(ticket)ticket.querySelector('.rail-brand')?.setAttribute('data-paw-ticket-locale',zh?'zh':'en');
+ }
+ return result
+};
+const pawOpeningSceneStyle=document.createElement('style');
+pawOpeningSceneStyle.textContent=`
+#proposal:is([data-paw-entrance-step="0"],[data-paw-entrance-step="1"],[data-paw-entrance-step="2"],[data-paw-entrance-step="4"]) .pawOpeningWordmark{
+ display:block;color:#fff0cb;font-family:var(--paw-display,Georgia,serif)!important;font-size:clamp(20px,5vw,32px)!important;font-weight:600;line-height:1.12;letter-spacing:.025em;text-shadow:0 2px 8px #192a22;
+}
+html[lang^="zh"] #proposal .pawOpeningWordmark,html[lang^="zh"] #proposal .pawGateWordmark{font-family:var(--paw-display,"Songti SC",serif)!important;letter-spacing:.08em}
+#proposal .pawOpeningMotto{display:block;color:#f2dfb5;font-family:var(--paw-display,Georgia,serif)!important;font-size:10px;line-height:1.35;letter-spacing:.14em;margin-top:5px}
+#proposal[data-paw-entrance-step="0"]:not([hidden]){display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;gap:0!important;padding:max(18px,env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) max(18px,env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))!important;overflow:hidden!important;background:#2c4032!important}
+#proposal[data-paw-entrance-step="0"]>.hero{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;margin:0!important;z-index:0!important}
+#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-height:none!important}
+#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:50% 60%!important}
+#proposal[data-paw-entrance-step="0"]>.hero:after{background:linear-gradient(180deg,#13271f9c 0%,#182b2340 18%,transparent 34%,transparent 49%,#182a226b 68%,#182a22e8 100%)!important}
+#proposal[data-paw-entrance-step="0"]>header{grid-area:1/1!important;position:relative!important;z-index:3!important;align-self:start!important}
+#proposal[data-paw-entrance-step="0"] .pawOpeningWordmark{font-size:clamp(32px,8.5vw,58px)!important;font-weight:500;letter-spacing:.015em}
+#proposal[data-paw-entrance-step="0"]>footer{grid-area:3/1!important;position:relative!important;z-index:3!important;align-self:end!important;justify-self:center!important;width:min(100%,460px)!important;max-width:460px!important;padding:0!important;gap:9px!important;text-shadow:0 2px 6px #18281f}
+#proposal[data-paw-entrance-step="0"]>footer h1{font-family:var(--paw-display,Georgia,serif)!important;font-size:clamp(24px,6.8vw,42px)!important;font-weight:500;line-height:1.12}
+#proposal[data-paw-entrance-step="0"]>footer p{font-family:var(--paw-body,system-ui,sans-serif)!important;font-size:clamp(13px,3.6vw,16px)!important;line-height:1.45;max-width:34ch;justify-self:center;color:#f7e9cd}
+#proposal[data-paw-entrance-step="0"]>footer .next,#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>footer .next,#proposal[data-paw-entrance-step="4"] .ticket-confirm{min-height:48px!important;background:#e4cf9e url('assets/visual/painted/recovered/ui/paper_texture.webp') center/220px auto repeat!important;color:#34483a!important;border:1px solid #b59b68!important;border-radius:5px!important;font-family:var(--paw-display,Georgia,serif)!important;font-size:clamp(15px,4vw,18px)!important;font-weight:600!important;box-shadow:0 3px 9px #17271e55!important;text-shadow:none!important}
+#proposal[data-paw-entrance-step="0"]>footer .next{width:min(100%,330px)!important;justify-self:center}
+#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>.hero.pawChoiceGrounded{border:0!important;box-shadow:none!important;border-radius:6px!important}
+#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"]) .pawChoiceStation{border-radius:inherit;mask-image:linear-gradient(to bottom,black 0%,black 88%,transparent 100%)}
+#proposal .pawAvatarOption{background:#dfcfae url('assets/visual/painted/recovered/ui/paper_texture.webp') center/160px auto repeat!important;border:1px solid #a99a77!important;border-radius:6px!important;box-shadow:none!important}
+#proposal .pawAvatarOption[aria-pressed=true]{background-color:#f5e1b0!important;border:2px solid #e4c77d!important;box-shadow:inset 0 0 0 1px #88744b,0 2px 6px #18291e50!important}
+#proposal .pawAvatarOption span,#proposal .pawAvatarKicker{font-family:var(--paw-display,Georgia,serif)!important;letter-spacing:0!important}
+#proposal .pawOpeningCharacterName{font-family:var(--paw-display,Georgia,serif)!important;color:#f5e5c3!important}
+#proposal .pawAvatarTurn button,#proposal .pawPersonaChoices button,#proposal .pawIntentSkip{font-family:var(--paw-display,Georgia,serif)!important}
+#proposal[data-paw-entrance-step="4"] .rail-ticket .rail-brand,#proposal[data-paw-entrance-step="4"] .rail-ticket .route{font-family:var(--paw-display,Georgia,serif)!important}
+#proposal[data-paw-entrance-step="4"] .rail-ticket{box-shadow:0 10px 30px #15251d6b!important}
+#proposal[data-paw-opening-enter="true"][data-paw-entrance-step="0"] .pawFirstRailPainting img{animation:pawOpeningCamera 9s ease-out both!important}
+#proposal[data-paw-opening-enter="true"][data-paw-entrance-step="4"] .rail-ticket{animation:pawOpeningTicket 260ms ease-out both!important}
+@keyframes pawOpeningCamera{from{transform:scale(1.045)}to{transform:scale(1)}}
+@keyframes pawOpeningTicket{from{opacity:.9;translate:0 6px}to{opacity:1;translate:0 0}}
+@media(min-width:850px) and (min-height:480px){
+ #proposal[data-paw-entrance-step="0"]>footer{justify-self:start!important;text-align:left!important;width:min(43vw,520px)!important;max-width:520px!important;margin:0 0 3vh 3vw!important}
+ #proposal[data-paw-entrance-step="0"]>footer p,#proposal[data-paw-entrance-step="0"]>footer .next{justify-self:start!important}
+ #proposal[data-paw-entrance-step="0"]>.hero:after{background:linear-gradient(90deg,#182a22e0 0%,#182a226b 39%,transparent 70%),linear-gradient(180deg,#182a2250,transparent 34%)!important}
+ #proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{object-position:center!important}
+}
+@media(max-height:500px) and (orientation:landscape){
+ #proposal[data-paw-entrance-step="0"]>footer{justify-self:start!important;text-align:left!important;width:min(55vw,430px)!important;gap:5px!important}
+ #proposal[data-paw-entrance-step="0"]>footer p,#proposal[data-paw-entrance-step="0"]>footer .next{justify-self:start!important}
+ #proposal[data-paw-entrance-step="0"] .pawOpeningWordmark{font-size:30px!important}
+ #proposal[data-paw-entrance-step="0"]>footer h1{font-size:24px!important}
+}
+@media(prefers-reduced-motion:reduce){#proposal[data-paw-opening-enter="true"] .pawFirstRailPainting img,#proposal[data-paw-opening-enter="true"] .rail-ticket{animation:none!important}}
+`;document.head.append(pawOpeningSceneStyle);
+/* PAW_OPENING_EXPERIENCE_END */
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
