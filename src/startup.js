@@ -4193,11 +4193,11 @@ function pawTownFront(){
   const photo=element('figure','',front,'pawTownFrontPhoto'),im=element('img','',photo);im.src=pawTownPavilionPath;im.alt=tr('Town Hall pavilion','小镇广场长廊');element('figcaption',tr('A little company between adventures','逛累了，就来聊两句'),photo);
   const chat=element('section','',front,'pawTownSection');
   element('h2',tr('Come sit with us','来坐坐吧'),chat);
-  pawTownLink(chat,'lounge','Tea chat','茶馆闲聊','Chat with fictional town residents, anytime.','随时跟小镇的虚构居民聊两句。');
+  pawTownLink(chat,'lounge','Tea chat','茶馆闲聊','Pull up a chair and chat with the game’s residents.','找个座位，和小镇里的游戏角色聊两句。');
   pawTownLink(chat,'public','Traveller lobby','旅人聊天室',communityURL()?'Chat with real visitors.':'Live chat is not open yet.',communityURL()?'和真实旅人聊聊天。':'真人聊天室尚未开放。');
   const news=element('section','',front,'pawTownSection pawTownPinned');
   element('h2',tr('On the noticeboard','留言墙上'),news);
-  element('small',tr('From fictional town residents','来自虚构小镇居民'),news);
+  element('small',tr('Stories from the game’s residents','小镇角色的日常趣闻'),news);
   element('p',tr(...pawWeekNote()),news,'pawTownWeek');
   const latest=townPublishedNotices().slice(0,2);
   for(const {thread:m} of latest){const note=element('article','',news,'pawTownPreview');element('strong',tr(...m[0]),note);element('p',tr(...m[1]),note);element('small',m[2].length+' '+tr('replies','条回复'),note)}
