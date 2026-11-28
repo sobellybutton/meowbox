@@ -46,4 +46,36 @@ ok(api.roundFrame(live,-.1,0,0)===null);ok(api.roundFrame(live,.46,0,0)===null);
 ok(api.roundFrame(live,-lead,lead,tail,true).angle===0);
 ok(api.roundFrame(live,.46,lead,tail,true).angle===lowAngle);
 for(let i=0;i<100;i++){const f=api.roundFrame(live,-lead+lead*i/100,lead,tail),g=api.roundFrame(live,.46+tail*i/100,lead,tail);ok(!f.strike&&!g.strike);ok(f.angle>=lowAngle&&f.angle<=0&&g.angle>=lowAngle&&g.angle<=0);ok(Math.abs(Math.hypot(f.tip[0]-live.pivot[0],f.tip[1]-live.pivot[1])-Math.hypot(g.tip[0]-live.pivot[0],g.tip[1]-live.pivot[1]))<.001)}
-console.log('Ah Ma motion: '+checks+' assertions passed; geometry only, no rendered visual approval');
+
+/* Exercise the effective round handlers as well as the geometry module. */
+const fs=require('node:fs'),path=require('node:path');
+const source=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
+const segment=(a,b)=>{const i=source.indexOf(a),j=source.indexOf(b,i);assert.ok(i>=0&&j>i);return source.slice(i,j)};
+const helpers=segment('function pawAuntieRoundRemaining','/* PAW_AUNTIE_ROUND_END */');
+const handlers=segment('function pawAuntieBeginRound()','const paperRitualPaperBefore=paperWorryAt;');
+const run={paperPrepared:true},events=[];
+const runtime=new Function('state','events','api',`
+let t=10,stressSwingAt=0,activity='hit',room='fish',smack,blocked=false;
+const globalThis={PawAuntieRitualMotion:api};
+function paperRitualAllowed(){return !blocked}
+function paperRitualBusy(){return !!state.paperAction}
+function openStressChoices(){events.push('choice')}
+function paperRitualSyncButtons(){}
+function paperRitualCancel(){state.paperAction=null;state.paperRoundRemaining=0;events.push('cancel')}
+function paperRitualImpactBefore(){events.push('hit')}
+function hint(){events.push('finished')}
+function refreshControls(){}
+${helpers}
+${handlers}
+return {begin:pawAuntieBeginRound,tick:x=>{t=x;paperRitualAdvance()},block:v=>blocked=v}
+`)(run,events,api);
+const hits=()=>events.filter(x=>x==='hit').length;
+ok(runtime.begin());ok(!runtime.begin());ok(run.paperAction.lead===lead);ok(run.paperAction.tail===0);
+runtime.tick(10.4);ok(events.length===0);runtime.tick(10.92);ok(hits()===1);runtime.tick(11);ok(hits()===1);
+runtime.tick(11.15);ok(run.paperRoundRemaining===2);ok(run.paperAction.lead===0&&run.paperAction.tail===0);
+runtime.tick(11.39);ok(hits()===2);runtime.tick(11.62);ok(run.paperRoundRemaining===1);ok(run.paperAction.tail===tail);
+runtime.tick(11.86);ok(hits()===3);runtime.tick(12.1);ok(run.paperAction!==null);ok(!events.includes('finished'));
+runtime.block(true);runtime.tick(12.9);ok(run.paperAction!==null);runtime.block(false);runtime.tick(12.91);
+ok(run.paperAction===null);ok(run.paperRoundRemaining===0);ok(hits()===3);ok(events.filter(x=>x==='finished').length===1);
+console.log('Ah Ma geometry and runtime: '+checks+' assertions passed; no rendered visual approval');
+
