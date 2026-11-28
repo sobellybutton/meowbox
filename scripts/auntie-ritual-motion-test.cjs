@@ -77,5 +77,43 @@ runtime.tick(11.39);ok(hits()===2);runtime.tick(11.62);ok(run.paperRoundRemainin
 runtime.tick(11.86);ok(hits()===3);runtime.tick(12.1);ok(run.paperAction!==null);ok(!events.includes('finished'));
 runtime.block(true);runtime.tick(12.9);ok(run.paperAction!==null);runtime.block(false);runtime.tick(12.91);
 ok(run.paperAction===null);ok(run.paperRoundRemaining===0);ok(hits()===3);ok(events.filter(x=>x==='finished').length===1);
+
+/* Actual selected-worry humour stays readable through a complete three-hit round. */
+const extension=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+const slice=(s,a,b)=>{const i=s.indexOf(a),j=s.indexOf(b,i);assert.ok(i>=0&&j>i);return s.slice(i,j)};
+const topics=slice(extension,'const stressGroups=','const stressTargets=')+'\nconst stressTargets=stressGroups.flatMap(g=>g.targets);\n'+slice(extension,'const pawAhMaTopicLines=','const pettyHitBefore=smack;');
+const humorRun={paperPrepared:true,pawAhMaWorryIndex:0,pawAhMaRoundNumber:0},humorEvents=[];
+const humorRuntime=new Function('state','events','api',`
+let t=10,stressSwingAt=0,activity='hit',room='fish',smack;
+const globalThis={PawAuntieRitualMotion:api};
+function paperRitualAllowed(){return true}
+function paperRitualBusy(){return !!state.paperAction}
+function openStressChoices(){throw Error('unexpected choice')}
+function paperRitualSyncButtons(){}
+function paperRitualCancel(){throw Error('unexpected cancel')}
+function paperRitualImpactBefore(){events.push(['contact'])}
+function hint(...words){events.push(words)}
+function refreshControls(){}
+${topics}
+${helpers}
+${handlers}
+return {begin:pawAuntieBeginRound,tick:x=>{t=x;paperRitualAdvance()},topics:stressTargets,words:pawAhMaRoundWords,hasTopic:key=>Object.hasOwn(pawAhMaTopicLines,key)}
+`)(humorRun,humorEvents,api);
+ok(humorRuntime.topics.length===34);
+for(let i=0;i<humorRuntime.topics.length;i++){
+ ok(humorRuntime.hasTopic(humorRuntime.topics[i][0]));
+ const run={pawAhMaWorryIndex:i,pawAhMaRoundNumber:0},first=humorRuntime.words(run,'hit'),last=humorRuntime.words(run,'end');
+ ok(first[0]!==last[0]&&first[1]!==last[1]);
+ ok(first[0].startsWith('Ah Ma: ')&&first[1].startsWith('阿嬷：'));
+ run.pawAhMaRoundNumber=1;ok(JSON.stringify(humorRuntime.words(run,'hit'))===JSON.stringify(last));
+}
+ok(humorRuntime.begin());
+for(const tick of [10.92,11.15,11.39,11.62,11.86,12.1,12.91])humorRuntime.tick(tick);
+const spoken=humorEvents.filter(x=>x.length===2);
+ok(humorEvents.filter(x=>x[0]==='contact').length===3);
+ok(spoken.length===4);
+ok(spoken.slice(0,3).every(x=>JSON.stringify(x)===JSON.stringify(spoken[0])));
+ok(spoken[0][0]!==spoken[3][0]&&spoken[0][1]!==spoken[3][1]);
+ok(humorRun.pawAhMaRoundNumber===1&&humorRun.paperAction===null);
 console.log('Ah Ma geometry and runtime: '+checks+' assertions passed; no rendered visual approval');
 
