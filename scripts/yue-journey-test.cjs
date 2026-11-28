@@ -56,6 +56,8 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
    const toPlace=async()=>{await next();await next()};
    await p.locator('.astroForm').waitFor();
    assert(await p.locator('.destinyChamber').isHidden(),'Obsolete chamber consumes reading layout');
+   assert(await p.locator('.astroForm:visible').count()===1,'Duplicate visible chart request form');
+   assert(await p.locator('.chartConsultation:visible').count()===0,'Chart result overlaps the birth details request');
    assert(await p.locator('.roomArtWrap').count()===0,'Obsolete vector room still attached');
    const field=await p.locator('.astroForm input[type=date]').boundingBox();
    assert(await p.locator('.yueCompactHost').count()===0,'Duplicate host header in study');
@@ -119,6 +121,8 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
    assert(check,'Reference main-star chart diverged');
 
    assert(await p.locator('.astroForm').isHidden(),'Form did not collapse');
+   assert(await p.locator('.astroForm:visible').count()===0,'Birth details request remains over the chart');
+   assert(await p.locator('.chartConsultation:visible').count()===1,'Duplicate chart result surfaces');
    assert(await p.locator('.ziGrid article:not(.blank)').count()===12,'Incomplete palace chart');
    assert(await p.locator('#page').getAttribute('data-paw-yue-expanded')==='true','Chart did not unfold');
    await click(p.getByRole('button',{name:'Fold the chart',exact:true}));
