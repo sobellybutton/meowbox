@@ -46,17 +46,19 @@ async function travelLoop(page,name,touch){
   }
   await press(sign);
   if(id==='temple'){
-   await page.waitForFunction(()=>activity==='templeForecourt'&&!transitioning,null,{timeout:21000});
-   await shot('temple-forecourt');
-   const hall=page.locator('[data-paw-forecourt-control="hall"]');
-   await press(hall);
+   // One doorway tap must initiate the walk without a second hall tap.
+   await page.waitForFunction(()=>room==='temple'&&!transitioning&&(activity==='templeForecourt'||(!activity&&continuityRoom==='temple')),null,{timeout:21000});
+   if(await page.evaluate(()=>activity==='templeForecourt'))await shot('temple-forecourt');
   }
-  await page.waitForFunction(id=>room===id&&!transitioning&&continuityRoom===id&&Math.hypot(indoor.x-indoor.tx,indoor.y-indoor.ty)<4,id,{timeout:21000});
+  await page.waitForFunction(id=>room===id&&!activity&&!transitioning&&continuityRoom===id&&Math.hypot(indoor.x-indoor.tx,indoor.y-indoor.ty)<4,id,{timeout:21000});
   assert(await page.evaluate(()=>indoorSafe(indoor.x,indoor.y)),'Arrival is outside walkable floor');
   // Inspect actual rendered room actors, not an artificial guest count.
   const visitors=await page.evaluate(()=>{
-   const reserved=pawGuestProtected(),obs=indoorObstacles();
-   return pawLocalVisitors.map(a=>({id:a.id,clear:pawGuestClear(a.x,a.y,reserved),safe:indoorSafe(a.x,a.y,obs),duplicate:!!a.guest&&npc.some(n=>n.popGuest===a.guest.id)}))
+   const reserved=pawGuestProtected(),stations=pawGuestActiveFeet(),obs=indoorObstacles(),gap=pawMappedGuestGaps(pawReadingActive()).station;
+   return pawLocalVisitors.map(a=>{
+    const transit=a.phase==='arriving'||a.phase==='departing';
+    return {id:a.id,phase:a.phase,gap,clear:pawGuestClear(a.x,a.y,transit?stations:reserved,gap),safe:indoorSafe(a.x,a.y,obs),duplicate:!!a.guest&&npc.some(n=>n.popGuest===a.guest.id)}
+   })
   });
   assert(visitors.every(a=>a.clear&&a.safe&&!a.duplicate),'Room visitor blocked a station, floor or existing identity: '+JSON.stringify(visitors));
   assert.equal(new Set(visitors.map(a=>a.id)).size,visitors.length,'Duplicate indoor visitor IDs');
