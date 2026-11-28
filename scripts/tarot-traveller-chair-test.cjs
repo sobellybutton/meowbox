@@ -1,0 +1,7 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),api=require('../assets/visual/painted/interior-layouts.js');
+const s=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
+const a=new Function(s.split('/* PAW_TAROT_TRAVELLER_SEAT_BEGIN */')[1].split('/* PAW_TAROT_TRAVELLER_SEAT_END */')[0]+';return {pawTarotChairBox,pawTarotChairAt,pawTarotChairProgress,pawTarotChairRecords}')();
+const q=api.rooms.tarot;assert.deepEqual(q.arrival,[.75,.69]);assert.deepEqual(q.arrival,q.stations.tarot.approach);assert.ok(api.route('tarot',q.entry,q.arrival));assert.ok(api.route('tarot',q.arrival,q.entry));
+for(const h of [390,550,568,844,1648]){const p={x:0,y:0,h,w:h*928/1648};for(let i=0;i<4;i++){const b=a.pawTarotChairBox(p,i),r=a.pawTarotChairRecords[i];assert.ok(b.x>=p.w*.69&&b.x+b.w<=p.w*.96);assert.ok(Math.abs(b.x+b.w-r.hip[0]*b.k-b.hipX)<1e-6);assert.ok(Math.abs(b.y+r.hip[1]*b.k-b.hipY)<1e-6);assert.ok(fs.existsSync(path.join(__dirname,'../assets/visual/staging/2026-11-27-extracted/players',String(i),'seated.webp')))}assert.ok(a.pawTarotChairAt(p.w*.75,p.h*.69,p))}
+assert.equal(a.pawTarotChairProgress(0),0);assert.equal(a.pawTarotChairProgress(1),1);assert.equal(a.pawTarotChairProgress(0,true),1);console.log('PASS right chair geometry, four identities and route');
