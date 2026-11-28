@@ -5,11 +5,11 @@ const block=startup.split('/* PAW_SCENE_AMBIENCE_BEGIN */')[1]?.split('/* PAW_SC
 assert.ok(block);
 const {pawSceneLightFrame:light,pawSceneVapourFrame:vapour,pawSceneAir:air}=new Function(block+';return {pawSceneLightFrame,pawSceneVapourFrame,pawSceneAir}')();
 let n=0;const ck=(v,m)=>{assert.ok(v,m);n++};
-const ids=['kitchen','boba','tarot','destiny','match'];
+const ids=['kitchen','boba','tarot','destiny','match','tea','arcade','quiz','story'];
 for(const id of ids){
  const still=JSON.stringify(light(id,0,true));
  for(let t=0;t<=120;t+=.2){
-  const q=light(id,t);ck(q.length>0&&q.length<=5,'bounded light count');
+  const q=light(id,t);ck(q.length>0&&q.length<=7,'bounded light count');
   ck(q.every(l=>l.u-l.rx>=0&&l.u+l.rx<=1&&l.v-l.ry>=0&&l.v+l.ry<=1&&l.alpha>=.034999&&l.alpha<=.110001),'light remains in painting');
   ck(JSON.stringify(light(id,t,true))===still,'static reduced light');
   for(let i=0;i<3;i++){

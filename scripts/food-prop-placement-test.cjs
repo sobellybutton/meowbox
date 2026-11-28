@@ -38,4 +38,21 @@ ck(registry.paint(ctx,id,100,200,40),'draw after ready');
 ck(calls.map(v=>v[0]).join(',')==='save,translate,rotate,drawImage,restore','balanced canvas state');
 ck(registry.forget(id)&&registry.image(id)===pending&&requests===2,'explicit retry');
 registry.clear();registry.image(id);ck(requests===3,'release room cache');
+// A transient failure or a wrong-size response must not strand a prop
+// until the entire browser reloads. Recovery occurs only on explicit warming.
+let attempts=0;
+const retry=api.create(manifest,()=>{attempts++;return {complete:false,naturalWidth:0,naturalHeight:0}});
+const first=retry.request([id])[0].image;
+ck(retry.request([id,id])[0].image===first&&attempts===1,'pending request reused');
+Object.assign(first,{complete:true});
+for(let frame=0;frame<120;frame++)ck(!retry.paint(ctx,id,100,200,40)&&attempts===1,'failed image does not retry per frame');
+const second=retry.request([id,id])[0].image;
+ck(second!==first&&attempts===2,'explicit warm retries failed image once');
+Object.assign(second,{complete:true,naturalWidth:1,naturalHeight:1});
+ck(!retry.paint(ctx,id,100,200,40)&&attempts===2,'wrong dimensions remain fallback');
+const third=retry.request([id])[0].image;
+ck(third!==second&&attempts===3,'explicit warm retries wrong-size response');
+Object.assign(third,{complete:true,naturalWidth:a.size[0],naturalHeight:a.size[1]});
+ck(retry.paint(ctx,id,100,200,40),'recovered painted prop renders');
+ck(retry.request([id])[0].image===third&&attempts===3,'ready prop reused on next visit');
 console.log('PASS '+n+' painted food prop placement, readiness and source checks');
