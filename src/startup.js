@@ -1789,6 +1789,7 @@ const shrineArrivalStyle=document.createElement('style');shrineArrivalStyle.text
 let townMapHintTimer=0;
 const townHintBefore=hint;hint=function(...args){
  clearTimeout(townMapHintTimer);const el=$('hint');el.classList.remove('townHintRest');
+ if(!room&&!activity&&!guideDismissed&&/^(Tap a doorway to walk inside|Tap a place to enter|Explore the valley at your own pace)/.test(String(args[0]))){el.classList.add('townHintRest');return}
  const v=townHintBefore(...args);
  if(!room&&!activity&&/^(Tap a doorway to walk inside|Tap a place to enter|Explore the valley at your own pace)/.test(String(args[0])))townMapHintTimer=setTimeout(()=>{if(!room&&!activity)el.classList.add('townHintRest')},4500);
  return v
@@ -2925,7 +2926,7 @@ function mbTransferHolding(from,to){
  const token=++mbTransferToken,overlay=element('section','',$('game'),'mbTransferHolding');
  overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
  const ticket=element('div','',overlay,'mbTransferTicket');
- element('small',tr('Pawradise railway · transfer ticket','Pawradise 铁路 · 换乘车票'),ticket,'mbTransferEyebrow');
+ element('small',tr('Pawradise railway · transfer ticket','摸鱼小镇铁路 · 换乘车票'),ticket,'mbTransferEyebrow');
  const portrait=element('img','',ticket,'mbTransferAvatar');mbTravellerImage(portrait,avatar??0);
  const route=element('div','',ticket,'mbTransferRoute');
  const departure=element('div','',route);element('small',tr('From','出发站'),departure);element('strong',tr(...maps[from].n),departure);
@@ -3781,7 +3782,7 @@ mbTransferHolding=function(from,to){
  const caption=element('div','',overlay,'pawRailCaption');
  element('small',tr('Bound for','开往'),caption);
  element('strong',tr(...maps[to].n),caption);
- element('span',tr('Pawradise railway','Pawradise 铁路'),caption);
+ element('span',tr('Pawradise railway','摸鱼小镇铁路'),caption);
  const skip=element('button',tr('Skip ride','跳过旅程'),overlay,'pawRailSkip');skip.type='button';
  // A cached painted fallback fills the viewport before the responsive source
  // finishes decoding. The shared entrance renderer adds the moving panes.
@@ -3856,7 +3857,7 @@ function pawJournalRender(district=scene){
   });
   const spread=element('article','',book,'pawSketchSpread'),cover=element('div','',spread,'pawSketchCover');
   const im=element('img','',cover);im.src=destinationPortrait(district);im.alt=tr(...maps[district].n);
-  const caption=element('div','',cover,'pawSketchCaption');element('small',tr('Pawradise railway · stop ','Pawradise 铁路 · 第 ')+(pawJournalKeys.indexOf(district)+1),caption);element('h2',tr(...maps[district].n),caption);
+  const caption=element('div','',cover,'pawSketchCaption');element('small',tr('Pawradise railway · stop ','摸鱼小镇铁路 · 第 ')+(pawJournalKeys.indexOf(district)+1),caption);element('h2',tr(...maps[district].n),caption);
   const stamp=element('span',district===scene?tr('YOU ARE HERE','此刻在这里'):visited.includes(district)?tr('VISITED','已到访'):tr('TO EXPLORE','待探索'),cover,'pawSketchStamp');stamp.dataset.seen=String(district===scene||visited.includes(district));
   const info=element('div','',spread,'pawSketchNotes');element('p',tr(...pawJournalLines[district]),info);
   if(district!==scene)b(info,tr('Board train','上车'),()=>{if(!transitioning)journey(district)}).className='pawSketchBoard';
@@ -5611,7 +5612,8 @@ function pawSyncDockSelection(){
  // A root can switch tabs; nested pages retain their contextual Back.
  // Never abandon a draft, active keyboard, furniture edit or room visit.
  const fields=open?[...q.querySelectorAll('textarea,input:not([type]),input[type="text"],input[type="search"],[contenteditable="true"]')].filter(n=>!n.disabled&&!n.hidden):[];
- const draft=fields.some(n=>String(n.value??n.textContent??'').trim()!==''),typing=fields.includes(document.activeElement);
+ const recoverable=n=>n.id==='goodCompanyNote'&&typeof goodCompanyDraft?.text==='string'&&goodCompanyDraft.text===n.value;
+ const draft=fields.some(n=>String(n.value??n.textContent??'').trim()!==''&&!recoverable(n)),typing=fields.includes(document.activeElement);
  pawDockRootKey=pawDockRootChoice({open,room:!!room,activity:!!activity,talk:talkOpen,transition:transitioning,entrance:!proposal.hidden,editing:!!hideoutEditing,homeOrigin:home&&!!mbHomeOrigin,draft,typing,explore,today,town,home});
  const selected=!open?'':explore||q.querySelector('.travelAlbum')?'travel':home||q.querySelector('.travellerBagV2,.komorebiBook,.komorebiConfirm,.figureCabinetBook,.pawPersonalShelf')?'home':q.querySelector('.pawTownFront,.communityTabs,.townWall,.townChatTranscript')?'town':today||q.querySelector('.journalDailyTasks,.goodCompanyBook')?'today':'';
  $('game').classList.toggle('pawDockRoot',!!pawDockRootKey);
@@ -5659,7 +5661,7 @@ updateHUD=function(...args){
 };
 const pawDockRootStyle=document.createElement('style');
 pawDockRootStyle.textContent=`
-#game.pawDockRoot.pawFocusedView:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){display:flex!important;z-index:7!important}
+#game.pawDockRoot.pawFocusedView:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){display:flex!important;z-index:24!important;pointer-events:auto!important}
 #game.pawDockRoot #page{padding-bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 84px)!important;scroll-padding-bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 84px)!important}
 #game #dock>button:not([hidden]){border:1px solid transparent!important;border-radius:5px!important;box-shadow:none}
 #game #dock>button.pawDockSelected{border-color:#839274!important;box-shadow:inset 0 -2px 0 #829374!important}
@@ -5695,7 +5697,7 @@ mbTransferHolding=function(from,to){
  const result=pawRailContextBefore(from,to),overlay=$('game').querySelector('.pawRailJourney');
  if(overlay){
   overlay.dataset.from=from;overlay.dataset.to=to;
-  const caption=overlay.querySelector('.pawRailCaption span');if(caption)caption.textContent=tr(...(pawRailRouteNotes[to]||['Pawradise railway','Pawradise 铁路']));
+  const caption=overlay.querySelector('.pawRailCaption span');if(caption)caption.textContent=tr(...(pawRailRouteNotes[to]||['Pawradise railway','摸鱼小镇铁路']));
   const skip=overlay.querySelector('.pawRailSkip');if(skip)skip.setAttribute('aria-label',tr('Skip ride and arrive','跳过旅程，直接抵达'))
  }
  return result
@@ -5717,7 +5719,7 @@ proRender=function(...args){
   foot.hidden=true;
   const ticket=hero.querySelector('.rail-ticket');
   if(ticket){
-   ticket.setAttribute('aria-label',tr('Pawradise railway ticket','Pawradise 铁路车票'));
+   ticket.setAttribute('aria-label',tr('Pawradise railway ticket','摸鱼小镇铁路车票'));
    const input=ticket.querySelector('input');if(input){input.setAttribute('aria-label',tr('Passenger signature','旅客签名'));input.enterKeyHint='go';input.autocomplete='nickname'}
   }
  }
@@ -5902,7 +5904,7 @@ proRender=function(...args){
   const wide=element('source','',preview);wide.media=pawWideArtworkMedia;wide.srcset='assets/visual/painted/recovered/scenes/station_landscape.webp';
   const art=element('img','',preview);art.src='assets/visual/painted/recovered/scenes/station_portrait.webp';art.alt=tr('A nostalgic railway station, with a train waiting at the platform','怀旧火车站，列车正在站台等候');
   art.onerror=()=>{art.onerror=null;wide.srcset='assets/visual/painted/journey/landscape.webp';art.src='assets/visual/painted/journey/portrait.webp'};
-  const heading=foot.querySelector('h1');if(heading){const tag=element('p',tr('Pawradise railway','Pawradise 铁路'),foot,'pawFirstRailLabel');heading.before(tag)}
+  const heading=foot.querySelector('h1');if(heading){const tag=element('p',tr('Pawradise railway','摸鱼小镇铁路'),foot,'pawFirstRailLabel');heading.before(tag)}
  }
  if(proStep===1||proStep===2){
   const player=hero.querySelector('.pawEntranceAvatar');if(player)pawCropEntranceImage(player);
@@ -5949,7 +5951,7 @@ movementUI=function(...args){
  const result=pawGuideCopyBefore(...args);
  if(!moveGuide.hidden&&guideStage===0){
   const touch='ontouchstart' in window||navigator.maxTouchPoints>0;
-  moveCopy.textContent=touch?tr('Tap the glowing spot or use the joystick to walk.','点击光圈或使用摇杆行走。'):tr('Click the path or use arrow keys to walk.','点击小路或使用方向键行走。')
+  moveCopy.textContent=touch?tr('Tap the path or use the joystick.','点击小路或使用摇杆。'):tr('Click the path or use arrow keys.','点击小路或使用方向键。')
  }
  return result
 };
@@ -6149,7 +6151,7 @@ proRender=function(...args){
  if(painting){painting.alt=tr('A mountain gateway and stone path into Fortune Valley','通往解忧谷的山门与石板小路');painting.setAttribute('aria-hidden','false')}
  const traveller=hero.querySelector('.gate-traveller');
  if(traveller){traveller.alt='';pawCropEntranceImage(traveller)}
- const brand=proposal.querySelector('header>span');if(brand){brand.replaceChildren();element('strong','Pawradise',brand,'pawGateWordmark');element('small',tr('A LITTLE WORLD AWAY','偷得浮生半日闲'),brand,'pawGateMotto')}
+ const brand=proposal.querySelector('header>span');if(brand){brand.replaceChildren();element('strong',pawBrand(),brand,'pawGateWordmark');element('small',tr('A LITTLE WORLD AWAY','偷得浮生半日闲'),brand,'pawGateMotto')}
  enter.textContent=tr('Step inside','进小镇');enter.classList.add('pawGateEnter');
  // The artwork and traveller occupy the scene; the footer is only a button.
  foot.replaceChildren(enter);return result
@@ -6927,7 +6929,7 @@ const pawGeminiVisitorRows=[
   "Offer a warm cup of tea",
   "递上一杯热茶",
   "Punctual, warm, and zero signal delays. Five-star service from Pawradise Station.",
-  "准点、温暖、零信号故障。给猫岛车站打五星好评。"
+  "准点、温暖、零信号故障。给摸鱼小镇车站打五星好评。"
  ],
  [
   "traveller_04_mateo_barista",
@@ -6949,7 +6951,7 @@ const pawGeminiVisitorRows=[
   "Priya Nair",
   "普里亚·奈尔",
   "I ran a Monte Carlo risk model across 400 holiday destinations to find the lowest probability of bumping into my London coworkers. Pawradise won by 0.4%.",
-  "我用蒙特卡洛风险模型测算了400个度假地，只为找出偶遇伦敦同事概率最低的地方。猫岛以0.4%的微弱优势胜出。",
+  "我用蒙特卡洛风险模型测算了400个度假地，只为找出偶遇伦敦同事概率最低的地方。摸鱼小镇以0.4%的微弱优势胜出。",
   "According to my calculations, there is a 94% chance a seagull will steal your snack if you look at a work email on the pier.",
   "根据我的精算模型，如果你在码头边低头回工作邮件，零食被海鸥抢走的概率高达94%。",
   "Offer a snack",
@@ -7647,7 +7649,7 @@ function pawFictionEdition(now,weather=''){
  const stamp=Date.parse(key+'T00:00:00+08:00');
  return [
   {id:'fiction-notice-'+key+'-'+n[0],date:stamp,thread:[['Town notice','小镇公告'],[n[2]+': '+n[4],n[3]+'：'+n[5]],[]]},
-  {id:'fiction-gazette-'+key+'-'+g[0],date:stamp,thread:[['Pawradise Gazette · satire','Pawradise 小镇日报 · 讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
+  {id:'fiction-gazette-'+key+'-'+g[0],date:stamp,thread:[['Pawradise Gazette · satire','摸鱼小镇日报 · 讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
  ]
 }
 const pawFictionPublishedBefore=townPublishedNotices;
@@ -7909,7 +7911,7 @@ pawFictionEdition=function(now,weather=''){
  const today=new Date(now+8*3600000).toISOString().slice(0,10),topic=pawReviewedTopic(pawReviewedTopicFeed,today,pawFictionGazette.map(v=>v[0]));
  if(topic){
   const g=pawFictionGazette.find(v=>v[0]===topic.templateId);
-  entries[1]={id:'topic-fiction-'+today+'-'+topic.id,date:entries[1].date,thread:[['Pawradise Gazette · topical satire','Pawradise 小镇日报 · 时事讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
+  entries[1]={id:'topic-fiction-'+today+'-'+topic.id,date:entries[1].date,thread:[['Pawradise Gazette · topical satire','摸鱼小镇日报 · 时事讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
  }
  return entries
 };
@@ -8674,7 +8676,7 @@ const pawShareCaptionBefore=meowSocialCaption;
 meowSocialCaption=function(data,format,cn){
  if(data.kind!=='zwds')return pawShareCaptionBefore(data,format,cn);
  const i=Number(cn),title=data.title[i];
- return [cn?'Pawradise · 紫微斗数小记':'Pawradise · Zi Wei Dou Shu reflection',title,data.takeaway[i],...data.lines.map(v=>v[i]),cn?'传统文化与自我反思，不是预测。':'Traditional symbolism for reflection, not a forecast.',cn?'#Pawradise #紫微斗数 #自我探索':'#Pawradise #SelfReflection',...(format==='xhs'||format==='story'?[]:[meowShareUrl])].join('\n')
+ return [cn?'摸鱼小镇 · 紫微斗数小记':'Pawradise · Zi Wei Dou Shu reflection',title,data.takeaway[i],...data.lines.map(v=>v[i]),cn?'传统文化与自我反思，不是预测。':'Traditional symbolism for reflection, not a forecast.',cn?'#摸鱼小镇 #紫微斗数 #自我探索':'#Pawradise #SelfReflection',...(format==='xhs'||format==='story'?[]:[meowShareUrl])].join('\n')
 };
 const pawShareCardBefore=shareCardArt;
 shareCardArt=function(cv,data,format,cn){
@@ -8692,7 +8694,7 @@ shareCardArt=function(cv,data,format,cn){
   if(rows.length>maxLines){rows=rows.slice(0,maxLines);let last=rows.at(-1);while(last.length&&g.measureText(last+'…').width>width-76)last=last.slice(0,-1);rows[rows.length-1]=last+'…'}
   const lh=size*1.28;rows.forEach((v,k)=>line(v,y+lh*(k+.5),size,weight,color));return y+rows.length*lh;
  }
- line('Pawradise · '+(cn?'月师傅小记':'MASTER YUE'),top+34,27,'bold','#55694f');
+ line((cn?'摸鱼小镇':'Pawradise')+' · '+(cn?'月师傅小记':'MASTER YUE'),top+34,27,'bold','#55694f');
  const im=pics[sharePaintedKey(data)],artY=top+65,artH=Math.min(L.artH,Math.floor((end-top)*.26));
  let y=artY;
  if(im?.complete&&im.naturalWidth>0&&im.naturalHeight>0){
@@ -8977,7 +8979,7 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
   const lines=[locale(socialResultQuote(data)),...(data.lines||[]).map(locale)].filter((v,i,a)=>v&&a.indexOf(v)===i);
   textIn(slots.summary,lines,format==='square'?30:36)
  }
- textIn(slots.footer,['Pawradise · '+(cn?'趣味探索，仅供反思':'For fun and reflection')],27,'normal',muted);
+ textIn(slots.footer,[(cn?'摸鱼小镇':'Pawradise')+' · '+(cn?'趣味探索，仅供反思':'For fun and reflection')],27,'normal',muted);
  g.restore();return true
 }
 /* Share only the computed result, never individual answers or private input. */
@@ -9143,7 +9145,7 @@ socialResultQuote=function(data){
 const pawExtraCaptionBefore=meowSocialCaption;
 meowSocialCaption=function(data,format,cn){
  if(!pawExtraDiscoveries[data.kind])return pawExtraCaptionBefore(data,format,cn);
- const i=Number(cn);return ['Pawradise · '+data.title[i],...(data.scoreRows||[]).map(r=>r.label[i]+' '+r.value[i]),socialResultQuote(data)[i],cn?'趣味探索，非心理诊断。':'Informal reflection, not a psychological assessment.'].join('\n')
+ const i=Number(cn);return [(cn?'摸鱼小镇':'Pawradise')+' · '+data.title[i],...(data.scoreRows||[]).map(r=>r.label[i]+' '+r.value[i]),socialResultQuote(data)[i],cn?'趣味探索，非心理诊断。':'Informal reflection, not a psychological assessment.'].join('\n')
 };
 function pawPublicWonderScores(kind,scores,labels){
  if(pawExtraDiscoveries[kind])return pawExtraRows(kind,scores);
@@ -9173,7 +9175,7 @@ function pawPublicChartShare(raw){
 shareKinds.zwds_chart=['Twelve palace keepsake','十二宫纪念卡'];
 const pawChartCaptionBefore=meowSocialCaption;
 meowSocialCaption=function(data,format,cn){
- if(data.kind==='zwds_chart')return cn?'Pawradise · 十二宫纪念卡\n传统文化探索，仅供反思。':'Pawradise · Twelve palace keepsake\nTraditional symbolism, for reflection.';
+ if(data.kind==='zwds_chart')return cn?'摸鱼小镇 · 十二宫纪念卡\n传统文化探索，仅供反思。':'Pawradise · Twelve palace keepsake\nTraditional symbolism, for reflection.';
  return pawChartCaptionBefore(data,format,cn)
 };
 const pawChartArtKeyBefore=sharePaintedKey;
@@ -9240,7 +9242,7 @@ shareCardArt=function(cv,data,format,cn){
   g.restore();return y+total*scale
  }
  const footer=bottom-65;
- line('Pawradise · '+(cn?'偷得浮生半日闲':'A LITTLE ESCAPE'),top+20,27,'bold',muted);
+ line((cn?'摸鱼小镇':'Pawradise')+' · '+(cn?'偷得浮生半日闲':'A LITTLE ESCAPE'),top+20,27,'bold',muted);
  let y=top+51;line(locale(shareKinds[data.kind]),y+13,25,'normal',accent);y+=33;
  y=block([locale(data.title)],y,Math.min(120,(bottom-top)*.16),format==='square'?46:54,'bold',ink)+10;
  if(data.kind==='tarot'&&[1,3,5].includes(data.cards.length)){
@@ -9290,12 +9292,12 @@ renderRailKeepsake=function(book){
  const data=load('originalRailTicketV1',null);
  if(!data||typeof data!=='object')return pawRecoveredRailKeepsakeBefore(book);
  const ticket=element('section','',book,'passportRailTicket pawRecoveredTicket');
- ticket.setAttribute('aria-label',tr('Your original Pawradise railway ticket','你的 Pawradise 初次入境车票'));
+ ticket.setAttribute('aria-label',tr('Your original Pawradise railway ticket','你的摸鱼小镇初次入境车票'));
  function field(key,content,label=null){
   const node=element('div','',ticket,'pawTicketField');node.dataset.ticketField=key;
   if(label)element('small',label,node);element('strong',content,node);return node
  }
- field('heading',tr('Pawradise · Railway','Pawradise 铁路'));
+ field('heading',tr('Pawradise · Railway','摸鱼小镇铁路'));
  const avatarIndex=Number(data.avatar),portrait=element('img','',ticket,'pawTicketAvatar');
  portrait.src=ART['walker'+(Number.isInteger(avatarIndex)&&avatarIndex>=0&&avatarIndex<4?avatarIndex:0)+'0'];portrait.alt='';
  field('name',String(data.name||tr('Traveller','旅人')),tr('Passenger','旅客'));
@@ -10933,8 +10935,7 @@ drawActivity=function(...args){
   const [bx,by]=xy(.83,.625);
   if(!moving){
    target(bx-36,by-34,72,68,()=>pawGardenChoose(run,'seat'));
-   target(water[0]-55,water[1]-20,110,40,()=>pawGardenChoose(run,'feed'));
-   target(wx-32,wy-24,64,62,()=>pawGardenChoose(run,'chime'))
+   target(water[0]-55,water[1]-20,110,40,()=>pawGardenChoose(run,'feed'))
   }
  }finally{ctx.restore()}
  pawGardenControls(run)
@@ -10948,10 +10949,11 @@ function pawGardenClearControls(){
 function pawGardenControls(run){
  const el=$('gameControls');if(!el||run!==state||activity!=='secretGarden')return;
  if(pawArcadeInputBlocked()){el.hidden=true;return}
+ if(run.pawGardenLeaving){el.hidden=true;return}
  const busy=!!run.pawGardenWalk?.route.length,key=String(zh)+'|'+run.gardenSitting+'|'+busy;
- if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===(run.pawRearGarden?4:3)){el.hidden=false;return}
+ if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===2){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawGardenControls');el.hidden=false;pawGardenControlsRun=run;pawGardenControlsKey=key;
- for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐'],['chime','Wind chime','听风铃'],...(run.pawRearGarden?[['cats','Greet the lucky cats','拜访招财猫']]:[])]){
+ for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐']]){
   const button=b(el,tr(en,cn),()=>pawGardenChoose(run,name));button.dataset.pawGardenControl=name;button.disabled=busy
  }
 }
@@ -11356,6 +11358,11 @@ const pawFortunePainting={
   station:{approach:[568,365],plaque:[568,282],hit:[430,245,304,126]}
  }
 };
+// Painted-door taps follow the same discovery rules as the visible plaques.
+function pawFortuneDoorHitAllowed(id,player,doors,nearby,railNearby){
+ const door=doors?.[id];if(!door||!player||!nearby(id,player.y,doors))return false;
+ return id!=='station'||railNearby('fortune',player,door.approach)
+}
 function pawFortuneDoorPlan(id,from,points=pawFortunePainting.player){
  const entry=pawFortunePainting.doors[id];if(!entry)return null;
  const end={x:entry.approach[0],y:entry.approach[1]};
@@ -11401,7 +11408,15 @@ walkDoor=function(id,...args){
 // actual actors, interaction targets, dialogue, footsteps and atmosphere.
 const pawFortuneDrawBefore=drawRoute;
 drawRoute=function(...args){
- const previousGlow=glow;
+ const previousGlow=glow,previousTarget=target;
+ target=function(x,y,w,h,fn,id){
+  const door=Object.entries(pawFortunePainting.doors).find(([,d])=>d.hit[0]===x&&d.hit[1]===y&&d.hit[2]===w&&d.hit[3]===h);
+  if(door){
+   if(!pawFortuneDoorHitAllowed(door[0],p,pawFortunePainting.doors,pawValleyDoorNearby,pawFortuneRailNearby))return;
+   return previousTarget(x,y,w,h,fn,'paw-valley-door-'+door[0])
+  }
+  return previousTarget(x,y,w,h,fn,id)
+ };
  glow=function(x,y,...rest){
   if([[108,1280],[130,912],[475,918],[620,664],[960,594],[306,407],[855,267]].some(v=>v[0]===x&&v[1]===y))return;
   return previousGlow(x,y,...rest)
@@ -11409,7 +11424,7 @@ drawRoute=function(...args){
  try{
   if(!pics.valleyClean?.naturalWidth){ctx.fillStyle='#31483d';ctx.fillRect(0,0,1000,routeHeight);return}
   return pawFortuneDrawBefore(...args)
- }finally{glow=previousGlow}
+ }finally{glow=previousGlow;target=previousTarget}
 };
 /* PAW_NEW_DISTRICTS_BEGIN */
 // Independent art-calibrated world registrations. Preserve the legacy
@@ -12359,7 +12374,7 @@ const pawRearGardenNodes={
 const pawRearGardenEdges=[['entry','bend'],['bend','fork'],['fork','feed'],['fork','seat'],['fork','chime'],['chime','upper'],['upper','cats']];
 const pawRearGardenTargets={feed:[.30,.459,.25,.095],seat:[.79,.415,.23,.065],chime:[.78,.17,.11,.12],cats:[.65,.25,.23,.09]};
 function pawRearGardenRoute(from,action){
- if(!Array.isArray(from)||from.length!==2||!from.every(Number.isFinite)||!Object.hasOwn(pawRearGardenTargets,action))return null;
+ if(!Array.isArray(from)||from.length!==2||!from.every(Number.isFinite)||!(action==='entry'||Object.hasOwn(pawRearGardenTargets,action)))return null;
  const names=Object.keys(pawRearGardenNodes),distance=(a,b)=>Math.hypot((a[0]-b[0])*pawRearGardenPlate.w,(a[1]-b[1])*pawRearGardenPlate.h);
  const origin=names.reduce((best,k)=>distance(from,pawRearGardenNodes[k])<distance(from,pawRearGardenNodes[best])?k:best,names[0]);
  // All actions originate at completed route nodes, never across scenery.
@@ -12420,7 +12435,7 @@ start=function(id,...args){
   state.pawRearGarden=pawRoomImageReady(pawRearGardenArt());
   if(state.pawRearGarden){
    state.pawGardenWalk={painted:true,pos:pawRearGardenNodes.entry.slice(),route:[pawRearGardenNodes.bend.slice(),pawRearGardenNodes.fork.slice()],action:null,last:t,dir:'up'};
-   hint('Follow the stone path to the pond or lucky cats.','沿石径去看看锦鲤和招财猫。')
+   hint('Follow the stone path to the pond or take a seat.','沿石径去看看锦鲤，或在长椅上歇一会儿。')
   }
  }
  return result
@@ -12436,7 +12451,7 @@ pawGardenRoute=function(q,action){
 const pawRearGardenChooseBefore=pawGardenChoose;
 pawGardenChoose=function(run,kind){
  if(!run?.pawRearGarden)return pawRearGardenChooseBefore(run,kind);
- if(run!==state||!pawRearGardenActive()||pawArcadeInputBlocked())return;
+ if(run!==state||!pawRearGardenActive()||pawArcadeInputBlocked()||run.pawGardenLeaving||!['feed','seat'].includes(kind))return;
  const q=run.pawGardenWalk;if(!q||q.route.length)return;
  if(kind==='seat'&&run.gardenSitting){gardenSeat();return}
  if(run.gardenSitting){gardenSeat();if(run.gardenSitting)return}
@@ -12462,8 +12477,15 @@ drawActivity=function(...args){
  if(!pawRearGardenActive())return pawRearGardenDrawBefore(...args);
  const run=state,q=run.pawGardenWalk,p=pawRearGardenPlate,b=livingBounds(),xy=(u,v)=>[p.x+p.w*u,p.y+p.h*v];
  const prior=q.pos.slice(),arrive=pawGardenWalkTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
- if(arrive==='feed')gardenFeed();else if(arrive==='seat')gardenSeat();else if(arrive==='chime')gardenChime();
- else if(arrive==='cats'){run.pawCatAt=t;const i=Number.isInteger(run.pawCatPending)?run.pawCatPending:(Number.isInteger(run.pawCatChoice)?(run.pawCatChoice+1)%6:1);delete run.pawCatPending;sound(520);hint(...pawRearCatChoice(run,i))}
+ if(run.pawGardenLeaving){
+  if(arrive==='entry'){pawGardenClearControls();return pawRearGardenExitBefore.apply($('back'),run.pawGardenLeaving.args)}
+  if(!q.route.length&&!pawArcadeInputBlocked()){
+   if(run.gardenSitting){gardenSeat();if(!run.gardenSitting)run.pawGardenLeaving.stoodAt=t}
+   else if(!Number.isFinite(run.pawGardenLeaving.stoodAt)||t-run.pawGardenLeaving.stoodAt>=.45){
+    if(pawGardenRoute(q,'entry'))hint('Walking back to the temple…','沿石径返回大殿……')
+   }
+  }
+ }else if(arrive==='feed')gardenFeed();else if(arrive==='seat')gardenSeat();
  const dx=(q.pos[0]-prior[0])*p.w,dy=(q.pos[1]-prior[1])*p.h,moving=q.route.length>0;
  if(Math.hypot(dx,dy)>.01)q.dir=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';
  continuityActivity=activity;
@@ -12507,14 +12529,22 @@ drawActivity=function(...args){
    const [u,v]=pawRearCatFigurines[run.pawCatChoice],[gx,gy]=xy(u,v+.012);
    ctx.save();ctx.globalAlpha=.48*(1-catAge/2.2);ellipse(gx,gy,12,2.6,'#ffdc94');ctx.restore()
   }
-  if(!moving)for(const [kind,[u,v,ww,hh]] of Object.entries(pawRearGardenTargets)){
-   const [tx,ty]=xy(u,v);target(tx-ww*p.w/2,ty-hh*p.h/2,ww*p.w,hh*p.h,()=>pawGardenChoose(run,kind),'paw-rear-garden-'+kind)
-  }
-  if(!moving)for(let i=0;i<pawRearCatFigurines.length;i++){
-   const [cx,cy]=xy(...pawRearCatFigurines[i]);target(cx-14,cy-15,28,30,()=>{if(run!==state||pawArcadeInputBlocked()||q.route.length)return;run.pawCatPending=i;pawGardenChoose(run,'cats')},'paw-rear-cat-'+i)
+  if(!moving&&!run.pawGardenLeaving)for(const kind of ['feed','seat']){
+   const [u,v,ww,hh]=pawRearGardenTargets[kind], [tx,ty]=xy(u,v);
+   target(tx-ww*p.w/2,ty-hh*p.h/2,ww*p.w,hh*p.h,()=>pawGardenChoose(run,kind),'paw-rear-garden-'+kind)
   }
  }finally{ctx.restore()}
  pawGardenControls(run)
+};
+
+// The garden is reached through the temple; Back follows the same painted
+// stone path before restoring the hall. Repeated taps cannot skip the walk.
+const pawRearGardenExitBefore=$('back').onclick;
+$('back').onclick=function(...args){
+ if(!pawRearGardenActive())return pawRearGardenExitBefore.apply(this,args);
+ if(pawArcadeInputBlocked()||state.pawGardenLeaving)return;
+ state.pawGardenLeaving={args};pawGardenClearControls();
+ hint('Time to head back along the stone path.','沿石径慢慢走回去吧。')
 };
 
 /* PAW_FOOD_PAINT_BEGIN */
@@ -13123,9 +13153,9 @@ indoorObstacles=function(){return pawWishLobbyActive()?[]:pawWishLobbyObstaclesB
 const pawWishLobbySafeBefore=indoorSafe;
 indoorSafe=function(x,y,...args){return pawWishLobbyActive()?pawWishLobbySafe(x,y):pawWishLobbySafeBefore(x,y,...args)};
 function pawWishLobbyBackdrop(){
- if(!pawWishLobbyActive())return false;
+ if(!(pawWishLobbyActive()||room==='wishes'&&activity==='wishes'&&pawRoomImageReady(pawWishLobbyArt())))return false;
  const p=pawWishLobbyPlate,b=livingBounds(),im=pawWishLobbyArt();
- ctx.save();try{ctx.fillStyle='#526b57';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(im,p.x,p.y,p.w,p.h)}finally{ctx.restore()}
+ ctx.save();try{if(activity==='wishes')cover(im,b.x,b.y,b.w,b.h);else{ctx.fillStyle='#526b57';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(im,p.x,p.y,p.w,p.h)}}finally{ctx.restore()}
  return true
 }
 const pawWishLobbyPortraitBefore=paintPortraitInterior;
@@ -14056,7 +14086,8 @@ gardenWrite=function(){
  paper.append(input);$('dialogue').insertBefore(paper,$('choices'));$('dialogue').classList.add('pawWishWriting');
  composer={run,paper,input};pawWishComposer=composer;
  input.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeTalk()}else if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();fold()}});
- input.focus({preventScroll:true})
+ // The paper appears first; tapping it opens the mobile keyboard deliberately.
+ if(!('ontouchstart' in window||navigator.maxTouchPoints>0))input.focus({preventScroll:true})
 };
 const pawWishArchiveBefore=gardenWishBook;
 gardenWishBook=function(){
@@ -14457,10 +14488,10 @@ function pawHomeFinishImage(api,kind,id){
  promise.then(value=>{if(!value&&pawHomeFinishCache.get(key)===promise)pawHomeFinishCache.delete(key)});
  return promise
 }
-function pawApplyHomeFinish(stage,svg,api,kind,id,zone){
+function pawApplyHomeFinish(stage,svg,api,kind,id,zone,selection=id){
  const spec=api.finishSpec(kind,id);if(!spec)return;
  pawHomeFinishImage(api,kind,id).then(data=>{
-  if(!data||!stage.isConnected||stage.querySelector(':scope > svg')!==svg||komorebiZone!==zone||komorebiFinishes()[kind]!==id)return;
+  if(!data||!stage.isConnected||stage.querySelector(':scope > svg')!==svg||komorebiZone!==zone||komorebiFinishes()[kind]!==selection)return;
   if(svg.getAttribute('viewBox')!=='0 0 400 500')return;
   const anchor=kind==='wall'?svg.querySelector(':scope > rect[y="300"][width="400"][height="200"]'):svg.querySelector(':scope > path[d="M0 291H400V302H0Z"]');
   if(!anchor||anchor.parentNode!==svg)return;
@@ -14478,10 +14509,10 @@ hideoutPage=function(...args){
  const result=pawHomeFinishPageBefore(...args),stage=$('content').querySelector('.hideoutScene'),svg=stage?.querySelector(':scope > svg'),zone=komorebiZone;
  if(!svg||svg.getAttribute('viewBox')!=='0 0 400 500')return result;
  const finishes=komorebiFinishes();
- if(finishes.wall==='plain'&&finishes.floor==='plain')return result;
+ // Default room uses existing painted linen and oak without changing saved selections.
  pawLoadHomePaintings().then(api=>{
   if(!api?.finishSpec||!stage.isConnected||komorebiZone!==zone)return;
-  for(const kind of ['wall','floor'])if(finishes[kind]!=='plain')pawApplyHomeFinish(stage,svg,api,kind,finishes[kind],zone)
+  for(const kind of ['wall','floor'])pawApplyHomeFinish(stage,svg,api,kind,finishes[kind]==='plain'?(kind==='wall'?'wallLinen':'floorOak'):finishes[kind],zone,finishes[kind])
  });
  return result
 };
@@ -15021,6 +15052,7 @@ card=function(x,y,w,h,front,...args){
 const pawLegacyTarotTable=table;
 table=function(...args){
  if(room!=='tarot'||!['tarot','love'].includes(activity))return pawLegacyTarotTable(...args);
+ if(state.readStage==='focus')return;
  const im=pawTarotProps();if(!pawRoomImageReady(im))return;
  ctx.drawImage(im,...pawTarotPropCrop('mat',im.naturalWidth,im.naturalHeight),148,303,504,453)
 };
@@ -15128,4 +15160,223 @@ pawValleyArrivalCss.textContent=`
 @media(max-height:620px) and (orientation:portrait){#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{object-fit:contain!important;object-position:center!important}}
 `;document.head.append(pawValleyArrivalCss);
 
+
+/* PAW_IN_WORLD_CONSULTATION_BEGIN */
+let pawYueInline=null;
+function pawYueRestoreInline(){
+ const visit=pawYueInline;if(!visit)return;
+ pawYueInline=null;visit.observer?.disconnect();
+ if(visit.anchor.isConnected)visit.anchor.replaceWith(visit.form);else visit.form.remove();
+ $('dialogue').removeAttribute('data-paw-yue-question');
+}
+const pawYueInlineClose=closeTalk;
+closeTalk=function(...args){pawYueRestoreInline();return pawYueInlineClose(...args)};
+const pawYueInlineSay=say;
+say=function(...args){pawYueRestoreInline();return pawYueInlineSay(...args)};
+function pawYueInlineForm(kind){
+ const q=$('content'),pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
+ if(room!=='destiny'||!form||!out||form.hidden||form.style.display==='none'||!form.classList.contains('pawYueGuidedForm'))return false;
+ if(out.querySelector('.ziGrid,.yueReadingFront'))return false;
+ const anchor=document.createComment('Yue consultation paper');form.before(anchor);
+ pane.style.display='none';
+ say(tr('Master Yue','月师傅'),'',[[tr('Return to our conversation','回到茶叙'),()=>{closeTalk();yueReadingHub()}]]);
+ const panel=$('dialogue');panel.dataset.pawYueQuestion='true';
+ panel.insertBefore(form,$('choices'));
+ const visit={form,anchor,out,kind,observer:null,scene,room};
+ pawYueInline=visit;
+ visit.observer=new MutationObserver(()=>{
+  if(pawYueInline!==visit)return;
+  if(room!=='destiny'||scene!==visit.scene||!form.isConnected){closeTalk();return}
+  if(!out.querySelector('.ziGrid,.yueReadingFront'))return;
+  closeTalk();pane.dataset.pawYueDesk='true';pane.style.display='block';pane.scrollTop=0;updateHUD();
+ });
+ visit.observer.observe(out,{childList:true,subtree:true});
+ updateHUD();return true
+}
+const pawYueInlinePresent=pawYueDeskPresent;
+pawYueDeskPresent=function(kind){
+ const result=pawYueInlinePresent(kind);
+ if(kind==='year'||kind==='chart'){
+  pawYueInlineForm(kind);
+  const q=$('content');for(const button of q.querySelectorAll('button')){
+   if([tr('Edit birth details','修改生辰资料'),tr('Change birth date','修改出生日期')].includes(button.textContent))
+    button.addEventListener('click',()=>queueMicrotask(()=>{if(room==='destiny')pawYueInlineForm(kind)}));
+  }
+ }
+ return result
+};
+// Keep the brush-held host visible while the birth question is in dialogue.
+const pawYueInlineHostPhase=pawReadingHostPhase;
+pawReadingHostPhase=function(id,q,kind,desk,result){return pawYueInline&&id==='destiny'?'question':pawYueInlineHostPhase(id,q,kind,desk,result)};
+// Flipped cards remain on the painted table. Give the interpretation in
+// short conversational turns rather than a separate long reading page.
+function pawTarotCardConversation(index=state.readFocus){
+ const run=state,kind=activity,v=run.readCards?.[index],d=v&&tarotDeck[v.i];
+ if(room!=='tarot'||!['tarot','love'].includes(kind)||!d||!Number.isFinite(run.readFlip?.[index])||run.readFlip[index]<0||t-run.readFlip[index]<.72)return;
+ const valid=()=>room==='tarot'&&activity===kind&&state===run;
+ run.readFocus=index;run.readStage='focus';run.readAt=t;
+ const name=tr(d[0],d[1])+' · '+orient(v.rev);
+ const reflection=run.readCards.length===5?fiveReadingPrompt(run.readTopic,index):topicReflection(run.readTopic,index);
+ const aside=tarotCommentary(d[0],v.rev,run.readTopic,run.tarotTone);
+ const parts=[name+'\n'+arcanaReading(d,v.rev),reflection,aside&&tr(...aside)].filter(Boolean);
+ function speak(step){
+  if(!valid())return;
+  $('page').style.display='none';
+  const choices=[];
+  if(step+1<parts.length)choices.push([tr('Tell me more','再说说'),()=>speak(step+1)]);
+  else if(index+1<run.readCards.length&&run.readFlip[index+1]>=0&&t-run.readFlip[index+1]>=.72)choices.push([tr('Next card','下一张牌'),()=>pawTarotCardConversation(index+1)]);
+  else if(run.readFlip.every(v=>v>=0&&t-v>=.72))choices.push([tr('Reflect on the whole reading','聊聊整体牌意'),()=>openTarotReading(tarotShareSnapshot(run))]);
+  if(step>0)choices.push([tr('Previous thought','上一段'),()=>speak(step-1)]);
+  choices.push([tr('Back to the table','回到牌桌'),()=>{if(valid())readingReturnSpread()}]);
+  say(tr('Fortune Teller','占卜师'),parts[step],choices);
+  $('dialogue').setAttribute('data-paw-tarot-conversation','true');
+ }
+ speak(0)
+}
+readingFocusMeaning=function(){return pawTarotCardConversation(state.readFocus)};
+fiveReadingDetail=function(v,i){return pawTarotCardConversation(i)};
+const pawRitualTalkClose=closeTalk;
+closeTalk=function(...args){$('dialogue').removeAttribute('data-paw-tarot-conversation');return pawRitualTalkClose(...args)};
+const pawRitualTalkSay=say;
+say=function(...args){$('dialogue').removeAttribute('data-paw-tarot-conversation');return pawRitualTalkSay(...args)};
+const pawInWorldRitualCss=document.createElement('style');
+pawInWorldRitualCss.textContent=`
+html #game #dialogue.pawWishWriting,html #game #dialogue.pawWishWriting[data-paw-visit-dialogue]{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;width:min(86%,400px)!important;max-height:62dvh!important;overflow:visible!important}
+#game #dialogue.pawWishWriting #dialogueTop,#game #dialogue.pawWishWriting #line{display:none!important}
+#game #dialogue.pawWishWriting .pawWishPaper{position:relative;padding:24px 17px 18px!important;background:#f4e4bd url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat;border:1px solid #a88c62;box-shadow:2px 5px 14px #30251d55;transform:rotate(-1deg);border-radius:2px 3px 5px 2px}
+#game #dialogue.pawWishWriting .pawWishPaper::before{content:'願';position:absolute;top:5px;right:12px;color:#a56049;font:600 18px Georgia,"Songti SC",serif}
+#game #dialogue.pawWishWriting textarea{background:repeating-linear-gradient(transparent 0 25px,#bca77b66 25px 26px)!important;border:0!important;min-height:104px!important;line-height:26px!important;resize:none!important;outline-offset:2px!important;padding:0 4px!important;border-radius:0!important}
+#game #dialogue.pawWishWriting #choices{display:flex!important;justify-content:center;gap:7px;margin-top:10px;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+#game #dialogue.pawWishWriting #choices button{flex:1;text-align:center!important;background:#e8d9b7!important;border:1px solid #a88c62!important;min-height:44px!important;border-radius:3px!important;box-shadow:0 2px 4px #30251d44!important}
+#game #dialogue[data-paw-yue-question]{max-height:min(48dvh,420px)!important;width:min(calc(100% - 28px),510px)!important;padding:9px 13px!important;border-radius:5px!important}
+#game #dialogue[data-paw-yue-question] #talkPortrait,#game #dialogue[data-paw-yue-question] #line:empty{display:none!important}
+#game #dialogue[data-paw-yue-question] .pawYueGuidedForm{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:5px!important;margin:4px 0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border:0!important}
+#game #dialogue[data-paw-yue-question] .pawYueGuidedForm>*{grid-column:1/-1!important;min-width:0!important;max-width:100%!important}
+#game #dialogue[data-paw-yue-question] .pawYueStepHidden,#game #dialogue[data-paw-yue-question] button[hidden]{display:none!important}
+#game #dialogue[data-paw-yue-question] .pawYueGuidedForm label{display:grid;gap:4px;font:14px/1.3 Georgia,"Songti SC",serif}
+#game #dialogue[data-paw-yue-question] .pawYueGuidedForm :is(input,select){min-height:44px;box-sizing:border-box;width:100%;min-width:0;max-width:100%;font-size:16px;background:#f7edd6;border:1px solid #ac9776;border-radius:3px;padding:6px 9px;color:#514333}
+#game #dialogue[data-paw-yue-question] .pawYueQuestion{font:600 17px/1.4 Georgia,"Songti SC",serif;color:#455c49;margin:2px 0 5px!important}
+#game #dialogue[data-paw-yue-question] .pawYueStepNav{display:flex;justify-content:flex-end;gap:6px}
+#game #dialogue[data-paw-yue-question] .pawYueStepNav button,#game #dialogue[data-paw-yue-question] button[type=submit]{min-height:44px}
+#game #dialogue[data-paw-tarot-conversation]{width:min(calc(100% - 24px),520px)!important;max-height:40dvh!important;padding:10px 13px!important;background:#f0e5d1f5 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat!important;border-radius:5px!important;box-shadow:0 2px 10px #2c241d55!important}
+#game #dialogue[data-paw-tarot-conversation] #talkPortrait{display:none!important}
+#game #dialogue[data-paw-tarot-conversation] #line{font:15px/1.45 Georgia,"Songti SC",serif!important}
+#game #dialogue[data-paw-tarot-conversation] #choices{display:flex!important;flex-wrap:wrap;gap:5px}
+#game #dialogue[data-paw-tarot-conversation] #choices button{flex:1 1 120px;text-align:center!important}
+@media(orientation:landscape){#game #dialogue[data-paw-yue-question],#game #dialogue[data-paw-tarot-conversation]{max-height:52dvh!important}}
+`;document.head.append(pawInWorldRitualCss);
+
+/* Keep the enlarged face to the right of the seated teller when speaking. */
+const pawTarotConversationDraw=drawActivity;
+drawActivity=function(...args){
+ if(room==='tarot'&&['tarot','love'].includes(activity)&&state.readStage==='focus'&&talkOpen&&$('dialogue').hasAttribute('data-paw-tarot-conversation')){
+  const v=state.readCards?.[state.readFocus],im=pawReadingImage(pawReadingAPI(),'tarot');
+  if(v&&pawRoomImageReady(im)){
+   const b=livingBounds(),w=Math.min(b.w*.31,b.h*.20),h=w*218/128;
+   ctx.save();try{paintLivingBackdrop(im);drawReadingCard(b.x+b.w*.64-w/2,b.y+b.h*.28-h/2,w,h,v.i,v.rev)}finally{ctx.restore()}
+   return
+  }
+ }
+ return pawTarotConversationDraw(...args)
+};
+/* PAW_IN_WORLD_CONSULTATION_END */
+
+/* PAW_OPENING_EXPERIENCE_BEGIN
+   One illustrated railway journey, rather than a succession of onboarding forms.
+   Keep original controls, hit areas, saved identity and current painted frames. */
+let pawOpeningLastStep=null;
+const pawOpeningRenderBefore=proRender;
+proRender=function(...args){
+ const result=pawOpeningRenderBefore(...args);
+ if(proposal.hidden)return result;
+ const changed=pawOpeningLastStep!==proStep;
+ pawOpeningLastStep=proStep;
+ proposal.dataset.pawOpeningEnter=changed?'true':'false';
+ const header=proposal.querySelector('header>span'),foot=proposal.querySelector('footer');
+ if([0,1,2,4].includes(proStep)&&header){
+  header.replaceChildren();
+  element('strong',tr('Pawradise','摸鱼小镇'),header,'pawOpeningWordmark');
+  if(proStep===0)element('small',tr('A LITTLE WORLD AWAY','偷得浮生半日闲'),header,'pawOpeningMotto');
+ }
+ if(proStep===0&&foot){
+  const heading=foot.querySelector('h1'),copy=foot.querySelector('p:not(.pawFirstRailLabel)'),next=foot.querySelector('button.next');
+  foot.querySelector('.pawFirstRailLabel')?.remove();
+  if(heading)heading.textContent=tr('Your little escape awaits','今天，去摸个鱼吧');
+  if(copy)copy.textContent=tr('A train to somewhere softer. Leave your deadlines on the platform.','有一班列车，开往没有催促的小镇。把待办事项留在站台吧。');
+  if(next)next.textContent=tr('Catch the train','搭上这班列车')+'  ›';
+ }
+ if(proStep===1&&foot){
+  const title=foot.querySelector('h1');
+  if(title)title.classList.add('pawOpeningCharacterName');
+  const kicker=foot.querySelector('.pawAvatarKicker');
+  if(kicker)kicker.textContent=tr('Who are you on this little adventure?','这趟旅程，你想当谁？');
+ }
+ if(proStep===4){
+  const ticket=proposal.querySelector('.rail-ticket');
+  if(ticket)ticket.querySelector('.rail-brand')?.setAttribute('data-paw-ticket-locale',zh?'zh':'en');
+ }
+ return result
+};
+const pawOpeningSceneStyle=document.createElement('style');
+pawOpeningSceneStyle.textContent=`
+#proposal:is([data-paw-entrance-step="0"],[data-paw-entrance-step="1"],[data-paw-entrance-step="2"],[data-paw-entrance-step="4"]) .pawOpeningWordmark{
+ display:block;color:#fff0cb;font-family:var(--paw-display,Georgia,serif)!important;font-size:clamp(20px,5vw,32px)!important;font-weight:600;line-height:1.12;letter-spacing:.025em;text-shadow:0 2px 8px #192a22;
+}
+html[lang^="zh"] #proposal .pawOpeningWordmark,html[lang^="zh"] #proposal .pawGateWordmark{font-family:var(--paw-display,"Songti SC",serif)!important;letter-spacing:.08em}
+#proposal .pawOpeningMotto{display:block;color:#f2dfb5;font-family:var(--paw-display,Georgia,serif)!important;font-size:10px;line-height:1.35;letter-spacing:.14em;margin-top:5px}
+#proposal[data-paw-entrance-step="0"]:not([hidden]){display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;gap:0!important;padding:max(18px,env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) max(18px,env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))!important;overflow:hidden!important;background:#2c4032!important}
+#proposal[data-paw-entrance-step="0"]>.hero{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;margin:0!important;z-index:0!important}
+#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-height:none!important}
+#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:50% 60%!important}
+#proposal[data-paw-entrance-step="0"]>.hero:after{background:linear-gradient(180deg,#13271f9c 0%,#182b2340 18%,transparent 34%,transparent 49%,#182a226b 68%,#182a22e8 100%)!important}
+#proposal[data-paw-entrance-step="0"]>header{grid-area:1/1!important;position:relative!important;z-index:3!important;align-self:start!important}
+#proposal[data-paw-entrance-step="0"] .pawOpeningWordmark{font-size:clamp(32px,8.5vw,58px)!important;font-weight:500;letter-spacing:.015em}
+#proposal[data-paw-entrance-step="0"]>footer{grid-area:3/1!important;position:relative!important;z-index:3!important;align-self:end!important;justify-self:center!important;width:min(100%,460px)!important;max-width:460px!important;padding:0!important;gap:9px!important;text-shadow:0 2px 6px #18281f}
+#proposal[data-paw-entrance-step="0"]>footer h1{font-family:var(--paw-display,Georgia,serif)!important;font-size:clamp(24px,6.8vw,42px)!important;font-weight:500;line-height:1.12}
+#proposal[data-paw-entrance-step="0"]>footer p{font-family:var(--paw-body,system-ui,sans-serif)!important;font-size:clamp(13px,3.6vw,16px)!important;line-height:1.45;max-width:34ch;justify-self:center;color:#f7e9cd}
+#proposal[data-paw-entrance-step="0"]>footer .next,#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>footer .next,#proposal[data-paw-entrance-step="4"] .ticket-confirm{min-height:48px!important;background:#e4cf9e url('assets/visual/painted/recovered/ui/paper_texture.webp') center/220px auto repeat!important;color:#34483a!important;border:1px solid #b59b68!important;border-radius:5px!important;font-family:var(--paw-display,Georgia,serif)!important;font-size:clamp(15px,4vw,18px)!important;font-weight:600!important;box-shadow:0 3px 9px #17271e55!important;text-shadow:none!important}
+#proposal[data-paw-entrance-step="0"]>footer .next{width:min(100%,330px)!important;justify-self:center}
+#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>.hero.pawChoiceGrounded{border:0!important;box-shadow:none!important;border-radius:6px!important}
+#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"]) .pawChoiceStation{border-radius:inherit;mask-image:linear-gradient(to bottom,black 0%,black 88%,transparent 100%)}
+#proposal .pawAvatarOption{background:#dfcfae url('assets/visual/painted/recovered/ui/paper_texture.webp') center/160px auto repeat!important;border:1px solid #a99a77!important;border-radius:6px!important;box-shadow:none!important}
+#proposal .pawAvatarOption[aria-pressed=true]{background-color:#f5e1b0!important;border:2px solid #e4c77d!important;box-shadow:inset 0 0 0 1px #88744b,0 2px 6px #18291e50!important}
+#proposal .pawAvatarOption span,#proposal .pawAvatarKicker{font-family:var(--paw-display,Georgia,serif)!important;letter-spacing:0!important}
+#proposal .pawOpeningCharacterName{font-family:var(--paw-display,Georgia,serif)!important;color:#f5e5c3!important}
+#proposal .pawAvatarTurn button,#proposal .pawPersonaChoices button,#proposal .pawIntentSkip{font-family:var(--paw-display,Georgia,serif)!important}
+#proposal[data-paw-entrance-step="4"] .rail-ticket .rail-brand,#proposal[data-paw-entrance-step="4"] .rail-ticket .route{font-family:var(--paw-display,Georgia,serif)!important}
+#proposal[data-paw-entrance-step="4"] .rail-ticket{box-shadow:0 10px 30px #15251d6b!important}
+#proposal[data-paw-opening-enter="true"][data-paw-entrance-step="0"] .pawFirstRailPainting img{animation:pawOpeningCamera 9s ease-out both!important}
+#proposal[data-paw-opening-enter="true"][data-paw-entrance-step="4"] .rail-ticket{animation:pawOpeningTicket 260ms ease-out both!important}
+@keyframes pawOpeningCamera{from{transform:scale(1.045)}to{transform:scale(1)}}
+@keyframes pawOpeningTicket{from{opacity:.9;translate:0 6px}to{opacity:1;translate:0 0}}
+@media(min-width:850px) and (min-height:480px){
+ #proposal[data-paw-entrance-step="0"]>footer{justify-self:start!important;text-align:left!important;width:min(43vw,520px)!important;max-width:520px!important;margin:0 0 3vh 3vw!important}
+ #proposal[data-paw-entrance-step="0"]>footer p,#proposal[data-paw-entrance-step="0"]>footer .next{justify-self:start!important}
+ #proposal[data-paw-entrance-step="0"]>.hero:after{background:linear-gradient(90deg,#182a22e0 0%,#182a226b 39%,transparent 70%),linear-gradient(180deg,#182a2250,transparent 34%)!important}
+ #proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{object-position:center!important}
+}
+@media(max-height:500px) and (orientation:landscape){
+ #proposal[data-paw-entrance-step="0"]>footer{justify-self:start!important;text-align:left!important;width:min(55vw,430px)!important;gap:5px!important}
+ #proposal[data-paw-entrance-step="0"]>footer p,#proposal[data-paw-entrance-step="0"]>footer .next{justify-self:start!important}
+ #proposal[data-paw-entrance-step="0"] .pawOpeningWordmark{font-size:30px!important}
+ #proposal[data-paw-entrance-step="0"]>footer h1{font-size:24px!important}
+}
+@media(prefers-reduced-motion:reduce){#proposal[data-paw-opening-enter="true"] .pawFirstRailPainting img,#proposal[data-paw-opening-enter="true"] .rail-ticket{animation:none!important}}
+`;document.head.append(pawOpeningSceneStyle);
+/* PAW_OPENING_EXPERIENCE_END */
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
+
+/* Visual continuity: retain real hit areas and let the illustration breathe. */
+const pawVisualContinuityStyle=document.createElement('style');pawVisualContinuityStyle.textContent=`
+#game button,#game summary,#game canvas,#game [role="button"]{-webkit-tap-highlight-color:transparent}
+#game button:focus-visible,#game summary:focus-visible{outline:2px solid #64816a;outline-offset:2px}
+#game #moveGuide:not([hidden]){font-family:Georgia,"Songti SC",serif!important;background:#32483eea!important;border:1px solid #c8bba08c!important;border-radius:7px!important;padding:8px 10px!important;max-width:calc(100% - 32px)!important;box-shadow:0 2px 6px #28332740!important}
+#game #content[data-paw-visual-theme="daily"] .journalCheckin{background:transparent!important;padding:10px 2px!important}
+#game #content[data-paw-visual-theme="daily"] .pawDiaryFold .goodCompanyBook{background:transparent!important;padding:6px 0!important}
+#game #content .pawDiaryFold .goodCompanyPicks button{border-radius:5px!important;box-shadow:none!important;border:1px solid #ae9e7f!important;background:#f3e7cc!important;color:#514a37!important}
+#game #content .pawDiaryFold .goodCompanyPicks button[aria-pressed="true"]{background:#d7dfc6!important;border-color:#64816a!important;color:#384f3d!important}
+#game #content .hideoutScene{border:1px solid #a69272!important;box-shadow:0 3px 10px #52443138!important;border-radius:5px!important}
+#game #content .hideoutPrimary button{border-radius:5px!important;box-shadow:none!important}
+#game.pawDockRoot.pawFocusedView:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){z-index:24!important;background:#eee5d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 145px repeat!important;box-shadow:0 3px 10px #2e352c55!important}
+`;document.head.append(pawVisualContinuityStyle);

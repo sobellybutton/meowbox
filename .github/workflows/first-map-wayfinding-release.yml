@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   mobile-first-map:
-    if: github.event_name == 'workflow_dispatch' || (github.head_ref == 'release/candidate-mobile-foundation-reconciled-20261128' || github.head_ref == 'fix/live-profile-name-fit-20261128')
+    if: github.event_name == 'workflow_dispatch' || (github.head_ref == 'release/candidate-mobile-foundation-reconciled-20261128' || github.head_ref == 'fix/live-profile-name-fit-20261128' || github.head_ref == 'fix/mobile-visual-continuity-20261128') || github.head_ref == 'release/valley-discovery-verified-20261128'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -18,6 +18,7 @@ jobs:
           node-version: '22'
       - run: node scripts/build.cjs
       - run: node scripts/world-visits-test.cjs
+      - run: node scripts/test-fortune-painting.cjs
       - run: test -s assets/visual/painted/recovered/ui/paper_texture.webp && test -s assets/visual/painted/signage/wood-grain.webp && test -s assets/visual/staging/2026-11-28-project-art-b10/avatar-frame.webp
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps chromium
