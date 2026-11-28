@@ -292,3 +292,114 @@ parallelSelect=function(i){
  }
  requestAnimationFrame(turn)
 };
+
+
+/* PAW_MAPPED_DISCOVERY_PLATE_BEGIN */
+function pawDiscoveryPlateKind(district,id,act,visit,ready){
+ if(district!=='wonder'||id!==visit||!ready)return null;
+ if(['quiz','story','match'].includes(id)&&act==='wonderScene')return 'wonder';
+ if(id==='match'&&act==='match')return 'cafe';
+ return null
+}
+function pawDiscoveryPlateFrame(base,foot,width,height){
+ if(!base||!foot||![base.s,base.ox,base.oy,width,height,...foot].every(Number.isFinite)||base.s<=0)return base;
+ if(width>=900&&width/height>=1.25)return {...base,ox:width*.34-foot[0]*base.s};
+ return {...base,oy:base.oy-Math.max(0,base.oy+foot[1]*base.s-height*.47)}
+}
+/* PAW_MAPPED_DISCOVERY_PLATE_END */
+function pawDiscoveryPlateActive(){
+ // These mapped-room helpers are defined by startup before the first frame.
+ if(!['quiz','story','match'].includes(room)||scene!=='wonder'||!['wonderScene','match'].includes(activity))return null;
+ const api=pawReadingAPI(),im=api&&pawReadingImage(api,room);
+ return pawDiscoveryPlateKind(scene,room,activity,pawReadingVisit,pawRoomImageReady(im))
+}
+function pawDiscoveryPlateFoot(){
+ const api=pawReadingAPI(),anchor=mb5Return;
+ if(anchor?.room===room&&api.safe(room,pawReadingNormalized(anchor.x,anchor.y)))return [anchor.x,anchor.y];
+ return pawReadingSpec(api,room)?.stations[room]?.slice(2)||null
+}
+const pawDiscoveryPlateCameraPrior=mobileRoomCamera;
+mobileRoomCamera=function(...args){
+ if(pawDiscoveryPlateActive()){
+  const base=pawReadingCamera(pawReadingAPI(),W,H);
+  return pawDiscoveryPlateFrame(base,pawDiscoveryPlateFoot(),W,H)||pawDiscoveryPlateCameraPrior(...args)
+ }
+ return pawDiscoveryPlateCameraPrior(...args)
+};
+function pawDrawDiscoveryPlate(){
+ const im=pawReadingImage(pawReadingAPI(),room),plate=pawReadingPlate,view=livingBounds(),foot=pawDiscoveryPlateFoot();
+ ctx.save();try{
+  ctx.fillStyle='#42433c';ctx.fillRect(view.x,view.y,view.w,view.h);
+  ctx.drawImage(im,plate.x,plate.y,plate.w,plate.h);
+  if(foot&&Number.isInteger(avatar))backHuman(...foot,avatar,false,'up',travellerRoomScale(H,cam.scale))
+ }finally{ctx.restore()}
+}
+function pawDiscoveryPlatePanel(panel,key,title,prompt){
+ if(panel.dataset.pawDiscoveryPlateKey===key&&!panel.hidden)return false;
+ panel.dataset.pawDiscoveryPlateKey=key;panel.dataset.pawDiscoveryPlate='true';panel.hidden=false;panel.replaceChildren();
+ panel.setAttribute('role','group');panel.setAttribute('aria-label',title);
+ panel.scrollTop=0;element('small',title,panel);
+ element('p',prompt,panel).setAttribute('aria-live','polite');return true
+}
+function pawDiscoveryPlateClear(panel){
+ if(!panel.hasAttribute('data-paw-discovery-plate'))return;
+ panel.removeAttribute('data-paw-discovery-plate');delete panel.dataset.pawDiscoveryPlateKey;panel.hidden=true
+}
+const pawPlateWonderPrior=syncWonderSheet,pawPlateCafePrior=syncCafeQuestionSheet;
+syncWonderSheet=function(...args){
+ const panel=wonderQuestionSheet;
+ if(pawDiscoveryPlateActive()!=='wonder'){pawDiscoveryPlateClear(panel);return pawPlateWonderPrior(...args)}
+ if(pawArcadeInputBlocked()){panel.hidden=true;return}
+ const token=wonderSceneToken,run=state,phase=wonderScenePhase,mode=wonderSceneMode,index=wonderSceneAnswers.length;
+ const current=()=>pawDiscoveryPlateActive()==='wonder'&&run===state&&token===wonderSceneToken&&phase===wonderScenePhase&&index===wonderSceneAnswers.length&&!pawArcadeInputBlocked();
+ const title=tr(...wonderSceneNames[mode]),key=[token,index,phase,zh].join('|');
+ if(phase==='welcome'){
+  if(pawDiscoveryPlatePanel(panel,key,title,tr('Take your time. Open the notebook when you are ready.','慢慢来，准备好就翻开小记吧。')))b(panel,tr('Begin our conversation','开始我们的对话'),()=>{if(current()){wonderScenePhase='question';wonderSceneAt=t;sound(480)}});
+ }else if(phase==='result'&&wonderSceneResult){
+  const result=wonderSceneResult;
+  if(pawDiscoveryPlatePanel(panel,key,title,tr(...result.name)+' · '+tr(...result.desc))){
+   b(panel,tr('View details','看看解读'),()=>{if(current())openWonderResult(mode,result)});
+   b(panel,tr('Share keepsake','分享纪念卡'),()=>{if(current())wonderSceneShare()});
+   b(panel,tr('Try again','再试一次'),()=>{if(current())wonderSceneOpen(mode)})
+  }
+ }else if(['question','turn'].includes(phase)){
+  const d=wonderSceneData();if(!d){panel.hidden=true;return}
+  if(!pawDiscoveryPlatePanel(panel,key,title+' · '+(index+1)+' / '+d.total,tr(...d.prompt)))return;
+  const frame=pawDiscoveryFrame();
+  d.opts.forEach((o,i)=>{const btn=b(panel,tr(o[0],o[1]),()=>{if(current())wonderSceneChoose(i,frame)});btn.disabled=phase!=='question';if(wonderScenePick===i)btn.classList.add('selected')});
+  if(index&&phase==='question')b(panel,tr('Previous','上一题'),()=>{if(current())pawDiscoveryBack(frame)})
+ }else panel.hidden=true
+};
+syncCafeQuestionSheet=function(...args){
+ const panel=cafeQuestionSheet;
+ if(pawDiscoveryPlateActive()!=='cafe'){pawDiscoveryPlateClear(panel);return pawPlateCafePrior(...args)}
+ if(pawArcadeInputBlocked()){panel.hidden=true;return}
+ const token=cafeToken,run=state,round=cafeRound,phase=cafePhase,key=[token,round,phase,zh].join('|');
+ const current=()=>pawDiscoveryPlateActive()==='cafe'&&state===run&&cafeToken===token&&cafeRound===round&&cafePhase===phase&&!pawArcadeInputBlocked();
+ // Startup owns the result and sharing controls.
+ if(phase==='result'){panel.dataset.pawDiscoveryPlate='true';return pawPlateCafePrior(...args)}
+ const title=tr('A cup of tea together','一起喝杯茶');
+ if(phase==='welcome'){
+  if(pawDiscoveryPlatePanel(panel,key,title,tr('Take a moment at the table. What kind of company feels right today?','在茶桌旁歇一歇，今天想要怎样的陪伴？')))b(panel,tr('Join me for tea','一起喝杯茶'),()=>{if(current()){cafePhase='question';cafeAt=t;sound(490)}});
+ }else if(['question','turn'].includes(phase)){
+  const q=cafeQuestions[round];if(!q){panel.hidden=true;return}
+  if(!pawDiscoveryPlatePanel(panel,key,title+' · '+(round+1)+' / '+cafeQuestions.length,tr(...q[0])))return;
+  q[1].forEach((o,i)=>{const btn=b(panel,tr(...o),()=>{if(current())cafeChoose(i)});btn.disabled=phase!=='question';btn.setAttribute('aria-pressed',String(cafePick===i))})
+ }else panel.hidden=true
+};
+const pawDiscoveryPlateDrawPrior=drawActivity;
+drawActivity=function(...args){
+ const kind=pawDiscoveryPlateActive();
+ if(!kind)return pawDiscoveryPlateDrawPrior(...args);
+ pawDrawDiscoveryPlate();continuityActivity=activity;
+ syncWonderSheet();syncCafeQuestionSheet();syncStorySheet()
+};
+// The later café result renderer invokes these two helpers directly.
+const pawDiscoveryPlateCafeRoomPrior=cafeRoom,pawDiscoveryPlateObjectPrior=wonderSceneObject;
+cafeRoom=function(...args){if(pawDiscoveryPlateActive()==='cafe'){pawDrawDiscoveryPlate();return}return pawDiscoveryPlateCafeRoomPrior(...args)};
+wonderSceneObject=function(...args){if(pawDiscoveryPlateActive()==='cafe'&&cafePhase==='result')return;return pawDiscoveryPlateObjectPrior(...args)};
+const pawDiscoveryPlateStyle=document.createElement('style');
+pawDiscoveryPlateStyle.textContent=`
+#game :is(#wonderQuestionSheet,#cafeQuestionSheet)[data-paw-discovery-plate]{max-height:42dvh;bottom:calc(env(safe-area-inset-bottom,0px) + 65px);box-sizing:border-box}
+@media(min-width:900px) and (min-aspect-ratio:5/4){#game :is(#wonderQuestionSheet,#cafeQuestionSheet)[data-paw-discovery-plate]{left:auto;right:clamp(16px,4vw,65px);top:50%;bottom:auto;transform:translateY(-50%);width:min(39vw,440px);max-height:70dvh}}
+`;document.head.append(pawDiscoveryPlateStyle);
