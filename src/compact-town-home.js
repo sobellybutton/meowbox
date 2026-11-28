@@ -95,6 +95,15 @@ function cutawayApproach(api,layout,items,item,actor){
  const routes=candidates.map(c=>({cell:c,route:cutawayRoute(api,layout,items,actor,c)})).filter(x=>x.route!==null);
  routes.sort((a,b)=>a.route.length-b.route.length);return routes[0]?.cell||null
 }
+function cutawayArtPaths(api,layout,items){
+ const paths=[api.shell(layout),...items.map(i=>api.furniture(i.id))];
+ if(paths.some(p=>typeof p!=='string'||!p))return null;
+ return [...new Set(paths)]
+}
+async function cutawayArtReady(paths,decode){
+ if(!Array.isArray(paths)||!paths.length)return false;
+ try{return (await Promise.all(paths.map(path=>decode(path)))).every(Boolean)}catch{return false}
+}
 // PAW_COMPACT_HELPERS_END
 function replaceExact(root,selector,oldEN,oldZH,en,cn){
  for(const node of root.querySelectorAll(selector)){
@@ -105,7 +114,7 @@ function replaceExact(root,selector,oldEN,oldZH,en,cn){
 // human participant's avatar from their chosen name.
 function addResidentPortrait(card){
  const name=card.querySelector(':scope > strong');
- if(!name||card.querySelector(':scope > .pawTownPortrait'))return;
+ if(!name||card.querySelector(':scope > .pawTownPortrait,:scope > .pawChatPortrait'))return;
  const path=residentPortraitPath(name.textContent);
  if(!path)return;
  const im=document.createElement('img');im.className='pawTownPortrait';im.alt='';im.decoding='async';im.loading='lazy';
@@ -191,7 +200,7 @@ function townConnectionInfo(q){
 const pageBefore=page;
 page=function(...args){$('content')?.classList.remove('pawCutawayOpen');const result=pageBefore(...args),q=$('content');naturalTownLabels(q);return result};
 const sayBefore=say;
-say=function(name,words,...rest){return sayBefore.call(this,residentDialogue(name),residentDialogue(words),...rest)};
+say=function(name,words,...rest){return sayBefore.call(this,residentDialogue(name),words,...rest)};
 function dressTeaTable(q){
  const log=q.querySelector('.townChatTranscript');if(!log)return;
  const paint=()=>{for(const row of log.querySelectorAll('.townChatLine:not(.self)'))addResidentPortrait(row)};
@@ -250,20 +259,39 @@ function physicalRoomLight(stage,zone){
  sync();
 }
 
+const cutawayDecoded=new Map();
+function decodeCutawayArt(path){
+ if(cutawayDecoded.has(path))return cutawayDecoded.get(path);
+ const job=new Promise(resolve=>{
+  const im=new Image();let done=false;
+  function finish(ok){if(done)return;done=true;clearTimeout(timer);im.onload=im.onerror=null;resolve(ok)}
+  const timer=setTimeout(()=>finish(false),8000);
+  im.onerror=()=>finish(false);
+  im.onload=()=>{if(typeof im.decode==='function')im.decode().then(()=>finish(im.naturalWidth>0),()=>finish(false));else finish(im.naturalWidth>0)};
+  im.src=path
+ }).then(ok=>{if(!ok)cutawayDecoded.delete(path);return ok});
+ cutawayDecoded.set(path,job);return job
+}
 function mountCutaway(q,legacyStage){
  const launch=element('div','',q,'pawCutawayLaunch');legacyStage.before(launch);
  const button=b(launch,tr('Cutaway room','立体小窝'),open);
  let opened=false;
  async function open(){
-  if(opened)return;opened=true;button.disabled=true;
+  if(opened)return;opened=true;button.disabled=true;button.textContent=tr('Opening your room…','正在打开小窝…');
+  const active=()=>q.contains(legacyStage)&&legacyStage.isConnected&&$('page').style.display==='block';
+  const reset=()=>{opened=false;button.disabled=false;button.textContent=tr('Cutaway room','立体小窝')};
   const api=await pawLoadHomePaintings();
-  if(!q.contains(legacyStage)||!legacyStage.isConnected)return;
+  if(!active()){reset();return}
+  if(!api){reset();toast(tr('The painted room could not load. Your original room is unchanged.','立体小窝暂时无法载入，原本的小窝不会改变。'));return}
   const zone=komorebiZone,layout=['starter','side','studio'][zone]||'starter';
   const source=hideoutFurniture.filter(d=>furnitureZone(d)===zone);
   const store=load('pawHomeCutawayV1',{}),fingerprint=JSON.stringify(source.map(d=>[d.id,d.x,d.y,d.r]));
   const saved=store?.[zone]?.fingerprint===fingerprint?store[zone].items:null;
   let items=api&&cutawayPlan(api,layout,source,saved);
-  if(!items){opened=false;button.disabled=false;toast(tr('This furniture arrangement needs more floor space. Your original room is safe.','这个布局需要更多空间，原本的小窝不会改变。'));return}
+  if(!items){reset();toast(tr('This furniture arrangement needs more floor space. Your original room is safe.','这个布局需要更多空间，原本的小窝不会改变。'));return}
+  const ready=await cutawayArtReady(cutawayArtPaths(api,layout,items),decodeCutawayArt);
+  if(!active()||komorebiZone!==zone){reset();return}
+  if(!ready){reset();toast(tr('The painted room could not load. Your original room is unchanged.','立体小窝暂时无法载入，原本的小窝不会改变。'));return}
   const panel=element('section','',q,'pawCutawayPanel');launch.after(panel);
   const stage=element('div','',panel,'pawCutawayStage'),shell=element('img','',stage,'pawCutawayShell');
   shell.alt='';shell.src=api.shell(layout);
@@ -271,7 +299,7 @@ function mountCutaway(q,legacyStage){
   const status=element('small','',panel,'pawCutawayStatus');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const oldHidden=legacyStage.hidden;
   function close(){
-   stop();panel.remove();legacyStage.hidden=oldHidden;q.classList.remove('pawCutawayOpen');opened=false;button.disabled=false;button.focus({preventScroll:true})
+   stop();observer.disconnect();document.removeEventListener('visibilitychange',onVisibility);panel.remove();legacyStage.hidden=oldHidden;q.classList.remove('pawCutawayOpen');reset();if(button.isConnected&&$('page').style.display==='block')button.focus({preventScroll:true})
   }
   function fail(){if(!panel.isConnected)return;close();toast(tr('The painted room could not load. Your original room is unchanged.','立体小窝暂时无法载入，原本的小窝不会改变。'))}
   shell.onerror=fail;shell.onload=()=>{if(shell.naturalWidth&&shell.naturalHeight)stage.style.aspectRatio=shell.naturalWidth+'/'+shell.naturalHeight};
@@ -279,13 +307,19 @@ function mountCutaway(q,legacyStage){
   b(controls,tr('Return to original room','返回原本小窝'),close);
   const edit=b(controls,tr('Move furniture','移动家具'),()=>{stop();editing=!editing;selected=null;edit.textContent=editing?tr('Finish arranging','完成布置'):tr('Move furniture','移动家具');render();sayStatus()});
   let editing=false,selected=null,actor=cutawayFree(api,layout,items).at(-1),raf=0,epoch=0;
- const lights=new Set(items.filter(i=>['lamp','shojiLamp','chineseLantern'].includes(i.key)).map(i=>i.key));
-  const player=element('img','',stage,'pawCutawayActor');player.alt=tr('Your avatar','你的角色');player.src=ART['walker'+(avatar??0)+'0'];
+  const lampKeys=items.filter(i=>['lamp','shojiLamp','chineseLantern'].includes(i.key)).map(i=>i.key);
+  const savedLights=store?.[zone]?.fingerprint===fingerprint?store[zone].lights:null;
+  const lights=new Set(Array.isArray(savedLights)?lampKeys.filter(id=>savedLights.includes(id)):lampKeys);
+  const player=element('img','',stage,'pawCutawayActor');player.alt=tr('Your avatar','你的角色');pawHomeActorArt(player,'down',false,0);
   const stop=()=>{epoch++;cancelAnimationFrame(raf);raf=0};
+  const onVisibility=()=>{if(document.hidden){stop();position(point(actor));pawHomeActorArt(player,'down',false,0)}};
+  const observer=new MutationObserver(()=>{if(!panel.isConnected||$('page').style.display!=='block')close()});
+  observer.observe($('page'),{attributes:true,attributeFilter:['style','hidden']});observer.observe(q,{childList:true});
+  document.addEventListener('visibilitychange',onVisibility);
   const point=c=>api.project(layout,c.u+.5,c.v+.5);
   function position(p){player.style.left=p.x*100+'%';player.style.top=p.y*100+'%';player.style.zIndex=String(20+Math.round(p.y*1000))}
   function sayStatus(){status.textContent=editing?selected?tr('Tap an empty floor space to place the selected piece.','点击空地摆放选中的家具。'):tr('Tap a piece of furniture to move it.','点击家具开始移动。'):tr('Tap the floor to walk.','点击地板走动。')}
-  function persist(){const previous=load('pawHomeCutawayV1',{});save('pawHomeCutawayV1',{...(previous&&typeof previous==='object'?previous:{}),[zone]:{fingerprint,items}})}
+  function persist(){const previous=load('pawHomeCutawayV1',{});save('pawHomeCutawayV1',{...(previous&&typeof previous==='object'?previous:{}),[zone]:{fingerprint,items,lights:[...lights]}})}
   function move(cell){
    const changed=cutawayMove(api,layout,items,selected,cell,actor);
    if(!changed){status.textContent=tr('There is not enough room there.','那里没有足够空间。');return}
@@ -312,7 +346,7 @@ function mountCutaway(q,legacyStage){
    walk(goal,()=>{
     if(['lamp','shojiLamp','chineseLantern'].includes(item.key)){
      if(lights.has(item.key))lights.delete(item.key);else lights.add(item.key);
-     render();status.textContent=lights.has(item.key)?tr('A little warmth for the room.','小窝又暖和了一点。'):tr('Time for a quiet evening.','享受安静的夜晚吧。');return
+     persist();render();status.textContent=lights.has(item.key)?tr('A little warmth for the room.','小窝又暖和了一点。'):tr('Time for a quiet evening.','享受安静的夜晚吧。');return
     }
     if(item.key==='board'){close();myNotes9();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),hideoutPage)}
     else if(item.key==='frame'){close();album9();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),hideoutPage)}
@@ -359,7 +393,7 @@ function mountCutaway(q,legacyStage){
   stage.tabIndex=0;stage.setAttribute('aria-label',tr('Walkable cutaway room','可行走的立体小窝'));
   stage.onclick=e=>{if(e.target.closest('.pawCutawayFurniture,.pawCutawayActor'))return;const rect=stage.getBoundingClientRect(),cell=api.nearestCell(layout,(e.clientX-rect.left)/rect.width,(e.clientY-rect.top)/rect.height);if(!cell)return;if(editing&&selected)move(cell);else if(!editing)walk(cell)};
   stage.onkeydown=e=>{if(e.target!==stage)return;const d={ArrowLeft:[1,0],ArrowRight:[-1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(!d)return;e.preventDefault();e.stopPropagation();if(editing&&selected){const i=items.find(v=>v.key===selected);move({u:i.u+d[0],v:i.v+d[1]})}else if(!editing)walk({u:actor.u+d[0],v:actor.v+d[1]})};
-  pawHomeStop();legacyStage.hidden=true;q.classList.add('pawCutawayOpen');render();sayStatus();
+  pawHomeStop();render();sayStatus();legacyStage.hidden=true;q.classList.add('pawCutawayOpen');stage.focus({preventScroll:true});
  }
 }
 const homeBefore=hideoutPage;
@@ -415,7 +449,7 @@ const style=document.createElement('style');style.textContent=`
 #game #content .pawCutawayFurniture.selected{outline:2px dashed #526a50}
 #game #content .pawCutawayControls{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:5px 0}
 #game #content .pawCutawayStatus{display:block;text-align:center;margin:6px 0;color:#675943}
-#game #content.pawCutawayOpen .hideoutScene[hidden],#game #content.pawCutawayOpen .pawHomeWalkHint,#game #content.pawCutawayOpen .hideoutRibbon,#game #content.pawCutawayOpen .komorebiRoomTabs,#game #content.pawCutawayOpen .pawRoomExpansionFold,#game #content.pawCutawayOpen .pawPersonalShelf,#game #content.pawCutawayOpen .pawCutawayLaunch{display:none!important}
+#game #content.pawCutawayOpen .hideoutScene[hidden],#game #content.pawCutawayOpen .pawHomeWalkHint,#game #content.pawCutawayOpen .hideoutRibbon,#game #content.pawCutawayOpen .komorebiRoomTabs,#game #content.pawCutawayOpen .pawRoomExpansionFold,#game #content.pawCutawayOpen .pawPersonalShelf,#game #content.pawCutawayOpen .pawCutawayLaunch,#game #content.pawCutawayOpen .hideoutPrimary,#game #content.pawCutawayOpen .hideoutRoomCaption{display:none!important}
 #game #content .pawRoomLampGlow{position:absolute;z-index:4;width:44%;aspect-ratio:1;pointer-events:none;transform:translate(-50%,-50%);background:radial-gradient(ellipse at center,#ffe7a659 0%,#f9d48a22 38%,transparent 72%);opacity:0;transition:opacity .4s}
 #game #content .pawRoomLampGlow[hidden]{display:none!important}
 #game #content .pawRoomFirst[data-paw-room-light=lit] .pawRoomLampGlow{opacity:1}
