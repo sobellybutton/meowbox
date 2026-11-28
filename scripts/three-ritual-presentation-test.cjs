@@ -19,6 +19,45 @@ fs.mkdirSync(out,{recursive:true});
 
  const text=(en,cn)=>zhMode?cn:en;
  async function tapText(en,cn){await page.locator('#dialogue').getByRole('button',{name:text(en,cn),exact:true}).tap({timeout:8000})}
+ async function captureYueExports(scope){
+  const panel=page.locator('.meowSharePanel');
+  await panel.waitFor({timeout:15000});
+  const formats=[['feed',/4:5/,1080,1350],['xhs',/小红书/,1080,1440],['story',/9:16|TikTok/i,1080,1920],['square',/1:1/,1080,1080]];
+  const language=panel.getByRole('button',{name:zhMode?'中文':'EN',exact:true});
+  // The language button's accessible English label may be English rather than EN.
+  if(await language.count())await language.tap();
+  else if(!zhMode)await panel.getByRole('button',{name:'English',exact:true}).tap();
+  for(const [format,label,w,h] of formats){
+   const button=panel.getByRole('button',{name:label}).first();
+   await button.tap();
+   assert.equal(await button.getAttribute('aria-pressed'),'true');
+   await page.waitForFunction(([w,h])=>{const c=document.querySelector('.meowSharePreview');return c?.width===w&&c?.height===h},[w,h]);
+   await panel.locator('.meowShareStatus').getByText(/Ready to share|可以分享/).waitFor({timeout:15000});
+   const save=panel.getByRole('button',{name:/Save PNG|保存.*PNG/i});
+   const [download]=await Promise.all([page.waitForEvent('download',{timeout:15000}),save.tap()]);
+   assert.equal(await download.failure(),null);
+   const path=out+'/'+scope+'-'+(zhMode?'zh':'en')+'-'+format+'.png';
+   await download.saveAs(path);
+   const bytes=fs.readFileSync(path);
+   assert(bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])),'Invalid PNG signature '+path);
+   assert.equal(bytes.toString('ascii',12,16),'IHDR');
+   assert.equal(bytes.readUInt32BE(16),w,'Wrong exported width '+path);
+   assert.equal(bytes.readUInt32BE(20),h,'Wrong exported height '+path);
+   assert(bytes.length>5000,'Unexpectedly small export '+path);
+   const decoded=await page.evaluate(async encoded=>{
+    const img=new Image();img.src='data:image/png;base64,'+encoded;await img.decode();
+    const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
+    const ctx=c.getContext('2d');ctx.drawImage(img,0,0);
+    const pixels=ctx.getImageData(0,0,c.width,c.height).data;
+    let opaque=0,min=255,max=0;
+    for(let i=0;i<pixels.length;i+=64){if(pixels[i+3]>0){opaque++;const lum=(pixels[i]+pixels[i+1]+pixels[i+2])/3;min=Math.min(min,lum);max=Math.max(max,lum)}}
+    return {w:c.width,h:c.height,opaque,range:max-min};
+   },bytes.toString('base64'));
+   assert.equal(decoded.w,w);assert.equal(decoded.h,h);
+   assert(decoded.opaque>w*h/32&&decoded.range>20,'Blank or mostly transparent export '+path);
+   console.log('EXPORTED_PNG '+path+' '+bytes.length+' bytes '+w+'x'+h);
+  }
+ }
  async function setup(){
   await page.goto(base,{waitUntil:'domcontentloaded'});
   await page.locator('#proposal .languageChoice').getByRole('button',{name:zhMode?'中文':'EN',exact:true}).tap();
@@ -78,9 +117,16 @@ fs.mkdirSync(out,{recursive:true});
   await share.tap();
   await page.locator('.meowShareStatus').waitFor({timeout:15000});
   await shot('yue-share');
+  await captureYueExports('yue-palace');
   await page.locator('#content > .row button').first().tap();
   await page.waitForFunction(()=>room==='destiny'&&$('page').dataset.pawYueDesk==='true'&&document.querySelector('.chartTopics [data-topic="8"][aria-pressed="true"]'),null,{timeout:15000});
   await shot('yue-share-return');
+  const full=page.locator('.pawFullChartSharing');
+  await full.locator('summary').tap();
+  await full.getByRole('button',{name:text('Preview twelve-palace card','预览十二宫纪念卡')}).tap();
+  await captureYueExports('yue-full-chart');
+  await page.locator('#content > .row button').first().tap();
+  await page.waitForFunction(()=>room==='destiny'&&$('page').dataset.pawYueDesk==='true'&&document.querySelector('.chartTopics [data-topic="8"][aria-pressed="true"]'),null,{timeout:15000});
   await page.locator('#content > .row button').first().tap();
   assert(await noPage());assert.equal(await page.locator('#dialogue[data-paw-yue-question]').count(),0);
   await page.evaluate(()=>closeTalk());
