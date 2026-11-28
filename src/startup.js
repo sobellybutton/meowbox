@@ -1724,7 +1724,7 @@ function syncTownSettings(){
  townSettingsToggle.setAttribute('aria-label',tr('Settings','设置'));townSettingsToggle.title=tr('Settings','设置');townSettingsToggle.setAttribute('aria-expanded',String(townSettingsOpen));
  townSettingsPanel.hidden=!townSettingsOpen;
  if(!townSettingsOpen){townResetArmed=false;townResetFailed=false}
- townResetButton.textContent=tr('Start over','重新开始');
+ townResetButton.textContent=tr('Reset data','重置游戏数据');
  townResetButton.setAttribute('aria-expanded',String(townResetArmed));
  townResetConfirm.hidden=!townResetArmed;
  townResetCopy.textContent=townResetFailed?tr('Could not reset local progress. Check browser storage and try again.','无法重置本地进度，请检查浏览器存储后重试。'):tr('This clears your saved traveller, coins, room, collections and local history on this browser. Close other game tabs first. Shared posts and your language setting stay.','这将清除本浏览器内的旅人、爪爪币、小窝、收藏和本地记录。请先关闭其他游戏标签页。公开留言和语言设置会保留。');
@@ -1733,13 +1733,13 @@ function syncTownSettings(){
  townSoundSettings.textContent=muted?tr('Sound off','声音已关闭'):tr('Sound on','声音已开启');
  townSoundSettings.setAttribute('aria-pressed',String(!muted));
  townMapLabels.textContent=quiet9?tr('Show map signs','显示地图路牌'):tr('Hide map signs','隐藏地图路牌');
- townMapLabels.hidden=!!room||scene!=='fortune';
+ townMapLabels.hidden=true;
  townHelp.textContent=tr('Walking help','行走指南');townHelp.hidden=!!room||!isRoute();
 }
 function closeTownSettings(){townSettingsOpen=false;if(townSettingsPanel.parentNode!==townSettingsRoot)townSettingsRoot.append(townSettingsPanel);syncTownSettings()}
 townSettingsToggle.onclick=null;
 townSoundSettings.onclick=()=>{$('mute').click();syncTownSettings()};
-townMapLabels.onclick=()=>{$('quietToggle').click();syncTownSettings()};
+townMapLabels.onclick=null;
 townHelp.onclick=()=>{closeTownSettings();$('page').style.display='none';walkHelp.click()};
 for(const [,btn] of languageButtons)btn.addEventListener('click',()=>{if(townSettingsOpen)pawOpenProfileSettings()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&townSettingsOpen){e.preventDefault();closeTownSettings();lifeProfile();$('content').querySelector('.pawProfileSettingsEntry')?.focus()}});
