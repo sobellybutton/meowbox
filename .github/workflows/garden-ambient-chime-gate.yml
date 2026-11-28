@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   garden:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/quiet-garden-ambient-chime-20261128'
+    if: github.event_name == 'workflow_dispatch' || (github.head_ref == 'fix/quiet-garden-ambient-chime-20261128' || github.head_ref == 'fix/rear-garden-late-seated-art-20261128')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
