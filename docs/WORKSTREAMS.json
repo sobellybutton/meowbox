@@ -465,7 +465,10 @@
         "Project batch 15: 9b1393d8 adds existing painted cat blink/rest frames and timed deer bow/chew idle movement at actual park lobby anchors; reduced motion remains static. Park closeup staging and actual visual playback remain pending.",
         "69cd9d61 + 4128d77b: assisted cat petting/play now complete using visible simulation time, not wall-clock timers; interrupted touch capture safely released on hidden/app switch, cancelled manual stroke/play returns to idle without reward. Exact extensions source parsed and 37 continuity assertions passed in simulated state/clock harness. Existing five cat identities retained. New Batch 06 candidate cats/props manifest reviewed; don't replace identity, storage or baked scoop blindly. Actual mobile/desktop playthrough, new prop artwork integration and visual acceptance remain outstanding."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-park-props-1319",
+        "until": 1795845700000
+      },
       "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\nCare visibility/gesture fix implemented; verify real touch interruption, all phone classes, painted prop integration and actor contact. Batch 06 candidates need identity/placement review before activation."
     },
     {
