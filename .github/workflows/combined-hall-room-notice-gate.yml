@@ -3,13 +3,13 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [release/hall-room-daily-notices-20261128]
+    branches: [release/hall-room-daily-notices-20261128, fix/home-seated-contact-20261128]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   mobile:
-    if: github.event_name != 'pull_request' || github.head_ref == 'release/hall-room-daily-notices-20261128'
+    if: github.event_name != 'pull_request' || (github.head_ref == 'release/hall-room-daily-notices-20261128' || github.head_ref == 'fix/home-seated-contact-20261128')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
