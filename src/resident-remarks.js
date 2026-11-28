@@ -516,6 +516,201 @@ const lines={
     ]
   ]
 };
+const extraLines={
+  "temple": [
+    [
+      "leavephone",
+      "The incense is burning nicely. Your phone can stay in your pocket.",
+      "香烧得正好，手机就留在口袋里吧。"
+    ],
+    [
+      "cloudshift",
+      "The clouds have changed shifts. No handover meeting required.",
+      "云朵换班了，连交接会都不用开。"
+    ]
+  ],
+  "tarot": [
+    [
+      "deckdayoff",
+      "The deck refuses to predict the exact time your boss will log off.",
+      "这副牌拒绝预测老板几点下班。"
+    ],
+    [
+      "questionmark",
+      "A question mark is allowed to remain a question mark.",
+      "问号不必今天就变成句号。"
+    ]
+  ],
+  "yue": [
+    [
+      "redink",
+      "I used red ink for a date, not for your performance review.",
+      "朱砂是拿来标日子的，不是给你打绩效的。"
+    ],
+    [
+      "pagewind",
+      "A gust of wind chose a page for me. I still have to read it.",
+      "风替我翻了页，内容还是得自己看。"
+    ]
+  ],
+  "garden": [
+    [
+      "bamboo",
+      "The bamboo pipe has one job. What a luxurious career.",
+      "竹筒只需要做好一件事，真是令人羡慕的职业。"
+    ],
+    [
+      "leafrent",
+      "The leaves have moved into the pond. I doubt they pay rent.",
+      "落叶搬进池塘了，看样子也不交租。"
+    ]
+  ],
+  "grandma": [
+    [
+      "soupclock",
+      "Soup is ready when it smells right, not when the calendar says so.",
+      "汤香了才算好，日历催也没用。"
+    ],
+    [
+      "garlic",
+      "Someone asked for a little garlic. I interpreted that generously.",
+      "有人说放一点蒜，我对一点的理解比较大方。"
+    ]
+  ],
+  "mei": [
+    [
+      "teaspoon",
+      "I found three teaspoons in my apron. None can stir away Monday.",
+      "围裙里摸出三把茶匙，没一把能把周一搅没。"
+    ],
+    [
+      "seatfree",
+      "That empty chair is free. No reservation deposit or team bonding.",
+      "空椅子随便坐，不用订位费，也不用团建。"
+    ]
+  ],
+  "hong": [
+    [
+      "voice",
+      "A seven-minute voice message arrived. I am making tea first.",
+      "收到一条七分钟的语音，我先泡杯茶。"
+    ],
+    [
+      "seen",
+      "The group chat is very active for people who say they are busy.",
+      "群里那群说自己很忙的人，聊得可真热闹。"
+    ]
+  ],
+  "wang": [
+    [
+      "calendarfull",
+      "My calendar is fully booked. My actual work is waiting outside.",
+      "日历排满了，真正的工作还在门外排队。"
+    ],
+    [
+      "urgent",
+      "The email marked urgent has been waiting since Tuesday.",
+      "那封标着紧急的邮件，从周二等到现在。"
+    ]
+  ],
+  "ahma": [
+    [
+      "paperwork",
+      "My paper has no approval chain. A very efficient operation.",
+      "我这儿的纸不用层层审批，效率高得很。"
+    ],
+    [
+      "riverquiet",
+      "The river has never asked for a status update.",
+      "河水从来不催进度。"
+    ]
+  ],
+  "lin": [
+    [
+      "sunspot",
+      "The cats moved their meeting to a sunnier patch.",
+      "猫咪把会议地点改到更暖和的太阳底下。"
+    ],
+    [
+      "deergrass",
+      "The deer is investigating a leaf. Apparently the report is confidential.",
+      "小鹿正在研究一片叶子，报告似乎是保密的。"
+    ]
+  ],
+  "arcade": [
+    [
+      "highscore",
+      "The high-score board does not ask for a cover letter.",
+      "排行榜不用附求职信。"
+    ],
+    [
+      "prize",
+      "The prizes are here to be enjoyed, not audited.",
+      "奖品拿来开心就好，不用做盘点报告。"
+    ]
+  ],
+  "boba": [
+    [
+      "receipt",
+      "The receipt says extra pearls. A decision I can fully support.",
+      "小票写着加珍珠，这个决定我完全支持。"
+    ],
+    [
+      "straw",
+      "The straw has one opening and no complicated onboarding.",
+      "吸管插好就能用，不需要入职培训。"
+    ]
+  ],
+  "souvenir": [
+    [
+      "wrapping",
+      "I spent longer choosing the ribbon than the gift.",
+      "挑丝带的时间比挑礼物还长。"
+    ],
+    [
+      "postage",
+      "The postcard is on holiday even if you are not.",
+      "你没放假也没关系，明信片替你去旅行。"
+    ]
+  ],
+  "lab": [
+    [
+      "pencilcase",
+      "There is no correct personality to put in this pencil case.",
+      "铅笔盒里可装不下所谓正确的性格。"
+    ],
+    [
+      "answer",
+      "The quietest answer can be the one worth keeping.",
+      "最安静的那个答案，也许最值得记下来。"
+    ]
+  ],
+  "story": [
+    [
+      "plot",
+      "A plot twist need not involve resigning in a dramatic hallway.",
+      "人生反转不一定要在走廊里潇洒辞职。"
+    ],
+    [
+      "ticket",
+      "The spare ticket is for an imaginary journey, not a commitment.",
+      "备用车票是给想象中的旅程，不是给你签合约。"
+    ]
+  ],
+  "cafe": [
+    [
+      "sugar",
+      "Two people can disagree on sugar and still share a table.",
+      "甜度意见不合，也不耽误同桌喝茶。"
+    ],
+    [
+      "quiet",
+      "A comfortable silence does not need a rescue plan.",
+      "舒服的沉默，不需要谁来救场。"
+    ]
+  ]
+};
+for(const [id,rows] of Object.entries(extraLines))lines[id].push(...rows);
 function merge(target){
  if(!target||typeof target!=='object')return 0;let added=0;
  for(const [id,rows] of Object.entries(lines)){
