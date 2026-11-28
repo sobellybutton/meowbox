@@ -7217,13 +7217,19 @@ initNPC=function(...args){
 
 /* PAW_PRESENTATION_REPAIR */
 /* PAW_WORLD_ADMISSION_BEGIN */
-const pawImageReadiness=new WeakMap();
+const pawImageReadiness=new WeakMap(),pawDecodedSources=new WeakMap();
 function pawReadyPicture(im,limit=6500){
  if(!im)return Promise.resolve(false);
- if(pawImageReadiness.has(im))return pawImageReadiness.get(im);
+ const source=im.src||im.currentSrc||'';
+ if(source&&im.complete&&im.naturalWidth>0&&im.naturalHeight>0&&pawDecodedSources.get(im)===source)return Promise.resolve(true);
+ const pending=pawImageReadiness.get(im);
+ if(pending?.source===source)return pending.task;
  const task=new Promise(resolve=>{
   let settled=false,decoding=false,timer;
-  const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);im.removeEventListener('load',onLoad);im.removeEventListener('error',onError);resolve(value)};
+  const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);im.removeEventListener('load',onLoad);im.removeEventListener('error',onError);
+   const current=im.src||im.currentSrc||'',valid=!!value&&current===source&&im.naturalWidth>0&&im.naturalHeight>0;
+   if(valid&&source)pawDecodedSources.set(im,source);resolve(valid)
+  };
   const onError=()=>finish(false);
   const onLoad=()=>{
    if(!im.naturalWidth||!im.naturalHeight){finish(false);return}
@@ -7239,8 +7245,8 @@ function pawReadyPicture(im,limit=6500){
    else onError()
   }
  });
- pawImageReadiness.set(im,task);
- task.then(()=>{if(pawImageReadiness.get(im)===task)pawImageReadiness.delete(im)});
+ const record={source,task};pawImageReadiness.set(im,record);
+ task.then(()=>{if(pawImageReadiness.get(im)===record)pawImageReadiness.delete(im)});
  return task
 }
 function pawReadyMap(key){
@@ -7282,7 +7288,8 @@ pawPresentationCSS.textContent=`
 #proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>footer{align-self:end!important;min-height:0!important;position:relative!important;transform:none!important;margin:0!important}
 @media(max-width:700px) and (orientation:portrait){#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"]):not([hidden]){grid-template-rows:auto minmax(150px,1fr) auto!important;overflow-y:auto!important;gap:8px!important}}
 `;document.head.append(pawPresentationCSS);
-const pawWarmDistricts=async()=>{await pawReadyMap('fortune');mbArtLoad();for(const key of Object.keys(maps))if(key!=='fortune')await pawReadyMap(key)};
+// Other districts are requested by the railway destination admission, not startup.
+const pawWarmDistricts=async()=>{await pawReadyMap('fortune');mbArtLoad()};
 if(typeof requestIdleCallback==='function')requestIdleCallback(pawWarmDistricts,{timeout:2000});else setTimeout(pawWarmDistricts,800);
 
 
@@ -9154,7 +9161,12 @@ function pawWarmNearbyRoom(){
  if(room||activity||transitioning||!proposal.hidden)return;
  const key=scene+'|'+Math.floor(p.y/280);if(key===pawWarmedDistrict)return;pawWarmedDistrict=key;
  const nearest=(maps[scene]?.st||[]).filter(v=>v[0]!=='station').map(v=>({id:v[0],d:Math.hypot(v[1]-p.x,v[2]-p.y)})).sort((a,b)=>a.d-b.d).slice(0,2);
- const work=()=>{for(const v of nearest)pawWarmRoomAssets(v.id)};
+ const work=()=>{
+  if(room||activity||transitioning||!proposal.hidden||document.hidden||key!==scene+'|'+Math.floor(p.y/280)){
+   if(pawWarmedDistrict===key)pawWarmedDistrict='';return
+  }
+  for(const v of nearest)pawWarmRoomAssets(v.id)
+ };
  if(typeof requestIdleCallback==='function')requestIdleCallback(work,{timeout:1000});else setTimeout(work,100)
 }
 const pawWarmLoopBefore=loop;
