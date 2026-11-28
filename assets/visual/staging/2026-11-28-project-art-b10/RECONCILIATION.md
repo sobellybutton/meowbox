@@ -20,4 +20,15 @@ These are staging candidates, not finished game implementation. Artwork producti
 - Review normal-input phone and desktop gameplay from approach through retrieval, interaction, reaction, return and departure. Respect reduced motion and hidden-tab pause.
 - Reuse existing sources first, inspect actual alpha, compare hashes, reject unsuitable composites.
 - Prioritize physical retrieval/contact and existing asset integration; no batch quota or additional round of duplicate artwork.
-- Verify Batches 1–5 upload separately; prior check could not find expected paths on main.
+- Both owner uploads verified on main: 31 earlier and 27 later WebP blob hashes match the two original ZIP archives. Second upload commit dcf6b77 placed the files inside an extra package folder; PR #3 merge 0ddac9e copied all 40 files (27 artwork and 13 metadata) into canonical dated staging directories. All 27 destination blobs were independently verified after merge. Retain the nested source as upload evidence, not a second candidate inventory. No new artwork or runtime acceptance claimed.
+
+
+## Next actionable integration order
+
+1. Pier: review four Ah Ma strike candidates against original seated identity and grip. Calibrate empty tray plus independent red slipper, with stored/retrieved/returned state and front edge occlusion. Do not animate or show a duplicate slipper baked into an alternate pose. Missing dedicated retrieval/return and paper handover remain genuine art blockers.
+2. Reading houses: inspect newly staged guides and Tarot deal pose against current room coordinates, original resident identity, desk, visitor seat and scale. Keep dialogue and computed results live, no static result board.
+3. Park: inspect four cat walk poses for common scale and foot placement; keep coat-specific identities, test cupboard open/closed alignment before activating. Reuse food and toy props; no new animal roster without matched poses.
+4. Kitchen, arcade, HUD and windsock: use staged storage objects and independent box foreground where aligned; inspect runtime state transitions. HUD frame must preserve selected face readability and touch area. Windsock ring stays fixed; no scene-wide motion.
+5. Commission only verified missing pose sets or props after those checks, prioritizing all original four travellers' reach, grip, sit/stand and tool contact plus named hosts' matching service motions. Do not regenerate existing walks, furniture, finishes, carriage or food-prop inventory.
+
+Coordination: independent staging work only. Inspect current workstream leases before modifying shared runtime files. Visual acceptance requires normal-input mobile and desktop playback.
