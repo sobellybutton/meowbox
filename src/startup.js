@@ -12580,6 +12580,11 @@ function pawRearSeatedImage(id){
  }
  return pawRearSeatedImages.get(id)
 }
+function pawWarmRearSeated(id){
+ const im=pawRearSeatedImage(id);
+ if(im&&!pawPictureDecoded(im))pawReadyPicture(im,4500);
+ return im
+}
 function pawDrawRearSeated(im,id,hip,scale){
  const r=pawRearSeatedRecords[id],box=pawRearSeatedBox(id,hip,scale);
  if(!r||!box||!im?.complete||im.naturalWidth!==r.w||im.naturalHeight!==r.h)return false;
@@ -12657,7 +12662,7 @@ start=function(id,...args){
  const result=pawRearGardenStartBefore(id,...args);
  if(id==='secretGarden'&&activity===id&&room==='temple'){
   state.pawRearGarden=pawRoomImageReady(pawRearGardenArt());
-  if(state.pawRearGarden)pawRearSeatedImage(avatar??0);
+  if(state.pawRearGarden)pawWarmRearSeated(avatar??0);
   if(state.pawRearGarden){
    state.pawGardenWalk={painted:true,pos:pawRearGardenNodes.entry.slice(),route:[pawRearGardenNodes.bend.slice(),pawRearGardenNodes.fork.slice()],action:null,last:t,dir:'up'};
    hint('Follow the stone path to the pond or the bench.','沿石径去看看锦鲤，或在长椅上歇一歇。')
@@ -12751,7 +12756,7 @@ drawActivity=function(...args){
    const id=avatar??0,im=pawRearSeatedImage(id);
    // Choose one completed pose when sitting starts; do not replace it
    // mid-visit if the image finishes decoding late.
-   if(seatAmount>=.98&&run.gardenSitting&&run.pawRearSeatArt===undefined){const r=pawRearSeatedRecords[id];run.pawRearSeatArt=!!(r&&im?.complete&&im.naturalWidth===r.w&&im.naturalHeight===r.h)}
+   if(seatAmount>=.98&&run.gardenSitting&&run.pawRearSeatArt===undefined){const r=pawRearSeatedRecords[id];run.pawRearSeatArt=!!(r&&pawPictureDecoded(im)&&im.naturalWidth===r.w&&im.naturalHeight===r.h)}
    const painted=seatAmount>=.98&&run.pawRearSeatArt&&pawDrawRearSeated(im,id,a.hip,scale);
    if(!painted){ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}}
   }else{delete run.pawRearSeatArt;backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale)}
@@ -13680,7 +13685,7 @@ enter=function(id,...args){
  pawWarmRoomAssets=function(id){
   if(room||activity)return pawMappedWarmBefore(id);
   const decode=im=>{if(im&&!pawPictureDecoded(im))pawReadyPicture(im,4500)};
-  if(id==='temple'){decode(pawRecoveredImage('scenes/temple_approach_portrait.webp'));decode(pawHallArt());return}
+  if(id==='temple'){decode(pawRecoveredImage('scenes/temple_approach_portrait.webp'));decode(pawHallArt());decode(pawRearGardenArt());pawWarmRearSeated(avatar??0);return}
   if(pawReadingRoomIds.includes(id)){pawLoadReadingModule().then(api=>decode(pawReadingImage(api,id)));pawWarmReadingHost(id);if(id==='tarot')pawPrepareTarotArt();return}
   if(Object.hasOwn(pawFoodRoomSpecs,id)){decode(pawFoodImage(id));return}
   if(id==='wishes'){decode(pawWishLobbyArt());return}
