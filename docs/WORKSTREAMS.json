@@ -1952,6 +1952,27 @@
       ],
       "lease": null,
       "blocker": "Full district/room exit audit, actual deployed mobile/desktop playthrough, artwork contact and visual verification remain outstanding."
+    },
+    {
+      "id": "ROOM-TAROT-PORTRAIT-FIX",
+      "lane": "engineering",
+      "priority": 0,
+      "summary": "Prevent retired mobile Tarot backdrop from overpainting admitted painted room",
+      "resources": [
+        "src/painted-lobby-runtime.js",
+        "index.html",
+        "scripts/build.cjs",
+        "scripts/painted-lobby-runtime-test.cjs"
+      ],
+      "depends": [],
+      "stage": "outstanding",
+      "evidence": [
+        "Direct visual review of 40 Chromium/WebKit screenshots from 46113537285: all four portrait Tarot screenshots show legacy geometric art although painted draw probe passed; four desktop Tarot screenshots show painted lobby with empty side bands."
+      ],
+      "lease": {
+        "owner": "manual-tarot-portrait-visual-fix",
+        "until": 1795845761792
+      }
     }
   ]
 }
