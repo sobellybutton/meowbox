@@ -1,0 +1,167 @@
+{
+  "count": 27,
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/roll.webp",
+      "sha256": "6b8749a8925c859d3649a3c61662eaa8d846ebad138c61a797d5a4e1e6d8b0e6",
+      "width": 169,
+      "height": 136
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/sit.webp",
+      "sha256": "b6cbbeaf8bdff927e4b4b39f4c03cee7483ddee7d060b852b24fa149ab793e7f",
+      "width": 121,
+      "height": 150
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/sleep.webp",
+      "sha256": "efe68ac54c86a79c60d8e2f823beb0889e6ed1c9f1dcbe33828755818ae4ec27",
+      "width": 159,
+      "height": 99
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/stretch.webp",
+      "sha256": "33fb7a4e98087f067b26338fbf5c771fb9800ba833f575209cb66036f0cf0eee",
+      "width": 132,
+      "height": 150
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/walk-01.webp",
+      "sha256": "5305898022daa6fe04057a471b46d5760ef4473010bada221b711833b4fc9b9d",
+      "width": 168,
+      "height": 164
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/walk-02.webp",
+      "sha256": "55ce22220abd31488f1fd615d65f61755071192470cdfde927cc920c28b3bc5a",
+      "width": 168,
+      "height": 164
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/walk-03.webp",
+      "sha256": "ee8195e472e9fe95c5cb10d12acb2ed68516c3a3d9027aad9c6f4f6416468c3a",
+      "width": 168,
+      "height": 164
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/walk-04.webp",
+      "sha256": "842e588cab5e0fd3305fd2abe289aa153793854cefe7cabd46f28b27b6b6a710",
+      "width": 168,
+      "height": 164
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/carrot-basket.webp",
+      "sha256": "d2791f9fc36d2566478d206cb6a04293e384dec82414c462c03355d843260c7e",
+      "width": 143,
+      "height": 142
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/feather-wand.webp",
+      "sha256": "75e3cadc39d26d18c3e432f78b1608eb21cd84d155ac0e7d9514e3d03c6814ac",
+      "width": 110,
+      "height": 131
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/feed-bucket.webp",
+      "sha256": "fae7019253b1585a29ec7f3f7e53ddd740d9fbf47d9265b6545d3666fcb580f5",
+      "width": 123,
+      "height": 151
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/filled-bowl.webp",
+      "sha256": "e60c6d456fe8f822a8a958ae8cb1cc792dc5c84b3ae20dc9eaef1696cbeedd9e",
+      "width": 130,
+      "height": 92
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/fish-toy.webp",
+      "sha256": "42e99586a9dec32a2503317361ebc5eb711eb5fd5e52d42ec7ac3ae69d423659",
+      "width": 100,
+      "height": 103
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/storage-closed.webp",
+      "sha256": "0aeb133bba65c92363a08758495544ed5ca8f82ef673d6a4a4ca89c71a895ed4",
+      "width": 199,
+      "height": 177
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/storage-open.webp",
+      "sha256": "791fc4518e003fa215df602cf4d6a360ef7cf56d17951ff6d7fd055dae7641dd",
+      "width": 312,
+      "height": 185
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/yarn-ball.webp",
+      "sha256": "bf00174698c0fa7cd9d8f037e4cc855d99617d8bd14ac8944c5d1ac740d1e32a",
+      "width": 121,
+      "height": 82
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b07/player-3-crouch-idle.webp",
+      "sha256": "4784510aeec358d86c92932f2fc8718704ef600fe50d22e15655beb00e3cd230",
+      "width": 480,
+      "height": 468
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b07/player-3-crouch-reach.webp",
+      "sha256": "2e8cacf4b1ad914e0e90f69342a672d9733bc47e384216306641858ad6e40da4",
+      "width": 480,
+      "height": 468
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b07/player-3-crouch-grip.webp",
+      "sha256": "3b71bc670f3cf638064cf275033dc562d4c06a838b8328bfcb85006e3b74eb33",
+      "width": 480,
+      "height": 468
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b08/visitor-lavender.webp",
+      "sha256": "dfeadee4d133ff7d9e83523522f4b05e83e0f4cc586048112787774eccbcf1d4",
+      "width": 206,
+      "height": 377
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b08/visitor-floral-senior.webp",
+      "sha256": "56d08bbedcb9fdc17d5fa29e55823d215ec72bf1de6aa1e8d54ce636cb6a91b9",
+      "width": 208,
+      "height": 385
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b09/windsock-flutter-0.webp",
+      "sha256": "a1f50ab47c0997f1cbce08f5803cb7b4e001877443457976dd3a3145f5d760c9",
+      "width": 800,
+      "height": 290
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b09/windsock-flutter-1.webp",
+      "sha256": "c5e99a29ad8674214f59ab6e666cb185a0ccc8789ba37c7adaa3f8e2f1b0cf6a",
+      "width": 800,
+      "height": 290
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b09/windsock-flutter-2.webp",
+      "sha256": "0c32ddb969edd1c9b7c2768badf140f37082a55388b253e8be62546acb103221",
+      "width": 800,
+      "height": 290
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b09/windsock-flutter-3.webp",
+      "sha256": "689902fc639702d3ca4cb15d21f708dc95c77c414051e075ad40e4738cf8346d",
+      "width": 800,
+      "height": 290
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b10/avatar-frame.webp",
+      "sha256": "262d4b23e80844227fb9833d195086fd2a4fac88ed4bb730f4ae69768237a5da",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b10/settings-cog.webp",
+      "sha256": "e6eed775cebbb2e66c00a994b0d93b7c3b0e69dd698c21c2e6f451d4645bc012",
+      "width": 96,
+      "height": 96
+    }
+  ]
+}

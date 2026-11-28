@@ -1,0 +1,61 @@
+{
+  "batch": 9,
+  "status": "staging candidates only",
+  "assets": [
+    {
+      "file": "windsock-flutter-0.webp",
+      "width": 800,
+      "height": 290,
+      "sha256": "a1f50ab47c0997f1cbce08f5803cb7b4e001877443457976dd3a3145f5d760c9",
+      "attachment_px": [
+        51,
+        122
+      ],
+      "attachment_status": "estimated; align to existing pole in scene",
+      "frame": 0,
+      "status": "derived flutter candidate; not runtime tested"
+    },
+    {
+      "file": "windsock-flutter-1.webp",
+      "width": 800,
+      "height": 290,
+      "sha256": "c5e99a29ad8674214f59ab6e666cb185a0ccc8789ba37c7adaa3f8e2f1b0cf6a",
+      "attachment_px": [
+        51,
+        122
+      ],
+      "attachment_status": "estimated; align to existing pole in scene",
+      "frame": 1,
+      "status": "derived flutter candidate; not runtime tested"
+    },
+    {
+      "file": "windsock-flutter-2.webp",
+      "width": 800,
+      "height": 290,
+      "sha256": "0c32ddb969edd1c9b7c2768badf140f37082a55388b253e8be62546acb103221",
+      "attachment_px": [
+        51,
+        122
+      ],
+      "attachment_status": "estimated; align to existing pole in scene",
+      "frame": 2,
+      "status": "derived flutter candidate; not runtime tested"
+    },
+    {
+      "file": "windsock-flutter-3.webp",
+      "width": 800,
+      "height": 290,
+      "sha256": "689902fc639702d3ca4cb15d21f708dc95c77c414051e075ad40e4738cf8346d",
+      "attachment_px": [
+        51,
+        122
+      ],
+      "attachment_status": "estimated; align to existing pole in scene",
+      "frame": 3,
+      "status": "derived flutter candidate; not runtime tested"
+    }
+  ],
+  "source": "one generated painted windsock; four derived raster deformations, not four independent illustrations",
+  "recommended_frame_ms": 180,
+  "notes": "Use only where a pole exists and no baked windsock is already present. Fixed ring, gentle tail movement; stop on hidden tab, use frame 0 for reduced motion."
+}

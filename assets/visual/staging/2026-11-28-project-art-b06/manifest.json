@@ -1,0 +1,361 @@
+{
+  "schema": 1,
+  "batch": 6,
+  "source_sha256": "f672400b5773bc19f899bb415e668570f3315a5e0bbe88c6b196c514fe3e815c",
+  "status": "candidate extraction only",
+  "notes": "Walking source frames have subtle pose differences, not yet a verified smooth cycle. Storage open and closed have different widths and must be aligned or treated as alternatives; baked supply inside open artwork cannot disappear individually. Feed bucket has baked scoop; separate pickup artwork still needed. Do not replace existing animal identity without inspection.",
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/walk-01.webp",
+      "size": [
+        168,
+        164
+      ],
+      "visibleAlphaBounds": [
+        21,
+        28,
+        146,
+        154
+      ],
+      "sourceCrop": [
+        8,
+        10,
+        140,
+        144
+      ],
+      "sha256": "5305898022daa6fe04057a471b46d5760ef4473010bada221b711833b4fc9b9d",
+      "git_blob_sha1": "a46cd2099ed53a3fe358ccb35898d1e231a93246",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/walk-02.webp",
+      "size": [
+        168,
+        164
+      ],
+      "visibleAlphaBounds": [
+        15,
+        33,
+        153,
+        154
+      ],
+      "sourceCrop": [
+        146,
+        13,
+        292,
+        144
+      ],
+      "sha256": "55ce22220abd31488f1fd615d65f61755071192470cdfde927cc920c28b3bc5a",
+      "git_blob_sha1": "297dec73a9ea536db755b5044ce83cf4565fd6e0",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/walk-03.webp",
+      "size": [
+        168,
+        164
+      ],
+      "visibleAlphaBounds": [
+        21,
+        28,
+        146,
+        154
+      ],
+      "sourceCrop": [
+        296,
+        10,
+        429,
+        144
+      ],
+      "sha256": "ee8195e472e9fe95c5cb10d12acb2ed68516c3a3d9027aad9c6f4f6416468c3a",
+      "git_blob_sha1": "cc5fd69557fe935c8e566495dba6bbb8bcdd7d64",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/walk-04.webp",
+      "size": [
+        168,
+        164
+      ],
+      "visibleAlphaBounds": [
+        17,
+        30,
+        151,
+        154
+      ],
+      "sourceCrop": [
+        429,
+        12,
+        570,
+        144
+      ],
+      "sha256": "842e588cab5e0fd3305fd2abe289aa153793854cefe7cabd46f28b27b6b6a710",
+      "git_blob_sha1": "8833b626b06d24af492ee1503fabd112f1eb4bd3",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/sit.webp",
+      "size": [
+        121,
+        150
+      ],
+      "visibleAlphaBounds": [
+        8,
+        8,
+        113,
+        142
+      ],
+      "sourceCrop": [
+        587,
+        7,
+        699,
+        150
+      ],
+      "sha256": "b6cbbeaf8bdff927e4b4b39f4c03cee7483ddee7d060b852b24fa149ab793e7f",
+      "git_blob_sha1": "a414a7aaf63679062321f2304da3345d0c7e4600",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/stretch.webp",
+      "size": [
+        132,
+        150
+      ],
+      "visibleAlphaBounds": [
+        8,
+        8,
+        124,
+        142
+      ],
+      "sourceCrop": [
+        713,
+        7,
+        837,
+        150
+      ],
+      "sha256": "33fb7a4e98087f067b26338fbf5c771fb9800ba833f575209cb66036f0cf0eee",
+      "git_blob_sha1": "fe903f37a742434bf5aa29a1288feb73a138b0bf",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/roll.webp",
+      "size": [
+        169,
+        136
+      ],
+      "visibleAlphaBounds": [
+        8,
+        8,
+        161,
+        128
+      ],
+      "sourceCrop": [
+        829,
+        19,
+        989,
+        148
+      ],
+      "sha256": "6b8749a8925c859d3649a3c61662eaa8d846ebad138c61a797d5a4e1e6d8b0e6",
+      "git_blob_sha1": "dbc00e444899c587f0a003ce846bff066019c4a0",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/cats/sleep.webp",
+      "size": [
+        159,
+        99
+      ],
+      "visibleAlphaBounds": [
+        8,
+        8,
+        151,
+        91
+      ],
+      "sourceCrop": [
+        992,
+        56,
+        1143,
+        147
+      ],
+      "sha256": "efe68ac54c86a79c60d8e2f823beb0889e6ed1c9f1dcbe33828755818ae4ec27",
+      "git_blob_sha1": "c435e8fc780dfc095b94dc42677602c09dba1900",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/feed-bucket.webp",
+      "size": [
+        123,
+        151
+      ],
+      "visibleAlphaBounds": [
+        8,
+        8,
+        115,
+        143
+      ],
+      "sourceCrop": [
+        537,
+        605,
+        650,
+        750
+      ],
+      "sha256": "fae7019253b1585a29ec7f3f7e53ddd740d9fbf47d9265b6545d3666fcb580f5",
+      "git_blob_sha1": "ed1849073ef36e23962f32c790849d33ad2debd3",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/filled-bowl.webp",
+      "size": [
+        130,
+        92
+      ],
+      "visibleAlphaBounds": [
+        8,
+        8,
+        122,
+        84
+      ],
+      "sourceCrop": [
+        649,
+        667,
+        767,
+        750
+      ],
+      "sha256": "e60c6d456fe8f822a8a958ae8cb1cc792dc5c84b3ae20dc9eaef1696cbeedd9e",
+      "git_blob_sha1": "39e66c6edf156dee8d29d9213ea8fb1dd72c1e2f",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/carrot-basket.webp",
+      "size": [
+        143,
+        142
+      ],
+      "visibleAlphaBounds": [
+        8,
+        8,
+        135,
+        134
+      ],
+      "sourceCrop": [
+        754,
+        615,
+        886,
+        750
+      ],
+      "sha256": "d2791f9fc36d2566478d206cb6a04293e384dec82414c462c03355d843260c7e",
+      "git_blob_sha1": "4c471c945eb55e35d7d6b116d591e1439206b72e",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/fish-toy.webp",
+      "size": [
+        100,
+        103
+      ],
+      "visibleAlphaBounds": [
+        8,
+        8,
+        92,
+        95
+      ],
+      "sourceCrop": [
+        886,
+        623,
+        973,
+        715
+      ],
+      "sha256": "42e99586a9dec32a2503317361ebc5eb711eb5fd5e52d42ec7ac3ae69d423659",
+      "git_blob_sha1": "e9a6221bbf512b1be9eda94bd5981a11afda7708",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/yarn-ball.webp",
+      "size": [
+        121,
+        82
+      ],
+      "visibleAlphaBounds": [
+        8,
+        8,
+        113,
+        74
+      ],
+      "sourceCrop": [
+        925,
+        686,
+        1038,
+        757
+      ],
+      "sha256": "bf00174698c0fa7cd9d8f037e4cc855d99617d8bd14ac8944c5d1ac740d1e32a",
+      "git_blob_sha1": "67207990865baa121dfc2545c8267b33edfc82da",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/feather-wand.webp",
+      "size": [
+        110,
+        131
+      ],
+      "visibleAlphaBounds": [
+        8,
+        8,
+        102,
+        123
+      ],
+      "sourceCrop": [
+        973,
+        628,
+        1069,
+        750
+      ],
+      "sha256": "75e3cadc39d26d18c3e432f78b1608eb21cd84d155ac0e7d9514e3d03c6814ac",
+      "git_blob_sha1": "6b27e1c658c5f66f43548b1ad48e5e894b31085c",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/storage-open.webp",
+      "size": [
+        312,
+        185
+      ],
+      "visibleAlphaBounds": [
+        8,
+        8,
+        304,
+        177
+      ],
+      "sourceCrop": [
+        7,
+        582,
+        312,
+        757
+      ],
+      "sha256": "791fc4518e003fa215df602cf4d6a360ef7cf56d17951ff6d7fd055dae7641dd",
+      "git_blob_sha1": "e8bdd82ca295a8a879db92bb440e3e91cdf2baf5",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b06/props/storage-closed.webp",
+      "size": [
+        199,
+        177
+      ],
+      "visibleAlphaBounds": [
+        8,
+        8,
+        191,
+        169
+      ],
+      "sourceCrop": [
+        338,
+        588,
+        530,
+        755
+      ],
+      "sha256": "0aeb133bba65c92363a08758495544ed5ca8f82ef673d6a4a4ca89c71a895ed4",
+      "git_blob_sha1": "eb1b53f0bb76d6211aac0ced33335520db85acf2",
+      "status": "candidate; identity, physical contact and live playback unverified"
+    }
+  ]
+}
