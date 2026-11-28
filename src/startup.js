@@ -12292,11 +12292,67 @@ const pawFoodObstaclesBefore=indoorObstacles;
 indoorObstacles=function(){return pawFoodRoomActive()?[]:pawFoodObstaclesBefore()};
 const pawFoodSafeBefore=indoorSafe;
 indoorSafe=function(x,y,...args){return pawFoodRoomActive()?pawFoodSafe(room,x,y):pawFoodSafeBefore(x,y,...args)};
+/* PAW_SCENE_AMBIENCE_BEGIN */
+// Normalized positions traced on the five original 928x1648 portrait
+// paintings. Never use these positions on a replacement landscape plate.
+const pawSceneLights={
+ kitchen:[[.752,.121,.103,.064],[.072,.194,.045,.044],[.468,.308,.039,.024]],
+ boba:[[.230,.111,.052,.039],[.430,.126,.047,.036],[.666,.142,.042,.034],[.830,.101,.053,.040],[.041,.468,.042,.041]],
+ tarot:[[.521,.113,.069,.054],[.528,.259,.032,.032],[.954,.328,.048,.038],[.053,.344,.045,.033]],
+ destiny:[[.310,.100,.064,.051],[.608,.181,.036,.031],[.490,.329,.028,.029],[.110,.678,.065,.061]],
+ match:[[.667,.378,.027,.032],[.461,.468,.033,.034],[.966,.572,.032,.039],[.139,.497,.027,.027]]
+};
+const pawSceneVapour={kitchen:[.133,.343,.032,.063],destiny:[.730,.430,.021,.042]};
+function pawSceneLightFrame(id,now,reduced=false){
+ if(!Object.hasOwn(pawSceneLights,id)||!Number.isFinite(now))return [];
+ return pawSceneLights[id].map(([u,v,rx,ry],i)=>{
+  const a=reduced?.5:.5+.32*Math.sin(now*.68+i*1.63)+.18*Math.sin(now*1.13+i*.81);
+  return {u,v,rx,ry,alpha:.035+.075*a}
+ })
+}
+function pawSceneVapourFrame(id,i,now,reduced=false){
+ const q=Object.hasOwn(pawSceneVapour,id)?pawSceneVapour[id]:null;
+ if(!q||!Number.isInteger(i)||i<0||i>=3||!Number.isFinite(now))return null;
+ const [u,v,w,h]=q,phase=reduced?(i+1)/4:((now*.36+i/3)%1+1)%1;
+ const drift=reduced?0:Math.sin(now*1.04+i)*w*.12;
+ return {u:u+Math.sin(phase*5+i)*w*.23+drift,v:v-phase*h,rx:w*(.11+.17*phase),ry:h*(.09+.09*phase),alpha:.17*Math.sin(Math.PI*phase)}
+}
+function pawSceneAir(ctx,id,p,now,reduced=false,hidden=false){
+ if(hidden||!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||p.w<=0||p.h<=0)return 0;
+ const lamps=pawSceneLightFrame(id,now,reduced);if(!lamps.length)return 0;
+ let count=0;
+ ctx.save();try{
+  ctx.beginPath();ctx.rect(p.x,p.y,p.w,p.h);ctx.clip();
+  for(const q of lamps){
+   ctx.save();try{
+    ctx.translate(p.x+p.w*q.u,p.y+p.h*q.v);ctx.scale(p.w*q.rx,p.h*q.ry);
+    const g=ctx.createRadialGradient(0,0,0,0,0,1);
+    g.addColorStop(0,'rgba(255,224,151,'+q.alpha+')');g.addColorStop(1,'rgba(255,224,151,0)');
+    ctx.fillStyle=g;ctx.fillRect(-1,-1,2,2);count++;
+   }finally{ctx.restore()}
+  }
+  for(let i=0;i<3;i++){
+   const q=pawSceneVapourFrame(id,i,now,reduced);if(!q)continue;
+   ctx.save();try{
+    ctx.translate(p.x+p.w*q.u,p.y+p.h*q.v);ctx.scale(p.w*q.rx,p.h*q.ry);
+    const g=ctx.createRadialGradient(0,0,0,0,0,1);
+    g.addColorStop(0,'rgba(255,249,225,'+q.alpha+')');g.addColorStop(1,'rgba(255,249,225,0)');
+    ctx.fillStyle=g;ctx.fillRect(-1,-1,2,2);count++;
+   }finally{ctx.restore()}
+  }
+ }finally{ctx.restore()}
+ return count
+}
+function pawSceneAirLive(id,p,im){
+ if(im?.naturalWidth!==928||im?.naturalHeight!==1648)return 0;
+ return pawSceneAir(ctx,id,p,t,residentReducedMotion.matches,document.hidden)
+}
+/* PAW_SCENE_AMBIENCE_END */
 function pawFoodBackdrop(){
  if(!pawFoodRoomActive())return false;
  const p=pawFoodPlate,b=livingBounds(),im=pawFoodImage(room);ctx.save();try{
   ctx.fillStyle=room==='kitchen'?'#554337':'#5d3f3d';ctx.fillRect(b.x,b.y,b.w,b.h);
-  ctx.drawImage(im,p.x,p.y,p.w,p.h)
+  ctx.drawImage(im,p.x,p.y,p.w,p.h);pawSceneAirLive(room,p,im)
  }finally{ctx.restore()}return true
 }
 const pawFoodPortraitBefore=paintPortraitInterior;
@@ -12986,7 +13042,7 @@ indoorDestination=function(x,y,goal=null,facing=null){
 function pawReadingBackdrop(){
  if(!pawReadingActive())return false;
  const p=pawReadingPlate,b=livingBounds(),im=pawReadingImage(pawReadingAPI(),room);
- ctx.save();try{ctx.fillStyle='#42433c';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(im,p.x,p.y,p.w,p.h)}finally{ctx.restore()}return true
+ ctx.save();try{ctx.fillStyle='#42433c';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(im,p.x,p.y,p.w,p.h);pawSceneAirLive(room,p,im)}finally{ctx.restore()}return true
 }
 const pawReadingPortraitBefore=paintPortraitInterior;
 paintPortraitInterior=function(id,...args){return id===room&&pawReadingBackdrop()?true:pawReadingPortraitBefore(id,...args)};
@@ -13541,7 +13597,7 @@ const pawTarotRoomBackdropBefore=paintLivingBackdrop;
 paintLivingBackdrop=function(...args){
  if(room==='tarot'&&pawReadingVisit==='tarot'&&['tarot','love'].includes(activity)){
   const im=pawReadingImage(pawReadingAPI(),'tarot');
-  if(pawRoomImageReady(im)){const b=livingBounds();ctx.save();try{cover(im,b.x,b.y,b.w,b.h);pawDrawReadingSeated('tarot',pawReadingCoverPlate(b,im.naturalWidth,im.naturalHeight))}finally{ctx.restore()}return}
+  if(pawRoomImageReady(im)){const b=livingBounds();ctx.save();try{cover(im,b.x,b.y,b.w,b.h);const plate=pawReadingCoverPlate(b,im.naturalWidth,im.naturalHeight);pawSceneAirLive('tarot',plate,im);pawDrawReadingSeated('tarot',plate)}finally{ctx.restore()}return}
  }
  return pawTarotRoomBackdropBefore(...args)
 };
