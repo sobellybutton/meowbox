@@ -5987,20 +5987,21 @@ function pawRoomWalkers(){
  const context=scene+'|'+room+'|'+avatar;
  if(!indoorReady()){if(context===pawVisitorContext)pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,t-pawVisitorAt));pawVisitorAt=t;return context===pawVisitorContext?pawVisitorHold(pawLocalVisitors):[]}
  const obs=indoorObstacles(),protectedFeet=pawGuestProtected(),door=indoorSpec().entry,stationFeet=pawGuestActiveFeet();
- const safe=pawGuestWaypoints(spec.points,protectedFeet,(x,y)=>indoorSafe(x,y,obs));
+ const mapped=pawReadingActive(),gaps=pawMappedGuestGaps(mapped);
+ const safe=pawGuestWaypoints(spec.points,protectedFeet,(x,y)=>indoorSafe(x,y,obs),gaps.station);
  if(context!==pawVisitorContext){
   pawVisitorContext=context;pawVisitorAt=t;pawVisitSerial++;
   const residents=pawAmbientIndoor.map(a=>[a.x,a.y]),entry=indoorSpec().entry;
-  const spawn=safe.filter(v=>pawGuestClear(v[0],v[1],[[indoor.x,indoor.y]],90)&&pawGuestClear(v[0],v[1],[entry],65)&&pawGuestClear(v[0],v[1],residents,68));
+  const spawn=safe.filter(v=>pawGuestClear(v[0],v[1],[[indoor.x,indoor.y]],gaps.spawn)&&pawGuestClear(v[0],v[1],[entry],gaps.entry)&&pawGuestClear(v[0],v[1],residents,gaps.host));
   const offset=spawn.length?pawVisitSerial%spawn.length:0,ordered=[...spawn.slice(offset),...spawn.slice(0,offset)];
   const used=[avatar??0];
   // Outdoor fallback looks may also appear indoors. Prefer a distinct look;
   // do not duplicate the selected player or another visitor in this room.
   const outdoor=[...pawPasserbyLooks().values()];
-  pawLocalVisitors=pawGuestSpaced(ordered,pawGuestCount(spec.count,pawVisitSerial,room)).map((pos,i)=>{
+  pawLocalVisitors=pawGuestSpaced(ordered,mapped?Math.max(1,pawGuestCount(spec.count,pawVisitSerial,room)):pawGuestCount(spec.count,pawVisitSerial,room),gaps.spacing).map((pos,i)=>{
    const start=((avatar??0)+1+i+pawVisitSerial%2)%4,look=pawRoomVisitorLook([...used,...outdoor],start)??pawRoomVisitorLook(used,start);
    if(look===null)return null;used.push(look);
-   return {id:'fictional-visitor-'+i,fictionalVisitor:true,room,x:pos[0],y:pos[1],avatar:look,facing:'down',walking:0,index:safe.indexOf(pos),route:[],wait:t+2+i*2.5,phase:'waiting',destination:pos,elapsed:0}
+   return {id:'fictional-visitor-'+i,fictionalVisitor:true,room,x:pos[0],y:pos[1],avatar:look,facing:'down',walking:0,index:safe.indexOf(pos),route:[],wait:t+2+i*2.5,phase:mapped&&i===0?'roaming':'waiting',destination:pos,elapsed:0}
   }).filter(Boolean);
   // Use existing original cameo identities, conversation branches and keepsakes.
   // Never duplicate an outdoor character or use unrelated portrait art.
@@ -6015,8 +6016,8 @@ function pawRoomWalkers(){
  if(residentReducedMotion.matches){for(const a of pawLocalVisitors)if(a.phase==='waiting')a.phase='stationary';return pawVisitorHold(pawLocalVisitors)}
  for(const a of pawLocalVisitors){
   a.walking=0;if(a.guest||a.visitingResident||a.phase==='gone'||a.phase==='stationary'||t<a.wait)continue;
-  const others=pawLocalVisitors.filter(b=>b!==a),clearDoor=()=>pawVisitorDoorClear(door,indoor,[...others,...pawAmbientIndoor]);
-  const routeTo=(from,to)=>pawVisitorDoorRoute(from,to,stationFeet,(x,y)=>indoorSafe(x,y,obs),(f,d)=>indoorPath(f,d,obs),52,(f,d)=>indoorSegment(f,d,obs));
+  const others=pawLocalVisitors.filter(b=>b!==a),clearDoor=()=>pawVisitorDoorClear(door,indoor,[...others,...pawAmbientIndoor],gaps.door);
+  const routeTo=(from,to)=>pawVisitorDoorRoute(from,to,stationFeet,(x,y)=>indoorSafe(x,y,obs),(f,d)=>indoorPath(f,d,obs),gaps.station,(f,d)=>indoorSegment(f,d,obs));
   if(a.phase==='waiting'){
    if(!a.identitySettled||!clearDoor()){a.wait=t+.7;continue}
    const route=routeTo(door,a.destination);
@@ -6041,15 +6042,15 @@ function pawRoomWalkers(){
    for(let attempt=0;attempt<safe.length;attempt++){
     a.index=(a.index+1)%safe.length;const end=safe[a.index];
     if(Math.hypot(a.x-end[0],a.y-end[1])<10)continue;
-    const route=pawVisitorDoorRoute([a.x,a.y],end,protectedFeet,(x,y)=>indoorSafe(x,y,obs),(f,d)=>indoorPath(f,d,obs),52,(f,d)=>indoorSegment(f,d,obs));
+    const route=pawVisitorDoorRoute([a.x,a.y],end,protectedFeet,(x,y)=>indoorSafe(x,y,obs),(f,d)=>indoorPath(f,d,obs),gaps.station,(f,d)=>indoorSegment(f,d,obs));
     if(route?.length){found=route;break}
    }
    if(!found){a.wait=t+5;continue}a.route=found
   }
   const tempo=pawResidentTempo(a.id+'|'+a.avatar),dest=a.route[0],next=pawWalkStep(a,dest,dt,tempo.speed);
   const transit=a.phase==='arriving'||a.phase==='departing';
-  if(!indoorSafe(next.x,next.y,obs)||!pawGuestClear(next.x,next.y,transit?stationFeet:protectedFeet)||!pawVisitorStepClear(a,next,pawAmbientIndoor,60)){if(!transit)a.route=[];a.wait=t+2;continue}
-  if(!pawVisitorStepClear(a,next,[indoor],55)||!pawVisitorStepClear(a,next,others.filter(pawVisitorVisible),50)){if(!transit)a.route=[];a.wait=t+1.1;continue}
+  if(!indoorSafe(next.x,next.y,obs)||!pawGuestClear(next.x,next.y,transit?stationFeet:protectedFeet,gaps.station)||!pawVisitorStepClear(a,next,pawAmbientIndoor,gaps.actor)){if(!transit)a.route=[];a.wait=t+2;continue}
+  if(!pawVisitorStepClear(a,next,[indoor],gaps.player)||!pawVisitorStepClear(a,next,others.filter(pawVisitorVisible),gaps.peer)){if(!transit)a.route=[];a.wait=t+1.1;continue}
   const distance=Math.hypot(next.x-a.x,next.y-a.y);
   if(distance>.01){a.facing=pawWalkFacing(a,dest);pawGaitTravel.set(a,(pawGaitTravel.get(a)||0)+distance);a.walking=1}
   a.x=next.x;a.y=next.y;
@@ -12376,10 +12377,10 @@ markIndoorStation=function(id,from,anchor){
 const pawReadingDrawBefore=drawRoom;
 drawRoom=function(...args){if(pawReadingActive())pawReadingBackdrop();return pawReadingDrawBefore(...args)};
 function pawReadingHost(){
- const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:room==='tea'?['Auntie Mei','梅姨']:room==='fish'?['Ah Ma','阿嬷']:room==='park'?['Auntie Lin','林姨']:null;
+ const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:room==='tea'?['Auntie Mei','梅姨']:room==='fish'?['Ah Ma','阿嬷']:room==='park'?['Auntie Lin','林姨']:room==='arcade'?['Arcade keeper','游戏厅店主']:null;
  if(!name)return null;const record=residentArtworkRecord(name);if(!record&&room!=='fish')return null;
  const [x,y]=pawReadingWorld(room==='destiny'?[.58,.446]:pawReadingAPI().rooms[room].host);
- return {station:room==='tea'?'chat':room==='fish'?'hit':room==='park'?'pet':room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record?.height||112,.90),facing:room==='fish'?'right':'left'}
+ return {station:room==='tea'?'chat':room==='fish'?'hit':room==='park'?'pet':room==='arcade'?'bubbleArcade':room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record?.height||112,.90),facing:room==='fish'?'right':'left'}
 }
 const pawReadingHostsBefore=roomResidentActors;
 roomResidentActors=function(){if(!pawReadingActive())return pawReadingHostsBefore();const a=pawReadingHost();return a?[a]:[]};
@@ -12459,7 +12460,31 @@ label=function(name,x,y,fn){
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
  }finally{ctx.restore()}
 };
-pawLoadReadingModule().then(api=>{if(!api)return;for(const id of pawReadingRoomIds){const q=api.rooms[id];if(q)pawRoomVisitorSpecs[id]={count:1,points:q.visitors.map(v=>pawReadingWorld(v))}}});
+/* PAW_MAPPED_VISITORS_BEGIN */
+// The mapped portrait has a smaller world-space footprint than legacy rooms.
+// Keep physical separation, but measure in its own coordinate space.
+function pawMappedGuestGaps(mapped){
+ return mapped?{station:34,spawn:48,entry:45,host:40,spacing:46,door:48,actor:40,player:40,peer:38}:{station:52,spawn:90,entry:65,host:68,spacing:68,door:75,actor:60,player:55,peer:50}
+}
+function pawMappedVisitorPoints(api,id){
+ const q=api?.rooms[id],spec=pawReadingSpec(api,id);if(!q||!spec)return [];
+ const gaps=pawMappedGuestGaps(true),protectedFeet=[spec.entry,[spec.entry[0],spec.entry[1]-35],spec.arrival,...Object.values(spec.stations).map(v=>v.slice(2))];
+ const host=['quiz','story','match'].includes(id)?[]:[pawReadingWorld(id==='destiny'?[.58,.446]:q.host)];
+ const points=q.visitors.map(v=>v.slice()),candidates=[];
+ for(let i=0;i<=100;i+=2){
+  const y=i/100,range=api.bounds(id,y);if(!range)continue;
+  for(const f of [.16,.34,.5,.66,.84])points.push([range[0]+(range[1]-range[0])*f,y])
+ }
+ for(const p of points){
+  const w=pawReadingWorld(p);if(!api.safe(id,p)||!pawGuestClear(...w,protectedFeet,gaps.station)||!pawGuestClear(...w,[spec.entry],gaps.entry)||!pawGuestClear(...w,[spec.arrival],gaps.spawn)||!pawGuestClear(...w,host,gaps.host))continue;
+  const distance=Math.min(...protectedFeet.map(a=>Math.hypot(w[0]-a[0],w[1]-a[1])));candidates.push({w,distance})
+ }
+ candidates.sort((a,b)=>b.distance-a.distance);
+ const chosen=[];for(const v of candidates){if(pawGuestClear(...v.w,chosen,18))chosen.push(v.w);if(chosen.length>=8)break}
+ return chosen
+}
+/* PAW_MAPPED_VISITORS_END */
+pawLoadReadingModule().then(api=>{if(!api)return;for(const id of pawReadingRoomIds){const q=api.rooms[id];if(q)pawRoomVisitorSpecs[id]={count:['park','arcade','tea'].includes(id)?2:1,points:pawMappedVisitorPoints(api,id)}}});
 /* PAW_MAPPED_EXIT_BEGIN */
 function pawMappedExitPlan(api,id,position){
  const spec=pawReadingSpec(api,id);
