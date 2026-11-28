@@ -15127,4 +15127,89 @@ pawValleyArrivalCss.textContent=`
 @media(max-height:620px) and (orientation:portrait){#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{object-fit:contain!important;object-position:center!important}}
 `;document.head.append(pawValleyArrivalCss);
 
+
+/* PAW_OPENING_EXPERIENCE_BEGIN
+   One illustrated railway journey, rather than a succession of onboarding forms.
+   Keep original controls, hit areas, saved identity and current painted frames. */
+let pawOpeningLastStep=null;
+const pawOpeningRenderBefore=proRender;
+proRender=function(...args){
+ const result=pawOpeningRenderBefore(...args);
+ if(proposal.hidden)return result;
+ const changed=pawOpeningLastStep!==proStep;
+ pawOpeningLastStep=proStep;
+ proposal.dataset.pawOpeningEnter=changed?'true':'false';
+ const header=proposal.querySelector('header>span'),foot=proposal.querySelector('footer');
+ if([0,1,2,4].includes(proStep)&&header){
+  header.replaceChildren();
+  element('strong',tr('Pawradise','摸鱼小镇'),header,'pawOpeningWordmark');
+  if(proStep===0)element('small',tr('A LITTLE WORLD AWAY','偷得浮生半日闲'),header,'pawOpeningMotto');
+ }
+ if(proStep===0&&foot){
+  const heading=foot.querySelector('h1'),copy=foot.querySelector('p:not(.pawFirstRailLabel)'),next=foot.querySelector('button.next');
+  foot.querySelector('.pawFirstRailLabel')?.remove();
+  if(heading)heading.textContent=tr('Your little escape awaits','今天，去摸个鱼吧');
+  if(copy)copy.textContent=tr('A train to somewhere softer. Leave your deadlines on the platform.','有一班列车，开往没有催促的小镇。把待办事项留在站台吧。');
+  if(next)next.textContent=tr('Catch the train','搭上这班列车')+'  ›';
+ }
+ if(proStep===1&&foot){
+  const title=foot.querySelector('h1');
+  if(title)title.classList.add('pawOpeningCharacterName');
+  const kicker=foot.querySelector('.pawAvatarKicker');
+  if(kicker)kicker.textContent=tr('Who are you on this little adventure?','这趟旅程，你想当谁？');
+ }
+ if(proStep===4){
+  const ticket=proposal.querySelector('.rail-ticket');
+  if(ticket)ticket.querySelector('.rail-brand')?.setAttribute('data-paw-ticket-locale',zh?'zh':'en');
+ }
+ return result
+};
+const pawOpeningSceneStyle=document.createElement('style');
+pawOpeningSceneStyle.textContent=`
+#proposal:is([data-paw-entrance-step="0"],[data-paw-entrance-step="1"],[data-paw-entrance-step="2"],[data-paw-entrance-step="4"]) .pawOpeningWordmark{
+ display:block;color:#fff0cb;font-family:var(--paw-display,Georgia,serif)!important;font-size:clamp(20px,5vw,32px)!important;font-weight:600;line-height:1.12;letter-spacing:.025em;text-shadow:0 2px 8px #192a22;
+}
+html[lang^="zh"] #proposal .pawOpeningWordmark,html[lang^="zh"] #proposal .pawGateWordmark{font-family:var(--paw-display,"Songti SC",serif)!important;letter-spacing:.08em}
+#proposal .pawOpeningMotto{display:block;color:#f2dfb5;font-family:var(--paw-display,Georgia,serif)!important;font-size:10px;line-height:1.35;letter-spacing:.14em;margin-top:5px}
+#proposal[data-paw-entrance-step="0"]:not([hidden]){display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;gap:0!important;padding:max(18px,env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) max(18px,env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))!important;overflow:hidden!important;background:#2c4032!important}
+#proposal[data-paw-entrance-step="0"]>.hero{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;margin:0!important;z-index:0!important}
+#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-height:none!important}
+#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:50% 60%!important}
+#proposal[data-paw-entrance-step="0"]>.hero:after{background:linear-gradient(180deg,#13271f9c 0%,#182b2340 18%,transparent 34%,transparent 49%,#182a226b 68%,#182a22e8 100%)!important}
+#proposal[data-paw-entrance-step="0"]>header{grid-area:1/1!important;position:relative!important;z-index:3!important;align-self:start!important}
+#proposal[data-paw-entrance-step="0"] .pawOpeningWordmark{font-size:clamp(32px,8.5vw,58px)!important;font-weight:500;letter-spacing:.015em}
+#proposal[data-paw-entrance-step="0"]>footer{grid-area:3/1!important;position:relative!important;z-index:3!important;align-self:end!important;justify-self:center!important;width:min(100%,460px)!important;max-width:460px!important;padding:0!important;gap:9px!important;text-shadow:0 2px 6px #18281f}
+#proposal[data-paw-entrance-step="0"]>footer h1{font-family:var(--paw-display,Georgia,serif)!important;font-size:clamp(24px,6.8vw,42px)!important;font-weight:500;line-height:1.12}
+#proposal[data-paw-entrance-step="0"]>footer p{font-family:var(--paw-body,system-ui,sans-serif)!important;font-size:clamp(13px,3.6vw,16px)!important;line-height:1.45;max-width:34ch;justify-self:center;color:#f7e9cd}
+#proposal[data-paw-entrance-step="0"]>footer .next,#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>footer .next,#proposal[data-paw-entrance-step="4"] .ticket-confirm{min-height:48px!important;background:#e4cf9e url('assets/visual/painted/recovered/ui/paper_texture.webp') center/220px auto repeat!important;color:#34483a!important;border:1px solid #b59b68!important;border-radius:5px!important;font-family:var(--paw-display,Georgia,serif)!important;font-size:clamp(15px,4vw,18px)!important;font-weight:600!important;box-shadow:0 3px 9px #17271e55!important;text-shadow:none!important}
+#proposal[data-paw-entrance-step="0"]>footer .next{width:min(100%,330px)!important;justify-self:center}
+#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"])>.hero.pawChoiceGrounded{border:0!important;box-shadow:none!important;border-radius:6px!important}
+#proposal:is([data-paw-entrance-step="1"],[data-paw-entrance-step="2"]) .pawChoiceStation{border-radius:inherit;mask-image:linear-gradient(to bottom,black 0%,black 88%,transparent 100%)}
+#proposal .pawAvatarOption{background:#dfcfae url('assets/visual/painted/recovered/ui/paper_texture.webp') center/160px auto repeat!important;border:1px solid #a99a77!important;border-radius:6px!important;box-shadow:none!important}
+#proposal .pawAvatarOption[aria-pressed=true]{background-color:#f5e1b0!important;border:2px solid #e4c77d!important;box-shadow:inset 0 0 0 1px #88744b,0 2px 6px #18291e50!important}
+#proposal .pawAvatarOption span,#proposal .pawAvatarKicker{font-family:var(--paw-display,Georgia,serif)!important;letter-spacing:0!important}
+#proposal .pawOpeningCharacterName{font-family:var(--paw-display,Georgia,serif)!important;color:#f5e5c3!important}
+#proposal .pawAvatarTurn button,#proposal .pawPersonaChoices button,#proposal .pawIntentSkip{font-family:var(--paw-display,Georgia,serif)!important}
+#proposal[data-paw-entrance-step="4"] .rail-ticket .rail-brand,#proposal[data-paw-entrance-step="4"] .rail-ticket .route{font-family:var(--paw-display,Georgia,serif)!important}
+#proposal[data-paw-entrance-step="4"] .rail-ticket{box-shadow:0 10px 30px #15251d6b!important}
+#proposal[data-paw-opening-enter="true"][data-paw-entrance-step="0"] .pawFirstRailPainting img{animation:pawOpeningCamera 9s ease-out both!important}
+#proposal[data-paw-opening-enter="true"][data-paw-entrance-step="4"] .rail-ticket{animation:pawOpeningTicket 260ms ease-out both!important}
+@keyframes pawOpeningCamera{from{transform:scale(1.045)}to{transform:scale(1)}}
+@keyframes pawOpeningTicket{from{opacity:.9;translate:0 6px}to{opacity:1;translate:0 0}}
+@media(min-width:850px) and (min-height:480px){
+ #proposal[data-paw-entrance-step="0"]>footer{justify-self:start!important;text-align:left!important;width:min(43vw,520px)!important;max-width:520px!important;margin:0 0 3vh 3vw!important}
+ #proposal[data-paw-entrance-step="0"]>footer p,#proposal[data-paw-entrance-step="0"]>footer .next{justify-self:start!important}
+ #proposal[data-paw-entrance-step="0"]>.hero:after{background:linear-gradient(90deg,#182a22e0 0%,#182a226b 39%,transparent 70%),linear-gradient(180deg,#182a2250,transparent 34%)!important}
+ #proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{object-position:center!important}
+}
+@media(max-height:500px) and (orientation:landscape){
+ #proposal[data-paw-entrance-step="0"]>footer{justify-self:start!important;text-align:left!important;width:min(55vw,430px)!important;gap:5px!important}
+ #proposal[data-paw-entrance-step="0"]>footer p,#proposal[data-paw-entrance-step="0"]>footer .next{justify-self:start!important}
+ #proposal[data-paw-entrance-step="0"] .pawOpeningWordmark{font-size:30px!important}
+ #proposal[data-paw-entrance-step="0"]>footer h1{font-size:24px!important}
+}
+@media(prefers-reduced-motion:reduce){#proposal[data-paw-opening-enter="true"] .pawFirstRailPainting img,#proposal[data-paw-opening-enter="true"] .rail-ticket{animation:none!important}}
+`;document.head.append(pawOpeningSceneStyle);
+/* PAW_OPENING_EXPERIENCE_END */
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
