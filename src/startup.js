@@ -11393,6 +11393,8 @@ pawPaintedRailModuleReady.then(async api=>{
  const keys=['carriage',...Object.keys(api.sprites)],images=await Promise.all([pawRailCandidateImage(api.carriage),...Object.values(api.sprites).map(pawRailCandidateImage)]);
  if(images.every(Boolean))pawPaintedRailLoaded={api,assets:Object.fromEntries(keys.map((key,i)=>[key,images[i]]))}
 }).catch(()=>{});
+// Preserve scenery position when the responsive picture swaps on rotation.
+const pawPaintedRailClocks=new WeakMap();
 function pawMountPaintedRailComposite(stage,layout,host,mode,layers){
  const candidate=pawPaintedRailLoaded,destination=mode==='entrance'?'fortune':host.dataset.to;
  if(!candidate||!['landscape','portrait'].includes(layout)||(layout==='portrait'&&!pawPaintedRailPortrait)||!['ride','entrance'].includes(mode)||!layers?.far||!Object.hasOwn(candidate.api.far,destination)||!stage.isConnected)return false;
@@ -11403,15 +11405,16 @@ function pawMountPaintedRailComposite(stage,layout,host,mode,layers){
  canvas.width=layout==='portrait'?720:1200;canvas.height=Math.round(canvas.width*record.height/record.width);
  canvas.className='pawPaintedRailComposite';canvas.setAttribute('aria-hidden','true');
  const assets={...candidate.assets,portrait:pawPaintedRailPortrait,far:layers.far},reduce=matchMedia('(prefers-reduced-motion: reduce)');
- let elapsed=0,raf=0,last=null,lastDraw=-Infinity,dead=false,frames=0;
+ const clock=pawPaintedRailClocks.get(stage)||{elapsed:0};pawPaintedRailClocks.set(stage,clock);
+ let raf=0,last=null,lastDraw=-Infinity,dead=false,frames=0,lastReduced=reduce.matches;
  function draw(){
   g.clearRect(0,0,canvas.width,canvas.height);
   // Read on every draw: the journey controller sets rideSeconds after mounting.
   const seconds=Number(host.dataset.rideSeconds);
   const duration=mode==='ride'?(Number.isFinite(seconds)&&seconds>0?seconds:3.6):undefined;
-  const ok=candidate.api.draw(g,assets,destination,elapsed,canvas.width,canvas.height,reduce.matches,layout,duration);
+  const ok=candidate.api.draw(g,assets,destination,clock.elapsed,canvas.width,canvas.height,reduce.matches,layout,duration);
   if(ok&&duration)canvas.dataset.rideDuration=String(duration);
-  if(ok){canvas.dataset.frame=String(++frames);canvas.dataset.travel=elapsed.toFixed(3)}
+  if(ok){canvas.dataset.frame=String(++frames);canvas.dataset.travel=clock.elapsed.toFixed(3);stage.dataset.railMotion=reduce.matches?'still':'painted-route-parallax'}
   return ok
  }
  if(!draw())return false;
@@ -11423,7 +11426,14 @@ function pawMountPaintedRailComposite(stage,layout,host,mode,layers){
  const tick=now=>{
   if(dead||!stage.isConnected||stage.hidden||stage.dataset.layout!==layout){stop();return}
   const dt=last===null?0:Math.min(.1,Math.max(0,(now-last)/1000));last=now;
-  if(!document.hidden&&host.dataset.sceneryPaused!=='true'&&!reduce.matches){elapsed+=dt;if(now-lastDraw>=33){if(!draw()){stop();return}lastDraw=now}}
+  if(!document.hidden){
+   const changed=reduce.matches!==lastReduced;lastReduced=reduce.matches;
+   const moving=host.dataset.sceneryPaused!=='true'&&!reduce.matches;
+   if(moving&&!changed)clock.elapsed+=dt;
+   // Honour a live accessibility preference change even when paused; only
+   // restart continuous drawing after motion is permitted again.
+   if(changed||(moving&&now-lastDraw>=33)){if(!draw()){stop();return}lastDraw=now}
+  }
   raf=requestAnimationFrame(tick)
  };
  stage.style.setProperty('--rail-aspect',aspect);picture.style.visibility='hidden';stage.append(canvas);stage.dataset.paintedComposite='true';stage.dataset.railMotion=reduce.matches?'still':'painted-route-parallax';
