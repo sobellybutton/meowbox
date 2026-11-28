@@ -20,6 +20,7 @@ fs.mkdirSync('test-results/tarot-chair',{recursive:true});
  await shot('arrival');
  await wait(()=>c.dataset.pawTarotSeat==='seated'&&pawTarotChairAt(indoor.x,indoor.y,pawReadingPlate)&&!indoor.route.length);
  await shot('seated');assert(await page.evaluate(()=>pawRoomImageReady(pawTarotChairImage(avatar??0))));
+ await wait(()=>pawHostFamilyReady('tarot')&&pawHostVisit?.ready===true,null,12000);await shot('host-seated-ready');
  // The fortune teller greets the seated traveller automatically. No hidden guide.
  await wait(()=>room==='tarot'&&!activity&&talkOpen);
  const choice=page.locator('#choices').getByRole('button',{name:cn?'今日指引 · 一张牌':'Daily guidance · 1 card',exact:true});

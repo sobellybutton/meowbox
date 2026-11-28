@@ -13595,6 +13595,9 @@ document.addEventListener('visibilitychange',()=>{
 });
 function pawDrawReadingSeated(id,plate){
  if(id==='destiny')pawYueAdoptSeatedVisit(pawHostVisit,id,activity,transitioning,()=>pawHostFamilyReady(id));
+ // A Tarot pose family can finish decoding after admission. Adopt it at the
+ // stationary chair, before the reading opens, instead of retaining a standing host.
+ if(id==='tarot'&&pawHostVisit?.id==='tarot'&&!pawHostVisit.ready&&!activity&&!transitioning&&!indoor.route.length&&pawTarotChairAt(indoor.x,indoor.y,plate)&&pawHostFamilyReady(id))pawHostVisit.ready=true;
  if(pawHostVisit?.id!==id||!pawHostVisit.ready||!pawHostLibrary)return false;
  const desk=id==='destiny'&&$('page').dataset.pawYueDesk==='true'&&$('page').style.display!=='none';
  const activeForm=desk?$('content').querySelector('.astroForm,.yueAlmanacForm'):null;
