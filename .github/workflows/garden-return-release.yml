@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   garden-routes:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/quiet-garden-physical-return-20261128'
+    if: github.event_name == 'workflow_dispatch' || (github.head_ref == 'fix/quiet-garden-physical-return-20261128' || github.head_ref == 'fix/temple-contact-seated-current-20261128')
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -18,8 +18,9 @@ jobs:
           node-version: '22'
       - run: node scripts/build.cjs
       - run: node scripts/garden-painted-test.cjs
+      - run: node scripts/test-painted-temple-rituals.cjs
   garden-mobile:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/quiet-garden-physical-return-20261128'
+    if: github.event_name == 'workflow_dispatch' || (github.head_ref == 'fix/quiet-garden-physical-return-20261128' || github.head_ref == 'fix/temple-contact-seated-current-20261128')
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
