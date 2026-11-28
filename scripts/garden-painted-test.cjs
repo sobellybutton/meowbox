@@ -160,3 +160,21 @@ console.log('Catalogue return and blind box scene ownership passed.');
  assert.ok(source.includes("keyboardButtons.push(b(controls,tr('Throw','投币')"));
  console.log('PASS '+n+' pickup/throw control state checks and keyboard wiring');
 }
+
+
+// Ambient chime remains attached to its eave and is never an activity.
+{
+ const source=fs.readFileSync(path.resolve(__dirname,'../src/startup.js'),'utf8');
+ const line=source.split('\n').find(l=>l.includes('ctx.translate(wx,wy)')&&l.includes('gardenWindChime(0,0)'));
+ assert.ok(line&&line.includes('if(!residentReducedMotion.matches)ctx.rotate('));
+ const frame=new Function('ctx','wx','wy','residentReducedMotion','t','gardenWindChime',line);
+ for(const reduced of [false,true])for(const t of [0,.5,1,2,3,8]){
+  const transforms=[];let drawn=0;
+  const ctx={save(){},restore(){},translate(x,y){transforms.push(['translate',x,y])},rotate(a){transforms.push(['rotate',a])},scale(x,y){transforms.push(['scale',x,y])}};
+  frame(ctx,12,34,{matches:reduced},t,()=>drawn++);
+  assert.equal(drawn,1);assert.deepEqual(transforms[0],['translate',12,34]);
+  const swing=transforms.find(x=>x[0]==='rotate');assert.equal(!!swing,!reduced);if(swing)assert.ok(Math.abs(swing[1])<=.049);
+ }
+ assert.ok(!source.includes("pawGardenChoose(run,'chime')"));
+ console.log('PASS ambient chime sway, reduced motion and non-interactive garden');
+}
