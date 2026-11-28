@@ -80,7 +80,8 @@ let n=0;for(const requested of [true,false,null,undefined])for(const complete of
 assert.equal(foldChecks,16);
 assert.ok(source.includes("out.toggleAttribute('data-paw-yue-folded',next.folded)"));
 assert.ok(source.includes("const focusSurface=expanded?lastGrid:toolbar"));
-assert.ok(source.includes('destiny-study-props.webp'));
+assert.ok(source.includes('assets/visual/painted/master-yue/folded-scroll.webp'));
+assert.ok(!source.includes('destiny-study-props.webp'),'No full atlas dependency in consultation');
 console.log('PASS '+foldChecks+' folded chart state checks plus 3 wiring assertions');
 
 const blocked=new Function(block+';return pawYueInkBlocked')();
