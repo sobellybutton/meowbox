@@ -412,7 +412,7 @@ const gardenBeforeDraw=drawActivity;drawActivity=function(){if(activity!=='wishe
  for(let row=0;row<2;row++){let y=290+row*68;ctx.beginPath();ctx.moveTo(170,y);ctx.quadraticCurveTo(400,y+27,630,y);ctx.strokeStyle='#71543c';ctx.lineWidth=2;ctx.stroke()}
  display.forEach(({w,slot},i)=>{let pos=gardenPosition(slot),isNew=state.gardenStage==='rise'&&i===display.length-1;if(isNew)return;gardenLantern(pos.x,pos.y,slot,.82);if(state.gardenStage!=='carry')target(pos.x-28,pos.y-30,56,65,()=>gardenWishBook())});
  if(state.gardenStage==='carry'){gardenLantern(400,525,0,1);for(let n=0;n<12;n++){if(assigned.has(n))continue;let pos=gardenPosition(n);ctx.save();ctx.strokeStyle='#ffe9b7';ctx.lineWidth=2;ctx.beginPath();ctx.arc(pos.x,pos.y-37,7+Math.sin(t*3+n)*2,0,TAU);ctx.stroke();ctx.restore();target(pos.x-23,pos.y-55,46,50,()=>{if(!state.pendingGardenWish)return;gardenWishes.push({id:Date.now()+'-'+Math.random().toString(36).slice(2),text:state.pendingGardenWish,date:new Date().toLocaleDateString(),slot:n});save('gardenWishesV1',gardenWishes);state.pendingGardenWish='';state.gardenStage='rise';state.gardenRise=t;state.gardenSlot=n;addItem('Wishing lantern','许愿灯');sound(660);hint('Your wish has found its place.','心愿找到自己的位置了。')})}txt(tr('Choose any glowing hook','选一个喜欢的发光挂钩'),400,597,18,'#fff0d5');
- }else if(state.gardenStage==='rise'){let f=Math.min(1,(t-state.gardenRise)/1.6),e=f*f*(3-2*f),i=state.gardenSlot??display[display.length-1]?.slot??0,pos=gardenPosition(i);gardenLantern(400+(pos.x-400)*e,525+(pos.y-525)*e,i,1-.18*e);ctx.save();ctx.globalAlpha=Math.sin(f*Math.PI)*.8;for(let k=0;k<9;k++)ellipse(400+(pos.x-400)*e+Math.cos(k*2.4+t)*27,525+(pos.y-525)*e+Math.sin(k*2.4+t)*38,2,2,'#ffe9aa');ctx.restore();if(f>=1){state.gardenStage='write';react('A little light for whatever matters to you.','为你在乎的事，留一盏小小的灯。')}}
+ }else if(state.gardenStage==='rise'){let f=Math.min(1,(t-state.gardenRise)/1.6),e=f*f*(3-2*f),i=state.gardenSlot??display[display.length-1]?.slot??0,pos=gardenPosition(i);gardenLantern(400+(pos.x-400)*e,525+(pos.y-525)*e,i,1-.18*e);ctx.save();ctx.globalAlpha=Math.sin(f*Math.PI)*.8;for(let k=0;k<9;k++)ellipse(400+(pos.x-400)*e+Math.cos(k*2.4+t)*27,525+(pos.y-525)*e+Math.sin(k*2.4+t)*38,2,2,'#ffe9aa');ctx.restore();if(f>=1){state.gardenStage='write';react('Your little light is glowing. No follow-up email required.','心愿灯亮啦，不用再发邮件跟进。')}}
 
  else{ctx.save();ctx.translate(400,498);ctx.rotate(-.06);round(-52,-62,104,124,3,'#f6e6c2','#b99a67');for(let i=0;i<5;i++)line(-35,-30+i*14,34,-30+i*14,'#cfb98f',.8);txt('願',0,-39,22,'#9d5e44');ctx.restore();target(340,430,120,142,gardenWrite);txt(tr('Write a wish','写下心愿'),400,584,19,'#fff0d5')}
  label(tr('My lanterns','我的心愿灯')+' · '+gardenWishes.length,400,635,gardenWishBook);
@@ -1280,7 +1280,7 @@ function templeBellArt(x,y,sc=1,angle=0){ctx.save();ctx.translate(x,y);ctx.scale
 function templeLadle(x,y,a=0){ctx.save();ctx.translate(x,y);ctx.rotate(a);line(-68,0,24,0,'#97734b',9);line(-66,-2,22,-2,'#d8bc80',3);ellipse(35,1,23,12,'#8d714b');ellipse(35,-2,21,10,'#d2bc86');ellipse(35,-2,15,6,'#72948c');ctx.restore()}
 function templeBasin(x,y){ctx.save();let g=ctx.createLinearGradient(0,y,0,y+85);g.addColorStop(0,'#a9aa91');g.addColorStop(1,'#616d61');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x-94,y);ctx.lineTo(x+94,y);ctx.lineTo(x+69,y+65);ctx.quadraticCurveTo(x,y+88,x-69,y+65);ctx.closePath();ctx.fill();ellipse(x,y,96,32,'#a6ad94');ellipse(x,y,82,25,'#526f68');ellipse(x,y,76,20,'#75948b');for(let i=0;i<5;i++){let f=(t*.38+i*.19)%1;ctx.strokeStyle='rgba(227,237,214,'+(1-f)*.55+')';ctx.beginPath();ctx.ellipse(x+22,y,8+f*48,2+f*13,0,0,TAU);ctx.stroke()}ctx.restore()}
 function templeRitualBackground(){paintLivingBackdrop(pics.streetTemple||pics.temple||pics.sticks);let g=ctx.createLinearGradient(0,270,0,680);g.addColorStop(0,'#243b3020');g.addColorStop(1,'#26392fa0');shadeLivingBackdrop(g)}
-function templeReleaseBell(moved){if(activity!=='templeBell'||!Number.isFinite(moved)||moved<=0||t-state.bellAt<2.5)return;state.bellStrength=Math.max(.15,Math.min(1,moved/120));state.bellAt=t;state.bellRung=false;hint('Listen as the sound travels through the valley.','听钟声慢慢传向山谷。')}
+function templeReleaseBell(moved){if(activity!=='templeBell'||!Number.isFinite(moved)||moved<=0||t-state.bellAt<2.5)return;state.bellStrength=Math.max(.15,Math.min(1,moved/120));state.bellAt=t;state.bellRung=false;hint('Listen to the bell. One sound that doesn\'t mean you have a meeting.','听听钟声。这回响铃，不是提醒你开会。')}
 function waterDropZone(stage,x,y){
  if(!Number.isFinite(x)||!Number.isFinite(y))return false;
  // Ladle coordinates are its handle centre; the bowl is 35 units to the right.
@@ -1290,7 +1290,7 @@ function templeReleaseWater(a){
  if(activity!=='templeWater'||![0,1].includes(state.waterStage)||!Number.isFinite(a?.x)||!Number.isFinite(a?.y))return;
  const stage=state.waterStage;if(!waterDropZone(stage,a.x,a.y)){hint(stage===0?'Lower the scoop into the highlighted water.':'Bring the filled scoop above your hand.',stage===0?'把勺口放进亮起的水面。':'把装满水的勺移到手掌上方。');return}
  state.waterStage=stage+1;state.waterAt=t;state.waterFrom={x:a.x,y:a.y};
- if(stage===0){hint('Now move the full ladle over your hand.','现在把盛满水的勺移到手掌上方。');shrineWaterFx(false)}
+ if(stage===0){hint('Bring the full ladle over your hand. The rest of the day can wait.','把盛满水的勺移到手掌上方。其他事先等等。');shrineWaterFx(false)}
  else{hint('Let the water rinse your hand.','让清水缓缓流过手掌。');shrineWaterFx(true)}
 }
 function waterLadleArt(x,y,angle,filled){
@@ -1550,9 +1550,9 @@ const foodTasteDraw=drawActivity;drawActivity=function(){
 activityTitle.secretGarden=['Behind the temple','寺后小径'];
 let gardenVisits=Number(load('secretGardenVisitsV1',0))||0;
 const gardenStart=start;start=function(id){gardenStart(id);if(id==='secretGarden'){gardenVisits++;save('secretGardenVisitsV1',gardenVisits);state.gardenAt=t;state.gardenSeatAt=-100;state.gardenChimeAt=-100;state.gardenFeedAt=-100;state.gardenFeedCount=0;state.gardenSitting=false;hint('Follow the path. Listen to the wind or feed the koi.','沿着小径走走，听风铃，或喂喂锦鲤。')}};
-function gardenChime(){if(activity!=='secretGarden'||t-state.gardenChimeAt<.6)return;state.gardenChimeAt=t;sound(690);if(!muted&&ambientBus){ambientTone(659.25,.028,1.9,'sine');ambientTone(987.77,.018,1.4,'sine',.17)}hint('Even the wind has nothing urgent to say.','连风都没有什么急事要说。')}
-function gardenFeed(x=435,y=480){if(activity!=='secretGarden'||t-state.gardenFeedAt<.8)return;state.gardenFeedAt=t;state.gardenFeedX=Math.max(320,Math.min(570,x));state.gardenFeedY=Math.max(430,Math.min(545,y));state.gardenFeedCount++;sound(320);if(state.gardenFeedCount===3){addItem('Quiet garden postcard','静谧后院明信片');hint('The keeper left a little postcard for you.','庙祝给你留了一张小小的明信片。')}else hint(...(state.gardenFeedCount%2?['The koi have spotted lunch. You are now their favourite person.','锦鲤发现午餐了，你现在是它们最爱的人。']:['One koi is clearly running the buffet.','有一条锦鲤显然承包了整个自助餐。']))}
-function gardenSeat(){if(activity!=='secretGarden'||t-state.gardenSeatAt<.75)return;state.gardenSitting=!state.gardenSitting;state.gardenSeatAt=t;hint(...(state.gardenSitting?['Sit as long as you like. No countdown here.','想坐多久就坐多久，这里没有倒计时。']:['Take the quiet with you.','把这一份清静带走吧。']))}
+function gardenChime(){if(activity!=='secretGarden'||t-state.gardenChimeAt<.6)return;state.gardenChimeAt=t;sound(690);if(!muted&&ambientBus){ambientTone(659.25,.028,1.9,'sine');ambientTone(987.77,.018,1.4,'sine',.17)}hint('Ding. The wind has sent you one notification. No reply needed.','叮。风铃给你发了条消息，不用回复。')}
+function gardenFeed(x=435,y=480){if(activity!=='secretGarden'||t-state.gardenFeedAt<.8)return;state.gardenFeedAt=t;state.gardenFeedX=Math.max(320,Math.min(570,x));state.gardenFeedY=Math.max(430,Math.min(545,y));state.gardenFeedCount++;sound(320);if(state.gardenFeedCount===3){addItem('Quiet garden postcard','静谧后院明信片');hint('Three snacks later, the koi send a postcard. Excellent customer service.','喂了三次，锦鲤托庙祝送张明信片。这服务不错啊。')}else hint(...(state.gardenFeedCount%2?['The koi have spotted lunch. Attendance suddenly excellent.','锦鲤发现开饭了，出勤率突然百分百。']:['One koi is clearly running the buffet.','有一条锦鲤显然承包了整个自助餐。']))}
+function gardenSeat(){if(activity!=='secretGarden'||t-state.gardenSeatAt<.75)return;state.gardenSitting=!state.gardenSitting;state.gardenSeatAt=t;hint(...(state.gardenSitting?['Sit awhile. This bench has no timesheet.','坐会儿吧，这张长椅不用打卡。']:['Take the quiet with you.','把这一份清静带走吧。']))}
 function gardenKoi(x,y,angle,kind){ctx.save();ctx.translate(x,y);ctx.rotate(angle);let col=['#d99b62','#e4d9ba','#d16b48','#e2bf75'][kind%4];ctx.globalAlpha=.88;ctx.beginPath();ctx.moveTo(-17,0);ctx.quadraticCurveTo(-30,Math.sin(t*6+kind)*9-7,-36,-12);ctx.lineTo(-29,0);ctx.lineTo(-36,12);ctx.quadraticCurveTo(-28,7,-17,0);ctx.fillStyle=col;ctx.fill();ellipse(0,0,23,9,col);ellipse(2,0,15,6,kind===1?'#c66b48':'#f2dbb7');ellipse(-6,2,6,4,col);ellipse(16,-3,1.6,1.6,'#514638');ellipse(16,3,1.6,1.6,'#514638');ctx.restore()}
 function gardenWindChime(x,y){let age=t-state.gardenChimeAt,ang=Math.sin(t*1.4)*.07+(age<3?Math.sin(age*12)*.35*Math.exp(-age*1.4):0);ctx.save();ctx.translate(x,y);line(0,-65,0,-22,'#ad9470',2);ctx.rotate(ang);let g=ctx.createLinearGradient(-20,0,20,0);g.addColorStop(0,'#829e9b80');g.addColorStop(.48,'#e5eddbcc');g.addColorStop(1,'#648f8d90');ctx.beginPath();ctx.arc(0,0,19,Math.PI,0);ctx.lineTo(19,11);ctx.quadraticCurveTo(0,21,-19,11);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#a8c3ad';ctx.stroke();line(0,5,0,40,'#bca681',1.5);ellipse(0,12,3,4,'#d8b47a');ctx.rotate(Math.sin(t*1.9)*.14);round(-8,40,16,40,1,'#d9bd89','#8e7856');line(-4,48,4,66,'#a8644a',1);ctx.restore()}
 const gardenRoomDraw=drawRoom;drawRoom=function(){gardenRoomDraw();if(room!=='temple')return;ctx.save();let [x,y,ax,ay]=indoorStation('secretGarden'),first=hit.length;label(tr('Garden →','后院 →'),x,480,()=>start('secretGarden'));markIndoorStation('secretGarden',first,[ax,ay]);ctx.restore()};
@@ -3156,15 +3156,15 @@ smack=function(){
 };
 
 const riverEchoReplies=[
- ['Auntie: Even the fish heard you.','阿姨：不错，连鱼都听见了。'],
- ['Auntie: Louder next time? No, I live here.','阿姨：下次再大声点？算了，我还住这儿。'],
- ['Auntie: The river is not taking minutes.','阿姨：放心，这条河不用写会议纪要。'],
- ['Auntie: Better out here than in the group chat.','阿姨：在这儿喊，总比发到工作群强。']
+ ['Even the fish heard that. One has taken a personal day.','连鱼都听见了，有一条决定今天请假。'],
+ ['The river echoes back. No need to repeat it for the minutes.','河水送回来一声回音，不用再喊一遍给会议记录。'],
+ ['The river is not taking minutes.','放心，这条河不用写会议纪要。'],
+ ['Better out here than in the group chat.','在这儿喊，总比发到工作群强。']
 ];
 const riverBottleReplies={
- soft:[['Auntie: Small throw, big relief.','阿姨：扔得不远，烦恼照样下班。'],['Auntie: No need for an Olympic record.','阿姨：不用拿奥运冠军，能放下就行。']],
- medium:[['Auntie: That worry is officially out of office.','阿姨：这个烦恼正式下班了。'],['Auntie: No forwarding address. Excellent.','阿姨：没留新地址，很好，不许退件。'],['Auntie: The river accepts resignations.','阿姨：这条河接受烦恼辞职。']],
- strong:[['Auntie: Wah, that one must have been a long meeting.','阿姨：哇，这一定开了很久的会。'],['Auntie: A bit more and it would need a passport.','阿姨：再远一点，瓶子都要办护照了。'],['Auntie: Save some strength for opening your lunch.','阿姨：留点力气，等会儿还要开饭盒。']]
+ soft:[['Small throw, big relief.','扔得不远，烦恼照样下班。'],['No need for an Olympic record. The bottle is off duty.','不用拿奥运冠军，瓶子已经下班啦。']],
+ medium:[['That worry is officially out of office.','这个烦恼正式下班了。'],['No forwarding address. Excellent.','没留新地址，很好，不许退件。'],['The river accepts resignations.','这条河接受烦恼辞职。']],
+ strong:[['Wah, that one must have been a long meeting.','哇，这一定开了很久的会。'],['A bit more and it would need a passport.','再远一点，瓶子都要办护照了。'],['Save some strength for opening your lunch.','留点力气，等会儿还要开饭盒。']]
 };
 
 
@@ -5514,7 +5514,7 @@ const stressChoiceStyle=document.createElement('style');stressChoiceStyle.textCo
 /* Petty paper curses: original, harmless everyday inconveniences. One per valid hit,
    without actual threats, real names, or changing the rewards. */
 const pettyPaperCurses=[["May every public toilet you enter be out of paper.","祝你每次上公厕，厕纸刚好用完。"],["May your phone charger work only at a very specific angle.","祝你充电线只有扭成麻花才充得进电。"],["May your bubble tea straw miss every pearl.","祝你喝奶茶，一颗珍珠都吸不到。"],["May your trousers feel tight immediately after lunch.","祝你午饭刚吃完，裤头就开始抗议。"],["May your socks always slide down inside your shoes.","祝你的袜子走两步就滑进鞋里。"],["May your boss's slides have the wrong font on every page.","祝老板的PPT每一页都字体错乱。"],["May your meeting room booking disappear just as the meeting starts.","祝你会议刚开始，会议室就被别人订了。"],["May your favourite snack contain ninety percent air.","祝你买的薯片，九成都是空气。"],["May your noodles come with a fork that bends.","祝你吃面的时候，叉子一用就弯。"],["May your lift stop on every floor.","祝你搭电梯，层层都停。"],["May your online delivery arrive just after you leave.","祝你刚出门，快递就到了。"],["May your umbrella turn inside out on a sunny day.","祝你撑伞没下雨，伞还自己翻了。"],["May your coffee always be lukewarm.","祝你喝热咖啡不够热，喝冰咖啡不够冰。"],["May your Wi-Fi disconnect at ninety-nine percent.","祝你下载到百分之九十九，网络断了。"],["May the last piece of toilet paper tear diagonally.","祝你最后一格厕纸，一撕就裂成三角形。"],["May your favourite pen run out halfway through your signature.","祝你签名签到一半，笔没墨了。"],["May every queue you switch to become the slow one.","祝你每次换队，换完原来的队就快了。"],["May your takeaway sauce be on the other side of the bag.","祝你外卖酱料藏在袋子最底下。"],["May the last dumpling always belong to someone else.","祝你想吃最后一个饺子，别人已经夹走了。"],["May your printer demand magenta to print a black page.","祝你打印黑白文件，打印机偏偏说缺红墨。"],["May autocorrect turn your serious email into nonsense.","祝你发严肃邮件，自动纠错比你还会加戏。"],["May your earbuds always end up in the wrong pocket.","祝你找耳机，永远先摸错口袋。"],["May your rice cooker finish just when you have to leave.","祝你饭刚煮好，人就得出门。"],["May your shopping cart have that one squeaky wheel.","祝你每次推购物车，都碰上那个吱吱叫的轮子。"],["May your alarm go off during your day off.","祝你休假那天，闹钟忘了关。"],["May your toast land jam-side down.","祝你面包掉地上，永远是果酱那一面。"],["May the aircon remote always be just out of reach.","祝你躺下才发现空调遥控器在另一头。"],["May your bank app log out just as you need to pay.","祝你付款的时候，银行App突然要求重新登录。"],["May your food delivery say 'arriving soon' for twenty minutes.","祝你外卖的马上到，永远还有二十分钟。"],["May your perfectly folded laundry unfold itself.","祝你叠好的衣服，拿一件倒一摞。"],["May your calendar invite have no meeting link.","祝你开线上会，邀请里偏偏没链接。"],["May your ice cream cone drip before you find a tissue.","祝你纸巾还没找到，冰淇淋先滴下来。"],["May every vending machine reject your perfectly good coin.","祝你投个完好无损的硬币，机器偏不认。"],["May your video buffer at the punchline.","祝你看视频，笑点前一秒卡住。"],["May your favourite seat always be occupied by a very comfortable cat.","祝你最爱的座位，永远被一只睡熟的猫霸占。"],["May your keyboard space bar squeak during a quiet meeting.","祝你开会全场安静时，空格键吱吱响。"]];
-const activityComedy={"clawMiss":[["The claw caught a whole lot of absolutely nothing.","恭喜你，成功夹到了空气。"],["That plush has better escape skills than my colleagues at 6pm.","这玩偶下班逃跑的速度，比我同事还快。"],["The claw came up empty. Try lining it up directly over the toy next time.","这回夹空啦。下次让夹爪对准玩偶的正上方试试。"],["The claw is doing the bare minimum. Relatable.","夹爪正在消极怠工，懂了。"],["The plush just dodged another responsibility.","玩偶又成功逃避了一项责任。"]],"clawWin":[["Congratulations. Your new colleague has never sent an email.","恭喜，新同事不会发邮件。"],["Finally, a colleague who sits quietly.","终于有个安静的同事了。"],["The plush has accepted your offer. No probation required.","玩偶已接受录用，不用试用期。"]],"soup":[["Grandma: Smells lovely. Here, let me get you a bowl.","外婆：闻起来真香。来，外婆给你拿个碗。"],["Grandma: That's a good pot of soup. Who taught you to cook so well, ah?","外婆：这锅汤煮得不错嘛！谁教你的呀？"],["Grandma: Eat while it's warm. Everything else can wait a little.","外婆：趁热吃，其他事先放一放。"],["Grandma: Not bad. I can retire for five minutes.","外婆：还行，我可以退休五分钟。"],["Grandma: Have a taste. The best part is eating what you made yourself.","外婆：快尝尝，自己亲手做的，吃起来才特别香。"]],"tea":[["The pearls have settled. One good sip coming right up!","珍珠落到底啦，第一口准备开喝！"],["Nice shake! Even the pearls look like they're celebrating.","摇得不错！珍珠都快开派对了。"],["A drink this good deserves its own public holiday.","好喝到应该为它设个公共假期。"],["The boss may control your calendar, not your sugar level.","老板管得了日历，管不了几分糖。"]],"rhythmHigh":[["Your dance moves have been approved. Unlike your leave.","舞步审批通过，年假还是没有。"],["HR would like to know where you learned those moves.","人事部想知道你从哪儿学的舞步。"]],"rhythmLow":[["Your feet held two separate dance parties. Try following the next beat.","两只脚各开各的舞会啦。下一轮跟着节拍来试试。"],["The dance floor survived. So did you.","舞池没事，你也没事，算赢。"],["Lost the beat? Pick it up again on the next arrow.","节奏跟丢啦？下一支箭头再跟上就好。"]],"box":[["A tiny new friend! It looks remarkably pleased with its new home.","新的小伙伴来啦！看起来对新家相当满意。"],["A new resident with no rent, no deadlines and no CV.","新居民：不用交房租，不用赶工，也没有简历。"],["Plot twist: your toy is better rested than you.","剧情反转：玩偶休息得比你好。"]]};
+const activityComedy={"clawMiss":[["The claw caught a whole lot of absolutely nothing.","恭喜你，成功夹到了空气。"],["That plush has better escape skills than my colleagues at 6pm.","这玩偶下班逃跑的速度，比我同事还快。"],["The claw came up empty. Try lining it up directly over the toy next time.","这回夹空啦。下次让夹爪对准玩偶的正上方试试。"],["The claw is doing the bare minimum. Relatable.","夹爪正在消极怠工，懂了。"],["The plush just dodged another responsibility.","玩偶又成功逃避了一项责任。"]],"clawWin":[["Congratulations. Your new colleague has never sent an email.","恭喜，新同事不会发邮件。"],["Finally, a colleague who sits quietly.","终于有个安静的同事了。"],["The plush has accepted your offer. No probation required.","玩偶已接受录用，不用试用期。"]],"soup":[["Grandma: Smells lovely. Here, let me get you a bowl.","外婆：闻起来真香。来，外婆给你拿个碗。"],["Grandma: That's a good pot of soup. Who taught you to cook so well, ah?","外婆：这锅汤煮得不错嘛！谁教你的呀？"],["Grandma: Soup first. Your inbox doesn't need feeding.","外婆：先喝汤。邮件又不用吃饭。"],["Grandma: Wah, this soup can make me retire. For five minutes.","外婆：哎哟，这汤煮得我都能退休了。退五分钟。"],["Grandma: You feed everyone else. This bowl is yours, ah!","外婆：平时净顾着别人。这碗归你，趁热吃！"]],"tea":[["The pearls have settled. One good sip coming right up!","珍珠落到底啦，第一口准备开喝！"],["Wah, even the pearls have more work-life balance now.","哇，连珍珠都比你会劳逸结合。"],["First sip approved. No supporting documents needed.","第一口奶茶审批通过，不用补交材料。"],["The boss may control your calendar, not your sugar level.","老板管得了日历，管不了几分糖。"]],"rhythmHigh":[["Your dance moves have been approved. Unlike your leave.","舞步审批通过，年假还是没有。"],["HR would like to know where you learned those moves.","人事部想知道你从哪儿学的舞步。"]],"rhythmLow":[["Your feet held two separate dance parties. Try following the next beat.","两只脚各开各的舞会啦。下一轮跟着节拍来试试。"],["The dance floor survived. So did you.","舞池没事，你也没事，算赢。"],["Lost the beat? Pick it up again on the next arrow.","节奏跟丢啦？下一支箭头再跟上就好。"]],"box":[["A tiny new friend! It looks remarkably pleased with its new home.","新的小伙伴来啦！看起来对新家相当满意。"],["A new resident with no rent, no deadlines and no CV.","新居民：不用交房租，不用赶工，也没有简历。"],["Plot twist: your toy is better rested than you.","剧情反转：玩偶休息得比你好。"]]};
 /* Contextual ritual dialogue, keyed to existing target labels, never to real people. */
 const pawAhMaTopicLines={
   "Boss's endless demands": [
@@ -5884,7 +5884,7 @@ const catComedy={"feed":[["The cat sniffs its food, then decides you are worth k
 /* Petty, locally adapted satire. Fictional residents, never impersonated players.
    Jokes target everyday frustrations and game actions, not a player's worth. */
 const clawRepeatRoasts=[
- ["Ah Ma: Three times already? Give me the controls. Aim right over the toy.","阿嬷：三次了啦！来，让我夹。瞄准娃娃正上方！"],
+ ["Ah Ma: Three tries, ah? The claw needs a little supervision. Aim above the toy.","阿嬷：三次啦？夹爪需要人监督。对准娃娃正上方！"],
  ["Arcade keeper: Aiyoh, is the glass dirty or are your eyes buffering?","店主：哎哟，是玻璃脏了，还是你老花了？"],
  ["Ah Ma: I can do this with one hand while cooking dinner. Try again!","阿嬷：我一边煮饭一边夹都行！再来！"],
  ["The plush is not your ex. Stop letting it get away. Aim closer.","娃娃又不是你前任，别老让它跑了。再瞄准一点。"],
@@ -5894,7 +5894,7 @@ const clawRepeatRoasts=[
  ["Ah Ma: Take your time. Even legends started with a few empty claws.","阿嬷：慢慢来，夹娃娃高手也都是从夹空气开始的。"]
 ];
 activityComedy.clawMiss.push(
- ["Ah Ma: Even my grandmother could catch that. And she is asleep.","阿嬷：这么简单也夹不到？我阿嬷都比你会夹！"],
+ ["Ah Ma: Aiyo, this claw is on probation. Try the centre of the toy.","阿嬷：哎哟，这夹爪还在试用期。试试瞄准娃娃中间。"],
  ["Arcade keeper: Need to clean your glasses or change the claw?","店主：是要擦眼镜，还是要换夹爪？"],
  ["The toy said: good luck finding someone better than me.","娃娃：祝你以后再也夹不到比我更好的。"],
  ["You are playing hide and seek with a stationary object.","你在跟一个不会动的娃娃玩捉迷藏。"]
@@ -6077,14 +6077,14 @@ const threeTalk={
   start:[['Mochi: You get the crosses. I get the circles and your chair.','麻薯：叉叉归你，圈圈和你的椅子归我。'],['Mochi: I learned strategy by stealing unattended food.','麻薯：我的战术是靠偷吃练出来的。']],
   turn:[['Mochi: Interesting. I was going to sit there.','麻薯：有意思，本来想坐那里的。'],['Mochi: Give me a second. My brain is on a tea break.','麻薯：等一下，脑子正在摸鱼。'],['Mochi: I have consulted my whiskers.','麻薯：本喵已征求胡须的意见。']],
   win:[['Mochi: Fine. I was distracted by a bird.','麻薯：行吧，刚才有只鸟影响我发挥。'],['Mochi: You win. I still own the house.','麻薯：你赢了，但房子还是我的。']],
-  lose:[['Mochi: Imagine losing to someone who licks their own feet.','麻薯：居然输给一只天天舔脚的猫。'],['Mochi: Nine squares and you still cannot afford one.','麻薯：九个格子，你连三个都保不住。']],
+  lose:[['Mochi: Imagine losing to someone who licks their own feet.','麻薯：居然输给一只天天舔脚的猫。'],['Mochi: Nine squares, and I still choose the cardboard box.','麻薯：九个格子任我挑，我还是喜欢纸箱。']],
   draw:[['Mochi: A draw. I shall accept payment in chin scratches.','麻薯：平局。摸下巴抵账吧。'],['Mochi: A tie is the perfect excuse for a nap.','麻薯：打平了，正好睡觉。']]
  },
  auntie:{
   start:[['Ah Ma: Three in a row. Easier than applying for leave.','阿嬷：三个连成一线，比请年假简单多了。'],['Ah Ma: Come. Let me see what your years of education were for.','阿嬷：来，让我看看你这么多年书读到哪里去了。']],
   turn:[['Ah Ma: I came here to relax, not sit an exam.','阿嬷：哎哟，今天还得动脑筋啊。'],['Ah Ma: I can see your little scheme from here.','阿嬷：你这点小算盘，我看得清清楚楚。'],['Ah Ma: Wait. Even a grandmother deserves a thinking break.','阿嬷：等一下，老人家也有思考时间的嘛。']],
   win:[['Ah Ma: Fine, you win. I forgot my reading glasses.','阿嬷：行行行，你赢了。我老花镜没戴。'],['Ah Ma: Not bad. At least your degree was useful for something.','阿嬷：不错，大学总算没白读。']],
-  lose:[['Ah Ma: My grandson could do better. He is still learning his ABCs.','阿嬷：我孙子都比你会下，他还在学ABC呢。'],['Ah Ma: That was the easy part. Shall I get the instruction manual?','阿嬷：这么简单也输？来来来，我教你。'],['Ah Ma: Your boss must love how easy it is to block you.','阿嬷：你这么容易被拿捏，老板一定很喜欢你。']],
+  lose:[['Ah Ma: Aiyo, I saw that gap! Block my next line, can?','阿嬷：哎哟，那里漏了一格！下次记得堵我呀。'],['Ah Ma: That was the easy part. Shall I get the instruction manual?','阿嬷：这么简单也输？来来来，我教你。'],['Ah Ma: I blocked your line. At least I didn\'t call a meeting about it.','阿嬷：你的路给我堵啦。至少我没为这事开个会。']],
   draw:[['Ah Ma: I am giving you face. Do not tell the neighbours.','阿嬷：给你留点面子，别告诉邻居。'],['Ah Ma: Draw? Alright, we can both keep our dignity.','阿嬷：平局？好，咱俩的面子都保住了。']]
  }
 };
@@ -8220,7 +8220,7 @@ const pearlOrders=[
  {guest:['Grandma','外婆'],resident:['Grandma','外婆'],line:['It is my day off. Extra drama, extra sugar.','休假啦，甜一点才对得起自己。'],base:2,sugar:100,ice:3,topping:1},
  {guest:['Master Yue','月师傅'],resident:['Master Yue','月师傅'],line:['A simple drink, no toppings to distract me.','来杯简单的，别让小料打扰我看书。'],base:1,sugar:50,ice:1,topping:0}
 ];
-const pearlPrompts={order:['Choose your own drink or a guest order.','自由搭配，或接一张客人订单。'],base:['Choose the tea base.','选择茶底。'],sugar:['How sweet today?','今天几分甜？'],ice:['Choose the ice.','冰块加多少？'],topping:['Choose your topping.','选喜欢的小料。'],pourReady:['Pour your chosen tea into the cup.','把茶倒进杯里。'],pearls:['Scoop two portions into the cup.','舀两勺小料进杯里。'],mix:['Hold the cup and shake side to side.','拿起杯子，左右摇匀。'],seal:['Seal the cup before drinking.','先给奶茶封口。'],ready:['Take a sip, or serve your guest.','喝一口，或者递给客人。']};
+const pearlPrompts={order:['Choose your own drink or a guest order.','自由搭配，或接一张客人订单。'],base:['Pick your tea base. The only base salary we discuss here.','选个茶底。今天不谈底薪，只谈茶底。'],sugar:['How sweet today? Life already supplies the bitterness.','今天几分甜？生活的苦已经够多啦。'],ice:['Choose the ice. Cold drinks, warm company.','冰块加多少？奶茶可以冷，人情不能冷。'],topping:['Pick a topping. These extras are actually welcome.','选个小料。这个加料可比老板加活受欢迎。'],pourReady:['Pour the tea. No need to CC anyone.','倒茶吧，不用抄送任何人。'],pearls:['Two scoops, please. The pearls have unionised.','舀两勺就好，珍珠也是有工会的。'],mix:['Shake the cup, not your last nerve.','拿起杯子左右摇。摇奶茶，不摇摆人生。'],seal:['Seal the cup. This is the only lid we put on your feelings.','先封口，今天只封奶茶，不封你的嘴。'],ready:['Take a sip or serve your guest. Officially tea time.','自己喝一口，或者递给客人。奶茶时间正式开始。']};
 function pearlPreviousStage(stage){return ({base:'order',sugar:'base',ice:'sugar',topping:'ice',pourReady:'topping'})[stage]||null}
 function pearlRewindRecipe(q){
  const previous=pearlPreviousStage(q?.teaStage);if(!previous)return null;
@@ -8252,7 +8252,7 @@ function pearlAdvance(){
   pearlStage('done');if(state.teaSaved)return;state.teaSaved=true;
   const v=teaChoices[state.teaBase],score=pearlScore(state);state.teaScore=score;addItem(v[0]+' recipe',v[1]+'配方');
   if(score===4)addItem('Pearl & Pause perfect order','珍珠摸鱼铺完美订单');
-  if(score!==null)react(...(score===4?['Perfect order. Finally, someone actually read the instructions.','完全正确！终于有人认真看需求了。']:['Still delicious. Let us call this the chef’s creative interpretation.','一样好喝，就当这是主厨的自由发挥吧。']));
+  if(score!==null)react(...(score===4?['Perfect order! Look, clear requirements actually work.','订单全对！你看，需求讲清楚就是不一样。']:['Not quite the order, but still delicious. A little practice, no appraisal.','和订单差一点，味道还是不错。再练练，不扣绩效。']));
   else react(...townReaction('tea-finish',activityComedy.tea))
  }
 }
@@ -9491,7 +9491,7 @@ const deerDrawBefore=drawActivity;
 drawActivity=function(){
  if(activity!=='deerVisit'||!state.deerProfile)return deerDrawBefore();
  const phase=state.deerPhase,age=t-state.deerAt;
- if(phase==='bow'&&age>=2.7){state.deerPhase='ready';state.deerAt=t;refreshControls();hint(...(state.deerBows?['A little bow in return!','小鹿也鞠了个躬！']:['This deer would rather look at the grass. Fair enough.','小鹿更想看看草地，也挺好。']))}
+ if(phase==='bow'&&age>=2.7){state.deerPhase='ready';state.deerAt=t;refreshControls();hint(...(state.deerBows?['A bow in return! No introduction, no name card.','小鹿回礼啦！不用自我介绍，也不用交换名片。']:['The deer is busy with grass. A very important appointment.','小鹿忙着看草呢。人家有重要约会。']))}
  else if(phase==='feed'&&age>=pawDeerOfferDuration&&!document.hidden)deerVisitReward();
  else if(phase==='watch'&&age>=4){deerVisitReward(false);if(!(deerVisitRecord().day===shrineClock().day&&deerVisitRecord().fed)){state.deerPhase='ready';refreshControls()}}
  const p=state.deerProfile,now=state.deerPhase,elapsed=t-state.deerAt;
