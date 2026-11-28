@@ -13869,7 +13869,7 @@ openTarotReading=function(entry,back){
  const live=pawLiveTarotSnapshot(entry,state,activity,room,tarotDeck.length);
  const run=state,kind=activity,count=live.cards.length;
  const valid=()=>run===state&&room==='tarot'&&activity===kind&&pawTarotReadingRoute(live,run,kind,room,tarotDeck.length,t,false)==='live';
- const returnTable=()=>{if(!valid())return;closeTalk();$('page').style.display='none';if(run.readStage==='focus')readingReturnSpread()};
+ const returnTable=()=>{if(!valid())return;closeTalk();$('page').style.display='none';if(run.readStage==='focus')readingReturnSpread();else hint(...pawReadingNextHint(run,t,journalAutoSave()))};
  function explain(index){
   if(!valid())return;
   $('page').style.display='none';closeTalk();
@@ -13882,13 +13882,13 @@ openTarotReading=function(entry,back){
    if(reflection)words+='\n\n'+reflection;
    const aside=tarotCommentary(d[0],c.rev,live.topic,live.tone);
    if(aside)words+='\n\n'+tr(...aside);
-   choices.push([index+1<count?tr('Next card','下一张牌'):tr('What does it mean together?','整体意味着什么？'),()=>explain(pawLiveTarotStep(count,index,1))]);
+   choices.push([index+1<count?tr('Next card','下一张牌'):count===1?tr('A moment to reflect','静心想一想'):tr('What does it mean together?','整体意味着什么？'),()=>explain(pawLiveTarotStep(count,index,1))]);
   }else{
    words=count===5?tr('Compare what helps with the challenge card. Choose one small action from the next-step card, and keep the last card as a reminder.','对照助力牌和挑战牌。从行动牌里选一件小事，再把最后一张牌当作提醒。'):count===3?readingConnection(live):tr('Take what resonates with you. A card is a moment for reflection, not a prediction or an instruction.','把有共鸣的部分留在心里。牌意是自我反思，不是预言，也不是指令。');
    choices.push([tr('Make a keepsake','制作纪念牌卡'),()=>{if(!valid())return;closeTalk();shareReadingResult(live,()=>{if(valid())explain(index)})}]);
   }
   if(index>0)choices.push([tr('Previous card','上一张牌'),()=>explain(pawLiveTarotStep(count,index,-1))]);
-  choices.push([tr('Back to the table','回到牌桌'),returnTable]);
+  choices.push([index===count?tr('Finish reading · return to table','结束解读，回到牌桌'):tr('Back to the table','回到牌桌'),returnTable]);
   say(tr('Fortune Teller','占卜师'),words,choices)
  }
  explain(0)
