@@ -2230,7 +2230,10 @@ function mbArtVisitRecord(raw,day){
  return {day:good?raw.day:day,total:good&&Number.isInteger(raw.total)?Math.max(0,Math.min(9999,raw.total)):0,today:good&&raw.day===day&&Number.isInteger(raw.today)?Math.max(0,Math.min(999,raw.today)):0}
 }
 /* MBART_VALIDATION_END */
-let mbArtRegistry=mbArtValidate(null),mbArtRequested=false,mbArtRetryAt=0;
+// Boot-critical current traveller records, copied from action-runtime.json.
+// Avoid a manifest round trip before the first illustrated entrance frame.
+const pawBootWalkManifest={"version":1,"players":{"0":{"walk":{"up":[{"path":"assets/visual/painted/player-0/walk/up-0.webp","width":152,"height":244,"sha256":"2b3dffa66873805e45582b990f664b1eade2ed9da4b7c71ea2a9b83b32d849a1","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/up-1.webp","width":152,"height":244,"sha256":"9b9c02f680d7fcba4c842f93a1fc6b785e14a3da525ad55285427e43c3fb04a3","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/up-2.webp","width":152,"height":244,"sha256":"7b3b984c36cfef2fd4bd746ca7c5b15acdec6327b209ff93e7072a2cae958a6a","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/up-3.webp","width":152,"height":244,"sha256":"218aa20c3cf4a1fb46a699959894a62ffee3d546c86e123810a406c57620675c","foot":[76,231]}],"down":[{"path":"assets/visual/painted/player-0/walk/down-0.webp","width":152,"height":244,"sha256":"7c8e27e0b9af94f6e544cf95a14b4b0ac0d69733ca94ad182be41fb3b358f249","foot":[76,230]},{"path":"assets/visual/painted/player-0/walk/down-1.webp","width":152,"height":244,"sha256":"04b1e9aed66fa72c8aa99d0d31378626e7c97cdf0d93857b1c8b0fc2de88756a","foot":[76,226]},{"path":"assets/visual/painted/player-0/walk/down-2.webp","width":152,"height":244,"sha256":"e2e5c18eb20cddf58e655516ca7bef6be3b26b24f7d9e7f60b2a26e513609855","foot":[76,225]},{"path":"assets/visual/painted/player-0/walk/down-3.webp","width":152,"height":244,"sha256":"505acccd70c07f8b64d2729946dc0352a16eeb4231e44190f6aaf959428c9f27","foot":[76,231]}],"right":[{"path":"assets/visual/painted/player-0/walk/right-0.webp","width":152,"height":244,"sha256":"477f2f6f0edfca9a96ca9bdd1008b6fa6d9bed5d57fa4d13f6cc2301f328609b","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/right-1.webp","width":152,"height":244,"sha256":"52f087ed1766a728c29a0c86fe9ccfb808e6900c0fa9e6dd09dcd0986523254e","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/right-2.webp","width":152,"height":244,"sha256":"07e61bd64f9323c94d6e74f60e092f9b726ac6704cda1642a39eb24089460122","foot":[76,230]},{"path":"assets/visual/painted/player-0/walk/right-3.webp","width":152,"height":244,"sha256":"7d8aa05fc42832f3c8a632392ec5c8735a562914b5e2b130a29636bdb6d7f915","foot":[76,231]}]}},"1":{"walk":{"up":[{"path":"assets/visual/painted/player-1/walk/up-0.webp","width":152,"height":244,"sha256":"e8b7f81b867590580109e1c1db271794c99aada6f0d7487b34f1ef32c5d419f2","foot":[76,231]},{"path":"assets/visual/painted/player-1/walk/up-1.webp","width":152,"height":244,"sha256":"982551ad69fadb2263404c9bdd2804fa363a860bef65e451392ee14b4f75d7ae","foot":[76,231]},{"path":"assets/visual/painted/player-1/walk/up-2.webp","width":152,"height":244,"sha256":"ccd8d352e4cc8a44b8e2fc9fef8da1b7b6d723fd8bf8f12bbf449e0e96f54ff1","foot":[76,231]},{"path":"assets/visual/painted/player-1/walk/up-3.webp","width":152,"height":244,"sha256":"038b0d2c4e0f03f080bb5232efd5ded22e1f145b3b9c67a5bf7c2b8643c87c6d","foot":[76,231]}],"right":[{"path":"assets/visual/painted/player-1/walk/right-0.webp","width":224,"height":300,"sha256":"dd6309dda26281292bc080c044726cff365ca46735be0ba571783d2c0d7cb2cb","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/right-1.webp","width":224,"height":300,"sha256":"ccbf3a412f76ae0a84c8c4cab4c2096f6d1d676d26151d3487806cfee662d241","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/right-2.webp","width":224,"height":300,"sha256":"0501646e875de1d7e171f7aab5fe498b5e08690c6bba1edff3baf91d35d6a860","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/right-3.webp","width":224,"height":300,"sha256":"ae6e422edf490b92b855e6ab58e417a4872fe7506877bc9c3b6693b1734a5176","foot":[112,286]}],"down":[{"path":"assets/visual/painted/player-1/walk/down-0.webp","width":224,"height":300,"sha256":"80c5617f28756a71c40175400056baed7823874e37b80b15521eb894d1d6c130","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/down-1.webp","width":224,"height":300,"sha256":"bbf93c490c874091b6e2e835bacce523f4e64c171a0b48d3cafc36f79a56fc7e","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/down-2.webp","width":224,"height":300,"sha256":"90b0777ace6ef858409f6092fa0a1894c9dca33fec546f5b13733d0e8dd8be4f","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/down-3.webp","width":224,"height":300,"sha256":"51d1dd8d67ef1fe7ac3ebc8ac882a77a639e9041dc367cb9b450117f5f3ca99a","foot":[112,286]}]}},"2":{"walk":{"up":[{"path":"assets/visual/painted/player-2/walk/up-0.webp","width":152,"height":244,"sha256":"60212123c80fa2926ca984e44e9bb5cdc9792092b362e4d0cf92d2bafceb2434","foot":[76,231]},{"path":"assets/visual/painted/player-2/walk/up-1.webp","width":152,"height":244,"sha256":"65ccc8e766422da51bfc692181c0db405ce001521d73f6ed2d426a876a9c8184","foot":[76,231]},{"path":"assets/visual/painted/player-2/walk/up-2.webp","width":152,"height":244,"sha256":"643b2e7e849c9faa9d83b43e76e8016fde4511868465827335119194059b742e","foot":[76,231]},{"path":"assets/visual/painted/player-2/walk/up-3.webp","width":152,"height":244,"sha256":"924e62727a49f7dc7d7d81e8d7fa3114806dfaaa9d0f8f332fa887ed006e7f61","foot":[76,231]}],"down":[{"path":"assets/visual/painted/player-2/walk/down-0.webp","width":152,"height":244,"sha256":"0caa1fe79178385662f4a37c3f85ca33a5e1975fa68f66a290ff0b53fdbcd8bd","foot":[76,226]},{"path":"assets/visual/painted/player-2/walk/down-1.webp","width":152,"height":244,"sha256":"97f6bf0cccf25145366b7c1a4a0c748cca85d7930a34e3a7367d3bdc95160076","foot":[76,226]},{"path":"assets/visual/painted/player-2/walk/down-2.webp","width":152,"height":244,"sha256":"cdf846df4bfd9f5eb5363cf85b84ca8781ed35bb7c50186bc6724cc5f615a9fc","foot":[76,226]},{"path":"assets/visual/painted/player-2/walk/down-3.webp","width":152,"height":244,"sha256":"ee2936ab1363d1df73f10939440bb8b40f178b259c1fa1dbca28d039633f22f3","foot":[76,229]}],"right":[{"path":"assets/visual/painted/player-2/walk/right-0.webp","width":152,"height":244,"sha256":"22d13eda3077e1c9ae954952e81493ab90278013a35b1ebb1e506edf23bc2954","foot":[76,228]},{"path":"assets/visual/painted/player-2/walk/right-1.webp","width":152,"height":244,"sha256":"b707d51d839d184a3a63335eddccc216441d46ead96a0c73699729b7b8d864e9","foot":[76,229]},{"path":"assets/visual/painted/player-2/walk/right-2.webp","width":152,"height":244,"sha256":"b61bb31f4c146207be2e85ff7c471060952d9ca01597ef8d760d830f810f7548","foot":[76,229]},{"path":"assets/visual/painted/player-2/walk/right-3.webp","width":152,"height":244,"sha256":"c0ac0efca105ede11e2732591412a958abec52f30c5d933eb6c7f10e98a30c4e","foot":[76,229]}]}},"3":{"walk":{"up":[{"path":"assets/visual/painted/player-3/walk/up-0.webp","width":152,"height":244,"sha256":"3ac999afe45c71a04778eeabda5391eec6e7683694b6129e1c7c6a42e2c21a87","foot":[76,231]},{"path":"assets/visual/painted/player-3/walk/up-1.webp","width":152,"height":244,"sha256":"13eb1e15f98731cd0a88f258cd6a6008d5f368cb81e4132be1670619af1d0b8b","foot":[76,231]},{"path":"assets/visual/painted/player-3/walk/up-2.webp","width":152,"height":244,"sha256":"1c947205102f87db297560c36f04535430056015304fe89f5cb7ae4ce0149354","foot":[76,231]},{"path":"assets/visual/painted/player-3/walk/up-3.webp","width":152,"height":244,"sha256":"de6e3c8543e874b06e07f6031535546cbaac6777c435212b28fa6cb49252cb2a","foot":[76,231]}],"down":[{"path":"assets/visual/painted/player-3/walk/down-0.webp","width":152,"height":244,"sha256":"d22b9bf384f9ac8c5bdf1b1388b1fdac3908a71c62cd48aeb003143d500d0e43","foot":[76,228]},{"path":"assets/visual/painted/player-3/walk/down-1.webp","width":152,"height":244,"sha256":"c9c7d9542d86bebd6f3e55192892e3500c8f4d5be87e9f8b6594880febcb87b1","foot":[76,225]},{"path":"assets/visual/painted/player-3/walk/down-2.webp","width":152,"height":244,"sha256":"541e04f530b1d62644a5756b22763a084b10a9f4ac590a57cf3a43d46997734c","foot":[76,230]},{"path":"assets/visual/painted/player-3/walk/down-3.webp","width":152,"height":244,"sha256":"3aae45230a5bce058d9a73b6ae0b8ca2548316a1875db5e1b33f3ca4cbe05527","foot":[76,227]}],"right":[{"path":"assets/visual/painted/player-3/walk/right-0.webp","width":152,"height":244,"sha256":"3b735dae1785bb837d9308b68a38331bef741c7a8bd39e1024560f98dc4585ba","foot":[76,225]},{"path":"assets/visual/painted/player-3/walk/right-1.webp","width":152,"height":244,"sha256":"068c5efb005dee8c8b64ed03dbd335f1aaf3023b3cd0bd8bb1d8464df68ead8a","foot":[76,228]},{"path":"assets/visual/painted/player-3/walk/right-2.webp","width":152,"height":244,"sha256":"d1a91ff52bdfbfa93b3f98fb546460ee813fd2bf63b10a1f27d92ae31cb12f23","foot":[76,228]},{"path":"assets/visual/painted/player-3/walk/right-3.webp","width":152,"height":244,"sha256":"589c0ed0e14dd7636f5fe3ac35092c83d511c0011190504bdcfac7911a43d17d","foot":[76,229]}]}}},"rooms":{}};
+let mbArtRegistry=mbArtValidate(pawBootWalkManifest),mbArtRequested=false,mbArtRetryAt=0;
 const mbArtImages=new Map(),mbArtFailures=new Map();
 function mbArtLoad(){
  if(mbArtRequested||Date.now()<mbArtRetryAt)return;
@@ -5884,7 +5887,7 @@ proRender=function(...args){
  const result=pawEntranceArtBefore(...args),hero=proposal.querySelector('.hero'),foot=proposal.querySelector('footer');
  if(!hero||!foot)return result;
  pawEntranceResize();
- if(proStep===0||proStep===4){pawEntranceCropFamily=null;if(proStep===4)requestAnimationFrame(()=>{if(!proposal.hidden&&proStep===4)pawWarmEntranceCrops()})}
+ if(proStep===0||proStep===4){pawEntranceCropFamily=null;}
  if([1,2].includes(proStep)&&pawEntranceCropFamily===null)pawEntranceCropFamily=pawEntranceCropChoice(pawEntranceCropSources(),pawAvatarCropCache);
  if(proStep===0){
   // Recovered matching native station paintings. Keep the train interior
@@ -7674,7 +7677,7 @@ async function pawGateWalk(hero,traveller){
   function tick(now){
    if(done)return;
    if(!pawTransitOwned({stage:proStep,connected:traveller.isConnected,hidden:document.hidden,proposalHidden:proposal.hidden},3)){finish(false);return}
-   const v=pawTransitClock(clock,now,true,1200),i=Math.min(frames.length-1,Math.floor(v*frames.length*2)%frames.length);
+   const v=pawTransitClock(clock,now,true,600),i=Math.min(frames.length-1,Math.floor(v*frames.length*2)%frames.length);
    if(traveller.getAttribute('src')!==frames[i].path)traveller.src=frames[i].path;
    traveller.style.setProperty('--paw-gate-pivot-x',(-100*frames[i].foot[0]/frames[i].width)+'%');
    traveller.style.setProperty('--paw-gate-pivot-y',(-100*frames[i].foot[1]/frames[i].height)+'%');
@@ -7710,7 +7713,7 @@ proRender=function(...args){
   button.disabled=true;button.textContent=tr('Preparing the path…','正在准备山间小路…');
   const gateArt=hero?.querySelector('.mbGatePainting');
   const kind=proAvatar??avatar??0;
-  const ready=await Promise.all([pawReadyMap('fortune'),pawReadyPicture(gateArt),pawReadyTraveller(kind)]).then(pawAdmissionReady);
+  const ready=await Promise.all([pawReadyMap('fortune'),pawReadyPicture(gateArt),pawReadyTraveller(kind),pawReadyEntranceWalk(kind)]).then(pawAdmissionReady);
   if(!button.isConnected||proStep!==3||proposal.hidden)return;
   if(!ready||document.hidden){waiting=false;button.disabled=false;button.textContent=tr('Retry arrival','重新入镇');return}
   const originalSprite=traveller?.getAttribute('src'),originalPivotX=traveller?.style.getPropertyValue('--paw-gate-pivot-x'),originalPivotY=traveller?.style.getPropertyValue('--paw-gate-pivot-y');
@@ -7718,6 +7721,9 @@ proRender=function(...args){
   if(!button.isConnected||proStep!==3||proposal.hidden)return;
   waiting=false;button.disabled=false;button.textContent=original;
   if(!walked||document.hidden){if(hero&&traveller){if(originalSprite)traveller.src=originalSprite;traveller.style.setProperty('--paw-gate-pivot-x',originalPivotX||'-50%');traveller.style.setProperty('--paw-gate-pivot-y',originalPivotY||'-100%');pawGatePlace(hero,traveller)}return}
+  // A pre-admission canvas frame must not pin the legacy family for this visit.
+  pawActorFamilyVisit='fortune|outside';pawActorFamilyChoice.clear();
+  pawActorFamilyChoice.set(kind,true);
   admit.call(button,event)
  };
  button.onclick=enter;if(gate)gate.onclick=enter;return result
@@ -11084,9 +11090,9 @@ function pawGardenControls(run){
  const el=$('gameControls');if(!el||run!==state||activity!=='secretGarden')return;
  if(pawArcadeInputBlocked()){el.hidden=true;return}
  const busy=!!run.pawGardenWalk?.route.length,key=String(zh)+'|'+run.gardenSitting+'|'+busy;
- if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===(run.pawRearGarden?4:3)){el.hidden=false;return}
+ if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===(run.pawRearGarden?2:3)){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawGardenControls');el.hidden=false;pawGardenControlsRun=run;pawGardenControlsKey=key;
- for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐'],['chime','Wind chime','听风铃'],...(run.pawRearGarden?[['cats','Greet the lucky cats','拜访招财猫']]:[])]){
+ for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐'],...(run.pawRearGarden?[]:[['chime','Wind chime','听风铃']])]){
   const button=b(el,tr(en,cn),()=>pawGardenChoose(run,name));button.dataset.pawGardenControl=name;button.disabled=busy
  }
 }
@@ -11944,7 +11950,7 @@ const pawWaterPlate={x:100,y:-145,w:600,h:600*1635/962};
 function pawWaterGeometry(p=pawWaterPlate){
  const point=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
  return {foot:point(.46,.645),basin:point(.345,.51),palm:point(.426,.565),
-  rest:point(.44,.55),scoop:point(.345+.038,.51),pour:point(.426+.038,.545),rack:point(.475,.535)}
+  rest:point(.39,.55),scoop:point(.345+.038,.51),pour:point(.426+.038,.545),rack:point(.475,.535)}
 }
 // Match the effective ladle material's source coordinates and mirrored
 // canvas transform. The grip and water outlet travel with the actual prop.
@@ -11952,6 +11958,7 @@ function pawWaterLadlePoint(at,angle,x,y){
  const c=Math.cos(angle),sn=Math.sin(angle);
  return {x:at.x-.65*(x*c-y*sn),y:at.y+.65*(x*sn+y*c)}
 }
+function pawWaterActorScale(){return 2.18}
 function pawWaterShoulder(g,sc){return {x:g.foot.x-8*sc,y:g.foot.y-52*sc}}
 function pawWaterReach(at,g,sc){
  if(!Number.isFinite(at?.x)||!Number.isFinite(at?.y))return at;
@@ -12013,7 +12020,7 @@ mobileRoomCamera=function(...args){return pawWaterPaintingActive()?pawWaterCamer
 const pawWaterReleaseBefore=templeReleaseWater;
 templeReleaseWater=function(a,gesture,...args){
  if(!pawWaterPaintingActive())return pawWaterReleaseBefore(a,gesture,...args);
- const run=state,stage=run.waterStage,g=pawWaterGeometry();a=pawWaterGripPoint(a,gesture);if(gesture?.id==='templeLadle')a=pawWaterDragCentre(a,g,pawTemplePaintedActorScale());
+ const run=state,stage=run.waterStage,g=pawWaterGeometry();a=pawWaterGripPoint(a,gesture);if(gesture?.id==='templeLadle')a=pawWaterDragCentre(a,g,pawWaterActorScale());
  if(pawArcadeInputBlocked()||![0,1].includes(stage))return;
  if(!pawWaterDropMatches(stage,a?.x,a?.y,g)){hint(stage===0?'Dip the ladle in the marked water.':'Move the filled ladle above your hand.',stage===0?'把竹勺放入亮起的水面。':'把盛满水的竹勺移到手掌上方。');return}
  // Retain the original action, audio, award and ownership contract.
@@ -12036,18 +12043,17 @@ function pawDrawWaterPainting(){
  ctx.fillStyle='#473e36';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawWaterArt(),p.x,p.y,p.w,p.h);
  const ready=stage===0?g.rest:stage===1?g.scoop:g.pour;
  let at=ready,angle=0;
- if(held){at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,pawTemplePaintedActorScale())}
+ if(held){at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,pawWaterActorScale())}
  else if(stage===1)at=pawWaterMix(run.pawWaterFrom||g.scoop,g.rest,poseEase(Math.min(1,age/.35)));
  else if(stage===2){at=pawWaterMix(run.pawWaterFrom||g.pour,g.pour,poseEase(Math.min(1,age/.35)));angle=.58*poseEase(Math.min(1,age/.4))*(1-poseEase(Math.max(0,Math.min(1,(age-1.5)/.5))))}
  else if(stage===3)at=pawWaterMix(g.pour,g.rack,poseEase(Math.min(1,age/.55)));
- const sc=pawTemplePaintedActorScale(),shoulder=pawWaterShoulder(g,sc),grip=pawWaterLadlePoint(at,angle,-25,1);
+ const sc=pawWaterActorScale(),shoulder=pawWaterShoulder(g,sc),grip=pawWaterLadlePoint(at,angle,-25,1);
  // Far arm is occluded by the traveller, not drawn across the torso.
- if(stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.80,true);
+ if(stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.72,true);
+ if((held||stage===1||stage===2)&&Math.hypot(grip.x-shoulder.x,grip.y-shoulder.y)<=48*sc)pawIncenseArm(shoulder,grip,sc*.70,false);
  backHuman(g.foot.x,g.foot.y,avatar??0,false,'left',sc);
  if(stage!==3||age<.55){
   ctx.save();ctx.translate(at.x,at.y);ctx.scale(-.65,.65);waterLadleArt(0,0,angle,stage===1||stage===2&&age<1.55);ctx.restore();
-  // At rest before pickup, no detached reaching sleeve.
-  if(held||stage!==0)pawIncenseArm(shoulder,grip,sc*.82,false)
  }
  if(stage===2&&age>.15&&age<1.8){
   const bowl=pawWaterLadlePoint(at,angle,35,6);
@@ -12080,7 +12086,7 @@ function pawAlcoveGeometry(p=pawWaterPlate){
  const pt=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
  return {tube:pt(.397,.473),tubeGrip:pt(.411,.499),tubeTop:pt(.397,.426),
   stickTray:pt(.523,.509),stickFoot:pt(.41,.625),stickPickFoot:pt(.51,.625),
-  moonTray:pt(.743,.508),moonFoot:pt(.707,.64),moonHand:pt(.70,.54)}
+  moonTray:pt(.743,.508),moonFoot:pt(.56,.64),moonHand:{x:p.x+.743*p.w-13,y:p.y+.508*p.h}}
 }
 function pawAlcoveActorScale(){return 1.92}
 function pawAlcoveReach(foot,side=1){
@@ -12106,6 +12112,24 @@ function pawAlcoveStickContact(g,pose,held=false){
 }
 function pawAlcoveMoonPoint(g,m){
  return {x:g.moonTray.x+(m.x-400)*.26,y:g.moonTray.y-m.lift*.32}
+}
+// Keep the complete toss envelope beside the traveller, not over the face.
+// The right sleeve reaches the nearer block only during release.
+function pawAlcoveMoonReach(g){
+ const sc=pawAlcoveActorScale();
+ return {shoulder:{x:g.moonFoot.x+5*sc,y:g.moonFoot.y-63*sc},sleeve:.72*sc,maxReach:48*sc}
+}
+function pawAlcoveMoonClearance(g,m,foot=g.moonFoot){
+ const pt=pawAlcoveMoonPoint(g,m),sc=pawAlcoveActorScale();
+ // Conservative body envelope and rotated crescent radius at .30 scale.
+ return pt.x-15-(foot.x+38*sc)
+}
+function pawAlcoveMoonContact(g,f,m){
+ if(!Number.isFinite(f)||f<0||f>.24)return null;
+ const reach=pawAlcoveMoonReach(g),pt=pawAlcoveMoonPoint(g,m);
+ const u=f<=.12?1:Math.max(0,(.24-f)/.12);
+ const hand={x:reach.shoulder.x+(pt.x-reach.shoulder.x)*u,y:reach.shoulder.y+(pt.y-reach.shoulder.y)*u};
+ return Math.hypot(hand.x-reach.shoulder.x,hand.y-reach.shoulder.y)<=reach.maxReach?hand:null
 }
 /* PAW_ALCOVE_PAINT_END */
 const pawAlcovePath='../../staging/2026-11-27/rooms/temple/sticks.webp';
@@ -12148,8 +12172,9 @@ function pawDrawAlcoveSticks(){
 }
 function pawDrawAlcoveMoon(){
  const run=state,g=pawAlcoveGeometry(),airborne=run.tossUntil>t,f=airborne?Math.max(0,Math.min(1,1-(run.tossUntil-t)/(run.moonDuration||.55))):1;
- const sc=pawAlcoveActorScale(),{shoulder,sleeve,maxReach}=pawAlcoveReach(g.moonFoot,-1);
- if(airborne&&Math.hypot(g.moonHand.x-shoulder.x,g.moonHand.y-shoulder.y)<=maxReach)pawIncenseArm(shoulder,g.moonHand,sleeve,false);
+ const sc=pawAlcoveActorScale(),reach=pawAlcoveMoonReach(g);
+ const hand=airborne?pawAlcoveMoonContact(g,f,pawMoonMotion(f,0,pawMoonFlat(run.result,0,run.count),run.moonHeight||95)):null;
+ if(hand)pawIncenseArm(reach.shoulder,hand,reach.sleeve,false);
  backHuman(g.moonFoot.x,g.moonFoot.y,avatar??0,false,'up',sc);
  for(let i=0;i<2;i++){
   const flat=pawMoonFlat(run.result,i,run.count),m=pawMoonMotion(f,i,flat,run.moonHeight||95),pt=pawAlcoveMoonPoint(g,m);
@@ -12386,9 +12411,40 @@ const pawCounterRackStyle=document.createElement('style');pawCounterRackStyle.te
 /* Railway wayfinding: a single contextual edge sign only when the actual
    map plaque has been clipped or displaced. No extra permanent next-stop CTA. */
 const pawRailEdge=element('button','',$('game'),'pawRailEdge');pawRailEdge.type='button';pawRailEdge.hidden=true;
-pawRailEdge.onclick=()=>{if(!pawRailEdge.hidden&&!transitioning&&!room&&!activity&&proposal.hidden&&$('page').style.display!=='block')walkDoor('station')};
+/* PAW_RAIL_EDGE_PRESS_BEGIN */
+function pawRailEdgePressValid(press,view,event){
+ return !!press&&!!view&&!!event&&press.id===event.pointerId&&press.scene===view.scene&&!view.blocked&&Math.hypot(event.clientX-press.x,event.clientY-press.y)<30
+}
+/* PAW_RAIL_EDGE_PRESS_END */
+let pawRailEdgePress=null,pawRailEdgeClickUntil=0;
+const pawRailEdgeView=()=>({scene,blocked:!!(transitioning||room||activity||pending||!proposal.hidden||document.hidden||$('page').style.display==='block'||!pawRailNearStation(p,maps[scene]?.st.find(v=>v[0]==='station')))});
+pawRailEdge.addEventListener('pointerdown',e=>{
+ if(e.button!==0||e.isPrimary===false||pawRailEdge.hidden||pawRailEdgeView().blocked||pawRailEdgePress)return;
+ pawRailEdgePress={id:e.pointerId,scene,x:e.clientX,y:e.clientY};drag=null;
+ e.preventDefault();e.stopPropagation();
+ try{pawRailEdge.setPointerCapture(e.pointerId)}catch{}
+});
+document.addEventListener('pointerup',e=>{
+ const press=pawRailEdgePress;if(!press||press.id!==e.pointerId)return;
+ pawRailEdgePress=null;pawRailEdgeClickUntil=performance.now()+400;drag=null;
+ e.preventDefault();e.stopImmediatePropagation();
+ if(pawRailEdgePressValid(press,pawRailEdgeView(),e))walkDoor('station');
+},true);
+for(const kind of ['pointercancel','lostpointercapture'])document.addEventListener(kind,e=>{
+ if(pawRailEdgePress?.id===e.pointerId){pawRailEdgePress=null;pawRailEdgeClickUntil=performance.now()+400;drag=null}
+},true);
+window.addEventListener('blur',()=>{pawRailEdgePress=null});
+pawRailEdge.onclick=e=>{
+ if(e.detail!==0&&performance.now()<pawRailEdgeClickUntil)return;
+ if(!pawRailEdge.hidden&&!pawRailEdgeView().blocked)walkDoor('station')
+};
 // A plaque can have a valid rectangle yet be hidden, clipped, or covered.
 // Require an actual hit target before withdrawing the edge navigation.
+/* PAW_RAIL_NEAR_STATION_BEGIN */
+function pawRailNearStation(actor,station){
+ return Array.isArray(station)&&station[0]==='station'&&[actor?.x,actor?.y,station[1],station[2]].every(Number.isFinite)&&Math.hypot(actor.x-station[1],actor.y-station[2])<=180
+}
+/* PAW_RAIL_NEAR_STATION_END */
 function pawRailPlaqueReachable(sign,g){
  if(!sign||sign.hidden||sign.disabled||!g)return false;
  const r=sign.getBoundingClientRect(),style=getComputedStyle(sign);
@@ -12416,6 +12472,12 @@ syncSigns=function(...args){
   pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
  }
  const sign=signButtons.get('station'),game=$('game'),g=game.getBoundingClientRect(),now=performance.now(),size=g.width+'|'+g.height;
+ const station=maps[scene].st.find(v=>v[0]==='station');
+ if(!pawRailNearStation(p,station)){
+  if(sign)sign.hidden=true;
+  pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
+ }
+ if(pawRailEdgePress?.scene===scene&&!pawRailEdge.hidden)return result;
  const changed=pawRailEdgeScene!==scene||pawRailEdgeSize!==size;
  if(changed){pawRailEdgeScene=scene;pawRailEdgeSize=size;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity}
  if(!changed&&now-pawRailEdgeAt<75)return result;pawRailEdgeAt=now;
@@ -12439,7 +12501,7 @@ syncSigns=function(...args){
  return result
 };
 const pawRailEdgeStyle=document.createElement('style');pawRailEdgeStyle.textContent=`
-#game .pawRailEdge{position:absolute;z-index:13;min-height:44px;max-width:46%;padding:6px 12px;border:1px solid #c6aa7a;border-radius:5px;background:#efe0bddf;color:#4d4938;font:600 12px var(--paw-body,system-ui,sans-serif);box-shadow:0 2px 4px #29392d44}
+#game .pawRailEdge{position:absolute;z-index:13;touch-action:none;user-select:none;-webkit-user-select:none;min-height:44px;max-width:46%;padding:6px 12px;border:1px solid #c6aa7a;border-radius:5px;background:#efe0bddf;color:#4d4938;font:600 12px var(--paw-body,system-ui,sans-serif);box-shadow:0 2px 4px #29392d44}
 #game .pawRailEdge[hidden],#game.pawDoorCameraActive #worldSigns,#game.pawRailJourneyActive .pawRailEdge{display:none!important}
 `;document.head.append(pawRailEdgeStyle);
 // Ordinary shop doors push the camera towards the player's grounded approach
@@ -12471,11 +12533,11 @@ fade=function(fn,kind='gust',destination=null){
 // from the temporary wishing garden. Trace the actual stone paving.
 const pawRearGardenPlate={x:100,y:-145,w:600,h:600*1631/960};
 const pawRearGardenNodes={
- entry:[.48,.78], bend:[.58,.60], fork:[.60,.48],
- feed:[.53,.49], seat:[.78,.475], chime:[.70,.355], cats:[.58,.351], upper:[.59,.389]
+ entry:[.48,.78], bend:[.59,.70], fork:[.61,.63],
+ feed:[.53,.63], seat:[.78,.60]
 };
-const pawRearGardenEdges=[['entry','bend'],['bend','fork'],['fork','feed'],['fork','seat'],['fork','chime'],['chime','upper'],['upper','cats']];
-const pawRearGardenTargets={feed:[.30,.459,.25,.095],seat:[.79,.415,.23,.065],chime:[.78,.17,.11,.12],cats:[.65,.25,.23,.09]};
+const pawRearGardenEdges=[['entry','bend'],['bend','fork'],['fork','feed'],['fork','seat']];
+const pawRearGardenTargets={feed:[.30,.62,.25,.095],seat:[.79,.55,.23,.065]};
 function pawRearGardenRoute(from,action){
  if(!Array.isArray(from)||from.length!==2||!from.every(Number.isFinite)||!Object.hasOwn(pawRearGardenTargets,action))return null;
  const names=Object.keys(pawRearGardenNodes),distance=(a,b)=>Math.hypot((a[0]-b[0])*pawRearGardenPlate.w,(a[1]-b[1])*pawRearGardenPlate.h);
@@ -12526,13 +12588,13 @@ function pawDrawRearSeated(im,id,hip,scale){
  }finally{ctx.restore()}return true
 }
 function pawRearBenchPose(p,scale){
- const hip={x:p.x+p.w*.78,y:p.y+p.h*.407};
+ const hip={x:p.x+p.w*.78,y:p.y+p.h*.55};
  return {hip,x:hip.x-9*scale,y:hip.y+32*scale,scale}
 }
 // The bench hip and adjacent paving establish a world-space body size.
 // Keep that size when the viewport or camera changes; the camera alone zooms.
 function pawRearGardenActorScale(p,seat=pawRearGardenNodes.seat){
- const rise=p.h*(seat[1]-.407);
+ const rise=p.h*(seat[1]-.55);
  return Number.isFinite(rise)&&rise>0?Math.max(1.35,Math.min(2.25,rise/32)):1.72
 }
 function pawRearGardenSeatAmount(run,now,reduced,atBench){
@@ -12566,22 +12628,22 @@ function pawRearGardenSway(age,reduced=false,kind='chime'){
 }
 function pawRearPondGlint(i,now,reduced=false){
  const phase=reduced?.45:((now*.22+i*.271)%1+1)%1;
- return {u:.315+i*.021+Math.sin(phase*Math.PI*2+i)*.007,v:.454+(i%2)*.014+(phase-.5)*.012,rx:5+phase*10,ry:1.3+phase*1.7,alpha:.26*Math.sin(Math.PI*phase)}
+ return {u:.315+i*.021+Math.sin(phase*Math.PI*2+i)*.007,v:.62+(i%2)*.014+(phase-.5)*.012,rx:5+phase*10,ry:1.3+phase*1.7,alpha:.26*Math.sin(Math.PI*phase)}
 }
 // Traced against the inspected 960x1631 rear garden plate. The animated
 // stream follows the bamboo spout and the ripples stay within open water.
 function pawRearWaterFlow(i,now,reduced=false){
  const f=reduced?(i+.5)/7:((now*.92+i/7)%1+1)%1;
- return {u:.167+.032*f+.006*Math.sin(f*Math.PI),v:.334+.073*f,alpha:.35+.50*Math.sin(Math.PI*f),length:.005+.008*f};
+ return {u:.167+.032*f+.006*Math.sin(f*Math.PI),v:.47+.073*f,alpha:.35+.50*Math.sin(Math.PI*f),length:.005+.008*f};
 }
 function pawRearWaterRipple(i,now,reduced=false){
  const f=reduced?(i+.5)/4:((now*.55+i/4)%1+1)%1;
- return {u:.198,v:.409,rx:.007+.037*f,ry:.0017+.009*f,alpha:.52*Math.sin(Math.PI*f)};
+ return {u:.198,v:.55,rx:.007+.037*f,ry:.0017+.009*f,alpha:.52*Math.sin(Math.PI*f)};
 }
 function pawRearGardenPellet(i,age){
  if(!Number.isFinite(age)||age<0||age>.9)return null;
  const f=Math.max(0,Math.min(1,(age-i*.035)/.65));if(f<=0||f>=1)return null;
- const from=[.53,.443],to=[.31+i*.018,.453+(i%2)*.014];
+ const from=[.53,.56],to=[.31+i*.018,.62+(i%2)*.014];
  return [from[0]+(to[0]-from[0])*f,from[1]+(to[1]-from[1])*f-.035*Math.sin(Math.PI*f)]
 }
 /* PAW_PAINTED_GARDEN_END */
@@ -12597,7 +12659,7 @@ start=function(id,...args){
   if(state.pawRearGarden)pawRearSeatedImage(avatar??0);
   if(state.pawRearGarden){
    state.pawGardenWalk={painted:true,pos:pawRearGardenNodes.entry.slice(),route:[pawRearGardenNodes.bend.slice(),pawRearGardenNodes.fork.slice()],action:null,last:t,dir:'up'};
-   hint('Follow the stone path to the pond or lucky cats.','沿石径去看看锦鲤和招财猫。')
+   hint('Follow the stone path to the pond or the bench.','沿石径去看看锦鲤，或在长椅上歇一歇。')
   }
  }
  return result
@@ -12613,7 +12675,7 @@ pawGardenRoute=function(q,action){
 const pawRearGardenChooseBefore=pawGardenChoose;
 pawGardenChoose=function(run,kind){
  if(!run?.pawRearGarden)return pawRearGardenChooseBefore(run,kind);
- if(run!==state||!pawRearGardenActive()||pawArcadeInputBlocked())return;
+ if(run!==state||!pawRearGardenActive()||pawArcadeInputBlocked()||!Object.hasOwn(pawRearGardenTargets,kind))return;
  const q=run.pawGardenWalk;if(!q||q.route.length)return;
  if(!Object.hasOwn(pawRearGardenTargets,kind))return;
  if(run.gardenSitting||pawRearGardenSeatAmount(run,t,residentReducedMotion.matches,pawRearGardenAtBench(q))>0){
@@ -12651,8 +12713,7 @@ drawActivity=function(...args){
   const next=q.pawAfterStand;delete q.pawAfterStand;pawGardenChoose(run,next)
  }
  const prior=q.pos.slice(),arrive=pawGardenWalkTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
- if(arrive==='feed')gardenFeed();else if(arrive==='seat'){gardenSeat();q.dir='left'}else if(arrive==='chime')gardenChime();
- else if(arrive==='cats'){run.pawCatAt=t;const i=Number.isInteger(run.pawCatPending)?run.pawCatPending:(Number.isInteger(run.pawCatChoice)?(run.pawCatChoice+1)%6:1);delete run.pawCatPending;sound(520);hint(...pawRearCatChoice(run,i))}
+ if(arrive==='feed')gardenFeed();else if(arrive==='seat'){gardenSeat();q.dir='left'}
  const dx=(q.pos[0]-prior[0])*p.w,dy=(q.pos[1]-prior[1])*p.h,moving=q.route.length>0;
  if(Math.hypot(dx,dy)>.01)q.dir=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';
  continuityActivity=activity;
@@ -12680,7 +12741,7 @@ drawActivity=function(...args){
    for(let j=0;j<5;j++){
     const pt=pawRearGardenPellet(j,age);if(pt){const [px,py]=xy(...pt);ellipse(px,py,1.6,1.6,'#dfc28a')}
     const f=Math.max(0,Math.min(1,(age-.65-j*.08)/1.65));
-    if(f>0&&f<1){const [rx,ry]=xy(.31+j*.018,.453+(j%2)*.014);ctx.strokeStyle='rgba(242,239,207,'+(.6*(1-f))+')';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(rx,ry,2+f*17,1+f*5,0,0,TAU);ctx.stroke()}
+    if(f>0&&f<1){const [rx,ry]=xy(.31+j*.018,.62+(j%2)*.014);ctx.strokeStyle='rgba(242,239,207,'+(.6*(1-f))+')';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(rx,ry,2+f*17,1+f*5,0,0,TAU);ctx.stroke()}
    }
   }
   const [x,y]=xy(...q.pos),scale=pawRearGardenActorScale(p);
@@ -12693,19 +12754,11 @@ drawActivity=function(...args){
    const painted=seatAmount>=.98&&run.pawRearSeatArt&&pawDrawRearSeated(im,id,a.hip,scale);
    if(!painted){ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}}
   }else{delete run.pawRearSeatArt;backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale)}
-  const chimeAge=t-run.gardenChimeAt,catAge=t-run.pawCatAt,reduced=residentReducedMotion.matches;
-  // Only the hanging paper tail moves. The beam, chain, bell and ceramic figures stay rigid.
-  const breeze=reduced?0:Math.sin(t*1.45)*.42+Math.sin(t*.83)*.18;
-  pawRearGardenWarp(pawRearGardenArt(),p,[.75,.169,.808,.224],breeze+pawRearGardenSway(chimeAge,reduced)*.36);
-  if(catAge>=0&&catAge<2.2&&Number.isInteger(run.pawCatChoice)){
-   const [u,v]=pawRearCatFigurines[run.pawCatChoice],[gx,gy]=xy(u,v+.012);
-   ctx.save();ctx.globalAlpha=.48*(1-catAge/2.2);ellipse(gx,gy,12,2.6,'#ffdc94');ctx.restore()
-  }
+  // Wind moves the existing paper strip. The cats remain scenery.
+  const breeze=residentReducedMotion.matches?0:Math.sin(t*1.45)*.65+Math.sin(t*.83)*.26;
+  pawRearGardenWarp(pawRearGardenArt(),p,[.75,.30,.81,.37],breeze);
   if(!moving)for(const [kind,[u,v,ww,hh]] of Object.entries(pawRearGardenTargets)){
    const [tx,ty]=xy(u,v);target(tx-ww*p.w/2,ty-hh*p.h/2,ww*p.w,hh*p.h,()=>pawGardenChoose(run,kind),'paw-rear-garden-'+kind)
-  }
-  if(!moving)for(let i=0;i<pawRearCatFigurines.length;i++){
-   const [cx,cy]=xy(...pawRearCatFigurines[i]);target(cx-14,cy-15,28,30,()=>{if(run!==state||pawArcadeInputBlocked()||q.route.length)return;run.pawCatPending=i;pawGardenChoose(run,'cats')},'paw-rear-cat-'+i)
   }
  }finally{ctx.restore()}
  pawGardenControls(run)
@@ -13211,12 +13264,57 @@ document.head.append(pawCafeReflectionCss);
 
 // Warm the selected traveller during registration and the railway ride,
 // including returning players. Existing gate artwork stays visible until ready.
+/* PAW_BOOT_CURRENT_ART_BEGIN */
+function pawEntranceRecord(kind,dir,registry=pawBootWalkManifest){
+ if(!Number.isInteger(kind)||kind<0||kind>3)return null;
+ return registry.players[kind]?.walk?.[dir]?.[0]||null
+}
+function pawEntranceWalkRecords(kind,registry=pawBootWalkManifest){
+ const walk=registry.players[kind]?.walk;
+ return walk&&['up','down','right'].every(d=>Array.isArray(walk[d])&&walk[d].length===4)?['up','down','right'].flatMap(d=>walk[d]):[]
+}
+function pawEntranceDirection(dir){return dir===1?'up':dir===2?'right':'down'}
+/* PAW_BOOT_CURRENT_ART_END */
+const pawEntranceWalkJobs=new Map();
+function pawReadyEntranceWalk(kind){
+ const records=pawEntranceWalkRecords(kind);
+ if(!records.length)return Promise.resolve(false);
+ if(pawEntranceWalkJobs.has(kind))return pawEntranceWalkJobs.get(kind);
+ for(const record of records)mbArtImage(record);
+ const task=Promise.all(records.map(record=>pawReadyPicture(mbArtImages.get(record.path)))).then(results=>{
+  const ready=pawAdmissionReady(results);if(ready)pawCalibrateWalkFamily(mbArtRegistry.players[kind]?.walk||pawBootWalkManifest.players[kind].walk);
+  else pawEntranceWalkJobs.delete(kind);return ready
+ });
+ pawEntranceWalkJobs.set(kind,task);return task
+}
+function pawEntranceUseCurrent(im,kind,dir,gate=false){
+ const record=pawEntranceRecord(kind,dir);if(!im||!record)return;
+ // Replace the detached legacy element synchronously before the next paint.
+ im.dataset.pawCropFamily='painted';im.dataset.pawArtReady='false';
+ im.style.visibility='hidden';im.src=record.path;
+ if(gate){
+  im.style.setProperty('--paw-gate-pivot-x',(-100*record.foot[0]/record.width)+'%');
+  im.style.setProperty('--paw-gate-pivot-y',(-100*record.foot[1]/record.height)+'%')
+ }
+ const reveal=()=>{if(im.isConnected&&im.getAttribute('src')===record.path&&im.naturalWidth===record.width&&im.naturalHeight===record.height){im.dataset.pawArtReady='true';im.style.visibility='visible'}};
+ if(im.complete)reveal();else im.addEventListener('load',reveal,{once:true})
+}
 const pawAdmissionRenderBefore=proRender;
 proRender=function(...args){
  const result=pawAdmissionRenderBefore(...args);
  if(!proposal.hidden){
   pawReadyMap('fortune');
-  if(Number.isInteger(proAvatar??avatar))pawWarmSelectedTraveller(proAvatar??avatar)
+  const kind=proAvatar??avatar;
+  if(Number.isInteger(kind)){
+   const hero=proposal.querySelector('.hero');
+   if(proStep===3)pawEntranceUseCurrent(hero?.querySelector('.gate-traveller'),kind,'up',true);
+   if(proStep===1||proStep===2){
+    pawEntranceUseCurrent(hero?.querySelector('.pawEntranceAvatar'),kind,pawEntranceDirection(proStep===1?proDir:0));
+    for(const button of proposal.querySelectorAll('.pawAvatarOption'))pawEntranceUseCurrent(button.querySelector('img'),Number(button.dataset.avatar),'down')
+   }
+   // Decode selected frames during onboarding, not after the entrance tap.
+   pawReadyEntranceWalk(kind)
+  }
  }
  return result
 };

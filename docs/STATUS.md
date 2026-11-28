@@ -1319,3 +1319,23 @@ Previous candidate run 46135424282: four rendered experience jobs and share expo
 
 ### Release regression convergence, 28 November
 Main de45561f Pages run 46135837805 completed successfully; organic player loop and Master Yue consultation passed. Main railway, entrance and broad smoke not terminal at observation. Candidate #123: repair three actual failing assertions from runs 46136089297 and 46136377880. Temple action harness explicitly exercises non-alcove fallback and refuses premature retry during 1.2-second settled-result pause. Master Yue seat and guest clearance checks use corrected chair/table anchors, and chart drawing must be unfolded. Exact action suite passed including 41 fortune state and 53,257 entrance lifecycle assertions; 57 seated host cases passed; layout runtime checks passed including 9,022 safe steps, 1,058 blocked steps, 110,678 safe routes and 12,114 shorter routes. Layout binary hashes not repeated in connector harness; prior CI passed them. No new runtime changes, no main write, no visual acceptance or workstream promotion. Update existing release candidate rather than opening another competing PR.
+
+
+### Railway edge touch correction, 28 November
+Main railway run 46135838241 passed eight profiles; WebKit tablet failed after rotation with pending arcade rather than station. Independent child correction retains the railway edge pointer target until release, validates scene and pointer ownership, rejects drag/cancel/stale scene, suppresses duplicate clicks and keeps keyboard action. Exact source parsed; 13,454 focused cases passed. This addresses a genuine edge touch ownership gap but the reported tablet failure requires full browser reproduction to confirm. Preserve current #123 CI; no main write or workstream acceptance.
+
+
+### Owner temple correction convergence, 28 November
+Reconciled #124 moon clearance and purification scale/occlusion into #125 without reverting the newer physical ladle transform. Exact candidate sources and test scripts parsed. Focused temple result and clearance checks executed against candidate source: PASS 2021 temple result, physical walk and resident copy checks; PASS 4877 moon clearance, contact, walk and viewport checks; minimum world gap 3.38. Full browser, screenshot and live acceptance pending. Garden and optional station portions of #124 still require reconciliation. No main write; #123 CI preserved.
+
+
+### Rear garden convergence, 28 November
+Reconciled #124 foreground paving routes, pond effects and ambient wind chime into #125 while retaining painted seated pose, stable actor scale and deferred stand/route transitions. Only feed and sit remain interactive on the painted garden. Exact JS parsed; focused garden and bench connector tests passed (asset existence checks stubbed). Rendered visual acceptance pending; no main write. Parent #123 CI preserved.
+
+
+### Entrance convergence, 28 November
+Reconciled #126 into #125: boot uses manifest-matched painted walking sprites, decodes selected artwork, avoids redundant legacy crop warmup, and shortens the gate walk to 600ms. All three changed JS files parsed; exact-source manifest/readiness checks passed: Entrance painted traveller readiness regression passed; PASS 31 current painted entrance selection and timing checks. Cold/warm browser timing and visual acceptance pending. Main unchanged; parent candidate checks remain running.
+
+
+### Railway discovery and departure convergence, 28 November
+Integrated revised #124 station proximity rule into #125, keeping direct boarding and the intentional travel journal route. A 180 world-unit threshold hides both plaque and edge fallback at distance; pointer ownership and proximity are both revalidated on release. Real touch approach added to railway matrix. Exact changed source parsed and focused connector checks passed: 2021 temple continuity, 4877 moon clearance, 9413 proximity/direct departure and 13455 railway touch ownership checks. Full mobile railway matrix and rendered visual acceptance pending. Main unchanged; parent #123 checks preserved.

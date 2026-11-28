@@ -9,7 +9,7 @@ for(let i=0;i<=100;i++){const f=i/100,a=api.pawAlcoveStickPoint(g,{fall:f,picked
 const landed=api.pawAlcoveStickPoint(g,{fall:1,picked:false,pick:0});assert.equal(landed.y,g.stickTray.y);assert.equal(landed.x,g.stickTray.x);
 const held=api.pawAlcoveStickPoint(g,{fall:1,picked:true,pick:1});const grip=api.pawAlcoveReach(g.stickPickFoot).grip;assert.equal(held.x,grip.x);assert.equal(held.y,grip.y);
 for(let i=0;i<=100;i++){const u=i/100,pick=.45+.55*u,f=u*u*(3-2*u),p=api.pawAlcoveStickPoint(g,{fall:1,picked:true,pick});assert.ok(Math.abs(p.x-(g.stickTray.x+(grip.x-g.stickTray.x)*f))<1e-8&&Math.abs(p.y-(g.stickTray.y+(grip.y-g.stickTray.y)*f))<1e-8);}
-for(const [foot,hand,side] of [[g.stickFoot,g.tubeGrip,1],[g.stickPickFoot,g.stickTray,1],[g.moonFoot,g.moonHand,-1]]){const r=api.pawAlcoveReach(foot,side);assert.ok(Math.hypot(hand.x-r.shoulder.x,hand.y-r.shoulder.y)<=r.maxReach);assert.equal(r.sleeve,.72*api.pawAlcoveActorScale());}
+for(const [foot,hand,side] of [[g.stickFoot,g.tubeGrip,1],[g.stickPickFoot,g.stickTray,1],[g.moonFoot,g.moonHand,1]]){const r=api.pawAlcoveReach(foot,side);assert.ok(Math.hypot(hand.x-r.shoulder.x,hand.y-r.shoulder.y)<=r.maxReach);assert.equal(r.sleeve,.72*api.pawAlcoveActorScale());}
 for(let i=0;i<=100;i++){const f=i/100;for(let j=0;j<2;j++){const sign=j?1:-1,x=350+j*100+sign*Math.sin(Math.PI*f)*21,lift=Math.sin(Math.PI*f)*95,p=api.pawAlcoveMoonPoint(g,{x,lift});assert.ok(Math.abs(p.x-g.moonTray.x)<=19&&p.y<=g.moonTray.y)}}
 const s=api.pawSlipGeometry();
 for(const [stage,age,a] of [['folded',0,s.counter],['opening',.75,s.reading],['tied',.7,s.tie],['kept',.7,s.bag]]){const p=api.pawSlipPose(stage,age,s);assert.ok(Math.abs(p.x-a.x)<.001&&Math.abs(p.y-a.y)<.001);if(['kept','tied'].includes(stage))assert.equal(p.alpha,0)}
@@ -190,8 +190,8 @@ console.log('Resting ladle retry and exclusive held-tool ownership checks passed
 
 // Physical contact: the mirrored rotation is identical for the painted
 // ladle, the gripping hand and the stream origin, with bounded arm reach.
-const physicalWater=new Function(get('PURIFICATION_PAINT')+';return {pawWaterGeometry,pawWaterLadlePoint,pawWaterShoulder,pawWaterDragCentre,pawWaterDestination,pawWaterDropMatches}')();
-const wg=physicalWater.pawWaterGeometry(),ws=1.92,wsh=physicalWater.pawWaterShoulder(wg,ws);
+const physicalWater=new Function(get('PURIFICATION_PAINT')+';return {pawWaterGeometry,pawWaterLadlePoint,pawWaterShoulder,pawWaterDragCentre,pawWaterDestination,pawWaterDropMatches,pawWaterActorScale}')();
+const wg=physicalWater.pawWaterGeometry(),ws=physicalWater.pawWaterActorScale(),wsh=physicalWater.pawWaterShoulder(wg,ws);
 for(let i=0;i<=100;i++){
  const angle=.58*i/100,p=physicalWater.pawWaterLadlePoint(wg.pour,angle,-25,1),b=physicalWater.pawWaterLadlePoint(wg.pour,angle,35,6);
  assert.ok(Math.abs(Math.hypot(p.x-b.x,p.y-b.y)-.65*Math.hypot(60,5))<1e-7);
@@ -207,6 +207,30 @@ for(const stage of [0,1]){
  assert.ok(Math.hypot(p.x-q.x,p.y-q.y)<1e-7);
  assert.ok(physicalWater.pawWaterDropMatches(stage,q.x,q.y,wg));
 }
-assert.ok(src.includes('at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,pawTemplePaintedActorScale())'));
+assert.ok(src.includes('at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,pawWaterActorScale())'));
+assert.equal(ws,2.18);
+assert.ok(src.includes('const sc=pawWaterActorScale(),shoulder=pawWaterShoulder'));
 assert.ok(src.includes('const bowl=pawWaterLadlePoint(at,angle,35,6)'));
+// Replay the actual release wrapper and compare its accepted centre with
+// the rendered held-ladle centre, including offset grabs and rejected drops.
+const releaseBlock=src.slice(src.indexOf('const pawWaterReleaseBefore=templeReleaseWater;'),src.indexOf('const pawWaterAssistBefore=mb5AssistPerform;'));
+const releaseHarness=new Function(get('PURIFICATION_PAINT')+`
+let state,accepted,templeReleaseWater=(a)=>{accepted=a;state.waterStage++};
+const pawWaterPaintingActive=()=>true,pawArcadeInputBlocked=()=>false,hint=()=>{};
+`+releaseBlock+`
+return {run(stage,point,gesture){state={waterStage:stage};accepted=null;templeReleaseWater(point,gesture);return {stage:state.waterStage,from:state.pawWaterFrom,accepted}}};
+`)();
+let releaseCases=0;
+for(const stage of [0,1])for(const dx of [-45,0,45])for(const dy of [-30,0,30])for(let x=260;x<=430;x+=5)for(let y=320;y<=500;y+=5){
+ const point={x,y},gesture={id:'templeLadle',h:{x:300,y:400,w:82,h:44},sx:341+dx,sy:422+dy};
+ const centre=physicalWater.pawWaterDragCentre({x:x-dx,y:y-dy},wg,ws);
+ const valid=physicalWater.pawWaterDropMatches(stage,centre.x,centre.y,wg);
+ const got=releaseHarness.run(stage,point,gesture);
+ assert.equal(got.stage,stage+(valid?1:0));
+ if(valid){assert.deepEqual(got.from,centre);assert.ok(got.accepted)}
+ else assert.equal(got.accepted,null);
+ releaseCases++;
+}
+assert.ok(src.includes("if(gesture?.id==='templeLadle')a=pawWaterDragCentre(a,g,pawWaterActorScale())"));
+console.log('PASS '+releaseCases+' actual ladle release and render agreement cases');
 console.log('Purification ladle contact and bounded reach checks passed.');
