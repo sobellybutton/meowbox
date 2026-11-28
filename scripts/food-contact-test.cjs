@@ -127,4 +127,32 @@ ck(extension.includes('const pose=pawKitchenTasteMotion(age,residentReducedMotio
 ck(extension.includes('drawRitualPose(290,495,1.35,{reach:pose.reach});'),'same actor scale as serving');
 ck(startup.includes("else if(action==='serve-soup')pawKitchenServeRequest();"),'assist uses real serving action');
 
+
+const steamBlock=startup.split('/* PAW_KITCHEN_STEAM_BEGIN */')[1].split('function pawKitchenSteamAvailable')[0];
+const steam=new Function(steamBlock+';return {pawKitchenSteamAdvance,pawKitchenSteamSpec,pawKitchenSteamPlate}')();
+const meal2={phase:'prep',age:0,last:0};let steamNow=0;
+ck(!steam.pawKitchenSteamAdvance(meal2,0,false,'steam-cook'),'cannot skip preparation');
+ck(steam.pawKitchenSteamAdvance(meal2,0,false,'steam-load'),'load vegetables');
+ck(steam.pawKitchenSteamSpec(meal2).disabled,'loading input locked');
+for(let i=0;i<20;i++){steamNow+=.1;steam.pawKitchenSteamAdvance(meal2,steamNow,true);ck(meal2.phase==='loading'&&meal2.age===0,'pause holds preparation')}
+for(let i=0;i<9;i++){steamNow+=.1;steam.pawKitchenSteamAdvance(meal2,steamNow,false)}
+ck(meal2.phase==='loaded','vegetables loaded');
+ck(steam.pawKitchenSteamAdvance(meal2,steamNow,false,'steam-cook'),'start steaming');
+for(let i=0;i<41;i++){steamNow+=.1;steam.pawKitchenSteamAdvance(meal2,steamNow,false)}
+ck(meal2.phase==='ready','steaming complete');
+ck(steam.pawKitchenSteamAdvance(meal2,steamNow,false,'steam-serve'),'serve vegetables');
+for(let i=0;i<10;i++){steamNow+=.1;steam.pawKitchenSteamAdvance(meal2,steamNow,false)}
+ck(meal2.phase==='served','served vegetables');
+ck(steam.pawKitchenSteamAdvance(meal2,steamNow,false,'steam-taste'),'taste vegetables');
+for(let i=0;i<16;i++){steamNow+=.1;steam.pawKitchenSteamAdvance(meal2,steamNow,false)}
+ck(meal2.phase==='done','meal complete');
+ck(steam.pawKitchenSteamSpec(meal2).action==='back','return to same kitchen');
+for(const phase of ['prep','loading','loaded','steaming','ready','serving','served','eating','done'])for(let i=0;i<=150;i++)for(const reduced of [false,true]){
+ const a=steam.pawKitchenSteamPlate({phase,age:i/100},reduced);
+ ck(Number.isFinite(a.x)&&Number.isFinite(a.y)&&a.x>=344&&a.x<=530&&a.y>=377&&a.y<=600,'bounded vegetable plate motion');
+}
+ck(startup.includes("pawPaintFoodProp('kitchen_bamboo_steamer',400,535,112);"),'actual painted steamer');
+ck(extension.includes('if(!state.pawSteam&&!state.done&&(W<H||ladle))'),'no duplicated avatar');
+ck(startup.includes("if(kind==='cook'&&q.pawSteam)return pawKitchenSteamSpec(q.pawSteam);"),'live alternate recipe control');
+
 console.log('PASS '+n+' food contact geometry, phase and source assertions; no rendered contact acceptance');
