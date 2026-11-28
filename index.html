@@ -22,11 +22,25 @@ html[data-boot-art="station"] .bootGate{object-fit:contain;object-position:cente
 .bootShade{position:fixed;inset:0;background:linear-gradient(180deg,#263c3208 35%,#263c32bd 100%);pointer-events:none}
 main{position:relative;align-self:end;text-align:center;box-sizing:border-box;width:min(100%,480px);padding:24px 20px max(30px,env(safe-area-inset-bottom,0px));text-shadow:0 1px 4px #263c32}h1{font-size:clamp(24px,5vw,34px);margin:0 0 8px;font-weight:normal}small{display:block;line-height:1.5;margin-top:10px}button{font:inherit;min-height:44px;background:#edddbd;color:#443d2d;border:1px solid #9e8966;border-radius:8px;padding:8px 18px}button:focus-visible{outline:2px solid #fff1c6;outline-offset:3px}progress{display:block;width:min(72%,240px);height:5px;margin:13px auto 0;accent-color:#e4cd99;border:0;border-radius:4px;background:#243b32;color:#e4cd99}progress::-webkit-progress-bar{background:#243b32;border-radius:4px}progress::-webkit-progress-value{background:#e4cd99;border-radius:4px}progress::-moz-progress-bar{background:#e4cd99;border-radius:4px}
 @media(orientation:landscape){.bootGate{object-fit:contain}.bootShade{background:linear-gradient(90deg,#263c32b0,transparent 32%,transparent 68%,#263c32b0)}main{background:#263c3299;align-self:end}}
+
+/* Illustrated first paint: same station artwork as the opening, no extra loading gate. */
+:root{--boot-display:Georgia,"Palatino Linotype","Songti SC","Noto Serif CJK SC",serif}
+html[lang^="zh"]{--boot-display:"Songti SC","Noto Serif CJK SC","STSong","KaiTi",serif}
+.bootShade{background:linear-gradient(180deg,#1b302c22 0%,transparent 30%,#1b302c12 48%,#1b302ce8 100%)}
+main{width:min(100%,540px);padding:24px 24px max(32px,env(safe-area-inset-bottom,0px));background:none!important;text-shadow:0 2px 12px #152b24}
+main h1{font-family:var(--boot-display);font-size:clamp(40px,11vw,72px);font-weight:600;line-height:1.05;letter-spacing:.015em;color:#fff4d6;margin:0}
+html[lang^="zh"] main h1{letter-spacing:.11em}
+.bootTagline{font-family:var(--boot-display);font-size:clamp(13px,3.6vw,17px);line-height:1.45;margin:10px 0 18px;color:#f8e9c8}
+main h1:after{content:"";display:block;width:52px;height:1px;background:#e5c58a;margin:13px auto 0}
+main small{font-size:12px;font-weight:400;color:#f4e2b8;margin-top:8px}
+progress{height:3px;width:min(48%,168px);margin-top:10px}
+@media(orientation:landscape){.bootShade{background:linear-gradient(180deg,transparent 45%,#1b302cde 100%),linear-gradient(90deg,#263c32a0,transparent 28%,transparent 72%,#263c32a0)}main h1{font-size:clamp(30px,8vh,58px)}main{padding:12px 24px max(12px,env(safe-area-inset-bottom,0px))}.bootTagline{margin:5px 0 8px}}
+@media(prefers-reduced-motion:no-preference){.bootGate{animation:pawStationReveal .55s ease-out both}@keyframes pawStationReveal{from{opacity:.65}to{opacity:1}}}
 </style></head><body>
 <img class="bootGate" alt="" fetchpriority="high" decoding="async">
 <script>document.querySelector('.bootGate').src=bootEntrance.path;</script>
 <div class="bootShade" aria-hidden="true"></div>
-<main><h1>Pawradise</h1><small role="status" aria-live="polite"></small><progress id="bootProgress" value="0"></progress></main>
+<main><h1></h1><p class="bootTagline"></p><small role="status" aria-live="polite"></small><progress id="bootProgress" value="0"></progress></main>
 <script>
 const bootMark=name=>{try{performance.mark('paw:'+name)}catch{}};
 bootMark('boot-start');
@@ -44,6 +58,7 @@ document.documentElement.lang=bootZh?'zh-Hans':'en';
 const bootTr=(en,cn)=>bootZh?cn:en;
 document.title=bootTr('Pawradise · Fortune Valley','摸鱼小镇 · 解忧谷');
 document.querySelector('main h1').textContent=bootTr('Pawradise','摸鱼小镇');
+document.querySelector('.bootTagline').textContent=bootTr('A little world away from work.','偷得浮生半日闲。');
 const gate=document.querySelector('.bootGate');
 function gateReady(){if(gate.naturalWidth)bootMark('gate-image-ready')}
 if(gate.complete)gateReady();else gate.addEventListener('load',gateReady,{once:true});
