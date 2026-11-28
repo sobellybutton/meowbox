@@ -10932,8 +10932,7 @@ drawActivity=function(...args){
   const [bx,by]=xy(.83,.625);
   if(!moving){
    target(bx-36,by-34,72,68,()=>pawGardenChoose(run,'seat'));
-   target(water[0]-55,water[1]-20,110,40,()=>pawGardenChoose(run,'feed'));
-   target(wx-32,wy-24,64,62,()=>pawGardenChoose(run,'chime'))
+   target(water[0]-55,water[1]-20,110,40,()=>pawGardenChoose(run,'feed'))
   }
  }finally{ctx.restore()}
  pawGardenControls(run)
@@ -10947,10 +10946,11 @@ function pawGardenClearControls(){
 function pawGardenControls(run){
  const el=$('gameControls');if(!el||run!==state||activity!=='secretGarden')return;
  if(pawArcadeInputBlocked()){el.hidden=true;return}
+ if(run.pawGardenLeaving){el.hidden=true;return}
  const busy=!!run.pawGardenWalk?.route.length,key=String(zh)+'|'+run.gardenSitting+'|'+busy;
- if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===(run.pawRearGarden?4:3)){el.hidden=false;return}
+ if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===2){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawGardenControls');el.hidden=false;pawGardenControlsRun=run;pawGardenControlsKey=key;
- for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐'],['chime','Wind chime','听风铃'],...(run.pawRearGarden?[['cats','Greet the lucky cats','拜访招财猫']]:[])]){
+ for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐']]){
   const button=b(el,tr(en,cn),()=>pawGardenChoose(run,name));button.dataset.pawGardenControl=name;button.disabled=busy
  }
 }
@@ -12358,7 +12358,7 @@ const pawRearGardenNodes={
 const pawRearGardenEdges=[['entry','bend'],['bend','fork'],['fork','feed'],['fork','seat'],['fork','chime'],['chime','upper'],['upper','cats']];
 const pawRearGardenTargets={feed:[.30,.459,.25,.095],seat:[.79,.415,.23,.065],chime:[.78,.17,.11,.12],cats:[.65,.25,.23,.09]};
 function pawRearGardenRoute(from,action){
- if(!Array.isArray(from)||from.length!==2||!from.every(Number.isFinite)||!Object.hasOwn(pawRearGardenTargets,action))return null;
+ if(!Array.isArray(from)||from.length!==2||!from.every(Number.isFinite)||!(action==='entry'||Object.hasOwn(pawRearGardenTargets,action)))return null;
  const names=Object.keys(pawRearGardenNodes),distance=(a,b)=>Math.hypot((a[0]-b[0])*pawRearGardenPlate.w,(a[1]-b[1])*pawRearGardenPlate.h);
  const origin=names.reduce((best,k)=>distance(from,pawRearGardenNodes[k])<distance(from,pawRearGardenNodes[best])?k:best,names[0]);
  // All actions originate at completed route nodes, never across scenery.
@@ -12419,7 +12419,7 @@ start=function(id,...args){
   state.pawRearGarden=pawRoomImageReady(pawRearGardenArt());
   if(state.pawRearGarden){
    state.pawGardenWalk={painted:true,pos:pawRearGardenNodes.entry.slice(),route:[pawRearGardenNodes.bend.slice(),pawRearGardenNodes.fork.slice()],action:null,last:t,dir:'up'};
-   hint('Follow the stone path to the pond or lucky cats.','沿石径去看看锦鲤和招财猫。')
+   hint('Follow the stone path to the pond or take a seat.','沿石径去看看锦鲤，或在长椅上歇一会儿。')
   }
  }
  return result
@@ -12435,7 +12435,7 @@ pawGardenRoute=function(q,action){
 const pawRearGardenChooseBefore=pawGardenChoose;
 pawGardenChoose=function(run,kind){
  if(!run?.pawRearGarden)return pawRearGardenChooseBefore(run,kind);
- if(run!==state||!pawRearGardenActive()||pawArcadeInputBlocked())return;
+ if(run!==state||!pawRearGardenActive()||pawArcadeInputBlocked()||run.pawGardenLeaving||!['feed','seat'].includes(kind))return;
  const q=run.pawGardenWalk;if(!q||q.route.length)return;
  if(kind==='seat'&&run.gardenSitting){gardenSeat();return}
  if(run.gardenSitting){gardenSeat();if(run.gardenSitting)return}
@@ -12461,8 +12461,15 @@ drawActivity=function(...args){
  if(!pawRearGardenActive())return pawRearGardenDrawBefore(...args);
  const run=state,q=run.pawGardenWalk,p=pawRearGardenPlate,b=livingBounds(),xy=(u,v)=>[p.x+p.w*u,p.y+p.h*v];
  const prior=q.pos.slice(),arrive=pawGardenWalkTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
- if(arrive==='feed')gardenFeed();else if(arrive==='seat')gardenSeat();else if(arrive==='chime')gardenChime();
- else if(arrive==='cats'){run.pawCatAt=t;const i=Number.isInteger(run.pawCatPending)?run.pawCatPending:(Number.isInteger(run.pawCatChoice)?(run.pawCatChoice+1)%6:1);delete run.pawCatPending;sound(520);hint(...pawRearCatChoice(run,i))}
+ if(run.pawGardenLeaving){
+  if(arrive==='entry'){pawGardenClearControls();return pawRearGardenExitBefore.apply($('back'),run.pawGardenLeaving.args)}
+  if(!q.route.length&&!pawArcadeInputBlocked()){
+   if(run.gardenSitting){gardenSeat();if(!run.gardenSitting)run.pawGardenLeaving.stoodAt=t}
+   else if(!Number.isFinite(run.pawGardenLeaving.stoodAt)||t-run.pawGardenLeaving.stoodAt>=.45){
+    if(pawGardenRoute(q,'entry'))hint('Walking back to the temple…','沿石径返回大殿……')
+   }
+  }
+ }else if(arrive==='feed')gardenFeed();else if(arrive==='seat')gardenSeat();
  const dx=(q.pos[0]-prior[0])*p.w,dy=(q.pos[1]-prior[1])*p.h,moving=q.route.length>0;
  if(Math.hypot(dx,dy)>.01)q.dir=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';
  continuityActivity=activity;
@@ -12506,14 +12513,22 @@ drawActivity=function(...args){
    const [u,v]=pawRearCatFigurines[run.pawCatChoice],[gx,gy]=xy(u,v+.012);
    ctx.save();ctx.globalAlpha=.48*(1-catAge/2.2);ellipse(gx,gy,12,2.6,'#ffdc94');ctx.restore()
   }
-  if(!moving)for(const [kind,[u,v,ww,hh]] of Object.entries(pawRearGardenTargets)){
-   const [tx,ty]=xy(u,v);target(tx-ww*p.w/2,ty-hh*p.h/2,ww*p.w,hh*p.h,()=>pawGardenChoose(run,kind),'paw-rear-garden-'+kind)
-  }
-  if(!moving)for(let i=0;i<pawRearCatFigurines.length;i++){
-   const [cx,cy]=xy(...pawRearCatFigurines[i]);target(cx-14,cy-15,28,30,()=>{if(run!==state||pawArcadeInputBlocked()||q.route.length)return;run.pawCatPending=i;pawGardenChoose(run,'cats')},'paw-rear-cat-'+i)
+  if(!moving&&!run.pawGardenLeaving)for(const kind of ['feed','seat']){
+   const [u,v,ww,hh]=pawRearGardenTargets[kind], [tx,ty]=xy(u,v);
+   target(tx-ww*p.w/2,ty-hh*p.h/2,ww*p.w,hh*p.h,()=>pawGardenChoose(run,kind),'paw-rear-garden-'+kind)
   }
  }finally{ctx.restore()}
  pawGardenControls(run)
+};
+
+// The garden is reached through the temple; Back follows the same painted
+// stone path before restoring the hall. Repeated taps cannot skip the walk.
+const pawRearGardenExitBefore=$('back').onclick;
+$('back').onclick=function(...args){
+ if(!pawRearGardenActive())return pawRearGardenExitBefore.apply(this,args);
+ if(pawArcadeInputBlocked()||state.pawGardenLeaving)return;
+ state.pawGardenLeaving={args};pawGardenClearControls();
+ hint('Time to head back along the stone path.','沿石径慢慢走回去吧。')
 };
 
 /* PAW_FOOD_PAINT_BEGIN */
