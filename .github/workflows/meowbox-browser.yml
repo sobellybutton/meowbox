@@ -32,6 +32,7 @@ jobs:
       - run: node scripts/paw-room-life-scoop-test.cjs
       - run: node scripts/prepared-art-test.cjs
       - run: node scripts/food-prop-placement-test.cjs
+      - run: node scripts/blind-box-reveal-test.cjs
   browser:
     concurrency:
       group: meowbox-navigation-job-${{ github.ref }}
