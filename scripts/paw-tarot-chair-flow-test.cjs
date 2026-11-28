@@ -19,13 +19,14 @@ fs.mkdirSync('test-results/tarot-chair',{recursive:true});
  await wait(()=>room==='tarot'&&!activity&&pawReadingActive()&&continuityRoom==='tarot');
  await shot('arrival');
  await wait(()=>c.dataset.pawTarotSeat==='seated'&&pawTarotChairAt(indoor.x,indoor.y,pawReadingPlate)&&!indoor.route.length);
- await shot('seated');assert(await page.evaluate(()=>pawRoomImageReady(pawTarotChairImage(avatar??0))));
+ await wait(()=>t-pawTarotHostLastDraw<.3);await shot('seated');assert(await page.evaluate(()=>pawRoomImageReady(pawTarotChairImage(avatar??0))));
  // The fortune teller greets the seated traveller automatically. No hidden guide.
  await wait(()=>room==='tarot'&&!activity&&talkOpen);
  const choice=page.locator('#choices').getByRole('button',{name:cn?'今日指引 · 一张牌':'Daily guidance · 1 card',exact:true});
  await choice.waitFor({state:'visible',timeout:10000});await shot('consultation');
  await tap(choice);await wait(()=>room==='tarot'&&activity==='tarot');
- await wait(()=>c.dataset.pawTarotSeat==='seated');await shot('reading-seat');
+ await wait(()=>c.dataset.pawTarotSeat==='seated'&&t-pawTarotWashLastDraw<.5&&t-pawTarotHostLastDraw<.5);await shot('reading-seat');
+ await wait(()=>state.readStage==='choose'&&pawTarotFanSettled(state,t,residentReducedMotion.matches));await shot('selection');
  await tap(page.locator('#back'));await wait(()=>room==='tarot'&&!activity);
  await tap(page.locator('#back'));await wait(()=>!room&&!activity&&!transitioning);
  await shot('departed');assert.deepEqual(errors,[]);console.log('PASS Tarot indoor approach, rendered seat, consultation and return');
