@@ -839,7 +839,8 @@
       "priority": 2,
       "summary": "Rendered verification of existing first railway recovery",
       "resources": [
-        "browser"
+        "browser",
+        "scripts/rail-mobile-matrix-test.cjs"
       ],
       "depends": [],
       "stage": "tested",
@@ -850,7 +851,10 @@
         "28 Nov live 390×844 Chromium follow-up: uncached request to deployed rail-foreground.js HTTP 200 and contains travelDistance + full offscreen recycling source. Reduced motion actual station trip: native portrait composite true, railMotion still, frame 1 / travel 0.000 throughout, correct arrival and canvas removed. Normal motion resumed and skip ride clicked via visible control (84.86×44px), arrived in Starlight Valley at travel 0.500s, 0 residual canvas, coins unchanged. Cold reload with portrait carriage image deliberately aborted in isolated browser: request confirmed blocked, fallback route-panorama / pawMovingGlass used full 390×844 ride, arrived Sea Breeze Island, 0 residual canvas. No deployed source changes this session; actual physical iPhone/WebKit and screenshot-based art fit remain unverified.",
         "Owner 28 Nov clarified all mobile phones, not iPhone only. 8bacfb07 + 77c7374a + 37cfaf57: added independent nine-profile railway CI across Chromium/WebKit/Firefox (compact, tall, large, Samsung-sized Android, iOS and tablet), actual touch station loop, rotate, reduced-motion, skip, screenshots, build/browser/DPR evidence. Script syntax validated; CI results and physical Android/iOS branded browser/hardware checks not yet verified. Full project-wide mobile acceptance standard updated."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-rail-mobile-station-diagnostics",
+        "until": 1795846926377
+      },
       "blocker": "Verify new live braking and alpha correction, nine-profile CI results, actual screenshot review and physical iOS/Android mobile browsers (Safari, Chrome, Samsung Internet, Firefox) across representative phone sizes, rotation, safe areas, cold loads. Browser simulation is not physical-device acceptance."
     },
     {
