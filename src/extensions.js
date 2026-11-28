@@ -620,7 +620,7 @@ function wonderSceneChoose(j,expected=pawDiscoveryFrame()){
   const blocked=pawArcadeInputBlocked();elapsed=pawDiscoveryStep(elapsed,last,now,blocked);last=now;
   if(blocked||elapsed<.33&&!matchMedia('(prefers-reduced-motion: reduce)').matches){requestAnimationFrame(turn);return}
   wonderSceneAnswers.push(answer);wonderScenePick=-1;
-  if(wonderSceneAnswers.length===d.total)wonderSceneFinish();else{wonderScenePhase='question';wonderSceneAt=t}
+  if(wonderSceneAnswers.length===d.total){wonderSceneFinish();if(wonderScenePhase==='result'&&wonderSceneResult)hint(...(wonderSceneMode==='soul'?['Your cat portrait is ready. No cat was consulted about overtime.','猫灵画像完成啦。没有猫咪被要求加班。']:['Your reflection is ready. No marks, no class ranking.','自我探索小记完成啦，不打分排名，也不用见家长。']))}else{wonderScenePhase='question';wonderSceneAt=t}
  }
  requestAnimationFrame(turn)
 }
@@ -660,7 +660,24 @@ const cafeKinds=[
 ['Warm-hearted Listener','暖心倾听者',"You seem to value being heard and making time for each other. Your feelings deserve the same attention you offer others.","你似乎很看重彼此的倾听和陪伴。你愿意给别人的那份关心，也值得留一点给自己。",'#c99a96']];
 const cafePriorHint=activityHint;activityHint=function(){if(activity==='match'&&scene==='wonder'){hint("Choose what you would actually do. There is no right answer.","选你平时真的会做的事，没有标准答案。");return}return cafePriorHint()};
 const cafePriorStart=start;start=function(a){cafePriorStart(a);if(a==='match'&&scene==='wonder'){cafeToken++;cafeRound=0;cafeAnswers=[];cafePhase='welcome';cafeAt=t;cafeResult=null;cafePick=-1}};
-function cafeChoose(i){if(cafePhase!=='question')return;cafePick=i;cafePhase='turn';cafeAt=t;let token=cafeToken;sound(450+i*70);setTimeout(()=>{if(activity!=='match'||scene!=='wonder'||cafeToken!==token||cafePhase!=='turn')return;cafeAnswers.push(i);cafeRound++;cafePick=-1;cafeAt=t;if(cafeRound===cafeQuestions.length){let scores=[0,0,0];cafeAnswers.forEach(k=>scores[k]++);let max=Math.max(...scores),ties=scores.map((v,k)=>v===max?k:-1).filter(k=>k>=0);cafeResult={index:ties[0],ties};save('cafeStyleV1',cafeResult);addItem('Café discovery: '+cafeKinds[ties[0]][0],'缘分咖啡馆：'+cafeKinds[ties[0]][1]);cafePhase='result';sound(660)}else cafePhase='question'},350)}
+/* PAW_GAMEPLAY_CAFE_HUMOUR_BEGIN */
+// Acknowledgements follow a committed response and do not rank any answer.
+const pawCafeAfterChoice=[
+ ["An entire afternoon together. No calendar invite required.","一整个下午都归你们。不用发日历邀请。"],
+ ["Tea can cool down. People can take their time.","茶凉一点没关系，人也可以慢慢来。"],
+ ["The eternal question: rice or noodles? At least nobody needs a committee.","千古难题：吃饭还是吃面？至少不用成立委员会。"],
+ ["The last train is strict about time. Good company needn't be.","末班车很准时，感情不用按分钟算。"],
+ ["A weekend is not a group project.","周末又不是小组作业。"],
+ ["Being remembered is lovely. No annual reminder needed.","被人记住真好，不用每年设个提醒。"],
+ ["Plans are allowed to change. They're not carved into the teapot.","计划可以改，又没刻在茶壶上。"],
+ ["Messages can wait. No need to turn one tick into a detective drama.","消息慢慢回，不用把未读拍成悬疑剧。"]
+];
+function pawCafeChoiceWords(index,finished){
+ if(finished)return ["Host: We've finished our tea. No relationship report card, promise.","店主：茶喝完啦，放心，不发感情成绩单。"];
+ return Number.isInteger(index)&&index>=0?pawCafeAfterChoice[index]||null:null;
+}
+/* PAW_GAMEPLAY_CAFE_HUMOUR_END */
+function cafeChoose(i){if(cafePhase!=='question')return;cafePick=i;cafePhase='turn';cafeAt=t;let token=cafeToken;sound(450+i*70);setTimeout(()=>{if(activity!=='match'||scene!=='wonder'||cafeToken!==token||cafePhase!=='turn')return;const answered=cafeRound;cafeAnswers.push(i);cafeRound++;cafePick=-1;cafeAt=t;const words=pawCafeChoiceWords(answered,cafeRound===cafeQuestions.length);if(words)hint(...words);if(cafeRound===cafeQuestions.length){let scores=[0,0,0];cafeAnswers.forEach(k=>scores[k]++);let max=Math.max(...scores),ties=scores.map((v,k)=>v===max?k:-1).filter(k=>k>=0);cafeResult={index:ties[0],ties};save('cafeStyleV1',cafeResult);addItem('Café discovery: '+cafeKinds[ties[0]][0],'缘分咖啡馆：'+cafeKinds[ties[0]][1]);cafePhase='result';sound(660)}else cafePhase='question'},350)}
 function cafeRoom(){let im=pics.tea||pics.readingInterior;paintLivingBackdrop(im);let veil=ctx.createLinearGradient(0,220,0,675);veil.addColorStop(0,'#2f38363b');veil.addColorStop(1,'#30261d8b');ctx.fillStyle=veil;shadeLivingBackdrop(veil);glow(218,265,60,1);glow(570,270,65,2);for(let i=0;i<10;i++){ctx.save();ctx.globalAlpha=.24+.18*Math.sin(t+i);ellipse(185+(i*73)%425+Math.sin(t+i)*3,243+(i*39)%148,1.5,1.5,'#ffefba');ctx.restore()}human(400,382,0,false,1,1.6);let g=ctx.createLinearGradient(0,392,0,660);g.addColorStop(0,'#bc976d');g.addColorStop(1,'#76533b');ctx.beginPath();ctx.moveTo(218,394);ctx.lineTo(582,394);ctx.lineTo(780,1800);ctx.lineTo(20,1800);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#bda073';ctx.stroke();for(let i=0;i<12;i++)line(190,418+i*20,610,420+i*20,'#e6c39325',1);txt(tr('Compatibility Café','缘分咖啡馆'),400,250,22,'#fff4dd')}
 const cafePriorDraw=drawActivity;drawActivity=function(){if(activity!=='match'||scene!=='wonder')return cafePriorDraw();ctx.save();cafeRoom();
  if(cafePhase==='welcome'){wonderSceneText(tr("Come, sit with me. Over tea, we can talk about the little things that make you feel close to someone.","来，坐下来喝杯茶。我们聊聊那些让你觉得和别人亲近的小事。"),400,420,390,18);wonderSceneObject(400,525,0,'motive',false);label(tr('Join me for tea','一起喝杯茶'),400,605,()=>{cafePhase='question';cafeAt=t;sound(490)});txt(tr('A friendly conversation, not a match prediction.','轻松聊聊，并非缘分预测。'),400,647,13,'#fff1d8')}
@@ -715,21 +732,21 @@ for(const [node,ids] of Object.entries(parallelNext))parallelScenes[node].choice
 
 /* Branch-specific fictional epilogues: same ending IDs and keepsakes, more actual consequences. */
 const parallelEpilogues={
- endLight:['The lamp finally turns. A ferry answers with one long horn; the keeper hands you the keys.','灯终于亮了，渡轮鸣笛回应。老灯塔员把钥匙交给你。'],
+ endLight:['The lamp finally turns. The ferry sounds its horn. Your first five-star review, delivered by boat.','灯终于亮了，渡轮鸣笛回应。第一条五星好评，竟然是坐船送来的。'],
  endHarbour:['Your signal brings the ferry safely into port. The harbour crew saves a lantern for you.','你发出的信号让渡轮平安靠岸。港口的人特意给你留了一盏灯。'],
  endArt:['Your rainy postcards sell out. Someone buys one because it reminds them of home.','雨天明信片卖光了，有人说那幅画让他想起了家。'],
- endTeacher:['The child returns with a crooked little painting of the sea. You hang it by the door.','小朋友带着一幅歪歪扭扭的海景画回来。你把它挂在门边。'],
- endNap:['The last train leaves. You tuck a blanket around a sleeping traveller and the cat claims your lap.','末班车开走了。你给睡着的旅人盖好毯子，猫咪占领了你的膝盖。'],
+ endTeacher:['The child brings back a crooked sea painting. You hang it by the door, where the art critics are mostly cats.','小朋友带来一幅歪歪扭扭的海景画。你挂在门边，反正这儿的艺术评论家大多是猫。'],
+ endNap:['The last train leaves. You tuck in a tired traveller. The cat claims your lap without paying rent.','末班车开走了。你替旅人盖好毯子。猫咪占领你的膝盖，还不交租。'],
  endConductor:['You send the stranded travellers onward together. Tomorrow, the station asks you to help again.','你帮滞留的旅人一起出发。第二天，车站又来请你帮忙。'],
  endStars:['The clouds part for one minute. Your visitor sees Saturn and forgets what they were worried about.','云层散开了一分钟。旅人终于看见土星，暂时忘了烦恼。'],
  endGuide:['Your little stargazing guide becomes the first thing nervous visitors pick up at the door.','你的观星小手册成了新手旅人进门时最爱拿的一份指南。'],
- endTea:['The crooked sign is fixed. Your first regular returns every Tuesday with a new story.','歪招牌修好了。第一位老顾客每逢周二都会带着新故事回来。'],
+ endTea:['The sign is fixed. Your first regular pays for tea and supplies free Tuesday gossip.','歪招牌修好了。第一位老顾客每周二来付茶钱，顺便免费供瓜。'],
  endCommunity:['The next visitor pays for two teas. The spare cup becomes a quiet tradition.','下一位客人付了两杯茶的钱。多出的那杯茶成了小小的传统。'],
- endGossip:['The missing context changes the headline completely. Auntie Hong reluctantly issues a correction.','补上的来龙去脉彻底改变了头条。红姐不情不愿地发了更正。'],
+ endGossip:['The full story changes the headline. Auntie Hong publishes a correction in a suspiciously small font.','来龙去脉一补，头条全变了。红姐发了更正，字号小得可疑。'],
  endComedy:['Everyone laughs at the fictional office drama. Nobody has to apologise on Monday.','大家笑着看完虚构的办公室闹剧。周一不用向任何人道歉。'],
  endWriter:['Your reader finishes the story, smiles, and buys a bun on the way home. An ordinary good day.','读者看完故事笑了笑，回家路上买了个面包。平凡又美好的一天。'],
  endEditor:['The traveller writes a different ending on the blank page. You leave the notebook on the shelf.','旅人在空白页写下另一个结局。你把笔记本留在书架上。'],
- endLetters:['You post the reply. A week later a letter arrives containing only a tiny drawing of a hammock.','你寄出回信。一周后收到一封新信，里面只有一张吊床小画。'],
+ endLetters:['A week after your reply, another letter arrives: a drawing of a hammock. Future you has excellent priorities.','回信寄出一周后，又收到一封信，只有一张吊床小画。未来的你很懂生活。'],
  endTicket:['The stranger takes the ticket and waves from the train window. You keep the empty envelope.','陌生人接过车票，从车窗向你挥手。你留下了空信封。']
 };
 function parallelChoiceRecap(trail,nodeId){
@@ -4329,7 +4346,7 @@ function hideoutPage(){
    }}
   }render();
   const controls=element('div','',q,'hideoutActions');
-  b(controls,hideoutEditing?tr('Save & view room','保存布置'):tr('Decorate room','布置小窝'),()=>{saveHideout();hideoutEditing=!hideoutEditing;hideoutPage()});
+  b(controls,hideoutEditing?tr('Save & view room','保存布置'):tr('Decorate room','布置小窝'),()=>{const wasEditing=hideoutEditing;saveHideout();hideoutEditing=!hideoutEditing;hideoutPage();if(wasEditing)toast(tr(...pawFurnitureActionWords('save')))});
   b(controls,tr('Stamps & rewards','印章与奖励'),hideoutClaimPage);controls.classList.add('hideoutPrimary');
   if(hideoutEditing){
    element('p',tr('Drag or use arrow keys to move a selected piece. Wall decor stays on the wall. Put pieces away to use them again later.','拖动家具，或用方向键移动。墙饰留在墙上；收起来的家具随时可以再摆出来。'),q);
@@ -4340,14 +4357,14 @@ function hideoutPage(){
      if(placed>=0){if(furnitureZone(hideoutFurniture[placed])!==komorebiZone){komorebiZone=furnitureZone(hideoutFurniture[placed]);hideoutSelected=placed;hideoutPage();return}hideoutSelected=placed;render();return}
      if(hideoutFurniture.filter(d=>furnitureZone(d)===komorebiZone).length>=24){toast(tr('Your room is full. Even the cat needs space.','小窝满啦，猫猫也需要空间。'));return}
      const pos=pawFurnitureSuggested(id,mbHomeObjects(komorebiZone));
-     hideoutFurniture.push({id,...pos,zone:komorebiZone});hideoutSelected=hideoutFurniture.length-1;saveHideout();render()
+     hideoutFurniture.push({id,...pos,zone:komorebiZone});hideoutSelected=hideoutFurniture.length-1;saveHideout();render();toast(tr(...pawFurnitureActionWords('place',id)))
     });btn.dataset.furnitureTray=id;const im=element('img','',btn);pawFurnitureSetImage(im,id,true);im.alt='';element('small',tr(...name),btn);element('small','',btn,'pawFurnitureLocation');
    }
    pawSyncFurnitureTray(q);b(q,tr('Visit Komorebi Living','去木漏日杂货铺'),()=>furnitureMarket('room'));
    const tools=element('div','',q,'hideoutActions hideoutTools');stage.after(tools);
    const selected=()=>hideoutSelected>=0&&furnitureZone(hideoutFurniture[hideoutSelected])===komorebiZone?hideoutFurniture[hideoutSelected]:null;
    b(tools,tr('Rotate','旋转'),()=>{const d=selected();if(d){if(d.id==='chineseLantern'){toast(tr('The lantern stays upright on its hook.','灯笼挂在钩子上，不能倒过来。'));return}d.r=((d.r||0)+15)%360;saveHideout();render()}});
-   b(tools,tr('Put away','收起来'),()=>{if(!selected())return;hideoutFurniture.splice(hideoutSelected,1);hideoutSelected=-1;saveHideout();render();info.textContent=tr('Choose a piece to decorate.','选一件家具来布置。')});
+   b(tools,tr('Put away','收起来'),()=>{if(!selected())return;hideoutFurniture.splice(hideoutSelected,1);hideoutSelected=-1;saveHideout();render();info.textContent=tr('Choose a piece to decorate.','选一件家具来布置。');toast(tr(...pawFurnitureActionWords('putAway')))});
    const info=element('p',selected()?tr('Selected: ','已选：')+tr(...roomNames9[selected().id]):tr('Choose a piece to decorate.','选一件家具来布置。'),q,'mbHomeSelection');info.setAttribute('role','status');tools.after(info);
    if(komorebiZones()>1){
     const transfer=element('div','',q,'mbHomeTransfer');info.after(transfer);
@@ -8509,10 +8526,10 @@ function yueZodiacAlmanac(birth='',selection=null){
  flags.forEach(x=>element('p',tr(...replies[x[1]]),out));
  if(!flags.length)element('p',tr('No Tai Sui flag is not a promotion letter. Enjoy the little wins.','没犯太岁不等于升职通知书，小确幸照收。'),out);
  const topics=[
- ['Work','事业',['Set one boundary before accepting extra work.','Choose one goal instead of seven.','Leave space for learning something new.'],['接活之前先立个边界。','目标选一个，别一口气立七个。','给自己留点学新东西的时间。']],
- ['Money','财运',['A discount is not income.','Save a little for something you truly enjoy.','Check subscriptions before adding another.'],['打折省的钱不叫收入。','给真正喜欢的东西留点预算。','开新会员前先查查旧会员。']],
- ['Relationships','感情',['Say what you need, kindly.','Make time for the people who make you laugh.','You do not owe every message an instant reply.'],['有话好好说，别让人猜。','给能逗你笑的人留点时间。','不是每条消息都需要秒回。']],
- ['Everyday life','生活',['A proper lunch break counts as progress.','Take a walk without turning it into a target.','Leave a little unplanned time.'],['好好吃顿午饭也算进步。','散步不必变成运动指标。','留点没有安排的时间。']]];
+ ['Work','事业',['Set one boundary before accepting extra work.','Choose one goal. Even the heavens don\'t need seven dashboards.','Leave space for learning something new.'],['接活之前先立个边界。','目标选一个就好，天庭也不用七个仪表盘。','给自己留点学新东西的时间。']],
+ ['Money','财运',['A discount is not income.','Save a little for something you truly enjoy.','Check your subscriptions. Even the gods can\'t remember every password.'],['打折省的钱不叫收入。','给真正喜欢的东西留点预算。','开新会员前先查查旧会员。神仙也记不住那么多密码。']],
+ ['Relationships','感情',['Say what you need, kindly.','Make time for the people who make you laugh.','Not every message needs an instant reply. You are not a vending machine.'],['有话好好说，别让人猜。','给能逗你笑的人留点时间。','不是每条消息都要秒回，你又不是自动售货机。']],
+ ['Everyday life','生活',['A proper lunch break counts as progress.','Take a walk without checking your steps. The pavement is not your personal trainer.','Leave a little unplanned time.'],['好好吃顿午饭也算进步。','散个步不用数步数。马路又不是你的健身教练。','留点没有安排的时间。']]];
  const topicGrid=element('div','',out,'yueReadingTopics');topics.forEach((x,k)=>{const n=(i+j+k)%3,cell=element('article','',topicGrid);element('h3',tr(x[0],x[1]),cell);element('p',tr(x[2][n],x[3][n]),cell)});
  element('small',tr('Folklore and playful reflections, not predictions. Lunar New Year convention; other traditions use Li Chun or different Tai Sui rules. Birth date stays in this page and is not saved or uploaded.','仅为民俗与趣味提示，并非预测。以农历正月初一为年界，其他流派或采用立春及不同太岁规则。出生日期仅在此页面使用，不保存、不上传。'),out);
  }catch(err){element('p',tr('Please check your birth date and browser calendar support.','请检查出生日期及浏览器农历支持。'),out)}};
@@ -9262,12 +9279,30 @@ function furnitureMarket(back='shop'){
  journalLanguage(()=>furnitureMarket(back))
  })
 }
+/* PAW_GAMEPLAY_FURNITURE_HUMOUR_BEGIN */
+function pawFurnitureActionWords(kind,id,category){
+ if(kind==='purchase'){
+  if(category==='extension')return ['New room unlocked! No landlord, no agent fee.','新房间解锁！没有房东，也不用付中介费。'];
+  if(category==='finish'||category==='floor')return ['Finish collected. Renovation without the drilling noise.','装修材料收好啦，不用忍受电钻声。'];
+  return ['Delivered to your collection. No need to wait at home for the courier.','已送到家具库，不用在家苦等快递。'];
+ }
+ if(kind==='place'){
+  if(['bed','futon','catBasket','readingChair','zabuton','kotatsu'].includes(id))return ['Placed. Excellent infrastructure for doing nothing.','摆好啦！摸鱼基础设施正式到位。'];
+  if(['plant','bonsai','sakuraVase','porcelainVase'].includes(id))return ['Placed. A new resident that sends no messages.','摆好啦。新住户不会发消息。'];
+  if(['lamp','shojiLamp','chineseLantern'].includes(id))return ['Placed. Mood lighting, not a meeting spotlight.','摆好啦。氛围灯，不是开会聚光灯。'];
+  return ['Placed. No assembly instructions left over.','摆好啦，竟然没有多出来的螺丝。'];
+ }
+ if(kind==='putAway')return ['Stored safely. It has not resigned.','收好啦，家具没有辞职。'];
+ if(kind==='save')return ['Room saved. The interior designer may clock off.','小窝已保存，设计师可以下班啦。'];
+ return null;
+}
+/* PAW_GAMEPLAY_FURNITURE_HUMOUR_END */
 function furnitureConfirm(id,back){
  const v=furnitureCatalogue().find(x=>x[0]===id);if(!v)return;
  page(tr(v[1],v[2]),tr('A little piece of home.','给小窝添一点温柔。'),q=>{
  const card=element('section','',q,'komorebiConfirm'),im=element('img','',card);pawFurnitureSetImage(im,id,true);im.alt='';
  element('h2',v[3]+' '+tr('Paw Coins','爪爪币'),card);element('p',tr('Your balance: ','目前余额：')+hideoutBalance(),card);
- const btn=b(card,furnitureOwned(id)?tr('Already owned','已拥有'):tr('Buy for ','购买 · ')+v[3]+' '+tr('Paw Coins','爪爪币'),()=>{if(buyFurniture(id)){toast(tr('Delivered to your furniture collection.','已送到你的小窝家具库。'));if(v[4]==='extension'){komorebiZone=id==='roomExtension'?1:2;hideoutSelected=-1;hideoutEditing=false;hideoutPage()}else furnitureMarket(back)}});
+ const btn=b(card,furnitureOwned(id)?tr('Already owned','已拥有'):tr('Buy for ','购买 · ')+v[3]+' '+tr('Paw Coins','爪爪币'),()=>{if(buyFurniture(id)){toast(tr(...pawFurnitureActionWords('purchase',id,v[4])));if(v[4]==='extension'){komorebiZone=id==='roomExtension'?1:2;hideoutSelected=-1;hideoutEditing=false;hideoutPage()}else furnitureMarket(back)}});
  btn.disabled=furnitureOwned(id)||hideoutBalance()<v[3]||(id==='roomStudio'&&!furnitureOwned('roomExtension'));if(id==='roomStudio'&&!furnitureOwned('roomExtension'))element('p',tr('Build the reading room first.','请先扩建阅读小室。'),card);
  if(!furnitureOwned(id)&&hideoutBalance()<v[3])element('p',tr('A little more exploring will get you there.','再逛逛小镇，攒一点爪爪币就够啦。'),card);
  b(q,tr('Keep browsing','继续看看'),()=>furnitureMarket(back));journalLanguage(()=>furnitureConfirm(id,back))
