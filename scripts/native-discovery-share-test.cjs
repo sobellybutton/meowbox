@@ -17,7 +17,7 @@ const out='test-results/native-keepsakes-'+engine;
    try{
     await page.goto(url,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>typeof pawKeepsakeRoomRoute==='function'&&openMeowShare.toString().includes('pawKeepsakeRoomRoute'));
-    for(const cn of [false,true])for(const kind of ['cafe','story','type','motive','bigfive','care','priorities','values','attachment']){
+    for(const cn of [false,true])for(const kind of ['cafe','story','type','motive','bigfive','care','priorities','values','attachment','soul']){
      const prefix=device+'-'+kind+'-'+(cn?'zh':'en');
      await page.evaluate(({cn,kind})=>{
       closeTalk();proposal.hidden=true;$('arrival').hidden=true;$('page').style.display='none';
@@ -31,9 +31,9 @@ const out='test-results/native-keepsakes-'+engine;
       }else{
        room='quiz';wonderSceneOpen(kind);
        if(kind==='priorities'){
-        wonderSceneAnswers=wonderQuestionOrder.map(()=>0);
-       }else wonderSceneAnswers=wonderQuestionOrder.map(q=>kind==='type'?q.id%2:1);
-       wonderSceneFinish();openWonderResult(kind,wonderSceneResult);
+        wonderSceneAnswers=wonderQuestionOrder.map(q=>q.opts[0][2]);
+       }else wonderSceneAnswers=wonderQuestionOrder.map(q=>kind==='soul'?q.opts[0][2]:kind==='type'?q.id%2:1);
+       wonderSceneFinish();if(!wonderSceneResult||wonderScenePhase!=='result')throw Error('Invalid completed-result fixture: '+kind);openWonderResult(kind,wonderSceneResult);
       }
      },{cn,kind});
      const resultButton=kind==='cafe'?page.locator('[data-cafe-result="share"]'):kind==='story'?page.locator('[data-story-ending="share"]'):page.locator('#choices').getByRole('button',{name:cn?'制作纪念卡':'Make a keepsake',exact:true});
