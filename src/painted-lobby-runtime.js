@@ -389,14 +389,15 @@ function pawEditorialTarotPlan(box,count){
  const top=box.top,story=box.height>=1800,rows=story&&count===5?[3,2]:[count];
  const header=H>=900?122:92,footer=48,summary=Math.max(110,Math.min(180,H*.20)),gap=18;
  const area=H-header-footer-summary-gap*3,perRow=(area-(rows.length-1)*gap)/rows.length;
- const caption=rows[0]===5?76:68,slots=[];let y=top+header+gap;
+ const caption=100,slots=[];let y=top+header+gap;
  for(const n of rows){
-  const cellW=(w-(n-1)*gap)/n,cardH=Math.min(perRow-caption-8,(cellW-12)*218/128, count===1?440:370),cardW=cardH*128/218;
+  const cellW=(w-(n-1)*gap)/n,cardH=Math.min(perRow-caption-8,(cellW-12)*218/128, count===1?(story?590:460):(story?480:380)),cardW=cardH*128/218;
   if(cardH<100)return null;
   const groupW=n*cellW+(n-1)*gap;
   for(let i=0;i<n;i++){
    const cx=x+(w-groupW)/2+i*(cellW+gap)+cellW/2;
-   slots.push({card:[cx-cardW/2,y,cardW,cardH],label:[cx-cellW/2,y+cardH+8,cellW,caption]})
+   const lift=Math.max(0,(perRow-cardH-caption-8)/2);
+   slots.push({card:[cx-cardW/2,y+lift,cardW,cardH],label:[cx-cellW/2,y+lift+cardH+8,cellW,caption]})
   }
   y+=perRow+gap
  }
@@ -454,8 +455,9 @@ function pawEditorialTarot(cv,data,format,cn,box,paper,atlas,deck,positions){
    g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(atlas,c.i%8*128,Math.floor(c.i/8)*218,128,218,-cw/2,-ch/2,cw,ch);
   }finally{g.restore()}
   const role=locale(positions[i]);
-  text([lx,ly,lw,26],role,24,19,1,'normal',muted);
-  text([lx,ly+26,lw,lh-26],locale(deck[c.i])+(c.rev?(cn?' · 逆位':' · Reversed'):(cn?' · 正位':' · Upright')),data.cards.length===5?26:30,22,2,'bold');
+  text([lx,ly,lw,22],role,20,17,1,'normal',muted);
+  text([lx,ly+23,lw,54],locale(deck[c.i]),data.cards.length===5?26:30,21,2,'bold');
+  text([lx,ly+78,lw,22],c.rev?(cn?'逆位':'Reversed'):(cn?'正位':'Upright'),20,17,1,'normal',muted);
  });
  const [rx,ry,rw,rh]=plan.reading;
  g.strokeStyle='#bca17d';g.lineWidth=2;g.beginPath();g.moveTo(rx+rw*.38,ry);g.lineTo(rx+rw*.62,ry);g.stroke();
