@@ -6,7 +6,7 @@ const api=new Function(get('READING_SEATED_HOST')+get('YUE_DESK')+';return {pawR
 let count=0;
 for(const w of [320,360,390,600,900,1280])for(const h of [568,640,844,1065,1600])for(const phase of ['idle','question','result']){
  const p={x:100,y:-145,w,h},plan=api.pawReadingSeatPlan('destiny',p,phase),b=api.pawYueDeskBox(p),tap=api.pawYueHostTapBox(p);
- assert(Math.abs(plan.center[1]-(p.y+.218*h))<1e-8&&Math.abs(plan.clip[3]-.306*h)<1e-8&&b.clipBottom===p.y+.306*h&&tap[1]+tap[3]<=b.clipBottom+1e-8);count++;
+ assert(Math.abs(plan.center[1]-(p.y+.350*h))<1e-8&&Math.abs(plan.clip[3]-.447*h)<1e-8&&b.clipBottom===p.y+.447*h&&tap[1]+tap[3]<=b.clipBottom+1e-8);count++;
 }
 for(const valid of [false,true])for(const blocked of [false,true])for(const busy of [null,'tarot'])for(const ready of [false,true]){
  const v=valid?{id:'destiny',ready:false}:null;
@@ -16,4 +16,5 @@ const layout=require('../assets/visual/painted/interior-layouts.js'),room=layout
 assert.deepEqual(goal,[.43,.47]);
 const bounds=layout.bounds('destiny',goal[1]);assert(goal[0]>=bounds[0]&&goal[0]<=bounds[1]);
 assert(src.includes('pawYueHostTapBox(pawReadingPlate)'));
+assert(src.includes("if(id==='destiny')pawYueAdoptSeatedVisit(pawHostVisit,id,activity,transitioning"));
 console.log('PASS '+count+' Master Yue desk, pose and visit ownership checks plus chair-side approach');
