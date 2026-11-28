@@ -320,8 +320,8 @@ html #game:has(#moveGuide:not([hidden])) #hint{visibility:hidden!important}
    overlapping decorative panels. Keep the original framed portrait. */
 html #game #hud{box-sizing:border-box!important;left:max(8px,env(safe-area-inset-left,0px))!important;right:max(8px,env(safe-area-inset-right,0px))!important;padding-right:50px!important;gap:6px!important}
 html #game #hud #profileHud{flex:0 1 auto!important;min-width:0!important;max-width:calc(100% - 86px)!important;overflow:hidden!important}
-html #game #hud #profileHud>span:last-child{min-width:0!important;overflow:hidden!important}
-html #game #hud #profileHud #hudName{max-width:clamp(54px,22vw,130px)!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+html #game #hud #profileHud>span:last-child{flex:0 1 auto!important;min-width:0!important;overflow:hidden!important}
+html #game #hud #profileHud #hudName{max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
 html #game #hud #hudStats{flex:0 0 auto!important;max-width:48%!important;margin-left:auto!important}
 html #game #hud #hudStats #hudCoins{max-width:100%!important;overflow:hidden!important;white-space:nowrap!important;font-variant-numeric:tabular-nums!important}
 html #game #small #townSettingsToggle[aria-label]{box-sizing:border-box!important;flex:0 0 44px!important;isolation:isolate}
@@ -336,7 +336,6 @@ html #game #dock>button.pawDockSelected:not([hidden]){color:#395846!important}
 @media(max-width:360px){
  html #game #hud{gap:4px!important;padding-right:48px!important}
  html #game #hud #profileHud{padding:2px 5px 2px 3px!important}
- html #game #hud #profileHud #hudName{max-width:64px!important}
  html #game #dock>button:not([hidden])>span:last-child{font-size:11px!important}
 }
 @media(forced-colors:active){html #game #dock>button:not([hidden]){color:ButtonText!important}html #game #dock>button.pawDockSelected:not([hidden]){color:HighlightText!important}}
