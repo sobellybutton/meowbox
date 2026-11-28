@@ -17,6 +17,20 @@ const q={};ck(api.parchmentClock(q,0)===0,'begin');
 for(let i=1;i<=4;i++)api.parchmentClock(q,i*.1);
 const before=q.elapsed;api.parchmentClock(q,1,true);api.parchmentClock(q,20,false);ck(q.elapsed===before,'pause and resume');
 ck(api.parchmentClock(q,21,false,true)===1,'reduced');
+// The visibilitychange listener can run with reduced motion enabled.
+const hidden={};ck(api.parchmentClock(hidden,1,true,true)===0,'hidden first frame does not reveal');
+ck(api.parchmentClock(hidden,60,true,true)===0,'hidden clock stays paused');
+ck(api.parchmentClock(hidden,61,false,true)===1,'reduced motion reveals when visible');
+const partial={};api.parchmentClock(partial,0);
+for(let i=1;i<=3;i++)api.parchmentClock(partial,i/10);
+const held=partial.elapsed;
+for(let i=1;i<=100;i++)ck(api.parchmentClock(partial,1+i,true,i%2===0)===held/.72,'hidden setting changes do not consume ink');
+ck(api.parchmentClock(partial,102,false,false)===held/.72,'resume keeps previous ink');
+ck(api.parchmentClock(partial,101,false,false)===held/.72&&partial.last===102,'stale frame ignored');
+ck(api.parchmentClock(partial,102,false,false)===held/.72,'no duplicated elapsed time');
+ck(api.parchmentClock(partial,103,false,true)===1,'visible reduced motion completes');
+ck(api.parchmentClock(partial,104,false,false)===1,'completed ink does not rewind');
+for(const invalid of [NaN,Infinity,-1]){const q={elapsed:invalid};ck(api.parchmentClock(q,0)===0,'invalid elapsed normalized')}
 console.log('PASS '+n+' parchment clock and computed palace surface checks');
 
 const source=require('node:fs').readFileSync('src/startup.js','utf8');
@@ -68,3 +82,17 @@ assert.ok(source.includes("out.toggleAttribute('data-paw-yue-folded',next.folded
 assert.ok(source.includes("const focusSurface=expanded?lastGrid:toolbar"));
 assert.ok(source.includes('destiny-study-props.webp'));
 console.log('PASS '+foldChecks+' folded chart state checks plus 3 wiring assertions');
+
+const blocked=new Function(block+';return pawYueInkBlocked')();
+let blockedCount=0;
+for(const fold of [false,true])for(const hidden of [false,true])for(const cover of [false,true])for(const transition of [false,true]){
+ assert.equal(blocked(fold,hidden,cover,transition),fold||hidden||cover||transition);
+ blockedCount++;
+}
+const foldedClock={};api.parchmentClock(foldedClock,0);api.parchmentClock(foldedClock,.1);
+const ink=foldedClock.elapsed;
+for(let i=1;i<20;i++)assert.equal(api.parchmentClock(foldedClock,i,blocked(true,false,false,false),i%2===0),ink/.72);
+assert.equal(api.parchmentClock(foldedClock,20,blocked(false,false,false,false),false),ink/.72);
+assert.ok(source.includes("desk&&!folded,result"));
+assert.ok(source.includes("!folded&&phase==='result'&&ink"));
+console.log('PASS '+(blockedCount+20)+' fold pause checks plus 2 wiring assertions');
