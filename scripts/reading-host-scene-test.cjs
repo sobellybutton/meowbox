@@ -28,6 +28,8 @@ for(const id of ['tarot','destiny']){
  for(let missing=0;missing<3;missing++){let i=0;ck(!ready(id,manifest,api,()=>i++!==missing),'partial family rejected')}
 }
 ck(phase('tarot',{readStage:'shuffle'},'love',false,false)==='shuffle','shuffle pose');
+for(const now of [0,.5,1.449,1.45,2,10])ck(phase('tarot',{readStage:'choose',readAt:1.45},'tarot',false,false,now)===(now<1.45?'shuffle':'idle'),'daily wash host phase follows card clock');
+ck(phase('tarot',{readStage:'choose'},'tarot',false,false,0)==='idle','invalid wash timestamp');
 ck(phase('tarot',{readStage:'focus',readFocus:0,readCards:[{i:2}]},'love',false,false)==='focus','actual chosen card');
 ck(phase('tarot',{readStage:'focus',readFocus:4,readCards:[]},'love',false,false)==='idle','invalid card');
 ck(phase('destiny',{},null,true,false)==='question','brush pose');

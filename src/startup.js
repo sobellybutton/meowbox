@@ -13230,8 +13230,8 @@ function pawReadingSeatPlan(id,plate,phase){
  const center=[plate.x+plate.w*eye[0],plate.y+plate.h*eye[1]];
  return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.447]}
 }
-function pawReadingHostPhase(id,q,kind,desk,result){
- if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle')return 'shuffle';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
+function pawReadingHostPhase(id,q,kind,desk,result,now=Infinity){
+ if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle'||q.readStage==='choose'&&Number.isFinite(q.readAt)&&now<q.readAt)return 'shuffle';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
  if(id==='destiny'&&desk)return result?'result':'question';
  return 'idle'
 }
@@ -13246,7 +13246,7 @@ function pawReadingCoverPlate(bounds,iw,ih){
 function pawReadingVisitPhase(visit,id,phase){
  if(visit?.id!==id)return null;
  if(visit.ready)return phase;
- return id==='destiny'&&visit.idleReady?'idle':null
+ return ['destiny','tarot'].includes(id)&&visit.idleReady?'idle':null
 }
 function pawReadingVisibleRect(frame,alpha,clip){
  if(!frame||typeof frame.point!=='function'||!Array.isArray(alpha)||!Array.isArray(clip)||alpha.length!==4||clip.length!==4||![...alpha,...clip].every(Number.isFinite)||alpha[2]<=alpha[0]||alpha[3]<=alpha[1]||clip[2]<=0||clip[3]<=0)return null;
@@ -13283,19 +13283,21 @@ function pawHostFamilyReady(id){
   const im=pawHostPoseImage(path);return pawRoomImageReady(im)&&im.naturalWidth===canvas[0]&&im.naturalHeight===canvas[1]&&pawDecodedSources.get(im)===(im.src||im.currentSrc||'')
  })
 }
-function pawYueIdleReady(){
- const lib=pawHostLibrary,host='master-yue',pose='seated-welcome-explain';
+function pawReadingIdleReady(id){
+ const lib=pawHostLibrary,host=id==='tarot'?'fortune-teller':id==='destiny'?'master-yue':null,pose=id==='tarot'?'seated-idle':'seated-welcome-explain';if(!host)return false;
  const f=lib?.api.contacts(lib.manifest,host,pose,[0,0],10);if(!f)return false;
  const im=pawHostPoseImage(f.path);
  return pawRoomImageReady(im)&&im.naturalWidth===f.canvas[0]&&im.naturalHeight===f.canvas[1]&&pawDecodedSources.get(im)===(im.src||im.currentSrc||'')
 }
 function pawWarmReadingHost(id){
- if(!['tarot','destiny'].includes(id)||pawHostWarmJobs.has(id)||pawHostFamilyReady(id))return;
+ if(!['tarot','destiny'].includes(id))return Promise.resolve(false);
+ if(pawHostFamilyReady(id))return Promise.resolve(true);
+ if(pawHostWarmJobs.has(id))return pawHostWarmJobs.get(id);
  const job=pawLoadHostLibrary().then(lib=>{
   const host=id==='tarot'?'fortune-teller':'master-yue',poses=lib?.manifest.characters?.[host]?.poses;
   return poses?Promise.all(Object.values(poses).map(a=>pawReadyPicture(pawHostPoseImage(a.path,true),3500))):null
  }).catch(()=>null).finally(()=>pawHostWarmJobs.delete(id));
- pawHostWarmJobs.set(id,job)
+ pawHostWarmJobs.set(id,job);return job
 }
 /* PAW_YUE_INK_RUNTIME_BEGIN */
 function pawYueInkState(cache,grid,api,now,blocked,reduced){
@@ -13320,7 +13322,7 @@ function pawReadingDeskState(id){
  const editing=!!activeForm&&!activeForm.hidden&&activeForm.style.display!=='none';
  const grid=desk&&!editing?$('content').querySelector('.ziGrid'):null;
  const almanac=desk&&!editing?$('content').querySelector('.yueReadingFront,.signNotebookResult'):null;
- return {grid,phase:pawReadingHostPhase(id,state,activity,desk,!!(grid||almanac))}
+ return {grid,phase:pawReadingHostPhase(id,state,activity,desk,!!(grid||almanac),t)}
 }
 function pawReadingVisitFrame(id,plate,phase){
  const selected=pawReadingVisitPhase(pawHostVisit,id,phase);
@@ -13374,7 +13376,7 @@ enter=function(id,...args){
  if(!pawReadingRoomIds.includes(id)){pawReadingAdmission=null;pawReadingVisit=null;pawHostVisit=null;return pawReadingEnterBefore(id,...args)}
  if(room||activity||transitioning||pawArcadeInputBlocked())return;
  if(pawFoodAdmissionValid(pawReadingAdmission,pawReadingAdmission,pawFoodAdmissionView()))return;
- const request={scene,avatar,x:p.x,y:p.y};pawReadingAdmission=request;pawWarmReadingHost(id);
+ const request={scene,avatar,x:p.x,y:p.y};pawReadingAdmission=request;const hostJob=pawWarmReadingHost(id);
  releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;
  const readyApi=pawReadingAPI(),readyImage=pawReadingImage(readyApi,id);
  if(!pawRoomImageReady(readyImage))hint('Getting the room ready…','小屋正在准备开门……');
@@ -13382,11 +13384,11 @@ enter=function(id,...args){
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   const compatible=pawReadingCompatible(api,id,roomActions[id]||[]);
   const im=compatible?pawReadingImage(api,id,true):null;
-  const ready=compatible&&(await Promise.all([pawReadyPicture(im,4500),id==='tarot'?pawPrepareTarotArt():true])).every(Boolean);
+  const ready=compatible&&(await Promise.all([pawReadyPicture(im,4500),id==='tarot'?pawPrepareTarotArt():true,hostJob.then(()=>true,()=>true)])).every(Boolean);
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   pawReadingAdmission=null;
   if(!ready||!pawRoomImageReady(im)){hint('The room painting could not load. Tap its door to try again.','小屋画面暂未加载成功，请再次点击门口重试。');return}
-  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id),idleReady:id==='destiny'&&pawYueIdleReady()};return pawReadingEnterBefore(id,...args)
+  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id),idleReady:pawReadingIdleReady(id)};return pawReadingEnterBefore(id,...args)
  }).finally(()=>{if(pawReadingAdmission===request)pawReadingAdmission=null})
 };
 // Nearby outdoor warming should decode the actual selected lobby painting,
