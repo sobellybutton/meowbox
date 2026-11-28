@@ -1362,13 +1362,11 @@
       "evidence": [
         "Existing recovered ornate_wood, hanging_wood, hanging_parchment, roof_plaque, ribbon and speech sprites are present; inspect before commissioning replacements.",
         "Inspected existing ornate wood, hanging wood, parchment, roof plaque and ribbon; 22101d9e and 310fb150 replace ornate treatment with quieter interim painted materials. Do not commission duplicate generic floral signs.",
-        "Owner: To Fortune Valley label visually out of theme and too striking. Use subdued physically anchored railway direction signage, secondary hierarchy, coherent four house plaque family, natural bilingual typography. Inspect primary and pawRailEdge fallback; no invented material without scene review."
+        "Owner: To Fortune Valley label visually out of theme and too striking. Use subdued physically anchored railway direction signage, secondary hierarchy, coherent four house plaque family, natural bilingual typography. Inspect primary and pawRailEdge fallback; no invented material without scene review.",
+        "04307386 + b0f80147 + 76f154e4: inspected four original material crops, applied distinct district palette and shared subdued railway paper texture in actual syncSigns path before projection; preserve existing live bilingual labels, activation, 44px railway edge control and forced-colors. 29 persisted focused exact-source checks passed; source parsed. Actual visual contrast, geometry and phone/desktop appearance not verified."
       ],
-      "lease": {
-        "owner": "manual-sign-art-batch14",
-        "until": 1795847090602
-      },
-      "blocker": "Current effective building plaque uses the same ornate_wood border image; final district-specific art not approved."
+      "lease": null,
+      "blocker": "Four district material variants and shared railway paper now integrated in live sign source; actual rendered appearance, NPC speech/remaining plaque-family cohesion and device acceptance remain pending."
     },
     {
       "id": "UX-SIGN-LIVE-01",
