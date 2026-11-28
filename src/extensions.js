@@ -4674,10 +4674,31 @@ function careComplete(action){
 function careStart(action){
  if(!careIsActive())return;const a=state.care;if(a.phase!=='idle'||!careCan(a.values,action))return;
  a.phase=action;a.at=t;a.fromX=a.x;a.fromY=a.y;a.stroke=0;a.drag=null;a.assisted=false;
+ a.supply=pawCareSupplySetup(action,a.supplyFrom);a.supplyFrom=null;
  const messages={feed:['The cat is inspecting dinner.','猫猫正在检查晚饭。'],water:['Fresh water is on the way.','新鲜水来了。'],play:['Move the feather across the grass.','在草地上轻轻拖动羽毛。'],pet:['Stroke along the back, slowly.','顺着背部慢慢摸。'],rest:['Let the cat settle down in peace.','让猫猫安静地睡一会儿。']};
  careMessage(...messages[action]);careSync()
 }
 let pawCareSleep=null;
+const pawCarePrepSeconds=1.35;
+function pawCareSupplySetup(kind,from){
+ if(!['feed','water'].includes(kind))return null;
+ const home=kind==='feed'?[285,620]:[400,620],bowl=kind==='feed'?[295,548]:[505,548];
+ return {kind,home,bowl,from:from&&[from.x,from.y].every(Number.isFinite)?[from.x,from.y]:home.slice()}
+}
+function pawCareActionAge(a,now){
+ return now-a.at-(a.supply?.kind===a.phase?pawCarePrepSeconds:0)
+}
+function pawCareSupplyPose(supply,age,reduced=false){
+ if(!supply||!Number.isFinite(age))return null;
+ const [hx,hy]=supply.home,[bx,by]=supply.bowl,[fx,fy]=supply.from;
+ const ease=v=>{v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)};
+ if(reduced||age>=pawCarePrepSeconds)return {x:hx,y:hy,tilt:0,pouring:false};
+ const target=[bx,by-47];
+ if(age<.45){const p=ease(age/.45);return {x:fx+(target[0]-fx)*p,y:fy+(target[1]-fy)*p,tilt:0,pouring:false}}
+ if(age<.9){const p=(age-.45)/.45;return {x:target[0],y:target[1],tilt:Math.sin(Math.PI*p)*(supply.kind==='feed'?.65:.82),pouring:p>.15&&p<.85}}
+ const p=ease((age-.9)/.45);
+ return {x:target[0]+(hx-target[0])*p,y:target[1]+(hy-target[1])*p,tilt:0,pouring:false}
+}
 function pawCareVisibility(hidden,now){
  if(!Number.isFinite(now))return;
  const a=activity==='pet'?state.care:null;
@@ -4701,7 +4722,7 @@ function pawCareVisibility(hidden,now){
 document.addEventListener('visibilitychange',()=>pawCareVisibility(document.hidden,performance.now()/1000));
 function careTick(){
  if(document.hidden)return;
- const a=state.care,age=t-a.at,dt=clamp(t-(a.tickAt??t),0,.05);a.tickAt=t;
+ const a=state.care,age=pawCareActionAge(a,t),dt=clamp(t-(a.tickAt??t),0,.05);a.tickAt=t;
  // Completion shares the visible simulation clock instead of a wall timer.
  if(a.assisted&&((a.phase==='pet'&&age>=2.3)||(a.phase==='play'&&age>=3.2))){careComplete(a.phase);return}
  if(a.phase==='return'){const f=poseEase(clamp((t-a.returnAt)/.7,0,1));a.x=a.returnFromX+(400-a.returnFromX)*f;a.y=a.returnFromY+(535-a.returnFromY)*f;if(f>=1){a.phase='idle';careSync()}return}
@@ -4772,8 +4793,8 @@ function careBowl(x,y,water,filled){
 function careFeather(x,y){if(pawDrawParkCareProp('feather',x,y))return;
  ctx.save();ctx.translate(x,y);ctx.rotate(-.42);line(0,0,39,31,'#8d7356',3);line(0,0,-8,-12,'#7d654f',1.5);for(let i=0;i<3;i++){ctx.save();ctx.translate(-6-i*3,-12+i*2);ctx.rotate(i*.35);ctx.fillStyle=['#b77f67','#92a895','#e2c38d'][i];ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(-13,-17,0,-24);ctx.quadraticCurveTo(12,-13,0,0);ctx.fill();ctx.restore()}ctx.restore()
 }
-function careFood(x,y){ctx.save();ctx.translate(x,y);ctx.rotate(-.10);ctx.fillStyle='#c7a276';ctx.beginPath();ctx.moveTo(-22,-30);ctx.lineTo(22,-30);ctx.lineTo(28,25);ctx.quadraticCurveTo(0,32,-28,25);ctx.closePath();ctx.fill();line(-20,-23,20,-23,'#8b7259',3);ellipse(0,2,15,12,'#ead5ac');ellipse(-5,-1,4,4,'#957454');ellipse(5,-1,4,4,'#957454');ellipse(0,5,6,4,'#957454');ctx.restore()}
-function carePitcher(x,y){ctx.save();ctx.translate(x,y);ctx.fillStyle='#c6ded6';ctx.strokeStyle='#779994';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-20,-27);ctx.lineTo(19,-27);ctx.lineTo(30,-35);ctx.lineTo(23,-18);ctx.lineTo(22,21);ctx.quadraticCurveTo(0,28,-23,21);ctx.closePath();ctx.fill();ctx.stroke();ellipse(-1,-27,20,5,'#94b6b2');line(-15,-15,-15,12,'#e5f0df',3);ctx.restore()}
+function careFood(x,y,tilt=0){ctx.save();ctx.translate(x,y);ctx.rotate(-.10+tilt);ctx.fillStyle='#c7a276';ctx.beginPath();ctx.moveTo(-22,-30);ctx.lineTo(22,-30);ctx.lineTo(28,25);ctx.quadraticCurveTo(0,32,-28,25);ctx.closePath();ctx.fill();line(-20,-23,20,-23,'#8b7259',3);ellipse(0,2,15,12,'#ead5ac');ellipse(-5,-1,4,4,'#957454');ellipse(5,-1,4,4,'#957454');ellipse(0,5,6,4,'#957454');ctx.restore()}
+function carePitcher(x,y,tilt=0){ctx.save();ctx.translate(x,y);ctx.rotate(tilt);ctx.fillStyle='#c6ded6';ctx.strokeStyle='#779994';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-20,-27);ctx.lineTo(19,-27);ctx.lineTo(30,-35);ctx.lineTo(23,-18);ctx.lineTo(22,21);ctx.quadraticCurveTo(0,28,-23,21);ctx.closePath();ctx.fill();ctx.stroke();ellipse(-1,-27,20,5,'#94b6b2');line(-15,-15,-15,12,'#e5f0df',3);ctx.restore()}
 function careCatArt(a){
  const kind=state.petKind??0,fur=['#cb975f','#e3d8bc','#615c60','#c99c78','#929da5'][kind%5],light=['#e4ba85','#f6ead0','#858089','#e5c5a0','#bcc5c7'][kind%5];
  const eating=(a.phase==='feed'||a.phase==='water')&&t-a.at>.9,sleep=a.phase==='rest',playing=a.phase==='play',petting=a.phase==='pet',walk=(a.phase==='feed'||a.phase==='water')&&t-a.at<.9||playing&&(!!a.drag||a.assisted),dir=(a.phase==='feed'||playing&&a.drag?.x<a.x)?-1:1,step=walk?Math.sin(t*11)*8:0,bob=sleep?Math.sin(t*2)*1.5:walk?Math.abs(step)*.22:Math.sin(t*2)*.8;
@@ -4803,10 +4824,17 @@ drawActivity=function(){
  // Leaf-strewn woven picnic mat, warm light and moving leaves give a grounded foreground.
  ellipse(400,550,162,48,'#34443144');ellipse(400,544,148,39,'#c3af81');for(let i=0;i<7;i++)line(278+i*35,537,280+i*35,555,'#8d7e5d55',1.5);
  for(let i=0;i<9;i++){const x=240+(i*83)%320,y=380+(i*37)%170;ellipse(x+Math.sin(t*.8+i)*7,y+Math.cos(t*.6+i)*4,3,1.5,'#e5d7a79c')}
- careBowl(295,548,false,a.phase==='feed'&&t-a.at<3.0);careBowl(505,548,true,a.phase==='water'&&t-a.at<3.0);
+ const age=pawCareActionAge(a,t),filled=age>=0&&age<3;
+ careBowl(295,548,false,a.phase==='feed'&&filled);careBowl(505,548,true,a.phase==='water'&&filled);
  careCatArt(a);
  const d=a.drag,food=d?.kind==='feed'?d:{x:285,y:620},water=d?.kind==='water'?d:{x:400,y:620},toy=d?.kind==='play'?d:a.phase==='play'&&a.assisted?{x:400+Math.sin((t-a.at)*2.3+.7)*95,y:465}:{x:510,y:615};
- careFood(food.x,food.y);carePitcher(water.x,water.y);careFeather(toy.x,toy.y);
+ const supply=a.supply?.kind===a.phase?pawCareSupplyPose(a.supply,t-a.at,residentReducedMotion.matches):null;
+ const f=a.phase==='feed'&&supply?supply:food,w=a.phase==='water'&&supply?supply:water;
+ careFood(f.x,f.y,f.tilt||0);carePitcher(w.x,w.y,w.tilt||0);careFeather(toy.x,toy.y);
+ // The pour lands in the existing bowl, not in the cat's path.
+ if(supply?.pouring){const [bx,by]=a.supply.bowl;
+  for(let i=0;i<4;i++){const p=((t*4+i*.25)%1);ellipse(bx+(i-1.5)*3,by-23+19*p,a.phase==='water'?1.6:2.5,a.phase==='water'?3:2,a.phase==='water'?'#a5d3cc':'#a9865d')}
+ }
  if(a.phase==='pet'&&(d||a.assisted)){const x=d?.x??(a.x-25+Math.sin((t-a.at)*2.8)*30),y=d?.y??(a.y-58);ctx.save();ctx.translate(x,y);ctx.rotate(-.35);ctx.fillStyle='#e1bc9b';ctx.beginPath();ctx.moveTo(-13,5);ctx.quadraticCurveTo(-18,-8,-7,-11);ctx.lineTo(5,-20);ctx.quadraticCurveTo(11,-23,11,-17);ctx.lineTo(2,-8);ctx.lineTo(16,-13);ctx.quadraticCurveTo(21,-13,20,-8);ctx.lineTo(9,5);ctx.quadraticCurveTo(2,13,-7,10);ctx.closePath();ctx.fill();ctx.restore()}
  if(a.phase==='rest'){txt('z',a.x+47,a.y-90-Math.sin(t*2)*5,19,'#fff2d6');txt('z',a.x+61,a.y-110,14,'#fff2d6')}
  txt(tr(...parkCats[state.petKind??0].name),400,375,24,'#fff4d9');
@@ -4838,8 +4866,8 @@ c.addEventListener('pointermove',e=>{
 },true);
 function careRelease(e,cancel=false){
  if(!careCapture(e))return;const a=state.care,d=a.drag;if(!d||d.id!==e.pointerId)return;const q=pawParkCareDragPoint(d,point(e));a.drag=null;
- if(!cancel&&d.kind==='feed'&&Math.hypot(q.x-295,q.y-548)<55){careStart('feed');return}
- if(!cancel&&d.kind==='water'&&Math.hypot(q.x-505,q.y-548)<55){careStart('water');return}
+ if(!cancel&&d.kind==='feed'&&Math.hypot(q.x-295,q.y-548)<55){a.supplyFrom=q;careStart('feed');return}
+ if(!cancel&&d.kind==='water'&&Math.hypot(q.x-505,q.y-548)<55){a.supplyFrom=q;careStart('water');return}
  if(!cancel&&d.kind==='feed'){careMessage('Drag the food into the left bowl.','把猫粮拖进左边的碗。');return}
  if(!cancel&&d.kind==='water'){careMessage('Pour into the right bowl.','把水倒进右边的碗。');return}
  if(a.phase==='pet'||a.phase==='play'){a.phase='return';a.returnFromX=a.x;a.returnFromY=a.y;a.returnAt=t;careMessage('A little more next time. No need to rush.','下次再玩一会儿，别急。');careSync()}
@@ -4957,8 +4985,8 @@ function pawCatDirection(a){if(a.phase==='return')return a.returnFromX>400?-1:1;
 const catArtDraft=careCatArt;
 careCatArt=function(a){
  const im=productionVisual('parkCats');if(!im)return catArtDraft(a);
- const kind=Math.max(0,Math.min(4,state.petKind??0)),age=Math.max(0,t-a.at);
- const frame=residentReducedMotion.matches?(a.phase==='rest'?6:['feed','water'].includes(a.phase)&&age>=.9?4:a.phase==='pet'?1:0):parkCatFrame(a.phase,age,t,a.assisted,!!a.drag,a.values.trust);
+ const kind=Math.max(0,Math.min(4,state.petKind??0)),rawAge=pawCareActionAge(a,t),age=Math.max(0,rawAge),phase=rawAge<0?'idle':a.phase;
+ const frame=residentReducedMotion.matches?(phase==='rest'?6:['feed','water'].includes(phase)&&age>=.9?4:phase==='pet'?1:0):parkCatFrame(phase,age,t,a.assisted,!!a.drag,a.values.trust);
  const dir=pawCatDirection(a);a.pawFacing=dir;a.pawPreviousX=a.x;
  const resting=frame===6,pounce=frame===7,bob=pounce?-Math.abs(Math.sin(age*5))*5:resting?Math.sin(t*2)*.6:0;
  ctx.save();ctx.translate(a.x,a.y);ellipse(0,3,resting?58:72,resting?10:12,'#393d2f38');ctx.scale(dir,1);
