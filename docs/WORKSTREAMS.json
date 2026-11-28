@@ -1370,11 +1370,10 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "parallel-office-stories-1795838294587",
-        "until": 1795840094587
-      },
+      "evidence": [
+        "618ec97b: existing tea-house Office comedy expanded to three premises and 12 distinct bilingual endings; 184 branch/exit/keepsake assertions passed in exact-source harness. Checkpoint 0af0af8406315b4cb2ee296e36890c446de5b20e"
+      ],
+      "lease": null,
       "blocker": "Acceptance: At least two genuinely different outcomes for each reviewed branch story, coherent English/Chinese writing, repeat and return behavior; do not duplicate assessment experiences."
     },
     {
