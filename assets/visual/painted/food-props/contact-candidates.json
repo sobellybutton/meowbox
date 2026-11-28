@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "status": "provisional source-pixel landmarks traced from individually inspected original PNGs; not rendered hand or liquid contact acceptance",
+  "coordinateConvention": "Source canvas pixel x,y, origin top left. Spout and receiver represent visible lip/opening; grip is provisional centre of grasp. Caller must calibrate hand pose, clearances, camera and occlusion against actual room.",
+  "assets": {
+    "boba_milk_pitcher": {
+      "sourceBlob": "e708c97b113f9500092ac0644bf709ad54e4cf92",
+      "grip": [
+        101,
+        51
+      ],
+      "spout": [
+        14,
+        21
+      ],
+      "pourAngle": -1.12
+    },
+    "boba_tea_pot": {
+      "sourceBlob": "4c2cb5926092e9ea227c71fe956c476c41139ff9",
+      "grip": [
+        138,
+        60
+      ],
+      "spout": [
+        13,
+        34
+      ],
+      "pourAngle": -1.04
+    },
+    "kitchen_kettle": {
+      "sourceBlob": "072a6812bf3b8ba02b2ffed2a532833ec2a21130",
+      "grip": [
+        67,
+        12
+      ],
+      "spout": [
+        12,
+        61
+      ],
+      "pourAngle": -1.18
+    },
+    "boba_shaker_closed": {
+      "sourceBlob": "20eaacc2a4aae90aa60ffdfb2305d5121b3a5261",
+      "grip": [
+        51,
+        96
+      ]
+    },
+    "kitchen_wooden_ladle": {
+      "sourceBlob": "c47c0b1c8e2556c4b05edaf01a5b3c10454e2f9f",
+      "grip": [
+        91,
+        21
+      ],
+      "workingTip": [
+        34,
+        90
+      ]
+    },
+    "kitchen_wooden_spatula": {
+      "sourceBlob": "89910b85d996beb6a1781e94bef17b60308ed773",
+      "grip": [
+        21,
+        91
+      ],
+      "workingTip": [
+        64,
+        29
+      ]
+    },
+    "kitchen_small_ladle": {
+      "sourceBlob": "e50fdb4b663a566736ea69a6306409c48fad6d3e",
+      "grip": [
+        61,
+        20
+      ],
+      "workingTip": [
+        32,
+        68
+      ]
+    },
+    "boba_cup_empty": {
+      "sourceBlob": "1d75900dd370d7712132a1bfaa438b7a0d8267e0",
+      "receiver": [
+        59,
+        21
+      ]
+    },
+    "kitchen_mixing_bowl": {
+      "sourceBlob": "64e9f56cba741e1a94dbbe265b0b86bf79fcb35c",
+      "receiver": [
+        55,
+        24
+      ]
+    },
+    "kitchen_stock_pot": {
+      "sourceBlob": "ccb2329e7365f81a6332dd58489feb5c343cc3ae",
+      "receiver": [
+        84,
+        28
+      ]
+    }
+  }
+}
