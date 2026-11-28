@@ -99,6 +99,13 @@ function pawKeepsakeShareMode(nav,file){
 }
 // Route only completed, live in-room results. Deliberate archive shares
 // keep their existing interface. Never return to a different visit.
+function pawKeepsakeCaption(data,format,cn,url){
+ const title=String(data?.title?.[Number(!!cn)]||'').trim();
+ if(!title)return '';
+ const rows=[(cn?'我在 Pawradise 的小记：':'My Pawradise keepsake: ')+title,cn?'给自己留一点时间。':'A little time for myself.',cn?'#Pawradise #摸鱼小镇':'#Pawradise #CozyGames'];
+ if((format==='feed'||format==='square')&&typeof url==='string'&&url.startsWith('https://'))rows.push(url);
+ return rows.join('\n')
+}
 function pawKeepsakeRoomRoute(v,resultKind,hasBack){
  if(!v||v.page)return null;
  if(v.room==='tarot'&&['tarot','love'].includes(v.activity)&&resultKind==='tarot'&&hasBack)return {id:'tarot',speaker:['Fortune Teller','占卜师'],back:['Back to reading','返回解读']};
@@ -316,10 +323,26 @@ function pawInstallNativeConsultation(){
    try{if(pawKeepsakeShareMode(navigator,file)){await navigator.share({files:[file],title:'Pawradise'});return}}catch(e){if(e?.name==='AbortError')return}
    if(current()&&token===version)status.textContent=tr('Save the PNG, then upload it in your chosen app.','请保存 PNG 图片，再到想分享的应用上传。')
   });
+  const copy=b(actions,tr('Copy caption','复制文案'),async()=>{
+   if(!ready||!current())return;
+   const token=version,text=pawKeepsakeCaption(data,format,cn,meowShareUrl);
+   if(!text)return;
+   try{
+    if(typeof navigator.clipboard?.writeText!=='function')throw Error('clipboard unavailable');
+    await navigator.clipboard.writeText(text);
+    if(current()&&token===version)status.textContent=tr('Caption copied.','文案已复制。');
+   }catch{
+    if(!current()||token!==version)return;
+    manualCaption.value=text;manualCaption.hidden=false;manualCaption.focus?.();manualCaption.select?.();
+    status.textContent=tr('Select and copy the caption below.','请选择并复制下方文案。');
+   }
+  });
+  const manualCaption=element('textarea','',panel,'pawKeepsakeCaption');manualCaption.hidden=true;manualCaption.readOnly=true;
+  manualCaption.setAttribute('aria-label',tr('Post caption','发布文案'));
   const keys=Object.keys(shareFormats),formatButtons=keys.map(k=>b(tabs,k==='feed'?'IG / FB':k==='xhs'?'小红书':k==='story'?'Story / TikTok':tr('WeChat','微信'),()=>{format=k;render()}));
   const languages=[b(langs,'English',()=>{cn=false;render()}),b(langs,'中文',()=>{cn=true;render()})];
   async function render(){
-   const token=++version,selectedFormat=format,selectedLanguage=cn;ready=null;preview.hidden=true;panel.setAttribute('aria-busy','true');saveButton.disabled=send.disabled=true;
+   const token=++version,selectedFormat=format,selectedLanguage=cn;ready=null;preview.hidden=true;panel.setAttribute('aria-busy','true');saveButton.disabled=send.disabled=copy.disabled=true;manualCaption.hidden=true;manualCaption.value='';
    formatButtons.forEach((x,i)=>x.setAttribute('aria-pressed',String(keys[i]===format)));languages.forEach((x,i)=>x.setAttribute('aria-pressed',String(i===Number(cn))));
    guide.textContent=pawKeepsakeFormatGuide(selectedFormat,zh,shareFormats);
    how.textContent=tr('Save the PNG, then add it to your post. If your device supports it, Share image opens the system share menu.','保存 PNG 后可在对应平台发布。如果设备支持，点击「分享图片」会打开系统分享菜单。');
@@ -327,7 +350,7 @@ function pawInstallNativeConsultation(){
    try{
     await pawPrepareRecoveredShare(selectedFormat,data);if(!current()||token!==version)return;
     shareCardArt(preview,data,selectedFormat,selectedLanguage);preview.setAttribute('aria-label',data.title[Number(selectedLanguage)]);
-    preview.toBlob(blob=>{if(!current()||token!==version)return;panel.setAttribute('aria-busy','false');if(!blob){status.textContent=tr('Try another format.','请换个尺寸重试。');return}ready=typeof File==='function'?new File([blob],'pawradise-'+data.kind+'-'+selectedFormat+'.png',{type:'image/png'}):blob;preview.hidden=false;saveButton.disabled=send.disabled=false;status.textContent=tr('Ready to share or save.','可以分享或保存啦。')},'image/png')
+    preview.toBlob(blob=>{if(!current()||token!==version)return;panel.setAttribute('aria-busy','false');if(!blob){status.textContent=tr('Try another format.','请换个尺寸重试。');return}ready=typeof File==='function'?new File([blob],'pawradise-'+data.kind+'-'+selectedFormat+'.png',{type:'image/png'}):blob;preview.hidden=false;saveButton.disabled=send.disabled=copy.disabled=false;status.textContent=tr('Ready to share or save.','可以分享或保存啦。')},'image/png')
    }catch{if(current()&&token===version){panel.setAttribute('aria-busy','false');status.textContent=tr('Try another format.','请换个尺寸重试。')}}
   }
   $('choices').prepend(panel);render()
@@ -355,7 +378,7 @@ function pawInstallNativeConsultation(){
  #game #dialogue[data-paw-keepsake] .meowShareTabs,#game #dialogue[data-paw-keepsake] .pawKeepsakeActions{display:flex;gap:4px;flex-wrap:wrap}
  #game #dialogue[data-paw-keepsake] .meowShareTabs button,#game #dialogue[data-paw-keepsake] .pawKeepsakeActions button{flex:1 1 110px;min-width:0;white-space:normal;overflow-wrap:anywhere;text-align:center!important}
  @media(min-width:900px) and (min-aspect-ratio:5/4){#game #dialogue[data-paw-keepsake]{left:auto!important;right:max(16px,env(safe-area-inset-right,0px))!important;transform:none!important;width:min(39vw,460px)!important;bottom:max(16px,env(safe-area-inset-bottom,0px))!important}#game #dialogue[data-paw-keepsake] .meowSharePreview{max-height:44dvh}}
- #game #dialogue[data-paw-keepsake] .meowShareTabs button[aria-pressed=true]{background:#536955!important;color:#fff2d8!important}
+ #game #dialogue[data-paw-keepsake] .pawKeepsakeCaption{width:100%;min-height:92px;box-sizing:border-box;resize:vertical;font:14px/1.4 Georgia,"Songti SC",serif;color:#463b35;background:#f6eddd;border:1px solid #b6a17e;padding:8px}\n #game #dialogue[data-paw-keepsake] .pawKeepsakeCaption[hidden]{display:none!important}\n #game #dialogue[data-paw-keepsake] .meowShareTabs button[aria-pressed=true]{background:#536955!important;color:#fff2d8!important}
  @media(orientation:landscape) and (max-height:550px){#game #dialogue[data-paw-keepsake] .meowSharePreview{max-height:26dvh}}
  `;document.head.append(css)
 }
