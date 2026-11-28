@@ -8996,7 +8996,8 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
    textIn([x,y,w,head],[locale(p.name)],22,'bold',muted);
    textIn([x,y+head,w,h-head],p.stars.length?p.stars.map(locale):[cn?'无主星':'No main star'],20,'normal',ink)
   });
-  textIn(slots.chart_summary,[cn?'十四主星':'14 main stars',cn?'传统文化小记':'Traditional symbolism',cn?'仅供反思':'For reflection'],30,'normal',accent)
+  textIn(slots.chart_summary,[cn?'十四主星':'14 main stars',cn?'传统文化小记':'Traditional symbolism',cn?'仅供反思':'For reflection'],30,'normal',accent);
+  if(slots.reading)textIn(slots.reading,[cn?'不含姓名及出生资料':'Name and birth details omitted'],28,'normal',muted);
  }else if(slots.tiles){
   slots.tiles.forEach((rect,i)=>{const [x,y,w,h]=rect,r=data.scoreRows[i];
    textIn([x+10,y+5,w-20,h*.47],[locale(r.label)],30,'bold',muted);
