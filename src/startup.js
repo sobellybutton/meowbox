@@ -13162,7 +13162,7 @@ function pawReadingActive(){return !activity&&room===pawReadingVisit&&pawReading
 // Predecode all required tarot artwork before the room becomes interactive.
 const pawTarotPropPath='../../staging/2026-11-28-consolidated/atlases/tarot-props.webp';
 function pawTarotProps(retry=false){return pawRecoveredImage(pawTarotPropPath,null,retry)}
-async function pawPrepareTarotArt(){const faces=readingArtwork(),props=pawTarotProps(true);const result=await Promise.all([pawReadyPicture(faces,4500),pawReadyPicture(props,4500)]);return result.every(Boolean)&&faces.naturalWidth===1024&&faces.naturalHeight===2180}
+async function pawPrepareTarotArt(){const faces=readingArtwork(),props=pawTarotProps(true);const result=await Promise.all([pawReadyPicture(faces,4500),pawReadyPicture(props,4500)]);return result.every(Boolean)&&faces.naturalWidth===1024&&faces.naturalHeight===2180&&!!pawTarotBackImage(props)}
 const pawReadingDoorBefore=walkDoor;
 walkDoor=function(id,...args){if(pawReadingRoomIds.includes(id))pawLoadReadingModule().then(api=>pawReadingImage(api,id));pawWarmReadingHost(id);if(id==='tarot')pawPrepareTarotArt();return pawReadingDoorBefore(id,...args)};
 const pawReadingEnterBefore=enter;
@@ -14801,8 +14801,28 @@ document.head.append(pawVisitDialogueStyle);
 /* PAW_TAROT_PAINTED_PROPS_BEGIN */
 function pawTarotPropCrop(kind,w,h){
  if(![w,h].every(Number.isFinite)||w<=0||h<=0)return null;
- const r=kind==='back'?[.660,.018,.148,.315]:kind==='mat'?[.018,.377,.410,.286]:null;
+ const r=kind==='mat'?[.018,.377,.410,.286]:null;
  return r?r.map((v,i)=>v*(i%2?h:w)):null
+}
+// Rectify the original painted deck's top face, rather than misusing
+// the nearby Moon card illustration as a card back. Source landmarks
+// traced inside the deck's gold border in the 1408 x 1056 atlas.
+function pawTarotBackTransform(iw,ih,w=180,h=260){
+ if(![iw,ih,w,h].every(Number.isFinite)||Math.min(iw,ih,w,h)<=0)return null;
+ const [ox,oy]=[495*iw/1408,58*ih/1056];
+ const ax=130*iw/1408,ay=33*ih/1056,bx=-130*iw/1408,by=205*ih/1056,det=ax*by-ay*bx;
+ if(det<=0)return null;
+ const a=w*by/det,b=-h*ay/det,c=-w*bx/det,d=h*ax/det;
+ return [a,b,c,d,-a*ox-c*oy,-b*ox-d*oy]
+}
+const pawTarotBackCache=new WeakMap();
+function pawTarotBackImage(im){
+ if(!im?.complete||!im.naturalWidth||!im.naturalHeight)return null;
+ const existing=pawTarotBackCache.get(im);if(existing)return existing;
+ const canvas=document.createElement('canvas');canvas.width=180;canvas.height=260;
+ const g=canvas.getContext('2d'),matrix=pawTarotBackTransform(im.naturalWidth,im.naturalHeight);
+ if(!g||!matrix)return null;
+ g.setTransform(...matrix);g.drawImage(im,0,0);pawTarotBackCache.set(im,canvas);return canvas
 }
 /* PAW_TAROT_PAINTED_PROPS_END */
 const pawLegacyTarotCard=card;
@@ -14810,7 +14830,7 @@ card=function(x,y,w,h,front,...args){
  if(room!=='tarot'||!['tarot','love'].includes(activity)||front)return pawLegacyTarotCard(x,y,w,h,front,...args);
  const im=pawTarotProps();
  if(!pawRoomImageReady(im)){round(x,y,w,h,3,'#4b3d60','#b99b70');return}
- ctx.drawImage(im,...pawTarotPropCrop('back',im.naturalWidth,im.naturalHeight),x,y,w,h)
+ const back=pawTarotBackImage(im);if(back)ctx.drawImage(back,x,y,w,h);else round(x,y,w,h,3,'#4b3d60','#b99b70')
 };
 const pawLegacyTarotTable=table;
 table=function(...args){
