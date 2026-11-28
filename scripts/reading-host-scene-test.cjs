@@ -54,3 +54,14 @@ assert.equal(ownershipChecks,104);
 assert.equal((source.match(/pawYueAdoptSeatedVisit\(pawHostVisit,room,activity,transitioning/g)||[]).length,2);
 assert.ok(source.includes("if(!pawYueConsultPlaqueVisible(talkOpen,$('page').style.display==='block',transitioning))return false"));
 console.log('PASS '+ownershipChecks+' seated visit and plaque checks, plus 2 wiring assertions');
+
+const actualStudy={x:0,y:0,w:928,h:1648};
+for(const phase of ['idle','question','result']){
+ const p=plan('destiny',actualStudy,phase),f=api.contacts(manifest,p.host,p.pose,p.center,p.span);
+ ck(Math.abs(p.center[1]-359.264)<.01,'eye at painted host chair');
+ ck(Math.abs(p.clip[3]-504.288)<.01,'desk lip clipping');
+ ck(f.rect[1]>=280&&f.rect[1]<350,'host head above chair back');
+ if(phase==='question')ck(f.contacts.tip[1]>=460&&f.contacts.tip[1]<=485,'brush tip at actual tabletop');
+ if(phase==='result')ck(f.contacts.paper.every(q=>q[1]<p.clip[3]),'complete held parchment above desk lip');
+}
+console.log('PASS actual study furniture and hand contact alignment checks');
