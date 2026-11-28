@@ -4435,7 +4435,7 @@ achievementBook=function(...args){
  for(const h of q.querySelectorAll('h2'))if(h.textContent===tr('Other little milestones','其他小小里程碑'))h.remove();
  return result
 };
-const pawDiaryOpen=new Set(['fortune']);
+const pawDiaryOpen=new Set(['tasks']);
 function pawDiaryFold(q,node,key,title,subtitle=''){
  if(!node)return null;
  const fold=element('details','',q,'pawDiaryFold');node.before(fold);
@@ -4455,6 +4455,13 @@ todayHub=function(...args){
  pawDiaryFold(q,gratitude,'gratitude',tr('One good thing','今日小确幸'),day.keys.includes('gratitude')?tr('Saved today','今日已记录'):tr('Optional private reflection','随心记录，仅自己可见'));
  const calendar=q.querySelector('.townCalendarLink'),occasion=q.querySelector('.townOccasion');
  if(calendar)calendar.remove();if(occasion)occasion.remove();
+ const lunar=element('section','',q,'pawDiaryLunar');
+ const info=lunarInfo(),fmt=new Intl.DateTimeFormat(zh?'zh-SG':'en-SG',{dateStyle:'full',timeZone:'Asia/Singapore'});
+ element('small',fmt.format(new Date()),lunar);
+ element('strong',info?tr(info.labelEn,info.labelZh):tr('Calendar unavailable','农历暂不可用'),lunar);
+ for(let i=1;i<=32;i++){const date=new Date(Date.now()+i*864e5),v=lunarInfo(date);if(v&&(v.d===1||v.d===15)){element('p',tr('Next observance: ','下一次初一或十五：')+fmt.format(date)+' · '+tr(v.labelEn,v.labelZh),lunar);break}}
+ element('small',tr('Traditional observances are optional.','传统习俗，自愿参与。'),lunar);
+ pawDiaryFold(q,lunar,'calendar',tr('Lunar calendar','农历日历'));
  q.querySelector('.travellerMoodBook')?.remove();
  journalLanguage(todayHub);return result
 };
@@ -4648,7 +4655,7 @@ function pawVisualImage(theme,q){
 }
 function pawVisualHeader(q,theme){
  const h=q.querySelector(':scope > h1'),intro=q.querySelector(':scope > p');
- if(!h||!intro||['room','travel'].includes(theme)||q.querySelector('.pawTownFrontPhoto'))return;
+ if(!h||!intro||['room','travel'].includes(theme)||q.querySelector('.pawTownFrontPhoto,.pawDiaryFold'))return;
  const art=pawVisualImage(theme,q);
  if(!art)return;
  const header=element('header','',q,'pawIllustratedHeading');h.before(header);
@@ -15719,3 +15726,146 @@ pawRoomGroundingStyle.textContent=`
 @media(forced-colors:active){#game #dock>button[aria-current="page"]{outline:2px solid Highlight!important}}
 `;document.head.append(pawRoomGroundingStyle);
 /* PAW_ROOM_GROUNDING_AND_DOCK_END */
+
+
+/* PAW_FULL_BOOK_BEGIN */
+// Reuse the original navigation and the original artwork; no second page stack.
+const pawBookCoverPath='assets/visual/staging/2026-11-28-project-batch10-interface/journal-cover.webp';
+const pawBookPaperPath='assets/visual/painted/recovered/ui/paper_texture.webp';
+function pawBookKey(q){
+ if(q.querySelector('.pawSketchbook,.travelAlbum'))return 'travel';
+ if(q.querySelector('.pawDiaryFold,.journalDailyTasks,.goodCompanyBook'))return 'today';
+ if(q.querySelector('.pawTownFront,.communityTabs,.townWall,.townChatTranscript,.pawJoyWall'))return 'town';
+ if(q.querySelector('.hideoutScene,.hideoutRoomView,.travellerBagV2,.komorebiBook,.komorebiConfirm,.figureCabinetBook,.pawPersonalShelf'))return 'home';
+ return ''
+}
+function pawBookTurn(dx,dy,duration,width,eligible){
+ if(!eligible||!Number.isFinite(dx)||!Number.isFinite(dy)||!Number.isFinite(duration)||duration>700||duration<0)return 0;
+ return Math.abs(dx)>=Math.max(54,width*.16)&&Math.abs(dx)>Math.abs(dy)*1.7?(dx<0?1:-1):0
+}
+const pawBookPane=$('page'),pawBookContent=$('content');
+const pawBookCover=new Image();pawBookCover.src=pawBookCoverPath;
+let pawBookPrevious='',pawBookGesture=null,pawBookLeaf=null,pawBookMotion=null,pawBookMotionSerial=0;
+const pawBookOpenSections=new Set();
+function pawBookFoldExisting(node,key,label){
+ if(!node||node.parentElement?.classList.contains('pawBookFold'))return;
+ const fold=document.createElement('details');fold.className='pawBookFold';node.before(fold);
+ element('summary',label,fold);fold.append(node);fold.open=pawBookOpenSections.has(key);
+ fold.addEventListener('toggle',()=>{if(!fold.isConnected)return;if(fold.open)pawBookOpenSections.add(key);else pawBookOpenSections.delete(key)})
+}
+
+/* A physical front cover is a transient, non-interactive layer, never a menu.
+   Page content is ready immediately; the cover hinges away from that content.
+   Interruptions and reduced motion remove it synchronously. */
+function pawBookRemoveMotion(){
+ if(pawBookMotion){pawBookMotion.remove();pawBookMotion=null}
+}
+function pawBookAnimate(opening,backwards=false){
+ pawBookRemoveMotion();
+ if(residentReducedMotion.matches||!Element.prototype.animate)return;
+ const game=$('game'),layer=element('div','',game,'pawPassportMotion');
+ layer.setAttribute('aria-hidden','true');layer.dataset.motion=opening?'open':'turn';
+ const leaf=element('div','',layer,'pawPassportMovingLeaf');
+ if(opening){
+  const cover=element('img','',leaf,'pawPassportCoverArt');cover.src=pawBookCoverPath;cover.alt='';cover.decoding='async';
+  cover.onerror=()=>cover.remove();
+ }else{
+  element('div','',leaf,'pawPassportTurningPaper');
+ }
+ pawBookMotion=layer;const serial=++pawBookMotionSerial;game.dataset.pawBookMotionSerial=String(serial);
+ game.dataset.pawBookLastMotion=opening?'open':'turn';
+ leaf.style.transformOrigin=backwards?'right center':'left center';
+ const sign=backwards?1:-1;
+ const frames=opening?[
+  {transform:'perspective(1100px) translateY(13%) scale(.65) rotateY(0deg)',opacity:1,offset:0},
+  {transform:'perspective(1100px) translateY(0) scale(1) rotateY(0deg)',opacity:1,offset:.30},
+  {transform:'perspective(1100px) rotateY(-78deg)',opacity:1,offset:.76},
+  {transform:'perspective(1100px) rotateY(-103deg)',opacity:0,offset:1}
+ ]:[
+  {transform:'perspective(1100px) rotateY(0deg)',opacity:1},
+  {transform:'perspective(1100px) rotateY('+sign*78+'deg)',opacity:.9,offset:.76},
+  {transform:'perspective(1100px) rotateY('+sign*104+'deg)',opacity:0}
+ ];
+ const animation=leaf.animate(frames,{duration:opening?460:260,easing:'cubic-bezier(.22,.67,.22,1)',fill:'forwards'});
+ animation.finished.catch(()=>{}).finally(()=>{if(pawBookMotion===layer)pawBookRemoveMotion();else layer.remove()});
+}
+function pawBookDress(q,key){
+ const row=q.querySelector(':scope > .row'),heading=q.querySelector(':scope > h1');
+ if(!row)return;
+ row.classList.add('pawPassportHeader');
+ const labels={travel:['TRAVEL JOURNAL','旅行手账'],today:['DAILY DIARY','每日手记'],town:['VILLAGE GAZETTE','小镇日报'],home:['MY SCRAPBOOK','我的手册']};
+ let mark=row.querySelector('.pawPassportImprint');
+ if(!mark){
+  mark=element('span','',row,'pawPassportImprint');mark.setAttribute('aria-hidden','true');
+  const nav=row.querySelector('button:first-child');if(nav)nav.after(mark);
+ }
+ mark.textContent=tr(...labels[key]);
+ if(heading)heading.classList.add('pawPassportTitle');
+ // Present actual existing actions as inked entries on the same leaf.
+ q.querySelector('.journalCheckin')?.classList.add('pawPassportDiaryEntry');
+ q.querySelector('.hideoutPrimary')?.classList.add('pawPassportRoomEntries');
+ q.querySelector('.pawSketchCover')?.classList.add('pawPassportPostcard');
+}
+
+function pawBookDecorate(){
+ const q=pawBookContent,pane=pawBookPane;
+ const key=pane.style.display==='block'&&!room&&!activity&&!talkOpen&&!transitioning&&proposal.hidden?pawBookKey(q):'';
+ if(!key){delete pane.dataset.pawFullBook;$('game').classList.remove('pawFullBookOpen');pawBookPrevious='';pawBookLeaf=null;pawBookGesture=null;pawBookRemoveMotion();return}
+ pane.dataset.pawFullBook=key;$('game').classList.add('pawFullBookOpen');
+ const root=!!q.querySelector('.pawSketchbook,.pawDiaryFold,.pawTownFront,.hideoutRoomView,.hideoutScene')&&!mbHomeOrigin;
+ const nav=q.querySelector(':scope > .row button:first-child');
+ if(root&&nav&&!nav.classList.contains('pawFullBookClose')){
+  nav.classList.add('pawFullBookClose');nav.replaceChildren();
+  const art=element('img','',nav);art.src=pawBookCoverPath;art.alt='';art.onerror=()=>art.remove();
+  element('span',tr('Close book','合上手账'),nav);nav.setAttribute('aria-label',tr('Close book','合上手账'))
+ }
+ const book=q.querySelector('.pawSketchbook');
+ if(book){
+  const district=book.querySelector('.pawSketchTabs [aria-current="page"]')?.dataset.district||scene;
+  pawBookFoldExisting(book.querySelector('.pawSketchPlaces'),'places:'+district,tr('Places to explore','可以逛逛的地方'));
+  pawBookFoldExisting(book.querySelector('.pawVisitProgress'),'progress:'+district,tr('Discovery notes','探索记录'));
+  const heading=book.querySelector('.pawSketchPlaces > h3');if(heading)heading.hidden=true;
+ }
+ pawBookDress(q,key);
+ const leaf=q.firstElementChild;
+ if(leaf&&leaf!==pawBookLeaf){
+  const old=pawBookPrevious,order=['travel','today','town','home'];
+  pawBookLeaf=leaf;pawBookPrevious=key;
+  pawBookAnimate(!old,!!old&&order.indexOf(key)<order.indexOf(old));
+ }
+}
+const pawBookPageObserver=new MutationObserver(pawBookDecorate);
+pawBookPageObserver.observe(pawBookPane,{attributes:true,attributeFilter:['style','hidden']});
+pawBookPageObserver.observe(pawBookContent,{childList:true});
+const pawBookPageBefore=page;
+page=function(...args){const v=pawBookPageBefore(...args);queueMicrotask(pawBookDecorate);return v};
+const pawBookHUD=updateHUD;
+updateHUD=function(...args){const v=pawBookHUD(...args);pawBookDecorate();return v};
+function pawBookCanTurn(e){
+ return !!pawBookPane.dataset.pawFullBook&&!!pawDockRootKey&&!e.target.closest('button,a,input,textarea,select,label,summary,[contenteditable],canvas,[role="button"],.hideoutScene,.townChatTranscript')
+}
+pawBookPane.addEventListener('pointerdown',e=>{
+ if(!e.isPrimary||e.button!==0||!pawBookCanTurn(e))return;
+ pawBookGesture={id:e.pointerId,x:e.clientX,y:e.clientY,t:performance.now(),key:pawDockRootKey,first:pawBookContent.firstElementChild}
+},{passive:true});
+pawBookPane.addEventListener('pointercancel',()=>{pawBookGesture=null},{passive:true});
+pawBookPane.addEventListener('pointerup',e=>{
+ const g=pawBookGesture;pawBookGesture=null;if(!g||g.id!==e.pointerId)return;
+ pawSyncDockSelection();
+ const d=pawBookTurn(e.clientX-g.x,e.clientY-g.y,performance.now()-g.t,pawBookPane.clientWidth,g.key===pawDockRootKey&&g.first===pawBookContent.firstElementChild&&pawBookCanTurn(e));
+ if(!d)return;
+ if(g.key==='travel'){
+  const foot=pawBookContent.querySelector('.pawSketchFoot'),buttons=foot?.querySelectorAll('button'),btn=d>0?buttons?.[1]:buttons?.[0];
+  if(btn&&!btn.disabled){btn.click();return}
+ }
+ const tabs=pawDockButtons(),index=tabs.findIndex(([key])=>key===g.key),next=tabs[index+d]?.[1];
+ if(next&&!next.disabled)next.click()
+},{passive:true});
+const pawFullBookStyle=document.createElement('style');
+pawFullBookStyle.textContent="\nhtml #game #page[data-paw-full-book]{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;box-sizing:border-box!important;border:0!important;border-radius:0!important;background:#e7d6b2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/220px auto repeat!important;color:#4d513e!important;overflow-y:auto!important;overflow-x:hidden!important;touch-action:pan-y;padding:max(6px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) calc(76px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))!important;scroll-padding-bottom:90px!important;box-shadow:inset 4px 0 8px #7d604b30,inset -4px 0 8px #7d604b30!important}\nhtml #game #page[data-paw-full-book] #content{box-sizing:border-box!important;max-width:min(1100px,100%)!important;width:100%!important;min-height:calc(100dvh - 100px)!important;margin:0 auto!important;padding:6px 10px 18px!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;color:#4d513e!important}\nhtml #game #page[data-paw-full-book] #content>.row{position:relative!important;top:auto!important;background:transparent!important;box-shadow:none!important;border:0!important;padding:0 0 6px!important;margin:0 0 4px!important}\nhtml #game #page[data-paw-full-book] #content>h1,html #game #page[data-paw-full-book] #content>p{color:#40533e!important;text-shadow:none!important;text-align:left!important}\nhtml #game #page[data-paw-full-book] #content>h1{font:600 clamp(24px,6vw,38px)/1.15 var(--paw-display,Georgia,serif)!important;margin:8px 0 4px!important;letter-spacing:0!important}\nhtml #game #page[data-paw-full-book] #content>p{font-size:13px!important;margin:4px 0 10px!important}\nhtml #game #page[data-paw-full-book] .pawFullBookClose{display:inline-flex!important;align-items:center;gap:6px;min-height:44px!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#40533e!important;padding:0 5px!important;font-family:var(--paw-display,Georgia,serif)!important}\nhtml #game #page[data-paw-full-book] .pawFullBookClose img{width:34px;height:34px;object-fit:contain;flex:none}\nhtml #game #page[data-paw-full-book] .pawSketchbook,html #game #page[data-paw-full-book] .pawDiaryFold{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:4px 0!important}\nhtml #game #page[data-paw-full-book] .pawBookFold{border-top:1px solid #b8a37c;margin:5px 0;min-width:0}\nhtml #game #page[data-paw-full-book] .pawBookFold>summary{min-height:44px;align-content:center;cursor:pointer;font:600 16px/1.3 var(--paw-display,Georgia,serif)}\nhtml #game #page[data-paw-full-book] .pawBookFold>.pawSketchPlaces{padding:0!important}\nhtml #game #page[data-paw-full-book] .pawDiaryLunar{padding:4px 0 10px;color:#564831}\nhtml #game #page[data-paw-full-book] .pawDiaryLunar strong,html #game #page[data-paw-full-book] .pawDiaryLunar small{display:block}\nhtml #game #page[data-paw-full-book] .pawDiaryFold>summary{border-bottom:1px solid #b8a37c!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}\nhtml #game #page[data-paw-full-book] .pawIllustratedHeading{border-width:0!important;outline:0!important;box-shadow:none!important}\nhtml #game.pawFullBookOpen.pawDockRoot #dock{width:min(620px,calc(100% - 16px))!important;gap:3px!important;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:0!important}\nhtml #game.pawFullBookOpen.pawDockRoot #dock>button:not([hidden]){min-height:44px!important;background:#c5b08a!important;color:#354b39!important;border:1px solid #a48d65!important;border-radius:7px 7px 2px 2px!important;box-shadow:0 -2px 3px #5b493126!important}\nhtml #game.pawFullBookOpen.pawDockRoot #dock>button[aria-current=\"page\"]{background:#ead7af!important;border-bottom-color:#ead7af!important;box-shadow:inset 0 3px #60775c!important}\nhtml #game.pawFullBookOpen.pawDockRoot #dock .dockIcon{display:none!important}\nhtml #game #page[data-paw-full-book] .pawPavilionScene>.pawTownFrontPhoto{max-height:55dvh;object-fit:contain}\n@media(min-width:780px) and (orientation:landscape){\n html #game #page[data-paw-full-book] #content{background:linear-gradient(90deg,transparent 48.8%,#7f624b25 49.5%,#77573e45 50%,#fff4d855 50.5%,transparent 51.2%)!important;padding:12px 32px 24px!important}\n html #game #page[data-paw-full-book=\"travel\"] .pawSketchSpread{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:30px!important}\n html #game #page[data-paw-full-book=\"travel\"] .pawSketchSpread>.pawSketchCover{grid-column:1!important;grid-row:1/span 3!important}\n html #game #page[data-paw-full-book=\"travel\"] .pawSketchSpread>.pawSketchNotes,html #game #page[data-paw-full-book=\"travel\"] .pawSketchSpread>.pawBookFold{grid-column:2!important;grid-row:auto!important}\n html #game #page[data-paw-full-book=\"town\"] .pawPavilionScene{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:30px!important;max-width:none!important;align-items:start}\n html #game #page[data-paw-full-book=\"town\"] .pawPavilionScene>.pawTownFrontPhoto{width:100%!important;max-height:none!important}\n html #game #page[data-paw-full-book=\"today\"] #content:has(.pawDiaryFold){display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 36px;align-content:start;align-items:start}\n html #game #page[data-paw-full-book=\"today\"] #content:has(.pawDiaryFold)>:not(.pawDiaryFold){grid-column:1/-1}\n}\n@media(prefers-reduced-motion:reduce){html #game #page[data-paw-full-book] #content{animation:none!important;transition:none!important}}\n";
+document.head.append(pawFullBookStyle);
+/* PAW_FULL_BOOK_END */
+
+const pawBookLegibilityStyle=document.createElement('style');pawBookLegibilityStyle.textContent="\n/* The older world-themed background selectors contain three IDs. Explicitly\n   outrank them on book pages, including nested tea/chat and notice pages. */\nhtml #game #page[data-paw-full-book]:has(#content),\nhtml #game #page[data-paw-full-book]:has(#content[data-paw-visual-theme] [data-paw-town-scene]){\n background:#f1e5c8 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/220px auto repeat!important;\n}\nhtml #game #page[data-paw-full-book] #content{background-color:transparent!important;color:#43503d!important}\nhtml #game #page[data-paw-full-book] #content>.row{background:transparent!important}\nhtml #game #page[data-paw-full-book] #content .pawSketchTabs button{color:#43503d!important;background:#e6d5b3!important;border:1px solid #b6a07b!important;text-shadow:none!important}\nhtml #game #page[data-paw-full-book] #content .pawSketchTabs button[aria-current=\"page\"]{background:#d5ddbc!important}\nhtml #game #page[data-paw-full-book] #content :is(.pawSketchNotes,.pawVisitProgress,.pawTravelMemoryLink,.pawDiaryFold,.journalCheckin){color:#43503d!important;text-shadow:none!important}\nhtml #game #page[data-paw-full-book] #content .pawSketchNotes>p,html #game #page[data-paw-full-book] #content .pawSketchNotes>small{color:#43503d!important}\nhtml #game #page[data-paw-full-book] #content .pawBookFold>summary,html #game #page[data-paw-full-book] #content .pawDiaryFold>summary{color:#43503d!important;text-shadow:none!important}\nhtml #game #page[data-paw-full-book] #content .pawTravelMemoryLink button{color:#43503d!important;text-shadow:none!important}\nhtml #game #page[data-paw-full-book=\"town\"] #content .townWall{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;color:#43503d!important}\nhtml #game #page[data-paw-full-book=\"town\"] #content .townWall :is(.board-heading,.wallIntro,.wallDisclosure){color:#43503d!important;text-shadow:none!important}\nhtml #game #page[data-paw-full-book=\"town\"] #content .pawIllustratedHeading{min-height:110px!important;margin:4px 0 12px!important;border-radius:3px!important}\nhtml #game #page[data-paw-full-book=\"town\"] #content .pawIllustratedCaption{min-height:110px!important;padding:28px 10px 10px!important}\nhtml #game #page[data-paw-full-book=\"town\"] #content .townResidentNote{box-shadow:none!important;border-bottom:1px solid #b8a37c!important}\n";document.head.append(pawBookLegibilityStyle);
+
+const pawBoundPassportStyle=document.createElement('style');pawBoundPassportStyle.textContent="\n/* One bound volume, not a flat web page with a paper background. */\nhtml #game #page[data-paw-full-book]:has(#content){\n background:#f1e5c8 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/220px auto repeat!important;\n padding:max(8px,env(safe-area-inset-top,0px)) max(8px,env(safe-area-inset-right,0px)) calc(64px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))!important;\n border-left:7px solid #59674b!important;border-right:5px solid #59674b!important;border-top:5px solid #59674b!important;border-bottom:7px solid #59674b!important;\n border-radius:0 9px 9px 0!important;\n box-shadow:inset 3px 0 #ae9267,inset 6px 0 #c4ac84,inset -2px 0 #9d825e,inset -5px 0 #d3bc91,inset 0 -3px #a48b64,inset 0 -6px #deca9e!important;\n}\nhtml #game #page[data-paw-full-book] #content{\n padding:6px 12px 22px 14px!important;\n max-width:min(1100px,100%)!important;\n background:linear-gradient(90deg,#95744c20,transparent 6%,transparent 96%,#97795018)!important;\n}\nhtml #game #page[data-paw-full-book] #content>.pawPassportHeader{\n position:sticky!important;top:0!important;z-index:5!important;display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important;\n gap:6px!important;align-items:center!important;padding:0 0 5px!important;margin:0 0 8px!important;\n background:#f1e5c8 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/220px auto repeat!important;\n border-bottom:1px solid #aa9670!important;\n}\nhtml #game #page[data-paw-full-book] .pawPassportHeader .pawPassportImprint{\n text-align:center;font:600 clamp(10px,2.8vw,14px)/1.3 var(--paw-display,Georgia,serif);letter-spacing:.08em;color:#526749;\n}\nhtml #game #page[data-paw-full-book] .pawPassportHeader button{\n background:transparent!important;border:0!important;box-shadow:none!important;min-height:44px!important;padding:3px!important;color:#526749!important;\n}\nhtml #game #page[data-paw-full-book] .pawFullBookClose img{width:34px;height:34px}\nhtml #game #page[data-paw-full-book] .pawFullBookClose span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}\nhtml #game #page[data-paw-full-book] #content>.pawPassportTitle{\n font:600 clamp(25px,6.8vw,40px)/1.13 var(--paw-display,Georgia,serif)!important;color:#495e45!important;\n text-align:center!important;margin:10px 0 6px!important;border:0!important;padding:0!important;\n}\nhtml #game #page[data-paw-full-book] #content>.pawPassportTitle+p{text-align:center!important;font:italic 14px/1.45 var(--paw-display,Georgia,serif)!important;color:#6b6250!important;margin:0 0 12px!important}\nhtml #game #page[data-paw-full-book] .pawPassportPostcard{\n background:#f6edd6!important;border:5px solid #f7efd9!important;border-radius:2px!important;\n box-shadow:1px 2px 3px #6b523b4d!important;transform:rotate(-.6deg);margin:8px 2px 14px!important;\n}\nhtml #game #page[data-paw-full-book] .pawSketchTabs{gap:4px!important;margin:0 0 8px!important}\nhtml #game #page[data-paw-full-book] #content .pawSketchTabs button{\n background:transparent!important;border:0!important;border-bottom:1px solid #ad9e7e!important;border-radius:0!important;box-shadow:none!important;\n font-family:var(--paw-display,Georgia,serif)!important;font-weight:600!important;\n}\nhtml #game #page[data-paw-full-book] #content .pawSketchTabs button[aria-current=\"page\"]{background:#d5ddbc55!important;border-bottom:3px solid #718267!important}\nhtml #game #page[data-paw-full-book] .pawPassportDiaryEntry{border-bottom:1px dashed #a99874!important;padding:8px 0 12px!important}\nhtml #game #page[data-paw-full-book] :is(.pawPassportRoomEntries,.pawPassportDiaryEntry,.pawDiaryFold,.pawBookFold) button:not([aria-pressed=\"true\"]){\n border-radius:3px!important;box-shadow:none!important;\n}\nhtml #game #page[data-paw-full-book] .pawPassportRoomEntries button{\n background:transparent!important;border:0!important;border-bottom:1px solid #b9a783!important;color:#486044!important;text-align:left!important;font-family:var(--paw-display,Georgia,serif)!important\n}\nhtml #game #page[data-paw-full-book] .pawPavilionScene>.pawTownFrontPhoto{\n border:5px solid #f7efd9!important;border-radius:2px!important;box-shadow:1px 2px 3px #6b523b4d!important\n}\nhtml #game #page[data-paw-full-book] .pawTownHotspot{\n border-radius:3px!important;box-shadow:1px 2px 3px #58493350!important;background:#f5e9cbf5!important;\n font-family:var(--paw-display,Georgia,serif)!important;color:#40533e!important;\n}\nhtml #game.pawFullBookOpen.pawDockRoot #dock{\n bottom:max(3px,env(safe-area-inset-bottom,0px))!important;width:min(620px,calc(100% - 30px))!important;gap:4px!important;\n}\nhtml #game.pawFullBookOpen.pawDockRoot #dock>button:not([hidden]){\n min-height:44px!important;border:1px solid #9b8e68!important;border-radius:3px 3px 0 0!important;\n background:#c6c9a2!important;box-shadow:inset 0 3px #e5e4c5!important;transform:translateY(3px);\n font-family:var(--paw-display,Georgia,serif)!important;\n}\nhtml #game.pawFullBookOpen.pawDockRoot #dock>button:nth-child(2){background:#d5bc91!important}\nhtml #game.pawFullBookOpen.pawDockRoot #dock>button:nth-child(3){background:#bfcabd!important}\nhtml #game.pawFullBookOpen.pawDockRoot #dock>button:nth-child(4){background:#d9c5ad!important}\nhtml #game.pawFullBookOpen.pawDockRoot #dock>button[aria-current=\"page\"]{\n transform:translateY(-2px);background:#f2e6c7!important;border-bottom-color:#f2e6c7!important;box-shadow:inset 0 3px #60775c!important\n}\nhtml #game .pawPassportMotion{\n position:absolute;inset:0;z-index:70;pointer-events:none;overflow:hidden;perspective:1100px;\n}\nhtml #game .pawPassportMovingLeaf{\n position:absolute;inset:5px 6px 5px 9px;transform-origin:left center;overflow:hidden;pointer-events:none;\n border-radius:3px 10px 10px 3px;backface-visibility:hidden;will-change:transform,opacity;\n}\nhtml #game .pawPassportMotion[data-motion=\"open\"] .pawPassportMovingLeaf{\n background:#50634b;border:6px solid #40543e;\n box-shadow:inset 0 0 0 2px #b0a077,inset 7px 0 #394b3a,0 4px 10px #30281f5c;\n display:grid;place-items:center;\n}\nhtml #game .pawPassportCoverArt{width:94%;height:90%;object-fit:contain;display:block;pointer-events:none}\nhtml #game .pawPassportTurningPaper{\n width:100%;height:100%;background:#f1e5c8 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/220px auto repeat;\n border:1px solid #ad976f;border-radius:0 8px 8px 0;box-shadow:inset -10px 0 20px #8b6d4933,5px 2px 9px #493b2a35;\n}\n@media(min-width:780px) and (orientation:landscape){\n html #game #page[data-paw-full-book] #content{padding:12px 32px 22px!important;background:linear-gradient(90deg,transparent 48.5%,#80624530 49.4%,#76583a55 50%,#fff4d877 50.6%,transparent 51.5%)!important}\n html #game #page[data-paw-full-book] #content>.pawPassportHeader{grid-column:1/-1}\n}\n@media(prefers-reduced-motion:reduce){html #game .pawPassportMotion{display:none!important}}\n";document.head.append(pawBoundPassportStyle);

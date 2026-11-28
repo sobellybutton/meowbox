@@ -130,6 +130,30 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
      await page.waitForFunction(()=>$('page').style.display==='block',null,{timeout:15000});
      await page.waitForFunction(id=>document.getElementById(id)?.getAttribute('aria-current')==='page',id,{timeout:8000});
      assert.equal(await dockRoot.locator('button[aria-current="page"]').count(),1,'Only the current destination is selected');
+     if(process.env.PAW_FULL_BOOK==='1'){
+      const book=page.locator('#page[data-paw-full-book]');await book.waitFor({state:'visible'});
+      const bounds=await book.boundingBox();assert(bounds.x<=1&&bounds.y<=1&&bounds.width>=width-2&&bounds.height>=height-2,'Book does not fill viewport');
+      assert.equal(await page.locator('#game').getAttribute('data-paw-book-last-motion'),'open','Physical cover opening did not run');
+      assert(await book.evaluate(n=>{const s=getComputedStyle(n);return parseFloat(s.borderLeftWidth)>=6&&parseFloat(s.borderRightWidth)>=4}),'Bound book spine and page edge missing');
+      assert.equal(await page.locator('.pawPassportImprint').count(),1,'One physical journal chapter imprint');
+      await page.locator('.pawPassportMotion').waitFor({state:'detached',timeout:2500});
+      assert(await book.evaluate(n=>n.scrollWidth<=n.clientWidth+1),'Book has horizontal overflow');
+      assert(await book.evaluate(n=>{const style=getComputedStyle(n);return style.backgroundImage.includes('/ui/paper_texture.webp')&&!style.backgroundImage.includes('/worlds/')&&!style.backgroundImage.includes('/town-hall/')&&style.backgroundColor!=='rgba(0, 0, 0, 0)'}),'Book background must be opaque paper, not underlying map artwork');
+      const close=page.locator('.pawFullBookClose');await close.waitFor({state:'visible'});
+      assert(await close.locator('img').evaluate(async im=>{await im.decode();return im.naturalWidth>0}),'Original illustrated cover did not decode');
+      assert.equal(await dockRoot.locator('.dockIcon:visible').count(),0,'Dock should be bookmarks inside book');
+      if(id==='dockTravel'){
+       const previousMotion=Number(await page.locator('#game').getAttribute('data-paw-book-motion-serial'));
+       const tabs=page.locator('.pawSketchTabs button');
+       await tabs.nth(1).tap();
+       await page.waitForFunction(n=>Number($('game').dataset.pawBookMotionSerial)>n,previousMotion);
+       assert.equal(await page.locator('#game').getAttribute('data-paw-book-last-motion'),'turn','Same chapter should visibly turn a page');
+       await tabs.nth(0).tap();
+       await page.locator('.pawPassportMotion').waitFor({state:'detached',timeout:2500});
+       const fold=page.locator('.pawBookFold').filter({has:page.locator('.pawSketchPlaces')});await fold.locator('summary').click();assert(await fold.evaluate(n=>n.open),'Places fold did not open');await fold.locator('summary').click();
+      }
+      if(id==='dockScoop')assert.equal(await page.locator('.pawDiaryLunar').count(),1,'Existing calendar is missing');
+     }
      if(id==='dockTravel'){
       assert.equal(await page.locator('.pawJournalDeparture .pawJournalStation').count(),1,'One station departure');
       assert.equal(await page.locator('.pawRailWayfinding').count(),0,'Duplicate station action');
@@ -141,6 +165,10 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       const board=page.locator('.pawTownHotspot').first();
       await (width<900?board.tap():board.click());
       await page.locator('.townWall').waitFor({state:'visible',timeout:8000});
+      if(process.env.PAW_FULL_BOOK==='1'){
+       assert.equal(await page.locator('#page').getAttribute('data-paw-full-book'),'town','Noticeboard left book presentation');
+       assert(await page.locator('#page').evaluate(n=>getComputedStyle(n).backgroundImage.includes('/ui/paper_texture.webp')&&!getComputedStyle(n).backgroundImage.includes('/town-hall/')),'Nested noticeboard background must be paper');
+      }
       const notices=page.locator('.townResidentNote');
       assert.equal(await notices.count(),10,'Only ten resident notices are shown');
       assert.equal(await page.locator('.townPostNav button').count(),0,'No archive pagination or invisible older notices button');
@@ -156,6 +184,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
        const spot=page.locator('.pawTownHotspot').nth(index);
        await (width<900?spot.tap():spot.click());
        await page.locator(target).waitFor({state:'visible',timeout:8000});
+       if(process.env.PAW_FULL_BOOK==='1')assert(await page.locator('#page').evaluate(n=>getComputedStyle(n).backgroundImage.includes('/ui/paper_texture.webp')&&!getComputedStyle(n).backgroundImage.includes('/rooms/tea/')),'Nested book must not restore full scene wallpaper');
        await shot(index===1?'town-tea-chat':'town-little-joys');
        const contextualBack=page.locator('#content > .row button').first();
        await (width<900?contextualBack.tap():contextualBack.click());
@@ -173,6 +202,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
      await back.waitFor({state:'visible',timeout:8000});
      await (width<900?back.tap():back.click());
      await page.waitForFunction(()=>$('page').style.display!=='block',null,{timeout:15000});
+     if(process.env.PAW_FULL_BOOK==='1')await page.waitForFunction(()=>!$('page').dataset.pawFullBook&&!$('game').classList.contains('pawFullBookOpen'));
      const after=await page.evaluate(()=>({scene,x:p.x,y:p.y}));
      assert.equal(after.scene,before.scene,'Dock return changed district');
      assert(Math.hypot(after.x-before.x,after.y-before.y)<3,'Dock return moved traveller');
