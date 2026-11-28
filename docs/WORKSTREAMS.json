@@ -17,7 +17,9 @@
       "priority": 1,
       "summary": "Entrance journey and return rendered acceptance",
       "resources": [
-        "browser"
+        "browser",
+        "scripts/paw-entrance-test.cjs",
+        "scripts/player-loop-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -27,7 +29,10 @@
         "CI run 46113537285 at 3033ec62: both organic Chromium and WebKit jobs completed SUCCESS (jobs 140882154328 and 140882154567). All 8 EN/ZH phone/desktop normal-input cases passed strict railway/gateway/map and Tarot lobby paint coverage, exit and returning identity. Emulated browser evidence only; screenshots not visually inspected in this session; physical devices, remaining full game journeys and exact deployed revision still require acceptance.",
         "Inspected actual 20 Chromium + 20 WebKit screenshots from 46113537285, all eight railway/gate/map/return cases. First railway viewport visually filled with illustrated carriage, no old inset; mobile gateway coherent. Desktop gateway/map still portrait art central with enlarged/dimmed sides; separate desktop design gate pending. Emulated only, not physical phone."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-batch01-entrance",
+        "until": 1795847413600
+      },
       "blocker": "\n\nOwner device acceptance clarification (27 Nov): Both genuine phone and desktop entrance, returning player, train, first coherent frame and normal movement acceptance; cold/warm cache, slow/failed network, cancellation and reload. Apply section 10.\n\n28 Nov owner iPhone screenshot: entrance image has horizontal bands inside game viewport; camera feels static/wide. Verify full-bleed coverage, safe area and Safari dynamic viewport; grounded character approach and purposeful camera push through gate without dead pause. Do not hide browser/system chrome.\n\nEnd-to-end critique, 28 Nov: Measure cold and warm time to first coherent frame, first usable input and first enjoyable action, including first-time and returning launch. No forced tutorial or redundant confirmation. Apply section 12."
     },
     {
