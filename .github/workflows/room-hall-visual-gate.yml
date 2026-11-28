@@ -1,0 +1,38 @@
+name: Pawradise room and hall visual gate
+on:
+  push:
+    branches: [fix/room-town-scene-composition]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['EN', '中文']
+    env:
+      PAW_BROWSER: chromium
+      PAW_VIEWPORT: '390x844'
+      PAW_LANGUAGE: ${{ matrix.language }}
+      PAW_MOTION: no-preference
+      PAW_FOUNDATION: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 8772 >/tmp/hall-room-server.log 2>&1 &
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8772/index.html >/dev/null && break; sleep 1; done
+          node scripts/paw-entrance-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: room-hall-${{ matrix.language }}
+          path: test-results/entrance/
