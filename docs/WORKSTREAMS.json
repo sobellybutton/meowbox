@@ -389,14 +389,18 @@
       "resources": [
         "art:park",
         "assets/visual/painted/interior-layouts.js",
-        "scripts/painted-interior-layout-test.cjs"
+        "scripts/painted-interior-layout-test.cjs",
+        "src/startup.js"
       ],
       "depends": [],
       "stage": "outstanding",
       "evidence": [
         "d47ae2c2 + c74aec92: inspected existing park portrait, traced curved stone path and distinct cat bench/deer feeding approach anchors; 234 focused route and viewport checks passed. Proposed deerVisit action verified in indexed gameplay; actual effective park lobby station list and runtime integration pending. Do not activate before validating current extensions and room geometry."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-20261128-park-live",
+        "until": 1795833798150
+      },
       "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay."
     },
     {
