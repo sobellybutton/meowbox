@@ -187,4 +187,32 @@ ck(startup.includes("pawPaintFoodProp('kitchen_frying_pan',400,535,92);"),'paint
 ck(startup.includes("pawKitchenSteamAction('pan-select',run)"),'second native recipe choice');
 ck(startup.includes("if(tool)pawFoodLive.placement.draw(ctx,pawFoodLive.cache.image('kitchen_wooden_spatula'),tool.prop)"),'painted spatula drawn');
 
+
+const stockBlock=startup.split('/* PAW_KITCHEN_STOCK_BEGIN */')[1].split('/* PAW_KITCHEN_STOCK_END */')[0];
+const stock=new Function(stockBlock+';return {pawKitchenStockArt,pawKitchenStockGeometry,pawKitchenPickupFrame,pawKitchenPickupTick,pawKitchenPickupAllowed}')();
+for(const spec of Object.values(stock.pawKitchenStockArt)){
+ const g=stock.pawKitchenStockGeometry(spec);
+ ck(Math.abs(g.y+spec.bounds[3]*g.z-spec.base[1])<1e-8,'stock grounded on counter');
+ for(const [x,y] of spec.outline)ck(x>=0&&x<=spec.size[0]&&y>=0&&y<=spec.size[1],'silhouette bounded');
+}
+for(let i=0;i<3;i++){
+ const q={i,x:270+i*130,y:610,age:0,last:0};
+ for(let j=0;j<=65;j++){q.age=j/100;for(const reduced of [false,true]){
+  const f=stock.pawKitchenPickupFrame(q,reduced);
+  ck(f.x>=270&&f.x<=530&&f.y>=454&&f.y<=610,'bounded ingredient travel');
+ }}
+ q.age=0;
+ for(let j=1;j<=20;j++){stock.pawKitchenPickupTick(q,j*.1,true);ck(q.age===0,'pause preserves pickup')}
+ for(let j=21;j<=28;j++)stock.pawKitchenPickupTick(q,j*.1,false);
+ ck(q.age>=.65-1e-8,'pickup completes');
+ ck(stock.pawKitchenPickupAllowed({ingredients:[]},i),'available ingredient');
+ ck(!stock.pawKitchenPickupAllowed({ingredients:[i]},i),'cannot add twice');
+ ck(!stock.pawKitchenPickupAllowed({ingredients:[],pawStockPickup:q},i),'cannot overlap pickup');
+ ck(!stock.pawKitchenPickupAllowed({ingredients:[],pawSteam:{}},i),'cannot mix cooking modes');
+}
+ck(extension.includes("if(typeof pawKitchenStockPaint==='function')pawKitchenStockPaint();"),'stock integrated into counter');
+ck(extension.includes("const id=used||pending?'empty':"),'no duplicate food plate');
+ck(extension.includes('!q.pawSteam&&!q.pawStockPickup&&!q.done'),'drag path guarded');
+ck(startup.includes('pawKitchenStockRequest(run,i)'),'stock pickup connected');
+
 console.log('PASS '+n+' food contact geometry, phase and source assertions; no rendered contact acceptance');
