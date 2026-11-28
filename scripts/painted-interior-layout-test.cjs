@@ -184,3 +184,34 @@ for(const id of Object.keys(api.rooms))for(let i=0;i<=100;i+=2){
 }
 assert.ok(manualMoves>8000&&manualBlocked>0);
 console.log('Mapped room manual walking: '+manualMoves+' safe steps, '+manualBlocked+' blocked steps.');
+
+// Native room routes should follow the floor without zigzagging through
+// every lane midpoint. Compare with the previous always-midpoint strategy.
+{
+ const d=(a,b)=>Math.hypot((a[0]-b[0])*928/1648,a[1]-b[1]);
+ const length=(a,route)=>route.reduce((sum,p,i)=>sum+d(i?route[i-1]:a,p),0);
+ const baseline=(id,a,b)=>{
+  if(api.segment(id,a,b))return [b];
+  const dir=Math.sign(b[1]-a[1]);
+  return [...api.rooms[id].lane.filter(([y])=>(y-a[1])*dir>0&&(b[1]-y)*dir>0).sort((a,b)=>(a[0]-b[0])*dir).map(([y,l,r])=>[(l+r)/2,y]),b];
+ };
+ let checked=0,shortened=0;
+ for(const [id,q] of Object.entries(api.rooms)){
+  const points=[q.entry,q.arrival,q.host,...q.visitors,...Object.values(q.stations).map(x=>x.approach)];
+  for(let i=0;i<=20;i++){
+   const y=q.lane[0][0]+(q.lane.at(-1)[0]-q.lane[0][0])*i/20,b=api.bounds(id,y);
+   if(b)for(const f of [.03,.25,.5,.75,.97])points.push([b[0]+(b[1]-b[0])*f,y]);
+  }
+  for(const a of points)for(const b of points){
+   const route=api.route(id,a,b),old=baseline(id,a,b);
+   assert.ok(route&&route.every((p,i)=>api.segment(id,i?route[i-1]:a,p)),id+' safe route');
+   assert.deepEqual(route.at(-1),b);
+   assert.ok(length(a,route)<=length(a,old)+1e-8,id+' no longer detour');
+   checked++;if(length(a,route)<length(a,old)-1e-8)shortened++;
+  }
+ }
+ const park=api.rooms.park;
+ assert.ok(api.route('park',park.entry,park.stations.pet.approach).length<baseline('park',park.entry,park.stations.pet.approach).length);
+ assert.ok(shortened>0);
+ console.log('Natural mapped walking: '+checked+' safe routes, '+shortened+' shorter routes.');
+}

@@ -10,9 +10,14 @@ const jobs=[
  ['tablet-chromium',chromium,{viewport:{width:768,height:1024},hasTouch:true,deviceScaleFactor:1}],
  ['desktop-chromium',chromium,{viewport:{width:1440,height:900},deviceScaleFactor:1}]
 ];
+// Local execution defaults to the full sweep. CI may shard by an exact
+// device identifier; a typo must fail rather than silently test nothing.
+const requestedDevice=process.env.MB_AUDIT_DEVICE||'';
+const selectedJobs=requestedDevice?jobs.filter(([device])=>device===requestedDevice):jobs;
+if(!selectedJobs.length)throw Error('Unknown visual audit device: '+requestedDevice);
 const results=[],failures=[];
 (async()=>{
- for(const [device,engine,options] of jobs){
+ for(const [device,engine,options] of selectedJobs){
   const browser=await engine.launch();
   try{for(const language of ['en','zh']){
    const page=await browser.newPage(options),prefix=device+'-'+language;
@@ -83,7 +88,23 @@ const results=[],failures=[];
       for(const act of actions)await attempt(world+'-'+id+'-'+act,async()=>{await prepare(world,id);await page.evaluate(a=>action(a),act)});
      }
     }
-    for(const mode of ['type','motive','soul'])await attempt('lab-'+mode,async()=>{await prepare('wonder','quiz');await page.evaluate(m=>wonderSceneOpen(m),mode)});
+    // Capture the exposed assessments by choosing the current host's actual
+    // bilingual dialogue. Do not open retired or misplaced modes directly.
+    const assessments=[
+     ['quiz','type','Four personality preferences','MBTI 启发的四组性格偏好'],
+     ['quiz','motive','Enneagram-inspired · nine motives','九型人格 · 九种内在动力'],
+     ['quiz','bigfive','Five personality tendencies','五大性格倾向'],
+     ['story','priorities','Room for what matters','给重要的事留点位置'],
+     ['match','values','Relationship values','关系价值观'],
+     ['match','care','How I feel cared for','怎样的关心最打动我'],
+     ['match','attachment','When closeness gets complicated','亲密关系里的小情绪']
+    ];
+    for(const [house,mode,en,cn] of assessments)await attempt(house+'-'+mode,async()=>{
+     await prepare('wonder',house);
+     await page.evaluate(id=>action(id),house);
+     await page.locator('#choices').getByRole('button',{name:language==='zh'?cn:en,exact:true}).click({timeout:8000});
+     await page.waitForFunction(({house,mode})=>scene==='wonder'&&room===house&&activity==='wonderScene'&&wonderSceneMode===mode,{house,mode},{timeout:5000});
+    });
     await attempt('deer-bow',async()=>{await prepare('home','park');await page.evaluate(()=>action('deerVisit'));await page.locator('.deerMeadowButtons button').first().click();await page.waitForTimeout(450)});
     await attempt('deer-feed',async()=>{await prepare('home','park');await page.evaluate(()=>action('deerVisit'));await page.locator('.deerMeadowButtons button').nth(1).click();await page.waitForTimeout(450)});
     for(const [name,open] of [['bag','myRoom'],['passport','passport'],['today','todayHub'],['wallet','pawWalletPage'],['wheel','dailyWheelPage'],['home','hideoutPage'],['rail','rail']]){

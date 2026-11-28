@@ -204,16 +204,19 @@ function wishFishSpeech(pond,fish,full){
  bubble.style.top=Math.max(13,Math.min(67,fish.y-11))+'%';
  setTimeout(()=>bubble.remove(),2800)
 }
-animateWishKoi=function(pond){
+animateWishKoi=function(pond,visitCurrent=()=>pond.isConnected&&$('page').style.display!=='none'){
  pond.querySelectorAll('.v9koi').forEach(n=>n.remove());element('div','',pond,'waterLight');
  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
- const fish=[];let impact=null,last=performance.now(),wake=last;
+ const fish=[];let impact=null,last=performance.now(),wake=last,frameId=null,stopped=false;
+ function stop(){if(stopped)return;stopped=true;if(frameId!==null)cancelAnimationFrame(frameId);frameId=null;impact=null}
+ function schedule(){if(!stopped)frameId=requestAnimationFrame(tick)}
  const count=Math.random()<.12?4:3;
  for(let k=0;k<count;k++){const el=element('div','',pond,'livingKoi'+(k===3?' golden':''));const im=element('img','',el);im.src=art9.koi;im.alt='';im.style.animationDelay=(-k*.4)+'s';const angle=k*2*Math.PI/count;fish.push({el,x:50+Math.cos(angle)*29,y:43+Math.sin(angle)*24,angle,heading:angle*180/Math.PI+90,speed:.36+k*.045})}
  const petals=Array.from({length:5},(_,k)=>({el:element('i','',pond,'floatingPetal'),x:15+k*17,y:15+(k*29)%64,phase:k*1.9}));
  function tick(now){
-  if(!pond.isConnected)return;
-  if($('page').style.display==='none'){last=now;requestAnimationFrame(tick);return}
+  frameId=null;
+  if(stopped||!visitCurrent()){stop();return}
+  if(document.hidden){last=now;schedule();return}
   const dt=Math.min(.06,Math.max(0,(now-last)/1000));last=now;
   const age=impact?(now-impact.at)/1000:0;
   if(impact&&age>=1.15)impact=null;
@@ -228,22 +231,91 @@ animateWishKoi=function(pond){
   }
   if(!reduce&&now-wake>1900){wake=now;const f=fish[Math.floor(now/1900)%fish.length];const ripple=element('i','',pond,'fishWake');ripple.style.left=f.x+'%';ripple.style.top=f.y+'%';setTimeout(()=>ripple.remove(),1650)}
   for(const petal of petals){if(!reduce){petal.x+=dt*.5;petal.y+=dt*Math.sin(now/4000+petal.phase)*.2;if(petal.x>90)petal.x=10}petal.el.style.left=petal.x+'%';petal.el.style.top=petal.y+'%';petal.el.style.transform='rotate('+(Math.sin(now/3200+petal.phase)*35)+'deg)'}
-  requestAnimationFrame(tick)
+  schedule()
  }
- requestAnimationFrame(tick);
- return {collision(x,y){return wishFishCollision(fish,x,y)},splash(x,y,hit,bumped){impact=!hit&&bumped?{fish:bumped,x,y,at:performance.now()}:null},reset(){impact=null;pond.querySelectorAll('.wishFishSpeech').forEach(v=>v.remove())}}
+ schedule();
+ return {stop,collision(x,y){return stopped?null:wishFishCollision(fish,x,y)},splash(x,y,hit,bumped){if(!stopped)impact=!hit&&bumped?{fish:bumped,x,y,at:performance.now()}:null},reset(){if(stopped)return;impact=null;pond.querySelectorAll('.wishFishSpeech').forEach(v=>v.remove())}}
 };
+/* PAW_WISH_VISIT_BEGIN */
+function pawWishVisitCurrent(connected,display,visitRoom,currentRoom,visitActivity,currentActivity,visitState,currentState){
+ return connected&&display!=='none'&&visitRoom===currentRoom&&visitActivity===currentActivity&&visitState===currentState
+}
+/* PAW_WISH_VISIT_END */
+/* PAW_WISH_BANK_BEGIN */
+function pawWishBankGeometry(stage,pond){
+ if(!stage||!pond||![stage.width,stage.height,pond.x,pond.y,pond.w,pond.h].every(Number.isFinite)||Math.min(stage.width,stage.height,pond.w,pond.h)<=0)return null;
+ const height=Math.max(58,Math.min(132,stage.height*.17,stage.width*.34)),x=pond.x+pond.w*.28,y=pond.y+pond.h+Math.max(4,height*.045);
+ const entry={x:Math.max(height*.28,x-Math.min(pond.w*.22,height*.66)),y:Math.min(stage.height-4,y+height*.23)};
+ return {height,foot:{x,y},entry,keeper:{x:pond.x+pond.w*.79,y},hand:{x:x+height*15/94,y:y-height*41/94}}
+}
+function pawWishCoinOrigin(bank,pond){
+ return {x:(bank.hand.x-pond.x)/pond.w*100,y:(bank.hand.y-pond.y)/pond.h*100}
+}
+function pawWishApproach(age,reduced){
+ return reduced?1:Math.max(0,Math.min(1,age/950))
+}
+/* PAW_WISH_BANK_END */
 wishPond9=function(){page(tr('The wishing pool','锦鲤许愿池'),tr('Hold a wish in your heart. No need to tell anyone.','在心里默默许个愿，不必告诉任何人。'),q=>{
- const pond=pond9(q);pond.classList.add('wishRitual');const stage=element('section','',q,'pawWishGarden');pond.before(stage);stage.append(pond);const koiLife=animateWishKoi(pond);element('div','',pond,'wishBowl');const aim=element('i','',pond,'wishAim');aim.hidden=true;const coin=element('img','',pond,'ritualCoin');coin.src=art9.coin;coin.alt=tr('Swipe the coin toward the centre bowl','将铜钱向中央许愿碗滑动');coin.draggable=false;
+ const pond=pond9(q);pond.classList.add('wishRitual');const stage=element('section','',q,'pawWishGarden');pond.before(stage);stage.append(pond);const koiLife=animateWishKoi(pond,()=>current());element('div','',pond,'wishBowl');const aim=element('i','',pond,'wishAim');aim.hidden=true;const coin=element('img','',pond,'ritualCoin');coin.src='assets/visual/painted/interface/paw-coin-hud.webp';coin.alt=tr('Swipe the coin toward the centre bowl','将铜钱向中央许愿碗滑动');coin.draggable=false;
  const instruction=element('p',tr('Swipe up from the coin towards the bowl. A faster swipe throws farther.','从铜钱向许愿碗滑动，滑得越快，投得越远。'),q,'wishThrowGuide');pond.before(instruction);const powerBar=element('div','',q,'wishPower');const powerFill=element('i','',powerBar);powerBar.setAttribute('aria-label',tr('Throw strength','投币力度'));const message=element('p',tr('Ready? Aim for the small bowl in the centre.','准备好了吗？瞄准中央的小碗。'),q,'wishMessage');message.setAttribute('aria-live','polite');message.setAttribute('role','status');pond.before(message);pond.before(powerBar);
- let busy=false,done=false,misses=0,origin=null;let gentle;const syncToss=()=>{if(gentle)gentle.disabled=busy||done;pond.setAttribute('aria-busy',String(busy))};const home=()=>{coin.style.left='50%';coin.style.top='86%';coin.style.opacity='1';coin.style.transform='translate(-50%,-50%)';coin.hidden=false};
+ const visitRoom=room,visitActivity=activity,visitState=state;
+ const current=()=>pawWishVisitCurrent(pond.isConnected,$('page').style.display,visitRoom,room,visitActivity,activity,visitState,state);
+ let busy=false,done=false,misses=0,origin=null,bankReady=false,held=false,bank=null,pondBox=null,throwAt=-Infinity,approachAt=null,previousPose='';
+ const actor=element('canvas','',stage,'pawWishBankActors');actor.setAttribute('aria-hidden','true');
+ const ag=actor.getContext('2d'),keeper=new Image();keeper.src='assets/visual/painted/garden-keeper/standing.webp';
+ const k=((avatar??0)%4+4)%4;
+ let gentle,takeCoin;
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const syncToss=()=>{if(gentle)gentle.disabled=busy||done||!bankReady||!held;if(takeCoin){takeCoin.hidden=held||done;takeCoin.disabled=!bankReady||busy}pond.setAttribute('aria-busy',String(busy))};
+ const source=()=>bank&&pondBox?pawWishCoinOrigin(bank,pondBox):{x:50,y:86};
+ const home=()=>{const o=source();coin.style.left=o.x+'%';coin.style.top=o.y+'%';coin.style.opacity='1';coin.style.transform='translate(-50%,-50%)';coin.hidden=!bankReady||!held||done};
+ coin.hidden=true;
+ instruction.textContent=tr('Take a Paw Coin from your pocket, then swipe towards the bowl.','从口袋取出一枚爪爪币，再向许愿碗滑动。');
+ message.textContent=tr('Walk down to the bank…','沿小路走到池边……');
+ function drawBank(now){
+  if(!current())return;
+  const rect=stage.getBoundingClientRect(),p=pond.getBoundingClientRect();
+  if(!ag||rect.width<=0||rect.height<=0||p.width<=0||p.height<=0){requestAnimationFrame(drawBank);return}
+  if(!busy&&!origin){
+   pondBox={x:p.left-rect.left,y:p.top-rect.top,w:p.width,h:p.height};
+   bank=pawWishBankGeometry(rect,pondBox)
+  }
+  if(!bank){requestAnimationFrame(drawBank);return}
+  const dpr=Math.min(2,window.devicePixelRatio||1),width=Math.round(rect.width*dpr),height=Math.round(rect.height*dpr);
+  if(actor.width!==width||actor.height!==height){actor.width=width;actor.height=height}
+  ag.setTransform(dpr,0,0,dpr,0,0);ag.clearRect(0,0,rect.width,rect.height);
+  const H=bank.height,im=pics['walker'+k+'2'];
+  mbArtLoad();const frames=mbArtRegistry.players[k]?.walk?.right||[];
+  const images=frames.map(mbArtImage),artReady=im?.complete&&im.naturalWidth>0&&im.naturalHeight>0;
+  if(keeper.complete&&keeper.naturalWidth){const kh=H*.93,kw=kh*keeper.naturalWidth/keeper.naturalHeight;ag.drawImage(keeper,bank.keeper.x-kw/2,bank.keeper.y-kh,kw,kh)}
+  if(!artReady){bankReady=false;home();syncToss();requestAnimationFrame(drawBank);return}
+  if(approachAt===null)approachAt=now;
+  const f=pawWishApproach(now-approachAt,reduced),x=bank.entry.x+(bank.foot.x-bank.entry.x)*f,y=bank.entry.y+(bank.foot.y-bank.entry.y)*f;
+  ag.save();ag.fillStyle='#302a2438';ag.beginPath();ag.ellipse(x,y,H*.14,H*.027,0,0,Math.PI*2);ag.fill();
+  if(f<1&&frames.length&&images.every(Boolean)){
+   const index=Math.floor(f*frames.length*2)%frames.length,frame=frames[index],q=H/frame.height;
+   ag.drawImage(images[index],x-frame.foot[0]*q,y-frame.foot[1]*q,frame.width*q,frame.height*q)
+  }else{
+   const w=H*im.naturalWidth/im.naturalHeight,age=now-throwAt,lean=reduced||age<0||age>470?0:Math.sin(Math.PI*age/470)*.12;
+   // Reuse the existing illustrated side pose and torso pivot. No separate arm.
+   const split=68/94*im.naturalHeight,top=68/94*H,lower=H-top;
+   ag.drawImage(im,0,split,im.naturalWidth,im.naturalHeight-split,x-w/2,y-lower,w,lower);
+   ag.save();ag.translate(x,y-lower);ag.rotate(lean);ag.drawImage(im,0,0,im.naturalWidth,split,-w/2,-top,w,top);ag.restore()
+  }
+  ag.restore();
+  if(f>=1&&!bankReady){bankReady=true;syncToss();home();message.textContent=tr('At the bank. Take out a Paw Coin.','到池边啦，取出一枚爪爪币吧。')}
+  if(bankReady&&!busy&&!done&&!origin)home();
+  requestAnimationFrame(drawBank)
+ }
+ requestAnimationFrame(drawBank);
+ function cancelFlight(){if(!pond.isConnected)return;origin=null;aim.hidden=true;pond.classList.remove('wishDragging');busy=false;home();syncToss();powerFill.style.width='0%';if(!done)message.textContent=tr('Ready when you are. Aim for the bowl.','准备好了再投，瞄准小碗。')}
  const clampWish=(v,min,max)=>Math.max(min,Math.min(max,v));
  // A deliberate drag lands where the finger aims; a short quick flick gets a modest boost.
- const destination=(dx,dy,ms)=>{const w=Math.max(1,pond.clientWidth),h=Math.max(1,pond.clientHeight),dist=Math.hypot(dx,dy)/h,speed=dist/Math.max(.08,ms/1000),gain=1+Math.min(.85,Math.max(0,(speed-.55)*.55))*Math.max(0,1-dist/.48);const x=clampWish(50+dx/w*100*gain,4,96),y=clampWish(86+dy/h*100*gain,5,94);return{x,y,power:Math.min(1,dist*gain)}};
- function throwWish(x,y){if(busy||done)return;busy=true;syncToss();aim.hidden=true;pond.querySelectorAll('.wishFishSpeech').forEach(v=>v.remove());message.textContent=tr('There goes your wish…','心愿飞出去了……');let hit=Math.pow((x-50)/8.4,2)+Math.pow((y-39)/6,2)<=1;let startTime=performance.now();sound(520);const distance=Math.hypot((x-50)*pond.clientWidth/pond.clientHeight,y-86),duration=460+distance*5,arc=8+distance*.26;const rim=!hit&&Math.pow((x-50)/13.8,2)+Math.pow((y-39)/9.6,2)<=1;const landingX=rim?clampWish(x+(x>=50?1:-1)*(8+distance*.045),5,95):x,landingY=rim?clampWish(y+(y>=39?7:-7),5,93):y;let bounced=false;function frame(now){if(!pond.isConnected)return;let f=Math.min(1,(now-startTime)/duration);coin.style.left=(50+(x-50)*f)+'%';coin.style.top=(86+(y-86)*f-arc*Math.sin(Math.PI*f))+'%';coin.style.transform='translate(-50%,-50%) rotateY('+(f*720)+'deg) scale('+(1-.55*f)+')';if(f<1){requestAnimationFrame(frame);return}if(rim&&!bounced){bounced=true;sound(780);const bowl=pond.querySelector('.wishBowl');bowl.animate([{transform:'translate(-50%,-50%) rotate(0deg)'},{transform:'translate(-50%,-50%) rotate(3deg)'},{transform:'translate(-50%,-50%) rotate(-2deg)'},{transform:'translate(-50%,-50%) rotate(0deg)'}],{duration:260});const bounceAt=performance.now();function rebound(at){if(!pond.isConnected)return;const u=Math.min(1,(at-bounceAt)/310);coin.style.left=(x+(landingX-x)*u)+'%';coin.style.top=(y+(landingY-y)*u-7*Math.sin(Math.PI*u))+'%';coin.style.transform='translate(-50%,-50%) rotate('+(u*420)+'deg) scale(.45)';if(u<1)requestAnimationFrame(rebound);else{x=landingX;y=landingY;finish()}}requestAnimationFrame(rebound);return}finish()}function finish(){if(!pond.isConnected)return;coin.hidden=true;const bumped=!hit&&koiLife.collision(x,y);koiLife.splash(x,y,hit,bumped);sound(hit?660:bumped?410:280);wishLanding(pond,x,y,hit,bumped);for(let n=0;n<3;n++){setTimeout(()=>{if(!pond.isConnected)return;let ripple=element('i','',pond,'wishRipple'+(hit?' gold':''));ripple.style.left=x+'%';ripple.style.top=y+'%';setTimeout(()=>ripple.remove(),1100)},n*150)}if(hit){done=true;busy=false;syncToss();const settled=element('img','',pond,'settledWishCoin');settled.src=art9.coin;settled.alt='';settled.style.left=x+'%';settled.style.top=y+'%';settled.animate([{transform:'translate(-50%,-50%) scale(.9)',opacity:1},{transform:'translate(-50%,-50%) scale(.65)',opacity:.85}],{duration:450,fill:'forwards'});message.textContent=tr(...townReaction('koi-hit',koiComedy.hit));addItem('Wishing coin','许愿铜钱');again.hidden=false}else{misses++;let lines=[['A little closer. Your wish is still yours.','差一点点，心愿还在。'],['The koi are curious. Try aiming a little higher.','锦鲤都来看热闹了，再往中间瞄一点。'],['Even the koi are cheering for you now. Take your time.','锦鲤都在替你加油了，慢慢来。']];const outcome=bumped?'fish':rim?'rim':y>48?'short':y<31?'long':'miss';message.textContent=tr(...townReaction('koi-'+outcome,koiComedy[outcome]));if(bumped)wishFishSpeech(pond,bumped,message.textContent);setTimeout(()=>{if(!pond.isConnected)return;home();busy=false;syncToss()},650)}}requestAnimationFrame(frame)}
+ const destination=(dx,dy,ms)=>{const w=Math.max(1,pond.clientWidth),h=Math.max(1,pond.clientHeight),dist=Math.hypot(dx,dy)/h,speed=dist/Math.max(.08,ms/1000),gain=1+Math.min(.85,Math.max(0,(speed-.55)*.55))*Math.max(0,1-dist/.48);const o=source(),x=clampWish(o.x+dx/w*100*gain,4,96),y=clampWish(o.y+dy/h*100*gain,5,94);return{x,y,power:Math.min(1,dist*gain)}};
+ function throwWish(x,y){if(!current()||!bankReady||!held||busy||done)return;const from=source();throwAt=performance.now();busy=true;syncToss();aim.hidden=true;pond.querySelectorAll('.wishFishSpeech').forEach(v=>v.remove());message.textContent=tr('There goes your wish…','心愿飞出去了……');let hit=Math.pow((x-50)/8.4,2)+Math.pow((y-39)/6,2)<=1;let startTime=performance.now();sound(520);const distance=Math.hypot((x-from.x)*pond.clientWidth/pond.clientHeight,y-from.y),duration=460+distance*5,arc=8+distance*.26;const rim=!hit&&Math.pow((x-50)/13.8,2)+Math.pow((y-39)/9.6,2)<=1;const landingX=rim?clampWish(x+(x>=50?1:-1)*(8+distance*.045),5,95):x,landingY=rim?clampWish(y+(y>=39?7:-7),5,93):y;let bounced=false;function frame(now){if(!current()){cancelFlight();return;}let f=Math.min(1,(now-startTime)/duration);coin.style.left=(from.x+(x-from.x)*f)+'%';coin.style.top=(from.y+(y-from.y)*f-arc*Math.sin(Math.PI*f))+'%';coin.style.transform='translate(-50%,-50%) rotateY('+(f*720)+'deg) scale('+(1-.55*f)+')';if(f<1){requestAnimationFrame(frame);return}if(rim&&!bounced){bounced=true;sound(780);const bowl=pond.querySelector('.wishBowl');bowl.animate([{transform:'translate(-50%,-50%) rotate(0deg)'},{transform:'translate(-50%,-50%) rotate(3deg)'},{transform:'translate(-50%,-50%) rotate(-2deg)'},{transform:'translate(-50%,-50%) rotate(0deg)'}],{duration:260});const bounceAt=performance.now();function rebound(at){if(!current()){cancelFlight();return;}const u=Math.min(1,(at-bounceAt)/310);coin.style.left=(x+(landingX-x)*u)+'%';coin.style.top=(y+(landingY-y)*u-7*Math.sin(Math.PI*u))+'%';coin.style.transform='translate(-50%,-50%) rotate('+(u*420)+'deg) scale(.45)';if(u<1)requestAnimationFrame(rebound);else{x=landingX;y=landingY;finish()}}requestAnimationFrame(rebound);return}finish()}function finish(){if(!current()){cancelFlight();return;}coin.hidden=true;const bumped=!hit&&koiLife.collision(x,y);koiLife.splash(x,y,hit,bumped);sound(hit?660:bumped?410:280);wishLanding(pond,x,y,hit,bumped);for(let n=0;n<3;n++){setTimeout(()=>{if(!current())return;let ripple=element('i','',pond,'wishRipple'+(hit?' gold':''));ripple.style.left=x+'%';ripple.style.top=y+'%';setTimeout(()=>ripple.remove(),1100)},n*150)}if(hit){done=true;held=false;busy=false;syncToss();const settled=element('img','',pond,'settledWishCoin');settled.src='assets/visual/painted/interface/paw-coin-hud.webp';settled.alt='';settled.style.left=x+'%';settled.style.top=y+'%';settled.animate([{transform:'translate(-50%,-50%) scale(.9)',opacity:1},{transform:'translate(-50%,-50%) scale(.65)',opacity:.85}],{duration:450,fill:'forwards'});message.textContent=tr(...townReaction('koi-hit',koiComedy.hit));addItem('Wishing coin','许愿铜钱');again.hidden=false}else{misses++;let lines=[['A little closer. Your wish is still yours.','差一点点，心愿还在。'],['The koi are curious. Try aiming a little higher.','锦鲤都来看热闹了，再往中间瞄一点。'],['Even the koi are cheering for you now. Take your time.','锦鲤都在替你加油了，慢慢来。']];const outcome=bumped?'fish':rim?'rim':y>48?'short':y<31?'long':'miss';message.textContent=tr(...townReaction('koi-'+outcome,koiComedy[outcome]));if(bumped)wishFishSpeech(pond,bumped,message.textContent);setTimeout(()=>{if(!current()){cancelFlight();return}held=false;home();busy=false;syncToss();message.textContent+=tr(' Take another coin to try again.',' 再取一枚试试吧。')},650)}}requestAnimationFrame(frame)}
  // The whole lower bank is a generous touch target. Capture on the pond, not the image.
  pond.addEventListener('pointerdown',e=>{
-  if(busy||done||origin||e.isPrimary===false||(e.pointerType==='mouse'&&e.button!==0))return;
+  if(!current()||!bankReady||!held||busy||done||origin||e.isPrimary===false||(e.pointerType==='mouse'&&e.button!==0))return;
   const r=pond.getBoundingClientRect(),c=coin.getBoundingClientRect();
   const near=Math.hypot(e.clientX-(c.left+c.width/2),e.clientY-(c.top+c.height/2))<=Math.max(48,c.width);
   if(!near&&(e.clientY<r.top+r.height*.70||e.clientY>r.bottom))return;
@@ -251,22 +323,26 @@ wishPond9=function(){page(tr('The wishing pool','锦鲤许愿池'),tr('Hold a wi
   try{pond.setPointerCapture(e.pointerId)}catch{}
  });
  pond.addEventListener('pointermove',e=>{
-  if(!origin||busy||origin.id!==e.pointerId)return;
+  if(!current()||!origin||busy||origin.id!==e.pointerId)return;
   e.preventDefault();const v=destination(e.clientX-origin.x,e.clientY-origin.y,performance.now()-origin.at);
   aim.hidden=false;aim.style.left=v.x+'%';aim.style.top=v.y+'%';powerFill.style.width=Math.min(100,v.power*100)+'%';
  });
  function cancelWishDrag(e){if(!origin||origin.id!==e.pointerId)return;origin=null;aim.hidden=true;pond.classList.remove('wishDragging')}
  pond.addEventListener('pointerup',e=>{
   if(!origin||origin.id!==e.pointerId)return;
+  if(!current()){cancelWishDrag(e);return}
   e.preventDefault();const dx=e.clientX-origin.x,dy=e.clientY-origin.y,elapsed=performance.now()-origin.at;
   cancelWishDrag(e);if(Math.hypot(dx,dy)<8||dy>=0){message.textContent=tr('Swipe up from the coin, or choose Toss gently.','从铜钱向上滑动，或选择轻轻投币。');return}
   const v=destination(dx,dy,elapsed);powerFill.style.width=Math.min(100,v.power*100)+'%';throwWish(v.x,v.y)
  });
  pond.addEventListener('pointercancel',cancelWishDrag);pond.addEventListener('lostpointercapture',cancelWishDrag);
+ takeCoin=b(q,tr('Take a Paw Coin','取一枚爪爪币'),()=>{if(!current()||!bankReady||held||busy||done)return;held=true;home();syncToss();sound(440);message.textContent=tr('Hold a wish in your heart. Swipe from your coin towards the bowl.','心里默默许个愿，再从手中的铜钱向小碗滑动。')});
  gentle=b(q,tr('Toss gently','轻轻投币'),()=>throwWish(50,39));gentle.classList.add('pawGentleToss');syncToss();
- let keyboardAim=0,keyboardPower=47;const keyboard=element('details','',q);element('summary',tr('Alternative aiming controls','其他瞄准方式'),keyboard);const controls=element('div','',keyboard,'wishKeyboard');const readout=element('output','',controls);readout.setAttribute('aria-live','polite');function updateAim(){readout.textContent=tr('Angle ','角度 ')+keyboardAim+'° · '+tr('Power ','力度 ')+keyboardPower+'%';powerFill.style.width=keyboardPower+'%'};for(const [label,description,fn] of [['←',['Aim left','向左瞄准'],()=>keyboardAim=Math.max(-45,keyboardAim-5)],['→',['Aim right','向右瞄准'],()=>keyboardAim=Math.min(45,keyboardAim+5)],['−',['Less power','减小力度'],()=>keyboardPower=Math.max(10,keyboardPower-4)],['+',['More power','加大力度'],()=>keyboardPower=Math.min(90,keyboardPower+4)]]){const btn=b(controls,label,()=>{fn();updateAim()});btn.setAttribute('aria-label',tr(...description))}b(controls,tr('Throw','投币'),()=>{const a=keyboardAim*Math.PI/180;throwWish(clampWish(50+Math.sin(a)*keyboardPower*pond.clientHeight/pond.clientWidth,4,96),clampWish(86-Math.cos(a)*keyboardPower,5,94))});updateAim();
-let again=b(q,tr('Make another wish','再许一个愿'),()=>{done=false;misses=0;syncToss();koiLife.reset();pond.querySelectorAll('.settledWishCoin').forEach(n=>n.remove());home();again.hidden=true;message.textContent=tr('Hold another wish in your heart, then toss.','再默默许个愿，然后投币。')});again.hidden=true;
- b(q,tr('Hang a private wish','挂心愿牌'),()=>{$('page').style.display='none';start('wishes')});
+ let keyboardAim=0,keyboardPower=47;const keyboard=element('details','',q);element('summary',tr('Alternative aiming controls','其他瞄准方式'),keyboard);const controls=element('div','',keyboard,'wishKeyboard');const readout=element('output','',controls);readout.setAttribute('aria-live','polite');function updateAim(){readout.textContent=tr('Angle ','角度 ')+keyboardAim+'° · '+tr('Power ','力度 ')+keyboardPower+'%';powerFill.style.width=keyboardPower+'%'};for(const [label,description,fn] of [['←',['Aim left','向左瞄准'],()=>keyboardAim=Math.max(-45,keyboardAim-5)],['→',['Aim right','向右瞄准'],()=>keyboardAim=Math.min(45,keyboardAim+5)],['−',['Less power','减小力度'],()=>keyboardPower=Math.max(10,keyboardPower-4)],['+',['More power','加大力度'],()=>keyboardPower=Math.min(90,keyboardPower+4)]]){const btn=b(controls,label,()=>{fn();updateAim()});btn.setAttribute('aria-label',tr(...description))}b(controls,tr('Throw','投币'),()=>{const a=keyboardAim*Math.PI/180;const o=source();throwWish(clampWish(o.x+Math.sin(a)*keyboardPower*pond.clientHeight/pond.clientWidth,4,96),clampWish(o.y-Math.cos(a)*keyboardPower,5,94))});updateAim();
+let again=b(q,tr('Make another wish','再许一个愿'),()=>{if(!current()||busy)return;done=false;held=false;misses=0;syncToss();koiLife.reset();pond.querySelectorAll('.settledWishCoin').forEach(n=>n.remove());home();again.hidden=true;message.textContent=tr('Take another Paw Coin when you are ready.','准备好了，再取一枚爪爪币。')});again.hidden=true;
+ const finishVisit=()=>{if(!current())return;koiLife.stop();cancelFlight();$('page').style.display='none';hint('Take your wish with you, or visit another spot in the garden.','带着心愿慢慢走，也可以去花园的其他地方看看。')};
+ b(q,tr('Hang a private wish','挂心愿牌'),()=>{if(!current())return;koiLife.stop();cancelFlight();$('page').style.display='none';start('wishes')});
+ b(q,tr('Return to the garden','回到花园'),finishVisit);
 })};
 const wishCompactVisual=document.createElement('style');wishCompactVisual.textContent=`
 #content:has(.wishRitual) .wishRitual{width:min(100%,340px,calc(43dvh * 1.06))!important;aspect-ratio:4/5!important;max-height:50dvh!important;margin:6px auto!important;touch-action:none}
@@ -442,3 +518,10 @@ const pawWishGardenCss=document.createElement('style');pawWishGardenCss.textCont
 #content .pawWishGarden .wishPower{background:#d7c9ac!important}
 #content .pawWishGarden .wishRitual .ritualCoin{filter:drop-shadow(0 2px 1px #213d35bb)}
 `;document.head.append(pawWishGardenCss);
+
+const pawWishBankStyle=document.createElement('style');pawWishBankStyle.textContent=`
+#game #content .pawWishGarden .pawWishBankActors{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+#game #content .pawWishGarden .wishRitual{overflow:visible!important;z-index:2}
+#game #content .pawWishGarden .pawCoinTray{display:none!important}
+#game #content .pawWishGarden .wishRitual .ritualCoin{width:clamp(14px,4vw,21px)!important;height:clamp(14px,4vw,21px)!important;object-fit:contain!important}
+`;document.head.append(pawWishBankStyle);
