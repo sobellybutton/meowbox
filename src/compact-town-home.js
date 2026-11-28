@@ -180,6 +180,14 @@ function cutawayFootPivot(frame,mirrored=false){
  // The transform origin stays on the real foot when mirroring.
  return {x:100*frame.foot[0]/frame.width,y:100*frame.foot[1]/frame.height}
 }
+// A stopped walk keeps the actual visible position on the current safe
+// edge. Its next route first retraces that edge, rather than teleporting.
+function cutawayStoppedFoot(foot,origin){
+ return foot&&[foot.x,foot.y].every(Number.isFinite)?{x:foot.x,y:foot.y}:origin
+}
+function cutawayWalkingFrame(progress,remaining){
+ return Number.isFinite(progress)&&Number.isInteger(remaining)&&remaining>0&&(progress<1||remaining>1)
+}
 // PAW_COMPACT_HELPERS_END
 function replaceExact(root,selector,oldEN,oldZH,en,cn){
  for(const node of root.querySelectorAll(selector)){
@@ -384,10 +392,16 @@ function mountCutaway(q,legacyStage){
   shell.onerror=fail;shell.onload=()=>{if(shell.naturalWidth&&shell.naturalHeight)stage.style.aspectRatio=shell.naturalWidth+'/'+shell.naturalHeight};
   if(shell.complete&&shell.naturalWidth)shell.onload();
   b(controls,tr('Return to original room','返回原本小窝'),close);
-  const edit=b(controls,tr('Move furniture','移动家具'),()=>{stop();position(point(actor));actorArt('down',false,0);editing=!editing;selected=null;edit.textContent=editing?tr('Finish arranging','完成布置'):tr('Move furniture','移动家具');render();sayStatus()});
+  const edit=b(controls,tr('Move furniture','移动家具'),()=>{
+   const toggle=()=>{stop();position(point(actor));actorArt('down',false,0);editing=!editing;selected=null;edit.textContent=editing?tr('Finish arranging','完成布置'):tr('Move furniture','移动家具');render();sayStatus()};
+   // Finish returning to the last safe cell before editing collision
+   // footprints. A click halfway through an edge must not teleport.
+   if(editing||seatedKey||!visibleFoot||Math.hypot(visibleFoot.x-point(actor).x,visibleFoot.y-point(actor).y)<=.0001)toggle();
+   else walk(actor,toggle)
+  });
   let editing=false,selected=null,actor=cutawayFree(api,layout,items).at(-1),raf=0,epoch=0;
   const drag=cutawayDragOwner();
-  let seatedKey=null,seatStandingRatio=0,seatResize=null,visibleFoot=null;
+  let seatedKey=null,seatStandingRatio=0,seatResize=null,visibleFoot=null,actorFacing='down';
   const seatFrame=cutawaySeatFrame(avatar??0);let seatReady=false;
   const lampKeys=items.filter(i=>['lamp','shojiLamp','chineseLantern'].includes(i.key)).map(i=>i.key);
   const savedLights=store?.[zone]?.fingerprint===fingerprint?store[zone].lights:null;
@@ -395,7 +409,7 @@ function mountCutaway(q,legacyStage){
   const player=element('img','',stage,'pawCutawayActor');player.alt=tr('Your avatar','你的角色');actorArt('down',false,0);
   const stop=()=>{epoch++;cancelAnimationFrame(raf);raf=0};
   const onVisibility=()=>{
-   if(document.hidden){drag.clear();stop();if(!seatedKey){position(point(actor));actorArt('down',false,0)}}
+   if(document.hidden){drag.clear();stop();if(!seatedKey){position(cutawayStoppedFoot(visibleFoot,point(actor)));actorArt(actorFacing,false,0)}}
    else if(seatedKey)syncSeat()
   };
   const observer=new MutationObserver(()=>{if(!panel.isConnected||$('page').style.display!=='block')close()});
@@ -404,6 +418,7 @@ function mountCutaway(q,legacyStage){
   const point=c=>api.project(layout,c.u+.5,c.v+.5);
   function position(p){visibleFoot={x:p.x,y:p.y};player.style.left=p.x*100+'%';player.style.top=p.y*100+'%';player.style.zIndex=String(cutawayDepth(p.y))}
   function actorArt(direction,walking,distance){
+   actorFacing=direction;
    seatedKey=null;seatStandingRatio=0;player.style.removeProperty('width');player.style.removeProperty('max-height');delete player.dataset.seated;
    pawHomeActorArt(player,direction,walking,distance);
    const dir=direction==='left'?'right':direction,frames=mbArtRegistry.players[avatar??0]?.walk?.[dir];
@@ -462,13 +477,13 @@ function mountCutaway(q,legacyStage){
    actorArt(first?pawHomeDirection(from,first,stage.clientWidth/Math.max(1,stage.clientHeight)):'down',false,0);position(from);
    function step(now){
     if(token!==epoch)return; // An obsolete callback must not cancel a newer walk.
-    if(!panel.isConnected||document.hidden||$('page').style.display!=='block'){stop();position(point(actor));actorArt('down',false,0);return}
-    const next=steps[0];if(!next){position(point(actor));actorArt('down',false,distance);raf=0;if(typeof arrive==='function')arrive();return}
+    if(!panel.isConnected||document.hidden||$('page').style.display!=='block'){stop();position(cutawayStoppedFoot(visibleFoot,point(actor)));actorArt(actorFacing,false,0);return}
+    const next=steps[0];if(!next){position(point(actor));actorArt(actorFacing,false,distance);raf=0;if(typeof arrive==='function')arrive();return}
     const to=point(next),length=Math.hypot(to.x-from.x,to.y-from.y),duration=Math.max(160,length*3400);
     if(started===null)started=now;
     const t=residentReducedMotion.matches?1:Math.min(1,(now-started)/duration);
     const p={x:from.x+(to.x-from.x)*t,y:from.y+(to.y-from.y)*t};position(p);
-    actorArt(pawHomeDirection({x:from.x,y:from.y},{x:to.x,y:to.y},stage.clientWidth/Math.max(1,stage.clientHeight)),t<1,distance+t*length*100);
+    actorArt(pawHomeDirection({x:from.x,y:from.y},{x:to.x,y:to.y},stage.clientWidth/Math.max(1,stage.clientHeight)),cutawayWalkingFrame(t,steps.length),distance+t*length*100);
     if(t===1){actor=steps.shift();from=to;started=null;distance+=length*100}raf=requestAnimationFrame(step)
    }
    raf=requestAnimationFrame(step)
