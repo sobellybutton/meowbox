@@ -35,6 +35,32 @@
   return result
  }
  function fit(w,h){if(![w,h].every(Number.isFinite)||w<=0||h<=0)return null;const s=Math.min(w/carriage.width,h/carriage.height);return {x:(w-carriage.width*s)/2,y:(h-carriage.height*s)/2,width:carriage.width*s,height:carriage.height*s}}
+ // Slow, route-specific daylight and breeze. No flash, full-screen tint,
+ // random jumps, or moving the carriage itself. Fixed poses in reduced motion.
+ function atmosphere(route,seconds,reduced=false){
+  if(!Object.hasOwn(routes,route)||!Number.isFinite(seconds))return null;
+  const phase={fortune:.2,home:1.5,island:2.8,wonder:4.1}[route];
+  const t=reduced?0:Math.max(0,seconds);
+  const slow=.5+.5*Math.sin(t*.48+phase);
+  const breeze=reduced?0:.018*Math.sin(t*1.4+phase)+.009*Math.sin(t*.7+phase*2);
+  return {breeze,light:.025+.038*slow,shade:.012+.025*(1-slow)};
+ }
+ function drawTrackside(ctx,image,p,air){
+  // Only the flexible flower sprite responds to wind. Its base remains
+  // planted on the original trackside ground line; fence/stone stay rigid.
+  if(p.id!=='flowers'||!air.breeze){ctx.drawImage(image,p.x,p.y,p.width,p.height);return}
+  ctx.save();try{
+   ctx.translate(p.x,p.y+p.height);ctx.transform(1,0,air.breeze,1,0,0);
+   ctx.drawImage(image,0,-p.height,p.width,p.height)
+  }finally{ctx.restore()}
+ }
+ function windowDaylight(ctx,w,h,air){
+  const wash=ctx.createLinearGradient(0,0,w,h);
+  wash.addColorStop(0,'rgba(255,226,175,'+air.light+')');
+  wash.addColorStop(.52,'rgba(255,235,202,0)');
+  wash.addColorStop(1,'rgba(91,117,119,'+air.shade+')');
+  ctx.fillStyle=wash;ctx.fillRect(0,0,w,h)
+ }
  function draw(ctx,assets,route,seconds,w,h,reduced=false){
   const box=fit(w,h);if(!box||!assets?.carriage?.naturalWidth||!assets?.far?.naturalWidth||!Object.hasOwn(routes,route))return false;
   const im=assets.far,progress=reduced?.5:Math.max(0,Math.min(1,seconds/9));
@@ -46,12 +72,13 @@
    const windowHeight=box.height*.58;
    const glass=cover(im.naturalWidth,im.naturalHeight,box.width,windowHeight,progress);
    ctx.drawImage(im,glass.x,glass.y,glass.w,glass.h,0,0,box.width,windowHeight);
+   const air=atmosphere(route,seconds,reduced);windowDaylight(ctx,box.width,windowHeight,air);
    for(const p of frame(route,seconds,box.width,windowHeight,reduced)){
-    const sprite=assets[p.id];if(sprite?.naturalWidth)ctx.drawImage(sprite,p.x,p.y,p.width,p.height)
+    const sprite=assets[p.id];if(sprite?.naturalWidth)drawTrackside(ctx,sprite,p,air)
    }
    ctx.drawImage(assets.carriage,0,0,box.width,box.height);
   }finally{ctx.restore()}
   return true
  }
- return Object.freeze({carriage,sprites,far,cover,fit,frame,draw});
+ return Object.freeze({carriage,sprites,far,cover,fit,frame,atmosphere,draw});
 });
