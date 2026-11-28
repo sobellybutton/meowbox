@@ -14079,7 +14079,7 @@ function pawKitchenPaintLadle(frame){
 function pawKitchenServeMotion(age,reduced=false){
  const p=Math.max(0,Math.min(1,Number.isFinite(age)?age/2.2:0));
  const ease=x=>x*x*(3-2*x),mix=(a,b,u)=>a+(b-a)*u;
- const rest=[253,536],pot=[400,481],lip=[510,410];
+ const rest=[253,536],pot=[400,481],lip=[510+(44-44.5)*34/48,437+(24-56)*34/48];
  // Desired working tip; the rest endpoint is supplied by source geometry
  // at render time. Dip, lift, carry, pour, then return to the counter.
  let phase='rest',u=0,tip=pot.slice(),angle=-1.68,fill=0,stream=false;
