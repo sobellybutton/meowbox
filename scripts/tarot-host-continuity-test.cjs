@@ -223,3 +223,13 @@ for(const format of ['feed','xhs','story','square'])for(const cn of [false,true]
  assert.equal(result.includes('https://'),format==='feed'||format==='square');
 }
 console.log('Native public caption: eight format/language cases and manual clipboard fallback passed');
+
+const surfaceApi=new Function(source.slice(source.indexOf('function pawKeepsakeResultSurface'),source.indexOf('function pawKeepsakeRoomRoute'))+';return {pawKeepsakeResultSurface,pawRestoreKeepsakeSurface}')();
+for(const height of [100,300,700])for(const scroll of [0,45,600])for(const open of [[true,false],[false,true],[true,true]]){
+ const details=open.map(v=>({open:v})),sheet={scrollTop:scroll,scrollHeight:height,clientHeight:100,querySelectorAll:()=>details};
+ const snap=surfaceApi.pawKeepsakeResultSurface(sheet);details.forEach(v=>v.open=false);sheet.scrollTop=0;
+ assert.ok(surfaceApi.pawRestoreKeepsakeSurface(sheet,snap));
+ assert.deepEqual(details.map(v=>v.open),open);assert.equal(sheet.scrollTop,Math.min(scroll,Math.max(0,height-100)));
+}
+assert.equal(surfaceApi.pawRestoreKeepsakeSurface(null,{}),false);
+console.log('Result surface: 27 scroll and disclosure restoration combinations passed');
