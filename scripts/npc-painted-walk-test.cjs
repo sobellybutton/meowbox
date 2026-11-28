@@ -1,7 +1,23 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),api=require('../assets/visual/painted/npc-walk.js');
-const images=Array.from({length:8},(_,i)=>({complete:true,naturalWidth:448,naturalHeight:464,id:i}));
+async function main(){
+const images=Array.from({length:8},(_,i)=>({complete:true,naturalWidth:448,naturalHeight:464,id:i,decode:()=>Promise.resolve()}));
 let n=0;const check=(v,m)=>{assert.ok(v,m);n++};
+check(!api.ready(images),'downloads alone cannot admit walking art');
+check(await api.decodeSequence(images)&&api.ready(images),'all frames decoded');
+const requests=[];
+class FakeImage{set src(path){this.path=path;requests.push(this)} decode(){return Promise.resolve()}}
+const prepare=api.createLoader(FakeImage);
+const first=prepare(1);
+check(prepare(1)===first&&requests.length===8,'one pending request per sequence');
+check(!await first.promise&&first.status==='failed','invalid dimensions reject sequence');
+check(prepare(1)===first&&requests.length===8,'no failure retry within visit');
+const next=prepare(2);
+for(const im of next.images)Object.assign(im,{complete:true,naturalWidth:448,naturalHeight:464});
+check(await next.promise&&api.ready(next.images),'retry on new visit succeeds');
+check(prepare(3)===next&&requests.length===16,'decoded sequence reused');
+const bad=images.map((im,i)=>i===4?{...im,decode:()=>Promise.reject(Error('decode failure'))}:im);
+check(!await api.decodeSequence(bad)&&!api.ready(bad),'one failed decode blocks entire set');
 for(const h of [45,72,94,150,225]){
  const stride=h*.65;
  for(let i=0;i<400;i++){
@@ -24,3 +40,6 @@ check(!api.draw(ctx,actor,images.map((v,i)=>i===4?{...v,naturalWidth:1}:v),94),'
 check(!api.draw(ctx,actor,images,0),'invalid scale');
 for(const p of api.assets)check(fs.existsSync(path.resolve(__dirname,'..',p)),'uploaded asset exists');
 console.log('PASS '+n+' office-worker artwork geometry and identity checks; candidate only.');
+
+}
+main().catch(e=>{console.error(e);process.exitCode=1});
