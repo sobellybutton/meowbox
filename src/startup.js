@@ -13655,8 +13655,103 @@ function pawYueDeskPresent(kind){
 }
 const pawYueDeskChartBefore=destinyPage;
 destinyPage=function(...args){const result=pawYueDeskChartBefore(...args);pawYueDeskPresent('chart');return result};
+/* PAW_YUE_YEAR_DIALOGUE_BEGIN */
+// Read only the already-calculated, localized output. No date, form values,
+// storage, new fortune rules or separate zodiac calculation enter the dialogue.
+function pawYueYearSnapshot(out){
+ if(!out)return null;
+ const read=node=>node?.textContent?.trim()||'';
+ const title=read(out.querySelector('.yueReadingFront h2')),year=read(out.querySelector('.yueReadingYear'));
+ const relation=read(out.querySelector(':scope > strong')),roast=read(out.querySelector('.yueReadingRoast'));
+ const notes=Array.from(out.querySelectorAll(':scope > p:not(.yueReadingRoast)'),read).filter(Boolean);
+ const topics=Array.from(out.querySelectorAll('.yueReadingTopics article'),node=>({title:read(node.querySelector('h3')),text:read(node.querySelector('p'))}));
+ const disclaimer=read(out.querySelector(':scope > small'));
+ if(!title||!year||!relation||!roast||!notes.length||topics.length!==4||topics.some(v=>!v.title||!v.text)||!disclaimer)return null;
+ return {title,year,relation,roast,notes,topics,disclaimer}
+}
+function pawYueYearDialogue(result){
+ if(room!=='destiny'||activity||!result)return false;
+ const pane=$('page');pane.style.display='none';
+ pawYueChartObserver?.disconnect();pawYueChartObserver=null;
+ delete pane.dataset.pawYueDesk;delete pane.dataset.pawYueExpanded;
+ closeTalk();
+ let revision=0;
+ const speak=(words,options)=>{
+  const current=++revision;
+  say(tr('Master Yue','月师傅'),words,options.map(([label,action])=>[label,()=>{if(room==='destiny'&&!activity&&talkOpen&&revision===current&&pane.style.display!=='block')action()}]))
+ };
+ const hub=()=>{revision++;yueReadingHub()};
+ const finish=()=>{revision++;closeTalk();hint('Take what is useful, and enjoy the rest of your day.','有用的记在心里，剩下的日子好好过。')};
+ function overview(){
+  speak([result.title,result.year,result.relation,result.roast].join('\n\n'),[
+   [tr('What does that mean?','这是什么意思？'),()=>note(0)],
+   [tr('Explore a part of my year','看看流年的各方面'),topics],
+   [tr('Finish reading','结束问事'),conclude]
+  ])
+ }
+ function note(i){
+  if(!Number.isInteger(i)||i<0||i>=result.notes.length)return topics();
+  speak(result.notes[i],[
+   [i+1<result.notes.length?tr('Tell me more','再说一点'):tr('Explore the year','看看流年'),()=>i+1<result.notes.length?note(i+1):topics()],
+   [tr('Back to the overview','回顾流年'),overview],
+   [tr('Finish reading','结束问事'),conclude]
+  ])
+ }
+ function topics(){
+  speak(tr('Which part of the year shall we talk about?','这一年，你想先聊哪方面？'),[
+   ...result.topics.map((v,i)=>[v.title,()=>topic(i)]),
+   [tr('Finish reading','结束问事'),conclude]
+  ])
+ }
+ function topic(i){
+  const v=result.topics[i];if(!v)return topics();
+  speak(v.title+'\n\n'+v.text,[
+   [tr('Explore another topic','看看其他方面'),topics],
+   [tr('Back to the overview','回顾流年'),overview],
+   [tr('Finish reading','结束问事'),conclude]
+  ])
+ }
+ function conclude(){
+  speak(result.disclaimer+'\n\n'+tr('Shall we look at something else, or leave the stars to their tea?','还想看看别的，还是让星星也喝杯茶休息一下？'),[
+   [tr('Another year reading','再看一次流年'),()=>{revision++;closeTalk();yueZodiacAlmanac()}],
+   [tr('Ask something else','问点别的'),hub],
+   [tr('Thanks, Yue','谢谢月师傅'),finish]
+  ])
+ }
+ overview();return true
+}
+function pawYueYearConnect(form,out){
+ if(!form||!out||form.dataset.pawYueYearConnected==='true')return false;
+ form.dataset.pawYueYearConnected='true';
+ const pane=$('page');
+ // Capture invalid synthetic submits before the original calculator.
+ form.addEventListener('submit',e=>{
+  if(room!=='destiny'||activity||!form.isConnected||pane.dataset.pawYueDesk!=='true'||pane.style.display!=='block'||!form.checkValidity()){
+   e.preventDefault();e.stopImmediatePropagation();if(form.isConnected&&pane.style.display==='block')form.reportValidity()
+  }
+ },true);
+ form.addEventListener('submit',()=>{
+  const result=pawYueYearSnapshot(out);if(!result)return;
+  // Existing listeners finish first; a different room or replacement paper
+  // must not open a stale consultation.
+  queueMicrotask(()=>{
+   if(room!=='destiny'||activity||!form.isConnected||pane.dataset.pawYueDesk!=='true'||pane.style.display!=='block'||!out.isConnected)return;
+   const current=pawYueYearSnapshot(out);if(!current||JSON.stringify(current)!==JSON.stringify(result))return;
+   const date=form.querySelector('input[type=date]');if(date)date.value='';
+   // The conversation needs only the computed text, not the birth paper.
+   $('content').replaceChildren();
+   pawYueYearDialogue(result)
+  })
+ });
+ return true
+}
+/* PAW_YUE_YEAR_DIALOGUE_END */
 const pawYueDeskYearBefore=yueZodiacAlmanac;
-yueZodiacAlmanac=function(...args){const result=pawYueDeskYearBefore(...args);pawYueDeskPresent('year');return result};
+yueZodiacAlmanac=function(...args){
+ const result=pawYueDeskYearBefore(...args);pawYueDeskPresent('year');
+ if(room==='destiny'&&!activity){const q=$('content');pawYueYearConnect(q.querySelector('.yueAlmanacForm'),q.querySelector('.yueAlmanacPaper'))}
+ return result
+};
 /* PAW_YUE_STAR_DIALOGUE_BEGIN */
 const pawYueStarGroups=[[9,10,11],[0,1,2],[3,4,5],[6,7,8]];
 function pawYueStarGroup(index){
