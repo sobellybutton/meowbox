@@ -191,3 +191,22 @@ console.log('Editorial public result exports: '+otherCases+' result/format/langu
 for(const [v,ratio,split] of [['0 / 6',0,false],['6 / 6',1,false],['1 : 3',.25,true],['4 : 0',1,true],['2 : 2',.5,true]])assert.deepEqual(other.pawEditorialScoreRatio(v),{ratio,split});
 for(const v of ['7 / 6','0 : 0','0 / 0','not a score','-1 / 6'])assert.equal(other.pawEditorialScoreRatio(v),null);
 console.log('Editorial exact score graphics: 10 valid and invalid cases passed');
+
+const liveRoutes=new Function(source.slice(source.indexOf('function pawKeepsakeRoomRoute'),source.indexOf('/* PAW_NATIVE_CONSULT_END */'))+';return {pawKeepsakeRoomRoute,pawKeepsakeVisitOwns}')();
+const routeCases=[
+ [{room:'tarot',activity:'tarot'},'tarot',true,'tarot'],
+ [{room:'tarot',activity:'love'},'tarot',true,'tarot'],
+ [{room:'match',activity:'match',scene:'wonder',phase:'result'},'cafe',false,'cafe'],
+ [{room:'story',activity:'story',scene:'wonder',phase:'result'},'story',false,'story'],
+ ...['quiz','curiosity','observatory'].flatMap(room=>['type','motive','bigfive','care','values','attachment','priorities'].map(mode=>[{room,activity:'wonderScene',scene:'wonder',phase:'result',mode,result:{}},mode,true,'notebook']))
+];
+for(const [v,kind,back,id] of routeCases){
+ assert.equal(liveRoutes.pawKeepsakeRoomRoute(v,kind,back)?.id,id);
+ assert.equal(liveRoutes.pawKeepsakeRoomRoute({...v,page:true},kind,back),null);
+ assert.equal(liveRoutes.pawKeepsakeRoomRoute(v,'unrelated',back),null);
+ const origin={...v,run:{},token:7,page:false};
+ assert.ok(liveRoutes.pawKeepsakeVisitOwns(origin,{...origin}));
+ for(const key of ['room','activity','scene','phase','run','token','mode','result','page'])assert.equal(liveRoutes.pawKeepsakeVisitOwns(origin,{...origin,[key]:key==='page'?true:Symbol(key)}),false);
+}
+for(const [v,kind,back] of [[{room:'match',activity:'match',scene:'wonder',phase:'question'},'cafe',false],[{room:'story',activity:'story',scene:'wonder',phase:'turn'},'story',false],[{room:'quiz',activity:'wonderScene',scene:'wonder',phase:'result',mode:'type',result:{}},'type',false],[{room:'tarot',activity:'tarot'},'tarot',false]])assert.equal(liveRoutes.pawKeepsakeRoomRoute(v,kind,back),null);
+console.log('Live keepsake routes: '+routeCases.length+' valid routes, archive fallbacks and stale visit guards passed');
