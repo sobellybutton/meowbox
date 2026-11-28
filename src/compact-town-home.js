@@ -185,7 +185,7 @@ hideoutPage=function(...args){
  return result
 };
 const style=document.createElement('style');style.textContent=`
-#game #content .pawTownWithPortrait{position:relative;min-height:64px;padding-left:62px!important}
+#game #content .pawTownWithPortrait.pawTownWithPortrait{position:relative;min-height:64px;padding-left:62px!important;box-sizing:border-box}
 #game #content .pawTownPortrait{position:absolute;top:12px;left:8px;width:44px;height:44px;object-fit:cover;object-position:center 35%;border-radius:50%;background:#e8d9bb;border:1px solid #ae9774;box-sizing:border-box}
 #game #content .pawTownWithPortrait>strong{min-height:20px}
 #game #content .pawRoomExtras{flex:1 1 120px;min-width:0}
