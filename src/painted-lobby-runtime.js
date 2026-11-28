@@ -22,10 +22,26 @@ function pawTarotLobbyFrame(w,h,p){
  const oy=ph<h?(h-ph)/2:Math.max(h-ph,Math.min(0,h*.5-ph*.58));
  return {s,ox:ox-p.x*s,oy:oy-p.y*s}
 }
+/* PAW_READING_WIDE_FRAME_BEGIN */
+// Keep the entire horizontal painting, host and authored floor lane.
+// Only trim the unused upper ceiling and lower edge of the portrait.
+// Use a modest zoom on roomy landscape displays, not a wide cover crop.
+function pawReadingWideFrame(w,h,p){
+ if(!p||![w,h,p.x,p.y,p.w,p.h].every(Number.isFinite)||Math.min(w,h,p.w,p.h)<=0||w<900||w/h<1.25)return null;
+ const top=.12,bottom=.98,span=bottom-top;
+ const s=Math.min(h/(p.h*span),w/p.w);
+ const pw=p.w*s,ph=p.h*s;
+ const left=(w-pw)/2,oy=(h-ph*span)/2-ph*top;
+ return {s,ox:left-p.x*s,oy:oy-p.y*s}
+}
+/* PAW_READING_WIDE_FRAME_END */
 const pawTarotLobbyCameraBefore=pawReadingCamera;
 pawReadingCamera=function(api,w,h,p=pawReadingPlate){
  if(room==='tarot'&&pawReadingActive()&&w<h){
   const frame=pawTarotLobbyFrame(w,h,p);if(frame)return frame
+ }
+ if(['tarot','destiny'].includes(room)&&pawReadingActive()){
+  const frame=pawReadingWideFrame(w,h,p);if(frame)return frame
  }
  return pawTarotLobbyCameraBefore(api,w,h,p)
 };
@@ -265,11 +281,13 @@ function pawInstallNativeConsultation(){
  #game #dialogue[data-paw-desk-dialogue]{bottom:max(12px,env(safe-area-inset-bottom,0px))!important;border-radius:3px!important;box-shadow:0 -2px 8px #2b251e30!important;width:min(calc(100% - 24px),570px)!important;max-height:48dvh!important}
  #game #dialogue[data-paw-desk-dialogue] #speaker{font:600 15px Georgia,"Songti SC",serif!important;color:#5b6550!important}
  #game #dialogue[data-paw-desk-dialogue] #choices{grid-template-columns:repeat(auto-fit,minmax(min(100%,125px),1fr))!important}
- #game #dialogue[data-paw-desk-dialogue] #choices button{font:500 14px/1.25 Georgia,"Songti SC",serif!important;text-align:center!important;border-radius:3px!important}
+ #game #dialogue[data-paw-desk-dialogue] #choices button{font:500 14px/1.25 Georgia,"Songti SC",serif!important;text-align:start!important;border:0!important;border-bottom:1px solid #b6a17e70!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;min-height:44px!important}
  #game #dialogue .pawDeskField{grid-column:1/-1;display:block;min-width:0}
  #game #dialogue .pawDeskField :is(input,select){box-sizing:border-box;display:block;width:100%;min-height:44px;font-size:16px;background:#fff6e1;color:#493e31;border:1px solid #b3a17e;border-radius:3px;padding:7px}
  #game #page[data-paw-yue-desk] .pawYueResultNav{position:sticky;top:0;z-index:8;display:flex;justify-content:space-between;gap:6px;padding:5px;background:#f0e4ce;border-bottom:1px solid #b6a17e}
- #game #page[data-paw-yue-desk] .pawYueResultNav button{min-height:44px;flex:1;white-space:normal}
+ #game #page[data-paw-yue-desk] .pawYueResultNav button{min-height:44px;flex:1;min-width:0;white-space:normal;background:transparent!important;border:0!important;border-bottom:1px solid #b6a17e70!important;border-radius:0!important;box-shadow:none!important;color:#405440!important}
+ #game #dialogue[data-paw-desk-dialogue] #choices button:focus-visible,#game #page[data-paw-yue-desk] .pawYueResultNav button:focus-visible{outline:2px solid #39594d!important;outline-offset:-2px}
+ @media(forced-colors:active){#game #dialogue[data-paw-desk-dialogue] #choices button,#game #page[data-paw-yue-desk] .pawYueResultNav button{color:ButtonText!important;border-bottom:1px solid ButtonText!important}}
  #game #dialogue[data-paw-keepsake]{max-height:78dvh!important}
  #game #dialogue[data-paw-keepsake] .pawTarotKeepsake{grid-column:1/-1;display:grid;gap:5px;min-width:0}
  #game #dialogue[data-paw-keepsake] .meowSharePreview{max-height:35dvh;width:auto;max-width:100%;margin:auto}
