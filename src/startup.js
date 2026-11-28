@@ -11071,12 +11071,11 @@ drawActivity=function(...args){
   else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',.9);
   // The wind chime is attached to the painted stall eave on the left.
   const [wx,wy]=xy(.205,.385);
-  ctx.save();try{ctx.translate(wx,wy);ctx.scale(.30,.30);gardenWindChime(0,0)}finally{ctx.restore()}
+  ctx.save();try{ctx.translate(wx,wy);if(!residentReducedMotion.matches)ctx.rotate(Math.sin(t*1.45)*.035+Math.sin(t*.83)*.014);ctx.scale(.30,.30);gardenWindChime(0,0)}finally{ctx.restore()}
   const [bx,by]=xy(.83,.625);
   if(!moving){
    target(bx-36,by-34,72,68,()=>pawGardenChoose(run,'seat'));
    target(water[0]-55,water[1]-20,110,40,()=>pawGardenChoose(run,'feed'));
-   target(wx-32,wy-24,64,62,()=>pawGardenChoose(run,'chime'))
   }
  }finally{ctx.restore()}
  pawGardenControls(run)
@@ -11091,9 +11090,9 @@ function pawGardenControls(run){
  const el=$('gameControls');if(!el||run!==state||activity!=='secretGarden')return;
  if(pawArcadeInputBlocked()){el.hidden=true;return}
  const busy=!!run.pawGardenWalk?.route.length,key=String(zh)+'|'+run.gardenSitting+'|'+busy;
- if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===(run.pawRearGarden?2:3)){el.hidden=false;return}
+ if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===2){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawGardenControls');el.hidden=false;pawGardenControlsRun=run;pawGardenControlsKey=key;
- for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐'],...(run.pawRearGarden?[]:[['chime','Wind chime','听风铃']])]){
+ for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐']]){
   const button=b(el,tr(en,cn),()=>pawGardenChoose(run,name));button.dataset.pawGardenControl=name;button.disabled=busy
  }
 }
@@ -13432,7 +13431,8 @@ drawActivity=function(...args){
  if(!pawWishPaintedActivity())return pawWishActivityDrawBefore(...args);
  const p=pawWishLobbyPlate,b=livingBounds();ctx.save();try{
   ctx.fillStyle='#526b57';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawWishLobbyArt(),p.x,p.y,p.w,p.h);
-  const foot=pawWishLobbyStations.wishes.slice(2);backHuman(foot[0],foot[1]+22,avatar??0,false,'left',1.2);
+  const foot=pawWishLobbyStations.wishes.slice(2),fy=foot[1]+22,sc=1.2;backHuman(foot[0],fy,avatar??0,false,'left',sc);
+  if(state.gardenStage==='carry'||state.gardenStage==='rise'&&t-state.gardenRise<.25){const held=state.gardenCarryOrigin||gardenCarryAnchor();pawIncenseArm({x:foot[0]-9*sc,y:fy-48*sc},{x:held.x,y:held.y-32*held.sc},sc,false)}
  }finally{ctx.restore()}
  return pawWishActivityDrawBefore(...args)
 };
@@ -14130,20 +14130,21 @@ function pawYueQuestionSteps(form,out,kind){
  if(steps.some(group=>!group.length||group.some(n=>!n||n===form)))return;
  const questions=pawYueDeskQuestions(kind);if(questions.length!==steps.length)return;
  let index=0,finished=false;
+ const visitEvents=new AbortController();
  form.classList.add('pawYueGuidedForm');
  const question=element('p','',form,'pawYueQuestion');form.prepend(question);question.setAttribute('aria-live','polite');
  const controls=element('div','',form,'pawYueStepNav'),back=b(controls,tr('Previous','上一步'),()=>show(index-1)),next=b(controls,tr('Continue','继续'),advance);back.type=next.type='button';submit.before(controls);
  function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));form.dataset.pawYueStep=String(index);question.textContent=tr(...questions[index]);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1)}
  function advance(){if(finished||index>=steps.length-1)return;for(const field of steps[index].flatMap(n=>[...n.querySelectorAll('input,select')]))if(!field.checkValidity()){field.reportValidity();return}show(index+1)}
- form.addEventListener('keydown',e=>{if(!finished&&index<steps.length-1&&e.key==='Enter'&&e.target.matches('input')){e.preventDefault();advance()}});
+ form.addEventListener('keydown',e=>{if(!finished&&index<steps.length-1&&e.key==='Enter'&&e.target.matches('input')){e.preventDefault();advance()}},{signal:visitEvents.signal});
  // Bring an invalid hidden field back into view before native validation focuses it.
  form.addEventListener('invalid',e=>{
   if(finished)return;
   const i=steps.findIndex(group=>group.some(node=>node.contains(e.target)));
   if(i>=0)show(i);
   for(let n=e.target.parentElement;n&&n!==form;n=n.parentElement)if(n.tagName==='DETAILS')n.open=true
- },true);
- form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();controls.remove()}});
+ },{capture:true,signal:visitEvents.signal});
+ form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;visitEvents.abort();delete form.pawYueRestoreStep;delete form.dataset.pawYueStep;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();controls.remove()}},{signal:visitEvents.signal});
  form.pawYueRestoreStep=i=>{if(Number.isInteger(i))show(i)};
  show(0)
 }
