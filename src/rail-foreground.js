@@ -38,6 +38,15 @@
   const v=Math.max(0,Math.min(1,(t-(duration-brake))/brake));
   return start-brake*(v*v*v-.5*v*v*v*v);
  }
+ // A finite journey must reach the destination framing at its own arrival,
+ // not at the nine-second entrance preview reference. Use the same eased
+ // distance as the nearby scenery so the panorama brakes with the train.
+ function panoramaProgress(seconds,duration,reduced=false){
+  if(reduced)return .5;
+  const finite=Number.isFinite(duration)&&duration>0;
+  const end=finite?travelDistance(duration,duration):travelDistance(9);
+  return Math.max(0,Math.min(1,travelDistance(seconds,duration)/end))
+ }
  function frame(route,seconds,w,h,reduced=false,duration){
   if(!Object.hasOwn(routes,route)||![seconds,w,h].every(Number.isFinite)||w<=0||h<=0)return [];
   const distance=reduced?0:travelDistance(seconds,duration);
@@ -98,7 +107,7 @@
   const box=fit(w,h,layout),foreground=layout==='portrait'?assets?.portrait:assets?.carriage;
   if(!box||!foreground?.naturalWidth||!assets?.far?.naturalWidth||!Object.hasOwn(routes,route)||!Number.isFinite(seconds))return false;
   if(layout==='portrait'&&(foreground.naturalWidth!==portrait.width||foreground.naturalHeight!==portrait.height))return false;
-  const im=assets.far,progress=reduced?.5:Math.min(1,travelDistance(seconds,duration)/travelDistance(9)),win=windowBox(box,layout);
+  const im=assets.far,progress=panoramaProgress(seconds,duration,reduced),win=windowBox(box,layout);
   const glass=cover(im.naturalWidth,im.naturalHeight,win.w,win.h,progress);
   if(!glass)return false;
   ctx.save();try{
@@ -115,5 +124,5 @@
   }finally{ctx.restore()}
   return true
  }
- return Object.freeze({carriage,portrait,sprites,far,cover,fit,windowBox,frame,atmosphere,travelDistance,draw});
+ return Object.freeze({carriage,portrait,sprites,far,cover,fit,windowBox,frame,atmosphere,travelDistance,panoramaProgress,draw});
 });
