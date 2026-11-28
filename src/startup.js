@@ -7109,7 +7109,11 @@ drawRoom=function(...args){
  if(room&&!activity&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block'){
   const entries=roomGuideEntries(),missing=pawMissingStations(entries,pawVisibleStationLabels);
   roomGuideToggle.dataset.missing=String(missing.length);
-  roomGuideToggle.dataset.showDirectory='false';
+  // Retain native station plaques as the primary input. Expose the existing
+  // directory only when a plaque cannot be rendered, or while it is open.
+  const showDirectory=missing.length>0||roomGuide.classList.contains('pawGuideOpen');
+  const flag=String(showDirectory);
+  if(roomGuideToggle.dataset.showDirectory!==flag)roomGuideToggle.dataset.showDirectory=flag;
   const guideName=pawGuideName(entries.length,missing.length,zh);
   if(roomGuideToggle.textContent!==guideName)roomGuideToggle.textContent=guideName;
   roomGuideToggle.setAttribute('aria-label',guideName);
@@ -7125,6 +7129,7 @@ pawActivityDirectoryCss.textContent=`
 #game #roomStationGuide.pawGuideOpen{top:max(108px,calc(env(safe-area-inset-top,0px) + 108px));z-index:12!important}
 #game .mbPaintedRail>canvas.pawMovingGlass,#proposal .mbPaintedRail>canvas.pawMovingGlass{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;z-index:4!important;opacity:1!important;visibility:visible!important;pointer-events:none!important;transform:none!important}
 @media(prefers-reduced-motion:reduce){#game .mbPaintedRail>canvas.pawMovingGlass,#proposal .mbPaintedRail>canvas.pawMovingGlass{display:none!important}}
+#game #pawRoomGuideToggle[data-show-directory="true"]:not([hidden]){position:absolute!important;right:max(12px,env(safe-area-inset-right,0px));top:max(60px,calc(env(safe-area-inset-top,0px) + 60px));width:auto!important;height:auto!important;min-width:44px!important;min-height:44px!important;max-width:calc(100% - 24px)!important;clip-path:none!important;overflow:visible!important;white-space:normal!important;pointer-events:auto!important;padding:7px 12px!important;background:#594b39f0!important;color:#fff1d4!important;border:1px solid #c9ad7c!important;z-index:10!important}
 `;document.head.append(pawActivityDirectoryCss);
 
 // Multiple painted deer, using the already installed independent deer poses.
