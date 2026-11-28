@@ -3778,7 +3778,7 @@ function pawDailyNoticeSelection(entries,now=Date.now()){
  const count=Math.min(10-fresh.length,pool.length),offset=pool.length?((day*10)%pool.length+pool.length)%pool.length:0;
  return fresh.concat(Array.from({length:count},(_,i)=>pool[(offset+i)%pool.length]));
 }
-function pawDailyTownNotices(now=Date.now()){return pawDailyNoticeSelection(townPublishedNotices(now),now)}
+function pawDailyTownNotices(now=Date.now()){const cutoff=Math.floor((now+8*3600000)/86400000)*86400000-8*3600000;return pawDailyNoticeSelection(townPublishedNotices(cutoff),now)}
 const pawWeekNotes=[
  ['Sunday: Tomorrow is a problem for tomorrow’s human.','周日：明天的烦恼交给明天的人类。'],
  ['Monday: The town accepts your resignation from pretending to enjoy Mondays.','周一：小镇批准你辞去假装喜欢周一的职务。'],
