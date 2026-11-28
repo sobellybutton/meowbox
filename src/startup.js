@@ -13105,20 +13105,22 @@ function pawYueInkState(cache,grid,api,now,blocked,reduced){
  const progress=api.parchmentClock(entry.clock,now,blocked,reduced);
  return {palaces:entry.palaces,progress}
 }
+function pawYueInkBlocked(folded,hidden,covered,transition){return !!(folded||hidden||covered||transition)}
 /* PAW_YUE_INK_RUNTIME_END */
 const pawYueInkCache=new WeakMap();
 let pawYueInkCurrent=null;
 document.addEventListener('visibilitychange',()=>{
- if(pawYueInkCurrent&&pawHostLibrary?.api?.parchmentClock)pawHostLibrary.api.parchmentClock(pawYueInkCurrent.clock,performance.now()/1000,document.hidden,residentReducedMotion.matches)
+ if(pawYueInkCurrent&&pawHostLibrary?.api?.parchmentClock)pawHostLibrary.api.parchmentClock(pawYueInkCurrent.clock,performance.now()/1000,pawYueInkBlocked(pawYueInkCurrent.folded,document.hidden,!proposal.hidden,transitioning),residentReducedMotion.matches)
 });
 function pawDrawReadingSeated(id,plate){
  if(pawHostVisit?.id!==id||!pawHostVisit.ready||!pawHostLibrary)return false;
  const desk=id==='destiny'&&$('page').dataset.pawYueDesk==='true'&&$('page').style.display!=='none';
  const activeForm=desk?$('content').querySelector('.astroForm,.yueAlmanacForm'):null;
  const editing=!!activeForm&&!activeForm.hidden&&activeForm.style.display!=='none';
- const grid=desk&&!editing&&!$('content').querySelector('.astroResult[data-paw-yue-folded]')?$('content').querySelector('.ziGrid'):null;
+ const grid=desk&&!editing?$('content').querySelector('.ziGrid'):null;
+ const folded=!!grid&&!!$('content').querySelector('.astroResult[data-paw-yue-folded]');
  const almanac=desk&&!editing?$('content').querySelector('.yueReadingFront,.signNotebookResult'):null;
- const result=!!(grid||almanac),phase=pawReadingHostPhase(id,state,activity,desk,result);
+ const result=!!(grid||almanac),phase=pawReadingHostPhase(id,state,activity,desk&&!folded,result);
  const plan=pawReadingSeatPlan(id,plate,phase);if(!plan)return false;
  const {api,manifest}=pawHostLibrary,fr=api.contacts(manifest,plan.host,plan.pose,plan.center,plan.span);
  if(!fr)return false;
@@ -13130,10 +13132,11 @@ function pawDrawReadingSeated(id,plate){
    const v=state.readCards[state.readFocus],atlas=readingArtwork();
    if(v&&Number.isInteger(v.i)&&v.i>=0&&v.i<tarotDeck.length)api.drawHeldCard(ctx,fr,atlas,[(v.i%readingFaceColumns)*readingFaceWidth,Math.floor(v.i/readingFaceColumns)*readingFaceHeight,readingFaceWidth,readingFaceHeight],v.rev);
   }
-  if(id==='destiny'&&phase==='result'&&grid){
-   const ink=pawYueInkState(pawYueInkCache,grid,api,performance.now()/1000,document.hidden||!proposal.hidden||transitioning,residentReducedMotion.matches);
+  if(id==='destiny'&&grid){
+   const ink=pawYueInkState(pawYueInkCache,grid,api,performance.now()/1000,pawYueInkBlocked(folded,document.hidden,!proposal.hidden,transitioning),residentReducedMotion.matches);
    pawYueInkCurrent=pawYueInkCache.get(grid)||null;
-   if(ink&&typeof api.paintChartPalaces==='function')api.drawHeldParchment(ctx,fr,g=>api.paintChartPalaces(g,ink.palaces,ink.progress))
+   if(pawYueInkCurrent)pawYueInkCurrent.folded=folded;
+   if(!folded&&phase==='result'&&ink&&typeof api.paintChartPalaces==='function')api.drawHeldParchment(ctx,fr,g=>api.paintChartPalaces(g,ink.palaces,ink.progress))
   }else if(id==='destiny'){pawYueInkCurrent=null}
   return true
  }finally{ctx.restore()}
