@@ -18,6 +18,21 @@ const lines={
       "visitor",
       "A traveller came just to watch the clouds.",
       "有位旅人特地来这里看云。"
+    ],
+    [
+      "quietbell",
+      "I wait for the bell to finish ringing before I pick up the broom.",
+      "钟声还没散呢，扫帚可以再等等。"
+    ],
+    [
+      "incensebox",
+      "Three sticks at a time. The rest can wait in the box.",
+      "一次三炷香，剩下的就让它们在香盒里休息。"
+    ],
+    [
+      "steps",
+      "Nobody gives the stone steps a deadline. They still get us there.",
+      "石阶没有截止日期，也一样能把人送到想去的地方。"
     ]
   ],
   "tarot": [
@@ -35,6 +50,21 @@ const lines={
       "choice",
       "You can leave a question unanswered for today.",
       "有些问题，今天不回答也没关系。"
+    ],
+    [
+      "deckrest",
+      "Even the cards get a break between questions.",
+      "牌也要休息一下，可不能连轴转。"
+    ],
+    [
+      "notverdict",
+      "A card is a conversation starter, not a verdict.",
+      "牌是用来打开话题的，不是给人生下判决的。"
+    ],
+    [
+      "teacold",
+      "I was so busy listening that my tea went cold again.",
+      "听故事听得太入迷，茶又凉了。"
     ]
   ],
   "yue": [
@@ -52,6 +82,21 @@ const lines={
       "spectacles",
       "I spent ten minutes looking for the glasses on my head.",
       "找了十分钟眼镜，原来就在头顶。"
+    ],
+    [
+      "brushrest",
+      "A brush writes better when I stop trying to hurry it.",
+      "越催毛笔，字越写不好。"
+    ],
+    [
+      "margin",
+      "A chart has room for notes. So does a life.",
+      "命盘旁边可以写批注，人生也不是一页定稿。"
+    ],
+    [
+      "teaagain",
+      "I poured tea before finding the cup. A very advanced technique.",
+      "还没找到茶杯就开始倒茶，看来我修行还不够。"
     ]
   ],
   "garden": [
@@ -69,6 +114,21 @@ const lines={
       "prune",
       "I left a branch alone. It wanted to grow its own way.",
       "那根枝条我没剪，让它自己长吧。"
+    ],
+    [
+      "chime",
+      "The wind chime has a lot to say for something with no mouth.",
+      "风铃没有嘴，话倒是不少。"
+    ],
+    [
+      "bench",
+      "I wiped the bench. The leaves immediately moved back in.",
+      "长椅刚擦干净，落叶就搬回来了。"
+    ],
+    [
+      "pond",
+      "The pond makes no promises, but it is rather good company.",
+      "池塘不许什么愿，却挺会陪人的。"
     ]
   ],
   "grandma": [
@@ -86,6 +146,21 @@ const lines={
       "recipe",
       "The recipe says one clove. My hand says three.",
       "食谱说一瓣蒜，我的手说三瓣。"
+    ],
+    [
+      "taste",
+      "Taste first. The recipe cannot tell when your nose is happy.",
+      "先尝尝，食谱又闻不到锅里的香味。"
+    ],
+    [
+      "apron",
+      "This apron has survived three soups and one very ambitious pancake.",
+      "这条围裙熬过三锅汤，还挺过一张不太成功的煎饼。"
+    ],
+    [
+      "leftovers",
+      "Leftovers? I prefer to call them tomorrow's head start.",
+      "什么剩菜？那叫明天提前备好的饭。"
     ]
   ],
   "mei": [
@@ -103,6 +178,21 @@ const lines={
       "sunbeam",
       "There is a warm patch of sunlight over there.",
       "那边有块晒得暖暖的地方。"
+    ],
+    [
+      "seat",
+      "The chair by the window has heard more stories than I have.",
+      "窗边那张椅子听过的故事，比我还多。"
+    ],
+    [
+      "steep",
+      "Let the tea steep. The gossip can wait thirty seconds.",
+      "茶先泡好，八卦再等半分钟。"
+    ],
+    [
+      "quietcup",
+      "Some days I bring two cups and talk to neither.",
+      "有时候摆两个茶杯，谁也不用陪我说话。"
     ]
   ],
   "hong": [
@@ -120,6 +210,21 @@ const lines={
       "secret",
       "I can keep a secret. The problem is my facial expression.",
       "我嘴巴很严，就是表情不太配合。"
+    ],
+    [
+      "meeting",
+      "The village had a meeting about meetings. I brought biscuits.",
+      "小镇开了个会，讨论要不要少开会。我负责带饼干。"
+    ],
+    [
+      "typing",
+      "I saw someone type for five minutes. The message was just 'OK'.",
+      "有人打了五分钟字，最后发来两个字：好的。"
+    ],
+    [
+      "rumour",
+      "I heard a rumour about the cat. The cat refused to comment.",
+      "听说那只猫有点八卦，当事猫拒绝回应。"
     ]
   ],
   "wang": [
@@ -137,6 +242,21 @@ const lines={
       "spreadsheet",
       "I opened a spreadsheet to decide what to eat. Send help.",
       "为了决定午饭吃什么，我竟然打开了表格。"
+    ],
+    [
+      "printer",
+      "The printer and I have agreed to see other people.",
+      "打印机又闹脾气了，我决定跟它暂时分居。"
+    ],
+    [
+      "lunch",
+      "My lunch break has a waiting list. It is mostly my own tasks.",
+      "午休还得排队，前面全是我自己的待办。"
+    ],
+    [
+      "attachment",
+      "I attached the attachment on the third email. Personal best.",
+      "第三封邮件终于记得加附件，今天有进步。"
     ]
   ],
   "ahma": [
@@ -154,6 +274,21 @@ const lines={
       "repair",
       "A broken stool only needed one new screw.",
       "那张坏凳子换颗螺丝就修好了。"
+    ],
+    [
+      "slipper",
+      "This slipper is for paper targets, not your neighbour's head.",
+      "拖鞋是拍纸人的，可不是拍邻居脑袋的。"
+    ],
+    [
+      "wind",
+      "The wind is free. No need to subscribe to it.",
+      "海风不用充值会员，放心吹。"
+    ],
+    [
+      "stitch",
+      "A loose thread is easier to fix before it becomes a hole.",
+      "线头松了就补一补，别等破了洞才着急。"
     ]
   ],
   "lin": [
@@ -171,6 +306,21 @@ const lines={
       "shade",
       "I moved the water bowl into the shade.",
       "我把水碗挪到阴凉处了。"
+    ],
+    [
+      "distance",
+      "The deer will come closer when it feels ready.",
+      "小鹿想靠近的时候，自然会走过来。"
+    ],
+    [
+      "catnap",
+      "The cat's appointment book is completely full of naps.",
+      "猫咪今天的行程排满了，全是午睡。"
+    ],
+    [
+      "quietpath",
+      "I take the longer path when the animals are resting.",
+      "小动物在休息，我就绕远一点走。"
     ]
   ],
   "arcade": [
@@ -188,6 +338,21 @@ const lines={
       "tokens",
       "I found an old arcade token in a coat pocket.",
       "在旧外套口袋里翻到一枚游戏币。"
+    ],
+    [
+      "claw",
+      "The claw is a little stubborn. I respect its commitment.",
+      "这抓娃娃机有点倔，倒是挺有原则。"
+    ],
+    [
+      "fishnet",
+      "A gentle scoop beats a dramatic splash.",
+      "捞金鱼要轻一点，水花大可不算本事。"
+    ],
+    [
+      "rhythm",
+      "The cabinet does not mind if you miss a beat.",
+      "漏拍也没关系，机器又不会写绩效评语。"
     ]
   ],
   "boba": [
@@ -205,6 +370,21 @@ const lines={
       "foam",
       "The milk foam looks like a little mountain today.",
       "今天的奶泡像一座小山。"
+    ],
+    [
+      "pearls",
+      "The pearls are ready. They have better timing than my alarm.",
+      "珍珠煮好了，比我的闹钟还准时。"
+    ],
+    [
+      "sweet",
+      "Less sugar, extra pearls? A very specific kind of balance.",
+      "少糖加珍珠？嗯，属于很有个人特色的养生。"
+    ],
+    [
+      "shake",
+      "The shaker makes a better percussion instrument than I expected.",
+      "这摇杯拿来打节拍，居然还挺像回事。"
     ]
   ],
   "souvenir": [
@@ -222,6 +402,21 @@ const lines={
       "label",
       "I wrote the gift tags before opening the shop.",
       "开门前就把礼物的小吊牌写好了。"
+    ],
+    [
+      "ribbon",
+      "I have a drawer of ribbons too pretty to throw away.",
+      "有一抽屉丝带，漂亮得舍不得扔。"
+    ],
+    [
+      "postcard",
+      "A postcard can be a whole holiday in a pocket.",
+      "一张明信片，就能把一场旅行装进口袋。"
+    ],
+    [
+      "shelfspace",
+      "I left a space on the shelf for something I have not found yet.",
+      "架子上留了一个空位，等还没遇见的小宝贝。"
     ]
   ],
   "lab": [
@@ -239,6 +434,21 @@ const lines={
       "drawing",
       "Someone drew a tiny boat in the margin.",
       "有人在纸边画了一艘小船。"
+    ],
+    [
+      "pencil",
+      "The pencil has an eraser for a reason. Answers can change.",
+      "铅笔带橡皮是有道理的，答案也可以改。"
+    ],
+    [
+      "labels",
+      "A label belongs on a drawer, not on someone's whole personality.",
+      "标签贴在抽屉上就好，别拿来定义一个人。"
+    ],
+    [
+      "notebook",
+      "My notebook has a page for things I am still curious about.",
+      "我的笔记本里专门留了一页，记还没想明白的事。"
     ]
   ],
   "story": [
@@ -256,6 +466,21 @@ const lines={
       "shelf",
       "The unfinished stories have their own shelf.",
       "没写完的故事，也有专属书架。"
+    ],
+    [
+      "fork",
+      "The best part of a fork in the road is imagining both paths.",
+      "岔路有趣的地方，是两条路都值得想一想。"
+    ],
+    [
+      "ending",
+      "Some stories end with a train ticket instead of a wedding.",
+      "有些故事的结尾不是婚礼，而是一张火车票。"
+    ],
+    [
+      "draft",
+      "My first draft had three endings. None involved replying to email.",
+      "初稿写了三个结局，没有一个需要回邮件。"
     ]
   ],
   "cafe": [
@@ -273,6 +498,21 @@ const lines={
       "orders",
       "Two different drinks can share the same tray.",
       "两杯不一样的饮料，也能放在同一个托盘上。"
+    ],
+    [
+      "twochairs",
+      "Two chairs do not have to face the same direction to belong together.",
+      "两张椅子不必朝着同一个方向，也能好好待在一桌。"
+    ],
+    [
+      "menu",
+      "I keep the menu short. Getting to know someone takes long enough.",
+      "菜单就写短一点吧，了解一个人已经够费时间了。"
+    ],
+    [
+      "listening",
+      "The best part of a conversation sometimes comes after the pause.",
+      "有些话，安静一会儿才说得出口。"
     ]
   ]
 };
