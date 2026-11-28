@@ -3478,10 +3478,18 @@ explorationRailStyle.textContent=`
 .pawExploreRail{padding:10px 12px;border:1px solid #b5a07a;background:#f3e6cd;color:#514737;margin:10px 0;line-height:1.4}
 .pawExploreRail small{display:block;margin:4px 0 8px}.pawExploreRail button{min-height:44px;white-space:normal}
 `;document.head.append(explorationRailStyle);
+/* PAW_VALLEY_DISCOVERY_BEGIN */
+function pawValleyDoorNearby(id,playerY,doors){
+ const door=doors?.[id];if(!door||!Number.isFinite(playerY))return false;
+ const reach=id==='station'?470:620;
+ return Math.abs(playerY-door.approach[1])<=reach
+}
+/* PAW_VALLEY_DISCOVERY_END */
 const explorationSignBefore=syncSigns;
 syncSigns=function(){
  const result=explorationSignBefore();
  nextStopButton.hidden=true;
+ if(scene==='fortune'&&!signRoot.hidden){for(const [id,btn] of signButtons){if(!pawValleyDoorNearby(id,p.y,pawFortunePainting.doors)&&!btn.hidden)btn.hidden=true}}
  const sign=signButtons.get('station');
  if(sign&&!signRoot.hidden&&!sign.hidden){
   const destination=railNextDistrict(scene),name=tr(...pawRailStationCopy(scene,destination)),accessible=tr('Walk to the train for ','步行前往列车：')+tr(...maps[destination].n);
@@ -3686,6 +3694,7 @@ function pawDirectBoardAllowed(flags){
  return !!flags.valid&&!flags.transitioning&&!flags.room&&!flags.activity&&!flags.entrance&&!flags.hidden&&!flags.page
 }
 function pawRailStationCopy(origin,destination,worlds=maps){
+ if(origin==='fortune')return ['Railway Station','火车站'];
  const name=worlds?.[destination]?.n;
  if(!Array.isArray(name)||typeof name[0]!=='string'||typeof name[1]!=='string')return ['Railway station','火车站'];
  return ['To '+name[0],'前往'+name[1]]
@@ -11294,7 +11303,7 @@ step=function(n,dt,speed){
 const pawFortunePainting={
  path:'assets/visual/painted/worlds/fortune/scene.webp',
  size:[962,1635],
- spawn:[500,1656],
+ spawn:[500,1570],
  player:[[365,568,14],[410,577,14],[470,567,19],[545,548,19],[605,532,22],
  [665,512,30],[702,493,82],[727,492,95],[758,501,45],[805,530,29],
  [870,528,39],[936,505,39],[1000,496,40],[1060,503,40],
@@ -12205,6 +12214,7 @@ syncSigns=function(...args){
  if(!proposal.hidden||room||activity||transitioning||pending||document.hidden||signRoot.hidden||$('page').style.display==='block'||!maps[scene]){
   pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
  }
+ if(scene==='fortune'&&!pawValleyDoorNearby('station',p.y,pawFortunePainting.doors)){pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result}
  const sign=signButtons.get('station'),game=$('game'),g=game.getBoundingClientRect(),now=performance.now(),size=g.width+'|'+g.height;
  const changed=pawRailEdgeScene!==scene||pawRailEdgeSize!==size;
  if(changed){pawRailEdgeScene=scene;pawRailEdgeSize=size;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity}
@@ -14942,5 +14952,19 @@ pawDistrictSignStyle.textContent=`
 }
 `;document.head.append(pawDistrictSignStyle);
 /* PAW_DISTRICT_SIGN_MATERIAL_END */
+
+/* A quieter mobile dock, with existing illustrated icons and full touch targets. */
+const pawValleyArrivalCss=document.createElement('style');
+pawValleyArrivalCss.textContent=`
+@media(orientation:portrait){
+ #game:not(.pawFocusedView):not(.pawInRoom) #dock{width:min(440px,calc(100% - 24px))!important;padding:3px!important;gap:1px!important;border-radius:8px!important;box-shadow:0 2px 7px #332a2544!important}
+ #game:not(.pawFocusedView):not(.pawInRoom) #dock>button:not([hidden]){min-height:44px!important;height:auto!important;padding:3px 1px!important;gap:1px!important}
+ #game:not(.pawFocusedView):not(.pawInRoom) #dock .dockIcon{width:23px!important;height:22px!important;line-height:22px!important}
+ #game[data-paw-sign-material="fortune"]>#worldSigns>.worldSign .doorPlaque{font-size:clamp(11px,2.7vw,13px)!important;padding:3px 6px!important;font-weight:600!important;background-color:#d9c19a!important;box-shadow:0 1px 2px #32261f33!important}
+ #proposal[data-paw-entrance-step="0"]>.hero{border-radius:4px!important}
+ #proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{object-fit:cover!important;object-position:50% 78%!important}
+}
+@media(max-height:620px) and (orientation:portrait){#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{object-fit:contain!important;object-position:center!important}}
+`;document.head.append(pawValleyArrivalCss);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
