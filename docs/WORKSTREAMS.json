@@ -245,13 +245,11 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [
-        "8 transparent resident candidates extracted and committed at ff1ca2dc; identity matching, role assignment and runtime verification pending."
+        "8 transparent resident candidates extracted and committed at ff1ca2dc; identity matching, role assignment and runtime verification pending.",
+        "ebecd1d8ed859bcb41443b251b0950cf816af363: 13 uploaded source blobs match manifest; six preferred seated pose copies verified and visually inspected as individual candidates; e1113d11b9c8bc17b7d9e2f4d49b50da91ea6bb1 checkpoint."
       ],
-      "lease": {
-        "owner": "parallel-host-prep-20261128-031428Z",
-        "until": 1795837481154
-      },
-      "blocker": "Owner-approved host and character-scale requirements (28 Nov): Owner requires a cross-room and cross-map character scale audit: all human player avatars, residents, room hosts, visitors and real/fictional peers should have comparable apparent height/body proportions when standing on the same ground plane. Allow natural age/body differences and perspective depth; do not normalize seated hosts to standing height or stretch artwork. Calibrate visible alpha bounds, seated torso and furniture contact, consistent head scale and foot/seat pivots; Master Yue and tarot reader must be immediately recognisable and not miniature. Reuse approved identities; create missing seated/writing/dealing poses only after inventory review."
+      "lease": null,
+      "blocker": "Owner-approved host and character-scale requirements (28 Nov): Owner requires a cross-room and cross-map character scale audit: all human player avatars, residents, room hosts, visitors and real/fictional peers should have comparable apparent height/body proportions when standing on the same ground plane. Allow natural age/body differences and perspective depth; do not normalize seated hosts to standing height or stretch artwork. Calibrate visible alpha bounds, seated torso and furniture contact, consistent head scale and foot/seat pivots; Master Yue and tarot reader must be immediately recognisable and not miniature. Reuse approved identities; create missing seated/writing/dealing poses only after inventory review.\nSix reference-matched Master Yue and Tarot Reader sprites now prepared in painted/host pose-candidates; seven alternatives excluded. Runtime registration, seat/table occlusion, head scale, motion/contact and actual gameplay verification pending."
     },
     {
       "id": "NPC-01",
