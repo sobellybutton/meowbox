@@ -47,12 +47,15 @@ fs.mkdirSync(out,{recursive:true});
   await tapText('Fold into a lantern','折进心愿灯');
   await page.waitForFunction(()=>state.gardenStage==='carry'&&!talkOpen);
   assert(await noPage());await shot('wish-carry');
+  const wishGeometry=await page.evaluate(()=>{const im=pawWishLobbyArt(),plate=pawReadingCoverPlate(livingBounds(),im.naturalWidth,im.naturalHeight);return {foot:pawWishGroundFoot,paper:pawWishGroundPaper,hook:pawWishRackPoint(0),plate:!!plate}});
+  assert(wishGeometry.plate&&wishGeometry.foot[1]>wishGeometry.paper[1]&&wishGeometry.hook[0]>.7&&wishGeometry.hook[1]<.3,'Wish staging must follow the painted kiosk and rack');
   await fixture('tarot');
   // Known flipped card fixture: tests interpretation rather than random draw.
   await page.evaluate(()=>{start('tarot');state.readCards=[{i:0,rev:false}];state.readFlip=[t-2];state.readFocus=0;state.readStage='focus';state.readAt=t-1;readingFocusMeaning()});
   await page.locator('#dialogue[data-paw-tarot-conversation]').waitFor();assert(await noPage(),'Tarot opened external page');
   assert(await page.evaluate(()=>room==='tarot'&&state.readStage==='focus'&&state.readFocus===0));
-  await chatGeometry('tarot');await page.waitForFunction(()=>readingArtwork().naturalWidth===1024&&readingArtwork().naturalHeight===2180);await shot('tarot-card-reading');
+  await chatGeometry('tarot');
+  assert(await page.locator('#dialogue #choices').evaluate(n=>n.scrollWidth<=n.clientWidth+2),'Tarot replies must fit the screen');await page.waitForFunction(()=>readingArtwork().naturalWidth===1024&&readingArtwork().naturalHeight===2180);await shot('tarot-card-reading');
   const more=page.locator('#dialogue').getByRole('button',{name:text('Tell me more','再说说'),exact:true});if(await more.count()){await more.tap();await shot('tarot-next-thought')}
   await tapText('Back to the table','回到牌桌');await page.waitForFunction(()=>state.readStage==='cards'&&!talkOpen);
   await fixture('destiny');
@@ -66,6 +69,10 @@ fs.mkdirSync(out,{recursive:true});
   const place=form.locator('details select');if(!await place.isVisible())await form.locator('details summary').tap();
   const choice=await place.evaluate(e=>[...e.options].find(x=>/singapore/i.test(x.textContent)||x.textContent.includes('新加坡'))?.value);assert(choice,'Singapore birthplace option');
   await place.selectOption(choice);
+  assert.equal(await form.locator('input[type=number]:visible').count(),0,'Known birthplace must not expose technical fields');
+  assert(await form.locator('.pawYuePlaceReply').isVisible());
+  assert.deepEqual(await form.locator('input[type=number]').evaluateAll(nodes=>nodes.map(n=>Number(n.value))),[8,1.35,103.82]);
+  await shot('yue-place-confirmed');
   await form.locator('button[type=submit]').tap();
   await page.waitForFunction(()=>document.querySelector('.ziGrid article:not(.blank)')&&$('page').style.display==='block',null,{timeout:15000});
   assert.equal(await page.locator('#dialogue[data-paw-yue-question]').count(),0);
