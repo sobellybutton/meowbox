@@ -19,27 +19,32 @@ for(const [w,h] of [[360,640],[390,844],[768,1024],[1280,720],[1920,1080]]){
 }
 assert.equal(place(-100,300,30,20,{s:1,ox:0,oy:0},{w:360,h:640}),null);
 assert.equal(place(180,300,30,20,{s:0,ox:0,oy:0},{w:360,h:640}),null);
-assert.equal((src.match(/const place=pawPaintedPlaquePlacement\(/g)||[]).length,2);
+// Five existing painted station/room plaque renderers use the clearance helper.
+assert.ok((src.match(/const place=pawPaintedPlaquePlacement\(/g)||[]).length>=5);
 console.log('Painted room plaque clearance regression passed');
 
 
-// The station must remain usable while the map and its sign are moving.
-// Other building plaques retain their cosmetic settle treatment.
+// Clear, reprojected plaques stay visible during walking. The underlying
+// layout alone decides visibility and pointer guards, for every doorway.
 {
  const polish=fs.readFileSync(path.join(__dirname,'../src/town-polish.js'),'utf8');
  const start=polish.indexOf('const townSignBefore='),end=polish.indexOf('parkSerials.push(',start);
  assert.ok(start>=0&&end>start);
  const make=()=>({hidden:false,_signOffset:{x:0,y:0},style:{opacity:'',pointerEvents:'auto',setProperty(k,v){this.pointerEvents=v}}});
- const station=make(),shop=make(),buttons=new Map([['station',station],['tarot',shop]]);
- let time=0,offset=0;
- const sync=new Function('signButtons','performance','syncSigns','zh',polish.slice(start,end)+';return syncSigns')(buttons,{now:()=>time},()=>{for(const b of buttons.values())b._signOffset={x:offset,y:0}},false);
+ const buttons=new Map(['station','tarot','temple','wishes','destiny'].map(id=>[id,make()]));
+ let offset=0,blocked=false;
+ const sync=new Function('signButtons','syncSigns','zh',polish.slice(start,end)+';return syncSigns')(buttons,()=>{
+  for(const [id,b] of buttons){b._signOffset={x:offset,y:0};b.hidden=blocked&&id==='tarot'}
+  return 'layout-result'
+ },false);
  sync();
- for(let i=1;i<=20;i++){
-  time=i*30;offset=i*14;sync();
-  assert.equal(station.style.opacity,'');assert.equal(station.style.pointerEvents,'auto');
-  assert.ok(shop.style.opacity==='0'&&shop.style.pointerEvents==='none');
+ for(let i=1;i<=60;i++){
+  offset=(i%2)*14;
+  assert.equal(sync(),'layout-result');
+  for(const b of buttons.values()){assert.equal(b.hidden,false);assert.equal(b.style.opacity,'');assert.equal(b.style.pointerEvents,'auto')}
  }
- time+=181;sync();assert.ok(shop.style.opacity===''&&shop.style.pointerEvents==='auto');
- station.hidden=true;sync();assert.ok(station.hidden);
- console.log('Station plaque cosmetic stability regression passed');
+ blocked=true;sync();assert.ok(buttons.get('tarot').hidden);
+ blocked=false;buttons.get('tarot').style.pointerEvents='none';sync();
+ assert.equal(buttons.get('tarot').style.pointerEvents,'none');
+ console.log('All doorway plaques preserve authoritative layout and input guards');
 }
