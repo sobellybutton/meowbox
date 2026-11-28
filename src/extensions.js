@@ -2445,9 +2445,28 @@ function directSignClick(id,x,y){
 // A nearby house can be partly cropped at the end of a winding path.
 // Keep the label within the visible part of the same house, not over a
 // resident or HUD. Far-away destinations retain their tight anchor range.
-function pawNearbyDoorPlaque(cx,cy,w,h,bounds,blockers,near,screenWidth){
+function pawNearbyDoorPlaque(cx,cy,w,h,bounds,blockers,near,screenWidth,approach=null){
  if(!near||!Number.isFinite(screenWidth)||screenWidth<=0)return null;
- return meowPlaceText(cx,cy,w,h,bounds,blockers,Math.min(120,screenWidth*.34))
+ const first=meowPlaceText(cx,cy,w,h,bounds,blockers,Math.min(120,screenWidth*.34));
+ if(first)return first;
+ // At the end of a narrow painted path, the building's roof anchor may
+ // be under the HUD. Search a bounded grid beside the actual door approach,
+ // keeping the target on the same local screen and clear of all actors/UI.
+ if(!approach||![...approach,w,h].every(Number.isFinite))return null;
+ const [ax,ay]=approach,pad=4,loX=bounds.left+w/2+pad,hiX=bounds.right-w/2-pad,loY=bounds.top+h/2+pad,hiY=bounds.bottom-h/2-pad;
+ if(loX>hiX||loY>hiY)return null;
+ const radius=Math.min(160,screenWidth*.44);let best=null;
+ const xs=[loX,hiX,clamp(ax,loX,hiX)],ys=[loY,hiY,clamp(ay,loY,hiY)];
+ for(let x=loX;x<=hiX;x+=8)xs.push(x);
+ for(let y=loY;y<=hiY;y+=8)ys.push(y);
+ for(const x of xs)for(const y of ys){
+  const distance=Math.hypot(x-ax,y-ay);if(distance>radius)continue;
+  const rect={left:x-w/2-pad,right:x+w/2+pad,top:y-h/2-pad,bottom:y+h/2+pad};
+  if(blockers.some(v=>v&&speechOverlap(rect,v)))continue;
+  const score=distance+Math.hypot(x-cx,y-cy)*.2;
+  if(!best||score<best.score)best={x,y,rect,score}
+ }
+ return best
 }
 let lastDoorLayoutAt=-Infinity,lastDoorLayoutLanguage=null,lastDoorCameraKey='',lastDoorUIAt=-Infinity,lastDoorUIRects=[],lastDoorUISize='';
 syncSigns=function(){
@@ -2500,17 +2519,17 @@ syncSigns=function(){
   if(!inView){btn._clearAt=0;btn._signOffset=null;if(!btn.hidden)btn.hidden=true;continue}
   // Measure only when necessary; do not repeatedly unhide a blocked sign.
   if(btn._measureName!==name||btn._measureViewport!==uiSize||!btn._signSize){btn._measureViewport=uiSize;const hidden=btn.hidden;if(hidden)btn.hidden=false;btn._signSize=[Math.max(44,btn.offsetWidth),Math.max(44,btn.offsetHeight)];btn._measureName=name;if(hidden)btn.hidden=true}
-  items.push({btn,sx,sy,near,w:btn._signSize[0],h:btn._signSize[1]});
+  items.push({btn,sx,sy,near,approach:[cam.ox+x*cam.scale,cam.oy+y*cam.scale],w:btn._signSize[0],h:btn._signSize[1]});
  }
  // Keep the nearest doorway closest to its artwork; move other labels only
  // as far as necessary to avoid an overlapping sign or navigation control.
  // Preserve authored map order so walking past a house cannot reshuffle the other labels.
  for(const item of items){
-  const {btn,sx,sy,w,h,near}=item;
+  const {btn,sx,sy,w,h,near,approach}=item;
   const avoid=[...blockers,...placed],maxShift=Math.min(62,W*.16),offsetLimit=near?Math.min(120,W*.34):maxShift;let choice=null;
   if(btn._signOffset&&Math.hypot(btn._signOffset.x,btn._signOffset.y)<=offsetLimit+.01){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
   if(!choice)choice=meowPlaceText(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,maxShift);
-  if(!choice)choice=pawNearbyDoorPlaque(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,near,W);
+  if(!choice)choice=pawNearbyDoorPlaque(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,near,W,approach);
   if(!choice){btn._clearAt=0;if(!btn.hidden)btn.hidden=true;continue}
   if(btn.hidden){if(!btn._clearAt)btn._clearAt=now;if(now-btn._clearAt<125){placed.push(choice.rect);continue}}
   btn._signOffset={x:choice.x-sx,y:choice.y-sy};
