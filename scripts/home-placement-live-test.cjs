@@ -23,6 +23,18 @@ q.set(37,80);
 assert.deepEqual(q.place(50,80),{x:37,y:80});
 assert.deepEqual(q.place(35,80),{x:35,y:80});
 assert.deepEqual(q.suggest(),{x:50,y:80});
+for(const invalid of [NaN,Infinity,-Infinity,undefined,null,'50']){
+ assert.deepEqual(q.place(invalid,80),{x:37,y:80});
+ assert.deepEqual(q.place(50,invalid),{x:37,y:80});
+ const rug=make(true,'rug',0);
+ assert.deepEqual(rug.place(invalid,80),{x:20,y:80});
+ assert.deepEqual(rug.place(50,invalid),{x:20,y:80});
+}
+const rug=make(true,'rug',0);
+assert.deepEqual(rug.place(50,80),{x:50,y:80});
+const recovering=make(true,'bed',0);
+recovering.set(NaN,80);
+assert.deepEqual(recovering.place(30,80),{x:30,y:80});
 for(const [editing,id,zone] of [[false,'bed',0],[true,'rug',0],[true,'frame',0],[true,'bed',1]])
  assert.deepEqual(make(editing,id,zone).place(50,80),{x:50,y:80});
 assert(ext.includes('const pos=pawFurniturePlacement(d.id,x,y);d.x=pos.x;d.y=pos.y'));

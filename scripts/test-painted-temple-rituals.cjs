@@ -2,12 +2,14 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const root=path.join(__dirname,'..'),src=fs.readFileSync(path.join(root,'src/startup.js'),'utf8');
 const get=name=>src.split('/* PAW_'+name+'_BEGIN */')[1].split('/* PAW_'+name+'_END */')[0];
-const api=new Function(get('PURIFICATION_PAINT')+get('ALCOVE_PAINT')+get('SLIP_COUNTER')+';return {pawAlcoveGeometry,pawAlcoveStickPoint,pawAlcoveMoonPoint,pawSlipGeometry,pawSlipPose,pawSlipRackCamera,pawSlipPage}')();
+const api=new Function(get('PURIFICATION_PAINT')+get('ALCOVE_PAINT')+get('SLIP_COUNTER')+';return {pawAlcoveGeometry,pawAlcoveReach,pawAlcoveActorScale,pawAlcoveStickPoint,pawAlcoveMoonPoint,pawSlipGeometry,pawSlipPose,pawSlipRackCamera,pawSlipPage}')();
 for(const name of ['sticks','slip-counter'])assert.ok(fs.existsSync(path.join(root,'assets/visual/staging/2026-11-27/rooms/temple',name+'.webp')));
 const g=api.pawAlcoveGeometry();
 for(let i=0;i<=100;i++){const f=i/100,a=api.pawAlcoveStickPoint(g,{fall:f,picked:false,pick:0});assert.ok(a.x>=g.tubeTop.x&&a.x<=g.stickTray.x&&Number.isFinite(a.y))}
 const landed=api.pawAlcoveStickPoint(g,{fall:1,picked:false,pick:0});assert.equal(landed.y,g.stickTray.y);assert.equal(landed.x,g.stickTray.x);
-const held=api.pawAlcoveStickPoint(g,{fall:1,picked:true,pick:1});assert.equal(held.x,g.stickPickFoot.x+14);assert.equal(held.y,g.stickPickFoot.y-64);
+const held=api.pawAlcoveStickPoint(g,{fall:1,picked:true,pick:1});const grip=api.pawAlcoveReach(g.stickPickFoot).grip;assert.equal(held.x,grip.x);assert.equal(held.y,grip.y);
+for(let i=0;i<=100;i++){const u=i/100,pick=.45+.55*u,f=u*u*(3-2*u),p=api.pawAlcoveStickPoint(g,{fall:1,picked:true,pick});assert.ok(Math.abs(p.x-(g.stickTray.x+(grip.x-g.stickTray.x)*f))<1e-8&&Math.abs(p.y-(g.stickTray.y+(grip.y-g.stickTray.y)*f))<1e-8);}
+for(const [foot,hand,side] of [[g.stickFoot,g.tubeGrip,1],[g.stickPickFoot,g.stickTray,1],[g.moonFoot,g.moonHand,-1]]){const r=api.pawAlcoveReach(foot,side);assert.ok(Math.hypot(hand.x-r.shoulder.x,hand.y-r.shoulder.y)<=r.maxReach);assert.equal(r.sleeve,.72*api.pawAlcoveActorScale());}
 for(let i=0;i<=100;i++){const f=i/100;for(let j=0;j<2;j++){const sign=j?1:-1,x=350+j*100+sign*Math.sin(Math.PI*f)*21,lift=Math.sin(Math.PI*f)*95,p=api.pawAlcoveMoonPoint(g,{x,lift});assert.ok(Math.abs(p.x-g.moonTray.x)<=19&&p.y<=g.moonTray.y)}}
 const s=api.pawSlipGeometry();
 for(const [stage,age,a] of [['folded',0,s.counter],['opening',.75,s.reading],['tied',.7,s.tie],['kept',.7,s.bag]]){const p=api.pawSlipPose(stage,age,s);assert.ok(Math.abs(p.x-a.x)<.001&&Math.abs(p.y-a.y)<.001);if(['kept','tied'].includes(stage))assert.equal(p.alpha,0)}
@@ -119,4 +121,49 @@ console.log('Resting ladle retry and exclusive held-tool ownership checks passed
  check(src.includes("if(pawDrawPaintedSmoke(ctx,state.pawSmokeArt,x,y,t,strength,residentReducedMotion.matches))return;"),'actual emitter calls painted renderer');
  check(src.includes('if(lit&&smoke)pawVisibleSmoke('),'unlit sticks do not emit smoke');
  console.log('PASS '+n+' painted incense smoke registration, frame, opacity and fallback assertions.');
+}
+
+{
+ const fixes=fs.readFileSync(path.join(root,'src/release-fixes.js'),'utf8');
+ const pure=fixes.split('/* PAW_CONTINUOUS_FORTUNE_BEGIN */')[1].split('/* PAW_CONTINUOUS_FORTUNE_END */')[0];
+ const f=new Function(pure+';return {pawPairedNext,pawPairedWalkPlan,pawPairedWalkTick,pawPairedCamera,pawGardenEntryRest}')();
+ let n=0;const ck=(v,m)=>{assert.ok(v,m);n++};
+ for(let failures=0;failures<=3;failures++){
+  const q={pawFortuneNumber:5,count:1,result:1,pawFortuneFailures:failures};
+  ck(f.pawPairedNext(q,'moon',2,false)===(failures>=3?'finish':'retry'),'three failed casts');
+  ck(f.pawPairedNext({...q,result:0},'moon',2,false)==='receive','confirmed only');
+  ck(f.pawPairedNext({...q,moonPending:true},'moon',2,false)===null,'wait for landing');
+  ck(f.pawPairedNext({...q,pawFortuneNumber:null},'moon',2,false)===null,'no independent cast');
+  ck(f.pawPairedNext({...q,pawPairedWalk:{}},'moon',2,false)===null,'walk input locked');
+ }
+ const plate={x:100,y:-145,w:600,h:600*1635/962};
+ const geom=api.pawAlcoveGeometry(plate);
+ for(const from of ['sticks','moon'])for(const reduced of [false,true]){
+  const q=f.pawPairedWalkPlan(from,true,geom,plate,0),start={...q.pos};
+  ck(!f.pawPairedWalkTick(q,50,true,reduced)&&q.pos.x===start.x&&q.pos.y===start.y,'pause');
+  let i=0;while(!f.pawPairedWalkTick(q,50+(++i)*.016,false,reduced)&&i<1000){ck(q.pos.y>=Math.min(geom.stickFoot.y,geom.moonFoot.y)-1e-7,'walk on lower aisle')}
+  const dest=from==='sticks'?geom.moonFoot:geom.stickFoot;
+  ck(q.path.length===0&&Math.hypot(q.pos.x-dest.x,q.pos.y-dest.y)<1e-7,'arrive physically');
+ }
+ for(const [w,h] of [[320,568],[390,844],[430,932],[320,932],[768,1024],[1440,900]]){
+  const c=f.pawPairedCamera(w,h,plate);
+  for(const p of [geom.stickFoot,geom.moonFoot,geom.tube,geom.moonTray])ck(c.ox+p.x*c.s>=0&&c.ox+p.x*c.s<=w&&c.oy+p.y*c.s>=0&&c.oy+p.y*c.s<=h,'both stations remain in frame')
+ }
+ const rest=f.pawGardenEntryRest({entry:[.48,.78]},10);ck(rest.route.length===0&&rest.action===null&&rest.pos[1]===.78,'garden entry waits for player');
+ ck(fixes.includes('queueMicrotask(pawInstallContinuousFortune)'),'late runtime installation');
+ console.log('PASS '+n+' paired ritual route, failure gate, shared camera and garden entry checks');
+}
+
+{
+ const fixes=fs.readFileSync(path.join(root,'src/release-fixes.js'),'utf8');
+ const code=fixes.split('/* PAW_TEMPLE_AUTO_ARRIVAL_BEGIN */')[1].split('/* PAW_TEMPLE_AUTO_ARRIVAL_END */')[0];
+ const a=new Function(code+';return {pawTempleAutoArrival,pawGardenSeatAtNode}')();
+ const q={route:[],pos:[.49,.82],destination:null};
+ assert.ok(a.pawTempleAutoArrival(q,false));
+ for(const patch of [{pawAutoArrival:true},{destination:'exit'},{route:[[.47,.73]]},{greeted:true},{catVisited:true}])assert.ok(!a.pawTempleAutoArrival({...q,...patch},false));
+ assert.ok(!a.pawTempleAutoArrival(q,true));
+ assert.ok(a.pawGardenSeatAtNode({route:[],pos:[.78,.475]},[.78,.475]));
+ assert.ok(!a.pawGardenSeatAtNode({route:[],pos:[.48,.78]},[.78,.475]));
+ assert.ok(!a.pawGardenSeatAtNode({route:[[.78,.475]],pos:[.78,.475]},[.78,.475]));
+ console.log('PASS 10 temple auto-arrival and garden seated ownership checks');
 }

@@ -43,18 +43,33 @@ const bootTr=(en,cn)=>bootZh?cn:en;
 const gate=document.querySelector('.bootGate');
 function gateReady(){if(gate.naturalWidth)bootMark('gate-image-ready')}
 if(gate.complete)gateReady();else gate.addEventListener('load',gateReady,{once:true});
-async function fetchText(path){
+async function fetchText(path,signal){
  for(let attempt=0;attempt<2;attempt++){
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),25000);
-  try{const res=await fetch(path,{cache:'no-cache',signal:controller.signal});if(!res.ok){const error=Error(path+' '+res.status);error.status=res.status;throw error}const value=await res.text();bootMark('source-ready:'+path);return value}
-  catch(e){if(attempt===1||!bootRetryable(e.status))throw e}finally{clearTimeout(timer)}
+  if(signal?.aborted)throw Error('Boot cancelled');
+  const controller=new AbortController(),abort=()=>controller.abort(),timer=setTimeout(abort,25000);
+  signal?.addEventListener('abort',abort,{once:true});
+  try{
+   const res=await fetch(path,{cache:'no-cache',signal:controller.signal});
+   if(!res.ok){const error=Error(path+' '+res.status);error.status=res.status;throw error}
+   const value=await res.text();if(signal?.aborted)throw Error('Boot cancelled');
+   bootMark('source-ready:'+path);return value
+  }catch(e){if(signal?.aborted||attempt===1||!bootRetryable(e.status))throw e}
+  finally{clearTimeout(timer);signal?.removeEventListener('abort',abort)}
  }
 }
-function loadAssembler(){
+function loadAssembler(signal){
  return new Promise((resolve,reject)=>{
+  if(signal?.aborted){reject(Error('Boot cancelled'));return}
   const script=document.createElement('script');script.src='src/assemble.js';script.async=true;
-  const finish=(error)=>{clearTimeout(timer);script.onload=script.onerror=null;if(error){script.remove();reject(error)}else if(typeof assembleMeowBox==='function'){bootMark('assembler-ready');resolve()}else reject(Error('Assembler unavailable'))};
+  let settled=false;
+  const abort=()=>finish(Error('Boot cancelled'));
+  const finish=(error)=>{
+   if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);
+   script.onload=script.onerror=null;
+   if(error){script.remove();reject(error)}else if(typeof assembleMeowBox==='function'){bootMark('assembler-ready');resolve()}else reject(Error('Assembler unavailable'))
+  };
   const timer=setTimeout(()=>finish(Error('Assembler timeout')),25000);
+  signal?.addEventListener('abort',abort,{once:true});
   script.onload=()=>finish();script.onerror=()=>finish(Error('Assembler failed'));document.head.append(script)
  })
 }
@@ -66,14 +81,15 @@ async function boot(){
  const meter=document.getElementById('bootProgress'),total=paths.length+1;let done=0,delayed=false;
  meter.max=total;meter.setAttribute('aria-label',bootTr('Journey preparation','旅程准备进度'));
  const paint=()=>{if(!progress.isConnected)return;progress.textContent=bootStatus(done,total,delayed,bootZh);meter.value=done};
- const ready=value=>{done++;paint();return value};paint();
+ const run=new AbortController();
+ const ready=value=>{if(!run.signal.aborted){done++;paint()}return value};paint();
  const slow=setTimeout(()=>{delayed=true;paint()},4500);
  try{
-  const [files]=await Promise.all([Promise.all(paths.map(path=>fetchText(path).then(ready))),loadAssembler().then(ready)]);
+  const [files]=await Promise.all([Promise.all(paths.map(path=>fetchText(path,run.signal).then(ready))),loadAssembler(run.signal).then(ready)]);
   bootMark('sources-ready');
   const html=assembleMeowBox(files[0],files.slice(1));bootMark('assembled');
   document.open();document.write(html);document.close()
- }finally{clearTimeout(slow)}
+ }catch(error){run.abort();throw error}finally{clearTimeout(slow)}
 }
 boot().catch(error=>{bootMark('boot-failed');console.error(error);const main=document.querySelector('main');if(!main)return;main.replaceChildren();const title=document.createElement('h2');title.textContent=bootTr('Your train is delayed','列车晚点了');const detail=document.createElement('p');detail.textContent=bootTr('We could not finish loading the town. Your saved progress has not been cleared.','小镇未能加载完成，你已保存的进度仍在。');const button=document.createElement('button');button.textContent=bootTr('Try again','重试');button.onclick=()=>location.reload();main.append(title,detail,button)});
 </script></body></html>

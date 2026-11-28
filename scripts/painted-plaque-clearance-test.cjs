@@ -19,27 +19,66 @@ for(const [w,h] of [[360,640],[390,844],[768,1024],[1280,720],[1920,1080]]){
 }
 assert.equal(place(-100,300,30,20,{s:1,ox:0,oy:0},{w:360,h:640}),null);
 assert.equal(place(180,300,30,20,{s:0,ox:0,oy:0},{w:360,h:640}),null);
-assert.equal((src.match(/const place=pawPaintedPlaquePlacement\(/g)||[]).length,2);
+// Five existing painted station/room plaque renderers use the clearance helper.
+assert.ok((src.match(/const place=pawPaintedPlaquePlacement\(/g)||[]).length>=5);
 console.log('Painted room plaque clearance regression passed');
 
 
-// The station must remain usable while the map and its sign are moving.
-// Other building plaques retain their cosmetic settle treatment.
+// Clear, reprojected plaques stay visible during walking. The underlying
+// layout alone decides visibility and pointer guards, for every doorway.
 {
  const polish=fs.readFileSync(path.join(__dirname,'../src/town-polish.js'),'utf8');
  const start=polish.indexOf('const townSignBefore='),end=polish.indexOf('parkSerials.push(',start);
  assert.ok(start>=0&&end>start);
  const make=()=>({hidden:false,_signOffset:{x:0,y:0},style:{opacity:'',pointerEvents:'auto',setProperty(k,v){this.pointerEvents=v}}});
- const station=make(),shop=make(),buttons=new Map([['station',station],['tarot',shop]]);
- let time=0,offset=0;
- const sync=new Function('signButtons','performance','syncSigns','zh',polish.slice(start,end)+';return syncSigns')(buttons,{now:()=>time},()=>{for(const b of buttons.values())b._signOffset={x:offset,y:0}},false);
+ const buttons=new Map(['station','tarot','temple','wishes','destiny'].map(id=>[id,make()]));
+ let offset=0,blocked=false;
+ const sync=new Function('signButtons','syncSigns','zh',polish.slice(start,end)+';return syncSigns')(buttons,()=>{
+  for(const [id,b] of buttons){b._signOffset={x:offset,y:0};b.hidden=blocked&&id==='tarot'}
+  return 'layout-result'
+ },false);
  sync();
- for(let i=1;i<=20;i++){
-  time=i*30;offset=i*14;sync();
-  assert.equal(station.style.opacity,'');assert.equal(station.style.pointerEvents,'auto');
-  assert.ok(shop.style.opacity==='0'&&shop.style.pointerEvents==='none');
+ for(let i=1;i<=60;i++){
+  offset=(i%2)*14;
+  assert.equal(sync(),'layout-result');
+  for(const b of buttons.values()){assert.equal(b.hidden,false);assert.equal(b.style.opacity,'');assert.equal(b.style.pointerEvents,'auto')}
  }
- time+=181;sync();assert.ok(shop.style.opacity===''&&shop.style.pointerEvents==='auto');
- station.hidden=true;sync();assert.ok(station.hidden);
- console.log('Station plaque cosmetic stability regression passed');
+ blocked=true;sync();assert.ok(buttons.get('tarot').hidden);
+ blocked=false;buttons.get('tarot').style.pointerEvents='none';sync();
+ assert.equal(buttons.get('tarot').style.pointerEvents,'none');
+ console.log('All doorway plaques preserve authoritative layout and input guards');
+}
+
+// Close-by doorway plaques may move a little farther within the same scene
+// when the primary placement is blocked. Never overlap the HUD or actors.
+{
+ const ext=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+ const a=ext.indexOf('function meowPlaceText('),b=ext.indexOf('let meowTextFrameRects=',a);
+ const c=ext.indexOf('function pawNearbyDoorPlaque('),d=ext.indexOf('let lastDoorLayoutAt=',c);
+ assert.ok(a>=0&&b>a&&c>=0&&d>c);
+ const api=new Function('const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));const speechOverlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;'+ext.slice(a,b)+ext.slice(c,d)+';return {meowPlaceText,pawNearbyDoorPlaque}')();
+ const bounds={left:6,right:354,top:112,bottom:510},blocked=[{left:0,right:360,top:112,bottom:202}];
+ assert.equal(api.meowPlaceText(180,160,110,44,bounds,blocked,57.6),null);
+ const q=api.pawNearbyDoorPlaque(180,160,110,44,bounds,blocked,true,360);
+ assert.ok(q&&q.rect.top>=202&&q.rect.bottom<=510);
+ assert.equal(api.pawNearbyDoorPlaque(180,160,110,44,bounds,blocked,false,360),null);
+ assert.equal(api.pawNearbyDoorPlaque(180,160,110,44,bounds,[{left:0,right:360,top:0,bottom:640}],true,360),null);
+ console.log('Nearby doorway plaque clearance: pass');
+}
+
+// Roof anchor can be clipped while the player stands on the final landing.
+{
+ const ext=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+ const a=ext.indexOf('function meowPlaceText('),b=ext.indexOf('let meowTextFrameRects=',a),c=ext.indexOf('function pawNearbyDoorPlaque('),d=ext.indexOf('let lastDoorLayoutAt=',c);
+ const place=new Function('const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));const speechOverlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;'+ext.slice(a,b)+ext.slice(c,d)+';return pawNearbyDoorPlaque')();
+ for(const w of [320,360,390,430]){
+  const bounds={left:6,right:w-6,top:112,bottom:510},blocked=[{left:0,right:w,top:0,bottom:202},{left:w*.54,right:w*.84,top:202,bottom:295}];
+  for(const y of [100,115,125,140]){
+   const q=place(w*.74,y,110,44,bounds,blocked,true,w,[w*.73,190]);
+   assert.ok(q&&q.rect.top>=202&&q.rect.bottom<=510);
+   assert.ok(blocked.every(v=>q.rect.right<=v.left||q.rect.left>=v.right||q.rect.top>=v.bottom||q.rect.bottom<=v.top));
+  }
+  assert.equal(place(w*.74,125,110,44,bounds,[{left:0,right:w,top:0,bottom:640}],true,w,[w*.73,190]),null);
+ }
+ console.log('Landing-local doorway placement passed');
 }
