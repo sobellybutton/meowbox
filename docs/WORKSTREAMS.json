@@ -983,7 +983,9 @@
       "priority": 1,
       "summary": "Create/import missing furniture and finish art against full 37-ID audit, reuse existing candidates",
       "resources": [
-        "art:home-room"
+        "art:home-room",
+        "src/home-layout.js",
+        "scripts/home-layout-test.cjs"
       ],
       "depends": [
         "HOME-CATALOGUE-AUDIT-01"
@@ -993,7 +995,10 @@
         "01a34865: all 14 generated WebP files imported to main from owner transfer; all source SHA256 and Git blob SHA1 checks, RGBA decoding and dimensions verified; 14 committed paths independently checked against main tree. 11 missing catalogue assets at runtime paths, 3 alternates staged separately.",
         "81dcbdae: eight exact catalogue finish IDs imported to assets/visual/painted/home/finishes/ with manifest, local source and remote file hashes/sizes/dimensions confirmed. Room surface masks, repeat seams and renderer projection remain open."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-20261128-home-projection",
+        "until": 1795835089174
+      },
       "blocker": "All eight finish swatches now imported at stable runtime paths; room surface masks and perspective-correct texture projection, repeat seams, actual phone/desktop catalogue and room acceptance pending. Do not regenerate these textures."
     },
     {
