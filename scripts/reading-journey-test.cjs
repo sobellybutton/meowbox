@@ -72,6 +72,17 @@ async function run(page,name,touch){
  const zhDownload=page.waitForEvent('download');
  await click(page.getByRole('button',{name:'Save PNG image'}));
  await (await zhDownload).saveAs('test-results/'+name+'-tarot-zh-square.png');
+ await click(dialogueButton('Back to reading'));
+ await dialogueButton('Review the spread').waitFor();
+ assert.equal(await page.locator('#page').isVisible(),false,'Keepsake must return to in-room summary');
+ await shot('tarot-return-summary');
+ await click(dialogueButton('Review the spread'));
+ await page.waitForFunction(()=>room==='tarot'&&activity==='love'&&state.readStage==='cards'&&!talkOpen);
+ await world(298,touch?755:650);
+ await liveSpread(3);
+ await click(dialogueButton('Finish reading · return to table'));
+ await page.waitForFunction(()=>room==='tarot'&&!activity&&!talkOpen);
+ await shot('tarot-finish-room');
  await page.reload({waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>typeof openTarotReading==='function'&&typeof yueReadingHub==='function');
  await showGame();
