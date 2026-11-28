@@ -843,7 +843,10 @@
         "Live isolated Chromium browser playthrough 28 Nov: ticket/signature/traveller/motivation/gate, actual map sign walking and automatic boarding, all four consecutive routes Fortune→Sea Breeze→Lantern→Starlight→Fortune. First two rides 390×844, latter two 1440×900. Portrait painted canvas active on second ride with frames 4→111; landscape third 2→114 and fourth 3→116; canvas CSS aspect preserved with centered horizontal crop and full viewport coverage within 0.02px. Correct arrival names and coins 10→20→30→40→40, no duplicate return reward, final ride canvas count 0. No physical iPhone/WebKit, screenshot-level visual inspection, reduced-motion, cold decode/failure or latest deployed kinetics module version proof.",
         "28 Nov live 390×844 Chromium follow-up: uncached request to deployed rail-foreground.js HTTP 200 and contains travelDistance + full offscreen recycling source. Reduced motion actual station trip: native portrait composite true, railMotion still, frame 1 / travel 0.000 throughout, correct arrival and canvas removed. Normal motion resumed and skip ride clicked via visible control (84.86×44px), arrived in Starlight Valley at travel 0.500s, 0 residual canvas, coins unchanged. Cold reload with portrait carriage image deliberately aborted in isolated browser: request confirmed blocked, fallback route-panorama / pawMovingGlass used full 390×844 ride, arrived Sea Breeze Island, 0 residual canvas. No deployed source changes this session; actual physical iPhone/WebKit and screenshot-based art fit remain unverified."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-rail-braking-mount-1313",
+        "until": 1795845000000
+      },
       "blocker": "Live Chromium round trip, both compositor orientations, deployed kinetics, reduced-motion, skip ride and missing portrait cold-load fallback verified. Physical iPhone/WebKit and screenshot-level artwork/alpha seam, full cold-load timing and other asset failure paths remain open."
     },
     {
