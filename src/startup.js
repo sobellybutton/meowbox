@@ -15407,14 +15407,14 @@ drawActivity=function(...args){
   if(stage==='rise'){
    const slot=state.gardenSlot??0,p=pawWishPhysicalSlot(plate,slot),f=clamp((t-state.gardenRise)/1.25,0,1),e=f*f*(3-2*f);
    gardenLantern(stall.x+(p.x-stall.x)*e,stall.y+(p.y-stall.y)*e,slot,scale*(1.6-.6*e));
-   if(f>=1){state.gardenStage='write';react('Your little light is glowing.','心愿灯亮啦。')}
+   if(f>=1){state.gardenStage='write';state.pawWishRackHint=false;react('Your little light is glowing.','心愿灯亮啦。')}
   }else if(stage==='carry'){
    const slot=Array.from({length:12},(_,i)=>i).find(i=>!assigned.has(i));
    const p=pawWishPhysicalSlot(plate,slot??0);
    // A small light at the real rack, not twelve floating dots over the water.
    ctx.save();ctx.globalAlpha=.8+.15*Math.sin(t*3);ctx.strokeStyle='#fff0ba';ctx.lineWidth=2/Math.max(.1,cam.scale);ctx.beginPath();ctx.ellipse(p.x,p.y,plate.w*.029,plate.h*.018,0,0,TAU);ctx.stroke();ctx.restore();
    if(slot!==undefined)target(rack.x-plate.w*.145,rack.y-plate.h*.07,plate.w*.29,plate.h*.14,()=>pawWishPhysicalHang(slot));
-   if(!talkOpen)hint('Tap the wooden rack to hang your lantern.','点击木架，挂上心愿灯。')
+   if(!talkOpen&&!state.pawWishRackHint){state.pawWishRackHint=true;hint('Tap the wooden rack to hang your lantern.','点击木架，挂上心愿灯。')}
   }else if(!talkOpen){
    const font=Math.max(14,12/Math.max(.1,cam.scale)),labelText=tr('Write a wish','写心愿'),w=plate.w*.25,h=font+11;
    round(stall.x-w/2,stall.y-h/2,w,h,3,'#3d4d3ee8','#d8bd8d');
