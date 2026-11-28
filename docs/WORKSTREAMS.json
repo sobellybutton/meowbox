@@ -265,7 +265,10 @@
         "Batch 5 partial (bfff03c6 + 8249417d): integrated .68s held-slipper lift before first strike and .62s lowering after third, no extra impact or reward; stable station anchor before asset decode and articulation availability locked per round rather than whole visit. Bilingual phase prompts, existing blocked clock and reduced-motion retained. Persisted and rerun 886 geometry and extracted runtime assertions; edited sources parsed. Actual storage pickup/empty-hand/grip/return and final handover art remain blocked by missing identity-matched poses; no visual acceptance or deployment verified. No stage promotion.",
         "60848152: inspected standing references and all six reading host candidate images; added hash-bound source eye-landmark framing, exact aspect ratio and decoded dimension guard; 218 isolated assertions passed."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-reading-host-contact",
+        "until": 1795842936750
+      },
       "blocker": "Owner-approved host and character-scale requirements (28 Nov): Owner requires a cross-room and cross-map character scale audit: all human player avatars, residents, room hosts, visitors and real/fictional peers should have comparable apparent height/body proportions when standing on the same ground plane. Allow natural age/body differences and perspective depth; do not normalize seated hosts to standing height or stretch artwork. Calibrate visible alpha bounds, seated torso and furniture contact, consistent head scale and foot/seat pivots; Master Yue and tarot reader must be immediately recognisable and not miniature. Reuse approved identities; create missing seated/writing/dealing poses only after inventory review.\nSix reference-matched Master Yue and Tarot Reader sprites now prepared in painted/host pose-candidates; seven alternatives excluded. Runtime registration, seat/table occlusion, head scale, motion/contact and actual gameplay verification pending.\nSeat/table/hand clearance and actual scene activation remain pending; framing landmarks are provisional, not motion sequences. Shared source currently leased by another manual runner."
     },
     {
