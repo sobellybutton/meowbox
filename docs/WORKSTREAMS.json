@@ -416,7 +416,10 @@
         "a899aaf2: restores existing painted Arcade keeper in the mapped lobby at the registered arcade host anchor, retains all three activities. Actual render/actor scale pending.",
         "Owner: Goldfish Scooping same arcade scene, Bubble Pop painted/iridescent themed bubbles, Blind Boxes inner redesign, visible living NPCs walking and playing actual machines. Retain requested scooping/pop; no separate fishing. Preserve spend/reward/input and current curated scope."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-global-arcade-park-food",
+        "until": 1795841343530
+      },
       "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay."
     },
     {
