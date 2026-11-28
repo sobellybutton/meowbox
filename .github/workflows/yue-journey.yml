@@ -26,11 +26,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Extract and validate the existing scroll sprite
-        if: matrix.engine == 'chromium'
+      - name: Validate committed independent scroll asset
         run: |
-          python3 -m pip install pillow
-          python3 scripts/extract-yue-scroll.py
+          python3 - <<'PY'
+          import hashlib,pathlib
+          p=pathlib.Path('assets/visual/painted/master-yue/folded-scroll.webp')
+          data=p.read_bytes()
+          assert len(data)==23598
+          assert hashlib.sha256(data).hexdigest()=='33a179610d382bb537975f0b87e77608800882a14605f01dfa81d5a8e3864f58'
+          print('PASS independent 23,598-byte scroll asset')
+          PY
       - name: Validate input and build the current game
         run: |
           node scripts/test-yue-input.cjs
