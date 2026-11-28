@@ -5965,7 +5965,7 @@ function pawFocusView(){if(room!=='destiny'&&$('page').dataset.pawYueDesk==='tru
 const pawFocusBefore=loop;
 loop=function(...args){const result=pawFocusBefore(...args);pawFocusView();return result};
 const pawFocusHUD=updateHUD;
-updateHUD=function(...args){const result=pawFocusHUD(...args);pawFocusView();if(room&&!activity&&!$('back').hidden)$('back').textContent=tr('Step outside','走出门口');return result};
+updateHUD=function(...args){const result=pawFocusHUD(...args);pawFocusView();if(room&&!activity&&!$('back').hidden)$('back').textContent=tr('Walk to the doorway','走向门口');return result};
 const pawPreloadDoor=walkDoor;
 walkDoor=function(id,...args){
  try{
@@ -13947,7 +13947,7 @@ yueReadingHub=function(...args){
  [tr('My year ahead','生肖流年'),()=>pawYueDeskChoose('year')],
  [tr('My birth chart','生辰命盘'),()=>pawYueDeskChoose('chart')],
  [tr('Weekly star signs','本周星座'),()=>pawYueDeskChoose('stars')],
- [tr('Just visiting','只是来坐坐'),closeTalk]])
+ [tr('Thank you, Master Yue','谢谢月师傅'),closeTalk]])
 };
 destinyConsultMenu=function(){closeTalk();return yueReadingHub()};
 const pawYueDeskPageBefore=page;
@@ -14084,7 +14084,7 @@ function pawYueDeskPresent(kind){
  const q=$('content'),pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
  pane.dataset.pawYueDesk='true';
  q.querySelector('.yueCompactHost')?.remove();
- const nav=q.querySelector(':scope > .row button:first-child');if(nav){nav.textContent=tr('‹ Talk to Yue','‹ 与月师傅聊');nav.onclick=()=>yueReadingHub()}
+ const nav=q.querySelector(':scope > .row button:first-child');if(nav){nav.textContent=tr('‹ Fold the parchment','‹ 收起命盘');nav.onclick=()=>yueReadingHub()}
  if(form&&['year','chart'].includes(kind)){
   pawYueQuestionSteps(form,out,kind);
   // A consultation starts with the relevant question, not repeated menus.
@@ -14220,7 +14220,7 @@ openTarotReading=function(entry,back){
    choices.push([tr('Make a keepsake','制作纪念牌卡'),()=>{if(!valid())return;closeTalk();shareReadingResult(live,()=>{if(valid())explain(index)})}]);
   }
   if(index>0)choices.push([tr('Previous card','上一张牌'),()=>explain(pawLiveTarotStep(count,index,-1))]);
-  choices.push([tr('Back to the table','回到牌桌'),returnTable]);
+  choices.push([tr('Let’s look at the other cards','看看其他牌卡'),returnTable]);
   say(tr('Fortune Teller','占卜师'),words,choices)
  }
  explain(0)
@@ -14310,7 +14310,7 @@ gardenWishBook=function(){
  function read(index){
   if(!valid())return;
   const selected=pawWishInlineSelection(gardenWishes,index);
-  if(!selected){say(tr('My lanterns','我的心愿灯'),tr('Your first lantern is waiting to be written.','第一盏心愿灯正在等你写下心愿。'),[[tr('Back to the garden','回到花园'),closeTalk]]);return}
+  if(!selected){say(tr('My lanterns','我的心愿灯'),tr('Your first lantern is waiting to be written.','第一盏心愿灯正在等你写下心愿。'),[[tr('Close the book','合上手记'),closeTalk]]);return}
   const {record,index:i}=selected,choices=[];
   if(i>0)choices.push([tr('Newer lantern','较新的心愿灯'),()=>read(i-1)]);
   if(i<gardenWishes.length-1)choices.push([tr('Older lantern','较早的心愿灯'),()=>read(i+1)]);
@@ -14321,7 +14321,7 @@ gardenWishBook=function(){
     [tr('Keep it','保留'),()=>read(i)]
    ])
   }]);
-  choices.push([tr('Back to the garden','回到花园'),closeTalk]);
+  choices.push([tr('Close the book','合上手记'),closeTalk]);
   say(tr('My lanterns','我的心愿灯'),String(record.date||'')+' · '+(i+1)+'/'+gardenWishes.length+'\n\n'+String(record.text||''),choices)
  }
  read(0)
@@ -15407,7 +15407,7 @@ function pawYueInlineForm(kind){
  if(out.querySelector('.ziGrid,.yueReadingFront'))return false;
  const anchor=document.createComment('Yue consultation paper');form.before(anchor);
  pane.style.display='none';
- say(tr('Master Yue','月师傅'),'',[[tr('Return to our conversation','回到茶叙'),()=>{closeTalk();yueReadingHub()}]]);
+ say(tr('Master Yue','月师傅'),'',[[tr('Let’s talk about something else','我们聊点别的吧'),()=>{closeTalk();yueReadingHub()}]]);
  const panel=$('dialogue');panel.dataset.pawYueQuestion='true';
  panel.insertBefore(form,$('choices'));
  pawYueSpeakCurrentQuestion(form);
@@ -15470,7 +15470,7 @@ function pawTarotCardConversation(index=state.readFocus){
   function next(i){tell(turns[i]||words,[
    ...(i+1<turns.length?[[tr('Tell me more','再说说'),()=>next(i+1)]]:[]),
    [tr('View my reading keepsake','看看我的牌卡手记'),()=>{if(valid())openTarotReading(entry,()=>{if(valid())next(i)})}],
-   [tr('Back to the table','回到牌桌'),leave]])}
+   [tr('Let’s look at the other cards','看看其他牌卡'),leave]])}
   next(0)
  }
  function speak(step){
@@ -15478,7 +15478,7 @@ function pawTarotCardConversation(index=state.readFocus){
   if(step+1<parts.length)choices.push([tr('Tell me more','再说说'),()=>speak(step+1)]);
   else if(index+1<run.readCards.length&&run.readFlip[index+1]>=0&&t-run.readFlip[index+1]>=.72)choices.push([tr('Next card','下一张牌'),()=>pawTarotCardConversation(index+1)]);
   else if(run.readFlip.every(v=>v>=0&&t-v>=.72))choices.push([tr('Reflect on the whole reading','聊聊整体牌意'),whole]);
-  choices.push([tr('What about work?','事业呢？'),()=>topic(1,step)],[tr('What about love?','感情呢？'),()=>topic(0,step)],[tr('Back to the table','回到牌桌'),leave]);
+  choices.push([tr('What about work?','事业呢？'),()=>topic(1,step)],[tr('What about love?','感情呢？'),()=>topic(0,step)],[tr('Let’s look at the other cards','看看其他牌卡'),leave]);
   tell(parts[step],choices)
  }
  speak(0)
@@ -15822,7 +15822,7 @@ drawActivity=function(...args){
    gardenLantern(hook.x,hook.y+12*lanternScale,run.gardenSlot,lanternScale);
    const move=pawWishGroundWalk(still?4:elapsed-1.2,true),pos=at(move.point);
    backHuman(pos.x,pos.y,avatar??0,!move.done&&!still,move.dir,scale);
-   if(move.done){run.gardenStage='write';run.pawWishBlessingPending=true;queueMicrotask(()=>{if(room!=='wishes'||activity!=='wishes'||state!==run||!run.pawWishBlessingPending||talkOpen)return;run.pawWishBlessingPending=false;say(tr('Garden keeper','守园人'),tr('Your wish has found its place. Give the universe a little time to do its work.','你的心愿已经有了归处。给宇宙一点时间，让它慢慢发芽。'),[[tr('Thank you','谢谢你'),closeTalk],[tr('Another wish','再写一个心愿'),()=>{closeTalk();if(room==='wishes'&&activity==='wishes'&&state===run)gardenWrite()}]]);})}
+   if(move.done){run.gardenStage='write';run.pawWishBlessingPending=true;queueMicrotask(()=>{if(room!=='wishes'||activity!=='wishes'||state!==run||!run.pawWishBlessingPending||talkOpen)return;run.pawWishBlessingPending=false;say(tr('Garden keeper','守园人'),tr('Your wish has found its place. Give the universe a little time to do its work.','你的心愿已经有了归处。给宇宙一点时间，让它慢慢发芽。'),[[tr('Thank you','谢谢你'),closeTalk],[tr('Another wish','再写一个心愿'),()=>{closeTalk();if(room==='wishes'&&activity==='wishes'&&state===run)gardenWrite()}],[tr('I’ll come back another day','改天再来'),closeTalk]]);})}
   }
  }
  if(stage==='write'){
@@ -15988,3 +15988,36 @@ html #game #dialogue[data-paw-yue-reply] .pawYueTypedReply~#choices button{min-h
 html #game #dialogue[data-paw-tarot-conversation] #choices{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important}
 html #game #dialogue[data-paw-tarot-conversation] #choices button{text-align:left!important;min-height:40px!important;padding:6px 9px!important}
 `;document.head.append(pawYueTypedReplyStyle);
+
+/* PAW_RESIDENT_CONVERSATION_EXIT_BEGIN */
+// A quiet fallback is part of the existing conversation, not a second panel.
+// Use the original callbacks so a card returns to its spread and Yue's
+// internal form is restored through the established closeTalk lifecycle.
+const pawResidentExitSay=say;
+say=function(name,words,choices=[],...rest){
+ const value=pawResidentExitSay(name,words,choices,...rest),panel=$('dialogue');
+ let arrow=panel.querySelector('.pawResidentExit');
+ const active=['tarot','destiny','wishes'].includes(room);
+ if(!active){arrow?.remove();return value}
+ if(!arrow){
+  arrow=document.createElement('button');arrow.type='button';arrow.className='pawResidentExit';
+  arrow.textContent='‹';panel.append(arrow);
+ }
+ arrow.setAttribute('aria-label',tr('Leave conversation','结束对话'));
+ arrow.title=tr('Leave conversation','结束对话');
+ arrow.onclick=()=>{
+  if(!talkOpen)return;
+  if(room==='tarot'&&['tarot','love'].includes(activity)&&state.readStage==='focus'){readingReturnSpread();return}
+  closeTalk();
+ };
+ return value
+};
+const pawResidentExitStyle=document.createElement('style');
+pawResidentExitStyle.textContent=`
+html #game #dialogue[data-paw-chat-bar]>.pawResidentExit{position:absolute;top:0;right:4px;width:44px;height:44px;min-width:44px;min-height:44px;padding:0!important;border:0!important;background:transparent!important;color:#e5d1a7!important;font:24px/1 var(--paw-body,system-ui,sans-serif)!important;box-shadow:none!important;z-index:2}
+html #game #dialogue[data-paw-chat-bar] #dialogueTop{padding-right:44px!important}
+html #game #dialogue[data-paw-chat-bar].pawWishWriting>.pawResidentExit{display:none!important}
+html #game #dialogue[data-paw-chat-bar]>.pawResidentExit:focus-visible{outline:2px solid currentColor;outline-offset:-4px}
+`;
+document.head.append(pawResidentExitStyle);
+/* PAW_RESIDENT_CONVERSATION_EXIT_END */
