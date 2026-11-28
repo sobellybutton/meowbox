@@ -42,3 +42,25 @@ for(const stage of [0,1])for(const dx of [-35,0,35])for(const dy of [-15,0,15]){
 assert.deepEqual(water.pawWaterGripPoint(waterGeo.scoop,null),waterGeo.scoop);
 assert.equal(water.pawWaterDropMatches(2,waterGeo.pour.x,waterGeo.pour.y,waterGeo),false);
 console.log('Painted water grip and drop alignment checks passed.');
+
+const contact=new Function(get('TEMPLE_OWNER_CONTACT')+get('PAINTED_GARDEN')+';return {pawTempleContactScale,pawIncenseSupply,pawIncensePickup,pawRearBenchPose,pawRearGardenSway,pawRearGardenPlate}')();
+const hall={x:100,y:-145,w:600,h:600*1648/928};
+for(let held=0;held<3;held++){
+ const before=contact.pawIncenseSupply(hall,held,'taking',.31),after=contact.pawIncenseSupply(hall,held,'taking',.32);
+ assert.equal(before.remaining.length,3-held);assert.equal(after.remaining.length,2-held);
+ const hand={x:1,y:2},picked=contact.pawIncensePickup(hand,after.pick,.32),end=contact.pawIncensePickup(hand,after.pick,.72);
+ assert.ok(Math.hypot(picked.x-after.pick.x,picked.y-after.pick.y)<1e-6);
+ assert.ok(Math.hypot(end.x-hand.x,end.y-hand.y)<1e-6);
+}
+for(const c of [.45,.55,.65,.75,1.2]){
+ const scale=contact.pawTempleContactScale(c,1.72),pose=contact.pawRearBenchPose(contact.pawRearGardenPlate,scale);
+ assert.ok(scale>=1.72&&scale<=2.15);
+ assert.ok(Math.abs(pose.y-20*scale-pose.hip.y)<1e-8);
+ assert.ok(Math.abs(pose.x+9*scale-pose.hip.x)<1e-8);
+}
+for(const kind of ['chime','cats']){
+ assert.notEqual(contact.pawRearGardenSway(.3,false,kind),0);
+ assert.equal(contact.pawRearGardenSway(4,false,kind),0);
+ assert.equal(contact.pawRearGardenSway(.3,true,kind),0);
+}
+console.log('Temple incense supply, character scale, bench contact and garden reaction checks passed.');
