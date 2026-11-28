@@ -7168,7 +7168,7 @@ start=function(id,...args){
 const pawHerdFeedBefore=deerFeed;
 deerFeed=function(){
  const result=pawHerdFeedBefore();
- if(activity==='deerVisit'&&state.deerPhase==='feed'&&state.deerProfile?.id==='koyo')hint('Koyo is rushing over for a cracker. Keep your space and offer it calmly.','枫枫急着跑来吃鹿饼。留一点距离，平静地递给它。');
+ if(activity==='deerVisit'&&state.deerPhase==='feed'&&state.deerProfile?.id==='koyo')hint('Koyo spotted a snack! Keep your space and offer it calmly.','枫枫一看见吃的就来劲啦！保持距离，慢慢递给它。');
  return result
 };
 // Resident hosts stay at their workplace. Existing illustrated neighbours
@@ -10413,7 +10413,7 @@ drawActivity=function(...args){
  }
  if(arrival==='cat'){
   q.greeted=true;
-  hint('The lucky cat wishes you a quiet, unhurried day.','招福猫祝你今天从容自在，不必匆忙。');
+  hint('The lucky cat has one wish for you: a lunch break with actual lunch.','招福猫祝你今天的午休，有饭吃，也有时间休。');
   if(!muted)physicalFx('wood',.25)
  }
  pawForecourtSyncControls(run);
@@ -12136,7 +12136,7 @@ function pawRearBenchPose(p,scale){
  return {hip,x:hip.x-9*scale,y:hip.y+32*scale,scale}
 }
 const pawRearCatFigurines=[[.578,.240],[.653,.229],[.717,.240],[.596,.278],[.645,.278],[.697,.278]];
-const pawRearCatBlessings=[['May your lunch break actually be a break.','愿你的午休，真的能休息。'],['May good things find you without a meeting invite.','愿好事找上门，不必先开会。'],['May you have the courage to say: tomorrow.','愿你有勇气说：明天再说。'],['A little luck for whatever you are carrying today.','愿你今天的心事，轻一点。'],['May your tea stay warm and your inbox stay quiet.','愿茶常温，消息常静。'],['May you find something small worth smiling about.','愿你今天遇见一件值得微笑的小事。']];
+const pawRearCatBlessings=[['May your lunch break actually be a break.','愿你的午休，真的能休息。'],['May good things find you without a meeting invite.','愿好事找上门，不必先开会。'],['May you master the ancient art of saying: tomorrow.','愿你练成一门绝学：明天再说。'],['A little luck for whatever you are carrying today.','愿你今天的心事，轻一点。'],['May your tea stay warm and your work chat stay on mute.','愿杯中茶常暖，工作群常静音。'],['May the lift arrive just as you press the button.','愿你每次按电梯，门马上就开。']];
 function pawRearCatChoice(run,index){
  if(!run||!Number.isInteger(index)||index<0||index>=pawRearCatBlessings.length)return null;
  run.pawCatChoice=index;return pawRearCatBlessings[index]
@@ -13707,7 +13707,7 @@ gardenWrite=function(){
   const value=pawWishInlineText(composer.input.value);
   if(!value){composer.input.focus();return}
   run.pendingGardenWish=value;run.gardenStage='carry';closeTalk();
-  hint('Choose a glowing hook for your lantern.','选一个发光的挂钩，把心愿灯挂上去。')
+  hint('Choose a glowing hook. Your wish doesn\'t need a follow-up email.','选个发光的挂钩挂灯。心愿不用发邮件催进度。')
  };
  say(tr('Wish paper','心愿纸'),tr('Only you can read this wish.','这份心愿只有你能看见。'),[
   [tr('Fold into a lantern','折进心愿灯'),fold],
@@ -14350,7 +14350,7 @@ function pawKitchenPaintBowl(x,y,fill){
 }
 function pawKitchenServeRequest(){
  if(activity!=='cook'||!state.done||state.pawSoupServed||state.pawSoupServeAt!==undefined||pawArcadeInputBlocked())return;
- state.pawSoupServeAt=t;closeTalk();sound(330);hint('Ladle the soup into a bowl.','把热汤盛进碗里。');
+ state.pawSoupServeAt=t;closeTalk();sound(330);hint('Grandma: Ladle yourself a bowl first. No need to serve the whole office.','外婆：先给自己盛一碗，又不用请全公司吃饭。');
 }
 /* PAW_KITCHEN_SERVE_END */
 
@@ -14470,8 +14470,8 @@ drawActivity=function(...args){
   const result=pawKitchenSteamBefore(...args);mb5AssistSync();return result
  }
  const q=run.pawSteam,pan=q.method==='pan',changed=pawKitchenSteamAdvance(q,t,pawArcadeInputBlocked());
- if(changed&&q.phase==='ready'){sound(540);hint(...(pan?['The tofu is ready. Grandma approves of those golden edges.','豆腐煎好了，外婆说这金黄的边儿真不错。']:['The greens are ready. Grandma says the colour is just right.','青菜蒸好了，外婆说这个颜色刚刚好。']))}
- if(changed&&q.phase==='done'){hint('Grandma: Fresh, simple and very good.','外婆：清清爽爽，好吃得很。');sound(480)}
+ if(changed&&q.phase==='ready'){sound(540);hint(...(pan?['Grandma: Wah, golden edges! The tofu has had a better holiday than you.','外婆：哇，煎得金黄金黄的！豆腐都比你会度假。']:['Grandma: Nice and green! Finally, something that isn\'t overworked.','外婆：青翠青翠的，终于有一样东西没被折腾过头。']))}
+ if(changed&&q.phase==='done'){hint(...(pan?['Grandma: Crispy outside, soft inside. Unlike your Monday face.','外婆：外脆里嫩，不像你周一那张苦瓜脸。']:['Grandma: Finished your greens! Now go do absolutely nothing for a bit.','外婆：青菜吃完啦！接下来什么都别干，歇会儿。']));sound(480)}
  continuityActivity=activity;ctx.save();try{
   table();
   const plate=pawKitchenSteamPlate(q,residentReducedMotion.matches);
@@ -14552,13 +14552,13 @@ function pawKitchenStockPaint(){
 }
 function pawKitchenStockRequest(run,i,x=270+i*130,y=W<H?610:600){
  if(run!==state||room!=='kitchen'||activity!=='cook'||pawArcadeInputBlocked()||drag||!pawKitchenPickupAllowed(run,i))return false;
- run.pawStockPickup={i,x,y,age:0,last:t,blocked:false};sound(360);hint('Into the pot…','食材下锅啦……');return true
+ run.pawStockPickup={i,x,y,age:0,last:t,blocked:false};sound(360);hint('Grandma: Into the pot! This is the only thing we are rushing today.','外婆：下锅咯！今天只赶这一顿饭。');return true
 }
 function pawKitchenStockChoose(run){
  if(run!==state||room!=='kitchen'||activity!=='cook'||pawArcadeInputBlocked()||drag)return;
  const names=run.vegetarian?[['Mushroom','香菇'],['Greens','青菜'],['Tofu','豆腐']]:[['Tomato','番茄'],['Greens','青菜'],['Egg','鸡蛋']];
  const choices=names.flatMap((name,i)=>pawKitchenPickupAllowed(run,i)?[[tr(...name),()=>{if(run!==state||activity!=='cook'||room!=='kitchen')return;closeTalk();pawKitchenStockRequest(run,i)}]]:[]);
- if(choices.length)say(tr('Grandma','外婆'),tr("Come, pick something from the counter. I'll show you what to do with it.","来，看看料理台上想拿哪样食材，外婆教你怎么做。"),choices)
+ if(choices.length)say(tr('Grandma','外婆'),tr("Grandma here. Pick an ingredient. No qualifications required.","来，挑样食材。外婆这里不用看学历。"),choices)
 }
 // Ordinary drag-to-pot remains unchanged. A short tap on an existing
 // ingredient plate is an alternative accessible physical pickup.
