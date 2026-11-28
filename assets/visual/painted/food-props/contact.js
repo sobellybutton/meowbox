@@ -58,7 +58,34 @@ function create(placement,manifest,contacts){
   const prop=placement.geometry(manifest,id,...hand,height,{anchor:c.grip,angle});
   return prop?{prop,hand:hand.slice(),tip:prop.point(...c.workingTip)}:null;
  }
- return Object.freeze({pourPlan,pourFrame,utensilPose});
+ // A scene-local stirring path. The caller supplies actual gesture angle;
+ // the spoon does not advance game progress on its own. Start/end return
+ // to the identical painted counter anchor, with no jump or duplicate prop.
+ function stirPlan(spec){
+  if(!spec||!pair(spec.rest)||!pair(spec.center)||!pair(spec.radius)||!spec.radius.every(v=>v>0)||!finite(spec.height)||spec.height<=0||!finite(spec.clearance)||spec.clearance<0)return null;
+  const c=landmarks(manifest,contacts,spec.id);
+  if(!c?.grip||!c.workingTip)return null;
+  const rest=placement.geometry(manifest,spec.id,...spec.rest,spec.height);
+  if(!rest)return null;
+  return {id:spec.id,height:spec.height,rest,center:spec.center.slice(),radius:spec.radius.slice(),clearance:spec.clearance,grip:c.grip.slice(),tip:c.workingTip.slice()};
+ }
+ function stirFrame(plan,progress,gestureAngle=0,reduced=false){
+  if(!plan||![progress,gestureAngle].every(finite))return null;
+  const p=Math.max(0,Math.min(1,progress)),active=p>=.25&&p<=.75;
+  const travel=p<.25?p/.25:p>.75?(1-p)/.25:1;
+  const u=ease(travel),restTip=plan.rest.point(...plan.tip);
+  const orbit=[plan.center[0]+Math.cos(gestureAngle)*plan.radius[0],plan.center[1]+Math.sin(gestureAngle)*plan.radius[1]];
+  // Lift above the work surface during transfer. Reduced motion retains
+  // exact endpoint/gesture contact without the decorative transfer arc.
+  const desired=[mix(restTip[0],orbit[0],u),mix(restTip[1],orbit[1],u)-(reduced?0:Math.sin(Math.PI*u)*plan.clearance)];
+  const angle=u*.48;
+  const probe=placement.geometry(manifest,plan.id,0,0,plan.height,{anchor:plan.grip,angle});
+  if(!probe)return null;
+  const offset=probe.point(...plan.tip),hand=[desired[0]-offset[0],desired[1]-offset[1]];
+  const pose=utensilPose(plan.id,hand,plan.height,angle);
+  return pose?{...pose,phase:p===0?'rest':p===1?'settled':active?'stir':p<.25?'lift':'return',active,progress:p}:null
+ }
+ return Object.freeze({pourPlan,pourFrame,utensilPose,stirPlan,stirFrame});
 }
 return Object.freeze({landmarks,create});
 });
