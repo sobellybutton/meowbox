@@ -433,7 +433,10 @@
         "5f8049e4 + fe39dce4 + 84b12ae3: actual stock basket/utensil holder silhouette masks, native tap plate or stock dialogue choice, animated ingredient transfer and guarded drag/recipe state; 529 new persisted checks passed. Kitchen portrait has no dining seat, dedicated furniture required. Actual rendered device and contact acceptance pending.",
         "d76e7370: refined 26 bilingual dialogue pairs in actual startup.js, differentiating temple keeper, Fortune Teller, Master Yue, Grandma, Auntie Mei, Auntie Hong, Ah Ma, animal caretaker, arcade/boba keeper, Observatory guide, storyteller and cafe host. Clearer fortune-stick retry and Sheng Bei confirmation, physical stock selection instructions; existing ritual rules and all resident IDs/aliases/rooms/line counts unchanged. Exact source syntax parsed and 109 profile structure/bilingual checks passed. Actual rendered copy, full CI and deployment not verified; review consent, line length and action labels throughout remaining activities."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-batch07-food-props-2",
+        "until": 1795846881296
+      },
       "blocker": "Dedicated ingredient, preparation, pouring, serving and tasting artwork, pose contact and actual browser verification remain outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n49 original kitchen/boba props prepared at assets/visual/painted/food-props; runtime integration, scene-specific grip/pour contact, animation and rendered acceptance remain pending. CI pending at check."
     },
     {
