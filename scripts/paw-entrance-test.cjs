@@ -135,8 +135,9 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       assert.equal(await page.locator('.pawRailWayfinding').count(),0,'Duplicate station action');
      }
      if(id==='dockValley'){
-      assert.equal(await page.locator('.pawPavilionScene > .pawPavilionTray').count(),1,'Town Hall opens its pavilion first');
-      assert.equal(await page.locator('.pawPavilionNews[open]').count(),0,'Long town news should begin folded');
+      assert.equal(await page.locator('.pawPavilionScene .pawTownHotspot').count(),3,'Town Hall offers three in-scene destinations');
+      assert.equal(await page.locator('.pawPavilionTray').count(),0,'No foreground menu covering hall');
+      assert(await page.locator('.pawPavilionScene .pawTownFrontPhoto img').isVisible(),'Pavilion artwork is visible');
      }
      if(id==='dockOwnHome'){
       const structure=await page.evaluate(()=>{const q=$('content'),room=q.querySelector('.hideoutScene'),actions=q.querySelector('.hideoutPrimary'),expansion=q.querySelector('.pawRoomExpansionFold');return {first:!!room&&!!actions&&!!(room.compareDocumentPosition(actions)&Node.DOCUMENT_POSITION_FOLLOWING),folded:!!expansion&&!expansion.open,top:room?.getBoundingClientRect().top,visible:room?.getBoundingClientRect().height}});
