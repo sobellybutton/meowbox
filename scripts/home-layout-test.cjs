@@ -33,7 +33,8 @@ console.log('Modular home asset, projection, placement and upgrade checks passed
 
 for(const id of api.legacyIds)assert.ok(fs.existsSync(path.resolve(__dirname,'..',api.legacyFurniture(id))));
 assert.equal(api.legacyFurniture('unknown'),null);
-assert.equal(api.legacyFurniture('shelf'),null);
+assert.equal(api.legacyFurniture('shelf'),api.furniture('bookcase'));
+assert.equal(api.legacyFurniture('shojiLamp'),api.furniture('floor-lantern'));
 assert.equal(api.legacyFurniture('displayCabinet'),null);
 for(const [extension,studio] of [[false,false],[false,true],[true,false],[true,true]]){
  const plans=api.plans(extension,studio);
@@ -54,7 +55,7 @@ for(const id of api.legacyIds){
  assert.equal(previews.pawFurniturePaintedPath(id),api.legacyFurniture(id));
  assert.ok(fs.existsSync(path.resolve(__dirname,'..',previews.pawFurniturePaintedPath(id))));
 }
-for(const id of ['shelf','displayCabinet','shojiLamp','roomExtension','roomStudio']){
+for(const id of ['displayCabinet','roomExtension','roomStudio']){
  assert.equal(previews.pawFurniturePaintedPath(id),null);
  assert.ok(fs.existsSync(path.resolve(__dirname,'..',previews.pawFurniturePaintedPath(id,true))));
 }
