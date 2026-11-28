@@ -10,6 +10,20 @@ const assert=require('node:assert/strict');
    try{
     await page.goto('http://127.0.0.1:8767/index.html',{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>typeof openMeowShare==='function'&&typeof socialLayout==='function',{},{timeout:60000});
+    // Verify every public Soul Cat result selects a decoded original cat charm,
+    // rather than a generic district painting. Unknown/tied results stay neutral.
+    await page.evaluate(async()=>{
+      const expected=['sakura','sleepy','guardian','moonlight','pink-love','classic-white','black','gold'];
+      for(let i=0;i<soulCats.length;i++){
+        const data=sharePublicData({kind:'soul',title:soulCats[i].slice(0,2),lines:[soulCats[i].slice(2,4)]});
+        const art=pawRecoveredResultIllustration(data);
+        await art.decode();
+        if(!art.naturalWidth||!art.naturalHeight||!art.src.endsWith('/fortune-cats/'+expected[i]+'.webp'))throw Error('Wrong Soul Cat art for '+i);
+      }
+      const neutral=pawRecoveredResultIllustration({kind:'soul',title:['Mixed','并列']});
+      await neutral.decode();
+      if(!neutral.src.endsWith('/fortune-cats/classic-white.webp'))throw Error('Unknown soul result must use neutral charm');
+    });
     // Direct fixture entry, not a claim of completing the personality test by touch.
     const cases=await page.evaluate(async()=>{
       const all=[...soulCats.map(v=>({kind:'soul',title:v.slice(0,2),lines:[v.slice(2,4)],accent:v[4]})),...wonderMotives.map(v=>({kind:'motive',title:v.slice(0,2),lines:[v.slice(2,4)]})),{kind:'type',title:['INFP','INFP'],lines:[['A preference portrait','偏好小画像']]},{kind:'tarot',title:['The Moon','月亮'],lines:[['A moment of reflection','片刻自省']]},{kind:'fortune',title:['Take it easy','慢慢来'],lines:[['No rush','不用着急']]},{kind:'cafe',title:['Quiet Harbour','安静港湾'],lines:[['Time to breathe','给自己一点空间']]},{kind:'story',title:['Tea Shop Keeper','茶馆主人'],lines:[['A new life','新生活']]}];
