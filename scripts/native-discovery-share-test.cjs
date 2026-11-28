@@ -36,6 +36,16 @@ const out='test-results/native-keepsakes-'+engine;
        wonderSceneFinish();if(!wonderSceneResult||wonderScenePhase!=='result')throw Error('Invalid completed-result fixture: '+kind);openWonderResult(kind,wonderSceneResult);
       }
      },{cn,kind});
+     // The existing reviewed illustrations must actually load in live exports.
+     if(kind==='cafe'||kind==='story'){
+      const art=await page.evaluate(async kind=>{
+       const im=pawRecoveredResultIllustration({kind});
+       await im.decode();
+       return {src:im.src,width:im.naturalWidth,height:im.naturalHeight}
+      },kind);
+      assert.ok(art.width>0&&art.height>0);
+      assert.ok(art.src.endsWith(kind==='cafe'?'/standing-serve.webp':'/standing-book.webp'));
+     }
      const resultButton=kind==='cafe'?page.locator('[data-cafe-result="share"]'):kind==='story'?page.locator('[data-story-ending="share"]'):page.locator('#choices').getByRole('button',{name:cn?'制作纪念卡':'Make a keepsake',exact:true});
      await resultButton.waitFor({timeout:10000});
      if(kind==='cafe'||kind==='story')await page.evaluate(kind=>{
