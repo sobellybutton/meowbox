@@ -439,3 +439,60 @@ pawDiscoveryPlateStyle.textContent=`
 @media(min-width:900px) and (min-aspect-ratio:5/4){#game #storyReadingSheet[data-paw-discovery-plate]{max-height:70dvh;display:block}}
 @media(prefers-reduced-motion:reduce){#game #storyReadingSheet .pawStoryLetterIllustration{animation:none}}
 `;document.head.append(pawDiscoveryPlateStyle);
+
+
+/* PAW_DEER_ACTIVE_CLOCK_BEGIN */
+function pawDeerAdvanceClock(run,now,blocked){
+ if(!run||!Number.isFinite(now)||!Number.isFinite(run.deerAt))return false;
+ const phase=run.deerPhase,active=['bow','feed','watch'].includes(phase);
+ if(!active){delete run.pawDeerClock;return false}
+ const prior=run.pawDeerClock;
+ if(prior&&prior.phase===phase&&prior.start===run.deerAt&&now>=prior.now){
+  const gap=now-prior.now,advance=blocked||prior.blocked?0:Math.min(.05,gap);
+  run.deerAt+=gap-advance
+ }else if(now>run.deerAt+.05){
+  run.deerAt=now-(blocked?0:.05)
+ }
+ run.pawDeerClock={phase,start:run.deerAt,now,blocked:!!blocked};
+ return true
+}
+function pawDeerControlCurrent(origin,live,action,blocked){
+ if(blocked||!origin||!live||origin.run!==live.run||origin.profile!==live.profile||origin.phase!==live.phase||live.room!=='park'||live.activity!=='deerVisit')return false;
+ return action==='bow'?['greet','ready'].includes(live.phase):action==='feed'?['greet','ready'].includes(live.phase):action==='watch'?['greet','ready','done'].includes(live.phase):false
+}
+/* PAW_DEER_ACTIVE_CLOCK_END */
+function pawDeerControlContext(){return {run:state,profile:state.deerProfile,phase:state.deerPhase,room,activity}}
+const pawDeerClockLoopPrior=loop;
+loop=function(ms,...args){
+ if(room==='park'&&activity==='deerVisit')pawDeerAdvanceClock(state,ms/1000,pawArcadeInputBlocked());
+ return pawDeerClockLoopPrior(ms,...args)
+};
+const pawDeerRewardPrior=deerVisitReward;
+deerVisitReward=function(...args){
+ if(room!=='park'||activity!=='deerVisit'||pawArcadeInputBlocked())return;
+ return pawDeerRewardPrior(...args)
+};
+const pawDeerControlPrior=refreshControls;
+refreshControls=function(...args){
+ const value=pawDeerControlPrior(...args);
+ if(room!=='park'||activity!=='deerVisit'||!state.deerProfile)return value;
+ const origin=pawDeerControlContext(),buttons=$('gameControls')?.querySelectorAll('.deerMeadowButtons button');
+ if(buttons?.length!==3)return value;
+ ['bow','feed','watch'].forEach((action,i)=>{
+  const button=buttons[i],fn=button.onclick;
+  if(typeof fn!=='function')return;
+  button.onclick=function(...values){
+   if(!button.isConnected||button.disabled||!pawDeerControlCurrent(origin,pawDeerControlContext(),action,pawArcadeInputBlocked()))return;
+   return fn.apply(this,values)
+  }
+ });
+ return value
+};
+const pawDeerActionStyles=document.createElement('style');
+pawDeerActionStyles.textContent=`
+#game #gameControls.deerMeadowControls{background:#efe3c9 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 180px repeat!important;border:1px solid #b8a17d!important;color:#514936!important;border-radius:9px!important;box-sizing:border-box}
+#game #gameControls.deerMeadowControls .deerMeadowButtons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+#game #gameControls.deerMeadowControls .deerMeadowButtons button{white-space:normal;overflow-wrap:anywhere;min-width:0;min-height:44px;padding:6px 5px!important;line-height:1.25}
+#game #gameControls.deerMeadowControls .deerMeadowButtons button:focus-visible{outline:2px solid #3b6653;outline-offset:-3px}
+@media(max-width:350px){#game #gameControls.deerMeadowControls .deerMeadowButtons button{font-size:12px}}
+`;document.head.append(pawDeerActionStyles);
