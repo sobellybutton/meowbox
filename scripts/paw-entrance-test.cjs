@@ -13,6 +13,22 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
   const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1,hasTouch:width<900,reducedMotion:motion});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const shot=async stage=>{
+   if(process.env.PAW_OPENING_EXPERIENCE==='1'&&stage!=='FAIL'){
+    if(stage==='station'){
+     const intro=await page.evaluate(()=>{
+      const hero=proposal.querySelector('.hero'),art=hero.querySelector('.pawFirstRailPainting img'),brand=proposal.querySelector('.pawOpeningWordmark'),button=proposal.querySelector('footer .next');
+      const r=hero.getBoundingClientRect(),b=button.getBoundingClientRect(),at=document.elementFromPoint(b.left+b.width/2,b.top+b.height/2);
+      return {hero:[r.width,r.height],screen:[innerWidth,innerHeight],brand:brand?.textContent,brandFont:brand&&getComputedStyle(brand).fontFamily,displayFont:getComputedStyle(document.documentElement).getPropertyValue('--paw-display').trim(),fit:getComputedStyle(art).objectFit,button:b.height,hit:button.contains(at),image:art.complete&&art.naturalWidth>0};
+     });
+     assert(intro.hero[0]>=width-2&&intro.hero[1]>=height-2,'Opening art not full screen: '+JSON.stringify(intro));
+     assert.equal(intro.brand,language==='中文'?'摸鱼小镇':'Pawradise');
+     assert(intro.brandFont.includes(intro.displayFont.split(',')[0].replace(/"/g,'')),'Wordmark must use display font: '+JSON.stringify(intro));
+     assert(intro.fit==='cover'&&intro.image&&intro.button>=44&&intro.hit,'Opening not readable or reachable');
+    }
+    if(stage==='ticket'||stage.startsWith('avatar-')||stage==='persona'){
+     assert.equal(await page.locator('#proposal .pawOpeningWordmark').innerText(),language==='中文'?'摸鱼小镇':'Pawradise');
+    }
+   }
    if(process.env.PAW_FOUNDATION==='1'){
     const words=await page.locator('body').innerText();
     assert(!/\bNPCs?\b|non.player character|fictional (?:residents?|guests?|visitors?|characters?)|虚构(?:居民|来客|角色|客串角色)|非玩家角色|电脑对手/i.test(words),'Out-of-world wording visible at '+stage);
