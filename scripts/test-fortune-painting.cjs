@@ -17,3 +17,16 @@ for(const [id,d] of Object.entries(data.doors))for(const [x,y] of [data.spawn,[5
  }
 }
 console.log('Fortune selected painting geometry PASS');
+
+const near=new Function(grab('/* PAW_FIRST_MAP_RAIL_BEGIN */','/* PAW_FIRST_MAP_RAIL_END */')+';return pawFortuneRailNearby')();
+const station=data.doors.station.approach;
+for(const id of ['tarot','destiny','temple','wishes']){
+ const [x,y]=data.doors[id].approach;
+ assert.equal(near('fortune',{x,y},station),false,id+' must not promote railway prematurely');
+}
+assert.equal(near('fortune',{x:data.spawn[0],y:data.spawn[1]},station),false);
+assert.equal(near('fortune',{x:548,y:605},station),true);
+assert.equal(near('fortune',{x:station[0],y:station[1]},station),true);
+assert.equal(near('fortune',{x:NaN,y:365},station),false);
+assert.equal(near('home',{x:0,y:0},station),true);
+console.log('Fortune railway discovery distance PASS');
