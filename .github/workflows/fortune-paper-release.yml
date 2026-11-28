@@ -1,0 +1,31 @@
+name: Pawradise fortune paper reveal
+on:
+  pull_request:
+    branches: [main]
+    paths: ['src/startup.js','scripts/fortune-paper-reveal-test.cjs','scripts/fortune-paper-mobile-test.cjs','.github/workflows/fortune-paper-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fortune-paper-mobile:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/fortune-paper-unfold-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: node scripts/fortune-paper-reveal-test.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 8765 >/tmp/fortune-paper-flow.log 2>&1 &
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8765/index.html >/dev/null && break; sleep 1; done
+          node scripts/fortune-paper-mobile-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fortune-paper-mobile
+          path: test-results/fortune-paper
