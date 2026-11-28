@@ -536,7 +536,10 @@
         "52e41844 + edba2787: landscape railway renderer now applies slow route-specific warm light/cool shade inside scenery window and anchored wind shear to flowers only; fixed rigid props and carriage, reduced motion freezes effects. Exact repository module and persisted script executed in connector harness: 11,770 assertions passed, including 7,217 atmosphere assertions. No real browser/deployed verification; portrait carriage still pending runtime activation.",
         "a95a0feb + 14ea2782: native 1024x1536 portrait carriage composition with explicit alpha window bounds and 3px under-frame overlap; scenery, near props, light and wind clipped to window; landscape compatibility retained. Exact persisted test executed against repo module and tree with 12,038 assertions passed (268 new portrait checks across six viewports, four routes and reduced motion). Startup mount still pending due shared runtime lease; no rendered acceptance."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-rail-kinetics-20261128",
+        "until": 1795844100000
+      },
       "blocker": "Landscape renderer is called by startup's painted railway composite when loaded; actual rendered ride and mobile/desktop acceptance remain pending. Native portrait carriage needs runtime activation and alpha-window alignment; shared startup leased by another runner."
     },
     {
