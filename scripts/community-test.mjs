@@ -22,6 +22,19 @@ async function call(path,token=tokens[0],body,method=body?'POST':'GET',admin=fal
 const base={place:'home',room:'',x:520,y:680,avatar:1,facing:'up',walking:false,gesture:'none'};
 try{
  assert.equal((await call('/health')).data.sharedRooms,true);
+ // A district must be a string, not a coercible JSON array.
+ for(const place of [['home'],{},null,42,'__proto__']){
+  assert.equal(validatePresence({...base,place}),null);
+  assert.equal((await call('/presence',tokens[0],{...base,place})).status,400);
+ }
+ // Validate the coordinates that peers actually receive, including
+ // fractional inputs around the painted corridor boundaries.
+ for(const [room,place] of [['tea','home'],['park','home'],['arcade','island'],['kitchen','island']]){
+  for(let x=280;x<=540;x+=.37)for(let y=450;y<=780;y+=2.31){
+   const q=validatePresence({...base,room,place,x,y});
+   if(q)assert.ok(validatePresence({...base,room,place,x:q.x,y:q.y}),'Published point must remain valid');
+  }
+ }
  assert.equal(validatePresence({...base,room:'destiny'}),null);
  assert.equal(validatePresence({...base,room:'tea',x:900}),null);
  assert.equal(validatePresence({...base,place:'fortune',room:'tea'}),null);

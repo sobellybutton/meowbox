@@ -51,7 +51,7 @@ hideoutPage=function(){cabinetRoomBefore();const q=$('content'),stage=q.querySel
 }
 };
 const bagReleaseBefore=myRoom;
-myRoom=function(){bagReleaseBefore();const q=$('content'),wrap=q.querySelector('.travellerBagV2');if(!wrap)return;const foot=wrap.querySelector('.bagFooter');if(foot){b(foot,tr('Figure cabinet','手办展示柜'),()=>figureCabinetPage('bag'));b(foot,tr('Life journal','人生档案'),lifeProfile);b(foot,tr('Sound settings','声音设置'),meowSettingsPage)}
+myRoom=function(){bagReleaseBefore();const q=$('content'),wrap=q.querySelector('.travellerBagV2');if(!wrap)return;const foot=wrap.querySelector('.bagFooter');if(foot){b(foot,tr('Figure cabinet','手办展示柜'),()=>figureCabinetPage('bag'));b(foot,tr('Life journal','人生档案'),lifeProfile)}
  const grid=wrap.querySelector('.bagSlots'),body=wrap.querySelector('.bagBody'),detail=wrap.querySelector('.bagDetail');
  if(grid&&body&&detail){
   const position=()=>{if(detail.parentNode===grid)body.append(detail);if(W<720&&!detail.hidden){const index=[...grid.children].findIndex(el=>el.getAttribute('aria-pressed')==='true');if(index>=0)grid.children[Math.min(grid.children.length-1,Math.floor(index/3)*3+2)]?.after(detail)}};
@@ -1683,29 +1683,66 @@ const compactLifeRefreshBefore=lifeHUDRefresh;
 lifeHUDRefresh=function(...args){const v=compactLifeRefreshBefore(...args);compactTownProfile();return v};
 const townSettingsRoot=$('small'),townSettingsPanel=languageChoices.parentNode;
 townSettingsPanel.classList.add('townSettingsPanel');townSettingsPanel.id='townSettingsPanel';
-const townSettingsToggle=element('button','',townSettingsRoot,'townSettingsToggle');
+const townSettingsToggle=document.createElement('button'); // Detached legacy reference; no map control.
 townSettingsToggle.id='townSettingsToggle';townSettingsToggle.setAttribute('aria-controls','townSettingsPanel');townSettingsToggle.innerHTML='<svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4l.7 2.5 2 .9 2.3-1.2 2 3.5-1.8 1.9v2.8l1.8 1.9-2 3.5-2.3-1.2-2 .9L14 21h-4l-.7-2.5-2-.9L5 18.8l-2-3.5 1.8-1.9v-2.8L3 8.7l2-3.5 2.3 1.2 2-.9z"/><circle cx="12" cy="12" r="3.2"/></svg>';
 const townSettingsExtra=element('div','',townSettingsPanel,'townSettingsExtra');
 const townSoundSettings=element('button','',townSettingsExtra),townMapLabels=element('button','',townSettingsExtra),townHelp=element('button','',townSettingsExtra);
+/* PAW_LOCAL_RESET_BEGIN */
+// Clear only this game's local progress, not other sites, language or the
+// shared community session. Snapshot first so failures can be rolled back.
+function pawLocalReset(storage){
+ const prefix='meowbox-preview-',keep=new Set([prefix+'zh',prefix+'communitySessionV1']),snapshot=[];
+ try{
+  for(let i=0;i<storage.length;i++){const key=storage.key(i);if(key?.startsWith(prefix)&&!keep.has(key))snapshot.push([key,storage.getItem(key)])}
+ }catch{return false}
+ try{for(const [key] of snapshot)storage.removeItem(key);return true}
+ catch{for(const [key,value] of snapshot){try{if(value!==null)storage.setItem(key,value)}catch{}}return false}
+}
+/* PAW_LOCAL_RESET_END */
+const townResetButton=element('button','',townSettingsExtra);
+const townResetConfirm=element('div','',townSettingsExtra,'pawResetConfirm');
+townResetConfirm.hidden=true;
+const townResetCopy=element('p','',townResetConfirm),townResetDo=element('button','',townResetConfirm),townResetCancel=element('button','',townResetConfirm);
+townResetButton.type=townResetDo.type=townResetCancel.type='button';
+townResetButton.setAttribute('aria-expanded','false');
+townResetConfirm.id='pawResetConfirm';townResetButton.setAttribute('aria-controls',townResetConfirm.id);
+let townResetArmed=false,townResetFailed=false;
+townResetButton.onclick=()=>{townResetArmed=!townResetArmed;townResetFailed=false;syncTownSettings();if(townResetArmed)townResetCancel.focus()};
+townResetCancel.onclick=()=>{townResetArmed=false;townResetFailed=false;syncTownSettings();townResetButton.focus()};
+townResetDo.onclick=()=>{
+ if(!townSettingsOpen||!townResetArmed)return;
+ let ok=false;try{ok=pawLocalReset(localStorage)}catch{}
+ if(ok){townResetArmed=false;townResetDo.disabled=true;location.reload()}
+ else{townResetFailed=true;syncTownSettings()}
+};
+const townResetStyle=document.createElement('style');
+townResetStyle.textContent='#game #small #townSettingsPanel .pawResetConfirm{display:grid;gap:4px;padding:7px;border-top:1px solid #ac9670;background:#f2e5cb;color:#514634;border-radius:5px}#game #small #townSettingsPanel .pawResetConfirm[hidden]{display:none!important}#game #small #townSettingsPanel .pawResetConfirm p{font-size:12px;line-height:1.4;margin:2px 0;white-space:normal}#game #small #townSettingsPanel .pawResetConfirm button{min-height:44px!important;white-space:normal!important}#game #small #townSettingsPanel .pawResetConfirm button:first-of-type{color:#894d3f!important}';
+document.head.append(townResetStyle);
 let townSettingsOpen=false;
 function syncTownSettings(){
  townSettingsRoot.dataset.open=String(townSettingsOpen);
  townSettingsToggle.setAttribute('aria-label',tr('Settings','设置'));townSettingsToggle.title=tr('Settings','设置');townSettingsToggle.setAttribute('aria-expanded',String(townSettingsOpen));
  townSettingsPanel.hidden=!townSettingsOpen;
+ if(!townSettingsOpen){townResetArmed=false;townResetFailed=false}
+ townResetButton.textContent=tr('Start over','重新开始');
+ townResetButton.setAttribute('aria-expanded',String(townResetArmed));
+ townResetConfirm.hidden=!townResetArmed;
+ townResetCopy.textContent=townResetFailed?tr('Could not reset local progress. Check browser storage and try again.','无法重置本地进度，请检查浏览器存储后重试。'):tr('This clears your saved traveller, coins, room, collections and local history on this browser. Close other game tabs first. Shared posts and your language setting stay.','这将清除本浏览器内的旅人、爪爪币、小窝、收藏和本地记录。请先关闭其他游戏标签页。公开留言和语言设置会保留。');
+ townResetDo.textContent=tr('Erase local progress','清除本地进度');
+ townResetCancel.textContent=tr('Keep my progress','保留我的进度');
  townSoundSettings.textContent=muted?tr('Sound off','声音已关闭'):tr('Sound on','声音已开启');
  townSoundSettings.setAttribute('aria-pressed',String(!muted));
  townMapLabels.textContent=quiet9?tr('Show map signs','显示地图路牌'):tr('Hide map signs','隐藏地图路牌');
  townMapLabels.hidden=!!room||scene!=='fortune';
  townHelp.textContent=tr('Walking help','行走指南');townHelp.hidden=!!room||!isRoute();
 }
-function closeTownSettings(){townSettingsOpen=false;syncTownSettings()}
-townSettingsToggle.onclick=()=>{townSettingsOpen=!townSettingsOpen;syncTownSettings()};
+function closeTownSettings(){townSettingsOpen=false;if(townSettingsPanel.parentNode!==townSettingsRoot)townSettingsRoot.append(townSettingsPanel);syncTownSettings()}
+townSettingsToggle.onclick=null;
 townSoundSettings.onclick=()=>{$('mute').click();syncTownSettings()};
-townMapLabels.onclick=()=>{$('quietToggle').click();closeTownSettings()};
-townHelp.onclick=()=>{closeTownSettings();walkHelp.click()};
-for(const [,btn] of languageButtons)btn.addEventListener('click',closeTownSettings);
-document.addEventListener('pointerdown',e=>{if(townSettingsOpen&&!townSettingsRoot.contains(e.target))closeTownSettings()},true);
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&townSettingsOpen){closeTownSettings();townSettingsToggle.focus()}});
+townMapLabels.onclick=()=>{$('quietToggle').click();syncTownSettings()};
+townHelp.onclick=()=>{closeTownSettings();$('page').style.display='none';walkHelp.click()};
+for(const [,btn] of languageButtons)btn.addEventListener('click',()=>{if(townSettingsOpen)pawOpenProfileSettings()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&townSettingsOpen){e.preventDefault();closeTownSettings();lifeProfile();$('content').querySelector('.pawProfileSettingsEntry')?.focus()}});
 const townSettingsHUDBefore=updateHUD;updateHUD=function(...args){
  const v=townSettingsHUDBefore(...args);compactTownProfile();
  if(!proposal.hidden||talkOpen||activity)townSettingsOpen=false;
@@ -4711,6 +4748,26 @@ function pawMainGaitAdvance(q,key,dir,distance,scale,ready){
 }
 /* PAW_MAIN_GAIT_END */
 const pawMainGaitState={key:'',dir:'',distance:0,cycles:0,ready:false};
+/* PAW_NPC_GAIT_ADMISSION_BEGIN */
+// Preserve the walking artwork family throughout one continuous directional
+// walk. A decoded sprite set may be admitted on the next start or turn, never
+// halfway through a stride. Per-actor state prevents visitors affecting one
+// another. A lost/invalid frame immediately revokes admission.
+function pawNpcGaitAdmission(state,actor,key,dir,distance,ready){
+ if(!actor||typeof actor!=='object')return false;
+ if(!key||!dir||!Number.isFinite(distance)||distance<0){state.delete(actor);return false}
+ let q=state.get(actor);
+ if(!q||q.key!==key||q.dir!==dir||distance<q.distance||distance-q.distance>65){
+  q={key,dir,distance,admitted:!!ready};state.set(actor,q)
+ }else{
+  q.distance=distance;
+  if(!ready)q.admitted=false
+ }
+ return q.admitted&&!!ready
+}
+function pawNpcGaitIdle(state,actor){if(actor&&typeof actor==='object')state.delete(actor)}
+/* PAW_NPC_GAIT_ADMISSION_END */
+const pawNpcGaitState=new WeakMap();
 function pawGaitPhase(distance,scale){return Math.max(0,Number.isFinite(distance)?distance:0)/Math.max(34,52*(Number.isFinite(scale)?scale:1))*Math.PI}
 function pawGaitStrength(speed,scale){
  const safe=Number.isFinite(speed)?Math.max(0,speed):0;
@@ -4741,6 +4798,10 @@ function pawPaintedGait(im,x,y,scale,facing,phase,strength=1){
 }
 backHuman=function(x,y,kind,walking,facing,scale=1){
  if(!walking||kind<0||kind>3){
+  if(!walking){
+   const idleActor=pawRenderedWalker||(!room&&!(kind===avatar&&Math.hypot(x-p.x,y-p.y)<4)?npc.find(n=>Math.hypot(x-n.x,y-n.y)<3):null);
+   pawNpcGaitIdle(pawNpcGaitState,idleActor)
+  }
   if(!walking&&kind===avatar&&!pawRenderedWalker&&(!room?Math.hypot(x-p.x,y-p.y)<4:Math.hypot(x-indoor.x,y-indoor.y)<4))pawMainGaitState.key='';
   if(activity&&kind===avatar&&!pawRenderedWalker&&!walking)pawTrackScriptedGait(pawScriptedGait,'',x,y,false);
   if(room&&!pawRenderedWalker&&kind===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<4){pawIndoorGait.key=scene+'|'+room;pawIndoorGait.x=x;pawIndoorGait.y=y}
@@ -4764,7 +4825,8 @@ backHuman=function(x,y,kind,walking,facing,scale=1){
   if(ready&&gait?.ready){const i=reduced?0:Math.min(frames.length-1,Math.floor(gait.cycle*frames.length));mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}
   return pawWalkRenderBefore(x,y,kind,false,facing,scale)
  }
- if(ready){const i=reduced?0:((Math.floor(phase/Math.PI*frames.length/2)%frames.length)+frames.length)%frames.length;mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}
+ const npcReady=actor?pawNpcGaitAdmission(pawNpcGaitState,actor,scene+'|'+(room||'outside')+'|'+kind,dir,distance,ready):ready;
+ if(npcReady){const i=reduced?0:((Math.floor(phase/Math.PI*frames.length/2)%frames.length)+frames.length)%frames.length;mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}
  const im=pics['walker'+kind+(dir==='up'?1:dir==='down'?0:2)];
  if(im?.naturalWidth&&im.naturalHeight&&!reduced&&(dir==='down'||dir==='right')){
   const strength=isPlayer&&Number.isFinite(p.motionSpeed)?pawGaitStrength(p.motionSpeed,scale):1;
@@ -6373,9 +6435,20 @@ function pawVisitorPauseTimers(roster,elapsed){
   if(Number.isFinite(a.exitRetry))a.exitRetry+=elapsed
  }
 }
+// Reuse the same traveller identity after a quiet absence. Never spawn
+// inside the room: the ordinary waiting phase checks and uses the doorway.
+function pawVisitorDepart(a,now){
+ a.phase='gone';a.walking=0;a.motionSpeed=0;a.route=[];a.elapsed=0;
+ a.wait=now+12+(a.avatar%4)*4;delete a.exitRetry
+}
+function pawVisitorReturn(a,now){
+ if(!a||a.phase!=='gone'||a.guest||a.visitingResident||!Number.isFinite(now)||!Number.isFinite(a.wait)||now<a.wait)return false;
+ a.phase='waiting';a.walking=0;a.motionSpeed=0;a.route=[];a.elapsed=0;return true
+}
 /* PAW_VISITOR_LIFECYCLE_END */
 function pawRoomWalkers(){
- const spec=pawRoomVisitorSpecs[room];if(!spec||activity)return [];
+ const spec=pawRoomVisitorSpecs[room];if(!spec)return [];
+ if(activity){if(pawVisitorContext===scene+'|'+room+'|'+avatar){pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,t-pawVisitorAt));pawVisitorHold(pawLocalVisitors)}pawVisitorAt=t;return []}
  const context=scene+'|'+room+'|'+avatar;
  if(!indoorReady()){if(context===pawVisitorContext)pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,t-pawVisitorAt));pawVisitorAt=t;return context===pawVisitorContext?pawVisitorHold(pawLocalVisitors):[]}
  const obs=indoorObstacles(),protectedFeet=pawGuestProtected(),door=indoorSpec().entry,stationFeet=pawGuestActiveFeet();
@@ -6407,13 +6480,13 @@ function pawRoomWalkers(){
  pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,elapsed-dt));
  if(residentReducedMotion.matches){for(const a of pawLocalVisitors)if(a.phase==='waiting')a.phase='stationary';return pawVisitorHold(pawLocalVisitors)}
  for(const a of pawLocalVisitors){
-  a.walking=0;if(a.guest||a.visitingResident||a.phase==='gone'||a.phase==='stationary'||t<a.wait){a.motionSpeed=0;continue;}
+  a.walking=0;pawVisitorReturn(a,t);if(a.guest||a.visitingResident||a.phase==='gone'||a.phase==='stationary'||t<a.wait){a.motionSpeed=0;continue;}
   const others=pawLocalVisitors.filter(b=>b!==a),clearDoor=()=>pawVisitorDoorClear(door,indoor,[...others,...pawAmbientIndoor],gaps.door);
   const routeTo=(from,to)=>pawVisitorDoorRoute(from,to,stationFeet,(x,y)=>indoorSafe(x,y,obs),(f,d)=>indoorPath(f,d,obs),gaps.station,(f,d)=>indoorSegment(f,d,obs));
   if(a.phase==='waiting'){
    if(!a.identitySettled||!clearDoor()){a.wait=t+.7;continue}
    const route=routeTo(door,a.destination);
-   if(!route){a.phase='gone';continue}
+   if(!route){pawVisitorDepart(a,t);continue}
    a.x=door[0];a.y=door[1];a.facing=pawWalkFacing(a,route[0]);a.route=route;a.phase='arriving';a.elapsed=0;
   }
   if(a.phase==='roaming'){
@@ -6450,7 +6523,7 @@ function pawRoomWalkers(){
   const distance=Math.hypot(next.x-a.x,next.y-a.y);
   if(distance>.01){a.facing=pawWalkFacing(a,dest);pawGaitTravel.set(a,(pawGaitTravel.get(a)||0)+distance);a.walking=1}
   a.x=next.x;a.y=next.y;
-  if(next.arrived){a.route.shift();if(!a.route.length){a.walking=0;a.motionSpeed=0;if(a.phase==='departing'){a.phase='gone';continue}if(a.phase==='arriving'){a.phase='roaming';a.elapsed=0}a.wait=t+(4+(a.avatar%3)*2)*tempo.dwell}}
+  if(next.arrived){a.route.shift();if(!a.route.length){a.walking=0;a.motionSpeed=0;if(a.phase==='departing'){pawVisitorDepart(a,t);continue}if(a.phase==='arriving'){a.phase='roaming';a.elapsed=0}a.wait=t+(4+(a.avatar%3)*2)*tempo.dwell}}
  }
  return pawLocalVisitors
 }
@@ -6932,8 +7005,11 @@ function pawTarotPick(pool,chosen,index,count){
  return [...chosen,index]
 }
 function pawTarotChoiceSlots(portrait){
- const cols=portrait?4:6,rows=12/cols,w=portrait?77:68,h=portrait?111:105,dx=portrait?91:80,dy=portrait?126:125;
- return Array.from({length:cols*rows},(_,i)=>({x:400+(i%cols-(cols-1)/2)*dx,y:portrait?388+Math.floor(i/cols)*dy:420+Math.floor(i/cols)*dy,w,h}))
+ const cols=portrait?4:6,w=portrait?85:88,h=portrait?110:118,dx=portrait?76:72,dy=portrait?122:132;
+ return Array.from({length:12},(_,i)=>{
+  const u=(i%cols-(cols-1)/2)/((cols-1)/2);
+  return {x:400+u*(cols-1)/2*dx,y:(portrait?383:408)+Math.floor(i/cols)*dy+20*u*u,w,h,angle:u*.16,hitW:dx-4}
+ })
 }
 function pawTarotFrameMatches(q,frame,portrait){
  return !!(q&&frame&&q.readStage==='choose'&&q.pawCardPool===frame.pool&&q.pawChoiceFrame===frame&&frame.portrait===portrait)
@@ -6943,37 +7019,121 @@ function pawTarotFrameMatches(q,frame,portrait){
 function pawTarotFanPose(slot,index,age,reduced=false){
  if(!slot||!Number.isInteger(index)||index<0||index>=12||![slot.x,slot.y,slot.w,slot.h,age].every(Number.isFinite))return null;
  const p=reduced?1:Math.max(0,Math.min(1,(age-index*.038)/.32)),e=p*p*(3-2*p);
- return {x:400+(slot.x-400)*e,y:475+(slot.y-475)*e-14*Math.sin(Math.PI*p),w:92+(slot.w-92)*e,h:136+(slot.h-136)*e,angle:(index%2===0?-1:1)*.12*Math.sin(Math.PI*p),landed:p>=1,visible:reduced||age>=index*.038}
+ return {x:400+(slot.x-400)*e,y:475+(slot.y-475)*e-14*Math.sin(Math.PI*p),w:92+(slot.w-92)*e,h:136+(slot.h-136)*e,angle:(slot.angle||0)*e+(index%2===0?-1:1)*.08*Math.sin(Math.PI*p),landed:p>=1,visible:reduced||age>=index*.038}
 }
 function pawTarotFanSettled(q,now,reduced=false){
  return !!q&&q.readStage==='choose'&&(!q.pawFanActive||reduced||Number.isFinite(now)&&Number.isFinite(q.readAt)&&now-q.readAt>=.738)
 }
+// Visual-only tabletop wash: spread, circulate on the cloth, gather.
+function pawTarotWashPose(index,progress,reduced=false){
+ if(!Number.isInteger(index)||index<0||index>=12||!Number.isFinite(progress))return null;
+ const p=reduced?1:Math.max(0,Math.min(1,progress)),spread=p===0||p===1?0:Math.sin(Math.PI*p)**.85;
+ const side=index<6?-1:1,phase=(index%6)*Math.PI/3+side*p*2*Math.PI,rad=38+(index%3)*15;
+ return {x:400+(index-5.5)*1.8+spread*(side*55+rad*Math.cos(phase)),y:475-index*1.2+spread*rad*.68*Math.sin(phase),w:92,h:136,angle:spread*(side*.38+.32*Math.sin(phase)),visible:true}
+}
+// Both reading routes use the same tabletop wash; do not expose a second deck gate.
+function pawTarotWashComplete(q,now,reduced=false,blocked=false){
+ return !!q&&q.readStage==='shuffle'&&!blocked&&Number.isFinite(now)&&Number.isFinite(q.readAt)&&(reduced||now-q.readAt>=1.45)
+}
+function pawTarotTrayPose(slot,rank,count,portrait,progress){
+ const p=Math.max(0,Math.min(1,progress)),e=p*p*(3-2*p),x=400+(rank-(count-1)/2)*(portrait?43:55),y=portrait?713:645;
+ return {x:slot.x+(x-slot.x)*e,y:slot.y+(y-slot.y)*e,w:slot.w+(43-slot.w)*e,h:slot.h+(61-slot.h)*e,angle:(slot.angle||0)*(1-e)}
+}
+// Match the actual reading geometry before enabling reveal targets.
+function pawTarotHandoffProgress(q,count,now,reduced=false){
+ if(q?.readStage!=='choose'||q.pawSelectedCards?.length!==count||!Number.isFinite(q.pawPickFinishAt)||!Number.isFinite(now))return null;
+ const age=now-q.pawPickFinishAt;
+ if(reduced||age>=.66-1e-9)return 1;
+ if(age<=.24+1e-9)return 0;
+ return Math.max(0,Math.min(1,(age-.24)/.42));
+}
+function pawTarotHandoffPose(from,to,progress){
+ const p=Math.max(0,Math.min(1,progress)),v=p*p*(3-2*p);
+ return {x:from.x+(to.x-from.x)*v,y:from.y+(to.y-from.y)*v,w:from.w+(to.w-from.w)*v,h:from.h+(to.h-from.h)*v,angle:(from.angle||0)*(1-v)+(to.angle||0)*v}
+}
+function pawTarotReadingSlot(rank,count,portrait){
+ if(count===5){const q=fiveReadingLayout(portrait)[rank];return {...q,angle:0}}
+ const q=readingActivitySlot(rank,count,count===3&&portrait);
+ return {x:q.x,y:q.y,w:92*q.scale,h:145*q.scale,angle:0}
+}
+function pawTarotRestingDeckPose(rank){
+ return {x:238+rank*.55,y:350-rank*.45,w:43,h:61,angle:0}
+}
+function pawTarotRemainingCount(q){
+ if(!Array.isArray(q?.pawCardPool)||q.pawCardPool.length!==12||!Array.isArray(q.pawSelectedCards)||!Array.isArray(q.readCards)||q.readCards.length!==q.pawSelectedCards.length||![1,3,5].includes(q.readCards.length))return 0;
+ if(new Set(q.pawSelectedCards).size!==q.pawSelectedCards.length||!q.pawSelectedCards.every((i,j)=>Number.isInteger(i)&&i>=0&&i<12&&q.pawCardPool[i]===q.readCards[j]))return 0;
+ return 12-q.readCards.length
+}
 /* PAW_TAROT_FAN_END */
 
-function pawOpenCardChoice(){
+/* PAW_DAILY_TAROT_BEGIN */
+// A real choice is locked per Singapore shrine day, independently of the
+// optional reading journal. Return the exact chosen card, not a new draw.
+const pawDailyTarotKey='pawDailyTarotDrawV1';
+function pawDailyTarotRecord(record,date,length){
+ if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)||record?.day!==date||!Number.isInteger(length)||length<=0||!Number.isInteger(record.i)||record.i<0||record.i>=length||typeof record.rev!=='boolean')return null;
+ return {day:date,i:record.i,rev:record.rev}
+}
+function pawDailyTarotExisting(record,journal,date,length){
+ const saved=pawDailyTarotRecord(record,date,length);if(saved)return saved;
+ if(!Array.isArray(journal))return null;
+ for(const entry of journal){
+  if(entry?.date!==date||!Array.isArray(entry.cards)||entry.cards.length!==1)continue;
+  const old=pawDailyTarotRecord({day:date,i:entry.cards[0]?.i,rev:entry.cards[0]?.rev},date,length);if(old)return old
+ }
+ return null
+}
+function pawDailyTarotReplay(q,record,now){
+ if(!q||!record||!Number.isFinite(now))return false;
+ q.pawDailyDay=record.day;q.pawCardPool=null;q.pawChoiceFrame=null;q.pawSelectedCards=[];q.pawPickedAt={};q.pawPickFinishAt=null;q.pawFanActive=false;
+ q.readCards=[{i:record.i,rev:record.rev}];q.readFlip=[-1];q.readStage='cards';q.readAt=now;q.readFocus=-1;q.readSaved=false;return true
+}
+function pawDailyTarotLookup(date){return pawDailyTarotExisting(load(pawDailyTarotKey,null),load('readingJournalV1',[]),date,tarotDeck.length)}
+function pawDailyTarotResume(q,record,now){
+ if(!pawDailyTarotReplay(q,record,now))return false;
+ save(pawDailyTarotKey,record);
+ hint('Your card for today is still here. Turn it over when you are ready.','今天的那张牌还在。准备好了，就把它翻开。');
+ return true
+}
+/* PAW_DAILY_TAROT_END */
+function pawOpenCardChoice(washFirst=false){
  if(!['tarot','love'].includes(activity))return false;
+ if(activity==='tarot'){
+  const date=state.pawDailyDay||shrineClock().day;
+  state.pawDailyDay=date;
+  const prior=pawDailyTarotLookup(date);
+  if(prior)return pawDailyTarotResume(state,prior,t)
+ }
  state.pawCardPool=pawTarotPool(tarotDeck.length);state.pawChoiceFrame=null;state.pawSelectedCards=[];state.readCards=[];state.readFlip=[];state.readSaved=false;
- state.readStage='choose';state.readAt=t;state.pawFanActive=true;state.readShuffle=Math.max(1,state.readShuffle||0);
+ state.readStage='choose';state.readAt=t+(washFirst&&!residentReducedMotion.matches?1.45:0);state.pawFanActive=true;state.pawPickedAt={};state.pawPickFinishAt=null;state.readShuffle=Math.max(1,state.readShuffle||0);
  const n=activity==='tarot'?1:state.readSpreadSize===5?5:3;
- hint(tr('Choose '+n+' '+(n===1?'card':'cards')+' that draw your attention.','凭直觉选 '+n+' 张牌。'),tr('Choose '+n+' cards.','凭直觉选 '+n+' 张牌。'));
+ hint('When the cards settle, choose '+n+' '+(n===1?'card':'cards')+' that draw your attention.','等牌铺好，再凭直觉选 '+n+' 张。');
  return true
 }
 function pawSelectTarotCard(index,frame=state.pawChoiceFrame){
  if(!['tarot','love'].includes(activity)||talkOpen||transitioning||document.hidden||!proposal.hidden||$('page').style.display==='block'||!pawTarotFrameMatches(state,frame,W<H)||!pawTarotFanSettled(state,t,residentReducedMotion.matches))return false;
  const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,chosen=pawTarotPick(state.pawCardPool,state.pawSelectedCards,index,count);
  if(!chosen)return false;
- state.pawSelectedCards=chosen;physicalFx('paper',.65);
- if(chosen.length===count){
-  state.readCards=chosen.map(i=>state.pawCardPool[i]);state.readFlip=Array(count).fill(-1);
-  state.readStage='cards';state.readAt=t;state.readSaved=false;
-  hint("Turn your chosen cards over. The universe has terrible handwriting, so we'll read them together.","翻开亲自选的牌吧。宇宙的字写得不太好，我们一起慢慢看。")
+ if(activity==='tarot'){
+  const date=state.pawDailyDay||shrineClock().day,prior=pawDailyTarotLookup(date);
+  // Another open tab may already have chosen today's card.
+  if(prior)return pawDailyTarotResume(state,prior,t);
+  const selected=state.pawCardPool[index],record=pawDailyTarotRecord({day:date,i:selected?.i,rev:selected?.rev},date,tarotDeck.length);
+  if(!record)return false;
+  state.pawDailyDay=date;save(pawDailyTarotKey,record)
  }
+ state.pawSelectedCards=chosen;state.pawPickedAt??={};state.pawPickedAt[index]=t;physicalFx('paper',.65);
+ if(chosen.length===count)state.pawPickFinishAt=t;
  return true
+}
+function pawTarotFinishSelection(q,count,now,reduced=false){
+ if(pawTarotHandoffProgress(q,count,now,reduced)!==1)return false;
+ q.readCards=q.pawSelectedCards.map(i=>q.pawCardPool[i]);q.readFlip=Array(count).fill(-1);q.readStage='cards';q.readAt=now;q.readSaved=false;q.pawPickFinishAt=null;return true
 }
 const pawSelectStartBefore=start;
 start=function(id,...args){
  const result=pawSelectStartBefore(id,...args);
- if(id==='tarot'&&activity==='tarot'){state.tarotTone='gentle';pawOpenCardChoice()}
+ if(id==='tarot'&&activity==='tarot'){state.tarotTone='gentle';state.pawDailyDay=shrineClock().day;pawOpenCardChoice(true)}
  return result
 };
 const pawSelectDealBefore=readingDeal;
@@ -6983,7 +7143,18 @@ readingDeal=function(){
 };
 const pawSelectDrawBefore=drawActivity;
 drawActivity=function(...args){
- if(!['tarot','love'].includes(activity)||state.readStage!=='choose')return pawSelectDrawBefore(...args);
+ if(!['tarot','love'].includes(activity))return pawSelectDrawBefore(...args);
+ if(state.readStage==='shuffle'){
+  const age=Math.max(0,t-state.readAt),reduced=residentReducedMotion.matches;
+  ctx.save();try{
+   paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);table();
+   for(let i=0;i<12;i++){const q=pawTarotWashPose(i,age/1.45,reduced);ctx.save();try{ctx.translate(q.x,q.y);ctx.rotate(q.angle);ctx.shadowColor='#1b152e55';ctx.shadowBlur=3;ctx.shadowOffsetY=2;card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}}
+   activityFitText(tr('Mixing the cards…','正在洗牌……'),400,600,20,340,'#fff0d2');
+  }finally{ctx.restore()}
+  if(pawTarotWashComplete(state,t,reduced,pawArcadeInputBlocked()))pawOpenCardChoice(false);
+  return
+ }
+ if(state.readStage!=='choose')return pawSelectDrawBefore(...args);
  const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,portrait=W<H,slots=pawTarotChoiceSlots(portrait),chosen=state.pawSelectedCards||[];
  // Keep the displayed pool identity stable across ordinary frames; invalidate
  // old hit callbacks if the deck is reshuffled or the viewport rotates.
@@ -6993,21 +7164,30 @@ drawActivity=function(...args){
   paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);
   table();
   // The deck fans out on the same mat; no card identity is assigned before selection.
-  const reduced=residentReducedMotion.matches,settled=pawTarotFanSettled(state,t,reduced),age=Math.max(0,t-state.readAt);
-  if(!settled){const remaining=slots.filter((q,i)=>!pawTarotFanPose(q,i,age,reduced).visible).length;for(let j=0;j<remaining;j++)card(354+j*.7,407-j*.65,92,136,false)}
-  for(const [i,q] of slots.entries()){
-   const pose=settled?{...q,angle:0,visible:true}:pawTarotFanPose(q,i,age,reduced);
-   if(!pose.visible)continue;
-   if(!settled){ctx.save();try{ctx.translate(pose.x,pose.y);ctx.rotate(pose.angle);card(-pose.w/2,-pose.h/2,pose.w,pose.h,false)}finally{ctx.restore()}continue}
-   const picked=chosen.includes(i);
-   ctx.save();ctx.globalAlpha=picked?.34:1;
-   if(picked){round(q.x-q.w/2,q.y-q.h/2,q.w,q.h,5,'#342a45','#bda16c');txt(String(chosen.indexOf(i)+1),q.x,q.y,27,'#eedcb2')}
-   else{ctx.shadowColor='#1b152e65';ctx.shadowBlur=4;ctx.shadowOffsetY=3;card(q.x-q.w/2,q.y-q.h/2,q.w,q.h,false)}
-   ctx.restore();
-   if(!picked)target(q.x-q.w/2-3,q.y-q.h/2-3,q.w+6,q.h+6,()=>pawSelectTarotCard(i,frame),'paw-pick-card-'+i)
+  const reduced=residentReducedMotion.matches,settled=pawTarotFanSettled(state,t,reduced),age=t-state.readAt;
+  if(age<0&&!reduced){
+   for(let i=0;i<12;i++){const q=pawTarotWashPose(i,(age+1.45)/1.45);ctx.save();try{ctx.translate(q.x,q.y);ctx.rotate(q.angle);card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}}
+   activityFitText(tr('Mixing the cards…','正在洗牌……'),400,W<H?307:341,22,430,'#f6e6c8');return
   }
-  activityFitText(settled?tr('Choose '+count+' '+(count===1?'card':'cards')+' · '+chosen.length+'/'+count,'选 '+count+' 张牌 · '+chosen.length+'/'+count):tr('Laying out the cards…','正在铺牌……'),400,W<H?307:341,22,430,'#f6e6c8');
-  if(settled&&!chosen.length)label(tr('Shuffle again','重新洗牌'),400,W<H?745:655,()=>{if(!pawTarotFrameMatches(state,frame,W<H)||pawArcadeInputBlocked())return;pawOpenCardChoice();physicalFx('paper',.6)})
+  if(!settled){const remaining=slots.filter((q,i)=>!pawTarotFanPose(q,i,age,reduced).visible).length;for(let j=0;j<remaining;j++)card(354+j*.7,407-j*.65,92,136,false)}
+  const handoff=settled?pawTarotHandoffProgress(state,count,t,reduced):null;
+  let remainderRank=0;
+  for(const [i,q] of slots.entries()){
+   const pose=settled?{...(handoff===null?q:pawTarotHandoffPose(q,pawTarotRestingDeckPose(remainderRank),handoff)),visible:true}:pawTarotFanPose(q,i,age,reduced);
+   if(!pose.visible||settled&&chosen.includes(i))continue;
+   remainderRank++;
+   ctx.save();try{ctx.translate(pose.x,pose.y);ctx.rotate(pose.angle);ctx.shadowColor='#1b152e65';ctx.shadowBlur=4;ctx.shadowOffsetY=3;card(-pose.w/2,-pose.h/2,pose.w,pose.h,false)}finally{ctx.restore()}
+   if(settled&&chosen.length<count)target(q.x-q.hitW/2,q.y-q.h/2,q.hitW,q.h,()=>pawSelectTarotCard(i,frame),'paw-pick-card-'+i)
+  }
+  // Physical selected cards slide to the traveller's edge.
+  if(settled)for(const [rank,i] of chosen.entries()){
+   const tray=pawTarotTrayPose(slots[i],rank,count,portrait,reduced?1:(t-(state.pawPickedAt?.[i]??t))/.24);
+   const q=handoff===null||handoff===0?tray:pawTarotHandoffPose(tray,pawTarotReadingSlot(rank,count,portrait),handoff);
+   ctx.save();try{ctx.translate(q.x,q.y);ctx.rotate(q.angle);ctx.shadowColor='#1b152e65';ctx.shadowBlur=3;ctx.shadowOffsetY=2;card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}
+  }
+  if(handoff===null)activityFitText(settled?tr('Choose '+count+' '+(count===1?'card':'cards')+' · '+chosen.length+'/'+count,'选 '+count+' 张牌 · '+chosen.length+'/'+count):tr('Laying out the cards…','正在铺牌……'),400,W<H?307:341,22,430,'#f6e6c8');
+  if(settled&&!pawArcadeInputBlocked()&&pawTarotFinishSelection(state,count,t,reduced))hint("Let's turn them over, one at a time.","我们一张一张翻开吧。");
+  if(settled&&!chosen.length)label(tr('Shuffle again','重新洗牌'),400,W<H?745:655,()=>{if(!pawTarotFrameMatches(state,frame,W<H)||pawArcadeInputBlocked())return;pawOpenCardChoice(true);physicalFx('paper',.6)})
  }finally{ctx.restore()}
 };
 const pawSelectCameraBefore=mobileRoomCamera;
@@ -7109,7 +7289,11 @@ drawRoom=function(...args){
  if(room&&!activity&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block'){
   const entries=roomGuideEntries(),missing=pawMissingStations(entries,pawVisibleStationLabels);
   roomGuideToggle.dataset.missing=String(missing.length);
-  roomGuideToggle.dataset.showDirectory='false';
+  // Retain native station plaques as the primary input. Expose the existing
+  // directory only when a plaque cannot be rendered, or while it is open.
+  const showDirectory=missing.length>0||roomGuide.classList.contains('pawGuideOpen');
+  const flag=String(showDirectory);
+  if(roomGuideToggle.dataset.showDirectory!==flag)roomGuideToggle.dataset.showDirectory=flag;
   const guideName=pawGuideName(entries.length,missing.length,zh);
   if(roomGuideToggle.textContent!==guideName)roomGuideToggle.textContent=guideName;
   roomGuideToggle.setAttribute('aria-label',guideName);
@@ -7125,6 +7309,7 @@ pawActivityDirectoryCss.textContent=`
 #game #roomStationGuide.pawGuideOpen{top:max(108px,calc(env(safe-area-inset-top,0px) + 108px));z-index:12!important}
 #game .mbPaintedRail>canvas.pawMovingGlass,#proposal .mbPaintedRail>canvas.pawMovingGlass{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;z-index:4!important;opacity:1!important;visibility:visible!important;pointer-events:none!important;transform:none!important}
 @media(prefers-reduced-motion:reduce){#game .mbPaintedRail>canvas.pawMovingGlass,#proposal .mbPaintedRail>canvas.pawMovingGlass{display:none!important}}
+#game #pawRoomGuideToggle[data-show-directory="true"]:not([hidden]){position:absolute!important;right:max(12px,env(safe-area-inset-right,0px));top:max(60px,calc(env(safe-area-inset-top,0px) + 60px));width:auto!important;height:auto!important;min-width:44px!important;min-height:44px!important;max-width:calc(100% - 24px)!important;clip-path:none!important;overflow:visible!important;white-space:normal!important;pointer-events:auto!important;padding:7px 12px!important;background:#594b39f0!important;color:#fff1d4!important;border:1px solid #c9ad7c!important;z-index:10!important}
 `;document.head.append(pawActivityDirectoryCss);
 
 // Multiple painted deer, using the already installed independent deer poses.
@@ -7431,7 +7616,10 @@ function pawGateGround(w,h,progress=0){
 }
 const pawGateCompositionCSS=document.createElement('style');
 pawGateCompositionCSS.textContent=`
-#proposal[data-paw-entrance-step="3"]>.hero{background:#293c32 url('assets/visual/painted/worlds/gateway/scene.webp') center bottom/cover no-repeat!important;container-type:size}
+/* The accessible img is the only painted gateway. Keep the calibrated
+   portrait framing on wide displays without repeating its architecture. */
+#proposal[data-paw-entrance-step="3"]>.hero{background:#293c32!important;container-type:size}
+@media(orientation:landscape){#proposal[data-paw-entrance-step="3"]>.hero{background:linear-gradient(110deg,#34483d,#293c32 50%,#34483d)!important}}
 #proposal[data-paw-entrance-step="3"] .mbGatePainting{object-fit:cover!important;object-position:center bottom!important;backdrop-filter:none!important;background:none!important;display:block!important;visibility:visible!important;z-index:1!important}
 @media(orientation:landscape){#proposal[data-paw-entrance-step="3"] .mbGatePainting{object-fit:contain!important;object-position:center!important}}
 #proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded{position:absolute!important;left:var(--paw-gate-x)!important;top:var(--paw-gate-y)!important;bottom:auto!important;width:auto!important;height:var(--paw-gate-height)!important;max-width:none!important;max-height:none!important;translate:var(--paw-gate-pivot-x,-50%) var(--paw-gate-pivot-y,-100%)!important;transform:none!important;transition:none!important;opacity:1!important;object-fit:contain!important;filter:none!important}
@@ -8641,7 +8829,7 @@ renderChartConsultation=function(out,z){
   const selected=section.querySelector('.chartTopics button[data-topic][aria-pressed="true"]');
   if(!selected)return;
   const topic=Number(selected.dataset.topic),data=pawZwdsTopicSnapshot(z,topic);
-  if(data)openMeowShare(data,()=>{destinyPage(false,topic)})
+  if(data)pawYueShareFromChart(data,topic,section)
  });
  btn.className='pawZwdsShareButton';
  element('small',tr('Only this palace’s main stars and reflection are included. Birth details and the full chart stay private.','仅分享此宫位主星与反思小记，不包含生辰、出生地或完整命盘。'),section,'pawZwdsShareNote');
@@ -9107,7 +9295,7 @@ renderChartConsultation=function(out,z){
  element('summary',tr('Optional: share all twelve palaces','可选：分享完整十二宫'),details);
  element('p',tr('The card contains your main-star placements. It omits name, birth date, time and location, but placements can still reveal clues about birth information. Only share if comfortable.','卡片包含你的主星分布，不含姓名、出生日期、时间及地点，但星曜分布仍可能透露部分生辰线索。请自行决定是否分享。'),details);
  b(details,tr('Preview twelve-palace card','预览十二宫纪念卡'),()=>{
-  if(yueSubject!=='self'||!details.isConnected)return;const data=pawChartShareSnapshot(z);if(data)openMeowShare(data,()=>destinyPage(false))
+  if(yueSubject!=='self'||!details.isConnected)return;const data=pawChartShareSnapshot(z);if(data)pawYueShareFromChart(data,null,section)
  });
  return result
 };
@@ -9244,6 +9432,12 @@ const pawRoomAlias={daily:'tarot',news:'tea',sticks:'temple',moon:'temple'};
 const pawRoomWarmJobs=new Map();
 function pawRoomImageReady(im){return !!(im?.complete&&im.naturalWidth>0&&im.naturalHeight>0)}
 function pawRoomKnownImage(id){return (pawRoomFallbackKeys[id]||[]).map(k=>pics[k]).find(pawRoomImageReady)||null}
+// Warm the existing activity art during the actual walk to the room,
+// not at the first animation frame. Never gate walking on optional art.
+function pawRoomActivityArtKeys(id,kayaKeys){
+ if(id!=='park')return [];
+ return ['parkCats','parkCareFilledBowl','parkCareFeather',...(Array.isArray(kayaKeys)?kayaKeys:[]),'parkKayaSleep']
+}
 function pawWarmRoomAssets(id){
  id=pawRoomAlias[id]||id;
  if(!Object.hasOwn(pawRoomFallbackKeys,id)||pawRoomWarmJobs.has(id))return;
@@ -9252,6 +9446,7 @@ function pawWarmRoomAssets(id){
  try{
   add(portraitInteriorImage(id));add(landscapeRoomImage(id));
   if(productionVisualManifest[id]){productionVisual(id);add(productionVisualCache.get(id))}
+  for(const key of pawRoomActivityArtKeys(id,pawKayaKeys)){if(productionVisualManifest[key]){productionVisual(key);add(productionVisualCache.get(key))}}
   if(id==='arcade'){add(pawArcadeArt);add(pawRecoveredImage(pawCloseupPaths.blindBox))}
   if(id==='temple')add(pawRecoveredImage(pawCloseupPaths.templePaper));
   if(id==='wishes')add(pawRecoveredImage('scenes/wishing_garden_portrait.webp'));
@@ -9485,6 +9680,9 @@ function pawTempleContactScale(camera,base=1.55){
  const c=Number.isFinite(camera)&&camera>0?camera:.65;
  return Math.max(base,Math.min(2.15,100/(94*c)))
 }
+// The painted action stations use authored world dimensions. Zoom changes
+// the whole scene, never just the person or the sleeve.
+function pawTemplePaintedActorScale(){return 1.92}
 function pawIncenseSupply(p,held,stage,age){
  const rack={x:p.x+p.w*.866,y:p.y+p.h*.543},count=Math.max(0,Math.min(3,Math.floor(held||0)));
  const taking=stage==='taking'&&count<3,removed=taking&&age>=.32;
@@ -9540,7 +9738,7 @@ function pawPrayerStep(){
   else if(['hold','bow','offer','complete'].includes(stage)){foot=front;dir='up'}
   else if(stage==='placing'){foot=blend(front,offering,ratio(1.85));dir='up'}
   else if(stage==='returnMat'){foot=pawIncenseReturnFoot(p,age);dir=age<.75?'down':'left'}
-  const sc=pawTempleContactScale(cam.scale,1.55),hand={x:foot.x+(dir==='left'?-15:dir==='up'?9:17)*sc,y:foot.y-48*sc+q.bow*9};
+  const sc=pawTemplePaintedActorScale(),hand={x:foot.x+(dir==='left'?-15:dir==='up'?9:17)*sc,y:foot.y-48*sc+q.bow*9};
   // The right-side incense supply is separate from the red fortune tube on the left.
   const reach=stage==='taking'?Math.sin(Math.PI*Math.min(1,age/.72)):stage==='lighting'?Math.sin(Math.PI*Math.min(1,age/1.65)):0;
   const reaching=stage==='taking',flame=supply.flame,pick=reaching?pawIncensePickup(hand,supply.pick,age):null;
@@ -9562,7 +9760,7 @@ function pawPrayerStep(){
    if(shown||pick){
     const shoulder={x:foot.x+(dir==='left'?-6:7)*sc,y:foot.y-48*sc+q.bow*9};
     ctx.save();try{
-     if(shown){pawIncenseArm(shoulder,grip,sc,true);for(let j=0;j<shown;j++)incenseStem(grip.x+(j-(shown-1)/2)*3.8,grip.y,lightAngle+(j-(shown-1)/2)*.065,lit,39,j===0)}
+     if(shown){if(pick)pawIncenseArm(shoulder,grip,sc,true);for(let j=0;j<shown;j++)incenseStem(grip.x+(j-(shown-1)/2)*3.8,grip.y,lightAngle+(j-(shown-1)/2)*.065,lit,39,j===0)}
      if(pick&&supply.removed)incenseStem(pick.x,pick.y,0,false,39);
      pawIncenseArm(shoulder,pick||grip,sc,false)
     }finally{ctx.restore()}
@@ -9730,7 +9928,7 @@ function pawFoodActionAllowed(rendered,current,stage,kind,blocked){
 function pawFoodClock(q,kind,now,blocked){
  if(!q||!Number.isFinite(now))return false;
  const phase=kind==='bubbleTea'?q.teaStage:kind==='cook'?(q.pawSoupServeAt!==undefined&&!q.pawSoupServed?'serve':q.tasteAt!==undefined&&!q.tasted?'taste':null):null;
- const field=['pouring','seasoning','sealing','sip'].includes(phase)?'teaAt':phase==='taste'?'tasteAt':phase==='serve'?'pawSoupServeAt':null;
+ const field=['pouring','seasoning','sealing','sip'].includes(phase)||phase==='pearls'&&q.pawScoopPending===true?'teaAt':phase==='taste'?'tasteAt':phase==='serve'?'pawSoupServeAt':null;
  if(!field||!Number.isFinite(q[field])){delete q.pawFoodClock;return false}
  const prior=q.pawFoodClock;
  if(prior&&prior.phase===phase&&prior.field===field&&Number.isFinite(prior.at)&&now>=prior.at&&(blocked||prior.blocked))q[field]+=now-prior.at;
@@ -10126,11 +10324,15 @@ function pawTarotClock(q,now,blocked){
  if(prior&&now>=prior.now&&(blocked||prior.blocked)){
   const gap=now-prior.now;
   if(prior.stage===q.readStage&&prior.start===q.readAt&&Number.isFinite(q.readAt))q.readAt+=gap;
+  if(q.readStage==='choose'&&prior.stage==='choose'){
+   if(Number.isFinite(q.pawPickFinishAt)&&prior.finish===q.pawPickFinishAt)q.pawPickFinishAt+=gap;
+   for(const [i,at] of Object.entries(q.pawPickedAt||{}))if(Number.isFinite(at)&&prior.picks?.[i]===at&&prior.now-at<.24)q.pawPickedAt[i]+=gap
+  }
   if(flips&&prior.flips===flips)for(let i=0;i<flips.length;i++){
    if(Number.isFinite(flips[i])&&flips[i]>=0&&flips[i]===prior.values[i]&&prior.now-flips[i]<.73)flips[i]+=gap
   }
  }
- q.pawReadClock={now,blocked:!!blocked,stage:q.readStage,start:q.readAt,flips,values:flips?flips.slice():[]};return true
+ q.pawReadClock={now,blocked:!!blocked,stage:q.readStage,start:q.readAt,finish:q.pawPickFinishAt,picks:{...q.pawPickedAt},flips,values:flips?flips.slice():[]};return true
 }
 function pawTarotActionAllowed(rendered,current,kind,expectedKind,stage,portrait,expectedPortrait,blocked){
  return !blocked&&pawTarotActive(current,kind)&&rendered===current&&kind===expectedKind&&current.readStage===stage&&portrait===expectedPortrait
@@ -10168,7 +10370,7 @@ target=function(x,y,w,h,fn,id){
  },id)
 };
 const pawTarotShuffleGuard=readingShuffle,pawTarotDealGuard=readingDeal,pawTarotRevealGuard=readingReveal,pawTarotShowGuard=readingShow,pawTarotSaveGuard=readingSave;
-readingShuffle=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked())return pawTarotShuffleGuard(...args)};
+readingShuffle=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked()){const was=state.readStage,result=pawTarotShuffleGuard(...args);if(was==='deck'&&state.readStage==='shuffle')hint('Let the cards mix on the cloth.','让牌在桌布上慢慢散开、混合。');return result}};
 readingDeal=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked())return pawTarotDealGuard(...args)};
 readingReveal=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked())return pawTarotRevealGuard(...args)};
 readingShow=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked())return pawTarotShowGuard(...args)};
@@ -10210,7 +10412,7 @@ drawActivity=function(...args){
  if(pawTarotActive(state,activity)&&state.readStage==='choose'&&pawTarotFanSettled(state,t,residentReducedMotion.matches)&&pawTarotKeyboard.has(state)){
   const index=pawTarotKeyboard.get(state),q=pawTarotChoiceSlots(W<H)[index];
   if(q&&!state.pawSelectedCards?.includes(index)){
-   ctx.save();try{ctx.strokeStyle='#fff3bf';ctx.lineWidth=3;ctx.strokeRect(q.x-q.w/2-5,q.y-q.h/2-5,q.w+10,q.h+10)}finally{ctx.restore()}
+   ctx.save();try{ctx.strokeStyle='#fff3bf';ctx.lineWidth=3;ctx.translate(q.x,q.y);ctx.rotate(q.angle||0);ctx.strokeRect(-q.w/2-4,-q.h/2-4,q.w+8,q.h+8)}finally{ctx.restore()}
   }
  }
  return result
@@ -10262,6 +10464,20 @@ function pawPaintedPlaquePlacement(x,y,w,h,view,screen,blockers=[]){
   return {x:(cx-ox)/s,y:(cy-oy)/s,hitW:tw/s,hitH:th/s,rect}
  }
  return null
+}
+// Match each compact station plaque to the room's painted materials.
+// The canvas keeps one surface; no additional banner, frame or shadow.
+function pawIndoorPlaquePalette(id){
+ if(id==='tarot'||id==='destiny'||id==='quiz'||id==='story'||id==='match')return ['#443b59','#b9a17b','#fff0d7'];
+ if(id==='boba')return ['#824955','#d5a67c','#fff2df'];
+ if(id==='kitchen'||id==='arcade')return ['#704638','#cba16d','#fff2db'];
+ if(id==='tea'||id==='fish'||id==='park'||id==='wishes')return ['#425b54','#b8b18a','#fff3dc'];
+ return ['#503b2c','#d7ba83','#fff1d7']
+}
+function pawDrawIndoorPlaque(id,place,w,h,font,value,scale){
+ const [fill,edge,ink]=pawIndoorPlaquePalette(id);
+ round(place.x-w/2,place.y-h/2,w,h,Math.min(3,2/Math.max(.08,scale)),fill,edge);
+ activityFitText(value,place.x,place.y,font,w-8,ink)
 }
 function pawHallActorScale(height,reference,ratio=1){
  return Number.isFinite(height)&&height>0&&Number.isFinite(reference)&&reference>0?height/reference*Math.max(.75,Math.min(1.1,ratio)):1
@@ -10329,8 +10545,7 @@ label=function(name,x,y,fn){
   const place=pawPaintedPlaquePlacement(anchorX,cy,w,h,{s:scale,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   // Original station body target and room directory remain available.
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,3,'#503b2ce8','#d7ba83');
-  activityFitText(value,place.x,place.y,font,w-8,'#fff1d7');
+  pawDrawIndoorPlaque(room,place,w,h,font,value,scale);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(id);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn);
  }finally{ctx.restore()}
@@ -11272,7 +11487,7 @@ const pawFortunePainting={
   tarot:{approach:[305,1135],plaque:[220,894],hit:[80,840,270,248]},
   destiny:{approach:[755,1135],plaque:[834,896],hit:[665,846,310,248]},
   temple:{approach:[375,702],plaque:[251,481],hit:[95,430,340,230]},
-  wishes:{approach:[630,727],plaque:[827,495],hit:[680,472,292,220]},
+  wishes:{approach:[630,727],plaque:[827,530],hit:[680,472,292,220]},
   station:{approach:[568,365],plaque:[568,282],hit:[430,245,304,126]}
  }
 };
@@ -11345,8 +11560,8 @@ const pawNewDistricts={
    [1280,503,82],[1360,501,90],[1440,502,91],[1530,499,94],
    [1640,500,92],[1685,500,87]],
   doors:{
-   quiz:{approach:[725,461],plaque:[740,347],hit:[636,266,327,197]},
-   story:{approach:[395,965],plaque:[232,760],hit:[55,701,336,237]},
+   quiz:{approach:[725,461],plaque:[740,400],hit:[636,266,327,197]},
+   story:{approach:[395,965],plaque:[232,725],hit:[55,701,336,237]},
    match:{approach:[510,1040],plaque:[812,945],hit:[642,858,329,242]},
    station:{approach:[707,461],plaque:[550,415],hit:[480,378,140,80]}
   }
@@ -11360,8 +11575,8 @@ const pawNewDistricts={
    [1250,350,65],[1320,366,69],[1390,440,106],[1450,498,99],
    [1515,499,100],[1580,504,94],[1640,504,89],[1685,504,83]],
   doors:{
-   mystery:{approach:[478,600],plaque:[255,350],hit:[100,345,325,190]},
-   arcade:{approach:[629,565],plaque:[829,338],hit:[657,329,315,231]},
+   mystery:{approach:[478,600],plaque:[255,405],hit:[100,345,325,190]},
+   arcade:{approach:[629,565],plaque:[829,390],hit:[657,329,315,231]},
    kitchen:{approach:[439,1060],plaque:[255,835],hit:[85,799,397,249]},
    boba:{approach:[588,1390],plaque:[779,1090],hit:[585,1080,385,300]},
    station:{approach:[551,373],plaque:[551,329],hit:[496,300,115,85]}
@@ -11375,8 +11590,8 @@ const pawNewDistricts={
    [1180,727,47],[1260,728,46],[1330,694,46],[1400,660,46],[1480,601,45],
    [1550,540,44],[1645,465,50],[1685,435,41]],
   doors:{
-   fish:{approach:[475,920],plaque:[202,925],hit:[65,865,342,240]},
-   tea:{approach:[414,810],plaque:[798,676],hit:[597,660,376,225]},
+   fish:{approach:[475,920],plaque:[202,895],hit:[65,865,342,240]},
+   tea:{approach:[414,810],plaque:[798,665],hit:[597,660,376,225]},
    park:{approach:[626,460],plaque:[815,355],hit:[660,298,300,165]},
    station:{approach:[515,400],plaque:[500,350],hit:[430,310,150,90]}
   }
@@ -11731,6 +11946,26 @@ function pawWaterGeometry(p=pawWaterPlate){
  return {foot:point(.46,.645),basin:point(.345,.51),palm:point(.426,.565),
   rest:point(.44,.55),scoop:point(.345+.038,.51),pour:point(.426+.038,.545),rack:point(.475,.535)}
 }
+// Match the effective ladle material's source coordinates and mirrored
+// canvas transform. The grip and water outlet travel with the actual prop.
+function pawWaterLadlePoint(at,angle,x,y){
+ const c=Math.cos(angle),sn=Math.sin(angle);
+ return {x:at.x-.65*(x*c-y*sn),y:at.y+.65*(x*sn+y*c)}
+}
+function pawWaterShoulder(g,sc){return {x:g.foot.x-8*sc,y:g.foot.y-52*sc}}
+function pawWaterReach(at,g,sc){
+ if(!Number.isFinite(at?.x)||!Number.isFinite(at?.y))return at;
+ const shoulder=pawWaterShoulder(g,sc),grip=pawWaterLadlePoint(at,0,-25,1);
+ const dx=grip.x-shoulder.x,dy=grip.y-shoulder.y,dist=Math.hypot(dx,dy),limit=42*sc;
+ if(dist<=limit)return at;
+ const f=limit/dist;
+ return {x:at.x+dx*(f-1),y:at.y+dy*(f-1)}
+}
+function pawWaterDragCentre(at,g,sc){
+ if(!Number.isFinite(at?.x)||!Number.isFinite(at?.y))return at;
+ const p=pawWaterPlate;
+ return pawWaterReach({x:Math.max(p.x+p.w*.29,Math.min(p.x+p.w*.54,at.x)),y:Math.max(p.y+p.h*.49,Math.min(p.y+p.h*.60,at.y))},g,sc)
+}
 function pawWaterDestination(stage,g){
  return stage===0?g.scoop:stage===1?g.pour:null
 }
@@ -11778,7 +12013,7 @@ mobileRoomCamera=function(...args){return pawWaterPaintingActive()?pawWaterCamer
 const pawWaterReleaseBefore=templeReleaseWater;
 templeReleaseWater=function(a,gesture,...args){
  if(!pawWaterPaintingActive())return pawWaterReleaseBefore(a,gesture,...args);
- const run=state,stage=run.waterStage,g=pawWaterGeometry();a=pawWaterGripPoint(a,gesture);
+ const run=state,stage=run.waterStage,g=pawWaterGeometry();a=pawWaterGripPoint(a,gesture);if(gesture?.id==='templeLadle')a=pawWaterDragCentre(a,g,pawTemplePaintedActorScale());
  if(pawArcadeInputBlocked()||![0,1].includes(stage))return;
  if(!pawWaterDropMatches(stage,a?.x,a?.y,g)){hint(stage===0?'Dip the ladle in the marked water.':'Move the filled ladle above your hand.',stage===0?'把竹勺放入亮起的水面。':'把盛满水的竹勺移到手掌上方。');return}
  // Retain the original action, audio, award and ownership contract.
@@ -11801,20 +12036,21 @@ function pawDrawWaterPainting(){
  ctx.fillStyle='#473e36';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawWaterArt(),p.x,p.y,p.w,p.h);
  const ready=stage===0?g.rest:stage===1?g.scoop:g.pour;
  let at=ready,angle=0;
- if(held){const grip=pawWaterGripPoint(drag,drag);at={x:Math.max(p.x+p.w*.29,Math.min(p.x+p.w*.54,grip.x)),y:Math.max(p.y+p.h*.49,Math.min(p.y+p.h*.60,grip.y))}}
+ if(held){at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,pawTemplePaintedActorScale())}
  else if(stage===1)at=pawWaterMix(run.pawWaterFrom||g.scoop,g.rest,poseEase(Math.min(1,age/.35)));
  else if(stage===2){at=pawWaterMix(run.pawWaterFrom||g.pour,g.pour,poseEase(Math.min(1,age/.35)));angle=.58*poseEase(Math.min(1,age/.4))*(1-poseEase(Math.max(0,Math.min(1,(age-1.5)/.5))))}
  else if(stage===3)at=pawWaterMix(g.pour,g.rack,poseEase(Math.min(1,age/.55)));
- const sc=pawTempleContactScale(cam.scale,1.72),shoulder={x:g.foot.x-8*sc,y:g.foot.y-52*sc},grip={x:at.x+16,y:at.y};
- // Reuse the chosen traveller, standing in front of the real basin.
+ const sc=pawTemplePaintedActorScale(),shoulder=pawWaterShoulder(g,sc),grip=pawWaterLadlePoint(at,angle,-25,1);
+ // Far arm is occluded by the traveller, not drawn across the torso.
+ if(stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.80,true);
  backHuman(g.foot.x,g.foot.y,avatar??0,false,'left',sc);
- if(stage===1||stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.80,true);
  if(stage!==3||age<.55){
-  ctx.save();ctx.translate(at.x,at.y);ctx.scale(-.65,.65);waterLadleArt(0,0,-angle,stage===1||stage===2&&age<1.55);ctx.restore();
-  pawIncenseArm(shoulder,grip,sc*.82,false)
+  ctx.save();ctx.translate(at.x,at.y);ctx.scale(-.65,.65);waterLadleArt(0,0,angle,stage===1||stage===2&&age<1.55);ctx.restore();
+  // At rest before pickup, no detached reaching sleeve.
+  if(held||stage!==0)pawIncenseArm(shoulder,grip,sc*.82,false)
  }
  if(stage===2&&age>.15&&age<1.8){
-  const bowl={x:at.x-23*Math.cos(angle),y:at.y+23*Math.sin(angle)};
+  const bowl=pawWaterLadlePoint(at,angle,35,6);
   for(let j=0;j<10;j++){const f=(age*2.8+j/10)%1;ellipse(bowl.x+(g.palm.x-bowl.x)*f+Math.sin(j)*1.5,bowl.y+(g.palm.y-bowl.y)*f,1.2,2.9,'#e0eee4')}
   for(let j=0;j<4;j++){const f=(age*2+j*.25)%1;ellipse(g.palm.x+Math.sin(j*2)*6,g.palm.y+3+f*20,1.1,2.1,'#d7ece4')}
  }
@@ -11847,11 +12083,26 @@ function pawAlcoveGeometry(p=pawWaterPlate){
   moonTray:pt(.743,.508),moonFoot:pt(.707,.64),moonHand:pt(.70,.54)}
 }
 function pawAlcoveActorScale(){return 1.92}
+function pawAlcoveReach(foot,side=1){
+ const scale=pawAlcoveActorScale();
+ return {shoulder:{x:foot.x+side*5*scale,y:foot.y-63*scale},grip:{x:foot.x+side*8*scale,y:foot.y-48*scale},sleeve:.72*scale,maxReach:48*scale}
+}
 function pawAlcoveStickPoint(g,pose){
- const f=Math.max(0,Math.min(1,pose.fall)),pick=pose.picked?Math.max(0,Math.min(1,(pose.pick-.45)/.55)):0;
+ const f=Math.max(0,Math.min(1,pose.fall)),u=pose.picked?Math.max(0,Math.min(1,(pose.pick-.45)/.55)):0,pick=u*u*(3-2*u);
  const x=g.tubeTop.x+(g.stickTray.x-g.tubeTop.x)*f;
  const y=g.tubeTop.y+(g.stickTray.y-g.tubeTop.y)*f-Math.sin(Math.PI*f)*25;
- return {x:x+(g.stickPickFoot.x+14-x)*pick,y:y+(g.stickPickFoot.y-64-y)*pick,angle:Math.PI*.46*f*(1-pick)}
+ const grip=pawAlcoveReach(g.stickPickFoot).grip;
+ return {x:x+(grip.x-x)*pick,y:y+(grip.y-y)*pick,angle:Math.PI*.46*f*(1-pick)}
+}
+// Keep approach, retrieval and carried stick on one shared physical contact point.
+function pawAlcoveStickContact(g,pose,held=false){
+ const ease=u=>{u=Math.max(0,Math.min(1,u));return u*u*(3-2*u)};
+ const move=pose.picked?ease(pose.pick/.45):0;
+ const foot={x:g.stickFoot.x+(g.stickPickFoot.x-g.stickFoot.x)*move,y:g.stickFoot.y+(g.stickPickFoot.y-g.stickFoot.y)*move};
+ const reach=pawAlcoveReach(foot),walking=move>0&&move<1;
+ const hand=pose.picked?(pose.pick>=.45?pawAlcoveStickPoint(g,pose):null):(held||pose.shake?g.tubeGrip:null);
+ const contact=hand&&Math.hypot(hand.x-reach.shoulder.x,hand.y-reach.shoulder.y)<=reach.maxReach?hand:null;
+ return {foot,walking,hand:contact,reach,scale:pawAlcoveActorScale()};
 }
 function pawAlcoveMoonPoint(g,m){
  return {x:g.moonTray.x+(m.x-400)*.26,y:g.moonTray.y-m.lift*.32}
@@ -11882,14 +12133,10 @@ function pawAlcoveTubeShake(shake){
 function pawDrawAlcoveSticks(){
  const run=state,g=pawAlcoveGeometry(),pose=pawTempleStickPose(run,t),held=drag?.id==='sticks';
  pawAlcoveTubeShake(held||pose.shake);
- const move=pose.picked?poseEase(Math.min(1,pose.pick/.45)):0,foot=pawWaterMix(g.stickFoot,g.stickPickFoot,move);
- const sc=pawAlcoveActorScale();
- // The whole actor is proportioned to the counter. Only expose the reaching hand during contact.
- if((held||pose.shake||pose.picked&&pose.pick<.85)&&(!pose.picked||pose.pick<.85)){
-  const shoulder={x:foot.x+8,y:foot.y-63*sc},hand=!pose.picked?g.tubeGrip:pawWaterMix(g.stickTray,{x:foot.x+14,y:foot.y-64},poseEase(Math.max(0,(pose.pick-.45)/.55)));
-  if(Math.hypot(hand.x-shoulder.x,hand.y-shoulder.y)<=38) pawIncenseArm(shoulder,hand,1.12,false)
- }
- backHuman(foot.x,foot.y,avatar??0,move>0&&move<1,'up',sc);
+ const contact=pawAlcoveStickContact(g,pose,held),{foot,walking,hand,reach,scale}=contact;
+ // Keep the arm behind the painted body; do not reach while still walking.
+ if(hand)pawIncenseArm(reach.shoulder,hand,reach.sleeve,false);
+ backHuman(foot.x,foot.y,avatar??0,walking,'up',scale);
  if(pose.show){
   const pt=pawAlcoveStickPoint(g,pose);ctx.save();try{ctx.translate(pt.x,pt.y);ctx.rotate(pt.angle);
    round(-2.8,-17,5.6,34,1,'#d7b47c','#9c7447');line(-1,-15,-1,15,'#f1dba6',.7);
@@ -11901,8 +12148,8 @@ function pawDrawAlcoveSticks(){
 }
 function pawDrawAlcoveMoon(){
  const run=state,g=pawAlcoveGeometry(),airborne=run.tossUntil>t,f=airborne?Math.max(0,Math.min(1,1-(run.tossUntil-t)/(run.moonDuration||.55))):1;
- const sc=pawAlcoveActorScale(),shoulder={x:g.moonFoot.x-8,y:g.moonFoot.y-63*sc};
- if(airborne&&Math.hypot(g.moonHand.x-shoulder.x,g.moonHand.y-shoulder.y)<=38)pawIncenseArm(shoulder,g.moonHand,1.12,false);
+ const sc=pawAlcoveActorScale(),{shoulder,sleeve,maxReach}=pawAlcoveReach(g.moonFoot,-1);
+ if(airborne&&Math.hypot(g.moonHand.x-shoulder.x,g.moonHand.y-shoulder.y)<=maxReach)pawIncenseArm(shoulder,g.moonHand,sleeve,false);
  backHuman(g.moonFoot.x,g.moonFoot.y,avatar??0,false,'up',sc);
  for(let i=0;i<2;i++){
   const flat=pawMoonFlat(run.result,i,run.count),m=pawMoonMotion(f,i,flat,run.moonHeight||95),pt=pawAlcoveMoonPoint(g,m);
@@ -12245,9 +12492,67 @@ function pawRearGardenRoute(from,action){
  return route.length?route:[pawRearGardenNodes[action].slice()]
 }
 // A seated body contacts the painted cushion at the hip, not the path.
+/* PAW_REAR_SEATED_ART_BEGIN */
+// Individually extracted original travellers; the sheet's row order is
+// 1,0,2,3. The hip is the visible cushion-contact landmark, not image centre.
+const pawRearSeatedRecords=[
+ {w:206,h:280,hip:[71,214]},
+ {w:215,h:283,hip:[82,225]},
+ {w:222,h:280,hip:[82,223]},
+ {w:239,h:279,hip:[88,225]}
+];
+function pawRearSeatedBox(id,hip,scale){
+ const r=pawRearSeatedRecords[id];
+ if(!r||![hip?.x,hip?.y,scale].every(Number.isFinite)||scale<=0)return null;
+ const h=78*scale,w=h*r.w/r.h,k=h/r.h;
+ // Mirror the original right-facing seated pose towards the pond.
+ return {x:hip.x-(r.w-r.hip[0])*k,y:hip.y-r.hip[1]*k,w,h,hipX:r.hip[0]*k,hipY:r.hip[1]*k}
+}
+/* PAW_REAR_SEATED_ART_END */
+const pawRearSeatedImages=new Map();
+function pawRearSeatedImage(id){
+ if(!pawRearSeatedRecords[id])return null;
+ if(!pawRearSeatedImages.has(id)){
+  const im=new Image();im.decoding='async';im.src='assets/visual/staging/2026-11-27-extracted/players/'+id+'/seated.webp';pawRearSeatedImages.set(id,im)
+ }
+ return pawRearSeatedImages.get(id)
+}
+function pawDrawRearSeated(im,id,hip,scale){
+ const r=pawRearSeatedRecords[id],box=pawRearSeatedBox(id,hip,scale);
+ if(!r||!box||!im?.complete||im.naturalWidth!==r.w||im.naturalHeight!==r.h)return false;
+ ctx.save();try{
+  ctx.translate(hip.x,hip.y);ctx.scale(-1,1);
+  ctx.drawImage(im,-box.hipX,-box.hipY,box.w,box.h)
+ }finally{ctx.restore()}return true
+}
 function pawRearBenchPose(p,scale){
  const hip={x:p.x+p.w*.78,y:p.y+p.h*.407};
  return {hip,x:hip.x-9*scale,y:hip.y+32*scale,scale}
+}
+// The bench hip and adjacent paving establish a world-space body size.
+// Keep that size when the viewport or camera changes; the camera alone zooms.
+function pawRearGardenActorScale(p,seat=pawRearGardenNodes.seat){
+ const rise=p.h*(seat[1]-.407);
+ return Number.isFinite(rise)&&rise>0?Math.max(1.35,Math.min(2.25,rise/32)):1.72
+}
+function pawRearGardenSeatAmount(run,now,reduced,atBench){
+ if(!atBench||!Number.isFinite(now)||!Number.isFinite(run?.gardenSeatAt))return 0;
+ if(reduced)return run.gardenSitting?1:0;
+ const f=Math.max(0,Math.min(1,(now-run.gardenSeatAt)/.45)),e=f*f*(3-2*f);
+ return run.gardenSitting?e:1-e
+}
+/* PAW_REAR_BENCH_QUEUE_BEGIN */
+// Record the latest intent, including a plain stand request. The original
+// 750ms seat cooldown must never discard an activity chosen just after sitting.
+function pawRearBenchNext(run,q,now,reduced,atBench,blocked){
+ if(blocked||!atBench||!q?.pawAfterStand||!Number.isFinite(now)||!Number.isFinite(run?.gardenSeatAt))return null;
+ if(run.gardenSitting)return now-run.gardenSeatAt>=.75?'stand':null;
+ if(pawRearGardenSeatAmount(run,now,reduced,atBench)>0)return null;
+ return q.pawAfterStand==='seat'?'clear':'route'
+}
+/* PAW_REAR_BENCH_QUEUE_END */
+function pawRearGardenAtBench(q,seat=pawRearGardenNodes.seat){
+ return !!q&&!q.route?.length&&Array.isArray(q.pos)&&q.pos.length===2&&Math.hypot(q.pos[0]-seat[0],q.pos[1]-seat[1])<.002
 }
 const pawRearCatFigurines=[[.578,.240],[.653,.229],[.717,.240],[.596,.278],[.645,.278],[.697,.278]];
 const pawRearCatBlessings=[['May your lunch break actually be a break.','愿你的午休，真的能休息。'],['May good things find you without a meeting invite.','愿好事找上门，不必先开会。'],['May you master the ancient art of saying: tomorrow.','愿你练成一门绝学：明天再说。'],['A little luck for whatever you are carrying today.','愿你今天的心事，轻一点。'],['May your tea stay warm and your work chat stay on mute.','愿杯中茶常暖，工作群常静音。'],['May the lift arrive just as you press the button.','愿你每次按电梯，门马上就开。']];
@@ -12289,6 +12594,7 @@ start=function(id,...args){
  const result=pawRearGardenStartBefore(id,...args);
  if(id==='secretGarden'&&activity===id&&room==='temple'){
   state.pawRearGarden=pawRoomImageReady(pawRearGardenArt());
+  if(state.pawRearGarden)pawRearSeatedImage(avatar??0);
   if(state.pawRearGarden){
    state.pawGardenWalk={painted:true,pos:pawRearGardenNodes.entry.slice(),route:[pawRearGardenNodes.bend.slice(),pawRearGardenNodes.fork.slice()],action:null,last:t,dir:'up'};
    hint('Follow the stone path to the pond or lucky cats.','沿石径去看看锦鲤和招财猫。')
@@ -12309,8 +12615,14 @@ pawGardenChoose=function(run,kind){
  if(!run?.pawRearGarden)return pawRearGardenChooseBefore(run,kind);
  if(run!==state||!pawRearGardenActive()||pawArcadeInputBlocked())return;
  const q=run.pawGardenWalk;if(!q||q.route.length)return;
- if(kind==='seat'&&run.gardenSitting){gardenSeat();return}
- if(run.gardenSitting){gardenSeat();if(run.gardenSitting)return}
+ if(!Object.hasOwn(pawRearGardenTargets,kind))return;
+ if(run.gardenSitting||pawRearGardenSeatAmount(run,t,residentReducedMotion.matches,pawRearGardenAtBench(q))>0){
+  q.pawAfterStand=kind;
+  // Immediate when eligible, otherwise retain intent until cooldown ends.
+  if(pawRearBenchNext(run,q,t,residentReducedMotion.matches,pawRearGardenAtBench(q),false)==='stand')gardenSeat();
+  return
+ }
+ delete q.pawAfterStand;
  if(pawGardenRoute(q,kind))hint(...({feed:['Walking to the pond…','走向锦鲤池……'],seat:['Walking to the bench…','走向长椅……'],chime:['Walking to the chime…','走向风铃……'],cats:['Walking to the lucky cats…','走向招财猫……']}[kind]))
 };
 // Deform a small region of the existing painted object, preserving the
@@ -12332,8 +12644,14 @@ const pawRearGardenDrawBefore=drawActivity;
 drawActivity=function(...args){
  if(!pawRearGardenActive())return pawRearGardenDrawBefore(...args);
  const run=state,q=run.pawGardenWalk,p=pawRearGardenPlate,b=livingBounds(),xy=(u,v)=>[p.x+p.w*u,p.y+p.h*v];
+ const benchNext=pawRearBenchNext(run,q,t,residentReducedMotion.matches,pawRearGardenAtBench(q),pawArcadeInputBlocked());
+ if(benchNext==='stand')gardenSeat();
+ else if(benchNext==='clear')delete q.pawAfterStand;
+ else if(benchNext==='route'){
+  const next=q.pawAfterStand;delete q.pawAfterStand;pawGardenChoose(run,next)
+ }
  const prior=q.pos.slice(),arrive=pawGardenWalkTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
- if(arrive==='feed')gardenFeed();else if(arrive==='seat')gardenSeat();else if(arrive==='chime')gardenChime();
+ if(arrive==='feed')gardenFeed();else if(arrive==='seat'){gardenSeat();q.dir='left'}else if(arrive==='chime')gardenChime();
  else if(arrive==='cats'){run.pawCatAt=t;const i=Number.isInteger(run.pawCatPending)?run.pawCatPending:(Number.isInteger(run.pawCatChoice)?(run.pawCatChoice+1)%6:1);delete run.pawCatPending;sound(520);hint(...pawRearCatChoice(run,i))}
  const dx=(q.pos[0]-prior[0])*p.w,dy=(q.pos[1]-prior[1])*p.h,moving=q.route.length>0;
  if(Math.hypot(dx,dy)>.01)q.dir=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';
@@ -12365,11 +12683,16 @@ drawActivity=function(...args){
     if(f>0&&f<1){const [rx,ry]=xy(.31+j*.018,.453+(j%2)*.014);ctx.strokeStyle='rgba(242,239,207,'+(.6*(1-f))+')';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(rx,ry,2+f*17,1+f*5,0,0,TAU);ctx.stroke()}
    }
   }
-  const [x,y]=xy(...q.pos),scale=pawTempleContactScale(cam.scale,1.48+Math.max(0,q.pos[1]-.54)*.55);
-  const seated=run.gardenSitting&&!moving,seatAge=Math.max(0,t-run.gardenSeatAt),seatAmount=seated?(residentReducedMotion.matches?1:poseEase(Math.min(1,seatAge/.45))):0;
-  if(seated){const a=pawRearBenchPose(p,scale),sx=x+(a.x-x)*seatAmount,sy=y+(a.y-y)*seatAmount;
-   ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}
-  }else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale);
+  const [x,y]=xy(...q.pos),scale=pawRearGardenActorScale(p);
+  const seatAmount=pawRearGardenSeatAmount(run,t,residentReducedMotion.matches,pawRearGardenAtBench(q));
+  if(seatAmount>0){const a=pawRearBenchPose(p,scale),sx=x+(a.x-x)*seatAmount,sy=y+(a.y-y)*seatAmount;
+   const id=avatar??0,im=pawRearSeatedImage(id);
+   // Choose one completed pose when sitting starts; do not replace it
+   // mid-visit if the image finishes decoding late.
+   if(seatAmount>=.98&&run.gardenSitting&&run.pawRearSeatArt===undefined){const r=pawRearSeatedRecords[id];run.pawRearSeatArt=!!(r&&im?.complete&&im.naturalWidth===r.w&&im.naturalHeight===r.h)}
+   const painted=seatAmount>=.98&&run.pawRearSeatArt&&pawDrawRearSeated(im,id,a.hip,scale);
+   if(!painted){ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}}
+  }else{delete run.pawRearSeatArt;backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale)}
   const chimeAge=t-run.gardenChimeAt,catAge=t-run.pawCatAt,reduced=residentReducedMotion.matches;
   // Only the hanging paper tail moves. The beam, chain, bell and ceramic figures stay rigid.
   const breeze=reduced?0:Math.sin(t*1.45)*.42+Math.sin(t*.83)*.18;
@@ -12393,8 +12716,8 @@ drawActivity=function(...args){
 // The path is the clear aisle between painted furniture, not the countertop.
 const pawFoodPlate={x:100,y:-145,w:600,h:600*1648/928};
 const pawFoodRoomSpecs={
- kitchen:{station:'cook',entry:[400,735],arrival:[400,690],anchor:[290,420,350,580],resident:[465,605],visitors:[[365,715],[435,730],[400,660]],label:['Cook with Grandma','跟外婆煮汤'],labelY:467},
- boba:{station:'bubbleTea',entry:[400,735],arrival:[400,675],anchor:[400,345,400,565],resident:[290,615],visitors:[[470,705],[340,720],[435,640]],label:['Make bubble tea','手摇奶茶'],labelY:397}
+ kitchen:{station:'cook',entry:[400,735],arrival:[400,690],anchor:[290,420,350,580],resident:[465,605],visitors:[[365,715],[435,730],[400,660]],label:['Cook with Grandma','跟外婆煮汤'],labelX:230,labelY:300},
+ boba:{station:'bubbleTea',entry:[400,735],arrival:[400,675],anchor:[400,345,400,565],resident:[290,615],visitors:[[470,705],[340,720],[435,640]],label:['Make bubble tea','手摇奶茶'],labelX:400,labelY:374}
 };
 function pawFoodSafe(id,x,y){
  if(!Object.hasOwn(pawFoodRoomSpecs,id)||![x,y].every(Number.isFinite)||y<565||y>738)return false;
@@ -12462,13 +12785,19 @@ indoorSafe=function(x,y,...args){return pawFoodRoomActive()?pawFoodSafe(room,x,y
 // Normalized positions traced on the five original 928x1648 portrait
 // paintings. Never use these positions on a replacement landscape plate.
 const pawSceneLights={
+ // Coordinates traced on the actual 928x1648 room paintings. Keep the
+ // glow inside existing fixtures; do not animate architecture or add lamps.
+ tea:[[.287,.149,.046,.036],[.807,.130,.053,.041],[.421,.221,.027,.023],[.810,.278,.022,.027],[.287,.433,.018,.016]],
+ arcade:[[.311,.099,.045,.031],[.410,.123,.039,.028],[.643,.138,.025,.019],[.887,.124,.041,.031],[.051,.212,.034,.025],[.337,.273,.018,.021],[.695,.273,.018,.021]],
+ quiz:[[.323,.220,.019,.021],[.512,.346,.017,.023],[.980,.339,.016,.027],[.518,.409,.035,.020],[.036,.460,.027,.025]],
+ story:[[.094,.232,.013,.016],[.907,.232,.014,.016],[.502,.485,.064,.029],[.220,.589,.020,.024],[.830,.583,.019,.024],[.061,.760,.027,.032],[.960,.784,.025,.035]],
  kitchen:[[.752,.121,.103,.064],[.072,.194,.045,.044],[.468,.308,.039,.024]],
  boba:[[.230,.111,.052,.039],[.430,.126,.047,.036],[.666,.142,.042,.034],[.830,.101,.053,.040],[.041,.468,.040,.041]],
  tarot:[[.521,.113,.069,.054],[.528,.259,.032,.032],[.954,.328,.045,.038],[.053,.344,.045,.033]],
- destiny:[[.310,.100,.064,.051],[.608,.181,.036,.031],[.490,.329,.028,.029],[.110,.678,.065,.061]],
+ destiny:[[.310,.100,.064,.051],[.608,.181,.036,.031],[.490,.161,.028,.029],[.110,.678,.065,.061]],
  match:[[.667,.378,.027,.032],[.461,.468,.033,.034],[.966,.572,.032,.039],[.139,.497,.027,.027]]
 };
-const pawSceneVapour={kitchen:[.133,.343,.032,.063],destiny:[.730,.430,.021,.042]};
+const pawSceneVapour={kitchen:[.133,.343,.032,.063],destiny:[.730,.280,.021,.042]};
 function pawSceneLightFrame(id,now,reduced=false){
  if(!Object.hasOwn(pawSceneLights,id)||!Number.isFinite(now))return [];
  return pawSceneLights[id].map(([u,v,rx,ry],i)=>{
@@ -12483,6 +12812,13 @@ function pawSceneVapourFrame(id,i,now,reduced=false){
  const drift=reduced?0:Math.sin(now*1.04+i)*w*.12;
  return {u:u+Math.sin(phase*5+i)*w*.23+drift,v:v-phase*h,rx:w*(.11+.17*phase),ry:h*(.09+.09*phase),alpha:.17*Math.sin(Math.PI*phase)}
 }
+// Small moving highlights on the existing painted cascade, not a second
+// waterfall or a new prop. Coordinates traced on the Destiny portrait.
+function pawYueCascadeFrame(i,now,reduced=false){
+ if(!Number.isInteger(i)||i<0||i>=3||!Number.isFinite(now))return null;
+ const phase=reduced?(i+1)/4:((now*.68+i/3)%1+1)%1;
+ return {u:.805+i*.010,v:.171+phase*.026,rx:.0035,ry:.0075,alpha:.12*Math.sin(Math.PI*phase)}
+}
 function pawSceneAir(ctx,id,p,now,reduced=false,hidden=false){
  if(hidden||!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||p.w<=0||p.h<=0)return 0;
  const lamps=pawSceneLightFrame(id,now,reduced);if(!lamps.length)return 0;
@@ -12496,6 +12832,17 @@ function pawSceneAir(ctx,id,p,now,reduced=false,hidden=false){
     g.addColorStop(0,'rgba(255,224,151,'+q.alpha+')');g.addColorStop(1,'rgba(255,224,151,0)');
     ctx.fillStyle=g;ctx.fillRect(-1,-1,2,2);count++;
    }finally{ctx.restore()}
+  }
+  if(id==='destiny'){
+   for(let i=0;i<3;i++){
+    const q=pawYueCascadeFrame(i,now,reduced);if(!q)continue;
+    ctx.save();try{
+     ctx.translate(p.x+p.w*q.u,p.y+p.h*q.v);ctx.scale(p.w*q.rx,p.h*q.ry);
+     const g=ctx.createRadialGradient(0,0,0,0,0,1);
+     g.addColorStop(0,'rgba(225,242,239,'+q.alpha+')');g.addColorStop(1,'rgba(225,242,239,0)');
+     ctx.fillStyle=g;ctx.fillRect(-1,-1,2,2);count++;
+    }finally{ctx.restore()}
+   }
   }
   for(let i=0;i<3;i++){
    const q=pawSceneVapourFrame(id,i,now,reduced);if(!q)continue;
@@ -12555,9 +12902,9 @@ label=function(name,x,y,fn){
  const sc=Math.max(.08,cam.scale),font=Math.min(26,Math.max(17,12/sc)),cy=q.labelY,value=tr(...q.label);
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';const w=Math.min(190,Math.max(75,ctx.measureText(value).width+18)),h=font+13;
-  const place=pawPaintedPlaquePlacement(x,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
+  const place=pawPaintedPlaquePlacement(q.labelX,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,4,'#523c2dec','#d7b982');activityFitText(value,place.x,place.y,font,w-10,'#fff0d5');
+  pawDrawIndoorPlaque(room,place,w,h,font,value,sc);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(q.station);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
  }finally{ctx.restore()}
@@ -12988,7 +13335,7 @@ label=function(name,x,y,fn){
   const w=Math.min(160,Math.max(75,ctx.measureText(value).width+18)),h=font+13;
   const place=pawPaintedPlaquePlacement(cx,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,4,'#523c2dec','#d7b982');activityFitText(value,place.x,place.y,font,w-10,'#fff0d5');
+  pawDrawIndoorPlaque(room,place,w,h,font,value,sc);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(station.id);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
  }finally{ctx.restore()}
@@ -13049,12 +13396,14 @@ function pawReadingSeatPlan(id,plate,phase){
  const tarot=id==='tarot',yue=id==='destiny';if(!tarot&&!yue)return null;
  const host=tarot?'fortune-teller':'master-yue';
  const pose=tarot?(phase==='shuffle'?'seated-shuffle-held':phase==='focus'?'seated-present-card':'seated-idle'):(phase==='result'?'seated-present-blank-parchment':phase==='question'?'seated-brush-held':'seated-welcome-explain');
- const eye=tarot?[.135,.399]:[.581,.337],span=plate.h*(tarot?.0165:.0185);
+ // Destiny portrait: chair back at y=.212, tabletop front lip at y=.306.
+ const eye=tarot?[.135,.399]:[.581,.218],span=plate.h*(tarot?.0165:.017);
  const center=[plate.x+plate.w*eye[0],plate.y+plate.h*eye[1]];
- return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.447]}
+ return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.306]}
 }
-function pawReadingHostPhase(id,q,kind,desk,result){
- if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle')return 'shuffle';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
+function pawReadingHostPhase(id,q,kind,desk,result,now=Infinity){
+ // The animated cloth already owns the deck during either wash route. The old in-hand shuffle sprite would show a second deck. Keep the seated host stable until an identity-matched tabletop contact pose is available.
+ if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle'||q.readStage==='choose'&&Number.isFinite(q.readAt)&&now<q.readAt)return 'table-wash';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
  if(id==='destiny'&&desk)return result?'result':'question';
  return 'idle'
 }
@@ -13063,10 +13412,34 @@ function pawReadingCoverPlate(bounds,iw,ih){
  const scale=Math.max(bounds.w/iw,bounds.h/ih),w=iw*scale,h=ih*scale;
  return {x:bounds.x+(bounds.w-w)/2,y:bounds.y+(bounds.h-h)/2,w,h}
 }
+/* PAW_YUE_SEATED_CONTINUITY_BEGIN */
+// Admission is frozen per visit. A validated idle pose is preferable to
+// a miniature standing crop when the other two poses are still decoding.
+function pawReadingVisitPhase(visit,id,phase){
+ if(visit?.id!==id)return null;
+ if(visit.ready)return phase;
+ return ['destiny','tarot'].includes(id)&&visit.idleReady?'idle':null
+}
+function pawReadingVisibleRect(frame,alpha,clip){
+ if(!frame||typeof frame.point!=='function'||!Array.isArray(alpha)||!Array.isArray(clip)||alpha.length!==4||clip.length!==4||![...alpha,...clip].every(Number.isFinite)||alpha[2]<=alpha[0]||alpha[3]<=alpha[1]||clip[2]<=0||clip[3]<=0)return null;
+ const [x,y]=frame.point(alpha[0],alpha[1]),[r,d]=frame.point(alpha[2],alpha[3]);
+ const left=Math.max(x,clip[0]),right=Math.min(r,clip[0]+clip[2]),top=Math.max(y,clip[1]),bottom=Math.min(d,clip[1]+clip[3]);
+ return [left,right,top,bottom].every(Number.isFinite)&&right>left&&bottom>top?{left,right,top,bottom}:null
+}
+/* PAW_YUE_SEATED_CONTINUITY_END */
 function pawReadingHostFamilyReady(id,manifest,api,ready){
  const host=id==='tarot'?'fortune-teller':id==='destiny'?'master-yue':null;
  const poses=host&&manifest?.characters?.[host]?.poses;
  return !!api&&!!poses&&Object.keys(poses).length===3&&Object.entries(poses).every(([pose,a])=>!!api.contacts(manifest,host,pose,[0,0],10)&&ready(a.path,a.canvas))
+}
+// A late-decoded family is adopted only at an intentional consultation
+// boundary, never halfway through a drawing or a parchment reveal.
+function pawYueAdoptSeatedVisit(visit,id,kind,transition,ready){
+ if(!visit||visit.id!=='destiny'||id!=='destiny'||kind||transition||visit.ready||!ready())return false;
+ visit.ready=true;return true
+}
+function pawYueConsultPlaqueVisible(talking,pageOpen,transition){
+ return !talking&&!pageOpen&&!transition
 }
 /* PAW_READING_SEATED_HOST_END */
 let pawHostLibrary=null,pawHostLibraryJob=null,pawHostWarmJobs=new Map(),pawHostVisit=null;
@@ -13091,13 +13464,21 @@ function pawHostFamilyReady(id){
   const im=pawHostPoseImage(path);return pawRoomImageReady(im)&&im.naturalWidth===canvas[0]&&im.naturalHeight===canvas[1]&&pawDecodedSources.get(im)===(im.src||im.currentSrc||'')
  })
 }
+function pawReadingIdleReady(id){
+ const lib=pawHostLibrary,host=id==='tarot'?'fortune-teller':id==='destiny'?'master-yue':null,pose=id==='tarot'?'seated-idle':'seated-welcome-explain';if(!host)return false;
+ const f=lib?.api.contacts(lib.manifest,host,pose,[0,0],10);if(!f)return false;
+ const im=pawHostPoseImage(f.path);
+ return pawRoomImageReady(im)&&im.naturalWidth===f.canvas[0]&&im.naturalHeight===f.canvas[1]&&pawDecodedSources.get(im)===(im.src||im.currentSrc||'')
+}
 function pawWarmReadingHost(id){
- if(!['tarot','destiny'].includes(id)||pawHostWarmJobs.has(id)||pawHostFamilyReady(id))return;
+ if(!['tarot','destiny'].includes(id))return Promise.resolve(false);
+ if(pawHostFamilyReady(id))return Promise.resolve(true);
+ if(pawHostWarmJobs.has(id))return pawHostWarmJobs.get(id);
  const job=pawLoadHostLibrary().then(lib=>{
   const host=id==='tarot'?'fortune-teller':'master-yue',poses=lib?.manifest.characters?.[host]?.poses;
   return poses?Promise.all(Object.values(poses).map(a=>pawReadyPicture(pawHostPoseImage(a.path,true),3500))):null
  }).catch(()=>null).finally(()=>pawHostWarmJobs.delete(id));
- pawHostWarmJobs.set(id,job)
+ pawHostWarmJobs.set(id,job);return job
 }
 /* PAW_YUE_INK_RUNTIME_BEGIN */
 function pawYueInkState(cache,grid,api,now,blocked,reduced){
@@ -13110,23 +13491,33 @@ function pawYueInkState(cache,grid,api,now,blocked,reduced){
  const progress=api.parchmentClock(entry.clock,now,blocked,reduced);
  return {palaces:entry.palaces,progress}
 }
+function pawYueInkBlocked(folded,hidden,covered,transition){return !!(folded||hidden||covered||transition)}
 /* PAW_YUE_INK_RUNTIME_END */
 const pawYueInkCache=new WeakMap();
 let pawYueInkCurrent=null;
 document.addEventListener('visibilitychange',()=>{
- if(pawYueInkCurrent&&pawHostLibrary?.api?.parchmentClock)pawHostLibrary.api.parchmentClock(pawYueInkCurrent.clock,performance.now()/1000,document.hidden,residentReducedMotion.matches)
+ if(pawYueInkCurrent&&pawHostLibrary?.api?.parchmentClock)pawHostLibrary.api.parchmentClock(pawYueInkCurrent.clock,performance.now()/1000,pawYueInkBlocked(pawYueInkCurrent.folded,document.hidden,!proposal.hidden,transitioning),residentReducedMotion.matches)
 });
-function pawDrawReadingSeated(id,plate){
- if(pawHostVisit?.id!==id||!pawHostVisit.ready||!pawHostLibrary)return false;
+function pawReadingDeskState(id){
  const desk=id==='destiny'&&$('page').dataset.pawYueDesk==='true'&&$('page').style.display!=='none';
  const activeForm=desk?$('content').querySelector('.astroForm,.yueAlmanacForm'):null;
  const editing=!!activeForm&&!activeForm.hidden&&activeForm.style.display!=='none';
  const grid=desk&&!editing?$('content').querySelector('.ziGrid'):null;
+ const folded=!!grid&&!!$('content').querySelector('.astroResult[data-paw-yue-folded]');
  const almanac=desk&&!editing?$('content').querySelector('.yueReadingFront,.signNotebookResult'):null;
- const result=!!(grid||almanac),phase=pawReadingHostPhase(id,state,activity,desk,result);
- const plan=pawReadingSeatPlan(id,plate,phase);if(!plan)return false;
+ return {grid,folded,phase:pawReadingHostPhase(id,state,activity,desk&&!folded,!!(grid||almanac),t)}
+}
+function pawReadingVisitFrame(id,plate,phase){
+ const selected=pawReadingVisitPhase(pawHostVisit,id,phase);
+ if(selected===null||!pawHostLibrary)return null;
+ const plan=pawReadingSeatPlan(id,plate,selected);if(!plan)return null;
  const {api,manifest}=pawHostLibrary,fr=api.contacts(manifest,plan.host,plan.pose,plan.center,plan.span);
- if(!fr)return false;
+ if(!fr)return null;
+ return {api,manifest,plan,fr,phase:selected}
+}
+function pawDrawReadingSeated(id,plate){
+ const desk=pawReadingDeskState(id),f=pawReadingVisitFrame(id,plate,desk.phase);if(!f)return false;
+ const {api,plan,fr,phase}=f,{grid,folded}=desk;
  const im=pawHostPoseImage(fr.path);
  ctx.save();try{
   ctx.beginPath();ctx.rect(...plan.clip);ctx.clip();
@@ -13135,10 +13526,11 @@ function pawDrawReadingSeated(id,plate){
    const v=state.readCards[state.readFocus],atlas=readingArtwork();
    if(v&&Number.isInteger(v.i)&&v.i>=0&&v.i<tarotDeck.length)api.drawHeldCard(ctx,fr,atlas,[(v.i%readingFaceColumns)*readingFaceWidth,Math.floor(v.i/readingFaceColumns)*readingFaceHeight,readingFaceWidth,readingFaceHeight],v.rev);
   }
-  if(id==='destiny'&&phase==='result'&&grid){
-   const ink=pawYueInkState(pawYueInkCache,grid,api,performance.now()/1000,document.hidden||!proposal.hidden||transitioning,residentReducedMotion.matches);
+  if(id==='destiny'&&grid){
+   const ink=pawYueInkState(pawYueInkCache,grid,api,performance.now()/1000,pawYueInkBlocked(folded,document.hidden,!proposal.hidden,transitioning),residentReducedMotion.matches);
    pawYueInkCurrent=pawYueInkCache.get(grid)||null;
-   if(ink&&typeof api.paintChartPalaces==='function')api.drawHeldParchment(ctx,fr,g=>api.paintChartPalaces(g,ink.palaces,ink.progress))
+   if(pawYueInkCurrent)pawYueInkCurrent.folded=folded;
+   if(!folded&&phase==='result'&&ink&&typeof api.paintChartPalaces==='function')api.drawHeldParchment(ctx,fr,g=>api.paintChartPalaces(g,ink.palaces,ink.progress))
   }else if(id==='destiny'){pawYueInkCurrent=null}
   return true
  }finally{ctx.restore()}
@@ -13160,7 +13552,7 @@ function pawReadingActive(){return !activity&&room===pawReadingVisit&&pawReading
 // Predecode all required tarot artwork before the room becomes interactive.
 const pawTarotPropPath='../../staging/2026-11-28-consolidated/atlases/tarot-props.webp';
 function pawTarotProps(retry=false){return pawRecoveredImage(pawTarotPropPath,null,retry)}
-async function pawPrepareTarotArt(){const faces=readingArtwork(),props=pawTarotProps(true);const result=await Promise.all([pawReadyPicture(faces,4500),pawReadyPicture(props,4500)]);return result.every(Boolean)&&faces.naturalWidth===1024&&faces.naturalHeight===2180}
+async function pawPrepareTarotArt(){const faces=readingArtwork(),props=pawTarotProps(true);const result=await Promise.all([pawReadyPicture(faces,4500),pawReadyPicture(props,4500)]);return result.every(Boolean)&&faces.naturalWidth===1024&&faces.naturalHeight===2180&&!!pawTarotBackImage(props)}
 const pawReadingDoorBefore=walkDoor;
 walkDoor=function(id,...args){if(pawReadingRoomIds.includes(id))pawLoadReadingModule().then(api=>pawReadingImage(api,id));pawWarmReadingHost(id);if(id==='tarot')pawPrepareTarotArt();return pawReadingDoorBefore(id,...args)};
 const pawReadingEnterBefore=enter;
@@ -13168,7 +13560,7 @@ enter=function(id,...args){
  if(!pawReadingRoomIds.includes(id)){pawReadingAdmission=null;pawReadingVisit=null;pawHostVisit=null;return pawReadingEnterBefore(id,...args)}
  if(room||activity||transitioning||pawArcadeInputBlocked())return;
  if(pawFoodAdmissionValid(pawReadingAdmission,pawReadingAdmission,pawFoodAdmissionView()))return;
- const request={scene,avatar,x:p.x,y:p.y};pawReadingAdmission=request;pawWarmReadingHost(id);
+ const request={scene,avatar,x:p.x,y:p.y};pawReadingAdmission=request;const hostJob=pawWarmReadingHost(id);
  releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;
  const readyApi=pawReadingAPI(),readyImage=pawReadingImage(readyApi,id);
  if(!pawRoomImageReady(readyImage))hint('Getting the room ready…','小屋正在准备开门……');
@@ -13176,11 +13568,11 @@ enter=function(id,...args){
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   const compatible=pawReadingCompatible(api,id,roomActions[id]||[]);
   const im=compatible?pawReadingImage(api,id,true):null;
-  const ready=compatible&&(await Promise.all([pawReadyPicture(im,4500),id==='tarot'?pawPrepareTarotArt():true])).every(Boolean);
+  const ready=compatible&&(await Promise.all([pawReadyPicture(im,4500),id==='tarot'?pawPrepareTarotArt():true,hostJob.then(()=>true,()=>true)])).every(Boolean);
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   pawReadingAdmission=null;
   if(!ready||!pawRoomImageReady(im)){hint('The room painting could not load. Tap its door to try again.','小屋画面暂未加载成功，请再次点击门口重试。');return}
-  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id)};return pawReadingEnterBefore(id,...args)
+  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id),idleReady:pawReadingIdleReady(id)};return pawReadingEnterBefore(id,...args)
  }).finally(()=>{if(pawReadingAdmission===request)pawReadingAdmission=null})
 };
 // Nearby outdoor warming should decode the actual selected lobby painting,
@@ -13263,7 +13655,7 @@ drawRoom=function(...args){if(pawReadingActive())pawReadingBackdrop();return paw
 function pawReadingHost(){
  const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:room==='tea'?['Auntie Mei','梅姨']:room==='fish'?['Ah Ma','阿嬷']:room==='park'?['Auntie Lin','林姨']:room==='arcade'?['Arcade keeper','游戏厅店主']:null;
  if(!name)return null;const record=residentArtworkRecord(name);if(!record&&room!=='fish')return null;
- const [x,y]=pawReadingWorld(room==='destiny'?[.58,.446]:room==='tarot'&&pawHostVisit?.ready?[.135,.61]:pawReadingAPI().rooms[room].host);
+ const [x,y]=pawReadingWorld(room==='destiny'?[.58,.306]:room==='tarot'&&pawHostVisit?.ready?[.135,.61]:pawReadingAPI().rooms[room].host);
  return {station:room==='tea'?'chat':room==='fish'?'hit':room==='park'?'pet':room==='arcade'?'bubbleArcade':room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record?.height||112,.90),facing:room==='fish'?'right':'left'}
 }
 const pawReadingHostsBefore=roomResidentActors;
@@ -13274,7 +13666,13 @@ roomResidentActors=function(){if(!pawReadingActive())return pawReadingHostsBefor
 // Until the proper seated sprite is registered this is a desk-occlusion
 // treatment, not a new animation pose.
 function pawYueDeskBox(p=pawReadingPlate){
- return {x:p.x+p.w*.581,y:p.y+p.h*.447,height:p.h*.104,clipTop:p.y+p.h*.31,clipBottom:p.y+p.h*.447}
+ return {x:p.x+p.w*.581,y:p.y+p.h*.306,height:p.h*.215,clipTop:p.y+p.h*.165,clipBottom:p.y+p.h*.306}
+}
+// The visible seated host, rather than a floating label alone, is tappable.
+// Keep the target inside the authored torso and face area of the portrait.
+function pawYueHostTapBox(p){
+ if(!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||p.w<=0||p.h<=0)return null;
+ return [p.x+p.w*.465,p.y+p.h*.175,p.w*.232,p.h*.130]
 }
 function pawYueDeskPlaque(p=pawReadingPlate){
  return {x:p.x+p.w*.5,y:p.y+p.h*.552}
@@ -13293,14 +13691,34 @@ function pawDrawYueAtDesk(a){
  }finally{ctx.restore()}
  return true
 }
+// Speech/sign clearance must reserve the actual visible seated silhouette,
+// not a standing rectangle based on the player's zoom-dependent scale.
+const pawYueBoundsBefore=meowIndoorActorBounds;
+meowIndoorActorBounds=function(a,scale){
+ if(room==='destiny'&&pawReadingActive()&&a?.station==='destiny'&&residentArtworkRecord(a.n)?.id==='master-yue'){
+  const f=pawReadingVisitFrame('destiny',pawReadingPlate,pawReadingDeskState('destiny').phase);
+  if(f){
+   const im=pawHostPoseImage(f.fr.path),alpha=f.manifest.characters[f.plan.host].poses[f.plan.pose].visibleAlphaBounds;
+   const rect=pawRoomImageReady(im)&&pawReadingVisibleRect(f.fr,alpha,f.plan.clip);
+   if(rect&&im.naturalWidth===f.fr.canvas[0]&&im.naturalHeight===f.fr.canvas[1]){
+    const z=cam.scale;return {left:cam.ox+rect.left*z-5,right:cam.ox+rect.right*z+5,top:cam.oy+rect.top*z-5,bottom:cam.oy+rect.bottom*z+6}
+   }
+  }
+ }
+ return pawYueBoundsBefore.call(this,a,scale)
+};
 function pawDrawYueDeskPlaque(fn){
+ // A consultation already underway does not need another entry sign.
+ if(activity||!pawYueConsultPlaqueVisible(talkOpen,$('page').style.display==='block',transitioning))return false;
+ const hostBox=pawYueHostTapBox(pawReadingPlate);
+ if(hostBox)target(...hostBox,fn);
  const q=pawYueDeskPlaque(),scale=Math.max(.08,cam.scale),font=Math.max(9,12/scale),name=tr('Consult','问事');
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';
   const w=Math.max(58/scale,ctx.measureText(name).width+12/scale),h=22/scale;
-  const place=pawPaintedPlaquePlacement(q.x,q.y,w,h,{s:scale,ox:cam.ox,oy:cam.oy},{w:W,h:H},meowTextFrameRects);
+  const place=pawPaintedPlaquePlacement(q.x,q.y,w,h,{s:scale,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers,...pawLocalVisitors.filter(pawVisitorVisible).map(a=>meowIndoorActorBounds(a))]);
   if(!place)return false;
-  round(place.x-w/2,place.y-h/2,w,h,2/scale,'#4b392ceb','#c9a979');activityFitText(name,place.x,place.y,font,w-6/scale,'#fff1d8');
+  pawDrawIndoorPlaque(room,place,w,h,font,name,scale);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add('destiny');
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn);return true
  }finally{ctx.restore()}
@@ -13348,7 +13766,7 @@ label=function(name,x,y,fn){
   const w=Math.min(144,Math.max(60,ctx.measureText(name).width+12)),h=font+9;
   const place=pawPaintedPlaquePlacement(cx,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,3,'#4e3d32ed','#d7bc88');activityFitText(name,place.x,place.y,font,w-7,'#fff0d5');
+  pawDrawIndoorPlaque(room,place,w,h,font,name,sc);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(station.id);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
  }finally{ctx.restore()}
@@ -13382,7 +13800,7 @@ function pawChooseConnectedGuestPoints(candidates,canDepart,canWalk,limit=8,spac
 function pawMappedVisitorPoints(api,id){
  const q=api?.rooms[id],spec=pawReadingSpec(api,id);if(!q||!spec)return [];
  const gaps=pawMappedGuestGaps(true),protectedFeet=[spec.entry,[spec.entry[0],spec.entry[1]-35],spec.arrival,...Object.values(spec.stations).map(v=>v.slice(2))];
- const host=['quiz','story','match'].includes(id)?[]:[pawReadingWorld(id==='destiny'?[.58,.446]:q.host)];
+ const host=['quiz','story','match'].includes(id)?[]:[pawReadingWorld(id==='destiny'?[.58,.306]:q.host)];
  const points=q.visitors.map(v=>v.slice()),candidates=[];
  for(let i=0;i<=100;i+=2){
   const y=i/100,range=api.bounds(id,y);if(!range)continue;
@@ -13549,12 +13967,15 @@ roomIntro=function(...args){
 const pawYueDeskHubBefore=yueReadingHub;
 function pawYueDeskChoose(kind){
  if(room!=='destiny')return;
+ if(kind==='stars')return starSignPage();
  function open(subject){if(room!=='destiny')return;yueSubject=subject;closeTalk();if(kind==='chart')destinyPage();else if(kind==='year')yueZodiacAlmanac();else starSignPage()}
  say(tr('Master Yue','月师傅'),tr('Is this reading for you, or someone else?','这次是想看看自己，还是替别人看看？'),[[tr('For me','看自己'),()=>open('self')],[tr('For someone else','帮别人看看'),()=>open('other')],[tr('Back','返回'),()=>yueReadingHub()]])
 }
 yueReadingHub=function(...args){
  if(room!=='destiny')return pawYueDeskHubBefore(...args);
  $('page').style.display='none';pawYueChartObserver?.disconnect();pawYueChartObserver=null;delete $('page').dataset.pawYueDesk;delete $('page').dataset.pawYueExpanded;closeTalk();
+ pawYueAdoptSeatedVisit(pawHostVisit,room,activity,transitioning,()=>pawHostFamilyReady('destiny'));
+ if(!pawHostVisit?.ready)pawWarmReadingHost('destiny');
  say(tr('Master Yue','月师傅'),tr("Ah, sit and have some tea. The stars are not going anywhere. What shall we explore?","来啦？坐，先喝口茶。星星又不会跑。今天想问些什么？"),[
  [tr('My year ahead','生肖流年'),()=>pawYueDeskChoose('year')],
  [tr('My birth chart','生辰命盘'),()=>pawYueDeskChoose('chart')],
@@ -13574,7 +13995,7 @@ function pawYueDeskQuestions(kind){
 }
 /* PAW_YUE_DESK_HUMOUR_END */
 function pawYueQuestionSteps(form,out,kind){
- if(!form||form.hidden||out?.children.length)return;
+ if(!form||form.hidden||out?.children.length||form.classList.contains('pawYueGuidedForm'))return;
  const date=form.querySelector('input[type=date]')?.closest('label'),time=form.querySelector('input[type=time]')?.closest('label'),details=form.querySelector('details'),year=form.querySelector('select')?.closest('label'),submit=form.querySelector('button[type=submit]');
  if(!date||!submit||date.hidden)return;
  const steps=kind==='year'?[[date],[year]]:[[date],[time],[details,...[...form.querySelectorAll('input[type=number]')].filter(n=>!details?.contains(n)).map(n=>n.closest('label'))]];
@@ -13587,6 +14008,13 @@ function pawYueQuestionSteps(form,out,kind){
  function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));question.textContent=tr(...questions[index]);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1)}
  function advance(){if(finished||index>=steps.length-1)return;for(const field of steps[index].flatMap(n=>[...n.querySelectorAll('input,select')]))if(!field.checkValidity()){field.reportValidity();return}show(index+1)}
  form.addEventListener('keydown',e=>{if(!finished&&index<steps.length-1&&e.key==='Enter'&&e.target.matches('input')){e.preventDefault();advance()}});
+ // Bring an invalid hidden field back into view before native validation focuses it.
+ form.addEventListener('invalid',e=>{
+  if(finished)return;
+  const i=steps.findIndex(group=>group.some(node=>node.contains(e.target)));
+  if(i>=0)show(i);
+  for(let n=e.target.parentElement;n&&n!==form;n=n.parentElement)if(n.tagName==='DETAILS')n.open=true
+ },true);
  form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();controls.remove()}});
  show(0)
 }
@@ -13594,15 +14022,72 @@ function pawYueQuestionSteps(form,out,kind){
 function pawYueChartComplete(grid){
  return !!grid&&grid.querySelectorAll('article:not(.blank)').length===12
 }
+// Preset locations still require the actual historical offset. Show a
+// compact verification disclosure, and always expose custom/invalid values.
+function pawYueLocationMode(place,values){
+ const preset=/^[0-7]$/.test(place||''),valid=Array.isArray(values)&&values.length===3&&values.every(v=>typeof v==='string'&&v.trim()!==''&&Number.isFinite(Number(v)));
+ if(!preset||!valid)return 'manual';
+ const [offset,lat,lon]=values.map(Number);
+ return offset>=-12&&offset<=14&&Number.isInteger(offset*4)&&lat>=-66&&lat<=66&&Math.abs(lon)<=180?'preset':'manual'
+}
+function pawYueChartVisitActive(pane,out,grid){
+ return room==='destiny'&&!activity&&pane.dataset.pawYueDesk==='true'&&pane.style.display==='block'&&out.isConnected&&!!grid&&grid.isConnected&&out.querySelector('.ziGrid')===grid&&pawYueChartComplete(grid)
+}
+// A folded parchment is a real compact state, not merely a narrower chart.
+function pawYueFoldState(requested,complete){
+ return {expanded:!!requested&&!!complete,folded:!requested&&!!complete}
+}
 /* PAW_YUE_PARCHMENT_END */
+/* PAW_YUE_SHARE_RETURN_BEGIN */
+function pawYueShareReturnMatches(origin,current){
+ return !!origin&&!!current&&origin.scene===current.scene&&current.room==='destiny'&&!current.activity&&current.subject==='self'&&origin.profile===current.profile&&origin.chart===current.chart&&origin.visit===current.visit&&current.page==='meowShare'
+}
+function pawYueShareScroll(scroll,height,client){
+ return Number.isFinite(scroll)&&Number.isFinite(height)&&Number.isFinite(client)?Math.max(0,Math.min(scroll,Math.max(0,height-client))):0
+}
+/* PAW_YUE_SHARE_RETURN_END */
+function pawYueShareFromChart(data,topic,section){
+ if(room!=='destiny')return openMeowShare(data,()=>destinyPage(false,topic));
+ if(activity||yueSubject!=='self'||!section?.isConnected)return;
+ const pane=$('page'),q=$('content');
+ if(pane.dataset.pawYueDesk!=='true'||pane.style.display!=='block')return;
+ const context=()=>({scene,room,activity,subject:yueSubject,profile:yueSessionProfiles.self,chart:yueSessionProfiles.self.chart,visit:pawHostVisit,page:activePage});
+ const origin=context(),scroll=pane.scrollTop,selected=section.querySelector('.chartTopics button[aria-pressed="true"]');
+ const chosen=Number.isInteger(topic)?topic:selected?Number(selected.dataset.topic):null;
+ const disclosures=Array.from(q.querySelectorAll('details')).map(n=>n.open);
+ const view=q.querySelector('.palaceViewTools button[aria-pressed="true"]');
+ const viewIndex=view?Array.from(view.parentElement.querySelectorAll('button')).indexOf(view):-1;
+ let used=false;
+ openMeowShare(data,()=>{
+  if(used||!pawYueShareReturnMatches(origin,context()))return;
+  used=true;destinyPage(false,chosen);
+  const restored=q.querySelector('.chartConsultation'),restoredChart=yueSessionProfiles.self.chart;
+  if(!restored||!restoredChart)return;
+  // Let the ordinary chart observer choose its default board first.
+  requestAnimationFrame(()=>{
+   if(room!=='destiny'||activity||!restored.isConnected||pane.dataset.pawYueDesk!=='true'||yueSessionProfiles.self.chart!==restoredChart||pawHostVisit!==origin.visit)return;
+   const buttons=q.querySelectorAll('.palaceViewTools button');
+   if(viewIndex>=0&&buttons[viewIndex])buttons[viewIndex].click();
+   Array.from(q.querySelectorAll('details')).forEach((node,i)=>{if(i<disclosures.length)node.open=disclosures[i]});
+   const control=restored.querySelector(data.kind==='zwds_chart'?'.pawFullChartSharing button':'.pawZwdsShareButton');
+   control?.focus({preventScroll:true});
+   pane.scrollTop=pawYueShareScroll(scroll,pane.scrollHeight,pane.clientHeight)
+  })
+ })
+}
+
 function pawYueChartParchment(q,pane,form,out){
  if(!out)return;
  let lastGrid=null,toolbar=null,expand=null,expanded=false;
  function setExpanded(value,scroll=false){
-  expanded=!!value&&pawYueChartComplete(lastGrid);
+  const next=pawYueFoldState(value,pawYueChartComplete(lastGrid));
+  expanded=next.expanded;
   if(expanded)pane.dataset.pawYueExpanded='true';else delete pane.dataset.pawYueExpanded;
+  out.toggleAttribute('data-paw-yue-folded',next.folded);
+  if(expand)expand.toggleAttribute('data-paw-yue-scroll',next.folded);
   if(expand){expand.textContent=expanded?tr('Fold the chart','收起命盘'):tr('Unfold the chart','展开命盘');expand.setAttribute('aria-expanded',String(expanded))}
-  if(scroll&&lastGrid?.isConnected)lastGrid.scrollIntoView({block:'nearest',behavior:residentReducedMotion.matches?'instant':'smooth'})
+  const focusSurface=expanded?lastGrid:toolbar;
+  if(scroll&&focusSurface?.isConnected)focusSurface.scrollIntoView({block:'nearest',behavior:residentReducedMotion.matches?'instant':'smooth'})
  }
  function sync(){
   if(room!=='destiny'||pane.dataset.pawYueDesk!=='true'||!out.isConnected)return;
@@ -13612,15 +14097,23 @@ function pawYueChartParchment(q,pane,form,out){
   }
   if(!toolbar){
    toolbar=element('div','',q,'pawYueParchmentTools');out.before(toolbar);
-   expand=b(toolbar,'',()=>setExpanded(!expanded,true));expand.type='button';
-   const ask=b(toolbar,tr('Ask Yue again','再问月师傅'),()=>yueReadingHub());ask.type='button'
+   const active=()=>toolbar.isConnected&&pawYueChartVisitActive(pane,out,lastGrid);
+   expand=b(toolbar,'',()=>{if(active())setExpanded(!expanded,true)});expand.type='button';
+   const ask=b(toolbar,tr('Ask Yue again','再问月师傅'),()=>{if(active())yueReadingHub()});ask.type='button';
+   const finish=b(toolbar,tr('Finish consultation','结束问事'),()=>{
+    if(!active())return;
+    pawYueChartObserver?.disconnect();pawYueChartObserver=null;
+    delete pane.dataset.pawYueDesk;delete pane.dataset.pawYueExpanded;
+    pane.style.display='none';q.replaceChildren();closeTalk();
+    hint('Take your time. Come back for another conversation whenever you like.','慢慢来，想再聊聊，随时来找我。')
+   });finish.type='button'
   }
   toolbar.hidden=false;
   if(lastGrid!==grid){
    lastGrid=grid;setExpanded(true);
    // Preserve the existing real palace handlers and disclosures; choose
    // the traditional overview first, with the readable-list toggle retained.
-   requestAnimationFrame(()=>{if(!grid.isConnected||lastGrid!==grid)return;const board=grid.parentElement?.querySelector('.palaceViewTools button:first-child');if(board)board.click()})
+   requestAnimationFrame(()=>{if(lastGrid!==grid||!pawYueChartVisitActive(pane,out,grid))return;const board=grid.parentElement?.querySelector('.palaceViewTools button:first-child');if(board)board.click()})
   }
  }
  pawYueChartObserver?.disconnect();
@@ -13652,8 +14145,26 @@ function pawYueDeskArrange(q,pane,form,out){
  pane.scrollTop=0
 }
 /* PAW_YUE_SINGLE_PAPER_END */
+function pawYueCompactLocation(form){
+ const outer=form?.querySelector('details'),place=outer?.querySelector('select'),fields=[...form.querySelectorAll('input[type=number]')];
+ if(!outer||!place||fields.length!==3||outer.querySelector('.pawYueLocationDetails'))return;
+ const labels=fields.map(n=>n.closest('label'));if(labels.some(n=>!n))return;
+ const advanced=element('details','',outer,'pawYueLocationDetails');
+ const summary=element('summary',tr('Verify time zone & coordinates','核对时区与经纬度'),advanced);
+ const note=outer.querySelector('.yueSessionNote');if(note)advanced.append(note);
+ labels.forEach(n=>advanced.append(n));
+ const sync=()=>{
+  const manual=pawYueLocationMode(place.value,fields.map(n=>n.value))==='manual';
+  advanced.open=manual&&!!place.value;
+  summary.textContent=tr('Verify time zone & coordinates','核对时区与经纬度');
+ };
+ place.addEventListener('change',sync);sync();
+ fields.forEach(n=>n.addEventListener('invalid',()=>{outer.open=true;advanced.open=true}));
+ form.addEventListener('submit',()=>{if(form.querySelector('.pawYueInputError:not([hidden])')){outer.open=true;advanced.open=true}},true)
+}
 function pawYueDeskPresent(kind){
  if(room!=='destiny')return;
+ pawYueAdoptSeatedVisit(pawHostVisit,room,activity,transitioning,()=>pawHostFamilyReady('destiny'));
  const q=$('content'),pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
  pane.dataset.pawYueDesk='true';
  q.querySelector('.yueCompactHost')?.remove();
@@ -13668,6 +14179,7 @@ function pawYueDeskPresent(kind){
    const details=form.querySelector('details');
    if(details)details.append(note);
   }
+  if(kind==='chart')pawYueCompactLocation(form);
   if(form.classList.contains('pawYueGuidedForm')){
    if(strip)form.after(strip);
    if(tools)(strip||form).after(tools);
@@ -13686,10 +14198,163 @@ function pawYueDeskPresent(kind){
 }
 const pawYueDeskChartBefore=destinyPage;
 destinyPage=function(...args){const result=pawYueDeskChartBefore(...args);pawYueDeskPresent('chart');return result};
+/* PAW_YUE_YEAR_DIALOGUE_BEGIN */
+// Read only the already-calculated, localized output. No date, form values,
+// storage, new fortune rules or separate zodiac calculation enter the dialogue.
+function pawYueYearSnapshot(out){
+ if(!out)return null;
+ const read=node=>node?.textContent?.trim()||'';
+ const title=read(out.querySelector('.yueReadingFront h2')),year=read(out.querySelector('.yueReadingYear'));
+ const relation=read(out.querySelector(':scope > strong')),roast=read(out.querySelector('.yueReadingRoast'));
+ const notes=Array.from(out.querySelectorAll(':scope > p:not(.yueReadingRoast)'),read).filter(Boolean);
+ const topics=Array.from(out.querySelectorAll('.yueReadingTopics article'),node=>({title:read(node.querySelector('h3')),text:read(node.querySelector('p'))}));
+ const disclaimer=read(out.querySelector(':scope > small'));
+ if(!title||!year||!relation||!roast||!notes.length||topics.length!==4||topics.some(v=>!v.title||!v.text)||!disclaimer)return null;
+ return {title,year,relation,roast,notes,topics,disclaimer}
+}
+function pawYueYearDialogue(result){
+ if(room!=='destiny'||activity||!result)return false;
+ const pane=$('page');pane.style.display='none';
+ pawYueChartObserver?.disconnect();pawYueChartObserver=null;
+ delete pane.dataset.pawYueDesk;delete pane.dataset.pawYueExpanded;
+ closeTalk();
+ let revision=0;
+ const speak=(words,options)=>{
+  const current=++revision;
+  say(tr('Master Yue','月师傅'),words,options.map(([label,action])=>[label,()=>{if(room==='destiny'&&!activity&&talkOpen&&revision===current&&pane.style.display!=='block')action()}]))
+ };
+ const hub=()=>{revision++;yueReadingHub()};
+ const finish=()=>{revision++;closeTalk();hint('Take what is useful, and enjoy the rest of your day.','有用的记在心里，剩下的日子好好过。')};
+ function overview(){
+  speak([result.title,result.year,result.relation,result.roast].join('\n\n'),[
+   [tr('What does that mean?','这是什么意思？'),()=>note(0)],
+   [tr('Explore a part of my year','看看流年的各方面'),topics],
+   [tr('Finish reading','结束问事'),conclude]
+  ])
+ }
+ function note(i){
+  if(!Number.isInteger(i)||i<0||i>=result.notes.length)return topics();
+  speak(result.notes[i],[
+   [i+1<result.notes.length?tr('Tell me more','再说一点'):tr('Explore the year','看看流年'),()=>i+1<result.notes.length?note(i+1):topics()],
+   [tr('Back to the overview','回顾流年'),overview],
+   [tr('Finish reading','结束问事'),conclude]
+  ])
+ }
+ function topics(){
+  speak(tr('Which part of the year shall we talk about?','这一年，你想先聊哪方面？'),[
+   ...result.topics.map((v,i)=>[v.title,()=>topic(i)]),
+   [tr('Finish reading','结束问事'),conclude]
+  ])
+ }
+ function topic(i){
+  const v=result.topics[i];if(!v)return topics();
+  speak(v.title+'\n\n'+v.text,[
+   [tr('Explore another topic','看看其他方面'),topics],
+   [tr('Back to the overview','回顾流年'),overview],
+   [tr('Finish reading','结束问事'),conclude]
+  ])
+ }
+ function conclude(){
+  speak(result.disclaimer+'\n\n'+tr('Shall we look at something else, or leave the stars to their tea?','还想看看别的，还是让星星也喝杯茶休息一下？'),[
+   [tr('Another year reading','再看一次流年'),()=>{revision++;closeTalk();yueZodiacAlmanac('',null,{editYear:true})}],
+   [tr('Ask something else','问点别的'),hub],
+   [tr('Thanks, Yue','谢谢月师傅'),finish]
+  ])
+ }
+ overview();return true
+}
+function pawYueYearConnect(form,out){
+ if(!form||!out||form.dataset.pawYueYearConnected==='true')return false;
+ form.dataset.pawYueYearConnected='true';
+ const pane=$('page');
+ // Capture invalid synthetic submits before the original calculator.
+ form.addEventListener('submit',e=>{
+  if(room!=='destiny'||activity||!form.isConnected||pane.dataset.pawYueDesk!=='true'||pane.style.display!=='block'||!form.checkValidity()){
+   e.preventDefault();e.stopImmediatePropagation();if(form.isConnected&&pane.style.display==='block')form.reportValidity()
+  }
+ },true);
+ const present=()=>{
+  const result=pawYueYearSnapshot(out);if(!result)return;
+  // Existing listeners finish first; a different room or replacement paper
+  // must not open a stale consultation.
+  queueMicrotask(()=>{
+   if(room!=='destiny'||activity||!form.isConnected||pane.dataset.pawYueDesk!=='true'||pane.style.display!=='block'||!out.isConnected)return;
+   const current=pawYueYearSnapshot(out);if(!current||JSON.stringify(current)!==JSON.stringify(result))return;
+   const date=form.querySelector('input[type=date]');if(date)date.value='';
+   // The conversation needs only the computed text, not the birth paper.
+   $('content').replaceChildren();
+   pawYueYearDialogue(result)
+  })
+ };
+ form.addEventListener('submit',present);
+ // The earlier session wrapper may already have computed a retained date.
+ // Route that existing result as well, without requiring duplicate submission.
+ if(pawYueYearSnapshot(out))present();
+ return true
+}
+/* PAW_YUE_YEAR_DIALOGUE_END */
 const pawYueDeskYearBefore=yueZodiacAlmanac;
-yueZodiacAlmanac=function(...args){const result=pawYueDeskYearBefore(...args);pawYueDeskPresent('year');return result};
+yueZodiacAlmanac=function(...args){
+ const result=pawYueDeskYearBefore(...args);
+ if(room==='destiny'&&!activity&&args[2]?.editYear){
+  const q=$('content'),f=q.querySelector('.yueAlmanacForm'),date=f?.querySelector('input[type=date]');
+  q.querySelector('.yueAlmanacPaper')?.replaceChildren();
+  if(date)date.closest('label').hidden=false;
+  const edit=[...q.querySelectorAll('.yueChartTools button')].find(n=>n.textContent===tr('Change birth date','修改出生日期'));if(edit)edit.hidden=true
+ }
+ pawYueDeskPresent('year');
+ if(room==='destiny'&&!activity){const q=$('content');pawYueYearConnect(q.querySelector('.yueAlmanacForm'),q.querySelector('.yueAlmanacPaper'))}
+ return result
+};
+/* PAW_YUE_STAR_DIALOGUE_BEGIN */
+const pawYueStarGroups=[[9,10,11],[0,1,2],[3,4,5],[6,7,8]];
+function pawYueStarGroup(index){
+ return Number.isInteger(index)&&index>=0&&index<pawYueStarGroups.length?pawYueStarGroups[index].slice():null
+}
+function pawYueStarDialogue(selected=null){
+ if(room!=='destiny'||activity)return false;
+ const pane=$('page');pane.style.display='none';
+ pawYueChartObserver?.disconnect();pawYueChartObserver=null;delete pane.dataset.pawYueDesk;delete pane.dataset.pawYueExpanded;
+ closeTalk();
+ let revision=0;
+ const speak=(words,options)=>{
+  const current=++revision;
+  say(tr('Master Yue','月师傅'),words,options.map(([label,action])=>[label,()=>{if(room==='destiny'&&!activity&&talkOpen&&revision===current&&pane.style.display!=='block')action()}]))
+ };
+ const finish=()=>{revision++;closeTalk();hint('Enjoy your tea. You can ask again whenever you like.','慢慢喝茶，想问什么随时来。')};
+ const hub=()=>{revision++;yueReadingHub()};
+ function groups(){
+  const options=pawYueStarGroups.map((_,g)=>{
+   const ids=pawYueStarGroup(g),first=signNotebook[ids[0]],last=signNotebook[ids.at(-1)];
+   return [tr(...first.name)+' / '+tr(...signNotebook[ids[1]].name)+' / '+tr(...last.name),()=>choose(g)]
+  });
+  options.push([tr('Ask something else','问点别的'),hub]);
+  speak(tr('Which sign shall we look at? No birth details needed.','想看看哪个星座？不用填生辰资料。'),options)
+ }
+ function choose(group){
+  const ids=pawYueStarGroup(group);if(!ids)return;
+  const options=ids.map(i=>[tr(...signNotebook[i].name)+' · '+signNotebook[i].dates,()=>result(i)]);
+  options.push([tr('Other signs','其他星座'),groups]);
+  speak(tr('Pick the sign you know. The dates are only approximate.','选你熟悉的星座就好，日期仅供参考。'),options)
+ }
+ function result(index){
+  if(!Number.isInteger(index)||!signNotebook[index])return groups();
+  const r=signReading(index);
+  speak(tr(...r.sign.name)+' · '+tr(...r.sign.theme)+'\n\n'+tr(...r.line)+'\n\n'+tr('A little reflection for the week, not a prediction.','本周给自己的一点小提醒，并非预测。'),[
+   [tr('Read another sign','看看其他星座'),groups],
+   [tr('Ask something else','问点别的'),hub],
+   [tr('Thanks, Yue','谢谢月师傅'),finish]
+  ])
+ }
+ if(Number.isInteger(selected)&&signNotebook[selected])result(selected);else groups();
+ return true
+}
+/* PAW_YUE_STAR_DIALOGUE_END */
 const pawYueDeskStarsBefore=starSignPage;
-starSignPage=function(...args){const result=pawYueDeskStarsBefore(...args);pawYueDeskPresent('stars');return result};
+starSignPage=function(selected=null,...args){
+ if(room==='destiny'&&!activity)return pawYueStarDialogue(selected);
+ return pawYueDeskStarsBefore(selected,...args)
+};
 const pawYueDeskCSS=document.createElement('style');
 pawYueDeskCSS.textContent=`
 #game #page[data-paw-yue-desk="true"]{position:absolute!important;inset:auto 0 0!important;height:auto!important;max-height:64dvh!important;min-height:0!important;max-width:none!important;width:100%!important;overflow:auto!important;overscroll-behavior:contain;padding:8px max(12px,env(safe-area-inset-left,0px)) max(12px,env(safe-area-inset-bottom,0px))!important;background:#f0e4cdeb url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important;border-radius:10px 10px 0 0;border-top:2px solid #b69a70;box-shadow:0 -5px 24px #251e1950}
@@ -13717,6 +14382,9 @@ pawYueDeskCSS.textContent=`
 #game #page[data-paw-yue-desk="true"] #content>.yueCompactIntro[hidden],#game #page[data-paw-yue-desk="true"] #content>button[hidden]{display:none!important}
 
 #game #page[data-paw-yue-desk="true"] .pawYueParchmentTools button{flex:1;min-height:44px}
+#game #page[data-paw-yue-desk="true"] [data-paw-yue-folded]{display:none!important}
+#game #page[data-paw-yue-desk="true"] button[data-paw-yue-scroll]{display:flex;align-items:center;justify-content:center;gap:5px;flex:1 1 100%;min-height:58px}
+#game #page[data-paw-yue-desk="true"] button[data-paw-yue-scroll]::before{content:'';display:block;flex:0 0 86px;height:55px;background:url('assets/visual/painted/master-yue/folded-scroll.webp') center / contain no-repeat;pointer-events:none}
 #game #page[data-paw-yue-expanded="true"] .ziGrid article:not(.blank){overflow-wrap:anywhere;min-width:0}
 #game #pawRoomGuideToggle:not(:focus-visible),#destinyAccess:not(:focus-visible){clip-path:inset(50%)!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;overflow:hidden!important;pointer-events:none!important;padding:0!important;border:0!important}
 
@@ -13756,6 +14424,7 @@ function pawLiveTarotStep(count,index,delta){
  return Math.max(0,Math.min(count,index+delta))
 }
 /* PAW_LIVE_TAROT_READING_END */
+const pawLiveTarotSessions=new WeakMap();
 const pawJournalReadingBefore=openTarotReading;
 openTarotReading=function(entry,back){
  const route=pawTarotReadingRoute(entry,state,activity,room,tarotDeck.length,t,typeof back==='function');
@@ -13763,11 +14432,23 @@ openTarotReading=function(entry,back){
  if(route==='wait'){hint('Let your cards finish turning before reading.','等牌完全翻开，再慢慢解读。');return}
  if(route!=='live')return;
  const live=pawLiveTarotSnapshot(entry,state,activity,room,tarotDeck.length);
- const run=state,kind=activity,count=live.cards.length;
- const valid=()=>run===state&&room==='tarot'&&activity===kind&&pawTarotReadingRoute(live,run,kind,room,tarotDeck.length,t,false)==='live';
- const returnTable=()=>{if(!valid())return;closeTalk();$('page').style.display='none';if(run.readStage==='focus')readingReturnSpread()};
+ const run=state,kind=activity,count=live.cards.length,session={revision:0};
+ pawLiveTarotSessions.set(run,session);
+ const valid=()=>pawLiveTarotSessions.get(run)===session&&run===state&&room==='tarot'&&activity===kind&&pawTarotReadingRoute(live,run,kind,room,tarotDeck.length,t,false)==='live';
+ const end=()=>{pawLiveTarotSessions.delete(run);closeTalk();$('page').style.display='none'};
+ const returnTable=()=>{if(!valid())return;end();if(run.readStage==='focus')readingReturnSpread();else hint(...pawReadingNextHint(run,t,journalAutoSave()))};
+ const finish=()=>{
+  if(!valid())return;
+  end();
+  if(!run.readSaved){if(count===5)fiveReadingSave();else readingSave()}
+  // Use the established activity-back path, preserving the indoor station
+  // and allowing the next actual doorway walk or consultation.
+  if(room==='tarot'&&activity===kind&&state===run)$('back').click()
+ };
  function explain(index){
   if(!valid())return;
+  const revision=++session.revision;
+  const guard=fn=>()=>{if(valid()&&session.revision===revision&&talkOpen)fn()};
   $('page').style.display='none';closeTalk();
   const choices=[];let words='';
   if(index<count){
@@ -13778,13 +14459,19 @@ openTarotReading=function(entry,back){
    if(reflection)words+='\n\n'+reflection;
    const aside=tarotCommentary(d[0],c.rev,live.topic,live.tone);
    if(aside)words+='\n\n'+tr(...aside);
-   choices.push([index+1<count?tr('Next card','下一张牌'):tr('What does it mean together?','整体意味着什么？'),()=>explain(pawLiveTarotStep(count,index,1))]);
+   choices.push([index+1<count?tr('Next card','下一张牌'):count===1?tr('A moment to reflect','静心想一想'):tr('What does it mean together?','整体意味着什么？'),guard(()=>explain(pawLiveTarotStep(count,index,1)))]);
   }else{
    words=count===5?tr('Compare what helps with the challenge card. Choose one small action from the next-step card, and keep the last card as a reminder.','对照助力牌和挑战牌。从行动牌里选一件小事，再把最后一张牌当作提醒。'):count===3?readingConnection(live):tr('Take what resonates with you. A card is a moment for reflection, not a prediction or an instruction.','把有共鸣的部分留在心里。牌意是自我反思，不是预言，也不是指令。');
-   choices.push([tr('Make a keepsake','制作纪念牌卡'),()=>{if(!valid())return;closeTalk();shareReadingResult(live,()=>{if(valid())explain(index)})}]);
+   choices.push([tr('Make a keepsake','制作纪念牌卡'),guard(()=>{
+    const exportRevision=++session.revision;
+    closeTalk();shareReadingResult(live,()=>{if(valid()&&session.revision===exportRevision)explain(index)})
+   })]);
   }
-  if(index>0)choices.push([tr('Previous card','上一张牌'),()=>explain(pawLiveTarotStep(count,index,-1))]);
-  choices.push([tr('Back to the table','回到牌桌'),returnTable]);
+  if(index>0)choices.push([tr('Previous card','上一张牌'),guard(()=>explain(pawLiveTarotStep(count,index,-1)))]);
+  if(index===count){
+   choices.push([tr('Review the spread','再看看牌阵'),guard(returnTable)]);
+   choices.push([tr('Finish reading · return to table','结束解读，回到牌桌'),guard(finish)])
+  }else choices.push([tr('Back to the table','回到牌桌'),guard(returnTable)]);
   say(tr('Fortune Teller','占卜师'),words,choices)
  }
  explain(0)
@@ -14332,10 +15019,13 @@ const pawAuntieSeatDrawBefore=drawActivity;
 drawActivity=function(...args){
  const visit=room==='fish'&&activity==='hit'?state.pawAuntieVisit:null;
  if(visit){
-  pawAuntieSeatAdvance(visit,t,pawArcadeInputBlocked());
-  const frame=pawAuntieSeatFrame(visit.phase,visit.age,residentReducedMotion.matches);
-  if(visit.phase==='arrival'&&frame.done){visit.phase='seated';visit.age=0;refreshControls();hint('Ah Ma: What is bothering you today?','阿嬷：今天有什么烦心事？')}
-  else if(visit.phase==='departure'&&frame.done){
+  const blocked=pawArcadeInputBlocked();
+  pawAuntieSeatAdvance(visit,t,blocked);
+  // Reduced motion may complete a pose immediately, but never complete
+  // an arrival or leave the room under a covered or hidden scene.
+  const frame=pawAuntieSeatFrame(visit.phase,visit.age,residentReducedMotion.matches&&!blocked);
+  if(!blocked&&visit.phase==='arrival'&&frame.done){visit.phase='seated';visit.age=0;refreshControls();hint('Ah Ma: What is bothering you today?','阿嬷：今天有什么烦心事？')}
+  else if(!blocked&&visit.phase==='departure'&&frame.done){
    return pawAuntieSeatBackBefore.apply($('back'),visit.backArgs||[])
   }
  }
@@ -14367,12 +15057,20 @@ function pawLoadFoodProps(){
  }).catch(()=>null).finally(()=>pawFoodLiveJob=null);
  return pawFoodLiveJob
 }
+function pawFoodWarmKeys(id){
+ return id==='boba'?['boba_tea_pot','boba_milk_pitcher','boba_cup_empty','boba_flat_lid','boba_pearls_bowl','boba_jelly_bowl','kitchen_small_ladle']:id==='kitchen'?['kitchen_small_bowl','kitchen_stock_pot','kitchen_wooden_ladle','kitchen_bamboo_steamer','kitchen_frying_pan','kitchen_wooden_spatula']:[]
+}
 function pawWarmFoodProps(id){
- if(!['kitchen','boba'].includes(id))return;
- if(id==='kitchen')pawKitchenStockImages();
- pawLoadFoodProps().then(q=>{if(!q)return;
-  q.cache.request(id==='boba'?['boba_tea_pot','boba_milk_pitcher','boba_cup_empty','boba_flat_lid']:['kitchen_small_bowl','kitchen_stock_pot','kitchen_wooden_ladle','kitchen_bamboo_steamer','kitchen_frying_pan','kitchen_wooden_spatula'])
- })
+ const keys=pawFoodWarmKeys(id);if(!keys.length)return;
+ if(id==='kitchen'){
+  pawKitchenStockImages();
+  for(const dish of kitchenDishNames){const im=pics['kitchenDish-'+dish];if(im&&!im.complete&&typeof im.decode==='function')im.decode().catch(()=>{})}
+ }
+ pawLoadFoodProps().then(q=>{if(q)q.cache.request(keys)})
+}
+function pawFoodPropReady(id){
+ const q=pawFoodLive;
+ return !!(q?.manifest?.assets?.[id]&&q.placement.ready(q.cache.image(id),q.manifest.assets[id].size))
 }
 const pawLiveFoodWarmBefore=pawWarmRoomAssets;
 pawWarmRoomAssets=function(id,...args){pawWarmFoodProps(id);return pawLiveFoodWarmBefore(id,...args)};
@@ -14398,7 +15096,7 @@ const pawLiveTeaPitcherBefore=teaPitcher;
 teaPitcher=function(x,y,base,tilt=0){
  // The base-selection jars represent distinct ingredients; leave their
  // colour-specific artwork unchanged. Only replace the actual tea vessel.
- if(activity==='bubbleTea'&&state.teaStage==='pourReady'&&pawPaintFoodProp('boba_tea_pot',x,y,70))return;
+ if(activity==='bubbleTea'&&state.teaStage==='pourReady'&&state.pawTeaPourPainted&&pawPaintFoodProp('boba_tea_pot',x,y,70))return;
  return pawLiveTeaPitcherBefore(x,y,base,tilt)
 };
 /* PAW_BOBA_LID_BEGIN */
@@ -14503,7 +15201,7 @@ function pawKitchenPaintBowl(x,y,fill){
 }
 function pawKitchenServeRequest(){
  if(activity!=='cook'||!state.done||state.pawSoupServed||state.pawSoupServeAt!==undefined||pawArcadeInputBlocked())return;
- state.pawSoupServeAt=t;closeTalk();sound(330);hint('Grandma: Ladle yourself a bowl first. No need to serve the whole office.','外婆：先给自己盛一碗，又不用请全公司吃饭。');
+ state.pawSoupServeAt=t;closeTalk();sound(330);hint('Grandma: Here, a bowl for you. Don\'t just keep looking at it!','外婆：来，先给自己盛一碗。光看又不会饱！');
 }
 /* PAW_KITCHEN_SERVE_END */
 
@@ -14623,8 +15321,8 @@ drawActivity=function(...args){
   const result=pawKitchenSteamBefore(...args);mb5AssistSync();return result
  }
  const q=run.pawSteam,pan=q.method==='pan',changed=pawKitchenSteamAdvance(q,t,pawArcadeInputBlocked());
- if(changed&&q.phase==='ready'){sound(540);hint(...(pan?['Grandma: Wah, golden edges! The tofu has had a better holiday than you.','外婆：哇，煎得金黄金黄的！豆腐都比你会度假。']:['Grandma: Nice and green! Finally, something that isn\'t overworked.','外婆：青翠青翠的，终于有一样东西没被折腾过头。']))}
- if(changed&&q.phase==='done'){hint(...(pan?['Grandma: Crispy outside, soft inside. Unlike your Monday face.','外婆：外脆里嫩，不像你周一那张苦瓜脸。']:['Grandma: Finished your greens! Now go do absolutely nothing for a bit.','外婆：青菜吃完啦！接下来什么都别干，歇会儿。']));sound(480)}
+ if(changed&&q.phase==='ready'){sound(540);hint(...(pan?['Grandma: Aiyo, look at those golden edges! Not bad for your first little pan.','外婆：哎哟，两面金灿灿的！这豆腐煎得有模有样嘛。']:['Grandma: Look at that colour. Take it off the heat before the greens change their minds.','外婆：这青菜绿油油的，赶紧出锅，再蒸就黄啦。']))}
+ if(changed&&q.phase==='done'){hint(...(pan?['Grandma: Crispy outside, soft inside. Save me a piece, will you?','外婆：外酥里嫩！哎，别顾着自己吃，给外婆留一块呀。']:['Grandma: All the greens gone? Good. At least I don\'t have to chase you with the chopsticks.','外婆：青菜都吃完啦？好，省得外婆拿着筷子追着你喂。']));sound(480)}
  continuityActivity=activity;ctx.save();try{
   table();
   const plate=pawKitchenSteamPlate(q,residentReducedMotion.matches);
@@ -14705,7 +15403,7 @@ function pawKitchenStockPaint(){
 }
 function pawKitchenStockRequest(run,i,x=270+i*130,y=W<H?610:600){
  if(run!==state||room!=='kitchen'||activity!=='cook'||pawArcadeInputBlocked()||drag||!pawKitchenPickupAllowed(run,i))return false;
- run.pawStockPickup={i,x,y,age:0,last:t,blocked:false};sound(360);hint('Grandma: Into the pot! This is the only thing we are rushing today.','外婆：下锅咯！今天只赶这一顿饭。');return true
+ run.pawStockPickup={i,x,y,age:0,last:t,blocked:false};sound(360);hint('Grandma: Into the pot it goes. Gently, gently, don\'t splash yourself!','外婆：下锅咯！轻一点，别把汤溅到自己身上。');return true
 }
 function pawKitchenStockChoose(run){
  if(run!==state||room!=='kitchen'||activity!=='cook'||pawArcadeInputBlocked()||drag)return;
@@ -14799,8 +15497,28 @@ document.head.append(pawVisitDialogueStyle);
 /* PAW_TAROT_PAINTED_PROPS_BEGIN */
 function pawTarotPropCrop(kind,w,h){
  if(![w,h].every(Number.isFinite)||w<=0||h<=0)return null;
- const r=kind==='back'?[.660,.018,.148,.315]:kind==='mat'?[.018,.377,.410,.286]:null;
+ const r=kind==='mat'?[.018,.377,.410,.286]:null;
  return r?r.map((v,i)=>v*(i%2?h:w)):null
+}
+// Rectify the original painted deck's top face, rather than misusing
+// the nearby Moon card illustration as a card back. Source landmarks
+// traced inside the deck's gold border in the 1408 x 1056 atlas.
+function pawTarotBackTransform(iw,ih,w=180,h=260){
+ if(![iw,ih,w,h].every(Number.isFinite)||Math.min(iw,ih,w,h)<=0)return null;
+ const [ox,oy]=[495*iw/1408,58*ih/1056];
+ const ax=130*iw/1408,ay=33*ih/1056,bx=-130*iw/1408,by=205*ih/1056,det=ax*by-ay*bx;
+ if(det<=0)return null;
+ const a=w*by/det,b=-h*ay/det,c=-w*bx/det,d=h*ax/det;
+ return [a,b,c,d,-a*ox-c*oy,-b*ox-d*oy]
+}
+const pawTarotBackCache=new WeakMap();
+function pawTarotBackImage(im){
+ if(!im?.complete||!im.naturalWidth||!im.naturalHeight)return null;
+ const existing=pawTarotBackCache.get(im);if(existing)return existing;
+ const canvas=document.createElement('canvas');canvas.width=180;canvas.height=260;
+ const g=canvas.getContext('2d'),matrix=pawTarotBackTransform(im.naturalWidth,im.naturalHeight);
+ if(!g||!matrix)return null;
+ g.setTransform(...matrix);g.drawImage(im,0,0);pawTarotBackCache.set(im,canvas);return canvas
 }
 /* PAW_TAROT_PAINTED_PROPS_END */
 const pawLegacyTarotCard=card;
@@ -14808,13 +15526,17 @@ card=function(x,y,w,h,front,...args){
  if(room!=='tarot'||!['tarot','love'].includes(activity)||front)return pawLegacyTarotCard(x,y,w,h,front,...args);
  const im=pawTarotProps();
  if(!pawRoomImageReady(im)){round(x,y,w,h,3,'#4b3d60','#b99b70');return}
- ctx.drawImage(im,...pawTarotPropCrop('back',im.naturalWidth,im.naturalHeight),x,y,w,h)
+ const back=pawTarotBackImage(im);if(back)ctx.drawImage(back,x,y,w,h);else round(x,y,w,h,3,'#4b3d60','#b99b70')
 };
 const pawLegacyTarotTable=table;
 table=function(...args){
  if(room!=='tarot'||!['tarot','love'].includes(activity))return pawLegacyTarotTable(...args);
  const im=pawTarotProps();if(!pawRoomImageReady(im))return;
- ctx.drawImage(im,...pawTarotPropCrop('mat',im.naturalWidth,im.naturalHeight),148,303,504,453)
+ ctx.drawImage(im,...pawTarotPropCrop('mat',im.naturalWidth,im.naturalHeight),148,303,504,453);
+ if(['cards','focus'].includes(state.readStage)){
+  const n=pawTarotRemainingCount(state);
+  for(let i=0;i<n;i++){const q=pawTarotRestingDeckPose(i);ctx.save();try{ctx.translate(q.x,q.y);ctx.shadowColor='#1b152e65';ctx.shadowBlur=4;ctx.shadowOffsetY=3;card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}}
+ }
 };
 const pawTarotUnifiedCamera=mobileRoomCamera;
 mobileRoomCamera=function(...args){
@@ -14892,18 +15614,200 @@ pawDistrictSignStyle.textContent=`
 #game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque{
  border:1px solid var(--paw-sign-edge)!important;border-image:none!important;border-radius:3px!important;
  background-color:var(--paw-sign-paper)!important;background-image:linear-gradient(var(--paw-sign-wash),var(--paw-sign-wash)),var(--paw-sign-texture)!important;background-size:100% 100%!important;
- color:var(--paw-sign-ink)!important;text-shadow:none!important;box-shadow:0 1px 2px #2b251e33!important;padding:5px 8px!important;
+ color:var(--paw-sign-ink)!important;text-shadow:none!important;box-shadow:none!important;padding:3px 7px!important;
+ font-family:var(--paw-display,Georgia,serif)!important;font-weight:600!important;line-height:1.2!important;
 }
 #game[data-paw-sign-material]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material] .pawRailEdge{
  border:1px solid var(--paw-rail-edge)!important;border-image:none!important;border-radius:3px!important;
  background-color:var(--paw-rail-paper)!important;background-image:linear-gradient(var(--paw-rail-wash),var(--paw-rail-wash)),var(--paw-rail-texture)!important;background-size:100% 100%!important;
  color:var(--paw-rail-ink)!important;text-shadow:none!important;box-shadow:0 1px 2px #2b251e22!important;font-weight:600!important;
 }
+/* One painted surface, not a decorative inset border or another backing. */
+#game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque::before,#game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque::after{display:none!important;content:none!important}
 #game[data-paw-sign-material] .pawRailEdge{min-height:44px;max-width:46%}
 @media(forced-colors:active){
  #game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material] .pawRailEdge{background:ButtonFace!important;border:1px solid ButtonText!important;border-image:none!important;color:ButtonText!important;box-shadow:none!important}
 }
 `;document.head.append(pawDistrictSignStyle);
 /* PAW_DISTRICT_SIGN_MATERIAL_END */
+
+
+
+/* PAW_SINGLE_ACTIVITY_SURFACE_BEGIN */
+// Keep authored physical controls, accessible equivalents and current hit
+// callbacks. Style the existing control owner, not a duplicate toolbar.
+const pawSingleActivitySurface=document.createElement('style');
+pawSingleActivitySurface.textContent=`
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls):not([hidden]){
+ box-sizing:border-box!important;max-width:calc(100% - 24px)!important;
+ background:#f3e7d0f0!important;border:0!important;border-radius:7px!important;
+ box-shadow:0 2px 7px #30291e29!important;padding:5px 8px!important;gap:3px!important;
+}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button{
+ box-sizing:border-box!important;min-height:44px!important;min-width:0!important;
+ white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.3!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ border-bottom:1px solid #ac967064!important;background:transparent!important;color:#405440!important;
+ padding:5px 7px!important;text-align:center!important
+}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button[aria-pressed=true]{
+ background:#dbe1cb!important;color:#395846!important
+}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button:focus-visible{outline:2px solid #39594d!important;outline-offset:-2px!important}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button:disabled{opacity:.5!important}
+html #game #gameControls .festivalFishButtons{gap:3px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+html #game #gameControls.mb5ActivityAssist:not([hidden]){grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr))!important}
+@media(max-width:480px){
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls):not([hidden]){max-height:min(40dvh,260px)!important;overflow-y:auto!important;overscroll-behavior:contain}
+}
+@media(forced-colors:active){
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls):not([hidden]){background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important}
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button{color:ButtonText!important;border-bottom:1px solid ButtonText!important}
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button[aria-pressed=true]{background:Highlight!important;color:HighlightText!important}
+}
+`;document.head.append(pawSingleActivitySurface);
+/* PAW_SINGLE_ACTIVITY_SURFACE_END */
+
+/* PAW_PROFILE_SETTINGS_BEGIN */
+// Canonical utility route: profile > settings. Keep the original storage,
+// language controls, sound and reset handlers, with no second map surface.
+function pawOpenProfileSettings(){
+ page(tr('Settings','设置'),tr('Make Pawradise your own.','按自己的节奏享受小镇。'),q=>{
+  const surface=element('section','',q,'pawProfileSettings');
+  surface.append(townSettingsPanel);
+  townSettingsOpen=true;syncTownSettings();
+  const soundRows=element('div','',surface,'pawProfileSoundRows');
+  for(const [id,en,cn] of [['ambience','Nature and room sounds','环境音'],['effects','Interaction sounds','互动音效']]){
+   const row=element('label','',soundRows);element('span',tr(en,cn),row);
+   const input=element('input','',row);input.type='checkbox';input.checked=meowSoundPrefs[id]!==false;
+   input.onchange=()=>{meowSoundPrefs[id]=input.checked;save('meowSoundPrefsV1',meowSoundPrefs);updateMeowAudioBuses()};
+  }
+ });
+ mbHomePageBack(tr('‹ Profile','‹ 返回档案'),()=>{closeTownSettings();lifeProfile();$('content').querySelector('.pawProfileSettingsEntry')?.focus()});
+}
+const pawProfileSettingsBefore=lifeProfile;
+lifeProfile=function(...args){
+ const result=pawProfileSettingsBefore(...args),q=$('content'),book=q.querySelector('.journalProfileBook');
+ if(book&&!book.querySelector('.pawProfileSettingsEntry')){
+  const entry=b(book,tr('Settings','设置'),pawOpenProfileSettings);entry.className='pawProfileSettingsEntry';
+  const identity=book.querySelector('.journalIdentity');if(identity)identity.after(entry);
+ }
+ return result
+};
+const pawProfileSettingsPagePrior=page;
+page=function(...args){
+ const result=pawProfileSettingsPagePrior(...args),q=$('content');
+ const lang=q.querySelector(':scope > .row button:nth-child(2)');
+ if(lang&&['EN','中文'].includes(lang.textContent.trim())){lang.hidden=true;lang.classList.add('pawRetiredPageLanguage')}
+ return result
+};
+const pawProfileSettingsGatePrior=proRender;
+proRender=function(...args){
+ const result=pawProfileSettingsGatePrior(...args);
+ if(shrineReturning){proposal.querySelector('.shrineLanguageMenu')?.remove();proposal.querySelector('header .languageChoice')?.remove()}
+ return result
+};
+const pawProfileBalance=$('hudStats'),pawProfileIdentity=$('hudName').parentElement;
+pawProfileIdentity.append(pawProfileBalance);
+const pawProfileSettingsHUDPrior=compactTownProfile;
+compactTownProfile=function(...args){
+ const result=pawProfileSettingsHUDPrior(...args);
+ const name=$('hudName').textContent,balance=$('hudCoins').getAttribute('aria-label')||$('hudCoins').textContent;
+ $('profileHud').setAttribute('aria-label',name+' · '+balance+' · '+tr('Open profile','查看资料'));
+ return result
+};
+const pawProfileSettingsStyle=document.createElement('style');
+pawProfileSettingsStyle.textContent=`
+html #game #small,html #game #hudProgress,html #game #content .pawRetiredPageLanguage{display:none!important}
+html #game #hud{padding-right:0!important}
+html #game #profileHud{height:auto!important;min-height:44px!important;gap:6px!important}
+html #game #profileHud>#hudStats,html #game #profileHud #hudStats{display:block!important;margin:0!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
+html #game #profileHud #hudStats #hudCoins{display:inline-flex!important;min-height:0!important;padding:0!important;gap:3px!important;background:none!important;border:0!important;box-shadow:none!important;font-size:11px!important;line-height:1.2!important}
+html #game #profileHud #hudStats #hudCoins.pawHudCoinPainted::before{width:15px!important;height:15px!important;flex-basis:15px!important}
+html #game #profileHud #hudName{display:block!important;line-height:1.25!important}
+html #game #content .pawProfileSettingsEntry{min-height:44px!important;width:100%;margin:7px 0!important;border:0!important;box-shadow:none!important;background:#e7dcc6!important;color:#514936!important}
+html #game #content .pawProfileSettings{max-width:460px;margin:auto;padding:0;border:0;background:none;box-shadow:none}
+html #game #content #townSettingsPanel:not([hidden]){display:grid!important;position:static!important;width:100%!important;max-width:none!important;gap:8px;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;overflow:visible!important;max-height:none!important}
+html #game #content #townSettingsPanel[hidden],html #game #content #townSettingsPanel #mute,html #game #content #townSettingsPanel #language,html #game #content #townSettingsPanel [hidden]{display:none!important}
+html #game #content #townSettingsPanel .languageChoice{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:0!important;background:none!important;border:0!important}
+html #game #content #townSettingsPanel .townSettingsExtra{display:grid!important;gap:0;background:none!important;border:0!important}
+html #game #content #townSettingsPanel button{min-height:44px!important;border:0!important;border-bottom:1px solid #c7b89c!important;border-radius:0!important;background:none!important;color:#514936!important;box-shadow:none!important;text-align:left!important;white-space:normal!important}
+html #game #content #townSettingsPanel .languageChoice button{text-align:center!important}
+html #game #content #townSettingsPanel button[aria-pressed=true]{background:#dbe1cb!important}
+html #game #content #townSettingsPanel .pawResetConfirm{display:grid;gap:5px;padding:8px 0;border:0;background:none;box-shadow:none}
+html #game #content #townSettingsPanel .pawResetConfirm button:first-of-type{color:#894d3f!important}
+html #game #content .pawProfileSoundRows label{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:44px;border-bottom:1px solid #c7b89c}
+html #game #content .pawProfileSoundRows input{width:24px;height:24px;accent-color:#536d58}
+html #game #content .pawProfileSettings button:focus-visible,html #game #content .pawProfileSettingsEntry:focus-visible{outline:2px solid #39594d!important;outline-offset:1px!important}
+@media(forced-colors:active){html #game #content .pawProfileSettings button,html #game #content .pawProfileSettingsEntry{background:Canvas!important;color:CanvasText!important;border-bottom:1px solid CanvasText!important}html #game #content .pawProfileSettings button[aria-pressed=true]{background:Highlight!important;color:HighlightText!important}}
+`;document.head.append(pawProfileSettingsStyle);
+/* PAW_PROFILE_SETTINGS_END */
+
+/* PAW_TRAVELLER_GREETING_BEGIN */
+// Original full-body illustrated key poses. Foot landmarks are provisional
+// visual readings of the inspected extracted images, not new motion frames.
+const pawTravellerWaveArt=Object.freeze([[153,270,74,263],[136,266,80,259],[147,260,89,253],[158,278,94,271]].map(([width,height,x,y],id)=>({path:'assets/visual/staging/2026-11-27-extracted/players/'+id+'/wave.webp',width,height,foot:[x,y]})));
+function pawTravellerGreetingFrame(g,now,place,roomId,id,x,y,walking,eligible){
+ if(!g||!eligible||walking||g.place!==place||g.room!==roomId||g.id!==id||![now,x,y].every(Number.isFinite))return false;
+ return now>=g.at&&now-g.at<.95&&Math.hypot(x-g.x,y-g.y)<2
+}
+// Do not borrow a front-facing pose for a side/back-facing actor, a moving
+// peer (including the interpolation after a heartbeat), or a fictional NPC.
+function pawPeerWaveEligible(a,place,roomId,kind,facing,walking,visible){
+ return !!a&&a.sharedPeer===true&&!a.fictionalVisitor&&visible===true&&a.place===place&&(a.room||'')===roomId&&a.gesture==='wave'&&a.avatar===kind&&Number.isInteger(kind)&&kind>=0&&kind<4&&facing==='down'&&a.facing==='down'&&!walking&&a.walking===0&&[a.x,a.y,a.toX,a.toY].every(Number.isFinite)&&Math.hypot(a.x-a.toX,a.y-a.toY)<.5
+}
+/* PAW_TRAVELLER_GREETING_END */
+let pawTravellerGreeting=null,pawTravellerSharedWaveSeen=0,pawGreetingPeerActor=null;
+function pawBeginTravellerGreeting(actor,frontOnly=true){
+ if(!actor||activity||transitioning||document.hidden||!Number.isInteger(avatar)||avatar<0||avatar>3||frontOnly&&actor.facing!=='down')return false;
+ if(!mbArtImage(pawTravellerWaveArt[avatar]))return false;
+ pawTravellerGreeting={place:scene,room:room||'',id:avatar,x:actor.x,y:actor.y,at:t};
+ return true
+}
+const pawGreetingTalkPrior=npcTalk;
+npcTalk=function(n,...args){
+ const result=pawGreetingTalkPrior(n,...args);
+ if(n&&!n.sharedPeer&&n.kind!==2&&!room&&talkOpen)pawBeginTravellerGreeting(p);
+ return result
+};
+const pawGreetingIndoorPrior=pawIndoorSocialTalk;
+pawIndoorSocialTalk=function(...args){
+ const result=pawGreetingIndoorPrior(...args);
+ if(result)pawBeginTravellerGreeting(indoor);
+ return result
+};
+// Keep original peer corridor/room eligibility and label drawing. Only
+// substitute the body artwork within the original actor's draw call.
+function pawGreetingWithPeer(actor,paint){
+ const previous=pawGreetingPeerActor;
+ pawGreetingPeerActor=actor?.sharedPeer===true&&!actor.fictionalVisitor?actor:null;
+ try{return paint()}finally{pawGreetingPeerActor=previous}
+}
+const pawGreetingMapPeerPrior=drawSharedTownActor;
+drawSharedTownActor=function(a,...args){return pawGreetingWithPeer(a,()=>pawGreetingMapPeerPrior(a,...args))};
+const pawGreetingRoomPeerPrior=drawSharedRoomActor;
+drawSharedRoomActor=function(a,...args){return pawGreetingWithPeer(a,()=>pawGreetingRoomPeerPrior(a,...args))};
+const pawGreetingBackHumanPrior=backHuman;
+backHuman=function(x,y,kind,walking,facing,scale=1){
+ const peer=pawGreetingPeerActor,visible=!activity&&!transitioning&&!document.hidden&&proposal.hidden&&$('page').style.display!=='block';
+ if(pawPeerWaveEligible(peer,scene,room||'',kind,facing,walking,visible)&&sharedTownVisible()&&sharedTown.ready&&sharedTown.actors.get(peer.id)===peer&&Math.hypot(x-peer.x,y-peer.y)<.01){
+  const record=pawTravellerWaveArt[kind],im=mbArtImage(record);
+  if(im){mbArtDrawFrame(record,im,x,y,scale,false);return}
+ }
+ const actor=room?indoor:p,local=!peer&&!activity&&!pawRenderedWalker&&kind===avatar&&actor&&Math.hypot(x-actor.x,y-actor.y)<.01;
+ if(local&&Number.isInteger(kind)&&kind>=0&&kind<4){
+  const record=pawTravellerWaveArt[kind],im=mbArtImage(record);
+  // Existing opt-in gesture: show it once after returning to the scene,
+  // never replay it every frame or interrupt walking.
+  if(visible&&!walking&&im&&actor.facing==='down'&&sharedTown.enabled&&sharedTown.gesture==='wave'&&sharedTown.gestureUntil>Date.now()&&sharedTown.gestureUntil!==pawTravellerSharedWaveSeen){
+   pawTravellerSharedWaveSeen=sharedTown.gestureUntil;pawBeginTravellerGreeting(actor)
+  }
+  if(facing==='down'&&pawTravellerGreetingFrame(pawTravellerGreeting,t,scene,room||'',kind,x,y,walking,visible)&&im){
+   pawSyncIdleGait(x,y,kind);mbArtDrawFrame(record,im,x,y,scale,false);return
+  }
+  if(pawTravellerGreeting&&(walking||!visible||t-pawTravellerGreeting.at>=.95||pawTravellerGreeting.place!==scene||pawTravellerGreeting.room!==(room||'')))pawTravellerGreeting=null
+ }
+ return pawGreetingBackHumanPrior(x,y,kind,walking,facing,scale)
+};
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
