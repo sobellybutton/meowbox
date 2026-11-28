@@ -13650,11 +13650,11 @@ function pawYueShareFromChart(data,topic,section){
  openMeowShare(data,()=>{
   if(used||!pawYueShareReturnMatches(origin,context()))return;
   used=true;destinyPage(false,chosen);
-  const restored=q.querySelector('.chartConsultation');
-  if(!restored)return;
+  const restored=q.querySelector('.chartConsultation'),restoredChart=yueSessionProfiles.self.chart;
+  if(!restored||!restoredChart)return;
   // Let the ordinary chart observer choose its default board first.
   requestAnimationFrame(()=>{
-   if(room!=='destiny'||activity||!restored.isConnected||pane.dataset.pawYueDesk!=='true'||yueSessionProfiles.self.chart!==origin.chart)return;
+   if(room!=='destiny'||activity||!restored.isConnected||pane.dataset.pawYueDesk!=='true'||yueSessionProfiles.self.chart!==restoredChart||pawHostVisit!==origin.visit)return;
    const buttons=q.querySelectorAll('.palaceViewTools button');
    if(viewIndex>=0&&buttons[viewIndex])buttons[viewIndex].click();
    Array.from(q.querySelectorAll('details')).forEach((node,i)=>{if(i<disclosures.length)node.open=disclosures[i]});
