@@ -7401,6 +7401,9 @@ renderChartConsultation=function(out,z){
   const actions=()=>[[tr('Ask another question','再问一题'),again],[tr('Read my chart','看看命盘'),returnChart],[tr('Finish for now','今天先到这里'),finish]];
   function reply(topic){
    if(!valid())return;
+   // Keep the chart's topic selection in sync with the conversational answer.
+   const topicButton=section.querySelector('.chartTopics [data-topic="'+topic.k+'"]');
+   if(topicButton)topicButton.click();
    const data=chartConsultData(z,topic);
    const stars=data.stars.length?data.stars.join('、'):data.opposite.join('、');
    const intro=tr('Let us consider ','咱们看看')+tr(...topic.name)+'. ';
