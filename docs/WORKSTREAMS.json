@@ -856,7 +856,10 @@
         "cf4ea6a7: strict real touch selection across physical station plaque and edge handoff; bounded retries when camera changes visibility, records candidate geometry, hit-test and visibility, no forced taps or route bypass. Exact test source parses. Prior ios-tall (140882515716) and ios-large (140883194819) WebKit jobs failed on the same disappearing station plaque. New matrix 46114041746 pending. Actual placement fix requires source coordination. No acceptance promotion.",
         "92cd0068 adds focused WebKit ios-tall and ios-large station regression, pinned to triggering commit, only runs on diagnostic script/workflow edits or manual dispatch, no cancellation from unrelated gameplay pushes. Broad nine-profile gate retained. No browser pass yet; new workflow pending. Source fix not claimed."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-rail-touch-route-ownership",
+        "until": 1795847172165
+      },
       "blocker": "Verify new live braking and alpha correction, nine-profile CI results, actual screenshot review and physical iOS/Android mobile browsers (Safari, Chrome, Samsung Internet, Firefox) across representative phone sizes, rotation, safe areas, cold loads. Browser simulation is not physical-device acceptance."
     },
     {
