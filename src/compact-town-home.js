@@ -104,6 +104,17 @@ async function cutawayArtReady(paths,decode){
  if(!Array.isArray(paths)||!paths.length)return false;
  try{return (await Promise.all(paths.map(path=>decode(path)))).every(Boolean)}catch{return false}
 }
+// Use the same visible bottom contact for both actors and furniture.
+// Collision still uses the complete furniture footprint.
+function cutawayDepth(y,layer='floor'){
+ if(layer==='rug')return 2;if(layer==='wall')return 3;
+ return Number.isFinite(y)?20+Math.round(y*1000):20
+}
+function cutawayFootPivot(frame,mirrored=false){
+ if(!frame||![frame.width,frame.height,...(frame.foot||[])].every(Number.isFinite)||frame.width<=0||frame.height<=0||frame.foot?.length!==2||frame.foot[0]<0||frame.foot[0]>frame.width||frame.foot[1]<0||frame.foot[1]>frame.height)return {x:50,y:100};
+ // The transform origin stays on the real foot when mirroring.
+ return {x:100*frame.foot[0]/frame.width,y:100*frame.foot[1]/frame.height}
+}
 // PAW_COMPACT_HELPERS_END
 function replaceExact(root,selector,oldEN,oldZH,en,cn){
  for(const node of root.querySelectorAll(selector)){
@@ -305,19 +316,27 @@ function mountCutaway(q,legacyStage){
   shell.onerror=fail;shell.onload=()=>{if(shell.naturalWidth&&shell.naturalHeight)stage.style.aspectRatio=shell.naturalWidth+'/'+shell.naturalHeight};
   if(shell.complete&&shell.naturalWidth)shell.onload();
   b(controls,tr('Return to original room','返回原本小窝'),close);
-  const edit=b(controls,tr('Move furniture','移动家具'),()=>{stop();editing=!editing;selected=null;edit.textContent=editing?tr('Finish arranging','完成布置'):tr('Move furniture','移动家具');render();sayStatus()});
+  const edit=b(controls,tr('Move furniture','移动家具'),()=>{stop();position(point(actor));actorArt('down',false,0);editing=!editing;selected=null;edit.textContent=editing?tr('Finish arranging','完成布置'):tr('Move furniture','移动家具');render();sayStatus()});
   let editing=false,selected=null,actor=cutawayFree(api,layout,items).at(-1),raf=0,epoch=0;
   const lampKeys=items.filter(i=>['lamp','shojiLamp','chineseLantern'].includes(i.key)).map(i=>i.key);
   const savedLights=store?.[zone]?.fingerprint===fingerprint?store[zone].lights:null;
   const lights=new Set(Array.isArray(savedLights)?lampKeys.filter(id=>savedLights.includes(id)):lampKeys);
-  const player=element('img','',stage,'pawCutawayActor');player.alt=tr('Your avatar','你的角色');pawHomeActorArt(player,'down',false,0);
+  const player=element('img','',stage,'pawCutawayActor');player.alt=tr('Your avatar','你的角色');actorArt('down',false,0);
   const stop=()=>{epoch++;cancelAnimationFrame(raf);raf=0};
-  const onVisibility=()=>{if(document.hidden){stop();position(point(actor));pawHomeActorArt(player,'down',false,0)}};
+  const onVisibility=()=>{if(document.hidden){stop();position(point(actor));actorArt('down',false,0)}};
   const observer=new MutationObserver(()=>{if(!panel.isConnected||$('page').style.display!=='block')close()});
   observer.observe($('page'),{attributes:true,attributeFilter:['style','hidden']});observer.observe(q,{childList:true});
   document.addEventListener('visibilitychange',onVisibility);
   const point=c=>api.project(layout,c.u+.5,c.v+.5);
-  function position(p){player.style.left=p.x*100+'%';player.style.top=p.y*100+'%';player.style.zIndex=String(20+Math.round(p.y*1000))}
+  function position(p){player.style.left=p.x*100+'%';player.style.top=p.y*100+'%';player.style.zIndex=String(cutawayDepth(p.y))}
+  function actorArt(direction,walking,distance){
+   pawHomeActorArt(player,direction,walking,distance);
+   const dir=direction==='left'?'right':direction,frames=mbArtRegistry.players[avatar??0]?.walk?.[dir];
+   const frame=walking&&frames?.length?frames[Math.floor(distance/2.1)%frames.length]:null;
+   const im=frame&&mbArtImage(frame),actual=im?.complete&&im.naturalWidth&&player.getAttribute('src')===im.src?frame:null;
+   const pivot=cutawayFootPivot(actual,direction==='left');
+   player.style.setProperty('--paw-cutaway-foot-x',pivot.x+'%');player.style.setProperty('--paw-cutaway-foot-y',pivot.y+'%')
+  }
   function sayStatus(){status.textContent=editing?selected?tr('Tap an empty floor space to place the selected piece.','点击空地摆放选中的家具。'):tr('Tap a piece of furniture to move it.','点击家具开始移动。'):tr('Tap the floor to walk.','点击地板走动。')}
   function persist(){const previous=load('pawHomeCutawayV1',{});save('pawHomeCutawayV1',{...(previous&&typeof previous==='object'?previous:{}),[zone]:{fingerprint,items,lights:[...lights]}})}
   function move(cell){
@@ -329,13 +348,14 @@ function mountCutaway(q,legacyStage){
    const route=cutawayRoute(api,layout,items,actor,goal);if(!route){status.textContent=tr('The furniture is in the way.','家具挡住了去路。');return}
    stop();const token=epoch;let from=point(actor),started=null,distance=0;position(from);
    function step(now){
-    if(token!==epoch||!panel.isConnected||document.hidden||$('page').style.display!=='block'){stop();position(point(actor));pawHomeActorArt(player,'down',false,0);return}
-    const next=route[0];if(!next){position(point(actor));pawHomeActorArt(player,'down',false,distance);if(typeof arrive==='function')arrive();return}
+    if(token!==epoch)return; // An obsolete callback must not cancel a newer walk.
+    if(!panel.isConnected||document.hidden||$('page').style.display!=='block'){stop();position(point(actor));actorArt('down',false,0);return}
+    const next=route[0];if(!next){position(point(actor));actorArt('down',false,distance);raf=0;if(typeof arrive==='function')arrive();return}
     const to=point(next),length=Math.hypot(to.x-from.x,to.y-from.y),duration=Math.max(160,length*3400);
     if(started===null)started=now;
     const t=residentReducedMotion.matches?1:Math.min(1,(now-started)/duration);
     const p={x:from.x+(to.x-from.x)*t,y:from.y+(to.y-from.y)*t};position(p);
-    pawHomeActorArt(player,pawHomeDirection({x:from.x,y:from.y},{x:to.x,y:to.y},stage.clientWidth/Math.max(1,stage.clientHeight)),t<1,distance+t*length*100);
+    actorArt(pawHomeDirection({x:from.x,y:from.y},{x:to.x,y:to.y},stage.clientWidth/Math.max(1,stage.clientHeight)),t<1,distance+t*length*100);
     if(t===1){actor=route.shift();from=to;started=null;distance+=length*100}raf=requestAnimationFrame(step)
    }
    raf=requestAnimationFrame(step)
@@ -370,7 +390,7 @@ function mountCutaway(q,legacyStage){
     im.alt=roomNames9[item.key]?tr(...roomNames9[item.key]):item.key;im.src=api.furniture(item.id);im.onerror=fail;im.draggable=false;
     im.style.left=a.x*100+'%';im.style.top=(a.y-(f.layer==='wall'?.14:0))*100+'%';
     im.style.width=Math.min(46,Math.max(12,furnitureWidth(item.key)*(layout==='starter'?1:.78)))+'%';
-    im.style.zIndex=String(f.layer==='rug'?2:f.layer==='wall'?3:20+Math.round(a.depth*1000));
+    im.style.zIndex=String(cutawayDepth(a.y,f.layer));
     // The same illustrated cutout can be mirrored, never rotated onto its side.
     im.style.setProperty('--paw-cutaway-facing',item.turn%2?' -1':'1');
     if(lights.has(item.key)){const glow=element('div','',stage,'pawCutawayGlow');glow.style.left=a.x*100+'%';glow.style.top=(a.y-(f.layer==='wall'?.14:.06))*100+'%';glow.setAttribute('aria-hidden','true')}
@@ -442,7 +462,7 @@ const style=document.createElement('style');style.textContent=`
 #game #content .pawCutawayStage{position:relative;width:100%;aspect-ratio:1;isolation:isolate;overflow:hidden;background:#eadfc8}
 #game #content .pawCutawayShell{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none}
 #game #content .pawCutawayFurniture,#game #content .pawCutawayActor{position:absolute;transform:translate(-50%,-100%);object-fit:contain;max-height:40%;filter:drop-shadow(0 2px 2px #503e3040)}
-#game #content .pawCutawayActor{width:12%;max-height:28%;pointer-events:none;transform:translate(-50%,-100%) scaleX(var(--paw-home-facing,1))}
+#game #content .pawCutawayActor{width:12%;max-height:28%;pointer-events:none;transform-origin:var(--paw-cutaway-foot-x,50%) var(--paw-cutaway-foot-y,100%);transform:translate(calc(0% - var(--paw-cutaway-foot-x,50%)),calc(0% - var(--paw-cutaway-foot-y,100%))) scaleX(var(--paw-home-facing,1))}
 #game #content .pawCutawayFurniture{transform:translate(-50%,-100%) scaleX(var(--paw-cutaway-facing,1))}
 #game #content .pawCutawayGlow{position:absolute;z-index:4;pointer-events:none;width:32%;aspect-ratio:1;transform:translate(-50%,-50%);background:radial-gradient(ellipse,#ffe6a76b,transparent 72%)}
 #game #content .pawCutawayControls button[hidden]{display:none!important}
