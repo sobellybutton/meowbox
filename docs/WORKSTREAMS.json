@@ -681,7 +681,10 @@
         "Measure frame-rate-independent walking and animation, speed/distance over timed routes, 30/60/120 Hz where available, hidden-tab and load transitions. Character and NPC scale/motion regressions need real browser video.",
         "Measure pace/time/distance and visible body-height travel, frame pacing on native phone/desktop; bound scene-local NPC cost and route recalculations; no arbitrary timing constants."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-20261128-1214-entrance",
+        "until": 1795841040000
+      },
       "blocker": "Actual iPhone Safari blank-screen cause, performance traces, real frame timings, deployed browser verification and artwork coverage remain unresolved.\n\nOwner device acceptance clarification (27 Nov): Record actual frame timing, asset failures, blank-screen diagnosis, iPhone Safari browser chrome and app resume/orientation, desktop resize, and device/browser/commit provenance. Distinguish simulated and physical hardware evidence. Apply section 10.\n\n28 Nov owner iPhone screenshot feedback: entrance takes too long. Current index.html gates document assembly on ten parallel source fetches with no-cache and up to two 25-second attempts per file. This is a candidate bottleneck, not measured timing. Measure navigation-to-first-painted-gate and first-interactive time separately, cold/warm cache and constrained mobile network; instrument asset decode and retry, avoid unnecessary startup dependencies, consider generated versioned bundle and defer noncritical assets. Targets: ~2s first useful gate frame, ~3s interactive on typical connection (design budgets, not observed results). Actual duration unverified.\n\nEnd-to-end critique, 28 Nov: Source boot currently requests and assembles ten source files before game starts, with bounded 25s fetch timeout and retry; measure actual waterfall, decode, memory and frame pacing before choosing optimization. Measure first usable input and first enjoyable action, not just document load. Retain recovery and state. Apply section 12.\n\nEntrance loader first refinement committed. Measure real cold/warm waterfall and first usable game input, compare same device and network against prior deployment; generated build bundle remains a candidate, not implemented. No speed claim without measurements."
     },
     {
