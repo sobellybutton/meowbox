@@ -1058,8 +1058,20 @@ jobs:
 
   visual-experiences:
     if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'release/candidate-')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - device: small-chromium
+            engine: chromium
+          - device: tall-webkit
+            engine: webkit
+          - device: tablet-chromium
+            engine: chromium
+          - device: desktop-chromium
+            engine: chromium
     concurrency:
-      group: meowbox-visual-${{ github.ref }}
+      group: meowbox-visual-${{ github.ref }}-${{ matrix.device }}
       cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -1070,14 +1082,16 @@ jobs:
           node-version: '22'
       - run: node scripts/build.cjs
       - run: npm install --no-save --no-package-lock playwright
-      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
       - run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
       - name: Capture all exposed experiences in both languages
+        env:
+          MB_AUDIT_DEVICE: ${{ matrix.device }}
         run: |
           python3 -m http.server 8769 >/tmp/meowbox-visual-server.log 2>&1 &
           node scripts/visual-experience-audit.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: meowbox-all-experience-visual-review
+          name: meowbox-all-experience-visual-review-${{ matrix.device }}
           path: visual-review/
