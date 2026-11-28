@@ -4244,7 +4244,7 @@ function pawTownFront(){
   const hotspot=(id,en,cn,x,y,fn)=>{const btn=b(photo,tr(en,cn),fn||(()=>pawOpenTownSpace(id)));btn.className='pawTownHotspot';btn.style.left=x+'%';btn.style.top=y+'%';return btn};
   hotspot('board','Noticeboard','留言墙',20,36);
   hotspot('lounge','Tea chat','茶馆闲聊',22,51);
-  hotspot('celebrate','Good things','小确幸',84,45);
+  hotspot('gratitude','Little Joys','小确幸',84,45);
   const more=element('section','',front,'pawTownSection pawHallExtras');
   if(communityURL()){pawTownLink(more,'public','Traveller lobby','旅人聊天室','Chat with real visitors.','和真实旅人聊聊天。');pawTownLink(more,'stroll','Meet travellers','结伴散步','Join a shared walk.','结伴散步。')}
   const paper=b(more,tr('Town paper & private notes','小镇日报与私密留言'),()=>todayScoopBefore.call($('dockScoop')));paper.className='pawTownTextLink';
@@ -4578,6 +4578,7 @@ const pawTownFinalBefore=townChatPage;
 communityTabs=function(q){
  const tabs=element('nav','',q,'communityTabs pawTownNotebookTabs');tabs.setAttribute('aria-label',tr('Community spaces','社区空间'));
  for(const [key,en,cn] of [['board','Noticeboard','留言墙'],['lounge','Tea table','茶桌闲聊'],['public','Travellers','旅人聊天室'],['gratitude','Little Joys','小确幸墙']]){
+  if(key==='public'&&!communityURL()&&!['public','stroll'].includes(communityTab))continue;
   const btn=b(tabs,tr(en,cn),()=>{communityTab=key;townChatPage()});btn.setAttribute('aria-pressed',String(communityTab===key||key==='public'&&communityTab==='stroll'))
  }
 };
@@ -6001,7 +6002,7 @@ townChatPage=function(...args){
   const notes=element('div','',wall,'pawJoyNotes');
   function render(){notes.replaceChildren();for(const n of pawJoyRead().slice().reverse()){const a=element('article','',notes,'pawJoyNote');element('strong',tr('My note','我的便签'),a);element('small',n.day,a);element('p',n.text,a)}for(const [name,copy] of pawJoySeeds){const a=element('article','',notes,'pawJoyNote');element('strong',tr(...name),a);element('small',tr('Town resident','小镇居民'),a);element('p',tr(...copy),a)}}
   form.onsubmit=e=>{e.preventDefault();const value=input.value.trim().slice(0,240);if(!value)return;save(pawJoyKey,[...pawJoyRead(),{day:day(),text:value}].slice(-30));input.value='';render();status.textContent=tr('Pinned privately.','已贴上私人便签。')};
-  b(wall,tr('Share a good thing with travellers','与旅人分享一件好事'),()=>goodCompanyPublic());render()
+  if(communityURL())b(wall,tr('Share a good thing with travellers','与旅人分享一件好事'),()=>goodCompanyPublic());render()
  });journalLanguage(townChatPage)
 };
 /* Readable editorial type, shared by both languages; no external font download. */
@@ -7909,7 +7910,17 @@ pawFictionEdition=function(now,weather=''){
  return entries
 };
 const pawTopicBoardBefore=townChatPage;
-townChatPage=function(...args){if(communityTab==='board')pawRefreshTopicFeed();return pawTopicBoardBefore(...args)};
+townChatPage=function(...args){
+ if(communityTab==='board')pawRefreshTopicFeed();
+ const result=pawTopicBoardBefore(...args),q=$('content');
+ // The board and private gratitude renderers bypass the earlier hall wrapper.
+ // Restore the entrance context after ALL community page renderers.
+ if(pawTownFromDock&&q.querySelector('.communityTabs')){
+  const back=q.querySelector(':scope > .row button:first-child');
+  if(back){back.textContent=tr('‹ Town Hall','‹ 小镇广场');back.onclick=pawTownFront}
+ }
+ return result
+};
 if(typeof requestIdleCallback==='function')requestIdleCallback(pawRefreshTopicFeed,{timeout:3500});else setTimeout(pawRefreshTopicFeed,1800);
 
 /* PAW_GUEST_PERSONALITY_BEGIN */
