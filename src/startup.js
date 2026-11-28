@@ -13973,7 +13973,7 @@ pawYueDeskCSS.textContent=`
 #game #page[data-paw-yue-desk="true"] .pawYueParchmentTools button{flex:1;min-height:44px}
 #game #page[data-paw-yue-desk="true"] [data-paw-yue-folded]{display:none!important}
 #game #page[data-paw-yue-desk="true"] button[data-paw-yue-scroll]{display:flex;align-items:center;justify-content:center;gap:5px;flex:1 1 100%;min-height:58px}
-#game #page[data-paw-yue-desk="true"] button[data-paw-yue-scroll]::before{content:'';display:block;flex:0 0 86px;height:55px;background:url('assets/visual/staging/2026-11-28-consolidated/atlases/destiny-study-props.webp') -81.6px -85.2px / 289.6px 217.2px no-repeat;pointer-events:none}
+#game #page[data-paw-yue-desk="true"] button[data-paw-yue-scroll]::before{content:'';display:block;flex:0 0 86px;height:55px;background:url('assets/visual/painted/master-yue/folded-scroll.webp') center / contain no-repeat;pointer-events:none}
 #game #page[data-paw-yue-expanded="true"] .ziGrid article:not(.blank){overflow-wrap:anywhere;min-width:0}
 #game #pawRoomGuideToggle:not(:focus-visible),#destinyAccess:not(:focus-visible){clip-path:inset(50%)!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;overflow:hidden!important;pointer-events:none!important;padding:0!important;border:0!important}
 
