@@ -11728,7 +11728,7 @@ function pawFoodRoomAsset(id){
 /* PAW_FOOD_PAINT_END */
 let pawFoodVisit=null;
 const pawFoodImage=(id,retry=false)=>pawRecoveredImage(pawFoodRoomAsset(id),null,retry);
-for(const id of Object.keys(pawFoodRoomSpecs))pawFoodImage(id);
+// Shop plates warm on approach or explicit admission, not at initial entrance.
 function pawFoodRoomActive(){return !!room&&!activity&&pawFoodVisit===room&&pawRoomImageReady(pawFoodImage(room))}
 const pawFoodDoorBefore=walkDoor;
 walkDoor=function(id,...args){if(Object.hasOwn(pawFoodRoomSpecs,id))pawFoodImage(id);return pawFoodDoorBefore(id,...args)};
@@ -12250,7 +12250,7 @@ pawRoomVisitorSpecs.wishes={count:1,points:pawWishLobbyVisitors.map(v=>v.slice()
 // The reading rooms and two-station tea lobby use individually reviewed paintings.
 // Keep the existing activity, save IDs and walking input; never draw a second
 // table or book on a table already present in the painted room.
-const pawReadingRoomIds=['tarot','destiny','quiz','story','match','tea','fish'];
+const pawReadingRoomIds=['tarot','destiny','quiz','story','match','tea','fish','arcade'];
 const pawReadingPlate={x:245,y:235,w:550*928/1648,h:550};
 function pawReadingWorld(point,p=pawReadingPlate){return [p.x+point[0]*p.w,p.y+point[1]*p.h]}
 function pawReadingNormalized(x,y,p=pawReadingPlate){return [(x-p.x)/p.w,(y-p.y)/p.h]}
@@ -12340,9 +12340,9 @@ indoorSegment=function(a,b,...args){return pawReadingActive()?pawReadingAPI().se
 // Use the reviewed lane for all normal inputs, not the rectangular y>=565 clamp.
 const pawPierDestinationBefore=indoorDestination;
 indoorDestination=function(x,y,goal=null,facing=null){
- if(room!=='fish'||!pawReadingActive())return pawPierDestinationBefore(x,y,goal,facing);
+ if(!['fish','arcade'].includes(room)||!pawReadingActive())return pawPierDestinationBefore(x,y,goal,facing);
  const route=pawReadingDestination(pawReadingAPI(),room,[indoor.x,indoor.y],x,y);
- if(!route?.length){if(goal)hint('Try the clear path beside the river.','请沿河边的小路走。');return false}
+ if(!route?.length){if(goal)hint(room==='fish'?'Try the clear path beside the river.':'Try the clear aisle between the games.',room==='fish'?'请沿河边的小路走。':'请沿游戏机之间的通道走。');return false}
  indoor.route=route;[indoor.tx,indoor.ty]=route.shift();indoor.goal=goal;indoor.goalFacing=facing;return true
 };
 function pawReadingBackdrop(){
@@ -12365,10 +12365,10 @@ riverSceneBackdrop=function(...args){if(room==='fish'&&pawReadingActive()){pawRe
 riverAuntie=function(...args){if(room==='fish'&&pawReadingActive())return;return pawPierAuntieBefore(...args)};
 const pawPierMarkBefore=markIndoorStation;
 markIndoorStation=function(id,from,anchor){
- if(room==='fish'&&pawReadingActive()){
+ if(['fish','arcade'].includes(room)&&pawReadingActive()){
   // Remove the generic oversized rectangle appended after the plaque. It can
   // overlap the next river activity in this narrow painting.
-  const last=hit.at(-1),q=pawReadingAPI().rooms.fish.stations[id];
+  const last=hit.at(-1),q=pawReadingAPI().rooms[room].stations[id];
   if(q&&hit.length>from&&last.w===136&&last.h===128){const [x,y]=pawReadingWorld(q.object);Object.assign(last,{x:x-24,y:y-24,w:48,h:48})}
  }
  return pawPierMarkBefore(id,from,anchor)
@@ -12453,20 +12453,25 @@ function pawMappedExitPlan(api,id,position){
  const route=pawReadingDestination(api,id,position,...entry);
  return route?.length?{entry,arrived:false}:null
 }
+function pawFoodExitPlan(id,position){
+ const q=pawFoodRoomSpecs[id];if(!q||!Array.isArray(position)||position.length!==2||!pawFoodSafe(id,...position))return null;
+ const entry=q.entry.slice();if(!pawFoodSafe(id,...entry))return null;
+ return {entry,arrived:Math.hypot(position[0]-entry[0],position[1]-entry[1])<=4}
+}
 /* PAW_MAPPED_EXIT_END */
 // The painted lobby has a real threshold. Back walks to it before the
 // existing outdoor transition, rather than vanishing beside the table.
 const pawMappedExitBefore=$('back').onclick;
 let pawMappedExitGoal=null;
 $('back').onclick=function(...args){
- if(!pawReadingActive()||!indoorReady()||continuityRoom!==room)return pawMappedExitBefore.apply(this,args);
+ if((!pawReadingActive()&&!pawFoodRoomActive())||!indoorReady()||continuityRoom!==room)return pawMappedExitBefore.apply(this,args);
  if(pawMappedExitGoal&&indoor.goal===pawMappedExitGoal)return;
- const expected=room,visit=pawReadingVisit,plan=pawMappedExitPlan(pawReadingAPI(),room,[indoor.x,indoor.y]);
+ const expected=room,food=pawFoodRoomActive(),visit=food?pawFoodVisit:pawReadingVisit,position=[indoor.x,indoor.y],plan=food?pawFoodExitPlan(room,position):pawMappedExitPlan(pawReadingAPI(),room,position);
  if(!plan){hint('Follow the clear path to the doorway.','请沿小路走向门口。');return}
  releaseWalkKeys();joystickReset();
  const finish=()=>{
   if(pawMappedExitGoal===finish)pawMappedExitGoal=null;
-  if(room!==expected||pawReadingVisit!==visit||!indoorReady())return;
+  if(room!==expected||(food?pawFoodVisit:pawReadingVisit)!==visit||!indoorReady())return;
   return pawMappedExitBefore.apply(this,args)
  };
  if(plan.arrived)return finish();
