@@ -9896,7 +9896,7 @@ function pawFoodActionAllowed(rendered,current,stage,kind,blocked){
 function pawFoodClock(q,kind,now,blocked){
  if(!q||!Number.isFinite(now))return false;
  const phase=kind==='bubbleTea'?q.teaStage:kind==='cook'?(q.pawSoupServeAt!==undefined&&!q.pawSoupServed?'serve':q.tasteAt!==undefined&&!q.tasted?'taste':null):null;
- const field=['pouring','seasoning','sealing','sip'].includes(phase)?'teaAt':phase==='taste'?'tasteAt':phase==='serve'?'pawSoupServeAt':null;
+ const field=['pouring','seasoning','sealing','sip'].includes(phase)||phase==='pearls'&&q.pawScoopPending===true?'teaAt':phase==='taste'?'tasteAt':phase==='serve'?'pawSoupServeAt':null;
  if(!field||!Number.isFinite(q[field])){delete q.pawFoodClock;return false}
  const prior=q.pawFoodClock;
  if(prior&&prior.phase===phase&&prior.field===field&&Number.isFinite(prior.at)&&now>=prior.at&&(blocked||prior.blocked))q[field]+=now-prior.at;
@@ -14693,12 +14693,20 @@ function pawLoadFoodProps(){
  }).catch(()=>null).finally(()=>pawFoodLiveJob=null);
  return pawFoodLiveJob
 }
+function pawFoodWarmKeys(id){
+ return id==='boba'?['boba_tea_pot','boba_milk_pitcher','boba_cup_empty','boba_flat_lid','boba_pearls_bowl','boba_jelly_bowl']:id==='kitchen'?['kitchen_small_bowl','kitchen_stock_pot','kitchen_wooden_ladle','kitchen_bamboo_steamer','kitchen_frying_pan','kitchen_wooden_spatula']:[]
+}
 function pawWarmFoodProps(id){
- if(!['kitchen','boba'].includes(id))return;
- if(id==='kitchen')pawKitchenStockImages();
- pawLoadFoodProps().then(q=>{if(!q)return;
-  q.cache.request(id==='boba'?['boba_tea_pot','boba_milk_pitcher','boba_cup_empty','boba_flat_lid']:['kitchen_small_bowl','kitchen_stock_pot','kitchen_wooden_ladle','kitchen_bamboo_steamer','kitchen_frying_pan','kitchen_wooden_spatula'])
- })
+ const keys=pawFoodWarmKeys(id);if(!keys.length)return;
+ if(id==='kitchen'){
+  pawKitchenStockImages();
+  for(const dish of kitchenDishNames){const im=pics['kitchenDish-'+dish];if(im&&!im.complete&&typeof im.decode==='function')im.decode().catch(()=>{})}
+ }
+ pawLoadFoodProps().then(q=>{if(q)q.cache.request(keys)})
+}
+function pawFoodPropReady(id){
+ const q=pawFoodLive;
+ return !!(q?.manifest?.assets?.[id]&&q.placement.ready(q.cache.image(id),q.manifest.assets[id].size))
 }
 const pawLiveFoodWarmBefore=pawWarmRoomAssets;
 pawWarmRoomAssets=function(id,...args){pawWarmFoodProps(id);return pawLiveFoodWarmBefore(id,...args)};
