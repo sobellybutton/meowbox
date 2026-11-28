@@ -322,3 +322,22 @@ Use this as a critique/acceptance matrix, not a demand to make needless changes.
 
 ### Execution and evidence
 For every station create a concise choreography record in the existing canonical task evidence: room and action ID, actual scene asset, entry/return anchors, player/host/visitor roles, route and pace profile, seat/storage/hand/contact coordinates, animation phase and duration, prompt/control, visible effect, recovery/cancel, native viewport camera, missing exact assets and tested evidence. Reuse the existing detailed station rows rather than opening a duplicate backlog. First resolve missing/hidden routes, systemic actor scale/pace and owner-reported legacy activity interfaces; integrate a polished complete vertical slice at a time while non-overlapping lanes prepare exact assets. Record measured travel distance/time, phone and desktop video, and visual defects. No acceptance until the room feels alive and the whole interaction makes sense. 
+
+
+## Final consolidated design baseline: coverage and handoff
+
+Owner direction, 28 November. This is the single final broad review pass, not a new backlog and not evidence of completed inspection. Populate this coverage section progressively from actual live/candidate playback and earlier verified artifacts. Review roles apply the existing 30 lenses; all findings and implementation actions use the canonical workstream IDs and existing remediation fields. Do not stop safe implementation while review coverage is collected.
+
+| Coverage group | Required surfaces | Baseline evidence |
+| --- | --- | --- |
+| First impression | Language, ticket, name/avatar selection, returning entry, railway, gateway, cold/warm load, interruption | Reconcile exact revision and prior evidence; not certified by this entry |
+| Four districts | All maps, paths, doors, labels, HUD, camera, NPCs, transport, discovery and return | Same |
+| All retained venues | Every interior, station, physical action, reaction, result, replay and exit; occupied/quiet states | Same |
+| Character and environment | All avatar identities, facing, movement, scale, poses, hand/seat/foot contact, collision, idle residents, weather and lighting | Same |
+| Dock and nested surfaces | Explore, Today, Town Hall, My Room; settings, profile, journal, passport, bag, collections, shop/decorating, social states, every accessible subview | Same |
+| Results and exports | All shareable live and archive results, both locales and every supported ratio, actual PNG inspection, delivery/cancel/failure, return and private exclusions | Same |
+| Cross-cutting journeys | New and returning users, touch/mouse/keyboard, narrow/tall phones, tablet, desktop, save/reload, accessibility, loading/empty/error states and performance | Same |
+
+For each actual surface, record stable route/location, exact tested commit or deployed SHA, screenshot/motion/export artifact reference, device/locale, review lens, design decision (keep/repair/reuse/redesign/approved retirement), matching canonical task and remediation ID, specific correction and dependency, priority, and acceptance evidence required. Mark unobserved surfaces explicitly and schedule the concrete verification action. Enumerate actual runtime surfaces from the approved product and active implementation rather than treating these seven group rows as exhaustive evidence. Reconcile already inspected work instead of recreating it.
+
+Exit the broad baseline review when every enumerated surface has a recorded decision or explicit verification dependency. Thereafter work by existing workstream and ordered remediation, verify affected journeys and regressions, and revisit a covered decision only for actual new evidence or changed code. Final integrated rendered and deployment verification remains mandatory; no new general design review cycle. No count increase or release claim from this plan entry.
