@@ -7655,22 +7655,46 @@ const meowTextCSS=document.createElement('style');meowTextCSS.textContent=`
 `;document.head.append(meowTextCSS);
 /* Suppress only a hint that collides with a higher-priority control. Keep it in
    the accessible DOM and restore it as soon as the area is clear. */
+// Prefer the quiet lower edge. If a recipe or reading sheet occupies it,
+// use the nearest clear stage space instead of hiding the only instruction.
+function pawHintClearSpot(preferred,width,height,screen,blockers,active=false){
+ const {w,h}=screen;
+ if(![preferred.left,preferred.right,preferred.top,preferred.bottom,width,height,w,h].every(Number.isFinite)||Math.min(width,height,w,h)<=0)return null;
+ const cx=(preferred.left+preferred.right)/2,cy=(preferred.top+preferred.bottom)/2;
+ const fits=r=>r.left>=6&&r.right<=w-6&&r.top>=6&&r.bottom<=h-6&&!blockers.some(v=>speechOverlap(r,v));
+ if(fits(preferred))return {x:cx,y:cy,rect:preferred,original:true};
+ const lower=meowPlaceText(cx,cy,width,height,{left:6,right:w-6,top:h*.55,bottom:h-6},blockers,Math.min(140,h*.23));
+ if(lower)return lower;
+ if(!active)return null;
+ // No overlap with HUD, action buttons or reading sheet even on short phones.
+ // A bounded grid avoids the limited candidate list of meowPlaceText.
+ const loX=10+width/2,hiX=w-10-width/2,loY=Math.max(10,h*.20)+height/2,hiY=h-10-height/2;
+ if(loX>hiX||loY>hiY)return null;
+ let best=null;
+ const xs=[loX,hiX,clamp(cx,loX,hiX)],ys=[loY,hiY,clamp(cy,loY,hiY)];
+ for(let x=loX;x<=hiX;x+=12)xs.push(x);
+ for(let y=loY;y<=hiY;y+=12)ys.push(y);
+ for(const x of xs)for(const y of ys){
+  const rect={left:x-width/2-4,right:x+width/2+4,top:y-height/2-4,bottom:y+height/2+4};
+  if(!fits(rect))continue;
+  const score=Math.abs(x-cx)*1.4+Math.abs(y-cy);
+  if(!best||score<best.score)best={x,y,rect,score}
+ }
+ return best
+}
 let meowHintLayoutKey='';
 function meowHintSpacing(){
  const hintEl=$('hint'),root=$('game').getBoundingClientRect();
- const blockers=meowVisibleRects('#dock,#movePad,#gameControls,#ritualActionBar,#dialogue,#back,#nextStopShortcut');
- // Recalculate only when actual layout/text changes; never remove and reapply
- // the same classes on every polling tick (Safari visibly repaints them).
- const key=[room,activity,zh,hintEl.textContent,Math.round(root.width),Math.round(root.height),getComputedStyle(hintEl).display,...blockers.map(b=>[b.left,b.top,b.right,b.bottom].map(v=>Math.round(v/3)).join(':'))].join('|');
+ const blockers=meowVisibleRects('#hud>*,#small button,#dock,#movePad,#moveGuide,#walkHelp,#gameControls,#ritualActionBar,#dialogue,#back,#nextStopShortcut,#pearlRecipePanel,#destinyAccess,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet,#threeBoardAccess,#lunarRibbon');
+ const key=[scene,room,activity,zh,hintEl.textContent,Math.round(root.width),Math.round(root.height),getComputedStyle(hintEl).display,...blockers.map(b=>[b.left,b.top,b.right,b.bottom].map(v=>Math.round(v/3)).join(':'))].join('|');
  if(key!==meowHintLayoutKey){
   meowHintLayoutKey=key;
   hintEl.classList.remove('meowHintMoved','meowHintBlocked');
   const base=hintEl.getBoundingClientRect(),preferred={left:base.left-root.left,right:base.right-root.left,top:base.top-root.top,bottom:base.bottom-root.top};
-  if(base.width>0&&base.height>0&&blockers.some(v=>speechOverlap(preferred,v))){
-   const dock=meowVisibleRects('#dock')[0],lower=Math.min(root.height-5,dock?.top??root.height-5);
-   const spot=meowPlaceText((preferred.left+preferred.right)/2,(preferred.top+preferred.bottom)/2,base.width,base.height,{left:6,right:root.width-6,top:root.height*.55,bottom:lower},blockers,Math.min(140,root.height*.23));
-   if(spot){hintEl.style.setProperty('--meow-hint-x',spot.x+'px');hintEl.style.setProperty('--meow-hint-y',spot.y+'px');hintEl.classList.add('meowHintMoved')}
-   else hintEl.classList.add('meowHintBlocked')
+  if(base.width>0&&base.height>0){
+   const spot=pawHintClearSpot(preferred,base.width,base.height,{w:root.width,h:root.height},blockers,!!activity);
+   if(spot&&!spot.original){hintEl.style.setProperty('--meow-hint-x',spot.x+'px');hintEl.style.setProperty('--meow-hint-y',spot.y+'px');hintEl.classList.add('meowHintMoved')}
+   else if(!spot)hintEl.classList.add('meowHintBlocked')
   }
  }
  setTimeout(meowHintSpacing,150)
