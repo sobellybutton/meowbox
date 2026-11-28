@@ -691,7 +691,9 @@
       "priority": 3,
       "summary": "Independent English and Chinese creative editorial review, bilingual terminology, satire, clarity and rendered typography",
       "resources": [
-        "src/extensions.js"
+        "src/startup.js",
+        "src/extensions.js",
+        "src/shell.html"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -704,13 +706,11 @@
         "683fde25 + b5435d19: added 54 original EN/ZH resident remarks across all 16 established profiles, with warm local auntie teasing, office-worker humour and reflective character voices per owner direction. Total module bank 182, preserves all previous IDs and pairs, existing live merge path. Exact persisted regression ran against fetched current startup and module with 464 assertions passed; no game mechanics or storage changes. Actual dialogue cadence, rendering and deployment remain unverified.",
         "f96165e8 + fd7d0cec: actual Ah Ma ritual now uses two dedicated bilingual responses for each of all 34 existing worry labels (68 pairs), with safe fallback for invalid targets, independent rotation by target, unchanged hit/reward mechanics. Four preparation, chooser, start and completion dialogue pairs refined. Full source syntax parsed; 209 targeted assertions passed. Live pre-fix screenshot confirmed unrelated laundry curse during unpaid overtime and legacy background/unsupported seating. Post-fix deployment and real device verification not completed.",
         "1b97e8ff + dc28504a: Ah Ma selected-worry punchline remains readable through each three-strike round; distinct post-round line, replay rotation, playful setup; 3f567c04 adds 34-topic bilingual and actual round-handler regression. Complete Ah Ma helper suite passed in connector harness; no browser/visual acceptance.",
-        "abaae10d + a453e1f5 + 29d72350: edited 65 bilingual pairs and added recipe-specific tasting completion in effective extensions/startup action paths: boba recipe stages and order result, soup serving/tasting, tofu/greens, garden feeding/seating/chime/cats, water/bell, wishing lantern, private river reactions without Ah Ma, claw/board game/rhythm/blind box/bubble arcade, deer, tarot reveal, railway captions and story replay. Existing action rules, scoring, persistence and reward paths unchanged. 153059f5 adds exact-source helper regression; passed in connector harness, both full JS sources parse. Complete rendered activity coverage, other remaining interaction paths, mobile/desktop readability and deployment not verified."
+        "abaae10d + a453e1f5 + 29d72350: edited 65 bilingual pairs and added recipe-specific tasting completion in effective extensions/startup action paths: boba recipe stages and order result, soup serving/tasting, tofu/greens, garden feeding/seating/chime/cats, water/bell, wishing lantern, private river reactions without Ah Ma, claw/board game/rhythm/blind box/bubble arcade, deer, tarot reveal, railway captions and story replay. Existing action rules, scoring, persistence and reward paths unchanged. 153059f5 adds exact-source helper regression; passed in connector harness, both full JS sources parse. Complete rendered activity coverage, other remaining interaction paths, mobile/desktop readability and deployment not verified.",
+        "c2800ce6: added eight topic-specific café acknowledgements after committed answers (plus final response), discovery completion humour after valid results, purchase/category and placement-specific furniture feedback plus saved/put-away feedback, six story epilogues and four Master Yue almanac reflections. Existing furniture transactions, assessment scoring, story IDs and consultation conventions preserved; independent extensions-only change while railway runner held startup.js. c96a7b33 extends exact-source gameplay regression, including actual café answer handler, duplicate guard, final score and one-time reward; full focused script passed in connector harness. No real browser or deployment verification."
       ],
-      "lease": {
-        "owner": "manual-humour-continuation",
-        "until": 1795847131890
-      },
-      "blocker": "Scoped editorial lease: extensions.js only while railway runner owns startup.js. Restore canonical LOC-01 resources at release; no stage promotion."
+      "lease": null,
+      "blocker": "Rendered mobile/desktop readability and full active-path editorial coverage remain open. Master Yue guided desk questions in startup.js and any later runtime overrides still need review once shared resource is available. No workstream stage promotion."
     },
     {
       "id": "UX-01",
