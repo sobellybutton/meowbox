@@ -26,6 +26,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Extract and validate the existing scroll sprite
+        if: matrix.engine == 'chromium'
+        run: |
+          python3 -m pip install pillow
+          python3 scripts/extract-yue-scroll.py
       - name: Validate input and build the current game
         run: |
           node scripts/test-yue-input.cjs
