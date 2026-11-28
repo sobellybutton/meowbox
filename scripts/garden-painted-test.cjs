@@ -137,3 +137,23 @@ console.log('Catalogue return and blind box scene ownership passed.');
  for(const needle of ["!bankReady||!held||busy||done","coin.hidden=!bankReady||!held||done","tr('Take a Paw Coin','取一枚爪爪币')","from.x+(x-from.x)*f","from.y+(y-from.y)*f","garden-keeper/standing.webp"]){assert.ok(source.includes(needle));n++}
  console.log('PASS '+n+' bank anchor, approach, pickup and launch checks');
 }
+
+
+// Every throw input shares the same pickup/flight/completion state.
+{
+ const source=fs.readFileSync(path.resolve(__dirname,'../src/town-access.js'),'utf8');
+ const sync=source.split('const syncToss=()=>{')[1].split('};')[0];
+ const apply=new Function('busy','done','bankReady','held','gentle','takeCoin','keyboardButtons','pond',sync);
+ let n=0;
+ for(const busy of [false,true])for(const done of [false,true])for(const bankReady of [false,true])for(const held of [false,true]){
+  const gentle={},takeCoin={},keyboardButtons=Array.from({length:5},()=>({})),pond={setAttribute(k,v){this[k]=v}};
+  apply(busy,done,bankReady,held,gentle,takeCoin,keyboardButtons,pond);
+  const unavailable=busy||done||!bankReady||!held;
+  assert.equal(gentle.disabled,unavailable);n++;
+  for(const button of keyboardButtons){assert.equal(button.disabled,unavailable);n++}
+  assert.equal(takeCoin.hidden,held||done);assert.equal(takeCoin.disabled,!bankReady||busy);assert.equal(pond['aria-busy'],String(busy));n+=3
+ }
+ assert.ok(source.includes("keyboardButtons.push(btn)"));
+ assert.ok(source.includes("keyboardButtons.push(b(controls,tr('Throw','投币')"));
+ console.log('PASS '+n+' pickup/throw control state checks and keyboard wiring');
+}
