@@ -117,3 +117,41 @@ for(const [w,h] of [[320,568],[390,844],[430,932],[720,1080],[1440,900],[1920,10
  ac(win.x>=0&&win.y>=0&&win.x+win.w<=box.width+1e-8&&win.y+win.h<=box.height+1e-8,'underpaint confined to frame');
 }
 console.log('PASS '+alphaChecks+' measured alpha coverage assertions.');
+
+{
+ const runtime=fs.readFileSync(path.resolve(__dirname,'../src/startup.js'),'utf8');
+ const begin=runtime.indexOf('const pawPaintedRailClocks=new WeakMap();'),finish=runtime.indexOf('const pawPaintedRailMotionBefore',begin);
+ assert.ok(begin>=0&&finish>begin);
+ const exact=runtime.slice(begin,finish);
+ let runtimeChecks=0,seq=0,calls=[],rafJobs=new Map(),jobs=new Map();
+ const rc=(v,msg)=>{assert.ok(v,msg);runtimeChecks++};
+ const renderer={portrait:{width:1024,height:1536},carriage:{width:1672,height:941},far:{fortune:'x',home:'x'},draw(...args){calls.push(args);return true}};
+ const loaded={api:renderer,assets:{carriage:{}}},image={},reduce={matches:false};
+ const doc={hidden:false,createElement(){return {dataset:{},setAttribute(){},getContext(){return {clearRect(){}}},remove(){this.removed=true}}}};
+ const mount=new Function('pawPaintedRailLoaded','pawPaintedRailPortrait','document','matchMedia','requestAnimationFrame','cancelAnimationFrame','pawRailMotionJobs',exact+';return pawMountPaintedRailComposite;')(loaded,image,doc,()=>reduce,cb=>{rafJobs.set(++seq,cb);return seq},id=>rafJobs.delete(id),jobs);
+ const tick=t=>{const entries=[...rafJobs.entries()];rc(entries.length===1,'one animation loop');rafJobs.delete(entries[0][0]);entries[0][1](t)};
+ for(const mode of ['ride','entrance']){
+  const host={dataset:{to:'home',rideSeconds:'3.6'}},picture={style:{}},style=new Map(),stage={isConnected:true,dataset:{layout:'portrait'},style:{getPropertyValue:k=>style.get(k)||'',setProperty:(k,v)=>style.set(k,v)},querySelector:()=>picture,append(c){this.canvas=c}};
+  reduce.matches=false;calls=[];
+  rc(mount(stage,'portrait',host,mode,{far:{}}),'mount');tick(100);tick(150);tick(200);
+  const before=Number(stage.canvas.dataset.travel);rc(before>.09,'travel advanced');
+  jobs.get(stage).stop();stage.dataset.layout='landscape';
+  rc(mount(stage,'landscape',host,mode,{far:{}}),'rotated mount');
+  rc(Number(stage.canvas.dataset.travel)===before,'rotation retained travel');
+  rc(calls.at(-1)[8]===(mode==='ride'?3.6:undefined),'duration');
+  tick(250);tick(300);const motionBefore=Number(stage.canvas.dataset.travel);
+  reduce.matches=true;tick(350);
+  rc(calls.at(-1)[6]===true&&stage.dataset.railMotion==='still','live reduced motion');
+  rc(Number(stage.canvas.dataset.travel)===motionBefore,'no progress while switching');
+  const frames=Number(stage.canvas.dataset.frame);tick(400);tick(450);
+  rc(Number(stage.canvas.dataset.frame)===frames,'still frame stays');
+  reduce.matches=false;tick(500);
+  rc(calls.at(-1)[6]===false&&stage.dataset.railMotion==='painted-route-parallax','resume motion');
+  tick(550);rc(Number(stage.canvas.dataset.travel)>motionBefore,'resume time');
+  host.dataset.sceneryPaused='true';const paused=Number(stage.canvas.dataset.travel);tick(600);
+  rc(Number(stage.canvas.dataset.travel)===paused,'pause held');
+  reduce.matches=true;tick(650);rc(stage.dataset.railMotion==='still','accessibility update while paused');
+  jobs.get(stage).stop();rc(stage.canvas.removed&&picture.style.visibility===''&&rafJobs.size===0,'cleanup');
+ }
+ console.log('PASS '+runtimeChecks+' exact runtime rotation/accessibility mock assertions.');
+}
