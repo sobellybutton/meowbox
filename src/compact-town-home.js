@@ -531,8 +531,8 @@ function mountCutaway(q,legacyStage){
     if(item.key==='board'){close();myNotes9();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),returnToCutaway)}
     else if(item.key==='frame'){close();album9();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),returnToCutaway)}
     else if(item.key==='shelf'){close();hideoutClaimPage();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),returnToCutaway)}
-    else if(item.key==='displayCabinet'){close();figureCabinetPage()}
-    else if(item.key==='retroTV'){close();komorebiTVPage()}
+    else if(item.key==='displayCabinet'){close();figureCabinetPage();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),returnToCutaway)}
+    else if(item.key==='retroTV'){close();komorebiTVPage();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),returnToCutaway)}
    })
   }
   const turnButton=b(controls,tr('Turn furniture','转动家具'),()=>{
@@ -637,6 +637,17 @@ hideoutPage=function(...args){
  }
  return result
 };
+// Animate only a deliberate chapter turn, not a reload, language switch or
+// return to the same chapter. The original notebook owns all navigation.
+const journalRenderBefore=pawJournalRender;
+let lastJournalDistrict=null;
+pawJournalRender=function(district=scene,...rest){
+ const q=$('content'),wasOpen=$('page').style.display==='block'&&!!q.querySelector('.pawSketchbook'),previous=lastJournalDistrict;
+ const result=journalRenderBefore.call(this,district,...rest);
+ const spread=q.querySelector('.pawSketchSpread');
+ if(spread){lastJournalDistrict=district;if(wasOpen&&previous!==null&&previous!==district)spread.classList.add('pawJournalTurning')}
+ return result
+};
 const style=document.createElement('style');style.textContent=`
 #game #content .pawCutawayLaunch{display:flex;justify-content:center;margin:4px 0}
 #game #content .pawCutawayLaunch button{background:none!important;border:0!important;box-shadow:none!important;color:#536346!important;text-decoration:underline;text-underline-offset:3px}
@@ -733,6 +744,9 @@ const style=document.createElement('style');style.textContent=`
 #game #content .pawSketchbook{background-image:linear-gradient(90deg,#c4a77a33,transparent 8%,transparent 92%,#c4a77a33),url('assets/visual/painted/recovered/ui/paper_texture.webp')!important}
 #game #content .pawSketchbook .pawSketchCover{transform:none!important;border:3px solid #fff3d9!important;outline:0!important;box-shadow:0 2px 4px #58482c22!important}
 #game #content .pawSketchbook .pawSketchNotes{min-width:0;overflow-wrap:break-word}
+#game #content .pawJournalTurning{animation:pawJournalTurn 220ms ease-out both;transform-origin:left center}
+@keyframes pawJournalTurn{from{transform:perspective(900px) rotateY(-7deg);opacity:.78}to{transform:perspective(900px) rotateY(0);opacity:1}}
+@media(prefers-reduced-motion:reduce){#game #content .pawJournalTurning{animation:none!important}}
 #game #content:has(.pawDiaryFold){background:#f5e9d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat!important;border:0!important;box-shadow:0 3px 10px #30261d33!important}
 #game #content .pawDiaryFold{border:0!important;border-bottom:1px solid #bfa882!important;border-radius:0!important;background:none!important;box-shadow:none!important;margin:0!important;padding:0 4px!important}
 #game #content .pawDiaryFold>summary{min-height:48px;box-sizing:border-box}
