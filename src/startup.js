@@ -11359,7 +11359,7 @@ html[lang^="zh"]{--paw-body:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",s
 
 /* Reuse the verified transparent wide carriage and independent painted
    trackside sprites. Legacy window motion remains the immediate fallback,
-   including portrait screens and cold/missing assets. Never switch art
+   including cold/missing assets. Never switch art
    mid-ride merely because a download finished. */
 const pawPaintedRailModuleReady=new Promise(resolve=>{
  const tag=document.createElement('script');tag.src='src/rail-foreground.js';tag.async=true;
@@ -11367,7 +11367,7 @@ const pawPaintedRailModuleReady=new Promise(resolve=>{
  const timer=setTimeout(()=>finish(null),7000);
  tag.onload=()=>finish(globalThis.PawRailForeground);tag.onerror=()=>finish(null);document.head.append(tag)
 });
-let pawPaintedRailLoaded=null;
+let pawPaintedRailLoaded=null,pawPaintedRailPortrait=null;
 function pawRailCandidateImage(record){
  return new Promise(resolve=>{
   const im=new Image();im.decoding='async';let done=false;
@@ -11379,33 +11379,41 @@ function pawRailCandidateImage(record){
 }
 pawPaintedRailModuleReady.then(async api=>{
  if(!api)return;
+ // Decode portrait independently: a failed or slow portrait must never block landscape.
+ if(api.portrait)pawRailCandidateImage(api.portrait).then(im=>{if(im)pawPaintedRailPortrait=im}).catch(()=>{});
  const keys=['carriage',...Object.keys(api.sprites)],images=await Promise.all([pawRailCandidateImage(api.carriage),...Object.values(api.sprites).map(pawRailCandidateImage)]);
  if(images.every(Boolean))pawPaintedRailLoaded={api,assets:Object.fromEntries(keys.map((key,i)=>[key,images[i]]))}
 }).catch(()=>{});
 function pawMountPaintedRailComposite(stage,layout,host,mode,layers){
  const candidate=pawPaintedRailLoaded,destination=mode==='entrance'?'fortune':host.dataset.to;
- if(!candidate||layout!=='landscape'||!['ride','entrance'].includes(mode)||!layers?.far||!Object.hasOwn(candidate.api.far,destination)||!stage.isConnected)return false;
+ if(!candidate||!['landscape','portrait'].includes(layout)||(layout==='portrait'&&!pawPaintedRailPortrait)||!['ride','entrance'].includes(mode)||!layers?.far||!Object.hasOwn(candidate.api.far,destination)||!stage.isConnected)return false;
  const canvas=document.createElement('canvas'),g=canvas.getContext('2d');if(!g)return false;
  const picture=stage.querySelector('picture');if(!picture)return false;
- canvas.width=1200;canvas.height=Math.round(1200*candidate.api.carriage.height/candidate.api.carriage.width);
+ const record=layout==='portrait'?candidate.api.portrait:candidate.api.carriage;
+ if(!record)return false;
+ canvas.width=layout==='portrait'?720:1200;canvas.height=Math.round(canvas.width*record.height/record.width);
  canvas.className='pawPaintedRailComposite';canvas.setAttribute('aria-hidden','true');
- const assets={...candidate.assets,far:layers.far},reduce=matchMedia('(prefers-reduced-motion: reduce)');
+ const assets={...candidate.assets,portrait:pawPaintedRailPortrait,far:layers.far},reduce=matchMedia('(prefers-reduced-motion: reduce)');
  let elapsed=0,raf=0,last=null,lastDraw=-Infinity,dead=false,frames=0;
  function draw(){
   g.clearRect(0,0,canvas.width,canvas.height);
-  const ok=candidate.api.draw(g,assets,destination,elapsed,canvas.width,canvas.height,reduce.matches);
+  const ok=candidate.api.draw(g,assets,destination,elapsed,canvas.width,canvas.height,reduce.matches,layout);
   if(ok){canvas.dataset.frame=String(++frames);canvas.dataset.travel=elapsed.toFixed(3)}
   return ok
  }
  if(!draw())return false;
- const stop=()=>{dead=true;cancelAnimationFrame(raf);canvas.remove();picture.style.visibility='';delete stage.dataset.paintedComposite};
+ const oldAspect=stage.style.getPropertyValue('--rail-aspect'),aspect=String(record.width/record.height);
+ const stop=()=>{if(dead)return;dead=true;cancelAnimationFrame(raf);canvas.remove();picture.style.visibility='';
+  if(stage.dataset.layout===layout&&stage.style.getPropertyValue('--rail-aspect')===aspect)stage.style.setProperty('--rail-aspect',oldAspect);
+  delete stage.dataset.paintedComposite;
+ };
  const tick=now=>{
   if(dead||!stage.isConnected||stage.hidden||stage.dataset.layout!==layout){stop();return}
   const dt=last===null?0:Math.min(.1,Math.max(0,(now-last)/1000));last=now;
   if(!document.hidden&&host.dataset.sceneryPaused!=='true'&&!reduce.matches){elapsed+=dt;if(now-lastDraw>=33){if(!draw()){stop();return}lastDraw=now}}
   raf=requestAnimationFrame(tick)
  };
- picture.style.visibility='hidden';stage.append(canvas);stage.dataset.paintedComposite='true';stage.dataset.railMotion=reduce.matches?'still':'painted-route-parallax';
+ stage.style.setProperty('--rail-aspect',aspect);picture.style.visibility='hidden';stage.append(canvas);stage.dataset.paintedComposite='true';stage.dataset.railMotion=reduce.matches?'still':'painted-route-parallax';
  pawRailMotionJobs.set(stage,{stop});raf=requestAnimationFrame(tick);return true
 }
 const pawPaintedRailMotionBefore=pawRailMountMotion;
