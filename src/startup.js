@@ -15222,8 +15222,13 @@ function pawTravellerGreetingFrame(g,now,place,roomId,id,x,y,walking,eligible){
  if(!g||!eligible||walking||g.place!==place||g.room!==roomId||g.id!==id||![now,x,y].every(Number.isFinite))return false;
  return now>=g.at&&now-g.at<.95&&Math.hypot(x-g.x,y-g.y)<2
 }
+// Do not borrow a front-facing pose for a side/back-facing actor, a moving
+// peer (including the interpolation after a heartbeat), or a fictional NPC.
+function pawPeerWaveEligible(a,place,roomId,kind,facing,walking,visible){
+ return !!a&&a.sharedPeer===true&&!a.fictionalVisitor&&visible===true&&a.place===place&&(a.room||'')===roomId&&a.gesture==='wave'&&a.avatar===kind&&Number.isInteger(kind)&&kind>=0&&kind<4&&facing==='down'&&a.facing==='down'&&!walking&&a.walking===0&&[a.x,a.y,a.toX,a.toY].every(Number.isFinite)&&Math.hypot(a.x-a.toX,a.y-a.toY)<.5
+}
 /* PAW_TRAVELLER_GREETING_END */
-let pawTravellerGreeting=null,pawTravellerSharedWaveSeen=0;
+let pawTravellerGreeting=null,pawTravellerSharedWaveSeen=0,pawGreetingPeerActor=null;
 function pawBeginTravellerGreeting(actor,frontOnly=true){
  if(!actor||activity||transitioning||document.hidden||!Number.isInteger(avatar)||avatar<0||avatar>3||frontOnly&&actor.facing!=='down')return false;
  if(!mbArtImage(pawTravellerWaveArt[avatar]))return false;
@@ -15242,18 +15247,33 @@ pawIndoorSocialTalk=function(...args){
  if(result)pawBeginTravellerGreeting(indoor);
  return result
 };
+// Keep original peer corridor/room eligibility and label drawing. Only
+// substitute the body artwork within the original actor's draw call.
+function pawGreetingWithPeer(actor,paint){
+ const previous=pawGreetingPeerActor;
+ pawGreetingPeerActor=actor?.sharedPeer===true&&!actor.fictionalVisitor?actor:null;
+ try{return paint()}finally{pawGreetingPeerActor=previous}
+}
+const pawGreetingMapPeerPrior=drawSharedTownActor;
+drawSharedTownActor=function(a,...args){return pawGreetingWithPeer(a,()=>pawGreetingMapPeerPrior(a,...args))};
+const pawGreetingRoomPeerPrior=drawSharedRoomActor;
+drawSharedRoomActor=function(a,...args){return pawGreetingWithPeer(a,()=>pawGreetingRoomPeerPrior(a,...args))};
 const pawGreetingBackHumanPrior=backHuman;
 backHuman=function(x,y,kind,walking,facing,scale=1){
- const actor=room?indoor:p,local=!activity&&!pawRenderedWalker&&kind===avatar&&actor&&Math.hypot(x-actor.x,y-actor.y)<.01;
+ const peer=pawGreetingPeerActor,visible=!activity&&!transitioning&&!document.hidden&&proposal.hidden&&$('page').style.display!=='block';
+ if(pawPeerWaveEligible(peer,scene,room||'',kind,facing,walking,visible)&&sharedTownVisible()&&sharedTown.ready&&sharedTown.actors.get(peer.id)===peer&&Math.hypot(x-peer.x,y-peer.y)<.01){
+  const record=pawTravellerWaveArt[kind],im=mbArtImage(record);
+  if(im){mbArtDrawFrame(record,im,x,y,scale,false);return}
+ }
+ const actor=room?indoor:p,local=!peer&&!activity&&!pawRenderedWalker&&kind===avatar&&actor&&Math.hypot(x-actor.x,y-actor.y)<.01;
  if(local&&Number.isInteger(kind)&&kind>=0&&kind<4){
   const record=pawTravellerWaveArt[kind],im=mbArtImage(record);
-  const visible=!transitioning&&!document.hidden&&proposal.hidden&&$('page').style.display!=='block';
   // Existing opt-in gesture: show it once after returning to the scene,
   // never replay it every frame or interrupt walking.
-  if(visible&&!walking&&im&&sharedTown.gesture==='wave'&&sharedTown.gestureUntil>Date.now()&&sharedTown.gestureUntil!==pawTravellerSharedWaveSeen){
-   pawTravellerSharedWaveSeen=sharedTown.gestureUntil;pawBeginTravellerGreeting(actor,false)
+  if(visible&&!walking&&im&&actor.facing==='down'&&sharedTown.enabled&&sharedTown.gesture==='wave'&&sharedTown.gestureUntil>Date.now()&&sharedTown.gestureUntil!==pawTravellerSharedWaveSeen){
+   pawTravellerSharedWaveSeen=sharedTown.gestureUntil;pawBeginTravellerGreeting(actor)
   }
-  if(pawTravellerGreetingFrame(pawTravellerGreeting,t,scene,room||'',kind,x,y,walking,visible)&&im){
+  if(facing==='down'&&pawTravellerGreetingFrame(pawTravellerGreeting,t,scene,room||'',kind,x,y,walking,visible)&&im){
    pawSyncIdleGait(x,y,kind);mbArtDrawFrame(record,im,x,y,scale,false);return
   }
   if(pawTravellerGreeting&&(walking||!visible||t-pawTravellerGreeting.at>=.95||pawTravellerGreeting.place!==scene||pawTravellerGreeting.room!==(room||'')))pawTravellerGreeting=null
