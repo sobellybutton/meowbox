@@ -157,3 +157,7 @@ This section is an acceptance direction and critique checklist, not a declaratio
 
 ## Mandatory temple continuity gate (owner clarification, 28 November)
 Every inner game must use the temple's continuous visit model: explore, approach, contextual choice only where meaningful, act, visible reaction/result, recover at the station, explore again. Target zero mandatory generic selection/action/result pages. Purposeful physical subareas and camera closeups are permitted, optional share/export and detailed reading must return exactly. Preserve actor/host identity, scale, position, state, input, environment motion and natural navigation. Apply the per-activity continuity recipes and live visual acceptance in [INNER_ACTIVITY_EXPERIENCE_PLAN.md](INNER_ACTIVITY_EXPERIENCE_PLAN.md). No completion based on a new lobby painting, a source test or a styled legacy webpage alone.
+
+
+## Mandatory physical dock journal gate (owner clarification, 28 November)
+The four dock destinations are chapters of a real illustrated traveller's journal. Apply [the physical journal design and asset audit](DOCK_PHYSICAL_JOURNAL_DESIGN.md) before changing the dock. A paper-coloured web page, a content tilt, or a passing layout test is not acceptance. The closed artwork must open into a coherent physical spread; pages turn within the volume and the player returns exactly to the world. Inspect existing artwork including ambiguous composite and archived assets before generation. Preserve actual My Room gameplay, bilingual accessibility and all saved state.
