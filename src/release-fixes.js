@@ -896,3 +896,23 @@ function pawInstallIndoorStandingScale(){
  }
 }
 queueMicrotask(pawInstallIndoorStandingScale);
+
+/* PAW_HOUSE_LABEL_RECOVERY_BEGIN */
+// House plaques are navigational controls, not optional decoration. Migrate
+// the former global quiet-map preference without disturbing other saved data.
+function pawRestoreHouseLabels(wasQuiet,root,persist){
+ root.classList.remove('quiet');
+ if(wasQuiet)try{persist(false)}catch{} // storage failure must not hide doors
+ return false
+}
+quiet9=pawRestoreHouseLabels(quiet9,signRoot,value=>save('quiet9',value));
+// The assembled runtime initializes startup synchronously before this runs.
+// Remove the obsolete hide-label control from both settings and the old HUD.
+queueMicrotask(()=>{
+ townMapLabels.remove();
+ $('quietToggle').remove();
+ quiet9=pawRestoreHouseLabels(quiet9,signRoot,value=>save('quiet9',value));
+ syncTownSettings();
+ syncSigns()
+});
+/* PAW_HOUSE_LABEL_RECOVERY_END */
