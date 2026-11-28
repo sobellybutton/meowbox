@@ -11834,7 +11834,28 @@ const pawWaterPlate={x:100,y:-145,w:600,h:600*1635/962};
 function pawWaterGeometry(p=pawWaterPlate){
  const point=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
  return {foot:point(.46,.645),basin:point(.345,.51),palm:point(.426,.565),
-  rest:point(.44,.55),scoop:point(.345+.038,.51),pour:point(.426+.038,.545),rack:point(.475,.535)}
+  rest:point(.39,.55),scoop:point(.345+.038,.51),pour:point(.426+.038,.545),rack:point(.475,.535)}
+}
+// Match the effective ladle material's source coordinates and mirrored
+// canvas transform. The grip and water outlet travel with the actual prop.
+function pawWaterLadlePoint(at,angle,x,y){
+ const c=Math.cos(angle),sn=Math.sin(angle);
+ return {x:at.x-.65*(x*c-y*sn),y:at.y+.65*(x*sn+y*c)}
+}
+function pawWaterActorScale(){return 2.18}
+function pawWaterShoulder(g,sc){return {x:g.foot.x-8*sc,y:g.foot.y-52*sc}}
+function pawWaterReach(at,g,sc){
+ if(!Number.isFinite(at?.x)||!Number.isFinite(at?.y))return at;
+ const shoulder=pawWaterShoulder(g,sc),grip=pawWaterLadlePoint(at,0,-25,1);
+ const dx=grip.x-shoulder.x,dy=grip.y-shoulder.y,dist=Math.hypot(dx,dy),limit=42*sc;
+ if(dist<=limit)return at;
+ const f=limit/dist;
+ return {x:at.x+dx*(f-1),y:at.y+dy*(f-1)}
+}
+function pawWaterDragCentre(at,g,sc){
+ if(!Number.isFinite(at?.x)||!Number.isFinite(at?.y))return at;
+ const p=pawWaterPlate;
+ return pawWaterReach({x:Math.max(p.x+p.w*.29,Math.min(p.x+p.w*.54,at.x)),y:Math.max(p.y+p.h*.49,Math.min(p.y+p.h*.60,at.y))},g,sc)
 }
 function pawWaterDestination(stage,g){
  return stage===0?g.scoop:stage===1?g.pour:null
@@ -11883,7 +11904,7 @@ mobileRoomCamera=function(...args){return pawWaterPaintingActive()?pawWaterCamer
 const pawWaterReleaseBefore=templeReleaseWater;
 templeReleaseWater=function(a,gesture,...args){
  if(!pawWaterPaintingActive())return pawWaterReleaseBefore(a,gesture,...args);
- const run=state,stage=run.waterStage,g=pawWaterGeometry();a=pawWaterGripPoint(a,gesture);
+ const run=state,stage=run.waterStage,g=pawWaterGeometry();a=pawWaterGripPoint(a,gesture);if(gesture?.id==='templeLadle')a=pawWaterDragCentre(a,g,pawWaterActorScale());
  if(pawArcadeInputBlocked()||![0,1].includes(stage))return;
  if(!pawWaterDropMatches(stage,a?.x,a?.y,g)){hint(stage===0?'Dip the ladle in the marked water.':'Move the filled ladle above your hand.',stage===0?'把竹勺放入亮起的水面。':'把盛满水的竹勺移到手掌上方。');return}
  // Retain the original action, audio, award and ownership contract.
@@ -11906,20 +11927,20 @@ function pawDrawWaterPainting(){
  ctx.fillStyle='#473e36';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawWaterArt(),p.x,p.y,p.w,p.h);
  const ready=stage===0?g.rest:stage===1?g.scoop:g.pour;
  let at=ready,angle=0;
- if(held){const grip=pawWaterGripPoint(drag,drag);at={x:Math.max(p.x+p.w*.29,Math.min(p.x+p.w*.54,grip.x)),y:Math.max(p.y+p.h*.49,Math.min(p.y+p.h*.60,grip.y))}}
+ if(held){at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,pawWaterActorScale())}
  else if(stage===1)at=pawWaterMix(run.pawWaterFrom||g.scoop,g.rest,poseEase(Math.min(1,age/.35)));
  else if(stage===2){at=pawWaterMix(run.pawWaterFrom||g.pour,g.pour,poseEase(Math.min(1,age/.35)));angle=.58*poseEase(Math.min(1,age/.4))*(1-poseEase(Math.max(0,Math.min(1,(age-1.5)/.5))))}
  else if(stage===3)at=pawWaterMix(g.pour,g.rack,poseEase(Math.min(1,age/.55)));
- const sc=pawTempleContactScale(cam.scale,1.72),shoulder={x:g.foot.x-8*sc,y:g.foot.y-52*sc},grip={x:at.x+16,y:at.y};
- // Reuse the chosen traveller, standing in front of the real basin.
+ const sc=pawWaterActorScale(),shoulder=pawWaterShoulder(g,sc),grip=pawWaterLadlePoint(at,angle,-25,1);
+ // Far arm is occluded by the traveller, not drawn across the torso.
+ if(stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.72,true);
+ if((held||stage===1||stage===2)&&Math.hypot(grip.x-shoulder.x,grip.y-shoulder.y)<=48*sc)pawIncenseArm(shoulder,grip,sc*.70,false);
  backHuman(g.foot.x,g.foot.y,avatar??0,false,'left',sc);
- if(stage===1||stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.80,true);
  if(stage!==3||age<.55){
-  ctx.save();ctx.translate(at.x,at.y);ctx.scale(-.65,.65);waterLadleArt(0,0,-angle,stage===1||stage===2&&age<1.55);ctx.restore();
-  pawIncenseArm(shoulder,grip,sc*.82,false)
+  ctx.save();ctx.translate(at.x,at.y);ctx.scale(-.65,.65);waterLadleArt(0,0,angle,stage===1||stage===2&&age<1.55);ctx.restore();
  }
  if(stage===2&&age>.15&&age<1.8){
-  const bowl={x:at.x-23*Math.cos(angle),y:at.y+23*Math.sin(angle)};
+  const bowl=pawWaterLadlePoint(at,angle,35,6);
   for(let j=0;j<10;j++){const f=(age*2.8+j/10)%1;ellipse(bowl.x+(g.palm.x-bowl.x)*f+Math.sin(j)*1.5,bowl.y+(g.palm.y-bowl.y)*f,1.2,2.9,'#e0eee4')}
   for(let j=0;j<4;j++){const f=(age*2+j*.25)%1;ellipse(g.palm.x+Math.sin(j*2)*6,g.palm.y+3+f*20,1.1,2.1,'#d7ece4')}
  }
@@ -11949,7 +11970,7 @@ function pawAlcoveGeometry(p=pawWaterPlate){
  const pt=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
  return {tube:pt(.397,.473),tubeGrip:pt(.411,.499),tubeTop:pt(.397,.426),
   stickTray:pt(.523,.509),stickFoot:pt(.41,.625),stickPickFoot:pt(.51,.625),
-  moonTray:pt(.743,.508),moonFoot:pt(.707,.64),moonHand:pt(.70,.54)}
+  moonTray:pt(.743,.508),moonFoot:pt(.56,.64),moonHand:{x:p.x+.743*p.w-13,y:p.y+.508*p.h}}
 }
 function pawAlcoveActorScale(){return 1.92}
 function pawAlcoveStickPoint(g,pose){
@@ -11958,8 +11979,36 @@ function pawAlcoveStickPoint(g,pose){
  const y=g.tubeTop.y+(g.stickTray.y-g.tubeTop.y)*f-Math.sin(Math.PI*f)*25;
  return {x:x+(g.stickPickFoot.x+14-x)*pick,y:y+(g.stickPickFoot.y-64-y)*pick,angle:Math.PI*.46*f*(1-pick)}
 }
+// Use the same physical point for the rendered stick and the reaching hand.
+function pawAlcoveStickContact(g,pose,held=false){
+ const ease=u=>{u=Math.max(0,Math.min(1,u));return u*u*(3-2*u)};
+ const scale=pawAlcoveActorScale(),move=pose.picked?ease(pose.pick/.45):0;
+ const foot={x:g.stickFoot.x+(g.stickPickFoot.x-g.stickFoot.x)*move,y:g.stickFoot.y+(g.stickPickFoot.y-g.stickFoot.y)*move};
+ const shoulder={x:foot.x+5*scale,y:foot.y-63*scale},maxReach=48*scale;
+ const target=pose.picked?(pose.pick>=.45?pawAlcoveStickPoint(g,pose):null):(held||pose.shake?g.tubeGrip:null);
+ const hand=target&&Math.hypot(target.x-shoulder.x,target.y-shoulder.y)<=maxReach?target:null;
+ return {foot,walking:move>0&&move<1,hand,shoulder,maxReach,scale};
+}
 function pawAlcoveMoonPoint(g,m){
  return {x:g.moonTray.x+(m.x-400)*.26,y:g.moonTray.y-m.lift*.32}
+}
+// Keep the complete toss envelope beside the traveller, not over the face.
+// The right sleeve reaches the nearer block only during release.
+function pawAlcoveMoonReach(g){
+ const sc=pawAlcoveActorScale();
+ return {shoulder:{x:g.moonFoot.x+5*sc,y:g.moonFoot.y-63*sc},sleeve:.72*sc,maxReach:48*sc}
+}
+function pawAlcoveMoonClearance(g,m,foot=g.moonFoot){
+ const pt=pawAlcoveMoonPoint(g,m),sc=pawAlcoveActorScale();
+ // Conservative body envelope and rotated crescent radius at .30 scale.
+ return pt.x-15-(foot.x+38*sc)
+}
+function pawAlcoveMoonContact(g,f,m){
+ if(!Number.isFinite(f)||f<0||f>.24)return null;
+ const reach=pawAlcoveMoonReach(g),pt=pawAlcoveMoonPoint(g,m);
+ const u=f<=.12?1:Math.max(0,(.24-f)/.12);
+ const hand={x:reach.shoulder.x+(pt.x-reach.shoulder.x)*u,y:reach.shoulder.y+(pt.y-reach.shoulder.y)*u};
+ return Math.hypot(hand.x-reach.shoulder.x,hand.y-reach.shoulder.y)<=reach.maxReach?hand:null
 }
 /* PAW_ALCOVE_PAINT_END */
 const pawAlcovePath='../../staging/2026-11-27/rooms/temple/sticks.webp';
@@ -11987,14 +12036,9 @@ function pawAlcoveTubeShake(shake){
 function pawDrawAlcoveSticks(){
  const run=state,g=pawAlcoveGeometry(),pose=pawTempleStickPose(run,t),held=drag?.id==='sticks';
  pawAlcoveTubeShake(held||pose.shake);
- const move=pose.picked?poseEase(Math.min(1,pose.pick/.45)):0,foot=pawWaterMix(g.stickFoot,g.stickPickFoot,move);
- const sc=pawAlcoveActorScale();
- // The whole actor is proportioned to the counter. Only expose the reaching hand during contact.
- if((held||pose.shake||pose.picked&&pose.pick<.85)&&(!pose.picked||pose.pick<.85)){
-  const shoulder={x:foot.x+8,y:foot.y-63*sc},hand=!pose.picked?g.tubeGrip:pawWaterMix(g.stickTray,{x:foot.x+14,y:foot.y-64},poseEase(Math.max(0,(pose.pick-.45)/.55)));
-  if(Math.hypot(hand.x-shoulder.x,hand.y-shoulder.y)<=38) pawIncenseArm(shoulder,hand,1.12,false)
- }
- backHuman(foot.x,foot.y,avatar??0,move>0&&move<1,'up',sc);
+ const {foot,walking,hand,shoulder,scale}=pawAlcoveStickContact(g,pose,held);
+ if(hand)pawIncenseArm(shoulder,hand,.72*scale,false);
+ backHuman(foot.x,foot.y,avatar??0,walking,'up',scale);
  if(pose.show){
   const pt=pawAlcoveStickPoint(g,pose);ctx.save();try{ctx.translate(pt.x,pt.y);ctx.rotate(pt.angle);
    round(-2.8,-17,5.6,34,1,'#d7b47c','#9c7447');line(-1,-15,-1,15,'#f1dba6',.7);
@@ -12006,8 +12050,9 @@ function pawDrawAlcoveSticks(){
 }
 function pawDrawAlcoveMoon(){
  const run=state,g=pawAlcoveGeometry(),airborne=run.tossUntil>t,f=airborne?Math.max(0,Math.min(1,1-(run.tossUntil-t)/(run.moonDuration||.55))):1;
- const sc=pawAlcoveActorScale(),shoulder={x:g.moonFoot.x-8,y:g.moonFoot.y-63*sc};
- if(airborne&&Math.hypot(g.moonHand.x-shoulder.x,g.moonHand.y-shoulder.y)<=38)pawIncenseArm(shoulder,g.moonHand,1.12,false);
+ const sc=pawAlcoveActorScale(),reach=pawAlcoveMoonReach(g);
+ const hand=airborne?pawAlcoveMoonContact(g,f,pawMoonMotion(f,0,pawMoonFlat(run.result,0,run.count),run.moonHeight||95)):null;
+ if(hand)pawIncenseArm(reach.shoulder,hand,reach.sleeve,false);
  backHuman(g.moonFoot.x,g.moonFoot.y,avatar??0,false,'up',sc);
  for(let i=0;i<2;i++){
   const flat=pawMoonFlat(run.result,i,run.count),m=pawMoonMotion(f,i,flat,run.moonHeight||95),pt=pawAlcoveMoonPoint(g,m);
@@ -12396,6 +12441,44 @@ function pawRearGardenRoute(from,action){
  return route.length?route:[pawRearGardenNodes[action].slice()]
 }
 // A seated body contacts the painted cushion at the hip, not the path.
+/* PAW_REAR_SEATED_ART_BEGIN */
+// Individually extracted original travellers; the sheet's row order is
+// 1,0,2,3. The hip is the visible cushion-contact landmark, not image centre.
+const pawRearSeatedRecords=[
+ {w:206,h:280,hip:[71,214]},
+ {w:215,h:283,hip:[82,225]},
+ {w:222,h:280,hip:[82,223]},
+ {w:239,h:279,hip:[88,225]}
+];
+function pawRearSeatedBox(id,hip,scale){
+ const r=pawRearSeatedRecords[id];
+ if(!r||![hip?.x,hip?.y,scale].every(Number.isFinite)||scale<=0)return null;
+ const h=78*scale,w=h*r.w/r.h,k=h/r.h;
+ // Mirror the original right-facing seated pose towards the pond.
+ return {x:hip.x-(r.w-r.hip[0])*k,y:hip.y-r.hip[1]*k,w,h,hipX:r.hip[0]*k,hipY:r.hip[1]*k}
+}
+/* PAW_REAR_SEATED_ART_END */
+const pawRearSeatedImages=new Map();
+function pawRearSeatedImage(id){
+ if(!pawRearSeatedRecords[id])return null;
+ if(!pawRearSeatedImages.has(id)){
+  const im=new Image();im.decoding='async';im.src='assets/visual/staging/2026-11-27-extracted/players/'+id+'/seated.webp';pawRearSeatedImages.set(id,im)
+ }
+ return pawRearSeatedImages.get(id)
+}
+function pawWarmRearSeated(id){
+ const im=pawRearSeatedImage(id);
+ if(im&&!pawPictureDecoded(im))pawReadyPicture(im,4500);
+ return im
+}
+function pawDrawRearSeated(im,id,hip,scale){
+ const r=pawRearSeatedRecords[id],box=pawRearSeatedBox(id,hip,scale);
+ if(!r||!box||!im?.complete||im.naturalWidth!==r.w||im.naturalHeight!==r.h)return false;
+ ctx.save();try{
+  ctx.translate(hip.x,hip.y);ctx.scale(-1,1);
+  ctx.drawImage(im,-box.hipX,-box.hipY,box.w,box.h)
+ }finally{ctx.restore()}return true
+}
 function pawRearBenchPose(p,scale){
  const hip={x:p.x+p.w*.78,y:p.y+p.h*.407};
  return {hip,x:hip.x-9*scale,y:hip.y+32*scale,scale}
@@ -12440,6 +12523,7 @@ start=function(id,...args){
  const result=pawRearGardenStartBefore(id,...args);
  if(id==='secretGarden'&&activity===id&&room==='temple'){
   state.pawRearGarden=pawRoomImageReady(pawRearGardenArt());
+  if(state.pawRearGarden)pawWarmRearSeated(avatar??0);
   if(state.pawRearGarden){
    state.pawGardenWalk={painted:true,pos:pawRearGardenNodes.entry.slice(),route:[pawRearGardenNodes.bend.slice(),pawRearGardenNodes.fork.slice()],action:null,last:t,dir:'up'};
    hint('Follow the stone path to the pond or take a seat.','沿石径去看看锦鲤，或在长椅上歇一会儿。')
@@ -12523,11 +12607,14 @@ drawActivity=function(...args){
     if(f>0&&f<1){const [rx,ry]=xy(.31+j*.018,.453+(j%2)*.014);ctx.strokeStyle='rgba(242,239,207,'+(.6*(1-f))+')';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(rx,ry,2+f*17,1+f*5,0,0,TAU);ctx.stroke()}
    }
   }
-  const [x,y]=xy(...q.pos),scale=pawTempleContactScale(cam.scale,1.48+Math.max(0,q.pos[1]-.54)*.55);
+  const [x,y]=xy(...q.pos),scale=Math.max(1.35,Math.min(2.25,p.h*(pawRearGardenNodes.seat[1]-.407)/32));
   const seated=run.gardenSitting&&!moving,seatAge=Math.max(0,t-run.gardenSeatAt),seatAmount=seated?(residentReducedMotion.matches?1:poseEase(Math.min(1,seatAge/.45))):0;
   if(seated){const a=pawRearBenchPose(p,scale),sx=x+(a.x-x)*seatAmount,sy=y+(a.y-y)*seatAmount;
-   ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}
-  }else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale);
+   const id=avatar??0,im=pawRearSeatedImage(id),record=pawRearSeatedRecords[id];
+   if(seatAmount>=.98&&run.pawRearSeatArt===undefined)run.pawRearSeatArt=!!(record&&pawPictureDecoded(im)&&im.naturalWidth===record.w&&im.naturalHeight===record.h);
+   const painted=seatAmount>=.98&&run.pawRearSeatArt&&pawDrawRearSeated(im,id,a.hip,scale);
+   if(!painted){ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}}
+  }else{delete run.pawRearSeatArt;backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale)}
   const chimeAge=t-run.gardenChimeAt,catAge=t-run.pawCatAt,reduced=residentReducedMotion.matches;
   // Only the hanging paper tail moves. The beam, chain, bell and ceramic figures stay rigid.
   const breeze=reduced?0:Math.sin(t*1.45)*.42+Math.sin(t*.83)*.18;
@@ -13400,7 +13487,7 @@ enter=function(id,...args){
  pawWarmRoomAssets=function(id){
   if(room||activity)return pawMappedWarmBefore(id);
   const decode=im=>{if(im&&!pawPictureDecoded(im))pawReadyPicture(im,4500)};
-  if(id==='temple'){decode(pawRecoveredImage('scenes/temple_approach_portrait.webp'));decode(pawHallArt());return}
+  if(id==='temple'){decode(pawRecoveredImage('scenes/temple_approach_portrait.webp'));decode(pawHallArt());decode(pawWaterArt());decode(pawRearGardenArt());pawWarmRearSeated(avatar??0);return}
   if(pawReadingRoomIds.includes(id)){pawLoadReadingModule().then(api=>decode(pawReadingImage(api,id)));pawWarmReadingHost(id);if(id==='tarot')pawPrepareTarotArt();return}
   if(Object.hasOwn(pawFoodRoomSpecs,id)){decode(pawFoodImage(id));return}
   if(id==='wishes'){decode(pawWishLobbyArt());return}
@@ -15478,30 +15565,32 @@ function pawTarotChairDraw(p,id){
  }finally{ctx.restore()}}
  return true
 }
-let pawTarotChairVisit=null,pawTarotChairAtTime=null;
+let pawTarotChairVisit=null,pawTarotChairAtTime=null,pawTarotChairLeaving=null;
 const pawTarotChairWalkBefore=walkDoor;
 walkDoor=function(id,...args){if(id==='tarot'){const im=pawTarotChairImage(avatar??0);if(im&&!pawPictureDecoded(im))pawReadyPicture(im,4500)}return pawTarotChairWalkBefore(id,...args)};
 const pawTarotChairHumanBefore=backHuman;
 backHuman=function(x,y,id,walking,facing,scale=1){
  if(room==='tarot'&&!activity&&pawReadingActive()&&id===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<.01){
   if(pawTarotChairVisit!==pawHostVisit){pawTarotChairVisit=pawHostVisit;pawTarotChairAtTime=null}
-  if(!walking&&pawTarotChairAt(x,y,pawReadingPlate)){
+  if(!walking&&pawTarotChairAt(x,y,pawReadingPlate)&&!pawTarotChairLeaving){
    if(pawTarotChairAtTime===null)pawTarotChairAtTime=t;
    const f=pawTarotChairProgress(t-pawTarotChairAtTime,residentReducedMotion.matches),b=pawTarotChairBox(pawReadingPlate,id);
-   if(f>=1&&pawTarotChairDraw(pawReadingPlate,id))return;
+   if(f>=1&&pawTarotChairDraw(pawReadingPlate,id)){c.dataset.pawTarotSeat='seated';return;}
    if(f<1&&b)return pawTarotChairHumanBefore(x+(b.hipX-x)*f,y+(pawReadingPlate.y+pawReadingPlate.h*.613-y)*f,id,true,'left',scale)
-  }else pawTarotChairAtTime=null
+  }else {pawTarotChairAtTime=null;delete c.dataset.pawTarotSeat}
  }
+ if(room!=='tarot')delete c.dataset.pawTarotSeat;
  return pawTarotChairHumanBefore(x,y,id,walking,facing,scale)
 };
 const pawTarotChairBackdropBefore=paintLivingBackdrop;
 paintLivingBackdrop=function(...args){
  const result=pawTarotChairBackdropBefore(...args);
  if(room==='tarot'&&pawReadingVisit==='tarot'&&['tarot','love'].includes(activity)){
-  const art=pawReadingImage(pawReadingAPI(),'tarot');if(pawRoomImageReady(art)){const p=pawReadingCoverPlate(livingBounds(),art.naturalWidth,art.naturalHeight);if(p)pawTarotChairDraw(p,avatar??0)}
+  const art=pawReadingImage(pawReadingAPI(),'tarot');if(pawRoomImageReady(art)){const p=pawReadingCoverPlate(livingBounds(),art.naturalWidth,art.naturalHeight);if(p&&pawTarotChairDraw(p,avatar??0))c.dataset.pawTarotSeat='seated'}
  }
  return result
 };
+
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
 
