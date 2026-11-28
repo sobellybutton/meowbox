@@ -972,7 +972,8 @@
       "evidence": [
         "39f30e29: original surface-specific footstep noise, distance-based alternating cadence and train rhythm; 25 mocked audio/guard assertions passed.",
         "Project batch 26: a71fff06 + bc42d4bb alternate quieter and stronger railway wheel pulses, reset phase at ride lifecycle and preserve mute/pause gates. Real listening and device verification pending.",
-        "4427eabf + e918c75e: live movement module cancels active own sound nodes on existing runtime reset; 44 exact persisted mocked/cadence assertions pass."
+        "4427eabf + e918c75e: live movement module cancels active own sound nodes on existing runtime reset; 44 exact persisted mocked/cadence assertions pass.",
+        "947ae98c + 4fe6cfdc: delayed-frame stepper preserves left/right phase when crossing two stride boundaries, emits only one latest pulse; playback gates immediately disconnect active owned sounds even without a separate reset. 109 assertions passed executing persisted test against current module in isolated connector harness; real device audio and deployment remain unverified."
       ],
       "lease": null,
       "blocker": "Live startup integration verified in source. Actual listening, phone/desktop mute and background behavior, transition audio synchronization, full build and deployment remain unverified."
