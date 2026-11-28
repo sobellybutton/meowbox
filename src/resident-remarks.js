@@ -711,6 +711,312 @@ const extraLines={
   ]
 };
 for(const [id,rows] of Object.entries(extraLines))lines[id].push(...rows);
+/* Local conversational humour: warm teasing, rest and individual voices. */
+const auntieVoiceLines={
+  "temple": [
+    [
+      "workox",
+      "Aiyo, who are you working so hard for? Even an ox gets to rest when the field is ploughed.",
+      "哎哟，你这么拼命是为了谁？做牛做马干嘛，牛耕完田还知道歇一歇呢。"
+    ],
+    [
+      "incensepace",
+      "The incense burns at its own pace. No need to rush through your whole life.",
+      "香都有自己的时辰，你也不用把一辈子过得那么赶。"
+    ],
+    [
+      "smallwish",
+      "Always praying for everyone else? Remember to save one wish for yourself.",
+      "老是替别人求平安？也记得给自己留一个心愿。"
+    ]
+  ],
+  "tarot": [
+    [
+      "overtimecard",
+      "Even The Chariot needs somewhere to park. What are you in such a hurry for?",
+      "战车牌也得找地方停车呀。你到底在急什么呢？"
+    ],
+    [
+      "ownlife",
+      "What would you choose if nobody were waiting to be impressed?",
+      "如果不用证明给谁看，你自己真正想选什么？"
+    ],
+    [
+      "replytomorrow",
+      "The cards aren't going to answer your work email. That can wait until you're ready.",
+      "牌又不能替你回工作消息，等你想清楚了再回也不迟。"
+    ]
+  ],
+  "yue": [
+    [
+      "fateovertime",
+      "My friend, your birth chart does not say you must spend your whole life working overtime.",
+      "小友，命盘可没写着你这辈子必须加班啊。"
+    ],
+    [
+      "goodfortune",
+      "You ask about good fortune. Have you made any time to enjoy the fortune you already have?",
+      "你来问福气，可曾留点时间享受眼前已有的福气？"
+    ],
+    [
+      "brushpause",
+      "Even this old man puts his brush down. A rest is not a wasted day.",
+      "老夫写累了也要搁笔。歇一歇，又不是白过一天。"
+    ]
+  ],
+  "garden": [
+    [
+      "grasssalary",
+      "Look at that grass. No promotion, no bonus, still growing quite happily.",
+      "你看那草，不升职、不加薪，照样长得挺开心。"
+    ],
+    [
+      "benchfree",
+      "Sit awhile. This bench won't ask what you've achieved today.",
+      "坐一会儿吧，这长椅又不会问你今天做了多少事。"
+    ],
+    [
+      "windleave",
+      "The wind comes and goes as it pleases. I envy its leave policy.",
+      "风想来就来，想走就走。真羡慕它请假的自由。"
+    ]
+  ],
+  "grandma": [
+    [
+      "workmeal",
+      "Aiyo, work so hard for what? Will your boss come and cook porridge if you fall sick?",
+      "哎哟，那么拼命干嘛？你病了，老板会来给你煮粥啊？"
+    ],
+    [
+      "ricefirst",
+      "Come, eat first. Your salary isn't going up just because your rice is getting cold.",
+      "来，先吃饭。饭都凉了，工资又不会跟着涨。"
+    ],
+    [
+      "bodyone",
+      "Money can earn again, dear. You've only got one body. Take better care of it.",
+      "钱可以再赚，身子就这一个。傻孩子，对自己好一点。"
+    ],
+    [
+      "soupclockout",
+      "Your shift can finish. The soup is already done, and so are you for today.",
+      "汤都煮好了，你今天的活也该收工了。"
+    ],
+    [
+      "fullbowl",
+      "Here, another spoonful. At least in this house, more work comes with more food.",
+      "来，再添一勺。外婆这里多干一点活，至少还多给一口饭。"
+    ]
+  ],
+  "mei": [
+    [
+      "hottea",
+      "Come, sit. You can put the whole company down for the length of one cup of tea.",
+      "来坐，喝一杯茶的工夫，公司那摊事先放下吧。"
+    ],
+    [
+      "notmachine",
+      "You are a person, not a kettle. Nobody needs to keep you boiling all day.",
+      "你是个人，又不是烧水壶，哪能一天到晚烧着呀。"
+    ],
+    [
+      "replytea",
+      "If they can wait three days to approve your leave, they can wait while you finish your tea.",
+      "批你的假能拖三天，等你喝完这杯茶总可以吧。"
+    ]
+  ],
+  "hong": [
+    [
+      "cowhorse",
+      "Eh, doing the work of three people for one salary? What a bargain for the boss!",
+      "一个人的工资，三个人的活？哎哟，老板这笔买卖可太划算了！"
+    ],
+    [
+      "companyfamily",
+      "They say the company is a family. Funny, my family doesn't need a leave application.",
+      "公司说大家是一家人。奇怪，我回自己家可不用填请假单。"
+    ],
+    [
+      "urgentclock",
+      "Everything is urgent until it's time to approve your pay rise. Then suddenly, take it slow.",
+      "什么事都十万火急，一谈加薪，哎呀，怎么突然就不急了？"
+    ],
+    [
+      "bossdream",
+      "Your boss has a dream. Very nice. But why are YOU the one losing sleep?",
+      "老板有梦想，很好啊。怎么熬夜实现梦想的却是你？"
+    ],
+    [
+      "afterhours",
+      "Don't tell me you're replying after dinner again. Is the office paying rent in your head?",
+      "别跟红姐说你吃完饭还回消息。公司住你脑子里，交房租了没？"
+    ]
+  ],
+  "wang": [
+    [
+      "myfault",
+      "I said 'quick meeting' once and booked an hour. Yes, yes, I owe everyone an apology.",
+      "我也说过开个短会，结果订了一小时。行行行，是我欠大家一个道歉。"
+    ],
+    [
+      "goodemployee",
+      "A good employee shouldn't have to prove it by being the last one to leave.",
+      "好员工又不一定非得最后一个下班。"
+    ],
+    [
+      "clockout",
+      "If I send you something after hours, it can wait. I need to remember that myself.",
+      "我下班后发你的消息可以明天回。这话我自己也得记住。"
+    ]
+  ],
+  "ahma": [
+    [
+      "oxhorse",
+      "Work like an ox, run like a horse, eat like a mouse. Aiyo! Come sit down.",
+      "做牛做马，吃饭像只小老鼠。哎哟，快给阿嬷坐下来！"
+    ],
+    [
+      "slipperboss",
+      "I can whack the paper. I can't whack an extra day of annual leave out of it. Pity, ah.",
+      "纸人阿嬷能打，可惜打不出多一天年假。唉，真可惜。"
+    ],
+    [
+      "borrowedworry",
+      "Someone else's bad mood, you carry home for what? Leave it on the paper.",
+      "别人的坏脾气，你带回家干嘛？写在纸上，留给阿嬷。"
+    ],
+    [
+      "renthead",
+      "That worry has been living in your head for free. Today we give it notice.",
+      "这烦恼在你脑子里白住那么久，今天阿嬷给它下逐客令！"
+    ],
+    [
+      "enoughday",
+      "You already did what you could today. Don't make me scold you for not resting.",
+      "今天能做的都做了。还不休息，等阿嬷骂你啊？"
+    ]
+  ],
+  "lin": [
+    [
+      "catlesson",
+      "Watch the cat. When it's tired, it sleeps. It never feels obliged to justify it.",
+      "看看那只猫，累了就睡，从来不用写理由。"
+    ],
+    [
+      "quiettime",
+      "The deer doesn't need you to be useful. It just needs you to be gentle.",
+      "小鹿不需要你有多能干，温柔一点就好。"
+    ],
+    [
+      "napping",
+      "That cat has never felt guilty about an afternoon nap. Quite a talent.",
+      "那只猫午睡从来不内疚，真是个值得学的本事。"
+    ]
+  ],
+  "arcade": [
+    [
+      "bossfree",
+      "Play one round for yourself. The high score isn't going into your performance review.",
+      "为自己玩一局吧，分数又不用写进绩效报告。"
+    ],
+    [
+      "missagain",
+      "Missed? That's all right. Here, you can try again without explaining it in a meeting.",
+      "没抓到？没事，在这儿失败了可以再来，不用开会解释。"
+    ],
+    [
+      "funfirst",
+      "A game is supposed to be fun, not another thing on your to-do list.",
+      "玩游戏是来开心的，不是给待办清单再加一项。"
+    ]
+  ],
+  "boba": [
+    [
+      "sugarboss",
+      "Your boss can choose the meeting time. The sugar level is yours to decide.",
+      "开会几点老板定，奶茶几分糖你自己定。"
+    ],
+    [
+      "littlejoy",
+      "Long day, ah? At least let the first sip belong entirely to you.",
+      "今天挺累啊？至少第一口奶茶，完完全全留给自己。"
+    ],
+    [
+      "bubblebreak",
+      "The pearls have already been through boiling water. You don't need to join them.",
+      "珍珠都在开水里熬过了，你就别跟着一起熬了。"
+    ]
+  ],
+  "souvenir": [
+    [
+      "buyforown",
+      "Always buying gifts for other people? Pick a little something you like, too.",
+      "老是给别人买礼物？也挑一件自己喜欢的小东西嘛。"
+    ],
+    [
+      "notuseful",
+      "A little trinket doesn't have to be useful. Looking at it and smiling is enough.",
+      "小摆件不用非得有用，看着开心就够了。"
+    ],
+    [
+      "tripprice",
+      "A holiday is not a prize you have to earn by exhausting yourself first.",
+      "放假不是奖励，不用先把自己累坏了才配去玩。"
+    ]
+  ],
+  "lab": [
+    [
+      "workidentity",
+      "If nobody asked what you do for a living, how would you introduce yourself?",
+      "如果没人问你做什么工作，你会怎么介绍自己？"
+    ],
+    [
+      "answerown",
+      "Pick your answer, not the answer that would look good at a job interview.",
+      "选自己的答案，不是选面试官爱听的答案。"
+    ],
+    [
+      "notreview",
+      "This isn't a review of how well you're doing at being a person.",
+      "这里可不是给你做人打绩效的地方。"
+    ]
+  ],
+  "story": [
+    [
+      "ownending",
+      "Who said every happy ending needs a promotion? Mine might just need a little seaside shop.",
+      "谁规定大团圆一定要升职？我的结局说不定只要一家海边小店。"
+    ],
+    [
+      "sidecharacter",
+      "You get to be the main character in this story, not somebody else's assistant.",
+      "这回你是故事的主角，不是谁的助理。"
+    ],
+    [
+      "chapteroff",
+      "You can turn the page without finishing every single sentence on the last one.",
+      "上一页不必每句话都写完，才有资格翻开下一页。"
+    ]
+  ],
+  "cafe": [
+    [
+      "careback",
+      "You spend all that time looking after everyone else. Who makes you a cup of tea?",
+      "你忙着照顾那么多人，有没有人也给你倒杯茶？"
+    ],
+    [
+      "notearnlove",
+      "You don't need to be the most useful person at the table to deserve a seat.",
+      "不用做桌上最有用的那个人，才配有个位置坐。"
+    ],
+    [
+      "quietfriend",
+      "A good friend can sit beside you even when you've got absolutely nothing to report.",
+      "真正的朋友，哪怕你今天什么都没做，也愿意陪你坐一会儿。"
+    ]
+  ]
+};
+for(const [id,rows] of Object.entries(auntieVoiceLines))lines[id].push(...rows);
 function merge(target){
  if(!target||typeof target!=='object')return 0;let added=0;
  for(const [id,rows] of Object.entries(lines)){
