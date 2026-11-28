@@ -4745,12 +4745,31 @@ refreshControls=function(){
  }
  const msg=element('div',state.care.message,controls,'parkCareMessage');msg.id='parkCareMessage';msg.setAttribute('role','status');careSync()
 };
+/* Candidate prop crops share the existing physical interaction anchors.
+   Normalize the visible bounds, not the padded source canvas. */
+const pawParkCareProps=Object.freeze({
+ foodBowl:{asset:'parkCareFilledBowl',size:[130,92],crop:[8,8,122,84],anchor:[65,84],visibleWidth:72,offset:[0,22]},
+ feather:{asset:'parkCareFeather',size:[110,131],crop:[8,8,102,123],anchor:[55,65],visibleWidth:57,offset:[0,0]}
+});
+function pawParkCarePropBox(id,x,y){
+ const q=pawParkCareProps[id];if(!q||![x,y].every(Number.isFinite))return null;
+ const [l,top,r,b]=q.crop,k=q.visibleWidth/(r-l);
+ return {x:x+q.offset[0]-(q.anchor[0]-l)*k,y:y+q.offset[1]-(q.anchor[1]-top)*k,w:(r-l)*k,h:(b-top)*k,sx:l,sy:top,sw:r-l,sh:b-top}
+}
+function pawDrawParkCareProp(id,x,y){
+ const q=pawParkCareProps[id],b=pawParkCarePropBox(id,x,y);
+ if(!q||!b)return false;
+ const im=productionVisual(q.asset);
+ if(!im||im.naturalWidth!==q.size[0]||im.naturalHeight!==q.size[1])return false;
+ ctx.drawImage(im,b.sx,b.sy,b.sw,b.sh,b.x,b.y,b.w,b.h);return true
+}
 function careBowl(x,y,water,filled){
+ if(!water&&filled&&pawDrawParkCareProp('foodBowl',x,y))return;
  ctx.save();ellipse(x,y+4,39,8,'#38362b44');ctx.fillStyle=water?'#819e9f':'#b87959';ctx.beginPath();ctx.moveTo(x-36,y-6);ctx.quadraticCurveTo(x-29,y+22,x,y+22);ctx.quadraticCurveTo(x+29,y+22,x+36,y-6);ctx.closePath();ctx.fill();ellipse(x,y-6,36,12,'#dbc6a2');ellipse(x,y-6,30,8,filled?(water?'#9ec5c4':'#8d684b'):'#64564b');
  if(filled&&!water)for(let i=0;i<9;i++)ellipse(x-20+(i%5)*9,y-7+Math.floor(i/5)*4,3,2.4,'#c09260');
  if(filled&&water)line(x-18,y-8,x+11,y-8,'#e0eee0',1.8);ctx.restore()
 }
-function careFeather(x,y){
+function careFeather(x,y){if(pawDrawParkCareProp('feather',x,y))return;
  ctx.save();ctx.translate(x,y);ctx.rotate(-.42);line(0,0,39,31,'#8d7356',3);line(0,0,-8,-12,'#7d654f',1.5);for(let i=0;i<3;i++){ctx.save();ctx.translate(-6-i*3,-12+i*2);ctx.rotate(i*.35);ctx.fillStyle=['#b77f67','#92a895','#e2c38d'][i];ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(-13,-17,0,-24);ctx.quadraticCurveTo(12,-13,0,0);ctx.fill();ctx.restore()}ctx.restore()
 }
 function careFood(x,y){ctx.save();ctx.translate(x,y);ctx.rotate(-.10);ctx.fillStyle='#c7a276';ctx.beginPath();ctx.moveTo(-22,-30);ctx.lineTo(22,-30);ctx.lineTo(28,25);ctx.quadraticCurveTo(0,32,-28,25);ctx.closePath();ctx.fill();line(-20,-23,20,-23,'#8b7259',3);ellipse(0,2,15,12,'#ead5ac');ellipse(-5,-1,4,4,'#957454');ellipse(5,-1,4,4,'#957454');ellipse(0,5,6,4,'#957454');ctx.restore()}
@@ -4882,6 +4901,8 @@ const productionVisualManifest={
  fish:{path:'assets/visual/pier-courtyard.svg',width:800,height:1400},
  park:{path:'assets/visual/daydream-park.svg',width:800,height:1400},
  parkCats:{path:'assets/visual/park-cats-sheet.svg',width:1760,height:700,cell:[220,140],foot:[110,120]},
+ parkCareFilledBowl:{path:'assets/visual/staging/2026-11-28-project-art-b06/props/filled-bowl.webp',width:130,height:92},
+ parkCareFeather:{path:'assets/visual/staging/2026-11-28-project-art-b06/props/feather-wand.webp',width:110,height:131},
  destiny:{path:'assets/visual/destiny-study.svg',width:800,height:1400},
  kitchen:{path:'assets/visual/kitchen-interior.svg',width:800,height:1400},
  kitchenIngredients:{path:'assets/visual/kitchen-ingredients.svg',width:720,height:100},
@@ -4912,7 +4933,7 @@ function drawProductionAhMa(x,y,scale=1){
 }
 // Request the matching two poses together when first reaching the stall.
 const productionVisualStart=start;
-start=function(a){if(['hit','riverBottle','riverShout'].includes(a)){productionVisual('fish');productionVisual('ahMaIdle');productionVisual('ahMaScold')}if(a==='pet'){productionVisual('park');productionVisual('parkCats')}return productionVisualStart(a)};
+start=function(a){if(['hit','riverBottle','riverShout'].includes(a)){productionVisual('fish');productionVisual('ahMaIdle');productionVisual('ahMaScold')}if(a==='pet'){productionVisual('park');productionVisual('parkCats');productionVisual('parkCareFilledBowl');productionVisual('parkCareFeather')}return productionVisualStart(a)};
 
 /* Art sheet rows retain the established five cat identities.
    Eight original poses per row, all sharing the same foot pivot. */
