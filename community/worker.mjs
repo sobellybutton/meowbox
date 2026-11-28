@@ -7,9 +7,30 @@ const worldHeights={fortune:1777,home:1516,island:1527,wonder:1519};
 const gestures=['none','wave','cheer','tea'];
 const socialRooms={home:['tea','park'],island:['kitchen','arcade']};
 const validTraveller=v=>typeof v==='string'&&/^[a-f0-9]{24}$/.test(v);
+/* Mapped portrait rooms use the same world-space plate as pawReadingPlate.
+   Preserve the previously shipped legacy bounds for older clients. Only
+   reviewed public walking corridors extend them. Intersect the rounded
+   coordinate's one-unit square with the lane, including steep path edges. */
+const mappedPresencePlate={x:245,y:235,w:550*928/1648,h:550};
+const mappedPresenceLanes={"tea":[[0.44,0.67,0.74],[0.52,0.61,0.71],[0.62,0.49,0.7],[0.72,0.4,0.72],[0.83,0.29,0.66],[0.91,0.28,0.65]],"park":[[0.43,0.38,0.49],[0.47,0.26,0.46],[0.51,0.13,0.25],[0.55,0.16,0.28],[0.59,0.26,0.47],[0.64,0.44,0.78],[0.7,0.51,0.84],[0.77,0.36,0.81],[0.85,0.16,0.68],[0.93,0.1,0.57],[0.96,0.12,0.52]],"arcade":[[0.48,0.42,0.55],[0.53,0.36,0.59],[0.58,0.29,0.57],[0.65,0.23,0.49],[0.72,0.23,0.51],[0.8,0.21,0.61],[0.88,0.24,0.76],[0.95,0.2,0.85]]};
+function validSharedRoomPosition(room,x,y){
+ if(x>=145&&x<=655&&y>=565&&y<=738)return true;
+ const lane=Object.hasOwn(mappedPresenceLanes,room)?mappedPresenceLanes[room]:null;
+ if(!lane)return false;
+ const p=mappedPresencePlate;
+ for(let i=1;i<lane.length;i++){
+  const [ay,al,ar]=lane[i-1],[by,bl,br]=lane[i];
+  const low=Math.max(ay,(y-.500001-p.y)/p.h),high=Math.min(by,(y+.500001-p.y)/p.h);
+  if(low>high)continue;
+  const f0=(low-ay)/(by-ay),f1=(high-ay)/(by-ay);
+  const l=Math.min(al+(bl-al)*f0,al+(bl-al)*f1),r=Math.max(ar+(br-ar)*f0,ar+(br-ar)*f1);
+  if(x+.500001>=p.x+p.w*l&&x-.500001<=p.x+p.w*r)return true
+ }
+ return false
+}
 function validatePresence(v){
  if(!v||!Object.hasOwn(worldHeights,v.place)||!Number.isInteger(v.avatar)||v.avatar<0||v.avatar>3||!Number.isFinite(v.x)||!Number.isFinite(v.y)||v.x<0||v.x>1000||v.y<0||v.y>worldHeights[v.place]||!['up','down','left','right'].includes(v.facing)||typeof v.walking!=='boolean'||!gestures.includes(v.gesture))return null;
- const room=v.room??'';if(typeof room!=='string'||(room&&(!(socialRooms[v.place]||[]).includes(room)||v.x<145||v.x>655||v.y<565||v.y>738)))return null;
+ const room=v.room??'';if(typeof room!=='string'||(room&&(!(socialRooms[v.place]||[]).includes(room)||!validSharedRoomPosition(room,v.x,v.y))))return null;
  return {room,place:v.place,x:Math.round(v.x),y:Math.round(v.y),avatar:v.avatar,facing:v.facing,walking:Number(v.walking),gesture:v.gesture};
 }
 const enc=new TextEncoder();

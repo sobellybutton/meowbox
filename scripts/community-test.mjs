@@ -25,6 +25,29 @@ try{
  assert.equal(validatePresence({...base,room:'destiny'}),null);
  assert.equal(validatePresence({...base,room:'tea',x:900}),null);
  assert.equal(validatePresence({...base,place:'fortune',room:'tea'}),null);
+ // Verify sampled current painted-room lanes, including points beyond
+ // the old rectangle. The frontend sends rounded world coordinates.
+ const painted={exports:{}};
+ new Function('module',readFileSync('assets/visual/painted/interior-layouts.js','utf8'))(painted);
+ for(const [room,place] of [['tea','home'],['park','home'],['arcade','island']]){
+  const lane=painted.exports.rooms[room].lane;
+  let extended=0;
+  for(let i=1;i<lane.length;i++)for(let step=0;step<=20;step++){
+   const f=step/20,[ay,al,ar]=lane[i-1],[by,bl,br]=lane[i];
+   const ny=ay+(by-ay)*f,l=al+(bl-al)*f,r=ar+(br-ar)*f;
+   for(const x0 of [l,(l+r)/2,r]){
+    const x=Math.round(245+550*928/1648*x0),y=Math.round(235+550*ny);
+    if(y<565||y>738)extended++;
+    assert.ok(validatePresence({...base,place,room,x,y}),'Rejected mapped '+room+' '+x+','+y);
+   }
+  }
+  assert.ok(extended>0);
+  for(const [x,y] of [[5,450],[900,500],[400,20],[400,850]])assert.equal(validatePresence({...base,place,room,x,y}),null);
+  assert.equal(validatePresence({...base,place:'fortune',room,x:400,y:680}),null);
+ }
+ assert.equal(validatePresence({...base,place:'island',room:'kitchen',x:400,y:500}),null);
+ assert.equal(validatePresence({...base,place:'home',room:'wishes',x:400,y:680}),null);
+
  const people=[];
  for(const token of tokens.slice(0,5)){
   const result=await call('/presence',token,base);assert.equal(result.status,200);people.push(result.data.self);
