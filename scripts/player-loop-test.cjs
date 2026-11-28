@@ -57,7 +57,7 @@ async function tarotLobby(page,click,tag){
 (async()=>{
  fs.mkdirSync(out,{recursive:true});
  const browser=await engine.launch();
- const report=[];
+ const report=[],failures=[];
  try{
   for(const [device,options] of sizes)for(const language of ['EN','中文']){
    const page=await browser.newPage(options),tag=device+'-'+(language==='EN'?'en':'zh'),errors=[];
@@ -104,11 +104,16 @@ async function tarotLobby(page,click,tag){
     report.push({tag,entryMs,totalMs:Date.now()-t,coverage,rail,gate,map,returningGate,tarot});
     if(strict)assert.ok(tarot.paintedSinceEntry,tag+' Tarot painted lobby was not drawn: '+JSON.stringify(tarot));
     if(strict)assert.ok(Object.values(coverage).every(Boolean),tag+' incomplete artwork coverage '+JSON.stringify(coverage));
+   }catch(error){
+    const failure={tag,message:String(error?.message||error),pageErrors:errors.slice()};
+    failures.push(failure);console.error('PLAYER_LOOP_FAILURE '+JSON.stringify(failure));
+    await page.screenshot({path:path.join(out,tag+'-failure.png')}).catch(()=>{});
    }finally{await page.close()}
   }
  }finally{
-  fs.writeFileSync(path.join(out,'entrance-report.json'),JSON.stringify(report,null,2));
+  fs.writeFileSync(path.join(out,'entrance-report.json'),JSON.stringify({engine:process.env.MEOW_BROWSER||'chromium',strict,expectedCases:sizes.length*2,report,failures},null,2));
   await browser.close();
  }
  console.log('Player loop entrance and Tarot lobby:',JSON.stringify(report.map(({tag,entryMs,coverage})=>({tag,entryMs,coverage}))));
+ if(failures.length)throw Error(failures.length+' player-loop cases failed: '+failures.map(f=>f.tag).join(', '));
 })().catch(e=>{console.error(e);process.exitCode=1});
