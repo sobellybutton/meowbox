@@ -59,6 +59,7 @@ jobs:
           node scripts/tarot-fan-test.cjs
           node scripts/test-tarot-snapshot.cjs
           node scripts/temple-result-continuity-test.cjs
+          node scripts/forecourt-return-test.cjs
           node scripts/rail-edge-touch-test.cjs
           node scripts/reading-host-scene-test.cjs
           node scripts/tea-scoop-continuity-test.cjs
