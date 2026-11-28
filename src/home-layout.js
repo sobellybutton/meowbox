@@ -55,17 +55,31 @@
   }
   return c.every(([u,v])=>!occupied.has(u+','+v))
  }
+ function cellPolygon(id,u,v){
+  if(!cellExists(id,u,v))return null;
+  return [project(id,u,v),project(id,u+1,v),project(id,u+1,v+1),project(id,u,v+1)];
+ }
+ function insideCell(poly,x,y){
+  let positive=false,negative=false;
+  for(let i=0;i<poly.length;i++){
+   const a=poly[i],b=poly[(i+1)%poly.length],cross=(b.x-a.x)*(y-a.y)-(b.y-a.y)*(x-a.x);
+   if(cross>1e-10)positive=true;
+   if(cross< -1e-10)negative=true;
+   if(positive&&negative)return false
+  }
+  return true
+ }
  function nearestCell(id,x,y){
   const l=spec(id);if(!l||!Number.isFinite(x)||!Number.isFinite(y))return null;
   let best=null;
   for(let u=0;u<l.width;u++)for(let v=0;v<l.depth;v++){
-   if(!cellExists(id,u,v))continue;
+   const poly=cellPolygon(id,u,v);if(!poly||!insideCell(poly,x,y))continue;
    const p=project(id,u+.5,v+.5),distance=Math.hypot(p.x-x,p.y-y);
-   if(!best||distance<best.distance)best={u,v,distance}
+   // Shared edges choose the nearest centre deterministically. No exterior
+   // radius: the painted wall, outside floor and L-shaped void cannot snap.
+   if(!best||distance<best.distance-1e-12)best={u,v,distance}
   }
-  // Do not snap clicks on the painted walls or outside the floor.
-  const threshold=.065;
-  return best&&best.distance<=threshold?{u:best.u,v:best.v}:null
+  return best?{u:best.u,v:best.v}:null
  }
  function anchor(id,item){
   const f=footprint(item);if(!f||!canPlace(id,item))return null;
