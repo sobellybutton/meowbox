@@ -2442,6 +2442,32 @@ function directSignClick(id,x,y){
  if(room||transitioning||!proposal.hidden||valleyRevealAt>=0||$('page').style.display==='block')return;
  walkDoor(id,x,y);
 }
+// A nearby house can be partly cropped at the end of a winding path.
+// Keep the label within the visible part of the same house, not over a
+// resident or HUD. Far-away destinations retain their tight anchor range.
+function pawNearbyDoorPlaque(cx,cy,w,h,bounds,blockers,near,screenWidth,approach=null){
+ if(!near||!Number.isFinite(screenWidth)||screenWidth<=0)return null;
+ const first=meowPlaceText(cx,cy,w,h,bounds,blockers,Math.min(120,screenWidth*.34));
+ if(first)return first;
+ // At the end of a narrow painted path, the building's roof anchor may
+ // be under the HUD. Search a bounded grid beside the actual door approach,
+ // keeping the target on the same local screen and clear of all actors/UI.
+ if(!approach||![...approach,w,h].every(Number.isFinite))return null;
+ const [ax,ay]=approach,pad=4,loX=bounds.left+w/2+pad,hiX=bounds.right-w/2-pad,loY=bounds.top+h/2+pad,hiY=bounds.bottom-h/2-pad;
+ if(loX>hiX||loY>hiY)return null;
+ const radius=Math.min(160,screenWidth*.44);let best=null;
+ const xs=[loX,hiX,clamp(ax,loX,hiX)],ys=[loY,hiY,clamp(ay,loY,hiY)];
+ for(let x=loX;x<=hiX;x+=8)xs.push(x);
+ for(let y=loY;y<=hiY;y+=8)ys.push(y);
+ for(const x of xs)for(const y of ys){
+  const distance=Math.hypot(x-ax,y-ay);if(distance>radius)continue;
+  const rect={left:x-w/2-pad,right:x+w/2+pad,top:y-h/2-pad,bottom:y+h/2+pad};
+  if(blockers.some(v=>v&&speechOverlap(rect,v)))continue;
+  const score=distance+Math.hypot(x-cx,y-cy)*.2;
+  if(!best||score<best.score)best={x,y,rect,score}
+ }
+ return best
+}
 let lastDoorLayoutAt=-Infinity,lastDoorLayoutLanguage=null,lastDoorCameraKey='',lastDoorUIAt=-Infinity,lastDoorUIRects=[],lastDoorUISize='';
 syncSigns=function(){
  const show=proposal.hidden&&!room&&!transitioning&&avatar!==null&&$('page').style.display!=='block'&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;
@@ -2488,20 +2514,22 @@ syncSigns=function(){
   if(btn.getAttribute('aria-label')!==name)btn.setAttribute('aria-label',name);const material=houseSignMaterial(id);if(btn.dataset.signMaterial!==material)btn.dataset.signMaterial=material;
   const [ax,ay]=housePlaqueAnchor(scene,id,x,y);
   const sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
+  const near=id!=='station'&&Math.hypot(p.x-x,p.y-y)<=210;
   const inView=sx>=-30&&sx<=W+30&&sy>=top-125&&sy<=bottom+70;
   if(!inView){btn._clearAt=0;btn._signOffset=null;if(!btn.hidden)btn.hidden=true;continue}
   // Measure only when necessary; do not repeatedly unhide a blocked sign.
   if(btn._measureName!==name||btn._measureViewport!==uiSize||!btn._signSize){btn._measureViewport=uiSize;const hidden=btn.hidden;if(hidden)btn.hidden=false;btn._signSize=[Math.max(44,btn.offsetWidth),Math.max(44,btn.offsetHeight)];btn._measureName=name;if(hidden)btn.hidden=true}
-  items.push({btn,sx,sy,w:btn._signSize[0],h:btn._signSize[1]});
+  items.push({btn,sx,sy,near,approach:[cam.ox+x*cam.scale,cam.oy+y*cam.scale],w:btn._signSize[0],h:btn._signSize[1]});
  }
  // Keep the nearest doorway closest to its artwork; move other labels only
  // as far as necessary to avoid an overlapping sign or navigation control.
  // Preserve authored map order so walking past a house cannot reshuffle the other labels.
  for(const item of items){
-  const {btn,sx,sy,w,h}=item;
-  const avoid=[...blockers,...placed],maxShift=Math.min(62,W*.16);let choice=null;
-  if(btn._signOffset&&Math.hypot(btn._signOffset.x,btn._signOffset.y)<=maxShift+.01){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
+  const {btn,sx,sy,w,h,near,approach}=item;
+  const avoid=[...blockers,...placed],maxShift=Math.min(62,W*.16),offsetLimit=near?Math.min(120,W*.34):maxShift;let choice=null;
+  if(btn._signOffset&&Math.hypot(btn._signOffset.x,btn._signOffset.y)<=offsetLimit+.01){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
   if(!choice)choice=meowPlaceText(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,maxShift);
+  if(!choice)choice=pawNearbyDoorPlaque(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,near,W,approach);
   if(!choice){btn._clearAt=0;if(!btn.hidden)btn.hidden=true;continue}
   if(btn.hidden){if(!btn._clearAt)btn._clearAt=now;if(now-btn._clearAt<125){placed.push(choice.rect);continue}}
   btn._signOffset={x:choice.x-sx,y:choice.y-sy};
@@ -5605,7 +5633,7 @@ const stressChoiceStyle=document.createElement('style');stressChoiceStyle.textCo
 /* Petty paper curses: original, harmless everyday inconveniences. One per valid hit,
    without actual threats, real names, or changing the rewards. */
 const pettyPaperCurses=[["May every public toilet you enter be out of paper.","祝你每次上公厕，厕纸刚好用完。"],["May your phone charger work only at a very specific angle.","祝你充电线只有扭成麻花才充得进电。"],["May your bubble tea straw miss every pearl.","祝你喝奶茶，一颗珍珠都吸不到。"],["May your trousers feel tight immediately after lunch.","祝你午饭刚吃完，裤头就开始抗议。"],["May your socks always slide down inside your shoes.","祝你的袜子走两步就滑进鞋里。"],["May your boss's slides have the wrong font on every page.","祝老板的PPT每一页都字体错乱。"],["May your meeting room booking disappear just as the meeting starts.","祝你会议刚开始，会议室就被别人订了。"],["May your favourite snack contain ninety percent air.","祝你买的薯片，九成都是空气。"],["May your noodles come with a fork that bends.","祝你吃面的时候，叉子一用就弯。"],["May your lift stop on every floor.","祝你搭电梯，层层都停。"],["May your online delivery arrive just after you leave.","祝你刚出门，快递就到了。"],["May your umbrella turn inside out on a sunny day.","祝你撑伞没下雨，伞还自己翻了。"],["May your coffee always be lukewarm.","祝你喝热咖啡不够热，喝冰咖啡不够冰。"],["May your Wi-Fi disconnect at ninety-nine percent.","祝你下载到百分之九十九，网络断了。"],["May the last piece of toilet paper tear diagonally.","祝你最后一格厕纸，一撕就裂成三角形。"],["May your favourite pen run out halfway through your signature.","祝你签名签到一半，笔没墨了。"],["May every queue you switch to become the slow one.","祝你每次换队，换完原来的队就快了。"],["May your takeaway sauce be on the other side of the bag.","祝你外卖酱料藏在袋子最底下。"],["May the last dumpling always belong to someone else.","祝你想吃最后一个饺子，别人已经夹走了。"],["May your printer demand magenta to print a black page.","祝你打印黑白文件，打印机偏偏说缺红墨。"],["May autocorrect turn your serious email into nonsense.","祝你发严肃邮件，自动纠错比你还会加戏。"],["May your earbuds always end up in the wrong pocket.","祝你找耳机，永远先摸错口袋。"],["May your rice cooker finish just when you have to leave.","祝你饭刚煮好，人就得出门。"],["May your shopping cart have that one squeaky wheel.","祝你每次推购物车，都碰上那个吱吱叫的轮子。"],["May your alarm go off during your day off.","祝你休假那天，闹钟忘了关。"],["May your toast land jam-side down.","祝你面包掉地上，永远是果酱那一面。"],["May the aircon remote always be just out of reach.","祝你躺下才发现空调遥控器在另一头。"],["May your bank app log out just as you need to pay.","祝你付款的时候，银行App突然要求重新登录。"],["May your food delivery say 'arriving soon' for twenty minutes.","祝你外卖的马上到，永远还有二十分钟。"],["May your perfectly folded laundry unfold itself.","祝你叠好的衣服，拿一件倒一摞。"],["May your calendar invite have no meeting link.","祝你开线上会，邀请里偏偏没链接。"],["May your ice cream cone drip before you find a tissue.","祝你纸巾还没找到，冰淇淋先滴下来。"],["May every vending machine reject your perfectly good coin.","祝你投个完好无损的硬币，机器偏不认。"],["May your video buffer at the punchline.","祝你看视频，笑点前一秒卡住。"],["May your favourite seat always be occupied by a very comfortable cat.","祝你最爱的座位，永远被一只睡熟的猫霸占。"],["May your keyboard space bar squeak during a quiet meeting.","祝你开会全场安静时，空格键吱吱响。"]];
-const activityComedy={"clawMiss":[["The claw caught a whole lot of absolutely nothing.","恭喜你，成功夹到了空气。"],["That plush has better escape skills than my colleagues at 6pm.","这玩偶下班逃跑的速度，比我同事还快。"],["The claw came up empty. Try lining it up directly over the toy next time.","这回夹空啦。下次让夹爪对准玩偶的正上方试试。"],["The claw is doing the bare minimum. Relatable.","夹爪正在消极怠工，懂了。"],["The plush just dodged another responsibility.","玩偶又成功逃避了一项责任。"]],"clawWin":[["Congratulations. Your new colleague has never sent an email.","恭喜，新同事不会发邮件。"],["Finally, a colleague who sits quietly.","终于有个安静的同事了。"],["The plush has accepted your offer. No probation required.","玩偶已接受录用，不用试用期。"]],"soup":[["Grandma: Smells lovely. Here, let me get you a bowl.","外婆：闻起来真香。来，外婆给你拿个碗。"],["Grandma: That's a good pot of soup. Who taught you to cook so well, ah?","外婆：这锅汤煮得不错嘛！谁教你的呀？"],["Grandma: Soup first. Your inbox doesn't need feeding.","外婆：先喝汤。邮件又不用吃饭。"],["Grandma: Wah, this soup can make me retire. For five minutes.","外婆：哎哟，这汤煮得我都能退休了。退五分钟。"],["Grandma: You feed everyone else. This bowl is yours, ah!","外婆：平时净顾着别人。这碗归你，趁热吃！"]],"tea":[["The pearls have settled. One good sip coming right up!","珍珠落到底啦，第一口准备开喝！"],["Wah, even the pearls have more work-life balance now.","哇，连珍珠都比你会劳逸结合。"],["First sip approved. No supporting documents needed.","第一口奶茶审批通过，不用补交材料。"],["The boss may control your calendar, not your sugar level.","老板管得了日历，管不了几分糖。"]],"rhythmHigh":[["Your dance moves have been approved. Unlike your leave.","舞步审批通过，年假还是没有。"],["HR would like to know where you learned those moves.","人事部想知道你从哪儿学的舞步。"]],"rhythmLow":[["Your feet held two separate dance parties. Try following the next beat.","两只脚各开各的舞会啦。下一轮跟着节拍来试试。"],["The dance floor survived. So did you.","舞池没事，你也没事，算赢。"],["Lost the beat? Pick it up again on the next arrow.","节奏跟丢啦？下一支箭头再跟上就好。"]],"box":[["A tiny new friend! It looks remarkably pleased with its new home.","新的小伙伴来啦！看起来对新家相当满意。"],["A new resident with no rent, no deadlines and no CV.","新居民：不用交房租，不用赶工，也没有简历。"],["Plot twist: your toy is better rested than you.","剧情反转：玩偶休息得比你好。"]]};
+const activityComedy={"clawMiss":[["The claw caught a whole lot of absolutely nothing.","恭喜你，成功夹到了空气。"],["It slipped out right at the top! That little rascal.","都夹到顶了，居然还能溜走！这个小坏蛋。"],["The claw came up empty. Try lining it up directly over the toy next time.","这回夹空啦。下次让夹爪对准玩偶的正上方试试。"],["Aiyo, the claw barely hugged it. Try the middle.","哎哟，夹爪就轻轻抱了一下。再往中间瞄瞄。"],["So close! That plush has clearly decided to stay put.","就差一点！看来这娃娃还不想搬家。"]],"clawWin":[["Look who's coming home with you!","看看是谁要跟你回家啦！"],["Caught it! Now find it a nice little spot at home.","夹到了！回家给它找个好位置吧。"],["The plush has packed its bags. It's moving in!","小家伙收拾好行李啦，准备搬进你家！"]],"soup":[["Grandma: Smells lovely. Here, let me get you a bowl.","外婆：闻起来真香。来，外婆给你拿个碗。"],["Grandma: That's a good pot of soup. Who taught you to cook so well, ah?","外婆：这锅汤煮得不错嘛！谁教你的呀？"],["Grandma: Drink it while it's warm. Don't leave it there to grow cold.","外婆：趁热喝呀！放凉了又得给你热一遍。"],["Grandma: Wah, this soup can make me retire. For five minutes.","外婆：哎哟，这汤煮得我都能退休了。退五分钟。"],["Grandma: You feed everyone else. This bowl is yours, ah!","外婆：平时净顾着别人。这碗归你，趁热吃！"]],"tea":[["The pearls have settled. One good sip coming right up!","珍珠落到底啦，第一口准备开喝！"],["Wah, look at those pearls. Don't swallow them all at once!","哇，这珍珠圆滚滚的！慢慢嚼，别一口全吸上来。"],["First sip! Was it the tea or the pearls that won you over?","第一口好喝吗？是茶香，还是珍珠先收买了你？"],["Just the way you like it. That is the best recipe.","自己喜欢的甜度，就是最好喝的配方。"]],"rhythmHigh":[["Wah, look at you go! Even the arrows couldn't keep up.","哇，跳得这么厉害！箭头都快跟不上你了。"],["That was quite a show. One more song?","可以啊，刚才那段有点帅！再来一首？"]],"rhythmLow":[["Your feet held two separate dance parties. Try following the next beat.","两只脚各开各的舞会啦。下一轮跟着节拍来试试。"],["The dance floor survived. So did you.","舞池没事，你也没事，算赢。"],["Lost the beat? Pick it up again on the next arrow.","节奏跟丢啦？下一支箭头再跟上就好。"]],"box":[["A tiny new friend! It looks remarkably pleased with its new home.","新的小伙伴来啦！看起来对新家相当满意。"],["A tiny new roommate. Good thing it doesn't take up much space.","新室友报到！幸好这小家伙不占地方。"],["Plot twist: your toy is better rested than you.","剧情反转：玩偶休息得比你好。"]]};
 /* Contextual ritual dialogue, keyed to existing target labels, never to real people. */
 const pawAhMaTopicLines={
   "Boss's endless demands": [
