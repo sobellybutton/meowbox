@@ -1629,13 +1629,11 @@
         "403101ca: nearby outdoor prewarming now chooses mapped lobby painting for seven reviewed rooms, kitchen/boba and wishing garden instead of retired backgrounds; explicit re-entry may retry failed images after 750ms while background cooldown remains 10s. Seven focused retry cases passed; 87cbc4fd persists regression. Actual load duration, device network and deployment not verified.",
         "Owner 28 Nov 11:17 SGT: entrance loading still lacking; prioritize real cold/warm timing, coherent first frame, avoid waiting for optional room artwork, branded entrance state rather than blank or generic web loader.",
         "Project batch 1: 378b1a11 caches same-source successful image decode, deduplicates pending decode, rejects changed-source results and avoids eager unrelated district decoding and stale nearby-room warm jobs. 8 isolated exact readiness assertions passed; device timings unverified.",
-        "Owner P0: entrance-to-room pauses and old/new face swaps on turning. 659badf7/0ffb4290 lock a single traveller art family for each scene/room visit; require all directions together and use ready family for idle as well as walking. All direction requests initiated; 27 helper checks passed. Entrance DOM crop swaps, other resident renderers, private home actors and true device timing still require audit. Do not mark complete."
+        "Owner P0: entrance-to-room pauses and old/new face swaps on turning. 659badf7/0ffb4290 lock a single traveller art family for each scene/room visit; require all directions together and use ready family for idle as well as walking. All direction requests initiated; 27 helper checks passed. Entrance DOM crop swaps, other resident renderers, private home actors and true device timing still require audit. Do not mark complete.",
+        "2c870c81 + 3cd18f9e + 55b2fa9b: predecode entrance crop candidates at ticket, stable per-visit artwork family; no late source replacement; 53,248 helper assertions; browser regression added, not run."
       ],
-      "lease": {
-        "owner": "manual-entrance-crop",
-        "until": 1795842604934
-      },
-      "blocker": "Actual iPhone/WebKit cold/warm cache, all other room assets and visual acceptance remain open."
+      "lease": null,
+      "blocker": "Actual iPhone/WebKit cold/warm cache, all other room assets and visual acceptance remain open.\nEntrance crop late replacement removed; cold fallback may have original padding. Real painted gate handoff and device timing/visual verification pending."
     },
     {
       "id": "LIFE-OCCUPANCY-01",
