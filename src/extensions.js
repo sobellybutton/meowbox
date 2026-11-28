@@ -2485,6 +2485,8 @@ syncSigns=function(){
  // House plaques are fixed to their buildings. Moving actors and transient name labels do not compete for these positions.
  for(const [id,x,y,en,cn] of maps[scene].st){
   const btn=signButtons.get(id),name=tr(en,cn);
+  // Undiscovered destinations must not reserve space or delay nearby plaques.
+  if(scene==='fortune'&&typeof pawValleyDoorNearby==='function'&&!pawValleyDoorNearby(id,p.y,pawFortunePainting.doors)){btn._clearAt=0;btn._signOffset=null;if(!btn.hidden)btn.hidden=true;continue}
   let plaque=btn.querySelector('.doorPlaque');if(!plaque){btn.replaceChildren();plaque=element('span','',btn,'doorPlaque')}if(plaque.textContent!==name)plaque.textContent=name;
   if(btn.getAttribute('aria-label')!==name)btn.setAttribute('aria-label',name);const material=houseSignMaterial(id);if(btn.dataset.signMaterial!==material)btn.dataset.signMaterial=material;
   const [ax,ay]=housePlaqueAnchor(scene,id,x,y);
