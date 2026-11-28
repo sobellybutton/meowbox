@@ -15379,6 +15379,7 @@ let pawYueInline=null;
 function pawYueRestoreInline(){
  const visit=pawYueInline;if(!visit)return;
  pawYueInline=null;visit.observer?.disconnect();
+ visit.form.pawCompactReply?.remove();delete visit.form.pawCompactReply;delete visit.form.dataset.pawYueCompact;
  if(visit.anchor.isConnected)visit.anchor.replaceWith(visit.form);else visit.form.remove();
  $('dialogue').removeAttribute('data-paw-yue-question');
  $('dialogue').removeAttribute('data-paw-yue-reply');
@@ -15398,6 +15399,7 @@ function pawYueSpeakCurrentQuestion(form){
  panel.dataset.pawYueReply='true';
  const details=form.querySelector('details');
  if(details&&form.dataset.pawYueTurn==='2')details.open=true;
+ form.pawCompactReply?.syncTurn?.();
 }
 function pawYueInlineForm(kind){
  const q=$('content'),pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
@@ -15442,21 +15444,42 @@ function pawTarotCardConversation(index=state.readFocus){
  if(room!=='tarot'||!['tarot','love'].includes(kind)||!d||!Number.isFinite(run.readFlip?.[index])||run.readFlip[index]<0||t-run.readFlip[index]<.72)return;
  const valid=()=>room==='tarot'&&activity===kind&&state===run;
  run.readFocus=index;run.readStage='focus';run.readAt=t;
- const name=tr(d[0],d[1])+' · '+orient(v.rev);
+ const name=tr(d[0],d[1]),opening=tr("Ah, you've drawn "+name+", "+(v.rev?'reversed':'upright')+".","哦，你抽到的是「"+name+"」"+(v.rev?'逆位':'正位')+"。");
  const reflection=run.readCards.length===5?fiveReadingPrompt(run.readTopic,index):topicReflection(run.readTopic,index);
  const aside=tarotCommentary(d[0],v.rev,run.readTopic,run.tarotTone);
- const parts=[name,...[arcanaReading(d,v.rev),reflection,aside&&tr(...aside)].filter(Boolean).flatMap(pawChatPhrases)];
- function speak(step){
+ const parts=pawChatPhrases(arcanaReading(d,v.rev));
+ if(parts.length&&opening.length+parts[0].length<(zh?82:185))parts[0]=opening+' '+parts[0];else parts.unshift(opening);
+ parts.push(...[reflection,aside&&tr(...aside)].filter(Boolean).flatMap(pawChatPhrases));
+ function leave(){if(valid())readingReturnSpread()}
+ function tell(words,choices){
   if(!valid())return;
   $('page').style.display='none';
+  say(tr('Fortune Teller','占卜师'),words,choices);
+  $('dialogue').setAttribute('data-paw-tarot-conversation','true')
+ }
+ function topic(i,from){
+  const prompt=topicReflection(i,0);
+  tell(tr("Let's think about "+readingTopics[i][0].toLowerCase()+". "+prompt,"那我们聊聊"+readingTopics[i][1]+"吧。"+prompt),[
+   [tr('Tell me more','再说说'),()=>tell(topicReflection(i,1)+' '+topicReflection(i,2),[[tr('Back to our reading','继续聊牌意'),()=>speak(from)],[tr('Thank you','谢谢你'),leave]])],
+   [tr('Back to our reading','继续聊牌意'),()=>speak(from)],[tr('Thank you','谢谢你'),leave]]);
+ }
+ function whole(){
+  const entry=tarotShareSnapshot(run);
+  const words=entry.cards.length===3?readingConnection(entry):tr("Take the meaning that speaks to you. What is one small thing you can try today?","留下最触动你的启发。今天有什么小事可以试着做呢？");
+  const turns=pawChatPhrases(words);
+  function next(i){tell(turns[i]||words,[
+   ...(i+1<turns.length?[[tr('Tell me more','再说说'),()=>next(i+1)]]:[]),
+   [tr('View my reading keepsake','看看我的牌卡手记'),()=>{if(valid())openTarotReading(entry,()=>{if(valid())next(i)})}],
+   [tr('Back to the table','回到牌桌'),leave]])}
+  next(0)
+ }
+ function speak(step){
   const choices=[];
   if(step+1<parts.length)choices.push([tr('Tell me more','再说说'),()=>speak(step+1)]);
   else if(index+1<run.readCards.length&&run.readFlip[index+1]>=0&&t-run.readFlip[index+1]>=.72)choices.push([tr('Next card','下一张牌'),()=>pawTarotCardConversation(index+1)]);
-  else if(run.readFlip.every(v=>v>=0&&t-v>=.72))choices.push([tr('Reflect on the whole reading','聊聊整体牌意'),()=>openTarotReading(tarotShareSnapshot(run))]);
-  if(step>0)choices.push([tr('Previous thought','上一段'),()=>speak(step-1)]);
-  choices.push([tr('Back to the table','回到牌桌'),()=>{if(valid())readingReturnSpread()}]);
-  say(tr('Fortune Teller','占卜师'),parts[step],choices);
-  $('dialogue').setAttribute('data-paw-tarot-conversation','true');
+  else if(run.readFlip.every(v=>v>=0&&t-v>=.72))choices.push([tr('Reflect on the whole reading','聊聊整体牌意'),whole]);
+  choices.push([tr('What about work?','事业呢？'),()=>topic(1,step)],[tr('What about love?','感情呢？'),()=>topic(0,step)],[tr('Back to the table','回到牌桌'),leave]);
+  tell(parts[step],choices)
  }
  speak(0)
 }
@@ -15874,3 +15897,90 @@ pawRoomGroundingStyle.textContent=`
 
 /* Keep the Tarot interpretation on the same resident dialogue surface. */
 const pawTarotSpeechBubbleStyle=document.createElement('style');pawTarotSpeechBubbleStyle.textContent=`html #game #dialogue[data-paw-tarot-conversation][data-paw-chat-bar] #line{width:fit-content;max-width:100%;box-sizing:border-box;background:#f1e6cf!important;color:#3d4b3d!important;border:1px solid #b6a17b;border-radius:11px 11px 11px 3px;padding:8px 11px!important;margin:0 0 6px!important}html #game #dialogue[data-paw-tarot-conversation][data-paw-chat-bar]{max-height:40dvh!important;padding-top:8px!important}`;document.head.append(pawTarotSpeechBubbleStyle);
+
+/* PAW_YUE_TYPED_REPLY_BEGIN */
+function pawYueParseDateReply(value){
+ const raw=String(value||'').trim();let m;
+ if((m=raw.match(/^(\d{2})(\d{2})(\d{4})$/))||(m=raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/))){
+  const date=m[3]+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0');return destinyBirthValid(date,'1900-01-02',shrineClock().day)?date:null
+ }
+ if(/^\d{4}-\d{2}-\d{2}$/.test(raw)&&destinyBirthValid(raw,'1900-01-02',shrineClock().day))return raw;
+ return null
+}
+function pawYueParseTimeReply(value){
+ const raw=String(value||'').trim().toLowerCase(),m=raw.match(/^(\d{1,2}):?(\d{2})\s*(am|pm)?$/);if(!m)return null;
+ let h=Number(m[1]),min=Number(m[2]);if(min>59||h>23||m[3]&&(h<1||h>12))return null;
+ if(m[3])h=h%12+(m[3]==='pm'?12:0);
+ return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0')
+}
+function pawYueTypedPlace(value){
+ const cities=[['singapore','新加坡'],['hangzhou','杭州'],['shanghai','上海'],['beijing','北京'],['hong kong','hongkong','香港'],['kuala lumpur','kl','吉隆坡'],['taipei','台北','臺北'],['tokyo','东京','東京']];
+ const key=String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
+ const i=cities.findIndex(a=>a.includes(key));return i>=0?String(i):null
+}
+/* PAW_YUE_TYPED_REPLY_END */
+function pawInstallYueTypedReply(visit){
+ const {form,kind}=visit;if(form.pawCompactReply)return;
+ const panel=$('dialogue'),row=element('div','',panel,'pawYueTypedReply');
+ panel.insertBefore(row,$('choices'));
+ const input=element('input','',row),send=b(row,'↵',submit),error=element('small','',row,'pawYueReplyError');
+ input.type='text';input.autocomplete='off';input.spellcheck=false;input.setAttribute('aria-label',tr('Your reply','你的回答'));send.type='button';send.setAttribute('aria-label',tr('Send reply','发送回答'));
+ error.setAttribute('aria-live','polite');error.hidden=true;
+ const cities=element('datalist','',row);cities.id='pawYueBirthCityOptions';
+ for(const name of (zh?['新加坡','杭州','上海','北京','香港','吉隆坡','台北','东京']:['Singapore','Hangzhou','Shanghai','Beijing','Hong Kong','Kuala Lumpur','Taipei','Tokyo'])){const option=element('option','',cities);option.value=name}
+ const controls=()=>form.querySelector('.pawYueStepNav');
+ const select=()=>form.querySelector('details select');
+ const active=()=>pawYueInline===visit&&room==='destiny'&&form.isConnected;
+ function message(en,cn){error.textContent=tr(en,cn);error.hidden=false;input.focus()}
+ function syncTurn(){
+  const step=Number(form.dataset.pawYueTurn||0);
+  error.hidden=true;input.removeAttribute('list');input.value='';
+  input.inputMode=step===0?'numeric':kind==='chart'&&step===2?'text':'numeric';
+  input.placeholder=step===0?'MM/DD/YYYY':kind==='year'?tr('Year, e.g. 2027','年份，例如 2027'):step===1?tr('09:30 or 9:30 AM','09:30 或 9:30 AM'):tr('City, e.g. Singapore','出生城市，例如新加坡');
+  if(step===0){const v=form.querySelector('input[type=date]')?.value;if(v)input.value=v.slice(5,7)+'/'+v.slice(8,10)+'/'+v.slice(0,4)}
+  else if(kind==='chart'&&step===1)input.value=form.querySelector('input[type=time]')?.value||'';
+  else if(kind==='chart'&&step===2){input.setAttribute('list',cities.id);const p=select();if(p&&/^[0-7]$/.test(p.value))input.value=cities.options[Number(p.value)].value}
+  else if(kind==='year')input.value=form.querySelector('select')?.value||'';
+ }
+ function change(field,value){field.value=value;field.dispatchEvent(new Event('input',{bubbles:true}));field.dispatchEvent(new Event('change',{bubbles:true}))}
+ function submit(){
+  if(!active())return;
+  const step=Number(form.dataset.pawYueTurn||0),value=input.value.trim();error.hidden=true;
+  if(step===0){
+   const parsed=pawYueParseDateReply(value);if(!parsed)return message('Enter your date as MM/DD/YYYY.','请按月/日/四位年份输入出生日期。');
+   change(form.querySelector('input[type=date]'),parsed)
+  }else if(kind==='chart'&&step===1){
+   const parsed=pawYueParseTimeReply(value);if(!parsed)return message('Enter your local birth time, such as 09:30.','请输入当地出生时间，例如 09:30。');
+   change(form.querySelector('input[type=time]'),parsed)
+  }else if(kind==='chart'){
+   const city=pawYueTypedPlace(value),place=select();
+   if(city===null){
+    if(/^(other|advanced|其他|进阶)$/i.test(value)){change(place,'custom');delete form.dataset.pawYueCompact;row.hidden=true;return}
+    return message('I know these eight cities. Choose one, or type Other for an unlisted city.','我的历书有这八座城市。请选择其一，或输入“其他”。')
+   }
+   change(place,city);
+   if(!place.checkValidity())return message('I cannot confirm that historical birth time. Please check the time.','这个出生时间暂时无法确认，请核对时间。')
+  }else{
+   const year=form.querySelector('select');if(![...year.options].some(o=>o.value===value))return message('Choose a year available in the almanac.','请选择历书中已有的年份。');
+   change(year,value)
+  }
+  const next=[...controls().querySelectorAll('button')][1],last=kind==='chart'?step===2:step===1;
+  if(last){form.querySelector('button[type=submit]').click()}else next.click()
+ }
+ input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();submit()}});
+ form.pawCompactReply=row;row.syncTurn=syncTurn;form.dataset.pawYueCompact='true';syncTurn()
+}
+const pawYueTypedInlineBefore=pawYueInlineForm;
+pawYueInlineForm=function(kind){const result=pawYueTypedInlineBefore(kind);if(result&&pawYueInline)pawInstallYueTypedReply(pawYueInline);return result};
+const pawYueTypedReplyStyle=document.createElement('style');pawYueTypedReplyStyle.textContent=`
+html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm[data-paw-yue-compact="true"]>:not(.pawYueQuestion){display:none!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueTypedReply{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:5px 0 2px auto;width:min(100%,310px)}
+html #game #dialogue[data-paw-yue-reply] .pawYueTypedReply[hidden]{display:none!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueTypedReply input{flex:1;min-width:0;box-sizing:border-box;width:0;min-height:44px;border:1px solid #b6a17b;border-radius:10px 10px 3px 10px;padding:8px 12px;font-size:16px;background:#f5e8cc;color:#3d4b3d}
+html #game #dialogue[data-paw-yue-reply] .pawYueTypedReply button{min-width:44px;min-height:44px;padding:0;border-radius:8px;background:#e5d1a7;color:#3d4b3d;border:1px solid #b6a17b;font-size:20px}
+html #game #dialogue[data-paw-yue-reply] .pawYueReplyError{flex-basis:100%;color:#f8dfb0;font-size:12px}
+html #game #dialogue[data-paw-yue-reply] .pawYueReplyError[hidden]{display:none!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueTypedReply~#choices button{min-height:30px!important;padding:2px 8px!important}
+html #game #dialogue[data-paw-tarot-conversation] #choices{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important}
+html #game #dialogue[data-paw-tarot-conversation] #choices button{text-align:left!important;min-height:40px!important;padding:6px 9px!important}
+`;document.head.append(pawYueTypedReplyStyle);
