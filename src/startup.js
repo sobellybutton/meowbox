@@ -12799,6 +12799,90 @@ function pawReadingCompatible(api,id,entries){
 }
 /* PAW_READING_LOBBIES_END */
 let pawReadingModuleJob=null,pawReadingVisit=null,pawReadingAdmission=null;
+/* PAW_READING_SEATED_HOST_BEGIN */
+function pawReadingSeatPlan(id,plate,phase){
+ if(!plate||![plate.x,plate.y,plate.w,plate.h].every(Number.isFinite)||plate.w<=0||plate.h<=0)return null;
+ const tarot=id==='tarot',yue=id==='destiny';if(!tarot&&!yue)return null;
+ const host=tarot?'fortune-teller':'master-yue';
+ const pose=tarot?(phase==='shuffle'?'seated-shuffle-held':phase==='focus'?'seated-present-card':'seated-idle'):(phase==='result'?'seated-present-blank-parchment':phase==='question'?'seated-brush-held':'seated-welcome-explain');
+ const eye=tarot?[.135,.399]:[.581,.337],span=plate.h*(tarot?.0165:.0185);
+ const center=[plate.x+plate.w*eye[0],plate.y+plate.h*eye[1]];
+ return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.447]}
+}
+function pawReadingHostPhase(id,q,kind,desk,result){
+ if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle')return 'shuffle';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
+ if(id==='destiny'&&desk)return result?'result':'question';
+ return 'idle'
+}
+function pawReadingCoverPlate(bounds,iw,ih){
+ if(!bounds||![bounds.x,bounds.y,bounds.w,bounds.h,iw,ih].every(Number.isFinite)||Math.min(bounds.w,bounds.h,iw,ih)<=0)return null;
+ const scale=Math.max(bounds.w/iw,bounds.h/ih),w=iw*scale,h=ih*scale;
+ return {x:bounds.x+(bounds.w-w)/2,y:bounds.y+(bounds.h-h)/2,w,h}
+}
+function pawReadingHostFamilyReady(id,manifest,api,ready){
+ const host=id==='tarot'?'fortune-teller':id==='destiny'?'master-yue':null;
+ const poses=host&&manifest?.characters?.[host]?.poses;
+ return !!api&&!!poses&&Object.keys(poses).length===3&&Object.entries(poses).every(([pose,a])=>!!api.contacts(manifest,host,pose,[0,0],10)&&ready(a.path,a.canvas))
+}
+/* PAW_READING_SEATED_HOST_END */
+let pawHostLibrary=null,pawHostLibraryJob=null,pawHostWarmJobs=new Map(),pawHostVisit=null;
+function pawLoadHostLibrary(){
+ if(pawHostLibrary)return Promise.resolve(pawHostLibrary);
+ if(pawHostLibraryJob)return pawHostLibraryJob;
+ const loadApi=()=>globalThis.PawReadingHost?Promise.resolve(globalThis.PawReadingHost):new Promise(resolve=>{
+  const script=document.createElement('script');script.src='assets/visual/painted/reading-host-framing.js';script.async=true;let done=false;
+  const finish=api=>{if(done)return;done=true;clearTimeout(timer);script.remove();resolve(api||null)};
+  const timer=setTimeout(()=>finish(null),3500);script.onload=()=>finish(globalThis.PawReadingHost);script.onerror=()=>finish(null);document.head.append(script)
+ });
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),3500);
+ pawHostLibraryJob=Promise.all([loadApi(),fetch('assets/visual/painted/host-pose-candidates.json',{signal:controller.signal}).then(r=>r.ok?r.json():null).catch(()=>null)]).then(([api,manifest])=>{
+  if(api&&manifest?.schema===1)pawHostLibrary={api,manifest};return pawHostLibrary
+ }).finally(()=>{clearTimeout(timer);pawHostLibraryJob=null});
+ return pawHostLibraryJob
+}
+function pawHostPoseImage(path,retry=false){return pawRecoveredImage(path.replace('assets/visual/painted/','../'),null,retry)}
+function pawHostFamilyReady(id){
+ const lib=pawHostLibrary;if(!lib)return false;
+ return pawReadingHostFamilyReady(id,lib.manifest,lib.api,(path,canvas)=>{
+  const im=pawHostPoseImage(path);return pawRoomImageReady(im)&&im.naturalWidth===canvas[0]&&im.naturalHeight===canvas[1]&&pawDecodedSources.get(im)===(im.src||im.currentSrc||'')
+ })
+}
+function pawWarmReadingHost(id){
+ if(!['tarot','destiny'].includes(id)||pawHostWarmJobs.has(id)||pawHostFamilyReady(id))return;
+ const job=pawLoadHostLibrary().then(lib=>{
+  const host=id==='tarot'?'fortune-teller':'master-yue',poses=lib?.manifest.characters?.[host]?.poses;
+  return poses?Promise.all(Object.values(poses).map(a=>pawReadyPicture(pawHostPoseImage(a.path,true),3500))):null
+ }).catch(()=>null).finally(()=>pawHostWarmJobs.delete(id));
+ pawHostWarmJobs.set(id,job)
+}
+function pawDrawReadingSeated(id,plate){
+ if(pawHostVisit?.id!==id||!pawHostVisit.ready||!pawHostLibrary)return false;
+ const desk=id==='destiny'&&$('page').dataset.pawYueDesk==='true'&&$('page').style.display!=='none';
+ const grid=desk?$('content').querySelector('.ziGrid'):null;
+ const almanac=desk?$('content').querySelector('.yueReadingFront,.signNotebookResult'):null;
+ const result=!!(grid||almanac),phase=pawReadingHostPhase(id,state,activity,desk,result);
+ const plan=pawReadingSeatPlan(id,plate,phase);if(!plan)return false;
+ const {api,manifest}=pawHostLibrary,fr=api.contacts(manifest,plan.host,plan.pose,plan.center,plan.span);
+ if(!fr)return false;
+ const im=pawHostPoseImage(fr.path);
+ ctx.save();try{
+  ctx.beginPath();ctx.rect(...plan.clip);ctx.clip();
+  if(!api.draw(ctx,im,fr))return false;
+  if(id==='tarot'&&phase==='focus'){
+   const v=state.readCards[state.readFocus],atlas=readingArtwork();
+   if(v&&Number.isInteger(v.i)&&v.i>=0&&v.i<tarotDeck.length)api.drawHeldCard(ctx,fr,atlas,[(v.i%readingFaceColumns)*readingFaceWidth,Math.floor(v.i/readingFaceColumns)*readingFaceHeight,readingFaceWidth,readingFaceHeight],v.rev);
+  }
+  if(id==='destiny'&&phase==='result'&&grid){
+   const cells=[...grid.querySelectorAll('article:not(.blank)')];
+   if(cells.length===12)api.drawHeldParchment(ctx,fr,g=>{
+    g.strokeStyle='#8e674b';g.lineWidth=.008;g.fillStyle='#674e3b';g.font='.065px Georgia,"Songti SC",serif';g.textAlign='center';g.textBaseline='middle';
+    cells.forEach((cell,i)=>{const x=(i%4)/4,y=Math.floor(i/4)/3;g.strokeRect(x,y,.25,1/3);const title=cell.querySelector('h3,h4,strong,b')?.textContent?.trim();if(title)g.fillText(title,x+.125,y+1/6,.23)})
+   })
+  }
+  return true
+ }finally{ctx.restore()}
+}
+
 function pawLoadReadingModule(){
  if(globalThis.PawPaintedInteriors)return Promise.resolve(globalThis.PawPaintedInteriors);
  if(pawReadingModuleJob)return pawReadingModuleJob;
@@ -12817,13 +12901,13 @@ const pawTarotPropPath='../../staging/2026-11-28-consolidated/atlases/tarot-prop
 function pawTarotProps(retry=false){return pawRecoveredImage(pawTarotPropPath,null,retry)}
 async function pawPrepareTarotArt(){const faces=readingArtwork(),props=pawTarotProps(true);const result=await Promise.all([pawReadyPicture(faces,4500),pawReadyPicture(props,4500)]);return result.every(Boolean)&&faces.naturalWidth===1024&&faces.naturalHeight===2180}
 const pawReadingDoorBefore=walkDoor;
-walkDoor=function(id,...args){if(pawReadingRoomIds.includes(id))pawLoadReadingModule().then(api=>pawReadingImage(api,id));if(id==='tarot')pawPrepareTarotArt();return pawReadingDoorBefore(id,...args)};
+walkDoor=function(id,...args){if(pawReadingRoomIds.includes(id))pawLoadReadingModule().then(api=>pawReadingImage(api,id));pawWarmReadingHost(id);if(id==='tarot')pawPrepareTarotArt();return pawReadingDoorBefore(id,...args)};
 const pawReadingEnterBefore=enter;
 enter=function(id,...args){
- if(!pawReadingRoomIds.includes(id)){pawReadingAdmission=null;pawReadingVisit=null;return pawReadingEnterBefore(id,...args)}
+ if(!pawReadingRoomIds.includes(id)){pawReadingAdmission=null;pawReadingVisit=null;pawHostVisit=null;return pawReadingEnterBefore(id,...args)}
  if(room||activity||transitioning||pawArcadeInputBlocked())return;
  if(pawFoodAdmissionValid(pawReadingAdmission,pawReadingAdmission,pawFoodAdmissionView()))return;
- const request={scene,avatar,x:p.x,y:p.y};pawReadingAdmission=request;
+ const request={scene,avatar,x:p.x,y:p.y};pawReadingAdmission=request;pawWarmReadingHost(id);
  releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;
  const readyApi=pawReadingAPI(),readyImage=pawReadingImage(readyApi,id);
  if(!pawRoomImageReady(readyImage))hint('Getting the room ready…','小屋正在准备开门……');
@@ -12835,7 +12919,7 @@ enter=function(id,...args){
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   pawReadingAdmission=null;
   if(!ready||!pawRoomImageReady(im)){hint('The room painting could not load. Tap its door to try again.','小屋画面暂未加载成功，请再次点击门口重试。');return}
-  pawReadingVisit=id;return pawReadingEnterBefore(id,...args)
+  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id)};return pawReadingEnterBefore(id,...args)
  }).finally(()=>{if(pawReadingAdmission===request)pawReadingAdmission=null})
 };
 // Nearby outdoor warming should decode the actual selected lobby painting,
@@ -12844,7 +12928,7 @@ enter=function(id,...args){
  pawWarmRoomAssets=function(id){
   if(room||activity)return pawMappedWarmBefore(id);
   const decode=im=>{if(im&&!pawRoomImageReady(im))pawReadyPicture(im,4500)};
-  if(pawReadingRoomIds.includes(id)){pawLoadReadingModule().then(api=>decode(pawReadingImage(api,id)));if(id==='tarot')pawPrepareTarotArt();return}
+  if(pawReadingRoomIds.includes(id)){pawLoadReadingModule().then(api=>decode(pawReadingImage(api,id)));pawWarmReadingHost(id);if(id==='tarot')pawPrepareTarotArt();return}
   if(Object.hasOwn(pawFoodRoomSpecs,id)){decode(pawFoodImage(id));return}
   if(id==='wishes'){decode(pawWishLobbyArt());return}
   return pawMappedWarmBefore(id)
@@ -12917,7 +13001,7 @@ drawRoom=function(...args){if(pawReadingActive())pawReadingBackdrop();return paw
 function pawReadingHost(){
  const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:room==='tea'?['Auntie Mei','梅姨']:room==='fish'?['Ah Ma','阿嬷']:room==='park'?['Auntie Lin','林姨']:room==='arcade'?['Arcade keeper','游戏厅店主']:null;
  if(!name)return null;const record=residentArtworkRecord(name);if(!record&&room!=='fish')return null;
- const [x,y]=pawReadingWorld(room==='destiny'?[.58,.446]:pawReadingAPI().rooms[room].host);
+ const [x,y]=pawReadingWorld(room==='destiny'?[.58,.446]:room==='tarot'&&pawHostVisit?.ready?[.135,.61]:pawReadingAPI().rooms[room].host);
  return {station:room==='tea'?'chat':room==='fish'?'hit':room==='park'?'pet':room==='arcade'?'bubbleArcade':room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record?.height||112,.90),facing:room==='fish'?'right':'left'}
 }
 const pawReadingHostsBefore=roomResidentActors;
@@ -12935,6 +13019,7 @@ function pawYueDeskPlaque(p=pawReadingPlate){
 }
 /* PAW_YUE_DESK_END */
 function pawDrawYueAtDesk(a){
+ if(pawDrawReadingSeated('destiny',pawReadingPlate))return true;
  const record=residentArtworkRecord(a.n),seated=residentArtworkImage(record,'seated'),standing=residentArtworkImage(record);
  const im=pawRoomImageReady(seated)?seated:standing;
  if(!pawRoomImageReady(im))return false;
@@ -12985,7 +13070,7 @@ const pawReadingPropBefore=prop;
 prop=function(id,x,y){
  if(!pawReadingActive()||!Object.hasOwn(pawReadingAPI().rooms[room].stations,id))return pawReadingPropBefore(id,x,y);
  if(room==='park')pawDrawParkLobbyAnimal(id);
- const a=pawReadingHost();if(a&&a.station===id){if(room==='destiny'){pawDrawYueAtDesk(a);pawDrawYueDeskPlaque(()=>action('destiny'))}else if(room==='fish'){if(!drawGatheringPainted(a.n,a.x,a.y,a.sc,a.facing))pawPierAuntieBefore(a.x,a.y,94*travellerRoomScale(H,cam.scale)/205)}else drawGatheringPainted(a.n,a.x,a.y,a.sc,a.facing)}
+ const a=pawReadingHost();if(a&&a.station===id){if(room==='destiny'){pawDrawYueAtDesk(a);pawDrawYueDeskPlaque(()=>action('destiny'))}else if(room==='fish'){if(!drawGatheringPainted(a.n,a.x,a.y,a.sc,a.facing))pawPierAuntieBefore(a.x,a.y,94*travellerRoomScale(H,cam.scale)/205)}else if(room!=='tarot'||!pawDrawReadingSeated('tarot',pawReadingPlate))drawGatheringPainted(a.n,a.x,a.y,a.sc,a.facing)}
  // Artwork contains the table and props. Only the interactive sign remains.
  pawStationPlaque={room,id,x,y,spec:groundedStationSpec(room,id),at:t}
 };
@@ -13441,7 +13526,7 @@ const pawTarotRoomBackdropBefore=paintLivingBackdrop;
 paintLivingBackdrop=function(...args){
  if(room==='tarot'&&pawReadingVisit==='tarot'&&['tarot','love'].includes(activity)){
   const im=pawReadingImage(pawReadingAPI(),'tarot');
-  if(pawRoomImageReady(im)){const b=livingBounds();ctx.save();try{cover(im,b.x,b.y,b.w,b.h)}finally{ctx.restore()}return}
+  if(pawRoomImageReady(im)){const b=livingBounds();ctx.save();try{cover(im,b.x,b.y,b.w,b.h);pawDrawReadingSeated('tarot',pawReadingCoverPlate(b,im.naturalWidth,im.naturalHeight))}finally{ctx.restore()}return}
  }
  return pawTarotRoomBackdropBefore(...args)
 };
