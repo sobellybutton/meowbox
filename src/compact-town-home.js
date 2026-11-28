@@ -282,8 +282,28 @@ function townConnectionInfo(q){
  };
  const observer=new MutationObserver(refresh);observer.observe(status,{childList:true,characterData:true,subtree:true});refresh();
 }
+// The pavilion is the destination, not a photograph pasted into a menu.
+// Keep the original action buttons and their handlers, using one foreground
+// notice surface while the painted scene remains visible behind it.
+function presentTownPavilion(q){
+ const front=q.querySelector('.pawTownFront');
+ if(!front||front.querySelector('.pawPavilionTray'))return;
+ const photo=front.querySelector(':scope > .pawTownFrontPhoto');
+ const sections=[...front.querySelectorAll(':scope > .pawTownSection')];
+ if(!photo||!sections.length)return;
+ const tray=element('div','',front,'pawPavilionTray');
+ sections.forEach(section=>tray.append(section));
+ const news=tray.querySelector('.pawTownPinned');
+ const previews=news&&[...news.querySelectorAll(':scope > .pawTownWeek,:scope > .pawTownPreview')];
+ if(previews?.length){
+  const fold=element('details','',news,'pawPavilionNews');
+  element('summary',tr('A glimpse of today’s news','今日小镇见闻'),fold);
+  previews[0].before(fold);previews.forEach(node=>fold.append(node));
+ }
+ front.classList.add('pawPavilionScene');
+}
 const pageBefore=page;
-page=function(...args){$('content')?.classList.remove('pawCutawayOpen');const result=pageBefore(...args),q=$('content');naturalTownLabels(q);return result};
+page=function(...args){$('content')?.classList.remove('pawCutawayOpen');const result=pageBefore(...args),q=$('content');naturalTownLabels(q);presentTownPavilion(q);return result};
 const sayBefore=say;
 say=function(name,words,...rest){return sayBefore.call(this,residentDialogue(name),words,...rest)};
 function dressTeaTable(q){
@@ -359,14 +379,16 @@ function decodeCutawayArt(path,expected=null){
  }).then(ok=>{if(!ok)cutawayDecoded.delete(key);return ok});
  cutawayDecoded.set(key,job);return job
 }
+let pendingCutawayReturn=null;
 function mountCutaway(q,legacyStage){
- const launch=element('div','',q,'pawCutawayLaunch');legacyStage.before(launch);
- const button=b(launch,tr('Cutaway room','立体小窝'),open);
+ const resume=pendingCutawayReturn;pendingCutawayReturn=null;
+ const launch=element('div','',q,'pawCutawayLaunch');legacyStage.after(launch);
+ const button=b(launch,tr('Explore the room','走进小窝'),()=>open());
  let opened=false;
- async function open(){
+ async function open(resumeState=null){
   if(opened)return;opened=true;button.disabled=true;button.textContent=tr('Opening your room…','正在打开小窝…');
   const active=()=>q.contains(legacyStage)&&legacyStage.isConnected&&$('page').style.display==='block';
-  const reset=()=>{opened=false;button.disabled=false;button.textContent=tr('Cutaway room','立体小窝')};
+  const reset=()=>{opened=false;button.disabled=false;button.textContent=tr('Explore the room','走进小窝')};
   const api=await pawLoadHomePaintings();
   if(!active()){reset();return}
   if(!api){reset();toast(tr('The painted room could not load. Your original room is unchanged.','立体小窝暂时无法载入，原本的小窝不会改变。'));return}
@@ -385,8 +407,14 @@ function mountCutaway(q,legacyStage){
   const controls=element('div','',panel,'pawCutawayControls');
   const status=element('small','',panel,'pawCutawayStatus');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const oldHidden=legacyStage.hidden;
+  let closed=false;
   function close(){
-   stop();drag.clear();seatResize?.disconnect();observer.disconnect();document.removeEventListener('visibilitychange',onVisibility);panel.remove();legacyStage.hidden=oldHidden;q.classList.remove('pawCutawayOpen');reset();if(button.isConnected&&$('page').style.display==='block')button.focus({preventScroll:true})
+   if(closed)return;closed=true;
+   stop();drag.clear();seatResize?.disconnect();observer.disconnect();document.removeEventListener('visibilitychange',onVisibility);panel.remove();legacyStage.hidden=oldHidden;if(!q.querySelector('.pawCutawayPanel'))q.classList.remove('pawCutawayOpen');reset();if(button.isConnected&&$('page').style.display==='block')button.focus({preventScroll:true})
+  }
+  function returnToCutaway(){
+   pendingCutawayReturn={zone,fingerprint,actor:{...actor}};
+   try{return hideoutPage()}finally{pendingCutawayReturn=null}
   }
   function fail(){if(!panel.isConnected)return;close();toast(tr('The painted room could not load. Your original room is unchanged.','立体小窝暂时无法载入，原本的小窝不会改变。'))}
   shell.onerror=fail;shell.onload=()=>{if(shell.naturalWidth&&shell.naturalHeight)stage.style.aspectRatio=shell.naturalWidth+'/'+shell.naturalHeight};
@@ -399,7 +427,9 @@ function mountCutaway(q,legacyStage){
    if(editing||seatedKey||!visibleFoot||Math.hypot(visibleFoot.x-point(actor).x,visibleFoot.y-point(actor).y)<=.0001)toggle();
    else walk(actor,toggle)
   });
-  let editing=false,selected=null,actor=cutawayFree(api,layout,items).at(-1),raf=0,epoch=0;
+  const freeCells=cutawayFree(api,layout,items);
+  const prior=resumeState?.zone===zone&&resumeState.fingerprint===fingerprint?freeCells.find(cell=>cell.u===resumeState.actor?.u&&cell.v===resumeState.actor?.v):null;
+  let editing=false,selected=null,actor=prior||freeCells.at(-1),raf=0,epoch=0;
   const drag=cutawayDragOwner();
   let seatedKey=null,seatStandingRatio=0,seatResize=null,visibleFoot=null,actorFacing='down';
   const seatFrame=cutawaySeatFrame(avatar??0);let seatReady=false;
@@ -498,11 +528,11 @@ function mountCutaway(q,legacyStage){
      if(lights.has(item.key))lights.delete(item.key);else lights.add(item.key);
      persist();render();status.textContent=lights.has(item.key)?tr('A little warmth for the room.','小窝又暖和了一点。'):tr('Time for a quiet evening.','享受安静的夜晚吧。');return
     }
-    if(item.key==='board'){close();myNotes9();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),hideoutPage)}
-    else if(item.key==='frame'){close();album9();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),hideoutPage)}
-    else if(item.key==='shelf'){close();hideoutClaimPage();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),hideoutPage)}
-    else if(item.key==='displayCabinet'){close();figureCabinetPage()}
-    else if(item.key==='retroTV'){close();komorebiTVPage()}
+    if(item.key==='board'){close();myNotes9();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),returnToCutaway)}
+    else if(item.key==='frame'){close();album9();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),returnToCutaway)}
+    else if(item.key==='shelf'){close();hideoutClaimPage();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),returnToCutaway)}
+    else if(item.key==='displayCabinet'){close();figureCabinetPage();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),returnToCutaway)}
+    else if(item.key==='retroTV'){close();komorebiTVPage();mbHomePageBack(tr('‹ My Room','‹ 返回小窝'),returnToCutaway)}
    })
   }
   const turnButton=b(controls,tr('Turn furniture','转动家具'),()=>{
@@ -555,6 +585,9 @@ function mountCutaway(q,legacyStage){
    }
   });
  }
+ // Explicit returns from physical room objects restore the same walkable
+ // layout and last safe cell; ordinary room opening keeps the proven fallback.
+ if(resume)open(resume);
 }
 const homeBefore=hideoutPage;
 let pawRoomMaterialsOpen=false;
@@ -604,8 +637,21 @@ hideoutPage=function(...args){
  }
  return result
 };
+// Animate only a deliberate chapter turn, not a reload, language switch or
+// return to the same chapter. The original notebook owns all navigation.
+const journalRenderBefore=pawJournalRender;
+let lastJournalDistrict=null;
+pawJournalRender=function(district=scene,...rest){
+ const q=$('content'),wasOpen=$('page').style.display==='block'&&!!q.querySelector('.pawSketchbook'),previous=lastJournalDistrict;
+ const result=journalRenderBefore.call(this,district,...rest);
+ const spread=q.querySelector('.pawSketchSpread');
+ if(spread){lastJournalDistrict=district;if(wasOpen&&previous!==null&&previous!==district)spread.classList.add('pawJournalTurning')}
+ return result
+};
 const style=document.createElement('style');style.textContent=`
 #game #content .pawCutawayLaunch{display:flex;justify-content:center;margin:4px 0}
+#game #content .pawCutawayLaunch button{background:none!important;border:0!important;box-shadow:none!important;color:#536346!important;text-decoration:underline;text-underline-offset:3px}
+#game #content .pawCutawayPanel{margin:0 auto;width:min(100%,clamp(240px,calc(85dvh - 130px),600px))!important}
 #game #content .pawCutawayLaunch button,#game #content .pawCutawayControls button{min-height:44px}
 #game #content .pawCutawayPanel{margin:0 auto;width:min(100%,530px)}
 #game #content .pawCutawayStage{position:relative;width:100%;aspect-ratio:1;isolation:isolate;overflow:hidden;background:#eadfc8}
@@ -655,5 +701,61 @@ const style=document.createElement('style');style.textContent=`
 #game #content .pawRoomExpansionFold summary{min-height:44px;align-content:center;cursor:pointer;color:#4c6248}
 #game #content .pawRoomExpansionFold .pawHomeExpansion{margin:0!important}
 @media(max-height:480px) and (orientation:landscape){#game #content .pawRoomFirst{width:min(100%,300px)!important}}
+
+/* One continuous pavilion setting with one foreground reading/action surface.
+   No duplicate copy of the background inside the paper. */
+#game #page:has(#content .pawPavilionScene) #content{background:transparent!important;border:0!important;box-shadow:none!important;padding:clamp(8px,2vw,18px)!important}
+#game #content:has(.pawPavilionScene)>h1,#game #content:has(.pawPavilionScene)>p{color:#fff7e4!important;text-shadow:0 1px 5px #241d14,0 1px 2px #241d14}
+#game #content .pawPavilionScene{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:6px!important;align-items:start}
+#game #content .pawPavilionScene>.pawTownFrontPhoto{grid-column:auto!important;aspect-ratio:auto!important;height:clamp(130px,30dvh,280px);background:transparent!important;box-shadow:none!important;border:0!important;outline:0!important}
+#game #content .pawPavilionScene>.pawTownFrontPhoto img{display:none!important}
+#game #content .pawPavilionScene>.pawTownFrontPhoto figcaption{background:linear-gradient(transparent,#302b22b8)!important;text-shadow:0 1px 2px #302b22}
+#game #content .pawPavilionTray{min-width:0;padding:8px 14px;background:#f5e9d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat;border-radius:6px;color:#493f31;box-shadow:0 3px 12px #30261d44}
+#game #content .pawPavilionTray>.pawTownSection{padding:5px 0!important;margin:0!important}
+#game #content .pawPavilionTray>.pawTownPinned{background:none!important;border:0!important;border-bottom:1px dashed #b6a17c!important;box-shadow:none!important}
+#game #content .pawPavilionTray>.pawTownSection:last-child{border-bottom:0!important}
+#game #content .pawPavilionTray .pawTownLink{min-height:44px!important;padding:5px 2px!important}
+#game #content .pawPavilionTray .pawTownSection h2{font-size:clamp(17px,4.4vw,21px)!important}
+#game #content .pawPavilionNews summary{cursor:pointer;min-height:44px;align-content:center;color:#536346}
+@media(min-width:700px) and (orientation:landscape){
+ #game #content .pawPavilionScene{grid-template-columns:minmax(0,1fr) minmax(280px,1fr)!important;gap:16px!important}
+ #game #content .pawPavilionScene>.pawTownFrontPhoto{height:clamp(220px,60dvh,560px)}
+}
+@media(forced-colors:active){
+ #game #content:has(.pawPavilionScene)>h1,#game #content:has(.pawPavilionScene)>p,#game #content .pawPavilionTray{color:CanvasText!important;background:Canvas!important;text-shadow:none!important}
+}
+
+/* Root dock pages: one physical object or setting, not nested web cards.
+   Scope these rules to existing native page markers so room activities,
+   forms and shared community input retain their own layout and handlers. */
+#game #page:has(#content .pawPavilionScene),#game #page:has(#content .pawCompactBoard){
+ background:linear-gradient(180deg,#34291d22,#312b2455),url('assets/visual/staging/2026-11-27/interfaces/town-hall/portrait.webp') center 43%/cover no-repeat,#766047!important
+}
+#game #content:has(.pawCompactBoard){background:transparent!important;border:0!important;box-shadow:none!important}
+#game #content:has(.pawCompactBoard) .pawIllustratedHeading{background:transparent!important;border:0!important;box-shadow:none!important;min-height:clamp(110px,23dvh,230px)!important;margin:0 0 6px!important}
+#game #content:has(.pawCompactBoard) .pawIllustratedHeading>img{display:none!important}
+#game #content:has(.pawCompactBoard) .pawIllustratedCaption{min-height:clamp(110px,23dvh,230px)!important;background:linear-gradient(transparent,#30291c66)!important;color:#fff7e4!important;text-shadow:0 1px 3px #30291c}
+#game #content:has(.pawCompactBoard) .communityTabs,#game #content .pawCompactBoard{background:#f5e9d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat!important;box-sizing:border-box}
+#game #content:has(.pawCompactBoard) .communityTabs{padding:4px 10px!important;border-radius:6px 6px 0 0!important;margin-bottom:0!important}
+#game #content .pawCompactBoard{margin:0!important;padding:6px 12px 12px;border:0;border-radius:0 0 6px 6px;box-shadow:0 4px 12px #31261f44}
+#game #content .pawCompactBoard .townWall{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+#game #content .pawCompactBoard .townResidentNote{background:#fff4d9!important;border:0!important;border-radius:2px!important;box-shadow:1px 2px 3px #65513929!important;margin:10px 0;padding-top:12px;position:relative}
+#game #content .pawCompactBoard .townResidentNote::before{content:'';position:absolute;top:4px;left:50%;width:5px;height:5px;border-radius:50%;background:#a37d51;pointer-events:none}
+#game #content .pawSketchbook{background-image:linear-gradient(90deg,#c4a77a33,transparent 8%,transparent 92%,#c4a77a33),url('assets/visual/painted/recovered/ui/paper_texture.webp')!important}
+#game #content .pawSketchbook .pawSketchCover{transform:none!important;border:3px solid #fff3d9!important;outline:0!important;box-shadow:0 2px 4px #58482c22!important}
+#game #content .pawSketchbook .pawSketchNotes{min-width:0;overflow-wrap:break-word}
+#game #content .pawJournalTurning{animation:pawJournalTurn 220ms ease-out both;transform-origin:left center}
+@keyframes pawJournalTurn{from{transform:perspective(900px) rotateY(-7deg);opacity:.78}to{transform:perspective(900px) rotateY(0);opacity:1}}
+@media(prefers-reduced-motion:reduce){#game #content .pawJournalTurning{animation:none!important}}
+#game #content:has(.pawDiaryFold){background:#f5e9d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat!important;border:0!important;box-shadow:0 3px 10px #30261d33!important}
+#game #content .pawDiaryFold{border:0!important;border-bottom:1px solid #bfa882!important;border-radius:0!important;background:none!important;box-shadow:none!important;margin:0!important;padding:0 4px!important}
+#game #content .pawDiaryFold>summary{min-height:48px;box-sizing:border-box}
+#game #content .pawDiaryFold :is(.goodCompanyBook,.journalDailyTasks,.townFortuneSlip){background:transparent!important;border:0!important;box-shadow:none!important}
+@media(max-width:699px){#game #content .pawSketchSpread{grid-template-columns:minmax(0,1fr)!important}}
+@media(min-width:700px) and (orientation:landscape){#game #content .pawSketchSpread{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:clamp(12px,3vw,32px)!important}}
+@media(forced-colors:active){
+ #game #content .pawCompactBoard,#game #content:has(.pawCompactBoard) .communityTabs,#game #content .pawCompactBoard .townResidentNote,#game #content:has(.pawDiaryFold),#game #content .pawSketchbook{background:Canvas!important;color:CanvasText!important;box-shadow:none!important}
+ #game #content .pawCompactBoard .townResidentNote::before{display:none}
+}
 `;document.head.append(style);
 })();

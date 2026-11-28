@@ -282,14 +282,17 @@ html #game #small button.townSettingsToggle[aria-label]::before,html #game #smal
 html #game #small button.townSettingsToggle[aria-label]>svg{display:block!important;width:36px!important;height:36px!important;stroke:currentColor!important;stroke-width:1.25!important;pointer-events:none}
 html #game #small button.townSettingsToggle[aria-expanded=true]{background:#dbe1cb!important}
 html #game #dock{
- background:#f5ead5f2!important;border:0!important;box-shadow:0 2px 8px #302a2026!important;
- border-radius:14px!important;padding:4px!important;gap:2px!important
+ /* Reuse the recovered painted paper, softened beneath the navigation ink. */
+ background:#f5ead5 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat!important;border:0!important;box-shadow:0 2px 8px #302a2026!important;
+ border-radius:14px!important;padding:4px!important;gap:2px!important;
+ box-sizing:border-box!important;width:min(420px,calc(100% - 16px))!important;
+ max-width:calc(100% - 16px)!important
 }
-html #game #dock>button:not([hidden]){background:transparent!important;border:0!important;box-shadow:none!important;border-radius:10px!important;min-height:50px!important}
+html #game #dock>button:not([hidden]){background:transparent!important;border:0!important;box-shadow:none!important;border-radius:10px!important;min-height:50px!important;flex:1 1 0!important;min-width:0!important;padding:4px 2px!important;gap:2px!important}
 html #game #dock>button.pawDockSelected:not([hidden]),html #game #dock>button[aria-current=page]:not([hidden]){background:#dbe1cb!important;color:#395846!important}
-html #game #dock .dockIcon{width:26px!important;height:26px!important;display:grid!important;place-items:center!important}
+html #game #dock .dockIcon{width:26px!important;height:26px!important;display:grid!important;place-items:center!important;color:inherit!important;flex:none!important}
 html #game #dock .dockIcon svg{width:24px!important;height:24px!important;display:block!important}
-html #game #dock>button:not([hidden])>span:last-child{font-size:clamp(11px,2.9vw,13px)!important}
+html #game #dock>button:not([hidden])>span:last-child{font-size:clamp(11px,2.9vw,13px)!important;line-height:1.15!important;text-align:center!important;white-space:normal!important;overflow-wrap:anywhere;min-width:0;max-width:100%}
 html #game #profileHud:focus-visible,html #game #small button.townSettingsToggle:focus-visible,html #game #dock>button:focus-visible{outline:2px solid #39594d!important;outline-offset:2px!important}
 @media(max-width:360px){
  html #game #profileHud{gap:4px!important;padding-right:5px!important}
@@ -299,7 +302,7 @@ html #game #profileHud:focus-visible,html #game #small button.townSettingsToggle
 }
 @media(forced-colors:active){
  html #game #profileHud,html #game #hudStats #hudCoins,html #game #small button.townSettingsToggle[aria-label],html #game #dock{background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important}
- html #game #dock>button.pawDockSelected:not([hidden]),html #game #small button.townSettingsToggle[aria-expanded=true]{background:Highlight!important;color:HighlightText!important}
+ html #game #dock>button.pawDockSelected:not([hidden]),html #game #dock>button[aria-current=page]:not([hidden]),html #game #small button.townSettingsToggle[aria-expanded=true]{background:Highlight!important;color:HighlightText!important}
  html #game #profileHud:focus-visible,html #game #small button.townSettingsToggle:focus-visible,html #game #dock>button:focus-visible{outline-color:Highlight!important}
 }
 /* The settings popover is one surface, not a stack of bordered cards. */

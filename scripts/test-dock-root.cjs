@@ -26,3 +26,18 @@ for(const file of [hall,tea,'assets/visual/painted/recovered/ui/paper_texture.we
 assert.ok(source.includes('const art=pawVisualImage(theme,q)'),'page passes actual scene');
 assert.ok(source.includes("q.querySelector('.pawTownFrontPhoto'))return"),'no duplicate town scene header');
 console.log('Painted town scene selection and asset availability verified.');
+
+// Shared existing artwork must remain available for the dock and its intentional
+// journal, profile, collection and travel pages; do not regenerate these files.
+const paper='assets/visual/painted/recovered/ui/paper_texture.webp';
+const backgrounds=['fortune','home','wonder','gateway'].map(zone=>'assets/visual/painted/worlds/'+zone+'/scene.webp');
+for(const file of [paper,...backgrounds,'assets/visual/staging/2026-11-27/rooms/tea/landscape.webp']){
+ const bytes=fs.readFileSync(path.join(__dirname,'..',file));
+ assert.equal(bytes.toString('ascii',0,4),'RIFF',file);
+ assert.equal(bytes.toString('ascii',8,12),'WEBP',file);
+}
+const shell=fs.readFileSync(path.join(__dirname,'../src/shell.html'),'utf8');
+const dockRule=shell.match(/html #game #dock\{([^}]+)\}/)?.[1]||'';
+assert.ok(dockRule.includes(paper),'Dock must reuse original painted paper');
+assert.ok(dockRule.includes('width:min(420px,calc(100% - 16px))'),'Compact responsive dock');
+console.log('Dock paper and backdrop asset contract verified.');

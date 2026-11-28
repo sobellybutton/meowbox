@@ -246,3 +246,20 @@ console.log('PASS '+retargetCases+' continuous cutaway retarget trajectories');
  assert(src.includes('actorArt(actorFacing,false,distance)'));
  console.log('PASS '+count+' interrupted walk, safe edit return and continuous gait checks');
 }
+
+// Physical room object return wiring: preserve the actual safe cell and only
+// reopen the same walkable room if that cell remains free in the same layout.
+assert(src.includes('pendingCutawayReturn={zone,fingerprint,actor:{...actor}}'));
+assert(src.includes('const resume=pendingCutawayReturn;pendingCutawayReturn=null;'));
+assert(src.includes('resumeState?.zone===zone&&resumeState.fingerprint===fingerprint?freeCells.find'));
+assert(src.includes('let editing=false,selected=null,actor=prior||freeCells.at(-1)'));
+assert(src.includes('if(resume)open(resume)'));
+assert(src.includes("if(closed)return;closed=true;"));
+assert(src.includes("if(!q.querySelector('.pawCutawayPanel'))q.classList.remove('pawCutawayOpen')"));
+assert.equal((src.match(/mbHomePageBack\(tr\('‹ My Room','‹ 返回小窝'\),returnToCutaway\)/g)||[]).length,5);
+assert(src.includes('legacyStage.after(launch)'));
+console.log('PASS physical room object return wiring (9 source checks; rendered journey separate)');
+
+assert(src.includes("if(wasOpen&&previous!==null&&previous!==district)spread.classList.add('pawJournalTurning')"));
+assert(src.includes('@media(prefers-reduced-motion:reduce){#game #content .pawJournalTurning{animation:none!important}}'));
+console.log('PASS journal chapter transition source checks');
