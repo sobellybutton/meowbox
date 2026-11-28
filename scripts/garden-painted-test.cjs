@@ -180,3 +180,13 @@ assert.ok(!s.includes("'paw-rear-cat-'+i"),'No individual cat hit targets');
  assert.ok(!a.includes('const split=68/94*im.naturalHeight'));
  console.log('Painted wish scene and planted coin toss checks passed');
 }
+
+// The older painted garden is an asset fallback, not a different activity menu.
+{
+ const a=s.slice(s.indexOf('const pawGardenDrawBefore=drawActivity'),s.indexOf('const pawGardenCleanupBefore=loop'));
+ assert.ok(!a.includes("pawGardenChoose(run,'chime')"));
+ assert.ok(!a.includes("['chime','Wind chime'"));
+ assert.ok(a.includes("length===2"));
+ assert.ok(a.includes('if(!residentReducedMotion.matches)ctx.rotate(Math.sin(t*1.45)'));
+ console.log('PASS fallback garden two-control and ambient chime checks');
+}

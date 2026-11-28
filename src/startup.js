@@ -11071,12 +11071,11 @@ drawActivity=function(...args){
   else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',.9);
   // The wind chime is attached to the painted stall eave on the left.
   const [wx,wy]=xy(.205,.385);
-  ctx.save();try{ctx.translate(wx,wy);ctx.scale(.30,.30);gardenWindChime(0,0)}finally{ctx.restore()}
+  ctx.save();try{ctx.translate(wx,wy);if(!residentReducedMotion.matches)ctx.rotate(Math.sin(t*1.45)*.035+Math.sin(t*.83)*.014);ctx.scale(.30,.30);gardenWindChime(0,0)}finally{ctx.restore()}
   const [bx,by]=xy(.83,.625);
   if(!moving){
    target(bx-36,by-34,72,68,()=>pawGardenChoose(run,'seat'));
    target(water[0]-55,water[1]-20,110,40,()=>pawGardenChoose(run,'feed'));
-   target(wx-32,wy-24,64,62,()=>pawGardenChoose(run,'chime'))
   }
  }finally{ctx.restore()}
  pawGardenControls(run)
@@ -11091,9 +11090,9 @@ function pawGardenControls(run){
  const el=$('gameControls');if(!el||run!==state||activity!=='secretGarden')return;
  if(pawArcadeInputBlocked()){el.hidden=true;return}
  const busy=!!run.pawGardenWalk?.route.length,key=String(zh)+'|'+run.gardenSitting+'|'+busy;
- if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===(run.pawRearGarden?2:3)){el.hidden=false;return}
+ if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===2){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawGardenControls');el.hidden=false;pawGardenControlsRun=run;pawGardenControlsKey=key;
- for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐'],...(run.pawRearGarden?[]:[['chime','Wind chime','听风铃']])]){
+ for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐']]){
   const button=b(el,tr(en,cn),()=>pawGardenChoose(run,name));button.dataset.pawGardenControl=name;button.disabled=busy
  }
 }
