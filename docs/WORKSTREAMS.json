@@ -567,12 +567,10 @@
         "84c021bc + 0a9c6827: optional finite-duration smooth braking, stationary arrival, independent indefinite entrance, 19,684 new assertions and 277,464 total numerical/mocked-canvas test assertions passed in connector harness; filesystem existence mocked. Runtime must explicitly supply finite ride duration, not yet activated.",
         "d87a24bd + e75cef03: decoded both deployed carriage WebPs in live Chromium, measured alpha edges; portrait source alpha<255 bounds inclusive 114,319–910,835; landscape visible alpha<240 through row 550. Expanded underpaint to six source-pixel portrait padding and landscape row 556; all 60 additional geometry checks and 277,524 total numerical/mocked canvas checks passed. New source deployment and visual screenshots not yet verified.",
         "00ef9c58 finite-duration runtime integration completed, 20 exact-runtime mock assertions; live acceptance pending.",
-        "Owner 28 Nov clarified all mobile phones, not iPhone only. 8bacfb07 + 77c7374a + 37cfaf57: added independent nine-profile railway CI across Chromium/WebKit/Firefox (compact, tall, large, Samsung-sized Android, iOS and tablet), actual touch station loop, rotate, reduced-motion, skip, screenshots, build/browser/DPR evidence. Script syntax validated; CI results and physical Android/iOS branded browser/hardware checks not yet verified. Full project-wide mobile acceptance standard updated."
+        "Owner 28 Nov clarified all mobile phones, not iPhone only. 8bacfb07 + 77c7374a + 37cfaf57: added independent nine-profile railway CI across Chromium/WebKit/Firefox (compact, tall, large, Samsung-sized Android, iOS and tablet), actual touch station loop, rotate, reduced-motion, skip, screenshots, build/browser/DPR evidence. Script syntax validated; CI results and physical Android/iOS branded browser/hardware checks not yet verified. Full project-wide mobile acceptance standard updated.",
+        "b22828f7 + 7e42c36c: corrected existing painted railway finite panorama progress to use its actual eased travel duration, reaching final crop at arrival and holding through departure from the carriage; keeps indefinite entrance preview and reduced-motion framing. 16,050 exact-module focused assertions passed, plus 216 mocked actual draw/crop assertions across four routes, portrait/landscape and three finite durations; persisted test parses. Full repository build, current browser CI, motion aesthetics and actual device rendering remain unverified. No acceptance promotion."
       ],
-      "lease": {
-        "owner": "manual-rail-panorama-1348",
-        "until": 1795846682082
-      },
+      "lease": null,
       "blocker": "Verify new live braking and alpha correction, nine-profile CI results, actual screenshot review and physical iOS/Android mobile browsers (Safari, Chrome, Samsung Internet, Firefox) across representative phone sizes, rotation, safe areas, cold loads. Browser simulation is not physical-device acceptance."
     },
     {
