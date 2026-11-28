@@ -6,7 +6,7 @@ const lines={
   "temple": [
     [
       "moss",
-      "The moss is slowly taking back the stone steps.",
+      "The moss has claimed another little corner of the stone steps.",
       "石阶上的青苔又长了一点。"
     ],
     [
@@ -27,7 +27,7 @@ const lines={
     [
       "incensebox",
       "Three sticks at a time. The rest can wait in the box.",
-      "一次三炷香，剩下的就让它们在香盒里休息。"
+      "一次三炷就好，其他的留给下一位香客。"
     ],
     [
       "steps",
@@ -58,8 +58,8 @@ const lines={
     ],
     [
       "notverdict",
-      "A card is a conversation starter, not a verdict.",
-      "牌是用来打开话题的，不是给人生下判决的。"
+      "A card can give us something to think about. That's all it needs to do.",
+      "抽到什么牌，就聊聊什么。它又不能替你做决定。"
     ],
     [
       "teacold",
@@ -95,8 +95,8 @@ const lines={
     ],
     [
       "teaagain",
-      "I poured tea before finding the cup. A very advanced technique.",
-      "还没找到茶杯就开始倒茶，看来我修行还不够。"
+      "I nearly poured tea into the ink dish. Perhaps I need a little rest.",
+      "差点把茶倒进砚台里。看来老夫也该歇会儿了。"
     ]
   ],
   "garden": [
@@ -127,8 +127,8 @@ const lines={
     ],
     [
       "pond",
-      "The pond makes no promises, but it is rather good company.",
-      "池塘不许什么愿，却挺会陪人的。"
+      "Some afternoons, sitting by the pond is all the company I need.",
+      "有时什么都不做，坐在池边就很舒服。"
     ]
   ],
   "grandma": [
@@ -149,8 +149,8 @@ const lines={
     ],
     [
       "taste",
-      "Taste first. The recipe cannot tell when your nose is happy.",
-      "先尝尝，食谱又闻不到锅里的香味。"
+      "Have a little taste. The recipe can't tell you when the soup is just right.",
+      "来，尝一口。好不好喝，你的舌头比食谱清楚。"
     ],
     [
       "apron",
@@ -191,8 +191,8 @@ const lines={
     ],
     [
       "quietcup",
-      "Some days I bring two cups and talk to neither.",
-      "有时候摆两个茶杯，谁也不用陪我说话。"
+      "Some days I set out two cups, just in case someone stops by.",
+      "有时我多摆一只茶杯，万一有人来坐坐呢。"
     ]
   ],
   "hong": [
@@ -299,8 +299,8 @@ const lines={
     ],
     [
       "sparrow",
-      "A sparrow keeps stealing the deer’s leftovers.",
-      "有只麻雀老来捡小鹿剩下的饼干。"
+      "A sparrow keeps hopping around the deer's water bowl.",
+      "有只小麻雀，总在鹿儿的水碗边蹦来蹦去。"
     ],
     [
       "shade",
@@ -346,8 +346,8 @@ const lines={
     ],
     [
       "fishnet",
-      "A gentle scoop beats a dramatic splash.",
-      "捞金鱼要轻一点，水花大可不算本事。"
+      "A steady hand is better than a heroic splash.",
+      "捞金鱼讲究手稳，不是谁溅的水花大谁厉害。"
     ],
     [
       "rhythm",
@@ -378,8 +378,8 @@ const lines={
     ],
     [
       "sweet",
-      "Less sugar, extra pearls? A very specific kind of balance.",
-      "少糖加珍珠？嗯，属于很有个人特色的养生。"
+      "Less sugar and extra pearls? A drink with its priorities in order.",
+      "少糖，多珍珠？看来重点很明确嘛。"
     ],
     [
       "shake",
@@ -469,8 +469,8 @@ const lines={
     ],
     [
       "fork",
-      "The best part of a fork in the road is imagining both paths.",
-      "岔路有趣的地方，是两条路都值得想一想。"
+      "At a crossroads, I like imagining where the other road might go.",
+      "每逢岔路，我总忍不住想想另一条路会通往哪里。"
     ],
     [
       "ending",
@@ -501,8 +501,8 @@ const lines={
     ],
     [
       "twochairs",
-      "Two chairs do not have to face the same direction to belong together.",
-      "两张椅子不必朝着同一个方向，也能好好待在一桌。"
+      "People can see things differently and still enjoy a cup of tea together.",
+      "看法不一样，也可以坐下来好好喝杯茶。"
     ],
     [
       "menu",
@@ -676,8 +676,8 @@ const extraLines={
   "lab": [
     [
       "pencilcase",
-      "There is no correct personality to put in this pencil case.",
-      "铅笔盒里可装不下所谓正确的性格。"
+      "There isn't an answer key for being yourself.",
+      "做自己这件事，可没有标准答案。"
     ],
     [
       "answer",
