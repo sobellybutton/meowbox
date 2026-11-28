@@ -133,15 +133,30 @@ function cutawayContainedArt(box,width,height){
  const k=Math.min(box.width/width,box.height/height),w=width*k,h=height*k;
  return {left:box.left+(box.width-w)/2,top:box.top+(box.height-h)/2,width:w,height:h}
 }
-function cutawaySeatPlacement(stage,cushion,standingHeight,frame,mirrored=false){
+// Reuse the same genuine low seated illustration on compatible surfaces.
+const cutawaySeatSurfaces=Object.freeze({'floor-cushion':{x:.51,y:.43},futon:{x:.31,y:.64}});
+function cutawaySeatSurface(id){return Object.hasOwn(cutawaySeatSurfaces,id)?cutawaySeatSurfaces[id]:null}
+function cutawaySeatApproach(api,layout,items,item,actor){
+ const f=api.footprint(item),anchor=api.anchor(layout,item);if(!f||!anchor)return null;
+ // Prefer the aisle in front of the furniture, not the wall behind it.
+ const options=cutawayFree(api,layout,items).filter(c=>{
+  const dx=Math.max(item.u-c.u,0,c.u-(item.u+f.w-1)),dy=Math.max(item.v-c.v,0,c.v-(item.v+f.d-1));
+  return dx+dy===1
+ }).map(c=>({cell:c,p:api.project(layout,c.u+.5,c.v+.5),route:cutawayRoute(api,layout,items,actor,c)})).filter(c=>c.route!==null);
+ options.sort((a,b)=>Number(b.p.y>=anchor.y)-Number(a.p.y>=anchor.y)||a.route.length-b.route.length);
+ return options[0]?.cell||null
+}
+function cutawaySeatPlacement(stage,cushion,standingHeight,frame,mirrored=false,surface='floor-cushion'){
  if(!stage||!cushion||!frame||![stage.left,stage.top,stage.width,stage.height,cushion.left,cushion.top,cushion.width,cushion.height,standingHeight].every(Number.isFinite)||Math.min(stage.width,stage.height,cushion.width,cushion.height,standingHeight)<=0)return null;
  // Align the visible hip with the cushion's center seam. Match approximate
  // head scale to standing artwork; do not reuse the floor pose on a high bench.
- const x=(cushion.left+cushion.width*(mirrored?.49:.51)-stage.left)/stage.width,y=(cushion.top+cushion.height*.43-stage.top)/stage.height;
+ const seat=cutawaySeatSurface(surface);if(!seat)return null;
+ const x=(cushion.left+cushion.width*(mirrored?1-seat.x:seat.x)-stage.left)/stage.width,y=(cushion.top+cushion.height*seat.y-stage.top)/stage.height;
  const width=standingHeight*.80*frame.width/frame.height/stage.width,height=standingHeight*.80/stage.height;
  const hx=frame.hip[0]/frame.width,hy=frame.hip[1]/frame.height;
  // Never crop the seated player's head or legs at the room edge.
- if(width<=0||width>.35||x-width*hx<0||x+width*(1-hx)>1||y-height*hy<0||y+height*(1-hy)>1)return null;
+ const edgeX=surface==='futon'&&mirrored?1-hx:hx;
+ if(width<=0||width>.35||x-width*edgeX<0||x+width*(1-edgeX)>1||y-height*hy<0||y+height*(1-hy)>1)return null;
  return {x,y,width,hipX:hx*100,hipY:hy*100}
 }
 function cutawayFootPivot(frame,mirrored=false){
@@ -382,22 +397,22 @@ function mountCutaway(q,legacyStage){
    const cushion=Array.from(stage.querySelectorAll('.pawCutawayFurniture')).find(n=>n.dataset.furnitureKey===item.key);
    const bounds=stage.getBoundingClientRect();
    const visible=cushion&&cutawayContainedArt(cushion.getBoundingClientRect(),cushion.naturalWidth,cushion.naturalHeight);
-   const p=cutawaySeatPlacement(bounds,visible,standingRatio*bounds.height,seatFrame,item.turn%2===1);
+   const p=cutawaySeatPlacement(bounds,visible,standingRatio*bounds.height,seatFrame,item.turn%2===1,item.id);
    if(!p)return false;
    seatedKey=item.key;seatStandingRatio=standingRatio;player.dataset.seated='true';
    if(player.getAttribute('src')!==seatFrame.path)player.src=seatFrame.path;
    player.style.width=p.width*100+'%';player.style.maxHeight='none';
-   player.style.setProperty('--paw-home-facing','1');
+   player.style.setProperty('--paw-home-facing',item.id==='futon'&&item.turn%2===1?'-1':'1');
    player.style.setProperty('--paw-cutaway-foot-x',p.hipX+'%');player.style.setProperty('--paw-cutaway-foot-y',p.hipY+'%');
    position(p);player.style.zIndex=String(Math.max(cutawayDepth(p.y),Number(cushion.style.zIndex)+1));
    return true
   }
-  function sitOnCushion(item){
+  function sitOnFurniture(item){
    const h=stage.getBoundingClientRect().height;
    if(!h||!alignSeat(item,player.getBoundingClientRect().height/h)){
     status.textContent=tr('I need a little more space to sit.','这里得留点空间才能坐下。');return
    }
-   status.textContent=tr('A moment to do absolutely nothing. Tap the cushion again to stand.','什么也不做，舒服一下。再点坐垫就起身。');
+   status.textContent=item.id==='futon'?tr('A quiet moment on the futon. Tap it again to stand.','在被褥上歇一会儿。再点一下就起身。'):tr('A moment to do absolutely nothing. Tap the cushion again to stand.','什么也不做，舒服一下。再点坐垫就起身。');
   }
   if(typeof ResizeObserver==='function'){
    seatResize=new ResizeObserver(()=>{
@@ -430,11 +445,11 @@ function mountCutaway(q,legacyStage){
    raf=requestAnimationFrame(step)
   }
   function use(item){
-   if(item.id==='floor-cushion'&&seatedKey===item.key){actorArt('down',false,0);position(point(actor));sayStatus();return}
-   const goal=cutawayApproach(api,layout,items,item,actor);
+   if(cutawaySeatSurface(item.id)&&seatedKey===item.key){actorArt('down',false,0);position(point(actor));sayStatus();return}
+   const goal=cutawaySeatSurface(item.id)?cutawaySeatApproach(api,layout,items,item,actor):cutawayApproach(api,layout,items,item,actor);
    if(!goal){status.textContent=tr('I need a little more space to get there.','这里得留点空间才能走过去。');return}
    walk(goal,()=>{
-    if(item.id==='floor-cushion'){sitOnCushion(item);return}
+    if(cutawaySeatSurface(item.id)){sitOnFurniture(item);return}
     if(['lamp','shojiLamp','chineseLantern'].includes(item.key)){
      if(lights.has(item.key))lights.delete(item.key);else lights.add(item.key);
      persist();render();status.textContent=lights.has(item.key)?tr('A little warmth for the room.','小窝又暖和了一点。'):tr('Time for a quiet evening.','享受安静的夜晚吧。');return
@@ -466,7 +481,7 @@ function mountCutaway(q,legacyStage){
     // The same illustrated cutout can be mirrored, never rotated onto its side.
     im.style.setProperty('--paw-cutaway-facing',item.turn%2?' -1':'1');
     if(lights.has(item.key)){const glow=element('div','',stage,'pawCutawayGlow');glow.style.left=a.x*100+'%';glow.style.top=(a.y-(f.layer==='wall'?.14:.06))*100+'%';glow.setAttribute('aria-hidden','true')}
-    if(!editing&&(['lamp','shojiLamp','chineseLantern','board','frame','shelf','displayCabinet','retroTV'].includes(item.key)||item.id==='floor-cushion'&&seatReady)){
+    if(!editing&&(['lamp','shojiLamp','chineseLantern','board','frame','shelf','displayCabinet','retroTV'].includes(item.key)||cutawaySeatSurface(item.id)&&seatReady)){
      im.tabIndex=0;im.setAttribute('role','button');if(['lamp','shojiLamp','chineseLantern'].includes(item.key))im.setAttribute('aria-pressed',String(lights.has(item.key)));
      im.onclick=e=>{e.stopPropagation();use(item)};im.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();use(item)}}
     }
@@ -485,10 +500,10 @@ function mountCutaway(q,legacyStage){
   stage.onclick=e=>{if(e.target.closest('.pawCutawayFurniture,.pawCutawayActor'))return;const rect=stage.getBoundingClientRect(),cell=api.nearestCell(layout,(e.clientX-rect.left)/rect.width,(e.clientY-rect.top)/rect.height);if(!cell)return;if(editing&&selected)move(cell);else if(!editing)walk(cell)};
   stage.onkeydown=e=>{if(e.target!==stage)return;const d={ArrowLeft:[1,0],ArrowRight:[-1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(!d)return;e.preventDefault();e.stopPropagation();if(editing&&selected){const i=items.find(v=>v.key===selected);move({u:i.u+d[0],v:i.v+d[1]})}else if(!editing)walk({u:actor.u+d[0],v:actor.v+d[1]})};
   pawHomeStop();render();sayStatus();legacyStage.hidden=true;q.classList.add('pawCutawayOpen');stage.focus({preventScroll:true});
-  if(seatFrame&&items.some(i=>i.id==='floor-cushion'))decodeCutawayArt(seatFrame.path,seatFrame).then(ok=>{
+  if(seatFrame&&items.some(i=>cutawaySeatSurface(i.id)))decodeCutawayArt(seatFrame.path,seatFrame).then(ok=>{
    if(!ok||!panel.isConnected||!active())return;seatReady=true;
    // Upgrade just the cushion input, without rerendering or interrupting a walk.
-   for(const item of items.filter(i=>i.id==='floor-cushion')){
+   for(const item of items.filter(i=>cutawaySeatSurface(i.id))){
     const im=Array.from(stage.querySelectorAll('.pawCutawayFurniture')).find(n=>n.dataset.furnitureKey===item.key);
     if(!im||editing)continue;im.tabIndex=0;im.setAttribute('role','button');
     im.onclick=e=>{e.stopPropagation();use(item)};
