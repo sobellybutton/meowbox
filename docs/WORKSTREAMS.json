@@ -1987,7 +1987,10 @@
         "Direct visual review of 40 Chromium/WebKit screenshots from 46113537285: all four portrait Tarot screenshots show legacy geometric art although painted draw probe passed; four desktop Tarot screenshots show painted lobby with empty side bands.",
         "f654d400 + da680daf + 9a7eb95b + eb43239a + 187347ee: isolated live and embedded loader guard prevents legacy portrait Tarot painter overwriting admitted watercolor lobby. 31 exact-source isolated assertions passed; persisted CI regression added. Actual post-fix screenshots/deployed visual verification still open under ROOM-06 and QA-SPATIAL-01; no visual acceptance claimed."
       ],
-      "lease": null
+      "lease": {
+        "owner": "manual-tarot-camera",
+        "until": 1795845906310
+      }
     }
   ]
 }
