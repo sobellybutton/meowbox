@@ -88,6 +88,7 @@ async function main(){
    await page.setViewportSize(landscape?{width:p.height,height:p.width}:{width:p.width,height:p.height});
    await page.emulateMedia({reducedMotion:i===2?'reduce':'no-preference'});
    await tapReachableStation(page,records,i);
+   if(i===0)await page.getByRole('button',{name:'Board train',exact:true}).click({timeout:45000});
    const ride=page.locator('.pawRailJourney');
    await ride.waitFor({state:'visible',timeout:45000});
    const expected=await page.evaluate(id=>maps[id].n[0],routes[i]);
