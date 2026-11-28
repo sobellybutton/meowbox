@@ -12922,10 +12922,15 @@ document.head.append(pawCafeReflectionCss);
 // Warm the selected traveller during registration and the railway ride,
 // including returning players. Existing gate artwork stays visible until ready.
 const pawAdmissionRenderBefore=proRender;
+let pawArrivalGateWarm=null;
 proRender=function(...args){
  const result=pawAdmissionRenderBefore(...args);
  if(!proposal.hidden){
   pawReadyMap('fortune');
+  if(!pawArrivalGateWarm){
+   pawArrivalGateWarm=new Image();pawArrivalGateWarm.decoding='async';pawArrivalGateWarm.fetchPriority='low';
+   pawArrivalGateWarm.src='assets/visual/painted/worlds/gateway/scene.webp';
+  }
   if(Number.isInteger(proAvatar??avatar))pawWarmSelectedTraveller(proAvatar??avatar)
  }
  return result
