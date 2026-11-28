@@ -4769,24 +4769,6 @@ figureCabinetPage=function(back='room'){
   else hideoutPage()
  });return result
 };
-/* Preserve catalogue position after inspecting one piece. Save no additional
-   purchase data and leave the existing filter and ownership logic intact. */
-let pawCatalogueResume=null;
-const pawCatalogueDetailBefore=furnitureConfirm;
-furnitureConfirm=function(id,back='shop'){
- if($('content').querySelector('.komorebiGrid'))pawCatalogueResume={id,back,scroll:$('page').scrollTop};
- return pawCatalogueDetailBefore(id,back)
-};
-const pawCatalogueReturnBefore=furnitureMarket;
-furnitureMarket=function(back='shop'){
- const result=pawCatalogueReturnBefore(back),resume=pawCatalogueResume;
- if(resume&&resume.back===back){
-  pawCatalogueResume=null;
-  const q=$('content'),tile=[...q.querySelectorAll('[data-furniture-id]')].find(n=>n.dataset.furnitureId===resume.id);
-  requestAnimationFrame(()=>{if(!q.querySelector('.komorebiGrid'))return;$('page').scrollTop=resume.scroll;if(tile&&!tile.hidden)tile.focus({preventScroll:true})})
- }
- return result
-};
 const pawHomeObjectsBefore=hideoutPage;
 hideoutPage=function(...args){
  const result=pawHomeObjectsBefore(...args),q=$('content'),stage=q.querySelector('.hideoutScene');
@@ -13067,8 +13049,8 @@ syncStorySheet=function(...args){
 };
 
 /* PAW_CATALOGUE_RETURN_BEGIN */
-function pawCatalogueReturnMatches(record,back,category,style){
- return !!record&&record.back===back&&record.category===category&&record.style===style&&typeof record.id==='string'&&Number.isFinite(record.scroll)
+function pawCatalogueReturnMatches(record,back,category,style,query){
+ return !!record&&record.back===back&&record.category===category&&record.style===style&&record.query===query&&typeof record.id==='string'&&Number.isFinite(record.scroll)
 }
 function pawCollectionReturnMatches(origin,current){
  return !!origin&&!!current&&origin.run===current.run&&origin.room===current.room&&origin.district===current.district&&origin.activity==='blindBox'&&current.activity==='blindBox'
@@ -13080,7 +13062,7 @@ furnitureConfirm=function(id,back='shop'){
  const q=$('content'),book=q.querySelector('.komorebiBook'),card=q.querySelector('.komorebiConfirm');
  if(book){
   const tile=Array.from(book.querySelectorAll('[data-furniture-id]')).find(node=>node.dataset.furnitureId===id);
-  pawCatalogueReturn=tile?{id,back,category:komorebiCategory,style:komorebiStyleFilter,scroll:$('page').scrollTop}:null
+  pawCatalogueReturn=tile?{id,back,category:komorebiCategory,style:komorebiStyleFilter,query:mbFurnitureQuery,scroll:$('page').scrollTop}:null
  }else if(!card||pawCatalogueReturn?.id!==id||pawCatalogueReturn?.back!==back)pawCatalogueReturn=null;
  return pawCatalogueConfirmPrior(id,back)
 };
@@ -13090,10 +13072,10 @@ furnitureMarket=function(back='shop'){
  pawCatalogueReturn=null;
  const result=pawCatalogueMarketPrior(back);
  const book=q.querySelector('.komorebiBook');
- if(returning&&book&&pawCatalogueReturnMatches(origin,back,komorebiCategory,komorebiStyleFilter)){
+ if(returning&&book&&pawCatalogueReturnMatches(origin,back,komorebiCategory,komorebiStyleFilter,mbFurnitureQuery)){
   requestAnimationFrame(()=>{
-   if(!book.isConnected||$('page').style.display!=='block')return;
-   const tile=Array.from(book.querySelectorAll('[data-furniture-id]')).find(node=>node.dataset.furnitureId===origin.id);
+   if(!book.isConnected||$('content').querySelector('.komorebiBook')!==book||$('page').style.display!=='block'||!pawCatalogueReturnMatches(origin,back,komorebiCategory,komorebiStyleFilter,mbFurnitureQuery))return;
+   const tile=Array.from(book.querySelectorAll('[data-furniture-id]')).find(node=>node.dataset.furnitureId===origin.id&&!node.hidden);
    if(tile){const button=tile.querySelector('button:not([disabled])');if(button)button.focus({preventScroll:true});else{tile.tabIndex=-1;tile.focus({preventScroll:true})}}
    const page=$('page');page.scrollTop=pawDiscoveryScroll(origin.scroll,page.scrollHeight,page.clientHeight)
   })
