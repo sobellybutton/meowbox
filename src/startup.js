@@ -1967,6 +1967,7 @@ function mb5AssistSpec(kind,q,now){
  }
  if(kind==='cook'&&q.done){
   if(q.tasted)return {key:'soup-done',label:['Back to kitchen','返回厨房'],action:'back'};
+  if(q.pawSoupServeMode&&!q.pawSoupServed)return q.pawSoupServeAt!==undefined?{key:'soup-serving',label:['Serving the soup…','正在盛汤……'],disabled:true}:{key:'soup-serve',label:['Serve the soup','盛一碗汤'],action:'serve-soup'};
   if(q.tasteAt!==undefined)return {key:'soup-tasting',label:['Enjoy the soup…','慢慢喝汤……'],disabled:true};
   return {key:'soup-taste',label:['Taste the soup','尝一口汤'],action:'taste'}
  }
@@ -1981,6 +1982,7 @@ function mb5AssistPerform(action){
  else if(action==='bell')templeReleaseBell(65);
  else if(action==='scoop')templeReleaseWater({x:440,y:486});
  else if(action==='rinse')templeReleaseWater({x:375,y:430});
+ else if(action==='serve-soup')pawKitchenServeRequest();
  else if(action==='taste')soupTaste();
  else if(action==='back')$('back').click();
  mb5AssistSync()
@@ -14274,6 +14276,15 @@ function pawKitchenServeMotion(age,reduced=false){
  else if(p<.73){phase='pour';u=1;tip=[lip[0],lip[1]-17];angle=-1.68-.65*ease((p-.55)/.18);fill=ease((p-.55)/.18);stream=true;}
  else {phase=p===1?'settled':'return';u=1-ease((p-.73)/.27);tip=[lip[0],lip[1]-17];angle=-2.33;fill=1;}
  return {phase,p,u,tip,angle,fill,stream,rest,lip,done:p===1};
+}
+// Keep the base of the same bowl at its served anchor before and after
+// tasting. The approach, sip and return use active visit time.
+function pawKitchenTasteMotion(age,reduced=false){
+ const p=Math.max(0,Math.min(1,Number.isFinite(age)?age/2.7:0));
+ const ease=x=>x*x*(3-2*x);
+ const lift=p<.35?ease(p/.35):p<.68?1:1-ease((p-.68)/.32);
+ const f=reduced?0:lift;
+ return {x:510-166*f,y:437-60*f,reach:f>0?{x:510-166*f-20,y:437-60*f-10}:null,done:p===1,fill:p<.68?1:1-.7*ease((p-.68)/.32)}
 }
 function pawKitchenServeAvailable(){
  const q=pawFoodLive;
