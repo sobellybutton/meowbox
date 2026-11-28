@@ -27,10 +27,43 @@ async function approachStation(page,records,leg){
  const before=await page.evaluate(()=>({scene,x:p.x,y:p.y,near:pawRailNearStation(p,maps[scene].st.find(v=>v[0]==='station'))}));
  if(!before.near){
   assert.equal(await page.locator(visibleStation).count(),0,'Distant railway label should not preempt exploration');
-  // Actual supported walking input, not direct player/route mutation.
-  await page.keyboard.down('ArrowUp');
-  try{await page.waitForFunction(()=>pawRailNearStation(p,maps[scene].st.find(v=>v[0]==='station')),null,{timeout:35000})}
-  finally{await page.keyboard.up('ArrowUp')}
+  // Walk by real touch on the painted path. Read only camera and route
+  // geometry; do not set player coordinates, keys, pending or route state.
+  const samples=[],deadline=Date.now()+55000;
+  while(Date.now()<deadline){
+   const view=await page.evaluate(()=>{
+    const station=maps[scene].st.find(v=>v[0]==='station'),points=pawDistrictSpines[scene],rect=$('c').getBoundingClientRect();
+    const near=pawRailNearStation(p,station),direction=Math.sign(station[2]-p.y)||-1;
+    const candidates=[];
+    if(!near&&points&&cam.scale>0&&!pending&&!transitioning&&!room&&!activity&&!talkOpen){
+     for(const distance of [180,140,100,70,40]){
+      const y=Math.max(minY(),Math.min(maxY(),p.y+direction*distance)),lane=pawStairLane(y,points);
+      for(const offset of [0,-.32,.32]){
+       const x=lane.x+lane.half*offset,sx=rect.left+cam.ox+x*cam.scale,sy=rect.top+cam.oy+y*cam.scale;
+       if(sx<rect.left+8||sx>rect.right-8||sy<rect.top+8||sy>rect.bottom-8)continue;
+       if(document.elementFromPoint(sx,sy)!==$('c'))continue;
+       // A canvas point can still be an invisible door or resident hit area.
+       // Only an actual unoccupied path tap counts as walking.
+       if(at({x,y}))continue;
+       if(Math.abs(y-p.y)<18)continue;
+       candidates.push({sx,sy,x,y});
+      }
+     }
+    }
+    return {scene,x:p.x,y:p.y,near,pending,room,activity,talkOpen,transitioning,candidates};
+   });
+   samples.push({...view,candidates:view.candidates.slice(0,2)});
+   if(view.scene!==before.scene||view.room||view.activity||view.pending||view.talkOpen){records.push({approachTrace:leg,samples});throw Error('Unexpected interaction during station approach: '+JSON.stringify(view))}
+   if(view.near)break;
+   const target=view.candidates[0];
+   if(!target){await page.waitForTimeout(180);continue}
+   await page.touchscreen.tap(target.sx,target.sy);
+   await page.waitForTimeout(450);
+   await page.waitForFunction(v=>Math.abs(p.y-v.y)>15||!!pending||!!room||!!activity||pawRailNearStation(p,maps[scene].st.find(s=>s[0]==='station')),view,{timeout:2500}).catch(()=>{});
+  }
+  records.push({approachTrace:leg,samples});
+  const reached=await page.evaluate(()=>pawRailNearStation(p,maps[scene].st.find(v=>v[0]==='station')));
+  assert(reached,'Real touch walking did not reach station: '+JSON.stringify(samples.slice(-4)));
  }
  const after=await page.evaluate(()=>({x:p.x,y:p.y,near:pawRailNearStation(p,maps[scene].st.find(v=>v[0]==='station'))}));
  assert(after.near,'Traveller must approach the station before boarding');

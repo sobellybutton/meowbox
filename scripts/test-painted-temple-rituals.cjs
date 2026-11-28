@@ -209,6 +209,7 @@ for(const stage of [0,1]){
 }
 assert.ok(src.includes('at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,pawWaterActorScale())'));
 assert.equal(ws,2.18);
+assert.ok(src.includes('a=pawWaterDragCentre(a,g,pawWaterActorScale())'));
 assert.ok(src.includes('const sc=pawWaterActorScale(),shoulder=pawWaterShoulder'));
 assert.ok(src.includes('const bowl=pawWaterLadlePoint(at,angle,35,6)'));
 console.log('Purification ladle contact and bounded reach checks passed.');

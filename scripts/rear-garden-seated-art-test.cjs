@@ -48,3 +48,18 @@ console.log('PASS '+(n+4)+' seat artwork identity, hip contact and visible leg g
  assert(source.includes("if(benchNext==='stand')gardenSeat();"));
  console.log('PASS '+checks+' retained garden bench intent, cooldown and stand-before-route assertions');
 }
+
+{
+ const start=source.indexOf('const pawRearSeatedImages=new Map();'),end=source.indexOf('function pawDrawRearSeated',start);
+ const setup=new Function('records',`let calls=[],loaded=new Set(),created=0;class Image{constructor(){created++}};const pawRearSeatedRecords=records,pawPictureDecoded=im=>loaded.has(im),pawReadyPicture=(im,limit)=>calls.push({im,limit});`+source.slice(start,end)+`;return {warm:pawWarmRearSeated,calls,loaded,count:()=>created}`);
+ const a=setup(api.pawRearSeatedRecords);let n=0;
+ for(let id=0;id<4;id++){
+  const im=a.warm(id);assert(im.src.endsWith('/'+id+'/seated.webp'));assert.equal(a.calls.at(-1).limit,4500);assert.equal(a.count(),id+1);
+  a.loaded.add(im);const prev=a.calls.length;assert.equal(a.warm(id),im);assert.equal(a.calls.length,prev);n+=5;
+ }
+ assert.equal(a.warm(99),null);n++;
+ assert(source.includes('decode(pawRearGardenArt());pawWarmRearSeated(avatar??0);return'));n++;
+ assert(source.includes('if(state.pawRearGarden)pawWarmRearSeated(avatar??0);'));n++;
+ assert(source.includes('r&&pawPictureDecoded(im)&&im.naturalWidth===r.w&&im.naturalHeight===r.h'));n++;
+ console.log('PASS '+n+' early seated-art decode, identity and stable admission checks');
+}
