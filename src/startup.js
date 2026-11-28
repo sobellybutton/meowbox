@@ -15445,7 +15445,9 @@ pawYueDeskPresent=function(kind){
   const date=form.querySelector('input[type=date]'),time=form.querySelector('input[type=time]');
   const custom=place.querySelector('option[value="custom"]');
   if(custom)custom.textContent=tr('Another city (advanced)','其他城市（进阶选项）');
-  const reply=element('small','',place.closest('details'),'pawYuePlaceReply');
+  const details=place.closest('details');
+  details.querySelector('.yueSessionNote')?.remove();
+  const reply=element('small','',details,'pawYuePlaceReply');
   const update=()=>{
    const preset=/^[0-7]$/.test(place.value),manual=place.value==='custom';
    form.dataset.pawBirthPreset=preset?'true':'false';
@@ -15609,7 +15611,7 @@ document.head.append(pawGroundedRitualStyle);
 /* PAW_WISH_GROUNDED_BEGIN */
 // Coordinates are relative to the actual recovered garden painting, never
 // to the old abstract activity table. Feet stay beside the writing kiosk.
-const pawWishGroundFoot=[.25,.725],pawWishGroundPaper=[.13,.632];
+const pawWishGroundFoot=[.245,.725],pawWishGroundPaper=[.13,.632];
 function pawWishRackPoint(slot){return [.754+(slot%4)*.06,.181+Math.floor(slot/4)*.036]}
 function pawWishGroundPoint(plate,point){return {x:plate.x+plate.w*point[0],y:plate.y+plate.h*point[1]}}
 function pawWishGroundSlots(records,carrying){
@@ -15619,7 +15621,7 @@ function pawWishGroundSlots(records,carrying){
  })
 }
 function pawWishGroundWalk(age,reverse=false){
- const route=[[.25,.725],[.29,.64],[.235,.53],[.17,.445],[.245,.36],[.36,.325],[.57,.325],[.71,.29],[.735,.32]];
+ const route=[pawWishGroundFoot,[.29,.64],[.235,.53],[.17,.445],[.245,.36],[.36,.325],[.57,.325],[.71,.29],[.735,.32]];
  const q=reverse?route.slice().reverse():route,progress=Math.max(0,Math.min(q.length-1,age*2.5)),i=Math.min(q.length-2,Math.floor(progress)),f=progress-i;
  return {point:[q[i][0]+(q[i+1][0]-q[i][0])*f,q[i][1]+(q[i+1][1]-q[i][1])*f],done:progress===q.length-1,dir:q[i+1][0]-q[i][0]>.045?'right':q[i+1][0]-q[i][0]<-.045?'left':q[i+1][1]<q[i][1]?'up':'down'}
 }
@@ -15633,7 +15635,7 @@ drawActivity=function(...args){
  continuityActivity=activity;
  paintLivingBackdrop(im);
  const carrying=stage==='carry',slots=pawWishGroundSlots(gardenWishes,carrying),taken=new Set(slots.map(v=>v.slot));
- const scale=Math.max(.45,Math.min(2.1,plate.h*.105/94)),lanternScale=Math.max(.17,plate.w*.00060);
+ const scale=Math.max(.55,Math.min(2.4,plate.h*.135/94)),lanternScale=Math.max(.17,plate.w*.00060);
  const foot=at(pawWishGroundFoot),paper=at(pawWishGroundPaper);
  for(const {slot} of slots){
   if(stage==='rise'&&slot===run.gardenSlot)continue;
@@ -15661,7 +15663,7 @@ drawActivity=function(...args){
   }
   if(!walk){
    for(let slot=0;slot<12;slot++)if(!taken.has(slot)){
-    const hook=at(pawWishRackPoint(slot));ctx.save();ctx.strokeStyle='#ffedbe';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(hook.x,hook.y,Math.max(3,plate.w*.008),0,TAU);ctx.stroke();ctx.restore();
+    const hook=at(pawWishRackPoint(slot));ctx.save();const radius=Math.max(4/cam.scale,plate.w*.011);ctx.strokeStyle='#fff1bf';ctx.lineWidth=Math.max(1.5,1.5/cam.scale);ctx.shadowColor='#ffe59b';ctx.shadowBlur=6/cam.scale;ctx.beginPath();ctx.arc(hook.x,hook.y,radius,0,TAU);ctx.stroke();ctx.restore();
     const hw=plate.w*.03,hh=plate.h*.018;target(hook.x-hw,hook.y-hh,hw*2,hh*2,()=>{if(state===run&&run.gardenStage==='carry'&&!run.pawWishWalk&&run.pendingGardenWish)run.pawWishWalk={at:t,slot}})
    }
   }
@@ -15681,3 +15683,10 @@ drawActivity=function(...args){
   const q=at([.21,.79]);label(tr('My lanterns','我的心愿灯')+' · '+gardenWishes.length,q.x,q.y,gardenWishBook)
  }
 };
+
+// Keep birth replies and both continuation controls on-screen after selection.
+const pawYueQuietDetailsStyle=document.createElement('style');pawYueQuietDetailsStyle.textContent=`html #game #dialogue[data-paw-yue-question] .pawYueGuidedForm details:has(select:valid) summary{min-height:0!important;padding:2px 0!important}
+html #game #dialogue[data-paw-yue-question] .pawYueGuidedForm .yueSessionNote{display:none!important}
+html #game #dialogue[data-paw-yue-question] .pawYueGuidedForm .pawYueStepNav{flex-wrap:wrap!important}
+html #game #dialogue[data-paw-yue-question] .pawYueGuidedForm select{margin-block:2px!important}
+html #game #dialogue[data-paw-yue-question] #choices button{min-height:44px!important}`;document.head.append(pawYueQuietDetailsStyle);
