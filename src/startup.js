@@ -14544,6 +14544,7 @@ pawYueDeskCSS.textContent=`
 /* A single question occupies the reading surface on narrow screens.
    Explicit one-column tracks prevent legacy two-column form overflow. */
 #game #page[data-paw-yue-desk="true"] .pawYueGuidedForm{display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:start!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;padding:10px 12px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+#game #page[data-paw-yue-desk="true"] .astroForm[hidden],#game #page[data-paw-yue-desk="true"] .yueAlmanacForm[hidden],#game #page[data-paw-yue-desk="true"] .pawYueGuidedForm[hidden]{display:none!important}
 #game #page[data-paw-yue-desk="true"] .pawYueGuidedForm>*{grid-column:1/-1!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
 #game #page[data-paw-yue-desk="true"] .pawYueGuidedForm label{display:grid;grid-template-columns:minmax(0,1fr)!important;min-width:0!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}
 #game #page[data-paw-yue-desk="true"] .pawYueGuidedForm :is(input,select){display:block;box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:100%!important;font-size:16px!important}
