@@ -714,12 +714,10 @@
         "b18e2ca9: fixed stale 48-line runtime assertion using fresh merge and minimum 96; 32 exact-source harness assertions passed. CI 46103708873 still shows shrine ladle pointer and approach failures; checkpoint 66aaf67df652c8faea5cdf76f658b4b26de3bb69",
         "894284b9: 134 exact-source adaptive pace and clearance assertions passed; persistent CI test extension. Checkpoint e103964f6ddd40b33ec6e7f492eb8483b5d20050",
         "6bfc573d + e9a1d628: prepared art integrity script and four focused CI steps added; syntax and representative headers checked; full CI pending. Checkpoint 1a48918ea4a63bd4b34f4c1885d4fd2e5a7a8e1f",
-        "46105728588 focused job 140857912621: 609 prepared art integrity, 184 office story, 231 Auntie motion and 134 adaptive pace assertions passed in GitHub CI."
+        "46105728588 focused job 140857912621: 609 prepared art integrity, 184 office story, 231 Auntie motion and 134 adaptive pace assertions passed in GitHub CI.",
+        "fe66829f: stale paper preparation clock assertion corrected, premature and covered completion guards verified against exact source; food prop placement added to focused CI. Checkpoint 5c45efee86fdb105ea02e831a19679eb70fe71bc"
       ],
-      "lease": {
-        "owner": "parallel-paper-ci-1795839050624",
-        "until": 1795840850624
-      },
+      "lease": null,
       "blocker": "Browser connector unavailable for this attempt; actual mobile/desktop playthrough and visual acceptance remain unverified.\n\nOwner device acceptance clarification (27 Nov): Final deployed verification must record exact commit, browser/OS, dimensions, DPR, language, input, evidence and pass/fail/blocked per complete desktop and genuine phone journey. Actual physical iPhone Safari and Android Chrome evidence distinct from Playwright emulation; inaccessible hardware remains blocked.\n\nEnd-to-end critique, 28 Nov: Use section 12 prioritized journeys and P0/P1/P2 severity, including first enjoyable action, actual return state, and current deployed commit; never conflate phone emulation with real hardware.\nChromium purification and temple entry failures in run 46096584043 still require diagnosis; native reading browser rerun pending."
     },
     {
