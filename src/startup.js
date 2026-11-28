@@ -10528,7 +10528,10 @@ roomIntro=function(...args){
  if(!pawForecourtPending||room!=='temple'||activity)return result;
  pawForecourtPending=false;
  start('templeForecourt');state.pawForecourt={pos:pawForecourtStart.slice(),route:[],destination:null,last:t};
- hint('Follow the stone path. The lucky cat is on your right.','沿着石阶向前走，右侧是招福猫。');
+ // The map doorway already expresses the intent to enter. Continue walking
+ // into the hall without demanding a second tap or stopping at the cat.
+ pawForecourtRoute(state.pawForecourt,'hall');
+ hint('Following the stone steps into the hall…','沿着石阶走进大殿……');
  return result
 };
 function pawForecourtChoose(kind,run=state){
@@ -10570,8 +10573,6 @@ drawActivity=function(...args){
   const dir=moving?(Math.abs((d[0]-q.pos[0])*p.w)>Math.abs((d[1]-q.pos[1])*p.h)?(d[0]>q.pos[0]?'right':'left'):(d[1]<q.pos[1]?'up':'down')):(q.greeted?'right':'up');
   backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,dir,.92+(q.pos[1]-.58)*1.05);
   if(!moving){
-   const cat=pawForecourtWorld([.69,.34]),catEnd=pawForecourtWorld([.97,.55]);
-   target(cat[0],cat[1],catEnd[0]-cat[0],catEnd[1]-cat[1],()=>pawForecourtChoose('cat',run),'paw-forecourt-cat');
    const landing=pawForecourtWorld([.47,.51]),left=pawForecourtWorld([.30,.46]),right=pawForecourtWorld([.65,.61]);
    target(left[0],left[1],right[0]-left[0],right[1]-left[1],()=>pawForecourtChoose('hall',run),'paw-forecourt-hall');
    // Compact directions live on the stair path, never on the cat or traveller.
@@ -10582,7 +10583,6 @@ drawActivity=function(...args){
 document.addEventListener('keydown',event=>{
  if(activity!=='templeForecourt'||pawArcadeInputBlocked()||event.repeat||event.altKey||event.ctrlKey||event.metaKey||event.target?.matches?.('input,textarea,select,button,[contenteditable=true]'))return;
  if(event.key==='Enter'||event.key==='ArrowUp'){event.preventDefault();pawForecourtChoose('hall')}
- if(event.key.toLowerCase()==='c'){event.preventDefault();pawForecourtChoose('cat')}
 });
 // Exit through the same approach and return down the actual stone path.
 const pawForecourtBackBefore=$('back').onclick;
@@ -10625,11 +10625,12 @@ function pawForecourtSyncControls(run){
  const el=$('gameControls'),model=pawForecourtControlModel(run?.pawForecourt,pawArcadeInputBlocked());
  if(!el||run!==state||activity!=='templeForecourt'||!model){pawForecourtClearControls();return}
  if(pawArcadeInputBlocked()){if(el.classList.contains('pawForecourtControls'))el.hidden=true;return}
- const key=String(zh)+'|'+model.busy+'|'+model.greeted+'|'+model.canReturn;
- if(pawForecourtControlsRun===run&&pawForecourtControlsKey===key&&el.querySelectorAll('[data-paw-forecourt-control]').length===3){el.hidden=false;return}
+ const key=String(zh)+'|'+model.busy+'|'+model.canReturn;
+ const actions=model.busy?[['exit','Return to valley','返回解忧谷']]:[['hall','Enter hall','进入大殿'],['exit','Return to valley','返回解忧谷']];
+ if(pawForecourtControlsRun===run&&pawForecourtControlsKey===key&&el.querySelectorAll('[data-paw-forecourt-control]').length===actions.length){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawForecourtControls');el.hidden=false;
  pawForecourtControlsRun=run;pawForecourtControlsKey=key;
- for(const [id,en,cn] of [['cat',model.greeted?'Greet again':'Greet lucky cat',model.greeted?'再次招呼':'拜访招福猫'],['hall','Enter hall','进入大殿'],['exit','Return to valley','返回福运谷']]){
+ for(const [id,en,cn] of actions){
   const button=b(el,tr(en,cn),()=>pawForecourtChoose(id,run));button.dataset.pawForecourtControl=id;button.disabled=id==='exit'?!model.canReturn:model.busy
  }
 }
