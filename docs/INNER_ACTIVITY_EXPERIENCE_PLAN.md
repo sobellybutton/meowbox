@@ -125,3 +125,53 @@ Apply this same rule to all other activities: tea house, wish kiosk, Grandma, ar
 
 ### Mandatory live visual gate
 For every clickable station, record actual mobile and desktop playback from first tap through walking, conversation/selection, first action/question, progression, result, exit and optional repeat. Verify no involuntary separate generic screen, no tiny actor, camera jump, oversized controls, unexpected loading, duplicate choice or lost context. Test both languages and actual inputs, cancellation, optional export and return, on current deployed revision. A source grep or passing questionnaire test does not satisfy this gate. Owner's prior visual feedback remains unresolved until actual rendered verification and correction.
+
+## Temple continuity model: mandatory screen and interaction architecture (28 November)
+
+Owner asks to rethink every inner game using the temple's same-interface flow. Current source inspection confirms temple hall stations are authored in pawHallStations/pawHallLabels, the guide order is optional, incense has approach/collect/light/walkMat/hold/bow/offer/placing/returnMat/complete stages in pawPrayerStep, and numbered fortune can physically route to the moon blocks while retaining its number in pawFortuneConfirm. Rear garden has station movement and activity-specific art. These are useful patterns, not proof that temple is visually finished. Its actor scale, motion and contact issues remain open.
+
+### Single continuous visit, not necessarily one static image
+Every retained room must have one continuous visit context (stable room identity, selected avatar, world position/return anchor, active station, camera, input/gesture ownership, host and activity state). A station's activity is a substate of that visit, not a new generic page. Different paintings/closeups for actual physical subareas are permitted, e.g. temple rear garden, tabletop tarot, arcade cabinet, or narrative illustration; continuity means a purposeful camera transition with recognizable spatial context and natural return. Do not layer a full webpage over a painting, duplicate the room selection or show the old layout for one frame. Use existing shared runtime state and guards where possible; don't introduce a second competing room engine.
+
+Required state sequence: EXPLORE -> APPROACH -> AT_STATION -> (CONTEXTUAL_CHOICE only when meaningful) -> ACTION -> REACTION/RESULT -> RECOVER -> EXPLORE at same station. Stop before starting action if arrival fails. Cancel/exit at every safe stage; preserve completed rewards and discard private transient data as appropriate. For physical games tapping an object should normally start directly on arrival. For hosted encounters select activity as dialogue, not another menu. No mandatory separate generic selection, help, question, result or restart pages (target: zero). Use compact local controls, meaningful props, contextual prompts, accessible equivalents and optional separate share/export or genuinely necessary detailed reading only by explicit choice, returning to exact context. Keep visible avatar/host where appropriate; closeup can intentionally show hands rather than tiny body. Maintain environment motion and safe NPC activity, no arbitrary global freeze.
+
+### Exact continuity recipes for implementation (all retained inner games)
+| Station | Start in room | Action and ending without leaving visit |
+| --- | --- | --- |
+| Temple bell | Walk to striker | Grip, swing, impact/resonance, settle, let go; remain by bell |
+| Purification | Approach basin | Take ladle, rinse, replace; remain by basin |
+| Incense/prayer | Approach supply | Collect, light, walk to mat, bow, offer, return to mat; next station optional |
+| Fortune sticks/moon blocks/slip | Approach tube/tray/counter | Shake, land, pick, optional physical walk to moon blocks, read matching paper, keep/tie; number survives transition; return by counter |
+| Rear garden | Walk through garden entrance | Feed koi, sit on bench, ring chime, greet cats; stand/walk to other station or gate |
+| Write a Wish | Approach kiosk | Write on plaque via native input anchored to paper, hang/submit visibly, confirm quietly, stay at kiosk |
+| Toss a Coin | Approach bank | Hold, aim, release, splash and reaction, stay dry at bank |
+| Moonlight Tarot | Sit at reader's table | Conversation chooses spread, cards deal/flip, interpretation unfolds at table, leave seat; optional keepsake export |
+| Master Yue | Sit at study desk | Ask question or privately enter birth data in desk surface, reveal chart, discuss and keep optionally, stand |
+| Whack Worries | Approach Auntie's stall | Choose/write symbolic paper worry, grip slipper, strike, paper reacts, Auntie jokes, put down slipper |
+| Bottle It Up | Approach writing bench | Write/fold/seal, walk to bank, throw/drift/dissolve, private text clears, stay by bank |
+| Shout It Out | Approach lookout | Choose/write line, breathe/shout, environmental echo/reaction, recover at lookout |
+| Join the Table | Approach free tea seat | Sit, talk to residents/consenting peers, hear gossip, optionally play tabletop game, stand |
+| Noticeboard | Approach wall | Read pinned note, expand replies on board, optional explicit publish, step away |
+| Workplace comedy | Tea table or approved retained setting only | Short resident-led branching dialogue/vignette with comic consequence, return; do not reinstate retired office door |
+| Meet the Cat | Approach cat | Crouch, wait, sniff/pet/treat if receptive, cat responds, stand |
+| Deer Meadow | Walk meadow path | Observe, optional appropriate feeding, deer react or walk away, return to path |
+| Cook with Grandma | Walk to prep counter | Select ingredients, prepare/cook/plate/taste, Grandma responds, reset counter |
+| Make Bubble Tea | Walk to tea counter | Choose tea/toppings, scoop/pour/shake/seal/serve, show drink, stay at counter |
+| Goldfish Scooping | Approach tank | Dip/drag/lift, fish and water response, release fish, result/retry at tank |
+| Bubble Pop | Approach bubble station | Pop themed translucent moving bubbles, satisfying bursts and score in scene, stop/retry at station |
+| Claw Machine | Stand at controls | Move/grip/drop, claw/prize reaction, collect or retry, leave controls |
+| Rhythm | Stand at cabinet | Select track locally, timed inputs, score on cabinet, step back |
+| Blind Boxes | Approach shelf | Pick/inspect/shake, confirm cost, open, reveal item, return shelf |
+| Wooden board game / table game | Sit at actual board | Play turns against appropriate NPC/consenting player, result on board, stand; verify whether visible in both tea and arcade and keep canonical rules |
+| Daily Souvenir (if retained) | Approach display | Inspect daily object and story, optional purchase/keep, return shelf |
+| Inner Observatory | Sit at guide's desk | Choose discovery via conversation, question choices and notebook in room, discuss nuanced result, stand |
+| House of What If | Approach storyteller | Choose premise verbally, illustrated story beats and meaningful branches, ending/keepsake, return |
+| Heart Café | Sit at table | Choose relational topic verbally, exchange responses, discuss result over tea, stand |
+| Curiosity Club | Approach approved host/physical station | Choose a distinct playful discovery in context, interact/reflect, leave; confirm allocated assessments and route before activation |
+| Home decorating | Enter private home | Inspect or choose item, place on floor, rotate/move, confirm purchase only if needed, return to room |
+| Railway (supporting flow) | Approach station | Contextual departure choice, board, travel, arrive outside next district; do not treat as nested game menu |
+
+The table enumerates known retained activities, not an exhaustive proof of current live reachability. Reconcile every visible action in current runtime, including aliases, nested branches, optional results and future additions. Never add a duplicate route simply because a legacy route still exists. Use the existing inner activity detailed rows for specific art, contact, privacy and testing requirements.
+
+### Enforce during implementation
+For each station log the actual effective dispatcher, scene renderer, input handler, action stages, entry/exit anchors, assets and every mandatory page transition before and after change. Remove legacy mandatory page transitions (zero budget), not merely style them. Preserve spending/reward/scoring/save safeguards. For each scene inspect live playback from tap to arrival to activity to visible result to walking away; include idle world animation, character scale/gait, both languages, narrow phone and desktop, cancel/retry. Test actual deployed revision; record footage/screenshots and any remaining route or device blockers. Progress is accepted per whole activity, not per isolated background or number of commits. Keep existing canonical workstreams, no second task register.
