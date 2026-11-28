@@ -1514,8 +1514,36 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
  if(stage==='ready')target(365,415,110,130,teaSip);
  ctx.restore();
 };
-function soupTaste(){if(activity!=='cook'||!state.done||state.tasteAt!==undefined)return;state.tasteAt=t;sound(390);closeTalk();hint('Careful, it is hot.','慢慢喝，小心烫。')}
-const foodTasteDraw=drawActivity;drawActivity=function(){foodTasteDraw();if(activity!=='cook'||!state.done)return;ctx.save();let age=t-(state.tasteAt??-100),active=state.tasteAt!==undefined&&age<2.7,f=active?Math.sin(Math.PI*Math.min(1,age/2.7)):0;let bx=510-130*f,by=422-33*f;drawRitualPose(290,495,1.6,{kneel:.4,reach:active?{x:bx-25,y:by}:null});ellipse(bx,by+9,32,10,'#58483c66');ellipse(bx,by,32,13,'#e7d8b9');ellipse(bx,by-2,27,8,'#ac8050');if(age>=2.7&&state.tasteAt!==undefined&&!state.tasted&&!pawArcadeInputBlocked()){state.tasted=true;react(...townReaction('soup-taste',activityComedy.soup))}if(state.tasteAt===undefined){label(tr('Taste the soup','尝一口汤'),510,390,soupTaste);target(478,397,64,42,soupTaste)}ctx.restore()};
+function soupTaste(){if(activity!=='cook'||!state.done||state.tasteAt!==undefined)return;if(state.pawSoupServeMode&&!state.pawSoupServed){pawKitchenServeRequest();return;}state.tasteAt=t;sound(390);closeTalk();hint('Careful, it is hot.','慢慢喝，小心烫。')}
+const foodTasteDraw=drawActivity;drawActivity=function(){
+ foodTasteDraw();if(activity!=='cook'||!state.done)return;
+ // Select the painted or legacy presentation once per completed recipe,
+ // so a late asset download cannot change the interaction mid-gesture.
+ if(state.pawSoupServeMode===undefined)state.pawSoupServeMode=typeof pawKitchenServeAvailable==='function'&&pawKitchenServeAvailable();
+ ctx.save();try{
+  if(state.pawSoupServeMode&&!state.pawSoupServed){
+   const serving=state.pawSoupServeAt!==undefined;
+   const q=serving?pawKitchenServePose(t-state.pawSoupServeAt):null;
+   drawRitualPose(290,495,1.35,{reach:q&&!q.done?{x:q.hand[0],y:q.hand[1]}:null});
+   pawKitchenPaintBowl(510,437,q?.fill||0);
+   if(q&&!q.done){
+    pawKitchenPaintLadle(q);
+    if(q.stream){ctx.save();ctx.strokeStyle='#c6965b';ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(...q.tip);ctx.lineTo(...q.lip);ctx.stroke();ctx.restore()}
+   }
+   if(q?.done&&!pawArcadeInputBlocked()){state.pawSoupServed=true;hint('Soup is served. Have a taste.','汤盛好了，尝一口吧。')}
+   if(!serving){label(tr('Serve the soup','盛一碗汤'),510,390,pawKitchenServeRequest);target(478,397,64,42,pawKitchenServeRequest)}
+   return;
+  }
+  let age=t-(state.tasteAt??-100),active=state.tasteAt!==undefined&&age<2.7,f=active?Math.sin(Math.PI*Math.min(1,age/2.7)):0;
+  const bx=510-130*f,by=422-33*f;
+  drawRitualPose(290,495,1.6,{kneel:state.pawSoupServeMode?0:.4,reach:active?{x:bx-25,y:by}:null});
+  if(!state.pawSoupServeMode||!pawKitchenPaintBowl(bx,by+15,state.tasted?.3:1)){
+   ellipse(bx,by+9,32,10,'#58483c66');ellipse(bx,by,32,13,'#e7d8b9');ellipse(bx,by-2,27,8,'#ac8050');
+  }
+  if(age>=2.7&&state.tasteAt!==undefined&&!state.tasted&&!pawArcadeInputBlocked()){state.tasted=true;react(...townReaction('soup-taste',activityComedy.soup))}
+  if(state.tasteAt===undefined){label(tr('Taste the soup','尝一口汤'),510,390,soupTaste);target(478,397,64,42,soupTaste)}
+ }finally{ctx.restore()}
+};
 
 /* Fortune Valley: a quiet garden beyond the temple courtyard. */
 activityTitle.secretGarden=['Behind the temple','寺后小径'];
@@ -4973,7 +5001,8 @@ table=function(){
  // Stove top, low cast iron trivet and visible burner; no floating pot.
  const stove=ctx.createLinearGradient(0,450,0,555);stove.addColorStop(0,'#7e8179');stove.addColorStop(1,'#464b48');
  ctx.fillStyle=stove;ctx.beginPath();ctx.moveTo(313,449);ctx.lineTo(487,449);ctx.lineTo(535,559);ctx.lineTo(265,559);ctx.closePath();ctx.fill();ctx.strokeStyle='#454b45';ctx.lineWidth=2;ctx.stroke();ellipse(400,516,103,35,'#3f4440');ellipse(400,517,81,24,'#676f65');for(const x of [312,488]){ellipse(x,542,14,8,'#414a43');ellipse(x,539,10,5,'#a29e88')}
- const ladle=typeof pawKitchenLadleFrame==='function'?pawKitchenLadleFrame():null;
+ const serving=state.pawSoupServeMode&&state.pawSoupServeAt!==undefined&&!state.pawSoupServed;
+ const ladle=!serving&&typeof pawKitchenLadleFrame==='function'?pawKitchenLadleFrame():null;
  state.pawKitchenPaintFrame=ladle;
  if(!state.done&&(W<H||ladle)){const stirring=drag?.id==='stir',reach=ladle&&state.pawKitchenLadle.travel>0?{x:ladle.hand[0],y:ladle.hand[1]}:stirring?{x:310,y:425}:null;drawRitualPose(270,450,1.22,{reach,bow:stirring?.10:0})}
  if(ladle&&state.pawKitchenLadle.travel===0)pawKitchenPaintLadle(ladle);
