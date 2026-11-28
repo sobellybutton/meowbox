@@ -8,6 +8,9 @@ permissions:
   contents: read
 jobs:
   consultation:
+    concurrency:
+      group: paw-yue-${{ matrix.engine }}-${{ github.ref }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:

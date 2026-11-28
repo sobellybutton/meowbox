@@ -8,6 +8,9 @@ permissions:
   contents: read
 jobs:
   entrance:
+    concurrency:
+      group: paw-entrance-${{ matrix.browser }}-${{ github.ref }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       matrix:
