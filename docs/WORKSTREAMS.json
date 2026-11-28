@@ -810,7 +810,10 @@
       "evidence": [
         "39875d96 + a13ca31c: four shell art-calibrated floor projections, 24 furniture paths, footprint collision/layers, upgrade retention; committed test executed against current source with repository-tree existence checks: 255 assertions"
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-home-raster-1256",
+        "until": 1795843596229
+      },
       "blocker": "Independent module is not loaded by live game yet; concurrent garden task owns startup/extensions. Integrate into existing purchase/storage controller, verify real scene floor masks, wall anchors, rotation artwork, balcony connection, mobile/desktop rendering."
     },
     {
