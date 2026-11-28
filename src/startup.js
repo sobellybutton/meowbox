@@ -15383,7 +15383,7 @@ drawActivity=function(...args){
  if(room==='tarot'&&['tarot','love'].includes(activity)&&state.readStage==='focus'&&talkOpen&&$('dialogue').hasAttribute('data-paw-tarot-conversation')){
   const v=state.readCards?.[state.readFocus],im=pawReadingImage(pawReadingAPI(),'tarot');
   if(v&&pawRoomImageReady(im)){
-   const b=livingBounds(),w=Math.min(b.w*.34,b.h*.22),h=w*218/128,x=b.x+b.w*.69-w/2,y=b.y+b.h*.33-h/2;
+   const b=livingBounds(),w=Math.min(b.w*.30,b.h*.19),h=w*218/128,x=b.x+b.w*.70-w/2,y=b.y+b.h*.33-h/2;
    ctx.save();try{paintLivingBackdrop(im);ctx.save();ctx.shadowColor='#29282280';ctx.shadowBlur=8;round(x-2,y-2,w+4,h+4,2,'#e5d1a6','#a78c64');ctx.restore();paintReadingArtwork(x,y,w,h,v.i,v.rev)}finally{ctx.restore()}
    return
   }
@@ -15416,6 +15416,21 @@ say=function(name,words,choices=[],...rest){
  return value
 };
 closeTalk=function(...args){$('dialogue').removeAttribute('data-paw-chat-bar');return pawChatBarClose(...args)};
+/* PAW_YUE_LOCAL_BIRTH_BEGIN */
+function pawYueLocalBirth(city,date,time){
+ const cities=[['Asia/Singapore',1.35,103.82],['Asia/Shanghai',30.27,120.16],['Asia/Shanghai',31.23,121.47],['Asia/Shanghai',39.9,116.4],['Asia/Hong_Kong',22.32,114.17],['Asia/Kuala_Lumpur',3.14,101.69],['Asia/Taipei',25.03,121.57],['Asia/Tokyo',35.68,139.69]];
+ const item=/^[0-7]$/.test(city)?cities[Number(city)]:null;
+ if(!item||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time))return null;
+ const wall=Date.parse(date+'T'+time+':00Z');if(!Number.isFinite(wall))return null;
+ try{
+  const fmt=new Intl.DateTimeFormat('en-GB',{timeZone:item[0],year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+  const local=instant=>{const q=Object.fromEntries(fmt.formatToParts(new Date(instant)).map(p=>[p.type,p.value]));return Date.parse(q.year+'-'+q.month+'-'+q.day+'T'+q.hour+':'+q.minute+':'+q.second+'Z')};
+  const offsets=new Set([-86400000,0,86400000].map(delta=>(local(wall+delta)-(wall+delta))/3600000));
+  const matches=[...offsets].filter(offset=>Number.isInteger(offset*4)&&offset>=-12&&offset<=14&&local(wall-offset*3600000)===wall);
+  return matches.length===1?[matches[0],item[1],item[2]]:null
+ }catch{return null}
+}
+/* PAW_YUE_LOCAL_BIRTH_END */
 const pawChatYuePresent=pawYueDeskPresent;
 pawYueDeskPresent=function(kind){
  const result=pawChatYuePresent(kind),visit=pawYueInline;
@@ -15425,17 +15440,30 @@ pawYueDeskPresent=function(kind){
  const place=form.querySelector('details select');
  if(place){
   const nums=[...form.querySelectorAll('input[type=number]')],labels=nums.map(n=>n.closest('label')).filter(Boolean);
-  // Existing historical offset and custom coordinates remain accessible.
-  const update=()=>{const preset=!!place.value&&place.value!=='custom';form.dataset.pawBirthPreset=preset?'true':'false'};
-  place.addEventListener('change',update);update();
-  // Move only the coordinate inputs into a disclosure, never remove or disable them.
-  const coordLabels=labels.slice(1);
-  if(coordLabels.length===2&&coordLabels.every(n=>n.parentElement===form)){
-   const disclosure=element('details','',form,'pawYueCoordinates');element('summary',tr('Check coordinates','核对坐标'),disclosure);coordLabels[0].before(disclosure);disclosure.append(...coordLabels);
-   // The original guided controller owns their visibility; the disclosure follows location.
-   const show=()=>{const active=!place.closest('details').classList.contains('pawYueStepHidden');disclosure.hidden=!active;disclosure.open=active&&(!place.value||place.value==='custom')};
-   const observer=new MutationObserver(show);observer.observe(place.closest('details'),{attributes:true,attributeFilter:['class']});place.addEventListener('change',show);form.addEventListener('submit',()=>{if(!form.classList.contains('pawYueGuidedForm')){observer.disconnect();disclosure.hidden=false}});show()
-  }
+  // Resolve known birthplaces locally; retain precise values for the chart,
+  // without making a player enter coordinates or a time-zone offset.
+  const date=form.querySelector('input[type=date]'),time=form.querySelector('input[type=time]');
+  const custom=place.querySelector('option[value="custom"]');
+  if(custom)custom.textContent=tr('Another city (advanced)','其他城市（进阶选项）');
+  const reply=element('small','',place.closest('details'),'pawYuePlaceReply');
+  const update=()=>{
+   const preset=/^[0-7]$/.test(place.value),manual=place.value==='custom';
+   form.dataset.pawBirthPreset=preset?'true':'false';
+   labels.forEach(label=>label.classList.toggle('pawYueTechnical',!manual));
+   place.setCustomValidity('');reply.textContent='';
+   if(preset&&date?.value&&time?.value){
+    const value=pawYueLocalBirth(place.value,date.value,time.value);
+    if(!value){
+     nums[0].value='';
+     const message=tr('I cannot place that exact birth time reliably. Please check the date and time, or choose the advanced option.','这个出生时刻暂时无法准确确认。请核对日期和时间，或选择进阶选项。');
+     place.setCustomValidity(message);reply.textContent=message;
+    }else{
+     nums.forEach((field,i)=>field.value=String(value[i]));
+     reply.textContent=tr('Ah, '+place.selectedOptions[0].textContent+'. I have what I need.','原来是'+place.selectedOptions[0].textContent+'。资料齐了。');
+    }
+   }else if(manual)reply.textContent=tr('I do not have every city in my almanac yet. You may enter the precise details if you know them.','我的历书暂未收录所有城市。如果你知道准确资料，可以手动填写。');
+  };
+  place.addEventListener('change',update);date?.addEventListener('change',update);time?.addEventListener('change',update);update();
  }
  return result
 };
@@ -15570,3 +15598,10 @@ const pawVisualContinuityStyle=document.createElement('style');pawVisualContinui
 #game #content .hideoutPrimary button{border-radius:5px!important;box-shadow:none!important}
 #game.pawDockRoot.pawFocusedView:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){z-index:24!important;background:#eee5d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 145px repeat!important;box-shadow:0 3px 10px #2e352c55!important}
 `;document.head.append(pawVisualContinuityStyle);
+
+const pawGroundedRitualStyle=document.createElement('style');
+pawGroundedRitualStyle.textContent=`html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm .pawYueTechnical{display:none!important}
+html #game #dialogue[data-paw-chat-bar] .pawYuePlaceReply{display:block;color:#f2e2bb;font-size:12px;line-height:1.4;margin-top:4px}
+html #game #dialogue[data-paw-chat-bar][data-paw-tarot-conversation] #choices{flex-wrap:wrap!important;overflow-x:visible!important}
+html #game #dialogue[data-paw-chat-bar][data-paw-tarot-conversation] #choices button{flex:1 1 100px!important;min-width:0!important;max-width:100%!important}`;
+document.head.append(pawGroundedRitualStyle);
