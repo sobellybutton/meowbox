@@ -15601,6 +15601,29 @@ pawPhysicalBookletStyle.textContent=`
 `;document.head.append(pawPhysicalBookletStyle);
 /* PAW_PHYSICAL_DOCK_BOOKLETS_END */
 
+/* PAW_PAINTED_SETTINGS_COG_BEGIN */
+// Keep one accessible button and one SVG. Use original artwork only after
+// decoding; if unavailable, the existing line icon remains the fallback.
+const pawSettingsCogAsset='assets/visual/staging/2026-11-28-project-art-b10/settings-cog.webp';
+const pawSettingsCogImage=new Image();
+pawSettingsCogImage.src=pawSettingsCogAsset;
+pawSettingsCogImage.decode().then(()=>{
+ const svg=townSettingsToggle.querySelector('svg');
+ if(!svg||svg.querySelector('.pawSettingsPaintedCog'))return;
+ for(const child of svg.children)child.classList.add('pawSettingsFallbackCog');
+ const art=document.createElementNS('http://www.w3.org/2000/svg','image');
+ art.setAttribute('href',pawSettingsCogAsset);art.setAttribute('width','24');art.setAttribute('height','24');art.setAttribute('preserveAspectRatio','xMidYMid meet');art.classList.add('pawSettingsPaintedCog');
+ art.addEventListener('error',()=>{art.remove();svg.removeAttribute('data-paw-painted-cog')},{once:true});
+ svg.append(art);svg.setAttribute('data-paw-painted-cog','true');
+}).catch(()=>{});
+const pawSettingsCogStyle=document.createElement('style');pawSettingsCogStyle.textContent=`
+html #game #small #townSettingsToggle[aria-label]>svg[data-paw-painted-cog]{width:33px!important;height:33px!important}
+html #game #small #townSettingsToggle[aria-label]>svg[data-paw-painted-cog]>.pawSettingsFallbackCog{display:none}
+@media(forced-colors:active){html #game #small #townSettingsToggle[aria-label]>svg[data-paw-painted-cog]>.pawSettingsFallbackCog{display:initial}html #game #small #townSettingsToggle[aria-label]>svg>.pawSettingsPaintedCog{display:none}}
+`;document.head.append(pawSettingsCogStyle);
+/* PAW_PAINTED_SETTINGS_COG_END */
+
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
 
 /* Visual continuity: retain real hit areas and let the illustration breathe. */
