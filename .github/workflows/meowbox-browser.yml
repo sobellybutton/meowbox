@@ -476,6 +476,7 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-bag.png'});
                 await page.getByRole('button',{name:'‹ My Room',exact:true}).click();
                 await page.locator('.hideoutScene').waitFor({state:'visible'});
+                await page.locator('.pawRoomExtras > summary').click();
                 await page.getByRole('button',{name:'Furniture shop',exact:true}).click();
                 await page.locator('#content > .row').getByRole('button',{name:'‹ My room',exact:true}).click();
                 await page.locator('.hideoutScene').waitFor({state:'visible'});
@@ -965,6 +966,7 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-resident-friendship.png'});
                 // Setup the home screen with the real starter layout, then use the actual editor controls.
                 await page.evaluate(()=>{hideoutEditing=false;komorebiZone=0;hideoutPage()});
+                await page.locator('.pawRoomExpansionFold').filter({has:page.getByText('Room expansions',{exact:true})}).locator('summary').click();
                 await page.getByRole('button',{name:'Expand home',exact:true}).click();
                 const furnitureSearch=page.locator('#mbFurnitureSearch');
                 const extensionTile=page.locator('.komorebiTile[data-furniture-id="roomExtension"]');
