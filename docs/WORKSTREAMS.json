@@ -411,7 +411,10 @@
         "bd78fa8e + 0393dc93: Batch 4 stock props imported: vegetable basket, utensil holder, stacked cups, straw holder. Integrate physical retrieval and preparation from canonical staging; preserve 49 existing food props. Finished food sprites remain a separate import. Staging verified, not runtime accepted; refer to PROJECT_BATCHES_30.md imported creative batches.",
         "169d3b31 + 1d512b05 + 60b1b3ec: live accessible serve/wait/taste/return phases and consistent bowl/actor scale, sip dwell and reduced motion. 826 new exact-source checks passed. Actual rendered contact and broad menu/seat flow open."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-kitchen-recipe-1306",
+        "until": 1795844228331
+      },
       "blocker": "Dedicated ingredient, preparation, pouring, serving and tasting artwork, pose contact and actual browser verification remain outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n49 original kitchen/boba props prepared at assets/visual/painted/food-props; runtime integration, scene-specific grip/pour contact, animation and rendered acceptance remain pending. CI pending at check."
     },
     {
