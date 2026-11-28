@@ -194,8 +194,8 @@ const recoveredChecks=new Function(
  recoveredPart('/* PAW_EXTRA_DISCOVERY_BEGIN */','/* PAW_EXTRA_DISCOVERY_END */')+
  `
 let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
-let size,strings,draws,depth;
-const g={font:'',save(){depth++},restore(){depth--},translate(){},scale(){},beginPath(){},rect(){},clip(){},rotate(){},measureText(v){return {width:Array.from(v).length*25}},fillText(v){strings.push(v)},drawImage(){draws++}};
+let size,strings,draws,depth,transform,stack,drawScales,textScales;
+const g={font:'',save(){depth++;stack.push(transform.slice())},restore(){depth--;transform=stack.pop()},translate(){},scale(x,y){transform=[transform[0]*x,transform[1]*y]},beginPath(){},rect(){},clip(){},rotate(){},measureText(v){return {width:Array.from(v).length*25}},fillText(v){strings.push(v);textScales.push(transform.slice())},drawImage(){draws++;drawScales.push(transform.slice())}};
 const cv={getContext(){return g}},atlas={complete:true,naturalWidth:1024,naturalHeight:2180};
 function readingArtwork(){return atlas}
 function pawRecoveredImage(){return {complete:true,naturalWidth:1080,naturalHeight:size}}
@@ -217,12 +217,14 @@ const examples=[...[1,3,5].map(count=>({kind:'tarot',cards:Array.from({length:co
 for(const format of Object.keys(pawRecoveredShareFormats)){
  const box=pawRecoveredShareBounds(format);size=box.height;
  for(const item of examples)for(const cn of [false,true]){
-  const data={...item,title:['Actual title','实际标题']};strings=[];draws=0;depth=0;
+  const data={...item,title:['Actual title','实际标题']};strings=[];draws=0;depth=0;transform=[1,1];stack=[];drawScales=[];textScales=[];
   ck(pawDrawRecoveredLayout(cv,data,format,cn,box,{})===true,'draw '+format+' '+item.kind);
   ck(cv.width===1080&&cv.height===size&&depth===0,'canvas size and balanced context');
   ck(strings.join('').includes(cn?'实际标题':'Actual title'),'live title');
   ck(strings.join('').includes(cn?'实际':'Actual'),'live data');
   ck(draws===(item.kind==='tarot'?2+item.cards.length:item.scoreRows||item.palaces?2:3),'actual image slots');
+  ck(textScales.every(([x,y])=>x===y),'no compressed text');
+  ck(drawScales.every(([x,y],i)=>i===1||x===y),'only decorative overlay may adapt to safe margins');
  }
 }
 ck(pawRecoveredLayoutKey({kind:'zwds'},'feed')===null,'no full birth chart invented');

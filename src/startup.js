@@ -5965,7 +5965,7 @@ document.head.append(pawDesktopGuideStyle);
 /* Owner feedback: keep the temple keeper inside, not in the arrival street. */
 const pawKeeperInitBefore=initNPC;
 initNPC=function(...args){const result=pawKeeperInitBefore(...args);if(scene==='fortune')for(let i=npc.length-1;i>=0;i--)if(npc[i].n?.some(v=>v==='Temple keeper'||v==='庙祝'))npc.splice(i,1);return result};
-function pawFocusView(){if(room!=='destiny'&&$('page').dataset.pawYueDesk==='true')pawCloseYueDesk();const open=$('page').style.display==='block';if(!open||room||activity||talkOpen||transitioning||!proposal.hidden){if(pawDockRootKey){pawDockRootKey='';$('game').classList.remove('pawDockRoot')}}$('game').classList.toggle('pawInRoom',!!room||!!activity);$('game').classList.toggle('pawFocusedView',!!room||!!activity||open||talkOpen||transitioning||!proposal.hidden);$('game').classList.toggle('pawExitView',!!room&&!activity&&!open&&!talkOpen&&!transitioning&&proposal.hidden)}
+function pawFocusView(){if(room!=='destiny'&&($('page').dataset.pawYueDesk==='true'||pawYueDialogueActive)){pawCloseYueDesk();closeTalk()}const open=$('page').style.display==='block';if(!open||room||activity||talkOpen||transitioning||!proposal.hidden){if(pawDockRootKey){pawDockRootKey='';$('game').classList.remove('pawDockRoot')}}$('game').classList.toggle('pawInRoom',!!room||!!activity);$('game').classList.toggle('pawFocusedView',!!room||!!activity||open||talkOpen||transitioning||!proposal.hidden);$('game').classList.toggle('pawExitView',!!room&&!activity&&!open&&!talkOpen&&!transitioning&&proposal.hidden)}
 const pawFocusBefore=loop;
 loop=function(...args){const result=pawFocusBefore(...args);pawFocusView();return result};
 const pawFocusHUD=updateHUD;
@@ -8924,7 +8924,12 @@ function pawPrepareRecoveredShare(format,data){
 }
 function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
  const key=pawRecoveredLayoutKey(data,format);if(!key)return false;
- const slots=pawRecoveredLayouts[key],overlay=pawRecoveredImage('templates/'+key+'.svg');
+ const nativeSlots=pawRecoveredLayouts[key],overlay=pawRecoveredImage('templates/'+key+'.svg');
+ // The decorative frame may adapt to safe margins; the art and typography
+ // must never inherit that non-uniform transform.
+ const scale=(box.width-box.left-box.right)/(box.width-168);
+ const mapRect=([x,y,w,h])=>[box.left+(x-84)*scale,y,w*scale,h];
+ const slots=Object.fromEntries(Object.entries(nativeSlots).map(([k,v])=>[k,Array.isArray(v[0])?v.map(mapRect):mapRect(v)]));
  if(!overlay?.complete||!overlay.naturalWidth||overlay.naturalWidth!==box.width||overlay.naturalHeight!==box.height)return false;
  const tarot=data.kind==='tarot',art=tarot?readingArtwork():pawRecoveredResultIllustration(data);
  if(!slots.score_rows&&!slots.tiles&&!slots.palace_cells&&(!art?.complete||!art.naturalWidth||!art.naturalHeight||(tarot&&(art.naturalWidth!==1024||art.naturalHeight!==2180))))return false;
@@ -8933,16 +8938,19 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
  const ink='#4d3a2c',accent='#795741',muted='#54684e';
  g.drawImage(paper,0,0,box.width,box.height);
  // Compress only the overlay and its coordinate system for social story safe margins.
- const scale=(box.width-box.left-box.right)/(box.width-168);
- g.save();g.translate(box.left,0);g.scale(scale,1);g.translate(-84,0);g.drawImage(overlay,0,0,box.width,box.height);
+ g.save();g.translate(box.left,0);g.scale(scale,1);g.translate(-84,0);g.drawImage(overlay,0,0,box.width,box.height);g.restore();
  function textIn(rect,values,initial=36,weight='normal',color=ink){
   const [x,y,w,h]=rect,pad=Math.min(16,h*.1),maxW=w-2*pad,maxH=h-2*pad;
   const v=values.filter(v=>typeof v==='string'&&v.trim());if(!v.length)return;
   let size=initial,rows=[],lh,total;
   for(;size>=16;size-=2){g.font=weight+' '+size+'px '+font;rows=v.flatMap(q=>shareTextLines(g,q,maxW));lh=size*1.22;total=rows.length*lh;if(total<=maxH||size<=17)break}
-  const shrink=Math.min(1,maxH/Math.max(1,total));
-  g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.translate(x+w/2,y+h/2);g.scale(1,shrink);g.font=weight+' '+size+'px '+font;g.textAlign='center';g.textBaseline='middle';g.fillStyle=color;
-  rows.forEach((q,i)=>g.fillText(q,0,(i-(rows.length-1)/2)*lh,maxW));g.restore()
+  // Keep readable glyph proportions. If a long result exceeds the allotted
+  // excerpt, show a clear ellipsis instead of vertically crushing the words.
+  const capacity=Math.max(1,Math.floor(maxH/lh));
+  g.font=weight+' '+size+'px '+font;
+  if(rows.length>capacity){rows=rows.slice(0,capacity);let last=rows.at(-1);while(last&&g.measureText(last+'…').width>maxW)last=Array.from(last).slice(0,-1).join('');rows[rows.length-1]=last+'…'}
+  g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.translate(x+w/2,y+h/2);g.textAlign='center';g.textBaseline='middle';g.fillStyle=color;
+  rows.forEach((q,i)=>g.fillText(q,0,(i-(rows.length-1)/2)*lh));g.restore()
  }
  textIn(slots.title,[locale(data.title)],format==='square'?38:46,'bold');
  if(tarot){
@@ -8978,7 +8986,7 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
   textIn(slots.summary,lines,format==='square'?30:36)
  }
  textIn(slots.footer,['Pawradise · '+(cn?'趣味探索，仅供反思':'For fun and reflection')],27,'normal',muted);
- g.restore();return true
+ return true
 }
 /* Share only the computed result, never individual answers or private input. */
 /* PAW_EXTRA_DISCOVERY_BEGIN */
@@ -10528,7 +10536,10 @@ roomIntro=function(...args){
  if(!pawForecourtPending||room!=='temple'||activity)return result;
  pawForecourtPending=false;
  start('templeForecourt');state.pawForecourt={pos:pawForecourtStart.slice(),route:[],destination:null,last:t};
- hint('Follow the stone path. The lucky cat is on your right.','沿着石阶向前走，右侧是招福猫。');
+ // The map doorway already expresses the intent to enter. Continue walking
+ // into the hall without demanding a second tap or stopping at the cat.
+ pawForecourtRoute(state.pawForecourt,'hall');
+ hint('Following the stone steps into the hall…','沿着石阶走进大殿……');
  return result
 };
 function pawForecourtChoose(kind,run=state){
@@ -10570,8 +10581,6 @@ drawActivity=function(...args){
   const dir=moving?(Math.abs((d[0]-q.pos[0])*p.w)>Math.abs((d[1]-q.pos[1])*p.h)?(d[0]>q.pos[0]?'right':'left'):(d[1]<q.pos[1]?'up':'down')):(q.greeted?'right':'up');
   backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,dir,.92+(q.pos[1]-.58)*1.05);
   if(!moving){
-   const cat=pawForecourtWorld([.69,.34]),catEnd=pawForecourtWorld([.97,.55]);
-   target(cat[0],cat[1],catEnd[0]-cat[0],catEnd[1]-cat[1],()=>pawForecourtChoose('cat',run),'paw-forecourt-cat');
    const landing=pawForecourtWorld([.47,.51]),left=pawForecourtWorld([.30,.46]),right=pawForecourtWorld([.65,.61]);
    target(left[0],left[1],right[0]-left[0],right[1]-left[1],()=>pawForecourtChoose('hall',run),'paw-forecourt-hall');
    // Compact directions live on the stair path, never on the cat or traveller.
@@ -10582,7 +10591,6 @@ drawActivity=function(...args){
 document.addEventListener('keydown',event=>{
  if(activity!=='templeForecourt'||pawArcadeInputBlocked()||event.repeat||event.altKey||event.ctrlKey||event.metaKey||event.target?.matches?.('input,textarea,select,button,[contenteditable=true]'))return;
  if(event.key==='Enter'||event.key==='ArrowUp'){event.preventDefault();pawForecourtChoose('hall')}
- if(event.key.toLowerCase()==='c'){event.preventDefault();pawForecourtChoose('cat')}
 });
 // Exit through the same approach and return down the actual stone path.
 const pawForecourtBackBefore=$('back').onclick;
@@ -10625,11 +10633,12 @@ function pawForecourtSyncControls(run){
  const el=$('gameControls'),model=pawForecourtControlModel(run?.pawForecourt,pawArcadeInputBlocked());
  if(!el||run!==state||activity!=='templeForecourt'||!model){pawForecourtClearControls();return}
  if(pawArcadeInputBlocked()){if(el.classList.contains('pawForecourtControls'))el.hidden=true;return}
- const key=String(zh)+'|'+model.busy+'|'+model.greeted+'|'+model.canReturn;
- if(pawForecourtControlsRun===run&&pawForecourtControlsKey===key&&el.querySelectorAll('[data-paw-forecourt-control]').length===3){el.hidden=false;return}
+ const key=String(zh)+'|'+model.busy+'|'+model.canReturn;
+ const actions=model.busy?[['exit','Return to valley','返回解忧谷']]:[['hall','Enter hall','进入大殿'],['exit','Return to valley','返回解忧谷']];
+ if(pawForecourtControlsRun===run&&pawForecourtControlsKey===key&&el.querySelectorAll('[data-paw-forecourt-control]').length===actions.length){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawForecourtControls');el.hidden=false;
  pawForecourtControlsRun=run;pawForecourtControlsKey=key;
- for(const [id,en,cn] of [['cat',model.greeted?'Greet again':'Greet lucky cat',model.greeted?'再次招呼':'拜访招福猫'],['hall','Enter hall','进入大殿'],['exit','Return to valley','返回福运谷']]){
+ for(const [id,en,cn] of actions){
   const button=b(el,tr(en,cn),()=>pawForecourtChoose(id,run));button.dataset.pawForecourtControl=id;button.disabled=id==='exit'?!model.canReturn:model.busy
  }
 }
@@ -10928,12 +10937,11 @@ drawActivity=function(...args){
   else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',.9);
   // The wind chime is attached to the painted stall eave on the left.
   const [wx,wy]=xy(.205,.385);
-  ctx.save();try{ctx.translate(wx,wy);ctx.scale(.30,.30);gardenWindChime(0,0)}finally{ctx.restore()}
+  ctx.save();try{ctx.translate(wx,wy);if(!residentReducedMotion.matches)ctx.rotate(Math.sin(t*1.45)*.035+Math.sin(t*.83)*.014);ctx.scale(.30,.30);gardenWindChime(0,0)}finally{ctx.restore()}
   const [bx,by]=xy(.83,.625);
   if(!moving){
    target(bx-36,by-34,72,68,()=>pawGardenChoose(run,'seat'));
    target(water[0]-55,water[1]-20,110,40,()=>pawGardenChoose(run,'feed'));
-   target(wx-32,wy-24,64,62,()=>pawGardenChoose(run,'chime'))
   }
  }finally{ctx.restore()}
  pawGardenControls(run)
@@ -10948,9 +10956,9 @@ function pawGardenControls(run){
  const el=$('gameControls');if(!el||run!==state||activity!=='secretGarden')return;
  if(pawArcadeInputBlocked()){el.hidden=true;return}
  const busy=!!run.pawGardenWalk?.route.length,key=String(zh)+'|'+run.gardenSitting+'|'+busy;
- if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===(run.pawRearGarden?4:3)){el.hidden=false;return}
+ if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===2){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawGardenControls');el.hidden=false;pawGardenControlsRun=run;pawGardenControlsKey=key;
- for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐'],['chime','Wind chime','听风铃'],...(run.pawRearGarden?[['cats','Greet the lucky cats','拜访招财猫']]:[])]){
+ for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐']]){
   const button=b(el,tr(en,cn),()=>pawGardenChoose(run,name));button.dataset.pawGardenControl=name;button.disabled=busy
  }
 }
@@ -12356,7 +12364,7 @@ const pawRearGardenNodes={
  feed:[.53,.49], seat:[.78,.475], chime:[.70,.355], cats:[.58,.351], upper:[.59,.389]
 };
 const pawRearGardenEdges=[['entry','bend'],['bend','fork'],['fork','feed'],['fork','seat'],['fork','chime'],['chime','upper'],['upper','cats']];
-const pawRearGardenTargets={feed:[.30,.459,.25,.095],seat:[.79,.415,.23,.065],chime:[.78,.17,.11,.12],cats:[.65,.25,.23,.09]};
+const pawRearGardenTargets={feed:[.30,.459,.25,.095],seat:[.79,.415,.23,.065]};
 function pawRearGardenRoute(from,action){
  if(!Array.isArray(from)||from.length!==2||!from.every(Number.isFinite)||!Object.hasOwn(pawRearGardenTargets,action))return null;
  const names=Object.keys(pawRearGardenNodes),distance=(a,b)=>Math.hypot((a[0]-b[0])*pawRearGardenPlate.w,(a[1]-b[1])*pawRearGardenPlate.h);
@@ -12419,7 +12427,7 @@ start=function(id,...args){
   state.pawRearGarden=pawRoomImageReady(pawRearGardenArt());
   if(state.pawRearGarden){
    state.pawGardenWalk={painted:true,pos:pawRearGardenNodes.entry.slice(),route:[pawRearGardenNodes.bend.slice(),pawRearGardenNodes.fork.slice()],action:null,last:t,dir:'up'};
-   hint('Follow the stone path to the pond or lucky cats.','沿石径去看看锦鲤和招财猫。')
+   hint('Follow the stone path to the pond or bench.','沿石径去看看锦鲤，或在长椅上歇一歇。')
   }
  }
  return result
@@ -12508,9 +12516,6 @@ drawActivity=function(...args){
   }
   if(!moving)for(const [kind,[u,v,ww,hh]] of Object.entries(pawRearGardenTargets)){
    const [tx,ty]=xy(u,v);target(tx-ww*p.w/2,ty-hh*p.h/2,ww*p.w,hh*p.h,()=>pawGardenChoose(run,kind),'paw-rear-garden-'+kind)
-  }
-  if(!moving)for(let i=0;i<pawRearCatFigurines.length;i++){
-   const [cx,cy]=xy(...pawRearCatFigurines[i]);target(cx-14,cy-15,28,30,()=>{if(run!==state||pawArcadeInputBlocked()||q.route.length)return;run.pawCatPending=i;pawGardenChoose(run,'cats')},'paw-rear-cat-'+i)
   }
  }finally{ctx.restore()}
  pawGardenControls(run)
@@ -13597,7 +13602,7 @@ function pawFoodExitPlan(id,position){
 const pawMappedExitBefore=$('back').onclick;
 let pawMappedExitGoal=null;
 $('back').onclick=function(...args){
- if(room==='destiny'&&$('page').dataset.pawYueDesk==='true'){pawCloseYueDesk();closeTalk()}
+ if(room==='destiny'){pawCloseYueDesk();closeTalk()}
  if((!pawReadingActive()&&!pawFoodRoomActive())||!indoorReady()||continuityRoom!==room)return pawMappedExitBefore.apply(this,args);
  if(pawMappedExitGoal&&indoor.goal===pawMappedExitGoal)return;
  const expected=room,food=pawFoodRoomActive(),visit=food?pawFoodVisit:pawReadingVisit,position=[indoor.x,indoor.y],plan=food?pawFoodExitPlan(room,position):pawMappedExitPlan(pawReadingAPI(),room,position);
@@ -13739,6 +13744,7 @@ roomIntro=function(...args){
  return result
 };
 function pawCloseYueDesk(){
+ pawYueRestoreForm();
  const pane=$('page');if(pane.dataset.pawYueDesk!=='true')return false;
  pawYueChartObserver?.disconnect();pawYueChartObserver=null;
  if(pane.contains(document.activeElement))document.activeElement.blur();
@@ -13748,15 +13754,15 @@ function pawCloseYueDesk(){
 function pawYueDeskChoose(kind){
  if(room!=='destiny')return;
  function open(subject){if(room!=='destiny')return;yueSubject=subject;closeTalk();if(kind==='chart')destinyPage();else if(kind==='year')yueZodiacAlmanac();else starSignPage()}
- say(tr('Master Yue','月师傅'),tr('Is this reading for you, or someone else?','这次是想看看自己，还是替别人看看？'),[[tr('For me','看自己'),()=>open('self')],[tr('For someone else','帮别人看看'),()=>open('other')],[tr('Back','返回'),()=>yueReadingHub()]])
+ pawYueSpeak(tr('Is this reading for you, or someone else? Please use another person’s details only with permission.','这次是想看看自己，还是替别人看看？使用他人资料前，请先征得同意。'),[[tr('For me','看自己'),()=>open('self')],[tr('For someone else','帮别人看看'),()=>open('other')],[tr('Back','返回'),()=>yueReadingHub()]])
 }
 yueReadingHub=function(...args){
  if(room!=='destiny'){pawCloseYueDesk();return}
  pawCloseYueDesk();$('page').style.display='none';closeTalk();
- say(tr('Master Yue','月师傅'),tr("Ah, sit and have some tea. The stars are not going anywhere. What shall we explore?","来啦？坐，先喝口茶。星星又不会跑。今天想问些什么？"),[
+ pawYueSpeak(tr("Ah, sit and have some tea. The stars are not going anywhere. What shall we explore?","来啦？坐，先喝口茶。星星又不会跑。今天想问些什么？"),[
  [tr('My year ahead','生肖流年'),()=>pawYueDeskChoose('year')],
  [tr('My birth chart','生辰命盘'),()=>pawYueDeskChoose('chart')],
- [tr('Weekly star signs','本周星座'),()=>pawYueDeskChoose('stars')],
+ [tr('Weekly star signs','本周星座'),()=>pawYueStarsDialogue()],
  [tr('Just visiting','只是来坐坐'),closeTalk]])
 };
 destinyConsultMenu=function(){closeTalk();return yueReadingHub()};
@@ -13876,18 +13882,21 @@ function pawYueDeskPresent(kind){
   if(edit)edit.addEventListener('click',()=>{
    if(room!=='destiny'||!form.isConnected||form.hidden)return;
    if(!form.classList.contains('pawYueGuidedForm'))pawYueQuestionSteps(form,out,kind);
-   pane.scrollTop=0
+   pane.scrollTop=0;
+   pawYueMountQuestion(q,pane,form,out,kind)
   });
  }
  pawYueDeskArrange(q,pane,form,out);
  if(kind==='chart')pawYueChartParchment(q,pane,form,out);
+ if(kind==='year'&&out?.querySelector('.yueReadingFront'))pawYueDialogueResult(out);
+ else if(['chart','year'].includes(kind))pawYueMountQuestion(q,pane,form,out,kind);
 }
 const pawYueDeskChartBefore=destinyPage;
 destinyPage=function(...args){const result=pawYueDeskChartBefore(...args);pawYueDeskPresent('chart');return result};
 const pawYueDeskYearBefore=yueZodiacAlmanac;
 yueZodiacAlmanac=function(...args){const result=pawYueDeskYearBefore(...args);pawYueDeskPresent('year');return result};
 const pawYueDeskStarsBefore=starSignPage;
-starSignPage=function(...args){const result=pawYueDeskStarsBefore(...args);pawYueDeskPresent('stars');return result};
+starSignPage=function(...args){if(room==='destiny')return pawYueStarsDialogue();return pawYueDeskStarsBefore(...args)};
 const pawYueDeskCSS=document.createElement('style');
 pawYueDeskCSS.textContent=`
 #game #page[data-paw-yue-desk="true"]{position:absolute!important;inset:auto 0 0!important;height:auto!important;max-height:64dvh!important;min-height:0!important;max-width:none!important;width:100%!important;overflow:auto!important;overscroll-behavior:contain;padding:8px max(12px,env(safe-area-inset-left,0px)) max(12px,env(safe-area-inset-bottom,0px))!important;background:#f0e4cdeb url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important;border-radius:10px 10px 0 0;border-top:2px solid #b69a70;box-shadow:0 -5px 24px #251e1950}
@@ -13985,7 +13994,7 @@ openTarotReading=function(entry,back){
    if(reflection)words+='\n\n'+reflection;
    const aside=tarotCommentary(d[0],c.rev,live.topic,live.tone);
    if(aside)words+='\n\n'+tr(...aside);
-   choices.push([index+1<count?tr('Next card','下一张牌'):tr('What does it mean together?','整体意味着什么？'),()=>explain(pawLiveTarotStep(count,index,1))]);
+   choices.push([index+1<count?tr('Next card','下一张牌'):count===1?tr('A thought to take with you','带走一点启发'):tr('What does it mean together?','整体意味着什么？'),()=>explain(pawLiveTarotStep(count,index,1))]);
   }else{
    words=count===5?tr('Compare what helps with the challenge card. Choose one small action from the next-step card, and keep the last card as a reminder.','对照助力牌和挑战牌。从行动牌里选一件小事，再把最后一张牌当作提醒。'):count===3?readingConnection(live):tr('Take what resonates with you. A card is a moment for reflection, not a prediction or an instruction.','把有共鸣的部分留在心里。牌意是自我反思，不是预言，也不是指令。');
    choices.push([tr('Make a keepsake','制作纪念牌卡'),()=>{if(!valid())return;closeTalk();shareReadingResult(live,()=>{if(valid())explain(index)})}]);
@@ -14055,7 +14064,8 @@ gardenWrite=function(){
  paper.append(input);$('dialogue').insertBefore(paper,$('choices'));$('dialogue').classList.add('pawWishWriting');
  composer={run,paper,input};pawWishComposer=composer;
  input.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeTalk()}else if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();fold()}});
- input.focus({preventScroll:true})
+ // Do not force the mobile keyboard over the painted writing station.
+ // The player can tap the paper when ready to begin.
 };
 const pawWishArchiveBefore=gardenWishBook;
 gardenWishBook=function(){
@@ -15126,5 +15136,105 @@ pawValleyArrivalCss.textContent=`
 }
 @media(max-height:620px) and (orientation:portrait){#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{object-fit:contain!important;object-position:center!important}}
 `;document.head.append(pawValleyArrivalCss);
+
+/* PAW_YUE_LIVE_DIALOGUE_BEGIN */
+// Questions belong to the resident dialogue. Reuse the authoritative form,
+// validation and calculation handlers, then unfold paper only for a chart.
+var pawYueLiveForm=null,pawYueDialogueActive=false;
+function pawYueSpeak(words,choices){say(tr('Master Yue','月师傅'),words,choices);pawYueDialogueActive=true}
+function pawYueRestoreForm(session=pawYueLiveForm){
+ if(!session)return;
+ session.observer?.disconnect();
+ if(session.anchor.isConnected)session.anchor.replaceWith(session.form);
+ else session.form.remove();
+ session.slot.remove();
+ if(pawYueLiveForm===session)pawYueLiveForm=null;
+ $('dialogue').classList.remove('pawYueLiveQuestion');
+}
+function pawYueDialogueResult(out){
+ if(room!=='destiny'||!out?.isConnected)return;
+ const headings=[...out.querySelectorAll('h2, :scope > strong, :scope > p, article')].map(n=>n.innerText.trim()).filter(Boolean);
+ const lines=headings.length?headings:[out.textContent.trim()].filter(Boolean);
+ const note=out.querySelector(':scope > small')?.textContent;
+ if(note)lines.push(note);
+ if(!lines.length)return;
+ $('page').style.display='none';
+ function read(i){
+  if(room!=='destiny')return;
+  const choices=[];
+  if(i>0)choices.push([tr('Previous','上一段'),()=>read(i-1)]);
+  if(i+1<lines.length)choices.push([tr('Continue','继续'),()=>read(i+1)]);
+  choices.push([tr('Ask Yue again','再问月师傅'),()=>yueReadingHub()],[tr('Finish reading','读完了'),()=>{pawCloseYueDesk();closeTalk()}]);
+  pawYueSpeak(lines[i],choices)
+ }
+ read(0)
+}
+function pawYueMountQuestion(q,pane,form,out,kind){
+ if(room!=='destiny'||!form?.isConnected||form.hidden||!form.classList.contains('pawYueGuidedForm'))return false;
+ const question=form.querySelector('.pawYueQuestion');if(!question)return false;
+ pawYueRestoreForm();
+ pane.style.display='none';
+ pawYueSpeak(question.textContent,[
+  [tr('Ask something else','换个问题'),()=>yueReadingHub()],
+  [tr('Cancel','暂时不问'),()=>{pawCloseYueDesk();closeTalk()}]
+ ]);
+ const language=q.querySelector(':scope > .row button:last-child');
+ if(language){const button=b($('choices'),zh?'English':'中文',()=>{pawYueRestoreForm();language.click()});button.type='button'}
+ const anchor=document.createComment('Yue question form home');form.before(anchor);
+ const slot=element('div','',$('dialogue'),'pawYueLiveFields');$('dialogue').insertBefore(slot,$('choices'));slot.append(form);
+ $('dialogue').classList.add('pawYueLiveQuestion');
+ const session={form,slot,anchor,observer:null};pawYueLiveForm=session;
+ session.observer=new MutationObserver(()=>{if(pawYueLiveForm===session&&room==='destiny')$('line').textContent=question.textContent});
+ session.observer.observe(question,{childList:true,characterData:true,subtree:true});
+ // Restore the original form location before the existing calculator runs.
+ // Reattach on invalid input; a successful chart alone opens the paper.
+ form.addEventListener('submit',()=>{
+  if(pawYueLiveForm!==session||room!=='destiny')return;
+  pawYueRestoreForm(session);
+  queueMicrotask(()=>{
+   if(room!=='destiny'||!form.isConnected||pane.dataset.pawYueDesk!=='true')return;
+   if(kind==='chart'&&pawYueChartComplete(out?.querySelector('.ziGrid'))){closeTalk();pane.style.display='block';pane.scrollTop=0}
+   else if(kind==='year'&&out?.querySelector('.yueReadingFront')){closeTalk();pawYueDialogueResult(out)}
+   else pawYueMountQuestion(q,pane,form,out,kind)
+  })
+ },{capture:true,once:true});
+ return true
+}
+function pawYueStarsDialogue(group=0){
+ if(room!=='destiny')return;
+ pawCloseYueDesk();
+ const start=group*4;
+ const choices=signNotebook.slice(start,start+4).map((sign,j)=>[tr(...sign.name),()=>{
+  if(room!=='destiny')return;
+  const result=signReading(start+j);
+  pawYueSpeak(tr(...result.sign.name)+' · '+tr(...result.sign.theme)+'\\n'+tr(...result.line),[
+   [tr('Choose another sign','换个星座'),()=>pawYueStarsDialogue(group)],
+   [tr('Ask Yue again','再问月师傅'),()=>yueReadingHub()],
+   [tr('Finish reading','读完了'),closeTalk],
+   [zh?'English':'中文',()=>{zh=!zh;save('zh',zh);updateHUD();pawYueStarsDialogue(group)}]
+  ])
+ }]);
+ if(group>0)choices.push([tr('Earlier signs','前几个星座'),()=>pawYueStarsDialogue(group-1)]);
+ if(start+4<signNotebook.length)choices.push([tr('More signs','更多星座'),()=>pawYueStarsDialogue(group+1)]);
+ choices.push([tr('Ask something else','换个问题'),()=>yueReadingHub()]);
+ pawYueSpeak(tr('Choose a sun sign. This is a weekly reflection for fun, not a prediction.','选一个太阳星座，看看本周的趣味小笺，并非预测。'),choices)
+}
+const pawYueLiveCloseBefore=closeTalk,pawYueLiveSayBefore=say;
+closeTalk=function(...args){pawYueDialogueActive=false;pawYueRestoreForm();return pawYueLiveCloseBefore(...args)};
+say=function(...args){pawYueDialogueActive=false;pawYueRestoreForm();return pawYueLiveSayBefore(...args)};
+const pawYueLiveCSS=document.createElement('style');
+pawYueLiveCSS.textContent=`
+#game #dialogue.pawYueLiveQuestion{bottom:calc(env(safe-area-inset-bottom,0px) + 12px)!important;max-height:46dvh!important}
+#game #dialogue .pawYueLiveFields .pawYueGuidedForm{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:5px!important;padding:0!important;margin:6px 0!important;background:none!important;border:0!important;box-shadow:none!important}
+#game #dialogue .pawYueLiveFields .pawYueGuidedForm>*{grid-column:1/-1!important;min-width:0!important;max-width:100%!important}
+#game #dialogue .pawYueLiveFields .pawYueQuestion,#game #dialogue .pawYueLiveFields .pawYueStepHidden,#game #dialogue .pawYueLiveFields [hidden]{display:none!important}
+#game #dialogue .pawYueLiveFields label{display:grid;gap:3px;font-size:13px;min-width:0}
+#game #dialogue .pawYueLiveFields :is(input,select){display:block;box-sizing:border-box;width:100%!important;min-width:0;max-width:100%;min-height:44px;font-size:16px;padding:6px 8px;background:#fff8e9;color:#4b4437;border:1px solid #b9a17c;border-radius:4px}
+#game #dialogue .pawYueLiveFields button{min-height:44px;padding:6px 10px}
+#game #dialogue .pawYueLiveFields .pawYueStepNav{display:flex;justify-content:flex-end;gap:6px}
+#game #dialogue.pawYueLiveQuestion #choices{display:flex;flex-wrap:wrap;gap:5px}
+#game #dialogue.pawYueLiveQuestion #choices button{flex:1 1 auto;font-size:12px}
+`;document.head.append(pawYueLiveCSS);
+/* PAW_YUE_LIVE_DIALOGUE_END */
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

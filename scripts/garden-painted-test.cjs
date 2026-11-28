@@ -16,6 +16,10 @@ for(const [key,point] of Object.entries(n))for(const action of Object.keys(t)){
  assert.equal(found,action);assert.deepEqual(q.pos,n[action]);assert.equal(q.route.length,0);assert.equal(tick(q,51,false),null);
 }
 assert.equal(route([.1,.1],'feed'),null);assert.equal(route(n.entry,'__proto__'),null);
+assert.deepEqual(Object.keys(t),['feed','seat']);
+assert.equal(route(n.entry,'chime'),null);assert.equal(route(n.entry,'cats'),null);
+assert.ok(!s.includes("target(wx-32,wy-24,64,62,()=>pawGardenChoose(run,'chime'))"));
+assert.ok(!s.includes("'Greet the lucky cats'"));
 const paused={painted:true,pos:n.entry.slice(),route:route(n.entry,'feed'),action:'feed',last:0};
 tick(paused,1,true);assert.deepEqual(paused.pos,n.entry);
 for(let i=0;i<5;i++)for(let age=.01;age<.9;age+=.02){const pt=pellet(i,age);if(pt){assert.ok(pt[0]>=.31&&pt[0]<=.53);assert.ok(pt[1]>.39&&pt[1]<.50)}}
