@@ -5599,7 +5599,7 @@ function pawSyncDockSelection(){
  const selected=!open?'':explore||q.querySelector('.travelAlbum')?'travel':home||q.querySelector('.travellerBagV2,.komorebiBook,.komorebiConfirm,.figureCabinetBook,.pawPersonalShelf')?'home':q.querySelector('.communityTabs,.townWall,.townChatTranscript')?'town':today||q.querySelector('.journalDailyTasks,.goodCompanyBook')?'today':'';
  $('game').classList.toggle('pawDockRoot',!!pawDockRootKey);
  for(const [key,button] of pawDockButtons()){
-  button.classList.toggle('pawDockSelected',selected===key);
+  button.classList.remove('active');button.classList.toggle('pawDockSelected',selected===key);
   if(selected===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')
  }
 }
@@ -5808,13 +5808,15 @@ function pawPrepareEntranceCrop(original){
   const source=new Image();
   source.onload=async()=>{
    try{
-    const w=source.naturalWidth,h=source.naturalHeight,work=document.createElement('canvas');work.width=w;work.height=h;
-    const ctx=work.getContext('2d',{willReadFrequently:true});ctx.drawImage(source,0,0);
+    const sw=source.naturalWidth,sh=source.naturalHeight,ratio=Math.min(1,512/Math.max(sw,sh));
+    const w=Math.max(2,Math.round(sw*ratio)),h=Math.max(2,Math.round(sh*ratio)),work=document.createElement('canvas');work.width=w;work.height=h;
+    const ctx=work.getContext('2d',{willReadFrequently:true});ctx.drawImage(source,0,0,w,h);
     const bounds=pawAvatarCropBounds(ctx.getImageData(0,0,w,h).data,w,h);
     if(!bounds||bounds.w===w&&bounds.h===h){finish(original);return}
-    const out=document.createElement('canvas');out.width=bounds.w;out.height=bounds.h;
-    out.getContext('2d').drawImage(source,bounds.x,bounds.y,bounds.w,bounds.h,0,0,bounds.w,bounds.h);
-    const cropped=out.toDataURL('image/png'),decoded=new Image();decoded.src=cropped;
+    const sx=sw/w,sy=sh/h,scale=Math.min(1,768/Math.max(bounds.w*sx,bounds.h*sy));
+    const out=document.createElement('canvas');out.width=Math.max(2,Math.round(bounds.w*sx*scale));out.height=Math.max(2,Math.round(bounds.h*sy*scale));
+    out.getContext('2d').drawImage(source,bounds.x*sx,bounds.y*sy,bounds.w*sx,bounds.h*sy,0,0,out.width,out.height);
+    const cropped=out.toDataURL('image/webp',.94),decoded=new Image();decoded.src=cropped;
     if(typeof decoded.decode==='function')await decoded.decode();
     else if(!decoded.complete)await new Promise((ok,fail)=>{decoded.onload=ok;decoded.onerror=fail});
     finish(cropped)
@@ -5832,7 +5834,12 @@ function pawWarmEntranceCrops(){
  // Warm at the ticket, after the station has already been rendered.
  // Limit simultaneous image processing rather than blocking the first frame.
  const sources=pawEntranceCropSources();
- pawEntranceWarmJob=(async()=>{for(let i=0;i<sources.length;i+=3)await Promise.all(sources.slice(i,i+3).map(pawPrepareEntranceCrop))})().finally(()=>{pawEntranceWarmJob=null})
+ pawEntranceWarmJob=(async()=>{for(const src of sources){
+  if(proposal.hidden||![0,4,1].includes(proStep))break;
+  await new Promise(resolve=>{if(typeof requestIdleCallback==='function')requestIdleCallback(resolve,{timeout:1200});else setTimeout(resolve,32)});
+  if(proposal.hidden||![0,4,1].includes(proStep))break;
+  await pawPrepareEntranceCrop(src)
+ }})().finally(()=>{pawEntranceWarmJob=null})
 }
 function pawCropEntranceImage(im){
  if(!im||!im.src)return;
@@ -11123,7 +11130,7 @@ function pawFirstRailAttach(){
  if(!cabin||!arrive||!foot)return;
  const run=pawFirstRailState??={elapsed:0,last:null,paused:false,completed:false,loadElapsed:0,artStarted:false};run.last=null;
  const original=arrive.onclick;if(typeof original!=='function')return;
- const reduced=residentReducedMotion.matches,duration=reduced?6500:8500;
+ const reduced=residentReducedMotion.matches,duration=reduced?3000:5500;
  cabin.dataset.rideSeconds=String(duration/1000);
  const status=element('small','',foot,'pawFirstRailStatus');
  status.setAttribute('role','status');status.setAttribute('aria-live','polite');
@@ -12179,6 +12186,13 @@ const pawRailEdge=element('button','',$('game'),'pawRailEdge');pawRailEdge.type=
 pawRailEdge.onclick=()=>{if(!pawRailEdge.hidden&&!transitioning&&!room&&!activity&&proposal.hidden&&$('page').style.display!=='block')walkDoor('station')};
 // A plaque can have a valid rectangle yet be hidden, clipped, or covered.
 // Require an actual hit target before withdrawing the edge navigation.
+/* PAW_FIRST_MAP_RAIL_BEGIN */
+function pawFortuneRailNearby(scene,player,station){
+ if(scene!=='fortune')return true;
+ if(!player||!station||![player.x,player.y,station[0],station[1]].every(Number.isFinite))return false;
+ return Math.hypot(player.x-station[0],player.y-station[1])<=280
+}
+/* PAW_FIRST_MAP_RAIL_END */
 function pawRailPlaqueReachable(sign,g){
  if(!sign||sign.hidden||sign.disabled||!g)return false;
  const r=sign.getBoundingClientRect(),style=getComputedStyle(sign);
@@ -12205,7 +12219,13 @@ syncSigns=function(...args){
  if(!proposal.hidden||room||activity||transitioning||pending||document.hidden||signRoot.hidden||$('page').style.display==='block'||!maps[scene]){
   pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
  }
- const sign=signButtons.get('station'),game=$('game'),g=game.getBoundingClientRect(),now=performance.now(),size=g.width+'|'+g.height;
+ const sign=signButtons.get('station');
+ const station=maps[scene].st.find(v=>v[0]==='station');
+ if(!pawFortuneRailNearby(scene,p,station?.slice(1,3))){
+  if(sign&&!sign.hidden)sign.hidden=true;
+  pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
+ }
+ const game=$('game'),g=game.getBoundingClientRect(),now=performance.now(),size=g.width+'|'+g.height;
  const changed=pawRailEdgeScene!==scene||pawRailEdgeSize!==size;
  if(changed){pawRailEdgeScene=scene;pawRailEdgeSize=size;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity}
  if(!changed&&now-pawRailEdgeAt<75)return result;pawRailEdgeAt=now;
