@@ -772,9 +772,10 @@
       "summary": "Measure loading, memory and frame pacing",
       "resources": [
         "browser",
-        "src/startup.js",
         "src/engine.js",
-        "index.html"
+        "scripts/performance-budget-test.cjs",
+        "scripts/frame-pacing-test.cjs",
+        ".github/workflows/paw-performance.yml"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -788,7 +789,10 @@
         "d806da63 + 9b3fa13e: first loading artwork matches new visitor station or returning visitor canonical gateway, exact preload path, 54 persisted assertions passed including all assets present. Device timing and first frame visual acceptance pending.",
         "Organic CI 46113122583 (Chromium and WebKit): all eight English/Chinese phone/desktop cases reached returning identity and passed strict Tarot lobby paint and first/return gateway assertions; all failed first carriage full-viewport coverage. No uncaught page errors reported. 3033ec62 applies full-bleed first carriage CSS scoped to decoded painted stage, retaining aspect-preserving cover for both picture and motion canvas, controls above and landscape height adjustments. Await new CI, actual visual inspection and hardware checks; no acceptance promotion."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-batch03-performance",
+        "until": 1795847852441
+      },
       "blocker": "Actual iPhone Safari blank-screen cause, performance traces, real frame timings, deployed browser verification and artwork coverage remain unresolved.\n\nOwner device acceptance clarification (27 Nov): Record actual frame timing, asset failures, blank-screen diagnosis, iPhone Safari browser chrome and app resume/orientation, desktop resize, and device/browser/commit provenance. Distinguish simulated and physical hardware evidence. Apply section 10.\n\n28 Nov owner iPhone screenshot feedback: entrance takes too long. Current index.html gates document assembly on ten parallel source fetches with no-cache and up to two 25-second attempts per file. This is a candidate bottleneck, not measured timing. Measure navigation-to-first-painted-gate and first-interactive time separately, cold/warm cache and constrained mobile network; instrument asset decode and retry, avoid unnecessary startup dependencies, consider generated versioned bundle and defer noncritical assets. Targets: ~2s first useful gate frame, ~3s interactive on typical connection (design budgets, not observed results). Actual duration unverified.\n\nEnd-to-end critique, 28 Nov: Source boot currently requests and assembles ten source files before game starts, with bounded 25s fetch timeout and retry; measure actual waterfall, decode, memory and frame pacing before choosing optimization. Measure first usable input and first enjoyable action, not just document load. Retain recovery and state. Apply section 12.\n\nEntrance loader first refinement committed. Measure real cold/warm waterfall and first usable game input, compare same device and network against prior deployment; generated build bundle remains a candidate, not implemented. No speed claim without measurements.\n6b4c85f4: entrance reports completed source/assembler preparations in saved EN/ZH; transient fetch retry only; 74 exact helper assertions and inline JS parse passed in connector harness. No actual speed claim. Real cold/warm network and device timing still pending."
     },
     {
