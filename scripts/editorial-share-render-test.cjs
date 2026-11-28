@@ -22,10 +22,14 @@ const url=process.env.MEOW_TEST_URL||'http://127.0.0.1:8768/index.html';
    }
    for(const [kind,title,lines] of [
     ['soul',soulCats[0],[['A moment to enjoy your own company.','给自己一点独处的时间。']]],
-    ['fortune',['A little good luck','今日小幸运'],[['Make time for something that makes you smile.','给让你微笑的小事留一点时间。']]],
+    
     ['cafe',['A quiet cup together','一起喝杯茶'],[['Good company. No agenda.','好好相处，不必列议程。']]],
     ['story',['A life by the sea','海边的另一种人生'],[['You chose the quiet coast and a slower life.','你选择了海边和慢一点的生活。']]]
    ])push(kind,{kind,title,lines});
+   for(let i=0;i<townFortunes.length;i++){
+    const theme=townFortunes[i];
+    push('fortune-'+i,{kind:'fortune',title:theme.title,lines:[theme.work,theme.rest,['Lucky colour: Rice paper · 7','幸运色：米纸白 · 7']]});
+   }
    push('type',{kind:'type',title:['INFP','INFP'],lines:[],computedScores:[-2,2,-4,0]});
    push('motive',{kind:'motive',title:wonderMotives[0].slice(0,2),lines:[],computedScores:[6,3,1,5,2,3,4,0,2]});
    for(const [kind,cfg] of Object.entries(pawExtraDiscoveries)){
@@ -36,13 +40,17 @@ const url=process.env.MEOW_TEST_URL||'http://127.0.0.1:8768/index.html';
    push('zwds_chart',{kind:'zwds_chart',palaces:Array.from({length:12},(_,i)=>({index:i,stars:i%3===0?keys.slice(0,3):i%3===1?[keys[i%keys.length]]:[]}))});
    return rows
   });
-  assert.equal(fixtures.length,16);
+  assert.equal(fixtures.length,27);
   const manifest=[];
   for(const {key,data} of fixtures)for(const format of ['feed','xhs','story','square'])for(const cn of [false,true]){
    const result=await page.evaluate(async({data,format,cn})=>{
     await pawPrepareRecoveredShare(format,data);
     const paper=pawRecoveredImage('templates/paper_'+format+'.webp');
     const illustration=data.kind==='tarot'?readingArtwork():data.scoreRows?.length||data.kind==='zwds_chart'?null:pawRecoveredResultIllustration(data);
+    if(data.kind==='fortune'){
+     const expected=pawEditorialFortuneCharm(data,townFortunes,pawRecoveredCharmPath);
+     if(!expected||!illustration?.src.endsWith(expected))throw Error('Fortune export does not match its illustrated charm');
+    }
     for(const im of [paper,illustration].filter(Boolean))if(!im.complete)await im.decode();
     if(!paper?.naturalWidth||illustration&&!illustration.naturalWidth)throw Error('Missing production art: '+data.kind);
     await document.fonts.ready;
@@ -72,7 +80,7 @@ const url=process.env.MEOW_TEST_URL||'http://127.0.0.1:8768/index.html';
    await page.setContent('<html><body style="margin:0;background:#e8e2d8;display:grid;grid-template-columns:repeat(3,320px);gap:16px;padding:16px;font:14px system-ui">'+files.map(v=>'<figure style="margin:0"><img style="width:320px;display:block" src="data:image/png;base64,'+fs.readFileSync(path.join(out,v.file)).toString('base64')+'"><figcaption>'+v.key+'</figcaption></figure>').join('')+'</body></html>');
    await page.setViewportSize({width:1040,height:900});
    await page.evaluate(()=>Promise.all(Array.from(document.images,im=>im.decode())));
-   await page.screenshot({path:path.join(out,'contact-'+format+'-'+locale+'.png'),fullPage:true});
+   await page.screenshot({path:path.join(out,'contact-'+format+'-'+locale+'.jpg'),fullPage:true,type:'jpeg',quality:76});
   }
   console.log('Exported '+manifest.length+' actual PNGs; eight phone-scale contact sheets. Renderer evidence only.');
  }finally{await browser.close()}
