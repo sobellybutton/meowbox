@@ -2925,7 +2925,7 @@ function mbTransferHolding(from,to){
  const token=++mbTransferToken,overlay=element('section','',$('game'),'mbTransferHolding');
  overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
  const ticket=element('div','',overlay,'mbTransferTicket');
- element('small',tr('Pawradise railway · transfer ticket','Pawradise 铁路 · 换乘车票'),ticket,'mbTransferEyebrow');
+ element('small',tr('Pawradise railway · transfer ticket','摸鱼小镇铁路 · 换乘车票'),ticket,'mbTransferEyebrow');
  const portrait=element('img','',ticket,'mbTransferAvatar');mbTravellerImage(portrait,avatar??0);
  const route=element('div','',ticket,'mbTransferRoute');
  const departure=element('div','',route);element('small',tr('From','出发站'),departure);element('strong',tr(...maps[from].n),departure);
@@ -3781,7 +3781,7 @@ mbTransferHolding=function(from,to){
  const caption=element('div','',overlay,'pawRailCaption');
  element('small',tr('Bound for','开往'),caption);
  element('strong',tr(...maps[to].n),caption);
- element('span',tr('Pawradise railway','Pawradise 铁路'),caption);
+ element('span',tr('Pawradise railway','摸鱼小镇铁路'),caption);
  const skip=element('button',tr('Skip ride','跳过旅程'),overlay,'pawRailSkip');skip.type='button';
  // A cached painted fallback fills the viewport before the responsive source
  // finishes decoding. The shared entrance renderer adds the moving panes.
@@ -3856,7 +3856,7 @@ function pawJournalRender(district=scene){
   });
   const spread=element('article','',book,'pawSketchSpread'),cover=element('div','',spread,'pawSketchCover');
   const im=element('img','',cover);im.src=destinationPortrait(district);im.alt=tr(...maps[district].n);
-  const caption=element('div','',cover,'pawSketchCaption');element('small',tr('Pawradise railway · stop ','Pawradise 铁路 · 第 ')+(pawJournalKeys.indexOf(district)+1),caption);element('h2',tr(...maps[district].n),caption);
+  const caption=element('div','',cover,'pawSketchCaption');element('small',tr('Pawradise railway · stop ','摸鱼小镇铁路 · 第 ')+(pawJournalKeys.indexOf(district)+1),caption);element('h2',tr(...maps[district].n),caption);
   const stamp=element('span',district===scene?tr('YOU ARE HERE','此刻在这里'):visited.includes(district)?tr('VISITED','已到访'):tr('TO EXPLORE','待探索'),cover,'pawSketchStamp');stamp.dataset.seen=String(district===scene||visited.includes(district));
   const info=element('div','',spread,'pawSketchNotes');element('p',tr(...pawJournalLines[district]),info);
   if(district!==scene)b(info,tr('Board train','上车'),()=>{if(!transitioning)journey(district)}).className='pawSketchBoard';
@@ -5695,7 +5695,7 @@ mbTransferHolding=function(from,to){
  const result=pawRailContextBefore(from,to),overlay=$('game').querySelector('.pawRailJourney');
  if(overlay){
   overlay.dataset.from=from;overlay.dataset.to=to;
-  const caption=overlay.querySelector('.pawRailCaption span');if(caption)caption.textContent=tr(...(pawRailRouteNotes[to]||['Pawradise railway','Pawradise 铁路']));
+  const caption=overlay.querySelector('.pawRailCaption span');if(caption)caption.textContent=tr(...(pawRailRouteNotes[to]||['Pawradise railway','摸鱼小镇铁路']));
   const skip=overlay.querySelector('.pawRailSkip');if(skip)skip.setAttribute('aria-label',tr('Skip ride and arrive','跳过旅程，直接抵达'))
  }
  return result
@@ -5717,7 +5717,7 @@ proRender=function(...args){
   foot.hidden=true;
   const ticket=hero.querySelector('.rail-ticket');
   if(ticket){
-   ticket.setAttribute('aria-label',tr('Pawradise railway ticket','Pawradise 铁路车票'));
+   ticket.setAttribute('aria-label',tr('Pawradise railway ticket','摸鱼小镇铁路车票'));
    const input=ticket.querySelector('input');if(input){input.setAttribute('aria-label',tr('Passenger signature','旅客签名'));input.enterKeyHint='go';input.autocomplete='nickname'}
   }
  }
@@ -5902,7 +5902,7 @@ proRender=function(...args){
   const wide=element('source','',preview);wide.media=pawWideArtworkMedia;wide.srcset='assets/visual/painted/recovered/scenes/station_landscape.webp';
   const art=element('img','',preview);art.src='assets/visual/painted/recovered/scenes/station_portrait.webp';art.alt=tr('A nostalgic railway station, with a train waiting at the platform','怀旧火车站，列车正在站台等候');
   art.onerror=()=>{art.onerror=null;wide.srcset='assets/visual/painted/journey/landscape.webp';art.src='assets/visual/painted/journey/portrait.webp'};
-  const heading=foot.querySelector('h1');if(heading){const tag=element('p',tr('Pawradise railway','Pawradise 铁路'),foot,'pawFirstRailLabel');heading.before(tag)}
+  const heading=foot.querySelector('h1');if(heading){const tag=element('p',tr('Pawradise railway','摸鱼小镇铁路'),foot,'pawFirstRailLabel');heading.before(tag)}
  }
  if(proStep===1||proStep===2){
   const player=hero.querySelector('.pawEntranceAvatar');if(player)pawCropEntranceImage(player);
@@ -6149,7 +6149,7 @@ proRender=function(...args){
  if(painting){painting.alt=tr('A mountain gateway and stone path into Fortune Valley','通往解忧谷的山门与石板小路');painting.setAttribute('aria-hidden','false')}
  const traveller=hero.querySelector('.gate-traveller');
  if(traveller){traveller.alt='';pawCropEntranceImage(traveller)}
- const brand=proposal.querySelector('header>span');if(brand){brand.replaceChildren();element('strong','Pawradise',brand,'pawGateWordmark');element('small',tr('A LITTLE WORLD AWAY','偷得浮生半日闲'),brand,'pawGateMotto')}
+ const brand=proposal.querySelector('header>span');if(brand){brand.replaceChildren();element('strong',pawBrand(),brand,'pawGateWordmark');element('small',tr('A LITTLE WORLD AWAY','偷得浮生半日闲'),brand,'pawGateMotto')}
  enter.textContent=tr('Step inside','进小镇');enter.classList.add('pawGateEnter');
  // The artwork and traveller occupy the scene; the footer is only a button.
  foot.replaceChildren(enter);return result
@@ -6927,7 +6927,7 @@ const pawGeminiVisitorRows=[
   "Offer a warm cup of tea",
   "递上一杯热茶",
   "Punctual, warm, and zero signal delays. Five-star service from Pawradise Station.",
-  "准点、温暖、零信号故障。给猫岛车站打五星好评。"
+  "准点、温暖、零信号故障。给摸鱼小镇车站打五星好评。"
  ],
  [
   "traveller_04_mateo_barista",
@@ -6949,7 +6949,7 @@ const pawGeminiVisitorRows=[
   "Priya Nair",
   "普里亚·奈尔",
   "I ran a Monte Carlo risk model across 400 holiday destinations to find the lowest probability of bumping into my London coworkers. Pawradise won by 0.4%.",
-  "我用蒙特卡洛风险模型测算了400个度假地，只为找出偶遇伦敦同事概率最低的地方。猫岛以0.4%的微弱优势胜出。",
+  "我用蒙特卡洛风险模型测算了400个度假地，只为找出偶遇伦敦同事概率最低的地方。摸鱼小镇以0.4%的微弱优势胜出。",
   "According to my calculations, there is a 94% chance a seagull will steal your snack if you look at a work email on the pier.",
   "根据我的精算模型，如果你在码头边低头回工作邮件，零食被海鸥抢走的概率高达94%。",
   "Offer a snack",
@@ -7647,7 +7647,7 @@ function pawFictionEdition(now,weather=''){
  const stamp=Date.parse(key+'T00:00:00+08:00');
  return [
   {id:'fiction-notice-'+key+'-'+n[0],date:stamp,thread:[['Town notice','小镇公告'],[n[2]+': '+n[4],n[3]+'：'+n[5]],[]]},
-  {id:'fiction-gazette-'+key+'-'+g[0],date:stamp,thread:[['Pawradise Gazette · satire','Pawradise 小镇日报 · 讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
+  {id:'fiction-gazette-'+key+'-'+g[0],date:stamp,thread:[['Pawradise Gazette · satire','摸鱼小镇日报 · 讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
  ]
 }
 const pawFictionPublishedBefore=townPublishedNotices;
@@ -7909,7 +7909,7 @@ pawFictionEdition=function(now,weather=''){
  const today=new Date(now+8*3600000).toISOString().slice(0,10),topic=pawReviewedTopic(pawReviewedTopicFeed,today,pawFictionGazette.map(v=>v[0]));
  if(topic){
   const g=pawFictionGazette.find(v=>v[0]===topic.templateId);
-  entries[1]={id:'topic-fiction-'+today+'-'+topic.id,date:entries[1].date,thread:[['Pawradise Gazette · topical satire','Pawradise 小镇日报 · 时事讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
+  entries[1]={id:'topic-fiction-'+today+'-'+topic.id,date:entries[1].date,thread:[['Pawradise Gazette · topical satire','摸鱼小镇日报 · 时事讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
  }
  return entries
 };
@@ -8674,7 +8674,7 @@ const pawShareCaptionBefore=meowSocialCaption;
 meowSocialCaption=function(data,format,cn){
  if(data.kind!=='zwds')return pawShareCaptionBefore(data,format,cn);
  const i=Number(cn),title=data.title[i];
- return [cn?'Pawradise · 紫微斗数小记':'Pawradise · Zi Wei Dou Shu reflection',title,data.takeaway[i],...data.lines.map(v=>v[i]),cn?'传统文化与自我反思，不是预测。':'Traditional symbolism for reflection, not a forecast.',cn?'#Pawradise #紫微斗数 #自我探索':'#Pawradise #SelfReflection',...(format==='xhs'||format==='story'?[]:[meowShareUrl])].join('\n')
+ return [cn?'摸鱼小镇 · 紫微斗数小记':'Pawradise · Zi Wei Dou Shu reflection',title,data.takeaway[i],...data.lines.map(v=>v[i]),cn?'传统文化与自我反思，不是预测。':'Traditional symbolism for reflection, not a forecast.',cn?'#摸鱼小镇 #紫微斗数 #自我探索':'#Pawradise #SelfReflection',...(format==='xhs'||format==='story'?[]:[meowShareUrl])].join('\n')
 };
 const pawShareCardBefore=shareCardArt;
 shareCardArt=function(cv,data,format,cn){
@@ -8692,7 +8692,7 @@ shareCardArt=function(cv,data,format,cn){
   if(rows.length>maxLines){rows=rows.slice(0,maxLines);let last=rows.at(-1);while(last.length&&g.measureText(last+'…').width>width-76)last=last.slice(0,-1);rows[rows.length-1]=last+'…'}
   const lh=size*1.28;rows.forEach((v,k)=>line(v,y+lh*(k+.5),size,weight,color));return y+rows.length*lh;
  }
- line('Pawradise · '+(cn?'月师傅小记':'MASTER YUE'),top+34,27,'bold','#55694f');
+ line(pawBrand(cn)+' · '+(cn?'月师傅小记':'MASTER YUE'),top+34,27,'bold','#55694f');
  const im=pics[sharePaintedKey(data)],artY=top+65,artH=Math.min(L.artH,Math.floor((end-top)*.26));
  let y=artY;
  if(im?.complete&&im.naturalWidth>0&&im.naturalHeight>0){
@@ -8977,7 +8977,7 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
   const lines=[locale(socialResultQuote(data)),...(data.lines||[]).map(locale)].filter((v,i,a)=>v&&a.indexOf(v)===i);
   textIn(slots.summary,lines,format==='square'?30:36)
  }
- textIn(slots.footer,['Pawradise · '+(cn?'趣味探索，仅供反思':'For fun and reflection')],27,'normal',muted);
+ textIn(slots.footer,[pawBrand(cn)+' · '+(cn?'趣味探索，仅供反思':'For fun and reflection')],27,'normal',muted);
  g.restore();return true
 }
 /* Share only the computed result, never individual answers or private input. */
@@ -9143,7 +9143,7 @@ socialResultQuote=function(data){
 const pawExtraCaptionBefore=meowSocialCaption;
 meowSocialCaption=function(data,format,cn){
  if(!pawExtraDiscoveries[data.kind])return pawExtraCaptionBefore(data,format,cn);
- const i=Number(cn);return ['Pawradise · '+data.title[i],...(data.scoreRows||[]).map(r=>r.label[i]+' '+r.value[i]),socialResultQuote(data)[i],cn?'趣味探索，非心理诊断。':'Informal reflection, not a psychological assessment.'].join('\n')
+ const i=Number(cn);return [pawBrand(cn)+' · '+data.title[i],...(data.scoreRows||[]).map(r=>r.label[i]+' '+r.value[i]),socialResultQuote(data)[i],cn?'趣味探索，非心理诊断。':'Informal reflection, not a psychological assessment.'].join('\n')
 };
 function pawPublicWonderScores(kind,scores,labels){
  if(pawExtraDiscoveries[kind])return pawExtraRows(kind,scores);
@@ -9173,7 +9173,7 @@ function pawPublicChartShare(raw){
 shareKinds.zwds_chart=['Twelve palace keepsake','十二宫纪念卡'];
 const pawChartCaptionBefore=meowSocialCaption;
 meowSocialCaption=function(data,format,cn){
- if(data.kind==='zwds_chart')return cn?'Pawradise · 十二宫纪念卡\n传统文化探索，仅供反思。':'Pawradise · Twelve palace keepsake\nTraditional symbolism, for reflection.';
+ if(data.kind==='zwds_chart')return cn?'摸鱼小镇 · 十二宫纪念卡\n传统文化探索，仅供反思。':'Pawradise · Twelve palace keepsake\nTraditional symbolism, for reflection.';
  return pawChartCaptionBefore(data,format,cn)
 };
 const pawChartArtKeyBefore=sharePaintedKey;
@@ -9240,7 +9240,7 @@ shareCardArt=function(cv,data,format,cn){
   g.restore();return y+total*scale
  }
  const footer=bottom-65;
- line('Pawradise · '+(cn?'偷得浮生半日闲':'A LITTLE ESCAPE'),top+20,27,'bold',muted);
+ line(pawBrand(cn)+' · '+(cn?'偷得浮生半日闲':'A LITTLE ESCAPE'),top+20,27,'bold',muted);
  let y=top+51;line(locale(shareKinds[data.kind]),y+13,25,'normal',accent);y+=33;
  y=block([locale(data.title)],y,Math.min(120,(bottom-top)*.16),format==='square'?46:54,'bold',ink)+10;
  if(data.kind==='tarot'&&[1,3,5].includes(data.cards.length)){
@@ -9290,12 +9290,12 @@ renderRailKeepsake=function(book){
  const data=load('originalRailTicketV1',null);
  if(!data||typeof data!=='object')return pawRecoveredRailKeepsakeBefore(book);
  const ticket=element('section','',book,'passportRailTicket pawRecoveredTicket');
- ticket.setAttribute('aria-label',tr('Your original Pawradise railway ticket','你的 Pawradise 初次入境车票'));
+ ticket.setAttribute('aria-label',tr('Your original Pawradise railway ticket','你的摸鱼小镇初次入境车票'));
  function field(key,content,label=null){
   const node=element('div','',ticket,'pawTicketField');node.dataset.ticketField=key;
   if(label)element('small',label,node);element('strong',content,node);return node
  }
- field('heading',tr('Pawradise · Railway','Pawradise 铁路'));
+ field('heading',tr('Pawradise · Railway','摸鱼小镇铁路'));
  const avatarIndex=Number(data.avatar),portrait=element('img','',ticket,'pawTicketAvatar');
  portrait.src=ART['walker'+(Number.isInteger(avatarIndex)&&avatarIndex>=0&&avatarIndex<4?avatarIndex:0)+'0'];portrait.alt='';
  field('name',String(data.name||tr('Traveller','旅人')),tr('Passenger','旅客'));

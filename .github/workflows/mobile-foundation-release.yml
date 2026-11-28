@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   foundation:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/candidate-mobile-foundation-reconciled-20261128'
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/candidate-mobile-foundation-reconciled-20261128' || github.head_ref == 'fix/chinese-interface-brand-20261128'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     strategy:
@@ -22,6 +22,7 @@ jobs:
       PAW_LANGUAGE: ${{ matrix.language }}
       PAW_MOTION: no-preference
       PAW_FOUNDATION: '1'
+      PAW_CHINESE_BRAND: ${{ github.head_ref == 'fix/chinese-interface-brand-20261128' && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
