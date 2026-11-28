@@ -15598,6 +15598,14 @@ pawPhysicalBookletStyle.textContent=`
 #game #content .pawDiaryLunar strong,#game #content .pawDiaryLunar small{display:block}
 #game #content .pawDiaryLunar p{margin:6px 0!important;font-size:14px}
 @media(min-width:780px){#game #content .pawSketchSpread>.pawBookFold:has(.pawSketchPlaces){grid-column:2;grid-row:1/span 2;align-self:start}}
+/* Root booklets fill the game, rather than floating over its scenery. */
+#game #page:has(#content :is(.pawSketchbook,.pawDiaryFold)){position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;box-sizing:border-box!important;background:#f2e4c8 url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important;padding:max(10px,env(safe-area-inset-top,0px)) 0 max(92px,calc(82px + env(safe-area-inset-bottom,0px)))!important;overflow-y:auto!important}
+#game #page:has(#content :is(.pawSketchbook,.pawDiaryFold)) #content{width:100%!important;max-width:970px!important;box-sizing:border-box!important;margin:0 auto!important;padding:0 clamp(14px,4vw,28px)!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+#game #content:has(:is(.pawSketchbook,.pawDiaryFold))>.row{position:static!important;min-height:44px!important;margin:0 0 8px!important;padding:0!important;background:transparent!important}
+#game #content:has(:is(.pawSketchbook,.pawDiaryFold))>h1{color:#405740!important;font:600 clamp(22px,6vw,32px)/1.2 Georgia,"Songti SC",serif!important;margin:6px 0 10px!important;text-align:left!important}
+#game #content:has(.pawSketchbook) .pawSketchbook{padding:6px 0 0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
+#game #content:has(:is(.pawSketchbook,.pawDiaryFold))>.row .pawBookletClose{background:#e5d5ad!important;color:#344d3a!important}
+@media(min-width:780px){#game #page:has(#content :is(.pawSketchbook,.pawDiaryFold)) #content{max-width:970px!important;padding-inline:32px!important}}
 `;document.head.append(pawPhysicalBookletStyle);
 /* PAW_PHYSICAL_DOCK_BOOKLETS_END */
 
