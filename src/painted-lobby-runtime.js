@@ -429,7 +429,7 @@ function pawEditorialTarotPlan(box,count){
  const top=box.top,story=box.height>=1800,rows=story&&count===5?[3,2]:[count];
  const header=H>=900?148:116,footer=56,summary=Math.max(150,Math.min(224,H*.22)),gap=24;
  const area=H-header-footer-summary-gap*3,perRow=(area-(rows.length-1)*gap)/rows.length;
- const caption=118,slots=[];let y=top+header+gap;
+ const caption=126,slots=[];let y=top+header+gap;
  for(const n of rows){
   const cellW=(w-(n-1)*gap)/n,cardH=Math.min(perRow-caption-8,(cellW-12)*218/128, count===1?(story?660:590):(story?540:475)),cardW=cardH*128/218;
   if(cardH<100)return null;
@@ -496,7 +496,7 @@ function pawEditorialTarot(cv,data,format,cn,box,paper,atlas,deck,positions){
   const role=locale(positions[i]);
   text([lx,ly,lw,30],role,28,23,1,'normal',ink);
   text([lx,ly+30,lw,58],locale(deck[c.i]),data.cards.length===5?31:40,22,2,'bold');
-  text([lx,ly+90,lw,28],c.rev?(cn?'逆位':'Reversed'):(cn?'正位':'Upright'),27,23,1,'normal',ink);
+  text([lx,ly+90,lw,36],c.rev?(cn?'逆位':'Reversed'):(cn?'正位':'Upright'),27,23,1,'normal',ink);
  });
  const [rx,ry,rw,rh]=plan.reading;
  g.strokeStyle='#bca17d';g.lineWidth=2;g.beginPath();g.moveTo(rx+rw*.38,ry);g.lineTo(rx+rw*.62,ry);g.stroke();
@@ -630,7 +630,7 @@ function pawInstallEditorialShare(){
   // Export-only candidate illustrations, not active room/host replacements.
   // Inspect the rendered artwork before release; never return to the
   // unrelated labelled tea-house scene or Tarot host for Master Yue.
-  const resultArt={cafe:'../../staging/2026-11-28-consolidated/room-alternates/compatibility-cafe.webp',story:'../../staging/2026-11-28-consolidated/room-alternates/parallel-lives.webp',zwds:'../master-yue/standing.webp'};
+  const resultArt={cafe:'../../staging/2026-11-28-batch3-heart-cafe/standing-serve.webp',story:'../../staging/2026-11-28-batch1-storyteller/standing-book.webp',zwds:'../master-yue/standing.webp'};
   if(Object.hasOwn(resultArt,data?.kind))return pawRecoveredImage(resultArt[data.kind]);
   return (path&&pawRecoveredImage(path))||artBefore(data)
  };
