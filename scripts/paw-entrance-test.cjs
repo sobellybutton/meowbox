@@ -167,6 +167,16 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       assert(structure.first&&structure.folded&&structure.visible>0&&structure.top<height*.5,'Room should appear before administration: '+JSON.stringify(structure));
       const actor=await page.evaluate(()=>{const s=document.querySelector('.hideoutScene'),a=s?.querySelector('.hideoutPlayer'),shadow=s?.querySelector('.pawHomeContactShadow');return {ratio:a?.getBoundingClientRect().height/s?.getBoundingClientRect().height,foot:a?.style.top,shadow:shadow?.style.top}});
       assert(actor.ratio>=.22&&actor.ratio<=.31&&actor.foot===actor.shadow,'Room traveller scale and contact shadow: '+JSON.stringify(actor));
+      const seat=page.locator('.hideoutPlaced[data-furniture-id="bed"], .hideoutPlaced[data-furniture-id="futon"], .hideoutPlaced[data-furniture-id="zabuton"]').first();
+      await seat.waitFor({state:'visible',timeout:8000});
+      await (width<900?seat.tap():seat.click());
+      const resting=page.locator('.pawHomeSeatedActor');
+      await resting.waitFor({state:'visible',timeout:12000});
+      assert.equal(await page.locator('.hideoutPlayer').isVisible(),false,'No duplicate standing traveller while sitting');
+      await shot('room-seated');
+      await (width<900?resting.tap():resting.click());
+      await page.locator('.hideoutPlayer').waitFor({state:'visible',timeout:5000});
+      assert.equal(await resting.count(),0,'Seated sprite removed after standing');
      }
      await shot('dock-'+id);
      const back=page.locator('#content > .row button').first();

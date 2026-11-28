@@ -311,3 +311,19 @@ return 'PASS: daily notice cap, rotation, publication and full archive coverage'
  if(!active.includes('const entries=pawDailyTownNotices()')||!active.includes('const next=pawDailyTownNotices()')||active.includes('Read older notices')||!active.includes('pawNoticeReplyState'))throw Error('Active noticeboard renderer reverted to archive pagination');
  console.log('PASS: '+result+' notices in the daily source snapshot and final renderer contract');
 }
+
+{
+ const seat=between(source,'/* PAW_HOME_SEATED_CONTACT_BEGIN */','/* PAW_HOME_SEATED_CONTACT_END */');
+ const n=new Function(seat+`
+ let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+ for(const id of ['zabuton','bed','futon'])for(let i=0;i<4;i++){
+  const s=pawHomeSeatSpec(id,i),p=pawHomeSeatPoint({left:0,top:0,width:400,height:500},{left:100,top:300,width:100,height:80},s);
+  ck(p&&s.path.endsWith(i+'/seated.webp'),'same avatar identity');
+  ck(p.x>=25&&p.x<=50&&p.y>=60&&p.y<=76,'contact on furniture');
+ }
+ ck(!pawHomeSeatSpec('lamp',0)&&!pawHomeSeatSpec('bed',4),'unsupported seat rejected');
+ ck(!pawHomeSeatPoint({width:0,height:1},{},{}),'invalid geometry rejected');
+ return n;
+ `)();
+ console.log('PASS: '+n+' seated avatar identity and furniture contact checks');
+}
