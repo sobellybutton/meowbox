@@ -43,6 +43,7 @@ jobs:
           node scripts/reading-host-scene-test.cjs
           node scripts/scene-ambience-test.cjs
           node scripts/yue-desk-contact-test.cjs
+          node scripts/yue-chair-contact-test.cjs
           node scripts/yue-year-dialogue-test.cjs
           node scripts/yue-star-dialogue-test.cjs
           node scripts/build.cjs
