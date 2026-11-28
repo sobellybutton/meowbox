@@ -66,6 +66,12 @@ jobs:
           node scripts/park-care-continuity-test.cjs
           node scripts/scene-handoff-regression-test.cjs
           node scripts/paw-room-life-scoop-test.cjs
+          node scripts/rear-garden-seated-art-test.cjs
+          node scripts/yue-parchment-test.cjs
+          node scripts/yue-chair-contact-test.cjs
+          node scripts/yue-desk-contact-test.cjs
+          node scripts/yue-star-dialogue-test.cjs
+          node scripts/yue-year-dialogue-test.cjs
   district:
     runs-on: ubuntu-latest
     timeout-minutes: 30
