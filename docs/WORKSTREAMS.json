@@ -1614,12 +1614,10 @@
       "stage": "outstanding",
       "evidence": [
         "f7345e1e + 9c0c07e6: atomic same-place reply admission, strict UUID/body validation, expired report exclusion, regression script extended; source parse and UUID check passed; SQLite workflow not yet verified.",
-        "7374e0b3 + 35ef9c53: rolling 24-hour HMAC network post quota no longer resets at midnight; atomic presence upsert respects concurrent moderator ban and returns restricted response. Worker and regression source parsed; 20 SQL placeholders matched. Actual SQLite CI and deployed service still unverified. Existing pre-migration network quota hashes will not match new keys until expired."
+        "7374e0b3 + 35ef9c53: rolling 24-hour HMAC network post quota no longer resets at midnight; atomic presence upsert respects concurrent moderator ban and returns restricted response. Worker and regression source parsed; 20 SQL placeholders matched. Actual SQLite CI and deployed service still unverified. Existing pre-migration network quota hashes will not match new keys until expired.",
+        "0f770230: scheduled presence privacy cleanup while disabled; 81 isolated mock-D1 assertions; SQLite regression cases added; e3c4a6123571780f7c8e2590b59ab6de9cdbb0e8 checkpoint."
       ],
-      "lease": {
-        "owner": "parallel-presence-privacy-1795836930137",
-        "until": 1795838731611
-      },
+      "lease": null,
       "blocker": "Worker endpoint remains blank; SQLite CI and actual deployed multi-client consent, moderation and presence verification pending."
     },
     {
