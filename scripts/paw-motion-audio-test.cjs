@@ -10,9 +10,9 @@ assert.equal(step.update(p(1040,{surface:'wood'})).surface,'wood');
 assert.equal(step.update(p(1080,{enabled:false})),null);
 const flags={enabled:true,muted:false,hidden:false,overlay:false,paused:false};
 assert.equal(a.permitted(flags),true);for(const k of Object.keys(flags))assert.equal(a.permitted({...flags,[k]:!flags[k]}),false);
-const log=[],param={setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}};
+const log=[],filters=[],param={setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}};
 const node=()=>({connect(){},disconnect(){}});
-const ctx={state:'running',sampleRate:8000,currentTime:0,createBuffer:(_,n)=>({getChannelData:()=>new Float32Array(n)}),createBufferSource:()=>({...node(),start(t){log.push(t)},stop(){this.onended?.()}}),createBiquadFilter:()=>({...node(),frequency:{},Q:{}}),createGain:()=>({...node(),gain:param})};
+const ctx={state:'running',sampleRate:8000,currentTime:0,createBuffer:(_,n)=>({getChannelData:()=>new Float32Array(n)}),createBufferSource:()=>({...node(),start(t){log.push(t)},stop(){this.onended?.()}}),createBiquadFilter:()=>{const filter={...node(),frequency:{},Q:{}};filters.push(filter);return filter},createGain:()=>({...node(),gain:param})};
 const player=a.createPlayer(ctx,{},()=>.5);
 assert.equal(player.footstep({foot:0,surface:'stone'},flags),true);
 assert.equal(player.footstep({foot:1,surface:'wood'},flags),false);
@@ -21,4 +21,6 @@ assert.equal(player.railway(flags),true);ctx.currentTime=.3;assert.equal(player.
 ctx.currentTime=.8;assert.equal(player.railway({...flags,hidden:true}),false);
 assert.equal(player.railway(flags),true);ctx.state='suspended';assert.equal(player.railway(flags),false);
 assert.equal(log.length,4);
+assert.equal(filters[2].frequency.value,132);assert.equal(filters[3].frequency.value,168);
+ctx.state='running';ctx.currentTime=2;player.reset();assert.equal(player.railway(flags),true);assert.equal(filters.at(-1).frequency.value,132);
 console.log('Motion cadence, mute, surface and audio lifecycle checks passed');
