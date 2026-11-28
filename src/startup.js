@@ -13025,9 +13025,9 @@ openMeowShare=function(raw,back=null){
  const panel=kind==='story'?storySheet:cafeQuestionSheet,scroll=panel.scrollTop;
  const details=Array.from(panel.querySelectorAll('details')).map(node=>node.open);
  return pawDiscoverySharePrior(raw,()=>{
-  $('page').style.display='none';
   const current=()=>pawDiscoveryReturnMatches(origin,pawDiscoveryResultContext(kind));
   if(!current())return;
+  $('page').style.display='none';
   if(kind==='story'){storySheetKey='';syncStorySheet()}else{cafeQuestionSheetKey='';syncCafeQuestionSheet()}
   if(!current()||panel.hidden)return;
   Array.from(panel.querySelectorAll('details')).forEach((node,i)=>{node.open=!!details[i]});
@@ -13050,6 +13050,57 @@ syncStorySheet=function(...args){
   const copy=tr('This fictional ending follows your choices, not a personality result or prediction. Your keepsake is in the Starlight Valley chapter.','这个虚构结局由你的选择决定，并非性格测试或未来预测。纪念品已收入星语谷章节。');
   if(note.textContent!==copy)note.textContent=copy
  }
+ return value
+};
+
+/* PAW_CATALOGUE_RETURN_BEGIN */
+function pawCatalogueReturnMatches(record,back,category,style){
+ return !!record&&record.back===back&&record.category===category&&record.style===style&&typeof record.id==='string'&&Number.isFinite(record.scroll)
+}
+function pawCollectionReturnMatches(origin,current){
+ return !!origin&&!!current&&origin.run===current.run&&origin.room===current.room&&origin.district===current.district&&origin.activity==='blindBox'&&current.activity==='blindBox'
+}
+/* PAW_CATALOGUE_RETURN_END */
+let pawCatalogueReturn=null;
+const pawCatalogueConfirmPrior=furnitureConfirm;
+furnitureConfirm=function(id,back='shop'){
+ const q=$('content'),book=q.querySelector('.komorebiBook'),card=q.querySelector('.komorebiConfirm');
+ if(book){
+  const tile=Array.from(book.querySelectorAll('[data-furniture-id]')).find(node=>node.dataset.furnitureId===id);
+  pawCatalogueReturn=tile?{id,back,category:komorebiCategory,style:komorebiStyleFilter,scroll:$('page').scrollTop}:null
+ }else if(!card||pawCatalogueReturn?.id!==id||pawCatalogueReturn?.back!==back)pawCatalogueReturn=null;
+ return pawCatalogueConfirmPrior(id,back)
+};
+const pawCatalogueMarketPrior=furnitureMarket;
+furnitureMarket=function(back='shop'){
+ const q=$('content'),returning=!!q.querySelector('.komorebiConfirm'),origin=pawCatalogueReturn;
+ pawCatalogueReturn=null;
+ const result=pawCatalogueMarketPrior(back);
+ const book=q.querySelector('.komorebiBook');
+ if(returning&&book&&pawCatalogueReturnMatches(origin,back,komorebiCategory,komorebiStyleFilter)){
+  requestAnimationFrame(()=>{
+   if(!book.isConnected||$('page').style.display!=='block')return;
+   const tile=Array.from(book.querySelectorAll('[data-furniture-id]')).find(node=>node.dataset.furnitureId===origin.id);
+   if(tile){const button=tile.querySelector('button:not([disabled])');if(button)button.focus({preventScroll:true});else{tile.tabIndex=-1;tile.focus({preventScroll:true})}}
+   const page=$('page');page.scrollTop=pawDiscoveryScroll(origin.scroll,page.scrollHeight,page.clientHeight)
+  })
+ }
+ return result
+};
+const pawCollectionPagePrior=blindCollectionPage;
+blindCollectionPage=function(...args){
+ const origin={run:state,room,district:scene,activity};
+ const value=pawCollectionPagePrior(...args);
+ if(origin.activity!=='blindBox')return value;
+ const q=$('content'),book=q.querySelector('.blindAlbum');if(!book)return value;
+ function back(){
+  if(!book.isConnected)return;
+  const current={run:state,room,district:scene,activity};
+  if(!pawCollectionReturnMatches(origin,current))return;
+  $('page').style.display='none';updateHUD()
+ }
+ mbHomePageBack(tr('‹ Back to the shelf','‹ 返回货架'),back);
+ for(const button of q.querySelectorAll('button'))if(button.textContent===tr('Back to blind boxes','返回盲盒'))button.onclick=back;
  return value
 };
 
