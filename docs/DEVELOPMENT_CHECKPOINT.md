@@ -744,3 +744,7 @@ b584b628 + 83751a4c: integrated original identity-matched seated sprites at Taro
 
 ## Project batch 16: continuous tarot deck fan (28 November)
 b442052c + 82d8a660 + 606b0ae0 + f2db1d4b: deck fans twelve cards from existing deck anchor onto exact current portrait/desktop selection slots within 0.738s, retaining same mat, host and pool identity. Remaining cards stay visibly stacked; touch/keyboard selection and reshuffle unavailable until settled; existing active-time clock and reduced motion preserved. Two browser test routes updated to wait for real fan completion. 2,501 persisted exact-source checks passed; startup and modified browser scripts parsed. Still no verified physical hand transfer from the reader, actual rendered device acceptance or new card-face atlas; no stage promotion.
+
+
+## Project batch 5: purification physical input regression (28 November)
+1ab64196 adds an off-centre grip and invalid filled-ladle release to the independent Playwright ritual test; captures bounded canvas pointer events and failure screenshot for scoop, pour and rinse. Test script parsed; 24 coordinate algebra checks passed. Earlier Chromium run 46096584043 failed at water and temple entry; newer CI queued. Shared startup/extensions leased by READ-03, no gameplay runtime edited. Actual browser/phone/device and contact evidence pending; no stage promotion. Next use current failure trace to correct actual gesture/entry runtime after lease releases.
