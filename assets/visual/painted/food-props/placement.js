@@ -59,7 +59,13 @@ function create(manifest,makeImage){
  }
  function request(ids){
   if(!Array.isArray(ids))return [];
-  return [...new Set(ids)].filter(id=>record(manifest,id)).map(id=>({id,image:image(id)}))
+  return [...new Set(ids)].filter(id=>record(manifest,id)).map(id=>{
+   // Explicit room/activity warming may recover a completed failed load.
+   // Never retry from paint/image: those paths run every animation frame.
+   const existing=cache.get(id),asset=record(manifest,id);
+   if(existing?.complete===true&&!ready(existing,asset.size))cache.delete(id);
+   return {id,image:image(id)}
+  })
  }
  function paint(ctx,id,x,y,height,options){
   const g=geometry(manifest,id,x,y,height,options);

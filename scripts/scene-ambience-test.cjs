@@ -5,11 +5,11 @@ const block=startup.split('/* PAW_SCENE_AMBIENCE_BEGIN */')[1]?.split('/* PAW_SC
 assert.ok(block);
 const {pawSceneLightFrame:light,pawSceneVapourFrame:vapour,pawSceneAir:air}=new Function(block+';return {pawSceneLightFrame,pawSceneVapourFrame,pawSceneAir}')();
 let n=0;const ck=(v,m)=>{assert.ok(v,m);n++};
-const ids=['kitchen','boba','tarot','destiny','match'];
+const ids=['kitchen','boba','tarot','destiny','match','tea','arcade','quiz','story'];
 for(const id of ids){
  const still=JSON.stringify(light(id,0,true));
  for(let t=0;t<=120;t+=.2){
-  const q=light(id,t);ck(q.length>0&&q.length<=5,'bounded light count');
+  const q=light(id,t);ck(q.length>0&&q.length<=7,'bounded light count');
   ck(q.every(l=>l.u-l.rx>=0&&l.u+l.rx<=1&&l.v-l.ry>=0&&l.v+l.ry<=1&&l.alpha>=.034999&&l.alpha<=.110001),'light remains in painting');
   ck(JSON.stringify(light(id,t,true))===still,'static reduced light');
   for(let i=0;i<3;i++){
@@ -36,3 +36,17 @@ const before=draws;
 ck(air(ctx,'kitchen',{x:0,y:0,w:100,h:100},1,false,true)===0&&draws===before,'hidden document skips drawing');
 ck(air(ctx,'kitchen',{x:0,y:0,w:0,h:100},1)===0,'invalid plate');
 console.log('PASS '+n+' scene atmosphere assertions; no rendered acceptance.');
+
+const extension=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+const policyBlock=extension.slice(extension.indexOf('function pawAtmosphereMotionPolicy'),extension.indexOf('function villageAtmosphere'));
+const policy=new Function('document','atmosphereMotionPreference','pawSceneLights',policyBlock+';return pawAtmospherePolicy');
+const doc={hidden:false},preference={matches:false},live=policy(doc,preference,Object.fromEntries(ids.map(id=>[id,[]])));
+for(const id of [...ids,'temple','wishes','office','park',null])for(const hidden of [false,true])for(const reduced of [false,true]){
+ doc.hidden=hidden;preference.matches=reduced;const q=live(id);
+ ck(q.draw===!hidden&&q.moving===(!hidden&&!reduced),'live motion preference');
+ ck(q.legacyMotes===(!hidden&&!reduced&&['temple','wishes'].includes(id)),'legacy particles excluded from mapped and ordinary rooms');
+}
+ck(extension.includes('if(pawAtmospherePolicy(room).legacyMotes)'),'actual room draw uses policy');
+ck(extension.includes("if(!policy.draw)return;refreshAtmosphere()"),'actual map skips hidden painting');
+ck(extension.includes('ctx.rotate(moving?Math.sin(t*1.9)*.14:0)'),'wind chime respects motion setting');
+console.log('PASS '+n+' cumulative scene atmosphere and live motion policy assertions.');

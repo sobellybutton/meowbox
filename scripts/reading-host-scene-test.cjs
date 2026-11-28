@@ -27,7 +27,10 @@ for(const id of ['tarot','destiny']){
  ck(ready(id,manifest,api,()=>true),'whole family ready');
  for(let missing=0;missing<3;missing++){let i=0;ck(!ready(id,manifest,api,()=>i++!==missing),'partial family rejected')}
 }
-ck(phase('tarot',{readStage:'shuffle'},'love',false,false)==='shuffle','shuffle pose');
+ck(phase('tarot',{readStage:'shuffle'},'love',false,false)==='table-wash','tabletop owns shuffle');
+ck(plan('tarot',{x:0,y:0,w:928,h:1648},'table-wash').pose==='seated-idle','no second held deck during tabletop wash');
+for(const now of [0,.5,1.449,1.45,2,10])ck(phase('tarot',{readStage:'choose',readAt:1.45},'tarot',false,false,now)===(now<1.45?'table-wash':'idle'),'daily wash host phase follows card clock');
+ck(phase('tarot',{readStage:'choose'},'tarot',false,false,0)==='idle','invalid wash timestamp');
 ck(phase('tarot',{readStage:'focus',readFocus:0,readCards:[{i:2}]},'love',false,false)==='focus','actual chosen card');
 ck(phase('tarot',{readStage:'focus',readFocus:4,readCards:[]},'love',false,false)==='idle','invalid card');
 ck(phase('destiny',{},null,true,false)==='question','brush pose');
