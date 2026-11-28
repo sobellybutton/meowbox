@@ -173,6 +173,13 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       assert(await book.evaluate(n=>{const style=getComputedStyle(n);return style.backgroundImage.includes('/ui/paper_texture.webp')&&!style.backgroundImage.includes('/worlds/')&&!style.backgroundImage.includes('/town-hall/')&&style.backgroundColor!=='rgba(0, 0, 0, 0)'}),'Book background must be opaque paper, not underlying map artwork');
       const close=page.locator('.pawFullBookClose');await close.waitFor({state:'visible'});
       assert(await close.locator('img').evaluate(async im=>{await im.decode();return im.naturalWidth>0}),'Original illustrated cover did not decode');
+      const label=close.locator('span');assert.equal(await label.innerText(),language==='中文'?'合上':'Close');
+      assert(await label.evaluate(n=>{const r=n.getBoundingClientRect(),s=getComputedStyle(n);return r.width>8&&r.height>8&&s.clipPath==='none'}),'Close action must have a visible label');
+      if(id==='dockTravel'){
+       await close.locator('img').evaluate(im=>im.dispatchEvent(new Event('error')));
+       assert.equal(await close.locator('img').count(),0,'Broken image should be removed');
+       await reachable(close,'Close book without cover image');
+      }
       assert.equal(await dockRoot.locator('.dockIcon:visible').count(),0,'Dock should be bookmarks inside book');
       if(id==='dockTravel'){
        const previousMotion=Number(await page.locator('#game').getAttribute('data-paw-book-motion-serial'));
@@ -180,9 +187,10 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
        await tabs.nth(1).tap();
        await page.waitForFunction(n=>Number($('game').dataset.pawBookMotionSerial)>n,previousMotion);
        assert.equal(await page.locator('#game').getAttribute('data-paw-book-last-motion'),'turn','Same chapter should visibly turn a page');
+       assert(await page.evaluate(()=>{const leaf=document.querySelector('.pawPassportMotion[data-motion="turn"] .pawPassportMovingLeaf');return !leaf||parseFloat(leaf.style.width)<=30}),'Turning paper must not cover the destination chapter');
        await tabs.nth(0).tap();
        await page.locator('.pawPassportMotion').waitFor({state:'detached',timeout:2500});
-       const fold=page.locator('.pawBookFold').filter({has:page.locator('.pawSketchPlaces')});await fold.locator('summary').click();assert(await fold.evaluate(n=>n.open),'Places fold did not open');await fold.locator('summary').click();
+       const fold=page.locator('.pawBookFold').filter({has:page.locator('.pawSketchPlaces')});const foldSerial=await page.locator('#game').getAttribute('data-paw-book-motion-serial');await fold.locator('summary').click();assert(await fold.evaluate(n=>n.open),'Places fold did not open');await fold.locator('summary').click();assert.equal(await page.locator('#game').getAttribute('data-paw-book-motion-serial'),foldSerial,'Folding content should not replay a page turn');
       }
       if(id==='dockScoop')assert.equal(await page.locator('.pawDiaryLunar').count(),1,'Existing calendar is missing');
      }
@@ -229,6 +237,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       const actor=await page.evaluate(()=>{const s=document.querySelector('.hideoutScene'),a=s?.querySelector('.hideoutPlayer'),shadow=s?.querySelector('.pawHomeContactShadow');return {ratio:a?.getBoundingClientRect().height/s?.getBoundingClientRect().height,foot:a?.style.top,shadow:shadow?.style.top}});
       assert(actor.ratio>=.22&&actor.ratio<=.31&&actor.foot===actor.shadow,'Room traveller scale and contact shadow: '+JSON.stringify(actor));
      }
+     if(process.env.PAW_FULL_BOOK==='1')await page.locator('.pawPassportMotion').waitFor({state:'detached',timeout:2500});
      await shot('dock-'+id);
      const back=page.locator('#content > .row button').first();
      await back.waitFor({state:'visible',timeout:8000});
