@@ -63,8 +63,34 @@ const assert=(value,message)=>{if(!value)throw Error(message)};
     await click(page.locator('#small .languageChoice').getByRole('button',{name:'EN',exact:true}));
     assert(await page.locator('#townSettingsPanel').isHidden(),'Language chooser did not collapse');
     assert(await page.evaluate(()=>zh===false&&document.documentElement.lang==='en'),'English switch failed');
+    // Fixture grants all existing materials without spending the player's
+    // real coins. Every material selection below uses the visible editor.
+    await page.evaluate(()=>{
+     const prior=load('komorebiLegacyOwnedV1',[]);
+     save('komorebiLegacyOwnedV1',[...new Set([...(Array.isArray(prior)?prior:[]),...pawFinishIds])]);
+     komorebiZone=0;hideoutEditing=false;hideoutPage()
+    });
+    await click(page.getByRole('button',{name:'Decorate room',exact:true}));
+    for(const [kind,names] of [['wall',['Linen wallpaper','Sakura wallpaper','Matcha wallpaper','Indigo wallpaper']],['floor',['Honey oak flooring','Vintage ceramic tiles','Tatami flooring','Cream checker tiles']]]){
+     for(const name of names){
+      const id=await page.evaluate(name=>furnitureCatalogue().find(v=>v[1]===name)[0],name);
+      await click(page.locator('.komorebiFinishChoices').getByRole('button',{name,exact:true}));
+      const surface=page.locator('.hideoutScene svg image[data-paw-home-finish="'+kind+'"][data-material="'+id+'"]');
+      await surface.waitFor({state:'attached',timeout:12000});
+      const ready=await surface.evaluate(async el=>{
+       const im=new Image();im.src=el.getAttribute('href');await im.decode();
+       return im.naturalWidth===640&&im.naturalHeight===(el.getAttribute('data-paw-home-finish')==='wall'?480:320)&&el.parentNode.getAttribute('viewBox')==='0 0 400 500'
+      });
+      assert(ready,'Missing projected material '+id);
+     }
+    }
+    await page.screenshot({path:'test-results/'+name+'-home-materials.png'});
+    await click(page.getByRole('button',{name:'Save & view room',exact:true}));
+    await page.locator('.hideoutScene svg image[data-material="wallBlue"]').waitFor({state:'attached'});
+    await page.locator('.hideoutScene svg image[data-material="floorChecker"]').waitFor({state:'attached'});
     await page.reload({waitUntil:'domcontentloaded'});
     await page.locator('#proposal .shrine-enter').waitFor({timeout:45000});
+    assert(await page.evaluate(()=>komorebiFinishes(0).wall==='wallBlue'&&komorebiFinishes(0).floor==='floorChecker'),'Selected materials lost on reload');
     assert(await page.evaluate(v=>avatar===v.avatar&&playerName===v.playerName,before),'Identity lost on reload');
     assert(errors.length===0,errors.join('; '));
     console.log(engine.name()+' '+name+' organic entry, resize, languages, exit and persistence PASS');
