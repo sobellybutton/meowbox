@@ -79,6 +79,15 @@ function cutawayRoute(api,layout,items,start,goal){
  }
  return null
 }
+// On a new tap during a walk, finish retracing the occupied edge to its
+// last safe cell before following the new route. Never jump or cut through
+// a furniture footprint; a seated actor starts at its safe approach cell.
+function cutawayRetargetRoute(route,actor,foot,origin,seated=false){
+ if(!Array.isArray(route)||!actor||!origin||![origin.x,origin.y].every(Number.isFinite))return null;
+ const valid=!seated&&foot&&[foot.x,foot.y].every(Number.isFinite);
+ const displaced=valid&&Math.hypot(foot.x-origin.x,foot.y-origin.y)>.0001;
+ return {from:displaced?{x:foot.x,y:foot.y}:{x:origin.x,y:origin.y},route:displaced?[actor,...route]:route.slice()}
+}
 function cutawayMove(api,layout,items,key,cell,actor,turn=null){
  const item=items.find(i=>i.key===key);if(!item||!cell)return null;
  const next={...item,u:cell.u,v:cell.v,turn:turn===null?item.turn:turn};
@@ -378,7 +387,7 @@ function mountCutaway(q,legacyStage){
   const edit=b(controls,tr('Move furniture','移动家具'),()=>{stop();position(point(actor));actorArt('down',false,0);editing=!editing;selected=null;edit.textContent=editing?tr('Finish arranging','完成布置'):tr('Move furniture','移动家具');render();sayStatus()});
   let editing=false,selected=null,actor=cutawayFree(api,layout,items).at(-1),raf=0,epoch=0;
   const drag=cutawayDragOwner();
-  let seatedKey=null,seatStandingRatio=0,seatResize=null;
+  let seatedKey=null,seatStandingRatio=0,seatResize=null,visibleFoot=null;
   const seatFrame=cutawaySeatFrame(avatar??0);let seatReady=false;
   const lampKeys=items.filter(i=>['lamp','shojiLamp','chineseLantern'].includes(i.key)).map(i=>i.key);
   const savedLights=store?.[zone]?.fingerprint===fingerprint?store[zone].lights:null;
@@ -393,7 +402,7 @@ function mountCutaway(q,legacyStage){
   observer.observe($('page'),{attributes:true,attributeFilter:['style','hidden']});observer.observe(q,{childList:true});
   document.addEventListener('visibilitychange',onVisibility);
   const point=c=>api.project(layout,c.u+.5,c.v+.5);
-  function position(p){player.style.left=p.x*100+'%';player.style.top=p.y*100+'%';player.style.zIndex=String(cutawayDepth(p.y))}
+  function position(p){visibleFoot={x:p.x,y:p.y};player.style.left=p.x*100+'%';player.style.top=p.y*100+'%';player.style.zIndex=String(cutawayDepth(p.y))}
   function actorArt(direction,walking,distance){
    seatedKey=null;seatStandingRatio=0;player.style.removeProperty('width');player.style.removeProperty('max-height');delete player.dataset.seated;
    pawHomeActorArt(player,direction,walking,distance);
@@ -445,17 +454,22 @@ function mountCutaway(q,legacyStage){
   }
   function walk(goal,arrive=null){
    const route=cutawayRoute(api,layout,items,actor,goal);if(!route){status.textContent=tr('The furniture is in the way.','家具挡住了去路。');return}
-   stop();actorArt('down',false,0);const token=epoch;let from=point(actor),started=null,distance=0;position(from);
+   const nextWalk=cutawayRetargetRoute(route,actor,visibleFoot,point(actor),!!seatedKey);
+   if(!nextWalk)return;
+   const steps=nextWalk.route;
+   stop();const token=epoch;let from=nextWalk.from,started=null,distance=0;
+   const first=steps[0]&&point(steps[0]);
+   actorArt(first?pawHomeDirection(from,first,stage.clientWidth/Math.max(1,stage.clientHeight)):'down',false,0);position(from);
    function step(now){
     if(token!==epoch)return; // An obsolete callback must not cancel a newer walk.
     if(!panel.isConnected||document.hidden||$('page').style.display!=='block'){stop();position(point(actor));actorArt('down',false,0);return}
-    const next=route[0];if(!next){position(point(actor));actorArt('down',false,distance);raf=0;if(typeof arrive==='function')arrive();return}
+    const next=steps[0];if(!next){position(point(actor));actorArt('down',false,distance);raf=0;if(typeof arrive==='function')arrive();return}
     const to=point(next),length=Math.hypot(to.x-from.x,to.y-from.y),duration=Math.max(160,length*3400);
     if(started===null)started=now;
     const t=residentReducedMotion.matches?1:Math.min(1,(now-started)/duration);
     const p={x:from.x+(to.x-from.x)*t,y:from.y+(to.y-from.y)*t};position(p);
     actorArt(pawHomeDirection({x:from.x,y:from.y},{x:to.x,y:to.y},stage.clientWidth/Math.max(1,stage.clientHeight)),t<1,distance+t*length*100);
-    if(t===1){actor=route.shift();from=to;started=null;distance+=length*100}raf=requestAnimationFrame(step)
+    if(t===1){actor=steps.shift();from=to;started=null;distance+=length*100}raf=requestAnimationFrame(step)
    }
    raf=requestAnimationFrame(step)
   }
