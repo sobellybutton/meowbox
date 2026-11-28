@@ -1617,7 +1617,10 @@
         "64235160 + 3820f535: twelve fictional bilingual resident threads with named replies, three releases per Singapore day, twelve-item bounded rolling archive, stable IDs and refresh handling; focused deterministic archive tests executed.",
         "Gossip Tea House table and physical pinned noticeboard should share canonical community data with Town Hall; no forced detour, distinguish NPC and genuine human posts, retain reply context, consent and moderation."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "parallel-resident-copy-1795836675913",
+        "until": 1795838476774
+      },
       "blocker": "Actual phone/desktop board rendering, scroll/focus behavior and real human feed integration remain unverified."
     },
     {
