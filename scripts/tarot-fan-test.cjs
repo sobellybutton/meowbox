@@ -38,5 +38,18 @@ for(const count of [1,3,5]){
  ck(q.readCards.every((v,i)=>v===pool[i]),'identity preserved');
  ck(!finish(q,count,11),'no repeated transition');
 }
+
+// Check the actual deck-top affine registration rather than the old Moon-card crop.
+const props=source.match(/\/\* PAW_TAROT_PAINTED_PROPS_BEGIN \*\/([\s\S]*?)\/\* PAW_TAROT_PAINTED_PROPS_END \*\//)[1];
+const backTransform=new Function(props+';return pawTarotBackTransform')();
+for(const factor of [.5,1,2]){
+ const m=backTransform(1408*factor,1056*factor);
+ for(const [x,y,u,v] of [[495,58,0,0],[625,91,180,0],[365,263,0,260],[495,296,180,260]]){
+  ck(Math.abs(m[0]*x*factor+m[2]*y*factor+m[4]-u)<1e-7,'deck back horizontal registration');
+  ck(Math.abs(m[1]*x*factor+m[3]*y*factor+m[5]-v)<1e-7,'deck back vertical registration');
+ }
+}
+ck(backTransform(0,1056)===null,'reject invalid atlas dimensions');
+
 new Function(source);
 console.log('PASS '+n+' tarot fan motion and input checks');
