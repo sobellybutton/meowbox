@@ -55,7 +55,7 @@ for(let held=0;held<3;held++){
 for(const c of [.45,.55,.65,.75,1.2]){
  const scale=contact.pawTempleContactScale(c,1.72),pose=contact.pawRearBenchPose(contact.pawRearGardenPlate,scale);
  assert.ok(scale>=1.72&&scale<=2.15);
- assert.ok(Math.abs(pose.y-20*scale-pose.hip.y)<1e-8);
+ assert.ok(Math.abs(pose.y-32*scale-pose.hip.y)<1e-8);
  assert.ok(Math.abs(pose.x+9*scale-pose.hip.x)<1e-8);
 }
 for(const kind of ['chime','cats']){
@@ -64,3 +64,9 @@ for(const kind of ['chime','cats']){
  assert.equal(contact.pawRearGardenSway(.3,true,kind),0);
 }
 console.log('Temple incense supply, character scale, bench contact and garden reaction checks passed.');
+
+const fixes=new Function(get('TEMPLE_OWNER_CONTACT')+get('PAINTED_GARDEN')+';return {pawIncenseReturnFoot,pawRearCatChoice,pawRearCatFigurines}')();
+const plate={x:100,y:-145,w:600,h:600*1648/928};
+for(let i=0;i<=100;i++){const a=fixes.pawIncenseReturnFoot(plate,i*.011);assert.ok(a.x>=400-1e-8&&a.x<=466+1e-8);assert.ok(a.y>=plate.y+plate.h*.572-1e-8);}
+const q={};for(let i=0;i<6;i++){assert.equal(fixes.pawRearCatChoice(q,i).length,2);assert.equal(q.pawCatChoice,i)}assert.equal(fixes.pawRearCatChoice(q,6),null);
+console.log('Retreat and six ceramic figurine choices passed.');
