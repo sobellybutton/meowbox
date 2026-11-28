@@ -114,3 +114,13 @@ for(const scroll of [-1,0,20,120,NaN])for(const height of [0,100,300])for(const 
 return n`)();
 assert.equal(shareChecks,159);
 console.log('PASS '+shareChecks+' chart share-return ownership and scroll cases');
+
+{
+ const begin=source.indexOf('function pawYueSettingsOwns('),end=source.indexOf('function pawYueSettingsContext(',begin);
+ const owns=new Function(source.slice(begin,end)+';return pawYueSettingsOwns')();
+ const origin={room:'destiny',scene:'fortune',visit:{},subject:'self',profile:{},activity:null};
+ assert.ok(owns(origin,{...origin}));
+ for(const [key,value] of [['room','tarot'],['scene','wonder'],['visit',{}],['subject','other'],['profile',{}],['activity','tarot']])assert.ok(!owns(origin,{...origin,[key]:value}));
+ assert.ok(!owns(null,origin));
+ console.log('PASS eight private profile-return ownership cases');
+}

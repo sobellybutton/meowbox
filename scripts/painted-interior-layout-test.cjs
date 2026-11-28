@@ -26,9 +26,11 @@ for(const id of ['tarot','destiny','quiz','story','match']){
  assert.ok(helpers.pawReadingCompatible(api,id,[[id,'en','zh']]));
  assert.ok(!helpers.pawReadingCompatible(api,id,[[id],['unmapped']]));
  for(const a of points){
-  assert.ok(a[0]>=145&&a[0]<=655&&a[1]>=565&&a[1]<=738,id+' legacy input bounds');
+  // The painted Destiny aisle reaches the visitor chair, above the legacy clamp.
+  assert.ok(a[0]>=145&&a[0]<=655&&a[1]>=(id==='destiny'?485:565)&&a[1]<=738,id+' mapped input bounds');
+  if(id==='destiny'&&a[1]<565)assert.ok(Math.abs(a[1]-493.5)<1e-8,'reviewed chair approach');
   assert.ok(api.safe(id,helpers.pawReadingNormalized(...a)),id+' mapped floor');
-  for(const b of points)assert.ok(api.route(id,helpers.pawReadingNormalized(...a),helpers.pawReadingNormalized(...b)),id+' mapped route');
+  for(const b of points){const route=helpers.pawReadingDestination(api,id,a,...b);assert.ok(route?.length,id+' mapped route');assert.ok(Math.hypot(route.at(-1)[0]-b[0],route.at(-1)[1]-b[1])<1e-7,id+' exact mapped destination');}
  }
  for(const [w,h] of [[320,640],[390,844],[430,932],[768,1024],[1280,720]]){
   const c=helpers.pawReadingCamera(api,w,h);
