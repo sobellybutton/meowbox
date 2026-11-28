@@ -1,0 +1,23 @@
+name: Traveller sprite calibration
+on:
+  push:
+    branches: [main]
+    paths: ['assets/visual/painted/player-*/walk/**', 'assets/visual/painted/action-runtime.json', 'scripts/sprite-calibration.py', '.github/workflows/sprite-calibration.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'Pillow>=10,<13'
+      - run: python scripts/sprite-calibration.py --output test-results/traveller-sprite-calibration.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: traveller-sprite-calibration
+          path: test-results/traveller-sprite-calibration.json
