@@ -1,0 +1,48 @@
+{
+  "batch": 5,
+  "status": "candidate; staging only",
+  "source_sha256": "ece46922c131c4a1dac083deab06774198d2def7b48237b91207866ef0baaa39",
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b05/blind-box-open.webp",
+      "dimensions": [
+        896,
+        671
+      ],
+      "alphaBounds": [
+        3,
+        3,
+        893,
+        668
+      ],
+      "sha256": "80ac4a8ac113bc55cbcad3e62eb45e0af9ce37e6961ec0fe94734eb2a12e59af",
+      "role": "Empty carton, back and side flaps visible"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b05/blind-box-front-occlusion.webp",
+      "dimensions": [
+        896,
+        671
+      ],
+      "alphaBounds": [
+        168,
+        286,
+        735,
+        667
+      ],
+      "sha256": "74b269fb823b53f264ee006da90ffd72c49fcfda2ce7c8e5e5a2041398efb4b5",
+      "role": "Draw after prize so the carton front hides the prize until it rises"
+    }
+  ],
+  "pending": [
+    "matching closed carton, paper wrapping and opening transitions",
+    "tea house seated host, cup handoff and storage",
+    "goldfish scoop and net contact, bubble pop and cabinet player contact",
+    "souvenir shelf, item retrieval and handover"
+  ],
+  "reuse": [
+    "existing arcade claw and rhythm atlases",
+    "existing resident identities",
+    "existing tea pot and cups if appropriate"
+  ]
+}

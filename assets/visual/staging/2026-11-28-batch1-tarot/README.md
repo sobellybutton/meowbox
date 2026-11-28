@@ -1,0 +1,1 @@
+Candidate Tarot dealing pose. Existing identity preserved approximately; costume and apparent head scale require comparison. Verify actual chair, hand, card and table contact before activating. No scene acceptance.

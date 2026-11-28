@@ -1,0 +1,369 @@
+{
+  "status": "staging only; no runtime activation",
+  "artwork_count": 31,
+  "folders": [
+    "2026-11-28-ah-ma-strike",
+    "2026-11-28-batch1-curiosity",
+    "2026-11-28-batch1-observatory",
+    "2026-11-28-batch1-storyteller",
+    "2026-11-28-batch1-tarot",
+    "2026-11-28-batch3-heart-cafe",
+    "2026-11-28-project-art-b02",
+    "2026-11-28-project-art-b04",
+    "2026-11-28-project-art-b05",
+    "2026-11-28-project-batch01-pier",
+    "2026-11-28-rail-portrait"
+  ],
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-ah-ma-strike/impact.webp",
+      "sha256": "0a661e2bef2a18f4908c76c8ecf48663f924b4567c48d3a17120f3027c4cd230",
+      "git_blob_sha1": "fc2ee4762ed88d5b68b92f7813174ae6ea07a943",
+      "size": [
+        680,
+        704
+      ],
+      "source": "Pawradise_Ah_Ma_Strike_Candidates.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-ah-ma-strike/ready.webp",
+      "sha256": "7dc585a28154e8c36ffc923ce309db9b8001e6ac12ec4f2b02fa9d6986f66337",
+      "git_blob_sha1": "e1b77d9eb88625f381cc93c9c425a03fe4b1dc5f",
+      "size": [
+        680,
+        704
+      ],
+      "source": "Pawradise_Ah_Ma_Strike_Candidates.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-ah-ma-strike/recovery.webp",
+      "sha256": "bc458cc90c8b7cd7fee119adcf04bb224c792be3c383d0e6a5266504bc80d591",
+      "git_blob_sha1": "7f3c8342e49fb93a65240f4553b40c2f8ab4a16b",
+      "size": [
+        680,
+        704
+      ],
+      "source": "Pawradise_Ah_Ma_Strike_Candidates.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-ah-ma-strike/windup.webp",
+      "sha256": "d6ecd1ce61c8f0b44725e5779e5a71fd11f98a416d438c71cb6701fe7e8b6932",
+      "git_blob_sha1": "0536ab3f835b4ceb6f7ece9655ac2644baf1e48c",
+      "size": [
+        680,
+        704
+      ],
+      "source": "Pawradise_Ah_Ma_Strike_Candidates.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-curiosity/seated-listen.webp",
+      "sha256": "55da88e2a6399c7d66991a26ec4cf98d46fdebd05814add2b37cfd01950ebe1b",
+      "git_blob_sha1": "b4d9c2abc9b08f95476e9571143b080507b13544",
+      "size": [
+        640,
+        760
+      ],
+      "source": "Pawradise_Project_Art_Batch_03_Reading_Houses.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-curiosity/seated-point.webp",
+      "sha256": "cc8e50bd727e469fd1b235a70b03577809e80798f4f18ec3f068015a945738f0",
+      "git_blob_sha1": "f6f382e98cb7caa22eeba734606c23b6e93624c5",
+      "size": [
+        640,
+        760
+      ],
+      "source": "Pawradise_Project_Art_Batch_03_Reading_Houses.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-curiosity/standing-inspect.webp",
+      "sha256": "42b09996453e5ab055482d1d6a83e9b9eb5b9ca30bbcd290982e67fad56c820e",
+      "git_blob_sha1": "588c8cd270992877d5971ef6b2ff58a962b13f0f",
+      "size": [
+        640,
+        760
+      ],
+      "source": "Pawradise_Project_Art_Batch_03_Reading_Houses.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-curiosity/standing-welcome.webp",
+      "sha256": "ef8d682b2dc089f12d795a37de823cc7fde2611f94172b149a9f97a6d9b3d0c8",
+      "git_blob_sha1": "fbb72e57460a222275f600511ec01109ef43db68",
+      "size": [
+        640,
+        760
+      ],
+      "source": "Pawradise_Project_Art_Batch_03_Reading_Houses.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-observatory/seated-explain.webp",
+      "sha256": "7e676ce4d080cc2a4f10939ad7acc3aedc22d127b34f064b47a5109600c71383",
+      "git_blob_sha1": "a1e2d98385367c9116f8d09fc31e0fb95440ad6e",
+      "size": [
+        560,
+        720
+      ],
+      "source": "Pawradise_Project_Art_Batch_03_Reading_Houses.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-observatory/seated-idle.webp",
+      "sha256": "39d8813fd04caf550bfec9a8a47cb0b801aa41fb64b0cd262966c4c69b4abcdd",
+      "git_blob_sha1": "b672bff7ba411d43d44e3dad039a73386797bb27",
+      "size": [
+        560,
+        720
+      ],
+      "source": "Pawradise_Project_Art_Batch_03_Reading_Houses.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-observatory/seated-notebook.webp",
+      "sha256": "c0df37fef377a6a5fd0db562a532e38bd31764023a615e97789fb3a6f802b9ca",
+      "git_blob_sha1": "73b316bb06830c3b93b54335d14e20516d580844",
+      "size": [
+        560,
+        720
+      ],
+      "source": "Pawradise_Project_Art_Batch_03_Reading_Houses.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-observatory/standing-welcome.webp",
+      "sha256": "e5a21810c57b2dff88975f183fdd6593dab176d29b7e962f06801dcde6afc8df",
+      "git_blob_sha1": "9b94d4e153281352e247501109c51212db45ce1e",
+      "size": [
+        560,
+        720
+      ],
+      "source": "Pawradise_Project_Art_Batch_03_Reading_Houses.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-storyteller/standing-book.webp",
+      "sha256": "41ef23bfd30142b604db46954549fe1438c841f78119191a9e8ac914df3cf9f8",
+      "git_blob_sha1": "597db0796762eaa20bc5366608e942b78de7c1bd",
+      "size": [
+        728,
+        784
+      ],
+      "source": "Pawradise_Project_Art_Batch_03_Reading_Houses.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-tarot/seated-deal-extended.webp",
+      "sha256": "41da6d5490b2b553eb36ac1cbc87d8e6538bf7831b5bc2de76cd696646cf535a",
+      "git_blob_sha1": "08fcf277714cc9c53c1ab8c85b3b8f91c2438168",
+      "size": [
+        728,
+        784
+      ],
+      "source": "Pawradise_Project_Art_Batch_03_Reading_Houses.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch3-heart-cafe/standing-serve.webp",
+      "sha256": "148dae64ddc98ea38cfa9303043ccf1e249bc3ea0ed19d1fca191bdea99f4c65",
+      "git_blob_sha1": "472209c383e75e86bc9dea1163250fdcfb01a6b7",
+      "size": [
+        560,
+        820
+      ],
+      "source": "Pawradise_Project_Art_Batch_03_Reading_Houses.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch3-heart-cafe/warm-portrait.webp",
+      "sha256": "90ecf4ef3fa2a65e54c16cc0fa9ba2d46203fb696eef9cb1e60373ff66ab8cb0",
+      "git_blob_sha1": "78c32cae9705ffb3093dc97f1d818147c7d1a191",
+      "size": [
+        256,
+        256
+      ],
+      "source": "Pawradise_Project_Art_Batch_03_Reading_Houses.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b02/garden/koi-direction-01.webp",
+      "sha256": "cd82c64f89fcfe731732d490f0621c998d08da914a64d908127960170510b0b1",
+      "git_blob_sha1": "a92a25a6865f8b5acbcab3f012b921b120f39713",
+      "size": [
+        128,
+        128
+      ],
+      "source": "Pawradise_Project_Art_Batch_02_Temple_Gardens.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b02/garden/koi-direction-02.webp",
+      "sha256": "68ae4b59710a75469cfee3e42a47f50bd8c57968de68e32b9a93e04572ba4aa5",
+      "git_blob_sha1": "73432620088611a3dca7a7e66d18c9cb3a789392",
+      "size": [
+        128,
+        128
+      ],
+      "source": "Pawradise_Project_Art_Batch_02_Temple_Gardens.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b02/garden/koi-direction-03.webp",
+      "sha256": "29585dbf5484b204dd5a9dda8b3dfdc2d36274cef281e987677cd37bb8e94eb9",
+      "git_blob_sha1": "d786266c1eb820c5444e9e4f660b92450b7d1ab8",
+      "size": [
+        128,
+        128
+      ],
+      "source": "Pawradise_Project_Art_Batch_02_Temple_Gardens.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b02/garden/koi-direction-04.webp",
+      "sha256": "96fe2db364c5933c681cd5ea713e4a39b100a30c13794afdc03ebf53c9cd5a5f",
+      "git_blob_sha1": "408f805d5a76adfa032cd07b35e9557d44140468",
+      "size": [
+        128,
+        128
+      ],
+      "source": "Pawradise_Project_Art_Batch_02_Temple_Gardens.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b02/garden/koi-direction-05.webp",
+      "sha256": "0dd1de4d4edf779ff36e2314f7db68476dc03e5b050737bd31abcb5c7d2f30b3",
+      "git_blob_sha1": "5677ad11f02273fc92cdad3a09af7909654a3590",
+      "size": [
+        128,
+        128
+      ],
+      "source": "Pawradise_Project_Art_Batch_02_Temple_Gardens.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b02/garden/koi-direction-06.webp",
+      "sha256": "e04c067ec99d820fbb157e4a1b5c9dad20ec36f341c6f0b819ae4238a4f06a89",
+      "git_blob_sha1": "ed73875044bc3b11d56c423839ae386827a81827",
+      "size": [
+        128,
+        128
+      ],
+      "source": "Pawradise_Project_Art_Batch_02_Temple_Gardens.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b04/boba/cup-stock-stacks.webp",
+      "sha256": "4354ee9e1aac9f42732cc7d1d073f09db7955bd576b35a4dce99651319858d46",
+      "git_blob_sha1": "a6a9b36b5e44bb9ff97c0bdda85ae64bd50b69d3",
+      "size": [
+        113,
+        157
+      ],
+      "source": "Pawradise_Project_Art_Batch_04_Kitchen_Boba.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b04/boba/straw-storage-holder.webp",
+      "sha256": "b3fd34b8ace6aab09692a6fa9be33b39076ae123ed62d60aa9f45113fe3f056f",
+      "git_blob_sha1": "ab5db2895e52e0f8cc4dd841e66545625aa8bef7",
+      "size": [
+        101,
+        155
+      ],
+      "source": "Pawradise_Project_Art_Batch_04_Kitchen_Boba.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b04/kitchen/utensil-storage-holder.webp",
+      "sha256": "5829cf94d846ed53e6a5806ae89c90849bc69bb71395f8323cdb011f0b416544",
+      "git_blob_sha1": "1e5ea1565403a904651ce6bcb626ab77ed5a2ced",
+      "size": [
+        126,
+        141
+      ],
+      "source": "Pawradise_Project_Art_Batch_04_Kitchen_Boba.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b04/kitchen/vegetable-stock-basket.webp",
+      "sha256": "6f7a980414dc9bc8a67774dda10b90c43bae68a580b110f7f69cbca53ddc1c45",
+      "git_blob_sha1": "e995edede58cd55b792b6191fe62bae68009c84f",
+      "size": [
+        213,
+        160
+      ],
+      "source": "Pawradise_Project_Art_Batch_04_Kitchen_Boba.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b05/blind-box-front-occlusion.webp",
+      "sha256": "74b269fb823b53f264ee006da90ffd72c49fcfda2ce7c8e5e5a2041398efb4b5",
+      "git_blob_sha1": "2dc4e365b39cd5cb830bc72626acf52d88af9124",
+      "size": [
+        896,
+        671
+      ],
+      "source": "Pawradise_Project_Art_Batch_05_Arcade_Tea_Souvenir.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b05/blind-box-open.webp",
+      "sha256": "80ac4a8ac113bc55cbcad3e62eb45e0af9ce37e6961ec0fe94734eb2a12e59af",
+      "git_blob_sha1": "86c3bf86ded043c7fc070f52e61a6e3bae3ffef6",
+      "size": [
+        896,
+        671
+      ],
+      "source": "Pawradise_Project_Art_Batch_05_Arcade_Tea_Souvenir.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-batch01-pier/slipper-red-floral-candidate.webp",
+      "sha256": "7762c5582460264e403f302be56b00bae28fc0f8088efe366444df750e0dff37",
+      "git_blob_sha1": "027ddd161d8f9ef058d72e9938573aff8ec01713",
+      "size": [
+        115,
+        179
+      ],
+      "source": "Pawradise_Project_Art_Batch_01_Pier.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-batch01-pier/slipper-storage-empty.webp",
+      "sha256": "438d2969c3fdeb3b6a1a5d30208d1b0bb495c7d6fb07f2258c4924ae092792f8",
+      "git_blob_sha1": "e00621bdcaa4e11af0598bf3c0ca5e2b56a508bb",
+      "size": [
+        784,
+        549
+      ],
+      "source": "Pawradise_Project_Art_Batch_01_Pier.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-rail-portrait/carriage-portrait-window.webp",
+      "sha256": "d1e9e8f1fb0804e671649c58cb31fe3d7451e4a5c05fd8f88fee98f6009d2126",
+      "git_blob_sha1": "2285df2d89341d602572537f779fdbcfcd877dc5",
+      "size": [
+        1024,
+        1536
+      ],
+      "source": "Pawradise_Portrait_Railway_Asset.zip",
+      "status": "staging candidate; not integrated or gameplay approved"
+    }
+  ],
+  "sources": [
+    "Pawradise_Project_Art_Batch_01_Pier.zip",
+    "Pawradise_Project_Art_Batch_02_Temple_Gardens.zip",
+    "Pawradise_Project_Art_Batch_03_Reading_Houses.zip",
+    "Pawradise_Project_Art_Batch_04_Kitchen_Boba.zip",
+    "Pawradise_Project_Art_Batch_05_Arcade_Tea_Souvenir.zip",
+    "Pawradise_Ah_Ma_Strike_Candidates.zip",
+    "Pawradise_Portrait_Railway_Asset.zip"
+  ]
+}

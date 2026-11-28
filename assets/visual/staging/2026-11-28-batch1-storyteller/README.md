@@ -1,0 +1,1 @@
+New standing storyteller identity candidate. Keep furniture and live story contents independent. No animation or runtime acceptance. Match subsequent pose artwork to this exact identity.

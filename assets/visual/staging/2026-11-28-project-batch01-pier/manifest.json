@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "batch": 1,
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-project-batch01-pier/slipper-storage-empty.webp",
+      "width": 784,
+      "height": 549,
+      "sha256": "438d2969c3fdeb3b6a1a5d30208d1b0bb495c7d6fb07f2258c4924ae092792f8",
+      "git_blob_sha1": "e00621bdcaa4e11af0598bf3c0ca5e2b56a508bb",
+      "status": "candidate; not integrated",
+      "notes": "Independent open tray; place on low shelf within seated Ah Ma reach. Align interior and foreground rim."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-batch01-pier/slipper-red-floral-candidate.webp",
+      "width": 115,
+      "height": 179,
+      "sha256": "7762c5582460264e403f302be56b00bae28fc0f8088efe366444df750e0dff37",
+      "git_blob_sha1": "027ddd161d8f9ef058d72e9938573aff8ec01713",
+      "status": "candidate; not integrated",
+      "notes": "99x163 source extracted from mixed board, independent and visually checked; lower resolution and visual match to hand-held slipper must be checked in runtime."
+    }
+  ]
+}

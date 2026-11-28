@@ -1,0 +1,35 @@
+{
+  "character": "heart-cafe-host",
+  "status": "new identity candidate",
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-batch3-heart-cafe/standing-serve.webp",
+      "width": 560,
+      "height": 820,
+      "alpha_bounds": [
+        149,
+        16,
+        411,
+        804
+      ],
+      "sha256": "148dae64ddc98ea38cfa9303043ccf1e249bc3ea0ed19d1fca191bdea99f4c65",
+      "git_blob_sha1": "472209c383e75e86bc9dea1163250fdcfb01a6b7",
+      "status": "candidate, not registered"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch3-heart-cafe/warm-portrait.webp",
+      "width": 256,
+      "height": 256,
+      "alpha_bounds": [
+        18,
+        16,
+        220,
+        240
+      ],
+      "sha256": "90ecf4ef3fa2a65e54c16cc0fa9ba2d46203fb696eef9cb1e60373ff66ab8cb0",
+      "git_blob_sha1": "78c32cae9705ffb3093dc97f1d818147c7d1a191",
+      "status": "candidate, not registered"
+    }
+  ],
+  "notes": "Cup is baked into serving pose. Use separate cup sprite at handoff, not duplicate cup. Need empty-hand standing and seated poses, full gait, contact and actual mobile/desktop validation. Portrait derived from same sprite, not independent new art."
+}

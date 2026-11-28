@@ -1,0 +1,103 @@
+{
+  "batch": 4,
+  "task": "ROOM-03",
+  "source_sha256": "bfb7f21d915ac9067e341d35816a02d4e7557d876bc95f02bb7062b1ce002842",
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b04/kitchen/vegetable-stock-basket.webp",
+      "size": [
+        213,
+        160
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        205,
+        152
+      ],
+      "sha256": "6f7a980414dc9bc8a67774dda10b90c43bae68a580b110f7f69cbca53ddc1c45",
+      "git_blob_sha1": "e995edede58cd55b792b6191fe62bae68009c84f",
+      "bytes": 46272,
+      "source_crop": [
+        0,
+        424,
+        203,
+        577
+      ],
+      "status": "candidate, not integrated",
+      "notes": "Stock visual at ingredient collection point; vegetables remain baked into basket. Use independent existing ingredient props for retrieval."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b04/kitchen/utensil-storage-holder.webp",
+      "size": [
+        126,
+        141
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        118,
+        133
+      ],
+      "sha256": "5829cf94d846ed53e6a5806ae89c90849bc69bb71395f8323cdb011f0b416544",
+      "git_blob_sha1": "1e5ea1565403a904651ce6bcb626ab77ed5a2ced",
+      "bytes": 19290,
+      "source_crop": [
+        779,
+        443,
+        894,
+        571
+      ],
+      "status": "candidate, not integrated",
+      "notes": "Resting storage visual; existing independent utensil sprites handle grip and return. Empty holder artwork still needed if exact stock depletion is required."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b04/boba/cup-stock-stacks.webp",
+      "size": [
+        113,
+        157
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        105,
+        149
+      ],
+      "sha256": "4354ee9e1aac9f42732cc7d1d073f09db7955bd576b35a4dce99651319858d46",
+      "git_blob_sha1": "a6a9b36b5e44bb9ff97c0bdda85ae64bd50b69d3",
+      "bytes": 23166,
+      "source_crop": [
+        1186,
+        688,
+        1291,
+        829
+      ],
+      "status": "candidate, not integrated",
+      "notes": "Cup supply on counter. Existing empty cup sprite handles pickup; do not equate opaque paper cups in this visual with transparent boba cup if mismatch is visible."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b04/boba/straw-storage-holder.webp",
+      "size": [
+        101,
+        155
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        93,
+        147
+      ],
+      "sha256": "b3fd34b8ace6aab09692a6fa9be33b39076ae123ed62d60aa9f45113fe3f056f",
+      "git_blob_sha1": "ab5db2895e52e0f8cc4dd841e66545625aa8bef7",
+      "bytes": 19612,
+      "source_crop": [
+        1277,
+        690,
+        1373,
+        830
+      ],
+      "status": "candidate, not integrated",
+      "notes": "Straw supply visual; individual straw removal requires an independent matching straw and stock state."
+    }
+  ]
+}

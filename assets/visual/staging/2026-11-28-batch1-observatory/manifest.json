@@ -1,0 +1,67 @@
+{
+  "character": "inner-observatory-guide",
+  "status": "new identity proposal; compare with existing candidate artwork before activation",
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-observatory/standing-welcome.webp",
+      "pose": "standing-welcome",
+      "width": 560,
+      "height": 720,
+      "alpha_bounds": [
+        116,
+        48,
+        443,
+        704
+      ],
+      "sha256": "e5a21810c57b2dff88975f183fdd6593dab176d29b7e962f06801dcde6afc8df",
+      "git_blob_sha1": "9b94d4e153281352e247501109c51212db45ce1e",
+      "status": "candidate, not registered"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-observatory/seated-idle.webp",
+      "pose": "seated-idle",
+      "width": 560,
+      "height": 720,
+      "alpha_bounds": [
+        127,
+        73,
+        432,
+        704
+      ],
+      "sha256": "39d8813fd04caf550bfec9a8a47cb0b801aa41fb64b0cd262966c4c69b4abcdd",
+      "git_blob_sha1": "b672bff7ba411d43d44e3dad039a73386797bb27",
+      "status": "candidate, not registered"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-observatory/seated-notebook.webp",
+      "pose": "seated-notebook",
+      "width": 560,
+      "height": 720,
+      "alpha_bounds": [
+        126,
+        67,
+        434,
+        704
+      ],
+      "sha256": "c0df37fef377a6a5fd0db562a532e38bd31764023a615e97789fb3a6f802b9ca",
+      "git_blob_sha1": "73b316bb06830c3b93b54335d14e20516d580844",
+      "status": "candidate, not registered"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-batch1-observatory/seated-explain.webp",
+      "pose": "seated-explain",
+      "width": 560,
+      "height": 720,
+      "alpha_bounds": [
+        97,
+        60,
+        463,
+        704
+      ],
+      "sha256": "7e676ce4d080cc2a4f10939ad7acc3aedc22d127b34f064b47a5109600c71383",
+      "git_blob_sha1": "a1e2d98385367c9116f8d09fc31e0fb95440ad6e",
+      "status": "candidate, not registered"
+    }
+  ],
+  "notes": "Keep notebook content dynamic. Calibrate head scale, foot and seat anchor against actual furniture; poses are static keyframes, not a verified animation cycle."
+}

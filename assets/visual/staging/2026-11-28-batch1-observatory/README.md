@@ -1,0 +1,1 @@
+Inner Observatory guide: four independently extracted transparent WebP candidate poses. Upload the containing staging folder. Do not register automatically. Compare identity against any existing keeper, calibrate head scale, foot and seat anchors, chair occlusion and notebook contact in portrait and landscape. No new character movement cycle or live acceptance is claimed.
