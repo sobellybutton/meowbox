@@ -5599,7 +5599,7 @@ function pawSyncDockSelection(){
  const selected=!open?'':explore||q.querySelector('.travelAlbum')?'travel':home||q.querySelector('.travellerBagV2,.komorebiBook,.komorebiConfirm,.figureCabinetBook,.pawPersonalShelf')?'home':q.querySelector('.communityTabs,.townWall,.townChatTranscript')?'town':today||q.querySelector('.journalDailyTasks,.goodCompanyBook')?'today':'';
  $('game').classList.toggle('pawDockRoot',!!pawDockRootKey);
  for(const [key,button] of pawDockButtons()){
-  button.classList.remove('active');button.classList.toggle('pawDockSelected',selected===key);
+  if(button.classList.contains('active'))button.classList.remove('active');button.classList.toggle('pawDockSelected',selected===key);
   if(selected===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')
  }
 }
@@ -5614,10 +5614,15 @@ $('dock').setAttribute('aria-label',tr('Game navigation','小镇导航'));
 for(const [key,button] of pawDockButtons()){
  const previous=button.onclick;
  button.onclick=function(event){
+  if(!proposal.hidden||room||activity||talkOpen||transitioning)return;
   if($('page').style.display==='block'){
    pawSyncDockSelection();
-   if(!pawDockRootKey||pawDockRootKey===key)return;
+   if(!pawDockRootKey)return;
+   if(pawDockRootKey===key){
+    $('page').style.display='none';updateHUD();queueMicrotask(pawSyncDockSelection);return
+   }
   }
+  closeTownSettings();
   const result=previous?.call(this,event);
   queueMicrotask(pawSyncDockSelection);
   return result
@@ -7434,7 +7439,9 @@ function pawReadyTraveller(kind){
 function pawWarmSelectedTraveller(kind){
  pawReadyTraveller(kind);
  mbArtLoad();
- for(const frames of Object.values(mbArtRegistry.players[kind]?.walk||{}))for(const frame of frames)mbArtImage(frame)
+ for(const frames of Object.values(mbArtRegistry.players[kind]?.walk||{}))for(const frame of frames){
+  const im=mbArtImage(frame)||mbArtImages.get(frame.path);if(im)pawReadyPicture(im,4500)
+ }
 }
 /* PAW_WORLD_ADMISSION_END */
 // The original plaque layout owns position and visibility. Do not overwrite it after each frame.
@@ -7519,6 +7526,9 @@ async function pawGateWalk(hero,traveller){
  if(!traveller||residentReducedMotion.matches)return true;
  mbArtLoad();const kind=proAvatar??avatar??0,frames=mbArtRegistry.players[kind]?.walk?.up;
  const loaded=frames?.map(mbArtImage),hasFrames=!!loaded?.length&&loaded.every(Boolean);
+ // Avoid switching to a decoded but visually unprepared sprite family during
+ // the gateway animation. The complete original direction remains available.
+ if(hasFrames&&!loaded.every(pawPictureDecoded))return true;
  // Keep the current art if the matching walk sequence has not been produced.
  // Do not fake walking by sliding a stationary cutout.
  if(!hasFrames)return true;
@@ -7562,17 +7572,18 @@ proRender=function(...args){
  const admit=button.onclick;
  const enter=async event=>{
   if(waiting||proBusy||document.hidden||!button.isConnected||proposal.hidden)return;
-  waiting=true;const original=button.textContent;
-  button.disabled=true;button.textContent=tr('Preparing the path…','正在准备山间小路…');
+  waiting=true;const original=button.textContent,language=[...proposal.querySelectorAll('header button')];
+  const unlock=()=>{waiting=false;button.disabled=false;language.forEach(v=>{if(v.isConnected)v.disabled=false})};
+  button.disabled=true;language.forEach(v=>v.disabled=true);button.textContent=tr('Preparing the path…','正在准备山间小路…');
   const gateArt=hero?.querySelector('.mbGatePainting');
   const kind=proAvatar??avatar??0;
   const ready=await Promise.all([pawReadyMap('fortune'),pawReadyPicture(gateArt),pawReadyTraveller(kind)]).then(pawAdmissionReady);
   if(!button.isConnected||proStep!==3||proposal.hidden)return;
-  if(!ready||document.hidden){waiting=false;button.disabled=false;button.textContent=tr('Retry arrival','重新入镇');return}
+  if(!ready||document.hidden){unlock();button.textContent=tr('Retry arrival','重新入镇');return}
   const originalSprite=traveller?.getAttribute('src'),originalPivotX=traveller?.style.getPropertyValue('--paw-gate-pivot-x'),originalPivotY=traveller?.style.getPropertyValue('--paw-gate-pivot-y');
   const walked=hero&&traveller?await pawGateWalk(hero,traveller):true;
   if(!button.isConnected||proStep!==3||proposal.hidden)return;
-  waiting=false;button.disabled=false;button.textContent=original;
+  unlock();button.textContent=original;
   if(!walked||document.hidden){if(hero&&traveller){if(originalSprite)traveller.src=originalSprite;traveller.style.setProperty('--paw-gate-pivot-x',originalPivotX||'-50%');traveller.style.setProperty('--paw-gate-pivot-y',originalPivotY||'-100%');pawGatePlace(hero,traveller)}return}
   admit.call(button,event)
  };
