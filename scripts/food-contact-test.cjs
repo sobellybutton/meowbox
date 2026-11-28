@@ -155,4 +155,36 @@ ck(startup.includes("pawPaintFoodProp('kitchen_bamboo_steamer',400,535,112);"),'
 ck(extension.includes('if(!state.pawSteam&&!state.done&&(W<H||ladle))'),'no duplicated avatar');
 ck(startup.includes("if(kind==='cook'&&q.pawSteam)return pawKitchenSteamSpec(q.pawSteam);"),'live alternate recipe control');
 
+
+let panNow=0,panMeal={method:'pan',phase:'prep',age:0,last:0,turns:0};
+const panAdvance=(action,blocked=false)=>steam.pawKitchenSteamAdvance(panMeal,panNow,blocked,action);
+const panTick=(count,blocked=false)=>{for(let i=0;i<count;i++){panNow+=.1;panAdvance(undefined,blocked)}};
+ck(!panAdvance('pan-turn'),'cannot turn before loading tofu');
+ck(panAdvance('pan-load'),'load tofu');panTick(8);
+ck(panMeal.phase==='loaded','tofu prepared');
+for(let i=1;i<=3;i++){
+ ck(steam.pawKitchenSteamSpec(panMeal).key==='tofu-loaded-'+i,'distinct turn count');
+ ck(panAdvance('pan-turn'),'deliberate turn');
+ ck(!panAdvance('pan-turn'),'no overlapping turn');
+ ck(!panAdvance('pan-serve'),'cannot serve early');
+ panTick(15,true);ck(panMeal.age===0,'interruption holds turn');
+ panTick(12);ck(panMeal.turns===i,'one turn counted');
+ ck(panMeal.phase===(i===3?'ready':'loaded'),'three required turns');
+}
+ck(panAdvance('pan-serve'),'serve tofu');panTick(9);
+ck(panMeal.phase==='served','tofu served');
+ck(panAdvance('pan-taste'),'taste tofu');panTick(15);
+ck(panMeal.phase==='done','tofu finished');
+ck(steam.pawKitchenSteamSpec(panMeal).action==='back','back to kitchen');
+const panFunction=startup.slice(startup.indexOf('function pawKitchenPanTurn('),startup.indexOf('function pawKitchenPanTofu('));
+const panTurn=new Function(panFunction+';return pawKitchenPanTurn')();
+for(let i=0;i<=110;i++){
+ const a=panTurn({phase:'turning',age:i/100}),r=panTurn({phase:'turning',age:i/100},true);
+ ck(a.progress>=0&&a.progress<=1&&a.lift>=0&&a.lift<=14,'bounded turn animation');
+ ck(r.lift===0,'reduced motion');
+}
+ck(startup.includes("pawPaintFoodProp('kitchen_frying_pan',400,535,92);"),'painted frying pan drawn');
+ck(startup.includes("pawKitchenSteamAction('pan-select',run)"),'second native recipe choice');
+ck(startup.includes("if(tool)pawFoodLive.placement.draw(ctx,pawFoodLive.cache.image('kitchen_wooden_spatula'),tool.prop)"),'painted spatula drawn');
+
 console.log('PASS '+n+' food contact geometry, phase and source assertions; no rendered contact acceptance');
