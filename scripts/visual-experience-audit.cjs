@@ -30,12 +30,41 @@ const results=[],failures=[];
    async function capture(name){
     const file=prefix+'-'+name+'.png',errorCount=errors.length;
     await settle();
+    // These four screenshots exposed cut-off controls. Test the rendered
+    // layout before capturing; never treat a merely existing DOM node as
+    // proof that the player can use it. Intentional long content may scroll,
+    // but these short conversation and filter groups should fit together.
+    if(['home-tea-chat','wonder-quiz-quiz','wonder-match-match','bag'].includes(name)){
+     const group=name==='bag'?'.travellerBagV2 .bagCategories':'#dialogue #choices';
+     const fit=await page.evaluate(selector=>{
+      const node=document.querySelector(selector);
+      if(!node)return {missing:true};
+      const parent=selector.includes('bagCategories')?node:document.getElementById('dialogue');
+      const bounds=parent.getBoundingClientRect();
+      const buttons=[...node.querySelectorAll('button')].filter(b=>!b.hidden&&!b.disabled&&getComputedStyle(b).display!=='none');
+      const invalid=buttons.flatMap(b=>{
+       const r=b.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+       const clipped=r.left<Math.max(0,bounds.left)-1||r.right>Math.min(innerWidth,bounds.right)+1||r.top<Math.max(0,bounds.top)-1||r.bottom>Math.min(innerHeight,bounds.bottom)+1;
+       const hit=document.elementFromPoint(x,y);
+       return clipped||r.height<43||!hit||!(hit===b||b.contains(hit)||hit.contains(b))?[{label:b.textContent.trim(),clipped,height:r.height,hit:hit?.className||hit?.id||hit?.tagName}]:[];
+      });
+      return {count:buttons.length,invalid};
+     },group);
+     if(fit.missing||!fit.count||fit.invalid?.length)throw Error('Corrected control group is not fully reachable: '+JSON.stringify(fit));
+    }
     await page.screenshot({path:path.join(out,file)});
     await frameAudit.flush(name);
     const data=await page.evaluate(()=>{
      const visible=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return !e.hidden&&s.visibility!=='hidden'&&s.display!=='none'&&r.width>0&&r.height>0&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth};
      const pageOpen=$('page').style.display==='block',root=pageOpen?$('page'):$('game');
-     const controls=[...root.querySelectorAll('button,input,select,textarea')].filter(e=>visible(e)&&!e.disabled&&e.getAttribute('aria-hidden')!=='true');
+     const controls=[...root.querySelectorAll('button,input,select,textarea')].filter(e=>{
+      if(!visible(e)||e.disabled||e.getAttribute('aria-hidden')==='true')return false;
+      // The keyboard-only fallback is intentionally a one-pixel clipped
+      // target while every native station plaque is reachable. A required
+      // directory is still checked and must not be excluded.
+      if(e.id==='pawRoomGuideToggle'&&e.dataset.showDirectory==='false'&&getComputedStyle(e).clipPath!=='none'&&!e.matches(':focus-visible'))return false;
+      return true
+     });
      const issues=[];
      for(const e of controls){
       const r=e.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
