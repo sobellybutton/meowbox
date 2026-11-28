@@ -1,12 +1,13 @@
 name: Pawradise room and hall visual gate
 on:
-  push:
-    branches: [fix/room-town-scene-composition]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   mobile:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/room-town-scene-composition'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     strategy:
