@@ -136,3 +136,14 @@ for(let i=0;i<4;i++){
 assert.equal(api.cutawaySeatFrame(5),null);
 assert.equal(api.cutawaySeatPlacement({left:0,top:0,width:0,height:400},{left:0,top:0,width:80,height:60},100,api.cutawaySeatFrame(0)),null);
 console.log('PASS four reused cushion poses and responsive hip alignment');
+
+// At small screens the full pose must stay inside the playable scene.
+for(let i=0;i<4;i++){
+ const frame=api.cutawaySeatFrame(i),stage={left:0,top:0,width:360,height:360};
+ assert(api.cutawaySeatPlacement(stage,{left:130,top:200,width:70,height:55},90,frame));
+ assert.equal(api.cutawaySeatPlacement(stage,{left:335,top:200,width:45,height:55},90,frame),null);
+ assert.equal(api.cutawaySeatPlacement(stage,{left:130,top:0,width:70,height:20},90,frame),null);
+}
+assert(src.includes('seatResize?.disconnect()'));
+assert(src.includes('alignSeat(item,seatStandingRatio)'));
+console.log('PASS seated full-body edge clearance and resize lifecycle');
