@@ -1,0 +1,97 @@
+{
+  "batch": 8,
+  "status": "candidate, not gameplay verified",
+  "reference": "assets/visual/staging/2026-11-27-extracted/residents/office-worker.webp",
+  "frames": [
+    {
+      "path": "npcs/office-worker/walk/right-00.png",
+      "size": [
+        448,
+        464
+      ],
+      "pivot": [
+        224,
+        454
+      ]
+    },
+    {
+      "path": "npcs/office-worker/walk/right-01.png",
+      "size": [
+        448,
+        464
+      ],
+      "pivot": [
+        224,
+        454
+      ]
+    },
+    {
+      "path": "npcs/office-worker/walk/right-02.png",
+      "size": [
+        448,
+        464
+      ],
+      "pivot": [
+        224,
+        454
+      ]
+    },
+    {
+      "path": "npcs/office-worker/walk/right-03.png",
+      "size": [
+        448,
+        464
+      ],
+      "pivot": [
+        224,
+        454
+      ]
+    },
+    {
+      "path": "npcs/office-worker/walk/right-04.png",
+      "size": [
+        448,
+        464
+      ],
+      "pivot": [
+        224,
+        454
+      ]
+    },
+    {
+      "path": "npcs/office-worker/walk/right-05.png",
+      "size": [
+        448,
+        464
+      ],
+      "pivot": [
+        224,
+        454
+      ]
+    },
+    {
+      "path": "npcs/office-worker/walk/right-06.png",
+      "size": [
+        448,
+        464
+      ],
+      "pivot": [
+        224,
+        454
+      ]
+    },
+    {
+      "path": "npcs/office-worker/walk/right-07.png",
+      "size": [
+        448,
+        464
+      ],
+      "pivot": [
+        224,
+        454
+      ]
+    }
+  ],
+  "suggested_fps": 8,
+  "notes": "Background removed from generated sheet; review edge matte, identity and foot sliding before activation. Left-facing can be mirrored only after checking briefcase continuity. Tourist rejected twice; no unrelated outputs included."
+}

@@ -1,0 +1,35 @@
+{
+  "status": "candidate_not_integrated",
+  "dimensions": [
+    512,
+    640
+  ],
+  "nominal_anchor": [
+    256,
+    616
+  ],
+  "assets": [
+    {
+      "path": "player-0/seated-writing.webp",
+      "character": "player-0",
+      "pose": "seated writing facing right"
+    },
+    {
+      "path": "player-1/seated-writing.webp",
+      "character": "player-1",
+      "pose": "seated writing facing right"
+    }
+  ],
+  "outstanding": [
+    "player-2 seated writing: rejected wrong identity in both attempts",
+    "player-3 seated writing: not produced",
+    "writing motion frames for all four",
+    "measure actual seat and foot anchors against scene furniture"
+  ],
+  "uses": [
+    "wish note",
+    "journal",
+    "consultation"
+  ],
+  "notes": "Single poses, not animation cycles. Match original seated pose scale and calibrate placement in actual mobile and desktop gameplay before activation."
+}

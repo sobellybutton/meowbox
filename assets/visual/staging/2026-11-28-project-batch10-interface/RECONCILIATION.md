@@ -1,0 +1,1 @@
+Batches 8–10: 8 office-worker walking candidates, 8 incense-smoke candidates, 1 journal cover. Tourist, ripple and settings attempts rejected. Batches 6–7 not included or verified in this session. Existing waterfall, wind chime, lantern, coin and home finishes retained. This package is for staging only; no live integration or acceptance claimed.

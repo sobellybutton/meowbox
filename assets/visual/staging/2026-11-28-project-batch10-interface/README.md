@@ -1,0 +1,1 @@
+Batch 10: one journal cover candidate. Keep existing coin, finishes and tarot journal. No live integration or browser acceptance. Test at 32, 48 and 64 CSS pixels; use an accessible text label. Do not replace other assets automatically.

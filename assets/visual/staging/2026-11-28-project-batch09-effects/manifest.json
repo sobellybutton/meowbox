@@ -1,0 +1,48 @@
+{
+  "batch": 9,
+  "status": "staged-candidate-not-integrated",
+  "assets": [
+    {
+      "id": "incense-smoke",
+      "source": "incense-smoke-source.png",
+      "frames": [
+        "incense-smoke/frame-00.webp",
+        "incense-smoke/frame-01.webp",
+        "incense-smoke/frame-02.webp",
+        "incense-smoke/frame-03.webp",
+        "incense-smoke/frame-04.webp",
+        "incense-smoke/frame-05.webp",
+        "incense-smoke/frame-06.webp",
+        "incense-smoke/frame-07.webp"
+      ],
+      "frameSize": [
+        256,
+        256
+      ],
+      "anchor": [
+        0.5,
+        0.98
+      ],
+      "suggestedFrameDurationMs": 180,
+      "suggestedOpacity": 0.35,
+      "loop": "crossfade and stagger emitters; check last-to-first transition",
+      "placements": [
+        "temple incense burner",
+        "Grandma kitchen steam variant (if visually appropriate)"
+      ],
+      "verification": "RGBA source and eight equal-sized WebP frames checked; in-game alignment and loop not verified."
+    }
+  ],
+  "reuseExisting": [
+    "assets/visual/staging/2026-11-28-consolidated/initial/atlases/waterfall-effects.webp",
+    "assets/visual/staging/2026-11-27-extracted/environment/chime-maple.webp",
+    "assets/visual/staging/2026-11-27-extracted/environment/chime-paw.webp",
+    "assets/visual/staging/2026-11-27-extracted/environment/chime-sakura.webp",
+    "assets/visual/staging/2026-11-27-extracted/environment/lantern-string.webp"
+  ],
+  "outstanding": [
+    "isolated pond ripples: both generated outputs rejected",
+    "NPC social and tourist animation from batch 8",
+    "live animation and placement testing"
+  ]
+}
