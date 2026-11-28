@@ -14788,4 +14788,47 @@ backHuman=function(x,y,kind,walking,facing,scale=1){
  return mbArtWalkBefore(x,y,kind,walking,facing,scale)
 };
 
+
+/* PAW_DISTRICT_SIGN_MATERIAL_BEGIN */
+// Reuse the inspected painted material crops. Keep labels as live text,
+// and keep their existing projected anchors, focus and activation handlers.
+const pawDistrictSignMaterials=Object.freeze({
+ fortune:{grain:'wood-grain.webp',wash:'#aa774b38',paper:'#ead4ac',ink:'#463024',edge:'#8b6345'},
+ home:{grain:'wood-grain.webp',wash:'#69877a91',paper:'#c3d0b4',ink:'#263c31',edge:'#577464'},
+ island:{grain:'wood-grain.webp',wash:'#a56b5266',paper:'#ead1ad',ink:'#4c3025',edge:'#96674a'},
+ wonder:{grain:'paper-grain.webp',wash:'#8e9bb96b',paper:'#d4d5e4',ink:'#30364c',edge:'#707f9b'}
+});
+const pawDistrictRailMaterial=Object.freeze({grain:'ribbon-paper.webp',wash:'#6e806c38',paper:'#e4dcc0',ink:'#364335',edge:'#8b987c'});
+function pawDistrictSignMaterial(id,rail=false){return rail?pawDistrictRailMaterial:pawDistrictSignMaterials[id]||pawDistrictSignMaterials.fortune}
+function pawDistrictSignVars(mat,prefix='--paw-sign-'){
+ return {[prefix+'texture']:'url("assets/visual/painted/signage/'+mat.grain+'")',[prefix+'wash']:mat.wash,[prefix+'paper']:mat.paper,[prefix+'ink']:mat.ink,[prefix+'edge']:mat.edge}
+}
+let pawDistrictMaterialScene=null;
+function pawApplyDistrictSignMaterial(game,id){
+ if(!game||pawDistrictMaterialScene===id)return false;
+ pawDistrictMaterialScene=id;
+ for(const [key,value] of Object.entries({...pawDistrictSignVars(pawDistrictSignMaterial(id)),...pawDistrictSignVars(pawDistrictRailMaterial,'--paw-rail-')}))game.style.setProperty(key,value);
+ game.dataset.pawSignMaterial=Object.hasOwn(pawDistrictSignMaterials,id)?id:'fortune';return true
+}
+const pawDistrictSignBefore=syncSigns;
+syncSigns=function(...args){pawApplyDistrictSignMaterial($('game'),scene);return pawDistrictSignBefore(...args)};
+const pawDistrictSignStyle=document.createElement('style');
+pawDistrictSignStyle.textContent=`
+#game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque{
+ border:1px solid var(--paw-sign-edge)!important;border-image:none!important;border-radius:3px!important;
+ background-color:var(--paw-sign-paper)!important;background-image:linear-gradient(var(--paw-sign-wash),var(--paw-sign-wash)),var(--paw-sign-texture)!important;background-size:100% 100%!important;
+ color:var(--paw-sign-ink)!important;text-shadow:none!important;box-shadow:0 1px 2px #2b251e33!important;padding:5px 8px!important;
+}
+#game[data-paw-sign-material]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material] .pawRailEdge{
+ border:1px solid var(--paw-rail-edge)!important;border-image:none!important;border-radius:3px!important;
+ background-color:var(--paw-rail-paper)!important;background-image:linear-gradient(var(--paw-rail-wash),var(--paw-rail-wash)),var(--paw-rail-texture)!important;background-size:100% 100%!important;
+ color:var(--paw-rail-ink)!important;text-shadow:none!important;box-shadow:0 1px 2px #2b251e22!important;font-weight:600!important;
+}
+#game[data-paw-sign-material] .pawRailEdge{min-height:44px;max-width:46%}
+@media(forced-colors:active){
+ #game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material] .pawRailEdge{background:ButtonFace!important;border:1px solid ButtonText!important;border-image:none!important;color:ButtonText!important;box-shadow:none!important}
+}
+`;document.head.append(pawDistrictSignStyle);
+/* PAW_DISTRICT_SIGN_MATERIAL_END */
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
