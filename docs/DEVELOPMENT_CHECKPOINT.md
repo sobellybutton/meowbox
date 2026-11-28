@@ -683,3 +683,15 @@ QA-01: 49ddeb3b fixes the newly exposed isolated share test missing soulCats fix
 
 ## Project batches 18–20 and 24: discovery conversation continuity (28 November)
 887ce4b6 + ac54a555: release-fixes.js now advances café response acknowledgement by active frame time rather than a background timeout, validates exact visit/run/token/round, preserves existing scoring and keepsake IDs, and guards detached phone response controls. Native assessment/story/café question sheets reset scroll on a new leaf rather than the same turn; matching paper texture, accessible labels and focus outlines. Persisted helper suite executed against exact source: 60 assertions passed; source parsed. No full browser/build/deployed verification or stage promotion. Shared startup/extensions and browser remained leased by manual-fortune-confirmation, so did not modify them. Curiosity Club independent physical room, selected host and authentic seating/prop handling remain open; no substitute artwork or false acceptance.
+
+
+## Owner review: temple, tarot, and visual continuity (28 November)
+ROOM-01: Owner feedback 28 Nov: 5eda6a8f/6c9b9d60 enforce Sheng Bei before slip; failed moon outcomes require returning to stick station and fresh draw, with no failed reward. 72da169a/68f2d32f/529a18f9/b5f81a45 correct incense retreat layering, seated leg depth, garden anchors, chime tail and ceramic cat blessing choices, and alcove scale/reach. 281 decision/clock checks, 39 actual lifecycle harness checks, 541 contact/route/pose checks passed. Real phone and desktop render verification remains open.
+
+QA-01: ba560687/4767539c/5f1eadee/ae214c75 persist mandatory fortune and garden regressions; source parse and focused harness passed. New browser run not yet checked.
+
+ENT-ASSET-READY-01: Owner P0: entrance-to-room pauses and old/new face swaps on turning. 659badf7/0ffb4290 lock a single traveller art family for each scene/room visit; require all directions together and use ready family for idle as well as walking. All direction requests initiated; 27 helper checks passed. Entrance DOM crop swaps, other resident renderers, private home actors and true device timing still require audit. Do not mark complete.
+
+ROOM-06: Owner feedback: Master Yue still opens multiple boxes and old tarot screens interrupt the reading. 659badf7 predecodes painted tarot cloth/backs and actual face atlas before entering, uses painted props, removes legacy deal pause and unifies selection/reveal camera. Existing atlas has decorative sample faces only, not full matching 78-card deck; actual meanings/faces retained. Master Yue needs full native in-room conversation, input and parchment flow, not merely CSS changes. Verify every state and return on both viewports; preserve exact calculation and privacy.
+
+Next: prioritise actual entrance-to-room frame continuity, then Master Yue native consultation and tarot host/desk staging. Do not reintroduce legacy cards during loading; no new dedicated 78-card face deck claimed. No live visual acceptance or stage promotion. Preserve concurrent lane changes.
