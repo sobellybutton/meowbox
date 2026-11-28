@@ -42,6 +42,8 @@ function bootStatus(done,total,slow,zh){
 let bootZh=false;try{bootZh=bootChinese(window.localStorage)}catch{}
 document.documentElement.lang=bootZh?'zh-Hans':'en';
 const bootTr=(en,cn)=>bootZh?cn:en;
+document.title=bootTr('Pawradise · Fortune Valley','摸鱼小镇 · 解忧谷');
+document.querySelector('main h1').textContent=bootTr('Pawradise','摸鱼小镇');
 const gate=document.querySelector('.bootGate');
 function gateReady(){if(gate.naturalWidth)bootMark('gate-image-ready')}
 if(gate.complete)gateReady();else gate.addEventListener('load',gateReady,{once:true});
