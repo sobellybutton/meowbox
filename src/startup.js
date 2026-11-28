@@ -5611,7 +5611,10 @@ function pawSyncDockSelection(){
  // A root can switch tabs; nested pages retain their contextual Back.
  // Never abandon a draft, active keyboard, furniture edit or room visit.
  const fields=open?[...q.querySelectorAll('textarea,input:not([type]),input[type="text"],input[type="search"],[contenteditable="true"]')].filter(n=>!n.disabled&&!n.hidden):[];
- const draft=fields.some(n=>String(n.value??n.textContent??'').trim()!==''),typing=fields.includes(document.activeElement);
+ // Today's private note already has an in-memory draft restored by goodCompanyPage.
+ // Only permit switching when that exact unsaved value is recoverable; all other drafts remain protected.
+ const recoverable=n=>n.id==='goodCompanyNote'&&typeof goodCompanyDraft?.text==='string'&&goodCompanyDraft.text===n.value;
+ const draft=fields.some(n=>String(n.value??n.textContent??'').trim()!==''&&!recoverable(n)),typing=fields.includes(document.activeElement);
  pawDockRootKey=pawDockRootChoice({open,room:!!room,activity:!!activity,talk:talkOpen,transition:transitioning,entrance:!proposal.hidden,editing:!!hideoutEditing,homeOrigin:home&&!!mbHomeOrigin,draft,typing,explore,today,town,home});
  const selected=!open?'':explore||q.querySelector('.travelAlbum')?'travel':home||q.querySelector('.travellerBagV2,.komorebiBook,.komorebiConfirm,.figureCabinetBook,.pawPersonalShelf')?'home':q.querySelector('.pawTownFront,.communityTabs,.townWall,.townChatTranscript')?'town':today||q.querySelector('.journalDailyTasks,.goodCompanyBook')?'today':'';
  $('game').classList.toggle('pawDockRoot',!!pawDockRootKey);
