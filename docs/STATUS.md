@@ -1273,3 +1273,8 @@ Next: organic entry, stool seating, three automatic strikes, cancellation and de
 ## Batch 25: resident dialogue editorial refinement (28 November)
 
 f6e95185: polished 13 existing bilingual resident remarks across temple, Tarot, Yue, garden, kitchen, Mei, park, arcade, boba, story, café and assessment venues. No new IDs, profiles, reward rules or timers; 24 text fields changed. Parsed exact committed module and passed 195 isolated assertions for 128 remarks, stable keys, per-profile uniqueness, length and idempotent merge against synthetic existing banks. Actual startup.js retrieval returned empty (large source), so the full existing resident regression against its real ambient bank could not run in this connector session. Build, deployed browser dialogue readability and device acceptance remain unverified. No acceptance promotion or backlog count change. Continue independent release-critical implementation and browser verification; preserve hourly schedule.
+
+
+### 28 November: first railway regression verified; public room presence coordinate repair
+
+CI 46113537285 at 3033ec62 completed both strict organic browser jobs successfully (8 English/Chinese phone/desktop emulated cases). No physical device or screenshot visual approval claimed. 59fae44f repairs mapped public-room position validation in community Worker; 1406 targeted assertions passed; full SQLite and live moderation service remain unverified. Worker endpoint remains blank. Keep the outstanding workstream count unchanged, continue to the next demonstrated defect, and preserve the owner target of 10 genuinely outstanding deliverables.
