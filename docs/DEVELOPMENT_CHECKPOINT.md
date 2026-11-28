@@ -748,3 +748,7 @@ b442052c + 82d8a660 + 606b0ae0 + f2db1d4b: deck fans twelve cards from existing 
 
 ## Project batch 5: purification physical input regression (28 November)
 1ab64196 adds an off-centre grip and invalid filled-ladle release to the independent Playwright ritual test; captures bounded canvas pointer events and failure screenshot for scoop, pour and rinse. Test script parsed; 24 coordinate algebra checks passed. Earlier Chromium run 46096584043 failed at water and temple entry; newer CI queued. Shared startup/extensions leased by READ-03, no gameplay runtime edited. Actual browser/phone/device and contact evidence pending; no stage promotion. Next use current failure trace to correct actual gesture/entry runtime after lease releases.
+
+
+## Project batch 28: movement audio lifecycle (28 November)
+4427eabf + e918c75e: the live movement audio module now cancels its own active footstep/railway voices when the existing runtime resets on room/mode, mute, visibility or pause changes, leaving other audio buses intact. Idempotent cleanup handles late onended and partial connection errors. All 44 persisted cadence, permission, surface and mocked lifecycle assertions passed in connector harness. Shared scene source held by LIFE-AMBIENCE-01; independent module only edited. Actual listening, mobile browser, full build and deployed revision unverified; no stage promotion. Next check actual sound/visual synchronization and silent transitions in organic journeys.
