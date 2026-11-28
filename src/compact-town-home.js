@@ -132,9 +132,11 @@ function cutawaySeatPlacement(stage,cushion,standingHeight,frame){
  // Align the visible hip with the cushion's center seam. Match approximate
  // head scale to standing artwork; do not reuse the floor pose on a high bench.
  const x=(cushion.left+cushion.width*.51-stage.left)/stage.width,y=(cushion.top+cushion.height*.43-stage.top)/stage.height;
- const width=standingHeight*.80*frame.width/frame.height/stage.width;
- if(x<0||x>1||y<0||y>1||width<=0||width>.35)return null;
- return {x,y,width,hipX:frame.hip[0]/frame.width*100,hipY:frame.hip[1]/frame.height*100}
+ const width=standingHeight*.80*frame.width/frame.height/stage.width,height=standingHeight*.80/stage.height;
+ const hx=frame.hip[0]/frame.width,hy=frame.hip[1]/frame.height;
+ // Never crop the seated player's head or legs at the room edge.
+ if(width<=0||width>.35||x-width*hx<0||x+width*(1-hx)>1||y-height*hy<0||y+height*(1-hy)>1)return null;
+ return {x,y,width,hipX:hx*100,hipY:hy*100}
 }
 function cutawayFootPivot(frame,mirrored=false){
  if(!frame||![frame.width,frame.height,...(frame.foot||[])].every(Number.isFinite)||frame.width<=0||frame.height<=0||frame.foot?.length!==2||frame.foot[0]<0||frame.foot[0]>frame.width||frame.foot[1]<0||frame.foot[1]>frame.height)return {x:50,y:100};
@@ -336,7 +338,7 @@ function mountCutaway(q,legacyStage){
   const status=element('small','',panel,'pawCutawayStatus');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const oldHidden=legacyStage.hidden;
   function close(){
-   stop();drag.clear();observer.disconnect();document.removeEventListener('visibilitychange',onVisibility);panel.remove();legacyStage.hidden=oldHidden;q.classList.remove('pawCutawayOpen');reset();if(button.isConnected&&$('page').style.display==='block')button.focus({preventScroll:true})
+   stop();drag.clear();seatResize?.disconnect();observer.disconnect();document.removeEventListener('visibilitychange',onVisibility);panel.remove();legacyStage.hidden=oldHidden;q.classList.remove('pawCutawayOpen');reset();if(button.isConnected&&$('page').style.display==='block')button.focus({preventScroll:true})
   }
   function fail(){if(!panel.isConnected)return;close();toast(tr('The painted room could not load. Your original room is unchanged.','立体小窝暂时无法载入，原本的小窝不会改变。'))}
   shell.onerror=fail;shell.onload=()=>{if(shell.naturalWidth&&shell.naturalHeight)stage.style.aspectRatio=shell.naturalWidth+'/'+shell.naturalHeight};
@@ -345,7 +347,7 @@ function mountCutaway(q,legacyStage){
   const edit=b(controls,tr('Move furniture','移动家具'),()=>{stop();position(point(actor));actorArt('down',false,0);editing=!editing;selected=null;edit.textContent=editing?tr('Finish arranging','完成布置'):tr('Move furniture','移动家具');render();sayStatus()});
   let editing=false,selected=null,actor=cutawayFree(api,layout,items).at(-1),raf=0,epoch=0;
   const drag=cutawayDragOwner();
-  let seatedKey=null;
+  let seatedKey=null,seatStandingRatio=0,seatResize=null;
   const seatFrame=cutawaySeatFrame(avatar??0);let seatReady=false;
   const lampKeys=items.filter(i=>['lamp','shojiLamp','chineseLantern'].includes(i.key)).map(i=>i.key);
   const savedLights=store?.[zone]?.fingerprint===fingerprint?store[zone].lights:null;
@@ -359,7 +361,7 @@ function mountCutaway(q,legacyStage){
   const point=c=>api.project(layout,c.u+.5,c.v+.5);
   function position(p){player.style.left=p.x*100+'%';player.style.top=p.y*100+'%';player.style.zIndex=String(cutawayDepth(p.y))}
   function actorArt(direction,walking,distance){
-   seatedKey=null;player.style.removeProperty('width');player.style.removeProperty('max-height');delete player.dataset.seated;
+   seatedKey=null;seatStandingRatio=0;player.style.removeProperty('width');player.style.removeProperty('max-height');delete player.dataset.seated;
    pawHomeActorArt(player,direction,walking,distance);
    const dir=direction==='left'?'right':direction,frames=mbArtRegistry.players[avatar??0]?.walk?.[dir];
    const frame=walking&&frames?.length?frames[Math.floor(distance/2.1)%frames.length]:null;
@@ -367,17 +369,33 @@ function mountCutaway(q,legacyStage){
    const pivot=cutawayFootPivot(actual,direction==='left');
    player.style.setProperty('--paw-cutaway-foot-x',pivot.x+'%');player.style.setProperty('--paw-cutaway-foot-y',pivot.y+'%')
   }
-  function sitOnCushion(item){
-   if(!seatReady||!seatFrame)return;
+  function alignSeat(item,standingRatio){
+   if(!seatReady||!seatFrame)return false;
    const cushion=Array.from(stage.querySelectorAll('.pawCutawayFurniture')).find(n=>n.dataset.furnitureKey===item.key);
-   const p=cutawaySeatPlacement(stage.getBoundingClientRect(),cushion?.getBoundingClientRect(),player.getBoundingClientRect().height,seatFrame);
-   if(!p){status.textContent=tr('I need a little more space to sit.','这里得留点空间才能坐下。');return}
-   seatedKey=item.key;player.dataset.seated='true';player.src=seatFrame.path;
+   const bounds=stage.getBoundingClientRect();
+   const p=cutawaySeatPlacement(bounds,cushion?.getBoundingClientRect(),standingRatio*bounds.height,seatFrame);
+   if(!p)return false;
+   seatedKey=item.key;seatStandingRatio=standingRatio;player.dataset.seated='true';
+   if(player.getAttribute('src')!==seatFrame.path)player.src=seatFrame.path;
    player.style.width=p.width*100+'%';player.style.maxHeight='none';
    player.style.setProperty('--paw-home-facing','1');
    player.style.setProperty('--paw-cutaway-foot-x',p.hipX+'%');player.style.setProperty('--paw-cutaway-foot-y',p.hipY+'%');
    position(p);player.style.zIndex=String(Math.max(cutawayDepth(p.y),Number(cushion.style.zIndex)+1));
+   return true
+  }
+  function sitOnCushion(item){
+   const h=stage.getBoundingClientRect().height;
+   if(!h||!alignSeat(item,player.getBoundingClientRect().height/h)){
+    status.textContent=tr('I need a little more space to sit.','这里得留点空间才能坐下。');return
+   }
    status.textContent=tr('A moment to do absolutely nothing. Tap the cushion again to stand.','什么也不做，舒服一下。再点坐垫就起身。');
+  }
+  if(typeof ResizeObserver==='function'){
+   seatResize=new ResizeObserver(()=>{
+    if(!seatedKey||!panel.isConnected)return;
+    const item=items.find(i=>i.key===seatedKey);
+    if(!item||!alignSeat(item,seatStandingRatio)){actorArt('down',false,0);position(point(actor));sayStatus()}
+   });seatResize.observe(stage)
   }
   function sayStatus(){status.textContent=editing?selected?tr('Tap an empty floor space to place the selected piece.','点击空地摆放选中的家具。'):tr('Tap a piece of furniture to move it.','点击家具开始移动。'):tr('Tap the floor to walk.','点击地板走动。')}
   function persist(){const previous=load('pawHomeCutawayV1',{});save('pawHomeCutawayV1',{...(previous&&typeof previous==='object'?previous:{}),[zone]:{fingerprint,items,lights:[...lights]}})}
