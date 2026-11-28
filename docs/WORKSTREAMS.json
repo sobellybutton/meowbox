@@ -541,7 +541,10 @@
         "28 Nov live 390×844 Chromium follow-up: uncached request to deployed rail-foreground.js HTTP 200 and contains travelDistance + full offscreen recycling source. Reduced motion actual station trip: native portrait composite true, railMotion still, frame 1 / travel 0.000 throughout, correct arrival and canvas removed. Normal motion resumed and skip ride clicked via visible control (84.86×44px), arrived in Starlight Valley at travel 0.500s, 0 residual canvas, coins unchanged. Cold reload with portrait carriage image deliberately aborted in isolated browser: request confirmed blocked, fallback route-panorama / pawMovingGlass used full 390×844 ride, arrived Sea Breeze Island, 0 residual canvas. No deployed source changes this session; actual physical iPhone/WebKit and screenshot-based art fit remain unverified.",
         "84c021bc + 0a9c6827: optional finite-duration smooth braking, stationary arrival, independent indefinite entrance, 19,684 new assertions and 277,464 total numerical/mocked-canvas test assertions passed in connector harness; filesystem existence mocked. Runtime must explicitly supply finite ride duration, not yet activated."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-rail-alpha-1313",
+        "until": 1795844900000
+      },
       "blocker": "Finite braking renderer tested; runtime needs pass duration from host.dataset.rideSeconds for mode ride only (leave entrance unlimited), shared startup is reserved by kitchen lane. Prior live checks retained. Physical iPhone/WebKit and screenshot-level art acceptance pending."
     },
     {
