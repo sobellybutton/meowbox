@@ -128,3 +128,26 @@ console.log('Painted room plaque clearance regression passed');
  }
  console.log('Reviewed facade and indoor station anchor regression passed');
 }
+
+/* Interior plaques have a single room-appropriate surface with readable
+   ink, independent of the collision-free touch area. */
+{
+ const source=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
+ const a=source.indexOf('function pawIndoorPlaquePalette('),b=source.indexOf('function pawHallActorScale(',a);
+ assert.ok(a>=0&&b>a);
+ const calls=[];
+ const api=new Function('round','activityFitText',source.slice(a,b)+';return {pawIndoorPlaquePalette,pawDrawIndoorPlaque}')((...v)=>calls.push(v),(...v)=>calls.push(v));
+ const luminance=h=>{const v=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255).map(x=>x<=.04045?x/12.92:((x+.055)/1.055)**2.4);return .2126*v[0]+.7152*v[1]+.0722*v[2]};
+ for(const id of ['tarot','destiny','quiz','story','match','boba','kitchen','arcade','tea','fish','park','wishes','temple']){
+  const [fill,edge,ink]=api.pawIndoorPlaquePalette(id);
+  assert.ok((luminance(ink)+.05)/(luminance(fill)+.05)>=4.5);
+  for(const sc of [.3,.6,1,1.5]){
+   calls.length=0;api.pawDrawIndoorPlaque(id,{x:50,y:70},80,30,15,'Test',sc);
+   assert.equal(calls.length,2);assert.ok(calls[0][0]===10&&calls[0][1]===55);assert.ok(calls[0][5]===fill&&calls[1][5]===ink);
+  }
+ }
+ assert.ok(source.includes('labelX:230,labelY:300'));
+ assert.ok(source.includes('labelX:400,labelY:374'));
+ assert.equal((source.match(/pawDrawIndoorPlaque\(room,place/g)||[]).length,5);
+ console.log('Room-specific indoor plaque palette and food station registration checks passed');
+}
