@@ -92,7 +92,7 @@
  }
  // Only map matching furniture identities. Keep cabinet/shelf and special
  // interactive fixtures on their current art until shelf contact is calibrated.
- const legacyArt={futon:'futon',bed:'single-bed',lamp:'paper-lamp',basicTable:'low-table',rug:'woven-rug',plant:'fern',zabuton:'floor-cushion',catBasket:'cat-bed',sakuraVase:'flower-vase',lowDesk:'desk',retroTV:'retro-tv',chineseTeaTable:'tea-table',chineseBench:'bench'};
+ const legacyArt={futon:'futon',bed:'single-bed',lamp:'paper-lamp',basicTable:'low-table',rug:'woven-rug',plant:'fern',zabuton:'floor-cushion',catBasket:'cat-bed',sakuraVase:'flower-vase',lowDesk:'desk',retroTV:'retro-tv',chineseTeaTable:'tea-table',chineseBench:'bench',shelf:'bookcase',shojiLamp:'floor-lantern'};
  function legacyFurniture(id){return Object.hasOwn(legacyArt,id)?furniture(legacyArt[id]):null}
  function plans(extension,studio){
   const second=!!extension&&!!studio;
