@@ -1,0 +1,16 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const source=fs.readFileSync(path.resolve(__dirname,'../src/town-access.js'),'utf8');
+const start=source.indexOf('const yueSessionProfiles='),end=source.indexOf('function yueReadingHub()');
+assert.ok(start>=0&&end>start);
+const api=new Function(source.slice(start,end)+';return {yueSessionProfiles,yueClearAllowed,yueAutoYearAllowed,yueReturnControls,yueAcceptChart,yueAcceptDate,setSubject:id=>yueSubject=id};')();
+for(const origin of ['self','other','bad',null])for(const current of ['self','other','bad',null])for(const connected of [true,false,null])assert.equal(api.yueClearAllowed(origin,current,connected),connected===true&&['self','other'].includes(origin)&&origin===current);
+for(const profile of [null,{}, {date:'1990-03-04',almanacReady:true},{date:'1990-03-04',almanacReady:false}])for(const date of ['1990-03-04','1990-03-05',''])for(const editing of [true,false])for(const valid of [true,false])assert.equal(api.yueAutoYearAllowed(profile,date,editing,valid),!!profile?.almanacReady&&!!profile?.date&&profile.date===date&&!editing&&valid);
+const today='2026-11-28',own=api.yueSessionProfiles.self,other=api.yueSessionProfiles.other;
+assert.ok(api.yueAcceptChart(own,['1990-06-15','12:30','8','1.35','103.82'],today));
+assert.ok(api.yueAcceptDate(other,'1994-09-24',today));
+assert.notEqual(own,other);
+assert.equal(own.chart.date,'1990-06-15');assert.equal(other.date,'1994-09-24');
+assert.equal(api.yueAcceptDate(other,'2026-11-29',today),false);
+assert.equal(other.date,'1994-09-24');
+console.log('Yue per-person consultation privacy, explicit confirmation and year guard checks passed.');
