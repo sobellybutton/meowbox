@@ -452,7 +452,9 @@
         "art:park",
         "assets/visual/painted/interior-layouts.js",
         "scripts/painted-interior-layout-test.cjs",
-        "src/startup.js"
+        "src/startup.js",
+        "src/extensions.js",
+        "scripts/park-care-continuity-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -462,7 +464,10 @@
         "Repeated owner live feedback: Meet the Cat and Deer Meadow old interfaces. Replace activity staging and camera, use current approved park art and animated animals with appropriate player scale/contact, not just new lobby painting.",
         "Project batch 15: 9b1393d8 adds existing painted cat blink/rest frames and timed deer bow/chew idle movement at actual park lobby anchors; reduced motion remains static. Park closeup staging and actual visual playback remain pending."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-park-care-1318",
+        "until": 1795845300000
+      },
       "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay."
     },
     {
