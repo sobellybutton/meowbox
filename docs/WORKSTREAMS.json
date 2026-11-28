@@ -1180,13 +1180,11 @@
       ],
       "stage": "implemented",
       "evidence": [
-        "470aad94: shrine test loads actual painted courtyard, drags current ladle with calibrated destinations and verifies actual drawn assets; script parses."
+        "470aad94: shrine test loads actual painted courtyard, drags current ladle with calibrated destinations and verifies actual drawn assets; script parses.",
+        "1ab64196: independent water ritual browser regression checks missed filled-ladle release and off-centre grip; bounded pointer trace and failure screenshot. JS parsed and 24 grip-coordinate algebra checks passed; browser execution pending."
       ],
-      "lease": {
-        "owner": "manual-water-qa-1251",
-        "until": 1795843388608
-      },
-      "blocker": "Browser execution and actual art/contact acceptance pending."
+      "lease": null,
+      "blocker": "Chromium prior failure remains unresolved pending current CI; actual off-centre touch, visible prop contact, device and deployment acceptance unverified. No runtime change in this batch."
     },
     {
       "id": "HOME-FURNITURE-IMPORT-LIVE-01",
