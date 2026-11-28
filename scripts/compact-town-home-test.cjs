@@ -1,0 +1,14 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const src=fs.readFileSync('src/compact-town-home.js','utf8');
+new vm.Script(src);
+const helper=src.split('// PAW_COMPACT_HELPERS_BEGIN')[1].split('// PAW_COMPACT_HELPERS_END')[0];
+const api=new Function(helper+';return {pageWindow,residentLabel}')();
+assert.deepEqual(api.pageWindow(0,5,2),{page:0,pages:1,start:0,end:0});
+assert.deepEqual(api.pageWindow(5,9,2),{page:2,pages:3,start:4,end:5});
+assert.deepEqual(api.pageWindow(5,-1,2),{page:0,pages:3,start:0,end:2});
+assert.deepEqual(api.pageWindow(5,2,1),{page:2,pages:5,start:2,end:3});
+assert(api.residentLabel('Fictional resident'));assert(api.residentLabel('虚构居民'));
+assert(!api.residentLabel('Auntie Mei'));assert(!api.residentLabel('2026-11-28'));
+for(const p of ['index.html','scripts/build.cjs'])assert(fs.readFileSync(p,'utf8').includes('compact-town-home'),p+' loads new module');
+console.log('PASS compact town/home helpers and source registration');
