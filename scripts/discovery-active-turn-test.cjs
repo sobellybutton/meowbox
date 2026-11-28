@@ -13,3 +13,14 @@ assert.equal(elapsed,48,'background time cannot consume an active response');
 assert.equal(api.pawCafeTurnElapsed(NaN,0,16,false),0);
 assert.equal(api.pawCafeTurnElapsed(-1,0,16,false),0);
 console.log('Café active response timing and stale interaction regression passed.');
+
+
+const storyStart=source.indexOf('/* PAW_STORY_CHAPTER_TURN_BEGIN */'),storyEnd=source.indexOf('/* PAW_STORY_CHAPTER_TURN_END */');
+assert.ok(storyStart>=0&&storyEnd>storyStart);
+const story=new Function(source.slice(storyStart,storyEnd)+';return {pawStoryTurnMatches,pawStoryNextNode,pawStoryTurnReady};')();
+const visit={run:{},token:1,node:'station',room:'story',activity:'story',scene:'wonder',turning:true};
+for(const delta of [{},{run:{}},{token:2},{node:'other'},{room:'match'},{activity:'match'},{scene:'fortune'},{turning:false}])assert.equal(story.pawStoryTurnMatches(visit,{...visit,...delta}),Object.keys(delta).length===0);
+for(const t of [0,419,420,1699,1700,10000])for(const ready of [true,false])for(const reduced of [true,false])for(const blocked of [true,false])assert.equal(story.pawStoryTurnReady(t,ready,reduced,blocked),!blocked&&(ready||t>=1700)&&(reduced||t>=420));
+const scenes={station:{choices:[['a','甲','second'],['b','乙','end'],['c','丙','__proto__']]},second:{}},ends={end:[]};
+for(const [i,want] of [[0,'second'],[1,'end'],[2,null],[-1,null],[3,null],[.5,null],['0',null]])assert.equal(story.pawStoryNextNode(scenes.station,i,scenes,ends),want);
+console.log('Story chapter preparation, active turn and branch guards passed.');
