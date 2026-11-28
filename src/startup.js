@@ -51,7 +51,7 @@ hideoutPage=function(){cabinetRoomBefore();const q=$('content'),stage=q.querySel
 }
 };
 const bagReleaseBefore=myRoom;
-myRoom=function(){bagReleaseBefore();const q=$('content'),wrap=q.querySelector('.travellerBagV2');if(!wrap)return;const foot=wrap.querySelector('.bagFooter');if(foot){b(foot,tr('Figure cabinet','手办展示柜'),()=>figureCabinetPage('bag'));b(foot,tr('Life journal','人生档案'),lifeProfile);b(foot,tr('Sound settings','声音设置'),meowSettingsPage)}
+myRoom=function(){bagReleaseBefore();const q=$('content'),wrap=q.querySelector('.travellerBagV2');if(!wrap)return;const foot=wrap.querySelector('.bagFooter');if(foot){b(foot,tr('Figure cabinet','手办展示柜'),()=>figureCabinetPage('bag'));b(foot,tr('Life journal','人生档案'),lifeProfile)}
  const grid=wrap.querySelector('.bagSlots'),body=wrap.querySelector('.bagBody'),detail=wrap.querySelector('.bagDetail');
  if(grid&&body&&detail){
   const position=()=>{if(detail.parentNode===grid)body.append(detail);if(W<720&&!detail.hidden){const index=[...grid.children].findIndex(el=>el.getAttribute('aria-pressed')==='true');if(index>=0)grid.children[Math.min(grid.children.length-1,Math.floor(index/3)*3+2)]?.after(detail)}};
@@ -12263,6 +12263,39 @@ function pawRearGardenRoute(from,action){
  return route.length?route:[pawRearGardenNodes[action].slice()]
 }
 // A seated body contacts the painted cushion at the hip, not the path.
+/* PAW_REAR_SEATED_ART_BEGIN */
+// Individually extracted original travellers; the sheet's row order is
+// 1,0,2,3. The hip is the visible cushion-contact landmark, not image centre.
+const pawRearSeatedRecords=[
+ {w:206,h:280,hip:[71,214]},
+ {w:215,h:283,hip:[82,225]},
+ {w:222,h:280,hip:[82,223]},
+ {w:239,h:279,hip:[88,225]}
+];
+function pawRearSeatedBox(id,hip,scale){
+ const r=pawRearSeatedRecords[id];
+ if(!r||![hip?.x,hip?.y,scale].every(Number.isFinite)||scale<=0)return null;
+ const h=78*scale,w=h*r.w/r.h,k=h/r.h;
+ // Mirror the original right-facing seated pose towards the pond.
+ return {x:hip.x-(r.w-r.hip[0])*k,y:hip.y-r.hip[1]*k,w,h,hipX:r.hip[0]*k,hipY:r.hip[1]*k}
+}
+/* PAW_REAR_SEATED_ART_END */
+const pawRearSeatedImages=new Map();
+function pawRearSeatedImage(id){
+ if(!pawRearSeatedRecords[id])return null;
+ if(!pawRearSeatedImages.has(id)){
+  const im=new Image();im.decoding='async';im.src='assets/visual/staging/2026-11-27-extracted/players/'+id+'/seated.webp';pawRearSeatedImages.set(id,im)
+ }
+ return pawRearSeatedImages.get(id)
+}
+function pawDrawRearSeated(im,id,hip,scale){
+ const r=pawRearSeatedRecords[id],box=pawRearSeatedBox(id,hip,scale);
+ if(!r||!box||!im?.complete||im.naturalWidth!==r.w||im.naturalHeight!==r.h)return false;
+ ctx.save();try{
+  ctx.translate(hip.x,hip.y);ctx.scale(-1,1);
+  ctx.drawImage(im,-box.hipX,-box.hipY,box.w,box.h)
+ }finally{ctx.restore()}return true
+}
 function pawRearBenchPose(p,scale){
  const hip={x:p.x+p.w*.78,y:p.y+p.h*.407};
  return {hip,x:hip.x-9*scale,y:hip.y+32*scale,scale}
@@ -12322,6 +12355,7 @@ start=function(id,...args){
  const result=pawRearGardenStartBefore(id,...args);
  if(id==='secretGarden'&&activity===id&&room==='temple'){
   state.pawRearGarden=pawRoomImageReady(pawRearGardenArt());
+  if(state.pawRearGarden)pawRearSeatedImage(avatar??0);
   if(state.pawRearGarden){
    state.pawGardenWalk={painted:true,pos:pawRearGardenNodes.entry.slice(),route:[pawRearGardenNodes.bend.slice(),pawRearGardenNodes.fork.slice()],action:null,last:t,dir:'up'};
    hint('Follow the stone path to the pond or lucky cats.','沿石径去看看锦鲤和招财猫。')
@@ -12412,8 +12446,13 @@ drawActivity=function(...args){
   const [x,y]=xy(...q.pos),scale=pawRearGardenActorScale(p);
   const seatAmount=pawRearGardenSeatAmount(run,t,residentReducedMotion.matches,pawRearGardenAtBench(q));
   if(seatAmount>0){const a=pawRearBenchPose(p,scale),sx=x+(a.x-x)*seatAmount,sy=y+(a.y-y)*seatAmount;
-   ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}
-  }else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale);
+   const id=avatar??0,im=pawRearSeatedImage(id);
+   // Choose one completed pose when sitting starts; do not replace it
+   // mid-visit if the image finishes decoding late.
+   if(seatAmount>=.98&&run.gardenSitting&&run.pawRearSeatArt===undefined){const r=pawRearSeatedRecords[id];run.pawRearSeatArt=!!(r&&im?.complete&&im.naturalWidth===r.w&&im.naturalHeight===r.h)}
+   const painted=seatAmount>=.98&&run.pawRearSeatArt&&pawDrawRearSeated(im,id,a.hip,scale);
+   if(!painted){ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}}
+  }else{delete run.pawRearSeatArt;backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale)}
   const chimeAge=t-run.gardenChimeAt,catAge=t-run.pawCatAt,reduced=residentReducedMotion.matches;
   // Only the hanging paper tail moves. The beam, chain, bell and ceramic figures stay rigid.
   const breeze=reduced?0:Math.sin(t*1.45)*.42+Math.sin(t*.83)*.18;

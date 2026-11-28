@@ -75,7 +75,7 @@ function loadAssembler(signal){
 }
 async function boot(){
  const progress=document.querySelector('small');
- const paths=['src/shell.html','src/engine.js','assets/visual/painted/ah-ma/ritual-motion.js','src/extensions.js','src/release-fixes.js','src/town-polish.js','src/town-access.js','src/resident-remarks.js','src/paw-motion-audio.js','src/paw-economy.js','src/blind-box-reveal.js','src/arcade-painted-runtime.js','src/painted-lobby-runtime.js','src/home-placement-runtime.js','src/startup.js'];
+ const paths=['src/shell.html','src/engine.js','assets/visual/painted/ah-ma/ritual-motion.js','src/extensions.js','src/release-fixes.js','src/town-polish.js','src/town-access.js','src/resident-remarks.js','src/paw-motion-audio.js','src/paw-economy.js','src/blind-box-reveal.js','src/arcade-painted-runtime.js','src/painted-lobby-runtime.js','src/home-placement-runtime.js','src/startup.js','src/compact-town-home.js'];
  // Begin the assembler and source requests together instead of blocking all
  // source downloads on an earlier synchronous script request.
  const meter=document.getElementById('bootProgress'),total=paths.length+1;let done=0,delayed=false;
