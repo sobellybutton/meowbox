@@ -85,7 +85,7 @@ async function shareRegression(){
  const pawPrepareRecoveredShare=()=>new Promise(resolve=>pending.push(resolve));
  const shareCardArt=(cv,data,format,cn)=>draws.push([format,cn]);
  const File=class{constructor(parts,name){this.name=name}};
- const navigator={canShare:()=>false};
+ const navigator={canShare:()=>false},meowShareUrl='https://sobellybutton.github.io/meowbox/';
  `)+`
  openMeowShare({kind:'tarot',title:['A','甲'],cards:[{i:1}]},()=>backCalls++);
  return {pending,blobs,draws,controls,nodes,goBack:()=>goBack(),backCalls:()=>backCalls}
@@ -105,8 +105,11 @@ async function shareRegression(){
  assert.ok(!preview.hidden&&!save.disabled&&!share.disabled);
  assert.ok(m.nodes.find(n=>n.className==='pawKeepsakeGuide').textContent.includes('1080 × 1920'));
  await share.click();assert.ok(m.nodes.find(n=>n.className==='meowShareStatus').textContent.includes('upload'));
+ const copy=m.controls.find(n=>n.textContent==='Copy caption'),manual=m.nodes.find(n=>n.className==='pawKeepsakeCaption');
+ await copy.click();assert.ok(!manual.hidden&&manual.value.includes('甲')&&!manual.value.includes('https://'));
+ 
  m.controls.find(n=>n.textContent==='IG / FB').click();
- assert.ok(preview.hidden&&save.disabled);
+ assert.ok(preview.hidden&&save.disabled&&copy.disabled&&manual.hidden&&manual.value==='');
  m.goBack();m.goBack();assert.equal(m.backCalls(),1);
  m.pending[4]();await Promise.resolve();assert.equal(m.draws.length,2);
  console.log('Tarot share: stale format/language, export readiness and return lifecycle passed');
@@ -151,6 +154,8 @@ for(const [format,[width,height,top,bottom]] of Object.entries(exportBoxes)){
    assert.equal(rotations.length,cards.filter(c=>c.rev).length);
    assert.ok(!text.some(v=>v.includes('undefined')));
    for(const card of deck){const name=card[Number(cn)];assert.ok(text.join(' ').includes(name)||text.join('').includes(name))}
+    assert.equal(text.filter(v=>v===(cn?'逆位':'Reversed')).length,cards.filter(c=>c.rev).length);
+    assert.equal(text.filter(v=>v===(cn?'正位':'Upright')).length,cards.filter(c=>!c.rev).length);
    editorialCases++;
   }
  }
@@ -191,3 +196,40 @@ console.log('Editorial public result exports: '+otherCases+' result/format/langu
 for(const [v,ratio,split] of [['0 / 6',0,false],['6 / 6',1,false],['1 : 3',.25,true],['4 : 0',1,true],['2 : 2',.5,true]])assert.deepEqual(other.pawEditorialScoreRatio(v),{ratio,split});
 for(const v of ['7 / 6','0 : 0','0 / 0','not a score','-1 / 6'])assert.equal(other.pawEditorialScoreRatio(v),null);
 console.log('Editorial exact score graphics: 10 valid and invalid cases passed');
+
+const liveRoutes=new Function(source.slice(source.indexOf('function pawKeepsakeRoomRoute'),source.indexOf('/* PAW_NATIVE_CONSULT_END */'))+';return {pawKeepsakeRoomRoute,pawKeepsakeVisitOwns}')();
+const routeCases=[
+ [{room:'tarot',activity:'tarot'},'tarot',true,'tarot'],
+ [{room:'tarot',activity:'love'},'tarot',true,'tarot'],
+ [{room:'match',activity:'match',scene:'wonder',phase:'result'},'cafe',false,'cafe'],
+ [{room:'story',activity:'story',scene:'wonder',phase:'result'},'story',false,'story'],
+ ...['quiz','curiosity','observatory'].flatMap(room=>['type','motive','bigfive','care','values','attachment','priorities','soul'].map(mode=>[{room,activity:'wonderScene',scene:'wonder',phase:'result',mode,result:{}},mode,true,'notebook']))
+];
+for(const [v,kind,back,id] of routeCases){
+ assert.equal(liveRoutes.pawKeepsakeRoomRoute(v,kind,back)?.id,id);
+ assert.equal(liveRoutes.pawKeepsakeRoomRoute({...v,page:true},kind,back),null);
+ assert.equal(liveRoutes.pawKeepsakeRoomRoute(v,'unrelated',back),null);
+ const origin={...v,run:{},token:7,page:false};
+ assert.ok(liveRoutes.pawKeepsakeVisitOwns(origin,{...origin}));
+ for(const key of ['room','activity','scene','phase','run','token','mode','result','page'])assert.equal(liveRoutes.pawKeepsakeVisitOwns(origin,{...origin,[key]:key==='page'?true:Symbol(key)}),false);
+}
+for(const [v,kind,back] of [[{room:'match',activity:'match',scene:'wonder',phase:'question'},'cafe',false],[{room:'story',activity:'story',scene:'wonder',phase:'turn'},'story',false],[{room:'quiz',activity:'wonderScene',scene:'wonder',phase:'result',mode:'type',result:{}},'type',false],[{room:'tarot',activity:'tarot'},'tarot',false]])assert.equal(liveRoutes.pawKeepsakeRoomRoute(v,kind,back),null);
+console.log('Live keepsake routes: '+routeCases.length+' valid routes, archive fallbacks and stale visit guards passed');
+
+const caption=new Function(source.slice(source.indexOf('function pawKeepsakeCaption'),source.indexOf('function pawKeepsakeRoomRoute'))+';return pawKeepsakeCaption')();
+for(const format of ['feed','xhs','story','square'])for(const cn of [false,true]){
+ const result=caption({title:['A real result','实际结果'],private:'PRIVATE'},format,cn,'https://example.org/');
+ assert.ok(result.includes(cn?'实际结果':'A real result')&&!result.includes('PRIVATE'));
+ assert.equal(result.includes('https://'),format==='feed'||format==='square');
+}
+console.log('Native public caption: eight format/language cases and manual clipboard fallback passed');
+
+const surfaceApi=new Function(source.slice(source.indexOf('function pawKeepsakeResultSurface'),source.indexOf('function pawKeepsakeRoomRoute'))+';return {pawKeepsakeResultSurface,pawRestoreKeepsakeSurface}')();
+for(const height of [100,300,700])for(const scroll of [0,45,600])for(const open of [[true,false],[false,true],[true,true]]){
+ const details=open.map(v=>({open:v})),sheet={scrollTop:scroll,scrollHeight:height,clientHeight:100,querySelectorAll:()=>details};
+ const snap=surfaceApi.pawKeepsakeResultSurface(sheet);details.forEach(v=>v.open=false);sheet.scrollTop=0;
+ assert.ok(surfaceApi.pawRestoreKeepsakeSurface(sheet,snap));
+ assert.deepEqual(details.map(v=>v.open),open);assert.equal(sheet.scrollTop,Math.min(scroll,Math.max(0,height-100)));
+}
+assert.equal(surfaceApi.pawRestoreKeepsakeSurface(null,{}),false);
+console.log('Result surface: 27 scroll and disclosure restoration combinations passed');
