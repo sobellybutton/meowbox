@@ -120,3 +120,34 @@ console.log('Resting ladle retry and exclusive held-tool ownership checks passed
  check(src.includes('if(lit&&smoke)pawVisibleSmoke('),'unlit sticks do not emit smoke');
  console.log('PASS '+n+' painted incense smoke registration, frame, opacity and fallback assertions.');
 }
+
+{
+ const fixes=fs.readFileSync(path.join(root,'src/release-fixes.js'),'utf8');
+ const pure=fixes.split('/* PAW_CONTINUOUS_FORTUNE_BEGIN */')[1].split('/* PAW_CONTINUOUS_FORTUNE_END */')[0];
+ const f=new Function(pure+';return {pawPairedNext,pawPairedWalkPlan,pawPairedWalkTick,pawPairedCamera,pawGardenEntryRest}')();
+ let n=0;const ck=(v,m)=>{assert.ok(v,m);n++};
+ for(let failures=0;failures<=3;failures++){
+  const q={pawFortuneNumber:5,count:1,result:1,pawFortuneFailures:failures};
+  ck(f.pawPairedNext(q,'moon',2,false)===(failures>=3?'finish':'retry'),'three failed casts');
+  ck(f.pawPairedNext({...q,result:0},'moon',2,false)==='receive','confirmed only');
+  ck(f.pawPairedNext({...q,moonPending:true},'moon',2,false)===null,'wait for landing');
+  ck(f.pawPairedNext({...q,pawFortuneNumber:null},'moon',2,false)===null,'no independent cast');
+  ck(f.pawPairedNext({...q,pawPairedWalk:{}},'moon',2,false)===null,'walk input locked');
+ }
+ const plate={x:100,y:-145,w:600,h:600*1635/962};
+ const geom=api.pawAlcoveGeometry(plate);
+ for(const from of ['sticks','moon'])for(const reduced of [false,true]){
+  const q=f.pawPairedWalkPlan(from,true,geom,plate,0),start={...q.pos};
+  ck(!f.pawPairedWalkTick(q,50,true,reduced)&&q.pos.x===start.x&&q.pos.y===start.y,'pause');
+  let i=0;while(!f.pawPairedWalkTick(q,50+(++i)*.016,false,reduced)&&i<1000){ck(q.pos.y>=Math.min(geom.stickFoot.y,geom.moonFoot.y)-1e-7,'walk on lower aisle')}
+  const dest=from==='sticks'?geom.moonFoot:geom.stickFoot;
+  ck(q.path.length===0&&Math.hypot(q.pos.x-dest.x,q.pos.y-dest.y)<1e-7,'arrive physically');
+ }
+ for(const [w,h] of [[320,568],[390,844],[430,932],[320,932],[768,1024],[1440,900]]){
+  const c=f.pawPairedCamera(w,h,plate);
+  for(const p of [geom.stickFoot,geom.moonFoot,geom.tube,geom.moonTray])ck(c.ox+p.x*c.s>=0&&c.ox+p.x*c.s<=w&&c.oy+p.y*c.s>=0&&c.oy+p.y*c.s<=h,'both stations remain in frame')
+ }
+ const rest=f.pawGardenEntryRest({entry:[.48,.78]},10);ck(rest.route.length===0&&rest.action===null&&rest.pos[1]===.78,'garden entry waits for player');
+ ck(fixes.includes('queueMicrotask(pawInstallContinuousFortune)'),'late runtime installation');
+ console.log('PASS '+n+' paired ritual route, failure gate, shared camera and garden entry checks');
+}
