@@ -13543,7 +13543,7 @@ function pawYueDeskQuestions(kind){
 }
 /* PAW_YUE_DESK_HUMOUR_END */
 function pawYueQuestionSteps(form,out,kind){
- if(!form||form.hidden||out?.children.length)return;
+ if(!form||form.hidden||out?.children.length||form.classList.contains('pawYueGuidedForm'))return;
  const date=form.querySelector('input[type=date]')?.closest('label'),time=form.querySelector('input[type=time]')?.closest('label'),details=form.querySelector('details'),year=form.querySelector('select')?.closest('label'),submit=form.querySelector('button[type=submit]');
  if(!date||!submit||date.hidden)return;
  const steps=kind==='year'?[[date],[year]]:[[date],[time],[details,...[...form.querySelectorAll('input[type=number]')].filter(n=>!details?.contains(n)).map(n=>n.closest('label'))]];
@@ -13556,12 +13556,27 @@ function pawYueQuestionSteps(form,out,kind){
  function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));question.textContent=tr(...questions[index]);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1)}
  function advance(){if(finished||index>=steps.length-1)return;for(const field of steps[index].flatMap(n=>[...n.querySelectorAll('input,select')]))if(!field.checkValidity()){field.reportValidity();return}show(index+1)}
  form.addEventListener('keydown',e=>{if(!finished&&index<steps.length-1&&e.key==='Enter'&&e.target.matches('input')){e.preventDefault();advance()}});
+ // Bring an invalid hidden field back into view before native validation focuses it.
+ form.addEventListener('invalid',e=>{
+  if(finished)return;
+  const i=steps.findIndex(group=>group.some(node=>node.contains(e.target)));
+  if(i>=0)show(i);
+  for(let n=e.target.parentElement;n&&n!==form;n=n.parentElement)if(n.tagName==='DETAILS')n.open=true
+ },true);
  form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();controls.remove()}});
  show(0)
 }
 /* PAW_YUE_PARCHMENT_BEGIN */
 function pawYueChartComplete(grid){
  return !!grid&&grid.querySelectorAll('article:not(.blank)').length===12
+}
+// Preset locations still require the actual historical offset. Show a
+// compact verification disclosure, and always expose custom/invalid values.
+function pawYueLocationMode(place,values){
+ const preset=/^[0-7]$/.test(place||''),valid=Array.isArray(values)&&values.length===3&&values.every(v=>typeof v==='string'&&v.trim()!==''&&Number.isFinite(Number(v)));
+ if(!preset||!valid)return 'manual';
+ const [offset,lat,lon]=values.map(Number);
+ return offset>=-12&&offset<=14&&Number.isInteger(offset*4)&&lat>=-66&&lat<=66&&Math.abs(lon)<=180?'preset':'manual'
 }
 /* PAW_YUE_PARCHMENT_END */
 function pawYueChartParchment(q,pane,form,out){
@@ -13582,7 +13597,15 @@ function pawYueChartParchment(q,pane,form,out){
   if(!toolbar){
    toolbar=element('div','',q,'pawYueParchmentTools');out.before(toolbar);
    expand=b(toolbar,'',()=>setExpanded(!expanded,true));expand.type='button';
-   const ask=b(toolbar,tr('Ask Yue again','再问月师傅'),()=>yueReadingHub());ask.type='button'
+   const active=()=>room==='destiny'&&!activity&&toolbar.isConnected&&pane.dataset.pawYueDesk==='true'&&pane.style.display==='block'&&pawYueChartComplete(lastGrid);
+   const ask=b(toolbar,tr('Ask Yue again','再问月师傅'),()=>{if(active())yueReadingHub()});ask.type='button';
+   const finish=b(toolbar,tr('Finish consultation','结束问事'),()=>{
+    if(!active())return;
+    pawYueChartObserver?.disconnect();pawYueChartObserver=null;
+    delete pane.dataset.pawYueDesk;delete pane.dataset.pawYueExpanded;
+    pane.style.display='none';q.replaceChildren();closeTalk();
+    hint('Take your time. Your chart is here if you want to look again.','慢慢来，想再看命盘，随时来找我。')
+   });finish.type='button'
   }
   toolbar.hidden=false;
   if(lastGrid!==grid){
@@ -13621,6 +13644,23 @@ function pawYueDeskArrange(q,pane,form,out){
  pane.scrollTop=0
 }
 /* PAW_YUE_SINGLE_PAPER_END */
+function pawYueCompactLocation(form){
+ const outer=form?.querySelector('details'),place=outer?.querySelector('select'),fields=[...form.querySelectorAll('input[type=number]')];
+ if(!outer||!place||fields.length!==3||outer.querySelector('.pawYueLocationDetails'))return;
+ const labels=fields.map(n=>n.closest('label'));if(labels.some(n=>!n))return;
+ const advanced=element('details','',outer,'pawYueLocationDetails');
+ const summary=element('summary',tr('Verify time zone & coordinates','核对时区与经纬度'),advanced);
+ const note=outer.querySelector('.yueSessionNote');if(note)advanced.append(note);
+ labels.forEach(n=>advanced.append(n));
+ const sync=()=>{
+  const manual=pawYueLocationMode(place.value,fields.map(n=>n.value))==='manual';
+  advanced.open=manual&&!!place.value;
+  summary.textContent=tr('Verify time zone & coordinates','核对时区与经纬度');
+ };
+ place.addEventListener('change',sync);sync();
+ fields.forEach(n=>n.addEventListener('invalid',()=>{outer.open=true;advanced.open=true}));
+ form.addEventListener('submit',()=>{if(form.querySelector('.pawYueInputError:not([hidden])')){outer.open=true;advanced.open=true}},true)
+}
 function pawYueDeskPresent(kind){
  if(room!=='destiny')return;
  const q=$('content'),pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
@@ -13637,6 +13677,7 @@ function pawYueDeskPresent(kind){
    const details=form.querySelector('details');
    if(details)details.append(note);
   }
+  if(kind==='chart')pawYueCompactLocation(form);
   if(form.classList.contains('pawYueGuidedForm')){
    if(strip)form.after(strip);
    if(tools)(strip||form).after(tools);
@@ -13713,7 +13754,7 @@ function pawYueYearDialogue(result){
  }
  function conclude(){
   speak(result.disclaimer+'\n\n'+tr('Shall we look at something else, or leave the stars to their tea?','还想看看别的，还是让星星也喝杯茶休息一下？'),[
-   [tr('Another year reading','再看一次流年'),()=>{revision++;closeTalk();yueZodiacAlmanac()}],
+   [tr('Another year reading','再看一次流年'),()=>{revision++;closeTalk();yueZodiacAlmanac('',null,{editYear:true})}],
    [tr('Ask something else','问点别的'),hub],
    [tr('Thanks, Yue','谢谢月师傅'),finish]
   ])
@@ -13730,7 +13771,7 @@ function pawYueYearConnect(form,out){
    e.preventDefault();e.stopImmediatePropagation();if(form.isConnected&&pane.style.display==='block')form.reportValidity()
   }
  },true);
- form.addEventListener('submit',()=>{
+ const present=()=>{
   const result=pawYueYearSnapshot(out);if(!result)return;
   // Existing listeners finish first; a different room or replacement paper
   // must not open a stale consultation.
@@ -13742,13 +13783,24 @@ function pawYueYearConnect(form,out){
    $('content').replaceChildren();
    pawYueYearDialogue(result)
   })
- });
+ };
+ form.addEventListener('submit',present);
+ // The earlier session wrapper may already have computed a retained date.
+ // Route that existing result as well, without requiring duplicate submission.
+ if(pawYueYearSnapshot(out))present();
  return true
 }
 /* PAW_YUE_YEAR_DIALOGUE_END */
 const pawYueDeskYearBefore=yueZodiacAlmanac;
 yueZodiacAlmanac=function(...args){
- const result=pawYueDeskYearBefore(...args);pawYueDeskPresent('year');
+ const result=pawYueDeskYearBefore(...args);
+ if(room==='destiny'&&!activity&&args[2]?.editYear){
+  const q=$('content'),f=q.querySelector('.yueAlmanacForm'),date=f?.querySelector('input[type=date]');
+  q.querySelector('.yueAlmanacPaper')?.replaceChildren();
+  if(date)date.closest('label').hidden=false;
+  const edit=[...q.querySelectorAll('.yueChartTools button')].find(n=>n.textContent===tr('Change birth date','修改出生日期'));if(edit)edit.hidden=true
+ }
+ pawYueDeskPresent('year');
  if(room==='destiny'&&!activity){const q=$('content');pawYueYearConnect(q.querySelector('.yueAlmanacForm'),q.querySelector('.yueAlmanacPaper'))}
  return result
 };
