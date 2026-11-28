@@ -1335,3 +1335,8 @@ Reconciled #124 foreground paving routes, pond effects and ambient wind chime in
 
 ### Entrance convergence, 28 November
 Reconciled #126 into #125: boot uses manifest-matched painted walking sprites, decodes selected artwork, avoids redundant legacy crop warmup, and shortens the gate walk to 600ms. All three changed JS files parsed; exact-source manifest/readiness checks passed: Entrance painted traveller readiness regression passed; PASS 31 current painted entrance selection and timing checks. Cold/warm browser timing and visual acceptance pending. Main unchanged; parent candidate checks remain running.
+
+
+### Railway discovery continuity (28 Nov 2026)
+- A district's physical station plaque and edge fallback are admitted only within 280 world units of the calibrated platform approach; explicit Map navigation is unchanged. A distant touch or keyboard activation is rejected. Existing captured-touch ownership and camera handoff remain intact.
+- Exact merged runtime parses; persisted rail touch suite executed against it: 39,701 assertions passed. Browser matrix now walks to each station using supported input before real touch boarding and records before/after positions; all nine browser profiles also run on release-candidate pull requests. Browser and live acceptance remain pending. Existing seating/sleep art and physical contact remain outstanding.

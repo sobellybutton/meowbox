@@ -22,6 +22,21 @@ const routes=['home','island','wonder','fortune'];
 // that was visible at lookup can disappear while the camera settles after
 // rotation. Never force a tap, inject a route, or bypass the railway.
 // Keep actionable hit-test evidence when neither affordance can be used.
+async function approachStation(page,records,leg){
+ await page.waitForFunction(()=>proposal.hidden&&!transitioning&&!room&&!activity&&!pending&&!signRoot.hidden,null,{timeout:30000});
+ const before=await page.evaluate(()=>({scene,x:p.x,y:p.y,near:pawRailNearStation(p,maps[scene].st.find(v=>v[0]==='station'))}));
+ if(!before.near){
+  assert.equal(await page.locator(visibleStation).count(),0,'Distant railway label should not preempt exploration');
+  // Actual supported walking input, not direct player/route mutation.
+  await page.keyboard.down('ArrowUp');
+  try{await page.waitForFunction(()=>pawRailNearStation(p,maps[scene].st.find(v=>v[0]==='station')),null,{timeout:35000})}
+  finally{await page.keyboard.up('ArrowUp')}
+ }
+ const after=await page.evaluate(()=>({x:p.x,y:p.y,near:pawRailNearStation(p,maps[scene].st.find(v=>v[0]==='station'))}));
+ assert(after.near,'Traveller must approach the station before boarding');
+ if(!before.near)assert(after.y<before.y,'Traveller must actually walk up the district');
+ records.push({approachLeg:leg,before,after});
+}
 async function tapReachableStation(page,records,leg){
  const deadline=Date.now()+15000,samples=[],origin=leg===0?'fortune':routes[leg-1];
  let attempts=0;
@@ -79,7 +94,7 @@ async function main(){
   await skip.or(gate).first().waitFor({state:'visible',timeout:45000});
   if(await skip.isVisible())await tap(skip);
   await tap(gate);
-  await page.locator(visibleStation).first().waitFor({state:'visible',timeout:45000});
+  await page.waitForFunction(()=>proposal.hidden&&!transitioning&&valleyRevealAt<0&&!signRoot.hidden,null,{timeout:45000});
   await shot('first-map');
   for(let i=0;i<routes.length;i++){
    // First and second journeys exercise portrait and landscape. Third uses
@@ -87,6 +102,7 @@ async function main(){
    const landscape=i===1;
    await page.setViewportSize(landscape?{width:p.height,height:p.width}:{width:p.width,height:p.height});
    await page.emulateMedia({reducedMotion:i===2?'reduce':'no-preference'});
+   await approachStation(page,records,i);
    await tapReachableStation(page,records,i);
    const ride=page.locator('.pawRailJourney');
    await ride.waitFor({state:'visible',timeout:45000});
