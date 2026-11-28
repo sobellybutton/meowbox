@@ -341,4 +341,31 @@ html #game #dock>button.pawDockSelected:not([hidden]){color:#395846!important}
 @media(forced-colors:active){html #game #dock>button:not([hidden]){color:ButtonText!important}html #game #dock>button.pawDockSelected:not([hidden]){color:HighlightText!important}}
 /* PAW_MAP_CHROME_FIT_END */
 
+
+/* PAW_ENTRANCE_ART_DIRECTION_BEGIN: existing entrance artwork, no extra steps or blocking animations. */
+html body #proposal:not([hidden]){--paw-opening-display:var(--paw-display,Georgia,"Palatino Linotype",serif)}
+html[lang^="zh"] body #proposal:not([hidden]){--paw-opening-display:"Songti SC","Noto Serif CJK SC","STSong","KaiTi",serif}
+html body #proposal:not([hidden])>header>span,html body #proposal:not([hidden])>footer h1{font-family:var(--paw-opening-display)!important;font-weight:600!important}
+html body #proposal:not([hidden])>footer h1{line-height:1.14!important;letter-spacing:.015em;text-wrap:balance}
+html body #proposal:not([hidden])>footer p{line-height:1.5!important;text-wrap:pretty}
+html body #proposal:not([hidden])>header>span{letter-spacing:.035em;text-shadow:0 1px 6px #23372d}
+html[lang^="zh"] body #proposal:not([hidden])>header>span{letter-spacing:.08em}
+html body #proposal[data-paw-entrance-step="0"]:not([hidden])>footer h1{font-size:clamp(30px,7.5vw,48px)!important;text-shadow:0 2px 14px #23372d}
+html body #proposal[data-paw-entrance-step="0"]:not([hidden])>footer h1:after{content:"";display:block;width:44px;height:1px;background:currentColor;opacity:.65;margin:10px auto 0}
+html body #proposal[data-paw-entrance-step="1"]:not([hidden])>footer h1{font-size:clamp(24px,6vw,36px)!important}
+html body #proposal[data-paw-entrance-step="1"]:not([hidden]) .traveller{filter:drop-shadow(0 5px 7px #34281938)}
+html body #proposal[data-paw-entrance-step="1"]:not([hidden])>footer .actions>button{min-height:44px!important}
+html body #proposal:not([hidden])>footer button.next{font-family:var(--paw-opening-display)!important;font-weight:600!important;min-height:46px!important;letter-spacing:.025em}
+html body #proposal:not([hidden])>footer button:focus-visible,html body #proposal:not([hidden])>header button:focus-visible{outline:2px solid #f2db9b!important;outline-offset:3px}
+@media(prefers-reduced-motion:no-preference){
+ html body #proposal[data-paw-entrance-step="0"]:not([hidden])>footer h1{animation:pawOpeningInk .38s ease-out both}
+ html body #proposal[data-paw-entrance-step="1"]:not([hidden])>footer h1{animation:pawOpeningInk .22s ease-out both}
+ @keyframes pawOpeningInk{from{opacity:.45;translate:0 4px}to{opacity:1;translate:0 0}}
+}
+@media(max-height:560px) and (orientation:landscape){
+ html body #proposal[data-paw-entrance-step="0"]:not([hidden])>footer h1{font-size:clamp(22px,6vh,34px)!important}
+ html body #proposal[data-paw-entrance-step="1"]:not([hidden])>footer h1{font-size:clamp(20px,5vh,28px)!important}
+}
+@media(prefers-reduced-motion:reduce){html body #proposal:not([hidden])>footer h1{animation:none!important}}
+/* PAW_ENTRANCE_ART_DIRECTION_END */
 </style></head><body><main id="game"><canvas id="c" aria-label="Pawradise interactive world"></canvas><div id="worldSigns" hidden></div><button id="lunarBtn" hidden></button><div id="hud"><button id="profileHud" aria-label="Player profile"><span class="pawPaintedPortrait"><img id="hudPortrait" alt=""></span><span><strong id="hudName"></strong><small id="hudProgress"></small></span></button><div id="location">Pawradise</div><div id="hudStats"><span id="hudCoins"></span><span id="hudStamps"></span></div><button id="travel">Travel</button></div><button id="back" hidden>Step Back</button><div id="small"><button id="luck">Daily Luck</button><div><button id="language">中文</button> <button id="mute">♪</button></div></div><div id="hint" role="status" aria-live="polite" aria-atomic="true"></div><nav id="dock" aria-label="Game navigation"><button id="dockRoom"><span class="dockIcon">⌂</span><span></span></button><button id="dockPassport"><span class="dockIcon">▤</span><span></span></button><button id="dockValley"><span class="dockIcon">♧</span><span></span></button><button id="dockTravel"><span class="dockIcon">✈</span><span></span></button><button id="dockScoop"><span class="dockIcon">▧</span><span></span></button></nav><div id="gameControls" hidden></div><div id="dialogue"><div id="dialogueTop"><img id="talkPortrait" alt="" hidden><div id="speaker"></div></div><div id="line"></div><div id="choices"></div></div><div id="toast" role="status" aria-live="polite" aria-atomic="true"></div><div id="page"><div class="inner" id="content"></div></div><div id="fade"></div><section id="arrival" class="intro" hidden><img class="introArt" id="arrivalArt" alt=""><div class="introDoors" id="introDoors"><div></div><div></div></div><div class="introCard" id="introCard"></div></section></main><meta name="meow-community-api" content=""><!--MEOW_GAME_SCRIPT--></body></html>
