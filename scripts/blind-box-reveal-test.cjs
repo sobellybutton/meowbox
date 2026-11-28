@@ -21,3 +21,29 @@ ck(!api.draw(ctx,{...images,front:{naturalWidth:100,naturalHeight:100}},400,515,
 ck(api.pose(0,true).done&&api.pose(0,true).rise===1,'reduced motion complete');
 ck(api.placement(400,515,-1,0)===null,'invalid geometry');
 console.log('PASS '+n+' blind-box placement, reveal and layer assertions.');
+
+ const fs=require('node:fs'),path=require('node:path');
+ const source=fs.readFileSync(path.resolve(__dirname,'../src/arcade-painted-runtime.js'),'utf8');
+ const block=source.match(/\/\* PAW_BLIND_PAINTED_RUNTIME_BEGIN \*\/([\s\S]*?)\/\* PAW_BLIND_PAINTED_RUNTIME_END \*\//);
+ assert.ok(block);
+ const drawn=[],boxCalls=[];
+ const scene=new Function('PawBlindReveal','ctx','boxArt','poseEase','pawBoxReveal',block[1]+';return pawBlindPaintedReveal;')(api,ctx,(...args)=>boxCalls.push(args),x=>x,age=>({lid:age/.95}));
+ const pair={decoded:true,failed:false,images},late={decoded:false,failed:false,images};
+ const locked={boxPick:1};
+ ck(scene(locked,'opening',.05,pair,false,(...a)=>drawn.push(a)),'opening remains at counter');
+ ck(boxCalls[0][0]===400&&boxCalls[0][1]===515,'closed carton at same counter anchor');
+ ck(scene(locked,'opening',.7,late,false,(...a)=>drawn.push(a)),'decoded pair remains selected');
+ ck(scene(locked,'result',0,late,false,(...a)=>drawn.push(a)),'result retains same carton');
+ ck(drawn.length===2,'figure rises then remains visible');
+ const fallback={};
+ ck(!scene(fallback,'opening',.1,late,false,()=>{}),'pending pair uses original renderer');
+ ck(!scene(fallback,'result',0,pair,false,()=>{}),'late art cannot replace fallback');
+ ck(scene({},'opening',0,pair,true,()=>{}),'reduced motion immediately reveals');
+ ck(!scene({},'choose',0,pair,false,()=>{}),'shelf untouched');
+ ck(source.includes('painted=v&&pawBlindPaintedReveal(state,stage,age,paintedPair'),'live draw call');
+ ck(source.includes("stage==='opening'&&reveal.done&&!pawArcadeInputBlocked()"),'existing reward gate retained');
+ for(const p of ['index.html','scripts/build.cjs']){
+  const assembly=fs.readFileSync(path.resolve(__dirname,'..',p),'utf8');
+  ck(assembly.includes('blind-box-reveal')&&assembly.includes('arcade-painted-runtime'),'assembly '+p);
+ }
+ console.log('PASS '+n+' total blind-box render, runtime lock and assembly assertions.');
