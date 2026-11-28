@@ -645,7 +645,9 @@
         "browser",
         "scripts/paw-room-life-scoop-test.cjs",
         "scripts/reading-journey-test.cjs",
-        ".github/workflows/meowbox-browser.yml"
+        ".github/workflows/meowbox-browser.yml",
+        ".github/workflows/paw-entrance.yml",
+        ".github/workflows/yue-journey.yml"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -660,7 +662,10 @@
         "4cbaa1cf: corrected stale priorities scoring regression for paired choices (all 4096 answer combinations) and Tarot/assessment browser expectations for in-room dialogue, retaining export and archived journal checks. Executed full isolated paw-room-life-scoop-test against exact startup source; all checks passed. Reading browser script syntax passed, actual browser run pending. CI 46096584043 confirmed previous assessment and reading failures, Chromium purification and temple door timeout, WebKit shrine/device job passed. Chromium remaining defects not resolved.",
         "46865014: identified actual workflow queue starvation (46096584043 visual audit running while 16 newer browser revisions cancelled or pending). Replaced workflow-wide concurrency with independent job groups for focused regressions, browser, share, per-engine shrine, and visual capture. Retains running jobs and newest pending per group. Added focused build and six existing regression scripts with verified paths. Actual scheduler and test outcomes pending; no visual acceptance."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-20261128-ci-queue-followup",
+        "until": 1795835423828
+      },
       "blocker": "Browser connector unavailable for this attempt; actual mobile/desktop playthrough and visual acceptance remain unverified.\n\nOwner device acceptance clarification (27 Nov): Final deployed verification must record exact commit, browser/OS, dimensions, DPR, language, input, evidence and pass/fail/blocked per complete desktop and genuine phone journey. Actual physical iPhone Safari and Android Chrome evidence distinct from Playwright emulation; inaccessible hardware remains blocked.\n\nEnd-to-end critique, 28 Nov: Use section 12 prioritized journeys and P0/P1/P2 severity, including first enjoyable action, actual return state, and current deployed commit; never conflate phone emulation with real hardware.\nChromium purification and temple entry failures in run 46096584043 still require diagnosis; native reading browser rerun pending."
     },
     {
