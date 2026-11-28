@@ -985,7 +985,10 @@
       "resources": [
         "art:home-room",
         "src/home-layout.js",
-        "scripts/home-layout-test.cjs"
+        "scripts/home-layout-test.cjs",
+        "src/startup.js",
+        "src/extensions.js",
+        "browser"
       ],
       "depends": [
         "HOME-CATALOGUE-AUDIT-01"
@@ -997,7 +1000,7 @@
       ],
       "lease": {
         "owner": "manual-20261128-home-projection",
-        "until": 1795835089174
+        "until": 1795835120798
       },
       "blocker": "All eight finish swatches now imported at stable runtime paths; room surface masks and perspective-correct texture projection, repeat seams, actual phone/desktop catalogue and room acceptance pending. Do not regenerate these textures."
     },
