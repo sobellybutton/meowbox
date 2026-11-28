@@ -282,11 +282,12 @@
         },
         {
           "id": "ART-02-wave",
-          "action": "Recover matching greeting/waving pose sequences, create genuinely missing frames and register four traveller identities without using detached arms as final art.",
+          "action": "Reconcile PR #67's four original front-facing wave key poses, then recover the alternate wave-cycle atlas via exact blob/base64 or original asset archive; inspect alpha and identity, extract/register usable motion frames or create missing side/back and resident response poses. Integrate continuous gesture motion and correct any foot, size and occlusion defects in normal-input phone/desktop play.",
           "depends": [],
           "lane": "interactive artwork",
           "acceptance": "Player wave and resident response rendered with identity, anchored feet and hand motion.",
-          "state": "open"
+          "state": "partial_implementation_staged",
+          "evidence": "PR #67, 93254569: four actual WebPs inspected and reused in local greeting renderer; 2,888 exact-source guard assertions passed, source and persisted test parse. Full gesture cycle, resident response, rendered review and integration not accepted. Ordinary base64 retrieval of alternate atlas returned empty."
         },
         {
           "id": "ART-02-integrate-furniture",
