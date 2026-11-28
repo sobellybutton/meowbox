@@ -6719,7 +6719,7 @@ townChatPage=function(...args){
  if(!tabs||q.querySelector('.pawGuestNotice'))return result;
  const note=element('details','',q,'pawGuestNotice');tabs.after(note);
  element('summary',tr('Around town today','今日小镇来客'),note);
- element('p',tr('Fictional visitors in '+maps[scene].n[0]+'. Meet them while exploring the district.',''+maps[scene].n[1]+'的虚构来客。逛小镇时可以遇见他们。'),note);
+ element('p',tr('Visitors in '+maps[scene].n[0]+'. You might bump into them on your stroll.',''+maps[scene].n[1]+'的来客。四处走走，说不定就能碰见他们。'),note);
  const roster=mbGuestRoster(scene);
  for(const g of roster){
   const line=element('div','',note,'pawGuestNoticeLine');element('strong',tr(...g.name),line);
@@ -7594,13 +7594,13 @@ const pawFictionNotices=[
  ['rain-reading',{weather:'rain'},'A quieter afternoon','下雨天，慢慢来','The tea room has a dry seat and a warm cup for anyone caught in the rain.','淋到雨的话，茶馆里有干爽的座位和一杯热茶。']
 ];
 const pawFictionGazette=[
- ['biscuit','The lighter biscuit tin','饼干铁盒轻量化','A fictional biscuit maker has announced a tin with fewer biscuits and more premium mountain air. Grandma is unimpressed.','某虚构饼干商推出轻量版铁盒：饼干少了，山间空气多了。外婆表示不买账。'],
+ ['biscuit','The lighter biscuit tin','饼干铁盒轻量化','The town biscuit shop has announced a tin with fewer biscuits and more premium mountain air. Grandma is unimpressed.','小镇饼干店推出轻量版铁盒：饼干少了，山间空气多了。外婆表示不买账。'],
  ['iced-water','Artisanal water','手冲冰水','A visitor claims clockwise-stirred water tastes more expensive. The tea keeper offers them a normal glass instead.','有旅人坚称顺时针搅拌的水比较高级。茶馆店主递给他一杯普通的水。'],
- ['qr-bun','One bun, three QR codes','一个包子，三个二维码','A fictional food stall has invented a login screen for extra chilli. Grandma has responded by handing over the chilli jar.','某虚构小摊推出加辣登录流程。外婆的回应是把辣椒罐直接递过去。'],
+ ['qr-bun','One bun, three QR codes','一个包子，三个二维码','A stall in town has invented a login screen for extra chilli. Grandma has responded by handing over the chilli jar.','小镇有家小摊推出加辣登录流程。外婆的回应是把辣椒罐直接递过去。'],
  ['turnip','The rare turnip','隐藏款萝卜','A blind box collector claims a tiny turnip with sunglasses is a rare investment. The souvenir keeper says it is a very nice toy.','有盲盒玩家说戴墨镜的小萝卜很有投资价值。手信店主说，它就是个挺可爱的玩具。'],
  ['kettle','Kettle update','烧水壶正在更新','A traveller missed breakfast because their clever kettle insisted on updating first. The tea room still uses a perfectly ordinary kettle.','有旅人的智能水壶坚持先升级，结果错过了早餐。茶馆依旧用普通水壶。'],
  ['offline','The offline retreat','离线生活实录','A group visiting for a digital detox spent the afternoon filming how offline they were.','一群来戒手机的旅人，花了一整个下午拍摄自己有多离线。'],
- ['auntie-ai','The helpful auntie algorithm','安娣智能助手','A fictional helpdesk answers every question by asking whether the visitor has eaten and brought a cardigan.','某虚构智能助手无论听到什么问题，都先问吃饭了没、外套带了没。'],
+ ['auntie-ai','The helpful auntie algorithm','安娣智能助手','The town helpdesk answers every question by asking whether the visitor has eaten and brought a cardigan.','小镇服务台无论听到什么问题，都先问吃饭了没、外套带了没。'],
  ['queue','A very popular queue','排队本身就是景点','A visitor joined a queue because it looked popular. It turned out to be the queue for the railway ticket office.','有旅人见队伍很长就跟着排，结果发现是火车站售票队。']
 ];
 function pawFictionEdition(now,weather=''){
@@ -7934,7 +7934,7 @@ const pawGuestPersonalityRows=[
   ],
   [
    "Even my imaginary rice cooker knows when to stop working.",
-   "连我家的虚构电饭锅都知道什么时候下班。"
+   "连我家的电饭锅都知道什么时候下班。"
   ]
  ],
  [
@@ -12893,7 +12893,7 @@ syncCafeQuestionSheet=function(...args){
  const detail=element('details','',cafeQuestionSheet,'pawCafePrompt');
  element('summary',tr('Something to try in real life','下次聊天，可以试着这样问'),detail);
  for(const pair of copy.prompts)element('p',tr(...pair),detail);
- element('small',tr('Your choices describe this fictional conversation, not a diagnosis or a compatibility score.','这些选项只反映这段虚构对话，不是性格诊断，也不算缘分分数。'),cafeQuestionSheet);
+ element('small',tr('These reflections come from your conversation over tea. They are not a diagnosis or a compatibility score.','这些心得来自这次茶叙，不是性格诊断，也不算缘分分数。'),cafeQuestionSheet);
  const share=b(cafeQuestionSheet,tr('Share reflection','分享这点心得'),()=>{if(current())openMeowShare({kind:'cafe',title:copy.title,lines:copy.lines,accent:'#ad8270'})});
  share.dataset.cafeResult='share';
  const retry=b(cafeQuestionSheet,tr('Try another conversation','再聊一次'),()=>{if(current())start('match')});
@@ -14255,7 +14255,7 @@ syncStorySheet=function(...args){
  }
  const note=storySheet.querySelector('.mbStoryIntro');
  if(note&&parallelEndings[parallelNode]){
-  const copy=tr('This fictional ending follows your choices, not a personality result or prediction. Your keepsake is in the Starlight Valley chapter.','这个虚构结局由你的选择决定，并非性格测试或未来预测。纪念品已收入星语谷章节。');
+  const copy=tr('This story ends the way you chose. It is not a personality result or prediction. Your keepsake is in the Starlight Valley chapter.','这个故事的结局由你的选择决定，并非性格测试或未来预测。纪念品已收入星语谷章节。');
   if(note.textContent!==copy)note.textContent=copy
  }
  return value
