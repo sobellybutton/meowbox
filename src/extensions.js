@@ -1534,13 +1534,14 @@ const foodTasteDraw=drawActivity;drawActivity=function(){
    if(!serving){label(tr('Serve the soup','盛一碗汤'),510,390,pawKitchenServeRequest);target(478,397,64,42,pawKitchenServeRequest)}
    return;
   }
-  let age=t-(state.tasteAt??-100),active=state.tasteAt!==undefined&&age<2.7,f=active?Math.sin(Math.PI*Math.min(1,age/2.7)):0;
-  const bx=510-130*f,by=422-33*f;
-  drawRitualPose(290,495,1.6,{kneel:state.pawSoupServeMode?0:.4,reach:active?{x:bx-25,y:by}:null});
-  if(!state.pawSoupServeMode||!pawKitchenPaintBowl(bx,by+15,state.tasted?.3:1)){
-   ellipse(bx,by+9,32,10,'#58483c66');ellipse(bx,by,32,13,'#e7d8b9');ellipse(bx,by-2,27,8,'#ac8050');
+  const age=state.tasteAt===undefined?0:Math.max(0,t-state.tasteAt);
+  const pose=pawKitchenTasteMotion(age,residentReducedMotion.matches);
+  const bx=pose.x,by=pose.y-15;
+  drawRitualPose(290,495,1.35,{reach:pose.reach});
+  if(!state.pawSoupServeMode||!pawKitchenPaintBowl(bx,pose.y,pose.fill)){
+   ellipse(bx,by+9,32,10,'#58483c66');ellipse(bx,by,32,13,'#e7d8b9');ellipse(bx,by-2,27*pose.fill,8,'#ac8050');
   }
-  if(age>=2.7&&state.tasteAt!==undefined&&!state.tasted&&!pawArcadeInputBlocked()){state.tasted=true;react(...townReaction('soup-taste',activityComedy.soup))}
+  if(pose.done&&state.tasteAt!==undefined&&!state.tasted&&!pawArcadeInputBlocked()){state.tasted=true;react(...townReaction('soup-taste',activityComedy.soup))}
   if(state.tasteAt===undefined){label(tr('Taste the soup','尝一口汤'),510,390,soupTaste);target(478,397,64,42,soupTaste)}
  }finally{ctx.restore()}
 };
