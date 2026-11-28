@@ -413,7 +413,10 @@
         "4e300c64 + c562c8bf + 88c5354a: optional steamed garden greens recipe in same kitchen, existing painted steamer, distinct load/steam/serve/taste/return, guarded active time and accessible controls; 2,752 new exact-source assertions passed. Provisional ingredient plate, no additional soup reward. Actual visual/seat/contact/deploy pending.",
         "40aa5b8b + d0b88b9c: third recipe pan-fried tofu, inspected original painted pan/spatula/tofu, three discrete turns and native serve/taste/return; 254 persisted exact-source checks passed. Actual pan contact, finished art, seating and browser/deploy unverified."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-kitchen-stock-1310",
+        "until": 1795844525190
+      },
       "blocker": "Dedicated ingredient, preparation, pouring, serving and tasting artwork, pose contact and actual browser verification remain outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n49 original kitchen/boba props prepared at assets/visual/painted/food-props; runtime integration, scene-specific grip/pour contact, animation and rendered acceptance remain pending. CI pending at check."
     },
     {
