@@ -106,7 +106,7 @@ for(const [kind,ids] of [['wall',['wallLinen','wallSakura','wallMatcha','wallBlu
   const result=api.finishRaster(kind,id,source,(width,height)=>{
    const calls=[],c={width,height,calls,getContext:()=>({save(){},restore(){},translate(){},scale(){},drawImage(...args){calls.push(args)}})};canvases.push(c);return c
   });
-  assert.equal(result,canvases[0]);assert.equal(canvases[1].calls.length,24);
+  assert.equal(result,canvases[0]);assert.equal(canvases[1].calls.length,kind==='wall'?6:18);
   assert.equal(result.calls.length,kind==='wall'?1:320);
   for(const [im,x,y,w,h] of result.calls)assert.ok(x>=0&&y>=0&&x+w<=im.width+1e-6&&y+h<=im.height+1e-6);
  }
@@ -118,3 +118,16 @@ for(let i=0;i<=1000;i++){
 assert.equal(api.finishSpec('wall','__proto__'),null);assert.equal(api.finishSpec('floor','plain'),null);
 assert.equal(api.floorSample(-1),null);assert.equal(api.floorSample(NaN),null);
 console.log('Eight home finish paths, mirror tiling, floor sampling and surface bounds verified.');
+
+ // Verify bounded allocation and all sample coordinates across import sizes.
+ for(const size of [1,4,344,512,1024,2048])for(const [kind,id] of [['wall','wallLinen'],['floor','floorOak']]){
+  const canvases=[];
+  const result=api.finishRaster(kind,id,{naturalWidth:size,naturalHeight:size},(width,height)=>{
+   const calls=[],c={width,height,calls,getContext:()=>({save(){},restore(){},translate(){},scale(){},drawImage(...args){calls.push(args)}})};canvases.push(c);return c
+  });
+  const tile=Math.max(4,Math.min(512,size)),wall=kind==='wall';
+  assert.equal(result,canvases[0]);assert.equal(canvases[1].width,tile*(wall?3:6));
+  assert.equal(canvases[1].height,tile*(wall?2:3));assert.equal(canvases[1].calls.length,wall?6:18);
+  for(const [im,x,y,w,h] of result.calls)assert.ok(x>=0&&y>=0&&x+w<=im.width+1e-6&&y+h<=im.height+1e-6);
+ }
+ console.log('Bounded home surface raster allocation and sampling verified.');
