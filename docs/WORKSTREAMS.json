@@ -1765,7 +1765,9 @@
         "src/extensions.js",
         "src/engine.js",
         "src/shell.html",
-        "browser"
+        "browser",
+        "scripts/paw-world-admission-test.cjs",
+        "scripts/scene-handoff-regression-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -1783,7 +1785,10 @@
         "Organic CI 46113122583 (Chromium and WebKit): all eight English/Chinese phone/desktop cases reached returning identity and passed strict Tarot lobby paint and first/return gateway assertions; all failed first carriage full-viewport coverage. No uncaught page errors reported. 3033ec62 applies full-bleed first carriage CSS scoped to decoded painted stage, retaining aspect-preserving cover for both picture and motion canvas, controls above and landscape height adjustments. Await new CI, actual visual inspection and hardware checks; no acceptance promotion.",
         "CI run 46113537285 at 3033ec62: both organic Chromium and WebKit jobs completed SUCCESS (jobs 140882154328 and 140882154567). All 8 EN/ZH phone/desktop normal-input cases passed strict railway/gateway/map and Tarot lobby paint coverage, exit and returning identity. Emulated browser evidence only; screenshots not visually inspected in this session; physical devices, remaining full game journeys and exact deployed revision still require acceptance."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-batch02-asset-admission",
+        "until": 1795847577825
+      },
       "blocker": "Actual iPhone/WebKit cold/warm cache, all other room assets and visual acceptance remain open.\nEntrance crop late replacement removed; cold fallback may have original padding. Real painted gate handoff and device timing/visual verification pending."
     },
     {
