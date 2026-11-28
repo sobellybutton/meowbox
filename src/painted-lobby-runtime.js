@@ -72,6 +72,20 @@ function pawConsultPresetReady(place,fields){
 function pawConsultCurrent(origin,current){
  return !!origin&&!!current&&origin.room===current.room&&origin.form===current.form&&origin.subject===current.subject
 }
+// Match the actual revealed card; a summary is not a card presentation.
+// The position prefix disambiguates repeated card labels in a multi-card spread.
+function pawConsultReadingFocus(q,words,labels,cardLine,now){
+ if(!q||!['cards','focus'].includes(q.readStage)||typeof words!=='string'||!Array.isArray(labels)||!Array.isArray(q.readCards)||!Array.isArray(q.readFlip)||q.readCards.length!==q.readFlip.length||!Number.isFinite(now))return null;
+ if(labels.includes('summary')&&q.readFlip.every(v=>Number.isFinite(v)&&v>=0&&now-v>=.72))return -1;
+ if(!labels.includes('card'))return null;
+ const lines=words.split('\n'),matches=q.readCards.map((c,i)=>({i,line:cardLine(c),flip:q.readFlip[i]})).filter(v=>v.line&&lines.includes(v.line)&&Number.isFinite(v.flip)&&v.flip>=0&&now-v.flip>=.72);
+ if(matches.length===1)return matches[0].i;
+ const position=lines[0]?.match(/(?:^|\s)([1-5])\/([135])$/);
+ if(position&&Number(position[2])===q.readCards.length){
+  const i=Number(position[1])-1;if(matches.some(v=>v.i===i))return i
+ }
+ return null
+}
 /* PAW_NATIVE_CONSULT_END */
 function pawInstallNativeConsultation(){
  const scalePrior=travellerRoomScale;
@@ -96,9 +110,11 @@ function pawInstallNativeConsultation(){
  // Remove the detached portrait and make its question a single quiet speech strip.
  const sayPrior=say,closePrior=closeTalk;
  say=function(name,words,choices=[],...rest){
-  if(room==='tarot'&&['tarot','love'].includes(activity)&&name===tr('Fortune Teller','占卜师')&&['cards','focus'].includes(state.readStage)&&typeof words==='string'&&choices.some(c=>c[0]===tr('Back to the table','回到牌桌'))){
-   const index=state.readCards?.findIndex(c=>{const d=tarotDeck[c.i];return d&&words.split('\n').includes(tr(d[0],d[1])+' · '+orient(c.rev))});
-   if(index>=0&&state.readFlip?.[index]>=0&&t-state.readFlip[index]>=.72){state.readFocus=index;state.readStage='focus';state.readAt=t-.45}
+  if(room==='tarot'&&['tarot','love'].includes(activity)&&name===tr('Fortune Teller','占卜师')){
+   const labels=choices.map(c=>c[0]===tr('Back to the table','回到牌桌')?'card':c[0]===tr('Finish reading · return to table','结束解读，回到牌桌')?'summary':'');
+   const index=pawConsultReadingFocus(state,words,labels,c=>{const d=tarotDeck[c?.i];return d&&tr(d[0],d[1])+' · '+orient(c.rev)},t);
+   if(index===-1){state.readStage='cards';state.readFocus=-1;state.readAt=t}
+   else if(index!==null){state.readFocus=index;state.readStage='focus';state.readAt=t-.45}
   }
   const v=sayPrior(name,words,choices,...rest),panel=$('dialogue');
   const consult=(room==='tarot'&&name===tr('Fortune Teller','占卜师'))||(room==='destiny'&&name===tr('Master Yue','月师傅'));
