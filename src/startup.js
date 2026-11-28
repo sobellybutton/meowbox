@@ -12268,6 +12268,26 @@ function pawReadingDestination(api,id,from,x,y){
  const route=api.route(id,pawReadingNormalized(...from),pawReadingNormalized(x,y));
  return route?.map(v=>pawReadingWorld(v))||null
 }
+// Manual input stops at the actual painted path edge. Try a shorter
+// straight step, then slide along a clear axis without routing around
+// obstacles behind the player's back.
+function pawReadingManualStep(api,id,from,dx,dy){
+ if(![...from,dx,dy].every(Number.isFinite)||Math.hypot(dx,dy)<.001)return null;
+ const origin=pawReadingNormalized(...from);if(!api?.safe(id,origin))return null;
+ const segment=(x,y)=>api.segment(id,origin,pawReadingNormalized(from[0]+x,from[1]+y));
+ const along=(x,y)=>{
+  if(Math.hypot(x,y)<.001)return null;
+  let f=1;if(!segment(x,y)){
+   let lo=0,hi=1;for(let i=0;i<12;i++){const mid=(lo+hi)/2;if(segment(x*mid,y*mid))lo=mid;else hi=mid}
+   f=lo
+  }
+  const progress=(x*dx+y*dy)*f/Math.hypot(dx,dy);
+  return Math.hypot(x*f,y*f)>.05?{point:[from[0]+x*f,from[1]+y*f],progress}:null
+ };
+ const options=[along(dx,dy),along(dx,0),along(0,dy)].filter(Boolean);
+ options.sort((a,b)=>b.progress-a.progress);
+ return options[0]?.point||null
+}
 function pawReadingCompatible(api,id,entries){
  const stations=api?.rooms[id]?.stations;
  return pawReadingRoomIds.includes(id)&&!!stations&&entries.length===Object.keys(stations).length&&new Set(entries.map(e=>e[0])).size===entries.length&&entries.every(e=>Object.hasOwn(stations,e[0]))
@@ -12341,9 +12361,18 @@ indoorSegment=function(a,b,...args){return pawReadingActive()?pawReadingAPI().se
 // Use the reviewed lane for all normal inputs, not the rectangular y>=565 clamp.
 const pawPierDestinationBefore=indoorDestination;
 indoorDestination=function(x,y,goal=null,facing=null){
- if(!['fish','arcade','park'].includes(room)||!pawReadingActive())return pawPierDestinationBefore(x,y,goal,facing);
- const route=pawReadingDestination(pawReadingAPI(),room,[indoor.x,indoor.y],x,y);
- if(!route?.length){if(goal)hint(room==='fish'?'Try the clear path beside the river.':room==='park'?'Follow the stone path through the park.':'Try the clear aisle between the games.',room==='fish'?'请沿河边的小路走。':room==='park'?'请沿公园的石板路走。':'请沿游戏机之间的通道走。');return false}
+ if(!pawReadingActive())return pawPierDestinationBefore(x,y,goal,facing);
+ const from=[indoor.x,indoor.y],api=pawReadingAPI();
+ const dx=Number(!!(keys.ArrowRight||keys.d))-Number(!!(keys.ArrowLeft||keys.a)),dy=Number(!!(keys.ArrowDown||keys.s))-Number(!!(keys.ArrowUp||keys.w)),norm=Math.hypot(dx,dy);
+ // Match the legacy keyboard/joystick caller's exact 45-unit request.
+ // Programmatic arrival, station clicks and exits retain full pathfinding.
+ if(!goal&&norm&&Math.hypot(x-from[0]-dx/norm*45,y-from[1]-dy/norm*45)<.001){
+  const next=pawReadingManualStep(api,room,from,x-from[0],y-from[1]);
+  indoor.goal=null;indoor.goalFacing=null;indoor.route=[];
+  [indoor.tx,indoor.ty]=next||from;return !!next
+ }
+ const route=pawReadingDestination(api,room,from,x,y);
+ if(!route?.length){if(goal)hint(room==='fish'?'Try the clear path beside the river.':room==='park'?'Follow the stone path through the park.':room==='arcade'?'Try the clear aisle between the games.':'Follow the clear path to the table.',room==='fish'?'请沿河边的小路走。':room==='park'?'请沿公园的石板路走。':room==='arcade'?'请沿游戏机之间的通道走。':'请沿小路走到桌旁。');return false}
  indoor.route=route;[indoor.tx,indoor.ty]=route.shift();indoor.goal=goal;indoor.goalFacing=facing;return true
 };
 function pawReadingBackdrop(){
