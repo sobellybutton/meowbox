@@ -157,9 +157,35 @@ async function travelLoop(page,name,touch){
  await station('destiny');
  await press(page.getByRole('button',{name:'My birth chart',exact:true}));
  await press(page.getByRole('button',{name:'For me',exact:true}));
- await page.locator('.astroForm').waitFor();
- assert.equal(await page.locator('#page').getAttribute('data-paw-yue-desk'),'true','Consultation stays at the study desk');
+ // Native consultation: each question is spoken by Yue, not displayed in
+ // a second page. Complete the real inputs and verify the chart and exit.
+ const birth=page.locator('#choices .pawDeskField input[type=date]');
+ await birth.waitFor({state:'visible'});
+ assert.equal(await page.locator('#page').isVisible(),false,'Birth question opened a separate page');
+ assert.equal(await page.locator('.astroForm').isVisible(),false,'Old birth form must not cover the study');
+ assert.equal(await page.evaluate(()=>room),'destiny');
  await shot('yue-desk');
+ await birth.fill('1990-06-15');
+ await press(page.locator('#choices').getByRole('button',{name:'Continue',exact:true}));
+ const birthTime=page.locator('#choices .pawDeskField input[type=time]');
+ await birthTime.waitFor({state:'visible'});
+ assert.equal(await page.locator('#page').isVisible(),false);
+ await birthTime.fill('12:30');
+ await press(page.locator('#choices').getByRole('button',{name:'Continue',exact:true}));
+ const place=page.locator('#choices .pawDeskField select');
+ await place.waitFor({state:'visible'});
+ assert.equal(await place.inputValue(),'','Birthplace must not be assumed');
+ await place.selectOption('0');
+ await press(page.locator('#choices').getByRole('button',{name:'Continue',exact:true}));
+ await press(page.locator('#choices').getByRole('button',{name:'Yes, use these details',exact:true}));
+ await page.locator('.chartConsultation').waitFor({state:'visible'});
+ assert.equal(await page.locator('.ziGrid article:not(.blank)').count(),12,'The chart must contain twelve palaces');
+ assert.equal(await page.locator('#page').getAttribute('data-paw-yue-desk'),'true','Consultation result stays anchored to the study');
+ assert.equal(await page.evaluate(()=>room),'destiny');
+ assert(await page.evaluate(()=>!JSON.stringify(localStorage).includes('1990-06-15')),'Private birth data must not persist');
+ await shot('yue-chart');
+ await press(page.locator('.pawYueResultNav').getByRole('button',{name:'Return to room',exact:true}));
+ await page.waitForFunction(()=>room==='destiny'&&!activity&&document.getElementById('page').style.display==='none');
  await backOutside();
 
  for(const [district,doors] of [['home',['fish']],['island',['boba','arcade']],['wonder',['quiz','story','match']],['fortune',[]]]){
