@@ -11942,9 +11942,9 @@ function pawAlcoveGeometry(p=pawWaterPlate){
  const pt=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
  return {tube:pt(.397,.473),tubeGrip:pt(.411,.499),tubeTop:pt(.397,.426),
   stickTray:pt(.523,.509),stickFoot:pt(.41,.625),stickPickFoot:pt(.51,.625),
-  moonTray:pt(.743,.508),moonFoot:pt(.707,.64),moonHand:pt(.70,.54)}
+  moonTray:pt(.743,.508),moonFoot:pt(.649,.64),moonHand:pt(.705,.563)}
 }
-function pawAlcoveActorScale(){return 1.92}
+function pawAlcoveActorScale(){return 1.48}
 function pawAlcoveStickPoint(g,pose){
  const f=Math.max(0,Math.min(1,pose.fall)),pick=pose.picked?Math.max(0,Math.min(1,(pose.pick-.45)/.55)):0;
  const x=g.tubeTop.x+(g.stickTray.x-g.tubeTop.x)*f;
@@ -11953,6 +11953,12 @@ function pawAlcoveStickPoint(g,pose){
 }
 function pawAlcoveMoonPoint(g,m){
  return {x:g.moonTray.x+(m.x-400)*.26,y:g.moonTray.y-m.lift*.32}
+}
+// The cast begins at the traveller’s hand, arcs forward, and lands on the
+// existing tray. At rest use the exact same landing coordinates.
+function pawAlcoveCastPoint(g,m,f,index){
+ f=Math.max(0,Math.min(1,f));const end=pawAlcoveMoonPoint(g,m),u=f*f*(3-2*f);
+ return {x:g.moonHand.x+(index?5:-5)+(end.x-g.moonHand.x-(index?5:-5))*u,y:g.moonHand.y+(end.y-g.moonHand.y)*u-Math.sin(Math.PI*f)*36}
 }
 /* PAW_ALCOVE_PAINT_END */
 const pawAlcovePath='../../staging/2026-11-27/rooms/temple/sticks.webp';
@@ -11999,11 +12005,11 @@ function pawDrawAlcoveSticks(){
 }
 function pawDrawAlcoveMoon(){
  const run=state,g=pawAlcoveGeometry(),airborne=run.tossUntil>t,f=airborne?Math.max(0,Math.min(1,1-(run.tossUntil-t)/(run.moonDuration||.55))):1;
- const sc=pawAlcoveActorScale(),shoulder={x:g.moonFoot.x-8,y:g.moonFoot.y-63*sc};
- if(airborne&&Math.hypot(g.moonHand.x-shoulder.x,g.moonHand.y-shoulder.y)<=38)pawIncenseArm(shoulder,g.moonHand,1.12,false);
+ const sc=pawAlcoveActorScale(),shoulder={x:g.moonFoot.x+12,y:g.moonFoot.y-53*sc};
  backHuman(g.moonFoot.x,g.moonFoot.y,avatar??0,false,'up',sc);
+ if(airborne){const reach=poseEase(Math.min(1,f/.12))*(1-poseEase(Math.max(0,(f-.24)/.50)));const hand=pawWaterMix({x:shoulder.x+6,y:shoulder.y+23},g.moonHand,reach);pawIncenseArm(shoulder,hand,1.05,false)}
  for(let i=0;i<2;i++){
-  const flat=pawMoonFlat(run.result,i,run.count),m=pawMoonMotion(f,i,flat,run.moonHeight||95),pt=pawAlcoveMoonPoint(g,m);
+  const flat=pawMoonFlat(run.result,i,run.count),m=pawMoonMotion(f,i,flat,run.moonHeight||95),pt=airborne?pawAlcoveCastPoint(g,m,f,i):pawAlcoveMoonPoint(g,m);
   ellipse(pt.x,g.moonTray.y+5,Math.max(3,9-m.lift*.035),2.5,'#342b2355');
   ctx.save();ctx.translate(pt.x,pt.y);ctx.scale(.30,.30);templeMoon(0,0,m.angle,m.flat);ctx.restore()
  }
