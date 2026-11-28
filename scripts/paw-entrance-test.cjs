@@ -141,6 +141,13 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       const board=page.locator('.pawTownHotspot').first();
       await (width<900?board.tap():board.click());
       await page.locator('.townWall').waitFor({state:'visible',timeout:8000});
+      const notices=page.locator('.townResidentNote');
+      assert.equal(await notices.count(),10,'Only ten resident notices are shown');
+      assert.equal(await page.locator('.townPostNav button').count(),0,'No archive pagination or invisible older notices button');
+      const ids=await notices.evaluateAll(nodes=>nodes.map(n=>n.dataset.noticeId));
+      assert.equal(new Set(ids).size,10,'No duplicate notices');
+      const reply=page.locator('.wallReplies summary').first();
+      if(await reply.count()){await (width<900?reply.tap():reply.click());assert.equal(await page.locator('.wallReplies[open]').count(),1,'Notice replies open normally');}
       await shot('town-noticeboard');
       const returnHall=page.locator('#content > .row button').first();
       await (width<900?returnHall.tap():returnHall.click());
