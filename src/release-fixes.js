@@ -659,3 +659,151 @@ threePlay=function(i){
  if(threeActive()&&pawThreeTurnCurrent(state.threeGame,state.threeGame,pawArcadeInputBlocked()))delete state.threeGame.pawConfirmRestart;
  return pawThreePlayConfirmationPrior(i)
 };
+
+/* PAW_CONTINUOUS_FORTUNE_BEGIN */
+function pawPairedFailures(q){return Number.isInteger(q?.pawFortuneFailures)?Math.max(0,Math.min(3,q.pawFortuneFailures)):0}
+function pawPairedNext(q,kind,now,blocked){
+ if(blocked||!q||!Number.isInteger(q.pawFortuneNumber)||q.pawFortuneNumber<1||q.pawFortuneNumber>12||q.pawPairedWalk)return null;
+ if(kind==='sticks'&&q.stickDelivered)return 'confirm';
+ if(kind==='moon'&&!q.moonPending&&!(q.tossUntil>now)){
+  if(q.count===0)return 'toss';
+  if(q.count===1)return q.result===0?'receive':pawPairedFailures(q)>=3?'finish':'retry'
+ }
+ return null
+}
+function pawPairedCamera(w,h,p){
+ if(![w,h,p?.w,p?.h].every(Number.isFinite)||Math.min(w,h,p.w,p.h)<=0)return null;
+ // Cover portrait screens without losing either station on unusually tall phones.
+ const s=w<h?Math.min(Math.max(w/p.w,h/p.h),w/(p.w*.70)):Math.min(w/p.w,h/p.h);
+ return {s,ox:(w-p.w*s)/2-p.x*s,oy:(h-p.h*s)/2-p.y*s}
+}
+function pawPairedWalkPlan(from,painted,g,p,now){
+ const point=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
+ const stick=painted?g.stickFoot:point(.26,.64);
+ const pickup=painted?g.stickPickFoot:{x:point(.37,.66).x-15,y:point(.37,.66).y+4};
+ const moon=painted?g.moonFoot:point(.70,.64);
+ const origin=from==='sticks'?pickup:moon,dest=from==='sticks'?moon:stick;
+ const lane=Math.max(origin.y,dest.y)+12;
+ return {to:from==='sticks'?'moon':'sticks',pos:{...origin},path:[{x:origin.x,y:lane},{x:dest.x,y:lane},{...dest}],last:now,dir:dest.x>origin.x?'right':'left'}
+}
+function pawPairedWalkTick(q,now,blocked,reduced){
+ const dt=Math.max(0,Math.min(.05,now-q.last));q.last=now;
+ if(blocked)return false;
+ let budget=reduced?Infinity:145*dt;
+ while(q.path.length){
+  const next=q.path[0],dx=next.x-q.pos.x,dy=next.y-q.pos.y,d=Math.hypot(dx,dy);
+  if(d>.01)q.dir=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';
+  if(d<=budget+.001){q.pos={...next};q.path.shift();budget-=d}
+  else{q.pos.x+=dx/d*budget;q.pos.y+=dy/d*budget;break}
+ }
+ return q.path.length===0
+}
+function pawGardenEntryRest(nodes,now){
+ return {painted:true,pos:nodes.entry.slice(),route:[],action:null,last:now,dir:'up'}
+}
+/* PAW_CONTINUOUS_FORTUNE_END */
+// Install after startup has installed all native activity and camera wrappers.
+function pawInstallContinuousFortune(){
+ let exhausted=false,transfer=false;
+ const active=()=>room==='temple'&&['sticks','moon'].includes(activity)&&!!state.pawPairedRitual;
+ const entryPrior=enter;
+ enter=function(id,...args){if(id==='temple')exhausted=false;return entryPrior.call(this,id,...args)};
+ const startPrior=start;
+ start=function(id,...args){
+  if(room==='temple'&&['sticks','moon'].includes(id)){
+   if(exhausted&&!transfer){hint('Three attempts are enough for today. Come back another time.','今天三次未得圣杯，先随缘，下次再来吧。');return false}
+   if(!transfer)id='sticks';
+   const art=pawRoomImageReady(pawAlcoveArt()),hall=pawRoomImageReady(pawHallArt());
+   if(!art&&!hall){hint('The fortune alcove is getting ready. Try again in a moment.','求签处正在准备，稍后再试。');return false}
+   const result=startPrior.call(this,id,...args);
+   if(activity===id){state.pawPairedRitual=true;state.pawAlcovePainting=art;state.pawFortuneFailures=0}
+   return result
+  }
+  const result=startPrior.call(this,id,...args);
+  if(room==='temple'&&id==='secretGarden'&&state.pawRearGarden){
+   state.pawGardenWalk=pawGardenEntryRest(pawRearGardenNodes,t);
+   hint('Take a moment here, then choose where to walk.','先在入口歇一歇，再选想去的地方。')
+  }
+  return result
+ };
+ const guidePrior=roomGuideEntries;
+ roomGuideEntries=function(...args){const v=guidePrior.apply(this,args);return room==='temple'?v.filter(x=>x[0]!=='moon').map(x=>x[0]==='sticks'?['sticks','Draw and confirm a fortune','求签与掷筊']:x):v};
+ const labelPrior=label;
+ label=function(...args){
+  if(room==='temple'&&!activity&&pawStationPlaque?.id==='moon'){pawStationPlaque=null;return}
+  return labelPrior.apply(this,args)
+ };
+ const roomPrior=drawRoom;
+ drawRoom=function(...args){const v=roomPrior.apply(this,args);if(room==='temple'&&!activity)hit=hit.filter(h=>h.stationId!=='moon');return v};
+ const cameraPrior=mobileRoomCamera;
+ mobileRoomCamera=function(...args){return active()?pawPairedCamera(W,H,state.pawAlcovePainting?pawWaterPlate:pawHallPlate)||cameraPrior(...args):cameraPrior(...args)};
+ const nextPrior=pawFortuneNext;
+ pawFortuneNext=function(q,kind,now,blocked){return q?.pawPairedRitual?pawPairedNext(q,kind,now,blocked):nextPrior(q,kind,now,blocked)};
+ const movePrior=pawFortuneMove;
+ pawFortuneMove=function(action,run=state){
+  if(!active())return movePrior(action,run);
+  if(run!==state||!['confirm','retry'].includes(action)||pawPairedNext(run,activity,t,pawArcadeInputBlocked())!==action)return false;
+  releaseWalkKeys();joystickReset();
+  run.pawPairedWalk=pawPairedWalkPlan(activity,run.pawAlcovePainting,pawAlcoveGeometry(),pawHallPlate,t);
+  hint(...(action==='confirm'?['Walk over to the moon blocks with your stick.','拿着签，走到旁边掷筊。']:['Return the unconfirmed stick and walk back to the holder.','这支签还未确认，放回去，再走到签筒前。']));
+  mb5AssistSync(true);return true
+ };
+ const ritualPrior=pawRitualAdvance;
+ pawRitualAdvance=function(...args){
+  if(active()&&state.pawPairedWalk)return;
+  const run=state,settling=active()&&activity==='moon'&&run.moonPending;
+  const v=ritualPrior.apply(this,args);
+  if(settling&&run===state&&!run.moonPending&&run.count===1&&run.result!==0){
+   run.pawFortuneFailures=Math.min(3,pawPairedFailures(run)+1);
+   if(run.pawFortuneFailures===3){
+    exhausted=true;$('toast').classList.remove('on');
+    hint('Three casts without Sheng Bei. Leave the stick here and come back another time.','三次未得圣杯，今天就先到这里吧。把签放回去，下次再来。')
+   }else hint('No Sheng Bei ('+run.pawFortuneFailures+'/3). Draw another stick.','未得圣杯（'+run.pawFortuneFailures+'/3），请重新求签。')
+  }
+  return v
+ };
+ const tossPrior=pawMoonToss;
+ pawMoonToss=function(...args){if(active()&&(state.pawPairedWalk||pawPairedNext(state,activity,t,pawArcadeInputBlocked())!=='toss'))return false;return tossPrior.apply(this,args)};
+ const shakePrior=shakeFortuneStick,pickPrior=pickupFortuneStick;
+ shakeFortuneStick=function(...args){return active()&&state.pawPairedWalk?false:shakePrior.apply(this,args)};
+ pickupFortuneStick=function(...args){return active()&&state.pawPairedWalk?false:pickPrior.apply(this,args)};
+ const specPrior=mb5AssistSpec;
+ mb5AssistSpec=function(kind,q,now){
+  if(q?.pawPairedRitual&&q.pawPairedWalk)return {key:'paired-walking',label:['Walking to the next station…','走向旁边的体验区……'],disabled:true};
+  if(q?.pawPairedRitual&&pawPairedNext(q,kind,now,false)==='finish')return {key:'paired-finish',label:['Leave the stick. Try another day.','放回签，下次再来'],action:'paired-finish'};
+  return specPrior(kind,q,now)
+ };
+ const performPrior=mb5AssistPerform;
+ mb5AssistPerform=function(action){
+  if(action==='paired-finish'){
+   if(!active()||pawPairedNext(state,activity,t,pawArcadeInputBlocked())!=='finish')return false;
+   delete state.pawFortuneNumber; $('back').click();return true
+  }
+  return performPrior(action)
+ };
+ const drawPrior=drawActivity;
+ drawActivity=function(...args){
+  if(!active()||!state.pawPairedWalk)return drawPrior.apply(this,args);
+  const run=state,q=run.pawPairedWalk,done=pawPairedWalkTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
+  continuityActivity=activity;
+  ctx.save();try{
+   if(run.pawAlcovePainting)pawAlcoveScene();else pawTempleScenePlate();
+   backHuman(q.pos.x,q.pos.y,avatar??0,!done&&!pawArcadeInputBlocked()&&!residentReducedMotion.matches,q.dir,run.pawAlcovePainting?pawAlcoveActorScale():.96)
+  }finally{ctx.restore()}
+  if(done&&run===state&&!pawArcadeInputBlocked()){
+   const n=run.pawFortuneNumber,failures=pawPairedFailures(run),painted=run.pawAlcovePainting;
+   transfer=true;try{start(q.to)}finally{transfer=false}
+   if(activity===q.to&&state!==run){
+    state.pawPairedRitual=true;state.pawAlcovePainting=painted;state.pawFortuneFailures=failures;
+    if(q.to==='moon'){state.pawFortuneNumber=n;hint('Cast the blocks to confirm your numbered stick.','掷筊确认手中的签。')}
+    else hint('Shake the holder for a new stick.','重新摇签筒，求一支新签。')
+   }
+  }
+  mb5AssistSync()
+ };
+ // Keep garden visits player-led. Until the upper artwork is revalidated,
+ // stop at the lower path viewpoints, not the former upper scenery nodes.
+ Object.assign(pawRearGardenNodes,{cats:[.58,.49],chime:[.70,.49]});
+ pawRearGardenEdges.splice(0,pawRearGardenEdges.length,...[['entry','bend'],['bend','fork'],['fork','feed'],['fork','seat'],['fork','chime'],['fork','cats']]);
+}
+queueMicrotask(pawInstallContinuousFortune);
