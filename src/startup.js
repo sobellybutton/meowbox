@@ -12217,6 +12217,21 @@ function pawRearBenchPose(p,scale){
  const hip={x:p.x+p.w*.78,y:p.y+p.h*.407};
  return {hip,x:hip.x-9*scale,y:hip.y+32*scale,scale}
 }
+// The bench hip and adjacent paving establish a world-space body size.
+// Keep that size when the viewport or camera changes; the camera alone zooms.
+function pawRearGardenActorScale(p,seat=pawRearGardenNodes.seat){
+ const rise=p.h*(seat[1]-.407);
+ return Number.isFinite(rise)&&rise>0?Math.max(1.35,Math.min(2.25,rise/32)):1.72
+}
+function pawRearGardenSeatAmount(run,now,reduced,atBench){
+ if(!atBench||!Number.isFinite(now)||!Number.isFinite(run?.gardenSeatAt))return 0;
+ if(reduced)return run.gardenSitting?1:0;
+ const f=Math.max(0,Math.min(1,(now-run.gardenSeatAt)/.45)),e=f*f*(3-2*f);
+ return run.gardenSitting?e:1-e
+}
+function pawRearGardenAtBench(q,seat=pawRearGardenNodes.seat){
+ return !!q&&!q.route?.length&&Array.isArray(q.pos)&&q.pos.length===2&&Math.hypot(q.pos[0]-seat[0],q.pos[1]-seat[1])<.002
+}
 const pawRearCatFigurines=[[.578,.240],[.653,.229],[.717,.240],[.596,.278],[.645,.278],[.697,.278]];
 const pawRearCatBlessings=[['May your lunch break actually be a break.','愿你的午休，真的能休息。'],['May good things find you without a meeting invite.','愿好事找上门，不必先开会。'],['May you master the ancient art of saying: tomorrow.','愿你练成一门绝学：明天再说。'],['A little luck for whatever you are carrying today.','愿你今天的心事，轻一点。'],['May your tea stay warm and your work chat stay on mute.','愿杯中茶常暖，工作群常静音。'],['May the lift arrive just as you press the button.','愿你每次按电梯，门马上就开。']];
 function pawRearCatChoice(run,index){
@@ -12277,8 +12292,16 @@ pawGardenChoose=function(run,kind){
  if(!run?.pawRearGarden)return pawRearGardenChooseBefore(run,kind);
  if(run!==state||!pawRearGardenActive()||pawArcadeInputBlocked())return;
  const q=run.pawGardenWalk;if(!q||q.route.length)return;
- if(kind==='seat'&&run.gardenSitting){gardenSeat();return}
- if(run.gardenSitting){gardenSeat();if(run.gardenSitting)return}
+ if(run.gardenSitting){
+  gardenSeat();if(run.gardenSitting)return;
+  if(kind!=='seat')q.pawAfterStand=kind;
+  return
+ }
+ if(pawRearGardenSeatAmount(run,t,residentReducedMotion.matches,pawRearGardenAtBench(q))>0){
+  if(kind!=='seat')q.pawAfterStand=kind;
+  return
+ }
+ delete q.pawAfterStand;
  if(pawGardenRoute(q,kind))hint(...({feed:['Walking to the pond…','走向锦鲤池……'],seat:['Walking to the bench…','走向长椅……'],chime:['Walking to the chime…','走向风铃……'],cats:['Walking to the lucky cats…','走向招财猫……']}[kind]))
 };
 // Deform a small region of the existing painted object, preserving the
@@ -12300,8 +12323,11 @@ const pawRearGardenDrawBefore=drawActivity;
 drawActivity=function(...args){
  if(!pawRearGardenActive())return pawRearGardenDrawBefore(...args);
  const run=state,q=run.pawGardenWalk,p=pawRearGardenPlate,b=livingBounds(),xy=(u,v)=>[p.x+p.w*u,p.y+p.h*v];
+ if(q.pawAfterStand&&!run.gardenSitting&&!pawArcadeInputBlocked()&&pawRearGardenSeatAmount(run,t,residentReducedMotion.matches,pawRearGardenAtBench(q))===0){
+  const next=q.pawAfterStand;delete q.pawAfterStand;pawGardenChoose(run,next)
+ }
  const prior=q.pos.slice(),arrive=pawGardenWalkTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
- if(arrive==='feed')gardenFeed();else if(arrive==='seat')gardenSeat();else if(arrive==='chime')gardenChime();
+ if(arrive==='feed')gardenFeed();else if(arrive==='seat'){gardenSeat();q.dir='left'}else if(arrive==='chime')gardenChime();
  else if(arrive==='cats'){run.pawCatAt=t;const i=Number.isInteger(run.pawCatPending)?run.pawCatPending:(Number.isInteger(run.pawCatChoice)?(run.pawCatChoice+1)%6:1);delete run.pawCatPending;sound(520);hint(...pawRearCatChoice(run,i))}
  const dx=(q.pos[0]-prior[0])*p.w,dy=(q.pos[1]-prior[1])*p.h,moving=q.route.length>0;
  if(Math.hypot(dx,dy)>.01)q.dir=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';
@@ -12333,9 +12359,9 @@ drawActivity=function(...args){
     if(f>0&&f<1){const [rx,ry]=xy(.31+j*.018,.453+(j%2)*.014);ctx.strokeStyle='rgba(242,239,207,'+(.6*(1-f))+')';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(rx,ry,2+f*17,1+f*5,0,0,TAU);ctx.stroke()}
    }
   }
-  const [x,y]=xy(...q.pos),scale=pawTempleContactScale(cam.scale,1.48+Math.max(0,q.pos[1]-.54)*.55);
-  const seated=run.gardenSitting&&!moving,seatAge=Math.max(0,t-run.gardenSeatAt),seatAmount=seated?(residentReducedMotion.matches?1:poseEase(Math.min(1,seatAge/.45))):0;
-  if(seated){const a=pawRearBenchPose(p,scale),sx=x+(a.x-x)*seatAmount,sy=y+(a.y-y)*seatAmount;
+  const [x,y]=xy(...q.pos),scale=pawRearGardenActorScale(p);
+  const seatAmount=pawRearGardenSeatAmount(run,t,residentReducedMotion.matches,pawRearGardenAtBench(q));
+  if(seatAmount>0){const a=pawRearBenchPose(p,scale),sx=x+(a.x-x)*seatAmount,sy=y+(a.y-y)*seatAmount;
    ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}
   }else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale);
   const chimeAge=t-run.gardenChimeAt,catAge=t-run.pawCatAt,reduced=residentReducedMotion.matches;
