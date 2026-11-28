@@ -48,18 +48,26 @@ function cutawayPlan(api,layout,source,saved){
  if(!Array.isArray(source))return null;
  const mapped=source.map((d,i)=>({id:cutawayIds[d.id],key:d.id,legacy:d,order:i,turn:Math.abs(Math.round((Number(d.r)||0)/90))%4}));
  if(mapped.some(d=>!d.id)||new Set(mapped.map(d=>d.key)).size!==mapped.length)return null;
- const items=[];
- // Place the largest floor objects first to avoid blocking large beds.
+ // Bounded backtracking keeps the largest objects first and searches for
+ // a connected walkable floor, rather than trapping the avatar.
  mapped.sort((a,b)=>{const x=api.footprint({...a,u:0,v:0}),y=api.footprint({...b,u:0,v:0});return y.w*y.d-x.w*x.d||a.order-b.order});
- for(const item of mapped){
-  const base={id:item.id,key:item.key,turn:item.turn},old=saved?.find?.(x=>x.key===item.key&&x.id===item.id);
+ let budget=10000;
+ function place(index,items){
+  if(--budget<0)return null;
+  if(index===mapped.length)return cutawayConnected(api,layout,items)?items:null;
+  const item=mapped[index],base={id:item.id,key:item.key,turn:item.turn},old=Array.isArray(saved)?saved.find(x=>x?.key===item.key&&x.id===item.id):null;
   const x=Math.max(0,Math.min(1,Number(item.legacy.x)/100||.5)),y=Math.max(0,Math.min(1,Number(item.legacy.y)/100||.8));
   const choices=cutawayCells(api,layout).map(c=>({...base,...c})).filter(c=>api.canPlace(layout,c,items));
   choices.sort((a,b)=>{const p=api.anchor(layout,a),q=api.anchor(layout,b);return Math.hypot(p.x-x,p.y-y)-Math.hypot(q.x-x,q.y-y)});
-  const chosen=old&&api.canPlace(layout,old,items)?{...old,key:item.key,id:item.id}:choices[0];
-  if(!chosen)return null;items.push(chosen)
+  if(old&&api.canPlace(layout,old,items))choices.unshift({...old,key:item.key,id:item.id});
+  for(const chosen of choices){if(budget<=0)return null;const result=place(index+1,[...items,chosen]);if(result)return result}
+  return null
  }
- return cutawayFree(api,layout,items).length?items:null
+ return place(0,[])
+}
+function cutawayConnected(api,layout,items){
+ const free=cutawayFree(api,layout,items);
+ return free.length>0&&free.every(c=>cutawayRoute(api,layout,items,free[0],c)!==null)
 }
 function cutawayRoute(api,layout,items,start,goal){
  const cells=cutawayFree(api,layout,items),key=c=>c.u+','+c.v,valid=new Set(cells.map(key));
@@ -76,7 +84,7 @@ function cutawayMove(api,layout,items,key,cell,actor){
  const next={...item,u:cell.u,v:cell.v};
  if(!api.canPlace(layout,next,items))return null;
  const changed=items.map(i=>i.key===key?next:i),free=cutawayFree(api,layout,changed);
- return free.length&&(!actor||free.some(c=>c.u===actor.u&&c.v===actor.v))?changed:null
+ return cutawayConnected(api,layout,changed)&&(!actor||free.some(c=>c.u===actor.u&&c.v===actor.v))?changed:null
 }
 // PAW_COMPACT_HELPERS_END
 function replaceExact(root,selector,oldEN,oldZH,en,cn){
@@ -172,7 +180,7 @@ function townConnectionInfo(q){
  const observer=new MutationObserver(refresh);observer.observe(status,{childList:true,characterData:true,subtree:true});refresh();
 }
 const pageBefore=page;
-page=function(...args){const result=pageBefore(...args),q=$('content');naturalTownLabels(q);return result};
+page=function(...args){$('content')?.classList.remove('pawCutawayOpen');const result=pageBefore(...args),q=$('content');naturalTownLabels(q);return result};
 const sayBefore=say;
 say=function(name,words,...rest){return sayBefore.call(this,residentDialogue(name),residentDialogue(words),...rest)};
 function dressTeaTable(q){
@@ -275,7 +283,7 @@ function mountCutaway(q,legacyStage){
   }
   function walk(goal){
    const route=cutawayRoute(api,layout,items,actor,goal);if(!route){status.textContent=tr('The furniture is in the way.','家具挡住了去路。');return}
-   stop();const token=epoch;let from=point(actor),started=null,distance=0;
+   stop();const token=epoch;let from=point(actor),started=null,distance=0;position(from);
    function step(now){
     if(token!==epoch||!panel.isConnected||document.hidden||$('page').style.display!=='block'){stop();position(point(actor));pawHomeActorArt(player,'down',false,0);return}
     const next=route[0];if(!next){position(point(actor));pawHomeActorArt(player,'down',false,distance);return}
@@ -296,10 +304,14 @@ function mountCutaway(q,legacyStage){
     im.style.left=a.x*100+'%';im.style.top=(a.y-(f.layer==='wall'?.14:0))*100+'%';
     im.style.width=Math.min(46,Math.max(12,furnitureWidth(item.key)*(layout==='starter'?1:.78)))+'%';
     im.style.zIndex=String(f.layer==='rug'?2:f.layer==='wall'?3:20+Math.round(a.depth*1000));
-    im.classList.toggle('selected',selected===item.key);im.dataset.layer=f.layer;
+    im.classList.toggle('selected',selected===item.key);im.dataset.layer=f.layer;im.style.touchAction=editing?'none':'';
     if(editing){im.tabIndex=0;im.setAttribute('role','button');im.setAttribute('aria-pressed',String(selected===item.key));
      const choose=()=>{selected=item.key;for(const n of stage.querySelectorAll('.pawCutawayFurniture')){n.classList.toggle('selected',n===im);n.setAttribute('aria-pressed',String(n===im))}sayStatus()};
-     im.onclick=e=>{e.stopPropagation();choose()};im.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose()}}
+     im.onclick=e=>{e.stopPropagation();choose()};im.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();stage.focus({preventScroll:true})}};
+     let press=null;
+     im.onpointerdown=e=>{if(e.button!==0)return;press={id:e.pointerId,x:e.clientX,y:e.clientY};im.setPointerCapture(e.pointerId)};
+     im.onpointercancel=im.onlostpointercapture=()=>{press=null};
+     im.onpointerup=e=>{if(!press||press.id!==e.pointerId)return;const start=press;press=null;if(Math.hypot(e.clientX-start.x,e.clientY-start.y)<8)return;choose();const rect=stage.getBoundingClientRect();move(api.nearestCell(layout,(e.clientX-rect.left)/rect.width,(e.clientY-rect.top)/rect.height))}
     }
    }
    position(point(actor))
