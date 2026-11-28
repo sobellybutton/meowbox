@@ -4242,9 +4242,9 @@ function pawTownFront(){
   const front=element('section','',q,'pawTownFront');
   const photo=element('figure','',front,'pawTownFrontPhoto'),im=element('img','',photo);im.src=pawTownPavilionPath;im.alt='';
   const hotspot=(id,en,cn,x,y,fn)=>{const btn=b(photo,tr(en,cn),fn||(()=>pawOpenTownSpace(id)));btn.className='pawTownHotspot';btn.style.left=x+'%';btn.style.top=y+'%';return btn};
-  hotspot('board','Noticeboard','留言墙',24,48);
-  hotspot('lounge','Tea chat','茶馆闲聊',25,70);
-  hotspot('celebrate','Good things','小确幸',76,56);
+  hotspot('board','Noticeboard','留言墙',20,36);
+  hotspot('lounge','Tea chat','茶馆闲聊',22,51);
+  hotspot('celebrate','Good things','小确幸',84,45);
   const more=element('section','',front,'pawTownSection pawHallExtras');
   if(communityURL()){pawTownLink(more,'public','Traveller lobby','旅人聊天室','Chat with real visitors.','和真实旅人聊聊天。');pawTownLink(more,'stroll','Meet travellers','结伴散步','Join a shared walk.','结伴散步。')}
   const paper=b(more,tr('Town paper & private notes','小镇日报与私密留言'),()=>todayScoopBefore.call($('dockScoop')));paper.className='pawTownTextLink';
@@ -15464,13 +15464,15 @@ const pawVisualContinuityStyle=document.createElement('style');pawVisualContinui
 /* PAW_HALL_HOME_COMPOSITION_BEGIN */
 const pawHallHomeComposition=document.createElement('style');
 pawHallHomeComposition.textContent=`
+#game #page:has(#content .pawPavilionScene){background:#eee4d0 url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important}
 #game #content .pawPavilionScene{display:block!important;max-width:560px;margin:0 auto}
+#game #content:has(.pawPavilionScene)>h1,#game #content:has(.pawPavilionScene)>p{color:#435740!important;text-shadow:none!important}
 #game #content .pawPavilionScene>.pawTownFrontPhoto{position:relative!important;isolation:isolate;width:100%;height:auto!important;aspect-ratio:3/4!important;overflow:hidden;border-radius:12px!important;margin:4px 0!important;background:#655344!important}
 #game #content .pawPavilionScene>.pawTownFrontPhoto img{visibility:visible!important;position:absolute;inset:0;width:100%;height:100%;object-fit:cover!important;object-position:center 48%!important}
 #game #content .pawTownHotspot{position:absolute!important;z-index:2;transform:translate(-50%,-50%);width:max-content;max-width:45%;min-height:44px!important;padding:7px 12px!important;background:#f5e5c5f2!important;color:#435740!important;border:1px solid #9b8056!important;border-radius:18px!important;box-shadow:0 2px 6px #34291c66;font-weight:700;font-size:clamp(12px,3.5vw,16px)!important;white-space:normal}
 #game #content .pawTownHotspot:focus-visible{outline:3px solid #eed69a;outline-offset:3px}
 #game #content .pawHallExtras{margin:5px 0 0!important;padding:0!important;background:transparent!important;border:0!important}
-#game #content .pawHallExtras .pawTownTextLink{color:#f8edcf!important;text-shadow:0 1px 3px #231c15;min-height:44px}
+#game #content .pawHallExtras .pawTownTextLink{color:#435740!important;text-shadow:none!important;min-height:44px}
 #game #content:has(.pawPavilionScene)>p{margin:4px 0!important}
 #game #content:has(.pawPavilionScene)>h1{margin:6px 0!important}
 #game #content .hideoutScene .hideoutPlayer{width:auto!important;height:var(--paw-home-height,27%)!important;max-height:30%!important;max-width:28%!important;object-fit:contain!important;filter:none!important}
