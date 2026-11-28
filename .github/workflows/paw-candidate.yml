@@ -49,6 +49,8 @@ jobs:
           node scripts/yue-seated-host-continuity-test.cjs
           node scripts/test-painted-temple-rituals.cjs
           node scripts/minimal-map-hud-test.cjs
+          node scripts/auntie-seat-interruption-test.cjs
+          node scripts/single-scene-activity-surface-test.cjs
           node scripts/scene-ambience-test.cjs
           node scripts/recurring-room-visitors-test.cjs
   district:

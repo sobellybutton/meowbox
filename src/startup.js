@@ -7484,7 +7484,10 @@ function pawGateGround(w,h,progress=0){
 }
 const pawGateCompositionCSS=document.createElement('style');
 pawGateCompositionCSS.textContent=`
-#proposal[data-paw-entrance-step="3"]>.hero{background:#293c32 url('assets/visual/painted/worlds/gateway/scene.webp') center bottom/cover no-repeat!important;container-type:size}
+/* The accessible img is the only painted gateway. Keep the calibrated
+   portrait framing on wide displays without repeating its architecture. */
+#proposal[data-paw-entrance-step="3"]>.hero{background:#293c32!important;container-type:size}
+@media(orientation:landscape){#proposal[data-paw-entrance-step="3"]>.hero{background:linear-gradient(110deg,#34483d,#293c32 50%,#34483d)!important}}
 #proposal[data-paw-entrance-step="3"] .mbGatePainting{object-fit:cover!important;object-position:center bottom!important;backdrop-filter:none!important;background:none!important;display:block!important;visibility:visible!important;z-index:1!important}
 @media(orientation:landscape){#proposal[data-paw-entrance-step="3"] .mbGatePainting{object-fit:contain!important;object-position:center!important}}
 #proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded{position:absolute!important;left:var(--paw-gate-x)!important;top:var(--paw-gate-y)!important;bottom:auto!important;width:auto!important;height:var(--paw-gate-height)!important;max-width:none!important;max-height:none!important;translate:var(--paw-gate-pivot-x,-50%) var(--paw-gate-pivot-y,-100%)!important;transform:none!important;transition:none!important;opacity:1!important;object-fit:contain!important;filter:none!important}
@@ -11897,6 +11900,16 @@ function pawAlcoveStickPoint(g,pose){
  const grip=pawAlcoveReach(g.stickPickFoot).grip;
  return {x:x+(grip.x-x)*pick,y:y+(grip.y-y)*pick,angle:Math.PI*.46*f*(1-pick)}
 }
+// Keep approach, retrieval and carried stick on one shared physical contact point.
+function pawAlcoveStickContact(g,pose,held=false){
+ const ease=u=>{u=Math.max(0,Math.min(1,u));return u*u*(3-2*u)};
+ const move=pose.picked?ease(pose.pick/.45):0;
+ const foot={x:g.stickFoot.x+(g.stickPickFoot.x-g.stickFoot.x)*move,y:g.stickFoot.y+(g.stickPickFoot.y-g.stickFoot.y)*move};
+ const reach=pawAlcoveReach(foot),walking=move>0&&move<1;
+ const hand=pose.picked?(pose.pick>=.45?pawAlcoveStickPoint(g,pose):null):(held||pose.shake?g.tubeGrip:null);
+ const contact=hand&&Math.hypot(hand.x-reach.shoulder.x,hand.y-reach.shoulder.y)<=reach.maxReach?hand:null;
+ return {foot,walking,hand:contact,reach,scale:pawAlcoveActorScale()};
+}
 function pawAlcoveMoonPoint(g,m){
  return {x:g.moonTray.x+(m.x-400)*.26,y:g.moonTray.y-m.lift*.32}
 }
@@ -11926,14 +11939,10 @@ function pawAlcoveTubeShake(shake){
 function pawDrawAlcoveSticks(){
  const run=state,g=pawAlcoveGeometry(),pose=pawTempleStickPose(run,t),held=drag?.id==='sticks';
  pawAlcoveTubeShake(held||pose.shake);
- const move=pose.picked?poseEase(Math.min(1,pose.pick/.45)):0,foot=pawWaterMix(g.stickFoot,g.stickPickFoot,move);
- const sc=pawAlcoveActorScale();
- // The whole actor is proportioned to the counter. Only expose the reaching hand during contact.
- if((held||pose.shake||pose.picked&&pose.pick<.85)&&(!pose.picked||pose.pick<.85)){
-  const {shoulder,grip,sleeve,maxReach}=pawAlcoveReach(foot),hand=!pose.picked?g.tubeGrip:pawWaterMix(g.stickTray,grip,poseEase(Math.max(0,(pose.pick-.45)/.55)));
-  if(Math.hypot(hand.x-shoulder.x,hand.y-shoulder.y)<=maxReach)pawIncenseArm(shoulder,hand,sleeve,false)
- }
- backHuman(foot.x,foot.y,avatar??0,move>0&&move<1,'up',sc);
+ const contact=pawAlcoveStickContact(g,pose,held),{foot,walking,hand,reach,scale}=contact;
+ // Keep the arm behind the painted body; do not reach while still walking.
+ if(hand)pawIncenseArm(reach.shoulder,hand,reach.sleeve,false);
+ backHuman(foot.x,foot.y,avatar??0,walking,'up',scale);
  if(pose.show){
   const pt=pawAlcoveStickPoint(g,pose);ctx.save();try{ctx.translate(pt.x,pt.y);ctx.rotate(pt.angle);
    round(-2.8,-17,5.6,34,1,'#d7b47c','#9c7447');line(-1,-15,-1,15,'#f1dba6',.7);
@@ -14479,10 +14488,13 @@ const pawAuntieSeatDrawBefore=drawActivity;
 drawActivity=function(...args){
  const visit=room==='fish'&&activity==='hit'?state.pawAuntieVisit:null;
  if(visit){
-  pawAuntieSeatAdvance(visit,t,pawArcadeInputBlocked());
-  const frame=pawAuntieSeatFrame(visit.phase,visit.age,residentReducedMotion.matches);
-  if(visit.phase==='arrival'&&frame.done){visit.phase='seated';visit.age=0;refreshControls();hint('Ah Ma: What is bothering you today?','阿嬷：今天有什么烦心事？')}
-  else if(visit.phase==='departure'&&frame.done){
+  const blocked=pawArcadeInputBlocked();
+  pawAuntieSeatAdvance(visit,t,blocked);
+  // Reduced motion may complete a pose immediately, but never complete
+  // an arrival or leave the room under a covered or hidden scene.
+  const frame=pawAuntieSeatFrame(visit.phase,visit.age,residentReducedMotion.matches&&!blocked);
+  if(!blocked&&visit.phase==='arrival'&&frame.done){visit.phase='seated';visit.age=0;refreshControls();hint('Ah Ma: What is bothering you today?','阿嬷：今天有什么烦心事？')}
+  else if(!blocked&&visit.phase==='departure'&&frame.done){
    return pawAuntieSeatBackBefore.apply($('back'),visit.backArgs||[])
   }
  }
@@ -15053,6 +15065,42 @@ pawDistrictSignStyle.textContent=`
 `;document.head.append(pawDistrictSignStyle);
 /* PAW_DISTRICT_SIGN_MATERIAL_END */
 
+
+
+/* PAW_SINGLE_ACTIVITY_SURFACE_BEGIN */
+// Keep authored physical controls, accessible equivalents and current hit
+// callbacks. Style the existing control owner, not a duplicate toolbar.
+const pawSingleActivitySurface=document.createElement('style');
+pawSingleActivitySurface.textContent=`
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls):not([hidden]){
+ box-sizing:border-box!important;max-width:calc(100% - 24px)!important;
+ background:#f3e7d0f0!important;border:0!important;border-radius:7px!important;
+ box-shadow:0 2px 7px #30291e29!important;padding:5px 8px!important;gap:3px!important;
+}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button{
+ box-sizing:border-box!important;min-height:44px!important;min-width:0!important;
+ white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.3!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ border-bottom:1px solid #ac967064!important;background:transparent!important;color:#405440!important;
+ padding:5px 7px!important;text-align:center!important
+}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button[aria-pressed=true]{
+ background:#dbe1cb!important;color:#395846!important
+}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button:focus-visible{outline:2px solid #39594d!important;outline-offset:-2px!important}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button:disabled{opacity:.5!important}
+html #game #gameControls .festivalFishButtons{gap:3px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+html #game #gameControls.mb5ActivityAssist:not([hidden]){grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr))!important}
+@media(max-width:480px){
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls):not([hidden]){max-height:min(40dvh,260px)!important;overflow-y:auto!important;overscroll-behavior:contain}
+}
+@media(forced-colors:active){
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls):not([hidden]){background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important}
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button{color:ButtonText!important;border-bottom:1px solid ButtonText!important}
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button[aria-pressed=true]{background:Highlight!important;color:HighlightText!important}
+}
+`;document.head.append(pawSingleActivitySurface);
+/* PAW_SINGLE_ACTIVITY_SURFACE_END */
 
 /* PAW_PROFILE_SETTINGS_BEGIN */
 // Canonical utility route: profile > settings. Keep the original storage,
