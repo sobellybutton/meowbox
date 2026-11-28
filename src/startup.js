@@ -14130,20 +14130,21 @@ function pawYueQuestionSteps(form,out,kind){
  if(steps.some(group=>!group.length||group.some(n=>!n||n===form)))return;
  const questions=pawYueDeskQuestions(kind);if(questions.length!==steps.length)return;
  let index=0,finished=false;
+ const visitEvents=new AbortController();
  form.classList.add('pawYueGuidedForm');
  const question=element('p','',form,'pawYueQuestion');form.prepend(question);question.setAttribute('aria-live','polite');
  const controls=element('div','',form,'pawYueStepNav'),back=b(controls,tr('Previous','上一步'),()=>show(index-1)),next=b(controls,tr('Continue','继续'),advance);back.type=next.type='button';submit.before(controls);
  function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));form.dataset.pawYueStep=String(index);question.textContent=tr(...questions[index]);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1)}
  function advance(){if(finished||index>=steps.length-1)return;for(const field of steps[index].flatMap(n=>[...n.querySelectorAll('input,select')]))if(!field.checkValidity()){field.reportValidity();return}show(index+1)}
- form.addEventListener('keydown',e=>{if(!finished&&index<steps.length-1&&e.key==='Enter'&&e.target.matches('input')){e.preventDefault();advance()}});
+ form.addEventListener('keydown',e=>{if(!finished&&index<steps.length-1&&e.key==='Enter'&&e.target.matches('input')){e.preventDefault();advance()}},{signal:visitEvents.signal});
  // Bring an invalid hidden field back into view before native validation focuses it.
  form.addEventListener('invalid',e=>{
   if(finished)return;
   const i=steps.findIndex(group=>group.some(node=>node.contains(e.target)));
   if(i>=0)show(i);
   for(let n=e.target.parentElement;n&&n!==form;n=n.parentElement)if(n.tagName==='DETAILS')n.open=true
- },true);
- form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();controls.remove()}});
+ },{capture:true,signal:visitEvents.signal});
+ form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;visitEvents.abort();delete form.pawYueRestoreStep;delete form.dataset.pawYueStep;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();controls.remove()}},{signal:visitEvents.signal});
  form.pawYueRestoreStep=i=>{if(Number.isInteger(i))show(i)};
  show(0)
 }

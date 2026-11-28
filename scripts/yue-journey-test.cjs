@@ -122,6 +122,8 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
 
    assert(await p.locator('.astroForm').isHidden(),'Form did not collapse');
    assert(await p.locator('.astroForm:visible').count()===0,'Birth details request remains over the chart');
+   assert(await p.locator('.pawYueStepNav').count()===0,'Completed consultation retains question controls');
+   assert(await p.locator('.astroForm').getAttribute('data-paw-yue-step')===null,'Completed consultation retained stale question state');
    assert(await p.locator('.chartConsultation:visible').count()===1,'Duplicate chart result surfaces');
    assert(await p.locator('.ziGrid article:not(.blank)').count()===12,'Incomplete palace chart');
    assert(await p.locator('#page').getAttribute('data-paw-yue-expanded')==='true','Chart did not unfold');
