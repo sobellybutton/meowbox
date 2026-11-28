@@ -10306,6 +10306,20 @@ function pawPaintedPlaquePlacement(x,y,w,h,view,screen,blockers=[]){
  }
  return null
 }
+// Match each compact station plaque to the room's painted materials.
+// The canvas keeps one surface; no additional banner, frame or shadow.
+function pawIndoorPlaquePalette(id){
+ if(id==='tarot'||id==='destiny'||id==='quiz'||id==='story'||id==='match')return ['#443b59','#b9a17b','#fff0d7'];
+ if(id==='boba')return ['#824955','#d5a67c','#fff2df'];
+ if(id==='kitchen'||id==='arcade')return ['#704638','#cba16d','#fff2db'];
+ if(id==='tea'||id==='fish'||id==='park'||id==='wishes')return ['#425b54','#b8b18a','#fff3dc'];
+ return ['#503b2c','#d7ba83','#fff1d7']
+}
+function pawDrawIndoorPlaque(id,place,w,h,font,value,scale){
+ const [fill,edge,ink]=pawIndoorPlaquePalette(id);
+ round(place.x-w/2,place.y-h/2,w,h,Math.min(3,2/Math.max(.08,scale)),fill,edge);
+ activityFitText(value,place.x,place.y,font,w-8,ink)
+}
 function pawHallActorScale(height,reference,ratio=1){
  return Number.isFinite(height)&&height>0&&Number.isFinite(reference)&&reference>0?height/reference*Math.max(.75,Math.min(1.1,ratio)):1
 }
@@ -10372,8 +10386,7 @@ label=function(name,x,y,fn){
   const place=pawPaintedPlaquePlacement(anchorX,cy,w,h,{s:scale,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   // Original station body target and room directory remain available.
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,3,'#503b2ce8','#d7ba83');
-  activityFitText(value,place.x,place.y,font,w-8,'#fff1d7');
+  pawDrawIndoorPlaque(room,place,w,h,font,value,scale);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(id);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn);
  }finally{ctx.restore()}
@@ -12437,8 +12450,8 @@ drawActivity=function(...args){
 // The path is the clear aisle between painted furniture, not the countertop.
 const pawFoodPlate={x:100,y:-145,w:600,h:600*1648/928};
 const pawFoodRoomSpecs={
- kitchen:{station:'cook',entry:[400,735],arrival:[400,690],anchor:[290,420,350,580],resident:[465,605],visitors:[[365,715],[435,730],[400,660]],label:['Cook with Grandma','跟外婆煮汤'],labelY:467},
- boba:{station:'bubbleTea',entry:[400,735],arrival:[400,675],anchor:[400,345,400,565],resident:[290,615],visitors:[[470,705],[340,720],[435,640]],label:['Make bubble tea','手摇奶茶'],labelY:397}
+ kitchen:{station:'cook',entry:[400,735],arrival:[400,690],anchor:[290,420,350,580],resident:[465,605],visitors:[[365,715],[435,730],[400,660]],label:['Cook with Grandma','跟外婆煮汤'],labelX:230,labelY:300},
+ boba:{station:'bubbleTea',entry:[400,735],arrival:[400,675],anchor:[400,345,400,565],resident:[290,615],visitors:[[470,705],[340,720],[435,640]],label:['Make bubble tea','手摇奶茶'],labelX:400,labelY:374}
 };
 function pawFoodSafe(id,x,y){
  if(!Object.hasOwn(pawFoodRoomSpecs,id)||![x,y].every(Number.isFinite)||y<565||y>738)return false;
@@ -12599,9 +12612,9 @@ label=function(name,x,y,fn){
  const sc=Math.max(.08,cam.scale),font=Math.min(26,Math.max(17,12/sc)),cy=q.labelY,value=tr(...q.label);
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';const w=Math.min(190,Math.max(75,ctx.measureText(value).width+18)),h=font+13;
-  const place=pawPaintedPlaquePlacement(x,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
+  const place=pawPaintedPlaquePlacement(q.labelX,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,4,'#523c2dec','#d7b982');activityFitText(value,place.x,place.y,font,w-10,'#fff0d5');
+  pawDrawIndoorPlaque(room,place,w,h,font,value,sc);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(q.station);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
  }finally{ctx.restore()}
@@ -13032,7 +13045,7 @@ label=function(name,x,y,fn){
   const w=Math.min(160,Math.max(75,ctx.measureText(value).width+18)),h=font+13;
   const place=pawPaintedPlaquePlacement(cx,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,4,'#523c2dec','#d7b982');activityFitText(value,place.x,place.y,font,w-10,'#fff0d5');
+  pawDrawIndoorPlaque(room,place,w,h,font,value,sc);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(station.id);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
  }finally{ctx.restore()}
@@ -13391,7 +13404,7 @@ function pawDrawYueDeskPlaque(fn){
   const w=Math.max(58/scale,ctx.measureText(name).width+12/scale),h=22/scale;
   const place=pawPaintedPlaquePlacement(q.x,q.y,w,h,{s:scale,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers,...pawLocalVisitors.filter(pawVisitorVisible).map(a=>meowIndoorActorBounds(a))]);
   if(!place)return false;
-  round(place.x-w/2,place.y-h/2,w,h,2/scale,'#4b392ceb','#c9a979');activityFitText(name,place.x,place.y,font,w-6/scale,'#fff1d8');
+  pawDrawIndoorPlaque(room,place,w,h,font,name,scale);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add('destiny');
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn);return true
  }finally{ctx.restore()}
@@ -13439,7 +13452,7 @@ label=function(name,x,y,fn){
   const w=Math.min(144,Math.max(60,ctx.measureText(name).width+12)),h=font+9;
   const place=pawPaintedPlaquePlacement(cx,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,3,'#4e3d32ed','#d7bc88');activityFitText(name,place.x,place.y,font,w-7,'#fff0d5');
+  pawDrawIndoorPlaque(room,place,w,h,font,name,sc);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(station.id);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
  }finally{ctx.restore()}
