@@ -341,8 +341,8 @@ function pawRitualAdvance(){
   const r=state.result;
   if(r===0)addItem('Heaven’s approval','圣杯祝福');
   if(Number.isInteger(state.pawFortuneNumber)&&state.pawFortuneNumber>=1&&state.pawFortuneNumber<=12){
-   if(r===0){react('Sheng Bei! Your stick is confirmed.','圣杯！此签已获确认。');hint('Your fortune slip is ready.','可以领取签文了。')}
-   else{react(r===1?'No approval. Draw a new stick.':'Not confirmed. Draw a new stick.',r===1?'阴杯。请重新求签。':'笑杯。请重新求签。');hint('Return to the fortune sticks before trying again.','请返回签筒处重新求签。')}
+   if(r===0){react('Sheng Bei! Your stick is confirmed.','圣杯！此签已获确认。');hint('Confirmed. Your fortune slip is ready; take your time reading it.','圣杯确认啦，可以领签文了。不赶时间，慢慢看。')}
+   else{react(r===1?'Yin Bei. Draw a new stick; no fortune slip yet.':'Xiao Bei. Draw a new stick; no fortune slip yet.',r===1?'阴杯。请重新摇签，暂不能领签。':'笑杯。请重新摇签，暂不能领签。');hint('No slip yet. Return to the stick holder and draw again. Even answers take their time.','这支签暂时不能领，回签筒重新摇签吧。答案也有自己的节奏。')}
   }else react(['Yes!','No.','Try again.'][r],['圣杯！','阴杯。','笑杯。'][r]);return
  }
  if(activity!=='sticks')return;
@@ -1114,7 +1114,7 @@ function wishLanding(pond,x,y,hit,bumped){if(matchMedia('(prefers-reduced-motion
 const ritualExperienceStart=start;
 start=function(a){ritualExperienceStart(a);if(a==='fish')hint('Cast your line, watch the float, and reel in when it dips. No rush.','抛下鱼线，看看浮标，等它沉下去再收线。不用赶。');if(a==='cook')hint('Choose a few ingredients, drop them in the pot and stir slowly.','挑几样食材放进锅里，慢慢搅拌。');if(a==='pet')hint('Gently stroke the cat. Let it decide when it trusts you.','轻轻摸摸小猫，让它慢慢熟悉你。')};
 const ritualExperienceFish=doFish;
-doFish=function(){if(activity!=='fish')return ritualExperienceFish();const before=state.fish;ritualExperienceFish();if(before===0&&state.fish===1)hint('The float is on the water. Enjoy the quiet.','浮标已经入水，安静等一会儿吧。');else if(before===2&&state.fish===0)hint('A little discovery from the water. Cast again whenever you like.','水里捞起一份小惊喜。想钓就再抛一竿。')};
+doFish=function(){if(activity!=='fish')return ritualExperienceFish();const before=state.fish;ritualExperienceFish();if(before===0&&state.fish===1)hint('Line in the water. The fish can reply when they have bandwidth.','鱼线放好了。鱼忙就让它忙，不用催回复。');else if(before===2&&state.fish===0)hint('Something turned up! Finally, a return on doing nothing. Cast again whenever you like.','居然有收获！摸鱼终于有回报了。想钓就再来一竿。')};
 const quietGardenStyle=document.createElement('style');quietGardenStyle.textContent='.wishPower:before{content:"";display:block;position:absolute;left:36%;width:2px;height:8px;background:#fff0cb99}.wishPower{position:relative}.wishRitual .wishBowl{box-shadow:0 8px 15px #163b37aa,inset 0 3px 8px #e8d8b6}.wishMessage{overflow-wrap:anywhere}';document.head.append(quietGardenStyle);
 
 /* Small screen polish: keep scrollable forms and the scene controls usable. */
@@ -1144,7 +1144,7 @@ function kitchenActualRecipe(){let i=state.ingredients||[],veg=state.vegetarian;
 const deeperPot=pot;pot=function(x,y){deeperPot(x,y);if(activity!=='cook'||!state.ingredients?.length)return;ctx.save();ctx.beginPath();ctx.ellipse(x,y-10,77,20,0,0,TAU);ctx.clip();let energy=Math.max(0,1-(t-(state.stirAt||-10))*1.3),rotation=(state.stirAngle||0)+t*.12+energy*t*.22;for(let i of state.ingredients){for(let j=0;j<3;j++){let angle=i*2.1+j*.7+rotation;ctx.save();ctx.translate(x+Math.cos(angle)*54,y-10+Math.sin(angle)*12);ctx.rotate(angle);round(-7,-3,14,6,2,(state.vegetarian?['#947256','#92ad69','#eee0b4']:['#cf7956','#92ad69','#f0dd99'])[i]);ctx.restore()}}ctx.restore()};
 const deeperStart=start;start=function(a){deeperStart(a);if(a==='cook')hint('Drop your favourite ingredients in the pot. Stir in gentle circles.','选喜欢的食材下锅，再轻轻画圈搅拌。');if(a==='pet'){prepareParkCat()}};
 const deeperDraw=drawActivity;drawActivity=function(){deeperDraw();if(activity==='pet'){ctx.save();let f=Math.min(1,(state.pet||0)/100);const catProfile=parkCats[state.petKind??0];txt(tr(...catProfile.name),400,590,21,'#fff1d0');txt(state.done?tr('You have been adopted.','你已经被猫领养啦。'):state.petAlarmUntil>t?tr('A little slower, please.','请摸慢一点嘛。'):tr('Trust','信任')+' '+Math.round(f*100)+'%',400,623,18,'#fff1d0');ctx.restore()}};
-const deeperFish=doFish;doFish=function(){let before=state?.fish;deeperFish();if(activity==='fish'&&before===2&&state.fish===0){let g=state.catchName;if(g?.[0]==='Moonlit postcard')hint('A rare postcard! Someone wrote a wish on the back.','稀有明信片！背面有人写了一份心愿。');else if(g?.[0]==='Sealed train ticket')hint('An old ticket to a place that no longer appears on maps.','一张旧车票，目的地早已从地图上消失。')}};
+const deeperFish=doFish;doFish=function(){let before=state?.fish;deeperFish();if(activity==='fish'&&before===2&&state.fish===0){let g=state.catchName;if(g?.[0]==='Moonlit postcard')hint('A rare postcard, with a wish on the back. Even the pond has better mail than your inbox.','稀有明信片，背面还有心愿。连鱼塘寄来的信都比工作邮件有意思。');else if(g?.[0]==='Sealed train ticket')hint('An old ticket to a place off the map. No itinerary, no group chat, just a little mystery.','一张通往地图外的旧车票。没行程表，没群聊，只有一点小秘密。')}};
 
 /* Temple visit: quiet, optional gestures in the existing illustrated room. */
 activityTitle.prayer=['A moment at the altar','静心祈愿'];
@@ -1214,9 +1214,9 @@ function incenseTray(){
 const incenseStagePrompts={
  collect:['Take three joss sticks, one at a time.','取三炷香，一炷一炷来。'],
  lightReady:['Light all three at the candle.','在烛火旁点燃三炷香。'],
- hold:['Hold the incense and bow gently.','双手持香，轻轻鞠躬。'],
+ hold:['Hold the incense and bow gently. For this moment, nothing else needs you.','双手持香，轻轻鞠躬。这一刻，什么事都可以先放一放。'],
  offer:['Now place the incense in the burner.','现在将香插入香炉。'],
- complete:['Your offering is complete. There is no need to hurry to the next thing.','上香礼成。不必赶着做下一件事。']
+ complete:['Offering complete. You can stand here a little longer. Nobody is clocking your break.','上香礼成。想多站一会儿就多站一会儿，这里不用打卡。']
 };
 const prayerDraw=drawActivity;drawActivity=function(){
  if(activity!=='prayer')return prayerDraw();
@@ -1291,8 +1291,8 @@ const shrinePaperLines=[
 let templeTies=load('templeTiesV1',[]);if(!Array.isArray(templeTies))templeTies=[];
 const templeMoreStart=start;start=function(a){templeMoreStart(a);if(a==='templeBell'){state.bellAt=-100;state.bellStrength=0;hint('Pull the wooden striker back, then release.','把木槌向后拉，再松手。')}if(a==='templeWater'){state.waterAt=-100;state.waterStage=0;hint('Drag the bamboo ladle down to the water to fill it.','将竹勺拖入水中舀水。')}if(a==='templePaper'){state.paperAt=-100;state.paperStage='folded';state.paperNumber=1;hint('Tap to unfold the slip. It can wait while you take a breath.','点开签纸，慢慢读。它又不会催你。')}};
 function templePaperOpen(n){start('templePaper');state.paperNumber=Math.max(1,Math.min(12,n||1));}
-function templePaperTap(){if(state.paperStage!=='folded')return;state.paperAt=t;state.paperStage='opening';sound(410);hint('Read your fortune, then keep it or leave it here.','慢慢读签文，可以收藏，也可以留在这里。')}
-function templePaperKeep(tie){if(state.paperStage!=='open')return;state.paperStage=tie?'tied':'kept';state.paperAt=t;if(tie){templeTies.push(state.paperNumber);templeTies=templeTies.slice(-28);save('templeTiesV1',templeTies);hint('Leave the paper, take the peace.','留下签纸，带走平静。')}else{addItem('Fortune paper '+state.paperNumber,'签文纸 '+state.paperNumber);hint('A little reminder for another day.','把这一份提醒留给以后的自己。')}sound(530)}
+function templePaperTap(){if(state.paperStage!=='folded')return;state.paperAt=t;state.paperStage='opening';sound(410);hint('Read at your own pace. Keep the slip or leave it here; no reply required.','慢慢看签文。想带走就带走，不想带走也行，不用回复收到。')}
+function templePaperKeep(tie){if(state.paperStage!=='open')return;state.paperStage=tie?'tied':'kept';state.paperAt=t;if(tie){templeTies.push(state.paperNumber);templeTies=templeTies.slice(-28);save('templeTiesV1',templeTies);hint('Leave the paper, take the peace. No need to carry everything home.','签纸留下，心放轻一点。什么都往家里带，多累呀。')}else{addItem('Fortune paper '+state.paperNumber,'签文纸 '+state.paperNumber);hint('Saved for a rainy day. This one is for you, not your boss.','留着以后慢慢看。这份是给自己的，不是给老板交差的。')}sound(530)}
 function templeBellArt(x,y,sc=1,angle=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(angle);let g=ctx.createLinearGradient(-75,0,80,0);g.addColorStop(0,'#554c3b');g.addColorStop(.27,'#8e8562');g.addColorStop(.53,'#b3a378');g.addColorStop(.8,'#71664f');g.addColorStop(1,'#4b493e');round(-12,-104,24,27,7,'#8d805e','#514a38');ctx.beginPath();ctx.moveTo(-29,-80);ctx.bezierCurveTo(-62,-79,-62,-20,-77,35);ctx.quadraticCurveTo(0,55,77,35);ctx.bezierCurveTo(62,-20,62,-79,29,-80);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#4d493b';ctx.lineWidth=3;ctx.stroke();ellipse(0,37,78,13,'#57513e');ellipse(0,35,70,8,'#343a34');for(let j=0;j<3;j++){ctx.beginPath();ctx.ellipse(0,-52+j*24,46+j*7,7,0,0,Math.PI);ctx.strokeStyle='#cab88a90';ctx.lineWidth=2;ctx.stroke()}for(let j=0;j<6;j++)ellipse(-36+j*14,-48,3,3,'#c2b28a');ctx.restore()}
 function templeLadle(x,y,a=0){ctx.save();ctx.translate(x,y);ctx.rotate(a);line(-68,0,24,0,'#97734b',9);line(-66,-2,22,-2,'#d8bc80',3);ellipse(35,1,23,12,'#8d714b');ellipse(35,-2,21,10,'#d2bc86');ellipse(35,-2,15,6,'#72948c');ctx.restore()}
 function templeBasin(x,y){ctx.save();let g=ctx.createLinearGradient(0,y,0,y+85);g.addColorStop(0,'#a9aa91');g.addColorStop(1,'#616d61');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x-94,y);ctx.lineTo(x+94,y);ctx.lineTo(x+69,y+65);ctx.quadraticCurveTo(x,y+88,x-69,y+65);ctx.closePath();ctx.fill();ellipse(x,y,96,32,'#a6ad94');ellipse(x,y,82,25,'#526f68');ellipse(x,y,76,20,'#75948b');for(let i=0;i<5;i++){let f=(t*.38+i*.19)%1;ctx.strokeStyle='rgba(227,237,214,'+(1-f)*.55+')';ctx.beginPath();ctx.ellipse(x+22,y,8+f*48,2+f*13,0,0,TAU);ctx.stroke()}ctx.restore()}
@@ -1598,7 +1598,7 @@ function rhythmHit(lane){if(activity!=='rhythm'||state.rhythmStage!=='play')retu
 function rhythmFinish(){if(state.rhythmStage!=='play')return;state.rhythmStage='result';state.rhythmEnd=t;let best=Number(load('rhythmHighV1',0))||0;save('rhythmHighV1',Math.max(best,state.rhythmScore));addItem('After-hours rhythm ticket','下班节拍门票');if(state.rhythmScore>=1600)addItem('Golden rhythm badge','金色节拍徽章');hint(...(state.rhythmScore>=1600?['Your boss cannot compete with those moves.','老板可比不上你的舞步。']:['The dance floor survived. Nobody asked for a report.','舞池没事，你也没事，还不用交总结。']))}
 document.addEventListener('keydown',e=>{if(activity!=='rhythm'||state.rhythmStage!=='play'||e.repeat||e.altKey||e.ctrlKey||e.metaKey||e.target.matches?.('input,textarea,select,button,[contenteditable=true]')||pawArcadeInputBlocked())return;const l=['ArrowLeft','ArrowDown','ArrowUp','ArrowRight'].indexOf(e.key);if(l>=0){e.preventDefault();rhythmHit(l)}});
 const boxPrizes=[['Office escape cat','逃班猫','#d89858',0,'common'],['Meeting survivor cat','开会幸存猫','#ece1c6',1,'common'],['Annual leave cat','请假猫','#9399a2',4,'uncommon'],['Moonlight cat','月光猫','#44434a',2,'rare'],['Golden payday cat','金薪猫','#d1a077',3,'rare'],['Strawberry mochi kitten','草莓麻薯猫','#eab0b5',1,'common','berry'],['Toast loaf cat','吐司猫','#dfb981',0,'common','toast'],['Bubble tea bear','奶茶小熊','#c99978',0,'common','tea'],['Sleepy cloud bunny','困困云朵兔','#d5dce9',1,'uncommon','cloud'],['Little raincoat duck','雨衣小鸭','#e7c570',0,'uncommon','duck'],['Sakura picnic fox','樱花野餐狐','#e8b098',3,'uncommon','fox'],['Moon rabbit lantern','月兔小灯','#c5b3e0',1,'rare','moon'],['Secret aurora dragon','极光小龙','#9dc9b8',4,'secret','dragon']];
-function boxSelect(i){if(activity!=='blindBox'||state.boxStage!=='choose'||!Number.isInteger(i)||i<0||i>2)return;if(!blindShopCanOpen()){blindShopExplain();return}state.boxPick=i;state.boxStage='shake';state.boxAt=t;sound(400);hint('Shake the box sideways, then open it.','左右摇动盒子，再打开看看。')}
+function boxSelect(i){if(activity!=='blindBox'||state.boxStage!=='choose'||!Number.isInteger(i)||i<0||i>2)return;if(!blindShopCanOpen()){blindShopExplain();return}state.boxPick=i;state.boxStage='shake';state.boxAt=t;sound(400);hint('Shake the box sideways, then open it. Hopefully not another tiny responsibility.','左右摇一摇再打开。希望里面不是又一件小小的待办。')}
 function boxShake(amount){if(activity!=='blindBox'||state.boxStage!=='shake'||!Number.isFinite(amount)||amount<=0)return;state.boxShake=Math.min(100,state.boxShake+Math.max(0,Math.min(50,amount*.65)));state.boxAt=t;sound(280);if(state.boxShake>=100){state.boxStage='ready';hint('Something\'s rattling inside. At least it isn\'t another task.','里面响起来了！总不会又是一份待办吧。打开看看。')}}
 function boxOpen(){return openPaidBlindBox()}
 function boxAward(){if(activity!=='blindBox'||state.boxStage!=='opening')return;state.boxStage='result';state.boxAt=t;const v=boxPrizes[state.boxPrize];if(!v)return;addItem(v[0],v[1]);const count=Number(load('blindBoxOpenedV1',0))||0;save('blindBoxOpenedV1',count+1);hint(...blindFigureLore[state.boxPrize]);}
@@ -2211,12 +2211,12 @@ function readingPositionCaption(name,x,y,w){
 function shakeFortuneStick(){
  if(activity!=='sticks'||!pawRitualInputAllowed()||state.drawing||state.fallenStick)return false;
  state.shakeUntil=t+.38;state.stickDrawAt=t;state.stickLaunchX=400;state.drawing=true;state.stickNumber=1+Math.floor(Math.random()*12);
- physicalFx('wood',.45);sound(350);hint('One stick is finding its way out…','一支签正在慢慢落下……');return true
+ physicalFx('wood',.45);sound(350);hint('One stick is finding its way out… even bamboo needs a moment.','签快出来了……竹签也得有个准备时间嘛。');return true
 }
 function pickupFortuneStick(){
  if(activity!=='sticks'||!pawRitualInputAllowed()||state.drawing||!state.fallenStick||state.stickPicked)return false;
  state.stickPicked=true;state.stickPickAt=t;state.stickDelivered=false;
- sound(420);hint('Take the numbered stick to the moon blocks.','拾起竹签，前往筊杯处确认。');return true
+ sound(420);hint('Take the numbered stick to the moon blocks. One little confirmation, then we can read.','拿好签号，去掷筊确认。先问清楚，别急着看答案。');return true
 }
 
 /* Original portrait-composed destinations. All coordinates refer to the new artwork,
@@ -2717,7 +2717,7 @@ function clawCabinet(){
  round(358,559,174,33,7,state.dropping?'#aa9983':'#b76856','#7a5146');
  activityFitText(state.dropping?tr('In motion…','抓取中……'):tr('LOWER CLAW','下夹'),445,575,15,160,'#fff0db');
  if(!state.dropping){target(252,358,296,178,()=>{},'claw');target(354,540,184,W<H?65:59,doClaw)}
- txt(state.clawResult?state.clawResult.i>=0?tr('Prize delivered!','玩偶到手啦！'):tr('Try a little closer','再瞄准一点'):tr('Slide to aim','左右滑动瞄准'),400,621,15,'#fff1d8');if(!state.dropping){label(state.clawExpert?tr('Precision mode: ON','精准模式：开'):tr('Try precision mode','挑战精准夹取'),400,655,()=>{state.clawExpert=!state.clawExpert;state.clawResult=null;hint(...(state.clawExpert?['Expert mode: aim at the exact centre.','高手模式：对准玩偶正中心。']:['Casual mode. Take your time.','休闲模式，慢慢来。']))});}
+ txt(state.clawResult?state.clawResult.i>=0?tr('Prize delivered!','玩偶到手啦！'):tr('Try a little closer','再瞄准一点'):tr('Slide to aim','左右滑动瞄准'),400,621,15,'#fff1d8');if(!state.dropping){label(state.clawExpert?tr('Precision mode: ON','精准模式：开'):tr('Try precision mode','挑战精准夹取'),400,655,()=>{state.clawExpert=!state.clawExpert;state.clawResult=null;hint(...(state.clawExpert?['Expert mode: aim at the exact centre. The plushie has very high standards.','高手模式：对准玩偶正中心。人家玩偶要求很高的。']:['Casual mode. No claw machine performance review today.','休闲模式，慢慢夹。今天没有夹娃娃绩效考核。']))});}
  ctx.restore();
 }
 const previousClawDraw=drawActivity;
@@ -3025,7 +3025,7 @@ function riverRing(x,y,age,max=55){
 function riverBegin(mode){
  if(room!=='fish')return;
  start(mode);state.riverPhase='ready';state.riverAt=t;state.riverNote='';state.riverMode=mode;state.riverStrength=60;
- hint(...(mode==='riverBottle'?['Write a private note, set throw strength, then let it go.','写下私人纸条，调整力度，再把烦恼放走。']:['Choose what to shout. No microphone needed.','想喊什么就喊什么，不需要麦克风。']));
+ hint(...(mode==='riverBottle'?['Write a private note, choose the throw strength, then let it go. No forwarding address.','写张私人纸条，选好力度，把烦恼放走。不用留回邮地址。']:['Choose what to shout. No microphone, no meeting recording.','想喊什么就喊什么。不用麦克风，也没人录会议纪要。']));
  refreshControls()
 }
 function riverPerform(){
@@ -3033,7 +3033,7 @@ function riverPerform(){
  const input=$('riverPrivateNote');if(input){state.riverNote=input.value.slice(0,100);input.value='';input.blur()}
  if(activity==='riverShout'&&!state.riverNote)state.riverNote=tr(...townReaction('riverPrompt',riverNotes));
  state.riverPhase='walk';state.riverLaunch=null;state.riverAt=t;state.count=(state.count||0)+1;refreshControls();sound(420);
- hint(...(activity==='riverBottle'?['Fold it, seal it, and walk to the water.','折好纸条，封好瓶子，走到河边。']:['Walk to the riverbank and let it out.','走到河边，把烦恼喊出去。']))
+ hint(...(activity==='riverBottle'?['Fold the note, seal the bottle and walk to the water. That worry has packed its bags.','折好纸条，封好瓶子，走到河边。烦恼已经收拾好行李啦。']:['Walk to the riverbank and let it out. The river does not have a complaint form.','走到河边，把烦恼喊出去。不用填投诉表。']))
 }
 function riverReset(){
  if(!riverIsActive()||state.riverPhase!=='done')return;state.riverNote='';state.riverLaunch=null;state.riverPhase='ready';state.riverAt=t;refreshControls()
@@ -4698,7 +4698,7 @@ function careStart(action){
  if(!careIsActive())return;const a=state.care;if(a.phase!=='idle'||!careCan(a.values,action))return;
  a.phase=action;a.at=t;a.fromX=a.x;a.fromY=a.y;a.stroke=0;a.drag=null;a.assisted=false;
  a.supply=pawCareSupplySetup(action,a.supplyFrom);a.supplyFrom=null;
- const messages={feed:['The cat is inspecting dinner.','猫猫正在检查晚饭。'],water:['Fresh water is on the way.','新鲜水来了。'],play:['Move the feather across the grass.','在草地上轻轻拖动羽毛。'],pet:['Stroke along the back, slowly.','顺着背部慢慢摸。'],rest:['Let the cat settle down in peace.','让猫猫安静地睡一会儿。']};
+ const messages={feed:['Dinner inspection in progress. The head of quality assurance has whiskers.','晚饭质检中。质检主任长着胡须。'],water:['Fresh water coming up. The tiny landlord has standards.','换上新鲜水啦。小房东可是很讲究的。'],play:['Move the feather across the grass. The cat has a suspect in sight.','轻轻拖动草地上的羽毛。猫警官锁定嫌疑犯了。'],pet:['Stroke along the back, slowly. Congratulations on your new massage business.','顺着背部慢慢摸。恭喜你，猫咪按摩店正式开张。'],rest:['Let the cat settle. Its calendar is fully booked with naps.','让猫猫安静睡吧。人家的行程表全排满了，都是午睡。']};
  careMessage(...messages[action]);careSync()
 }
 let pawCareSleep=null;
@@ -8684,10 +8684,10 @@ function blindWeightedPick(pool,random=Math.random){
 }
 function blindShopCanOpen(){return hideoutBalance()>=blindPrice&&blindStockRemaining()>0&&blindUnowned().length>0}
 function blindShopMessage(){
- if(!blindUnowned().length)return ['Your cabinet is complete. Enjoy your little companions!','收藏柜满啦，好好陪陪你的小伙伴吧！'];
- if(!blindStockRemaining())return ['Today’s three boxes have found homes. Restocked tomorrow.','今天三盒都找到主人啦，明天再补货。'];
- if(hideoutBalance()<blindPrice)return ['Explore for more Paw Coins. A box costs 40; no real money.','去小镇逛逛攒爪爪币吧。一盒40爪爪币，不用花真钱。'];
- return ['Choose a box on the shelf. 40 Paw Coins when you open it.','挑一个架上的盒子。开盒时扣40爪爪币。']
+ if(!blindUnowned().length)return ['Your cabinet is complete! The tiny residents have declared a housewarming.','收藏柜集齐啦！小家伙们准备办乔迁派对。'];
+ if(!blindStockRemaining())return ['Today\'s three boxes have found homes. The shopkeeper is off duty until tomorrow.','今天三盒都找到主人啦。店主收工，明天补货。'];
+ if(hideoutBalance()<blindPrice)return ['A box costs 40 Paw Coins. Explore to earn more; your real wallet gets a day off.','一盒40爪爪币。去小镇玩玩攒币吧，现实的钱包今天放假。'];
+ return ['Choose a box on the shelf. Opening costs 40 Paw Coins; tiny suspense is included.','挑个架上的盒子，开盒扣40爪爪币。紧张刺激免费附送。']
 }
 function blindShopExplain(){hint(...blindShopMessage())}
 function openPaidBlindBox(){
@@ -9492,25 +9492,25 @@ function deerVisitReward(fed=true){
 function deerBow(){
  if(activity!=='deerVisit'||state.deerPhase!=='greet')return;
  state.deerPhase='bow';state.deerAt=t;refreshControls();
- hint('A small bow, then let the deer decide whether to respond.','轻轻鞠躬，让小鹿自己决定要不要回应。')
+ hint('Bow gently, then give the deer space. No need to chase a reply.','轻轻鞠个躬，给小鹿留点空间。不用追问人家为什么不回。')
 }
 function deerFeed(){
  if(activity!=='deerVisit'||!['greet','ready'].includes(state.deerPhase))return;
  if(deerVisitRecord().day===shrineClock().day&&deerVisitRecord().fed)return;
  state.deerPhase='feed';state.deerAt=t;refreshControls();
- hint('Collect one cracker and offer it calmly.','取一块鹿饼，平静地递给小鹿。')
+ hint('Collect one cracker and offer it calmly. The meadow has a strict snack policy.','取一块鹿饼，慢慢递过去。小鹿食堂有规矩，一天一份。')
 }
 function deerWatch(){
  if(activity!=='deerVisit'||!['greet','ready','done'].includes(state.deerPhase))return;
  state.deerPhase='watch';state.deerAt=t;refreshControls();
- hint('Stay quiet and enjoy the meadow.','安静地待一会儿，看看草地上的小鹿。')
+ hint('Stay quiet and enjoy the meadow. A meeting with absolutely no action items.','安静看会儿小鹿。难得一次见面，不用安排任何后续任务。')
 }
 const deerStartBefore=start;
 start=function(id){
  if(id!=='deerVisit')return deerStartBefore(id);
  deerStartBefore(id);const day=shrineClock().day,record=deerVisitRecord();
  state.deerProfile=deerForDay(day);state.deerPhase='greet';state.deerAt=t;state.deerBows=hash(day+'deer-bow')%3!==0;
- refreshControls();if(record.day===day&&record.fed)hint('Welcome back. Your deer has eaten today, but you can still bow or watch.','又见面啦。小鹿今天吃过鹿饼了，还可以鞠躬或静静看它。');else hint('Bow, offer a deer cracker, or simply watch.','鞠躬、喂鹿饼，或者安静地看看小鹿。')
+ refreshControls();if(record.day===day&&record.fed)hint('Welcome back! The snack counter is closed for today. You can still bow or watch.','又见面啦！今天鹿饼已售罄，还可以鞠躬或者静静看它。');else hint('Bow, offer a deer cracker, or simply watch.','鞠躬、喂鹿饼，或者安静地看看小鹿。')
 };
 const deerControlsBefore=refreshControls;
 refreshControls=function(){
