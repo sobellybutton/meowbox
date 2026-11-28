@@ -18,6 +18,38 @@ const engine={chromium,webkit,firefox}[p.engine],base=process.env.RAIL_URL||'htt
 const output='test-results/rail-mobile/'+name;
 const visibleStation='.pawRailEdge:visible,button[data-door=station]:visible';
 const routes=['home','island','wonder','fortune'];
+// Resolve the physical plaque/edge handoff using ordinary touch. A locator
+// that was visible at lookup can disappear while the camera settles after
+// rotation. Never force a tap, inject a route, or bypass the railway.
+// Keep actionable hit-test evidence when neither affordance can be used.
+async function tapReachableStation(page,records,leg){
+ const deadline=Date.now()+15000,samples=[];
+ let lastError='';
+ while(Date.now()<deadline){
+  if(await page.locator('.pawRailJourney').isVisible())return;
+  const state=await page.evaluate(()=>{
+   const g=document.querySelector('#game')?.getBoundingClientRect();
+   return [...document.querySelectorAll('.pawRailEdge,button[data-door="station"]')].map(el=>{
+    const r=el.getBoundingClientRect(),style=getComputedStyle(el),x=r.left+r.width/2,y=r.top+r.height/2;
+    const inside=!!g&&r.width>0&&r.height>0&&r.left>=g.left-1&&r.right<=g.right+1&&r.top>=g.top-1&&r.bottom<=g.bottom+1;
+    const hit=inside?document.elementFromPoint(x,y):null;
+    return {edge:el.classList.contains('pawRailEdge'),hidden:el.hidden,display:style.display,visibility:style.visibility,rect:[r.left,r.top,r.width,r.height],hit:hit?.className?.baseVal||String(hit?.className||''),ready:!el.hidden&&!el.disabled&&style.display!=='none'&&style.visibility==='visible'&&inside&&!!hit&&el.contains(hit)};
+   });
+  });
+  if(samples.length<40)samples.push(state);
+  const candidate=state.find(v=>v.ready);
+  if(candidate){
+   const station=page.locator(candidate.edge?'.pawRailEdge:visible':'button[data-door="station"]:visible');
+   try{
+    await station.tap({timeout:Math.max(1,Math.min(700,deadline-Date.now()))});
+    records.push({stationLeg:leg,affordance:candidate.edge?'edge':'plaque',samples});return;
+   }catch(e){lastError=String(e.message).slice(0,300)}
+  }
+  await page.waitForTimeout(120);
+ }
+ records.push({stationLeg:leg,failure:'No reachable railway control',lastError,samples});
+ throw Error('No reachable railway control for leg '+leg+'; '+lastError+'; last state '+JSON.stringify(samples.at(-1)));
+}
 async function main(){
  fs.mkdirSync(output,{recursive:true});
  const browser=await engine.launch();
@@ -48,9 +80,7 @@ async function main(){
    const landscape=i===1;
    await page.setViewportSize(landscape?{width:p.height,height:p.width}:{width:p.width,height:p.height});
    await page.emulateMedia({reducedMotion:i===2?'reduce':'no-preference'});
-   const station=page.locator(visibleStation).first();
-   await station.waitFor({state:'visible',timeout:15000});
-   await tap(station);
+   await tapReachableStation(page,records,i);
    const ride=page.locator('.pawRailJourney');
    await ride.waitFor({state:'visible',timeout:45000});
    const expected=await page.evaluate(id=>maps[id].n[0],routes[i]);
