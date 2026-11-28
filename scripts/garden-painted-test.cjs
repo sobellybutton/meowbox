@@ -82,3 +82,9 @@ assert.ok(reflect.pawStressGroupPage(stressFixture,0,0).next);
 assert.ok(reflect.pawStressGroupPage(stressFixture,0,1).previous);
 assert.equal(reflect.pawReflectionRoomTitle('match')[0],'The Heart Café');
 console.log('Live reflection ownership, page bounds and contextual worry slip indices passed.');
+
+const localTV=new Function(extract('/* PAW_LOCAL_HOME_TV_BEGIN */','/* PAW_LOCAL_HOME_TV_END */')+';return {pawHomeTVChannel,pawWheelReturnKind}')();
+for(let count=1;count<12;count++)for(let i=0;i<count;i++)for(let d=-5;d<=5;d++)assert.equal(localTV.pawHomeTVChannel(count,i,d),((i+d)%count+count)%count);
+for(const [w,t,p,expected] of [[true,false,null,'wallet'],[false,true,'wallet','today'],[false,false,'wallet','wallet'],[false,false,null,'today']])assert.equal(localTV.pawWheelReturnKind(w,t,p),expected);
+assert.equal(localTV.pawHomeTVChannel(0,0,1),0);
+console.log('Local television channel bounds and daily wheel parent resolution passed.');
