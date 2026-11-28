@@ -170,6 +170,17 @@ async function handle(req,env){
  }
  return reply({error:'not found'},404)
 }
-async function purge(env){const now=Date.now();if(env.ENABLE_PRESENCE==='true')await env.DB.batch([env.DB.prepare('DELETE FROM presence WHERE updated<?').bind(now-PRESENCE_TTL),env.DB.prepare('DELETE FROM presence_reports WHERE created<?').bind(now-TTL),env.DB.prepare('DELETE FROM presence_bans WHERE until<=?').bind(now)]);await env.DB.batch([env.DB.prepare('DELETE FROM messages WHERE created<?').bind(now-TTL),env.DB.prepare('DELETE FROM submission_events WHERE created<?').bind(now-DAY),env.DB.prepare('DELETE FROM reports WHERE created<?').bind(now-TTL)])}
+async function purge(env){
+ const now=Date.now(),db=env.DB;
+ // Optional presence tables may be absent in older text-only deployments.
+ // Disabling presence must not disable deletion of stored positions.
+ const tables=new Set((await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('presence','presence_reports','presence_bans')").all()).results.map(r=>r.name));
+ const cleanup=[];
+ if(tables.has('presence'))cleanup.push(env.ENABLE_PRESENCE==='true'?db.prepare('DELETE FROM presence WHERE updated<?').bind(now-PRESENCE_TTL):db.prepare('DELETE FROM presence'));
+ if(tables.has('presence_reports'))cleanup.push(db.prepare('DELETE FROM presence_reports WHERE created<?').bind(now-TTL));
+ if(tables.has('presence_bans'))cleanup.push(db.prepare('DELETE FROM presence_bans WHERE until<=?').bind(now));
+ if(cleanup.length)await db.batch(cleanup);
+ await db.batch([db.prepare('DELETE FROM messages WHERE created<?').bind(now-TTL),db.prepare('DELETE FROM submission_events WHERE created<?').bind(now-DAY),db.prepare('DELETE FROM reports WHERE created<?').bind(now-TTL)])
+}
 export {validatePost,normalized,validId,validatePresence,handle};
 export default {async fetch(req,env){try{return await handle(req,env)}catch{return json({error:'temporarily unavailable'},503)}},async scheduled(event,env,ctx){ctx.waitUntil(purge(env))}};

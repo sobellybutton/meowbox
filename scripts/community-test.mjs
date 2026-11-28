@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
-import {handle,validatePresence} from '../community/worker.mjs';
+import worker,{handle,validatePresence} from '../community/worker.mjs';
 const sqlite=new DatabaseSync(':memory:');
 sqlite.exec('PRAGMA foreign_keys=ON');
 sqlite.exec(readFileSync('community/schema.sql','utf8'));
@@ -100,5 +100,26 @@ try{
   assert.ok(injected);
   assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM presence WHERE public_id=?').get(target).n,0);
  }finally{db.prepare=realPrepare}
+ // Scheduled privacy cleanup must still run when presence is disabled.
+ const cleanup=async (override={})=>{let pending;await worker.scheduled({}, {...env,...override},{waitUntil(p){pending=p}});await pending};
+ const countPositions=()=>sqlite.prepare('SELECT COUNT(*) AS n FROM presence').get().n;
+ step(20000);const freshA=await call('/presence',tokens[7],base);assert.equal(freshA.status,200);
+ step(20000);const freshB=await call('/presence',tokens[8],base);assert.equal(freshB.status,200);
+ await cleanup();
+ assert.equal(countPositions(),1);
+ assert.equal(sqlite.prepare('SELECT public_id FROM presence').get().public_id,freshB.data.self);
+ const activeBan='a'.repeat(24),expiredBan='b'.repeat(24);
+ sqlite.prepare('INSERT INTO presence_bans(public_id,until) VALUES(?,?)').run(activeBan,now+3600000);
+ sqlite.prepare('INSERT INTO presence_bans(public_id,until) VALUES(?,?)').run(expiredBan,now-1);
+ sqlite.prepare('INSERT INTO presence_reports(reporter,target_id,reason,created) VALUES(?,?,?,?)').run('test-old-reporter',activeBan,'spam',now-31*86400000);
+ sqlite.prepare('INSERT INTO presence_blocks(owner,target_id,created) VALUES(?,?,?)').run('test-block-owner',activeBan,now);
+ await cleanup({ENABLE_PRESENCE:'false'});
+ assert.equal(countPositions(),0);
+ assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM presence_bans WHERE public_id=?').get(activeBan).n,1);
+ assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM presence_bans WHERE public_id=?').get(expiredBan).n,0);
+ assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM presence_reports WHERE reporter=?').get('test-old-reporter').n,0);
+ assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM presence_blocks WHERE owner=?').get('test-block-owner').n,1);
+ sqlite.exec('DROP TABLE presence; DROP TABLE presence_reports; DROP TABLE presence_bans; DROP TABLE presence_blocks;');
+ await cleanup({ENABLE_PRESENCE:'false'});
  console.log('PASS: SQLite Worker integration, five sessions, rooms, blocking, reports, moderation, expiry and reactions');
 }finally{Date.now=realNow;sqlite.close()}
