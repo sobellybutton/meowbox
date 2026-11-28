@@ -15780,6 +15780,9 @@ drawActivity=function(...args){
  const carrying=stage==='carry',slots=pawWishGroundSlots(gardenWishes,carrying),taken=new Set(slots.map(v=>v.slot));
  const scale=Math.max(.55,Math.min(2.4,plate.h*.135/94)),lanternScale=Math.max(.17,plate.w*.00060);
  const foot=at(pawWishGroundFoot),paper=at(pawWishGroundPaper);
+ // Keep the existing garden resident present during the ritual, at the same painted-lobby anchor.
+ const keeper=pawWishLobbyActor(),keeperFoot=at([(keeper.x-pawWishLobbyPlate.x)/pawWishLobbyPlate.w,(keeper.y-pawWishLobbyPlate.y)/pawWishLobbyPlate.h]);
+ const keeperRecord=residentArtworkRecord(keeper.n);if(keeperRecord)drawGatheringPainted(keeper.n,keeperFoot.x,keeperFoot.y,pawHallActorScale(94*scale*.92,keeperRecord.height||112,.94),keeper.facing);
  for(const {slot} of slots){
   if(stage==='rise'&&slot===run.gardenSlot)continue;
   const q=at(pawWishRackPoint(slot));gardenLantern(q.x,q.y+12*lanternScale,slot,lanternScale);
@@ -15801,7 +15804,7 @@ drawActivity=function(...args){
    const slot=walk.slot;
    if(!taken.has(slot)&&run.pendingGardenWish){
     gardenWishes.push({id:Date.now()+'-'+Math.random().toString(36).slice(2),text:run.pendingGardenWish,date:new Date().toLocaleDateString(),slot});
-    save('gardenWishesV1',gardenWishes);run.pendingGardenWish='';run.gardenStage='rise';run.gardenRise=t;run.gardenSlot=slot;delete run.pawWishWalk;addItem('Wishing lantern','许愿灯');sound(660);hint('Your wish has found its place.','心愿找到自己的位置了。')
+    save('gardenWishesV1',gardenWishes);run.pendingGardenWish='';run.gardenStage='rise';run.gardenRise=t;run.gardenSlot=slot;delete run.pawWishWalk;addItem('Wishing lantern','许愿灯');sound(660)
    }else delete run.pawWishWalk;
   }
   if(!walk){
@@ -15819,7 +15822,7 @@ drawActivity=function(...args){
    gardenLantern(hook.x,hook.y+12*lanternScale,run.gardenSlot,lanternScale);
    const move=pawWishGroundWalk(still?4:elapsed-1.2,true),pos=at(move.point);
    backHuman(pos.x,pos.y,avatar??0,!move.done&&!still,move.dir,scale);
-   if(move.done){run.gardenStage='write';react('Your little light is glowing. No follow-up email required.','心愿灯亮啦，不用再发邮件跟进。')}
+   if(move.done){run.gardenStage='write';run.pawWishBlessingPending=true;queueMicrotask(()=>{if(room!=='wishes'||activity!=='wishes'||state!==run||!run.pawWishBlessingPending||talkOpen)return;run.pawWishBlessingPending=false;say(tr('Garden keeper','守园人'),tr('Your wish has found its place. Give the universe a little time to do its work.','你的心愿已经有了归处。给宇宙一点时间，让它慢慢发芽。'),[[tr('Thank you','谢谢你'),closeTalk],[tr('Another wish','再写一个心愿'),()=>{closeTalk();if(room==='wishes'&&activity==='wishes'&&state===run)gardenWrite()}]]);})}
   }
  }
  if(stage==='write'){
