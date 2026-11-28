@@ -299,3 +299,15 @@ assert(pawDailyNoticeSelection([...pool,fresh,future],now)[0].id==='new','recent
 assert(pawDailyNoticeSelection([future],now).length===0&&pawDailyNoticeSelection(pool.slice(0,3),now).length===3,'publication cutoff and small pool');
 return 'PASS: daily notice cap, rotation, publication and full archive coverage';
 `)());
+
+{
+ const select=pawSlice('function pawDailyNoticeSelection','const pawWeekNotes');
+ const result=new Function("let times=[];const townPublishedNotices=now=>{times.push(now);return Array.from({length:73},(_,i)=>({id:'archive-'+i,date:0}))};"+select+`
+ const now=Date.UTC(2026,10,28,1),a=pawDailyTownNotices(now),b=pawDailyTownNotices(now+7200000);
+ if(times[0]!==times[1]||JSON.stringify(a)!==JSON.stringify(b)||a.length!==10)throw Error('Daily source pool must be stable');
+ return a.length;
+ `)();
+ const active=between(source,'renderResidentNoticeboard=function(q){','const pawNoticeDisclosureStyle');
+ if(!active.includes('const entries=pawDailyTownNotices()')||!active.includes('const next=pawDailyTownNotices()')||active.includes('Read older notices')||!active.includes('pawNoticeReplyState'))throw Error('Active noticeboard renderer reverted to archive pagination');
+ console.log('PASS: '+result+' notices in the daily source snapshot and final renderer contract');
+}
