@@ -172,6 +172,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       assert(await book.evaluate(n=>n.scrollWidth<=n.clientWidth+1),'Book has horizontal overflow');
       assert(await book.evaluate(n=>{const style=getComputedStyle(n);return style.backgroundImage.includes('/ui/paper_texture.webp')&&!style.backgroundImage.includes('/worlds/')&&!style.backgroundImage.includes('/town-hall/')&&style.backgroundColor!=='rgba(0, 0, 0, 0)'}),'Book background must be opaque paper, not underlying map artwork');
       const close=page.locator('.pawFullBookClose');await close.waitFor({state:'visible'});
+      assert(await page.locator('.pawPassportHeader').evaluate(n=>{const s=getComputedStyle(n,'::before');return s.content!=='none'&&s.backgroundImage.includes('paper_texture.webp')&&parseFloat(s.height)>=28&&s.pointerEvents==='none'}),'Sticky header must mask content above it without blocking taps');
       assert(await close.locator('img').evaluate(async im=>{await im.decode();return im.naturalWidth>0}),'Original illustrated cover did not decode');
       const label=close.locator('span');assert.equal(await label.innerText(),language==='中文'?'合上':'Close');
       assert(await label.evaluate(n=>{const r=n.getBoundingClientRect(),s=getComputedStyle(n);return r.width>8&&r.height>8&&s.clipPath==='none'}),'Close action must have a visible label');
@@ -229,6 +230,11 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
        const contextualBack=page.locator('#content > .row button').first();
        await (width<900?contextualBack.tap():contextualBack.click());
        await page.locator('.pawTownHotspot').first().waitFor({state:'visible',timeout:8000});
+       if(process.env.PAW_FULL_BOOK==='1'){
+        await page.locator('.pawPassportMotion').waitFor({state:'detached',timeout:2500});
+        assert(await page.locator('#page').evaluate(n=>n.scrollTop<=2),'Return to Town Hall must reveal top of the new page');
+        assert(await page.locator('.pawPavilionScene .pawTownFrontPhoto img').evaluate(im=>{const r=im.getBoundingClientRect();return im.naturalWidth>0&&r.top<innerHeight&&r.bottom>0}),'Town Hall illustration must be visible after returning');
+       }
       }
      }
      if(id==='dockOwnHome'){
