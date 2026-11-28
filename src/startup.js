@@ -7473,7 +7473,10 @@ function pawGateGround(w,h,progress=0){
 }
 const pawGateCompositionCSS=document.createElement('style');
 pawGateCompositionCSS.textContent=`
-#proposal[data-paw-entrance-step="3"]>.hero{background:#293c32 url('assets/visual/painted/worlds/gateway/scene.webp') center bottom/cover no-repeat!important;container-type:size}
+/* The accessible img is the only painted gateway. Keep the calibrated
+   portrait framing on wide displays without repeating its architecture. */
+#proposal[data-paw-entrance-step="3"]>.hero{background:#293c32!important;container-type:size}
+@media(orientation:landscape){#proposal[data-paw-entrance-step="3"]>.hero{background:linear-gradient(110deg,#34483d,#293c32 50%,#34483d)!important}}
 #proposal[data-paw-entrance-step="3"] .mbGatePainting{object-fit:cover!important;object-position:center bottom!important;backdrop-filter:none!important;background:none!important;display:block!important;visibility:visible!important;z-index:1!important}
 @media(orientation:landscape){#proposal[data-paw-entrance-step="3"] .mbGatePainting{object-fit:contain!important;object-position:center!important}}
 #proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded{position:absolute!important;left:var(--paw-gate-x)!important;top:var(--paw-gate-y)!important;bottom:auto!important;width:auto!important;height:var(--paw-gate-height)!important;max-width:none!important;max-height:none!important;translate:var(--paw-gate-pivot-x,-50%) var(--paw-gate-pivot-y,-100%)!important;transform:none!important;transition:none!important;opacity:1!important;object-fit:contain!important;filter:none!important}
@@ -14997,6 +15000,42 @@ pawDistrictSignStyle.textContent=`
 `;document.head.append(pawDistrictSignStyle);
 /* PAW_DISTRICT_SIGN_MATERIAL_END */
 
+
+
+/* PAW_SINGLE_ACTIVITY_SURFACE_BEGIN */
+// Keep authored physical controls, accessible equivalents and current hit
+// callbacks. Style the existing control owner, not a duplicate toolbar.
+const pawSingleActivitySurface=document.createElement('style');
+pawSingleActivitySurface.textContent=`
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls):not([hidden]){
+ box-sizing:border-box!important;max-width:calc(100% - 24px)!important;
+ background:#f3e7d0f0!important;border:0!important;border-radius:7px!important;
+ box-shadow:0 2px 7px #30291e29!important;padding:5px 8px!important;gap:3px!important;
+}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button{
+ box-sizing:border-box!important;min-height:44px!important;min-width:0!important;
+ white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.3!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ border-bottom:1px solid #ac967064!important;background:transparent!important;color:#405440!important;
+ padding:5px 7px!important;text-align:center!important
+}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button[aria-pressed=true]{
+ background:#dbe1cb!important;color:#395846!important
+}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button:focus-visible{outline:2px solid #39594d!important;outline-offset:-2px!important}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button:disabled{opacity:.5!important}
+html #game #gameControls .festivalFishButtons{gap:3px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+html #game #gameControls.mb5ActivityAssist:not([hidden]){grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr))!important}
+@media(max-width:480px){
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls):not([hidden]){max-height:min(40dvh,260px)!important;overflow-y:auto!important;overscroll-behavior:contain}
+}
+@media(forced-colors:active){
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls):not([hidden]){background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important}
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button{color:ButtonText!important;border-bottom:1px solid ButtonText!important}
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button[aria-pressed=true]{background:Highlight!important;color:HighlightText!important}
+}
+`;document.head.append(pawSingleActivitySurface);
+/* PAW_SINGLE_ACTIVITY_SURFACE_END */
 
 /* PAW_PROFILE_SETTINGS_BEGIN */
 // Canonical utility route: profile > settings. Keep the original storage,
