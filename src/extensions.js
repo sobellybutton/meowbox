@@ -5515,12 +5515,359 @@ const stressChoiceStyle=document.createElement('style');stressChoiceStyle.textCo
    without actual threats, real names, or changing the rewards. */
 const pettyPaperCurses=[["May every public toilet you enter be out of paper.","祝你每次上公厕，厕纸刚好用完。"],["May your phone charger work only at a very specific angle.","祝你充电线只有扭成麻花才充得进电。"],["May your bubble tea straw miss every pearl.","祝你喝奶茶，一颗珍珠都吸不到。"],["May your trousers feel tight immediately after lunch.","祝你午饭刚吃完，裤头就开始抗议。"],["May your socks always slide down inside your shoes.","祝你的袜子走两步就滑进鞋里。"],["May your boss's slides have the wrong font on every page.","祝老板的PPT每一页都字体错乱。"],["May your meeting room booking disappear just as the meeting starts.","祝你会议刚开始，会议室就被别人订了。"],["May your favourite snack contain ninety percent air.","祝你买的薯片，九成都是空气。"],["May your noodles come with a fork that bends.","祝你吃面的时候，叉子一用就弯。"],["May your lift stop on every floor.","祝你搭电梯，层层都停。"],["May your online delivery arrive just after you leave.","祝你刚出门，快递就到了。"],["May your umbrella turn inside out on a sunny day.","祝你撑伞没下雨，伞还自己翻了。"],["May your coffee always be lukewarm.","祝你喝热咖啡不够热，喝冰咖啡不够冰。"],["May your Wi-Fi disconnect at ninety-nine percent.","祝你下载到百分之九十九，网络断了。"],["May the last piece of toilet paper tear diagonally.","祝你最后一格厕纸，一撕就裂成三角形。"],["May your favourite pen run out halfway through your signature.","祝你签名签到一半，笔没墨了。"],["May every queue you switch to become the slow one.","祝你每次换队，换完原来的队就快了。"],["May your takeaway sauce be on the other side of the bag.","祝你外卖酱料藏在袋子最底下。"],["May the last dumpling always belong to someone else.","祝你想吃最后一个饺子，别人已经夹走了。"],["May your printer demand magenta to print a black page.","祝你打印黑白文件，打印机偏偏说缺红墨。"],["May autocorrect turn your serious email into nonsense.","祝你发严肃邮件，自动纠错比你还会加戏。"],["May your earbuds always end up in the wrong pocket.","祝你找耳机，永远先摸错口袋。"],["May your rice cooker finish just when you have to leave.","祝你饭刚煮好，人就得出门。"],["May your shopping cart have that one squeaky wheel.","祝你每次推购物车，都碰上那个吱吱叫的轮子。"],["May your alarm go off during your day off.","祝你休假那天，闹钟忘了关。"],["May your toast land jam-side down.","祝你面包掉地上，永远是果酱那一面。"],["May the aircon remote always be just out of reach.","祝你躺下才发现空调遥控器在另一头。"],["May your bank app log out just as you need to pay.","祝你付款的时候，银行App突然要求重新登录。"],["May your food delivery say 'arriving soon' for twenty minutes.","祝你外卖的马上到，永远还有二十分钟。"],["May your perfectly folded laundry unfold itself.","祝你叠好的衣服，拿一件倒一摞。"],["May your calendar invite have no meeting link.","祝你开线上会，邀请里偏偏没链接。"],["May your ice cream cone drip before you find a tissue.","祝你纸巾还没找到，冰淇淋先滴下来。"],["May every vending machine reject your perfectly good coin.","祝你投个完好无损的硬币，机器偏不认。"],["May your video buffer at the punchline.","祝你看视频，笑点前一秒卡住。"],["May your favourite seat always be occupied by a very comfortable cat.","祝你最爱的座位，永远被一只睡熟的猫霸占。"],["May your keyboard space bar squeak during a quiet meeting.","祝你开会全场安静时，空格键吱吱响。"]];
 const activityComedy={"clawMiss":[["The claw caught a whole lot of absolutely nothing.","恭喜你，成功夹到了空气。"],["That plush has better escape skills than my colleagues at 6pm.","这玩偶下班逃跑的速度，比我同事还快。"],["The claw came up empty. Try lining it up directly over the toy next time.","这回夹空啦。下次让夹爪对准玩偶的正上方试试。"],["The claw is doing the bare minimum. Relatable.","夹爪正在消极怠工，懂了。"],["The plush just dodged another responsibility.","玩偶又成功逃避了一项责任。"]],"clawWin":[["Congratulations. Your new colleague has never sent an email.","恭喜，新同事不会发邮件。"],["Finally, a colleague who sits quietly.","终于有个安静的同事了。"],["The plush has accepted your offer. No probation required.","玩偶已接受录用，不用试用期。"]],"soup":[["Grandma: Smells lovely. Here, let me get you a bowl.","外婆：闻起来真香。来，外婆给你拿个碗。"],["Grandma: That's a good pot of soup. Who taught you to cook so well, ah?","外婆：这锅汤煮得不错嘛！谁教你的呀？"],["Grandma: Eat while it's warm. Everything else can wait a little.","外婆：趁热吃，其他事先放一放。"],["Grandma: Not bad. I can retire for five minutes.","外婆：还行，我可以退休五分钟。"],["Grandma: Have a taste. The best part is eating what you made yourself.","外婆：快尝尝，自己亲手做的，吃起来才特别香。"]],"tea":[["The pearls have settled. One good sip coming right up!","珍珠落到底啦，第一口准备开喝！"],["Nice shake! Even the pearls look like they're celebrating.","摇得不错！珍珠都快开派对了。"],["A drink this good deserves its own public holiday.","好喝到应该为它设个公共假期。"],["The boss may control your calendar, not your sugar level.","老板管得了日历，管不了几分糖。"]],"rhythmHigh":[["Your dance moves have been approved. Unlike your leave.","舞步审批通过，年假还是没有。"],["HR would like to know where you learned those moves.","人事部想知道你从哪儿学的舞步。"]],"rhythmLow":[["Your feet held two separate dance parties. Try following the next beat.","两只脚各开各的舞会啦。下一轮跟着节拍来试试。"],["The dance floor survived. So did you.","舞池没事，你也没事，算赢。"],["Lost the beat? Pick it up again on the next arrow.","节奏跟丢啦？下一支箭头再跟上就好。"]],"box":[["A tiny new friend! It looks remarkably pleased with its new home.","新的小伙伴来啦！看起来对新家相当满意。"],["A new resident with no rent, no deadlines and no CV.","新居民：不用交房租，不用赶工，也没有简历。"],["Plot twist: your toy is better rested than you.","剧情反转：玩偶休息得比你好。"]]};
+/* Contextual ritual dialogue, keyed to existing target labels, never to real people. */
+const pawAhMaTopicLines={
+  "Boss's endless demands": [
+    [
+      "Work like an ox and a horse for what? Your boss got four hands or not?",
+      "做牛做马干嘛？老板两只手，你也两只手啊！"
+    ],
+    [
+      "One job, three people's workload. Aiyo, the maths very good for the boss.",
+      "一份工资三份活。哎哟，老板这算盘打得真响。"
+    ]
+  ],
+  "Unpaid overtime": [
+    [
+      "Overtime without pay? Even my slipper would refuse that shift.",
+      "加班不给钱？阿嬷的拖鞋都不肯接这个班。"
+    ],
+    [
+      "Aiyo, you work so hard for who? Let this paper clock in, you clock out.",
+      "哎哟，你这么拼命是为了谁？让纸人加班，你下班！"
+    ]
+  ],
+  "Pointless meetings": [
+    [
+      "A meeting about another meeting? Come, let my slipper take the minutes.",
+      "开会讨论下次开会？来，让拖鞋记会议纪要。"
+    ],
+    [
+      "One hour to say two sentences. Even the kettle works faster.",
+      "两句话讲一个钟，烧壶水都比这个快。"
+    ]
+  ],
+  "Office politics": [
+    [
+      "They play palace drama in the office, ah? You came here to drink tea.",
+      "办公室演宫斗剧啊？你来这儿是喝茶的。"
+    ],
+    [
+      "Let the office drama stay at the office. No need to bring the whole cast home.",
+      "办公室的戏留在办公室，别把整个剧组带回家。"
+    ]
+  ],
+  "Weekend work texts": [
+    [
+      "Saturday also got homework? This one belongs on the paper.",
+      "星期六还有作业啊？来，写在这张纸上。"
+    ],
+    [
+      "The group chat can wait. Your weekend is not a public property.",
+      "工作群等一等。你的周末又不是公共财产。"
+    ]
+  ],
+  "Empty promises": [
+    [
+      "Such a big imaginary pancake! Too bad it cannot fill your stomach.",
+      "这么大一个饼，可惜是画的，吃不饱啊！"
+    ],
+    [
+      "Promises sound nice. My slipper prefers actual results.",
+      "话说得好听。阿嬷的拖鞋比较喜欢说到做到。"
+    ]
+  ],
+  "Credit stealing": [
+    [
+      "You cooked the whole meal, somebody else took the chef's hat? Aiyo.",
+      "你煮了一桌菜，别人戴上厨师帽去领奖？哎哟！"
+    ],
+    [
+      "Keep a record of your work. This paper can keep the frustration.",
+      "自己的成果记清楚，气就留给这张纸。"
+    ]
+  ],
+  "Tiny salary": [
+    [
+      "Your wallet is doing intermittent fasting without your permission.",
+      "钱包在断食，连你的同意都没问。"
+    ],
+    [
+      "Salary comes in walking, bills go out running. Come, sit awhile.",
+      "工资慢慢走进来，账单飞快跑出去。来，先坐坐。"
+    ]
+  ],
+  "Rising prices": [
+    [
+      "Even the vegetables want a pay rise. Aiyo, everybody except you!",
+      "连青菜都涨薪了。哎哟，怎么就没轮到你！"
+    ],
+    [
+      "Prices can climb the stairs. You don't have to run after them every minute.",
+      "物价爱往上爬，你也不用每分钟都追着跑。"
+    ]
+  ],
+  "Rent and bills": [
+    [
+      "The bills have a very busy social life. Always arriving together.",
+      "账单还挺会交朋友，每次都结伴来。"
+    ],
+    [
+      "One bill at a time, dear. Don't let all of them move into your head.",
+      "账单一张一张处理，别让它们全住进脑子里。"
+    ]
+  ],
+  "No pay raise": [
+    [
+      "They call it a salary review. So far, only the reviewing has gone up.",
+      "说是薪资调整，目前涨的好像只有讨论次数。"
+    ],
+    [
+      "Your time has value too. Don't let this paper tell you otherwise.",
+      "你的时间也值钱，别让这张烦恼纸说了算。"
+    ]
+  ],
+  "Expensive groceries": [
+    [
+      "Went to buy vegetables, came home with a finance lesson.",
+      "本来去买菜，回来上了一堂经济课。"
+    ],
+    [
+      "The price tag is spicy enough. No need for extra chilli.",
+      "价格已经够辣了，辣椒都可以省了。"
+    ]
+  ],
+  "Surprise expenses": [
+    [
+      "The budget was sitting quietly. Then life knocked on the door.",
+      "预算本来坐得好好的，生活突然来敲门。"
+    ],
+    [
+      "Unexpected expenses are troublesome. You don't have to blame yourself for every one.",
+      "突发开销够烦了，别每一笔都怪自己。"
+    ]
+  ],
+  "Red tape": [
+    [
+      "One stamp wants another stamp. My slipper only needs one swing.",
+      "一个章还要另一个章批准。阿嬷的拖鞋一挥就行。"
+    ],
+    [
+      "If red tape could make a ribbon, we could wrap the whole town.",
+      "这些手续要能当丝带，整个小镇都能包起来了。"
+    ]
+  ],
+  "Endless forms": [
+    [
+      "Fill a form to request another form. Aiyo, never ending!",
+      "填一张表申请另一张表。哎哟，没完没了！"
+    ],
+    [
+      "This paper doesn't need a signature in triplicate.",
+      "这张纸不用一式三份，也不用签三个名。"
+    ]
+  ],
+  "Unclear policies": [
+    [
+      "Read it three times, still don't know what it means? Here, take a breather.",
+      "看了三遍还是看不懂？来，先喘口气。"
+    ],
+    [
+      "The rules should make things clearer, not give you a headache.",
+      "规矩是拿来把事情讲清楚的，不是拿来让人头痛的。"
+    ]
+  ],
+  "Costly fees": [
+    [
+      "A processing fee for processing another fee? Very creative, ah.",
+      "收个手续费还要另收手续费？还挺有创意啊。"
+    ],
+    [
+      "You can sit here for free. At least this stool has no hidden charges.",
+      "这儿坐不用钱。至少阿嬷的小凳没有隐藏收费。"
+    ]
+  ],
+  "Slow approvals": [
+    [
+      "The application is moving slower than my slipper in slow motion.",
+      "审批比阿嬷的拖鞋慢动作还慢。"
+    ],
+    [
+      "Waiting is tiring too. Give yourself a break while it takes its time.",
+      "等人批复也很累的。人家慢慢来，你也歇一歇。"
+    ]
+  ],
+  "Empty official talk": [
+    [
+      "So many words, still no answer. Aiyo, save some breath!",
+      "讲了一大堆，答案还是没有。哎哟，省点口水吧！"
+    ],
+    [
+      "My slipper is more concise. One swing, straight to the point.",
+      "阿嬷的拖鞋比较简洁，一挥就到重点。"
+    ]
+  ],
+  "Mixed signals": [
+    [
+      "Hot today, cold tomorrow. Is this romance or the aircon?",
+      "今天热，明天冷。谈恋爱还是开空调啊？"
+    ],
+    [
+      "You deserve a conversation you don't have to decode every night.",
+      "你值得一段不用每天晚上做阅读理解的关系。"
+    ]
+  ],
+  "Ghosting": [
+    [
+      "A message is not a fishing rod. Don't sit there waiting all night.",
+      "消息又不是鱼竿，别在那里守一整晚。"
+    ],
+    [
+      "Put the phone down awhile. Come, the tea is still warm.",
+      "手机先放下吧。来，茶还热着呢。"
+    ]
+  ],
+  "Broken promises": [
+    [
+      "A promise isn't a souvenir you have to keep forever.",
+      "没兑现的承诺，又不是手信，非得收藏一辈子。"
+    ],
+    [
+      "It hurts when words and actions don't match. Come, sit beside me.",
+      "说的和做的不一样，心里当然不好受。来，坐阿嬷旁边。"
+    ]
+  ],
+  "Toxic drama": [
+    [
+      "Some people's drama has too many episodes. No need to watch every one.",
+      "有些人的戏太多集了，你又不用集集追。"
+    ],
+    [
+      "Let the paper hold the noise. You can have a quieter afternoon.",
+      "吵吵闹闹的留给纸人，你过个清静的下午。"
+    ]
+  ],
+  "Family pressure": [
+    [
+      "Aiyo, ask when you're getting married again? Ask who is bringing dessert.",
+      "哎哟，又问什么时候结婚？你问他们甜品带了没。"
+    ],
+    [
+      "Your life is not a timetable for the relatives to fill in.",
+      "你的人生又不是亲戚拿来填的时间表。"
+    ]
+  ],
+  "One-sided effort": [
+    [
+      "Always you taking the first step? Your legs deserve a rest too.",
+      "每次都是你先走一步？你的腿也该休息啦。"
+    ],
+    [
+      "You can care about someone without carrying the whole relationship alone.",
+      "喜欢一个人，也不用一个人扛起整段关系。"
+    ]
+  ],
+  "Old grudges": [
+    [
+      "That old grudge has been occupying your best chair for years.",
+      "那点陈年怨气，在你心里霸占好位置好多年了。"
+    ],
+    [
+      "You can set it down for an afternoon without solving everything.",
+      "不用今天把一切解决，也能先放下一个下午。"
+    ]
+  ],
+  "Monday blues": [
+    [
+      "Monday arrives without asking. My slipper would like to complain.",
+      "周一每次不请自来。阿嬷的拖鞋想投诉一下。"
+    ],
+    [
+      "Monday gets one day, not the whole week. Don't let it claim the rest.",
+      "周一就一天，别让它把剩下六天也抢走。"
+    ]
+  ],
+  "Endless emails": [
+    [
+      "You cleared ten emails and eleven arrived? Very hardworking inbox!",
+      "回了十封，又来十一封？收件箱可真勤劳啊！"
+    ],
+    [
+      "Your inbox can keep growing. You don't have to sit there feeding it all night.",
+      "邮件爱长就长，你又不用一整晚坐着喂它。"
+    ]
+  ],
+  "Overthinking": [
+    [
+      "Your brain holding a midnight meeting again? No quorum today.",
+      "脑子又半夜开会？今天人数不够，散会！"
+    ],
+    [
+      "Not every thought needs a reply. Let some float past like the clouds.",
+      "不是每个念头都得回消息，有些让它像云一样飘过去吧。"
+    ]
+  ],
+  "Bad luck": [
+    [
+      "Bad luck took the wrong ferry here. Let's send it on its way.",
+      "坏运气搭错船来到这里了，咱们送它一程。"
+    ],
+    [
+      "One unlucky day doesn't get to write the whole story.",
+      "倒霉一天，也不能让它写完你整个人生。"
+    ]
+  ],
+  "Traffic jams": [
+    [
+      "The traffic can stay stuck. Your shoulders don't have to.",
+      "车堵归堵，你的肩膀不用跟着绷那么紧。"
+    ],
+    [
+      "Even my slipper moves faster than that road today.",
+      "今天那条路，还没阿嬷的拖鞋走得快。"
+    ]
+  ],
+  "Hot weather": [
+    [
+      "The sun is working overtime. Nobody asked it to, ah!",
+      "太阳又在加班，也没人叫它这么拼啊！"
+    ],
+    [
+      "Have some water, dear. The heat doesn't need a second helping of frustration.",
+      "喝口水吧，天已经够热了，不用再添一勺火气。"
+    ]
+  ],
+  "Insomnia": [
+    [
+      "Can't sleep, ah? Don't give yourself another task called 'must sleep now'.",
+      "睡不着啊？别又给自己加个任务，叫作必须马上睡着。"
+    ],
+    [
+      "Let your worries sit here awhile. You don't have to finish thinking tonight.",
+      "烦恼先在这儿坐会儿吧，今晚不用把所有事都想完。"
+    ]
+  ],
+  "Everything going wrong": [
+    [
+      "Aiyo, all at once? No wonder you need a seat. Come.",
+      "哎哟，一起找上门啊？难怪你累，来坐。"
+    ],
+    [
+      "One thing at a time, dear. This afternoon doesn't need to fix your whole life.",
+      "一件一件来，孩子。这个下午不用把整个人生都修好。"
+    ]
+  ]
+};
+function pawAhMaTopicPool(index){
+ const target=Number.isInteger(index)?stressTargets[index]?.[0]:null;
+ return target&&Object.hasOwn(pawAhMaTopicLines,target)?pawAhMaTopicLines[target]:[['Leave this worry here awhile. Ah Ma can look after the paper.','烦恼先留这儿吧，纸人交给阿嬷。'],['You have done enough for the moment. Sit and rest a little.','这一会儿已经够啦，坐下来歇一歇。']];
+}
 const pettyHitBefore=smack;
 smack=function(){
  if(activity!=='hit'||$('page').style.display==='block')return;
  const count=state.count;pettyHitBefore();if(state.count===count)return;
- const curse=townReaction('petty-paper-curses',pettyPaperCurses);
- // The persistent hint is always a new curse, even on milestone hits.
+ const pool=room==='fish'?pawAhMaTopicPool(stressTarget):pettyPaperCurses;
+ const curse=townReaction(room==='fish'?'paper-topic:'+stressTarget:'petty-paper-curses',pool);
  hint('Ah Ma: '+curse[0],'阿嬷：'+curse[1])
 };
 const comedyClawBefore=clawFinish;
