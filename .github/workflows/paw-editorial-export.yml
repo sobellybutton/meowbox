@@ -6,6 +6,8 @@ on:
       - 'src/painted-lobby-runtime.js'
       - 'scripts/editorial-share-render-test.cjs'
       - '.github/workflows/paw-editorial-export.yml'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read

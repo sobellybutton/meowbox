@@ -6,6 +6,8 @@ on:
       - 'src/painted-lobby-runtime.js'
       - 'scripts/native-discovery-share-test.cjs'
       - '.github/workflows/paw-native-keepsake.yml'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
