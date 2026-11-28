@@ -13516,7 +13516,7 @@ function pawReadingActive(){return !activity&&room===pawReadingVisit&&pawReading
 // Predecode all required tarot artwork before the room becomes interactive.
 const pawTarotPropPath='../../staging/2026-11-28-consolidated/atlases/tarot-props.webp';
 function pawTarotProps(retry=false){return pawRecoveredImage(pawTarotPropPath,null,retry)}
-async function pawPrepareTarotArt(){const faces=readingArtwork(),props=pawTarotProps(true);const result=await Promise.all([pawReadyPicture(faces,4500),pawReadyPicture(props,4500)]);return result.every(Boolean)&&faces.naturalWidth===1024&&faces.naturalHeight===2180}
+async function pawPrepareTarotArt(){const faces=readingArtwork(),props=pawTarotProps(true),seated=pawWarmRearSeated(avatar??0);const result=await Promise.all([pawReadyPicture(faces,4500),pawReadyPicture(props,4500),seated?pawReadyPicture(seated,4500):true]);return result[0]&&result[1]&&faces.naturalWidth===1024&&faces.naturalHeight===2180}
 const pawReadingDoorBefore=walkDoor;
 walkDoor=function(id,...args){if(pawReadingRoomIds.includes(id))pawLoadReadingModule().then(api=>pawReadingImage(api,id));pawWarmReadingHost(id);if(id==='tarot')pawPrepareTarotArt();return pawReadingDoorBefore(id,...args)};
 const pawReadingEnterBefore=enter;
@@ -14189,11 +14189,26 @@ openTarotReading=function(entry,back){
 // Keep the established painting in the live consultation, rather than
 // substituting the generic reading-room image. Existing card/table geometry
 // remains unchanged pending final calibrated closeup and seated host art.
+/* PAW_TAROT_TRAVELLER_CHAIR_BEGIN */
+// Match the right chair in the original Tarot portrait, using the
+// existing identity-specific seated illustration, not a standing sprite.
+function pawTarotTravellerChair(plate){
+ if(!plate||![plate.x,plate.y,plate.w,plate.h].every(Number.isFinite)||plate.w<=0||plate.h<=0)return null;
+ return {hip:{x:plate.x+plate.w*.855,y:plate.y+plate.h*.533},scale:plate.h*.168/78}
+}
+function pawDrawTarotTravellerChair(plate){
+ const id=avatar??0,pose=pawTarotTravellerChair(plate);
+ if(!pose||!pawRearSeatedRecords[id])return false;
+ const im=pawRearSeatedImage(id);
+ if(!pawRoomImageReady(im))return false;
+ return pawDrawRearSeated(im,id,pose.hip,pose.scale)
+}
+/* PAW_TAROT_TRAVELLER_CHAIR_END */
 const pawTarotRoomBackdropBefore=paintLivingBackdrop;
 paintLivingBackdrop=function(...args){
  if(room==='tarot'&&pawReadingVisit==='tarot'&&['tarot','love'].includes(activity)){
   const im=pawReadingImage(pawReadingAPI(),'tarot');
-  if(pawRoomImageReady(im)){const b=livingBounds();ctx.save();try{cover(im,b.x,b.y,b.w,b.h);const plate=pawReadingCoverPlate(b,im.naturalWidth,im.naturalHeight);pawSceneAirLive('tarot',plate,im);pawDrawReadingSeated('tarot',plate)}finally{ctx.restore()}return}
+  if(pawRoomImageReady(im)){const b=livingBounds();ctx.save();try{cover(im,b.x,b.y,b.w,b.h);const plate=pawReadingCoverPlate(b,im.naturalWidth,im.naturalHeight);pawSceneAirLive('tarot',plate,im);pawDrawReadingSeated('tarot',plate);state.pawTarotSeatDrawn=pawDrawTarotTravellerChair(plate)}finally{ctx.restore()}return}
  }
  return pawTarotRoomBackdropBefore(...args)
 };
@@ -15445,7 +15460,7 @@ drawActivity=function(...args){
  if(room==='tarot'&&['tarot','love'].includes(activity)&&state.readStage==='focus'&&talkOpen&&$('dialogue').hasAttribute('data-paw-tarot-conversation')){
   const v=state.readCards?.[state.readFocus],im=pawReadingImage(pawReadingAPI(),'tarot');
   if(v&&pawRoomImageReady(im)){
-   const b=livingBounds(),w=Math.min(b.w*.30,b.h*.19),h=w*218/128,x=b.x+b.w*.70-w/2,y=b.y+b.h*.33-h/2;
+   const b=livingBounds(),w=Math.min(b.w*.28,b.h*.19),h=w*218/128,x=b.x+b.w*.52-w/2,y=b.y+b.h*.31-h/2;
    ctx.save();try{paintLivingBackdrop(im);ctx.save();ctx.shadowColor='#29282280';ctx.shadowBlur=8;round(x-2,y-2,w+4,h+4,2,'#e5d1a6','#a78c64');ctx.restore();paintReadingArtwork(x,y,w,h,v.i,v.rev)}finally{ctx.restore()}
    return
   }
@@ -15817,3 +15832,6 @@ pawRoomGroundingStyle.textContent=`
 @media(forced-colors:active){#game #dock>button[aria-current="page"]{outline:2px solid Highlight!important}}
 `;document.head.append(pawRoomGroundingStyle);
 /* PAW_ROOM_GROUNDING_AND_DOCK_END */
+
+/* Keep the Tarot interpretation on the same resident dialogue surface. */
+const pawTarotSpeechBubbleStyle=document.createElement('style');pawTarotSpeechBubbleStyle.textContent=`html #game #dialogue[data-paw-tarot-conversation][data-paw-chat-bar] #line{width:fit-content;max-width:100%;box-sizing:border-box;background:#f1e6cf!important;color:#3d4b3d!important;border:1px solid #b6a17b;border-radius:11px 11px 11px 3px;padding:8px 11px!important;margin:0 0 6px!important}html #game #dialogue[data-paw-tarot-conversation][data-paw-chat-bar]{max-height:40dvh!important;padding-top:8px!important}`;document.head.append(pawTarotSpeechBubbleStyle);
