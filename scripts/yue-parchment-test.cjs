@@ -60,3 +60,11 @@ assert.equal(visitChecks,256);
 assert.ok(source.includes('if(active())setExpanded(!expanded,true)'),'fold control guarded');
 assert.ok(source.includes('if(lastGrid!==grid||!pawYueChartVisitActive(pane,out,grid))return'),'deferred board selection guarded');
 console.log('PASS '+visitChecks+' chart visit ownership combinations and 2 runtime wiring assertions');
+
+const foldChecks=new Function(locationBlock+`
+let n=0;for(const requested of [true,false,null,undefined])for(const complete of [true,false,null,undefined]){const q=pawYueFoldState(requested,complete);if(q.expanded!==Boolean(requested&&complete)||q.folded!==Boolean(!requested&&complete)||q.expanded&&q.folded)throw Error('fold state');n++}return n`)();
+assert.equal(foldChecks,16);
+assert.ok(source.includes("out.toggleAttribute('data-paw-yue-folded',next.folded)"));
+assert.ok(source.includes("const focusSurface=expanded?lastGrid:toolbar"));
+assert.ok(source.includes('destiny-study-props.webp'));
+console.log('PASS '+foldChecks+' folded chart state checks plus 3 wiring assertions');

@@ -13116,7 +13116,7 @@ function pawDrawReadingSeated(id,plate){
  const desk=id==='destiny'&&$('page').dataset.pawYueDesk==='true'&&$('page').style.display!=='none';
  const activeForm=desk?$('content').querySelector('.astroForm,.yueAlmanacForm'):null;
  const editing=!!activeForm&&!activeForm.hidden&&activeForm.style.display!=='none';
- const grid=desk&&!editing?$('content').querySelector('.ziGrid'):null;
+ const grid=desk&&!editing&&!$('content').querySelector('.astroResult[data-paw-yue-folded]')?$('content').querySelector('.ziGrid'):null;
  const almanac=desk&&!editing?$('content').querySelector('.yueReadingFront,.signNotebookResult'):null;
  const result=!!(grid||almanac),phase=pawReadingHostPhase(id,state,activity,desk,result);
  const plan=pawReadingSeatPlan(id,plate,phase);if(!plan)return false;
@@ -13619,15 +13619,23 @@ function pawYueLocationMode(place,values){
 function pawYueChartVisitActive(pane,out,grid){
  return room==='destiny'&&!activity&&pane.dataset.pawYueDesk==='true'&&pane.style.display==='block'&&out.isConnected&&!!grid&&grid.isConnected&&out.querySelector('.ziGrid')===grid&&pawYueChartComplete(grid)
 }
+// A folded parchment is a real compact state, not merely a narrower chart.
+function pawYueFoldState(requested,complete){
+ return {expanded:!!requested&&!!complete,folded:!requested&&!!complete}
+}
 /* PAW_YUE_PARCHMENT_END */
 function pawYueChartParchment(q,pane,form,out){
  if(!out)return;
  let lastGrid=null,toolbar=null,expand=null,expanded=false;
  function setExpanded(value,scroll=false){
-  expanded=!!value&&pawYueChartComplete(lastGrid);
+  const next=pawYueFoldState(value,pawYueChartComplete(lastGrid));
+  expanded=next.expanded;
   if(expanded)pane.dataset.pawYueExpanded='true';else delete pane.dataset.pawYueExpanded;
+  out.toggleAttribute('data-paw-yue-folded',next.folded);
+  if(expand)expand.toggleAttribute('data-paw-yue-scroll',next.folded);
   if(expand){expand.textContent=expanded?tr('Fold the chart','收起命盘'):tr('Unfold the chart','展开命盘');expand.setAttribute('aria-expanded',String(expanded))}
-  if(scroll&&lastGrid?.isConnected)lastGrid.scrollIntoView({block:'nearest',behavior:residentReducedMotion.matches?'instant':'smooth'})
+  const focusSurface=expanded?lastGrid:toolbar;
+  if(scroll&&focusSurface?.isConnected)focusSurface.scrollIntoView({block:'nearest',behavior:residentReducedMotion.matches?'instant':'smooth'})
  }
  function sync(){
   if(room!=='destiny'||pane.dataset.pawYueDesk!=='true'||!out.isConnected)return;
@@ -13922,6 +13930,9 @@ pawYueDeskCSS.textContent=`
 #game #page[data-paw-yue-desk="true"] #content>.yueCompactIntro[hidden],#game #page[data-paw-yue-desk="true"] #content>button[hidden]{display:none!important}
 
 #game #page[data-paw-yue-desk="true"] .pawYueParchmentTools button{flex:1;min-height:44px}
+#game #page[data-paw-yue-desk="true"] [data-paw-yue-folded]{display:none!important}
+#game #page[data-paw-yue-desk="true"] button[data-paw-yue-scroll]{display:flex;align-items:center;justify-content:center;gap:5px;flex:1 1 100%;min-height:58px}
+#game #page[data-paw-yue-desk="true"] button[data-paw-yue-scroll]::before{content:'';display:block;flex:0 0 86px;height:55px;background:url('assets/visual/staging/2026-11-28-consolidated/atlases/destiny-study-props.webp') -81.6px -85.2px / 289.6px 217.2px no-repeat;pointer-events:none}
 #game #page[data-paw-yue-expanded="true"] .ziGrid article:not(.blank){overflow-wrap:anywhere;min-width:0}
 #game #pawRoomGuideToggle:not(:focus-visible),#destinyAccess:not(:focus-visible){clip-path:inset(50%)!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;overflow:hidden!important;pointer-events:none!important;padding:0!important;border:0!important}
 
