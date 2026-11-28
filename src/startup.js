@@ -15749,7 +15749,7 @@ let pawBookPrevious='',pawBookGesture=null;
 const pawBookOpenSections=new Set();
 function pawBookFoldExisting(node,key,label){
  if(!node||node.parentElement?.classList.contains('pawBookFold'))return;
- const fold=element('details','',null,'pawBookFold');node.before(fold);
+ const fold=document.createElement('details');fold.className='pawBookFold';node.before(fold);
  element('summary',label,fold);fold.append(node);fold.open=pawBookOpenSections.has(key);
  fold.addEventListener('toggle',()=>{if(!fold.isConnected)return;if(fold.open)pawBookOpenSections.add(key);else pawBookOpenSections.delete(key)})
 }
