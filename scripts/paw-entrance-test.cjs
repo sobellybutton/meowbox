@@ -12,7 +12,13 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
   const name=width+'x'+height+'-'+(language==='EN'?'en':'zh')+'-'+motion;
   const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1,hasTouch:width<900,reducedMotion:motion});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  const shot=stage=>page.screenshot({path:'test-results/entrance/'+name+'-'+stage+'.png'});
+  const shot=async stage=>{
+   if(process.env.PAW_FOUNDATION==='1'){
+    const words=await page.locator('body').innerText();
+    assert(!/\bNPCs?\b|non.player character|fictional (?:residents?|guests?|visitors?|characters?)|虚构(?:居民|来客|角色|客串角色)|非玩家角色|电脑对手/i.test(words),'Out-of-world wording visible at '+stage);
+   }
+   await page.screenshot({path:'test-results/entrance/'+name+'-'+stage+'.png'});
+  };
   async function reachable(locator,label){
    await locator.scrollIntoViewIfNeeded();
    const result=await locator.evaluate(el=>{
