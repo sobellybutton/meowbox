@@ -4385,12 +4385,25 @@ function pawApplyPlaceNames(world){
  }
 }
 pawApplyPlaceNames(maps);
+/* PAW_DISPLAY_NAMES_BEGIN */
 function pawDisplayPlaceText(value){
- const aliases=[['Tarot House','Moonlight Tarot'],['塔罗小屋','月光塔罗'],['Destiny House','Master Yue’s Study'],['命理小馆','月师傅的书房']];
+ if(typeof value!=='string')return value;
+ // Visible prose only. Never rewrite stored item names, IDs or save keys.
+ const aliases=[
+ ['Tarot House','Moonlight Tarot'],['塔罗小屋','月光塔罗'],
+ ['Destiny House','Master Yue’s Study'],['Starlight Observatory','Master Yue’s Study'],['星月命理小馆','月师傅的书房'],['星月命理馆','月师傅的书房'],['命理小馆','月师傅的书房'],
+ ['Personality Lab','The Inner Observatory'],['人格研究所','心灵观星台'],
+ ['Parallel Lives','The House of What If'],
+ ['Compatibility Café','The Heart Café'],['Compatibility Cafe','The Heart Café'],['缘分咖啡馆','心语咖啡馆'],
+ ['Discovery Station','Starlight Valley'],['Wonder Valley','Starlight Valley'],['奇遇驿站','星语谷'],['奇遇谷','星语谷'],['奇遇站','星语谷'],
+ ['Lazy Island','Sea Breeze Island'],['懒人岛','海风岛'],['咸鱼岛','海风岛'],
+ ['Munch & Play','Lantern Lane'],['Food & Fun Street','Lantern Lane'],['吃喝玩乐街','灯火小街'],['吃喝玩乐岛','灯火小街']
+ ];
  let result=value;
- for(const [oldName,newName] of aliases)if(typeof result==='string')result=result.split(oldName).join(newName);
+ for(const [oldName,newName] of aliases)result=result.split(oldName).join(newName);
  return result
 }
+/* PAW_DISPLAY_NAMES_END */
 const pawPhysicalPageBefore=page;
 page=function(title,sub,body){
  return pawPhysicalPageBefore(pawDisplayPlaceText(title),pawDisplayPlaceText(sub),q=>{
@@ -5227,7 +5240,7 @@ pawJournalRender=function(district=scene){
 // Keep interaction text tied to its actual scene. The existing scenery
 // remains shared, pending original route-specific painted landscapes.
 const pawRailRouteNotes={
- fortune:['Into the hills','开往山间'],home:['Towards the tea room district','开往茶香小镇'],island:['Towards the food and fun district','开往吃喝玩乐街'],wonder:['Towards the discovery district','开往奇遇驿站']
+ fortune:['Into the hills','开往山间'],home:['Towards the tea room district','开往茶香小镇'],island:['Towards Lantern Lane','开往灯火小街'],wonder:['Towards Starlight Valley','开往星语谷']
 };
 const pawRailContextBefore=mbTransferHolding;
 mbTransferHolding=function(from,to){
@@ -13103,5 +13116,13 @@ blindCollectionPage=function(...args){
  for(const button of q.querySelectorAll('button'))if(button.textContent===tr('Back to blind boxes','返回盲盒'))button.onclick=back;
  return value
 };
+
+// Apply display aliases at presentation boundaries, never in persistence.
+const pawDisplayHintPrior=hint;
+hint=function(en,cn,...args){return pawDisplayHintPrior(pawDisplayPlaceText(en),pawDisplayPlaceText(cn),...args)};
+const pawDisplayCluePrior=keepsakeClue;
+keepsakeClue=function(...args){const pair=pawDisplayCluePrior(...args);return Array.isArray(pair)?pair.map(pawDisplayPlaceText):pair};
+const pawDisplayResidentTipPrior=residentTip;
+residentTip=function(...args){const pair=pawDisplayResidentTipPrior(...args);return Array.isArray(pair)?pair.map(pawDisplayPlaceText):pair};
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
