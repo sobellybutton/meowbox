@@ -812,7 +812,8 @@
         ".github/workflows/yue-journey.yml",
         "scripts/runtime-module-live-test.cjs",
         "scripts/prepared-art-test.cjs",
-        "scripts/action-refinement-test.cjs"
+        "scripts/action-refinement-test.cjs",
+        "scripts/quality-checks.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -841,7 +842,10 @@
         "Inspected all 40 screenshots from organic run 46113537285. Mobile Tarot visual defect despite positive draw probe confirmed and fixed in source; post-fix inspection needed. Railway matrix run 46113395561: Android compact/tall/large/Samsung-size Chromium, Android Firefox-size, iOS compact WebKit passed; iOS tall/large and tablet cancelled, not failed or passed. Physical-device verification still unavailable.",
         "Run 46114885059 failed browser job before normal-input gameplay because action-refinement-test.cjs source slice included new Kaya production manifest registration. 8e508d20 restores focused function boundary; 1b4aff77 updates temple admission test to inject explicit decode predicate and reject downloaded-but-not-decoded artwork. Entire exact current action regression subsequently passed all 26 groups with source-file read adapter, including 53,257 entrance family checks. No runtime change or rendered acceptance; fresh CI required."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-quality-build-1412",
+        "until": 1795846940129
+      },
       "blocker": "Browser connector unavailable for this attempt; actual mobile/desktop playthrough and visual acceptance remain unverified.\n\nOwner device acceptance clarification (27 Nov): Final deployed verification must record exact commit, browser/OS, dimensions, DPR, language, input, evidence and pass/fail/blocked per complete desktop and genuine phone journey. Actual physical iPhone Safari and Android Chrome evidence distinct from Playwright emulation; inaccessible hardware remains blocked.\n\nEnd-to-end critique, 28 Nov: Use section 12 prioritized journeys and P0/P1/P2 severity, including first enjoyable action, actual return state, and current deployed commit; never conflate phone emulation with real hardware.\nChromium purification and temple entry failures in run 46096584043 still require diagnosis; native reading browser rerun pending.\nOwner requires all representative mobile phone classes and browsers, including Android and iOS; see updated GAME_EXPERIENCE_STANDARD.md. Nine-profile railway CI is only a first subset."
     },
     {
