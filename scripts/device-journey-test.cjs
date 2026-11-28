@@ -89,10 +89,15 @@ const assert=(value,message)=>{if(!value)throw Error(message)};
      komorebiZone=0;hideoutEditing=false;hideoutPage()
     });
     await click(page.getByRole('button',{name:'Decorate room',exact:true}));
+     const materialFold=page.locator('.pawRoomMaterialsFold');
+     assert(await materialFold.count()===1,'Missing wallpaper and flooring disclosure');
+     await click(materialFold.locator('summary'));
+     assert(await materialFold.getAttribute('open')!==null,'Material selector did not open');
     for(const [kind,names] of [['wall',['Linen wallpaper','Sakura wallpaper','Matcha wallpaper','Indigo wallpaper']],['floor',['Honey oak flooring','Vintage ceramic tiles','Tatami flooring','Cream checker tiles']]]){
      for(const name of names){
       const id=await page.evaluate(name=>furnitureCatalogue().find(v=>v[1]===name)[0],name);
       await click(page.locator('.komorebiFinishChoices').getByRole('button',{name,exact:true}));
+       assert(await materialFold.getAttribute('open')!==null,'Material selector collapsed after selecting '+id);
       const surface=page.locator('.hideoutScene svg image[data-paw-home-finish="'+kind+'"][data-material="'+id+'"]');
       await surface.waitFor({state:'attached',timeout:12000});
       const ready=await surface.evaluate(async el=>{

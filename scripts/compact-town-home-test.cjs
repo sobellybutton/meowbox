@@ -176,3 +176,8 @@ for(const room of ['starter','side','studio']){
  for(const start of free){const goal=api.cutawaySeatApproach(layout,room,items,futon,start);assert(goal);assert(api.cutawayRoute(layout,room,items,start,goal)!==null);}
 }
 console.log('PASS futon seating surface, mirrored placement and reachable front approach');
+
+assert(src.includes('fold.open=pawRoomMaterialsOpen'));
+assert(src.includes('pawRoomMaterialsOpen=!fold.open;fold.open=pawRoomMaterialsOpen'));
+assert(src.includes('pawRoomMaterialsOpen=false;\n // Keep a compact room-side tray'));
+console.log('PASS room materials disclosure retains state through editor rerenders');
