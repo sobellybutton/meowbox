@@ -1,0 +1,48 @@
+name: Pawradise in-room ritual presentation
+on:
+  pull_request:
+    branches: [main]
+    paths: ['src/**','scripts/three-ritual-presentation-test.cjs','.github/workflows/three-ritual-presentation.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rituals:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/three-ritual-room-presentation-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chromium
+            width: 360
+            height: 640
+            language: en
+          - browser: webkit
+            width: 390
+            height: 844
+            language: zh
+    env:
+      PAW_BROWSER: ${{ matrix.browser }}
+      PAW_WIDTH: ${{ matrix.width }}
+      PAW_HEIGHT: ${{ matrix.height }}
+      PAW_LANGUAGE: ${{ matrix.language }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Actual in-room controls and chart handoff
+        run: |
+          python3 -m http.server 8765 >/tmp/paw-ritual.log 2>&1 &
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8765/index.html >/dev/null && break; sleep 1; done
+          node scripts/three-ritual-presentation-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: three-ritual-${{ matrix.browser }}-${{ matrix.language }}
+          path: test-results/ritual-presentation
