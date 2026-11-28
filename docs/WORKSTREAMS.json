@@ -435,7 +435,8 @@
         "scripts/blind-box-reveal-test.cjs",
         "src/extensions.js",
         "index.html",
-        "scripts/build.cjs"
+        "scripts/build.cjs",
+        "src/arcade-painted-runtime.js"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -446,12 +447,10 @@
         "Owner: Goldfish Scooping same arcade scene, Bubble Pop painted/iridescent themed bubbles, Blind Boxes inner redesign, visible living NPCs walking and playing actual machines. Retain requested scooping/pop; no separate fishing. Preserve spend/reward/input and current curated scope.",
         "Project batch 14: 9b1393d8 + 64bcb409 reserve scoop controls using measured panel height plus dip timing allowance, retain stable camera reserve during active pointer; add pearlescent bubble rims without changing color matching or symbol. Five viewport sizes checked; actual failing narrow-device scoop regression and visual acceptance still pending.",
         "bd78fa8e + 0393dc93: Batch 5 open blind-box and front occlusion candidate imported; use same-box prize reveal and physical pickup. Staging verified, not runtime accepted; refer to PROJECT_BATCHES_30.md imported creative batches.",
-        "422c0479 + 15044344: standalone same-carton reveal renderer, uses Batch 05 matching open and front occlusion images, shared transform and ground anchor; prize rises between layers, reduced motion and missing-pair fallback. 2,187 geometry/mock rendering assertions passed. Shared runtime was leased by UX-02, so no runtime activation, no live or physical device verification. Next connect to actual blind-box stage using existing transaction/ledger and original closed box fallback; inspect identity, art contact, reveal and both screen orientations."
+        "422c0479 + 15044344: standalone same-carton reveal renderer, uses Batch 05 matching open and front occlusion images, shared transform and ground anchor; prize rises between layers, reduced motion and missing-pair fallback. 2,187 geometry/mock rendering assertions passed. Shared runtime was leased by UX-02, so no runtime activation, no live or physical device verification. Next connect to actual blind-box stage using existing transaction/ledger and original closed box fallback; inspect identity, art contact, reveal and both screen orientations.",
+        "9dbf0b01: activated existing matching open carton and front mask in actual live and embedded assembly via a small isolated arcade runtime. Pair decoded on shelf visit, locked per purchase, result uses same counter anchor; legacy fallback if unavailable, existing transaction, reward and collection logic preserved. 2201 exact-source isolated checks passed; new module and loader scripts parse. Matching closed carton art remains absent; provisional closed/open identity, full build CI, organic device playback and visual acceptance pending. No stage promotion."
       ],
-      "lease": {
-        "owner": "manual-blind-reveal-integration",
-        "until": 1795844796249
-      },
+      "lease": null,
       "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\nIndependent same-carton reveal renderer implemented and tested; runtime loading/activation and live art review remain outstanding."
     },
     {
