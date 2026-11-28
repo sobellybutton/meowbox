@@ -82,3 +82,26 @@ console.log('Painted room plaque clearance regression passed');
  }
  console.log('Landing-local doorway placement passed');
 }
+
+/* Stable architectural anchor after a passing character or transient HUD
+   obstruction. Existing safe offset stays until the authored point is clear. */
+{
+ const ext=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+ const a=ext.indexOf('function pawArchitecturalPlaqueHome('),b=ext.indexOf('let lastDoorLayoutAt=',a);
+ assert.ok(a>=0&&b>a);
+ const home=new Function(ext.slice(a,b)+';return pawArchitecturalPlaqueHome')();
+ const exact={x:100,y:100,rect:{}};
+ let n=0;const ck=v=>{assert.ok(v);n++};
+ for(let t=0;t<1000;t+=10){
+  const q={hidden:false,_signOffset:{x:14,y:0}};
+  ck(home(q,exact,t)===null);ck(home(q,exact,t+349)===null);
+  ck(home(q,exact,t+350)===exact);ck(q._anchorClearAt===null);
+  ck(home(q,null,t+351)===null);ck(home(q,exact,t+400)===null);
+  ck(home(q,null,t+600)===null);ck(home(q,exact,t+700)===null);
+  ck(home(q,exact,t+1050)===exact);
+ }
+ ck(home({_signOffset:{x:0,y:0}},exact,0)===exact);
+ ck(home({hidden:true,_signOffset:{x:20,y:0}},exact,0)===exact);
+ assert.ok(ext.includes('let choice=pawArchitecturalPlaqueHome(btn,exact,now);'));
+ console.log('PASS '+n+' architectural anchor recovery assertions');
+}
