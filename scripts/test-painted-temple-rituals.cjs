@@ -211,4 +211,26 @@ assert.ok(src.includes('at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,paw
 assert.equal(ws,2.18);
 assert.ok(src.includes('const sc=pawWaterActorScale(),shoulder=pawWaterShoulder'));
 assert.ok(src.includes('const bowl=pawWaterLadlePoint(at,angle,35,6)'));
+// Replay the actual release wrapper and compare its accepted centre with
+// the rendered held-ladle centre, including offset grabs and rejected drops.
+const releaseBlock=src.slice(src.indexOf('const pawWaterReleaseBefore=templeReleaseWater;'),src.indexOf('const pawWaterAssistBefore=mb5AssistPerform;'));
+const releaseHarness=new Function(get('PURIFICATION_PAINT')+`
+let state,accepted,templeReleaseWater=(a)=>{accepted=a;state.waterStage++};
+const pawWaterPaintingActive=()=>true,pawArcadeInputBlocked=()=>false,hint=()=>{};
+`+releaseBlock+`
+return {run(stage,point,gesture){state={waterStage:stage};accepted=null;templeReleaseWater(point,gesture);return {stage:state.waterStage,from:state.pawWaterFrom,accepted}}};
+`)();
+let releaseCases=0;
+for(const stage of [0,1])for(const dx of [-45,0,45])for(const dy of [-30,0,30])for(let x=260;x<=430;x+=5)for(let y=320;y<=500;y+=5){
+ const point={x,y},gesture={id:'templeLadle',h:{x:300,y:400,w:82,h:44},sx:341+dx,sy:422+dy};
+ const centre=physicalWater.pawWaterDragCentre({x:x-dx,y:y-dy},wg,ws);
+ const valid=physicalWater.pawWaterDropMatches(stage,centre.x,centre.y,wg);
+ const got=releaseHarness.run(stage,point,gesture);
+ assert.equal(got.stage,stage+(valid?1:0));
+ if(valid){assert.deepEqual(got.from,centre);assert.ok(got.accepted)}
+ else assert.equal(got.accepted,null);
+ releaseCases++;
+}
+assert.ok(src.includes("if(gesture?.id==='templeLadle')a=pawWaterDragCentre(a,g,pawWaterActorScale())"));
+console.log('PASS '+releaseCases+' actual ladle release and render agreement cases');
 console.log('Purification ladle contact and bounded reach checks passed.');
