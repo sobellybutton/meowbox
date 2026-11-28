@@ -6867,7 +6867,7 @@ function pawSelectTarotCard(index,frame=state.pawChoiceFrame){
  state.pawSelectedCards=chosen;physicalFx('paper',.65);
  if(chosen.length===count){
   state.readCards=chosen.map(i=>state.pawCardPool[i]);state.readFlip=Array(count).fill(-1);
-  state.readStage='deal';state.readAt=t;state.readSaved=false;
+  state.readStage='cards';state.readAt=t;state.readSaved=false;
   hint('Turn your chosen cards over.','翻开你亲自选的牌。')
  }
  return true
@@ -12780,8 +12780,12 @@ function pawLoadReadingModule(){
 function pawReadingImage(api,id,retry=false){const path=api?.asset(id);return path?pawRecoveredImage(path.replace('assets/visual/','../../'),null,retry):null}
 const pawReadingAPI=()=>globalThis.PawPaintedInteriors;
 function pawReadingActive(){return !activity&&room===pawReadingVisit&&pawReadingRoomIds.includes(room)&&pawRoomImageReady(pawReadingImage(pawReadingAPI(),room))}
+// Predecode all required tarot artwork before the room becomes interactive.
+const pawTarotPropPath='../../staging/2026-11-28-consolidated/atlases/tarot-props.webp';
+function pawTarotProps(retry=false){return pawRecoveredImage(pawTarotPropPath,null,retry)}
+async function pawPrepareTarotArt(){const faces=readingArtwork(),props=pawTarotProps(true);const result=await Promise.all([pawReadyPicture(faces,4500),pawReadyPicture(props,4500)]);return result.every(Boolean)&&faces.naturalWidth===1024&&faces.naturalHeight===2180}
 const pawReadingDoorBefore=walkDoor;
-walkDoor=function(id,...args){if(pawReadingRoomIds.includes(id))pawLoadReadingModule().then(api=>pawReadingImage(api,id));return pawReadingDoorBefore(id,...args)};
+walkDoor=function(id,...args){if(pawReadingRoomIds.includes(id))pawLoadReadingModule().then(api=>pawReadingImage(api,id));if(id==='tarot')pawPrepareTarotArt();return pawReadingDoorBefore(id,...args)};
 const pawReadingEnterBefore=enter;
 enter=function(id,...args){
  if(!pawReadingRoomIds.includes(id)){pawReadingAdmission=null;pawReadingVisit=null;return pawReadingEnterBefore(id,...args)}
@@ -12795,7 +12799,7 @@ enter=function(id,...args){
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   const compatible=pawReadingCompatible(api,id,roomActions[id]||[]);
   const im=compatible?pawReadingImage(api,id,true):null;
-  const ready=compatible&&await pawReadyPicture(im,4500);
+  const ready=compatible&&(await Promise.all([pawReadyPicture(im,4500),id==='tarot'?pawPrepareTarotArt():true])).every(Boolean);
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   pawReadingAdmission=null;
   if(!ready||!pawRoomImageReady(im)){hint('The room painting could not load. Tap its door to try again.','小屋画面暂未加载成功，请再次点击门口重试。');return}
@@ -12808,7 +12812,7 @@ enter=function(id,...args){
  pawWarmRoomAssets=function(id){
   if(room||activity)return pawMappedWarmBefore(id);
   const decode=im=>{if(im&&!pawRoomImageReady(im))pawReadyPicture(im,4500)};
-  if(pawReadingRoomIds.includes(id)){pawLoadReadingModule().then(api=>decode(pawReadingImage(api,id)));return}
+  if(pawReadingRoomIds.includes(id)){pawLoadReadingModule().then(api=>decode(pawReadingImage(api,id)));if(id==='tarot')pawPrepareTarotArt();return}
   if(Object.hasOwn(pawFoodRoomSpecs,id)){decode(pawFoodImage(id));return}
   if(id==='wishes'){decode(pawWishLobbyArt());return}
   return pawMappedWarmBefore(id)
@@ -14019,5 +14023,59 @@ pawVisitDialogueStyle.textContent=`
 `;
 document.head.append(pawVisitDialogueStyle);
 /* PAW_DISCOVERY_DIALOGUE_CONTINUITY_END */
+
+
+/* PAW_TAROT_PAINTED_PROPS_BEGIN */
+function pawTarotPropCrop(kind,w,h){
+ if(![w,h].every(Number.isFinite)||w<=0||h<=0)return null;
+ const r=kind==='back'?[.660,.018,.148,.315]:kind==='mat'?[.018,.377,.410,.286]:null;
+ return r?r.map((v,i)=>v*(i%2?h:w)):null
+}
+/* PAW_TAROT_PAINTED_PROPS_END */
+const pawLegacyTarotCard=card;
+card=function(x,y,w,h,front,...args){
+ if(room!=='tarot'||!['tarot','love'].includes(activity)||front)return pawLegacyTarotCard(x,y,w,h,front,...args);
+ const im=pawTarotProps();
+ if(!pawRoomImageReady(im)){round(x,y,w,h,3,'#4b3d60','#b99b70');return}
+ ctx.drawImage(im,...pawTarotPropCrop('back',im.naturalWidth,im.naturalHeight),x,y,w,h)
+};
+const pawLegacyTarotTable=table;
+table=function(...args){
+ if(room!=='tarot'||!['tarot','love'].includes(activity))return pawLegacyTarotTable(...args);
+ const im=pawTarotProps();if(!pawRoomImageReady(im))return;
+ ctx.drawImage(im,...pawTarotPropCrop('mat',im.naturalWidth,im.naturalHeight),148,303,504,453)
+};
+const pawTarotUnifiedCamera=mobileRoomCamera;
+mobileRoomCamera=function(...args){
+ if(room==='tarot'&&pawTarotActive(state,activity)&&['choose','cards','focus'].includes(state.readStage)){
+  const portrait=W<H,bounds=portrait?[205,595,278,790]:[145,655,280,700],top=44,bottom=Math.max(top+80,H-60);
+  const [l,r,u,d]=bounds,z=Math.max(.08,Math.min((W-20)/(r-l),(bottom-top)/(d-u)));
+  return {s:z,ox:W/2-(l+r)/2*z,oy:(top+bottom)/2-(u+d)/2*z}
+ }
+ return pawTarotUnifiedCamera(...args)
+};
+/* PAW_ACTOR_FAMILY_BEGIN */
+function pawActorFamilyReady(walk,ready){
+ return ['up','down','right'].every(dir=>Array.isArray(walk?.[dir])&&walk[dir].length>=4&&walk[dir].every(ready))
+}
+/* PAW_ACTOR_FAMILY_END */
+const pawActorFamilyChoice=new Map();
+let pawActorFamilyVisit='';
+const pawFamilyBackHuman=backHuman;
+backHuman=function(x,y,kind,walking,facing,scale=1){
+ if(!Number.isInteger(kind)||kind<0||kind>3)return pawFamilyBackHuman(x,y,kind,walking,facing,scale);
+ const key=scene+'|'+(room||'outside');
+ if(key!==pawActorFamilyVisit){pawActorFamilyVisit=key;pawActorFamilyChoice.clear()}
+ mbArtLoad();const walk=mbArtRegistry.players[kind]?.walk;
+ if(!pawActorFamilyChoice.has(kind))pawActorFamilyChoice.set(kind,pawActorFamilyReady(walk,r=>!!mbArtImage(r)));
+ if(pawActorFamilyChoice.get(kind)){
+  const dir=facing==='left'?'right':facing,frames=walk?.[dir]||walk?.down;
+  const frame=frames[walking?mbArtFrameIndex(t,frames.length,actorReduce||residentReducedMotion.matches):0],im=mbArtImage(frame);
+  if(im){mbArtDrawFrame(frame,im,x,y,scale,facing==='left');return}
+ }
+ // Keep the legacy illustrated family for the whole visit, even if a
+ // subset of new walk directions finishes downloading during a turn.
+ return mbArtWalkBefore(x,y,kind,walking,facing,scale)
+};
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
