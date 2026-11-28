@@ -56,6 +56,11 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
     const before=await page.evaluate(()=>({x:p.x,y:p.y,scene}));
     await page.locator('#'+id).tap();
     await page.waitForFunction(()=>$('page').style.display==='block',null,{timeout:15000});
+    await page.waitForFunction(()=>document.getElementById('game').classList.contains('pawDockRoot'),null,{timeout:8000});
+    const dockHits=await page.locator('#dock button:visible').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {id:n.id,hit:n.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2))}}));
+    assert(dockHits.length===4&&dockHits.every(v=>v.hit),'Dock must actually be in front of page: '+JSON.stringify(dockHits));
+    if(id==='dockOwnHome')await page.waitForFunction(()=>document.querySelectorAll('.hideoutScene [data-paw-home-finish]').length===2,null,{timeout:15000});
+    await page.waitForTimeout(350);
     await page.screenshot({path:'test-results/wayfinding-'+name+'-'+id+'.png'});
     const back=page.locator('#content > .row button').first();
     await back.waitFor({state:'visible',timeout:8000});await back.tap();
@@ -63,6 +68,28 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
     const after=await page.evaluate(()=>({x:p.x,y:p.y,scene}));
     assert.equal(after.scene,before.scene);assert(Math.hypot(after.x-before.x,after.y-before.y)<3,'Dock moved traveller');
    }
+   // Direct tab changes must retain a recoverable private note, without moving the traveller.
+   const rootStart=await page.evaluate(()=>({x:p.x,y:p.y,scene}));
+   await page.locator('#dockScoop').tap();
+   const note=page.locator('#goodCompanyNote'),fold=page.locator('.pawDiaryFold').filter({has:note});
+   if(!await fold.evaluate(e=>e.open))await fold.locator('summary').first().tap();
+   await note.fill('A quiet moment in the valley');
+   await note.blur();
+   await page.waitForFunction(()=>document.getElementById('game').classList.contains('pawDockRoot'));
+   await page.locator('#dockTravel').tap();
+   await page.waitForFunction(()=>document.querySelector('.pawSketchbook')&&document.getElementById('dockTravel').getAttribute('aria-current')==='page');
+   await page.locator('#dockScoop').tap();
+   await page.waitForFunction(()=>document.getElementById('dockScoop').getAttribute('aria-current')==='page');
+   assert.equal(await page.locator('#goodCompanyNote').inputValue(),'A quiet moment in the valley','Private draft lost during direct tab return');
+   await page.locator('#dockValley').tap();
+   await page.waitForFunction(()=>document.querySelector('.pawPavilionScene')&&document.getElementById('dockValley').getAttribute('aria-current')==='page');
+   await page.locator('#dockOwnHome').tap();
+   await page.waitForFunction(()=>document.querySelector('.hideoutScene')&&document.getElementById('dockOwnHome').getAttribute('aria-current')==='page');
+   await page.locator('#content > .row button').first().tap();
+   await page.waitForFunction(()=>$('page').style.display!=='block');
+   const rootEnd=await page.evaluate(()=>({x:p.x,y:p.y,scene}));
+   assert.equal(rootEnd.scene,rootStart.scene);assert(Math.hypot(rootEnd.x-rootStart.x,rootEnd.y-rootStart.y)<3,'Direct tab switching moved traveller');
+   console.log('PASS direct tab switching with private draft '+name);
    // A real touch on an in-view local plaque must cause a physical approach.
    const plaqueProbe=()=>[...document.querySelectorAll('#worldSigns .worldSign[data-door]')].map(e=>{
     const r=e.getBoundingClientRect(),s=getComputedStyle(e),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
