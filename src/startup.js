@@ -15198,4 +15198,71 @@ html #game #content .pawProfileSettings button:focus-visible,html #game #content
 `;document.head.append(pawProfileSettingsStyle);
 /* PAW_PROFILE_SETTINGS_END */
 
+/* PAW_TRAVELLER_GREETING_BEGIN */
+// Original full-body illustrated key poses. Foot landmarks are provisional
+// visual readings of the inspected extracted images, not new motion frames.
+const pawTravellerWaveArt=Object.freeze([[153,270,74,263],[136,266,80,259],[147,260,89,253],[158,278,94,271]].map(([width,height,x,y],id)=>({path:'assets/visual/staging/2026-11-27-extracted/players/'+id+'/wave.webp',width,height,foot:[x,y]})));
+function pawTravellerGreetingFrame(g,now,place,roomId,id,x,y,walking,eligible){
+ if(!g||!eligible||walking||g.place!==place||g.room!==roomId||g.id!==id||![now,x,y].every(Number.isFinite))return false;
+ return now>=g.at&&now-g.at<.95&&Math.hypot(x-g.x,y-g.y)<2
+}
+// Do not borrow a front-facing pose for a side/back-facing actor, a moving
+// peer (including the interpolation after a heartbeat), or a fictional NPC.
+function pawPeerWaveEligible(a,place,roomId,kind,facing,walking,visible){
+ return !!a&&a.sharedPeer===true&&!a.fictionalVisitor&&visible===true&&a.place===place&&(a.room||'')===roomId&&a.gesture==='wave'&&a.avatar===kind&&Number.isInteger(kind)&&kind>=0&&kind<4&&facing==='down'&&a.facing==='down'&&!walking&&a.walking===0&&[a.x,a.y,a.toX,a.toY].every(Number.isFinite)&&Math.hypot(a.x-a.toX,a.y-a.toY)<.5
+}
+/* PAW_TRAVELLER_GREETING_END */
+let pawTravellerGreeting=null,pawTravellerSharedWaveSeen=0,pawGreetingPeerActor=null;
+function pawBeginTravellerGreeting(actor,frontOnly=true){
+ if(!actor||activity||transitioning||document.hidden||!Number.isInteger(avatar)||avatar<0||avatar>3||frontOnly&&actor.facing!=='down')return false;
+ if(!mbArtImage(pawTravellerWaveArt[avatar]))return false;
+ pawTravellerGreeting={place:scene,room:room||'',id:avatar,x:actor.x,y:actor.y,at:t};
+ return true
+}
+const pawGreetingTalkPrior=npcTalk;
+npcTalk=function(n,...args){
+ const result=pawGreetingTalkPrior(n,...args);
+ if(n&&!n.sharedPeer&&n.kind!==2&&!room&&talkOpen)pawBeginTravellerGreeting(p);
+ return result
+};
+const pawGreetingIndoorPrior=pawIndoorSocialTalk;
+pawIndoorSocialTalk=function(...args){
+ const result=pawGreetingIndoorPrior(...args);
+ if(result)pawBeginTravellerGreeting(indoor);
+ return result
+};
+// Keep original peer corridor/room eligibility and label drawing. Only
+// substitute the body artwork within the original actor's draw call.
+function pawGreetingWithPeer(actor,paint){
+ const previous=pawGreetingPeerActor;
+ pawGreetingPeerActor=actor?.sharedPeer===true&&!actor.fictionalVisitor?actor:null;
+ try{return paint()}finally{pawGreetingPeerActor=previous}
+}
+const pawGreetingMapPeerPrior=drawSharedTownActor;
+drawSharedTownActor=function(a,...args){return pawGreetingWithPeer(a,()=>pawGreetingMapPeerPrior(a,...args))};
+const pawGreetingRoomPeerPrior=drawSharedRoomActor;
+drawSharedRoomActor=function(a,...args){return pawGreetingWithPeer(a,()=>pawGreetingRoomPeerPrior(a,...args))};
+const pawGreetingBackHumanPrior=backHuman;
+backHuman=function(x,y,kind,walking,facing,scale=1){
+ const peer=pawGreetingPeerActor,visible=!activity&&!transitioning&&!document.hidden&&proposal.hidden&&$('page').style.display!=='block';
+ if(pawPeerWaveEligible(peer,scene,room||'',kind,facing,walking,visible)&&sharedTownVisible()&&sharedTown.ready&&sharedTown.actors.get(peer.id)===peer&&Math.hypot(x-peer.x,y-peer.y)<.01){
+  const record=pawTravellerWaveArt[kind],im=mbArtImage(record);
+  if(im){mbArtDrawFrame(record,im,x,y,scale,false);return}
+ }
+ const actor=room?indoor:p,local=!peer&&!activity&&!pawRenderedWalker&&kind===avatar&&actor&&Math.hypot(x-actor.x,y-actor.y)<.01;
+ if(local&&Number.isInteger(kind)&&kind>=0&&kind<4){
+  const record=pawTravellerWaveArt[kind],im=mbArtImage(record);
+  // Existing opt-in gesture: show it once after returning to the scene,
+  // never replay it every frame or interrupt walking.
+  if(visible&&!walking&&im&&actor.facing==='down'&&sharedTown.enabled&&sharedTown.gesture==='wave'&&sharedTown.gestureUntil>Date.now()&&sharedTown.gestureUntil!==pawTravellerSharedWaveSeen){
+   pawTravellerSharedWaveSeen=sharedTown.gestureUntil;pawBeginTravellerGreeting(actor)
+  }
+  if(facing==='down'&&pawTravellerGreetingFrame(pawTravellerGreeting,t,scene,room||'',kind,x,y,walking,visible)&&im){
+   pawSyncIdleGait(x,y,kind);mbArtDrawFrame(record,im,x,y,scale,false);return
+  }
+  if(pawTravellerGreeting&&(walking||!visible||t-pawTravellerGreeting.at>=.95||pawTravellerGreeting.place!==scene||pawTravellerGreeting.room!==(room||'')))pawTravellerGreeting=null
+ }
+ return pawGreetingBackHumanPrior(x,y,kind,walking,facing,scale)
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
