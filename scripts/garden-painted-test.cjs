@@ -178,3 +178,17 @@ console.log('Catalogue return and blind box scene ownership passed.');
  assert.ok(!source.includes("pawGardenChoose(run,'chime')"));
  console.log('PASS ambient chime sway, reduced motion and non-interactive garden');
 }
+
+
+// A saved wish belongs to the same active visit, never to a stale hook.
+{
+ const source=fs.readFileSync(path.resolve(__dirname,'../src/extensions.js'),'utf8');
+ const a=new Function(source.split('/* PAW_WISH_HOOK_BEGIN */')[1].split('/* PAW_WISH_HOOK_END */')[0]+';return {pawWishHookCurrent,pawWishRiseProgress}')();
+ let n=0;
+ for(const same of [true,false])for(const room of ['wishes','tarot'])for(const kind of ['wishes','tarot'])for(const blocked of [true,false])for(const stage of ['write','carry','rise'])for(const value of ['', 'a private wish','x'.repeat(301)]){
+  const run={gardenStage:stage,pendingGardenWish:value};assert.equal(a.pawWishHookCurrent(run,same?run:{},'wishes',room,kind,blocked),same&&room==='wishes'&&kind==='wishes'&&!blocked&&stage==='carry'&&value==='a private wish');n++;
+ }
+ for(const [age,reduced,want] of [[-1,false,0],[0,false,0],[.8,false,.5],[1.6,false,1],[3,false,1],[0,true,1]]){assert.equal(a.pawWishRiseProgress(age,reduced),want);n++}
+ assert.ok(source.includes('pawWishHookCurrent(visit,state,visitRoom,room,activity,pawArcadeInputBlocked())'));
+ console.log('PASS '+n+' lantern visit ownership and reduced-motion checks');
+}
