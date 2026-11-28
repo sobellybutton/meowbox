@@ -1453,12 +1453,17 @@ const teaChoices=[['Milk tea','经典奶茶','#b68965'],['Jasmine milk tea','茉
 function teaCup(x,y,sc=1,base=0,pearls=0,fill=1,angle=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(-36,-74);ctx.lineTo(36,-74);ctx.lineTo(26,0);ctx.lineTo(-26,0);ctx.closePath();ctx.fillStyle='#e6e3cf';ctx.fill();ctx.save();ctx.clip();let level=-69*Math.max(0,Math.min(1,fill));ctx.fillStyle=teaChoices[Math.max(0,base)][2];ctx.fillRect(-38,level,76,75);for(let i=0;i<Math.min(16,pearls);i++){let xx=-20+(i*17)%42,yy=-5-Math.floor(i/5)*7+Math.sin(t*6+i)*Math.min(3,Math.abs(angle)*12);ellipse(xx,yy,4.2,4.2,'#4b342e')}ctx.restore();ctx.strokeStyle='#c8b999';ctx.lineWidth=2;ctx.stroke();ellipse(0,-74,37,7,'#eee1c7');line(9,-78,16,-110,'#a66357',5);line(-24,-63,-19,-12,'#fff3da66',3);ctx.restore()}
 function selectTeaBase(i){if(activity!=='bubbleTea'||state.teaStage!=='base'||!Number.isInteger(i)||!teaChoices[i])return;state.teaBase=i;pearlStage('sugar');sound(440)}
 // Finish each visible scoop before another one can begin.
-function pawTeaScoopBusy(q,now){
- return q?.teaStage==='pearls'&&q.teaToppingCount>0&&Number.isFinite(q.teaAt)&&Number.isFinite(now)&&now-q.teaAt<.52
+function pawTeaScoopBusy(q){
+ return q?.teaStage==='pearls'&&q.pawScoopPending===true
+}
+function pawTeaScoopFrame(age,reduced=false){
+ const p=Math.max(0,Math.min(1,age/.85)),ease=u=>u*u*(3-2*u);
+ const f=p<.55?ease(p/.55):1-ease((p-.55)/.45),u=reduced?1:f;
+ return {x:530-102*u,y:520-83*u-(reduced?0:Math.sin(Math.PI*u)*20),angle:-.22*u,loaded:p<.55,drop:p>=.55,done:p>=1}
 }
 function teaAddPearls(){
- if(activity!=='bubbleTea'||state.teaStage!=='pearls'||state.teaTopping===0||state.teaToppingCount>=2||pawTeaScoopBusy(state,t))return;
- state.teaToppingCount=Math.min(2,state.teaToppingCount+1);state.teaPearls=state.teaToppingCount*5;state.teaAt=t;sound(280+state.teaPearls*12)
+ if(activity!=='bubbleTea'||state.teaStage!=='pearls'||state.teaTopping===0||state.teaToppingCount>=2||pawTeaScoopBusy(state))return;
+ state.pawScoopPending=true;state.pawScoopDropped=false;state.teaAt=t
 }
 function teaShake(amount){if(activity!=='bubbleTea'||state.teaStage!=='mix'||!Number.isFinite(amount)||amount<=0)return;state.teaMix=Math.min(100,state.teaMix+Math.min(36,Math.max(0,amount*.42)));state.teaAt=t;if(state.teaMix>=100){pearlStage('seal');sound(630)}}
 function teaSip(){if(activity!=='bubbleTea'||state.teaStage!=='ready')return;state.teaStage='sip';state.teaAt=t;sound(380)}
@@ -1532,7 +1537,7 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
    for(let i=0;i<12;i++)ellipse(511+(i*13)%39,532+(i%3)*5,4,4,state.teaTopping===2?'#c8a271':'#50362e')
   }
   if(drag?.id==='teaPearlScoop')teaScoopArt(drag.x,drag.y,-.13,true);
-  else if(pawTeaScoopBusy(state,t)){const f=poseEase(age/.52);teaScoopArt(530-110*f,521-63*Math.sin(f*Math.PI),-.6*f,f<.85)}
+  else if(pawTeaScoopBusy(state)){const f=pawTeaScoopFrame(age,residentReducedMotion.matches);teaScoopArt(f.x,f.y,f.angle,f.loaded)}
   else teaScoopArt(530,520,0,true);
   if(!pawTeaScoopBusy(state,t)&&state.teaToppingCount<2)target(487,480,90,80,()=>{},'teaPearlScoop');
  }
@@ -8430,7 +8435,12 @@ function pearlAdvance(){
  const age=t-state.teaAt;
  if(state.teaStage==='pouring'&&age>=1.55){pearlStage('seasoning');return}
  if(state.teaStage==='seasoning'&&age>=1.35){pearlStage(state.teaTopping===0?'mix':'pearls');return}
- if(state.teaStage==='pearls'&&state.teaToppingCount===2&&!pawTeaScoopBusy(state,t)){pearlStage('mix');return}
+ if(pawTeaScoopBusy(state)){
+  const f=pawTeaScoopFrame(age);
+  if(f.drop&&!state.pawScoopDropped){state.pawScoopDropped=true;state.teaToppingCount++;state.teaPearls=state.teaToppingCount*5;sound(280+state.teaPearls*12)}
+  if(f.done){state.pawScoopPending=false;if(state.teaToppingCount===2)pearlStage('mix')}
+  return
+ }
  if(state.teaStage==='sealing'&&age>=1.25){state.teaSealed=true;pearlStage('ready');sound(580)}
  if(state.teaStage==='sip'&&age>=2.4){
   pearlStage('done');if(state.teaSaved)return;state.teaSaved=true;
@@ -8463,7 +8473,7 @@ function syncPearlPanel(){
  else if(stage==='ice')pearlIce.forEach(v=>btn(tr(v[1],v[2]),()=>pearlPick('teaIce',v[0])));
  else if(stage==='topping')pearlToppings.forEach(v=>btn(tr(v[1],v[2]),()=>pearlPick('teaTopping',v[0])));
  else if(stage==='pourReady')btn(tr('Pour tea','倒茶'),pearlPour);
- else if(stage==='pearls'){const scoop=btn(q.teaToppingCount===2?tr('Adding the last scoop…','正在加入最后一勺……'):tr('Scoop topping','舀小料')+' '+q.teaToppingCount+'/2',teaAddPearls);scoop.disabled=pawTeaScoopBusy(q,t)||q.teaToppingCount>=2}
+ else if(stage==='pearls'){const scoop=btn(pawTeaScoopBusy(q)?tr('Adding topping…','正在加小料……'):tr('Scoop topping','舀小料')+' '+q.teaToppingCount+'/2',teaAddPearls);scoop.disabled=pawTeaScoopBusy(q,t)||q.teaToppingCount>=2}
  else if(stage==='mix')btn(tr('Shake cup','摇奶茶')+' '+Math.floor(q.teaMix)+'%',()=>teaShake(80));
  else if(stage==='seal')btn(tr('Press to seal','按压封口'),pearlSeal);
  else if(stage==='ready')btn(q.teaOrder?tr('Serve the guest','递给客人'):tr('Take a sip','喝一口'),teaSip);
