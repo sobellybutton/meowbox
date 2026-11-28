@@ -45,6 +45,12 @@ async function travelLoop(page,name,touch){
    }
   }
   await press(sign);
+  if(id==='temple'){
+   await page.waitForFunction(()=>activity==='templeForecourt'&&!transitioning,null,{timeout:21000});
+   await shot('temple-forecourt');
+   const hall=page.locator('[data-paw-forecourt-control="hall"]');
+   await press(hall);
+  }
   await page.waitForFunction(id=>room===id&&!transitioning&&continuityRoom===id&&Math.hypot(indoor.x-indoor.tx,indoor.y-indoor.ty)<4,id,{timeout:21000});
   assert(await page.evaluate(()=>indoorSafe(indoor.x,indoor.y)),'Arrival is outside walkable floor');
   // Inspect actual rendered room actors, not an artificial guest count.

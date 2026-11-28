@@ -11173,6 +11173,10 @@ function pawWaterGripPoint(point,gesture){
  if(gesture?.id!=='templeLadle'||!h||![h.x,h.y,h.w,h.h,gesture.sx,gesture.sy].every(Number.isFinite))return {x:point.x,y:point.y};
  return {x:point.x+h.x+h.w/2-gesture.sx,y:point.y+h.y+h.h/2-gesture.sy}
 }
+function pawWaterHitBox(at,scale){
+ const safe=Number.isFinite(scale)&&scale>0?scale:1,w=Math.max(82,44/safe),h=Math.max(40,44/safe);
+ return {x:at.x-w/2,y:at.y-h/2,w,h}
+}
 function pawWaterDropMatches(stage,x,y,g){
  const a=pawWaterDestination(stage,g);
  return !!a&&Number.isFinite(x)&&Number.isFinite(y)&&Math.hypot(x-a.x,y-a.y)<=25
@@ -11243,7 +11247,8 @@ function pawDrawWaterPainting(){
  if(stage<2){
   const dest=pawWaterDestination(stage,g),x=dest.x-23,y=dest.y;
   ctx.save();ctx.strokeStyle='#fff3bd';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.ellipse(x,y,23+Math.sin(t*3),10,0,0,TAU);ctx.stroke();ctx.restore();
-  target(at.x-41,at.y-20,82,40,()=>{},'templeLadle');
+  const gripBox=pawWaterHitBox(at,cam.scale);
+  target(gripBox.x,gripBox.y,gripBox.w,gripBox.h,()=>{},'templeLadle');
  }
  if(pawWaterProgress(run,t,pawArcadeInputBlocked())){
   run.waterStage=3;run.waterAt=t;

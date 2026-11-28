@@ -63,7 +63,10 @@ const fs=require('node:fs');
     await page.waitForFunction(()=>pawRoomImageReady(pawWaterArt()),{},{timeout:10000});
     await page.evaluate(()=>start('templeWater'));
     await page.waitForFunction(()=>activity==='templeWater'&&pawWaterPaintingActive()&&pics.templeLadlePaint.naturalWidth>0&&hit.some(h=>h.id==='templeLadle'),{},{timeout:10000});
-    const waterTarget=()=>page.evaluate(()=>{const h=hit.find(h=>h.id==='templeLadle');if(!h)throw Error('Missing rendered ladle target');return {x:h.x+h.w/2,y:h.y+h.h/2}});
+    const waterTarget=async()=>{
+     const handle=await page.waitForFunction(()=>{const h=hit.find(h=>h.id==='templeLadle');if(!h)return false;const x=h.x+h.w/2,y=h.y+h.h/2,r=c.getBoundingClientRect(),sx=r.left+cam.ox+x*cam.scale,sy=r.top+cam.oy+y*cam.scale;return at({x,y})===h&&document.elementFromPoint(sx,sy)===c?{x,y}:false},null,{timeout:4000});
+     return handle.jsonValue()
+    };
     // Independent calibration from the courtyard plate, not legacy vector basin coordinates.
     const plate={x:100,y:-145,w:600,h:600*1635/962};
     const point=(u,v)=>({x:plate.x+u*plate.w,y:plate.y+v*plate.h});
@@ -75,7 +78,7 @@ const fs=require('node:fs');
     await dragLadle(miss);
     if(await page.evaluate(()=>state.waterStage)!==0)throw Error('Accepted a drop away from basin');
     await dragLadle(scoop);
-    await page.waitForFunction(()=>state.waterStage===1,{},{timeout:2500});
+    await page.waitForFunction(()=>state.waterStage===1,{},{timeout:2500}).catch(async error=>{const diagnostic=await page.evaluate(()=>({stage:state.waterStage,drag:drag&&{id:drag.id,x:drag.x,y:drag.y},blocked:pawArcadeInputBlocked(),camera:{scale:cam.scale,ox:cam.ox,oy:cam.oy},target:hit.find(h=>h.id==='templeLadle')}));throw Error(name+' scoop failed: '+JSON.stringify(diagnostic)+' '+error.message)});
     await page.waitForTimeout(450);await page.screenshot({path:'test-results/'+name+'-water-filled.png'});
     await dragLadle(pour);
     await page.waitForFunction(()=>state.waterStage===2,{},{timeout:2500});
