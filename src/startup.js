@@ -14826,7 +14826,7 @@ pawDistrictSignStyle.textContent=`
 }
 #game[data-paw-sign-material] .pawRailEdge{min-height:44px;max-width:46%}
 @media(forced-colors:active){
- #game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material] .pawRailEdge{background:ButtonFace!important;border:1px solid ButtonText!important;border-image:none!important;color:ButtonText!important;box-shadow:none!important}
+ #game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material] .pawRailEdge{background:ButtonFace!important;border:1px solid ButtonText!important;border-image:none!important;color:ButtonText!important;box-shadow:none!important}
 }
 `;document.head.append(pawDistrictSignStyle);
 /* PAW_DISTRICT_SIGN_MATERIAL_END */
