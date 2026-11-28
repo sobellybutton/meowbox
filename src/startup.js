@@ -9896,7 +9896,7 @@ function pawFoodActionAllowed(rendered,current,stage,kind,blocked){
 function pawFoodClock(q,kind,now,blocked){
  if(!q||!Number.isFinite(now))return false;
  const phase=kind==='bubbleTea'?q.teaStage:kind==='cook'?(q.pawSoupServeAt!==undefined&&!q.pawSoupServed?'serve':q.tasteAt!==undefined&&!q.tasted?'taste':null):null;
- const field=['pouring','seasoning','sealing','sip'].includes(phase)||phase==='pearls'&&q.teaToppingCount>0?'teaAt':phase==='taste'?'tasteAt':phase==='serve'?'pawSoupServeAt':null;
+ const field=['pouring','seasoning','sealing','sip'].includes(phase)||phase==='pearls'&&q.pawScoopPending===true?'teaAt':phase==='taste'?'tasteAt':phase==='serve'?'pawSoupServeAt':null;
  if(!field||!Number.isFinite(q[field])){delete q.pawFoodClock;return false}
  const prior=q.pawFoodClock;
  if(prior&&prior.phase===phase&&prior.field===field&&Number.isFinite(prior.at)&&now>=prior.at&&(blocked||prior.blocked))q[field]+=now-prior.at;
