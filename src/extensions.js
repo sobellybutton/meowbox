@@ -4681,7 +4681,17 @@ let pawCareSleep=null;
 function pawCareVisibility(hidden,now){
  if(!Number.isFinite(now))return;
  const a=activity==='pet'?state.care:null;
- if(hidden){pawCareSleep=a&&a.phase!=='idle'?{a,phase:a.phase,at:now}:null;return}
+ if(hidden){
+  // Do not retain a pointer gesture when a phone switches apps or locks.
+  // Assisted care keeps its elapsed visible time and resumes on return.
+  if(a?.drag){const drag=a.drag;a.drag=null;a.stroke=0;
+   if((a.phase==='pet'||a.phase==='play')&&!a.assisted){
+    a.phase='return';a.returnFromX=a.x;a.returnFromY=a.y;a.returnAt=t;careSync()
+   }
+   try{if(c.hasPointerCapture(drag.id))c.releasePointerCapture(drag.id)}catch{}
+  }
+  pawCareSleep=a&&a.phase!=='idle'?{a,phase:a.phase,at:now}:null;return
+ }
  const p=pawCareSleep;pawCareSleep=null;if(!p||p.a!==a||p.phase!==a.phase)return;
  const elapsed=Math.max(0,now-p.at);
  if(Number.isFinite(a.at))a.at+=elapsed;
@@ -4692,6 +4702,8 @@ document.addEventListener('visibilitychange',()=>pawCareVisibility(document.hidd
 function careTick(){
  if(document.hidden)return;
  const a=state.care,age=t-a.at,dt=clamp(t-(a.tickAt??t),0,.05);a.tickAt=t;
+ // Completion shares the visible simulation clock instead of a wall timer.
+ if(a.assisted&&((a.phase==='pet'&&age>=2.3)||(a.phase==='play'&&age>=3.2))){careComplete(a.phase);return}
  if(a.phase==='return'){const f=poseEase(clamp((t-a.returnAt)/.7,0,1));a.x=a.returnFromX+(400-a.returnFromX)*f;a.y=a.returnFromY+(535-a.returnFromY)*f;if(f>=1){a.phase='idle';careSync()}return}
  if(a.phase==='feed'||a.phase==='water'){
   const x=a.phase==='feed'?348:452,f=poseEase(clamp(age/.9,0,1));a.x=a.fromX+(x-a.fromX)*f;a.y=a.fromY+(535-a.fromY)*f;
@@ -4727,8 +4739,7 @@ refreshControls=function(){
   const btn=b(buttons,tr(en,cn),()=>{
    const a=state.care;if(key==='pet'||key==='play'){
     // Keyboard/touch alternative is a timed gentle activity, not rapid tapping.
-    careStart(key);if(a.phase!==key)return;a.assisted=true;const run=state;
-    setTimeout(()=>{if(state===run&&careIsActive()&&a.phase===key)careComplete(key)},key==='pet'?2300:3200)
+    careStart(key);if(a.phase!==key)return;a.assisted=true;careSync()
    }else careStart(key)
   });btn.dataset.care=key
  }
