@@ -2,13 +2,21 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const root=path.join(__dirname,'..'),src=fs.readFileSync(path.join(root,'src/startup.js'),'utf8');
 const get=name=>src.split('/* PAW_'+name+'_BEGIN */')[1].split('/* PAW_'+name+'_END */')[0];
-const api=new Function(get('PURIFICATION_PAINT')+get('ALCOVE_PAINT')+get('SLIP_COUNTER')+';return {pawAlcoveGeometry,pawAlcoveStickPoint,pawAlcoveMoonPoint,pawSlipGeometry,pawSlipPose,pawSlipRackCamera,pawSlipPage}')();
+const api=new Function(get('PURIFICATION_PAINT')+get('ALCOVE_PAINT')+get('SLIP_COUNTER')+';return {pawAlcoveGeometry,pawAlcoveStickPoint,pawAlcoveMoonPoint,pawAlcoveCastPoint,pawAlcoveActorScale,pawSlipGeometry,pawSlipPose,pawSlipRackCamera,pawSlipPage}')();
 for(const name of ['sticks','slip-counter'])assert.ok(fs.existsSync(path.join(root,'assets/visual/staging/2026-11-27/rooms/temple',name+'.webp')));
 const g=api.pawAlcoveGeometry();
 for(let i=0;i<=100;i++){const f=i/100,a=api.pawAlcoveStickPoint(g,{fall:f,picked:false,pick:0});assert.ok(a.x>=g.tubeTop.x&&a.x<=g.stickTray.x&&Number.isFinite(a.y))}
 const landed=api.pawAlcoveStickPoint(g,{fall:1,picked:false,pick:0});assert.equal(landed.y,g.stickTray.y);assert.equal(landed.x,g.stickTray.x);
 const held=api.pawAlcoveStickPoint(g,{fall:1,picked:true,pick:1});assert.equal(held.x,g.stickPickFoot.x+14);assert.equal(held.y,g.stickPickFoot.y-64);
 for(let i=0;i<=100;i++){const f=i/100;for(let j=0;j<2;j++){const sign=j?1:-1,x=350+j*100+sign*Math.sin(Math.PI*f)*21,lift=Math.sin(Math.PI*f)*95,p=api.pawAlcoveMoonPoint(g,{x,lift});assert.ok(Math.abs(p.x-g.moonTray.x)<=19&&p.y<=g.moonTray.y)}}
+assert.ok(g.moonTray.x-g.moonFoot.x>=50,'separate actor from tray');
+assert.ok(api.pawAlcoveActorScale()<1.6);
+for(let j=0;j<2;j++){
+ const m={x:350+j*100,lift:0},from=api.pawAlcoveCastPoint(g,m,0,j),to=api.pawAlcoveCastPoint(g,m,1,j),land=api.pawAlcoveMoonPoint(g,m);
+ assert.equal(from.y,g.moonHand.y);assert.ok(Math.abs(from.x-g.moonHand.x)<=5);
+ assert.ok(Math.hypot(to.x-land.x,to.y-land.y)<1e-7);
+ for(let i=0;i<=100;i++){const f=i/100,p=api.pawAlcoveCastPoint(g,m,f,j);assert.ok(Number.isFinite(p.x)&&Number.isFinite(p.y))}
+}
 const s=api.pawSlipGeometry();
 for(const [stage,age,a] of [['folded',0,s.counter],['opening',.75,s.reading],['tied',.7,s.tie],['kept',.7,s.bag]]){const p=api.pawSlipPose(stage,age,s);assert.ok(Math.abs(p.x-a.x)<.001&&Math.abs(p.y-a.y)<.001);if(['kept','tied'].includes(stage))assert.equal(p.alpha,0)}
 for(let i=0;i<=100;i++){const p=api.pawSlipPose('opening',i*.0075,s);assert.ok(p.w>=105&&p.w<=460&&p.h>=82&&p.h<=380)}
