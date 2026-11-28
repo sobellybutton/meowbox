@@ -135,12 +135,38 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       assert.equal(await page.locator('.pawRailWayfinding').count(),0,'Duplicate station action');
      }
      if(id==='dockValley'){
-      assert.equal(await page.locator('.pawPavilionScene > .pawPavilionTray').count(),1,'Town Hall opens its pavilion first');
-      assert.equal(await page.locator('.pawPavilionNews[open]').count(),0,'Long town news should begin folded');
+      assert.equal(await page.locator('.pawPavilionScene .pawTownHotspot').count(),3,'Town Hall offers three in-scene destinations');
+      assert.equal(await page.locator('.pawPavilionTray').count(),0,'No foreground menu covering hall');
+      assert(await page.locator('.pawPavilionScene .pawTownFrontPhoto img').isVisible(),'Pavilion artwork is visible');
+      const board=page.locator('.pawTownHotspot').first();
+      await (width<900?board.tap():board.click());
+      await page.locator('.townWall').waitFor({state:'visible',timeout:8000});
+      const notices=page.locator('.townResidentNote');
+      assert.equal(await notices.count(),10,'Only ten resident notices are shown');
+      assert.equal(await page.locator('.townPostNav button').count(),0,'No archive pagination or invisible older notices button');
+      const ids=await notices.evaluateAll(nodes=>nodes.map(n=>n.dataset.noticeId));
+      assert.equal(new Set(ids).size,10,'No duplicate notices');
+      const reply=page.locator('.wallReplies .wallReplyToggle, .wallReplies summary').first();
+      if(await reply.count()){await (width<900?reply.tap():reply.click());assert.equal(await page.locator('.wallReplies[open]').count(),1,'Notice replies open normally');}
+      await shot('town-noticeboard');
+      const returnHall=page.locator('#content > .row button').first();
+      await (width<900?returnHall.tap():returnHall.click());
+      await page.locator('.pawTownHotspot').first().waitFor({state:'visible',timeout:8000});
+      for(const [index,target] of [[1,'.townChatTranscript'],[2,'.pawJoyWall']]){
+       const spot=page.locator('.pawTownHotspot').nth(index);
+       await (width<900?spot.tap():spot.click());
+       await page.locator(target).waitFor({state:'visible',timeout:8000});
+       await shot(index===1?'town-tea-chat':'town-little-joys');
+       const contextualBack=page.locator('#content > .row button').first();
+       await (width<900?contextualBack.tap():contextualBack.click());
+       await page.locator('.pawTownHotspot').first().waitFor({state:'visible',timeout:8000});
+      }
      }
      if(id==='dockOwnHome'){
       const structure=await page.evaluate(()=>{const q=$('content'),room=q.querySelector('.hideoutScene'),actions=q.querySelector('.hideoutPrimary'),expansion=q.querySelector('.pawRoomExpansionFold');return {first:!!room&&!!actions&&!!(room.compareDocumentPosition(actions)&Node.DOCUMENT_POSITION_FOLLOWING),folded:!!expansion&&!expansion.open,top:room?.getBoundingClientRect().top,visible:room?.getBoundingClientRect().height}});
       assert(structure.first&&structure.folded&&structure.visible>0&&structure.top<height*.5,'Room should appear before administration: '+JSON.stringify(structure));
+      const actor=await page.evaluate(()=>{const s=document.querySelector('.hideoutScene'),a=s?.querySelector('.hideoutPlayer'),shadow=s?.querySelector('.pawHomeContactShadow');return {ratio:a?.getBoundingClientRect().height/s?.getBoundingClientRect().height,foot:a?.style.top,shadow:shadow?.style.top}});
+      assert(actor.ratio>=.22&&actor.ratio<=.31&&actor.foot===actor.shadow,'Room traveller scale and contact shadow: '+JSON.stringify(actor));
      }
      await shot('dock-'+id);
      const back=page.locator('#content > .row button').first();

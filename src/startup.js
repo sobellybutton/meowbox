@@ -4238,28 +4238,16 @@ function pawTownLink(parent,key,en,cn,detailEn,detailCn){
 function pawTownFront(){
  if(transitioning)return;
  pawTownFromDock=true;activePage='pawTownFront';
- page(tr('Town Hall','小镇广场'),tr('Pull up a chair. There is always something to read or someone to talk to.','来坐坐吧，总有故事可看，也有话可聊。'),q=>{
+ page(tr('Town Hall','小镇广场'),tr('Tap a spot to join in.','点一点，加入小镇的热闹。'),q=>{
   const front=element('section','',q,'pawTownFront');
-  const photo=element('figure','',front,'pawTownFrontPhoto'),im=element('img','',photo);im.src=pawTownPavilionPath;im.alt=tr('Town Hall pavilion','小镇广场长廊');element('figcaption',tr('A little company between adventures','逛累了，就来聊两句'),photo);
-  const chat=element('section','',front,'pawTownSection');
-  element('h2',tr('Come sit with us','来坐坐吧'),chat);
-  pawTownLink(chat,'lounge','Tea chat','茶馆闲聊','Pull up a chair and chat with the residents.','坐下来，和小镇居民聊两句吧。');
-  pawTownLink(chat,'public','Traveller lobby','旅人聊天室',communityURL()?'Chat with real visitors.':'Live chat is not open yet.',communityURL()?'和真实旅人聊聊天。':'真人聊天室尚未开放。');
-  const news=element('section','',front,'pawTownSection pawTownPinned');
-  element('h2',tr('On the noticeboard','留言墙上'),news);
-  element('small',tr('From the neighbourhood','来自小镇街坊'),news);
-  element('p',tr(...pawWeekNote()),news,'pawTownWeek');
-  const latest=townPublishedNotices().slice(0,2);
-  for(const {thread:m} of latest){const note=element('article','',news,'pawTownPreview');element('strong',tr(...m[0]),note);element('p',tr(...m[1]),note);element('small',m[2].length+' '+tr('replies','条回复'),note)}
-  b(news,tr('Read the noticeboard & replies ›','看看留言和回复 ›'),()=>pawOpenTownSpace('board')).className='pawTownTextLink';
-  const more=element('section','',front,'pawTownSection');
-  element('h2',tr('A little more company','还有这些小热闹'),more);
-  pawTownLink(more,'celebrate','Good things','小确幸','Share a little win or celebrate privately.','分享小胜利，也可以自己庆祝。');
-  pawTownLink(more,'stroll','Meet travellers','结伴散步','Optional shared walks, when available.','联机开放时，可自愿结伴散步。');
-  const paper=b(more,tr('Town paper & private notes ›','小镇日报与私密留言 ›'),()=>todayScoopBefore.call($('dockScoop')));paper.className='pawTownTextLink';
-  const tray=element('div','',front,'pawPavilionTray');tray.append(chat,news,more);
-  const previews=[...news.querySelectorAll('.pawTownWeek,.pawTownPreview')];
-  if(previews.length){const fold=element('details','',news,'pawPavilionNews');element('summary',tr('A glimpse of today’s news','今日小镇见闻'),fold);previews[0].before(fold);previews.forEach(n=>fold.append(n))}
+  const photo=element('figure','',front,'pawTownFrontPhoto'),im=element('img','',photo);im.src=pawTownPavilionPath;im.alt='';
+  const hotspot=(id,en,cn,x,y,fn)=>{const btn=b(photo,tr(en,cn),fn||(()=>pawOpenTownSpace(id)));btn.className='pawTownHotspot';btn.style.left=x+'%';btn.style.top=y+'%';return btn};
+  hotspot('board','Noticeboard','留言墙',20,36);
+  hotspot('lounge','Tea chat','茶馆闲聊',22,51);
+  hotspot('gratitude','Little Joys','小确幸',84,45);
+  const more=element('section','',front,'pawTownSection pawHallExtras');
+  if(communityURL()){pawTownLink(more,'public','Traveller lobby','旅人聊天室','Chat with real visitors.','和真实旅人聊聊天。');pawTownLink(more,'stroll','Meet travellers','结伴散步','Join a shared walk.','结伴散步。')}
+  const paper=b(more,tr('Town paper & private notes','小镇日报与私密留言'),()=>todayScoopBefore.call($('dockScoop')));paper.className='pawTownTextLink';
   front.classList.add('pawPavilionScene');
  });
  const q=$('content'),back=q.querySelector(':scope > .row button:first-child');
@@ -4590,6 +4578,7 @@ const pawTownFinalBefore=townChatPage;
 communityTabs=function(q){
  const tabs=element('nav','',q,'communityTabs pawTownNotebookTabs');tabs.setAttribute('aria-label',tr('Community spaces','社区空间'));
  for(const [key,en,cn] of [['board','Noticeboard','留言墙'],['lounge','Tea table','茶桌闲聊'],['public','Travellers','旅人聊天室'],['gratitude','Little Joys','小确幸墙']]){
+  if(key==='public'&&!communityURL()&&!['public','stroll'].includes(communityTab))continue;
   const btn=b(tabs,tr(en,cn),()=>{communityTab=key;townChatPage()});btn.setAttribute('aria-pressed',String(communityTab===key||key==='public'&&communityTab==='stroll'))
  }
 };
@@ -5367,7 +5356,12 @@ function pawHomeStageBlocks(stage){
  }
  return blocks
 }
+function pawHomeActorHeight(y){return Math.max(23,Math.min(29,23+(Number.isFinite(y)?y-68:0)*6/26))}
 function pawHomeActorPosition(player,stage,point){
+ player.style.setProperty('--paw-home-height',pawHomeActorHeight(point.y)+'%');
+ let shadow=stage.querySelector('.pawHomeContactShadow');
+ if(!shadow){shadow=element('span','',stage,'pawHomeContactShadow');shadow.setAttribute('aria-hidden','true')}
+ shadow.style.left=point.x+'%';shadow.style.top=point.y+'%';shadow.style.zIndex=String(pawHomeLayer(point.y)-1);
  player.style.left=point.x+'%';player.style.top=point.y+'%';player.style.right='auto';player.style.bottom='auto';
  player.style.zIndex=String(pawHomeLayer(point.y));
 }
@@ -5442,7 +5436,7 @@ hideoutPage=function(...args){
    const anchor={x:parseFloat(item.style.left),y:parseFloat(item.style.top)};
    if(!Number.isFinite(anchor.x)||!Number.isFinite(anchor.y)||anchor.y<pawHomeBounds.u||Math.hypot(anchor.x-point.x,anchor.y-point.y)<13){pawHomeStop();return old.apply(this,args)}
    const goal=pawHomeObjectApproach(point,anchor,pawHomeStageBlocks(stage));
-   if(!goal||!pawHomeMoveTo(stage,player,point,key,goal,note,()=>old.apply(item,args))){pawHomeStop();return old.apply(this,args)}
+   if(!goal||!pawHomeMoveTo(stage,player,point,key,goal,note,()=>old.apply(item,args))){pawHomeStop();note.textContent=tr('Move a little furniture to reach this spot.','挪一挪家具，才能走到这里。');return}
   }
  }
  stage.addEventListener('keydown',e=>{
@@ -6008,7 +6002,7 @@ townChatPage=function(...args){
   const notes=element('div','',wall,'pawJoyNotes');
   function render(){notes.replaceChildren();for(const n of pawJoyRead().slice().reverse()){const a=element('article','',notes,'pawJoyNote');element('strong',tr('My note','我的便签'),a);element('small',n.day,a);element('p',n.text,a)}for(const [name,copy] of pawJoySeeds){const a=element('article','',notes,'pawJoyNote');element('strong',tr(...name),a);element('small',tr('Town resident','小镇居民'),a);element('p',tr(...copy),a)}}
   form.onsubmit=e=>{e.preventDefault();const value=input.value.trim().slice(0,240);if(!value)return;save(pawJoyKey,[...pawJoyRead(),{day:day(),text:value}].slice(-30));input.value='';render();status.textContent=tr('Pinned privately.','已贴上私人便签。')};
-  b(wall,tr('Share a good thing with travellers','与旅人分享一件好事'),()=>goodCompanyPublic());render()
+  if(communityURL())b(wall,tr('Share a good thing with travellers','与旅人分享一件好事'),()=>goodCompanyPublic());render()
  });journalLanguage(townChatPage)
 };
 /* Readable editorial type, shared by both languages; no external font download. */
@@ -7947,7 +7941,17 @@ pawFictionEdition=function(now,weather=''){
  return entries
 };
 const pawTopicBoardBefore=townChatPage;
-townChatPage=function(...args){if(communityTab==='board')pawRefreshTopicFeed();return pawTopicBoardBefore(...args)};
+townChatPage=function(...args){
+ if(communityTab==='board')pawRefreshTopicFeed();
+ const result=pawTopicBoardBefore(...args),q=$('content');
+ // The board and private gratitude renderers bypass the earlier hall wrapper.
+ // Restore the entrance context after ALL community page renderers.
+ if(pawTownFromDock&&q.querySelector('.communityTabs')){
+  const back=q.querySelector(':scope > .row button:first-child');
+  if(back){back.textContent=tr('‹ Town Hall','‹ 小镇广场');back.onclick=pawTownFront}
+ }
+ return result
+};
 if(typeof requestIdleCallback==='function')requestIdleCallback(pawRefreshTopicFeed,{timeout:3500});else setTimeout(pawRefreshTopicFeed,1800);
 
 /* PAW_GUEST_PERSONALITY_BEGIN */
@@ -9885,7 +9889,6 @@ document.addEventListener('keydown',event=>{
    while on the board, and focus-safe refresh. Fictional posts stay separate. */
 let pawNoticeDisclosureSerial=0;
 const pawNoticeExpanded=new Set();
-let pawNoticeShown=6;
 function pawNoticeReplyState(button,panel,expanded){
  button.setAttribute('aria-expanded',String(expanded));
  panel.hidden=!expanded;
@@ -9894,19 +9897,19 @@ function pawNoticeReplyState(button,panel,expanded){
 renderResidentNoticeboard=function(q){
  const wrap=element('section','',q,'townWall');
  element('h2',tr('Overheard in town','摸鱼留言墙'),wrap,'board-heading');
- element('p',tr('New town notices arrive over time. Old favourites stay in the archive.','小镇见闻陆续更新，旧瓜也能慢慢翻。'),wrap,'wallIntro');
+ element('p',tr('Ten little notes from around town. Come back tomorrow for a new selection.','每天十条小镇见闻，明天再来看看新鲜事。'),wrap,'wallIntro');
  element('p',tr(...pawWeekNote()),wrap,'pawWeeklyNotice');
  element('small',tr('Notes from around town. The shared square is a separate public space.','来自小镇的留言。共享广场是另一个公共空间。'),wrap,'wallDisclosure');
- const publicBtn=b(wrap,communityURL()?tr('Read or leave a real visitor post','看看真人留言 / 留句话'):tr('Shared square · not open yet','共享广场 · 尚未开放'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink';
+ if(communityURL()){const publicBtn=b(wrap,tr('Read or leave a real visitor post','看看真人留言 / 留句话'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink'}
  const list=element('div','',wrap,'townPostList'),nav=element('div','',wrap,'townPostNav');
- let shown=pawNoticeShown,lastCount=-1,lastSignature='',lastIds=new Set();
+ let lastSignature='';
  function render(){
   const focused=document.activeElement?.closest?.('.wallReplyToggle');
   const focusId=focused&&list.contains(focused)?focused.closest('.wallReplies')?.dataset.noticeId:null;
-  const moreFocused=nav.contains(document.activeElement),top=$('page').scrollTop;
-  const entries=townPublishedNotices();lastCount=entries.length;lastSignature=entries.map(v=>v.id).join('|');lastIds=new Set(entries.map(v=>v.id));for(const id of pawNoticeExpanded)if(!lastIds.has(id))pawNoticeExpanded.delete(id);
+  const top=$('page').scrollTop;
+  const entries=pawDailyTownNotices();lastSignature=entries.map(v=>v.id).join('|');const ids=new Set(entries.map(v=>v.id));for(const id of pawNoticeExpanded)if(!ids.has(id))pawNoticeExpanded.delete(id);
   list.replaceChildren();nav.replaceChildren();let restore=null;
-  for(const {thread:m,date,id} of entries.slice(0,shown)){
+  for(const {thread:m,date,id} of entries){
    const post=element('article','',list,'townResidentNote');post.dataset.noticeId=id;
    element('strong',tr(...m[0]),post);
    if(date)element('small',new Date(date).toLocaleDateString(zh?'zh-CN':'en-SG',{month:'short',day:'numeric',timeZone:'Asia/Singapore'}),post,'townNoticeDate');
@@ -9925,16 +9928,15 @@ renderResidentNoticeboard=function(q){
    });
    if(id===focusId)restore=toggle;
   }
-  element('span',Math.min(shown,entries.length)+' / '+entries.length+' '+tr('notices','条见闻'),nav);
-  const more=b(nav,tr('Read older notices','翻翻以前的留言'),()=>{shown=pawNoticeShown=pawNoticePageSize(shown,entries.length,6);render()});more.type='button';more.disabled=shown>=entries.length;
-  if(restore)restore.focus({preventScroll:true});else if(moreFocused&&!more.disabled)more.focus({preventScroll:true});
+  element('span',entries.length+' '+tr('notices today','条今日留言'),nav);
+  if(restore)restore.focus({preventScroll:true});
   $('page').scrollTop=top;
  }
  render();
  const timer=setInterval(()=>{
   if(!wrap.isConnected||$('page').style.display!=='block'){clearInterval(timer);return}
-  const next=townPublishedNotices(),n=next.length;
-  if(n!==lastCount||next.map(v=>v.id).join('|')!==lastSignature){shown=pawNoticeShown=pawNoticePageSize(shown,n,next.filter(v=>!lastIds.has(v.id)).length);render()}
+  const next=pawDailyTownNotices();
+  if(next.map(v=>v.id).join('|')!==lastSignature)render()
  },60000)
 };
 const pawNoticeDisclosureStyle=document.createElement('style');
@@ -11757,7 +11759,7 @@ hideoutPage=function(...args){
  const section=element('section','',fold,'pawHomeExpansion');
  element('p',tr('Unlock extra rooms with Paw Coins. Your existing furniture stays yours.','用爪爪币解锁更多房间，原有家具会保留。'),section);
  const tabs=q.querySelector('.komorebiRoomTabs');
- if(tabs&&tabs.parentElement===stage.parentElement)tabs.after(stage);else actions.before(stage);
+ if(tabs&&tabs.parentElement===stage.parentElement){stage.after(tabs);if(komorebiZones()===1){fold.append(tabs);tabs.querySelector('[aria-pressed=true]')?.remove()}}else actions.before(stage);
  stage.after(actions);actions.after(fold);
  pawLoadHomePaintings().then(api=>{if(api&&section.isConnected&&$('content').contains(section))pawRenderExpansionPlans(section,api)});
  return result
@@ -15616,3 +15618,43 @@ const pawVisualContinuityStyle=document.createElement('style');pawVisualContinui
 #game #content .hideoutPrimary button{border-radius:5px!important;box-shadow:none!important}
 #game.pawDockRoot.pawFocusedView:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){z-index:24!important;background:#eee5d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 145px repeat!important;box-shadow:0 3px 10px #2e352c55!important}
 `;document.head.append(pawVisualContinuityStyle);
+
+
+/* PAW_HALL_HOME_COMPOSITION_BEGIN */
+const pawHallHomeComposition=document.createElement('style');
+pawHallHomeComposition.textContent=`
+#game #page:has(#content .pawPavilionScene){background:#eee4d0 url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important}
+#game #content .pawPavilionScene{display:block!important;max-width:560px;margin:0 auto}
+#game #content:has(.pawPavilionScene)>h1,#game #content:has(.pawPavilionScene)>p{color:#435740!important;text-shadow:none!important}
+#game #content .pawPavilionScene>.pawTownFrontPhoto{position:relative!important;isolation:isolate;width:100%;height:auto!important;aspect-ratio:3/4!important;overflow:hidden;border-radius:12px!important;margin:4px 0!important;background:#655344!important}
+#game #content .pawPavilionScene>.pawTownFrontPhoto img{visibility:visible!important;position:absolute;inset:0;width:100%;height:100%;object-fit:cover!important;object-position:center 48%!important}
+#game #content .pawTownHotspot{position:absolute!important;z-index:2;transform:translate(-50%,-50%);width:max-content;max-width:45%;min-height:44px!important;padding:7px 12px!important;background:#f5e5c5f2!important;color:#435740!important;border:1px solid #9b8056!important;border-radius:18px!important;box-shadow:0 2px 6px #34291c66;font-weight:700;font-size:clamp(12px,3.5vw,16px)!important;white-space:normal}
+#game #content .pawTownHotspot:focus-visible{outline:3px solid #eed69a;outline-offset:3px}
+#game #content .pawHallExtras{margin:5px 0 0!important;padding:0!important;background:transparent!important;border:0!important}
+#game #content .pawHallExtras .pawTownTextLink{color:#435740!important;text-shadow:none!important;min-height:44px}
+#game #content:has(.pawPavilionScene)>p{margin:4px 0!important}
+#game #content:has(.pawPavilionScene)>h1{margin:6px 0!important}
+#game #content .hideoutScene .hideoutPlayer{width:auto!important;height:var(--paw-home-height,27%)!important;max-height:30%!important;max-width:28%!important;object-fit:contain!important;filter:none!important}
+#game #content .hideoutRoomView .hideoutScene{margin:4px 0!important}
+#game #content .komorebiRoomTabs{margin:4px 0!important;gap:6px}
+#game #content .komorebiRoomTabs button{min-height:44px!important;font-size:13px!important;padding:5px 9px!important}
+#game #content:has(.pawPavilionScene),#game #content.hideoutRoomView{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
+@media(orientation:landscape) and (max-height:540px){#game #content .pawPavilionScene>.pawTownFrontPhoto{width:min(100%,55dvh);margin:0 auto!important}}
+`;document.head.append(pawHallHomeComposition);
+/* PAW_HALL_HOME_COMPOSITION_END */
+
+/* PAW_ROOM_GROUNDING_AND_DOCK_BEGIN */
+const pawRoomGroundingStyle=document.createElement('style');
+pawRoomGroundingStyle.textContent=`
+#game #content .pawHomeContactShadow{position:absolute;width:10%;height:2.5%;border-radius:50%;background:radial-gradient(ellipse,#3f2c235c,transparent 72%);transform:translate(-50%,-50%);pointer-events:none}
+#game #content .hideoutRoomView>h1{margin:5px 0!important}
+#game #content .hideoutRoomView>p.hideoutIntro{margin:2px 0 4px!important}
+#game #content .hideoutRoomView .pawRoomExpansionFold .komorebiRoomTabs{display:flex;flex-wrap:wrap;margin:8px 0!important}
+#game #dock{gap:2px!important;padding:3px!important;border-radius:12px!important}
+#game #dock>button:not([hidden]){min-height:44px!important;border:0!important;padding:3px 2px!important;box-shadow:none!important}
+#game #dock>button.pawDockSelected{background:#d9ddbd80!important;box-shadow:inset 0 -2px #657d59!important;color:#36533f!important;border-radius:8px!important}
+#game #dock>button .dockIcon{width:22px!important;height:22px!important}
+#game #dock>button:not([hidden])>span:last-child{font-weight:600!important;font-size:clamp(10px,2.8vw,12px)!important}
+@media(forced-colors:active){#game #dock>button[aria-current="page"]{outline:2px solid Highlight!important}}
+`;document.head.append(pawRoomGroundingStyle);
+/* PAW_ROOM_GROUNDING_AND_DOCK_END */
