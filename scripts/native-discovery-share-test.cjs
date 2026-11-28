@@ -53,6 +53,8 @@ const out='test-results/native-keepsakes-'+engine;
      const saved=await dl;
      await saved.saveAs(out+'/'+prefix+'.png');
      assert.match(saved.suggestedFilename(),new RegExp('^pawradise-'+kind+'-story\\.png$'));
+     await click(panel.getByRole('button',{name:cn?'复制文案':'Copy caption',exact:true}));
+     await panel.locator('.meowShareStatus').filter({hasText:cn?/文案已复制|请选择并复制/:/Caption copied|Select and copy/}).waitFor();
      await page.screenshot({path:out+'/'+prefix+'-preview.jpg',type:'jpeg',quality:80});
      await click(panel.getByRole('button',{name:cn?(kind==='cafe'?'返回心得':kind==='story'?'返回故事':'返回小记'):(kind==='cafe'?'Back to reflection':kind==='story'?'Back to the story':'Back to the notebook'),exact:true}));
      await resultButton.waitFor({timeout:10000});
