@@ -93,6 +93,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
     assert(dimensions.every(v=>v.w>=44&&v.h>=50&&v.label),'Dock buttons clipped or unlabelled');
     assert(Math.max(...dimensions.map(v=>v.w))-Math.min(...dimensions.map(v=>v.w))<2,'Uneven dock widths');
     await page.waitForFunction(()=>[...document.querySelectorAll('#worldSigns .worldSign[data-door]')].some(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&r.top<innerHeight&&r.bottom>0&&r.left<innerWidth&&r.right>0&&getComputedStyle(e).visibility!=='hidden'}),null,{timeout:15000});
+    assert.equal(await page.locator('.pawRailEdge:visible,button[data-door="station"]:visible').count(),0,'Station appears before traveller approaches');
     await shot('mobile-foundation-map');
     // Start each root through real dock input on the first map. The explicit
     // page close control must return to the same scene and player position.
@@ -100,6 +101,9 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
      const before=await page.evaluate(()=>({scene,x:p.x,y:p.y}));
      const nav=page.locator('#'+id);await reachable(nav,id);await nav.tap();
      await page.waitForFunction(()=>$('page').style.display==='block',null,{timeout:15000});
+     await page.waitForFunction(id=>document.getElementById(id)?.getAttribute('aria-current')==='page',id,{timeout:8000});
+     assert.equal(await dockRoot.locator('button[aria-current="page"]').count(),1,'Only the current destination is selected');
+     if(id==='dockValley')assert.equal(await page.locator('.pawTownFront').count(),1,'Town Hall root missing');
      await shot('dock-'+id);
      const back=page.locator('#content > .row button').first();
      await back.waitFor({state:'visible',timeout:8000});
