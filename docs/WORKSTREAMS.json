@@ -1589,12 +1589,10 @@
         "Owner 28 Nov 11:17 SGT: NPCs should walk naturally around temple and games generally; verify continuous route movement, stopping and interaction, not static guests.",
         "Arcade specific: NPCs walk to available cabinets/shelf, turn, operate machines, react/collect prizes, wait and leave; reserve player's active machine; maintain life in compatible activities; avoid static guests and false human claims.",
         "Humans must be walking and visibly living: residents and guests follow distinct safe routines, occupy seats and perform appropriate machine/host actions, retain compatible NPC movement during activities; no stationary decorative crowds.",
-        "Detailed per-location choreography in 14bdb99a: purposeful walking and work/seat/machine use through compatible activities, bounded occupancy and privacy exceptions; no static decorative crowds."
+        "Detailed per-location choreography in 14bdb99a: purposeful walking and work/seat/machine use through compatible activities, bounded occupancy and privacy exceptions; no static decorative crowds.",
+        "68386b822840fdc9f90cf795f62225af4bf85170: scene-local indoor visitor walking now uses individual baseline, actor clearance, final approach slowdown and exponentially smoothed elapsed-time pace; motion speed resets when waiting, blocked or arrived. 24 focused assertions and full startup.js JS parse passed via JS evaluator. Not built/deployed/visually verified; current visitor renderer still suppresses active gameplay, room-specific task/seat/host animations and all player/outdoor pace remain outstanding."
       ],
-      "lease": {
-        "owner": "manual-motion-20261128",
-        "until": 1795838870226
-      },
+      "lease": null,
       "blocker": "My Room may be empty; private close-ups stay private. Natural walking, seating, departures and arrivals, no obstructed exits, props or signs; distinguish fictional and actual visitors.\n\nEnd-to-end critique, 28 Nov: Observe quiet intervals and moving actors in public spaces, natural population and no blocking; private closeups exempt. Apply section 12."
     },
     {
