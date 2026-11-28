@@ -15946,6 +15946,7 @@ function pawInstallYueTypedReply(visit){
  function submit(){
   if(!active())return;
   const step=Number(form.dataset.pawYueTurn||0),value=input.value.trim();error.hidden=true;
+  if(step>0&&/^(back|返回|上一步)$/i.test(value)){controls().querySelector('button')?.click();return}
   if(step===0){
    const parsed=pawYueParseDateReply(value);if(!parsed)return message('Enter your date as MM/DD/YYYY.','请按月/日/四位年份输入出生日期。');
    change(form.querySelector('input[type=date]'),parsed)
@@ -15959,7 +15960,7 @@ function pawInstallYueTypedReply(visit){
     return message('I know these eight cities. Choose one, or type Other for an unlisted city.','我的历书有这八座城市。请选择其一，或输入“其他”。')
    }
    change(place,city);
-   if(!place.checkValidity())return message('I cannot confirm that historical birth time. Please check the time.','这个出生时间暂时无法确认，请核对时间。')
+   if(!place.checkValidity())return message('I cannot confirm that historical birth time. Type Back to check the time.','这个出生时间暂时无法确认，输入“返回”可核对时间。')
   }else{
    const year=form.querySelector('select');if(![...year.options].some(o=>o.value===value))return message('Choose a year available in the almanac.','请选择历书中已有的年份。');
    change(year,value)
