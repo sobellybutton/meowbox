@@ -18,3 +18,17 @@ for(let i=1;i<=4;i++)api.parchmentClock(q,i*.1);
 const before=q.elapsed;api.parchmentClock(q,1,true);api.parchmentClock(q,20,false);ck(q.elapsed===before,'pause and resume');
 ck(api.parchmentClock(q,21,false,true)===1,'reduced');
 console.log('PASS '+n+' parchment clock and computed palace surface checks');
+
+const source=require('node:fs').readFileSync('src/startup.js','utf8');
+const block=source.match(/\/\* PAW_YUE_INK_RUNTIME_BEGIN \*\/([\s\S]*?)\/\* PAW_YUE_INK_RUNTIME_END \*\//)[1];
+const state=new Function(block+';return pawYueInkState')();
+let calls=0;
+const mock={chartPalaces:g=>{calls++;return g.valid?[1]:null},parchmentClock:(c,n,b,r)=>{c.n=n;return r?1:b?0:.5}};
+const cache=new WeakMap(),first={valid:true},second={valid:true};
+ck(state(cache,first,mock,0,false,false).progress===.5,'initial');
+ck(state(cache,first,mock,1,false,true).progress===1&&calls===1,'reuse');
+ck(state(cache,second,mock,1,false,false).progress===.5&&calls===2,'new chart');
+ck(state(cache,{valid:false},mock,1,false,false)===null,'invalid chart');
+ck(state(cache,null,mock,1,false,false)===null,'no chart');
+ck(state(cache,first,{},1,false,false)===null,'old library');
+console.log('PASS '+n+' combined parchment and runtime cache checks');
