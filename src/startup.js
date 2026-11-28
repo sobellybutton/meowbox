@@ -11635,6 +11635,11 @@ function pawWaterHitBox(at,scale){
  const safe=Number.isFinite(scale)&&scale>0?scale:1,w=Math.max(82,44/safe),h=Math.max(40,44/safe);
  return {x:at.x-w/2,y:at.y-h/2,w,h}
 }
+// A held tool belongs to its existing pointer. Register no new moving
+// pickup target until the renderer has restored the actual resting pose.
+function pawWaterPickupBox(stage,held,at,scale){
+ return !held&&(stage===0||stage===1)?pawWaterHitBox(at,scale):null
+}
 function pawWaterDropMatches(stage,x,y,g){
  const a=pawWaterDestination(stage,g);
  return !!a&&Number.isFinite(x)&&Number.isFinite(y)&&Math.hypot(x-a.x,y-a.y)<=25
@@ -11705,8 +11710,8 @@ function pawDrawWaterPainting(){
  if(stage<2){
   const dest=pawWaterDestination(stage,g),x=dest.x-23,y=dest.y;
   ctx.save();ctx.strokeStyle='#fff3bd';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.ellipse(x,y,23+Math.sin(t*3),10,0,0,TAU);ctx.stroke();ctx.restore();
-  const gripBox=pawWaterHitBox(at,cam.scale);
-  target(gripBox.x,gripBox.y,gripBox.w,gripBox.h,()=>{},'templeLadle');
+  const gripBox=pawWaterPickupBox(stage,held,at,cam.scale);
+  if(gripBox)target(gripBox.x,gripBox.y,gripBox.w,gripBox.h,()=>{},'templeLadle');
  }
  if(pawWaterProgress(run,t,pawArcadeInputBlocked())){
   run.waterStage=3;run.waterAt=t;
