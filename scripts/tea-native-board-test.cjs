@@ -1,0 +1,23 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const source=fs.readFileSync(path.resolve(__dirname,'../src/release-fixes.js'),'utf8');
+const a=source.indexOf('/* PAW_TEA_NATIVE_BOARD_BEGIN */'),b=source.indexOf('/* PAW_TEA_NATIVE_BOARD_END */');
+assert.ok(a>=0&&b>a);
+const api=new Function(source.slice(a,b)+';return {pawTeaNoticeSnapshot,pawTeaNoticeIndex,pawTeaVisitCurrent};')();
+const input=[{id:'a',thread:[['Mei','梅姨'],['Tea','茶'],[['Wang','王','Yes','好'],['bad']]]},{id:'a',thread:[['Other','其他'],['No','否'],[]]},{id:'b',thread:[['Lin','林姨'],['Cat','猫'],[]]},null,{id:'c',thread:[]}];
+const rows=api.pawTeaNoticeSnapshot(input);
+assert.equal(rows.length,2);assert.equal(rows[0].replies.length,1);assert.equal(rows[0].author[0],'Mei');
+input[0].thread[1][0]='changed';assert.equal(rows[0].body[0],'Tea');
+assert.equal(api.pawTeaNoticeIndex(rows,'b'),1);assert.equal(api.pawTeaNoticeIndex([],'b'),-1);
+const origin={room:'tea',scene:'home',visit:1,activity:null,transitioning:false,page:false};
+for(const delta of [{},{room:'park'},{scene:'island'},{visit:2},{activity:'woodenThree'},{transitioning:true},{page:true}])assert.equal(api.pawTeaVisitCurrent(origin,{...origin,...delta}),Object.keys(delta).length===0);
+const begin=source.indexOf('function pawInstallTeaNativeAction()'),end=source.indexOf('let pawTeaConversationSerial=',begin);
+assert.ok(begin>b&&end>begin);
+const dispatch=new Function(`let room='tea',activity=null,transitioning=false,page={style:{display:'none'}},calls=[];
+let action=id=>calls.push('original:'+id);
+const $=()=>page,pawTeaReadBoard=()=>calls.push('board'),pawTeaJoinTable=()=>calls.push('table');
+`+source.slice(begin,end)+`
+action=id=>calls.push('later:'+id);pawInstallTeaNativeAction();
+action('board');action('chat');action('other');room='park';action('board');room='tea';activity='woodenThree';action('chat');activity=null;page.style.display='block';action('board');return calls;`)();
+assert.equal(dispatch.join('|'),'board|table|later:other|later:board|later:chat|later:board');
+console.log('Native tea board snapshot, visit identity and final station dispatch passed.');
