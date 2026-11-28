@@ -150,7 +150,32 @@ def self_test():
         pass
     else:
         raise AssertionError("empty silhouette accepted")
-    print("PASS synthetic alpha threshold, foot offset and spread checks")
+    # Exercise the real candidate decoder, checksum and nominal-anchor path.
+    from tempfile import TemporaryDirectory
+    with TemporaryDirectory(dir=ROOT) as temp:
+        folder = Path(temp)
+        target = folder / "pose.webp"
+        pose = Image.new("RGBA", (100, 200), (0, 0, 0, 0))
+        pose.paste((80, 70, 60, 255), (20, 30, 80, 180))
+        pose.save(target, lossless=True)
+        rec = {"path": target.name, "sha256": hashlib.sha256(target.read_bytes()).hexdigest()}
+        row = inspect_candidate(folder, rec, size=[100, 200], anchor=[50, 175], anchor_kind="nominal_seated")
+        assert row["nominalAnchorMinusAlphaBottomPx"] == -5
+        assert row["nominalAnchorToAlphaTopPx"] == 145
+        assert row["anchorKind"] == "nominal_seated" and "registeredFoot" not in row
+        for bad, size, anchor in [
+            ({**rec, "sha256": "0" * 64}, [100, 200], [50, 175]),
+            (rec, [101, 200], [50, 175]),
+            (rec, [100, 200], [100, 175]),
+            ({"path": "../outside.webp"}, [100, 200], [50, 175]),
+        ]:
+            try:
+                inspect_candidate(folder, bad, size=size, anchor=anchor, anchor_kind="nominal_seated")
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("invalid candidate accepted")
+    print("PASS synthetic alpha, foot offset, spread and candidate decoder checks")
 
 
 def main():
