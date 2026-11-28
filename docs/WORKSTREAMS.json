@@ -1319,13 +1319,11 @@
       "depends": [],
       "stage": "tested",
       "evidence": [
-        "22101d9e: four original painted wood/paper material crops uploaded with provenance and blob hashes; inspected source art. 310fb150: compact district-specific bilingual sign styles, shared railway identity and 44px touch targets applied in shell without touching current garden runner. Controlled browser CSS probe at 360x640 and 1440x900 confirmed sample EN/ZH labels fit and 44px button targets; first visual probe corrected for synthetic layout positioning. Pages run 46016588647 reports success for this revision."
+        "22101d9e: four original painted wood/paper material crops uploaded with provenance and blob hashes; inspected source art. 310fb150: compact district-specific bilingual sign styles, shared railway identity and 44px touch targets applied in shell without touching current garden runner. Controlled browser CSS probe at 360x640 and 1440x900 confirmed sample EN/ZH labels fit and 44px button targets; first visual probe corrected for synthetic layout positioning. Pages run 46016588647 reports success for this revision.",
+        "77b2b535: anchored signs excluded from generic press scale, painted brightness feedback and inset accessible focus added; 11 static checks passed."
       ],
-      "lease": {
-        "owner": "manual-anchored-signs-1259",
-        "until": 1795843754388
-      },
-      "blocker": "Controlled label probe used fallback background because the new assets had not yet deployed. Actual in-world signs, all door labels, collision with actors/UI, texture load, accessibility and organic mobile/desktop routes still require inspection. District-specific individual sign illustrations remain outstanding."
+      "lease": null,
+      "blocker": "Actual device touch/keyboard focus, sign collision and appearance remain unverified. Final district-specific illustrations outstanding."
     },
     {
       "id": "ROOM-FOOD-LIVE-01",
