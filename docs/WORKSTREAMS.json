@@ -785,7 +785,8 @@
       "summary": "Align automated smoke checks with new station and wide railway and home modules",
       "resources": [
         "scripts/district-journey-test.cjs",
-        ".github/workflows/meowbox-browser.yml"
+        ".github/workflows/meowbox-browser.yml",
+        "scripts/guest-personality-test.cjs"
       ],
       "depends": [
         "RAIL-LIVE-01",
@@ -796,7 +797,10 @@
       "evidence": [
         "a1677190: actual input regression updated for station cancel/board, room visits and both carriage motion renderers; test source parses. 4fd9eea7: home, rail and room visit helper tests added to browser CI."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-20261128-guest-regression",
+        "until": 1795836486752
+      },
       "blocker": "Browser CI execution and screenshots not yet verified. Live browser timed out; do not claim successful playthrough."
     },
     {
