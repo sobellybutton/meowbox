@@ -807,3 +807,42 @@ function pawInstallContinuousFortune(){
  pawRearGardenEdges.splice(0,pawRearGardenEdges.length,...[['entry','bend'],['bend','fork'],['fork','feed'],['fork','seat'],['fork','chime'],['fork','cats']]);
 }
 queueMicrotask(pawInstallContinuousFortune);
+
+/* PAW_TEMPLE_AUTO_ARRIVAL_BEGIN */
+function pawTempleAutoArrival(q,blocked){
+ return !!q&&!blocked&&!q.pawAutoArrival&&!q.destination&&!q.route?.length&&!q.greeted&&!q.catVisited
+}
+function pawGardenSeatAtNode(q,seat){
+ return !!q&&!q.route?.length&&Array.isArray(q.pos)&&q.pos.length===2&&q.pos.every(Number.isFinite)&&Math.hypot(q.pos[0]-seat[0],q.pos[1]-seat[1])<.002
+}
+/* PAW_TEMPLE_AUTO_ARRIVAL_END */
+function pawInstallTempleArrival(){
+ const prior=drawActivity;
+ drawActivity=function(...args){
+  if(room==='temple'&&activity==='templeForecourt'){
+   const q=state.pawForecourt;
+   if(pawTempleAutoArrival(q,pawArcadeInputBlocked())){
+    q.pawAutoArrival=true;
+    if(pawForecourtRoute(q,'hall'))hint('Follow the stone steps into the temple.','沿着石阶走进大殿。')
+   }
+   const value=prior.apply(this,args);
+   if(activity==='templeForecourt'&&state.pawForecourt===q&&q?.pawAutoArrival){
+    const el=$('gameControls');
+    // The existing Back button still permits an immediate turn around.
+    if(el?.classList.contains('pawForecourtControls'))el.hidden=true
+   }
+   return value
+  }
+  if(room==='temple'&&activity==='secretGarden'&&state.pawRearGarden&&state.gardenSitting&&!pawGardenSeatAtNode(state.pawGardenWalk,pawRearGardenNodes.seat)){
+   // A stale seated flag must never pull the actor away from its actual node.
+   state.gardenSitting=false
+  }
+  return prior.apply(this,args)
+ };
+ const seatPrior=gardenSeat;
+ gardenSeat=function(...args){
+  if(room==='temple'&&activity==='secretGarden'&&state.pawRearGarden&&!state.gardenSitting&&!pawGardenSeatAtNode(state.pawGardenWalk,pawRearGardenNodes.seat))return false;
+  return seatPrior.apply(this,args)
+ }
+}
+queueMicrotask(pawInstallTempleArrival);
