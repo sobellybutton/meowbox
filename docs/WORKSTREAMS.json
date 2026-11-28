@@ -1356,7 +1356,8 @@
         "art:signage",
         "assets/visual/painted/signage/manifest.json",
         "assets/visual/painted/signage/district-signs.css",
-        "scripts/district-sign-art-test.cjs"
+        "scripts/district-sign-art-test.cjs",
+        "src/startup.js"
       ],
       "depends": [],
       "stage": "outstanding",
