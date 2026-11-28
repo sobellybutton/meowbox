@@ -131,7 +131,7 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
    const readingLanguage=p.locator('.pawYueDeskOptions .yueReadingLanguage');
    assert(await readingLanguage.isVisible(),'Reading language control is not reachable');
    await click(readingLanguage);
-   assert.equal(await p.locator('html').getAttribute('lang'),'zh','Reading did not switch language');
+   assert(await p.locator('html').getAttribute('lang')==='zh','Reading did not switch language');
    assert(await p.locator('.signNotebookGrid button').nth(2).getAttribute('aria-pressed')==='true','Language switch lost sign');
    assert(await p.evaluate(()=>!JSON.stringify(localStorage).includes('1990-06-15')&&!JSON.stringify(localStorage).includes('1995-05-06')),'Birth details persisted');
    // Regression: the consultation is owned by the study, even if an
