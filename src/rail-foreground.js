@@ -25,14 +25,22 @@
  }
  // Integrate a smooth acceleration ramp: distance and velocity are continuous
  // at departure, then settle into the same width-scaled cruising speed.
- function travelDistance(seconds){
+ function travelDistance(seconds,duration){
   if(!Number.isFinite(seconds))return 0;
-  const t=Math.max(0,seconds),ramp=.65,u=Math.min(1,t/ramp);
-  return ramp*(u*u*u-.5*u*u*u*u)+Math.max(0,t-ramp);
+  const bounded=Number.isFinite(duration)&&duration>0;
+  const t=Math.max(0,bounded?Math.min(seconds,duration):seconds);
+  const ramp=bounded?Math.min(.65,duration/2):.65,u=Math.min(1,t/ramp);
+  const start=ramp*(u*u*u-.5*u*u*u*u)+Math.max(0,t-ramp);
+  if(!bounded)return start;
+  // Integrate a smooth braking ramp, with zero velocity at the station.
+  // Keep indefinite entrance previews independent of finite district rides.
+  const brake=Math.min(.85,duration-ramp);
+  const v=Math.max(0,Math.min(1,(t-(duration-brake))/brake));
+  return start-brake*(v*v*v-.5*v*v*v*v);
  }
- function frame(route,seconds,w,h,reduced=false){
+ function frame(route,seconds,w,h,reduced=false,duration){
   if(!Object.hasOwn(routes,route)||![seconds,w,h].every(Number.isFinite)||w<=0||h<=0)return [];
-  const distance=reduced?0:travelDistance(seconds);
+  const distance=reduced?0:travelDistance(seconds,duration);
   const items=routes[route].map(([id,offset,ratio])=>{
    const asset=sprites[id],height=h*ratio;
    return {id,offset,height,width:height*asset.width/asset.height}
@@ -82,11 +90,11 @@
   wash.addColorStop(1,'rgba(91,117,119,'+air.shade+')');
   ctx.fillStyle=wash;ctx.fillRect(0,0,w,h)
  }
- function draw(ctx,assets,route,seconds,w,h,reduced=false,layout='landscape'){
+ function draw(ctx,assets,route,seconds,w,h,reduced=false,layout='landscape',duration){
   const box=fit(w,h,layout),foreground=layout==='portrait'?assets?.portrait:assets?.carriage;
   if(!box||!foreground?.naturalWidth||!assets?.far?.naturalWidth||!Object.hasOwn(routes,route)||!Number.isFinite(seconds))return false;
   if(layout==='portrait'&&(foreground.naturalWidth!==portrait.width||foreground.naturalHeight!==portrait.height))return false;
-  const im=assets.far,progress=reduced?.5:Math.min(1,travelDistance(seconds)/travelDistance(9)),win=windowBox(box,layout);
+  const im=assets.far,progress=reduced?.5:Math.min(1,travelDistance(seconds,duration)/travelDistance(9)),win=windowBox(box,layout);
   const glass=cover(im.naturalWidth,im.naturalHeight,win.w,win.h,progress);
   if(!glass)return false;
   ctx.save();try{
@@ -95,7 +103,7 @@
     ctx.translate(win.x,win.y);ctx.beginPath();ctx.rect(0,0,win.w,win.h);ctx.clip();
     ctx.drawImage(im,glass.x,glass.y,glass.w,glass.h,0,0,win.w,win.h);
     const air=atmosphere(route,seconds,reduced);windowDaylight(ctx,win.w,win.h,air);
-    for(const p of frame(route,seconds,win.w,win.h,reduced)){
+    for(const p of frame(route,seconds,win.w,win.h,reduced,duration)){
      const sprite=assets[p.id];if(sprite?.naturalWidth)drawTrackside(ctx,sprite,p,air)
     }
    }finally{ctx.restore()}
