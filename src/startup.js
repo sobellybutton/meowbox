@@ -9354,6 +9354,12 @@ function pawIncenseSupply(p,held,stage,age){
  const slots=Array.from({length:3},(_,i)=>({x:rack.x+(i-1)*6,y:rack.y-8}));
  return {rack,slots,count,removed,remaining:slots.slice(count+(removed?1:0)),pick:slots[Math.min(2,count)],flame:{x:rack.x+30,y:rack.y-24}}
 }
+function pawIncenseReturnFoot(p,age){
+ const f=Math.max(0,Math.min(1,age/1.1)),ease=v=>v*v*(3-2*v);
+ // Withdraw along the side of the censer before turning back to the mat.
+ const u=f<.68?.61:.61-.11*ease((f-.68)/.32),v=.572+.078*ease(Math.min(1,f/.68));
+ return {x:p.x+p.w*u,y:p.y+p.h*v}
+}
 function pawIncensePickup(hand,pick,age){
  const f=Math.max(0,Math.min(1,age<.32?age/.32:(.72-age)/.40)),v=f*f*(3-2*f);
  return {x:hand.x+(pick.x-hand.x)*v,y:hand.y+(pick.y-hand.y)*v}
@@ -9388,7 +9394,7 @@ function pawPrayerStep(){
  // No second deity, table, burner, mat or furniture over the painting.
  if(pawRoomImageReady(pawHallArt())){
   const p=pawHallPlate,xy=(u,v)=>({x:p.x+p.w*u,y:p.y+p.h*v});
-  const side=xy(.76,.655),front=xy(.50,.65),offering=xy(.50,.572),supply=pawIncenseSupply(p,held,stage,age),rack=supply.rack,burner=xy(.50,.495);
+  const side=xy(.76,.655),front=xy(.50,.65),offering=xy(.61,.572),supply=pawIncenseSupply(p,held,stage,age),rack=supply.rack,burner=xy(.50,.495);
   const blend=(a,b,v)=>({x:a.x+(b.x-a.x)*v,y:a.y+(b.y-a.y)*v});
   const ratio=duration=>poseEase(Math.max(0,Math.min(1,age/duration)));
   let foot=side,dir='right';
@@ -9396,7 +9402,7 @@ function pawPrayerStep(){
   else if(stage==='walkMat'){foot=blend(side,front,ratio(1.25));dir='left'}
   else if(['hold','bow','offer','complete'].includes(stage)){foot=front;dir='up'}
   else if(stage==='placing'){foot=blend(front,offering,ratio(1.85));dir='up'}
-  else if(stage==='returnMat'){foot=blend(offering,front,ratio(1.1));dir='down'}
+  else if(stage==='returnMat'){foot=pawIncenseReturnFoot(p,age);dir=age<.75?'down':'left'}
   const sc=pawTempleContactScale(cam.scale,1.55),hand={x:foot.x+(dir==='left'?-15:dir==='up'?9:17)*sc,y:foot.y-48*sc+q.bow*9};
   // The right-side incense supply is separate from the red fortune tube on the left.
   const reach=stage==='taking'?Math.sin(Math.PI*Math.min(1,age/.72)):stage==='lighting'?Math.sin(Math.PI*Math.min(1,age/1.65)):0;
@@ -9404,9 +9410,12 @@ function pawPrayerStep(){
   const lightAngle=stage==='lighting'?1.05*reach:0;
   const lightGrip={x:flame.x-Math.sin(lightAngle)*39,y:flame.y+Math.cos(lightAngle)*39};
   const grip=stage==='placing'?blend(hand,burner,poseEase(Math.max(0,Math.min(1,(age-1.25)/.65)))):stage==='lighting'?blend(hand,lightGrip,reach):hand;
-  const shown=stage==='placing'&&age>=1.98?0:Math.min(3,held);
+  const placed=!!state.prayerOffered||stage==='placing'&&age>=1.98;
+  const shown=placed||['returnMat','complete'].includes(stage)?0:Math.min(3,held);
   // The empty supply stays on the counter throughout the ritual.
   pawDrawIncenseSupply({...supply,remaining:['walkMat','hold','bow','offer','placing','returnMat','complete'].includes(stage)?[]:supply.remaining});
+  // The incense remains behind the retreating traveller, never painted across their face.
+  if(placed){for(let j=0;j<3;j++)incenseStem(burner.x+(j-1)*3,burner.y,0,true,25,false);pawVisibleSmoke(burner.x,burner.y-25,1.0)}
   if(q.walking&&!shown&&!pick)backHuman(foot.x,foot.y,avatar??0,true,dir,sc);
   else{
    // During the actual bow face the altar, rather than bowing towards
@@ -9421,10 +9430,6 @@ function pawPrayerStep(){
      pawIncenseArm(shoulder,pick||grip,sc,false)
     }finally{ctx.restore()}
    }
-  }
-  if(state.prayerOffered||stage==='placing'&&age>=1.98){
-   for(let j=0;j<3;j++)incenseStem(burner.x+(j-1)*3,burner.y,0,true,25,false);
-   pawVisibleSmoke(burner.x,burner.y-25,1.0);
   }
   if(stage==='collect'){const size=Math.max(54,44/Math.max(.1,cam.scale));target(rack.x-size/2,rack.y-45,size,Math.max(65,size),()=>requestIncenseAction('take'),'paw-incense-supply')}
   if(stage==='lightReady')target(rack.x-25,rack.y-35,65,80,()=>requestIncenseAction('light'));
@@ -10722,7 +10727,7 @@ function pawGardenControls(run){
  const busy=!!run.pawGardenWalk?.route.length,key=String(zh)+'|'+run.gardenSitting+'|'+busy;
  if(pawGardenControlsRun===run&&pawGardenControlsKey===key&&el.querySelectorAll('[data-paw-garden-control]').length===(run.pawRearGarden?4:3)){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawGardenControls');el.hidden=false;pawGardenControlsRun=run;pawGardenControlsKey=key;
- for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐'],['chime','Wind chime','听风铃'],...(run.pawRearGarden?[['cats','Lucky cats','招财猫']]:[])]){
+ for(const [name,en,cn] of [['feed','Feed koi','喂锦鲤'],['seat',run.gardenSitting?'Stand up':'Sit by pond',run.gardenSitting?'起身':'池边小坐'],['chime','Wind chime','听风铃'],...(run.pawRearGarden?[['cats','Greet the lucky cats','拜访招财猫']]:[])]){
   const button=b(el,tr(en,cn),()=>pawGardenChoose(run,name));button.dataset.pawGardenControl=name;button.disabled=busy
  }
 }
@@ -12024,8 +12029,14 @@ function pawRearGardenRoute(from,action){
 }
 // A seated body contacts the painted cushion at the hip, not the path.
 function pawRearBenchPose(p,scale){
- const hip={x:p.x+p.w*.78,y:p.y+p.h*.558};
- return {hip,x:hip.x-9*scale,y:hip.y+20*scale,scale}
+ const hip={x:p.x+p.w*.78,y:p.y+p.h*.563};
+ return {hip,x:hip.x-9*scale,y:hip.y+32*scale,scale}
+}
+const pawRearCatFigurines=[[.578,.398],[.653,.386],[.717,.398],[.596,.436],[.645,.436],[.697,.436]];
+const pawRearCatBlessings=[['May your lunch break actually be a break.','愿你的午休，真的能休息。'],['May good things find you without a meeting invite.','愿好事找上门，不必先开会。'],['May you have the courage to say: tomorrow.','愿你有勇气说：明天再说。'],['A little luck for whatever you are carrying today.','愿你今天的心事，轻一点。'],['May your tea stay warm and your inbox stay quiet.','愿茶常温，消息常静。'],['May you find something small worth smiling about.','愿你今天遇见一件值得微笑的小事。']];
+function pawRearCatChoice(run,index){
+ if(!run||!Number.isInteger(index)||index<0||index>=pawRearCatBlessings.length)return null;
+ run.pawCatChoice=index;return pawRearCatBlessings[index]
 }
 function pawRearGardenSway(age,reduced=false,kind='chime'){
  if(reduced||!Number.isFinite(age)||age<0||age>=3.2)return 0;
@@ -12106,7 +12117,7 @@ drawActivity=function(...args){
  const run=state,q=run.pawGardenWalk,p=pawRearGardenPlate,b=livingBounds(),xy=(u,v)=>[p.x+p.w*u,p.y+p.h*v];
  const prior=q.pos.slice(),arrive=pawGardenWalkTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
  if(arrive==='feed')gardenFeed();else if(arrive==='seat')gardenSeat();else if(arrive==='chime')gardenChime();
- else if(arrive==='cats'){run.pawCatAt=t;run.pawCatVisit=(run.pawCatVisit||0)+1;sound(520);hint(...(run.pawCatVisit%2?['May the lucky cats bring you a little peace today.','愿招财猫送你一点清静。']:['They look very busy doing absolutely nothing.','它们忙着什么也不做，真让人羡慕。']))}
+ else if(arrive==='cats'){run.pawCatAt=t;const i=Number.isInteger(run.pawCatPending)?run.pawCatPending:(Number.isInteger(run.pawCatChoice)?(run.pawCatChoice+1)%6:1);delete run.pawCatPending;sound(520);hint(...pawRearCatChoice(run,i))}
  const dx=(q.pos[0]-prior[0])*p.w,dy=(q.pos[1]-prior[1])*p.h,moving=q.route.length>0;
  if(Math.hypot(dx,dy)>.01)q.dir=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';
  continuityActivity=activity;
@@ -12140,24 +12151,21 @@ drawActivity=function(...args){
   const [x,y]=xy(...q.pos),scale=pawTempleContactScale(cam.scale,1.48+Math.max(0,q.pos[1]-.54)*.55);
   const seated=run.gardenSitting&&!moving,seatAge=Math.max(0,t-run.gardenSeatAt),seatAmount=seated?(residentReducedMotion.matches?1:poseEase(Math.min(1,seatAge/.45))):0;
   if(seated){const a=pawRearBenchPose(p,scale),sx=x+(a.x-x)*seatAmount,sy=y+(a.y-y)*seatAmount;
-   ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount})}finally{ctx.restore()}
+   ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}
   }else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale);
   const chimeAge=t-run.gardenChimeAt,catAge=t-run.pawCatAt,reduced=residentReducedMotion.matches;
-  const breeze=reduced?0:Math.sin(t*1.45)*.75+Math.sin(t*.83)*.38;
-  pawRearGardenWarp(pawRearGardenArt(),p,[.725,.254,.825,.385],breeze+pawRearGardenSway(chimeAge,reduced));
-  pawRearGardenWarp(pawRearGardenArt(),p,[.603,.361,.645,.408],pawRearGardenSway(catAge,reduced,'cats'));
-  if(catAge>=0&&catAge<1.8){
-   const [gx,gy]=xy(.65,.390),fade=1-catAge/1.8;ctx.save();ctx.globalAlpha=fade*.7;
-   for(let j=0;j<3;j++){const a=j*TAU/3;ellipse(gx+Math.cos(a)*(13+catAge*8),gy+Math.sin(a)*(8+catAge*6),1.8,1.8,'#ffdf91')}ctx.restore()
-  }
-  // Gentle sound rings accompany actual movement of the existing painting.
-  if(chimeAge>=0&&chimeAge<1.5&&!residentReducedMotion.matches){
-   const [cx,cy]=xy(.78,.303),f=chimeAge/1.5;
-   ctx.strokeStyle='rgba(239,223,161,'+(.5*(1-f))+')';ctx.lineWidth=.8;
-   for(const side of [-1,1]){ctx.beginPath();ctx.arc(cx+side*(17+f*8),cy,5+f*7,side<0?Math.PI*.7:-Math.PI*.3,side<0?Math.PI*1.3:Math.PI*.3);ctx.stroke()}
+  // Only the hanging paper tail moves. The beam, chain, bell and ceramic figures stay rigid.
+  const breeze=reduced?0:Math.sin(t*1.45)*.42+Math.sin(t*.83)*.18;
+  pawRearGardenWarp(pawRearGardenArt(),p,[.75,.326,.808,.365],breeze+pawRearGardenSway(chimeAge,reduced)*.36);
+  if(catAge>=0&&catAge<2.2&&Number.isInteger(run.pawCatChoice)){
+   const [u,v]=pawRearCatFigurines[run.pawCatChoice],[gx,gy]=xy(u,v+.012);
+   ctx.save();ctx.globalAlpha=.48*(1-catAge/2.2);ellipse(gx,gy,12,2.6,'#ffdc94');ctx.restore()
   }
   if(!moving)for(const [kind,[u,v,ww,hh]] of Object.entries(pawRearGardenTargets)){
    const [tx,ty]=xy(u,v);target(tx-ww*p.w/2,ty-hh*p.h/2,ww*p.w,hh*p.h,()=>pawGardenChoose(run,kind),'paw-rear-garden-'+kind)
+  }
+  if(!moving)for(let i=0;i<pawRearCatFigurines.length;i++){
+   const [cx,cy]=xy(...pawRearCatFigurines[i]);target(cx-14,cy-15,28,30,()=>{if(run!==state||pawArcadeInputBlocked()||q.route.length)return;run.pawCatPending=i;pawGardenChoose(run,'cats')},'paw-rear-cat-'+i)
   }
  }finally{ctx.restore()}
  pawGardenControls(run)
