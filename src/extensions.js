@@ -5186,13 +5186,25 @@ function pawDrawKaya(a,kind,phase,age,dir,reduced){
 const pawKayaIntroBefore=roomIntro;
 roomIntro=function(...args){if(room==='park'&&!activity)pawKayaPrepare();return pawKayaIntroBefore(...args)};
 /* PAW_KAYA_PAINTED_END */
+/* PAW_PARK_VISUAL_PHASE_BEGIN */
+// Arrival and preparation are not yet petting/drinking. A stationary
+// return after stroking/resting must not animate four walking paws.
+function pawParkVisualPhase(a,rawAge){
+ if(rawAge<0)return 'idle';
+ if(a.phase==='pet'&&(!a.traveller||a.traveller.moving||a.traveller.kneel<=.25))return 'idle';
+ if(a.phase==='return'&&Math.hypot(a.x-400,a.y-535)<1)return 'idle';
+ return a.phase
+}
+/* PAW_PARK_VISUAL_PHASE_END */
 const catArtDraft=careCatArt;
 careCatArt=function(a){
- const im=productionVisual('parkCats');if(!im)return catArtDraft(a);
- const kind=Math.max(0,Math.min(4,state.petKind??0)),rawAge=pawCareActionAge(a,t),age=Math.max(0,rawAge),phase=rawAge<0?'idle':a.phase;
+ const kind=Math.max(0,Math.min(4,state.petKind??0)),rawAge=pawCareActionAge(a,t),age=Math.max(0,rawAge),phase=pawParkVisualPhase(a,rawAge);
  const frame=residentReducedMotion.matches?(phase==='rest'?6:['feed','water'].includes(phase)&&age>=.9?4:phase==='pet'?1:0):parkCatFrame(phase,age,t,a.assisted,!!a.drag,a.values.trust);
  const dir=pawCatDirection(a);a.pawFacing=dir;a.pawPreviousX=a.x;
  if(pawDrawKaya(a,kind,phase,age,dir,residentReducedMotion.matches))return;
+ // The isolated ginger-tabby set does not depend on the larger atlas.
+ const im=productionVisual('parkCats');
+ if(!im)return catArtDraft({...a,phase});
  const resting=frame===6,pounce=frame===7,bob=pounce?-Math.abs(Math.sin(age*5))*5:resting?Math.sin(t*2)*.6:0;
  ctx.save();ctx.translate(a.x,a.y);ellipse(0,3,resting?58:72,resting?10:12,'#393d2f38');ctx.scale(dir,1);
  ctx.drawImage(im,frame*220,kind*140,220,140,-110,-120+bob,220,140);

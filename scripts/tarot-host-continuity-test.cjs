@@ -246,3 +246,18 @@ for(const height of [100,300,700])for(const scroll of [0,45,600])for(const open 
 }
 assert.equal(surfaceApi.pawRestoreKeepsakeSurface(null,{}),false);
 console.log('Result surface: 27 scroll and disclosure restoration combinations passed');
+
+// Actual exported Chromium contact sheets showed stranded Chinese punctuation.
+const exportType=new Function(source.slice(source.indexOf('function pawEditorialCanvasBox'),source.indexOf('function pawEditorialTarot('))+';return {fit:pawEditorialTextFit,backdrop:pawEditorialBackdrop}')();
+for(const sample of ["严苛判断或怨愤。想想哪些地方值得留意。","你的日历已经够满了，不必再培养一个分身。","先喝杯茶（或者睡个午觉），给自己一点时间。","「慢一点」，也是一种选择。"])for(let width=5;width<=18;width++){
+ const result=exportType.fit(v=>Array.from(v).length,sample,width,100,1,1,100,1);
+ assert.equal(result.rows.join(''),sample);
+ assert.ok(result.rows.every(v=>v.length<=width));
+ assert.ok(result.rows.slice(1).every(v=>!/^[，。！？；：、）》」』】〕〉”’…]/u.test(v)));
+ assert.ok(result.rows.slice(0,-1).every(v=>!/[（《「『【〔〈“‘]$/u.test(v)));
+}
+for(const h of [1080,1350,1440,1920]){
+ let args;exportType.backdrop({drawImage(...v){args=v},fillRect(){}},{},{width:1080,height:h},'#fff');
+ assert.ok(Math.abs(args[3]/args[4]-1080/h)<1e-9);
+}
+console.log('Editorial export: Chinese line breaks and proportional paper cropping verified');

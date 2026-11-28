@@ -478,7 +478,8 @@ function pawEditorialCanvasBox(box){
 }
 function pawEditorialBackdrop(g,paper,box,surface){
  const w=box.width,h=box.height;
- g.drawImage(paper,Math.round(w*.12),Math.round(h*.27),Math.round(w*.76),Math.round(h*.44),0,0,w,h);
+ // Crop by the same fraction on both axes so the actual washi grain is not stretched.
+ g.drawImage(paper,w*.12,h*.12,w*.76,h*.76,0,0,w,h);
  g.globalAlpha=.79;g.fillStyle=surface;g.fillRect(0,0,w,h);g.globalAlpha=1
 }
 function pawEditorialScoreRatio(value){
@@ -513,8 +514,26 @@ function pawEditorialTarotPlan(box,count){
 function pawEditorialTextFit(measure,text,width,height,start,min,maxLines,spacing=1.25){
  const chars=Array.from(String(text||'').trim());if(!chars.length)return {size:start,rows:[],lineHeight:start*spacing};
  function wrap(size){
-  const lines=[];let row='';const parts=/[\u3400-\u9fff]/.test(chars.join(''))?chars:chars.join('').split(/\s+/);
-  const sep=parts===chars?'':' ';
+  const lines=[];let row='';
+  if(/[\u3400-\u9fff]/.test(chars.join(''))){
+   // Keep Chinese closing punctuation with its preceding character and
+   // opening punctuation with its following character. Prefer a balanced
+   // final line over a single stranded glyph where there is room.
+   const closing=/^[，。！？；：、）》」』】〕〉”’…％,.!?;:%)\]]$/u,opening=/^[（《「『【〔〈“‘(\[]$/u;
+   for(let at=0;at<chars.length;){
+    let end=at+1;
+    while(end<chars.length&&measure(chars.slice(at,end+1).join(''),size)<=width)end++;
+    if(end<chars.length){
+     let legal=end;
+     while(legal>at+1&&(closing.test(chars[legal])||opening.test(chars[legal-1])||chars.length-legal===1))legal--;
+     if(legal>at&& !closing.test(chars[legal])&&!opening.test(chars[legal-1]))end=legal;
+    }
+    lines.push(chars.slice(at,end).join('').trim());at=end;
+   }
+   return lines.filter(Boolean)
+  }
+  const parts=chars.join('').split(/\s+/);
+  const sep=' ';
   for(const word of parts){
    let next=row?row+sep+word:word;
    if(measure(next,size)<=width){row=next;continue}
