@@ -57,7 +57,7 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
     await page.locator('#'+id).tap();
     await page.waitForFunction(()=>$('page').style.display==='block',null,{timeout:15000});
     await page.waitForFunction(()=>document.getElementById('game').classList.contains('pawDockRoot'),null,{timeout:8000});
-    const dockHits=await page.locator('#dock button:visible').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {id:n.id,hit:n.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2))}}));
+    const dockHits=await page.locator('#dock button:visible').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();const top=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return {id:n.id,hit:n.contains(top),cover:top?.id||top?.className,root:document.getElementById('game').className,z:getComputedStyle(n.parentElement).zIndex}}));
     assert(dockHits.length===4&&dockHits.every(v=>v.hit),'Dock must actually be in front of page: '+JSON.stringify(dockHits));
     if(id==='dockOwnHome')await page.waitForFunction(()=>document.querySelectorAll('.hideoutScene [data-paw-home-finish]').length===2,null,{timeout:15000});
     await page.waitForTimeout(350);
