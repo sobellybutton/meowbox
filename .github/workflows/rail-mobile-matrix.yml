@@ -11,11 +11,12 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-concurrency:
-  group: railway-mobile-${{ github.ref }}
-  cancel-in-progress: true
 jobs:
   mobile-rail:
+    # Keep a running device test intact while later commits queue the latest revision.
+    concurrency:
+      group: railway-mobile-${{ matrix.profile }}-${{ github.ref }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 14
     strategy:
