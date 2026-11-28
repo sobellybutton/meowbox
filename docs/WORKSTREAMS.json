@@ -847,7 +847,9 @@
       "resources": [
         "browser",
         "scripts/rail-mobile-matrix-test.cjs",
-        ".github/workflows/rail-station-diagnostic.yml"
+        ".github/workflows/rail-station-diagnostic.yml",
+        "src/town-polish.js",
+        "scripts/painted-plaque-clearance-test.cjs"
       ],
       "depends": [],
       "stage": "tested",
@@ -861,7 +863,10 @@
         "92cd0068 adds focused WebKit ios-tall and ios-large station regression, pinned to triggering commit, only runs on diagnostic script/workflow edits or manual dispatch, no cancellation from unrelated gameplay pushes. Broad nine-profile gate retained. No browser pass yet; new workflow pending. Source fix not claimed.",
         "027d3287: isolated pre-fix iOS diagnostic 46114130580 failed both profiles, but final samples had hit-tested reachable plaque (large) / edge (tall) and destination already changed to Sea Breeze Island while still on leg 0. Replaced locator stability retry with ordinary touchscreen.tap at freshly hit-tested point; read-only origin/pending/transition ownership stops retries on accepted action and fails if scene advances before ride observation. Four focused mock assertions and syntax passed; post-fix isolated run pending. Existing strict ride, camera, duration and route assertions preserved. No visual acceptance."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-station-stability",
+        "until": 1795847304573
+      },
       "blocker": "Verify new live braking and alpha correction, nine-profile CI results, actual screenshot review and physical iOS/Android mobile browsers (Safari, Chrome, Samsung Internet, Firefox) across representative phone sizes, rotation, safe areas, cold loads. Browser simulation is not physical-device acceptance."
     },
     {
