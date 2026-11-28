@@ -9369,7 +9369,36 @@ function pawVisibleSmokeFrame(i,now,reduced=false,strength=1){
  return {dx:Math.sin(f*7+i*.6)*f*9,dy:2+f*40,w:1.8+f*3.8,alpha:Math.max(0,Math.sin(Math.PI*f)*.53*strength),drift:Math.sin(f*6+i)*8};
 }
 /* PAW_VISIBLE_SMOKE_END */
+/* PAW_PAINTED_INCENSE_SMOKE_BEGIN */
+const pawSmokePaths=Object.freeze(Array.from({length:8},(_,i)=>'../../staging/2026-11-28-project-batch09-effects/incense-smoke/frame-'+String(i).padStart(2,'0')+'.webp'));
+function pawSmokeImages(){
+ const images=pawSmokePaths.map(path=>pawRecoveredImage(path));
+ return images.every(im=>im?.complete&&im.naturalWidth===256&&im.naturalHeight===256)?images:null
+}
+function pawSmokeLayers(x,y,now,strength=1,reduced=false){
+ if(![x,y,now,strength].every(Number.isFinite)||strength<=0)return [];
+ const w=strength>=.95?72:52,opacity=.35*Math.min(1,strength);
+ const cycle=reduced?3.5:((now/.18+x*.027)%8+8)%8;
+ const i=Math.floor(cycle),f=cycle-i,e=f*f*(3-2*f);
+ // All frames share the painted emitter. Crossfade adjacent frames,
+ // including the last-to-first reset, without lifting the base.
+ const layers=[{frame:i,alpha:opacity*(1-e)},{frame:(i+1)%8,alpha:opacity*e}];
+ return layers.filter(p=>p.alpha>0).map(p=>({...p,x:x-w*.5,y:y-w*.98,w,h:w}))
+}
+function pawDrawPaintedSmoke(g,images,x,y,now,strength=1,reduced=false){
+ if(!images||images.length!==8||!images.every(im=>im?.complete&&im.naturalWidth===256&&im.naturalHeight===256))return false;
+ const layers=pawSmokeLayers(x,y,now,strength,reduced);if(!layers.length)return false;
+ g.save();try{const base=g.globalAlpha;for(const p of layers){g.globalAlpha=base*p.alpha;g.drawImage(images[p.frame],p.x,p.y,p.w,p.h)}}finally{g.restore()}
+ return true
+}
+const pawSmokeRoomIntroBefore=roomIntro;
+roomIntro=function(...args){if(room==='temple'&&!activity)pawSmokeImages();return pawSmokeRoomIntroBefore(...args)};
+const pawSmokeStartBefore=start;
+start=function(id,...args){if(id==='prayer')pawSmokeImages();return pawSmokeStartBefore(id,...args)};
+/* PAW_PAINTED_INCENSE_SMOKE_END */
 function pawVisibleSmoke(x,y,strength=1){
+ if(!Object.hasOwn(state,'pawSmokeArt'))state.pawSmokeArt=pawSmokeImages();
+ if(pawDrawPaintedSmoke(ctx,state.pawSmokeArt,x,y,t,strength,residentReducedMotion.matches))return;
  ctx.save();try{ctx.lineCap='round';
   for(let i=0;i<5;i++){
    const p=pawVisibleSmokeFrame(i,t,residentReducedMotion.matches,strength),px=x+p.dx,py=y-p.dy;
