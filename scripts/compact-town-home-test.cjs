@@ -200,7 +200,7 @@ for(let i=0;i<4;i++)for(const w of [0,320,390,768,1200])for(const h of [0,320,84
  resumeCases+=2;
 }
 assert.equal(api.cutawaySeatResume(false,{width:400,height:400},{id:'futon'},{width:80,height:50},NaN),'stand');
-assert(src.includes("if(!seatedKey){position(point(actor));actorArt('down',false,0)}"));
+assert(src.includes('if(!seatedKey){position(cutawayStoppedFoot(visibleFoot,point(actor)));actorArt(actorFacing,false,0)}'));
 assert(src.includes('else if(seatedKey)syncSeat()'));
 assert(src.includes("if(decision==='defer')return"));
 assert(src.includes('seatResize=new ResizeObserver(syncSeat)'));
@@ -221,3 +221,28 @@ assert.equal(api.cutawayRetargetRoute(null,{u:0,v:0},{x:0,y:0},{x:0,y:0}),null);
 assert(src.includes('cutawayRetargetRoute(route,actor,visibleFoot,point(actor),!!seatedKey)'));
 assert(src.includes('actor=steps.shift()'));
 console.log('PASS '+retargetCases+' continuous cutaway retarget trajectories');
+
+{
+ const h=new Function(helper+';return {cutawayStoppedFoot,cutawayWalkingFrame,cutawayRetargetRoute}')();
+ let count=0;
+ const eq=(v,e)=>{assert.deepEqual(v,e);count++};
+ const actor={u:2,v:2},origin={x:.4,y:.6};
+ for(const [dx,dy] of [[.12,.08],[-.12,.08],[.12,-.08],[-.12,-.08]])for(let i=0;i<=100;i++){
+  const visible={x:origin.x+dx*i/100,y:origin.y+dy*i/100};
+  const stopped=h.cutawayStoppedFoot(visible,origin);
+  eq(stopped,visible);
+  const resume=h.cutawayRetargetRoute([],actor,stopped,origin);
+  eq(resume.from,visible);
+  eq(resume.route.length,i?1:0);
+  if(i)eq(resume.route[0],actor);
+ }
+ eq(h.cutawayStoppedFoot(null,origin),origin);
+ eq(h.cutawayStoppedFoot({x:NaN,y:0},origin),origin);
+ for(let remaining=1;remaining<=12;remaining++)for(let i=0;i<=100;i++)eq(h.cutawayWalkingFrame(i/100,remaining),i<100||remaining>1);
+ eq(h.cutawayWalkingFrame(1,0),false);
+ eq(h.cutawayWalkingFrame(NaN,2),false);
+ assert(src.includes('else walk(actor,toggle)'));
+ assert(src.includes('cutawayWalkingFrame(t,steps.length)'));
+ assert(src.includes('actorArt(actorFacing,false,distance)'));
+ console.log('PASS '+count+' interrupted walk, safe edit return and continuous gait checks');
+}
