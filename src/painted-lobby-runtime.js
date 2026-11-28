@@ -124,9 +124,9 @@ function pawKeepsakeRoomRoute(v,resultKind,hasBack){
  if(!v||v.page)return null;
  if(v.room==='tarot'&&['tarot','love'].includes(v.activity)&&resultKind==='tarot'&&hasBack)return {id:'tarot',speaker:['Fortune Teller','占卜师'],back:['Back to reading','返回解读']};
  if(v.scene!=='wonder'||v.phase!=='result')return null;
- if(v.activity==='match'&&v.room==='match'&&resultKind==='cafe')return {id:'cafe',speaker:['Heart Café','心语咖啡馆'],back:['Back to reflection','返回心得']};
- if(v.activity==='story'&&v.room==='story'&&resultKind==='story')return {id:'story',speaker:['House of What If','如果人生馆'],back:['Back to the story','返回故事']};
- if(v.activity==='wonderScene'&&['quiz','curiosity','observatory'].includes(v.room)&&resultKind===v.mode&&hasBack&&v.result)return {id:'notebook',speaker:v.room==='curiosity'?['Curiosity Club','奇想俱乐部']:['Inner Observatory','心灵观星台'],back:['Back to the notebook','返回小记']};
+ if(v.activity==='match'&&v.room==='match'&&resultKind==='cafe')return {id:'cafe',speaker:['The Heart Café','心语咖啡馆'],back:['Back to reflection','返回心得']};
+ if(v.activity==='story'&&v.room==='story'&&resultKind==='story')return {id:'story',speaker:['The House of What If','如果人生馆'],back:['Back to the story','返回故事']};
+ if(v.activity==='wonderScene'&&['quiz','curiosity','observatory'].includes(v.room)&&resultKind===v.mode&&hasBack&&v.result)return {id:'notebook',speaker:v.room==='curiosity'?['The Curiosity Club','奇想俱乐部']:['The Inner Observatory','心灵观星台'],back:['Back to the notebook','返回小记']};
  return null
 }
 function pawKeepsakeVisitOwns(origin,live){
@@ -329,7 +329,7 @@ function pawInstallNativeConsultation(){
    }else if(opener?.isConnected)opener.focus?.({preventScroll:true});
    else if(typeof document!=='undefined')Array.from($('choices').querySelectorAll('button')).find(btn=>btn.textContent===tr('Make a keepsake','制作纪念卡'))?.focus({preventScroll:true})
   };
-  say(tr(...route.speaker),tr('Choose a keepsake format. Only the result in the preview is shared.','选一个纪念卡尺寸。分享时只会包含预览中的结果。'),[[tr(...route.back),returnTo]]);
+  say(tr(...route.speaker),tr('Choose a keepsake format. Your preview contains the result, not your private answers.','选一个纪念卡尺寸吧。分享时只会带上预览里的结果，不会带上私人答案。'),[[tr(...route.back),returnTo]]);
   $('dialogue').setAttribute('data-paw-keepsake','');
   const panel=element('section','',$('choices'),'pawTarotKeepsake'),preview=element('canvas','',panel,'meowSharePreview');
   preview.setAttribute('role','img');preview.hidden=true;
@@ -562,9 +562,9 @@ function pawEditorialTarot(cv,data,format,cn,box,paper,atlas,deck,positions){
 // generic boxed worksheet. All input is the existing sanitized public result.
 const pawEditorialThemes=Object.freeze({
  soul:['#f8ecd9','#473c37','#a26452',['Cat charm','猫灵小记']],
- fortune:['#fff0d9','#594234','#a05b43',['Fortune Valley','福运谷']],
- cafe:['#f7e8d6','#4f3c35','#986449',['Heart Café','心动咖啡馆']],
- story:['#ede9ee','#403c56','#74617e',['Parallel life','平行人生']],
+ fortune:['#fff0d9','#594234','#a05b43',['Fortune Valley','解忧谷']],
+ cafe:['#f7e8d6','#4f3c35','#986449',['The Heart Café','心语咖啡馆']],
+ story:['#ede9ee','#403c56','#74617e',['The House of What If','如果人生馆']],
  type:['#eaf0e2','#354b3e','#607b65',['Personality portrait','四维性格探索']],
  motive:['#f3e9e2','#543e48','#946877',['Inner motives','九型动力探索']],
  bigfive:['#eaf0e2','#354b3e','#607b65',['Five tendencies','五大性格倾向']],
