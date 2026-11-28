@@ -124,3 +124,35 @@ assert.equal(shareHelpers.pawKeepsakeShareMode({share(){},canShare(){return true
 assert.equal(shareHelpers.pawKeepsakeShareMode({share(){},canShare(){throw Error('unsupported')}},{}),false);
 assert.equal(shareHelpers.pawKeepsakeShareMode({share(){}},{}),false);
 console.log('Tarot share destination guide: eight locale/format cases and four invalid/support cases passed');
+
+const editorial=new Function(source.slice(source.indexOf('/* PAW_EDITORIAL_SHARE_BEGIN */'),source.indexOf('/* PAW_EDITORIAL_SHARE_END */'))+';return {pawEditorialTarotPlan,pawEditorialTextFit,pawEditorialTarot}')();
+const exportBoxes={feed:[1080,1350,271,1119],xhs:[1080,1440,289,1195],story:[1080,1920,380,1598],square:[1080,1080,220,892]};
+let editorialCases=0;
+for(const [format,[width,height,top,bottom]] of Object.entries(exportBoxes)){
+ const box={width,height,top,bottom,left:84,right:format==='story'?142:84};
+ for(const count of [1,3,5]){
+  const plan=editorial.pawEditorialTarotPlan(box,count);
+  assert.equal(plan.slots.length,count);
+  for(const slot of plan.slots)for(const [x,y,w,h] of [slot.card,slot.label]){
+   assert.ok(w>0&&h>0&&x>=box.left&&x+w<=width-box.right+.001&&y>=top&&y+h<=plan.reading[1]+.001);
+  }
+  assert.ok(plan.reading[1]+plan.reading[3]<=plan.footer[1]);
+  for(const cn of [false,true]){
+   const text=[],draws=[],rotations=[];
+   const g={save(){},restore(){},translate(){},rotate(v){rotations.push(v)},drawImage(...v){draws.push(v)},fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(v){text.push(v)},measureText(v){return {width:Array.from(v).length*Number(this.font.match(/(\d+)px/)[1])*(cn?.88:.56)}}};
+   const cv={getContext:()=>g},paper={complete:true,naturalWidth:width,naturalHeight:height},atlas={complete:true,naturalWidth:1024,naturalHeight:2180};
+   const deck=Array.from({length:count},(_,i)=>[['The Star','Knight of Pentacles','Wheel of Fortune','The High Priestess','Ten of Swords'][i],['星星','星币骑士','命运之轮','女祭司','宝剑十'][i]]);
+   const cards=deck.map((_,i)=>({i,rev:i%2===1}));
+   const roles=deck.map(()=>['Notice','留意']);
+   const data={kind:'tarot',title:['Moonlight reflection','月光塔罗手记'],cards,takeaway:['Take some time to notice the things that matter. '.repeat(8),'给自己一点时间，慢慢看清眼前真正重要的事。'.repeat(10)]};
+   assert.ok(editorial.pawEditorialTarot(cv,data,format,cn,box,paper,atlas,deck,roles));
+   assert.equal(cv.width,width);assert.equal(cv.height,height);
+   assert.equal(draws.filter(d=>d[0]===atlas).length,count);
+   assert.equal(rotations.length,cards.filter(c=>c.rev).length);
+   assert.ok(!text.some(v=>v.includes('undefined')));
+   for(const card of deck){const name=card[Number(cn)];assert.ok(text.join(' ').includes(name)||text.join('').includes(name))}
+   editorialCases++;
+  }
+ }
+}
+console.log('Editorial Tarot exports: '+editorialCases+' format, spread and language cases passed with mocked canvas');
