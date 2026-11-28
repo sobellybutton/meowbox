@@ -120,3 +120,47 @@ console.log('Resting ladle retry and exclusive held-tool ownership checks passed
  check(src.includes('if(lit&&smoke)pawVisibleSmoke('),'unlit sticks do not emit smoke');
  console.log('PASS '+n+' painted incense smoke registration, frame, opacity and fallback assertions.');
 }
+
+/* One physical ladle centre for both rendering and release, and the four
+   existing illustrated seated traveller poses at the cushion contact. */
+{
+ const a=new Function(get('PURIFICATION_PAINT')+get('REAR_SEATED_ART')+';return {pawWaterGeometry,pawWaterActorScale,pawWaterDragCentre,pawWaterLadlePoint,pawWaterShoulder,pawWaterDropMatches,pawRearSeatedBox,pawRearSeatedRecords}')();
+ const g=a.pawWaterGeometry(),scale=a.pawWaterActorScale(),shoulder=a.pawWaterShoulder(g,scale);
+ let checks=0;
+ for(let x=200;x<=450;x+=5)for(let y=300;y<=500;y+=5){
+  const v=a.pawWaterDragCentre({x,y},g,scale),hand=a.pawWaterLadlePoint(v,0,-25,1);
+  assert.ok(Math.hypot(hand.x-shoulder.x,hand.y-shoulder.y)<=42*scale+1e-8);checks++
+ }
+ for(const [stage,d] of [[0,g.scoop],[1,g.pour]]){
+  const v=a.pawWaterDragCentre(d,g,scale);assert.ok(a.pawWaterDropMatches(stage,v.x,v.y,g));checks++
+ }
+ const manifest=JSON.parse(fs.readFileSync(path.join(root,'assets/visual/staging/2026-11-27-extracted/manifest.json'),'utf8'));
+ const records=Object.values(manifest).find(x=>Array.isArray(x)&&x.some(y=>y.path?.endsWith('/seated.webp')));
+ for(let id=0;id<4;id++){
+  const r=a.pawRearSeatedRecords[id],m=records.find(x=>x.path.endsWith('/players/'+id+'/seated.webp'));
+  assert.equal(r.w,m.width);assert.equal(r.h,m.height);assert.ok(fs.existsSync(path.join(root,m.path)));
+  for(const sc of [1.35,1.72,2.25])for(const hip of [{x:200,y:320},{x:410,y:580}]){
+   const q=a.pawRearSeatedBox(id,hip,sc);
+   assert.ok(Math.abs(q.x+q.w-q.hipX-hip.x)<1e-8&&Math.abs(q.y+q.hipY-hip.y)<1e-8&&Math.abs(q.w/q.h-r.w/r.h)<1e-8);checks++
+  }
+ }
+ assert.ok(src.includes("a=pawWaterDragCentre(a,g,pawWaterActorScale())"));
+ assert.ok(src.includes("at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,pawWaterActorScale())"));
+ assert.ok(src.includes("pawDrawRearSeated(im,id,a.hip,scale)"));
+ console.log('PASS '+checks+' ladle reach, drop and seated pose geometry cases');
+}
+
+/* Reach only after the traveller arrives; hand follows the exact prop. */
+{
+ const a=new Function(get('PURIFICATION_PAINT')+get('ALCOVE_PAINT')+';return {pawAlcoveGeometry,pawAlcoveStickPoint,pawAlcoveStickContact}')();
+ const g=a.pawAlcoveGeometry();let n=0;
+ for(let i=0;i<=1000;i++){
+  const pick=i/1000,p={picked:true,fall:1,pick},c=a.pawAlcoveStickContact(g,p),pt=a.pawAlcoveStickPoint(g,p);
+  assert.ok(c.foot.x>=g.stickFoot.x&&c.foot.x<=g.stickPickFoot.x);n++;
+  if(pick<.45){assert.equal(c.hand,null);assert.equal(pt.x,g.stickTray.x);assert.equal(pt.y,g.stickTray.y);n+=3}
+  else{assert.equal(c.walking,false);assert.deepEqual(c.hand,pt);assert.ok(Math.hypot(c.hand.x-c.shoulder.x,c.hand.y-c.shoulder.y)<=c.maxReach);n+=3}
+ }
+ assert.equal(a.pawAlcoveStickContact(g,{picked:false,shake:false}).hand,null);
+ assert.deepEqual(a.pawAlcoveStickContact(g,{picked:false,shake:true}).hand,g.tubeGrip);
+ console.log('PASS '+(n+2)+' physical stick approach and contact checks');
+}

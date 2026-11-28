@@ -3,11 +3,15 @@ on:
   push:
     branches: [main]
     paths: ['src/engine.js','src/release-fixes.js','src/startup.js','src/town-access.js','src/extensions.js','scripts/build.cjs','scripts/test-yue-input.cjs','scripts/yue-journey-test.cjs','.github/workflows/yue-journey.yml']
+  pull_request:
+    branches: [main]
+    paths: ['src/town-access.js','scripts/yue-journey-test.cjs','.github/workflows/yue-journey.yml']
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   consultation:
+    if: github.event_name != 'pull_request' || github.head_ref == 'fix/yue-star-language-options-20261128'
     concurrency:
       group: paw-yue-${{ matrix.engine }}-${{ github.ref }}
       cancel-in-progress: false

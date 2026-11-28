@@ -12,9 +12,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['EN', '中文']
+        include:
+          - language: EN
+            browser: chromium
+          - language: 中文
+            browser: webkit
     env:
-      PAW_BROWSER: chromium
+      PAW_BROWSER: ${{ matrix.browser }}
       PAW_VIEWPORT: '390x844'
       PAW_LANGUAGE: ${{ matrix.language }}
       PAW_MOTION: no-preference
@@ -26,7 +30,7 @@ jobs:
           node-version: '22'
       - run: node scripts/build.cjs
       - run: npm install --no-save --no-package-lock playwright
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: |
           python3 -m http.server 8772 >/tmp/hall-room-server.log 2>&1 &
           for i in {1..20}; do curl -fsS http://127.0.0.1:8772/index.html >/dev/null && break; sleep 1; done

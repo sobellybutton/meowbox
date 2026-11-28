@@ -1246,7 +1246,74 @@ function residentWelcomeLine(profile,count){
 /* Small local hospitality history; never store chat text or birth details. */
 const residentHospitalityKey='residentHospitalityV1';
 const residentHospitalityRaw=load(residentHospitalityKey,{});
-const residentHospitality={visits:Object.create(null),drink:null,soup:null,chats:Object.create(null)};
+const residentHospitality={visits:Object.create(null),drink:null,soup:null,chats:Object.create(null),welcomes:Object.create(null)};
+/* PAW_VALLEY_DAILY_WELCOME_BEGIN */
+const pawValleyDailyVoices={
+ temple:{daily:[
+ ['Morning or evening, the steps could always use another sweep.','早晚都一样，这石阶是扫不完的。'],
+ ['Come in. That cat has already claimed the sunny spot.','进来吧。晒太阳的位置已经被那只猫占了。'],
+ ['A quiet moment is a perfectly good reason to visit.','来清静一会儿，也挺好。'],
+ ['Someone left an orange here yesterday. Nobody seems willing to claim it.','昨天有人落了个橘子，问了一圈都说不是自己的。'],
+ ['Mind the last step. It has been there longer than I have.','小心最后一级台阶，它比我来得还早。'],
+ ['The incense is ready. No need to rush.','香备好了，慢慢来。'],
+ ['There was a bird here earlier that sounded rather offended.','刚才有只鸟叫得特别委屈，也不知道谁惹它了。'],
+ ['The garden is lovely today. I have done very little to deserve the credit.','今天后院挺漂亮的，说实话也没我什么功劳。'],
+ ['You look as though a little peace would suit you.','看你这样子，来歇会儿正合适。'],
+ ['I found a leaf in the bell. Quite the little hiding place.','钟里居然有片叶子，还挺会藏。'],
+ ['You may sit for as long as you like.','想坐多久就坐多久。'],
+ ['Ah, a visitor. I was beginning to have conversations with the broom.','总算来人了，我都快跟扫帚聊上了。']
+ ],again:[['Back already? The cat has not moved.','又回来了？猫还没挪窝呢。'],['Come, the door is still open.','来吧，门一直开着。'],['Something else on your mind?','还有件心事？'],['Make yourself comfortable.','随意些，不必拘礼。']]},
+ tarot:{daily:[
+ ['The cards are behaving themselves. So far.','今天的牌还挺老实的，暂时。'],
+ ['I opened the window. Even mysterious rooms get stuffy.','我开了窗。再神秘的屋子也得通通风。'],
+ ['Sit anywhere you like.','找个舒服的位置坐吧。'],
+ ['One card fell out while I was shuffling. Very eager, that one.','刚洗牌掉出来一张，看来它挺着急。'],
+ ['I have tea, cards and an excellent view of the rain when it rains.','有茶有牌，下雨的时候还能看雨。'],
+ ['No need to know the perfect question.','不必想好一个多厉害的问题才来。'],
+ ['I think the candle is leaning to the left. It has no opinion on your love life.','蜡烛好像歪了。跟你的感情运没关系。'],
+ ['You are welcome to look around before we begin.','先随便看看，不急着占卜。'],
+ ['The moon looked particularly round last night. Quite pleased with itself, I thought.','昨晚月亮特别圆，看着还挺得意。'],
+ ['The cards have been waiting in their little box.','牌一直在小盒子里等着呢。'],
+ ['Someone asked me about their cat yesterday. I rather liked that question.','昨天有人问自家猫的事，我还挺喜欢这个问题。'],
+ ['I rearranged the table. It looks exactly the same.','我重新布置了桌子。看起来跟原来一模一样。']
+ ],again:[['Forgot to ask something?','刚才是不是漏问了一件事？'],['There you are. The cards are still here.','又见面啦，牌还在呢。'],['We can try a different question.','换个问题也行。'],['Back for company? That works too.','回来坐坐？也好。']]},
+ yue:{daily:[
+ ['Come, sit. I finally found my glasses.','来，坐。老夫总算找到眼镜了。'],
+ ['The tea is fresh. I make no promises about the biscuits.','茶是新泡的，点心就不好说了。'],
+ ['The ink is still wet. Careful with your sleeves.','墨还没干，小心衣袖。'],
+ ['Sit wherever you like. The chair with the papers is spoken for.','随便坐。堆着书的那把椅子先别碰。'],
+ ['I was reading an old almanac. It seems I owe someone a book.','刚翻了本旧历书，才想起来好像还欠人一本书。'],
+ ['Ah, you have caught me between cups of tea.','来得巧，老夫刚喝完一盏茶。'],
+ ['No need to have everything figured out before you sit down.','不必什么都想明白了才来。'],
+ ['Someone moved my brush. I suspect it was me.','有人动了我的笔。仔细一想，可能是我自己。'],
+ ['It is good to have a little company.','有人来坐坐，挺好。'],
+ ['The stars are in no hurry. Neither am I.','星星不急，老夫也不急。'],
+ ['I tried a new tea today. The old one was better.','今天换了种茶。还是原来的好喝。'],
+ ['You can tell me as much or as little as you like.','想说多少就说多少，不必勉强。']
+ ],again:[['Left something behind?','落东西了？'],['Another question? Let me put the kettle back on.','还有一问？那我再烧壶水。'],['Ah, the chair is still warm.','椅子还没凉呢。'],['Come back in.','来吧，接着坐。']]},
+ garden:{daily:[
+ ['That vine has finally decided to grow in the right direction.','那根藤总算肯往该长的地方长了。'],
+ ['The pond is especially quiet today.','今天池子格外安静。'],
+ ['I left a little room for new lanterns.','特意给新灯笼腾了点位置。'],
+ ['A little flower opened where I did not plant one.','有朵小花开了，我可没在那儿种过。'],
+ ['You can wander. The plants do not mind.','随便走走，花草不介意。'],
+ ['Watch the stepping stones. A frog has opinions about them.','留心石板路，有只蛙觉得那是它的地盘。'],
+ ['Someone tied a very elaborate bow here. I am still impressed.','有人在这里打了个特别复杂的结，我到现在还挺佩服。'],
+ ['The garden looks different every time the light changes.','光线一变，园子就又是另一个样子。'],
+ ['Have a look at the little buds by the path.','看看路边那些小花苞吧。'],
+ ['I have been negotiating with the weeds. No agreement yet.','我跟杂草谈了半天，暂时没谈拢。'],
+ ['There is space for you here, wish or no wish.','许不许愿都好，这里有你的位置。'],
+ ['The wind chime has been particularly talkative.','今天风铃倒是挺爱说话。']
+ ],again:[['Back for another stroll?','回来再走一圈？'],['The pond is still here.','池子还在呢。'],['Take your time.','慢慢来。'],['Did you spot something on the way out?','刚才出去的时候看到什么啦？']]}
+};
+function pawValleyWelcomePick(id,day,prior){
+ const voice=pawValleyDailyVoices[id];if(!voice||typeof day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(day))return null;
+ const ms=Date.parse(day+'T00:00:00Z');if(!Number.isFinite(ms)||new Date(ms).toISOString().slice(0,10)!==day)return null;
+ const same=prior?.day===day,old=same&&Number.isInteger(prior.count)&&prior.count>0?Math.min(prior.count,9998):0;
+ const count=old+1,ordinal=Math.floor(ms/86400000),index=((ordinal%voice.daily.length)+voice.daily.length)%voice.daily.length;
+ return {pair:old?voice.again[(old-1)%voice.again.length]:voice.daily[index],row:{day,count}}
+}
+/* PAW_VALLEY_DAILY_WELCOME_END */
 /* PAW_RESIDENT_CHAT_MEMORY_BEGIN */
 function pawResidentChatDate(day){
  if(typeof day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(day))return false;
@@ -1355,6 +1422,7 @@ function residentRecipeValid(v){
 }
 if(residentHospitalityRaw&&typeof residentHospitalityRaw==='object'){
  for(const p of residentWelcomeProfiles){const n=residentHospitalityRaw.visits?.[p.id];if(Number.isInteger(n)&&n>0)residentHospitality.visits[p.id]=Math.min(n,9999);const chat=pawResidentChatRow(residentHospitalityRaw.chats?.[p.id]);if(chat)residentHospitality.chats[p.id]=chat}
+ for(const id of Object.keys(pawValleyDailyVoices)){const v=residentHospitalityRaw.welcomes?.[id];if(v&&pawResidentChatDate(v.day)&&Number.isInteger(v.count)&&v.count>0&&v.count<=9999)residentHospitality.welcomes[id]={day:v.day,count:v.count}}
  if(residentRecipeValid(residentHospitalityRaw.drink))residentHospitality.drink=residentHospitalityRaw.drink;
  const soup=residentHospitalityRaw.soup;
  if(Array.isArray(soup)&&soup.length===2&&soup.every(v=>typeof v==='string'&&v.length<=60))residentHospitality.soup=soup;
@@ -1431,7 +1499,9 @@ say=function(name,line,...rest){
  if(profile&&residentPendingWelcome?.room===room&&residentPendingWelcome.id===profile.id&&typeof line==='string'){
   const pending=residentPendingWelcome;residentPendingWelcome=null;residentWelcomeSpoken.add(profile.id);
   // Preserve the actual intentional conversation; avoid prepending a second scripted greeting.
-   if(pending.visits>1&&pending.visits%4===0&&['grandma','boba'].includes(profile.id))line=residentHospitalityWelcome(profile,pending.visits)+'\n\n'+line;
+   const welcome=pawValleyWelcomePick(profile.id,shrineClock().day,residentHospitality.welcomes[profile.id]);
+   if(welcome){residentHospitality.welcomes[profile.id]=welcome.row;residentHospitalitySave();line=tr(...welcome.pair)+'\n\n'+line}
+   else if(pending.visits>1&&pending.visits%4===0&&['grandma','boba'].includes(profile.id))line=residentHospitalityWelcome(profile,pending.visits)+'\n\n'+line;
  }
  if(profile&&chosen&&typeof line==='string'&&!line.startsWith('Hi '+chosen+'!')&&!line.startsWith(chosen+'，')){
   const already=room?residentWelcomeSpoken.has(profile.id):(now-(residentOutdoorWelcome.get(profile.id)||0)<300000);
@@ -4242,9 +4312,9 @@ function pawTownFront(){
   const front=element('section','',q,'pawTownFront');
   const photo=element('figure','',front,'pawTownFrontPhoto'),im=element('img','',photo);im.src=pawTownPavilionPath;im.alt='';
   const hotspot=(id,en,cn,x,y,fn)=>{const btn=b(photo,tr(en,cn),fn||(()=>pawOpenTownSpace(id)));btn.className='pawTownHotspot';btn.style.left=x+'%';btn.style.top=y+'%';return btn};
-  hotspot('board','Noticeboard','留言墙',24,48);
-  hotspot('lounge','Tea chat','茶馆闲聊',25,70);
-  hotspot('celebrate','Good things','小确幸',76,56);
+  hotspot('board','Noticeboard','留言墙',20,36);
+  hotspot('lounge','Tea chat','茶馆闲聊',22,51);
+  hotspot('gratitude','Little Joys','小确幸',84,45);
   const more=element('section','',front,'pawTownSection pawHallExtras');
   if(communityURL()){pawTownLink(more,'public','Traveller lobby','旅人聊天室','Chat with real visitors.','和真实旅人聊聊天。');pawTownLink(more,'stroll','Meet travellers','结伴散步','Join a shared walk.','结伴散步。')}
   const paper=b(more,tr('Town paper & private notes','小镇日报与私密留言'),()=>todayScoopBefore.call($('dockScoop')));paper.className='pawTownTextLink';
@@ -4435,7 +4505,7 @@ achievementBook=function(...args){
  for(const h of q.querySelectorAll('h2'))if(h.textContent===tr('Other little milestones','其他小小里程碑'))h.remove();
  return result
 };
-const pawDiaryOpen=new Set(['fortune']);
+const pawDiaryOpen=new Set(['tasks']);
 function pawDiaryFold(q,node,key,title,subtitle=''){
  if(!node)return null;
  const fold=element('details','',q,'pawDiaryFold');node.before(fold);
@@ -4455,6 +4525,13 @@ todayHub=function(...args){
  pawDiaryFold(q,gratitude,'gratitude',tr('One good thing','今日小确幸'),day.keys.includes('gratitude')?tr('Saved today','今日已记录'):tr('Optional private reflection','随心记录，仅自己可见'));
  const calendar=q.querySelector('.townCalendarLink'),occasion=q.querySelector('.townOccasion');
  if(calendar)calendar.remove();if(occasion)occasion.remove();
+ const lunar=element('section','',q,'pawDiaryLunar');
+ const info=lunarInfo(),fmt=new Intl.DateTimeFormat(zh?'zh-SG':'en-SG',{dateStyle:'full',timeZone:'Asia/Singapore'});
+ element('small',fmt.format(new Date()),lunar);
+ element('strong',info?tr(info.labelEn,info.labelZh):tr('Calendar unavailable','农历暂不可用'),lunar);
+ for(let i=1;i<=32;i++){const date=new Date(Date.now()+i*864e5),v=lunarInfo(date);if(v&&(v.d===1||v.d===15)){element('p',tr('Next observance: ','下一次初一或十五：')+fmt.format(date)+' · '+tr(v.labelEn,v.labelZh),lunar);break}}
+ element('small',tr('Traditional observances are optional.','传统习俗，自愿参与。'),lunar);
+ pawDiaryFold(q,lunar,'calendar',tr('Lunar calendar','农历日历'));
  q.querySelector('.travellerMoodBook')?.remove();
  journalLanguage(todayHub);return result
 };
@@ -4578,6 +4655,7 @@ const pawTownFinalBefore=townChatPage;
 communityTabs=function(q){
  const tabs=element('nav','',q,'communityTabs pawTownNotebookTabs');tabs.setAttribute('aria-label',tr('Community spaces','社区空间'));
  for(const [key,en,cn] of [['board','Noticeboard','留言墙'],['lounge','Tea table','茶桌闲聊'],['public','Travellers','旅人聊天室'],['gratitude','Little Joys','小确幸墙']]){
+  if(key==='public'&&!communityURL()&&!['public','stroll'].includes(communityTab))continue;
   const btn=b(tabs,tr(en,cn),()=>{communityTab=key;townChatPage()});btn.setAttribute('aria-pressed',String(communityTab===key||key==='public'&&communityTab==='stroll'))
  }
 };
@@ -4647,7 +4725,7 @@ function pawVisualImage(theme,q){
 }
 function pawVisualHeader(q,theme){
  const h=q.querySelector(':scope > h1'),intro=q.querySelector(':scope > p');
- if(!h||!intro||['room','travel'].includes(theme)||q.querySelector('.pawTownFrontPhoto'))return;
+ if(!h||!intro||['room','travel'].includes(theme)||q.querySelector('.pawTownFrontPhoto,.pawDiaryFold'))return;
  const art=pawVisualImage(theme,q);
  if(!art)return;
  const header=element('header','',q,'pawIllustratedHeading');h.before(header);
@@ -6001,7 +6079,7 @@ townChatPage=function(...args){
   const notes=element('div','',wall,'pawJoyNotes');
   function render(){notes.replaceChildren();for(const n of pawJoyRead().slice().reverse()){const a=element('article','',notes,'pawJoyNote');element('strong',tr('My note','我的便签'),a);element('small',n.day,a);element('p',n.text,a)}for(const [name,copy] of pawJoySeeds){const a=element('article','',notes,'pawJoyNote');element('strong',tr(...name),a);element('small',tr('Town resident','小镇居民'),a);element('p',tr(...copy),a)}}
   form.onsubmit=e=>{e.preventDefault();const value=input.value.trim().slice(0,240);if(!value)return;save(pawJoyKey,[...pawJoyRead(),{day:day(),text:value}].slice(-30));input.value='';render();status.textContent=tr('Pinned privately.','已贴上私人便签。')};
-  b(wall,tr('Share a good thing with travellers','与旅人分享一件好事'),()=>goodCompanyPublic());render()
+  if(communityURL())b(wall,tr('Share a good thing with travellers','与旅人分享一件好事'),()=>goodCompanyPublic());render()
  });journalLanguage(townChatPage)
 };
 /* Readable editorial type, shared by both languages; no external font download. */
@@ -6440,6 +6518,8 @@ function pawVisitorPauseTimers(roster,elapsed){
 }
 /* PAW_VISITOR_LIFECYCLE_END */
 function pawRoomWalkers(){
+ // Private consultations retain only the traveller and resident host.
+ if(room==='destiny'||room==='tarot')return [];
  const spec=pawRoomVisitorSpecs[room];if(!spec||activity)return [];
  const context=scene+'|'+room+'|'+avatar;
  if(!indoorReady()){if(context===pawVisitorContext)pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,t-pawVisitorAt));pawVisitorAt=t;return context===pawVisitorContext?pawVisitorHold(pawLocalVisitors):[]}
@@ -6997,8 +7077,11 @@ function pawTarotPick(pool,chosen,index,count){
  return [...chosen,index]
 }
 function pawTarotChoiceSlots(portrait){
- const cols=portrait?4:6,rows=12/cols,w=portrait?77:68,h=portrait?111:105,dx=portrait?91:80,dy=portrait?126:125;
- return Array.from({length:cols*rows},(_,i)=>({x:400+(i%cols-(cols-1)/2)*dx,y:portrait?388+Math.floor(i/cols)*dy:420+Math.floor(i/cols)*dy,w,h}))
+ const cols=portrait?4:6,w=portrait?85:88,h=portrait?110:118,dx=portrait?76:72,dy=portrait?122:132;
+ return Array.from({length:12},(_,i)=>{
+  const u=(i%cols-(cols-1)/2)/((cols-1)/2);
+  return {x:400+u*(cols-1)/2*dx,y:(portrait?383:408)+Math.floor(i/cols)*dy+20*u*u,w,h,angle:u*.16,hitW:dx-4}
+ })
 }
 function pawTarotFrameMatches(q,frame,portrait){
  return !!(q&&frame&&q.readStage==='choose'&&q.pawCardPool===frame.pool&&q.pawChoiceFrame===frame&&frame.portrait===portrait)
@@ -7008,37 +7091,50 @@ function pawTarotFrameMatches(q,frame,portrait){
 function pawTarotFanPose(slot,index,age,reduced=false){
  if(!slot||!Number.isInteger(index)||index<0||index>=12||![slot.x,slot.y,slot.w,slot.h,age].every(Number.isFinite))return null;
  const p=reduced?1:Math.max(0,Math.min(1,(age-index*.038)/.32)),e=p*p*(3-2*p);
- return {x:400+(slot.x-400)*e,y:475+(slot.y-475)*e-14*Math.sin(Math.PI*p),w:92+(slot.w-92)*e,h:136+(slot.h-136)*e,angle:(index%2===0?-1:1)*.12*Math.sin(Math.PI*p),landed:p>=1,visible:reduced||age>=index*.038}
+ return {x:400+(slot.x-400)*e,y:475+(slot.y-475)*e-14*Math.sin(Math.PI*p),w:92+(slot.w-92)*e,h:136+(slot.h-136)*e,angle:(slot.angle||0)*e+(index%2===0?-1:1)*.08*Math.sin(Math.PI*p),landed:p>=1,visible:reduced||age>=index*.038}
 }
 function pawTarotFanSettled(q,now,reduced=false){
  return !!q&&q.readStage==='choose'&&(!q.pawFanActive||reduced||Number.isFinite(now)&&Number.isFinite(q.readAt)&&now-q.readAt>=.738)
 }
+function pawTarotWashPose(index,progress,reduced=false){
+ if(!Number.isInteger(index)||index<0||index>=12||!Number.isFinite(progress))return null;
+ const p=reduced?1:Math.max(0,Math.min(1,progress)),spread=p===0||p===1?0:Math.sin(Math.PI*p)**.85;
+ const side=index<6?-1:1,phase=(index%6)*Math.PI/3+side*p*2*Math.PI,rad=38+(index%3)*15;
+ return {x:400+(index-5.5)*1.8+spread*(side*55+rad*Math.cos(phase)),y:475-index*1.2+spread*rad*.68*Math.sin(phase),w:92,h:136,angle:spread*(side*.38+.32*Math.sin(phase)),visible:true}
+}
+function pawTarotWashComplete(q,now,reduced=false,blocked=false){
+ return !!q&&q.readStage==='shuffle'&&!blocked&&Number.isFinite(now)&&Number.isFinite(q.readAt)&&(reduced||now-q.readAt>=1.45)
+}
+function pawTarotTrayPose(slot,rank,count,portrait,progress){
+ const p=Math.max(0,Math.min(1,progress)),e=p*p*(3-2*p),x=400+(rank-(count-1)/2)*(portrait?43:55),y=portrait?713:645;
+ return {x:slot.x+(x-slot.x)*e,y:slot.y+(y-slot.y)*e,w:slot.w+(43-slot.w)*e,h:slot.h+(61-slot.h)*e,angle:(slot.angle||0)*(1-e)}
+}
+function pawTarotFinishSelection(q,count,now,reduced=false){
+ if(q.readStage!=='choose'||q.pawSelectedCards?.length!==count||!Number.isFinite(q.pawPickFinishAt)||!reduced&&now-q.pawPickFinishAt<.24)return false;
+ q.readCards=q.pawSelectedCards.map(i=>q.pawCardPool[i]);q.readFlip=Array(count).fill(-1);q.readStage='cards';q.readAt=now;q.readSaved=false;q.pawPickFinishAt=null;return true
+}
 /* PAW_TAROT_FAN_END */
 
-function pawOpenCardChoice(){
+function pawOpenCardChoice(washFirst=false){
  if(!['tarot','love'].includes(activity))return false;
  state.pawCardPool=pawTarotPool(tarotDeck.length);state.pawChoiceFrame=null;state.pawSelectedCards=[];state.readCards=[];state.readFlip=[];state.readSaved=false;
- state.readStage='choose';state.readAt=t;state.pawFanActive=true;state.readShuffle=Math.max(1,state.readShuffle||0);
+ state.readStage='choose';state.readAt=t+(washFirst&&!residentReducedMotion.matches?1.45:0);state.pawFanActive=true;state.pawPickedAt={};state.pawPickFinishAt=null;pawTarotKeyboard.delete(state);state.readShuffle=Math.max(1,state.readShuffle||0);
  const n=activity==='tarot'?1:state.readSpreadSize===5?5:3;
- hint(tr('Choose '+n+' '+(n===1?'card':'cards')+' that draw your attention.','凭直觉选 '+n+' 张牌。'),tr('Choose '+n+' cards.','凭直觉选 '+n+' 张牌。'));
+ hint('When the cards settle, choose '+n+' '+(n===1?'card':'cards')+' that draw your attention.','等牌铺好，再凭直觉选 '+n+' 张。');
  return true
 }
 function pawSelectTarotCard(index,frame=state.pawChoiceFrame){
  if(!['tarot','love'].includes(activity)||talkOpen||transitioning||document.hidden||!proposal.hidden||$('page').style.display==='block'||!pawTarotFrameMatches(state,frame,W<H)||!pawTarotFanSettled(state,t,residentReducedMotion.matches))return false;
  const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,chosen=pawTarotPick(state.pawCardPool,state.pawSelectedCards,index,count);
  if(!chosen)return false;
- state.pawSelectedCards=chosen;physicalFx('paper',.65);
- if(chosen.length===count){
-  state.readCards=chosen.map(i=>state.pawCardPool[i]);state.readFlip=Array(count).fill(-1);
-  state.readStage='cards';state.readAt=t;state.readSaved=false;
-  hint("Turn your chosen cards over. The universe has terrible handwriting, so we'll read them together.","翻开亲自选的牌吧。宇宙的字写得不太好，我们一起慢慢看。")
- }
+ state.pawSelectedCards=chosen;state.pawPickedAt??={};state.pawPickedAt[index]=t;physicalFx('paper',.65);
+ if(chosen.length===count)state.pawPickFinishAt=t;
  return true
 }
 const pawSelectStartBefore=start;
 start=function(id,...args){
  const result=pawSelectStartBefore(id,...args);
- if(id==='tarot'&&activity==='tarot'){state.tarotTone='gentle';pawOpenCardChoice()}
+ if(id==='tarot'&&activity==='tarot'){state.tarotTone='gentle';pawOpenCardChoice(true)}
  return result
 };
 const pawSelectDealBefore=readingDeal;
@@ -7048,7 +7144,18 @@ readingDeal=function(){
 };
 const pawSelectDrawBefore=drawActivity;
 drawActivity=function(...args){
- if(!['tarot','love'].includes(activity)||state.readStage!=='choose')return pawSelectDrawBefore(...args);
+ if(!['tarot','love'].includes(activity))return pawSelectDrawBefore(...args);
+ if(state.readStage==='shuffle'){
+  const age=Math.max(0,t-state.readAt),reduced=residentReducedMotion.matches;
+  ctx.save();try{
+   paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);table();
+   for(let i=0;i<12;i++){const q=pawTarotWashPose(i,age/1.45,reduced);ctx.save();try{ctx.translate(q.x,q.y);ctx.rotate(q.angle);card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}}
+   activityFitText(tr('Mixing the cards…','正在洗牌……'),400,600,20,340,'#fff0d2');
+  }finally{ctx.restore()}
+  if(pawTarotWashComplete(state,t,reduced,pawArcadeInputBlocked()))pawOpenCardChoice(false);
+  return
+ }
+ if(state.readStage!=='choose')return pawSelectDrawBefore(...args);
  const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,portrait=W<H,slots=pawTarotChoiceSlots(portrait),chosen=state.pawSelectedCards||[];
  // Keep the displayed pool identity stable across ordinary frames; invalidate
  // old hit callbacks if the deck is reshuffled or the viewport rotates.
@@ -7058,21 +7165,25 @@ drawActivity=function(...args){
   paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);
   table();
   // The deck fans out on the same mat; no card identity is assigned before selection.
-  const reduced=residentReducedMotion.matches,settled=pawTarotFanSettled(state,t,reduced),age=Math.max(0,t-state.readAt);
+  const reduced=residentReducedMotion.matches,settled=pawTarotFanSettled(state,t,reduced),age=t-state.readAt;
+  if(age<0&&!reduced){
+   for(let i=0;i<12;i++){const q=pawTarotWashPose(i,(age+1.45)/1.45);ctx.save();try{ctx.translate(q.x,q.y);ctx.rotate(q.angle);card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}}
+   activityFitText(tr('Mixing the cards…','正在洗牌……'),400,W<H?307:341,22,430,'#f6e6c8');return
+  }
   if(!settled){const remaining=slots.filter((q,i)=>!pawTarotFanPose(q,i,age,reduced).visible).length;for(let j=0;j<remaining;j++)card(354+j*.7,407-j*.65,92,136,false)}
   for(const [i,q] of slots.entries()){
-   const pose=settled?{...q,angle:0,visible:true}:pawTarotFanPose(q,i,age,reduced);
-   if(!pose.visible)continue;
-   if(!settled){ctx.save();try{ctx.translate(pose.x,pose.y);ctx.rotate(pose.angle);card(-pose.w/2,-pose.h/2,pose.w,pose.h,false)}finally{ctx.restore()}continue}
-   const picked=chosen.includes(i);
-   ctx.save();ctx.globalAlpha=picked?.34:1;
-   if(picked){round(q.x-q.w/2,q.y-q.h/2,q.w,q.h,5,'#342a45','#bda16c');txt(String(chosen.indexOf(i)+1),q.x,q.y,27,'#eedcb2')}
-   else{ctx.shadowColor='#1b152e65';ctx.shadowBlur=4;ctx.shadowOffsetY=3;card(q.x-q.w/2,q.y-q.h/2,q.w,q.h,false)}
-   ctx.restore();
-   if(!picked)target(q.x-q.w/2-3,q.y-q.h/2-3,q.w+6,q.h+6,()=>pawSelectTarotCard(i,frame),'paw-pick-card-'+i)
+   const pose=settled?{...q,visible:true}:pawTarotFanPose(q,i,age,reduced);
+   if(!pose.visible||settled&&chosen.includes(i))continue;
+   ctx.save();try{ctx.translate(pose.x,pose.y);ctx.rotate(pose.angle);ctx.shadowColor='#1b152e65';ctx.shadowBlur=4;ctx.shadowOffsetY=3;card(-pose.w/2,-pose.h/2,pose.w,pose.h,false)}finally{ctx.restore()}
+   if(settled&&chosen.length<count&&!pawArcadeInputBlocked())target(q.x-q.hitW/2,q.y-q.h/2,q.hitW,q.h,()=>pawSelectTarotCard(i,frame),'paw-pick-card-'+i)
+  }
+  if(settled)for(const [rank,i] of chosen.entries()){
+   const q=pawTarotTrayPose(slots[i],rank,count,portrait,reduced?1:(t-(state.pawPickedAt?.[i]??t))/.24);
+   ctx.save();try{ctx.translate(q.x,q.y);ctx.rotate(q.angle);card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}
   }
   activityFitText(settled?tr('Choose '+count+' '+(count===1?'card':'cards')+' · '+chosen.length+'/'+count,'选 '+count+' 张牌 · '+chosen.length+'/'+count):tr('Laying out the cards…','正在铺牌……'),400,W<H?307:341,22,430,'#f6e6c8');
-  if(settled&&!chosen.length)label(tr('Shuffle again','重新洗牌'),400,W<H?745:655,()=>{if(!pawTarotFrameMatches(state,frame,W<H)||pawArcadeInputBlocked())return;pawOpenCardChoice();physicalFx('paper',.6)})
+  if(settled&&!pawArcadeInputBlocked()&&pawTarotFinishSelection(state,count,t,reduced))hint("Let's turn them over, one at a time.","我们一张一张翻开吧。");
+  if(settled&&!chosen.length)label(tr('Shuffle again','重新洗牌'),400,W<H?745:655,()=>{if(!pawTarotFrameMatches(state,frame,W<H)||pawArcadeInputBlocked())return;pawOpenCardChoice(true);physicalFx('paper',.6)})
  }finally{ctx.restore()}
 };
 const pawSelectCameraBefore=mobileRoomCamera;
@@ -7909,7 +8020,17 @@ pawFictionEdition=function(now,weather=''){
  return entries
 };
 const pawTopicBoardBefore=townChatPage;
-townChatPage=function(...args){if(communityTab==='board')pawRefreshTopicFeed();return pawTopicBoardBefore(...args)};
+townChatPage=function(...args){
+ if(communityTab==='board')pawRefreshTopicFeed();
+ const result=pawTopicBoardBefore(...args),q=$('content');
+ // The board and private gratitude renderers bypass the earlier hall wrapper.
+ // Restore the entrance context after ALL community page renderers.
+ if(pawTownFromDock&&q.querySelector('.communityTabs')){
+  const back=q.querySelector(':scope > .row button:first-child');
+  if(back){back.textContent=tr('‹ Town Hall','‹ 小镇广场');back.onclick=pawTownFront}
+ }
+ return result
+};
 if(typeof requestIdleCallback==='function')requestIdleCallback(pawRefreshTopicFeed,{timeout:3500});else setTimeout(pawRefreshTopicFeed,1800);
 
 /* PAW_GUEST_PERSONALITY_BEGIN */
@@ -8715,7 +8836,7 @@ renderChartConsultation=function(out,z){
   const selected=section.querySelector('.chartTopics button[data-topic][aria-pressed="true"]');
   if(!selected)return;
   const topic=Number(selected.dataset.topic),data=pawZwdsTopicSnapshot(z,topic);
-  if(data)openMeowShare(data,()=>{destinyPage(false,topic)})
+  if(data)pawYueShareFromChart(data,topic,section)
  });
  btn.className='pawZwdsShareButton';
  element('small',tr('Only this palace’s main stars and reflection are included. Birth details and the full chart stay private.','仅分享此宫位主星与反思小记，不包含生辰、出生地或完整命盘。'),section,'pawZwdsShareNote');
@@ -8919,7 +9040,10 @@ function pawPrepareRecoveredShare(format,data){
 }
 function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
  const key=pawRecoveredLayoutKey(data,format);if(!key)return false;
- const slots=pawRecoveredLayouts[key],overlay=pawRecoveredImage('templates/'+key+'.svg');
+ const nativeSlots=pawRecoveredLayouts[key],overlay=pawRecoveredImage('templates/'+key+'.svg');
+ const scale=(box.width-box.left-box.right)/(box.width-168);
+ const mapRect=([x,y,w,h])=>[box.left+(x-84)*scale,y,w*scale,h];
+ const slots=Object.fromEntries(Object.entries(nativeSlots).map(([k,v])=>[k,Array.isArray(v[0])?v.map(mapRect):mapRect(v)]));
  if(!overlay?.complete||!overlay.naturalWidth||overlay.naturalWidth!==box.width||overlay.naturalHeight!==box.height)return false;
  const tarot=data.kind==='tarot',art=tarot?readingArtwork():pawRecoveredResultIllustration(data);
  if(!slots.score_rows&&!slots.tiles&&!slots.palace_cells&&(!art?.complete||!art.naturalWidth||!art.naturalHeight||(tarot&&(art.naturalWidth!==1024||art.naturalHeight!==2180))))return false;
@@ -8928,16 +9052,17 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
  const ink='#4d3a2c',accent='#795741',muted='#54684e';
  g.drawImage(paper,0,0,box.width,box.height);
  // Compress only the overlay and its coordinate system for social story safe margins.
- const scale=(box.width-box.left-box.right)/(box.width-168);
- g.save();g.translate(box.left,0);g.scale(scale,1);g.translate(-84,0);g.drawImage(overlay,0,0,box.width,box.height);
+ g.save();g.translate(box.left,0);g.scale(scale,1);g.translate(-84,0);g.drawImage(overlay,0,0,box.width,box.height);g.restore();
  function textIn(rect,values,initial=36,weight='normal',color=ink){
   const [x,y,w,h]=rect,pad=Math.min(16,h*.1),maxW=w-2*pad,maxH=h-2*pad;
   const v=values.filter(v=>typeof v==='string'&&v.trim());if(!v.length)return;
   let size=initial,rows=[],lh,total;
   for(;size>=16;size-=2){g.font=weight+' '+size+'px '+font;rows=v.flatMap(q=>shareTextLines(g,q,maxW));lh=size*1.22;total=rows.length*lh;if(total<=maxH||size<=17)break}
-  const shrink=Math.min(1,maxH/Math.max(1,total));
-  g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.translate(x+w/2,y+h/2);g.scale(1,shrink);g.font=weight+' '+size+'px '+font;g.textAlign='center';g.textBaseline='middle';g.fillStyle=color;
-  rows.forEach((q,i)=>g.fillText(q,0,(i-(rows.length-1)/2)*lh,maxW));g.restore()
+  const capacity=Math.max(1,Math.floor(maxH/lh));
+  g.font=weight+' '+size+'px '+font;
+  if(rows.length>capacity){rows=rows.slice(0,capacity);let last=rows.at(-1);while(last&&g.measureText(last+'…').width>maxW)last=Array.from(last).slice(0,-1).join('');rows[rows.length-1]=last+'…'}
+  g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.translate(x+w/2,y+h/2);g.textAlign='center';g.textBaseline='middle';g.fillStyle=color;
+  rows.forEach((q,i)=>g.fillText(q,0,(i-(rows.length-1)/2)*lh));g.restore()
  }
  textIn(slots.title,[locale(data.title)],format==='square'?38:46,'bold');
  if(tarot){
@@ -8954,7 +9079,8 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
    textIn([x,y,w,head],[locale(p.name)],22,'bold',muted);
    textIn([x,y+head,w,h-head],p.stars.length?p.stars.map(locale):[cn?'无主星':'No main star'],20,'normal',ink)
   });
-  textIn(slots.chart_summary,[cn?'十四主星':'14 main stars',cn?'传统文化小记':'Traditional symbolism',cn?'仅供反思':'For reflection'],30,'normal',accent)
+  textIn(slots.chart_summary,[cn?'十四主星':'14 main stars',cn?'传统文化小记':'Traditional symbolism',cn?'仅供反思':'For reflection'],30,'normal',accent);
+  if(slots.reading)textIn(slots.reading,[cn?'不含姓名及出生资料':'Name and birth details omitted'],28,'normal',muted);
  }else if(slots.tiles){
   slots.tiles.forEach((rect,i)=>{const [x,y,w,h]=rect,r=data.scoreRows[i];
    textIn([x+10,y+5,w-20,h*.47],[locale(r.label)],30,'bold',muted);
@@ -8973,7 +9099,7 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
   textIn(slots.summary,lines,format==='square'?30:36)
  }
  textIn(slots.footer,[(cn?'摸鱼小镇':'Pawradise')+' · '+(cn?'趣味探索，仅供反思':'For fun and reflection')],27,'normal',muted);
- g.restore();return true
+ return true
 }
 /* Share only the computed result, never individual answers or private input. */
 /* PAW_EXTRA_DISCOVERY_BEGIN */
@@ -9181,7 +9307,7 @@ renderChartConsultation=function(out,z){
  element('summary',tr('Optional: share all twelve palaces','可选：分享完整十二宫'),details);
  element('p',tr('The card contains your main-star placements. It omits name, birth date, time and location, but placements can still reveal clues about birth information. Only share if comfortable.','卡片包含你的主星分布，不含姓名、出生日期、时间及地点，但星曜分布仍可能透露部分生辰线索。请自行决定是否分享。'),details);
  b(details,tr('Preview twelve-palace card','预览十二宫纪念卡'),()=>{
-  if(yueSubject!=='self'||!details.isConnected)return;const data=pawChartShareSnapshot(z);if(data)openMeowShare(data,()=>destinyPage(false))
+  if(yueSubject!=='self'||!details.isConnected)return;const data=pawChartShareSnapshot(z);if(data)pawYueShareFromChart(data,null,section)
  });
  return result
 };
@@ -9252,7 +9378,13 @@ shareCardArt=function(cv,data,format,cn){
  }else{
   const quote=locale(data.kind==='zwds'?data.takeaway:socialResultQuote(data));
   const all=[quote,...data.lines.map(locale)].filter((v,i,a)=>v&&a.indexOf(v)===i);
-  block(all,y+Math.min(30,Math.max(0,(footer-y)/12)),Math.max(60,footer-y-30),format==='square'?34:42,'normal',ink)
+  if(data.kind==='zwds'){
+   const available=Math.max(60,footer-y-30),size=format==='square'?36:format==='story'?50:44;
+   g.font='normal '+size+'px '+font;
+   const estimated=all.reduce((n,v)=>n+shareTextLines(g,v,usable-44).length*size*1.26,0)+Math.max(0,all.length-1)*size*.38;
+   const start=y+Math.max(12,(available-Math.min(available,estimated))*.43);
+   block(all,start,Math.max(40,footer-start-20),size,'normal',ink);
+  }else block(all,y+Math.min(30,Math.max(0,(footer-y)/12)),Math.max(60,footer-y-30),format==='square'?34:42,'normal',ink)
  }
  g.strokeStyle='#a99772';g.lineWidth=2;g.beginPath();g.moveTo(left+28,footer);g.lineTo(w-right-28,footer);g.stroke();
  line(cn?'趣味探索 · 仅供反思':'For fun and reflection · Pawradise',footer+24,23,'normal',muted);
@@ -9575,6 +9707,14 @@ function pawIncensePickup(hand,pick,age){
  const f=Math.max(0,Math.min(1,age<.32?age/.32:(.72-age)/.40)),v=f*f*(3-2*f);
  return {x:hand.x+(pick.x-hand.x)*v,y:hand.y+(pick.y-hand.y)*v}
 }
+// Hold the actual lit tip at the painted flame through the ignition window.
+function pawIncenseLighting(hand,flame,age){
+ const ease=v=>{v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)};
+ const reach=age<.65?ease(age/.65):age<=1.05?1:ease((1.65-age)/.6);
+ const angle=1.05*reach,length=39;
+ const contact={x:flame.x-Math.sin(angle)*length,y:flame.y+Math.cos(angle)*length};
+ return {angle,reach,grip:{x:hand.x+(contact.x-hand.x)*reach,y:hand.y+(contact.y-hand.y)*reach}};
+}
 /* PAW_TEMPLE_OWNER_CONTACT_END */
 function pawDrawIncenseSupply(supply){
  const {rack,remaining}=supply,x=rack.x,y=rack.y;
@@ -9616,11 +9756,10 @@ function pawPrayerStep(){
   else if(stage==='returnMat'){foot=pawIncenseReturnFoot(p,age);dir=age<.75?'down':'left'}
   const sc=pawTempleContactScale(cam.scale,1.55),hand={x:foot.x+(dir==='left'?-15:dir==='up'?9:17)*sc,y:foot.y-48*sc+q.bow*9};
   // The right-side incense supply is separate from the red fortune tube on the left.
-  const reach=stage==='taking'?Math.sin(Math.PI*Math.min(1,age/.72)):stage==='lighting'?Math.sin(Math.PI*Math.min(1,age/1.65)):0;
-  const reaching=stage==='taking',flame=supply.flame,pick=reaching?pawIncensePickup(hand,supply.pick,age):null;
-  const lightAngle=stage==='lighting'?1.05*reach:0;
-  const lightGrip={x:flame.x-Math.sin(lightAngle)*39,y:flame.y+Math.cos(lightAngle)*39};
-  const grip=stage==='placing'?blend(hand,burner,poseEase(Math.max(0,Math.min(1,(age-1.25)/.65)))):stage==='lighting'?blend(hand,lightGrip,reach):hand;
+  const reaching=stage==='taking',pick=reaching?pawIncensePickup(hand,supply.pick,age):null;
+  const lighting=stage==='lighting'?pawIncenseLighting(hand,supply.flame,age):{angle:0,grip:hand};
+  const lightAngle=lighting.angle;
+  const grip=stage==='placing'?blend(hand,burner,poseEase(Math.max(0,Math.min(1,(age-1.25)/.65)))):lighting.grip;
   const placed=!!state.prayerOffered||stage==='placing'&&age>=1.98;
   const shown=placed||['returnMat','complete'].includes(stage)?0:Math.min(3,held);
   // The empty supply stays on the counter throughout the ritual.
@@ -9840,7 +9979,6 @@ document.addEventListener('keydown',event=>{
    while on the board, and focus-safe refresh. Fictional posts stay separate. */
 let pawNoticeDisclosureSerial=0;
 const pawNoticeExpanded=new Set();
-let pawNoticeShown=6;
 function pawNoticeReplyState(button,panel,expanded){
  button.setAttribute('aria-expanded',String(expanded));
  panel.hidden=!expanded;
@@ -9849,19 +9987,19 @@ function pawNoticeReplyState(button,panel,expanded){
 renderResidentNoticeboard=function(q){
  const wrap=element('section','',q,'townWall');
  element('h2',tr('Overheard in town','摸鱼留言墙'),wrap,'board-heading');
- element('p',tr('New town notices arrive over time. Old favourites stay in the archive.','小镇见闻陆续更新，旧瓜也能慢慢翻。'),wrap,'wallIntro');
+ element('p',tr('Ten little notes from around town. Come back tomorrow for a new selection.','每天十条小镇见闻，明天再来看看新鲜事。'),wrap,'wallIntro');
  element('p',tr(...pawWeekNote()),wrap,'pawWeeklyNotice');
  element('small',tr('Notes from around town. The shared square is a separate public space.','来自小镇的留言。共享广场是另一个公共空间。'),wrap,'wallDisclosure');
- const publicBtn=b(wrap,communityURL()?tr('Read or leave a real visitor post','看看真人留言 / 留句话'):tr('Shared square · not open yet','共享广场 · 尚未开放'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink';
+ if(communityURL()){const publicBtn=b(wrap,tr('Read or leave a real visitor post','看看真人留言 / 留句话'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink'}
  const list=element('div','',wrap,'townPostList'),nav=element('div','',wrap,'townPostNav');
- let shown=pawNoticeShown,lastCount=-1,lastSignature='',lastIds=new Set();
+ let lastSignature='';
  function render(){
   const focused=document.activeElement?.closest?.('.wallReplyToggle');
   const focusId=focused&&list.contains(focused)?focused.closest('.wallReplies')?.dataset.noticeId:null;
-  const moreFocused=nav.contains(document.activeElement),top=$('page').scrollTop;
-  const entries=townPublishedNotices();lastCount=entries.length;lastSignature=entries.map(v=>v.id).join('|');lastIds=new Set(entries.map(v=>v.id));for(const id of pawNoticeExpanded)if(!lastIds.has(id))pawNoticeExpanded.delete(id);
+  const top=$('page').scrollTop;
+  const entries=pawDailyTownNotices();lastSignature=entries.map(v=>v.id).join('|');const ids=new Set(entries.map(v=>v.id));for(const id of pawNoticeExpanded)if(!ids.has(id))pawNoticeExpanded.delete(id);
   list.replaceChildren();nav.replaceChildren();let restore=null;
-  for(const {thread:m,date,id} of entries.slice(0,shown)){
+  for(const {thread:m,date,id} of entries){
    const post=element('article','',list,'townResidentNote');post.dataset.noticeId=id;
    element('strong',tr(...m[0]),post);
    if(date)element('small',new Date(date).toLocaleDateString(zh?'zh-CN':'en-SG',{month:'short',day:'numeric',timeZone:'Asia/Singapore'}),post,'townNoticeDate');
@@ -9880,16 +10018,15 @@ renderResidentNoticeboard=function(q){
    });
    if(id===focusId)restore=toggle;
   }
-  element('span',Math.min(shown,entries.length)+' / '+entries.length+' '+tr('notices','条见闻'),nav);
-  const more=b(nav,tr('Read older notices','翻翻以前的留言'),()=>{shown=pawNoticeShown=pawNoticePageSize(shown,entries.length,6);render()});more.type='button';more.disabled=shown>=entries.length;
-  if(restore)restore.focus({preventScroll:true});else if(moreFocused&&!more.disabled)more.focus({preventScroll:true});
+  element('span',entries.length+' '+tr('notices today','条今日留言'),nav);
+  if(restore)restore.focus({preventScroll:true});
   $('page').scrollTop=top;
  }
  render();
  const timer=setInterval(()=>{
   if(!wrap.isConnected||$('page').style.display!=='block'){clearInterval(timer);return}
-  const next=townPublishedNotices(),n=next.length;
-  if(n!==lastCount||next.map(v=>v.id).join('|')!==lastSignature){shown=pawNoticeShown=pawNoticePageSize(shown,n,next.filter(v=>!lastIds.has(v.id)).length);render()}
+  const next=pawDailyTownNotices();
+  if(next.map(v=>v.id).join('|')!==lastSignature)render()
  },60000)
 };
 const pawNoticeDisclosureStyle=document.createElement('style');
@@ -10200,11 +10337,15 @@ function pawTarotClock(q,now,blocked){
  if(prior&&now>=prior.now&&(blocked||prior.blocked)){
   const gap=now-prior.now;
   if(prior.stage===q.readStage&&prior.start===q.readAt&&Number.isFinite(q.readAt))q.readAt+=gap;
+  if(q.readStage==='choose'&&prior.stage==='choose'){
+   if(Number.isFinite(q.pawPickFinishAt)&&prior.finish===q.pawPickFinishAt)q.pawPickFinishAt+=gap;
+   for(const [i,at] of Object.entries(q.pawPickedAt||{}))if(Number.isFinite(at)&&prior.picks?.[i]===at&&prior.now-at<.24)q.pawPickedAt[i]+=gap
+  }
   if(flips&&prior.flips===flips)for(let i=0;i<flips.length;i++){
    if(Number.isFinite(flips[i])&&flips[i]>=0&&flips[i]===prior.values[i]&&prior.now-flips[i]<.73)flips[i]+=gap
   }
  }
- q.pawReadClock={now,blocked:!!blocked,stage:q.readStage,start:q.readAt,flips,values:flips?flips.slice():[]};return true
+ q.pawReadClock={now,blocked:!!blocked,stage:q.readStage,start:q.readAt,finish:q.pawPickFinishAt,picks:{...q.pawPickedAt},flips,values:flips?flips.slice():[]};return true
 }
 function pawTarotActionAllowed(rendered,current,kind,expectedKind,stage,portrait,expectedPortrait,blocked){
  return !blocked&&pawTarotActive(current,kind)&&rendered===current&&kind===expectedKind&&current.readStage===stage&&portrait===expectedPortrait
@@ -11820,7 +11961,28 @@ const pawWaterPlate={x:100,y:-145,w:600,h:600*1635/962};
 function pawWaterGeometry(p=pawWaterPlate){
  const point=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
  return {foot:point(.46,.645),basin:point(.345,.51),palm:point(.426,.565),
-  rest:point(.44,.55),scoop:point(.345+.038,.51),pour:point(.426+.038,.545),rack:point(.475,.535)}
+  rest:point(.39,.55),scoop:point(.345+.038,.51),pour:point(.426+.038,.545),rack:point(.475,.535)}
+}
+// Match the effective ladle material's source coordinates and mirrored
+// canvas transform. The grip and water outlet travel with the actual prop.
+function pawWaterLadlePoint(at,angle,x,y){
+ const c=Math.cos(angle),sn=Math.sin(angle);
+ return {x:at.x-.65*(x*c-y*sn),y:at.y+.65*(x*sn+y*c)}
+}
+function pawWaterActorScale(){return 2.18}
+function pawWaterShoulder(g,sc){return {x:g.foot.x-8*sc,y:g.foot.y-52*sc}}
+function pawWaterReach(at,g,sc){
+ if(!Number.isFinite(at?.x)||!Number.isFinite(at?.y))return at;
+ const shoulder=pawWaterShoulder(g,sc),grip=pawWaterLadlePoint(at,0,-25,1);
+ const dx=grip.x-shoulder.x,dy=grip.y-shoulder.y,dist=Math.hypot(dx,dy),limit=42*sc;
+ if(dist<=limit)return at;
+ const f=limit/dist;
+ return {x:at.x+dx*(f-1),y:at.y+dy*(f-1)}
+}
+function pawWaterDragCentre(at,g,sc){
+ if(!Number.isFinite(at?.x)||!Number.isFinite(at?.y))return at;
+ const p=pawWaterPlate;
+ return pawWaterReach({x:Math.max(p.x+p.w*.29,Math.min(p.x+p.w*.54,at.x)),y:Math.max(p.y+p.h*.49,Math.min(p.y+p.h*.60,at.y))},g,sc)
 }
 function pawWaterDestination(stage,g){
  return stage===0?g.scoop:stage===1?g.pour:null
@@ -11869,7 +12031,7 @@ mobileRoomCamera=function(...args){return pawWaterPaintingActive()?pawWaterCamer
 const pawWaterReleaseBefore=templeReleaseWater;
 templeReleaseWater=function(a,gesture,...args){
  if(!pawWaterPaintingActive())return pawWaterReleaseBefore(a,gesture,...args);
- const run=state,stage=run.waterStage,g=pawWaterGeometry();a=pawWaterGripPoint(a,gesture);
+ const run=state,stage=run.waterStage,g=pawWaterGeometry();a=pawWaterGripPoint(a,gesture);if(gesture?.id==='templeLadle')a=pawWaterDragCentre(a,g,pawWaterActorScale());
  if(pawArcadeInputBlocked()||![0,1].includes(stage))return;
  if(!pawWaterDropMatches(stage,a?.x,a?.y,g)){hint(stage===0?'Dip the ladle in the marked water.':'Move the filled ladle above your hand.',stage===0?'把竹勺放入亮起的水面。':'把盛满水的竹勺移到手掌上方。');return}
  // Retain the original action, audio, award and ownership contract.
@@ -11892,20 +12054,20 @@ function pawDrawWaterPainting(){
  ctx.fillStyle='#473e36';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawWaterArt(),p.x,p.y,p.w,p.h);
  const ready=stage===0?g.rest:stage===1?g.scoop:g.pour;
  let at=ready,angle=0;
- if(held){const grip=pawWaterGripPoint(drag,drag);at={x:Math.max(p.x+p.w*.29,Math.min(p.x+p.w*.54,grip.x)),y:Math.max(p.y+p.h*.49,Math.min(p.y+p.h*.60,grip.y))}}
+ if(held){at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,pawWaterActorScale())}
  else if(stage===1)at=pawWaterMix(run.pawWaterFrom||g.scoop,g.rest,poseEase(Math.min(1,age/.35)));
  else if(stage===2){at=pawWaterMix(run.pawWaterFrom||g.pour,g.pour,poseEase(Math.min(1,age/.35)));angle=.58*poseEase(Math.min(1,age/.4))*(1-poseEase(Math.max(0,Math.min(1,(age-1.5)/.5))))}
  else if(stage===3)at=pawWaterMix(g.pour,g.rack,poseEase(Math.min(1,age/.55)));
- const sc=pawTempleContactScale(cam.scale,1.72),shoulder={x:g.foot.x-8*sc,y:g.foot.y-52*sc},grip={x:at.x+16,y:at.y};
- // Reuse the chosen traveller, standing in front of the real basin.
+ const sc=pawWaterActorScale(),shoulder=pawWaterShoulder(g,sc),grip=pawWaterLadlePoint(at,angle,-25,1);
+ // Far arm is occluded by the traveller, not drawn across the torso.
+ if(stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.72,true);
+ if((held||stage===1||stage===2)&&Math.hypot(grip.x-shoulder.x,grip.y-shoulder.y)<=48*sc)pawIncenseArm(shoulder,grip,sc*.70,false);
  backHuman(g.foot.x,g.foot.y,avatar??0,false,'left',sc);
- if(stage===1||stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.80,true);
  if(stage!==3||age<.55){
-  ctx.save();ctx.translate(at.x,at.y);ctx.scale(-.65,.65);waterLadleArt(0,0,-angle,stage===1||stage===2&&age<1.55);ctx.restore();
-  pawIncenseArm(shoulder,grip,sc*.82,false)
+  ctx.save();ctx.translate(at.x,at.y);ctx.scale(-.65,.65);waterLadleArt(0,0,angle,stage===1||stage===2&&age<1.55);ctx.restore();
  }
  if(stage===2&&age>.15&&age<1.8){
-  const bowl={x:at.x-23*Math.cos(angle),y:at.y+23*Math.sin(angle)};
+  const bowl=pawWaterLadlePoint(at,angle,35,6);
   for(let j=0;j<10;j++){const f=(age*2.8+j/10)%1;ellipse(bowl.x+(g.palm.x-bowl.x)*f+Math.sin(j)*1.5,bowl.y+(g.palm.y-bowl.y)*f,1.2,2.9,'#e0eee4')}
   for(let j=0;j<4;j++){const f=(age*2+j*.25)%1;ellipse(g.palm.x+Math.sin(j*2)*6,g.palm.y+3+f*20,1.1,2.1,'#d7ece4')}
  }
@@ -11935,7 +12097,7 @@ function pawAlcoveGeometry(p=pawWaterPlate){
  const pt=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
  return {tube:pt(.397,.473),tubeGrip:pt(.411,.499),tubeTop:pt(.397,.426),
   stickTray:pt(.523,.509),stickFoot:pt(.41,.625),stickPickFoot:pt(.51,.625),
-  moonTray:pt(.743,.508),moonFoot:pt(.707,.64),moonHand:pt(.70,.54)}
+  moonTray:pt(.743,.508),moonFoot:pt(.56,.64),moonHand:{x:p.x+.743*p.w-13,y:p.y+.508*p.h}}
 }
 function pawAlcoveActorScale(){return 1.92}
 function pawAlcoveStickPoint(g,pose){
@@ -11944,8 +12106,36 @@ function pawAlcoveStickPoint(g,pose){
  const y=g.tubeTop.y+(g.stickTray.y-g.tubeTop.y)*f-Math.sin(Math.PI*f)*25;
  return {x:x+(g.stickPickFoot.x+14-x)*pick,y:y+(g.stickPickFoot.y-64-y)*pick,angle:Math.PI*.46*f*(1-pick)}
 }
+// Use the same physical point for the rendered stick and the reaching hand.
+function pawAlcoveStickContact(g,pose,held=false){
+ const ease=u=>{u=Math.max(0,Math.min(1,u));return u*u*(3-2*u)};
+ const scale=pawAlcoveActorScale(),move=pose.picked?ease(pose.pick/.45):0;
+ const foot={x:g.stickFoot.x+(g.stickPickFoot.x-g.stickFoot.x)*move,y:g.stickFoot.y+(g.stickPickFoot.y-g.stickFoot.y)*move};
+ const shoulder={x:foot.x+5*scale,y:foot.y-63*scale},maxReach=48*scale;
+ const target=pose.picked?(pose.pick>=.45?pawAlcoveStickPoint(g,pose):null):(held||pose.shake?g.tubeGrip:null);
+ const hand=target&&Math.hypot(target.x-shoulder.x,target.y-shoulder.y)<=maxReach?target:null;
+ return {foot,walking:move>0&&move<1,hand,shoulder,maxReach,scale};
+}
 function pawAlcoveMoonPoint(g,m){
  return {x:g.moonTray.x+(m.x-400)*.26,y:g.moonTray.y-m.lift*.32}
+}
+// Keep the complete toss envelope beside the traveller, not over the face.
+// The right sleeve reaches the nearer block only during release.
+function pawAlcoveMoonReach(g){
+ const sc=pawAlcoveActorScale();
+ return {shoulder:{x:g.moonFoot.x+5*sc,y:g.moonFoot.y-63*sc},sleeve:.72*sc,maxReach:48*sc}
+}
+function pawAlcoveMoonClearance(g,m,foot=g.moonFoot){
+ const pt=pawAlcoveMoonPoint(g,m),sc=pawAlcoveActorScale();
+ // Conservative body envelope and rotated crescent radius at .30 scale.
+ return pt.x-15-(foot.x+38*sc)
+}
+function pawAlcoveMoonContact(g,f,m){
+ if(!Number.isFinite(f)||f<0||f>.24)return null;
+ const reach=pawAlcoveMoonReach(g),pt=pawAlcoveMoonPoint(g,m);
+ const u=f<=.12?1:Math.max(0,(.24-f)/.12);
+ const hand={x:reach.shoulder.x+(pt.x-reach.shoulder.x)*u,y:reach.shoulder.y+(pt.y-reach.shoulder.y)*u};
+ return Math.hypot(hand.x-reach.shoulder.x,hand.y-reach.shoulder.y)<=reach.maxReach?hand:null
 }
 /* PAW_ALCOVE_PAINT_END */
 const pawAlcovePath='../../staging/2026-11-27/rooms/temple/sticks.webp';
@@ -11973,14 +12163,9 @@ function pawAlcoveTubeShake(shake){
 function pawDrawAlcoveSticks(){
  const run=state,g=pawAlcoveGeometry(),pose=pawTempleStickPose(run,t),held=drag?.id==='sticks';
  pawAlcoveTubeShake(held||pose.shake);
- const move=pose.picked?poseEase(Math.min(1,pose.pick/.45)):0,foot=pawWaterMix(g.stickFoot,g.stickPickFoot,move);
- const sc=pawAlcoveActorScale();
- // The whole actor is proportioned to the counter. Only expose the reaching hand during contact.
- if((held||pose.shake||pose.picked&&pose.pick<.85)&&(!pose.picked||pose.pick<.85)){
-  const shoulder={x:foot.x+8,y:foot.y-63*sc},hand=!pose.picked?g.tubeGrip:pawWaterMix(g.stickTray,{x:foot.x+14,y:foot.y-64},poseEase(Math.max(0,(pose.pick-.45)/.55)));
-  if(Math.hypot(hand.x-shoulder.x,hand.y-shoulder.y)<=38) pawIncenseArm(shoulder,hand,1.12,false)
- }
- backHuman(foot.x,foot.y,avatar??0,move>0&&move<1,'up',sc);
+ const {foot,walking,hand,shoulder,scale}=pawAlcoveStickContact(g,pose,held);
+ if(hand)pawIncenseArm(shoulder,hand,.72*scale,false);
+ backHuman(foot.x,foot.y,avatar??0,walking,'up',scale);
  if(pose.show){
   const pt=pawAlcoveStickPoint(g,pose);ctx.save();try{ctx.translate(pt.x,pt.y);ctx.rotate(pt.angle);
    round(-2.8,-17,5.6,34,1,'#d7b47c','#9c7447');line(-1,-15,-1,15,'#f1dba6',.7);
@@ -11992,8 +12177,9 @@ function pawDrawAlcoveSticks(){
 }
 function pawDrawAlcoveMoon(){
  const run=state,g=pawAlcoveGeometry(),airborne=run.tossUntil>t,f=airborne?Math.max(0,Math.min(1,1-(run.tossUntil-t)/(run.moonDuration||.55))):1;
- const sc=pawAlcoveActorScale(),shoulder={x:g.moonFoot.x-8,y:g.moonFoot.y-63*sc};
- if(airborne&&Math.hypot(g.moonHand.x-shoulder.x,g.moonHand.y-shoulder.y)<=38)pawIncenseArm(shoulder,g.moonHand,1.12,false);
+ const sc=pawAlcoveActorScale(),reach=pawAlcoveMoonReach(g);
+ const hand=airborne?pawAlcoveMoonContact(g,f,pawMoonMotion(f,0,pawMoonFlat(run.result,0,run.count),run.moonHeight||95)):null;
+ if(hand)pawIncenseArm(reach.shoulder,hand,reach.sleeve,false);
  backHuman(g.moonFoot.x,g.moonFoot.y,avatar??0,false,'up',sc);
  for(let i=0;i<2;i++){
   const flat=pawMoonFlat(run.result,i,run.count),m=pawMoonMotion(f,i,flat,run.moonHeight||95),pt=pawAlcoveMoonPoint(g,m);
@@ -12029,18 +12215,30 @@ drawActivity=function(...args){
 /* PAW_SLIP_COUNTER_BEGIN */
 function pawSlipGeometry(p=pawWaterPlate){
  const pt=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
- return {counter:pt(.235,.50),reading:pt(.50,.55),tie:pt(.605,.482),bag:pt(.50,.79),rackCenter:pt(.585,.455),
+ const counterFoot=pt(.36,.65),rackFoot=pt(.59,.60);
+ return {counter:pt(.235,.50),reading:pt(.50,.55),tie:pt(.605,.482),bag:{x:counterFoot.x+18,y:counterFoot.y-54},counterFoot,rackFoot,rackCenter:pt(.585,.455),
   rows:[.419,.453,.486].map(v=>Array.from({length:7},(_,i)=>pt(.505+i*.030,v)))}
 }
 function pawSlipPose(stage,age,g=pawSlipGeometry()){
  const ease=f=>{f=Math.max(0,Math.min(1,f));return f*f*(3-2*f)};
  const mix=(a,b,f)=>({x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f});
  const f=stage==='folded'?0:stage==='opening'?ease(age/.75):1;
- let pos=mix(g.counter,g.reading,f),w=105+f*355,h=82+f*298,alpha=1;
+ let pos=mix(g.counter,g.reading,f),w=105+f*355,h=82+f*298,alpha=1,open=f;
  if(stage==='tied'||stage==='kept'){
-  const u=ease(age/.7);pos=mix(g.reading,stage==='tied'?g.tie:g.bag,u);w*=1-.97*u;h*=1-.96*u;alpha=1-u;
+  const u=ease(age/.7);pos=mix(g.reading,stage==='tied'?g.tie:g.bag,u);w=105+355*(1-u);h=82+298*(1-u);open=1-u;alpha=1-ease((u-.78)/.22);
  }
- return {...pos,w,h,alpha,open:f}
+ return {...pos,w,h,alpha,open}
+}
+// The original counter portrait has paving in front of the left cabinet
+// and an unobstructed aisle toward the lower fortune rack.
+function pawSlipTravellerContact(stage,age,pose,g){
+ const scale=1.92,u=stage==='tied'?Math.max(0,Math.min(1,age/.7)):0,e=u*u*(3-2*u);
+ const foot={x:g.counterFoot.x+(g.rackFoot.x-g.counterFoot.x)*e,y:g.counterFoot.y+(g.rackFoot.y-g.counterFoot.y)*e};
+ const shoulder={x:foot.x+(stage==='tied'||stage==='kept'?5:-5)*scale,y:foot.y-63*scale};
+ const foldedW=Math.min(pose.w,145,Math.min(pose.h,105)*336/194);
+ const grip={x:pose.x+(stage==='kept'?-1:1)*foldedW*.42,y:pose.y};
+ const compact=pose.open<=.25&&pose.alpha>.01,reach=Math.hypot(grip.x-shoulder.x,grip.y-shoulder.y)<=48*scale;
+ return {foot,shoulder,hand:compact&&reach?grip:null,scale,walking:stage==='tied'&&u>0&&u<1};
 }
 function pawSlipRackCamera(w,h,p=pawWaterPlate){
  if(![w,h,p.x,p.y,p.w,p.h].every(Number.isFinite)||Math.min(w,h,p.w,p.h)<=0)return null;
@@ -12101,22 +12299,39 @@ function pawSlipSkinBox(pose,iw,ih,folded){
  const scale=Math.min(pose.w/iw,pose.h*(folded?1:1.38)/ih);
  return {w:iw*scale,h:ih*scale}
 }
+function pawSlipRevealLayers(pose){
+ const ease=f=>{f=Math.max(0,Math.min(1,f));return f*f*(3-2*f)};
+ const reveal=ease((pose.open-.25)/.65);
+ return {folded:1-reveal,unfolded:reveal,words:ease((pose.open-.8)/.2),
+  foldedPose:{w:Math.min(pose.w,145),h:Math.min(pose.h,105)}};
+}
 /* PAW_PAINTED_SLIP_SKIN_END */
 function pawPaintedSlipImage(number,folded){
  const grade=pawSlipSkin(number,shrinePaperLines);
  return pawRecoveredImage(pawSlipSkinPath(grade,folded))
 }
 function pawDrawPaintedSlip(pose,number,words,subtitle){
- const folded=pose.open<.9,grade=pawSlipSkin(number,shrinePaperLines),im=pawPaintedSlipImage(number,folded);
- if(!pawRoomImageReady(im))return false;
- const box=pawSlipSkinBox(pose,im.naturalWidth,im.naturalHeight,folded);
+ const grade=pawSlipSkin(number,shrinePaperLines),layers=pawSlipRevealLayers(pose);
+ const folded=layers.folded>0?pawPaintedSlipImage(number,true):null;
+ const unfolded=layers.unfolded>0?pawPaintedSlipImage(number,false):null;
+ if((folded&&!pawRoomImageReady(folded))||(unfolded&&!pawRoomImageReady(unfolded)))return false;
+ if(layers.folded>0){
+  const box=pawSlipSkinBox(layers.foldedPose,folded.naturalWidth,folded.naturalHeight,true);
+  if(!box)return false;
+  ctx.save();try{ctx.globalAlpha*=layers.folded;ctx.drawImage(folded,-box.w/2,-box.h/2,box.w,box.h)}finally{ctx.restore()}
+ }
+ if(layers.unfolded<=0)return true;
+ const box=pawSlipSkinBox(pose,unfolded.naturalWidth,unfolded.naturalHeight,false);
  if(!box)return false;
  const {w,h}=box;
  ctx.save();try{
-  // Remove tiny source edge residue outside the actual portrait paper body.
-  if(!folded){ctx.beginPath();ctx.rect(-w*.489,-h*.443,w*.978,h*.931);ctx.ellipse(0,-h*.438,w*.215,h*.058,0,0,TAU);ctx.clip()}
-  ctx.drawImage(im,-w/2,-h/2,w,h);
-  if(folded||w<200||h<250)return true;
+  const alpha=ctx.globalAlpha;
+  // Preserve the portrait paper's actual aspect ratio through the reveal.
+  ctx.globalAlpha=alpha*layers.unfolded;
+  ctx.beginPath();ctx.rect(-w*.489,-h*.443,w*.978,h*.931);ctx.ellipse(0,-h*.438,w*.215,h*.058,0,0,TAU);ctx.clip();
+  ctx.drawImage(unfolded,-w/2,-h/2,w,h);
+  if(layers.words<=0||w<200||h<250)return true;
+  ctx.globalAlpha=alpha*layers.words;
   const title=tr(...pawSlipGrades[grade]),note=subtitle||tr('A reflection, not a promise','签文仅供自我反思');
   activityFitText(title,0,-h*.225,30,w*.72,'#684633');
   activityFitText(tr('Fortune No. ','第 ')+number+(zh?' 签':''),0,-h*.153,22,w*.73,'#70503d');
@@ -12147,7 +12362,9 @@ function pawSlipDrawPaper(pose,number,words,subtitle=''){
 function pawDrawCounterFortune(){
  const run=state,g=pawSlipGeometry(),age=Math.max(0,t-run.paperAt);
  if(run.paperStage==='opening'&&age>=.75&&!pawArcadeInputBlocked())run.paperStage='open';
- const pose=pawSlipPose(run.paperStage,age,g),words=shrinePaperLines[run.paperNumber-1];
+ const pose=pawSlipPose(run.paperStage,age,g),words=shrinePaperLines[run.paperNumber-1],contact=pawSlipTravellerContact(run.paperStage,age,pose,g);
+ if(contact.hand)pawIncenseArm(contact.shoulder,contact.hand,.72*contact.scale,false);
+ backHuman(contact.foot.x,contact.foot.y,avatar??0,contact.walking,'up',contact.scale);
  if(Array.isArray(words))pawSlipDrawPaper(pose,run.paperNumber,tr(...words));
  if(run.paperStage==='folded')target(pose.x-pose.w/2-15,pose.y-pose.h/2-15,pose.w+30,pose.h+30,()=>{if(run===state&&!pawArcadeInputBlocked())templePaperTap()});
  // The controls below are the existing accessible open/keep/tie/rack/return
@@ -12382,6 +12599,44 @@ function pawRearGardenRoute(from,action){
  return route.length?route:[pawRearGardenNodes[action].slice()]
 }
 // A seated body contacts the painted cushion at the hip, not the path.
+/* PAW_REAR_SEATED_ART_BEGIN */
+// Individually extracted original travellers; the sheet's row order is
+// 1,0,2,3. The hip is the visible cushion-contact landmark, not image centre.
+const pawRearSeatedRecords=[
+ {w:206,h:280,hip:[71,214]},
+ {w:215,h:283,hip:[82,225]},
+ {w:222,h:280,hip:[82,223]},
+ {w:239,h:279,hip:[88,225]}
+];
+function pawRearSeatedBox(id,hip,scale){
+ const r=pawRearSeatedRecords[id];
+ if(!r||![hip?.x,hip?.y,scale].every(Number.isFinite)||scale<=0)return null;
+ const h=78*scale,w=h*r.w/r.h,k=h/r.h;
+ // Mirror the original right-facing seated pose towards the pond.
+ return {x:hip.x-(r.w-r.hip[0])*k,y:hip.y-r.hip[1]*k,w,h,hipX:r.hip[0]*k,hipY:r.hip[1]*k}
+}
+/* PAW_REAR_SEATED_ART_END */
+const pawRearSeatedImages=new Map();
+function pawRearSeatedImage(id){
+ if(!pawRearSeatedRecords[id])return null;
+ if(!pawRearSeatedImages.has(id)){
+  const im=new Image();im.decoding='async';im.src='assets/visual/staging/2026-11-27-extracted/players/'+id+'/seated.webp';pawRearSeatedImages.set(id,im)
+ }
+ return pawRearSeatedImages.get(id)
+}
+function pawWarmRearSeated(id){
+ const im=pawRearSeatedImage(id);
+ if(im&&!pawPictureDecoded(im))pawReadyPicture(im,4500);
+ return im
+}
+function pawDrawRearSeated(im,id,hip,scale){
+ const r=pawRearSeatedRecords[id],box=pawRearSeatedBox(id,hip,scale);
+ if(!r||!box||!im?.complete||im.naturalWidth!==r.w||im.naturalHeight!==r.h)return false;
+ ctx.save();try{
+  ctx.translate(hip.x,hip.y);ctx.scale(-1,1);
+  ctx.drawImage(im,-box.hipX,-box.hipY,box.w,box.h)
+ }finally{ctx.restore()}return true
+}
 function pawRearBenchPose(p,scale){
  const hip={x:p.x+p.w*.78,y:p.y+p.h*.407};
  return {hip,x:hip.x-9*scale,y:hip.y+32*scale,scale}
@@ -12426,6 +12681,7 @@ start=function(id,...args){
  const result=pawRearGardenStartBefore(id,...args);
  if(id==='secretGarden'&&activity===id&&room==='temple'){
   state.pawRearGarden=pawRoomImageReady(pawRearGardenArt());
+  if(state.pawRearGarden)pawWarmRearSeated(avatar??0);
   if(state.pawRearGarden){
    state.pawGardenWalk={painted:true,pos:pawRearGardenNodes.entry.slice(),route:[pawRearGardenNodes.bend.slice(),pawRearGardenNodes.fork.slice()],action:null,last:t,dir:'up'};
    hint('Follow the stone path to the pond or take a seat.','沿石径去看看锦鲤，或在长椅上歇一会儿。')
@@ -12509,11 +12765,14 @@ drawActivity=function(...args){
     if(f>0&&f<1){const [rx,ry]=xy(.31+j*.018,.453+(j%2)*.014);ctx.strokeStyle='rgba(242,239,207,'+(.6*(1-f))+')';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(rx,ry,2+f*17,1+f*5,0,0,TAU);ctx.stroke()}
    }
   }
-  const [x,y]=xy(...q.pos),scale=pawTempleContactScale(cam.scale,1.48+Math.max(0,q.pos[1]-.54)*.55);
+  const [x,y]=xy(...q.pos),scale=Math.max(1.35,Math.min(2.25,p.h*(pawRearGardenNodes.seat[1]-.407)/32));
   const seated=run.gardenSitting&&!moving,seatAge=Math.max(0,t-run.gardenSeatAt),seatAmount=seated?(residentReducedMotion.matches?1:poseEase(Math.min(1,seatAge/.45))):0;
   if(seated){const a=pawRearBenchPose(p,scale),sx=x+(a.x-x)*seatAmount,sy=y+(a.y-y)*seatAmount;
-   ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}
-  }else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale);
+   const id=avatar??0,im=pawRearSeatedImage(id),record=pawRearSeatedRecords[id];
+   if(seatAmount>=.98&&run.pawRearSeatArt===undefined)run.pawRearSeatArt=!!(record&&pawPictureDecoded(im)&&im.naturalWidth===record.w&&im.naturalHeight===record.h);
+   const painted=seatAmount>=.98&&run.pawRearSeatArt&&pawDrawRearSeated(im,id,a.hip,scale);
+   if(!painted){ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}}
+  }else{delete run.pawRearSeatArt;backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale)}
   const chimeAge=t-run.gardenChimeAt,catAge=t-run.pawCatAt,reduced=residentReducedMotion.matches;
   // Only the hanging paper tail moves. The beam, chain, bell and ceramic figures stay rigid.
   const breeze=reduced?0:Math.sin(t*1.45)*.42+Math.sin(t*.83)*.18;
@@ -12617,10 +12876,10 @@ const pawSceneLights={
  kitchen:[[.752,.121,.103,.064],[.072,.194,.045,.044],[.468,.308,.039,.024]],
  boba:[[.230,.111,.052,.039],[.430,.126,.047,.036],[.666,.142,.042,.034],[.830,.101,.053,.040],[.041,.468,.040,.041]],
  tarot:[[.521,.113,.069,.054],[.528,.259,.032,.032],[.954,.328,.045,.038],[.053,.344,.045,.033]],
- destiny:[[.310,.100,.064,.051],[.608,.181,.036,.031],[.490,.329,.028,.029],[.110,.678,.065,.061]],
+ destiny:[[.310,.100,.064,.051],[.608,.181,.036,.031],[.490,.161,.028,.029],[.110,.678,.065,.061]],
  match:[[.667,.378,.027,.032],[.461,.468,.033,.034],[.966,.572,.032,.039],[.139,.497,.027,.027]]
 };
-const pawSceneVapour={kitchen:[.133,.343,.032,.063],destiny:[.730,.430,.021,.042]};
+const pawSceneVapour={kitchen:[.133,.343,.032,.063],destiny:[.730,.280,.021,.042]};
 function pawSceneLightFrame(id,now,reduced=false){
  if(!Object.hasOwn(pawSceneLights,id)||!Number.isFinite(now))return [];
  return pawSceneLights[id].map(([u,v,rx,ry],i)=>{
@@ -13246,12 +13505,12 @@ function pawReadingSeatPlan(id,plate,phase){
  const tarot=id==='tarot',yue=id==='destiny';if(!tarot&&!yue)return null;
  const host=tarot?'fortune-teller':'master-yue';
  const pose=tarot?(phase==='shuffle'?'seated-shuffle-held':phase==='focus'?'seated-present-card':'seated-idle'):(phase==='result'?'seated-present-blank-parchment':phase==='question'?'seated-brush-held':'seated-welcome-explain');
- const eye=tarot?[.135,.399]:[.581,.337],span=plate.h*(tarot?.0165:.0185);
+ const eye=tarot?[.135,.399]:[.581,.350],span=plate.h*(tarot?.0165:.0185);
  const center=[plate.x+plate.w*eye[0],plate.y+plate.h*eye[1]];
  return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.447]}
 }
 function pawReadingHostPhase(id,q,kind,desk,result){
- if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle')return 'shuffle';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
+ if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle')return 'table-wash';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
  if(id==='destiny'&&desk)return result?'result':'question';
  return 'idle'
 }
@@ -13264,6 +13523,10 @@ function pawReadingHostFamilyReady(id,manifest,api,ready){
  const host=id==='tarot'?'fortune-teller':id==='destiny'?'master-yue':null;
  const poses=host&&manifest?.characters?.[host]?.poses;
  return !!api&&!!poses&&Object.keys(poses).length===3&&Object.entries(poses).every(([pose,a])=>!!api.contacts(manifest,host,pose,[0,0],10)&&ready(a.path,a.canvas))
+}
+function pawYueAdoptSeatedVisit(visit,id,kind,transition,ready){
+ if(!visit||visit.id!=='destiny'||id!=='destiny'||kind||transition||visit.ready||!ready())return false;
+ visit.ready=true;return true
 }
 /* PAW_READING_SEATED_HOST_END */
 let pawHostLibrary=null,pawHostLibraryJob=null,pawHostWarmJobs=new Map(),pawHostVisit=null;
@@ -13314,6 +13577,7 @@ document.addEventListener('visibilitychange',()=>{
  if(pawYueInkCurrent&&pawHostLibrary?.api?.parchmentClock)pawHostLibrary.api.parchmentClock(pawYueInkCurrent.clock,performance.now()/1000,document.hidden,residentReducedMotion.matches)
 });
 function pawDrawReadingSeated(id,plate){
+ if(id==='destiny')pawYueAdoptSeatedVisit(pawHostVisit,id,activity,transitioning,()=>pawHostFamilyReady(id));
  if(pawHostVisit?.id!==id||!pawHostVisit.ready||!pawHostLibrary)return false;
  const desk=id==='destiny'&&$('page').dataset.pawYueDesk==='true'&&$('page').style.display!=='none';
  const activeForm=desk?$('content').querySelector('.astroForm,.yueAlmanacForm'):null;
@@ -13377,7 +13641,7 @@ enter=function(id,...args){
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   pawReadingAdmission=null;
   if(!ready||!pawRoomImageReady(im)){hint('The room painting could not load. Tap its door to try again.','小屋画面暂未加载成功，请再次点击门口重试。');return}
-  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id)};return pawReadingEnterBefore(id,...args)
+  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id)};if(id==='destiny')pawWarmRearSeated(avatar??0);return pawReadingEnterBefore(id,...args)
  }).finally(()=>{if(pawReadingAdmission===request)pawReadingAdmission=null})
 };
 // Nearby outdoor warming should decode the actual selected lobby painting,
@@ -13386,7 +13650,7 @@ enter=function(id,...args){
  pawWarmRoomAssets=function(id){
   if(room||activity)return pawMappedWarmBefore(id);
   const decode=im=>{if(im&&!pawPictureDecoded(im))pawReadyPicture(im,4500)};
-  if(id==='temple'){decode(pawRecoveredImage('scenes/temple_approach_portrait.webp'));decode(pawHallArt());return}
+  if(id==='temple'){decode(pawRecoveredImage('scenes/temple_approach_portrait.webp'));decode(pawHallArt());decode(pawWaterArt());decode(pawRearGardenArt());pawWarmRearSeated(avatar??0);return}
   if(pawReadingRoomIds.includes(id)){pawLoadReadingModule().then(api=>decode(pawReadingImage(api,id)));pawWarmReadingHost(id);if(id==='tarot')pawPrepareTarotArt();return}
   if(Object.hasOwn(pawFoodRoomSpecs,id)){decode(pawFoodImage(id));return}
   if(id==='wishes'){decode(pawWishLobbyArt());return}
@@ -13460,7 +13724,7 @@ drawRoom=function(...args){if(pawReadingActive())pawReadingBackdrop();return paw
 function pawReadingHost(){
  const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:room==='tea'?['Auntie Mei','梅姨']:room==='fish'?['Ah Ma','阿嬷']:room==='park'?['Auntie Lin','林姨']:room==='arcade'?['Arcade keeper','游戏厅店主']:null;
  if(!name)return null;const record=residentArtworkRecord(name);if(!record&&room!=='fish')return null;
- const [x,y]=pawReadingWorld(room==='destiny'?[.58,.446]:room==='tarot'&&pawHostVisit?.ready?[.135,.61]:pawReadingAPI().rooms[room].host);
+ const [x,y]=pawReadingWorld(room==='destiny'?[.58,.447]:room==='tarot'&&pawHostVisit?.ready?[.135,.61]:pawReadingAPI().rooms[room].host);
  return {station:room==='tea'?'chat':room==='fish'?'hit':room==='park'?'pet':room==='arcade'?'bubbleArcade':room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record?.height||112,.90),facing:room==='fish'?'right':'left'}
 }
 const pawReadingHostsBefore=roomResidentActors;
@@ -13471,7 +13735,11 @@ roomResidentActors=function(){if(!pawReadingActive())return pawReadingHostsBefor
 // Until the proper seated sprite is registered this is a desk-occlusion
 // treatment, not a new animation pose.
 function pawYueDeskBox(p=pawReadingPlate){
- return {x:p.x+p.w*.581,y:p.y+p.h*.447,height:p.h*.104,clipTop:p.y+p.h*.31,clipBottom:p.y+p.h*.447}
+ return {x:p.x+p.w*.581,y:p.y+p.h*.447,height:p.h*.215,clipTop:p.y+p.h*.30,clipBottom:p.y+p.h*.447}
+}
+function pawYueHostTapBox(p){
+ if(!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||p.w<=0||p.h<=0)return null;
+ return [p.x+p.w*.465,p.y+p.h*.305,p.w*.232,p.h*.142]
 }
 function pawYueDeskPlaque(p=pawReadingPlate){
  return {x:p.x+p.w*.5,y:p.y+p.h*.552}
@@ -13491,7 +13759,8 @@ function pawDrawYueAtDesk(a){
  return true
 }
 function pawDrawYueDeskPlaque(fn){
- if(talkOpen||($('page').dataset.pawYueDesk==='true'&&$('page').style.display!=='none'))return false;
+ if(talkOpen||transitioning||$('page').style.display==='block')return false;
+ const hostBox=pawYueHostTapBox(pawReadingPlate);if(hostBox)target(...hostBox,fn);
  const q=pawYueDeskPlaque(),scale=Math.max(.08,cam.scale),font=Math.max(9,12/scale),name=tr('Consult','问事');
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';
@@ -13580,7 +13849,7 @@ function pawChooseConnectedGuestPoints(candidates,canDepart,canWalk,limit=8,spac
 function pawMappedVisitorPoints(api,id){
  const q=api?.rooms[id],spec=pawReadingSpec(api,id);if(!q||!spec)return [];
  const gaps=pawMappedGuestGaps(true),protectedFeet=[spec.entry,[spec.entry[0],spec.entry[1]-35],spec.arrival,...Object.values(spec.stations).map(v=>v.slice(2))];
- const host=['quiz','story','match'].includes(id)?[]:[pawReadingWorld(id==='destiny'?[.58,.446]:q.host)];
+ const host=['quiz','story','match'].includes(id)?[]:[pawReadingWorld(id==='destiny'?[.58,.447]:q.host)];
  const points=q.visitors.map(v=>v.slice()),candidates=[];
  for(let i=0;i<=100;i+=2){
   const y=i/100,range=api.bounds(id,y);if(!range)continue;
@@ -13753,15 +14022,8 @@ pawRoomOwnerPresentation.textContent=`
 
 // Preserve the existing reading engines and temporary, local personal data.
 // The study remains the setting instead of a separate full-screen website.
-const pawYueVisitIntroBefore=roomIntro;
-roomIntro=function(...args){
- const result=pawYueVisitIntroBefore(...args);
- if(room==='destiny'&&!activity&&residentPendingWelcome?.id==='yue'){
-  const profile=residentWelcomeProfiles.find(v=>v.id==='yue');
-  if(profile){const welcome=residentHospitalityWelcome(profile,residentPendingWelcome.visits);residentPendingWelcome=null;residentGreetingToast(tr('Master Yue: ','月师傅：')+welcome)}
- }
- return result
-};
+// Master Yue's greeting is delivered by the intentional consultation dialogue,
+// not a second arrival toast over the illustrated room.
 function pawCloseYueDesk(){
  const pane=$('page');if(pane.dataset.pawYueDesk!=='true')return false;
  pawYueChartObserver?.disconnect();pawYueChartObserver=null;
@@ -13777,7 +14039,9 @@ function pawYueDeskChoose(kind){
 yueReadingHub=function(...args){
  if(room!=='destiny'){pawCloseYueDesk();return}
  pawCloseYueDesk();$('page').style.display='none';closeTalk();
- say(tr('Master Yue','月师傅'),tr("Ah, sit and have some tea. The stars are not going anywhere. What shall we explore?","来啦？坐，先喝口茶。星星又不会跑。今天想问些什么？"),[
+ pawYueAdoptSeatedVisit(pawHostVisit,room,activity,transitioning,()=>pawHostFamilyReady('destiny'));
+ if(!pawHostVisit?.ready)pawWarmReadingHost('destiny');
+ say(tr('Master Yue','月师傅'),tr('What shall we look at today?','今天想看些什么？'),[
  [tr('My year ahead','生肖流年'),()=>pawYueDeskChoose('year')],
  [tr('My birth chart','生辰命盘'),()=>pawYueDeskChoose('chart')],
  [tr('Weekly star signs','本周星座'),()=>pawYueDeskChoose('stars')],
@@ -13789,9 +14053,9 @@ let pawYueChartObserver=null;
 page=function(...args){pawYueChartObserver?.disconnect();pawYueChartObserver=null;delete $('page').dataset.pawYueDesk;delete $('page').dataset.pawYueExpanded;return pawYueDeskPageBefore(...args)};
 /* PAW_YUE_DESK_HUMOUR_BEGIN */
 function pawYueDeskQuestions(kind){
- const date=["First, when were you born? No need to tell me how old you feel.","先告诉我出生日期。心里觉得自己几岁，就不用交代啦。"];
+ const date=['When were you born?','你是哪天出生的？'];
  if(kind==='year')return [date,["Which year shall we look at? The calendar is not your boss.","想看看哪一年的流年？日历又不是你的老板。"]];
- if(kind==='chart')return [date,["Do you know your local birth time? Ask the family if needed; the baby was busy.","知道出生时的当地时间吗？不确定就问问家人，当时的你忙着哭呢。"],["Where were you born? Check the time zone used then. Even the stars need the right clock.","你在哪里出生？请核对当时的时区。星星也得看对钟。"]];
+ if(kind==='chart')return [date,["What time were you born?","你几点出生的？"],["Where were you born?","你在哪里出生的？"]];
  return [];
 }
 /* PAW_YUE_DESK_HUMOUR_END */
@@ -13809,7 +14073,7 @@ function pawYueQuestionSteps(form,out,kind){
  function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));question.textContent=tr(...questions[index]);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1)}
  function advance(){if(finished||index>=steps.length-1)return;for(const field of steps[index].flatMap(n=>[...n.querySelectorAll('input,select')]))if(!field.checkValidity()){field.reportValidity();return}show(index+1)}
  form.addEventListener('keydown',e=>{if(!finished&&index<steps.length-1&&e.key==='Enter'&&e.target.matches('input')){e.preventDefault();advance()}});
- form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();controls.remove()}});
+ form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();if(controls.contains(submit))controls.before(submit);controls.remove()}});
  show(0)
 }
 /* PAW_YUE_PARCHMENT_BEGIN */
@@ -13817,6 +14081,45 @@ function pawYueChartComplete(grid){
  return !!grid&&grid.querySelectorAll('article:not(.blank)').length===12
 }
 /* PAW_YUE_PARCHMENT_END */
+/* PAW_YUE_SHARE_RETURN_BEGIN */
+function pawYueShareReturnMatches(origin,current){
+ return !!origin&&!!current&&origin.scene===current.scene&&current.room==='destiny'&&!current.activity&&current.subject==='self'&&origin.profile===current.profile&&origin.chart===current.chart&&origin.visit===current.visit&&current.page==='meowShare'
+}
+function pawYueShareScroll(scroll,height,client){
+ return Number.isFinite(scroll)&&Number.isFinite(height)&&Number.isFinite(client)?Math.max(0,Math.min(scroll,Math.max(0,height-client))):0
+}
+/* PAW_YUE_SHARE_RETURN_END */
+function pawYueShareFromChart(data,topic,section){
+ if(room!=='destiny')return openMeowShare(data,()=>destinyPage(false,topic));
+ if(activity||yueSubject!=='self'||!section?.isConnected)return;
+ const pane=$('page'),q=$('content');
+ if(pane.dataset.pawYueDesk!=='true'||pane.style.display!=='block')return;
+ const context=()=>({scene,room,activity,subject:yueSubject,profile:yueSessionProfiles.self,chart:yueSessionProfiles.self.chart,visit:pawHostVisit,page:activePage});
+ const origin=context(),scroll=pane.scrollTop,selected=section.querySelector('.chartTopics button[aria-pressed="true"]');
+ const chosen=Number.isInteger(topic)?topic:selected?Number(selected.dataset.topic):null;
+ const disclosures=Array.from(q.querySelectorAll('details')).map(n=>n.open);
+ const view=q.querySelector('.palaceViewTools button[aria-pressed="true"]');
+ const viewIndex=view?Array.from(view.parentElement.querySelectorAll('button')).indexOf(view):-1;
+ const expanded=pane.dataset.pawYueExpanded==='true';
+ let used=false;
+ openMeowShare(data,()=>{
+  if(used||!pawYueShareReturnMatches(origin,context()))return;
+  used=true;destinyPage(false,chosen);
+  const restored=q.querySelector('.chartConsultation'),restoredChart=yueSessionProfiles.self.chart;
+  if(!restored||!restoredChart)return;
+  requestAnimationFrame(()=>{
+   if(room!=='destiny'||activity||!restored.isConnected||pane.dataset.pawYueDesk!=='true'||yueSessionProfiles.self.chart!==restoredChart||pawHostVisit!==origin.visit)return;
+   const buttons=q.querySelectorAll('.palaceViewTools button');
+   if(viewIndex>=0&&buttons[viewIndex])buttons[viewIndex].click();
+   Array.from(q.querySelectorAll('details')).forEach((node,i)=>{if(i<disclosures.length)node.open=disclosures[i]});
+   if(!expanded&&pane.dataset.pawYueExpanded==='true')q.querySelector('.pawYueParchmentTools button')?.click();
+   const control=restored.querySelector(data.kind==='zwds_chart'?'.pawFullChartSharing button':'.pawZwdsShareButton');
+   control?.focus({preventScroll:true});
+   // Set the position after the chart's own view-change layout is applied.
+   requestAnimationFrame(()=>{if(restored.isConnected&&room==='destiny'&&!activity&&pawHostVisit===origin.visit&&yueSessionProfiles.self.chart===restoredChart)pane.scrollTop=pawYueShareScroll(scroll,pane.scrollHeight,pane.clientHeight)})
+  })
+ })
+}
 function pawYueChartParchment(q,pane,form,out){
  if(!out)return;
  let lastGrid=null,toolbar=null,expand=null,expanded=false;
@@ -13861,6 +14164,10 @@ function pawYueDeskArrange(q,pane,form,out){
  element('summary',tr('Reading options & privacy','问事选项与隐私'),footer);
  anchor.after(footer);
  if(strip)footer.append(strip);
+ // Rehome the existing language control after its reading-specific callback
+ // is assigned. Never move the sole remaining back button.
+ const row=q.querySelector(':scope > .row'),language=row?.children.length>1?row.lastElementChild:null;
+ if(language?.tagName==='BUTTON'){language.classList.add('yueReadingLanguage');language.type='button';(strip||footer).append(language)}
  if(tools){
   const edit=[...tools.querySelectorAll('button')].find(v=>[tr('Edit birth details','修改生辰资料'),tr('Change birth date','修改出生日期')].includes(v.textContent));
   if(edit)footer.before(edit);
@@ -15051,7 +15358,7 @@ table=function(...args){
 };
 const pawTarotUnifiedCamera=mobileRoomCamera;
 mobileRoomCamera=function(...args){
- if(room==='tarot'&&pawTarotActive(state,activity)&&['choose','cards','focus'].includes(state.readStage)){
+ if(room==='tarot'&&pawTarotActive(state,activity)&&['deck','shuffle','choose','deal','cards','focus'].includes(state.readStage)){
   const portrait=W<H,bounds=portrait?[205,595,278,790]:[145,655,280,700],top=44,bottom=Math.max(top+80,H-60);
   const [l,r,u,d]=bounds,z=Math.max(.08,Math.min((W-20)/(r-l),(bottom-top)/(d-u)));
   return {s:z,ox:W/2-(l+r)/2*z,oy:(top+bottom)/2-(u+d)/2*z}
@@ -15160,6 +15467,8 @@ function pawYueRestoreInline(){
  const visit=pawYueInline;if(!visit)return;
  pawYueInline=null;visit.observer?.disconnect();
  if(visit.anchor.isConnected)visit.anchor.replaceWith(visit.form);else visit.form.remove();
+ if(visit.optionsAnchor?.isConnected)visit.optionsAnchor.replaceWith(visit.options);else visit.options?.remove();
+ if(visit.languageAnchor?.isConnected)visit.languageAnchor.replaceWith(visit.language);else visit.language?.remove();
  $('dialogue').removeAttribute('data-paw-yue-question');
 }
 const pawYueInlineClose=closeTalk;
@@ -15175,7 +15484,12 @@ function pawYueInlineForm(kind){
  say(tr('Master Yue','月师傅'),'',[[tr('Return to our conversation','回到茶叙'),()=>{closeTalk();yueReadingHub()}]]);
  const panel=$('dialogue');panel.dataset.pawYueQuestion='true';
  panel.insertBefore(form,$('choices'));
- const visit={form,anchor,out,kind,observer:null,scene,room};
+ const language=q.querySelector('.pawYueDeskOptions .yueReadingLanguage');
+ const languageAnchor=language?document.createComment('Yue reading language'):null;
+ if(language){language.before(languageAnchor);$('choices').append(language)}
+ const options=q.querySelector('.pawYueDeskOptions'),optionsAnchor=options?document.createComment('Yue reading options'):null;
+ if(options){options.before(optionsAnchor);options.open=false;panel.insertBefore(options,$('choices'))}
+ const visit={form,anchor,out,kind,observer:null,scene,room,language,languageAnchor,options,optionsAnchor};
  pawYueInline=visit;
  visit.observer=new MutationObserver(()=>{
   if(pawYueInline!==visit)return;
@@ -15211,7 +15525,7 @@ function pawTarotCardConversation(index=state.readFocus){
  const name=tr(d[0],d[1])+' · '+orient(v.rev);
  const reflection=run.readCards.length===5?fiveReadingPrompt(run.readTopic,index):topicReflection(run.readTopic,index);
  const aside=tarotCommentary(d[0],v.rev,run.readTopic,run.tarotTone);
- const parts=[name+'\n'+arcanaReading(d,v.rev),reflection,aside&&tr(...aside)].filter(Boolean);
+ const parts=[name,...[arcanaReading(d,v.rev),reflection,aside&&tr(...aside)].filter(Boolean).flatMap(pawChatPhrases)];
  function speak(step){
   if(!valid())return;
   $('page').style.display='none';
@@ -15265,13 +15579,95 @@ drawActivity=function(...args){
  if(room==='tarot'&&['tarot','love'].includes(activity)&&state.readStage==='focus'&&talkOpen&&$('dialogue').hasAttribute('data-paw-tarot-conversation')){
   const v=state.readCards?.[state.readFocus],im=pawReadingImage(pawReadingAPI(),'tarot');
   if(v&&pawRoomImageReady(im)){
-   const b=livingBounds(),w=Math.min(b.w*.31,b.h*.20),h=w*218/128;
-   ctx.save();try{paintLivingBackdrop(im);drawReadingCard(b.x+b.w*.64-w/2,b.y+b.h*.28-h/2,w,h,v.i,v.rev)}finally{ctx.restore()}
+   const b=livingBounds(),w=Math.min(b.w*.34,b.h*.22),h=w*218/128,x=b.x+b.w*.5-w/2,y=b.y+b.h*.30-h/2;
+   ctx.save();try{paintLivingBackdrop(im);ctx.save();ctx.shadowColor='#29282280';ctx.shadowBlur=8;round(x-2,y-2,w+4,h+4,2,'#e5d1a6','#a78c64');ctx.restore();paintReadingArtwork(x,y,w,h,v.i,v.rev)}finally{ctx.restore()}
    return
   }
  }
  return pawTarotConversationDraw(...args)
 };
+
+/* PAW_RITUAL_CHAT_BAR_BEGIN */
+// A subtitle-sized line and a short reply, not a modal or information card.
+function pawChatPhrases(value){
+ const source=String(value||'').trim(),limit=zh?46:110,out=[];
+ if(!source)return out;
+ const sentences=source.match(/[^.!?。！？；;\n]+[.!?。！？；;]*|[^\n]+/gu)||[source];
+ for(const sentence of sentences){
+  let part=sentence.trim();
+  while(part.length>limit){
+   let cut=zh?limit:part.lastIndexOf(' ',limit);
+   if(cut<Math.floor(limit*.45))cut=limit;
+   out.push(part.slice(0,cut).trim());part=part.slice(cut).trim()
+  }
+  if(part)out.push(part)
+ }
+ return out
+}
+const pawChatRooms=new Set(['tarot','destiny','wishes']);
+const pawChatBarSay=say,pawChatBarClose=closeTalk;
+say=function(name,words,choices=[],...rest){
+ const value=pawChatBarSay(name,words,choices,...rest),panel=$('dialogue');
+ panel.toggleAttribute('data-paw-chat-bar',pawChatRooms.has(room));
+ return value
+};
+closeTalk=function(...args){$('dialogue').removeAttribute('data-paw-chat-bar');return pawChatBarClose(...args)};
+const pawChatYuePresent=pawYueDeskPresent;
+pawYueDeskPresent=function(kind){
+ const result=pawChatYuePresent(kind),visit=pawYueInline;
+ if(!visit||visit.kind!==kind)return result;
+ const form=visit.form,controls=form.querySelector('.pawYueStepNav'),submit=form.querySelector('button[type=submit]');
+ if(controls&&submit)controls.append(submit);
+ const place=form.querySelector('details select');
+ if(place){
+  const nums=[...form.querySelectorAll('input[type=number]')],labels=nums.map(n=>n.closest('label')).filter(Boolean);
+  // Existing historical offset and custom coordinates remain accessible.
+  const update=()=>{const preset=!!place.value&&place.value!=='custom';form.dataset.pawBirthPreset=preset?'true':'false'};
+  place.addEventListener('change',update);update();
+  // Move only the coordinate inputs into a disclosure, never remove or disable them.
+  const coordLabels=labels.slice(1);
+  if(coordLabels.length===2&&coordLabels.every(n=>n.parentElement===form)){
+   const disclosure=element('details','',form,'pawYueCoordinates');element('summary',tr('Check coordinates','核对坐标'),disclosure);coordLabels[0].before(disclosure);disclosure.append(...coordLabels);
+   // The original guided controller owns their visibility; the disclosure follows location.
+   const show=()=>{const active=!place.closest('details').classList.contains('pawYueStepHidden');disclosure.hidden=!active;disclosure.open=active&&(!place.value||place.value==='custom')};
+   const observer=new MutationObserver(show);observer.observe(place.closest('details'),{attributes:true,attributeFilter:['class']});place.addEventListener('change',show);form.addEventListener('submit',()=>{if(!form.classList.contains('pawYueGuidedForm')){observer.disconnect();disclosure.hidden=false}});show()
+  }
+ }
+ return result
+};
+const pawChatBarStyle=document.createElement('style');
+pawChatBarStyle.textContent=`
+html #game #dialogue[data-paw-chat-bar]:not(.pawWishWriting){position:absolute!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;transform:none!important;width:100%!important;max-width:none!important;max-height:36dvh!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:24px max(14px,env(safe-area-inset-right,0px)) max(9px,env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px))!important;background:linear-gradient(180deg,transparent,#1d2927e8 27%,#1b2928fa 100%)!important;color:#fff2d8!important;overflow:auto!important;overscroll-behavior:contain;scrollbar-width:thin}
+html #game #dialogue[data-paw-chat-bar] #dialogueTop{display:flex!important;min-height:0!important;margin:0 0 3px!important;gap:0!important}
+html #game #dialogue[data-paw-chat-bar] #talkPortrait{display:none!important}
+html #game #dialogue[data-paw-chat-bar] #speaker{color:#e7ca8e!important;font:600 11px/1.3 var(--paw-display,Georgia,serif)!important;letter-spacing:.04em;text-shadow:none!important}
+html #game #dialogue[data-paw-chat-bar] #line{color:#fff2d8!important;font:15px/1.38 var(--paw-body,system-ui,sans-serif)!important;white-space:pre-line!important;margin:0 0 5px!important;padding:0!important;text-shadow:none!important}
+html #game #dialogue[data-paw-chat-bar] #choices{display:flex!important;flex-wrap:wrap!important;justify-content:flex-start!important;overflow-x:hidden!important;gap:6px!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:2px 0 0!important;scrollbar-width:thin}
+html #game #dialogue[data-paw-chat-bar] #choices button{flex:0 1 auto!important;width:auto!important;min-width:44px!important;min-height:44px!important;max-width:100%!important;padding:6px 11px!important;border:1px solid #e2c99980!important;border-radius:16px!important;box-shadow:none!important;background:#f0dfba12!important;color:#fff2d8!important;font:500 12px/1.25 var(--paw-body,system-ui,sans-serif)!important;text-align:center!important;white-space:normal!important}
+html #game #dialogue[data-paw-chat-bar] #choices button:first-child{background:#e6d2a8!important;color:#33473c!important;border-color:#e6d2a8!important}
+html #game #dialogue[data-paw-chat-bar][data-paw-yue-question] #line:empty{display:none!important}
+html #game #dialogue[data-paw-chat-bar][data-paw-yue-question] .pawYueGuidedForm{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:4px!important;margin:0!important;padding:0!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueQuestion{font:15px/1.35 var(--paw-body,system-ui,sans-serif)!important;color:#fff2d8!important;margin:0 0 3px!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm label{color:#e7d6b5!important;font:11px/1.25 var(--paw-body,system-ui,sans-serif)!important;gap:2px!important;margin:0!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm :is(input,select){min-height:44px!important;background:#f5e9d0!important;color:#3a4034!important;border:1px solid #c5b38c!important;border-radius:8px!important;font-size:16px!important;margin:0!important;padding:4px 8px!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueStepNav{display:flex!important;justify-content:flex-end!important;gap:6px!important;margin:0!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueStepNav button{flex:0 1 auto!important;min-height:44px!important;padding:6px 12px!important;border-radius:16px!important;background:#e6d2a8!important;color:#33473c!important;border:0!important;box-shadow:none!important;font-size:12px!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm .pawYueStepHidden,html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm [hidden]{display:none!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm details{padding:0!important;margin:0!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#e7d6b5!important;font-size:11px!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm details summary{min-height:36px!important;color:#e7d6b5!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm .pawYueInputError{color:#ffe0b0!important}
+html #game #dialogue.pawWishWriting[data-paw-chat-bar]{position:absolute!important;left:10px!important;right:10px!important;bottom:max(12px,env(safe-area-inset-bottom,0px))!important;top:auto!important;transform:none!important;width:auto!important;max-width:480px!important;margin:0 auto!important;max-height:28dvh!important;background:transparent!important;border:0!important;box-shadow:none!important}
+html #game #dialogue.pawWishWriting[data-paw-chat-bar] #dialogueTop,html #game #dialogue.pawWishWriting[data-paw-chat-bar] #line{display:none!important}
+html #game #dialogue.pawWishWriting[data-paw-chat-bar] .pawWishPaper{padding:8px 30px 7px 10px!important;transform:none!important;border-radius:3px!important}
+html #game #dialogue.pawWishWriting[data-paw-chat-bar] textarea{min-height:52px!important;max-height:74px!important;line-height:24px!important;font:16px/24px var(--paw-body,system-ui,sans-serif)!important}
+html #game #dialogue.pawWishWriting[data-paw-chat-bar] #choices button{background:#e6d2a8!important;color:#33473c!important}
+@media(orientation:landscape){html #game #dialogue[data-paw-chat-bar]:not(.pawWishWriting){max-height:46dvh!important;padding-top:16px!important}html #game #dialogue.pawWishWriting[data-paw-chat-bar]{max-height:44dvh!important}}
+@media(forced-colors:active){html #game #dialogue[data-paw-chat-bar]{background:Canvas!important;color:CanvasText!important}html #game #dialogue[data-paw-chat-bar] :is(#speaker,#line,.pawYueQuestion){color:CanvasText!important}html #game #dialogue[data-paw-chat-bar] #choices button{color:ButtonText!important;background:ButtonFace!important;border:1px solid ButtonText!important}}
+html #game #dialogue[data-paw-yue-question] .pawYueDeskOptions{margin:2px 0!important;padding:0!important;color:#e7d6b5!important;background:transparent!important;border:0!important;box-shadow:none!important}
+html #game #dialogue[data-paw-yue-question] .pawYueDeskOptions>summary{cursor:pointer;min-height:44px;align-content:center;color:#e7d6b5!important;font-size:12px}
+html #game #dialogue[data-paw-yue-question] .pawYueDeskOptions:not([open])>*:not(summary){display:none!important}
+`;document.head.append(pawChatBarStyle);
+/* PAW_RITUAL_CHAT_BAR_END */
 /* PAW_IN_WORLD_CONSULTATION_END */
 
 /* PAW_OPENING_EXPERIENCE_BEGIN
@@ -15358,6 +15754,152 @@ html[lang^="zh"] #proposal .pawOpeningWordmark,html[lang^="zh"] #proposal .pawGa
 `;document.head.append(pawOpeningSceneStyle);
 /* PAW_OPENING_EXPERIENCE_END */
 
+
+/* PAW_PHYSICAL_DOCK_BOOKLETS_BEGIN */
+const pawDockJournalCover='assets/visual/staging/2026-11-28-project-batch10-interface/journal-cover.webp';
+const pawBookFolds=new Set();
+function pawBookFold(section,key,label){
+ if(!section||section.parentElement?.classList.contains('pawBookFold'))return;
+ const fold=document.createElement('details');fold.className='pawBookFold';section.before(fold);
+ element('summary',label,fold);fold.append(section);fold.open=pawBookFolds.has(key);
+ fold.addEventListener('toggle',()=>{if(!fold.isConnected)return;if(fold.open)pawBookFolds.add(key);else pawBookFolds.delete(key)});
+}
+function pawBookletClose(q){
+ const back=q.querySelector(':scope > .row button:first-child');
+ if(!back||back.classList.contains('pawBookletClose'))return;
+ // Preserve the current back callback. The cover is an affordance, not a new page.
+ back.classList.add('pawBookletClose');
+ back.replaceChildren();
+ const art=element('img','',back);art.src=pawDockJournalCover;art.alt='';art.decoding='async';art.onerror=()=>art.remove();
+ element('span',tr('Close book','合上手账'),back);
+}
+const pawBookletJournalPrior=pawJournalRender;
+pawJournalRender=function(district=scene){
+ const result=pawBookletJournalPrior(district),q=$('content'),book=q.querySelector('.pawSketchbook');
+ if(!book)return result;
+ pawBookletClose(q);
+ pawBookFold(book.querySelector('.pawSketchPlaces'),'places:'+district,tr('Places to explore','可以逛逛的地方'));
+ pawBookFold(book.querySelector('.pawVisitProgress'),'progress:'+district,tr('Discovery notes','探索记录'));
+ const heading=book.querySelector('.pawSketchPlaces > h3');if(heading)heading.hidden=true;
+ return result
+};
+const pawBookletTodayPrior=todayHub;
+todayHub=function(...args){
+ const result=pawBookletTodayPrior(...args),q=$('content');
+ if(!q.querySelector('.pawDiaryFold'))return result;
+ pawBookletClose(q);
+ // The calendar and reflection stay in this planner. No additional page.
+ return result
+};
+const pawPhysicalBookletStyle=document.createElement('style');
+pawPhysicalBookletStyle.textContent=`
+#game #content .pawBookletClose{display:inline-flex!important;align-items:center;justify-content:center;gap:7px;min-height:44px!important;padding:3px 8px!important;background:#e5d5ad!important;color:#344d3a!important;border:1px solid #a18e66!important;border-radius:4px!important;box-shadow:none!important;white-space:normal}
+#game #content .pawBookletClose img{width:35px;height:35px;object-fit:contain;flex:none}
+#game #content .pawBookFold{min-width:0;border-top:1px dashed #b9a481;margin:6px 0;padding:0 2px;color:#4b5b43}
+#game #content .pawBookFold>summary{cursor:pointer;min-height:44px;align-content:center;font:600 16px/1.3 Georgia,"Songti SC",serif}
+#game #content .pawBookFold>.pawSketchPlaces{padding:0 2px}
+#game #content .pawBookFold>.pawVisitProgress{border-top:0;margin:0;padding:3px 0}
+#game #content .pawSketchSpread>.pawBookFold{grid-column:1/-1}
+#game #content:has(.pawDiaryFold)>h1{font:600 clamp(22px,6vw,30px)/1.2 Georgia,"Songti SC",serif!important;color:#405740!important;margin:8px 0 4px!important}
+#game #content:has(.pawDiaryFold)>p{margin:0 0 8px!important;font-size:13px!important;color:#645b47!important}
+#game #content:has(.pawDiaryFold){max-width:560px!important}
+#game #content .pawDiaryLunar{padding:4px 0 12px;color:#564831}
+#game #content .pawDiaryLunar strong,#game #content .pawDiaryLunar small{display:block}
+#game #content .pawDiaryLunar p{margin:6px 0!important;font-size:14px}
+@media(min-width:780px){#game #content .pawSketchSpread>.pawBookFold:has(.pawSketchPlaces){grid-column:2;grid-row:1/span 2;align-self:start}}
+/* Root booklets fill the game, rather than floating over its scenery. */
+#game #page:has(#content :is(.pawSketchbook,.pawDiaryFold)){position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;box-sizing:border-box!important;background:#f2e4c8 url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important;padding:max(10px,env(safe-area-inset-top,0px)) 0 max(92px,calc(82px + env(safe-area-inset-bottom,0px)))!important;overflow-y:auto!important}
+#game #page:has(#content :is(.pawSketchbook,.pawDiaryFold)) #content{width:100%!important;max-width:970px!important;box-sizing:border-box!important;margin:0 auto!important;padding:0 clamp(14px,4vw,28px)!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+#game #content:has(:is(.pawSketchbook,.pawDiaryFold))>.row{position:static!important;min-height:44px!important;margin:0 0 8px!important;padding:0!important;background:transparent!important}
+#game #content:has(:is(.pawSketchbook,.pawDiaryFold))>h1{color:#405740!important;font:600 clamp(22px,6vw,32px)/1.2 Georgia,"Songti SC",serif!important;margin:6px 0 10px!important;text-align:left!important}
+#game #content:has(.pawSketchbook) .pawSketchbook{padding:6px 0 0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
+#game #content:has(:is(.pawSketchbook,.pawDiaryFold))>.row .pawBookletClose{background:#e5d5ad!important;color:#344d3a!important}
+@media(min-width:780px){#game #page:has(#content :is(.pawSketchbook,.pawDiaryFold)) #content{max-width:970px!important;padding-inline:32px!important}}
+`;document.head.append(pawPhysicalBookletStyle);
+/* PAW_PHYSICAL_DOCK_BOOKLETS_END */
+
+/* PAW_PAINTED_SETTINGS_COG_BEGIN */
+// Keep one accessible button and one SVG. Use original artwork only after
+// decoding; if unavailable, the existing line icon remains the fallback.
+const pawSettingsCogAsset='assets/visual/staging/2026-11-28-project-art-b10/settings-cog.webp';
+const pawSettingsCogImage=new Image();
+pawSettingsCogImage.src=pawSettingsCogAsset;
+pawSettingsCogImage.decode().then(()=>{
+ const svg=townSettingsToggle.querySelector('svg');
+ if(!svg||svg.querySelector('.pawSettingsPaintedCog'))return;
+ for(const child of svg.children)child.classList.add('pawSettingsFallbackCog');
+ const art=document.createElementNS('http://www.w3.org/2000/svg','image');
+ art.setAttribute('href',pawSettingsCogAsset);art.setAttribute('width','24');art.setAttribute('height','24');art.setAttribute('preserveAspectRatio','xMidYMid meet');art.classList.add('pawSettingsPaintedCog');
+ art.addEventListener('error',()=>{art.remove();svg.removeAttribute('data-paw-painted-cog')},{once:true});
+ svg.append(art);svg.setAttribute('data-paw-painted-cog','true');
+}).catch(()=>{});
+const pawSettingsCogStyle=document.createElement('style');pawSettingsCogStyle.textContent=`
+html #game #small #townSettingsToggle[aria-label]>svg[data-paw-painted-cog]{width:33px!important;height:33px!important}
+html #game #small #townSettingsToggle[aria-label]>svg[data-paw-painted-cog]>.pawSettingsFallbackCog{display:none}
+@media(forced-colors:active){html #game #small #townSettingsToggle[aria-label]>svg[data-paw-painted-cog]>.pawSettingsFallbackCog{display:initial}html #game #small #townSettingsToggle[aria-label]>svg>.pawSettingsPaintedCog{display:none}}
+`;document.head.append(pawSettingsCogStyle);
+/* PAW_PAINTED_SETTINGS_COG_END */
+
+
+/* PAW_TAROT_TRAVELLER_SEAT_BEGIN */
+const pawTarotChairRecords=[{w:206,h:280,hip:[71,214]},{w:215,h:283,hip:[82,225]},{w:222,h:280,hip:[82,223]},{w:239,h:279,hip:[88,225]}];
+function pawTarotChairBox(p,id){
+ const r=pawTarotChairRecords[id];if(!r||!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||Math.min(p.w,p.h)<=0)return null;
+ const h=p.h*.16,k=h/r.h,w=r.w*k,hipX=p.x+p.w*.852,hipY=p.y+p.h*.531;
+ return {x:hipX-(r.w-r.hip[0])*k,y:hipY-r.hip[1]*k,w,h,k,hipX,hipY}
+}
+function pawTarotChairAt(x,y,p){return Math.hypot(x-p.x-p.w*.75,y-p.y-p.h*.69)<=4}
+function pawTarotChairProgress(age,reduced){return reduced?1:Math.max(0,Math.min(1,age/.68))}
+/* PAW_TAROT_TRAVELLER_SEAT_END */
+const pawTarotChairImages=new Map();
+function pawTarotChairImage(id){
+ if(!pawTarotChairRecords[id])return null;
+ if(!pawTarotChairImages.has(id)){const im=new Image();im.decoding='async';im.src='assets/visual/staging/2026-11-27-extracted/players/'+id+'/seated.webp';pawTarotChairImages.set(id,im)}
+ return pawTarotChairImages.get(id)
+}
+function pawTarotChairDraw(p,id){
+ const b=pawTarotChairBox(p,id),r=pawTarotChairRecords[id],im=pawTarotChairImage(id);
+ if(!b||!r||!pawRoomImageReady(im)||im.naturalWidth!==r.w||im.naturalHeight!==r.h)return false;
+ ctx.save();try{ctx.translate(b.x+b.w,b.y);ctx.scale(-1,1);ctx.drawImage(im,0,0,b.w,b.h)}finally{ctx.restore()}
+ const art=pawReadingImage(pawReadingAPI(),'tarot');
+ if(pawRoomImageReady(art)){ctx.save();try{
+  const poly=[[.866,.496],[.892,.495],[.932,.485],[.957,.469],[.973,.46],[.977,.472],[.952,.501],[.91,.514],[.881,.514],[.876,.543],[.861,.542]];
+  ctx.beginPath();poly.forEach(([u,v],i)=>i?ctx.lineTo(p.x+u*p.w,p.y+v*p.h):ctx.moveTo(p.x+u*p.w,p.y+v*p.h));ctx.closePath();ctx.clip();ctx.drawImage(art,p.x,p.y,p.w,p.h)
+ }finally{ctx.restore()}}
+ return true
+}
+let pawTarotChairVisit=null,pawTarotChairAtTime=null,pawTarotChairLeaving=null,pawTarotChairInvited=null;
+const pawTarotChairWalkBefore=walkDoor;
+walkDoor=function(id,...args){if(id==='tarot'){const im=pawTarotChairImage(avatar??0);if(im&&!pawPictureDecoded(im))pawReadyPicture(im,4500)}return pawTarotChairWalkBefore(id,...args)};
+const pawTarotChairHumanBefore=backHuman;
+backHuman=function(x,y,id,walking,facing,scale=1){
+ if(room==='tarot'&&!activity&&pawReadingActive()&&id===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<.01){
+  if(pawTarotChairVisit!==pawHostVisit){pawTarotChairVisit=pawHostVisit;pawTarotChairAtTime=null;pawTarotChairLeaving=null;pawTarotChairInvited=null}
+  if(!walking&&pawTarotChairAt(x,y,pawReadingPlate)&&!pawTarotChairLeaving){
+   if(pawTarotChairAtTime===null)pawTarotChairAtTime=t;
+   const f=pawTarotChairProgress(t-pawTarotChairAtTime,residentReducedMotion.matches),b=pawTarotChairBox(pawReadingPlate,id);
+   if(f>=1&&pawTarotChairDraw(pawReadingPlate,id)){c.dataset.pawTarotSeat='seated';
+    if(pawTarotChairInvited!==pawHostVisit&&!talkOpen&&indoorReady()&&!indoor.goal&&!indoor.route.length){
+     const visit=pawHostVisit;pawTarotChairInvited=visit;
+     queueMicrotask(()=>{if(room==='tarot'&&!activity&&pawHostVisit===visit&&indoorReady()&&pawTarotChairAt(indoor.x,indoor.y,pawReadingPlate)&&!indoor.goal&&!indoor.route.length)action('tarot')});
+    }return;}
+   if(f<1&&b)return pawTarotChairHumanBefore(x+(b.hipX-x)*f,y+(pawReadingPlate.y+pawReadingPlate.h*.613-y)*f,id,true,'left',scale)
+  }else {pawTarotChairAtTime=null;delete c.dataset.pawTarotSeat}
+ }
+ if(room!=='tarot')delete c.dataset.pawTarotSeat;
+ return pawTarotChairHumanBefore(x,y,id,walking,facing,scale)
+};
+const pawTarotChairBackdropBefore=paintLivingBackdrop;
+paintLivingBackdrop=function(...args){
+ const result=pawTarotChairBackdropBefore(...args);
+ if(room==='tarot'&&pawReadingVisit==='tarot'&&['tarot','love'].includes(activity)){
+  const art=pawReadingImage(pawReadingAPI(),'tarot');if(pawRoomImageReady(art)){const p=pawReadingCoverPlate(livingBounds(),art.naturalWidth,art.naturalHeight);if(p&&pawTarotChairDraw(p,avatar??0))c.dataset.pawTarotSeat='seated'}
+ }
+ return result
+};
+
+
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
 
 /* Visual continuity: retain real hit areas and let the illustration breathe. */
@@ -15378,13 +15920,15 @@ const pawVisualContinuityStyle=document.createElement('style');pawVisualContinui
 /* PAW_HALL_HOME_COMPOSITION_BEGIN */
 const pawHallHomeComposition=document.createElement('style');
 pawHallHomeComposition.textContent=`
+#game #page:has(#content .pawPavilionScene){background:#eee4d0 url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important}
 #game #content .pawPavilionScene{display:block!important;max-width:560px;margin:0 auto}
+#game #content:has(.pawPavilionScene)>h1,#game #content:has(.pawPavilionScene)>p{color:#435740!important;text-shadow:none!important}
 #game #content .pawPavilionScene>.pawTownFrontPhoto{position:relative!important;isolation:isolate;width:100%;height:auto!important;aspect-ratio:3/4!important;overflow:hidden;border-radius:12px!important;margin:4px 0!important;background:#655344!important}
 #game #content .pawPavilionScene>.pawTownFrontPhoto img{visibility:visible!important;position:absolute;inset:0;width:100%;height:100%;object-fit:cover!important;object-position:center 48%!important}
 #game #content .pawTownHotspot{position:absolute!important;z-index:2;transform:translate(-50%,-50%);width:max-content;max-width:45%;min-height:44px!important;padding:7px 12px!important;background:#f5e5c5f2!important;color:#435740!important;border:1px solid #9b8056!important;border-radius:18px!important;box-shadow:0 2px 6px #34291c66;font-weight:700;font-size:clamp(12px,3.5vw,16px)!important;white-space:normal}
 #game #content .pawTownHotspot:focus-visible{outline:3px solid #eed69a;outline-offset:3px}
 #game #content .pawHallExtras{margin:5px 0 0!important;padding:0!important;background:transparent!important;border:0!important}
-#game #content .pawHallExtras .pawTownTextLink{color:#f8edcf!important;text-shadow:0 1px 3px #231c15;min-height:44px}
+#game #content .pawHallExtras .pawTownTextLink{color:#435740!important;text-shadow:none!important;min-height:44px}
 #game #content:has(.pawPavilionScene)>p{margin:4px 0!important}
 #game #content:has(.pawPavilionScene)>h1{margin:6px 0!important}
 #game #content .hideoutScene .hideoutPlayer{width:auto!important;height:var(--paw-home-height,27%)!important;max-height:30%!important;max-width:28%!important;object-fit:contain!important;filter:none!important}
@@ -15393,6 +15937,11 @@ pawHallHomeComposition.textContent=`
 #game #content .komorebiRoomTabs button{min-height:44px!important;font-size:13px!important;padding:5px 9px!important}
 #game #content:has(.pawPavilionScene),#game #content.hideoutRoomView{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
 @media(orientation:landscape) and (max-height:540px){#game #content .pawPavilionScene>.pawTownFrontPhoto{width:min(100%,55dvh);margin:0 auto!important}}
+/* The hall and personal room use the same edge-to-edge book surface as Explore. */
+#game #page:has(#content .pawPavilionScene),#game #page:has(#content.hideoutRoomView),#game #page:has(#content .hideoutRoomView){position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-height:none!important;max-width:none!important;box-sizing:border-box!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow-y:auto!important;background:#f2e4c8 url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important;padding:max(10px,env(safe-area-inset-top,0px)) 0 max(92px,calc(82px + env(safe-area-inset-bottom,0px)))!important}
+#game #page:has(#content .pawPavilionScene) #content,#game #page:has(#content.hideoutRoomView) #content,#game #page:has(#content .hideoutRoomView) #content{box-sizing:border-box!important;width:100%!important;max-width:970px!important;padding:0 clamp(14px,4vw,28px)!important;margin:0 auto!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
+#game #content:has(.pawPavilionScene)>.row,#game #content.hideoutRoomView>.row,#game #content:has(.hideoutRoomView)>.row{position:static!important;min-height:44px!important;margin:0 0 8px!important;padding:0!important;background:transparent!important}
+#game #content:has(.pawPavilionScene)>h1,#game #content.hideoutRoomView>h1,#game #content:has(.hideoutRoomView)>h1{font:600 clamp(22px,6vw,32px)/1.2 Georgia,"Songti SC",serif!important;color:#405740!important;margin:6px 0 10px!important;text-align:left!important}
 `;document.head.append(pawHallHomeComposition);
 /* PAW_HALL_HOME_COMPOSITION_END */
 
@@ -15411,3 +15960,25 @@ pawRoomGroundingStyle.textContent=`
 @media(forced-colors:active){#game #dock>button[aria-current="page"]{outline:2px solid Highlight!important}}
 `;document.head.append(pawRoomGroundingStyle);
 /* PAW_ROOM_GROUNDING_AND_DOCK_END */
+
+/* PAW_YUE_VISITOR_SEAT_BEGIN */
+// Reuse the four original transparent seated traveller poses. The right
+// chair is painted into the room: the hip is anchored to its cushion,
+// while the logical walking position remains on the aisle beside it.
+function pawYueVisitorSeat(plate,position,approach,kind,consulting,walking){
+ if(!plate||!Array.isArray(position)||!Array.isArray(approach)||!consulting||walking||!Number.isInteger(kind)||kind<0||kind>3||Math.hypot(position[0]-approach[0],position[1]-approach[1])>5)return null;
+ const [x,y]=pawReadingWorld([.685,.535],plate);
+ return {hip:{x,y},scale:.78}
+}
+let pawYueVisitorLastDraw=-Infinity;
+const pawYueVisitorBackHuman=backHuman;
+backHuman=function(x,y,kind,walking,facing,scale=1){
+ if(room==='destiny'&&pawReadingActive()&&!activity&&!transitioning&&!pawRenderedWalker&&kind===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<4){
+  const q=pawReadingAPI()?.rooms.destiny?.stations.destiny;
+  const consulting=talkOpen||($('page').dataset.pawYueDesk==='true'&&$('page').style.display==='block');
+  const seat=q&&pawYueVisitorSeat(pawReadingPlate,[x,y],pawReadingWorld(q.approach),kind,consulting,walking);
+  if(seat&&pawDrawRearSeated(pawWarmRearSeated(kind),kind,seat.hip,seat.scale)){pawYueVisitorLastDraw=t;pawSyncIdleGait(x,y,kind);return}
+ }
+ return pawYueVisitorBackHuman(x,y,kind,walking,facing,scale)
+};
+/* PAW_YUE_VISITOR_SEAT_END */

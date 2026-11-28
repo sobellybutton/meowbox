@@ -1,0 +1,51 @@
+name: Pawradise tarot traveller chair geometry
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  chair:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/tarot-right-chair-20261128'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: node scripts/tarot-traveller-chair-test.cjs
+
+  mobile:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/tarot-right-chair-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - viewport: '320x568'
+            language: EN
+          - viewport: '390x844'
+            language: 中文
+    env:
+      PAW_VIEWPORT: ${{ matrix.viewport }}
+      PAW_LANGUAGE: ${{ matrix.language }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 8772 >/tmp/tarot-chair.log 2>&1 &
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8772/index.html >/dev/null && break; sleep 1; done
+          node scripts/paw-tarot-chair-flow-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tarot-chair-${{ matrix.viewport }}
+          path: test-results/tarot-chair
