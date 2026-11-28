@@ -51,3 +51,29 @@ ck(keys('boba').includes('kitchen_small_ladle'),'existing painted scoop prewarme
 ck(ext.includes("state.pawToppingScoopPainted=typeof pawFoodPropReady"),'stable scoop artwork admission');
 ck(ext.includes("anchor:[32,68],angle:tilt+.5"),'source bowl anchor');
 console.log('PASS '+checks+' combined scoop transfer and painted asset checks');
+
+{
+ const block=ext.split('/* PAW_TEA_POUR_CONTINUITY_BEGIN */')[1].split('/* PAW_TEA_POUR_CONTINUITY_END */')[0];
+ const {admit,timing,pose}=new Function(block+';return {admit:pawTeaPourAdmission,timing:pawTeaPourTiming,pose:pawTeaFallbackPour}')();
+ for(const ready of [true,false]){
+  const q={};ck(admit(q,ready)===ready,'first artwork decision');
+  for(let i=0;i<100;i++)ck(admit(q,!ready)===ready,'no switch after decode');
+ }
+ for(const reduced of [false,true]){
+  let last=0;
+  for(let i=0;i<=1550;i++){
+   const age=i/1000,f=pose(age,reduced),v=timing(age);
+   ck(Number.isFinite(f.x)&&Number.isFinite(f.y)&&Number.isFinite(f.angle),'finite physical pour');
+   ck(f.fill>=last&&f.fill>=0&&f.fill<=1,'monotonic fill');last=f.fill;
+   ck(f.stream===v.stream,'same liquid transfer clock');
+   if(f.p<.35)ck(f.fill===0,'no liquid before pour');
+   if(f.p>=.70)ck(near(f.fill,1),'full before return');
+   if(f.stream)ck(near(f.from[0],420)&&near(f.from[1],411)&&f.to[0]===420&&f.to[1]===445,'stream begins at spout and meets cup');
+  }
+  for(const age of [0,1.55]){const f=pose(age,reduced);ck(near(f.x,530)&&near(f.y,516)&&near(f.angle,0),'same counter rest position')}
+ }
+ ck(ext.includes("fill=prepared?1:stage==='pouring'?pawTeaPourTiming(age).fill:0"),'visible cup uses transfer clock');
+ ck(startup.includes("state.teaStage==='pourReady'&&state.pawTeaPourPainted"),'ready vessel uses same art family');
+ ck(ext.includes("state.pawTeaPourPainted&&typeof pawFoodPourFrame"),'pour uses admitted family');
+ console.log('PASS '+checks+' combined tea preparation and pour continuity checks');
+}
