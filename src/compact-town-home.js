@@ -28,6 +28,12 @@ function residentPortraitPath(name){
  const entry=residentPortraits.find(v=>v[0]===name||v[1]===name);
  return entry?'assets/visual/painted/'+entry[2]+'/expressions/warm.webp':null
 }
+function roomLampAnchor(id,left,top,height,stageHeight){
+ if(!['lamp','shojiLamp','chineseLantern'].includes(id)||![left,top,height,stageHeight].every(Number.isFinite)||stageHeight<=0||height<=0||left<0||left>100||top<0||top>100)return null;
+ const half=height/stageHeight*50;
+ return {x:left,y:Math.max(0,Math.min(100,id==='chineseLantern'?top+half:top-half*.7))}
+}
+function roomLightState(lamps,dim){return lamps>0&&!dim?'lit':dim?'dim':'day'}
 // PAW_COMPACT_HELPERS_END
 function replaceExact(root,selector,oldEN,oldZH,en,cn){
  for(const node of root.querySelectorAll(selector)){
@@ -147,6 +153,41 @@ goodCompanyPage=function(q,...args){
  const privacy=q.querySelector('.goodCompanyPrivacy');if(privacy)privacy.textContent=tr('Your note stays on this device. You can choose to share it in the square.','便签仅保存在本设备。你也可以选择分享到广场。');
  return result
 };
+// Lighting follows physical furniture, never an independent floating prop.
+// Keep per-room preferences for this visit; the saved inventory is untouched.
+const roomDimByZone=new Map();
+function physicalRoomLight(stage,zone){
+ const lamps=[...stage.querySelectorAll('.hideoutPlaced')].filter(im=>['lamp','shojiLamp','chineseLantern'].includes(im.dataset.furnitureId));
+ if(!lamps.length)return;
+ if(roomDimByZone.has(zone))stage.classList.toggle('dim',roomDimByZone.get(zone));
+ const glows=lamps.map(im=>{
+  const glow=element('div','',stage,'pawRoomLampGlow');glow.setAttribute('aria-hidden','true');return {im,glow}
+ });
+ function sync(){
+  if(!stage.isConnected)return;
+  const dim=stage.classList.contains('dim');roomDimByZone.set(zone,dim);
+  stage.dataset.pawRoomLight=roomLightState(lamps.length,dim);
+  for(const {im,glow} of glows){
+   const anchor=roomLampAnchor(im.dataset.furnitureId,parseFloat(im.style.left),parseFloat(im.style.top),im.offsetHeight,stage.clientHeight);
+   glow.hidden=!anchor;if(anchor){glow.style.left=anchor.x+'%';glow.style.top=anchor.y+'%'}
+   im.setAttribute('aria-pressed',String(!dim));im.setAttribute('aria-label',dim?tr('Turn lamp on','开灯'):tr('Turn lamp off','关灯'))
+  }
+ }
+ for(const {im} of glows){
+  // Existing floor lamps retain their approach-to-object click handlers.
+  // The ceiling lantern is reachable via tap/keyboard without an extra page.
+  if(im.dataset.furnitureId==='chineseLantern'&&!im.hasAttribute('role')){
+   im.tabIndex=0;im.setAttribute('role','button');
+   im.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();im.click()}}
+  }
+  im.addEventListener('load',sync,{once:true});
+ }
+ const observer=new MutationObserver(sync);observer.observe(stage,{attributes:true,attributeFilter:['class']});
+ if(typeof ResizeObserver==='function'){
+  const resize=new ResizeObserver(()=>{if(!stage.isConnected){resize.disconnect();observer.disconnect();return}sync()});resize.observe(stage);
+ }
+ sync();
+}
 const homeBefore=hideoutPage;
 hideoutPage=function(...args){
  const result=homeBefore(...args),q=$('content'),stage=q.querySelector('.hideoutScene');
@@ -178,6 +219,7 @@ hideoutPage=function(...args){
    const tray=element('div','',fold,'pawRoomExtraTray');extras.forEach(btn=>tray.append(btn))
   }
  }
+ physicalRoomLight(stage,String(komorebiZone));
  const expansion=q.querySelector('.pawHomeExpansion');
  if(expansion){
   const fold=element('details','',q,'pawRoomExpansionFold');element('summary',tr('Room expansions','小窝扩建'),fold);expansion.before(fold);fold.append(expansion)
@@ -185,6 +227,11 @@ hideoutPage=function(...args){
  return result
 };
 const style=document.createElement('style');style.textContent=`
+#game #content .pawRoomLampGlow{position:absolute;z-index:4;width:44%;aspect-ratio:1;pointer-events:none;transform:translate(-50%,-50%);background:radial-gradient(ellipse at center,#ffe7a659 0%,#f9d48a22 38%,transparent 72%);opacity:0;transition:opacity .4s}
+#game #content .pawRoomLampGlow[hidden]{display:none!important}
+#game #content .pawRoomFirst[data-paw-room-light=lit] .pawRoomLampGlow{opacity:1}
+#game #content .pawRoomFirst[data-paw-room-light=dim] .pawRoomLampGlow{opacity:0}
+@media(prefers-reduced-motion:reduce){#game #content .pawRoomLampGlow{transition:none}}
 #game #content .pawTownWithPortrait.pawTownWithPortrait{position:relative;min-height:64px;padding-left:62px!important;box-sizing:border-box}
 #game #content .pawTownPortrait{position:absolute;top:12px;left:8px;width:44px;height:44px;object-fit:cover;object-position:center 35%;border-radius:50%;background:#e8d9bb;border:1px solid #ae9774;box-sizing:border-box}
 #game #content .pawTownWithPortrait>strong{min-height:20px}
