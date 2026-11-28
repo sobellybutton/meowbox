@@ -1,9 +1,13 @@
 /* Arcade painted reveal, loaded after the base activity renderer.
    Purchase, reward, input, and save rules remain in their original functions. */
 /* PAW_BLIND_PAINTED_RUNTIME_BEGIN */
-let pawBlindPairCache=null;
-function pawBlindPreparePair(){
- if(pawBlindPairCache||typeof PawBlindReveal==='undefined')return pawBlindPairCache;
+let pawBlindPairCache=null,pawBlindPairVisit=null;
+function pawBlindPreparePair(visit){
+ if(typeof PawBlindReveal==='undefined')return pawBlindPairCache;
+ // A failed download is not a permanent art decision. Retry on a new
+ // shelf visit only, never every animation frame or halfway through a reveal.
+ if(pawBlindPairCache&&(!pawBlindPairCache.failed||pawBlindPairVisit===visit))return pawBlindPairCache;
+ pawBlindPairVisit=visit;
  const pair={images:{},decoded:false,failed:false};
  pawBlindPairCache=pair;
  const jobs=Object.entries(PawBlindReveal.assets).map(([key,path])=>new Promise((resolve,reject)=>{
@@ -25,7 +29,7 @@ function pawBlindPaintedReveal(run,stage,age,pair,reduced,drawFigure){
 }
 /* PAW_BLIND_PAINTED_RUNTIME_END */
 drawBlindShopStage=function(){
- const stage=state.boxStage,age=t-state.boxAt,portrait=W<H,stock=blindStockRemaining(),paintedPair=pawBlindPreparePair();
+ const stage=state.boxStage,age=t-state.boxAt,portrait=W<H,stock=blindStockRemaining(),paintedPair=pawBlindPreparePair(state);
  // One authored shop sign, grounded shelves, and a work counter. The existing
  // room painting remains behind this vector staging draft.
  round(245,230,310,61,5,'#e9d8b6','#92734e');
