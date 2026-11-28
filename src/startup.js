@@ -4238,28 +4238,16 @@ function pawTownLink(parent,key,en,cn,detailEn,detailCn){
 function pawTownFront(){
  if(transitioning)return;
  pawTownFromDock=true;activePage='pawTownFront';
- page(tr('Town Hall','小镇广场'),tr('Pull up a chair. There is always something to read or someone to talk to.','来坐坐吧，总有故事可看，也有话可聊。'),q=>{
+ page(tr('Town Hall','小镇广场'),tr('Tap a spot to join in.','点一点，加入小镇的热闹。'),q=>{
   const front=element('section','',q,'pawTownFront');
-  const photo=element('figure','',front,'pawTownFrontPhoto'),im=element('img','',photo);im.src=pawTownPavilionPath;im.alt=tr('Town Hall pavilion','小镇广场长廊');element('figcaption',tr('A little company between adventures','逛累了，就来聊两句'),photo);
-  const chat=element('section','',front,'pawTownSection');
-  element('h2',tr('Come sit with us','来坐坐吧'),chat);
-  pawTownLink(chat,'lounge','Tea chat','茶馆闲聊','Pull up a chair and chat with the residents.','坐下来，和小镇居民聊两句吧。');
-  pawTownLink(chat,'public','Traveller lobby','旅人聊天室',communityURL()?'Chat with real visitors.':'Live chat is not open yet.',communityURL()?'和真实旅人聊聊天。':'真人聊天室尚未开放。');
-  const news=element('section','',front,'pawTownSection pawTownPinned');
-  element('h2',tr('On the noticeboard','留言墙上'),news);
-  element('small',tr('From the neighbourhood','来自小镇街坊'),news);
-  element('p',tr(...pawWeekNote()),news,'pawTownWeek');
-  const latest=townPublishedNotices().slice(0,2);
-  for(const {thread:m} of latest){const note=element('article','',news,'pawTownPreview');element('strong',tr(...m[0]),note);element('p',tr(...m[1]),note);element('small',m[2].length+' '+tr('replies','条回复'),note)}
-  b(news,tr('Read the noticeboard & replies ›','看看留言和回复 ›'),()=>pawOpenTownSpace('board')).className='pawTownTextLink';
-  const more=element('section','',front,'pawTownSection');
-  element('h2',tr('A little more company','还有这些小热闹'),more);
-  pawTownLink(more,'celebrate','Good things','小确幸','Share a little win or celebrate privately.','分享小胜利，也可以自己庆祝。');
-  pawTownLink(more,'stroll','Meet travellers','结伴散步','Optional shared walks, when available.','联机开放时，可自愿结伴散步。');
-  const paper=b(more,tr('Town paper & private notes ›','小镇日报与私密留言 ›'),()=>todayScoopBefore.call($('dockScoop')));paper.className='pawTownTextLink';
-  const tray=element('div','',front,'pawPavilionTray');tray.append(chat,news,more);
-  const previews=[...news.querySelectorAll('.pawTownWeek,.pawTownPreview')];
-  if(previews.length){const fold=element('details','',news,'pawPavilionNews');element('summary',tr('A glimpse of today’s news','今日小镇见闻'),fold);previews[0].before(fold);previews.forEach(n=>fold.append(n))}
+  const photo=element('figure','',front,'pawTownFrontPhoto'),im=element('img','',photo);im.src=pawTownPavilionPath;im.alt='';
+  const hotspot=(id,en,cn,x,y,fn)=>{const btn=b(photo,tr(en,cn),fn||(()=>pawOpenTownSpace(id)));btn.className='pawTownHotspot';btn.style.left=x+'%';btn.style.top=y+'%';return btn};
+  hotspot('board','Noticeboard','留言墙',24,48);
+  hotspot('lounge','Tea chat','茶馆闲聊',25,70);
+  hotspot('celebrate','Good things','小确幸',76,56);
+  const more=element('section','',front,'pawTownSection pawHallExtras');
+  if(communityURL()){pawTownLink(more,'public','Traveller lobby','旅人聊天室','Chat with real visitors.','和真实旅人聊聊天。');pawTownLink(more,'stroll','Meet travellers','结伴散步','Join a shared walk.','结伴散步。')}
+  const paper=b(more,tr('Town paper & private notes','小镇日报与私密留言'),()=>todayScoopBefore.call($('dockScoop')));paper.className='pawTownTextLink';
   front.classList.add('pawPavilionScene');
  });
  const q=$('content'),back=q.querySelector(':scope > .row button:first-child');
@@ -15380,3 +15368,25 @@ const pawVisualContinuityStyle=document.createElement('style');pawVisualContinui
 #game #content .hideoutPrimary button{border-radius:5px!important;box-shadow:none!important}
 #game.pawDockRoot.pawFocusedView:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){z-index:24!important;background:#eee5d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 145px repeat!important;box-shadow:0 3px 10px #2e352c55!important}
 `;document.head.append(pawVisualContinuityStyle);
+
+
+/* PAW_HALL_HOME_COMPOSITION_BEGIN */
+const pawHallHomeComposition=document.createElement('style');
+pawHallHomeComposition.textContent=`
+#game #content .pawPavilionScene{display:block!important;max-width:560px;margin:0 auto}
+#game #content .pawPavilionScene>.pawTownFrontPhoto{position:relative!important;isolation:isolate;width:100%;height:auto!important;aspect-ratio:3/4!important;overflow:hidden;border-radius:12px!important;margin:4px 0!important;background:#655344!important}
+#game #content .pawPavilionScene>.pawTownFrontPhoto img{visibility:visible!important;position:absolute;inset:0;width:100%;height:100%;object-fit:cover!important;object-position:center 48%!important}
+#game #content .pawTownHotspot{position:absolute!important;z-index:2;transform:translate(-50%,-50%);width:max-content;max-width:45%;min-height:44px!important;padding:7px 12px!important;background:#f5e5c5f2!important;color:#435740!important;border:1px solid #9b8056!important;border-radius:18px!important;box-shadow:0 2px 6px #34291c66;font-weight:700;font-size:clamp(12px,3.5vw,16px)!important;white-space:normal}
+#game #content .pawTownHotspot:focus-visible{outline:3px solid #eed69a;outline-offset:3px}
+#game #content .pawHallExtras{margin:5px 0 0!important;padding:0!important;background:transparent!important;border:0!important}
+#game #content .pawHallExtras .pawTownTextLink{color:#f8edcf!important;text-shadow:0 1px 3px #231c15;min-height:44px}
+#game #content:has(.pawPavilionScene)>p{margin:4px 0!important}
+#game #content:has(.pawPavilionScene)>h1{margin:6px 0!important}
+#game #content .hideoutScene .hideoutPlayer{width:22%!important;height:auto!important;max-height:34%!important;object-fit:contain!important;filter:drop-shadow(0 4px 2px #33271e55)!important}
+#game #content .hideoutRoomView .hideoutScene{margin:4px 0!important}
+#game #content .komorebiRoomTabs{margin:4px 0!important;gap:6px}
+#game #content .komorebiRoomTabs button{min-height:44px!important;font-size:13px!important;padding:5px 9px!important}
+#game #content:has(.pawPavilionScene),#game #content.hideoutRoomView{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
+@media(orientation:landscape) and (max-height:540px){#game #content .pawPavilionScene>.pawTownFrontPhoto{width:min(100%,55dvh);margin:0 auto!important}}
+`;document.head.append(pawHallHomeComposition);
+/* PAW_HALL_HOME_COMPOSITION_END */
