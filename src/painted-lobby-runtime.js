@@ -472,9 +472,9 @@ function pawEditorialTarot(cv,data,format,cn,box,paper,atlas,deck,positions){
    g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(atlas,c.i%8*128,Math.floor(c.i/8)*218,128,218,-cw/2,-ch/2,cw,ch);
   }finally{g.restore()}
   const role=locale(positions[i]);
-  text([lx,ly,lw,28],role,24,20,1,'normal',muted);
-  text([lx,ly+29,lw,54],locale(deck[c.i]),data.cards.length===5?28:36,21,2,'bold');
-  text([lx,ly+84,lw,28],c.rev?(cn?'逆位':'Reversed'):(cn?'正位':'Upright'),24,20,1,'normal',muted);
+  text([lx,ly,lw,30],role,28,23,1,'normal',ink);
+  text([lx,ly+30,lw,54],locale(deck[c.i]),data.cards.length===5?31:40,23,2,'bold');
+  text([lx,ly+84,lw,28],c.rev?(cn?'逆位':'Reversed'):(cn?'正位':'Upright'),27,23,1,'normal',ink);
  });
  const [rx,ry,rw,rh]=plan.reading;
  g.strokeStyle='#bca17d';g.lineWidth=2;g.beginPath();g.moveTo(rx+rw*.38,ry);g.lineTo(rx+rw*.62,ry);g.stroke();
@@ -514,8 +514,9 @@ function pawEditorialResultPlan(box,mode,count){
  }
  if(mode==='scores'){
   if(!Number.isInteger(count)||count<1||count>9)return null;
-  const cols=count>=7?2:1,rows=Math.ceil(count/cols),colW=(w-(cols-1)*34)/cols,rowH=Math.min(152,body[3]/rows),oy=body[1]+(body[3]-rowH*rows)/2;
-  return {title,footer,body,rows:Array.from({length:count},(_,i)=>[x+(i%cols)*(colW+30),oy+Math.floor(i/cols)*rowH,colW,rowH])}
+  const cols=count>=7?2:1,rows=Math.ceil(count/cols),colW=(w-(cols-1)*34)/cols;
+  const noteH=Math.min(150,Math.floor(body[3]*.19)),rowH=Math.min(184,(body[3]-noteH-24)/rows),oy=body[1]+Math.max(0,(body[3]-noteH-24-rowH*rows)/2);
+  return {title,footer,body,note:[x,body[1]+body[3]-noteH,w,noteH],rows:Array.from({length:count},(_,i)=>[x+(i%cols)*(colW+34),oy+Math.floor(i/cols)*rowH,colW,rowH])}
  }
  const artH=Math.round(body[3]*(H>1000?.64:.55));
  return {title,footer,body,art:[x,body[1],w,artH],summary:[x,body[1]+artH+12,w,body[3]-artH-12]}
@@ -546,20 +547,24 @@ function pawEditorialOther(cv,data,format,cn,box,paper,art,quote){
   plan.cells.forEach((rect,i)=>{
    const [a,b,c,d]=rect,p=data.palaces[i];
    g.strokeStyle=accent;g.lineWidth=1.5;g.strokeRect(a,b,c,d);
-   text([a+3,b+4,c-6,d*.32],locale(p.name),25,17,2,'bold',accent);
+   text([a+3,b+4,c-6,d*.32],locale(p.name),30,22,2,'bold',ink);
    const names=p.stars.length?p.stars.map(locale).join(cn?'、':' / '):(cn?'无主星':'No main star');
-   text([a+3,b+d*.35,c-6,d*.63-3],names,22,16,4)
+   text([a+3,b+d*.35,c-6,d*.63-3],names,28,20,4,'normal',ink)
   });
   text(plan.center,cn?'十二宫\n传统文化小记':'Twelve palaces · Traditional symbolism',31,22,3,'normal',accent);
  }else if(scores){
   plan.rows.forEach((rect,i)=>{
    const [a,b,c,d]=rect,row=data.scoreRows[i],label=locale(row.label),value=locale(row.value);
-   const split=c*.71,bar=pawEditorialScoreRatio(value),labelH=bar?d*.65:d-8;
-   text([a,b,split-8,labelH],label,data.scoreRows.length>=7?33:40,25,2,'normal',ink,'left');
-   text([a+split,b,c-split,labelH],value,38,28,2,'bold',ink,'right');
-   if(bar){const bx=a+5,by=b+labelH+4,bw=c-10,bh=Math.min(11,d*.12);g.globalAlpha=.19;g.fillStyle=accent;g.fillRect(bx,by,bw,bh);g.globalAlpha=1;g.fillStyle=accent;if(bar.ratio>0)g.fillRect(bx,by,bw*bar.ratio,bh);if(bar.split){g.fillStyle=ink;g.globalAlpha=.35;g.fillRect(bx+bw/2-1,by-3,2,bh+6);g.globalAlpha=1}}
+   const split=c*.72,bar=pawEditorialScoreRatio(value),labelH=bar?d*.62:d-8;
+   text([a,b,split-8,labelH],label,data.scoreRows.length>=7?36:44,28,2,'normal',ink,'left');
+   text([a+split,b,c-split,labelH],value,42,29,2,'bold',ink,'right');
+   if(bar){const bx=a+5,by=b+labelH+4,bw=c-10,bh=Math.min(18,d*.16);g.globalAlpha=.19;g.fillStyle=accent;g.fillRect(bx,by,bw,bh);g.globalAlpha=1;g.fillStyle=accent;if(bar.ratio>0)g.fillRect(bx,by,bw*bar.ratio,bh);if(bar.split){g.fillStyle=ink;g.globalAlpha=.35;g.fillRect(bx+bw/2-1,by-3,2,bh+6);g.globalAlpha=1}}
    else rule(a,b+d-2,c);
   });
+  const note=locale(data.lines?.[0])||locale(quote)||(cn?'此刻的探索小记，不是固定标签。':'A snapshot for reflection, not a fixed label.');
+  const [nx,ny,nw,nh]=plan.note;
+  rule(nx+nw*.4,ny+4,nw*.2);
+  text([nx+12,ny+16,nw-24,nh-16],note,cn?36:38,28,3,'normal',ink);
  }else{
   const [a,b,c,d]=plan.art;
   // Show existing illustration in its native proportions; no forced crop
