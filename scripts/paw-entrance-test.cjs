@@ -167,6 +167,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       assert.equal(await page.locator('.pawRailWayfinding').count(),0,'Duplicate station action');
      }
      if(id==='dockValley'){
+      const screen=await page.evaluate(()=>{const a=$('page').getBoundingClientRect(),b=$('game').getBoundingClientRect();return Math.max(Math.abs(a.left-b.left),Math.abs(a.top-b.top),Math.abs(a.right-b.right),Math.abs(a.bottom-b.bottom))});assert(screen<=2,'Dock page does not fill the game viewport: '+screen);
       assert.equal(await page.locator('.pawPavilionScene .pawTownHotspot').count(),3,'Town Hall offers three in-scene destinations');
       assert.equal(await page.locator('.pawPavilionTray').count(),0,'No foreground menu covering hall');
       assert(await page.locator('.pawPavilionScene .pawTownFrontPhoto img').isVisible(),'Pavilion artwork is visible');
@@ -197,6 +198,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
      if(id==='dockOwnHome'){
       const structure=await page.evaluate(()=>{const q=$('content'),room=q.querySelector('.hideoutScene'),actions=q.querySelector('.hideoutPrimary'),expansion=q.querySelector('.pawRoomExpansionFold');return {first:!!room&&!!actions&&!!(room.compareDocumentPosition(actions)&Node.DOCUMENT_POSITION_FOLLOWING),folded:!!expansion&&!expansion.open,top:room?.getBoundingClientRect().top,visible:room?.getBoundingClientRect().height}});
       assert(structure.first&&structure.folded&&structure.visible>0&&structure.top<height*.5,'Room should appear before administration: '+JSON.stringify(structure));
+      const screen=await page.evaluate(()=>{const a=$('page').getBoundingClientRect(),b=$('game').getBoundingClientRect();return Math.max(Math.abs(a.left-b.left),Math.abs(a.top-b.top),Math.abs(a.right-b.right),Math.abs(a.bottom-b.bottom))});assert(screen<=2,'Dock page does not fill the game viewport: '+screen);
       const actor=await page.evaluate(()=>{const s=document.querySelector('.hideoutScene'),a=s?.querySelector('.hideoutPlayer'),shadow=s?.querySelector('.pawHomeContactShadow');return {ratio:a?.getBoundingClientRect().height/s?.getBoundingClientRect().height,foot:a?.style.top,shadow:shadow?.style.top}});
       assert(actor.ratio>=.22&&actor.ratio<=.31&&actor.foot===actor.shadow,'Room traveller scale and contact shadow: '+JSON.stringify(actor));
      }

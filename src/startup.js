@@ -15968,6 +15968,11 @@ pawHallHomeComposition.textContent=`
 #game #content .komorebiRoomTabs button{min-height:44px!important;font-size:13px!important;padding:5px 9px!important}
 #game #content:has(.pawPavilionScene),#game #content.hideoutRoomView{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
 @media(orientation:landscape) and (max-height:540px){#game #content .pawPavilionScene>.pawTownFrontPhoto{width:min(100%,55dvh);margin:0 auto!important}}
+/* The hall and personal room use the same edge-to-edge book surface as Explore. */
+#game #page:has(#content .pawPavilionScene),#game #page:has(#content.hideoutRoomView),#game #page:has(#content .hideoutRoomView){position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-height:none!important;max-width:none!important;box-sizing:border-box!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow-y:auto!important;background:#f2e4c8 url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important;padding:max(10px,env(safe-area-inset-top,0px)) 0 max(92px,calc(82px + env(safe-area-inset-bottom,0px)))!important}
+#game #page:has(#content .pawPavilionScene) #content,#game #page:has(#content.hideoutRoomView) #content,#game #page:has(#content .hideoutRoomView) #content{box-sizing:border-box!important;width:100%!important;max-width:970px!important;padding:0 clamp(14px,4vw,28px)!important;margin:0 auto!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
+#game #content:has(.pawPavilionScene)>.row,#game #content.hideoutRoomView>.row,#game #content:has(.hideoutRoomView)>.row{position:static!important;min-height:44px!important;margin:0 0 8px!important;padding:0!important;background:transparent!important}
+#game #content:has(.pawPavilionScene)>h1,#game #content.hideoutRoomView>h1,#game #content:has(.hideoutRoomView)>h1{font:600 clamp(22px,6vw,32px)/1.2 Georgia,"Songti SC",serif!important;color:#405740!important;margin:6px 0 10px!important;text-align:left!important}
 `;document.head.append(pawHallHomeComposition);
 /* PAW_HALL_HOME_COMPOSITION_END */
 
