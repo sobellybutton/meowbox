@@ -13240,6 +13240,31 @@ function pawYueChartParchment(q,pane,form,out){
  pawYueChartObserver=new MutationObserver(sync);pawYueChartObserver.observe(out,{childList:true,subtree:true});
  sync()
 }
+/* PAW_YUE_SINGLE_PAPER_BEGIN */
+function pawYueDeskArrange(q,pane,form,out){
+ // The existing scene already contains the host. Keep one question/result
+ // surface; optional consultation settings belong on the same sheet.
+ const strip=q.querySelector(':scope > .yueSubjectStrip'),tools=q.querySelector(':scope > .yueChartTools'),privacy=q.querySelector(':scope > .yueDeskPrivacy');
+ if(!strip&&!tools&&!privacy)return;
+ const anchor=out||form||q.querySelector('.signNotebookGrid');
+ if(!anchor)return;
+ const footer=element('details','',q,'pawYueDeskOptions');
+ element('summary',tr('Reading options & privacy','问事选项与隐私'),footer);
+ anchor.after(footer);
+ if(strip)footer.append(strip);
+ if(tools){
+  const edit=[...tools.querySelectorAll('button')].find(v=>[tr('Edit birth details','修改生辰资料'),tr('Change birth date','修改出生日期')].includes(v.textContent));
+  if(edit)footer.before(edit);
+  footer.append(tools)
+ }
+ if(privacy)footer.append(privacy);
+ const intro=q.querySelector(':scope > .yueCompactIntro');
+ if(intro)intro.hidden=true;
+ // Opening an option must not scroll the next question out of view.
+ // Leave the disclosure closed unless a visitor deliberately opens it.
+ pane.scrollTop=0
+}
+/* PAW_YUE_SINGLE_PAPER_END */
 function pawYueDeskPresent(kind){
  if(room!=='destiny')return;
  const q=$('content'),pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
@@ -13260,7 +13285,16 @@ function pawYueDeskPresent(kind){
    if(strip)form.after(strip);
    if(tools)(strip||form).after(tools);
   }
+  // Re-enter the same guided birth paper when a completed chart is edited.
+  // Existing input values and the original calculation handlers stay intact.
+  const edit=[...q.querySelectorAll('.yueChartTools button')].find(v=>v.textContent===tr('Edit birth details','修改生辰资料'));
+  if(edit)edit.addEventListener('click',()=>{
+   if(room!=='destiny'||!form.isConnected||form.hidden)return;
+   if(!form.classList.contains('pawYueGuidedForm'))pawYueQuestionSteps(form,out,kind);
+   pane.scrollTop=0
+  });
  }
+ pawYueDeskArrange(q,pane,form,out);
  if(kind==='chart')pawYueChartParchment(q,pane,form,out);
 }
 const pawYueDeskChartBefore=destinyPage;
@@ -13288,6 +13322,13 @@ pawYueDeskCSS.textContent=`
 #game #page[data-paw-yue-expanded="true"] #content{max-width:860px!important;width:100%!important}
 #game #page[data-paw-yue-desk="true"] .pawYueParchmentTools{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 #game #page[data-paw-yue-desk="true"] .pawYueParchmentTools[hidden]{display:none!important}
+#game #page[data-paw-yue-desk="true"] .pawYueDeskOptions{margin:10px 0 2px;border:0;border-top:1px solid #b69a7099;background:transparent;box-shadow:none}
+#game #page[data-paw-yue-desk="true"] .pawYueDeskOptions>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:#536454;text-decoration:underline;text-underline-offset:3px}
+#game #page[data-paw-yue-desk="true"] .pawYueDeskOptions>summary:focus-visible{outline:2px solid #3b6553;outline-offset:-2px}
+#game #page[data-paw-yue-desk="true"] .pawYueDeskOptions:not([open])>*:not(summary){display:none!important}
+#game #page[data-paw-yue-desk="true"] .pawYueDeskOptions .yueSubjectStrip{background:transparent!important;border:0!important;box-shadow:none!important}
+#game #page[data-paw-yue-desk="true"] #content>.yueCompactIntro[hidden],#game #page[data-paw-yue-desk="true"] #content>button[hidden]{display:none!important}
+
 #game #page[data-paw-yue-desk="true"] .pawYueParchmentTools button{flex:1;min-height:44px}
 #game #page[data-paw-yue-expanded="true"] .ziGrid article:not(.blank){overflow-wrap:anywhere;min-width:0}
 #game #pawRoomGuideToggle:not(:focus-visible),#destinyAccess:not(:focus-visible){clip-path:inset(50%)!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;overflow:hidden!important;pointer-events:none!important;padding:0!important;border:0!important}
