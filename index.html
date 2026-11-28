@@ -4,12 +4,14 @@
 /* PAW_BOOT_ART_BEGIN */
 function bootEntranceArt(storage,wide){
  let returning=false;
- try{returning=JSON.parse(storage.getItem('meowbox-preview-avatar'))!=null}catch{}
+ try{const avatar=JSON.parse(storage.getItem('meowbox-preview-avatar'));returning=Number.isInteger(avatar)&&avatar>=0&&avatar<=3}catch{}
  return returning?{kind:'gate',path:'assets/visual/painted/worlds/gateway/scene.webp'}:{kind:'station',path:'assets/visual/painted/recovered/scenes/station_'+(wide?'landscape':'portrait')+'.webp'}
 }
 /* PAW_BOOT_ART_END */
-let bootEntrance;
-try{bootEntrance=bootEntranceArt(window.localStorage,matchMedia('(min-aspect-ratio: 23/20)').matches)}catch{bootEntrance=bootEntranceArt(null,false)}
+let bootStorage=null,bootWide=false;
+try{bootStorage=window.localStorage}catch{}
+try{bootWide=matchMedia('(min-aspect-ratio: 23/20)').matches}catch{}
+const bootEntrance=bootEntranceArt(bootStorage,bootWide);
 document.documentElement.dataset.bootArt=bootEntrance.kind;
 const bootPreload=document.createElement('link');bootPreload.rel='preload';bootPreload.as='image';bootPreload.href=bootEntrance.path;bootPreload.setAttribute('fetchpriority','high');document.head.append(bootPreload);
 </script>
@@ -24,7 +26,7 @@ main{position:relative;align-self:end;text-align:center;box-sizing:border-box;wi
 <img class="bootGate" alt="" fetchpriority="high" decoding="async">
 <script>document.querySelector('.bootGate').src=bootEntrance.path;</script>
 <div class="bootShade" aria-hidden="true"></div>
-<main><h1>Pawradise</h1><small role="status" aria-live="polite">Preparing your journey…</small><progress id="bootProgress" max="12" value="0" aria-label="Preparing your journey"></progress></main>
+<main><h1>Pawradise</h1><small role="status" aria-live="polite"></small><progress id="bootProgress" value="0"></progress></main>
 <script>
 const bootMark=name=>{try{performance.mark('paw:'+name)}catch{}};
 bootMark('boot-start');
