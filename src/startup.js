@@ -11358,6 +11358,11 @@ const pawFortunePainting={
   station:{approach:[568,365],plaque:[568,282],hit:[430,245,304,126]}
  }
 };
+// Painted-door taps follow the same discovery rules as the visible plaques.
+function pawFortuneDoorHitAllowed(id,player,doors,nearby,railNearby){
+ const door=doors?.[id];if(!door||!player||!nearby(id,player.y,doors))return false;
+ return id!=='station'||railNearby('fortune',player,door.approach)
+}
 function pawFortuneDoorPlan(id,from,points=pawFortunePainting.player){
  const entry=pawFortunePainting.doors[id];if(!entry)return null;
  const end={x:entry.approach[0],y:entry.approach[1]};
@@ -11403,7 +11408,15 @@ walkDoor=function(id,...args){
 // actual actors, interaction targets, dialogue, footsteps and atmosphere.
 const pawFortuneDrawBefore=drawRoute;
 drawRoute=function(...args){
- const previousGlow=glow;
+ const previousGlow=glow,previousTarget=target;
+ target=function(x,y,w,h,fn,id){
+  const door=Object.entries(pawFortunePainting.doors).find(([,d])=>d.hit[0]===x&&d.hit[1]===y&&d.hit[2]===w&&d.hit[3]===h);
+  if(door){
+   if(!pawFortuneDoorHitAllowed(door[0],p,pawFortunePainting.doors,pawValleyDoorNearby,pawFortuneRailNearby))return;
+   return previousTarget(x,y,w,h,fn,'paw-valley-door-'+door[0])
+  }
+  return previousTarget(x,y,w,h,fn,id)
+ };
  glow=function(x,y,...rest){
   if([[108,1280],[130,912],[475,918],[620,664],[960,594],[306,407],[855,267]].some(v=>v[0]===x&&v[1]===y))return;
   return previousGlow(x,y,...rest)
@@ -11411,7 +11424,7 @@ drawRoute=function(...args){
  try{
   if(!pics.valleyClean?.naturalWidth){ctx.fillStyle='#31483d';ctx.fillRect(0,0,1000,routeHeight);return}
   return pawFortuneDrawBefore(...args)
- }finally{glow=previousGlow}
+ }finally{glow=previousGlow;target=previousTarget}
 };
 /* PAW_NEW_DISTRICTS_BEGIN */
 // Independent art-calibrated world registrations. Preserve the legacy
