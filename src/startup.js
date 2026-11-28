@@ -9582,6 +9582,14 @@ function pawIncensePickup(hand,pick,age){
  const f=Math.max(0,Math.min(1,age<.32?age/.32:(.72-age)/.40)),v=f*f*(3-2*f);
  return {x:hand.x+(pick.x-hand.x)*v,y:hand.y+(pick.y-hand.y)*v}
 }
+// Hold the actual lit tip at the painted flame through the ignition window.
+function pawIncenseLighting(hand,flame,age){
+ const ease=v=>{v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)};
+ const reach=age<.65?ease(age/.65):age<=1.05?1:ease((1.65-age)/.6);
+ const angle=1.05*reach,length=39;
+ const contact={x:flame.x-Math.sin(angle)*length,y:flame.y+Math.cos(angle)*length};
+ return {angle,reach,grip:{x:hand.x+(contact.x-hand.x)*reach,y:hand.y+(contact.y-hand.y)*reach}};
+}
 /* PAW_TEMPLE_OWNER_CONTACT_END */
 function pawDrawIncenseSupply(supply){
  const {rack,remaining}=supply,x=rack.x,y=rack.y;
@@ -9623,11 +9631,10 @@ function pawPrayerStep(){
   else if(stage==='returnMat'){foot=pawIncenseReturnFoot(p,age);dir=age<.75?'down':'left'}
   const sc=pawTempleContactScale(cam.scale,1.55),hand={x:foot.x+(dir==='left'?-15:dir==='up'?9:17)*sc,y:foot.y-48*sc+q.bow*9};
   // The right-side incense supply is separate from the red fortune tube on the left.
-  const reach=stage==='taking'?Math.sin(Math.PI*Math.min(1,age/.72)):stage==='lighting'?Math.sin(Math.PI*Math.min(1,age/1.65)):0;
-  const reaching=stage==='taking',flame=supply.flame,pick=reaching?pawIncensePickup(hand,supply.pick,age):null;
-  const lightAngle=stage==='lighting'?1.05*reach:0;
-  const lightGrip={x:flame.x-Math.sin(lightAngle)*39,y:flame.y+Math.cos(lightAngle)*39};
-  const grip=stage==='placing'?blend(hand,burner,poseEase(Math.max(0,Math.min(1,(age-1.25)/.65)))):stage==='lighting'?blend(hand,lightGrip,reach):hand;
+  const reaching=stage==='taking',pick=reaching?pawIncensePickup(hand,supply.pick,age):null;
+  const lighting=stage==='lighting'?pawIncenseLighting(hand,supply.flame,age):{angle:0,grip:hand};
+  const lightAngle=lighting.angle;
+  const grip=stage==='placing'?blend(hand,burner,poseEase(Math.max(0,Math.min(1,(age-1.25)/.65)))):lighting.grip;
   const placed=!!state.prayerOffered||stage==='placing'&&age>=1.98;
   const shown=placed||['returnMat','complete'].includes(stage)?0:Math.min(3,held);
   // The empty supply stays on the counter throughout the ritual.
