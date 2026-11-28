@@ -924,13 +924,11 @@
       "stage": "tested",
       "evidence": [
         "39f30e29: original surface-specific footstep noise, distance-based alternating cadence and train rhythm; 25 mocked audio/guard assertions passed.",
-        "Project batch 26: a71fff06 + bc42d4bb alternate quieter and stronger railway wheel pulses, reset phase at ride lifecycle and preserve mute/pause gates. Real listening and device verification pending."
+        "Project batch 26: a71fff06 + bc42d4bb alternate quieter and stronger railway wheel pulses, reset phase at ride lifecycle and preserve mute/pause gates. Real listening and device verification pending.",
+        "4427eabf + e918c75e: live movement module cancels active own sound nodes on existing runtime reset; 44 exact persisted mocked/cadence assertions pass."
       ],
-      "lease": {
-        "owner": "manual-motion-audio-1254",
-        "until": 1795843493893
-      },
-      "blocker": "Connect to existing audio bus and movement lifecycle after shared startup lease clears; real listening/mobile mute and background checks outstanding."
+      "lease": null,
+      "blocker": "Live startup integration verified in source. Actual listening, phone/desktop mute and background behavior, transition audio synchronization, full build and deployment remain unverified."
     },
     {
       "id": "TEMPLE-WATER-01",
