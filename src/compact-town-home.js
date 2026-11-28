@@ -698,5 +698,35 @@ const style=document.createElement('style');style.textContent=`
 @media(forced-colors:active){
  #game #content:has(.pawPavilionScene)>h1,#game #content:has(.pawPavilionScene)>p,#game #content .pawPavilionTray{color:CanvasText!important;background:Canvas!important;text-shadow:none!important}
 }
+
+/* Root dock pages: one physical object or setting, not nested web cards.
+   Scope these rules to existing native page markers so room activities,
+   forms and shared community input retain their own layout and handlers. */
+#game #page:has(#content .pawPavilionScene),#game #page:has(#content .pawCompactBoard){
+ background:linear-gradient(180deg,#34291d22,#312b2455),url('assets/visual/staging/2026-11-27/interfaces/town-hall/portrait.webp') center 43%/cover no-repeat,#766047!important
+}
+#game #content:has(.pawCompactBoard){background:transparent!important;border:0!important;box-shadow:none!important}
+#game #content:has(.pawCompactBoard) .pawIllustratedHeading{background:transparent!important;border:0!important;box-shadow:none!important;min-height:clamp(110px,23dvh,230px)!important;margin:0 0 6px!important}
+#game #content:has(.pawCompactBoard) .pawIllustratedHeading>img{display:none!important}
+#game #content:has(.pawCompactBoard) .pawIllustratedCaption{min-height:clamp(110px,23dvh,230px)!important;background:linear-gradient(transparent,#30291c66)!important;color:#fff7e4!important;text-shadow:0 1px 3px #30291c}
+#game #content:has(.pawCompactBoard) .communityTabs,#game #content .pawCompactBoard{background:#f5e9d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat!important;box-sizing:border-box}
+#game #content:has(.pawCompactBoard) .communityTabs{padding:4px 10px!important;border-radius:6px 6px 0 0!important;margin-bottom:0!important}
+#game #content .pawCompactBoard{margin:0!important;padding:6px 12px 12px;border:0;border-radius:0 0 6px 6px;box-shadow:0 4px 12px #31261f44}
+#game #content .pawCompactBoard .townWall{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+#game #content .pawCompactBoard .townResidentNote{background:#fff4d9!important;border:0!important;border-radius:2px!important;box-shadow:1px 2px 3px #65513929!important;margin:10px 0;padding-top:12px;position:relative}
+#game #content .pawCompactBoard .townResidentNote::before{content:'';position:absolute;top:4px;left:50%;width:5px;height:5px;border-radius:50%;background:#a37d51;pointer-events:none}
+#game #content .pawSketchbook{background-image:linear-gradient(90deg,#c4a77a33,transparent 8%,transparent 92%,#c4a77a33),url('assets/visual/painted/recovered/ui/paper_texture.webp')!important}
+#game #content .pawSketchbook .pawSketchCover{transform:none!important;border:3px solid #fff3d9!important;outline:0!important;box-shadow:0 2px 4px #58482c22!important}
+#game #content .pawSketchbook .pawSketchNotes{min-width:0;overflow-wrap:break-word}
+#game #content:has(.pawDiaryFold){background:#f5e9d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat!important;border:0!important;box-shadow:0 3px 10px #30261d33!important}
+#game #content .pawDiaryFold{border:0!important;border-bottom:1px solid #bfa882!important;border-radius:0!important;background:none!important;box-shadow:none!important;margin:0!important;padding:0 4px!important}
+#game #content .pawDiaryFold>summary{min-height:48px;box-sizing:border-box}
+#game #content .pawDiaryFold :is(.goodCompanyBook,.journalDailyTasks,.townFortuneSlip){background:transparent!important;border:0!important;box-shadow:none!important}
+@media(max-width:699px){#game #content .pawSketchSpread{grid-template-columns:minmax(0,1fr)!important}}
+@media(min-width:700px) and (orientation:landscape){#game #content .pawSketchSpread{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:clamp(12px,3vw,32px)!important}}
+@media(forced-colors:active){
+ #game #content .pawCompactBoard,#game #content:has(.pawCompactBoard) .communityTabs,#game #content .pawCompactBoard .townResidentNote,#game #content:has(.pawDiaryFold),#game #content .pawSketchbook{background:Canvas!important;color:CanvasText!important;box-shadow:none!important}
+ #game #content .pawCompactBoard .townResidentNote::before{display:none}
+}
 `;document.head.append(style);
 })();
