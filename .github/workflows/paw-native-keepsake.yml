@@ -1,7 +1,7 @@
 name: Pawradise native keepsake journey
 on:
   push:
-    branches: [fix/discovery-native-keepsake-return-20261128]
+    branches: [fix/discovery-native-keepsake-return-20261128, fix/native-keepsake-share-delivery-20261128]
     paths:
       - 'src/painted-lobby-runtime.js'
       - 'scripts/native-discovery-share-test.cjs'
@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   native-share:
-    if: github.ref == 'refs/heads/fix/discovery-native-keepsake-return-20261128'
+    if: github.ref == 'refs/heads/fix/discovery-native-keepsake-return-20261128' || github.ref == 'refs/heads/fix/native-keepsake-share-delivery-20261128'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:

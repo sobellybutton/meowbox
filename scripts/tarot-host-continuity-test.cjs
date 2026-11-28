@@ -85,10 +85,10 @@ async function shareRegression(){
  const pawPrepareRecoveredShare=()=>new Promise(resolve=>pending.push(resolve));
  const shareCardArt=(cv,data,format,cn)=>draws.push([format,cn]);
  const File=class{constructor(parts,name){this.name=name}};
- const navigator={canShare:()=>false},meowShareUrl='https://sobellybutton.github.io/meowbox/';
+ const shares=[];let shareSupported=false;const navigator={canShare:()=>shareSupported,share:payload=>new Promise((resolve,reject)=>shares.push({payload,resolve,reject}))},meowShareUrl='https://sobellybutton.github.io/meowbox/';
  `)+`
  openMeowShare({kind:'tarot',title:['A','甲'],cards:[{i:1}]},()=>backCalls++);
- return {pending,blobs,draws,controls,nodes,goBack:()=>goBack(),backCalls:()=>backCalls}
+ return {pending,blobs,draws,controls,nodes,shares,enableShare:()=>shareSupported=true,goBack:()=>goBack(),backCalls:()=>backCalls}
  `);
  const m=make(),preview=m.nodes.find(n=>n.className==='meowSharePreview'),save=m.controls.find(n=>n.textContent==='Save PNG image'),share=m.controls.find(n=>n.textContent==='Share image');
  assert.ok(preview.hidden&&save.disabled&&share.disabled);
@@ -104,14 +104,27 @@ async function shareRegression(){
  m.pending[3]();await Promise.resolve();m.blobs[1]({});
  assert.ok(!preview.hidden&&!save.disabled&&!share.disabled);
  assert.ok(m.nodes.find(n=>n.className==='pawKeepsakeGuide').textContent.includes('1080 × 1920'));
- await share.click();assert.ok(m.nodes.find(n=>n.className==='meowShareStatus').textContent.includes('upload'));
+ await share.click();const status=m.nodes.find(n=>n.className==='meowShareStatus');assert.ok(status.textContent.includes('upload'));
+ m.enableShare();
+ let delivery=share.click();assert.ok(share.disabled&&status.textContent.includes('Opening'));
+ await share.click();assert.equal(m.shares.length,1);
+ assert.equal(m.shares[0].payload.files[0].name,'pawradise-tarot-story.png');
+ m.shares[0].resolve();await delivery;assert.ok(!share.disabled&&status.textContent.includes('finished'));
+ delivery=share.click();m.shares[1].reject({name:'AbortError'});await delivery;assert.ok(!share.disabled&&status.textContent.includes('cancelled'));
+ delivery=share.click();m.shares[2].reject(Error('delivery unavailable'));await delivery;assert.ok(!share.disabled&&status.textContent.includes('upload'));
+ delivery=share.click();m.controls.find(n=>n.textContent==='小红书').click();
+ m.pending[4]();await Promise.resolve();m.blobs[2]({});assert.ok(share.disabled);
+ m.shares[3].resolve();await delivery;assert.ok(!share.disabled&&status.textContent.includes('Ready'));
+ delivery=share.click();assert.equal(m.shares[4].payload.files[0].name,'pawradise-tarot-xhs.png');
+ m.shares[4].reject({name:'AbortError'});await delivery;
+ console.log('Native share delivery: duplicate lock, exact filename, success, cancellation, failure and stale render passed');
  const copy=m.controls.find(n=>n.textContent==='Copy caption'),manual=m.nodes.find(n=>n.className==='pawKeepsakeCaption');
  await copy.click();assert.ok(!manual.hidden&&manual.value.includes('甲')&&!manual.value.includes('https://'));
  
  m.controls.find(n=>n.textContent==='IG / FB').click();
  assert.ok(preview.hidden&&save.disabled&&copy.disabled&&manual.hidden&&manual.value==='');
  m.goBack();m.goBack();assert.equal(m.backCalls(),1);
- m.pending[4]();await Promise.resolve();assert.equal(m.draws.length,2);
+ m.pending[5]();await Promise.resolve();assert.equal(m.draws.length,3);
  console.log('Tarot share: stale format/language, export readiness and return lifecycle passed');
 }
 shareRegression().catch(e=>{console.error(e);process.exitCode=1});

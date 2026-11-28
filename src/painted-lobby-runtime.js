@@ -313,7 +313,7 @@ function pawInstallNativeConsultation(){
   if(!route)return sharePrior(raw,back);
   const data=sharePublicData(raw);
   if(!data||data.kind!==raw.kind||route.id==='tarot'&&!data.cards?.length)return;
-  let format=zh?'xhs':'feed',cn=zh,ready=null,version=0;
+  let format=zh?'xhs':'feed',cn=zh,ready=null,version=0,sharing=false;
   const resultSurface=route.id==='cafe'?cafeQuestionSheet:route.id==='story'?storySheet:null;
   const surfaceSnapshot=pawKeepsakeResultSurface(resultSurface);
   const opener=typeof document!=='undefined'?document.activeElement:null;
@@ -345,10 +345,21 @@ function pawInstallNativeConsultation(){
    const url=URL.createObjectURL(ready),a=document.createElement('a');a.href=url;a.download='pawradise-'+data.kind+'-'+format+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)
   });
   const send=b(actions,tr('Share image','分享图片'),async()=>{
-   if(!ready||!current())return;
+   if(!ready||!current()||sharing)return;
    const token=version,file=ready;
-   try{if(pawKeepsakeShareMode(navigator,file)){await navigator.share({files:[file],title:'Pawradise'});return}}catch(e){if(e?.name==='AbortError')return}
-   if(current()&&token===version)status.textContent=tr('Save the PNG, then upload it in your chosen app.','请保存 PNG 图片，再到想分享的应用上传。')
+   const fallback=()=>tr('Save the PNG, then upload it in your chosen app.','请保存 PNG 图片，再到想分享的应用上传。');
+   if(!pawKeepsakeShareMode(navigator,file)){status.textContent=fallback();return}
+   sharing=true;send.disabled=true;status.textContent=tr('Opening your device’s share menu…','正在打开系统分享菜单……');
+   let outcome;
+   try{
+    await navigator.share({files:[file],title:'Pawradise'});
+    outcome=tr('Share menu finished. Your keepsake is still here.','系统分享已结束，纪念卡仍在这里。')
+   }catch(e){
+    outcome=e?.name==='AbortError'?tr('Sharing cancelled. You can try again or save the PNG.','已取消分享，可以重试或保存 PNG 图片。'):fallback()
+   }finally{
+    sharing=false;
+    if(current()){send.disabled=!ready;if(token===version)status.textContent=outcome}
+   }
   });
   const copy=b(actions,tr('Copy caption','复制文案'),async()=>{
    if(!ready||!current())return;
@@ -377,7 +388,7 @@ function pawInstallNativeConsultation(){
    try{
     await pawPrepareRecoveredShare(selectedFormat,data);if(!current()||token!==version)return;
     shareCardArt(preview,data,selectedFormat,selectedLanguage);preview.setAttribute('aria-label',data.title[Number(selectedLanguage)]);
-    preview.toBlob(blob=>{if(!current()||token!==version)return;panel.setAttribute('aria-busy','false');if(!blob){status.textContent=tr('Try another format.','请换个尺寸重试。');return}ready=typeof File==='function'?new File([blob],'pawradise-'+data.kind+'-'+selectedFormat+'.png',{type:'image/png'}):blob;preview.hidden=false;saveButton.disabled=send.disabled=copy.disabled=false;status.textContent=tr('Ready to share or save.','可以分享或保存啦。')},'image/png')
+    preview.toBlob(blob=>{if(!current()||token!==version)return;panel.setAttribute('aria-busy','false');if(!blob){status.textContent=tr('Try another format.','请换个尺寸重试。');return}ready=typeof File==='function'?new File([blob],'pawradise-'+data.kind+'-'+selectedFormat+'.png',{type:'image/png'}):blob;preview.hidden=false;saveButton.disabled=copy.disabled=false;send.disabled=sharing;status.textContent=tr('Ready to share or save.','可以分享或保存啦。')},'image/png')
    }catch{if(current()&&token===version){panel.setAttribute('aria-busy','false');status.textContent=tr('Try another format.','请换个尺寸重试。')}}
   }
   $('choices').prepend(panel);render()
