@@ -1387,8 +1387,9 @@ function poseEase(v){v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)}
    The current sprite is gently deformed until dedicated action frames are available. */
 function ritualSpritePose(opts={},reach=null){
  const sit=clamp(opts.seat||0,0,1),kneel=clamp(opts.kneel||0,0,1)*(1-sit),bow=clamp(opts.bow||0,0,1);
- const hip={x:-7*kneel-9*sit,y:-26+15*kneel+6*sit};
- const knee={x:hip.x+3+15*kneel+18*sit,y:-12+9*kneel-6*sit};
+ const bench=opts.bench?1:0;
+ const hip={x:-7*kneel-9*sit,y:-26+15*kneel+(6-12*bench)*sit};
+ const knee={x:hip.x+3+15*kneel+18*sit,y:-12+9*kneel-(6+2*bench)*sit};
  const foot={x:2-11*kneel+13*sit,y:0};
  const angle=bow*.65+(reach?clamp((reach.x-15)/115,-.09,.20):0)+(opts.praying?.045:0);
  const shift=reach?clamp((reach.x-12)*.12,-2,5):0;
