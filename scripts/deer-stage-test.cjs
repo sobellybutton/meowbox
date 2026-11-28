@@ -7,3 +7,26 @@ const a=pawHerdExchangePose(0,stage,old,next),b=pawHerdExchangePose(.95,stage,ol
 ck(a.x===stage.x&&a.y===stage.y&&a.leg==='leave','start at front');ck(b.x===next.x&&b.y===next.y&&b.leg==='arrive','next deer starts in herd');ck(c.x===stage.x&&c.y===stage.y&&c.done,'finish at front');
 for(let k=0;k<=210;k++){const p=pawHerdExchangePose(k/100,stage,old,next);ck(p.x>=old.x&&p.x<=stage.x&&p.y>=old.y&&p.y<=stage.y&&p.scale>=.28&&p.scale<=.84+1e-9,'bounded pose')}
 return 'PASS '+n+' herd identity and continuous exchange checks';`)());
+
+const offerStart=s.indexOf('/* PAW_DEER_OFFER_BEGIN */'),offerEnd=s.indexOf('/* PAW_DEER_OFFER_END */',offerStart);
+if(offerStart<0||offerEnd<=offerStart)throw Error('Missing deer offering choreography');
+console.log(new Function(s.slice(start,end)+s.slice(offerStart,offerEnd)+`
+let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};
+let prev=null;
+for(let i=0;i<=380;i++){
+ const t=i/100,q=pawDeerOfferPose(t),g=deerStageLayout(0,q.feed);
+ ck(q.retrieve>=0&&q.retrieve<=1&&q.kneel>=0&&q.kneel<=1,'bounded actor movement');
+ ck(q.feed>=0&&q.feed<=1,'bounded animal approach');
+ ck(!(q.stock&&q.held),'no duplicate cracker');
+ ck(t>=1.3||q.feed===0,'deer waits for retrieval');
+ ck(g.deerX-(g.playerX+30*q.retrieve)>=171,'safe separation throughout');
+ if(prev)ck(Math.abs(q.retrieve-prev.retrieve)<=.05&&Math.abs(q.kneel-prev.kneel)<=.08,'continuous pose');
+ prev=q;
+ const still=pawDeerOfferPose(t,true);ck(still.retrieve===0&&still.kneel===0&&!still.walking,'reduced motion actor stable');
+}
+ck(pawDeerOfferPose(0).stock&&!pawDeerOfferPose(0).held,'cracker starts in tray');
+ck(pawDeerOfferPose(.65).held&&!pawDeerOfferPose(.65).stock,'one cracker taken');
+ck(pawDeerOfferPose(2.65).feed>.9&&!pawDeerOfferPose(2.65).held,'consumption during closest approach');
+ck(pawDeerOfferPose(3.8).done&&Math.abs(pawDeerOfferPose(3.8).feed)<1e-8,'return to neutral');
+return 'PASS '+n+' deer retrieval, offer, spacing and reduced motion checks';
+`)());
