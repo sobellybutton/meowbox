@@ -632,3 +632,8 @@ Next: independently review the actual phone/desktop scene and correct stool/visi
 
 ## Paper preparation regression and food placement CI (28 November)
 QA-01 partial: fe66829f3bb973e10bb48ca34e06c111902c5b8c corrects the stale .62-second preparation test identified in browser run 46106180994. Production preparation now uses 1.1s, so test measures the current duration, rejects premature readiness and covered completion, then verifies readiness after duration. First complete action refinement harness passed against exact current startup source; entire test script parses. Added food-prop-placement-test.cjs to focused CI (1827 assertions previously passed independently). No production changes or visual acceptance. Full CI rerun pending. Next verify latest CI and genuine room traversal failures.
+
+
+## Owner scope correction: 30 whole-project batches (28 November)
+Global scope correction: previous five local Auntie substeps count only within project batch 12. Project-wide batch map covers all 84 canonical workstream IDs. Temple batch 9/11/26 partial: stronger rising hand/burner smoke, painted bamboo stream and bounded water ripples, actual isolated bell and striker raster use, medallion-height contact and larger traveller. 2588 isolated geometry assertions and startup syntax passed. Actual rendered phone/desktop smoke, bell contact, water, CI and deployment not verified; no acceptance promotion.
+Next prioritize other venues, entrance, discovery and food/gameplay while blocked pier art is parked; do not continue slipper-only work. See docs/PROJECT_BATCHES_30.md.

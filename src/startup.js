@@ -9253,6 +9253,27 @@ function pawIncenseArm(shoulder,hand,scale,far=false,skin='#e7bb98'){
  if(!far){ctx.strokeStyle='#a37a60';ctx.lineWidth=.65*scale;ctx.beginPath();ctx.moveTo(hand.x-2*scale,hand.y-1.5*scale);ctx.lineTo(hand.x+2*scale,hand.y-.7*scale);ctx.stroke()}
  ctx.restore()
 }
+/* PAW_VISIBLE_SMOKE_BEGIN */
+function pawVisibleSmokeFrame(i,now,reduced=false,strength=1){
+ const f=reduced?(i+.5)/5:((now*.44+i/5)%1+1)%1;
+ return {dx:Math.sin(f*7+i*.6)*f*9,dy:2+f*40,w:1.8+f*3.8,alpha:Math.max(0,Math.sin(Math.PI*f)*.53*strength),drift:Math.sin(f*6+i)*8};
+}
+/* PAW_VISIBLE_SMOKE_END */
+function pawVisibleSmoke(x,y,strength=1){
+ ctx.save();try{ctx.lineCap='round';
+  for(let i=0;i<5;i++){
+   const p=pawVisibleSmokeFrame(i,t,residentReducedMotion.matches,strength),px=x+p.dx,py=y-p.dy;
+   ctx.strokeStyle='rgba(247,236,215,'+p.alpha*.45+')';ctx.lineWidth=p.w*2;
+   ctx.beginPath();ctx.moveTo(px,py);ctx.quadraticCurveTo(px+p.drift*.6,py-6,px+p.drift,py-13);ctx.stroke();
+   ctx.strokeStyle='rgba(248,239,221,'+p.alpha+')';ctx.lineWidth=p.w*.65;ctx.stroke();
+  }
+ }finally{ctx.restore()}
+}
+const pawVisibleIncenseBefore=incenseStem;
+incenseStem=function(x,y,angle=0,lit=false,length=65,smoke=false){
+ pawVisibleIncenseBefore(x,y,angle,lit,length,false);
+ if(lit&&smoke)pawVisibleSmoke(x+Math.sin(angle)*length,y-Math.cos(angle)*length,.82)
+};
 function pawHeldIncense(q,held,lit){
  const {x,y,sc,bow,grip,pick,touch,angle}=q,shoulder={x:x+9*sc+bow*17,y:y-58*sc+bow*12};
  // First paint the body, then the rear sleeve, incense, and near fingers.
@@ -9365,12 +9386,7 @@ function pawPrayerStep(){
   }
   if(state.prayerOffered||stage==='placing'&&age>=1.98){
    for(let j=0;j<3;j++)incenseStem(burner.x+(j-1)*3,burner.y,0,true,25,false);
-   ctx.save();try{ctx.lineCap='round';for(let j=0;j<3;j++){
-    const phase=residentReducedMotion.matches?.55:((t*.34+j*.31)%1+1)%1;
-    const h=12+phase*38,x=burner.x+(j-1)*3,y=burner.y-25-phase*22;
-    ctx.strokeStyle='rgba(239,229,205,'+(.26*Math.sin(Math.PI*phase))+')';ctx.lineWidth=1.2+phase*1.7;
-    ctx.beginPath();ctx.moveTo(x,y);ctx.bezierCurveTo(x+Math.sin(phase*8+j)*9,y-h*.33,x-5,y-h*.7,x+Math.sin(phase*5+j)*12,y-h);ctx.stroke()
-   }}finally{ctx.restore()}
+   pawVisibleSmoke(burner.x,burner.y-25,1.0);
   }
   if(stage==='collect'){const size=Math.max(54,44/Math.max(.1,cam.scale));target(rack.x-size/2,rack.y-45,size,Math.max(65,size),()=>requestIncenseAction('take'),'paw-incense-supply')}
   if(stage==='lightReady')target(rack.x-25,rack.y-35,65,80,()=>requestIncenseAction('light'));
@@ -10759,6 +10775,17 @@ function pawTempleDrawMoon(){
  }
  if(!run.moonPending&&!(run.tossUntil>t))target(x-38,y-35,76,70,()=>{if(run===state)pawMoonToss(65,true)},'moon');
 }
+/* PAW_PAINTED_BELL_CONTACT_BEGIN */
+// Original isolated bronze bell and wooden striker. The centre medallion
+// is the contact height; the rope attaches to the actual top ring.
+function pawPaintedBellLayout(x,floor,swing=0){
+ const w=84,h=w*520/510,left=x+9-w/2,top=floor-128;
+ const contact={x:left+w*.075,y:top+h*.685};
+ const length=65,thickness=length*74/512;
+ const sx=contact.x-length+swing*.42,sy=contact.y-Math.abs(swing)*.055;
+ return {left,top,w,h,contact,sx,sy,length,thickness,beam:floor-148};
+}
+/* PAW_PAINTED_BELL_CONTACT_END */
 function pawTempleDrawBell(){
  const run=state,p=pawHallPlate,[x,floor]=pawTemplePoint(p,.72,.82),y=floor-63;
  const [ax,ay]=pawTemplePoint(p,.56,.83),m=pawTempleBellMotion(run,t,drag?.id==='templeStriker'?Math.abs(drag.x-drag.sx):0);
@@ -10770,19 +10797,24 @@ function pawTempleDrawBell(){
  // suspended above the torii or player feet on the stone railing.
  ctx.save();try{
   ellipse(x,floor+1,43,8,'#3d2e2444');
-  for(const dx of [-37,37]){
+  for(const dx of [-67,61]){
    const wood=ctx.createLinearGradient(x+dx-4,0,x+dx+5,0);wood.addColorStop(0,'#6e4832');wood.addColorStop(.48,'#bd8b58');wood.addColorStop(1,'#65432c');
    ctx.fillStyle=wood;ctx.fillRect(x+dx-4,floor-140,9,140);line(x+dx-2,floor-135,x+dx-2,floor-5,'#e0b28355',1);
    ellipse(x+dx,floor+1,9,3,'#43342766')
   }
-  round(x-46,floor-145,92,10,2,'#8a5b39','#64422c');line(x-42,floor-141,x+42,floor-141,'#c69b69',1.4);
-  line(x,floor-135,x,y-52,'#6f6047',3);templeBellArt(x+10,y,.50,m.impact);
-  const sx=x-47+m.swing*.40,sy=y-8-Math.abs(m.swing)*.08;
-  line(x-34,floor-135,sx+5,sy,'#ab8e66',1.3);line(x-15,floor-135,sx+29,sy,'#ab8e66',1.3);
-  if(pics.templeStrikerPaint?.naturalWidth)ctx.drawImage(pics.templeStrikerPaint,sx,sy-4,36,9);
-  else round(sx,sy-4,36,9,4,'#9d7046','#68462f');
-  backHuman(ax,ay,avatar??0,false,'right',.96);
-  if(drag?.id==='templeStriker'||m.age<.6)pawIncenseArm({x:ax+9,y:ay-48},{x:sx+7,y:sy},.80,false);
+  round(x-76,floor-145,146,10,2,'#8a5b39','#64422c');line(x-72,floor-141,x+66,floor-141,'#c69b69',1.4);
+  const g=pawPaintedBellLayout(x,floor,m.swing),bell=pawRecoveredImage('../temple/bell.webp'),striker=pawRecoveredImage('../temple/striker.webp');
+  const pivot=g.left+g.w/2;
+  line(pivot,floor-135,pivot,g.top+2,'#6f6047',3);
+  if(pawRoomImageReady(bell)){ctx.save();try{ctx.translate(pivot,g.top+2);ctx.rotate(m.impact);ctx.drawImage(bell,-g.w/2,-2,g.w,g.h)}finally{ctx.restore()}}
+  else templeBellArt(x+9,g.top+g.h*.66,.50,m.impact);
+  const {sx,sy,length,thickness}=g;
+  line(x-34,floor-135,sx+length*.18,sy,'#ab8e66',1.3);line(x-15,floor-135,sx+length*.82,sy,'#ab8e66',1.3);
+  if(pawRoomImageReady(striker))ctx.drawImage(striker,sx,sy-thickness/2,length,thickness);
+  else round(sx,sy-thickness/2,length,thickness,4,'#9d7046','#68462f');
+  const sc=pawTempleContactScale(cam.scale,1.25);
+  backHuman(ax,ay,avatar??0,false,'right',sc);
+  if(drag?.id==='templeStriker'||m.age>=0&&m.age<.6)pawIncenseArm({x:ax+9*sc,y:ay-48*sc},{x:sx+length*.15,y:sy},sc,false);
   if(m.age>=2.5)target(sx-24,sy-29,80,58,()=>{if(run===state)templeReleaseBell(55)},'templeStriker');
  }finally{ctx.restore()}
 }
@@ -11967,6 +11999,16 @@ function pawRearPondGlint(i,now,reduced=false){
  const phase=reduced?.45:((now*.22+i*.271)%1+1)%1;
  return {u:.315+i*.021+Math.sin(phase*Math.PI*2+i)*.007,v:.618+(i%2)*.014+(phase-.5)*.012,rx:5+phase*10,ry:1.3+phase*1.7,alpha:.26*Math.sin(Math.PI*phase)}
 }
+// Traced against the inspected 960x1631 rear garden plate. The animated
+// stream follows the bamboo spout and the ripples stay within open water.
+function pawRearWaterFlow(i,now,reduced=false){
+ const f=reduced?(i+.5)/7:((now*.92+i/7)%1+1)%1;
+ return {u:.167+.032*f+.006*Math.sin(f*Math.PI),v:.491+.073*f,alpha:.35+.50*Math.sin(Math.PI*f),length:.005+.008*f};
+}
+function pawRearWaterRipple(i,now,reduced=false){
+ const f=reduced?(i+.5)/4:((now*.55+i/4)%1+1)%1;
+ return {u:.198,v:.566,rx:.007+.037*f,ry:.0017+.009*f,alpha:.52*Math.sin(Math.PI*f)};
+}
 function pawRearGardenPellet(i,age){
  if(!Number.isFinite(age)||age<0||age>.9)return null;
  const f=Math.max(0,Math.min(1,(age-i*.035)/.65));if(f<=0||f>=1)return null;
@@ -12034,6 +12076,18 @@ drawActivity=function(...args){
  continuityActivity=activity;
  ctx.save();try{
   ctx.fillStyle='#344238';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawRearGardenArt(),p.x,p.y,p.w,p.h);
+  const still=residentReducedMotion.matches;
+  ctx.save();try{
+   ctx.lineCap='round';
+   for(let j=0;j<7;j++){const f=pawRearWaterFlow(j,t,still),[fx,fy]=xy(f.u,f.v);
+    ctx.strokeStyle='rgba(224,244,239,'+f.alpha+')';ctx.lineWidth=1.7;
+    ctx.beginPath();ctx.moveTo(fx,fy);ctx.lineTo(fx+.8,fy+f.length*p.h);ctx.stroke()
+   }
+   for(let j=0;j<4;j++){const f=pawRearWaterRipple(j,t,still),[rx,ry]=xy(f.u,f.v);
+    ctx.strokeStyle='rgba(226,243,219,'+f.alpha+')';ctx.lineWidth=1.3;
+    ctx.beginPath();ctx.ellipse(rx,ry,f.rx*p.w,f.ry*p.h,0,0,TAU);ctx.stroke()
+   }
+  }finally{ctx.restore()}
   for(let j=0;j<5;j++){
    const g=pawRearPondGlint(j,t,residentReducedMotion.matches),[gx,gy]=xy(g.u,g.v);
    ctx.save();ctx.strokeStyle='rgba(235,240,211,'+g.alpha+')';ctx.lineWidth=.85;
