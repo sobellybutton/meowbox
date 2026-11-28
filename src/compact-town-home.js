@@ -59,7 +59,7 @@ function compactBoard(q){
   for(const btn of rail.children)btn.setAttribute('aria-pressed',String(btn.dataset.section===boardSection))
  }
  for(const [id,en,cn,node] of sections){const btn=b(rail,tr(en,cn),()=>select(id));btn.dataset.section=id;panels.append(node)}
- const disclosure=wall.querySelector('.wallDisclosure');if(disclosure)disclosure.textContent=tr('News from around town. Online visitor posts are under Travellers.','小镇里的新鲜事。联机旅人的留言请到旅人聊天室。');
+ const disclosure=wall.querySelector('.wallDisclosure');if(disclosure)disclosure.textContent=tr('Catch up on the latest town news.','来看看小镇最近的新鲜事。');
  if(story){const refresh=()=>{replaceExact(story,'.pawStoryKicker','Resident stories · fictional town','居民小故事 · 虚构小镇','Town stories','小镇故事');replaceExact(story,'.pawStoryKicker','Resident story · fictional town','居民小故事 · 虚构小镇','Town story','小镇故事')};refresh();new MutationObserver(refresh).observe(story,{childList:true})}
  const roster=guests?.querySelector('p');if(roster)roster.textContent=tr('Meet these neighbours as you explore '+maps[scene].n[0]+'.','逛逛'+maps[scene].n[1]+'，也许就能遇见他们。');
  attachPager(wall.querySelector('.townPostList'),'.townResidentNote',2,wall.querySelector('.townPostNav'),card=>{const name=card.querySelector(':scope > strong');if(name){const clean=residentHeading(name.textContent);if(clean!==name.textContent)name.textContent=clean}});select(boardSection);
@@ -73,6 +73,10 @@ function compactJoy(q){
 }
 // Only touch known authored interface labels. Never rewrite visitor or player messages.
 function naturalTownLabels(q){
+ replaceExact(q,'.communityTabs > button','Travellers','旅人聊天室','Square chat','广场聊天');
+ replaceExact(q,'.pawTownLink strong','Traveller lobby','旅人聊天室','Square chat','广场聊天');
+ replaceExact(q,'.pawTownLink small','Chat with real visitors.','和真实旅人聊聊天。','Say hello in the square.','去广场打个招呼。');
+ replaceExact(q,'.pawTownLink small','Live chat is not open yet.','真人聊天室尚未开放。','The square chat is resting for now.','广场聊天室暂未开放。');
  replaceExact(q,'.pawTownLink small','Chat with fictional town residents, anytime.','随时跟小镇的虚构居民聊两句。','Pull up a chair and have a chat.','来坐坐，聊两句吧。');
  replaceExact(q,'.pawTownLink small','Pull up a chair and chat with the game’s residents.','找个座位，和小镇里的游戏角色聊两句。','Pull up a chair and have a chat.','来坐坐，聊两句吧。');
  replaceExact(q,'.pawTownPinned small','From fictional town residents','来自虚构小镇居民','Around town','小镇见闻');
@@ -80,6 +84,22 @@ function naturalTownLabels(q){
  replaceExact(q,':scope > p','A chat with town characters · local play, not live players.','小镇角色聊天室 · 本地互动，非真人联机。','Pull up a chair.','来坐坐吧。');
  replaceExact(q,'.communityMuted','Tea chat · fictional town companions, private to this visit.','茶馆闲聊 · 虚构小镇伙伴，仅本次会话可见。','Tea table · private to this visit.','茶桌闲聊 · 仅本次会话可见。');
  for(const note of q.querySelectorAll('.pawResidentChatNote'))note.textContent=tr('This conversation is private to this visit.','这段聊天仅本次会话可见。');
+}
+// Online controls still use the genuine service and its actual connection state.
+function townConnectionInfo(q){
+ if(communityTab!=='public'||!q.querySelector('.communityTabs')||q.querySelector('.pawTownConnectionInfo'))return;
+ const status=q.querySelector('.communityMuted[role=status]');
+ if(!status)return;
+ const info=element('details','',q,'pawTownConnectionInfo');
+ element('summary',tr('About shared town life','关于小镇联机'),info);
+ element('p',tr('Pawradise has authored residents and people who join the shared town. Everyday town encounters and notes can be part of the local game. Square chat publishes actual submitted messages when the connection is available.','小镇既有游戏设定的居民，也有加入联机的玩家。日常相遇和便签可以是本地游戏内容。广场聊天在联机服务可用时发布真实提交的留言。'),info);
+ const refresh=()=>{
+  if(!status.isConnected){observer.disconnect();return}
+  const current=status.textContent;
+  if(current==='Connected · real visitor posts · reviewed before publishing'||current==='已连接 · 真人留言 · 审核后公开')status.textContent=tr('Connected · messages reviewed before publishing','已连接 · 留言审核后公开');
+  else if(current==='The shared square is not open yet. Messages here will appear only when a live community service is connected.'||current==='公共广场尚未开放，接入联机服务后才会显示真人留言。')status.textContent=tr('Square chat is not open yet. Come and sit at the tea table in the meantime.','广场聊天暂未开放，先到茶桌坐坐吧。');
+ };
+ const observer=new MutationObserver(refresh);observer.observe(status,{childList:true,characterData:true,subtree:true});refresh();
 }
 const pageBefore=page;
 page=function(...args){const result=pageBefore(...args),q=$('content');naturalTownLabels(q);return result};
@@ -91,13 +111,14 @@ townChatPage=function(...args){
  naturalTownLabels(q);
  if(communityTab==='board')compactBoard(q);
  if(communityTab==='gratitude')compactJoy(q);
+ if(communityTab==='public')townConnectionInfo(q);
  return result
 };
 const goodBefore=goodCompanyPage;
 goodCompanyPage=function(q,...args){
  const result=goodBefore(q,...args);
  for(const node of q.querySelectorAll('.goodCompanyBanner > small'))if(['Town residents · fictional companions','小镇居民 · 虚构伙伴'].includes(node.textContent))node.remove();
- const privacy=q.querySelector('.goodCompanyPrivacy');if(privacy)privacy.textContent=tr('Your note stays on this device. Share with online travellers only if you choose.','便签仅保存在本设备。想分享给联机旅人时，再选择公开发布。');
+ const privacy=q.querySelector('.goodCompanyPrivacy');if(privacy)privacy.textContent=tr('Your note stays on this device. You can choose to share it in the square.','便签仅保存在本设备。你也可以选择分享到广场。');
  return result
 };
 const homeBefore=hideoutPage;
@@ -118,6 +139,8 @@ hideoutPage=function(...args){
  return result
 };
 const style=document.createElement('style');style.textContent=`
+#game #content .pawTownConnectionInfo{margin:12px 0 0;border-top:1px dashed #bda582;padding-top:6px;font-size:12px;color:#675943}
+#game #content .pawTownConnectionInfo summary{cursor:pointer;min-height:44px;align-content:center}
 #game #content .pawCompactBoard{margin:6px 0 0}
 #game #content .pawCompactSections{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid #bca57e;padding:3px 0 6px}
 #game #content .pawCompactSections button{flex:1 1 0;min-width:0;min-height:44px;white-space:normal!important;padding:5px!important;font-size:13px!important}
