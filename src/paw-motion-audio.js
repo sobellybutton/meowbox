@@ -21,6 +21,7 @@
  function permitted(flags){return !!flags?.enabled&&!flags.muted&&!flags.hidden&&!flags.overlay&&!flags.paused}
  function createPlayer(context,bus,random=Math.random){
   let last=-Infinity,trainLast=-Infinity,buffer=null,railBeat=0;
+  const active=new Set();
   function ready(flags){return permitted(flags)&&context?.state==='running'&&bus&&Number.isFinite(context.currentTime)}
   function noise(){
    if(buffer)return buffer;
@@ -32,7 +33,15 @@
    const t=context.currentTime,source=context.createBufferSource(),filter=context.createBiquadFilter(),gain=context.createGain();
    source.buffer=noise();filter.type=filterType;filter.frequency.value=frequency;filter.Q.value=.75;
    gain.gain.setValueAtTime(.0001,t);gain.gain.linearRampToValueAtTime(volume,t+.009);gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
-   source.connect(filter);filter.connect(gain);gain.connect(bus);source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect()};source.start(t);source.stop(t+duration+.005);
+   // Retain only our own short-lived nodes so a room change or mute can
+   // immediately silence movement without touching music or other effects.
+   let closed=false;
+   const cleanup=()=>{if(closed)return;closed=true;active.delete(cancel);source.onended=null;for(const node of [source,filter,gain])try{node.disconnect()}catch{}};
+   const cancel=()=>{if(closed)return;cleanup();try{source.stop()}catch{}};
+   try{
+    source.connect(filter);filter.connect(gain);gain.connect(bus);active.add(cancel);source.onended=cleanup;
+    source.start(t);source.stop(t+duration+.005);
+   }catch(error){cancel();throw error}
   }
   function footstep(step,flags){
    if(!ready(flags)||!step||!Object.hasOwn(surfaces,step.surface)||context.currentTime-last<.12)return false;
@@ -44,7 +53,7 @@
    if(context.currentTime-trainLast<period)return false;
    try{const beat=railBeat%2; pulse(beat?168:132,(beat?.017:.025)*s,beat?.12:.16,'lowpass');railBeat++;trainLast=context.currentTime;return true}catch{return false}
   }
-  return {footstep,railway,reset(){last=-Infinity;trainLast=-Infinity;railBeat=0}}
+  return {footstep,railway,reset(){for(const cancel of active)cancel();last=-Infinity;trainLast=-Infinity;railBeat=0}}
  }
  return Object.freeze({createStepper,createPlayer,permitted,surfaceNames:Object.keys(surfaces)});
 });
