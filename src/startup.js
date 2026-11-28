@@ -2570,7 +2570,7 @@ todayHub=function(...args){
  const result=mbGuestTodayBefore(...args);
  const panel=$('content').querySelector('.guestVisitPanel');if(panel){
   const previous=panel.querySelector('p');
-  if(previous)previous.textContent=tr('Fictional visitors rotate with the town calendar. A familiar face may remember your last conversation.','虚构客串角色随小镇日历轮换。熟面孔也许还记得上次的聊天。');
+  if(previous)previous.textContent=tr('Visitors come and go with the town calendar. A familiar face may remember your last conversation.','小镇访客随日历轮换。熟面孔也许还记得上次的聊天。');
   const title=panel.querySelector('h2');
   if(title)title.textContent=tr('Who is around town?','今天谁来摸鱼？')
  }
@@ -4230,11 +4230,11 @@ function pawTownFront(){
   const photo=element('figure','',front,'pawTownFrontPhoto'),im=element('img','',photo);im.src=pawTownPavilionPath;im.alt=tr('Town Hall pavilion','小镇广场长廊');element('figcaption',tr('A little company between adventures','逛累了，就来聊两句'),photo);
   const chat=element('section','',front,'pawTownSection');
   element('h2',tr('Come sit with us','来坐坐吧'),chat);
-  pawTownLink(chat,'lounge','Tea chat','茶馆闲聊','Chat with fictional town residents, anytime.','随时跟小镇的虚构居民聊两句。');
+  pawTownLink(chat,'lounge','Tea chat','茶馆闲聊','Pull up a chair and chat with the residents.','坐下来，和小镇居民聊两句吧。');
   pawTownLink(chat,'public','Traveller lobby','旅人聊天室',communityURL()?'Chat with real visitors.':'Live chat is not open yet.',communityURL()?'和真实旅人聊聊天。':'真人聊天室尚未开放。');
   const news=element('section','',front,'pawTownSection pawTownPinned');
   element('h2',tr('On the noticeboard','留言墙上'),news);
-  element('small',tr('From fictional town residents','来自虚构小镇居民'),news);
+  element('small',tr('From the neighbourhood','来自小镇街坊'),news);
   element('p',tr(...pawWeekNote()),news,'pawTownWeek');
   const latest=townPublishedNotices().slice(0,2);
   for(const {thread:m} of latest){const note=element('article','',news,'pawTownPreview');element('strong',tr(...m[0]),note);element('p',tr(...m[1]),note);element('small',m[2].length+' '+tr('replies','条回复'),note)}
@@ -5582,7 +5582,7 @@ townChatPage=function(...args){
  const current=pawTownStoryToday();if(!current)return result;
  const {story,episode,total,entry}=current;
  const note=element('article','',q,'pawTownStoryNote');
- element('small',tr('Resident stories · fictional town','居民小故事 · 虚构小镇'),note,'pawStoryKicker');
+ element('small',tr('Resident stories','居民小故事'),note,'pawStoryKicker');
  element('h2',tr(...story.title),note);
  element('small',tr('Part ','第 ')+(episode+1)+' / '+total,note,'pawStoryPart');
  const voice=element('p','',note,'pawStoryVoice');element('strong',tr(entry[0],entry[1]),voice);
@@ -5994,9 +5994,9 @@ townChatPage=function(...args){
   element('p',tr('Leave something you are thankful for. No achievement is too small.','写下一件值得感恩的小事，再小也值得记住。'),wall);
   const form=element('form','',wall,'pawJoyForm'),input=element('textarea','',form);input.maxLength=240;input.required=true;input.rows=3;input.placeholder=tr('Today I am grateful for…','今天我很感恩……');input.setAttribute('aria-label',input.placeholder);
   const post=element('button',tr('Pin a private note','贴上私人便签'),form);post.type='submit';
-  const status=element('small',tr('Your notes stay on this device. Resident examples are fictional.','便签仅保存在本设备。居民留言为虚构示例。'),form);status.setAttribute('role','status');
+  const status=element('small',tr('Your notes stay on this device.','便签仅保存在本设备。'),form);status.setAttribute('role','status');
   const notes=element('div','',wall,'pawJoyNotes');
-  function render(){notes.replaceChildren();for(const n of pawJoyRead().slice().reverse()){const a=element('article','',notes,'pawJoyNote');element('strong',tr('My note','我的便签'),a);element('small',n.day,a);element('p',n.text,a)}for(const [name,copy] of pawJoySeeds){const a=element('article','',notes,'pawJoyNote');element('strong',tr(...name),a);element('small',tr('Fictional resident','虚构居民'),a);element('p',tr(...copy),a)}}
+  function render(){notes.replaceChildren();for(const n of pawJoyRead().slice().reverse()){const a=element('article','',notes,'pawJoyNote');element('strong',tr('My note','我的便签'),a);element('small',n.day,a);element('p',n.text,a)}for(const [name,copy] of pawJoySeeds){const a=element('article','',notes,'pawJoyNote');element('strong',tr(...name),a);element('small',tr('Town resident','小镇居民'),a);element('p',tr(...copy),a)}}
   form.onsubmit=e=>{e.preventDefault();const value=input.value.trim().slice(0,240);if(!value)return;save(pawJoyKey,[...pawJoyRead(),{day:day(),text:value}].slice(-30));input.value='';render();status.textContent=tr('Pinned privately.','已贴上私人便签。')};
   b(wall,tr('Share a good thing with travellers','与旅人分享一件好事'),()=>goodCompanyPublic());render()
  });journalLanguage(townChatPage)
@@ -6036,10 +6036,10 @@ function pawFortuneRackPage(){
    const label=element('summary','',slip);
    element('strong',tr(...entry.name),label);
    element('small',tr('Fortune ','第 ')+entry.number+(zh?' 签':''),label);
-   element('small',entry.fictional?tr('Fictional resident','虚构居民'):tr('Saved on this device','本设备记录'),slip);
+   element('small',entry.fictional?tr('Town resident','小镇居民'):tr('Saved on this device','本设备记录'),slip);
    element('p',tr(...fortune),slip)
   }
-  element('small',tr('These are fictional resident fortunes and your own local slips, not live traveller posts.','这里只展示虚构居民的签文和你在本设备留下的签纸，不是在线旅人的公开留言。'),q);
+  element('small',tr('Unfold a fortune from the rack. Your own tied slips stay with you on this device.','打开签文架上的签纸。你自己系上的签纸会留在此设备中。'),q);
  });
  mbHomePageBack(tr('‹ Back to the fortune rack','‹ 返回签文架'),()=>{$('page').style.display='none';updateHUD()});
  journalLanguage(pawFortuneRackPage)
@@ -7755,7 +7755,7 @@ function pawFictionEdition(now,weather=''){
  const n=pool[((ordinal%pool.length)+pool.length)%pool.length],g=pawFictionGazette[((ordinal%pawFictionGazette.length)+pawFictionGazette.length)%pawFictionGazette.length];
  const stamp=Date.parse(key+'T00:00:00+08:00');
  return [
-  {id:'fiction-notice-'+key+'-'+n[0],date:stamp,thread:[['Town notice · fictional','小镇公告 · 虚构'],[n[2]+': '+n[4],n[3]+'：'+n[5]],[]]},
+  {id:'fiction-notice-'+key+'-'+n[0],date:stamp,thread:[['Town notice','小镇公告'],[n[2]+': '+n[4],n[3]+'：'+n[5]],[]]},
   {id:'fiction-gazette-'+key+'-'+g[0],date:stamp,thread:[['Pawradise Gazette · satire','Pawradise 小镇日报 · 讽刺小品'],[g[1]+': '+g[3],g[2]+'：'+g[4]],[]]}
  ]
 }
@@ -7972,7 +7972,7 @@ function pawRenderBench(note){
  const today=shrineClock().day,view=pawBenchView(load(pawBenchKey,null),today);
  const copy=pawBenchCopy[view.ending||view.stage];if(!copy)return;
  note.replaceChildren();
- element('small',tr('Resident story · fictional town','居民小故事 · 虚构小镇'),note,'pawStoryKicker');
+ element('small',tr('Resident story','居民小故事'),note,'pawStoryKicker');
  element('h2',tr('The great tissue-packet debate','纸巾占座之争'),note);
  const chapter=view.stage==='first'?1:view.stage==='ending'||view.stage==='wait-second'?3:2;
  element('small',tr('Chapter ','第 ')+chapter+' / 3',note,'pawStoryPart');
@@ -9832,7 +9832,7 @@ function pawTempleRackDraw(){
    activityFitText(tr(...sel.name),0,-78,18,280,'#624b36');
    txt(tr('Fortune ','第 ')+sel.number+(zh?' 签':''),0,-47,18,'#8b6447');
    wonderSceneText(tr(...shrinePaperLines[sel.number-1]),0,-12,280,21,'#5e4937',4);
-   activityFitText(sel.fictional?tr('Fictional resident','虚构居民'):tr('Saved on this device','本设备记录'),0,75,13,280,'#856b51');
+   activityFitText(sel.fictional?tr('Town resident','小镇居民'):tr('Saved on this device','本设备记录'),0,75,13,280,'#856b51');
    ctx.restore();
    label(tr('Fold the paper','收起签纸'),400,590,()=>{state.rackSelected=null})
   }else{
@@ -9975,7 +9975,7 @@ renderResidentNoticeboard=function(q){
  element('h2',tr('Overheard in town','摸鱼留言墙'),wrap,'board-heading');
  element('p',tr('New town notices arrive over time. Old favourites stay in the archive.','小镇见闻陆续更新，旧瓜也能慢慢翻。'),wrap,'wallIntro');
  element('p',tr(...pawWeekNote()),wrap,'pawWeeklyNotice');
- element('small',tr('Written by the fictional town residents. Real visitor posts are in the shared square.','以下为虚构小镇居民的趣味留言，真人留言请到共享广场。'),wrap,'wallDisclosure');
+ element('small',tr('Notes from around town. The shared square is a separate public space.','来自小镇的留言。共享广场是另一个公共空间。'),wrap,'wallDisclosure');
  const publicBtn=b(wrap,communityURL()?tr('Read or leave a real visitor post','看看真人留言 / 留句话'):tr('Shared square · not open yet','共享广场 · 尚未开放'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink';
  const list=element('div','',wrap,'townPostList'),nav=element('div','',wrap,'townPostNav');
  let shown=pawNoticeShown,lastCount=-1,lastSignature='',lastIds=new Set();
@@ -10125,7 +10125,9 @@ document.head.append(pawClawCss);
 /* PAW_RITUAL_PAUSE_BEGIN */
 function pawQuietPhase(kind,q){
  if(!q)return null;
+ if(q.pawFortuneTransfer&&['sticks','moon'].includes(kind))return ['fortune-transfer','pawFortuneTransferAt'];
  if(kind==='moon'&&q.moonPending)return ['moon','tossUntil'];
+ if(kind==='moon'&&Number.isFinite(q.pawFortuneSettledAt)&&q.result!==0)return ['fortune-result','pawFortuneSettledAt'];
  if(kind==='sticks'&&q.drawing)return ['fall','stickDrawAt','shakeUntil'];
  if(kind==='sticks'&&q.stickPicked&&!q.stickDelivered)return ['pick','stickPickAt'];
  if(kind==='prayer'&&['approach','taking','lighting','walkMat','bow','placing','returnMat'].includes(q.prayerStage))return [q.prayerStage,'prayerAt'];
@@ -10782,10 +10784,19 @@ loop=function(...args){
 
 /* PAW_TEMPLE_JOURNEY_BEGIN */
 function pawFortuneSlipNumber(v){return Number.isInteger(v)&&v>=1&&v<=12?v:null}
+function pawFortuneResultHolding(q,now){
+ return !!q&&q.count===1&&q.result!==0&&Number.isFinite(q.pawFortuneSettledAt)&&now-q.pawFortuneSettledAt<1.2
+}
+function pawFortuneTransferFrame(q,now,g){
+ if(!q?.pawFortuneTransfer||!Number.isFinite(q.pawFortuneTransferAt))return null;
+ const retry=q.pawFortuneTransfer==='retry',a=retry?g.moonFoot:g.stickPickFoot,b=retry?g.stickFoot:g.moonFoot;
+ const duration=Math.max(.8,Math.hypot(b.x-a.x,b.y-a.y)/155),f=Math.max(0,Math.min(1,(now-q.pawFortuneTransferAt)/duration)),u=f*f*(3-2*f);
+ return {x:a.x+(b.x-a.x)*u,y:a.y+(b.y-a.y)*u,done:f>=1,retry,direction:retry?'left':'right'}
+}
 function pawFortuneNext(q,kind,now,blocked){
- if(blocked||!q||!pawFortuneSlipNumber(q.pawFortuneNumber))return null;
+ if(blocked||!q||q.pawFortuneTransfer||!pawFortuneSlipNumber(q.pawFortuneNumber))return null;
  if(kind==='sticks'&&q.stickDelivered)return 'confirm';
- if(kind==='moon'&&!q.moonPending&&!(q.tossUntil>now))return q.count===1?(q.result===0?'receive':'retry'):q.count===0?'toss':null;
+ if(kind==='moon'&&!q.moonPending&&!(q.tossUntil>now)&&!pawFortuneResultHolding(q,now))return q.count===1?(q.result===0?'receive':'retry'):q.count===0?'toss':null;
  return null
 }
 function pawFortuneAction(q,current,kind,now,blocked,action){
@@ -10863,6 +10874,10 @@ function pawFortuneMove(action,run=state){
  if(!['confirm','retry'].includes(action)||!pawFortuneAction(run,state,activity,t,pawArcadeInputBlocked(),action))return false;
  const n=run.pawFortuneNumber,from=activity,to=action==='retry'?'sticks':'moon';
  releaseWalkKeys();joystickReset();
+ if(pawAlcoveActive()){
+  run.pawFortuneTransfer=action;run.pawFortuneTransferAt=t;
+  hint(...(action==='retry'?['Return to the holder for another stick.','回到签筒旁，重新摇一支签。']:['Carry your stick to the moon blocks.','拿着签走到筊杯旁。']));mb5AssistSync(true);return true
+ }
  activity=null;state={};roomIntro();updateHUD();
  const q={run,from,to,hallState:state,started:false,arrive:null};
  q.arrive=()=>{
@@ -10886,6 +10901,8 @@ loop=function(...args){const result=pawFortuneWalkLoopBefore(...args);pawFortune
 const pawFortuneAssistSpecBefore=mb5AssistSpec;
 mb5AssistSpec=function(kind,q,now){
  const next=pawFortuneNext(q,kind,now,false);
+ if(q?.pawFortuneTransfer&&['sticks','moon'].includes(kind))return {key:'fortune-walking',label:q.pawFortuneTransfer==='retry'?['Returning to the stick holder…','走回签筒旁……']:['Walking to the moon blocks…','走向筊杯……'],disabled:true};
+ if(kind==='moon'&&pawFortuneSlipNumber(q?.pawFortuneNumber)&&pawFortuneResultHolding(q,now))return {key:'fortune-settled',label:q.result===1?['Yin Bei · not this time','阴杯 · 这次未获确认']:['Xiao Bei · try a new stick','笑杯 · 请重新求签'],disabled:true};
  if(next==='confirm')return {key:'fortune-confirm',label:['Confirm with moon blocks','掷筊确认'],action:'fortune-confirm'};
  if(next==='receive')return {key:'fortune-receive',label:['Receive your confirmed fortune slip','领取签文'],action:'fortune-receive'};
  if(next==='retry')return {key:'fortune-retry',label:['Draw another fortune stick','重新求签'],action:'fortune-retry'};
@@ -12141,12 +12158,27 @@ function pawDrawAlcoveMoon(){
  }
  if(!run.moonPending&&!(run.tossUntil>t)&&(!pawFortuneSlipNumber(run.pawFortuneNumber)||!run.count))target(g.moonTray.x-46,g.moonTray.y-30,92,60,()=>{if(run===state&&!pawArcadeInputBlocked())pawMoonToss(65,true)},'moon')
 }
+function pawDrawAlcoveFortuneTransfer(){
+ const run=state,g=pawAlcoveGeometry(),pose=pawFortuneTransferFrame(run,t,g);if(!pose)return false;
+ if(pose.done&&!pawArcadeInputBlocked()){
+  const n=run.pawFortuneNumber;start(pose.retry?'sticks':'moon');
+  if(!pose.retry)state.pawFortuneNumber=n;
+  hint(...(pose.retry?['Shake the holder for a fresh stick.','重新摇签筒吧。']:['Toss the moon blocks to confirm your stick.','掷筊确认手中的签吧。']));mb5AssistSync(true);return false
+ }
+ for(let i=0;i<2;i++){
+  const result=pose.retry?run.result:0,count=pose.retry?run.count:0,m=pawMoonMotion(1,i,pawMoonFlat(result,i,count),95),pt=pawAlcoveMoonPoint(g,m);
+  ellipse(pt.x,g.moonTray.y+5,9,2.5,'#342b2355');ctx.save();ctx.translate(pt.x,pt.y);ctx.scale(.30,.30);templeMoon(0,0,m.angle,m.flat);ctx.restore()
+ }
+ const sc=pawAlcoveActorScale();backHuman(pose.x,pose.y,avatar??0,!pose.done,pose.direction,sc);
+ if(!pose.retry){const end={x:pose.x+14,y:pose.y-64};ctx.save();ctx.translate(end.x,end.y);round(-2.8,-17,5.6,34,1,'#d7b47c','#9c7447');line(-1,-15,-1,15,'#f1dba6',.7);ctx.restore()}
+ return true
+}
 const pawAlcoveDrawBefore=drawActivity;
 drawActivity=function(...args){
  if(!pawAlcoveActive())return pawAlcoveDrawBefore(...args);
  pawRitualAdvance();
  if(!pawAlcoveActive())return pawAlcoveDrawBefore(...args);
- continuityActivity=activity;ctx.save();try{pawAlcoveScene();if(activity==='sticks')pawDrawAlcoveSticks();else pawDrawAlcoveMoon()}finally{ctx.restore()}mb5AssistSync()
+ continuityActivity=activity;ctx.save();try{pawAlcoveScene();if(!pawDrawAlcoveFortuneTransfer()){if(activity==='sticks')pawDrawAlcoveSticks();else pawDrawAlcoveMoon()}}finally{ctx.restore()}mb5AssistSync()
 };
 
 
@@ -12321,7 +12353,7 @@ function pawDrawCounterRack(){
  const run=state,g=pawSlipGeometry(),data=pawCounterRackData(run),selected=data.entries[run.rackSelected];
  if(selected){
   const f=Math.max(0,Math.min(1,(t-run.rackAt)/.25)),pose={...g.reading,w:460,h:380,open:1,alpha:Math.max(.2,f)};
-  const subtitle=selected.fictional?tr('Fictional resident','虚构居民'):tr('Saved on this device','本设备记录');
+  const subtitle=selected.fictional?tr('Town resident','小镇居民'):tr('Saved on this device','本设备记录');
   pawSlipDrawPaper(pose,selected.number,tr(...shrinePaperLines[selected.number-1]),subtitle);
   // The owner is shown separately to avoid hiding the fortune text.
   const b=livingBounds();ctx.fillStyle='#40352bc9';ctx.fillRect(g.reading.x-210,g.reading.y-240,420,37);

@@ -58,6 +58,7 @@ jobs:
           node scripts/indoor-social-test.cjs
           node scripts/tarot-fan-test.cjs
           node scripts/test-tarot-snapshot.cjs
+          node scripts/temple-result-continuity-test.cjs
           node scripts/reading-host-scene-test.cjs
           node scripts/tea-scoop-continuity-test.cjs
           node scripts/scene-ambience-test.cjs

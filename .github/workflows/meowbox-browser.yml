@@ -26,6 +26,7 @@ jobs:
           node-version: '22'
       - run: node scripts/build.cjs
       - run: node scripts/test-tarot-snapshot.cjs
+      - run: node scripts/temple-result-continuity-test.cjs
       - run: node scripts/house-label-recovery-test.cjs
       - run: node scripts/local-progress-reset-test.cjs
       - run: node scripts/home-placement-live-test.cjs
