@@ -146,3 +146,26 @@ for(const id of Object.keys(api.rooms)){
 assert.ok(source.includes("room==='arcade'?['Arcade keeper','游戏厅店主']"));
 assert.ok(source.includes("room==='arcade'?'bubbleArcade':room,n:name"));
 console.log('Mapped public-room visitor candidates and arcade keeper registration passed.');
+
+// Direct joystick movement must not follow an indirect route around a wall,
+// nor use the old rectangular room limits. Test eight directions near edges.
+const manual=new Function(source.slice(start,end)+';return {pawReadingWorld,pawReadingNormalized,pawReadingManualStep};')();
+let manualMoves=0,manualBlocked=0;
+for(const id of Object.keys(api.rooms))for(let i=0;i<=100;i+=2){
+ const y=i/100,b=api.bounds(id,y);if(!b)continue;
+ for(const f of [0,.01,.25,.5,.75,.99,1]){
+  const point=[b[0]+(b[1]-b[0])*f,y],from=manual.pawReadingWorld(point);
+  for(const [dx,dy] of [[45,0],[-45,0],[0,45],[0,-45],[31.82,31.82],[-31.82,31.82],[31.82,-31.82],[-31.82,-31.82]]){
+   const to=manual.pawReadingManualStep(api,id,from,dx,dy);
+   if(!to){manualBlocked++;continue}
+   manualMoves++;
+   const n=manual.pawReadingNormalized(...to);
+   assert.ok(api.safe(id,n),id+' manual floor');
+   assert.ok(api.segment(id,point,n),id+' manual segment');
+   assert.ok(Math.hypot(to[0]-from[0],to[1]-from[1])<=Math.hypot(dx,dy)+.001,id+' manual distance');
+   assert.ok((to[0]-from[0])*dx+(to[1]-from[1])*dy>0,id+' manual direction');
+  }
+ }
+}
+assert.ok(manualMoves>8000&&manualBlocked>0);
+console.log('Mapped room manual walking: '+manualMoves+' safe steps, '+manualBlocked+' blocked steps.');
