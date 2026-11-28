@@ -640,6 +640,7 @@ refreshControls=function(...args){
  const g=state.threeGame,el=$('gameControls'),buttons=el.querySelectorAll('button');
  if(buttons.length!==2)return value;
  const [opponent,restart]=buttons;
+ if(g.pawConfirmRestart&&!g.result)restart.textContent=tr('Confirm new round','确认重新开局');
  opponent.onclick=()=>{if(!opponent.disabled&&opponent.isConnected)pawThreeRematch(g,g.opponent==='cat'?'auntie':'cat')};
  restart.onclick=()=>{
   if(!restart.isConnected||!threeActive()||state.threeGame!==g||pawArcadeInputBlocked())return;
