@@ -4435,7 +4435,7 @@ achievementBook=function(...args){
  for(const h of q.querySelectorAll('h2'))if(h.textContent===tr('Other little milestones','其他小小里程碑'))h.remove();
  return result
 };
-const pawDiaryOpen=new Set(['fortune']);
+const pawDiaryOpen=new Set(['tasks']);
 function pawDiaryFold(q,node,key,title,subtitle=''){
  if(!node)return null;
  const fold=element('details','',q,'pawDiaryFold');node.before(fold);
@@ -4455,6 +4455,13 @@ todayHub=function(...args){
  pawDiaryFold(q,gratitude,'gratitude',tr('One good thing','今日小确幸'),day.keys.includes('gratitude')?tr('Saved today','今日已记录'):tr('Optional private reflection','随心记录，仅自己可见'));
  const calendar=q.querySelector('.townCalendarLink'),occasion=q.querySelector('.townOccasion');
  if(calendar)calendar.remove();if(occasion)occasion.remove();
+ const lunar=element('section','',q,'pawDiaryLunar');
+ const info=lunarInfo(),fmt=new Intl.DateTimeFormat(zh?'zh-SG':'en-SG',{dateStyle:'full',timeZone:'Asia/Singapore'});
+ element('small',fmt.format(new Date()),lunar);
+ element('strong',info?tr(info.labelEn,info.labelZh):tr('Calendar unavailable','农历暂不可用'),lunar);
+ for(let i=1;i<=32;i++){const date=new Date(Date.now()+i*864e5),v=lunarInfo(date);if(v&&(v.d===1||v.d===15)){element('p',tr('Next observance: ','下一次初一或十五：')+fmt.format(date)+' · '+tr(v.labelEn,v.labelZh),lunar);break}}
+ element('small',tr('Traditional observances are optional.','传统习俗，自愿参与。'),lunar);
+ pawDiaryFold(q,lunar,'calendar',tr('Lunar calendar','农历日历'));
  q.querySelector('.travellerMoodBook')?.remove();
  journalLanguage(todayHub);return result
 };
@@ -4648,7 +4655,7 @@ function pawVisualImage(theme,q){
 }
 function pawVisualHeader(q,theme){
  const h=q.querySelector(':scope > h1'),intro=q.querySelector(':scope > p');
- if(!h||!intro||['room','travel'].includes(theme)||q.querySelector('.pawTownFrontPhoto'))return;
+ if(!h||!intro||['room','travel'].includes(theme)||q.querySelector('.pawTownFrontPhoto,.pawDiaryFold'))return;
  const art=pawVisualImage(theme,q);
  if(!art)return;
  const header=element('header','',q,'pawIllustratedHeading');h.before(header);
@@ -15658,6 +15665,93 @@ html[lang^="zh"] #proposal .pawOpeningWordmark,html[lang^="zh"] #proposal .pawGa
 @media(prefers-reduced-motion:reduce){#proposal[data-paw-opening-enter="true"] .pawFirstRailPainting img,#proposal[data-paw-opening-enter="true"] .rail-ticket{animation:none!important}}
 `;document.head.append(pawOpeningSceneStyle);
 /* PAW_OPENING_EXPERIENCE_END */
+
+
+/* PAW_PHYSICAL_DOCK_BOOKLETS_BEGIN */
+const pawDockJournalCover='assets/visual/staging/2026-11-28-project-batch10-interface/journal-cover.webp';
+const pawBookFolds=new Set();
+function pawBookFold(section,key,label){
+ if(!section||section.parentElement?.classList.contains('pawBookFold'))return;
+ const fold=document.createElement('details');fold.className='pawBookFold';section.before(fold);
+ element('summary',label,fold);fold.append(section);fold.open=pawBookFolds.has(key);
+ fold.addEventListener('toggle',()=>{if(!fold.isConnected)return;if(fold.open)pawBookFolds.add(key);else pawBookFolds.delete(key)});
+}
+function pawBookletClose(q){
+ const back=q.querySelector(':scope > .row button:first-child');
+ if(!back||back.classList.contains('pawBookletClose'))return;
+ // Preserve the current back callback. The cover is an affordance, not a new page.
+ back.classList.add('pawBookletClose');
+ back.replaceChildren();
+ const art=element('img','',back);art.src=pawDockJournalCover;art.alt='';art.decoding='async';art.onerror=()=>art.remove();
+ element('span',tr('Close book','合上手账'),back);
+}
+const pawBookletJournalPrior=pawJournalRender;
+pawJournalRender=function(district=scene){
+ const result=pawBookletJournalPrior(district),q=$('content'),book=q.querySelector('.pawSketchbook');
+ if(!book)return result;
+ pawBookletClose(q);
+ pawBookFold(book.querySelector('.pawSketchPlaces'),'places:'+district,tr('Places to explore','可以逛逛的地方'));
+ pawBookFold(book.querySelector('.pawVisitProgress'),'progress:'+district,tr('Discovery notes','探索记录'));
+ const heading=book.querySelector('.pawSketchPlaces > h3');if(heading)heading.hidden=true;
+ return result
+};
+const pawBookletTodayPrior=todayHub;
+todayHub=function(...args){
+ const result=pawBookletTodayPrior(...args),q=$('content');
+ if(!q.querySelector('.pawDiaryFold'))return result;
+ pawBookletClose(q);
+ // The calendar and reflection stay in this planner. No additional page.
+ return result
+};
+const pawPhysicalBookletStyle=document.createElement('style');
+pawPhysicalBookletStyle.textContent=`
+#game #content .pawBookletClose{display:inline-flex!important;align-items:center;justify-content:center;gap:7px;min-height:44px!important;padding:3px 8px!important;background:#e5d5ad!important;color:#344d3a!important;border:1px solid #a18e66!important;border-radius:4px!important;box-shadow:none!important;white-space:normal}
+#game #content .pawBookletClose img{width:35px;height:35px;object-fit:contain;flex:none}
+#game #content .pawBookFold{min-width:0;border-top:1px dashed #b9a481;margin:6px 0;padding:0 2px;color:#4b5b43}
+#game #content .pawBookFold>summary{cursor:pointer;min-height:44px;align-content:center;font:600 16px/1.3 Georgia,"Songti SC",serif}
+#game #content .pawBookFold>.pawSketchPlaces{padding:0 2px}
+#game #content .pawBookFold>.pawVisitProgress{border-top:0;margin:0;padding:3px 0}
+#game #content .pawSketchSpread>.pawBookFold{grid-column:1/-1}
+#game #content:has(.pawDiaryFold)>h1{font:600 clamp(22px,6vw,30px)/1.2 Georgia,"Songti SC",serif!important;color:#405740!important;margin:8px 0 4px!important}
+#game #content:has(.pawDiaryFold)>p{margin:0 0 8px!important;font-size:13px!important;color:#645b47!important}
+#game #content:has(.pawDiaryFold){max-width:560px!important}
+#game #content .pawDiaryLunar{padding:4px 0 12px;color:#564831}
+#game #content .pawDiaryLunar strong,#game #content .pawDiaryLunar small{display:block}
+#game #content .pawDiaryLunar p{margin:6px 0!important;font-size:14px}
+@media(min-width:780px){#game #content .pawSketchSpread>.pawBookFold:has(.pawSketchPlaces){grid-column:2;grid-row:1/span 2;align-self:start}}
+/* Root booklets fill the game, rather than floating over its scenery. */
+#game #page:has(#content :is(.pawSketchbook,.pawDiaryFold)){position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;box-sizing:border-box!important;background:#f2e4c8 url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important;padding:max(10px,env(safe-area-inset-top,0px)) 0 max(92px,calc(82px + env(safe-area-inset-bottom,0px)))!important;overflow-y:auto!important}
+#game #page:has(#content :is(.pawSketchbook,.pawDiaryFold)) #content{width:100%!important;max-width:970px!important;box-sizing:border-box!important;margin:0 auto!important;padding:0 clamp(14px,4vw,28px)!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+#game #content:has(:is(.pawSketchbook,.pawDiaryFold))>.row{position:static!important;min-height:44px!important;margin:0 0 8px!important;padding:0!important;background:transparent!important}
+#game #content:has(:is(.pawSketchbook,.pawDiaryFold))>h1{color:#405740!important;font:600 clamp(22px,6vw,32px)/1.2 Georgia,"Songti SC",serif!important;margin:6px 0 10px!important;text-align:left!important}
+#game #content:has(.pawSketchbook) .pawSketchbook{padding:6px 0 0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
+#game #content:has(:is(.pawSketchbook,.pawDiaryFold))>.row .pawBookletClose{background:#e5d5ad!important;color:#344d3a!important}
+@media(min-width:780px){#game #page:has(#content :is(.pawSketchbook,.pawDiaryFold)) #content{max-width:970px!important;padding-inline:32px!important}}
+`;document.head.append(pawPhysicalBookletStyle);
+/* PAW_PHYSICAL_DOCK_BOOKLETS_END */
+
+/* PAW_PAINTED_SETTINGS_COG_BEGIN */
+// Keep one accessible button and one SVG. Use original artwork only after
+// decoding; if unavailable, the existing line icon remains the fallback.
+const pawSettingsCogAsset='assets/visual/staging/2026-11-28-project-art-b10/settings-cog.webp';
+const pawSettingsCogImage=new Image();
+pawSettingsCogImage.src=pawSettingsCogAsset;
+pawSettingsCogImage.decode().then(()=>{
+ const svg=townSettingsToggle.querySelector('svg');
+ if(!svg||svg.querySelector('.pawSettingsPaintedCog'))return;
+ for(const child of svg.children)child.classList.add('pawSettingsFallbackCog');
+ const art=document.createElementNS('http://www.w3.org/2000/svg','image');
+ art.setAttribute('href',pawSettingsCogAsset);art.setAttribute('width','24');art.setAttribute('height','24');art.setAttribute('preserveAspectRatio','xMidYMid meet');art.classList.add('pawSettingsPaintedCog');
+ art.addEventListener('error',()=>{art.remove();svg.removeAttribute('data-paw-painted-cog')},{once:true});
+ svg.append(art);svg.setAttribute('data-paw-painted-cog','true');
+}).catch(()=>{});
+const pawSettingsCogStyle=document.createElement('style');pawSettingsCogStyle.textContent=`
+html #game #small #townSettingsToggle[aria-label]>svg[data-paw-painted-cog]{width:33px!important;height:33px!important}
+html #game #small #townSettingsToggle[aria-label]>svg[data-paw-painted-cog]>.pawSettingsFallbackCog{display:none}
+@media(forced-colors:active){html #game #small #townSettingsToggle[aria-label]>svg[data-paw-painted-cog]>.pawSettingsFallbackCog{display:initial}html #game #small #townSettingsToggle[aria-label]>svg>.pawSettingsPaintedCog{display:none}}
+`;document.head.append(pawSettingsCogStyle);
+/* PAW_PAINTED_SETTINGS_COG_END */
+
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
 
