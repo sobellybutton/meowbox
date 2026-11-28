@@ -378,3 +378,101 @@ function pawInstallTarotHostContinuity(){
  }
 }
 if(typeof document!=='undefined')queueMicrotask(pawInstallTarotHostContinuity);
+
+/* PAW_EDITORIAL_SHARE_BEGIN */
+// Share art is a souvenir, not the detailed in-game reading. Keep every
+// actual card identity, but give the illustration and one takeaway room.
+function pawEditorialTarotPlan(box,count){
+ if(!box||![1,3,5].includes(count)||![box.width,box.height,box.left,box.right,box.top,box.bottom].every(Number.isFinite))return null;
+ const x=box.left+12,w=box.width-box.left-box.right-24,H=box.bottom-box.top;
+ if(w<640||H<600)return null;
+ const top=box.top,story=box.height>=1800,rows=story&&count===5?[3,2]:[count];
+ const header=H>=900?122:92,footer=48,summary=Math.max(110,Math.min(180,H*.20)),gap=18;
+ const area=H-header-footer-summary-gap*3,perRow=(area-(rows.length-1)*gap)/rows.length;
+ const caption=rows[0]===5?76:68,slots=[];let y=top+header+gap;
+ for(const n of rows){
+  const cellW=(w-(n-1)*gap)/n,cardH=Math.min(perRow-caption-8,(cellW-12)*218/128, count===1?440:370),cardW=cardH*128/218;
+  if(cardH<100)return null;
+  const groupW=n*cellW+(n-1)*gap;
+  for(let i=0;i<n;i++){
+   const cx=x+(w-groupW)/2+i*(cellW+gap)+cellW/2;
+   slots.push({card:[cx-cardW/2,y,cardW,cardH],label:[cx-cellW/2,y+cardH+8,cellW,caption]})
+  }
+  y+=perRow+gap
+ }
+ const readingY=box.bottom-footer-summary-gap;
+ return {title:[x,top,w,header],slots,reading:[x,readingY,w,summary],footer:[x,box.bottom-footer,w,footer]}
+}
+// Measured wrap with a real minimum type size, never distort glyphs vertically.
+function pawEditorialTextFit(measure,text,width,height,start,min,maxLines,spacing=1.25){
+ const chars=Array.from(String(text||'').trim());if(!chars.length)return {size:start,rows:[],lineHeight:start*spacing};
+ function wrap(size){
+  const lines=[];let row='';const parts=/[\u3400-\u9fff]/.test(chars.join(''))?chars:chars.join('').split(/\s+/);
+  const sep=parts===chars?'':' ';
+  for(const word of parts){
+   let next=row?row+sep+word:word;
+   if(measure(next,size)<=width){row=next;continue}
+   if(row){lines.push(row);row=''}
+   for(const ch of Array.from(word)){if(row&&measure(row+ch,size)>width){lines.push(row);row=''}row+=ch}
+  }
+  if(row)lines.push(row);return lines
+ }
+ for(let size=start;size>=min;size--){
+  const rows=wrap(size),lineHeight=size*spacing,cap=Math.min(maxLines,Math.floor(height/lineHeight));
+  if(rows.length<=cap)return {size,rows,lineHeight};
+  if(size===min){
+   const shown=rows.slice(0,Math.max(0,cap));
+   if(shown.length){let tail=Array.from(shown.at(-1));while(tail.length&&measure(tail.join('')+'…',size)>width)tail.pop();shown[shown.length-1]=tail.join('')+'…'}
+   return {size,rows:shown,lineHeight}
+  }
+ }
+ return {size:min,rows:[],lineHeight:min*spacing}
+}
+function pawEditorialTarot(cv,data,format,cn,box,paper,atlas,deck,positions){
+ if(data?.kind!=='tarot'||!Array.isArray(data.cards)||!data.cards.every(c=>Number.isInteger(c?.i)&&deck[c.i])||!paper?.complete||paper.naturalWidth!==box?.width||paper.naturalHeight!==box?.height||!atlas?.complete||atlas.naturalWidth!==1024||atlas.naturalHeight!==2180)return false;
+ const plan=pawEditorialTarotPlan(box,data.cards.length);if(!plan)return false;
+ const locale=v=>String(v?.[Number(!!cn)]||''),font=cn?'"Songti SC","Noto Serif CJK SC","Microsoft YaHei",serif':'Georgia,serif';
+ const ink='#443348',muted='#6e5367',gold='#9d7851';
+ cv.width=box.width;cv.height=box.height;const g=cv.getContext('2d');if(!g)return false;
+ g.drawImage(paper,0,0,cv.width,cv.height);
+ // One quiet sheet over the old reserved template area; no nested UI panels.
+ g.fillStyle='#faf0de';g.fillRect(box.left-4,box.top-8,box.width-box.left-box.right+8,box.bottom-box.top+16);
+ function text(rect,value,start,min,maxLines,weight='normal',color=ink,spacing=1.23){
+  const [x,y,w,h]=rect,measure=(v,size)=>{g.font=weight+' '+size+'px '+font;return g.measureText(v).width};
+  const fit=pawEditorialTextFit(measure,value,w-8,h,start,min,maxLines,spacing);
+  g.font=weight+' '+fit.size+'px '+font;g.textAlign='center';g.textBaseline='middle';g.fillStyle=color;
+  fit.rows.forEach((v,i)=>g.fillText(v,x+w/2,y+h/2+(i-(fit.rows.length-1)/2)*fit.lineHeight));
+ }
+ const [x,y,w,h]=plan.title;
+ text([x,y,w,30],cn?'月光塔罗 · 摸鱼小镇':'MOONLIGHT TAROT  /  PAWRADISE',25,20,1,'normal',gold);
+ text([x,y+32,w,h-32],locale(data.title),cn?48:56,34,2,'bold');
+ data.cards.forEach((c,i)=>{
+  const slot=plan.slots[i],[cx,cy,cw,ch]=slot.card,[lx,ly,lw,lh]=slot.label;
+  g.save();try{
+   g.shadowColor='#38233d45';g.shadowBlur=12;g.shadowOffsetY=5;g.fillStyle='#c4a27d';g.fillRect(cx-3,cy-3,cw+6,ch+6);
+   g.shadowBlur=0;g.shadowOffsetY=0;g.translate(cx+cw/2,cy+ch/2);if(c.rev)g.rotate(Math.PI);
+   g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(atlas,c.i%8*128,Math.floor(c.i/8)*218,128,218,-cw/2,-ch/2,cw,ch);
+  }finally{g.restore()}
+  const role=locale(positions[i]);
+  text([lx,ly,lw,26],role,24,19,1,'normal',muted);
+  text([lx,ly+26,lw,lh-26],locale(deck[c.i])+(c.rev?(cn?' · 逆位':' · Reversed'):(cn?' · 正位':' · Upright')),data.cards.length===5?26:30,22,2,'bold');
+ });
+ const [rx,ry,rw,rh]=plan.reading;
+ g.strokeStyle='#bca17d';g.lineWidth=2;g.beginPath();g.moveTo(rx+rw*.38,ry);g.lineTo(rx+rw*.62,ry);g.stroke();
+ text([rx+24,ry+12,rw-48,rh-12],locale(data.takeaway||socialResultQuote(data)),cn?34:36,27,4,'normal',ink,1.32);
+ text(plan.footer,cn?'Pawradise · 给自己留一点时间 · 仅供反思':'Pawradise · A little time for yourself · For reflection',23,19,2,'normal',muted);
+ return true
+}
+function pawInstallEditorialShare(){
+ const prior=shareCardArt;
+ shareCardArt=function(cv,data,format,cn){
+  if(data?.kind==='tarot'){
+   const box=pawRecoveredShareBounds(format),paper=pawRecoveredImage('templates/paper_'+format+'.webp'),atlas=readingArtwork(),count=data.cards?.length;
+   const roles=count===5?fiveReadingPositions:count===3?[['Situation','现状'],['Notice','留意'],['Next step','下一步']]:[['Your card','今日之牌']];
+   if(pawEditorialTarot(cv,data,format,cn,box,paper,atlas,tarotDeck,roles))return
+  }
+  return prior(cv,data,format,cn)
+ }
+}
+/* PAW_EDITORIAL_SHARE_END */
+if(typeof document!=='undefined')queueMicrotask(pawInstallEditorialShare);
