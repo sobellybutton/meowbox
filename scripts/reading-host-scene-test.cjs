@@ -37,3 +37,20 @@ ck(plan('park',{x:0,y:0,w:100,h:100},'idle')===null,'other rooms excluded');
 ck(cover({x:0,y:0,w:0,h:10},928,1648)===null,'invalid cover');
 new Function(source);
 console.log('PASS '+n+' seated reading scene geometry and phase checks');
+
+const ownershipChecks=new Function(block[1]+`
+let n=0;
+for(const visitId of [null,'destiny','tarot'])for(const id of ['destiny','tea'])for(const kind of [null,'chart'])for(const transition of [false,true])for(const already of [false,true])for(const ready of [false,true]){
+ const v=visitId?{id:visitId,ready:already}:null;
+ let probes=0;const result=pawYueAdoptSeatedVisit(v,id,kind,transition,()=>{probes++;return ready});
+ const eligible=visitId==='destiny'&&id==='destiny'&&!kind&&!transition&&!already;
+ if(result!==(eligible&&ready)||probes!==Number(eligible)||(v&&v.ready!==(already||result)))throw Error('late pose ownership');n++;
+}
+for(const talk of [true,false])for(const page of [true,false])for(const transition of [true,false]){
+ if(pawYueConsultPlaqueVisible(talk,page,transition)!==(!talk&&!page&&!transition))throw Error('plaque ownership');n++;
+}
+return n`)();
+assert.equal(ownershipChecks,104);
+assert.equal((source.match(/pawYueAdoptSeatedVisit\(pawHostVisit,room,activity,transitioning/g)||[]).length,2);
+assert.ok(source.includes("if(!pawYueConsultPlaqueVisible(talkOpen,$('page').style.display==='block',transitioning))return false"));
+console.log('PASS '+ownershipChecks+' seated visit and plaque checks, plus 2 wiring assertions');
