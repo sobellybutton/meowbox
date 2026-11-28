@@ -162,7 +162,15 @@ $('dockRoom').onclick=myRoom;$('profileHud').onclick=myRoom;$('dockTravel').oncl
 follower=function(){let d=Math.hypot(p.x-petPos.x,p.y-petPos.y);if(d>55){let f=Math.min(.12,(d-55)/d*.16);petPos.x+=(p.x-petPos.x)*f;petPos.y+=(p.y-petPos.y)*f}cat(petPos.x,petPos.y,petChoice===2?2:petChoice===1?1:0,d>56,1.15*(.73+petPos.y/routeHeight*.32))};
 const oldSay=say;say=function(a,b,opts=[]){oldSay(a,b,opts);let k= /Fortune|占卜|Temple|庙祝|Garden|守园|Caretaker/.test(a)?4:/Astrologer|命理|Wang|王老板/.test(a)?5:/Grandma|外婆|Auntie|梅姨/.test(a)?0: null;if(k!==null){$('talkPortrait').hidden=false;$('talkPortrait').src=ART['badge'+k]}};
 // Render an accessible DOM sign layer on the same logical coordinate system as canvas hit testing.
-function uiTick(){syncSigns();requestAnimationFrame(uiTick)}requestAnimationFrame(uiTick);
+/* PAW_LEGACY_SIGN_TICK_BEGIN */
+function pawLegacySignTickNeeded(view){
+ // Outdoor plaques are projected by startup's post-camera render hook.
+ // The legacy UI clock only owns the other views, including clearing signs
+ // when the player enters a room or the entrance screen is shown.
+ return !view.proposalHidden||!!view.room||!!view.activity
+}
+/* PAW_LEGACY_SIGN_TICK_END */
+function uiTick(){if(pawLegacySignTickNeeded({proposalHidden:proposal.hidden,room,activity}))syncSigns();requestAnimationFrame(uiTick)}requestAnimationFrame(uiTick);
 Object.assign(ART,{"walker00": "__MEOW_ART_046__", "face0": "__MEOW_ART_047__", "walker01": "__MEOW_ART_048__", "walker02": "__MEOW_ART_049__", "walker10": "__MEOW_ART_050__", "face1": "__MEOW_ART_051__", "walker11": "__MEOW_ART_052__", "walker12": "__MEOW_ART_053__", "walker20": "__MEOW_ART_054__", "face2": "__MEOW_ART_055__", "walker21": "__MEOW_ART_056__", "walker22": "__MEOW_ART_057__", "walker30": "__MEOW_ART_058__", "face3": "__MEOW_ART_059__", "walker31": "__MEOW_ART_060__", "walker32": "__MEOW_ART_061__"});
 // V9 production pass: retain existing games, add intentional interactions and progressive disclosure.
 /* The artwork cache now loads images on first access. */
