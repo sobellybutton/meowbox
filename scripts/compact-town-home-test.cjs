@@ -186,3 +186,6 @@ assert(src.includes('let index=memory?.page??0,count=0'));
 assert(src.includes('if(memory)memory.page=index'));
 assert(src.includes('},boardPageMemory);select(boardSection)'));
 console.log('PASS noticeboard pagination state persists through language changes');
+
+assert(src.includes('v!==decorate&&v!==collections'));
+console.log('PASS collections remains a direct room action');

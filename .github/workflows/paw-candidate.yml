@@ -54,6 +54,7 @@ jobs:
           node scripts/discovery-single-leaf-test.cjs
           node scripts/home-layout-test.cjs
           node scripts/painted-lobby-runtime-test.cjs
+          node scripts/indoor-social-test.cjs
           node scripts/scene-ambience-test.cjs
           node scripts/recurring-room-visitors-test.cjs
   district:

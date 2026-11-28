@@ -10320,6 +10320,20 @@ function pawPaintedPlaquePlacement(x,y,w,h,view,screen,blockers=[]){
  }
  return null
 }
+// Match each compact station plaque to the room's painted materials.
+// The canvas keeps one surface; no additional banner, frame or shadow.
+function pawIndoorPlaquePalette(id){
+ if(id==='tarot'||id==='destiny'||id==='quiz'||id==='story'||id==='match')return ['#443b59','#b9a17b','#fff0d7'];
+ if(id==='boba')return ['#824955','#d5a67c','#fff2df'];
+ if(id==='kitchen'||id==='arcade')return ['#704638','#cba16d','#fff2db'];
+ if(id==='tea'||id==='fish'||id==='park'||id==='wishes')return ['#425b54','#b8b18a','#fff3dc'];
+ return ['#503b2c','#d7ba83','#fff1d7']
+}
+function pawDrawIndoorPlaque(id,place,w,h,font,value,scale){
+ const [fill,edge,ink]=pawIndoorPlaquePalette(id);
+ round(place.x-w/2,place.y-h/2,w,h,Math.min(3,2/Math.max(.08,scale)),fill,edge);
+ activityFitText(value,place.x,place.y,font,w-8,ink)
+}
 function pawHallActorScale(height,reference,ratio=1){
  return Number.isFinite(height)&&height>0&&Number.isFinite(reference)&&reference>0?height/reference*Math.max(.75,Math.min(1.1,ratio)):1
 }
@@ -10386,8 +10400,7 @@ label=function(name,x,y,fn){
   const place=pawPaintedPlaquePlacement(anchorX,cy,w,h,{s:scale,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   // Original station body target and room directory remain available.
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,3,'#503b2ce8','#d7ba83');
-  activityFitText(value,place.x,place.y,font,w-8,'#fff1d7');
+  pawDrawIndoorPlaque(room,place,w,h,font,value,scale);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(id);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn);
  }finally{ctx.restore()}
@@ -11314,7 +11327,7 @@ const pawFortunePainting={
   tarot:{approach:[305,1135],plaque:[220,894],hit:[80,840,270,248]},
   destiny:{approach:[755,1135],plaque:[834,896],hit:[665,846,310,248]},
   temple:{approach:[375,702],plaque:[251,481],hit:[95,430,340,230]},
-  wishes:{approach:[630,727],plaque:[827,495],hit:[680,472,292,220]},
+  wishes:{approach:[630,727],plaque:[827,530],hit:[680,472,292,220]},
   station:{approach:[568,365],plaque:[568,282],hit:[430,245,304,126]}
  }
 };
@@ -11387,8 +11400,8 @@ const pawNewDistricts={
    [1280,503,82],[1360,501,90],[1440,502,91],[1530,499,94],
    [1640,500,92],[1685,500,87]],
   doors:{
-   quiz:{approach:[725,461],plaque:[740,347],hit:[636,266,327,197]},
-   story:{approach:[395,965],plaque:[232,760],hit:[55,701,336,237]},
+   quiz:{approach:[725,461],plaque:[740,400],hit:[636,266,327,197]},
+   story:{approach:[395,965],plaque:[232,725],hit:[55,701,336,237]},
    match:{approach:[510,1040],plaque:[812,945],hit:[642,858,329,242]},
    station:{approach:[707,461],plaque:[550,415],hit:[480,378,140,80]}
   }
@@ -11402,8 +11415,8 @@ const pawNewDistricts={
    [1250,350,65],[1320,366,69],[1390,440,106],[1450,498,99],
    [1515,499,100],[1580,504,94],[1640,504,89],[1685,504,83]],
   doors:{
-   mystery:{approach:[478,600],plaque:[255,350],hit:[100,345,325,190]},
-   arcade:{approach:[629,565],plaque:[829,338],hit:[657,329,315,231]},
+   mystery:{approach:[478,600],plaque:[255,405],hit:[100,345,325,190]},
+   arcade:{approach:[629,565],plaque:[829,390],hit:[657,329,315,231]},
    kitchen:{approach:[439,1060],plaque:[255,835],hit:[85,799,397,249]},
    boba:{approach:[588,1390],plaque:[779,1090],hit:[585,1080,385,300]},
    station:{approach:[551,373],plaque:[551,329],hit:[496,300,115,85]}
@@ -11417,8 +11430,8 @@ const pawNewDistricts={
    [1180,727,47],[1260,728,46],[1330,694,46],[1400,660,46],[1480,601,45],
    [1550,540,44],[1645,465,50],[1685,435,41]],
   doors:{
-   fish:{approach:[475,920],plaque:[202,925],hit:[65,865,342,240]},
-   tea:{approach:[414,810],plaque:[798,676],hit:[597,660,376,225]},
+   fish:{approach:[475,920],plaque:[202,895],hit:[65,865,342,240]},
+   tea:{approach:[414,810],plaque:[798,665],hit:[597,660,376,225]},
    park:{approach:[626,460],plaque:[815,355],hit:[660,298,300,165]},
    station:{approach:[515,400],plaque:[500,350],hit:[430,310,150,90]}
   }
@@ -12517,8 +12530,8 @@ drawActivity=function(...args){
 // The path is the clear aisle between painted furniture, not the countertop.
 const pawFoodPlate={x:100,y:-145,w:600,h:600*1648/928};
 const pawFoodRoomSpecs={
- kitchen:{station:'cook',entry:[400,735],arrival:[400,690],anchor:[290,420,350,580],resident:[465,605],visitors:[[365,715],[435,730],[400,660]],label:['Cook with Grandma','跟外婆煮汤'],labelY:467},
- boba:{station:'bubbleTea',entry:[400,735],arrival:[400,675],anchor:[400,345,400,565],resident:[290,615],visitors:[[470,705],[340,720],[435,640]],label:['Make bubble tea','手摇奶茶'],labelY:397}
+ kitchen:{station:'cook',entry:[400,735],arrival:[400,690],anchor:[290,420,350,580],resident:[465,605],visitors:[[365,715],[435,730],[400,660]],label:['Cook with Grandma','跟外婆煮汤'],labelX:230,labelY:300},
+ boba:{station:'bubbleTea',entry:[400,735],arrival:[400,675],anchor:[400,345,400,565],resident:[290,615],visitors:[[470,705],[340,720],[435,640]],label:['Make bubble tea','手摇奶茶'],labelX:400,labelY:374}
 };
 function pawFoodSafe(id,x,y){
  if(!Object.hasOwn(pawFoodRoomSpecs,id)||![x,y].every(Number.isFinite)||y<565||y>738)return false;
@@ -12685,9 +12698,9 @@ label=function(name,x,y,fn){
  const sc=Math.max(.08,cam.scale),font=Math.min(26,Math.max(17,12/sc)),cy=q.labelY,value=tr(...q.label);
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';const w=Math.min(190,Math.max(75,ctx.measureText(value).width+18)),h=font+13;
-  const place=pawPaintedPlaquePlacement(x,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
+  const place=pawPaintedPlaquePlacement(q.labelX,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,4,'#523c2dec','#d7b982');activityFitText(value,place.x,place.y,font,w-10,'#fff0d5');
+  pawDrawIndoorPlaque(room,place,w,h,font,value,sc);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(q.station);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
  }finally{ctx.restore()}
@@ -13118,7 +13131,7 @@ label=function(name,x,y,fn){
   const w=Math.min(160,Math.max(75,ctx.measureText(value).width+18)),h=font+13;
   const place=pawPaintedPlaquePlacement(cx,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,4,'#523c2dec','#d7b982');activityFitText(value,place.x,place.y,font,w-10,'#fff0d5');
+  pawDrawIndoorPlaque(room,place,w,h,font,value,sc);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(station.id);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
  }finally{ctx.restore()}
@@ -13477,7 +13490,7 @@ function pawDrawYueDeskPlaque(fn){
   const w=Math.max(58/scale,ctx.measureText(name).width+12/scale),h=22/scale;
   const place=pawPaintedPlaquePlacement(q.x,q.y,w,h,{s:scale,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers,...pawLocalVisitors.filter(pawVisitorVisible).map(a=>meowIndoorActorBounds(a))]);
   if(!place)return false;
-  round(place.x-w/2,place.y-h/2,w,h,2/scale,'#4b392ceb','#c9a979');activityFitText(name,place.x,place.y,font,w-6/scale,'#fff1d8');
+  pawDrawIndoorPlaque(room,place,w,h,font,name,scale);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add('destiny');
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn);return true
  }finally{ctx.restore()}
@@ -13525,7 +13538,7 @@ label=function(name,x,y,fn){
   const w=Math.min(144,Math.max(60,ctx.measureText(name).width+12)),h=font+9;
   const place=pawPaintedPlaquePlacement(cx,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,3,'#4e3d32ed','#d7bc88');activityFitText(name,place.x,place.y,font,w-7,'#fff0d5');
+  pawDrawIndoorPlaque(room,place,w,h,font,name,sc);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(station.id);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
  }finally{ctx.restore()}
@@ -13942,7 +13955,7 @@ openTarotReading=function(entry,back){
  const live=pawLiveTarotSnapshot(entry,state,activity,room,tarotDeck.length);
  const run=state,kind=activity,count=live.cards.length;
  const valid=()=>run===state&&room==='tarot'&&activity===kind&&pawTarotReadingRoute(live,run,kind,room,tarotDeck.length,t,false)==='live';
- const returnTable=()=>{if(!valid())return;closeTalk();$('page').style.display='none';if(run.readStage==='focus')readingReturnSpread()};
+ const returnTable=()=>{if(!valid())return;closeTalk();$('page').style.display='none';if(run.readStage==='focus')readingReturnSpread();else hint(...pawReadingNextHint(run,t,journalAutoSave()))};
  function explain(index){
   if(!valid())return;
   $('page').style.display='none';closeTalk();
@@ -13955,13 +13968,13 @@ openTarotReading=function(entry,back){
    if(reflection)words+='\n\n'+reflection;
    const aside=tarotCommentary(d[0],c.rev,live.topic,live.tone);
    if(aside)words+='\n\n'+tr(...aside);
-   choices.push([index+1<count?tr('Next card','下一张牌'):tr('What does it mean together?','整体意味着什么？'),()=>explain(pawLiveTarotStep(count,index,1))]);
+   choices.push([index+1<count?tr('Next card','下一张牌'):count===1?tr('A moment to reflect','静心想一想'):tr('What does it mean together?','整体意味着什么？'),()=>explain(pawLiveTarotStep(count,index,1))]);
   }else{
    words=count===5?tr('Compare what helps with the challenge card. Choose one small action from the next-step card, and keep the last card as a reminder.','对照助力牌和挑战牌。从行动牌里选一件小事，再把最后一张牌当作提醒。'):count===3?readingConnection(live):tr('Take what resonates with you. A card is a moment for reflection, not a prediction or an instruction.','把有共鸣的部分留在心里。牌意是自我反思，不是预言，也不是指令。');
    choices.push([tr('Make a keepsake','制作纪念牌卡'),()=>{if(!valid())return;closeTalk();shareReadingResult(live,()=>{if(valid())explain(index)})}]);
   }
   if(index>0)choices.push([tr('Previous card','上一张牌'),()=>explain(pawLiveTarotStep(count,index,-1))]);
-  choices.push([tr('Back to the table','回到牌桌'),returnTable]);
+  choices.push([index===count?tr('Finish reading · return to table','结束解读，回到牌桌'):tr('Back to the table','回到牌桌'),returnTable]);
   say(tr('Fortune Teller','占卜师'),words,choices)
  }
  explain(0)
@@ -15072,13 +15085,16 @@ pawDistrictSignStyle.textContent=`
 #game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque{
  border:1px solid var(--paw-sign-edge)!important;border-image:none!important;border-radius:3px!important;
  background-color:var(--paw-sign-paper)!important;background-image:linear-gradient(var(--paw-sign-wash),var(--paw-sign-wash)),var(--paw-sign-texture)!important;background-size:100% 100%!important;
- color:var(--paw-sign-ink)!important;text-shadow:none!important;box-shadow:0 1px 2px #2b251e33!important;padding:5px 8px!important;
+ color:var(--paw-sign-ink)!important;text-shadow:none!important;box-shadow:none!important;padding:3px 7px!important;
+ font-family:var(--paw-display,Georgia,serif)!important;font-weight:600!important;line-height:1.2!important;
 }
 #game[data-paw-sign-material]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material] .pawRailEdge{
  border:1px solid var(--paw-rail-edge)!important;border-image:none!important;border-radius:3px!important;
  background-color:var(--paw-rail-paper)!important;background-image:linear-gradient(var(--paw-rail-wash),var(--paw-rail-wash)),var(--paw-rail-texture)!important;background-size:100% 100%!important;
  color:var(--paw-rail-ink)!important;text-shadow:none!important;box-shadow:0 1px 2px #2b251e22!important;font-weight:600!important;
 }
+/* One painted surface, not a decorative inset border or another backing. */
+#game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque::before,#game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque::after{display:none!important;content:none!important}
 #game[data-paw-sign-material] .pawRailEdge{min-height:44px;max-width:46%}
 @media(forced-colors:active){
  #game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material] .pawRailEdge{background:ButtonFace!important;border:1px solid ButtonText!important;border-image:none!important;color:ButtonText!important;box-shadow:none!important}
@@ -15197,5 +15213,72 @@ html #game #content .pawProfileSettings button:focus-visible,html #game #content
 @media(forced-colors:active){html #game #content .pawProfileSettings button,html #game #content .pawProfileSettingsEntry{background:Canvas!important;color:CanvasText!important;border-bottom:1px solid CanvasText!important}html #game #content .pawProfileSettings button[aria-pressed=true]{background:Highlight!important;color:HighlightText!important}}
 `;document.head.append(pawProfileSettingsStyle);
 /* PAW_PROFILE_SETTINGS_END */
+
+/* PAW_TRAVELLER_GREETING_BEGIN */
+// Original full-body illustrated key poses. Foot landmarks are provisional
+// visual readings of the inspected extracted images, not new motion frames.
+const pawTravellerWaveArt=Object.freeze([[153,270,74,263],[136,266,80,259],[147,260,89,253],[158,278,94,271]].map(([width,height,x,y],id)=>({path:'assets/visual/staging/2026-11-27-extracted/players/'+id+'/wave.webp',width,height,foot:[x,y]})));
+function pawTravellerGreetingFrame(g,now,place,roomId,id,x,y,walking,eligible){
+ if(!g||!eligible||walking||g.place!==place||g.room!==roomId||g.id!==id||![now,x,y].every(Number.isFinite))return false;
+ return now>=g.at&&now-g.at<.95&&Math.hypot(x-g.x,y-g.y)<2
+}
+// Do not borrow a front-facing pose for a side/back-facing actor, a moving
+// peer (including the interpolation after a heartbeat), or a fictional NPC.
+function pawPeerWaveEligible(a,place,roomId,kind,facing,walking,visible){
+ return !!a&&a.sharedPeer===true&&!a.fictionalVisitor&&visible===true&&a.place===place&&(a.room||'')===roomId&&a.gesture==='wave'&&a.avatar===kind&&Number.isInteger(kind)&&kind>=0&&kind<4&&facing==='down'&&a.facing==='down'&&!walking&&a.walking===0&&[a.x,a.y,a.toX,a.toY].every(Number.isFinite)&&Math.hypot(a.x-a.toX,a.y-a.toY)<.5
+}
+/* PAW_TRAVELLER_GREETING_END */
+let pawTravellerGreeting=null,pawTravellerSharedWaveSeen=0,pawGreetingPeerActor=null;
+function pawBeginTravellerGreeting(actor,frontOnly=true){
+ if(!actor||activity||transitioning||document.hidden||!Number.isInteger(avatar)||avatar<0||avatar>3||frontOnly&&actor.facing!=='down')return false;
+ if(!mbArtImage(pawTravellerWaveArt[avatar]))return false;
+ pawTravellerGreeting={place:scene,room:room||'',id:avatar,x:actor.x,y:actor.y,at:t};
+ return true
+}
+const pawGreetingTalkPrior=npcTalk;
+npcTalk=function(n,...args){
+ const result=pawGreetingTalkPrior(n,...args);
+ if(n&&!n.sharedPeer&&n.kind!==2&&!room&&talkOpen)pawBeginTravellerGreeting(p);
+ return result
+};
+const pawGreetingIndoorPrior=pawIndoorSocialTalk;
+pawIndoorSocialTalk=function(...args){
+ const result=pawGreetingIndoorPrior(...args);
+ if(result)pawBeginTravellerGreeting(indoor);
+ return result
+};
+// Keep original peer corridor/room eligibility and label drawing. Only
+// substitute the body artwork within the original actor's draw call.
+function pawGreetingWithPeer(actor,paint){
+ const previous=pawGreetingPeerActor;
+ pawGreetingPeerActor=actor?.sharedPeer===true&&!actor.fictionalVisitor?actor:null;
+ try{return paint()}finally{pawGreetingPeerActor=previous}
+}
+const pawGreetingMapPeerPrior=drawSharedTownActor;
+drawSharedTownActor=function(a,...args){return pawGreetingWithPeer(a,()=>pawGreetingMapPeerPrior(a,...args))};
+const pawGreetingRoomPeerPrior=drawSharedRoomActor;
+drawSharedRoomActor=function(a,...args){return pawGreetingWithPeer(a,()=>pawGreetingRoomPeerPrior(a,...args))};
+const pawGreetingBackHumanPrior=backHuman;
+backHuman=function(x,y,kind,walking,facing,scale=1){
+ const peer=pawGreetingPeerActor,visible=!activity&&!transitioning&&!document.hidden&&proposal.hidden&&$('page').style.display!=='block';
+ if(pawPeerWaveEligible(peer,scene,room||'',kind,facing,walking,visible)&&sharedTownVisible()&&sharedTown.ready&&sharedTown.actors.get(peer.id)===peer&&Math.hypot(x-peer.x,y-peer.y)<.01){
+  const record=pawTravellerWaveArt[kind],im=mbArtImage(record);
+  if(im){mbArtDrawFrame(record,im,x,y,scale,false);return}
+ }
+ const actor=room?indoor:p,local=!peer&&!activity&&!pawRenderedWalker&&kind===avatar&&actor&&Math.hypot(x-actor.x,y-actor.y)<.01;
+ if(local&&Number.isInteger(kind)&&kind>=0&&kind<4){
+  const record=pawTravellerWaveArt[kind],im=mbArtImage(record);
+  // Existing opt-in gesture: show it once after returning to the scene,
+  // never replay it every frame or interrupt walking.
+  if(visible&&!walking&&im&&actor.facing==='down'&&sharedTown.enabled&&sharedTown.gesture==='wave'&&sharedTown.gestureUntil>Date.now()&&sharedTown.gestureUntil!==pawTravellerSharedWaveSeen){
+   pawTravellerSharedWaveSeen=sharedTown.gestureUntil;pawBeginTravellerGreeting(actor)
+  }
+  if(facing==='down'&&pawTravellerGreetingFrame(pawTravellerGreeting,t,scene,room||'',kind,x,y,walking,visible)&&im){
+   pawSyncIdleGait(x,y,kind);mbArtDrawFrame(record,im,x,y,scale,false);return
+  }
+  if(pawTravellerGreeting&&(walking||!visible||t-pawTravellerGreeting.at>=.95||pawTravellerGreeting.place!==scene||pawTravellerGreeting.room!==(room||'')))pawTravellerGreeting=null
+ }
+ return pawGreetingBackHumanPrior(x,y,kind,walking,facing,scale)
+};
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);

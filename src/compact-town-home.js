@@ -546,7 +546,8 @@ hideoutPage=function(...args){
  if(primary){
   const buttons=[...primary.querySelectorAll(':scope > button')];
   const decorate=buttons.find(v=>v.textContent===tr('Decorate room','布置小窝'));
-  const extras=buttons.filter(v=>v!==decorate);
+  const collections=buttons.find(v=>v.textContent===tr('My collections','我的收藏'));
+  const extras=buttons.filter(v=>v!==decorate&&v!==collections);
   if(decorate&&extras.length){
    const fold=element('details','',primary,'pawRoomExtras');element('summary',tr('Room belongings','小窝物品'),fold);
    const tray=element('div','',fold,'pawRoomExtraTray');extras.forEach(btn=>tray.append(btn))
