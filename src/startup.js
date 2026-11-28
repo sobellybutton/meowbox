@@ -13941,15 +13941,8 @@ pawRoomOwnerPresentation.textContent=`
 
 // Preserve the existing reading engines and temporary, local personal data.
 // The study remains the setting instead of a separate full-screen website.
-const pawYueVisitIntroBefore=roomIntro;
-roomIntro=function(...args){
- const result=pawYueVisitIntroBefore(...args);
- if(room==='destiny'&&!activity&&residentPendingWelcome?.id==='yue'){
-  const profile=residentWelcomeProfiles.find(v=>v.id==='yue');
-  if(profile){const welcome=residentHospitalityWelcome(profile,residentPendingWelcome.visits);residentPendingWelcome=null;residentGreetingToast(tr('Master Yue: ','月师傅：')+welcome)}
- }
- return result
-};
+// Master Yue's greeting is delivered by the intentional consultation dialogue,
+// not a second arrival toast over the illustrated room.
 function pawCloseYueDesk(){
  const pane=$('page');if(pane.dataset.pawYueDesk!=='true')return false;
  pawYueChartObserver?.disconnect();pawYueChartObserver=null;
