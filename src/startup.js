@@ -1551,15 +1551,29 @@ function paperRitualSyncButtons(){
 }
 function paperRitualCancel(){
  if(activity!=='hit'||!state.paperAction)return;
- state.paperAction=null;stressSwingAt=-10;paperRitualSyncButtons()
+ state.paperAction=null;state.paperRoundRemaining=0;stressSwingAt=-10;paperRitualSyncButtons()
+}
+/* PAW_AUNTIE_ROUND_BEGIN */
+function pawAuntieRoundRemaining(run){
+ return Number.isInteger(run?.paperRoundRemaining)?Math.max(0,Math.min(3,run.paperRoundRemaining)):0
+}
+function pawAuntieRoundCanBegin(run,allowed,busy){
+ return !!run&&allowed&&!busy&&pawAuntieRoundRemaining(run)===0
+}
+/* PAW_AUNTIE_ROUND_END */
+function pawAuntieBeginRound(){
+ if(!pawAuntieRoundCanBegin(state,paperRitualAllowed(),paperRitualBusy()))return false;
+ state.paperRoundRemaining=3;
+ if(paperRitualRequest())return true;
+ state.paperRoundRemaining=0;return false
 }
 function paperRitualRequest(){
- if(!paperRitualAllowed()||paperRitualBusy())return false;
+ if(!paperRitualAllowed()||paperRitualBusy()||!pawAuntieRoundRemaining(state))return false;
  state.paperAction={at:t,landed:false};
  stressSwingAt=t;paperRitualSyncButtons();return true
 }
 smack=function(){
- if(activity==='hit'&&room==='fish')return paperRitualRequest();
+ if(activity==='hit'&&room==='fish')return false; // The visitor is not the performer.
  return paperRitualImpactBefore()
 };
 function paperRitualAdvance(){
@@ -1573,7 +1587,11 @@ function paperRitualAdvance(){
   paperRitualImpactBefore();stressSwingAt=move.at;
  }
  if(age>=.46){
-  state.paperAction=null;refreshControls()
+  state.paperAction=null;
+  state.paperRoundRemaining=Math.max(0,pawAuntieRoundRemaining(state)-1);
+  if(state.paperRoundRemaining){if(!paperRitualRequest())state.paperRoundRemaining=0}
+  else hint('Ah Ma: There. Let the paper take the overtime.','阿嬷：好啦，加班就留给这张纸吧。');
+  refreshControls()
  }
 }
 const paperRitualPaperBefore=paperWorryAt;
@@ -1591,8 +1609,8 @@ start=function(id){
  const result=paperRitualStartBefore(id);
  if(id==='hit'&&room==='fish'){
   const name=String(playerName||'').trim().slice(0,24);
-  const en=name?name+', take your time. Choose a worry or give the paper a tap.':'Take your time. Choose a worry or give the paper a tap.';
-  const cn=(name?name+'，':'')+'慢慢来。选个烦恼，或者先拍拍纸小人。';
+  const en=(name?name+', ':'')+'take a seat. Choose a worry and I will take care of the paper.';
+  const cn=(name?name+'，':'')+'坐下来慢慢说，选个烦恼，阿嬷来帮你打。';
   hint('Ah Ma: '+en,'阿嬷：'+cn);refreshControls()
  }
  return result
@@ -1655,7 +1673,7 @@ function mb5PrepareAdvance(){
  if(pawArcadeInputBlocked())return;
  if(mb5PrepProgress(t,state.paperPrepAt)>=1){
   delete state.paperPrepAt;state.paperPrepared=true;
-  hint('Ah Ma: Ready. Take your time.','阿嬷：准备好啦，慢慢来。');refreshControls()
+  hint('Ah Ma: Ready. Shall I start?','阿嬷：准备好啦，要开始了吗？');refreshControls()
  }
 }
 const mb5SheetBefore=paperWorryAt;
@@ -1669,7 +1687,7 @@ paperRitualSyncButtons=function(){
  mb5PaperControlBefore();if(activity!=='hit'||room!=='fish')return;
  const button=$('gameControls')?.querySelector('.paperWhack');if(!button)return;
  const phase=Number.isFinite(state.paperPrepAt)?'prepare':state.paperAction?townActionPhase(t-state.paperAction.at):'ready';
- const words={prepare:['Preparing the paper…','铺好纸小人……'],anticipation:['Raise the slipper…','举起拖鞋……'],swing:['Swing…','挥下拖鞋……'],impact:['Whack!','啪！'],recovery:['Ready in a moment…','稍等一下……'],ready:['Whack!','打走烦恼！']};
+ const words={prepare:['Preparing the paper…','铺好纸小人……'],anticipation:['Ah Ma is getting ready…','阿嬷准备好了……'],swing:['Ah Ma swings…','阿嬷挥下拖鞋……'],impact:['Whack!','啪！'],recovery:['Ah Ma is still working…','阿嬷还在忙……'],ready:['Ask Ah Ma to begin','请阿嬷开始']};
  const label=tr(...words[phase]);if(button.textContent!==label)button.textContent=label
 };
 
@@ -2005,7 +2023,7 @@ const mbArtAhMaBefore=drawProductionAhMa;
 drawProductionAhMa=function(x,y,scale=1){
  if(activity!=='hit'||room!=='fish')return mbArtAhMaBefore(x,y,scale);
  const phase=state.paperAction?townActionPhase(t-state.paperAction.at):'ready';
- const r=residentArtworkRecord('Ah Ma'),pose=phase==='impact'||phase==='recovery'?'scolding':'seated';
+ const r=residentArtworkRecord('Ah Ma'),pose=phase==='swing'||phase==='impact'||phase==='recovery'?'scolding':'seated';
  const im=residentArtworkImage(r,pose)||residentArtworkImage(r,'seated');
  if(drawResidentRaster(im,x,y,205*scale,'right'))return true;
  return mbArtAhMaBefore(x,y,scale)
