@@ -4679,7 +4679,33 @@ function careStart(action){
  careMessage(...messages[action]);careSync()
 }
 let pawCareSleep=null;
-const pawCarePrepSeconds=1.35;
+const pawCarePrepSeconds=2;
+const pawCareWalkSeconds=.65;
+const pawCareActorHome=[400,657];
+const pawCareActorTargets=Object.freeze({feed:[252,596],water:[548,596],pet:[310,583],play:[530,586],rest:[302,590]});
+function pawCareActorTarget(phase){
+ return pawCareActorTargets[phase]||pawCareActorHome
+}
+function pawCareActorStep(a,dt,reduced=false){
+ const q=a.traveller||(a.traveller={x:pawCareActorHome[0],y:pawCareActorHome[1],facing:'up',kneel:0,moving:false});
+ const [tx,ty]=pawCareActorTarget(a.phase);
+ const dx=tx-q.x,dy=ty-q.y,dist=Math.hypot(dx,dy),step=Math.min(dist,260*Math.max(0,Math.min(.05,dt)));
+ const moving=dist>2;
+ if(moving){q.facing=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')}
+ if(reduced){q.x=tx;q.y=ty}else if(dist>0){q.x+=dx/dist*step;q.y+=dy/dist*step}
+ q.moving=!reduced&&Math.hypot(tx-q.x,ty-q.y)>2;
+ const active=Object.hasOwn(pawCareActorTargets,a.phase)&&!q.moving;
+ const goal=active?(a.phase==='rest'?.4:.68):0;
+ q.kneel=reduced?goal:q.kneel+Math.sign(goal-q.kneel)*Math.min(Math.abs(goal-q.kneel),dt*3);
+ return q
+}
+function pawDrawCareTraveller(a){
+ const q=a.traveller;if(!q)return;
+ const scale=1.37;
+ if(q.moving||q.kneel<.04){backHuman(q.x,q.y,avatar??0,q.moving,q.facing,scale);return}
+ const left=q.x>400,opts={kneel:q.kneel,bow:q.kneel*.16};
+ if(left)mirrorRitualPose(q.x,q.y,scale,opts);else drawRitualPose(q.x,q.y,scale,opts)
+}
 function pawCareSupplySetup(kind,from){
  if(!['feed','water'].includes(kind))return null;
  const home=kind==='feed'?[285,620]:[400,620],bowl=kind==='feed'?[295,548]:[505,548];
@@ -4693,6 +4719,7 @@ function pawCareSupplyPose(supply,age,reduced=false){
  const [hx,hy]=supply.home,[bx,by]=supply.bowl,[fx,fy]=supply.from;
  const ease=v=>{v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)};
  if(reduced||age>=pawCarePrepSeconds)return {x:hx,y:hy,tilt:0,pouring:false};
+ age=Math.max(0,age-pawCareWalkSeconds);
  const target=[bx,by-47];
  if(age<.45){const p=ease(age/.45);return {x:fx+(target[0]-fx)*p,y:fy+(target[1]-fy)*p,tilt:0,pouring:false}}
  if(age<.9){const p=(age-.45)/.45;return {x:target[0],y:target[1],tilt:Math.sin(Math.PI*p)*(supply.kind==='feed'?.65:.82),pouring:p>.15&&p<.85}}
@@ -4723,6 +4750,7 @@ document.addEventListener('visibilitychange',()=>pawCareVisibility(document.hidd
 function careTick(){
  if(document.hidden)return;
  const a=state.care,age=pawCareActionAge(a,t),dt=clamp(t-(a.tickAt??t),0,.05);a.tickAt=t;
+ pawCareActorStep(a,dt,residentReducedMotion.matches);
  // Completion shares the visible simulation clock instead of a wall timer.
  if(a.assisted&&((a.phase==='pet'&&age>=2.3)||(a.phase==='play'&&age>=3.2))){careComplete(a.phase);return}
  if(a.phase==='return'){const f=poseEase(clamp((t-a.returnAt)/.7,0,1));a.x=a.returnFromX+(400-a.returnFromX)*f;a.y=a.returnFromY+(535-a.returnFromY)*f;if(f>=1){a.phase='idle';careSync()}return}
@@ -4826,7 +4854,7 @@ drawActivity=function(){
  for(let i=0;i<9;i++){const x=240+(i*83)%320,y=380+(i*37)%170;ellipse(x+Math.sin(t*.8+i)*7,y+Math.cos(t*.6+i)*4,3,1.5,'#e5d7a79c')}
  const age=pawCareActionAge(a,t),filled=age>=0&&age<3;
  careBowl(295,548,false,a.phase==='feed'&&filled);careBowl(505,548,true,a.phase==='water'&&filled);
- careCatArt(a);
+ careCatArt(a);pawDrawCareTraveller(a);
  const d=a.drag,food=d?.kind==='feed'?d:{x:285,y:620},water=d?.kind==='water'?d:{x:400,y:620},toy=d?.kind==='play'?d:a.phase==='play'&&a.assisted?{x:400+Math.sin((t-a.at)*2.3+.7)*95,y:465}:{x:510,y:615};
  const supply=a.supply?.kind===a.phase?pawCareSupplyPose(a.supply,t-a.at,residentReducedMotion.matches):null;
  const f=a.phase==='feed'&&supply?supply:food,w=a.phase==='water'&&supply?supply:water;
@@ -4835,7 +4863,7 @@ drawActivity=function(){
  if(supply?.pouring){const [bx,by]=a.supply.bowl;
   for(let i=0;i<4;i++){const p=((t*4+i*.25)%1);ellipse(bx+(i-1.5)*3,by-23+19*p,a.phase==='water'?1.6:2.5,a.phase==='water'?3:2,a.phase==='water'?'#a5d3cc':'#a9865d')}
  }
- if(a.phase==='pet'&&(d||a.assisted)){const x=d?.x??(a.x-25+Math.sin((t-a.at)*2.8)*30),y=d?.y??(a.y-58);ctx.save();ctx.translate(x,y);ctx.rotate(-.35);ctx.fillStyle='#e1bc9b';ctx.beginPath();ctx.moveTo(-13,5);ctx.quadraticCurveTo(-18,-8,-7,-11);ctx.lineTo(5,-20);ctx.quadraticCurveTo(11,-23,11,-17);ctx.lineTo(2,-8);ctx.lineTo(16,-13);ctx.quadraticCurveTo(21,-13,20,-8);ctx.lineTo(9,5);ctx.quadraticCurveTo(2,13,-7,10);ctx.closePath();ctx.fill();ctx.restore()}
+
  if(a.phase==='rest'){txt('z',a.x+47,a.y-90-Math.sin(t*2)*5,19,'#fff2d6');txt('z',a.x+61,a.y-110,14,'#fff2d6')}
  txt(tr(...parkCats[state.petKind??0].name),400,375,24,'#fff4d9');
  ctx.restore()
