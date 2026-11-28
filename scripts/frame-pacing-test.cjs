@@ -1,0 +1,11 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
+const engine=read('src/engine.js'),startup=read('src/startup.js');
+const begin=engine.indexOf('/* PAW_LEGACY_SIGN_TICK_BEGIN */'),end=engine.indexOf('/* PAW_LEGACY_SIGN_TICK_END */',begin);
+assert.ok(begin>=0&&end>begin);
+const needed=new Function(engine.slice(begin,end)+';return pawLegacySignTickNeeded')();
+for(const proposalHidden of [true,false])for(const room of [null,'temple'])for(const activity of [null,'sticks'])assert.equal(needed({proposalHidden,room,activity}),!proposalHidden||!!room||!!activity);
+assert.ok(engine.includes('function uiTick(){if(pawLegacySignTickNeeded({proposalHidden:proposal.hidden,room,activity}))syncSigns()'));
+assert.ok(startup.includes('if(proposal.hidden&&!room&&!activity)syncSigns();return result'),'Outdoor sign owner missing');
+console.log('PASS: outdoor sign frame ownership; no duplicate legacy projection');
