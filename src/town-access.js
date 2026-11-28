@@ -204,16 +204,19 @@ function wishFishSpeech(pond,fish,full){
  bubble.style.top=Math.max(13,Math.min(67,fish.y-11))+'%';
  setTimeout(()=>bubble.remove(),2800)
 }
-animateWishKoi=function(pond){
+animateWishKoi=function(pond,visitCurrent=()=>pond.isConnected&&$('page').style.display!=='none'){
  pond.querySelectorAll('.v9koi').forEach(n=>n.remove());element('div','',pond,'waterLight');
  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
- const fish=[];let impact=null,last=performance.now(),wake=last;
+ const fish=[];let impact=null,last=performance.now(),wake=last,frameId=null,stopped=false;
+ function stop(){if(stopped)return;stopped=true;if(frameId!==null)cancelAnimationFrame(frameId);frameId=null;impact=null}
+ function schedule(){if(!stopped)frameId=requestAnimationFrame(tick)}
  const count=Math.random()<.12?4:3;
  for(let k=0;k<count;k++){const el=element('div','',pond,'livingKoi'+(k===3?' golden':''));const im=element('img','',el);im.src=art9.koi;im.alt='';im.style.animationDelay=(-k*.4)+'s';const angle=k*2*Math.PI/count;fish.push({el,x:50+Math.cos(angle)*29,y:43+Math.sin(angle)*24,angle,heading:angle*180/Math.PI+90,speed:.36+k*.045})}
  const petals=Array.from({length:5},(_,k)=>({el:element('i','',pond,'floatingPetal'),x:15+k*17,y:15+(k*29)%64,phase:k*1.9}));
  function tick(now){
-  if(!pond.isConnected)return;
-  if($('page').style.display==='none'){last=now;requestAnimationFrame(tick);return}
+  frameId=null;
+  if(stopped||!visitCurrent()){stop();return}
+  if(document.hidden){last=now;schedule();return}
   const dt=Math.min(.06,Math.max(0,(now-last)/1000));last=now;
   const age=impact?(now-impact.at)/1000:0;
   if(impact&&age>=1.15)impact=null;
@@ -228,10 +231,10 @@ animateWishKoi=function(pond){
   }
   if(!reduce&&now-wake>1900){wake=now;const f=fish[Math.floor(now/1900)%fish.length];const ripple=element('i','',pond,'fishWake');ripple.style.left=f.x+'%';ripple.style.top=f.y+'%';setTimeout(()=>ripple.remove(),1650)}
   for(const petal of petals){if(!reduce){petal.x+=dt*.5;petal.y+=dt*Math.sin(now/4000+petal.phase)*.2;if(petal.x>90)petal.x=10}petal.el.style.left=petal.x+'%';petal.el.style.top=petal.y+'%';petal.el.style.transform='rotate('+(Math.sin(now/3200+petal.phase)*35)+'deg)'}
-  requestAnimationFrame(tick)
+  schedule()
  }
- requestAnimationFrame(tick);
- return {collision(x,y){return wishFishCollision(fish,x,y)},splash(x,y,hit,bumped){impact=!hit&&bumped?{fish:bumped,x,y,at:performance.now()}:null},reset(){impact=null;pond.querySelectorAll('.wishFishSpeech').forEach(v=>v.remove())}}
+ schedule();
+ return {stop,collision(x,y){return stopped?null:wishFishCollision(fish,x,y)},splash(x,y,hit,bumped){if(!stopped)impact=!hit&&bumped?{fish:bumped,x,y,at:performance.now()}:null},reset(){if(stopped)return;impact=null;pond.querySelectorAll('.wishFishSpeech').forEach(v=>v.remove())}}
 };
 /* PAW_WISH_VISIT_BEGIN */
 function pawWishVisitCurrent(connected,display,visitRoom,currentRoom,visitActivity,currentActivity,visitState,currentState){
@@ -253,7 +256,7 @@ function pawWishApproach(age,reduced){
 }
 /* PAW_WISH_BANK_END */
 wishPond9=function(){page(tr('The wishing pool','锦鲤许愿池'),tr('Hold a wish in your heart. No need to tell anyone.','在心里默默许个愿，不必告诉任何人。'),q=>{
- const pond=pond9(q);pond.classList.add('wishRitual');const stage=element('section','',q,'pawWishGarden');pond.before(stage);stage.append(pond);const koiLife=animateWishKoi(pond);element('div','',pond,'wishBowl');const aim=element('i','',pond,'wishAim');aim.hidden=true;const coin=element('img','',pond,'ritualCoin');coin.src='assets/visual/painted/interface/paw-coin-hud.webp';coin.alt=tr('Swipe the coin toward the centre bowl','将铜钱向中央许愿碗滑动');coin.draggable=false;
+ const pond=pond9(q);pond.classList.add('wishRitual');const stage=element('section','',q,'pawWishGarden');pond.before(stage);stage.append(pond);const koiLife=animateWishKoi(pond,()=>current());element('div','',pond,'wishBowl');const aim=element('i','',pond,'wishAim');aim.hidden=true;const coin=element('img','',pond,'ritualCoin');coin.src='assets/visual/painted/interface/paw-coin-hud.webp';coin.alt=tr('Swipe the coin toward the centre bowl','将铜钱向中央许愿碗滑动');coin.draggable=false;
  const instruction=element('p',tr('Swipe up from the coin towards the bowl. A faster swipe throws farther.','从铜钱向许愿碗滑动，滑得越快，投得越远。'),q,'wishThrowGuide');pond.before(instruction);const powerBar=element('div','',q,'wishPower');const powerFill=element('i','',powerBar);powerBar.setAttribute('aria-label',tr('Throw strength','投币力度'));const message=element('p',tr('Ready? Aim for the small bowl in the centre.','准备好了吗？瞄准中央的小碗。'),q,'wishMessage');message.setAttribute('aria-live','polite');message.setAttribute('role','status');pond.before(message);pond.before(powerBar);
  const visitRoom=room,visitActivity=activity,visitState=state;
  const current=()=>pawWishVisitCurrent(pond.isConnected,$('page').style.display,visitRoom,room,visitActivity,activity,visitState,state);
@@ -337,8 +340,8 @@ wishPond9=function(){page(tr('The wishing pool','锦鲤许愿池'),tr('Hold a wi
  gentle=b(q,tr('Toss gently','轻轻投币'),()=>throwWish(50,39));gentle.classList.add('pawGentleToss');syncToss();
  let keyboardAim=0,keyboardPower=47;const keyboard=element('details','',q);element('summary',tr('Alternative aiming controls','其他瞄准方式'),keyboard);const controls=element('div','',keyboard,'wishKeyboard');const readout=element('output','',controls);readout.setAttribute('aria-live','polite');function updateAim(){readout.textContent=tr('Angle ','角度 ')+keyboardAim+'° · '+tr('Power ','力度 ')+keyboardPower+'%';powerFill.style.width=keyboardPower+'%'};for(const [label,description,fn] of [['←',['Aim left','向左瞄准'],()=>keyboardAim=Math.max(-45,keyboardAim-5)],['→',['Aim right','向右瞄准'],()=>keyboardAim=Math.min(45,keyboardAim+5)],['−',['Less power','减小力度'],()=>keyboardPower=Math.max(10,keyboardPower-4)],['+',['More power','加大力度'],()=>keyboardPower=Math.min(90,keyboardPower+4)]]){const btn=b(controls,label,()=>{fn();updateAim()});btn.setAttribute('aria-label',tr(...description))}b(controls,tr('Throw','投币'),()=>{const a=keyboardAim*Math.PI/180;const o=source();throwWish(clampWish(o.x+Math.sin(a)*keyboardPower*pond.clientHeight/pond.clientWidth,4,96),clampWish(o.y-Math.cos(a)*keyboardPower,5,94))});updateAim();
 let again=b(q,tr('Make another wish','再许一个愿'),()=>{if(!current()||busy)return;done=false;held=false;misses=0;syncToss();koiLife.reset();pond.querySelectorAll('.settledWishCoin').forEach(n=>n.remove());home();again.hidden=true;message.textContent=tr('Take another Paw Coin when you are ready.','准备好了，再取一枚爪爪币。')});again.hidden=true;
- const finishVisit=()=>{if(!current())return;cancelFlight();$('page').style.display='none';hint('Take your wish with you, or visit another spot in the garden.','带着心愿慢慢走，也可以去花园的其他地方看看。')};
- b(q,tr('Hang a private wish','挂心愿牌'),()=>{if(!current())return;cancelFlight();$('page').style.display='none';start('wishes')});
+ const finishVisit=()=>{if(!current())return;koiLife.stop();cancelFlight();$('page').style.display='none';hint('Take your wish with you, or visit another spot in the garden.','带着心愿慢慢走，也可以去花园的其他地方看看。')};
+ b(q,tr('Hang a private wish','挂心愿牌'),()=>{if(!current())return;koiLife.stop();cancelFlight();$('page').style.display='none';start('wishes')});
  b(q,tr('Return to the garden','回到花园'),finishVisit);
 })};
 const wishCompactVisual=document.createElement('style');wishCompactVisual.textContent=`
