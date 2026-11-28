@@ -11944,7 +11944,7 @@ const pawWaterPlate={x:100,y:-145,w:600,h:600*1635/962};
 function pawWaterGeometry(p=pawWaterPlate){
  const point=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
  return {foot:point(.46,.645),basin:point(.345,.51),palm:point(.426,.565),
-  rest:point(.44,.55),scoop:point(.345+.038,.51),pour:point(.426+.038,.545),rack:point(.475,.535)}
+  rest:point(.39,.55),scoop:point(.345+.038,.51),pour:point(.426+.038,.545),rack:point(.475,.535)}
 }
 // Match the effective ladle material's source coordinates and mirrored
 // canvas transform. The grip and water outlet travel with the actual prop.
@@ -12036,18 +12036,17 @@ function pawDrawWaterPainting(){
  ctx.fillStyle='#473e36';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawWaterArt(),p.x,p.y,p.w,p.h);
  const ready=stage===0?g.rest:stage===1?g.scoop:g.pour;
  let at=ready,angle=0;
- if(held){at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,pawTemplePaintedActorScale())}
+ if(held){at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,2.18)}
  else if(stage===1)at=pawWaterMix(run.pawWaterFrom||g.scoop,g.rest,poseEase(Math.min(1,age/.35)));
  else if(stage===2){at=pawWaterMix(run.pawWaterFrom||g.pour,g.pour,poseEase(Math.min(1,age/.35)));angle=.58*poseEase(Math.min(1,age/.4))*(1-poseEase(Math.max(0,Math.min(1,(age-1.5)/.5))))}
  else if(stage===3)at=pawWaterMix(g.pour,g.rack,poseEase(Math.min(1,age/.55)));
- const sc=pawTemplePaintedActorScale(),shoulder=pawWaterShoulder(g,sc),grip=pawWaterLadlePoint(at,angle,-25,1);
+ const sc=2.18,shoulder=pawWaterShoulder(g,sc),grip=pawWaterLadlePoint(at,angle,-25,1);
  // Far arm is occluded by the traveller, not drawn across the torso.
- if(stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.80,true);
+ if(stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.72,true);
+ if((held||stage===1||stage===2)&&Math.hypot(grip.x-shoulder.x,grip.y-shoulder.y)<=48*sc)pawIncenseArm(shoulder,grip,sc*.70,false);
  backHuman(g.foot.x,g.foot.y,avatar??0,false,'left',sc);
  if(stage!==3||age<.55){
   ctx.save();ctx.translate(at.x,at.y);ctx.scale(-.65,.65);waterLadleArt(0,0,angle,stage===1||stage===2&&age<1.55);ctx.restore();
-  // At rest before pickup, no detached reaching sleeve.
-  if(held||stage!==0)pawIncenseArm(shoulder,grip,sc*.82,false)
  }
  if(stage===2&&age>.15&&age<1.8){
   const bowl=pawWaterLadlePoint(at,angle,35,6);
@@ -12080,7 +12079,7 @@ function pawAlcoveGeometry(p=pawWaterPlate){
  const pt=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
  return {tube:pt(.397,.473),tubeGrip:pt(.411,.499),tubeTop:pt(.397,.426),
   stickTray:pt(.523,.509),stickFoot:pt(.41,.625),stickPickFoot:pt(.51,.625),
-  moonTray:pt(.743,.508),moonFoot:pt(.707,.64),moonHand:pt(.70,.54)}
+  moonTray:pt(.743,.508),moonFoot:pt(.56,.64),moonHand:{x:p.x+.743*p.w-13,y:p.y+.508*p.h}}
 }
 function pawAlcoveActorScale(){return 1.92}
 function pawAlcoveReach(foot,side=1){
@@ -12106,6 +12105,24 @@ function pawAlcoveStickContact(g,pose,held=false){
 }
 function pawAlcoveMoonPoint(g,m){
  return {x:g.moonTray.x+(m.x-400)*.26,y:g.moonTray.y-m.lift*.32}
+}
+// Keep the complete toss envelope beside the traveller, not over the face.
+// The right sleeve reaches the nearer block only during release.
+function pawAlcoveMoonReach(g){
+ const sc=pawAlcoveActorScale();
+ return {shoulder:{x:g.moonFoot.x+5*sc,y:g.moonFoot.y-63*sc},sleeve:.72*sc,maxReach:48*sc}
+}
+function pawAlcoveMoonClearance(g,m,foot=g.moonFoot){
+ const pt=pawAlcoveMoonPoint(g,m),sc=pawAlcoveActorScale();
+ // Conservative body envelope and rotated crescent radius at .30 scale.
+ return pt.x-15-(foot.x+38*sc)
+}
+function pawAlcoveMoonContact(g,f,m){
+ if(!Number.isFinite(f)||f<0||f>.24)return null;
+ const reach=pawAlcoveMoonReach(g),pt=pawAlcoveMoonPoint(g,m);
+ const u=f<=.12?1:Math.max(0,(.24-f)/.12);
+ const hand={x:reach.shoulder.x+(pt.x-reach.shoulder.x)*u,y:reach.shoulder.y+(pt.y-reach.shoulder.y)*u};
+ return Math.hypot(hand.x-reach.shoulder.x,hand.y-reach.shoulder.y)<=reach.maxReach?hand:null
 }
 /* PAW_ALCOVE_PAINT_END */
 const pawAlcovePath='../../staging/2026-11-27/rooms/temple/sticks.webp';
@@ -12148,8 +12165,9 @@ function pawDrawAlcoveSticks(){
 }
 function pawDrawAlcoveMoon(){
  const run=state,g=pawAlcoveGeometry(),airborne=run.tossUntil>t,f=airborne?Math.max(0,Math.min(1,1-(run.tossUntil-t)/(run.moonDuration||.55))):1;
- const sc=pawAlcoveActorScale(),{shoulder,sleeve,maxReach}=pawAlcoveReach(g.moonFoot,-1);
- if(airborne&&Math.hypot(g.moonHand.x-shoulder.x,g.moonHand.y-shoulder.y)<=maxReach)pawIncenseArm(shoulder,g.moonHand,sleeve,false);
+ const sc=pawAlcoveActorScale(),reach=pawAlcoveMoonReach(g);
+ const hand=airborne?pawAlcoveMoonContact(g,f,pawMoonMotion(f,0,pawMoonFlat(run.result,0,run.count),run.moonHeight||95)):null;
+ if(hand)pawIncenseArm(reach.shoulder,hand,reach.sleeve,false);
  backHuman(g.moonFoot.x,g.moonFoot.y,avatar??0,false,'up',sc);
  for(let i=0;i<2;i++){
   const flat=pawMoonFlat(run.result,i,run.count),m=pawMoonMotion(f,i,flat,run.moonHeight||95),pt=pawAlcoveMoonPoint(g,m);

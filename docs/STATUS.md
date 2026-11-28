@@ -1323,3 +1323,7 @@ Main de45561f Pages run 46135837805 completed successfully; organic player loop 
 
 ### Railway edge touch correction, 28 November
 Main railway run 46135838241 passed eight profiles; WebKit tablet failed after rotation with pending arcade rather than station. Independent child correction retains the railway edge pointer target until release, validates scene and pointer ownership, rejects drag/cancel/stale scene, suppresses duplicate clicks and keeps keyboard action. Exact source parsed; 13,454 focused cases passed. This addresses a genuine edge touch ownership gap but the reported tablet failure requires full browser reproduction to confirm. Preserve current #123 CI; no main write or workstream acceptance.
+
+
+### Owner temple correction convergence, 28 November
+Reconciled #124 moon clearance and purification scale/occlusion into #125 without reverting the newer physical ladle transform. Exact candidate sources and test scripts parsed. Focused temple result and clearance checks executed against candidate source: PASS 2021 temple result, physical walk and resident copy checks; PASS 4877 moon clearance, contact, walk and viewport checks; minimum world gap 3.38. Full browser, screenshot and live acceptance pending. Garden and optional station portions of #124 still require reconciliation. No main write; #123 CI preserved.
