@@ -2,12 +2,13 @@ const {chromium,webkit}=require('playwright');
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const url=process.env.PAW_TEST_URL||'http://127.0.0.1:8772/index.html';
 const engine=process.env.PAW_BROWSER==='webkit'?webkit:chromium;
-const sizes=[[320,568],[360,640],[390,844],[768,1024],[844,390],[1280,720],[1440,900],[1792,864]];
+const sizes=process.env.PAW_VIEWPORT?[process.env.PAW_VIEWPORT.split('x').map(Number)]:[[320,568],[360,640],[390,844],[768,1024],[844,390],[1280,720],[1440,900],[1792,864]];
+const languages=process.env.PAW_LANGUAGE?[process.env.PAW_LANGUAGE]:['EN','中文'],motions=process.env.PAW_MOTION?[process.env.PAW_MOTION]:['reduce','no-preference'];
 fs.mkdirSync('test-results/entrance',{recursive:true});
 (async()=>{
  const browser=await engine.launch();
  const failures=[];
- for(const [width,height] of sizes)for(const language of ['EN','中文'])for(const motion of ['reduce','no-preference']){
+ for(const [width,height] of sizes)for(const language of languages)for(const motion of motions){
   const name=width+'x'+height+'-'+(language==='EN'?'en':'zh')+'-'+motion;
   const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1,hasTouch:width<900,reducedMotion:motion});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -76,6 +77,33 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
    await gate.click();if(motion==='no-preference'){await page.waitForTimeout(450);await shot('gate-walk')}await proposal.waitFor({state:'hidden',timeout:30000});
    assert(await page.evaluate(()=>avatar===3&&playerName==='Traveller 旅人'),'Player identity not preserved');
    await page.locator('#dock').waitFor({state:'visible'});await shot('first-walk');const dock=await page.locator('#dock').boundingBox();assert(dock&&dock.y>=0&&dock.y+dock.height<=height+1,'Dock clipped');assert.deepEqual(errors,[],'Page errors');
+   if(process.env.PAW_FOUNDATION==='1'){
+    await page.waitForFunction(()=>!transitioning&&valleyRevealAt<0&&!signRoot.hidden,null,{timeout:30000});
+    const dockRoot=page.locator('#dock'),buttons=dockRoot.locator('button:visible');
+    assert.equal(await buttons.count(),4,'Exactly four dock choices');
+    const ids=['dockTravel','dockScoop','dockValley','dockOwnHome'];
+    assert.deepEqual(await buttons.evaluateAll(nodes=>nodes.map(n=>n.id)),ids);
+    const dimensions=await buttons.evaluateAll(nodes=>nodes.map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height,label:n.getAttribute('aria-label')})));
+    assert(dimensions.every(v=>v.w>=44&&v.h>=50&&v.label),'Dock buttons clipped or unlabelled');
+    assert(Math.max(...dimensions.map(v=>v.w))-Math.min(...dimensions.map(v=>v.w))<2,'Uneven dock widths');
+    await page.waitForFunction(()=>[...document.querySelectorAll('#worldSigns .worldSign[data-door]')].some(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&r.top<innerHeight&&r.bottom>0&&r.left<innerWidth&&r.right>0&&getComputedStyle(e).visibility!=='hidden'}),null,{timeout:15000});
+    await shot('mobile-foundation-map');
+    // Start each root through real dock input on the first map. The explicit
+    // page close control must return to the same scene and player position.
+    for(const id of ids){
+     const before=await page.evaluate(()=>({scene,x:p.x,y:p.y}));
+     const nav=page.locator('#'+id);await reachable(nav,id);await nav.tap();
+     await page.waitForFunction(()=>$('page').style.display==='block',null,{timeout:15000});
+     await shot('dock-'+id);
+     const back=page.locator('#content > .row button').first();
+     await back.waitFor({state:'visible',timeout:8000});
+     await back.tap();
+     await page.waitForFunction(()=>$('page').style.display!=='block',null,{timeout:15000});
+     const after=await page.evaluate(()=>({scene,x:p.x,y:p.y}));
+     assert.equal(after.scene,before.scene,'Dock return changed district');
+     assert(Math.hypot(after.x-before.x,after.y-before.y)<3,'Dock return moved traveller');
+    }
+   }
    await page.reload({waitUntil:'domcontentloaded'});const returnGate=proposal.locator('.shrine-enter');await returnGate.waitFor({timeout:45000});await proposal.locator('.mbGatePainting').evaluate(im=>im.decode());assert.equal(await proposal.locator('.rail-revisit,.shrine-speaker').count(),0,'Return screen still has redundant controls');assert.equal(await proposal.locator('.cinema-world').isVisible(),false,'Return shows fallback art');await reachable(returnGate,'Return ticket entry');await shot('return-ticket');await returnGate.click();await proposal.waitFor({state:'hidden',timeout:20000});assert(await page.evaluate(()=>avatar===3&&playerName==='Traveller 旅人'),'Return identity changed');assert.deepEqual(errors,[],'Return page errors');console.log('PASS '+name);
   }catch(e){failures.push(name+': '+e.message);await shot('FAIL').catch(()=>{});console.error(name,e.message)}
   finally{await page.close()}
