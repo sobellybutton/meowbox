@@ -4029,10 +4029,12 @@ townChatPage=function(){
   if(header)header.textContent=tr('Town Square','摸鱼广场');
   if(intro)intro.textContent=tr('A little company between adventures.','逛累了，就来聊两句。');
   const controls=element('section','',q,'communityHeader');communityTabs(controls);
-  element('small',tr('Tea chat · fictional town companions, private to this visit.','茶馆闲聊 · 虚构小镇伙伴，仅本次会话可见。'),controls,'communityMuted');
+  // Keep the tea table welcoming; explain the game-character chat beside its composer.
   const log=q.querySelector('.townChatTranscript');if(log)q.insertBefore(controls,log);
   const chips=q.querySelector('.townChatChoices');const input=q.querySelector('.townChatCompose input');const form=q.querySelector('.townChatCompose');
   if(chips&&input&&form){chips.replaceChildren();for(const prompt of communityTopicExamples)b(chips,tr(...prompt),()=>{input.value=tr(...prompt);form.requestSubmit()})}
+  const chatNote=element('small',tr('You are chatting with game characters. This conversation is private to this visit.','这里是与游戏角色的闲聊，仅本次会话可见。'),q,'communityMuted pawResidentChatNote');
+  if(form)form.after(chatNote);
  }else{
   page(tr('Town Square','摸鱼广场'),tr('A little company between adventures.','逛累了，就来聊两句。'),q=>{
    communityTabs(q);
@@ -9781,7 +9783,7 @@ function goodCompanyPage(q){
  element('p',tr('Big news, tiny victories, or a day that went a little better. Pull up a chair.','大喜事、小胜利，或只是今天过得好一点。来坐坐吧。'),banner);
  const friends=element('div','',banner,'goodCompanyFriends');
  for(const pair of [['Grandma','外婆'],['Auntie Mei','梅姨'],['Master Yue','月师傅']]){const f=element('div','',friends);const src=paintedDialoguePortrait(pair[0]);if(src){const img=element('img','',f);img.src=src;img.alt=''}element('small',tr(...pair),f)}
- element('small',tr('Town residents · fictional companions','小镇居民 · 虚构伙伴'),banner);
+ // The portraits already identify the residents; place the disclosure with the private-note information.
  const actions=element('div','',book,'goodCompanyActions');
  b(actions,tr('Meet other travellers','认识其他旅人'),()=>{communityTab='stroll';townChatPage()});
  b(actions,tr('Share good news in the square','去广场分享好消息'),goodCompanyPublic);
@@ -9804,7 +9806,7 @@ function goodCompanyPage(q){
   reward.textContent=tr('Today’s reward is collected. You can still celebrate.','今日奖励已领取，依然可以庆祝。');
   updateHUD();if(category)townPawNotice(category);goodCompanyApplause();renderMemories();busy=false
  });
- element('small',tr('Your note is private on this device. Public messages are a separate optional action and are reviewed before publishing.','回忆仅保存在本设备。公开留言需另行选择，并经审核后发布。'),book,'goodCompanyPrivacy');
+ element('small',tr('Cheers come from game characters. Your note stays on this device. Public messages are optional and reviewed before publishing.','喝彩来自游戏角色。回忆仅保存在本设备。公开留言需另行选择，并经审核后发布。'),book,'goodCompanyPrivacy');
  const archive=element('details','',book,'goodCompanyArchive'),summary=element('summary','',archive),list=element('div','',archive);
  function renderMemories(){const rows=goodCompanyRecords().reverse();summary.textContent=tr('My little good things','我的小确幸')+' ('+rows.length+')';list.replaceChildren();if(!rows.length)element('p',tr('A blank page is a perfectly good beginning.','空白的一页，也是很好的开始。'),list);
   for(const v of rows){const row=element('article','',list,'goodCompanyMemory');element('small',v.day+' · '+tr(...goodCompanyKinds.find(k=>k.id===v.kind).name),row);element('p',v.text,row);b(row,tr('Remove','删除'),()=>{save('goodCompanyNotesV1',goodCompanyRecords().filter(x=>x.id!==v.id));renderMemories()})}
