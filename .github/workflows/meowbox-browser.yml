@@ -3,6 +3,9 @@ on:
   push:
     branches: [main]
     paths: ['index.html', 'preview-v9-1/**', 'assets/**', 'src/**', 'scripts/**', '.github/workflows/meowbox-browser.yml']
+  pull_request:
+    branches: [main]
+    paths: ['index.html', 'src/**', 'assets/**', 'scripts/**', '.github/workflows/meowbox-browser.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -10,6 +13,7 @@ permissions:
 # keeps one running and one latest pending revision of its own kind.
 jobs:
   focused-regressions:
+    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'release/candidate-')
     concurrency:
       group: meowbox-focused-${{ github.ref }}
       cancel-in-progress: false
@@ -36,6 +40,7 @@ jobs:
       - run: node scripts/painted-lobby-runtime-test.cjs
       - run: node scripts/home-placement-live-test.cjs
   browser:
+    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'release/candidate-')
     concurrency:
       group: meowbox-navigation-job-${{ github.ref }}
       cancel-in-progress: false
@@ -981,6 +986,7 @@ jobs:
           path: test-results/
 
   share-exports:
+    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'release/candidate-')
     concurrency:
       group: meowbox-share-${{ github.ref }}
       cancel-in-progress: false
@@ -1006,6 +1012,7 @@ jobs:
           path: test-results/
 
   shrine-repair:
+    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'release/candidate-')
     concurrency:
       group: meowbox-shrine-${{ matrix.engine }}-${{ github.ref }}
       cancel-in-progress: false
@@ -1043,6 +1050,7 @@ jobs:
           path: test-results/
 
   visual-experiences:
+    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'release/candidate-')
     concurrency:
       group: meowbox-visual-${{ github.ref }}
       cancel-in-progress: false
