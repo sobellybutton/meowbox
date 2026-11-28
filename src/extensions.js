@@ -200,7 +200,7 @@ destinyPage=function(){
  let choose=()=>{let title=a.querySelector('strong')?.textContent||'',p=prompts.find(x=>title.startsWith(tr(x[0],x[1])));if(!p)return;grid.querySelectorAll('[aria-pressed]').forEach(el=>el.setAttribute('aria-pressed','false'));a.setAttribute('aria-pressed','true');panel.replaceChildren();element('strong',tr(p[0],p[1]),panel);element('p',a.querySelector('span')?.textContent||'',panel);element('p',tr(p[2],p[3]),panel);sound(440+i*18)};
  a.onclick=choose;a.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose()}};
  });
- let saveScroll=b(out,tr('Tie the destiny scroll and keep it','系好命理卷轴，收入背包'),()=>{addItem('Observatory destiny scroll','星月命理卷轴');saveScroll.textContent=tr('Scroll collected','卷轴已收藏');saveScroll.disabled=true;sound(660)});saveScroll.className='destinySave';
+ let saveScroll=b(out,tr('Tie the destiny scroll and keep it','系好命理卷轴，收入背包'),()=>{addItem('Observatory destiny scroll','星月命理卷轴');saveScroll.textContent=tr('Scroll collected','卷轴已收藏');saveScroll.disabled=true;sound(660);if(room==='destiny'&&$('page').dataset.pawYueDesk==='true'){pawCloseYueDesk();say(tr('Master Yue','月师傅'),tr('There, your scroll is safely tucked away. Shall we look at another reading, or leave the stars to rest?','好啦，卷轴已经收入背包。还想看看别的命理，还是让星星休息一会儿？'),[[tr('Another reading','再看一项'),()=>yueReadingHub()],[tr('Finish for now','今天先到这里'),closeTalk]]);updateHUD()}});saveScroll.className='destinySave';
  });
 };
 
@@ -7390,29 +7390,45 @@ function chartFollowTopics(value){
 const chartFollowBefore=renderChartConsultation;
 renderChartConsultation=function(out,z){
  chartFollowBefore(out,z);const section=out.querySelector('.chartConsultation');if(!section)return;
- const form=element('form','',section,'chartFollowForm'),label=element('label',tr('Ask a follow-up question','继续问月师傅'),form);
- const field=element('input','',label);field.maxLength=160;field.required=true;field.placeholder=tr('What is on your mind?','你还想了解什么？');
- const send=element('button',tr('Explore','继续了解'),form);send.type='submit';
- const reply=element('div','',section,'chartFollowReply');
- const status=element('p','',reply,'chartPractice');status.setAttribute('role','status');
- const matches=element('div','',reply,'chartTopics');
- element('small',tr('The guide matches topics on this device. Your question is cleared after use.','小馆会在本机匹配主题，提问后会清空。'),section);
- function openTopic(k){
-  section.querySelector('.chartTopics [data-topic="'+k+'"]')?.click();
-  const result=section.querySelector('.chartReply h3');
-  if(result){result.tabIndex=-1;result.focus({preventScroll:true});result.scrollIntoView({block:'center',behavior:'instant'})}
- }
- form.onsubmit=e=>{
-  e.preventDefault();
-  const topics=chartFollowTopics(field.value);field.value='';matches.replaceChildren();
-  if(!topics.length){status.textContent=tr('Try a topic like work, friendships or rest.','可以试试工作、朋友或休息等主题。');return}
-  if(topics.length===1){status.textContent='';openTopic(topics[0]);return}
-  status.textContent=tr('I heard a few topics. Which should we start with?','听起来有几个方向。你想先聊哪一个？');
-  topics.forEach(k=>{
-   const topic=chartConsultTopics.find(v=>v.k===k);
-   if(topic)b(matches,tr(...topic.name),()=>openTopic(k));
-  });
- };
+ const open=b(section,tr('Ask Yue a question','继续问月师傅'),()=>{
+  const pane=$('page');
+  if(room!=='destiny'||!section.isConnected||pane.dataset.pawYueDesk!=='true')return;
+  const valid=()=>room==='destiny'&&section.isConnected&&pane.dataset.pawYueDesk==='true';
+  const name=()=>tr('Master Yue','月师傅');
+  const returnChart=()=>{if(!valid())return;closeTalk();pane.style.display='block';updateHUD()};
+  const finish=()=>{if(!valid())return;pawCloseYueDesk();closeTalk();updateHUD()};
+  const again=()=>ask(tr('What else is on your mind?','还有什么想聊的？'));
+  const actions=()=>[[tr('Ask another question','再问一题'),again],[tr('Read my chart','看看命盘'),returnChart],[tr('Finish for now','今天先到这里'),finish]];
+  function reply(topic){
+   if(!valid())return;
+   const data=chartConsultData(z,topic);
+   const stars=data.stars.length?data.stars.join('、'):data.opposite.join('、');
+   const intro=tr('Let us consider ','咱们看看')+tr(...topic.name)+'. ';
+   const context=stars?(data.stars.length?tr('The main stars here are ','此宫主星为'):tr('The opposite palace contains ','对宫有'))+stars+'. ':tr('This palace has no main stars. ','此宫无主星。');
+   say(name(),intro+context+tr(...topic.practice),actions());
+  }
+  function ask(line){
+   if(!valid())return;
+   pane.style.display='none';
+   say(name(),line+' '+tr('For now I can offer local chart guidance, not an AI reading.','目前我可以提供本机命盘指引，暂未接入 AI 解读。'),[[tr('Read my chart','看看命盘'),returnChart],[tr('Finish for now','今天先到这里'),finish]]);
+   const form=element('form','',$('choices'),'chartFollowForm');
+   form.style.gridColumn='1/-1';form.style.width='100%';form.style.margin='0';
+   const label=element('label',tr('Your question','你的问题'),form);
+   const field=element('input','',label);field.maxLength=160;field.required=true;field.placeholder=tr('What is on your mind?','你还想了解什么？');field.autocomplete='off';
+   const send=element('button',tr('Ask','请教'),form);send.type='submit';
+   form.onsubmit=e=>{
+    e.preventDefault();if(!valid())return;
+    const topics=chartFollowTopics(field.value).map(k=>chartConsultTopics.find(v=>v.k===k)).filter(Boolean);
+    field.value='';
+    if(!topics.length){ask(tr('I can explore career, relationships, money, travel, friends, family or rest with you.','我们可以聊事业、感情、财运、迁移、朋友、家庭或休息。'));return}
+    if(topics.length===1){reply(topics[0]);return}
+    say(name(),tr('There are several threads here. Which shall we consider first?','这里有几个方向，先聊哪一个？'),[...topics.map(topic=>[tr(...topic.name),()=>reply(topic)]),[tr('Back to my question','重新提问'),again]]);
+   };
+   updateHUD();
+  }
+  ask(tr('The tea is still warm. What would you like to ask?','茶还热着呢，你还想问些什么？'));
+ });open.className='chartFollowOpen';
+ element('small',tr('Questions use local chart topics only; AI consultation is not connected.','问题仅匹配本机命盘主题，暂未接入 AI 咨询。'),section);
 };
 let indoorStepAt=-100;
 const footstepsRoomBefore=drawRoom;
