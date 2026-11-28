@@ -98,7 +98,7 @@ console.log('PASS '+checks+' park care continuity checks.');
  const images=Array.from({length:9},(_,i)=>({naturalWidth:480,naturalHeight:480,id:i}));
  const manifest={},ctx={save(){},restore(){},translate(){},scale(){},drawImage(...v){this.last=v}};
  let ready=true;
- const api=new Function('productionVisualManifest','productionVisual','roomIntro','ctx','ellipse','t',block[1]+';return {frame:pawKayaFrame,box:pawKayaBox,draw:pawDrawKaya,prepare:pawKayaPrepare}')(manifest,id=>ready?images[id==='parkKayaSleep'?8:Number(id.slice(-1))]:null,()=>{},ctx,()=>{},1);
+ const api=new Function('productionVisualManifest','productionVisual','roomIntro','ctx','ellipse','t','pawCarePetContact',block[1]+';return {frame:pawKayaFrame,box:pawKayaBox,draw:pawDrawKaya,prepare:pawKayaPrepare}')(manifest,id=>ready?images[id==='parkKayaSleep'?8:Number(id.slice(-1))]:null,()=>{},ctx,()=>{},1,new Function('document',body+';return pawCarePetContact')({addEventListener(){}}));
  let n=0;const check=(v,m)=>{assert.ok(v,m);n++};
  let last=0;
  for(let i=0;i<500;i++){
@@ -109,7 +109,7 @@ console.log('PASS '+checks+' park care continuity checks.');
  check(api.frame('pet',.6,false)===0,'wait for physical approach');
  check(api.frame('pet',0,true,true)===4,'reduced-motion pet expression');
  check(api.frame('rest',0,false)===8,'sleep pose');
- const a={x:400,y:535,traveller:{moving:false,kneel:.5}};
+ const a={phase:'pet',x:400,y:535,traveller:{x:310,y:583,moving:false,kneel:.5}};
  for(const kind of [1,2,3,4])check(!api.draw(a,kind,'pet',0,1,false),'no identity substitution');
  check(api.draw(a,0,'pet',0,1,false)&&ctx.last[0].id===0,'initial pet');
  check(api.draw(a,0,'pet',.6,1,false)&&ctx.last[0].id===4,'physical response');
@@ -121,4 +121,61 @@ console.log('PASS '+checks+' park care continuity checks.');
  check(Object.keys(manifest).length===9,'all uploaded pose paths registered');
  check(src.includes('if(pawDrawKaya(a,kind,phase,age,dir,residentReducedMotion.matches))return;'),'actual care renderer calls new pose selector');
  console.log('PASS '+n+' painted ginger tabby timing, contact, fallback and identity assertions.');
+}
+
+{
+ const mark=src.match(/\/\* PAW_PARK_VISUAL_PHASE_BEGIN \*\/([\s\S]*?)\/\* PAW_PARK_VISUAL_PHASE_END \*\//);
+ assert.ok(mark);
+ const phase=new Function(mark[1]+';return pawParkVisualPhase')();
+ let n=0;const ck=(v,m)=>{assert.ok(v,m);n++};
+ for(const p of ['feed','water','pet','play','rest','return','idle'])for(let i=0;i<100;i++)ck(phase({phase:p},-i-1)==='idle','preparation is idle');
+ for(const moving of [true,false])for(let i=0;i<=68;i++){
+  const kneel=i/100,a={phase:'pet',traveller:{moving,kneel}};
+  ck(phase(a,1)===(moving||kneel<=.25?'idle':'pet'),'wait until traveller settles');
+ }
+ for(let i=0;i<=100;i++){
+  const a={phase:'return',x:400+i/10,y:535};
+  ck(phase(a,1)===(i<10?'idle':'return'),'no walking in place at the end');
+ }
+ const render=src.slice(src.indexOf('const catArtDraft=careCatArt;'),src.indexOf('/* New room artwork',src.indexOf('const catArtDraft=careCatArt;')));
+ const calls=[],ctx={save(){},restore(){},translate(){},scale(){},drawImage(){calls.push('atlas')}};
+ let kaya=true,atlas=false;const state={petKind:0};
+ const api=new Function('ctx','state','t','residentReducedMotion','productionVisual','pawDrawKaya','pawCareActionAge','pawParkVisualPhase','parkCatFrame','pawCatDirection','ellipse','careCatArt',render+';return careCatArt')(ctx,state,1,{matches:false},()=>{calls.push('request atlas');return atlas?{}:null},()=>{calls.push('kaya');return kaya},()=>1,phase,()=>0,()=>1,()=>{},a=>calls.push('fallback:'+a.phase));
+ const a={phase:'pet',x:400,y:535,values:{trust:50},traveller:{moving:false,kneel:.68}};
+ api(a);ck(calls.join(',')==='kaya','dedicated cat renders even without atlas');
+ calls.length=0;kaya=false;api(a);ck(calls.join(',')==='kaya,request atlas,fallback:pet','fallback remains playable');
+ calls.length=0;atlas=true;api(a);ck(calls.join(',')==='kaya,request atlas,atlas','atlas retained for other actions');
+ console.log('PASS '+n+' painted park contact and independent cat-art readiness checks');
+}
+
+{
+ const helpers=new Function('document',body+';return {step:pawCareActorStep,target:pawCareActorTarget,filled:pawCareBowlFilled,contact:pawCarePetContact}')({addEventListener(){}});
+ let n=0;const check=(v,m)=>{assert.ok(v,m);n++};
+ for(const phase of ['feed','water','pet','play','rest']){
+  const a={phase};for(let i=0;i<120;i++)helpers.step(a,.016);
+  const q=a.traveller;check(q.kneel>.25,'arrived in crouch');
+  a.phase='return';
+  for(let i=0;i<100;i++){
+   const before={x:q.x,y:q.y,kneel:q.kneel};helpers.step(a,.016);
+   if(before.kneel>.001)check(q.x===before.x&&q.y===before.y&&!q.moving,'stand before walking');
+   if(q.moving)check(q.kneel<=.001,'walk only upright');
+  }
+  check(q.x===400&&q.y===657&&q.kneel===0,'return home');
+  helpers.step(a,-1);helpers.step(a,NaN);check(Number.isFinite(q.kneel)&&q.kneel===0,'invalid frame duration');
+ }
+ for(const phase of ['feed','water']){
+  const a={phase,at:10,supply:{kind:phase}};
+  for(let i=0;i<=550;i++){
+   const age=(i+.5)/100;
+   check(helpers.filled(a,10+age)===(age>=1.1675&&age<5.1),'visible fill between pour and finish');
+  }
+  check(!helpers.filled({...a,phase:'return'},12),'return clears completed bowl');
+ }
+ for(const moving of [true,false])for(let i=0;i<=68;i++)for(const dx of [0,1,3,60]){
+  const a={phase:'pet',traveller:{x:310+dx,y:583,moving,kneel:i/100}};
+  check(helpers.contact(a)===(!moving&&i>25&&dx<=2),'real pet contact requires settled actor');
+ }
+ check(src.includes('if(!pawCarePetContact(a)||Math.hypot'),'manual gesture uses contact gate');
+ check(src.includes('const filled=pawCareBowlFilled(a,t);'),'visible bowl uses preparation clock');
+ console.log('PASS '+n+' physical stand/walk, preparation and manual contact assertions');
 }
