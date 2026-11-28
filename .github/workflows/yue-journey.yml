@@ -3,11 +3,15 @@ on:
   push:
     branches: [main]
     paths: ['src/engine.js','src/release-fixes.js','src/startup.js','src/town-access.js','src/extensions.js','scripts/build.cjs','scripts/test-yue-input.cjs','scripts/yue-journey-test.cjs','.github/workflows/yue-journey.yml']
+  pull_request:
+    branches: [main]
+    paths: ['src/startup.js','assets/visual/painted/reading-host-framing.js','scripts/yue-journey-test.cjs','.github/workflows/yue-journey.yml']
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   consultation:
+    if: github.event_name != 'pull_request' || (startsWith(github.head_ref, 'dev/read-02-yue-') || github.head_ref == 'release/candidate-multibatch-integrated-20261128')
     concurrency:
       group: paw-yue-${{ matrix.engine }}-${{ github.ref }}
       cancel-in-progress: false
@@ -22,9 +26,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Validate committed independent scroll asset
+        run: |
+          python3 - <<'PY'
+          import hashlib,pathlib
+          p=pathlib.Path('assets/visual/painted/master-yue/folded-scroll.webp')
+          data=p.read_bytes()
+          assert len(data)==23598
+          assert hashlib.sha256(data).hexdigest()=='33a179610d382bb537975f0b87e77608800882a14605f01dfa81d5a8e3864f58'
+          print('PASS independent 23,598-byte scroll asset')
+          PY
       - name: Validate input and build the current game
         run: |
           node scripts/test-yue-input.cjs
+          node scripts/yue-parchment-test.cjs
+          node scripts/reading-host-scene-test.cjs
+          node scripts/scene-ambience-test.cjs
+          node scripts/yue-desk-contact-test.cjs
+          node scripts/yue-chair-contact-test.cjs
+          node scripts/yue-year-dialogue-test.cjs
+          node scripts/yue-star-dialogue-test.cjs
           node scripts/build.cjs
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps ${{ matrix.engine }}
@@ -34,6 +55,22 @@ jobs:
         run: |
           python3 -m http.server 8770 >/tmp/meowbox-yue-server.log 2>&1 &
           node scripts/yue-journey-test.cjs
+      - name: Produce compact screenshot review evidence
+        if: always()
+        run: |
+          python3 -m pip install pillow
+          python3 - <<'PY'
+          from PIL import Image, ImageOps
+          from pathlib import Path
+          import io,base64
+          for label in ('phone-yue-lobby','phone-yue-desk-arrival','phone-yue-chart','phone-yue-folded-scroll','desktop-yue-desk-arrival','desktop-yue-chart','desktop-yue-departure'):
+              p=Path('test-results')/(label+'.png')
+              if not p.exists(): continue
+              im=Image.open(p).convert('RGB')
+              im.thumbnail((640,720))
+              b=io.BytesIO(); im.save(b,format='WEBP',quality=68,method=4)
+              print('YUE_REVIEW_'+label+'='+base64.b64encode(b.getvalue()).decode('ascii'))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
