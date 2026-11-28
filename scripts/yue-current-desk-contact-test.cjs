@@ -13,8 +13,12 @@ for(const valid of [false,true])for(const blocked of [false,true])for(const busy
  assert.equal(api.pawYueAdoptSeatedVisit(v,'destiny',busy,blocked,()=>ready),!!(valid&&!blocked&&!busy&&ready));count++;
 }
 const layout=require('../assets/visual/painted/interior-layouts.js'),room=layout.rooms.destiny,goal=room.stations.destiny.approach;
-assert.deepEqual(goal,[.43,.47]);
+assert.deepEqual(goal,[.63,.575]);
 const bounds=layout.bounds('destiny',goal[1]);assert(goal[0]>=bounds[0]&&goal[0]<=bounds[1]);
 assert(src.includes('pawYueHostTapBox(pawReadingPlate)'));
 assert(src.includes("if(id==='destiny')pawYueAdoptSeatedVisit(pawHostVisit,id,activity,transitioning"));
 console.log('PASS '+count+' Master Yue desk, pose and visit ownership checks plus chair-side approach');
+
+assert(room.lane.length&&layout.route('destiny',room.arrival,goal));
+const seatApi=new Function('function pawReadingWorld(v,p){return [p.x+v[0]*p.w,p.y+v[1]*p.h]}\n'+get('YUE_VISITOR_SEAT').split('let pawYueVisitorLastDraw')[0]+';return pawYueVisitorSeat')();
+for(let i=0;i<4;i++){const p={x:0,y:0,w:360,h:640},a=[200,370],r=seatApi(p,a,a,i,true,false);assert(r&&Math.abs(r.hip.x-246.6)<.001&&Math.abs(r.hip.y-342.4)<.001);assert.equal(seatApi(p,a,a,i,false,false),null);assert.equal(seatApi(p,a,a,i,true,true),null);assert.equal(seatApi(p,[0,0],a,i,true,false),null)}

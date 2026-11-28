@@ -1,0 +1,55 @@
+name: Pawradise physical booklet release gate
+on:
+  pull_request:
+    branches: [main]
+    paths: ['src/startup.js','scripts/paw-entrance-test.cjs','.github/workflows/dock-booklets-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  booklets:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/dock-physical-booklets-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chromium
+            viewport: '360x640'
+            language: EN
+            tag: compact-en
+          - browser: webkit
+            viewport: '390x844'
+            language: 中文
+            tag: tall-zh
+          - browser: chromium
+            viewport: '1280x720'
+            language: EN
+            tag: desktop-en
+    env:
+      PAW_BROWSER: ${{ matrix.browser }}
+      PAW_VIEWPORT: ${{ matrix.viewport }}
+      PAW_LANGUAGE: ${{ matrix.language }}
+      PAW_MOTION: reduce
+      PAW_FOUNDATION: '1'
+      PAW_BOOKLETS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: test -s assets/visual/staging/2026-11-28-project-batch10-interface/journal-cover.webp && test -s assets/visual/staging/2026-11-28-project-art-b10/settings-cog.webp
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Organic entrance, painted settings and booklet journey
+        run: |
+          python3 -m http.server 8772 >/tmp/booklet-server.log 2>&1 &
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8772/index.html >/dev/null && break; sleep 1; done
+          node scripts/paw-entrance-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dock-booklets-${{ matrix.tag }}
+          path: test-results/entrance

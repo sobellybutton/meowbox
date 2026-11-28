@@ -122,6 +122,38 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
     await page.waitForFunction(()=>[...document.querySelectorAll('#worldSigns .worldSign[data-door]')].some(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&r.top<innerHeight&&r.bottom>0&&r.left<innerWidth&&r.right>0&&getComputedStyle(e).visibility!=='hidden'}),null,{timeout:15000});
     assert.equal(await page.locator('.pawRailEdge:visible,button[data-door="station"]:visible').count(),0,'Station appears before traveller approaches');
     await shot('mobile-foundation-map');
+    if(process.env.PAW_BOOKLETS==='1'){
+     const tap=async locator=>{await reachable(locator,'Booklet action');await (width<900?locator.tap():locator.click())};
+     const origin=await page.evaluate(()=>({scene,x:p.x,y:p.y}));
+     const gear=page.locator('#townSettingsToggle');
+     await page.waitForFunction(()=>document.querySelector('#townSettingsToggle svg[data-paw-painted-cog] .pawSettingsPaintedCog'));
+     assert.equal(await gear.locator('svg').count(),1,'Duplicate settings icon');
+     assert.equal(await gear.locator('.pawSettingsFallbackCog:visible').count(),0,'Vector fallback overlaps painted cog');
+     await tap(gear);await page.locator('#townSettingsPanel').waitFor({state:'visible'});
+     await shot('painted-settings');await tap(gear);
+     await page.locator('#townSettingsPanel').waitFor({state:'hidden'});
+     await tap(page.locator('#dockTravel'));
+     const cover=page.locator('.pawBookletClose img');
+     await cover.evaluate(im=>im.decode());
+     assert((await cover.getAttribute('src')).endsWith('/journal-cover.webp'),'Existing painted journal asset not used');
+     const places=page.locator('.pawBookFold').filter({has:page.locator('.pawSketchPlaces')});
+     assert.equal(await places.count(),1);assert.equal(await places.evaluate(el=>el.open),false);
+     await shot('booklet-explore-folded');
+     await tap(places.locator('summary'));assert.equal(await places.evaluate(el=>el.open),true);
+     await shot('booklet-explore-unfolded');
+     await tap(places.locator('summary'));assert.equal(await places.evaluate(el=>el.open),false);
+     await tap(page.locator('.pawBookletClose'));await page.waitForFunction(()=>$('page').style.display!=='block');
+     await tap(page.locator('#dockScoop'));
+     const lunar=page.locator('.pawDiaryFold').filter({has:page.locator('.pawDiaryLunar')});
+     assert.equal(await lunar.count(),1);assert.equal(await lunar.evaluate(el=>el.open),false);
+     assert.equal(await page.locator('.pawIllustratedHeading').count(),0,'Redundant daily hero');
+     await tap(lunar.locator('summary'));assert.equal(await lunar.evaluate(el=>el.open),true);
+     assert(await lunar.locator('.pawDiaryLunar strong').isVisible());
+     await shot('booklet-today-calendar');
+     await tap(lunar.locator('summary'));assert.equal(await lunar.evaluate(el=>el.open),false);
+     await tap(page.locator('.pawBookletClose'));await page.waitForFunction(()=>$('page').style.display!=='block');
+     const end=await page.evaluate(()=>({scene,x:p.x,y:p.y}));assert.equal(end.scene,origin.scene);assert(Math.hypot(end.x-origin.x,end.y-origin.y)<3,'Booklet close displaced traveller');
+    }
     // Start each root through real dock input on the first map. The explicit
     // page close control must return to the same scene and player position.
     for(const id of ids){
