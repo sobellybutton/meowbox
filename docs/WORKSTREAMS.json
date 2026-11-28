@@ -898,12 +898,10 @@
         "39875d96 + a13ca31c: four shell art-calibrated floor projections, 24 furniture paths, footprint collision/layers, upgrade retention; committed test executed against current source with repository-tree existence checks: 255 assertions",
         "7d808c60 + 4bf1d174: live home surface raster temporary atlas allocation reduced by 75% for wall, 25% for floor at ordinary sizes; oversized imports bounded. 1,974 exact-source mocked canvas allocation and sample bounds checks passed.",
         "83694491 + 11e92ac8: live home finish raster now samples contiguous projected source bands for each floor output row rather than skipping source texture pixels, intended to reduce distant floor stripes and aliasing. 2240 direct row checks and 6734 persisted focused mocked-canvas assertions passed against exact module; no actual screenshot/CI/build/deployment verification.",
-        "2c5798d5: projected floor cell containment replaces fixed-radius selection; exact-source 5357 assertions passed for all four layouts, interior taps, outside edges and studio void. Persisted in d5c943af. Live modular floor editor hookup and rendering remain pending under HOME-CATALOGUE-LIVE-02."
+        "2c5798d5: projected floor cell containment replaces fixed-radius selection; exact-source 5357 assertions passed for all four layouts, interior taps, outside edges and studio void. Persisted in d5c943af. Live modular floor editor hookup and rendering remain pending under HOME-CATALOGUE-LIVE-02.",
+        "0e6bb462 + 18614dbe + becc296f + 3f0d1b92 + 1fbe68da: live and embedded room placement adapter now rejects a drag or keyboard movement that worsens collision with another solid object, while allowing recovery from legacy overlap and preserving rug/wall layers, selected room, existing percentages, suggestions, transfer and save behavior. 12 isolated behavior/source assertions passed; actual loader paths committed, focused CI queued. Uses existing rectangular room geometry, not the modular isometric shell; new placement/rotation, live modular shell and rendered acceptance remain open."
       ],
-      "lease": {
-        "owner": "manual-home-editor-contact",
-        "until": 1795846340007
-      },
+      "lease": null,
       "blocker": "Live finish raster consumer confirmed in startup. Actual rendered surface comparison, full room geometry/placement/expansion integration, mobile/desktop performance, build and deployment remain unverified."
     },
     {
@@ -1240,7 +1238,8 @@
       ],
       "stage": "outstanding",
       "evidence": [
-        "7016abe7/5d1af91f: live existing room material selection and persistence regression implemented; dependency remains open until actual rendering verified."
+        "7016abe7/5d1af91f: live existing room material selection and persistence regression implemented; dependency remains open until actual rendering verified.",
+        "Live existing room drag and keyboard contact guard loaded in actual assembly; see HOME-ASSET-01. No forced save migration. Painted modular room and final rendering still open."
       ],
       "lease": null
     },
