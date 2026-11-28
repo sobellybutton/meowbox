@@ -9,6 +9,14 @@ fs.mkdirSync(out,{recursive:true});
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const shot=label=>page.screenshot({path:out+'/'+label+'.png'});
  const noPage=()=>page.evaluate(()=>$('page').style.display!=='block');
+ async function chatGeometry(name,maxFraction=.36){
+  const info=await page.locator('#dialogue[data-paw-chat-bar]').evaluate(n=>{const r=n.getBoundingClientRect(),style=getComputedStyle(n);return {top:r.top,bottom:r.bottom,height:r.height,width:r.width,background:style.backgroundImage,shadow:style.boxShadow,viewport:innerHeight}});
+  assert(info.height<=info.viewport*maxFraction+2,name+' dialogue consumes too much of room '+JSON.stringify(info));
+  assert(info.bottom<=info.viewport+2&&info.bottom>=info.viewport-20,name+' dialogue must stay at bottom '+JSON.stringify(info));
+  assert.equal(info.shadow,'none',name+' still looks like a panel');
+  console.log('CHAT_BAR_GEOMETRY '+name+' '+JSON.stringify(info));
+ }
+
  const text=(en,cn)=>zhMode?cn:en;
  async function tapText(en,cn){await page.locator('#dialogue').getByRole('button',{name:text(en,cn),exact:true}).tap({timeout:8000})}
  async function setup(){
@@ -34,7 +42,7 @@ fs.mkdirSync(out,{recursive:true});
   await page.evaluate(()=>{start('wishes');gardenWrite()});
   const paper=page.locator('#dialogue.pawWishWriting .pawWishPaper textarea');
   await paper.waitFor({timeout:10000});assert(await noPage(),'Wish opened external page');
-  await shot('wish-blank');
+  await chatGeometry('wish',.28);await shot('wish-blank');
   await paper.fill('A quiet day with a little sunshine');
   await tapText('Fold into a lantern','折进心愿灯');
   await page.waitForFunction(()=>state.gardenStage==='carry'&&!talkOpen);
@@ -44,7 +52,7 @@ fs.mkdirSync(out,{recursive:true});
   await page.evaluate(()=>{start('tarot');state.readCards=[{i:0,rev:false}];state.readFlip=[t-2];state.readFocus=0;state.readStage='focus';state.readAt=t-1;readingFocusMeaning()});
   await page.locator('#dialogue[data-paw-tarot-conversation]').waitFor();assert(await noPage(),'Tarot opened external page');
   assert(await page.evaluate(()=>room==='tarot'&&state.readStage==='focus'&&state.readFocus===0));
-  await shot('tarot-card-reading');
+  await chatGeometry('tarot');await page.waitForFunction(()=>readingArtwork().naturalWidth===1024&&readingArtwork().naturalHeight===2180);await shot('tarot-card-reading');
   const more=page.locator('#dialogue').getByRole('button',{name:text('Tell me more','再说说'),exact:true});if(await more.count()){await more.tap();await shot('tarot-next-thought')}
   await tapText('Back to the table','回到牌桌');await page.waitForFunction(()=>state.readStage==='cards'&&!talkOpen);
   await fixture('destiny');
@@ -52,9 +60,9 @@ fs.mkdirSync(out,{recursive:true});
   await tapText('My birth chart','生辰命盘');await tapText('For me','看自己');
   const form=page.locator('#dialogue[data-paw-yue-question] .pawYueGuidedForm');
   await form.waitFor({timeout:10000});assert(await noPage(),'Birth questions opened external page');
-  await shot('yue-birth-question');await form.locator('input[type=date]').fill('1990-05-15');
-  await tapText('Continue','继续');await form.locator('input[type=time]').fill('09:30');await shot('yue-birth-time');
-  await tapText('Continue','继续');await shot('yue-birthplace');
+  await chatGeometry('yue');await shot('yue-birth-question');await form.locator('input[type=date]').fill('1990-05-15');
+  await tapText('Continue','继续');await form.locator('input[type=time]').fill('09:30');await chatGeometry('yue-time');await shot('yue-birth-time');
+  await tapText('Continue','继续');await chatGeometry('yue-place');await shot('yue-birthplace');
   const place=form.locator('details select');if(!await place.isVisible())await form.locator('details summary').tap();
   const choice=await place.evaluate(e=>[...e.options].find(x=>/singapore/i.test(x.textContent)||x.textContent.includes('新加坡'))?.value);assert(choice,'Singapore birthplace option');
   await place.selectOption(choice);
