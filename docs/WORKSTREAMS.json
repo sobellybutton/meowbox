@@ -1591,7 +1591,10 @@
         "Humans must be walking and visibly living: residents and guests follow distinct safe routines, occupy seats and perform appropriate machine/host actions, retain compatible NPC movement during activities; no stationary decorative crowds.",
         "Detailed per-location choreography in 14bdb99a: purposeful walking and work/seat/machine use through compatible activities, bounded occupancy and privacy exceptions; no static decorative crowds."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-motion-20261128",
+        "until": 1795838870226
+      },
       "blocker": "My Room may be empty; private close-ups stay private. Natural walking, seating, departures and arrivals, no obstructed exits, props or signs; distinguish fictional and actual visitors.\n\nEnd-to-end critique, 28 Nov: Observe quiet intervals and moving actors in public spaces, natural population and no blocking; private closeups exempt. Apply section 12."
     },
     {
