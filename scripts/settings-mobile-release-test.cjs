@@ -43,7 +43,6 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
    }
    await page.screenshot({path:'test-results/settings-'+name+'-map.png'});
    await page.evaluate(()=>{localStorage.setItem('meowbox-preview-resetProbe','keep until confirmed');localStorage.setItem('other-app-settings-test','preserve')});
-   const language=await page.evaluate(()=>localStorage.getItem('meowbox-preview-zh'));
    await cog.tap();
    const journal=page.locator('#townSettingsPanel');
    await journal.waitFor({state:'visible'});
@@ -69,6 +68,7 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
    await reset.tap();await page.getByRole('button',{name:'Keep my progress',exact:true}).tap();
    assert.equal(await page.locator('#pawResetConfirm').isVisible(),false);
    assert.equal(await page.evaluate(()=>localStorage.getItem('meowbox-preview-resetProbe')),'keep until confirmed');
+   const language=await page.evaluate(()=>localStorage.getItem('meowbox-preview-zh'));
    await reset.tap();
    await page.screenshot({path:'test-results/settings-'+name+'-confirm.png'});
    await Promise.all([page.waitForNavigation({waitUntil:'load',timeout:30000}),page.getByRole('button',{name:'Erase local progress',exact:true}).tap()]);
