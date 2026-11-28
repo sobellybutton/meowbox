@@ -321,12 +321,10 @@
       "stage": "outstanding",
       "evidence": [
         "TEMPLE-WATER-01 delivered as helper-tested; remaining altar, slip, sticks, bell and articulated poses still open.",
-        "TEMPLE-ALCOVE-01 and TEMPLE-SLIP-01 are implemented and helper-tested."
+        "TEMPLE-ALCOVE-01 and TEMPLE-SLIP-01 are implemented and helper-tested.",
+        "Owner live feedback response: c5c70177 + cf053dfb adds grounded wooden incense box with separate pickups, scales up prayer/purification/rear garden traveller and aligns arm reach, seated hip anchored to cushion facing pond, animated painted chime and lucky-cat paw with sound/visual feedback, reduced motion support. 33 isolated checks and source syntax passed; 451f9d5e persists tests. Actual rendered visual/physical contact acceptance remains pending, and remaining temple activities/other rooms require scale audit."
       ],
-      "lease": {
-        "owner": "manual-20261128-owner-temple-contact",
-        "until": 1795836003615
-      },
+      "lease": null,
       "blocker": "Purification, alcove and slip counter integrated; altar painting lacks Guanyin statue and matching incense supply so retain current hall. Final bell pavilion, remaining garden and articulated character poses, browser and visual review outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n\nOwner live feedback 28 Nov: temple greatly improved and native activities appreciated. Correct undersized characters (especially water), visibly grounded incense supply box and three real pickups, seated pose physically on rear garden bench, responsive wind chime and lucky cats with actual visual reactions. Review size/contact across temple and other activities; require genuine rendered device verification."
     },
     {
@@ -1302,12 +1300,10 @@
       "stage": "outstanding",
       "evidence": [
         "25084c7c + e49cfe8b: retain actual grab offset in painted water ladle drawing and release; 56 focused assertions executed against exact source, both source files parsed. 15a61ce9 persists regression. Existing action/reward/keyboard assist retained; actual water drag on rendered Chromium/WebKit still needs verification; no claim that prior failure is resolved.",
-        "a478f336: painted purification ladle has minimum 44 logical-screen CSS pixel grab area, centered on existing tool; expanded geometry tests exercise six viewports and off-center grabs. Shrine browser fixture verifies topmost canvas target and records diagnostic on failed scoop. Organic district test now enters temple via the actual forecourt and hall button rather than waiting for a bypass. Exact changed source and scripts parsed; focused geometry assertions ran in connector harness (asset presence stubbed). Chromium rerun and actual visual/contact acceptance pending."
+        "a478f336: painted purification ladle has minimum 44 logical-screen CSS pixel grab area, centered on existing tool; expanded geometry tests exercise six viewports and off-center grabs. Shrine browser fixture verifies topmost canvas target and records diagnostic on failed scoop. Organic district test now enters temple via the actual forecourt and hall button rather than waiting for a bypass. Exact changed source and scripts parsed; focused geometry assertions ran in connector harness (asset presence stubbed). Chromium rerun and actual visual/contact acceptance pending.",
+        "Owner live feedback response: c5c70177 + cf053dfb adds grounded wooden incense box with separate pickups, scales up prayer/purification/rear garden traveller and aligns arm reach, seated hip anchored to cushion facing pond, animated painted chime and lucky-cat paw with sound/visual feedback, reduced motion support. 33 isolated checks and source syntax passed; 451f9d5e persists tests. Actual rendered visual/physical contact acceptance remains pending, and remaining temple activities/other rooms require scale audit."
       ],
-      "lease": {
-        "owner": "manual-20261128-owner-temple-contact",
-        "until": 1795836003615
-      },
+      "lease": null,
       "blocker": "Acceptance: Organic entry, action, outcome, return and replay for each retained activity on phone and desktop. Real inputs affect outcomes; no duplicate or gratuitous games, reward farming or generic click/read/reward loop.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n\nEnd-to-end critique, 28 Nov: Evaluate distinct actions, meaningful outcome and repeat variation in short/long sessions. Keep enjoyable existing activities; avoid gratuitous added tasks, identical mechanics or reward farming. Apply section 12.\nActual Chromium purification and organic temple route rerun pending on a478f336.\n\nOwner live feedback 28 Nov: temple greatly improved and native activities appreciated. Correct undersized characters (especially water), visibly grounded incense supply box and three real pickups, seated pose physically on rear garden bench, responsive wind chime and lucky cats with actual visual reactions. Review size/contact across temple and other activities; require genuine rendered device verification."
     },
     {
@@ -1423,11 +1419,10 @@
       ],
       "depends": [],
       "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-20261128-owner-temple-contact",
-        "until": 1795836003615
-      },
+      "evidence": [
+        "Owner live feedback response: c5c70177 + cf053dfb adds grounded wooden incense box with separate pickups, scales up prayer/purification/rear garden traveller and aligns arm reach, seated hip anchored to cushion facing pond, animated painted chime and lucky-cat paw with sound/visual feedback, reduced motion support. 33 isolated checks and source syntax passed; 451f9d5e persists tests. Actual rendered visual/physical contact acceptance remains pending, and remaining temple activities/other rooms require scale audit."
+      ],
+      "lease": null,
       "blocker": "Owner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n\nOwner live feedback 28 Nov: temple greatly improved and native activities appreciated. Correct undersized characters (especially water), visibly grounded incense supply box and three real pickups, seated pose physically on rear garden bench, responsive wind chime and lucky cats with actual visual reactions. Review size/contact across temple and other activities; require genuine rendered device verification."
     },
     {
@@ -1449,12 +1444,10 @@
       "evidence": [
         "cbae8dbb: visible grounded doorway zoom precedes existing door transition; transform removed at interior handoff; canceled if context becomes invalid. Source parsed; visual motion and all camera bounds not verified.",
         "5baafcce persists focused scene handoff regression checks; executed against source in connector harness, not browser.",
-        "be041feb: clamp Valley camera to actual vertical artwork coverage, including tall portrait; focused boundary cases executed. Visual acceptance pending."
+        "be041feb: clamp Valley camera to actual vertical artwork coverage, including tall portrait; focused boundary cases executed. Visual acceptance pending.",
+        "Owner live feedback response: c5c70177 + cf053dfb adds grounded wooden incense box with separate pickups, scales up prayer/purification/rear garden traveller and aligns arm reach, seated hip anchored to cushion facing pond, animated painted chime and lucky-cat paw with sound/visual feedback, reduced motion support. 33 isolated checks and source syntax passed; 451f9d5e persists tests. Actual rendered visual/physical contact acceptance remains pending, and remaining temple activities/other rooms require scale audit."
       ],
-      "lease": {
-        "owner": "manual-20261128-owner-temple-contact",
-        "until": 1795836003615
-      },
+      "lease": null,
       "blocker": "Actual iPhone and desktop doorway timings, painted coverage and upper-map framing still require visual review.\n\nOwner device acceptance clarification (27 Nov): Inspect independent desktop and phone camera composition at entrance, approach, action, result and exit, every room and camera boundary, normal touch/mouse and reduced motion. Apply section 10.\n\n28 Nov owner iPhone screenshots: entrance and Moonlight Tarot appear insufficiently framed/zoomed with visible horizontal bands inside game area. Fix full-bleed camera coverage at every scale and transition; audit all rooms, independently compose phone and desktop, retain ground registration. Tarot should naturally push toward physical reading table on approach, then card-level framing during draw, return without snap. Do not apply indiscriminate zoom.\n\nOwner-approved host and character-scale requirements (28 Nov): Approved consultation camera: arrival establishes host at comparable adult scale, approach is short and grounded, gentle desk push-in for conversation and preparation, in-world parchment expands only as needed for legible ZWDS, close returns to same desk without snap. Check apparent player/host scale at equal depth, independently on phone and desktop, across all rooms/maps; solve camera/framing rather than indiscriminately enlarging sprites.\n\nOwner feedback: remove the generic website handoff after physical room activity. Keep the same scene, host, props, sound and player/session state through approach, greeting, choices, preparation, interaction, individual results, combined results and natural return. Use compact readable dialogue or an in-world physical object (cards, parchment, notebook, assessment sheet, menu, storybook); expand only content-heavy objects when necessary. Explicit share/export, passport/library and settings may retain dedicated interfaces. Do not merely put a room picture behind an old full-page form. Verify the complete rendered mobile and desktop journey, host scale, physical contact, legibility and no snap/duplicate props. Moonlight Tarot is the first reference flow, not proof all other rooms are complete.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n\nOwner live feedback 28 Nov: temple greatly improved and native activities appreciated. Correct undersized characters (especially water), visibly grounded incense supply box and three real pickups, seated pose physically on rear garden bench, responsive wind chime and lucky cats with actual visual reactions. Review size/contact across temple and other activities; require genuine rendered device verification."
     },
     {
