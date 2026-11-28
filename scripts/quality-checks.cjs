@@ -151,7 +151,7 @@ module.exports=function runQualityChecks(s,log=console.log){
  const signAnchorsProposal={};const speechOverlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
  function element(tag,label,parent,cls){if(tag==='span'){const child={textContent:''};parent.plaque=child;return child}let hidden=false;const style=new Proxy({setProperty(){}},{set(o,k,v){if(o[k]!==v)mutations++;o[k]=v;return true}});
  const node={style,dataset:{},offsetWidth:90,offsetHeight:44,attrs:{},querySelector:()=>node.plaque,replaceChildren(){node.plaque=null},setAttribute(k,v){node.attrs[k]=v},getAttribute(k){return node.attrs[k]}};Object.defineProperty(node,'hidden',{get:()=>hidden,set:v=>{if(v!==hidden)mutations++;hidden=v}});return node}
- `+range('function meowPlaceText(','let meowTextFrameRects=')+range('function housePlaqueAnchor(','function pearlTeaJars(')+range('let lastDoorLayoutAt=','/* Recurring villagers remember')+`
+ `+range('function meowPlaceText(','let meowTextFrameRects=')+range('function housePlaqueAnchor(','function pearlTeaJars(')+range('function pawArchitecturalPlaqueHome(','/* Recurring villagers remember')+`
  let checks=0;
  for(const k of ['fortune','home','island','wonder']){
  scene=k;for(let i=0;i<8;i++){now+=40;syncSigns()}

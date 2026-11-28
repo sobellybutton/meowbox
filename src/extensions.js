@@ -1633,7 +1633,7 @@ function readingSave(){
  const entry=tarotShareSnapshot(state);
  if(!entry||entry.cards.length!==state.readFlip.length||!state.readFlip.every(v=>Number.isFinite(v)&&v>=0&&t-v>.6))return;
  state.readSaved=true;
- entry.date=shrineClock().day;
+ entry.date=activity==='tarot'&&typeof state.pawDailyDay==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(state.pawDailyDay)?state.pawDailyDay:shrineClock().day;
  const same=v=>v?.date===entry.date&&(v.topic??-1)===entry.topic&&JSON.stringify(v.cards)===JSON.stringify(entry.cards);
  const existing=readingJournal.find(same);
  if(journalAutoSave()&&(!existing||existing.tone!==entry.tone)){
@@ -1661,9 +1661,15 @@ function readingFocusMeaning(){
   if(entry&&entry.cards.length!==5)b($('choices'),tr('Read the full spread','查看完整解读'),()=>openTarotReading(entry));
  }
 }
+function pawReadingNextHint(run,now,autoSave){
+ const complete=Array.isArray(run?.readCards)&&run.readCards.length>0&&Array.isArray(run.readFlip)&&run.readCards.length===run.readFlip.length&&run.readFlip.every(v=>Number.isFinite(v)&&v>=0&&now-v>=.72);
+ if(!complete)return ['Turn the remaining cards over, or revisit a revealed card.','继续翻开剩下的牌，或再看看已翻开的牌。'];
+ if(!run.readSaved)return ['Your cards are ready. Read the spread or return to the room when ready.','牌已翻好，可以解读牌阵，或准备好后回到小屋。'];
+ return autoSave?['Saved in your passport. Read the spread or return to the room when ready.','已收进旅人护照。可以解读牌阵，或准备好后回到小屋。']:['Read the spread, make a keepsake, or return to the room when ready.','可以解读牌阵、制作纪念牌卡，或准备好后回到小屋。'];
+}
 function readingReturnSpread(){
  closeTalk();state.readStage='cards';state.readAt=t;
- hint('Turn the remaining cards over, or revisit any revealed card.','可以继续翻牌，也可以再看看已经翻开的牌。');
+ hint(...pawReadingNextHint(state,t,journalAutoSave()));
 }
 const readingDraw=drawActivity;drawActivity=function(){if(!['tarot','love'].includes(activity)||!state.readStage)return readingDraw();ctx.save();paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);let g=ctx.createLinearGradient(0,250,0,690);g.addColorStop(0,'#40373220');g.addColorStop(1,'#2a332c50');shadeLivingBackdrop(g);table();let stage=state.readStage,age=t-state.readAt;
 if(stage==='topic'){drawPawReadingTopics()}
@@ -1686,8 +1692,7 @@ ctx.restore()};
 const tarotJournalArt='assets/visual/painted/tarot-journal.webp';
 function journalAutoSave(){return load('tarotJournalAutoSaveV1',true)!==false}
 function readingJournalHint(){
- const message=journalAutoSave()?['Your reading is tucked into your passport.','这份牌意已经收进旅人护照。']:['Your spread is ready. Automatic saving is off.','牌阵已解开，自动保存目前关闭。'];
- hint(...message);
+ hint(...pawReadingNextHint(state,t,journalAutoSave()));
 }
 function readingTitle(entry){
  return entry.cards.length===1?tr('Daily tarot','今日塔罗'):tr(...(readingTopics[entry.topic]||(entry.cards.length===5?['Five-card reading','五张牌解读']:['Three-card reading','三张牌占卜'])));
@@ -2442,6 +2447,43 @@ function directSignClick(id,x,y){
  if(room||transitioning||!proposal.hidden||valleyRevealAt>=0||$('page').style.display==='block')return;
  walkDoor(id,x,y);
 }
+// A nearby house can be partly cropped at the end of a winding path.
+// Keep the label within the visible part of the same house, not over a
+// resident or HUD. Far-away destinations retain their tight anchor range.
+function pawNearbyDoorPlaque(cx,cy,w,h,bounds,blockers,near,screenWidth,approach=null){
+ if(!near||!Number.isFinite(screenWidth)||screenWidth<=0)return null;
+ const first=meowPlaceText(cx,cy,w,h,bounds,blockers,Math.min(120,screenWidth*.34));
+ if(first)return first;
+ // At the end of a narrow painted path, the building's roof anchor may
+ // be under the HUD. Search a bounded grid beside the actual door approach,
+ // keeping the target on the same local screen and clear of all actors/UI.
+ if(!approach||![...approach,w,h].every(Number.isFinite))return null;
+ const [ax,ay]=approach,pad=4,loX=bounds.left+w/2+pad,hiX=bounds.right-w/2-pad,loY=bounds.top+h/2+pad,hiY=bounds.bottom-h/2-pad;
+ if(loX>hiX||loY>hiY)return null;
+ const radius=Math.min(160,screenWidth*.44);let best=null;
+ const xs=[loX,hiX,clamp(ax,loX,hiX)],ys=[loY,hiY,clamp(ay,loY,hiY)];
+ for(let x=loX;x<=hiX;x+=8)xs.push(x);
+ for(let y=loY;y<=hiY;y+=8)ys.push(y);
+ for(const x of xs)for(const y of ys){
+  const distance=Math.hypot(x-ax,y-ay);if(distance>radius)continue;
+  const rect={left:x-w/2-pad,right:x+w/2+pad,top:y-h/2-pad,bottom:y+h/2+pad};
+  if(blockers.some(v=>v&&speechOverlap(rect,v)))continue;
+  const score=distance+Math.hypot(x-cx,y-cy)*.2;
+  if(!best||score<best.score)best={x,y,rect,score}
+ }
+ return best
+}
+// Prefer the painted building anchor. A temporary obstruction may move the
+// sign, but cannot permanently detach it from its facade. Wait for a clear
+// interval before returning so passing residents do not cause flicker.
+function pawArchitecturalPlaqueHome(btn,exact,now,delay=350){
+ if(!exact){btn._anchorClearAt=null;return null}
+ const offset=btn._signOffset,displaced=offset&&Math.hypot(offset.x,offset.y)>.75;
+ if(!displaced||btn.hidden){btn._anchorClearAt=null;return exact}
+ if(!Number.isFinite(btn._anchorClearAt))btn._anchorClearAt=now;
+ if(now-btn._anchorClearAt>=delay){btn._anchorClearAt=null;return exact}
+ return null
+}
 let lastDoorLayoutAt=-Infinity,lastDoorLayoutLanguage=null,lastDoorCameraKey='',lastDoorUIAt=-Infinity,lastDoorUIRects=[],lastDoorUISize='';
 syncSigns=function(){
  const show=proposal.hidden&&!room&&!transitioning&&avatar!==null&&$('page').style.display!=='block'&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;
@@ -2488,20 +2530,25 @@ syncSigns=function(){
   if(btn.getAttribute('aria-label')!==name)btn.setAttribute('aria-label',name);const material=houseSignMaterial(id);if(btn.dataset.signMaterial!==material)btn.dataset.signMaterial=material;
   const [ax,ay]=housePlaqueAnchor(scene,id,x,y);
   const sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
+  const near=id!=='station'&&Math.hypot(p.x-x,p.y-y)<=210;
   const inView=sx>=-30&&sx<=W+30&&sy>=top-125&&sy<=bottom+70;
-  if(!inView){btn._clearAt=0;btn._signOffset=null;if(!btn.hidden)btn.hidden=true;continue}
+  if(!inView){btn._clearAt=0;btn._anchorClearAt=null;btn._signOffset=null;if(!btn.hidden)btn.hidden=true;continue}
   // Measure only when necessary; do not repeatedly unhide a blocked sign.
   if(btn._measureName!==name||btn._measureViewport!==uiSize||!btn._signSize){btn._measureViewport=uiSize;const hidden=btn.hidden;if(hidden)btn.hidden=false;btn._signSize=[Math.max(44,btn.offsetWidth),Math.max(44,btn.offsetHeight)];btn._measureName=name;if(hidden)btn.hidden=true}
-  items.push({btn,sx,sy,w:btn._signSize[0],h:btn._signSize[1]});
+  items.push({btn,sx,sy,near,approach:[cam.ox+x*cam.scale,cam.oy+y*cam.scale],w:btn._signSize[0],h:btn._signSize[1]});
  }
  // Keep the nearest doorway closest to its artwork; move other labels only
  // as far as necessary to avoid an overlapping sign or navigation control.
  // Preserve authored map order so walking past a house cannot reshuffle the other labels.
  for(const item of items){
-  const {btn,sx,sy,w,h}=item;
-  const avoid=[...blockers,...placed],maxShift=Math.min(62,W*.16);let choice=null;
-  if(btn._signOffset&&Math.hypot(btn._signOffset.x,btn._signOffset.y)<=maxShift+.01){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
+  const {btn,sx,sy,w,h,near,approach}=item;
+  const avoid=[...blockers,...placed],maxShift=Math.min(62,W*.16),offsetLimit=near?Math.min(120,W*.34):maxShift;
+  const rect={left:sx-w/2-4,right:sx+w/2+4,top:sy-h/2-4,bottom:sy+h/2+4};
+  const exact=rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v))?{x:sx,y:sy,rect}:null;
+  let choice=pawArchitecturalPlaqueHome(btn,exact,now);
+  if(!choice&&btn._signOffset&&Math.hypot(btn._signOffset.x,btn._signOffset.y)<=offsetLimit+.01){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
   if(!choice)choice=meowPlaceText(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,maxShift);
+  if(!choice)choice=pawNearbyDoorPlaque(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,near,W,approach);
   if(!choice){btn._clearAt=0;if(!btn.hidden)btn.hidden=true;continue}
   if(btn.hidden){if(!btn._clearAt)btn._clearAt=now;if(now-btn._clearAt<125){placed.push(choice.rect);continue}}
   btn._signOffset={x:choice.x-sx,y:choice.y-sy};
@@ -5605,7 +5652,7 @@ const stressChoiceStyle=document.createElement('style');stressChoiceStyle.textCo
 /* Petty paper curses: original, harmless everyday inconveniences. One per valid hit,
    without actual threats, real names, or changing the rewards. */
 const pettyPaperCurses=[["May every public toilet you enter be out of paper.","祝你每次上公厕，厕纸刚好用完。"],["May your phone charger work only at a very specific angle.","祝你充电线只有扭成麻花才充得进电。"],["May your bubble tea straw miss every pearl.","祝你喝奶茶，一颗珍珠都吸不到。"],["May your trousers feel tight immediately after lunch.","祝你午饭刚吃完，裤头就开始抗议。"],["May your socks always slide down inside your shoes.","祝你的袜子走两步就滑进鞋里。"],["May your boss's slides have the wrong font on every page.","祝老板的PPT每一页都字体错乱。"],["May your meeting room booking disappear just as the meeting starts.","祝你会议刚开始，会议室就被别人订了。"],["May your favourite snack contain ninety percent air.","祝你买的薯片，九成都是空气。"],["May your noodles come with a fork that bends.","祝你吃面的时候，叉子一用就弯。"],["May your lift stop on every floor.","祝你搭电梯，层层都停。"],["May your online delivery arrive just after you leave.","祝你刚出门，快递就到了。"],["May your umbrella turn inside out on a sunny day.","祝你撑伞没下雨，伞还自己翻了。"],["May your coffee always be lukewarm.","祝你喝热咖啡不够热，喝冰咖啡不够冰。"],["May your Wi-Fi disconnect at ninety-nine percent.","祝你下载到百分之九十九，网络断了。"],["May the last piece of toilet paper tear diagonally.","祝你最后一格厕纸，一撕就裂成三角形。"],["May your favourite pen run out halfway through your signature.","祝你签名签到一半，笔没墨了。"],["May every queue you switch to become the slow one.","祝你每次换队，换完原来的队就快了。"],["May your takeaway sauce be on the other side of the bag.","祝你外卖酱料藏在袋子最底下。"],["May the last dumpling always belong to someone else.","祝你想吃最后一个饺子，别人已经夹走了。"],["May your printer demand magenta to print a black page.","祝你打印黑白文件，打印机偏偏说缺红墨。"],["May autocorrect turn your serious email into nonsense.","祝你发严肃邮件，自动纠错比你还会加戏。"],["May your earbuds always end up in the wrong pocket.","祝你找耳机，永远先摸错口袋。"],["May your rice cooker finish just when you have to leave.","祝你饭刚煮好，人就得出门。"],["May your shopping cart have that one squeaky wheel.","祝你每次推购物车，都碰上那个吱吱叫的轮子。"],["May your alarm go off during your day off.","祝你休假那天，闹钟忘了关。"],["May your toast land jam-side down.","祝你面包掉地上，永远是果酱那一面。"],["May the aircon remote always be just out of reach.","祝你躺下才发现空调遥控器在另一头。"],["May your bank app log out just as you need to pay.","祝你付款的时候，银行App突然要求重新登录。"],["May your food delivery say 'arriving soon' for twenty minutes.","祝你外卖的马上到，永远还有二十分钟。"],["May your perfectly folded laundry unfold itself.","祝你叠好的衣服，拿一件倒一摞。"],["May your calendar invite have no meeting link.","祝你开线上会，邀请里偏偏没链接。"],["May your ice cream cone drip before you find a tissue.","祝你纸巾还没找到，冰淇淋先滴下来。"],["May every vending machine reject your perfectly good coin.","祝你投个完好无损的硬币，机器偏不认。"],["May your video buffer at the punchline.","祝你看视频，笑点前一秒卡住。"],["May your favourite seat always be occupied by a very comfortable cat.","祝你最爱的座位，永远被一只睡熟的猫霸占。"],["May your keyboard space bar squeak during a quiet meeting.","祝你开会全场安静时，空格键吱吱响。"]];
-const activityComedy={"clawMiss":[["The claw caught a whole lot of absolutely nothing.","恭喜你，成功夹到了空气。"],["That plush has better escape skills than my colleagues at 6pm.","这玩偶下班逃跑的速度，比我同事还快。"],["The claw came up empty. Try lining it up directly over the toy next time.","这回夹空啦。下次让夹爪对准玩偶的正上方试试。"],["The claw is doing the bare minimum. Relatable.","夹爪正在消极怠工，懂了。"],["The plush just dodged another responsibility.","玩偶又成功逃避了一项责任。"]],"clawWin":[["Congratulations. Your new colleague has never sent an email.","恭喜，新同事不会发邮件。"],["Finally, a colleague who sits quietly.","终于有个安静的同事了。"],["The plush has accepted your offer. No probation required.","玩偶已接受录用，不用试用期。"]],"soup":[["Grandma: Smells lovely. Here, let me get you a bowl.","外婆：闻起来真香。来，外婆给你拿个碗。"],["Grandma: That's a good pot of soup. Who taught you to cook so well, ah?","外婆：这锅汤煮得不错嘛！谁教你的呀？"],["Grandma: Soup first. Your inbox doesn't need feeding.","外婆：先喝汤。邮件又不用吃饭。"],["Grandma: Wah, this soup can make me retire. For five minutes.","外婆：哎哟，这汤煮得我都能退休了。退五分钟。"],["Grandma: You feed everyone else. This bowl is yours, ah!","外婆：平时净顾着别人。这碗归你，趁热吃！"]],"tea":[["The pearls have settled. One good sip coming right up!","珍珠落到底啦，第一口准备开喝！"],["Wah, even the pearls have more work-life balance now.","哇，连珍珠都比你会劳逸结合。"],["First sip approved. No supporting documents needed.","第一口奶茶审批通过，不用补交材料。"],["The boss may control your calendar, not your sugar level.","老板管得了日历，管不了几分糖。"]],"rhythmHigh":[["Your dance moves have been approved. Unlike your leave.","舞步审批通过，年假还是没有。"],["HR would like to know where you learned those moves.","人事部想知道你从哪儿学的舞步。"]],"rhythmLow":[["Your feet held two separate dance parties. Try following the next beat.","两只脚各开各的舞会啦。下一轮跟着节拍来试试。"],["The dance floor survived. So did you.","舞池没事，你也没事，算赢。"],["Lost the beat? Pick it up again on the next arrow.","节奏跟丢啦？下一支箭头再跟上就好。"]],"box":[["A tiny new friend! It looks remarkably pleased with its new home.","新的小伙伴来啦！看起来对新家相当满意。"],["A new resident with no rent, no deadlines and no CV.","新居民：不用交房租，不用赶工，也没有简历。"],["Plot twist: your toy is better rested than you.","剧情反转：玩偶休息得比你好。"]]};
+const activityComedy={"clawMiss":[["The claw caught a whole lot of absolutely nothing.","恭喜你，成功夹到了空气。"],["It slipped out right at the top! That little rascal.","都夹到顶了，居然还能溜走！这个小坏蛋。"],["The claw came up empty. Try lining it up directly over the toy next time.","这回夹空啦。下次让夹爪对准玩偶的正上方试试。"],["Aiyo, the claw barely hugged it. Try the middle.","哎哟，夹爪就轻轻抱了一下。再往中间瞄瞄。"],["So close! That plush has clearly decided to stay put.","就差一点！看来这娃娃还不想搬家。"]],"clawWin":[["Look who's coming home with you!","看看是谁要跟你回家啦！"],["Caught it! Now find it a nice little spot at home.","夹到了！回家给它找个好位置吧。"],["The plush has packed its bags. It's moving in!","小家伙收拾好行李啦，准备搬进你家！"]],"soup":[["Grandma: Smells lovely. Here, let me get you a bowl.","外婆：闻起来真香。来，外婆给你拿个碗。"],["Grandma: That's a good pot of soup. Who taught you to cook so well, ah?","外婆：这锅汤煮得不错嘛！谁教你的呀？"],["Grandma: Drink it while it's warm. Don't leave it there to grow cold.","外婆：趁热喝呀！放凉了又得给你热一遍。"],["Grandma: Wah, this soup can make me retire. For five minutes.","外婆：哎哟，这汤煮得我都能退休了。退五分钟。"],["Grandma: You feed everyone else. This bowl is yours, ah!","外婆：平时净顾着别人。这碗归你，趁热吃！"]],"tea":[["The pearls have settled. One good sip coming right up!","珍珠落到底啦，第一口准备开喝！"],["Wah, look at those pearls. Don't swallow them all at once!","哇，这珍珠圆滚滚的！慢慢嚼，别一口全吸上来。"],["First sip! Was it the tea or the pearls that won you over?","第一口好喝吗？是茶香，还是珍珠先收买了你？"],["Just the way you like it. That is the best recipe.","自己喜欢的甜度，就是最好喝的配方。"]],"rhythmHigh":[["Wah, look at you go! Even the arrows couldn't keep up.","哇，跳得这么厉害！箭头都快跟不上你了。"],["That was quite a show. One more song?","可以啊，刚才那段有点帅！再来一首？"]],"rhythmLow":[["Your feet held two separate dance parties. Try following the next beat.","两只脚各开各的舞会啦。下一轮跟着节拍来试试。"],["The dance floor survived. So did you.","舞池没事，你也没事，算赢。"],["Lost the beat? Pick it up again on the next arrow.","节奏跟丢啦？下一支箭头再跟上就好。"]],"box":[["A tiny new friend! It looks remarkably pleased with its new home.","新的小伙伴来啦！看起来对新家相当满意。"],["A tiny new roommate. Good thing it doesn't take up much space.","新室友报到！幸好这小家伙不占地方。"],["Plot twist: your toy is better rested than you.","剧情反转：玩偶休息得比你好。"]]};
 /* Contextual ritual dialogue, keyed to existing target labels, never to real people. */
 const pawAhMaTopicLines={
   "Boss's endless demands": [
@@ -6785,8 +6832,10 @@ const houseSignStyle=document.createElement('style');houseSignStyle.textContent=
 
 function speechOverlap(a,b){return a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top}
 function chooseSpeechPosition(w,h,width,height,speaker,player,blockers=[]){
- const center=(speaker.left+speaker.right)/2;
- const candidates=[{left:center-w/2,top:speaker.top-h-14},{left:speaker.right+12,top:speaker.top+5},{left:speaker.left-w-12,top:speaker.top+5},{left:center-w/2,top:speaker.bottom+12}];
+ if(!speaker||![w,h,width,height,speaker.left,speaker.right,speaker.top,speaker.bottom].every(Number.isFinite)||Math.min(w,h,width,height)<=0||speaker.right<=speaker.left||speaker.bottom<=speaker.top||speaker.right<0||speaker.left>width||speaker.bottom<0||speaker.top>height)return null;
+ const center=(speaker.left+speaker.right)/2,mid=(speaker.top+speaker.bottom)/2;
+ const candidates=[{left:center-w/2,top:speaker.top-h-14},{left:speaker.right+12,top:speaker.top+5},{left:speaker.left-w-12,top:speaker.top+5},{left:center-w/2,top:speaker.bottom+12},
+ {left:speaker.right+12,top:mid-h/2},{left:speaker.left-w-12,top:mid-h/2}];
  for(const v of candidates){const left=Math.max(8,Math.min(width-w-8,v.left)),top=v.top,rect={left,top,right:left+w,bottom:top+h};
  if(w>width-16||top<10||rect.bottom>height-74||[speaker,player,...blockers].some(b=>b&&speechOverlap(rect,b)))continue;
  const side=rect.bottom<=speaker.top?'bottom':rect.top>=speaker.bottom?'top':rect.left>=speaker.right?'left':'right';
@@ -7613,22 +7662,54 @@ const meowTextCSS=document.createElement('style');meowTextCSS.textContent=`
 `;document.head.append(meowTextCSS);
 /* Suppress only a hint that collides with a higher-priority control. Keep it in
    the accessible DOM and restore it as soon as the area is clear. */
+// Prefer the quiet lower edge. If a recipe or reading sheet occupies it,
+// use the nearest clear stage space instead of hiding the only instruction.
+function pawHintClearSpot(preferred,width,height,screen,blockers,active=false){
+ const {w,h}=screen;
+ if(![preferred.left,preferred.right,preferred.top,preferred.bottom,width,height,w,h].every(Number.isFinite)||Math.min(width,height,w,h)<=0)return null;
+ const cx=(preferred.left+preferred.right)/2,cy=(preferred.top+preferred.bottom)/2;
+ const fits=r=>r.left>=6&&r.right<=w-6&&r.top>=6&&r.bottom<=h-6&&!blockers.some(v=>speechOverlap(r,v));
+ if(fits(preferred))return {x:cx,y:cy,rect:preferred,original:true};
+ const lower=meowPlaceText(cx,cy,width,height,{left:6,right:w-6,top:h*.55,bottom:h-6},blockers,Math.min(140,h*.23));
+ if(lower)return lower;
+ if(!active)return null;
+ // No overlap with HUD, action buttons or reading sheet even on short phones.
+ // A bounded grid avoids the limited candidate list of meowPlaceText.
+ const loX=10+width/2,hiX=w-10-width/2,loY=Math.max(10,h*.20)+height/2,hiY=h-10-height/2;
+ if(loX>hiX||loY>hiY)return null;
+ let best=null;
+ const xs=[loX,hiX,clamp(cx,loX,hiX)],ys=[loY,hiY,clamp(cy,loY,hiY)];
+ for(let x=loX;x<=hiX;x+=12)xs.push(x);
+ for(let y=loY;y<=hiY;y+=12)ys.push(y);
+ for(const x of xs)for(const y of ys){
+  const rect={left:x-width/2-4,right:x+width/2+4,top:y-height/2-4,bottom:y+height/2+4};
+  if(!fits(rect))continue;
+  const score=Math.abs(x-cx)*1.4+Math.abs(y-cy);
+  if(!best||score<best.score)best={x,y,rect,score}
+ }
+ return best
+}
+function pawSamePrompt(hintText,visibleCopies){
+ const normalize=value=>String(value??'').normalize('NFKC').trim().replace(/\s+/g,' ').replace(/[.!?。！？…]+$/u,'').trim().toLowerCase();
+ const text=normalize(hintText);
+ return !!text&&visibleCopies.some(v=>normalize(v)===text)
+}
 let meowHintLayoutKey='';
 function meowHintSpacing(){
  const hintEl=$('hint'),root=$('game').getBoundingClientRect();
- const blockers=meowVisibleRects('#dock,#movePad,#gameControls,#ritualActionBar,#dialogue,#back,#nextStopShortcut');
- // Recalculate only when actual layout/text changes; never remove and reapply
- // the same classes on every polling tick (Safari visibly repaints them).
- const key=[room,activity,zh,hintEl.textContent,Math.round(root.width),Math.round(root.height),getComputedStyle(hintEl).display,...blockers.map(b=>[b.left,b.top,b.right,b.bottom].map(v=>Math.round(v/3)).join(':'))].join('|');
+ const blockers=meowVisibleRects('#hud>*,#small button,#dock,#movePad,#moveGuide,#walkHelp,#gameControls,#ritualActionBar,#dialogue,#back,#nextStopShortcut,#pearlRecipePanel,#destinyAccess,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet,#threeBoardAccess,#lunarRibbon');
+ const copies=activity?[...document.querySelectorAll('#gameControls button,#ritualActionBar button,#ritualActionBar [role="status"],#pearlRecipePanel button')].filter(el=>!el.hidden&&el.getClientRects().length&&getComputedStyle(el).visibility==='visible'&&getComputedStyle(el).display!=='none'&&Number(getComputedStyle(el).opacity)>0).map(el=>el.textContent):[];
+ const duplicate=pawSamePrompt(hintEl.textContent,copies);
+ const key=[scene,room,activity,zh,duplicate,hintEl.textContent,Math.round(root.width),Math.round(root.height),getComputedStyle(hintEl).display,...blockers.map(b=>[b.left,b.top,b.right,b.bottom].map(v=>Math.round(v/3)).join(':'))].join('|');
  if(key!==meowHintLayoutKey){
   meowHintLayoutKey=key;
   hintEl.classList.remove('meowHintMoved','meowHintBlocked');
   const base=hintEl.getBoundingClientRect(),preferred={left:base.left-root.left,right:base.right-root.left,top:base.top-root.top,bottom:base.bottom-root.top};
-  if(base.width>0&&base.height>0&&blockers.some(v=>speechOverlap(preferred,v))){
-   const dock=meowVisibleRects('#dock')[0],lower=Math.min(root.height-5,dock?.top??root.height-5);
-   const spot=meowPlaceText((preferred.left+preferred.right)/2,(preferred.top+preferred.bottom)/2,base.width,base.height,{left:6,right:root.width-6,top:root.height*.55,bottom:lower},blockers,Math.min(140,root.height*.23));
-   if(spot){hintEl.style.setProperty('--meow-hint-x',spot.x+'px');hintEl.style.setProperty('--meow-hint-y',spot.y+'px');hintEl.classList.add('meowHintMoved')}
-   else hintEl.classList.add('meowHintBlocked')
+  if(duplicate)hintEl.classList.add('meowHintBlocked');
+  else if(base.width>0&&base.height>0){
+   const spot=pawHintClearSpot(preferred,base.width,base.height,{w:root.width,h:root.height},blockers,!!activity);
+   if(spot&&!spot.original){hintEl.style.setProperty('--meow-hint-x',spot.x+'px');hintEl.style.setProperty('--meow-hint-y',spot.y+'px');hintEl.classList.add('meowHintMoved')}
+   else if(!spot)hintEl.classList.add('meowHintBlocked')
   }
  }
  setTimeout(meowHintSpacing,150)
@@ -9284,9 +9365,9 @@ function komorebiArt(id){
 }
 /* PAW_FURNITURE_PREVIEW_BEGIN */
 const pawFurnitureArtBase="assets/visual/staging/2026-11-27-b/room/";
-const pawFurniturePainted={"futon":"futon","bed":"single-bed","lamp":"paper-lamp","basicTable":"low-table","rug":"woven-rug","plant":"fern","zabuton":"floor-cushion","catBasket":"cat-bed","sakuraVase":"flower-vase","lowDesk":"desk","retroTV":"retro-tv","chineseTeaTable":"tea-table","chineseBench":"bench"};
+const pawFurniturePainted={"futon":"futon","bed":"single-bed","lamp":"paper-lamp","basicTable":"low-table","rug":"woven-rug","plant":"fern","zabuton":"floor-cushion","catBasket":"cat-bed","sakuraVase":"flower-vase","lowDesk":"desk","retroTV":"retro-tv","chineseTeaTable":"tea-table","chineseBench":"bench","shojiLamp":"floor-lantern"};
 const pawFurnitureImported=new Set(["board","frame","kotatsu","teaCabinet","bonsai","recordPlayer","readingChair","chineseScreen","chineseLantern","porcelainVase","moonShelf"]);
-const pawFurniturePreviewOnly={"shelf":"furniture/bookcase.webp","displayCabinet":"furniture/display-cabinet.webp","shojiLamp":"furniture/floor-lantern.webp","roomExtension":"shells/side-extension.webp","roomStudio":"shells/l-shaped-extension.webp"};
+const pawFurniturePreviewOnly={"shelf":"furniture/bookcase.webp","displayCabinet":"furniture/display-cabinet.webp","roomExtension":"shells/side-extension.webp","roomStudio":"shells/l-shaped-extension.webp"};
 function pawFurniturePaintedPath(id,preview=false){
  if(pawFurnitureImported.has(id))return 'assets/visual/painted/home/furniture/'+id+'.webp';
  if(Object.hasOwn(pawFurniturePainted,id))return pawFurnitureArtBase+'furniture/'+pawFurniturePainted[id]+'.webp';
@@ -9299,6 +9380,10 @@ function pawFurnitureRoomPose(id,x,y,r=0){
  const clamp=(v,a,b,f)=>Math.max(a,Math.min(b,Number.isFinite(Number(v))&&v!==null?Number(v):f));
  const left=clamp(x,8,92,50),rotation=Number.isFinite(Number(r))?Number(r):0;
  if(id==='chineseLantern')return {left:clamp(x,12,88,50),top:3.2,logicalY:35,rotation:0,anchor:'top',maxHeight:32};
+ if(id==='shojiLamp'){
+  const top=clamp(y,12,91,80);
+  return {left,top,logicalY:top,rotation,anchor:'bottom',maxHeight:38}
+ }
  if(pawFurnitureImported.has(id)){
   const wall=id==='board'||id==='frame',top=clamp(y,wall?18:12,wall?54:91,wall?35:80);
   return {left,top,logicalY:top,rotation,anchor:'bottom',maxHeight:wall?Math.min(38,top-4):38}

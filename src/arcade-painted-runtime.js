@@ -27,6 +27,19 @@ function pawBlindPaintedReveal(run,stage,age,pair,reduced,drawFigure){
  boxArt(400,515,1.15,run.boxPick,poseEase(pawBoxReveal(age,reduced).lid),0);
  return true
 }
+// One fixed counter anchor for shake, ready, opening and result.
+// The fallback prize emerges behind the front wall of the same carton.
+// Draw the wall last so the figure never appears through solid cardboard.
+function pawBlindFallbackReveal(run,reveal,drawFigure){
+ const x=400,y=515,scale=1.15,rise=poseEase(reveal.figure),opening=poseEase(reveal.lid);
+ if(rise>0&&typeof drawFigure==='function'){
+  ctx.save();try{
+   ctx.globalAlpha*=rise;
+   drawFigure(x,y-20*scale-66*scale*rise,scale*.90);
+  }finally{ctx.restore()}
+ }
+ boxArt(x,y,scale,run.boxPick,opening,0);
+}
 /* PAW_BLIND_PAINTED_RUNTIME_END */
 drawBlindShopStage=function(){
  const stage=state.boxStage,age=t-state.boxAt,portrait=W<H,stock=blindStockRemaining(),paintedPair=pawBlindPreparePair(state,stage==='choose');
@@ -47,17 +60,12 @@ drawBlindShopStage=function(){
  }
  const held=drag?.id==='boxShake'&&stage==='shake',x=held?Math.max(335,Math.min(465,drag.x)):400,y=held?Math.max(450,Math.min(535,drag.y)):515;
  const reveal=stage==='opening'?pawBoxReveal(age,residentReducedMotion.matches):stage==='result'?{lid:1,figure:1,done:true}:{lid:0,figure:0,done:false};
- const opening=poseEase(reveal.lid);
  drawRitualPose(270,560,1.15,{reach:held?{x:x-38,y:y-35}:null});
  blindShopCounter(245,525,310);
  if(stage==='opening'||stage==='result'){
  const v=boxPrizes[state.boxPrize];
  const painted=v&&pawBlindPaintedReveal(state,stage,age,paintedPair,residentReducedMotion.matches,(fx,fy,sc)=>drawBlindCollectible(fx,fy,v,sc));
- if(!painted){
-  boxArt(332,515,.82,state.boxPick,opening,0);
-  ellipse(458,522,48,8,'#5f49383c');round(408,507,100,17,4,'#d7bb8b','#98724e');
-  if(v&&reveal.figure>0){ctx.save();ctx.globalAlpha*=poseEase(reveal.figure);drawBlindCollectible(458,508+(1-reveal.figure)*10,v,1.42);ctx.restore()}
- }
+ if(!painted)pawBlindFallbackReveal(state,reveal,v?(fx,fy,sc)=>drawBlindCollectible(fx,fy,v,sc):null);
  if(stage==='opening'&&reveal.done&&!pawArcadeInputBlocked()){boxAward();if(v)toast(tr('Meet '+v[0],'遇见'+v[1]))}
  if(stage==='result'&&v){activityFitText(tr(...pawFigureRarity(v[4])),400,558,12,310,'#ffe5ad');activityFitText(tr(v[0],v[1]),400,584,19,310,'#fff1d0');activityFitText(tr(...blindFigureLore[state.boxPrize]),400,610,13,320,'#fff1d0');label(tr('Back to shelf','回到货架'),310,650,()=>start('blindBox'));label(tr('Collection','收藏册'),500,650,blindCollectionPage)}
  return
