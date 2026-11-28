@@ -723,7 +723,10 @@
         "bd1cf1aa + 45acedb4: short-landscape in-room hint compact styling keeps collision suppression measurable; hint and toast are polite atomic status regions. 7ba7ee63: added native Master Yue guided questions, tea introduction, two tarot handling reactions, and retained café previous-answer reaction in existing conversation paper plus final acknowledgement. Actual calculation, input validation, tarot selection and relationship assessment unchanged. 71cd837e extends existing focused regression; full exact-source script passed in connector harness including prior café handler and new consultation/copy/shell wiring. CSS visibility and screen-reader speech still require browser/device verification.",
         "f5ce1d4d + b4fc9a67: integrated all 49 bilingual feedback changes from PR #4 onto current main via 34 unique exact-line replacements, preserving concurrent edits; full scripts parse. a1ca0c3e: added 22 new bilingual variants in 11 rotating action-specific pools for fishing cast/catch, deer feeding/watching, fortune paper keeping/tying and five cat care preparations; 44 focused exact-source rotation checks passed. No mechanics changed. Actual browser rendering, cadence and deployment remain unverified."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-humour-natural-dialogue",
+        "until": 1795848000000
+      },
       "blocker": "Remaining full scene/device editorial review, rendered feedback layout and actual speech verification, including active overrides and all interactions. Existing source coverage does not imply live deployment or full acceptance."
     },
     {
