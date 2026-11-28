@@ -1655,7 +1655,8 @@
         "src/extensions.js",
         "src/engine.js",
         "src/shell.html",
-        "browser"
+        "browser",
+        "scripts/painted-interior-layout-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -1666,7 +1667,10 @@
         "6333e9ce: seven mapped painted rooms now walk to the actual threshold when Back is selected, then use existing outdoor transition. Guard repeated/stale requests and preserve activity-level back behavior; 31 route and arrival checks passed, startup parsed. Actual rendered exit and outside approach still unverified.",
         "c3264a19 + 2c4f4b2b: kitchen and boba lobby Back now walks to existing safe painted doorway before outdoor transition, same guard as mapped rooms; tests cover safe/rejected positions and arrival."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-20261128-mapped-direction",
+        "until": 1795834968897
+      },
       "blocker": "Full district/room exit audit, actual deployed mobile/desktop playthrough, artwork contact and visual verification remain outstanding."
     }
   ]
