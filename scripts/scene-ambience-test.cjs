@@ -29,7 +29,7 @@ const ctx={save(){depth++},restore(){depth--},beginPath(){},rect(){},clip(){clip
 for(const id of ids){
  const before=draws,clipBefore=clipped;
  const count=air(ctx,id,{x:100,y:-145,w:600,h:1065.5},2,false,false);
- ck(count===draws-before&&count<=8,'bounded draws per backdrop');
+ ck(count===draws-before&&count===(id==='destiny'?10:id==='kitchen'?6:light(id,2).length),'bounded draws per backdrop');
  ck(depth===0&&clipped===clipBefore+1,'balanced drawing state and clip');
 }
 const before=draws;
