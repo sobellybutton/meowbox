@@ -928,20 +928,21 @@ drawActivity=function(){
  const bounds=livingBounds(),shade=ctx.createLinearGradient(0,270,0,740);shade.addColorStop(0,'#40372b19');shade.addColorStop(1,'#2b342c70');shadeLivingBackdrop(shade);
  // Ground plane and compact wooden stool, separate from the background.
  ellipse(400,580,190,37,'#302a2440');
- // Lock artwork availability for this visit so decoding cannot move the host
- // between the visitor's arrival and the first strike.
+ // Keep one logical station anchor even while the artwork decodes.
+ // Freeze articulated-pose availability only during a three-strike round.
  const motionApi=room==='fish'?globalThis.PawAuntieRitualMotion:null;
  const hostRecord=motionApi?residentArtworkRecord('Ah Ma'):null;
  const raised=hostRecord?residentArtworkImage(hostRecord,'scolding'):null;
  const seated=hostRecord?residentArtworkImage(hostRecord,'seated'):null;
  const matched=!!(motionApi&&raised?.complete&&raised.naturalWidth===motionApi.art.width&&raised.naturalHeight===motionApi.art.height&&seated?.complete&&seated.naturalWidth===347&&seated.naturalHeight===510&&residentInstalledArt.get(hostRecord.id)?.scolding?.sha256===motionApi.art.sha256);
- if(room==='fish'&&typeof state.pawAuntieArticulation!=='boolean')state.pawAuntieArticulation=matched;
- const motionSpec=state.pawAuntieArticulation&&matched?motionApi.sceneLayout():null;
+ if(room==='fish'&&state.paperAction&&typeof state.pawAuntieArticulation!=='boolean')state.pawAuntieArticulation=matched;
+ const motionSpec=motionApi?motionApi.sceneLayout():null;
  const prepared=room!=='fish'||state.paperPrepared===true;
  const preparing=room==='fish'&&Number.isFinite(state.paperPrepAt);
  const prepFrame=motionSpec&&preparing?motionApi.preparationFrame(motionSpec,mb5PrepProgress(t,state.paperPrepAt),residentReducedMotion.matches):null;
  const paperVisible=prepared||preparing;
- const motionPose=motionSpec&&state.paperAction?motionApi.frame(motionSpec,t-state.paperAction.at,residentReducedMotion.matches):null;
+ const move=state.paperAction;
+ const motionPose=motionSpec&&matched&&state.pawAuntieArticulation&&move?motionApi.roundFrame(motionSpec,t-move.at,move.lead||0,move.tail||0,residentReducedMotion.matches):null;
  if(motionSpec)ellipse(motionSpec.foot[0],motionSpec.foot[1],39,9,'#302a2444');
  else ellipse(272,548,50,12,'#302a2444');
  // Real seat and foot anchors: stool at y504, feet at y550.
@@ -949,7 +950,10 @@ drawActivity=function(){
  const sc=W<H?.67:.70;
  if(room==='fish'){
   if(motionSpec){
-   if(!motionPose||!motionApi.drawBody(ctx,raised,motionSpec))drawResidentRaster(seated,...motionSpec.foot,motionSpec.height,'right');
+   const [hx,hy]=motionSpec.foot;
+   if(!motionPose||!motionApi.drawBody(ctx,raised,motionSpec)){
+    if(!drawResidentRaster(seated,hx,hy,motionSpec.height,'right')&&!drawProductionAhMa(hx,hy,motionSpec.height/205))riverAuntie(hx,hy,motionSpec.height/205)
+   }
   }else if(!drawProductionAhMa(272,550,sc))riverAuntie(272,550,sc);
  }else{
   const seatY=550-54*sc;

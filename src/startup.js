@@ -1808,13 +1808,16 @@ function pawAuntieBeginRound(){
  if(!pawAuntieRoundCanBegin(state,paperRitualAllowed(),paperRitualBusy()))return false;
  if(state.paperPrepared!==true){openStressChoices();return false;}
  state.paperRoundRemaining=3;
+ delete state.pawAuntieArticulation;
  if(paperRitualRequest())return true;
  state.paperRoundRemaining=0;return false
 }
 function paperRitualRequest(){
  if(!paperRitualAllowed()||paperRitualBusy()||state.paperPrepared!==true||!pawAuntieRoundRemaining(state))return false;
- state.paperAction={at:t,landed:false};
- stressSwingAt=t;paperRitualSyncButtons();return true
+ const remaining=pawAuntieRoundRemaining(state),timing=globalThis.PawAuntieRitualMotion?.roundTiming;
+ const lead=remaining===3?(timing?.lead??.68):0,tail=remaining===1?(timing?.tail??.62):0;
+ state.paperAction={at:t+lead,lead,tail,landed:false};
+ stressSwingAt=state.paperAction.at;paperRitualSyncButtons();return true
 }
 smack=function(){
  if(activity==='hit'&&room==='fish')return false; // The visitor is not the performer.
@@ -1824,13 +1827,15 @@ function paperRitualAdvance(){
  if(activity!=='hit'||room!=='fish'||!state.paperAction)return;
  const move=state.paperAction,age=t-move.at;
  if(!paperRitualAllowed())return;
- if(!Number.isFinite(age)||age<0){paperRitualCancel();return}
+ const lead=Number.isFinite(move.lead)?Math.max(0,move.lead):0,tail=Number.isFinite(move.tail)?Math.max(0,move.tail):0;
+ if(!Number.isFinite(age)||age< -lead-.001){paperRitualCancel();return}
+ if(age<0)return;
  if(age>=.23&&!move.landed){
   move.landed=true;
   // Existing reward, sound, joke and paper-debris handlers run at contact.
   paperRitualImpactBefore();stressSwingAt=move.at;
  }
- if(age>=.46){
+ if(age>=.46+tail){
   state.paperAction=null;
   state.paperRoundRemaining=Math.max(0,pawAuntieRoundRemaining(state)-1);
   if(state.paperRoundRemaining){if(!paperRitualRequest())state.paperRoundRemaining=0}
@@ -1930,8 +1935,9 @@ const mb5PaperControlBefore=paperRitualSyncButtons;
 paperRitualSyncButtons=function(){
  mb5PaperControlBefore();if(activity!=='hit'||room!=='fish')return;
  const button=$('gameControls')?.querySelector('.paperWhack');if(!button)return;
- const phase=Number.isFinite(state.paperPrepAt)?'prepare':state.paperAction?townActionPhase(t-state.paperAction.at):'ready';
- const words={prepare:['Preparing the paper…','铺好纸小人……'],anticipation:['Ah Ma is getting ready…','阿嬷准备好了……'],swing:['Ah Ma swings…','阿嬷挥下拖鞋……'],impact:['Whack!','啪！'],recovery:['Ah Ma is still working…','阿嬷还在忙……'],ready:['Ask Ah Ma to begin','请阿嬷开始']};
+ const move=state.paperAction,age=move?t-move.at:0;
+ const phase=Number.isFinite(state.paperPrepAt)?'prepare':move?(age<0?'lift':age>=.46?'lower':townActionPhase(age)):'ready';
+ const words={prepare:['Preparing the paper…','铺好纸小人……'],lift:['Ah Ma readies her slipper…','阿嬷正在准备拖鞋……'],lower:['Ah Ma lowers her slipper…','阿嬷放下拖鞋……'],anticipation:['Ah Ma is getting ready…','阿嬷准备好了……'],swing:['Ah Ma swings…','阿嬷挥下拖鞋……'],impact:['Whack!','啪！'],recovery:['Ah Ma is still working…','阿嬷还在忙……'],ready:['Ask Ah Ma to begin','请阿嬷开始']};
  const label=phase==='ready'&&state.paperPrepared!==true?tr('Choose a worry','选个烦恼'):tr(...words[phase]);if(button.textContent!==label)button.textContent=label
 };
 

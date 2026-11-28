@@ -41,6 +41,21 @@ function frame(spec,age,reduced=false){
  const a=baseAngle+angle,reach=radius*spec.scale;
  return {phase,angle,strike,tip:[spec.pivot[0]+Math.cos(a)*reach,spec.pivot[1]+Math.sin(a)*reach]}
 }
+// A short held-tool lift and settling phase. This is deliberately not a
+// storage pickup: the original raised painting already includes the grip.
+const roundTiming=Object.freeze({lead:.68,tail:.62,lowAngle:-1.65});
+function roundFrame(spec,age,lead=0,tail=0,reduced=false){
+ if(!spec||!Number.isFinite(spec.angle)||!Number.isFinite(age)||!Number.isFinite(lead)||!Number.isFinite(tail)||lead<0||tail<0)return null;
+ if(age>=0&&age<timing.duration)return frame(spec,age,reduced);
+ let angle,phase;
+ if(lead>0&&age>=-lead&&age<0){
+  phase='lift';angle=reduced?0:roundTiming.lowAngle*(1-ease((age+lead)/lead))
+ }else if(tail>0&&age>=timing.duration&&age<timing.duration+tail){
+  phase='lower';angle=reduced?roundTiming.lowAngle:roundTiming.lowAngle*ease((age-timing.duration)/tail)
+ }else return null;
+ const a=baseAngle+angle,reach=radius*spec.scale;
+ return {phase,angle,strike:false,tip:[spec.pivot[0]+Math.cos(a)*reach,spec.pivot[1]+Math.sin(a)*reach]}
+}
 function path(ctx,polygon){ctx.moveTo(polygon[0][0],polygon[0][1]);for(const p of polygon.slice(1))ctx.lineTo(p[0],p[1]);ctx.closePath()}
 // Fixed logical coordinates for both viewport orientations. The contact point is
 // inside the paper's left arm on the low block, not the air above it.
@@ -83,5 +98,5 @@ function draw(ctx,im,spec,pose){
  if(!validDraw(ctx,im,spec)||!pose||!Number.isFinite(pose.angle))return false;
  return drawBody(ctx,im,spec)&&drawArm(ctx,im,spec,pose)
 }
-return Object.freeze({art,shoulder,tip,timing,layout,fit,frame,station,sceneLayout,seatedArt,preparationDuration,preparationFrame,drawSeatedHand,drawBody,drawArm,draw})
+return Object.freeze({art,shoulder,tip,timing,roundTiming,layout,fit,frame,roundFrame,station,sceneLayout,seatedArt,preparationDuration,preparationFrame,drawSeatedHand,drawBody,drawArm,draw})
 });

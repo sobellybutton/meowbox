@@ -31,4 +31,19 @@ ok(near(api.preparationFrame(live,0,true).center,api.station.paper));ok(api.prep
 ok(api.drawSeatedHand(layerCtx,{complete:true,naturalWidth:347,naturalHeight:510},live));
 ok(layerCalls.filter(v=>v[0]==='save').length===layerCalls.filter(v=>v[0]==='restore').length);
 ok(!api.drawSeatedHand(layerCtx,painted,live));
+const {lead,tail,lowAngle}=api.roundTiming;
+ok(api.roundFrame(live,-lead-.001,lead,tail)===null);
+ok(api.roundFrame(live,-lead,lead,tail).phase==='lift');
+ok(Math.abs(api.roundFrame(live,-lead,lead,tail).angle-lowAngle)<.001);
+ok(Math.abs(api.roundFrame(live,-.00001,lead,tail).angle)<.001);
+ok(api.roundFrame(live,.23,lead,tail).strike);
+ok(near(api.roundFrame(live,.23,lead,tail).tip,api.station.contact));
+ok(api.roundFrame(live,.46,lead,tail).phase==='lower');
+ok(Math.abs(api.roundFrame(live,.46,lead,tail).angle)<.001);
+ok(Math.abs(api.roundFrame(live,.46+tail-.00001,lead,tail).angle-lowAngle)<.001);
+ok(api.roundFrame(live,.46+tail,lead,tail)===null);
+ok(api.roundFrame(live,-.1,0,0)===null);ok(api.roundFrame(live,.46,0,0)===null);
+ok(api.roundFrame(live,-lead,lead,tail,true).angle===0);
+ok(api.roundFrame(live,.46,lead,tail,true).angle===lowAngle);
+for(let i=0;i<100;i++){const f=api.roundFrame(live,-lead+lead*i/100,lead,tail),g=api.roundFrame(live,.46+tail*i/100,lead,tail);ok(!f.strike&&!g.strike);ok(f.angle>=lowAngle&&f.angle<=0&&g.angle>=lowAngle&&g.angle<=0);ok(Math.abs(Math.hypot(f.tip[0]-live.pivot[0],f.tip[1]-live.pivot[1])-Math.hypot(g.tip[0]-live.pivot[0],g.tip[1]-live.pivot[1]))<.001)}
 console.log('Ah Ma motion: '+checks+' assertions passed; geometry only, no rendered visual approval');
