@@ -29,9 +29,10 @@ function validSharedRoomPosition(room,x,y){
  return false
 }
 function validatePresence(v){
- if(!v||!Object.hasOwn(worldHeights,v.place)||!Number.isInteger(v.avatar)||v.avatar<0||v.avatar>3||!Number.isFinite(v.x)||!Number.isFinite(v.y)||v.x<0||v.x>1000||v.y<0||v.y>worldHeights[v.place]||!['up','down','left','right'].includes(v.facing)||typeof v.walking!=='boolean'||!gestures.includes(v.gesture))return null;
- const room=v.room??'';if(typeof room!=='string'||(room&&(!(socialRooms[v.place]||[]).includes(room)||!validSharedRoomPosition(room,v.x,v.y))))return null;
- return {room,place:v.place,x:Math.round(v.x),y:Math.round(v.y),avatar:v.avatar,facing:v.facing,walking:Number(v.walking),gesture:v.gesture};
+ if(!v||typeof v.place!=='string'||!Object.hasOwn(worldHeights,v.place)||!Number.isInteger(v.avatar)||v.avatar<0||v.avatar>3||!Number.isFinite(v.x)||!Number.isFinite(v.y)||v.x<0||v.x>1000||v.y<0||v.y>worldHeights[v.place]||!['up','down','left','right'].includes(v.facing)||typeof v.walking!=='boolean'||!gestures.includes(v.gesture))return null;
+ const x=Math.round(v.x),y=Math.round(v.y);
+ const room=v.room??'';if(typeof room!=='string'||(room&&(!(socialRooms[v.place]||[]).includes(room)||!validSharedRoomPosition(room,x,y))))return null;
+ return {room,place:v.place,x,y,avatar:v.avatar,facing:v.facing,walking:Number(v.walking),gesture:v.gesture};
 }
 const enc=new TextEncoder();
 const hex=b=>Array.from(new Uint8Array(b),v=>v.toString(16).padStart(2,'0')).join('');
