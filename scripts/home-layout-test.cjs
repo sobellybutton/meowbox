@@ -131,3 +131,20 @@ console.log('Eight home finish paths, mirror tiling, floor sampling and surface 
   for(const [im,x,y,w,h] of result.calls)assert.ok(x>=0&&y>=0&&x+w<=im.width+1e-6&&y+h<=im.height+1e-6);
  }
  console.log('Bounded home surface raster allocation and sampling verified.');
+
+ // A perspective-compressed floor must sample every source band, not skip
+ // intervening rows. Check continuity, complete coverage and near/far scale.
+ for(const size of [1,4,128,344,512,1024,2048]){
+  const make=(width,height)=>{const calls=[];return {width,height,calls,getContext:()=>({save(){},restore(){},translate(){},scale(){},drawImage(...a){calls.push(a)}})}};
+  const out=api.finishRaster('floor','floorOak',{naturalWidth:size,naturalHeight:size},make);
+  const tile=Math.max(4,Math.min(512,size));
+  let previous=api.floorSample(0).v*tile;
+  for(const [i,[im,x,y,w,h,dx,dy,dw,dh]] of out.calls.entries()){
+   assert.ok(Math.abs(y-previous)<1e-8,'Projected texture band gap at '+i);
+   assert.ok(h>0&&y+h<=im.height&&x>=0&&x+w<=im.width);
+   assert.deepEqual([dx,dy,dw,dh],[0,i,out.width,1]);previous=y+h;
+  }
+  assert.ok(Math.abs(previous-api.floorSample(1).v*tile)<1e-8);
+  assert.ok(out.calls[0][4]>out.calls.at(-1)[4]);
+ }
+ console.log('Perspective floor texture bands are contiguous across all import sizes.');
