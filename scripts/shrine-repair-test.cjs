@@ -63,28 +63,49 @@ const fs=require('node:fs');
     await page.waitForFunction(()=>pawRoomImageReady(pawWaterArt()),{},{timeout:10000});
     await page.evaluate(()=>start('templeWater'));
     await page.waitForFunction(()=>activity==='templeWater'&&pawWaterPaintingActive()&&pics.templeLadlePaint.naturalWidth>0&&hit.some(h=>h.id==='templeLadle'),{},{timeout:10000});
-    const waterTarget=async()=>{
-     const handle=await page.waitForFunction(()=>{const h=hit.find(h=>h.id==='templeLadle');if(!h)return false;const x=h.x+h.w/2,y=h.y+h.h/2,r=c.getBoundingClientRect(),sx=r.left+cam.ox+x*cam.scale,sy=r.top+cam.oy+y*cam.scale;return at({x,y})===h&&document.elementFromPoint(sx,sy)===c?{x,y}:false},null,{timeout:4000});
+    await page.evaluate(()=>{
+     window.__pawWaterPointerTrace=[];
+     for(const type of ['pointerdown','pointermove','pointerup','pointercancel','lostpointercapture'])c.addEventListener(type,e=>{
+      const r=c.getBoundingClientRect(),trace=window.__pawWaterPointerTrace;
+      trace.push({type,id:e.pointerId,pointerType:e.pointerType,x:Math.round(e.clientX-r.left),y:Math.round(e.clientY-r.top),buttons:e.buttons,stage:state.waterStage});
+      if(trace.length>100)trace.shift();
+     },true);
+    });
+    const waterTarget=async(offset=0)=>{
+     const handle=await page.waitForFunction(offset=>{const h=hit.find(h=>h.id==='templeLadle');if(!h)return false;const dx=h.w*offset,x=h.x+h.w/2+dx,y=h.y+h.h/2,r=c.getBoundingClientRect(),sx=r.left+cam.ox+x*cam.scale,sy=r.top+cam.oy+y*cam.scale;return at({x,y})===h&&document.elementFromPoint(sx,sy)===c?{x,y,dx}:false},offset,{timeout:4000});
      return handle.jsonValue()
     };
     // Independent calibration from the courtyard plate, not legacy vector basin coordinates.
     const plate={x:100,y:-145,w:600,h:600*1635/962};
     const point=(u,v)=>({x:plate.x+u*plate.w,y:plate.y+v*plate.h});
     const scoop=point(.383,.51),pour=point(.464,.545),miss=point(.25,.64);
-    const dragLadle=async(dest)=>{const from=await waterTarget();await drag(from.x,from.y,dest.x,dest.y)};
+    const dragLadle=async(dest,offset=0)=>{const from=await waterTarget(offset);await drag(from.x,from.y,dest.x+from.dx,dest.y)};
     const screen=async(x,y)=>page.evaluate(([x,y])=>{const r=c.getBoundingClientRect();return {x:r.left+cam.ox+x*cam.scale,y:r.top+cam.oy+y*cam.scale}},[x,y]);
     const drag=async(x,y,toX,toY)=>{const a=await screen(x,y),b=await screen(toX,toY);if(options.hasTouch&&engine===chromium){const client=await page.context().newCDPSession(page);try{await client.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:a.x,y:a.y}]});for(let i=1;i<=15;i++){await client.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:a.x+(b.x-a.x)*i/15,y:a.y+(b.y-a.y)*i/15}]})}await client.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]})}finally{await client.detach()}}else{await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:15});await page.mouse.up()}};
     await page.screenshot({path:'test-results/'+name+'-water-empty.png'});
     await dragLadle(miss);
     if(await page.evaluate(()=>state.waterStage)!==0)throw Error('Accepted a drop away from basin');
+    const expectWaterStage=async(expected,phase,timeout=2500)=>{
+     try{await page.waitForFunction(expected=>state.waterStage===expected,expected,{timeout})}
+     catch(error){
+      await page.screenshot({path:'test-results/'+name+'-water-failure-'+phase+'.png'}).catch(()=>{});
+      const diagnostic=await page.evaluate(()=>({stage:state.waterStage,drag:drag&&{id:drag.id,x:drag.x,y:drag.y},blocked:pawArcadeInputBlocked(),camera:{scale:cam.scale,ox:cam.ox,oy:cam.oy},target:hit.find(h=>h.id==='templeLadle'),pointerTrace:window.__pawWaterPointerTrace.slice(-40)}));
+      throw Error(name+' '+phase+' failed: '+JSON.stringify(diagnostic)+' '+error.message)
+     }
+    };
     await dragLadle(scoop);
-    await page.waitForFunction(()=>state.waterStage===1,{},{timeout:2500}).catch(async error=>{const diagnostic=await page.evaluate(()=>({stage:state.waterStage,drag:drag&&{id:drag.id,x:drag.x,y:drag.y},blocked:pawArcadeInputBlocked(),camera:{scale:cam.scale,ox:cam.ox,oy:cam.oy},target:hit.find(h=>h.id==='templeLadle')}));throw Error(name+' scoop failed: '+JSON.stringify(diagnostic)+' '+error.message)});
+    await expectWaterStage(1,'scoop');
     await page.waitForTimeout(450);await page.screenshot({path:'test-results/'+name+'-water-filled.png'});
-    await dragLadle(pour);
-    await page.waitForFunction(()=>state.waterStage===2,{},{timeout:2500});
+    // A filled ladle may not rinse outside the marked hand; preserve the filled state.
+    await dragLadle(miss);
+    if(await page.evaluate(()=>state.waterStage)!==1)throw Error('Accepted a rinse away from the hand');
+    // Grip off centre as on a real touch screen. The tool centre, not the finger,
+    // must arrive at the marked pour point without changing the accepted gesture.
+    await dragLadle(pour,.2);
+    await expectWaterStage(2,'off-centre-pour');
     if(await page.evaluate(()=>!!state.waterRewarded))throw Error('Water reward granted before rinse completed');
     await page.waitForTimeout(700);await page.screenshot({path:'test-results/'+name+'-water-pouring.png'});
-    await page.waitForFunction(()=>state.waterStage===3,{},{timeout:3500});
+    await expectWaterStage(3,'rinse-complete',3500);
     if(!await page.evaluate(()=>state.waterRewarded===true))throw Error('Completed rinse did not grant reward');
     await page.screenshot({path:'test-results/'+name+'-water-done.png'});
     await page.evaluate(()=>start('templeBell'));
