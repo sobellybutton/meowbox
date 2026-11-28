@@ -118,6 +118,14 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
    assert(await p.locator('#page').getAttribute('data-paw-yue-expanded')===null,'Fold did not restore compact study');
    assert(!await p.locator('.ziGrid').isVisible(),'Folded chart still covers the study');
    assert(await p.locator('button[data-paw-yue-scroll]').isVisible(),'Missing illustrated scroll control');
+   const sprite=await p.locator('button[data-paw-yue-scroll]').evaluate(async el=>{
+    const value=getComputedStyle(el,'::before').backgroundImage;
+    const path=value.match(/url\(["']?(.*?)["']?\)$/)?.[1];if(!path)return null;
+    const im=new Image();im.src=path;await im.decode();
+    return {path:im.src,w:im.naturalWidth,h:im.naturalHeight}
+   });
+   assert(sprite?.path.endsWith('/painted/master-yue/folded-scroll.webp')&&sprite.w===288&&sprite.h===166,'Standalone scroll not loaded');
+   await p.screenshot({path:'test-results/'+name+'-yue-folded-scroll.png'});
    await click(p.getByRole('button',{name:'Unfold the chart',exact:true}));
    assert(await p.locator('.ziGrid').isVisible(),'Reopening lost the chart');
    assert(await p.evaluate(()=>yueSessionProfiles.self.chart?.date==='1990-06-15'),'Own chart not retained');
