@@ -238,3 +238,77 @@ Public world must continue living: residents and guests have distinct routines a
 
 ### Responsive phone and desktop acceptance
 Use independent portrait and landscape framing, not a stretched portrait or centered narrow webpage. Test 360x640, 390x844, 430x932, tablet portrait/landscape and 1280x720/1440x900 desktop; real iOS/Android where available. Respect safe areas, address bar and software keyboard/visual viewport. On small phone frame the active actor, seated player and paper/tool contact without blocking them with dialogue; if space limited use a purposeful action close-up while preserving context and visible reaction. Desktop uses wider scene context with readable actor scale, not tiny figures. Keep UI compact, hit targets at least 44px, one language, no clipped or overlapping text, no horizontal scrolling, no obstruction by HUD/dock, no duplicate back/language controls. Keyboard/mouse/touch equivalents, resize/orientation and language changes preserve seat, gesture and activity state. Test full ordinary entry -> seat -> handoff -> motion -> outcome -> stand -> walk away, cancellation, repeat and idle 30-second scene on each relevant viewport; inspect actual video and screenshots, record exact commit and deployment. No acceptance based solely on source checks or static art.
+
+## Living world, adaptive walking and 30-lens production review (owner direction, 28 November)
+
+Owner requires the map's walking humans to apply throughout the game, including interiors and compatible active gameplay. Walk speed currently feels odd; speed must reflect room clearance, route length and context rather than a single arbitrary number. This section is a design/implementation specification, not a measured performance result.
+
+### Shared actor motion and clearance
+- Inspect current effective outdoor movement (pawDistrictAdvance, motionSpeed, pawGaitStrength, pawOutdoorYield) and indoor routing (pawVisitorDoorRoute, indoorSafe/Path, guest/player/station clearance) plus later overrides. Reuse validated mechanisms and unify movement intent/measurement; do not replace an entire engine or add duplicate tick loops blindly.
+- Proposed calibration relative to a comfortable normal indoor walking speed: open uncongested long path 1.2x; normal interior 1.0x; narrow/crowded path 0.7x; final approach 0.4x; quiet animal approach 0.5x. These are illustrative initial ratios, NOT tested or approved absolute constants. Measure existing ground distance/time and body-height traversed per second, compare video and adjust. Actual pace depends on scene projection, clear path length, obstacle clearance, turn angle, remaining distance, purpose, actor mobility and input. Player control remains responsive; no arbitrary sluggish movement. Faster where ample open space and meaningful travel, not because the camera is wide. Do not speed up time-based physical actions.
+- Accelerate smoothly to target pace, decelerate before arrival or collision, turn with consistent facing/stride, use distance-based gait phase and actual feet position. Preserve speed across path segments unless geometry requires slowing; do not reset speed at every waypoint. Use bounded elapsed time, never jump after tab suspension or route interruption. Joystick, tap, auto-route, keyboard, door transitions share credible ground speed and facing. Reduced motion removes unnecessary animation, not accessibility or route correctness.
+- Author walkable ground, door/seat/station anchors, obstacles and clearance per room. Actor feet stay on ground; sprite size and collision footprints must agree. Reserve a seat or station on approach, release on cancellation/leave; NPCs yield to player and each other, wait briefly, reroute only when safe. No crowding doorway, clipping furniture, walking in water or over text, overlapping player, instant relocation, permanent blocked path, or forced player detour through crowd. Use actual depth sorting and occlusion.
+- NPC lifecycle: enter through actual door -> route to purpose -> face station -> work/observe/sit/converse -> react/idle -> stand/release station -> leave through actual exit. Offscreen scheduling can use bounded state transitions, never teleport visibly. Hosts remain at appropriate workplace during customer service; independent visitors continue compatible routines in active scenes. Use stable identities, distinct pace and staggered timing. Keep occupancy appropriate to available floor space; don't fill every seat or machine. Private home and confidential consultations can have fewer/no unrelated visitors. Do not label NPCs as real humans; real visitors remain opt-in and moderated.
+- Runtime budget: avoid per-frame asset decode, route recalculation or unbounded NPC counts. Use scene-local actors, cadence scheduling, culling/sleep offscreen and bounded route attempts; respect hidden tabs, reduced motion and mute. Record cold/warm load, frame pacing and distance/time on supported device sizes. Motion must be judged from actual playback, not merely walking sprites or static screenshot.
+
+### Scene-specific resident and visitor choreography
+| Location | NPC routine and purposeful movement during compatible gameplay |
+| --- | --- |
+| Four district maps | Independent walkers use mapped routes, approach actual doors and station, yield at narrow sections, occasional greetings and exits; brisk on open segments, slow at turns/doors. |
+| Entrance / railway | Arrival and departure paths, waiting passengers sit at actual benches, stand and board; no crossing rails or blocking arrival. Keep arrival fast and avoid extra loading. |
+| Temple courtyard and hall | Keeper arranges supplies; visitors approach available station, retrieve incense, bow, use basin or wait, then leave. Slow reverent approach and safe space at ritual contact. |
+| Temple rear garden | Visitors feed koi, walk stone path, sit on vacant bench and stand; koi, chime, cats and water move. No seating on floor. |
+| Wishing Garden | Visitors select plaque at kiosk, write/hang, toss coin from bank and leave; independent water movement; reserve player kiosk/bank. |
+| Moonlight Tarot | Reader arranges and deals cards, reacts; customer approaches actual visitor seat; optional waiting visitor where room permits; no crowd in reading closeup. |
+| Master Yue's Study | Master Yue writes/turns pages/gestures; private visitor seated opposite; other visitors only if spatially and privately appropriate. |
+| Worry-Free Pier | Passersby stroll along safe dry path; Auntie seated prepares supplies, customer takes second stool, Auntie performs 打小人 with actual slipper and paper; player watches. Private bottle and shout stations do not require Auntie. |
+| Tea House | Guests enter, reserve free seat, turn/sit, receive tea, sip/chat, stand and leave; host pours tea or welcomes; visitors walk to real noticeboard. Actual seated hip/foot/cup contact. |
+| Park | Visitors walk along paths and pause, crouch with cats or observe deer; animals stretch, walk, graze and respond, no inappropriate contact. |
+| Kitchen | Grandma retrieves/prepares food, stirs, serves and reacts; visitors order/wait/collect without crowding work zone. Player uses real prep station. |
+| Bubble tea | Host retrieves cups, scoops/pours/seals, serves; customers queue at clear anchor and leave; reserve prep area for active player. |
+| Arcade | Customers enter, choose a free cabinet or shelf, stand at controls, visibly operate claw/rhythm/bubbles or sit for wooden game, react to moving machine and prize, collect and leave. Goldfish tank users stay dry; blind-box customers pick up from shelf. Keep active player's station reserved. |
+| Daily souvenir (if retained) | Shopkeeper arranges physical stock; guests browse display and leave; no duplicate mystery reward route. |
+| Inner Observatory | Guide turns pages, prepares notebook, welcomes seated visitor; optional waiting guest where appropriate. |
+| House of What If | Storyteller handles book, gestures and reacts to story choices; visitor sits/stands naturally; background guests only if appropriate. |
+| Heart Café | Host/guests sit and converse, sip tea, approach/free seats; meaningful partner interaction only with consent. |
+| Curiosity Club | Host arranges approved displays, visitors inspect objects; reconcile actual art and assigned activities before choosing props/routes. |
+| Private home | No forced guests; player moves around furniture with safe paths and optional appropriate invited presence only. |
+
+### 30-lens review for each full activity and district
+Use this as a critique/acceptance matrix, not a demand to make needless changes. Record keep/fix/blocker and concrete evidence per lens; repair actual defects, retain good existing design. Use the detailed station flow and physical inventories above; every review includes ordinary live entry through recovery/exit, not only direct test setup.
+
+| Lens | Pass condition |
+| --- | --- |
+| 1 Purpose | Distinct reason to visit; no duplicated or pointless activity. |
+| 2 Discoverability | Actual visible sign/object, accurate target and route. |
+| 3 Entry | Real doorway, coherent first frame and no teleport. |
+| 4 Route | Walkable ground, obstacle and seat clearance. |
+| 5 Pace | Context-dependent speed; measured time/distance and human-looking gait. |
+| 6 Turning | Smooth facing changes, stop and recovery, no waypoint jitter. |
+| 7 Scale | Visible bodies readable and proportional to doors/furniture/other actors. |
+| 8 Identity | Selected avatar remains consistent through all poses and cameras. |
+| 9 Seating | Correct stool/chair, hip pivot, feet and stand motion. |
+| 10 Props | Every object retrieved from real storage, correct handoff/return. |
+| 11 Performer | Correct actor performs service/action (Auntie, not player, for 打小人). |
+| 12 Choreography | Anticipation, reach, contact, follow-through and reaction. |
+| 13 Physics | Object movement and impact tied to actual contact, no floating props. |
+| 14 NPC life | Independent routines, walking, sitting, working and departures. |
+| 15 Occupancy | Purposeful population, reserve stations, avoid blocking/crowds. |
+| 16 Ambient life | Contextual water/smoke/steam/foliage/machines/animals; not distracting. |
+| 17 Camera | Continuous purposeful framing and exact same-station return. |
+| 18 Controls | Direct contextual input and accessible alternate control. |
+| 19 Interface | Zero mandatory generic webpages; compact coherent room UI. |
+| 20 Phone | Safe areas, software keyboard, visible actors/targets, no clipping. |
+| 21 Desktop | Wide contextual framing, readable characters, mouse/keyboard. |
+| 22 Language | Natural independent EN/ZH, short labels, state preserved. |
+| 23 Humour and host | Distinct voice, timely reactions, no generic chatter. |
+| 24 Outcome | Visible result connected to action; meaningful repeat/leave. |
+| 25 Persistence | Correct save/reward/cost, no duplicate spend or stale state. |
+| 26 Privacy | Explicit sharing, transient notes, no fake real visitors. |
+| 27 Accessibility | Touch targets, focus, readable contrast, mute/reduced motion. |
+| 28 Performance | Measured loading, memory and stable frame pacing; bounded NPC cost. |
+| 29 Resilience | Cancellation, resize, language, interrupted route, reload recover safely. |
+| 30 Live player test | Actual deployed playback/screenshots/video, both languages, phone/desktop and 30s idle; no code-only acceptance. |
+
+### Execution and evidence
+For every station create a concise choreography record in the existing canonical task evidence: room and action ID, actual scene asset, entry/return anchors, player/host/visitor roles, route and pace profile, seat/storage/hand/contact coordinates, animation phase and duration, prompt/control, visible effect, recovery/cancel, native viewport camera, missing exact assets and tested evidence. Reuse the existing detailed station rows rather than opening a duplicate backlog. First resolve missing/hidden routes, systemic actor scale/pace and owner-reported legacy activity interfaces; integrate a polished complete vertical slice at a time while non-overlapping lanes prepare exact assets. Record measured travel distance/time, phone and desktop video, and visual defects. No acceptance until the room feels alive and the whole interaction makes sense. 
