@@ -10427,14 +10427,14 @@ loop=function(...args){
 function pawFortuneSlipNumber(v){return Number.isInteger(v)&&v>=1&&v<=12?v:null}
 function pawFortuneNext(q,kind,now,blocked){
  if(blocked||!q||!pawFortuneSlipNumber(q.pawFortuneNumber))return null;
- if(kind==='sticks'&&q.stickDelivered)return 'choice';
- if(kind==='moon'&&!q.moonPending&&!(q.tossUntil>now))return q.count>0?'receive':'confirm';
+ if(kind==='sticks'&&q.stickDelivered)return 'confirm';
+ if(kind==='moon'&&!q.moonPending&&!(q.tossUntil>now))return q.count===1?(q.result===0?'receive':'retry'):q.count===0?'toss':null;
  return null
 }
 function pawFortuneAction(q,current,kind,now,blocked,action){
  if(q!==current)return false;
  const next=pawFortuneNext(q,kind,now,blocked);
- return action==='receive'?['choice','receive','confirm'].includes(next):action==='confirm'&&next==='choice'
+ return ['receive','confirm','retry'].includes(action)&&action===next
 }
 function pawTempleCatVisit(q){
  if(!q||q.catVisited)return false;
@@ -10456,21 +10456,22 @@ pawForecourtTick=function(q,...args){
  if(arrival==='cat'&&pawTempleCatVisit(q))meetTempleCat();
  return arrival
 };
-// Keep the actual number picked up by the player. Confirmation is optional,
-// not a new random draw and not a condition for receiving a fortune.
+// A drawn number is provisional until a settled Sheng Bei confirms it.
+// Only the confirmed number may be collected; failed draws grant no slip.
 const pawOriginalFortunePaper=templePaperOpen;
 templePaperOpen=function(n){
  if(room==='temple'&&activity==='sticks'&&state.stickDelivered&&pawFortuneSlipNumber(n)){
   state.pawFortuneNumber=n;
-  hint('Your numbered stick is ready. Confirm with moon blocks, or receive the slip directly.','已拾到签号。可以掷筊确认，也可以直接领取签文。');
+  hint('Take your numbered stick to the moon blocks for confirmation.','已拾到签号，请前往筊杯处掷筊确认。');
   mb5AssistSync(true);return
  }
- return pawOriginalFortunePaper(n)
+ return false
 };
 function pawFortuneReceive(run=state){
  if(!pawFortuneAction(run,state,activity,t,pawArcadeInputBlocked(),'receive'))return false;
  const n=run.pawFortuneNumber;
  delete run.pawFortuneNumber;
+ addItem('Fortune stick '+n,'签文 '+n);
  pawOriginalFortunePaper(n);return true
 }
 /* PAW_FORTUNE_WALK_BEGIN */
@@ -10487,8 +10488,9 @@ let pawFortuneWalk=null;
 function pawFortuneRestoreWalk(q){
  if(pawFortuneWalk!==q||state!==q.hallState||room!=='temple'||activity)return;
  pawFortuneWalk=null;
- activity='sticks';state=q.run;updateHUD();mb5AssistSync(true);
- hint('Your numbered stick is safe. Continue to moon blocks, or receive the slip here.','签号已保留。可以继续前往筊杯处，也可以直接领取签文。')
+ activity=q.from;state=q.run;updateHUD();mb5AssistSync(true);
+ if(q.from==='moon')hint('This stick was not confirmed. Return to draw a new one.','此签未获确认，请返回重新求签。');
+ else hint('Your numbered stick is safe. Continue to the moon blocks.','签号已保留，请前往筊杯处确认。')
 }
 function pawFortuneWalkTick(){
  const q=pawFortuneWalk;if(!q)return;
@@ -10496,52 +10498,48 @@ function pawFortuneWalkTick(){
  if(phase==='cancel'){pawFortuneWalk=null;return}
  if(phase==='restore'){pawFortuneRestoreWalk(q);return}
  if(phase!=='route')return;
- const station=indoorStation('moon');
+ const station=indoorStation(q.to);
  q.started=true;
  if(!indoorDestination(station[2],station[3],q.arrive,'up'))pawFortuneRestoreWalk(q)
 }
-function pawFortuneConfirm(run=state){
- if(!pawFortuneAction(run,state,activity,t,pawArcadeInputBlocked(),'confirm'))return false;
- const n=run.pawFortuneNumber;
+function pawFortuneMove(action,run=state){
+ if(!['confirm','retry'].includes(action)||!pawFortuneAction(run,state,activity,t,pawArcadeInputBlocked(),action))return false;
+ const n=run.pawFortuneNumber,from=activity,to=action==='retry'?'sticks':'moon';
  releaseWalkKeys();joystickReset();
  activity=null;state={};roomIntro();updateHUD();
- const q={run,hallState:state,started:false,arrive:null};
+ const q={run,from,to,hallState:state,started:false,arrive:null};
  q.arrive=()=>{
   if(pawFortuneWalk!==q||room!=='temple'||activity||state!==q.hallState||pawArcadeInputBlocked())return;
-  pawFortuneWalk=null;start('moon');state.pawFortuneNumber=n;
-  hint('If you wish, toss the moon blocks once. Your fortune is still yours regardless of the result.','可以掷一次筊杯确认。无论结果如何，都能领取自己的签文。');
+  pawFortuneWalk=null;start(to);
+  if(to==='moon'){
+   state.pawFortuneNumber=n;
+   hint('Toss the moon blocks. Only Sheng Bei confirms your stick.','请掷筊确认，得到圣杯才可领取签文。');
+  }else{
+   hint('Draw a new fortune stick, then confirm it with the moon blocks.','请重新摇签，拾签后再掷筊确认。');
+  }
   mb5AssistSync(true)
  };
  pawFortuneWalk=q;
  return true
 }
+function pawFortuneConfirm(run=state){return pawFortuneMove('confirm',run)}
+function pawFortuneRetry(run=state){return pawFortuneMove('retry',run)}
 const pawFortuneWalkLoopBefore=loop;
 loop=function(...args){const result=pawFortuneWalkLoopBefore(...args);pawFortuneWalkTick();return result};
 const pawFortuneAssistSpecBefore=mb5AssistSpec;
 mb5AssistSpec=function(kind,q,now){
  const next=pawFortuneNext(q,kind,now,false);
- if(next==='choice')return {key:'fortune-confirm',label:['Confirm with moon blocks','掷筊确认'],action:'fortune-confirm'};
- if(next==='receive')return {key:'fortune-receive',label:['Receive your fortune slip','领取签文'],action:'fortune-receive'};
+ if(next==='confirm')return {key:'fortune-confirm',label:['Confirm with moon blocks','掷筊确认'],action:'fortune-confirm'};
+ if(next==='receive')return {key:'fortune-receive',label:['Receive your confirmed fortune slip','领取签文'],action:'fortune-receive'};
+ if(next==='retry')return {key:'fortune-retry',label:['Draw another fortune stick','重新求签'],action:'fortune-retry'};
  return pawFortuneAssistSpecBefore(kind,q,now)
 };
 const pawFortuneAssistPerformBefore=mb5AssistPerform;
 mb5AssistPerform=function(action){
  if(action==='fortune-confirm')return pawFortuneConfirm();
  if(action==='fortune-receive')return pawFortuneReceive();
+ if(action==='fortune-retry')return pawFortuneRetry();
  return pawFortuneAssistPerformBefore(action)
-};
-const pawFortuneAssistSyncBefore=mb5AssistSync;
-mb5AssistSync=function(...args){
- const result=pawFortuneAssistSyncBefore(...args),el=$('gameControls'),run=state;
- if(!el)return result;
- const next=pawFortuneNext(run,activity,t,pawArcadeInputBlocked()),old=el.querySelector('[data-paw-fortune-skip]');
- if(el.hidden||!['choice','confirm'].includes(next)){old?.remove();return result}
- if(!old||old.pawRun!==run||old.pawLanguage!==zh){
-  old?.remove();
-  const skip=b(el,tr('Receive slip without confirmation','直接领取签文'),()=>{if(skip.isConnected&&!el.hidden)pawFortuneReceive(run)});skip.type='button';
-  skip.dataset.pawFortuneSkip='true';skip.pawRun=run;skip.pawLanguage=zh;skip.className='mb5ActivityButton'
- }
- return result
 };
 const pawFortuneMoonTossBefore=pawMoonToss;
 pawMoonToss=function(...args){
@@ -10811,7 +10809,7 @@ function pawTempleDrawMoon(){
   ellipse(bx,y+8,Math.max(3,9-m.lift*.036),2.5,'#342b2355');
   ctx.save();ctx.translate(bx,by);ctx.scale(sc,sc);templeMoon(0,0,m.angle,m.flat);ctx.restore()
  }
- if(!run.moonPending&&!(run.tossUntil>t))target(x-38,y-35,76,70,()=>{if(run===state)pawMoonToss(65,true)},'moon');
+ if(!run.moonPending&&!(run.tossUntil>t)&&(!pawFortuneSlipNumber(run.pawFortuneNumber)||!run.count))target(x-38,y-35,76,70,()=>{if(run===state)pawMoonToss(65,true)},'moon');
 }
 /* PAW_PAINTED_BELL_CONTACT_BEGIN */
 // Original isolated bronze bell and wooden striker. The centre medallion
@@ -11731,7 +11729,7 @@ function pawDrawAlcoveMoon(){
   ellipse(pt.x,g.moonTray.y+5,Math.max(3,9-m.lift*.035),2.5,'#342b2355');
   ctx.save();ctx.translate(pt.x,pt.y);ctx.scale(.30,.30);templeMoon(0,0,m.angle,m.flat);ctx.restore()
  }
- if(!run.moonPending&&!(run.tossUntil>t))target(g.moonTray.x-46,g.moonTray.y-30,92,60,()=>{if(run===state&&!pawArcadeInputBlocked())pawMoonToss(65,true)},'moon')
+ if(!run.moonPending&&!(run.tossUntil>t)&&(!pawFortuneSlipNumber(run.pawFortuneNumber)||!run.count))target(g.moonTray.x-46,g.moonTray.y-30,92,60,()=>{if(run===state&&!pawArcadeInputBlocked())pawMoonToss(65,true)},'moon')
 }
 const pawAlcoveDrawBefore=drawActivity;
 drawActivity=function(...args){
