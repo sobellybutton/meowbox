@@ -67,7 +67,9 @@ fs.mkdirSync(out,{recursive:true});
   await page.evaluate(()=>{start('tarot');state.readCards=[{i:0,rev:false}];state.readFlip=[t-2];state.readFocus=0;state.readStage='focus';state.readAt=t-1;readingFocusMeaning()});
   await page.locator('#dialogue[data-paw-tarot-conversation]').waitFor();assert(await noPage(),'Tarot opened external page');
   assert(await page.evaluate(()=>room==='tarot'&&state.readStage==='focus'&&state.readFocus===0));
-  await chatGeometry('tarot');
+  await chatGeometry('tarot',.40);
+  await page.waitForFunction(()=>state.pawTarotSeatDrawn===true,null,{timeout:12000});
+  assert(await page.evaluate(()=>{const im=pawReadingImage(pawReadingAPI(),'tarot'),p=pawReadingCoverPlate(livingBounds(),im.naturalWidth,im.naturalHeight),q=pawTarotTravellerChair(p);return q.hip.x>p.x+p.w*.8&&q.hip.y>p.y+p.h*.5&&q.hip.y<p.y+p.h*.56}),'Traveller must sit on the actual right chair');
   assert(await page.locator('#dialogue #choices').evaluate(n=>n.scrollWidth<=n.clientWidth+2),'Tarot replies must fit the screen');await page.waitForFunction(()=>readingArtwork().naturalWidth===1024&&readingArtwork().naturalHeight===2180);await shot('tarot-card-reading');
   const more=page.locator('#dialogue').getByRole('button',{name:text('Tell me more','再说说'),exact:true});if(await more.count()){await more.tap();await shot('tarot-next-thought')}
   await tapText('Back to the table','回到牌桌');await page.waitForFunction(()=>state.readStage==='cards'&&!talkOpen);
