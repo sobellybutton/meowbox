@@ -9,6 +9,7 @@ const run=new Function('assert',ext.slice(x,y)+s.slice(s.indexOf('const pawGemin
 popGuestStories.push(...pawGeminiMerge(popGuestStories,pawGeminiVisitorRows));
 const pawAmbientLines={},pawGuestWindows={},popGuestMemory={},items=[];
 let pawAmbientProfile=()=>null,popGuestMeet=()=>{},last=null,saves=0;
+const friendships=[],lifeFriend=name=>friendships.push(name);
 const popGuestRecord=g=>popGuestMemory[g.id]||null,save=()=>saves++,tr=(en)=>en,closeTalk=()=>{},addItem=(...p)=>items.push(p),popGuestSay=(g,line,opts)=>last={g,line,opts};
 `+s.slice(a,b)+`
 assert.equal(popGuestStories.length,27);
@@ -21,12 +22,13 @@ for(const g of popGuestStories){
  assert.deepEqual(pawGuestVisitLine(g,6),variants[0]);
  assert.equal(pawAmbientProfile({popGuest:g.id}).id,'guest:'+g.id);
  assert.equal(pawAmbientLines['guest:'+g.id].length,4);
- popGuestMeet(g);assert.equal(last.line,variants[0][0]+(g.source==='gemini-modules-01-03'?'':'\\n\\n'+g.prompt[0]));assert.equal(last.opts.length,3);
- last.opts[0][1]();assert.deepEqual(popGuestMemory[g.id].choices,[0]);
+ const priorFriendships=friendships.length;
+ popGuestMeet(g);assert.equal(friendships.length,priorFriendships);assert.equal(last.line,variants[0][0]+(g.source==='gemini-modules-01-03'?'':'\\n\\n'+g.prompt[0]));assert.equal(last.opts.length,3);
+ last.opts[0][1]();assert.equal(friendships.length,priorFriendships+1);assert.equal(friendships.at(-1),g.name);assert.deepEqual(popGuestMemory[g.id].choices,[0]);
  assert.equal(last.line,g.choices[0][1][0]);
- popGuestMeet(g);last.opts[1][1]();assert.deepEqual(popGuestMemory[g.id].choices,[0,1]);
- popGuestMeet(g);assert.equal(last.opts.length,0);assert.equal(last.line,variants[2][0]);
- popGuestMeet(g);last.opts[0][1]();assert.deepEqual(popGuestMemory[g.id].choices,[0,1]);
+ popGuestMeet(g);last.opts[1][1]();assert.equal(friendships.length,priorFriendships+2);assert.deepEqual(popGuestMemory[g.id].choices,[0,1]);
+ popGuestMeet(g);assert.equal(friendships.length,priorFriendships+2);assert.equal(last.opts.length,0);assert.equal(last.line,variants[2][0]);
+ popGuestMeet(g);last.opts[0][1]();assert.equal(friendships.length,priorFriendships+3);assert.deepEqual(popGuestMemory[g.id].choices,[0,1]);
  assert.equal(items.filter(p=>p[0]===g.gift[0]).length,1);
 }
 assert.equal(pawAmbientProfile({popGuest:'unknown'}),null);
