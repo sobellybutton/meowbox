@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const src=fs.readFileSync('src/compact-town-home.js','utf8');
 new vm.Script(src);
 const helper=src.split('// PAW_COMPACT_HELPERS_BEGIN')[1].split('// PAW_COMPACT_HELPERS_END')[0];
-const api=new Function(helper+';return {pageWindow,residentLabel,residentHeading,residentDialogue,residentPortraitPath,roomLampAnchor,roomLightState,cutawayPlan,cutawayFree,cutawayConnected,cutawayMove,cutawayRoute}')();
+const api=new Function(helper+';return {pageWindow,residentLabel,residentHeading,residentDialogue,residentPortraitPath,roomLampAnchor,roomLightState,cutawayPlan,cutawayFree,cutawayConnected,cutawayMove,cutawayRoute,cutawayApproach}')();
 assert.deepEqual(api.pageWindow(0,5,2),{page:0,pages:1,start:0,end:0});
 assert.deepEqual(api.pageWindow(5,9,2),{page:2,pages:3,start:4,end:5});
 assert.deepEqual(api.pageWindow(5,-1,2),{page:0,pages:3,start:0,end:2});
@@ -45,6 +45,14 @@ for(const room of ['starter','side','studio']){
  assert.deepEqual(api.cutawayPlan(layout,room,source,plan),plan);
  assert.equal(api.cutawayMove(layout,room,plan,'lamp',{u:99,v:99},free[0]),null);
  assert.equal(api.cutawayMove(layout,room,plan,'missing',free[0],free[0]),null);
+ for(const item of plan){
+  const approach=api.cutawayApproach(layout,room,plan,item,free[0]);
+  if(approach)assert(api.cutawayRoute(layout,room,plan,free[0],approach)!==null);
+ }
+ const lamp=plan.find(i=>i.key==='lamp');
+ const turned=api.cutawayMove(layout,room,plan,'lamp',lamp,free[0],(lamp.turn+1)%4);
+ assert(turned&&turned.find(i=>i.key==='lamp').turn===(lamp.turn+1)%4);
+ assert(api.cutawayConnected(layout,room,turned));
  assert.equal(api.cutawayMove(layout,room,plan,'lamp',free[0],free[0]),null);
 }
 assert.equal(api.cutawayPlan(layout,'starter',[{id:'unknown'}]),null);
