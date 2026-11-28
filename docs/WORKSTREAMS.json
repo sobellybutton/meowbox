@@ -851,7 +851,10 @@
         "00ef9c58: finite rideSeconds supplied to compositor draw and re-read each frame; 3.6s default for district rides only. Exact committed runtime parsed, 20 mocked mount/duration/late dataset/cleanup assertions passed in both orientations and modes. Sea Breeze Island caption corrected. New live deployment and visual acceptance pending.",
         "Owner 28 Nov clarified all mobile phones, not iPhone only. 8bacfb07 + 77c7374a + 37cfaf57: added independent nine-profile railway CI across Chromium/WebKit/Firefox (compact, tall, large, Samsung-sized Android, iOS and tablet), actual touch station loop, rotate, reduced-motion, skip, screenshots, build/browser/DPR evidence. Script syntax validated; CI results and physical Android/iOS branded browser/hardware checks not yet verified. Full project-wide mobile acceptance standard updated."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-rail-rotate-1316",
+        "until": 1795845400000
+      },
       "blocker": "Verify new live braking and alpha correction, nine-profile CI results, actual screenshot review and physical iOS/Android mobile browsers (Safari, Chrome, Samsung Internet, Firefox) across representative phone sizes, rotation, safe areas, cold loads. Browser simulation is not physical-device acceptance."
     },
     {
