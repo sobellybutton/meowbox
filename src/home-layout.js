@@ -103,14 +103,18 @@
   const size=source.naturalWidth||source.width,height=source.naturalHeight||source.height;
   if(!Number.isInteger(size)||size<1||size!==height||size>2048)return null;
   const out=makeCanvas(spec.width,spec.height),g=out.getContext('2d');if(!g)return null;
-  const atlas=makeCanvas(size*6,size*4),ag=atlas.getContext('2d');if(!ag)return null;
-  for(let y=0;y<4;y++)for(let x=0;x<6;x++){
-   ag.save();ag.translate((x+(x%2))*size,(y+(y%2))*size);ag.scale(x%2?-1:1,y%2?-1:1);ag.drawImage(source,0,0,size,size);ag.restore()
+  // The wall samples only 2.5 by 1.875 tiles; the floor samples at
+  // most five across and 2.7 deep. Avoid allocating unused mirror tiles.
+  // Bound oversized future imports to the output's practical resolution.
+  const tile=Math.max(4,Math.min(512,size)),cols=kind==='wall'?3:6,rows=kind==='wall'?2:3;
+  const atlas=makeCanvas(tile*cols,tile*rows),ag=atlas.getContext('2d');if(!ag)return null;
+  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+   ag.save();ag.translate((x+(x%2))*tile,(y+(y%2))*tile);ag.scale(x%2?-1:1,y%2?-1:1);ag.drawImage(source,0,0,tile,tile);ag.restore()
   }
-  if(kind==='wall')g.drawImage(atlas,0,0,size*2.5,size*1.875,0,0,spec.width,spec.height);
+  if(kind==='wall')g.drawImage(atlas,0,0,tile*2.5,tile*1.875,0,0,spec.width,spec.height);
   else for(let y=0;y<spec.height;y++){
    const p=floorSample((y+.5)/spec.height);
-   g.drawImage(atlas,p.left*size,p.v*size,p.span*size,1,0,y,spec.width,1)
+   g.drawImage(atlas,p.left*tile,p.v*tile,p.span*tile,1,0,y,spec.width,1)
   }
   return out
  }
