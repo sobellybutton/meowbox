@@ -56,7 +56,7 @@ console.log('Painted room plaque clearance regression passed');
  const a=ext.indexOf('function meowPlaceText('),b=ext.indexOf('let meowTextFrameRects=',a);
  const c=ext.indexOf('function pawNearbyDoorPlaque('),d=ext.indexOf('let lastDoorLayoutAt=',c);
  assert.ok(a>=0&&b>a&&c>=0&&d>c);
- const api=new Function('const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));'+ext.slice(a,b)+ext.slice(c,d)+';return {meowPlaceText,pawNearbyDoorPlaque}')();
+ const api=new Function('const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));const speechOverlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;'+ext.slice(a,b)+ext.slice(c,d)+';return {meowPlaceText,pawNearbyDoorPlaque}')();
  const bounds={left:6,right:354,top:112,bottom:510},blocked=[{left:0,right:360,top:112,bottom:202}];
  assert.equal(api.meowPlaceText(180,160,110,44,bounds,blocked,57.6),null);
  const q=api.pawNearbyDoorPlaque(180,160,110,44,bounds,blocked,true,360);
@@ -64,4 +64,21 @@ console.log('Painted room plaque clearance regression passed');
  assert.equal(api.pawNearbyDoorPlaque(180,160,110,44,bounds,blocked,false,360),null);
  assert.equal(api.pawNearbyDoorPlaque(180,160,110,44,bounds,[{left:0,right:360,top:0,bottom:640}],true,360),null);
  console.log('Nearby doorway plaque clearance: pass');
+}
+
+// Roof anchor can be clipped while the player stands on the final landing.
+{
+ const ext=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+ const a=ext.indexOf('function meowPlaceText('),b=ext.indexOf('let meowTextFrameRects=',a),c=ext.indexOf('function pawNearbyDoorPlaque('),d=ext.indexOf('let lastDoorLayoutAt=',c);
+ const place=new Function('const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));const speechOverlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;'+ext.slice(a,b)+ext.slice(c,d)+';return pawNearbyDoorPlaque')();
+ for(const w of [320,360,390,430]){
+  const bounds={left:6,right:w-6,top:112,bottom:510},blocked=[{left:0,right:w,top:0,bottom:202},{left:w*.54,right:w*.84,top:202,bottom:295}];
+  for(const y of [100,115,125,140]){
+   const q=place(w*.74,y,110,44,bounds,blocked,true,w,[w*.73,190]);
+   assert.ok(q&&q.rect.top>=202&&q.rect.bottom<=510);
+   assert.ok(blocked.every(v=>q.rect.right<=v.left||q.rect.left>=v.right||q.rect.top>=v.bottom||q.rect.bottom<=v.top));
+  }
+  assert.equal(place(w*.74,125,110,44,bounds,[{left:0,right:w,top:0,bottom:640}],true,w,[w*.73,190]),null);
+ }
+ console.log('Landing-local doorway placement passed');
 }
