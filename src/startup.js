@@ -11672,9 +11672,10 @@ drawActivity=function(...args){
 function pawAlcoveGeometry(p=pawWaterPlate){
  const pt=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
  return {tube:pt(.397,.473),tubeGrip:pt(.411,.499),tubeTop:pt(.397,.426),
-  stickTray:pt(.523,.509),stickFoot:pt(.41,.65),stickPickFoot:pt(.51,.65),
-  moonTray:pt(.743,.508),moonFoot:pt(.707,.667),moonHand:pt(.70,.54)}
+  stickTray:pt(.523,.509),stickFoot:pt(.41,.625),stickPickFoot:pt(.51,.625),
+  moonTray:pt(.743,.508),moonFoot:pt(.707,.64),moonHand:pt(.70,.54)}
 }
+function pawAlcoveActorScale(){return 1.92}
 function pawAlcoveStickPoint(g,pose){
  const f=Math.max(0,Math.min(1,pose.fall)),pick=pose.picked?Math.max(0,Math.min(1,(pose.pick-.45)/.55)):0;
  const x=g.tubeTop.x+(g.stickTray.x-g.tubeTop.x)*f;
@@ -11711,11 +11712,13 @@ function pawDrawAlcoveSticks(){
  const run=state,g=pawAlcoveGeometry(),pose=pawTempleStickPose(run,t),held=drag?.id==='sticks';
  pawAlcoveTubeShake(held||pose.shake);
  const move=pose.picked?poseEase(Math.min(1,pose.pick/.45)):0,foot=pawWaterMix(g.stickFoot,g.stickPickFoot,move);
- backHuman(foot.x,foot.y,avatar??0,move>0&&move<1,'up',1.44);
- if(!pose.picked||pose.pick<.85){
-  const shoulder={x:foot.x+8,y:foot.y-79},hand=!pose.picked?g.tubeGrip:pawWaterMix(g.stickTray,{x:foot.x+14,y:foot.y-64},poseEase(Math.max(0,(pose.pick-.45)/.55)));
-  pawIncenseArm(shoulder,hand,1.05,false)
+ const sc=pawAlcoveActorScale();
+ // The whole actor is proportioned to the counter. Only expose the reaching hand during contact.
+ if((held||pose.shake||pose.picked&&pose.pick<.85)&&(!pose.picked||pose.pick<.85)){
+  const shoulder={x:foot.x+8,y:foot.y-63*sc},hand=!pose.picked?g.tubeGrip:pawWaterMix(g.stickTray,{x:foot.x+14,y:foot.y-64},poseEase(Math.max(0,(pose.pick-.45)/.55)));
+  if(Math.hypot(hand.x-shoulder.x,hand.y-shoulder.y)<=38) pawIncenseArm(shoulder,hand,1.12,false)
  }
+ backHuman(foot.x,foot.y,avatar??0,move>0&&move<1,'up',sc);
  if(pose.show){
   const pt=pawAlcoveStickPoint(g,pose);ctx.save();try{ctx.translate(pt.x,pt.y);ctx.rotate(pt.angle);
    round(-2.8,-17,5.6,34,1,'#d7b47c','#9c7447');line(-1,-15,-1,15,'#f1dba6',.7);
@@ -11727,8 +11730,9 @@ function pawDrawAlcoveSticks(){
 }
 function pawDrawAlcoveMoon(){
  const run=state,g=pawAlcoveGeometry(),airborne=run.tossUntil>t,f=airborne?Math.max(0,Math.min(1,1-(run.tossUntil-t)/(run.moonDuration||.55))):1;
- backHuman(g.moonFoot.x,g.moonFoot.y,avatar??0,false,'up',1.44);
- if(airborne)pawIncenseArm({x:g.moonFoot.x-8,y:g.moonFoot.y-79},g.moonHand,1.05,false);
+ const sc=pawAlcoveActorScale(),shoulder={x:g.moonFoot.x-8,y:g.moonFoot.y-63*sc};
+ if(airborne&&Math.hypot(g.moonHand.x-shoulder.x,g.moonHand.y-shoulder.y)<=38)pawIncenseArm(shoulder,g.moonHand,1.12,false);
+ backHuman(g.moonFoot.x,g.moonFoot.y,avatar??0,false,'up',sc);
  for(let i=0;i<2;i++){
   const flat=pawMoonFlat(run.result,i,run.count),m=pawMoonMotion(f,i,flat,run.moonHeight||95),pt=pawAlcoveMoonPoint(g,m);
   ellipse(pt.x,g.moonTray.y+5,Math.max(3,9-m.lift*.035),2.5,'#342b2355');
