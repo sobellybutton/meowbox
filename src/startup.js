@@ -12932,4 +12932,76 @@ openStressChoices=function(){
  groups(0)
 };
 
+/* PAW_LOCAL_HOME_TV_BEGIN */
+function pawHomeTVChannel(count,index,delta){
+ if(!Number.isInteger(count)||count<1||!Number.isInteger(index)||!Number.isInteger(delta))return 0;
+ return ((index+delta)%count+count)%count
+}
+function pawWheelReturnKind(wallet,today,previous){
+ if(wallet)return 'wallet';if(today)return 'today';return previous==='wallet'?'wallet':'today'
+}
+/* PAW_LOCAL_HOME_TV_END */
+const pawHomeTVChannels=[
+ ['Weather report: mild chance of ignoring emails.','天气预报：今天有小概率不回邮件。'],
+ ['Tonight’s programme: cats doing absolutely nothing.','今晚节目：小猫什么都没干。'],
+ ['Breaking news: the weekend has not been cancelled.','突发新闻：周末尚未被取消。']
+];
+let pawHomeTVIndex=0;
+const pawLegacyTVPage=komorebiTVPage;
+komorebiTVPage=function(){
+ const q=$('content'),stage=q.querySelector('.hideoutScene'),tv=stage?.querySelector('.hideoutPlaced[data-furniture-id="retroTV"]');
+ if(!stage||!tv||hideoutEditing||$('page').style.display!=='block')return;
+ const existing=stage.querySelector('.pawHomeTVCloseup');if(existing){existing.querySelector('button')?.focus({preventScroll:true});return}
+ pawHomeStop();
+ const pane=element('section','',stage,'pawHomeTVCloseup');pane.setAttribute('role','group');pane.setAttribute('aria-label',tr('Little town television','小镇电视台'));
+ const set=element('div','',pane,'pawHomeTVSet'),art=element('img','',set);art.alt='';art.src=tv.currentSrc||tv.src||art9.retroTV;
+ const screen=element('div','',set,'pawHomeTVScreen');screen.setAttribute('role','status');screen.setAttribute('aria-live','polite');
+ function tune(){screen.textContent=tr(...pawHomeTVChannels[pawHomeTVIndex])}
+ function close(){pane.remove();if(tv.isConnected)tv.focus({preventScroll:true})}
+ const controls=element('div','',pane,'pawHomeTVControls');
+ b(controls,tr('Change channel','换台'),()=>{pawHomeTVIndex=pawHomeTVChannel(pawHomeTVChannels.length,pawHomeTVIndex,1);tune();sound(380)});
+ b(controls,tr('Switch off','关电视'),close);
+ pane.addEventListener('click',e=>e.stopPropagation());
+ pane.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close()}});
+ tune();controls.firstElementChild.focus({preventScroll:true})
+};
+const pawHomeTVRenderBefore=hideoutPage;
+hideoutPage=function(...args){
+ const result=pawHomeTVRenderBefore(...args);
+ if(hideoutEditing)return result;
+ const stage=$('content').querySelector('.hideoutScene');
+ for(const tv of stage?.querySelectorAll('.hideoutPlaced[data-furniture-id="retroTV"]')||[]){
+  tv.tabIndex=0;tv.setAttribute('role','button');tv.setAttribute('aria-label',tr('Watch television','看电视'));
+  tv.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();tv.click()}}
+ }
+ return result
+};
+const pawHomeTVStyle=document.createElement('style');pawHomeTVStyle.textContent=`
+#content .hideoutScene .pawHomeTVCloseup{position:absolute;z-index:500;inset:auto 4% 4%;max-height:92%;overflow:auto;box-sizing:border-box;padding:8px;background:#eadbc0 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 180px repeat;border:1px solid #a99573;border-radius:9px;box-shadow:0 3px 12px #34292170;display:grid;justify-items:center;gap:5px;color:#534a37}
+#content .pawHomeTVSet{position:relative;width:min(220px,90%);aspect-ratio:1.35;display:grid;place-items:center;background:#544d40;border:5px solid #846547;border-radius:15px;box-shadow:inset 0 0 0 2px #c5a579}
+#content .pawHomeTVSet img{position:absolute;width:100%;height:100%;object-fit:contain;opacity:.18;pointer-events:none}
+#content .pawHomeTVScreen{position:relative;margin:8px;padding:10px 12px;border:2px solid #7c8d7b;border-radius:14px;background:#354b43;color:#fff1cb;font:600 clamp(12px,3.2vw,15px)/1.45 Georgia,"Songti SC",serif;text-align:center;text-shadow:0 1px #15251f}
+#content .pawHomeTVControls{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+#content .pawHomeTVControls button{min-height:44px;padding:6px 10px;font-size:13px}
+@media(max-height:500px) and (orientation:landscape){#content .pawHomeTVCloseup{grid-template-columns:1fr 1fr}#content .pawHomeTVSet{width:min(170px,100%)}}
+`;document.head.append(pawHomeTVStyle);
+// The free wheel is an intentional utility, opened from Today or the coin
+// purse. The animated wheel and daily reward transaction stay unchanged.
+const pawWheelPageBefore=dailyWheelPage;
+let pawWheelParent=null;
+dailyWheelPage=function(...args){
+ const q=$('content'),pageEl=$('page'),isWheel=!!q.querySelector('.dailyWheelStage'),wallet=!!q.querySelector('.townPawWheelLink'),today=!!q.querySelector('.journalCheckin');
+ if(!isWheel||!pawWheelParent)pawWheelParent={kind:pawWheelReturnKind(wallet,today,pawWheelParent?.kind),scroll:pageEl.scrollTop};
+ const parent=pawWheelParent,result=pawWheelPageBefore(...args);
+ const back=()=>{
+  if(!q.querySelector('.dailyWheelStage'))return;
+  pawWheelParent=null;(parent.kind==='wallet'?pawWalletPage:todayHub)();
+  requestAnimationFrame(()=>{if(!q.querySelector('.dailyWheelStage'))pageEl.scrollTop=parent.scroll})
+ };
+ mbHomePageBack(parent.kind==='wallet'?tr('‹ Coin purse','‹ 返回钱包'):tr('‹ Today','‹ 返回今日'),back);
+ for(const btn of q.querySelectorAll('button'))if(btn.textContent===tr('Back to Today','返回今日')){btn.textContent=parent.kind==='wallet'?tr('Back to coin purse','返回钱包'):tr('Back to Today','返回今日');btn.onclick=back}
+ const sign=q.querySelector('.mbFestivalSign small');if(sign)sign.textContent=tr('LANTERN LANE · DAILY FESTIVAL','灯火小街 · 每日小摊');
+ journalLanguage(dailyWheelPage);return result
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
