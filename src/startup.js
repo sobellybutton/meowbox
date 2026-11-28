@@ -13517,6 +13517,7 @@ roomIntro=function(...args){
 const pawYueDeskHubBefore=yueReadingHub;
 function pawYueDeskChoose(kind){
  if(room!=='destiny')return;
+ if(kind==='stars')return starSignPage();
  function open(subject){if(room!=='destiny')return;yueSubject=subject;closeTalk();if(kind==='chart')destinyPage();else if(kind==='year')yueZodiacAlmanac();else starSignPage()}
  say(tr('Master Yue','月师傅'),tr('Is this reading for you, or someone else?','这次是想看看自己，还是替别人看看？'),[[tr('For me','看自己'),()=>open('self')],[tr('For someone else','帮别人看看'),()=>open('other')],[tr('Back','返回'),()=>yueReadingHub()]])
 }
@@ -13656,8 +13657,55 @@ const pawYueDeskChartBefore=destinyPage;
 destinyPage=function(...args){const result=pawYueDeskChartBefore(...args);pawYueDeskPresent('chart');return result};
 const pawYueDeskYearBefore=yueZodiacAlmanac;
 yueZodiacAlmanac=function(...args){const result=pawYueDeskYearBefore(...args);pawYueDeskPresent('year');return result};
+/* PAW_YUE_STAR_DIALOGUE_BEGIN */
+const pawYueStarGroups=[[9,10,11],[0,1,2],[3,4,5],[6,7,8]];
+function pawYueStarGroup(index){
+ return Number.isInteger(index)&&index>=0&&index<pawYueStarGroups.length?pawYueStarGroups[index].slice():null
+}
+function pawYueStarDialogue(selected=null){
+ if(room!=='destiny'||activity)return false;
+ const pane=$('page');pane.style.display='none';
+ pawYueChartObserver?.disconnect();pawYueChartObserver=null;delete pane.dataset.pawYueDesk;delete pane.dataset.pawYueExpanded;
+ closeTalk();
+ let revision=0;
+ const speak=(words,options)=>{
+  const current=++revision;
+  say(tr('Master Yue','月师傅'),words,options.map(([label,action])=>[label,()=>{if(room==='destiny'&&!activity&&talkOpen&&revision===current&&pane.style.display!=='block')action()}]))
+ };
+ const finish=()=>{revision++;closeTalk();hint('Enjoy your tea. You can ask again whenever you like.','慢慢喝茶，想问什么随时来。')};
+ const hub=()=>{revision++;yueReadingHub()};
+ function groups(){
+  const options=pawYueStarGroups.map((_,g)=>{
+   const ids=pawYueStarGroup(g),first=signNotebook[ids[0]],last=signNotebook[ids.at(-1)];
+   return [tr(...first.name)+' / '+tr(...signNotebook[ids[1]].name)+' / '+tr(...last.name),()=>choose(g)]
+  });
+  options.push([tr('Ask something else','问点别的'),hub]);
+  speak(tr('Which sign shall we look at? No birth details needed.','想看看哪个星座？不用填生辰资料。'),options)
+ }
+ function choose(group){
+  const ids=pawYueStarGroup(group);if(!ids)return;
+  const options=ids.map(i=>[tr(...signNotebook[i].name)+' · '+signNotebook[i].dates,()=>result(i)]);
+  options.push([tr('Other signs','其他星座'),groups]);
+  speak(tr('Pick the sign you know. The dates are only approximate.','选你熟悉的星座就好，日期仅供参考。'),options)
+ }
+ function result(index){
+  if(!Number.isInteger(index)||!signNotebook[index])return groups();
+  const r=signReading(index);
+  speak(tr(...r.sign.name)+' · '+tr(...r.sign.theme)+'\n\n'+tr(...r.line)+'\n\n'+tr('A little reflection for the week, not a prediction.','本周给自己的一点小提醒，并非预测。'),[
+   [tr('Read another sign','看看其他星座'),groups],
+   [tr('Ask something else','问点别的'),hub],
+   [tr('Thanks, Yue','谢谢月师傅'),finish]
+  ])
+ }
+ if(Number.isInteger(selected)&&signNotebook[selected])result(selected);else groups();
+ return true
+}
+/* PAW_YUE_STAR_DIALOGUE_END */
 const pawYueDeskStarsBefore=starSignPage;
-starSignPage=function(...args){const result=pawYueDeskStarsBefore(...args);pawYueDeskPresent('stars');return result};
+starSignPage=function(selected=null,...args){
+ if(room==='destiny'&&!activity)return pawYueStarDialogue(selected);
+ return pawYueDeskStarsBefore(selected,...args)
+};
 const pawYueDeskCSS=document.createElement('style');
 pawYueDeskCSS.textContent=`
 #game #page[data-paw-yue-desk="true"]{position:absolute!important;inset:auto 0 0!important;height:auto!important;max-height:64dvh!important;min-height:0!important;max-width:none!important;width:100%!important;overflow:auto!important;overscroll-behavior:contain;padding:8px max(12px,env(safe-area-inset-left,0px)) max(12px,env(safe-area-inset-bottom,0px))!important;background:#f0e4cdeb url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important;border-radius:10px 10px 0 0;border-top:2px solid #b69a70;box-shadow:0 -5px 24px #251e1950}
