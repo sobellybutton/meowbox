@@ -20,17 +20,13 @@ fs.mkdirSync('test-results/tarot-chair',{recursive:true});
  await shot('arrival');
  await wait(()=>c.dataset.pawTarotSeat==='seated'&&pawTarotChairAt(indoor.x,indoor.y,pawReadingPlate)&&!indoor.route.length);
  await shot('seated');assert(await page.evaluate(()=>pawRoomImageReady(pawTarotChairImage(avatar??0))));
- // Actual directory control if table plaque isn't reachable on this viewport.
- const guide=page.locator('#pawRoomGuideToggle');await tap(guide);
- await tap(page.locator('#roomStationGuide [data-station="tarot"]'));
- await wait(()=>room==='tarot'&&(['tarot','love'].includes(activity)||talkOpen));
- await shot('consultation');
- if(await page.evaluate(()=>talkOpen))await page.evaluate(()=>closeTalk());
- if(await page.evaluate(()=>!!activity)){
-  await wait(()=>c.dataset.pawTarotSeat==='seated');
-  await shot('reading-seat');
-  await tap(page.locator('#back'));await wait(()=>room==='tarot'&&!activity);
- }
+ // The fortune teller greets the seated traveller automatically. No hidden guide.
+ await wait(()=>room==='tarot'&&!activity&&talkOpen);
+ const choice=page.locator('#choices').getByRole('button',{name:cn?'今日指引 · 一张牌':'Daily guidance · 1 card',exact:true});
+ await choice.waitFor({state:'visible',timeout:10000});await shot('consultation');
+ await tap(choice);await wait(()=>room==='tarot'&&activity==='tarot');
+ await wait(()=>c.dataset.pawTarotSeat==='seated');await shot('reading-seat');
+ await tap(page.locator('#back'));await wait(()=>room==='tarot'&&!activity);
  await tap(page.locator('#back'));await wait(()=>!room&&!activity&&!transitioning);
  await shot('departed');assert.deepEqual(errors,[]);console.log('PASS Tarot indoor approach, rendered seat, consultation and return');
  }catch(e){await shot('failure').catch(()=>{});throw e}finally{await browser.close()}
