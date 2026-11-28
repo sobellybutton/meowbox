@@ -595,3 +595,66 @@ pawTeaBoardStyle.textContent=`
 #game #dialogue[data-paw-tea-board] button{min-height:44px;white-space:normal;overflow-wrap:anywhere;color:#524332;background:#f6e9ce;border:1px solid #baa17b}
 #game #dialogue[data-paw-tea-board] button:focus-visible{outline:2px solid #46634e;outline-offset:-3px}
 `;document.head.append(pawTeaBoardStyle);
+
+
+/* PAW_THREE_REMATCH_BEGIN */
+function pawThreeTurnCurrent(origin,live,blocked){
+ return !blocked&&!!origin&&origin===live&&!live.result&&!live.thinking
+}
+function pawThreeThinkClock(g,now,blocked){
+ if(!g||!g.thinking||g.result||!Number.isFinite(now)||!Number.isFinite(g.thinkAt)){if(g)delete g.pawThinkClock;return false}
+ const prior=g.pawThinkClock;
+ if(prior&&prior.due===g.thinkAt&&now>=prior.now){
+  const gap=now-prior.now,step=blocked||prior.blocked?0:Math.min(.05,gap);
+  g.thinkAt+=gap-step
+ }
+ g.pawThinkClock={now,due:g.thinkAt,blocked:!!blocked};return true
+}
+function pawThreeRematchStarter(previous,opponent){
+ return previous?.result&&previous.opponent===opponent&&previous.pawStarter!==2?2:1
+}
+/* PAW_THREE_REMATCH_END */
+const pawThreePlayPrior=threePlay;
+threePlay=function(i){
+ if(!threeActive()||!pawThreeTurnCurrent(state.threeGame,state.threeGame,pawArcadeInputBlocked()))return;
+ return pawThreePlayPrior(i)
+};
+const pawThreeAdvancePrior=threeAdvance;
+threeAdvance=function(g){
+ if(!threeActive()||state.threeGame!==g)return;
+ const blocked=pawArcadeInputBlocked();pawThreeThinkClock(g,t,blocked);
+ if(blocked)return;
+ return pawThreeAdvancePrior(g)
+};
+function pawThreeRematch(g,opponent){
+ if(!threeActive()||state.threeGame!==g||pawArcadeInputBlocked())return;
+ const starter=pawThreeRematchStarter(g,opponent),next=threeNew(opponent);
+ next.pawStarter=starter;state.threeGame=next;
+ if(starter===2){next.thinking=true;next.thinkAt=t+.55;threeSay(next,'turn')}
+ refreshControls()
+}
+const pawThreeControlsPrior=refreshControls;
+refreshControls=function(...args){
+ const value=pawThreeControlsPrior(...args);
+ if(!threeActive())return value;
+ const g=state.threeGame,el=$('gameControls'),buttons=el.querySelectorAll('button');
+ if(buttons.length!==2)return value;
+ const [opponent,restart]=buttons;
+ opponent.onclick=()=>{if(!opponent.disabled&&opponent.isConnected)pawThreeRematch(g,g.opponent==='cat'?'auntie':'cat')};
+ restart.onclick=()=>{
+  if(!restart.isConnected||!threeActive()||state.threeGame!==g||pawArcadeInputBlocked())return;
+  if(!g.result&&g.board.some(Boolean)&&!g.pawConfirmRestart){
+   g.pawConfirmRestart=true;restart.textContent=tr('Confirm new round','确认重新开局');
+   return
+  }
+  pawThreeRematch(g,g.opponent)
+ };
+ const status=el.querySelector('[role=status]');
+ if(status&&!g.board.some(Boolean)&&g.thinking)status.textContent=tr('Opponent goes first','这局对手先下');
+ return value
+};
+const pawThreePlayConfirmationPrior=threePlay;
+threePlay=function(i){
+ if(threeActive()&&pawThreeTurnCurrent(state.threeGame,state.threeGame,pawArcadeInputBlocked()))delete state.threeGame.pawConfirmRestart;
+ return pawThreePlayConfirmationPrior(i)
+};
