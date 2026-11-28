@@ -10,9 +10,14 @@ const jobs=[
  ['tablet-chromium',chromium,{viewport:{width:768,height:1024},hasTouch:true,deviceScaleFactor:1}],
  ['desktop-chromium',chromium,{viewport:{width:1440,height:900},deviceScaleFactor:1}]
 ];
+// Local execution defaults to the full sweep. CI may shard by an exact
+// device identifier; a typo must fail rather than silently test nothing.
+const requestedDevice=process.env.MB_AUDIT_DEVICE||'';
+const selectedJobs=requestedDevice?jobs.filter(([device])=>device===requestedDevice):jobs;
+if(!selectedJobs.length)throw Error('Unknown visual audit device: '+requestedDevice);
 const results=[],failures=[];
 (async()=>{
- for(const [device,engine,options] of jobs){
+ for(const [device,engine,options] of selectedJobs){
   const browser=await engine.launch();
   try{for(const language of ['en','zh']){
    const page=await browser.newPage(options),prefix=device+'-'+language;
