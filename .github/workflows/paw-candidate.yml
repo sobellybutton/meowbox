@@ -53,6 +53,7 @@ jobs:
           node scripts/single-scene-activity-surface-test.cjs
           node scripts/discovery-single-leaf-test.cjs
           node scripts/home-layout-test.cjs
+          node scripts/compact-town-home-test.cjs
           node scripts/painted-lobby-runtime-test.cjs
           node scripts/indoor-social-test.cjs
           node scripts/tarot-fan-test.cjs

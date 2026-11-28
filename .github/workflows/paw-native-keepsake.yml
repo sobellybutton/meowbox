@@ -1,0 +1,51 @@
+name: Pawradise native keepsake journey
+on:
+  push:
+    branches: [fix/discovery-native-keepsake-return-20261128, fix/native-keepsake-share-delivery-20261128, integration/multibatch-player-continuity-20261128]
+    paths:
+      - 'src/painted-lobby-runtime.js'
+      - 'scripts/native-discovery-share-test.cjs'
+      - '.github/workflows/paw-native-keepsake.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: paw-native-keepsake-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  native-share:
+    if: github.ref == 'refs/heads/fix/discovery-native-keepsake-return-20261128' || github.ref == 'refs/heads/fix/native-keepsake-share-delivery-20261128' || github.ref == 'refs/heads/integration/multibatch-player-continuity-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: git rev-parse HEAD
+      - run: node scripts/build.cjs
+      - run: node scripts/tarot-host-continuity-test.cjs
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Render and exercise native result sharing
+        env:
+          MEOW_BROWSER: ${{ matrix.engine }}
+        run: |
+          python3 -m http.server 8768 >/tmp/paw-native-keepsake.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8768/index.html -o /dev/null && break; sleep 1; done
+          node scripts/native-discovery-share-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-keepsake-${{ matrix.engine }}-${{ github.run_id }}
+          path: |
+            test-results/native-keepsakes-*/
+            /tmp/paw-native-keepsake.log
+          if-no-files-found: warn
