@@ -258,15 +258,23 @@ html #game>#dialogue.characterSpeech #choices button:focus-visible{outline:2px s
 /* PAW_PAINTED_HUD_ASSETS_BEGIN */
 /* One visual per control. Let the watercolor map breathe; use a small warm
    backing for contrast rather than a separate ornamental frame per button. */
-html #game #profileHud,html #game #hudStats #hudCoins,html #game #small button.townSettingsToggle[aria-label]{
+html #game #profileHud,html #game #small button.townSettingsToggle[aria-label]{
  box-sizing:border-box!important;border:0!important;box-shadow:none!important;
- background:#f5ead5ed!important;color:#514936!important;border-radius:12px!important
+ background:#f5ead5d9!important;color:#514936!important;border-radius:9px!important
 }
-html #game #profileHud{height:44px!important;min-height:44px!important;min-width:44px!important;gap:6px!important;padding:3px 8px 3px 3px!important}
+html #game #profileHud{height:44px!important;min-height:44px!important;min-width:44px!important;gap:4px!important;padding:2px 6px 2px 3px!important;max-width:min(54%,190px)!important}
 html #game #profileHud>.pawPaintedPortrait{position:relative!important;display:block!important;flex:0 0 36px!important;width:36px!important;height:36px!important;min-width:36px!important;isolation:isolate;pointer-events:none}
 html #game #profileHud>.pawPaintedPortrait>#hudPortrait{position:absolute!important;inset:0!important;width:36px!important;height:36px!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;object-fit:contain!important;object-position:center!important;background:transparent!important;box-shadow:none!important}
 html #game #profileHud>.pawPaintedPortrait:after{content:none!important;display:none!important}
-html #game #hudStats #hudCoins{min-height:34px!important;padding:4px 7px!important;gap:4px!important;font-variant-numeric:tabular-nums}
+/* Reuse the original live coin node and painted asset. Level is still
+   maintained by the progression engine and available in the profile. */
+html #game #hudStats{display:none!important}
+html #game #profileHud #hudProgress{display:none!important}
+html #game #profileHud>.pawMapIdentity{display:flex!important;flex-direction:column;justify-content:center;align-items:flex-start;gap:0;min-width:0;overflow:hidden}
+html #game #profileHud #hudName{font-size:12px!important;line-height:15px!important;font-weight:600!important;max-width:100%!important;color:#514936!important}
+html #game #profileHud #hudCoins{display:inline-flex!important;align-items:center;gap:3px!important;padding:0!important;margin:0!important;min-height:15px!important;max-width:100%;font-size:11px!important;line-height:15px!important;font-weight:500!important;font-variant-numeric:tabular-nums;color:#78613f!important;background:none!important;border:0!important;box-shadow:none!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+html #game #profileHud #hudCoins.pawHudCoinPainted::before{content:"";display:block;width:14px;height:14px;flex:0 0 14px;background:url('assets/visual/painted/interface/paw-coin-hud.webp') center/contain no-repeat}
+html #game #hud{justify-content:flex-start!important}
 html #game #small button.townSettingsToggle[aria-label]{
  position:relative!important;min-width:44px!important;min-height:44px!important;width:44px!important;height:44px!important;
  display:grid!important;place-items:center!important;padding:0!important
@@ -292,7 +300,8 @@ html #game #profileHud:focus-visible,html #game #small button.townSettingsToggle
  html #game #small button.townSettingsToggle[aria-label]>svg{width:32px!important;height:32px!important}
 }
 @media(forced-colors:active){
- html #game #profileHud,html #game #hudStats #hudCoins,html #game #small button.townSettingsToggle[aria-label],html #game #dock{background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important}
+ html #game #profileHud,html #game #small button.townSettingsToggle[aria-label],html #game #dock{background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important}
+ html #game #profileHud #hudName,html #game #profileHud #hudCoins{color:CanvasText!important}
  html #game #dock>button.pawDockSelected:not([hidden]),html #game #small button.townSettingsToggle[aria-expanded=true]{background:Highlight!important;color:HighlightText!important}
  html #game #profileHud:focus-visible,html #game #small button.townSettingsToggle:focus-visible,html #game #dock>button:focus-visible{outline-color:Highlight!important}
 }
@@ -383,4 +392,4 @@ html #game #small #townSettingsPanel button:focus-visible{outline:2px solid #395
  #game #toast:not(.residentArrival){max-width:min(70vw,480px);font-size:clamp(12px,3.8vh,16px);padding:6px 10px;overflow-wrap:anywhere}
 }
 /* PAW_GAMEPLAY_FEEDBACK_END */
-</style></head><body><main id="game"><canvas id="c" aria-label="Pawradise interactive world"></canvas><div id="worldSigns" hidden></div><button id="lunarBtn" hidden></button><div id="hud"><button id="profileHud" aria-label="Player profile"><span class="pawPaintedPortrait"><img id="hudPortrait" alt=""></span><span><strong id="hudName"></strong><small id="hudProgress"></small></span></button><div id="location">Pawradise</div><div id="hudStats"><span id="hudCoins"></span><span id="hudStamps"></span></div><button id="travel">Travel</button></div><button id="back" hidden>Step Back</button><div id="small"><button id="luck">Daily Luck</button><div><button id="language">中文</button> <button id="mute">♪</button></div></div><div id="hint" role="status" aria-live="polite" aria-atomic="true"></div><nav id="dock" aria-label="Game navigation"><button id="dockRoom"><span class="dockIcon">⌂</span><span></span></button><button id="dockPassport"><span class="dockIcon">▤</span><span></span></button><button id="dockValley"><span class="dockIcon">♧</span><span></span></button><button id="dockTravel"><span class="dockIcon">✈</span><span></span></button><button id="dockScoop"><span class="dockIcon">▧</span><span></span></button></nav><div id="gameControls" hidden></div><div id="dialogue"><div id="dialogueTop"><img id="talkPortrait" alt="" hidden><div id="speaker"></div></div><div id="line"></div><div id="choices"></div></div><div id="toast" role="status" aria-live="polite" aria-atomic="true"></div><div id="page"><div class="inner" id="content"></div></div><div id="fade"></div><section id="arrival" class="intro" hidden><img class="introArt" id="arrivalArt" alt=""><div class="introDoors" id="introDoors"><div></div><div></div></div><div class="introCard" id="introCard"></div></section></main><meta name="meow-community-api" content=""><!--MEOW_GAME_SCRIPT--></body></html>
+</style></head><body><main id="game"><canvas id="c" aria-label="Pawradise interactive world"></canvas><div id="worldSigns" hidden></div><button id="lunarBtn" hidden></button><div id="hud"><button id="profileHud" aria-label="Player profile" aria-describedby="hudCoins"><span class="pawPaintedPortrait"><img id="hudPortrait" alt=""></span><span class="pawMapIdentity"><strong id="hudName"></strong><span id="hudCoins"></span><small id="hudProgress" hidden></small></span></button><div id="location">Pawradise</div><div id="hudStats"><span id="hudStamps"></span></div><button id="travel">Travel</button></div><button id="back" hidden>Step Back</button><div id="small"><button id="luck">Daily Luck</button><div><button id="language">中文</button> <button id="mute">♪</button></div></div><div id="hint" role="status" aria-live="polite" aria-atomic="true"></div><nav id="dock" aria-label="Game navigation"><button id="dockRoom"><span class="dockIcon">⌂</span><span></span></button><button id="dockPassport"><span class="dockIcon">▤</span><span></span></button><button id="dockValley"><span class="dockIcon">♧</span><span></span></button><button id="dockTravel"><span class="dockIcon">✈</span><span></span></button><button id="dockScoop"><span class="dockIcon">▧</span><span></span></button></nav><div id="gameControls" hidden></div><div id="dialogue"><div id="dialogueTop"><img id="talkPortrait" alt="" hidden><div id="speaker"></div></div><div id="line"></div><div id="choices"></div></div><div id="toast" role="status" aria-live="polite" aria-atomic="true"></div><div id="page"><div class="inner" id="content"></div></div><div id="fade"></div><section id="arrival" class="intro" hidden><img class="introArt" id="arrivalArt" alt=""><div class="introDoors" id="introDoors"><div></div><div></div></div><div class="introCard" id="introCard"></div></section></main><meta name="meow-community-api" content=""><!--MEOW_GAME_SCRIPT--></body></html>
