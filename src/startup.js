@@ -12433,10 +12433,10 @@ const pawSceneLights={
  kitchen:[[.752,.121,.103,.064],[.072,.194,.045,.044],[.468,.308,.039,.024]],
  boba:[[.230,.111,.052,.039],[.430,.126,.047,.036],[.666,.142,.042,.034],[.830,.101,.053,.040],[.041,.468,.040,.041]],
  tarot:[[.521,.113,.069,.054],[.528,.259,.032,.032],[.954,.328,.045,.038],[.053,.344,.045,.033]],
- destiny:[[.310,.100,.064,.051],[.608,.181,.036,.031],[.490,.329,.028,.029],[.110,.678,.065,.061]],
+ destiny:[[.310,.100,.064,.051],[.608,.181,.036,.031],[.490,.161,.028,.029],[.110,.678,.065,.061]],
  match:[[.667,.378,.027,.032],[.461,.468,.033,.034],[.966,.572,.032,.039],[.139,.497,.027,.027]]
 };
-const pawSceneVapour={kitchen:[.133,.343,.032,.063],destiny:[.730,.430,.021,.042]};
+const pawSceneVapour={kitchen:[.133,.343,.032,.063],destiny:[.730,.280,.021,.042]};
 function pawSceneLightFrame(id,now,reduced=false){
  if(!Object.hasOwn(pawSceneLights,id)||!Number.isFinite(now))return [];
  return pawSceneLights[id].map(([u,v,rx,ry],i)=>{
@@ -12456,7 +12456,7 @@ function pawSceneVapourFrame(id,i,now,reduced=false){
 function pawYueCascadeFrame(i,now,reduced=false){
  if(!Number.isInteger(i)||i<0||i>=3||!Number.isFinite(now))return null;
  const phase=reduced?(i+1)/4:((now*.68+i/3)%1+1)%1;
- return {u:.805+i*.010,v:.330+phase*.026,rx:.0035,ry:.0075,alpha:.12*Math.sin(Math.PI*phase)}
+ return {u:.805+i*.010,v:.171+phase*.026,rx:.0035,ry:.0075,alpha:.12*Math.sin(Math.PI*phase)}
 }
 function pawSceneAir(ctx,id,p,now,reduced=false,hidden=false){
  if(hidden||!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||p.w<=0||p.h<=0)return 0;
@@ -13035,9 +13035,10 @@ function pawReadingSeatPlan(id,plate,phase){
  const tarot=id==='tarot',yue=id==='destiny';if(!tarot&&!yue)return null;
  const host=tarot?'fortune-teller':'master-yue';
  const pose=tarot?(phase==='shuffle'?'seated-shuffle-held':phase==='focus'?'seated-present-card':'seated-idle'):(phase==='result'?'seated-present-blank-parchment':phase==='question'?'seated-brush-held':'seated-welcome-explain');
- const eye=tarot?[.135,.399]:[.581,.337],span=plate.h*(tarot?.0165:.0185);
+ // Destiny portrait: chair back at y=.212, tabletop front lip at y=.306.
+ const eye=tarot?[.135,.399]:[.581,.218],span=plate.h*(tarot?.0165:.017);
  const center=[plate.x+plate.w*eye[0],plate.y+plate.h*eye[1]];
- return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.447]}
+ return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.306]}
 }
 function pawReadingHostPhase(id,q,kind,desk,result){
  if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle')return 'shuffle';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
@@ -13261,7 +13262,7 @@ drawRoom=function(...args){if(pawReadingActive())pawReadingBackdrop();return paw
 function pawReadingHost(){
  const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:room==='tea'?['Auntie Mei','梅姨']:room==='fish'?['Ah Ma','阿嬷']:room==='park'?['Auntie Lin','林姨']:room==='arcade'?['Arcade keeper','游戏厅店主']:null;
  if(!name)return null;const record=residentArtworkRecord(name);if(!record&&room!=='fish')return null;
- const [x,y]=pawReadingWorld(room==='destiny'?[.58,.446]:room==='tarot'&&pawHostVisit?.ready?[.135,.61]:pawReadingAPI().rooms[room].host);
+ const [x,y]=pawReadingWorld(room==='destiny'?[.58,.306]:room==='tarot'&&pawHostVisit?.ready?[.135,.61]:pawReadingAPI().rooms[room].host);
  return {station:room==='tea'?'chat':room==='fish'?'hit':room==='park'?'pet':room==='arcade'?'bubbleArcade':room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record?.height||112,.90),facing:room==='fish'?'right':'left'}
 }
 const pawReadingHostsBefore=roomResidentActors;
@@ -13272,13 +13273,13 @@ roomResidentActors=function(){if(!pawReadingActive())return pawReadingHostsBefor
 // Until the proper seated sprite is registered this is a desk-occlusion
 // treatment, not a new animation pose.
 function pawYueDeskBox(p=pawReadingPlate){
- return {x:p.x+p.w*.581,y:p.y+p.h*.447,height:p.h*.104,clipTop:p.y+p.h*.31,clipBottom:p.y+p.h*.447}
+ return {x:p.x+p.w*.581,y:p.y+p.h*.306,height:p.h*.215,clipTop:p.y+p.h*.165,clipBottom:p.y+p.h*.306}
 }
 // The visible seated host, rather than a floating label alone, is tappable.
 // Keep the target inside the authored torso and face area of the portrait.
 function pawYueHostTapBox(p){
  if(!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||p.w<=0||p.h<=0)return null;
- return [p.x+p.w*.465,p.y+p.h*.286,p.w*.232,p.h*.161]
+ return [p.x+p.w*.465,p.y+p.h*.175,p.w*.232,p.h*.130]
 }
 function pawYueDeskPlaque(p=pawReadingPlate){
  return {x:p.x+p.w*.5,y:p.y+p.h*.552}
@@ -13389,7 +13390,7 @@ function pawChooseConnectedGuestPoints(candidates,canDepart,canWalk,limit=8,spac
 function pawMappedVisitorPoints(api,id){
  const q=api?.rooms[id],spec=pawReadingSpec(api,id);if(!q||!spec)return [];
  const gaps=pawMappedGuestGaps(true),protectedFeet=[spec.entry,[spec.entry[0],spec.entry[1]-35],spec.arrival,...Object.values(spec.stations).map(v=>v.slice(2))];
- const host=['quiz','story','match'].includes(id)?[]:[pawReadingWorld(id==='destiny'?[.58,.446]:q.host)];
+ const host=['quiz','story','match'].includes(id)?[]:[pawReadingWorld(id==='destiny'?[.58,.306]:q.host)];
  const points=q.visitors.map(v=>v.slice()),candidates=[];
  for(let i=0;i<=100;i+=2){
   const y=i/100,range=api.bounds(id,y);if(!range)continue;
