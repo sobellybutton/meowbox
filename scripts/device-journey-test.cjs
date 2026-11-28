@@ -64,11 +64,16 @@ const assert=(value,message)=>{if(!value)throw Error(message)};
     const normalCog=await settingsIconState();
     assert(normalCog.painted!==normalCog.svg,'Exactly one settings icon required: '+JSON.stringify(normalCog));
     assert(normalCog.width>=44&&normalCog.height>=44&&normalCog.label,'Settings control lacks accessible touch target or name');
-    await page.emulateMedia({forcedColors:'active'});
-    try{
-     const contrastCog=await settingsIconState();
-     assert(!contrastCog.painted&&contrastCog.svg,'Forced-colors settings fallback missing: '+JSON.stringify(contrastCog));
-    }finally{await page.emulateMedia({forcedColors:'none'})}
+    // Forced-colors emulation is browser-engine dependent; Chromium
+    // exercises the high-contrast fallback without requiring WebKit support.
+    if(engine.name()==='chromium'){
+     await page.emulateMedia({forcedColors:'active'});
+     try{
+      assert(await page.evaluate(()=>matchMedia('(forced-colors: active)').matches),'Forced-colors emulation did not activate');
+      const contrastCog=await settingsIconState();
+      assert(!contrastCog.painted&&contrastCog.svg,'Forced-colors settings fallback missing: '+JSON.stringify(contrastCog));
+     }finally{await page.emulateMedia({forcedColors:'none'})}
+    }
     await page.screenshot({path:'test-results/'+name+'-map-hud.png'});
     await click(page.locator('#townSettingsToggle'));
     await click(page.locator('#small .languageChoice').getByRole('button',{name:'中文',exact:true}));
