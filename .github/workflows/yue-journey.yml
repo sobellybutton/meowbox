@@ -55,6 +55,22 @@ jobs:
         run: |
           python3 -m http.server 8770 >/tmp/meowbox-yue-server.log 2>&1 &
           node scripts/yue-journey-test.cjs
+      - name: Produce compact screenshot review evidence
+        if: always()
+        run: |
+          python3 -m pip install pillow
+          python3 - <<'PY'
+          from PIL import Image, ImageOps
+          from pathlib import Path
+          import io,base64
+          for label in ('phone-yue-lobby','phone-yue-desk-arrival','phone-yue-chart','phone-yue-folded-scroll','desktop-yue-desk-arrival','desktop-yue-chart','desktop-yue-departure'):
+              p=Path('test-results')/(label+'.png')
+              if not p.exists(): continue
+              im=Image.open(p).convert('RGB')
+              im.thumbnail((640,720))
+              b=io.BytesIO(); im.save(b,format='WEBP',quality=68,method=4)
+              print('YUE_REVIEW_'+label+'='+base64.b64encode(b.getvalue()).decode('ascii'))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
