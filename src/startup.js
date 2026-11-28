@@ -9047,7 +9047,7 @@ function pawPrayerStep(){
   const reach=stage==='taking'?Math.sin(Math.PI*Math.min(1,age/.72)):stage==='lighting'?Math.sin(Math.PI*Math.min(1,age/1.65)):0;
   const reaching=stage==='taking',flame=supply.flame,pick=reaching?pawIncensePickup(hand,supply.pick,age):null;
   const lightAngle=stage==='lighting'?1.05*reach:0;
-  const lightGrip={x:flame.x-Math.sin(lightAngle)*34,y:flame.y+Math.cos(lightAngle)*34};
+  const lightGrip={x:flame.x-Math.sin(lightAngle)*39,y:flame.y+Math.cos(lightAngle)*39};
   const grip=stage==='placing'?blend(hand,burner,poseEase(Math.max(0,Math.min(1,(age-1.25)/.65)))):stage==='lighting'?blend(hand,lightGrip,reach):hand;
   const shown=stage==='placing'&&age>=1.98?0:Math.min(3,held);
   // The empty supply stays on the counter throughout the ritual.
