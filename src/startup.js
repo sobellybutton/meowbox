@@ -14983,13 +14983,16 @@ pawDistrictSignStyle.textContent=`
 #game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque{
  border:1px solid var(--paw-sign-edge)!important;border-image:none!important;border-radius:3px!important;
  background-color:var(--paw-sign-paper)!important;background-image:linear-gradient(var(--paw-sign-wash),var(--paw-sign-wash)),var(--paw-sign-texture)!important;background-size:100% 100%!important;
- color:var(--paw-sign-ink)!important;text-shadow:none!important;box-shadow:0 1px 2px #2b251e33!important;padding:5px 8px!important;
+ color:var(--paw-sign-ink)!important;text-shadow:none!important;box-shadow:none!important;padding:3px 7px!important;
+ font-family:var(--paw-display,Georgia,serif)!important;font-weight:600!important;line-height:1.2!important;
 }
 #game[data-paw-sign-material]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material] .pawRailEdge{
  border:1px solid var(--paw-rail-edge)!important;border-image:none!important;border-radius:3px!important;
  background-color:var(--paw-rail-paper)!important;background-image:linear-gradient(var(--paw-rail-wash),var(--paw-rail-wash)),var(--paw-rail-texture)!important;background-size:100% 100%!important;
  color:var(--paw-rail-ink)!important;text-shadow:none!important;box-shadow:0 1px 2px #2b251e22!important;font-weight:600!important;
 }
+/* One painted surface, not a decorative inset border or another backing. */
+#game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque::before,#game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque::after{display:none!important;content:none!important}
 #game[data-paw-sign-material] .pawRailEdge{min-height:44px;max-width:46%}
 @media(forced-colors:active){
  #game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material] .pawRailEdge{background:ButtonFace!important;border:1px solid ButtonText!important;border-image:none!important;color:ButtonText!important;box-shadow:none!important}
