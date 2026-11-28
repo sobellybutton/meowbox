@@ -202,104 +202,8 @@ function pawInstallNativeConsultation(){
    [tr('Just visiting','只是来坐坐'),closeTalk]
   ])
  };
- function yueAfterReading(words){
-  if(room!=='destiny')return;
-  $('page').style.display='none';
-  say(tr('Master Yue','月师傅'),words||tr('Is there anything else you would like to look at?','还想看看别的吗？'),[
-   [tr('My year ahead','生肖流年'),()=>pawYueDeskChoose('year')],
-   [tr('My birth chart','生辰命盘'),()=>pawYueDeskChoose('chart')],
-   [tr('Weekly star signs','本周星座'),()=>pawYueDeskChoose('stars')],
-   [tr('Finish for now','今天先到这里'),()=>{closeTalk();hint('Take your time. Explore the room or head back to the valley.','慢慢来，可以继续逛逛，也可以返回福运谷。')}]
-  ])
- }
- function yueResultNavigation(q,kind){
-  if(room!=='destiny')return;
-  const pane=$('page'),nav=element('nav','',q,'pawYueResultNav');
-  nav.setAttribute('aria-label',tr('Reading navigation','问事导航'));q.prepend(nav);
-  b(nav,tr('Ask Yue again','再问月师傅'),()=>yueAfterReading());
-  b(nav,tr('Return to room','回到小屋'),()=>{pane.style.display='none';closeTalk();hint('Explore the room or head back to the valley.','继续逛逛，或返回福运谷。')});
-  if(kind==='stars'){
-   const grid=q.querySelector('.signNotebookGrid'),out=q.querySelector('.signNotebookResult');
-   if(grid&&out)grid.addEventListener('click',e=>{
-    if(!e.target.closest('button')||room!=='destiny'||!out.isConnected||!out.children.length)return;
-    const words=[out.querySelector('h2')?.textContent,out.querySelector('small')?.textContent,out.querySelector('p')?.textContent].filter(Boolean).join('\n\n');
-    pane.style.display='none';
-    say(tr('Master Yue','月师傅'),words,[
-     [tr('What else can we explore?','还能看看什么？'),()=>yueAfterReading()],
-     [tr('Choose another sign','看看其他星座'),()=>{closeTalk();if(out.isConnected)pane.style.display='block'}],
-     [tr('Finish for now','今天先到这里'),()=>{closeTalk();hint('Explore the room or head back to the valley.','继续逛逛，或返回福运谷。')}]
-    ])
-   })
-  }
-  // The original save handler owns the collectible. Offer next steps only
-  // after it has actually disabled its successful collection button.
-  q.addEventListener('click',e=>{
-   const btn=e.target.closest('.destinySave');
-   if(btn&&btn.disabled&&room==='destiny')yueAfterReading(tr('Your scroll is safely tucked away. Shall we explore something else?','卷轴已经收好啦。还想看看别的吗？'))
-  });
- }
- // Keep the chart and its validation engine in place. Mirror one original
- // editable field per spoken question; all changes reach its real handlers.
- const deskPrior=pawYueDeskPresent;
- pawYueDeskPresent=function(kind){
-  const result=deskPrior(kind);
-  if(room!=='destiny')return result;
-  const q=$('content');yueResultNavigation(q,kind);
-  if(!['year','chart'].includes(kind))return result;
-  const pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
-  if(!form||form.hidden||out?.children.length||!form.classList.contains('pawYueGuidedForm'))return result;
-  const fields=pawConsultInputPlan(form,kind);if(!fields.length)return result;
-  const origin={room,form,subject:yueSubject};
-  const valid=()=>form.isConnected&&pawConsultCurrent(origin,{room,form:$('content').querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),subject:yueSubject});
-  const prompts=kind==='year'?[['When were you born? Your birth date stays in this tab.','先告诉我出生日期。资料只留在本次页面。'],['Which year shall we look at?','想看看哪一年的流年？']]:[
-   ['When were you born? Your details stay in this tab.','先告诉我出生日期。资料只留在本次页面。'],
-   ['What was the local time when you were born?','你出生时，当地是几点？'],
-   ['Where were you born?','你在哪里出生的？'],
-   ['What was the UTC offset at the time? Check daylight saving if applicable.','出生当时的时区差是多少？如适用，请核对夏令时。'],
-   ['What is the latitude of your birthplace?','出生地点的纬度是多少？'],
-   ['And its longitude?','出生地点的经度呢？']
-  ];
-  function show(i,error=''){
-   if(!valid())return;
-   pane.style.display='none';const field=fields[i];let input;
-   const sync=()=>{
-    if(!input||!input.checkValidity()){input?.reportValidity();return false}
-    if(field.value!==input.value){field.value=input.value;field.dispatchEvent(new Event('input',{bubbles:true}));field.dispatchEvent(new Event('change',{bubbles:true}))}
-    return field.checkValidity()
-   };
-   const next=()=>{
-    if(!valid()||!sync())return;
-    if(kind==='chart'&&i===2&&pawConsultPresetReady(field.value,fields.slice(3))){
-     const city=field.selectedOptions[0]?.textContent||field.value;
-     say(tr('Master Yue','月师傅'),tr('I have filled in the location details for '+city+'. Are these the usual local settings for your birth date?','已按'+city+'填好地点资料。出生当时用的是当地通常的时区吗？'),[
-      [tr('Yes, use these details','是的，使用这些资料'),submitReading],
-      [tr('Adjust birth details','核对或修改地点资料'),()=>show(3)],
-      [tr('Choose another birthplace','重新选择出生地'),()=>show(2)]
-     ]);return
-    }
-    if(i<fields.length-1){show(i+1);return}
-    submitReading()
-   };
-   function submitReading(){
-    if(!valid())return;
-    closeTalk();pane.style.display='block';
-    form.requestSubmit();
-    if(!out?.querySelector('.ziGrid,.yueReadingFront')){
-     const invalid=fields.findIndex(f=>!f.checkValidity());
-     show(invalid>=0?invalid:i,tr('Please check these details.','请核对资料。'))
-    }else{pane.scrollTop=0}
-   }
-   const choices=[[i===fields.length-1?tr('Ask Yue','请月师傅指点'):tr('Continue','继续'),next]];
-   if(i>0)choices.push([tr('Previous','上一步'),()=>show(i-1)]);
-   choices.push([tr('Back to Yue','返回问事'),()=>{if(valid())yueReadingHub()}]);
-   say(tr('Master Yue','月师傅'),tr(...prompts[i])+(i===0&&origin.subject==='other'?'\n'+tr('Please use their details only with permission.','请先征得对方同意。'):'')+(error?'\n'+error:''),choices);
-   const label=element('label','',$('choices'),'pawDeskField');input=field.cloneNode(true);
-   input.removeAttribute('id');input.removeAttribute('name');input.removeAttribute('form');input.disabled=false;input.value=field.value;
-   input.setAttribute('aria-label',tr(...prompts[i]));label.append(input);$('choices').prepend(label);
-   input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();next()}});
-  }
-  show(0);return result
- };
+ // Master Yue's single guided paper and native year/star dialogue are owned
+ // by startup.js. Do not mirror inputs or hide that paper in a second wrapper.
  // Live tarot keepsake: use the same validated public data and PNG renderer
  // without entering the generic share page. Archive sharing stays unchanged.
  const sharePrior=openMeowShare;
@@ -478,7 +382,8 @@ function pawEditorialCanvasBox(box){
 }
 function pawEditorialBackdrop(g,paper,box,surface){
  const w=box.width,h=box.height;
- g.drawImage(paper,Math.round(w*.12),Math.round(h*.27),Math.round(w*.76),Math.round(h*.44),0,0,w,h);
+ // Crop by the same fraction on both axes so the actual washi grain is not stretched.
+ g.drawImage(paper,w*.12,h*.12,w*.76,h*.76,0,0,w,h);
  g.globalAlpha=.79;g.fillStyle=surface;g.fillRect(0,0,w,h);g.globalAlpha=1
 }
 function pawEditorialScoreRatio(value){
@@ -513,8 +418,26 @@ function pawEditorialTarotPlan(box,count){
 function pawEditorialTextFit(measure,text,width,height,start,min,maxLines,spacing=1.25){
  const chars=Array.from(String(text||'').trim());if(!chars.length)return {size:start,rows:[],lineHeight:start*spacing};
  function wrap(size){
-  const lines=[];let row='';const parts=/[\u3400-\u9fff]/.test(chars.join(''))?chars:chars.join('').split(/\s+/);
-  const sep=parts===chars?'':' ';
+  const lines=[];let row='';
+  if(/[\u3400-\u9fff]/.test(chars.join(''))){
+   // Keep Chinese closing punctuation with its preceding character and
+   // opening punctuation with its following character. Prefer a balanced
+   // final line over a single stranded glyph where there is room.
+   const closing=/^[，。！？；：、）》」』】〕〉”’…％,.!?;:%)\]]$/u,opening=/^[（《「『【〔〈“‘(\[]$/u;
+   for(let at=0;at<chars.length;){
+    let end=at+1;
+    while(end<chars.length&&measure(chars.slice(at,end+1).join(''),size)<=width)end++;
+    if(end<chars.length){
+     let legal=end;
+     while(legal>at+1&&(closing.test(chars[legal])||opening.test(chars[legal-1])||chars.length-legal===1))legal--;
+     if(legal>at&& !closing.test(chars[legal])&&!opening.test(chars[legal-1]))end=legal;
+    }
+    lines.push(chars.slice(at,end).join('').trim());at=end;
+   }
+   return lines.filter(Boolean)
+  }
+  const parts=chars.join('').split(/\s+/);
+  const sep=' ';
   for(const word of parts){
    let next=row?row+sep+word:word;
    if(measure(next,size)<=width){row=next;continue}

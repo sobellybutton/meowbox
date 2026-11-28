@@ -90,7 +90,8 @@ console.log('PASS Tarot mobile host and route framing across eight viewport clas
  assert(source.includes("When the cards settle, choose one, or shuffle again."));
  assert(source.includes("When the cards settle, choose '+n+', or shuffle again before choosing."));
  assert(source.includes("...readingTopics.map((topic,i)"));
- assert(source.includes("btn&&btn.disabled&&room==='destiny'"));
- assert(source.includes("pawConsultPresetReady(field.value,fields.slice(3))"));
- console.log('PASS 11 preset birthplace and next-step wiring checks');
+ assert(!source.includes('const deskPrior=pawYueDeskPresent'),'Do not override the canonical Yue paper with cloned inputs');
+ const startup=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
+ assert(startup.includes('pawYueQuestionSteps(form,out,kind)')&&startup.includes('pawYueCompactLocation(form)'),'Canonical guided paper and optional historical location details');
+ console.log('PASS 11 preset birthplace and single consultation ownership checks');
 }
