@@ -1,0 +1,1232 @@
+{
+  "version": 1,
+  "date": "2026-11-28",
+  "source": "Recovered original library artwork sheets; not newly generated",
+  "assets": [
+    {
+      "id": "boba_cup_empty",
+      "file": "boba_cup_empty.png",
+      "size": [
+        118,
+        140
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        110,
+        132
+      ],
+      "source_crop": [
+        482,
+        47,
+        590,
+        183
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "f299e818ee880de5e308388d0aab635b86ba5452dea5eb3085f32d280421876a",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_cup_dome_lid",
+      "file": "boba_cup_dome_lid.png",
+      "size": [
+        120,
+        166
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        112,
+        158
+      ],
+      "source_crop": [
+        592,
+        22,
+        705,
+        183
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "3c80d85a9028a3c25adaf9c827172bc10db49e625abe7560eaf06015f0f97623",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_cup_straw",
+      "file": "boba_cup_straw.png",
+      "size": [
+        119,
+        185
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        111,
+        177
+      ],
+      "source_crop": [
+        708,
+        4,
+        820,
+        183
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "e130985572c6d818a5f95e40852831e8409016aaff9bf23709457701e33319d4",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_shaker_closed",
+      "file": "boba_shaker_closed.png",
+      "size": [
+        99,
+        168
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        91,
+        160
+      ],
+      "source_crop": [
+        830,
+        21,
+        922,
+        183
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "0a4e54b5fa21ae2fdb5439384f63c32b0182b1405b24374acd09ec56f4965caf",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_shaker_open",
+      "file": "boba_shaker_open.png",
+      "size": [
+        97,
+        109
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        89,
+        101
+      ],
+      "source_crop": [
+        925,
+        81,
+        1013,
+        184
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "7d926322a2fb42aeeaafb8ea6140c63090964d706ed8150681d1b3dac0d1a220",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_shaker_ice",
+      "file": "boba_shaker_ice.png",
+      "size": [
+        104,
+        146
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        96,
+        138
+      ],
+      "source_crop": [
+        1014,
+        42,
+        1111,
+        185
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "3d5da046b98c98fbf7823f9380ca8c1e2f90bcb39c801ee9f015c5de12847cbc",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_shaker_tilt_left",
+      "file": "boba_shaker_tilt_left.png",
+      "size": [
+        127,
+        170
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        119,
+        162
+      ],
+      "source_crop": [
+        1113,
+        17,
+        1230,
+        187
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "ac1a794dd889fee993ec1876de27bc9547602a6364b6066bcdb7ffdb42d3291f",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_shaker_tilt_right",
+      "file": "boba_shaker_tilt_right.png",
+      "size": [
+        163,
+        184
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        155,
+        176
+      ],
+      "source_crop": [
+        1235,
+        12,
+        1394,
+        188
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "254489d7e2df4925516e1dc5e455791cfbf1deda26365e345469628d3b43f60b",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_shaker_rest",
+      "file": "boba_shaker_rest.png",
+      "size": [
+        106,
+        173
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        98,
+        165
+      ],
+      "source_crop": [
+        1403,
+        19,
+        1509,
+        184
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "ff369263dfb3de443ff666c0ab3c0f7898fc31333a4c26450760c0dab2ed096f",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_milk_pitcher",
+      "file": "boba_milk_pitcher.png",
+      "size": [
+        117,
+        120
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        109,
+        112
+      ],
+      "source_crop": [
+        480,
+        207,
+        590,
+        319
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "8aa839af346a375ccb801ab5442c08300bbc4a6d9201b7f23f86c4c77085cb57",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_tea_pot",
+      "file": "boba_tea_pot.png",
+      "size": [
+        153,
+        126
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        145,
+        118
+      ],
+      "source_crop": [
+        590,
+        199,
+        731,
+        320
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "3052d17d55da9e50fda1a95a08ee62e76217a415c7c99bf0261b8885e20a6171",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_matcha_bowl",
+      "file": "boba_matcha_bowl.png",
+      "size": [
+        114,
+        92
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        106,
+        84
+      ],
+      "source_crop": [
+        731,
+        231,
+        838,
+        318
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "62ceb151833587906d5b987ea20f7066c57750ad746bd7ddecbe68160a74bf8c",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_ice_bowl",
+      "file": "boba_ice_bowl.png",
+      "size": [
+        128,
+        119
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        120,
+        111
+      ],
+      "source_crop": [
+        839,
+        206,
+        958,
+        323
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "dc64bcd0e0f67c540320f0c22b59807644c6ff7863b58e2a3a507b6abbc1005f",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_pearls_jar",
+      "file": "boba_pearls_jar.png",
+      "size": [
+        122,
+        146
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        114,
+        138
+      ],
+      "source_crop": [
+        959,
+        187,
+        1077,
+        323
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "c5171d424207db57304e621153217891236fd0d10a1f8aefcea044dd1c25fd59",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_jelly_jar",
+      "file": "boba_jelly_jar.png",
+      "size": [
+        114,
+        129
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        106,
+        121
+      ],
+      "source_crop": [
+        1081,
+        199,
+        1189,
+        323
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "05b2d2aa6ac30deb49180cb4dd8c9ef6afdf68e7f255763c6e8a8f0ee29c0e0a",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_red_bean_jar",
+      "file": "boba_red_bean_jar.png",
+      "size": [
+        113,
+        130
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        105,
+        122
+      ],
+      "source_crop": [
+        1192,
+        199,
+        1299,
+        323
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "711549e7d4d5aafc0b8c40ae04d23921d958e7051bd23a96a91ff92ef81fca3a",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_mango_jar",
+      "file": "boba_mango_jar.png",
+      "size": [
+        113,
+        130
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        105,
+        122
+      ],
+      "source_crop": [
+        1300,
+        199,
+        1410,
+        324
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "5bbe9efe0ca60f9f31bab40c27e704a9291004126c0ad3a53ac5502053701e33",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_strawberry_jar",
+      "file": "boba_strawberry_jar.png",
+      "size": [
+        117,
+        135
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        109,
+        127
+      ],
+      "source_crop": [
+        1416,
+        195,
+        1529,
+        324
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "e84758eee5408c560145efc33675a2b265eb1ad740be1527d71cb6d45cbc6cbe",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_pearls_bowl",
+      "file": "boba_pearls_bowl.png",
+      "size": [
+        104,
+        78
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        96,
+        70
+      ],
+      "source_crop": [
+        956,
+        469,
+        1054,
+        542
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "d1b2d3b8e63bc8ac7829a17547fdd94bcad822429e57dacd4ac0412f8ff8cb53",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_jelly_bowl",
+      "file": "boba_jelly_bowl.png",
+      "size": [
+        104,
+        79
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        96,
+        71
+      ],
+      "source_crop": [
+        1062,
+        468,
+        1159,
+        542
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "f0f6ce762049ec018dfe424069a2f2d6657c1ec2c07f8f174c7c73b9020425cb",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_pink_jelly_bowl",
+      "file": "boba_pink_jelly_bowl.png",
+      "size": [
+        103,
+        79
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        95,
+        71
+      ],
+      "source_crop": [
+        1166,
+        469,
+        1264,
+        542
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "86304f74d7618585b96f7d970989740fc98f8ed9136733881f31b4dd18572f22",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_cream_bowl",
+      "file": "boba_cream_bowl.png",
+      "size": [
+        101,
+        92
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        93,
+        84
+      ],
+      "source_crop": [
+        944,
+        372,
+        1040,
+        457
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "07c1664e4b3a4a415685f0343ca9a492a39c0b4c74ba9dc8ffa0e8248fac4131",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_red_bean_bowl",
+      "file": "boba_red_bean_bowl.png",
+      "size": [
+        101,
+        79
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        93,
+        71
+      ],
+      "source_crop": [
+        1038,
+        383,
+        1134,
+        457
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "48322402806dac29da7296c720fa018f17efb38826e31a59a02c097e1bcfc29b",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_mango_bowl",
+      "file": "boba_mango_bowl.png",
+      "size": [
+        98,
+        78
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        90,
+        70
+      ],
+      "source_crop": [
+        1132,
+        386,
+        1226,
+        457
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "8c4ab3b43f370ffc546d972b022651ed8ca86b170af496f3b4c2b1c5cc80471e",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_strawberry_bowl",
+      "file": "boba_strawberry_bowl.png",
+      "size": [
+        97,
+        79
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        89,
+        71
+      ],
+      "source_crop": [
+        1224,
+        384,
+        1317,
+        457
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "64e88f0af2e858b2387beec44362ebea7bdef02a64cc296d902f41417080247a",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_dome_lid",
+      "file": "boba_dome_lid.png",
+      "size": [
+        125,
+        71
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        117,
+        63
+      ],
+      "source_crop": [
+        1397,
+        423,
+        1517,
+        486
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "54c5087958d773eb9362b8461a9365e0b438e8da3d546a0ee1c618eaa3744d39",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "boba_flat_lid",
+      "file": "boba_flat_lid.png",
+      "size": [
+        123,
+        55
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        115,
+        47
+      ],
+      "source_crop": [
+        1400,
+        493,
+        1518,
+        541
+      ],
+      "source_file": "Watercolor Boba Shop Asset Sheet.png",
+      "source_sha256": "2e52b185728f59a0429bb34560b615b9372add97240a10588c08a77870282d9b",
+      "sha256": "15ab41f0a307f6b3c96d333de663990f5e8943946697fbd64fe8edb53a86b4cc",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_worktop",
+      "file": "kitchen_worktop.png",
+      "size": [
+        388,
+        123
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        380,
+        115
+      ],
+      "source_crop": [
+        538,
+        3,
+        920,
+        119
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "7592b0905a8e51a2e3cc62000e6933199cb1b6222a3cf632d13089d4c74d9f06",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_cutting_board",
+      "file": "kitchen_cutting_board.png",
+      "size": [
+        208,
+        97
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        200,
+        89
+      ],
+      "source_crop": [
+        925,
+        9,
+        1127,
+        101
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "11ccfc5f7f6d9e8959e682f77a0300709b8665c7e8481d48daf385ada40fc575",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_wooden_tray",
+      "file": "kitchen_wooden_tray.png",
+      "size": [
+        146,
+        79
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        138,
+        71
+      ],
+      "source_crop": [
+        1134,
+        19,
+        1276,
+        98
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "cd71d9acd866825950bfb5ebfa6f82de967c75c7e75fe0ca0a573741b1107ce5",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_round_wooden_tray",
+      "file": "kitchen_round_wooden_tray.png",
+      "size": [
+        144,
+        93
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        136,
+        85
+      ],
+      "source_crop": [
+        1279,
+        10,
+        1424,
+        100
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "fc045edac66ab644c0a5df545871c2a602d5d684671d42d8243f9ff113eea541",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_folded_cloth",
+      "file": "kitchen_folded_cloth.png",
+      "size": [
+        109,
+        98
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        101,
+        90
+      ],
+      "source_crop": [
+        1429,
+        11,
+        1532,
+        104
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "c0bf952a59bbae921e63e8da880e518a584dab9db2d3616426bd27ba7ed40457",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_clay_pot_lidded",
+      "file": "kitchen_clay_pot_lidded.png",
+      "size": [
+        174,
+        118
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        166,
+        110
+      ],
+      "source_crop": [
+        549,
+        122,
+        720,
+        234
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "8df03284b15abe29ab91e6ec5fb2503b1412e9c456da3af133376c0f731c7434",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_frying_pan",
+      "file": "kitchen_frying_pan.png",
+      "size": [
+        170,
+        108
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        162,
+        100
+      ],
+      "source_crop": [
+        726,
+        128,
+        891,
+        234
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "5b73a863816a6aa8a9e6da1dc0d21e65f8fd801e528564068be1feb874d02e4b",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_small_saucepan",
+      "file": "kitchen_small_saucepan.png",
+      "size": [
+        167,
+        97
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        159,
+        89
+      ],
+      "source_crop": [
+        900,
+        138,
+        1059,
+        229
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "32e10f05fcdebbc29cf7e5f984872f5379931af7df7537a1f7470e0016c6bc93",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_stock_pot",
+      "file": "kitchen_stock_pot.png",
+      "size": [
+        168,
+        126
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        160,
+        118
+      ],
+      "source_crop": [
+        1064,
+        112,
+        1224,
+        232
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "7f50a11f2a3ed55605dacf150d89ffa3b6098e27d56a066392b5d0a19287955d",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_bamboo_steamer",
+      "file": "kitchen_bamboo_steamer.png",
+      "size": [
+        125,
+        122
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        117,
+        114
+      ],
+      "source_crop": [
+        1241,
+        118,
+        1363,
+        234
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "0610b90b971568fa5acab5d15ac783491170677b9fe96870c844a22a36df2b99",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_rice_tub",
+      "file": "kitchen_rice_tub.png",
+      "size": [
+        143,
+        128
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        135,
+        120
+      ],
+      "source_crop": [
+        1384,
+        111,
+        1519,
+        234
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "6bb062dd6881e0ad32ce702262b7a6e4c0974ea25741f4f8043dccab5fc691f7",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_knife",
+      "file": "kitchen_knife.png",
+      "size": [
+        142,
+        107
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        134,
+        99
+      ],
+      "source_crop": [
+        541,
+        241,
+        677,
+        340
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "8d4021ccef088baa97c2e4aabb44e537ec064224e5a2deeb7df9478234df4f70",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_wooden_ladle",
+      "file": "kitchen_wooden_ladle.png",
+      "size": [
+        113,
+        120
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        105,
+        112
+      ],
+      "source_crop": [
+        650,
+        237,
+        756,
+        348
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "4f6be5895559fa574af5d2c167993997fc12453b0a780f57f7d16ce0d524b23e",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_wooden_spatula",
+      "file": "kitchen_wooden_spatula.png",
+      "size": [
+        100,
+        117
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        92,
+        109
+      ],
+      "source_crop": [
+        740,
+        238,
+        834,
+        350
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "2f744be06cb20cb7d98e02904b31d39bab2b22a7559443e0dc7cef642e7a2171",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_metal_turner",
+      "file": "kitchen_metal_turner.png",
+      "size": [
+        96,
+        117
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        88,
+        109
+      ],
+      "source_crop": [
+        818,
+        240,
+        905,
+        352
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "861310b0b5f20545a38d85a535219a2b4dc2debb819e842ab8acb608a361518c",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_whisk",
+      "file": "kitchen_whisk.png",
+      "size": [
+        84,
+        116
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        76,
+        108
+      ],
+      "source_crop": [
+        894,
+        240,
+        973,
+        349
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "39cfd3978e09e73810068a5efaa5445913c40d752fccb3495477a2ce29798036",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_chopsticks",
+      "file": "kitchen_chopsticks.png",
+      "size": [
+        89,
+        113
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        81,
+        105
+      ],
+      "source_crop": [
+        960,
+        242,
+        1043,
+        350
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "f6aea2081453a58a322236c60c7710c03660b791165e6915f0eac5182c48d0bc",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_small_ladle",
+      "file": "kitchen_small_ladle.png",
+      "size": [
+        81,
+        93
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        73,
+        85
+      ],
+      "source_crop": [
+        1030,
+        252,
+        1103,
+        340
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "0f25ac96f915c119a3633b9aecbb6a80425a08b8157f4a9f8e24b7c6546df0c8",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_small_bowl",
+      "file": "kitchen_small_bowl.png",
+      "size": [
+        89,
+        64
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        81,
+        56
+      ],
+      "source_crop": [
+        1104,
+        276,
+        1187,
+        333
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "774068164b0dd1b62de5396a4553a7022bee991d1d7f280255000763af5b1185",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_mixing_bowl",
+      "file": "kitchen_mixing_bowl.png",
+      "size": [
+        111,
+        81
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        103,
+        73
+      ],
+      "source_crop": [
+        1196,
+        266,
+        1300,
+        339
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "8c2b7d4f511ef20270f4520ad84ae471478e23a34a184e394df64f0124c87627",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_blue_bowl",
+      "file": "kitchen_blue_bowl.png",
+      "size": [
+        103,
+        78
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        95,
+        70
+      ],
+      "source_crop": [
+        1307,
+        262,
+        1403,
+        333
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "598387c7b690712805a69787bbc97919ad2d73f60701f30289187b7c371d790f",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    },
+    {
+      "id": "kitchen_kettle",
+      "file": "kitchen_kettle.png",
+      "size": [
+        121,
+        123
+      ],
+      "alpha_bounds": [
+        8,
+        8,
+        113,
+        115
+      ],
+      "source_crop": [
+        1406,
+        233,
+        1523,
+        351
+      ],
+      "source_file": "Cozy Japanese Kitchen Sprite Sheet.png",
+      "source_sha256": "a6279af59df4a8ff2bece54a4efe63156e3e437e9049cd24e6c3a1eab21d4470",
+      "sha256": "ef6f75369845fe45a106e26abc76e86c8afb3954ee957fb3d551663cfb6f1c22",
+      "status": "extracted candidate, alpha validated; runtime integration and rendered acceptance pending",
+      "anchor": "visible bottom center suggested for counter placement; verify actual hand contact/occlusion in game"
+    }
+  ]
+}
