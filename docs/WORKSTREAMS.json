@@ -724,7 +724,10 @@
         "f5ce1d4d + b4fc9a67: integrated all 49 bilingual feedback changes from PR #4 onto current main via 34 unique exact-line replacements, preserving concurrent edits; full scripts parse. a1ca0c3e: added 22 new bilingual variants in 11 rotating action-specific pools for fishing cast/catch, deer feeding/watching, fortune paper keeping/tying and five cat care preparations; 44 focused exact-source rotation checks passed. No mechanics changed. Actual browser rendering, cadence and deployment remain unverified.",
         "4e2d7e47 + 3acd2da9: owner explicitly rejected forced Excel/workplace humour during fishing. Rewrote 19 bilingual pairs across fishing casts/catches/rare discoveries, deer watching, fortune paper and cat care to prioritise activity-specific observations, natural spoken Chinese and gentle ritual tone. Both full source edits parse; original Excel line absent. Do not use office jargon as a universal punchline; reserve workplace satire for contextually relevant worries or characters. Live page was reachable but updated dialogue rendering remains unverified."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-activity-context-rewrite",
+        "until": 1795849200000
+      },
       "blocker": "Remaining full scene/device editorial review, rendered feedback layout and actual speech verification, including active overrides and all interactions. Existing source coverage does not imply live deployment or full acceptance."
     },
     {
