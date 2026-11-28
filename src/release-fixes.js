@@ -496,3 +496,80 @@ pawDeerActionStyles.textContent=`
 #game #gameControls.deerMeadowControls .deerMeadowButtons button:focus-visible{outline:2px solid #3b6653;outline-offset:-3px}
 @media(max-width:350px){#game #gameControls.deerMeadowControls .deerMeadowButtons button{font-size:12px}}
 `;document.head.append(pawDeerActionStyles);
+
+
+/* PAW_TEA_NATIVE_BOARD_BEGIN */
+function pawTeaNoticeSnapshot(rows){
+ if(!Array.isArray(rows))return [];
+ const seen=new Set();
+ const pair=v=>Array.isArray(v)&&v.length>=2&&v.slice(0,2).every(x=>typeof x==='string');
+ return rows.filter(v=>{
+  if(!v||typeof v.id!=='string'||!v.id||seen.has(v.id)||!Array.isArray(v.thread)||!pair(v.thread[0])||!pair(v.thread[1])||!Array.isArray(v.thread[2]))return false;
+  seen.add(v.id);return true
+ }).map(v=>({id:v.id,date:v.date,author:v.thread[0].slice(0,2),body:v.thread[1].slice(0,2),replies:v.thread[2].filter(q=>pair(q)&&pair(q.slice(2))).map(q=>q.slice(0,4))}))
+}
+function pawTeaNoticeIndex(rows,id){
+ if(!Array.isArray(rows)||!rows.length)return -1;
+ const i=rows.findIndex(v=>v.id===id);return i<0?0:i
+}
+function pawTeaVisitCurrent(origin,live){
+ return !!origin&&!!live&&origin.room==='tea'&&live.room===origin.room&&origin.scene===live.scene&&origin.visit===live.visit&&live.activity===null&&!live.transitioning&&!live.page
+}
+/* PAW_TEA_NATIVE_BOARD_END */
+let pawTeaBoardVisit=0;
+const pawTeaBoardEnterPrior=enter;
+enter=function(...args){pawTeaBoardVisit++;return pawTeaBoardEnterPrior(...args)};
+function pawTeaBoardContext(){return {room,scene,visit:pawTeaBoardVisit,activity,transitioning,page:$('page').style.display==='block'}}
+function pawTeaReadBoard(){
+ closeTalk();pawRefreshTopicFeed();
+ const origin=pawTeaBoardContext(),rows=pawTeaNoticeSnapshot(townPublishedNotices());
+ let shown=0,sequence=0;
+ const current=()=>pawTeaVisitCurrent(origin,pawTeaBoardContext());
+ function display(index=0,reply=-1){
+  if(!current())return;
+  const id=++sequence,entry=rows[index],choices=[];
+  const choice=(en,zh,fn)=>[tr(en,zh),()=>{if(current()&&sequence===id&&talkOpen)fn()}];
+  if(!entry){
+   say(tr('Town noticeboard','小镇留言墙'),tr('Nothing pinned yet. Come back for another cup of tea.','暂时没有留言，下次喝茶再来看看。'),[choice('Step away','离开留言墙',closeTalk)]);return
+  }
+  const body=reply>=0?entry.replies[reply]:null;
+  const author=body?tr(body[0],body[1]):tr(...entry.author);
+  const words=body?tr(body[2],body[3]):tr(...entry.body);
+  const heading=(index+1)+' / '+rows.length+' · '+tr('Fictional resident notices','虚构居民留言');
+  if(body){
+   if(reply+1<entry.replies.length)choices.push(choice('Next reply','下一条回复',()=>display(index,reply+1)));
+   choices.push(choice('Back to notice','回到原留言',()=>display(index)))
+  }else{
+   if(entry.replies.length)choices.push(choice('Read replies ('+entry.replies.length+')','看看回复（'+entry.replies.length+'）',()=>display(index,0)));
+   if(index+1<rows.length)choices.push(choice('Older notice','上一张旧留言',()=>display(index+1)));
+   if(index>0)choices.push(choice('Newer notice','下一张新留言',()=>display(index-1)));
+   choices.push(choice('Shared traveller posts','真人旅人留言',()=>{closeTalk();communityTab='public';townChatPage()}))
+  }
+  choices.push(choice('Step away','离开留言墙',closeTalk));
+  say(tr('Town noticeboard','小镇留言墙'),heading+'\n\n'+author+'\n'+words,choices)
+ }
+ display()
+}
+const pawTeaNativeActionPrior=action;
+action=function(id,...args){
+ if(room==='tea'&&!activity&&!transitioning&&$('page').style.display!=='block'){
+  if(id==='board')return pawTeaReadBoard();
+ }
+ return pawTeaNativeActionPrior(id,...args)
+};
+const pawTeaBoardSayPrior=say;
+say=function(name,words,choices=[],...args){
+ const result=pawTeaBoardSayPrior(name,words,choices,...args),panel=$('dialogue');
+ panel.toggleAttribute('data-paw-tea-board',room==='tea'&&name===tr('Town noticeboard','小镇留言墙'));
+ return result
+};
+const pawTeaBoardClosePrior=closeTalk;
+closeTalk=function(...args){$('dialogue').removeAttribute('data-paw-tea-board');return pawTeaBoardClosePrior(...args)};
+const pawTeaBoardStyle=document.createElement('style');
+pawTeaBoardStyle.textContent=`
+#game #dialogue[data-paw-tea-board]{background:#f1e3c8 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 180px repeat!important;border:1px solid #af956d!important;color:#514332!important;border-radius:7px!important;box-sizing:border-box;width:min(calc(100% - 24px),510px)!important;max-height:48dvh;overflow-y:auto;overscroll-behavior:contain}
+#game #dialogue[data-paw-tea-board] #line{white-space:pre-wrap;line-height:1.5}
+#game #dialogue[data-paw-tea-board] #choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:5px}
+#game #dialogue[data-paw-tea-board] button{min-height:44px;white-space:normal;overflow-wrap:anywhere;color:#524332;background:#f6e9ce;border:1px solid #baa17b}
+#game #dialogue[data-paw-tea-board] button:focus-visible{outline:2px solid #46634e;outline-offset:-3px}
+`;document.head.append(pawTeaBoardStyle);
