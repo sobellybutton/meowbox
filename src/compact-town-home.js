@@ -7,7 +7,18 @@ function pageWindow(total,index,size){
  const pages=Math.max(1,Math.ceil(total/size)),page=Math.max(0,Math.min(pages-1,index));
  return {page,pages,start:page*size,end:Math.min(total,(page+1)*size)}
 }
-function residentLabel(text){return text==='Fictional resident'||text==='虚构居民'}
+function residentLabel(text){return ['Fictional resident','虚构居民','Game character','游戏角色'].includes(text)}
+function residentHeading(text){
+ if(text==='Town notice · fictional')return 'Town notice';
+ if(text==='小镇公告 · 虚构')return '小镇公告';
+ if(text==='Fictional resident notices')return 'Town noticeboard';
+ if(text==='虚构居民留言')return '小镇留言';
+ return text
+}
+function residentDialogue(text){
+ if(typeof text!=='string')return text;
+ return text.replace(/\s*\(Fictional guest\)\s*$/,'').replace(/\s*（虚构客串角色）\s*$/,'').replace(/(\d+ \/ \d+ · )Fictional resident notices/g,'$1Town noticeboard').replace(/(\d+ \/ \d+ · )虚构居民留言/g,'$1小镇留言')
+}
 // PAW_COMPACT_HELPERS_END
 function replaceExact(root,selector,oldEN,oldZH,en,cn){
  for(const node of root.querySelectorAll(selector)){
@@ -48,21 +59,36 @@ function compactBoard(q){
   for(const btn of rail.children)btn.setAttribute('aria-pressed',String(btn.dataset.section===boardSection))
  }
  for(const [id,en,cn,node] of sections){const btn=b(rail,tr(en,cn),()=>select(id));btn.dataset.section=id;panels.append(node)}
- const disclosure=wall.querySelector('.wallDisclosure');if(disclosure)disclosure.textContent=tr('Town stories are written for the game. Find real visitor posts under Travellers.','小镇故事为游戏创作，真人留言请到旅人聊天室。');
+ const disclosure=wall.querySelector('.wallDisclosure');if(disclosure)disclosure.textContent=tr('News from around town. Online visitor posts are under Travellers.','小镇里的新鲜事。联机旅人的留言请到旅人聊天室。');
  if(story){const refresh=()=>{replaceExact(story,'.pawStoryKicker','Resident stories · fictional town','居民小故事 · 虚构小镇','Town stories','小镇故事');replaceExact(story,'.pawStoryKicker','Resident story · fictional town','居民小故事 · 虚构小镇','Town story','小镇故事')};refresh();new MutationObserver(refresh).observe(story,{childList:true})}
  const roster=guests?.querySelector('p');if(roster)roster.textContent=tr('Meet these neighbours as you explore '+maps[scene].n[0]+'.','逛逛'+maps[scene].n[1]+'，也许就能遇见他们。');
- attachPager(wall.querySelector('.townPostList'),'.townResidentNote',2,wall.querySelector('.townPostNav'));select(boardSection);
+ attachPager(wall.querySelector('.townPostList'),'.townResidentNote',2,wall.querySelector('.townPostNav'),card=>{const name=card.querySelector(':scope > strong');if(name){const clean=residentHeading(name.textContent);if(clean!==name.textContent)name.textContent=clean}});select(boardSection);
 }
 function compactJoy(q){
  const wall=q.querySelector('.pawJoyWall'),list=wall?.querySelector('.pawJoyNotes'),form=wall?.querySelector('.pawJoyForm');if(!list||!form)return;
  const status=form.querySelector('small');if(status)status.textContent=tr('Your notes stay on this device.','便签仅保存在本设备。');
- const explanation=element('small',tr('A little inspiration from your town neighbours. Their notes are written for the game.','小镇邻居送来一点灵感。他们的便签为游戏创作。'),wall,'pawCompactJoyDisclosure');list.before(explanation);
+ const explanation=element('small',tr('Little joys from your neighbours.','小镇邻居的小确幸。'),wall,'pawCompactJoyDisclosure');list.before(explanation);
  const pager=attachPager(list,'.pawJoyNote',1,null,card=>{for(const label of card.querySelectorAll(':scope > small'))if(residentLabel(label.textContent))label.remove()});
  form.addEventListener('submit',()=>queueMicrotask(()=>pager?.reset()));
 }
+// Only touch known authored interface labels. Never rewrite visitor or player messages.
+function naturalTownLabels(q){
+ replaceExact(q,'.pawTownLink small','Chat with fictional town residents, anytime.','随时跟小镇的虚构居民聊两句。','Pull up a chair and have a chat.','来坐坐，聊两句吧。');
+ replaceExact(q,'.pawTownLink small','Pull up a chair and chat with the game’s residents.','找个座位，和小镇里的游戏角色聊两句。','Pull up a chair and have a chat.','来坐坐，聊两句吧。');
+ replaceExact(q,'.pawTownPinned small','From fictional town residents','来自虚构小镇居民','Around town','小镇见闻');
+ replaceExact(q,'.pawTownPinned small','Stories from the game’s residents','小镇角色的日常趣闻','Around town','小镇见闻');
+ replaceExact(q,':scope > p','A chat with town characters · local play, not live players.','小镇角色聊天室 · 本地互动，非真人联机。','Pull up a chair.','来坐坐吧。');
+ replaceExact(q,'.communityMuted','Tea chat · fictional town companions, private to this visit.','茶馆闲聊 · 虚构小镇伙伴，仅本次会话可见。','Tea table · private to this visit.','茶桌闲聊 · 仅本次会话可见。');
+ for(const note of q.querySelectorAll('.pawResidentChatNote'))note.textContent=tr('This conversation is private to this visit.','这段聊天仅本次会话可见。');
+}
+const pageBefore=page;
+page=function(...args){const result=pageBefore(...args),q=$('content');naturalTownLabels(q);return result};
+const sayBefore=say;
+say=function(name,words,...rest){return sayBefore.call(this,residentDialogue(name),residentDialogue(words),...rest)};
 const townBefore=townChatPage;
 townChatPage=function(...args){
  const result=townBefore(...args),q=$('content');
+ naturalTownLabels(q);
  if(communityTab==='board')compactBoard(q);
  if(communityTab==='gratitude')compactJoy(q);
  return result
@@ -71,7 +97,7 @@ const goodBefore=goodCompanyPage;
 goodCompanyPage=function(q,...args){
  const result=goodBefore(q,...args);
  for(const node of q.querySelectorAll('.goodCompanyBanner > small'))if(['Town residents · fictional companions','小镇居民 · 虚构伙伴'].includes(node.textContent))node.remove();
- const privacy=q.querySelector('.goodCompanyPrivacy');if(privacy)privacy.textContent=tr('Your note stays on this device. Cheers come from game characters. Public sharing is separate and optional.','便签仅保存在本设备。喝彩来自游戏角色。公开分享是另外的自愿选择。');
+ const privacy=q.querySelector('.goodCompanyPrivacy');if(privacy)privacy.textContent=tr('Your note stays on this device. Share with online travellers only if you choose.','便签仅保存在本设备。想分享给联机旅人时，再选择公开发布。');
  return result
 };
 const homeBefore=hideoutPage;
