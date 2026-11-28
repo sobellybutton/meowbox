@@ -13155,7 +13155,7 @@ indoorSafe=function(x,y,...args){return pawWishLobbyActive()?pawWishLobbySafe(x,
 function pawWishLobbyBackdrop(){
  if(!(pawWishLobbyActive()||room==='wishes'&&activity==='wishes'&&pawRoomImageReady(pawWishLobbyArt())))return false;
  const p=pawWishLobbyPlate,b=livingBounds(),im=pawWishLobbyArt();
- ctx.save();try{ctx.fillStyle='#526b57';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(im,p.x,p.y,p.w,p.h)}finally{ctx.restore()}
+ ctx.save();try{if(activity==='wishes')cover(im,b.x,b.y,b.w,b.h);else{ctx.fillStyle='#526b57';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(im,p.x,p.y,p.w,p.h)}}finally{ctx.restore()}
  return true
 }
 const pawWishLobbyPortraitBefore=paintPortraitInterior;
@@ -15052,6 +15052,7 @@ card=function(x,y,w,h,front,...args){
 const pawLegacyTarotTable=table;
 table=function(...args){
  if(room!=='tarot'||!['tarot','love'].includes(activity))return pawLegacyTarotTable(...args);
+ if(state.readStage==='focus')return;
  const im=pawTarotProps();if(!pawRoomImageReady(im))return;
  ctx.drawImage(im,...pawTarotPropCrop('mat',im.naturalWidth,im.naturalHeight),148,303,504,453)
 };
@@ -15240,13 +15241,13 @@ const pawRitualTalkSay=say;
 say=function(...args){$('dialogue').removeAttribute('data-paw-tarot-conversation');return pawRitualTalkSay(...args)};
 const pawInWorldRitualCss=document.createElement('style');
 pawInWorldRitualCss.textContent=`
-#game #dialogue.pawWishWriting[data-paw-visit-dialogue]{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;width:min(86%,400px)!important;max-height:62dvh!important;overflow:visible!important}
+html #game #dialogue.pawWishWriting,html #game #dialogue.pawWishWriting[data-paw-visit-dialogue]{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;width:min(86%,400px)!important;max-height:62dvh!important;overflow:visible!important}
 #game #dialogue.pawWishWriting #dialogueTop,#game #dialogue.pawWishWriting #line{display:none!important}
 #game #dialogue.pawWishWriting .pawWishPaper{position:relative;padding:24px 17px 18px!important;background:#f4e4bd url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat;border:1px solid #a88c62;box-shadow:2px 5px 14px #30251d55;transform:rotate(-1deg);border-radius:2px 3px 5px 2px}
 #game #dialogue.pawWishWriting .pawWishPaper::before{content:'願';position:absolute;top:5px;right:12px;color:#a56049;font:600 18px Georgia,"Songti SC",serif}
 #game #dialogue.pawWishWriting textarea{background:repeating-linear-gradient(transparent 0 25px,#bca77b66 25px 26px)!important;border:0!important;min-height:104px!important;line-height:26px!important;resize:none!important;outline-offset:2px!important;padding:0 4px!important;border-radius:0!important}
-#game #dialogue.pawWishWriting #choices{display:flex!important;justify-content:center;gap:7px;margin-top:10px}
-#game #dialogue.pawWishWriting #choices button{flex:1;text-align:center!important;background:#e8d9b7!important;border:1px solid #a88c62!important}
+#game #dialogue.pawWishWriting #choices{display:flex!important;justify-content:center;gap:7px;margin-top:10px;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+#game #dialogue.pawWishWriting #choices button{flex:1;text-align:center!important;background:#e8d9b7!important;border:1px solid #a88c62!important;min-height:44px!important;border-radius:3px!important;box-shadow:0 2px 4px #30251d44!important}
 #game #dialogue[data-paw-yue-question]{max-height:min(48dvh,420px)!important;width:min(calc(100% - 28px),510px)!important;padding:9px 13px!important;border-radius:5px!important}
 #game #dialogue[data-paw-yue-question] #talkPortrait,#game #dialogue[data-paw-yue-question] #line:empty{display:none!important}
 #game #dialogue[data-paw-yue-question] .pawYueGuidedForm{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:5px!important;margin:4px 0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border:0!important}
@@ -15264,6 +15265,20 @@ pawInWorldRitualCss.textContent=`
 #game #dialogue[data-paw-tarot-conversation] #choices button{flex:1 1 120px;text-align:center!important}
 @media(orientation:landscape){#game #dialogue[data-paw-yue-question],#game #dialogue[data-paw-tarot-conversation]{max-height:52dvh!important}}
 `;document.head.append(pawInWorldRitualCss);
+
+/* Keep the enlarged face to the right of the seated teller when speaking. */
+const pawTarotConversationDraw=drawActivity;
+drawActivity=function(...args){
+ if(room==='tarot'&&['tarot','love'].includes(activity)&&state.readStage==='focus'&&talkOpen&&$('dialogue').hasAttribute('data-paw-tarot-conversation')){
+  const v=state.readCards?.[state.readFocus],im=pawReadingImage(pawReadingAPI(),'tarot');
+  if(v&&pawRoomImageReady(im)){
+   const b=livingBounds(),w=Math.min(b.w*.31,b.h*.20),h=w*218/128;
+   ctx.save();try{paintLivingBackdrop(im);drawReadingCard(b.x+b.w*.64-w/2,b.y+b.h*.28-h/2,w,h,v.i,v.rev)}finally{ctx.restore()}
+   return
+  }
+ }
+ return pawTarotConversationDraw(...args)
+};
 /* PAW_IN_WORLD_CONSULTATION_END */
 
 /* PAW_OPENING_EXPERIENCE_BEGIN
