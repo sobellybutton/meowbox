@@ -166,3 +166,86 @@ wonderSceneShare=function(back=null){
  openMeowShare({kind:mode,title:result.name,lines,accent:result.color},back);
 };
 const releaseChartStyle=document.createElement('style');releaseChartStyle.textContent='.releaseChartDetails{padding:12px;border:1px solid #b7a17c;border-radius:5px;background:#f6ead3;margin:0 0 14px;line-height:1.45}.releaseChartDetails p{margin:5px 0}.releaseChartDetails small{display:block;font-size:12px}';document.head.append(releaseChartStyle);
+
+
+/* PAW_DISCOVERY_ACTIVE_TURN_BEGIN */
+function pawCafeTurnElapsed(elapsed,last,now,blocked){
+ if(![elapsed,last,now].every(Number.isFinite)||elapsed<0)return 0;
+ return blocked?elapsed:elapsed+Math.min(50,Math.max(0,now-last));
+}
+function pawCafeTurnMatches(origin,current){
+ return !!origin&&!!current&&origin.run===current.run&&origin.token===current.token&&origin.round===current.round&&origin.room===current.room&&current.activity==='match'&&current.scene==='wonder'&&current.phase==='turn';
+}
+/* PAW_DISCOVERY_ACTIVE_TURN_END */
+function pawCafeTurnContext(){
+ return {run:state,token:cafeToken,round:cafeRound,room,activity,scene,phase:cafePhase};
+}
+// A response is acknowledged while the player is actually present, rather
+// than completing on a background timeout. Keep the existing scoring and
+// collection identifiers, including historical tied-style keepsakes.
+cafeChoose=function(i){
+ if(activity!=='match'||scene!=='wonder'||room!=='match'||cafePhase!=='question'||pawArcadeInputBlocked()||!Number.isInteger(i)||!cafeQuestions[cafeRound]?.[1]?.[i]||cafeAnswers.length!==cafeRound)return;
+ cafePick=i;cafePhase='turn';cafeAt=t;sound(450+i*70);
+ const origin=pawCafeTurnContext();let elapsed=0,last=performance.now();
+ function acknowledge(now){
+  if(!pawCafeTurnMatches(origin,pawCafeTurnContext()))return;
+  const blocked=pawArcadeInputBlocked()||document.hidden;
+  elapsed=pawCafeTurnElapsed(elapsed,last,now,blocked);last=now;
+  if(blocked||elapsed<350&&!matchMedia('(prefers-reduced-motion: reduce)').matches){requestAnimationFrame(acknowledge);return}
+  cafeAnswers.push(i);cafeRound++;cafePick=-1;cafeAt=t;
+  if(cafeRound===cafeQuestions.length){
+   const scores=[0,0,0];cafeAnswers.forEach(k=>scores[k]++);
+   const max=Math.max(...scores),ties=scores.map((v,k)=>v===max?k:-1).filter(k=>k>=0);
+   cafeResult={index:ties[0],ties};save('cafeStyleV1',cafeResult);
+   addItem('Café discovery: '+cafeKinds[ties[0]][0],'缘分咖啡馆：'+cafeKinds[ties[0]][1]);
+   cafePhase='result';sound(660)
+  }else cafePhase='question';
+ }
+ requestAnimationFrame(acknowledge)
+};
+// Reading surfaces should turn to the top of each new question or chapter,
+// without jumping while the same card is turning or a detail is expanded.
+function pawReadingSurfaceKey(kind){
+ if(kind==='wonder')return [wonderSceneToken,wonderSceneAnswers.length,zh].join('|');
+ if(kind==='story')return [parallelToken,parallelNode,zh].join('|');
+ return [cafeToken,cafeRound,zh].join('|')
+}
+function pawSyncReadingSurface(panel,kind,render,args){
+ const first=panel.firstElementChild,oldKey=panel.dataset.pawReadingLeaf,focused=panel.contains(document.activeElement)&&document.activeElement.matches(':focus-visible');
+ const value=render(...args);
+ if(panel.hidden)return value;
+ const key=pawReadingSurfaceKey(kind);
+ if(first!==panel.firstElementChild){
+  panel.setAttribute('role','group');
+  panel.setAttribute('aria-label',kind==='wonder'?tr('Discovery notebook','奇遇小记'):kind==='story'?tr('Story letter','故事来信'):tr('Conversation cards','相处话题卡'));
+  panel.dataset.pawReadingLeaf=key;
+  if(oldKey!==key)panel.scrollTop=0;
+  if(focused&&oldKey!==key){
+   const button=panel.querySelector('button:not([disabled])');
+   if(button)button.focus({preventScroll:true})
+  }
+  if(kind==='cafe'){
+   const origin=pawCafeTurnContext();
+   for(const button of panel.querySelectorAll('button')){
+    const callback=button.onclick;if(typeof callback!=='function')continue;
+    button.onclick=function(...values){
+     const current=pawCafeTurnContext();
+     if(origin.run!==current.run||origin.token!==current.token||origin.round!==current.round||origin.room!==current.room||current.phase!=='question'||panel.hidden||!button.isConnected)return;
+     return callback.apply(this,values)
+    }
+   }
+  }
+ }
+ return value
+}
+const pawReleaseWonderSheet=syncWonderSheet,pawReleaseStorySheet=syncStorySheet,pawReleaseCafeSheet=syncCafeQuestionSheet;
+syncWonderSheet=function(...args){return pawSyncReadingSurface(wonderQuestionSheet,'wonder',pawReleaseWonderSheet,args)};
+syncStorySheet=function(...args){return pawSyncReadingSurface(storySheet,'story',pawReleaseStorySheet,args)};
+syncCafeQuestionSheet=function(...args){return pawSyncReadingSurface(cafeQuestionSheet,'cafe',pawReleaseCafeSheet,args)};
+const pawDiscoveryReadingStyle=document.createElement('style');
+pawDiscoveryReadingStyle.textContent=`
+#game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet){background:#f0e3c9 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 180px repeat!important;box-sizing:border-box;overflow-wrap:anywhere;overscroll-behavior:contain;scrollbar-width:thin}
+#game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet) button{min-height:44px;white-space:normal;overflow-wrap:anywhere;max-width:100%}
+#game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet) :is(button,summary):focus-visible{outline:2px solid #3c6654;outline-offset:-3px}
+#game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet) button:disabled{opacity:.68}
+`;document.head.append(pawDiscoveryReadingStyle);
