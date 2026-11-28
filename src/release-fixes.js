@@ -523,12 +523,12 @@ function pawTeaBoardContext(){return {room,scene,visit:pawTeaBoardVisit,activity
 function pawTeaReadBoard(){
  closeTalk();pawRefreshTopicFeed();
  const origin=pawTeaBoardContext(),rows=pawTeaNoticeSnapshot(townPublishedNotices());
- let shown=0,sequence=0;
+ let sequence=0;const serial=++pawTeaConversationSerial;
  const current=()=>pawTeaVisitCurrent(origin,pawTeaBoardContext());
  function display(index=0,reply=-1){
   if(!current())return;
   const id=++sequence,entry=rows[index],choices=[];
-  const choice=(en,zh,fn)=>[tr(en,zh),()=>{if(current()&&sequence===id&&talkOpen)fn()}];
+  const choice=(en,zh,fn)=>[tr(en,zh),()=>{if(current()&&serial===pawTeaConversationSerial&&sequence===id&&talkOpen)fn()}];
   if(!entry){
    say(tr('Town noticeboard','小镇留言墙'),tr('Nothing pinned yet. Come back for another cup of tea.','暂时没有留言，下次喝茶再来看看。'),[choice('Step away','离开留言墙',closeTalk)]);return
   }
@@ -550,13 +550,35 @@ function pawTeaReadBoard(){
  }
  display()
 }
-const pawTeaNativeActionPrior=action;
-action=function(id,...args){
- if(room==='tea'&&!activity&&!transitioning&&$('page').style.display!=='block'){
-  if(id==='board')return pawTeaReadBoard();
+// The assembled game loads startup after this file. Its tea station
+// dispatcher must finish installing before we wrap the final action.
+function pawInstallTeaNativeAction(){
+ const prior=action;
+ action=function(id,...args){
+  if(room==='tea'&&!activity&&!transitioning&&$('page').style.display!=='block'){
+   if(id==='board')return pawTeaReadBoard();
+   if(id==='chat')return pawTeaJoinTable()
+  }
+  return prior.call(this,id,...args)
  }
- return pawTeaNativeActionPrior(id,...args)
-};
+}
+let pawTeaConversationSerial=0;
+function pawTeaJoinTable(){
+ closeTalk();
+ const origin=pawTeaBoardContext(),serial=++pawTeaConversationSerial;
+ const option=(en,cn,fn)=>[tr(en,cn),()=>{if(serial===pawTeaConversationSerial&&talkOpen&&pawTeaVisitCurrent(origin,pawTeaBoardContext()))fn()}];
+ say(tr('Auntie Mei','梅姨'),tr('Come over. The tea is hot and the gossip is fresh. No meeting agenda required.','过来喝茶吧。茶是热的，瓜是新鲜的，不用准备会议议程。'),[
+  option('Hear the latest gossip','听听最新的瓜',parkSerialTalk),
+  option('Chat with Auntie Mei','跟梅姨聊聊',()=>residentConversation('auntie',{n:residentProfiles.auntie.name})),
+  option('Chat with Wang Laoban','跟王老板聊聊',()=>residentConversation('wang',{n:residentProfiles.wang.name})),
+  option('Office comedy','职场小剧场',gatheringOfficeStory),
+  option('Play a table game','来局井字棋',()=>{closeTalk();start('woodenThree')}),
+  option('Meet other travellers','认识其他旅人',()=>{closeTalk();communityTab=communityURL()?'public':'lounge';townChatPage()}),
+  option('Share a little joy','分享小确幸',()=>{closeTalk();communityTab='gratitude';townChatPage()}),
+  option('Keep wandering','继续逛',closeTalk)
+ ])
+}
+queueMicrotask(pawInstallTeaNativeAction);
 const pawTeaBoardSayPrior=say;
 say=function(name,words,choices=[],...args){
  const result=pawTeaBoardSayPrior(name,words,choices,...args),panel=$('dialogue');
