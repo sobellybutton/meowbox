@@ -62,6 +62,10 @@ jobs:
           node scripts/tea-scoop-continuity-test.cjs
           node scripts/scene-ambience-test.cjs
           node scripts/recurring-room-visitors-test.cjs
+          node scripts/recovered-journal-cover-test.cjs
+          node scripts/park-care-continuity-test.cjs
+          node scripts/scene-handoff-regression-test.cjs
+          node scripts/paw-room-life-scoop-test.cjs
   district:
     runs-on: ubuntu-latest
     timeout-minutes: 30
