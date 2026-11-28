@@ -602,7 +602,10 @@
         "9dde6e38: persisted tarot snapshot and key regression",
         "58e07d6a: live one/three/five-card readings now use sequential reader dialogue with exact chosen card meanings, orientations, reflections, synthesis, optional keepsake and return to same spread; historical passport readings unchanged. Reuse selected Moonlight Tarot painting during live activity, existing table/card geometry retained. Source parsed and 18 isolated snapshot/step assertions passed. Actual phone/desktop visual flow, closeup table alignment and seated host poses still pending."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-reading-host-activation",
+        "until": 1795843096599
+      },
       "blocker": "Real rendered tarot, keyboard/touch flow, card artwork, share export/history acceptance and deployment still pending.\n\nOwner feedback: remove the generic website handoff after physical room activity. Keep the same scene, host, props, sound and player/session state through approach, greeting, choices, preparation, interaction, individual results, combined results and natural return. Use compact readable dialogue or an in-world physical object (cards, parchment, notebook, assessment sheet, menu, storybook); expand only content-heavy objects when necessary. Explicit share/export, passport/library and settings may retain dedicated interfaces. Do not merely put a room picture behind an old full-page form. Verify the complete rendered mobile and desktop journey, host scale, physical contact, legibility and no snap/duplicate props. Moonlight Tarot is the first reference flow, not proof all other rooms are complete.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay."
     },
     {
