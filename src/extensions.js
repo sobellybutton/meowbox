@@ -5444,7 +5444,7 @@ function shareCardArt(cv,data,format,cn){
  function block(text,y,maxW,size,maxLines,color=ink,weight='normal'){let rows;for(;;){g.font=weight+' '+size+'px '+font;rows=shareTextLines(g,text,maxW);if(rows.length<=maxLines||size<=20)break;size-=2}if(rows.length>maxLines){rows=rows.slice(0,maxLines);let last=rows[maxLines-1];while(last.length&&g.measureText(last+'…').width>maxW)last=last.slice(0,-1);rows[maxLines-1]=last+'…'}const lh=size*1.23;rows.forEach((v,i)=>line(v,cx,y+lh*(i+.5),size,weight,color,maxW));return y+rows.length*lh}
  const mood=data.kind==='tarot'&&data.cards.length?shareTarotMood(data.cards):data.kind==='type'&&/^[EIX][SNX][TFX][JPX]$/.test(data.title[0])?shareTypeMood(data.title[0]):null;
  const panelTop=top+44;frame(left-12,panelTop,width+24,end-panelTop,26,paper,'#d8b77d');
- line(pawBrand(cn)+'  /  '+(cn?'偷得浮生半日闲':'LITTLE ESCAPE CLUB'),cx,top-2,30,'bold','#fff0c9');
+ line((cn?'摸鱼小镇':'Pawradise')+'  /  '+(cn?'偷得浮生半日闲':'LITTLE ESCAPE CLUB'),cx,top-2,30,'bold','#fff0c9');
  const artY=panelTop+18;g.save();g.beginPath();g.rect(left+7,artY,width-14,artH);g.clip();if(data.kind==='soul'||(data.kind==='tarot'&&!data.takeaway)||data.kind==='cafe'||!crop(left+7,artY,width-14,artH))socialCoverIllustration(g,data,left+7,artY,width-14,artH);g.restore();
  // Print a small editorial label over a reserved strip, never over the result text.
  const chip=locale(shareKinds[data.kind]);frame(left+23,artY+17,Math.min(width-46,390),52,14,'#fff1d9f5','#d8ba89');g.font='bold 27px '+font;g.textAlign='left';g.textBaseline='middle';g.fillStyle=ink;g.fillText(chip,left+40,artY+43,Math.min(width-78,350));
@@ -5500,7 +5500,7 @@ function openMeowShare(raw,back=null){
   const status=element('p','',panel,'meowShareStatus');status.setAttribute('role','status');const actions=element('div','',panel,'sharePrimaryActions');
   const send=b(actions,tr('Share image to apps','分享到其他应用'),async()=>{
    if(!ready)return;
-   try{if(typeof File==='function'&&navigator.share&&navigator.canShare?.({files:[ready]})){await navigator.share({files:[ready],title:pawBrand(cn)});return}}catch(e){if(e?.name==='AbortError')return}
+   try{if(typeof File==='function'&&navigator.share&&navigator.canShare?.({files:[ready]})){await navigator.share({files:[ready],title:(cn?'摸鱼小镇':'Pawradise')});return}}catch(e){if(e?.name==='AbortError')return}
    status.textContent=tr('Image sharing is not supported here. Save the PNG and upload it in your chosen app.','当前浏览器不支持图片直传，请保存 PNG 后在目标应用中上传。')
   });
   const saveButton=b(actions,tr('Save PNG image','保存 PNG 图片'),()=>{if(!ready)return;const a=document.createElement('a'),url=URL.createObjectURL(ready);a.href=url;a.download=ready.name||'pawradise-'+data.kind+'-'+format+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)});
