@@ -22,11 +22,11 @@ assert.equal(direct.pawDirectBoardAllowed(board),true);
 for(const key of Object.keys(board))assert.equal(direct.pawDirectBoardAllowed({...board,[key]:!board[key]}),false,key);
 const worlds={fortune:{n:['Fortune Valley','解忧谷']},home:{n:['Lazy Island','懒人岛']},island:{n:['Munch & Play','吃喝玩乐岛']},wonder:{n:['Discovery Station','奇遇站']}};
 for(const [from,to] of [['fortune','home'],['home','island'],['island','wonder'],['wonder','fortune']]){
- assert.deepEqual(direct.pawRailStationCopy(from,to,worlds),['To '+worlds[to].n[0],'前往'+worlds[to].n[1]]);
+ assert.deepEqual(direct.pawRailStationCopy(from,to,worlds),from==='fortune'?['Railway Station','火车站']:['To '+worlds[to].n[0],'前往'+worlds[to].n[1]]);
  const note=direct.pawRailChapterNote(from,to);assert.ok(note&&note.every(v=>typeof v==='string'&&v.length>0));
 }
 assert.equal(direct.pawRailChapterNote('fortune','wonder'),null);
-assert.deepEqual(direct.pawRailStationCopy('fortune','missing',worlds),['Railway station','火车站']);
+assert.deepEqual(direct.pawRailStationCopy('fortune','missing',worlds),['Railway Station','火车站']);
 assert.ok(!source.includes('pawStationPlatform(scene)'));
 console.log('District visit and direct station boarding regression passed');
 
@@ -75,4 +75,22 @@ console.log('District visit and direct station boarding regression passed');
   assert.equal(items.length,5);assert.equal(hud,5);assert.equal(saves.length,5);assert.deepEqual(notices,[chinese?'已收藏：茶饮纪念品':'Collected: Tea keepsake']);
  }
  console.log('Arrival stamps preserve collection and HUD without obscuring map labels');
+}
+
+// Fortune Valley wayfinding is based on player progress, not visibility of the distant art.
+{
+ const discovery=source.match(/\/\* PAW_VALLEY_DISCOVERY_BEGIN \*\/([\s\S]*?)\/\* PAW_VALLEY_DISCOVERY_END \*\//);
+ assert.ok(discovery);
+ const nearby=new Function(discovery[1]+';return pawValleyDoorNearby')();
+ const doors={tarot:{approach:[305,1135]},destiny:{approach:[755,1135]},temple:{approach:[375,702]},wishes:{approach:[630,727]},station:{approach:[568,365]}};
+ for(const id of ['tarot','destiny'])assert.equal(nearby(id,1570,doors),true,id);
+ for(const id of ['temple','wishes','station'])assert.equal(nearby(id,1570,doors),false,id);
+ for(const id of ['temple','wishes'])assert.equal(nearby(id,1150,doors),true,id);
+ assert.equal(nearby('station',1150,doors),false);
+ assert.equal(nearby('station',835,doors),true);
+ assert.equal(nearby('station',836,doors),false);
+ assert.equal(nearby('station',365,doors),true);
+ assert.equal(nearby('station',NaN,doors),false);
+ assert.equal(nearby('unknown',365,doors),false);
+ console.log('Fortune Valley progressive discovery regression passed');
 }
