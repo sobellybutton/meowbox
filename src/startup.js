@@ -13596,7 +13596,7 @@ function pawCloseYueDesk(){
 function pawYueDeskChoose(kind){
  if(room!=='destiny')return;
  function open(subject){if(room!=='destiny')return;yueSubject=subject;closeTalk();if(kind==='chart')destinyPage();else if(kind==='year')yueZodiacAlmanac();else starSignPage()}
- pawYueSpeak(tr('Is this reading for you, or someone else?','这次是想看看自己，还是替别人看看？'),[[tr('For me','看自己'),()=>open('self')],[tr('For someone else','帮别人看看'),()=>open('other')],[tr('Back','返回'),()=>yueReadingHub()]])
+ pawYueSpeak(tr('Is this reading for you, or someone else? Please use another person’s details only with permission.','这次是想看看自己，还是替别人看看？使用他人资料前，请先征得同意。'),[[tr('For me','看自己'),()=>open('self')],[tr('For someone else','帮别人看看'),()=>open('other')],[tr('Back','返回'),()=>yueReadingHub()]])
 }
 yueReadingHub=function(...args){
  if(room!=='destiny'){pawCloseYueDesk();return}
@@ -14968,7 +14968,7 @@ pawDistrictSignStyle.textContent=`
 /* PAW_YUE_LIVE_DIALOGUE_BEGIN */
 // Questions belong to the resident dialogue. Reuse the authoritative form,
 // validation and calculation handlers, then unfold paper only for a chart.
-let pawYueLiveForm=null,pawYueDialogueActive=false;
+var pawYueLiveForm=null,pawYueDialogueActive=false;
 function pawYueSpeak(words,choices){say(tr('Master Yue','月师傅'),words,choices);pawYueDialogueActive=true}
 function pawYueRestoreForm(session=pawYueLiveForm){
  if(!session)return;
