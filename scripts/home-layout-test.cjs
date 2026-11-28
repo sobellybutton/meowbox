@@ -148,3 +148,17 @@ console.log('Eight home finish paths, mirror tiling, floor sampling and surface 
   assert.ok(out.calls[0][4]>out.calls.at(-1)[4]);
  }
  console.log('Perspective floor texture bands are contiguous across all import sizes.');
+
+ // Floor taps follow projected tile boundaries, not a fixed radius.
+ for(const [id,w,d] of [['starter',4,4],['side',7,4],['studio',7,7],['balcony',4,4]]){
+  for(let u=0;u<w;u++)for(let v=0;v<d;v++){
+   for(const a of [.01,.08,.25,.5,.75,.92,.99])for(const b of [.01,.08,.25,.5,.75,.92,.99]){
+    const p=api.project(id,u+a,v+b);
+    assert.deepEqual(api.nearestCell(id,p.x,p.y),api.cellExists(id,u,v)?{u,v}:null,'projected '+id+' '+u+','+v);
+   }
+  }
+  for(const [u,v] of [[-.01,1.5],[1.5,-.01],[w+.01,1.5],[1.5,d+.01]]){
+   const p=api.project(id,u,v);assert.equal(api.nearestCell(id,p.x,p.y),null,'outside '+id);
+  }
+ }
+ console.log('Projected floor tap coverage, perimeter and studio notch verified.');
