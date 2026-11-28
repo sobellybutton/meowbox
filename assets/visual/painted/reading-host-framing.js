@@ -164,5 +164,42 @@ function drawHeldParchment(ctx,f,paint){
  if(f?.id!=='master-yue'||f.pose!=='seated-present-blank-parchment')return false;
  return withSurface(ctx,f,'paper',paint)
 }
-return Object.freeze({frame,draw,contacts,surface,drawHeldCard,drawHeldParchment});
+// Read only the computed twelve-palace result, never input fields or birth data.
+const palaceSlots=Object.freeze([0,1,2,3,4,7,8,11,12,13,14,15]);
+function chartPalaces(grid){
+ const cells=grid?.querySelectorAll?.('article:not(.blank)');
+ if(!cells||cells.length!==12)return null;
+ const result=Array.from(cells,(cell,i)=>{
+  const name=cell.querySelector('strong')?.textContent?.trim();
+  return {slot:palaceSlots[i],name,life:!!cell.classList?.contains('lifePalace')}
+ });
+ return result.every(c=>typeof c.name==='string'&&c.name.length>0&&c.name.length<=80)&&result.filter(c=>c.life).length===1?result:null
+}
+// A short ink reveal on the already-held paper. Caller supplies active time;
+// no wall-clock timer, storage, chart recomputation or fabricated results.
+function parchmentClock(q,now,blocked=false,reduced=false){
+ if(!q||!finite(now))return 0;
+ if(reduced){q.elapsed=.72;q.last=now;q.blocked=!!blocked;return 1}
+ const prior=q.last;
+ if(finite(prior)&&now>=prior&&!blocked&&!q.blocked)q.elapsed=Math.min(.72,(finite(q.elapsed)?q.elapsed:0)+Math.min(.1,now-prior));
+ q.last=now;q.blocked=!!blocked;
+ return Math.max(0,Math.min(1,(q.elapsed||0)/.72))
+}
+function paintChartPalaces(g,palaces,progress=1){
+ if(!g||!Array.isArray(palaces)||palaces.length!==12||!finite(progress)||!palaces.every((v,i)=>v?.slot===palaceSlots[i]&&typeof v.name==='string'&&v.name.length>0)||palaces.filter(c=>c.life).length!==1)return false;
+ const p=Math.max(0,Math.min(1,progress));
+ g.save();try{
+  g.beginPath();g.rect(0,0,1,p);g.clip();
+  g.strokeStyle='#8e674b';g.fillStyle='#674e3b';g.lineWidth=.007;g.font='.056px Georgia,"Songti SC",serif';g.textAlign='center';g.textBaseline='middle';
+  for(const c of palaces){
+   const x=(c.slot%4)/4,y=Math.floor(c.slot/4)/4;
+   if(c.life){g.fillStyle='#aa735333';g.fillRect(x,y,.25,.25);g.fillStyle='#674e3b'}
+   g.strokeRect(x,y,.25,.25);g.fillText(c.name,x+.125,y+.125,.225)
+  }
+  g.strokeRect(.25,.25,.5,.5);
+  g.beginPath();g.arc(.5,.5,.12,0,Math.PI*2);g.stroke();
+  return true
+ }finally{g.restore()}
+}
+return Object.freeze({frame,draw,contacts,surface,drawHeldCard,drawHeldParchment,chartPalaces,parchmentClock,paintChartPalaces});
 });
