@@ -1,0 +1,34 @@
+name: Pawradise quiet arrival mobile gate
+on:
+  pull_request:
+    branches: [main]
+    paths: ['src/startup.js','src/shell.html','scripts/settings-mobile-release-test.cjs','.github/workflows/quiet-arrival-release.yml']
+permissions:
+  contents: read
+jobs:
+  mobile:
+    if: github.head_ref == 'fix/live-quiet-valley-arrival-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Real mobile arrival without duplicate overlays
+        env:
+          PAW_QUIET_ARRIVAL: '1'
+          PAW_MAP_STATIONERY: '1'
+        run: |
+          mkdir -p test-results
+          python3 -m http.server 8765 >/tmp/quiet-arrival.log 2>&1 &
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8765/index.html >/dev/null && break; sleep 1; done
+          node scripts/settings-mobile-release-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quiet-arrival-mobile-evidence
+          path: test-results
