@@ -130,6 +130,15 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
    await click(p.locator('#content .row button').last());
    assert(await p.locator('.signNotebookGrid button').nth(2).getAttribute('aria-pressed')==='true','Language switch lost sign');
    assert(await p.evaluate(()=>!JSON.stringify(localStorage).includes('1990-06-15')&&!JSON.stringify(localStorage).includes('1995-05-06')),'Birth details persisted');
+   // Regression: the consultation is owned by the study, even if an
+   // external room transition bypasses its normal back control.
+   // This is a lifecycle test, not proof of physical doorway traversal.
+   await p.evaluate(()=>{window.__staleYueBack=document.querySelector('#content .row button').onclick;room=null;updateHUD()});
+   await p.waitForFunction(()=>document.querySelector('#page').style.display==='none'&&!document.querySelector('#page').dataset.pawYueDesk);
+   assert(await p.locator('#content .astroForm,#content .yueAlmanacForm,#content .signNotebookGrid').count()===0,'Consultation survived room departure');
+   await p.evaluate(()=>{window.__staleYueBack();delete window.__staleYueBack});
+   assert(await p.locator('#page').isHidden(),'Stale consultation reopened outside study');
+   assert(await p.locator('.yueReadingMenu').count()===0,'Legacy reading menu reopened outside study');
    assert(errors.length===0,errors.join('; '));
    console.log(name+': Master Yue click-through PASS');
   }catch(e){await p.screenshot({path:'test-results/'+name+'-yue-failure.png'}).catch(()=>{});throw Error(name+': '+e.message+' | '+errors.join('; '))}
