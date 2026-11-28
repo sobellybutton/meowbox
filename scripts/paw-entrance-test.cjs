@@ -126,7 +126,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
     // page close control must return to the same scene and player position.
     for(const id of ids){
      const before=await page.evaluate(()=>({scene,x:p.x,y:p.y}));
-     const nav=page.locator('#'+id);await reachable(nav,id);await nav.tap();
+     const nav=page.locator('#'+id);await reachable(nav,id);await (width<900?nav.tap():nav.click());
      await page.waitForFunction(()=>$('page').style.display==='block',null,{timeout:15000});
      await page.waitForFunction(id=>document.getElementById(id)?.getAttribute('aria-current')==='page',id,{timeout:8000});
      assert.equal(await dockRoot.locator('button[aria-current="page"]').count(),1,'Only the current destination is selected');
@@ -145,7 +145,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
      await shot('dock-'+id);
      const back=page.locator('#content > .row button').first();
      await back.waitFor({state:'visible',timeout:8000});
-     await back.tap();
+     await (width<900?back.tap():back.click());
      await page.waitForFunction(()=>$('page').style.display!=='block',null,{timeout:15000});
      const after=await page.evaluate(()=>({scene,x:p.x,y:p.y}));
      assert.equal(after.scene,before.scene,'Dock return changed district');

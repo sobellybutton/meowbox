@@ -43,16 +43,20 @@ fs.mkdirSync('test-results/organic-flow',{recursive:true});
    // Never set player, room, or activity state from the test.
    const point=await page.evaluate(()=>{
     const r=c.getBoundingClientRect();
-    for(const delta of [160,120,90,65,40]){
-     const target=pawDistrictFoot(pawFortunePainting.player,p.x,p.y-delta);
+    for(const delta of [160,120,90,65,40])for(const shift of [0,-18,18,-35,35]){
+     const target=pawDistrictFoot(pawFortunePainting.player,p.x+shift,p.y-delta);
      const x=r.left+cam.ox+target.x*cam.scale,y=r.top+cam.oy+target.y*cam.scale;
-     if(x>10&&x<innerWidth-10&&y>70&&y<innerHeight-85&&document.elementFromPoint(x,y)===c)return {x,y};
+     // DOM hit testing alone cannot see a resident or door's canvas target.
+     if(x>10&&x<innerWidth-10&&y>70&&y<innerHeight-85&&document.elementFromPoint(x,y)===c&&!at(target))return {x,y,world:target};
     }
     return null;
    });
    assert(point,'No unobstructed walking path to the temple');
    if(touch)await page.touchscreen.tap(point.x,point.y);else await page.mouse.click(point.x,point.y);
-   await wait(prev=>p.y<prev.y-8,before,12000);
+   try{await wait(prev=>p.y<prev.y-8,before,12000)}catch(error){
+    console.error('Walk input diagnostic',JSON.stringify(await page.evaluate(({before,screen})=>({before,screen,now:{x:p.x,y:p.y,tx:p.tx,ty:p.ty,walk:p.walk},scene,room,activity,pending,talkOpen,transitioning,hit:at(screen.world)?.id||null,camera:{x:cam.x,y:cam.y,scale:cam.scale},blocked:pawCanvasBlocked()}),{before,screen:point})));
+    throw error;
+   }
    await wait(()=>!p.walk&&!transitioning,null,12000);
    assert(await page.evaluate(()=>!room&&scene==='fortune'),'Ordinary path tap entered an unrelated room');
    await page.waitForTimeout(250);

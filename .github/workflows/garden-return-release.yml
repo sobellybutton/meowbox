@@ -1,0 +1,44 @@
+name: Pawradise quiet garden return gate
+on:
+  pull_request:
+    branches: [main]
+    paths: ['src/startup.js','scripts/garden-painted-test.cjs','scripts/paw-garden-physical-flow-test.cjs','.github/workflows/garden-return-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  garden-routes:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/quiet-garden-physical-return-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: node scripts/garden-painted-test.cjs
+  garden-mobile:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/quiet-garden-physical-return-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      PAW_VIEWPORT: '360x640'
+      PAW_LANGUAGE: '中文'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 8772 >/tmp/garden-flow.log 2>&1 &
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8772/index.html >/dev/null && break; sleep 1; done
+          node scripts/paw-garden-physical-flow-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: garden-mobile-flow
+          path: test-results/organic-flow
