@@ -16,6 +16,8 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
    await page.locator('#proposal footer button.next').click();
    await page.locator('#proposal footer .actions button').first().click();
    await page.locator('#proposal .rail-arrive').click({timeout:20000});
+   await page.locator('#proposal .shrine-enter').waitFor({state:'visible',timeout:20000});
+   if(process.env.PAW_VALLEY_CONTINUITY==='1')await page.screenshot({path:'test-results/entrance-'+name+'-gate.png'});
    await page.locator('#proposal .shrine-enter').click({timeout:20000});
    await page.locator('#proposal').waitFor({state:'hidden',timeout:30000});
    await page.waitForFunction(()=>!transitioning&&!room&&scene==='fortune');
@@ -40,6 +42,22 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
     assert(mapStyle.gear.width>=44&&mapStyle.gear.height>=44,'Settings touch target');
     for(const art of [mapStyle.profileArt,mapStyle.coinArt,mapStyle.gearArt,mapStyle.dockArt])assert(art.includes('paper_texture.webp'),'Shared painted paper must render');
     assert(mapStyle.plaque&&mapStyle.plaque.borderImage==='none'&&mapStyle.plaque.hit.height>=44,'Slim plaque must retain accessible target');
+   }
+   if(process.env.PAW_VALLEY_CONTINUITY==='1'){
+    const journey=await page.evaluate(()=>{
+     const station=maps.fortune.st.find(v=>v[0]==='station');
+     const visible=e=>!!e&&!e.hidden&&getComputedStyle(e).visibility==='visible'&&e.getClientRects().length>0;
+     const dock=document.querySelector('#dock'),bounds=dock.getBoundingClientRect();
+     const buttons=[...dock.querySelectorAll('button:not([hidden])')].filter(visible).map(e=>({width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height,icon:e.querySelector('.dockIcon svg')?.getBoundingClientRect().width}));
+     return {early:pawFortuneRailNearby('fortune',p,station.slice(1,3)),edge:visible(document.querySelector('.pawRailEdge')),sign:visible(signButtons.get('station')),near:pawFortuneRailNearby('fortune',{x:station[1],y:station[2]},station.slice(1,3)),other:pawFortuneRailNearby('home',{x:0,y:0},station.slice(1,3)),guide:!moveGuide.hidden,hint:getComputedStyle(document.querySelector('#hint')).visibility,dock:{left:bounds.left,right:bounds.right,height:bounds.height},buttons};
+    });
+    assert.equal(journey.early,false,'Arrival must be distant from railway');
+    assert.equal(journey.edge,false,'No premature railway shortcut');
+    assert.equal(journey.sign,false,'No premature railway plaque');
+    assert.equal(journey.near,true);assert.equal(journey.other,true);
+    if(journey.guide)assert.equal(journey.hint,'hidden','Movement guide and hint must not compete');
+    assert(journey.buttons.length>=4&&journey.buttons.every(b=>b.width>=44&&b.height>=44&&b.icon>=20&&b.icon<=25),'Dock touch targets and icons: '+JSON.stringify(journey));
+    assert(journey.dock.left>=0&&journey.dock.right<=width+1&&journey.dock.height<=76,'Dock footprint: '+JSON.stringify(journey));
    }
    await page.screenshot({path:'test-results/settings-'+name+'-map.png'});
    await page.evaluate(()=>{localStorage.setItem('meowbox-preview-resetProbe','keep until confirmed');localStorage.setItem('other-app-settings-test','preserve')});
