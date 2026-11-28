@@ -11,6 +11,28 @@ const url=process.env.MEOW_TEST_URL||'http://127.0.0.1:8768/index.html';
  const browser=await ({chromium,webkit}[engine]).launch();
  const page=await browser.newPage({viewport:{width:390,height:844}});
  try{
+  // Render the actual repository binaries as a review sheet first. Staged
+  // candidates remain unregistered until visual identity/contact review.
+  const base='assets/visual/staging/';
+  const candidates=[
+   ...['compatibility-cafe','parallel-lives','personality-lab','destiny-study'].map(n=>[n,base+'2026-11-28-consolidated/room-alternates/'+n+'.webp']),
+   ['journal-cover',base+'2026-11-28-project-batch10-interface/journal-cover.webp'],
+   ['heart-cafe-serve',base+'2026-11-28-batch3-heart-cafe/standing-serve.webp'],
+   ['heart-cafe-portrait',base+'2026-11-28-batch3-heart-cafe/warm-portrait.webp'],
+   ['storyteller-book',base+'2026-11-28-batch1-storyteller/standing-book.webp'],
+   ...['seated-explain','seated-idle','seated-notebook','standing-welcome'].map(n=>['observatory-'+n,base+'2026-11-28-batch1-observatory/'+n+'.webp']),
+   ...['seated-listen','seated-point','standing-inspect','standing-welcome'].map(n=>['curiosity-'+n,base+'2026-11-28-batch1-curiosity/'+n+'.webp']),
+   ['tarot-deal',base+'2026-11-28-batch1-tarot/seated-deal-extended.webp'],
+   ...['avatar-frame-empty','bag','calendar','mail','map','menu','notification','settings-leaf-alternate','settings'].map(n=>['interface-'+n,base+'2026-11-28-composite-recovery/interface/'+n+'.webp'])
+  ];
+  for(let offset=0;offset<candidates.length;offset+=9){
+   const group=candidates.slice(offset,offset+9);
+   await page.setViewportSize({width:1040,height:980});
+   await page.setContent('<html><body style="margin:0;background:#e6ded0;display:grid;grid-template-columns:repeat(3,320px);gap:14px;padding:14px;font:16px system-ui">'+group.map(([name,file])=>'<figure style="margin:0"><div style="height:290px;background:#ddd3c4;display:flex;align-items:center;justify-content:center"><img style="max-width:310px;max-height:280px;object-fit:contain" src="data:image/webp;base64,'+fs.readFileSync(file).toString('base64')+'"></div><figcaption>'+name+'</figcaption></figure>').join('')+'</body></html>');
+   await page.evaluate(()=>Promise.all(Array.from(document.images,im=>im.decode())));
+   await page.screenshot({path:path.join(out,'contact-assets-'+(offset/9+1)+'.jpg'),fullPage:true,type:'jpeg',quality:88});
+  }
+  await page.setViewportSize({width:390,height:844});
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>typeof pawEditorialOther==='function'&&typeof shareCardArt==='function'&&shareCardArt.toString().includes('pawEditorialOther'));
   const fixtures=await page.evaluate(()=>{
