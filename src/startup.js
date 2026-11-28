@@ -11886,6 +11886,16 @@ function pawAlcoveStickPoint(g,pose){
  const grip=pawAlcoveReach(g.stickPickFoot).grip;
  return {x:x+(grip.x-x)*pick,y:y+(grip.y-y)*pick,angle:Math.PI*.46*f*(1-pick)}
 }
+// Keep approach, retrieval and carried stick on one shared physical contact point.
+function pawAlcoveStickContact(g,pose,held=false){
+ const ease=u=>{u=Math.max(0,Math.min(1,u));return u*u*(3-2*u)};
+ const move=pose.picked?ease(pose.pick/.45):0;
+ const foot={x:g.stickFoot.x+(g.stickPickFoot.x-g.stickFoot.x)*move,y:g.stickFoot.y+(g.stickPickFoot.y-g.stickFoot.y)*move};
+ const reach=pawAlcoveReach(foot),walking=move>0&&move<1;
+ const hand=pose.picked?(pose.pick>=.45?pawAlcoveStickPoint(g,pose):null):(held||pose.shake?g.tubeGrip:null);
+ const contact=hand&&Math.hypot(hand.x-reach.shoulder.x,hand.y-reach.shoulder.y)<=reach.maxReach?hand:null;
+ return {foot,walking,hand:contact,reach,scale:pawAlcoveActorScale()};
+}
 function pawAlcoveMoonPoint(g,m){
  return {x:g.moonTray.x+(m.x-400)*.26,y:g.moonTray.y-m.lift*.32}
 }
@@ -11915,14 +11925,10 @@ function pawAlcoveTubeShake(shake){
 function pawDrawAlcoveSticks(){
  const run=state,g=pawAlcoveGeometry(),pose=pawTempleStickPose(run,t),held=drag?.id==='sticks';
  pawAlcoveTubeShake(held||pose.shake);
- const move=pose.picked?poseEase(Math.min(1,pose.pick/.45)):0,foot=pawWaterMix(g.stickFoot,g.stickPickFoot,move);
- const sc=pawAlcoveActorScale();
- // The whole actor is proportioned to the counter. Only expose the reaching hand during contact.
- if((held||pose.shake||pose.picked&&pose.pick<.85)&&(!pose.picked||pose.pick<.85)){
-  const {shoulder,grip,sleeve,maxReach}=pawAlcoveReach(foot),hand=!pose.picked?g.tubeGrip:pawWaterMix(g.stickTray,grip,poseEase(Math.max(0,(pose.pick-.45)/.55)));
-  if(Math.hypot(hand.x-shoulder.x,hand.y-shoulder.y)<=maxReach)pawIncenseArm(shoulder,hand,sleeve,false)
- }
- backHuman(foot.x,foot.y,avatar??0,move>0&&move<1,'up',sc);
+ const contact=pawAlcoveStickContact(g,pose,held),{foot,walking,hand,reach,scale}=contact;
+ // Keep the arm behind the painted body; do not reach while still walking.
+ if(hand)pawIncenseArm(reach.shoulder,hand,reach.sleeve,false);
+ backHuman(foot.x,foot.y,avatar??0,walking,'up',scale);
  if(pose.show){
   const pt=pawAlcoveStickPoint(g,pose);ctx.save();try{ctx.translate(pt.x,pt.y);ctx.rotate(pt.angle);
    round(-2.8,-17,5.6,34,1,'#d7b47c','#9c7447');line(-1,-15,-1,15,'#f1dba6',.7);
