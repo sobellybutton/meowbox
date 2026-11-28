@@ -47,6 +47,12 @@ fs.mkdirSync(out,{recursive:true});
   await tapText('Fold into a lantern','折进心愿灯');
   await page.waitForFunction(()=>state.gardenStage==='carry'&&!talkOpen);
   assert(await noPage());await shot('wish-carry');
+  const rack=await page.evaluate(()=>{const plate=pawWishPhysicalPlate(),v=pawWishPhysicalPoint(plate,.83,.205),r=c.getBoundingClientRect();return {x:r.left+cam.ox+v.x*cam.scale,y:r.top+cam.oy+v.y*cam.scale}});
+  await page.touchscreen.tap(rack.x,rack.y);
+  await page.waitForFunction(()=>state.gardenStage==='rise'||gardenWishes.some(w=>w.text==='A quiet day with a little sunshine'),null,{timeout:8000});
+  await page.waitForFunction(()=>state.gardenStage==='write',null,{timeout:8000});
+  await shot('wish-hung');assert(await page.evaluate(()=>gardenWishes.some(w=>w.text==='A quiet day with a little sunshine')));
+
   await fixture('tarot');
   // Known flipped card fixture: tests interpretation rather than random draw.
   await page.evaluate(()=>{start('tarot');state.readCards=[{i:0,rev:false}];state.readFlip=[t-2];state.readFocus=0;state.readStage='focus';state.readAt=t-1;readingFocusMeaning()});
@@ -62,7 +68,7 @@ fs.mkdirSync(out,{recursive:true});
   await form.waitFor({timeout:10000});assert(await noPage(),'Birth questions opened external page');
   await chatGeometry('yue');await shot('yue-birth-question');await form.locator('input[type=date]').fill('1990-05-15');
   await tapText('Continue','继续');await form.locator('input[type=time]').fill('09:30');await chatGeometry('yue-time');await shot('yue-birth-time');
-  await tapText('Continue','继续');await chatGeometry('yue-place');await shot('yue-birthplace');
+  await tapText('Continue','继续');await chatGeometry('yue-place');assert.equal(await form.locator('input[type=number]:visible').count(),0,'Location question exposes unnecessary coordinate form');await shot('yue-birthplace');
   const place=form.locator('details select');if(!await place.isVisible())await form.locator('details summary').tap();
   const choice=await place.evaluate(e=>[...e.options].find(x=>/singapore/i.test(x.textContent)||x.textContent.includes('新加坡'))?.value);assert(choice,'Singapore birthplace option');
   await place.selectOption(choice);
