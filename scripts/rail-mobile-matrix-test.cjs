@@ -22,6 +22,54 @@ const routes=['home','island','wonder','fortune'];
 // that was visible at lookup can disappear while the camera settles after
 // rotation. Never force a tap, inject a route, or bypass the railway.
 // Keep actionable hit-test evidence when neither affordance can be used.
+function approachKey(actor,station){
+ const dx=station.x-actor.x,dy=station.y-actor.y;
+ if(Math.abs(dx)>Math.abs(dy))return dx<0?'ArrowLeft':'ArrowRight';
+ return dy<0?'ArrowUp':'ArrowDown';
+}
+for(const [actor,station,expected] of [
+ [{x:500,y:1500},{x:500,y:210},'ArrowUp'],
+ [{x:100,y:400},{x:800,y:350},'ArrowRight'],
+ [{x:800,y:350},{x:100,y:400},'ArrowLeft'],
+ [{x:500,y:100},{x:500,y:650},'ArrowDown']
+])assert.equal(approachKey(actor,station),expected);
+async function approachStation(page,records,leg){
+ await page.waitForFunction(()=>proposal.hidden&&!transitioning&&!room&&!activity&&!pending&&!signRoot.hidden&&!talkOpen,null,{timeout:30000});
+ const read=()=>page.evaluate(()=>{
+  const station=maps[scene].st.find(v=>v[0]==='station');
+  if(!station)throw Error('No registered station for '+scene);
+  return {scene,x:p.x,y:p.y,station:{x:station[1],y:station[2]},near:pawRailNearStation(p,station),
+   distance:Math.hypot(p.x-station[1],p.y-station[2]),blocked:pawCanvasBlocked(),
+   focus:document.activeElement?.tagName,focusId:document.activeElement?.id,
+   focusVisible:!!document.activeElement?.getClientRects().length,
+   keys:Object.keys(keys).filter(k=>keys[k]),pending,transitioning,room,activity};
+ });
+ const before=await read(),trace={approachLeg:leg,before,samples:[]};records.push(trace);
+ if(!before.near){
+  assert.equal(await page.locator(visibleStation).count(),0,'Distant railway label should not preempt exploration');
+  const deadline=Date.now()+35000;
+  let current=before,stalled=0;
+  while(!current.near&&Date.now()<deadline){
+   if(current.focus!=='BODY'&&current.focus!=='HTML'&&!current.focusVisible)
+    await page.evaluate(()=>document.activeElement?.blur());
+   const key=approachKey(current,current.station);
+   await page.keyboard.down(key);
+   try{await page.waitForTimeout(300)}finally{await page.keyboard.up(key)}
+   const next=await read();
+   trace.samples.push({key,...next});
+   assert.equal(next.scene,before.scene,'Approach must stay in the same district');
+   if(Math.hypot(next.x-current.x,next.y-current.y)<1)stalled++;else stalled=0;
+   if(stalled>=8)throw Error('Station movement stalled: '+JSON.stringify({leg,before,last:next}));
+   current=next;
+  }
+ }
+ const after=await read();trace.after=after;
+ assert(after.near,'Traveller must approach the station before boarding: '+JSON.stringify({leg,before,after}));
+ if(!before.near){
+  assert(after.distance<before.distance,'Traveller must walk closer to the station');
+  assert(Math.hypot(after.x-before.x,after.y-before.y)>2,'Actual traveller movement required');
+ }
+}
 async function tapReachableStation(page,records,leg){
  const deadline=Date.now()+15000,samples=[],origin=leg===0?'fortune':routes[leg-1];
  let attempts=0;
@@ -79,7 +127,7 @@ async function main(){
   await skip.or(gate).first().waitFor({state:'visible',timeout:45000});
   if(await skip.isVisible())await tap(skip);
   await tap(gate);
-  await page.locator(visibleStation).first().waitFor({state:'visible',timeout:45000});
+  await page.waitForFunction(()=>proposal.hidden&&!transitioning&&!room&&!activity&&!signRoot.hidden,null,{timeout:45000});
   await shot('first-map');
   for(let i=0;i<routes.length;i++){
    // First and second journeys exercise portrait and landscape. Third uses
@@ -87,6 +135,7 @@ async function main(){
    const landscape=i===1;
    await page.setViewportSize(landscape?{width:p.height,height:p.width}:{width:p.width,height:p.height});
    await page.emulateMedia({reducedMotion:i===2?'reduce':'no-preference'});
+   await approachStation(page,records,i);
    await tapReachableStation(page,records,i);
    const ride=page.locator('.pawRailJourney');
    await ride.waitFor({state:'visible',timeout:45000});

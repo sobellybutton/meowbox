@@ -1,0 +1,44 @@
+name: Pawradise independent live railway journey
+on:
+  pull_request:
+    branches: [main]
+    paths: ['scripts/rail-mobile-matrix-test.cjs','.github/workflows/live-railway-release.yml','src/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  railway:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/live-railway-journey-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: android-compact
+            browser: chromium
+          - profile: ios-tall
+            browser: webkit
+          - profile: touch-tablet
+            browser: webkit
+    env:
+      RAIL_PROFILE: ${{ matrix.profile }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: node scripts/test-fortune-painting.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Walk, board and travel through all four districts
+        run: |
+          python3 -m http.server 8771 >/tmp/rail-live.log 2>&1 &
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8771/ >/dev/null && break; sleep 1; done
+          node scripts/rail-mobile-matrix-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: railway-live-${{ matrix.profile }}
+          path: test-results/rail-mobile
