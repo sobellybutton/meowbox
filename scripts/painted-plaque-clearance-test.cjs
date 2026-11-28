@@ -105,3 +105,26 @@ console.log('Painted room plaque clearance regression passed');
  assert.ok(ext.includes('let choice=pawArchitecturalPlaqueHome(btn,exact,now);'));
  console.log('PASS '+n+' architectural anchor recovery assertions');
 }
+
+/* Individually reviewed painted facades and interior objects. Sign anchors
+   remain independent of the approach point and original interaction area. */
+{
+ const source=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
+ const read=n=>{const a=source.indexOf('const '+n+'='),b=source.indexOf('\n};',a);assert.ok(a>=0&&b>a);return new Function(source.slice(a,b+3)+';return '+n)()};
+ const districts={fortune:read('pawFortunePainting'),...read('pawNewDistricts')};
+ const anchors={fortune:{wishes:[827,530]},wonder:{quiz:[740,400],story:[232,725]},island:{mystery:[255,405],arcade:[829,390]},home:{fish:[202,895],tea:[798,665]}};
+ for(const [room,stations] of Object.entries(anchors))for(const [id,point] of Object.entries(stations)){
+  const q=districts[room].doors[id],[x,y]=q.plaque,[l,t,w,h]=q.hit;
+  assert.deepEqual(q.plaque,point);
+  assert.ok(x>=l&&x<=l+w&&y>=t&&y<=t+h);
+ }
+ const api=require('../assets/visual/painted/interior-layouts.js');
+ const labels={tea:{chat:[.34,.46],board:[.50,.33]},quiz:{quiz:[.72,.48]},arcade:{bubbleArcade:[.80,.35],goldfishScoop:[.81,.46],blindBox:[.51,.30]}};
+ for(const [room,stations] of Object.entries(labels))for(const [id,point] of Object.entries(stations)){
+  const q=api.rooms[room].stations[id];
+  assert.deepEqual(q.label,point);
+  assert.ok(api.route(room,api.rooms[room].entry,q.approach)?.length);
+  for(const [w,h] of [[320,568],[390,844],[430,932],[768,1024],[1440,900]])assert.ok(api.project(q.label,api.camera(w,h)).every(Number.isFinite));
+ }
+ console.log('Reviewed facade and indoor station anchor regression passed');
+}
