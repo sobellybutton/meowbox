@@ -6,7 +6,7 @@ const sqlite=new DatabaseSync(':memory:');
 sqlite.exec('PRAGMA foreign_keys=ON');
 sqlite.exec(readFileSync('community/schema.sql','utf8'));
 const db={
- prepare(sql){return {bind(...args){return {async all(){return {results:sqlite.prepare(sql).all(...args)}},async first(){return sqlite.prepare(sql).get(...args)??null},async run(){return {meta:{changes:Number(sqlite.prepare(sql).run(...args).changes)}}}}},async all(){return {results:sqlite.prepare(sql).all()}}}},
+ prepare(sql){const statement=(args=[])=>({bind(...values){return statement(values)},async all(){return {results:sqlite.prepare(sql).all(...args)}},async first(){return sqlite.prepare(sql).get(...args)??null},async run(){return {meta:{changes:Number(sqlite.prepare(sql).run(...args).changes)}}}});return statement()},
  async batch(ops){sqlite.exec('BEGIN');try{const out=[];for(const op of ops)out.push(await op.run());sqlite.exec('COMMIT');return out}catch(e){sqlite.exec('ROLLBACK');throw e}}
 };
 const env={DB:db,RATE_SECRET:'test-rate-secret'.repeat(4),MODERATOR_TOKEN:'test-admin-token'.repeat(4),ENABLE_PRESENCE:'true',ALLOWED_ORIGIN:'https://example.test'};
