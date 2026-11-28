@@ -55,6 +55,21 @@ const assert=(value,message)=>{if(!value)throw Error(message)};
     await click(page.locator('#back'));await page.waitForFunction(()=>room===null&&!transitioning,null,{timeout:15000});
     assert(await page.locator('#profileHud').isVisible(),'Compact profile missing after returning to map');
     assert(/Lv\. \d+/.test(await page.locator('#hudProgress').innerText()),'Visible level missing');
+    // Regression for the owner screenshot: painted and SVG gears must
+    // never appear together, including after returning from a room.
+    const settingsIconState=()=>page.locator('#townSettingsToggle').evaluate(el=>{
+     const art=getComputedStyle(el,'::before'),svg=el.querySelector('svg'),r=el.getBoundingClientRect();
+     return {painted:art.content!=='none'&&art.content!=='normal'&&art.display!=='none'&&art.backgroundImage!=='none',svg:!!svg&&getComputedStyle(svg).display!=='none'&&svg.getBoundingClientRect().width>0,width:r.width,height:r.height,label:el.getAttribute('aria-label')};
+    });
+    const normalCog=await settingsIconState();
+    assert(normalCog.painted!==normalCog.svg,'Exactly one settings icon required: '+JSON.stringify(normalCog));
+    assert(normalCog.width>=44&&normalCog.height>=44&&normalCog.label,'Settings control lacks accessible touch target or name');
+    await page.emulateMedia({forcedColors:'active'});
+    try{
+     const contrastCog=await settingsIconState();
+     assert(!contrastCog.painted&&contrastCog.svg,'Forced-colors settings fallback missing: '+JSON.stringify(contrastCog));
+    }finally{await page.emulateMedia({forcedColors:'none'})}
+    await page.screenshot({path:'test-results/'+name+'-map-hud.png'});
     await click(page.locator('#townSettingsToggle'));
     await click(page.locator('#small .languageChoice').getByRole('button',{name:'中文',exact:true}));
     assert(await page.locator('#townSettingsPanel').isHidden(),'Language chooser did not collapse');
