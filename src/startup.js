@@ -13796,9 +13796,9 @@ let pawYueChartObserver=null;
 page=function(...args){pawYueChartObserver?.disconnect();pawYueChartObserver=null;delete $('page').dataset.pawYueDesk;delete $('page').dataset.pawYueExpanded;return pawYueDeskPageBefore(...args)};
 /* PAW_YUE_DESK_HUMOUR_BEGIN */
 function pawYueDeskQuestions(kind){
- const date=["First, when were you born? No need to tell me how old you feel.","先告诉我出生日期。心里觉得自己几岁，就不用交代啦。"];
+ const date=['When were you born?','你是哪天出生的？'];
  if(kind==='year')return [date,["Which year shall we look at? The calendar is not your boss.","想看看哪一年的流年？日历又不是你的老板。"]];
- if(kind==='chart')return [date,["Do you know your local birth time? Ask the family if needed; the baby was busy.","知道出生时的当地时间吗？不确定就问问家人，当时的你忙着哭呢。"],["Where were you born? Check the time zone used then. Even the stars need the right clock.","你在哪里出生？请核对当时的时区。星星也得看对钟。"]];
+ if(kind==='chart')return [date,["What time were you born?","你几点出生的？"],["Where were you born?","你在哪里出生的？"]];
  return [];
 }
 /* PAW_YUE_DESK_HUMOUR_END */
@@ -15218,7 +15218,7 @@ function pawTarotCardConversation(index=state.readFocus){
  const name=tr(d[0],d[1])+' · '+orient(v.rev);
  const reflection=run.readCards.length===5?fiveReadingPrompt(run.readTopic,index):topicReflection(run.readTopic,index);
  const aside=tarotCommentary(d[0],v.rev,run.readTopic,run.tarotTone);
- const parts=[name+'\n'+arcanaReading(d,v.rev),reflection,aside&&tr(...aside)].filter(Boolean);
+ const parts=[name,...[arcanaReading(d,v.rev),reflection,aside&&tr(...aside)].filter(Boolean).flatMap(pawChatPhrases)];
  function speak(step){
   if(!valid())return;
   $('page').style.display='none';
@@ -15272,13 +15272,92 @@ drawActivity=function(...args){
  if(room==='tarot'&&['tarot','love'].includes(activity)&&state.readStage==='focus'&&talkOpen&&$('dialogue').hasAttribute('data-paw-tarot-conversation')){
   const v=state.readCards?.[state.readFocus],im=pawReadingImage(pawReadingAPI(),'tarot');
   if(v&&pawRoomImageReady(im)){
-   const b=livingBounds(),w=Math.min(b.w*.31,b.h*.20),h=w*218/128;
-   ctx.save();try{paintLivingBackdrop(im);drawReadingCard(b.x+b.w*.64-w/2,b.y+b.h*.28-h/2,w,h,v.i,v.rev)}finally{ctx.restore()}
+   const b=livingBounds(),w=Math.min(b.w*.34,b.h*.22),h=w*218/128,x=b.x+b.w*.69-w/2,y=b.y+b.h*.33-h/2;
+   ctx.save();try{paintLivingBackdrop(im);ctx.save();ctx.shadowColor='#29282280';ctx.shadowBlur=8;round(x-2,y-2,w+4,h+4,2,'#e5d1a6','#a78c64');ctx.restore();paintReadingArtwork(x,y,w,h,v.i,v.rev)}finally{ctx.restore()}
    return
   }
  }
  return pawTarotConversationDraw(...args)
 };
+
+/* PAW_RITUAL_CHAT_BAR_BEGIN */
+// A subtitle-sized line and a short reply, not a modal or information card.
+function pawChatPhrases(value){
+ const source=String(value||'').trim(),limit=zh?46:110,out=[];
+ if(!source)return out;
+ const sentences=source.match(/[^.!?。！？；;\n]+[.!?。！？；;]*|[^\n]+/gu)||[source];
+ for(const sentence of sentences){
+  let part=sentence.trim();
+  while(part.length>limit){
+   let cut=zh?limit:part.lastIndexOf(' ',limit);
+   if(cut<Math.floor(limit*.45))cut=limit;
+   out.push(part.slice(0,cut).trim());part=part.slice(cut).trim()
+  }
+  if(part)out.push(part)
+ }
+ return out
+}
+const pawChatRooms=new Set(['tarot','destiny','wishes']);
+const pawChatBarSay=say,pawChatBarClose=closeTalk;
+say=function(name,words,choices=[],...rest){
+ const value=pawChatBarSay(name,words,choices,...rest),panel=$('dialogue');
+ panel.toggleAttribute('data-paw-chat-bar',pawChatRooms.has(room));
+ return value
+};
+closeTalk=function(...args){$('dialogue').removeAttribute('data-paw-chat-bar');return pawChatBarClose(...args)};
+const pawChatYuePresent=pawYueDeskPresent;
+pawYueDeskPresent=function(kind){
+ const result=pawChatYuePresent(kind),visit=pawYueInline;
+ if(!visit||visit.kind!==kind)return result;
+ const form=visit.form,controls=form.querySelector('.pawYueStepNav'),submit=form.querySelector('button[type=submit]');
+ if(controls&&submit)controls.append(submit);
+ const place=form.querySelector('details select');
+ if(place){
+  const nums=[...form.querySelectorAll('input[type=number]')],labels=nums.map(n=>n.closest('label')).filter(Boolean);
+  // Existing historical offset and custom coordinates remain accessible.
+  const update=()=>{const preset=!!place.value&&place.value!=='custom';form.dataset.pawBirthPreset=preset?'true':'false'};
+  place.addEventListener('change',update);update();
+  // Move only the coordinate inputs into a disclosure, never remove or disable them.
+  const coordLabels=labels.slice(1);
+  if(coordLabels.length===2&&coordLabels.every(n=>n.parentElement===form)){
+   const disclosure=element('details','',form,'pawYueCoordinates');element('summary',tr('Check coordinates','核对坐标'),disclosure);coordLabels[0].before(disclosure);disclosure.append(...coordLabels);
+   // The original guided controller owns their visibility; the disclosure follows location.
+   const show=()=>{const active=!place.closest('details').classList.contains('pawYueStepHidden');disclosure.hidden=!active;disclosure.open=active&&(!place.value||place.value==='custom')};
+   const observer=new MutationObserver(show);observer.observe(place.closest('details'),{attributes:true,attributeFilter:['class']});place.addEventListener('change',show);show()
+  }
+ }
+ return result
+};
+const pawChatBarStyle=document.createElement('style');
+pawChatBarStyle.textContent=`
+html #game #dialogue[data-paw-chat-bar]:not(.pawWishWriting){position:absolute!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;transform:none!important;width:100%!important;max-width:none!important;max-height:36dvh!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:24px max(14px,env(safe-area-inset-right,0px)) max(9px,env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px))!important;background:linear-gradient(180deg,transparent,#1d2927e8 27%,#1b2928fa 100%)!important;color:#fff2d8!important;overflow:auto!important;overscroll-behavior:contain;scrollbar-width:thin}
+html #game #dialogue[data-paw-chat-bar] #dialogueTop{display:flex!important;min-height:0!important;margin:0 0 3px!important;gap:0!important}
+html #game #dialogue[data-paw-chat-bar] #talkPortrait{display:none!important}
+html #game #dialogue[data-paw-chat-bar] #speaker{color:#e7ca8e!important;font:600 11px/1.3 var(--paw-display,Georgia,serif)!important;letter-spacing:.04em;text-shadow:none!important}
+html #game #dialogue[data-paw-chat-bar] #line{color:#fff2d8!important;font:15px/1.38 var(--paw-body,system-ui,sans-serif)!important;white-space:pre-line!important;margin:0 0 5px!important;padding:0!important;text-shadow:none!important}
+html #game #dialogue[data-paw-chat-bar] #choices{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;gap:6px!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:2px 0 0!important;scrollbar-width:thin}
+html #game #dialogue[data-paw-chat-bar] #choices button{flex:0 0 auto!important;width:auto!important;min-width:44px!important;min-height:44px!important;max-width:86vw!important;padding:6px 11px!important;border:1px solid #e2c99980!important;border-radius:16px!important;box-shadow:none!important;background:#f0dfba12!important;color:#fff2d8!important;font:500 12px/1.25 var(--paw-body,system-ui,sans-serif)!important;text-align:center!important;white-space:normal!important}
+html #game #dialogue[data-paw-chat-bar] #choices button:first-child{background:#e6d2a8!important;color:#33473c!important;border-color:#e6d2a8!important}
+html #game #dialogue[data-paw-chat-bar][data-paw-yue-question] #line:empty{display:none!important}
+html #game #dialogue[data-paw-chat-bar][data-paw-yue-question] .pawYueGuidedForm{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:4px!important;margin:0!important;padding:0!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueQuestion{font:15px/1.35 var(--paw-body,system-ui,sans-serif)!important;color:#fff2d8!important;margin:0 0 3px!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm label{color:#e7d6b5!important;font:11px/1.25 var(--paw-body,system-ui,sans-serif)!important;gap:2px!important;margin:0!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm :is(input,select){min-height:44px!important;background:#f5e9d0!important;color:#3a4034!important;border:1px solid #c5b38c!important;border-radius:8px!important;font-size:16px!important;margin:0!important;padding:4px 8px!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueStepNav{display:flex!important;justify-content:flex-end!important;gap:6px!important;margin:0!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueStepNav button{flex:0 1 auto!important;min-height:44px!important;padding:6px 12px!important;border-radius:16px!important;background:#e6d2a8!important;color:#33473c!important;border:0!important;box-shadow:none!important;font-size:12px!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm .pawYueStepHidden,html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm [hidden]{display:none!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm details{padding:0!important;margin:0!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#e7d6b5!important;font-size:11px!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm details summary{min-height:36px!important;color:#e7d6b5!important}
+html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm .pawYueInputError{color:#ffe0b0!important}
+html #game #dialogue.pawWishWriting[data-paw-chat-bar]{position:absolute!important;left:10px!important;right:10px!important;bottom:max(12px,env(safe-area-inset-bottom,0px))!important;top:auto!important;transform:none!important;width:auto!important;max-width:480px!important;margin:0 auto!important;max-height:28dvh!important;background:transparent!important;border:0!important;box-shadow:none!important}
+html #game #dialogue.pawWishWriting[data-paw-chat-bar] #dialogueTop,html #game #dialogue.pawWishWriting[data-paw-chat-bar] #line{display:none!important}
+html #game #dialogue.pawWishWriting[data-paw-chat-bar] .pawWishPaper{padding:8px 30px 7px 10px!important;transform:none!important;border-radius:3px!important}
+html #game #dialogue.pawWishWriting[data-paw-chat-bar] textarea{min-height:52px!important;max-height:74px!important;line-height:24px!important;font:16px/24px var(--paw-body,system-ui,sans-serif)!important}
+html #game #dialogue.pawWishWriting[data-paw-chat-bar] #choices button{background:#e6d2a8!important;color:#33473c!important}
+@media(orientation:landscape){html #game #dialogue[data-paw-chat-bar]:not(.pawWishWriting){max-height:46dvh!important;padding-top:16px!important}html #game #dialogue.pawWishWriting[data-paw-chat-bar]{max-height:44dvh!important}}
+@media(forced-colors:active){html #game #dialogue[data-paw-chat-bar]{background:Canvas!important;color:CanvasText!important}html #game #dialogue[data-paw-chat-bar] :is(#speaker,#line,.pawYueQuestion){color:CanvasText!important}html #game #dialogue[data-paw-chat-bar] #choices button{color:ButtonText!important;background:ButtonFace!important;border:1px solid ButtonText!important}}
+`;document.head.append(pawChatBarStyle);
+/* PAW_RITUAL_CHAT_BAR_END */
 /* PAW_IN_WORLD_CONSULTATION_END */
 
 /* PAW_OPENING_EXPERIENCE_BEGIN
