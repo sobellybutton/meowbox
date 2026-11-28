@@ -98,3 +98,16 @@ for(const id of ['kitchen','boba']){
  assert.equal(exits.pawFoodExitPlan(id,[100,400]),null);
 }
 console.log('Arcade runtime compatibility and painted food shop exit plans passed.');
+
+// Park retains distinct animal approach points; the painted fence, water,
+// bench and feeder are not walkable ground.
+const park=api.rooms.park;
+assert.deepEqual(Object.keys(park.stations),['pet','deerVisit']);
+assert.equal(api.safe('park',[.82,.47]),false);
+assert.equal(api.safe('park',[.21,.36]),false);
+assert.equal(api.safe('park',[.50,.22]),false);
+const parkRoute=api.route('park',park.entry,park.stations.pet.approach);
+assert.ok(parkRoute.length>2,'park path must follow the bend');
+assert.ok(!api.segment('park',park.entry,park.stations.pet.approach));
+assert.ok(api.route('park',park.stations.pet.approach,park.stations.deerVisit.approach));
+console.log('Park path bend, animal approach and obstacle exclusions passed.');
