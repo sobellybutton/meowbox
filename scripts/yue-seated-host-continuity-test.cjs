@@ -16,13 +16,16 @@ for(const id of ['destiny','tarot','tea'])for(const ready of [false,true])for(co
 assert.equal(api.pawReadingVisitPhase({id:'tarot',ready:true},'destiny','result'),null);
 for(const h of [275,550,1100])for(const phase of ['idle','question','result']){
  const p={x:20,y:30,w:h*928/1648,h},q=plan('destiny',p,phase),f=host.contacts(manifest,q.host,q.pose,q.center,q.span),r=api.pawReadingVisibleRect(f,manifest.characters[q.host].poses[q.pose].visibleAlphaBounds,q.clip);
- assert.ok(r&&r.bottom<=p.y+p.h*.447+1e-8&&r.top<q.center[1]&&r.left<q.center[0]&&r.right>q.center[0]);
- assert.ok(Math.abs(q.span-h*.0185)<1e-8);
+ assert.ok(r&&r.bottom<=p.y+p.h*.306+1e-8&&r.top<q.center[1]&&r.left<q.center[0]&&r.right>q.center[0]);
+ assert.ok(Math.abs(q.span-h*.017)<1e-8);
+ assert.ok(Math.abs(q.center[0]-(p.x+p.w*.581))<1e-8&&Math.abs(q.center[1]-(p.y+p.h*.218))<1e-8,'painted chair eye anchor');
+ assert.ok(Math.abs(q.clip[3]-h*.306)<1e-8,'tabletop front lip clips host');
  checks++;
 }
 assert.equal(api.pawReadingVisibleRect({point:(x,y)=>[x,y]},[0,0,10,10],[20,20,5,5]),null);
 assert.equal(api.pawReadingVisibleRect({point:(x,y)=>[x,y]},[0,0,10,10],[2,3,5,6]).bottom,9);
 assert.ok(src.includes("idleReady:pawReadingIdleReady(id)"));
 assert.ok(src.includes("const selected=pawReadingVisitPhase(pawHostVisit,id,phase)"));
-assert.ok(src.includes("if(id==='destiny'&&phase==='result'&&grid)"));
+assert.ok(src.includes("if(id==='destiny'&&grid)"));
+assert.ok(src.includes("if(!folded&&phase==='result'&&ink&&typeof api.paintChartPalaces==='function')api.drawHeldParchment"));
 console.log('Master Yue seated visit admission and visible silhouette: '+checks+' cases passed');

@@ -146,7 +146,7 @@ for(const id of Object.keys(api.rooms)){
  const route=(a,b)=>visitor.pawReadingDestination(api,id,a,...b);
  const stations=Object.values(spec.stations).map(v=>v.slice(2));
  const reserved=[spec.entry,[spec.entry[0],spec.entry[1]-35],spec.arrival,...stations];
- const host=['quiz','story','match'].includes(id)?[]:[visitor.pawReadingWorld(id==='destiny'?[.58,.446]:api.rooms[id].host)];
+ const host=['quiz','story','match'].includes(id)?[]:[visitor.pawReadingWorld(id==='destiny'?[.58,.306]:api.rooms[id].host)];
  assert.ok(visitor.pawVisitorDoorRoute(spec.entry,points[0],stations,safe,route,gap.station,segment),id+' guest seed can enter and leave');
  for(let i=1;i<points.length;i++){
   assert.ok(points.slice(0,i).some(p=>segment(p,points[i])&&visitor.pawGuestSegment(p,points[i],reserved,gap.station)&&visitor.pawGuestSegment(p,points[i],host,gap.host)),id+' connected guest stops');
