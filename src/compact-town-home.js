@@ -121,17 +121,23 @@ function cutawayDragOwner(){
 }
 // Four existing extracted illustrations: low sitting, not raised-chair or sleeping poses.
 const cutawaySeatArt=[
- {width:206,height:280,hip:[63,212]},
- {width:215,height:283,hip:[70,220]},
- {width:222,height:280,hip:[74,219]},
- {width:239,height:279,hip:[82,218]}
+ {width:206,height:280,hip:[71,214]},
+ {width:215,height:283,hip:[82,225]},
+ {width:222,height:280,hip:[82,223]},
+ {width:239,height:279,hip:[88,225]}
 ].map((p,i)=>Object.freeze({...p,path:'assets/visual/staging/2026-11-27-extracted/players/'+i+'/seated.webp'}));
 function cutawaySeatFrame(index){return Number.isInteger(index)?cutawaySeatArt[index]||null:null}
-function cutawaySeatPlacement(stage,cushion,standingHeight,frame){
+// Use the actual contained image rather than the element's letterboxed area.
+function cutawayContainedArt(box,width,height){
+ if(!box||![box.left,box.top,box.width,box.height,width,height].every(Number.isFinite)||Math.min(box.width,box.height,width,height)<=0)return null;
+ const k=Math.min(box.width/width,box.height/height),w=width*k,h=height*k;
+ return {left:box.left+(box.width-w)/2,top:box.top+(box.height-h)/2,width:w,height:h}
+}
+function cutawaySeatPlacement(stage,cushion,standingHeight,frame,mirrored=false){
  if(!stage||!cushion||!frame||![stage.left,stage.top,stage.width,stage.height,cushion.left,cushion.top,cushion.width,cushion.height,standingHeight].every(Number.isFinite)||Math.min(stage.width,stage.height,cushion.width,cushion.height,standingHeight)<=0)return null;
  // Align the visible hip with the cushion's center seam. Match approximate
  // head scale to standing artwork; do not reuse the floor pose on a high bench.
- const x=(cushion.left+cushion.width*.51-stage.left)/stage.width,y=(cushion.top+cushion.height*.43-stage.top)/stage.height;
+ const x=(cushion.left+cushion.width*(mirrored?.49:.51)-stage.left)/stage.width,y=(cushion.top+cushion.height*.43-stage.top)/stage.height;
  const width=standingHeight*.80*frame.width/frame.height/stage.width,height=standingHeight*.80/stage.height;
  const hx=frame.hip[0]/frame.width,hy=frame.hip[1]/frame.height;
  // Never crop the seated player's head or legs at the room edge.
@@ -299,17 +305,19 @@ function physicalRoomLight(stage,zone){
 }
 
 const cutawayDecoded=new Map();
-function decodeCutawayArt(path){
- if(cutawayDecoded.has(path))return cutawayDecoded.get(path);
+function decodeCutawayArt(path,expected=null){
+ const key=expected?path+'|'+expected.width+'x'+expected.height:path;
+ if(cutawayDecoded.has(key))return cutawayDecoded.get(key);
  const job=new Promise(resolve=>{
   const im=new Image();let done=false;
   function finish(ok){if(done)return;done=true;clearTimeout(timer);im.onload=im.onerror=null;resolve(ok)}
   const timer=setTimeout(()=>finish(false),8000);
   im.onerror=()=>finish(false);
-  im.onload=()=>{if(typeof im.decode==='function')im.decode().then(()=>finish(im.naturalWidth>0),()=>finish(false));else finish(im.naturalWidth>0)};
+  const valid=()=>im.naturalWidth>0&&im.naturalHeight>0&&(!expected||im.naturalWidth===expected.width&&im.naturalHeight===expected.height);
+  im.onload=()=>{if(typeof im.decode==='function')im.decode().then(()=>finish(valid()),()=>finish(false));else finish(valid())};
   im.src=path
- }).then(ok=>{if(!ok)cutawayDecoded.delete(path);return ok});
- cutawayDecoded.set(path,job);return job
+ }).then(ok=>{if(!ok)cutawayDecoded.delete(key);return ok});
+ cutawayDecoded.set(key,job);return job
 }
 function mountCutaway(q,legacyStage){
  const launch=element('div','',q,'pawCutawayLaunch');legacyStage.before(launch);
@@ -373,7 +381,8 @@ function mountCutaway(q,legacyStage){
    if(!seatReady||!seatFrame)return false;
    const cushion=Array.from(stage.querySelectorAll('.pawCutawayFurniture')).find(n=>n.dataset.furnitureKey===item.key);
    const bounds=stage.getBoundingClientRect();
-   const p=cutawaySeatPlacement(bounds,cushion?.getBoundingClientRect(),standingRatio*bounds.height,seatFrame);
+   const visible=cushion&&cutawayContainedArt(cushion.getBoundingClientRect(),cushion.naturalWidth,cushion.naturalHeight);
+   const p=cutawaySeatPlacement(bounds,visible,standingRatio*bounds.height,seatFrame,item.turn%2===1);
    if(!p)return false;
    seatedKey=item.key;seatStandingRatio=standingRatio;player.dataset.seated='true';
    if(player.getAttribute('src')!==seatFrame.path)player.src=seatFrame.path;
@@ -476,7 +485,7 @@ function mountCutaway(q,legacyStage){
   stage.onclick=e=>{if(e.target.closest('.pawCutawayFurniture,.pawCutawayActor'))return;const rect=stage.getBoundingClientRect(),cell=api.nearestCell(layout,(e.clientX-rect.left)/rect.width,(e.clientY-rect.top)/rect.height);if(!cell)return;if(editing&&selected)move(cell);else if(!editing)walk(cell)};
   stage.onkeydown=e=>{if(e.target!==stage)return;const d={ArrowLeft:[1,0],ArrowRight:[-1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(!d)return;e.preventDefault();e.stopPropagation();if(editing&&selected){const i=items.find(v=>v.key===selected);move({u:i.u+d[0],v:i.v+d[1]})}else if(!editing)walk({u:actor.u+d[0],v:actor.v+d[1]})};
   pawHomeStop();render();sayStatus();legacyStage.hidden=true;q.classList.add('pawCutawayOpen');stage.focus({preventScroll:true});
-  if(seatFrame&&items.some(i=>i.id==='floor-cushion'))decodeCutawayArt(seatFrame.path).then(ok=>{
+  if(seatFrame&&items.some(i=>i.id==='floor-cushion'))decodeCutawayArt(seatFrame.path,seatFrame).then(ok=>{
    if(!ok||!panel.isConnected||!active())return;seatReady=true;
    // Upgrade just the cushion input, without rerendering or interrupting a walk.
    for(const item of items.filter(i=>i.id==='floor-cushion')){
