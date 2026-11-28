@@ -382,16 +382,34 @@ if(typeof document!=='undefined')queueMicrotask(pawInstallTarotHostContinuity);
 /* PAW_EDITORIAL_SHARE_BEGIN */
 // Share art is a souvenir, not the detailed in-game reading. Keep every
 // actual card identity, but give the illustration and one takeaway room.
+// Use the original paper's quiet interior texture, not its travel-specific
+// decorative border on every result. Preserve social overlay safe margins.
+function pawEditorialCanvasBox(box){
+ if(!box)return null;
+ const story=box.height>=1800,margin=story?84:68;
+ return {...box,left:margin,right:story?142:margin,top:story?216:86,bottom:box.height-(story?300:86)}
+}
+function pawEditorialBackdrop(g,paper,box,surface){
+ const w=box.width,h=box.height;
+ g.drawImage(paper,Math.round(w*.12),Math.round(h*.27),Math.round(w*.76),Math.round(h*.44),0,0,w,h);
+ g.globalAlpha=.79;g.fillStyle=surface;g.fillRect(0,0,w,h);g.globalAlpha=1
+}
+function pawEditorialScoreRatio(value){
+ const match=/^\s*(\d+)\s*([/:])\s*(\d+)\s*$/.exec(String(value||''));
+ if(!match)return null;
+ const a=Number(match[1]),b=Number(match[3]),total=match[2]===':'?a+b:b;
+ return total>0&&a<=total?{ratio:a/total,split:match[2]===':'}:null
+}
 function pawEditorialTarotPlan(box,count){
  if(!box||![1,3,5].includes(count)||![box.width,box.height,box.left,box.right,box.top,box.bottom].every(Number.isFinite))return null;
  const x=box.left+12,w=box.width-box.left-box.right-24,H=box.bottom-box.top;
  if(w<640||H<600)return null;
  const top=box.top,story=box.height>=1800,rows=story&&count===5?[3,2]:[count];
- const header=H>=900?122:92,footer=48,summary=Math.max(110,Math.min(180,H*.20)),gap=18;
+ const header=H>=900?148:116,footer=56,summary=Math.max(150,Math.min(224,H*.22)),gap=24;
  const area=H-header-footer-summary-gap*3,perRow=(area-(rows.length-1)*gap)/rows.length;
- const caption=100,slots=[];let y=top+header+gap;
+ const caption=112,slots=[];let y=top+header+gap;
  for(const n of rows){
-  const cellW=(w-(n-1)*gap)/n,cardH=Math.min(perRow-caption-8,(cellW-12)*218/128, count===1?(story?590:460):(story?480:380)),cardW=cardH*128/218;
+  const cellW=(w-(n-1)*gap)/n,cardH=Math.min(perRow-caption-8,(cellW-12)*218/128, count===1?(story?660:590):(story?540:475)),cardW=cardH*128/218;
   if(cardH<100)return null;
   const groupW=n*cellW+(n-1)*gap;
   for(let i=0;i<n;i++){
@@ -431,13 +449,12 @@ function pawEditorialTextFit(measure,text,width,height,start,min,maxLines,spacin
 }
 function pawEditorialTarot(cv,data,format,cn,box,paper,atlas,deck,positions){
  if(data?.kind!=='tarot'||!Array.isArray(data.cards)||!data.cards.every(c=>Number.isInteger(c?.i)&&deck[c.i])||!paper?.complete||paper.naturalWidth!==box?.width||paper.naturalHeight!==box?.height||!atlas?.complete||atlas.naturalWidth!==1024||atlas.naturalHeight!==2180)return false;
+ box=pawEditorialCanvasBox(box);
  const plan=pawEditorialTarotPlan(box,data.cards.length);if(!plan)return false;
  const locale=v=>String(v?.[Number(!!cn)]||''),font=cn?'"Songti SC","Noto Serif CJK SC","Microsoft YaHei",serif':'Georgia,serif';
  const ink='#443348',muted='#6e5367',gold='#9d7851';
  cv.width=box.width;cv.height=box.height;const g=cv.getContext('2d');if(!g)return false;
- g.drawImage(paper,0,0,cv.width,cv.height);
- // One quiet sheet over the old reserved template area; no nested UI panels.
- g.fillStyle='#faf0de';g.fillRect(box.left-4,box.top-8,box.width-box.left-box.right+8,box.bottom-box.top+16);
+ pawEditorialBackdrop(g,paper,box,'#f0e5f0');
  function text(rect,value,start,min,maxLines,weight='normal',color=ink,spacing=1.23){
   const [x,y,w,h]=rect,measure=(v,size)=>{g.font=weight+' '+size+'px '+font;return g.measureText(v).width};
   const fit=pawEditorialTextFit(measure,value,w-8,h,start,min,maxLines,spacing);
@@ -445,8 +462,8 @@ function pawEditorialTarot(cv,data,format,cn,box,paper,atlas,deck,positions){
   fit.rows.forEach((v,i)=>g.fillText(v,x+w/2,y+h/2+(i-(fit.rows.length-1)/2)*fit.lineHeight));
  }
  const [x,y,w,h]=plan.title;
- text([x,y,w,30],cn?'月光塔罗 · 摸鱼小镇':'MOONLIGHT TAROT  /  PAWRADISE',25,20,1,'normal',gold);
- text([x,y+32,w,h-32],locale(data.title),cn?48:56,34,2,'bold');
+ text([x,y,w,40],cn?'月光塔罗 · 摸鱼小镇':'MOONLIGHT TAROT  /  PAWRADISE',32,26,1,'normal',muted);
+ text([x,y+42,w,h-42],locale(data.title),cn?60:68,42,2,'bold');
  data.cards.forEach((c,i)=>{
   const slot=plan.slots[i],[cx,cy,cw,ch]=slot.card,[lx,ly,lw,lh]=slot.label;
   g.save();try{
@@ -455,14 +472,14 @@ function pawEditorialTarot(cv,data,format,cn,box,paper,atlas,deck,positions){
    g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(atlas,c.i%8*128,Math.floor(c.i/8)*218,128,218,-cw/2,-ch/2,cw,ch);
   }finally{g.restore()}
   const role=locale(positions[i]);
-  text([lx,ly,lw,22],role,20,17,1,'normal',muted);
-  text([lx,ly+23,lw,54],locale(deck[c.i]),data.cards.length===5?26:30,21,2,'bold');
-  text([lx,ly+78,lw,22],c.rev?(cn?'逆位':'Reversed'):(cn?'正位':'Upright'),20,17,1,'normal',muted);
+  text([lx,ly,lw,28],role,24,20,1,'normal',muted);
+  text([lx,ly+29,lw,54],locale(deck[c.i]),data.cards.length===5?28:36,21,2,'bold');
+  text([lx,ly+84,lw,28],c.rev?(cn?'逆位':'Reversed'):(cn?'正位':'Upright'),24,20,1,'normal',muted);
  });
  const [rx,ry,rw,rh]=plan.reading;
  g.strokeStyle='#bca17d';g.lineWidth=2;g.beginPath();g.moveTo(rx+rw*.38,ry);g.lineTo(rx+rw*.62,ry);g.stroke();
- text([rx+24,ry+12,rw-48,rh-12],locale(data.takeaway||socialResultQuote(data)),cn?34:36,27,4,'normal',ink,1.32);
- text(plan.footer,cn?'Pawradise · 给自己留一点时间 · 仅供反思':'Pawradise · A little time for yourself · For reflection',23,19,2,'normal',muted);
+ text([rx+24,ry+12,rw-48,rh-12],locale(data.takeaway||socialResultQuote(data)),cn?42:44,32,4,'normal',ink,1.32);
+ text(plan.footer,cn?'Pawradise · 给自己留一点时间 · 仅供反思':'Pawradise · A little time for yourself · For reflection',28,23,2,'normal',muted);
  return true
 }
 
@@ -488,7 +505,7 @@ function pawEditorialResultPlan(box,mode,count){
  if(!box||![box.width,box.height,box.left,box.right,box.top,box.bottom].every(Number.isFinite))return null;
  const x=box.left+18,w=box.width-box.left-box.right-36,H=box.bottom-box.top;
  if(w<640||H<600)return null;
- const top=box.top,head=H>=900?126:108,foot=48,gap=20;
+ const top=box.top,head=H>=900?148:116,foot=56,gap=26;
  const title=[x,top,w,head],footer=[x,box.bottom-foot,w,foot],body=[x,top+head+gap,w,H-head-foot-gap*2];
  if(mode==='chart'){
   const chartW=Math.min(w,Math.max(body[3],w*.88)),chartH=Math.min(chartW,body[3]-12),cw=chartW/4,ch=chartH/4,ox=x+(w-chartW)/2,oy=body[1]+(body[3]-chartH)/2;
@@ -497,7 +514,7 @@ function pawEditorialResultPlan(box,mode,count){
  }
  if(mode==='scores'){
   if(!Number.isInteger(count)||count<1||count>9)return null;
-  const cols=count>=7?2:1,rows=Math.ceil(count/cols),colW=(w-(cols-1)*30)/cols,rowH=Math.min(120,body[3]/rows),oy=body[1]+(body[3]-rowH*rows)/2;
+  const cols=count>=7?2:1,rows=Math.ceil(count/cols),colW=(w-(cols-1)*34)/cols,rowH=Math.min(152,body[3]/rows),oy=body[1]+(body[3]-rowH*rows)/2;
   return {title,footer,body,rows:Array.from({length:count},(_,i)=>[x+(i%cols)*(colW+30),oy+Math.floor(i/cols)*rowH,colW,rowH])}
  }
  const artH=Math.round(body[3]*(H>1000?.64:.55));
@@ -508,11 +525,11 @@ function pawEditorialOther(cv,data,format,cn,box,paper,art,quote){
  const chart=data.kind==='zwds_chart',scores=Array.isArray(data.scoreRows)&&data.scoreRows.length>0;
  if(chart&&(!Array.isArray(data.palaces)||data.palaces.length!==12||data.palaces.some(p=>!Array.isArray(p?.name)||!Array.isArray(p.stars))))return false;
  if(scores&&data.scoreRows.some(r=>!Array.isArray(r?.label)||!Array.isArray(r.value)))return false;
+ box=pawEditorialCanvasBox(box);
  const mode=chart?'chart':scores?'scores':'illustrated',plan=pawEditorialResultPlan(box,mode,data.scoreRows?.length);if(!plan)return false;
  const [surface,ink,accent,category]=theme,locale=v=>String(v?.[Number(!!cn)]||''),font=cn?'"Songti SC","Noto Serif CJK SC","Microsoft YaHei",serif':'Georgia,serif';
  cv.width=box.width;cv.height=box.height;const g=cv.getContext('2d');if(!g)return false;
- g.drawImage(paper,0,0,cv.width,cv.height);
- g.fillStyle=surface;g.fillRect(box.left-4,box.top-8,box.width-box.left-box.right+8,box.bottom-box.top+16);
+ pawEditorialBackdrop(g,paper,box,surface);
  function text(rect,value,start,min,maxLines,weight='normal',color=ink,align='center'){
   const [x,y,w,h]=rect,measure=(v,size)=>{g.font=weight+' '+size+'px '+font;return g.measureText(v).width};
   const fit=pawEditorialTextFit(measure,value,w-10,h,start,min,maxLines,1.23);
@@ -521,8 +538,8 @@ function pawEditorialOther(cv,data,format,cn,box,paper,art,quote){
  }
  function rule(x,y,w){g.strokeStyle=accent;g.globalAlpha=.38;g.lineWidth=1.5;g.beginPath();g.moveTo(x,y);g.lineTo(x+w,y);g.stroke();g.globalAlpha=1}
  const [x,y,w,h]=plan.title;
- text([x,y,w,30],locale(category)+'  ·  Pawradise',25,20,1,'normal',accent);
- text([x,y+32,w,h-32],locale(data.title),cn?49:56,34,2,'bold');
+ text([x,y,w,40],locale(category)+'  ·  Pawradise',32,26,1,'normal',ink);
+ text([x,y+42,w,h-42],locale(data.title),cn?60:68,42,2,'bold');
  if(chart){
   // The palace positions are meaningful. Retain the traditional chart
   // structure, but use fine ink rules instead of individual UI cards.
@@ -537,10 +554,11 @@ function pawEditorialOther(cv,data,format,cn,box,paper,art,quote){
  }else if(scores){
   plan.rows.forEach((rect,i)=>{
    const [a,b,c,d]=rect,row=data.scoreRows[i],label=locale(row.label),value=locale(row.value);
-   const split=c*.68;
-   text([a,b,split-8,d-8],label,30,22,2,'normal',ink,'left');
-   text([a+split,b,c-split,d-8],value,34,24,2,'bold',accent,'right');
-   rule(a,b+d-2,c);
+   const split=c*.71,bar=pawEditorialScoreRatio(value),labelH=bar?d*.65:d-8;
+   text([a,b,split-8,labelH],label,data.scoreRows.length>=7?33:40,25,2,'normal',ink,'left');
+   text([a+split,b,c-split,labelH],value,38,28,2,'bold',ink,'right');
+   if(bar){const bx=a+5,by=b+labelH+4,bw=c-10,bh=Math.min(11,d*.12);g.globalAlpha=.19;g.fillStyle=accent;g.fillRect(bx,by,bw,bh);g.globalAlpha=1;g.fillStyle=accent;if(bar.ratio>0)g.fillRect(bx,by,bw*bar.ratio,bh);if(bar.split){g.fillStyle=ink;g.globalAlpha=.35;g.fillRect(bx+bw/2-1,by-3,2,bh+6);g.globalAlpha=1}}
+   else rule(a,b+d-2,c);
   });
  }else{
   const [a,b,c,d]=plan.art;
@@ -562,11 +580,11 @@ function pawEditorialOther(cv,data,format,cn,box,paper,art,quote){
   const fortuneDetail=data.kind==='fortune'?locale(data.lines?.[2]):'';
   const hasFortuneDetail=!!fortuneDetail,contentH=hasFortuneDetail?sh-34:sh;
   const leadH=detail?contentH*.51:contentH-10;
-  text([sx+14,sy+8,sw-28,leadH-8],lead,cn?34:38,24,3,'bold',accent);
-  if(detail)text([sx+16,sy+leadH,sw-32,contentH-leadH],detail,cn?30:32,24,4);
-  if(hasFortuneDetail)text([sx+12,sy+contentH,sw-24,34],fortuneDetail,25,20,1,'normal',accent)
+  text([sx+14,sy+8,sw-28,leadH-8],lead,cn?42:44,29,3,'bold',ink);
+  if(detail)text([sx+16,sy+leadH,sw-32,contentH-leadH],detail,cn?36:38,29,4);
+  if(hasFortuneDetail)text([sx+12,sy+contentH,sw-24,34],fortuneDetail,30,24,1,'normal',ink)
  }
- text(plan.footer,cn?'Pawradise · 偷得浮生半日闲 · 仅供反思':'Pawradise · A little escape · For reflection',23,19,2,'normal',accent);
+ text(plan.footer,cn?'Pawradise · 偷得浮生半日闲 · 仅供反思':'Pawradise · A little escape · For reflection',28,23,2,'normal',ink);
  return true
 }
 /* PAW_EDITORIAL_RESULTS_END */
