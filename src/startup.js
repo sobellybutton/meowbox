@@ -119,7 +119,250 @@ const meowSettingsCSS=document.createElement('style');meowSettingsCSS.textConten
 roomActions.park=(roomActions.park||[]).filter(a=>a[0]!=='chat');
 const curatedOfficeDoor=maps.home.st.find(v=>v[0]==='office');
 if(curatedOfficeDoor)maps.home.st=maps.home.st.filter(v=>v[0]!=='office');
-function gatheringOfficeStory(){closeTalk();const finish=()=>{addItem('Meeting escape ticket','逃会车票');closeTalk()};say(tr('Wang Laoban','王老板'),tr('Quick meeting. Only five minutes. It starts at 5:58 PM.','开个短会，就五分钟。下午五点五十八开始。'),[[tr('Ask for an agenda','先问议程'),()=>say(tr('Wang Laoban','王老板'),tr('Excellent initiative. Please prepare the agenda.','很好，很主动。那你来准备议程吧。'),[[tr('I have a train to catch','我要赶车'),finish]])],[tr('Pretend the connection froze','假装网络卡了'),()=>say(tr('Wang Laoban','王老板'),tr('No problem. I recorded the meeting for you. All 97 minutes.','没关系，我录下来了。整整九十七分钟。'),[[tr('Clock out anyway','照常下班'),finish]])],[tr('Return to the table','回茶桌'),closeTalk]])}
+/* PAW_OFFICE_STORIES_BEGIN */
+const pawOfficeStories=[
+  {
+    "id": "lateMeeting",
+    "name": [
+      "The five-minute meeting",
+      "五分钟小会"
+    ],
+    "opening": [
+      "A quick meeting at 5:58 PM. Wang says it will only take five minutes. The calendar invitation ends tomorrow.",
+      "下午五点五十八，王老板说开个五分钟的小会。你一看日历邀请，结束时间竟然是明天。"
+    ],
+    "choices": [
+      {
+        "label": [
+          "Ask what needs deciding",
+          "先问要决定什么"
+        ],
+        "reply": [
+          "Wang studies the invitation. Nobody has an actual decision to make. He puts the meeting on hold.",
+          "王老板盯着邀请看了半天，发现根本没事要拍板。会议暂缓。"
+        ],
+        "choices": [
+          {
+            "label": [
+              "Suggest an email instead",
+              "建议发封邮件"
+            ],
+            "ending": [
+              "The meeting becomes three bullet points. At six, even the office printer goes home. You catch your train.",
+              "一场会议浓缩成三行字。六点一到，连打印机都下班了。你赶上了车。"
+            ]
+          },
+          {
+            "label": [
+              "Offer a tomorrow slot",
+              "约明天再谈"
+            ],
+            "ending": [
+              "Tomorrow's calendar now has a five-minute slot. Today has a whole evening. Wang actually accepts.",
+              "明天的日历多了五分钟，今晚却完整地回到了你手里。王老板居然同意了。"
+            ]
+          }
+        ]
+      },
+      {
+        "label": [
+          "Stay for the alleged five minutes",
+          "姑且相信这五分钟"
+        ],
+        "reply": [
+          "Twenty minutes later, the discussion has moved from budgets to somebody's air fryer. Wang asks for final thoughts.",
+          "二十分钟过去，话题已经从预算聊到了空气炸锅。王老板问大家还有没有补充。"
+        ],
+        "choices": [
+          {
+            "label": [
+              "Summarise and close",
+              "总结一下，散会"
+            ],
+            "ending": [
+              "You volunteer one useful sentence. Everyone mistakes it for the conclusion and closes their laptops. A minor miracle.",
+              "你说了一句有用的话。大家以为这是散会暗号，齐刷刷合上电脑。奇迹发生了。"
+            ]
+          },
+          {
+            "label": [
+              "Name your actual departure time",
+              "坦白自己几点得走"
+            ],
+            "ending": [
+              "Wang waves you off. You leave without guilt, and the air fryer discussion survives without you.",
+              "王老板挥挥手放你走了。你安心下班，空气炸锅的话题少了你也照样继续。"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "urgentEmail",
+    "name": [
+      "The urgent email",
+      "十万火急的邮件"
+    ],
+    "opening": [
+      "Wang forwards an email marked URGENT. It has no attachment, no question and six people copied in.",
+      "王老板转发一封标着十万火急的邮件。没有附件，没有问题，却抄送了六个人。"
+    ],
+    "choices": [
+      {
+        "label": [
+          "Ask for the missing details",
+          "问清楚到底要什么"
+        ],
+        "reply": [
+          "The sender admits the attachment is still being prepared. The urgency appears to be running ahead of the work.",
+          "发件人承认附件还没做好。看来紧急程度已经抢跑了。"
+        ],
+        "choices": [
+          {
+            "label": [
+              "Wait for the actual file",
+              "等文件到了再处理"
+            ],
+            "ending": [
+              "You finish the work already on your desk. When the file arrives, it turns out to be a lunch menu. The department survives.",
+              "你先做完手头的事。文件终于到了，原来是午餐菜单。部门安然无恙。"
+            ]
+          },
+          {
+            "label": [
+              "Agree on a real deadline",
+              "约定一个实际期限"
+            ],
+            "ending": [
+              "Everyone agrees on tomorrow morning. Someone quietly removes three exclamation marks from the subject line.",
+              "大家一致同意明早交付。有人默默从邮件标题删掉了三个感叹号。"
+            ]
+          }
+        ]
+      },
+      {
+        "label": [
+          "Read the whole email trail",
+          "把来龙去脉看一遍"
+        ],
+        "reply": [
+          "Buried in the seventeenth reply is a perfectly ordinary request for one number. The rest is greetings.",
+          "翻到第十七封回复，才找到一个普通的数据请求。其余内容全是客套话。"
+        ],
+        "choices": [
+          {
+            "label": [
+              "Reply with the one number",
+              "直接回复那个数字"
+            ],
+            "ending": [
+              "The thread ends with a single useful answer. The six copied colleagues are temporarily released back into the wild.",
+              "一封邮件，一个数字，事情解决。六位被抄送的同事暂时重获自由。"
+            ]
+          },
+          {
+            "label": [
+              "Write a clear summary",
+              "整理一句话摘要"
+            ],
+            "ending": [
+              "The next person thanks you for saving seventeen emails. Somewhere, an inbox feels a little lighter.",
+              "下一位同事谢谢你帮他省了十七封邮件。某个收件箱终于轻松了一点。"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "teamLunch",
+    "name": [
+      "The team lunch committee",
+      "午餐决策委员会"
+    ],
+    "opening": [
+      "Wang proposes a team lunch. Four restaurants, eight preferences, one person who says anything is fine but rejects everything.",
+      "王老板提议部门聚餐。四家餐厅，八种口味，还有一位什么都行、什么都不行的同事。"
+    ],
+    "choices": [
+      {
+        "label": [
+          "Ask about actual dietary needs",
+          "先问大家有什么忌口"
+        ],
+        "reply": [
+          "Once genuine dietary needs are sorted, two places remain. The indecisive colleague suddenly has a strong opinion.",
+          "真正的忌口排除以后，只剩两家。那位随便吃的同事突然有了非常明确的意见。"
+        ],
+        "choices": [
+          {
+            "label": [
+              "Let the group vote",
+              "让大家投票"
+            ],
+            "ending": [
+              "The vote takes thirty seconds. The committee is dissolved. Lunch arrives before anyone can create a spreadsheet.",
+              "三十秒投票结束，委员会就地解散。还没来得及建表，午餐已经上桌。"
+            ]
+          },
+          {
+            "label": [
+              "Pick a place and rotate next time",
+              "今天定一家，下次换"
+            ],
+            "ending": [
+              "Everyone gets a turn next week. Today's meal is warm, and nobody has to win the argument.",
+              "下周轮到别人选。今天饭还是热的，也不必争个输赢。"
+            ]
+          }
+        ]
+      },
+      {
+        "label": [
+          "Propose a picnic in the park",
+          "提议去公园各带各的"
+        ],
+        "reply": [
+          "Wang wants a formal picnic agenda. Auntie Mei arrives with a thermos and threatens to confiscate the agenda.",
+          "王老板想拟个野餐议程。梅姨拎着保温壶来了，说再开会就没收议程。"
+        ],
+        "choices": [
+          {
+            "label": [
+              "Share what you brought",
+              "把带来的食物分一分"
+            ],
+            "ending": [
+              "The picnic becomes a small feast. Wang is assigned the very important job of passing the napkins.",
+              "野餐变成了小小一桌盛宴。王老板负责一项极其重要的工作：递纸巾。"
+            ]
+          },
+          {
+            "label": [
+              "Keep a quiet corner for yourself",
+              "给自己留个安静的角落"
+            ],
+            "ending": [
+              "You eat slowly under a tree. The group has its fun, you have your quiet, and both count as lunch.",
+              "你在树下慢慢吃饭。他们热热闹闹，你安安静静，两种午休都很好。"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+];
+function gatheringOfficeStory(){
+ closeTalk();
+ const speaker=tr('Wang Laoban','王老板'),leave=[tr('Return to the table','回茶桌'),closeTalk];
+ const finish=()=>{addItem('Meeting escape ticket','逃会车票');closeTalk()};
+ const ending=choice=>say(speaker,tr(...choice.ending),[[tr('Finish the story','故事讲完啦'),finish],leave]);
+ const reply=choice=>say(speaker,tr(...choice.reply),[...choice.choices.map(v=>[tr(...v.label),()=>ending(v)]),leave]);
+ const open=story=>say(speaker,tr(...story.opening),[...story.choices.map(v=>[tr(...v.label),()=>reply(v)]),leave]);
+ say(speaker,tr('Which office disaster shall we revisit over tea?','喝口茶，今天聊哪一场职场小事故？'),[...pawOfficeStories.map(v=>[tr(...v.name),()=>open(v)]),leave]);
+}
+/* PAW_OFFICE_STORIES_END */
 roomActions.tea=[['chat','Join the table','来茶桌坐坐'],['board','Town noticeboard','小镇留言墙']];
 const gatheringActionBefore=action;
 action=function(id){
