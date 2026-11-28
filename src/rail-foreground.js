@@ -58,11 +58,15 @@
  function fit(w,h,layout='landscape'){if(![w,h].every(Number.isFinite)||w<=0||h<=0||!['landscape','portrait'].includes(layout))return null;const c=layout==='portrait'?portrait:carriage,s=Math.min(w/c.width,h/c.height);return {x:(w-c.width*s)/2,y:(h-c.height*s)/2,width:c.width*s,height:c.height*s}}
  function windowBox(box,layout='landscape'){
   if(!box||![box.width,box.height].every(Number.isFinite)||box.width<=0||box.height<=0)return null;
-  if(layout==='landscape')return {x:0,y:0,w:box.width,h:box.height*.58};
+  // Live decoded alpha inspection: landscape visible glass extends through
+  // row 550 (alpha < 240); cover to 556 under the opaque painted sill.
+  if(layout==='landscape')return {x:0,y:0,w:box.width,h:box.height*556/carriage.height};
   if(layout!=='portrait')return null;
-  // A small overlap underneath the opaque painted frame prevents a seam.
-  const [l,t,r,b]=portrait.window;
-  return {x:(l-3)/portrait.width*box.width,y:(t-3)/portrait.height*box.height,w:(r-l+6)/portrait.width*box.width,h:(b-t+6)/portrait.height*box.height}
+  // Portrait zero-alpha window is [119,322,906,831), but its antialiased
+  // edge includes pixels x=114..910 and y=319..835. Six source pixels
+  // of underpaint cover the entire soft edge without changing the frame.
+  const [l,t,r,b]=portrait.window,pad=6;
+  return {x:(l-pad)/portrait.width*box.width,y:(t-pad)/portrait.height*box.height,w:(r-l+2*pad)/portrait.width*box.width,h:(b-t+2*pad)/portrait.height*box.height}
  }
  // Slow, route-specific daylight and breeze. No flash, full-screen tint,
  // random jumps, or moving the carriage itself. Fixed poses in reduced motion.
