@@ -51,5 +51,20 @@ for(const factor of [.5,1,2]){
 }
 ck(backTransform(0,1056)===null,'reject invalid atlas dimensions');
 
+
+const cameraBlock=source.match(/\/\* PAW_TAROT_CAMERA_BEGIN \*\/([\s\S]*?)\/\* PAW_TAROT_CAMERA_END \*\//)[1];
+const camera=new Function(cameraBlock+';return pawTarotTableCamera')();
+for(const [w,h] of [[320,568],[360,640],[390,844],[430,932],[768,1024],[844,390],[1280,720],[1440,900]]){
+ const a=camera(w,h,'deck'),bounds=w<h?[205,595,278,790]:[145,655,280,700];
+ for(const stage of ['deck','shuffle','choose','deal','cards','focus']){
+  const v=camera(w,h,stage);
+  ck(JSON.stringify(v)===JSON.stringify(a),'constant physical table camera');
+  ck(v.ox+bounds[0]*v.s>=9.99&&v.ox+bounds[1]*v.s<=w-9.99,'horizontal fit');
+  ck(v.oy+bounds[2]*v.s>=43.99&&v.oy+bounds[3]*v.s<=h-59.99,'vertical fit');
+ }
+}
+ck(camera(390,844,'topic')===null,'preserve topic framing');
+ck(camera(0,844,'deck')===null,'invalid viewport rejected');
+
 new Function(source);
 console.log('PASS '+n+' tarot fan motion and input checks');
