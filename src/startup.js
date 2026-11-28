@@ -5645,7 +5645,11 @@ pawDockRootStyle.textContent=`
 #game #dock>button:not([hidden]){border:1px solid transparent!important;border-radius:5px!important;box-shadow:none}
 #game #dock>button.pawDockSelected{border-color:#839274!important;box-shadow:inset 0 -2px 0 #829374!important}
 #game #dock>button:not([hidden])>span:last-child{font-size:clamp(10px,2.9vw,13px)!important;white-space:normal!important;text-align:center}
-#game #dock{border-radius:8px!important}
+#game #dock{border-radius:8px!important;box-sizing:border-box!important;width:min(420px,calc(100% - 16px))!important;gap:3px!important;padding:4px!important}
+#game #dock>button:not([hidden]){flex:1 1 0!important;min-width:0!important;min-height:50px!important;padding:4px 2px!important}
+#game #dock>button:not([hidden])>span:last-child{max-width:100%;overflow-wrap:normal;line-height:1.18!important;font-size:clamp(11px,3vw,13px)!important}
+#game #dock>button.pawDockSelected .dockIcon{color:#36533f!important}
+@media(forced-colors:active){#game #dock>button[aria-current="page"]{outline:2px solid Highlight!important;outline-offset:-2px!important}}
 `;document.head.append(pawDockRootStyle);
 
 // Keyboard journal traversal moves focus to the selected tab after a rebuild.
