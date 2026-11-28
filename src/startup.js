@@ -4352,6 +4352,10 @@ renderTravellerBag=function(){
   for(const [key,en,cn] of bagCats){const btn=b(category,tr(en,cn),()=>{bagCategory=key;bagSelected=null;bagPageIndex=0;draw()});btn.dataset.category=key}
   const tools=element('div','',wrap,'bagTools'),search=element('input','',tools);search.type='search';search.placeholder=tr('Find a treasure','找一件宝贝');search.setAttribute('aria-label',search.placeholder);search.value=bagQuery;search.oninput=()=>{bagQuery=search.value;bagSelected=null;bagPageIndex=0;draw()};
   const sort=element('select','',tools);sort.setAttribute('aria-label',tr('Sort items','排序'));for(const [key,en,cn] of [['recent','Recent','最近'],['name','Name','名称']]){const opt=element('option',tr(en,cn),sort);opt.value=key}sort.value=bagSort;sort.onchange=()=>{bagSort=sort.value;bagPageIndex=0;draw()};
+  // Keep the collection itself visible; sorting and search are optional.
+  const filterFold=document.createElement('details');filterFold.className='pawCollectionFilters';category.before(filterFold);
+  element('summary',tr('Find and sort keepsakes','查找与整理收藏'),filterFold);filterFold.append(category,tools);
+  filterFold.open=!!bagQuery||bagCategory!=='all'||bagSort!=='recent';
   const body=element('div','',wrap,'bagBody'),chapters=element('div','',body,'bagChapterShelf'),trail=element('div','',body,'bagChapterTrail'),grid=element('div','',body,'bagSlots'),detail=element('section','',body,'bagDetail'),pagination=element('div','',body,'bagPagination');
   const foot=element('div','',wrap,'bagFooter');b(foot,tr('My room','我的小窝'),hideoutPage);b(foot,tr('Passport','护照'),passport);b(foot,tr('Stamp rewards','印章奖励'),hideoutClaimPage);
   function draw(){
@@ -4568,6 +4572,13 @@ const pawProfileFinalBefore=lifeProfile;
 lifeProfile=function(...args){
  const result=pawProfileFinalBefore(...args),q=$('content'),book=q.querySelector('.journalProfileBook');
  q.querySelectorAll('.mbHomeDirect,.pawProfileStat').forEach(n=>n.remove());
+ const notebook=q.querySelector('.journalBookLink[data-book="life"]');
+ if(notebook){
+  const spine=notebook.querySelector('.journalBookSpine');
+  if(spine){
+   const art=document.createElement('img');art.className='pawProfileNotebook';art.src='assets/visual/staging/2026-11-28-project-batch10-interface/journal-cover.webp';art.alt='';art.decoding='async';art.onerror=()=>art.replaceWith(spine);spine.replaceWith(art);
+  }
+ }
  if(book){
   const rank=lifeRank(),stats=book.querySelector('.journalQuickStats');
   if(stats){
@@ -4660,6 +4671,8 @@ function pawVisualImage(theme,q){
 function pawVisualHeader(q,theme){
  const h=q.querySelector(':scope > h1'),intro=q.querySelector(':scope > p');
  if(!h||!intro||['room','travel'].includes(theme)||q.querySelector('.pawTownFrontPhoto'))return;
+ // The actual identity card or collection cabinet is already the focal point.
+ if(q.querySelector('.journalProfileBook,.travellerBagV2'))return;
  const art=pawVisualImage(theme,q);
  if(!art)return;
  const header=element('header','',q,'pawIllustratedHeading');h.before(header);
@@ -15600,6 +15613,20 @@ html[lang^="zh"] #proposal .pawOpeningWordmark,html[lang^="zh"] #proposal .pawGa
 @media(prefers-reduced-motion:reduce){#proposal[data-paw-opening-enter="true"] .pawFirstRailPainting img,#proposal[data-paw-opening-enter="true"] .rail-ticket{animation:none!important}}
 `;document.head.append(pawOpeningSceneStyle);
 /* PAW_OPENING_EXPERIENCE_END */
+
+
+/* Physical personal belongings: subordinate utilities, retain original art. */
+const pawPersonalObjectStyle=document.createElement('style');
+pawPersonalObjectStyle.textContent=`
+#game #content .pawCollectionFilters{border-block:1px dashed #b6a17c;margin:6px 0 10px;padding:0 4px;color:#4b5c43}
+#game #content .pawCollectionFilters>summary{cursor:pointer;min-height:44px;align-content:center;font:600 15px/1.35 Georgia,"Songti SC",serif}
+#game #content .pawCollectionFilters .bagCategories,#game #content .pawCollectionFilters .bagTools{margin:4px 0 8px}
+#game #content .journalBookLink:has(.pawProfileNotebook){background:transparent!important;border:0!important;box-shadow:none!important;align-items:center}
+#game #content .pawProfileNotebook{width:64px;height:64px;object-fit:contain;flex:0 0 64px}
+#game #content:has(.journalProfileBook),#game #content:has(.travellerBagV2){max-width:720px!important}
+#game #content:has(.journalProfileBook)>h1,#game #content:has(.travellerBagV2)>h1{margin:6px 0!important;color:#4a5e47!important}
+#game #content:has(.journalProfileBook)>p,#game #content:has(.travellerBagV2)>p{margin:0 0 8px!important;font-size:13px}
+`;document.head.append(pawPersonalObjectStyle);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
 
