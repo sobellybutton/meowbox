@@ -550,3 +550,6 @@ ROOM-05 partial: eab02193 integrates the exact reviewed park painting, cat and d
 
 ## Mapped public-room population (28 November)
 LIFE-OCCUPANCY-01 / ROOM-04 partial: a899aaf2 restores the registered painted Arcade keeper and uses coordinate-specific visitor clearances for nine mapped lobbies. The previous legacy clearances rejected every authored visitor position at normal arrival. Bounded safe candidates generated from reviewed paths, one already-present visitor when safe, old room rules retained, no save changes. 261 targeted checks passed; all nine have viable candidates. 697b72ac persists the regression. Registry 867e5bf7 releases leases. Real device rendering, actor spacing, organic motion and human presence remain unverified; no acceptance or stage promotion.
+
+## Mapped room manual movement (28 November)
+UX-WAYFINDING-INTERACTION-01 partial: b3f7d33d replaces legacy rectangular clamping for all nine mapped rooms with true path routing and direct safe joystick/keyboard steps. Shorter steps and axis sliding at edges; blocked manual movement cancels old activity goal. Organic door/station routes retained. 34,081 checks (8,518 safe steps, 1,002 blocked), source parsed. c001de83 persists coverage; ded9364d releases lease. Rendered mobile/desktop input feel and latency remain unverified; no stage promotion.
