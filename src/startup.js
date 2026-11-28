@@ -10640,6 +10640,10 @@ function pawForecourtRoute(q,kind){
  route.push(goal.slice());
  q.route=route;q.destination=kind;return true
 }
+function pawForecourtEntry(now){
+ const q={pos:pawForecourtStart.slice(),route:[],destination:null,last:now};
+ pawForecourtRoute(q,'hall');return q
+}
 function pawForecourtTick(q,now,blocked,reduced=false){
  if(!q||!Number.isFinite(now))return null;
  const elapsed=Number.isFinite(q.last)?Math.max(0,Math.min(.05,now-q.last)):0;q.last=now;
@@ -10669,8 +10673,8 @@ roomIntro=function(...args){
  const result=pawForecourtIntroBefore(...args);
  if(!pawForecourtPending||room!=='temple'||activity)return result;
  pawForecourtPending=false;
- start('templeForecourt');state.pawForecourt={pos:pawForecourtStart.slice(),route:[],destination:null,last:t};
- hint('Follow the stone path. The lucky cat is on your right.','沿着石阶向前走，右侧是招福猫。');
+ start('templeForecourt');state.pawForecourt=pawForecourtEntry(t);
+ hint('Walking up to the temple hall…','沿石阶走进大殿……');
  return result
 };
 function pawForecourtChoose(kind,run=state){
@@ -10766,7 +10770,7 @@ function pawForecourtClearControls(){
 function pawForecourtSyncControls(run){
  const el=$('gameControls'),model=pawForecourtControlModel(run?.pawForecourt,pawArcadeInputBlocked());
  if(!el||run!==state||activity!=='templeForecourt'||!model){pawForecourtClearControls();return}
- if(pawArcadeInputBlocked()){if(el.classList.contains('pawForecourtControls'))el.hidden=true;return}
+ if(pawArcadeInputBlocked()||model.busy){pawForecourtClearControls();return}
  const key=String(zh)+'|'+model.busy+'|'+model.greeted+'|'+model.canReturn;
  if(pawForecourtControlsRun===run&&pawForecourtControlsKey===key&&el.querySelectorAll('[data-paw-forecourt-control]').length===3){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawForecourtControls');el.hidden=false;
