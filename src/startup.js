@@ -13461,4 +13461,67 @@ hideoutPage=function(...args){
  return result
 };
 
+/* PAW_AUNTIE_SEAT_BEGIN */
+// Local close-up choreography. The actual lobby approach and return anchor
+// remain owned by the existing indoor route and mb5Return.
+function pawAuntieSeatFrame(phase,elapsed,reduced=false){
+ const duration=phase==='arrival'?1.22:phase==='departure'?1.18:0;
+ const age=reduced?duration:Math.max(0,Math.min(duration,Number.isFinite(elapsed)?elapsed:0));
+ const ease=v=>{v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)};
+ if(phase==='arrival'){
+  const walk=ease(age/.78),seat=ease((age-.78)/.44);
+  return {x:550-60*walk,y:602-30*walk,seat,walking:age<.78,direction:'left',done:age>=duration};
+ }
+ if(phase==='departure'){
+  const seat=1-ease(age/.42),walk=ease((age-.42)/.76);
+  return {x:490+60*walk,y:572+30*walk,seat,walking:age>.42&&age<duration,direction:'right',done:age>=duration};
+ }
+ return {x:490,y:572,seat:1,walking:false,direction:'left',done:true}
+}
+function pawAuntieSeatReady(run){return !run?.pawAuntieVisit||run.pawAuntieVisit.phase==='seated'}
+function pawAuntieSeatAdvance(visit,now,blocked){
+ if(!visit||!Number.isFinite(now))return;
+ const elapsed=Number.isFinite(visit.last)?Math.max(0,Math.min(.05,now-visit.last)):0;
+ visit.last=now;
+ if(!blocked)visit.age+=elapsed
+}
+/* PAW_AUNTIE_SEAT_END */
+const pawAuntieSeatStartBefore=start;
+start=function(id,...args){
+ const repeat=id==='hit'&&room==='fish'&&activity==='hit'&&pawAuntieSeatReady(state);
+ const result=pawAuntieSeatStartBefore(id,...args);
+ if(id==='hit'&&room==='fish'&&activity==='hit'){
+  state.pawAuntieVisit={phase:repeat?'seated':'arrival',age:0,last:t};
+  refreshControls();
+  if(!repeat)hint('Ah Ma: Come, have a seat.','阿嬷：来，坐下来慢慢说。')
+ }
+ return result
+};
+const pawAuntieSeatBusyBefore=paperRitualBusy;
+paperRitualBusy=function(){return !pawAuntieSeatReady(state)&&activity==='hit'&&room==='fish'||pawAuntieSeatBusyBefore()};
+const pawAuntieSeatBackBefore=$('back').onclick;
+$('back').onclick=function(...args){
+ if(room!=='fish'||activity!=='hit'||!state.pawAuntieVisit||talkOpen||transitioning||$('page').style.display==='block')return pawAuntieSeatBackBefore.apply(this,args);
+ const visit=state.pawAuntieVisit;
+ if(visit.phase==='departure')return;
+ if(visit.phase==='arrival')return pawAuntieSeatBackBefore.apply(this,args);
+ if(state.paperAction)paperRitualCancel();
+ delete state.paperPrepAt;
+ visit.phase='departure';visit.age=0;visit.last=t;visit.backArgs=args;
+ refreshControls();hint('Standing up and returning to the pier…','起身回到码头……')
+};
+const pawAuntieSeatDrawBefore=drawActivity;
+drawActivity=function(...args){
+ const visit=room==='fish'&&activity==='hit'?state.pawAuntieVisit:null;
+ if(visit){
+  pawAuntieSeatAdvance(visit,t,pawArcadeInputBlocked());
+  const frame=pawAuntieSeatFrame(visit.phase,visit.age,residentReducedMotion.matches);
+  if(visit.phase==='arrival'&&frame.done){visit.phase='seated';visit.age=0;refreshControls();hint('Ah Ma: What is bothering you today?','阿嬷：今天有什么烦心事？')}
+  else if(visit.phase==='departure'&&frame.done){
+   return pawAuntieSeatBackBefore.apply($('back'),visit.backArgs||[])
+  }
+ }
+ return pawAuntieSeatDrawBefore(...args)
+};
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
