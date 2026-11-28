@@ -4748,6 +4748,26 @@ function pawMainGaitAdvance(q,key,dir,distance,scale,ready){
 }
 /* PAW_MAIN_GAIT_END */
 const pawMainGaitState={key:'',dir:'',distance:0,cycles:0,ready:false};
+/* PAW_NPC_GAIT_ADMISSION_BEGIN */
+// Preserve the walking artwork family throughout one continuous directional
+// walk. A decoded sprite set may be admitted on the next start or turn, never
+// halfway through a stride. Per-actor state prevents visitors affecting one
+// another. A lost/invalid frame immediately revokes admission.
+function pawNpcGaitAdmission(state,actor,key,dir,distance,ready){
+ if(!actor||typeof actor!=='object')return false;
+ if(!key||!dir||!Number.isFinite(distance)||distance<0){state.delete(actor);return false}
+ let q=state.get(actor);
+ if(!q||q.key!==key||q.dir!==dir||distance<q.distance||distance-q.distance>65){
+  q={key,dir,distance,admitted:!!ready};state.set(actor,q)
+ }else{
+  q.distance=distance;
+  if(!ready)q.admitted=false
+ }
+ return q.admitted&&!!ready
+}
+function pawNpcGaitIdle(state,actor){if(actor&&typeof actor==='object')state.delete(actor)}
+/* PAW_NPC_GAIT_ADMISSION_END */
+const pawNpcGaitState=new WeakMap();
 function pawGaitPhase(distance,scale){return Math.max(0,Number.isFinite(distance)?distance:0)/Math.max(34,52*(Number.isFinite(scale)?scale:1))*Math.PI}
 function pawGaitStrength(speed,scale){
  const safe=Number.isFinite(speed)?Math.max(0,speed):0;
@@ -4778,6 +4798,10 @@ function pawPaintedGait(im,x,y,scale,facing,phase,strength=1){
 }
 backHuman=function(x,y,kind,walking,facing,scale=1){
  if(!walking||kind<0||kind>3){
+  if(!walking){
+   const idleActor=pawRenderedWalker||(!room&&!(kind===avatar&&Math.hypot(x-p.x,y-p.y)<4)?npc.find(n=>Math.hypot(x-n.x,y-n.y)<3):null);
+   pawNpcGaitIdle(pawNpcGaitState,idleActor)
+  }
   if(!walking&&kind===avatar&&!pawRenderedWalker&&(!room?Math.hypot(x-p.x,y-p.y)<4:Math.hypot(x-indoor.x,y-indoor.y)<4))pawMainGaitState.key='';
   if(activity&&kind===avatar&&!pawRenderedWalker&&!walking)pawTrackScriptedGait(pawScriptedGait,'',x,y,false);
   if(room&&!pawRenderedWalker&&kind===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<4){pawIndoorGait.key=scene+'|'+room;pawIndoorGait.x=x;pawIndoorGait.y=y}
@@ -4801,7 +4825,8 @@ backHuman=function(x,y,kind,walking,facing,scale=1){
   if(ready&&gait?.ready){const i=reduced?0:Math.min(frames.length-1,Math.floor(gait.cycle*frames.length));mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}
   return pawWalkRenderBefore(x,y,kind,false,facing,scale)
  }
- if(ready){const i=reduced?0:((Math.floor(phase/Math.PI*frames.length/2)%frames.length)+frames.length)%frames.length;mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}
+ const npcReady=actor?pawNpcGaitAdmission(pawNpcGaitState,actor,scene+'|'+(room||'outside')+'|'+kind,dir,distance,ready):ready;
+ if(npcReady){const i=reduced?0:((Math.floor(phase/Math.PI*frames.length/2)%frames.length)+frames.length)%frames.length;mbArtDrawFrame(frames[i],loaded[i],x,y,scale,facing==='left');return}
  const im=pics['walker'+kind+(dir==='up'?1:dir==='down'?0:2)];
  if(im?.naturalWidth&&im.naturalHeight&&!reduced&&(dir==='down'||dir==='right')){
   const strength=isPlayer&&Number.isFinite(p.motionSpeed)?pawGaitStrength(p.motionSpeed,scale):1;
@@ -9407,6 +9432,12 @@ const pawRoomAlias={daily:'tarot',news:'tea',sticks:'temple',moon:'temple'};
 const pawRoomWarmJobs=new Map();
 function pawRoomImageReady(im){return !!(im?.complete&&im.naturalWidth>0&&im.naturalHeight>0)}
 function pawRoomKnownImage(id){return (pawRoomFallbackKeys[id]||[]).map(k=>pics[k]).find(pawRoomImageReady)||null}
+// Warm the existing activity art during the actual walk to the room,
+// not at the first animation frame. Never gate walking on optional art.
+function pawRoomActivityArtKeys(id,kayaKeys){
+ if(id!=='park')return [];
+ return ['parkCats','parkCareFilledBowl','parkCareFeather',...(Array.isArray(kayaKeys)?kayaKeys:[]),'parkKayaSleep']
+}
 function pawWarmRoomAssets(id){
  id=pawRoomAlias[id]||id;
  if(!Object.hasOwn(pawRoomFallbackKeys,id)||pawRoomWarmJobs.has(id))return;
@@ -9415,6 +9446,7 @@ function pawWarmRoomAssets(id){
  try{
   add(portraitInteriorImage(id));add(landscapeRoomImage(id));
   if(productionVisualManifest[id]){productionVisual(id);add(productionVisualCache.get(id))}
+  for(const key of pawRoomActivityArtKeys(id,pawKayaKeys)){if(productionVisualManifest[key]){productionVisual(key);add(productionVisualCache.get(key))}}
   if(id==='arcade'){add(pawArcadeArt);add(pawRecoveredImage(pawCloseupPaths.blindBox))}
   if(id==='temple')add(pawRecoveredImage(pawCloseupPaths.templePaper));
   if(id==='wishes')add(pawRecoveredImage('scenes/wishing_garden_portrait.webp'));

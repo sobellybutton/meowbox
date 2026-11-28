@@ -367,3 +367,39 @@ console.log('PASS '+paceAssertions+' adaptive visitor pace and clearance checks'
  return {wide,narrow,near}`)();
  console.log('PASS adaptive room pace and facing',verify);
 }
+
+/* Independent NPCs must not change sprite family while walking as an image
+   finishes decoding. Admission is reset only at a new start, turn, context
+   or discontinuity. Test the actual helper used by backHuman. */
+{
+ const gaitSrc=require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/startup.js'),'utf8');
+ const block=gaitSrc.split('/* PAW_NPC_GAIT_ADMISSION_BEGIN */')[1]?.split('/* PAW_NPC_GAIT_ADMISSION_END */')[0];
+ const assert=require('node:assert/strict');
+ assert.ok(block);
+ const {admit,idle}=new Function(block+';return {admit:pawNpcGaitAdmission,idle:pawNpcGaitIdle}')();
+ let count=0;const eq=(actual,expected)=>{assert.equal(actual,expected);count++};
+ for(const dir of ['up','down','right'])for(const context of ['fortune|outside|0','island|kitchen|1','wonder|tarot|3']){
+  const state=new WeakMap(),a={},b={};
+  eq(admit(state,a,context,dir,0,false),false);
+  eq(admit(state,b,context,dir,0,true),true);
+  for(let distance=1;distance<=120;distance++){
+   eq(admit(state,a,context,dir,distance,true),false);
+   eq(admit(state,b,context,dir,distance,true),true);
+  }
+  idle(state,a);eq(admit(state,a,context,dir,120,true),true);
+  eq(admit(state,b,context,dir,121,false),false);
+  eq(admit(state,b,context,dir,122,true),false);
+  eq(admit(state,b,context,dir==='up'?'right':'up',123,true),true);
+  eq(admit(state,b,context,dir==='up'?'right':'up',124,false),false);
+  eq(admit(state,b,context+'|next',dir,125,true),true);
+  eq(admit(state,b,context+'|next',dir,126,false),false);
+  eq(admit(state,b,context+'|next',dir,200,true),true);
+  eq(admit(state,b,context+'|next',dir,NaN,true),false);
+  eq(admit(state,b,context+'|next',dir,0,true),true);
+ }
+ eq(admit(new WeakMap(),null,'room','up',0,true),false);
+ assert.ok(gaitSrc.includes('const npcReady=actor?pawNpcGaitAdmission(pawNpcGaitState,actor,'));
+ assert.ok(gaitSrc.includes('if(npcReady){const i=reduced?0:'));
+ assert.ok(gaitSrc.includes('pawNpcGaitIdle(pawNpcGaitState,idleActor)'));
+ console.log('PASS '+count+' NPC directional sprite-admission and identity isolation assertions');
+}
