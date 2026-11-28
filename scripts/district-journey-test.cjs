@@ -209,7 +209,6 @@ async function travelLoop(page,name,touch){
  assert(await page.evaluate(()=>pawRoomVisitProgress(maps.fortune,pawRoomVisitMemory.fortune).count>=4),'Physical room visits were not recorded');
  assert(await page.locator('.pawVisitProgress progress').isVisible(),'Optional exploration progress stays in the travel journal');
  await press(page.locator('.pawJournalDeparture').getByRole('button',{name:'Walk to station',exact:true}));
- await press(page.getByRole('button',{name:'Board train',exact:true}));
  await page.locator('.pawRailJourney').waitFor({state:'visible',timeout:24000});
  assert.equal(await page.locator('.pawStationPlatform').count(),0,'Station must not open a holding page');
  assert.equal(await page.locator('.districtRailCabin').isVisible(),false,'Boarding must not open the obsolete preview');

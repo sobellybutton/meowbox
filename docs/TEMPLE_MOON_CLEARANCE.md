@@ -3,3 +3,6 @@ Owner report 28 November 2026: moon blocks overlap character. Move the traveller
 
 ## Owner screenshot follow-up
 Purification: use stable 2.18 actor scale, move resting ladle left and occlude reaching sleeves behind the body; no overlay at rest. Garden: trace visible foreground path, pond and bench from owner screenshot; retain feed/sit only, remove individual cat taps, animate existing chime ambiently; align pond effects. Valley: neutral railway sign and explicit keep-exploring/board choice on station arrival, no forced house completion. Geometry inferred from supplied screenshot, rendered verification required. Update existing garden and rail journeys; preserve main until release gates pass.
+
+## Revised owner-approved railway flow
+Supersedes confirmation dialogue. All districts hide station plaque and edge fallback outside 180 world-unit proximity, regardless of phone aspect/scroll. Actual station label appears near the station; direct boarding restored. Journal remains intentional travel route. Added real touch approach in railway matrix and 9,413 proximity/direct departure cases. Threshold is an initial calibrated world-space distance; verify phone approach and exact sign appearance before deployment. Main remains unchanged while prior checks finish.

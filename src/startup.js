@@ -3651,7 +3651,7 @@ function pawDirectBoardAllowed(flags){
 function pawRailStationCopy(origin,destination,worlds=maps){
  const name=worlds?.[destination]?.n;
  if(!Array.isArray(name)||typeof name[0]!=='string'||typeof name[1]!=='string')return ['Railway station','火车站'];
- return origin==='fortune'?['Railway station','火车站']:['To '+name[0],'前往'+name[1]]
+ return ['To '+name[0],'前往'+name[1]]
 }
 function pawRailChapterNote(origin,destination){
  const next={fortune:'home',home:'island',island:'wonder',wonder:'fortune'};
@@ -3692,13 +3692,7 @@ enter=function(id){
  if(id!=='station')return pawStationEnterBefore(id);
  if(transitioning||room||activity||!proposal.hidden||$('page').style.display==='block')return;
  releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;
- if(scene==='fortune'){
-  const origin=scene,destination=railNextDistrict(origin);
-  say(tr('Railway station','火车站'),tr('There is still plenty to discover in the valley. Shall we stay a little longer, or catch the next train to '+maps[destination].n[0]+'?','山谷里还有许多地方可以慢慢逛。想再留一会儿，还是搭下一班列车去'+maps[destination].n[1]+'？'),[
-   [tr('Keep exploring','继续探索'),closeTalk],
-   [tr('Board train','搭乘列车'),()=>{closeTalk();if(scene===origin&&!room&&!activity)pawBoardStation(origin)}]
-  ]);return
- }
+
  pawBoardStation(scene)
 };
 const pawRailFadeBefore=fade;
@@ -12165,9 +12159,14 @@ const pawCounterRackStyle=document.createElement('style');pawCounterRackStyle.te
 /* Railway wayfinding: a single contextual edge sign only when the actual
    map plaque has been clipped or displaced. No extra permanent next-stop CTA. */
 const pawRailEdge=element('button','',$('game'),'pawRailEdge');pawRailEdge.type='button';pawRailEdge.hidden=true;
-pawRailEdge.onclick=()=>{if(!pawRailEdge.hidden&&!transitioning&&!room&&!activity&&proposal.hidden&&$('page').style.display!=='block')walkDoor('station')};
+pawRailEdge.onclick=()=>{if(!pawRailEdge.hidden&&!transitioning&&!room&&!activity&&proposal.hidden&&$('page').style.display!=='block'&&pawRailNearStation(p,maps[scene]?.st.find(v=>v[0]==='station')))walkDoor('station')};
 // A plaque can have a valid rectangle yet be hidden, clipped, or covered.
 // Require an actual hit target before withdrawing the edge navigation.
+/* PAW_RAIL_NEAR_STATION_BEGIN */
+function pawRailNearStation(actor,station){
+ return Array.isArray(station)&&station[0]==='station'&&[actor?.x,actor?.y,station[1],station[2]].every(Number.isFinite)&&Math.hypot(actor.x-station[1],actor.y-station[2])<=180
+}
+/* PAW_RAIL_NEAR_STATION_END */
 function pawRailPlaqueReachable(sign,g){
  if(!sign||sign.hidden||sign.disabled||!g)return false;
  const r=sign.getBoundingClientRect(),style=getComputedStyle(sign);
@@ -12195,6 +12194,13 @@ syncSigns=function(...args){
   pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
  }
  const sign=signButtons.get('station'),game=$('game'),g=game.getBoundingClientRect(),now=performance.now(),size=g.width+'|'+g.height;
+ const station=maps[scene].st.find(v=>v[0]==='station');
+ // Never promote an offscreen destination to an early floating shortcut.
+ // Only a nearby station may use an accessible edge fallback.
+ if(!pawRailNearStation(p,station)){
+  if(sign)sign.hidden=true;
+  pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
+ }
  const changed=pawRailEdgeScene!==scene||pawRailEdgeSize!==size;
  if(changed){pawRailEdgeScene=scene;pawRailEdgeSize=size;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity}
  if(!changed&&now-pawRailEdgeAt<75)return result;pawRailEdgeAt=now;
