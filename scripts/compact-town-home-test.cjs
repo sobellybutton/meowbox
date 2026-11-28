@@ -181,3 +181,8 @@ assert(src.includes('fold.open=pawRoomMaterialsOpen'));
 assert(src.includes('pawRoomMaterialsOpen=!fold.open;fold.open=pawRoomMaterialsOpen'));
 assert(src.includes('pawRoomMaterialsOpen=false;\n // Keep a compact room-side tray'));
 console.log('PASS room materials disclosure retains state through editor rerenders');
+
+assert(src.includes('let index=memory?.page??0,count=0'));
+assert(src.includes('if(memory)memory.page=index'));
+assert(src.includes('},boardPageMemory);select(boardSection)'));
+console.log('PASS noticeboard pagination state persists through language changes');

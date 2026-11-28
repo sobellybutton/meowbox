@@ -181,9 +181,9 @@ function addResidentPortrait(card){
  im.onerror=()=>{im.remove();card.classList.remove('pawTownWithPortrait')};
  card.prepend(im);card.classList.add('pawTownWithPortrait');im.src=path
 }
-function attachPager(list,selector,size,olderNav=null,clean=null){
+function attachPager(list,selector,size,olderNav=null,clean=null,memory=null){
  if(!list||!list.parentNode)return;
- let index=0,count=0;
+ let index=memory?.page??0,count=0;
  const nav=element('nav','',list.parentNode,'pawCompactPager');list.after(nav);
  nav.setAttribute('aria-label',tr('Turn pages','翻页'));
  const prev=b(nav,tr('‹ Previous','‹ 上一页'),()=>{index--;paint()}),label=element('small','',nav),next=b(nav,tr('Next ›','下一页 ›'),()=>{index++;paint()});
@@ -191,7 +191,7 @@ function attachPager(list,selector,size,olderNav=null,clean=null){
  function paint(){
   if(!list.isConnected){observer.disconnect();return}
   const cards=[...list.querySelectorAll(selector)];if(clean)for(const card of cards)clean(card);
-  const win=pageWindow(cards.length,index,size);index=win.page;count=cards.length;
+  const win=pageWindow(cards.length,index,size);index=win.page;count=cards.length;if(memory)memory.page=index;
   cards.forEach((card,i)=>{card.hidden=i<win.start||i>=win.end});
   prev.disabled=index===0;next.disabled=index>=win.pages-1;
   label.textContent=(index+1)+' / '+win.pages;nav.hidden=win.pages<=1;
@@ -202,6 +202,7 @@ function attachPager(list,selector,size,olderNav=null,clean=null){
  paint();return {reset(){index=0;paint()},disconnect(){observer.disconnect()}}
 }
 let boardSection='notices';
+const boardPageMemory={page:0};
 function compactBoard(q){
  const wall=q.querySelector('.townWall'),tabs=q.querySelector('.communityTabs');if(!wall||!tabs)return;
  const story=q.querySelector('.pawTownStoryNote'),guests=q.querySelector('.pawGuestNotice');
@@ -218,7 +219,7 @@ function compactBoard(q){
  const disclosure=wall.querySelector('.wallDisclosure');if(disclosure)disclosure.textContent=tr('Catch up on the latest town news.','来看看小镇最近的新鲜事。');
  if(story){const refresh=()=>{replaceExact(story,'.pawStoryKicker','Resident stories · fictional town','居民小故事 · 虚构小镇','Town stories','小镇故事');replaceExact(story,'.pawStoryKicker','Resident story · fictional town','居民小故事 · 虚构小镇','Town story','小镇故事')};refresh();new MutationObserver(refresh).observe(story,{childList:true})}
  const roster=guests?.querySelector('p');if(roster)roster.textContent=tr('Meet these neighbours as you explore '+maps[scene].n[0]+'.','逛逛'+maps[scene].n[1]+'，也许就能遇见他们。');
- attachPager(wall.querySelector('.townPostList'),'.townResidentNote',2,wall.querySelector('.townPostNav'),card=>{const name=card.querySelector(':scope > strong');if(name){const clean=residentHeading(name.textContent);if(clean!==name.textContent)name.textContent=clean}addResidentPortrait(card)});select(boardSection);
+ attachPager(wall.querySelector('.townPostList'),'.townResidentNote',2,wall.querySelector('.townPostNav'),card=>{const name=card.querySelector(':scope > strong');if(name){const clean=residentHeading(name.textContent);if(clean!==name.textContent)name.textContent=clean}addResidentPortrait(card)},boardPageMemory);select(boardSection);
 }
 function compactJoy(q){
  const wall=q.querySelector('.pawJoyWall'),list=wall?.querySelector('.pawJoyNotes'),form=wall?.querySelector('.pawJoyForm');if(!list||!form)return;
