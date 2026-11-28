@@ -152,6 +152,15 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       const returnHall=page.locator('#content > .row button').first();
       await (width<900?returnHall.tap():returnHall.click());
       await page.locator('.pawTownHotspot').first().waitFor({state:'visible',timeout:8000});
+      for(const [index,target] of [[1,'.townChatTranscript'],[2,'.pawJoyWall']]){
+       const spot=page.locator('.pawTownHotspot').nth(index);
+       await (width<900?spot.tap():spot.click());
+       await page.locator(target).waitFor({state:'visible',timeout:8000});
+       await shot(index===1?'town-tea-chat':'town-little-joys');
+       const contextualBack=page.locator('#content > .row button').first();
+       await (width<900?contextualBack.tap():contextualBack.click());
+       await page.locator('.pawTownHotspot').first().waitFor({state:'visible',timeout:8000});
+      }
      }
      if(id==='dockOwnHome'){
       const structure=await page.evaluate(()=>{const q=$('content'),room=q.querySelector('.hideoutScene'),actions=q.querySelector('.hideoutPrimary'),expansion=q.querySelector('.pawRoomExpansionFold');return {first:!!room&&!!actions&&!!(room.compareDocumentPosition(actions)&Node.DOCUMENT_POSITION_FOLLOWING),folded:!!expansion&&!expansion.open,top:room?.getBoundingClientRect().top,visible:room?.getBoundingClientRect().height}});
