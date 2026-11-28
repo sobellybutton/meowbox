@@ -1967,6 +1967,7 @@ function mb5AssistSpec(kind,q,now){
  }
  if(kind==='cook'&&q.pawSteam)return pawKitchenSteamSpec(q.pawSteam);
  if(kind==='cook'&&!q.done&&q.ingredients?.length===0){
+  if(q.pawStockPickup)return {key:'stock-loading',label:['Putting ingredients in…','正在下锅……'],disabled:true};
   if(q.pawSteamReady)return {key:'steam-option',label:['Steam greens instead','改做蒸青菜'],action:'steam-select'};
   if(q.pawPanReady)return {key:'pan-option',label:['Pan-fry tofu instead','改做香煎豆腐'],action:'pan-select'};
  }
@@ -14208,6 +14209,7 @@ function pawLoadFoodProps(){
 }
 function pawWarmFoodProps(id){
  if(!['kitchen','boba'].includes(id))return;
+ if(id==='kitchen')pawKitchenStockImages();
  pawLoadFoodProps().then(q=>{if(!q)return;
   q.cache.request(id==='boba'?['boba_tea_pot','boba_milk_pitcher','boba_cup_empty']:['kitchen_small_bowl','kitchen_stock_pot','kitchen_wooden_ladle','kitchen_bamboo_steamer','kitchen_frying_pan','kitchen_wooden_spatula'])
  })
@@ -14406,7 +14408,7 @@ function pawKitchenSteamAction(action,run){
  if(room!=='kitchen'||activity!=='cook'||state!==run||pawArcadeInputBlocked())return false;
  if(action==='steam-select'||action==='pan-select'){
   const pan=action==='pan-select';
-  if(run.pawSteam||run.done||run.ingredients?.length!==0||drag||!(pan?pawKitchenPanAvailable():pawKitchenSteamAvailable()))return false;
+  if(run.pawSteam||run.done||run.pawStockPickup||run.ingredients?.length!==0||drag||!(pan?pawKitchenPanAvailable():pawKitchenSteamAvailable()))return false;
   run.pawSteam={method:pan?'pan':'steam',phase:'prep',age:0,last:t,blocked:false,turns:0};
   hint(...(pan?['Take the tofu beside the frying pan.','把煎锅旁的豆腐拿来。']:['Choose the greens beside the bamboo steamer.','把竹蒸笼旁的青菜拿来。']));mb5AssistSync(true);return true
  }
@@ -14474,6 +14476,89 @@ drawActivity=function(...args){
  mb5AssistSync()
 };
 /* PAW_KITCHEN_STEAM_END */
+
+/* PAW_KITCHEN_STOCK_BEGIN */
+// Imported stock artwork has small extraction-edge remnants. Keep only
+// the traced silhouettes and align the visible bottom to the counter.
+const pawKitchenStockArt={
+ basket:{file:'vegetable-stock-basket.webp',size:[213,160],bounds:[8,8,205,152],base:[553,444],height:50,outline:[[9,75],[17,60],[23,55],[30,32],[48,30],[63,15],[79,17],[91,29],[106,31],[112,38],[120,13],[140,8],[153,15],[165,9],[180,18],[192,23],[203,35],[199,56],[193,65],[201,82],[197,101],[182,119],[174,134],[154,146],[116,151],[79,149],[53,142],[28,125],[19,109],[13,96]]},
+ holder:{file:'utensil-storage-holder.webp',size:[126,141],bounds:[8,8,118,133],base:[240,420],height:54,outline:[[10,21],[22,18],[36,31],[36,11],[51,8],[64,12],[71,24],[82,15],[94,17],[111,11],[118,22],[115,43],[103,57],[96,67],[94,119],[85,129],[70,133],[49,131],[32,126],[28,73],[18,48],[8,35]]}
+};
+function pawKitchenStockGeometry(spec){
+ const [l,u,r,b]=spec.bounds,z=spec.height/(b-u);
+ return {x:spec.base[0]-(l+r)*z/2,y:spec.base[1]-b*z,w:spec.size[0]*z,h:spec.size[1]*z,z,visible:[spec.base[0]-(r-l)*z/2,spec.base[1]-spec.height,(r-l)*z,spec.height]}
+}
+function pawKitchenPickupFrame(q,reduced=false){
+ const p=Math.max(0,Math.min(1,q.age/.65)),f=reduced?(p===1?1:0):p*p*(3-2*p);
+ return {x:q.x+(400-q.x)*f,y:q.y+(474-q.y)*f-(reduced?0:Math.sin(Math.PI*f)*20),done:p===1}
+}
+function pawKitchenPickupTick(q,now,blocked){
+ if(!q||!Number.isFinite(now))return false;
+ const dt=Number.isFinite(q.last)?Math.max(0,Math.min(.1,now-q.last)):0,prior=q.blocked;
+ q.last=now;q.blocked=!!blocked;
+ if(!blocked&&!prior)q.age=Math.min(.65,q.age+dt);
+ return q.age>=.65-1e-8
+}
+function pawKitchenPickupAllowed(q,i){
+ return !!q&&!q.pawSteam&&!q.pawStockPickup&&!q.done&&Array.isArray(q.ingredients)&&Number.isInteger(i)&&i>=0&&i<3&&!q.ingredients.includes(i)
+}
+/* PAW_KITCHEN_STOCK_END */
+function pawKitchenStockImages(){
+ const path='../../staging/2026-11-28-project-art-b04/kitchen/';
+ return Object.fromEntries(Object.entries(pawKitchenStockArt).map(([k,a])=>[k,pawRecoveredImage(path+a.file)]))
+}
+function pawKitchenStockPaint(){
+ const run=state,images=pawKitchenStockImages();
+ for(const [k,a] of Object.entries(pawKitchenStockArt)){
+  const im=images[k];if(!pawRoomImageReady(im)||im.naturalWidth!==a.size[0]||im.naturalHeight!==a.size[1])continue;
+  const g=pawKitchenStockGeometry(a);ctx.save();try{
+   ctx.beginPath();a.outline.forEach(([x,y],i)=>{const px=g.x+x*g.z,py=g.y+y*g.z;i?ctx.lineTo(px,py):ctx.moveTo(px,py)});ctx.closePath();ctx.clip();
+   ctx.drawImage(im,g.x,g.y,g.w,g.h)
+  }finally{ctx.restore()}
+  if(k==='basket'&&!run.pawSteam&&!run.done&&!run.pawStockPickup&&run.ingredients?.length<3){
+   const [x,y,w,h]=g.visible;target(x-4,y-4,w+8,h+8,()=>pawKitchenStockChoose(run),'paw-stock-basket')
+  }
+ }
+}
+function pawKitchenStockRequest(run,i,x=270+i*130,y=W<H?610:600){
+ if(run!==state||room!=='kitchen'||activity!=='cook'||pawArcadeInputBlocked()||drag||!pawKitchenPickupAllowed(run,i))return false;
+ run.pawStockPickup={i,x,y,age:0,last:t,blocked:false};sound(360);hint('Into the pot…','食材下锅啦……');return true
+}
+function pawKitchenStockChoose(run){
+ if(run!==state||room!=='kitchen'||activity!=='cook'||pawArcadeInputBlocked()||drag)return;
+ const names=run.vegetarian?[['Mushroom','香菇'],['Greens','青菜'],['Tofu','豆腐']]:[['Tomato','番茄'],['Greens','青菜'],['Egg','鸡蛋']];
+ const choices=names.flatMap((name,i)=>pawKitchenPickupAllowed(run,i)?[[tr(...name),()=>{if(run!==state||activity!=='cook'||room!=='kitchen')return;closeTalk();pawKitchenStockRequest(run,i)}]]:[]);
+ if(choices.length)say(tr('Grandma','外婆'),tr('Which ingredient shall we take from the counter?','想从料理台拿哪样食材？'),choices)
+}
+// Ordinary drag-to-pot remains unchanged. A short tap on an existing
+// ingredient plate is an alternative accessible physical pickup.
+c.addEventListener('pointerup',event=>{
+ const run=state,d=drag;
+ if(room!=='kitchen'||activity!=='cook'||!d||!/^ingredient[0-2]$/.test(d.id)||!pawCanvasDragValid(event)||Math.hypot(event.clientX-d.screenX,event.clientY-d.screenY)>12||d.moved*cam.scale>16)return;
+ const i=Number(d.id.slice(-1));
+ if(!pawKitchenPickupAllowed(run,i))return;
+ event.preventDefault();event.stopImmediatePropagation();pawCancelCanvasDrag();
+ pawKitchenStockRequest(run,i)
+},true);
+const pawKitchenStockBefore=drawActivity;
+drawActivity=function(...args){
+ if(room!=='kitchen'||activity!=='cook'||!state.pawStockPickup)return pawKitchenStockBefore(...args);
+ const run=state,q=run.pawStockPickup;
+ if(pawKitchenPickupTick(q,t,pawArcadeInputBlocked())&&!pawArcadeInputBlocked()){
+  delete run.pawStockPickup;
+  if(pawKitchenPickupAllowed(run,q.i)){run.ingredients.push(q.i);run.coins=0;run.stirAngle=0;run.stirInputAngle=undefined;react('In it goes!','下锅啦！')}
+  return pawKitchenStockBefore(...args)
+ }
+ const result=pawKitchenStockBefore(...args),frame=pawKitchenPickupFrame(q,residentReducedMotion.matches);
+ if(run!==state||activity!=='cook')return result;
+ // No second pointer may begin stirring or picking while the plate moves.
+ hit=hit.filter(h=>h.id!=='stir'&&!/^ingredient[0-2]$/.test(h.id||'')&&h.id!=='paw-stock-basket');
+ ctx.save();try{
+  const names=run.vegetarian?['mushrooms','greens','tofu']:['tomatoes','greens','eggs'],im=pics['kitchenDish-'+names[q.i]];
+  if(pawRoomImageReady(im)){const z=Math.min(92/im.naturalWidth,68/im.naturalHeight),w=im.naturalWidth*z,h=im.naturalHeight*z;ctx.drawImage(im,frame.x-w/2,frame.y+12-h,w,h)}
+ }finally{ctx.restore()}
+ return result
+};
 
 /* PAW_FOOD_LIVE_PROPS_END */
 
