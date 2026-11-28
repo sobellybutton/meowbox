@@ -4303,7 +4303,8 @@ function pawVisualChatPortraits(q){
  cleaner.observe(q,{childList:true})
 }
 page=function(title,sub,body){
- const result=pawVisualPageBefore(title,sub,body),q=$('content');
+ const q=$('content');delete q.dataset.pawVisualTheme;
+ const result=pawVisualPageBefore(title,sub,body);
  // The final decorators run after callers have moved or added content.
  const first=q.firstElementChild;
  queueMicrotask(()=>{
@@ -12476,6 +12477,15 @@ const pawDockPaintStyle=document.createElement('style');
 pawDockPaintStyle.textContent=`
 #game #page:has(#content[data-paw-visual-theme="town"]){background:linear-gradient(180deg,#34291d32,#312b2455),url('assets/visual/staging/2026-11-27/interfaces/town-hall/portrait.webp') center 43%/cover no-repeat,#766047!important}
 #game #page:has(#content[data-paw-visual-theme="town"] [data-paw-town-scene="tea"]){background-image:linear-gradient(180deg,#302d2633,#302d264d),url('assets/visual/staging/2026-11-27/rooms/tea/portrait.webp')!important}
+/* Intentional journal, purse and catalogue views retain the painted town
+   behind their readable paper surfaces. Never apply to live room activities. */
+#game #page:has(#content[data-paw-visual-theme="daily"]){background:linear-gradient(180deg,#302d2633,#302d2677),url('assets/visual/painted/worlds/fortune/scene.webp') center 44%/cover no-repeat,#766047!important}
+#game #page:has(#content[data-paw-visual-theme="collection"]),#game #page:has(#content[data-paw-visual-theme="shop"]){background:linear-gradient(180deg,#302d2633,#302d2677),url('assets/visual/painted/worlds/home/scene.webp') center 44%/cover no-repeat,#766047!important}
+#game #page:has(#content[data-paw-visual-theme="profile"]){background:linear-gradient(180deg,#302d2633,#302d2677),url('assets/visual/painted/worlds/wonder/scene.webp') center 44%/cover no-repeat,#766047!important}
+#game #page:has(#content[data-paw-visual-theme="travel"]){background:linear-gradient(180deg,#302d2633,#302d2677),url('assets/visual/painted/worlds/gateway/scene.webp') center 44%/cover no-repeat,#766047!important}
+#game #content:is([data-paw-visual-theme="profile"],[data-paw-visual-theme="collection"],[data-paw-visual-theme="shop"],[data-paw-visual-theme="travel"]){box-sizing:border-box;background:#f5e9d2f5 url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important;color:#493f31}
+@media(orientation:landscape){#game #page:has(#content[data-paw-visual-theme="town"] [data-paw-town-scene="tea"]){background-image:linear-gradient(180deg,#302d2633,#302d264d),url('assets/visual/staging/2026-11-27/rooms/tea/landscape.webp')!important;background-position:center!important}}
+
 #game #content[data-paw-visual-theme="town"]{box-sizing:border-box;max-width:820px!important;padding:clamp(10px,2.6vw,20px)!important;background:#f5e9d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important;border:1px solid #bea37b;box-shadow:0 7px 24px #31261f55;color:#493f31}
 #game #content[data-paw-visual-theme="town"] .pawIllustratedHeading{min-height:clamp(185px,50vw,270px);border:0!important;outline:0!important;margin:4px 0 14px}
 #game #content[data-paw-visual-theme="town"] .pawIllustratedHeading>img{object-position:50% 35%}
