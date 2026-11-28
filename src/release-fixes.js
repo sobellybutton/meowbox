@@ -845,3 +845,54 @@ function pawInstallTempleArrival(){
  }
 }
 queueMicrotask(pawInstallTempleArrival);
+
+
+/* PAW_INDOOR_STANDING_SCALE_BEGIN */
+function pawIndoorStandingScale(playerScale,reference,ratio){
+ if(![playerScale,reference,ratio].every(Number.isFinite)||playerScale<=0||reference<=0||ratio<=0)return null;
+ return 94*playerScale*Math.max(.82,Math.min(1.05,ratio))/reference
+}
+function pawIndoorStandingBounds(x,y,worldHeight,aspect,view){
+ if(![x,y,worldHeight,aspect,view?.s,view?.ox,view?.oy].every(Number.isFinite)||worldHeight<=0||aspect<=0||view.s<=0)return null;
+ const h=worldHeight*view.s,w=Math.max(30,h*aspect),fx=view.ox+x*view.s,fy=view.oy+y*view.s;
+ return {left:fx-w/2-5,right:fx+w/2+5,top:fy-h-5,bottom:fy+6}
+}
+/* PAW_INDOOR_STANDING_SCALE_END */
+function pawInstallIndoorStandingScale(){
+ // Only legacy standing station hosts. Painted rooms already have their own
+ // staging; seated hosts and contact poses must retain their authored anchors.
+ const legacyRooms=new Set(['tea','park','boba','arcade','mystery']);
+ const legacyActor=()=>!activity&&legacyRooms.has(room)?roomResidentStations[room]:null;
+ const normalized=(a,r)=>pawIndoorStandingScale(travellerRoomScale(H,cam.scale),r.height,a.sc);
+ const drawPrior=drawGatheringPainted;
+ drawGatheringPainted=function(name,x,y,scale=1,facing='right'){
+  const a=legacyActor(),r=residentArtworkRecord(name);
+  if(a&&r&&r.id===residentArtworkRecord(a.n)?.id&&a.x===x&&a.y===y&&a.sc===scale){
+   scale=normalized(a,r)??scale
+  }
+  return drawPrior.call(this,name,x,y,scale,facing)
+ };
+ const actorsPrior=roomResidentActors;
+ roomResidentActors=function(...args){
+  const actors=actorsPrior.apply(this,args),legacy=legacyActor();
+  return actors.map(a=>{
+   const r=a===legacy&&residentArtworkRecord(a.n);
+   return r?{...a,sc:normalized(a,r)??a.sc}:a
+  })
+ };
+ const boundsPrior=meowIndoorActorBounds;
+ meowIndoorActorBounds=function(a,scale){
+  // Station NPCs use their individual reference height, not the player's 94.
+  // Use the same trimmed aspect as drawResidentRaster, including broad bodies.
+  if(!activity&&!['fish','destiny','tarot'].includes(room)&&a?.n&&Number.isFinite(a.sc)&&scale===a.sc){
+   const r=residentArtworkRecord(a.n),im=r&&residentArtworkImage(r);
+   if(r&&im?.complete&&im.naturalWidth&&im.naturalHeight){
+    const crop=pawResidentCrop(im),aspect=crop?crop.w/crop.h:im.naturalWidth/im.naturalHeight;
+    const rect=pawIndoorStandingBounds(a.x,a.y,r.height*scale,aspect,{s:cam.scale,ox:cam.ox,oy:cam.oy});
+    if(rect)return rect
+   }
+  }
+  return boundsPrior.call(this,a,scale)
+ }
+}
+queueMicrotask(pawInstallIndoorStandingScale);
