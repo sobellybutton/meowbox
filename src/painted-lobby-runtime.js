@@ -491,9 +491,9 @@ function pawEditorialResultPlan(box,mode,count){
  const top=box.top,head=H>=900?126:108,foot=48,gap=20;
  const title=[x,top,w,head],footer=[x,box.bottom-foot,w,foot],body=[x,top+head+gap,w,H-head-foot-gap*2];
  if(mode==='chart'){
-  const size=Math.min(w,body[3]-12),cell=size/4,ox=x+(w-size)/2,oy=body[1]+(body[3]-size)/2;
-  const cells=[[0,0],[1,0],[2,0],[3,0],[0,1],[3,1],[0,2],[3,2],[0,3],[1,3],[2,3],[3,3]].map(([col,row])=>[ox+col*cell,oy+row*cell,cell,cell]);
-  return {title,footer,body,cells,center:[ox+cell,oy+cell,2*cell,2*cell]}
+  const chartW=Math.min(w,Math.max(body[3],w*.88)),chartH=Math.min(chartW,body[3]-12),cw=chartW/4,ch=chartH/4,ox=x+(w-chartW)/2,oy=body[1]+(body[3]-chartH)/2;
+  const cells=[[0,0],[1,0],[2,0],[3,0],[0,1],[3,1],[0,2],[3,2],[0,3],[1,3],[2,3],[3,3]].map(([col,row])=>[ox+col*cw,oy+row*ch,cw,ch]);
+  return {title,footer,body,cells,center:[ox+cw,oy+ch,2*cw,2*ch]}
  }
  if(mode==='scores'){
   if(!Number.isInteger(count)||count<1||count>9)return null;
@@ -557,7 +557,7 @@ function pawEditorialOther(cv,data,format,cn,box,paper,art,quote){
   rule(sx+sw*.38,sy,sw*.24);
   // One public result line and a short supporting excerpt. For a Zi Wei
   // reflection retain the actual main-star line before the takeaway.
-  const lead=data.kind==='zwds'?locale(data.lines?.[0]):items[0]||locale(data.title);
+  const lead=locale(data.lines?.[0])||items[0]||locale(data.title);
   const detail=items.find(v=>v!==lead)||'';
   const leadH=detail?sh*.46:sh-10;
   text([sx+14,sy+8,sw-28,leadH-8],lead,cn?34:38,24,3,'bold',accent);
