@@ -8,13 +8,13 @@ function fixture(phase,assisted=true){
  const a={phase,assisted,x:400,y:535,at:0,stroke:0,drag:null,fromX:400,fromY:535};
  if(['feed','water'].includes(phase))a.supply={kind:phase};
  const state={care:a},document={hidden:false,addEventListener(){}},completed=[],released=[];
- const api=new Function('state','document','c','clamp','poseEase','careComplete','careSync',
+ const api=new Function('state','document','c','clamp','poseEase','careComplete','careSync','residentReducedMotion',
  'let t=0,activity="pet";'+body+';return {tick(v){t=v;careTick()},hide(v){t=v;document.hidden=true;pawCareVisibility(true,v)},show(v){t=v;document.hidden=false;pawCareVisibility(false,v)}}')
- (state,document,{hasPointerCapture:()=>true,releasePointerCapture:id=>released.push(id)},(v,min,max)=>Math.min(max,Math.max(min,v)),v=>v*v*(3-2*v),p=>{completed.push(p);a.phase='return';a.assisted=false;a.returnFromX=a.x;a.returnFromY=a.y;a.returnAt=a.tickAt},()=>{});
+ (state,document,{hasPointerCapture:()=>true,releasePointerCapture:id=>released.push(id)},(v,min,max)=>Math.min(max,Math.max(min,v)),v=>v*v*(3-2*v),p=>{completed.push(p);a.phase='return';a.assisted=false;a.returnFromX=a.x;a.returnFromY=a.y;a.returnAt=a.tickAt},()=>{},{matches:false});
  return {a,api,completed,released};
 }
 let checks=0;const ck=(v,msg)=>{assert.ok(v,msg);checks++};
-for(const [phase,duration] of [['pet',2.3],['play',3.2],['feed',4.451],['water',4.451],['rest',4.501]]){
+for(const [phase,duration] of [['pet',2.3],['play',3.2],['feed',5.101],['water',5.101],['rest',4.501]]){
  const {a,api,completed}=fixture(phase);
  api.tick(0);api.tick(1);api.hide(1);api.tick(61);
  ck(completed.length===0,'hidden activity cannot complete');
@@ -58,13 +58,13 @@ console.log('PASS '+checks+' park care continuity checks.');
  const api=new Function('document',body+';return {setup:pawCareSupplySetup,pose:pawCareSupplyPose,age:pawCareActionAge}')({addEventListener(){}});
  let n=0;const check=(v,msg)=>{assert.ok(v,msg);n++};
  for(const kind of ['feed','water']){
-  const q=api.setup(kind,{x:310,y:570}),first=api.pose(q,0),end=api.pose(q,1.35);
+  const q=api.setup(kind,{x:310,y:570}),first=api.pose(q,0),end=api.pose(q,2);
   check(first.x===310&&first.y===570,'manual release starts at physical drop');
   check(end.x===q.home[0]&&end.y===q.home[1]&&end.tilt===0,'supply returns to home');
-  check(api.pose(q,.675).pouring,'pour is visibly staged');
-  check(api.age({phase:kind,at:0,supply:q},1.34)<0,'cat waits until preparation finishes');
-  check(api.age({phase:kind,at:0,supply:q},1.35)===0,'cat approach begins at preparation end');
-  for(let i=0;i<=135;i++){
+  check(api.pose(q,1.325).pouring,'pour is visibly staged');
+  check(api.age({phase:kind,at:0,supply:q},1.99)<0,'cat waits until preparation finishes');
+  check(api.age({phase:kind,at:0,supply:q},2)===0,'cat approach begins at preparation end');
+  for(let i=0;i<=200;i++){
    const t=i/100,p=api.pose(q,t),still=api.pose(q,t,true);
    check([p.x,p.y,p.tilt].every(Number.isFinite),'finite prop coordinates');
    check(still.x===q.home[0]&&still.y===q.home[1]&&!still.pouring,'reduced motion still');
@@ -72,4 +72,22 @@ console.log('PASS '+checks+' park care continuity checks.');
  }
  check(api.setup('play')===null,'other actions unchanged');
  console.log('PASS '+n+' physical preparation checks.');
+}
+
+{
+ const api=new Function('document',body+';return {step:pawCareActorStep,target:pawCareActorTarget}')({addEventListener(){}});
+ let n=0;const check=(v,msg)=>{assert.ok(v,msg);n++};
+ for(const phase of ['feed','water','pet','play','rest']){
+  const a={phase},target=api.target(phase);let previous=api.step(a,0),last=[previous.x,previous.y];
+  for(let i=0;i<100;i++){const p=api.step(a,.016);
+   check(Math.hypot(p.x-last[0],p.y-last[1])<=260*.016+1e-7,'bounded walking speed');
+   check(p.kneel>=0&&p.kneel<=.68,'grounded pose range');
+   last=[p.x,p.y];
+  }
+  check(Math.hypot(last[0]-target[0],last[1]-target[1])<1e-6&&!a.traveller.moving&&a.traveller.kneel>0,'approach reaches target and settles');
+  a.phase='return';for(let i=0;i<100;i++)api.step(a,.016);
+  check(a.traveller.x===400&&a.traveller.y===657&&a.traveller.kneel===0,'returns to rest position');
+  const reduced=api.step({phase},0,true);check(reduced.x===target[0]&&reduced.y===target[1]&&!reduced.moving,'reduced motion pose');
+ }
+ console.log('PASS '+n+' park traveller movement checks.');
 }
