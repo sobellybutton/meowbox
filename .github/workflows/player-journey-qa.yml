@@ -11,7 +11,7 @@ permissions:
   contents: read
 jobs:
   entrance-dock:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/organic-temple-flow-qa-20261128'
+    if: github.event_name == 'workflow_dispatch' || (github.head_ref == 'fix/organic-temple-flow-qa-20261128' || github.head_ref == 'release/candidate-first-valley-consolidated-20261128')
     runs-on: ubuntu-latest
     timeout-minutes: 18
     strategy:
@@ -43,7 +43,7 @@ jobs:
           name: entrance-dock-${{ matrix.browser }}-${{ matrix.viewport }}
           path: test-results/entrance
   physical-temple:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/organic-temple-flow-qa-20261128'
+    if: github.event_name == 'workflow_dispatch' || (github.head_ref == 'fix/organic-temple-flow-qa-20261128' || github.head_ref == 'release/candidate-first-valley-consolidated-20261128')
     runs-on: ubuntu-latest
     timeout-minutes: 12
     strategy:
