@@ -15391,6 +15391,7 @@ function pawYueRestoreInline(){
  const visit=pawYueInline;if(!visit)return;
  pawYueInline=null;visit.observer?.disconnect();
  if(visit.anchor.isConnected)visit.anchor.replaceWith(visit.form);else visit.form.remove();
+ if(visit.optionsAnchor?.isConnected)visit.optionsAnchor.replaceWith(visit.options);else visit.options?.remove();
  if(visit.languageAnchor?.isConnected)visit.languageAnchor.replaceWith(visit.language);else visit.language?.remove();
  $('dialogue').removeAttribute('data-paw-yue-question');
 }
@@ -15410,7 +15411,9 @@ function pawYueInlineForm(kind){
  const language=q.querySelector('.pawYueDeskOptions .yueReadingLanguage');
  const languageAnchor=language?document.createComment('Yue reading language'):null;
  if(language){language.before(languageAnchor);$('choices').append(language)}
- const visit={form,anchor,out,kind,observer:null,scene,room,language,languageAnchor};
+ const options=q.querySelector('.pawYueDeskOptions'),optionsAnchor=options?document.createComment('Yue reading options'):null;
+ if(options){options.before(optionsAnchor);options.open=false;panel.insertBefore(options,$('choices'))}
+ const visit={form,anchor,out,kind,observer:null,scene,room,language,languageAnchor,options,optionsAnchor};
  pawYueInline=visit;
  visit.observer=new MutationObserver(()=>{
   if(pawYueInline!==visit)return;
@@ -15584,6 +15587,9 @@ html #game #dialogue.pawWishWriting[data-paw-chat-bar] textarea{min-height:52px!
 html #game #dialogue.pawWishWriting[data-paw-chat-bar] #choices button{background:#e6d2a8!important;color:#33473c!important}
 @media(orientation:landscape){html #game #dialogue[data-paw-chat-bar]:not(.pawWishWriting){max-height:46dvh!important;padding-top:16px!important}html #game #dialogue.pawWishWriting[data-paw-chat-bar]{max-height:44dvh!important}}
 @media(forced-colors:active){html #game #dialogue[data-paw-chat-bar]{background:Canvas!important;color:CanvasText!important}html #game #dialogue[data-paw-chat-bar] :is(#speaker,#line,.pawYueQuestion){color:CanvasText!important}html #game #dialogue[data-paw-chat-bar] #choices button{color:ButtonText!important;background:ButtonFace!important;border:1px solid ButtonText!important}}
+html #game #dialogue[data-paw-yue-question] .pawYueDeskOptions{margin:2px 0!important;padding:0!important;color:#e7d6b5!important;background:transparent!important;border:0!important;box-shadow:none!important}
+html #game #dialogue[data-paw-yue-question] .pawYueDeskOptions>summary{cursor:pointer;min-height:44px;align-content:center;color:#e7d6b5!important;font-size:12px}
+html #game #dialogue[data-paw-yue-question] .pawYueDeskOptions:not([open])>*:not(summary){display:none!important}
 `;document.head.append(pawChatBarStyle);
 /* PAW_RITUAL_CHAT_BAR_END */
 /* PAW_IN_WORLD_CONSULTATION_END */
