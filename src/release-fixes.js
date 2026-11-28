@@ -522,7 +522,7 @@ enter=function(...args){pawTeaBoardVisit++;return pawTeaBoardEnterPrior(...args)
 function pawTeaBoardContext(){return {room,scene,visit:pawTeaBoardVisit,activity,transitioning,page:$('page').style.display==='block'}}
 function pawTeaReadBoard(){
  closeTalk();pawRefreshTopicFeed();
- const origin=pawTeaBoardContext(),rows=pawTeaNoticeSnapshot(townPublishedNotices());
+ const origin=pawTeaBoardContext(),rows=pawTeaNoticeSnapshot(pawDailyTownNotices());
  let sequence=0;const serial=++pawTeaConversationSerial;
  const current=()=>pawTeaVisitCurrent(origin,pawTeaBoardContext());
  function display(index=0,reply=-1){
@@ -541,8 +541,8 @@ function pawTeaReadBoard(){
    choices.push(choice('Back to notice','回到原留言',()=>display(index)))
   }else{
    if(entry.replies.length)choices.push(choice('Read replies ('+entry.replies.length+')','看看回复（'+entry.replies.length+'）',()=>display(index,0)));
-   if(index+1<rows.length)choices.push(choice('Older notice','上一张旧留言',()=>display(index+1)));
-   if(index>0)choices.push(choice('Newer notice','下一张新留言',()=>display(index-1)));
+   if(index+1<rows.length)choices.push(choice('Next notice','下一张留言',()=>display(index+1)));
+   if(index>0)choices.push(choice('Previous notice','上一张留言',()=>display(index-1)));
    choices.push(choice('Shared traveller posts','真人旅人留言',()=>{closeTalk();communityTab='public';townChatPage()}))
   }
   choices.push(choice('Step away','离开留言墙',closeTalk));
