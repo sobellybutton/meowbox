@@ -11300,7 +11300,7 @@ const pawFortunePainting={
   tarot:{approach:[305,1135],plaque:[220,894],hit:[80,840,270,248]},
   destiny:{approach:[755,1135],plaque:[834,896],hit:[665,846,310,248]},
   temple:{approach:[375,702],plaque:[251,481],hit:[95,430,340,230]},
-  wishes:{approach:[630,727],plaque:[827,495],hit:[680,472,292,220]},
+  wishes:{approach:[630,727],plaque:[827,530],hit:[680,472,292,220]},
   station:{approach:[568,365],plaque:[568,282],hit:[430,245,304,126]}
  }
 };
@@ -11373,8 +11373,8 @@ const pawNewDistricts={
    [1280,503,82],[1360,501,90],[1440,502,91],[1530,499,94],
    [1640,500,92],[1685,500,87]],
   doors:{
-   quiz:{approach:[725,461],plaque:[740,347],hit:[636,266,327,197]},
-   story:{approach:[395,965],plaque:[232,760],hit:[55,701,336,237]},
+   quiz:{approach:[725,461],plaque:[740,400],hit:[636,266,327,197]},
+   story:{approach:[395,965],plaque:[232,725],hit:[55,701,336,237]},
    match:{approach:[510,1040],plaque:[812,945],hit:[642,858,329,242]},
    station:{approach:[707,461],plaque:[550,415],hit:[480,378,140,80]}
   }
@@ -11388,8 +11388,8 @@ const pawNewDistricts={
    [1250,350,65],[1320,366,69],[1390,440,106],[1450,498,99],
    [1515,499,100],[1580,504,94],[1640,504,89],[1685,504,83]],
   doors:{
-   mystery:{approach:[478,600],plaque:[255,350],hit:[100,345,325,190]},
-   arcade:{approach:[629,565],plaque:[829,338],hit:[657,329,315,231]},
+   mystery:{approach:[478,600],plaque:[255,405],hit:[100,345,325,190]},
+   arcade:{approach:[629,565],plaque:[829,390],hit:[657,329,315,231]},
    kitchen:{approach:[439,1060],plaque:[255,835],hit:[85,799,397,249]},
    boba:{approach:[588,1390],plaque:[779,1090],hit:[585,1080,385,300]},
    station:{approach:[551,373],plaque:[551,329],hit:[496,300,115,85]}
@@ -11403,8 +11403,8 @@ const pawNewDistricts={
    [1180,727,47],[1260,728,46],[1330,694,46],[1400,660,46],[1480,601,45],
    [1550,540,44],[1645,465,50],[1685,435,41]],
   doors:{
-   fish:{approach:[475,920],plaque:[202,925],hit:[65,865,342,240]},
-   tea:{approach:[414,810],plaque:[798,676],hit:[597,660,376,225]},
+   fish:{approach:[475,920],plaque:[202,895],hit:[65,865,342,240]},
+   tea:{approach:[414,810],plaque:[798,665],hit:[597,660,376,225]},
    park:{approach:[626,460],plaque:[815,355],hit:[660,298,300,165]},
    station:{approach:[515,400],plaque:[500,350],hit:[430,310,150,90]}
   }
