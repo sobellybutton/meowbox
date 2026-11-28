@@ -92,3 +92,31 @@ for(const [w,h] of [[320,568],[360,640],[390,844],[768,1024],[1440,900]])for(con
 assert.ok(src.includes('const gripBox=pawWaterPickupBox(stage,held,at,cam.scale);'));
 assert.ok(src.includes("if(gripBox)target(gripBox.x,gripBox.y,gripBox.w,gripBox.h,()=>{},'templeLadle');"));
 console.log('Resting ladle retry and exclusive held-tool ownership checks passed.');
+
+/* Painted smoke is anchored to the actual lit-stick tip and stays subtle
+   through the final-to-first frame transition, with a fixed reduced-motion pose. */
+{
+ const code=get('PAINTED_INCENSE_SMOKE');
+ const art=Array.from({length:8},(_,i)=>({complete:true,naturalWidth:256,naturalHeight:256,id:i}));
+ const api=new Function('pawRecoveredImage','roomIntro','start',code+';return {layers:pawSmokeLayers,draw:pawDrawPaintedSmoke,paths:pawSmokePaths,images:pawSmokeImages}')(()=>null,()=>{},()=>{});
+ let n=0;const check=(v,m)=>{assert.ok(v,m);n++};
+ for(const strength of [.82,1])for(let i=0;i<720;i++){
+  const layers=api.layers(400,420,i*.01,strength);
+  check(layers.every(p=>p.frame>=0&&p.frame<8&&Math.abs(p.y+p.h*.98-420)<1e-7&&Math.abs(p.x+p.w*.5-400)<1e-7),'emitter stays registered');
+  check(Math.abs(layers.reduce((z,p)=>z+p.alpha,0)-.35*strength)<1e-7,'crossfade opacity bounded');
+ }
+ check(JSON.stringify(api.layers(400,420,0,1,true))===JSON.stringify(api.layers(400,420,500,1,true)),'reduced motion fixed');
+ check(api.layers(400,420,NaN,1).length===0,'invalid time rejected');
+ check(api.layers(400,420,0,0).length===0,'zero strength rejected');
+ const calls=[],stack=[],g={globalAlpha:.5,save(){stack.push(this.globalAlpha)},restore(){this.globalAlpha=stack.pop()},drawImage(...v){calls.push([this.globalAlpha,...v])}};
+ check(api.draw(g,art,400,420,1,1),'painted smoke drawn');
+ check(g.globalAlpha===.5&&stack.length===0,'canvas alpha restored');
+ check(calls.every(c=>c[0]<=.175),'existing canvas alpha preserved');
+ check(!api.draw(g,art.slice(1),400,420,1,1),'incomplete frame set falls back');
+ check(!api.draw(g,art.map((v,i)=>i===3?{...v,naturalWidth:128}:v),400,420,1,1),'wrong dimensions fall back');
+ check(api.images()===null,'unavailable images do not lock a partial set');
+ for(const p of api.paths)check(fs.existsSync(path.resolve(root,'assets/visual/painted/recovered',p)),'uploaded frame exists');
+ check(src.includes("if(pawDrawPaintedSmoke(ctx,state.pawSmokeArt,x,y,t,strength,residentReducedMotion.matches))return;"),'actual emitter calls painted renderer');
+ check(src.includes('if(lit&&smoke)pawVisibleSmoke('),'unlit sticks do not emit smoke');
+ console.log('PASS '+n+' painted incense smoke registration, frame, opacity and fallback assertions.');
+}
