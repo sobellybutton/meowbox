@@ -1186,7 +1186,10 @@
       "evidence": [
         "470aad94: shrine test loads actual painted courtyard, drags current ladle with calibrated destinations and verifies actual drawn assets; script parses."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-water-qa-1251",
+        "until": 1795843388608
+      },
       "blocker": "Browser execution and actual art/contact acceptance pending."
     },
     {
