@@ -59,6 +59,7 @@ jobs:
           node scripts/tarot-fan-test.cjs
           node scripts/test-tarot-snapshot.cjs
           node scripts/reading-host-scene-test.cjs
+          node scripts/tea-scoop-continuity-test.cjs
           node scripts/scene-ambience-test.cjs
           node scripts/recurring-room-visitors-test.cjs
   district:

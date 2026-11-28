@@ -870,14 +870,23 @@ const streetDrawBefore=drawActivity;drawActivity=function(){streetDrawBefore();i
 /* Ambient village atmosphere. Local daylight, fictional weather, no gameplay penalties. */
 let atmosphereLast=-Infinity,atmosphere={hour:12,weather:'clear',season:11};
 function refreshAtmosphere(){if(t-atmosphereLast<30)return;atmosphereLast=t;let parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Singapore',hour:'2-digit',hourCycle:'h23',month:'numeric',day:'numeric'}).formatToParts(new Date());let get=k=>Number(parts.find(v=>v.type===k)?.value||0);let hour=get('hour'),month=get('month'),date=get('day');let roll=hash(day()+'sky'+Math.floor(hour/3))%10;atmosphere={hour,season:month,weather:roll<2?'rain':roll<4?'mist':'clear'};}
-const atmosphereReduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-function villageAtmosphere(){refreshAtmosphere();let h=atmosphere.hour,w=1000,height=mapWorldHeight(),night=h>=19||h<6,dusk=h>=17&&h<19,dawn=h>=6&&h<8;ctx.save();if(night||dusk||dawn){let light=ctx.createLinearGradient(0,0,0,height);light.addColorStop(0,night?'#2238554d':dusk?'#b36b452f':'#e8ac5626');light.addColorStop(1,night?'#20394b29':'#d5ad6c10');ctx.fillStyle=light;ctx.fillRect(0,0,w,height)}
+const atmosphereMotionPreference=matchMedia('(prefers-reduced-motion: reduce)');
+// The authored interior renderer owns mapped fixture animation. Do not
+// scatter the same floating particle layer over residents and furniture.
+function pawAtmosphereMotionPolicy(hidden,reduced,roomId,mapped){
+ return {draw:!hidden,moving:!hidden&&!reduced,legacyMotes:!hidden&&!reduced&&!mapped&&['temple','wishes'].includes(roomId)}
+}
+function pawAtmospherePolicy(roomId=null){
+ const mapped=roomId&&typeof pawSceneLights!=='undefined'&&Object.hasOwn(pawSceneLights,roomId);
+ return pawAtmosphereMotionPolicy(document.hidden,atmosphereMotionPreference.matches,roomId,mapped)
+}
+function villageAtmosphere(){const policy=pawAtmospherePolicy();if(!policy.draw)return;refreshAtmosphere();let h=atmosphere.hour,w=1000,height=mapWorldHeight(),night=h>=19||h<6,dusk=h>=17&&h<19,dawn=h>=6&&h<8;ctx.save();if(night||dusk||dawn){let light=ctx.createLinearGradient(0,0,0,height);light.addColorStop(0,night?'#2238554d':dusk?'#b36b452f':'#e8ac5626');light.addColorStop(1,night?'#20394b29':'#d5ad6c10');ctx.fillStyle=light;ctx.fillRect(0,0,w,height)}
  if(atmosphere.weather==='mist'){let fog=ctx.createLinearGradient(0,0,0,height);fog.addColorStop(0,'#e9e5d938');fog.addColorStop(.55,'#e0e6d710');fog.addColorStop(1,'#eff0e61a');ctx.fillStyle=fog;ctx.fillRect(0,0,w,height)}
- if(!atmosphereReduced){let drift=atmosphere.weather==='rain';if(drift){ctx.strokeStyle='#e1ebea66';ctx.lineWidth=1.2;for(let i=0;i<78;i++){let x=((i*113-t*35)%w+w)%w,y=((i*97+t*310)%height+height)%height;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-8,y+23);ctx.stroke()}for(let i=0;i<8;i++){let f=(t*.8+i*.17)%1,x=310+(i*71)%370,y=height-45-(i*83)%(height*.55);ctx.strokeStyle='rgba(225,240,230,'+(.35*(1-f))+')';ctx.beginPath();ctx.ellipse(x,y,3+f*18,1+f*5,0,0,TAU);ctx.stroke()}}else if(night){for(let i=0;i<27;i++){let x=60+(i*131)%880+Math.sin(t*.5+i)*12,y=140+(i*83)%(height-160)+Math.sin(t*.8+i)*9;ctx.globalAlpha=.35+.28*Math.sin(t*1.6+i);ellipse(x,y,2.2,2.2,'#f6e8a5')}}else{for(let i=0;i<13;i++){let x=((i*97+t*14)%w+w)%w,y=80+(i*73)%(height-90)+Math.sin(t*.7+i)*13;ctx.globalAlpha=.45;petal(x,y,3+i%3,i)}}}
+ if(policy.moving){let drift=atmosphere.weather==='rain';if(drift){ctx.strokeStyle='#e1ebea66';ctx.lineWidth=1.2;for(let i=0;i<78;i++){let x=((i*113-t*35)%w+w)%w,y=((i*97+t*310)%height+height)%height;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-8,y+23);ctx.stroke()}for(let i=0;i<8;i++){let f=(t*.8+i*.17)%1,x=310+(i*71)%370,y=height-45-(i*83)%(height*.55);ctx.strokeStyle='rgba(225,240,230,'+(.35*(1-f))+')';ctx.beginPath();ctx.ellipse(x,y,3+f*18,1+f*5,0,0,TAU);ctx.stroke()}}else if(night){for(let i=0;i<27;i++){let x=60+(i*131)%880+Math.sin(t*.5+i)*12,y=140+(i*83)%(height-160)+Math.sin(t*.8+i)*9;ctx.globalAlpha=.35+.28*Math.sin(t*1.6+i);ellipse(x,y,2.2,2.2,'#f6e8a5')}}else{for(let i=0;i<13;i++){let x=((i*97+t*14)%w+w)%w,y=80+(i*73)%(height-90)+Math.sin(t*.7+i)*13;ctx.globalAlpha=.45;petal(x,y,3+i%3,i)}}}
  ctx.restore()
 }
 const atmosphereMapBefore=drawMap;drawMap=function(){atmosphereMapBefore();villageAtmosphere()};
-const atmosphereRoomBefore=drawRoom;drawRoom=function(){atmosphereRoomBefore();if(!atmosphereReduced){ctx.save();for(let i=0;i<9;i++){let x=190+(i*67)%430+Math.sin(t*.6+i)*6,y=220+(i*37)%155;ctx.globalAlpha=.18+.13*Math.sin(t+i);ellipse(x,y,1.8,1.8,'#ffe4ac')}ctx.restore()}};
+const atmosphereRoomBefore=drawRoom;drawRoom=function(){atmosphereRoomBefore();if(pawAtmospherePolicy(room).legacyMotes){ctx.save();for(let i=0;i<9;i++){let x=190+(i*67)%430+Math.sin(t*.6+i)*6,y=220+(i*37)%155;ctx.globalAlpha=.18+.13*Math.sin(t+i);ellipse(x,y,1.8,1.8,'#ffe4ac')}ctx.restore()}};
 const weatherIndicator=document.createElement('span');weatherIndicator.id='weatherIndicator';weatherIndicator.style.cssText='display:block;font:10px system-ui;opacity:.9;letter-spacing:.03em;margin-top:2px';let lastSkyLabel='';function atmosphereHUD(){if(!$('location'))return;refreshAtmosphere();let h=atmosphere.hour,label=atmosphere.weather==='rain'?tr('Passing shower','阵雨'):atmosphere.weather==='mist'?tr('Gentle mist','薄雾'):h>=19||h<6?tr('Starlit evening','星夜'):tr('Clear skies','晴空');if(!room&&!activity&&proposal.hidden){if(weatherIndicator.parentNode!==$('location'))$('location').append(weatherIndicator);if(label!==lastSkyLabel){weatherIndicator.textContent=label;lastSkyLabel=label}}else if(weatherIndicator.parentNode)weatherIndicator.remove();setTimeout(atmosphereHUD,500)}
 setTimeout(atmosphereHUD,0);
 
@@ -1452,7 +1461,25 @@ const foodReleaseStart=start;start=function(id){foodReleaseStart(id);if(id==='bu
 const teaChoices=[['Milk tea','经典奶茶','#b68965'],['Jasmine milk tea','茉莉奶茶','#d7c59b'],['Brown sugar tea','黑糖奶茶','#976843']];
 function teaCup(x,y,sc=1,base=0,pearls=0,fill=1,angle=0){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(-36,-74);ctx.lineTo(36,-74);ctx.lineTo(26,0);ctx.lineTo(-26,0);ctx.closePath();ctx.fillStyle='#e6e3cf';ctx.fill();ctx.save();ctx.clip();let level=-69*Math.max(0,Math.min(1,fill));ctx.fillStyle=teaChoices[Math.max(0,base)][2];ctx.fillRect(-38,level,76,75);for(let i=0;i<Math.min(16,pearls);i++){let xx=-20+(i*17)%42,yy=-5-Math.floor(i/5)*7+Math.sin(t*6+i)*Math.min(3,Math.abs(angle)*12);ellipse(xx,yy,4.2,4.2,'#4b342e')}ctx.restore();ctx.strokeStyle='#c8b999';ctx.lineWidth=2;ctx.stroke();ellipse(0,-74,37,7,'#eee1c7');line(9,-78,16,-110,'#a66357',5);line(-24,-63,-19,-12,'#fff3da66',3);ctx.restore()}
 function selectTeaBase(i){if(activity!=='bubbleTea'||state.teaStage!=='base'||!Number.isInteger(i)||!teaChoices[i])return;state.teaBase=i;pearlStage('sugar');sound(440)}
-function teaAddPearls(){if(activity!=='bubbleTea'||state.teaStage!=='pearls'||state.teaTopping===0)return;state.teaToppingCount=Math.min(2,state.teaToppingCount+1);state.teaPearls=state.teaToppingCount*5;state.teaAt=t;sound(280+state.teaPearls*12);if(state.teaToppingCount===2){pearlStage('mix')}}
+// Finish each visible scoop before another one can begin.
+function pawTeaScoopBusy(q){
+ return q?.teaStage==='pearls'&&q.pawScoopPending===true
+}
+function pawTeaScoopOrigin(a){
+ return a&&Number.isFinite(a.x)&&Number.isFinite(a.y)&&Math.hypot(a.x-420,a.y-480)<65?{x:a.x,y:a.y}:null
+}
+function pawTeaScoopFrame(age,reduced=false,origin=null){
+ const p=Math.max(0,Math.min(1,Number.isFinite(age)?age/.85:0)),ease=u=>u*u*(3-2*u);
+ const going=p<.55,rest={x:530,y:520},lip={x:428,y:437};
+ const from=going?(pawTeaScoopOrigin(origin)||rest):lip,to=going?lip:rest;
+ const phase=going?p/.55:(p-.55)/.45,u=reduced?(phase===0?0:1):ease(phase);
+ const startAngle=going?(pawTeaScoopOrigin(origin)?-.13:0):-.22,endAngle=going?-.22:0;
+ return {x:from.x+(to.x-from.x)*u,y:from.y+(to.y-from.y)*u-(reduced?0:Math.sin(Math.PI*u)*(going&&origin?6:20)),angle:startAngle+(endAngle-startAngle)*u,loaded:p<.55,drop:p>=.55,done:p>=1}
+}
+function teaAddPearls(origin=null){
+ if(activity!=='bubbleTea'||state.teaStage!=='pearls'||state.teaTopping===0||state.teaToppingCount>=2||pawTeaScoopBusy(state))return;
+ state.pawScoopOrigin=pawTeaScoopOrigin(origin);state.pawScoopPending=true;state.pawScoopDropped=false;state.teaAt=t
+}
 function teaShake(amount){if(activity!=='bubbleTea'||state.teaStage!=='mix'||!Number.isFinite(amount)||amount<=0)return;state.teaMix=Math.min(100,state.teaMix+Math.min(36,Math.max(0,amount*.42)));state.teaAt=t;if(state.teaMix>=100){pearlStage('seal');sound(630)}}
 function teaSip(){if(activity!=='bubbleTea'||state.teaStage!=='ready')return;state.teaStage='sip';state.teaAt=t;sound(380)}
 function drawFoodCounter(){paintLivingBackdrop(room==='boba'?null:(pics.kitchen||pics.streetKitchen||pics.tea||pics.sticks));let g=ctx.createLinearGradient(0,410,0,690);g.addColorStop(0,room==='boba'?'#d2b393':'#a8835b');g.addColorStop(1,room==='boba'?'#a17d66':'#654c39');ctx.beginPath();ctx.moveTo(180,466);ctx.lineTo(620,466);ctx.lineTo(690,690);ctx.lineTo(110,690);ctx.closePath();ctx.fillStyle=g;ctx.fill();for(let i=0;i<5;i++)line(175-i*12,482+i*39,625+i*12,482+i*39,'#e0b98230',2)}
@@ -1467,15 +1494,20 @@ function teaPitcher(x,y,base,tilt=0){
  ellipse(0,-55,23,5,'#bba389');line(-17,-45,-14,-5,'#fff2df80',2);ctx.restore();
 }
 function teaScoopArt(x,y,tilt=0,loaded=false){
+ // The original transparent small ladle is registered at its source bowl
+ // point. Keep its painted/fallback family stable for this topping stage.
+ const painted=state.pawToppingScoopPainted&&typeof pawPaintFoodProp==='function'&&pawPaintFoodProp('kitchen_small_ladle',x-8*Math.cos(tilt)-5*Math.sin(tilt),y-8*Math.sin(tilt)+5*Math.cos(tilt),56,{anchor:[32,68],angle:tilt+.5});
  ctx.save();ctx.translate(x,y);ctx.rotate(tilt);
- line(0,0,50,-29,'#765f45',8);line(1,-2,48,-31,'#d1ad79',3);
- ellipse(-8,5,22,12,'#ad936b');ellipse(-8,2,18,8,'#e2c697');
+ if(!painted){
+  line(0,0,50,-29,'#765f45',8);line(1,-2,48,-31,'#d1ad79',3);
+  ellipse(-8,5,22,12,'#ad936b');ellipse(-8,2,18,8,'#e2c697');
+ }
  if(loaded)for(let i=0;i<5;i++){const xx=-18+i*5,yy=1+(i%2)*4;if(activity==='bubbleTea'&&state.teaTopping===2){round(xx-3.5,yy-3.5,7,7,1,'#e5caa0','#aa8966');line(xx-2,yy-2,xx+1,yy-2,'#faf1dc',1)}else{ellipse(xx,yy,4,4,'#4b342e');ellipse(xx-1,yy-1,1,1,'#ab8870')}}
  ctx.restore();
 }
 function teaScoopRelease(a){
  if(activity!=='bubbleTea'||state.teaStage!=='pearls'||!Number.isFinite(a?.x)||!Number.isFinite(a?.y))return;
- if(Math.hypot(a.x-420,a.y-480)<65){teaAddPearls();return}
+ if(pawTeaScoopOrigin(a)){teaAddPearls(a);return}
  hint('Tip the scoop into the cup.','把珍珠倒进奶茶杯里。');
 }
 c.addEventListener('pointerup',e=>{
@@ -1518,12 +1550,17 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
  if(stage==='base')teaChoices.forEach((v,i)=>{const x=285+i*115;teaPitcher(x,611,i);target(x-42,544,84,75,()=>selectTeaBase(i))});
  if(stage==='pourReady'){teaPitcher(530,516,state.teaBase);target(480,440,104,90,()=>pearlPour())}
  if(stage==='pearls'){
-  ellipse(530,540,36,15,'#e5caa0');ellipse(530,537,30,10,'#986b53');
-  for(let i=0;i<12;i++)ellipse(511+(i*13)%39,532+(i%3)*5,4,4,state.teaTopping===2?'#c8a271':'#50362e');
+  const bowlId=state.teaTopping===2?'boba_jelly_bowl':'boba_pearls_bowl';
+  if(state.pawToppingBowlPainted===undefined)state.pawToppingBowlPainted=typeof pawFoodPropReady==='function'&&pawFoodPropReady(bowlId);
+  if(state.pawToppingScoopPainted===undefined)state.pawToppingScoopPainted=typeof pawFoodPropReady==='function'&&pawFoodPropReady('kitchen_small_ladle');
+  if(!state.pawToppingBowlPainted||!pawPaintFoodProp(bowlId,530,552,42)){
+   ellipse(530,540,36,15,'#e5caa0');ellipse(530,537,30,10,'#986b53');
+   for(let i=0;i<12;i++)ellipse(511+(i*13)%39,532+(i%3)*5,4,4,state.teaTopping===2?'#c8a271':'#50362e')
+  }
   if(drag?.id==='teaPearlScoop')teaScoopArt(drag.x,drag.y,-.13,true);
-  else if(age<.52&&state.teaPearls){const f=poseEase(age/.52);teaScoopArt(530-110*f,521-63*Math.sin(f*Math.PI),-.6*f,false)}
+  else if(pawTeaScoopBusy(state)){const f=pawTeaScoopFrame(age,residentReducedMotion.matches,state.pawScoopOrigin);teaScoopArt(f.x,f.y,f.angle,f.loaded)}
   else teaScoopArt(530,520,0,true);
-  target(487,480,90,80,()=>{},'teaPearlScoop');
+  if(!pawTeaScoopBusy(state,t)&&state.teaToppingCount<2)target(487,480,90,80,()=>{},'teaPearlScoop');
  }
  if(stage==='mix'){target(325,415,185,145,()=>{},'teaMix');const live=Math.min(100,state.teaMix+(drag?.id==='teaMix'?Math.min(36,drag.moved*.42):0));round(315,595,170,12,5,'#e8d4b7','#b99b7e');if(live>0)round(317,597,166*live/100,8,3,'#91a58b');txt(Math.round(live)+'%',400,623,16,'#fff4dc')}
  if((stage==='seal'||stage==='sealing')&&paintedLid){if(stage==='seal')target(480,440,104,90,()=>pearlSeal())}
@@ -1575,7 +1612,7 @@ function gardenChime(){if(activity!=='secretGarden'||t-state.gardenChimeAt<.6)re
 function gardenFeed(x=435,y=480){if(activity!=='secretGarden'||t-state.gardenFeedAt<.8)return;state.gardenFeedAt=t;state.gardenFeedX=Math.max(320,Math.min(570,x));state.gardenFeedY=Math.max(430,Math.min(545,y));state.gardenFeedCount++;sound(320);if(state.gardenFeedCount===3){addItem('Quiet garden postcard','静谧后院明信片');hint('Three feedings and the koi have sent you a postcard. Apparently you\'re a regular now.','喂了三回，锦鲤送你一张明信片。看来已经把你当熟客啦。')}else hint(...(state.gardenFeedCount%2?['Lunch! Look how quickly the koi remembered how to swim.','开饭啦！刚才还慢悠悠的，怎么一下子全游过来了？']:['One koi is clearly running the buffet.','有一条锦鲤显然承包了整个自助餐。']))}
 function gardenSeat(){if(activity!=='secretGarden'||t-state.gardenSeatAt<.75)return;state.gardenSitting=!state.gardenSitting;state.gardenSeatAt=t;hint(...(state.gardenSitting?['Sit a little longer. The view isn\'t going anywhere.','再坐会儿吧。风景又不会跑。']:['Take the quiet with you.','把这一份清静带走吧。']))}
 function gardenKoi(x,y,angle,kind){ctx.save();ctx.translate(x,y);ctx.rotate(angle);let col=['#d99b62','#e4d9ba','#d16b48','#e2bf75'][kind%4];ctx.globalAlpha=.88;ctx.beginPath();ctx.moveTo(-17,0);ctx.quadraticCurveTo(-30,Math.sin(t*6+kind)*9-7,-36,-12);ctx.lineTo(-29,0);ctx.lineTo(-36,12);ctx.quadraticCurveTo(-28,7,-17,0);ctx.fillStyle=col;ctx.fill();ellipse(0,0,23,9,col);ellipse(2,0,15,6,kind===1?'#c66b48':'#f2dbb7');ellipse(-6,2,6,4,col);ellipse(16,-3,1.6,1.6,'#514638');ellipse(16,3,1.6,1.6,'#514638');ctx.restore()}
-function gardenWindChime(x,y){let age=t-state.gardenChimeAt,ang=Math.sin(t*1.4)*.07+(age<3?Math.sin(age*12)*.35*Math.exp(-age*1.4):0);ctx.save();ctx.translate(x,y);line(0,-65,0,-22,'#ad9470',2);ctx.rotate(ang);let g=ctx.createLinearGradient(-20,0,20,0);g.addColorStop(0,'#829e9b80');g.addColorStop(.48,'#e5eddbcc');g.addColorStop(1,'#648f8d90');ctx.beginPath();ctx.arc(0,0,19,Math.PI,0);ctx.lineTo(19,11);ctx.quadraticCurveTo(0,21,-19,11);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#a8c3ad';ctx.stroke();line(0,5,0,40,'#bca681',1.5);ellipse(0,12,3,4,'#d8b47a');ctx.rotate(Math.sin(t*1.9)*.14);round(-8,40,16,40,1,'#d9bd89','#8e7856');line(-4,48,4,66,'#a8644a',1);ctx.restore()}
+function gardenWindChime(x,y){let age=t-state.gardenChimeAt,moving=pawAtmospherePolicy('temple').moving,ang=moving?Math.sin(t*1.4)*.07+(age>=0&&age<3?Math.sin(age*12)*.35*Math.exp(-age*1.4):0):0;ctx.save();ctx.translate(x,y);line(0,-65,0,-22,'#ad9470',2);ctx.rotate(ang);let g=ctx.createLinearGradient(-20,0,20,0);g.addColorStop(0,'#829e9b80');g.addColorStop(.48,'#e5eddbcc');g.addColorStop(1,'#648f8d90');ctx.beginPath();ctx.arc(0,0,19,Math.PI,0);ctx.lineTo(19,11);ctx.quadraticCurveTo(0,21,-19,11);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#a8c3ad';ctx.stroke();line(0,5,0,40,'#bca681',1.5);ellipse(0,12,3,4,'#d8b47a');ctx.rotate(moving?Math.sin(t*1.9)*.14:0);round(-8,40,16,40,1,'#d9bd89','#8e7856');line(-4,48,4,66,'#a8644a',1);ctx.restore()}
 const gardenRoomDraw=drawRoom;drawRoom=function(){gardenRoomDraw();if(room!=='temple')return;ctx.save();let [x,y,ax,ay]=indoorStation('secretGarden'),first=hit.length;label(tr('Garden →','后院 →'),x,480,()=>start('secretGarden'));markIndoorStation('secretGarden',first,[ax,ay]);ctx.restore()};
 const gardenDraw=drawActivity;drawActivity=function(){if(activity!=='secretGarden')return gardenDraw();ctx.save();paintLivingBackdrop(pics.park||pics.streetTemple||pics.temple);let shade=ctx.createLinearGradient(0,280,0,690);shade.addColorStop(0,'#304b3030');shade.addColorStop(1,'#27392d80');shadeLivingBackdrop(shade);
 let age=t-state.gardenAt,walk=age<1.2,seatAge=t-state.gardenSeatAt,seat=state.gardenSitting?poseEase(seatAge/.75):seatAge<.75?1-poseEase(seatAge/.75):0;
@@ -8419,6 +8456,12 @@ function pearlAdvance(){
  const age=t-state.teaAt;
  if(state.teaStage==='pouring'&&age>=1.55){pearlStage('seasoning');return}
  if(state.teaStage==='seasoning'&&age>=1.35){pearlStage(state.teaTopping===0?'mix':'pearls');return}
+ if(pawTeaScoopBusy(state)){
+  const f=pawTeaScoopFrame(age);
+  if(f.drop&&!state.pawScoopDropped){state.pawScoopDropped=true;state.teaToppingCount++;state.teaPearls=state.teaToppingCount*5;sound(280+state.teaPearls*12)}
+  if(f.done){state.pawScoopPending=false;state.pawScoopOrigin=null;if(state.teaToppingCount===2)pearlStage('mix')}
+  return
+ }
  if(state.teaStage==='sealing'&&age>=1.25){state.teaSealed=true;pearlStage('ready');sound(580)}
  if(state.teaStage==='sip'&&age>=2.4){
   pearlStage('done');if(state.teaSaved)return;state.teaSaved=true;
@@ -8434,7 +8477,7 @@ function pearlLabel(options,value){const a=options.find(v=>v[0]===value);return 
 function syncPearlPanel(){
  const show=activity==='bubbleTea'&&room==='boba'&&!talkOpen&&proposal.hidden&&$('page').style.display!=='block'&&!transitioning;
  if(!show){pearlPanel.hidden=true;pearlPanelKey='';return}
- const q=state,stage=q.teaStage,key=[stage,q.teaBase,q.teaSugar,q.teaIce,q.teaTopping,q.teaToppingCount,Math.floor(q.teaMix/10),zh].join('|');
+ const q=state,stage=q.teaStage,key=[stage,q.teaBase,q.teaSugar,q.teaIce,q.teaTopping,q.teaToppingCount,Math.floor(q.teaMix/10),pawTeaScoopBusy(q,t),zh].join('|');
  if(key===pearlPanelKey&&q===pearlPanelRun&&!pearlPanel.hidden)return;
  pearlPanelKey=key;pearlPanelRun=q;pearlPanel.hidden=false;pearlPanel.replaceChildren();
  const title=element('strong',tr('Pearl & Pause','珍珠摸鱼铺'),pearlPanel,'pearlRecipeTitle');
@@ -8451,7 +8494,7 @@ function syncPearlPanel(){
  else if(stage==='ice')pearlIce.forEach(v=>btn(tr(v[1],v[2]),()=>pearlPick('teaIce',v[0])));
  else if(stage==='topping')pearlToppings.forEach(v=>btn(tr(v[1],v[2]),()=>pearlPick('teaTopping',v[0])));
  else if(stage==='pourReady')btn(tr('Pour tea','倒茶'),pearlPour);
- else if(stage==='pearls')btn(tr('Scoop topping','舀小料')+' '+q.teaToppingCount+'/2',teaAddPearls);
+ else if(stage==='pearls'){const scoop=btn(pawTeaScoopBusy(q)?tr('Adding topping…','正在加小料……'):tr('Scoop topping','舀小料')+' '+q.teaToppingCount+'/2',teaAddPearls);scoop.disabled=pawTeaScoopBusy(q,t)||q.teaToppingCount>=2}
  else if(stage==='mix')btn(tr('Shake cup','摇奶茶')+' '+Math.floor(q.teaMix)+'%',()=>teaShake(80));
  else if(stage==='seal')btn(tr('Press to seal','按压封口'),pearlSeal);
  else if(stage==='ready')btn(q.teaOrder?tr('Serve the guest','递给客人'):tr('Take a sip','喝一口'),teaSip);
