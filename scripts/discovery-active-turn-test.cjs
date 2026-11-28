@@ -51,7 +51,7 @@ const plateStart=source.indexOf('/* PAW_MAPPED_DISCOVERY_PLATE_BEGIN */'),plateE
 assert.ok(plateStart>contextStart&&plateEnd>plateStart);
 const plate=new Function(source.slice(plateStart,plateEnd)+';return {pawDiscoveryPlateKind,pawDiscoveryPlateFrame};')();
 for(const district of ['wonder','fortune'])for(const id of ['quiz','story','match','tarot'])for(const act of ['wonderScene','match','story',null])for(const visit of [id,'other'])for(const ready of [true,false]){
- const want=district==='wonder'&&visit===id&&ready?(['quiz','story','match'].includes(id)&&act==='wonderScene'?'wonder':id==='match'&&act==='match'?'cafe':null):null;
+ const want=district==='wonder'&&visit===id&&ready?(['quiz','story','match'].includes(id)&&act==='wonderScene'?'wonder':id==='match'&&act==='match'?'cafe':id==='story'&&act==='story'?'story':null):null;
  assert.equal(plate.pawDiscoveryPlateKind(district,id,act,visit,ready),want)
 }
 for(const [w,h] of [[320,640],[390,844],[430,932],[768,1024],[1280,720],[1440,900]]){
@@ -60,3 +60,11 @@ for(const [w,h] of [[320,640],[390,844],[430,932],[768,1024],[1280,720],[1440,90
  assert.ok(w>=900&&w/h>=1.25?Math.abs(q.ox+foot[0]*q.s-w*.34)<1e-7:q.oy+foot[1]*q.s<=h*.47+1e-7)
 }
 console.log('Mapped discovery plate selection and six viewport anchor checks passed.');
+
+const letterStart=source.indexOf('/* PAW_STORY_LETTER_ART_BEGIN */'),letterEnd=source.indexOf('/* PAW_STORY_LETTER_ART_END */');
+assert.ok(letterStart>plateEnd&&letterEnd>letterStart);
+const letter=new Function(source.slice(letterStart,letterEnd)+';return {pawStoryLetterArt,pawStoryLetterCurrent};')();
+const chapters={station:{art:'stationArt'},town:{art:'townArt'}},ending={end:['Title','标题','Summary','简介','endingArt']};
+for(const [id,want] of [['station','stationArt'],['town','townArt'],['end','endingArt'],['__proto__',null],['missing',null]])assert.equal(letter.pawStoryLetterArt(id,chapters,ending),want);
+for(const delta of [{},{run:{}},{token:2},{node:'town'},{room:'match'},{activity:'match'},{scene:'fortune'}])assert.equal(letter.pawStoryLetterCurrent(visit,{...visit,...delta}),Object.keys(delta).length===0);
+console.log('Story letter artwork identity and visit guards passed.');
