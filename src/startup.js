@@ -691,9 +691,14 @@ refreshControls=function(){
 const festivalCameraBefore=mobileRoomCamera;
 mobileRoomCamera=function(s,ox,oy){
  if(activity!=='goldfishScoop')return festivalCameraBefore(s,ox,oy);
- const short=W>=H&&H<500,top=short?65:120,bottom=H-(short?80:180),usableW=W-(short?220:16);
- const z=Math.max(.08,Math.min(usableW/385,Math.max(70,bottom-top)/260));
- return {s:z,ox:(short?(W-210)/2:W/2)-400*z,oy:(top+bottom)/2-475*z}
+ const q=state.festivalFish,short=W>=H&&H<500,controls=$('gameControls');
+ const measured=controls?.getBoundingClientRect().height||0;
+ const sizeKey=W+'|'+H;
+ if(q&&q.pawCameraSize!==sizeKey){q.pawCameraSize=sizeKey;q.pawCameraReserve=0}
+ // Reserve space for the extra dip timing row from the outset; never
+ // shift the water under a captured pointer when the controls change.
+ if(q&&!pawScoopPointer&&q.phase==='aim')q.pawCameraReserve=Math.max(q.pawCameraReserve||0,measured+64);
+ return pawScoopCamera(W,H,q?.pawCameraReserve||0)
 };
 const festivalStyle=document.createElement('style');festivalStyle.textContent='#game #gameControls.festivalFishControls:not([hidden]){display:flex;flex-direction:column;gap:4px;width:min(92vw,390px);padding:7px;background:#f0e2c7;color:#514638;border:3px double #b09a72;border-radius:5px}.festivalFishControls small{font-size:12px;line-height:1.35;text-align:center}.festivalFishButtons{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}.festivalFishButtons button{min-width:44px!important;min-height:44px!important;padding:5px 8px!important;white-space:normal!important}@media(orientation:landscape) and (max-height:499px){#game #gameControls.festivalFishControls:not([hidden]){width:200px!important;left:auto!important;right:8px!important;transform:none!important}}';document.head.append(festivalStyle);
 
@@ -6019,6 +6024,14 @@ pawArrivalTicketCss.textContent=`
 document.head.append(pawArrivalTicketCss);
 
 /* PAW_ROOM_LIFE_AND_SCOOP_BEGIN */
+function pawScoopCamera(w,h,reserve=0){
+ if(![w,h,reserve].every(Number.isFinite)||w<=0||h<=0)return null;
+ const short=w>=h&&h<500,top=short?58:Math.min(120,h*.21);
+ const bottom=h-(short?75:Math.max(180,Math.min(h*.48,reserve+76)));
+ const usableW=Math.max(80,w-(short?220:16));
+ const z=Math.max(.08,Math.min(usableW/385,Math.max(60,bottom-top)/260));
+ return {s:z,ox:(short?(w-210)/2:w/2)-400*z,oy:(top+bottom)/2-475*z}
+}
 function pawScoopProject(x,y){
  if(!Number.isFinite(x)||!Number.isFinite(y))return null;
  const dx=(x-400)/124,dy=(y-458)/63,k=Math.max(1,Math.hypot(dx,dy));
@@ -12893,12 +12906,20 @@ function pawParkLobbyAnimal(id){
  return null
 }
 /* PAW_PARK_LOBBY_END */
+/* PAW_PARK_IDLE_BEGIN */
+function pawParkIdlePose(id,now,reduced=false){
+ if(reduced||!Number.isFinite(now))return {bow:0,chew:0,frame:0};
+ if(id==='deerVisit'){const f=((now%13)+13)%13;return {bow:f<2.2?.24*Math.sin(Math.PI*f/2.2):0,chew:f>=2.2&&f<4?.15*(.5+.5*Math.sin(now*7)):0,frame:0}}
+ const f=((now%11)+11)%11;return {bow:0,chew:0,frame:f<.22?1:f>8.2&&f<10.5?6:0}
+}
+/* PAW_PARK_IDLE_END */
 function pawDrawParkLobbyAnimal(id){
  const q=pawParkLobbyAnimal(id);if(!q)return;
  const [x,y]=pawReadingWorld(q.foot);
- if(id==='deerVisit'){drawMeadowDeer(x,y,deerProfiles[0],0,0,q.scale);return}
+ const idle=pawParkIdlePose(id,t,residentReducedMotion.matches);
+ if(id==='deerVisit'){drawMeadowDeer(x,y,deerProfiles[0],idle.bow,idle.chew,q.scale);return}
  const im=productionVisual('parkCats');if(!pawRoomImageReady(im))return;
- const frame=parkCatFrame('idle',0,t),w=220*q.scale,h=140*q.scale;
+ const frame=idle.frame,w=220*q.scale,h=140*q.scale;
  ctx.drawImage(im,frame*220,0,220,140,x-w/2,y-h*120/140,w,h)
 }
 const pawReadingPropBefore=prop;
@@ -13841,4 +13862,63 @@ drawActivity=function(...args){
  return pawAuntieSeatDrawBefore(...args)
 };
 
+/* PAW_FOOD_LIVE_PROPS_BEGIN */
+// Load only when entering the food street activity. Use the verified
+// production manifest and existing source-pixel contact module.
+let pawFoodLiveJob=null,pawFoodLive=null;
+function pawFoodLoadScript(path,global){
+ if(globalThis[global])return Promise.resolve(globalThis[global]);
+ return new Promise(resolve=>{const el=document.createElement('script');let done=false;
+  const finish=v=>{if(done)return;done=true;clearTimeout(timer);el.remove();resolve(v||null)};
+  const timer=setTimeout(()=>finish(null),4500);el.async=true;el.src=path;
+  el.onload=()=>finish(globalThis[global]);el.onerror=()=>finish(null);document.head.append(el)
+ })
+}
+function pawLoadFoodProps(){
+ if(pawFoodLive)return Promise.resolve(pawFoodLive);
+ if(pawFoodLiveJob)return pawFoodLiveJob;
+ const base='assets/visual/painted/food-props/';
+ const json=name=>fetch(base+name).then(r=>{if(!r.ok)throw Error(name);return r.json()});
+ pawFoodLiveJob=Promise.all([pawFoodLoadScript(base+'placement.js','PawFoodProps'),pawFoodLoadScript(base+'contact.js','PawFoodContact'),json('manifest.json'),json('contact-candidates.json')]).then(([placement,contact,manifest,landmarks])=>{
+  if(!placement||!contact)return null;
+  const cache=placement.create(manifest,path=>{const im=new Image();im.decoding='async';im.src=path;return im});
+  const api=contact.create(placement,manifest,landmarks);
+  pawFoodLive={placement,cache,api,manifest,landmarks};return pawFoodLive
+ }).catch(()=>null).finally(()=>pawFoodLiveJob=null);
+ return pawFoodLiveJob
+}
+function pawWarmFoodProps(id){
+ if(!['kitchen','boba'].includes(id))return;
+ pawLoadFoodProps().then(q=>{if(!q)return;
+  q.cache.request(id==='boba'?['boba_tea_pot','boba_milk_pitcher','boba_cup_empty']:['kitchen_small_bowl','kitchen_stock_pot','kitchen_wooden_ladle'])
+ })
+}
+const pawLiveFoodWarmBefore=pawWarmRoomAssets;
+pawWarmRoomAssets=function(id,...args){pawWarmFoodProps(id);return pawLiveFoodWarmBefore(id,...args)};
+const pawLiveFoodStartBefore=start;
+start=function(id,...args){if(id==='bubbleTea')pawWarmFoodProps('boba');else if(id==='cook')pawWarmFoodProps('kitchen');return pawLiveFoodStartBefore(id,...args)};
+function pawPaintFoodProp(id,x,y,h,options){return !!pawFoodLive?.cache.paint(ctx,id,x,y,h,options)}
+function pawFoodPourFrame(q,age,reduced=false){
+ if(!q||!Number.isFinite(age))return null;
+ // The rendered cup is still the original variable-fill cup; match its
+ // actual upper lip at 420,445, rather than replacing the liquid layer.
+ const receiver='boba_cup_empty',height=82,probe=q.cache.geometry(receiver,420,525,height);
+ const lip=q.landmarks.assets[receiver].receiver,at=probe?.point(...lip);if(!at)return null;
+ const plan=q.api.pourPlan({vessel:'boba_tea_pot',receiver,rest:[530,516],receiverBase:[420+420-at[0],525+445-at[1]],vesselHeight:70,receiverHeight:height,gap:34});
+ return q.api.pourFrame(plan,age/1.55,reduced)
+}
+function pawPaintFoodPour(frame){
+ const q=pawFoodLive;if(!q||!frame)return false;
+ const im=q.cache.image('boba_tea_pot');if(!q.placement.draw(ctx,im,frame.vessel))return false;
+ if(frame.stream){ctx.save();try{ctx.strokeStyle=teaChoices[Math.max(0,state.teaBase)][2];ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(...frame.stream.from);ctx.lineTo(...frame.stream.to);ctx.stroke()}finally{ctx.restore()}}
+ return true
+}
+const pawLiveTeaPitcherBefore=teaPitcher;
+teaPitcher=function(x,y,base,tilt=0){
+ // The base-selection jars represent distinct ingredients; leave their
+ // colour-specific artwork unchanged. Only replace the actual tea vessel.
+ if(activity==='bubbleTea'&&state.teaStage==='pourReady'&&pawPaintFoodProp('boba_tea_pot',x,y,70))return;
+ return pawLiveTeaPitcherBefore(x,y,base,tilt)
+};
+/* PAW_FOOD_LIVE_PROPS_END */
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
