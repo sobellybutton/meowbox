@@ -5726,7 +5726,7 @@ function pawPrepareEntranceCrop(original){
     if(typeof decoded.decode==='function')await decoded.decode();
     else if(!decoded.complete)await new Promise((ok,fail)=>{decoded.onload=ok;decoded.onerror=fail});
     finish(cropped)
-   }catch{finish(original)}
+   }catch{pawAvatarCropCache.delete(original);resolve(null)}
   };
   source.onerror=()=>{pawAvatarCropCache.delete(original);resolve(null)};source.src=original
  });
@@ -5746,7 +5746,7 @@ function pawCropEntranceImage(im){
  if(!im||!im.src)return;
  const original=im.getAttribute('src');if(!original||im.dataset.pawCropSource===original)return;
  im.dataset.pawCropSource=original;
- const useCrops=[1,2].includes(proStep)?pawEntranceCropFamily===true:pawAvatarCropCache.get(original)?.ready===true;
+ const useCrops=[1,2,3].includes(proStep)&&pawEntranceCropFamily!==null?pawEntranceCropFamily===true:pawAvatarCropCache.get(original)?.ready===true;
  const chosen=pawEntranceCropSource(original,pawAvatarCropCache,useCrops);
  // Source assignment is synchronous and never changed by a late callback.
  // A cold visit uses the same original art family for all three directions.
