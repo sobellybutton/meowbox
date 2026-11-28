@@ -397,6 +397,9 @@ function yueReturnControls(q,render,switchView=render){
  const strip=element('div','',q,'yueSubjectStrip');element('strong',yueSubjectName(),strip);
  const people=element('div','',strip,'yueInlinePeople');for(const [id,en,cn] of [['self','Me','自己'],['other','Someone else','别人']]){const btn=b(people,tr(en,cn),()=>{if(yueSubject===id)return;yueSubject=id;switchView()});btn.setAttribute('aria-pressed',String(id===yueSubject))}
  const title=q.querySelector('h1');if(title)title.after(strip);
+ // Keep the original language action reachable inside the existing reading options.
+ // The in-room paper hides the generic navigation language control.
+ if(room==='destiny'&&language&&q.querySelector('.signNotebookGrid')){language.classList.add('yueReadingLanguage');language.type='button';strip.append(language)}
  // The native desk menu bypasses the old standalone hub. Keep the
  // privacy notice and per-person clearing on each actual consultation.
  const subject=yueSubject,privacy=element('details','',q,'yueDeskPrivacy');
