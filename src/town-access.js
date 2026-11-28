@@ -305,6 +305,14 @@ function yueAcceptChart(profile,values,today){
  yueAcceptDate(profile,date,today);profile.chart={date,time,tz,lat,lon,topic};return true
 }
 function yueClearProfile(subject){if(!Object.hasOwn(yueSessionProfiles,subject))return;yueSessionProfiles[subject]={date:'',chart:null,year:null,sign:null,almanacReady:false}}
+/* PAW_YUE_CONSULTATION_PRIVACY_BEGIN */
+function yueClearAllowed(origin,current,connected){
+ return connected===true&&['self','other'].includes(origin)&&origin===current
+}
+function yueAutoYearAllowed(profile,date,editing,valid){
+ return !!profile?.almanacReady&&!!profile.date&&profile.date===date&&!editing&&valid===true
+}
+/* PAW_YUE_CONSULTATION_PRIVACY_END */
 function yueSubjectName(){return yueSubject==='self'?tr('My reading','我的命盘'):tr('Someone else’s reading','帮别人看看')}
 function yueReturnControls(q,render,switchView=render){
  const nav=q.querySelector('.row'),back=nav?.firstElementChild,language=nav?.lastElementChild;
@@ -312,7 +320,24 @@ function yueReturnControls(q,render,switchView=render){
  if(language)language.onclick=()=>{zh=!zh;save('zh',zh);document.documentElement.lang=zh?'zh':'en';updateHUD();render()};
  const strip=element('div','',q,'yueSubjectStrip');element('strong',yueSubjectName(),strip);
  const people=element('div','',strip,'yueInlinePeople');for(const [id,en,cn] of [['self','Me','自己'],['other','Someone else','别人']]){const btn=b(people,tr(en,cn),()=>{if(yueSubject===id)return;yueSubject=id;switchView()});btn.setAttribute('aria-pressed',String(id===yueSubject))}
- const title=q.querySelector('h1');if(title)title.after(strip)
+ const title=q.querySelector('h1');if(title)title.after(strip);
+ // The native desk menu bypasses the old standalone hub. Keep the
+ // privacy notice and per-person clearing on each actual consultation.
+ const subject=yueSubject,privacy=element('details','',q,'yueDeskPrivacy');
+ strip.after(privacy);
+ element('summary',tr('Birth details & privacy','生辰资料与隐私'),privacy);
+ element('p',tr('Birth details stay in this open game tab. For someone else, use only details they agree to share.','生辰资料仅暂存在当前游戏页面。替别人查看时，请使用对方同意提供的资料。'),privacy);
+ const clear=b(privacy,tr('Clear this person’s details','清除该对象资料'),()=>{
+  if(!yueClearAllowed(subject,yueSubject,privacy.isConnected)||!confirmRow.hidden)return;
+  confirmRow.hidden=false;clear.hidden=true;cancel.focus({preventScroll:true})
+ });clear.type='button';
+ const confirmRow=element('div','',privacy,'yueClearConfirm');confirmRow.hidden=true;
+ element('p',tr('Clear the current person’s details and any unfinished input? The other person’s details will stay.','清除当前对象的资料及未完成的输入？另一位对象的资料会保留。'),confirmRow);
+ const cancel=b(confirmRow,tr('Keep details','保留资料'),()=>{if(!privacy.isConnected)return;confirmRow.hidden=true;clear.hidden=false;clear.focus({preventScroll:true})});cancel.type='button';
+ const confirm=b(confirmRow,tr('Clear details','确认清除'),()=>{
+  if(confirmRow.hidden||!yueClearAllowed(subject,yueSubject,privacy.isConnected))return;
+  yueClearProfile(subject);switchView()
+ });confirm.type='button'
 }
 function yueReadingHub(){
  page(tr('Master Yue’s reading room','月师傅的命理小馆'),tr('One visit, many questions. The heavens do not require duplicate paperwork.','来都来了，慢慢问。天庭不需要你重复填表。'),q=>{
@@ -374,11 +399,12 @@ yueZodiacAlmanac=function(birth='',selection=null){
  const date=form.querySelector('input[type=date]'),year=form.querySelector('select');if(!date||!year)return;
  if(profile.date&&!birth)date.value=profile.date;
  date.min='1900-01-02';
+ date.max=shrineClock().day;
  const toolbar=element('div','',q,'yueChartTools');form.before(toolbar);
  const edit=b(toolbar,tr('Change birth date','修改出生日期'),()=>{date.closest('label').hidden=false;edit.hidden=true;date.focus()});edit.hidden=true;
  function remember(){if(!out.querySelector('.yueReadingFront')||!yueAcceptDate(profile,date.value,shrineClock().day))return;profile.almanacReady=true;profile.year=Number(year.value);date.closest('label').hidden=true;edit.hidden=false}
  form.addEventListener('submit',remember);
- year.addEventListener('change',()=>{if(profile.date&&date.value===profile.date&&form.checkValidity())form.requestSubmit()});
+ year.addEventListener('change',()=>{if(yueAutoYearAllowed(profile,date.value,!date.closest('label').hidden,form.checkValidity()))form.requestSubmit()});
  yueReturnControls(q,()=>yueZodiacAlmanac(date.value,Number(year.value)),()=>yueZodiacAlmanac());
  if(profile.date&&date.value===profile.date&&form.checkValidity())form.requestSubmit()
 };
@@ -390,6 +416,11 @@ starSignPage=function(selected=null){
  yueReturnControls(q,()=>starSignPage(profile.sign),()=>starSignPage())
 };
 const yueSessionStyle=document.createElement('style');yueSessionStyle.textContent=`
+#game #content .yueDeskPrivacy{margin:7px 0;padding:5px 0;border-top:1px dashed #baa47f;color:#554b39;font-size:13px;line-height:1.5}
+#game #content .yueDeskPrivacy summary{min-height:44px;display:flex;align-items:center;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+#game #content .yueDeskPrivacy p{margin:5px 0 8px;overflow-wrap:anywhere}
+#game #content .yueDeskPrivacy button{min-height:44px;white-space:normal;margin:3px 5px 3px 0}
+#game #content .yueDeskPrivacy [hidden]{display:none!important}
 .yueSessionMast{display:flex;align-items:center;gap:15px;background:#e9dcc0;padding:12px;margin:14px 0;color:#384f43}
 .yueSessionMast img{width:90px;height:100px;object-fit:contain;flex:none}.yueSessionMast p{margin:4px 0;line-height:1.4}
 .yueSubjectChoices,.yueChartTools{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.yueSubjectChoices button,.yueChartTools button{flex:1 1 120px;min-height:44px;white-space:normal}
