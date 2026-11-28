@@ -2230,7 +2230,10 @@ function mbArtVisitRecord(raw,day){
  return {day:good?raw.day:day,total:good&&Number.isInteger(raw.total)?Math.max(0,Math.min(9999,raw.total)):0,today:good&&raw.day===day&&Number.isInteger(raw.today)?Math.max(0,Math.min(999,raw.today)):0}
 }
 /* MBART_VALIDATION_END */
-let mbArtRegistry=mbArtValidate(null),mbArtRequested=false,mbArtRetryAt=0;
+// Boot-critical current traveller records, copied from action-runtime.json.
+// Avoid a manifest round trip before the first illustrated entrance frame.
+const pawBootWalkManifest={"version":1,"players":{"0":{"walk":{"up":[{"path":"assets/visual/painted/player-0/walk/up-0.webp","width":152,"height":244,"sha256":"2b3dffa66873805e45582b990f664b1eade2ed9da4b7c71ea2a9b83b32d849a1","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/up-1.webp","width":152,"height":244,"sha256":"9b9c02f680d7fcba4c842f93a1fc6b785e14a3da525ad55285427e43c3fb04a3","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/up-2.webp","width":152,"height":244,"sha256":"7b3b984c36cfef2fd4bd746ca7c5b15acdec6327b209ff93e7072a2cae958a6a","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/up-3.webp","width":152,"height":244,"sha256":"218aa20c3cf4a1fb46a699959894a62ffee3d546c86e123810a406c57620675c","foot":[76,231]}],"down":[{"path":"assets/visual/painted/player-0/walk/down-0.webp","width":152,"height":244,"sha256":"7c8e27e0b9af94f6e544cf95a14b4b0ac0d69733ca94ad182be41fb3b358f249","foot":[76,230]},{"path":"assets/visual/painted/player-0/walk/down-1.webp","width":152,"height":244,"sha256":"04b1e9aed66fa72c8aa99d0d31378626e7c97cdf0d93857b1c8b0fc2de88756a","foot":[76,226]},{"path":"assets/visual/painted/player-0/walk/down-2.webp","width":152,"height":244,"sha256":"e2e5c18eb20cddf58e655516ca7bef6be3b26b24f7d9e7f60b2a26e513609855","foot":[76,225]},{"path":"assets/visual/painted/player-0/walk/down-3.webp","width":152,"height":244,"sha256":"505acccd70c07f8b64d2729946dc0352a16eeb4231e44190f6aaf959428c9f27","foot":[76,231]}],"right":[{"path":"assets/visual/painted/player-0/walk/right-0.webp","width":152,"height":244,"sha256":"477f2f6f0edfca9a96ca9bdd1008b6fa6d9bed5d57fa4d13f6cc2301f328609b","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/right-1.webp","width":152,"height":244,"sha256":"52f087ed1766a728c29a0c86fe9ccfb808e6900c0fa9e6dd09dcd0986523254e","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/right-2.webp","width":152,"height":244,"sha256":"07e61bd64f9323c94d6e74f60e092f9b726ac6704cda1642a39eb24089460122","foot":[76,230]},{"path":"assets/visual/painted/player-0/walk/right-3.webp","width":152,"height":244,"sha256":"7d8aa05fc42832f3c8a632392ec5c8735a562914b5e2b130a29636bdb6d7f915","foot":[76,231]}]}},"1":{"walk":{"up":[{"path":"assets/visual/painted/player-1/walk/up-0.webp","width":152,"height":244,"sha256":"e8b7f81b867590580109e1c1db271794c99aada6f0d7487b34f1ef32c5d419f2","foot":[76,231]},{"path":"assets/visual/painted/player-1/walk/up-1.webp","width":152,"height":244,"sha256":"982551ad69fadb2263404c9bdd2804fa363a860bef65e451392ee14b4f75d7ae","foot":[76,231]},{"path":"assets/visual/painted/player-1/walk/up-2.webp","width":152,"height":244,"sha256":"ccd8d352e4cc8a44b8e2fc9fef8da1b7b6d723fd8bf8f12bbf449e0e96f54ff1","foot":[76,231]},{"path":"assets/visual/painted/player-1/walk/up-3.webp","width":152,"height":244,"sha256":"038b0d2c4e0f03f080bb5232efd5ded22e1f145b3b9c67a5bf7c2b8643c87c6d","foot":[76,231]}],"right":[{"path":"assets/visual/painted/player-1/walk/right-0.webp","width":224,"height":300,"sha256":"dd6309dda26281292bc080c044726cff365ca46735be0ba571783d2c0d7cb2cb","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/right-1.webp","width":224,"height":300,"sha256":"ccbf3a412f76ae0a84c8c4cab4c2096f6d1d676d26151d3487806cfee662d241","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/right-2.webp","width":224,"height":300,"sha256":"0501646e875de1d7e171f7aab5fe498b5e08690c6bba1edff3baf91d35d6a860","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/right-3.webp","width":224,"height":300,"sha256":"ae6e422edf490b92b855e6ab58e417a4872fe7506877bc9c3b6693b1734a5176","foot":[112,286]}],"down":[{"path":"assets/visual/painted/player-1/walk/down-0.webp","width":224,"height":300,"sha256":"80c5617f28756a71c40175400056baed7823874e37b80b15521eb894d1d6c130","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/down-1.webp","width":224,"height":300,"sha256":"bbf93c490c874091b6e2e835bacce523f4e64c171a0b48d3cafc36f79a56fc7e","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/down-2.webp","width":224,"height":300,"sha256":"90b0777ace6ef858409f6092fa0a1894c9dca33fec546f5b13733d0e8dd8be4f","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/down-3.webp","width":224,"height":300,"sha256":"51d1dd8d67ef1fe7ac3ebc8ac882a77a639e9041dc367cb9b450117f5f3ca99a","foot":[112,286]}]}},"2":{"walk":{"up":[{"path":"assets/visual/painted/player-2/walk/up-0.webp","width":152,"height":244,"sha256":"60212123c80fa2926ca984e44e9bb5cdc9792092b362e4d0cf92d2bafceb2434","foot":[76,231]},{"path":"assets/visual/painted/player-2/walk/up-1.webp","width":152,"height":244,"sha256":"65ccc8e766422da51bfc692181c0db405ce001521d73f6ed2d426a876a9c8184","foot":[76,231]},{"path":"assets/visual/painted/player-2/walk/up-2.webp","width":152,"height":244,"sha256":"643b2e7e849c9faa9d83b43e76e8016fde4511868465827335119194059b742e","foot":[76,231]},{"path":"assets/visual/painted/player-2/walk/up-3.webp","width":152,"height":244,"sha256":"924e62727a49f7dc7d7d81e8d7fa3114806dfaaa9d0f8f332fa887ed006e7f61","foot":[76,231]}],"down":[{"path":"assets/visual/painted/player-2/walk/down-0.webp","width":152,"height":244,"sha256":"0caa1fe79178385662f4a37c3f85ca33a5e1975fa68f66a290ff0b53fdbcd8bd","foot":[76,226]},{"path":"assets/visual/painted/player-2/walk/down-1.webp","width":152,"height":244,"sha256":"97f6bf0cccf25145366b7c1a4a0c748cca85d7930a34e3a7367d3bdc95160076","foot":[76,226]},{"path":"assets/visual/painted/player-2/walk/down-2.webp","width":152,"height":244,"sha256":"cdf846df4bfd9f5eb5363cf85b84ca8781ed35bb7c50186bc6724cc5f615a9fc","foot":[76,226]},{"path":"assets/visual/painted/player-2/walk/down-3.webp","width":152,"height":244,"sha256":"ee2936ab1363d1df73f10939440bb8b40f178b259c1fa1dbca28d039633f22f3","foot":[76,229]}],"right":[{"path":"assets/visual/painted/player-2/walk/right-0.webp","width":152,"height":244,"sha256":"22d13eda3077e1c9ae954952e81493ab90278013a35b1ebb1e506edf23bc2954","foot":[76,228]},{"path":"assets/visual/painted/player-2/walk/right-1.webp","width":152,"height":244,"sha256":"b707d51d839d184a3a63335eddccc216441d46ead96a0c73699729b7b8d864e9","foot":[76,229]},{"path":"assets/visual/painted/player-2/walk/right-2.webp","width":152,"height":244,"sha256":"b61bb31f4c146207be2e85ff7c471060952d9ca01597ef8d760d830f810f7548","foot":[76,229]},{"path":"assets/visual/painted/player-2/walk/right-3.webp","width":152,"height":244,"sha256":"c0ac0efca105ede11e2732591412a958abec52f30c5d933eb6c7f10e98a30c4e","foot":[76,229]}]}},"3":{"walk":{"up":[{"path":"assets/visual/painted/player-3/walk/up-0.webp","width":152,"height":244,"sha256":"3ac999afe45c71a04778eeabda5391eec6e7683694b6129e1c7c6a42e2c21a87","foot":[76,231]},{"path":"assets/visual/painted/player-3/walk/up-1.webp","width":152,"height":244,"sha256":"13eb1e15f98731cd0a88f258cd6a6008d5f368cb81e4132be1670619af1d0b8b","foot":[76,231]},{"path":"assets/visual/painted/player-3/walk/up-2.webp","width":152,"height":244,"sha256":"1c947205102f87db297560c36f04535430056015304fe89f5cb7ae4ce0149354","foot":[76,231]},{"path":"assets/visual/painted/player-3/walk/up-3.webp","width":152,"height":244,"sha256":"de6e3c8543e874b06e07f6031535546cbaac6777c435212b28fa6cb49252cb2a","foot":[76,231]}],"down":[{"path":"assets/visual/painted/player-3/walk/down-0.webp","width":152,"height":244,"sha256":"d22b9bf384f9ac8c5bdf1b1388b1fdac3908a71c62cd48aeb003143d500d0e43","foot":[76,228]},{"path":"assets/visual/painted/player-3/walk/down-1.webp","width":152,"height":244,"sha256":"c9c7d9542d86bebd6f3e55192892e3500c8f4d5be87e9f8b6594880febcb87b1","foot":[76,225]},{"path":"assets/visual/painted/player-3/walk/down-2.webp","width":152,"height":244,"sha256":"541e04f530b1d62644a5756b22763a084b10a9f4ac590a57cf3a43d46997734c","foot":[76,230]},{"path":"assets/visual/painted/player-3/walk/down-3.webp","width":152,"height":244,"sha256":"3aae45230a5bce058d9a73b6ae0b8ca2548316a1875db5e1b33f3ca4cbe05527","foot":[76,227]}],"right":[{"path":"assets/visual/painted/player-3/walk/right-0.webp","width":152,"height":244,"sha256":"3b735dae1785bb837d9308b68a38331bef741c7a8bd39e1024560f98dc4585ba","foot":[76,225]},{"path":"assets/visual/painted/player-3/walk/right-1.webp","width":152,"height":244,"sha256":"068c5efb005dee8c8b64ed03dbd335f1aaf3023b3cd0bd8bb1d8464df68ead8a","foot":[76,228]},{"path":"assets/visual/painted/player-3/walk/right-2.webp","width":152,"height":244,"sha256":"d1a91ff52bdfbfa93b3f98fb546460ee813fd2bf63b10a1f27d92ae31cb12f23","foot":[76,228]},{"path":"assets/visual/painted/player-3/walk/right-3.webp","width":152,"height":244,"sha256":"589c0ed0e14dd7636f5fe3ac35092c83d511c0011190504bdcfac7911a43d17d","foot":[76,229]}]}}},"rooms":{}};
+let mbArtRegistry=mbArtValidate(pawBootWalkManifest),mbArtRequested=false,mbArtRetryAt=0;
 const mbArtImages=new Map(),mbArtFailures=new Map();
 function mbArtLoad(){
  if(mbArtRequested||Date.now()<mbArtRetryAt)return;
@@ -3478,10 +3481,18 @@ explorationRailStyle.textContent=`
 .pawExploreRail{padding:10px 12px;border:1px solid #b5a07a;background:#f3e6cd;color:#514737;margin:10px 0;line-height:1.4}
 .pawExploreRail small{display:block;margin:4px 0 8px}.pawExploreRail button{min-height:44px;white-space:normal}
 `;document.head.append(explorationRailStyle);
+/* PAW_VALLEY_DISCOVERY_BEGIN */
+function pawValleyDoorNearby(id,playerY,doors){
+ const door=doors?.[id];if(!door||!Number.isFinite(playerY))return false;
+ const reach=id==='station'?470:620;
+ return Math.abs(playerY-door.approach[1])<=reach
+}
+/* PAW_VALLEY_DISCOVERY_END */
 const explorationSignBefore=syncSigns;
 syncSigns=function(){
  const result=explorationSignBefore();
  nextStopButton.hidden=true;
+ if(scene==='fortune'&&!signRoot.hidden){for(const [id,btn] of signButtons){if(!pawValleyDoorNearby(id,p.y,pawFortunePainting.doors)&&!btn.hidden)btn.hidden=true}}
  const sign=signButtons.get('station');
  if(sign&&!signRoot.hidden&&!sign.hidden){
   const destination=railNextDistrict(scene),name=tr(...pawRailStationCopy(scene,destination)),accessible=tr('Walk to the train for ','步行前往列车：')+tr(...maps[destination].n);
@@ -3686,6 +3697,7 @@ function pawDirectBoardAllowed(flags){
  return !!flags.valid&&!flags.transitioning&&!flags.room&&!flags.activity&&!flags.entrance&&!flags.hidden&&!flags.page
 }
 function pawRailStationCopy(origin,destination,worlds=maps){
+ if(origin==='fortune')return ['Railway Station','火车站'];
  const name=worlds?.[destination]?.n;
  if(!Array.isArray(name)||typeof name[0]!=='string'||typeof name[1]!=='string')return ['Railway station','火车站'];
  return ['To '+name[0],'前往'+name[1]]
@@ -3835,7 +3847,7 @@ function pawJournalPicture(id,district){
 }
 function pawJournalRender(district=scene){
  if(!maps[district])district='fortune';
- activePage='travel';page(tr('Travel sketchbook','旅行手账'),tr('Four little worlds, yours to discover.','四个小世界，慢慢去发现。'),q=>{
+ activePage='travel';page(tr('Travel sketchbook','旅行手账'),tr('Four neighbourhoods, one little world to wander.','四个小镇，同一个世界，慢慢逛。'),q=>{
   const book=element('section','',q,'pawSketchbook'),rail=element('nav','',book,'pawSketchTabs');
   rail.setAttribute('aria-label',tr('Choose a district page','选择小镇书页'));
   pawJournalKeys.forEach((k,i)=>{
@@ -4225,7 +4237,7 @@ function pawTownLink(parent,key,en,cn,detailEn,detailCn){
 function pawTownFront(){
  if(transitioning)return;
  pawTownFromDock=true;activePage='pawTownFront';
- page(tr('Town Square','摸鱼广场'),tr('Pull up a chair. There is always something to read or someone to talk to.','来坐坐吧，总有故事可看，也有话可聊。'),q=>{
+ page(tr('Town Hall','小镇广场'),tr('Pull up a chair. There is always something to read or someone to talk to.','来坐坐吧，总有故事可看，也有话可聊。'),q=>{
   const front=element('section','',q,'pawTownFront');
   const photo=element('figure','',front,'pawTownFrontPhoto'),im=element('img','',photo);im.src=pawTownPavilionPath;im.alt=tr('Town Hall pavilion','小镇广场长廊');element('figcaption',tr('A little company between adventures','逛累了，就来聊两句'),photo);
   const chat=element('section','',front,'pawTownSection');
@@ -4244,6 +4256,10 @@ function pawTownFront(){
   pawTownLink(more,'celebrate','Good things','小确幸','Share a little win or celebrate privately.','分享小胜利，也可以自己庆祝。');
   pawTownLink(more,'stroll','Meet travellers','结伴散步','Optional shared walks, when available.','联机开放时，可自愿结伴散步。');
   const paper=b(more,tr('Town paper & private notes ›','小镇日报与私密留言 ›'),()=>todayScoopBefore.call($('dockScoop')));paper.className='pawTownTextLink';
+  const tray=element('div','',front,'pawPavilionTray');tray.append(chat,news,more);
+  const previews=[...news.querySelectorAll('.pawTownWeek,.pawTownPreview')];
+  if(previews.length){const fold=element('details','',news,'pawPavilionNews');element('summary',tr('A glimpse of today’s news','今日小镇见闻'),fold);previews[0].before(fold);previews.forEach(n=>fold.append(n))}
+  front.classList.add('pawPavilionScene');
  });
  const q=$('content'),back=q.querySelector(':scope > .row button:first-child');
  if(back)back.onclick=()=>{pawTownFromDock=false;$('page').style.display='none'};
@@ -4511,7 +4527,7 @@ townChatPage=function(...args){
  }
  return result
 };
-pawTownDock.onclick=()=>{if(transitioning)return;pawTownFromDock=false;communityTab='board';townChatPage()};
+pawTownDock.onclick=pawTownFront;
 const pawFourDockBefore=updateHUD;
 updateHUD=function(...args){
  const result=pawFourDockBefore(...args);
@@ -4877,6 +4893,7 @@ pawJournalRender=function(district=scene){
  const info=q.querySelector('.pawSketchNotes'),station=maps[district]?.st.find(v=>v[0]==='station');
  if(info&&station&&district===scene&&!room&&!activity){
   const departure=element('section','',info,'pawJournalDeparture');
+  info.querySelector('.pawRailWayfinding')?.remove(); // one departure action
   element('small',tr('Next train','下一班列车'),departure);
   element('strong',tr(...maps[railNextDistrict(scene)].n),departure);
   const go=b(departure,tr('Walk to station','步行去车站'),()=>{
@@ -5590,13 +5607,13 @@ let pawDockRootKey='';
 function pawDockButtons(){return [['travel',$('dockTravel')],['today',$('dockScoop')],['town',pawTownDock],['home',mbHomeNav]]}
 function pawSyncDockSelection(){
  const q=$('content'),open=$('page').style.display==='block';
- const explore=!!q.querySelector('.pawSketchbook'),today=!!q.querySelector('.pawDiaryFold'),town=!!q.querySelector('.communityTabs')&&communityTab==='board',home=!!q.querySelector('.hideoutScene,.hideoutRoomView');
+ const explore=!!q.querySelector('.pawSketchbook'),today=!!q.querySelector('.pawDiaryFold'),town=!!q.querySelector('.pawTownFront'),home=!!q.querySelector('.hideoutScene,.hideoutRoomView');
  // A root can switch tabs; nested pages retain their contextual Back.
  // Never abandon a draft, active keyboard, furniture edit or room visit.
  const fields=open?[...q.querySelectorAll('textarea,input:not([type]),input[type="text"],input[type="search"],[contenteditable="true"]')].filter(n=>!n.disabled&&!n.hidden):[];
  const draft=fields.some(n=>String(n.value??n.textContent??'').trim()!==''),typing=fields.includes(document.activeElement);
  pawDockRootKey=pawDockRootChoice({open,room:!!room,activity:!!activity,talk:talkOpen,transition:transitioning,entrance:!proposal.hidden,editing:!!hideoutEditing,homeOrigin:home&&!!mbHomeOrigin,draft,typing,explore,today,town,home});
- const selected=!open?'':explore||q.querySelector('.travelAlbum')?'travel':home||q.querySelector('.travellerBagV2,.komorebiBook,.komorebiConfirm,.figureCabinetBook,.pawPersonalShelf')?'home':q.querySelector('.communityTabs,.townWall,.townChatTranscript')?'town':today||q.querySelector('.journalDailyTasks,.goodCompanyBook')?'today':'';
+ const selected=!open?'':explore||q.querySelector('.travelAlbum')?'travel':home||q.querySelector('.travellerBagV2,.komorebiBook,.komorebiConfirm,.figureCabinetBook,.pawPersonalShelf')?'home':q.querySelector('.pawTownFront,.communityTabs,.townWall,.townChatTranscript')?'town':today||q.querySelector('.journalDailyTasks,.goodCompanyBook')?'today':'';
  $('game').classList.toggle('pawDockRoot',!!pawDockRootKey);
  for(const [key,button] of pawDockButtons()){
   button.classList.remove('active');button.classList.toggle('pawDockSelected',selected===key);
@@ -5642,7 +5659,11 @@ pawDockRootStyle.textContent=`
 #game #dock>button:not([hidden]){border:1px solid transparent!important;border-radius:5px!important;box-shadow:none}
 #game #dock>button.pawDockSelected{border-color:#839274!important;box-shadow:inset 0 -2px 0 #829374!important}
 #game #dock>button:not([hidden])>span:last-child{font-size:clamp(10px,2.9vw,13px)!important;white-space:normal!important;text-align:center}
-#game #dock{border-radius:8px!important}
+#game #dock{border-radius:8px!important;box-sizing:border-box!important;width:min(420px,calc(100% - 16px))!important;gap:3px!important;padding:4px!important}
+#game #dock>button:not([hidden]){flex:1 1 0!important;min-width:0!important;min-height:50px!important;padding:4px 2px!important}
+#game #dock>button:not([hidden])>span:last-child{max-width:100%;overflow-wrap:normal;line-height:1.18!important;font-size:clamp(11px,3vw,13px)!important}
+#game #dock>button.pawDockSelected .dockIcon{color:#36533f!important}
+@media(forced-colors:active){#game #dock>button[aria-current="page"]{outline:2px solid Highlight!important;outline-offset:-2px!important}}
 `;document.head.append(pawDockRootStyle);
 
 // Keyboard journal traversal moves focus to the selected tab after a rebuild.
@@ -5866,7 +5887,7 @@ proRender=function(...args){
  const result=pawEntranceArtBefore(...args),hero=proposal.querySelector('.hero'),foot=proposal.querySelector('footer');
  if(!hero||!foot)return result;
  pawEntranceResize();
- if(proStep===0||proStep===4){pawEntranceCropFamily=null;if(proStep===4)requestAnimationFrame(()=>{if(!proposal.hidden&&proStep===4)pawWarmEntranceCrops()})}
+ if(proStep===0||proStep===4){pawEntranceCropFamily=null;}
  if([1,2].includes(proStep)&&pawEntranceCropFamily===null)pawEntranceCropFamily=pawEntranceCropChoice(pawEntranceCropSources(),pawAvatarCropCache);
  if(proStep===0){
   // Recovered matching native station paintings. Keep the train interior
@@ -6719,7 +6740,7 @@ townChatPage=function(...args){
  if(!tabs||q.querySelector('.pawGuestNotice'))return result;
  const note=element('details','',q,'pawGuestNotice');tabs.after(note);
  element('summary',tr('Around town today','今日小镇来客'),note);
- element('p',tr('Fictional visitors in '+maps[scene].n[0]+'. Meet them while exploring the district.',''+maps[scene].n[1]+'的虚构来客。逛小镇时可以遇见他们。'),note);
+ element('p',tr('Visitors in '+maps[scene].n[0]+'. You might bump into them on your stroll.',''+maps[scene].n[1]+'的来客。四处走走，说不定就能碰见他们。'),note);
  const roster=mbGuestRoster(scene);
  for(const g of roster){
   const line=element('div','',note,'pawGuestNoticeLine');element('strong',tr(...g.name),line);
@@ -7530,7 +7551,7 @@ async function pawGateWalk(hero,traveller){
   function tick(now){
    if(done)return;
    if(!pawTransitOwned({stage:proStep,connected:traveller.isConnected,hidden:document.hidden,proposalHidden:proposal.hidden},3)){finish(false);return}
-   const v=pawTransitClock(clock,now,true,1200),i=Math.min(frames.length-1,Math.floor(v*frames.length*2)%frames.length);
+   const v=pawTransitClock(clock,now,true,600),i=Math.min(frames.length-1,Math.floor(v*frames.length*2)%frames.length);
    if(traveller.getAttribute('src')!==frames[i].path)traveller.src=frames[i].path;
    traveller.style.setProperty('--paw-gate-pivot-x',(-100*frames[i].foot[0]/frames[i].width)+'%');
    traveller.style.setProperty('--paw-gate-pivot-y',(-100*frames[i].foot[1]/frames[i].height)+'%');
@@ -7566,7 +7587,7 @@ proRender=function(...args){
   button.disabled=true;button.textContent=tr('Preparing the path…','正在准备山间小路…');
   const gateArt=hero?.querySelector('.mbGatePainting');
   const kind=proAvatar??avatar??0;
-  const ready=await Promise.all([pawReadyMap('fortune'),pawReadyPicture(gateArt),pawReadyTraveller(kind)]).then(pawAdmissionReady);
+  const ready=await Promise.all([pawReadyMap('fortune'),pawReadyPicture(gateArt),pawReadyTraveller(kind),pawReadyEntranceWalk(kind)]).then(pawAdmissionReady);
   if(!button.isConnected||proStep!==3||proposal.hidden)return;
   if(!ready||document.hidden){waiting=false;button.disabled=false;button.textContent=tr('Retry arrival','重新入镇');return}
   const originalSprite=traveller?.getAttribute('src'),originalPivotX=traveller?.style.getPropertyValue('--paw-gate-pivot-x'),originalPivotY=traveller?.style.getPropertyValue('--paw-gate-pivot-y');
@@ -7574,6 +7595,9 @@ proRender=function(...args){
   if(!button.isConnected||proStep!==3||proposal.hidden)return;
   waiting=false;button.disabled=false;button.textContent=original;
   if(!walked||document.hidden){if(hero&&traveller){if(originalSprite)traveller.src=originalSprite;traveller.style.setProperty('--paw-gate-pivot-x',originalPivotX||'-50%');traveller.style.setProperty('--paw-gate-pivot-y',originalPivotY||'-100%');pawGatePlace(hero,traveller)}return}
+  // A pre-admission canvas frame must not pin the legacy family for this visit.
+  pawActorFamilyVisit='fortune|outside';pawActorFamilyChoice.clear();
+  pawActorFamilyChoice.set(kind,true);
   admit.call(button,event)
  };
  button.onclick=enter;if(gate)gate.onclick=enter;return result
@@ -7591,13 +7615,13 @@ const pawFictionNotices=[
  ['rain-reading',{weather:'rain'},'A quieter afternoon','下雨天，慢慢来','The tea room has a dry seat and a warm cup for anyone caught in the rain.','淋到雨的话，茶馆里有干爽的座位和一杯热茶。']
 ];
 const pawFictionGazette=[
- ['biscuit','The lighter biscuit tin','饼干铁盒轻量化','A fictional biscuit maker has announced a tin with fewer biscuits and more premium mountain air. Grandma is unimpressed.','某虚构饼干商推出轻量版铁盒：饼干少了，山间空气多了。外婆表示不买账。'],
+ ['biscuit','The lighter biscuit tin','饼干铁盒轻量化','The town biscuit shop has announced a tin with fewer biscuits and more premium mountain air. Grandma is unimpressed.','小镇饼干店推出轻量版铁盒：饼干少了，山间空气多了。外婆表示不买账。'],
  ['iced-water','Artisanal water','手冲冰水','A visitor claims clockwise-stirred water tastes more expensive. The tea keeper offers them a normal glass instead.','有旅人坚称顺时针搅拌的水比较高级。茶馆店主递给他一杯普通的水。'],
- ['qr-bun','One bun, three QR codes','一个包子，三个二维码','A fictional food stall has invented a login screen for extra chilli. Grandma has responded by handing over the chilli jar.','某虚构小摊推出加辣登录流程。外婆的回应是把辣椒罐直接递过去。'],
+ ['qr-bun','One bun, three QR codes','一个包子，三个二维码','A stall in town has invented a login screen for extra chilli. Grandma has responded by handing over the chilli jar.','小镇有家小摊推出加辣登录流程。外婆的回应是把辣椒罐直接递过去。'],
  ['turnip','The rare turnip','隐藏款萝卜','A blind box collector claims a tiny turnip with sunglasses is a rare investment. The souvenir keeper says it is a very nice toy.','有盲盒玩家说戴墨镜的小萝卜很有投资价值。手信店主说，它就是个挺可爱的玩具。'],
  ['kettle','Kettle update','烧水壶正在更新','A traveller missed breakfast because their clever kettle insisted on updating first. The tea room still uses a perfectly ordinary kettle.','有旅人的智能水壶坚持先升级，结果错过了早餐。茶馆依旧用普通水壶。'],
  ['offline','The offline retreat','离线生活实录','A group visiting for a digital detox spent the afternoon filming how offline they were.','一群来戒手机的旅人，花了一整个下午拍摄自己有多离线。'],
- ['auntie-ai','The helpful auntie algorithm','安娣智能助手','A fictional helpdesk answers every question by asking whether the visitor has eaten and brought a cardigan.','某虚构智能助手无论听到什么问题，都先问吃饭了没、外套带了没。'],
+ ['auntie-ai','The helpful auntie algorithm','安娣智能助手','The town helpdesk answers every question by asking whether the visitor has eaten and brought a cardigan.','小镇服务台无论听到什么问题，都先问吃饭了没、外套带了没。'],
  ['queue','A very popular queue','排队本身就是景点','A visitor joined a queue because it looked popular. It turned out to be the queue for the railway ticket office.','有旅人见队伍很长就跟着排，结果发现是火车站售票队。']
 ];
 function pawFictionEdition(now,weather=''){
@@ -7931,7 +7955,7 @@ const pawGuestPersonalityRows=[
   ],
   [
    "Even my imaginary rice cooker knows when to stop working.",
-   "连我家的虚构电饭锅都知道什么时候下班。"
+   "连我家的电饭锅都知道什么时候下班。"
   ]
  ],
  [
@@ -11301,7 +11325,7 @@ step=function(n,dt,speed){
 const pawFortunePainting={
  path:'assets/visual/painted/worlds/fortune/scene.webp',
  size:[962,1635],
- spawn:[500,1656],
+ spawn:[500,1570],
  player:[[365,568,14],[410,577,14],[470,567,19],[545,548,19],[605,532,22],
  [665,512,30],[702,493,82],[727,492,95],[758,501,45],[805,530,29],
  [870,528,39],[936,505,39],[1000,496,40],[1060,503,40],
@@ -11659,10 +11683,13 @@ hideoutPage=function(...args){
  const q=$('content'),stage=q.querySelector('.hideoutScene'),actions=q.querySelector('.hideoutPrimary');
  if(!stage||!actions)return result;
  if(hideoutEditing){pawLoadHomePaintings();return result}
- const section=element('section','',q,'pawHomeExpansion');
- const heading=element('h2',tr('Room expansions','小窝扩建'),section);
- const details=element('p',tr('Unlock extra rooms with Paw Coins. Your existing furniture stays yours.','用爪爪币解锁更多房间，原有家具会保留。'),section);
- actions.after(section);
+ const fold=element('details','',q,'pawRoomExpansionFold');
+ element('summary',tr('Room expansions','小窝扩建'),fold);
+ const section=element('section','',fold,'pawHomeExpansion');
+ element('p',tr('Unlock extra rooms with Paw Coins. Your existing furniture stays yours.','用爪爪币解锁更多房间，原有家具会保留。'),section);
+ const tabs=q.querySelector('.komorebiRoomTabs');
+ if(tabs&&tabs.parentElement===stage.parentElement)tabs.after(stage);else actions.before(stage);
+ stage.after(actions);actions.after(fold);
  pawLoadHomePaintings().then(api=>{if(api&&section.isConnected&&$('content').contains(section))pawRenderExpansionPlans(section,api)});
  return result
 };
@@ -12183,7 +12210,38 @@ const pawCounterRackStyle=document.createElement('style');pawCounterRackStyle.te
 /* Railway wayfinding: a single contextual edge sign only when the actual
    map plaque has been clipped or displaced. No extra permanent next-stop CTA. */
 const pawRailEdge=element('button','',$('game'),'pawRailEdge');pawRailEdge.type='button';pawRailEdge.hidden=true;
-pawRailEdge.onclick=()=>{if(!pawRailEdge.hidden&&!transitioning&&!room&&!activity&&proposal.hidden&&$('page').style.display!=='block')walkDoor('station')};
+/* PAW_RAIL_NEAR_STATION_BEGIN */
+function pawRailNearStation(actor,station){
+ return Array.isArray(station)&&station[0]==='station'&&[actor?.x,actor?.y,station[1],station[2]].every(Number.isFinite)&&Math.hypot(actor.x-station[1],actor.y-station[2])<=280
+}
+/* PAW_RAIL_NEAR_STATION_END */
+/* PAW_RAIL_EDGE_PRESS_BEGIN */
+function pawRailEdgePressValid(press,view,event){
+ return !!press&&!!view&&!!event&&press.id===event.pointerId&&press.scene===view.scene&&!view.blocked&&Math.hypot(event.clientX-press.x,event.clientY-press.y)<30
+}
+/* PAW_RAIL_EDGE_PRESS_END */
+let pawRailEdgePress=null,pawRailEdgeClickUntil=0;
+const pawRailEdgeView=()=>({scene,blocked:!!(transitioning||room||activity||pending||!proposal.hidden||document.hidden||$('page').style.display==='block'||!pawRailNearStation(p,maps[scene]?.st.find(v=>v[0]==='station')))});
+pawRailEdge.addEventListener('pointerdown',e=>{
+ if(e.button!==0||e.isPrimary===false||pawRailEdge.hidden||pawRailEdgeView().blocked||pawRailEdgePress)return;
+ pawRailEdgePress={id:e.pointerId,scene,x:e.clientX,y:e.clientY};drag=null;
+ e.preventDefault();e.stopPropagation();
+ try{pawRailEdge.setPointerCapture(e.pointerId)}catch{}
+});
+document.addEventListener('pointerup',e=>{
+ const press=pawRailEdgePress;if(!press||press.id!==e.pointerId)return;
+ pawRailEdgePress=null;pawRailEdgeClickUntil=performance.now()+400;drag=null;
+ e.preventDefault();e.stopImmediatePropagation();
+ if(pawRailEdgePressValid(press,pawRailEdgeView(),e))walkDoor('station');
+},true);
+for(const kind of ['pointercancel','lostpointercapture'])document.addEventListener(kind,e=>{
+ if(pawRailEdgePress?.id===e.pointerId){pawRailEdgePress=null;pawRailEdgeClickUntil=performance.now()+400;drag=null}
+},true);
+window.addEventListener('blur',()=>{pawRailEdgePress=null});
+pawRailEdge.onclick=e=>{
+ if(e.detail!==0&&performance.now()<pawRailEdgeClickUntil)return;
+ if(!pawRailEdge.hidden&&!pawRailEdgeView().blocked)walkDoor('station')
+};
 // A plaque can have a valid rectangle yet be hidden, clipped, or covered.
 // Require an actual hit target before withdrawing the edge navigation.
 /* PAW_FIRST_MAP_RAIL_BEGIN */
@@ -12225,6 +12283,8 @@ syncSigns=function(...args){
   if(sign&&!sign.hidden)sign.hidden=true;
   pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
  }
+ if(!pawRailNearStation(p,station)){if(sign)sign.hidden=true;pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result}
+ if(pawRailEdgePress?.scene===scene&&!pawRailEdge.hidden)return result;
  const game=$('game'),g=game.getBoundingClientRect(),now=performance.now(),size=g.width+'|'+g.height;
  const changed=pawRailEdgeScene!==scene||pawRailEdgeSize!==size;
  if(changed){pawRailEdgeScene=scene;pawRailEdgeSize=size;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity}
@@ -12249,7 +12309,7 @@ syncSigns=function(...args){
  return result
 };
 const pawRailEdgeStyle=document.createElement('style');pawRailEdgeStyle.textContent=`
-#game .pawRailEdge{position:absolute;z-index:13;min-height:44px;max-width:46%;padding:6px 12px;border:1px solid #c6aa7a;border-radius:5px;background:#efe0bddf;color:#4d4938;font:600 12px var(--paw-body,system-ui,sans-serif);box-shadow:0 2px 4px #29392d44}
+#game .pawRailEdge{position:absolute;z-index:13;touch-action:none;user-select:none;-webkit-user-select:none;min-height:44px;max-width:46%;padding:6px 12px;border:1px solid #c6aa7a;border-radius:5px;background:#efe0bddf;color:#4d4938;font:600 12px var(--paw-body,system-ui,sans-serif);box-shadow:0 2px 4px #29392d44}
 #game .pawRailEdge[hidden],#game.pawDoorCameraActive #worldSigns,#game.pawRailJourneyActive .pawRailEdge{display:none!important}
 `;document.head.append(pawRailEdgeStyle);
 // Ordinary shop doors push the camera towards the player's grounded approach
@@ -12903,7 +12963,7 @@ syncCafeQuestionSheet=function(...args){
  const detail=element('details','',cafeQuestionSheet,'pawCafePrompt');
  element('summary',tr('Something to try in real life','下次聊天，可以试着这样问'),detail);
  for(const pair of copy.prompts)element('p',tr(...pair),detail);
- element('small',tr('Your choices describe this fictional conversation, not a diagnosis or a compatibility score.','这些选项只反映这段虚构对话，不是性格诊断，也不算缘分分数。'),cafeQuestionSheet);
+ element('small',tr('These reflections come from your conversation over tea. They are not a diagnosis or a compatibility score.','这些心得来自这次茶叙，不是性格诊断，也不算缘分分数。'),cafeQuestionSheet);
  const share=b(cafeQuestionSheet,tr('Share reflection','分享这点心得'),()=>{if(current())openMeowShare({kind:'cafe',title:copy.title,lines:copy.lines,accent:'#ad8270'})});
  share.dataset.cafeResult='share';
  const retry=b(cafeQuestionSheet,tr('Try another conversation','再聊一次'),()=>{if(current())start('match')});
@@ -12921,12 +12981,57 @@ document.head.append(pawCafeReflectionCss);
 
 // Warm the selected traveller during registration and the railway ride,
 // including returning players. Existing gate artwork stays visible until ready.
+/* PAW_BOOT_CURRENT_ART_BEGIN */
+function pawEntranceRecord(kind,dir,registry=pawBootWalkManifest){
+ if(!Number.isInteger(kind)||kind<0||kind>3)return null;
+ return registry.players[kind]?.walk?.[dir]?.[0]||null
+}
+function pawEntranceWalkRecords(kind,registry=pawBootWalkManifest){
+ const walk=registry.players[kind]?.walk;
+ return walk&&['up','down','right'].every(d=>Array.isArray(walk[d])&&walk[d].length===4)?['up','down','right'].flatMap(d=>walk[d]):[]
+}
+function pawEntranceDirection(dir){return dir===1?'up':dir===2?'right':'down'}
+/* PAW_BOOT_CURRENT_ART_END */
+const pawEntranceWalkJobs=new Map();
+function pawReadyEntranceWalk(kind){
+ const records=pawEntranceWalkRecords(kind);
+ if(!records.length)return Promise.resolve(false);
+ if(pawEntranceWalkJobs.has(kind))return pawEntranceWalkJobs.get(kind);
+ for(const record of records)mbArtImage(record);
+ const task=Promise.all(records.map(record=>pawReadyPicture(mbArtImages.get(record.path)))).then(results=>{
+  const ready=pawAdmissionReady(results);if(ready)pawCalibrateWalkFamily(mbArtRegistry.players[kind]?.walk||pawBootWalkManifest.players[kind].walk);
+  else pawEntranceWalkJobs.delete(kind);return ready
+ });
+ pawEntranceWalkJobs.set(kind,task);return task
+}
+function pawEntranceUseCurrent(im,kind,dir,gate=false){
+ const record=pawEntranceRecord(kind,dir);if(!im||!record)return;
+ // Replace the detached legacy element synchronously before the next paint.
+ im.dataset.pawCropFamily='painted';im.dataset.pawArtReady='false';
+ im.style.visibility='hidden';im.src=record.path;
+ if(gate){
+  im.style.setProperty('--paw-gate-pivot-x',(-100*record.foot[0]/record.width)+'%');
+  im.style.setProperty('--paw-gate-pivot-y',(-100*record.foot[1]/record.height)+'%')
+ }
+ const reveal=()=>{if(im.isConnected&&im.getAttribute('src')===record.path&&im.naturalWidth===record.width&&im.naturalHeight===record.height){im.dataset.pawArtReady='true';im.style.visibility='visible'}};
+ if(im.complete)reveal();else im.addEventListener('load',reveal,{once:true})
+}
 const pawAdmissionRenderBefore=proRender;
 proRender=function(...args){
  const result=pawAdmissionRenderBefore(...args);
  if(!proposal.hidden){
   pawReadyMap('fortune');
-  if(Number.isInteger(proAvatar??avatar))pawWarmSelectedTraveller(proAvatar??avatar)
+  const kind=proAvatar??avatar;
+  if(Number.isInteger(kind)){
+   const hero=proposal.querySelector('.hero');
+   if(proStep===3)pawEntranceUseCurrent(hero?.querySelector('.gate-traveller'),kind,'up',true);
+   if(proStep===1||proStep===2){
+    pawEntranceUseCurrent(hero?.querySelector('.pawEntranceAvatar'),kind,pawEntranceDirection(proStep===1?proDir:0));
+    for(const button of proposal.querySelectorAll('.pawAvatarOption'))pawEntranceUseCurrent(button.querySelector('img'),Number(button.dataset.avatar),'down')
+   }
+   // Decode selected frames during onboarding, not after the entrance tap.
+   pawReadyEntranceWalk(kind)
+  }
  }
  return result
 };
@@ -13524,6 +13629,23 @@ pawDockPaintStyle.textContent=`
 #game #content .pawSketchbook,#game #content[data-paw-visual-theme="profile"] .journalProfileBook{background-image:linear-gradient(90deg,#c4a77a55,transparent 9%,transparent 91%,#d0b78b55),url('assets/visual/painted/recovered/ui/paper_texture.webp')!important;background-repeat:no-repeat,repeat!important}
 #game #content[data-paw-visual-theme="collection"] .bagSlot{background-image:linear-gradient(#fff6dc33,#fff6dc77),url('assets/visual/painted/recovered/ui/paper_texture.webp')!important;background-repeat:no-repeat,repeat!important}
 @media(min-width:700px){#game #content[data-paw-visual-theme="town"] .pawTownFrontPhoto{aspect-ratio:2.5}}
+/* A pavilion with a single foreground notice surface, and a room-first home. */
+#game #page:has(#content .pawPavilionScene) #content{background:transparent!important;border:0!important;box-shadow:none!important;padding:clamp(8px,2vw,18px)!important}
+#game #content:has(.pawPavilionScene)>h1,#game #content:has(.pawPavilionScene)>p{color:#fff7e4!important;text-shadow:0 1px 5px #241d14,0 1px 2px #241d14}
+#game #content .pawPavilionScene{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:6px!important}
+#game #content .pawPavilionScene>.pawTownFrontPhoto{aspect-ratio:auto!important;height:clamp(125px,27dvh,270px);background:transparent!important;box-shadow:none!important;border:0!important;outline:0!important}
+#game #content .pawPavilionScene>.pawTownFrontPhoto img{visibility:hidden!important}
+#game #content .pawPavilionScene>.pawTownFrontPhoto figcaption{background:linear-gradient(transparent,#302b22b8)!important}
+#game #content .pawPavilionTray{min-width:0;padding:8px 14px;background:#f5e9d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat;border-radius:6px;color:#493f31;box-shadow:0 3px 12px #30261d44}
+#game #content .pawPavilionTray>.pawTownSection{padding:5px 0!important;margin:0!important}
+#game #content .pawPavilionTray>.pawTownPinned{background:none!important;border:0!important;border-bottom:1px dashed #b6a17c!important;box-shadow:none!important}
+#game #content .pawPavilionTray .pawTownLink{min-height:44px!important;padding:5px 2px!important}
+#game #content .pawPavilionTray .pawTownSection h2{font-size:clamp(17px,4.4vw,21px)!important}
+#game #content .pawPavilionNews summary,#game #content .pawRoomExpansionFold summary{cursor:pointer;min-height:44px;align-content:center;color:#536346}
+#game #content .pawRoomExpansionFold .pawHomeExpansion{margin:0!important}
+#game #content .hideoutScene{margin-block:6px!important}
+@media(min-width:700px) and (orientation:landscape){#game #content .pawPavilionScene{grid-template-columns:minmax(0,1fr) minmax(280px,1fr)!important;gap:16px!important}#game #content .pawPavilionScene>.pawTownFrontPhoto{height:clamp(220px,60dvh,560px)}}
+@media(forced-colors:active){#game #content:has(.pawPavilionScene)>h1,#game #content:has(.pawPavilionScene)>p,#game #content .pawPavilionTray{color:CanvasText!important;background:Canvas!important;text-shadow:none!important}}
 `;document.head.append(pawDockPaintStyle);
 /* PAW_PAINTED_POOL_LAYOUT_BEGIN */
 function pawPaintedPoolLayout(w,h,footer=100){
@@ -14237,7 +14359,7 @@ syncStorySheet=function(...args){
  }
  const note=storySheet.querySelector('.mbStoryIntro');
  if(note&&parallelEndings[parallelNode]){
-  const copy=tr('This fictional ending follows your choices, not a personality result or prediction. Your keepsake is in the Starlight Valley chapter.','这个虚构结局由你的选择决定，并非性格测试或未来预测。纪念品已收入星语谷章节。');
+  const copy=tr('This story ends the way you chose. It is not a personality result or prediction. Your keepsake is in the Starlight Valley chapter.','这个故事的结局由你的选择决定，并非性格测试或未来预测。纪念品已收入星语谷章节。');
   if(note.textContent!==copy)note.textContent=copy
  }
  return value
@@ -14979,5 +15101,19 @@ pawDistrictSignStyle.textContent=`
 }
 `;document.head.append(pawDistrictSignStyle);
 /* PAW_DISTRICT_SIGN_MATERIAL_END */
+
+/* A quieter mobile dock, with existing illustrated icons and full touch targets. */
+const pawValleyArrivalCss=document.createElement('style');
+pawValleyArrivalCss.textContent=`
+@media(orientation:portrait){
+ #game:not(.pawFocusedView):not(.pawInRoom) #dock{width:min(440px,calc(100% - 24px))!important;padding:3px!important;gap:1px!important;border-radius:8px!important;box-shadow:0 2px 7px #332a2544!important}
+ #game:not(.pawFocusedView):not(.pawInRoom) #dock>button:not([hidden]){min-height:50px!important;height:auto!important;padding:3px 1px!important;gap:1px!important}
+ #game:not(.pawFocusedView):not(.pawInRoom) #dock .dockIcon{width:23px!important;height:22px!important;line-height:22px!important}
+ #game[data-paw-sign-material="fortune"]>#worldSigns>.worldSign .doorPlaque{font-size:clamp(11px,2.7vw,13px)!important;padding:3px 6px!important;font-weight:600!important;background-color:#d9c19a!important;box-shadow:0 1px 2px #32261f33!important}
+ #proposal[data-paw-entrance-step="0"]>.hero{border-radius:4px!important}
+ #proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{object-fit:cover!important;object-position:50% 78%!important}
+}
+@media(max-height:620px) and (orientation:portrait){#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{object-fit:contain!important;object-position:center!important}}
+`;document.head.append(pawValleyArrivalCss);
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
