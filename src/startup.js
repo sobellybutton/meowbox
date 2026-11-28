@@ -11958,6 +11958,7 @@ function pawWaterLadlePoint(at,angle,x,y){
  const c=Math.cos(angle),sn=Math.sin(angle);
  return {x:at.x-.65*(x*c-y*sn),y:at.y+.65*(x*sn+y*c)}
 }
+function pawWaterActorScale(){return 2.18}
 function pawWaterShoulder(g,sc){return {x:g.foot.x-8*sc,y:g.foot.y-52*sc}}
 function pawWaterReach(at,g,sc){
  if(!Number.isFinite(at?.x)||!Number.isFinite(at?.y))return at;
@@ -12042,11 +12043,11 @@ function pawDrawWaterPainting(){
  ctx.fillStyle='#473e36';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawWaterArt(),p.x,p.y,p.w,p.h);
  const ready=stage===0?g.rest:stage===1?g.scoop:g.pour;
  let at=ready,angle=0;
- if(held){at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,2.18)}
+ if(held){at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,pawWaterActorScale())}
  else if(stage===1)at=pawWaterMix(run.pawWaterFrom||g.scoop,g.rest,poseEase(Math.min(1,age/.35)));
  else if(stage===2){at=pawWaterMix(run.pawWaterFrom||g.pour,g.pour,poseEase(Math.min(1,age/.35)));angle=.58*poseEase(Math.min(1,age/.4))*(1-poseEase(Math.max(0,Math.min(1,(age-1.5)/.5))))}
  else if(stage===3)at=pawWaterMix(g.pour,g.rack,poseEase(Math.min(1,age/.55)));
- const sc=2.18,shoulder=pawWaterShoulder(g,sc),grip=pawWaterLadlePoint(at,angle,-25,1);
+ const sc=pawWaterActorScale(),shoulder=pawWaterShoulder(g,sc),grip=pawWaterLadlePoint(at,angle,-25,1);
  // Far arm is occluded by the traveller, not drawn across the torso.
  if(stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.72,true);
  if((held||stage===1||stage===2)&&Math.hypot(grip.x-shoulder.x,grip.y-shoulder.y)<=48*sc)pawIncenseArm(shoulder,grip,sc*.70,false);
