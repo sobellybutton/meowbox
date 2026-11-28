@@ -8996,7 +8996,8 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
    textIn([x,y,w,head],[locale(p.name)],22,'bold',muted);
    textIn([x,y+head,w,h-head],p.stars.length?p.stars.map(locale):[cn?'无主星':'No main star'],20,'normal',ink)
   });
-  textIn(slots.chart_summary,[cn?'十四主星':'14 main stars',cn?'传统文化小记':'Traditional symbolism',cn?'仅供反思':'For reflection'],30,'normal',accent)
+  textIn(slots.chart_summary,[cn?'十四主星':'14 main stars',cn?'传统文化小记':'Traditional symbolism',cn?'仅供反思':'For reflection'],30,'normal',accent);
+  if(slots.reading)textIn(slots.reading,[cn?'不含姓名及出生资料':'Name and birth details omitted'],28,'normal',muted);
  }else if(slots.tiles){
   slots.tiles.forEach((rect,i)=>{const [x,y,w,h]=rect,r=data.scoreRows[i];
    textIn([x+10,y+5,w-20,h*.47],[locale(r.label)],30,'bold',muted);
@@ -9294,7 +9295,13 @@ shareCardArt=function(cv,data,format,cn){
  }else{
   const quote=locale(data.kind==='zwds'?data.takeaway:socialResultQuote(data));
   const all=[quote,...data.lines.map(locale)].filter((v,i,a)=>v&&a.indexOf(v)===i);
-  block(all,y+Math.min(30,Math.max(0,(footer-y)/12)),Math.max(60,footer-y-30),format==='square'?34:42,'normal',ink)
+  if(data.kind==='zwds'){
+   const available=Math.max(60,footer-y-30),size=format==='square'?36:format==='story'?50:44;
+   g.font='normal '+size+'px '+font;
+   const estimated=all.reduce((n,v)=>n+shareTextLines(g,v,usable-44).length*size*1.26,0)+Math.max(0,all.length-1)*size*.38;
+   const start=y+Math.max(12,(available-Math.min(available,estimated))*.43);
+   block(all,start,Math.max(40,footer-start-20),size,'normal',ink);
+  }else block(all,y+Math.min(30,Math.max(0,(footer-y)/12)),Math.max(60,footer-y-30),format==='square'?34:42,'normal',ink)
  }
  g.strokeStyle='#a99772';g.lineWidth=2;g.beginPath();g.moveTo(left+28,footer);g.lineTo(w-right-28,footer);g.stroke();
  line(cn?'趣味探索 · 仅供反思':'For fun and reflection · Pawradise',footer+24,23,'normal',muted);
@@ -13415,9 +13422,9 @@ function pawReadingSeatPlan(id,plate,phase){
  const tarot=id==='tarot',yue=id==='destiny';if(!tarot&&!yue)return null;
  const host=tarot?'fortune-teller':'master-yue';
  const pose=tarot?(phase==='shuffle'?'seated-shuffle-held':phase==='focus'?'seated-present-card':'seated-idle'):(phase==='result'?'seated-present-blank-parchment':phase==='question'?'seated-brush-held':'seated-welcome-explain');
- const eye=tarot?[.135,.399]:[.581,.218],span=plate.h*(tarot?.0165:.017);
+ const eye=tarot?[.135,.399]:[.581,.350],span=plate.h*(tarot?.0165:.0185);
  const center=[plate.x+plate.w*eye[0],plate.y+plate.h*eye[1]];
- return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.306]}
+ return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.447]}
 }
 function pawReadingHostPhase(id,q,kind,desk,result){
  if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle')return 'table-wash';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
@@ -13487,6 +13494,7 @@ document.addEventListener('visibilitychange',()=>{
  if(pawYueInkCurrent&&pawHostLibrary?.api?.parchmentClock)pawHostLibrary.api.parchmentClock(pawYueInkCurrent.clock,performance.now()/1000,document.hidden,residentReducedMotion.matches)
 });
 function pawDrawReadingSeated(id,plate){
+ if(id==='destiny')pawYueAdoptSeatedVisit(pawHostVisit,id,activity,transitioning,()=>pawHostFamilyReady(id));
  if(pawHostVisit?.id!==id||!pawHostVisit.ready||!pawHostLibrary)return false;
  const desk=id==='destiny'&&$('page').dataset.pawYueDesk==='true'&&$('page').style.display!=='none';
  const activeForm=desk?$('content').querySelector('.astroForm,.yueAlmanacForm'):null;
@@ -13633,7 +13641,7 @@ drawRoom=function(...args){if(pawReadingActive())pawReadingBackdrop();return paw
 function pawReadingHost(){
  const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:room==='tea'?['Auntie Mei','梅姨']:room==='fish'?['Ah Ma','阿嬷']:room==='park'?['Auntie Lin','林姨']:room==='arcade'?['Arcade keeper','游戏厅店主']:null;
  if(!name)return null;const record=residentArtworkRecord(name);if(!record&&room!=='fish')return null;
- const [x,y]=pawReadingWorld(room==='destiny'?[.58,.306]:room==='tarot'&&pawHostVisit?.ready?[.135,.61]:pawReadingAPI().rooms[room].host);
+ const [x,y]=pawReadingWorld(room==='destiny'?[.58,.447]:room==='tarot'&&pawHostVisit?.ready?[.135,.61]:pawReadingAPI().rooms[room].host);
  return {station:room==='tea'?'chat':room==='fish'?'hit':room==='park'?'pet':room==='arcade'?'bubbleArcade':room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record?.height||112,.90),facing:room==='fish'?'right':'left'}
 }
 const pawReadingHostsBefore=roomResidentActors;
@@ -13644,11 +13652,11 @@ roomResidentActors=function(){if(!pawReadingActive())return pawReadingHostsBefor
 // Until the proper seated sprite is registered this is a desk-occlusion
 // treatment, not a new animation pose.
 function pawYueDeskBox(p=pawReadingPlate){
- return {x:p.x+p.w*.581,y:p.y+p.h*.306,height:p.h*.215,clipTop:p.y+p.h*.165,clipBottom:p.y+p.h*.306}
+ return {x:p.x+p.w*.581,y:p.y+p.h*.447,height:p.h*.215,clipTop:p.y+p.h*.30,clipBottom:p.y+p.h*.447}
 }
 function pawYueHostTapBox(p){
  if(!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||p.w<=0||p.h<=0)return null;
- return [p.x+p.w*.465,p.y+p.h*.175,p.w*.232,p.h*.130]
+ return [p.x+p.w*.465,p.y+p.h*.305,p.w*.232,p.h*.142]
 }
 function pawYueDeskPlaque(p=pawReadingPlate){
  return {x:p.x+p.w*.5,y:p.y+p.h*.552}
@@ -13758,7 +13766,7 @@ function pawChooseConnectedGuestPoints(candidates,canDepart,canWalk,limit=8,spac
 function pawMappedVisitorPoints(api,id){
  const q=api?.rooms[id],spec=pawReadingSpec(api,id);if(!q||!spec)return [];
  const gaps=pawMappedGuestGaps(true),protectedFeet=[spec.entry,[spec.entry[0],spec.entry[1]-35],spec.arrival,...Object.values(spec.stations).map(v=>v.slice(2))];
- const host=['quiz','story','match'].includes(id)?[]:[pawReadingWorld(id==='destiny'?[.58,.306]:q.host)];
+ const host=['quiz','story','match'].includes(id)?[]:[pawReadingWorld(id==='destiny'?[.58,.447]:q.host)];
  const points=q.visitors.map(v=>v.slice()),candidates=[];
  for(let i=0;i<=100;i+=2){
   const y=i/100,range=api.bounds(id,y);if(!range)continue;
