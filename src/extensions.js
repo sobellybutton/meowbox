@@ -108,12 +108,12 @@ const lunarNoteStyle=document.createElement('style');lunarNoteStyle.textContent=
 let lunarRibbon=element('button','',document.body);lunarRibbon.id='lunarRibbon';lunarRibbon.hidden=true;lunarRibbon.onclick=()=>calendarPage();
 function lunarTick(){let on=lunarMenu()&&proposal.hidden&&!room&&scene==='fortune'&&valleyRevealAt<0&&$('page').style.display!=='block';lunarRibbon.hidden=!on;if(on){let l=lunarInfo();lunarRibbon.textContent=tr('Lunar day '+l.d+' · Vegetarian day', (l.d===1?'初一':'十五')+' · 今日宜吃素')}setTimeout(lunarTick,1000)}lunarTick();
 const seasonalGreetings={
-tarot:[['The cards are ready. Your emails can wait.','牌已经洗好了，邮件先放一边。'],['Ask about love, work or whatever keeps you awake.','问感情、事业，或让你睡不着的事。'],['Take a seat. There is no rush to know everything.','坐吧，不用急着知道所有答案。']],
-temple:[['A sincere wish is enough. No appointment needed.','心诚就好，不用预约。'],['The gods are listening. Unlike some group chats.','神明在听，不像有些群聊。'],['One question at a time, please. Heaven has a queue.','一次问一件事，天庭也要排队。']],
-kitchen:[['Come hungry. Leave the work talk outside.','饿了就来，工作的话留在门外。'],['Today we cook slowly. No performance appraisal.','今天慢慢煮，不用做绩效考核。'],['Wash your hands. Your boss cannot help with this one.','先洗手，这件事老板帮不了你。']],
+tarot:[['The cards are ready. Your emails can wait.','牌已经洗好了，邮件先放一边。'],["Come in. Is there something you've been turning over in your mind?","进来坐坐吧。最近是不是有什么事一直想不明白？"],['Take a seat. There is no rush to know everything.','坐吧，不用急着知道所有答案。']],
+temple:[['A sincere wish is enough. No appointment needed.','心诚就好，不用预约。'],["The incense is ready. Take your time with your wish.","香已经备好了，心愿慢慢想，不着急。"],["One clear question at a time. The bamboo slips can wait.","一次想清楚一个问题，签筒就在这儿等你。"]],
+kitchen:[['Come hungry. Leave the work talk outside.','饿了就来，工作的话留在门外。'],["Come, help me with the soup. Good food takes its own sweet time.","来，帮外婆看着这锅汤。好吃的东西急不得。"],["Wash your hands first, dear. I'll get the ingredients ready.","乖，先去洗手，外婆给你备好食材。"]],
 wishes:[['A lantern for the things you cannot put into words.','说不出口的心愿，就交给这盏灯。'],['Write a wish. No need to CC the universe.','写个心愿，不用抄送宇宙。'],['The wind is gentle today. Stay a little longer.','今天风很轻，多待一会儿吧。']],
 arcade:[['The machine is in a good mood. Or so it claims.','机器说自己今天心情不错。'],['Aim carefully. These plushies have no deadlines.','慢慢瞄准，玩偶没有截止日期。']],
-destiny:[['Your birth chart is a map, not a prison.','命盘是一张地图，不是一座牢笼。'],['Let us look at your stars before your inbox.','先看看星星，再看收件箱。']]
+destiny:[["We can look at your chart together. It does not decide your life for you.","来，我们一起看看命盘。命盘不能替你决定人生。"],["Sit here, young traveller. Tell me what you came to ask.","小友，坐这儿吧。今天想问些什么？"]]
 };
 const prevSeasonIntro=roomIntro;roomIntro=function(){prevSeasonIntro();if(room==='temple'&&lunarMenu()){toast(tr('It is lunar day '+lunarInfo().d+'. Vegetarian meals are available at Grandma’s today.', '今天农历'+(lunarInfo().d===1?'初一':'十五')+'，有吃素习惯的旅人，外婆今天准备了素食。'));return}if(room==='kitchen'&&lunarMenu()){toast(tr('Grandma: Mushroom, greens and tofu today. Come eat!','外婆：今天初一十五，香菇青菜豆腐汤，来吃饭啦！'));return}let pool=seasonalGreetings[room];if(pool)toast(tr(...pickDaily(pool,room)))};
 const prevSeasonStart=start;start=function(id){prevSeasonStart(id);if(id==='cook'){state.vegetarian=lunarMenu();state.recipe=state.vegetarian?['Mushroom and tofu soup','香菇豆腐汤']:pickDaily([['Tomato and egg soup','番茄蛋汤'],['Tomato and greens soup','番茄青菜汤'],['Grandma’s comfort soup','外婆暖心汤']],'recipe');hint(tr('Today’s recipe: '+state.recipe[0]+'. Drag ingredients into the pot.','今日菜谱：'+state.recipe[1]+'。把食材拖入锅中。'),'今日菜谱：'+state.recipe[1]+'。把食材拖入锅中。')}};
@@ -1594,10 +1594,10 @@ roomActions.tarot=[['tarot','Daily tarot','今日塔罗'],['love','Ask the cards
 const readingTopics=[['Love','感情'],['Work','事业'],['Money','财运'],['Life','生活']];
 const readingPositions=[['Situation','现状'],['What needs attention','需要留意'],['A next step','下一步']];
 const readingPrompts=[
- [['What feels comfortable or uncertain in your relationships?','感情里，什么让你安心，什么又让你犹豫？'],['Which needs or boundaries deserve a conversation?','有哪些需求或界限值得好好谈一谈？'],['Choose one small, kind action without forcing an outcome.','做一件小小的温柔的事，不必强求结果。']],
- [['Which part of work is taking most of your energy?','工作中，哪一部分最消耗你的精力？'],['Notice what is within your control and what is not.','分清哪些事是你能改变的，哪些不是。'],['Try one practical next step, even if it is a small one.','试着迈出实际的一小步，慢一点也没关系。']],
- [['How do your spending choices reflect your priorities?','你的消费习惯反映了怎样的生活重心？'],['Consider which commitments deserve a closer look.','想想哪些支出或承诺值得重新审视。'],['Make one realistic choice based on your budget, not the cards.','根据实际预算做一个务实的选择，而不是靠牌面决定。']],
- [['What is occupying your thoughts lately?','最近有什么事一直放在心上？'],['What might you be overlooking in your daily life?','日常生活中，有没有什么被你忽略了？'],['Choose a manageable change that feels right for you.','选一个适合自己、力所能及的小改变。']]
+ [["When do you feel most at ease with the people close to you?","和亲近的人相处时，什么时候的你最自在？"],["Is there something you wish you could ask for more openly?","有没有什么心里话，是你希望自己能坦然说出口的？"],["What could you do kindly, without expecting a particular response?","能不能做一件温柔的小事，不急着等对方给出回应？"]],
+ [["What has been weighing on you most at work lately?","最近工作上，哪件事最让你费心？"],["Which part of that situation can you actually change?","这件事里，有哪些是你自己能做主的？"],["What would make tomorrow at work a little easier?","做些什么，能让明天上班轻松一点？"]],
+ [["Which expenses feel worthwhile to you, and which don't?","哪些钱花得值得，哪些花完以后反而有点后悔？"],["Is there a regular expense you would like to understand better?","有没有一笔固定开销，值得你再仔细看看？"],["If you make a money decision, let your budget and the facts guide you, not this reading.","真要做财务决定，还是得看实际预算和情况，不能只凭牌意。"]],
+ [["What keeps coming back to mind when things get quiet?","安静下来的时候，哪件事总会浮现在你心里？"],["Is there something you miss that you haven't made time for?","有没有什么你其实很想做，却一直没腾出时间？"],["What small change would make your days feel more like your own?","做一点什么改变，能让日子过得更像你自己？"]]
 ];
 function topicReflection(topic,position){const prompt=readingPrompts[topic]?.[position];return prompt?tr(...prompt):''}
 let readingJournal=load('readingJournalV1',[]);if(!Array.isArray(readingJournal))readingJournal=[];
