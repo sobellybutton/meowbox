@@ -2193,7 +2193,10 @@ function mbArtVisitRecord(raw,day){
  return {day:good?raw.day:day,total:good&&Number.isInteger(raw.total)?Math.max(0,Math.min(9999,raw.total)):0,today:good&&raw.day===day&&Number.isInteger(raw.today)?Math.max(0,Math.min(999,raw.today)):0}
 }
 /* MBART_VALIDATION_END */
-let mbArtRegistry=mbArtValidate(null),mbArtRequested=false,mbArtRetryAt=0;
+// Boot-critical current traveller records, copied from action-runtime.json.
+// Avoid a manifest round trip before the first illustrated entrance frame.
+const pawBootWalkManifest={"version":1,"players":{"0":{"walk":{"up":[{"path":"assets/visual/painted/player-0/walk/up-0.webp","width":152,"height":244,"sha256":"2b3dffa66873805e45582b990f664b1eade2ed9da4b7c71ea2a9b83b32d849a1","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/up-1.webp","width":152,"height":244,"sha256":"9b9c02f680d7fcba4c842f93a1fc6b785e14a3da525ad55285427e43c3fb04a3","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/up-2.webp","width":152,"height":244,"sha256":"7b3b984c36cfef2fd4bd746ca7c5b15acdec6327b209ff93e7072a2cae958a6a","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/up-3.webp","width":152,"height":244,"sha256":"218aa20c3cf4a1fb46a699959894a62ffee3d546c86e123810a406c57620675c","foot":[76,231]}],"down":[{"path":"assets/visual/painted/player-0/walk/down-0.webp","width":152,"height":244,"sha256":"7c8e27e0b9af94f6e544cf95a14b4b0ac0d69733ca94ad182be41fb3b358f249","foot":[76,230]},{"path":"assets/visual/painted/player-0/walk/down-1.webp","width":152,"height":244,"sha256":"04b1e9aed66fa72c8aa99d0d31378626e7c97cdf0d93857b1c8b0fc2de88756a","foot":[76,226]},{"path":"assets/visual/painted/player-0/walk/down-2.webp","width":152,"height":244,"sha256":"e2e5c18eb20cddf58e655516ca7bef6be3b26b24f7d9e7f60b2a26e513609855","foot":[76,225]},{"path":"assets/visual/painted/player-0/walk/down-3.webp","width":152,"height":244,"sha256":"505acccd70c07f8b64d2729946dc0352a16eeb4231e44190f6aaf959428c9f27","foot":[76,231]}],"right":[{"path":"assets/visual/painted/player-0/walk/right-0.webp","width":152,"height":244,"sha256":"477f2f6f0edfca9a96ca9bdd1008b6fa6d9bed5d57fa4d13f6cc2301f328609b","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/right-1.webp","width":152,"height":244,"sha256":"52f087ed1766a728c29a0c86fe9ccfb808e6900c0fa9e6dd09dcd0986523254e","foot":[76,231]},{"path":"assets/visual/painted/player-0/walk/right-2.webp","width":152,"height":244,"sha256":"07e61bd64f9323c94d6e74f60e092f9b726ac6704cda1642a39eb24089460122","foot":[76,230]},{"path":"assets/visual/painted/player-0/walk/right-3.webp","width":152,"height":244,"sha256":"7d8aa05fc42832f3c8a632392ec5c8735a562914b5e2b130a29636bdb6d7f915","foot":[76,231]}]}},"1":{"walk":{"up":[{"path":"assets/visual/painted/player-1/walk/up-0.webp","width":152,"height":244,"sha256":"e8b7f81b867590580109e1c1db271794c99aada6f0d7487b34f1ef32c5d419f2","foot":[76,231]},{"path":"assets/visual/painted/player-1/walk/up-1.webp","width":152,"height":244,"sha256":"982551ad69fadb2263404c9bdd2804fa363a860bef65e451392ee14b4f75d7ae","foot":[76,231]},{"path":"assets/visual/painted/player-1/walk/up-2.webp","width":152,"height":244,"sha256":"ccd8d352e4cc8a44b8e2fc9fef8da1b7b6d723fd8bf8f12bbf449e0e96f54ff1","foot":[76,231]},{"path":"assets/visual/painted/player-1/walk/up-3.webp","width":152,"height":244,"sha256":"038b0d2c4e0f03f080bb5232efd5ded22e1f145b3b9c67a5bf7c2b8643c87c6d","foot":[76,231]}],"right":[{"path":"assets/visual/painted/player-1/walk/right-0.webp","width":224,"height":300,"sha256":"dd6309dda26281292bc080c044726cff365ca46735be0ba571783d2c0d7cb2cb","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/right-1.webp","width":224,"height":300,"sha256":"ccbf3a412f76ae0a84c8c4cab4c2096f6d1d676d26151d3487806cfee662d241","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/right-2.webp","width":224,"height":300,"sha256":"0501646e875de1d7e171f7aab5fe498b5e08690c6bba1edff3baf91d35d6a860","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/right-3.webp","width":224,"height":300,"sha256":"ae6e422edf490b92b855e6ab58e417a4872fe7506877bc9c3b6693b1734a5176","foot":[112,286]}],"down":[{"path":"assets/visual/painted/player-1/walk/down-0.webp","width":224,"height":300,"sha256":"80c5617f28756a71c40175400056baed7823874e37b80b15521eb894d1d6c130","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/down-1.webp","width":224,"height":300,"sha256":"bbf93c490c874091b6e2e835bacce523f4e64c171a0b48d3cafc36f79a56fc7e","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/down-2.webp","width":224,"height":300,"sha256":"90b0777ace6ef858409f6092fa0a1894c9dca33fec546f5b13733d0e8dd8be4f","foot":[112,286]},{"path":"assets/visual/painted/player-1/walk/down-3.webp","width":224,"height":300,"sha256":"51d1dd8d67ef1fe7ac3ebc8ac882a77a639e9041dc367cb9b450117f5f3ca99a","foot":[112,286]}]}},"2":{"walk":{"up":[{"path":"assets/visual/painted/player-2/walk/up-0.webp","width":152,"height":244,"sha256":"60212123c80fa2926ca984e44e9bb5cdc9792092b362e4d0cf92d2bafceb2434","foot":[76,231]},{"path":"assets/visual/painted/player-2/walk/up-1.webp","width":152,"height":244,"sha256":"65ccc8e766422da51bfc692181c0db405ce001521d73f6ed2d426a876a9c8184","foot":[76,231]},{"path":"assets/visual/painted/player-2/walk/up-2.webp","width":152,"height":244,"sha256":"643b2e7e849c9faa9d83b43e76e8016fde4511868465827335119194059b742e","foot":[76,231]},{"path":"assets/visual/painted/player-2/walk/up-3.webp","width":152,"height":244,"sha256":"924e62727a49f7dc7d7d81e8d7fa3114806dfaaa9d0f8f332fa887ed006e7f61","foot":[76,231]}],"down":[{"path":"assets/visual/painted/player-2/walk/down-0.webp","width":152,"height":244,"sha256":"0caa1fe79178385662f4a37c3f85ca33a5e1975fa68f66a290ff0b53fdbcd8bd","foot":[76,226]},{"path":"assets/visual/painted/player-2/walk/down-1.webp","width":152,"height":244,"sha256":"97f6bf0cccf25145366b7c1a4a0c748cca85d7930a34e3a7367d3bdc95160076","foot":[76,226]},{"path":"assets/visual/painted/player-2/walk/down-2.webp","width":152,"height":244,"sha256":"cdf846df4bfd9f5eb5363cf85b84ca8781ed35bb7c50186bc6724cc5f615a9fc","foot":[76,226]},{"path":"assets/visual/painted/player-2/walk/down-3.webp","width":152,"height":244,"sha256":"ee2936ab1363d1df73f10939440bb8b40f178b259c1fa1dbca28d039633f22f3","foot":[76,229]}],"right":[{"path":"assets/visual/painted/player-2/walk/right-0.webp","width":152,"height":244,"sha256":"22d13eda3077e1c9ae954952e81493ab90278013a35b1ebb1e506edf23bc2954","foot":[76,228]},{"path":"assets/visual/painted/player-2/walk/right-1.webp","width":152,"height":244,"sha256":"b707d51d839d184a3a63335eddccc216441d46ead96a0c73699729b7b8d864e9","foot":[76,229]},{"path":"assets/visual/painted/player-2/walk/right-2.webp","width":152,"height":244,"sha256":"b61bb31f4c146207be2e85ff7c471060952d9ca01597ef8d760d830f810f7548","foot":[76,229]},{"path":"assets/visual/painted/player-2/walk/right-3.webp","width":152,"height":244,"sha256":"c0ac0efca105ede11e2732591412a958abec52f30c5d933eb6c7f10e98a30c4e","foot":[76,229]}]}},"3":{"walk":{"up":[{"path":"assets/visual/painted/player-3/walk/up-0.webp","width":152,"height":244,"sha256":"3ac999afe45c71a04778eeabda5391eec6e7683694b6129e1c7c6a42e2c21a87","foot":[76,231]},{"path":"assets/visual/painted/player-3/walk/up-1.webp","width":152,"height":244,"sha256":"13eb1e15f98731cd0a88f258cd6a6008d5f368cb81e4132be1670619af1d0b8b","foot":[76,231]},{"path":"assets/visual/painted/player-3/walk/up-2.webp","width":152,"height":244,"sha256":"1c947205102f87db297560c36f04535430056015304fe89f5cb7ae4ce0149354","foot":[76,231]},{"path":"assets/visual/painted/player-3/walk/up-3.webp","width":152,"height":244,"sha256":"de6e3c8543e874b06e07f6031535546cbaac6777c435212b28fa6cb49252cb2a","foot":[76,231]}],"down":[{"path":"assets/visual/painted/player-3/walk/down-0.webp","width":152,"height":244,"sha256":"d22b9bf384f9ac8c5bdf1b1388b1fdac3908a71c62cd48aeb003143d500d0e43","foot":[76,228]},{"path":"assets/visual/painted/player-3/walk/down-1.webp","width":152,"height":244,"sha256":"c9c7d9542d86bebd6f3e55192892e3500c8f4d5be87e9f8b6594880febcb87b1","foot":[76,225]},{"path":"assets/visual/painted/player-3/walk/down-2.webp","width":152,"height":244,"sha256":"541e04f530b1d62644a5756b22763a084b10a9f4ac590a57cf3a43d46997734c","foot":[76,230]},{"path":"assets/visual/painted/player-3/walk/down-3.webp","width":152,"height":244,"sha256":"3aae45230a5bce058d9a73b6ae0b8ca2548316a1875db5e1b33f3ca4cbe05527","foot":[76,227]}],"right":[{"path":"assets/visual/painted/player-3/walk/right-0.webp","width":152,"height":244,"sha256":"3b735dae1785bb837d9308b68a38331bef741c7a8bd39e1024560f98dc4585ba","foot":[76,225]},{"path":"assets/visual/painted/player-3/walk/right-1.webp","width":152,"height":244,"sha256":"068c5efb005dee8c8b64ed03dbd335f1aaf3023b3cd0bd8bb1d8464df68ead8a","foot":[76,228]},{"path":"assets/visual/painted/player-3/walk/right-2.webp","width":152,"height":244,"sha256":"d1a91ff52bdfbfa93b3f98fb546460ee813fd2bf63b10a1f27d92ae31cb12f23","foot":[76,228]},{"path":"assets/visual/painted/player-3/walk/right-3.webp","width":152,"height":244,"sha256":"589c0ed0e14dd7636f5fe3ac35092c83d511c0011190504bdcfac7911a43d17d","foot":[76,229]}]}}},"rooms":{}};
+let mbArtRegistry=mbArtValidate(pawBootWalkManifest),mbArtRequested=false,mbArtRetryAt=0;
 const mbArtImages=new Map(),mbArtFailures=new Map();
 function mbArtLoad(){
  if(mbArtRequested||Date.now()<mbArtRetryAt)return;
@@ -5822,7 +5825,7 @@ proRender=function(...args){
  const result=pawEntranceArtBefore(...args),hero=proposal.querySelector('.hero'),foot=proposal.querySelector('footer');
  if(!hero||!foot)return result;
  pawEntranceResize();
- if(proStep===0||proStep===4){pawEntranceCropFamily=null;if(proStep===4)requestAnimationFrame(()=>{if(!proposal.hidden&&proStep===4)pawWarmEntranceCrops()})}
+ if(proStep===0||proStep===4){pawEntranceCropFamily=null;}
  if([1,2].includes(proStep)&&pawEntranceCropFamily===null)pawEntranceCropFamily=pawEntranceCropChoice(pawEntranceCropSources(),pawAvatarCropCache);
  if(proStep===0){
   // Recovered matching native station paintings. Keep the train interior
@@ -7486,7 +7489,7 @@ async function pawGateWalk(hero,traveller){
   function tick(now){
    if(done)return;
    if(!pawTransitOwned({stage:proStep,connected:traveller.isConnected,hidden:document.hidden,proposalHidden:proposal.hidden},3)){finish(false);return}
-   const v=pawTransitClock(clock,now,true,1200),i=Math.min(frames.length-1,Math.floor(v*frames.length*2)%frames.length);
+   const v=pawTransitClock(clock,now,true,600),i=Math.min(frames.length-1,Math.floor(v*frames.length*2)%frames.length);
    if(traveller.getAttribute('src')!==frames[i].path)traveller.src=frames[i].path;
    traveller.style.setProperty('--paw-gate-pivot-x',(-100*frames[i].foot[0]/frames[i].width)+'%');
    traveller.style.setProperty('--paw-gate-pivot-y',(-100*frames[i].foot[1]/frames[i].height)+'%');
@@ -7522,7 +7525,7 @@ proRender=function(...args){
   button.disabled=true;button.textContent=tr('Preparing the path…','正在准备山间小路…');
   const gateArt=hero?.querySelector('.mbGatePainting');
   const kind=proAvatar??avatar??0;
-  const ready=await Promise.all([pawReadyMap('fortune'),pawReadyPicture(gateArt),pawReadyTraveller(kind)]).then(pawAdmissionReady);
+  const ready=await Promise.all([pawReadyMap('fortune'),pawReadyPicture(gateArt),pawReadyTraveller(kind),pawReadyEntranceWalk(kind)]).then(pawAdmissionReady);
   if(!button.isConnected||proStep!==3||proposal.hidden)return;
   if(!ready||document.hidden){waiting=false;button.disabled=false;button.textContent=tr('Retry arrival','重新入镇');return}
   const originalSprite=traveller?.getAttribute('src'),originalPivotX=traveller?.style.getPropertyValue('--paw-gate-pivot-x'),originalPivotY=traveller?.style.getPropertyValue('--paw-gate-pivot-y');
@@ -7530,6 +7533,9 @@ proRender=function(...args){
   if(!button.isConnected||proStep!==3||proposal.hidden)return;
   waiting=false;button.disabled=false;button.textContent=original;
   if(!walked||document.hidden){if(hero&&traveller){if(originalSprite)traveller.src=originalSprite;traveller.style.setProperty('--paw-gate-pivot-x',originalPivotX||'-50%');traveller.style.setProperty('--paw-gate-pivot-y',originalPivotY||'-100%');pawGatePlace(hero,traveller)}return}
+  // A pre-admission canvas frame must not pin the legacy family for this visit.
+  pawActorFamilyVisit='fortune|outside';pawActorFamilyChoice.clear();
+  pawActorFamilyChoice.set(kind,true);
   admit.call(button,event)
  };
  button.onclick=enter;if(gate)gate.onclick=enter;return result
@@ -12864,12 +12870,57 @@ document.head.append(pawCafeReflectionCss);
 
 // Warm the selected traveller during registration and the railway ride,
 // including returning players. Existing gate artwork stays visible until ready.
+/* PAW_BOOT_CURRENT_ART_BEGIN */
+function pawEntranceRecord(kind,dir,registry=pawBootWalkManifest){
+ if(!Number.isInteger(kind)||kind<0||kind>3)return null;
+ return registry.players[kind]?.walk?.[dir]?.[0]||null
+}
+function pawEntranceWalkRecords(kind,registry=pawBootWalkManifest){
+ const walk=registry.players[kind]?.walk;
+ return walk&&['up','down','right'].every(d=>Array.isArray(walk[d])&&walk[d].length===4)?['up','down','right'].flatMap(d=>walk[d]):[]
+}
+function pawEntranceDirection(dir){return dir===1?'up':dir===2?'right':'down'}
+/* PAW_BOOT_CURRENT_ART_END */
+const pawEntranceWalkJobs=new Map();
+function pawReadyEntranceWalk(kind){
+ const records=pawEntranceWalkRecords(kind);
+ if(!records.length)return Promise.resolve(false);
+ if(pawEntranceWalkJobs.has(kind))return pawEntranceWalkJobs.get(kind);
+ for(const record of records)mbArtImage(record);
+ const task=Promise.all(records.map(record=>pawReadyPicture(mbArtImages.get(record.path)))).then(results=>{
+  const ready=pawAdmissionReady(results);if(ready)pawCalibrateWalkFamily(mbArtRegistry.players[kind]?.walk||pawBootWalkManifest.players[kind].walk);
+  else pawEntranceWalkJobs.delete(kind);return ready
+ });
+ pawEntranceWalkJobs.set(kind,task);return task
+}
+function pawEntranceUseCurrent(im,kind,dir,gate=false){
+ const record=pawEntranceRecord(kind,dir);if(!im||!record)return;
+ // Replace the detached legacy element synchronously before the next paint.
+ im.dataset.pawCropFamily='painted';im.dataset.pawArtReady='false';
+ im.style.visibility='hidden';im.src=record.path;
+ if(gate){
+  im.style.setProperty('--paw-gate-pivot-x',(-100*record.foot[0]/record.width)+'%');
+  im.style.setProperty('--paw-gate-pivot-y',(-100*record.foot[1]/record.height)+'%')
+ }
+ const reveal=()=>{if(im.isConnected&&im.getAttribute('src')===record.path&&im.naturalWidth===record.width&&im.naturalHeight===record.height){im.dataset.pawArtReady='true';im.style.visibility='visible'}};
+ if(im.complete)reveal();else im.addEventListener('load',reveal,{once:true})
+}
 const pawAdmissionRenderBefore=proRender;
 proRender=function(...args){
  const result=pawAdmissionRenderBefore(...args);
  if(!proposal.hidden){
   pawReadyMap('fortune');
-  if(Number.isInteger(proAvatar??avatar))pawWarmSelectedTraveller(proAvatar??avatar)
+  const kind=proAvatar??avatar;
+  if(Number.isInteger(kind)){
+   const hero=proposal.querySelector('.hero');
+   if(proStep===3)pawEntranceUseCurrent(hero?.querySelector('.gate-traveller'),kind,'up',true);
+   if(proStep===1||proStep===2){
+    pawEntranceUseCurrent(hero?.querySelector('.pawEntranceAvatar'),kind,pawEntranceDirection(proStep===1?proDir:0));
+    for(const button of proposal.querySelectorAll('.pawAvatarOption'))pawEntranceUseCurrent(button.querySelector('img'),Number(button.dataset.avatar),'down')
+   }
+   // Decode selected frames during onboarding, not after the entrance tap.
+   pawReadyEntranceWalk(kind)
+  }
  }
  return result
 };
