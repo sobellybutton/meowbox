@@ -5,7 +5,7 @@ const grab=(a,b)=>s.split(a)[1].split(b)[0];
 const stair=grab('function pawStairLane(y,points=pawPlayerStairs){','function pawStairFoot');
 const geo=grab('/* PAW_DISTRICT_GROUND_BEGIN','/* PAW_DISTRICT_GROUND_END */');
 const h=grab('/* PAW_FORTUNE_PAINTING_BEGIN */','/* PAW_FORTUNE_PAINTING_END */');
-const {data,plan,foot}=new Function('function pawStairLane(y,points=pawPlayerStairs){'+stair+geo.slice(geo.indexOf('function pawDistrictFoot'))+h+';return {data:pawFortunePainting,plan:pawFortuneDoorPlan,foot:pawDistrictFoot}')();
+const {data,plan,foot,doorHit}=new Function('function pawStairLane(y,points=pawPlayerStairs){'+stair+geo.slice(geo.indexOf('function pawDistrictFoot'))+h+';return {data:pawFortunePainting,plan:pawFortuneDoorPlan,foot:pawDistrictFoot,doorHit:pawFortuneDoorHitAllowed}')();
 assert.equal(data.size.join('x'),'962x1635');
 assert.ok(data.player.every((a,i)=>a[2]>0&&(!i||a[0]>data.player[i-1][0])));
 for(const [id,d] of Object.entries(data.doors))for(const [x,y] of [data.spawn,[500,800],[568,365],[505,1135]]){
@@ -30,3 +30,13 @@ assert.equal(near('fortune',{x:station[0],y:station[1]},station),true);
 assert.equal(near('fortune',{x:NaN,y:365},station),false);
 assert.equal(near('home',{x:0,y:0},station),true);
 console.log('Fortune railway discovery distance PASS');
+
+const discovered=new Function(grab('/* PAW_VALLEY_DISCOVERY_BEGIN */','/* PAW_VALLEY_DISCOVERY_END */')+';return pawValleyDoorNearby')();
+const start={x:data.spawn[0],y:data.spawn[1]};
+for(const id of ['tarot','destiny'])assert.equal(doorHit(id,start,data.doors,discovered,near),true,id);
+for(const id of ['temple','wishes','station'])assert.equal(doorHit(id,start,data.doors,discovered,near),false,id+' invisible canvas target');
+for(const [id,d] of Object.entries(data.doors))assert.equal(doorHit(id,{x:d.approach[0],y:d.approach[1]},data.doors,discovered,near),true,id+' at doorway');
+assert.equal(doorHit('station',{x:568,y:650},data.doors,discovered,near),false);
+assert.equal(doorHit('station',{x:568,y:605},data.doors,discovered,near),true);
+assert.equal(doorHit('invalid',start,data.doors,discovered,near),false);
+console.log('Painted door hit areas match progressive discovery PASS');
