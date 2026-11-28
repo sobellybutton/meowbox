@@ -6964,10 +6964,10 @@ function pawTarotTrayPose(slot,rank,count,portrait,progress){
 }
 /* PAW_TAROT_FAN_END */
 
-function pawOpenCardChoice(){
+function pawOpenCardChoice(washFirst=false){
  if(!['tarot','love'].includes(activity))return false;
  state.pawCardPool=pawTarotPool(tarotDeck.length);state.pawChoiceFrame=null;state.pawSelectedCards=[];state.readCards=[];state.readFlip=[];state.readSaved=false;
- state.readStage='choose';state.readAt=t;state.pawFanActive=true;state.pawPickedAt={};state.readShuffle=Math.max(1,state.readShuffle||0);
+ state.readStage='choose';state.readAt=t+(washFirst&&!residentReducedMotion.matches?1.45:0);state.pawFanActive=true;state.pawPickedAt={};state.pawPickFinishAt=null;state.readShuffle=Math.max(1,state.readShuffle||0);
  const n=activity==='tarot'?1:state.readSpreadSize===5?5:3;
  hint(tr('Choose '+n+' '+(n===1?'card':'cards')+' that draw your attention.','凭直觉选 '+n+' 张牌。'),tr('Choose '+n+' cards.','凭直觉选 '+n+' 张牌。'));
  return true
@@ -6977,17 +6977,17 @@ function pawSelectTarotCard(index,frame=state.pawChoiceFrame){
  const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,chosen=pawTarotPick(state.pawCardPool,state.pawSelectedCards,index,count);
  if(!chosen)return false;
  state.pawSelectedCards=chosen;state.pawPickedAt??={};state.pawPickedAt[index]=t;physicalFx('paper',.65);
- if(chosen.length===count){
-  state.readCards=chosen.map(i=>state.pawCardPool[i]);state.readFlip=Array(count).fill(-1);
-  state.readStage='cards';state.readAt=t;state.readSaved=false;
-  hint("Turn your chosen cards over. The universe has terrible handwriting, so we'll read them together.","翻开亲自选的牌吧。宇宙的字写得不太好，我们一起慢慢看。")
- }
+ if(chosen.length===count)state.pawPickFinishAt=t;
  return true
+}
+function pawTarotFinishSelection(q,count,now,reduced=false){
+ if(q.readStage!=='choose'||q.pawSelectedCards?.length!==count||!Number.isFinite(q.pawPickFinishAt)||!reduced&&now-q.pawPickFinishAt<.24)return false;
+ q.readCards=q.pawSelectedCards.map(i=>q.pawCardPool[i]);q.readFlip=Array(count).fill(-1);q.readStage='cards';q.readAt=now;q.readSaved=false;q.pawPickFinishAt=null;return true
 }
 const pawSelectStartBefore=start;
 start=function(id,...args){
  const result=pawSelectStartBefore(id,...args);
- if(id==='tarot'&&activity==='tarot'){state.tarotTone='gentle';pawOpenCardChoice()}
+ if(id==='tarot'&&activity==='tarot'){state.tarotTone='gentle';pawOpenCardChoice(true)}
  return result
 };
 const pawSelectDealBefore=readingDeal;
@@ -7018,13 +7018,17 @@ drawActivity=function(...args){
   paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);
   table();
   // The deck fans out on the same mat; no card identity is assigned before selection.
-  const reduced=residentReducedMotion.matches,settled=pawTarotFanSettled(state,t,reduced),age=Math.max(0,t-state.readAt);
+  const reduced=residentReducedMotion.matches,settled=pawTarotFanSettled(state,t,reduced),age=t-state.readAt;
+  if(age<0&&!reduced){
+   for(let i=0;i<12;i++){const q=pawTarotWashPose(i,(age+1.45)/1.45);ctx.save();try{ctx.translate(q.x,q.y);ctx.rotate(q.angle);card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}}
+   activityFitText(tr('Mixing the cards…','正在洗牌……'),400,W<H?307:341,22,430,'#f6e6c8');return
+  }
   if(!settled){const remaining=slots.filter((q,i)=>!pawTarotFanPose(q,i,age,reduced).visible).length;for(let j=0;j<remaining;j++)card(354+j*.7,407-j*.65,92,136,false)}
   for(const [i,q] of slots.entries()){
    const pose=settled?{...q,visible:true}:pawTarotFanPose(q,i,age,reduced);
    if(!pose.visible||settled&&chosen.includes(i))continue;
    ctx.save();try{ctx.translate(pose.x,pose.y);ctx.rotate(pose.angle);ctx.shadowColor='#1b152e65';ctx.shadowBlur=4;ctx.shadowOffsetY=3;card(-pose.w/2,-pose.h/2,pose.w,pose.h,false)}finally{ctx.restore()}
-   if(settled)target(q.x-q.hitW/2,q.y-q.h/2,q.hitW,q.h,()=>pawSelectTarotCard(i,frame),'paw-pick-card-'+i)
+   if(settled&&chosen.length<count)target(q.x-q.hitW/2,q.y-q.h/2,q.hitW,q.h,()=>pawSelectTarotCard(i,frame),'paw-pick-card-'+i)
   }
   // Physical selected cards slide to the traveller's edge.
   if(settled)for(const [rank,i] of chosen.entries()){
@@ -7032,7 +7036,8 @@ drawActivity=function(...args){
    ctx.save();try{ctx.translate(q.x,q.y);ctx.rotate(q.angle);ctx.shadowColor='#1b152e65';ctx.shadowBlur=3;ctx.shadowOffsetY=2;card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}
   }
   activityFitText(settled?tr('Choose '+count+' '+(count===1?'card':'cards')+' · '+chosen.length+'/'+count,'选 '+count+' 张牌 · '+chosen.length+'/'+count):tr('Laying out the cards…','正在铺牌……'),400,W<H?307:341,22,430,'#f6e6c8');
-  if(settled&&!chosen.length)label(tr('Shuffle again','重新洗牌'),400,W<H?745:655,()=>{if(!pawTarotFrameMatches(state,frame,W<H)||pawArcadeInputBlocked())return;pawOpenCardChoice();physicalFx('paper',.6)})
+  if(settled&&!pawArcadeInputBlocked()&&pawTarotFinishSelection(state,count,t,reduced))hint("Let's turn them over, one at a time.","我们一张一张翻开吧。");
+  if(settled&&!chosen.length)label(tr('Shuffle again','重新洗牌'),400,W<H?745:655,()=>{if(!pawTarotFrameMatches(state,frame,W<H)||pawArcadeInputBlocked())return;pawOpenCardChoice(true);physicalFx('paper',.6)})
  }finally{ctx.restore()}
 };
 const pawSelectCameraBefore=mobileRoomCamera;
@@ -10149,11 +10154,15 @@ function pawTarotClock(q,now,blocked){
  if(prior&&now>=prior.now&&(blocked||prior.blocked)){
   const gap=now-prior.now;
   if(prior.stage===q.readStage&&prior.start===q.readAt&&Number.isFinite(q.readAt))q.readAt+=gap;
+  if(q.readStage==='choose'&&prior.stage==='choose'){
+   if(Number.isFinite(q.pawPickFinishAt)&&prior.finish===q.pawPickFinishAt)q.pawPickFinishAt+=gap;
+   for(const [i,at] of Object.entries(q.pawPickedAt||{}))if(Number.isFinite(at)&&prior.picks?.[i]===at&&prior.now-at<.24)q.pawPickedAt[i]+=gap
+  }
   if(flips&&prior.flips===flips)for(let i=0;i<flips.length;i++){
    if(Number.isFinite(flips[i])&&flips[i]>=0&&flips[i]===prior.values[i]&&prior.now-flips[i]<.73)flips[i]+=gap
   }
  }
- q.pawReadClock={now,blocked:!!blocked,stage:q.readStage,start:q.readAt,flips,values:flips?flips.slice():[]};return true
+ q.pawReadClock={now,blocked:!!blocked,stage:q.readStage,start:q.readAt,finish:q.pawPickFinishAt,picks:{...q.pawPickedAt},flips,values:flips?flips.slice():[]};return true
 }
 function pawTarotActionAllowed(rendered,current,kind,expectedKind,stage,portrait,expectedPortrait,blocked){
  return !blocked&&pawTarotActive(current,kind)&&rendered===current&&kind===expectedKind&&current.readStage===stage&&portrait===expectedPortrait
@@ -10191,7 +10200,7 @@ target=function(x,y,w,h,fn,id){
  },id)
 };
 const pawTarotShuffleGuard=readingShuffle,pawTarotDealGuard=readingDeal,pawTarotRevealGuard=readingReveal,pawTarotShowGuard=readingShow,pawTarotSaveGuard=readingSave;
-readingShuffle=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked())return pawTarotShuffleGuard(...args)};
+readingShuffle=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked()){const was=state.readStage,result=pawTarotShuffleGuard(...args);if(was==='deck'&&state.readStage==='shuffle')hint('Let the cards mix on the cloth.','让牌在桌布上慢慢散开、混合。');return result}};
 readingDeal=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked())return pawTarotDealGuard(...args)};
 readingReveal=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked())return pawTarotRevealGuard(...args)};
 readingShow=function(...args){if(pawTarotActive(state,activity)&&!pawArcadeInputBlocked())return pawTarotShowGuard(...args)};
