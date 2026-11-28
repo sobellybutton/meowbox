@@ -308,7 +308,7 @@ html #game #dock{background:#eee5d2 url('assets/visual/painted/recovered/ui/pape
 html #game #dock>button:not([hidden]){flex:1 1 0!important;min-width:0!important;min-height:50px!important;padding:4px 2px!important;border-radius:10px!important}
 html #game #dock>button:not([hidden])>span:last-child{white-space:normal!important;line-height:1.15!important;text-align:center!important;font-size:clamp(11px,2.9vw,13px)!important}
 html #game #dock>button.pawDockSelected:not([hidden]),html #game #dock>button[aria-current=page]:not([hidden]){background:#dbe0ca!important;color:#395846!important;box-shadow:none!important}
-html #game:has(#moveGuide:not([hidden])) #hint{visibility:hidden!important}
+html #game.pawMovementGuideVisible #hint,html #game:has(#moveGuide:not([hidden])) #hint{visibility:hidden!important;opacity:0!important}
 @media(forced-colors:active){
  html #game #hud #profileHud,html #game #hud #hudStats #hudCoins,html #game #small #townSettingsToggle[aria-label],html #game #dock{background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important;box-shadow:none!important}
  html #game[data-paw-sign-material]>#worldSigns>.worldSign[data-door]>.doorPlaque,html #game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign[data-door]>.doorPlaque{background:ButtonFace!important;color:ButtonText!important;border:1px solid ButtonText!important;box-shadow:none!important}
