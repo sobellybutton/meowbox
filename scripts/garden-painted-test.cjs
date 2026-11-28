@@ -96,3 +96,15 @@ for(const [key,value] of Object.entries({kind:'cafe',room:'match',run:{},token:4
 for(const sh of [0,100,400,1000])for(const ch of [0,80,600])for(const y of [-100,0,50,500,1500])assert.equal(discoveryReturn.pawDiscoveryScroll(y,sh,ch),Math.max(0,Math.min(y,Math.max(0,sh-ch))));
 assert.equal(discoveryReturn.pawDiscoveryScroll(NaN,100,20),0);
 console.log('Discovery share return ownership and scroll restoration bounds passed.');
+
+const catalogueReturn=new Function(extract('/* PAW_CATALOGUE_RETURN_BEGIN */','/* PAW_CATALOGUE_RETURN_END */')+';return {pawCatalogueReturnMatches,pawCollectionReturnMatches}')();
+const catalogueOrigin={id:'futon',back:'room',category:'rest',style:'japanese',scroll:120};
+assert.ok(catalogueReturn.pawCatalogueReturnMatches(catalogueOrigin,'room','rest','japanese'));
+for(const [a,b,c] of [['shop','rest','japanese'],['room','all','japanese'],['room','rest','all']])assert.equal(catalogueReturn.pawCatalogueReturnMatches(catalogueOrigin,a,b,c),false);
+assert.equal(catalogueReturn.pawCatalogueReturnMatches({...catalogueOrigin,scroll:NaN},'room','rest','japanese'),false);
+assert.equal(catalogueReturn.pawCatalogueReturnMatches(null,'room','rest','japanese'),false);
+const collectionOrigin={run:{},room:'mystery',district:'island',activity:'blindBox'};
+assert.ok(catalogueReturn.pawCollectionReturnMatches(collectionOrigin,{...collectionOrigin}));
+for(const [key,value] of Object.entries({run:{},room:'arcade',district:'home',activity:'claw'}))assert.equal(catalogueReturn.pawCollectionReturnMatches(collectionOrigin,{...collectionOrigin,[key]:value}),false);
+assert.equal(catalogueReturn.pawCollectionReturnMatches(collectionOrigin,null),false);
+console.log('Catalogue return and blind box scene ownership passed.');
