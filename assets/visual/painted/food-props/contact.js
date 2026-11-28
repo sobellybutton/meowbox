@@ -39,10 +39,15 @@ function create(placement,manifest,contacts){
   if(!plan||!finite(progress))return null;
   const p=Math.min(1,Math.max(0,progress)),pouring=p>=.35&&p<.70;
   const phase=p===0?'rest':p<.35?'lift':pouring?'pour':p<1?'return':'settled';
-  let u=p<.35?ease(p/.35):pouring?1:ease((1-p)/.30);
-  if(reduced)u=p===0||p===1?0:1;
-  const grip=[mix(plan.startGrip[0],plan.endGrip[0],u),mix(plan.startGrip[1],plan.endGrip[1],u)];
-  const vessel=placement.geometry(manifest,plan.vessel,...grip,plan.vesselHeight,{anchor:plan.grip,angle:plan.angle*u});
+  const travel=p<.35?p/.35:pouring?1:(1-p)/.30;
+  // Lift upright before reaching and tilting. Reverse the same path,
+  // straighten away from the receiver, then lower onto the counter.
+  const split=.45,u=Math.max(0,Math.min(1,travel));
+  const lift=ease(Math.min(1,u/split)),reach=ease(Math.max(0,(u-split)/(1-split)));
+  const raisedY=Math.min(plan.startGrip[1],plan.endGrip[1]);
+  let grip=[mix(plan.startGrip[0],plan.endGrip[0],reach),mix(mix(plan.startGrip[1],raisedY,lift),plan.endGrip[1],reach)],angle=plan.angle*reach;
+  if(reduced){const active=p!==0&&p!==1;grip=(active?plan.endGrip:plan.startGrip).slice();angle=active?plan.angle:0}
+  const vessel=placement.geometry(manifest,plan.vessel,...grip,plan.vesselHeight,{anchor:plan.grip,angle});
   if(!vessel)return null;
   const stream=pouring?{from:vessel.point(...plan.spout),to:plan.endLip.slice()}:null;
   return {phase,vessel,receiver:plan.receive,grip,stream,progress:p};
