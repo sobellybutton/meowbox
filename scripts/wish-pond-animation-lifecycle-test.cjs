@@ -1,0 +1,20 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const s=fs.readFileSync(path.join(__dirname,'../src/town-access.js'),'utf8');
+const a=s.indexOf('animateWishKoi=function(pond,visitCurrent='),z=s.indexOf('/* PAW_WISH_VISIT_BEGIN */',a);
+assert.ok(a>=0&&z>a);
+const exercise=new Function('src',`let queue=new Map(),id=0,active=true,hidden=false,mutations=0;
+const document={get hidden(){return hidden}},performance={now:()=>0},matchMedia=()=>({matches:false}),art9={koi:'koi'},requestAnimationFrame=fn=>{queue.set(++id,fn);return id},cancelAnimationFrame=i=>queue.delete(i),setTimeout=()=>{};
+const element=()=>({style:new Proxy({},{set(o,k,v){mutations++;o[k]=v;return true}}),remove(){}}),pond={isConnected:true,clientWidth:200,clientHeight:220,querySelectorAll:()=>[]},wishFishGoal=()=>({x:50,y:45}),wishFishCollision=()=>null;
+let animateWishKoi;eval(src);const api=animateWishKoi(pond,()=>active);
+function tick(now){const q=[...queue.values()];queue.clear();q.forEach(f=>f(now))}
+return {tick,stop:api.stop,active:v=>active=v,hidden:v=>hidden=v,count:()=>queue.size,mutations:()=>mutations}`);
+const x=exercise(s.slice(a,z));assert.equal(x.count(),1);
+x.tick(16);assert.equal(x.count(),1);const m=x.mutations();
+x.hidden(true);x.tick(32);assert.equal(x.mutations(),m);assert.equal(x.count(),1);
+x.hidden(false);x.active(false);x.tick(48);assert.equal(x.count(),0);assert.equal(x.mutations(),m);
+x.active(true);x.tick(64);assert.equal(x.count(),0);
+const y=exercise(s.slice(a,z));y.stop();y.stop();assert.equal(y.count(),0);
+assert.ok(s.includes('animateWishKoi(pond,()=>current())'));
+assert.equal((s.match(/koiLife\.stop\(\);cancelFlight\(\)/g)||[]).length,2);
+console.log('PASS wishing pond animation visit ownership, pause, and cleanup');

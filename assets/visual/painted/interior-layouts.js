@@ -176,7 +176,7 @@ const rooms={
         ],
         "label": [
           0.72,
-          0.43
+          0.48
         ]
       }
     }
@@ -371,7 +371,7 @@ const rooms={
         ],
         "label": [
           0.34,
-          0.43
+          0.46
         ]
       },
       "board": {
@@ -384,8 +384,8 @@ const rooms={
           0.62
         ],
         "label": [
-          0.51,
-          0.3
+          0.5,
+          0.33
         ]
       }
     }
@@ -571,8 +571,8 @@ const rooms={
           0.54
         ],
         "label": [
-          0.73,
-          0.37
+          0.8,
+          0.35
         ]
       },
       "goldfishScoop": {
@@ -585,8 +585,8 @@ const rooms={
           0.67
         ],
         "label": [
-          0.77,
-          0.59
+          0.81,
+          0.46
         ]
       },
       "blindBox": {
@@ -600,7 +600,7 @@ const rooms={
         ],
         "label": [
           0.51,
-          0.32
+          0.3
         ]
       }
     }
@@ -724,7 +724,31 @@ const point=p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite);
 function bounds(id,y){const q=Object.hasOwn(rooms,id)?rooms[id]:null;if(!q||!Number.isFinite(y)||y<q.lane[0][0]||y>q.lane.at(-1)[0])return null;for(let i=1;i<q.lane.length;i++){const a=q.lane[i-1],b=q.lane[i];if(y<=b[0]){const f=(y-a[0])/(b[0]-a[0]);return [a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f]}}return null}
 function safe(id,p){if(!point(p))return false;const b=bounds(id,p[1]);return !!b&&p[0]>=b[0]-1e-9&&p[0]<=b[1]+1e-9}
 function segment(id,a,b){if(!safe(id,a)||!safe(id,b))return false;const q=rooms[id],dy=b[1]-a[1];if(Math.abs(dy)<1e-12)return true;for(const [y] of q.lane){const f=(y-a[1])/dy;if(f>0&&f<1&&!safe(id,[a[0]+f*(b[0]-a[0]),y]))return false}return true}
-function route(id,a,b){if(!safe(id,a)||!safe(id,b))return null;if(segment(id,a,b))return [b.slice()];const q=rooms[id],dir=Math.sign(b[1]-a[1]),nodes=q.lane.filter(([y])=>(y-a[1])*dir>0&&(b[1]-y)*dir>0).sort((a,b)=>(a[0]-b[0])*dir).map(([y,l,r])=>[(l+r)/2,y]);const out=[...nodes,b.slice()];let last=a;for(const n of out){if(!segment(id,last,n))return null;last=n}return out}
+// Use the reviewed lane as a visibility graph, not a mandatory trip down
+// every cross-section centre. Choose a short, clear route with comfortably
+// inset turn points; preserve the existing centre-line path as a fallback.
+function route(id,a,b){
+ if(!safe(id,a)||!safe(id,b))return null;
+ if(segment(id,a,b))return [b.slice()];
+ const q=rooms[id],dir=Math.sign(b[1]-a[1]);
+ const rows=q.lane.filter(([y])=>(y-a[1])*dir>0&&(b[1]-y)*dir>0).sort((a,b)=>(a[0]-b[0])*dir);
+ const nodes=[a,...rows.flatMap(([y,l,r])=>[.2,.35,.5,.65,.8].map(f=>[l+(r-l)*f,y])),b];
+ // Distances are in the painting's aspect ratio, matching live world units.
+ const distance=(p,q)=>Math.hypot((p[0]-q[0])*928/1648,p[1]-q[1]);
+ const best=Array(nodes.length).fill(Infinity),prev=Array(nodes.length).fill(-1);
+ best[0]=0;
+ for(let i=1;i<nodes.length;i++)for(let j=0;j<i;j++){
+  if((nodes[i][1]-nodes[j][1])*dir<=0||!Number.isFinite(best[j]))continue;
+  const cost=best[j]+distance(nodes[j],nodes[i])+(j===0?0:.004);
+  if(cost+1e-10<best[i]&&segment(id,nodes[j],nodes[i])){best[i]=cost;prev[i]=j}
+ }
+ if(prev.at(-1)>=0){
+  const out=[];for(let i=nodes.length-1;i>0;i=prev[i])out.unshift(nodes[i].slice());
+  return out
+ }
+ const out=[...rows.map(([y,l,r])=>[(l+r)/2,y]),b.slice()];
+ let last=a;for(const n of out){if(!segment(id,last,n))return null;last=n}return out
+}
 function camera(w,h,iw=928,ih=1648){if(![w,h,iw,ih].every(Number.isFinite)||Math.min(w,h,iw,ih)<=0)return null;const s=w<h?Math.max(w/iw,h/ih):Math.min(w/iw,h/ih),pw=iw*s,ph=ih*s;return {s,ox:(w-pw)/2,oy:w<h?Math.max(h-ph,Math.min(0,h*.5-ph*.58)):(h-ph)/2,w:pw,h:ph}}
 function project(p,c){return point(p)&&c?[c.ox+c.w*p[0],c.oy+c.h*p[1]]:null}
 function asset(id){return Object.hasOwn(rooms,id)?base+rooms[id].file+'/portrait.webp':null}
