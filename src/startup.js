@@ -16040,3 +16040,37 @@ drawActivity=function(...args){
  }finally{ctx.restore()}
  if(settled&&!pawArcadeInputBlocked()&&pawTarotFinishSelection(state,count,t,reduced))hint("Let's turn them over, one at a time.","我们一张一张翻开吧。");
 };
+
+
+/* PAW_TAROT_TABLE_REVEAL_BEGIN */
+function pawTarotRevealSlots(plate,n){
+ if(!plate||![1,3,5].includes(n))return [];
+ const w=Math.min(plate.w*(n===1?.185:n===3?.123:.081),plate.h*.115/1.5),h=w*1.5,dx=plate.w*(n===5?.091:.145);
+ return Array.from({length:n},(_,i)=>({x:plate.x+plate.w*.5+(i-(n-1)/2)*dx,y:plate.y+plate.h*.475,w,h,hitW:Math.max(w,dx*.94)}))
+}
+/* PAW_TAROT_TABLE_REVEAL_END */
+let pawTarotRevealLastDraw=-Infinity;
+const pawTarotPhysicalRevealBefore=drawActivity;
+drawActivity=function(...args){
+ if(room!=='tarot'||!['tarot','love'].includes(activity)||!['cards','deal'].includes(state.readStage))return pawTarotPhysicalRevealBefore(...args);
+ const im=pawReadingImage(pawReadingAPI(),'tarot'),plate=pawRoomImageReady(im)&&pawReadingCoverPlate(livingBounds(),im.naturalWidth,im.naturalHeight),run=state,n=run.readCards?.length;
+ if(!plate||![1,3,5].includes(n))return pawTarotPhysicalRevealBefore(...args);
+ const slots=pawTarotRevealSlots(plate,n),age=t-run.readAt,reduced=residentReducedMotion.matches;
+ if(run.readStage==='deal'&&(reduced||age>.65+(n-1)*.22)){run.readStage='cards';run.readAt=t}
+ const complete=run.readFlip.every(v=>v>=0&&t-v>=.72);
+ ctx.save();try{
+  paintLivingBackdrop(im);
+  for(let i=0;i<n;i++){
+   const q=slots[i],v=run.readCards[i],deal=run.readStage==='deal'?poseEase((age-i*.22)/.65):1,flip=run.readFlip[i]<0?0:Math.min(1,(t-run.readFlip[i])/.72),face=flip>=.5,w=q.w*(flip>0&&flip<1?Math.max(.045,Math.abs(Math.cos(Math.PI*flip))):1),x=plate.x+plate.w*.5+(q.x-plate.x-plate.w*.5)*deal,y=q.y;
+   if(face)drawReadingCard(x-w/2,y-q.h/2,w,q.h,v.i,v.rev);else card(x-w/2,y-q.h/2,w,q.h,false);
+   if(run.readStage==='cards')target(q.x-q.hitW/2,q.y-q.h/2,q.hitW,q.h,()=>{if(run.readFlip[i]<0)readingReveal(i);else if(t-run.readFlip[i]>=.72)pawTarotCardConversation(i)},'paw-table-reveal-'+i)
+  }
+  const cx=plate.x+plate.w*.5,size=Math.min(16/Math.max(.08,cam.scale),plate.w*.04);
+  activityFitText(complete?tr('Tap a card to read it','点牌听解读'):tr('Turn a card over','翻开一张牌'),cx,plate.y+plate.h*.395,size,plate.w*.48,'#fff0d2');
+  if(complete){
+   if(!run.readSaved&&!pawArcadeInputBlocked()){if(n===5)fiveReadingSave();else readingSave()}
+   label(tr('Share card','分享牌卡'),cx,plate.y+plate.h*.60,()=>shareReadingResult(tarotShareSnapshot(run)));
+  }
+  pawTarotRevealLastDraw=t;
+ }finally{ctx.restore()}
+};
