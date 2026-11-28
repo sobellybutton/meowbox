@@ -29,3 +29,33 @@ assert.equal(direct.pawRailChapterNote('fortune','wonder'),null);
 assert.deepEqual(direct.pawRailStationCopy('fortune','missing',worlds),['Railway station','火车站']);
 assert.ok(!source.includes('pawStationPlatform(scene)'));
 console.log('District visit and direct station boarding regression passed');
+
+
+// Actual edge-navigation helpers: geometry alone does not prove reachability.
+{
+ const start=source.indexOf('function pawRailPlaqueReachable('),end=source.indexOf('let pawRailEdgeAt=',start);
+ assert.ok(start>=0&&end>start);
+ let hit=null,style={display:'block',visibility:'visible',pointerEvents:'auto'};
+ const {pawRailPlaqueReachable:ready,pawRailEdgePosition:position}=new Function('document','getComputedStyle',source.slice(start,end)+';return {pawRailPlaqueReachable,pawRailEdgePosition}')({elementFromPoint:()=>hit},()=>style);
+ const g={left:0,top:0,right:390,bottom:844,width:390,height:844};
+ const sign={hidden:false,disabled:false,getBoundingClientRect:()=>({left:10,top:100,right:110,bottom:144,width:100,height:44}),contains:v=>v===sign};
+ hit=sign;assert.ok(ready(sign,g));
+ hit={};assert.ok(!ready(sign,g));hit=sign;
+ for(const [key,value] of [['visibility','hidden'],['display','none'],['pointerEvents','none']]){
+  const previous=style[key];style[key]=value;assert.ok(!ready(sign,g));style[key]=previous;
+ }
+ sign.hidden=true;assert.ok(!ready(sign,g));sign.hidden=false;
+ sign.disabled=true;assert.ok(!ready(sign,g));sign.disabled=false;
+ assert.ok(!ready(sign,{...g,bottom:120}));
+ for(const [w,h] of [[320,568],[390,844],[430,932],[844,390],[1440,900]]){
+  const viewport={left:10,top:20,width:w,height:h};
+  for(let block=0;block<=240;block+=24){
+   const pos=position(viewport,130,44,[{left:10,right:10+w,top:20,bottom:20+block}]);
+   if(pos){assert.ok(pos.left>=8&&pos.left+130<=w-8);assert.ok(pos.top+44<=h-100);assert.ok(pos.top>=block+5)}
+   else assert.ok(block+5+44>h-100-24);
+  }
+ }
+ assert.equal(position(g,390,44,[]),null);
+ assert.equal(position(g,130,44,[{left:0,right:390,top:0,bottom:844}]),null);
+ console.log('Railway touch reachability and bounded edge placement passed');
+}
