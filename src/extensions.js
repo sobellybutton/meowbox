@@ -1661,9 +1661,15 @@ function readingFocusMeaning(){
   if(entry&&entry.cards.length!==5)b($('choices'),tr('Read the full spread','查看完整解读'),()=>openTarotReading(entry));
  }
 }
+function pawReadingNextHint(run,now,autoSave){
+ const complete=Array.isArray(run?.readCards)&&run.readCards.length>0&&Array.isArray(run.readFlip)&&run.readCards.length===run.readFlip.length&&run.readFlip.every(v=>Number.isFinite(v)&&v>=0&&now-v>=.72);
+ if(!complete)return ['Turn the remaining cards over, or revisit a revealed card.','继续翻开剩下的牌，或再看看已翻开的牌。'];
+ if(!run.readSaved)return ['Your cards are ready. Read the spread or return to the room when ready.','牌已翻好，可以解读牌阵，或准备好后回到小屋。'];
+ return autoSave?['Saved in your passport. Read the spread or return to the room when ready.','已收进旅人护照。可以解读牌阵，或准备好后回到小屋。']:['Read the spread, make a keepsake, or return to the room when ready.','可以解读牌阵、制作纪念牌卡，或准备好后回到小屋。'];
+}
 function readingReturnSpread(){
  closeTalk();state.readStage='cards';state.readAt=t;
- hint('Turn the remaining cards over, or revisit any revealed card.','可以继续翻牌，也可以再看看已经翻开的牌。');
+ hint(...pawReadingNextHint(state,t,journalAutoSave()));
 }
 const readingDraw=drawActivity;drawActivity=function(){if(!['tarot','love'].includes(activity)||!state.readStage)return readingDraw();ctx.save();paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);let g=ctx.createLinearGradient(0,250,0,690);g.addColorStop(0,'#40373220');g.addColorStop(1,'#2a332c50');shadeLivingBackdrop(g);table();let stage=state.readStage,age=t-state.readAt;
 if(stage==='topic'){drawPawReadingTopics()}
@@ -1686,8 +1692,7 @@ ctx.restore()};
 const tarotJournalArt='assets/visual/painted/tarot-journal.webp';
 function journalAutoSave(){return load('tarotJournalAutoSaveV1',true)!==false}
 function readingJournalHint(){
- const message=journalAutoSave()?['Your reading is tucked into your passport.','这份牌意已经收进旅人护照。']:['Your spread is ready. Automatic saving is off.','牌阵已解开，自动保存目前关闭。'];
- hint(...message);
+ hint(...pawReadingNextHint(state,t,journalAutoSave()));
 }
 function readingTitle(entry){
  return entry.cards.length===1?tr('Daily tarot','今日塔罗'):tr(...(readingTopics[entry.topic]||(entry.cards.length===5?['Five-card reading','五张牌解读']:['Three-card reading','三张牌占卜'])));
@@ -2468,6 +2473,17 @@ function pawNearbyDoorPlaque(cx,cy,w,h,bounds,blockers,near,screenWidth,approach
  }
  return best
 }
+// Prefer the painted building anchor. A temporary obstruction may move the
+// sign, but cannot permanently detach it from its facade. Wait for a clear
+// interval before returning so passing residents do not cause flicker.
+function pawArchitecturalPlaqueHome(btn,exact,now,delay=350){
+ if(!exact){btn._anchorClearAt=null;return null}
+ const offset=btn._signOffset,displaced=offset&&Math.hypot(offset.x,offset.y)>.75;
+ if(!displaced||btn.hidden){btn._anchorClearAt=null;return exact}
+ if(!Number.isFinite(btn._anchorClearAt))btn._anchorClearAt=now;
+ if(now-btn._anchorClearAt>=delay){btn._anchorClearAt=null;return exact}
+ return null
+}
 let lastDoorLayoutAt=-Infinity,lastDoorLayoutLanguage=null,lastDoorCameraKey='',lastDoorUIAt=-Infinity,lastDoorUIRects=[],lastDoorUISize='';
 syncSigns=function(){
  const show=proposal.hidden&&!room&&!transitioning&&avatar!==null&&$('page').style.display!=='block'&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;
@@ -2516,7 +2532,7 @@ syncSigns=function(){
   const sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
   const near=id!=='station'&&Math.hypot(p.x-x,p.y-y)<=210;
   const inView=sx>=-30&&sx<=W+30&&sy>=top-125&&sy<=bottom+70;
-  if(!inView){btn._clearAt=0;btn._signOffset=null;if(!btn.hidden)btn.hidden=true;continue}
+  if(!inView){btn._clearAt=0;btn._anchorClearAt=null;btn._signOffset=null;if(!btn.hidden)btn.hidden=true;continue}
   // Measure only when necessary; do not repeatedly unhide a blocked sign.
   if(btn._measureName!==name||btn._measureViewport!==uiSize||!btn._signSize){btn._measureViewport=uiSize;const hidden=btn.hidden;if(hidden)btn.hidden=false;btn._signSize=[Math.max(44,btn.offsetWidth),Math.max(44,btn.offsetHeight)];btn._measureName=name;if(hidden)btn.hidden=true}
   items.push({btn,sx,sy,near,approach:[cam.ox+x*cam.scale,cam.oy+y*cam.scale],w:btn._signSize[0],h:btn._signSize[1]});
@@ -2526,8 +2542,11 @@ syncSigns=function(){
  // Preserve authored map order so walking past a house cannot reshuffle the other labels.
  for(const item of items){
   const {btn,sx,sy,w,h,near,approach}=item;
-  const avoid=[...blockers,...placed],maxShift=Math.min(62,W*.16),offsetLimit=near?Math.min(120,W*.34):maxShift;let choice=null;
-  if(btn._signOffset&&Math.hypot(btn._signOffset.x,btn._signOffset.y)<=offsetLimit+.01){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
+  const avoid=[...blockers,...placed],maxShift=Math.min(62,W*.16),offsetLimit=near?Math.min(120,W*.34):maxShift;
+  const rect={left:sx-w/2-4,right:sx+w/2+4,top:sy-h/2-4,bottom:sy+h/2+4};
+  const exact=rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v))?{x:sx,y:sy,rect}:null;
+  let choice=pawArchitecturalPlaqueHome(btn,exact,now);
+  if(!choice&&btn._signOffset&&Math.hypot(btn._signOffset.x,btn._signOffset.y)<=offsetLimit+.01){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
   if(!choice)choice=meowPlaceText(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,maxShift);
   if(!choice)choice=pawNearbyDoorPlaque(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,near,W,approach);
   if(!choice){btn._clearAt=0;if(!btn.hidden)btn.hidden=true;continue}
@@ -6813,8 +6832,10 @@ const houseSignStyle=document.createElement('style');houseSignStyle.textContent=
 
 function speechOverlap(a,b){return a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top}
 function chooseSpeechPosition(w,h,width,height,speaker,player,blockers=[]){
- const center=(speaker.left+speaker.right)/2;
- const candidates=[{left:center-w/2,top:speaker.top-h-14},{left:speaker.right+12,top:speaker.top+5},{left:speaker.left-w-12,top:speaker.top+5},{left:center-w/2,top:speaker.bottom+12}];
+ if(!speaker||![w,h,width,height,speaker.left,speaker.right,speaker.top,speaker.bottom].every(Number.isFinite)||Math.min(w,h,width,height)<=0||speaker.right<=speaker.left||speaker.bottom<=speaker.top||speaker.right<0||speaker.left>width||speaker.bottom<0||speaker.top>height)return null;
+ const center=(speaker.left+speaker.right)/2,mid=(speaker.top+speaker.bottom)/2;
+ const candidates=[{left:center-w/2,top:speaker.top-h-14},{left:speaker.right+12,top:speaker.top+5},{left:speaker.left-w-12,top:speaker.top+5},{left:center-w/2,top:speaker.bottom+12},
+ {left:speaker.right+12,top:mid-h/2},{left:speaker.left-w-12,top:mid-h/2}];
  for(const v of candidates){const left=Math.max(8,Math.min(width-w-8,v.left)),top=v.top,rect={left,top,right:left+w,bottom:top+h};
  if(w>width-16||top<10||rect.bottom>height-74||[speaker,player,...blockers].some(b=>b&&speechOverlap(rect,b)))continue;
  const side=rect.bottom<=speaker.top?'bottom':rect.top>=speaker.bottom?'top':rect.left>=speaker.right?'left':'right';
@@ -7641,22 +7662,54 @@ const meowTextCSS=document.createElement('style');meowTextCSS.textContent=`
 `;document.head.append(meowTextCSS);
 /* Suppress only a hint that collides with a higher-priority control. Keep it in
    the accessible DOM and restore it as soon as the area is clear. */
+// Prefer the quiet lower edge. If a recipe or reading sheet occupies it,
+// use the nearest clear stage space instead of hiding the only instruction.
+function pawHintClearSpot(preferred,width,height,screen,blockers,active=false){
+ const {w,h}=screen;
+ if(![preferred.left,preferred.right,preferred.top,preferred.bottom,width,height,w,h].every(Number.isFinite)||Math.min(width,height,w,h)<=0)return null;
+ const cx=(preferred.left+preferred.right)/2,cy=(preferred.top+preferred.bottom)/2;
+ const fits=r=>r.left>=6&&r.right<=w-6&&r.top>=6&&r.bottom<=h-6&&!blockers.some(v=>speechOverlap(r,v));
+ if(fits(preferred))return {x:cx,y:cy,rect:preferred,original:true};
+ const lower=meowPlaceText(cx,cy,width,height,{left:6,right:w-6,top:h*.55,bottom:h-6},blockers,Math.min(140,h*.23));
+ if(lower)return lower;
+ if(!active)return null;
+ // No overlap with HUD, action buttons or reading sheet even on short phones.
+ // A bounded grid avoids the limited candidate list of meowPlaceText.
+ const loX=10+width/2,hiX=w-10-width/2,loY=Math.max(10,h*.20)+height/2,hiY=h-10-height/2;
+ if(loX>hiX||loY>hiY)return null;
+ let best=null;
+ const xs=[loX,hiX,clamp(cx,loX,hiX)],ys=[loY,hiY,clamp(cy,loY,hiY)];
+ for(let x=loX;x<=hiX;x+=12)xs.push(x);
+ for(let y=loY;y<=hiY;y+=12)ys.push(y);
+ for(const x of xs)for(const y of ys){
+  const rect={left:x-width/2-4,right:x+width/2+4,top:y-height/2-4,bottom:y+height/2+4};
+  if(!fits(rect))continue;
+  const score=Math.abs(x-cx)*1.4+Math.abs(y-cy);
+  if(!best||score<best.score)best={x,y,rect,score}
+ }
+ return best
+}
+function pawSamePrompt(hintText,visibleCopies){
+ const normalize=value=>String(value??'').normalize('NFKC').trim().replace(/\s+/g,' ').replace(/[.!?。！？…]+$/u,'').trim().toLowerCase();
+ const text=normalize(hintText);
+ return !!text&&visibleCopies.some(v=>normalize(v)===text)
+}
 let meowHintLayoutKey='';
 function meowHintSpacing(){
  const hintEl=$('hint'),root=$('game').getBoundingClientRect();
- const blockers=meowVisibleRects('#dock,#movePad,#gameControls,#ritualActionBar,#dialogue,#back,#nextStopShortcut');
- // Recalculate only when actual layout/text changes; never remove and reapply
- // the same classes on every polling tick (Safari visibly repaints them).
- const key=[room,activity,zh,hintEl.textContent,Math.round(root.width),Math.round(root.height),getComputedStyle(hintEl).display,...blockers.map(b=>[b.left,b.top,b.right,b.bottom].map(v=>Math.round(v/3)).join(':'))].join('|');
+ const blockers=meowVisibleRects('#hud>*,#small button,#dock,#movePad,#moveGuide,#walkHelp,#gameControls,#ritualActionBar,#dialogue,#back,#nextStopShortcut,#pearlRecipePanel,#destinyAccess,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet,#threeBoardAccess,#lunarRibbon');
+ const copies=activity?[...document.querySelectorAll('#gameControls button,#ritualActionBar button,#ritualActionBar [role="status"],#pearlRecipePanel button')].filter(el=>!el.hidden&&el.getClientRects().length&&getComputedStyle(el).visibility==='visible'&&getComputedStyle(el).display!=='none'&&Number(getComputedStyle(el).opacity)>0).map(el=>el.textContent):[];
+ const duplicate=pawSamePrompt(hintEl.textContent,copies);
+ const key=[scene,room,activity,zh,duplicate,hintEl.textContent,Math.round(root.width),Math.round(root.height),getComputedStyle(hintEl).display,...blockers.map(b=>[b.left,b.top,b.right,b.bottom].map(v=>Math.round(v/3)).join(':'))].join('|');
  if(key!==meowHintLayoutKey){
   meowHintLayoutKey=key;
   hintEl.classList.remove('meowHintMoved','meowHintBlocked');
   const base=hintEl.getBoundingClientRect(),preferred={left:base.left-root.left,right:base.right-root.left,top:base.top-root.top,bottom:base.bottom-root.top};
-  if(base.width>0&&base.height>0&&blockers.some(v=>speechOverlap(preferred,v))){
-   const dock=meowVisibleRects('#dock')[0],lower=Math.min(root.height-5,dock?.top??root.height-5);
-   const spot=meowPlaceText((preferred.left+preferred.right)/2,(preferred.top+preferred.bottom)/2,base.width,base.height,{left:6,right:root.width-6,top:root.height*.55,bottom:lower},blockers,Math.min(140,root.height*.23));
-   if(spot){hintEl.style.setProperty('--meow-hint-x',spot.x+'px');hintEl.style.setProperty('--meow-hint-y',spot.y+'px');hintEl.classList.add('meowHintMoved')}
-   else hintEl.classList.add('meowHintBlocked')
+  if(duplicate)hintEl.classList.add('meowHintBlocked');
+  else if(base.width>0&&base.height>0){
+   const spot=pawHintClearSpot(preferred,base.width,base.height,{w:root.width,h:root.height},blockers,!!activity);
+   if(spot&&!spot.original){hintEl.style.setProperty('--meow-hint-x',spot.x+'px');hintEl.style.setProperty('--meow-hint-y',spot.y+'px');hintEl.classList.add('meowHintMoved')}
+   else if(!spot)hintEl.classList.add('meowHintBlocked')
   }
  }
  setTimeout(meowHintSpacing,150)
