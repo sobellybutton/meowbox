@@ -801,7 +801,7 @@ if(typeof readingTopics!=='undefined'&&Array.isArray(readingTopics)&&readingTopi
 const tarotTopicCopyBefore=readingTopic;
 readingTopic=function(i){
  const was=state.readStage;const result=tarotTopicCopyBefore(i);
- if(was==='topic'&&state.readStage==='deck')hint('Hold your question in mind, then shuffle when you feel ready.','把问题放在心里，准备好了就洗牌。');
+ if(was==='topic'&&state.readStage==='deck')hint("Hold your question in mind, then shuffle. No need to send the universe a reminder.","把问题放在心里，准备好就洗牌。不用催宇宙回复。");
  return result
 };
 
@@ -6936,7 +6936,7 @@ function pawSelectTarotCard(index,frame=state.pawChoiceFrame){
  if(chosen.length===count){
   state.readCards=chosen.map(i=>state.pawCardPool[i]);state.readFlip=Array(count).fill(-1);
   state.readStage='cards';state.readAt=t;state.readSaved=false;
-  hint('Turn your chosen cards over.','翻开你亲自选的牌。')
+  hint("Turn your chosen cards over. The universe has terrible handwriting, so we'll read them together.","翻开亲自选的牌吧。宇宙的字写得不太好，我们一起慢慢看。")
  }
  return true
 }
@@ -12735,7 +12735,14 @@ const pawCafeSheetBefore=syncCafeQuestionSheet;
 syncCafeQuestionSheet=function(...args){
  const allowed=activity==='match'&&scene==='wonder'&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block';
  if(!allowed){cafeQuestionSheet.hidden=true;cafeQuestionSheetKey='';return}
- if(cafePhase!=='result'||!cafeResult)return pawCafeSheetBefore(...args);
+ if(cafePhase!=='result'||!cafeResult){
+  const value=pawCafeSheetBefore(...args);
+  if(!cafeQuestionSheet.hidden&&cafeRound>0&&['question','turn'].includes(cafePhase)&&!cafeQuestionSheet.querySelector('.pawCafeReaction')){
+   const line=pawCafeChoiceWords(cafeRound-1,false);
+   if(line){const note=element('small',tr(...line),cafeQuestionSheet,'pawCafeReaction');cafeQuestionSheet.querySelector('p')?.before(note)}
+  }
+  return value
+ }
  const assessed=pawCafeAssess(cafeAnswers,cafeQuestions.length);
  const copy=pawCafeResultCopy(assessed,cafeKinds);
  if(!copy){cafeQuestionSheet.hidden=true;cafeQuestionSheetKey='';return}
@@ -12743,7 +12750,7 @@ syncCafeQuestionSheet=function(...args){
  if(cafeQuestionSheetKey===key&&!cafeQuestionSheet.hidden)return;
  cafeQuestionSheetKey=key;cafeQuestionSheet.hidden=false;cafeQuestionSheet.replaceChildren();
  const token=cafeToken,current=()=>activity==='match'&&scene==='wonder'&&cafePhase==='result'&&cafeToken===token&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block';
- element('small',tr('A conversation to remember','这一杯茶，聊得刚刚好'),cafeQuestionSheet);
+ element('small',tr(...pawCafeChoiceWords(cafeQuestions.length-1,true)),cafeQuestionSheet);
  element('h3',tr(...copy.title),cafeQuestionSheet);
  assessed.ties.forEach((id,i)=>{
   if(copy.lines.length>1)element('strong',tr(cafeKinds[id][0],cafeKinds[id][1]),cafeQuestionSheet);
@@ -13460,7 +13467,7 @@ function pawYueDeskChoose(kind){
 yueReadingHub=function(...args){
  if(room!=='destiny')return pawYueDeskHubBefore(...args);
  $('page').style.display='none';pawYueChartObserver?.disconnect();pawYueChartObserver=null;delete $('page').dataset.pawYueDesk;delete $('page').dataset.pawYueExpanded;closeTalk();
- say(tr('Master Yue','月师傅'),tr('Ah, you have arrived. Have some tea. What would you like to know today?','来啦？坐，先喝口茶。今天想问些什么？'),[
+ say(tr('Master Yue','月师傅'),tr("Ah, sit and have some tea. The stars are not going anywhere. What shall we explore?","来啦？坐，先喝口茶。星星又不会跑。今天想问些什么？"),[
  [tr('My year ahead','生肖流年'),()=>pawYueDeskChoose('year')],
  [tr('My birth chart','生辰命盘'),()=>pawYueDeskChoose('chart')],
  [tr('Weekly star signs','本周星座'),()=>pawYueDeskChoose('stars')],
@@ -13470,13 +13477,21 @@ destinyConsultMenu=function(){closeTalk();return yueReadingHub()};
 const pawYueDeskPageBefore=page;
 let pawYueChartObserver=null;
 page=function(...args){pawYueChartObserver?.disconnect();pawYueChartObserver=null;delete $('page').dataset.pawYueDesk;delete $('page').dataset.pawYueExpanded;return pawYueDeskPageBefore(...args)};
+/* PAW_YUE_DESK_HUMOUR_BEGIN */
+function pawYueDeskQuestions(kind){
+ const date=["First, when were you born? No need to tell me how old you feel.","先告诉我出生日期。心里觉得自己几岁，就不用交代啦。"];
+ if(kind==='year')return [date,["Which year shall we look at? The calendar is not your boss.","想看看哪一年的流年？日历又不是你的老板。"]];
+ if(kind==='chart')return [date,["Do you know your local birth time? Ask the family if needed; the baby was busy.","知道出生时的当地时间吗？不确定就问问家人，当时的你忙着哭呢。"],["Where were you born? Check the time zone used then. Even the stars need the right clock.","你在哪里出生？请核对当时的时区。星星也得看对钟。"]];
+ return [];
+}
+/* PAW_YUE_DESK_HUMOUR_END */
 function pawYueQuestionSteps(form,out,kind){
  if(!form||form.hidden||out?.children.length)return;
  const date=form.querySelector('input[type=date]')?.closest('label'),time=form.querySelector('input[type=time]')?.closest('label'),details=form.querySelector('details'),year=form.querySelector('select')?.closest('label'),submit=form.querySelector('button[type=submit]');
  if(!date||!submit||date.hidden)return;
  const steps=kind==='year'?[[date],[year]]:[[date],[time],[details,...[...form.querySelectorAll('input[type=number]')].filter(n=>!details?.contains(n)).map(n=>n.closest('label'))]];
  if(steps.some(group=>!group.length||group.some(n=>!n||n===form)))return;
- const questions=kind==='year'?[['First, when were you born?','先告诉我，你是哪一天出生的？'],['Which year shall we look at?','想看看哪一年的流年呢？']]:[['First, when were you born?','先告诉我，你是哪一天出生的？'],['Do you know your local birth time?','知道你出生时的当地时间吗？'],['Where were you born? Check the historical time zone too.','你在哪里出生？也请核对当时的时区。']];
+ const questions=pawYueDeskQuestions(kind);if(questions.length!==steps.length)return;
  let index=0,finished=false;
  form.classList.add('pawYueGuidedForm');
  const question=element('p','',form,'pawYueQuestion');form.prepend(question);question.setAttribute('aria-live','polite');
