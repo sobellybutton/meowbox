@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   rituals:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/three-ritual-room-presentation-20261128' || github.head_ref == 'fix/ritual-visual-composition-20261128' || github.head_ref == 'fix/illustrated-ritual-chat-bar-20261128'
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/three-ritual-room-presentation-20261128' || github.head_ref == 'fix/ritual-visual-composition-20261128' || github.head_ref == 'fix/illustrated-ritual-chat-bar-20261128' || github.head_ref == 'fix/ritual-physical-composition-20261128'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     strategy:
