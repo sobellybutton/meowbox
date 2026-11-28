@@ -172,3 +172,37 @@ console.log('Painted room plaque clearance regression passed');
  }
  console.log('Active game prompt clearance checks passed');
 }
+
+/* Dialogue can use a clear side position rather than falling back to the
+   large paper sheet; completed Tarot never asks for another card flip.
+   Remove only genuinely duplicate visible guidance. */
+{
+ const ext=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+ const source=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
+ const a=ext.indexOf('function chooseSpeechPosition('),b=ext.indexOf('\nfunction ',a+10);
+ const c=ext.indexOf('function pawReadingNextHint('),d=ext.indexOf('\nfunction readingReturnSpread(',c);
+ const e=ext.indexOf('function pawSamePrompt('),f=ext.indexOf('let meowHintLayoutKey=',e);
+ assert.ok(a>=0&&b>a&&c>=0&&d>c&&e>=0&&f>e);
+ const api=new Function('const speechOverlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;'+ext.slice(a,b)+ext.slice(c,d)+ext.slice(e,f)+';return {chooseSpeechPosition,pawReadingNextHint,pawSamePrompt}')();
+ for(const [w,h] of [[320,568],[390,844],[768,1024],[1440,900]]){
+  const speaker={left:w*.48-20,right:w*.48+20,top:h*.4,bottom:h*.4+75};
+  assert.equal(api.chooseSpeechPosition(100,64,w,h,speaker,null,[])?.side,'bottom');
+  assert.equal(api.chooseSpeechPosition(100,64,w,h,{...speaker,top:NaN},null,[]),null);
+  assert.equal(api.chooseSpeechPosition(100,64,w,h,{left:-100,right:-50,top:100,bottom:200},null,[]),null);
+  assert.equal(api.chooseSpeechPosition(100,64,w,h,speaker,null,[{left:0,right:w,top:0,bottom:h}]),null);
+ }
+ const sp={left:180,right:220,top:280,bottom:355},blocks=[{left:150,right:250,top:198,bottom:260},{left:150,right:250,top:367,bottom:460},{left:0,right:168,top:250,bottom:400},{left:232,right:332,top:350,bottom:365}];
+ assert.equal(api.chooseSpeechPosition(100,64,400,600,sp,null,blocks)?.side,'left');
+ for(const count of [1,3,5]){
+  const run={readCards:Array(count).fill({i:1}),readFlip:Array(count).fill(2),readSaved:true};
+  assert.ok(api.pawReadingNextHint(run,3,true)[0].startsWith('Saved'));
+  assert.ok(api.pawReadingNextHint(run,3,false)[0].includes('keepsake'));
+  assert.ok(api.pawReadingNextHint({...run,readSaved:false},3,true)[0].includes('ready'));
+  assert.ok(api.pawReadingNextHint(run,2.2,true)[0].includes('remaining'));
+  assert.ok(api.pawReadingNextHint({...run,readFlip:[]},3,true)[0].includes('remaining'));
+ }
+ for(const [text,copies,expected] of [['Bow.',['Bow'],true],['净手完成。',['净手完成'],true],[' Light   incense… ',['Light incense'],true],['Bow three times',['Bow'],false],['Return to the altar',['Bow'],false],['',[''],false],['Save is off',['Save'],false],['Make tea',[],false],['取香',['取香 (1/3)'],false]])assert.equal(api.pawSamePrompt(text,copies),expected);
+ assert.ok(source.includes('Finish reading · return to table'));
+ assert.ok(source.includes('else hint(...pawReadingNextHint(run,t,journalAutoSave()))'));
+ console.log('Dialogue side clearance, duplicate instruction and Tarot completion checks passed');
+}
