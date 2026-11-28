@@ -679,7 +679,8 @@
         ".github/workflows/meowbox-browser.yml",
         ".github/workflows/paw-entrance.yml",
         ".github/workflows/yue-journey.yml",
-        "scripts/runtime-module-live-test.cjs"
+        "scripts/runtime-module-live-test.cjs",
+        "scripts/prepared-art-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -697,7 +698,10 @@
         "b18e2ca9: fixed stale 48-line runtime assertion using fresh merge and minimum 96; 32 exact-source harness assertions passed. CI 46103708873 still shows shrine ladle pointer and approach failures; checkpoint 66aaf67df652c8faea5cdf76f658b4b26de3bb69",
         "894284b9: 134 exact-source adaptive pace and clearance assertions passed; persistent CI test extension. Checkpoint e103964f6ddd40b33ec6e7f492eb8483b5d20050"
       ],
-      "lease": null,
+      "lease": {
+        "owner": "parallel-ci-assets-1795838528268",
+        "until": 1795840328268
+      },
       "blocker": "Browser connector unavailable for this attempt; actual mobile/desktop playthrough and visual acceptance remain unverified.\n\nOwner device acceptance clarification (27 Nov): Final deployed verification must record exact commit, browser/OS, dimensions, DPR, language, input, evidence and pass/fail/blocked per complete desktop and genuine phone journey. Actual physical iPhone Safari and Android Chrome evidence distinct from Playwright emulation; inaccessible hardware remains blocked.\n\nEnd-to-end critique, 28 Nov: Use section 12 prioritized journeys and P0/P1/P2 severity, including first enjoyable action, actual return state, and current deployed commit; never conflate phone emulation with real hardware.\nChromium purification and temple entry failures in run 46096584043 still require diagnosis; native reading browser rerun pending."
     },
     {
