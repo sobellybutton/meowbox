@@ -155,3 +155,24 @@ console.log('PASS '+alphaChecks+' measured alpha coverage assertions.');
  }
  console.log('PASS '+runtimeChecks+' exact runtime rotation/accessibility mock assertions.');
 }
+
+{
+ let checks=0;
+ const verify=(v,m)=>{assert.ok(v,m);checks++};
+ for(const duration of [.1,.65,1,2,3.6,6,9,30]){
+  let previous=0;
+  for(let i=0;i<=1000;i++){
+   const t=duration*i/1000,p=a.panoramaProgress(t,duration);
+   verify(p>=previous-1e-12&&p<=1,'panorama monotonic');previous=p;
+   verify(a.panoramaProgress(t,duration,true)===.5,'reduced motion framing');
+  }
+  verify(a.panoramaProgress(0,duration)===0,'departure frame');
+  verify(a.panoramaProgress(duration,duration)===1,'destination frame');
+  verify(a.panoramaProgress(duration+10,duration)===1,'hold at station');
+  const epsilon=duration/10000;
+  verify((1-a.panoramaProgress(duration-epsilon,duration))/epsilon<.005,'smooth panorama braking');
+ }
+ verify(a.panoramaProgress(9)===1,'entrance preview unchanged');
+ verify(a.panoramaProgress(3)===Math.min(1,a.travelDistance(3)/a.travelDistance(9)),'entrance speed unchanged');
+ console.log('PASS '+checks+' finite panorama continuity assertions.');
+}
