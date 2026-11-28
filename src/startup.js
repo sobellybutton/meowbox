@@ -13031,6 +13031,21 @@ function pawReadingCoverPlate(bounds,iw,ih){
  const scale=Math.max(bounds.w/iw,bounds.h/ih),w=iw*scale,h=ih*scale;
  return {x:bounds.x+(bounds.w-w)/2,y:bounds.y+(bounds.h-h)/2,w,h}
 }
+/* PAW_YUE_SEATED_CONTINUITY_BEGIN */
+// Admission is frozen per visit. A validated idle pose is preferable to
+// a miniature standing crop when the other two poses are still decoding.
+function pawReadingVisitPhase(visit,id,phase){
+ if(visit?.id!==id)return null;
+ if(visit.ready)return phase;
+ return id==='destiny'&&visit.idleReady?'idle':null
+}
+function pawReadingVisibleRect(frame,alpha,clip){
+ if(!frame||typeof frame.point!=='function'||!Array.isArray(alpha)||!Array.isArray(clip)||alpha.length!==4||clip.length!==4||![...alpha,...clip].every(Number.isFinite)||alpha[2]<=alpha[0]||alpha[3]<=alpha[1]||clip[2]<=0||clip[3]<=0)return null;
+ const [x,y]=frame.point(alpha[0],alpha[1]),[r,d]=frame.point(alpha[2],alpha[3]);
+ const left=Math.max(x,clip[0]),right=Math.min(r,clip[0]+clip[2]),top=Math.max(y,clip[1]),bottom=Math.min(d,clip[1]+clip[3]);
+ return [left,right,top,bottom].every(Number.isFinite)&&right>left&&bottom>top?{left,right,top,bottom}:null
+}
+/* PAW_YUE_SEATED_CONTINUITY_END */
 function pawReadingHostFamilyReady(id,manifest,api,ready){
  const host=id==='tarot'?'fortune-teller':id==='destiny'?'master-yue':null;
  const poses=host&&manifest?.characters?.[host]?.poses;
@@ -13059,6 +13074,12 @@ function pawHostFamilyReady(id){
   const im=pawHostPoseImage(path);return pawRoomImageReady(im)&&im.naturalWidth===canvas[0]&&im.naturalHeight===canvas[1]&&pawDecodedSources.get(im)===(im.src||im.currentSrc||'')
  })
 }
+function pawYueIdleReady(){
+ const lib=pawHostLibrary,host='master-yue',pose='seated-welcome-explain';
+ const f=lib?.api.contacts(lib.manifest,host,pose,[0,0],10);if(!f)return false;
+ const im=pawHostPoseImage(f.path);
+ return pawRoomImageReady(im)&&im.naturalWidth===f.canvas[0]&&im.naturalHeight===f.canvas[1]&&pawDecodedSources.get(im)===(im.src||im.currentSrc||'')
+}
 function pawWarmReadingHost(id){
  if(!['tarot','destiny'].includes(id)||pawHostWarmJobs.has(id)||pawHostFamilyReady(id))return;
  const job=pawLoadHostLibrary().then(lib=>{
@@ -13084,17 +13105,25 @@ let pawYueInkCurrent=null;
 document.addEventListener('visibilitychange',()=>{
  if(pawYueInkCurrent&&pawHostLibrary?.api?.parchmentClock)pawHostLibrary.api.parchmentClock(pawYueInkCurrent.clock,performance.now()/1000,document.hidden,residentReducedMotion.matches)
 });
-function pawDrawReadingSeated(id,plate){
- if(pawHostVisit?.id!==id||!pawHostVisit.ready||!pawHostLibrary)return false;
+function pawReadingDeskState(id){
  const desk=id==='destiny'&&$('page').dataset.pawYueDesk==='true'&&$('page').style.display!=='none';
  const activeForm=desk?$('content').querySelector('.astroForm,.yueAlmanacForm'):null;
  const editing=!!activeForm&&!activeForm.hidden&&activeForm.style.display!=='none';
  const grid=desk&&!editing?$('content').querySelector('.ziGrid'):null;
  const almanac=desk&&!editing?$('content').querySelector('.yueReadingFront,.signNotebookResult'):null;
- const result=!!(grid||almanac),phase=pawReadingHostPhase(id,state,activity,desk,result);
- const plan=pawReadingSeatPlan(id,plate,phase);if(!plan)return false;
+ return {grid,phase:pawReadingHostPhase(id,state,activity,desk,!!(grid||almanac))}
+}
+function pawReadingVisitFrame(id,plate,phase){
+ const selected=pawReadingVisitPhase(pawHostVisit,id,phase);
+ if(selected===null||!pawHostLibrary)return null;
+ const plan=pawReadingSeatPlan(id,plate,selected);if(!plan)return null;
  const {api,manifest}=pawHostLibrary,fr=api.contacts(manifest,plan.host,plan.pose,plan.center,plan.span);
- if(!fr)return false;
+ if(!fr)return null;
+ return {api,manifest,plan,fr,phase:selected}
+}
+function pawDrawReadingSeated(id,plate){
+ const desk=pawReadingDeskState(id),f=pawReadingVisitFrame(id,plate,desk.phase);if(!f)return false;
+ const {api,plan,fr,phase}=f,{grid}=desk;
  const im=pawHostPoseImage(fr.path);
  ctx.save();try{
   ctx.beginPath();ctx.rect(...plan.clip);ctx.clip();
@@ -13148,7 +13177,7 @@ enter=function(id,...args){
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   pawReadingAdmission=null;
   if(!ready||!pawRoomImageReady(im)){hint('The room painting could not load. Tap its door to try again.','小屋画面暂未加载成功，请再次点击门口重试。');return}
-  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id)};return pawReadingEnterBefore(id,...args)
+  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id),idleReady:id==='destiny'&&pawYueIdleReady()};return pawReadingEnterBefore(id,...args)
  }).finally(()=>{if(pawReadingAdmission===request)pawReadingAdmission=null})
 };
 // Nearby outdoor warming should decode the actual selected lobby painting,
@@ -13261,6 +13290,22 @@ function pawDrawYueAtDesk(a){
  }finally{ctx.restore()}
  return true
 }
+// Speech/sign clearance must reserve the actual visible seated silhouette,
+// not a standing rectangle based on the player's zoom-dependent scale.
+const pawYueBoundsBefore=meowIndoorActorBounds;
+meowIndoorActorBounds=function(a,scale){
+ if(room==='destiny'&&pawReadingActive()&&a?.station==='destiny'&&residentArtworkRecord(a.n)?.id==='master-yue'){
+  const f=pawReadingVisitFrame('destiny',pawReadingPlate,pawReadingDeskState('destiny').phase);
+  if(f){
+   const im=pawHostPoseImage(f.fr.path),alpha=f.manifest.characters[f.plan.host].poses[f.plan.pose].visibleAlphaBounds;
+   const rect=pawRoomImageReady(im)&&pawReadingVisibleRect(f.fr,alpha,f.plan.clip);
+   if(rect&&im.naturalWidth===f.fr.canvas[0]&&im.naturalHeight===f.fr.canvas[1]){
+    const z=cam.scale;return {left:cam.ox+rect.left*z-5,right:cam.ox+rect.right*z+5,top:cam.oy+rect.top*z-5,bottom:cam.oy+rect.bottom*z+6}
+   }
+  }
+ }
+ return pawYueBoundsBefore.call(this,a,scale)
+};
 function pawDrawYueDeskPlaque(fn){
  // A consultation already underway does not need another entry sign.
  if(talkOpen||$('page').style.display==='block'||activity)return false;
