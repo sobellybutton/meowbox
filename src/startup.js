@@ -1210,22 +1210,22 @@ const compactConsultStyle=document.createElement('style');compactConsultStyle.te
 /* Resident recognition: local player name, contextual greetings, no fake
    shared presence or private birth-data references. One welcome per visit. */
 const residentWelcomeProfiles=[
- {id:'temple',names:['Temple keeper','庙祝'],rooms:['temple','sticks','moon'],lines:[['Leave your worries by the door.','烦恼先放门口吧。'],['The incense is ready. Take your time.','香已备好，慢慢来。'],['No appointments with heaven today.','今天不用跟神明预约，慢慢来。'],['You can just breathe. No wish required.','不一定非要求什么，静静坐会儿也好。']]},
- {id:'tarot',names:['Fortune Teller','占卜师'],rooms:['tarot','daily'],lines:[['The cards are ready. No meeting minutes will be taken.','牌已备好，本次占卜不出会议纪要。'],['What is on your mind today?','今天想问点什么呢？'],['Still waiting for that reply? Cards cannot read minds.','还在等那条消息吗？牌可不会读心术。'],['Career, love, or a mysterious desire for a nap?','事业、感情，还是那股神秘的午睡欲望？']]},
- {id:'yue',names:['Master Yue','月师傅','Astrologer','命理师'],rooms:['destiny'],lines:[['Come, have some tea. The stars can wait.','来，喝口茶，星星不催你。'],['Love, work, or a little clarity today?','今天想聊感情、工作，还是理理思绪？'],['The stars have no deadlines. A rare luxury.','星星没有截止日期，真是难得。'],['Read for yourself or someone else. Take your time.','看自己或别人都可以，慢慢来。']]},
+ {id:'temple',names:['Temple keeper','庙祝'],rooms:['temple','sticks','moon'],lines:[['Leave your worries by the door.','烦恼先放门口吧。'],['The incense is ready. Take your time.','香已备好，慢慢来。'],["Whether you came to pray or just sit awhile, you're welcome here.","来祈福也好，来静坐也好，这里都欢迎你。"],['You can just breathe. No wish required.','不一定非要求什么，静静坐会儿也好。']]},
+ {id:'tarot',names:['Fortune Teller','占卜师'],rooms:['tarot','daily'],lines:[["The cards are here. We can begin whenever you're ready.","牌已经备好了，你准备好，我们就开始。"],['What is on your mind today?','今天想问点什么呢？'],["Wondering what someone else is thinking? We can reflect on your feelings, but the cards cannot read their mind.","想知道别人在想什么？我们可以聊聊你的感受，但牌可不会读心术。"],["Is it work, love, or something you haven't quite found the words for?","是工作、感情，还是一件你暂时说不清的心事？"]]},
+ {id:'yue',names:['Master Yue','月师傅','Astrologer','命理师'],rooms:['destiny'],lines:[['Come, have some tea. The stars can wait.','来，喝口茶，星星不催你。'],['Love, work, or a little clarity today?','今天想聊感情、工作，还是理理思绪？'],["There is no hurry, my friend. Let's look at one question at a time.","小友，不急。咱们一个问题一个问题慢慢看。"],["We can start with your own chart. If it belongs to someone else, make sure they're comfortable with that.","可以先看看自己的命盘。若想看别人的，记得先征得对方同意。"]]},
  {id:'garden',names:['Garden keeper','守园人','Caretaker','管理员'],rooms:['wishes'],lines:[['There is room for another wish.','这里还有地方挂你的心愿。'],['No wish is too small.','小小的心愿也值得被记住。']]},
- {id:'grandma',names:['Grandma','外婆','奶奶'],rooms:['kitchen'],lines:[['Come eat. You look like someone who skipped lunch.','来吃饭啦。忙起来是不是又忘了吃饭？'],['I saved you a bowl.','给你留了一碗呢。'],['Soup first. Work problems can wait outside.','先喝汤，工作的烦心事在外面等着。'],['The only thing simmering here should be the soup.','在这里，只有汤需要慢慢熬。']]},
- {id:'mei',names:['Auntie Mei','梅姨'],rooms:['tea'],lines:[['Sit here. I have tea and possibly too much news.','来坐这边，有茶，还有一点点八卦。'],['Good to see you. How has your day been?','见到你真好，今天过得怎样？']]},
- {id:'hong',names:['Auntie Hong','红姐','洪姨'],rooms:[],lines:[['Come sit. I have a story for you.','来坐坐，有个故事跟你说。'],['What have I missed?','最近有什么新鲜事呀？']]},
+ {id:'grandma',names:['Grandma','外婆','奶奶'],rooms:['kitchen'],lines:[["Come in, dear. Have you had anything good to eat today?","来来来，今天有没有好好吃饭呀？"],['I saved you a bowl.','给你留了一碗呢。'],['Soup first. Work problems can wait outside.','先喝汤，工作的烦心事在外面等着。'],["The soup needs another minute. Come sit by me while it cooks.","汤还得再煮一会儿，来外婆旁边坐坐。"]]},
+ {id:'mei',names:['Auntie Mei','梅姨'],rooms:['tea'],lines:[["Come sit by the window. I'll pour you a cup while it's still hot.","来，坐窗边。我趁茶还热，给你倒一杯。"],['Good to see you. How has your day been?','见到你真好，今天过得怎样？']]},
+ {id:'hong',names:['Auntie Hong','红姐','洪姨'],rooms:[],lines:[["Aiyo, come closer! You missed quite a story at the tea table today.","哎哟，快坐过来！今天茶桌上可热闹了，你都错过啦。"],["Now, what have you been up to? I promise not to turn it into a headline.","最近忙什么呢？放心，红姐今天不把你写成头条。"]]},
  {id:'wang',names:['Wang Laoban','王老板'],rooms:['office'],lines:[['Relax. This meeting could have been an email.','放轻松，这个会本来发封邮件就行。'],['No performance review today. Promise.','今天不谈绩效，说好了。']]},
- {id:'ahma',names:['Ah Ma','阿嬷','阿嫲','阿嬤','打小人阿姨','打小人阿婆','Grumpy Ah Ma','暴躁阿嬷'],rooms:['fish'],lines:[['Who has been making your blood boil today?','今天又是谁惹你生气啦？'],['Sit down. We can leave the drama here.','来坐坐，把那些破事留在这里。'],['The slipper has office hours. Luckily, they are flexible.','拖鞋也有上班时间，不过可以弹性打卡。'],['No need to explain everything. The river can listen.','不用把来龙去脉都讲清楚，河水会听你说。']]},
- {id:'lin',names:['Auntie Lin','林姨'],rooms:['park'],lines:[['The animals are taking their sweet time. So can you.','小动物都慢悠悠的，你也可以。'],['Come see who is out in the meadow today.','来看看今天草地上有哪些小可爱。']]},
- {id:'arcade',names:['Keeper','店主','Arcade keeper','游戏厅老板','Arcade host','游戏厅店主'],rooms:['arcade'],lines:[['Ready to beat your own score?','今天要不要刷新自己的纪录？'],['The claw owes you nothing. But give it a go.','夹爪可不欠你的，不过试试嘛。']]},
- {id:'boba',names:['Boba keeper','奶茶店主','Pearl & Pause','珍珠摸鱼铺','Barista','店员'],rooms:['boba'],lines:[['A little tea break? You have earned one.','喝杯奶茶歇一歇吧。'],['Less ice, more peace?','少冰，多一点好心情？'],['The only thing we are shaking today is bubble tea.','今天只摇奶茶，不摇摆人生。'],['Your drink, your rules. No approval chain.','自己的奶茶自己做主，不用逐级审批。']]},
+ {id:'ahma',names:['Ah Ma','阿嬷','阿嫲','阿嬤','打小人阿姨','打小人阿婆','Grumpy Ah Ma','暴躁阿嬷'],rooms:['fish'],lines:[["Come, sit on the stool. What's been bothering you today?","来，坐小凳上。今天有什么烦心事，跟阿嬷说说？"],['Sit down. We can leave the drama here.','来坐坐，把那些破事留在这里。'],["I'll fetch my slipper. You just sit there and leave the whacking to me.","阿嬷去拿拖鞋，你坐好就行，打小人的事交给我。"],['No need to explain everything. The river can listen.','不用把来龙去脉都讲清楚，河水会听你说。']]},
+ {id:'lin',names:['Auntie Lin','林姨'],rooms:['park'],lines:[["Walk gently, dear. Let the animals come to you when they feel ready.","慢慢走，别惊着小动物。等它们愿意了，自然会靠近你。"],['Come see who is out in the meadow today.','来看看今天草地上有哪些小可爱。']]},
+ {id:'arcade',names:['Keeper','店主','Arcade keeper','游戏厅老板','Arcade host','游戏厅店主'],rooms:['arcade'],lines:[['Ready to beat your own score?','今天要不要刷新自己的纪录？'],["Take your time aiming. The claw has a mischievous streak today.","慢慢瞄准，今天这夹爪有点调皮哦。"]]},
+ {id:'boba',names:['Boba keeper','奶茶店主','Pearl & Pause','珍珠摸鱼铺','Barista','店员'],rooms:['boba'],lines:[['A little tea break? You have earned one.','喝杯奶茶歇一歇吧。'],['Less ice, more peace?','少冰，多一点好心情？'],["Give the cup a good shake. Let the pearls dance a little!","把杯子好好摇一摇，让珍珠也跳个舞！"],['Your drink, your rules. No approval chain.','自己的奶茶自己做主，不用逐级审批。']]},
  {id:'souvenir',names:['Souvenir keeper','手信店主','Furniture keeper','家具店主'],rooms:['mystery'],lines:[['Come browse. No need to buy anything.','随便看看，不买也没关系。'],['Find something that makes you smile.','看看有没有让你会心一笑的小东西。']]},
- {id:'lab',names:['Lab keeper','研究所店主','Personality guide','人格向导','Researcher','研究员'],rooms:['quiz'],lines:[['Curious about yourself? Excellent. The questionnaire has no manager approval field.','想研究一下自己？很好，这份问卷不用领导签字。'],['There is no perfect answer.','没有标准答案，做自己就好。']]},
- {id:'story',names:['Storyteller','说书人','故事向导'],rooms:[],lines:[['Another little adventure awaits.','又有一段小故事等着你。'],['What would you do differently this time?','这一次，你会怎么选呢？']]},
- {id:'cafe',names:['Café keeper','Cafe keeper','咖啡店主'],rooms:[],lines:[['Let us make some space for the heart.','给心里的人留一点时间吧。'],['Tea first, overthinking later.','先喝茶，晚点再胡思乱想。']]}
+ {id:'lab',names:['Lab keeper','研究所店主','Personality guide','人格向导','Researcher','研究员'],rooms:['quiz'],lines:[["Come over to the desk. We'll explore a few ways you tend to see the world.","来桌边坐坐吧。我们一起看看，你平时是怎么看待这个世界的。"],["Choose what feels closest to you today. These questions are for reflection, not a verdict.","选最贴近此刻自己的答案就好。这些问题是用来了解自己的，不是给你下定论。"]]},
+ {id:'story',names:['Storyteller','说书人','故事向导'],rooms:[],lines:[["I found another unfinished story. Shall we see where your choices take it?","我又找到一本没写完的故事。要不要看看，你会把它带到哪里？"],['What would you do differently this time?','这一次，你会怎么选呢？']]},
+ {id:'cafe',names:['Café keeper','Cafe keeper','咖啡店主'],rooms:[],lines:[["I saved a seat for you. What kind of company feels like home to you?","给你留了个位置。什么样的陪伴，会让你觉得像回到家一样自在？"],["Here's your tea. We can talk, or take a moment to enjoy it quietly.","茶来啦。想聊就聊，不想说话，安静喝一会儿也好。"]]}
 ];
 const residentWelcomeVisits=new Map(),residentWelcomeSpoken=new Set(),residentOutdoorWelcome=new Map();
 const residentVisitorWelcome=new Map();
@@ -10550,8 +10550,8 @@ function pawFortuneRestoreWalk(q){
  if(pawFortuneWalk!==q||state!==q.hallState||room!=='temple'||activity)return;
  pawFortuneWalk=null;
  activity=q.from;state=q.run;updateHUD();mb5AssistSync(true);
- if(q.from==='moon')hint('This stick was not confirmed. Return to draw a new one.','此签未获确认，请返回重新求签。');
- else hint('Your numbered stick is safe. Continue to the moon blocks.','签号已保留，请前往筊杯处确认。')
+ if(q.from==='moon')hint("This draw wasn't confirmed. Go back to the stick holder and draw a fresh stick. There is no slip to collect yet.","这次没有掷到圣杯。请回签筒重新摇签，这一支暂时不能领取签文。");
+ else hint("Keep your numbered stick. Take it to the moon blocks to confirm the draw.","先留好手中的签，再去掷筊确认。")
 }
 function pawFortuneWalkTick(){
  const q=pawFortuneWalk;if(!q)return;
@@ -10574,9 +10574,9 @@ function pawFortuneMove(action,run=state){
   pawFortuneWalk=null;start(to);
   if(to==='moon'){
    state.pawFortuneNumber=n;
-   hint('Toss the moon blocks. Only Sheng Bei confirms your stick.','请掷筊确认，得到圣杯才可领取签文。');
+   hint("Cast the moon blocks. One flat side and one rounded side (Sheng Bei) confirm your stick. Otherwise, draw a new one.","请掷筊。一平一凸才是圣杯，方可领取签文；若不是圣杯，就要重新摇签。");
   }else{
-   hint('Draw a new fortune stick, then confirm it with the moon blocks.','请重新摇签，拾签后再掷筊确认。');
+   hint("Shake the holder for a fresh stick. Pick it up, then return to the moon blocks.","重新摇签筒，拾起新签，再回去掷筊确认。");
   }
   mb5AssistSync(true)
  };
@@ -14542,7 +14542,7 @@ function pawKitchenStockChoose(run){
  if(run!==state||room!=='kitchen'||activity!=='cook'||pawArcadeInputBlocked()||drag)return;
  const names=run.vegetarian?[['Mushroom','香菇'],['Greens','青菜'],['Tofu','豆腐']]:[['Tomato','番茄'],['Greens','青菜'],['Egg','鸡蛋']];
  const choices=names.flatMap((name,i)=>pawKitchenPickupAllowed(run,i)?[[tr(...name),()=>{if(run!==state||activity!=='cook'||room!=='kitchen')return;closeTalk();pawKitchenStockRequest(run,i)}]]:[]);
- if(choices.length)say(tr('Grandma','外婆'),tr('Which ingredient shall we take from the counter?','想从料理台拿哪样食材？'),choices)
+ if(choices.length)say(tr('Grandma','外婆'),tr("Come, pick something from the counter. I'll show you what to do with it.","来，看看料理台上想拿哪样食材，外婆教你怎么做。"),choices)
 }
 // Ordinary drag-to-pot remains unchanged. A short tap on an existing
 // ingredient plate is an alternative accessible physical pickup.
