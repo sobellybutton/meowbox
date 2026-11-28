@@ -659,3 +659,260 @@ threePlay=function(i){
  if(threeActive()&&pawThreeTurnCurrent(state.threeGame,state.threeGame,pawArcadeInputBlocked()))delete state.threeGame.pawConfirmRestart;
  return pawThreePlayConfirmationPrior(i)
 };
+
+/* PAW_CONTINUOUS_FORTUNE_BEGIN */
+function pawPairedFailures(q){return Number.isInteger(q?.pawFortuneFailures)?Math.max(0,Math.min(3,q.pawFortuneFailures)):0}
+function pawPairedNext(q,kind,now,blocked){
+ if(blocked||!q||!Number.isInteger(q.pawFortuneNumber)||q.pawFortuneNumber<1||q.pawFortuneNumber>12||q.pawPairedWalk)return null;
+ if(kind==='sticks'&&q.stickDelivered)return 'confirm';
+ if(kind==='moon'&&!q.moonPending&&!(q.tossUntil>now)){
+  if(q.count===0)return 'toss';
+  if(q.count===1)return q.result===0?'receive':pawPairedFailures(q)>=3?'finish':'retry'
+ }
+ return null
+}
+function pawPairedCamera(w,h,p){
+ if(![w,h,p?.w,p?.h].every(Number.isFinite)||Math.min(w,h,p.w,p.h)<=0)return null;
+ // Cover portrait screens without losing either station on unusually tall phones.
+ const s=w<h?Math.min(Math.max(w/p.w,h/p.h),w/(p.w*.70)):Math.min(w/p.w,h/p.h);
+ return {s,ox:(w-p.w*s)/2-p.x*s,oy:(h-p.h*s)/2-p.y*s}
+}
+function pawPairedWalkPlan(from,painted,g,p,now){
+ const point=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
+ const stick=painted?g.stickFoot:point(.26,.64);
+ const pickup=painted?g.stickPickFoot:{x:point(.37,.66).x-15,y:point(.37,.66).y+4};
+ const moon=painted?g.moonFoot:point(.70,.64);
+ const origin=from==='sticks'?pickup:moon,dest=from==='sticks'?moon:stick;
+ const lane=Math.max(origin.y,dest.y)+12;
+ return {to:from==='sticks'?'moon':'sticks',pos:{...origin},path:[{x:origin.x,y:lane},{x:dest.x,y:lane},{...dest}],last:now,dir:dest.x>origin.x?'right':'left'}
+}
+function pawPairedWalkTick(q,now,blocked,reduced){
+ const dt=Math.max(0,Math.min(.05,now-q.last));q.last=now;
+ if(blocked)return false;
+ let budget=reduced?Infinity:145*dt;
+ while(q.path.length){
+  const next=q.path[0],dx=next.x-q.pos.x,dy=next.y-q.pos.y,d=Math.hypot(dx,dy);
+  if(d>.01)q.dir=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';
+  if(d<=budget+.001){q.pos={...next};q.path.shift();budget-=d}
+  else{q.pos.x+=dx/d*budget;q.pos.y+=dy/d*budget;break}
+ }
+ return q.path.length===0
+}
+function pawGardenEntryRest(nodes,now){
+ return {painted:true,pos:nodes.entry.slice(),route:[],action:null,last:now,dir:'up'}
+}
+/* PAW_CONTINUOUS_FORTUNE_END */
+// Install after startup has installed all native activity and camera wrappers.
+function pawInstallContinuousFortune(){
+ let exhausted=false,transfer=false;
+ const active=()=>room==='temple'&&['sticks','moon'].includes(activity)&&!!state.pawPairedRitual;
+ const entryPrior=enter;
+ enter=function(id,...args){if(id==='temple')exhausted=false;return entryPrior.call(this,id,...args)};
+ const startPrior=start;
+ start=function(id,...args){
+  if(room==='temple'&&['sticks','moon'].includes(id)){
+   if(exhausted&&!transfer){hint('Three attempts are enough for today. Come back another time.','今天三次未得圣杯，先随缘，下次再来吧。');return false}
+   if(!transfer)id='sticks';
+   const art=pawRoomImageReady(pawAlcoveArt()),hall=pawRoomImageReady(pawHallArt());
+   if(!art&&!hall){hint('The fortune alcove is getting ready. Try again in a moment.','求签处正在准备，稍后再试。');return false}
+   const result=startPrior.call(this,id,...args);
+   if(activity===id){state.pawPairedRitual=true;state.pawAlcovePainting=art;state.pawFortuneFailures=0}
+   return result
+  }
+  const result=startPrior.call(this,id,...args);
+  if(room==='temple'&&id==='secretGarden'&&state.pawRearGarden){
+   state.pawGardenWalk=pawGardenEntryRest(pawRearGardenNodes,t);
+   hint('Take a moment here, then choose where to walk.','先在入口歇一歇，再选想去的地方。')
+  }
+  return result
+ };
+ const guidePrior=roomGuideEntries;
+ roomGuideEntries=function(...args){const v=guidePrior.apply(this,args);return room==='temple'?v.filter(x=>x[0]!=='moon').map(x=>x[0]==='sticks'?['sticks','Draw and confirm a fortune','求签与掷筊']:x):v};
+ const labelPrior=label;
+ label=function(...args){
+  if(room==='temple'&&!activity&&pawStationPlaque?.id==='moon'){pawStationPlaque=null;return}
+  return labelPrior.apply(this,args)
+ };
+ const roomPrior=drawRoom;
+ drawRoom=function(...args){const v=roomPrior.apply(this,args);if(room==='temple'&&!activity)hit=hit.filter(h=>h.stationId!=='moon');return v};
+ const cameraPrior=mobileRoomCamera;
+ mobileRoomCamera=function(...args){return active()?pawPairedCamera(W,H,state.pawAlcovePainting?pawWaterPlate:pawHallPlate)||cameraPrior(...args):cameraPrior(...args)};
+ const nextPrior=pawFortuneNext;
+ pawFortuneNext=function(q,kind,now,blocked){return q?.pawPairedRitual?pawPairedNext(q,kind,now,blocked):nextPrior(q,kind,now,blocked)};
+ const movePrior=pawFortuneMove;
+ pawFortuneMove=function(action,run=state){
+  if(!active())return movePrior(action,run);
+  if(run!==state||!['confirm','retry'].includes(action)||pawPairedNext(run,activity,t,pawArcadeInputBlocked())!==action)return false;
+  releaseWalkKeys();joystickReset();
+  run.pawPairedWalk=pawPairedWalkPlan(activity,run.pawAlcovePainting,pawAlcoveGeometry(),pawHallPlate,t);
+  hint(...(action==='confirm'?['Walk over to the moon blocks with your stick.','拿着签，走到旁边掷筊。']:['Return the unconfirmed stick and walk back to the holder.','这支签还未确认，放回去，再走到签筒前。']));
+  mb5AssistSync(true);return true
+ };
+ const ritualPrior=pawRitualAdvance;
+ pawRitualAdvance=function(...args){
+  if(active()&&state.pawPairedWalk)return;
+  const run=state,settling=active()&&activity==='moon'&&run.moonPending;
+  const v=ritualPrior.apply(this,args);
+  if(settling&&run===state&&!run.moonPending&&run.count===1&&run.result!==0){
+   run.pawFortuneFailures=Math.min(3,pawPairedFailures(run)+1);
+   if(run.pawFortuneFailures===3){
+    exhausted=true;$('toast').classList.remove('on');
+    hint('Three casts without Sheng Bei. Leave the stick here and come back another time.','三次未得圣杯，今天就先到这里吧。把签放回去，下次再来。')
+   }else hint('No Sheng Bei ('+run.pawFortuneFailures+'/3). Draw another stick.','未得圣杯（'+run.pawFortuneFailures+'/3），请重新求签。')
+  }
+  return v
+ };
+ const tossPrior=pawMoonToss;
+ pawMoonToss=function(...args){if(active()&&(state.pawPairedWalk||pawPairedNext(state,activity,t,pawArcadeInputBlocked())!=='toss'))return false;return tossPrior.apply(this,args)};
+ const shakePrior=shakeFortuneStick,pickPrior=pickupFortuneStick;
+ shakeFortuneStick=function(...args){return active()&&state.pawPairedWalk?false:shakePrior.apply(this,args)};
+ pickupFortuneStick=function(...args){return active()&&state.pawPairedWalk?false:pickPrior.apply(this,args)};
+ const specPrior=mb5AssistSpec;
+ mb5AssistSpec=function(kind,q,now){
+  if(q?.pawPairedRitual&&q.pawPairedWalk)return {key:'paired-walking',label:['Walking to the next station…','走向旁边的体验区……'],disabled:true};
+  if(q?.pawPairedRitual&&pawPairedNext(q,kind,now,false)==='finish')return {key:'paired-finish',label:['Leave the stick. Try another day.','放回签，下次再来'],action:'paired-finish'};
+  return specPrior(kind,q,now)
+ };
+ const performPrior=mb5AssistPerform;
+ mb5AssistPerform=function(action){
+  if(action==='paired-finish'){
+   if(!active()||pawPairedNext(state,activity,t,pawArcadeInputBlocked())!=='finish')return false;
+   delete state.pawFortuneNumber; $('back').click();return true
+  }
+  return performPrior(action)
+ };
+ const drawPrior=drawActivity;
+ drawActivity=function(...args){
+  if(!active()||!state.pawPairedWalk)return drawPrior.apply(this,args);
+  const run=state,q=run.pawPairedWalk,done=pawPairedWalkTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
+  continuityActivity=activity;
+  ctx.save();try{
+   if(run.pawAlcovePainting)pawAlcoveScene();else pawTempleScenePlate();
+   backHuman(q.pos.x,q.pos.y,avatar??0,!done&&!pawArcadeInputBlocked()&&!residentReducedMotion.matches,q.dir,run.pawAlcovePainting?pawAlcoveActorScale():.96)
+  }finally{ctx.restore()}
+  if(done&&run===state&&!pawArcadeInputBlocked()){
+   const n=run.pawFortuneNumber,failures=pawPairedFailures(run),painted=run.pawAlcovePainting;
+   transfer=true;try{start(q.to)}finally{transfer=false}
+   if(activity===q.to&&state!==run){
+    state.pawPairedRitual=true;state.pawAlcovePainting=painted;state.pawFortuneFailures=failures;
+    if(q.to==='moon'){state.pawFortuneNumber=n;hint('Cast the blocks to confirm your numbered stick.','掷筊确认手中的签。')}
+    else hint('Shake the holder for a new stick.','重新摇签筒，求一支新签。')
+   }
+  }
+  mb5AssistSync()
+ };
+ // Keep garden visits player-led. Until the upper artwork is revalidated,
+ // stop at the lower path viewpoints, not the former upper scenery nodes.
+ Object.assign(pawRearGardenNodes,{cats:[.58,.49],chime:[.70,.49]});
+ pawRearGardenEdges.splice(0,pawRearGardenEdges.length,...[['entry','bend'],['bend','fork'],['fork','feed'],['fork','seat'],['fork','chime'],['fork','cats']]);
+}
+queueMicrotask(pawInstallContinuousFortune);
+
+/* PAW_TEMPLE_AUTO_ARRIVAL_BEGIN */
+function pawTempleAutoArrival(q,blocked){
+ return !!q&&!blocked&&!q.pawAutoArrival&&!q.destination&&!q.route?.length&&!q.greeted&&!q.catVisited
+}
+function pawGardenSeatAtNode(q,seat){
+ return !!q&&!q.route?.length&&Array.isArray(q.pos)&&q.pos.length===2&&q.pos.every(Number.isFinite)&&Math.hypot(q.pos[0]-seat[0],q.pos[1]-seat[1])<.002
+}
+/* PAW_TEMPLE_AUTO_ARRIVAL_END */
+function pawInstallTempleArrival(){
+ const prior=drawActivity;
+ drawActivity=function(...args){
+  if(room==='temple'&&activity==='templeForecourt'){
+   const q=state.pawForecourt;
+   if(pawTempleAutoArrival(q,pawArcadeInputBlocked())){
+    if(pawForecourtRoute(q,'hall')){q.pawAutoArrival=true;hint('Follow the stone steps into the temple.','沿着石阶走进大殿。')}
+   }
+   const value=prior.apply(this,args);
+   if(activity==='templeForecourt'&&state.pawForecourt===q&&q?.pawAutoArrival){
+    const el=$('gameControls');
+    // The existing Back button still permits an immediate turn around.
+    if(el?.classList.contains('pawForecourtControls'))el.hidden=true
+   }
+   return value
+  }
+  if(room==='temple'&&activity==='secretGarden'&&state.pawRearGarden&&state.gardenSitting&&!pawGardenSeatAtNode(state.pawGardenWalk,pawRearGardenNodes.seat)){
+   // A stale seated flag must never pull the actor away from its actual node.
+   state.gardenSitting=false
+  }
+  return prior.apply(this,args)
+ };
+ const seatPrior=gardenSeat;
+ gardenSeat=function(...args){
+  if(room==='temple'&&activity==='secretGarden'&&state.pawRearGarden&&!state.gardenSitting&&!pawGardenSeatAtNode(state.pawGardenWalk,pawRearGardenNodes.seat))return false;
+  return seatPrior.apply(this,args)
+ }
+}
+queueMicrotask(pawInstallTempleArrival);
+
+
+/* PAW_INDOOR_STANDING_SCALE_BEGIN */
+function pawIndoorStandingScale(playerScale,reference,ratio){
+ if(![playerScale,reference,ratio].every(Number.isFinite)||playerScale<=0||reference<=0||ratio<=0)return null;
+ return 94*playerScale*Math.max(.82,Math.min(1.05,ratio))/reference
+}
+function pawIndoorStandingBounds(x,y,worldHeight,aspect,view){
+ if(![x,y,worldHeight,aspect,view?.s,view?.ox,view?.oy].every(Number.isFinite)||worldHeight<=0||aspect<=0||view.s<=0)return null;
+ const h=worldHeight*view.s,w=Math.max(30,h*aspect),fx=view.ox+x*view.s,fy=view.oy+y*view.s;
+ return {left:fx-w/2-5,right:fx+w/2+5,top:fy-h-5,bottom:fy+6}
+}
+/* PAW_INDOOR_STANDING_SCALE_END */
+function pawInstallIndoorStandingScale(){
+ // Only legacy standing station hosts. Painted rooms already have their own
+ // staging; seated hosts and contact poses must retain their authored anchors.
+ const legacyRooms=new Set(['tea','park','boba','arcade','mystery']);
+ const legacyActor=()=>!activity&&legacyRooms.has(room)?roomResidentStations[room]:null;
+ const normalized=(a,r)=>pawIndoorStandingScale(travellerRoomScale(H,cam.scale),r.height,a.sc);
+ const drawPrior=drawGatheringPainted;
+ drawGatheringPainted=function(name,x,y,scale=1,facing='right'){
+  const a=legacyActor(),r=residentArtworkRecord(name);
+  if(a&&r&&r.id===residentArtworkRecord(a.n)?.id&&a.x===x&&a.y===y&&a.sc===scale){
+   scale=normalized(a,r)??scale
+  }
+  return drawPrior.call(this,name,x,y,scale,facing)
+ };
+ const actorsPrior=roomResidentActors;
+ roomResidentActors=function(...args){
+  const actors=actorsPrior.apply(this,args),legacy=legacyActor();
+  return actors.map(a=>{
+   const r=a===legacy&&residentArtworkRecord(a.n);
+   return r?{...a,sc:normalized(a,r)??a.sc}:a
+  })
+ };
+ const boundsPrior=meowIndoorActorBounds;
+ meowIndoorActorBounds=function(a,scale){
+  // Station NPCs use their individual reference height, not the player's 94.
+  // Use the same trimmed aspect as drawResidentRaster, including broad bodies.
+  if(!activity&&!['fish','destiny','tarot'].includes(room)&&a?.n&&Number.isFinite(a.sc)&&scale===a.sc){
+   const r=residentArtworkRecord(a.n),im=r&&residentArtworkImage(r);
+   if(r&&im?.complete&&im.naturalWidth&&im.naturalHeight){
+    const crop=pawResidentCrop(im),aspect=crop?crop.w/crop.h:im.naturalWidth/im.naturalHeight;
+    const rect=pawIndoorStandingBounds(a.x,a.y,r.height*scale,aspect,{s:cam.scale,ox:cam.ox,oy:cam.oy});
+    if(rect)return rect
+   }
+  }
+  return boundsPrior.call(this,a,scale)
+ }
+}
+queueMicrotask(pawInstallIndoorStandingScale);
+
+/* PAW_HOUSE_LABEL_RECOVERY_BEGIN */
+// House plaques are navigational controls, not optional decoration. Migrate
+// the former global quiet-map preference without disturbing other saved data.
+function pawRestoreHouseLabels(wasQuiet,root,persist){
+ root.classList.remove('quiet');
+ if(wasQuiet)try{persist(false)}catch{} // storage failure must not hide doors
+ return false
+}
+quiet9=pawRestoreHouseLabels(quiet9,signRoot,value=>save('quiet9',value));
+// The assembled runtime initializes startup synchronously before this runs.
+// Remove the obsolete hide-label control from both settings and the old HUD.
+queueMicrotask(()=>{
+ townMapLabels.remove();
+ $('quietToggle').remove();
+ quiet9=pawRestoreHouseLabels(quiet9,signRoot,value=>save('quiet9',value));
+ syncTownSettings();
+ syncSigns()
+});
+/* PAW_HOUSE_LABEL_RECOVERY_END */
