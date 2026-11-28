@@ -19,7 +19,8 @@ for(const [w,h] of [[360,640],[390,844],[768,1024],[1280,720],[1920,1080]]){
 }
 assert.equal(place(-100,300,30,20,{s:1,ox:0,oy:0},{w:360,h:640}),null);
 assert.equal(place(180,300,30,20,{s:0,ox:0,oy:0},{w:360,h:640}),null);
-assert.equal((src.match(/const place=pawPaintedPlaquePlacement\(/g)||[]).length,2);
+// Five existing painted station/room plaque renderers use the clearance helper.
+assert.ok((src.match(/const place=pawPaintedPlaquePlacement\(/g)||[]).length>=5);
 console.log('Painted room plaque clearance regression passed');
 
 
