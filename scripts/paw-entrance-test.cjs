@@ -180,6 +180,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
        await tabs.nth(1).tap();
        await page.waitForFunction(n=>Number($('game').dataset.pawBookMotionSerial)>n,previousMotion);
        assert.equal(await page.locator('#game').getAttribute('data-paw-book-last-motion'),'turn','Same chapter should visibly turn a page');
+       assert(await page.evaluate(()=>{const leaf=document.querySelector('.pawPassportMotion[data-motion="turn"] .pawPassportMovingLeaf');return !leaf||parseFloat(leaf.style.width)<=30}),'Turning paper must not cover the destination chapter');
        await tabs.nth(0).tap();
        await page.locator('.pawPassportMotion').waitFor({state:'detached',timeout:2500});
        const fold=page.locator('.pawBookFold').filter({has:page.locator('.pawSketchPlaces')});await fold.locator('summary').click();assert(await fold.evaluate(n=>n.open),'Places fold did not open');await fold.locator('summary').click();
@@ -229,6 +230,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       const actor=await page.evaluate(()=>{const s=document.querySelector('.hideoutScene'),a=s?.querySelector('.hideoutPlayer'),shadow=s?.querySelector('.pawHomeContactShadow');return {ratio:a?.getBoundingClientRect().height/s?.getBoundingClientRect().height,foot:a?.style.top,shadow:shadow?.style.top}});
       assert(actor.ratio>=.22&&actor.ratio<=.31&&actor.foot===actor.shadow,'Room traveller scale and contact shadow: '+JSON.stringify(actor));
      }
+     if(process.env.PAW_FULL_BOOK==='1')await page.locator('.pawPassportMotion').waitFor({state:'detached',timeout:2500});
      await shot('dock-'+id);
      const back=page.locator('#content > .row button').first();
      await back.waitFor({state:'visible',timeout:8000});
