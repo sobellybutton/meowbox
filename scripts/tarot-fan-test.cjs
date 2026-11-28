@@ -3,7 +3,7 @@ const fs=require('node:fs'),assert=require('node:assert/strict');
 const source=fs.readFileSync('src/startup.js','utf8');
 const block=source.match(/\/\* PAW_TAROT_FAN_BEGIN \*\/([\s\S]*?)\/\* PAW_TAROT_FAN_END \*\//)[1];
 const slots=source.slice(source.indexOf('function pawTarotChoiceSlots('),source.indexOf('function pawTarotFrameMatches('));
-const {pawTarotFanPose:pose,pawTarotFanSettled:settled,pawTarotChoiceSlots}=new Function(block+slots+';return {pawTarotFanPose,pawTarotFanSettled,pawTarotChoiceSlots}')();
+const {pawTarotFanPose:pose,pawTarotFanSettled:settled,pawTarotChoiceSlots,pawTarotWashPose:wash,pawTarotTrayPose:tray}=new Function(block+slots+';return {pawTarotFanPose,pawTarotFanSettled,pawTarotChoiceSlots,pawTarotWashPose,pawTarotTrayPose}')();
 let n=0;const ck=(v,m)=>{assert(v,m);n++};
 for(const portrait of [true,false])for(const [i,q] of pawTarotChoiceSlots(portrait).entries()){
  const p=pose(q,i,0),end=pose(q,i,1),reduced=pose(q,i,0,true);
@@ -15,5 +15,56 @@ const q={readStage:'choose',readAt:1,pawFanActive:true};
 ck(!settled(q,1.7),'input locked');ck(settled(q,1.75),'ready');ck(settled(q,1,true),'reduced motion');
 ck(!settled({...q,readStage:'cards'},2),'stale stage');
 ck(settled({readStage:'choose'},0),'legacy test fixture');
+const near=(a,b)=>Math.abs(a-b)<1e-7;
+for(const portrait of [true,false])for(const [i,q] of pawTarotChoiceSlots(portrait).entries()){
+ const end=pose(q,i,1);
+ ck(near(end.angle,q.angle),'curved final angle');
+ ck(q.hitW>40&&q.hitW<q.w,'distinct touch strip');
+ for(let j=0;j<=100;j++){
+  const p=wash(i,j/100),v=tray(q,0,3,portrait,j/100);
+  ck([p.x,p.y,p.angle,v.x,v.y,v.angle].every(Number.isFinite),'finite tabletop frame');
+  ck(p.x-p.w/2>215&&p.x+p.w/2<585,'wash stays horizontally on table');
+  ck(p.y-p.h/2>290&&p.y+p.h/2<780,'wash stays vertically on table');
+ }
+ ck(near(wash(i,0).x,wash(i,1,true).x),'gather matches deck');
+}
+const finish=new Function(source.slice(source.indexOf('function pawTarotFinishSelection('),source.indexOf('const pawSelectStartBefore'))+';return pawTarotFinishSelection')();
+for(const count of [1,3,5]){
+ const pool=Array.from({length:12},(_,i)=>({i,rev:!!(i%2)}));
+ const q={readStage:'choose',pawCardPool:pool,pawSelectedCards:Array.from({length:count},(_,i)=>i),pawPickFinishAt:10};
+ ck(!finish(q,count,10.1),'final slide must complete');
+ ck(finish(q,count,10.25),'finish at settled time');
+ ck(q.readStage==='cards'&&q.readCards.length===count&&q.readFlip.every(v=>v===-1),'same selected identities and unrevealed state');
+ ck(q.readCards.every((v,i)=>v===pool[i]),'identity preserved');
+ ck(!finish(q,count,11),'no repeated transition');
+}
+
+// Check the actual deck-top affine registration rather than the old Moon-card crop.
+const props=source.match(/\/\* PAW_TAROT_PAINTED_PROPS_BEGIN \*\/([\s\S]*?)\/\* PAW_TAROT_PAINTED_PROPS_END \*\//)[1];
+const backTransform=new Function(props+';return pawTarotBackTransform')();
+for(const factor of [.5,1,2]){
+ const m=backTransform(1408*factor,1056*factor);
+ for(const [x,y,u,v] of [[495,58,0,0],[625,91,180,0],[365,263,0,260],[495,296,180,260]]){
+  ck(Math.abs(m[0]*x*factor+m[2]*y*factor+m[4]-u)<1e-7,'deck back horizontal registration');
+  ck(Math.abs(m[1]*x*factor+m[3]*y*factor+m[5]-v)<1e-7,'deck back vertical registration');
+ }
+}
+ck(backTransform(0,1056)===null,'reject invalid atlas dimensions');
+
+
+const cameraBlock=source.match(/\/\* PAW_TAROT_CAMERA_BEGIN \*\/([\s\S]*?)\/\* PAW_TAROT_CAMERA_END \*\//)[1];
+const camera=new Function(cameraBlock+';return pawTarotTableCamera')();
+for(const [w,h] of [[320,568],[360,640],[390,844],[430,932],[768,1024],[844,390],[1280,720],[1440,900]]){
+ const a=camera(w,h,'deck'),bounds=w<h?[205,595,278,790]:[145,655,280,700];
+ for(const stage of ['deck','shuffle','choose','deal','cards','focus']){
+  const v=camera(w,h,stage);
+  ck(JSON.stringify(v)===JSON.stringify(a),'constant physical table camera');
+  ck(v.ox+bounds[0]*v.s>=9.99&&v.ox+bounds[1]*v.s<=w-9.99,'horizontal fit');
+  ck(v.oy+bounds[2]*v.s>=43.99&&v.oy+bounds[3]*v.s<=h-59.99,'vertical fit');
+ }
+}
+ck(camera(390,844,'topic')===null,'preserve topic framing');
+ck(camera(0,844,'deck')===null,'invalid viewport rejected');
+
 new Function(source);
 console.log('PASS '+n+' tarot fan motion and input checks');

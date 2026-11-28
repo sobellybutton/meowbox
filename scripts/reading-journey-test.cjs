@@ -31,6 +31,8 @@ async function run(page,name,touch){
    await click(dialogueButton(i===count-1?'What does it mean together?':'Next card'));
   }
   await dialogueButton('Make a keepsake').waitFor();
+  await dialogueButton('Another reading').waitFor();
+  await dialogueButton('Finish reading').waitFor();
  }
  const showGame=()=>page.evaluate(()=>{
   proposal.hidden=true;$('arrival').hidden=true;$('page').style.display='none';
@@ -125,6 +127,15 @@ async function run(page,name,touch){
  });
  await page.waitForFunction(()=>state.readSaved);
  assert(await page.evaluate(()=>readingJournal.length===1&&!journalAutoSave()));
+ // Exercise the actual completion buttons on a controlled completed spread.
+ await page.evaluate(()=>{room='tarot';openTarotReading(tarotShareSnapshot(state))});
+ await liveSpread(1);
+ await click(dialogueButton('Finish reading'));
+ await page.waitForFunction(()=>room==='tarot'&&activity===null&&!talkOpen);
+ await page.evaluate(()=>{start('tarot');Object.assign(state,{readCards:[{i:15,rev:false}],readFlip:[t-1],readStage:'cards'});openTarotReading(tarotShareSnapshot(state))});
+ await liveSpread(1);
+ await click(dialogueButton('Another reading'));
+ await page.waitForFunction(()=>room==='tarot'&&activity==='tarot'&&!talkOpen&&state.readCards.length===0);
  await page.reload({waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>typeof openReadingJournal==='function'&&typeof openWonderResult==='function');
  await showGame();
