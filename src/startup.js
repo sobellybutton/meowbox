@@ -5661,7 +5661,7 @@ updateHUD=function(...args){
 };
 const pawDockRootStyle=document.createElement('style');
 pawDockRootStyle.textContent=`
-#game.pawDockRoot.pawFocusedView:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){display:flex!important;z-index:24!important;pointer-events:auto!important}
+#game.pawDockRoot:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){display:flex!important;z-index:24!important;pointer-events:auto!important}
 #game.pawDockRoot #page{padding-bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 84px)!important;scroll-padding-bottom:calc(max(8px,env(safe-area-inset-bottom,0px)) + 84px)!important}
 #game #dock>button:not([hidden]){border:1px solid transparent!important;border-radius:5px!important;box-shadow:none}
 #game #dock>button.pawDockSelected{border-color:#839274!important;box-shadow:inset 0 -2px 0 #829374!important}
@@ -15171,5 +15171,5 @@ const pawVisualContinuityStyle=document.createElement('style');pawVisualContinui
 #game #content .pawDiaryFold .goodCompanyPicks button[aria-pressed="true"]{background:#d7dfc6!important;border-color:#64816a!important;color:#384f3d!important}
 #game #content .hideoutScene{border:1px solid #a69272!important;box-shadow:0 3px 10px #52443138!important;border-radius:5px!important}
 #game #content .hideoutPrimary button{border-radius:5px!important;box-shadow:none!important}
-#game.pawDockRoot.pawFocusedView:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){z-index:24!important;background:#eee5d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 145px repeat!important;box-shadow:0 3px 10px #2e352c55!important}
+#game.pawDockRoot:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){z-index:24!important;background:#eee5d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 145px repeat!important;box-shadow:0 3px 10px #2e352c55!important}
 `;document.head.append(pawVisualContinuityStyle);
