@@ -9488,9 +9488,6 @@ function pawTempleContactScale(camera,base=1.55){
 // The painted action stations use authored world dimensions. Zoom changes
 // the whole scene, never just the person or the sleeve.
 function pawTemplePaintedActorScale(){return 1.92}
-function pawTempleReachGeometry(foot,scale,side=1){
- return {shoulder:{x:foot.x+side*5*scale,y:foot.y-63*scale},grip:{x:foot.x+side*8*scale,y:foot.y-48*scale},sleeve:.72*scale,maxReach:48*scale}
-}
 function pawIncenseSupply(p,held,stage,age){
  const rack={x:p.x+p.w*.866,y:p.y+p.h*.543},count=Math.max(0,Math.min(3,Math.floor(held||0)));
  const taking=stage==='taking'&&count<3,removed=taking&&age>=.32;
@@ -11841,7 +11838,7 @@ function pawAlcoveReach(foot,side=1){
  return {shoulder:{x:foot.x+side*5*scale,y:foot.y-63*scale},grip:{x:foot.x+side*8*scale,y:foot.y-48*scale},sleeve:.72*scale,maxReach:48*scale}
 }
 function pawAlcoveStickPoint(g,pose){
- const f=Math.max(0,Math.min(1,pose.fall)),pick=pose.picked?Math.max(0,Math.min(1,(pose.pick-.45)/.55)):0;
+ const f=Math.max(0,Math.min(1,pose.fall)),u=pose.picked?Math.max(0,Math.min(1,(pose.pick-.45)/.55)):0,pick=u*u*(3-2*u);
  const x=g.tubeTop.x+(g.stickTray.x-g.tubeTop.x)*f;
  const y=g.tubeTop.y+(g.stickTray.y-g.tubeTop.y)*f-Math.sin(Math.PI*f)*25;
  const grip=pawAlcoveReach(g.stickPickFoot).grip;
