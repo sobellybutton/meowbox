@@ -34,6 +34,35 @@ jobs:
       - name: Visitor clearance regression checks
         if: always() && !cancelled()
         run: node scripts/visitor-clearance-test.cjs
+      - name: Keyboard continuity regression
+        if: always() && !cancelled()
+        run: node scripts/world-key-continuity-test.cjs
+  district:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Identify tested revision
+        run: git rev-parse HEAD
+      - run: node scripts/build.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Organic four-district and doorway journey
+        run: |
+          python3 -m http.server 8768 >/tmp/paw-district-server.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8768/index.html -o /dev/null && break; sleep 1; done
+          node scripts/district-journey-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: candidate-district-${{ github.run_id }}
+          path: |
+            test-results/
+            /tmp/paw-district-server.log
+          if-no-files-found: warn
   device:
     # Independent evidence: a failed focused assertion remains red, but does
     # not prevent the actual browser/device journey from being exercised.
