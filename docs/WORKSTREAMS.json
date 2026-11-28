@@ -1352,7 +1352,10 @@
       "priority": 1,
       "summary": "Audit and select/create coherent district-specific painted signage families, railway wayfinding, NPC names, speech, action prompts and HUD iconography; reusable materials and bilingual text safe zones",
       "resources": [
-        "art:signage"
+        "art:signage",
+        "assets/visual/painted/signage/manifest.json",
+        "assets/visual/painted/signage/district-signs.css",
+        "scripts/district-sign-art-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -1361,7 +1364,10 @@
         "Inspected existing ornate wood, hanging wood, parchment, roof plaque and ribbon; 22101d9e and 310fb150 replace ornate treatment with quieter interim painted materials. Do not commission duplicate generic floral signs.",
         "Owner: To Fortune Valley label visually out of theme and too striking. Use subdued physically anchored railway direction signage, secondary hierarchy, coherent four house plaque family, natural bilingual typography. Inspect primary and pawRailEdge fallback; no invented material without scene review."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-sign-art-batch14",
+        "until": 1795847090602
+      },
       "blocker": "Current effective building plaque uses the same ornate_wood border image; final district-specific art not approved."
     },
     {
