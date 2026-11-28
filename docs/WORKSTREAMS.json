@@ -384,7 +384,9 @@
         "scripts/food-prop-placement-test.cjs",
         "assets/visual/painted/food-props/contact-candidates.json",
         "assets/visual/painted/food-props/contact.js",
-        "scripts/food-contact-test.cjs"
+        "scripts/food-contact-test.cjs",
+        "src/extensions.js",
+        "src/startup.js"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -399,7 +401,10 @@
         "28 Nov manual owner sheet recovery: 16 individual transparent PNGs prepared locally as Pawradise_Finished_Food_Assets.zip (9 plated dishes and 7 drinks), visual contact sheet inspected, per-file source crop, alpha bounds, SHA256, ground anchors and bilingual candidate names in manifest. Not yet uploaded to repository: expected staging assets/visual/staging/Pawradise_Finished_Food_Assets/. Do not regenerate these finished dish/drink sprites while awaiting import. Exact sauced rice and purple drink identity provisional. Existing soup remains playable; distinct recipes, seated dining and runtime prop integration pending. No stage promotion.",
         "cf27d9cb + 8372d925: added painted wooden ladle/small ladle/spatula pickup, gesture-driven working tip path constrained to pot ellipse, source grip lock and exact return to counter, reduced-motion transfer. Exact persisted food-contact script executed in connector harness against current modules and manifests: 18,016 assertions passed (4,609 new). Shared runtime files leased by ENT-ASSET-READY-01; no live integration, deployment or rendered acceptance. Next wire existing cook drag to stirFrame and replace legacy spoon only when image ready; calibrate actual actor reach, counter and pot geometry. Finished food PNGs still awaiting binary import."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-food-runtime-20261128",
+        "until": 1795842698136
+      },
       "blocker": "Dedicated ingredient, preparation, pouring, serving and tasting artwork, pose contact and actual browser verification remain outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n49 original kitchen/boba props prepared at assets/visual/painted/food-props; runtime integration, scene-specific grip/pour contact, animation and rendered acceptance remain pending. CI pending at check."
     },
     {
