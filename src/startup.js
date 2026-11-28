@@ -14471,7 +14471,7 @@ function pawKitchenPaintBowl(x,y,fill){
 }
 function pawKitchenServeRequest(){
  if(activity!=='cook'||!state.done||state.pawSoupServed||state.pawSoupServeAt!==undefined||pawArcadeInputBlocked())return;
- state.pawSoupServeAt=t;closeTalk();sound(330);hint('Grandma: Ladle yourself a bowl first. No need to serve the whole office.','外婆：先给自己盛一碗，又不用请全公司吃饭。');
+ state.pawSoupServeAt=t;closeTalk();sound(330);hint('Grandma: Here, a bowl for you. Don\'t just keep looking at it!','外婆：来，先给自己盛一碗。光看又不会饱！');
 }
 /* PAW_KITCHEN_SERVE_END */
 
@@ -14591,8 +14591,8 @@ drawActivity=function(...args){
   const result=pawKitchenSteamBefore(...args);mb5AssistSync();return result
  }
  const q=run.pawSteam,pan=q.method==='pan',changed=pawKitchenSteamAdvance(q,t,pawArcadeInputBlocked());
- if(changed&&q.phase==='ready'){sound(540);hint(...(pan?['Grandma: Wah, golden edges! The tofu has had a better holiday than you.','外婆：哇，煎得金黄金黄的！豆腐都比你会度假。']:['Grandma: Nice and green! Finally, something that isn\'t overworked.','外婆：青翠青翠的，终于有一样东西没被折腾过头。']))}
- if(changed&&q.phase==='done'){hint(...(pan?['Grandma: Crispy outside, soft inside. Unlike your Monday face.','外婆：外脆里嫩，不像你周一那张苦瓜脸。']:['Grandma: Finished your greens! Now go do absolutely nothing for a bit.','外婆：青菜吃完啦！接下来什么都别干，歇会儿。']));sound(480)}
+ if(changed&&q.phase==='ready'){sound(540);hint(...(pan?['Grandma: Aiyo, look at those golden edges! Not bad for your first little pan.','外婆：哎哟，两面金灿灿的！这豆腐煎得有模有样嘛。']:['Grandma: Look at that colour. Take it off the heat before the greens change their minds.','外婆：这青菜绿油油的，赶紧出锅，再蒸就黄啦。']))}
+ if(changed&&q.phase==='done'){hint(...(pan?['Grandma: Crispy outside, soft inside. Save me a piece, will you?','外婆：外酥里嫩！哎，别顾着自己吃，给外婆留一块呀。']:['Grandma: All the greens gone? Good. At least I don\'t have to chase you with the chopsticks.','外婆：青菜都吃完啦？好，省得外婆拿着筷子追着你喂。']));sound(480)}
  continuityActivity=activity;ctx.save();try{
   table();
   const plate=pawKitchenSteamPlate(q,residentReducedMotion.matches);
@@ -14673,7 +14673,7 @@ function pawKitchenStockPaint(){
 }
 function pawKitchenStockRequest(run,i,x=270+i*130,y=W<H?610:600){
  if(run!==state||room!=='kitchen'||activity!=='cook'||pawArcadeInputBlocked()||drag||!pawKitchenPickupAllowed(run,i))return false;
- run.pawStockPickup={i,x,y,age:0,last:t,blocked:false};sound(360);hint('Grandma: Into the pot! This is the only thing we are rushing today.','外婆：下锅咯！今天只赶这一顿饭。');return true
+ run.pawStockPickup={i,x,y,age:0,last:t,blocked:false};sound(360);hint('Grandma: Into the pot it goes. Gently, gently, don\'t splash yourself!','外婆：下锅咯！轻一点，别把汤溅到自己身上。');return true
 }
 function pawKitchenStockChoose(run){
  if(run!==state||room!=='kitchen'||activity!=='cook'||pawArcadeInputBlocked()||drag)return;
