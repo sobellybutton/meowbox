@@ -29,3 +29,26 @@ for(const phase of ['pet','play','idle']){
 }
 assert.ok(!src.includes("setTimeout(()=>{if(state===run&&careIsActive()&&a.phase===key)careComplete(key)"),'no independent wall-clock completion');
 console.log('PASS '+checks+' park care continuity checks.');
+
+{
+ const a=src.indexOf('const pawParkCareProps=Object.freeze('),b=src.indexOf('function careBowl(',a);
+ const d=src.indexOf('const pawParkCareHome=Object.freeze('),e=src.indexOf('// Dedicated canvas gestures.',d);
+ assert.ok(a>=0&&b>a&&d>=0&&e>d);
+ const calls=[],images={parkCareFilledBowl:{naturalWidth:130,naturalHeight:92},parkCareFeather:{naturalWidth:110,naturalHeight:131}};
+ const api=new Function('ctx','productionVisual',src.slice(a,b)+src.slice(d,e)+';return {box:pawParkCarePropBox,draw:pawDrawParkCareProp,grab:pawParkCareGrab,point:pawParkCareDragPoint}')({drawImage(...v){calls.push(v)}},id=>images[id]);
+ let n=0;const check=(v,msg)=>{assert.ok(v,msg);n++};
+ for(const [kind,hx,hy] of [['feed',285,620],['water',400,620],['play',510,615],['pet',400,500]]){
+  for(const dx of [-20,0,20])for(const dy of [-20,0,20]){
+   const q={x:hx+dx,y:hy+dy},g=api.grab(kind,q,7,100);
+   check(g.x===(kind==='pet'?q.x:hx)&&g.y===(kind==='pet'?q.y:hy),'no pickup snap');
+   const p=api.point(g,{x:q.x+32,y:q.y-25});
+   check(p.x===g.x+32&&p.y===g.y-25,'tool retains touch offset');
+  }
+ }
+ const bowl=api.box('foodBowl',295,548);
+ check(Math.abs(bowl.x+bowl.w/2-295)<1e-9&&Math.abs(bowl.y+bowl.h-570)<1e-9,'bowl bottom at ground contact');
+ check(api.draw('foodBowl',295,548)&&api.draw('feather',510,615)&&calls.length===2,'painted props draw');
+ delete images.parkCareFeather;check(!api.draw('feather',510,615),'unavailable artwork falls back');
+ check(api.box('missing',0,0)===null&&api.box('feather',NaN,0)===null,'invalid input');
+ console.log('PASS '+n+' painted prop placement and grab offset checks.');
+}
