@@ -67,5 +67,38 @@ try{
  step(31*86400000);
  assert.equal((await call('/report',tokens[2],{id})).data.recorded,false);
  assert.equal((await call('/messages?place=square',tokens[2])).data.messages.length,0);
+ // Rolling network quota must survive UTC midnight. Prior posts have expired.
+ now=(Math.floor(now/86400000)+1)*86400000-100000;
+ for(let round=0;round<5;round++){
+  for(const token of tokens.slice(0,4)){
+   const post=await call('/messages',token,{name:'Tea Cat',text:'Quota test',place:'square'});
+   assert.equal(post.status,201);
+  }
+  step(16000);
+ }
+ step(25000);
+ assert.equal((await call('/messages',tokens[5],{name:'Guest',text:'After midnight',place:'square'})).status,429);
+ step(86400000);
+ assert.equal((await call('/messages',tokens[5],{name:'Guest',text:'After a full day',place:'square'})).status,201);
+ // Simulate a moderator ban committed between the first read and write.
+ const initial=await call('/presence',tokens[6],base);
+ assert.equal(initial.status,200);
+ const target=initial.data.self;
+ step();
+ const realPrepare=db.prepare;
+ let injected=false;
+ db.prepare=function(sql){
+  if(!injected&&sql.startsWith('INSERT INTO presence(owner,')){
+   injected=true;
+   sqlite.prepare('INSERT INTO presence_bans(public_id,until) VALUES(?,?)').run(target,now+3600000);
+   sqlite.prepare('DELETE FROM presence WHERE public_id=?').run(target);
+  }
+  return realPrepare.call(this,sql)
+ };
+ try{
+  assert.equal((await call('/presence',tokens[6],base)).status,403);
+  assert.ok(injected);
+  assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM presence WHERE public_id=?').get(target).n,0);
+ }finally{db.prepare=realPrepare}
  console.log('PASS: SQLite Worker integration, five sessions, rooms, blocking, reports, moderation, expiry and reactions');
 }finally{Date.now=realNow;sqlite.close()}
