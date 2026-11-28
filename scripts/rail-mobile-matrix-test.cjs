@@ -42,6 +42,10 @@ async function approachStation(page,records,leg){
        const x=lane.x+lane.half*offset,sx=rect.left+cam.ox+x*cam.scale,sy=rect.top+cam.oy+y*cam.scale;
        if(sx<rect.left+8||sx>rect.right-8||sy<rect.top+8||sy>rect.bottom-8)continue;
        if(document.elementFromPoint(sx,sy)!==$('c'))continue;
+       // A canvas point can still be an invisible door or resident hit area.
+       // Only an actual unoccupied path tap counts as walking.
+       if(at({x,y}))continue;
+       if(Math.abs(y-p.y)<18)continue;
        candidates.push({sx,sy,x,y});
       }
      }
@@ -49,7 +53,7 @@ async function approachStation(page,records,leg){
     return {scene,x:p.x,y:p.y,near,pending,room,activity,talkOpen,transitioning,candidates};
    });
    samples.push({...view,candidates:view.candidates.slice(0,2)});
-   if(view.scene!==before.scene||view.room||view.activity||view.pending&&view.pending!=='station')throw Error('Unexpected route during station approach: '+JSON.stringify(view));
+   if(view.scene!==before.scene||view.room||view.activity||view.pending||view.talkOpen){records.push({approachTrace:leg,samples});throw Error('Unexpected interaction during station approach: '+JSON.stringify(view))}
    if(view.near)break;
    const target=view.candidates[0];
    if(!target){await page.waitForTimeout(180);continue}
