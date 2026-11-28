@@ -5914,9 +5914,10 @@ document.head.append(pawEntranceFitStyle);
 const pawGuideCopyBefore=movementUI;
 movementUI=function(...args){
  const result=pawGuideCopyBefore(...args);
+ $('game').classList.toggle('pawMovementGuideVisible',!moveGuide.hidden);
  if(!moveGuide.hidden&&guideStage===0){
   const touch='ontouchstart' in window||navigator.maxTouchPoints>0;
-  moveCopy.textContent=touch?tr('Tap the glowing spot or use the joystick to walk.','点击光圈或使用摇杆行走。'):tr('Click the path or use arrow keys to walk.','点击小路或使用方向键行走。')
+  moveCopy.textContent=touch?tr('Tap the path or use the joystick.','点击小路或使用摇杆行走。'):tr('Click the path or use arrow keys to walk.','点击小路或使用方向键行走。')
  }
  return result
 };
@@ -12176,7 +12177,12 @@ const pawCounterRackStyle=document.createElement('style');pawCounterRackStyle.te
 /* Railway wayfinding: a single contextual edge sign only when the actual
    map plaque has been clipped or displaced. No extra permanent next-stop CTA. */
 const pawRailEdge=element('button','',$('game'),'pawRailEdge');pawRailEdge.type='button';pawRailEdge.hidden=true;
-pawRailEdge.onclick=()=>{if(!pawRailEdge.hidden&&!transitioning&&!room&&!activity&&proposal.hidden&&$('page').style.display!=='block')walkDoor('station')};
+/* PAW_RAIL_NEAR_STATION_BEGIN */
+function pawRailNearStation(actor,station){
+ return Array.isArray(station)&&station[0]==='station'&&[actor?.x,actor?.y,station[1],station[2]].every(Number.isFinite)&&Math.hypot(actor.x-station[1],actor.y-station[2])<=280
+}
+/* PAW_RAIL_NEAR_STATION_END */
+pawRailEdge.onclick=()=>{if(!pawRailEdge.hidden&&pawRailNearStation(p,maps[scene]?.st.find(v=>v[0]==='station'))&&!transitioning&&!room&&!activity&&proposal.hidden&&$('page').style.display!=='block')walkDoor('station')};
 // A plaque can have a valid rectangle yet be hidden, clipped, or covered.
 // Require an actual hit target before withdrawing the edge navigation.
 function pawRailPlaqueReachable(sign,g){
@@ -12206,6 +12212,11 @@ syncSigns=function(...args){
   pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
  }
  const sign=signButtons.get('station'),game=$('game'),g=game.getBoundingClientRect(),now=performance.now(),size=g.width+'|'+g.height;
+ if(!pawRailNearStation(p,maps[scene].st.find(v=>v[0]==='station'))){
+  if(sign)sign.hidden=true;
+  pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
+ }
+
  const changed=pawRailEdgeScene!==scene||pawRailEdgeSize!==size;
  if(changed){pawRailEdgeScene=scene;pawRailEdgeSize=size;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity}
  if(!changed&&now-pawRailEdgeAt<75)return result;pawRailEdgeAt=now;
