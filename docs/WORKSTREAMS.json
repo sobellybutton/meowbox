@@ -529,7 +529,10 @@
         "4caa3219 + 3c152ffd: independent landscape carriage composite with three trackside sprites, distinct route sequences, motion and reduced-motion controls; 4553 assertions executed on exact source with current repository-tree existence checks; local alpha and composite inspection",
         "bd78fa8e + 0393dc93: Native portrait carriage foreground imported; transparent window bounds 119,322,906,831 on 1024x1536; evaluate native portrait ride, preserve landscape. Staging verified, not runtime accepted; refer to PROJECT_BATCHES_30.md imported creative batches."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-rail-atmosphere-20261128",
+        "until": 1795843327025
+      },
       "blocker": "Module not yet loaded into game; integrate with existing railway lifecycle after shared-source lease clears. New carriage landscape only; retain existing portrait fallback. Actual rendering, no gaps around windows, movement and journey acceptance pending."
     },
     {
