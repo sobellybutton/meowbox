@@ -149,3 +149,18 @@ console.log('Resting ladle retry and exclusive held-tool ownership checks passed
  assert.ok(src.includes("pawDrawRearSeated(im,id,a.hip,scale)"));
  console.log('PASS '+checks+' ladle reach, drop and seated pose geometry cases');
 }
+
+/* Reach only after the traveller arrives; hand follows the exact prop. */
+{
+ const a=new Function(get('PURIFICATION_PAINT')+get('ALCOVE_PAINT')+';return {pawAlcoveGeometry,pawAlcoveStickPoint,pawAlcoveStickContact}')();
+ const g=a.pawAlcoveGeometry();let n=0;
+ for(let i=0;i<=1000;i++){
+  const pick=i/1000,p={picked:true,fall:1,pick},c=a.pawAlcoveStickContact(g,p),pt=a.pawAlcoveStickPoint(g,p);
+  assert.ok(c.foot.x>=g.stickFoot.x&&c.foot.x<=g.stickPickFoot.x);n++;
+  if(pick<.45){assert.equal(c.hand,null);assert.equal(pt.x,g.stickTray.x);assert.equal(pt.y,g.stickTray.y);n+=3}
+  else{assert.equal(c.walking,false);assert.deepEqual(c.hand,pt);assert.ok(Math.hypot(c.hand.x-c.shoulder.x,c.hand.y-c.shoulder.y)<=c.maxReach);n+=3}
+ }
+ assert.equal(a.pawAlcoveStickContact(g,{picked:false,shake:false}).hand,null);
+ assert.deepEqual(a.pawAlcoveStickContact(g,{picked:false,shake:true}).hand,g.tubeGrip);
+ console.log('PASS '+(n+2)+' physical stick approach and contact checks');
+}

@@ -11972,6 +11972,16 @@ function pawAlcoveStickPoint(g,pose){
  const y=g.tubeTop.y+(g.stickTray.y-g.tubeTop.y)*f-Math.sin(Math.PI*f)*25;
  return {x:x+(g.stickPickFoot.x+14-x)*pick,y:y+(g.stickPickFoot.y-64-y)*pick,angle:Math.PI*.46*f*(1-pick)}
 }
+// Use the same physical point for the rendered stick and the reaching hand.
+function pawAlcoveStickContact(g,pose,held=false){
+ const ease=u=>{u=Math.max(0,Math.min(1,u));return u*u*(3-2*u)};
+ const scale=pawAlcoveActorScale(),move=pose.picked?ease(pose.pick/.45):0;
+ const foot={x:g.stickFoot.x+(g.stickPickFoot.x-g.stickFoot.x)*move,y:g.stickFoot.y+(g.stickPickFoot.y-g.stickFoot.y)*move};
+ const shoulder={x:foot.x+5*scale,y:foot.y-63*scale},maxReach=48*scale;
+ const target=pose.picked?(pose.pick>=.45?pawAlcoveStickPoint(g,pose):null):(held||pose.shake?g.tubeGrip:null);
+ const hand=target&&Math.hypot(target.x-shoulder.x,target.y-shoulder.y)<=maxReach?target:null;
+ return {foot,walking:move>0&&move<1,hand,shoulder,maxReach,scale};
+}
 function pawAlcoveMoonPoint(g,m){
  return {x:g.moonTray.x+(m.x-400)*.26,y:g.moonTray.y-m.lift*.32}
 }
@@ -12019,14 +12029,9 @@ function pawAlcoveTubeShake(shake){
 function pawDrawAlcoveSticks(){
  const run=state,g=pawAlcoveGeometry(),pose=pawTempleStickPose(run,t),held=drag?.id==='sticks';
  pawAlcoveTubeShake(held||pose.shake);
- const move=pose.picked?poseEase(Math.min(1,pose.pick/.45)):0,foot=pawWaterMix(g.stickFoot,g.stickPickFoot,move);
- const sc=pawAlcoveActorScale();
- // The whole actor is proportioned to the counter. Only expose the reaching hand during contact.
- if((held||pose.shake||pose.picked&&pose.pick<.85)&&(!pose.picked||pose.pick<.85)){
-  const shoulder={x:foot.x+8,y:foot.y-63*sc},hand=!pose.picked?g.tubeGrip:pawWaterMix(g.stickTray,{x:foot.x+14,y:foot.y-64},poseEase(Math.max(0,(pose.pick-.45)/.55)));
-  if(Math.hypot(hand.x-shoulder.x,hand.y-shoulder.y)<=38) pawIncenseArm(shoulder,hand,1.12,false)
- }
- backHuman(foot.x,foot.y,avatar??0,move>0&&move<1,'up',sc);
+ const {foot,walking,hand,shoulder,scale}=pawAlcoveStickContact(g,pose,held);
+ if(hand)pawIncenseArm(shoulder,hand,.72*scale,false);
+ backHuman(foot.x,foot.y,avatar??0,walking,'up',scale);
  if(pose.show){
   const pt=pawAlcoveStickPoint(g,pose);ctx.save();try{ctx.translate(pt.x,pt.y);ctx.rotate(pt.angle);
    round(-2.8,-17,5.6,34,1,'#d7b47c','#9c7447');line(-1,-15,-1,15,'#f1dba6',.7);
