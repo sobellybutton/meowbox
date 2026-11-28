@@ -157,7 +157,7 @@ for(const [format,[width,height,top,bottom]] of Object.entries(exportBoxes)){
 }
 console.log('Editorial Tarot exports: '+editorialCases+' format, spread and language cases passed with mocked canvas');
 
-const other=new Function(source.slice(source.indexOf('function pawEditorialTextFit'),source.indexOf('function pawEditorialTarot('))+source.slice(source.indexOf('/* PAW_EDITORIAL_RESULTS_BEGIN */'),source.indexOf('/* PAW_EDITORIAL_RESULTS_END */'))+';return {pawEditorialThemes,pawEditorialOther,pawEditorialResultPlan}')();
+const other=new Function(source.slice(source.indexOf('function pawEditorialCanvasBox'),source.indexOf('function pawEditorialTarot('))+source.slice(source.indexOf('/* PAW_EDITORIAL_RESULTS_BEGIN */'),source.indexOf('/* PAW_EDITORIAL_RESULTS_END */'))+';return {pawEditorialThemes,pawEditorialOther,pawEditorialResultPlan,pawEditorialScoreRatio,pawEditorialCanvasBox}')();
 let otherCases=0;
 for(const [format,[width,height,top,bottom]] of Object.entries(exportBoxes)){
  const box={width,height,top,bottom,left:84,right:format==='story'?142:84};
@@ -187,3 +187,7 @@ for(const [format,[width,height,top,bottom]] of Object.entries(exportBoxes)){
  }
 }
 console.log('Editorial public result exports: '+otherCases+' result/format/language cases passed with mocked canvas');
+
+for(const [v,ratio,split] of [['0 / 6',0,false],['6 / 6',1,false],['1 : 3',.25,true],['4 : 0',1,true],['2 : 2',.5,true]])assert.deepEqual(other.pawEditorialScoreRatio(v),{ratio,split});
+for(const v of ['7 / 6','0 : 0','0 / 0','not a score','-1 / 6'])assert.equal(other.pawEditorialScoreRatio(v),null);
+console.log('Editorial exact score graphics: 10 valid and invalid cases passed');
