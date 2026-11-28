@@ -1808,7 +1808,6 @@ function pawAuntieRoundRemaining(run){
 function pawAuntieRoundCanBegin(run,allowed,busy){
  return !!run&&allowed&&!busy&&pawAuntieRoundRemaining(run)===0
 }
-/* PAW_AUNTIE_ROUND_END */
 // Keep one readable joke through the rapid three-strike round. The second
 // topic line stays on screen once the slipper is lowered, not for one frame.
 function pawAhMaRoundWords(run,phase){
@@ -1819,6 +1818,7 @@ function pawAhMaRoundWords(run,phase){
  const line=pool[(round+ (phase==='end'?1:0))%pool.length];
  return ['Ah Ma: '+line[0],'阿嬷：'+line[1]]
 }
+/* PAW_AUNTIE_ROUND_END */
 function pawAuntieBeginRound(){
  if(!pawAuntieRoundCanBegin(state,paperRitualAllowed(),paperRitualBusy()))return false;
  if(state.paperPrepared!==true){openStressChoices();return false;}
