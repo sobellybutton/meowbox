@@ -67,3 +67,44 @@ check(focus(duplicates,'card 1',['card'],line,5)===null);
 check(focus({readStage:'cards',readCards:[],readFlip:[]},'summary',['summary'],line,5)===null);
 check(focus({...duplicates,readFlip:[1,2,NaN]},'summary',['summary'],line,5)===null);
 console.log('Tarot host presentation: '+focusChecks+' focused reading and summary checks passed');
+
+async function shareRegression(){
+ const block=source.slice(source.indexOf(' const sharePrior=openMeowShare;'),source.indexOf(' const css=document.createElement'));
+ const make=new Function(block.replace(' const sharePrior=openMeowShare;',`
+ let room='tarot',activity='tarot',state={},talkOpen=true,zh=false,openMeowShare=()=>{},backCalls=0;
+ const tr=(a,b)=>zh?b:a,shareFormats={feed:[1080,1350],xhs:[1080,1440],story:[1080,1920],square:[1080,1080]};
+ const pending=[],blobs=[],draws=[],controls=[],nodes=[];
+ function node(){return {isConnected:true,hidden:false,style:{},attrs:{},children:[],setAttribute(k,v){this.attrs[k]=v},hasAttribute(k){return Object.hasOwn(this.attrs,k)},closest(){return this.isConnected?dialogue:null},prepend(v){this.children.unshift(v)},toBlob(cb){blobs.push(cb)}}}
+ const dialogue=node(),choices=node(),page=node();page.style.display='none';
+ const $=id=>({dialogue,choices,page}[id]);
+ const element=(tag,text,parent,cls)=>{const n=node();n.className=cls;n.textContent=text;parent.children.push(n);nodes.push(n);return n};
+ const b=(parent,text,click)=>{const n=node();n.textContent=text;n.click=click;parent.children.push(n);controls.push(n);return n};
+ const sharePublicData=x=>x,closeTalk=()=>{talkOpen=false;for(const n of nodes)n.isConnected=false;delete dialogue.attrs['data-paw-keepsake']};
+ let goBack;const say=(name,words,options)=>{talkOpen=true;goBack=options[0][1]};
+ const pawPrepareRecoveredShare=()=>new Promise(resolve=>pending.push(resolve));
+ const shareCardArt=(cv,data,format,cn)=>draws.push([format,cn]);
+ const File=class{constructor(parts,name){this.name=name}};
+ `)+`
+ openMeowShare({kind:'tarot',title:['A','甲'],cards:[{i:1}]},()=>backCalls++);
+ return {pending,blobs,draws,controls,nodes,goBack:()=>goBack(),backCalls:()=>backCalls}
+ `);
+ const m=make(),preview=m.nodes.find(n=>n.className==='meowSharePreview'),save=m.controls.find(n=>n.textContent==='Save PNG image'),share=m.controls.find(n=>n.textContent==='Share image');
+ assert.ok(preview.hidden&&save.disabled&&share.disabled);
+ m.controls.find(n=>n.textContent==='小红书').click();
+ m.controls.find(n=>n.textContent==='中文').click();
+ m.pending[0]();m.pending[1]();await Promise.resolve();
+ assert.equal(m.draws.length,0);
+ m.pending[2]();await Promise.resolve();
+ assert.deepEqual(m.draws,[['xhs',true]]);
+ assert.ok(preview.hidden&&save.disabled);
+ m.controls.find(n=>n.textContent==='Story / TikTok').click();
+ m.blobs[0]({});assert.ok(preview.hidden&&save.disabled);
+ m.pending[3]();await Promise.resolve();m.blobs[1]({});
+ assert.ok(!preview.hidden&&!save.disabled&&!share.disabled);
+ m.controls.find(n=>n.textContent==='IG / FB').click();
+ assert.ok(preview.hidden&&save.disabled);
+ m.goBack();m.goBack();assert.equal(m.backCalls(),1);
+ m.pending[4]();await Promise.resolve();assert.equal(m.draws.length,2);
+ console.log('Tarot share: stale format/language, export readiness and return lifecycle passed');
+}
+shareRegression().catch(e=>{console.error(e);process.exitCode=1});
