@@ -151,3 +151,24 @@ console.log('Painted room plaque clearance regression passed');
  assert.equal((source.match(/pawDrawIndoorPlaque\(room,place/g)||[]).length,5);
  console.log('Room-specific indoor plaque palette and food station registration checks passed');
 }
+
+/* A crowded activity must not hide its only instruction when clear space
+   remains above the controls. The original position stays if safe. */
+{
+ const ext=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+ const a=ext.indexOf('function meowPlaceText('),b=ext.indexOf('let meowTextFrameRects=',a),c=ext.indexOf('function pawHintClearSpot('),d=ext.indexOf('let meowHintLayoutKey=',c);
+ assert.ok(a>=0&&b>a&&c>=0&&d>c);
+ const api=new Function('const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));const speechOverlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;'+ext.slice(a,b)+ext.slice(c,d)+';return pawHintClearSpot')();
+ const overlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+ for(const [w,h] of [[320,568],[360,640],[390,844],[430,932],[768,1024],[1440,900],[800,390]]){
+  const width=Math.min(w-40,250),height=40,p={left:(w-width)/2,right:(w+width)/2,top:h-100,bottom:h-60};
+  assert.ok(api(p,width,height,{w,h},[],true)?.original);
+  const blockers=[{left:0,right:w,top:0,bottom:h*.17},{left:0,right:w,top:h*.51,bottom:h}];
+  assert.equal(api(p,width,height,{w,h},blockers,false),null);
+  const q=api(p,width,height,{w,h},blockers,true);
+  assert.ok(q&&blockers.every(b=>!overlap(q.rect,b)));
+  assert.ok(q.rect.left>=6&&q.rect.right<=w-6&&q.rect.top>=6&&q.rect.bottom<=h-6);
+  assert.equal(api(p,width,height,{w,h},[{left:0,right:w,top:0,bottom:h}],true),null);
+ }
+ console.log('Active game prompt clearance checks passed');
+}
