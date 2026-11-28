@@ -3768,7 +3768,7 @@ pawThreeSceneCss.textContent=`
 #game #page:has(.pawWishGarden){position:absolute!important;inset:0!important;width:100%!important;height:100%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;overflow:hidden!important;background:#42594b!important}
 #game #content:has(.pawWishGarden){position:relative!important;display:block!important;box-sizing:border-box!important;width:100%!important;max-width:none!important;height:100%!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;isolation:isolate;color:#fff1d4!important}
 #game #content:has(.pawWishGarden)>.row{position:absolute;z-index:4;top:max(8px,env(safe-area-inset-top,0px));left:12px;right:12px;margin:0!important;display:flex;justify-content:space-between}
-#game #content:has(.pawWishGarden)>.row button{background:#35493eea!important;color:#fff1d4!important;border:1px solid #b69c71!important;min-height:44px}
+#game #content:has(.pawWishGarden)>.row button{background:#35493eea!important;color:#fff1d4!important;border:1px solid #b69c71!important;min-height:44px!important;height:44px!important;min-width:44px!important;width:auto!important;max-width:44%!important;flex:0 0 auto!important;padding:6px 11px!important;font:500 13px/1.15 Georgia,"Songti SC",serif!important;box-sizing:border-box!important;white-space:normal!important}
 #game #content:has(.pawWishGarden)>h1{position:absolute;z-index:2;top:61px;left:14px;right:14px;margin:0!important;text-align:center;color:#fff2d3!important;font:600 clamp(22px,5vw,34px)/1.2 Georgia,"Songti SC",serif;text-shadow:0 2px 5px #24382e;border:0!important;pointer-events:none}
 #game #content:has(.pawWishGarden)>p{display:none!important}
 #game #content .pawWishGarden{position:absolute!important;inset:0!important;display:grid!important;place-items:center;width:100%!important;height:100%!important;max-width:none!important;box-sizing:border-box!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:linear-gradient(#253a2d22,#283d3155),var(--pawGardenArt,url('assets/visual/daydream-park.svg')) center/cover no-repeat!important}
@@ -9067,7 +9067,15 @@ function pawPrayerStep(){
     }finally{ctx.restore()}
    }
   }
-  if(state.prayerOffered||stage==='placing'&&age>=1.98){for(let j=0;j<3;j++)incenseStem(burner.x+(j-1)*3,burner.y,0,true,25,j===1)}
+  if(state.prayerOffered||stage==='placing'&&age>=1.98){
+   for(let j=0;j<3;j++)incenseStem(burner.x+(j-1)*3,burner.y,0,true,25,false);
+   ctx.save();try{ctx.lineCap='round';for(let j=0;j<3;j++){
+    const phase=residentReducedMotion.matches?.55:((t*.34+j*.31)%1+1)%1;
+    const h=12+phase*38,x=burner.x+(j-1)*3,y=burner.y-25-phase*22;
+    ctx.strokeStyle='rgba(239,229,205,'+(.26*Math.sin(Math.PI*phase))+')';ctx.lineWidth=1.2+phase*1.7;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.bezierCurveTo(x+Math.sin(phase*8+j)*9,y-h*.33,x-5,y-h*.7,x+Math.sin(phase*5+j)*12,y-h);ctx.stroke()
+   }}finally{ctx.restore()}
+  }
   if(stage==='collect'){const size=Math.max(54,44/Math.max(.1,cam.scale));target(rack.x-size/2,rack.y-45,size,Math.max(65,size),()=>requestIncenseAction('take'),'paw-incense-supply')}
   if(stage==='lightReady')target(rack.x-25,rack.y-35,65,80,()=>requestIncenseAction('light'));
   if(stage==='hold')target(front.x-32,front.y-90,64,100,beginQuietBow);
@@ -10472,8 +10480,8 @@ function pawTempleDrawBell(){
    ellipse(x+dx,floor+1,9,3,'#43342766')
   }
   round(x-46,floor-145,92,10,2,'#8a5b39','#64422c');line(x-42,floor-141,x+42,floor-141,'#c69b69',1.4);
-  line(x,floor-135,x,y-42,'#6f6047',3);templeBellArt(x+10,y,.36,m.impact);
-  const sx=x-42+m.swing*.40,sy=y+13-Math.abs(m.swing)*.08;
+  line(x,floor-135,x,y-52,'#6f6047',3);templeBellArt(x+10,y,.50,m.impact);
+  const sx=x-47+m.swing*.40,sy=y-8-Math.abs(m.swing)*.08;
   line(x-34,floor-135,sx+5,sy,'#ab8e66',1.3);line(x-15,floor-135,sx+29,sy,'#ab8e66',1.3);
   if(pics.templeStrikerPaint?.naturalWidth)ctx.drawImage(pics.templeStrikerPaint,sx,sy-4,36,9);
   else round(sx,sy-4,36,9,4,'#9d7046','#68462f');
@@ -11659,6 +11667,10 @@ function pawRearGardenSway(age,reduced=false,kind='chime'){
  if(reduced||!Number.isFinite(age)||age<0||age>=3.2)return 0;
  return Math.sin(age*(kind==='cats'?10:8.5))*Math.exp(-age*1.15)*(kind==='cats'?2.7:5.5)
 }
+function pawRearPondGlint(i,now,reduced=false){
+ const phase=reduced?.45:((now*.22+i*.271)%1+1)%1;
+ return {u:.315+i*.021+Math.sin(phase*Math.PI*2+i)*.007,v:.618+(i%2)*.014+(phase-.5)*.012,rx:5+phase*10,ry:1.3+phase*1.7,alpha:.26*Math.sin(Math.PI*phase)}
+}
 function pawRearGardenPellet(i,age){
  if(!Number.isFinite(age)||age<0||age>.9)return null;
  const f=Math.max(0,Math.min(1,(age-i*.035)/.65));if(f<=0||f>=1)return null;
@@ -11726,6 +11738,11 @@ drawActivity=function(...args){
  continuityActivity=activity;
  ctx.save();try{
   ctx.fillStyle='#344238';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawRearGardenArt(),p.x,p.y,p.w,p.h);
+  for(let j=0;j<5;j++){
+   const g=pawRearPondGlint(j,t,residentReducedMotion.matches),[gx,gy]=xy(g.u,g.v);
+   ctx.save();ctx.strokeStyle='rgba(235,240,211,'+g.alpha+')';ctx.lineWidth=.85;
+   ctx.beginPath();ctx.ellipse(gx,gy,g.rx,g.ry,0,.15,Math.PI*.88);ctx.stroke();ctx.restore()
+  }
   const age=t-run.gardenFeedAt;
   if(age>=0&&age<2.8){
    for(let j=0;j<5;j++){
@@ -11740,7 +11757,8 @@ drawActivity=function(...args){
    ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount})}finally{ctx.restore()}
   }else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale);
   const chimeAge=t-run.gardenChimeAt,catAge=t-run.pawCatAt,reduced=residentReducedMotion.matches;
-  pawRearGardenWarp(pawRearGardenArt(),p,[.725,.254,.825,.385],pawRearGardenSway(chimeAge,reduced));
+  const breeze=reduced?0:Math.sin(t*1.45)*.75+Math.sin(t*.83)*.38;
+  pawRearGardenWarp(pawRearGardenArt(),p,[.725,.254,.825,.385],breeze+pawRearGardenSway(chimeAge,reduced));
   pawRearGardenWarp(pawRearGardenArt(),p,[.603,.361,.645,.408],pawRearGardenSway(catAge,reduced,'cats'));
   if(catAge>=0&&catAge<1.8){
    const [gx,gy]=xy(.65,.390),fade=1-catAge/1.8;ctx.save();ctx.globalAlpha=fade*.7;
