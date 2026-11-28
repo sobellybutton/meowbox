@@ -16041,6 +16041,8 @@ function pawBookAnimate(opening,backwards=false){
   cover.onerror=()=>cover.remove();
  }else{
   element('div','',leaf,'pawPassportTurningPaper');
+  // A turning edge leaves the new chapter readable, even during rapid taps.
+  leaf.style.width='26%';leaf.style.left=backwards?'auto':'9px';leaf.style.right=backwards?'6px':'auto';
  }
  pawBookMotion=layer;const serial=++pawBookMotionSerial;game.dataset.pawBookMotionSerial=String(serial);
  game.dataset.pawBookLastMotion=opening?'open':'turn';
@@ -16052,11 +16054,11 @@ function pawBookAnimate(opening,backwards=false){
   {transform:'perspective(1100px) rotateY(-78deg)',opacity:1,offset:.76},
   {transform:'perspective(1100px) rotateY(-103deg)',opacity:0,offset:1}
  ]:[
-  {transform:'perspective(1100px) rotateY(0deg)',opacity:1},
-  {transform:'perspective(1100px) rotateY('+sign*78+'deg)',opacity:.9,offset:.76},
+  {transform:'perspective(1100px) rotateY(0deg)',opacity:.78},
+  {transform:'perspective(1100px) rotateY('+sign*78+'deg)',opacity:.42,offset:.76},
   {transform:'perspective(1100px) rotateY('+sign*104+'deg)',opacity:0}
  ];
- const duration=opening?460:260;
+ const duration=opening?460:200;
  const finish=()=>{if(pawBookMotion===layer)pawBookRemoveMotion();else layer.remove()};
  // WebKit may leave the animation completion promise unresolved after a layout change.
  // The visual cover is disposable and must never outlive its intended transition.
