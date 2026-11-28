@@ -254,7 +254,52 @@
         "Batch 3 (b370aaa9 + 44612344): inspected actual 344x510 scolding painting with baked slipper and 347x510 seated painting. Independent painted motion module and persisted test implement source-pixel shoulder/tool-tip anchors, reach-checked layout, phased anticipation/swing/contact/recovery at existing .23/.46 clock, reduced motion, original raster arm clip and balanced canvas drawing. 231 isolated geometry/mocked-canvas assertions passed. Actual seam, silhouette, seat/paper alignment and visual quality not verified. Shared source is held by STORY-DEPTH-01 parallel lane, so module is not wired into gameplay; no build, live deployment or visual acceptance. Dedicated final action artwork remains open."
       ],
       "lease": null,
-      "blocker": "Owner explicitly requests real visible waving and other natural gestures. Verify player-initiated wave, NPC response, greeting, sitting and context-specific interaction poses for all selectable travellers; use matching illustrated frames and anchored feet/hands, not a floating emoji, generic bob or detached limb. No final acceptance before rendered playback. Reuse recovered 4x5 tapping atlas and temple concept pose row noted in ART-01 before producing replacements. Do not treat reaching poses as waving or the single concept traveller's poses as complete animation sets for other identities.\n\nOwner-approved host and character-scale requirements (28 Nov): Check same identity proportions between standing, walking, seated, waving and contact poses; ensure seated host and player align with furniture, with no artificial enlargement or shrinkage on transition. Master Yue seated, writing and presenting chart; tarot host seated/dealing as needed. Audit existing candidate poses first."
+      "blocker": "Owner explicitly requests real visible waving and other natural gestures. Verify player-initiated wave, NPC response, greeting, sitting and context-specific interaction poses for all selectable travellers; use matching illustrated frames and anchored feet/hands, not a floating emoji, generic bob or detached limb. No final acceptance before rendered playback. Reuse recovered 4x5 tapping atlas and temple concept pose row noted in ART-01 before producing replacements. Do not treat reaching poses as waving or the single concept traveller's poses as complete animation sets for other identities.\n\nOwner-approved host and character-scale requirements (28 Nov): Check same identity proportions between standing, walking, seated, waving and contact poses; ensure seated host and player align with furniture, with no artificial enlargement or shrinkage on transition. Master Yue seated, writing and presenting chart; tarot host seated/dealing as needed. Audit existing candidate poses first.",
+      "remediation": [
+        {
+          "id": "ART-02-seat-low",
+          "action": "Reconcile PRs #53/#54/#60 and render all four reused low seated poses on actual floor cushions and garden bench; correct hip/leg occlusion and stand/sit timing.",
+          "depends": [],
+          "lane": "interactive integration",
+          "acceptance": "All four identities maintain believable scale and hip contact, visible legs, ordinary sit/rise input; screenshots and motion evidence.",
+          "state": "implementation_staged"
+        },
+        {
+          "id": "ART-02-seat-raised",
+          "action": "Inspect original pose inventory for suitable chair/bench seated views; if absent, produce four identity-matched raised-seat sprites with hip, knee, foot and furniture anchor data.",
+          "depends": [],
+          "lane": "interactive artwork",
+          "acceptance": "Four actual transparent illustrated poses, identity matched, appropriate chair height and usable leg silhouettes.",
+          "state": "open"
+        },
+        {
+          "id": "ART-02-sleep",
+          "action": "Recover or produce four identity-matched reclining/sleeping poses with head/pillow, hip/mattress and blanket foreground landmarks; no standing sprite rotated onto bed.",
+          "depends": [],
+          "lane": "interactive artwork",
+          "acceptance": "Four production sprites with registered dimensions, alpha and mattress contact.",
+          "state": "open"
+        },
+        {
+          "id": "ART-02-wave",
+          "action": "Recover matching greeting/waving pose sequences, create genuinely missing frames and register four traveller identities without using detached arms as final art.",
+          "depends": [],
+          "lane": "interactive artwork",
+          "acceptance": "Player wave and resident response rendered with identity, anchored feet and hand motion.",
+          "state": "open"
+        },
+        {
+          "id": "ART-02-integrate-furniture",
+          "action": "Integrate raised seating and sleeping poses into actual home and relevant dining/bench interactions; implement approach, sit/lie, rest, rise and return with furniture depth order.",
+          "depends": [
+            "ART-02-seat-raised",
+            "ART-02-sleep"
+          ],
+          "lane": "interactive gameplay",
+          "acceptance": "Normal input produces grounded poses, correct head and leg alignment, interruption and return, all identities phone/desktop.",
+          "state": "open"
+        }
+      ]
     },
     {
       "id": "ART-03",
@@ -286,7 +331,33 @@
         "9198c1a0 + 3525a320: office worker candidate walking sequence requires all eight original frames to decode before admission; failed sequences retry on a new visit, successful sequences reused. 6067 focused assertions passed using exact fetched source and repository tree adapter, including eight new readiness/retry checks. Candidate module remains unconnected to live actor; no live visual or hardware acceptance. Batch 08 carton fallback positional jump identified but not changed because shared source is leased by LOC-01."
       ],
       "lease": null,
-      "blocker": "Owner-approved host and character-scale requirements (28 Nov): Owner requires a cross-room and cross-map character scale audit: all human player avatars, residents, room hosts, visitors and real/fictional peers should have comparable apparent height/body proportions when standing on the same ground plane. Allow natural age/body differences and perspective depth; do not normalize seated hosts to standing height or stretch artwork. Calibrate visible alpha bounds, seated torso and furniture contact, consistent head scale and foot/seat pivots; Master Yue and tarot reader must be immediately recognisable and not miniature. Reuse approved identities; create missing seated/writing/dealing poses only after inventory review.\nSix reference-matched Master Yue and Tarot Reader sprites now prepared in painted/host pose-candidates; seven alternatives excluded. Runtime registration, seat/table occlusion, head scale, motion/contact and actual gameplay verification pending.\nSeat/table/hand clearance and actual scene activation remain pending; framing landmarks are provisional, not motion sequences. Shared source currently leased by another manual runner.\nContact-surface module now available; actual host seat, desk occlusion, frame sequence and runtime hookup still open."
+      "blocker": "Owner-approved host and character-scale requirements (28 Nov): Owner requires a cross-room and cross-map character scale audit: all human player avatars, residents, room hosts, visitors and real/fictional peers should have comparable apparent height/body proportions when standing on the same ground plane. Allow natural age/body differences and perspective depth; do not normalize seated hosts to standing height or stretch artwork. Calibrate visible alpha bounds, seated torso and furniture contact, consistent head scale and foot/seat pivots; Master Yue and tarot reader must be immediately recognisable and not miniature. Reuse approved identities; create missing seated/writing/dealing poses only after inventory review.\nSix reference-matched Master Yue and Tarot Reader sprites now prepared in painted/host pose-candidates; seven alternatives excluded. Runtime registration, seat/table occlusion, head scale, motion/contact and actual gameplay verification pending.\nSeat/table/hand clearance and actual scene activation remain pending; framing landmarks are provisional, not motion sequences. Shared source currently leased by another manual runner.\nContact-surface module now available; actual host seat, desk occlusion, frame sequence and runtime hookup still open.",
+      "remediation": [
+        {
+          "id": "ART-03-host-contact",
+          "action": "Render the six registered reading-host pose candidates in their actual rooms; recalibrate eye/seat/table contact and replace incompatible pose transitions, preserving host identities.",
+          "depends": [],
+          "lane": "interactive integration",
+          "acceptance": "Tarot and Master Yue seated at furniture with no head-size jump or displaced hands, actual reading motion verified.",
+          "state": "open"
+        },
+        {
+          "id": "ART-03-scale",
+          "action": "Compare visible body/feet bounds of residents, travellers, visitors and hosts at shared ground planes across all rooms and districts; adjust per-scene depth and scale only where demonstrated.",
+          "depends": [],
+          "lane": "interactive gameplay",
+          "acceptance": "Representative same-plane comparisons and rendered movement across all retained venues, no stretched or miniature adult sprites.",
+          "state": "open"
+        },
+        {
+          "id": "ART-03-walk",
+          "action": "Map eligible existing directional resident sequences to matching identities; produce missing directions/frames where necessary and use safe continuous visitor routes.",
+          "depends": [],
+          "lane": "interactive artwork / gameplay",
+          "acceptance": "Actual residents visibly walk, enter, dwell and leave repeatedly without identity swap or sliding.",
+          "state": "open"
+        }
+      ]
     },
     {
       "id": "NPC-01",
@@ -371,7 +442,17 @@
         "55a80f91 + 0da45e0f: integrated eight uploaded incense smoke frames in actual lit-stick and burner emitter; fixed physical anchor, bounded opacity, staggered crossfade, reduced motion and locked per-ritual fallback. Three source frames visually inspected, 2,899 persisted focused assertions passed in exact-source connector harness. Source parsed. Actual phone/desktop and deployment visuals not yet verified."
       ],
       "lease": null,
-      "blocker": "Purification, alcove and slip counter integrated; altar painting lacks Guanyin statue and matching incense supply so retain current hall. Final bell pavilion, remaining garden and articulated character poses, browser and visual review outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n\nOwner live feedback 28 Nov: temple greatly improved and native activities appreciated. Correct undersized characters (especially water), visibly grounded incense supply box and three real pickups, seated pose physically on rear garden bench, responsive wind chime and lucky cats with actual visual reactions. Review size/contact across temple and other activities; require genuine rendered device verification."
+      "blocker": "Purification, alcove and slip counter integrated; altar painting lacks Guanyin statue and matching incense supply so retain current hall. Final bell pavilion, remaining garden and articulated character poses, browser and visual review outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n\nOwner live feedback 28 Nov: temple greatly improved and native activities appreciated. Correct undersized characters (especially water), visibly grounded incense supply box and three real pickups, seated pose physically on rear garden bench, responsive wind chime and lucky cats with actual visual reactions. Review size/contact across temple and other activities; require genuine rendered device verification.",
+      "remediation": [
+        {
+          "id": "ROOM-01-contact",
+          "action": "Reconcile #58 fortune-stick and #62 purification contact corrections; render all temple rituals and replace any remaining detached sleeve/hand with matching illustrated gesture art where required.",
+          "depends": [],
+          "lane": "interactive gameplay / artwork",
+          "acceptance": "Actual hand/tool contact, correct incense return, bell strike, water pour, fortune draw and moon-block confirmation; full player journey verified.",
+          "state": "implementation_staged"
+        }
+      ]
     },
     {
       "id": "ROOM-02",
@@ -561,7 +642,29 @@
       "stage": "outstanding",
       "evidence": [],
       "lease": null,
-      "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Audit actual effective background for every room and activity (including Wishing Garden's old green fallback). Register and activate existing approved native portrait/landscape artwork, preserve room-specific geometry, grounded feet, prop alignment and walkable areas. Do not wait for an unrelated avatar art task to do independently actionable room-specific work under ROOM tasks.\n\nOwner-approved host and character-scale requirements (28 Nov): Mandatory all-character visual scale/contact pass across every district, room, interaction and arrival; compare players, hosts, visitors, seated poses and furniture with consistent perspective and visible alpha bounds. No final acceptance from static screenshots or helper checks alone.\n\nOwner feedback: remove the generic website handoff after physical room activity. Keep the same scene, host, props, sound and player/session state through approach, greeting, choices, preparation, interaction, individual results, combined results and natural return. Use compact readable dialogue or an in-world physical object (cards, parchment, notebook, assessment sheet, menu, storybook); expand only content-heavy objects when necessary. Explicit share/export, passport/library and settings may retain dedicated interfaces. Do not merely put a room picture behind an old full-page form. Verify the complete rendered mobile and desktop journey, host scale, physical contact, legibility and no snap/duplicate props. Moonlight Tarot is the first reference flow, not proof all other rooms are complete."
+      "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Audit actual effective background for every room and activity (including Wishing Garden's old green fallback). Register and activate existing approved native portrait/landscape artwork, preserve room-specific geometry, grounded feet, prop alignment and walkable areas. Do not wait for an unrelated avatar art task to do independently actionable room-specific work under ROOM tasks.\n\nOwner-approved host and character-scale requirements (28 Nov): Mandatory all-character visual scale/contact pass across every district, room, interaction and arrival; compare players, hosts, visitors, seated poses and furniture with consistent perspective and visible alpha bounds. No final acceptance from static screenshots or helper checks alone.\n\nOwner feedback: remove the generic website handoff after physical room activity. Keep the same scene, host, props, sound and player/session state through approach, greeting, choices, preparation, interaction, individual results, combined results and natural return. Use compact readable dialogue or an in-world physical object (cards, parchment, notebook, assessment sheet, menu, storybook); expand only content-heavy objects when necessary. Explicit share/export, passport/library and settings may retain dedicated interfaces. Do not merely put a room picture behind an old full-page form. Verify the complete rendered mobile and desktop journey, host scale, physical contact, legibility and no snap/duplicate props. Moonlight Tarot is the first reference flow, not proof all other rooms are complete.",
+      "remediation": [
+        {
+          "id": "ART-INTEGRATION-pose-register",
+          "action": "Register and preload the approved raised-seat, sleep and wave art with exact dimensions and pivots; wire into applicable runtime scenes after art is available.",
+          "depends": [
+            "ART-02-seat-raised",
+            "ART-02-sleep",
+            "ART-02-wave"
+          ],
+          "lane": "interactive integration",
+          "acceptance": "Decoded assets selected on normal input; no duplicate layers or old-art flash; browser evidence.",
+          "state": "open"
+        },
+        {
+          "id": "ART-INTEGRATION-scene-pass",
+          "action": "Reconcile prepared art manifests against effective render overrides; integrate remaining approved room/activity plates before commissioning replacements; fix scene-specific contact and mask defects.",
+          "depends": [],
+          "lane": "interactive integration",
+          "acceptance": "Each retained room and activity uses intended painting with registered props and actors; inspect phone/desktop.",
+          "state": "open"
+        }
+      ]
     },
     {
       "id": "RAIL-04",
@@ -843,7 +946,27 @@
         "00ebdb7e: actual failed CI 46115435901 (Yue), 46115435881 (organic player loop), 46115418359 (rail compatibility). Build quality-check deer fixture omitted new live townReaction helper. Included exact production helper and validated nonempty bilingual hint pairs; all 21 isolated quality groups passed against exact current extensions blob in connector JS harness. Browser smoke run 46115541241 queued; no full build, organic device, or deployment result claimed."
       ],
       "lease": null,
-      "blocker": "Browser connector unavailable for this attempt; actual mobile/desktop playthrough and visual acceptance remain unverified.\n\nOwner device acceptance clarification (27 Nov): Final deployed verification must record exact commit, browser/OS, dimensions, DPR, language, input, evidence and pass/fail/blocked per complete desktop and genuine phone journey. Actual physical iPhone Safari and Android Chrome evidence distinct from Playwright emulation; inaccessible hardware remains blocked.\n\nEnd-to-end critique, 28 Nov: Use section 12 prioritized journeys and P0/P1/P2 severity, including first enjoyable action, actual return state, and current deployed commit; never conflate phone emulation with real hardware.\nChromium purification and temple entry failures in run 46096584043 still require diagnosis; native reading browser rerun pending.\nOwner requires all representative mobile phone classes and browsers, including Android and iOS; see updated GAME_EXPERIENCE_STANDARD.md. Nine-profile railway CI is only a first subset."
+      "blocker": "Browser connector unavailable for this attempt; actual mobile/desktop playthrough and visual acceptance remain unverified.\n\nOwner device acceptance clarification (27 Nov): Final deployed verification must record exact commit, browser/OS, dimensions, DPR, language, input, evidence and pass/fail/blocked per complete desktop and genuine phone journey. Actual physical iPhone Safari and Android Chrome evidence distinct from Playwright emulation; inaccessible hardware remains blocked.\n\nEnd-to-end critique, 28 Nov: Use section 12 prioritized journeys and P0/P1/P2 severity, including first enjoyable action, actual return state, and current deployed commit; never conflate phone emulation with real hardware.\nChromium purification and temple entry failures in run 46096584043 still require diagnosis; native reading browser rerun pending.\nOwner requires all representative mobile phone classes and browsers, including Android and iOS; see updated GAME_EXPERIENCE_STANDARD.md. Nine-profile railway CI is only a first subset.",
+      "remediation": [
+        {
+          "id": "QA-01-candidate",
+          "action": "Reconcile latest consolidated candidate with compatible scoped corrective PRs, diagnose current failed job steps and fix causes, rerun existing browser workflows on exact integrated candidate.",
+          "depends": [],
+          "lane": "interactive release coordinator / QA",
+          "acceptance": "Successful exact-revision build and applicable normal-input CI, screenshots inspected; no skipped or cancelled failures.",
+          "state": "open"
+        },
+        {
+          "id": "QA-01-deploy",
+          "action": "After required candidate gates, central coordinator integrates one guarded release and verifies exact live revision; review normal-input desktop and genuine iOS/Android journeys, fixing and retesting defects.",
+          "depends": [
+            "QA-01-candidate"
+          ],
+          "lane": "interactive release coordinator / QA",
+          "acceptance": "Exact deployed SHA and actual device/browser evidence; hardware unavailable stays specifically blocked.",
+          "state": "open"
+        }
+      ]
     },
     {
       "id": "MAP-05",
@@ -1252,7 +1375,20 @@
         "7016abe7/5d1af91f: live existing room material selection and persistence regression implemented; dependency remains open until actual rendering verified.",
         "Live existing room drag and keyboard contact guard loaded in actual assembly; see HOME-ASSET-01. No forced save migration. Painted modular room and final rendering still open."
       ],
-      "lease": null
+      "lease": null,
+      "remediation": [
+        {
+          "id": "HOME-CATALOGUE-LIVE-pose",
+          "action": "Integrate raised chair and bed art in room-first cutaway, retain existing floor cushion seating and drag protection; validate editable furniture contact before normal use.",
+          "depends": [
+            "ART-02-seat-raised",
+            "ART-02-sleep"
+          ],
+          "lane": "interactive gameplay",
+          "acceptance": "Player approaches and uses placed furniture without clipping, floating, invalid movement or save regression.",
+          "state": "open"
+        }
+      ]
     },
     {
       "id": "HOME-PREVIEW-03",
@@ -1494,7 +1630,17 @@
         "8b3156cd + d9b6f31f + 7a8560a4: directly inspected five original 928x1648 paintings, traced existing lamp positions and two existing steam/incense sources. Added softly varying local glow to kitchen, boba, tarot, destiny and match lobbies, and tarot's existing portrait artwork activity backdrop where available; added source-anchored vapour to kitchen and destiny lobbies, clipped to original plate. No full-screen tint or extra props; reduced motion freezes effects, hidden document skips draws; <=8 gradient draws per backdrop invocation. Exact current source parsed and persisted test executed in connector harness: 21,615 assertions passed. Real device frame pacing, actual rendered visibility and remaining activity-specific lighting/wind still pending. No stage promotion."
       ],
       "lease": null,
-      "blocker": "Acceptance: inspect actual entrance and all four districts in motion on mobile and desktop. Audit weather clock and long rain streaks; make clear weather common, use bounded coherent transitions across doors and visits, preserve guest/weather dependencies. Register painted moving props to actual attachment anchors; do not duplicate baked lanterns or move whole background; include wind-responsive lantern sway and subtle warm light, river ripples, foliage, flags, noren, smoke/steam and indoor sheltered behaviour where appropriate. Keep labels and paths unobstructed, reduce motion and bound frame cost. No final acceptance without rendered review. Owner follow-up: prefer optional real-world synchronization. Use device local clock/time zone for day/night without location permission; weather sync only after explicit opt-in via approximate browser location or manual city, never persist precise coordinates or expose them to other players. Cache/rate-limit weather fetches, handle denied permission/offline/API errors with a pleasant fictional weather cycle, and preserve shared gameplay/NPC fairness across local visuals. Verify suitable free weather data provider terms and privacy before integration. Do not force day/night tint or seasonal effects onto paintings that cannot support them; prioritize scene-specific light variants/anchored overlays and sheltered interiors, with no rain through roofs. Match local climate, not a universal four-season calendar. Allow disabling sync at any time; no permission prompt on entry. Treat as design direction pending implementation and visual acceptance."
+      "blocker": "Acceptance: inspect actual entrance and all four districts in motion on mobile and desktop. Audit weather clock and long rain streaks; make clear weather common, use bounded coherent transitions across doors and visits, preserve guest/weather dependencies. Register painted moving props to actual attachment anchors; do not duplicate baked lanterns or move whole background; include wind-responsive lantern sway and subtle warm light, river ripples, foliage, flags, noren, smoke/steam and indoor sheltered behaviour where appropriate. Keep labels and paths unobstructed, reduce motion and bound frame cost. No final acceptance without rendered review. Owner follow-up: prefer optional real-world synchronization. Use device local clock/time zone for day/night without location permission; weather sync only after explicit opt-in via approximate browser location or manual city, never persist precise coordinates or expose them to other players. Cache/rate-limit weather fetches, handle denied permission/offline/API errors with a pleasant fictional weather cycle, and preserve shared gameplay/NPC fairness across local visuals. Verify suitable free weather data provider terms and privacy before integration. Do not force day/night tint or seasonal effects onto paintings that cannot support them; prioritize scene-specific light variants/anchored overlays and sheltered interiors, with no rain through roofs. Match local climate, not a universal four-season calendar. Allow disabling sync at any time; no permission prompt on entry. Treat as design direction pending implementation and visual acceptance.",
+      "remediation": [
+        {
+          "id": "LIFE-AMBIENCE-activate",
+          "action": "Reconcile existing ambient-light PR #55, then add missing attached motion to actual lanterns/chimes, water, smoke/steam and foliage where visually appropriate; avoid duplicate fixtures.",
+          "depends": [],
+          "lane": "interactive gameplay / artwork",
+          "acceptance": "Rendered motion in all relevant rooms and districts, reduced-motion behavior and frame pacing verified.",
+          "state": "open"
+        }
+      ]
     },
     {
       "id": "LIFE-RELATIONSHIPS-01",
@@ -1675,7 +1821,17 @@
         "46114151990: all eight actual Tarot lobby screenshots reviewed; old painting defect resolved on phone and desktop. Reader partly cropped at left on phone, desktop broad blank sides; 6a1bd046 corrects mobile protected span, new screenshots pending. Dedicated desktop artwork still required."
       ],
       "lease": null,
-      "blocker": "Actual deployed mobile/desktop scenes, other rooms, moving actors, both languages and complete overlap audit remain outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Check top HUD coverage, background boundaries and foreground masks throughout pan/zoom and avatar/coin legibility; no station sign floating into another doorway or obscuring player.\n\nOwner device acceptance clarification (27 Nov): Inspect rendered screenshots and motion through full routes on both device families and both languages, including physical safe areas/browser chrome, real gesture hit regions, text and character/prop overlap. Apply section 10."
+      "blocker": "Actual deployed mobile/desktop scenes, other rooms, moving actors, both languages and complete overlap audit remain outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Check top HUD coverage, background boundaries and foreground masks throughout pan/zoom and avatar/coin legibility; no station sign floating into another doorway or obscuring player.\n\nOwner device acceptance clarification (27 Nov): Inspect rendered screenshots and motion through full routes on both device families and both languages, including physical safe areas/browser chrome, real gesture hit regions, text and character/prop overlap. Apply section 10.",
+      "remediation": [
+        {
+          "id": "QA-SPATIAL-correct",
+          "action": "Run rendered normal-input overlap audit on four maps, rooms, activity/results and dock surfaces in EN/ZH; for each reproduced defect patch exact depth/anchor/layout or redesign offending art and immediately rerun.",
+          "depends": [],
+          "lane": "interactive gameplay / QA",
+          "acceptance": "Readable unobstructed signs and hit targets; no unintended player/prop/UI collisions or layered duplicate controls at supported viewports.",
+          "state": "open"
+        }
+      ]
     },
     {
       "id": "SCENE-BLOCKING-01",
@@ -1733,7 +1889,17 @@
         "46114151990: all eight actual Tarot lobby screenshots reviewed; old painting defect resolved on phone and desktop. Reader partly cropped at left on phone, desktop broad blank sides; 6a1bd046 corrects mobile protected span, new screenshots pending. Dedicated desktop artwork still required."
       ],
       "lease": null,
-      "blocker": "Actual iPhone and desktop doorway timings, painted coverage and upper-map framing still require visual review.\n\nOwner device acceptance clarification (27 Nov): Inspect independent desktop and phone camera composition at entrance, approach, action, result and exit, every room and camera boundary, normal touch/mouse and reduced motion. Apply section 10.\n\n28 Nov owner iPhone screenshots: entrance and Moonlight Tarot appear insufficiently framed/zoomed with visible horizontal bands inside game area. Fix full-bleed camera coverage at every scale and transition; audit all rooms, independently compose phone and desktop, retain ground registration. Tarot should naturally push toward physical reading table on approach, then card-level framing during draw, return without snap. Do not apply indiscriminate zoom.\n\nOwner-approved host and character-scale requirements (28 Nov): Approved consultation camera: arrival establishes host at comparable adult scale, approach is short and grounded, gentle desk push-in for conversation and preparation, in-world parchment expands only as needed for legible ZWDS, close returns to same desk without snap. Check apparent player/host scale at equal depth, independently on phone and desktop, across all rooms/maps; solve camera/framing rather than indiscriminately enlarging sprites.\n\nOwner feedback: remove the generic website handoff after physical room activity. Keep the same scene, host, props, sound and player/session state through approach, greeting, choices, preparation, interaction, individual results, combined results and natural return. Use compact readable dialogue or an in-world physical object (cards, parchment, notebook, assessment sheet, menu, storybook); expand only content-heavy objects when necessary. Explicit share/export, passport/library and settings may retain dedicated interfaces. Do not merely put a room picture behind an old full-page form. Verify the complete rendered mobile and desktop journey, host scale, physical contact, legibility and no snap/duplicate props. Moonlight Tarot is the first reference flow, not proof all other rooms are complete.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n\nOwner live feedback 28 Nov: temple greatly improved and native activities appreciated. Correct undersized characters (especially water), visibly grounded incense supply box and three real pickups, seated pose physically on rear garden bench, responsive wind chime and lucky cats with actual visual reactions. Review size/contact across temple and other activities; require genuine rendered device verification."
+      "blocker": "Actual iPhone and desktop doorway timings, painted coverage and upper-map framing still require visual review.\n\nOwner device acceptance clarification (27 Nov): Inspect independent desktop and phone camera composition at entrance, approach, action, result and exit, every room and camera boundary, normal touch/mouse and reduced motion. Apply section 10.\n\n28 Nov owner iPhone screenshots: entrance and Moonlight Tarot appear insufficiently framed/zoomed with visible horizontal bands inside game area. Fix full-bleed camera coverage at every scale and transition; audit all rooms, independently compose phone and desktop, retain ground registration. Tarot should naturally push toward physical reading table on approach, then card-level framing during draw, return without snap. Do not apply indiscriminate zoom.\n\nOwner-approved host and character-scale requirements (28 Nov): Approved consultation camera: arrival establishes host at comparable adult scale, approach is short and grounded, gentle desk push-in for conversation and preparation, in-world parchment expands only as needed for legible ZWDS, close returns to same desk without snap. Check apparent player/host scale at equal depth, independently on phone and desktop, across all rooms/maps; solve camera/framing rather than indiscriminately enlarging sprites.\n\nOwner feedback: remove the generic website handoff after physical room activity. Keep the same scene, host, props, sound and player/session state through approach, greeting, choices, preparation, interaction, individual results, combined results and natural return. Use compact readable dialogue or an in-world physical object (cards, parchment, notebook, assessment sheet, menu, storybook); expand only content-heavy objects when necessary. Explicit share/export, passport/library and settings may retain dedicated interfaces. Do not merely put a room picture behind an old full-page form. Verify the complete rendered mobile and desktop journey, host scale, physical contact, legibility and no snap/duplicate props. Moonlight Tarot is the first reference flow, not proof all other rooms are complete.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n\nOwner live feedback 28 Nov: temple greatly improved and native activities appreciated. Correct undersized characters (especially water), visibly grounded incense supply box and three real pickups, seated pose physically on rear garden bench, responsive wind chime and lucky cats with actual visual reactions. Review size/contact across temple and other activities; require genuine rendered device verification.",
+      "remediation": [
+        {
+          "id": "SCENE-CAMERA-reframe",
+          "action": "Review existing portrait/desktop alternatives against actual current room geometry; implement targeted camera framing for remaining cramped or distant scenes, preserving ground pivots. Redesign only where no suitable plate can meet the required composition.",
+          "depends": [],
+          "lane": "interactive gameplay / artwork",
+          "acceptance": "Complete approach/action/result/exit framing in both languages and device layouts, no letterbox defects, clipped hosts or abrupt camera jumps.",
+          "state": "open"
+        }
+      ]
     },
     {
       "id": "WORLD-STORY-FLOW-01",
