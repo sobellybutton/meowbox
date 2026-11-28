@@ -256,6 +256,10 @@ assert(src.includes('let editing=false,selected=null,actor=prior||freeCells.at(-
 assert(src.includes('if(resume)open(resume)'));
 assert(src.includes("if(closed)return;closed=true;"));
 assert(src.includes("if(!q.querySelector('.pawCutawayPanel'))q.classList.remove('pawCutawayOpen')"));
-assert.equal((src.match(/mbHomePageBack\(tr\('‹ My Room','‹ 返回小窝'\),returnToCutaway\)/g)||[]).length,3);
+assert.equal((src.match(/mbHomePageBack\(tr\('‹ My Room','‹ 返回小窝'\),returnToCutaway\)/g)||[]).length,5);
 assert(src.includes('legacyStage.after(launch)'));
 console.log('PASS physical room object return wiring (9 source checks; rendered journey separate)');
+
+assert(src.includes("if(wasOpen&&previous!==null&&previous!==district)spread.classList.add('pawJournalTurning')"));
+assert(src.includes('@media(prefers-reduced-motion:reduce){#game #content .pawJournalTurning{animation:none!important}}'));
+console.log('PASS journal chapter transition source checks');
