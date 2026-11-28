@@ -954,7 +954,9 @@ drawActivity=function(){
   line(playerX-23,seatY+3,playerX-26,playerY,'#70513c',5);
   line(playerX+23,seatY+3,playerX+26,playerY,'#70513c',5);
   ellipse(playerX,seatY,30,6,stoolWood);ellipse(playerX,seatY-2,29,4,'#b4956c');
-  ctx.save();try{ctx.translate(playerX,playerY);ctx.scale(-1,1);drawRitualPose(0,0,1.38,{seat:1,bow:.055*swing})}finally{ctx.restore()}
+  const visit=state.pawAuntieVisit,frame=pawAuntieSeatFrame(visit?.phase||'seated',visit?.age||0,residentReducedMotion.matches);
+  if(frame.walking)backHuman(frame.x,frame.y,avatar??0,true,frame.direction,1.38);
+  else{ctx.save();try{ctx.translate(frame.x,frame.y);ctx.scale(-1,1);drawRitualPose(0,0,1.38,{seat:frame.seat,bow:frame.seat*.055*swing})}finally{ctx.restore()}}
  }else{
   const wrist=mirrorRitualPose(playerX,playerY,1.38,{reach:{x:playerX-20-42*swing,y:playerY-55-36*swing},bow:.13*swing});
   ctx.save();ctx.translate(wrist.x-9,wrist.y-6);ctx.scale(.43,.43);stressSlipper(0,0,-.40+1.45*swing);ctx.restore();
