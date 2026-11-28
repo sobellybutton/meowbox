@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const src=fs.readFileSync('src/compact-town-home.js','utf8');
 new vm.Script(src);
 const helper=src.split('// PAW_COMPACT_HELPERS_BEGIN')[1].split('// PAW_COMPACT_HELPERS_END')[0];
-const api=new Function(helper+';return {pageWindow,residentLabel,residentHeading,residentDialogue,residentPortraitPath,roomLampAnchor,roomLightState,cutawayPlan,cutawayFree,cutawayConnected,cutawayMove,cutawayRoute,cutawayApproach,cutawayArtPaths,cutawayArtReady,cutawayDepth,cutawayFootPivot,cutawayDragOwner}')();
+const api=new Function(helper+';return {pageWindow,residentLabel,residentHeading,residentDialogue,residentPortraitPath,roomLampAnchor,roomLightState,cutawayPlan,cutawayFree,cutawayConnected,cutawayMove,cutawayRoute,cutawayApproach,cutawayArtPaths,cutawayArtReady,cutawayDepth,cutawayFootPivot,cutawayDragOwner,cutawaySeatFrame,cutawaySeatPlacement,cutawayContainedArt,cutawaySeatSurface,cutawaySeatApproach}')();
 assert.deepEqual(api.pageWindow(0,5,2),{page:0,pages:1,start:0,end:0});
 assert.deepEqual(api.pageWindow(5,9,2),{page:2,pages:3,start:4,end:5});
 assert.deepEqual(api.pageWindow(5,-1,2),{page:0,pages:3,start:0,end:2});
@@ -126,3 +126,53 @@ assert(!drag.end('chair',evt(5,2,2)));
 assert(drag.begin('lamp',evt(6)));
 assert(drag.end('lamp',evt(6,0,8)));
 console.log('PASS cutaway furniture single-pointer ownership and interrupted drag checks');
+
+for(let i=0;i<4;i++){
+ const frame=api.cutawaySeatFrame(i);assert(fs.existsSync(frame.path));
+ const a=api.cutawaySeatPlacement({left:0,top:0,width:400,height:400},{left:180,top:200,width:80,height:60},100,frame);
+ assert(Math.abs(a.x-.552)<1e-8);assert(Math.abs(a.y-.5645)<1e-8);assert(a.width>0&&a.width<.35);assert(a.hipX>0&&a.hipY>0);
+ const b=api.cutawaySeatPlacement({left:0,top:0,width:800,height:800},{left:360,top:400,width:160,height:120},200,frame);assert.deepEqual(a,b)
+}
+assert.equal(api.cutawaySeatFrame(5),null);
+assert.equal(api.cutawaySeatPlacement({left:0,top:0,width:0,height:400},{left:0,top:0,width:80,height:60},100,api.cutawaySeatFrame(0)),null);
+console.log('PASS four reused cushion poses and responsive hip alignment');
+
+// At small screens the full pose must stay inside the playable scene.
+for(let i=0;i<4;i++){
+ const frame=api.cutawaySeatFrame(i),stage={left:0,top:0,width:360,height:360};
+ assert(api.cutawaySeatPlacement(stage,{left:130,top:200,width:70,height:55},90,frame));
+ assert.equal(api.cutawaySeatPlacement(stage,{left:335,top:200,width:45,height:55},90,frame),null);
+ assert.equal(api.cutawaySeatPlacement(stage,{left:130,top:0,width:70,height:20},90,frame),null);
+}
+assert(src.includes('seatResize?.disconnect()'));
+assert(src.includes('alignSeat(item,seatStandingRatio)'));
+console.log('PASS seated full-body edge clearance and resize lifecycle');
+
+const seatManifest=JSON.parse(fs.readFileSync('assets/visual/staging/2026-11-27-extracted/manifest.json','utf8'));
+const seatCrypto=require('node:crypto');
+for(let i=0;i<4;i++){
+ const frame=api.cutawaySeatFrame(i),record=seatManifest.assets.find(a=>a.path===frame.path);
+ assert(record);assert.equal(record.width,frame.width);assert.equal(record.height,frame.height);
+ assert.equal(seatCrypto.createHash('sha256').update(fs.readFileSync(frame.path)).digest('hex'),record.sha256);
+ const stage={left:0,top:0,width:400,height:400},cushion={left:160,top:200,width:80,height:50};
+ const a=api.cutawaySeatPlacement(stage,cushion,90,frame),b=api.cutawaySeatPlacement(stage,cushion,90,frame,true);
+ assert(a&&b&&Math.abs((a.x+b.x)/2-.5)<1e-8);assert.equal(a.y,b.y);
+}
+assert.deepEqual(api.cutawayContainedArt({left:0,top:0,width:100,height:100},200,100),{left:0,top:25,width:100,height:50});
+assert.deepEqual(api.cutawayContainedArt({left:0,top:0,width:100,height:100},100,200),{left:25,top:0,width:50,height:100});
+assert.equal(api.cutawayContainedArt({left:0,top:0,width:100,height:100},0,200),null);
+assert(src.includes('decodeCutawayArt(seatFrame.path,seatFrame)'));
+console.log('PASS recovered asset integrity, image containment and mirrored cushion seam');
+
+// Futon uses the low sitting pose only; no invented lying/raised seat sprite.
+for(let i=0;i<4;i++){
+ const frame=api.cutawaySeatFrame(i),stage={left:0,top:0,width:400,height:400},futon={left:100,top:160,width:180,height:130};
+ const a=api.cutawaySeatPlacement(stage,futon,90,frame,false,'futon'),b=api.cutawaySeatPlacement(stage,futon,90,frame,true,'futon');
+ assert(a&&b);assert(Math.abs((a.x+b.x)/2-.475)<1e-8);assert(Math.abs(a.y-.608)<1e-8);assert.equal(a.y,b.y);
+ for(const id of ['single-bed','sofa','wood-chair','bench'])assert.equal(api.cutawaySeatPlacement(stage,futon,90,frame,false,id),null);
+}
+for(const room of ['starter','side','studio']){
+ const items=api.cutawayPlan(layout,room,source),free=api.cutawayFree(layout,room,items),futon=items.find(i=>i.id==='futon');
+ for(const start of free){const goal=api.cutawaySeatApproach(layout,room,items,futon,start);assert(goal);assert(api.cutawayRoute(layout,room,items,start,goal)!==null);}
+}
+console.log('PASS futon seating surface, mirrored placement and reachable front approach');
