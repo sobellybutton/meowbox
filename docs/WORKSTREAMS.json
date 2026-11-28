@@ -795,12 +795,10 @@
       ],
       "stage": "implemented",
       "evidence": [
-        "a1677190: actual input regression updated for station cancel/board, room visits and both carriage motion renderers; test source parses. 4fd9eea7: home, rail and room visit helper tests added to browser CI."
+        "a1677190: actual input regression updated for station cancel/board, room visits and both carriage motion renderers; test source parses. 4fd9eea7: home, rail and room visit helper tests added to browser CI.",
+        "a775a676: confirmed guest personality CI ReferenceError fixed with isolated lifeFriend fixture; 571 assertions executed against exact source; verify main browser rerun."
       ],
-      "lease": {
-        "owner": "manual-20261128-guest-regression",
-        "until": 1795836486752
-      },
+      "lease": null,
       "blocker": "Browser CI execution and screenshots not yet verified. Live browser timed out; do not claim successful playthrough."
     },
     {
