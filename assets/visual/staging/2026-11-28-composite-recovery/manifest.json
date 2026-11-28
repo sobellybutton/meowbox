@@ -1,0 +1,834 @@
+{
+  "status": "staged candidates, not integrated",
+  "source_sheets_reviewed": 10,
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/interface/bag.webp",
+      "name": "bag",
+      "group": "interface",
+      "source": "a_high_detail_watercolor_ghibli_style_game_asset.png",
+      "source_bbox": [
+        667,
+        784,
+        87,
+        90
+      ],
+      "dimensions": [
+        105,
+        108
+      ],
+      "status": "candidate",
+      "notes": "HUD candidate; consistent matching button family"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/interface/map.webp",
+      "name": "map",
+      "group": "interface",
+      "source": "a_high_detail_watercolor_ghibli_style_game_asset.png",
+      "source_bbox": [
+        770,
+        784,
+        91,
+        91
+      ],
+      "dimensions": [
+        111,
+        110
+      ],
+      "status": "candidate",
+      "notes": "HUD candidate; consistent matching button family"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/interface/mail.webp",
+      "name": "mail",
+      "group": "interface",
+      "source": "a_high_detail_watercolor_ghibli_style_game_asset.png",
+      "source_bbox": [
+        878,
+        784,
+        91,
+        91
+      ],
+      "dimensions": [
+        112,
+        110
+      ],
+      "status": "candidate",
+      "notes": "HUD candidate; consistent matching button family"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/interface/notification.webp",
+      "name": "notification",
+      "group": "interface",
+      "source": "a_high_detail_watercolor_ghibli_style_game_asset.png",
+      "source_bbox": [
+        985,
+        780,
+        89,
+        95
+      ],
+      "dimensions": [
+        110,
+        114
+      ],
+      "status": "candidate",
+      "notes": "HUD candidate; consistent matching button family"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/interface/calendar.webp",
+      "name": "calendar",
+      "group": "interface",
+      "source": "a_high_detail_watercolor_ghibli_style_game_asset.png",
+      "source_bbox": [
+        1091,
+        784,
+        92,
+        91
+      ],
+      "dimensions": [
+        111,
+        110
+      ],
+      "status": "candidate",
+      "notes": "HUD candidate; consistent matching button family"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/interface/settings.webp",
+      "name": "settings",
+      "group": "interface",
+      "source": "a_high_detail_watercolor_ghibli_style_game_asset.png",
+      "source_bbox": [
+        1199,
+        784,
+        93,
+        91
+      ],
+      "dimensions": [
+        113,
+        109
+      ],
+      "status": "candidate",
+      "notes": "HUD candidate; consistent matching button family"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/interface/menu.webp",
+      "name": "menu",
+      "group": "interface",
+      "source": "a_high_detail_watercolor_ghibli_style_game_asset.png",
+      "source_bbox": [
+        1308,
+        784,
+        87,
+        88
+      ],
+      "dimensions": [
+        105,
+        107
+      ],
+      "status": "candidate",
+      "notes": "HUD candidate; consistent matching button family"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/interface/avatar-frame-empty.webp",
+      "name": "avatar-frame-empty",
+      "group": "interface",
+      "source": "a_detailed_high_quality_illustration_asset_sheet.png",
+      "source_bbox": [
+        1093,
+        840,
+        160,
+        165
+      ],
+      "dimensions": [
+        178,
+        183
+      ],
+      "status": "candidate",
+      "notes": "alternate decorative HUD candidate; do not use both settings styles"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/interface/settings-leaf-alternate.webp",
+      "name": "settings-leaf-alternate",
+      "group": "interface",
+      "source": "a_detailed_high_quality_illustration_asset_sheet.png",
+      "source_bbox": [
+        1391,
+        870,
+        132,
+        108
+      ],
+      "dimensions": [
+        150,
+        125
+      ],
+      "status": "candidate",
+      "notes": "alternate decorative HUD candidate; do not use both settings styles"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/park/feeding-station.webp",
+      "name": "feeding-station",
+      "group": "park",
+      "source": "a_detailed_high_quality_illustration_asset_sheet.png",
+      "source_bbox": [
+        339,
+        895,
+        212,
+        97
+      ],
+      "dimensions": [
+        229,
+        114
+      ],
+      "status": "candidate",
+      "notes": "separate feeding station, verify against existing park props"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/garden/pond-ripple-plain.webp",
+      "name": "pond-ripple-plain",
+      "group": "garden",
+      "source": "a_highly_detailed_illustration_style_game_asset_sh.png",
+      "source_bbox": [
+        626,
+        252,
+        180,
+        72
+      ],
+      "dimensions": [
+        200,
+        92
+      ],
+      "status": "hold-scene-match",
+      "notes": "water patches, not clear ripple-only overlays; use only if perspective and water colour match"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/garden/pond-ripple-petals-a.webp",
+      "name": "pond-ripple-petals-a",
+      "group": "garden",
+      "source": "a_highly_detailed_illustration_style_game_asset_sh.png",
+      "source_bbox": [
+        823,
+        248,
+        179,
+        81
+      ],
+      "dimensions": [
+        200,
+        99
+      ],
+      "status": "hold-scene-match",
+      "notes": "water patches, not clear ripple-only overlays; use only if perspective and water colour match"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/garden/pond-ripple-petals-b.webp",
+      "name": "pond-ripple-petals-b",
+      "group": "garden",
+      "source": "a_highly_detailed_illustration_style_game_asset_sh.png",
+      "source_bbox": [
+        1005,
+        240,
+        187,
+        89
+      ],
+      "dimensions": [
+        207,
+        106
+      ],
+      "status": "hold-scene-match",
+      "notes": "water patches, not clear ripple-only overlays; use only if perspective and water colour match"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/bamboo-a.webp",
+      "name": "bamboo-a",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        10,
+        476,
+        139,
+        129
+      ],
+      "dimensions": [
+        158,
+        148
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/bamboo-b.webp",
+      "name": "bamboo-b",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        156,
+        479,
+        138,
+        125
+      ],
+      "dimensions": [
+        159,
+        143
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/bamboo-c.webp",
+      "name": "bamboo-c",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        299,
+        477,
+        120,
+        128
+      ],
+      "dimensions": [
+        139,
+        147
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/maple-a.webp",
+      "name": "maple-a",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        435,
+        477,
+        156,
+        88
+      ],
+      "dimensions": [
+        177,
+        106
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/maple-b.webp",
+      "name": "maple-b",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        593,
+        477,
+        147,
+        90
+      ],
+      "dimensions": [
+        167,
+        110
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/maple-c.webp",
+      "name": "maple-c",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        749,
+        478,
+        143,
+        92
+      ],
+      "dimensions": [
+        165,
+        112
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/sakura-a.webp",
+      "name": "sakura-a",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        833,
+        12,
+        152,
+        114
+      ],
+      "dimensions": [
+        170,
+        134
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/sakura-b.webp",
+      "name": "sakura-b",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        998,
+        12,
+        152,
+        113
+      ],
+      "dimensions": [
+        172,
+        134
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/sakura-c.webp",
+      "name": "sakura-c",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        1161,
+        12,
+        152,
+        113
+      ],
+      "dimensions": [
+        171,
+        133
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/lantern-a.webp",
+      "name": "lantern-a",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        1345,
+        16,
+        95,
+        185
+      ],
+      "dimensions": [
+        113,
+        201
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/lantern-b.webp",
+      "name": "lantern-b",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        1454,
+        16,
+        95,
+        185
+      ],
+      "dimensions": [
+        111,
+        201
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/lantern-c.webp",
+      "name": "lantern-c",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        1562,
+        16,
+        94,
+        185
+      ],
+      "dimensions": [
+        116,
+        202
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/lantern-d.webp",
+      "name": "lantern-d",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        1667,
+        16,
+        96,
+        184
+      ],
+      "dimensions": [
+        115,
+        201
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/stone-lamp-off.webp",
+      "name": "stone-lamp-off",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        307,
+        693,
+        104,
+        168
+      ],
+      "dimensions": [
+        125,
+        186
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/stone-lamp-on-a.webp",
+      "name": "stone-lamp-on-a",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        424,
+        705,
+        98,
+        156
+      ],
+      "dimensions": [
+        119,
+        174
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/environment/stone-lamp-on-b.webp",
+      "name": "stone-lamp-on-b",
+      "group": "environment",
+      "source": "a_richly_detailed_hand_painted_watercolor_illustr.png",
+      "source_bbox": [
+        537,
+        698,
+        99,
+        161
+      ],
+      "dimensions": [
+        119,
+        180
+      ],
+      "status": "candidate",
+      "notes": "painted environmental state candidate; align top hanging pivot or lamp base; not a verified loop Independently cropped, no common pivot calibration performed."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/closeup/camera.webp",
+      "name": "camera",
+      "group": "player-0/closeup",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        11,
+        308,
+        182,
+        235
+      ],
+      "dimensions": [
+        199,
+        252
+      ],
+      "status": "candidate",
+      "notes": "waist-up only; not world-space full-body sprite"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/closeup/map-reading.webp",
+      "name": "map-reading",
+      "group": "player-0/closeup",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        220,
+        307,
+        176,
+        230
+      ],
+      "dimensions": [
+        194,
+        248
+      ],
+      "status": "candidate",
+      "notes": "waist-up only; not world-space full-body sprite"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/closeup/writing.webp",
+      "name": "writing",
+      "group": "player-0/closeup",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        401,
+        308,
+        181,
+        227
+      ],
+      "dimensions": [
+        198,
+        245
+      ],
+      "status": "candidate",
+      "notes": "waist-up only; not world-space full-body sprite"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/closeup/phone.webp",
+      "name": "phone",
+      "group": "player-0/closeup",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        597,
+        313,
+        156,
+        223
+      ],
+      "dimensions": [
+        175,
+        241
+      ],
+      "status": "candidate",
+      "notes": "waist-up only; not world-space full-body sprite"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/closeup/book.webp",
+      "name": "book",
+      "group": "player-0/closeup",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        781,
+        311,
+        187,
+        232
+      ],
+      "dimensions": [
+        205,
+        249
+      ],
+      "status": "candidate",
+      "notes": "waist-up only; not world-space full-body sprite"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/closeup/boba-sip.webp",
+      "name": "boba-sip",
+      "group": "player-0/closeup",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        975,
+        302,
+        163,
+        237
+      ],
+      "dimensions": [
+        181,
+        254
+      ],
+      "status": "candidate",
+      "notes": "waist-up only; not world-space full-body sprite"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/closeup/snack.webp",
+      "name": "snack",
+      "group": "player-0/closeup",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        1161,
+        311,
+        157,
+        233
+      ],
+      "dimensions": [
+        175,
+        250
+      ],
+      "status": "candidate",
+      "notes": "waist-up only; not world-space full-body sprite"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/closeup/shopping.webp",
+      "name": "shopping",
+      "group": "player-0/closeup",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        1346,
+        305,
+        185,
+        233
+      ],
+      "dimensions": [
+        201,
+        250
+      ],
+      "status": "candidate",
+      "notes": "waist-up only; not world-space full-body sprite"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/expression/laugh.webp",
+      "name": "laugh",
+      "group": "player-0/expression",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        21,
+        836,
+        191,
+        160
+      ],
+      "dimensions": [
+        208,
+        177
+      ],
+      "status": "candidate",
+      "notes": "Portrait expression only; some expressive marks are baked in. Use in dialogue framing, not world movement."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/expression/surprised.webp",
+      "name": "surprised",
+      "group": "player-0/expression",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        227,
+        841,
+        169,
+        155
+      ],
+      "dimensions": [
+        187,
+        173
+      ],
+      "status": "candidate",
+      "notes": "Portrait expression only; some expressive marks are baked in. Use in dialogue framing, not world movement."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/expression/thinking.webp",
+      "name": "thinking",
+      "group": "player-0/expression",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        411,
+        829,
+        179,
+        168
+      ],
+      "dimensions": [
+        197,
+        186
+      ],
+      "status": "candidate",
+      "notes": "Portrait expression only; some expressive marks are baked in. Use in dialogue framing, not world movement."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/expression/delighted.webp",
+      "name": "delighted",
+      "group": "player-0/expression",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        602,
+        842,
+        172,
+        155
+      ],
+      "dimensions": [
+        192,
+        173
+      ],
+      "status": "candidate",
+      "notes": "Portrait expression only; some expressive marks are baked in. Use in dialogue framing, not world movement."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/expression/affection.webp",
+      "name": "affection",
+      "group": "player-0/expression",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        784,
+        841,
+        172,
+        157
+      ],
+      "dimensions": [
+        193,
+        175
+      ],
+      "status": "candidate",
+      "notes": "Portrait expression only; some expressive marks are baked in. Use in dialogue framing, not world movement."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/expression/excited.webp",
+      "name": "excited",
+      "group": "player-0/expression",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        968,
+        839,
+        176,
+        159
+      ],
+      "dimensions": [
+        196,
+        177
+      ],
+      "status": "candidate",
+      "notes": "Portrait expression only; some expressive marks are baked in. Use in dialogue framing, not world movement."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/expression/worried.webp",
+      "name": "worried",
+      "group": "player-0/expression",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        1154,
+        842,
+        172,
+        152
+      ],
+      "dimensions": [
+        190,
+        170
+      ],
+      "status": "candidate",
+      "notes": "Portrait expression only; some expressive marks are baked in. Use in dialogue framing, not world movement."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-0/expression/tired.webp",
+      "name": "tired",
+      "group": "player-0/expression",
+      "source": "a_detailed_sticker_sheet_style_illustration_on_a_t.png",
+      "source_bbox": [
+        1339,
+        839,
+        163,
+        155
+      ],
+      "dimensions": [
+        181,
+        173
+      ],
+      "status": "candidate",
+      "notes": "Portrait expression only; some expressive marks are baked in. Use in dialogue framing, not world movement."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-composite-recovery/player-3/writing-alternate.webp",
+      "name": "writing-alternate",
+      "group": "player-3",
+      "source": "a_detailed_clean_transparent_background_illustrat.png",
+      "source_bbox": [
+        584,
+        444,
+        186,
+        246
+      ],
+      "dimensions": [
+        202,
+        263
+      ],
+      "status": "hold-identity-review",
+      "notes": "full body candidate, missing sunglasses and camera; hold until identity review"
+    }
+  ]
+}

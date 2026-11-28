@@ -1,0 +1,1 @@
+Upload preserving paths. Use as a sleeping state only; do not treat this as a finished animation. Keep the ground anchor fixed and review size against the existing tabby petting frames. Do not overwrite prior assets.

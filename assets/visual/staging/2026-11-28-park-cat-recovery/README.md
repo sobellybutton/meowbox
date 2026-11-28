@@ -1,0 +1,1 @@
+Stage these eight frames for the Daydream Park ginger tabby petting response. Keep walking, feeding and other cat identities unchanged until matching artwork is reviewed. Trigger from physical pet contact, preserve the cat floor anchor and return to idle. Review paw placement, head contact and mobile scale before activation. Existing deer and pet props should not be replaced.

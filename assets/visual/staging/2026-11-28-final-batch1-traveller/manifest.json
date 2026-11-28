@@ -1,0 +1,243 @@
+{
+  "batch": "Final recovery 1 of 5",
+  "assets": [
+    {
+      "path": "player-0/crouch-reach.webp",
+      "source": "a_detailed_high_quality_watercolor_cel_shaded_ill.png",
+      "source_crop": [
+        640,
+        510,
+        920,
+        780
+      ],
+      "component_native_size": [
+        176,
+        226
+      ],
+      "canvas": [
+        256,
+        256
+      ],
+      "anchor": [
+        128,
+        248
+      ],
+      "status": "candidate",
+      "notes": "Separate cat removed; player crouches and reaches toward pet. Align hand to pet in scene; compare head height with existing walk sprite.",
+      "sha256": "6a105e8de8c35a743b852bdbe779710504a7851fea46dcb0d4f9f92a955aac33"
+    },
+    {
+      "path": "player-1/crouch-feed.webp",
+      "source": "a_high_quality_illustration_sheet_asset_pack_in.png",
+      "source_crop": [
+        1000,
+        440,
+        1255,
+        710
+      ],
+      "component_native_size": [
+        176,
+        256
+      ],
+      "canvas": [
+        256,
+        280
+      ],
+      "anchor": [
+        128,
+        272
+      ],
+      "status": "candidate",
+      "notes": "Separate cat and bowl excluded. Treat held in hand; review satchel and original costume before activation.",
+      "sha256": "007fdbb16eaed0b50930a3f0a092fd1ab0f7f06cc813a99ddddf822c45c75bf0"
+    },
+    {
+      "path": "player-1/pick-carry/frame-00.webp",
+      "source": "a_detailed_vibrant_watercolor_gouache_style_stic.png",
+      "source_crop": [
+        535,
+        380,
+        815,
+        480
+      ],
+      "component_native_size": [
+        59,
+        71
+      ],
+      "canvas": [
+        112,
+        112
+      ],
+      "anchor": [
+        56,
+        104
+      ],
+      "status": "map-scale candidate",
+      "notes": "Native small-scale sequence: bend to crate, lift, hold, finish. Crate is baked into frames where held. No close-up use; check foot and prop continuity.",
+      "sha256": "2dcec75824ebe14cad7c0ea16caa731ac438916995154ab23cabd05099390876"
+    },
+    {
+      "path": "player-1/pick-carry/frame-01.webp",
+      "source": "a_detailed_vibrant_watercolor_gouache_style_stic.png",
+      "source_crop": [
+        535,
+        380,
+        815,
+        480
+      ],
+      "component_native_size": [
+        46,
+        88
+      ],
+      "canvas": [
+        112,
+        112
+      ],
+      "anchor": [
+        56,
+        104
+      ],
+      "status": "map-scale candidate",
+      "notes": "Native small-scale sequence: bend to crate, lift, hold, finish. Crate is baked into frames where held. No close-up use; check foot and prop continuity.",
+      "sha256": "e4c954ac6b751e1213e31fcd311f03ac92aac451c3955546bb9210874816558d"
+    },
+    {
+      "path": "player-1/pick-carry/frame-02.webp",
+      "source": "a_detailed_vibrant_watercolor_gouache_style_stic.png",
+      "source_crop": [
+        535,
+        380,
+        815,
+        480
+      ],
+      "component_native_size": [
+        46,
+        90
+      ],
+      "canvas": [
+        112,
+        112
+      ],
+      "anchor": [
+        56,
+        104
+      ],
+      "status": "map-scale candidate",
+      "notes": "Native small-scale sequence: bend to crate, lift, hold, finish. Crate is baked into frames where held. No close-up use; check foot and prop continuity.",
+      "sha256": "46a23b54423aa408aab543ed94ab46d53801ac80a22f58e7f998b9beae03b3ff"
+    },
+    {
+      "path": "player-1/pick-carry/frame-03.webp",
+      "source": "a_detailed_vibrant_watercolor_gouache_style_stic.png",
+      "source_crop": [
+        535,
+        380,
+        815,
+        480
+      ],
+      "component_native_size": [
+        42,
+        90
+      ],
+      "canvas": [
+        112,
+        112
+      ],
+      "anchor": [
+        56,
+        104
+      ],
+      "status": "map-scale candidate",
+      "notes": "Native small-scale sequence: bend to crate, lift, hold, finish. Crate is baked into frames where held. No close-up use; check foot and prop continuity.",
+      "sha256": "2024b23435ca06461cc444ae4ccab99893b46814cb2bf6151e03e1ccdd8c1ff2"
+    },
+    {
+      "path": "player-0/moon-blocks/frame-00.webp",
+      "source": "a_detailed_vibrant_watercolor_gouache_style_stic.png",
+      "source_crop": [
+        870,
+        350,
+        1198,
+        480
+      ],
+      "component_native_size": [
+        69,
+        117
+      ],
+      "canvas": [
+        128,
+        144
+      ],
+      "anchor": [
+        64,
+        136
+      ],
+      "status": "map-scale candidate",
+      "notes": "Player only; separate moon blocks and arrows removed. Use actual blocks as separate scene objects. Verify ritual timing and hand contact.",
+      "sha256": "1a24cdcb3cb489099f41003957ab0af39e41bd32bc97fae6fac68d79b156f384"
+    },
+    {
+      "path": "player-0/moon-blocks/frame-01.webp",
+      "source": "a_detailed_vibrant_watercolor_gouache_style_stic.png",
+      "source_crop": [
+        870,
+        350,
+        1198,
+        480
+      ],
+      "component_native_size": [
+        65,
+        118
+      ],
+      "canvas": [
+        128,
+        144
+      ],
+      "anchor": [
+        64,
+        136
+      ],
+      "status": "map-scale candidate",
+      "notes": "Player only; separate moon blocks and arrows removed. Use actual blocks as separate scene objects. Verify ritual timing and hand contact.",
+      "sha256": "8aa86d9efb9fac05103e99a12b10c6d5a119439449aefbd5317938432302b07b"
+    },
+    {
+      "path": "player-0/moon-blocks/frame-02.webp",
+      "source": "a_detailed_vibrant_watercolor_gouache_style_stic.png",
+      "source_crop": [
+        870,
+        350,
+        1198,
+        480
+      ],
+      "component_native_size": [
+        65,
+        118
+      ],
+      "canvas": [
+        128,
+        144
+      ],
+      "anchor": [
+        64,
+        136
+      ],
+      "status": "map-scale candidate",
+      "notes": "Player only; separate moon blocks and arrows removed. Use actual blocks as separate scene objects. Verify ritual timing and hand contact.",
+      "sha256": "8a6bbbb30d51f7943527ba27c39023e1ec3e8f9979b70f125146d1a35aa5566d"
+    }
+  ],
+  "status": "staging only; not integrated or accepted",
+  "existing_reuse": [
+    "Previous writing pair: player 0 and 1",
+    "Existing four seated poses, reach-tap frames and walk sprites",
+    "Previously recovered close-ups"
+  ],
+  "remaining": [
+    "player 2 and 3 accurate seated writing",
+    "Full-body drinking/eating for all four",
+    "Sit/stand transition and shelf retrieval for each identity",
+    "High-resolution carry and handoff poses",
+    "Actual gameplay fit and animation verification"
+  ]
+}

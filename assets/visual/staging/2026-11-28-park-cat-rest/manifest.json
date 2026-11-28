@@ -1,0 +1,21 @@
+{
+  "status": "candidate; not runtime integrated",
+  "asset": "ginger tabby sleeping pose",
+  "file": "ginger-tabby-sleep.webp",
+  "size": [
+    480,
+    480
+  ],
+  "anchor_px": [
+    252,
+    440
+  ],
+  "related_asset": "assets/visual/staging/2026-11-28-park-cat-recovery/petting-00.webp",
+  "motion": "static sleeping pose; subtle breathing may be applied by renderer, pivot near floor; no baked particles",
+  "checks": "alpha verified; subject clear of canvas edges; matching scale and identity provisional; no in-game testing",
+  "outstanding": [
+    "feeding sequence",
+    "grooming and waking transition",
+    "walking cycle"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "status": "candidate; not runtime integrated",
+  "asset": "painted ginger tabby petting response",
+  "source": "new artwork, based on existing park ginger tabby colours; identity and scale require gameplay review",
+  "frames": [
+    "petting-00.webp",
+    "petting-01.webp",
+    "petting-02.webp",
+    "petting-03.webp",
+    "petting-04.webp",
+    "petting-05.webp",
+    "petting-06.webp",
+    "petting-07.webp"
+  ],
+  "size": [
+    480,
+    480
+  ],
+  "anchor_px": [
+    252,
+    440
+  ],
+  "duration_ms_per_frame": [
+    120,
+    100,
+    100,
+    120,
+    280,
+    120,
+    100,
+    120
+  ],
+  "playback": "one-shot on pet interaction, return to idle; do not loop constantly",
+  "checks": "RGBA; no alpha >100 intersects source cell edge; aligned baseline; in-game contact and animation not tested"
+}
