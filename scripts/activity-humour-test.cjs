@@ -32,3 +32,31 @@ assert.ok(st.includes("if(changed&&q.phase==='done'){hint(...(pan?"));
 assert.ok(st.includes('青菜吃完啦！'));
 assert.ok(st.includes('心愿不用发邮件催进度'));
 console.log('Activity humour: actual tea stage, garden, card reveal, private river and rail helpers passed; no browser approval.');
+
+const cafeHumour=section(ex,'/* PAW_GAMEPLAY_CAFE_HUMOUR_BEGIN */','/* PAW_GAMEPLAY_CAFE_HUMOUR_END */');
+const furnitureHumour=section(ex,'/* PAW_GAMEPLAY_FURNITURE_HUMOUR_BEGIN */','/* PAW_GAMEPLAY_FURNITURE_HUMOUR_END */');
+const cafeHandler=section(ex,'function cafeChoose(i){','function cafeRoom(){');
+const interaction=new Function(`
+let cafePhase='question',cafeRound=0,cafeAnswers=[],cafeQuestions=Array(8).fill(null),cafePick=-1,cafeAt=0,t=10,cafeToken=1,cafeResult=null,activity='match',scene='wonder',pending=[],hints=[],awards=[],saved=[];
+const cafeKinds=[['Quiet','静'],['Adventure','探索'],['Listener','倾听']];
+const setTimeout=f=>pending.push(f),sound=()=>{},hint=(...v)=>hints.push(v),save=(...v)=>saved.push(v),addItem=(...v)=>awards.push(v);
+${cafeHumour}
+${cafeHandler}
+${furnitureHumour}
+return {choose:cafeChoose,flush:()=>pending.shift()?.(),leave:()=>{cafeToken++},state:()=>({phase:cafePhase,round:cafeRound,answers:cafeAnswers.slice(),hints:hints.slice(),awards:awards.slice(),saved:saved.slice(),result:cafeResult}),furniture:pawFurnitureActionWords,cafe:pawCafeChoiceWords}
+`)();
+interaction.choose(1);interaction.choose(2);assert.ok(interaction.state().hints.length===0);interaction.flush();
+assert.ok(interaction.state().answers.join(',')==='1');pair(interaction.state().hints[0]);
+for(const answer of [0,2,1,1,0,2,1]){interaction.choose(answer);interaction.flush()}
+const cafeEnd=interaction.state();assert.ok(cafeEnd.phase==='result'&&cafeEnd.round===8&&cafeEnd.hints.length===8);
+assert.ok(cafeEnd.result.index===1&&cafeEnd.result.ties.join(',')==='1'&&cafeEnd.awards.length===1&&cafeEnd.saved.length===1);
+cafeEnd.hints.forEach(pair);assert.ok(cafeEnd.hints[7][1].includes('成绩单'));interaction.choose(0);interaction.flush();assert.ok(interaction.state().hints.length===8);
+for(let i=0;i<8;i++)pair(interaction.cafe(i,false));assert.ok(interaction.cafe(-1,false)===null);
+for(const category of ['extension','finish','floor','storage'])pair(interaction.furniture('purchase','',category));
+const placed=['bed','plant','lamp','shelf'].map(id=>interaction.furniture('place',id));placed.forEach(pair);assert.ok(new Set(placed.map(v=>v[0])).size===4);
+for(const kind of ['save','putAway'])pair(interaction.furniture(kind));assert.ok(interaction.furniture('unknown')===null);
+assert.ok(ex.includes("if(buyFurniture(id)){toast(tr(...pawFurnitureActionWords('purchase',id,v[4])))"));
+assert.ok(ex.includes("saveHideout();render();toast(tr(...pawFurnitureActionWords('place',id)))"));
+assert.ok(ex.includes("if(wasEditing)toast(tr(...pawFurnitureActionWords('save')))"));
+assert.ok(ex.includes("wonderScenePhase==='result'&&wonderSceneResult"));
+console.log('Café accepted-answer and score preservation, decorating feedback, and discovery completion wiring passed.');
