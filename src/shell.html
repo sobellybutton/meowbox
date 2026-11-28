@@ -315,4 +315,31 @@ html #game:has(#moveGuide:not([hidden])) #hint{visibility:hidden!important}
  html #game #dock>button.pawDockSelected:not([hidden]),html #game #dock>button[aria-current=page]:not([hidden]){background:Highlight!important;color:HighlightText!important}
 }
 /* PAW_MAP_STATIONERY_END */
+
+/* PAW_MAP_CHROME_FIT_BEGIN: reserve the three real controls, not three
+   overlapping decorative panels. Keep the original framed portrait. */
+html #game #hud{box-sizing:border-box!important;left:max(8px,env(safe-area-inset-left,0px))!important;right:max(8px,env(safe-area-inset-right,0px))!important;padding-right:50px!important;gap:6px!important}
+html #game #hud #profileHud{flex:0 1 auto!important;min-width:0!important;max-width:calc(100% - 86px)!important;overflow:hidden!important}
+html #game #hud #profileHud>span:last-child{min-width:0!important;overflow:hidden!important}
+html #game #hud #profileHud #hudName{max-width:clamp(54px,22vw,130px)!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+html #game #hud #hudStats{flex:0 0 auto!important;max-width:48%!important;margin-left:auto!important}
+html #game #hud #hudStats #hudCoins{max-width:100%!important;overflow:hidden!important;white-space:nowrap!important;font-variant-numeric:tabular-nums!important}
+html #game #small #townSettingsToggle[aria-label]{box-sizing:border-box!important;flex:0 0 44px!important;isolation:isolate}
+html #game #small #townSettingsToggle[aria-label]>:not(svg){display:none!important}
+html #game #small #townSettingsPanel[hidden]{display:none!important}
+html #game #small #townSettingsPanel:not([hidden]){width:min(240px,calc(100vw - 20px))!important;overflow-y:auto!important}
+html #game #dock{box-sizing:border-box!important;gap:3px!important;padding:4px!important;border-radius:10px!important}
+html #game #dock>button:not([hidden]){display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;padding:4px 2px!important;border-radius:6px!important;color:#534937!important}
+html #game #dock>button:not([hidden])>.dockIcon{width:25px!important;height:25px!important;flex:0 0 25px!important;display:grid!important;place-items:center!important;line-height:1}
+html #game #dock>button:not([hidden])>.dockIcon>svg{width:24px!important;height:24px!important;display:block!important}
+html #game #dock>button.pawDockSelected:not([hidden]){color:#395846!important}
+@media(max-width:360px){
+ html #game #hud{gap:4px!important;padding-right:48px!important}
+ html #game #hud #profileHud{padding:2px 5px 2px 3px!important}
+ html #game #hud #profileHud #hudName{max-width:64px!important}
+ html #game #dock>button:not([hidden])>span:last-child{font-size:11px!important}
+}
+@media(forced-colors:active){html #game #dock>button:not([hidden]){color:ButtonText!important}html #game #dock>button.pawDockSelected:not([hidden]){color:HighlightText!important}}
+/* PAW_MAP_CHROME_FIT_END */
+
 </style></head><body><main id="game"><canvas id="c" aria-label="Pawradise interactive world"></canvas><div id="worldSigns" hidden></div><button id="lunarBtn" hidden></button><div id="hud"><button id="profileHud" aria-label="Player profile"><span class="pawPaintedPortrait"><img id="hudPortrait" alt=""></span><span><strong id="hudName"></strong><small id="hudProgress"></small></span></button><div id="location">Pawradise</div><div id="hudStats"><span id="hudCoins"></span><span id="hudStamps"></span></div><button id="travel">Travel</button></div><button id="back" hidden>Step Back</button><div id="small"><button id="luck">Daily Luck</button><div><button id="language">中文</button> <button id="mute">♪</button></div></div><div id="hint" role="status" aria-live="polite" aria-atomic="true"></div><nav id="dock" aria-label="Game navigation"><button id="dockRoom"><span class="dockIcon">⌂</span><span></span></button><button id="dockPassport"><span class="dockIcon">▤</span><span></span></button><button id="dockValley"><span class="dockIcon">♧</span><span></span></button><button id="dockTravel"><span class="dockIcon">✈</span><span></span></button><button id="dockScoop"><span class="dockIcon">▧</span><span></span></button></nav><div id="gameControls" hidden></div><div id="dialogue"><div id="dialogueTop"><img id="talkPortrait" alt="" hidden><div id="speaker"></div></div><div id="line"></div><div id="choices"></div></div><div id="toast" role="status" aria-live="polite" aria-atomic="true"></div><div id="page"><div class="inner" id="content"></div></div><div id="fade"></div><section id="arrival" class="intro" hidden><img class="introArt" id="arrivalArt" alt=""><div class="introDoors" id="introDoors"><div></div><div></div></div><div class="introCard" id="introCard"></div></section></main><meta name="meow-community-api" content=""><!--MEOW_GAME_SCRIPT--></body></html>
