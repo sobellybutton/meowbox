@@ -6410,9 +6410,20 @@ function pawVisitorPauseTimers(roster,elapsed){
   if(Number.isFinite(a.exitRetry))a.exitRetry+=elapsed
  }
 }
+// Reuse the same traveller identity after a quiet absence. Never spawn
+// inside the room: the ordinary waiting phase checks and uses the doorway.
+function pawVisitorDepart(a,now){
+ a.phase='gone';a.walking=0;a.motionSpeed=0;a.route=[];a.elapsed=0;
+ a.wait=now+12+(a.avatar%4)*4;delete a.exitRetry
+}
+function pawVisitorReturn(a,now){
+ if(!a||a.phase!=='gone'||a.guest||a.visitingResident||!Number.isFinite(now)||!Number.isFinite(a.wait)||now<a.wait)return false;
+ a.phase='waiting';a.walking=0;a.motionSpeed=0;a.route=[];a.elapsed=0;return true
+}
 /* PAW_VISITOR_LIFECYCLE_END */
 function pawRoomWalkers(){
- const spec=pawRoomVisitorSpecs[room];if(!spec||activity)return [];
+ const spec=pawRoomVisitorSpecs[room];if(!spec)return [];
+ if(activity){if(pawVisitorContext===scene+'|'+room+'|'+avatar){pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,t-pawVisitorAt));pawVisitorHold(pawLocalVisitors)}pawVisitorAt=t;return []}
  const context=scene+'|'+room+'|'+avatar;
  if(!indoorReady()){if(context===pawVisitorContext)pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,t-pawVisitorAt));pawVisitorAt=t;return context===pawVisitorContext?pawVisitorHold(pawLocalVisitors):[]}
  const obs=indoorObstacles(),protectedFeet=pawGuestProtected(),door=indoorSpec().entry,stationFeet=pawGuestActiveFeet();
@@ -6444,13 +6455,13 @@ function pawRoomWalkers(){
  pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,elapsed-dt));
  if(residentReducedMotion.matches){for(const a of pawLocalVisitors)if(a.phase==='waiting')a.phase='stationary';return pawVisitorHold(pawLocalVisitors)}
  for(const a of pawLocalVisitors){
-  a.walking=0;if(a.guest||a.visitingResident||a.phase==='gone'||a.phase==='stationary'||t<a.wait){a.motionSpeed=0;continue;}
+  a.walking=0;pawVisitorReturn(a,t);if(a.guest||a.visitingResident||a.phase==='gone'||a.phase==='stationary'||t<a.wait){a.motionSpeed=0;continue;}
   const others=pawLocalVisitors.filter(b=>b!==a),clearDoor=()=>pawVisitorDoorClear(door,indoor,[...others,...pawAmbientIndoor],gaps.door);
   const routeTo=(from,to)=>pawVisitorDoorRoute(from,to,stationFeet,(x,y)=>indoorSafe(x,y,obs),(f,d)=>indoorPath(f,d,obs),gaps.station,(f,d)=>indoorSegment(f,d,obs));
   if(a.phase==='waiting'){
    if(!a.identitySettled||!clearDoor()){a.wait=t+.7;continue}
    const route=routeTo(door,a.destination);
-   if(!route){a.phase='gone';continue}
+   if(!route){pawVisitorDepart(a,t);continue}
    a.x=door[0];a.y=door[1];a.facing=pawWalkFacing(a,route[0]);a.route=route;a.phase='arriving';a.elapsed=0;
   }
   if(a.phase==='roaming'){
@@ -6487,7 +6498,7 @@ function pawRoomWalkers(){
   const distance=Math.hypot(next.x-a.x,next.y-a.y);
   if(distance>.01){a.facing=pawWalkFacing(a,dest);pawGaitTravel.set(a,(pawGaitTravel.get(a)||0)+distance);a.walking=1}
   a.x=next.x;a.y=next.y;
-  if(next.arrived){a.route.shift();if(!a.route.length){a.walking=0;a.motionSpeed=0;if(a.phase==='departing'){a.phase='gone';continue}if(a.phase==='arriving'){a.phase='roaming';a.elapsed=0}a.wait=t+(4+(a.avatar%3)*2)*tempo.dwell}}
+  if(next.arrived){a.route.shift();if(!a.route.length){a.walking=0;a.motionSpeed=0;if(a.phase==='departing'){pawVisitorDepart(a,t);continue}if(a.phase==='arriving'){a.phase='roaming';a.elapsed=0}a.wait=t+(4+(a.avatar%3)*2)*tempo.dwell}}
  }
  return pawLocalVisitors
 }
@@ -12545,6 +12556,12 @@ indoorSafe=function(x,y,...args){return pawFoodRoomActive()?pawFoodSafe(room,x,y
 // Normalized positions traced on the five original 928x1648 portrait
 // paintings. Never use these positions on a replacement landscape plate.
 const pawSceneLights={
+ // Coordinates traced on the actual 928x1648 room paintings. Keep the
+ // glow inside existing fixtures; do not animate architecture or add lamps.
+ tea:[[.287,.149,.046,.036],[.807,.130,.053,.041],[.421,.221,.027,.023],[.810,.278,.022,.027],[.287,.433,.018,.016]],
+ arcade:[[.311,.099,.045,.031],[.410,.123,.039,.028],[.643,.138,.025,.019],[.887,.124,.041,.031],[.051,.212,.034,.025],[.337,.273,.018,.021],[.695,.273,.018,.021]],
+ quiz:[[.323,.220,.019,.021],[.512,.346,.017,.023],[.980,.339,.016,.027],[.518,.409,.035,.020],[.036,.460,.027,.025]],
+ story:[[.094,.232,.013,.016],[.907,.232,.014,.016],[.502,.485,.064,.029],[.220,.589,.020,.024],[.830,.583,.019,.024],[.061,.760,.027,.032],[.960,.784,.025,.035]],
  kitchen:[[.752,.121,.103,.064],[.072,.194,.045,.044],[.468,.308,.039,.024]],
  boba:[[.230,.111,.052,.039],[.430,.126,.047,.036],[.666,.142,.042,.034],[.830,.101,.053,.040],[.041,.468,.040,.041]],
  tarot:[[.521,.113,.069,.054],[.528,.259,.032,.032],[.954,.328,.045,.038],[.053,.344,.045,.033]],
