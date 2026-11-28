@@ -7303,10 +7303,14 @@ initNPC=function(...args){
 /* PAW_PRESENTATION_REPAIR */
 /* PAW_WORLD_ADMISSION_BEGIN */
 const pawImageReadiness=new WeakMap(),pawDecodedSources=new WeakMap();
+function pawPictureDecoded(im){
+ const source=im?.src||im?.currentSrc||'';
+ return !!(source&&im.complete&&im.naturalWidth>0&&im.naturalHeight>0&&pawDecodedSources.get(im)===source)
+}
 function pawReadyPicture(im,limit=6500){
  if(!im)return Promise.resolve(false);
  const source=im.src||im.currentSrc||'';
- if(source&&im.complete&&im.naturalWidth>0&&im.naturalHeight>0&&pawDecodedSources.get(im)===source)return Promise.resolve(true);
+ if(pawPictureDecoded(im))return Promise.resolve(true);
  const pending=pawImageReadiness.get(im);
  if(pending?.source===source)return pending.task;
  const task=new Promise(resolve=>{
@@ -7318,7 +7322,9 @@ function pawReadyPicture(im,limit=6500){
   const onError=()=>finish(false);
   const onLoad=()=>{
    if(!im.naturalWidth||!im.naturalHeight){finish(false);return}
-   if(decoding||settled)return;decoding=true;
+   if(decoding||settled)return;
+   if((im.src||im.currentSrc||'')!==source){finish(false);return}
+   decoding=true;
    if(typeof im.decode==='function')Promise.resolve().then(()=>im.decode()).then(()=>finish(im.naturalWidth>0&&im.naturalHeight>0),onError);
    else finish(true)
   };
@@ -10681,41 +10687,31 @@ function pawTempleAdmissionValid(request,current,view){
  return !!request&&request===current&&request.scene===view.scene&&!view.room&&!view.activity&&!view.transitioning&&!view.blocked&&!view.pending&&
  Math.hypot(view.x-request.x,view.y-request.y)<=12
 }
-function pawTempleAssetsReady(approach,hall){
- return [approach,hall].every(im=>!!im&&im.complete&&im.naturalWidth>0&&im.naturalHeight>0)
+function pawTempleAssetsReady(approach,hall,decoded=pawPictureDecoded){
+ return [approach,hall].every(im=>!!im&&im.complete&&im.naturalWidth>0&&im.naturalHeight>0&&decoded(im))
 }
 /* PAW_TEMPLE_ADMISSION_END */
 let pawTempleAdmission=null;
 function pawTempleAdmissionView(){
  return {scene,room,activity,transitioning,blocked:pawArcadeInputBlocked(),pending,x:p.x,y:p.y}
 }
-function pawTempleDecode(im){
- if(!im)return Promise.resolve(false);
- if(im.complete)return Promise.resolve(im.naturalWidth>0);
- return new Promise(resolve=>{
-  let done=false;const finish=ok=>{if(done)return;done=true;clearTimeout(timer);im.removeEventListener('load',load);im.removeEventListener('error',error);resolve(ok)};
-  const load=()=>finish(im.naturalWidth>0),error=()=>finish(false);
-  const timer=setTimeout(error,6000);
-  im.addEventListener('load',load);im.addEventListener('error',error);
-  if(im.complete)load()
- })
-}
+function pawTempleDecode(im){return pawReadyPicture(im,6000)}
 const pawTempleDoorEnterBefore=enter;
 enter=function(id,...args){
  if(id!=='temple'){pawTempleAdmission=null;return pawTempleDoorEnterBefore(id,...args)}
  if(room||activity||transitioning||pawArcadeInputBlocked())return;
- const approach=pawRecoveredImage('scenes/temple_approach_portrait.webp'),hall=pawHallArt();
+ const approach=pawRecoveredImage('scenes/temple_approach_portrait.webp',null,true),hall=pawRecoveredImage(pawHallArtPath,null,true);
  if(pawTempleAssetsReady(approach,hall)){pawTempleAdmission=null;return pawTempleDoorEnterBefore(id,...args)}
  if(pawTempleAdmissionValid(pawTempleAdmission,pawTempleAdmission,pawTempleAdmissionView()))return;
  const request={scene,x:p.x,y:p.y};pawTempleAdmission=request;
  releaseWalkKeys();joystickReset();stopRoute();pending=null;walkQueue=[];p.tx=p.x;p.ty=p.y;
  hint('Preparing the painted temple…','正在准备寺庙的画卷……');
- Promise.all([pawTempleDecode(approach),pawTempleDecode(hall)]).then(()=>{
+ Promise.all([pawTempleDecode(approach),pawTempleDecode(hall)]).then(results=>{
   if(!pawTempleAdmissionValid(request,pawTempleAdmission,pawTempleAdmissionView())){
    if(pawTempleAdmission===request)pawTempleAdmission=null;return
   }
   pawTempleAdmission=null;
-  if(pawTempleAssetsReady(approach,hall))pawTempleDoorEnterBefore(id,...args);
+  if(pawAdmissionReady(results)&&pawTempleAssetsReady(approach,hall))pawTempleDoorEnterBefore(id,...args);
   else hint('The temple artwork could not load. Tap the doorway to try again.','寺庙画面暂未加载成功，请再次点击门口重试。')
  })
 };
@@ -13130,7 +13126,8 @@ enter=function(id,...args){
  const pawMappedWarmBefore=pawWarmRoomAssets;
  pawWarmRoomAssets=function(id){
   if(room||activity)return pawMappedWarmBefore(id);
-  const decode=im=>{if(im&&!pawRoomImageReady(im))pawReadyPicture(im,4500)};
+  const decode=im=>{if(im&&!pawPictureDecoded(im))pawReadyPicture(im,4500)};
+  if(id==='temple'){decode(pawRecoveredImage('scenes/temple_approach_portrait.webp'));decode(pawHallArt());return}
   if(pawReadingRoomIds.includes(id)){pawLoadReadingModule().then(api=>decode(pawReadingImage(api,id)));pawWarmReadingHost(id);if(id==='tarot')pawPrepareTarotArt();return}
   if(Object.hasOwn(pawFoodRoomSpecs,id)){decode(pawFoodImage(id));return}
   if(id==='wishes'){decode(pawWishLobbyArt());return}
