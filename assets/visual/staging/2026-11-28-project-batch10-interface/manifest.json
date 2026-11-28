@@ -11,7 +11,8 @@
       "sha256": "bdcc50fe599b300ccae6a0476295cb84458cf924d657d10dc6580cf5f4fdc79e",
       "alpha": true,
       "placement": "Journal entry or inventory item; not a replacement for existing tarot journal",
-      "status": "staged candidate, not integrated"
+      "status": "runtime registered on development candidate; rendered acceptance pending",
+      "runtime": "src/extensions.js journalBookLink(kind=life), replaces plain spine only after exact dimensions load; clipped to inspected book silhouette; no new button"
     }
   ],
   "blocked": [
