@@ -13558,7 +13558,7 @@ enter=function(id,...args){
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   pawReadingAdmission=null;
   if(!ready||!pawRoomImageReady(im)){hint('The room painting could not load. Tap its door to try again.','小屋画面暂未加载成功，请再次点击门口重试。');return}
-  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id)};return pawReadingEnterBefore(id,...args)
+  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id)};if(id==='destiny')pawWarmRearSeated(avatar??0);return pawReadingEnterBefore(id,...args)
  }).finally(()=>{if(pawReadingAdmission===request)pawReadingAdmission=null})
 };
 // Nearby outdoor warming should decode the actual selected lobby painting,
@@ -15719,3 +15719,25 @@ pawRoomGroundingStyle.textContent=`
 @media(forced-colors:active){#game #dock>button[aria-current="page"]{outline:2px solid Highlight!important}}
 `;document.head.append(pawRoomGroundingStyle);
 /* PAW_ROOM_GROUNDING_AND_DOCK_END */
+
+/* PAW_YUE_VISITOR_SEAT_BEGIN */
+// Reuse the four original transparent seated traveller poses. The right
+// chair is painted into the room: the hip is anchored to its cushion,
+// while the logical walking position remains on the aisle beside it.
+function pawYueVisitorSeat(plate,position,approach,kind,consulting,walking){
+ if(!plate||!Array.isArray(position)||!Array.isArray(approach)||!consulting||walking||!Number.isInteger(kind)||kind<0||kind>3||Math.hypot(position[0]-approach[0],position[1]-approach[1])>5)return null;
+ const [x,y]=pawReadingWorld([.685,.535],plate);
+ return {hip:{x,y},scale:.78}
+}
+let pawYueVisitorLastDraw=-Infinity;
+const pawYueVisitorBackHuman=backHuman;
+backHuman=function(x,y,kind,walking,facing,scale=1){
+ if(room==='destiny'&&pawReadingActive()&&!activity&&!transitioning&&!pawRenderedWalker&&kind===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<4){
+  const q=pawReadingAPI()?.rooms.destiny?.stations.destiny;
+  const consulting=talkOpen||($('page').dataset.pawYueDesk==='true'&&$('page').style.display==='block');
+  const seat=q&&pawYueVisitorSeat(pawReadingPlate,[x,y],pawReadingWorld(q.approach),kind,consulting,walking);
+  if(seat&&pawDrawRearSeated(pawWarmRearSeated(kind),kind,seat.hip,seat.scale)){pawYueVisitorLastDraw=t;pawSyncIdleGait(x,y,kind);return}
+ }
+ return pawYueVisitorBackHuman(x,y,kind,walking,facing,scale)
+};
+/* PAW_YUE_VISITOR_SEAT_END */
