@@ -1000,11 +1000,15 @@ const residentHospitalityKey='residentHospitalityV1';
 const residentHospitalityRaw=load(residentHospitalityKey,{});
 const residentHospitality={visits:Object.create(null),drink:null,soup:null,chats:Object.create(null)};
 /* PAW_RESIDENT_CHAT_MEMORY_BEGIN */
+function pawResidentChatDate(day){
+ if(typeof day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(day))return false;
+ const ms=Date.parse(day+'T00:00:00Z');return Number.isFinite(ms)&&new Date(ms).toISOString().slice(0,10)===day
+}
 function pawResidentChatRow(row){
- return row&&Number.isInteger(row.days)&&row.days>0&&row.days<=9999&&typeof row.last==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(row.last)&&Number.isFinite(Date.parse(row.last+'T00:00:00Z'))?{days:row.days,last:row.last}:null
+ return row&&Number.isInteger(row.days)&&row.days>0&&row.days<=9999&&pawResidentChatDate(row.last)?{days:row.days,last:row.last}:null
 }
 function pawResidentChatAdvance(old,day){
- if(typeof day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(day)||!Number.isFinite(Date.parse(day+'T00:00:00Z')))return null;
+ if(!pawResidentChatDate(day))return null;
  const prior=pawResidentChatRow(old);
  if(prior&&day<=prior.last)return {row:prior,changed:false,returning:false};
  return {row:{days:Math.min(9999,(prior?.days||0)+1),last:day},changed:true,returning:!!prior}
@@ -1028,6 +1032,76 @@ const pawResidentChatCallbacks={
  story:['Another chapter, perhaps? No one is checking your reading speed.','要不要再读一章？这里没人考核阅读速度。'],
  cafe:['A familiar face at the table. We can start anywhere today.','茶桌边又见熟人了。今天想从哪儿聊都可以。']
 };
+const pawResidentChatLater={
+ "temple": [
+  "I swept the steps again. The leaves are determined to win.",
+  "石阶又扫了一遍，落叶看来非要赢不可。"
+ ],
+ "tarot": [
+  "The cards can stay in their box today. A little company is enough.",
+  "今天牌可以留在盒子里，有人坐坐就很好。"
+ ],
+ "yue": [
+  "I left the inkstone out for a familiar guest. No appointment needed.",
+  "砚台还摆着呢，熟客不用预约。"
+ ],
+ "garden": [
+  "That little bud finally opened. Glad you came by again.",
+  "那朵小花苞终于开了。又见到你真好。"
+ ],
+ "grandma": [
+  "You know where the bowls are by now. Take the biggest one.",
+  "碗放哪儿你都知道了吧？拿最大的。"
+ ],
+ "mei": [
+  "Your usual corner is free. The sunshine got here first.",
+  "你常坐的角落还空着，阳光倒是先到了。"
+ ],
+ "hong": [
+  "I saved the good gossip for a familiar face. The boring bits can wait.",
+  "好八卦当然留给熟人，没劲的部分先跳过。"
+ ],
+ "wang": [
+  "Welcome back. I have successfully postponed the meeting with myself.",
+  "又来啦。我成功推迟了和自己的会议。"
+ ],
+ "ahma": [
+  "The river is still here. Leave the day's nonsense on the bank.",
+  "河还在呢。今天那些糟心事就留在岸边吧。"
+ ],
+ "lin": [
+  "The cats might remember you now. Naturally they will deny it.",
+  "猫咪可能已经认得你了，当然它们不会承认。"
+ ],
+ "arcade": [
+  "Back again? Even the cabinet knows you take your breaks seriously.",
+  "又来了？连游戏机都知道你认真摸鱼。"
+ ],
+ "boba": [
+  "I have spare straws and absolutely no rush. Stay awhile.",
+  "吸管多的是，时间也不赶，慢慢坐。"
+ ],
+ "souvenir": [
+  "I rearranged the shelf. See if you spot anything different.",
+  "货架重新摆过了，看看你能不能发现变化。"
+ ],
+ "lab": [
+  "A familiar visitor. No need to give yesterday's answers.",
+  "熟客来了。今天不用重复昨天的答案。"
+ ],
+ "story": [
+  "I kept a bookmark on the desk, in case you wanted another tale.",
+  "桌上留了张书签，万一你想再听个故事呢。"
+ ],
+ "cafe": [
+  "The cups are warm. Choose any seat, even a different one.",
+  "杯子还是暖的。随便坐，换个座位也行。"
+ ]
+};
+function pawResidentChatReply(id,memory){
+ if(!memory?.returning||!Object.hasOwn(pawResidentChatCallbacks,id))return null;
+ return memory.row.days%2===0?pawResidentChatCallbacks[id]:pawResidentChatLater[id]||pawResidentChatCallbacks[id]
+}
 function residentRecipeValid(v){
  return !!v&&Number.isInteger(v.base)&&v.base>=0&&v.base<teaChoices.length&&pearlSugar.some(a=>a[0]===v.sugar)&&pearlIce.some(a=>a[0]===v.ice)&&pearlToppings.some(a=>a[0]===v.topping)
 }
@@ -4042,7 +4116,7 @@ function pawIndoorSocialTalk(actor,name,line){
   used=true;lifeFriend(name);
   const profile=residentWelcomeFor(name[0]),day=shrineClock().day,memory=profile&&pawResidentChatAdvance(residentHospitality.chats[profile.id],day);
   if(memory?.changed){residentHospitality.chats[profile.id]=memory.row;residentHospitalitySave()}
-  const reply=memory?.returning&&pawResidentChatCallbacks[profile.id]||['Glad we crossed paths today. Enjoy the rest of your little escape.','今天碰见你挺开心的。接着慢慢享受你的小假期吧。'];
+  const reply=pawResidentChatReply(profile?.id,memory)||['Glad we crossed paths today. Enjoy the rest of your little escape.','今天碰见你挺开心的。接着慢慢享受你的小假期吧。'];
   say(tr(...name),tr(...reply),[[tr('See you around','回头见'),closeTalk]])
  };
  say(tr(...name),tr(...line),[[tr('Stay for a little chat','留下聊两句'),respond],[tr('See you around','回头见'),closeTalk]]);
