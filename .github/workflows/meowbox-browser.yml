@@ -3,6 +3,9 @@ on:
   push:
     branches: [main]
     paths: ['index.html', 'preview-v9-1/**', 'assets/**', 'src/**', 'scripts/**', '.github/workflows/meowbox-browser.yml']
+  pull_request:
+    branches: [main]
+    paths: ['index.html', 'src/**', 'assets/**', 'scripts/**', '.github/workflows/meowbox-browser.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -10,6 +13,7 @@ permissions:
 # keeps one running and one latest pending revision of its own kind.
 jobs:
   focused-regressions:
+    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'release/candidate-')
     concurrency:
       group: meowbox-focused-${{ github.ref }}
       cancel-in-progress: false
@@ -22,6 +26,9 @@ jobs:
           node-version: '22'
       - run: node scripts/build.cjs
       - run: node scripts/test-tarot-snapshot.cjs
+      - run: node scripts/house-label-recovery-test.cjs
+      - run: node scripts/local-progress-reset-test.cjs
+      - run: node scripts/home-placement-live-test.cjs
       - run: node scripts/test-purification-painting.cjs
       - run: node scripts/resident-chat-callback-test.cjs
       - run: node scripts/painted-interior-layout-test.cjs
@@ -36,6 +43,7 @@ jobs:
       - run: node scripts/painted-lobby-runtime-test.cjs
       - run: node scripts/home-placement-live-test.cjs
   browser:
+    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'release/candidate-')
     concurrency:
       group: meowbox-navigation-job-${{ github.ref }}
       cancel-in-progress: false
@@ -196,26 +204,11 @@ jobs:
                       else await door.click({timeout:5000});
                       await page.waitForFunction(id=>pending===id||room===id,st.id,{timeout:2000}).catch(async()=>{throw Error('Door click did not start the requested walking route: '+JSON.stringify(await page.evaluate(()=>({events:window.__doorEvents,pending,room,transitioning,scene}))))});
                       if(st.id==='temple'){
-                        await page.waitForFunction(()=>activity==='templeForecourt'&&!transitioning&&hit.some(h=>h.id==='paw-forecourt-cat'),null,{timeout:10000});
-                        await page.screenshot({path:'test-results/'+name+'-lucky-cat-forecourt.png'});
-                        const tapForecourt=async id=>{
-                          const q=await page.evaluate(id=>{const h=hit.find(v=>v.id===id),r=c.getBoundingClientRect();return h?{x:r.left+cam.ox+(h.x+h.w/2)*cam.scale,y:r.top+cam.oy+(h.y+h.h/2)*cam.scale}:null},id);
-                          if(!q)throw Error('Missing forecourt target '+id);
-                          if(options.hasTouch)await page.touchscreen.tap(q.x,q.y);else await page.mouse.click(q.x,q.y);
-                        };
-                        const catVisitsBefore=await page.evaluate(()=>templeCatVisits);
-                        await tapForecourt('paw-forecourt-cat');
-                        await page.waitForFunction(()=>state.pawForecourt?.greeted&&!state.pawForecourt.route.length,null,{timeout:8000});
-                        if(!await page.evaluate(v=>state.pawForecourt.catVisited&&templeCatVisits===v+1,catVisitsBefore))throw Error('Forecourt cat visit missing');
-                        const catControl=page.locator('[data-paw-forecourt-control="cat"]');
-                        if(!await catControl.isVisible()||await catControl.evaluate(el=>el.getBoundingClientRect().height)<44)throw Error('Lucky cat accessible control is missing or too small');
-                        if(options.hasTouch)await catControl.tap();else await catControl.click();
-                        await page.waitForFunction(()=>!state.pawForecourt.route.length,null,{timeout:8000});
-                        if(await page.evaluate(()=>templeCatVisits)!==catVisitsBefore+1)throw Error('Repeated tap counted as another cat visit');
-                        await page.screenshot({path:'test-results/'+name+'-lucky-cat-greeting.png'});
-                        const hallControl=page.locator('[data-paw-forecourt-control="hall"]');
-                        if(options.hasTouch)await hallControl.tap();else await hallControl.click();
-                        await page.waitForFunction(()=>room==='temple'&&!activity&&pawHallEnabled(),null,{timeout:8000});
+                        // The owner requested a single doorway tap followed by
+                        // a physical walk up the painted stairs, no hall button.
+                        await page.waitForFunction(()=>activity==='templeForecourt'&&state.pawForecourt?.destination==='hall'&&state.pawForecourt.route.length>0,null,{timeout:10000});
+                        await page.screenshot({path:'test-results/'+name+'-temple-walking-up.png'});
+                        await page.waitForFunction(()=>room==='temple'&&!activity&&pawHallEnabled(),null,{timeout:15000});
                         if(await page.locator('[data-paw-forecourt-control]').count())throw Error('Forecourt controls leaked into hall');
                       }
                       await page.waitForFunction(id=>room===id&&!transitioning&&continuityRoom===id,st.id,{timeout:15000});
@@ -225,6 +218,7 @@ jobs:
                       await page.screenshot({path:'test-results/'+name+'-'+map+'-'+st.id+'.png'});
                       // One end-to-end activity entry from the real door, with no player repositioning.
                       if(st.id==='tarot'){
+                        const tarotAnchor=await page.evaluate(()=>indoorSpec().stations.tarot.slice(2));
                         const tap=await page.evaluate(()=>{const target=hit.find(h=>h.stationId==='tarot');if(!target)return null;const r=c.getBoundingClientRect();return {x:r.left+cam.ox+(target.x+target.w/2)*cam.scale,y:r.top+cam.oy+(target.y+target.h/2)*cam.scale}});
                         if(!tap)throw Error('Tarot station hit target missing');
                         if(options.hasTouch)await page.touchscreen.tap(tap.x,tap.y);else await page.mouse.click(tap.x,tap.y);
@@ -235,20 +229,18 @@ jobs:
                         if(await page.locator('#dialogue').isVisible()){
                           const tone=page.locator('#choices button').first();if(await tone.isVisible())await tone.click()
                         }
-                        if(!await page.evaluate(()=>{const a=indoorSpec().stations.tarot.slice(2);return Math.hypot(indoor.x-a[0],indoor.y-a[1])<=3}))throw Error('Activity began before reaching authored station');
+                        if(!await page.evaluate(a=>Math.hypot(indoor.x-a[0],indoor.y-a[1])<=3,tarotAnchor))throw Error('Activity began before reaching authored station');
                         await page.locator('#back').click();
                         await page.waitForFunction(()=>room==='tarot'&&!activity&&continuityActivity===null,{},{timeout:5000});
-                        if(!await page.evaluate(()=>{const a=indoorSpec().stations.tarot.slice(2);return Math.hypot(indoor.x-a[0],indoor.y-a[1])<=3}))throw Error('Return lost station position');
+                        if(!await page.evaluate(a=>Math.hypot(indoor.x-a[0],indoor.y-a[1])<=3,tarotAnchor))throw Error('Return lost station position');
                         await page.screenshot({path:'test-results/'+name+'-tarot-return-anchor.png'});
                       }
                       await page.locator('#back').click();
-                      // The temple is a two-way journey through its forecourt, not a teleport to the village.
+                      // One back tap walks down the painted approach, without
+                      // another exit button or stopping at the forecourt.
                       if(st.id==='temple'){
-                        await page.waitForFunction(()=>activity==='templeForecourt'&&state.pawForecourt&&!state.pawForecourt.route.length,null,{timeout:8000});
-                        await page.screenshot({path:'test-results/'+name+'-temple-return-forecourt.png'});
-                        const exit=page.locator('[data-paw-forecourt-control="exit"]');
-                        if(options.hasTouch)await exit.tap();else await exit.click();
-                        await page.waitForFunction(()=>activity==='templeForecourt'&&state.pawForecourt?.destination==='exit'||!room||transitioning,null,{timeout:3000});
+                        await page.waitForFunction(()=>activity==='templeForecourt'&&state.pawForecourt?.destination==='exit'&&state.pawForecourt.route.length>0,null,{timeout:15000});
+                        await page.screenshot({path:'test-results/'+name+'-temple-walking-down.png'});
                       }else await page.waitForFunction(()=>!room||transitioning||!!indoor.goal,{},{timeout:3000});
                       await page.waitForFunction(()=>!room&&!transitioning,{},{timeout:10000});
                       await page.waitForFunction(()=>!room&&!transitioning,{},{timeout:10000});
@@ -373,7 +365,13 @@ jobs:
                 await page.locator('#dockScoop').click();
                 await page.locator('.townFortuneSlip').waitFor({timeout:8000});
                 if(!await page.locator('#luck').isHidden())throw Error('Obsolete luck shortcut visible');
-                if(await page.locator('#dock').isVisible())throw Error('Focused Today page must not display map dock');
+                // Owner standard: four persistent destinations at safe root pages;
+                // nested screens still use their contextual return.
+                await page.locator('#game.pawDockRoot #dock').waitFor({state:'visible',timeout:4000});
+                if(await page.locator('#dock button[aria-current="page"]').count()!==1||await page.locator('#dockScoop').getAttribute('aria-current')!=='page')throw Error('Today root must select exactly its own persistent dock destination');
+                if(await page.locator('#dock > button:visible').count()!==4)throw Error('Today root must expose the four canonical dock destinations');
+                const dockFit=await page.evaluate(()=>{const d=$('dock').getBoundingClientRect(),g=$('game').getBoundingClientRect(),p=$('page');return d.left>=g.left-1&&d.right<=g.right+1&&d.bottom<=g.bottom+1&&parseFloat(getComputedStyle(p).paddingBottom)>=d.height});
+                if(!dockFit)throw Error('Today dock clips the viewport or lacks reserved page space');
                 await page.locator('#content > .row').getByRole('button',{name:/^‹ (Back(?: to game)?|Town|Profile|My room)$/}).click();
                 await page.locator('#dockValley').click();
                 await page.locator('.communityTabs').waitFor({state:'visible'});
@@ -393,21 +391,51 @@ jobs:
                 await noticeReplies.locator('.wallReply').first().waitFor({state:'hidden',timeout:3000});
                 await noticeSummary.press('Space');
                 await noticeReplies.locator('.wallReply').first().waitFor({state:'visible',timeout:3000});
+                // Global language is now intentionally owned by Profile > Settings.
+                // Leave and reopen the noticeboard through real controls; retain its state.
+                const switchTownLanguage=async(language)=>{
+                  await page.locator('#content > .row button:first-child').click();
+                  await page.locator('#profileHud').click();
+                  await page.locator('.pawProfileSettingsEntry').click();
+                  const choice=page.locator('#content #townSettingsPanel .languageChoice').getByRole('button',{name:language,exact:true});
+                  await choice.click();
+                  if(await page.evaluate(()=>document.documentElement.lang)!==(language==='EN'?'en':'zh'))throw Error('Profile language did not change');
+                  await page.locator('#content > .row button:first-child').click();
+                  await page.locator('#content > .row button:first-child').click();
+                  await page.locator('#dockValley').click();
+                  await page.locator('.townWall').waitFor({state:'visible'});
+                };
                 const noticeId=await noticeReplies.getAttribute('data-notice-id');
-                await page.locator('#page').getByRole('button',{name:'中文',exact:true}).click();
+                await switchTownLanguage('中文');
                 await page.locator('.townWall').waitFor({state:'visible'});
                 const translated=page.locator('.townWall .wallReplies').filter({has:page.locator('.wallReplyToggle[aria-expanded=true]')});
                 if(!await translated.evaluateAll((els,id)=>els.some(e=>e.dataset.noticeId===id),noticeId))throw Error('Reply expansion lost on language switch');
-                await page.locator('#page').getByRole('button',{name:'EN',exact:true}).click();
+                await switchTownLanguage('EN');
                 await page.locator('.townWall').waitFor({state:'visible'});
-                const older=page.locator('.townPostNav').getByRole('button',{name:'Read older notices',exact:true});
-                if(await older.isEnabled()){await older.click();if(await page.locator('.townResidentNote').count()<=initialNotices)throw Error('Older notices did not expand')}
-                else if(!await page.locator('.townPostNav span').innerText().then(v=>/^6 \/ 6 notices$/.test(v)))throw Error('Older notices disabled despite more notices');
-                const archiveDepth=await page.locator('.townResidentNote').count();
-                await page.locator('#page').getByRole('button',{name:'中文',exact:true}).click();
+                const pager=page.locator('.townWall .pawCompactPager');
+                const pageNext=pager.getByRole('button',{name:'Next ›',exact:true});
+                if(await page.locator('.townResidentNote:visible').count()!==2)throw Error('Noticeboard must show two notices per page');
+                await pageNext.click();
+                const readVisibleNotices=()=>page.locator('.townResidentNote:visible').evaluateAll(nodes=>nodes.map(n=>n.dataset.noticeId));
+                const secondPage=await readVisibleNotices();
+                if(secondPage.length!==2||secondPage.includes(noticeId))throw Error('Noticeboard next page did not change notices');
+                const archivePage=await pager.locator('small').innerText();
+                await switchTownLanguage('中文');
+                if(await pager.locator('small').innerText()!==archivePage||JSON.stringify(await readVisibleNotices())!==JSON.stringify(secondPage))throw Error('Noticeboard page lost on language switch');
+                await switchTownLanguage('EN');
+                if(JSON.stringify(await readVisibleNotices())!==JSON.stringify(secondPage))throw Error('Noticeboard page lost returning to English');
+                while(await pageNext.isEnabled())await pageNext.click();
+                const older=page.locator('.townPostNav').getByRole('button',{name:'Read older notices',exact:true,includeHidden:true});
+                if(await older.isEnabled()){
+                  if(!await older.isVisible())throw Error('Older notices unavailable on final page');
+                  await older.click();
+                  if(await page.locator('.townResidentNote').count()<=initialNotices)throw Error('Older notices did not expand');
+                }else if(await page.locator('.townPostNav').isVisible())throw Error('Empty archive control should be hidden');
+                const archiveDepth=await page.locator('.townResidentNote').count(),archiveIds=await readVisibleNotices();
+                await switchTownLanguage('中文');
                 await page.locator('.townWall').waitFor({state:'visible'});
-                if(await page.locator('.townResidentNote').count()!==archiveDepth)throw Error('Archive depth lost on language switch');
-                await page.locator('#page').getByRole('button',{name:'EN',exact:true}).click();
+                if(await page.locator('.townResidentNote').count()!==archiveDepth||JSON.stringify(await readVisibleNotices())!==JSON.stringify(archiveIds))throw Error('Archive depth or page lost on language switch');
+                await switchTownLanguage('EN');
                 await page.locator('.townWall').waitFor({state:'visible'});
                 await page.screenshot({path:'test-results/'+name+'-town-wall.png'});
                 await page.locator('.communityTabs').getByRole('button',{name:'Tea table',exact:true}).click();
@@ -448,6 +476,7 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-bag.png'});
                 await page.getByRole('button',{name:'‹ My Room',exact:true}).click();
                 await page.locator('.hideoutScene').waitFor({state:'visible'});
+                await page.locator('.pawRoomExtras > summary').click();
                 await page.getByRole('button',{name:'Furniture shop',exact:true}).click();
                 await page.locator('#content > .row').getByRole('button',{name:'‹ My room',exact:true}).click();
                 await page.locator('.hideoutScene').waitFor({state:'visible'});
@@ -458,15 +487,12 @@ jobs:
                 if(await page.locator('#proposal').getAttribute('data-shot')!=='shrine')throw Error('Returning player did not start at shrine');
                 await page.waitForTimeout(1500);
                 if(await page.locator('#proposal').isHidden())throw Error('Returning player bypassed gate');
-                if(!/Test Traveller/.test(await page.locator('#proposal .shrine-welcome').innerText()))throw Error('Returning welcome lost player name');
+                if(!await page.evaluate(()=>playerName==='Test Traveller'&&Number.isInteger(avatar)&&avatar>=0))throw Error('Returning player identity lost');
+                if(!await page.locator('#proposal .mbGatePainting').isVisible())throw Error('Painted returning gate missing');
                 if(!await page.locator('#proposal .shrine-sky').count())throw Error('Shrine atmosphere missing');
                 if(await page.locator('#proposal .rail-ticket').count())throw Error('Returning player asked to register again');
                 if(await page.locator('#proposal .gate').isVisible())throw Error('Obsolete flat gate still obscures scenery');
-                const returnLanguage=page.locator('#proposal .shrineLanguageMenu');
-                if(await returnLanguage.locator('.languageChoice').isVisible())throw Error('Returning language selector not collapsed');
-                await returnLanguage.locator('summary').click();
-                if(!await returnLanguage.getByRole('button',{name:'中文',exact:true}).isVisible())throw Error('Language choice cannot be opened');
-                await returnLanguage.locator('summary').click();
+                if(await page.locator('#proposal .shrineLanguageMenu, #proposal header .languageChoice').count())throw Error('Returning gate has duplicate language setting');
                 await page.screenshot({path:'test-results/'+name+'-returning-player-gate.png'});
                 const entranceStart=Date.now();
                 await page.locator('#proposal .shrine-enter').click();
@@ -474,10 +500,14 @@ jobs:
                 await page.waitForFunction(()=>document.querySelector('#game').dataset.entranceControlsBlocked==='false'&&getComputedStyle(document.querySelector('#dock')).visibility==='visible');
                 console.log('RETURN_ENTRANCE_UNLOCK '+name+' '+(Date.now()-entranceStart)+'ms');
                 if(Date.now()-entranceStart>2500)throw Error('Returning player controls unlocked too slowly');
-                await page.getByRole('button',{name:'Settings',exact:true}).click();
-                if(!await page.locator('#townSettingsPanel').isVisible())throw Error('Settings icon cannot open its panel');
-                await page.getByRole('button',{name:'Settings',exact:true}).click();
-                if(await page.locator('#townSettingsPanel').isVisible())throw Error('Settings panel did not collapse');
+                if(await page.locator('#townSettingsToggle').count())throw Error('Standalone map cog still exists');
+                await page.locator('#profileHud').click();
+                await page.locator('.pawProfileSettingsEntry').click();
+                if(!await page.locator('#content #townSettingsPanel').isVisible())throw Error('Profile settings missing');
+                await page.locator('#content > .row button:first-child').click();
+                if(!await page.locator('.pawProfileSettingsEntry').isVisible())throw Error('Settings did not return to profile');
+                await page.locator('#content > .row button:first-child').click();
+                if(await page.locator('#townSettingsPanel').isVisible())throw Error('Settings leaked to map');
                 await page.locator('#dockScoop').click();
                 await page.locator('.townFortuneSlip').waitFor({state:'visible'});
                 const fortuneAfter=await page.evaluate(()=>{const f=townFortuneFor();return [f.date,f.themeIndex,f.colour[2],f.number]});
@@ -493,11 +523,12 @@ jobs:
                 await page.getByRole('button',{name:'‹ Explore',exact:true}).click();
                 await page.locator('#content > .row').getByRole('button',{name:/^‹ (Back(?: to game)?|Town|Profile|My room)$/}).click();
                 // Direct activity integration check, separate from the normal entrance flow.
-                // The lab is one house with four current choices, not separate destinations.
-                await page.evaluate(()=>{scene='wonder';room='quiz';activity=null;action('quiz')});
-                for(const [label,mode] of [['MBTI-inspired preferences','type'],['Enneagram-inspired · nine motives','motive'],['Five personality tendencies','bigfive'],['Relationship values','values']]){
+                // Test the actual authored host and return destination for each assessment.
+                // The Observatory offers personality reflections; relationship values belong in the Heart Café.
+                for(const [house,label,mode] of [['quiz','Four personality preferences','type'],['quiz','Enneagram-inspired · nine motives','motive'],['quiz','Five personality tendencies','bigfive'],['match','Relationship values','values']]){
+                  await page.evaluate(house=>{scene='wonder';room=house;activity=null;action(house)},house);
                   await page.locator('#choices').getByRole('button',{name:label,exact:true}).click();
-                  await page.waitForFunction(mode=>scene==='wonder'&&room==='quiz'&&activity==='wonderScene'&&wonderSceneMode===mode,mode,{timeout:3000});
+                  await page.waitForFunction(({house,mode})=>scene==='wonder'&&room===house&&activity==='wonderScene'&&wonderSceneMode===mode,{house,mode},{timeout:3000});
                   if(options.hasTouch&&options.viewport.width<=540){
                     await page.evaluate(()=>{wonderScenePhase='question';wonderSceneAt=t;syncWonderSheet()});
                     const question=page.locator('#wonderQuestionSheet');
@@ -510,8 +541,7 @@ jobs:
                   }
                   await page.evaluate(()=>{closeTalk();updateHUD()});
                   await page.locator('#back').click();
-                  await page.waitForFunction(()=>room==='quiz'&&!activity,{},{timeout:3000});
-                  if(mode!=='values')await page.evaluate(()=>action('quiz'));
+                  await page.waitForFunction(house=>room===house&&!activity,house,{timeout:3000});
                 }
                 await page.evaluate(()=>{scene='fortune';room=null;activity=null;state={};closeTalk();updateHUD()});
                 await page.evaluate(()=>{room='wishes';activity=null;action('coin')});
@@ -936,6 +966,7 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-resident-friendship.png'});
                 // Setup the home screen with the real starter layout, then use the actual editor controls.
                 await page.evaluate(()=>{hideoutEditing=false;komorebiZone=0;hideoutPage()});
+                await page.locator('.pawRoomExpansionFold').filter({has:page.getByText('Room expansions',{exact:true})}).locator('summary').click();
                 await page.getByRole('button',{name:'Expand home',exact:true}).click();
                 const furnitureSearch=page.locator('#mbFurnitureSearch');
                 const extensionTile=page.locator('.komorebiTile[data-furniture-id="roomExtension"]');
@@ -998,6 +1029,7 @@ jobs:
           path: test-results/
 
   share-exports:
+    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'release/candidate-')
     concurrency:
       group: meowbox-share-${{ github.ref }}
       cancel-in-progress: false
@@ -1023,6 +1055,7 @@ jobs:
           path: test-results/
 
   shrine-repair:
+    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'release/candidate-')
     concurrency:
       group: meowbox-shrine-${{ matrix.engine }}-${{ github.ref }}
       cancel-in-progress: false
@@ -1060,8 +1093,21 @@ jobs:
           path: test-results/
 
   visual-experiences:
+    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'release/candidate-')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - device: small-chromium
+            engine: chromium
+          - device: tall-webkit
+            engine: webkit
+          - device: tablet-chromium
+            engine: chromium
+          - device: desktop-chromium
+            engine: chromium
     concurrency:
-      group: meowbox-visual-${{ github.ref }}
+      group: meowbox-visual-${{ github.ref }}-${{ matrix.device }}
       cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -1072,14 +1118,16 @@ jobs:
           node-version: '22'
       - run: node scripts/build.cjs
       - run: npm install --no-save --no-package-lock playwright
-      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
       - run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
       - name: Capture all exposed experiences in both languages
+        env:
+          MB_AUDIT_DEVICE: ${{ matrix.device }}
         run: |
           python3 -m http.server 8769 >/tmp/meowbox-visual-server.log 2>&1 &
           node scripts/visual-experience-audit.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: meowbox-all-experience-visual-review
+          name: meowbox-all-experience-visual-review-${{ matrix.device }}
           path: visual-review/

@@ -322,3 +322,57 @@ Use this as a critique/acceptance matrix, not a demand to make needless changes.
 
 ### Execution and evidence
 For every station create a concise choreography record in the existing canonical task evidence: room and action ID, actual scene asset, entry/return anchors, player/host/visitor roles, route and pace profile, seat/storage/hand/contact coordinates, animation phase and duration, prompt/control, visible effect, recovery/cancel, native viewport camera, missing exact assets and tested evidence. Reuse the existing detailed station rows rather than opening a duplicate backlog. First resolve missing/hidden routes, systemic actor scale/pace and owner-reported legacy activity interfaces; integrate a polished complete vertical slice at a time while non-overlapping lanes prepare exact assets. Record measured travel distance/time, phone and desktop video, and visual defects. No acceptance until the room feels alive and the whole interaction makes sense. 
+
+
+## Owner follow-up: complete journeys, readable results and next actions (28 November, after live feedback)
+
+Use the existing 30-lens gate above. This is a source/design critique against main 79a4215, with direct owner feedback and separately staged PRs #13 and #15; not completed browser/device testing. The latest owner direction overrides standalone moon-block entry: pair the stick and block stations in one painted alcove, fixed camera, actual walking between stations, draw anew after failed confirmation, stop after three unsuccessful confirmations during that visit and never award a slip without confirmation. Automatically walk up the temple approach after entering; do not require a second hall tap. Rear garden entry must stop on the path and never teleport to a bench; pixel-trace the real floor and cushion before acceptance. Tarot and Yue should speak questions naturally, keep a readable artifact in context and provide explicit next actions. Preset birthplace coordinates are technical defaults only; ask for local time and allow historical offset correction where necessary.
+
+### Completion choreography, specific actions and exit gates
+
+These rows supplement the existing detailed station recipes. Review the active dispatch, actual artwork and all 30 lenses for each; priorities P0 broken navigation/privacy/state, P1 immersion/physical staging, P2 repeat/ambience. Do not add duplicate workstream IDs or count these rows as new tasks.
+
+| Existing activity | Critique and acceptance direction | Existing ownership |
+| --- | --- | --- |
+| Temple approach/hall | Automatic climb from first tap; retain deliberate exit; no redundant hall CTA or flash. | ROOM-01, ENT-01 |
+| Water pavilion | Rinse both hands and return tool; keeper acknowledges completion; next ritual or explore. | ROOM-01 |
+| Bell | Strike centre bronze with grounded grip, contact sound, swing damping; step back without extra menu. | ROOM-01 |
+| Incense | Real supply, grip, light, bow, offer, smoke at tip and burner; return on actual path. | ROOM-01 |
+| Fortune pair | One camera and paired stations, retry walk, three-failure termination, no standalone block toss, no unmatched slip. | ROOM-01 |
+| Slip/rack | Read matching physical paper, tie/keep once, keeper offers garden or next ritual; rack revisit optional. | ROOM-01 |
+| Rear garden | No automatic walk into upper scenery; trace every path and seat hip contact; stand before walking; feed/chime/cat optional. | ROOM-01, SCENE-BLOCKING-01 |
+| Wish lantern | Private transient draft, fold/hang on actual hook, local saved wish, read/remove or return to kiosk; never publish by default. | ROOM-02, UX-FLOW-01 |
+| Wish coin | Character's grip/throw/rebound/splash, visible result and return. Current final source still wraps a page-based pond; prevent late rewards after leaving, then replace with native bank camera. | ROOM-02, UX-FLOW-01 |
+| Tarot daily/topic | Reader asks in dialogue, choose one/three, physically shuffle/deal/flip, readable full illustration and speaker, optional export, close to same table. Existing traditional atlas is not proof of approved new face art. | ROOM-06 |
+| Yue zodiac year/chart/stars | One spoken question/field at a time; recognised city defaults with correction, chart/paper in study, choose another reading or finish after save. No cropped nested scrolling question box. | ROOM-06 |
+| Whack Worries | Player on stool, Auntie takes paper/retrieves slipper, strikes, concludes, stands/returns. No score pressure or player whacking. | GAME-DEPTH-01 |
+| Bottle release | Write/fold/seal, carry and throw from actual bank; dissolve, no private text left on exit, retry or return. | GAME-DEPTH-01 |
+| River shout | Breath, pose, echo and environmental response, quiet option; finish without recording, return. | GAME-DEPTH-01 |
+| Tea table | Free seat, cup, resident conversation, gossip/response; standing and walking back; no compulsory town page. | LIFE-RELATIONSHIPS-01, COMM-TOWN-LIFE-01 |
+| Noticeboard | Inspect actual notes, local NPC versus live human provenance, explicit post consent, report/back to exact thread. | COMM-TOWN-LIFE-01, COMM-MIXED-LIVE-01 |
+| Park cats | Crouch, wait, cat chooses approach, stroke/feed if receptive; visible trust cue and stand. | ROOM-05 |
+| Deer | Quiet approach, bow/watch/appropriate feed, daily limit respected, animal response and return. | ROOM-05 |
+| Kitchen | Select meaningful ingredients, chop/mix/cook, serve/taste, Grandma reaction and put tools down; another dish or leave. | ROOM-03 |
+| Boba | Select base/toppings, scoop/pour/stir/seal, sip or serve and reset counter; no repeated selection pages. | ROOM-03 |
+| Claw | Cabinet approach, controls/grip, prize drops into actual chute, collect once, retry or step away. | ROOM-04 |
+| Rhythm | In-cabinet track, beat prompts, result/reaction, retry or next cabinet; pause properly. | ROOM-04 |
+| Bubble pop | Same cabinet play plane, translucent painted bubbles, clear aim/result, return. | ROOM-04 |
+| Goldfish scoop | Hold/dip/lift, fish/water and paper response, release fish, retry/leave. | ROOM-04 |
+| Blind boxes | Shelf inspection, price, pickup/shake/open and collectible reveal, return to shelf, cancel without spend. | ROOM-04 |
+| Souvenir | Distinct daily artifact/story if retained, inspect and explicitly collect; never duplicate blind boxes. | DISCOVERY-01 |
+| Inner Observatory | Host-led distinct assessments, one scenario at a time, actual computed results, notebook, share/return. | DISCOVERY-ASSESSMENTS-01 |
+| Curiosity Club | Approved fourth-house entrance, distinct activity inventory, no duplicated assessments, real route and return. | DISCOVERY-ASSESSMENTS-01 |
+| House of What If | Choices materially change narrative, illustrations/scene reactions, fictional ending, replay or return to storyteller. | DISCOVERY-PARALLEL-LIVE-02, STORY-DEPTH-01 |
+| Heart Café | Partner identity clear, seated conversation, consent for comparison, nuanced reflection, goodbye/return. | DISCOVERY-CAFE-LIVE-02 |
+| My Room | Place/rotate furniture with correct footprint, confirm actual price, preserve exact catalogue selection on cancel, save/reload. | HOME-CATALOGUE-LIVE-02 |
+| Railway and entrance | Fast first frame, preserved avatar, walk aboard and scenery movement, exit at actual destination; clear cancel. | ENT-01, PERF-01 |
+
+Retired standalone fishing, passive bench game and duplicate office stress room remain retired; preserve prior earned items. Verify actual visible arcade inventory rather than reviving historical entries absent from the current dispatch. The cross-cutting UX-FLOW-01, SCENE-BLOCKING-01, SCENE-CAMERA-01, QA-PLAYER-LOOP-01 and QA-SPATIAL-01 remain open across the rows. Apply actual live acceptance to each, not a single pass score for all games.
+
+### Immediate source fix in this candidate
+
+town-access.js: guard pond flight, rebound, finish, delayed reset/ripple and pointer actions against stale room/activity/state or hidden page; add explicit return to the garden. Focused 32 ownership combinations passed; the runtime wiring regression is committed. This is an interim route safety improvement, not the native bank renderer or visual acceptance. Candidate branch only; no main register change. Next unclaimed implementation: native wish bank staging and full end-to-end exit testing, then tea table / park / kitchen / arcade vertical slices, coordinated with existing PR scopes.
+
+### Owner follow-up: physical wishing coin
+
+Extend existing ROOM-02 / UX-FLOW-01, not a new task. Selected avatar approaches the pool bank, with the garden keeper present; deliberate Take a Paw Coin action places the existing illustrated Paw Coin at the provisional wrist anchor, then swipe or gentle toss launches from that exact coordinate. Preserve rim rebound, splash, koi reaction and return. Retry requires fresh pickup. No wallet deduction in this candidate: use Paw Coin artwork without introducing an unapproved charge. Current implementation layers existing sprite art over the painted pond page; not yet a native continuous lobby-to-bank journey. The lower-bank foot and estimated wrist positions, NPC scale, torso motion, footer occlusion and all actual phone/desktop layouts need visual verification against the painting. 35 focused geometry/approach/wiring checks executed; full browser suite not run on candidate. Main unchanged.

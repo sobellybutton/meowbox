@@ -51,7 +51,7 @@ hideoutPage=function(){cabinetRoomBefore();const q=$('content'),stage=q.querySel
 }
 };
 const bagReleaseBefore=myRoom;
-myRoom=function(){bagReleaseBefore();const q=$('content'),wrap=q.querySelector('.travellerBagV2');if(!wrap)return;const foot=wrap.querySelector('.bagFooter');if(foot){b(foot,tr('Figure cabinet','手办展示柜'),()=>figureCabinetPage('bag'));b(foot,tr('Life journal','人生档案'),lifeProfile);b(foot,tr('Sound settings','声音设置'),meowSettingsPage)}
+myRoom=function(){bagReleaseBefore();const q=$('content'),wrap=q.querySelector('.travellerBagV2');if(!wrap)return;const foot=wrap.querySelector('.bagFooter');if(foot){b(foot,tr('Figure cabinet','手办展示柜'),()=>figureCabinetPage('bag'));b(foot,tr('Life journal','人生档案'),lifeProfile)}
  const grid=wrap.querySelector('.bagSlots'),body=wrap.querySelector('.bagBody'),detail=wrap.querySelector('.bagDetail');
  if(grid&&body&&detail){
   const position=()=>{if(detail.parentNode===grid)body.append(detail);if(W<720&&!detail.hidden){const index=[...grid.children].findIndex(el=>el.getAttribute('aria-pressed')==='true');if(index>=0)grid.children[Math.min(grid.children.length-1,Math.floor(index/3)*3+2)]?.after(detail)}};
@@ -1683,29 +1683,66 @@ const compactLifeRefreshBefore=lifeHUDRefresh;
 lifeHUDRefresh=function(...args){const v=compactLifeRefreshBefore(...args);compactTownProfile();return v};
 const townSettingsRoot=$('small'),townSettingsPanel=languageChoices.parentNode;
 townSettingsPanel.classList.add('townSettingsPanel');townSettingsPanel.id='townSettingsPanel';
-const townSettingsToggle=element('button','',townSettingsRoot,'townSettingsToggle');
+const townSettingsToggle=document.createElement('button'); // Detached legacy reference; no map control.
 townSettingsToggle.id='townSettingsToggle';townSettingsToggle.setAttribute('aria-controls','townSettingsPanel');townSettingsToggle.innerHTML='<svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4l.7 2.5 2 .9 2.3-1.2 2 3.5-1.8 1.9v2.8l1.8 1.9-2 3.5-2.3-1.2-2 .9L14 21h-4l-.7-2.5-2-.9L5 18.8l-2-3.5 1.8-1.9v-2.8L3 8.7l2-3.5 2.3 1.2 2-.9z"/><circle cx="12" cy="12" r="3.2"/></svg>';
 const townSettingsExtra=element('div','',townSettingsPanel,'townSettingsExtra');
 const townSoundSettings=element('button','',townSettingsExtra),townMapLabels=element('button','',townSettingsExtra),townHelp=element('button','',townSettingsExtra);
+/* PAW_LOCAL_RESET_BEGIN */
+// Clear only this game's local progress, not other sites, language or the
+// shared community session. Snapshot first so failures can be rolled back.
+function pawLocalReset(storage){
+ const prefix='meowbox-preview-',keep=new Set([prefix+'zh',prefix+'communitySessionV1']),snapshot=[];
+ try{
+  for(let i=0;i<storage.length;i++){const key=storage.key(i);if(key?.startsWith(prefix)&&!keep.has(key))snapshot.push([key,storage.getItem(key)])}
+ }catch{return false}
+ try{for(const [key] of snapshot)storage.removeItem(key);return true}
+ catch{for(const [key,value] of snapshot){try{if(value!==null)storage.setItem(key,value)}catch{}}return false}
+}
+/* PAW_LOCAL_RESET_END */
+const townResetButton=element('button','',townSettingsExtra);
+const townResetConfirm=element('div','',townSettingsExtra,'pawResetConfirm');
+townResetConfirm.hidden=true;
+const townResetCopy=element('p','',townResetConfirm),townResetDo=element('button','',townResetConfirm),townResetCancel=element('button','',townResetConfirm);
+townResetButton.type=townResetDo.type=townResetCancel.type='button';
+townResetButton.setAttribute('aria-expanded','false');
+townResetConfirm.id='pawResetConfirm';townResetButton.setAttribute('aria-controls',townResetConfirm.id);
+let townResetArmed=false,townResetFailed=false;
+townResetButton.onclick=()=>{townResetArmed=!townResetArmed;townResetFailed=false;syncTownSettings();if(townResetArmed)townResetCancel.focus()};
+townResetCancel.onclick=()=>{townResetArmed=false;townResetFailed=false;syncTownSettings();townResetButton.focus()};
+townResetDo.onclick=()=>{
+ if(!townSettingsOpen||!townResetArmed)return;
+ let ok=false;try{ok=pawLocalReset(localStorage)}catch{}
+ if(ok){townResetArmed=false;townResetDo.disabled=true;location.reload()}
+ else{townResetFailed=true;syncTownSettings()}
+};
+const townResetStyle=document.createElement('style');
+townResetStyle.textContent='#game #small #townSettingsPanel .pawResetConfirm{display:grid;gap:4px;padding:7px;border-top:1px solid #ac9670;background:#f2e5cb;color:#514634;border-radius:5px}#game #small #townSettingsPanel .pawResetConfirm[hidden]{display:none!important}#game #small #townSettingsPanel .pawResetConfirm p{font-size:12px;line-height:1.4;margin:2px 0;white-space:normal}#game #small #townSettingsPanel .pawResetConfirm button{min-height:44px!important;white-space:normal!important}#game #small #townSettingsPanel .pawResetConfirm button:first-of-type{color:#894d3f!important}';
+document.head.append(townResetStyle);
 let townSettingsOpen=false;
 function syncTownSettings(){
  townSettingsRoot.dataset.open=String(townSettingsOpen);
  townSettingsToggle.setAttribute('aria-label',tr('Settings','设置'));townSettingsToggle.title=tr('Settings','设置');townSettingsToggle.setAttribute('aria-expanded',String(townSettingsOpen));
  townSettingsPanel.hidden=!townSettingsOpen;
+ if(!townSettingsOpen){townResetArmed=false;townResetFailed=false}
+ townResetButton.textContent=tr('Start over','重新开始');
+ townResetButton.setAttribute('aria-expanded',String(townResetArmed));
+ townResetConfirm.hidden=!townResetArmed;
+ townResetCopy.textContent=townResetFailed?tr('Could not reset local progress. Check browser storage and try again.','无法重置本地进度，请检查浏览器存储后重试。'):tr('This clears your saved traveller, coins, room, collections and local history on this browser. Close other game tabs first. Shared posts and your language setting stay.','这将清除本浏览器内的旅人、爪爪币、小窝、收藏和本地记录。请先关闭其他游戏标签页。公开留言和语言设置会保留。');
+ townResetDo.textContent=tr('Erase local progress','清除本地进度');
+ townResetCancel.textContent=tr('Keep my progress','保留我的进度');
  townSoundSettings.textContent=muted?tr('Sound off','声音已关闭'):tr('Sound on','声音已开启');
  townSoundSettings.setAttribute('aria-pressed',String(!muted));
  townMapLabels.textContent=quiet9?tr('Show map signs','显示地图路牌'):tr('Hide map signs','隐藏地图路牌');
  townMapLabels.hidden=!!room||scene!=='fortune';
  townHelp.textContent=tr('Walking help','行走指南');townHelp.hidden=!!room||!isRoute();
 }
-function closeTownSettings(){townSettingsOpen=false;syncTownSettings()}
-townSettingsToggle.onclick=()=>{townSettingsOpen=!townSettingsOpen;syncTownSettings()};
+function closeTownSettings(){townSettingsOpen=false;if(townSettingsPanel.parentNode!==townSettingsRoot)townSettingsRoot.append(townSettingsPanel);syncTownSettings()}
+townSettingsToggle.onclick=null;
 townSoundSettings.onclick=()=>{$('mute').click();syncTownSettings()};
-townMapLabels.onclick=()=>{$('quietToggle').click();closeTownSettings()};
-townHelp.onclick=()=>{closeTownSettings();walkHelp.click()};
-for(const [,btn] of languageButtons)btn.addEventListener('click',closeTownSettings);
-document.addEventListener('pointerdown',e=>{if(townSettingsOpen&&!townSettingsRoot.contains(e.target))closeTownSettings()},true);
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&townSettingsOpen){closeTownSettings();townSettingsToggle.focus()}});
+townMapLabels.onclick=()=>{$('quietToggle').click();syncTownSettings()};
+townHelp.onclick=()=>{closeTownSettings();$('page').style.display='none';walkHelp.click()};
+for(const [,btn] of languageButtons)btn.addEventListener('click',()=>{if(townSettingsOpen)pawOpenProfileSettings()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&townSettingsOpen){e.preventDefault();closeTownSettings();lifeProfile();$('content').querySelector('.pawProfileSettingsEntry')?.focus()}});
 const townSettingsHUDBefore=updateHUD;updateHUD=function(...args){
  const v=townSettingsHUDBefore(...args);compactTownProfile();
  if(!proposal.hidden||talkOpen||activity)townSettingsOpen=false;
@@ -6373,9 +6410,20 @@ function pawVisitorPauseTimers(roster,elapsed){
   if(Number.isFinite(a.exitRetry))a.exitRetry+=elapsed
  }
 }
+// Reuse the same traveller identity after a quiet absence. Never spawn
+// inside the room: the ordinary waiting phase checks and uses the doorway.
+function pawVisitorDepart(a,now){
+ a.phase='gone';a.walking=0;a.motionSpeed=0;a.route=[];a.elapsed=0;
+ a.wait=now+12+(a.avatar%4)*4;delete a.exitRetry
+}
+function pawVisitorReturn(a,now){
+ if(!a||a.phase!=='gone'||a.guest||a.visitingResident||!Number.isFinite(now)||!Number.isFinite(a.wait)||now<a.wait)return false;
+ a.phase='waiting';a.walking=0;a.motionSpeed=0;a.route=[];a.elapsed=0;return true
+}
 /* PAW_VISITOR_LIFECYCLE_END */
 function pawRoomWalkers(){
- const spec=pawRoomVisitorSpecs[room];if(!spec||activity)return [];
+ const spec=pawRoomVisitorSpecs[room];if(!spec)return [];
+ if(activity){if(pawVisitorContext===scene+'|'+room+'|'+avatar){pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,t-pawVisitorAt));pawVisitorHold(pawLocalVisitors)}pawVisitorAt=t;return []}
  const context=scene+'|'+room+'|'+avatar;
  if(!indoorReady()){if(context===pawVisitorContext)pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,t-pawVisitorAt));pawVisitorAt=t;return context===pawVisitorContext?pawVisitorHold(pawLocalVisitors):[]}
  const obs=indoorObstacles(),protectedFeet=pawGuestProtected(),door=indoorSpec().entry,stationFeet=pawGuestActiveFeet();
@@ -6407,13 +6455,13 @@ function pawRoomWalkers(){
  pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,elapsed-dt));
  if(residentReducedMotion.matches){for(const a of pawLocalVisitors)if(a.phase==='waiting')a.phase='stationary';return pawVisitorHold(pawLocalVisitors)}
  for(const a of pawLocalVisitors){
-  a.walking=0;if(a.guest||a.visitingResident||a.phase==='gone'||a.phase==='stationary'||t<a.wait){a.motionSpeed=0;continue;}
+  a.walking=0;pawVisitorReturn(a,t);if(a.guest||a.visitingResident||a.phase==='gone'||a.phase==='stationary'||t<a.wait){a.motionSpeed=0;continue;}
   const others=pawLocalVisitors.filter(b=>b!==a),clearDoor=()=>pawVisitorDoorClear(door,indoor,[...others,...pawAmbientIndoor],gaps.door);
   const routeTo=(from,to)=>pawVisitorDoorRoute(from,to,stationFeet,(x,y)=>indoorSafe(x,y,obs),(f,d)=>indoorPath(f,d,obs),gaps.station,(f,d)=>indoorSegment(f,d,obs));
   if(a.phase==='waiting'){
    if(!a.identitySettled||!clearDoor()){a.wait=t+.7;continue}
    const route=routeTo(door,a.destination);
-   if(!route){a.phase='gone';continue}
+   if(!route){pawVisitorDepart(a,t);continue}
    a.x=door[0];a.y=door[1];a.facing=pawWalkFacing(a,route[0]);a.route=route;a.phase='arriving';a.elapsed=0;
   }
   if(a.phase==='roaming'){
@@ -6450,7 +6498,7 @@ function pawRoomWalkers(){
   const distance=Math.hypot(next.x-a.x,next.y-a.y);
   if(distance>.01){a.facing=pawWalkFacing(a,dest);pawGaitTravel.set(a,(pawGaitTravel.get(a)||0)+distance);a.walking=1}
   a.x=next.x;a.y=next.y;
-  if(next.arrived){a.route.shift();if(!a.route.length){a.walking=0;a.motionSpeed=0;if(a.phase==='departing'){a.phase='gone';continue}if(a.phase==='arriving'){a.phase='roaming';a.elapsed=0}a.wait=t+(4+(a.avatar%3)*2)*tempo.dwell}}
+  if(next.arrived){a.route.shift();if(!a.route.length){a.walking=0;a.motionSpeed=0;if(a.phase==='departing'){pawVisitorDepart(a,t);continue}if(a.phase==='arriving'){a.phase='roaming';a.elapsed=0}a.wait=t+(4+(a.avatar%3)*2)*tempo.dwell}}
  }
  return pawLocalVisitors
 }
@@ -7109,7 +7157,11 @@ drawRoom=function(...args){
  if(room&&!activity&&!talkOpen&&!transitioning&&proposal.hidden&&$('page').style.display!=='block'){
   const entries=roomGuideEntries(),missing=pawMissingStations(entries,pawVisibleStationLabels);
   roomGuideToggle.dataset.missing=String(missing.length);
-  roomGuideToggle.dataset.showDirectory='false';
+  // Retain native station plaques as the primary input. Expose the existing
+  // directory only when a plaque cannot be rendered, or while it is open.
+  const showDirectory=missing.length>0||roomGuide.classList.contains('pawGuideOpen');
+  const flag=String(showDirectory);
+  if(roomGuideToggle.dataset.showDirectory!==flag)roomGuideToggle.dataset.showDirectory=flag;
   const guideName=pawGuideName(entries.length,missing.length,zh);
   if(roomGuideToggle.textContent!==guideName)roomGuideToggle.textContent=guideName;
   roomGuideToggle.setAttribute('aria-label',guideName);
@@ -7125,6 +7177,7 @@ pawActivityDirectoryCss.textContent=`
 #game #roomStationGuide.pawGuideOpen{top:max(108px,calc(env(safe-area-inset-top,0px) + 108px));z-index:12!important}
 #game .mbPaintedRail>canvas.pawMovingGlass,#proposal .mbPaintedRail>canvas.pawMovingGlass{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;z-index:4!important;opacity:1!important;visibility:visible!important;pointer-events:none!important;transform:none!important}
 @media(prefers-reduced-motion:reduce){#game .mbPaintedRail>canvas.pawMovingGlass,#proposal .mbPaintedRail>canvas.pawMovingGlass{display:none!important}}
+#game #pawRoomGuideToggle[data-show-directory="true"]:not([hidden]){position:absolute!important;right:max(12px,env(safe-area-inset-right,0px));top:max(60px,calc(env(safe-area-inset-top,0px) + 60px));width:auto!important;height:auto!important;min-width:44px!important;min-height:44px!important;max-width:calc(100% - 24px)!important;clip-path:none!important;overflow:visible!important;white-space:normal!important;pointer-events:auto!important;padding:7px 12px!important;background:#594b39f0!important;color:#fff1d4!important;border:1px solid #c9ad7c!important;z-index:10!important}
 `;document.head.append(pawActivityDirectoryCss);
 
 // Multiple painted deer, using the already installed independent deer poses.
@@ -7431,7 +7484,10 @@ function pawGateGround(w,h,progress=0){
 }
 const pawGateCompositionCSS=document.createElement('style');
 pawGateCompositionCSS.textContent=`
-#proposal[data-paw-entrance-step="3"]>.hero{background:#293c32 url('assets/visual/painted/worlds/gateway/scene.webp') center bottom/cover no-repeat!important;container-type:size}
+/* The accessible img is the only painted gateway. Keep the calibrated
+   portrait framing on wide displays without repeating its architecture. */
+#proposal[data-paw-entrance-step="3"]>.hero{background:#293c32!important;container-type:size}
+@media(orientation:landscape){#proposal[data-paw-entrance-step="3"]>.hero{background:linear-gradient(110deg,#34483d,#293c32 50%,#34483d)!important}}
 #proposal[data-paw-entrance-step="3"] .mbGatePainting{object-fit:cover!important;object-position:center bottom!important;backdrop-filter:none!important;background:none!important;display:block!important;visibility:visible!important;z-index:1!important}
 @media(orientation:landscape){#proposal[data-paw-entrance-step="3"] .mbGatePainting{object-fit:contain!important;object-position:center!important}}
 #proposal[data-paw-entrance-step="3"] .gate-traveller.pawGateGrounded{position:absolute!important;left:var(--paw-gate-x)!important;top:var(--paw-gate-y)!important;bottom:auto!important;width:auto!important;height:var(--paw-gate-height)!important;max-width:none!important;max-height:none!important;translate:var(--paw-gate-pivot-x,-50%) var(--paw-gate-pivot-y,-100%)!important;transform:none!important;transition:none!important;opacity:1!important;object-fit:contain!important;filter:none!important}
@@ -9485,6 +9541,9 @@ function pawTempleContactScale(camera,base=1.55){
  const c=Number.isFinite(camera)&&camera>0?camera:.65;
  return Math.max(base,Math.min(2.15,100/(94*c)))
 }
+// The painted action stations use authored world dimensions. Zoom changes
+// the whole scene, never just the person or the sleeve.
+function pawTemplePaintedActorScale(){return 1.92}
 function pawIncenseSupply(p,held,stage,age){
  const rack={x:p.x+p.w*.866,y:p.y+p.h*.543},count=Math.max(0,Math.min(3,Math.floor(held||0)));
  const taking=stage==='taking'&&count<3,removed=taking&&age>=.32;
@@ -9540,7 +9599,7 @@ function pawPrayerStep(){
   else if(['hold','bow','offer','complete'].includes(stage)){foot=front;dir='up'}
   else if(stage==='placing'){foot=blend(front,offering,ratio(1.85));dir='up'}
   else if(stage==='returnMat'){foot=pawIncenseReturnFoot(p,age);dir=age<.75?'down':'left'}
-  const sc=pawTempleContactScale(cam.scale,1.55),hand={x:foot.x+(dir==='left'?-15:dir==='up'?9:17)*sc,y:foot.y-48*sc+q.bow*9};
+  const sc=pawTemplePaintedActorScale(),hand={x:foot.x+(dir==='left'?-15:dir==='up'?9:17)*sc,y:foot.y-48*sc+q.bow*9};
   // The right-side incense supply is separate from the red fortune tube on the left.
   const reach=stage==='taking'?Math.sin(Math.PI*Math.min(1,age/.72)):stage==='lighting'?Math.sin(Math.PI*Math.min(1,age/1.65)):0;
   const reaching=stage==='taking',flame=supply.flame,pick=reaching?pawIncensePickup(hand,supply.pick,age):null;
@@ -9562,7 +9621,7 @@ function pawPrayerStep(){
    if(shown||pick){
     const shoulder={x:foot.x+(dir==='left'?-6:7)*sc,y:foot.y-48*sc+q.bow*9};
     ctx.save();try{
-     if(shown){pawIncenseArm(shoulder,grip,sc,true);for(let j=0;j<shown;j++)incenseStem(grip.x+(j-(shown-1)/2)*3.8,grip.y,lightAngle+(j-(shown-1)/2)*.065,lit,39,j===0)}
+     if(shown){if(pick)pawIncenseArm(shoulder,grip,sc,true);for(let j=0;j<shown;j++)incenseStem(grip.x+(j-(shown-1)/2)*3.8,grip.y,lightAngle+(j-(shown-1)/2)*.065,lit,39,j===0)}
      if(pick&&supply.removed)incenseStem(pick.x,pick.y,0,false,39);
      pawIncenseArm(shoulder,pick||grip,sc,false)
     }finally{ctx.restore()}
@@ -10261,6 +10320,20 @@ function pawPaintedPlaquePlacement(x,y,w,h,view,screen,blockers=[]){
  }
  return null
 }
+// Match each compact station plaque to the room's painted materials.
+// The canvas keeps one surface; no additional banner, frame or shadow.
+function pawIndoorPlaquePalette(id){
+ if(id==='tarot'||id==='destiny'||id==='quiz'||id==='story'||id==='match')return ['#443b59','#b9a17b','#fff0d7'];
+ if(id==='boba')return ['#824955','#d5a67c','#fff2df'];
+ if(id==='kitchen'||id==='arcade')return ['#704638','#cba16d','#fff2db'];
+ if(id==='tea'||id==='fish'||id==='park'||id==='wishes')return ['#425b54','#b8b18a','#fff3dc'];
+ return ['#503b2c','#d7ba83','#fff1d7']
+}
+function pawDrawIndoorPlaque(id,place,w,h,font,value,scale){
+ const [fill,edge,ink]=pawIndoorPlaquePalette(id);
+ round(place.x-w/2,place.y-h/2,w,h,Math.min(3,2/Math.max(.08,scale)),fill,edge);
+ activityFitText(value,place.x,place.y,font,w-8,ink)
+}
 function pawHallActorScale(height,reference,ratio=1){
  return Number.isFinite(height)&&height>0&&Number.isFinite(reference)&&reference>0?height/reference*Math.max(.75,Math.min(1.1,ratio)):1
 }
@@ -10327,8 +10400,7 @@ label=function(name,x,y,fn){
   const place=pawPaintedPlaquePlacement(anchorX,cy,w,h,{s:scale,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   // Original station body target and room directory remain available.
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,3,'#503b2ce8','#d7ba83');
-  activityFitText(value,place.x,place.y,font,w-8,'#fff1d7');
+  pawDrawIndoorPlaque(room,place,w,h,font,value,scale);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(id);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn);
  }finally{ctx.restore()}
@@ -11255,7 +11327,7 @@ const pawFortunePainting={
   tarot:{approach:[305,1135],plaque:[220,894],hit:[80,840,270,248]},
   destiny:{approach:[755,1135],plaque:[834,896],hit:[665,846,310,248]},
   temple:{approach:[375,702],plaque:[251,481],hit:[95,430,340,230]},
-  wishes:{approach:[630,727],plaque:[827,495],hit:[680,472,292,220]},
+  wishes:{approach:[630,727],plaque:[827,530],hit:[680,472,292,220]},
   station:{approach:[568,365],plaque:[568,282],hit:[430,245,304,126]}
  }
 };
@@ -11328,8 +11400,8 @@ const pawNewDistricts={
    [1280,503,82],[1360,501,90],[1440,502,91],[1530,499,94],
    [1640,500,92],[1685,500,87]],
   doors:{
-   quiz:{approach:[725,461],plaque:[740,347],hit:[636,266,327,197]},
-   story:{approach:[395,965],plaque:[232,760],hit:[55,701,336,237]},
+   quiz:{approach:[725,461],plaque:[740,400],hit:[636,266,327,197]},
+   story:{approach:[395,965],plaque:[232,725],hit:[55,701,336,237]},
    match:{approach:[510,1040],plaque:[812,945],hit:[642,858,329,242]},
    station:{approach:[707,461],plaque:[550,415],hit:[480,378,140,80]}
   }
@@ -11343,8 +11415,8 @@ const pawNewDistricts={
    [1250,350,65],[1320,366,69],[1390,440,106],[1450,498,99],
    [1515,499,100],[1580,504,94],[1640,504,89],[1685,504,83]],
   doors:{
-   mystery:{approach:[478,600],plaque:[255,350],hit:[100,345,325,190]},
-   arcade:{approach:[629,565],plaque:[829,338],hit:[657,329,315,231]},
+   mystery:{approach:[478,600],plaque:[255,405],hit:[100,345,325,190]},
+   arcade:{approach:[629,565],plaque:[829,390],hit:[657,329,315,231]},
    kitchen:{approach:[439,1060],plaque:[255,835],hit:[85,799,397,249]},
    boba:{approach:[588,1390],plaque:[779,1090],hit:[585,1080,385,300]},
    station:{approach:[551,373],plaque:[551,329],hit:[496,300,115,85]}
@@ -11358,8 +11430,8 @@ const pawNewDistricts={
    [1180,727,47],[1260,728,46],[1330,694,46],[1400,660,46],[1480,601,45],
    [1550,540,44],[1645,465,50],[1685,435,41]],
   doors:{
-   fish:{approach:[475,920],plaque:[202,925],hit:[65,865,342,240]},
-   tea:{approach:[414,810],plaque:[798,676],hit:[597,660,376,225]},
+   fish:{approach:[475,920],plaque:[202,895],hit:[65,865,342,240]},
+   tea:{approach:[414,810],plaque:[798,665],hit:[597,660,376,225]},
    park:{approach:[626,460],plaque:[815,355],hit:[660,298,300,165]},
    station:{approach:[515,400],plaque:[500,350],hit:[430,310,150,90]}
   }
@@ -11714,6 +11786,26 @@ function pawWaterGeometry(p=pawWaterPlate){
  return {foot:point(.46,.645),basin:point(.345,.51),palm:point(.426,.565),
   rest:point(.44,.55),scoop:point(.345+.038,.51),pour:point(.426+.038,.545),rack:point(.475,.535)}
 }
+// Match the effective ladle material's source coordinates and mirrored
+// canvas transform. The grip and water outlet travel with the actual prop.
+function pawWaterLadlePoint(at,angle,x,y){
+ const c=Math.cos(angle),sn=Math.sin(angle);
+ return {x:at.x-.65*(x*c-y*sn),y:at.y+.65*(x*sn+y*c)}
+}
+function pawWaterShoulder(g,sc){return {x:g.foot.x-8*sc,y:g.foot.y-52*sc}}
+function pawWaterReach(at,g,sc){
+ if(!Number.isFinite(at?.x)||!Number.isFinite(at?.y))return at;
+ const shoulder=pawWaterShoulder(g,sc),grip=pawWaterLadlePoint(at,0,-25,1);
+ const dx=grip.x-shoulder.x,dy=grip.y-shoulder.y,dist=Math.hypot(dx,dy),limit=42*sc;
+ if(dist<=limit)return at;
+ const f=limit/dist;
+ return {x:at.x+dx*(f-1),y:at.y+dy*(f-1)}
+}
+function pawWaterDragCentre(at,g,sc){
+ if(!Number.isFinite(at?.x)||!Number.isFinite(at?.y))return at;
+ const p=pawWaterPlate;
+ return pawWaterReach({x:Math.max(p.x+p.w*.29,Math.min(p.x+p.w*.54,at.x)),y:Math.max(p.y+p.h*.49,Math.min(p.y+p.h*.60,at.y))},g,sc)
+}
 function pawWaterDestination(stage,g){
  return stage===0?g.scoop:stage===1?g.pour:null
 }
@@ -11761,7 +11853,7 @@ mobileRoomCamera=function(...args){return pawWaterPaintingActive()?pawWaterCamer
 const pawWaterReleaseBefore=templeReleaseWater;
 templeReleaseWater=function(a,gesture,...args){
  if(!pawWaterPaintingActive())return pawWaterReleaseBefore(a,gesture,...args);
- const run=state,stage=run.waterStage,g=pawWaterGeometry();a=pawWaterGripPoint(a,gesture);
+ const run=state,stage=run.waterStage,g=pawWaterGeometry();a=pawWaterGripPoint(a,gesture);if(gesture?.id==='templeLadle')a=pawWaterDragCentre(a,g,pawTemplePaintedActorScale());
  if(pawArcadeInputBlocked()||![0,1].includes(stage))return;
  if(!pawWaterDropMatches(stage,a?.x,a?.y,g)){hint(stage===0?'Dip the ladle in the marked water.':'Move the filled ladle above your hand.',stage===0?'把竹勺放入亮起的水面。':'把盛满水的竹勺移到手掌上方。');return}
  // Retain the original action, audio, award and ownership contract.
@@ -11784,20 +11876,21 @@ function pawDrawWaterPainting(){
  ctx.fillStyle='#473e36';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawWaterArt(),p.x,p.y,p.w,p.h);
  const ready=stage===0?g.rest:stage===1?g.scoop:g.pour;
  let at=ready,angle=0;
- if(held){const grip=pawWaterGripPoint(drag,drag);at={x:Math.max(p.x+p.w*.29,Math.min(p.x+p.w*.54,grip.x)),y:Math.max(p.y+p.h*.49,Math.min(p.y+p.h*.60,grip.y))}}
+ if(held){at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,pawTemplePaintedActorScale())}
  else if(stage===1)at=pawWaterMix(run.pawWaterFrom||g.scoop,g.rest,poseEase(Math.min(1,age/.35)));
  else if(stage===2){at=pawWaterMix(run.pawWaterFrom||g.pour,g.pour,poseEase(Math.min(1,age/.35)));angle=.58*poseEase(Math.min(1,age/.4))*(1-poseEase(Math.max(0,Math.min(1,(age-1.5)/.5))))}
  else if(stage===3)at=pawWaterMix(g.pour,g.rack,poseEase(Math.min(1,age/.55)));
- const sc=pawTempleContactScale(cam.scale,1.72),shoulder={x:g.foot.x-8*sc,y:g.foot.y-52*sc},grip={x:at.x+16,y:at.y};
- // Reuse the chosen traveller, standing in front of the real basin.
+ const sc=pawTemplePaintedActorScale(),shoulder=pawWaterShoulder(g,sc),grip=pawWaterLadlePoint(at,angle,-25,1);
+ // Far arm is occluded by the traveller, not drawn across the torso.
+ if(stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.80,true);
  backHuman(g.foot.x,g.foot.y,avatar??0,false,'left',sc);
- if(stage===1||stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.80,true);
  if(stage!==3||age<.55){
-  ctx.save();ctx.translate(at.x,at.y);ctx.scale(-.65,.65);waterLadleArt(0,0,-angle,stage===1||stage===2&&age<1.55);ctx.restore();
-  pawIncenseArm(shoulder,grip,sc*.82,false)
+  ctx.save();ctx.translate(at.x,at.y);ctx.scale(-.65,.65);waterLadleArt(0,0,angle,stage===1||stage===2&&age<1.55);ctx.restore();
+  // At rest before pickup, no detached reaching sleeve.
+  if(held||stage!==0)pawIncenseArm(shoulder,grip,sc*.82,false)
  }
  if(stage===2&&age>.15&&age<1.8){
-  const bowl={x:at.x-23*Math.cos(angle),y:at.y+23*Math.sin(angle)};
+  const bowl=pawWaterLadlePoint(at,angle,35,6);
   for(let j=0;j<10;j++){const f=(age*2.8+j/10)%1;ellipse(bowl.x+(g.palm.x-bowl.x)*f+Math.sin(j)*1.5,bowl.y+(g.palm.y-bowl.y)*f,1.2,2.9,'#e0eee4')}
   for(let j=0;j<4;j++){const f=(age*2+j*.25)%1;ellipse(g.palm.x+Math.sin(j*2)*6,g.palm.y+3+f*20,1.1,2.1,'#d7ece4')}
  }
@@ -11830,11 +11923,26 @@ function pawAlcoveGeometry(p=pawWaterPlate){
   moonTray:pt(.743,.508),moonFoot:pt(.707,.64),moonHand:pt(.70,.54)}
 }
 function pawAlcoveActorScale(){return 1.92}
+function pawAlcoveReach(foot,side=1){
+ const scale=pawAlcoveActorScale();
+ return {shoulder:{x:foot.x+side*5*scale,y:foot.y-63*scale},grip:{x:foot.x+side*8*scale,y:foot.y-48*scale},sleeve:.72*scale,maxReach:48*scale}
+}
 function pawAlcoveStickPoint(g,pose){
- const f=Math.max(0,Math.min(1,pose.fall)),pick=pose.picked?Math.max(0,Math.min(1,(pose.pick-.45)/.55)):0;
+ const f=Math.max(0,Math.min(1,pose.fall)),u=pose.picked?Math.max(0,Math.min(1,(pose.pick-.45)/.55)):0,pick=u*u*(3-2*u);
  const x=g.tubeTop.x+(g.stickTray.x-g.tubeTop.x)*f;
  const y=g.tubeTop.y+(g.stickTray.y-g.tubeTop.y)*f-Math.sin(Math.PI*f)*25;
- return {x:x+(g.stickPickFoot.x+14-x)*pick,y:y+(g.stickPickFoot.y-64-y)*pick,angle:Math.PI*.46*f*(1-pick)}
+ const grip=pawAlcoveReach(g.stickPickFoot).grip;
+ return {x:x+(grip.x-x)*pick,y:y+(grip.y-y)*pick,angle:Math.PI*.46*f*(1-pick)}
+}
+// Keep approach, retrieval and carried stick on one shared physical contact point.
+function pawAlcoveStickContact(g,pose,held=false){
+ const ease=u=>{u=Math.max(0,Math.min(1,u));return u*u*(3-2*u)};
+ const move=pose.picked?ease(pose.pick/.45):0;
+ const foot={x:g.stickFoot.x+(g.stickPickFoot.x-g.stickFoot.x)*move,y:g.stickFoot.y+(g.stickPickFoot.y-g.stickFoot.y)*move};
+ const reach=pawAlcoveReach(foot),walking=move>0&&move<1;
+ const hand=pose.picked?(pose.pick>=.45?pawAlcoveStickPoint(g,pose):null):(held||pose.shake?g.tubeGrip:null);
+ const contact=hand&&Math.hypot(hand.x-reach.shoulder.x,hand.y-reach.shoulder.y)<=reach.maxReach?hand:null;
+ return {foot,walking,hand:contact,reach,scale:pawAlcoveActorScale()};
 }
 function pawAlcoveMoonPoint(g,m){
  return {x:g.moonTray.x+(m.x-400)*.26,y:g.moonTray.y-m.lift*.32}
@@ -11865,14 +11973,10 @@ function pawAlcoveTubeShake(shake){
 function pawDrawAlcoveSticks(){
  const run=state,g=pawAlcoveGeometry(),pose=pawTempleStickPose(run,t),held=drag?.id==='sticks';
  pawAlcoveTubeShake(held||pose.shake);
- const move=pose.picked?poseEase(Math.min(1,pose.pick/.45)):0,foot=pawWaterMix(g.stickFoot,g.stickPickFoot,move);
- const sc=pawAlcoveActorScale();
- // The whole actor is proportioned to the counter. Only expose the reaching hand during contact.
- if((held||pose.shake||pose.picked&&pose.pick<.85)&&(!pose.picked||pose.pick<.85)){
-  const shoulder={x:foot.x+8,y:foot.y-63*sc},hand=!pose.picked?g.tubeGrip:pawWaterMix(g.stickTray,{x:foot.x+14,y:foot.y-64},poseEase(Math.max(0,(pose.pick-.45)/.55)));
-  if(Math.hypot(hand.x-shoulder.x,hand.y-shoulder.y)<=38) pawIncenseArm(shoulder,hand,1.12,false)
- }
- backHuman(foot.x,foot.y,avatar??0,move>0&&move<1,'up',sc);
+ const contact=pawAlcoveStickContact(g,pose,held),{foot,walking,hand,reach,scale}=contact;
+ // Keep the arm behind the painted body; do not reach while still walking.
+ if(hand)pawIncenseArm(reach.shoulder,hand,reach.sleeve,false);
+ backHuman(foot.x,foot.y,avatar??0,walking,'up',scale);
  if(pose.show){
   const pt=pawAlcoveStickPoint(g,pose);ctx.save();try{ctx.translate(pt.x,pt.y);ctx.rotate(pt.angle);
    round(-2.8,-17,5.6,34,1,'#d7b47c','#9c7447');line(-1,-15,-1,15,'#f1dba6',.7);
@@ -11884,8 +11988,8 @@ function pawDrawAlcoveSticks(){
 }
 function pawDrawAlcoveMoon(){
  const run=state,g=pawAlcoveGeometry(),airborne=run.tossUntil>t,f=airborne?Math.max(0,Math.min(1,1-(run.tossUntil-t)/(run.moonDuration||.55))):1;
- const sc=pawAlcoveActorScale(),shoulder={x:g.moonFoot.x-8,y:g.moonFoot.y-63*sc};
- if(airborne&&Math.hypot(g.moonHand.x-shoulder.x,g.moonHand.y-shoulder.y)<=38)pawIncenseArm(shoulder,g.moonHand,1.12,false);
+ const sc=pawAlcoveActorScale(),{shoulder,sleeve,maxReach}=pawAlcoveReach(g.moonFoot,-1);
+ if(airborne&&Math.hypot(g.moonHand.x-shoulder.x,g.moonHand.y-shoulder.y)<=maxReach)pawIncenseArm(shoulder,g.moonHand,sleeve,false);
  backHuman(g.moonFoot.x,g.moonFoot.y,avatar??0,false,'up',sc);
  for(let i=0;i<2;i++){
   const flat=pawMoonFlat(run.result,i,run.count),m=pawMoonMotion(f,i,flat,run.moonHeight||95),pt=pawAlcoveMoonPoint(g,m);
@@ -12213,9 +12317,57 @@ function pawRearGardenRoute(from,action){
  return route.length?route:[pawRearGardenNodes[action].slice()]
 }
 // A seated body contacts the painted cushion at the hip, not the path.
+/* PAW_REAR_SEATED_ART_BEGIN */
+// Individually extracted original travellers; the sheet's row order is
+// 1,0,2,3. The hip is the visible cushion-contact landmark, not image centre.
+const pawRearSeatedRecords=[
+ {w:206,h:280,hip:[71,214]},
+ {w:215,h:283,hip:[82,225]},
+ {w:222,h:280,hip:[82,223]},
+ {w:239,h:279,hip:[88,225]}
+];
+function pawRearSeatedBox(id,hip,scale){
+ const r=pawRearSeatedRecords[id];
+ if(!r||![hip?.x,hip?.y,scale].every(Number.isFinite)||scale<=0)return null;
+ const h=78*scale,w=h*r.w/r.h,k=h/r.h;
+ // Mirror the original right-facing seated pose towards the pond.
+ return {x:hip.x-(r.w-r.hip[0])*k,y:hip.y-r.hip[1]*k,w,h,hipX:r.hip[0]*k,hipY:r.hip[1]*k}
+}
+/* PAW_REAR_SEATED_ART_END */
+const pawRearSeatedImages=new Map();
+function pawRearSeatedImage(id){
+ if(!pawRearSeatedRecords[id])return null;
+ if(!pawRearSeatedImages.has(id)){
+  const im=new Image();im.decoding='async';im.src='assets/visual/staging/2026-11-27-extracted/players/'+id+'/seated.webp';pawRearSeatedImages.set(id,im)
+ }
+ return pawRearSeatedImages.get(id)
+}
+function pawDrawRearSeated(im,id,hip,scale){
+ const r=pawRearSeatedRecords[id],box=pawRearSeatedBox(id,hip,scale);
+ if(!r||!box||!im?.complete||im.naturalWidth!==r.w||im.naturalHeight!==r.h)return false;
+ ctx.save();try{
+  ctx.translate(hip.x,hip.y);ctx.scale(-1,1);
+  ctx.drawImage(im,-box.hipX,-box.hipY,box.w,box.h)
+ }finally{ctx.restore()}return true
+}
 function pawRearBenchPose(p,scale){
  const hip={x:p.x+p.w*.78,y:p.y+p.h*.407};
  return {hip,x:hip.x-9*scale,y:hip.y+32*scale,scale}
+}
+// The bench hip and adjacent paving establish a world-space body size.
+// Keep that size when the viewport or camera changes; the camera alone zooms.
+function pawRearGardenActorScale(p,seat=pawRearGardenNodes.seat){
+ const rise=p.h*(seat[1]-.407);
+ return Number.isFinite(rise)&&rise>0?Math.max(1.35,Math.min(2.25,rise/32)):1.72
+}
+function pawRearGardenSeatAmount(run,now,reduced,atBench){
+ if(!atBench||!Number.isFinite(now)||!Number.isFinite(run?.gardenSeatAt))return 0;
+ if(reduced)return run.gardenSitting?1:0;
+ const f=Math.max(0,Math.min(1,(now-run.gardenSeatAt)/.45)),e=f*f*(3-2*f);
+ return run.gardenSitting?e:1-e
+}
+function pawRearGardenAtBench(q,seat=pawRearGardenNodes.seat){
+ return !!q&&!q.route?.length&&Array.isArray(q.pos)&&q.pos.length===2&&Math.hypot(q.pos[0]-seat[0],q.pos[1]-seat[1])<.002
 }
 const pawRearCatFigurines=[[.578,.240],[.653,.229],[.717,.240],[.596,.278],[.645,.278],[.697,.278]];
 const pawRearCatBlessings=[['May your lunch break actually be a break.','愿你的午休，真的能休息。'],['May good things find you without a meeting invite.','愿好事找上门，不必先开会。'],['May you master the ancient art of saying: tomorrow.','愿你练成一门绝学：明天再说。'],['A little luck for whatever you are carrying today.','愿你今天的心事，轻一点。'],['May your tea stay warm and your work chat stay on mute.','愿杯中茶常暖，工作群常静音。'],['May the lift arrive just as you press the button.','愿你每次按电梯，门马上就开。']];
@@ -12257,6 +12409,7 @@ start=function(id,...args){
  const result=pawRearGardenStartBefore(id,...args);
  if(id==='secretGarden'&&activity===id&&room==='temple'){
   state.pawRearGarden=pawRoomImageReady(pawRearGardenArt());
+  if(state.pawRearGarden)pawRearSeatedImage(avatar??0);
   if(state.pawRearGarden){
    state.pawGardenWalk={painted:true,pos:pawRearGardenNodes.entry.slice(),route:[pawRearGardenNodes.bend.slice(),pawRearGardenNodes.fork.slice()],action:null,last:t,dir:'up'};
    hint('Follow the stone path to the pond or lucky cats.','沿石径去看看锦鲤和招财猫。')
@@ -12277,8 +12430,16 @@ pawGardenChoose=function(run,kind){
  if(!run?.pawRearGarden)return pawRearGardenChooseBefore(run,kind);
  if(run!==state||!pawRearGardenActive()||pawArcadeInputBlocked())return;
  const q=run.pawGardenWalk;if(!q||q.route.length)return;
- if(kind==='seat'&&run.gardenSitting){gardenSeat();return}
- if(run.gardenSitting){gardenSeat();if(run.gardenSitting)return}
+ if(run.gardenSitting){
+  gardenSeat();if(run.gardenSitting)return;
+  if(kind!=='seat')q.pawAfterStand=kind;
+  return
+ }
+ if(pawRearGardenSeatAmount(run,t,residentReducedMotion.matches,pawRearGardenAtBench(q))>0){
+  if(kind!=='seat')q.pawAfterStand=kind;
+  return
+ }
+ delete q.pawAfterStand;
  if(pawGardenRoute(q,kind))hint(...({feed:['Walking to the pond…','走向锦鲤池……'],seat:['Walking to the bench…','走向长椅……'],chime:['Walking to the chime…','走向风铃……'],cats:['Walking to the lucky cats…','走向招财猫……']}[kind]))
 };
 // Deform a small region of the existing painted object, preserving the
@@ -12300,8 +12461,11 @@ const pawRearGardenDrawBefore=drawActivity;
 drawActivity=function(...args){
  if(!pawRearGardenActive())return pawRearGardenDrawBefore(...args);
  const run=state,q=run.pawGardenWalk,p=pawRearGardenPlate,b=livingBounds(),xy=(u,v)=>[p.x+p.w*u,p.y+p.h*v];
+ if(q.pawAfterStand&&!run.gardenSitting&&!pawArcadeInputBlocked()&&pawRearGardenSeatAmount(run,t,residentReducedMotion.matches,pawRearGardenAtBench(q))===0){
+  const next=q.pawAfterStand;delete q.pawAfterStand;pawGardenChoose(run,next)
+ }
  const prior=q.pos.slice(),arrive=pawGardenWalkTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
- if(arrive==='feed')gardenFeed();else if(arrive==='seat')gardenSeat();else if(arrive==='chime')gardenChime();
+ if(arrive==='feed')gardenFeed();else if(arrive==='seat'){gardenSeat();q.dir='left'}else if(arrive==='chime')gardenChime();
  else if(arrive==='cats'){run.pawCatAt=t;const i=Number.isInteger(run.pawCatPending)?run.pawCatPending:(Number.isInteger(run.pawCatChoice)?(run.pawCatChoice+1)%6:1);delete run.pawCatPending;sound(520);hint(...pawRearCatChoice(run,i))}
  const dx=(q.pos[0]-prior[0])*p.w,dy=(q.pos[1]-prior[1])*p.h,moving=q.route.length>0;
  if(Math.hypot(dx,dy)>.01)q.dir=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';
@@ -12333,11 +12497,16 @@ drawActivity=function(...args){
     if(f>0&&f<1){const [rx,ry]=xy(.31+j*.018,.453+(j%2)*.014);ctx.strokeStyle='rgba(242,239,207,'+(.6*(1-f))+')';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(rx,ry,2+f*17,1+f*5,0,0,TAU);ctx.stroke()}
    }
   }
-  const [x,y]=xy(...q.pos),scale=pawTempleContactScale(cam.scale,1.48+Math.max(0,q.pos[1]-.54)*.55);
-  const seated=run.gardenSitting&&!moving,seatAge=Math.max(0,t-run.gardenSeatAt),seatAmount=seated?(residentReducedMotion.matches?1:poseEase(Math.min(1,seatAge/.45))):0;
-  if(seated){const a=pawRearBenchPose(p,scale),sx=x+(a.x-x)*seatAmount,sy=y+(a.y-y)*seatAmount;
-   ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}
-  }else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale);
+  const [x,y]=xy(...q.pos),scale=pawRearGardenActorScale(p);
+  const seatAmount=pawRearGardenSeatAmount(run,t,residentReducedMotion.matches,pawRearGardenAtBench(q));
+  if(seatAmount>0){const a=pawRearBenchPose(p,scale),sx=x+(a.x-x)*seatAmount,sy=y+(a.y-y)*seatAmount;
+   const id=avatar??0,im=pawRearSeatedImage(id);
+   // Choose one completed pose when sitting starts; do not replace it
+   // mid-visit if the image finishes decoding late.
+   if(seatAmount>=.98&&run.gardenSitting&&run.pawRearSeatArt===undefined){const r=pawRearSeatedRecords[id];run.pawRearSeatArt=!!(r&&im?.complete&&im.naturalWidth===r.w&&im.naturalHeight===r.h)}
+   const painted=seatAmount>=.98&&run.pawRearSeatArt&&pawDrawRearSeated(im,id,a.hip,scale);
+   if(!painted){ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}}
+  }else{delete run.pawRearSeatArt;backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale)}
   const chimeAge=t-run.gardenChimeAt,catAge=t-run.pawCatAt,reduced=residentReducedMotion.matches;
   // Only the hanging paper tail moves. The beam, chain, bell and ceramic figures stay rigid.
   const breeze=reduced?0:Math.sin(t*1.45)*.42+Math.sin(t*.83)*.18;
@@ -12361,8 +12530,8 @@ drawActivity=function(...args){
 // The path is the clear aisle between painted furniture, not the countertop.
 const pawFoodPlate={x:100,y:-145,w:600,h:600*1648/928};
 const pawFoodRoomSpecs={
- kitchen:{station:'cook',entry:[400,735],arrival:[400,690],anchor:[290,420,350,580],resident:[465,605],visitors:[[365,715],[435,730],[400,660]],label:['Cook with Grandma','跟外婆煮汤'],labelY:467},
- boba:{station:'bubbleTea',entry:[400,735],arrival:[400,675],anchor:[400,345,400,565],resident:[290,615],visitors:[[470,705],[340,720],[435,640]],label:['Make bubble tea','手摇奶茶'],labelY:397}
+ kitchen:{station:'cook',entry:[400,735],arrival:[400,690],anchor:[290,420,350,580],resident:[465,605],visitors:[[365,715],[435,730],[400,660]],label:['Cook with Grandma','跟外婆煮汤'],labelX:230,labelY:300},
+ boba:{station:'bubbleTea',entry:[400,735],arrival:[400,675],anchor:[400,345,400,565],resident:[290,615],visitors:[[470,705],[340,720],[435,640]],label:['Make bubble tea','手摇奶茶'],labelX:400,labelY:374}
 };
 function pawFoodSafe(id,x,y){
  if(!Object.hasOwn(pawFoodRoomSpecs,id)||![x,y].every(Number.isFinite)||y<565||y>738)return false;
@@ -12430,6 +12599,12 @@ indoorSafe=function(x,y,...args){return pawFoodRoomActive()?pawFoodSafe(room,x,y
 // Normalized positions traced on the five original 928x1648 portrait
 // paintings. Never use these positions on a replacement landscape plate.
 const pawSceneLights={
+ // Coordinates traced on the actual 928x1648 room paintings. Keep the
+ // glow inside existing fixtures; do not animate architecture or add lamps.
+ tea:[[.287,.149,.046,.036],[.807,.130,.053,.041],[.421,.221,.027,.023],[.810,.278,.022,.027],[.287,.433,.018,.016]],
+ arcade:[[.311,.099,.045,.031],[.410,.123,.039,.028],[.643,.138,.025,.019],[.887,.124,.041,.031],[.051,.212,.034,.025],[.337,.273,.018,.021],[.695,.273,.018,.021]],
+ quiz:[[.323,.220,.019,.021],[.512,.346,.017,.023],[.980,.339,.016,.027],[.518,.409,.035,.020],[.036,.460,.027,.025]],
+ story:[[.094,.232,.013,.016],[.907,.232,.014,.016],[.502,.485,.064,.029],[.220,.589,.020,.024],[.830,.583,.019,.024],[.061,.760,.027,.032],[.960,.784,.025,.035]],
  kitchen:[[.752,.121,.103,.064],[.072,.194,.045,.044],[.468,.308,.039,.024]],
  boba:[[.230,.111,.052,.039],[.430,.126,.047,.036],[.666,.142,.042,.034],[.830,.101,.053,.040],[.041,.468,.040,.041]],
  tarot:[[.521,.113,.069,.054],[.528,.259,.032,.032],[.954,.328,.045,.038],[.053,.344,.045,.033]],
@@ -12523,9 +12698,9 @@ label=function(name,x,y,fn){
  const sc=Math.max(.08,cam.scale),font=Math.min(26,Math.max(17,12/sc)),cy=q.labelY,value=tr(...q.label);
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';const w=Math.min(190,Math.max(75,ctx.measureText(value).width+18)),h=font+13;
-  const place=pawPaintedPlaquePlacement(x,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
+  const place=pawPaintedPlaquePlacement(q.labelX,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,4,'#523c2dec','#d7b982');activityFitText(value,place.x,place.y,font,w-10,'#fff0d5');
+  pawDrawIndoorPlaque(room,place,w,h,font,value,sc);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(q.station);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
  }finally{ctx.restore()}
@@ -12956,7 +13131,7 @@ label=function(name,x,y,fn){
   const w=Math.min(160,Math.max(75,ctx.measureText(value).width+18)),h=font+13;
   const place=pawPaintedPlaquePlacement(cx,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,4,'#523c2dec','#d7b982');activityFitText(value,place.x,place.y,font,w-10,'#fff0d5');
+  pawDrawIndoorPlaque(room,place,w,h,font,value,sc);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(station.id);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
  }finally{ctx.restore()}
@@ -13031,6 +13206,21 @@ function pawReadingCoverPlate(bounds,iw,ih){
  const scale=Math.max(bounds.w/iw,bounds.h/ih),w=iw*scale,h=ih*scale;
  return {x:bounds.x+(bounds.w-w)/2,y:bounds.y+(bounds.h-h)/2,w,h}
 }
+/* PAW_YUE_SEATED_CONTINUITY_BEGIN */
+// Admission is frozen per visit. A validated idle pose is preferable to
+// a miniature standing crop when the other two poses are still decoding.
+function pawReadingVisitPhase(visit,id,phase){
+ if(visit?.id!==id)return null;
+ if(visit.ready)return phase;
+ return id==='destiny'&&visit.idleReady?'idle':null
+}
+function pawReadingVisibleRect(frame,alpha,clip){
+ if(!frame||typeof frame.point!=='function'||!Array.isArray(alpha)||!Array.isArray(clip)||alpha.length!==4||clip.length!==4||![...alpha,...clip].every(Number.isFinite)||alpha[2]<=alpha[0]||alpha[3]<=alpha[1]||clip[2]<=0||clip[3]<=0)return null;
+ const [x,y]=frame.point(alpha[0],alpha[1]),[r,d]=frame.point(alpha[2],alpha[3]);
+ const left=Math.max(x,clip[0]),right=Math.min(r,clip[0]+clip[2]),top=Math.max(y,clip[1]),bottom=Math.min(d,clip[1]+clip[3]);
+ return [left,right,top,bottom].every(Number.isFinite)&&right>left&&bottom>top?{left,right,top,bottom}:null
+}
+/* PAW_YUE_SEATED_CONTINUITY_END */
 function pawReadingHostFamilyReady(id,manifest,api,ready){
  const host=id==='tarot'?'fortune-teller':id==='destiny'?'master-yue':null;
  const poses=host&&manifest?.characters?.[host]?.poses;
@@ -13059,6 +13249,12 @@ function pawHostFamilyReady(id){
   const im=pawHostPoseImage(path);return pawRoomImageReady(im)&&im.naturalWidth===canvas[0]&&im.naturalHeight===canvas[1]&&pawDecodedSources.get(im)===(im.src||im.currentSrc||'')
  })
 }
+function pawYueIdleReady(){
+ const lib=pawHostLibrary,host='master-yue',pose='seated-welcome-explain';
+ const f=lib?.api.contacts(lib.manifest,host,pose,[0,0],10);if(!f)return false;
+ const im=pawHostPoseImage(f.path);
+ return pawRoomImageReady(im)&&im.naturalWidth===f.canvas[0]&&im.naturalHeight===f.canvas[1]&&pawDecodedSources.get(im)===(im.src||im.currentSrc||'')
+}
 function pawWarmReadingHost(id){
  if(!['tarot','destiny'].includes(id)||pawHostWarmJobs.has(id)||pawHostFamilyReady(id))return;
  const job=pawLoadHostLibrary().then(lib=>{
@@ -13084,17 +13280,25 @@ let pawYueInkCurrent=null;
 document.addEventListener('visibilitychange',()=>{
  if(pawYueInkCurrent&&pawHostLibrary?.api?.parchmentClock)pawHostLibrary.api.parchmentClock(pawYueInkCurrent.clock,performance.now()/1000,document.hidden,residentReducedMotion.matches)
 });
-function pawDrawReadingSeated(id,plate){
- if(pawHostVisit?.id!==id||!pawHostVisit.ready||!pawHostLibrary)return false;
+function pawReadingDeskState(id){
  const desk=id==='destiny'&&$('page').dataset.pawYueDesk==='true'&&$('page').style.display!=='none';
  const activeForm=desk?$('content').querySelector('.astroForm,.yueAlmanacForm'):null;
  const editing=!!activeForm&&!activeForm.hidden&&activeForm.style.display!=='none';
  const grid=desk&&!editing?$('content').querySelector('.ziGrid'):null;
  const almanac=desk&&!editing?$('content').querySelector('.yueReadingFront,.signNotebookResult'):null;
- const result=!!(grid||almanac),phase=pawReadingHostPhase(id,state,activity,desk,result);
- const plan=pawReadingSeatPlan(id,plate,phase);if(!plan)return false;
+ return {grid,phase:pawReadingHostPhase(id,state,activity,desk,!!(grid||almanac))}
+}
+function pawReadingVisitFrame(id,plate,phase){
+ const selected=pawReadingVisitPhase(pawHostVisit,id,phase);
+ if(selected===null||!pawHostLibrary)return null;
+ const plan=pawReadingSeatPlan(id,plate,selected);if(!plan)return null;
  const {api,manifest}=pawHostLibrary,fr=api.contacts(manifest,plan.host,plan.pose,plan.center,plan.span);
- if(!fr)return false;
+ if(!fr)return null;
+ return {api,manifest,plan,fr,phase:selected}
+}
+function pawDrawReadingSeated(id,plate){
+ const desk=pawReadingDeskState(id),f=pawReadingVisitFrame(id,plate,desk.phase);if(!f)return false;
+ const {api,plan,fr,phase}=f,{grid}=desk;
  const im=pawHostPoseImage(fr.path);
  ctx.save();try{
   ctx.beginPath();ctx.rect(...plan.clip);ctx.clip();
@@ -13148,7 +13352,7 @@ enter=function(id,...args){
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   pawReadingAdmission=null;
   if(!ready||!pawRoomImageReady(im)){hint('The room painting could not load. Tap its door to try again.','小屋画面暂未加载成功，请再次点击门口重试。');return}
-  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id)};return pawReadingEnterBefore(id,...args)
+  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id),idleReady:id==='destiny'&&pawYueIdleReady()};return pawReadingEnterBefore(id,...args)
  }).finally(()=>{if(pawReadingAdmission===request)pawReadingAdmission=null})
 };
 // Nearby outdoor warming should decode the actual selected lobby painting,
@@ -13261,14 +13465,32 @@ function pawDrawYueAtDesk(a){
  }finally{ctx.restore()}
  return true
 }
+// Speech/sign clearance must reserve the actual visible seated silhouette,
+// not a standing rectangle based on the player's zoom-dependent scale.
+const pawYueBoundsBefore=meowIndoorActorBounds;
+meowIndoorActorBounds=function(a,scale){
+ if(room==='destiny'&&pawReadingActive()&&a?.station==='destiny'&&residentArtworkRecord(a.n)?.id==='master-yue'){
+  const f=pawReadingVisitFrame('destiny',pawReadingPlate,pawReadingDeskState('destiny').phase);
+  if(f){
+   const im=pawHostPoseImage(f.fr.path),alpha=f.manifest.characters[f.plan.host].poses[f.plan.pose].visibleAlphaBounds;
+   const rect=pawRoomImageReady(im)&&pawReadingVisibleRect(f.fr,alpha,f.plan.clip);
+   if(rect&&im.naturalWidth===f.fr.canvas[0]&&im.naturalHeight===f.fr.canvas[1]){
+    const z=cam.scale;return {left:cam.ox+rect.left*z-5,right:cam.ox+rect.right*z+5,top:cam.oy+rect.top*z-5,bottom:cam.oy+rect.bottom*z+6}
+   }
+  }
+ }
+ return pawYueBoundsBefore.call(this,a,scale)
+};
 function pawDrawYueDeskPlaque(fn){
+ // A consultation already underway does not need another entry sign.
+ if(talkOpen||$('page').style.display==='block'||activity)return false;
  const q=pawYueDeskPlaque(),scale=Math.max(.08,cam.scale),font=Math.max(9,12/scale),name=tr('Consult','问事');
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';
   const w=Math.max(58/scale,ctx.measureText(name).width+12/scale),h=22/scale;
-  const place=pawPaintedPlaquePlacement(q.x,q.y,w,h,{s:scale,ox:cam.ox,oy:cam.oy},{w:W,h:H},meowTextFrameRects);
+  const place=pawPaintedPlaquePlacement(q.x,q.y,w,h,{s:scale,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers,...pawLocalVisitors.filter(pawVisitorVisible).map(a=>meowIndoorActorBounds(a))]);
   if(!place)return false;
-  round(place.x-w/2,place.y-h/2,w,h,2/scale,'#4b392ceb','#c9a979');activityFitText(name,place.x,place.y,font,w-6/scale,'#fff1d8');
+  pawDrawIndoorPlaque(room,place,w,h,font,name,scale);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add('destiny');
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn);return true
  }finally{ctx.restore()}
@@ -13316,7 +13538,7 @@ label=function(name,x,y,fn){
   const w=Math.min(144,Math.max(60,ctx.measureText(name).width+12)),h=font+9;
   const place=pawPaintedPlaquePlacement(cx,cy,w,h,{s:sc,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers]);
   if(!place)return;
-  round(place.x-w/2,place.y-h/2,w,h,3,'#4e3d32ed','#d7bc88');activityFitText(name,place.x,place.y,font,w-7,'#fff0d5');
+  pawDrawIndoorPlaque(room,place,w,h,font,name,sc);
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add(station.id);
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn)
  }finally{ctx.restore()}
@@ -13733,7 +13955,7 @@ openTarotReading=function(entry,back){
  const live=pawLiveTarotSnapshot(entry,state,activity,room,tarotDeck.length);
  const run=state,kind=activity,count=live.cards.length;
  const valid=()=>run===state&&room==='tarot'&&activity===kind&&pawTarotReadingRoute(live,run,kind,room,tarotDeck.length,t,false)==='live';
- const returnTable=()=>{if(!valid())return;closeTalk();$('page').style.display='none';if(run.readStage==='focus')readingReturnSpread()};
+ const returnTable=()=>{if(!valid())return;closeTalk();$('page').style.display='none';if(run.readStage==='focus')readingReturnSpread();else hint(...pawReadingNextHint(run,t,journalAutoSave()))};
  function explain(index){
   if(!valid())return;
   $('page').style.display='none';closeTalk();
@@ -13746,13 +13968,13 @@ openTarotReading=function(entry,back){
    if(reflection)words+='\n\n'+reflection;
    const aside=tarotCommentary(d[0],c.rev,live.topic,live.tone);
    if(aside)words+='\n\n'+tr(...aside);
-   choices.push([index+1<count?tr('Next card','下一张牌'):tr('What does it mean together?','整体意味着什么？'),()=>explain(pawLiveTarotStep(count,index,1))]);
+   choices.push([index+1<count?tr('Next card','下一张牌'):count===1?tr('A moment to reflect','静心想一想'):tr('What does it mean together?','整体意味着什么？'),()=>explain(pawLiveTarotStep(count,index,1))]);
   }else{
    words=count===5?tr('Compare what helps with the challenge card. Choose one small action from the next-step card, and keep the last card as a reminder.','对照助力牌和挑战牌。从行动牌里选一件小事，再把最后一张牌当作提醒。'):count===3?readingConnection(live):tr('Take what resonates with you. A card is a moment for reflection, not a prediction or an instruction.','把有共鸣的部分留在心里。牌意是自我反思，不是预言，也不是指令。');
    choices.push([tr('Make a keepsake','制作纪念牌卡'),()=>{if(!valid())return;closeTalk();shareReadingResult(live,()=>{if(valid())explain(index)})}]);
   }
   if(index>0)choices.push([tr('Previous card','上一张牌'),()=>explain(pawLiveTarotStep(count,index,-1))]);
-  choices.push([tr('Back to the table','回到牌桌'),returnTable]);
+  choices.push([index===count?tr('Finish reading · return to table','结束解读，回到牌桌'):tr('Back to the table','回到牌桌'),returnTable]);
   say(tr('Fortune Teller','占卜师'),words,choices)
  }
  explain(0)
@@ -14300,10 +14522,13 @@ const pawAuntieSeatDrawBefore=drawActivity;
 drawActivity=function(...args){
  const visit=room==='fish'&&activity==='hit'?state.pawAuntieVisit:null;
  if(visit){
-  pawAuntieSeatAdvance(visit,t,pawArcadeInputBlocked());
-  const frame=pawAuntieSeatFrame(visit.phase,visit.age,residentReducedMotion.matches);
-  if(visit.phase==='arrival'&&frame.done){visit.phase='seated';visit.age=0;refreshControls();hint('Ah Ma: What is bothering you today?','阿嬷：今天有什么烦心事？')}
-  else if(visit.phase==='departure'&&frame.done){
+  const blocked=pawArcadeInputBlocked();
+  pawAuntieSeatAdvance(visit,t,blocked);
+  // Reduced motion may complete a pose immediately, but never complete
+  // an arrival or leave the room under a covered or hidden scene.
+  const frame=pawAuntieSeatFrame(visit.phase,visit.age,residentReducedMotion.matches&&!blocked);
+  if(!blocked&&visit.phase==='arrival'&&frame.done){visit.phase='seated';visit.age=0;refreshControls();hint('Ah Ma: What is bothering you today?','阿嬷：今天有什么烦心事？')}
+  else if(!blocked&&visit.phase==='departure'&&frame.done){
    return pawAuntieSeatBackBefore.apply($('back'),visit.backArgs||[])
   }
  }
@@ -14471,7 +14696,7 @@ function pawKitchenPaintBowl(x,y,fill){
 }
 function pawKitchenServeRequest(){
  if(activity!=='cook'||!state.done||state.pawSoupServed||state.pawSoupServeAt!==undefined||pawArcadeInputBlocked())return;
- state.pawSoupServeAt=t;closeTalk();sound(330);hint('Grandma: Ladle yourself a bowl first. No need to serve the whole office.','外婆：先给自己盛一碗，又不用请全公司吃饭。');
+ state.pawSoupServeAt=t;closeTalk();sound(330);hint('Grandma: Here, a bowl for you. Don\'t just keep looking at it!','外婆：来，先给自己盛一碗。光看又不会饱！');
 }
 /* PAW_KITCHEN_SERVE_END */
 
@@ -14591,8 +14816,8 @@ drawActivity=function(...args){
   const result=pawKitchenSteamBefore(...args);mb5AssistSync();return result
  }
  const q=run.pawSteam,pan=q.method==='pan',changed=pawKitchenSteamAdvance(q,t,pawArcadeInputBlocked());
- if(changed&&q.phase==='ready'){sound(540);hint(...(pan?['Grandma: Wah, golden edges! The tofu has had a better holiday than you.','外婆：哇，煎得金黄金黄的！豆腐都比你会度假。']:['Grandma: Nice and green! Finally, something that isn\'t overworked.','外婆：青翠青翠的，终于有一样东西没被折腾过头。']))}
- if(changed&&q.phase==='done'){hint(...(pan?['Grandma: Crispy outside, soft inside. Unlike your Monday face.','外婆：外脆里嫩，不像你周一那张苦瓜脸。']:['Grandma: Finished your greens! Now go do absolutely nothing for a bit.','外婆：青菜吃完啦！接下来什么都别干，歇会儿。']));sound(480)}
+ if(changed&&q.phase==='ready'){sound(540);hint(...(pan?['Grandma: Aiyo, look at those golden edges! Not bad for your first little pan.','外婆：哎哟，两面金灿灿的！这豆腐煎得有模有样嘛。']:['Grandma: Look at that colour. Take it off the heat before the greens change their minds.','外婆：这青菜绿油油的，赶紧出锅，再蒸就黄啦。']))}
+ if(changed&&q.phase==='done'){hint(...(pan?['Grandma: Crispy outside, soft inside. Save me a piece, will you?','外婆：外酥里嫩！哎，别顾着自己吃，给外婆留一块呀。']:['Grandma: All the greens gone? Good. At least I don\'t have to chase you with the chopsticks.','外婆：青菜都吃完啦？好，省得外婆拿着筷子追着你喂。']));sound(480)}
  continuityActivity=activity;ctx.save();try{
   table();
   const plate=pawKitchenSteamPlate(q,residentReducedMotion.matches);
@@ -14673,7 +14898,7 @@ function pawKitchenStockPaint(){
 }
 function pawKitchenStockRequest(run,i,x=270+i*130,y=W<H?610:600){
  if(run!==state||room!=='kitchen'||activity!=='cook'||pawArcadeInputBlocked()||drag||!pawKitchenPickupAllowed(run,i))return false;
- run.pawStockPickup={i,x,y,age:0,last:t,blocked:false};sound(360);hint('Grandma: Into the pot! This is the only thing we are rushing today.','外婆：下锅咯！今天只赶这一顿饭。');return true
+ run.pawStockPickup={i,x,y,age:0,last:t,blocked:false};sound(360);hint('Grandma: Into the pot it goes. Gently, gently, don\'t splash yourself!','外婆：下锅咯！轻一点，别把汤溅到自己身上。');return true
 }
 function pawKitchenStockChoose(run){
  if(run!==state||room!=='kitchen'||activity!=='cook'||pawArcadeInputBlocked()||drag)return;
@@ -14860,18 +15085,200 @@ pawDistrictSignStyle.textContent=`
 #game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque{
  border:1px solid var(--paw-sign-edge)!important;border-image:none!important;border-radius:3px!important;
  background-color:var(--paw-sign-paper)!important;background-image:linear-gradient(var(--paw-sign-wash),var(--paw-sign-wash)),var(--paw-sign-texture)!important;background-size:100% 100%!important;
- color:var(--paw-sign-ink)!important;text-shadow:none!important;box-shadow:0 1px 2px #2b251e33!important;padding:5px 8px!important;
+ color:var(--paw-sign-ink)!important;text-shadow:none!important;box-shadow:none!important;padding:3px 7px!important;
+ font-family:var(--paw-display,Georgia,serif)!important;font-weight:600!important;line-height:1.2!important;
 }
 #game[data-paw-sign-material]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material] .pawRailEdge{
  border:1px solid var(--paw-rail-edge)!important;border-image:none!important;border-radius:3px!important;
  background-color:var(--paw-rail-paper)!important;background-image:linear-gradient(var(--paw-rail-wash),var(--paw-rail-wash)),var(--paw-rail-texture)!important;background-size:100% 100%!important;
  color:var(--paw-rail-ink)!important;text-shadow:none!important;box-shadow:0 1px 2px #2b251e22!important;font-weight:600!important;
 }
+/* One painted surface, not a decorative inset border or another backing. */
+#game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque::before,#game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque::after{display:none!important;content:none!important}
 #game[data-paw-sign-material] .pawRailEdge{min-height:44px;max-width:46%}
 @media(forced-colors:active){
  #game[data-paw-sign-material]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign .doorPlaque,#game[data-paw-sign-material]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign[data-paw-wayfinding="railway"] .doorPlaque,#game[data-paw-sign-material] .pawRailEdge{background:ButtonFace!important;border:1px solid ButtonText!important;border-image:none!important;color:ButtonText!important;box-shadow:none!important}
 }
 `;document.head.append(pawDistrictSignStyle);
 /* PAW_DISTRICT_SIGN_MATERIAL_END */
+
+
+
+/* PAW_SINGLE_ACTIVITY_SURFACE_BEGIN */
+// Keep authored physical controls, accessible equivalents and current hit
+// callbacks. Style the existing control owner, not a duplicate toolbar.
+const pawSingleActivitySurface=document.createElement('style');
+pawSingleActivitySurface.textContent=`
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls):not([hidden]){
+ box-sizing:border-box!important;max-width:calc(100% - 24px)!important;
+ background:#f3e7d0f0!important;border:0!important;border-radius:7px!important;
+ box-shadow:0 2px 7px #30291e29!important;padding:5px 8px!important;gap:3px!important;
+}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button{
+ box-sizing:border-box!important;min-height:44px!important;min-width:0!important;
+ white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.3!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ border-bottom:1px solid #ac967064!important;background:transparent!important;color:#405440!important;
+ padding:5px 7px!important;text-align:center!important
+}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button[aria-pressed=true]{
+ background:#dbe1cb!important;color:#395846!important
+}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button:focus-visible{outline:2px solid #39594d!important;outline-offset:-2px!important}
+html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button:disabled{opacity:.5!important}
+html #game #gameControls .festivalFishButtons{gap:3px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+html #game #gameControls.mb5ActivityAssist:not([hidden]){grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr))!important}
+@media(max-width:480px){
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls):not([hidden]){max-height:min(40dvh,260px)!important;overflow-y:auto!important;overscroll-behavior:contain}
+}
+@media(forced-colors:active){
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls):not([hidden]){background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important}
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button{color:ButtonText!important;border-bottom:1px solid ButtonText!important}
+ html #game #gameControls:is(.festivalFishControls,.mb5ActivityAssist,.pawCounterRackControls,.pawTemplePaperControls,.pawForecourtControls,.pawGardenControls,.riverControls,.parkCareControls,.nostalgiaControls,.threeControls) button[aria-pressed=true]{background:Highlight!important;color:HighlightText!important}
+}
+`;document.head.append(pawSingleActivitySurface);
+/* PAW_SINGLE_ACTIVITY_SURFACE_END */
+
+/* PAW_PROFILE_SETTINGS_BEGIN */
+// Canonical utility route: profile > settings. Keep the original storage,
+// language controls, sound and reset handlers, with no second map surface.
+function pawOpenProfileSettings(){
+ page(tr('Settings','设置'),tr('Make Pawradise your own.','按自己的节奏享受小镇。'),q=>{
+  const surface=element('section','',q,'pawProfileSettings');
+  surface.append(townSettingsPanel);
+  townSettingsOpen=true;syncTownSettings();
+  const soundRows=element('div','',surface,'pawProfileSoundRows');
+  for(const [id,en,cn] of [['ambience','Nature and room sounds','环境音'],['effects','Interaction sounds','互动音效']]){
+   const row=element('label','',soundRows);element('span',tr(en,cn),row);
+   const input=element('input','',row);input.type='checkbox';input.checked=meowSoundPrefs[id]!==false;
+   input.onchange=()=>{meowSoundPrefs[id]=input.checked;save('meowSoundPrefsV1',meowSoundPrefs);updateMeowAudioBuses()};
+  }
+ });
+ mbHomePageBack(tr('‹ Profile','‹ 返回档案'),()=>{closeTownSettings();lifeProfile();$('content').querySelector('.pawProfileSettingsEntry')?.focus()});
+}
+const pawProfileSettingsBefore=lifeProfile;
+lifeProfile=function(...args){
+ const result=pawProfileSettingsBefore(...args),q=$('content'),book=q.querySelector('.journalProfileBook');
+ if(book&&!book.querySelector('.pawProfileSettingsEntry')){
+  const entry=b(book,tr('Settings','设置'),pawOpenProfileSettings);entry.className='pawProfileSettingsEntry';
+  const identity=book.querySelector('.journalIdentity');if(identity)identity.after(entry);
+ }
+ return result
+};
+const pawProfileSettingsPagePrior=page;
+page=function(...args){
+ const result=pawProfileSettingsPagePrior(...args),q=$('content');
+ const lang=q.querySelector(':scope > .row button:nth-child(2)');
+ if(lang&&['EN','中文'].includes(lang.textContent.trim())){lang.hidden=true;lang.classList.add('pawRetiredPageLanguage')}
+ return result
+};
+const pawProfileSettingsGatePrior=proRender;
+proRender=function(...args){
+ const result=pawProfileSettingsGatePrior(...args);
+ if(shrineReturning){proposal.querySelector('.shrineLanguageMenu')?.remove();proposal.querySelector('header .languageChoice')?.remove()}
+ return result
+};
+const pawProfileBalance=$('hudStats'),pawProfileIdentity=$('hudName').parentElement;
+pawProfileIdentity.append(pawProfileBalance);
+const pawProfileSettingsHUDPrior=compactTownProfile;
+compactTownProfile=function(...args){
+ const result=pawProfileSettingsHUDPrior(...args);
+ const name=$('hudName').textContent,balance=$('hudCoins').getAttribute('aria-label')||$('hudCoins').textContent;
+ $('profileHud').setAttribute('aria-label',name+' · '+balance+' · '+tr('Open profile','查看资料'));
+ return result
+};
+const pawProfileSettingsStyle=document.createElement('style');
+pawProfileSettingsStyle.textContent=`
+html #game #small,html #game #hudProgress,html #game #content .pawRetiredPageLanguage{display:none!important}
+html #game #hud{padding-right:0!important}
+html #game #profileHud{height:auto!important;min-height:44px!important;gap:6px!important}
+html #game #profileHud>#hudStats,html #game #profileHud #hudStats{display:block!important;margin:0!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
+html #game #profileHud #hudStats #hudCoins{display:inline-flex!important;min-height:0!important;padding:0!important;gap:3px!important;background:none!important;border:0!important;box-shadow:none!important;font-size:11px!important;line-height:1.2!important}
+html #game #profileHud #hudStats #hudCoins.pawHudCoinPainted::before{width:15px!important;height:15px!important;flex-basis:15px!important}
+html #game #profileHud #hudName{display:block!important;line-height:1.25!important}
+html #game #content .pawProfileSettingsEntry{min-height:44px!important;width:100%;margin:7px 0!important;border:0!important;box-shadow:none!important;background:#e7dcc6!important;color:#514936!important}
+html #game #content .pawProfileSettings{max-width:460px;margin:auto;padding:0;border:0;background:none;box-shadow:none}
+html #game #content #townSettingsPanel:not([hidden]){display:grid!important;position:static!important;width:100%!important;max-width:none!important;gap:8px;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;overflow:visible!important;max-height:none!important}
+html #game #content #townSettingsPanel[hidden],html #game #content #townSettingsPanel #mute,html #game #content #townSettingsPanel #language,html #game #content #townSettingsPanel [hidden]{display:none!important}
+html #game #content #townSettingsPanel .languageChoice{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:0!important;background:none!important;border:0!important}
+html #game #content #townSettingsPanel .townSettingsExtra{display:grid!important;gap:0;background:none!important;border:0!important}
+html #game #content #townSettingsPanel button{min-height:44px!important;border:0!important;border-bottom:1px solid #c7b89c!important;border-radius:0!important;background:none!important;color:#514936!important;box-shadow:none!important;text-align:left!important;white-space:normal!important}
+html #game #content #townSettingsPanel .languageChoice button{text-align:center!important}
+html #game #content #townSettingsPanel button[aria-pressed=true]{background:#dbe1cb!important}
+html #game #content #townSettingsPanel .pawResetConfirm{display:grid;gap:5px;padding:8px 0;border:0;background:none;box-shadow:none}
+html #game #content #townSettingsPanel .pawResetConfirm button:first-of-type{color:#894d3f!important}
+html #game #content .pawProfileSoundRows label{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:44px;border-bottom:1px solid #c7b89c}
+html #game #content .pawProfileSoundRows input{width:24px;height:24px;accent-color:#536d58}
+html #game #content .pawProfileSettings button:focus-visible,html #game #content .pawProfileSettingsEntry:focus-visible{outline:2px solid #39594d!important;outline-offset:1px!important}
+@media(forced-colors:active){html #game #content .pawProfileSettings button,html #game #content .pawProfileSettingsEntry{background:Canvas!important;color:CanvasText!important;border-bottom:1px solid CanvasText!important}html #game #content .pawProfileSettings button[aria-pressed=true]{background:Highlight!important;color:HighlightText!important}}
+`;document.head.append(pawProfileSettingsStyle);
+/* PAW_PROFILE_SETTINGS_END */
+
+/* PAW_TRAVELLER_GREETING_BEGIN */
+// Original full-body illustrated key poses. Foot landmarks are provisional
+// visual readings of the inspected extracted images, not new motion frames.
+const pawTravellerWaveArt=Object.freeze([[153,270,74,263],[136,266,80,259],[147,260,89,253],[158,278,94,271]].map(([width,height,x,y],id)=>({path:'assets/visual/staging/2026-11-27-extracted/players/'+id+'/wave.webp',width,height,foot:[x,y]})));
+function pawTravellerGreetingFrame(g,now,place,roomId,id,x,y,walking,eligible){
+ if(!g||!eligible||walking||g.place!==place||g.room!==roomId||g.id!==id||![now,x,y].every(Number.isFinite))return false;
+ return now>=g.at&&now-g.at<.95&&Math.hypot(x-g.x,y-g.y)<2
+}
+// Do not borrow a front-facing pose for a side/back-facing actor, a moving
+// peer (including the interpolation after a heartbeat), or a fictional NPC.
+function pawPeerWaveEligible(a,place,roomId,kind,facing,walking,visible){
+ return !!a&&a.sharedPeer===true&&!a.fictionalVisitor&&visible===true&&a.place===place&&(a.room||'')===roomId&&a.gesture==='wave'&&a.avatar===kind&&Number.isInteger(kind)&&kind>=0&&kind<4&&facing==='down'&&a.facing==='down'&&!walking&&a.walking===0&&[a.x,a.y,a.toX,a.toY].every(Number.isFinite)&&Math.hypot(a.x-a.toX,a.y-a.toY)<.5
+}
+/* PAW_TRAVELLER_GREETING_END */
+let pawTravellerGreeting=null,pawTravellerSharedWaveSeen=0,pawGreetingPeerActor=null;
+function pawBeginTravellerGreeting(actor,frontOnly=true){
+ if(!actor||activity||transitioning||document.hidden||!Number.isInteger(avatar)||avatar<0||avatar>3||frontOnly&&actor.facing!=='down')return false;
+ if(!mbArtImage(pawTravellerWaveArt[avatar]))return false;
+ pawTravellerGreeting={place:scene,room:room||'',id:avatar,x:actor.x,y:actor.y,at:t};
+ return true
+}
+const pawGreetingTalkPrior=npcTalk;
+npcTalk=function(n,...args){
+ const result=pawGreetingTalkPrior(n,...args);
+ if(n&&!n.sharedPeer&&n.kind!==2&&!room&&talkOpen)pawBeginTravellerGreeting(p);
+ return result
+};
+const pawGreetingIndoorPrior=pawIndoorSocialTalk;
+pawIndoorSocialTalk=function(...args){
+ const result=pawGreetingIndoorPrior(...args);
+ if(result)pawBeginTravellerGreeting(indoor);
+ return result
+};
+// Keep original peer corridor/room eligibility and label drawing. Only
+// substitute the body artwork within the original actor's draw call.
+function pawGreetingWithPeer(actor,paint){
+ const previous=pawGreetingPeerActor;
+ pawGreetingPeerActor=actor?.sharedPeer===true&&!actor.fictionalVisitor?actor:null;
+ try{return paint()}finally{pawGreetingPeerActor=previous}
+}
+const pawGreetingMapPeerPrior=drawSharedTownActor;
+drawSharedTownActor=function(a,...args){return pawGreetingWithPeer(a,()=>pawGreetingMapPeerPrior(a,...args))};
+const pawGreetingRoomPeerPrior=drawSharedRoomActor;
+drawSharedRoomActor=function(a,...args){return pawGreetingWithPeer(a,()=>pawGreetingRoomPeerPrior(a,...args))};
+const pawGreetingBackHumanPrior=backHuman;
+backHuman=function(x,y,kind,walking,facing,scale=1){
+ const peer=pawGreetingPeerActor,visible=!activity&&!transitioning&&!document.hidden&&proposal.hidden&&$('page').style.display!=='block';
+ if(pawPeerWaveEligible(peer,scene,room||'',kind,facing,walking,visible)&&sharedTownVisible()&&sharedTown.ready&&sharedTown.actors.get(peer.id)===peer&&Math.hypot(x-peer.x,y-peer.y)<.01){
+  const record=pawTravellerWaveArt[kind],im=mbArtImage(record);
+  if(im){mbArtDrawFrame(record,im,x,y,scale,false);return}
+ }
+ const actor=room?indoor:p,local=!peer&&!activity&&!pawRenderedWalker&&kind===avatar&&actor&&Math.hypot(x-actor.x,y-actor.y)<.01;
+ if(local&&Number.isInteger(kind)&&kind>=0&&kind<4){
+  const record=pawTravellerWaveArt[kind],im=mbArtImage(record);
+  // Existing opt-in gesture: show it once after returning to the scene,
+  // never replay it every frame or interrupt walking.
+  if(visible&&!walking&&im&&actor.facing==='down'&&sharedTown.enabled&&sharedTown.gesture==='wave'&&sharedTown.gestureUntil>Date.now()&&sharedTown.gestureUntil!==pawTravellerSharedWaveSeen){
+   pawTravellerSharedWaveSeen=sharedTown.gestureUntil;pawBeginTravellerGreeting(actor)
+  }
+  if(facing==='down'&&pawTravellerGreetingFrame(pawTravellerGreeting,t,scene,room||'',kind,x,y,walking,visible)&&im){
+   pawSyncIdleGait(x,y,kind);mbArtDrawFrame(record,im,x,y,scale,false);return
+  }
+  if(pawTravellerGreeting&&(walking||!visible||t-pawTravellerGreeting.at>=.95||pawTravellerGreeting.place!==scene||pawTravellerGreeting.room!==(room||'')))pawTravellerGreeting=null
+ }
+ return pawGreetingBackHumanPrior(x,y,kind,walking,facing,scale)
+};
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
