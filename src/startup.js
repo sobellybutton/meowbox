@@ -12125,18 +12125,30 @@ drawActivity=function(...args){
 /* PAW_SLIP_COUNTER_BEGIN */
 function pawSlipGeometry(p=pawWaterPlate){
  const pt=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
- return {counter:pt(.235,.50),reading:pt(.50,.55),tie:pt(.605,.482),bag:pt(.50,.79),rackCenter:pt(.585,.455),
+ const counterFoot=pt(.36,.65),rackFoot=pt(.59,.60);
+ return {counter:pt(.235,.50),reading:pt(.50,.55),tie:pt(.605,.482),bag:{x:counterFoot.x+18,y:counterFoot.y-54},counterFoot,rackFoot,rackCenter:pt(.585,.455),
   rows:[.419,.453,.486].map(v=>Array.from({length:7},(_,i)=>pt(.505+i*.030,v)))}
 }
 function pawSlipPose(stage,age,g=pawSlipGeometry()){
  const ease=f=>{f=Math.max(0,Math.min(1,f));return f*f*(3-2*f)};
  const mix=(a,b,f)=>({x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f});
  const f=stage==='folded'?0:stage==='opening'?ease(age/.75):1;
- let pos=mix(g.counter,g.reading,f),w=105+f*355,h=82+f*298,alpha=1;
+ let pos=mix(g.counter,g.reading,f),w=105+f*355,h=82+f*298,alpha=1,open=f;
  if(stage==='tied'||stage==='kept'){
-  const u=ease(age/.7);pos=mix(g.reading,stage==='tied'?g.tie:g.bag,u);w*=1-.97*u;h*=1-.96*u;alpha=1-u;
+  const u=ease(age/.7);pos=mix(g.reading,stage==='tied'?g.tie:g.bag,u);w=105+355*(1-u);h=82+298*(1-u);open=1-u;alpha=1-ease((u-.78)/.22);
  }
- return {...pos,w,h,alpha,open:f}
+ return {...pos,w,h,alpha,open}
+}
+// The original counter portrait has paving in front of the left cabinet
+// and an unobstructed aisle toward the lower fortune rack.
+function pawSlipTravellerContact(stage,age,pose,g){
+ const scale=1.92,u=stage==='tied'?Math.max(0,Math.min(1,age/.7)):0,e=u*u*(3-2*u);
+ const foot={x:g.counterFoot.x+(g.rackFoot.x-g.counterFoot.x)*e,y:g.counterFoot.y+(g.rackFoot.y-g.counterFoot.y)*e};
+ const shoulder={x:foot.x+(stage==='tied'||stage==='kept'?5:-5)*scale,y:foot.y-63*scale};
+ const foldedW=Math.min(pose.w,145,Math.min(pose.h,105)*336/194);
+ const grip={x:pose.x+(stage==='kept'?-1:1)*foldedW*.42,y:pose.y};
+ const compact=pose.open<=.25&&pose.alpha>.01,reach=Math.hypot(grip.x-shoulder.x,grip.y-shoulder.y)<=48*scale;
+ return {foot,shoulder,hand:compact&&reach?grip:null,scale,walking:stage==='tied'&&u>0&&u<1};
 }
 function pawSlipRackCamera(w,h,p=pawWaterPlate){
  if(![w,h,p.x,p.y,p.w,p.h].every(Number.isFinite)||Math.min(w,h,p.w,p.h)<=0)return null;
@@ -12260,7 +12272,9 @@ function pawSlipDrawPaper(pose,number,words,subtitle=''){
 function pawDrawCounterFortune(){
  const run=state,g=pawSlipGeometry(),age=Math.max(0,t-run.paperAt);
  if(run.paperStage==='opening'&&age>=.75&&!pawArcadeInputBlocked())run.paperStage='open';
- const pose=pawSlipPose(run.paperStage,age,g),words=shrinePaperLines[run.paperNumber-1];
+ const pose=pawSlipPose(run.paperStage,age,g),words=shrinePaperLines[run.paperNumber-1],contact=pawSlipTravellerContact(run.paperStage,age,pose,g);
+ if(contact.hand)pawIncenseArm(contact.shoulder,contact.hand,.72*contact.scale,false);
+ backHuman(contact.foot.x,contact.foot.y,avatar??0,contact.walking,'up',contact.scale);
  if(Array.isArray(words))pawSlipDrawPaper(pose,run.paperNumber,tr(...words));
  if(run.paperStage==='folded')target(pose.x-pose.w/2-15,pose.y-pose.h/2-15,pose.w+30,pose.h+30,()=>{if(run===state&&!pawArcadeInputBlocked())templePaperTap()});
  // The controls below are the existing accessible open/keep/tie/rack/return
