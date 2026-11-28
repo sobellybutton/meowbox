@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const src=fs.readFileSync('src/compact-town-home.js','utf8');
 new vm.Script(src);
 const helper=src.split('// PAW_COMPACT_HELPERS_BEGIN')[1].split('// PAW_COMPACT_HELPERS_END')[0];
-const api=new Function(helper+';return {pageWindow,residentLabel,residentHeading,residentDialogue,residentPortraitPath,roomLampAnchor,roomLightState,cutawayPlan,cutawayFree,cutawayConnected,cutawayMove,cutawayRoute,cutawayApproach,cutawayArtPaths,cutawayArtReady}')();
+const api=new Function(helper+';return {pageWindow,residentLabel,residentHeading,residentDialogue,residentPortraitPath,roomLampAnchor,roomLightState,cutawayPlan,cutawayFree,cutawayConnected,cutawayMove,cutawayRoute,cutawayApproach,cutawayArtPaths,cutawayArtReady,cutawayDepth,cutawayFootPivot}')();
 assert.deepEqual(api.pageWindow(0,5,2),{page:0,pages:1,start:0,end:0});
 assert.deepEqual(api.pageWindow(5,9,2),{page:2,pages:3,start:4,end:5});
 assert.deepEqual(api.pageWindow(5,-1,2),{page:0,pages:3,start:0,end:2});
@@ -64,7 +64,37 @@ const paths=api.cutawayArtPaths(layout,'starter',p);
 assert.equal(paths.length,4);
 assert.equal(api.cutawayArtPaths(layout,'starter',[{id:'invalid'}]),null);
 assert.deepEqual(api.cutawayArtPaths(layout,'starter',[p[0],p[0]]),[layout.shell('starter'),layout.furniture(p[0].id)]);
-assert(src.includes("pawHomeActorArt(player,'down',false,0)"));
+assert(src.includes("actorArt('down',false,0)"));
+assert(src.includes("pawHomeActorArt(player,direction,walking,distance)"));
+assert(src.includes("if(token!==epoch)return;"));
+assert(src.includes("stop();position(point(actor));actorArt('down',false,0);editing=!editing"));
+assert(src.includes("cutawayDepth(a.y,f.layer)"));
+assert(src.includes("transform-origin:var(--paw-cutaway-foot-x,50%) var(--paw-cutaway-foot-y,100%)"));
+const actions=JSON.parse(fs.readFileSync('assets/visual/painted/action-runtime.json','utf8'));
+let poseChecks=0;
+for(const player of Object.values(actions.players))for(const frames of Object.values(player.walk))for(const frame of frames){
+ const p=api.cutawayFootPivot(frame);
+ assert.equal(p.x,100*frame.foot[0]/frame.width);
+ assert.equal(p.y,100*frame.foot[1]/frame.height);
+ assert.deepEqual(api.cutawayFootPivot(frame,true),p);
+ assert.ok(p.x>=0&&p.x<=100&&p.y>=0&&p.y<=100);poseChecks+=4
+}
+assert.deepEqual(api.cutawayFootPivot(null),{x:50,y:100});
+assert.deepEqual(api.cutawayFootPivot({width:0,height:200,foot:[0,100]}),{x:50,y:100});
+assert.deepEqual(api.cutawayFootPivot({width:100,height:200,foot:[50,201]}),{x:50,y:100});
+for(const room of ['starter','side','studio']){
+ const plan=api.cutawayPlan(layout,room,source),free=api.cutawayFree(layout,room,plan);
+ for(const item of plan){
+  const a=layout.anchor(room,item);
+  for(const cell of free){
+   const p=layout.project(room,cell.u+.5,cell.v+.5);
+   if(Math.abs(p.y-a.y)>.002)assert.equal(Math.sign(api.cutawayDepth(p.y)-api.cutawayDepth(a.y)),Math.sign(p.y-a.y));
+   assert.ok(api.cutawayDepth(p.y)>api.cutawayDepth(a.y,'wall'));
+   assert.ok(api.cutawayDepth(p.y)>api.cutawayDepth(a.y,'rug'));poseChecks+=2
+  }
+ }
+}
+console.log('PASS '+poseChecks+' manifest foot-pivot and cutaway depth checks');
 assert(src.includes("persist();render();status.textContent=lights.has"));
 assert(src.includes("observer.disconnect();document.removeEventListener('visibilitychange',onVisibility)"));
 assert(src.includes("residentDialogue(name),words,...rest"));
