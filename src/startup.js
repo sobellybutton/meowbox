@@ -12786,7 +12786,7 @@ drawActivity=function(...args){
   const seated=run.gardenSitting&&!moving,seatAge=Math.max(0,t-run.gardenSeatAt),seatAmount=seated?(residentReducedMotion.matches?1:poseEase(Math.min(1,seatAge/.45))):0;
   if(seated){const a=pawRearBenchPose(p,scale),sx=x+(a.x-x)*seatAmount,sy=y+(a.y-y)*seatAmount;
    const id=avatar??0,im=pawRearSeatedImage(id),record=pawRearSeatedRecords[id];
-   if(seatAmount>=.98&&run.pawRearSeatArt===undefined)run.pawRearSeatArt=!!(record&&pawPictureDecoded(im)&&im.naturalWidth===record.w&&im.naturalHeight===record.h);
+   if(seatAmount>=.98&&!run.pawRearSeatArt&&record&&pawPictureDecoded(im)&&im.naturalWidth===record.w&&im.naturalHeight===record.h)run.pawRearSeatArt=true;
    const painted=seatAmount>=.98&&run.pawRearSeatArt&&pawDrawRearSeated(im,id,a.hip,scale);
    if(!painted){ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount,bench:true})}finally{ctx.restore()}}
   }else{delete run.pawRearSeatArt;backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale)}

@@ -178,3 +178,23 @@ console.log('Catalogue return and blind box scene ownership passed.');
  assert.ok(!source.includes("pawGardenChoose(run,'chime')"));
  console.log('PASS ambient chime sway, reduced motion and non-interactive garden');
 }
+
+
+// A slow image decode must not lock the traveller into fallback art for the whole seat visit.
+{
+ const source=fs.readFileSync(path.resolve(__dirname,'../src/startup.js'),'utf8');
+ const line=source.split('\n').find(l=>l.includes('run.pawRearSeatArt=true;'));
+ assert.ok(line);
+ const update=new Function('seatAmount','run','record','pawPictureDecoded','im',line);
+ let checks=0;
+ for(const record of [{w:206,h:280},{w:215,h:283},{w:222,h:280},{w:239,h:279}]){
+  const run={},im={naturalWidth:record.w,naturalHeight:record.h};
+  update(1,run,record,()=>false,im);assert.notEqual(run.pawRearSeatArt,true);checks++;
+  update(.5,run,record,()=>true,im);assert.notEqual(run.pawRearSeatArt,true);checks++;
+  update(1,run,record,()=>true,{...im,naturalWidth:0});assert.notEqual(run.pawRearSeatArt,true);checks++;
+  update(1,run,record,()=>true,im);assert.equal(run.pawRearSeatArt,true);checks++;
+  update(1,run,record,()=>false,im);assert.equal(run.pawRearSeatArt,true);checks++;
+ }
+ assert.ok(source.includes('delete run.pawRearSeatArt;backHuman'));
+ console.log('PASS '+checks+' delayed seated artwork checks across four travellers');
+}
