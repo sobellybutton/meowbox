@@ -69,6 +69,54 @@ def inspect(record):
     return {"path": rel, **result}
 
 
+def inspect_candidate(root, record, *, size, anchor, anchor_kind):
+    """Measure staging art without promoting it or inferring body contacts."""
+    rel = record["path"]
+    path = (root / rel).resolve()
+    if not path.is_relative_to(root.resolve()):
+        raise ValueError("unsafe candidate path: " + rel)
+    raw = path.read_bytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    if record.get("sha256") and digest != record["sha256"]:
+        raise ValueError("candidate checksum mismatch: " + rel)
+    with Image.open(path) as img:
+        if list(img.size) != size or "A" not in img.getbands():
+            raise ValueError("candidate dimensions or alpha mismatch: " + rel)
+        alpha = img.getchannel("A")
+        if alpha.getextrema()[0] != 0:
+            raise ValueError("candidate lacks transparent pixels: " + rel)
+        if not (0 <= anchor[0] < img.width and 0 <= anchor[1] < img.height):
+            raise ValueError("candidate anchor outside canvas: " + rel)
+        # A nominal seat/ground anchor is not a verified foot or hip.
+        metrics = measure(alpha, None)
+        box = metrics["alphaBounds"]["32"]
+        metrics.update({
+            "nominalAnchor": anchor, "anchorKind": anchor_kind,
+            "nominalAnchorMinusAlphaBottomPx": anchor[1] - box[3],
+            "nominalAnchorToAlphaTopPx": anchor[1] - box[1],
+            "sha256": digest,
+            "nativeComponentSize": record.get("component_native_size"),
+            "candidateStatus": record.get("status", "candidate_not_integrated"),
+        })
+    return {"path": str(path.relative_to(ROOT)), **metrics}
+
+
+def staging_candidates():
+    staging = ROOT / "assets/visual/staging"
+    rows = []
+    for name in ("2026-11-28-final-batch1-traveller", "2026-11-28-traveller-writing"):
+        root = staging / name
+        manifest = json.loads((root / "manifest.json").read_text())
+        for record in manifest["assets"]:
+            rows.append(inspect_candidate(
+                root, record,
+                size=record.get("canvas", manifest.get("dimensions")),
+                anchor=record.get("anchor", manifest.get("nominal_anchor")),
+                anchor_kind="nominal_seated" if name.endswith("writing") else "nominal_ground",
+            ))
+    return rows
+
+
 def summarize(rows):
     heights = [r["visibleHeightFraction"] for r in rows]
     foot_heights = [r["footToVisibleTopFraction"] for r in rows]
@@ -137,6 +185,8 @@ def main():
         result["players"][player] = {"directions": data, "combined": summarize(all_rows)}
     count = sum(v["combined"]["frames"] for v in result["players"].values())
     print(f"Measured {count} registered walk frames; no artwork or runtime modified.")
+    result["stagedPoseCandidates"] = staging_candidates()
+    print(f"Measured {len(result['stagedPoseCandidates'])} staged pose candidates; nominal anchors only, no art promoted.")
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
