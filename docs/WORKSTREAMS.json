@@ -394,7 +394,10 @@
         "bcd16add: reusable food prop geometry, readiness and lazy loading module; 1827 exact-module harness assertions passed for all 49 props; not runtime activated. Checkpoint b36c740c5c9fc7b2db0e2a1e37163723a51c637c",
         "c2cd2f27 + 0dec5e0f + f52edaae: ten inspected source prop contact candidates; 11173 exact-module geometry and phase assertions passed. Scene integration and visual hand contact pending. Checkpoint 296ea8ed34a9ee5c4d3e01a1906c16ebcebfd4b8"
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-global-arcade-park-food",
+        "until": 1795841385865
+      },
       "blocker": "Dedicated ingredient, preparation, pouring, serving and tasting artwork, pose contact and actual browser verification remain outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n49 original kitchen/boba props prepared at assets/visual/painted/food-props; runtime integration, scene-specific grip/pour contact, animation and rendered acceptance remain pending. CI pending at check."
     },
     {
@@ -440,7 +443,10 @@
         "eab02193 + e5d0505c: verified effective park action list from current extensions and startup (pet and deerVisit only); enabled painted lobby, curved route and threshold exit, preserved Auntie Lin, reused existing cat atlas and deer art at separate physical anchors. 23 focused runtime checks and 1195 geometry assertions across nine exact Git asset hashes passed in connector harness. Actual rendered device playthrough and animal/label alignment remain pending.",
         "Repeated owner live feedback: Meet the Cat and Deer Meadow old interfaces. Replace activity staging and camera, use current approved park art and animated animals with appropriate player scale/contact, not just new lobby painting."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-global-arcade-park-food",
+        "until": 1795841385865
+      },
       "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay."
     },
     {
@@ -1383,7 +1389,10 @@
         "Batch 2 (75ad8197 + b9fc9c6b): local ritual closeup visitor approaches stool, transitions standing-to-seated, waits for Auntie, stands and walks back before invoking existing return anchor handler. Repeated visits within ritual retain seated position; controls gated during movement; blocked clock and reduced-motion handling. 19 focused choreography assertions and both source syntax parses passed. Interim seating art and local closeup coordinates remain unverified; actual lobby-to-closeup spatial continuity, Auntie contact/handoff artwork, responsive camera, full build/CI and deployed playback remain outstanding. No stage promotion.",
         "Batch 3 (b370aaa9 + 44612344): inspected actual 344x510 scolding painting with baked slipper and 347x510 seated painting. Independent painted motion module and persisted test implement source-pixel shoulder/tool-tip anchors, reach-checked layout, phased anticipation/swing/contact/recovery at existing .23/.46 clock, reduced motion, original raster arm clip and balanced canvas drawing. 231 isolated geometry/mocked-canvas assertions passed. Actual seam, silhouette, seat/paper alignment and visual quality not verified. Shared source is held by STORY-DEPTH-01 parallel lane, so module is not wired into gameplay; no build, live deployment or visual acceptance. Dedicated final action artwork remains open."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-global-arcade-park-food",
+        "until": 1795841385865
+      },
       "blocker": "Acceptance: Organic entry, action, outcome, return and replay for each retained activity on phone and desktop. Real inputs affect outcomes; no duplicate or gratuitous games, reward farming or generic click/read/reward loop.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n\nEnd-to-end critique, 28 Nov: Evaluate distinct actions, meaningful outcome and repeat variation in short/long sessions. Keep enjoyable existing activities; avoid gratuitous added tasks, identical mechanics or reward farming. Apply section 12.\nActual Chromium purification and organic temple route rerun pending on a478f336.\n\nOwner live feedback 28 Nov: temple greatly improved and native activities appreciated. Correct undersized characters (especially water), visibly grounded incense supply box and three real pickups, seated pose physically on rear garden bench, responsive wind chime and lucky cats with actual visual reactions. Review size/contact across temple and other activities; require genuine rendered device verification."
     },
     {
