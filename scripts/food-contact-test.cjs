@@ -216,3 +216,22 @@ ck(extension.includes('!q.pawSteam&&!q.pawStockPickup&&!q.done'),'drag path guar
 ck(startup.includes('pawKitchenStockRequest(run,i)'),'stock pickup connected');
 
 console.log('PASS '+n+' food contact geometry, phase and source assertions; no rendered contact acceptance');
+
+const lidBlock=startup.split('/* PAW_BOBA_LID_BEGIN */')[1].split('/* PAW_BOBA_LID_END */')[0];
+const lidPose=new Function(lidBlock+';return pawBobaLidPose')();
+for(const reduced of [false,true])for(let i=0;i<=125;i++){
+ const q=lidPose('sealing',i/100,420,525,0,reduced);
+ ck(q.x>=420&&q.x<=530&&q.y>=380&&q.y<=516,'lid travel bounded');
+ ck(q.height===29.5&&q.grip.every(Number.isFinite),'lid and hand geometry');
+}
+for(const angle of [-.32,-.12,0,.12,.32]){
+ const q=lidPose('sip',1,330,440,angle);
+ ck(q.attached&&Math.abs(q.x-(330+Math.sin(angle)*(74*1.12-8)))<1e-8,'lid follows rotated cup');
+ ck(Math.abs(q.y-(440-Math.cos(angle)*(74*1.12-8)))<1e-8,'lip registration');
+}
+ck(lidPose('base',0)===null,'no premature lid');
+ck(lidPose('seal',0).x===530,'resting lid at counter');
+ck(extension.includes("state.pawBobaLidMode=typeof pawBobaLidAvailable"),'per visit painted fallback selected');
+ck(extension.includes("if((stage==='seal'||stage==='sealing')&&paintedLid)"),'old press omitted for painted lid');
+ck(extension.includes('const paintedLid=lid&&pawBobaPaintLid(pawBobaLidPose(stage,age,cx,cy,angle'),'cup follows final sip pose');
+console.log('PASS '+n+' food contact assertions including painted lid transfer');
