@@ -702,7 +702,10 @@
         "f96165e8 + fd7d0cec: actual Ah Ma ritual now uses two dedicated bilingual responses for each of all 34 existing worry labels (68 pairs), with safe fallback for invalid targets, independent rotation by target, unchanged hit/reward mechanics. Four preparation, chooser, start and completion dialogue pairs refined. Full source syntax parsed; 209 targeted assertions passed. Live pre-fix screenshot confirmed unrelated laundry curse during unpaid overtime and legacy background/unsupported seating. Post-fix deployment and real device verification not completed.",
         "1b97e8ff + dc28504a: Ah Ma selected-worry punchline remains readable through each three-strike round; distinct post-round line, replay rotation, playful setup; 3f567c04 adds 34-topic bilingual and actual round-handler regression. Complete Ah Ma helper suite passed in connector harness; no browser/visual acceptance."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-gameplay-humour-20261128",
+        "until": 1795846886458
+      },
       "blocker": "Broader bilingual editorial review and rendered mobile/desktop humour pacing remain outstanding; current Ah Ma source and focused helper tests passed, no visual/deployment acceptance."
     },
     {
