@@ -26,9 +26,16 @@ for(const id of ['tarot','destiny','quiz','story','match']){
  assert.ok(helpers.pawReadingCompatible(api,id,[[id,'en','zh']]));
  assert.ok(!helpers.pawReadingCompatible(api,id,[[id],['unmapped']]));
  for(const a of points){
-  assert.ok(a[0]>=145&&a[0]<=655&&a[1]>=565&&a[1]<=738,id+' legacy input bounds');
+  // Master Yue's real painted desk is above the former rectangular y clamp.
+  const desk=id==='destiny'&&Math.hypot(a[0]-spec.stations.destiny[2],a[1]-spec.stations.destiny[3])<1e-7;
+  if(!desk)assert.ok(a[0]>=145&&a[0]<=655&&a[1]>=565&&a[1]<=738,id+' legacy input bounds');
+  else assert.ok(a[1]<565,'Master Yue desk must use mapped floor, not the old clamp');
   assert.ok(api.safe(id,helpers.pawReadingNormalized(...a)),id+' mapped floor');
-  for(const b of points)assert.ok(api.route(id,helpers.pawReadingNormalized(...a),helpers.pawReadingNormalized(...b)),id+' mapped route');
+  for(const b of points){
+   assert.ok(api.route(id,helpers.pawReadingNormalized(...a),helpers.pawReadingNormalized(...b)),id+' mapped route');
+   const route=helpers.pawReadingDestination(api,id,a,...b);
+   assert.ok(route?.length&&Math.hypot(route.at(-1)[0]-b[0],route.at(-1)[1]-b[1])<1e-7,id+' runtime destination');
+  }
  }
  for(const [w,h] of [[320,640],[390,844],[430,932],[768,1024],[1280,720]]){
   const c=helpers.pawReadingCamera(api,w,h);
