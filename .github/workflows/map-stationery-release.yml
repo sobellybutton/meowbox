@@ -11,6 +11,10 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/live-map-stationery-20261128' || github.head_ref == 'fix/converged-mobile-arrival-dock-20261128'
     runs-on: ubuntu-latest
     timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [compact, tall]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,6 +27,7 @@ jobs:
       - name: Organic mobile map composition and settings
         env:
           PAW_MAP_STATIONERY: '1'
+          PAW_MAP_PROFILE: ${{ matrix.profile }}
           PAW_VALLEY_CONTINUITY: ${{ github.head_ref == 'fix/converged-mobile-arrival-dock-20261128' && '1' || '0' }}
         run: |
           mkdir -p test-results
@@ -32,5 +37,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: painted-map-composition
+          name: painted-map-composition-${{ matrix.profile }}
           path: test-results
