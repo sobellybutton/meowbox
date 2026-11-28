@@ -558,17 +558,32 @@ function pawEditorialOther(cv,data,format,cn,box,paper,art,quote){
   // One public result line and a short supporting excerpt. For a Zi Wei
   // reflection retain the actual main-star line before the takeaway.
   const lead=locale(data.lines?.[0])||items[0]||locale(data.title);
-  const detail=items.find(v=>v!==lead)||'';
-  const leadH=detail?sh*.46:sh-10;
+  const detail=(data.kind==='fortune'?locale(data.lines?.[1]):'')||items.find(v=>v!==lead)||'';
+  const fortuneDetail=data.kind==='fortune'?locale(data.lines?.[2]):'';
+  const hasFortuneDetail=!!fortuneDetail,contentH=hasFortuneDetail?sh-34:sh;
+  const leadH=detail?contentH*.51:contentH-10;
   text([sx+14,sy+8,sw-28,leadH-8],lead,cn?34:38,24,3,'bold',accent);
-  if(detail)text([sx+16,sy+leadH,sw-32,sh-leadH],detail,cn?30:32,24,4)
+  if(detail)text([sx+16,sy+leadH,sw-32,contentH-leadH],detail,cn?30:32,24,4);
+  if(hasFortuneDetail)text([sx+12,sy+contentH,sw-24,34],fortuneDetail,25,20,1,'normal',accent)
  }
  text(plan.footer,cn?'Pawradise · 偷得浮生半日闲 · 仅供反思':'Pawradise · A little escape · For reflection',23,19,2,'normal',accent);
  return true
 }
 /* PAW_EDITORIAL_RESULTS_END */
 
+// Reuse the exact public daily fortune theme's registered charm.
+// Match both title strings rather than current day or private seed.
+function pawEditorialFortuneCharm(data,themes,pathFor){
+ if(data?.kind!=='fortune'||!Array.isArray(data.title)||!Array.isArray(themes))return null;
+ const index=themes.findIndex(t=>t?.title?.[0]===data.title[0]&&t?.title?.[1]===data.title[1]);
+ return index>=0?pathFor(index):null
+}
 function pawInstallEditorialShare(){
+ const artBefore=pawRecoveredResultIllustration;
+ pawRecoveredResultIllustration=function(data){
+  const path=pawEditorialFortuneCharm(data,townFortunes,pawRecoveredCharmPath);
+  return (path&&pawRecoveredImage(path))||artBefore(data)
+ };
  const prior=shareCardArt;
  shareCardArt=function(cv,data,format,cn){
   if(data?.kind==='tarot'){
