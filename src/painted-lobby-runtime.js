@@ -75,7 +75,7 @@ function pawConsultCurrent(origin,current){
 // Match the actual revealed card; a summary is not a card presentation.
 // The position prefix disambiguates repeated card labels in a multi-card spread.
 function pawConsultReadingFocus(q,words,labels,cardLine,now){
- if(!q||!['cards','focus'].includes(q.readStage)||typeof words!=='string'||!Array.isArray(labels)||!Array.isArray(q.readCards)||!Array.isArray(q.readFlip)||q.readCards.length!==q.readFlip.length||!Number.isFinite(now))return null;
+ if(!q||!['cards','focus'].includes(q.readStage)||typeof words!=='string'||!Array.isArray(labels)||!Array.isArray(q.readCards)||![1,3,5].includes(q.readCards.length)||!Array.isArray(q.readFlip)||q.readCards.length!==q.readFlip.length||!Number.isFinite(now))return null;
  if(labels.includes('summary')&&q.readFlip.every(v=>Number.isFinite(v)&&v>=0&&now-v>=.72))return -1;
  if(!labels.includes('card'))return null;
  const lines=words.split('\n'),matches=q.readCards.map((c,i)=>({i,line:cardLine(c),flip:q.readFlip[i]})).filter(v=>v.line&&lines.includes(v.line)&&Number.isFinite(v.flip)&&v.flip>=0&&now-v.flip>=.72);
