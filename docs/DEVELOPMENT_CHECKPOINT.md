@@ -544,3 +544,6 @@ ROOM-05 partial: d47ae2c2 maps the inspected existing park portrait with curved 
 
 ## Painted home materials (28 November)
 7016abe7 connects all eight imported finish swatches to the current room's bounded SVG wall/floor, with reflected tile edges, perspective-scaled floor sampling, fallback and stale-view protection. 3345 isolated assertions exercised mocked canvas and projected bounds; 5d1af91f adds editor choice, decoded raster and reload persistence browser checks. Actual phone and desktop rendering and future painted shell masks remain pending. No workstream accepted; hourly automation unchanged.
+
+## Daydream Park live lobby activation (28 November)
+ROOM-05 partial: eab02193 integrates the exact reviewed park painting, cat and deer stations (no retired gossip), safe curved walking route and threshold exit. Existing cat atlas, deer artwork and Auntie Lin reused; no new art. e5d0505c persists regression. Full geometry script executed with connector harness against nine exact Git tree artwork hashes and 1195 assertions, plus source syntax and 23 focused checks. Actual mobile/desktop render, animal scale/grounding and label overlap remain pending; no final visual acceptance or stage promotion. Registry 117f7e02 releases park lease; separate QA lease preserved.
