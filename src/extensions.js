@@ -339,6 +339,7 @@ function pawRitualAdvance(){
  if(activity==='moon'&&state.moonPending&&t>=state.tossUntil){
   state.moonPending=false;physicalFx('wood',.8);
   const r=state.result;
+  if(Number.isInteger(state.pawFortuneNumber)&&state.pawFortuneNumber>=1&&state.pawFortuneNumber<=12)state.pawFortuneSettledAt=t;
   if(r===0)addItem('Heaven’s approval','圣杯祝福');
   if(Number.isInteger(state.pawFortuneNumber)&&state.pawFortuneNumber>=1&&state.pawFortuneNumber<=12){
    if(r===0){react('Sheng Bei! Your stick is confirmed.','圣杯！此签已获确认。');hint('Confirmed. Your fortune slip is ready; take your time reading it.','圣杯确认啦，可以领签文了。不赶时间，慢慢看。')}
@@ -2917,7 +2918,7 @@ const townWallNotes=[
 rant9=function(){page(tr('The Rant Wall','吐槽墙'),tr('The wall has heard worse. No names, no screenshots, no HR.','这面墙见过大场面。不点名，不截图，不惊动人事。'),q=>{
  element('h2',tr('Already on the wall','墙上已有的吐槽'),q);
  let wall=element('div','',q,'townRantWall');
- for(const n of townWallNotes){const note=element('article','',wall,'townRantNote');element('small',tr(n[0],n[1])+tr(' · Fictional resident',' · 虚构居民'),note);element('p',tr(n[2],n[3]),note)}
+ for(const n of townWallNotes){const note=element('article','',wall,'townRantNote');element('small',tr(n[0],n[1])+tr(' · Town resident',' · 小镇居民'),note);element('p',tr(n[2],n[3]),note)}
  element('h2',tr('Leave a worry here','把烦恼留在这里'),q);privateNote9(q,'rant');b(q,tr('Visit the community noticeboard','去摸鱼留言板'),board)
 })};
 const rantPaperStyle=document.createElement('style');rantPaperStyle.textContent='.townRantWall{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;padding:16px 10px;background:#a58b67;border:7px solid #795a42;border-radius:5px}.townRantNote{position:relative;min-width:0;background:#f6e5b5;color:#5a4737;padding:16px 10px 9px;box-shadow:1px 4px 7px #392b3444;transform:rotate(-1deg);overflow-wrap:anywhere}.townRantNote:nth-child(2n){background:#e6c4ba;transform:rotate(1deg)}.townRantNote:nth-child(3n){background:#d9dfbd}.townRantNote:before{content:"";position:absolute;top:4px;left:48%;width:6px;height:6px;border-radius:50%;background:#a96850}.townRantNote small{font-size:11px}.townRantNote p{font-size:14px;line-height:1.5;margin:8px 0}';document.head.append(rantPaperStyle);
@@ -3270,7 +3271,7 @@ const localCameoReplies={
  ],
  'Kim Out of Office':[
   [['Today I have a strategic objective: finish lunch while it is hot.','今日战略目标：趁热吃完午饭。']],
-  [['My annual leave has been approved by absolutely nobody in this fictional town.','我在虚构小镇休假，无需任何领导批准。']],
+  [['My annual leave has been approved by absolutely nobody in this town.','我在小镇休假，无需任何领导批准。']],
   [['The river has rejected my meeting request. I respect its boundaries.','河流拒绝了我的会议邀请，尊重它的边界。']],
   [['No minutes will be circulated.','不发会议纪要。']]
  ],
@@ -3781,7 +3782,7 @@ function renderResidentNoticeboard(q){
  element('h2',tr('Overheard in town','摸鱼留言墙'),wrap,'board-heading');
  element('p',tr('New town notices arrive over time. Old favourites stay in the archive.','小镇见闻陆续更新，旧瓜也能慢慢翻。'),wrap,'wallIntro');
  element('p',tr(...pawWeekNote()),wrap,'pawWeeklyNotice');
- element('small',tr('Written by the fictional town residents. Real visitor posts are in the shared square.','以下为虚构小镇居民的趣味留言，真人留言请到共享广场。'),wrap,'wallDisclosure');
+ element('small',tr('Notes from around town. The shared square is a separate public space.','来自小镇的留言。共享广场是另一个公共空间。'),wrap,'wallDisclosure');
  const publicBtn=b(wrap,communityURL()?tr('Read or leave a real visitor post','看看真人留言 / 留句话'):tr('Shared square · not open yet','共享广场 · 尚未开放'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink';
  const list=element('div','',wrap,'townPostList'),nav=element('div','',wrap,'townPostNav');
  let shown=6,lastCount=-1,lastNoticeSignature='';
@@ -4020,7 +4021,7 @@ townChatPage=function(){
   if(header)header.textContent=tr('Town Square','摸鱼广场');
   if(intro)intro.textContent=tr('A little company between adventures.','逛累了，就来聊两句。');
   const controls=element('section','',q,'communityHeader');communityTabs(controls);
-  element('small',tr('Tea chat · fictional town companions, private to this visit.','茶馆闲聊 · 虚构小镇伙伴，仅本次会话可见。'),controls,'communityMuted');
+  element('small',tr('Tea chat · private to this visit.','茶馆闲聊 · 仅本次会话可见。'),controls,'communityMuted');
   const log=q.querySelector('.townChatTranscript');if(log)q.insertBefore(controls,log);
   const chips=q.querySelector('.townChatChoices');const input=q.querySelector('.townChatCompose input');const form=q.querySelector('.townChatCompose');
   if(chips&&input&&form){chips.replaceChildren();for(const prompt of communityTopicExamples)b(chips,tr(...prompt),()=>{input.value=tr(...prompt);form.requestSubmit()})}
@@ -4537,7 +4538,7 @@ auntieHitReplies.push(
 );
 const townRoasts=[
  [['Weather department','天气吐槽局'],['The town weather is either sauna or free shower. Very generous.','小镇天气不是免费桑拿，就是免费淋浴，福利真好。'],[['Anonymous','匿名','My umbrella has a better work-life balance than me.','我的伞比我更懂劳逸结合。']]],
- [['Taxpayer cat','纳税猫'],['The fictional town council has announced a task force to investigate why there are too many task forces.','小镇议会成立专项小组，调查专项小组为何太多。'],[['Mochi','麻薯','Can I sit on the paperwork?','公文给我坐一下？']]],
+ [['Taxpayer cat','纳税猫'],['The town council has announced a task force to investigate why there are too many task forces.','小镇议会成立专项小组，调查专项小组为何太多。'],[['Mochi','麻薯','Can I sit on the paperwork?','公文给我坐一下？']]],
  [['MRT standing champion','地铁站票冠军'],['The train said move in. My organs said there is no more room.','地铁广播叫往里走，我的内脏说真没位置了。'],[['Anonymous','匿名','We have become a group project.','挤成一个团建项目了。']]],
  [['Kopi detective','咖啡侦探'],['I ordered less sugar. The price was not less anything.','点了少糖，价格倒是一分没少。'],[['Anonymous','匿名','That is premium disappointment.','这是高级版失望。']]],
  [['Definitely working','认真摸鱼中'],['My boss asked for a quick sync. I have aged visibly since.','老板说快速同步一下，我肉眼可见地老了三岁。'],[['Anonymous','匿名','Please update your passport photo.','记得更新护照照片。']]],
@@ -4552,7 +4553,7 @@ townChatReplies.weather=[
  [['Kopi Uncle','咖啡叔'],['I opened my umbrella. The wind applied for joint custody.','刚撑开伞，风就申请共同抚养权。']]
 ];
 townChatReplies.civic=[
- [['Grumpy Ah Ma','暴躁阿嬷'],['Our fictional town council has formed a committee to reduce the number of committees.','小镇议会成立了一个委员会，专门研究怎么减少委员会。']],
+ [['Grumpy Ah Ma','暴躁阿嬷'],['Our town council has formed a committee to reduce the number of committees.','小镇议会成立了一个委员会，专门研究怎么减少委员会。']],
  [['Office Intern','实习生'],['Public consultation complete. We are now consulting on the results of the consultation.','公众咨询已完成，现在开始咨询咨询结果。']]
 ];
 
@@ -8122,7 +8123,7 @@ const livingGuestsTodayBefore=todayHub;
 todayHub=function(){
  livingGuestsTodayBefore();const q=$('content'),section=element('section','',q,'guestVisitPanel');
  element('h2',tr('Who is around town?','今天谁来摸鱼？'),section);
- element('p',tr('Fictional town guests come and go. No need to chase them or finish every story.','小镇客串角色随缘出现，不用追着找，也不必集齐所有故事。'),section);
+ element('p',tr('Town guests come and go. No need to chase them or finish every story.','小镇客串角色随缘出现，不用追着找，也不必集齐所有故事。'),section);
  for(const district of ['fortune','home','island','wonder']){
   const row=element('article','',section,'guestVisitRow');element('strong',tr(...maps[district].n),row);
   const guests=mbGuestRoster(district);
@@ -9772,7 +9773,7 @@ function goodCompanyPage(q){
  element('p',tr('Big news, tiny victories, or a day that went a little better. Pull up a chair.','大喜事、小胜利，或只是今天过得好一点。来坐坐吧。'),banner);
  const friends=element('div','',banner,'goodCompanyFriends');
  for(const pair of [['Grandma','外婆'],['Auntie Mei','梅姨'],['Master Yue','月师傅']]){const f=element('div','',friends);const src=paintedDialoguePortrait(pair[0]);if(src){const img=element('img','',f);img.src=src;img.alt=''}element('small',tr(...pair),f)}
- element('small',tr('Town residents · fictional companions','小镇居民 · 虚构伙伴'),banner);
+ element('small',tr('Town residents','小镇居民'),banner);
  const actions=element('div','',book,'goodCompanyActions');
  b(actions,tr('Meet other travellers','认识其他旅人'),()=>{communityTab='stroll';townChatPage()});
  b(actions,tr('Share good news in the square','去广场分享好消息'),goodCompanyPublic);

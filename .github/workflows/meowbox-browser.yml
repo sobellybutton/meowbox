@@ -22,6 +22,7 @@ jobs:
           node-version: '22'
       - run: node scripts/build.cjs
       - run: node scripts/test-tarot-snapshot.cjs
+      - run: node scripts/temple-result-continuity-test.cjs
       - run: node scripts/test-purification-painting.cjs
       - run: node scripts/resident-chat-callback-test.cjs
       - run: node scripts/painted-interior-layout-test.cjs
