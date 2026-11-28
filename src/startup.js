@@ -12451,6 +12451,13 @@ function pawSceneVapourFrame(id,i,now,reduced=false){
  const drift=reduced?0:Math.sin(now*1.04+i)*w*.12;
  return {u:u+Math.sin(phase*5+i)*w*.23+drift,v:v-phase*h,rx:w*(.11+.17*phase),ry:h*(.09+.09*phase),alpha:.17*Math.sin(Math.PI*phase)}
 }
+// Small moving highlights on the existing painted cascade, not a second
+// waterfall or a new prop. Coordinates traced on the Destiny portrait.
+function pawYueCascadeFrame(i,now,reduced=false){
+ if(!Number.isInteger(i)||i<0||i>=3||!Number.isFinite(now))return null;
+ const phase=reduced?(i+1)/4:((now*.68+i/3)%1+1)%1;
+ return {u:.805+i*.010,v:.330+phase*.026,rx:.0035,ry:.0075,alpha:.12*Math.sin(Math.PI*phase)}
+}
 function pawSceneAir(ctx,id,p,now,reduced=false,hidden=false){
  if(hidden||!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||p.w<=0||p.h<=0)return 0;
  const lamps=pawSceneLightFrame(id,now,reduced);if(!lamps.length)return 0;
@@ -12464,6 +12471,17 @@ function pawSceneAir(ctx,id,p,now,reduced=false,hidden=false){
     g.addColorStop(0,'rgba(255,224,151,'+q.alpha+')');g.addColorStop(1,'rgba(255,224,151,0)');
     ctx.fillStyle=g;ctx.fillRect(-1,-1,2,2);count++;
    }finally{ctx.restore()}
+  }
+  if(id==='destiny'){
+   for(let i=0;i<3;i++){
+    const q=pawYueCascadeFrame(i,now,reduced);if(!q)continue;
+    ctx.save();try{
+     ctx.translate(p.x+p.w*q.u,p.y+p.h*q.v);ctx.scale(p.w*q.rx,p.h*q.ry);
+     const g=ctx.createRadialGradient(0,0,0,0,0,1);
+     g.addColorStop(0,'rgba(225,242,239,'+q.alpha+')');g.addColorStop(1,'rgba(225,242,239,0)');
+     ctx.fillStyle=g;ctx.fillRect(-1,-1,2,2);count++;
+    }finally{ctx.restore()}
+   }
   }
   for(let i=0;i<3;i++){
    const q=pawSceneVapourFrame(id,i,now,reduced);if(!q)continue;
@@ -13253,6 +13271,12 @@ roomResidentActors=function(){if(!pawReadingActive())return pawReadingHostsBefor
 function pawYueDeskBox(p=pawReadingPlate){
  return {x:p.x+p.w*.581,y:p.y+p.h*.447,height:p.h*.104,clipTop:p.y+p.h*.31,clipBottom:p.y+p.h*.447}
 }
+// The visible seated host, rather than a floating label alone, is tappable.
+// Keep the target inside the authored torso and face area of the portrait.
+function pawYueHostTapBox(p){
+ if(!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||p.w<=0||p.h<=0)return null;
+ return [p.x+p.w*.465,p.y+p.h*.286,p.w*.232,p.h*.161]
+}
 function pawYueDeskPlaque(p=pawReadingPlate){
  return {x:p.x+p.w*.5,y:p.y+p.h*.552}
 }
@@ -13272,6 +13296,8 @@ function pawDrawYueAtDesk(a){
 }
 function pawDrawYueDeskPlaque(fn){
  if(!pawYueConsultPlaqueVisible(talkOpen,$('page').style.display==='block',transitioning))return false;
+ const hostBox=pawYueHostTapBox(pawReadingPlate);
+ if(hostBox)target(...hostBox,fn);
  const q=pawYueDeskPlaque(),scale=Math.max(.08,cam.scale),font=Math.max(9,12/scale),name=tr('Consult','问事');
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';
