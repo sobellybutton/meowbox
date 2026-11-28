@@ -8709,7 +8709,20 @@ function pawRecoveredLayoutKey(data,format){
  const key=kind?kind+'_'+format:null;
  return key&&Object.hasOwn(pawRecoveredLayouts,key)?key:null
 }
+/* PAW_SOUL_SHARE_ART_BEGIN */
+// These are symbolic painted cat charms, not new personality archetypes.
+// Match the actual public result, never infer identity from private answers.
+function pawSoulShareArt(data,labels){
+ if(data?.kind!=='soul')return null;
+ const title=data.title;
+ const index=Array.isArray(title)&&Array.isArray(labels)?labels.findIndex(v=>Array.isArray(v)&&v[0]===title[0]&&v[1]===title[1]):-1;
+ const charms=['sakura','sleepy','guardian','moonlight','pink-love','classic-white','black','gold'];
+ return 'fortune-cats/'+(charms[index]||'classic-white')+'.webp'
+}
+/* PAW_SOUL_SHARE_ART_END */
 function pawRecoveredResultIllustration(data){
+ const charm=pawSoulShareArt(data,soulCats);
+ if(charm)return pawRecoveredImage(charm);
  if(data.kind==='fortune')return pawRecoveredImage('scenes/temple_approach_portrait.webp');
  return pics[sharePaintedKey(data)]
 }
