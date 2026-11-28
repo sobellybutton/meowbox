@@ -13816,7 +13816,7 @@ function pawYueQuestionSteps(form,out,kind){
  function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));question.textContent=tr(...questions[index]);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1)}
  function advance(){if(finished||index>=steps.length-1)return;for(const field of steps[index].flatMap(n=>[...n.querySelectorAll('input,select')]))if(!field.checkValidity()){field.reportValidity();return}show(index+1)}
  form.addEventListener('keydown',e=>{if(!finished&&index<steps.length-1&&e.key==='Enter'&&e.target.matches('input')){e.preventDefault();advance()}});
- form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();controls.remove()}});
+ form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();if(controls.contains(submit))controls.before(submit);controls.remove()}});
  show(0)
 }
 /* PAW_YUE_PARCHMENT_BEGIN */
@@ -15323,7 +15323,7 @@ pawYueDeskPresent=function(kind){
    const disclosure=element('details','',form,'pawYueCoordinates');element('summary',tr('Check coordinates','核对坐标'),disclosure);coordLabels[0].before(disclosure);disclosure.append(...coordLabels);
    // The original guided controller owns their visibility; the disclosure follows location.
    const show=()=>{const active=!place.closest('details').classList.contains('pawYueStepHidden');disclosure.hidden=!active;disclosure.open=active&&(!place.value||place.value==='custom')};
-   const observer=new MutationObserver(show);observer.observe(place.closest('details'),{attributes:true,attributeFilter:['class']});place.addEventListener('change',show);show()
+   const observer=new MutationObserver(show);observer.observe(place.closest('details'),{attributes:true,attributeFilter:['class']});place.addEventListener('change',show);form.addEventListener('submit',()=>{if(!form.classList.contains('pawYueGuidedForm')){observer.disconnect();disclosure.hidden=false}});show()
   }
  }
  return result
