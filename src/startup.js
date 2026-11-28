@@ -12966,6 +12966,26 @@ label=function(name,x,y,fn){
 function pawMappedGuestGaps(mapped){
  return mapped?{station:34,spawn:48,entry:45,host:40,spacing:46,door:48,actor:40,player:40,peer:38}:{station:52,spawn:90,entry:65,host:68,spacing:68,door:75,actor:60,player:55,peer:50}
 }
+// Select a connected set of quiet walking stops rather than clustering every
+// waypoint in the corner farthest from the player. A seed must also have a
+// real route to the door. All connecting edges keep the station/host clear.
+function pawChooseConnectedGuestPoints(candidates,canDepart,canWalk,limit=8,spacing=18){
+ const pool=candidates.filter(v=>Array.isArray(v.w)&&v.w.length===2&&v.w.every(Number.isFinite));
+ if(!pool.length||limit<1)return [];
+ const seed=pool.find(v=>canDepart(v.w));
+ if(!seed)return [];
+ const chosen=[seed.w];
+ while(chosen.length<limit){
+  let best=null,bestGap=-1;
+  for(const v of pool){
+   const gap=Math.min(...chosen.map(p=>Math.hypot(p[0]-v.w[0],p[1]-v.w[1])));
+   if(gap<spacing||gap<=bestGap||!chosen.some(p=>canWalk(p,v.w)))continue;
+   best=v.w;bestGap=gap;
+  }
+  if(!best)break;chosen.push(best)
+ }
+ return chosen
+}
 function pawMappedVisitorPoints(api,id){
  const q=api?.rooms[id],spec=pawReadingSpec(api,id);if(!q||!spec)return [];
  const gaps=pawMappedGuestGaps(true),protectedFeet=[spec.entry,[spec.entry[0],spec.entry[1]-35],spec.arrival,...Object.values(spec.stations).map(v=>v.slice(2))];
@@ -12980,8 +13000,13 @@ function pawMappedVisitorPoints(api,id){
   const distance=Math.min(...protectedFeet.map(a=>Math.hypot(w[0]-a[0],w[1]-a[1])));candidates.push({w,distance})
  }
  candidates.sort((a,b)=>b.distance-a.distance);
- const chosen=[];for(const v of candidates){if(pawGuestClear(...v.w,chosen,18))chosen.push(v.w);if(chosen.length>=8)break}
- return chosen
+ const worldSafe=(x,y)=>api.safe(id,pawReadingNormalized(x,y));
+ const worldSegment=(a,b)=>api.segment(id,pawReadingNormalized(...a),pawReadingNormalized(...b));
+ const worldPath=(a,b)=>pawReadingDestination(api,id,a,...b);
+ const active=Object.values(spec.stations).map(v=>v.slice(2));
+ const depart=v=>!!pawVisitorDoorRoute(spec.entry,v,active,worldSafe,worldPath,gaps.station,worldSegment);
+ const walk=(a,b)=>worldSegment(a,b)&&pawGuestSegment(a,b,protectedFeet,gaps.station)&&pawGuestSegment(a,b,host,gaps.host);
+ return pawChooseConnectedGuestPoints(candidates,depart,walk,8,18)
 }
 /* PAW_MAPPED_VISITORS_END */
 pawLoadReadingModule().then(api=>{if(!api)return;for(const id of pawReadingRoomIds){const q=api.rooms[id];if(q)pawRoomVisitorSpecs[id]={count:['park','arcade','tea'].includes(id)?2:1,points:pawMappedVisitorPoints(api,id)}}});
