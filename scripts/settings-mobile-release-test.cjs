@@ -41,6 +41,12 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
     for(const art of [mapStyle.profileArt,mapStyle.coinArt,mapStyle.gearArt,mapStyle.dockArt])assert(art.includes('paper_texture.webp'),'Shared painted paper must render');
     assert(mapStyle.plaque&&mapStyle.plaque.borderImage==='none'&&mapStyle.plaque.hit.height>=44,'Slim plaque must retain accessible target');
    }
+   if(process.env.PAW_QUIET_ARRIVAL==='1'){
+    const state=await page.evaluate(()=>({near:pawRailNearStation(p,maps[scene].st.find(v=>v[0]==='station')),rail:[...document.querySelectorAll('.pawRailEdge,button[data-door="station"]')].some(e=>!e.hidden&&e.getClientRects().length&&getComputedStyle(e).visibility==='visible'),guide:!moveGuide.hidden,hint:getComputedStyle(document.querySelector('#hint')).visibility}));
+    assert.equal(state.near,false,'Arrival must be distant from railway');
+    assert.equal(state.rail,false,'Premature railway sign');
+    if(state.guide)assert.equal(state.hint,'hidden','Competing tutorial hint');
+   }
    await page.screenshot({path:'test-results/settings-'+name+'-map.png'});
    await page.evaluate(()=>{localStorage.setItem('meowbox-preview-resetProbe','keep until confirmed');localStorage.setItem('other-app-settings-test','preserve')});
    const language=await page.evaluate(()=>localStorage.getItem('meowbox-preview-zh'));
