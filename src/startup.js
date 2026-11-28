@@ -14914,4 +14914,70 @@ pawDistrictSignStyle.textContent=`
 `;document.head.append(pawDistrictSignStyle);
 /* PAW_DISTRICT_SIGN_MATERIAL_END */
 
+
+/* PAW_PROFILE_SETTINGS_BEGIN */
+// First-time ticket language remains separate. Returning travellers use the
+// profile; no map dropdown can cover a railway or house navigation target.
+function pawProfileSettings(){
+ page(tr('My settings','我的设置'),tr('Make this little town feel like home.','让小镇更合你的心意。'),q=>{
+  const wrap=element('section','',q,'meowSoundSettings pawProfileSettings');
+  element('h2',tr('Language','语言'),wrap);
+  const langs=element('div','',wrap,'pawProfileLanguages');
+  for(const [cn,label] of [[false,'English'],[true,'中文']]){
+   const btn=b(langs,label,()=>{if(Boolean(zh)!==cn){toggleLang();refreshLanguageChoice()}pawProfileSettings()});
+   btn.setAttribute('aria-pressed',String(Boolean(zh)===cn));btn.type='button'
+  }
+  element('h2',tr('Sound','声音'),wrap);
+  for(const [id,en,cn,descEn,descCn] of [['ambience','Nature and room ambience','环境音','Rain, river and village sounds','雨声、流水和小镇环境音'],['effects','Interaction sounds','互动音效','Taps, bells, splashes and arcade cues','点击、钟声、水声和游戏音效']]){
+   const row=element('label','',wrap,'meowSettingRow'),info=element('span','',row);element('strong',tr(en,cn),info);element('small',tr(descEn,descCn),info);
+   const input=element('input','',row);input.type='checkbox';input.checked=meowSoundPrefs[id]!==false;
+   input.onchange=()=>{meowSoundPrefs[id]=input.checked;save('meowSoundPrefsV1',meowSoundPrefs);updateMeowAudioBuses()}
+  }
+  b(wrap,muted?tr('Turn all sound on','打开声音'):tr('Mute all sound','关闭所有声音'),()=>{$('mute').click();pawProfileSettings()});
+  if(!room&&isRoute())b(wrap,tr('Walking help','行走指南'),()=>{$('page').style.display='none';updateHUD();walkHelp.click()});
+  element('h2',tr('Your local progress','本地游戏进度'),wrap);
+  const reset=b(wrap,tr('Start over','重新开始'),()=>arm(!armed));reset.setAttribute('aria-expanded','false');
+  const confirm=element('div','',wrap,'pawProfileReset');confirm.id='pawProfileReset';reset.setAttribute('aria-controls',confirm.id);confirm.hidden=true;
+  const msg=element('p',tr('This clears your saved traveller, coins, room, collections and local history on this browser. Close other game tabs first. Shared posts and your language setting stay.','这将清除本浏览器内的旅人、爪爪币、小窝、收藏和本地记录。请先关闭其他游戏标签页。公开留言和语言设置会保留。'),confirm);
+  let armed=false;
+  const cancel=b(confirm,tr('Keep my progress','保留我的进度'),()=>arm(false));
+  const erase=b(confirm,tr('Erase local progress','清除本地进度'),()=>{
+   if(!armed||!confirm.isConnected||confirm.hidden)return;
+   let ok=false;try{ok=pawLocalReset(localStorage)}catch{}
+   if(ok){armed=false;erase.disabled=true;location.reload()}
+   else msg.textContent=tr('Could not reset local progress. Check browser storage and try again.','无法重置本地进度，请检查浏览器存储后重试。')
+  });
+  function arm(value){armed=value;confirm.hidden=!value;reset.setAttribute('aria-expanded',String(value));(value?cancel:reset).focus()}
+  b(wrap,tr('Back to profile','返回档案'),()=>lifeProfile());
+  const row=q.querySelector(':scope > .row');if(row){const back=row.querySelector('button:first-child');if(back){back.textContent=tr('‹ Profile','‹ 返回档案');back.onclick=()=>lifeProfile()}row.querySelector('button:nth-child(2)')?.remove()}
+ })
+}
+const pawProfileSettingsBefore=lifeProfile;
+lifeProfile=function(...args){
+ const result=pawProfileSettingsBefore(...args),q=$('content'),book=q.querySelector('.journalProfileBook');
+ if(book&&!book.querySelector('.pawProfileSettingsLink')){
+  const btn=b(book,tr('Settings','设置'),pawProfileSettings);btn.className='pawProfileSettingsLink';
+  const stats=book.querySelector('.journalQuickStats');if(stats)stats.after(btn);
+  q.querySelector(':scope > .row button:nth-child(2)')?.remove()
+ }
+ return result
+};
+$('profileHud').onclick=()=>{if(avatar!==null&&proposal.hidden&&!transitioning&&!talkOpen&&!activity)lifeProfile()};
+meowSettingsPage=pawProfileSettings;
+const pawProfileSettingsStyle=document.createElement('style');
+pawProfileSettingsStyle.textContent=`
+#game #small #townSettingsToggle,#game #small #townSettingsPanel{display:none!important}
+#content .pawProfileSettingsLink{display:block;width:100%;min-height:44px;margin:8px 0 12px}
+#content .pawProfileSettings{max-width:460px;margin:auto;color:#514634}
+#content .pawProfileSettings h2{font-size:16px;margin:18px 0 8px}
+#content .pawProfileLanguages{display:flex;gap:8px}
+#content .pawProfileLanguages button{flex:1;min-height:44px}
+#content .pawProfileLanguages button[aria-pressed=true]{background:#dbe0ca!important;border-color:#8c9b7c!important}
+#content .pawProfileReset{display:grid;gap:8px;margin:8px 0;padding:10px;border:1px solid #ad9775;background:#f2e5cb;border-radius:5px}
+#content .pawProfileReset[hidden]{display:none!important}
+#content .pawProfileReset button{min-height:44px;white-space:normal}
+#content .pawProfileReset button:last-child{color:#894d3f}
+`;document.head.append(pawProfileSettingsStyle);
+/* PAW_PROFILE_SETTINGS_END */
+
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
