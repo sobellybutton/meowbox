@@ -46,6 +46,28 @@ function path(ctx,polygon){ctx.moveTo(polygon[0][0],polygon[0][1]);for(const p o
 // inside the paper's left arm on the low block, not the air above it.
 const station=Object.freeze({paper:Object.freeze([390,518]),contact:Object.freeze([360,518]),paperScaleY:.36,height:150,direction:.55});
 function sceneLayout(){return fit(station.contact,station.height,station.direction)}
+// Original seated painting, with the fingers resting near the low block.
+// The paper remains on the tabletop; it never travels through empty air.
+const seatedArt=Object.freeze({width:347,height:510,sha256:'975908fd030f6fe18a4366fe65eb35c2323a48853f9a395252cad6fc885b260b'});
+const seatedGrip=Object.freeze([264,294]);
+const handClip=Object.freeze([[239,275],[258,267],[275,279],[289,294],[278,311],[255,309],[237,296]].map(Object.freeze));
+const preparationDuration=1.1;
+function preparationFrame(spec,progress,reduced=false){
+ if(!spec||!finite(spec.foot)||!Number.isFinite(spec.height)||spec.height<=0||!Number.isFinite(progress))return null;
+ const scale=spec.height/seatedArt.height,left=spec.foot[0]-seatedArt.width*scale/2,top=spec.foot[1]-spec.height;
+ const grip=[left+seatedGrip[0]*scale,top+seatedGrip[1]*scale];
+ const p=reduced?1:Math.max(0,Math.min(1,progress)),open=ease((p-.18)/.82);
+ const sx=.30+.70*open,sy=.28+.72*open;
+ // The same point of the folded paper stays beneath her fingers as it opens.
+ const center=[grip[0]+(station.paper[0]-grip[0])*sx,grip[1]+(station.paper[1]-grip[1])*sy];
+ return {grip,center,sx,sy,phase:p<.18?'position':p<1?'unfold':'ready'}
+}
+function drawSeatedHand(ctx,im,spec){
+ if(!ctx||!im?.complete||im.naturalWidth!==seatedArt.width||im.naturalHeight!==seatedArt.height||!spec)return false;
+ const scale=spec.height/seatedArt.height;
+ ctx.save();try{ctx.translate(spec.foot[0]-seatedArt.width*scale/2,spec.foot[1]-spec.height);ctx.scale(scale,scale);ctx.beginPath();path(ctx,handClip);ctx.clip();ctx.drawImage(im,0,0)}finally{ctx.restore()}
+ return true
+}
 function validDraw(ctx,im,spec){return !!(ctx&&im?.complete&&im.naturalWidth===art.width&&im.naturalHeight===art.height&&spec)}
 function drawBody(ctx,im,spec){
  if(!validDraw(ctx,im,spec))return false;
@@ -61,5 +83,5 @@ function draw(ctx,im,spec,pose){
  if(!validDraw(ctx,im,spec)||!pose||!Number.isFinite(pose.angle))return false;
  return drawBody(ctx,im,spec)&&drawArm(ctx,im,spec,pose)
 }
-return Object.freeze({art,shoulder,tip,timing,layout,fit,frame,station,sceneLayout,drawBody,drawArm,draw})
+return Object.freeze({art,shoulder,tip,timing,layout,fit,frame,station,sceneLayout,seatedArt,preparationDuration,preparationFrame,drawSeatedHand,drawBody,drawArm,draw})
 });

@@ -1806,12 +1806,13 @@ function pawAuntieRoundCanBegin(run,allowed,busy){
 /* PAW_AUNTIE_ROUND_END */
 function pawAuntieBeginRound(){
  if(!pawAuntieRoundCanBegin(state,paperRitualAllowed(),paperRitualBusy()))return false;
+ if(state.paperPrepared!==true){openStressChoices();return false;}
  state.paperRoundRemaining=3;
  if(paperRitualRequest())return true;
  state.paperRoundRemaining=0;return false
 }
 function paperRitualRequest(){
- if(!paperRitualAllowed()||paperRitualBusy()||!pawAuntieRoundRemaining(state))return false;
+ if(!paperRitualAllowed()||paperRitualBusy()||state.paperPrepared!==true||!pawAuntieRoundRemaining(state))return false;
  state.paperAction={at:t,landed:false};
  stressSwingAt=t;paperRitualSyncButtons();return true
 }
@@ -1899,7 +1900,7 @@ document.addEventListener('visibilitychange',()=>{if(activity==='hit'&&room==='f
 
 
 /* MB5_ACTION_BEGIN: five physical interaction slices, no new art. */
-function mb5PrepProgress(now,started){return Number.isFinite(started)?Math.max(0,Math.min(1,(now-started)/.62)):1}
+function mb5PrepProgress(now,started){const duration=globalThis.PawAuntieRitualMotion?.preparationDuration??1.1;return Number.isFinite(started)?Math.max(0,Math.min(1,(now-started)/duration)):1}
 const mb5BusyBefore=paperRitualBusy;
 paperRitualBusy=function(){return mb5BusyBefore()||Number.isFinite(state?.paperPrepAt)};
 const mb5ChooseBefore=chooseStressTarget;
@@ -1931,7 +1932,7 @@ paperRitualSyncButtons=function(){
  const button=$('gameControls')?.querySelector('.paperWhack');if(!button)return;
  const phase=Number.isFinite(state.paperPrepAt)?'prepare':state.paperAction?townActionPhase(t-state.paperAction.at):'ready';
  const words={prepare:['Preparing the paper…','铺好纸小人……'],anticipation:['Ah Ma is getting ready…','阿嬷准备好了……'],swing:['Ah Ma swings…','阿嬷挥下拖鞋……'],impact:['Whack!','啪！'],recovery:['Ah Ma is still working…','阿嬷还在忙……'],ready:['Ask Ah Ma to begin','请阿嬷开始']};
- const label=tr(...words[phase]);if(button.textContent!==label)button.textContent=label
+ const label=phase==='ready'&&state.paperPrepared!==true?tr('Choose a worry','选个烦恼'):tr(...words[phase]);if(button.textContent!==label)button.textContent=label
 };
 
 /* Accessible alternatives to canvas controls; the same action handlers run. */
@@ -13735,6 +13736,7 @@ start=function(id,...args){
  const result=pawAuntieSeatStartBefore(id,...args);
  if(id==='hit'&&room==='fish'&&activity==='hit'){
   state.pawAuntieVisit={phase:repeat?'seated':'arrival',age:0,last:t};
+  state.paperPrepared=false;delete state.paperPrepAt;
   refreshControls();
   if(!repeat)hint('Ah Ma: Come, have a seat.','阿嬷：来，坐下来慢慢说。')
  }

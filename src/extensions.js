@@ -937,6 +937,10 @@ drawActivity=function(){
  const matched=!!(motionApi&&raised?.complete&&raised.naturalWidth===motionApi.art.width&&raised.naturalHeight===motionApi.art.height&&seated?.complete&&seated.naturalWidth===347&&seated.naturalHeight===510&&residentInstalledArt.get(hostRecord.id)?.scolding?.sha256===motionApi.art.sha256);
  if(room==='fish'&&typeof state.pawAuntieArticulation!=='boolean')state.pawAuntieArticulation=matched;
  const motionSpec=state.pawAuntieArticulation&&matched?motionApi.sceneLayout():null;
+ const prepared=room!=='fish'||state.paperPrepared===true;
+ const preparing=room==='fish'&&Number.isFinite(state.paperPrepAt);
+ const prepFrame=motionSpec&&preparing?motionApi.preparationFrame(motionSpec,mb5PrepProgress(t,state.paperPrepAt),residentReducedMotion.matches):null;
+ const paperVisible=prepared||preparing;
  const motionPose=motionSpec&&state.paperAction?motionApi.frame(motionSpec,t-state.paperAction.at,residentReducedMotion.matches):null;
  if(motionSpec)ellipse(motionSpec.foot[0],motionSpec.foot[1],39,9,'#302a2444');
  else ellipse(272,548,50,12,'#302a2444');
@@ -960,10 +964,18 @@ drawActivity=function(){
  for(let i=0;i<3;i++)line(331,515+i*7,427,516+i*7,'#e0c09a55',1);
  const f=clamp((t-stressSwingAt)/.46,0,1),impact=(1-f)*Math.sin(f*13),swing=Math.sin(Math.PI*f);
  if(motionSpec){
-  ctx.save();try{ctx.translate(...motionApi.station.paper);ctx.scale(1,motionApi.station.paperScaleY);paperWorryAt(0,0,impact)}finally{ctx.restore()}
+  if(paperVisible){
+   ctx.save();try{
+    ctx.translate(...(prepFrame?prepFrame.center:motionApi.station.paper));
+    ctx.scale(prepFrame?.sx??1,motionApi.station.paperScaleY*(prepFrame?.sy??1));
+    // Use the original paper painter; the new anchored fold owns preparation.
+    if(prepFrame)mb5SheetBefore(0,0,0);else paperWorryAt(0,0,impact)
+   }finally{ctx.restore()}
+   if(prepFrame&&!motionPose&&residentInstalledArt.get(hostRecord.id)?.seated?.sha256===motionApi.seatedArt.sha256)motionApi.drawSeatedHand(ctx,seated,motionSpec)
+  }
   // The painted slipper crosses the foreground after the block and paper.
   if(motionPose)motionApi.drawArm(ctx,raised,motionSpec,motionPose)
- }else paperWorryAt(381,494,impact);
+ }else if(paperVisible)paperWorryAt(381,494,impact);
  const playerX=490,playerY=572;
  if(room==='fish'){
   // Customer seat: actual support behind the seated visitor. The old
@@ -981,7 +993,7 @@ drawActivity=function(){
  }
  target(333,445,95,112,()=>{},'hit');
  stressPieces=stressPieces.filter(v=>t-v.at<.65);for(const v of stressPieces){const d=t-v.at;ctx.save();ctx.globalAlpha=1-d/.65;ctx.translate(v.x-19+(motionSpec?9:0)+v.vx*d*.6,v.y+20+(motionSpec?24:0)+v.vy*d*.6+70*d*d);ctx.rotate(v.angle+d*3);ctx.fillStyle='#f0d8a3';ctx.fillRect(-2,-1.5,4,3);ctx.restore()}
- wonderSceneText(tr(...stressTargets[stressTarget]),400,580,220,15,'#fff0d4',1);
+ if(paperVisible)wonderSceneText(tr(...stressTargets[stressTarget]),400,580,220,15,'#fff0d4',1);
  if(room!=='fish')txt(tr('Worries released: ','打走的烦恼：')+state.count,400,605,17,'#fff0d4');
  ctx.restore()
 };

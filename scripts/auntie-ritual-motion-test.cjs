@@ -24,4 +24,11 @@ ok(api.station.paper[0]>api.station.contact[0]&&api.station.paper[1]===api.stati
 const layerCalls=[];const layerCtx=Object.fromEntries(['save','restore','translate','scale','beginPath','rect','moveTo','lineTo','closePath','clip','drawImage','rotate'].map(k=>[k,(...args)=>layerCalls.push([k,...args])]));
 const painted={complete:true,naturalWidth:344,naturalHeight:510};
 ok(api.drawBody(layerCtx,painted,live));ok(layerCalls.filter(v=>v[0]==='drawImage').length===1);ok(api.drawArm(layerCtx,painted,live,api.frame(live,.23)));ok(layerCalls.filter(v=>v[0]==='drawImage').length===2);ok(layerCalls.filter(v=>v[0]==='save').length===layerCalls.filter(v=>v[0]==='restore').length);
+const prep0=api.preparationFrame(live,0),prep1=api.preparationFrame(live,1);
+ok(prep0.phase==='position');ok(prep1.phase==='ready');ok(near(prep1.center,api.station.paper));ok(near(prep0.grip,prep1.grip));
+for(let i=0;i<=100;i++){const f=api.preparationFrame(live,i/100);ok(f.sx>=.30&&f.sx<=1&&f.sy>=.28&&f.sy<=1);ok(near(f.grip,[f.center[0]-(api.station.paper[0]-f.grip[0])*f.sx,f.center[1]-(api.station.paper[1]-f.grip[1])*f.sy]));ok(f.center[0]>335&&f.center[0]<421&&f.center[1]>506&&f.center[1]<540)}
+ok(near(api.preparationFrame(live,0,true).center,api.station.paper));ok(api.preparationFrame(live,NaN)===null);
+ok(api.drawSeatedHand(layerCtx,{complete:true,naturalWidth:347,naturalHeight:510},live));
+ok(layerCalls.filter(v=>v[0]==='save').length===layerCalls.filter(v=>v[0]==='restore').length);
+ok(!api.drawSeatedHand(layerCtx,painted,live));
 console.log('Ah Ma motion: '+checks+' assertions passed; geometry only, no rendered visual approval');
