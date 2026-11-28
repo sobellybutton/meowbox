@@ -56,6 +56,7 @@ jobs:
           node scripts/painted-lobby-runtime-test.cjs
           node scripts/indoor-social-test.cjs
           node scripts/tarot-fan-test.cjs
+          node scripts/recovered-journal-cover-test.cjs
           node scripts/test-tarot-snapshot.cjs
           node scripts/reading-host-scene-test.cjs
           node scripts/scene-ambience-test.cjs
