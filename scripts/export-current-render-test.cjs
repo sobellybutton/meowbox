@@ -42,7 +42,7 @@ const url=process.env.MEOW_TEST_URL||'http://127.0.0.1:8768/index.html';
    return rows
   });
   assert.ok(fixtures.length>=20);
-  const manifest=[];
+  const manifest=[],thumbDir=path.join(out,'phone-thumbnails');fs.mkdirSync(thumbDir,{recursive:true});
   for(const {key,data} of fixtures)for(const format of ['feed','xhs','story','square'])for(const cn of [false,true]){
    const result=await page.evaluate(async({data,format,cn})=>{
     await pawPrepareRecoveredShare(format,data);
@@ -61,7 +61,9 @@ const url=process.env.MEOW_TEST_URL||'http://127.0.0.1:8768/index.html';
     shareCardArt(cv,data,format,cn);
     const png=cv.toDataURL('image/png');
     if(key&&png!==reference.toDataURL('image/png'))throw Error('Effective renderer differs from editorial candidate');
-    return {png:png.split(',')[1],width:cv.width,height:cv.height}
+    const thumb=document.createElement('canvas');thumb.width=320;thumb.height=Math.round(cv.height*320/cv.width);thumb.getContext('2d').drawImage(cv,0,0,thumb.width,thumb.height);
+    const preview=thumb.toDataURL('image/jpeg',.9).split(',')[1];
+    return {png:png.split(',')[1],preview,width:cv.width,height:cv.height}
    },{data,format,cn});
    const dims={feed:[1080,1350],xhs:[1080,1440],story:[1080,1920],square:[1080,1080]}[format];
    assert.deepEqual([result.width,result.height],dims);
@@ -69,17 +71,20 @@ const url=process.env.MEOW_TEST_URL||'http://127.0.0.1:8768/index.html';
    assert.ok(bytes.length>10000,'Blank or incomplete PNG');
    assert.equal(bytes.readUInt32BE(16),dims[0]);assert.equal(bytes.readUInt32BE(20),dims[1]);
    fs.writeFileSync(path.join(out,file),bytes);
+   fs.writeFileSync(path.join(thumbDir,file+'.jpg'),Buffer.from(result.preview,'base64'));
    manifest.push({key,format,locale:cn?'zh':'en',file,bytes:bytes.length,width:dims[0],height:dims[1]});
   }
   fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify(manifest,null,2));
   // Contact sheets at 320px image width, alongside the untouched originals.
   // Inspect these at normal phone viewing scale, not just enlarged exports.
+  await page.close();
   for(const format of ['feed','xhs','story','square'])for(const locale of ['en','zh']){
    const files=manifest.filter(v=>v.format===format&&v.locale===locale);
-   await page.setContent('<html><body style="margin:0;background:#e8e2d8;display:grid;grid-template-columns:repeat(3,320px);gap:16px;padding:16px;font:14px system-ui">'+files.map(v=>'<figure style="margin:0"><img style="width:320px;display:block" src="data:image/png;base64,'+fs.readFileSync(path.join(out,v.file)).toString('base64')+'"><figcaption>'+v.key+'</figcaption></figure>').join('')+'</body></html>');
-   await page.setViewportSize({width:1040,height:900});
-   await page.evaluate(()=>Promise.all(Array.from(document.images,im=>im.decode())));
-   await page.screenshot({path:path.join(out,'contact-'+format+'-'+locale+'.jpg'),fullPage:true,type:'jpeg',quality:76});
+   const sheet=await browser.newPage({viewport:{width:1040,height:900}});
+   try{await sheet.setContent('<html><body style="margin:0;background:#e8e2d8;display:grid;grid-template-columns:repeat(3,320px);gap:16px;padding:16px;font:14px system-ui">'+files.map(v=>'<figure style="margin:0"><img style="width:320px;display:block" src="data:image/jpeg;base64,'+fs.readFileSync(path.join(thumbDir,v.file+'.jpg')).toString('base64')+'"><figcaption>'+v.key+'</figcaption></figure>').join('')+'</body></html>');
+   await sheet.evaluate(()=>Promise.all(Array.from(document.images,im=>im.decode())));
+   await sheet.screenshot({path:path.join(out,'contact-'+format+'-'+locale+'.jpg'),fullPage:true,type:'jpeg',quality:76});
+   }finally{await sheet.close()}
   }
   console.log('Exported '+manifest.length+' actual PNGs; eight phone-scale contact sheets. Renderer evidence only.');
  }finally{await browser.close()}
