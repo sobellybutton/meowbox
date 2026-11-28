@@ -2,7 +2,10 @@
 const assert=require('node:assert/strict'),{chromium}=require('playwright');
 (async()=>{
  const browser=await chromium.launch();
- try{for(const [name,width,height] of [['compact',360,640],['tall',390,844]]){
+ const profiles=[['compact',360,640],['tall',390,844]];
+ const selected=process.env.PAW_MAP_PROFILE;
+ if(selected&&!profiles.some(([name])=>name===selected))throw Error('Unknown mobile profile '+selected);
+ try{for(const [name,width,height] of profiles.filter(([name])=>!selected||name===selected)){
   const page=await browser.newPage({viewport:{width,height},isMobile:true,hasTouch:true,deviceScaleFactor:1});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   try{
