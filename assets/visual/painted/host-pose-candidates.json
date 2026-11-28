@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "task": "ART-03",
+  "status": "candidate preparation only; do not activate automatically",
+  "source": "assets/visual/staging/2026-11-28-host-characters/manifest.json",
+  "registration": "Shared canvas and visible bounds are not seat anchors. Calibrate apparent head size, seat, desk/table occlusion and contact per pose; retain standing identities and runtime card/chart data. Static poses are not motion sequences.",
+  "excludedAlternatives": 7,
+  "characters": {
+    "master-yue": {
+      "standingReference": "36ae6db3436a00c8a428d225cff430db57918a94",
+      "poses": {
+        "seated-brush-held": {
+          "path": "assets/visual/painted/master-yue/pose-candidates/seated-brush-held.webp",
+          "sourceBlob": "9c9aece3514188592a0264e56ad10c7cd42b067a",
+          "sha256": "6502f9d601ccca4a5108e0b43dd896c812145de243abef224435c8f45368c929",
+          "canvas": [
+            728,
+            784
+          ],
+          "visibleAlphaBounds": [
+            152,
+            16,
+            576,
+            768
+          ],
+          "notes": "Brush held in preparation; not a verified writing contact or animation."
+        },
+        "seated-present-blank-parchment": {
+          "path": "assets/visual/painted/master-yue/pose-candidates/seated-present-blank-parchment.webp",
+          "sourceBlob": "69fd84bbe1809d675230c198cd6cc8ab18e98ede",
+          "sha256": "b3a7bb81ccaeee35f1ca16c33ab511a67da110bec89436f87b538ceb2580be9e",
+          "canvas": [
+            728,
+            784
+          ],
+          "visibleAlphaBounds": [
+            130,
+            17,
+            597,
+            768
+          ],
+          "notes": "Blank parchment; render the computed chart separately, never use baked symbols."
+        },
+        "seated-welcome-explain": {
+          "path": "assets/visual/painted/master-yue/pose-candidates/seated-welcome-explain.webp",
+          "sourceBlob": "55b0825ce477aa196aafd04d94619475208a1cc5",
+          "sha256": "8ed2fc0c58f69ae85e72bc214940355ba8904e3710732182c8b5ae851a0d2a96",
+          "canvas": [
+            728,
+            784
+          ],
+          "visibleAlphaBounds": [
+            123,
+            16,
+            605,
+            768
+          ],
+          "notes": "Open palm welcoming or explaining; desk occlusion and arm clearance required."
+        }
+      }
+    },
+    "fortune-teller": {
+      "standingReference": "fc1b97c859b7e95d2c3f59b568763498727860c6",
+      "poses": {
+        "seated-idle": {
+          "path": "assets/visual/painted/fortune-teller/pose-candidates/seated-idle.webp",
+          "sourceBlob": "b79a563c66338db88fe52b918d041806144cc8a6",
+          "sha256": "7f58b019c90bd4866761f6dd23226e4df3abf2f7d1c92e118d3c84156a635c38",
+          "canvas": [
+            728,
+            784
+          ],
+          "visibleAlphaBounds": [
+            152,
+            16,
+            576,
+            768
+          ],
+          "notes": "Seated host candidate; fit seat height and head scale to painted table."
+        },
+        "seated-shuffle-held": {
+          "path": "assets/visual/painted/fortune-teller/pose-candidates/seated-shuffle-held.webp",
+          "sourceBlob": "bf7c0c347afd4dba76e1c069ac0d94f33830ccb0",
+          "sha256": "9671da2bd200e277e7eb161f537b00e0e7fbf3167ce3176dad5478a44b8bf900",
+          "canvas": [
+            728,
+            784
+          ],
+          "visibleAlphaBounds": [
+            128,
+            16,
+            600,
+            768
+          ],
+          "notes": "Single shuffle pose, not a complete motion cycle. Match game deck design."
+        },
+        "seated-present-card": {
+          "path": "assets/visual/painted/fortune-teller/pose-candidates/seated-present-card.webp",
+          "sourceBlob": "44f95fabb2403b409a85866b9647888a1eec9bff",
+          "sha256": "a07dcc9b259509d22ace03da2585bbd4b1fe8cfb3f27c922a7a0358693503c4b",
+          "canvas": [
+            728,
+            784
+          ],
+          "visibleAlphaBounds": [
+            115,
+            16,
+            612,
+            768
+          ],
+          "notes": "Blank decorative card; display the actual selected card separately."
+        }
+      }
+    }
+  }
+}
