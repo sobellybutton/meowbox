@@ -122,3 +122,28 @@ console.log('PASS '+checks+' park care continuity checks.');
  check(src.includes('if(pawDrawKaya(a,kind,phase,age,dir,residentReducedMotion.matches))return;'),'actual care renderer calls new pose selector');
  console.log('PASS '+n+' painted ginger tabby timing, contact, fallback and identity assertions.');
 }
+
+{
+ const mark=src.match(/\/\* PAW_PARK_VISUAL_PHASE_BEGIN \*\/([\s\S]*?)\/\* PAW_PARK_VISUAL_PHASE_END \*\//);
+ assert.ok(mark);
+ const phase=new Function(mark[1]+';return pawParkVisualPhase')();
+ let n=0;const ck=(v,m)=>{assert.ok(v,m);n++};
+ for(const p of ['feed','water','pet','play','rest','return','idle'])for(let i=0;i<100;i++)ck(phase({phase:p},-i-1)==='idle','preparation is idle');
+ for(const moving of [true,false])for(let i=0;i<=68;i++){
+  const kneel=i/100,a={phase:'pet',traveller:{moving,kneel}};
+  ck(phase(a,1)===(moving||kneel<=.25?'idle':'pet'),'wait until traveller settles');
+ }
+ for(let i=0;i<=100;i++){
+  const a={phase:'return',x:400+i/10,y:535};
+  ck(phase(a,1)===(i<10?'idle':'return'),'no walking in place at the end');
+ }
+ const render=src.slice(src.indexOf('const catArtDraft=careCatArt;'),src.indexOf('/* New room artwork',src.indexOf('const catArtDraft=careCatArt;')));
+ const calls=[],ctx={save(){},restore(){},translate(){},scale(){},drawImage(){calls.push('atlas')}};
+ let kaya=true,atlas=false;const state={petKind:0};
+ const api=new Function('ctx','state','t','residentReducedMotion','productionVisual','pawDrawKaya','pawCareActionAge','pawParkVisualPhase','parkCatFrame','pawCatDirection','ellipse','careCatArt',render+';return careCatArt')(ctx,state,1,{matches:false},()=>{calls.push('request atlas');return atlas?{}:null},()=>{calls.push('kaya');return kaya},()=>1,phase,()=>0,()=>1,()=>{},a=>calls.push('fallback:'+a.phase));
+ const a={phase:'pet',x:400,y:535,values:{trust:50},traveller:{moving:false,kneel:.68}};
+ api(a);ck(calls.join(',')==='kaya','dedicated cat renders even without atlas');
+ calls.length=0;kaya=false;api(a);ck(calls.join(',')==='kaya,request atlas,fallback:pet','fallback remains playable');
+ calls.length=0;atlas=true;api(a);ck(calls.join(',')==='kaya,request atlas,atlas','atlas retained for other actions');
+ console.log('PASS '+n+' painted park contact and independent cat-art readiness checks');
+}
