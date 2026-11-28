@@ -690,9 +690,8 @@
       "priority": 3,
       "summary": "Independent English and Chinese creative editorial review, bilingual terminology, satire, clarity and rendered typography",
       "resources": [
-        "src/startup.js",
-        "src/extensions.js",
-        "src/shell.html"
+        "src/shell.html",
+        "scripts/activity-humour-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -708,7 +707,10 @@
         "abaae10d + a453e1f5 + 29d72350: edited 65 bilingual pairs and added recipe-specific tasting completion in effective extensions/startup action paths: boba recipe stages and order result, soup serving/tasting, tofu/greens, garden feeding/seating/chime/cats, water/bell, wishing lantern, private river reactions without Ah Ma, claw/board game/rhythm/blind box/bubble arcade, deer, tarot reveal, railway captions and story replay. Existing action rules, scoring, persistence and reward paths unchanged. 153059f5 adds exact-source helper regression; passed in connector harness, both full JS sources parse. Complete rendered activity coverage, other remaining interaction paths, mobile/desktop readability and deployment not verified.",
         "c2800ce6: added eight topic-specific café acknowledgements after committed answers (plus final response), discovery completion humour after valid results, purchase/category and placement-specific furniture feedback plus saved/put-away feedback, six story epilogues and four Master Yue almanac reflections. Existing furniture transactions, assessment scoring, story IDs and consultation conventions preserved; independent extensions-only change while railway runner held startup.js. c96a7b33 extends exact-source gameplay regression, including actual café answer handler, duplicate guard, final score and one-time reward; full focused script passed in connector harness. No real browser or deployment verification."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-humour-feedback-access",
+        "until": 1795847365515
+      },
       "blocker": "Rendered mobile/desktop readability and full active-path editorial coverage remain open. Master Yue guided desk questions in startup.js and any later runtime overrides still need review once shared resource is available. No workstream stage promotion."
     },
     {
