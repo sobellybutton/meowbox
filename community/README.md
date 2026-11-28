@@ -55,3 +55,16 @@ Automated integration: from repository root, use Node 22 and run node --experime
 ### Presence retention when disabled
 
 Scheduled cleanup deletes all stored position snapshots when ENABLE_PRESENCE is not true, rather than leaving stale positions behind. While enabled, snapshots expire after 18 seconds as before. Expired reports and restrictions are cleaned independently of the setting, while active restrictions and session blocks are retained. Older text-only databases without presence tables continue their regular cleanup. Keep the scheduled trigger configured; switching off the flag immediately prevents new presence writes, and existing rows are removed at the next successful cleanup.
+
+
+## One-time Cloudflare staging activation via GitHub Actions
+
+The workflow **Deploy Pawradise community staging** is manually triggered only. It leaves the game's public endpoint unchanged and does not open public participation.
+
+1. In Cloudflare, create a fresh D1 database for Pawradise staging and record its name and UUID. Use a new database rather than silently migrating an existing production database.
+2. In GitHub repository Settings > Secrets and variables > Actions, create repository secrets CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, PAW_COMMUNITY_RATE_SECRET and PAW_COMMUNITY_MODERATOR_TOKEN. Use an account-scoped API token with Workers Scripts and D1 write permissions, and two independent randomly generated secrets of at least 32 characters. Never paste the token or secrets into a chat, issue or source file.
+3. In the Variables tab, set PAW_COMMUNITY_D1_ID and PAW_COMMUNITY_D1_NAME to the new database's UUID and name.
+4. Open Actions > Deploy Pawradise community staging > Run workflow, select main, enter STAGING, and keep presence off for initial moderation/health checks. The workflow runs the real SQLite regression, applies schema.sql, deploys a Worker called pawradise-community-staging, configures scheduled cleanup, and stores server secrets in Cloudflare. Use the Worker URL shown by Wrangler in the run log.
+5. Verify /health returns the expected service/version/moderated/replies/places capabilities, complete moderated post/reply/report/delete tests using separate sessions, then explicitly enable presence in a staging rerun for the five-client acceptance tests. Public activation is separate: assign a moderator, complete acceptance, then set only the public HTTPS endpoint in src/shell.html. Do not expose either server secret in the browser.
+
+A successful workflow is not sufficient evidence of visual or multi-client acceptance. If Cloudflare permissions, D1 configuration, or moderation staffing are absent, leave the public meta content blank. The staging workflow is unexecuted until the account owner supplies the configuration.
