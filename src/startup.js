@@ -14088,6 +14088,10 @@ function pawYueDeskArrange(q,pane,form,out){
  element('summary',tr('Reading options & privacy','问事选项与隐私'),footer);
  anchor.after(footer);
  if(strip)footer.append(strip);
+ // Rehome the existing language control after its reading-specific callback
+ // is assigned. Never move the sole remaining back button.
+ const row=q.querySelector(':scope > .row'),language=row?.children.length>1?row.lastElementChild:null;
+ if(language?.tagName==='BUTTON'){language.classList.add('yueReadingLanguage');language.type='button';(strip||footer).append(language)}
  if(tools){
   const edit=[...tools.querySelectorAll('button')].find(v=>[tr('Edit birth details','修改生辰资料'),tr('Change birth date','修改出生日期')].includes(v.textContent));
   if(edit)footer.before(edit);
