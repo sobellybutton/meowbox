@@ -9,7 +9,11 @@ syncSigns=function(){
  const now=performance.now();
  for(const [id,btn] of signButtons){
   const a=before.get(id),b=btn._signOffset;
-  if(a&&b&&Math.hypot(a.x-b.x,a.y-b.y)>10)btn._townSettle=now+180;
+  // Railway is a primary physical exit. The authoritative layout already
+  // hides obstructed plaques; a cosmetic settle timer must not withdraw
+  // a reachable station on every camera reprojection.
+  if(id==='station')btn._townSettle=0;
+  else if(a&&b&&Math.hypot(a.x-b.x,a.y-b.y)>10)btn._townSettle=now+180;
   const settling=(btn._townSettle||0)>now;
   if(settling&&!btn.hidden){if(btn.style.opacity!=='0')btn.style.opacity='0';if(btn.style.pointerEvents!=='none')btn.style.setProperty('pointer-events','none','important')}
   else{if(btn.style.opacity==='0')btn.style.opacity='';if(btn.style.pointerEvents!=='auto')btn.style.setProperty('pointer-events','auto','important')}
