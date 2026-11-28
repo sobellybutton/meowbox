@@ -111,3 +111,17 @@ assert.ok(parkRoute.length>2,'park path must follow the bend');
 assert.ok(!api.segment('park',park.entry,park.stations.pet.approach));
 assert.ok(api.route('park',park.stations.pet.approach,park.stations.deerVisit.approach));
 console.log('Park path bend, animal approach and obstacle exclusions passed.');
+
+assert.ok(helpers.pawReadingCompatible(api,'park',[['pet'],['deerVisit']]));
+assert.ok(!helpers.pawReadingCompatible(api,'park',[['pet'],['deerVisit'],['chat']]));
+const parkSpec=helpers.pawReadingSpec(api,'park');
+for(const p of [parkSpec.entry,parkSpec.arrival,...Object.values(parkSpec.stations).map(v=>v.slice(2))]){
+ for(const to of [parkSpec.entry,parkSpec.arrival,...Object.values(parkSpec.stations).map(v=>v.slice(2))])assert.ok(helpers.pawReadingDestination(api,'park',p,...to));
+ assert.ok(exits.pawMappedExitPlan(api,'park',p));
+}
+const animalStart=source.indexOf('/* PAW_PARK_LOBBY_BEGIN */'),animalEnd=source.indexOf('/* PAW_PARK_LOBBY_END */');
+assert.ok(animalStart>=0&&animalEnd>animalStart);
+const animals=new Function(source.slice(animalStart,animalEnd)+';return pawParkLobbyAnimal')();
+for(const id of ['pet','deerVisit']){const a=animals(id);assert.ok(a.scale>0&&a.scale<.3);assert.ok(a.foot.every(x=>x>0&&x<1))}
+assert.equal(animals('chat'),null);
+console.log('Park live admission, animal staging and threshold exit checks passed.');
