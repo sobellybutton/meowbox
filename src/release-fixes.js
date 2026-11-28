@@ -822,8 +822,7 @@ function pawInstallTempleArrival(){
   if(room==='temple'&&activity==='templeForecourt'){
    const q=state.pawForecourt;
    if(pawTempleAutoArrival(q,pawArcadeInputBlocked())){
-    q.pawAutoArrival=true;
-    if(pawForecourtRoute(q,'hall'))hint('Follow the stone steps into the temple.','沿着石阶走进大殿。')
+    if(pawForecourtRoute(q,'hall')){q.pawAutoArrival=true;hint('Follow the stone steps into the temple.','沿着石阶走进大殿。')}
    }
    const value=prior.apply(this,args);
    if(activity==='templeForecourt'&&state.pawForecourt===q&&q?.pawAutoArrival){
