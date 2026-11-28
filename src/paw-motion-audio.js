@@ -20,7 +20,7 @@
  }
  function permitted(flags){return !!flags?.enabled&&!flags.muted&&!flags.hidden&&!flags.overlay&&!flags.paused}
  function createPlayer(context,bus,random=Math.random){
-  let last=-Infinity,trainLast=-Infinity,buffer=null;
+  let last=-Infinity,trainLast=-Infinity,buffer=null,railBeat=0;
   function ready(flags){return permitted(flags)&&context?.state==='running'&&bus&&Number.isFinite(context.currentTime)}
   function noise(){
    if(buffer)return buffer;
@@ -42,9 +42,9 @@
    if(!ready(flags)||!Number.isFinite(speed)||speed<=0)return false;
    const s=Math.min(1,Math.max(.25,speed)),period=.39/s;
    if(context.currentTime-trainLast<period)return false;
-   try{pulse(145,.024*s,.16,'lowpass');trainLast=context.currentTime;return true}catch{return false}
+   try{const beat=railBeat%2; pulse(beat?168:132,(beat?.017:.025)*s,beat?.12:.16,'lowpass');railBeat++;trainLast=context.currentTime;return true}catch{return false}
   }
-  return {footstep,railway,reset(){last=-Infinity;trainLast=-Infinity}}
+  return {footstep,railway,reset(){last=-Infinity;trainLast=-Infinity;railBeat=0}}
  }
  return Object.freeze({createStepper,createPlayer,permitted,surfaceNames:Object.keys(surfaces)});
 });
