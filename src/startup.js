@@ -5926,9 +5926,10 @@ document.head.append(pawEntranceFitStyle);
 const pawGuideCopyBefore=movementUI;
 movementUI=function(...args){
  const result=pawGuideCopyBefore(...args);
+ $('game').classList.toggle('pawMovementGuideVisible',!moveGuide.hidden);
  if(!moveGuide.hidden&&guideStage===0){
   const touch='ontouchstart' in window||navigator.maxTouchPoints>0;
-  moveCopy.textContent=touch?tr('Tap the glowing spot or use the joystick to walk.','点击光圈或使用摇杆行走。'):tr('Click the path or use arrow keys to walk.','点击小路或使用方向键行走。')
+  moveCopy.textContent=touch?tr('Tap the path or use the joystick.','点击小路或使用摇杆行走。'):tr('Click the path or use arrow keys to walk.','点击小路或使用方向键行走。')
  }
  return result
 };
@@ -12194,7 +12195,7 @@ const pawCounterRackStyle=document.createElement('style');pawCounterRackStyle.te
 /* Railway wayfinding: a single contextual edge sign only when the actual
    map plaque has been clipped or displaced. No extra permanent next-stop CTA. */
 const pawRailEdge=element('button','',$('game'),'pawRailEdge');pawRailEdge.type='button';pawRailEdge.hidden=true;
-pawRailEdge.onclick=()=>{if(!pawRailEdge.hidden&&!transitioning&&!room&&!activity&&proposal.hidden&&$('page').style.display!=='block')walkDoor('station')};
+pawRailEdge.onclick=()=>{if(!pawRailEdge.hidden&&pawFortuneRailNearby(scene,p,maps[scene]?.st.find(v=>v[0]==='station')?.slice(1,3))&&!transitioning&&!room&&!activity&&proposal.hidden&&$('page').style.display!=='block')walkDoor('station')};
 // A plaque can have a valid rectangle yet be hidden, clipped, or covered.
 // Require an actual hit target before withdrawing the edge navigation.
 /* PAW_FIRST_MAP_RAIL_BEGIN */
@@ -12933,10 +12934,15 @@ document.head.append(pawCafeReflectionCss);
 // Warm the selected traveller during registration and the railway ride,
 // including returning players. Existing gate artwork stays visible until ready.
 const pawAdmissionRenderBefore=proRender;
+let pawArrivalGateWarm=null;
 proRender=function(...args){
  const result=pawAdmissionRenderBefore(...args);
  if(!proposal.hidden){
   pawReadyMap('fortune');
+  if(!pawArrivalGateWarm){
+   pawArrivalGateWarm=new Image();pawArrivalGateWarm.decoding='async';pawArrivalGateWarm.fetchPriority='low';
+   pawArrivalGateWarm.src='assets/visual/painted/worlds/gateway/scene.webp';
+  }
   if(Number.isInteger(proAvatar??avatar))pawWarmSelectedTraveller(proAvatar??avatar)
  }
  return result

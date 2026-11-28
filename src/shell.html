@@ -308,12 +308,18 @@ html #game #dock{background:#eee5d2 url('assets/visual/painted/recovered/ui/pape
 html #game #dock>button:not([hidden]){flex:1 1 0!important;min-width:0!important;min-height:50px!important;padding:4px 2px!important;border-radius:10px!important}
 html #game #dock>button:not([hidden])>span:last-child{white-space:normal!important;line-height:1.15!important;text-align:center!important;font-size:clamp(11px,2.9vw,13px)!important}
 html #game #dock>button.pawDockSelected:not([hidden]),html #game #dock>button[aria-current=page]:not([hidden]){background:#dbe0ca!important;color:#395846!important;box-shadow:none!important}
-html #game:has(#moveGuide:not([hidden])) #hint{visibility:hidden!important}
+html #game.pawMovementGuideVisible #hint,html #game:has(#moveGuide:not([hidden])) #hint{visibility:hidden!important;opacity:0!important}
 @media(forced-colors:active){
  html #game #hud #profileHud,html #game #hud #hudStats #hudCoins,html #game #small #townSettingsToggle[aria-label],html #game #dock{background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important;box-shadow:none!important}
  html #game[data-paw-sign-material]>#worldSigns>.worldSign[data-door]>.doorPlaque,html #game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign[data-door]>.doorPlaque{background:ButtonFace!important;color:ButtonText!important;border:1px solid ButtonText!important;box-shadow:none!important}
  html #game #dock>button.pawDockSelected:not([hidden]),html #game #dock>button[aria-current=page]:not([hidden]){background:Highlight!important;color:HighlightText!important}
 }
+/* Compact painted navigation, preserving accessible touch targets. */
+html #game #dock{gap:2px!important;padding:3px 4px!important;box-sizing:border-box!important;bottom:max(6px,env(safe-area-inset-bottom,0px))!important;width:min(392px,calc(100% - 18px))!important}
+html #game #dock>button:not([hidden]){display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px!important;min-height:46px!important;padding:3px 2px!important}
+html #game #dock>button:not([hidden])>.dockIcon{display:grid;place-items:center;width:24px;height:24px;flex:0 0 24px;line-height:1}
+html #game #dock>button:not([hidden])>.dockIcon>svg{display:block;width:23px!important;height:23px!important}
+html #game #dock>button:not([hidden])>span:last-child{font-size:clamp(10px,2.8vw,12px)!important;line-height:1.2!important}
 /* PAW_MAP_STATIONERY_END */
 
 /* PAW_MAP_CHROME_FIT_BEGIN: reserve the three real controls, not three
