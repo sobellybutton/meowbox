@@ -163,3 +163,20 @@ assert.ok(!s.includes("'paw-rear-cat-'+i"),'No individual cat hit targets');
  assert.ok(source.includes("keyboardButtons.push(b(controls,tr('Throw','投币')"));
  console.log('PASS '+n+' pickup/throw control state checks and keyboard wiring');
 }
+
+// Wish writing retains the garden's painting and coin throws retain a planted
+// full sprite. No artificial torso split or switch to a generic background.
+{
+ const e=fs.readFileSync(path.resolve(__dirname,'../src/extensions.js'),'utf8');
+ const a=fs.readFileSync(path.resolve(__dirname,'../src/town-access.js'),'utf8');
+ assert.ok(s.includes("room==='wishes'&&activity==='wishes'&&pawRoomImageReady(pawWishLobbyArt())"));
+ assert.ok(s.includes('pawWishPaintedActivity()?pawWishLobbyCamera(W,H)'));
+ assert.ok(s.includes('ctx.drawImage(pawWishLobbyArt(),p.x,p.y,p.w,p.h)'));
+ assert.ok(e.includes('function gardenPaperAnchor()'));
+ const lean=new Function(a.split('/* PAW_WISH_BANK_BEGIN */')[1].split('/* PAW_WISH_BANK_END */')[0]+';return pawWishThrowLean')();
+ for(let age=-10;age<500;age++){assert.ok(Math.abs(lean(age,false))<=.1400001);assert.equal(lean(age,true),0)}
+ assert.ok(lean(235,false)>.13);assert.equal(lean(0,false),0);assert.equal(lean(480,false),0);
+ assert.ok(a.includes('ag.translate(x,y);ag.rotate(lean);ag.drawImage(im,-fx,-fy,w,H)'));
+ assert.ok(!a.includes('const split=68/94*im.naturalHeight'));
+ console.log('Painted wish scene and planted coin toss checks passed');
+}
