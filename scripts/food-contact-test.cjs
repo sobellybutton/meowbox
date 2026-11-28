@@ -45,4 +45,18 @@ for(let i=0;i<=1000;i++){
 ck(!motion.pourPlan({}),'invalid plan');
 ck(!motion.utensilPose('unknown',[0,0],10,0),'unknown tool');
 ck(!api.landmarks(manifest,{...contacts,assets:{boba_tea_pot:{sourceBlob:'wrong',grip:[1,1]}}},'boba_tea_pot'),'stale artwork');
+// Stirring uses the actual gesture angle, keeps the working tip inside
+// the recipe's pot ellipse, and returns to the same counter anchor.
+for(const id of ['kitchen_wooden_ladle','kitchen_small_ladle','kitchen_wooden_spatula'])for(const height of [45,75,105])for(const reduced of [false,true]){
+ const p=motion.stirPlan({id,rest:[540,545],center:[400,481],radius:[49,13],height,clearance:28});
+ ck(p,'stir plan');
+ for(let i=0;i<=100;i++){
+  const progress=i/100,a=i*.31,q=motion.stirFrame(p,progress,a,reduced);
+  ck(q&&near(q.prop.point(...p.grip),q.hand),'stir grip');
+  ck(near(q.tip,q.prop.point(...p.tip)),'stir working tip');
+  if(q.active)ck(near(q.tip,[400+49*Math.cos(a),481+13*Math.sin(a)]),'gesture follows pot orbit');
+  if(i===0||i===100)ck(near(q.prop.point(0,0),p.rest.point(0,0)),'exact utensil rest and return');
+ }
+}
+ck(!motion.stirPlan({}),'invalid stir plan');
 console.log('PASS '+n+' food contact geometry, phase and source assertions; no rendered contact acceptance');
