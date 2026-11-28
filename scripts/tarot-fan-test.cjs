@@ -36,14 +36,32 @@ for(const reduced of [true,false])for(const blocked of [true,false])for(const ag
 }
 ck(!washComplete({readStage:'shuffle'},2),'invalid clock');
 ck(source.includes('if(pawTarotWashComplete(state,t,reduced,pawArcadeInputBlocked()))pawOpenCardChoice(false);'),'physical wash directly continues to fan');
-const finish=new Function(source.slice(source.indexOf('function pawTarotFinishSelection('),source.indexOf('const pawSelectStartBefore'))+';return pawTarotFinishSelection')();
+const finish=new Function(block+source.slice(source.indexOf('function pawTarotFinishSelection('),source.indexOf('const pawSelectStartBefore'))+';return pawTarotFinishSelection')();
+const ext=fs.readFileSync('src/extensions.js','utf8');
+const one=ext.slice(ext.indexOf('function readingActivitySlot('),ext.indexOf('function drawFittedFortuneText('));
+const five=source.slice(source.indexOf('function fiveReadingLayout('),source.indexOf('function fiveReadingArchive('));
+const {pawTarotHandoffPose:move,pawTarotHandoffProgress:progress,pawTarotReadingSlot:landing,pawTarotRestingDeckPose:rest,pawTarotRemainingCount:remaining}=new Function(block+one+five+';return {pawTarotHandoffPose,pawTarotHandoffProgress,pawTarotReadingSlot,pawTarotRestingDeckPose,pawTarotRemainingCount}')();
+for(const portrait of [true,false])for(const count of [1,3,5]){
+ const slots=pawTarotChoiceSlots(portrait);
+ for(let rank=0;rank<count;rank++){
+  const from=tray(slots[rank],rank,count,portrait,1),to=landing(rank,count,portrait);
+  for(const k of ['x','y','w','h','angle']){ck(near(move(from,to,0)[k],from[k]),'no jump from selection tray');ck(near(move(from,to,1)[k],to[k]),'exact reading slot handoff')}
+  for(let step=0;step<=100;step++){const v=move(from,to,step/100);ck([v.x,v.y,v.w,v.h,v.angle].every(Number.isFinite)&&v.w>0&&v.h>0,'valid handoff frame')}
+ }
+ for(let rank=0;rank<12-count;rank++){const q=rest(rank);const end=move(slots[rank],q,1);ck(near(end.x,q.x)&&near(end.y,q.y)&&near(end.w,q.w)&&near(end.h,q.h),'remaining cards keep same resting deck');ck(q.x-q.w/2>=205&&q.y-q.h/2>=303,'deck rests on mat and in frame')}
+ const q={readStage:'choose',pawSelectedCards:Array.from({length:count},(_,i)=>i),pawPickFinishAt:10};
+ ck(progress(q,count,10.24)===0,'tray slide precedes handoff');ck(progress(q,count,10.45)>.49&&progress(q,count,10.45)<.51,'handoff middle');ck(progress(q,count,10.1,true)===1,'reduced motion immediate');ck(progress({...q,readStage:'cards'},count,11)===null,'no repeat');
+}
 for(const count of [1,3,5]){
  const pool=Array.from({length:12},(_,i)=>({i,rev:!!(i%2)}));
  const q={readStage:'choose',pawCardPool:pool,pawSelectedCards:Array.from({length:count},(_,i)=>i),pawPickFinishAt:10};
  ck(!finish(q,count,10.1),'final slide must complete');
- ck(finish(q,count,10.25),'finish at settled time');
+ ck(!finish(q,count,10.25),'do not enable reveal while cards are travelling');
+ ck(finish(q,count,10.66),'finish at exact reading position');
  ck(q.readStage==='cards'&&q.readCards.length===count&&q.readFlip.every(v=>v===-1),'same selected identities and unrevealed state');
  ck(q.readCards.every((v,i)=>v===pool[i]),'identity preserved');
+ ck(remaining(q)===12-count,'resting deck retains unchosen cards');
+ ck(remaining({...q,readCards:q.readCards.map(c=>({...c}))})===0,'stale spread cannot render an unrelated resting deck');
  ck(!finish(q,count,11),'no repeated transition');
 }
 new Function(source);
