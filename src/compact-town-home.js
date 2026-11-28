@@ -513,6 +513,7 @@ function mountCutaway(q,legacyStage){
  }
 }
 const homeBefore=hideoutPage;
+let pawRoomMaterialsOpen=false;
 hideoutPage=function(...args){
  const result=homeBefore(...args),q=$('content'),stage=q.querySelector('.hideoutScene');
  if(!stage)return result;
@@ -529,9 +530,16 @@ hideoutPage=function(...args){
   const tools=q.querySelector('.hideoutTools'),selection=q.querySelector('.mbHomeSelection');
   if(tools){stage.after(tools);if(selection)tools.after(selection)}
   const materials=[...q.querySelectorAll('.komorebiBook')].find(n=>n.querySelector('.komorebiFinishChoices'));
-  if(materials){const fold=element('details','',q,'pawRoomExpansionFold');element('summary',tr('Wallpaper & flooring','墙纸与地板'),fold);materials.before(fold);fold.append(materials)}
+  if(materials){
+   const fold=element('details','',q,'pawRoomExpansionFold pawRoomMaterialsFold');
+   const summary=element('summary',tr('Wallpaper & flooring','墙纸与地板'),fold);
+   fold.open=pawRoomMaterialsOpen;
+   summary.addEventListener('click',event=>{event.preventDefault();pawRoomMaterialsOpen=!fold.open;fold.open=pawRoomMaterialsOpen});
+   materials.before(fold);fold.append(materials)
+  }
   return result
  }
+ pawRoomMaterialsOpen=false;
  // Keep a compact room-side tray for optional collections and purchases.
  const primary=q.querySelector('.hideoutPrimary');
  if(primary){
