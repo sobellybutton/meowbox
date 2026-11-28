@@ -238,4 +238,40 @@ html #game #small button.townSettingsToggle[aria-label]:before{content:"";displa
 @media(forced-colors:active){html #game #small button.townSettingsToggle[aria-label]:before,html #game #profileHud>.pawPaintedPortrait:after{display:none}}
 /* PAW_PAINTED_HUD_ASSETS_END */
 
+
+/* First boarding uses the same full-bleed framing as inter-district rides.
+   Keep the original aspect ratio for both the painted picture and its
+   transparent motion canvas so the window mask never drifts on tall phones. */
+#proposal[data-paw-entrance-step="5"]:has(.rail-cabin[data-painted-rail="true"]):not([hidden]){
+ position:absolute!important;inset:0!important;isolation:isolate;overflow:hidden!important;
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;
+}
+#proposal[data-paw-entrance-step="5"]:has(.rail-cabin[data-painted-rail="true"])>.hero{
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;min-height:0!important;padding:0!important;margin:0!important;overflow:hidden!important;z-index:0!important;pointer-events:none;animation:none!important;
+}
+#proposal[data-paw-entrance-step="5"] .rail-cabin[data-painted-rail="true"]{
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;min-height:0!important;border:0!important;border-radius:0!important;margin:0!important;padding:0!important;box-shadow:none!important;overflow:hidden!important;
+}
+#proposal[data-paw-entrance-step="5"] .rail-cabin[data-painted-rail="true"] .mbPaintedRail[data-use="entrance"]{
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;aspect-ratio:auto!important;margin:0!important;border-radius:0!important;
+}
+#proposal[data-paw-entrance-step="5"] .mbPaintedRail[data-use="entrance"] picture,
+#proposal[data-paw-entrance-step="5"] .mbPaintedRail[data-use="entrance"] picture img,
+#proposal[data-paw-entrance-step="5"] .mbPaintedRail[data-use="entrance"] canvas{
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;object-position:center center!important;
+}
+#proposal[data-paw-entrance-step="5"]:has(.rail-cabin[data-painted-rail="true"])>.hero:after{
+ content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(180deg,#17292388,transparent 18%,transparent 53%,#172923d9 86%,#172923f2);
+}
+#proposal[data-paw-entrance-step="5"]:has(.rail-cabin[data-painted-rail="true"])>header{
+ position:relative!important;z-index:3!important;grid-row:1;
+}
+#proposal[data-paw-entrance-step="5"]:has(.rail-cabin[data-painted-rail="true"])>footer{
+ position:relative!important;z-index:3!important;grid-row:3;align-self:end!important;justify-self:center!important;transform:none!important;width:min(100%,480px)!important;max-width:480px!important;min-width:0!important;margin:0!important;padding:8px 12px max(12px,env(safe-area-inset-bottom,0px))!important;animation:none!important;text-shadow:0 1px 4px #172923;
+}
+@media(max-height:520px) and (orientation:landscape){
+ #proposal[data-paw-entrance-step="5"]:has(.rail-cabin[data-painted-rail="true"])>footer{max-width:min(82vw,620px)!important;gap:3px!important}
+ #proposal[data-paw-entrance-step="5"]:has(.rail-cabin[data-painted-rail="true"])>footer h1{font-size:clamp(16px,3vh,22px)!important;margin:0!important}
+ #proposal[data-paw-entrance-step="5"]:has(.rail-cabin[data-painted-rail="true"])>footer p{font-size:12px!important;margin:0!important}
+}
 </style></head><body><main id="game"><canvas id="c" aria-label="Pawradise interactive world"></canvas><div id="worldSigns" hidden></div><button id="lunarBtn" hidden></button><div id="hud"><button id="profileHud" aria-label="Player profile"><span class="pawPaintedPortrait"><img id="hudPortrait" alt=""></span><span><strong id="hudName"></strong><small id="hudProgress"></small></span></button><div id="location">Pawradise</div><div id="hudStats"><span id="hudCoins"></span><span id="hudStamps"></span></div><button id="travel">Travel</button></div><button id="back" hidden>Step Back</button><div id="small"><button id="luck">Daily Luck</button><div><button id="language">中文</button> <button id="mute">♪</button></div></div><div id="hint"></div><nav id="dock" aria-label="Game navigation"><button id="dockRoom"><span class="dockIcon">⌂</span><span></span></button><button id="dockPassport"><span class="dockIcon">▤</span><span></span></button><button id="dockValley"><span class="dockIcon">♧</span><span></span></button><button id="dockTravel"><span class="dockIcon">✈</span><span></span></button><button id="dockScoop"><span class="dockIcon">▧</span><span></span></button></nav><div id="gameControls" hidden></div><div id="dialogue"><div id="dialogueTop"><img id="talkPortrait" alt="" hidden><div id="speaker"></div></div><div id="line"></div><div id="choices"></div></div><div id="toast"></div><div id="page"><div class="inner" id="content"></div></div><div id="fade"></div><section id="arrival" class="intro" hidden><img class="introArt" id="arrivalArt" alt=""><div class="introDoors" id="introDoors"><div></div><div></div></div><div class="introCard" id="introCard"></div></section></main><meta name="meow-community-api" content=""><!--MEOW_GAME_SCRIPT--></body></html>
