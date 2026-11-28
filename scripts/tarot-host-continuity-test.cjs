@@ -156,3 +156,34 @@ for(const [format,[width,height,top,bottom]] of Object.entries(exportBoxes)){
  }
 }
 console.log('Editorial Tarot exports: '+editorialCases+' format, spread and language cases passed with mocked canvas');
+
+const other=new Function(source.slice(source.indexOf('function pawEditorialTextFit'),source.indexOf('function pawEditorialTarot('))+source.slice(source.indexOf('/* PAW_EDITORIAL_RESULTS_BEGIN */'),source.indexOf('/* PAW_EDITORIAL_RESULTS_END */'))+';return {pawEditorialThemes,pawEditorialOther,pawEditorialResultPlan}')();
+let otherCases=0;
+for(const [format,[width,height,top,bottom]] of Object.entries(exportBoxes)){
+ const box={width,height,top,bottom,left:84,right:format==='story'?142:84};
+ for(const kind of Object.keys(other.pawEditorialThemes)){
+  const count=({type:4,motive:9,bigfive:5,care:5,priorities:4,values:4,attachment:4})[kind]||0;
+  const mode=kind==='zwds_chart'?'chart':count?'scores':'illustrated',plan=other.pawEditorialResultPlan(box,mode,count);
+  for(const [x,y,w,h] of [plan.title,plan.footer,plan.body,...(plan.rows||[]),...(plan.cells||[]),...(plan.art?[plan.art,plan.summary]:[])]){
+   assert.ok(x>=box.left&&x+w<=width-box.right+.001&&y>=top&&y+h<=bottom+.001&&w>0&&h>0);
+  }
+  for(const cn of [false,true]){
+   const printed=[],draws=[];
+   const g={drawImage(...v){draws.push(v)},fillRect(){},strokeRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(v){printed.push(v)},measureText(v){return {width:Array.from(v).length*Number(this.font.match(/(\d+)px/)[1])*(cn?.9:.56)}}};
+   const cv={getContext:()=>g},paper={complete:true,naturalWidth:width,naturalHeight:height},art={complete:true,naturalWidth:800,naturalHeight:1200};
+   const data={kind,title:['My actual outcome','我的实际结果'],lines:[['A public result line','公开的结果']],takeaway:['A moment of reflection','留一点时间给自己'],privateAnswer:'NEVER EXPORT'};
+   if(count)data.scoreRows=Array.from({length:count},(_,i)=>({label:['Trait '+(i+1),'倾向 '+(i+1)],value:[i+' / 9',i+' / 9']}));
+   if(mode==='chart')data.palaces=Array.from({length:12},(_,i)=>({name:['Palace '+(i+1),'宫 '+(i+1)],stars:i%2===0?[['Sun','太阳']]:[]}));
+   assert.ok(other.pawEditorialOther(cv,data,format,cn,box,paper,art,['A playful quote','一句玩笑']));
+   assert.equal(cv.width,width);assert.equal(cv.height,height);
+   const result=printed.join(' ');
+   assert.ok(!result.includes('NEVER EXPORT'));
+   assert.ok(result.includes(data.title[Number(cn)])||printed.join('').includes(data.title[Number(cn)]));
+   if(count)for(const row of data.scoreRows){assert.ok(result.includes(row.label[Number(cn)])||printed.join('').includes(row.label[Number(cn)]));assert.ok(result.includes(row.value[Number(cn)]))}
+   if(mode==='chart')for(const p of data.palaces)assert.ok(result.includes(p.name[Number(cn)])||printed.join('').includes(p.name[Number(cn)]));
+   if(mode==='illustrated'){assert.equal(draws.length,2);assert.ok(result.includes(data.lines[0][Number(cn)])||printed.join('').includes(data.lines[0][Number(cn)]))}
+   otherCases++;
+  }
+ }
+}
+console.log('Editorial public result exports: '+otherCases+' result/format/language cases passed with mocked canvas');
