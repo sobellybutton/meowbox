@@ -643,12 +643,13 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-fortune-failed-result.png'});
                 // Observe both actual walking routes, beginning before input.
                 await page.evaluate(()=>{
-                  const trace=window.__pawRetryTrace={samples:[],painted:pawAlcoveActive(),done:false};
+                  const trace=window.__pawRetryTrace={samples:[],painted:state.pawPairedRitual?!!state.pawAlcovePainting:!!pawAlcoveActive(),done:false};
                   const tick=()=>{
                     if(trace.done||trace.samples.length>=1000)return;
+                    const paired=activity==='moon'&&state.pawPairedWalk?.to==='sticks'?state.pawPairedWalk.pos:null;
                     const pose=activity==='moon'&&state.pawFortuneTransfer==='retry'?pawFortuneTransferFrame(state,t,pawAlcoveGeometry()):null;
                     const hall=!activity&&pawFortuneWalk?.from==='moon'&&pawFortuneWalk?.to==='sticks';
-                    if(pose||hall)trace.samples.push({x:pose?pose.x:indoor.x,y:pose?pose.y:indoor.y,mode:pose?'painted':'hall'});
+                    if(paired||pose||hall){const p=paired||pose||indoor;trace.samples.push({x:p.x,y:p.y,mode:paired?(state.pawAlcovePainting?'painted':'hall'):pose?'painted':'hall',owner:paired?'paired':pose?'legacy-painted':'legacy-hall'})}
                     requestAnimationFrame(tick);
                   };
                   requestAnimationFrame(tick);

@@ -39,3 +39,19 @@ for(const [w,h] of [[320,568],[390,844],[430,932],[768,1024],[1440,900]]){
  assert.ok(c.ox+moonGeo.moonTray.x*c.s<w&&c.ox+moonGeo.moonFoot.x*c.s>0);clearanceChecks++;
 }
 console.log('PASS '+clearanceChecks+' moon clearance, contact, walk and viewport checks; minimum world gap '+minClearance.toFixed(2));
+
+{
+ const f=read('src/release-fixes.js'),body=f.split('/* PAW_CONTINUOUS_FORTUNE_BEGIN */')[1].split('/* PAW_CONTINUOUS_FORTUNE_END */')[0];
+ const api=new Function(body+';return {pawPairedWalkPlan,pawPairedWalkTick}')();
+ let n=0;const eq=(a,b)=>{assert.deepEqual(a,b);n++};
+ for(const painted of [true,false])for(const from of ['moon','sticks']){
+  const q=api.pawPairedWalkPlan(from,painted,moonGeo,{x:0,y:0,w:800,h:650},10),start={...q.pos},end={...q.path.at(-1)};
+  let now=10;for(let i=0;i<20;i++){now+=.02;eq(api.pawPairedWalkTick(q,now,true,false),false);eq(q.pos,start)}
+  let moved=false,done=false;
+  for(let i=0;i<1000&&!done;i++){now+=.02;const prev={...q.pos};done=api.pawPairedWalkTick(q,now,false,false);assert.ok(Math.hypot(q.pos.x-prev.x,q.pos.y-prev.y)<=2.901);n++;moved||=Math.hypot(q.pos.x-start.x,q.pos.y-start.y)>5}
+  eq(done,true);eq(moved,true);eq(q.pos,end);eq(q.to,from==='moon'?'sticks':'moon');
+ }
+ const workflow=read('.github/workflows/meowbox-browser.yml');
+ assert.ok(workflow.includes("state.pawPairedWalk?.to==='sticks'?state.pawPairedWalk.pos:null"));n++;
+ console.log('PASS '+n+' active paired ritual route and observer assertions');
+}
