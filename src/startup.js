@@ -12053,29 +12053,56 @@ const pawCounterRackStyle=document.createElement('style');pawCounterRackStyle.te
    map plaque has been clipped or displaced. No extra permanent next-stop CTA. */
 const pawRailEdge=element('button','',$('game'),'pawRailEdge');pawRailEdge.type='button';pawRailEdge.hidden=true;
 pawRailEdge.onclick=()=>{if(!pawRailEdge.hidden&&!transitioning&&!room&&!activity&&proposal.hidden&&$('page').style.display!=='block')walkDoor('station')};
-let pawRailEdgeAt=-Infinity;
+// A plaque can have a valid rectangle yet be hidden, clipped, or covered.
+// Require an actual hit target before withdrawing the edge navigation.
+function pawRailPlaqueReachable(sign,g){
+ if(!sign||sign.hidden||sign.disabled||!g)return false;
+ const r=sign.getBoundingClientRect(),style=getComputedStyle(sign);
+ if(r.width<=0||r.height<=0||r.top<g.top||r.bottom>g.bottom||r.left<g.left||r.right>g.right||style.display==='none'||style.visibility!=='visible'||style.pointerEvents==='none')return false;
+ const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+ return !!hit&&sign.contains(hit)
+}
+function pawRailEdgePosition(g,width,height,obstacles){
+ if(!g||![width,height,g.width,g.height].every(Number.isFinite)||width<=0||height<=0||width>g.width-16)return null;
+ const overlap=(a,b)=>a.left<b.right+5&&a.right>b.left-5&&a.top<b.bottom+5&&a.bottom>b.top-5;
+ // Search beyond the first few rows on tall phones, but never overlap
+ // the bottom dock or an existing visible control. Short landscape stays bounded.
+ for(let top=70;top+height<=g.height-100;top+=24)for(const fraction of [.5,.27,.73,.12,.88]){
+  const left=Math.max(8,Math.min(g.width-width-8,g.width*fraction-width/2));
+  const box={left:g.left+left,right:g.left+left+width,top:g.top+top,bottom:g.top+top+height};
+  if(!obstacles.some(r=>overlap(box,r)))return {left,top}
+ }
+ return null
+}
+let pawRailEdgeAt=-Infinity,pawRailPlaqueSince=null,pawRailEdgeScene=null,pawRailEdgeSize='';
 const pawRailEdgeSignsBefore=syncSigns;
 syncSigns=function(...args){
  const result=pawRailEdgeSignsBefore(...args);
- if(!proposal.hidden||room||activity||transitioning||pending||document.hidden||signRoot.hidden||$('page').style.display==='block'||!maps[scene]){pawRailEdge.hidden=true;return result}
- if(performance.now()-pawRailEdgeAt<150)return result;pawRailEdgeAt=performance.now();
- const sign=signButtons.get('station'),game=$('game'),g=game.getBoundingClientRect();
- const r=sign?.getBoundingClientRect();
- if(sign&&!sign.hidden&&r&&r.width>0&&r.height>0&&r.top>=g.top&&r.bottom<=g.bottom&&r.left>=g.left&&r.right<=g.right){pawRailEdge.hidden=true;return result}
+ if(!proposal.hidden||room||activity||transitioning||pending||document.hidden||signRoot.hidden||$('page').style.display==='block'||!maps[scene]){
+  pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
+ }
+ const sign=signButtons.get('station'),game=$('game'),g=game.getBoundingClientRect(),now=performance.now(),size=g.width+'|'+g.height;
+ const changed=pawRailEdgeScene!==scene||pawRailEdgeSize!==size;
+ if(changed){pawRailEdgeScene=scene;pawRailEdgeSize=size;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity}
+ if(!changed&&now-pawRailEdgeAt<75)return result;pawRailEdgeAt=now;
+ if(pawRailPlaqueReachable(sign,g)){
+  if(pawRailPlaqueSince===null)pawRailPlaqueSince=now;
+  // Do not withdraw a usable edge control during a transient camera handoff.
+  if(pawRailEdge.hidden||now-pawRailPlaqueSince>=300){pawRailEdge.hidden=true;return result}
+  return result
+ }
+ pawRailPlaqueSince=null;
  const dest=railNextDistrict(scene);if(!maps[dest]){pawRailEdge.hidden=true;return result}
- const copy=tr(...pawRailStationCopy(scene,dest));pawRailEdge.textContent='↑ '+copy;pawRailEdge.title=tr('Train to ','列车前往：')+tr(...maps[dest].n);pawRailEdge.setAttribute('aria-label',pawRailEdge.title);
+ const copy=tr(...pawRailStationCopy(scene,dest)),label='↑ '+copy,title=tr('Train to ','列车前往：')+tr(...maps[dest].n);
+ if(pawRailEdge.textContent!==label)pawRailEdge.textContent=label;
+ if(pawRailEdge.title!==title){pawRailEdge.title=title;pawRailEdge.setAttribute('aria-label',title)}
  pawRailEdge.hidden=false;
- const obstacles=[...signRoot.querySelectorAll('.worldSign:not([hidden])'),...game.querySelectorAll('#hud button,#hudStats,#pawPlaceName,#dock')].filter(el=>el.getClientRects().length).map(el=>el.getBoundingClientRect());
+ const obstacles=[...signRoot.querySelectorAll('.worldSign:not([hidden])'),...game.querySelectorAll('#hud button,#hudStats,#pawPlaceName,#dock')].filter(el=>el.getClientRects().length&&getComputedStyle(el).visibility==='visible').map(el=>el.getBoundingClientRect());
  const width=pawRailEdge.offsetWidth,height=pawRailEdge.offsetHeight;
- const overlap=(a,b)=>a.left<b.right+5&&a.right>b.left-5&&a.top<b.bottom+5&&a.bottom>b.top-5;
- let placed=false;
- for(const top of [78,116,154,192]){for(const fraction of [.5,.27,.73]){
-  const left=Math.max(8,Math.min(g.width-width-8,g.width*fraction-width/2));
-  const box={left:g.left+left,right:g.left+left+width,top:g.top+top,bottom:g.top+top+height};
-  if(box.bottom>g.bottom-100||obstacles.some(r=>overlap(box,r)))continue;
-  pawRailEdge.style.left=left+'px';pawRailEdge.style.top=top+'px';placed=true;break
- }if(placed)break}
- pawRailEdge.hidden=!placed;return result
+ const pos=pawRailEdgePosition(g,width,height,obstacles);
+ pawRailEdge.hidden=!pos;
+ if(pos){pawRailEdge.style.left=pos.left+'px';pawRailEdge.style.top=pos.top+'px'}
+ return result
 };
 const pawRailEdgeStyle=document.createElement('style');pawRailEdgeStyle.textContent=`
 #game .pawRailEdge{position:absolute;z-index:13;min-height:44px;max-width:46%;padding:6px 12px;border:1px solid #c6aa7a;border-radius:5px;background:#efe0bddf;color:#4d4938;font:600 12px var(--paw-body,system-ui,sans-serif);box-shadow:0 2px 4px #29392d44}
