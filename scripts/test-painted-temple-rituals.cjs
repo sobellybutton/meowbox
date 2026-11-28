@@ -135,6 +135,12 @@ console.log('Resting ladle retry and exclusive held-tool ownership checks passed
   ck(f.pawPairedNext({...q,moonPending:true},'moon',2,false)===null,'wait for landing');
   ck(f.pawPairedNext({...q,pawFortuneNumber:null},'moon',2,false)===null,'no independent cast');
   ck(f.pawPairedNext({...q,pawPairedWalk:{}},'moon',2,false)===null,'walk input locked');
+  for(const result of [1,2])for(let i=0;i<=150;i++){
+   const age=i/100,now=10+age,settled={...q,result,pawFortuneSettledAt:10};
+   ck(f.pawPairedNext(settled,'moon',now,false)===(now-10<1.2?null:failures>=3?'finish':'retry'),'settled block result must remain before next action');
+   ck(f.pawPairedNext(settled,'moon',now,true)===null,'blocked result cannot advance');
+  }
+  ck(f.pawPairedNext({...q,result:0,pawFortuneSettledAt:2},'moon',2,false)==='receive','confirmed receipt remains available');
  }
  const plate={x:100,y:-145,w:600,h:600*1635/962};
  const geom=api.pawAlcoveGeometry(plate);

@@ -696,7 +696,11 @@ function pawPairedNext(q,kind,now,blocked){
  if(kind==='sticks'&&q.stickDelivered)return 'confirm';
  if(kind==='moon'&&!q.moonPending&&!(q.tossUntil>now)){
   if(q.count===0)return 'toss';
-  if(q.count===1)return q.result===0?'receive':pawPairedFailures(q)>=3?'finish':'retry'
+  if(q.count===1){
+   // Match the settled-result presentation before admitting retry, receipt or exit.
+   if(q.result!==0&&Number.isFinite(q.pawFortuneSettledAt)&&now-q.pawFortuneSettledAt<1.2)return null;
+   return q.result===0?'receive':pawPairedFailures(q)>=3?'finish':'retry'
+  }
  }
  return null
 }
