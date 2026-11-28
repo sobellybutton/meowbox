@@ -12011,11 +12011,11 @@ fade=function(fn,kind='gust',destination=null){
 // from the temporary wishing garden. Trace the actual stone paving.
 const pawRearGardenPlate={x:100,y:-145,w:600,h:600*1631/960};
 const pawRearGardenNodes={
- entry:[.48,.78], bend:[.58,.70], fork:[.59,.655],
- feed:[.55,.645], seat:[.79,.627], chime:[.64,.579], cats:[.53,.535], upper:[.51,.558]
+ entry:[.48,.78], bend:[.58,.60], fork:[.60,.48],
+ feed:[.53,.49], seat:[.78,.475], chime:[.70,.355], cats:[.58,.351], upper:[.59,.389]
 };
 const pawRearGardenEdges=[['entry','bend'],['bend','fork'],['fork','feed'],['fork','seat'],['fork','chime'],['chime','upper'],['upper','cats']];
-const pawRearGardenTargets={feed:[.32,.624,.18,.075],seat:[.79,.574,.23,.065],chime:[.78,.303,.11,.105],cats:[.65,.414,.23,.09]};
+const pawRearGardenTargets={feed:[.30,.459,.25,.095],seat:[.79,.415,.23,.065],chime:[.78,.17,.11,.12],cats:[.65,.25,.23,.09]};
 function pawRearGardenRoute(from,action){
  if(!Array.isArray(from)||from.length!==2||!from.every(Number.isFinite)||!Object.hasOwn(pawRearGardenTargets,action))return null;
  const names=Object.keys(pawRearGardenNodes),distance=(a,b)=>Math.hypot((a[0]-b[0])*pawRearGardenPlate.w,(a[1]-b[1])*pawRearGardenPlate.h);
@@ -12033,10 +12033,10 @@ function pawRearGardenRoute(from,action){
 }
 // A seated body contacts the painted cushion at the hip, not the path.
 function pawRearBenchPose(p,scale){
- const hip={x:p.x+p.w*.78,y:p.y+p.h*.563};
+ const hip={x:p.x+p.w*.78,y:p.y+p.h*.407};
  return {hip,x:hip.x-9*scale,y:hip.y+32*scale,scale}
 }
-const pawRearCatFigurines=[[.578,.398],[.653,.386],[.717,.398],[.596,.436],[.645,.436],[.697,.436]];
+const pawRearCatFigurines=[[.578,.240],[.653,.229],[.717,.240],[.596,.278],[.645,.278],[.697,.278]];
 const pawRearCatBlessings=[['May your lunch break actually be a break.','愿你的午休，真的能休息。'],['May good things find you without a meeting invite.','愿好事找上门，不必先开会。'],['May you have the courage to say: tomorrow.','愿你有勇气说：明天再说。'],['A little luck for whatever you are carrying today.','愿你今天的心事，轻一点。'],['May your tea stay warm and your inbox stay quiet.','愿茶常温，消息常静。'],['May you find something small worth smiling about.','愿你今天遇见一件值得微笑的小事。']];
 function pawRearCatChoice(run,index){
  if(!run||!Number.isInteger(index)||index<0||index>=pawRearCatBlessings.length)return null;
@@ -12048,22 +12048,22 @@ function pawRearGardenSway(age,reduced=false,kind='chime'){
 }
 function pawRearPondGlint(i,now,reduced=false){
  const phase=reduced?.45:((now*.22+i*.271)%1+1)%1;
- return {u:.315+i*.021+Math.sin(phase*Math.PI*2+i)*.007,v:.618+(i%2)*.014+(phase-.5)*.012,rx:5+phase*10,ry:1.3+phase*1.7,alpha:.26*Math.sin(Math.PI*phase)}
+ return {u:.315+i*.021+Math.sin(phase*Math.PI*2+i)*.007,v:.454+(i%2)*.014+(phase-.5)*.012,rx:5+phase*10,ry:1.3+phase*1.7,alpha:.26*Math.sin(Math.PI*phase)}
 }
 // Traced against the inspected 960x1631 rear garden plate. The animated
 // stream follows the bamboo spout and the ripples stay within open water.
 function pawRearWaterFlow(i,now,reduced=false){
  const f=reduced?(i+.5)/7:((now*.92+i/7)%1+1)%1;
- return {u:.167+.032*f+.006*Math.sin(f*Math.PI),v:.491+.073*f,alpha:.35+.50*Math.sin(Math.PI*f),length:.005+.008*f};
+ return {u:.167+.032*f+.006*Math.sin(f*Math.PI),v:.334+.073*f,alpha:.35+.50*Math.sin(Math.PI*f),length:.005+.008*f};
 }
 function pawRearWaterRipple(i,now,reduced=false){
  const f=reduced?(i+.5)/4:((now*.55+i/4)%1+1)%1;
- return {u:.198,v:.566,rx:.007+.037*f,ry:.0017+.009*f,alpha:.52*Math.sin(Math.PI*f)};
+ return {u:.198,v:.409,rx:.007+.037*f,ry:.0017+.009*f,alpha:.52*Math.sin(Math.PI*f)};
 }
 function pawRearGardenPellet(i,age){
  if(!Number.isFinite(age)||age<0||age>.9)return null;
  const f=Math.max(0,Math.min(1,(age-i*.035)/.65));if(f<=0||f>=1)return null;
- const from=[.53,.598],to=[.31+i*.018,.617+(i%2)*.014];
+ const from=[.53,.443],to=[.31+i*.018,.453+(i%2)*.014];
  return [from[0]+(to[0]-from[0])*f,from[1]+(to[1]-from[1])*f-.035*Math.sin(Math.PI*f)]
 }
 /* PAW_PAINTED_GARDEN_END */
@@ -12149,7 +12149,7 @@ drawActivity=function(...args){
    for(let j=0;j<5;j++){
     const pt=pawRearGardenPellet(j,age);if(pt){const [px,py]=xy(...pt);ellipse(px,py,1.6,1.6,'#dfc28a')}
     const f=Math.max(0,Math.min(1,(age-.65-j*.08)/1.65));
-    if(f>0&&f<1){const [rx,ry]=xy(.31+j*.018,.617+(j%2)*.014);ctx.strokeStyle='rgba(242,239,207,'+(.6*(1-f))+')';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(rx,ry,2+f*17,1+f*5,0,0,TAU);ctx.stroke()}
+    if(f>0&&f<1){const [rx,ry]=xy(.31+j*.018,.453+(j%2)*.014);ctx.strokeStyle='rgba(242,239,207,'+(.6*(1-f))+')';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(rx,ry,2+f*17,1+f*5,0,0,TAU);ctx.stroke()}
    }
   }
   const [x,y]=xy(...q.pos),scale=pawTempleContactScale(cam.scale,1.48+Math.max(0,q.pos[1]-.54)*.55);
@@ -12160,7 +12160,7 @@ drawActivity=function(...args){
   const chimeAge=t-run.gardenChimeAt,catAge=t-run.pawCatAt,reduced=residentReducedMotion.matches;
   // Only the hanging paper tail moves. The beam, chain, bell and ceramic figures stay rigid.
   const breeze=reduced?0:Math.sin(t*1.45)*.42+Math.sin(t*.83)*.18;
-  pawRearGardenWarp(pawRearGardenArt(),p,[.75,.326,.808,.365],breeze+pawRearGardenSway(chimeAge,reduced)*.36);
+  pawRearGardenWarp(pawRearGardenArt(),p,[.75,.169,.808,.224],breeze+pawRearGardenSway(chimeAge,reduced)*.36);
   if(catAge>=0&&catAge<2.2&&Number.isInteger(run.pawCatChoice)){
    const [u,v]=pawRearCatFigurines[run.pawCatChoice],[gx,gy]=xy(u,v+.012);
    ctx.save();ctx.globalAlpha=.48*(1-catAge/2.2);ellipse(gx,gy,12,2.6,'#ffdc94');ctx.restore()
