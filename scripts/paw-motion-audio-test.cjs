@@ -24,3 +24,25 @@ assert.equal(log.length,4);
 assert.equal(filters[2].frequency.value,132);assert.equal(filters[3].frequency.value,168);
 ctx.state='running';ctx.currentTime=2;player.reset();assert.equal(player.railway(flags),true);assert.equal(filters.at(-1).frequency.value,132);
 console.log('Motion cadence, mute, surface and audio lifecycle checks passed');
+
+ // A real source ends asynchronously. Scene transitions must silence the
+ // existing footstep and rail pulses, including a late onended callback.
+ {
+  let disconnects=0,stops=0,starts=0;const voices=[];
+  const liveNode=()=>({connect(){},disconnect(){disconnects++}});
+  const live={...ctx,state:'running',currentTime:0,
+   createBufferSource:()=>{const v={...liveNode(),start(){starts++},stop(at){if(at===undefined)stops++}};voices.push(v);return v},
+   createBiquadFilter:()=>({...liveNode(),frequency:{},Q:{}}),
+   createGain:()=>({...liveNode(),gain:param})};
+  const p=a.createPlayer(live,{},()=>.5);
+  assert.ok(p.footstep({surface:'stone',foot:0},flags));assert.ok(p.railway(flags));
+  assert.equal(starts,2);assert.equal(disconnects,0);
+  const late=voices[0].onended;p.reset();
+  assert.equal(stops,2);assert.equal(disconnects,6);
+  late();p.reset();assert.equal(disconnects,6);assert.equal(stops,2);
+  assert.ok(p.railway(flags));voices[2].onended();
+  assert.equal(disconnects,9);p.reset();assert.equal(stops,2);assert.equal(disconnects,9);
+  assert.ok(p.footstep({surface:'wood',foot:1},flags));p.reset();
+  assert.equal(stops,3);assert.equal(disconnects,12);
+ }
+ console.log('Movement audio cancellation and late-end cleanup checks passed');
