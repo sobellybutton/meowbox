@@ -1,0 +1,44 @@
+name: Pawradise combined Hall Room and daily notices
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [release/hall-room-daily-notices-20261128]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile:
+    if: github.event_name != 'pull_request' || github.head_ref == 'release/hall-room-daily-notices-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+        language: ['EN', '中文']
+    env:
+      PAW_BROWSER: ${{ matrix.browser }}
+      PAW_VIEWPORT: '390x844'
+      PAW_LANGUAGE: ${{ matrix.language }}
+      PAW_MOTION: no-preference
+      PAW_FOUNDATION: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: node scripts/action-refinement-test.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Organic entrance, noticeboard and room journeys
+        run: |
+          python3 -m http.server 8772 >/tmp/hall-room-server.log 2>&1 &
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8772/index.html >/dev/null && break; sleep 1; done
+          node scripts/paw-entrance-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: room-hall-${{ matrix.browser }}-${{ matrix.language }}
+          path: test-results/entrance/

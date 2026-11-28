@@ -122,6 +122,38 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
     await page.waitForFunction(()=>[...document.querySelectorAll('#worldSigns .worldSign[data-door]')].some(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&r.top<innerHeight&&r.bottom>0&&r.left<innerWidth&&r.right>0&&getComputedStyle(e).visibility!=='hidden'}),null,{timeout:15000});
     assert.equal(await page.locator('.pawRailEdge:visible,button[data-door="station"]:visible').count(),0,'Station appears before traveller approaches');
     await shot('mobile-foundation-map');
+    if(process.env.PAW_BOOKLETS==='1'){
+     const tap=async locator=>{await reachable(locator,'Booklet action');await (width<900?locator.tap():locator.click())};
+     const origin=await page.evaluate(()=>({scene,x:p.x,y:p.y}));
+     const gear=page.locator('#townSettingsToggle');
+     await page.waitForFunction(()=>document.querySelector('#townSettingsToggle svg[data-paw-painted-cog] .pawSettingsPaintedCog'));
+     assert.equal(await gear.locator('svg').count(),1,'Duplicate settings icon');
+     assert.equal(await gear.locator('.pawSettingsFallbackCog:visible').count(),0,'Vector fallback overlaps painted cog');
+     await tap(gear);await page.locator('#townSettingsPanel').waitFor({state:'visible'});
+     await shot('painted-settings');await tap(gear);
+     await page.locator('#townSettingsPanel').waitFor({state:'hidden'});
+     await tap(page.locator('#dockTravel'));
+     const cover=page.locator('.pawBookletClose img');
+     await cover.evaluate(im=>im.decode());
+     assert((await cover.getAttribute('src')).endsWith('/journal-cover.webp'),'Existing painted journal asset not used');
+     const places=page.locator('.pawBookFold').filter({has:page.locator('.pawSketchPlaces')});
+     assert.equal(await places.count(),1);assert.equal(await places.evaluate(el=>el.open),false);
+     await shot('booklet-explore-folded');
+     await tap(places.locator('summary'));assert.equal(await places.evaluate(el=>el.open),true);
+     await shot('booklet-explore-unfolded');
+     await tap(places.locator('summary'));assert.equal(await places.evaluate(el=>el.open),false);
+     await tap(page.locator('.pawBookletClose'));await page.waitForFunction(()=>$('page').style.display!=='block');
+     await tap(page.locator('#dockScoop'));
+     const lunar=page.locator('.pawDiaryFold').filter({has:page.locator('.pawDiaryLunar')});
+     assert.equal(await lunar.count(),1);assert.equal(await lunar.evaluate(el=>el.open),false);
+     assert.equal(await page.locator('.pawIllustratedHeading').count(),0,'Redundant daily hero');
+     await tap(lunar.locator('summary'));assert.equal(await lunar.evaluate(el=>el.open),true);
+     assert(await lunar.locator('.pawDiaryLunar strong').isVisible());
+     await shot('booklet-today-calendar');
+     await tap(lunar.locator('summary'));assert.equal(await lunar.evaluate(el=>el.open),false);
+     await tap(page.locator('.pawBookletClose'));await page.waitForFunction(()=>$('page').style.display!=='block');
+     const end=await page.evaluate(()=>({scene,x:p.x,y:p.y}));assert.equal(end.scene,origin.scene);assert(Math.hypot(end.x-origin.x,end.y-origin.y)<3,'Booklet close displaced traveller');
+    }
     // Start each root through real dock input on the first map. The explicit
     // page close control must return to the same scene and player position.
     for(const id of ids){
@@ -135,12 +167,38 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       assert.equal(await page.locator('.pawRailWayfinding').count(),0,'Duplicate station action');
      }
      if(id==='dockValley'){
-      assert.equal(await page.locator('.pawPavilionScene > .pawPavilionTray').count(),1,'Town Hall opens its pavilion first');
-      assert.equal(await page.locator('.pawPavilionNews[open]').count(),0,'Long town news should begin folded');
+      assert.equal(await page.locator('.pawPavilionScene .pawTownHotspot').count(),3,'Town Hall offers three in-scene destinations');
+      assert.equal(await page.locator('.pawPavilionTray').count(),0,'No foreground menu covering hall');
+      assert(await page.locator('.pawPavilionScene .pawTownFrontPhoto img').isVisible(),'Pavilion artwork is visible');
+      const board=page.locator('.pawTownHotspot').first();
+      await (width<900?board.tap():board.click());
+      await page.locator('.townWall').waitFor({state:'visible',timeout:8000});
+      const notices=page.locator('.townResidentNote');
+      assert.equal(await notices.count(),10,'Only ten resident notices are shown');
+      assert.equal(await page.locator('.townPostNav button').count(),0,'No archive pagination or invisible older notices button');
+      const ids=await notices.evaluateAll(nodes=>nodes.map(n=>n.dataset.noticeId));
+      assert.equal(new Set(ids).size,10,'No duplicate notices');
+      const reply=page.locator('.wallReplies .wallReplyToggle, .wallReplies summary').first();
+      if(await reply.count()){await (width<900?reply.tap():reply.click());assert.equal(await page.locator('.wallReplies[open]').count(),1,'Notice replies open normally');}
+      await shot('town-noticeboard');
+      const returnHall=page.locator('#content > .row button').first();
+      await (width<900?returnHall.tap():returnHall.click());
+      await page.locator('.pawTownHotspot').first().waitFor({state:'visible',timeout:8000});
+      for(const [index,target] of [[1,'.townChatTranscript'],[2,'.pawJoyWall']]){
+       const spot=page.locator('.pawTownHotspot').nth(index);
+       await (width<900?spot.tap():spot.click());
+       await page.locator(target).waitFor({state:'visible',timeout:8000});
+       await shot(index===1?'town-tea-chat':'town-little-joys');
+       const contextualBack=page.locator('#content > .row button').first();
+       await (width<900?contextualBack.tap():contextualBack.click());
+       await page.locator('.pawTownHotspot').first().waitFor({state:'visible',timeout:8000});
+      }
      }
      if(id==='dockOwnHome'){
       const structure=await page.evaluate(()=>{const q=$('content'),room=q.querySelector('.hideoutScene'),actions=q.querySelector('.hideoutPrimary'),expansion=q.querySelector('.pawRoomExpansionFold');return {first:!!room&&!!actions&&!!(room.compareDocumentPosition(actions)&Node.DOCUMENT_POSITION_FOLLOWING),folded:!!expansion&&!expansion.open,top:room?.getBoundingClientRect().top,visible:room?.getBoundingClientRect().height}});
       assert(structure.first&&structure.folded&&structure.visible>0&&structure.top<height*.5,'Room should appear before administration: '+JSON.stringify(structure));
+      const actor=await page.evaluate(()=>{const s=document.querySelector('.hideoutScene'),a=s?.querySelector('.hideoutPlayer'),shadow=s?.querySelector('.pawHomeContactShadow');return {ratio:a?.getBoundingClientRect().height/s?.getBoundingClientRect().height,foot:a?.style.top,shadow:shadow?.style.top}});
+      assert(actor.ratio>=.22&&actor.ratio<=.31&&actor.foot===actor.shadow,'Room traveller scale and contact shadow: '+JSON.stringify(actor));
      }
      await shot('dock-'+id);
      const back=page.locator('#content > .row button').first();

@@ -200,7 +200,7 @@ destinyPage=function(){
  let choose=()=>{let title=a.querySelector('strong')?.textContent||'',p=prompts.find(x=>title.startsWith(tr(x[0],x[1])));if(!p)return;grid.querySelectorAll('[aria-pressed]').forEach(el=>el.setAttribute('aria-pressed','false'));a.setAttribute('aria-pressed','true');panel.replaceChildren();element('strong',tr(p[0],p[1]),panel);element('p',a.querySelector('span')?.textContent||'',panel);element('p',tr(p[2],p[3]),panel);sound(440+i*18)};
  a.onclick=choose;a.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose()}};
  });
- let saveScroll=b(out,tr('Tie the destiny scroll and keep it','系好命理卷轴，收入背包'),()=>{addItem('Observatory destiny scroll','星月命理卷轴');saveScroll.textContent=tr('Scroll collected','卷轴已收藏');saveScroll.disabled=true;sound(660)});saveScroll.className='destinySave';
+ let saveScroll=b(out,tr('Tie the destiny scroll and keep it','系好命理卷轴，收入背包'),()=>{addItem('Observatory destiny scroll','星月命理卷轴');saveScroll.textContent=tr('Scroll collected','卷轴已收藏');saveScroll.disabled=true;sound(660);if(room==='destiny'&&$('page').dataset.pawYueDesk==='true'){pawCloseYueDesk();say(tr('Master Yue','月师傅'),tr('There, your scroll is safely tucked away. Shall we look at another reading, or leave the stars to rest?','好啦，卷轴已经收入背包。还想看看别的命理，还是让星星休息一会儿？'),[[tr('Another reading','再看一项'),()=>yueReadingHub()],[tr('Finish for now','今天先到这里'),closeTalk]]);updateHUD()}});saveScroll.className='destinySave';
  });
 };
 
@@ -3770,6 +3770,15 @@ function townPublishedNotices(now=Date.now()){
  const count=Math.max(0,Math.min(townNoticeEditions.length,1+Math.floor((now-townNoticeStart)/townNoticeInterval)));
  return [...townNoticeEditions.slice(0,count).map((thread,i)=>({thread,date:townNoticeStart+i*townNoticeInterval,id:'edition-'+i})),...pawSerialPublished(now),...wallThreads.map((thread,i)=>({thread,date:0,id:'archive-'+i})).reverse()].sort((a,b)=>b.date-a.date)
 }
+function pawDailyNoticeSelection(entries,now=Date.now()){
+ const day=Math.floor((now+8*3600000)/86400000),cutoff=day*86400000-8*3600000;
+ const seen=new Set(),eligible=entries.filter(v=>v&&typeof v.id==='string'&&v.date<=cutoff&&!seen.has(v.id)&&seen.add(v.id));
+ const fresh=eligible.filter(v=>v.date>0&&v.date>cutoff-86400000).sort((a,b)=>b.date-a.date||a.id.localeCompare(b.id)).slice(0,3);
+ const picked=new Set(fresh.map(v=>v.id)),pool=eligible.filter(v=>!picked.has(v.id)).sort((a,b)=>a.id.localeCompare(b.id));
+ const count=Math.min(10-fresh.length,pool.length),offset=pool.length?((day*10)%pool.length+pool.length)%pool.length:0;
+ return fresh.concat(Array.from({length:count},(_,i)=>pool[(offset+i)%pool.length]));
+}
+function pawDailyTownNotices(now=Date.now()){const cutoff=Math.floor((now+8*3600000)/86400000)*86400000-8*3600000;return pawDailyNoticeSelection(townPublishedNotices(cutoff),now)}
 const pawWeekNotes=[
  ['Sunday: Tomorrow is a problem for tomorrow’s human.','周日：明天的烦恼交给明天的人类。'],
  ['Monday: The town accepts your resignation from pretending to enjoy Mondays.','周一：小镇批准你辞去假装喜欢周一的职务。'],
@@ -3783,25 +3792,24 @@ function pawWeekNote(now=Date.now()){const day=new Date(now+8*3600000).getUTCDay
 function renderResidentNoticeboard(q){
  const wrap=element('section','',q,'townWall');
  element('h2',tr('Overheard in town','摸鱼留言墙'),wrap,'board-heading');
- element('p',tr('New town notices arrive over time. Old favourites stay in the archive.','小镇见闻陆续更新，旧瓜也能慢慢翻。'),wrap,'wallIntro');
+ element('p',tr('A little town chatter for today. Come back tomorrow for a different selection.','今天的小镇新鲜事，明天再来看看别的留言。'),wrap,'wallIntro');
  element('p',tr(...pawWeekNote()),wrap,'pawWeeklyNotice');
  element('small',tr('Notes from around town. The shared square is a separate public space.','来自小镇的留言。共享广场是另一个公共空间。'),wrap,'wallDisclosure');
  const publicBtn=b(wrap,communityURL()?tr('Read or leave a real visitor post','看看真人留言 / 留句话'):tr('Shared square · not open yet','共享广场 · 尚未开放'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink';
  const list=element('div','',wrap,'townPostList'),nav=element('div','',wrap,'townPostNav');
- let shown=6,lastCount=-1,lastNoticeSignature='';
+ let lastNoticeSignature='';
  function render(){
   const open=new Set([...list.querySelectorAll('.wallReplies[open]')].map(el=>el.dataset.noticeId));
-  const entries=townPublishedNotices();lastCount=entries.length;lastNoticeSignature=entries.map(v=>v.id).join('|');list.replaceChildren();nav.replaceChildren();
-  for(const {thread:m,date,id} of entries.slice(0,shown)){const post=element('article','',list,'townResidentNote');post.dataset.noticeId=id;
+  const entries=pawDailyTownNotices();lastNoticeSignature=entries.map(v=>v.id).join('|');list.replaceChildren();nav.replaceChildren();
+  for(const {thread:m,date,id} of entries){const post=element('article','',list,'townResidentNote');post.dataset.noticeId=id;
    element('strong',tr(...m[0]),post);if(date)element('small',new Date(date).toLocaleDateString(zh?'zh-CN':'en-SG',{month:'short',day:'numeric',timeZone:'Asia/Singapore'}),post,'townNoticeDate');element('p',tr(...m[1]),post);
    if(!m[2].length)continue;
    const replies=element('details','',post,'wallReplies');replies.dataset.noticeId=id;replies.open=open.has(id);element('summary',tr('Read replies','看看楼下怎么说')+' ('+m[2].length+')',replies);
    for(const reply of m[2]){const row=element('div','',replies,'wallReply');element('strong',tr(reply[0],reply[1]),row);element('p',tr(reply[2],reply[3]),row)}
   }
-  element('span',Math.min(shown,entries.length)+' / '+entries.length+' '+tr('notices','条见闻'),nav);
-  const more=b(nav,tr('Read older notices','翻翻以前的留言'),()=>{shown+=6;render()});more.disabled=shown>=entries.length;
+  element('span',entries.length+' '+tr('notices today','条今日留言'),nav);
  }render();
- const timer=setInterval(()=>{if(!wrap.isConnected||$('page').style.display!=='block'){clearInterval(timer);return}const next=townPublishedNotices(),n=next.length;if(n!==lastCount||next.map(v=>v.id).join('|')!==lastNoticeSignature){shown+=Math.max(0,n-lastCount);render()}},60000)
+ const timer=setInterval(()=>{if(!wrap.isConnected||$('page').style.display!=='block'){clearInterval(timer);return}const next=pawDailyTownNotices();if(next.map(v=>v.id).join('|')!==lastNoticeSignature)render()},60000)
 }
 
 /* A local character lounge, not a simulated online-player population.
@@ -4335,7 +4343,7 @@ function hideoutPage(){
    pawSyncFurnitureTray(q);stage.querySelectorAll('.hideoutPlaced,.hideoutDisplay,.hideoutPlayer').forEach(el=>el.remove());
    const sorted=hideoutFurniture.map((d,i)=>({d,i})).filter(v=>Object.hasOwn(art9,v.d.id)&&furnitureZone(v.d)===komorebiZone).sort((a,b)=>(a.d.id==='rug'?-1:a.d.y)-(b.d.id==='rug'?-1:b.d.y));
    for(const {d,i} of sorted){
-    const im=element('img','',stage,'hideoutPlaced'+(hideoutEditing&&i===hideoutSelected?' selected':''));pawFurnitureSetImage(im,d.id);im.alt=tr(...roomNames9[d.id]);im.style.width=furnitureWidth(d.id)+'%';im.dataset.furnitureId=d.id;pawFurnitureApplyRoomPose(im,d);
+    const im=element('img','',stage,'hideoutPlaced'+(hideoutEditing&&i===hideoutSelected?' selected':''));pawFurnitureSetImage(im,d.id);if(d.id==='shelf'&&Number(d.y)<60){im.src=pawFurnitureArtBase+'furniture/wall-shelf.webp';im.dataset.furnitureArt='painted-wall-shelf'}im.alt=tr(...roomNames9[d.id]);im.style.width=furnitureWidth(d.id)+'%';im.dataset.furnitureId=d.id;pawFurnitureApplyRoomPose(im,d);
     if(hideoutEditing){
      im.tabIndex=0;im.setAttribute('role','button');im.setAttribute('aria-pressed',String(i===hideoutSelected));im.draggable=false;
      function selectPiece(){
@@ -7382,29 +7390,45 @@ function chartFollowTopics(value){
 const chartFollowBefore=renderChartConsultation;
 renderChartConsultation=function(out,z){
  chartFollowBefore(out,z);const section=out.querySelector('.chartConsultation');if(!section)return;
- const form=element('form','',section,'chartFollowForm'),label=element('label',tr('Ask a follow-up question','继续问月师傅'),form);
- const field=element('input','',label);field.maxLength=160;field.required=true;field.placeholder=tr('What is on your mind?','你还想了解什么？');
- const send=element('button',tr('Explore','继续了解'),form);send.type='submit';
- const reply=element('div','',section,'chartFollowReply');
- const status=element('p','',reply,'chartPractice');status.setAttribute('role','status');
- const matches=element('div','',reply,'chartTopics');
- element('small',tr('The guide matches topics on this device. Your question is cleared after use.','小馆会在本机匹配主题，提问后会清空。'),section);
- function openTopic(k){
-  section.querySelector('.chartTopics [data-topic="'+k+'"]')?.click();
-  const result=section.querySelector('.chartReply h3');
-  if(result){result.tabIndex=-1;result.focus({preventScroll:true});result.scrollIntoView({block:'center',behavior:'instant'})}
- }
- form.onsubmit=e=>{
-  e.preventDefault();
-  const topics=chartFollowTopics(field.value);field.value='';matches.replaceChildren();
-  if(!topics.length){status.textContent=tr('Try a topic like work, friendships or rest.','可以试试工作、朋友或休息等主题。');return}
-  if(topics.length===1){status.textContent='';openTopic(topics[0]);return}
-  status.textContent=tr('I heard a few topics. Which should we start with?','听起来有几个方向。你想先聊哪一个？');
-  topics.forEach(k=>{
-   const topic=chartConsultTopics.find(v=>v.k===k);
-   if(topic)b(matches,tr(...topic.name),()=>openTopic(k));
-  });
- };
+ const open=b(section,tr('Ask Yue a question','继续问月师傅'),()=>{
+  const pane=$('page');
+  if(room!=='destiny'||!section.isConnected||pane.dataset.pawYueDesk!=='true')return;
+  const valid=()=>room==='destiny'&&section.isConnected&&pane.dataset.pawYueDesk==='true';
+  const name=()=>tr('Master Yue','月师傅');
+  const returnChart=()=>{if(!valid())return;closeTalk();pane.style.display='block';updateHUD()};
+  const finish=()=>{if(!valid())return;pawCloseYueDesk();closeTalk();updateHUD()};
+  const again=()=>ask(tr('What else is on your mind?','还有什么想聊的？'));
+  const actions=()=>[[tr('Ask another question','再问一题'),again],[tr('Read my chart','看看命盘'),returnChart],[tr('Finish for now','今天先到这里'),finish]];
+  function reply(topic){
+   if(!valid())return;
+   const data=chartConsultData(z,topic);
+   const stars=data.stars.length?data.stars.join('、'):data.opposite.join('、');
+   const intro=tr('Let us consider ','咱们看看')+tr(...topic.name)+'. ';
+   const context=stars?(data.stars.length?tr('The main stars here are ','此宫主星为'):tr('The opposite palace contains ','对宫有'))+stars+'. ':tr('This palace has no main stars. ','此宫无主星。');
+   say(name(),intro+context+tr(...topic.practice),actions());
+  }
+  function ask(line){
+   if(!valid())return;
+   pane.style.display='none';
+   say(name(),line+' '+tr('For now I can offer local chart guidance, not an AI reading.','目前我可以提供本机命盘指引，暂未接入 AI 解读。'),[[tr('Read my chart','看看命盘'),returnChart],[tr('Finish for now','今天先到这里'),finish]]);
+   const form=element('form','',$('choices'),'chartFollowForm');
+   form.style.gridColumn='1/-1';form.style.width='100%';form.style.margin='0';
+   const label=element('label',tr('Your question','你的问题'),form);
+   const field=element('input','',label);field.maxLength=160;field.required=true;field.placeholder=tr('What is on your mind?','你还想了解什么？');field.autocomplete='off';
+   const send=element('button',tr('Ask','请教'),form);send.type='submit';
+   form.onsubmit=e=>{
+    e.preventDefault();if(!valid())return;
+    const topics=chartFollowTopics(field.value).map(k=>chartConsultTopics.find(v=>v.k===k)).filter(Boolean);
+    field.value='';
+    if(!topics.length){ask(tr('I can explore career, relationships, money, travel, friends, family or rest with you.','我们可以聊事业、感情、财运、迁移、朋友、家庭或休息。'));return}
+    if(topics.length===1){reply(topics[0]);return}
+    say(name(),tr('There are several threads here. Which shall we consider first?','这里有几个方向，先聊哪一个？'),[...topics.map(topic=>[tr(...topic.name),()=>reply(topic)]),[tr('Back to my question','重新提问'),again]]);
+   };
+   updateHUD();
+  }
+  ask(tr('The tea is still warm. What would you like to ask?','茶还热着呢，你还想问些什么？'));
+ });open.className='chartFollowOpen';
+ element('small',tr('Questions use local chart topics only; AI consultation is not connected.','问题仅匹配本机命盘主题，暂未接入 AI 咨询。'),section);
 };
 let indoorStepAt=-100;
 const footstepsRoomBefore=drawRoom;
@@ -9288,7 +9312,7 @@ function komorebiArt(id){
 }
 /* PAW_FURNITURE_PREVIEW_BEGIN */
 const pawFurnitureArtBase="assets/visual/staging/2026-11-27-b/room/";
-const pawFurniturePainted={"futon":"futon","bed":"single-bed","lamp":"paper-lamp","basicTable":"low-table","rug":"woven-rug","plant":"fern","zabuton":"floor-cushion","catBasket":"cat-bed","sakuraVase":"flower-vase","lowDesk":"desk","retroTV":"retro-tv","chineseTeaTable":"tea-table","chineseBench":"bench"};
+const pawFurniturePainted={"futon":"futon","bed":"single-bed","lamp":"paper-lamp","basicTable":"low-table","rug":"woven-rug","plant":"fern","zabuton":"floor-cushion","catBasket":"cat-bed","sakuraVase":"flower-vase","lowDesk":"desk","retroTV":"retro-tv","chineseTeaTable":"tea-table","chineseBench":"bench","shelf":"bookcase","shojiLamp":"floor-lantern"};
 const pawFurnitureImported=new Set(["board","frame","kotatsu","teaCabinet","bonsai","recordPlayer","readingChair","chineseScreen","chineseLantern","porcelainVase","moonShelf"]);
 const pawFurniturePreviewOnly={"shelf":"furniture/bookcase.webp","displayCabinet":"furniture/display-cabinet.webp","shojiLamp":"furniture/floor-lantern.webp","roomExtension":"shells/side-extension.webp","roomStudio":"shells/l-shaped-extension.webp"};
 function pawFurniturePaintedPath(id,preview=false){
@@ -9440,13 +9464,13 @@ function komorebiSetFinish(kind,id){
  hideoutPrefs.finishes[komorebiZone]={...komorebiFinishes(),[kind]:id};saveHideout();return true
 }
 hideoutSceneArt=function(theme){
- const {wall,floor}=komorebiFinishes(),wc=wall==='plain'?theme.wall:komorebiFinishColor(wall),fc=floor==='plain'?(theme.id==='morning'?'#bda17b':theme.floor):komorebiFinishColor(floor),windowX=komorebiZone===1?245:komorebiZone===2?200:105;
+ const {wall,floor}=komorebiFinishes(),wc=wall==='plain'?theme.wall:komorebiFinishColor(wall),fc=floor==='plain'?(theme.id==='morning'?'#bda17b':theme.floor):komorebiFinishColor(floor),windowX=komorebiZone===1?245:200;
  const wallPattern=wall==='wallSakura'?Array.from({length:32},(_,i)=>'<path d="M'+(12+i%8*54)+' '+(30+Math.floor(i/8)*70)+'q-6-10-12 0q6 9 12 0q6-10 12 0q-6 9-12 0Z" fill="#c18d89" opacity=".32"/>').join(''):wall==='plain'?'':Array.from({length:32},(_,i)=>'<path d="M'+(i*13)+' 0V295" stroke="#816f55" opacity=".06"/>').join('');
  let floorPattern='';
  if(floor==='floorTiles'||floor==='floorChecker'){for(let y=0;y<5;y++)for(let x=0;x<8;x++){const xx=x*50,yy=300+y*40;floorPattern+='<rect x="'+xx+'" y="'+yy+'" width="50" height="40" fill="'+((x+y)%2?'#e5d6b9':fc)+'" stroke="#927f64" stroke-width=".7"/>';if(floor==='floorTiles')floorPattern+='<path d="M'+(xx+25)+' '+(yy+9)+'l10 11-10 11-10-11Z" fill="#849b8f" opacity=".65"/>'}}
  else if(floor==='floorTatami'){for(let y=0;y<4;y++)floorPattern+='<rect x="0" y="'+(300+y*50)+'" width="400" height="50" fill="'+fc+'" stroke="#788365" stroke-width="3"/>'}
  else{for(let i=0;i<6;i++)floorPattern+='<path d="M0 '+(300+i*i*8)+'H400" stroke="#7d6246" opacity=".32"/>';for(let i=0;i<8;i++)floorPattern+='<path d="M'+(i*55-10)+' 300L'+(i*75-80)+' 500" stroke="#7d6246" opacity=".34"/>'}
- return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" aria-hidden="true"><defs><linearGradient id="kw" x2="0" y2="1"><stop stop-color="'+wc+'"/><stop offset="1" stop-color="'+wc+'"/></linearGradient><linearGradient id="ks" x2="0" y2="1"><stop stop-color="'+theme.sky+'"/><stop offset="1" stop-color="#e6d7b5"/></linearGradient><radialGradient id="kl"><stop stop-color="#fff1c2" stop-opacity=".5"/><stop offset="1" stop-color="#fff1c2" stop-opacity="0"/></radialGradient></defs><rect width="400" height="300" fill="url(#kw)"/>'+wallPattern+'<rect y="300" width="400" height="200" fill="'+fc+'"/>'+floorPattern+'<path d="M0 291H400V302H0Z" fill="#967854"/><path d="M0 0H400V9H0Z" fill="#a68a67"/><g transform="translate('+windowX+' 68)"><rect x="-71" width="142" height="139" rx="2" fill="#866b4c"/><rect x="-64" y="7" width="128" height="125" fill="url(#ks)"/><circle cx="34" cy="29" r="14" fill="#f0ddb0"/><path d="M-64 111Q-32 65 0 94Q31 54 64 88V132H-64Z" fill="#93a895"/><path d="M-64 121Q-24 97 11 110Q38 87 64 108V132H-64Z" fill="#6f8e7c"/><path d="M0 7V132M-64 69H64" stroke="#8d7353" stroke-width="5"/><path d="M-76 138H76V144H-76Z" fill="#a98b63"/></g><ellipse cx="'+windowX+'" cy="338" rx="126" ry="82" fill="url(#kl)" pointer-events="none"/></svg>'
+ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" aria-hidden="true"><defs><linearGradient id="kw" x2="0" y2="1"><stop stop-color="'+wc+'"/><stop offset="1" stop-color="'+wc+'"/></linearGradient><linearGradient id="ks" x2="0" y2="1"><stop stop-color="'+theme.sky+'"/><stop offset="1" stop-color="#e6d7b5"/></linearGradient><radialGradient id="kl"><stop stop-color="#fff1c2" stop-opacity=".5"/><stop offset="1" stop-color="#fff1c2" stop-opacity="0"/></radialGradient></defs><rect width="400" height="300" fill="url(#kw)"/>'+wallPattern+'<rect y="300" width="400" height="200" fill="'+fc+'"/>'+floorPattern+'<path d="M0 291H400V302H0Z" fill="#967854"/><path d="M0 0H400V9H0Z" fill="#a68a67"/><g transform="translate('+windowX+' 68)"><rect x="-71" width="142" height="139" rx="2" fill="#866b4c"/><rect x="-64" y="7" width="128" height="125" fill="url(#ks)"/><image href="assets/visual/painted/worlds/home/scene.webp" x="-64" y="7" width="128" height="125" preserveAspectRatio="xMidYMid slice"/><rect x="-64" y="7" width="128" height="125" fill="#f3e4c7" opacity=".13"/><path d="M0 7V132M-64 69H64" stroke="#8d7353" stroke-width="5"/><path d="M-76 138H76V144H-76Z" fill="#a98b63"/></g><ellipse cx="'+windowX+'" cy="338" rx="126" ry="82" fill="url(#kl)" pointer-events="none"/></svg>'
 };
 function komorebiTVPage(){
  page(tr('The little town television','小镇电视台'),tr('A quiet moment in front of your old television.','在老电视前休息一小会儿。'),q=>{
