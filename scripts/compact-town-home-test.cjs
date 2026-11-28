@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const src=fs.readFileSync('src/compact-town-home.js','utf8');
 new vm.Script(src);
 const helper=src.split('// PAW_COMPACT_HELPERS_BEGIN')[1].split('// PAW_COMPACT_HELPERS_END')[0];
-const api=new Function(helper+';return {pageWindow,residentLabel,residentHeading,residentDialogue,residentPortraitPath,roomLampAnchor,roomLightState,cutawayPlan,cutawayFree,cutawayConnected,cutawayMove,cutawayRoute,cutawayApproach,cutawayArtPaths,cutawayArtReady,cutawayDepth,cutawayFootPivot,cutawayDragOwner,cutawaySeatFrame,cutawaySeatPlacement,cutawayContainedArt,cutawaySeatSurface,cutawaySeatApproach}')();
+const api=new Function(helper+';return {pageWindow,residentLabel,residentHeading,residentDialogue,residentPortraitPath,roomLampAnchor,roomLightState,cutawayPlan,cutawayFree,cutawayConnected,cutawayMove,cutawayRoute,cutawayApproach,cutawayArtPaths,cutawayArtReady,cutawayDepth,cutawayFootPivot,cutawayDragOwner,cutawaySeatFrame,cutawaySeatPlacement,cutawayContainedArt,cutawaySeatSurface,cutawaySeatApproach,cutawaySeatResume}')();
 assert.deepEqual(api.pageWindow(0,5,2),{page:0,pages:1,start:0,end:0});
 assert.deepEqual(api.pageWindow(5,9,2),{page:2,pages:3,start:4,end:5});
 assert.deepEqual(api.pageWindow(5,-1,2),{page:0,pages:3,start:0,end:2});
@@ -189,3 +189,19 @@ console.log('PASS noticeboard pagination state persists through language changes
 
 assert(src.includes('v!==decorate&&v!==collections'));
 console.log('PASS collections remains a direct room action');
+
+
+// Preserve the same seat while the tab is hidden or layout is temporarily zero.
+let resumeCases=0;
+for(let i=0;i<4;i++)for(const w of [0,320,390,768,1200])for(const h of [0,320,844,900])for(const hidden of [false,true])for(const ready of [false,true]){
+ const box={width:w,height:h},art=ready?{width:80,height:50}:null;
+ assert.equal(api.cutawaySeatResume(hidden,box,{id:'futon'},art,.22),hidden||!w||!h||!ready?'defer':'align');
+ assert.equal(api.cutawaySeatResume(hidden,box,null,art,.22),hidden||!w||!h?'defer':'stand');
+ resumeCases+=2;
+}
+assert.equal(api.cutawaySeatResume(false,{width:400,height:400},{id:'futon'},{width:80,height:50},NaN),'stand');
+assert(src.includes("if(!seatedKey){position(point(actor));actorArt('down',false,0)}"));
+assert(src.includes('else if(seatedKey)syncSeat()'));
+assert(src.includes("if(decision==='defer')return"));
+assert(src.includes('seatResize=new ResizeObserver(syncSeat)'));
+console.log('PASS '+resumeCases+' seated viewport interruption and restore scenarios');

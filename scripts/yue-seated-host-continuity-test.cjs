@@ -11,7 +11,7 @@ const manifest=JSON.parse(fs.readFileSync(path.join(root,'assets/visual/painted/
 let checks=0;
 for(const id of ['destiny','tarot','tea'])for(const ready of [false,true])for(const idleReady of [false,true])for(const phase of ['idle','question','result','focus']){
  const visit={id,ready,idleReady};
- assert.equal(api.pawReadingVisitPhase(visit,id,phase),ready?phase:id==='destiny'&&idleReady?'idle':null);checks++;
+ assert.equal(api.pawReadingVisitPhase(visit,id,phase),ready?phase:['destiny','tarot'].includes(id)&&idleReady?'idle':null);checks++;
 }
 assert.equal(api.pawReadingVisitPhase({id:'tarot',ready:true},'destiny','result'),null);
 for(const h of [275,550,1100])for(const phase of ['idle','question','result']){
@@ -22,7 +22,7 @@ for(const h of [275,550,1100])for(const phase of ['idle','question','result']){
 }
 assert.equal(api.pawReadingVisibleRect({point:(x,y)=>[x,y]},[0,0,10,10],[20,20,5,5]),null);
 assert.equal(api.pawReadingVisibleRect({point:(x,y)=>[x,y]},[0,0,10,10],[2,3,5,6]).bottom,9);
-assert.ok(src.includes("idleReady:id==='destiny'&&pawYueIdleReady()"));
+assert.ok(src.includes("idleReady:pawReadingIdleReady(id)"));
 assert.ok(src.includes("const selected=pawReadingVisitPhase(pawHostVisit,id,phase)"));
 assert.ok(src.includes("if(id==='destiny'&&phase==='result'&&grid)"));
 console.log('Master Yue seated visit admission and visible silhouette: '+checks+' cases passed');
