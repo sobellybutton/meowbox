@@ -60,3 +60,25 @@ assert.ok(ex.includes("saveHideout();render();toast(tr(...pawFurnitureActionWord
 assert.ok(ex.includes("if(wasEditing)toast(tr(...pawFurnitureActionWords('save')))"));
 assert.ok(ex.includes("wonderScenePhase==='result'&&wonderSceneResult"));
 console.log('Café accepted-answer and score preservation, decorating feedback, and discovery completion wiring passed.');
+
+const shell=read('src/shell.html');
+for(const id of ['hint','toast']){
+ assert.ok(shell.includes('id="'+id+'" role="status" aria-live="polite" aria-atomic="true"'));
+}
+const feedbackStyle=section(shell,'/* PAW_GAMEPLAY_FEEDBACK_BEGIN */','/* PAW_GAMEPLAY_FEEDBACK_END */');
+assert.ok(feedbackStyle.includes('orientation:landscape'));
+assert.ok(feedbackStyle.includes('body:not(.meow-dialogue)'));
+assert.ok(feedbackStyle.includes(':not(.pawRailJourneyActive)'));
+assert.ok(!feedbackStyle.includes(':not(.meowHintBlocked)'));
+const yueHumour=section(st,'/* PAW_YUE_DESK_HUMOUR_BEGIN */','/* PAW_YUE_DESK_HUMOUR_END */');
+const yueQuestions=new Function(yueHumour+'return pawYueDeskQuestions')();
+assert.ok(yueQuestions('year').length===2&&yueQuestions('chart').length===3);
+for(const kind of ['year','chart'])yueQuestions(kind).forEach(pair);
+assert.ok(yueQuestions('chart')[2][0].includes('time zone'));
+assert.ok(yueQuestions('chart')[1][0].includes('local birth time'));
+assert.ok(yueQuestions('unknown').length===0);
+assert.ok(st.includes("const questions=pawYueDeskQuestions(kind);if(questions.length!==steps.length)return;"));
+assert.ok(st.includes("pawCafeChoiceWords(cafeRound-1,false)"));
+assert.ok(st.includes("!cafeQuestionSheet.querySelector('.pawCafeReaction')"));
+assert.ok(st.includes("pawCafeChoiceWords(cafeQuestions.length-1,true)"));
+console.log('Guided consultation copy, short landscape guards, accessible status markup and inline café reaction wiring passed.');
