@@ -131,7 +131,16 @@ async function travelLoop(page,name,touch){
  assert.deepEqual(await page.evaluate(()=>state.readCards[0]),chosen.value,'Reading must use the exact chosen card');
  await backOutside();
  await enterDoor('temple');
- assert(await page.evaluate(()=>Object.entries(pawTempleLayout).every(([id,v])=>indoorSafe(v[2],v[3]))),'Temple stations have safe approaches');
+ // Validate the active painted hall or fallback registration against its own obstacles.
+ const approaches=await page.evaluate(()=>{
+  const spec=indoorSpec(),obstacles=indoorObstacles();
+  return {painted:pawHallEnabled(),stations:Object.entries(spec.stations).map(([id,v])=>({
+   id,point:v.slice(2,4),safe:indoorSafe(v[2],v[3],obstacles),
+   reachable:!!indoorPath([indoor.x,indoor.y],v.slice(2,4),obstacles)
+  }))};
+ });
+ assert.deepEqual(approaches.stations.map(s=>s.id).sort(),['moon','prayer','secretGarden','sticks','templeBell','templeWater'].sort(),'All six temple stations must remain available');
+ assert(approaches.stations.every(s=>s.safe&&s.reachable),'Temple station approach failure: '+JSON.stringify(approaches));
  await shot('temple-sanctuary');
  await backOutside();
  await enterDoor('wishes');
