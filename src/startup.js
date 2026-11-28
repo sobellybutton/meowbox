@@ -15975,6 +15975,7 @@ function pawBookTurn(dx,dy,duration,width,eligible){
 const pawBookPane=$('page'),pawBookContent=$('content');
 const pawBookCover=new Image();pawBookCover.src=pawBookCoverPath;
 let pawBookPrevious='',pawBookGesture=null,pawBookLeaf=null,pawBookMotion=null,pawBookMotionSerial=0;
+let pawBookMotionTimer=0;
 const pawBookOpenSections=new Set();
 function pawBookFoldExisting(node,key,label){
  if(!node||node.parentElement?.classList.contains('pawBookFold'))return;
@@ -15987,6 +15988,7 @@ function pawBookFoldExisting(node,key,label){
    Page content is ready immediately; the cover hinges away from that content.
    Interruptions and reduced motion remove it synchronously. */
 function pawBookRemoveMotion(){
+ if(pawBookMotionTimer){clearTimeout(pawBookMotionTimer);pawBookMotionTimer=0}
  if(pawBookMotion){pawBookMotion.remove();pawBookMotion=null}
 }
 function pawBookAnimate(opening,backwards=false){
@@ -16015,8 +16017,15 @@ function pawBookAnimate(opening,backwards=false){
   {transform:'perspective(1100px) rotateY('+sign*78+'deg)',opacity:.9,offset:.76},
   {transform:'perspective(1100px) rotateY('+sign*104+'deg)',opacity:0}
  ];
- const animation=leaf.animate(frames,{duration:opening?460:260,easing:'cubic-bezier(.22,.67,.22,1)',fill:'forwards'});
- animation.finished.catch(()=>{}).finally(()=>{if(pawBookMotion===layer)pawBookRemoveMotion();else layer.remove()});
+ const duration=opening?460:260;
+ const finish=()=>{if(pawBookMotion===layer)pawBookRemoveMotion();else layer.remove()};
+ // WebKit may leave the animation completion promise unresolved after a layout change.
+ // The visual cover is disposable and must never outlive its intended transition.
+ pawBookMotionTimer=setTimeout(finish,duration+100);
+ try{
+  const animation=leaf.animate(frames,{duration,easing:'cubic-bezier(.22,.67,.22,1)',fill:'forwards'});
+  animation.finished.then(finish,finish);
+ }catch{finish()}
 }
 function pawBookDress(q,key){
  const row=q.querySelector(':scope > .row'),heading=q.querySelector(':scope > h1');
