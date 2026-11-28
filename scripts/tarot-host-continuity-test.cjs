@@ -44,3 +44,26 @@ for(const a of ['tarot','love']){
 }
 for(const args of [['tarot',null,'tarot',true],['tarot','tarot','destiny',true],['tarot','tarot','tarot',false],['destiny','tarot','tarot',true]])assert.deepEqual(make.run(...args),{calls:[['fallback']],depth:0});
 console.log('Tarot host continuity: '+n+' viewport/camera scenarios and six runtime cases passed');
+
+const focus=new Function(source.slice(source.indexOf('function pawConsultReadingFocus'),source.indexOf('/* PAW_NATIVE_CONSULT_END */'))+';return pawConsultReadingFocus')();
+let focusChecks=0;
+const check=(v)=>{assert.ok(v);focusChecks++};
+const line=c=>'card '+c.i;
+for(const count of [1,3,5]){
+ const q={readStage:'focus',readCards:Array.from({length:count},(_,i)=>({i})),readFlip:Array.from({length:count},(_,i)=>i+1)};
+ for(const language of ['Position','位置'])for(let i=0;i<count;i++){
+  const words=language+' · '+(i+1)+'/'+count+'\n'+line(q.readCards[i])+'\n\nReflection';
+  check(focus(q,words,['card'],line,10)===i);
+  check(focus(q,words,['card'],line,q.readFlip[i]+.5)===null);
+ }
+ check(focus(q,'summary',['summary'],line,10)===-1);
+ check(focus(q,'summary',['summary'],line,count+.5)===null);
+ check(focus(q,'card 0',[],line,10)===null);
+ check(focus({...q,readStage:'choose'},'card 0',['card'],line,10)===null);
+}
+const duplicates={readStage:'cards',readCards:[{i:1},{i:1},{i:3}],readFlip:[1,2,3]};
+check(focus(duplicates,'Position · 2/3\ncard 1',['card'],line,5)===1);
+check(focus(duplicates,'card 1',['card'],line,5)===null);
+check(focus({readStage:'cards',readCards:[],readFlip:[]},'summary',['summary'],line,5)===null);
+check(focus({...duplicates,readFlip:[1,2,NaN]},'summary',['summary'],line,5)===null);
+console.log('Tarot host presentation: '+focusChecks+' focused reading and summary checks passed');
