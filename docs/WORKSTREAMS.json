@@ -534,10 +534,11 @@
         "bd78fa8e + 0393dc93: Native portrait carriage foreground imported; transparent window bounds 119,322,906,831 on 1024x1536; evaluate native portrait ride, preserve landscape. Staging verified, not runtime accepted; refer to PROJECT_BATCHES_30.md imported creative batches.",
         "52e41844 + edba2787: landscape railway renderer now applies slow route-specific warm light/cool shade inside scenery window and anchored wind shear to flowers only; fixed rigid props and carriage, reduced motion freezes effects. Exact repository module and persisted script executed in connector harness: 11,770 assertions passed, including 7,217 atmosphere assertions. No real browser/deployed verification; portrait carriage still pending runtime activation.",
         "a95a0feb + 14ea2782: native 1024x1536 portrait carriage composition with explicit alpha window bounds and 3px under-frame overlap; scenery, near props, light and wind clipped to window; landscape compatibility retained. Exact persisted test executed against repo module and tree with 12,038 assertions passed (268 new portrait checks across six viewports, four routes and reduced motion). Startup mount still pending due shared runtime lease; no rendered acceptance.",
-        "f6580bc8 + e046a2ce: smooth departure acceleration and full offscreen sprite recycling across narrow and wide windows; 245,733 new numerical assertions and 257,780 total assertions executed on exact source and persisted script with mocked canvas and filesystem existence. No new art or startup edits; actual CI, mobile/desktop rendering and deployment not verified."
+        "f6580bc8 + e046a2ce: smooth departure acceleration and full offscreen sprite recycling across narrow and wide windows; 245,733 new numerical assertions and 257,780 total assertions executed on exact source and persisted script with mocked canvas and filesystem existence. No new art or startup edits; actual CI, mobile/desktop rendering and deployment not verified.",
+        "Live isolated Chromium browser playthrough 28 Nov: ticket/signature/traveller/motivation/gate, actual map sign walking and automatic boarding, all four consecutive routes Fortune→Sea Breeze→Lantern→Starlight→Fortune. First two rides 390×844, latter two 1440×900. Portrait painted canvas active on second ride with frames 4→111; landscape third 2→114 and fourth 3→116; canvas CSS aspect preserved with centered horizontal crop and full viewport coverage within 0.02px. Correct arrival names and coins 10→20→30→40→40, no duplicate return reward, final ride canvas count 0. No physical iPhone/WebKit, screenshot-level visual inspection, reduced-motion, cold decode/failure or latest deployed kinetics module version proof."
       ],
       "lease": null,
-      "blocker": "Native portrait and landscape compositor integrated per RAIL-LIVE-01; actual rendered mobile/desktop rides, alpha-window visual fit, cold loading, arrival and reduced-motion acceptance still pending. Verify current deployed source and CI before closing."
+      "blocker": "Four-route actual browser gameplay and both compositor orientations verified. Physical iPhone/WebKit, screenshot-level art/crop/alpha seam acceptance, cold/failure/reduced-motion tests and latest kinetics version confirmation remain open."
     },
     {
       "id": "GAME-01",
@@ -791,9 +792,11 @@
       "stage": "tested",
       "evidence": [
         "c1ae152",
-        "6a5b7c1"
+        "6a5b7c1",
+        "Live isolated Chromium browser playthrough 28 Nov: ticket/signature/traveller/motivation/gate, actual map sign walking and automatic boarding, all four consecutive routes Fortune→Sea Breeze→Lantern→Starlight→Fortune. First two rides 390×844, latter two 1440×900. Portrait painted canvas active on second ride with frames 4→111; landscape third 2→114 and fourth 3→116; canvas CSS aspect preserved with centered horizontal crop and full viewport coverage within 0.02px. Correct arrival names and coins 10→20→30→40→40, no duplicate return reward, final ride canvas count 0. No physical iPhone/WebKit, screenshot-level visual inspection, reduced-motion, cold decode/failure or latest deployed kinetics module version proof."
       ],
-      "lease": null
+      "lease": null,
+      "blocker": "Four-route actual browser gameplay and both compositor orientations verified. Physical iPhone/WebKit, screenshot-level art/crop/alpha seam acceptance, cold/failure/reduced-motion tests and latest kinetics version confirmation remain open."
     },
     {
       "id": "HOME-ASSET-01",
@@ -830,10 +833,11 @@
       "stage": "tested",
       "evidence": [
         "845b8ee5: wide ride integration, preloaded candidate assets, portrait/failed-load fallback, reduced motion and cleanup; parsed exact startup and 10 mocked lifecycle assertions passed",
-        "9166cf77: activated native portrait carriage in existing entrance/ride compositor, independent portrait decode, correct aspect and bounded 720x1080 canvas, cold/missing portrait and missing route preserve legacy fallback; landscape renderer retained. Exact runtime mount extracted from current startup and tested in mocked DOM/canvas harness: 18 assertions passed for both orientations, animation, hidden pause, cleanup and unavailable-image fallback; no actual device/deployed verification. Source parses."
+        "9166cf77: activated native portrait carriage in existing entrance/ride compositor, independent portrait decode, correct aspect and bounded 720x1080 canvas, cold/missing portrait and missing route preserve legacy fallback; landscape renderer retained. Exact runtime mount extracted from current startup and tested in mocked DOM/canvas harness: 18 assertions passed for both orientations, animation, hidden pause, cleanup and unavailable-image fallback; no actual device/deployed verification. Source parses.",
+        "Live isolated Chromium browser playthrough 28 Nov: ticket/signature/traveller/motivation/gate, actual map sign walking and automatic boarding, all four consecutive routes Fortune→Sea Breeze→Lantern→Starlight→Fortune. First two rides 390×844, latter two 1440×900. Portrait painted canvas active on second ride with frames 4→111; landscape third 2→114 and fourth 3→116; canvas CSS aspect preserved with centered horizontal crop and full viewport coverage within 0.02px. Correct arrival names and coins 10→20→30→40→40, no duplicate return reward, final ride canvas count 0. No physical iPhone/WebKit, screenshot-level visual inspection, reduced-motion, cold decode/failure or latest deployed kinetics module version proof."
       ],
       "lease": null,
-      "blocker": "Native portrait and landscape source integration now present; verify actual rendered ride, viewport crop, cold route decode, pause and transition on phone and desktop before acceptance."
+      "blocker": "Four-route actual browser gameplay and both compositor orientations verified. Physical iPhone/WebKit, screenshot-level art/crop/alpha seam acceptance, cold/failure/reduced-motion tests and latest kinetics version confirmation remain open."
     },
     {
       "id": "HOME-LIVE-01",
@@ -1042,10 +1046,11 @@
       "stage": "tested",
       "evidence": [
         "ecae54c4 direct boarding with reduced-motion guard, camera push, full-bleed carriage, contextual offscreen sign, final return station at upper landing; exact source parsed, four station routes checked for walkability and order",
-        "e432af08 browser regression adjusted for direct boarding and full-bleed; 8eaa474d 31 room visit/direct boarding helper assertions executed"
+        "e432af08 browser regression adjusted for direct boarding and full-bleed; 8eaa474d 31 room visit/direct boarding helper assertions executed",
+        "Live isolated Chromium browser playthrough 28 Nov: ticket/signature/traveller/motivation/gate, actual map sign walking and automatic boarding, all four consecutive routes Fortune→Sea Breeze→Lantern→Starlight→Fortune. First two rides 390×844, latter two 1440×900. Portrait painted canvas active on second ride with frames 4→111; landscape third 2→114 and fourth 3→116; canvas CSS aspect preserved with centered horizontal crop and full viewport coverage within 0.02px. Correct arrival names and coins 10→20→30→40→40, no duplicate return reward, final ride canvas count 0. No physical iPhone/WebKit, screenshot-level visual inspection, reduced-motion, cold decode/failure or latest deployed kinetics module version proof."
       ],
       "lease": null,
-      "blocker": "Actual mobile/desktop rendered game, edge sign collision and carriage crop/zoom review and deployment pending; existing artwork lacks dedicated visible platform on some maps."
+      "blocker": "Four-route actual browser gameplay and both compositor orientations verified. Physical iPhone/WebKit, screenshot-level art/crop/alpha seam acceptance, cold/failure/reduced-motion tests and latest kinetics version confirmation remain open."
     },
     {
       "id": "MODULE-LIVE-01",
