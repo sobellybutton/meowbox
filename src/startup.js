@@ -7041,8 +7041,44 @@ function pawTarotRemainingCount(q){
 }
 /* PAW_TAROT_FAN_END */
 
+/* PAW_DAILY_TAROT_BEGIN */
+// A real choice is locked per Singapore shrine day, independently of the
+// optional reading journal. Return the exact chosen card, not a new draw.
+const pawDailyTarotKey='pawDailyTarotDrawV1';
+function pawDailyTarotRecord(record,date,length){
+ if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)||record?.day!==date||!Number.isInteger(length)||length<=0||!Number.isInteger(record.i)||record.i<0||record.i>=length||typeof record.rev!=='boolean')return null;
+ return {day:date,i:record.i,rev:record.rev}
+}
+function pawDailyTarotExisting(record,journal,date,length){
+ const saved=pawDailyTarotRecord(record,date,length);if(saved)return saved;
+ if(!Array.isArray(journal))return null;
+ for(const entry of journal){
+  if(entry?.date!==date||!Array.isArray(entry.cards)||entry.cards.length!==1)continue;
+  const old=pawDailyTarotRecord({day:date,i:entry.cards[0]?.i,rev:entry.cards[0]?.rev},date,length);if(old)return old
+ }
+ return null
+}
+function pawDailyTarotReplay(q,record,now){
+ if(!q||!record||!Number.isFinite(now))return false;
+ q.pawDailyDay=record.day;q.pawCardPool=null;q.pawChoiceFrame=null;q.pawSelectedCards=[];q.pawPickedAt={};q.pawPickFinishAt=null;q.pawFanActive=false;
+ q.readCards=[{i:record.i,rev:record.rev}];q.readFlip=[-1];q.readStage='cards';q.readAt=now;q.readFocus=-1;q.readSaved=false;return true
+}
+function pawDailyTarotLookup(date){return pawDailyTarotExisting(load(pawDailyTarotKey,null),load('readingJournalV1',[]),date,tarotDeck.length)}
+function pawDailyTarotResume(q,record,now){
+ if(!pawDailyTarotReplay(q,record,now))return false;
+ save(pawDailyTarotKey,record);
+ hint('Your card for today is still here. Turn it over when you are ready.','今天的那张牌还在。准备好了，就把它翻开。');
+ return true
+}
+/* PAW_DAILY_TAROT_END */
 function pawOpenCardChoice(washFirst=false){
  if(!['tarot','love'].includes(activity))return false;
+ if(activity==='tarot'){
+  const date=state.pawDailyDay||shrineClock().day;
+  state.pawDailyDay=date;
+  const prior=pawDailyTarotLookup(date);
+  if(prior)return pawDailyTarotResume(state,prior,t)
+ }
  state.pawCardPool=pawTarotPool(tarotDeck.length);state.pawChoiceFrame=null;state.pawSelectedCards=[];state.readCards=[];state.readFlip=[];state.readSaved=false;
  state.readStage='choose';state.readAt=t+(washFirst&&!residentReducedMotion.matches?1.45:0);state.pawFanActive=true;state.pawPickedAt={};state.pawPickFinishAt=null;state.readShuffle=Math.max(1,state.readShuffle||0);
  const n=activity==='tarot'?1:state.readSpreadSize===5?5:3;
@@ -7053,6 +7089,14 @@ function pawSelectTarotCard(index,frame=state.pawChoiceFrame){
  if(!['tarot','love'].includes(activity)||talkOpen||transitioning||document.hidden||!proposal.hidden||$('page').style.display==='block'||!pawTarotFrameMatches(state,frame,W<H)||!pawTarotFanSettled(state,t,residentReducedMotion.matches))return false;
  const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,chosen=pawTarotPick(state.pawCardPool,state.pawSelectedCards,index,count);
  if(!chosen)return false;
+ if(activity==='tarot'){
+  const date=state.pawDailyDay||shrineClock().day,prior=pawDailyTarotLookup(date);
+  // Another open tab may already have chosen today's card.
+  if(prior)return pawDailyTarotResume(state,prior,t);
+  const selected=state.pawCardPool[index],record=pawDailyTarotRecord({day:date,i:selected?.i,rev:selected?.rev},date,tarotDeck.length);
+  if(!record)return false;
+  state.pawDailyDay=date;save(pawDailyTarotKey,record)
+ }
  state.pawSelectedCards=chosen;state.pawPickedAt??={};state.pawPickedAt[index]=t;physicalFx('paper',.65);
  if(chosen.length===count)state.pawPickFinishAt=t;
  return true
@@ -7064,7 +7108,7 @@ function pawTarotFinishSelection(q,count,now,reduced=false){
 const pawSelectStartBefore=start;
 start=function(id,...args){
  const result=pawSelectStartBefore(id,...args);
- if(id==='tarot'&&activity==='tarot'){state.tarotTone='gentle';pawOpenCardChoice(true)}
+ if(id==='tarot'&&activity==='tarot'){state.tarotTone='gentle';state.pawDailyDay=shrineClock().day;pawOpenCardChoice(true)}
  return result
 };
 const pawSelectDealBefore=readingDeal;

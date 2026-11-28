@@ -1633,7 +1633,7 @@ function readingSave(){
  const entry=tarotShareSnapshot(state);
  if(!entry||entry.cards.length!==state.readFlip.length||!state.readFlip.every(v=>Number.isFinite(v)&&v>=0&&t-v>.6))return;
  state.readSaved=true;
- entry.date=shrineClock().day;
+ entry.date=activity==='tarot'&&typeof state.pawDailyDay==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(state.pawDailyDay)?state.pawDailyDay:shrineClock().day;
  const same=v=>v?.date===entry.date&&(v.topic??-1)===entry.topic&&JSON.stringify(v.cards)===JSON.stringify(entry.cards);
  const existing=readingJournal.find(same);
  if(journalAutoSave()&&(!existing||existing.tone!==entry.tone)){

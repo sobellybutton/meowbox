@@ -64,5 +64,40 @@ for(const count of [1,3,5]){
  ck(remaining({...q,readCards:q.readCards.map(c=>({...c}))})===0,'stale spread cannot render an unrelated resting deck');
  ck(!finish(q,count,11),'no repeated transition');
 }
+
+// Test exact runtime entry and selection with a mock local store.
+const daily=source.match(/\/\* PAW_DAILY_TAROT_BEGIN \*\/([\s\S]*?)\/\* PAW_DAILY_TAROT_END \*\//)[1];
+const choice=source.slice(source.indexOf('function pawOpenCardChoice('),source.indexOf('function pawTarotFinishSelection('));
+const pool=source.slice(source.indexOf('function pawTarotPool('),source.indexOf('/* PAW_OWNER_TAROT_CHOICE_END */'));
+const runtime=new Function(daily+pool+block+choice+`
+let date='2026-11-28',activity='tarot',state={},t=20,W=390,H=844,talkOpen=false,transitioning=false;
+const data={},tarotDeck=Array(78).fill(null),document={hidden:false},proposal={hidden:true},residentReducedMotion={matches:false},$=()=>({style:{display:'none'}}),physicalFx=()=>{},hint=()=>{},shrineClock=()=>({day:date}),load=(k,d)=>data[k]??d,save=(k,v)=>{data[k]=JSON.parse(JSON.stringify(v))};
+return {open:()=>pawOpenCardChoice(true),select(i){state.pawChoiceFrame={pool:state.pawCardPool,portrait:true};t=23;return pawSelectTarotCard(i)},state:()=>state,data,day(d){date=d},reset(k='tarot'){activity=k;state={};t=20},validate:pawDailyTarotRecord,existing:pawDailyTarotExisting}
+`)();
+ck(runtime.open()&&runtime.state().readStage==='choose','first daily visit keeps real fan');
+const selected=runtime.state().pawCardPool[4];
+ck(runtime.select(4),'first choice accepted');
+ck(runtime.data.pawDailyTarotDrawV1.i===selected.i&&runtime.data.pawDailyTarotDrawV1.rev===selected.rev,'exact first choice persisted');
+runtime.reset();
+ck(runtime.open()&&runtime.state().readStage==='cards'&&runtime.state().readFlip[0]===-1,'return directly to same face-down card');
+ck(runtime.state().readCards[0].i===selected.i&&runtime.state().readCards[0].rev===selected.rev,'return preserves identity and orientation');
+ck(!runtime.select(2),'cannot select again during same-day replay');
+ck(!runtime.data.readingJournalV1,'daily lock is not journal autosave');
+runtime.reset('love');
+ck(runtime.open()&&runtime.state().readStage==='choose','three-card reading remains free');
+ck(runtime.select(0)&&runtime.select(1)&&runtime.select(2),'three distinct choices remain available');
+ck(runtime.data.pawDailyTarotDrawV1.i===selected.i,'deeper reading cannot change daily card');
+runtime.day('2026-11-29');runtime.reset();
+ck(runtime.open()&&runtime.state().readStage==='choose','next day allows new choice');
+const next=runtime.state().pawCardPool[7];ck(runtime.select(7)&&runtime.data.pawDailyTarotDrawV1.day==='2026-11-29'&&runtime.data.pawDailyTarotDrawV1.i===next.i,'new day stores actual selection');
+runtime.reset();runtime.day('2026-11-30');runtime.data.readingJournalV1=[{date:'2026-11-30',cards:[{i:5,rev:true}]}];
+ck(runtime.open()&&runtime.state().readCards[0].i===5&&runtime.state().readCards[0].rev===true,'migrate existing daily journal entry');
+for(const rec of [null,{day:'2026-11-30',i:-1,rev:false},{day:'2026-11-30',i:78,rev:false},{day:'2026-11-30',i:1,rev:'false'},{day:'2026-11-29',i:1,rev:false}])ck(runtime.validate(rec,'2026-11-30',78)===null,'invalid or stale daily data rejected');
+ck(runtime.existing(null,[{date:'2026-11-30',cards:[{i:2,rev:false},{i:3,rev:false},{i:4,rev:false}]}],'2026-11-30',78)===null,'three-card archive cannot become daily result');
+runtime.day('2026-12-01');runtime.reset();ck(runtime.open(),'new visit starts fan');
+runtime.data.pawDailyTarotDrawV1={day:'2026-12-01',i:8,rev:true};
+ck(runtime.select(2)&&runtime.state().readStage==='cards'&&runtime.state().readCards[0].i===8,'respect other-tab existing daily choice');
+ck(ext.includes("entry.date=activity==='tarot'&&typeof state.pawDailyDay"),'journal retains the original draw day');
+
 new Function(source);
 console.log('PASS '+n+' tarot fan motion and input checks');
