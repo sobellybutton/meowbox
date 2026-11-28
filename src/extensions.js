@@ -6835,7 +6835,7 @@ function chooseSpeechPosition(w,h,width,height,speaker,player,blockers=[]){
  if(!speaker||![w,h,width,height,speaker.left,speaker.right,speaker.top,speaker.bottom].every(Number.isFinite)||Math.min(w,h,width,height)<=0||speaker.right<=speaker.left||speaker.bottom<=speaker.top||speaker.right<0||speaker.left>width||speaker.bottom<0||speaker.top>height)return null;
  const center=(speaker.left+speaker.right)/2,mid=(speaker.top+speaker.bottom)/2;
  const candidates=[{left:center-w/2,top:speaker.top-h-14},{left:speaker.right+12,top:speaker.top+5},{left:speaker.left-w-12,top:speaker.top+5},{left:center-w/2,top:speaker.bottom+12},
- {left:speaker.right+12,top:mid-h/2},{left:speaker.left-w-12,top:mid-h/2},{left:center-w/2,top:speaker.bottom+14},{left:center-w/2,top:speaker.top-h-14}];
+ {left:speaker.right+12,top:mid-h/2},{left:speaker.left-w-12,top:mid-h/2}];
  for(const v of candidates){const left=Math.max(8,Math.min(width-w-8,v.left)),top=v.top,rect={left,top,right:left+w,bottom:top+h};
  if(w>width-16||top<10||rect.bottom>height-74||[speaker,player,...blockers].some(b=>b&&speechOverlap(rect,b)))continue;
  const side=rect.bottom<=speaker.top?'bottom':rect.top>=speaker.bottom?'top':rect.left>=speaker.right?'left':'right';
@@ -7689,16 +7689,24 @@ function pawHintClearSpot(preferred,width,height,screen,blockers,active=false){
  }
  return best
 }
+function pawSamePrompt(hintText,visibleCopies){
+ const normalize=value=>String(value??'').normalize('NFKC').trim().replace(/\s+/g,' ').replace(/[.!?。！？…]+$/u,'').trim().toLowerCase();
+ const text=normalize(hintText);
+ return !!text&&visibleCopies.some(v=>normalize(v)===text)
+}
 let meowHintLayoutKey='';
 function meowHintSpacing(){
  const hintEl=$('hint'),root=$('game').getBoundingClientRect();
  const blockers=meowVisibleRects('#hud>*,#small button,#dock,#movePad,#moveGuide,#walkHelp,#gameControls,#ritualActionBar,#dialogue,#back,#nextStopShortcut,#pearlRecipePanel,#destinyAccess,#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet,#threeBoardAccess,#lunarRibbon');
- const key=[scene,room,activity,zh,hintEl.textContent,Math.round(root.width),Math.round(root.height),getComputedStyle(hintEl).display,...blockers.map(b=>[b.left,b.top,b.right,b.bottom].map(v=>Math.round(v/3)).join(':'))].join('|');
+ const copies=activity?[...document.querySelectorAll('#gameControls button,#ritualActionBar button,#ritualActionBar [role="status"],#pearlRecipePanel button')].filter(el=>!el.hidden&&el.getClientRects().length&&getComputedStyle(el).visibility==='visible'&&getComputedStyle(el).display!=='none'&&Number(getComputedStyle(el).opacity)>0).map(el=>el.textContent):[];
+ const duplicate=pawSamePrompt(hintEl.textContent,copies);
+ const key=[scene,room,activity,zh,duplicate,hintEl.textContent,Math.round(root.width),Math.round(root.height),getComputedStyle(hintEl).display,...blockers.map(b=>[b.left,b.top,b.right,b.bottom].map(v=>Math.round(v/3)).join(':'))].join('|');
  if(key!==meowHintLayoutKey){
   meowHintLayoutKey=key;
   hintEl.classList.remove('meowHintMoved','meowHintBlocked');
   const base=hintEl.getBoundingClientRect(),preferred={left:base.left-root.left,right:base.right-root.left,top:base.top-root.top,bottom:base.bottom-root.top};
-  if(base.width>0&&base.height>0){
+  if(duplicate)hintEl.classList.add('meowHintBlocked');
+  else if(base.width>0&&base.height>0){
    const spot=pawHintClearSpot(preferred,base.width,base.height,{w:root.width,h:root.height},blockers,!!activity);
    if(spot&&!spot.original){hintEl.style.setProperty('--meow-hint-x',spot.x+'px');hintEl.style.setProperty('--meow-hint-y',spot.y+'px');hintEl.classList.add('meowHintMoved')}
    else if(!spot)hintEl.classList.add('meowHintBlocked')
