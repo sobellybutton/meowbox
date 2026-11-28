@@ -586,7 +586,7 @@ function festivalFishPosition(i,age,seed=0){
  return {...pos,dir:-Math.sin(a)>=0?1:-1}
 }
 function festivalNewRound(now,seed=0){
- return {at:now,seed,x:400,y:458,paper:100,phase:'aim',caught:[],attempts:0,last:now,resultAt:0,feedback:['Hold in the water, follow a fish and release to lift.','按住水面，跟着小鱼移动，松手捞起。']}
+ return {at:now,seed,x:400,y:458,paper:100,phase:'aim',caught:[],attempts:0,last:now,resultAt:0,feedback:['Hold in the water, follow a fish and release to lift. The fish are not attending voluntarily.','按住水面跟着鱼游，松手捞起。小鱼表示没有报名参加。']}
 }
 function festivalFishOutcome(game,now){
  const elapsed=now-game.last;
@@ -601,7 +601,7 @@ function festivalFishOutcome(game,now){
 function festivalFinish(g){
  if(g.phase==='done')return;g.phase='done';g.resultAt=t;
  if(g.attempts)lifeEarn('round:goldfish',{skill:2,happiness:1},true);
- g.feedback=g.caught.length?['A little fish parade! All fish return safely to the tank.','小鱼巡游成功！小鱼们都安全回水池啦。']:['The fish have excellent evasive manoeuvres.','小鱼的闪避技能已经点满。'];
+ g.feedback=g.caught.length?['A successful fish parade! Everyone goes safely back to the tank. No overtime.','小鱼巡游成功！全部安全回水池，准时下班。']:['Zero catches. The fish have clearly mastered the art of avoiding responsibility.','一条都没捞到。小鱼们个个都是摸鱼高手。'];
  refreshControls()
 }
 function festivalAim(x,y){
@@ -610,24 +610,24 @@ function festivalAim(x,y){
 }
 function festivalDip(){
  const g=state.festivalFish;if(activity!=='goldfishScoop'||g?.phase!=='aim'||g.paper<=0)return;
- g.phase='dip';g.last=t;g.feedback=['Lift gently while a fish is inside the ring.','小鱼游进圈里，轻轻捞起来。'];physicalFx('water',.6);refreshControls()
+ g.phase='dip';g.last=t;g.feedback=['When a fish is in the ring, lift gently. No dramatic career moves.','等小鱼游进圈里，再轻轻捞起。别一激动就使蛮力。'];physicalFx('water',.6);refreshControls()
 }
 function festivalLift(){
  const g=state.festivalFish;if(activity!=='goldfishScoop'||g?.phase!=='dip')return;
  const elapsed=t-g.last,result=festivalFishOutcome(g,t);if(!result)return;
  g.attempts++;g.paper=Math.max(0,g.paper-result.wear);g.phase='lift';g.last=t;
- if(result.caught>=0){const i=result.caught,k=festivalFishKinds[i];g.caught.push(i);addItem('Goldfish postcard: '+k.name[0],'金鱼明信片：'+k.name[1]);g.feedback=['A gentle catch! '+k.name[0]+' is going back in the water.','轻轻捞到了'+k.name[1]+'！一会儿放回水里。'];physicalFx('water',.8)}
- else{g.feedback=result.tooQuick?['Let the paper settle before lifting.','先让纸网稳一稳，再捞起来。']:elapsed>2.0?['The paper soaked too long. Lift a little sooner.','纸网泡太久了，下次早点捞起来。']:['The fish dodged the ring. Aim where it is swimming.','小鱼躲开了，试着瞄准它游去的方向。'];physicalFx('splash',.4)}
+ if(result.caught>=0){const i=result.caught,k=festivalFishKinds[i];g.caught.push(i);addItem('Goldfish postcard: '+k.name[0],'金鱼明信片：'+k.name[1]);g.feedback=['Caught '+k.name[0]+'! A brief meeting, then straight back into the water.','捞到'+k.name[1]+'啦！短暂见个面，马上放回水里。'];physicalFx('water',.8)}
+ else{g.feedback=result.tooQuick?['Too quick! Let the paper settle before lifting. No need to rush the fish.','太快啦！先让纸网稳一稳再捞。鱼又不赶着打卡。']:elapsed>2.0?['The paper soaked too long. Lift sooner next time. Even paper has a breaking point.','纸网泡太久了，下次早点捞。纸网也有崩溃的时候。']:['The fish dodged you. Aim where it is heading, not where it used to be.','小鱼成功溜走。瞄它要游去的方向，别追着它屁股跑。'];physicalFx('splash',.4)}
  refreshControls()
 }
 const festivalStartBefore=start;
 start=function(id){
  festivalStartBefore(id);
- if(id==='goldfishScoop'){state.festivalFish=festivalNewRound(t,Math.random()*TAU);refreshControls();hint('Hold and drag in the water. Release to lift.','按住水面移动，松手捞鱼。')}
+ if(id==='goldfishScoop'){state.festivalFish=festivalNewRound(t,Math.random()*TAU);refreshControls();hint('Hold and drag in the water, then release to lift. Actual fishing on your break.','按住水面移动，松手捞鱼。今天是真正的摸鱼。')}
 };
 activityTitle.goldfishScoop=['Goldfish scooping','捞金鱼'];
 const festivalHintBefore=activityHint;
-activityHint=function(){if(activity==='goldfishScoop'){hint('Hold to dip. Drag gently. Release to lift.','按住下网，轻轻移动，松手捞起。');return}return festivalHintBefore()};
+activityHint=function(){if(activity==='goldfishScoop'){hint('Hold to dip, drag gently, release to lift. Slow hands, happy fish.','按住下网，轻轻移动，松手捞起。手慢一点，鱼也安心一点。');return}return festivalHintBefore()};
 const festivalActionBefore=action;
 action=function(id){if(room==='arcade'&&id==='goldfishScoop'){start(id);return}return festivalActionBefore(id)};
 const festivalPawBefore=townPawCategory;
@@ -7241,9 +7241,9 @@ festivalLift=function(...args){
   g.streak=(g.streak||0)+1;g.bestStreak=Math.max(g.bestStreak||0,g.streak);
   const rare=g.caught.at(-1)===4,points=10+(quality.ideal?10:0)+(rare?15:0)+Math.min(3,g.streak-1)*5;
   g.score=(g.score||0)+points;g.perfect=(g.perfect||0)+(quality.ideal?1:0);
-  g.feedback=[(quality.ideal?'Perfect scoop! ':'Nice catch! ')+'+'+points+' points. '+(g.streak>1?g.streak+' in a row. ':'')+'Back to the water!',(quality.ideal?'完美捞鱼！':'捞到了！')+' +'+points+' 分。'+(g.streak>1?'连续 '+g.streak+' 次！':'')+'小鱼回水啦！'];
+  g.feedback=[(quality.ideal?'Perfect scoop! ':'Nice catch! ')+'+'+points+' points. '+(g.streak>1?g.streak+' in a row. ':'')+(rare?'Golden guest! Back to the tank.':'Fish clocked out. Back to the tank.'),(quality.ideal?'完美捞鱼！':'捞到了！')+' +'+points+' 分。'+(g.streak>1?'连续 '+g.streak+' 次！':'')+(rare?'金元宝来啦！送它回水池。':'小鱼打卡下班，回水池啦！')];
  }else{
-  g.streak=0;if(!quality.steady)g.feedback=['Too much swishing! A steady scoop protects the paper.','纸网晃得太厉害啦！稳稳地捞，才不容易破。']
+  g.streak=0;if(!quality.steady)g.feedback=['Too much swishing! This is a paper net, not a washing machine. Move gently.','晃太厉害啦！这是纸网，不是洗衣机。轻轻捞。']
  }
  refreshControls();return result
 };
@@ -10574,7 +10574,7 @@ const pawOriginalFortunePaper=templePaperOpen;
 templePaperOpen=function(n){
  if(room==='temple'&&activity==='sticks'&&state.stickDelivered&&pawFortuneSlipNumber(n)){
   state.pawFortuneNumber=n;
-  hint('Take your numbered stick to the moon blocks for confirmation.','已拾到签号，请前往筊杯处掷筊确认。');
+  hint('Number collected. Take the stick to the moon blocks for confirmation, one step at a time.','签号拿到了。去掷筊确认，一步一步来，不急。');
   mb5AssistSync(true);return
  }
  return false
@@ -10601,7 +10601,7 @@ function pawFortuneRestoreWalk(q){
  if(pawFortuneWalk!==q||state!==q.hallState||room!=='temple'||activity)return;
  pawFortuneWalk=null;
  activity=q.from;state=q.run;updateHUD();mb5AssistSync(true);
- if(q.from==='moon')hint("This draw wasn't confirmed. Go back to the stick holder and draw a fresh stick. There is no slip to collect yet.","这次没有掷到圣杯。请回签筒重新摇签，这一支暂时不能领取签文。");
+ if(q.from==='moon')hint("No Sheng Bei this time. Return to the holder and draw a new stick; there is no slip yet. Take your time.","这次没有圣杯，暂时不能领签。回签筒重新摇签吧，不着急。");
  else hint("Keep your numbered stick. Take it to the moon blocks to confirm the draw.","先留好手中的签，再去掷筊确认。")
 }
 function pawFortuneWalkTick(){
