@@ -1,0 +1,41 @@
+name: Pawradise entrance recovery acceptance
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/entry-recovery-test.cjs'
+      - '.github/workflows/paw-entry-recovery.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  entrance:
+    concurrency:
+      group: paw-entry-recovery-${{ github.sha }}-${{ matrix.browser }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: First arrival, retry, first walk and saved return
+        env:
+          PAW_BROWSER: ${{ matrix.browser }}
+        run: |
+          python3 -m http.server 8775 >/tmp/paw-entry-recovery.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8775/ -o /dev/null && break; sleep 1; done
+          node scripts/entry-recovery-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: entry-recovery-${{ matrix.browser }}-${{ github.sha }}
+          path: test-results/entry-recovery/
