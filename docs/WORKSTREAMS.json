@@ -258,11 +258,12 @@
       "remediation": [
         {
           "id": "ART-02-seat-low",
-          "action": "Reconcile PRs #53/#54/#60 and render all four reused low seated poses on actual floor cushions and garden bench; correct hip/leg occlusion and stand/sit timing.",
+          "action": "Reconcile #76 seated interruption fix with candidate and render all four reused low seated poses on cushions/futon and garden bench. Test normal sit/rise, background/foreground, orientation changes and image load. Correct hip/leg occlusion and stand/sit timing from rendered evidence.",
           "depends": [],
           "lane": "interactive integration",
           "acceptance": "All four identities maintain believable scale and hip contact, visible legs, ordinary sit/rise input; screenshots and motion evidence.",
-          "state": "implementation_staged"
+          "state": "implementation_staged",
+          "evidence": " PR #76 afc2d393: preserve seat ownership across hidden/temporarily zero viewport and realign after measurable geometry; 640 isolated decisions passed, source and persisted regression parse. No final visual acceptance."
         },
         {
           "id": "ART-02-seat-raised",
@@ -951,12 +952,12 @@
       "remediation": [
         {
           "id": "QA-01-candidate",
-          "action": "Reconcile PR #73 (canonical build plaque helper correction) onto latest release candidate if not already included; run full checkout/build, isolated candidate and broader smoke suite. PR #72 corrected inaccessible collections and integrated #68/#70; preserve these changes, verify actual primary collection and secondary belongings navigation, then address any remaining organic browser failure. Do not deploy until required release gates pass.",
+          "action": "Verify exact corrected candidate #74 (0ecd406d), including required full browser and isolated candidate jobs, and inspect screenshots. Reconcile compatible #75 Tarot choreography and #76 seated interruption corrections only in a new coherent candidate after reviewing active run status; fix any demonstrated failures and do not deploy until required gates pass.",
           "depends": [],
           "lane": "interactive release coordinator / QA",
           "acceptance": "Successful exact-revision build and applicable normal-input CI, screenshots inspected; no skipped or cancelled failures.",
           "state": "partial_implementation_staged",
-          "evidence": "Candidate #66 4e6a270c: all four isolated jobs passed (46127381866); eight of nine broad smoke jobs passed, browser failed on inaccessible My collections at all three viewports (46127381857). Concurrent #72 corrected collections flow and combined greetings and signage. All four isolated #72 jobs failed at canonical quality-check helper extraction (46128402634). #73 0ecd406d restores actual helper and all 21 exact-source quality groups passed, including 228 sign checks. Full build and browser rerun pending."
+          "evidence": "Candidate #66 4e6a270c: all four isolated jobs passed (46127381866); eight of nine broad smoke jobs passed, browser failed on inaccessible My collections at all three viewports (46127381857). Concurrent #72 corrected collections flow and combined greetings and signage. All four isolated #72 jobs failed at canonical quality-check helper extraction (46128402634). #73 0ecd406d restores actual helper and all 21 exact-source quality groups passed, including 228 sign checks. Full build and browser rerun pending. #73 actual build completed successfully on all four isolated jobs (46128525342), focused job passed; #74 created from exact same head to activate previously skipped broad smoke. Other device/district results pending at time of creation."
         },
         {
           "id": "QA-01-deploy",
