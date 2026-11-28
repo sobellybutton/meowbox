@@ -14775,7 +14775,7 @@ const pawLiveTeaPitcherBefore=teaPitcher;
 teaPitcher=function(x,y,base,tilt=0){
  // The base-selection jars represent distinct ingredients; leave their
  // colour-specific artwork unchanged. Only replace the actual tea vessel.
- if(activity==='bubbleTea'&&state.teaStage==='pourReady'&&pawPaintFoodProp('boba_tea_pot',x,y,70))return;
+ if(activity==='bubbleTea'&&state.teaStage==='pourReady'&&state.pawTeaPourPainted&&pawPaintFoodProp('boba_tea_pot',x,y,70))return;
  return pawLiveTeaPitcherBefore(x,y,base,tilt)
 };
 /* PAW_BOBA_LID_BEGIN */
