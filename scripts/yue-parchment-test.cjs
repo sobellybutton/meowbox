@@ -96,3 +96,19 @@ assert.equal(api.parchmentClock(foldedClock,20,blocked(false,false,false,false),
 assert.ok(source.includes("desk&&!folded,result"));
 assert.ok(source.includes("!folded&&phase==='result'&&ink"));
 console.log('PASS '+(blockedCount+20)+' fold pause checks plus 2 wiring assertions');
+
+const shareBlock=source.match(/\/\* PAW_YUE_SHARE_RETURN_BEGIN \*\/([\s\S]*?)\/\* PAW_YUE_SHARE_RETURN_END \*\//)[1];
+const shareChecks=new Function(shareBlock+`
+let n=0;const p={},c={},v={},o={scene:'fortune',profile:p,chart:c,visit:v};
+for(let mask=0;mask<128;mask++){
+ const x={scene:mask&1?'other':'fortune',room:mask&2?'tea':'destiny',activity:mask&4?'x':null,subject:mask&8?'other':'self',profile:mask&16?{}:p,chart:mask&32?{}:c,visit:mask&64?{}:v,page:'meowShare'};
+ if(pawYueShareReturnMatches(o,x)!==(mask===0))throw Error('return guard');n++
+}
+if(pawYueShareReturnMatches(o,{...o,room:'destiny',subject:'self',page:'other'}))throw Error('page guard');n++;
+for(const scroll of [-1,0,20,120,NaN])for(const height of [0,100,300])for(const client of [50,200]){
+ const expected=Number.isFinite(scroll)?Math.max(0,Math.min(scroll,Math.max(0,height-client))):0;
+ if(pawYueShareScroll(scroll,height,client)!==expected)throw Error('scroll guard');n++
+}
+return n`)();
+assert.equal(shareChecks,159);
+console.log('PASS '+shareChecks+' chart share-return ownership and scroll cases');
