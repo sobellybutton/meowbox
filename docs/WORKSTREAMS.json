@@ -688,9 +688,7 @@
       "priority": 3,
       "summary": "Independent English and Chinese creative editorial review, bilingual terminology, satire, clarity and rendered typography",
       "resources": [
-        "src/startup.js",
-        "src/extensions.js",
-        "src/shell.html"
+        "src/extensions.js"
       ],
       "depends": [],
       "stage": "outstanding",
@@ -705,8 +703,11 @@
         "1b97e8ff + dc28504a: Ah Ma selected-worry punchline remains readable through each three-strike round; distinct post-round line, replay rotation, playful setup; 3f567c04 adds 34-topic bilingual and actual round-handler regression. Complete Ah Ma helper suite passed in connector harness; no browser/visual acceptance.",
         "abaae10d + a453e1f5 + 29d72350: edited 65 bilingual pairs and added recipe-specific tasting completion in effective extensions/startup action paths: boba recipe stages and order result, soup serving/tasting, tofu/greens, garden feeding/seating/chime/cats, water/bell, wishing lantern, private river reactions without Ah Ma, claw/board game/rhythm/blind box/bubble arcade, deer, tarot reveal, railway captions and story replay. Existing action rules, scoring, persistence and reward paths unchanged. 153059f5 adds exact-source helper regression; passed in connector harness, both full JS sources parse. Complete rendered activity coverage, other remaining interaction paths, mobile/desktop readability and deployment not verified."
       ],
-      "lease": null,
-      "blocker": "Complete editorial sweep of actual interaction paths and rendered device review remain outstanding. Keep humour action-specific, independently localized, readable and appropriate to character, mood and outcome; do not replace necessary instructions or alter scoring, privacy or ritual rules. Next verify all active overrides, remaining furniture/decorating, discovery and consultation actions, and actual device playback."
+      "lease": {
+        "owner": "manual-humour-continuation",
+        "until": 1795847131890
+      },
+      "blocker": "Scoped editorial lease: extensions.js only while railway runner owns startup.js. Restore canonical LOC-01 resources at release; no stage promotion."
     },
     {
       "id": "UX-01",
