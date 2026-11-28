@@ -14060,6 +14060,7 @@ function pawLiveTarotStep(count,index,delta){
  return Math.max(0,Math.min(count,index+delta))
 }
 /* PAW_LIVE_TAROT_READING_END */
+const pawLiveTarotSessions=new WeakMap();
 const pawJournalReadingBefore=openTarotReading;
 openTarotReading=function(entry,back){
  const route=pawTarotReadingRoute(entry,state,activity,room,tarotDeck.length,t,typeof back==='function');
@@ -14067,11 +14068,23 @@ openTarotReading=function(entry,back){
  if(route==='wait'){hint('Let your cards finish turning before reading.','等牌完全翻开，再慢慢解读。');return}
  if(route!=='live')return;
  const live=pawLiveTarotSnapshot(entry,state,activity,room,tarotDeck.length);
- const run=state,kind=activity,count=live.cards.length;
- const valid=()=>run===state&&room==='tarot'&&activity===kind&&pawTarotReadingRoute(live,run,kind,room,tarotDeck.length,t,false)==='live';
- const returnTable=()=>{if(!valid())return;closeTalk();$('page').style.display='none';if(run.readStage==='focus')readingReturnSpread();else hint(...pawReadingNextHint(run,t,journalAutoSave()))};
+ const run=state,kind=activity,count=live.cards.length,session={revision:0};
+ pawLiveTarotSessions.set(run,session);
+ const valid=()=>pawLiveTarotSessions.get(run)===session&&run===state&&room==='tarot'&&activity===kind&&pawTarotReadingRoute(live,run,kind,room,tarotDeck.length,t,false)==='live';
+ const end=()=>{pawLiveTarotSessions.delete(run);closeTalk();$('page').style.display='none'};
+ const returnTable=()=>{if(!valid())return;end();if(run.readStage==='focus')readingReturnSpread();else hint(...pawReadingNextHint(run,t,journalAutoSave()))};
+ const finish=()=>{
+  if(!valid())return;
+  end();
+  if(!run.readSaved){if(count===5)fiveReadingSave();else readingSave()}
+  // Use the established activity-back path, preserving the indoor station
+  // and allowing the next actual doorway walk or consultation.
+  if(room==='tarot'&&activity===kind&&state===run)$('back').click()
+ };
  function explain(index){
   if(!valid())return;
+  const revision=++session.revision;
+  const guard=fn=>()=>{if(valid()&&session.revision===revision&&talkOpen)fn()};
   $('page').style.display='none';closeTalk();
   const choices=[];let words='';
   if(index<count){
@@ -14082,13 +14095,19 @@ openTarotReading=function(entry,back){
    if(reflection)words+='\n\n'+reflection;
    const aside=tarotCommentary(d[0],c.rev,live.topic,live.tone);
    if(aside)words+='\n\n'+tr(...aside);
-   choices.push([index+1<count?tr('Next card','下一张牌'):count===1?tr('A moment to reflect','静心想一想'):tr('What does it mean together?','整体意味着什么？'),()=>explain(pawLiveTarotStep(count,index,1))]);
+   choices.push([index+1<count?tr('Next card','下一张牌'):count===1?tr('A moment to reflect','静心想一想'):tr('What does it mean together?','整体意味着什么？'),guard(()=>explain(pawLiveTarotStep(count,index,1)))]);
   }else{
    words=count===5?tr('Compare what helps with the challenge card. Choose one small action from the next-step card, and keep the last card as a reminder.','对照助力牌和挑战牌。从行动牌里选一件小事，再把最后一张牌当作提醒。'):count===3?readingConnection(live):tr('Take what resonates with you. A card is a moment for reflection, not a prediction or an instruction.','把有共鸣的部分留在心里。牌意是自我反思，不是预言，也不是指令。');
-   choices.push([tr('Make a keepsake','制作纪念牌卡'),()=>{if(!valid())return;closeTalk();shareReadingResult(live,()=>{if(valid())explain(index)})}]);
+   choices.push([tr('Make a keepsake','制作纪念牌卡'),guard(()=>{
+    const exportRevision=++session.revision;
+    closeTalk();shareReadingResult(live,()=>{if(valid()&&session.revision===exportRevision)explain(index)})
+   })]);
   }
-  if(index>0)choices.push([tr('Previous card','上一张牌'),()=>explain(pawLiveTarotStep(count,index,-1))]);
-  choices.push([index===count?tr('Finish reading · return to table','结束解读，回到牌桌'):tr('Back to the table','回到牌桌'),returnTable]);
+  if(index>0)choices.push([tr('Previous card','上一张牌'),guard(()=>explain(pawLiveTarotStep(count,index,-1)))]);
+  if(index===count){
+   choices.push([tr('Review the spread','再看看牌阵'),guard(returnTable)]);
+   choices.push([tr('Finish reading · return to table','结束解读，回到牌桌'),guard(finish)])
+  }else choices.push([tr('Back to the table','回到牌桌'),guard(returnTable)]);
   say(tr('Fortune Teller','占卜师'),words,choices)
  }
  explain(0)
