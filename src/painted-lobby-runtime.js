@@ -106,6 +106,20 @@ function pawKeepsakeCaption(data,format,cn,url){
  if((format==='feed'||format==='square')&&typeof url==='string'&&url.startsWith('https://'))rows.push(url);
  return rows.join('\n')
 }
+// Remember the public result surface, including optional unfolded notes.
+// Restore only in the same visit, and only after the result has been rebuilt.
+function pawKeepsakeResultSurface(node){
+ if(!node||typeof node.querySelectorAll!=='function')return null;
+ return {scroll:Number.isFinite(node.scrollTop)?Math.max(0,node.scrollTop):0,open:Array.from(node.querySelectorAll('details'),d=>!!d.open)};
+}
+function pawRestoreKeepsakeSurface(node,snapshot){
+ if(!node||!snapshot||typeof node.querySelectorAll!=='function')return false;
+ const details=Array.from(node.querySelectorAll('details'));
+ if(details.length!==snapshot.open.length)return false;
+ details.forEach((d,i)=>{d.open=snapshot.open[i]});
+ node.scrollTop=Math.max(0,Math.min(snapshot.scroll,Math.max(0,node.scrollHeight-node.clientHeight)));
+ return true
+}
 function pawKeepsakeRoomRoute(v,resultKind,hasBack){
  if(!v||v.page)return null;
  if(v.room==='tarot'&&['tarot','love'].includes(v.activity)&&resultKind==='tarot'&&hasBack)return {id:'tarot',speaker:['Fortune Teller','占卜师'],back:['Back to reading','返回解读']};
@@ -300,8 +314,21 @@ function pawInstallNativeConsultation(){
   const data=sharePublicData(raw);
   if(!data||data.kind!==raw.kind||route.id==='tarot'&&!data.cards?.length)return;
   let format=zh?'xhs':'feed',cn=zh,ready=null,version=0;
+  const resultSurface=route.id==='cafe'?cafeQuestionSheet:route.id==='story'?storySheet:null;
+  const surfaceSnapshot=pawKeepsakeResultSurface(resultSurface);
+  const opener=typeof document!=='undefined'?document.activeElement:null;
   const current=()=>pawKeepsakeVisitOwns(origin,visit())&&talkOpen&&panel.isConnected&&panel.closest('#dialogue')&&$('dialogue').hasAttribute('data-paw-keepsake');
-  const returnTo=()=>{if(!current())return;closeTalk();if(back)back();else if(route.id==='cafe')syncCafeQuestionSheet();else if(route.id==='story')syncStorySheet()};
+  const returnTo=()=>{
+   if(!current())return;
+   closeTalk();
+   if(back)back();else if(route.id==='cafe')syncCafeQuestionSheet();else if(route.id==='story')syncStorySheet();
+   if(!pawKeepsakeVisitOwns(origin,visit()))return;
+   if(resultSurface){
+    pawRestoreKeepsakeSurface(resultSurface,surfaceSnapshot);
+    resultSurface.querySelector('[data-cafe-result="share"],[data-story-ending="share"]')?.focus({preventScroll:true});
+   }else if(opener?.isConnected)opener.focus?.({preventScroll:true});
+   else if(typeof document!=='undefined')Array.from($('choices').querySelectorAll('button')).find(btn=>btn.textContent===tr('Make a keepsake','制作纪念卡'))?.focus({preventScroll:true})
+  };
   say(tr(...route.speaker),tr('Choose a keepsake format. Only the result in the preview is shared.','选一个纪念卡尺寸。分享时只会包含预览中的结果。'),[[tr(...route.back),returnTo]]);
   $('dialogue').setAttribute('data-paw-keepsake','');
   const panel=element('section','',$('choices'),'pawTarotKeepsake'),preview=element('canvas','',panel,'meowSharePreview');
@@ -378,6 +405,8 @@ function pawInstallNativeConsultation(){
  #game #dialogue[data-paw-keepsake] .meowShareTabs,#game #dialogue[data-paw-keepsake] .pawKeepsakeActions{display:flex;gap:4px;flex-wrap:wrap}
  #game #dialogue[data-paw-keepsake] .meowShareTabs button,#game #dialogue[data-paw-keepsake] .pawKeepsakeActions button{flex:1 1 110px;min-width:0;white-space:normal;overflow-wrap:anywhere;text-align:center!important}
  @media(min-width:900px) and (min-aspect-ratio:5/4){#game #dialogue[data-paw-keepsake]{left:auto!important;right:max(16px,env(safe-area-inset-right,0px))!important;transform:none!important;width:min(39vw,460px)!important;bottom:max(16px,env(safe-area-inset-bottom,0px))!important}#game #dialogue[data-paw-keepsake] .meowSharePreview{max-height:44dvh}}
+ #game #dialogue[data-paw-keepsake] .meowShareTabs button:focus-visible,#game #dialogue[data-paw-keepsake] .pawKeepsakeActions button:focus-visible,#game #dialogue[data-paw-keepsake] .pawKeepsakeCaption:focus-visible{outline:2px solid #39594d!important;outline-offset:2px}
+ #game #dialogue[data-paw-keepsake] .meowShareTabs button,#game #dialogue[data-paw-keepsake] .pawKeepsakeActions button{min-height:44px}
  #game #dialogue[data-paw-keepsake] .pawKeepsakeCaption{width:100%;min-height:92px;box-sizing:border-box;resize:vertical;font:14px/1.4 Georgia,"Songti SC",serif;color:#463b35;background:#f6eddd;border:1px solid #b6a17e;padding:8px}\n #game #dialogue[data-paw-keepsake] .pawKeepsakeCaption[hidden]{display:none!important}\n #game #dialogue[data-paw-keepsake] .meowShareTabs button[aria-pressed=true]{background:#536955!important;color:#fff2d8!important}
  @media(orientation:landscape) and (max-height:550px){#game #dialogue[data-paw-keepsake] .meowSharePreview{max-height:26dvh}}
  `;document.head.append(css)
