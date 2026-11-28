@@ -82,3 +82,127 @@ console.log('Painted room plaque clearance regression passed');
  }
  console.log('Landing-local doorway placement passed');
 }
+
+/* Stable architectural anchor after a passing character or transient HUD
+   obstruction. Existing safe offset stays until the authored point is clear. */
+{
+ const ext=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+ const a=ext.indexOf('function pawArchitecturalPlaqueHome('),b=ext.indexOf('let lastDoorLayoutAt=',a);
+ assert.ok(a>=0&&b>a);
+ const home=new Function(ext.slice(a,b)+';return pawArchitecturalPlaqueHome')();
+ const exact={x:100,y:100,rect:{}};
+ let n=0;const ck=v=>{assert.ok(v);n++};
+ for(let t=0;t<1000;t+=10){
+  const q={hidden:false,_signOffset:{x:14,y:0}};
+  ck(home(q,exact,t)===null);ck(home(q,exact,t+349)===null);
+  ck(home(q,exact,t+350)===exact);ck(q._anchorClearAt===null);
+  ck(home(q,null,t+351)===null);ck(home(q,exact,t+400)===null);
+  ck(home(q,null,t+600)===null);ck(home(q,exact,t+700)===null);
+  ck(home(q,exact,t+1050)===exact);
+ }
+ ck(home({_signOffset:{x:0,y:0}},exact,0)===exact);
+ ck(home({hidden:true,_signOffset:{x:20,y:0}},exact,0)===exact);
+ assert.ok(ext.includes('let choice=pawArchitecturalPlaqueHome(btn,exact,now);'));
+ console.log('PASS '+n+' architectural anchor recovery assertions');
+}
+
+/* Individually reviewed painted facades and interior objects. Sign anchors
+   remain independent of the approach point and original interaction area. */
+{
+ const source=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
+ const read=n=>{const a=source.indexOf('const '+n+'='),b=source.indexOf('\n};',a);assert.ok(a>=0&&b>a);return new Function(source.slice(a,b+3)+';return '+n)()};
+ const districts={fortune:read('pawFortunePainting'),...read('pawNewDistricts')};
+ const anchors={fortune:{wishes:[827,530]},wonder:{quiz:[740,400],story:[232,725]},island:{mystery:[255,405],arcade:[829,390]},home:{fish:[202,895],tea:[798,665]}};
+ for(const [room,stations] of Object.entries(anchors))for(const [id,point] of Object.entries(stations)){
+  const q=districts[room].doors[id],[x,y]=q.plaque,[l,t,w,h]=q.hit;
+  assert.deepEqual(q.plaque,point);
+  assert.ok(x>=l&&x<=l+w&&y>=t&&y<=t+h);
+ }
+ const api=require('../assets/visual/painted/interior-layouts.js');
+ const labels={tea:{chat:[.34,.46],board:[.50,.33]},quiz:{quiz:[.72,.48]},arcade:{bubbleArcade:[.80,.35],goldfishScoop:[.81,.46],blindBox:[.51,.30]}};
+ for(const [room,stations] of Object.entries(labels))for(const [id,point] of Object.entries(stations)){
+  const q=api.rooms[room].stations[id];
+  assert.deepEqual(q.label,point);
+  assert.ok(api.route(room,api.rooms[room].entry,q.approach)?.length);
+  for(const [w,h] of [[320,568],[390,844],[430,932],[768,1024],[1440,900]])assert.ok(api.project(q.label,api.camera(w,h)).every(Number.isFinite));
+ }
+ console.log('Reviewed facade and indoor station anchor regression passed');
+}
+
+/* Interior plaques have a single room-appropriate surface with readable
+   ink, independent of the collision-free touch area. */
+{
+ const source=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
+ const a=source.indexOf('function pawIndoorPlaquePalette('),b=source.indexOf('function pawHallActorScale(',a);
+ assert.ok(a>=0&&b>a);
+ const calls=[];
+ const api=new Function('round','activityFitText',source.slice(a,b)+';return {pawIndoorPlaquePalette,pawDrawIndoorPlaque}')((...v)=>calls.push(v),(...v)=>calls.push(v));
+ const luminance=h=>{const v=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255).map(x=>x<=.04045?x/12.92:((x+.055)/1.055)**2.4);return .2126*v[0]+.7152*v[1]+.0722*v[2]};
+ for(const id of ['tarot','destiny','quiz','story','match','boba','kitchen','arcade','tea','fish','park','wishes','temple']){
+  const [fill,edge,ink]=api.pawIndoorPlaquePalette(id);
+  assert.ok((luminance(ink)+.05)/(luminance(fill)+.05)>=4.5);
+  for(const sc of [.3,.6,1,1.5]){
+   calls.length=0;api.pawDrawIndoorPlaque(id,{x:50,y:70},80,30,15,'Test',sc);
+   assert.equal(calls.length,2);assert.ok(calls[0][0]===10&&calls[0][1]===55);assert.ok(calls[0][5]===fill&&calls[1][5]===ink);
+  }
+ }
+ assert.ok(source.includes('labelX:230,labelY:300'));
+ assert.ok(source.includes('labelX:400,labelY:374'));
+ assert.equal((source.match(/pawDrawIndoorPlaque\(room,place/g)||[]).length,5);
+ console.log('Room-specific indoor plaque palette and food station registration checks passed');
+}
+
+/* A crowded activity must not hide its only instruction when clear space
+   remains above the controls. The original position stays if safe. */
+{
+ const ext=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+ const a=ext.indexOf('function meowPlaceText('),b=ext.indexOf('let meowTextFrameRects=',a),c=ext.indexOf('function pawHintClearSpot('),d=ext.indexOf('let meowHintLayoutKey=',c);
+ assert.ok(a>=0&&b>a&&c>=0&&d>c);
+ const api=new Function('const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));const speechOverlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;'+ext.slice(a,b)+ext.slice(c,d)+';return pawHintClearSpot')();
+ const overlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+ for(const [w,h] of [[320,568],[360,640],[390,844],[430,932],[768,1024],[1440,900],[800,390]]){
+  const width=Math.min(w-40,250),height=40,p={left:(w-width)/2,right:(w+width)/2,top:h-100,bottom:h-60};
+  assert.ok(api(p,width,height,{w,h},[],true)?.original);
+  const blockers=[{left:0,right:w,top:0,bottom:h*.17},{left:0,right:w,top:h*.51,bottom:h}];
+  assert.equal(api(p,width,height,{w,h},blockers,false),null);
+  const q=api(p,width,height,{w,h},blockers,true);
+  assert.ok(q&&blockers.every(b=>!overlap(q.rect,b)));
+  assert.ok(q.rect.left>=6&&q.rect.right<=w-6&&q.rect.top>=6&&q.rect.bottom<=h-6);
+  assert.equal(api(p,width,height,{w,h},[{left:0,right:w,top:0,bottom:h}],true),null);
+ }
+ console.log('Active game prompt clearance checks passed');
+}
+
+/* Dialogue can use a clear side position rather than falling back to the
+   large paper sheet; completed Tarot never asks for another card flip.
+   Remove only genuinely duplicate visible guidance. */
+{
+ const ext=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+ const source=fs.readFileSync(path.join(__dirname,'../src/startup.js'),'utf8');
+ const a=ext.indexOf('function chooseSpeechPosition('),b=ext.indexOf('\nfunction ',a+10);
+ const c=ext.indexOf('function pawReadingNextHint('),d=ext.indexOf('\nfunction readingReturnSpread(',c);
+ const e=ext.indexOf('function pawSamePrompt('),f=ext.indexOf('let meowHintLayoutKey=',e);
+ assert.ok(a>=0&&b>a&&c>=0&&d>c&&e>=0&&f>e);
+ const api=new Function('const speechOverlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;'+ext.slice(a,b)+ext.slice(c,d)+ext.slice(e,f)+';return {chooseSpeechPosition,pawReadingNextHint,pawSamePrompt}')();
+ for(const [w,h] of [[320,568],[390,844],[768,1024],[1440,900]]){
+  const speaker={left:w*.48-20,right:w*.48+20,top:h*.4,bottom:h*.4+75};
+  assert.equal(api.chooseSpeechPosition(100,64,w,h,speaker,null,[])?.side,'bottom');
+  assert.equal(api.chooseSpeechPosition(100,64,w,h,{...speaker,top:NaN},null,[]),null);
+  assert.equal(api.chooseSpeechPosition(100,64,w,h,{left:-100,right:-50,top:100,bottom:200},null,[]),null);
+  assert.equal(api.chooseSpeechPosition(100,64,w,h,speaker,null,[{left:0,right:w,top:0,bottom:h}]),null);
+ }
+ const sp={left:180,right:220,top:280,bottom:355},blocks=[{left:150,right:250,top:198,bottom:260},{left:150,right:250,top:367,bottom:460},{left:0,right:168,top:250,bottom:400},{left:232,right:332,top:350,bottom:365}];
+ assert.equal(api.chooseSpeechPosition(100,64,400,600,sp,null,blocks)?.side,'left');
+ for(const count of [1,3,5]){
+  const run={readCards:Array(count).fill({i:1}),readFlip:Array(count).fill(2),readSaved:true};
+  assert.ok(api.pawReadingNextHint(run,3,true)[0].startsWith('Saved'));
+  assert.ok(api.pawReadingNextHint(run,3,false)[0].includes('keepsake'));
+  assert.ok(api.pawReadingNextHint({...run,readSaved:false},3,true)[0].includes('ready'));
+  assert.ok(api.pawReadingNextHint(run,2.2,true)[0].includes('remaining'));
+  assert.ok(api.pawReadingNextHint({...run,readFlip:[]},3,true)[0].includes('remaining'));
+ }
+ for(const [text,copies,expected] of [['Bow.',['Bow'],true],['净手完成。',['净手完成'],true],[' Light   incense… ',['Light incense'],true],['Bow three times',['Bow'],false],['Return to the altar',['Bow'],false],['',[''],false],['Save is off',['Save'],false],['Make tea',[],false],['取香',['取香 (1/3)'],false]])assert.equal(api.pawSamePrompt(text,copies),expected);
+ assert.ok(source.includes('Finish reading · return to table'));
+ assert.ok(source.includes('else hint(...pawReadingNextHint(run,t,journalAutoSave()))'));
+ console.log('Dialogue side clearance, duplicate instruction and Tarot completion checks passed');
+}
