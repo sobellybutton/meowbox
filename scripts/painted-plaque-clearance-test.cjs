@@ -48,3 +48,20 @@ console.log('Painted room plaque clearance regression passed');
  assert.equal(buttons.get('tarot').style.pointerEvents,'none');
  console.log('All doorway plaques preserve authoritative layout and input guards');
 }
+
+// Close-by doorway plaques may move a little farther within the same scene
+// when the primary placement is blocked. Never overlap the HUD or actors.
+{
+ const ext=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+ const a=ext.indexOf('function meowPlaceText('),b=ext.indexOf('let meowTextFrameRects=',a);
+ const c=ext.indexOf('function pawNearbyDoorPlaque('),d=ext.indexOf('let lastDoorLayoutAt=',c);
+ assert.ok(a>=0&&b>a&&c>=0&&d>c);
+ const api=new Function('const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));'+ext.slice(a,b)+ext.slice(c,d)+';return {meowPlaceText,pawNearbyDoorPlaque}')();
+ const bounds={left:6,right:354,top:112,bottom:510},blocked=[{left:0,right:360,top:112,bottom:202}];
+ assert.equal(api.meowPlaceText(180,160,110,44,bounds,blocked,57.6),null);
+ const q=api.pawNearbyDoorPlaque(180,160,110,44,bounds,blocked,true,360);
+ assert.ok(q&&q.rect.top>=202&&q.rect.bottom<=510);
+ assert.equal(api.pawNearbyDoorPlaque(180,160,110,44,bounds,blocked,false,360),null);
+ assert.equal(api.pawNearbyDoorPlaque(180,160,110,44,bounds,[{left:0,right:360,top:0,bottom:640}],true,360),null);
+ console.log('Nearby doorway plaque clearance: pass');
+}

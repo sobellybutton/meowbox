@@ -21,12 +21,16 @@ async function travelLoop(page,name,touch){
  }
  async function enterDoor(id){
   const sign=page.locator('#worldSigns [data-door="'+id+'"]');
-  for(let walks=0;walks<5&&!await sign.isVisible();walks++){
-   const {direction,from}=await page.evaluate(id=>{
-    const y=maps[scene].st.find(v=>v[0]===id)[2]+110;
-    return {direction:Math.sign(y-p.y)||1,from:p.y};
+  // A full-length painted district can require more than five walking
+  // steps. Keep real joystick/keyboard input and require actual progress.
+  for(let walks=0;walks<15&&!await sign.isVisible();walks++){
+   const {direction,from,distance}=await page.evaluate(id=>{
+    const row=maps[scene].st.find(v=>v[0]===id);
+    const goal=Math.max(minY(),Math.min(maxY(),row[2]));
+    const delta=goal-p.y;
+    return {direction:Math.sign(delta)||-1,from:p.y,distance:Math.max(18,Math.min(160,Math.abs(delta)))};
    },id);
-   const waitForWalk=()=>page.waitForFunction(({direction,from,id})=>Math.abs(p.y-from)>160||!signButtons.get(id)?.hidden,{direction,from,id},{timeout:10000});
+   const waitForWalk=()=>page.waitForFunction(({direction,from,id,distance})=>direction*(p.y-from)>=distance-3||!signButtons.get(id)?.hidden,{direction,from,id,distance},{timeout:10000});
    if(touch){
     await page.locator('#movePad').waitFor();
     const box=await page.locator('#movePad').boundingBox();
@@ -43,6 +47,13 @@ async function travelLoop(page,name,touch){
     await page.keyboard.down(key);
     try{await waitForWalk();}finally{await page.keyboard.up(key);}
    }
+  }
+  if(!await sign.isVisible()){
+   const detail=await page.evaluate(id=>{
+    const row=maps[scene].st.find(v=>v[0]===id),btn=signButtons.get(id);
+    return {scene,player:[p.x,p.y],approach:row.slice(1,3),anchor:housePlaqueAnchor(scene,id,row[1],row[2]),camera:{scale:cam.scale,ox:cam.ox,oy:cam.oy},viewport:[W,H],hidden:btn?.hidden,size:btn?._signSize,offset:btn?._signOffset};
+   },id);
+   throw Error('Doorway plaque unreachable by actual walking: '+id+' '+JSON.stringify(detail));
   }
   await press(sign);
   if(id==='temple'){

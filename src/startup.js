@@ -13262,11 +13262,13 @@ function pawDrawYueAtDesk(a){
  return true
 }
 function pawDrawYueDeskPlaque(fn){
+ // A consultation already underway does not need another entry sign.
+ if(talkOpen||$('page').style.display==='block'||activity)return false;
  const q=pawYueDeskPlaque(),scale=Math.max(.08,cam.scale),font=Math.max(9,12/scale),name=tr('Consult','问事');
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';
   const w=Math.max(58/scale,ctx.measureText(name).width+12/scale),h=22/scale;
-  const place=pawPaintedPlaquePlacement(q.x,q.y,w,h,{s:scale,ox:cam.ox,oy:cam.oy},{w:W,h:H},meowTextFrameRects);
+  const place=pawPaintedPlaquePlacement(q.x,q.y,w,h,{s:scale,ox:cam.ox,oy:cam.oy},{w:W,h:H},[...meowTextFrameRects,...meowFrameBlockers,...pawLocalVisitors.filter(pawVisitorVisible).map(a=>meowIndoorActorBounds(a))]);
   if(!place)return false;
   round(place.x-w/2,place.y-h/2,w,h,2/scale,'#4b392ceb','#c9a979');activityFitText(name,place.x,place.y,font,w-6/scale,'#fff1d8');
   meowTextFrameRects.push(place.rect);pawVisibleStationLabels.add('destiny');
