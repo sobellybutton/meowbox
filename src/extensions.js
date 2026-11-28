@@ -4823,14 +4823,18 @@ function pawCareActorTarget(phase){
 function pawCareActorStep(a,dt,reduced=false){
  const q=a.traveller||(a.traveller={x:pawCareActorHome[0],y:pawCareActorHome[1],facing:'up',kneel:0,moving:false});
  const [tx,ty]=pawCareActorTarget(a.phase);
- const dx=tx-q.x,dy=ty-q.y,dist=Math.hypot(dx,dy),step=Math.min(dist,260*Math.max(0,Math.min(.05,dt)));
+ const elapsed=Number.isFinite(dt)?Math.max(0,Math.min(.05,dt)):0;
+ const dx=tx-q.x,dy=ty-q.y,dist=Math.hypot(dx,dy),step=Math.min(dist,260*elapsed);
  const moving=dist>2;
+ // Stand at the existing foot anchor before starting a new walking leg.
+ // Do not slide a crouched body across the ground.
+ if(moving&&!reduced&&q.kneel>.001){q.kneel=Math.max(0,q.kneel-elapsed*3);q.moving=false;return q}
  if(moving){q.facing=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')}
  if(reduced){q.x=tx;q.y=ty}else if(dist>0){q.x+=dx/dist*step;q.y+=dy/dist*step}
  q.moving=!reduced&&Math.hypot(tx-q.x,ty-q.y)>2;
  const active=Object.hasOwn(pawCareActorTargets,a.phase)&&!q.moving;
  const goal=active?(a.phase==='rest'?.4:.68):0;
- q.kneel=reduced?goal:q.kneel+Math.sign(goal-q.kneel)*Math.min(Math.abs(goal-q.kneel),dt*3);
+ q.kneel=reduced?goal:q.kneel+Math.sign(goal-q.kneel)*Math.min(Math.abs(goal-q.kneel),elapsed*3);
  return q
 }
 function pawDrawCareTraveller(a){
@@ -4847,6 +4851,19 @@ function pawCareSupplySetup(kind,from){
 }
 function pawCareActionAge(a,now){
  return now-a.at-(a.supply?.kind===a.phase?pawCarePrepSeconds:0)
+}
+// A bowl first receives its contents during transfer and stays filled
+// during approach and drinking, clearing only at the end of the action.
+function pawCareBowlFilled(a,now){
+ if(!a||!['feed','water'].includes(a.phase)||!Number.isFinite(now)||!Number.isFinite(a.at))return false;
+ const age=now-a.at;
+ return age>=(a.supply?.kind===a.phase?pawCareWalkSeconds+.45+.45*.15:0)&&pawCareActionAge(a,now)<3.1
+}
+function pawCarePetContact(a){
+ const q=a?.traveller;
+ if(!q||a.phase!=='pet'||q.moving||q.kneel<=.25)return false;
+ const [x,y]=pawCareActorTarget('pet');
+ return Math.hypot(q.x-x,q.y-y)<=2
 }
 function pawCareSupplyPose(supply,age,reduced=false){
  if(!supply||!Number.isFinite(age))return null;
@@ -4986,7 +5003,7 @@ drawActivity=function(){
  // Leaf-strewn woven picnic mat, warm light and moving leaves give a grounded foreground.
  ellipse(400,550,162,48,'#34443144');ellipse(400,544,148,39,'#c3af81');for(let i=0;i<7;i++)line(278+i*35,537,280+i*35,555,'#8d7e5d55',1.5);
  for(let i=0;i<9;i++){const x=240+(i*83)%320,y=380+(i*37)%170;ellipse(x+Math.sin(t*.8+i)*7,y+Math.cos(t*.6+i)*4,3,1.5,'#e5d7a79c')}
- const age=pawCareActionAge(a,t),filled=age>=0&&age<3;
+ const filled=pawCareBowlFilled(a,t);
  careBowl(295,548,false,a.phase==='feed'&&filled);careBowl(505,548,true,a.phase==='water'&&filled);
  careCatArt(a);pawDrawCareTraveller(a);
  const d=a.drag,food=d?.kind==='feed'?d:{x:285,y:620},water=d?.kind==='water'?d:{x:400,y:620},toy=d?.kind==='play'?d:a.phase==='play'&&a.assisted?{x:400+Math.sin((t-a.at)*2.3+.7)*95,y:465}:{x:510,y:615};
@@ -5021,7 +5038,8 @@ c.addEventListener('pointerdown',e=>{
 c.addEventListener('pointermove',e=>{
  if(!careCapture(e))return;const a=state.care,d=a.drag;if(!d||d.id!==e.pointerId)return;const q=pawParkCareDragPoint(d,point(e)),delta=Math.hypot(q.x-d.x,q.y-d.y),now=performance.now(),elapsed=Math.max(16,now-d.last);d.x=q.x;d.y=q.y;d.last=now;
  if(d.kind==='pet'){
-  if(Math.hypot(q.x-a.x,q.y-(a.y-38))>85)return;
+  // A fast swipe before the traveller reaches the cat is not a stroke.
+  if(!pawCarePetContact(a)||Math.hypot(q.x-a.x,q.y-(a.y-38))>85)return;
   if(delta/elapsed>1.5/(parkCats[state.petKind??0].sensitivity)||delta>42){a.stroke=Math.max(0,a.stroke-8);careMessage('Oi, gentle! I am not a dirty frying pan.','喂！轻点，我又不是待刷的锅！');return}
   a.stroke+=Math.min(12,delta);if(a.stroke>=110&&t-a.at>.65)careComplete('pet')
  }else if(d.kind==='play'&&q.x>=250&&q.x<=550&&q.y>=410&&q.y<=620&&delta<=90){a.stroke+=Math.min(14,delta)}
@@ -5173,7 +5191,7 @@ function pawDrawKaya(a,kind,phase,age,dir,reduced){
  if(!a.pawKayaImages)return false;
  const stationaryReturn=phase==='return'&&Math.abs((a.returnFromX??400)-400)<1&&Math.abs((a.returnFromY??535)-535)<1;
  if(!['idle','pet','rest'].includes(phase)&&!stationaryReturn){a.pawKayaContactAt=null;return false}
- const contact=phase==='pet'&&!!a.traveller&&!a.traveller.moving&&a.traveller.kneel>.25;
+ const contact=phase==='pet'&&pawCarePetContact(a);
  if(!contact)a.pawKayaContactAt=null;else if(a.pawKayaContactAt==null)a.pawKayaContactAt=age;
  const frame=pawKayaFrame(phase,age-(a.pawKayaContactAt??age),contact,reduced);
  const b=pawKayaBox(0,0,frame,t,reduced);
