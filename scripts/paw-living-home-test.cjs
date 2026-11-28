@@ -37,3 +37,15 @@ check(!pawTopicSeen('exchange','flowers',[['hong','cake',now-1]],now),'unrelated
 check(pawTopicCandidates('hong',[['bouquet','a','b'],['cake','c','d']],[['exchange','flowers',now-1]],now).length===1,'candidate suppression');
 return n;`);
 console.log('PASS: '+cases()+' home walking and dialogue variety checks');
+
+const catalogueReturn=new Function(part('/* PAW_CATALOGUE_RETURN_BEGIN */','/* PAW_CATALOGUE_RETURN_END */')+`
+let n=0;
+const check=(actual,want)=>{if(actual!==want)throw Error('Catalogue context mismatch '+n);n++};
+const origin={id:'lamp',back:'room',category:'lighting',style:'japanese',query:'lamp',scroll:240};
+for(const back of ['room','shop','wallet'])for(const cat of ['lighting','all'])for(const style of ['japanese','all'])for(const query of ['lamp','','bed'])check(pawCatalogueReturnMatches(origin,back,cat,style,query),back==='room'&&cat==='lighting'&&style==='japanese'&&query==='lamp');
+for(const record of [null,{...origin,id:4},{...origin,scroll:NaN},{...origin,scroll:Infinity},{...origin,query:undefined}])check(pawCatalogueReturnMatches(record,'room','lighting','japanese','lamp'),false);
+return n;`);
+assert.ok(!s.includes('pawCatalogueResume'),'only one catalogue scroll restoration owner');
+assert.ok(s.includes("querySelector('.komorebiBook')!==book"),'stale rendered catalogue guard');
+assert.ok(s.includes('node.dataset.furnitureId===origin.id&&!node.hidden'),'never focus a filtered-out item');
+console.log('PASS: '+catalogueReturn()+' catalogue return context checks and 3 wiring checks');
