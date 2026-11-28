@@ -25,7 +25,13 @@ const shrineClock=()=>({day:currentDay}),townPawRecord=()=>({day:recordDay,keys:
    screen.style.display=m==='page'?'block':'none';muted=m==='mute';document.hidden=m==='hidden';
    meowSoundPrefs.effects=m!=='effectsOff';
  }};`)(require('../src/resident-remarks'),require('../src/paw-economy'),motionMock);
-assert.equal(api.pawLiveRemarkCount,48);assert.equal(api.pawLiveSurface('home',null),'sand');assert.equal(api.pawLiveSurface('fortune','temple'),'stone');assert.equal(api.pawLiveSurface('island','boba'),'wood');
+// Compare runtime wiring with a fresh independent merge of the current content.
+const remarks=require('../src/resident-remarks');
+const baseline=new Function(s.slice(ambientStart,ambientEnd)+';return pawAmbientLines;')();
+const expectedRemarkCount=remarks.merge(baseline);
+assert(expectedRemarkCount>=96,'Resident content must not regress below the approved collection');
+assert.equal(api.pawLiveRemarkCount,expectedRemarkCount);
+assert.equal(remarks.merge(baseline),0);assert.equal(api.pawLiveSurface('home',null),'sand');assert.equal(api.pawLiveSurface('fortune','temple'),'stone');assert.equal(api.pawLiveSurface('island','boba'),'wood');
 assert.equal(api.ambientLastFoot,Infinity);assert.equal(api.indoorStepAt,Infinity);
 const q=api.pawLiveEconomySnapshot();assert.equal(q.goals[0].owned,true);assert.equal(q.goals[1].needed,550);assert.equal(q.goals[1].available,true);assert.equal(q.earn.possible,50);
 api.setDay('2026-11-28','2026-11-28');assert.equal(api.pawLiveEconomySnapshot().earn.possible,0);
