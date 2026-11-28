@@ -1809,6 +1809,16 @@ function pawAuntieRoundCanBegin(run,allowed,busy){
  return !!run&&allowed&&!busy&&pawAuntieRoundRemaining(run)===0
 }
 /* PAW_AUNTIE_ROUND_END */
+// Keep one readable joke through the rapid three-strike round. The second
+// topic line stays on screen once the slipper is lowered, not for one frame.
+function pawAhMaRoundWords(run,phase){
+ const index=run?.pawAhMaWorryIndex;
+ if(!Number.isInteger(index)||typeof pawAhMaTopicPool!=='function')return null;
+ const pool=pawAhMaTopicPool(index);
+ const round=Math.max(0,Math.floor(run.pawAhMaRoundNumber||0));
+ const line=pool[(round+ (phase==='end'?1:0))%pool.length];
+ return ['Ah Ma: '+line[0],'阿嬷：'+line[1]]
+}
 function pawAuntieBeginRound(){
  if(!pawAuntieRoundCanBegin(state,paperRitualAllowed(),paperRitualBusy()))return false;
  if(state.paperPrepared!==true){openStressChoices();return false;}
@@ -1839,12 +1849,17 @@ function paperRitualAdvance(){
   move.landed=true;
   // Existing reward, sound, joke and paper-debris handlers run at contact.
   paperRitualImpactBefore();stressSwingAt=move.at;
+  const words=pawAhMaRoundWords(state,'hit');if(words)hint(...words);
  }
  if(age>=.46+tail){
   state.paperAction=null;
   state.paperRoundRemaining=Math.max(0,pawAuntieRoundRemaining(state)-1);
   if(state.paperRoundRemaining){if(!paperRitualRequest())state.paperRoundRemaining=0}
-  else hint("Ah Ma: There! Leave this worry on the paper. Your shoulders can relax now.","阿嬷：好啦！烦恼留在纸上，肩膀可以放松一点咯。");
+  else {
+   const words=pawAhMaRoundWords(state,'end');
+   hint(...(words||["Ah Ma: There! Leave this worry on the paper. Your shoulders can relax now.","阿嬷：好啦！烦恼留在纸上，肩膀可以放松一点咯。"]));
+   if(words)state.pawAhMaRoundNumber=(state.pawAhMaRoundNumber||0)+1
+  }
   refreshControls()
  }
 }
@@ -1918,7 +1933,8 @@ chooseStressTarget=function(index){
  const ok=mb5ChooseBefore(index);
  if(ok&&activity==='hit'&&room==='fish'){
   state.paperPrepAt=t;state.paperPrepared=false;
-  hint("Ah Ma: You sit properly. I'll lay out the paper and take care of this one.","阿嬷：你坐好就行，纸给你铺上，这件事交给我。");refreshControls()
+  state.pawAhMaWorryIndex=index;state.pawAhMaRoundNumber=0;
+  hint("Ah Ma: Sit, sit. Today the slipper does the work. You are off duty.","阿嬷：坐好坐好。今天拖鞋上班，你下班。");refreshControls()
  }
  return ok
 };
@@ -1927,7 +1943,7 @@ function mb5PrepareAdvance(){
  if(pawArcadeInputBlocked())return;
  if(mb5PrepProgress(t,state.paperPrepAt)>=1){
   delete state.paperPrepAt;state.paperPrepared=true;
-  hint("Ah Ma: All set. Say when, and I'll give this worry a good whack.","阿嬷：好啦，准备好了。你说开始，阿嬷就替你打走这个烦恼。");refreshControls()
+  hint("Ah Ma: Paper ready. No forms, no approval. Just tell me when.","阿嬷：纸铺好了，不用填表，不用审批。你说开始就行。");refreshControls()
  }
 }
 const mb5SheetBefore=paperWorryAt;
