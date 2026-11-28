@@ -3838,7 +3838,7 @@ function pawJournalPicture(id,district){
 }
 function pawJournalRender(district=scene){
  if(!maps[district])district='fortune';
- activePage='travel';page(tr('Travel sketchbook','旅行手账'),tr('Four little worlds, yours to discover.','四个小世界，慢慢去发现。'),q=>{
+ activePage='travel';page(tr('Travel sketchbook','旅行手账'),tr('Four neighbourhoods, one little world to wander.','四个小镇，同一个世界，慢慢逛。'),q=>{
   const book=element('section','',q,'pawSketchbook'),rail=element('nav','',book,'pawSketchTabs');
   rail.setAttribute('aria-label',tr('Choose a district page','选择小镇书页'));
   pawJournalKeys.forEach((k,i)=>{
@@ -5593,13 +5593,13 @@ let pawDockRootKey='';
 function pawDockButtons(){return [['travel',$('dockTravel')],['today',$('dockScoop')],['town',pawTownDock],['home',mbHomeNav]]}
 function pawSyncDockSelection(){
  const q=$('content'),open=$('page').style.display==='block';
- const explore=!!q.querySelector('.pawSketchbook'),today=!!q.querySelector('.pawDiaryFold'),town=!!q.querySelector('.communityTabs')&&communityTab==='board',home=!!q.querySelector('.hideoutScene,.hideoutRoomView');
+ const explore=!!q.querySelector('.pawSketchbook'),today=!!q.querySelector('.pawDiaryFold'),town=!!q.querySelector('.pawTownFront'),home=!!q.querySelector('.hideoutScene,.hideoutRoomView');
  // A root can switch tabs; nested pages retain their contextual Back.
  // Never abandon a draft, active keyboard, furniture edit or room visit.
  const fields=open?[...q.querySelectorAll('textarea,input:not([type]),input[type="text"],input[type="search"],[contenteditable="true"]')].filter(n=>!n.disabled&&!n.hidden):[];
  const draft=fields.some(n=>String(n.value??n.textContent??'').trim()!==''),typing=fields.includes(document.activeElement);
  pawDockRootKey=pawDockRootChoice({open,room:!!room,activity:!!activity,talk:talkOpen,transition:transitioning,entrance:!proposal.hidden,editing:!!hideoutEditing,homeOrigin:home&&!!mbHomeOrigin,draft,typing,explore,today,town,home});
- const selected=!open?'':explore||q.querySelector('.travelAlbum')?'travel':home||q.querySelector('.travellerBagV2,.komorebiBook,.komorebiConfirm,.figureCabinetBook,.pawPersonalShelf')?'home':q.querySelector('.communityTabs,.townWall,.townChatTranscript')?'town':today||q.querySelector('.journalDailyTasks,.goodCompanyBook')?'today':'';
+ const selected=!open?'':explore||q.querySelector('.travelAlbum')?'travel':home||q.querySelector('.travellerBagV2,.komorebiBook,.komorebiConfirm,.figureCabinetBook,.pawPersonalShelf')?'home':q.querySelector('.pawTownFront,.communityTabs,.townWall,.townChatTranscript')?'town':today||q.querySelector('.journalDailyTasks,.goodCompanyBook')?'today':'';
  $('game').classList.toggle('pawDockRoot',!!pawDockRootKey);
  for(const [key,button] of pawDockButtons()){
   button.classList.toggle('pawDockSelected',selected===key);
@@ -12186,7 +12186,38 @@ const pawCounterRackStyle=document.createElement('style');pawCounterRackStyle.te
 /* Railway wayfinding: a single contextual edge sign only when the actual
    map plaque has been clipped or displaced. No extra permanent next-stop CTA. */
 const pawRailEdge=element('button','',$('game'),'pawRailEdge');pawRailEdge.type='button';pawRailEdge.hidden=true;
-pawRailEdge.onclick=()=>{if(!pawRailEdge.hidden&&!transitioning&&!room&&!activity&&proposal.hidden&&$('page').style.display!=='block')walkDoor('station')};
+/* PAW_RAIL_NEAR_STATION_BEGIN */
+function pawRailNearStation(actor,station){
+ return Array.isArray(station)&&station[0]==='station'&&[actor?.x,actor?.y,station[1],station[2]].every(Number.isFinite)&&Math.hypot(actor.x-station[1],actor.y-station[2])<=280
+}
+/* PAW_RAIL_NEAR_STATION_END */
+/* PAW_RAIL_EDGE_PRESS_BEGIN */
+function pawRailEdgePressValid(press,view,event){
+ return !!press&&!!view&&!!event&&press.id===event.pointerId&&press.scene===view.scene&&!view.blocked&&Math.hypot(event.clientX-press.x,event.clientY-press.y)<30
+}
+/* PAW_RAIL_EDGE_PRESS_END */
+let pawRailEdgePress=null,pawRailEdgeClickUntil=0;
+const pawRailEdgeView=()=>({scene,blocked:!!(transitioning||room||activity||pending||!proposal.hidden||document.hidden||$('page').style.display==='block'||!pawRailNearStation(p,maps[scene]?.st.find(v=>v[0]==='station')))});
+pawRailEdge.addEventListener('pointerdown',e=>{
+ if(e.button!==0||e.isPrimary===false||pawRailEdge.hidden||pawRailEdgeView().blocked||pawRailEdgePress)return;
+ pawRailEdgePress={id:e.pointerId,scene,x:e.clientX,y:e.clientY};drag=null;
+ e.preventDefault();e.stopPropagation();
+ try{pawRailEdge.setPointerCapture(e.pointerId)}catch{}
+});
+document.addEventListener('pointerup',e=>{
+ const press=pawRailEdgePress;if(!press||press.id!==e.pointerId)return;
+ pawRailEdgePress=null;pawRailEdgeClickUntil=performance.now()+400;drag=null;
+ e.preventDefault();e.stopImmediatePropagation();
+ if(pawRailEdgePressValid(press,pawRailEdgeView(),e))walkDoor('station');
+},true);
+for(const kind of ['pointercancel','lostpointercapture'])document.addEventListener(kind,e=>{
+ if(pawRailEdgePress?.id===e.pointerId){pawRailEdgePress=null;pawRailEdgeClickUntil=performance.now()+400;drag=null}
+},true);
+window.addEventListener('blur',()=>{pawRailEdgePress=null});
+pawRailEdge.onclick=e=>{
+ if(e.detail!==0&&performance.now()<pawRailEdgeClickUntil)return;
+ if(!pawRailEdge.hidden&&!pawRailEdgeView().blocked)walkDoor('station')
+};
 // A plaque can have a valid rectangle yet be hidden, clipped, or covered.
 // Require an actual hit target before withdrawing the edge navigation.
 function pawRailPlaqueReachable(sign,g){
@@ -12216,6 +12247,13 @@ syncSigns=function(...args){
   pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
  }
  const sign=signButtons.get('station'),game=$('game'),g=game.getBoundingClientRect(),now=performance.now(),size=g.width+'|'+g.height;
+ // Reveal the destination only after walking near the real painted platform.
+ // Explicit Map navigation remains available; no activity or progress gate.
+ if(!pawRailNearStation(p,maps[scene].st.find(v=>v[0]==='station'))){
+  if(sign)sign.hidden=true;
+  pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
+ }
+ if(pawRailEdgePress?.scene===scene&&!pawRailEdge.hidden)return result;
  const changed=pawRailEdgeScene!==scene||pawRailEdgeSize!==size;
  if(changed){pawRailEdgeScene=scene;pawRailEdgeSize=size;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity}
  if(!changed&&now-pawRailEdgeAt<75)return result;pawRailEdgeAt=now;
@@ -12239,7 +12277,7 @@ syncSigns=function(...args){
  return result
 };
 const pawRailEdgeStyle=document.createElement('style');pawRailEdgeStyle.textContent=`
-#game .pawRailEdge{position:absolute;z-index:13;min-height:44px;max-width:46%;padding:6px 12px;border:1px solid #c6aa7a;border-radius:5px;background:#efe0bddf;color:#4d4938;font:600 12px var(--paw-body,system-ui,sans-serif);box-shadow:0 2px 4px #29392d44}
+#game .pawRailEdge{position:absolute;z-index:13;touch-action:none;user-select:none;-webkit-user-select:none;min-height:44px;max-width:46%;padding:6px 12px;border:1px solid #c6aa7a;border-radius:5px;background:#efe0bddf;color:#4d4938;font:600 12px var(--paw-body,system-ui,sans-serif);box-shadow:0 2px 4px #29392d44}
 #game .pawRailEdge[hidden],#game.pawDoorCameraActive #worldSigns,#game.pawRailJourneyActive .pawRailEdge{display:none!important}
 `;document.head.append(pawRailEdgeStyle);
 // Ordinary shop doors push the camera towards the player's grounded approach
