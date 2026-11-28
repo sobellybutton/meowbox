@@ -27,7 +27,7 @@ const out='test-results/native-keepsakes-'+engine;
        room='match';start('match');cafeAnswers=cafeQuestions.map((_,i)=>i%3);cafeRound=cafeQuestions.length;
        const scored=pawCafeAssess(cafeAnswers,cafeQuestions.length);cafeResult={index:scored.ties[0],ties:scored.ties};cafePhase='result';syncCafeQuestionSheet();
       }else if(kind==='story'){
-       room='story';start('story');parallelNode=Object.keys(parallelEndings)[0];parallelTurning=false;syncStorySheet();
+       room='story';start('story');parallelTrail=[];parallelNode='station';for(let i=0;i<8&&parallelScenes[parallelNode];i++){const node=parallelNode;parallelTrail.push(node);parallelNode=parallelScenes[node].choices[0][2]}if(!parallelEndings[parallelNode])throw Error('Incomplete story fixture');parallelTurning=false;syncStorySheet();
       }else{
        room='quiz';wonderSceneOpen(kind);
        if(kind==='priorities'){
