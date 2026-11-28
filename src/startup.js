@@ -6441,6 +6441,8 @@ function pawVisitorPauseTimers(roster,elapsed){
 }
 /* PAW_VISITOR_LIFECYCLE_END */
 function pawRoomWalkers(){
+ // Private consultations retain only the traveller and resident host.
+ if(room==='destiny'||room==='tarot')return [];
  const spec=pawRoomVisitorSpecs[room];if(!spec||activity)return [];
  const context=scene+'|'+room+'|'+avatar;
  if(!indoorReady()){if(context===pawVisitorContext)pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,t-pawVisitorAt));pawVisitorAt=t;return context===pawVisitorContext?pawVisitorHold(pawLocalVisitors):[]}
@@ -9000,7 +9002,8 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
    textIn([x,y,w,head],[locale(p.name)],22,'bold',muted);
    textIn([x,y+head,w,h-head],p.stars.length?p.stars.map(locale):[cn?'无主星':'No main star'],20,'normal',ink)
   });
-  textIn(slots.chart_summary,[cn?'十四主星':'14 main stars',cn?'传统文化小记':'Traditional symbolism',cn?'仅供反思':'For reflection'],30,'normal',accent)
+  textIn(slots.chart_summary,[cn?'十四主星':'14 main stars',cn?'传统文化小记':'Traditional symbolism',cn?'仅供反思':'For reflection'],30,'normal',accent);
+  if(slots.reading)textIn(slots.reading,[cn?'不含姓名及出生资料':'Name and birth details omitted'],28,'normal',muted);
  }else if(slots.tiles){
   slots.tiles.forEach((rect,i)=>{const [x,y,w,h]=rect,r=data.scoreRows[i];
    textIn([x+10,y+5,w-20,h*.47],[locale(r.label)],30,'bold',muted);
@@ -9298,7 +9301,13 @@ shareCardArt=function(cv,data,format,cn){
  }else{
   const quote=locale(data.kind==='zwds'?data.takeaway:socialResultQuote(data));
   const all=[quote,...data.lines.map(locale)].filter((v,i,a)=>v&&a.indexOf(v)===i);
-  block(all,y+Math.min(30,Math.max(0,(footer-y)/12)),Math.max(60,footer-y-30),format==='square'?34:42,'normal',ink)
+  if(data.kind==='zwds'){
+   const available=Math.max(60,footer-y-30),size=format==='square'?36:format==='story'?50:44;
+   g.font='normal '+size+'px '+font;
+   const estimated=all.reduce((n,v)=>n+shareTextLines(g,v,usable-44).length*size*1.26,0)+Math.max(0,all.length-1)*size*.38;
+   const start=y+Math.max(12,(available-Math.min(available,estimated))*.43);
+   block(all,start,Math.max(40,footer-start-20),size,'normal',ink);
+  }else block(all,y+Math.min(30,Math.max(0,(footer-y)/12)),Math.max(60,footer-y-30),format==='square'?34:42,'normal',ink)
  }
  g.strokeStyle='#a99772';g.lineWidth=2;g.beginPath();g.moveTo(left+28,footer);g.lineTo(w-right-28,footer);g.stroke();
  line(cn?'趣味探索 · 仅供反思':'For fun and reflection · Pawradise',footer+24,23,'normal',muted);
@@ -12129,18 +12138,30 @@ drawActivity=function(...args){
 /* PAW_SLIP_COUNTER_BEGIN */
 function pawSlipGeometry(p=pawWaterPlate){
  const pt=(u,v)=>({x:p.x+u*p.w,y:p.y+v*p.h});
- return {counter:pt(.235,.50),reading:pt(.50,.55),tie:pt(.605,.482),bag:pt(.50,.79),rackCenter:pt(.585,.455),
+ const counterFoot=pt(.36,.65),rackFoot=pt(.59,.60);
+ return {counter:pt(.235,.50),reading:pt(.50,.55),tie:pt(.605,.482),bag:{x:counterFoot.x+18,y:counterFoot.y-54},counterFoot,rackFoot,rackCenter:pt(.585,.455),
   rows:[.419,.453,.486].map(v=>Array.from({length:7},(_,i)=>pt(.505+i*.030,v)))}
 }
 function pawSlipPose(stage,age,g=pawSlipGeometry()){
  const ease=f=>{f=Math.max(0,Math.min(1,f));return f*f*(3-2*f)};
  const mix=(a,b,f)=>({x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f});
  const f=stage==='folded'?0:stage==='opening'?ease(age/.75):1;
- let pos=mix(g.counter,g.reading,f),w=105+f*355,h=82+f*298,alpha=1;
+ let pos=mix(g.counter,g.reading,f),w=105+f*355,h=82+f*298,alpha=1,open=f;
  if(stage==='tied'||stage==='kept'){
-  const u=ease(age/.7);pos=mix(g.reading,stage==='tied'?g.tie:g.bag,u);w*=1-.97*u;h*=1-.96*u;alpha=1-u;
+  const u=ease(age/.7);pos=mix(g.reading,stage==='tied'?g.tie:g.bag,u);w=105+355*(1-u);h=82+298*(1-u);open=1-u;alpha=1-ease((u-.78)/.22);
  }
- return {...pos,w,h,alpha,open:f}
+ return {...pos,w,h,alpha,open}
+}
+// The original counter portrait has paving in front of the left cabinet
+// and an unobstructed aisle toward the lower fortune rack.
+function pawSlipTravellerContact(stage,age,pose,g){
+ const scale=1.92,u=stage==='tied'?Math.max(0,Math.min(1,age/.7)):0,e=u*u*(3-2*u);
+ const foot={x:g.counterFoot.x+(g.rackFoot.x-g.counterFoot.x)*e,y:g.counterFoot.y+(g.rackFoot.y-g.counterFoot.y)*e};
+ const shoulder={x:foot.x+(stage==='tied'||stage==='kept'?5:-5)*scale,y:foot.y-63*scale};
+ const foldedW=Math.min(pose.w,145,Math.min(pose.h,105)*336/194);
+ const grip={x:pose.x+(stage==='kept'?-1:1)*foldedW*.42,y:pose.y};
+ const compact=pose.open<=.25&&pose.alpha>.01,reach=Math.hypot(grip.x-shoulder.x,grip.y-shoulder.y)<=48*scale;
+ return {foot,shoulder,hand:compact&&reach?grip:null,scale,walking:stage==='tied'&&u>0&&u<1};
 }
 function pawSlipRackCamera(w,h,p=pawWaterPlate){
  if(![w,h,p.x,p.y,p.w,p.h].every(Number.isFinite)||Math.min(w,h,p.w,p.h)<=0)return null;
@@ -12264,7 +12285,9 @@ function pawSlipDrawPaper(pose,number,words,subtitle=''){
 function pawDrawCounterFortune(){
  const run=state,g=pawSlipGeometry(),age=Math.max(0,t-run.paperAt);
  if(run.paperStage==='opening'&&age>=.75&&!pawArcadeInputBlocked())run.paperStage='open';
- const pose=pawSlipPose(run.paperStage,age,g),words=shrinePaperLines[run.paperNumber-1];
+ const pose=pawSlipPose(run.paperStage,age,g),words=shrinePaperLines[run.paperNumber-1],contact=pawSlipTravellerContact(run.paperStage,age,pose,g);
+ if(contact.hand)pawIncenseArm(contact.shoulder,contact.hand,.72*contact.scale,false);
+ backHuman(contact.foot.x,contact.foot.y,avatar??0,contact.walking,'up',contact.scale);
  if(Array.isArray(words))pawSlipDrawPaper(pose,run.paperNumber,tr(...words));
  if(run.paperStage==='folded')target(pose.x-pose.w/2-15,pose.y-pose.h/2-15,pose.w+30,pose.h+30,()=>{if(run===state&&!pawArcadeInputBlocked())templePaperTap()});
  // The controls below are the existing accessible open/keep/tie/rack/return
@@ -13405,9 +13428,9 @@ function pawReadingSeatPlan(id,plate,phase){
  const tarot=id==='tarot',yue=id==='destiny';if(!tarot&&!yue)return null;
  const host=tarot?'fortune-teller':'master-yue';
  const pose=tarot?(phase==='shuffle'?'seated-shuffle-held':phase==='focus'?'seated-present-card':'seated-idle'):(phase==='result'?'seated-present-blank-parchment':phase==='question'?'seated-brush-held':'seated-welcome-explain');
- const eye=tarot?[.135,.399]:[.581,.218],span=plate.h*(tarot?.0165:.017);
+ const eye=tarot?[.135,.399]:[.581,.350],span=plate.h*(tarot?.0165:.0185);
  const center=[plate.x+plate.w*eye[0],plate.y+plate.h*eye[1]];
- return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.306]}
+ return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.447]}
 }
 function pawReadingHostPhase(id,q,kind,desk,result){
  if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle')return 'table-wash';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
@@ -13477,6 +13500,7 @@ document.addEventListener('visibilitychange',()=>{
  if(pawYueInkCurrent&&pawHostLibrary?.api?.parchmentClock)pawHostLibrary.api.parchmentClock(pawYueInkCurrent.clock,performance.now()/1000,document.hidden,residentReducedMotion.matches)
 });
 function pawDrawReadingSeated(id,plate){
+ if(id==='destiny')pawYueAdoptSeatedVisit(pawHostVisit,id,activity,transitioning,()=>pawHostFamilyReady(id));
  if(pawHostVisit?.id!==id||!pawHostVisit.ready||!pawHostLibrary)return false;
  const desk=id==='destiny'&&$('page').dataset.pawYueDesk==='true'&&$('page').style.display!=='none';
  const activeForm=desk?$('content').querySelector('.astroForm,.yueAlmanacForm'):null;
@@ -13540,7 +13564,7 @@ enter=function(id,...args){
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   pawReadingAdmission=null;
   if(!ready||!pawRoomImageReady(im)){hint('The room painting could not load. Tap its door to try again.','小屋画面暂未加载成功，请再次点击门口重试。');return}
-  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id)};return pawReadingEnterBefore(id,...args)
+  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id)};if(id==='destiny')pawWarmRearSeated(avatar??0);return pawReadingEnterBefore(id,...args)
  }).finally(()=>{if(pawReadingAdmission===request)pawReadingAdmission=null})
 };
 // Nearby outdoor warming should decode the actual selected lobby painting,
@@ -13623,7 +13647,7 @@ drawRoom=function(...args){if(pawReadingActive())pawReadingBackdrop();return paw
 function pawReadingHost(){
  const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:room==='tea'?['Auntie Mei','梅姨']:room==='fish'?['Ah Ma','阿嬷']:room==='park'?['Auntie Lin','林姨']:room==='arcade'?['Arcade keeper','游戏厅店主']:null;
  if(!name)return null;const record=residentArtworkRecord(name);if(!record&&room!=='fish')return null;
- const [x,y]=pawReadingWorld(room==='destiny'?[.58,.306]:room==='tarot'&&pawHostVisit?.ready?[.135,.61]:pawReadingAPI().rooms[room].host);
+ const [x,y]=pawReadingWorld(room==='destiny'?[.58,.447]:room==='tarot'&&pawHostVisit?.ready?[.135,.61]:pawReadingAPI().rooms[room].host);
  return {station:room==='tea'?'chat':room==='fish'?'hit':room==='park'?'pet':room==='arcade'?'bubbleArcade':room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record?.height||112,.90),facing:room==='fish'?'right':'left'}
 }
 const pawReadingHostsBefore=roomResidentActors;
@@ -13634,11 +13658,11 @@ roomResidentActors=function(){if(!pawReadingActive())return pawReadingHostsBefor
 // Until the proper seated sprite is registered this is a desk-occlusion
 // treatment, not a new animation pose.
 function pawYueDeskBox(p=pawReadingPlate){
- return {x:p.x+p.w*.581,y:p.y+p.h*.306,height:p.h*.215,clipTop:p.y+p.h*.165,clipBottom:p.y+p.h*.306}
+ return {x:p.x+p.w*.581,y:p.y+p.h*.447,height:p.h*.215,clipTop:p.y+p.h*.30,clipBottom:p.y+p.h*.447}
 }
 function pawYueHostTapBox(p){
  if(!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||p.w<=0||p.h<=0)return null;
- return [p.x+p.w*.465,p.y+p.h*.175,p.w*.232,p.h*.130]
+ return [p.x+p.w*.465,p.y+p.h*.305,p.w*.232,p.h*.142]
 }
 function pawYueDeskPlaque(p=pawReadingPlate){
  return {x:p.x+p.w*.5,y:p.y+p.h*.552}
@@ -13748,7 +13772,7 @@ function pawChooseConnectedGuestPoints(candidates,canDepart,canWalk,limit=8,spac
 function pawMappedVisitorPoints(api,id){
  const q=api?.rooms[id],spec=pawReadingSpec(api,id);if(!q||!spec)return [];
  const gaps=pawMappedGuestGaps(true),protectedFeet=[spec.entry,[spec.entry[0],spec.entry[1]-35],spec.arrival,...Object.values(spec.stations).map(v=>v.slice(2))];
- const host=['quiz','story','match'].includes(id)?[]:[pawReadingWorld(id==='destiny'?[.58,.306]:q.host)];
+ const host=['quiz','story','match'].includes(id)?[]:[pawReadingWorld(id==='destiny'?[.58,.447]:q.host)];
  const points=q.visitors.map(v=>v.slice()),candidates=[];
  for(let i=0;i<=100;i+=2){
   const y=i/100,range=api.bounds(id,y);if(!range)continue;
@@ -13921,15 +13945,8 @@ pawRoomOwnerPresentation.textContent=`
 
 // Preserve the existing reading engines and temporary, local personal data.
 // The study remains the setting instead of a separate full-screen website.
-const pawYueVisitIntroBefore=roomIntro;
-roomIntro=function(...args){
- const result=pawYueVisitIntroBefore(...args);
- if(room==='destiny'&&!activity&&residentPendingWelcome?.id==='yue'){
-  const profile=residentWelcomeProfiles.find(v=>v.id==='yue');
-  if(profile){const welcome=residentHospitalityWelcome(profile,residentPendingWelcome.visits);residentPendingWelcome=null;residentGreetingToast(tr('Master Yue: ','月师傅：')+welcome)}
- }
- return result
-};
+// Master Yue's greeting is delivered by the intentional consultation dialogue,
+// not a second arrival toast over the illustrated room.
 function pawCloseYueDesk(){
  const pane=$('page');if(pane.dataset.pawYueDesk!=='true')return false;
  pawYueChartObserver?.disconnect();pawYueChartObserver=null;
@@ -15537,8 +15554,8 @@ html #game #dialogue[data-paw-chat-bar] #dialogueTop{display:flex!important;min-
 html #game #dialogue[data-paw-chat-bar] #talkPortrait{display:none!important}
 html #game #dialogue[data-paw-chat-bar] #speaker{color:#e7ca8e!important;font:600 11px/1.3 var(--paw-display,Georgia,serif)!important;letter-spacing:.04em;text-shadow:none!important}
 html #game #dialogue[data-paw-chat-bar] #line{color:#fff2d8!important;font:15px/1.38 var(--paw-body,system-ui,sans-serif)!important;white-space:pre-line!important;margin:0 0 5px!important;padding:0!important;text-shadow:none!important}
-html #game #dialogue[data-paw-chat-bar] #choices{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;gap:6px!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:2px 0 0!important;scrollbar-width:thin}
-html #game #dialogue[data-paw-chat-bar] #choices button{flex:0 0 auto!important;width:auto!important;min-width:44px!important;min-height:44px!important;max-width:86vw!important;padding:6px 11px!important;border:1px solid #e2c99980!important;border-radius:16px!important;box-shadow:none!important;background:#f0dfba12!important;color:#fff2d8!important;font:500 12px/1.25 var(--paw-body,system-ui,sans-serif)!important;text-align:center!important;white-space:normal!important}
+html #game #dialogue[data-paw-chat-bar] #choices{display:flex!important;flex-wrap:wrap!important;justify-content:flex-start!important;overflow-x:hidden!important;gap:6px!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:2px 0 0!important;scrollbar-width:thin}
+html #game #dialogue[data-paw-chat-bar] #choices button{flex:0 1 auto!important;width:auto!important;min-width:44px!important;min-height:44px!important;max-width:100%!important;padding:6px 11px!important;border:1px solid #e2c99980!important;border-radius:16px!important;box-shadow:none!important;background:#f0dfba12!important;color:#fff2d8!important;font:500 12px/1.25 var(--paw-body,system-ui,sans-serif)!important;text-align:center!important;white-space:normal!important}
 html #game #dialogue[data-paw-chat-bar] #choices button:first-child{background:#e6d2a8!important;color:#33473c!important;border-color:#e6d2a8!important}
 html #game #dialogue[data-paw-chat-bar][data-paw-yue-question] #line:empty{display:none!important}
 html #game #dialogue[data-paw-chat-bar][data-paw-yue-question] .pawYueGuidedForm{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:4px!important;margin:0!important;padding:0!important}
@@ -15701,3 +15718,25 @@ pawRoomGroundingStyle.textContent=`
 @media(forced-colors:active){#game #dock>button[aria-current="page"]{outline:2px solid Highlight!important}}
 `;document.head.append(pawRoomGroundingStyle);
 /* PAW_ROOM_GROUNDING_AND_DOCK_END */
+
+/* PAW_YUE_VISITOR_SEAT_BEGIN */
+// Reuse the four original transparent seated traveller poses. The right
+// chair is painted into the room: the hip is anchored to its cushion,
+// while the logical walking position remains on the aisle beside it.
+function pawYueVisitorSeat(plate,position,approach,kind,consulting,walking){
+ if(!plate||!Array.isArray(position)||!Array.isArray(approach)||!consulting||walking||!Number.isInteger(kind)||kind<0||kind>3||Math.hypot(position[0]-approach[0],position[1]-approach[1])>5)return null;
+ const [x,y]=pawReadingWorld([.685,.535],plate);
+ return {hip:{x,y},scale:.78}
+}
+let pawYueVisitorLastDraw=-Infinity;
+const pawYueVisitorBackHuman=backHuman;
+backHuman=function(x,y,kind,walking,facing,scale=1){
+ if(room==='destiny'&&pawReadingActive()&&!activity&&!transitioning&&!pawRenderedWalker&&kind===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<4){
+  const q=pawReadingAPI()?.rooms.destiny?.stations.destiny;
+  const consulting=talkOpen||($('page').dataset.pawYueDesk==='true'&&$('page').style.display==='block');
+  const seat=q&&pawYueVisitorSeat(pawReadingPlate,[x,y],pawReadingWorld(q.approach),kind,consulting,walking);
+  if(seat&&pawDrawRearSeated(pawWarmRearSeated(kind),kind,seat.hip,seat.scale)){pawYueVisitorLastDraw=t;pawSyncIdleGait(x,y,kind);return}
+ }
+ return pawYueVisitorBackHuman(x,y,kind,walking,facing,scale)
+};
+/* PAW_YUE_VISITOR_SEAT_END */
