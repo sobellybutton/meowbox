@@ -105,8 +105,11 @@ async function handle(req,env){
   const since=now-PRESENCE_TTL,rate=await rateHash(env.RATE_SECRET,'presence|'+(req.headers.get('CF-Connecting-IP')||'unknown')),id=(await rateHash(env.RATE_SECRET,'public|'+owner)).slice(0,24);
   // Stable pseudonym derived server-side; do not expose bearer token, owner hash or IP.
   if(await db.prepare('SELECT 1 FROM presence_bans WHERE public_id=? AND until>?').bind(id,now).first())return reply({error:'presence restricted'},403);
-  const written=await db.prepare("INSERT INTO presence(owner,public_id,rate_key,place,room,x,y,avatar,facing,walking,gesture,updated) SELECT ?,?,?,?,?,?,?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM presence WHERE rate_key=? AND updated>=? AND owner<>?)<8 AND (SELECT COUNT(*) FROM presence WHERE updated>=? AND owner<>?)<100 ON CONFLICT(owner) DO UPDATE SET place=excluded.place,room=excluded.room,x=excluded.x,y=excluded.y,avatar=excluded.avatar,facing=excluded.facing,walking=excluded.walking,gesture=excluded.gesture,updated=excluded.updated,rate_key=excluded.rate_key WHERE presence.updated<=?").bind(owner,id,rate,value.place,value.room,value.x,value.y,value.avatar,value.facing,value.walking,value.gesture,now,rate,since,owner,since,owner,now-PRESENCE_MIN_INTERVAL).run();
-  if(!written.meta.changes)return reply({error:'presence rate limited'},429);
+  const written=await db.prepare("INSERT INTO presence(owner,public_id,rate_key,place,room,x,y,avatar,facing,walking,gesture,updated) SELECT ?,?,?,?,?,?,?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM presence WHERE rate_key=? AND updated>=? AND owner<>?)<8 AND (SELECT COUNT(*) FROM presence WHERE updated>=? AND owner<>?)<100 AND NOT EXISTS(SELECT 1 FROM presence_bans WHERE public_id=? AND until>?) ON CONFLICT(owner) DO UPDATE SET place=excluded.place,room=excluded.room,x=excluded.x,y=excluded.y,avatar=excluded.avatar,facing=excluded.facing,walking=excluded.walking,gesture=excluded.gesture,updated=excluded.updated,rate_key=excluded.rate_key WHERE presence.updated<=?").bind(owner,id,rate,value.place,value.room,value.x,value.y,value.avatar,value.facing,value.walking,value.gesture,now,rate,since,owner,since,owner,id,now,now-PRESENCE_MIN_INTERVAL).run();
+  if(!written.meta.changes){
+   if(await db.prepare('SELECT 1 FROM presence_bans WHERE public_id=? AND until>?').bind(id,now).first())return reply({error:'presence restricted'},403);
+   return reply({error:'presence rate limited'},429);
+  }
   const result=await db.prepare("SELECT p.public_id AS id,p.place,p.room,p.x,p.y,p.avatar,p.facing,p.walking,p.gesture,p.updated FROM presence p WHERE p.updated>=? AND p.place=? AND p.room=? AND p.owner<>? AND NOT EXISTS(SELECT 1 FROM presence_blocks b WHERE (b.owner=? AND b.target_id=p.public_id) OR (b.owner=p.owner AND b.target_id=?)) AND NOT EXISTS(SELECT 1 FROM presence_bans z WHERE z.public_id=p.public_id AND z.until>?) ORDER BY p.updated DESC LIMIT 30").bind(since,value.place,value.room,owner,owner,id,now).all();
   return reply({self:id,peers:result.results});
  }
@@ -135,8 +138,9 @@ async function handle(req,env){
   let value;try{value=validatePost(await readBody(req))}catch{return reply({error:'invalid body'},400)}
   if(!value)return reply({error:'invalid text or personal details'},400);
   if(value.replyTo&&!await db.prepare("SELECT id FROM messages WHERE id=? AND status='approved' AND created>=? AND place=?").bind(value.replyTo,cutoff,value.place).first())return reply({error:'reply unavailable'},409);
-  const ip=req.headers.get('CF-Connecting-IP')||'unknown',rate=await rateHash(env.RATE_SECRET,ip+'|'+Math.floor(now/DAY)),id=crypto.randomUUID();
-  // Atomic write condition enforces session and daily network limits.
+  const ip=req.headers.get('CF-Connecting-IP')||'unknown',rate=await rateHash(env.RATE_SECRET,'message-network|'+ip),id=crypto.randomUUID();
+  // Atomic write condition enforces rolling 24-hour session and network limits.
+  // Network keys are HMACs, not raw addresses; event rows expire after 24 hours.
   const [limit,r]=await db.batch([
    db.prepare("INSERT INTO submission_events(id,owner,rate_key,created) SELECT ?,?,?,? WHERE (SELECT COUNT(*) FROM submission_events WHERE owner=? AND created>?)<5 AND (SELECT COUNT(*) FROM submission_events WHERE rate_key=? AND created>?)<20 AND (SELECT COUNT(*) FROM submission_events WHERE owner=? AND created>?)=0 AND (? IS NULL OR EXISTS(SELECT 1 FROM messages WHERE id=? AND status='approved' AND created>=? AND place=?))").bind(id,owner,rate,now,owner,now-DAY,rate,now-DAY,owner,now-15000,value.replyTo,value.replyTo,cutoff,value.place),
    db.prepare("INSERT INTO messages(id,owner,rate_key,name,text,created,status,reply_to,place) SELECT ?,?,?,?,?,?,'pending',?,? WHERE EXISTS(SELECT 1 FROM submission_events WHERE id=?)").bind(id,owner,rate,value.name,value.text,now,value.replyTo,value.place,id)
