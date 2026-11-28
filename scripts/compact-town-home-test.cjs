@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const src=fs.readFileSync('src/compact-town-home.js','utf8');
 new vm.Script(src);
 const helper=src.split('// PAW_COMPACT_HELPERS_BEGIN')[1].split('// PAW_COMPACT_HELPERS_END')[0];
-const api=new Function(helper+';return {pageWindow,residentLabel,residentHeading,residentDialogue,residentPortraitPath,roomLampAnchor,roomLightState,cutawayPlan,cutawayFree,cutawayConnected,cutawayMove,cutawayRoute,cutawayApproach,cutawayArtPaths,cutawayArtReady,cutawayDepth,cutawayFootPivot,cutawayDragOwner,cutawaySeatFrame,cutawaySeatPlacement,cutawayContainedArt,cutawaySeatSurface,cutawaySeatApproach,cutawaySeatResume}')();
+const api=new Function(helper+';return {pageWindow,residentLabel,residentHeading,residentDialogue,residentPortraitPath,roomLampAnchor,roomLightState,cutawayPlan,cutawayFree,cutawayConnected,cutawayMove,cutawayRoute,cutawayApproach,cutawayArtPaths,cutawayArtReady,cutawayDepth,cutawayFootPivot,cutawayDragOwner,cutawaySeatFrame,cutawaySeatPlacement,cutawayContainedArt,cutawaySeatSurface,cutawaySeatApproach,cutawaySeatResume,cutawayRetargetRoute}')();
 assert.deepEqual(api.pageWindow(0,5,2),{page:0,pages:1,start:0,end:0});
 assert.deepEqual(api.pageWindow(5,9,2),{page:2,pages:3,start:4,end:5});
 assert.deepEqual(api.pageWindow(5,-1,2),{page:0,pages:3,start:0,end:2});
@@ -205,3 +205,19 @@ assert(src.includes('else if(seatedKey)syncSeat()'));
 assert(src.includes("if(decision==='defer')return"));
 assert(src.includes('seatResize=new ResizeObserver(syncSeat)'));
 console.log('PASS '+resumeCases+' seated viewport interruption and restore scenarios');
+
+
+let retargetCases=0;
+for(const origin of [{x:.3,y:.4},{x:.8,y:.2}])for(const direction of [[.08,.04],[-.08,.04],[.08,-.04],[-.08,-.04]])for(let i=0;i<=100;i++){
+ const actor={u:2,v:2},route=[{u:2,v:3}],foot={x:origin.x+direction[0]*i/100,y:origin.y+direction[1]*i/100};
+ const v=api.cutawayRetargetRoute(route,actor,foot,origin,false);
+ assert.deepEqual(v.from,foot);assert.equal(v.route.length,i?2:1);
+ if(i)assert.equal(v.route[0],actor);
+ assert.equal(route.length,1);
+ const seated=api.cutawayRetargetRoute(route,actor,foot,origin,true);
+ assert.deepEqual(seated.from,origin);assert.equal(seated.route.length,1);retargetCases++;
+}
+assert.equal(api.cutawayRetargetRoute(null,{u:0,v:0},{x:0,y:0},{x:0,y:0}),null);
+assert(src.includes('cutawayRetargetRoute(route,actor,visibleFoot,point(actor),!!seatedKey)'));
+assert(src.includes('actor=steps.shift()'));
+console.log('PASS '+retargetCases+' continuous cutaway retarget trajectories');
