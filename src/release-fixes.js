@@ -332,6 +332,7 @@ function pawDrawDiscoveryPlate(){
  ctx.save();try{
   ctx.fillStyle='#42433c';ctx.fillRect(view.x,view.y,view.w,view.h);
   ctx.drawImage(im,plate.x,plate.y,plate.w,plate.h);
+  pawSceneAirLive(room,plate,im);
   if(foot&&Number.isInteger(avatar))backHuman(...foot,avatar,false,'up',travellerRoomScale(H,cam.scale))
  }finally{ctx.restore()}
 }
