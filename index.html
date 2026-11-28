@@ -1,18 +1,49 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Pawradise · Fortune Valley</title><link rel="preload" as="image" href="assets/visual/painted/journey/gate.webp" fetchpriority="high"><style>body{margin:0;background:#263c32;color:#f6ecd3;font:18px Georgia;display:grid;place-items:center;min-height:100dvh}main{text-align:center;padding:24px}small{display:block;margin-top:12px}button{font:inherit}</style></head><body><main>Pawradise<small role="status" aria-live="polite">Preparing your journey…</small></main><script src="src/assemble.js"></script><script>
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Pawradise · Fortune Valley</title>
+<link rel="preload" as="image" href="assets/visual/painted/journey/gate.webp" fetchpriority="high">
+<style>
+html,body{margin:0;min-height:100%;background:#263c32;color:#f6ecd3;font:18px Georgia,"Songti SC",serif}body{min-height:100vh;min-height:100dvh;display:grid;place-items:center}
+.bootGate{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;pointer-events:none}
+.bootShade{position:fixed;inset:0;background:linear-gradient(180deg,#263c3208 35%,#263c32bd 100%);pointer-events:none}
+main{position:relative;align-self:end;text-align:center;box-sizing:border-box;width:min(100%,480px);padding:24px 20px max(30px,env(safe-area-inset-bottom,0px));text-shadow:0 1px 4px #263c32}h1{font-size:clamp(24px,5vw,34px);margin:0 0 8px;font-weight:normal}small{display:block;line-height:1.5;margin-top:10px}button{font:inherit;min-height:44px;background:#edddbd;color:#443d2d;border:1px solid #9e8966;border-radius:8px;padding:8px 18px}button:focus-visible{outline:2px solid #fff1c6;outline-offset:3px}
+@media(orientation:landscape){.bootGate{object-fit:contain}.bootShade{background:linear-gradient(90deg,#263c32b0,transparent 32%,transparent 68%,#263c32b0)}main{background:#263c3299;align-self:end}}
+</style></head><body>
+<img class="bootGate" src="assets/visual/painted/journey/gate.webp" alt="" fetchpriority="high" decoding="async">
+<div class="bootShade" aria-hidden="true"></div>
+<main><h1>Pawradise</h1><small role="status" aria-live="polite">Preparing your journey… · 正在准备旅程</small></main>
+<script>
+const bootMark=name=>{try{performance.mark('paw:'+name)}catch{}};
+bootMark('boot-start');
+const gate=document.querySelector('.bootGate');
+function gateReady(){if(gate.naturalWidth)bootMark('gate-image-ready')}
+if(gate.complete)gateReady();else gate.addEventListener('load',gateReady,{once:true});
 async function fetchText(path){
-  for(let attempt=0;attempt<2;attempt++){
-    const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),25000);
-    try{const res=await fetch(path,{cache:'no-cache',signal:controller.signal});if(!res.ok)throw Error(path+' '+res.status);return await res.text()}
-    catch(e){if(attempt===1)throw e}finally{clearTimeout(timer)}
-  }
+ for(let attempt=0;attempt<2;attempt++){
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),25000);
+  try{const res=await fetch(path,{cache:'no-cache',signal:controller.signal});if(!res.ok)throw Error(path+' '+res.status);const value=await res.text();bootMark('source-ready:'+path);return value}
+  catch(e){if(attempt===1)throw e}finally{clearTimeout(timer)}
+ }
+}
+function loadAssembler(){
+ return new Promise((resolve,reject)=>{
+  const script=document.createElement('script');script.src='src/assemble.js';script.async=true;
+  const finish=(error)=>{clearTimeout(timer);script.onload=script.onerror=null;if(error){script.remove();reject(error)}else if(typeof assembleMeowBox==='function'){bootMark('assembler-ready');resolve()}else reject(Error('Assembler unavailable'))};
+  const timer=setTimeout(()=>finish(Error('Assembler timeout')),25000);
+  script.onload=()=>finish();script.onerror=()=>finish(Error('Assembler failed'));document.head.append(script)
+ })
 }
 async function boot(){
-  const progress=document.querySelector('small');
-  const paths=['src/shell.html','src/engine.js','src/extensions.js','src/release-fixes.js','src/town-polish.js','src/town-access.js','src/resident-remarks.js','src/paw-motion-audio.js','src/paw-economy.js','src/startup.js'];let loaded=0;
-  const track=p=>p.then(v=>{progress.textContent='Preparing your journey… '+Math.round(++loaded/paths.length*100)+'%';return v});
-  const files=await Promise.all(paths.map(p=>track(fetchText(p))));
-  const html=assembleMeowBox(files[0],files.slice(1));
-  document.open();document.write(html);document.close();
+ const progress=document.querySelector('small');
+ const paths=['src/shell.html','src/engine.js','src/extensions.js','src/release-fixes.js','src/town-polish.js','src/town-access.js','src/resident-remarks.js','src/paw-motion-audio.js','src/paw-economy.js','src/startup.js'];
+ // Begin the assembler and source requests together instead of blocking all
+ // source downloads on an earlier synchronous script request.
+ const slow=setTimeout(()=>{if(progress.isConnected)progress.textContent='The train is taking a little longer… · 旅程稍有延误'},4500);
+ try{
+  const [files]=await Promise.all([Promise.all(paths.map(fetchText)),loadAssembler()]);
+  bootMark('sources-ready');
+  const html=assembleMeowBox(files[0],files.slice(1));bootMark('assembled');
+  document.open();document.write(html);document.close()
+ }finally{clearTimeout(slow)}
 }
-boot().catch(error=>{console.error(error);const main=document.querySelector('main');if(!main)return;main.replaceChildren();const title=document.createElement('h2');title.textContent='Your train is delayed';const detail=document.createElement('p');detail.textContent='旅途稍有延误 · Your saved progress has not been cleared.';const button=document.createElement('button');button.textContent='Try again · 重试';button.onclick=()=>location.reload();main.append(title,detail,button)});
+boot().catch(error=>{bootMark('boot-failed');console.error(error);const main=document.querySelector('main');if(!main)return;main.replaceChildren();const title=document.createElement('h2');title.textContent='Your train is delayed';const detail=document.createElement('p');detail.textContent='旅途稍有延误 · Your saved progress has not been cleared.';const button=document.createElement('button');button.textContent='Try again · 重试';button.onclick=()=>location.reload();main.append(title,detail,button)});
 </script></body></html>
