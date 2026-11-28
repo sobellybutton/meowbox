@@ -50,6 +50,9 @@ function pawConsultInputPlan(form,kind){
  const time=form.querySelector('input[type=time]'),place=form.querySelector('details select'),nums=[...form.querySelectorAll('input[type=number]')];
  return date&&time&&place&&nums.length===3?[date,time,place,...nums]:[]
 }
+function pawConsultPresetReady(place,fields){
+ return !!place&&place!=='custom'&&fields.length===3&&fields.every(f=>String(f.value).trim()!==''&&Number.isFinite(Number(f.value))&&f.checkValidity())
+}
 function pawConsultCurrent(origin,current){
  return !!origin&&!!current&&origin.room===current.room&&origin.form===current.form&&origin.subject===current.subject
 }
@@ -77,6 +80,10 @@ function pawInstallNativeConsultation(){
  // Remove the detached portrait and make its question a single quiet speech strip.
  const sayPrior=say,closePrior=closeTalk;
  say=function(name,words,choices=[],...rest){
+  if(room==='tarot'&&['tarot','love'].includes(activity)&&name===tr('Fortune Teller','占卜师')&&['cards','focus'].includes(state.readStage)&&typeof words==='string'&&choices.some(c=>c[0]===tr('Back to the table','回到牌桌'))){
+   const index=state.readCards?.findIndex(c=>{const d=tarotDeck[c.i];return d&&words.split('\n').includes(tr(d[0],d[1])+' · '+orient(c.rev))});
+   if(index>=0&&state.readFlip?.[index]>=0&&t-state.readFlip[index]>=.72){state.readFocus=index;state.readStage='focus';state.readAt=t-.45}
+  }
   const v=sayPrior(name,words,choices,...rest),panel=$('dialogue');
   const consult=(room==='tarot'&&name===tr('Fortune Teller','占卜师'))||(room==='destiny'&&name===tr('Master Yue','月师傅'));
   panel.toggleAttribute('data-paw-desk-dialogue',consult);
@@ -88,13 +95,78 @@ function pawInstallNativeConsultation(){
   $('dialogue').removeAttribute('data-paw-desk-dialogue');$('dialogue').removeAttribute('data-paw-keepsake');
   return closePrior.apply(this,args)
  };
+ const choicePrior=pawOpenCardChoice;
+ pawOpenCardChoice=function(...args){
+  const result=choicePrior(...args);
+  if(result&&room==='tarot'){
+   const n=activity==='tarot'?1:state.readSpreadSize===5?5:3;
+   hint(n===1?'Choose a card, or shuffle again.':'Choose '+n+' cards, or shuffle again before choosing.',n===1?'选一张有感觉的牌，也可以重新洗牌。':'选 '+n+' 张牌，也可以先重新洗牌。')
+  }
+  return result
+ };
+ const actionPrior=action;
+ action=function(id,...args){
+  if(room!=='tarot'||activity||id!=='tarot')return actionPrior.call(this,id,...args);
+  closeTalk();
+  const pickTopic=()=>{
+   closeTalk();start('love');const run=state;
+   if(activity!=='love'||run.readStage!=='topic')return;
+   say(tr('Fortune Teller','占卜师'),tr('What is on your mind? You can keep the details to yourself.','今天想问些什么？细节可以留在心里。'),[
+    ...readingTopics.map((topic,i)=>[tr(...topic),()=>{if(state===run&&activity==='love')readingTopic(i)}]),
+    [tr('Back to the table','回到牌桌'),()=>{if(state===run){closeTalk();$('back').click()}}]
+   ])
+  };
+  say(tr('Fortune Teller','占卜师'),tr('Come, sit with me. Is there something you would like to ask, or just a little guidance for today?','来，坐吧。心里有什么想问的，还是想看看今天的指引？'),[
+   [tr('Daily guidance · 1 card','今日指引 · 一张牌'),()=>{closeTalk();start('tarot')}],
+   [tr('Find some clarity · 3 cards','三牌解惑 · 三张牌'),pickTopic],
+   [tr('Just visiting','只是来坐坐'),closeTalk]
+  ])
+ };
+ function yueAfterReading(words){
+  if(room!=='destiny')return;
+  $('page').style.display='none';
+  say(tr('Master Yue','月师傅'),words||tr('Is there anything else you would like to look at?','还想看看别的吗？'),[
+   [tr('My year ahead','生肖流年'),()=>pawYueDeskChoose('year')],
+   [tr('My birth chart','生辰命盘'),()=>pawYueDeskChoose('chart')],
+   [tr('Weekly star signs','本周星座'),()=>pawYueDeskChoose('stars')],
+   [tr('Finish for now','今天先到这里'),()=>{closeTalk();hint('Take your time. Explore the room or head back to the valley.','慢慢来，可以继续逛逛，也可以返回福运谷。')}]
+  ])
+ }
+ function yueResultNavigation(q,kind){
+  if(room!=='destiny')return;
+  const pane=$('page'),nav=element('nav','',q,'pawYueResultNav');
+  nav.setAttribute('aria-label',tr('Reading navigation','问事导航'));q.prepend(nav);
+  b(nav,tr('Ask Yue again','再问月师傅'),()=>yueAfterReading());
+  b(nav,tr('Return to room','回到小屋'),()=>{pane.style.display='none';closeTalk();hint('Explore the room or head back to the valley.','继续逛逛，或返回福运谷。')});
+  if(kind==='stars'){
+   const grid=q.querySelector('.signNotebookGrid'),out=q.querySelector('.signNotebookResult');
+   if(grid&&out)grid.addEventListener('click',e=>{
+    if(!e.target.closest('button')||room!=='destiny'||!out.isConnected||!out.children.length)return;
+    const words=[out.querySelector('h2')?.textContent,out.querySelector('small')?.textContent,out.querySelector('p')?.textContent].filter(Boolean).join('\n\n');
+    pane.style.display='none';
+    say(tr('Master Yue','月师傅'),words,[
+     [tr('What else can we explore?','还能看看什么？'),()=>yueAfterReading()],
+     [tr('Choose another sign','看看其他星座'),()=>{closeTalk();if(out.isConnected)pane.style.display='block'}],
+     [tr('Finish for now','今天先到这里'),()=>{closeTalk();hint('Explore the room or head back to the valley.','继续逛逛，或返回福运谷。')}]
+    ])
+   })
+  }
+  // The original save handler owns the collectible. Offer next steps only
+  // after it has actually disabled its successful collection button.
+  q.addEventListener('click',e=>{
+   const btn=e.target.closest('.destinySave');
+   if(btn&&btn.disabled&&room==='destiny')yueAfterReading(tr('Your scroll is safely tucked away. Shall we explore something else?','卷轴已经收好啦。还想看看别的吗？'))
+  });
+ }
  // Keep the chart and its validation engine in place. Mirror one original
  // editable field per spoken question; all changes reach its real handlers.
  const deskPrior=pawYueDeskPresent;
  pawYueDeskPresent=function(kind){
   const result=deskPrior(kind);
-  if(room!=='destiny'||!['year','chart'].includes(kind))return result;
-  const pane=$('page'),q=$('content'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
+  if(room!=='destiny')return result;
+  const q=$('content');yueResultNavigation(q,kind);
+  if(!['year','chart'].includes(kind))return result;
+  const pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
   if(!form||form.hidden||out?.children.length||!form.classList.contains('pawYueGuidedForm'))return result;
   const fields=pawConsultInputPlan(form,kind);if(!fields.length)return result;
   const origin={room,form,subject:yueSubject};
@@ -117,14 +189,26 @@ function pawInstallNativeConsultation(){
    };
    const next=()=>{
     if(!valid()||!sync())return;
+    if(kind==='chart'&&i===2&&pawConsultPresetReady(field.value,fields.slice(3))){
+     const city=field.selectedOptions[0]?.textContent||field.value;
+     say(tr('Master Yue','月师傅'),tr('I have filled in the location details for '+city+'. Are these the usual local settings for your birth date?','已按'+city+'填好地点资料。出生当时用的是当地通常的时区吗？'),[
+      [tr('Yes, use these details','是的，使用这些资料'),submitReading],
+      [tr('Adjust birth details','核对或修改地点资料'),()=>show(3)],
+      [tr('Choose another birthplace','重新选择出生地'),()=>show(2)]
+     ]);return
+    }
     if(i<fields.length-1){show(i+1);return}
+    submitReading()
+   };
+   function submitReading(){
+    if(!valid())return;
     closeTalk();pane.style.display='block';
     form.requestSubmit();
     if(!out?.querySelector('.ziGrid,.yueReadingFront')){
      const invalid=fields.findIndex(f=>!f.checkValidity());
      show(invalid>=0?invalid:i,tr('Please check these details.','请核对资料。'))
-    }
-   };
+    }else{pane.scrollTop=0}
+   }
    const choices=[[i===fields.length-1?tr('Ask Yue','请月师傅指点'):tr('Continue','继续'),next]];
    if(i>0)choices.push([tr('Previous','上一步'),()=>show(i-1)]);
    choices.push([tr('Back to Yue','返回问事'),()=>{if(valid())yueReadingHub()}]);
@@ -140,7 +224,7 @@ function pawInstallNativeConsultation(){
  // without entering the generic share page. Archive sharing stays unchanged.
  const sharePrior=openMeowShare;
  openMeowShare=function(raw,back=null){
-  if(room!=='tarot'||!['tarot','love'].includes(activity)||raw?.kind!=='tarot')return sharePrior(raw,back);
+  if(room!=='tarot'||!['tarot','love'].includes(activity)||raw?.kind!=='tarot'||$('page').style.display==='block')return sharePrior(raw,back);
   const data=sharePublicData(raw),run=state,kind=activity;
   if(!data?.cards?.length)return;
   let format=zh?'xhs':'feed',cn=zh,ready=null,version=0;
@@ -184,6 +268,8 @@ function pawInstallNativeConsultation(){
  #game #dialogue[data-paw-desk-dialogue] #choices button{font:500 14px/1.25 Georgia,"Songti SC",serif!important;text-align:center!important;border-radius:3px!important}
  #game #dialogue .pawDeskField{grid-column:1/-1;display:block;min-width:0}
  #game #dialogue .pawDeskField :is(input,select){box-sizing:border-box;display:block;width:100%;min-height:44px;font-size:16px;background:#fff6e1;color:#493e31;border:1px solid #b3a17e;border-radius:3px;padding:7px}
+ #game #page[data-paw-yue-desk] .pawYueResultNav{position:sticky;top:0;z-index:8;display:flex;justify-content:space-between;gap:6px;padding:5px;background:#f0e4ce;border-bottom:1px solid #b6a17e}
+ #game #page[data-paw-yue-desk] .pawYueResultNav button{min-height:44px;flex:1;white-space:normal}
  #game #dialogue[data-paw-keepsake]{max-height:78dvh!important}
  #game #dialogue[data-paw-keepsake] .pawTarotKeepsake{grid-column:1/-1;display:grid;gap:5px;min-width:0}
  #game #dialogue[data-paw-keepsake] .meowSharePreview{max-height:35dvh;width:auto;max-width:100%;margin:auto}
