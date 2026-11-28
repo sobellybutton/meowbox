@@ -282,12 +282,12 @@
         },
         {
           "id": "ART-02-wave",
-          "action": "Reconcile PR #67's four original front-facing wave key poses, then recover the alternate wave-cycle atlas via exact blob/base64 or original asset archive; inspect alpha and identity, extract/register usable motion frames or create missing side/back and resident response poses. Integrate continuous gesture motion and correct any foot, size and occlusion defects in normal-input phone/desktop play.",
+          "action": "Reconcile #70 (supersedes #67), then recover or produce identity-matched transparent wave cycles for the current four travellers, including side/back views, and matching named resident response poses. GitHub alternate-wave-cycle-atlas.webp (1,783,736 bytes, 0bd4880c) cannot be inspected through current binary connector; use the original asset archive if available, otherwise create only the missing production frames. Recovered Library sheet has different character clothing/proportions and a baked checkerboard and must not be substituted. Register frame foot pivots, integrate continuous hand motion, and verify ordinary local/opted-in peer greetings across phone/desktop with stable scale and no overlap.",
           "depends": [],
           "lane": "interactive artwork",
           "acceptance": "Player wave and resident response rendered with identity, anchored feet and hand motion.",
           "state": "partial_implementation_staged",
-          "evidence": "PR #67, 93254569: four actual WebPs inspected and reused in local greeting renderer; 2,888 exact-source guard assertions passed, source and persisted test parse. Full gesture cycle, resident response, rendered review and integration not accepted. Ordinary base64 retrieval of alternate atlas returned empty."
+          "evidence": "PR #67, 93254569: four actual WebPs inspected and reused in local greeting renderer; 2,888 exact-source guard assertions passed, source and persisted test parse. Full gesture cycle, resident response, rendered review and integration not accepted. Ordinary base64 retrieval of alternate atlas returned empty. PR #70 (66a06cc8) reconciles #67 on current candidate #66 and adds actual eligible shared-peer key pose rendering; 936 focused peer eligibility checks passed, source and persisted test parse. Local pose limited to matching facing and consent state. Current Library alternate sheet rejected after inspection; actual full-cycle and named NPC response art remain open."
         },
         {
           "id": "ART-02-integrate-furniture",
