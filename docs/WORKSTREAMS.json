@@ -1630,7 +1630,10 @@
         "Project batch 1: 378b1a11 caches same-source successful image decode, deduplicates pending decode, rejects changed-source results and avoids eager unrelated district decoding and stale nearby-room warm jobs. 8 isolated exact readiness assertions passed; device timings unverified.",
         "Owner P0: entrance-to-room pauses and old/new face swaps on turning. 659badf7/0ffb4290 lock a single traveller art family for each scene/room visit; require all directions together and use ready family for idle as well as walking. All direction requests initiated; 27 helper checks passed. Entrance DOM crop swaps, other resident renderers, private home actors and true device timing still require audit. Do not mark complete."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-entrance-crop",
+        "until": 1795842604934
+      },
       "blocker": "Actual iPhone/WebKit cold/warm cache, all other room assets and visual acceptance remain open."
     },
     {
