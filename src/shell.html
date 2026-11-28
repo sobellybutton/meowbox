@@ -108,11 +108,23 @@ html #game>#worldSigns>.worldSign:is([data-door="arcade"],[data-door="mystery"],
  --sign-tint:linear-gradient(#edd9bdde,#d9bda3d9);
  --sign-ink:#593b30;--sign-edge:#946149;--sign-inner:#f9e8c794;
 }
-/* Discovery Station: soft indigo and aged brass. */
-html #game>#worldSigns>.worldSign:is([data-door="quiz"],[data-door="story"],[data-door="match"])>.doorPlaque{
+/* Starlight Valley: all four houses share soft indigo and aged brass. */
+html #game>#worldSigns>.worldSign:is([data-door="quiz"],[data-door="story"],[data-door="match"],[data-door="curiosity"])>.doorPlaque{
  --sign-grain:url('assets/visual/painted/signage/ribbon-paper.webp');
  --sign-tint:linear-gradient(#40566ad9,#343d59df);
  --sign-ink:#fff0ce;--sign-edge:#bfa575;--sign-inner:#f2d8aa33;
+}
+/* Long English names can use two lines without covering the whole house.
+   Chinese remains naturally compact; the door hit target stays separate. */
+html #game>#worldSigns>.worldSign:is([data-door="quiz"],[data-door="story"],[data-door="match"],[data-door="curiosity"])>.doorPlaque{
+ max-width:min(132px,34vw)!important;
+ overflow-wrap:anywhere!important;
+ text-wrap:balance;
+}
+@media(max-width:375px){
+ html #game>#worldSigns>.worldSign:is([data-door="quiz"],[data-door="story"],[data-door="match"],[data-door="curiosity"])>.doorPlaque{
+  padding:4px 6px!important;
+ }
 }
 /* Route information has its own understated, shared railway identity. */
 html #game>#worldSigns>.worldSign[data-door="station"]>.doorPlaque{
