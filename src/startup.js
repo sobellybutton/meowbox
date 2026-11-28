@@ -12198,6 +12198,11 @@ function pawRailEdgePosition(g,width,height,obstacles){
  }
  return null
 }
+// In the valley, wayfinding appears as the traveller approaches the railway.
+ // The Explore journal remains available from the dock at any position.
+function pawRailApproachVisible(district,playerY,stationY){
+ return district!=='fortune'||(Number.isFinite(playerY)&&Number.isFinite(stationY)&&playerY<=stationY+500);
+}
 let pawRailEdgeAt=-Infinity,pawRailPlaqueSince=null,pawRailEdgeScene=null,pawRailEdgeSize='';
 const pawRailEdgeSignsBefore=syncSigns;
 syncSigns=function(...args){
@@ -12206,6 +12211,11 @@ syncSigns=function(...args){
   pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
  }
  const sign=signButtons.get('station'),game=$('game'),g=game.getBoundingClientRect(),now=performance.now(),size=g.width+'|'+g.height;
+ const station=maps[scene].st.find(item=>item[0]==='station');
+ if(!pawRailApproachVisible(scene,p.y,station?.[2])){
+  if(sign&&!sign.hidden)sign.hidden=true;
+  pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
+ }
  const changed=pawRailEdgeScene!==scene||pawRailEdgeSize!==size;
  if(changed){pawRailEdgeScene=scene;pawRailEdgeSize=size;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity}
  if(!changed&&now-pawRailEdgeAt<75)return result;pawRailEdgeAt=now;
@@ -12902,10 +12912,15 @@ document.head.append(pawCafeReflectionCss);
 // Warm the selected traveller during registration and the railway ride,
 // including returning players. Existing gate artwork stays visible until ready.
 const pawAdmissionRenderBefore=proRender;
+let pawArrivalGateWarm=null;
 proRender=function(...args){
  const result=pawAdmissionRenderBefore(...args);
  if(!proposal.hidden){
   pawReadyMap('fortune');
+  if(!pawArrivalGateWarm){
+   pawArrivalGateWarm=new Image();pawArrivalGateWarm.decoding='async';pawArrivalGateWarm.fetchPriority='low';
+   pawArrivalGateWarm.src='assets/visual/painted/worlds/gateway/scene.webp';
+  }
   if(Number.isInteger(proAvatar??avatar))pawWarmSelectedTraveller(proAvatar??avatar)
  }
  return result

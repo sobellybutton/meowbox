@@ -16,6 +16,8 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
    await page.locator('#proposal footer button.next').click();
    await page.locator('#proposal footer .actions button').first().click();
    await page.locator('#proposal .rail-arrive').click({timeout:20000});
+   await page.locator('#proposal .shrine-enter').waitFor({state:'visible',timeout:20000});
+   if(process.env.PAW_VALLEY_CONTINUITY==='1')await page.screenshot({path:'test-results/entrance-'+name+'-gate.png'});
    await page.locator('#proposal .shrine-enter').click({timeout:20000});
    await page.locator('#proposal').waitFor({state:'hidden',timeout:30000});
    await page.waitForFunction(()=>!transitioning&&!room&&scene==='fortune');
@@ -40,6 +42,23 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
     assert(mapStyle.gear.width>=44&&mapStyle.gear.height>=44,'Settings touch target');
     for(const art of [mapStyle.profileArt,mapStyle.coinArt,mapStyle.gearArt,mapStyle.dockArt])assert(art.includes('paper_texture.webp'),'Shared painted paper must render');
     assert(mapStyle.plaque&&mapStyle.plaque.borderImage==='none'&&mapStyle.plaque.hit.height>=44,'Slim plaque must retain accessible target');
+   }
+   if(process.env.PAW_VALLEY_CONTINUITY==='1'){
+    const journey=await page.evaluate(()=>{
+     const station=maps.fortune.st.find(item=>item[0]==='station');
+     const early=pawRailApproachVisible('fortune',p.y,station[2]);
+     const edge=document.querySelector('.pawRailEdge'),sign=signButtons.get('station');
+     const visible=e=>!!e&&!e.hidden&&getComputedStyle(e).visibility==='visible'&&e.getClientRects().length>0;
+     const dock=document.querySelector('#dock'),bounds=dock.getBoundingClientRect();
+     const buttons=[...dock.querySelectorAll('button:not([hidden])')].filter(visible).map(e=>({width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height,icon:e.querySelector('.dockIcon svg')?.getBoundingClientRect().width}));
+     return {early,edge:visible(edge),sign:visible(sign),near:pawRailApproachVisible('fortune',station[2]+400,station[2]),other:pawRailApproachVisible('home',1000,300),dock:{left:bounds.left,right:bounds.right,height:bounds.height},buttons};
+    });
+    assert.equal(journey.early,false,'New arrivals should explore the valley before railway wayfinding appears');
+    assert.equal(journey.edge,false,'No floating railway shortcut at the gate');
+    assert.equal(journey.sign,false,'No early railway plaque at the gate');
+    assert.equal(journey.near,true);assert.equal(journey.other,true);
+    assert(journey.buttons.length>=4&&journey.buttons.every(b=>b.width>=44&&b.height>=44&&b.icon>=20&&b.icon<=25),'Dock touch targets and icons: '+JSON.stringify(journey));
+    assert(journey.dock.left>=0&&journey.dock.right<=width+1&&journey.dock.height<=76,'Dock footprint: '+JSON.stringify(journey));
    }
    await page.screenshot({path:'test-results/settings-'+name+'-map.png'});
    await page.evaluate(()=>{localStorage.setItem('meowbox-preview-resetProbe','keep until confirmed');localStorage.setItem('other-app-settings-test','preserve')});
