@@ -31,8 +31,8 @@ const lines={
     ],
     [
       "steps",
-      "Nobody gives the stone steps a deadline. They still get us there.",
-      "石阶没有截止日期，也一样能把人送到想去的地方。"
+      "The steps have been here longer than any of our worries.",
+      "这石阶都在这儿好多年了，咱们那点烦心事算什么。"
     ]
   ],
   "tarot": [
@@ -240,8 +240,8 @@ const lines={
     ],
     [
       "spreadsheet",
-      "I opened a spreadsheet to decide what to eat. Send help.",
-      "为了决定午饭吃什么，我竟然打开了表格。"
+      "I finally chose lunch. By the time I got there, the stall had closed.",
+      "午饭终于想好吃什么了，走过去一看，人家收摊了。"
     ],
     [
       "printer",
@@ -346,8 +346,8 @@ const lines={
     ],
     [
       "fishnet",
-      "A steady hand is better than a heroic splash.",
-      "捞金鱼讲究手稳，不是谁溅的水花大谁厉害。"
+      "If the little fish swims away, let it. You're here to enjoy yourself.",
+      "小鱼游走了就让它走嘛，你是来玩的，又不是来交差的。"
     ],
     [
       "rhythm",
@@ -479,8 +479,8 @@ const lines={
     ],
     [
       "draft",
-      "My first draft had three endings. None involved replying to email.",
-      "初稿写了三个结局，没有一个需要回邮件。"
+      "My hero opened a bookshop in one ending. In another, she adopted all the cats.",
+      "一个结局里主角开了书店，另一个结局里她收养了所有猫。"
     ]
   ],
   "cafe": [
@@ -537,15 +537,15 @@ const extraLines={
     ],
     [
       "questionmark",
-      "A question mark is allowed to remain a question mark.",
-      "问号不必今天就变成句号。"
+      "If a question feels too big, we can start with a smaller one.",
+      "问题太大？那我们先从一件小事聊起。"
     ]
   ],
   "yue": [
     [
       "redink",
-      "I used red ink for a date, not for your performance review.",
-      "朱砂是拿来标日子的，不是给你打绩效的。"
+      "Ah, wrong ink again. This red mark is mine to explain, not yours.",
+      "哎呀，又拿错墨了。这一笔算老夫的，可不算你的。"
     ],
     [
       "pagewind",
@@ -556,8 +556,8 @@ const extraLines={
   "garden": [
     [
       "bamboo",
-      "The bamboo pipe has one job. What a luxurious career.",
-      "竹筒只需要做好一件事，真是令人羡慕的职业。"
+      "Listen. The bamboo pipe is keeping time for the whole garden.",
+      "你听，那竹筒在给整个小院打拍子呢。"
     ],
     [
       "leafrent",
@@ -568,8 +568,8 @@ const extraLines={
   "grandma": [
     [
       "soupclock",
-      "Soup is ready when it smells right, not when the calendar says so.",
-      "汤香了才算好，日历催也没用。"
+      "The nose says it's ready. The clock has never cooked dinner.",
+      "闻着香就差不多咯。钟表又不会做饭。"
     ],
     [
       "garlic",
@@ -580,8 +580,8 @@ const extraLines={
   "mei": [
     [
       "teaspoon",
-      "I found three teaspoons in my apron. None can stir away Monday.",
-      "围裙里摸出三把茶匙，没一把能把周一搅没。"
+      "Three teaspoons in my apron! I've been looking for those all morning.",
+      "围裙里居然有三把茶匙！我找了一早上呢。"
     ],
     [
       "seatfree",
@@ -597,8 +597,8 @@ const extraLines={
     ],
     [
       "seen",
-      "The group chat is very active for people who say they are busy.",
-      "群里那群说自己很忙的人，聊得可真热闹。"
+      "The group chat went silent when someone asked who could help. Aiyo, so efficient.",
+      "群里刚才还聊得热闹，一问谁来帮忙，哎哟，全安静了。"
     ]
   ],
   "wang": [
@@ -657,8 +657,8 @@ const extraLines={
     ],
     [
       "straw",
-      "The straw has one opening and no complicated onboarding.",
-      "吸管插好就能用，不需要入职培训。"
+      "Somehow the last pearl always escapes the straw. It knows what it's doing.",
+      "最后一颗珍珠总是吸不上来，它肯定是故意的。"
     ]
   ],
   "souvenir": [
@@ -705,8 +705,8 @@ const extraLines={
     ],
     [
       "quiet",
-      "A comfortable silence does not need a rescue plan.",
-      "舒服的沉默，不需要谁来救场。"
+      "A little silence gives us time to notice how good the tea smells.",
+      "安静一会儿，才闻得到茶有多香。"
     ]
   ]
 };
@@ -872,8 +872,8 @@ const auntieVoiceLines={
   "ahma": [
     [
       "oxhorse",
-      "Work like an ox, run like a horse, eat like a mouse. Aiyo! Come sit down.",
-      "做牛做马，吃饭像只小老鼠。哎哟，快给阿嬷坐下来！"
+      "Aiyo, you work until your shoulders touch your ears. Sit properly, let Ah Ma see.",
+      "哎哟，累得肩膀都快耸到耳朵了。来，坐好，阿嬷看看。"
     ],
     [
       "slipperboss",
@@ -909,8 +909,8 @@ const auntieVoiceLines={
     ],
     [
       "napping",
-      "That cat has never felt guilty about an afternoon nap. Quite a talent.",
-      "那只猫午睡从来不内疚，真是个值得学的本事。"
+      "That cat stole my seat. Look at its face. Apparently I'm the guest now.",
+      "猫咪霸占了我的位子。你看它那表情，好像我才是客人。"
     ]
   ],
   "arcade": [
@@ -960,8 +960,8 @@ const auntieVoiceLines={
     ],
     [
       "tripprice",
-      "A holiday is not a prize you have to earn by exhausting yourself first.",
-      "放假不是奖励，不用先把自己累坏了才配去玩。"
+      "This little souvenir can wait on the shelf while you look around. No need to decide now.",
+      "小摆件就在架上等你，先慢慢逛，不急着买。"
     ]
   ],
   "lab": [
@@ -977,8 +977,8 @@ const auntieVoiceLines={
     ],
     [
       "notreview",
-      "This isn't a review of how well you're doing at being a person.",
-      "这里可不是给你做人打绩效的地方。"
+      "You can be the loud one on Friday and the quiet one on Sunday. Both are you.",
+      "周五爱热闹，周日想安静，两种都是你呀。"
     ]
   ],
   "story": [
