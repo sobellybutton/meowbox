@@ -26,7 +26,9 @@ for(const id of ['tarot','destiny','quiz','story','match']){
  assert.ok(helpers.pawReadingCompatible(api,id,[[id,'en','zh']]));
  assert.ok(!helpers.pawReadingCompatible(api,id,[[id],['unmapped']]));
  for(const a of points){
-  assert.ok(a[0]>=145&&a[0]<=655&&a[1]>=565&&a[1]<=738,id+' legacy input bounds');
+  const desk=id==='destiny'&&a[0]===spec.stations.destiny[2]&&a[1]===spec.stations.destiny[3];
+  if(desk){const v=helpers.pawReadingNormalized(...a);assert.ok(Math.abs(v[0]-.43)<1e-8&&Math.abs(v[1]-.47)<1e-8,'Yue desk-side approach');assert.ok(a[1]<565,'Yue approach uses mapped route, not legacy clamp')}
+  else assert.ok(a[0]>=145&&a[0]<=655&&a[1]>=565&&a[1]<=738,id+' legacy input bounds');
   assert.ok(api.safe(id,helpers.pawReadingNormalized(...a)),id+' mapped floor');
   for(const b of points)assert.ok(api.route(id,helpers.pawReadingNormalized(...a),helpers.pawReadingNormalized(...b)),id+' mapped route');
  }

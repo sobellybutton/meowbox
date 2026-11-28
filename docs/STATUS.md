@@ -1311,3 +1311,7 @@ Corrects both failed divination result states with a visible 1.2-second pause, t
 
 ### Combined candidate reconciliation after temple release (28 November)
 Reconciled main de45561f into consolidated candidate c5d497dd: 25 exact runtime hunks, temple focused test in both workflows, garden harness extracts real target declaration. Both corrected regressions passed in connector harness: 101 pose pairs and deferred routes; 2,021 temple and resident checks. Prior candidate 46135424291: district and Chromium/WebKit device jobs succeeded; focused failed at garden dependency. New combined CI and visual acceptance required. Preserve active Pages deployment 46135837805.
+
+
+### Broad CI correction, 28 November
+Previous candidate run 46135424282: four rendered experience jobs and share exports passed; broad entrance/activity failed at retired no-confirmation button and focused layout test at new Yue desk coordinate. Correct test contract: normal input confirms every stick, exercises a deterministic Yin Bei and same-alcove retry, then actual confirmed receipt, keep and second confirmed tie. No test-only runtime bypass. Retain physical mapped safe floor, route and camera checks; exact new desk approach (.43,.47) exempted only from obsolete legacy y clamp. Test and inline workflow JavaScript parsed. Requires execution on new candidate; active main release untouched.
