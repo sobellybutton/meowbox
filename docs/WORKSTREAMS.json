@@ -1505,7 +1505,10 @@
       "evidence": [
         "f7345e1e + 9c0c07e6: atomic same-place reply admission, strict UUID/body validation, expired report exclusion, regression script extended; source parse and UUID check passed; SQLite workflow not yet verified."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-20261128-community-safety",
+        "until": 1795833403453
+      },
       "blocker": "Worker endpoint remains blank; SQLite CI and actual deployed multi-client consent, moderation and presence verification pending."
     },
     {
