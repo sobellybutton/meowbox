@@ -13972,7 +13972,7 @@ function pawYueQuestionSteps(form,out,kind){
  form.classList.add('pawYueGuidedForm');
  const question=element('p','',form,'pawYueQuestion');form.prepend(question);question.setAttribute('aria-live','polite');
  const controls=element('div','',form,'pawYueStepNav'),back=b(controls,tr('Previous','上一步'),()=>show(index-1)),next=b(controls,tr('Continue','继续'),advance);back.type=next.type='button';submit.before(controls);
- function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));question.textContent=tr(...questions[index]);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1)}
+ function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));question.textContent=tr(...questions[index]);form.dataset.pawYueTurn=String(index);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1);if(form.closest('#dialogue'))pawYueSpeakCurrentQuestion(form)}
  function advance(){if(finished||index>=steps.length-1)return;for(const field of steps[index].flatMap(n=>[...n.querySelectorAll('input,select')]))if(!field.checkValidity()){field.reportValidity();return}show(index+1)}
  form.addEventListener('keydown',e=>{if(!finished&&index<steps.length-1&&e.key==='Enter'&&e.target.matches('input')){e.preventDefault();advance()}});
  form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();if(controls.contains(submit))controls.before(submit);controls.remove()}});
@@ -15327,11 +15327,24 @@ function pawYueRestoreInline(){
  pawYueInline=null;visit.observer?.disconnect();
  if(visit.anchor.isConnected)visit.anchor.replaceWith(visit.form);else visit.form.remove();
  $('dialogue').removeAttribute('data-paw-yue-question');
+ $('dialogue').removeAttribute('data-paw-yue-reply');
+ $('line').removeAttribute('aria-live');
 }
 const pawYueInlineClose=closeTalk;
 closeTalk=function(...args){pawYueRestoreInline();return pawYueInlineClose(...args)};
 const pawYueInlineSay=say;
 say=function(...args){pawYueRestoreInline();return pawYueInlineSay(...args)};
+// The same conversation surface speaks the question; the original form is
+// only the private input/calculation transport, not another visible panel.
+function pawYueSpeakCurrentQuestion(form){
+ const panel=$('dialogue'),question=form.querySelector('.pawYueQuestion');
+ if(!question||!panel.contains(form))return;
+ $('line').textContent=question.textContent;
+ $('line').setAttribute('aria-live','polite');
+ panel.dataset.pawYueReply='true';
+ const details=form.querySelector('details');
+ if(details&&form.dataset.pawYueTurn==='2')details.open=true;
+}
 function pawYueInlineForm(kind){
  const q=$('content'),pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
  if(room!=='destiny'||!form||!out||form.hidden||form.style.display==='none'||!form.classList.contains('pawYueGuidedForm'))return false;
@@ -15341,6 +15354,7 @@ function pawYueInlineForm(kind){
  say(tr('Master Yue','月师傅'),'',[[tr('Return to our conversation','回到茶叙'),()=>{closeTalk();yueReadingHub()}]]);
  const panel=$('dialogue');panel.dataset.pawYueQuestion='true';
  panel.insertBefore(form,$('choices'));
+ pawYueSpeakCurrentQuestion(form);
  const visit={form,anchor,out,kind,observer:null,scene,room};
  pawYueInline=visit;
  visit.observer=new MutationObserver(()=>{
@@ -15431,7 +15445,7 @@ drawActivity=function(...args){
  if(room==='tarot'&&['tarot','love'].includes(activity)&&state.readStage==='focus'&&talkOpen&&$('dialogue').hasAttribute('data-paw-tarot-conversation')){
   const v=state.readCards?.[state.readFocus],im=pawReadingImage(pawReadingAPI(),'tarot');
   if(v&&pawRoomImageReady(im)){
-   const b=livingBounds(),w=Math.min(b.w*.34,b.h*.22),h=w*218/128,x=b.x+b.w*.69-w/2,y=b.y+b.h*.33-h/2;
+   const b=livingBounds(),w=Math.min(b.w*.30,b.h*.19),h=w*218/128,x=b.x+b.w*.70-w/2,y=b.y+b.h*.33-h/2;
    ctx.save();try{paintLivingBackdrop(im);ctx.save();ctx.shadowColor='#29282280';ctx.shadowBlur=8;round(x-2,y-2,w+4,h+4,2,'#e5d1a6','#a78c64');ctx.restore();paintReadingArtwork(x,y,w,h,v.i,v.rev)}finally{ctx.restore()}
    return
   }
@@ -15464,26 +15478,60 @@ say=function(name,words,choices=[],...rest){
  return value
 };
 closeTalk=function(...args){$('dialogue').removeAttribute('data-paw-chat-bar');return pawChatBarClose(...args)};
-const pawChatYuePresent=pawYueDeskPresent;
-pawYueDeskPresent=function(kind){
- const result=pawChatYuePresent(kind),visit=pawYueInline;
- if(!visit||visit.kind!==kind)return result;
+/* PAW_YUE_LOCAL_BIRTH_BEGIN */
+function pawYueLocalBirth(city,date,time){
+ const cities=[['Asia/Singapore',1.35,103.82],['Asia/Shanghai',30.27,120.16],['Asia/Shanghai',31.23,121.47],['Asia/Shanghai',39.9,116.4],['Asia/Hong_Kong',22.32,114.17],['Asia/Kuala_Lumpur',3.14,101.69],['Asia/Taipei',25.03,121.57],['Asia/Tokyo',35.68,139.69]];
+ const item=/^[0-7]$/.test(city)?cities[Number(city)]:null;
+ if(!item||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time))return null;
+ const wall=Date.parse(date+'T'+time+':00Z');if(!Number.isFinite(wall))return null;
+ try{
+  const fmt=new Intl.DateTimeFormat('en-GB',{timeZone:item[0],year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+  const local=instant=>{const q=Object.fromEntries(fmt.formatToParts(new Date(instant)).map(p=>[p.type,p.value]));return Date.parse(q.year+'-'+q.month+'-'+q.day+'T'+q.hour+':'+q.minute+':'+q.second+'Z')};
+  const offsets=new Set([-86400000,0,86400000].map(delta=>(local(wall+delta)-(wall+delta))/3600000));
+  const matches=[...offsets].filter(offset=>Number.isInteger(offset*4)&&offset>=-12&&offset<=14&&local(wall-offset*3600000)===wall);
+  return matches.length===1?[matches[0],item[1],item[2]]:null
+ }catch{return null}
+}
+/* PAW_YUE_LOCAL_BIRTH_END */
+const pawChatYueInlineForm=pawYueInlineForm;
+pawYueInlineForm=function(kind){
+ const result=pawChatYueInlineForm(kind),visit=pawYueInline;
+ if(!result||!visit||visit.kind!==kind)return result;
  const form=visit.form,controls=form.querySelector('.pawYueStepNav'),submit=form.querySelector('button[type=submit]');
+ if(form.dataset.pawYueReplyReady==='true')return result;
+ form.dataset.pawYueReplyReady='true';
+ if(submit)submit.textContent=kind==='chart'?tr('Prepare my chart','请师傅排盘'):tr('Tell me about my year','请师傅看看流年');
+ if(controls){const buttons=controls.querySelectorAll('button');if(buttons[1])buttons[1].textContent=tr('Continue','继续')}
  if(controls&&submit)controls.append(submit);
  const place=form.querySelector('details select');
  if(place){
   const nums=[...form.querySelectorAll('input[type=number]')],labels=nums.map(n=>n.closest('label')).filter(Boolean);
-  // Existing historical offset and custom coordinates remain accessible.
-  const update=()=>{const preset=!!place.value&&place.value!=='custom';form.dataset.pawBirthPreset=preset?'true':'false'};
-  place.addEventListener('change',update);update();
-  // Move only the coordinate inputs into a disclosure, never remove or disable them.
-  const coordLabels=labels.slice(1);
-  if(coordLabels.length===2&&coordLabels.every(n=>n.parentElement===form)){
-   const disclosure=element('details','',form,'pawYueCoordinates');element('summary',tr('Check coordinates','核对坐标'),disclosure);coordLabels[0].before(disclosure);disclosure.append(...coordLabels);
-   // The original guided controller owns their visibility; the disclosure follows location.
-   const show=()=>{const active=!place.closest('details').classList.contains('pawYueStepHidden');disclosure.hidden=!active;disclosure.open=active&&(!place.value||place.value==='custom')};
-   const observer=new MutationObserver(show);observer.observe(place.closest('details'),{attributes:true,attributeFilter:['class']});place.addEventListener('change',show);form.addEventListener('submit',()=>{if(!form.classList.contains('pawYueGuidedForm')){observer.disconnect();disclosure.hidden=false}});show()
-  }
+  // Resolve known birthplaces locally; retain precise values for the chart,
+  // without making a player enter coordinates or a time-zone offset.
+  const date=form.querySelector('input[type=date]'),time=form.querySelector('input[type=time]');
+  const custom=place.querySelector('option[value="custom"]');
+  if(custom)custom.textContent=tr('Another city (advanced)','其他城市（进阶选项）');
+  const details=place.closest('details');
+  details.querySelector('.yueSessionNote')?.remove();
+  const reply=element('small','',details,'pawYuePlaceReply');reply.setAttribute('aria-live','polite');
+  const update=()=>{
+   const preset=/^[0-7]$/.test(place.value),manual=place.value==='custom';
+   form.dataset.pawBirthPreset=preset?'true':'false';
+   labels.forEach(label=>label.classList.toggle('pawYueTechnical',!manual));
+   place.setCustomValidity('');reply.textContent='';
+   if(preset&&date?.value&&time?.value){
+    const value=pawYueLocalBirth(place.value,date.value,time.value);
+    if(!value){
+     nums[0].value='';
+     const message=tr('I cannot place that exact birth time reliably. Please check the date and time, or choose the advanced option.','这个出生时刻暂时无法准确确认。请核对日期和时间，或选择进阶选项。');
+     place.setCustomValidity(message);reply.textContent=message;
+    }else{
+     nums.forEach((field,i)=>field.value=String(value[i]));
+     reply.textContent=tr('Ah, '+place.selectedOptions[0].textContent+'. I have what I need.','原来是'+place.selectedOptions[0].textContent+'。资料齐了。');
+    }
+   }else if(manual)reply.textContent=tr('I do not have every city in my almanac yet. You may enter the precise details if you know them.','我的历书暂未收录所有城市。如果你知道准确资料，可以手动填写。');
+  };
+  place.addEventListener('change',update);date?.addEventListener('change',update);time?.addEventListener('change',update);update();
  }
  return result
 };
@@ -15618,6 +15666,117 @@ const pawVisualContinuityStyle=document.createElement('style');pawVisualContinui
 #game #content .hideoutPrimary button{border-radius:5px!important;box-shadow:none!important}
 #game.pawDockRoot.pawFocusedView:not(.pawInRoom):not(.pawRailJourneyActive) #dock:not([hidden]){z-index:24!important;background:#eee5d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 145px repeat!important;box-shadow:0 3px 10px #2e352c55!important}
 `;document.head.append(pawVisualContinuityStyle);
+
+const pawGroundedRitualStyle=document.createElement('style');
+pawGroundedRitualStyle.textContent=`html #game #dialogue[data-paw-chat-bar] .pawYueGuidedForm .pawYueTechnical{display:none!important}
+html #game #dialogue[data-paw-chat-bar] .pawYuePlaceReply{display:block;color:#f2e2bb;font-size:12px;line-height:1.4;margin-top:4px}
+html #game #dialogue[data-paw-chat-bar][data-paw-tarot-conversation] #choices{flex-wrap:wrap!important;overflow-x:visible!important}
+html #game #dialogue[data-paw-chat-bar][data-paw-tarot-conversation] #choices button{flex:1 1 100px!important;min-width:0!important;max-width:100%!important}`;
+document.head.append(pawGroundedRitualStyle);
+
+/* PAW_WISH_GROUNDED_BEGIN */
+// Coordinates are relative to the actual recovered garden painting, never
+// to the old abstract activity table. Feet stay beside the writing kiosk.
+const pawWishGroundFoot=[.245,.725],pawWishGroundPaper=[.13,.632];
+function pawWishRackPoint(slot){return [.754+(slot%4)*.06,.181+Math.floor(slot/4)*.036]}
+function pawWishGroundPoint(plate,point){return {x:plate.x+plate.w*point[0],y:plate.y+plate.h*point[1]}}
+function pawWishGroundSlots(records,carrying){
+ const used=new Set();return records.slice(carrying?-11:-12).map(w=>{
+  const slot=Number.isInteger(w.slot)&&w.slot>=0&&w.slot<12&&!used.has(w.slot)?w.slot:Array.from({length:12},(_,i)=>i).find(i=>!used.has(i));
+  used.add(slot);return {w,slot}
+ })
+}
+function pawWishGroundWalk(age,reverse=false){
+ const route=[pawWishGroundFoot,[.29,.64],[.235,.53],[.17,.445],[.245,.36],[.36,.325],[.57,.325],[.71,.29],[.735,.32]];
+ const q=reverse?route.slice().reverse():route,progress=Math.max(0,Math.min(q.length-1,age*2.5)),i=Math.min(q.length-2,Math.floor(progress)),f=progress-i;
+ return {point:[q[i][0]+(q[i+1][0]-q[i][0])*f,q[i][1]+(q[i+1][1]-q[i][1])*f],done:progress===q.length-1,dir:q[i+1][0]-q[i][0]>.045?'right':q[i+1][0]-q[i][0]<-.045?'left':q[i+1][1]<q[i][1]?'up':'down'}
+}
+/* PAW_WISH_GROUNDED_END */
+const pawWishGroundDrawBefore=drawActivity;
+drawActivity=function(...args){
+ if(room!=='wishes'||activity!=='wishes'||!pawRoomImageReady(pawWishLobbyArt()))return pawWishGroundDrawBefore(...args);
+ const run=state,im=pawWishLobbyArt(),b=livingBounds(),plate=pawReadingCoverPlate(b,im.naturalWidth,im.naturalHeight);
+ if(!plate)return pawWishGroundDrawBefore(...args);
+ const at=point=>pawWishGroundPoint(plate,point),still=residentReducedMotion.matches,stage=run.gardenStage;
+ continuityActivity=activity;
+ paintLivingBackdrop(im);
+ const carrying=stage==='carry',slots=pawWishGroundSlots(gardenWishes,carrying),taken=new Set(slots.map(v=>v.slot));
+ const scale=Math.max(.55,Math.min(2.4,plate.h*.135/94)),lanternScale=Math.max(.17,plate.w*.00060);
+ const foot=at(pawWishGroundFoot),paper=at(pawWishGroundPaper);
+ for(const {slot} of slots){
+  if(stage==='rise'&&slot===run.gardenSlot)continue;
+  const q=at(pawWishRackPoint(slot));gardenLantern(q.x,q.y+12*lanternScale,slot,lanternScale);
+ }
+ if(stage==='write'){
+  const pw=plate.w*.057,ph=plate.h*.031;
+  ctx.save();try{ctx.translate(paper.x,paper.y);ctx.rotate(-.16);round(-pw/2,-ph/2,pw,ph,1,'#f6e6c2','#b99a67');for(let i=0;i<3;i++)line(-pw*.34,-ph*.12+i*ph*.16,pw*.34,-ph*.12+i*ph*.16,'#c8ae82',.7)}finally{ctx.restore()}
+  backHuman(foot.x,foot.y,avatar??0,false,'left',scale);
+  if(pawWishComposer&&talkOpen){
+   const shoulder={x:foot.x-6*scale,y:foot.y-48*scale},grip={x:paper.x+pw*.2,y:paper.y};
+   if(Math.hypot(shoulder.x-grip.x,shoulder.y-grip.y)<90*scale){pawIncenseArm(shoulder,grip,scale*.7,false);line(grip.x,grip.y-7*scale,grip.x-3*scale,grip.y+4*scale,'#73543d',1.6)}
+  }
+  const hit=Math.max(42/cam.scale,plate.w*.14);target(paper.x-hit/2,paper.y-hit/2,hit,hit,gardenWrite);
+ }else if(carrying){
+  const walk=run.pawWishWalk,move=walk?pawWishGroundWalk(still?4:t-walk.at):null,q=move?at(move.point):foot,sc=scale*(move?1-.24*Math.min(1,(t-walk.at)/3):1);
+  backHuman(q.x,q.y,avatar??0,!!move&&!move.done&&!still,move?.dir||'up',sc);
+  gardenLantern(q.x+14*sc,q.y-35*sc,0,Math.max(lanternScale*1.4,.32));
+  if(move?.done){
+   const slot=walk.slot;
+   if(!taken.has(slot)&&run.pendingGardenWish){
+    gardenWishes.push({id:Date.now()+'-'+Math.random().toString(36).slice(2),text:run.pendingGardenWish,date:new Date().toLocaleDateString(),slot});
+    save('gardenWishesV1',gardenWishes);run.pendingGardenWish='';run.gardenStage='rise';run.gardenRise=t;run.gardenSlot=slot;delete run.pawWishWalk;addItem('Wishing lantern','许愿灯');sound(660);hint('Your wish has found its place.','心愿找到自己的位置了。')
+   }else delete run.pawWishWalk;
+  }
+  if(!walk){
+   for(let slot=0;slot<12;slot++)if(!taken.has(slot)){
+    const hook=at(pawWishRackPoint(slot));ctx.save();const radius=Math.max(4/cam.scale,plate.w*.011);ctx.strokeStyle='#fff1bf';ctx.lineWidth=Math.max(1.5,1.5/cam.scale);ctx.shadowColor='#ffe59b';ctx.shadowBlur=6/cam.scale;ctx.beginPath();ctx.arc(hook.x,hook.y,radius,0,TAU);ctx.stroke();ctx.restore();
+    const hw=plate.w*.03,hh=plate.h*.018;target(hook.x-hw,hook.y-hh,hw*2,hh*2,()=>{if(state===run&&run.gardenStage==='carry'&&!run.pawWishWalk&&run.pendingGardenWish)run.pawWishWalk={at:t,slot}})
+   }
+  }
+ }else if(stage==='rise'){
+  const elapsed=Math.max(0,t-run.gardenRise),q=at([.735,.32]),hook=at(pawWishRackPoint(run.gardenSlot)),sc=scale*.76;
+  if(elapsed<1.2&&!still){
+   backHuman(q.x,q.y,avatar??0,false,'up',sc);
+   const f=poseEase(Math.min(1,elapsed/1.2));gardenLantern(q.x+14*sc+(hook.x-q.x-14*sc)*f,q.y-35*sc+(hook.y-q.y+35*sc)*f,run.gardenSlot,lanternScale*(1.4-.4*f))
+  }else{
+   gardenLantern(hook.x,hook.y+12*lanternScale,run.gardenSlot,lanternScale);
+   const move=pawWishGroundWalk(still?4:elapsed-1.2,true),pos=at(move.point);
+   backHuman(pos.x,pos.y,avatar??0,!move.done&&!still,move.dir,scale);
+   if(move.done){run.gardenStage='write';react('Your little light is glowing. No follow-up email required.','心愿灯亮啦，不用再发邮件跟进。')}
+  }
+ }
+ if(stage==='write'){
+  const q=at([.21,.79]);label(tr('My lanterns','我的心愿灯')+' · '+gardenWishes.length,q.x,q.y,gardenWishBook)
+ }
+};
+
+// Keep birth replies and both continuation controls on-screen after selection.
+const pawYueQuietDetailsStyle=document.createElement('style');pawYueQuietDetailsStyle.textContent=`html #game #dialogue[data-paw-yue-question] .pawYueGuidedForm details:has(select:valid) summary{min-height:0!important;padding:2px 0!important}
+html #game #dialogue[data-paw-yue-question] .pawYueGuidedForm .yueSessionNote{display:none!important}
+html #game #dialogue[data-paw-yue-question] .pawYueGuidedForm .pawYueStepNav{flex-wrap:wrap!important}
+html #game #dialogue[data-paw-yue-question] .pawYueGuidedForm select{margin-block:2px!important}
+html #game #dialogue[data-paw-yue-question] #choices button{min-height:44px!important}`;document.head.append(pawYueQuietDetailsStyle);
+
+/* PAW_RESIDENT_REPLY_TURN_BEGIN */
+// Compact in-world conversation; never expose the internal form as a second box.
+const pawResidentReplyTurnStyle=document.createElement('style');
+pawResidentReplyTurnStyle.textContent=`
+html #game #dialogue[data-paw-yue-reply][data-paw-chat-bar]{max-height:44dvh!important;overflow:visible!important;padding-top:8px!important;background:linear-gradient(180deg,transparent,#1d2927c9 48%,#1b2928fa 100%)!important}
+html #game #dialogue[data-paw-yue-reply] #dialogueTop{margin:0 0 3px!important}
+html #game #dialogue[data-paw-yue-reply] #line{display:block!important;width:fit-content;max-width:94%;box-sizing:border-box;background:#f1e6cf!important;color:#3d4b3d!important;border:1px solid #b6a17b;border-radius:11px 11px 11px 3px;padding:8px 11px!important;margin:0 0 6px!important;font:15px/1.35 var(--paw-body,system-ui,sans-serif)!important;box-shadow:0 2px 6px #252b2440!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm{display:contents!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm .pawYueQuestion{display:none!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm>label:not(.pawYueStepHidden),html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm>details:not(.pawYueStepHidden){width:min(100%,300px)!important;max-width:100%!important;margin:0 0 0 auto!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm details summary{display:none!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm :is(input,select){border-radius:10px 10px 3px 10px!important;background:#f5e8cc!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueStepNav{justify-content:flex-end!important}
+html #game #dialogue[data-paw-yue-reply] #choices{justify-content:flex-end!important}
+html #game #dialogue[data-paw-yue-reply] #choices button{background:transparent!important;color:#ead9b7!important;border-color:#c6b68b80!important;font-size:11px!important}
+html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm[data-paw-birth-preset="false"]:has(select option[value="custom"]:checked){display:grid!important;max-height:31dvh;overflow:auto}
+@media(orientation:landscape){html #game #dialogue[data-paw-yue-reply][data-paw-chat-bar]{max-height:65dvh!important}}
+@media(forced-colors:active){html #game #dialogue[data-paw-yue-reply] #line{background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText}}
+`;document.head.append(pawResidentReplyTurnStyle);
+/* PAW_RESIDENT_REPLY_TURN_END */
 
 
 /* PAW_HALL_HOME_COMPOSITION_BEGIN */
