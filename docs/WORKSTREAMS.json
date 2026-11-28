@@ -690,6 +690,8 @@
       "priority": 3,
       "summary": "Independent English and Chinese creative editorial review, bilingual terminology, satire, clarity and rendered typography",
       "resources": [
+        "src/startup.js",
+        "src/extensions.js",
         "src/shell.html",
         "scripts/activity-humour-test.cjs"
       ],
