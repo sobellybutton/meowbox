@@ -179,7 +179,7 @@ backHuman=function(x,y,kind,walking,facing,sc){const im=pics['walker'+(kind%4)+(
 const human9=human;human=function(x,y,k,w,d,sc){if(k<4)return backHuman(x,y,k,w,k===avatar&&p.facing?p.facing:d<0?'left':'right',sc);human9(x,y,k,w,d,sc)};
 for(let i=0;i<4;i++)ART['badge'+i]=ART['face'+i];
 const oldHud9=updateHUD;updateHUD=function(){oldHud9();$('hudPortrait').src=ART['face'+(avatar??0)];$('dockValley').classList.toggle('active',!room&&scene==='fortune');if($('quietToggle')){$('quietToggle').hidden=avatar===null||!!room||scene!=='fortune';$('quietToggle').textContent=quiet9?'＋':'···';$('quietToggle').title=tr('Show or hide map labels','显示或隐藏地图标识')}};
-let quiet9=load('quiet9',false);const quietButton=element('button','···',$('game'));quietButton.id='quietToggle';quietButton.setAttribute('aria-label','Toggle map labels');quietButton.onclick=()=>{quiet9=!quiet9;save('quiet9',quiet9);signRoot.classList.toggle('quiet',quiet9);updateHUD();sound(440)};signRoot.classList.toggle('quiet',quiet9);
+let quiet9=false;try{if(load('quiet9',false))save('quiet9',false)}catch{};const quietButton=element('button','···',$('game'));quietButton.id='quietToggle';quietButton.setAttribute('aria-label','Toggle map labels');quietButton.onclick=null;quietButton.hidden=true;signRoot.classList.toggle('quiet',quiet9);
 const previousSign9=syncSigns;syncSigns=function(){previousSign9();signRoot.classList.toggle('quiet',quiet9)};
 // Original fictional parody residents, no real-world endorsement or cloned voices.
 const cast9=[

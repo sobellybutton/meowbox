@@ -232,12 +232,12 @@ html #game>#dialogue #choices button:focus-visible{
 html #game #profileHud>.pawPaintedPortrait{position:relative!important;display:block!important;flex:0 0 46px!important;width:46px!important;height:46px!important;min-width:46px!important;isolation:isolate;pointer-events:none}
 html #game #profileHud>.pawPaintedPortrait>#hudPortrait{position:absolute!important;inset:4px!important;width:38px!important;height:38px!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;object-fit:contain!important;object-position:center!important;background:#eadbc0!important}
 html #game #profileHud>.pawPaintedPortrait:after{content:"";position:absolute;inset:0;pointer-events:none;background:url('assets/visual/staging/2026-11-28-project-art-b10/avatar-frame.webp') center/contain no-repeat}
-/* One painted cog; the original accessible SVG remains the forced-colors fallback. */
-html #game #small button.townSettingsToggle[aria-label]{position:relative!important;min-width:44px!important;min-height:44px!important;display:inline-grid!important;place-items:center!important;padding:5px!important}
-@media not (forced-colors:active){
- html #game #small button.townSettingsToggle[aria-label]>svg{display:none!important}
- html #game #small button.townSettingsToggle[aria-label]:before{content:"";display:block;width:28px;height:28px;margin:0;background:url('assets/visual/staging/2026-11-28-project-art-b10/settings-cog.webp') center/contain no-repeat;pointer-events:none}
-}
+/* A single accessible settings glyph, without a second painted image or ornamental box. */
+html #game #small button.townSettingsToggle[aria-label]{position:relative!important;min-width:44px!important;min-height:44px!important;width:44px!important;height:44px!important;display:grid!important;place-items:center!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#65503a!important}
+html #game #small button.townSettingsToggle[aria-label]::before,html #game #small button.townSettingsToggle[aria-label]::after{content:none!important;display:none!important;background:none!important}
+html #game #small button.townSettingsToggle[aria-label]>svg{display:block!important;width:28px!important;height:28px!important;pointer-events:none}
+html #game #quietToggle{display:none!important}
+@media(forced-colors:active){html #game #small button.townSettingsToggle[aria-label]{background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important}}
 @media(max-width:360px){html #game #profileHud>.pawPaintedPortrait{flex-basis:40px!important;width:40px!important;height:40px!important;min-width:40px!important}html #game #profileHud>.pawPaintedPortrait>#hudPortrait{inset:4px!important;width:32px!important;height:32px!important}}
 @media(forced-colors:active){html #game #small button.townSettingsToggle[aria-label]:before,html #game #profileHud>.pawPaintedPortrait:after{display:none}}
 /* PAW_PAINTED_HUD_ASSETS_END */
