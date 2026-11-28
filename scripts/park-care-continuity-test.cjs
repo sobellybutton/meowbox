@@ -91,3 +91,34 @@ console.log('PASS '+checks+' park care continuity checks.');
  }
  console.log('PASS '+n+' park traveller movement checks.');
 }
+
+{
+ const block=src.match(/\/\* PAW_KAYA_PAINTED_BEGIN \*\/([\s\S]*?)\/\* PAW_KAYA_PAINTED_END \*\//);
+ assert.ok(block);
+ const images=Array.from({length:9},(_,i)=>({naturalWidth:480,naturalHeight:480,id:i}));
+ const manifest={},ctx={save(){},restore(){},translate(){},scale(){},drawImage(...v){this.last=v}};
+ let ready=true;
+ const api=new Function('productionVisualManifest','productionVisual','roomIntro','ctx','ellipse','t',block[1]+';return {frame:pawKayaFrame,box:pawKayaBox,draw:pawDrawKaya,prepare:pawKayaPrepare}')(manifest,id=>ready?images[id==='parkKayaSleep'?8:Number(id.slice(-1))]:null,()=>{},ctx,()=>{},1);
+ let n=0;const check=(v,m)=>{assert.ok(v,m);n++};
+ let last=0;
+ for(let i=0;i<500;i++){
+  const age=i/100,fr=api.frame('pet',age,true),box=api.box(400,535,8,age);
+  check(fr>=last&&fr<=7,'one-shot frames never restart');last=fr;
+  check(Math.abs(box.y+box.h*440/480-535)<1e-8,'breathing retains ground anchor');
+ }
+ check(api.frame('pet',.6,false)===0,'wait for physical approach');
+ check(api.frame('pet',0,true,true)===4,'reduced-motion pet expression');
+ check(api.frame('rest',0,false)===8,'sleep pose');
+ const a={x:400,y:535,traveller:{moving:false,kneel:.5}};
+ for(const kind of [1,2,3,4])check(!api.draw(a,kind,'pet',0,1,false),'no identity substitution');
+ check(api.draw(a,0,'pet',0,1,false)&&ctx.last[0].id===0,'initial pet');
+ check(api.draw(a,0,'pet',.6,1,false)&&ctx.last[0].id===4,'physical response');
+ check(api.draw(a,0,'pet',2,1,false)&&ctx.last[0].id===7,'one shot settles');
+ check(api.draw(a,0,'rest',0,1,false)&&ctx.last[0].id===8,'sleep');
+ for(const phase of ['feed','water','play'])check(!api.draw(a,0,phase,1,1,false),'preserve existing motion atlas');
+ ready=false;const fallback={};check(!api.draw(fallback,0,'idle',0,1,false),'missing set falls back');
+ ready=true;check(!api.draw(fallback,0,'pet',1,1,false),'no artwork swap during visit');
+ check(Object.keys(manifest).length===9,'all uploaded pose paths registered');
+ check(src.includes('if(pawDrawKaya(a,kind,phase,age,dir,residentReducedMotion.matches))return;'),'actual care renderer calls new pose selector');
+ console.log('PASS '+n+' painted ginger tabby timing, contact, fallback and identity assertions.');
+}
