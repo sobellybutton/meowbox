@@ -70,3 +70,25 @@ const plate={x:100,y:-145,w:600,h:600*1648/928};
 for(let i=0;i<=100;i++){const a=fixes.pawIncenseReturnFoot(plate,i*.011);assert.ok(a.x>=400-1e-8&&a.x<=466+1e-8);assert.ok(a.y>=plate.y+plate.h*.572-1e-8);}
 const q={};for(let i=0;i<6;i++){assert.equal(fixes.pawRearCatChoice(q,i).length,2);assert.equal(q.pawCatChoice,i)}assert.equal(fixes.pawRearCatChoice(q,6),null);
 console.log('Retreat and six ceramic figurine choices passed.');
+
+/* A rejected gesture cannot leave a moving pickup target in the previous
+   frame. A fresh pointer waits for the resting tool to be registered. */
+const pickup=new Function(get('PURIFICATION_PAINT')+';return {pawWaterGeometry,pawWaterPickupBox,pawWaterGripPoint,pawWaterDropMatches,pawWaterCamera}')();
+const pg=pickup.pawWaterGeometry();
+for(const [w,h] of [[320,568],[360,640],[390,844],[768,1024],[1440,900]])for(const stage of [0,1]){
+ const scale=pickup.pawWaterCamera(w,h).s;
+ for(const dx of [-20,0,20])for(const dy of [-10,0,10]){
+  const box=pickup.pawWaterPickupBox(stage,false,pg.rest,scale),gesture={id:'templeLadle',h:box,sx:pg.rest.x+dx,sy:pg.rest.y+dy};
+  assert.ok(box.w*scale>=44-1e-8&&box.h*scale>=44-1e-8);
+  assert.equal(pickup.pawWaterPickupBox(stage,true,pg.basin,scale),null);
+  const dest=stage===0?pg.scoop:pg.pour,q=pickup.pawWaterGripPoint({x:dest.x+dx,y:dest.y+dy},gesture);
+  assert.ok(pickup.pawWaterDropMatches(stage,q.x,q.y,pg));
+  assert.ok(!pickup.pawWaterDropMatches(stage,q.x-65,q.y+65,pg));
+  assert.deepEqual(pickup.pawWaterPickupBox(stage,false,pg.rest,scale),box);
+  assert.equal(pickup.pawWaterPickupBox(2,false,dest,scale),null);
+  assert.equal(pickup.pawWaterPickupBox(3,false,dest,scale),null);
+ }
+}
+assert.ok(src.includes('const gripBox=pawWaterPickupBox(stage,held,at,cam.scale);'));
+assert.ok(src.includes("if(gripBox)target(gripBox.x,gripBox.y,gripBox.w,gripBox.h,()=>{},'templeLadle');"));
+console.log('Resting ladle retry and exclusive held-tool ownership checks passed.');
