@@ -15543,6 +15543,7 @@ pawHallHomeComposition.textContent=`
 /* PAW_ROOM_GROUNDING_AND_DOCK_BEGIN */
 const pawRoomGroundingStyle=document.createElement('style');
 pawRoomGroundingStyle.textContent=`
+#game #content .hideoutScene .pawHomeWalker{pointer-events:none!important}
 #game #content .pawHomeSeatedActor{position:absolute;width:auto!important;max-width:35%;object-fit:contain;pointer-events:auto;cursor:pointer;filter:drop-shadow(0 1px 1px #49342244)}
 #game #content .pawHomeContactShadow{position:absolute;width:10%;height:2.5%;border-radius:50%;background:radial-gradient(ellipse,#3f2c235c,transparent 72%);transform:translate(-50%,-50%);pointer-events:none}
 #game #content .hideoutRoomView>h1{margin:5px 0!important}
