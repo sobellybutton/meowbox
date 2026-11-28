@@ -107,5 +107,62 @@ function draw(ctx,image,f){
  if(!ctx||!f||!image?.complete||image.naturalWidth!==f.canvas[0]||image.naturalHeight!==f.canvas[1])return false;
  ctx.drawImage(image,...f.rect);return true;
 }
-return Object.freeze({frame,draw});
+// Inset physical prop surfaces traced on the inspected candidate sprites.
+// Card bounds deliberately avoid the decorative rim and gripping fingers.
+const propLandmarks=Object.freeze({
+ 'master-yue':{
+  'seated-brush-held':{grip:[329,308],tip:[371,375]},
+  'seated-present-blank-parchment':{paper:[[276,272],[503,272],[276,410]]},
+  'seated-welcome-explain':{palm:[550,232]}
+ },
+ 'fortune-teller':{
+  'seated-idle':{hands:[424,384]},
+  'seated-shuffle-held':{upperDeck:[462,300],lowerDeck:[475,340]},
+  'seated-present-card':{card:[[462,153],[509,157],[452,229]]}
+ }
+});
+function contacts(manifest,id,pose,eyeCenter,eyeSpan){
+ const f=frame(manifest,id,pose,eyeCenter,eyeSpan);
+ if(!f)return null;
+ const points=propLandmarks[id]?.[pose];if(!points)return null;
+ const mapped={};
+ for(const [k,v] of Object.entries(points))mapped[k]=pair(v)?f.point(...v):v.map(p=>f.point(...p));
+ return {...f,contacts:mapped,id,pose};
+}
+// Map a unit square onto an inset held card or parchment. The fourth corner
+// is inferred from the three safe interior landmarks; no hand is overpainted.
+function surface(f,name){
+ if(!f||!['card','paper'].includes(name))return null;
+ const points=f.contacts?.[name];
+ if(!Array.isArray(points)||points.length!==3||!points.every(pair))return null;
+ const [o,x,y]=points,a=x[0]-o[0],b=x[1]-o[1],c=y[0]-o[0],d=y[1]-o[1];
+ if(![a,b,c,d].every(finite)||a*d-b*c<=0)return null;
+ return {matrix:[a,b,c,d,...o],corners:[o,x,[x[0]+y[0]-o[0],x[1]+y[1]-o[1]],y]};
+}
+function withSurface(ctx,f,name,paint){
+ const s=surface(f,name);
+ if(!ctx||!s||typeof paint!=='function')return false;
+ ctx.save();try{
+  ctx.transform(...s.matrix);ctx.beginPath();ctx.rect(0,0,1,1);ctx.clip();
+  paint(ctx);return true
+ }finally{ctx.restore()}
+}
+// The caller supplies the actual chosen card and its atlas rectangle,
+// never a decorative substitute or a second random draw. Reverse in place.
+function drawHeldCard(ctx,f,image,source,reversed=false){
+ if(!f||f.id!=='fortune-teller'||f.pose!=='seated-present-card'||!image?.complete||!image.naturalWidth||!image.naturalHeight||!Array.isArray(source)||source.length!==4||!source.every(finite))return false;
+ const [x,y,w,h]=source;
+ if(x<0||y<0||w<=0||h<=0||x+w>image.naturalWidth||y+h>image.naturalHeight)return false;
+ return withSurface(ctx,f,'card',g=>{
+  if(reversed){g.translate(1,1);g.rotate(Math.PI)}
+  g.drawImage(image,x,y,w,h,0,0,1,1)
+ })
+}
+// Only the existing computed chart renderer may provide parchment contents.
+// The normalized callback is clipped to the blank paper, not the host's hands.
+function drawHeldParchment(ctx,f,paint){
+ if(f?.id!=='master-yue'||f.pose!=='seated-present-blank-parchment')return false;
+ return withSurface(ctx,f,'paper',paint)
+}
+return Object.freeze({frame,draw,contacts,surface,drawHeldCard,drawHeldParchment});
 });
