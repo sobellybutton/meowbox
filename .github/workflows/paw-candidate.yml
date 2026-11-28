@@ -45,6 +45,10 @@ jobs:
           node scripts/painted-plaque-clearance-test.cjs
           node scripts/indoor-standing-actor-scale-test.cjs
           node scripts/tarot-host-continuity-test.cjs
+          node scripts/rear-garden-bench-scale-test.cjs
+          node scripts/yue-seated-host-continuity-test.cjs
+          node scripts/test-painted-temple-rituals.cjs
+          node scripts/minimal-map-hud-test.cjs
   district:
     runs-on: ubuntu-latest
     timeout-minutes: 30

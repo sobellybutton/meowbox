@@ -2,12 +2,14 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const root=path.join(__dirname,'..'),src=fs.readFileSync(path.join(root,'src/startup.js'),'utf8');
 const get=name=>src.split('/* PAW_'+name+'_BEGIN */')[1].split('/* PAW_'+name+'_END */')[0];
-const api=new Function(get('PURIFICATION_PAINT')+get('ALCOVE_PAINT')+get('SLIP_COUNTER')+';return {pawAlcoveGeometry,pawAlcoveStickPoint,pawAlcoveMoonPoint,pawSlipGeometry,pawSlipPose,pawSlipRackCamera,pawSlipPage}')();
+const api=new Function(get('PURIFICATION_PAINT')+get('ALCOVE_PAINT')+get('SLIP_COUNTER')+';return {pawAlcoveGeometry,pawAlcoveReach,pawAlcoveActorScale,pawAlcoveStickPoint,pawAlcoveMoonPoint,pawSlipGeometry,pawSlipPose,pawSlipRackCamera,pawSlipPage}')();
 for(const name of ['sticks','slip-counter'])assert.ok(fs.existsSync(path.join(root,'assets/visual/staging/2026-11-27/rooms/temple',name+'.webp')));
 const g=api.pawAlcoveGeometry();
 for(let i=0;i<=100;i++){const f=i/100,a=api.pawAlcoveStickPoint(g,{fall:f,picked:false,pick:0});assert.ok(a.x>=g.tubeTop.x&&a.x<=g.stickTray.x&&Number.isFinite(a.y))}
 const landed=api.pawAlcoveStickPoint(g,{fall:1,picked:false,pick:0});assert.equal(landed.y,g.stickTray.y);assert.equal(landed.x,g.stickTray.x);
-const held=api.pawAlcoveStickPoint(g,{fall:1,picked:true,pick:1});assert.equal(held.x,g.stickPickFoot.x+14);assert.equal(held.y,g.stickPickFoot.y-64);
+const held=api.pawAlcoveStickPoint(g,{fall:1,picked:true,pick:1});const grip=api.pawAlcoveReach(g.stickPickFoot).grip;assert.equal(held.x,grip.x);assert.equal(held.y,grip.y);
+for(let i=0;i<=100;i++){const u=i/100,pick=.45+.55*u,f=u*u*(3-2*u),p=api.pawAlcoveStickPoint(g,{fall:1,picked:true,pick});assert.ok(Math.abs(p.x-(g.stickTray.x+(grip.x-g.stickTray.x)*f))<1e-8&&Math.abs(p.y-(g.stickTray.y+(grip.y-g.stickTray.y)*f))<1e-8);}
+for(const [foot,hand,side] of [[g.stickFoot,g.tubeGrip,1],[g.stickPickFoot,g.stickTray,1],[g.moonFoot,g.moonHand,-1]]){const r=api.pawAlcoveReach(foot,side);assert.ok(Math.hypot(hand.x-r.shoulder.x,hand.y-r.shoulder.y)<=r.maxReach);assert.equal(r.sleeve,.72*api.pawAlcoveActorScale());}
 for(let i=0;i<=100;i++){const f=i/100;for(let j=0;j<2;j++){const sign=j?1:-1,x=350+j*100+sign*Math.sin(Math.PI*f)*21,lift=Math.sin(Math.PI*f)*95,p=api.pawAlcoveMoonPoint(g,{x,lift});assert.ok(Math.abs(p.x-g.moonTray.x)<=19&&p.y<=g.moonTray.y)}}
 const s=api.pawSlipGeometry();
 for(const [stage,age,a] of [['folded',0,s.counter],['opening',.75,s.reading],['tied',.7,s.tie],['kept',.7,s.bag]]){const p=api.pawSlipPose(stage,age,s);assert.ok(Math.abs(p.x-a.x)<.001&&Math.abs(p.y-a.y)<.001);if(['kept','tied'].includes(stage))assert.equal(p.alpha,0)}
