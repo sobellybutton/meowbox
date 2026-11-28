@@ -5225,7 +5225,7 @@ hideoutPage=function(...args){
  for(const item of stage.querySelectorAll('.hideoutPlaced,.figureCabinetInRoom')){
   const id=item.dataset.furnitureId;
   if(typeof item.onclick!=='function'||item.tagName==='BUTTON')continue;
-  if(!['board','frame','shelf','lamp','shojiLamp','retroTV','displayCabinet','bed','futon'].includes(id))continue;
+  if(!['board','frame','shelf','lamp','shojiLamp','retroTV','displayCabinet','bed','futon','zabuton'].includes(id))continue;
   item.tabIndex=0;item.setAttribute('role','button');item.setAttribute('aria-label',item.alt||id);
   item.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();item.click()}});
   if(['board','frame','shelf','retroTV','displayCabinet'].includes(id)){
@@ -5378,8 +5378,52 @@ function pawHomeActorArt(player,direction,walking,distance){
  if(src&&player.getAttribute('src')!==src)player.src=src;
  player.style.setProperty('--paw-home-facing',direction==='left'?'-1':'1')
 }
+/* PAW_HOME_SEATED_CONTACT_BEGIN */
+function pawHomeSeatSpec(id,avatarIndex){
+ const seats={zabuton:[.49,.50],bed:[.60,.65],futon:[.48,.62]};
+ const pivots=[[.34,.72],[.33,.74],[.33,.73],[.35,.74]];
+ const p=pivots[avatarIndex],seat=seats[id];if(!seat||!p)return null;
+ return {seatX:seat[0],seatY:seat[1],pivotX:p[0],pivotY:p[1],scale:.76,path:'assets/visual/staging/2026-11-27-extracted/players/'+avatarIndex+'/seated.webp'}
+}
+function pawHomeSeatPoint(stage,furniture,spec){
+ if(!stage||!furniture||!spec||stage.width<=0||stage.height<=0||furniture.width<=0||furniture.height<=0)return null;
+ const x=(furniture.left-stage.left+furniture.width*spec.seatX)/stage.width*100;
+ const y=(furniture.top-stage.top+furniture.height*spec.seatY)/stage.height*100;
+ return Number.isFinite(x)&&Number.isFinite(y)&&x>=0&&x<=100&&y>=0&&y<=100?{x,y}:null
+}
+/* PAW_HOME_SEATED_CONTACT_END */
+function pawHomeClearSeat(stage,player){
+ stage.pawSeatSerial=(stage.pawSeatSerial||0)+1;
+ stage.querySelector('.pawHomeSeatedActor')?.remove();
+ player.style.visibility='';
+ const shadow=stage.querySelector('.pawHomeContactShadow');if(shadow)shadow.style.visibility='';
+ delete stage.dataset.pawSeat
+}
+function pawHomeSit(stage,player,item,point,note){
+ const id=item.dataset.furnitureId,spec=pawHomeSeatSpec(id,avatar??0),rotation=Number.parseFloat(item.style.rotate)||0;
+ if(!spec)return false;
+ if(Math.abs(rotation%360)>.01){note.textContent=tr('Turn the seat upright before resting here.','把家具转回正向，就可以坐下休息。');return false}
+ const anchor=pawHomeSeatPoint(stage.getBoundingClientRect(),item.getBoundingClientRect(),spec);
+ if(!anchor)return false;
+ pawHomeClearSeat(stage,player);
+ const serial=stage.pawSeatSerial,pose=document.createElement('img');
+ pose.className='pawHomeSeatedActor';pose.alt=tr('Resting traveller','休息中的旅人');
+ pose.style.left=anchor.x+'%';pose.style.top=anchor.y+'%';
+ pose.style.height=(pawHomeActorHeight(point.y)*spec.scale)+'%';pose.style.transform='translate('+(-100*spec.pivotX)+'%,'+(-100*spec.pivotY)+'%)';
+ pose.style.zIndex=String(Math.max(pawHomeLayer(point.y),Number(item.style.zIndex)||0)+2);
+ pose.tabIndex=0;pose.setAttribute('role','button');pose.setAttribute('aria-label',tr('Stand up','站起来'));
+ const stand=()=>{pawHomeClearSeat(stage,player);note.textContent=''};
+ pose.onclick=e=>{e.stopPropagation();stand()};pose.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();stand()}};
+ pose.onload=()=>{
+  if(!stage.isConnected||$('page').style.display!=='block'||hideoutEditing||stage.pawSeatSerial!==serial||pawHomeWalk)return;
+  stage.append(pose);stage.dataset.pawSeat=id;player.style.visibility='hidden';
+  const shadow=stage.querySelector('.pawHomeContactShadow');if(shadow)shadow.style.visibility='hidden';
+  note.textContent=tr('Rest a while. Tap the floor to get up.','休息一下吧。点地板就能起身。')
+ };
+ pose.onerror=()=>{if(stage.isConnected&&stage.pawSeatSerial===serial)note.textContent=tr('This seat is not ready yet.','这个座位暂时还不能坐。')};pose.src=spec.path;return true
+}
 function pawHomeMoveTo(stage,player,point,key,goal,announce,onArrival=null){
- pawHomeStop();
+ pawHomeStop();pawHomeClearSeat(stage,player);
  const blocks=pawHomeStageBlocks(stage),route=pawHomeRoute(point,goal,blocks);
  if(!route?.length)return false;
  const motion={frame:0,at:0,distance:0,direction:'down',point};
@@ -5433,10 +5477,13 @@ hideoutPage=function(...args){
  for(const item of stage.querySelectorAll('.hideoutPlaced[role=button],.figureCabinetInRoom')){
   const old=item.onclick;if(typeof old!=='function')continue;
   item.onclick=function(...args){
+   const seat=pawHomeSeatSpec(item.dataset.furnitureId,avatar??0);
+   if(seat&&stage.dataset.pawSeat===item.dataset.furnitureId){pawHomeClearSeat(stage,player);note.textContent='';return}
+   const act=()=>{if(seat)return pawHomeSit(stage,player,item,point,note);pawHomeClearSeat(stage,player);return old.apply(item,args)};
    const anchor={x:parseFloat(item.style.left),y:parseFloat(item.style.top)};
-   if(!Number.isFinite(anchor.x)||!Number.isFinite(anchor.y)||anchor.y<pawHomeBounds.u||Math.hypot(anchor.x-point.x,anchor.y-point.y)<13){pawHomeStop();return old.apply(this,args)}
+   if(!Number.isFinite(anchor.x)||!Number.isFinite(anchor.y)||anchor.y<pawHomeBounds.u||Math.hypot(anchor.x-point.x,anchor.y-point.y)<13){pawHomeStop();return act()}
    const goal=pawHomeObjectApproach(point,anchor,pawHomeStageBlocks(stage));
-   if(!goal||!pawHomeMoveTo(stage,player,point,key,goal,note,()=>old.apply(item,args))){pawHomeStop();note.textContent=tr('Move a little furniture to reach this spot.','挪一挪家具，才能走到这里。');return}
+   if(!goal||!pawHomeMoveTo(stage,player,point,key,goal,note,act)){pawHomeStop();note.textContent=tr('Move a little furniture to reach this spot.','挪一挪家具，才能走到这里。');return}
   }
  }
  stage.addEventListener('keydown',e=>{
@@ -15496,6 +15543,7 @@ pawHallHomeComposition.textContent=`
 /* PAW_ROOM_GROUNDING_AND_DOCK_BEGIN */
 const pawRoomGroundingStyle=document.createElement('style');
 pawRoomGroundingStyle.textContent=`
+#game #content .pawHomeSeatedActor{position:absolute;width:auto!important;max-width:35%;object-fit:contain;pointer-events:auto;cursor:pointer;filter:drop-shadow(0 1px 1px #49342244)}
 #game #content .pawHomeContactShadow{position:absolute;width:10%;height:2.5%;border-radius:50%;background:radial-gradient(ellipse,#3f2c235c,transparent 72%);transform:translate(-50%,-50%);pointer-events:none}
 #game #content .hideoutRoomView>h1{margin:5px 0!important}
 #game #content .hideoutRoomView>p.hideoutIntro{margin:2px 0 4px!important}
