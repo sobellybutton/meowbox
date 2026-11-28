@@ -30,7 +30,7 @@ for(const id of ['tarot','destiny','quiz','story','match']){
   if(desk){const v=helpers.pawReadingNormalized(...a);assert.ok(Math.abs(v[0]-.43)<1e-8&&Math.abs(v[1]-.47)<1e-8,'Yue desk-side approach');assert.ok(a[1]<565,'Yue approach uses mapped route, not legacy clamp')}
   else assert.ok(a[0]>=145&&a[0]<=655&&a[1]>=565&&a[1]<=738,id+' legacy input bounds');
   assert.ok(api.safe(id,helpers.pawReadingNormalized(...a)),id+' mapped floor');
-  for(const b of points)assert.ok(api.route(id,helpers.pawReadingNormalized(...a),helpers.pawReadingNormalized(...b)),id+' mapped route');
+  for(const b of points){const route=helpers.pawReadingDestination(api,id,a,...b);assert.ok(route?.length,id+' mapped route');assert.ok(Math.hypot(route.at(-1)[0]-b[0],route.at(-1)[1]-b[1])<1e-8,id+' exact mapped arrival');}
  }
  for(const [w,h] of [[320,640],[390,844],[430,932],[768,1024],[1280,720]]){
   const c=helpers.pawReadingCamera(api,w,h);

@@ -6,6 +6,8 @@ on:
       - 'src/painted-lobby-runtime.js'
       - 'scripts/editorial-share-render-test.cjs'
       - '.github/workflows/paw-editorial-export.yml'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -14,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   rendered-exports:
-    if: github.ref == 'refs/heads/fix/read03-desktop-camera-continuity-20261128' || github.ref == 'refs/heads/integration/multibatch-player-continuity-20261128'
+    if: (github.ref == 'refs/heads/fix/read03-desktop-camera-continuity-20261128' || github.ref == 'refs/heads/integration/multibatch-player-continuity-20261128') || (github.event_name == 'pull_request' && startsWith(github.head_ref, 'release/candidate-'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:

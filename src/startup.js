@@ -14054,6 +14054,7 @@ roomIntro=function(...args){
 const pawYueDeskHubBefore=yueReadingHub;
 function pawYueDeskChoose(kind){
  if(room!=='destiny')return;
+ pawYueSettingsReturn=null;
  if(kind==='stars')return starSignPage();
  function open(subject){if(room!=='destiny')return;yueSubject=subject;closeTalk();if(kind==='chart')destinyPage();else if(kind==='year')yueZodiacAlmanac();else starSignPage()}
  say(tr('Master Yue','月师傅'),tr('Is this reading for you, or someone else?','这次是想看看自己，还是替别人看看？'),[[tr('For me','看自己'),()=>open('self')],[tr('For someone else','帮别人看看'),()=>open('other')],[tr('Back','返回'),()=>yueReadingHub()]])
@@ -14092,7 +14093,7 @@ function pawYueQuestionSteps(form,out,kind){
  form.classList.add('pawYueGuidedForm');
  const question=element('p','',form,'pawYueQuestion');form.prepend(question);question.setAttribute('aria-live','polite');
  const controls=element('div','',form,'pawYueStepNav'),back=b(controls,tr('Previous','上一步'),()=>show(index-1)),next=b(controls,tr('Continue','继续'),advance);back.type=next.type='button';submit.before(controls);
- function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));question.textContent=tr(...questions[index]);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1)}
+ function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));form.dataset.pawYueStep=String(index);question.textContent=tr(...questions[index]);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1)}
  function advance(){if(finished||index>=steps.length-1)return;for(const field of steps[index].flatMap(n=>[...n.querySelectorAll('input,select')]))if(!field.checkValidity()){field.reportValidity();return}show(index+1)}
  form.addEventListener('keydown',e=>{if(!finished&&index<steps.length-1&&e.key==='Enter'&&e.target.matches('input')){e.preventDefault();advance()}});
  // Bring an invalid hidden field back into view before native validation focuses it.
@@ -14103,6 +14104,7 @@ function pawYueQuestionSteps(form,out,kind){
   for(let n=e.target.parentElement;n&&n!==form;n=n.parentElement)if(n.tagName==='DETAILS')n.open=true
  },true);
  form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();controls.remove()}});
+ form.pawYueRestoreStep=i=>{if(Number.isInteger(i))show(i)};
  show(0)
 }
 /* PAW_YUE_PARCHMENT_BEGIN */
@@ -14208,6 +14210,20 @@ function pawYueChartParchment(q,pane,form,out){
  sync()
 }
 /* PAW_YUE_SINGLE_PAPER_BEGIN */
+let pawYueSettingsReturn=null;
+function pawYueSettingsOwns(origin,current){
+ return !!origin&&!!current&&origin.room==='destiny'&&current.room===origin.room&&origin.scene===current.scene&&origin.visit===current.visit&&origin.subject===current.subject&&origin.profile===current.profile&&!current.activity
+}
+function pawYueSettingsContext(){return {room,scene,visit:pawHostVisit,subject:yueSubject,profile:yueProfile(),activity}}
+function pawYueResumeControl(parent){
+ const pending=pawYueSettingsReturn;
+ if(!pending||!pawYueSettingsOwns(pending.origin,pawYueSettingsContext())){pawYueSettingsReturn=null;return}
+ const resume=b(parent,tr('Return to reading','返回问事'),()=>{
+  if(pawYueSettingsReturn!==pending||!pawYueSettingsOwns(pending.origin,pawYueSettingsContext()))return;
+  pawYueSettingsReturn=null;closeTownSettings();destinyPage({subject:pending.origin.subject,draft:pending.draft});
+  $('content').querySelector('.astroForm')?.pawYueRestoreStep?.(pending.step)
+ });resume.className='pawProfileSettingsEntry'
+}
 function pawYueDeskArrange(q,pane,form,out){
  // The existing scene already contains the host. Keep one question/result
  // surface; optional consultation settings belong on the same sheet.
@@ -14225,6 +14241,13 @@ function pawYueDeskArrange(q,pane,form,out){
   footer.append(tools)
  }
  if(privacy)footer.append(privacy);
+ if(form?.matches('.astroForm')&&!form.hidden&&!out?.children.length){
+  const settings=b(footer,tr('Profile & settings','档案与设置'),()=>{
+   if(room!=='destiny'||activity||!form.isConnected||form.hidden||pane.dataset.pawYueDesk!=='true')return;
+   pawYueSettingsReturn={origin:pawYueSettingsContext(),draft:destinyChartValues(form),step:Number(form.dataset.pawYueStep)||0};
+   lifeProfile()
+  });settings.type='button'
+ }
  const intro=q.querySelector(':scope > .yueCompactIntro');
  if(intro)intro.hidden=true;
  // Opening an option must not scroll the next question out of view.
@@ -15762,7 +15785,7 @@ function pawOpenProfileSettings(){
  page(tr('Settings','设置'),tr('Make Pawradise your own.','按自己的节奏享受小镇。'),q=>{
   const surface=element('section','',q,'pawProfileSettings');
   surface.append(townSettingsPanel);
-  townSettingsOpen=true;syncTownSettings();
+  townSettingsOpen=true;syncTownSettings();pawYueResumeControl(surface);
   const soundRows=element('div','',surface,'pawProfileSoundRows');
   for(const [id,en,cn] of [['ambience','Nature and room sounds','环境音'],['effects','Interaction sounds','互动音效']]){
    const row=element('label','',soundRows);element('span',tr(en,cn),row);
@@ -15778,6 +15801,7 @@ lifeProfile=function(...args){
  if(book&&!book.querySelector('.pawProfileSettingsEntry')){
   const entry=b(book,tr('Settings','设置'),pawOpenProfileSettings);entry.className='pawProfileSettingsEntry';
   const identity=book.querySelector('.journalIdentity');if(identity)identity.after(entry);
+  pawYueResumeControl(book);
  }
  return result
 };
@@ -15788,6 +15812,8 @@ page=function(...args){
  if(lang&&['EN','中文'].includes(lang.textContent.trim())){lang.hidden=true;lang.classList.add('pawRetiredPageLanguage')}
  return result
 };
+const pawYueSettingsEnterPrior=enter;
+enter=function(...args){pawYueSettingsReturn=null;return pawYueSettingsEnterPrior(...args)};
 const pawProfileSettingsGatePrior=proRender;
 proRender=function(...args){
  const result=pawProfileSettingsGatePrior(...args);

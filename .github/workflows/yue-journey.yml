@@ -11,7 +11,7 @@ permissions:
   contents: read
 jobs:
   consultation:
-    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'dev/read-02-yue-')
+    if: github.event_name != 'pull_request' || (startsWith(github.head_ref, 'dev/read-02-yue-') || startsWith(github.head_ref, 'release/candidate-'))
     concurrency:
       group: paw-yue-${{ matrix.engine }}-${{ github.ref }}
       cancel-in-progress: false
