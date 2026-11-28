@@ -1,0 +1,2 @@
+# Batch 10: HUD artwork
+Two independent transparent candidate assets, not live UI. Preserve current selected-avatar identity, wallet values, keyboard focus, safe areas and 44 px touch targets. Frame goes above clipped avatar; do not use as an opaque backing. Cog remains a real accessible settings button with dynamic label. Check both orientations, small-screen layout, visual contrast and apparent scale. Existing home furnishings, finishes and painted Paw coin are retained.

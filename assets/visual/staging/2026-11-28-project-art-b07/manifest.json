@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "batch": 7,
+  "player": 3,
+  "source_sha256": "b0ec231827bdc9c69188daf193777dc0cbbfd19a7f924e01562887d9409a9582",
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b07/player-3-crouch-idle.webp",
+      "width": 480,
+      "height": 468,
+      "sha256": "4784510aeec358d86c92932f2fc8718704ef600fe50d22e15655beb00e3cd230",
+      "foot": [
+        240,
+        449
+      ],
+      "status": "candidate; no runtime activation",
+      "source_cell": 0,
+      "notes": "Same scale across candidate poses; calibrate head size against original player 3 standing art. Foot pivot estimated from lowest opaque sole region; hand grip requires in-game tracing."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b07/player-3-crouch-reach.webp",
+      "width": 480,
+      "height": 468,
+      "sha256": "2e8cacf4b1ad914e0e90f69342a672d9733bc47e384216306641858ad6e40da4",
+      "foot": [
+        240,
+        449
+      ],
+      "status": "candidate; no runtime activation",
+      "source_cell": 1,
+      "notes": "Same scale across candidate poses; calibrate head size against original player 3 standing art. Foot pivot estimated from lowest opaque sole region; hand grip requires in-game tracing."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b07/player-3-crouch-grip.webp",
+      "width": 480,
+      "height": 468,
+      "sha256": "3b71bc670f3cf638064cf275033dc562d4c06a838b8328bfcb85006e3b74eb33",
+      "foot": [
+        240,
+        449
+      ],
+      "status": "candidate; no runtime activation",
+      "source_cell": 2,
+      "notes": "Same scale across candidate poses; calibrate head size against original player 3 standing art. Foot pivot estimated from lowest opaque sole region; hand grip requires in-game tracing."
+    }
+  ]
+}

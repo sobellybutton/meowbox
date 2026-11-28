@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "batch": 8,
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b08/visitor-lavender.webp",
+      "width": 206,
+      "height": 377,
+      "alphaBounds": [
+        10,
+        10,
+        196,
+        367
+      ],
+      "sha256": "dfeadee4d133ff7d9e83523522f4b05e83e0f4cc586048112787774eccbcf1d4",
+      "footCandidate": [
+        103.0,
+        366
+      ],
+      "status": "low-resolution identity candidate; single mid-stride pose, not an animation; do not activate until matching idle and gait are verified"
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b08/visitor-floral-senior.webp",
+      "width": 208,
+      "height": 385,
+      "alphaBounds": [
+        10,
+        10,
+        198,
+        375
+      ],
+      "sha256": "56d08bbedcb9fdc17d5fa29e55823d215ec72bf1de6aa1e8d54ce636cb6a91b9",
+      "footCandidate": [
+        104.0,
+        374
+      ],
+      "status": "low-resolution identity candidate; single mid-stride pose, not an animation; do not activate until matching idle and gait are verified"
+    }
+  ],
+  "source": "individually segmented visitor row from generated composite; original resolution approximately 95 x 180 each; enlarged for edge work only"
+}
