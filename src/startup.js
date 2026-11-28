@@ -6441,6 +6441,8 @@ function pawVisitorPauseTimers(roster,elapsed){
 }
 /* PAW_VISITOR_LIFECYCLE_END */
 function pawRoomWalkers(){
+ // Private consultations retain only the traveller and resident host.
+ if(room==='destiny'||room==='tarot')return [];
  const spec=pawRoomVisitorSpecs[room];if(!spec||activity)return [];
  const context=scene+'|'+room+'|'+avatar;
  if(!indoorReady()){if(context===pawVisitorContext)pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,t-pawVisitorAt));pawVisitorAt=t;return context===pawVisitorContext?pawVisitorHold(pawLocalVisitors):[]}
@@ -13558,7 +13560,7 @@ enter=function(id,...args){
   if(!pawFoodAdmissionValid(request,pawReadingAdmission,pawFoodAdmissionView()))return;
   pawReadingAdmission=null;
   if(!ready||!pawRoomImageReady(im)){hint('The room painting could not load. Tap its door to try again.','小屋画面暂未加载成功，请再次点击门口重试。');return}
-  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id)};return pawReadingEnterBefore(id,...args)
+  pawReadingVisit=id;pawHostVisit={id,ready:pawHostFamilyReady(id)};if(id==='destiny')pawWarmRearSeated(avatar??0);return pawReadingEnterBefore(id,...args)
  }).finally(()=>{if(pawReadingAdmission===request)pawReadingAdmission=null})
 };
 // Nearby outdoor warming should decode the actual selected lobby painting,
@@ -13939,15 +13941,8 @@ pawRoomOwnerPresentation.textContent=`
 
 // Preserve the existing reading engines and temporary, local personal data.
 // The study remains the setting instead of a separate full-screen website.
-const pawYueVisitIntroBefore=roomIntro;
-roomIntro=function(...args){
- const result=pawYueVisitIntroBefore(...args);
- if(room==='destiny'&&!activity&&residentPendingWelcome?.id==='yue'){
-  const profile=residentWelcomeProfiles.find(v=>v.id==='yue');
-  if(profile){const welcome=residentHospitalityWelcome(profile,residentPendingWelcome.visits);residentPendingWelcome=null;residentGreetingToast(tr('Master Yue: ','月师傅：')+welcome)}
- }
- return result
-};
+// Master Yue's greeting is delivered by the intentional consultation dialogue,
+// not a second arrival toast over the illustrated room.
 function pawCloseYueDesk(){
  const pane=$('page');if(pane.dataset.pawYueDesk!=='true')return false;
  pawYueChartObserver?.disconnect();pawYueChartObserver=null;
@@ -15555,8 +15550,8 @@ html #game #dialogue[data-paw-chat-bar] #dialogueTop{display:flex!important;min-
 html #game #dialogue[data-paw-chat-bar] #talkPortrait{display:none!important}
 html #game #dialogue[data-paw-chat-bar] #speaker{color:#e7ca8e!important;font:600 11px/1.3 var(--paw-display,Georgia,serif)!important;letter-spacing:.04em;text-shadow:none!important}
 html #game #dialogue[data-paw-chat-bar] #line{color:#fff2d8!important;font:15px/1.38 var(--paw-body,system-ui,sans-serif)!important;white-space:pre-line!important;margin:0 0 5px!important;padding:0!important;text-shadow:none!important}
-html #game #dialogue[data-paw-chat-bar] #choices{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;gap:6px!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:2px 0 0!important;scrollbar-width:thin}
-html #game #dialogue[data-paw-chat-bar] #choices button{flex:0 0 auto!important;width:auto!important;min-width:44px!important;min-height:44px!important;max-width:86vw!important;padding:6px 11px!important;border:1px solid #e2c99980!important;border-radius:16px!important;box-shadow:none!important;background:#f0dfba12!important;color:#fff2d8!important;font:500 12px/1.25 var(--paw-body,system-ui,sans-serif)!important;text-align:center!important;white-space:normal!important}
+html #game #dialogue[data-paw-chat-bar] #choices{display:flex!important;flex-wrap:wrap!important;justify-content:flex-start!important;overflow-x:hidden!important;gap:6px!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:2px 0 0!important;scrollbar-width:thin}
+html #game #dialogue[data-paw-chat-bar] #choices button{flex:0 1 auto!important;width:auto!important;min-width:44px!important;min-height:44px!important;max-width:100%!important;padding:6px 11px!important;border:1px solid #e2c99980!important;border-radius:16px!important;box-shadow:none!important;background:#f0dfba12!important;color:#fff2d8!important;font:500 12px/1.25 var(--paw-body,system-ui,sans-serif)!important;text-align:center!important;white-space:normal!important}
 html #game #dialogue[data-paw-chat-bar] #choices button:first-child{background:#e6d2a8!important;color:#33473c!important;border-color:#e6d2a8!important}
 html #game #dialogue[data-paw-chat-bar][data-paw-yue-question] #line:empty{display:none!important}
 html #game #dialogue[data-paw-chat-bar][data-paw-yue-question] .pawYueGuidedForm{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:4px!important;margin:0!important;padding:0!important}
@@ -15719,3 +15714,25 @@ pawRoomGroundingStyle.textContent=`
 @media(forced-colors:active){#game #dock>button[aria-current="page"]{outline:2px solid Highlight!important}}
 `;document.head.append(pawRoomGroundingStyle);
 /* PAW_ROOM_GROUNDING_AND_DOCK_END */
+
+/* PAW_YUE_VISITOR_SEAT_BEGIN */
+// Reuse the four original transparent seated traveller poses. The right
+// chair is painted into the room: the hip is anchored to its cushion,
+// while the logical walking position remains on the aisle beside it.
+function pawYueVisitorSeat(plate,position,approach,kind,consulting,walking){
+ if(!plate||!Array.isArray(position)||!Array.isArray(approach)||!consulting||walking||!Number.isInteger(kind)||kind<0||kind>3||Math.hypot(position[0]-approach[0],position[1]-approach[1])>5)return null;
+ const [x,y]=pawReadingWorld([.685,.535],plate);
+ return {hip:{x,y},scale:.78}
+}
+let pawYueVisitorLastDraw=-Infinity;
+const pawYueVisitorBackHuman=backHuman;
+backHuman=function(x,y,kind,walking,facing,scale=1){
+ if(room==='destiny'&&pawReadingActive()&&!activity&&!transitioning&&!pawRenderedWalker&&kind===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<4){
+  const q=pawReadingAPI()?.rooms.destiny?.stations.destiny;
+  const consulting=talkOpen||($('page').dataset.pawYueDesk==='true'&&$('page').style.display==='block');
+  const seat=q&&pawYueVisitorSeat(pawReadingPlate,[x,y],pawReadingWorld(q.approach),kind,consulting,walking);
+  if(seat&&pawDrawRearSeated(pawWarmRearSeated(kind),kind,seat.hip,seat.scale)){pawYueVisitorLastDraw=t;pawSyncIdleGait(x,y,kind);return}
+ }
+ return pawYueVisitorBackHuman(x,y,kind,walking,facing,scale)
+};
+/* PAW_YUE_VISITOR_SEAT_END */

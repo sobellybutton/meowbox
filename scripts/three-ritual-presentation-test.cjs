@@ -95,11 +95,16 @@ fs.mkdirSync(out,{recursive:true});
   const more=page.locator('#dialogue').getByRole('button',{name:text('Tell me more','再说说'),exact:true});if(await more.count()){await more.tap();await shot('tarot-next-thought')}
   await tapText('Back to the table','回到牌桌');await page.waitForFunction(()=>state.readStage==='cards'&&!talkOpen);
   await fixture('destiny');
-  await page.evaluate(()=>yueReadingHub());
+  await page.evaluate(()=>{const q=pawReadingAPI().rooms.destiny.stations.destiny;const goal=pawReadingWorld(q.approach);if(!indoorDestination(...goal,()=>yueReadingHub(),'up'))throw Error('Cannot reach consultation chair')});
+  await page.waitForFunction(()=>talkOpen&&t-pawYueVisitorLastDraw<.3,null,{timeout:15000});
+  assert(await page.evaluate(()=>pawRoomWalkers().length===0),'Private study has unrelated visitors');
+  const visibleChoices=await page.locator('#dialogue #choices').evaluate(e=>{const r=e.getBoundingClientRect();return [...e.querySelectorAll('button')].filter(b=>!b.hidden).every(b=>{const q=b.getBoundingClientRect();return q.width>=44&&q.height>=44&&q.left>=r.left-1&&q.right<=r.right+1})});
+  assert(visibleChoices,'Consultation replies are horizontally clipped');
+  await shot('yue-seated-welcome');
   await tapText('My birth chart','生辰命盘');await tapText('For me','看自己');
   const form=page.locator('#dialogue[data-paw-yue-question] .pawYueGuidedForm');
   await form.waitFor({timeout:10000});assert(await noPage(),'Birth questions opened external page');
-  await chatGeometry('yue');await shot('yue-birth-question');await form.locator('input[type=date]').fill('1990-05-15');
+  await chatGeometry('yue');await page.waitForFunction(()=>t-pawYueVisitorLastDraw<.3);await shot('yue-birth-question');await form.locator('input[type=date]').fill('1990-05-15');
   await tapText('Continue','继续');await form.locator('input[type=time]').fill('09:30');await chatGeometry('yue-time');await shot('yue-birth-time');
   await tapText('Continue','继续');await chatGeometry('yue-place');await shot('yue-birthplace');
   const place=form.locator('details select');if(!await place.isVisible())await form.locator('details summary').tap();
