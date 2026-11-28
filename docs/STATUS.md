@@ -1335,3 +1335,7 @@ Reconciled #124 foreground paving routes, pond effects and ambient wind chime in
 
 ### Entrance convergence, 28 November
 Reconciled #126 into #125: boot uses manifest-matched painted walking sprites, decodes selected artwork, avoids redundant legacy crop warmup, and shortens the gate walk to 600ms. All three changed JS files parsed; exact-source manifest/readiness checks passed: Entrance painted traveller readiness regression passed; PASS 31 current painted entrance selection and timing checks. Cold/warm browser timing and visual acceptance pending. Main unchanged; parent candidate checks remain running.
+
+
+### Railway discovery and departure convergence, 28 November
+Integrated revised #124 station proximity rule into #125, keeping direct boarding and the intentional travel journal route. A 180 world-unit threshold hides both plaque and edge fallback at distance; pointer ownership and proximity are both revalidated on release. Real touch approach added to railway matrix. Exact changed source parsed and focused connector checks passed: 2021 temple continuity, 4877 moon clearance, 9413 proximity/direct departure and 13455 railway touch ownership checks. Full mobile railway matrix and rendered visual acceptance pending. Main unchanged; parent #123 checks preserved.

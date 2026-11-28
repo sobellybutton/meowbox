@@ -12416,7 +12416,7 @@ function pawRailEdgePressValid(press,view,event){
 }
 /* PAW_RAIL_EDGE_PRESS_END */
 let pawRailEdgePress=null,pawRailEdgeClickUntil=0;
-const pawRailEdgeView=()=>({scene,blocked:!!(transitioning||room||activity||pending||!proposal.hidden||document.hidden||$('page').style.display==='block')});
+const pawRailEdgeView=()=>({scene,blocked:!!(transitioning||room||activity||pending||!proposal.hidden||document.hidden||$('page').style.display==='block'||!pawRailNearStation(p,maps[scene]?.st.find(v=>v[0]==='station')))});
 pawRailEdge.addEventListener('pointerdown',e=>{
  if(e.button!==0||e.isPrimary===false||pawRailEdge.hidden||pawRailEdgeView().blocked||pawRailEdgePress)return;
  pawRailEdgePress={id:e.pointerId,scene,x:e.clientX,y:e.clientY};drag=null;
@@ -12439,6 +12439,11 @@ pawRailEdge.onclick=e=>{
 };
 // A plaque can have a valid rectangle yet be hidden, clipped, or covered.
 // Require an actual hit target before withdrawing the edge navigation.
+/* PAW_RAIL_NEAR_STATION_BEGIN */
+function pawRailNearStation(actor,station){
+ return Array.isArray(station)&&station[0]==='station'&&[actor?.x,actor?.y,station[1],station[2]].every(Number.isFinite)&&Math.hypot(actor.x-station[1],actor.y-station[2])<=180
+}
+/* PAW_RAIL_NEAR_STATION_END */
 function pawRailPlaqueReachable(sign,g){
  if(!sign||sign.hidden||sign.disabled||!g)return false;
  const r=sign.getBoundingClientRect(),style=getComputedStyle(sign);
@@ -12465,8 +12470,13 @@ syncSigns=function(...args){
  if(!proposal.hidden||room||activity||transitioning||pending||document.hidden||signRoot.hidden||$('page').style.display==='block'||!maps[scene]){
   pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
  }
- if(pawRailEdgePress?.scene===scene&&!pawRailEdge.hidden)return result;
  const sign=signButtons.get('station'),game=$('game'),g=game.getBoundingClientRect(),now=performance.now(),size=g.width+'|'+g.height;
+ const station=maps[scene].st.find(v=>v[0]==='station');
+ if(!pawRailNearStation(p,station)){
+  if(sign)sign.hidden=true;
+  pawRailEdge.hidden=true;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity;return result
+ }
+ if(pawRailEdgePress?.scene===scene&&!pawRailEdge.hidden)return result;
  const changed=pawRailEdgeScene!==scene||pawRailEdgeSize!==size;
  if(changed){pawRailEdgeScene=scene;pawRailEdgeSize=size;pawRailPlaqueSince=null;pawRailEdgeAt=-Infinity}
  if(!changed&&now-pawRailEdgeAt<75)return result;pawRailEdgeAt=now;

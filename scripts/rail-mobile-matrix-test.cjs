@@ -79,7 +79,8 @@ async function main(){
   await skip.or(gate).first().waitFor({state:'visible',timeout:45000});
   if(await skip.isVisible())await tap(skip);
   await tap(gate);
-  await page.locator(visibleStation).first().waitFor({state:'visible',timeout:45000});
+  await page.waitForFunction(()=>proposal.hidden&&!transitioning,{},{timeout:45000});
+  assert.equal(await page.locator(visibleStation).count(),0,'Arrival must not advertise distant railway');
   await shot('first-map');
   for(let i=0;i<routes.length;i++){
    // First and second journeys exercise portrait and landscape. Third uses
@@ -87,7 +88,18 @@ async function main(){
    const landscape=i===1;
    await page.setViewportSize(landscape?{width:p.height,height:p.width}:{width:p.width,height:p.height});
    await page.emulateMedia({reducedMotion:i===2?'reduce':'no-preference'});
+   // Walk towards the real station using ordinary touch on the visible path.
+   // The camera may scroll; sample the actual route corridor at each tap.
+   for(let step=0;step<32&&!await page.locator(visibleStation).count();step++){
+    const point=await page.evaluate(()=>{
+     const station=maps[scene].st.find(v=>v[0]==='station'),dir=Math.sign(station[2]-p.y)||-1;
+     const y=p.y+dir*Math.min(180,Math.abs(station[2]-p.y)),lane=residentLane(scene,y),rect=c.getBoundingClientRect();
+     return [rect.left+cam.ox+lane.x*cam.scale,rect.top+cam.oy+y*cam.scale]
+    });
+    await page.touchscreen.tap(...point);await page.waitForTimeout(700)
+   }
    await tapReachableStation(page,records,i);
+
    const ride=page.locator('.pawRailJourney');
    await ride.waitFor({state:'visible',timeout:45000});
    const expected=await page.evaluate(id=>maps[id].n[0],routes[i]);

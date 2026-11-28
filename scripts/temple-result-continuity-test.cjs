@@ -39,3 +39,13 @@ for(const [w,h] of [[320,568],[390,844],[430,932],[768,1024],[1440,900]]){
  assert.ok(c.ox+moonGeo.moonTray.x*c.s<w&&c.ox+moonGeo.moonFoot.x*c.s>0);clearanceChecks++;
 }
 console.log('PASS '+clearanceChecks+' moon clearance, contact, walk and viewport checks; minimum world gap '+minClearance.toFixed(2));
+
+// Railway visibility uses player distance, not viewport clipping.
+{
+ const block=s.match(/\/\* PAW_RAIL_NEAR_STATION_BEGIN \*\/([\s\S]*?)\/\* PAW_RAIL_NEAR_STATION_END \*\//)[1];
+ const near=new Function(block+';return pawRailNearStation')();
+ let n=0;for(let x=-240;x<=240;x+=5)for(let y=-240;y<=240;y+=5){assert.equal(near({x:500+x,y:200+y},['station',500,200]),Math.hypot(x,y)<=180);n++}
+ assert.equal(near({x:500,y:200},null),false);assert.equal(near({x:NaN,y:200},['station',500,200]),false);
+ assert.ok(s.includes('if(sign)sign.hidden=true;'));assert.ok(!s.includes('There is still plenty to discover in the valley.'));
+ console.log('PASS '+(n+4)+' proximity and direct departure checks');
+}
