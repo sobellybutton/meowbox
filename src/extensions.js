@@ -1480,11 +1480,13 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
  if(stage==='sip'&&!state.teaOrder){const f=Math.sin(Math.PI*clamp(age/2.4,0,1));cx=420-104*f;cy=525-100*f;angle=-.12*f;fill=Math.max(.35,1-age*.25)}
  if(guestDelivery&&['sip','done'].includes(stage)){cx=guestDelivery.x;cy=guestDelivery.y;angle=guestDelivery.angle;fill=guestDelivery.fill}
  else if(stage==='done')fill=.35;
- const wrist=drawRitualPose(260,492,1.65,{reach:(stage==='sip'&&(!guestDelivery||!guestDelivery.delivered))||stage==='pouring'||drag?.id==='teaMix'?{x:cx-25,y:cy-35}:null});
+ const paintedFrame=stage==='pouring'&&typeof pawFoodPourFrame==='function'&&pawFoodLive&&pawFoodLive.placement.ready(pawFoodLive.cache.image('boba_tea_pot'),pawFoodLive.manifest.assets.boba_tea_pot.size)?pawFoodPourFrame(pawFoodLive,age,residentReducedMotion.matches):null;
+ const reach=paintedFrame?{x:paintedFrame.grip[0],y:paintedFrame.grip[1]}:(stage==='sip'&&(!guestDelivery||!guestDelivery.delivered))||stage==='pouring'||drag?.id==='teaMix'?{x:cx-25,y:cy-35}:null;
+ const wrist=drawRitualPose(260,492,1.65,{reach});
  if(stage==='sip'&&!state.teaOrder){const lift=Math.sin(Math.PI*clamp(age/2.4,0,1));cx+=(wrist.x+22-cx)*lift;cy+=(wrist.y+27-cy)*lift}
  if(['ready','sip','done'].includes(stage)&&state.teaOrder)drawPaintedResident({x:555,y:510,n:state.teaOrder.resident||['Wang Laoban','王老板']},1.18,false,'left');
  teaCup(cx,cy,1.12,state.teaBase,state.teaPearls,fill,angle);
- if(stage==='pouring'){
+ if(stage==='pouring'&&!(paintedFrame&&pawPaintFoodPour(paintedFrame))){
   const f=poseEase(clamp(age/.3,0,1)),px=495-45*f,py=414-25*f;teaPitcher(px,py,state.teaBase,-.72*f);
   if(age>.25&&age<1.35){ctx.save();ctx.strokeStyle=teaChoices[state.teaBase][2];ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(px-19,py-35);ctx.quadraticCurveTo(420,py+5,420,445);ctx.stroke();ctx.restore()}
  }
@@ -5506,7 +5508,11 @@ function nostalgiaTick(g){
 }
 function nostalgiaOrb(x,y,color,r=17,alpha=1){
  ctx.save();ctx.globalAlpha=alpha;const p=nostalgiaBubbleColors[color];const grad=ctx.createRadialGradient(x-r*.36,y-r*.42,1,x,y,r);grad.addColorStop(0,'#fff8e2');grad.addColorStop(.25,p[0]);grad.addColorStop(1,p[1]);ellipse(x,y,r,r,grad);
- ctx.strokeStyle=p[1];ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,y,r-.5,0,TAU);ctx.stroke();ellipse(x-r*.33,y-r*.42,r*.23,r*.14,'#fff9e2bc');
+ ctx.strokeStyle=p[1];ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,y,r-.5,0,TAU);ctx.stroke();
+ const sheen=ctx.createLinearGradient(x-r,y-r,x+r,y+r);
+ sheen.addColorStop(0,'#fff7dcbb');sheen.addColorStop(.35,'#c2e5d577');sheen.addColorStop(.65,'#e7c4dd55');sheen.addColorStop(1,'#f4d9a499');
+ ctx.strokeStyle=sheen;ctx.lineWidth=Math.max(.6,r*.09);ctx.beginPath();ctx.arc(x,y,r*.82,.18,Math.PI*1.63);ctx.stroke();
+ ellipse(x-r*.33,y-r*.42,r*.23,r*.14,'#fff9e2bc');
  // Distinct engraved shapes supplement colour matching.
  ctx.strokeStyle='#fff4debd';ctx.lineWidth=1.6;ctx.beginPath();
  if(color===0){ctx.arc(x,y+1,r*.29,0,TAU)}else if(color===1){ctx.rect(x-r*.22,y-r*.22,r*.44,r*.44)}else if(color===2){ctx.moveTo(x,y-r*.32);ctx.lineTo(x+r*.31,y+r*.23);ctx.lineTo(x-r*.31,y+r*.23);ctx.closePath()}else{ctx.moveTo(x-r*.25,y);ctx.lineTo(x+r*.25,y);ctx.moveTo(x,y-r*.25);ctx.lineTo(x,y+r*.25)}ctx.stroke();ctx.restore()
