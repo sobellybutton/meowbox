@@ -14045,6 +14045,34 @@ teaPitcher=function(x,y,base,tilt=0){
  if(activity==='bubbleTea'&&state.teaStage==='pourReady'&&pawPaintFoodProp('boba_tea_pot',x,y,70))return;
  return pawLiveTeaPitcherBefore(x,y,base,tilt)
 };
+/* PAW_KITCHEN_LADLE_BEGIN */
+// The same pose is read by the counter actor and spoon renderer in one frame.
+// Preserve the original stir input/reward state; animation never adds progress.
+function pawKitchenLadleTick(m,now,held,angle,blocked,reduced){
+ if(!m||!Number.isFinite(now))return null;
+ const dt=Number.isFinite(m.last)?Math.max(0,Math.min(.1,now-m.last)):0;m.last=now;
+ if(blocked)return m;
+ if(held&&Number.isFinite(angle))m.angle=angle;
+ const goal=held?.25:0;
+ m.travel=reduced?goal:Math.max(0,Math.min(.25,m.travel+Math.sign(goal-m.travel)*Math.min(Math.abs(goal-m.travel),dt*.95)));
+ return m;
+}
+function pawKitchenLadleFrame(){
+ const q=pawFoodLive,id='kitchen_wooden_ladle';
+ if(activity!=='cook'||room!=='kitchen'||!q?.api?.stirPlan||!q.placement.ready(q.cache.image(id),q.manifest.assets[id].size))return null;
+ const m=state.pawKitchenLadle||(state.pawKitchenLadle={travel:0,angle:0,last:t});
+ const held=drag?.id==='stir'&&!state.done&&!!state.ingredients?.length;
+ const angle=held?Math.atan2(drag.y-480,drag.x-400):m.angle;
+ const blocked=pawArcadeInputBlocked();
+ pawKitchenLadleTick(m,t,held,angle,blocked,residentReducedMotion.matches);
+ const plan=q.api.stirPlan({id,rest:[253,536],center:[400,481],radius:[27,10],height:92,clearance:24,angle:-1.68});
+ return q.api.stirFrame(plan,m.travel,m.angle,residentReducedMotion.matches);
+}
+function pawKitchenPaintLadle(frame){
+ const q=pawFoodLive;
+ return !!(q&&frame&&q.placement.draw(ctx,q.cache.image('kitchen_wooden_ladle'),frame.prop));
+}
+/* PAW_KITCHEN_LADLE_END */
 /* PAW_FOOD_LIVE_PROPS_END */
 
 /* PAW_DISCOVERY_DIALOGUE_CONTINUITY_BEGIN */
