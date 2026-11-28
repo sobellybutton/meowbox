@@ -115,7 +115,7 @@ async function travelLoop(page,name,touch){
  assert.equal(await page.evaluate(()=>playerName),'June','Selected name persists');
  assert((await page.locator('#line').innerText()).trim().length>0,'Reading has a contextual opening');
  await press(page.locator('#choices').getByRole('button',{name:/Daily guidance/}));
- await page.waitForFunction(()=>activity==='tarot'&&state.readStage==='choose');
+ await page.waitForFunction(()=>activity==='tarot'&&pawTarotFanSettled(state,t,residentReducedMotion.matches));
  assert.equal(await page.locator('#hud').isVisible(),false,'Room hides profile and coins');
  assert.equal(await page.locator('#small').isVisible(),false,'Room hides settings');
  const chosenCard=await page.waitForFunction(()=>{
