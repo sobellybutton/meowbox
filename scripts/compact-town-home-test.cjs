@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const src=fs.readFileSync('src/compact-town-home.js','utf8');
 new vm.Script(src);
 const helper=src.split('// PAW_COMPACT_HELPERS_BEGIN')[1].split('// PAW_COMPACT_HELPERS_END')[0];
-const api=new Function(helper+';return {pageWindow,residentLabel,residentHeading,residentDialogue,residentPortraitPath}')();
+const api=new Function(helper+';return {pageWindow,residentLabel,residentHeading,residentDialogue,residentPortraitPath,roomLampAnchor,roomLightState}')();
 assert.deepEqual(api.pageWindow(0,5,2),{page:0,pages:1,start:0,end:0});
 assert.deepEqual(api.pageWindow(5,9,2),{page:2,pages:3,start:4,end:5});
 assert.deepEqual(api.pageWindow(5,-1,2),{page:0,pages:3,start:0,end:2});
@@ -23,5 +23,13 @@ for(const [en,cn,key] of [['Auntie Mei','梅姨','auntie-mei'],['Grandma','外�
 }
 assert.equal(api.residentPortraitPath('Unknown traveller'),null);
 assert(src.includes("if(communityTab==='lounge')dressTeaTable(q)"),'portraits only in authored tea chat');
+assert.deepEqual(api.roomLampAnchor('chineseLantern',50,3.2,100,400),{x:50,y:15.7});
+assert.deepEqual(api.roomLampAnchor('lamp',25,80,100,400),{x:25,y:71.25});
+assert.equal(api.roomLampAnchor('lamp',50,80,0,400),null);
+assert.equal(api.roomLampAnchor('lamp',NaN,80,100,400),null);
+assert.equal(api.roomLampAnchor('bed',50,80,100,400),null);
+assert.equal(api.roomLightState(0,false),'day');
+assert.equal(api.roomLightState(1,false),'lit');
+assert.equal(api.roomLightState(1,true),'dim');
 for(const p of ['index.html','scripts/build.cjs'])assert(fs.readFileSync(p,'utf8').includes('compact-town-home'),p+' loads new module');
 console.log('PASS compact town/home helpers and source registration');
