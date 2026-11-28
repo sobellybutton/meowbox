@@ -125,3 +125,24 @@ const animals=new Function(source.slice(animalStart,animalEnd)+';return pawParkL
 for(const id of ['pet','deerVisit']){const a=animals(id);assert.ok(a.scale>0&&a.scale<.3);assert.ok(a.foot.every(x=>x>0&&x<1))}
 assert.equal(animals('chat'),null);
 console.log('Park live admission, animal staging and threshold exit checks passed.');
+
+const visitorStart=source.indexOf('/* PAW_MAPPED_VISITORS_BEGIN */'),visitorEnd=source.indexOf('/* PAW_MAPPED_VISITORS_END */');
+const guestStart=source.indexOf('function pawGuestClear('),guestEnd=source.indexOf('function pawGuestStationFeet(');
+assert.ok(visitorStart>=0&&visitorEnd>visitorStart&&guestStart>=0&&guestEnd>guestStart);
+const visitor=new Function(source.slice(start,end)+source.slice(guestStart,guestEnd)+source.slice(visitorStart,visitorEnd)+';return {pawMappedGuestGaps,pawMappedVisitorPoints,pawReadingNormalized,pawReadingSpec,pawGuestClear};')();
+const gap=visitor.pawMappedGuestGaps(true),legacyGap=visitor.pawMappedGuestGaps(false);
+assert.equal(legacyGap.station,52);assert.equal(legacyGap.spawn,90);
+for(const id of Object.keys(api.rooms)){
+ const spec=visitor.pawReadingSpec(api,id),points=visitor.pawMappedVisitorPoints(api,id);
+ assert.ok(points.length>0&&points.length<=8,id+' room has safe guest candidates');
+ assert.deepEqual(points,visitor.pawMappedVisitorPoints(api,id),'stable guest candidates');
+ for(const p of points){
+  assert.ok(api.safe(id,visitor.pawReadingNormalized(...p)),id+' guest floor');
+  assert.ok(visitor.pawGuestClear(...p,[spec.entry],gap.entry),id+' threshold clearance');
+  assert.ok(visitor.pawGuestClear(...p,[spec.arrival],gap.spawn),id+' player arrival clearance');
+  assert.ok(visitor.pawGuestClear(...p,Object.values(spec.stations).map(v=>v.slice(2)),gap.station),id+' station clearance');
+ }
+}
+assert.ok(source.includes("room==='arcade'?['Arcade keeper','游戏厅店主']"));
+assert.ok(source.includes("room==='arcade'?'bubbleArcade':room,n:name"));
+console.log('Mapped public-room visitor candidates and arcade keeper registration passed.');
