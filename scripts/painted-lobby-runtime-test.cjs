@@ -35,7 +35,21 @@ for(const [w,h] of [[320,568],[320,900],[360,780],[390,844],[430,932],[412,915],
  assert.equal(make(false,'tarot',true).camera(w,h),null);
  assert.equal(make(true,'destiny',true).camera(w,h),null);
 }
-assert.equal(make(true,'tarot',true).camera(1440,900),null);
+// Desktop framing protects all actual station and lane positions.
+const layouts=require('../assets/visual/painted/interior-layouts.js');
+let desktopChecks=0;
+for(const id of ['tarot','destiny'])for(const [w,h] of [[900,720],[1024,768],[1280,720],[1440,900],[1920,1080],[2560,1440]]){
+ const q=make(true,id,true),p=q.plate,c=q.camera(w,h),spec=layouts.rooms[id];
+ assert.ok(c&&c.s>h/p.h&&c.s<=h/(p.h*.86)+1e-8);desktopChecks++;
+ const points=[spec.entry,spec.arrival,spec.host,...spec.visitors,...Object.values(spec.stations).flatMap(v=>[v.object,v.approach,v.label]),...spec.lane.flatMap(([y,l,r])=>[[l,y],[r,y]]),id==='tarot'?[.135,.399]:[.581,.337]];
+ for(const [x,y] of points){
+  const xx=c.ox+(p.x+p.w*x)*c.s,yy=c.oy+(p.y+p.h*y)*c.s;
+  assert.ok(xx>=0&&xx<=w&&yy>=0&&yy<=h,id+' protected anchor');desktopChecks++;
+ }
+ assert.equal(make(false,id,true).camera(w,h),null);desktopChecks++;
+}
+assert.equal(make(true,'tarot',true).camera(844,390),null);
+console.log('PASS '+desktopChecks+' reading room wide framing checks');
 console.log('PASS Tarot mobile host and route framing across eight viewport classes');
 
 {
