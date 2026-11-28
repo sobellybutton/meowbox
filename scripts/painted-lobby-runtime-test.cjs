@@ -59,3 +59,21 @@ console.log('PASS Tarot mobile host and route framing across eight viewport clas
  ck(!api.pawConsultCurrent(origin,{...origin,room:'tarot'}),'room change invalidates question');
  console.log('PASS '+n+' consultation input ownership, card geometry and scale checks');
 }
+
+{
+ const body=source.split('/* PAW_NATIVE_CONSULT_BEGIN */')[1].split('/* PAW_NATIVE_CONSULT_END */')[0];
+ const api=new Function(body+';return {pawConsultPresetReady}')();
+ const field=(value,valid=true)=>({value,checkValidity:()=>valid});
+ const values=[field('8'),field('1.35'),field('103.82')];
+ assert(api.pawConsultPresetReady('singapore',values));
+ assert(!api.pawConsultPresetReady('custom',values));
+ assert(!api.pawConsultPresetReady('',values));
+ assert(!api.pawConsultPresetReady('singapore',[field(''),...values.slice(1)]));
+ assert(!api.pawConsultPresetReady('singapore',[field('NaN'),...values.slice(1)]));
+ assert(!api.pawConsultPresetReady('singapore',[field('8',false),...values.slice(1)]));
+ assert(source.includes("Choose a card, or shuffle again."));
+ assert(source.includes("...readingTopics.map((topic,i)"));
+ assert(source.includes("btn&&btn.disabled&&room==='destiny'"));
+ assert(source.includes("pawConsultPresetReady(field.value,fields.slice(3))"));
+ console.log('PASS 10 preset birthplace and next-step wiring checks');
+}
