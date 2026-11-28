@@ -264,7 +264,7 @@ action=function(id){
   ])
  }
  if(room==='quiz'&&id==='quiz'){
-  closeTalk();return say(tr('Lab keeper','研究所店主'),tr('Ever wondered what makes you tick? No grades, no diagnosis, and absolutely no group project.','想知道自己是什么样的人？不打分、不诊断，更不用做小组作业。'),[
+  closeTalk();return say(tr('Observatory guide','观星台向导'),tr('Ever wondered what makes you tick? No grades, no diagnosis, and absolutely no group project.','想知道自己是什么样的人？不打分、不诊断，更不用做小组作业。'),[
    [tr('Four personality preferences','MBTI 启发的四组性格偏好'),()=>{closeTalk();wonderSceneOpen('type')}],
    [tr('Enneagram-inspired · nine motives','九型人格 · 九种内在动力'),()=>{closeTalk();wonderSceneOpen('motive')}],
    [tr('Five personality tendencies','五大性格倾向'),()=>{closeTalk();wonderSceneOpen('bigfive')}],
@@ -13002,6 +13002,55 @@ dailyWheelPage=function(...args){
  for(const btn of q.querySelectorAll('button'))if(btn.textContent===tr('Back to Today','返回今日')){btn.textContent=parent.kind==='wallet'?tr('Back to coin purse','返回钱包'):tr('Back to Today','返回今日');btn.onclick=back}
  const sign=q.querySelector('.mbFestivalSign small');if(sign)sign.textContent=tr('LANTERN LANE · DAILY FESTIVAL','灯火小街 · 每日小摊');
  journalLanguage(dailyWheelPage);return result
+};
+
+/* PAW_DISCOVERY_RETURN_BEGIN */
+function pawDiscoveryReturnMatches(origin,current){
+ return !!origin&&!!current&&origin.kind===current.kind&&origin.room===current.room&&origin.run===current.run&&origin.token===current.token&&origin.result===current.result&&current.district==='wonder'&&current.finished
+}
+function pawDiscoveryScroll(value,scrollHeight,clientHeight){
+ if(!Number.isFinite(value)||!Number.isFinite(scrollHeight)||!Number.isFinite(clientHeight))return 0;
+ return Math.max(0,Math.min(value,Math.max(0,scrollHeight-clientHeight)))
+}
+/* PAW_DISCOVERY_RETURN_END */
+function pawDiscoveryResultContext(kind){
+ if(kind==='story')return {kind,room,run:state,token:parallelToken,result:parallelNode,district:scene,finished:activity==='story'&&!!parallelEndings[parallelNode]};
+ if(kind==='cafe')return {kind,room,run:state,token:cafeToken,result:cafeResult,district:scene,finished:activity==='match'&&cafePhase==='result'&&!!cafeResult};
+ return null
+}
+const pawDiscoverySharePrior=openMeowShare;
+openMeowShare=function(raw,back=null){
+ const kind=raw?.kind,origin=pawDiscoveryResultContext(kind);
+ if(back||!origin?.finished||origin.district!=='wonder')return pawDiscoverySharePrior(raw,back);
+ const panel=kind==='story'?storySheet:cafeQuestionSheet,scroll=panel.scrollTop;
+ const details=Array.from(panel.querySelectorAll('details')).map(node=>node.open);
+ return pawDiscoverySharePrior(raw,()=>{
+  $('page').style.display='none';
+  const current=()=>pawDiscoveryReturnMatches(origin,pawDiscoveryResultContext(kind));
+  if(!current())return;
+  if(kind==='story'){storySheetKey='';syncStorySheet()}else{cafeQuestionSheetKey='';syncCafeQuestionSheet()}
+  if(!current()||panel.hidden)return;
+  Array.from(panel.querySelectorAll('details')).forEach((node,i)=>{node.open=!!details[i]});
+  const share=panel.querySelector(kind==='story'?'[data-story-ending="share"]':'[data-cafe-result="share"]');
+  share?.focus({preventScroll:true});
+  panel.scrollTop=pawDiscoveryScroll(scroll,panel.scrollHeight,panel.clientHeight)
+ })
+};
+const pawStoryNameBefore=syncStorySheet;
+syncStorySheet=function(...args){
+ const value=pawStoryNameBefore(...args);
+ if(storySheet.hidden)return value;
+ const chapter=storySheet.querySelector(':scope > small');
+ if(chapter&&parallelScenes[parallelNode]){
+  const name=tr('The House of What If · Chapter ','如果人生馆 · 第')+(parallelTrail.length+1)+tr(' of 4',' / 4 章');
+  if(chapter.textContent!==name)chapter.textContent=name
+ }
+ const note=storySheet.querySelector('.mbStoryIntro');
+ if(note&&parallelEndings[parallelNode]){
+  const copy=tr('This fictional ending follows your choices, not a personality result or prediction. Your keepsake is in the Starlight Valley chapter.','这个虚构结局由你的选择决定，并非性格测试或未来预测。纪念品已收入星语谷章节。');
+  if(note.textContent!==copy)note.textContent=copy
+ }
+ return value
 };
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
