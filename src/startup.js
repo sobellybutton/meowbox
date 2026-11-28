@@ -1844,7 +1844,7 @@ function paperRitualAdvance(){
   state.paperAction=null;
   state.paperRoundRemaining=Math.max(0,pawAuntieRoundRemaining(state)-1);
   if(state.paperRoundRemaining){if(!paperRitualRequest())state.paperRoundRemaining=0}
-  else hint('Ah Ma: There. Let the paper take the overtime.','阿嬷：好啦，加班就留给这张纸吧。');
+  else hint("Ah Ma: There! Leave this worry on the paper. Your shoulders can relax now.","阿嬷：好啦！烦恼留在纸上，肩膀可以放松一点咯。");
   refreshControls()
  }
 }
@@ -1918,7 +1918,7 @@ chooseStressTarget=function(index){
  const ok=mb5ChooseBefore(index);
  if(ok&&activity==='hit'&&room==='fish'){
   state.paperPrepAt=t;state.paperPrepared=false;
-  hint('Ah Ma: Let me lay out a fresh sheet.','阿嬷：来，先铺好这张纸。');refreshControls()
+  hint("Ah Ma: You sit properly. I'll lay out the paper and take care of this one.","阿嬷：你坐好就行，纸给你铺上，这件事交给我。");refreshControls()
  }
  return ok
 };
@@ -1927,7 +1927,7 @@ function mb5PrepareAdvance(){
  if(pawArcadeInputBlocked())return;
  if(mb5PrepProgress(t,state.paperPrepAt)>=1){
   delete state.paperPrepAt;state.paperPrepared=true;
-  hint('Ah Ma: Ready. Shall I start?','阿嬷：准备好啦，要开始了吗？');refreshControls()
+  hint("Ah Ma: All set. Say when, and I'll give this worry a good whack.","阿嬷：好啦，准备好了。你说开始，阿嬷就替你打走这个烦恼。");refreshControls()
  }
 }
 const mb5SheetBefore=paperWorryAt;
@@ -13897,7 +13897,7 @@ openStressChoices=function(){
   if(first+size<stressGroups.length)choices.push([tr('More worries','更多烦恼'),()=>groups(page+1)]);
   if(page>0)choices.push([tr('Previous worries','上一组烦恼'),()=>groups(page-1)]);
   choices.push([tr('Choose a slipper','选只拖鞋'),tools],[tr('Surprise me','随机挑一个'),()=>{const n=stressTargets.length;if(n)choose(n===1?0:(stressTarget+1+Math.floor(Math.random()*(n-1)))%n)}],[tr('Back to the stall','回到摊位'),()=>{if(valid())closeTalk()}]);
-  say(tr('Ah Ma','阿嬷'),tr('Pick a worry, not a real person. My slippers have no paperwork.','挑个烦恼，不打真人。阿嬷的拖鞋不用填表。'),choices)
+  say(tr('Ah Ma','阿嬷'),tr("Aiyo, carrying so many worries for what? Pick one for the paper. We hit the worry, not a real person.","哎哟，背着那么多烦恼干嘛？挑一个写在纸上，咱们只打烦恼，不打真人。"),choices)
  }
  groups(0)
 };
