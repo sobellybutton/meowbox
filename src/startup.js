@@ -8757,7 +8757,7 @@ renderChartConsultation=function(out,z){
   const selected=section.querySelector('.chartTopics button[data-topic][aria-pressed="true"]');
   if(!selected)return;
   const topic=Number(selected.dataset.topic),data=pawZwdsTopicSnapshot(z,topic);
-  if(data)openMeowShare(data,()=>{destinyPage(false,topic)})
+  if(data)pawYueShareFromChart(data,topic,section)
  });
  btn.className='pawZwdsShareButton';
  element('small',tr('Only this palace’s main stars and reflection are included. Birth details and the full chart stay private.','仅分享此宫位主星与反思小记，不包含生辰、出生地或完整命盘。'),section,'pawZwdsShareNote');
@@ -9223,7 +9223,7 @@ renderChartConsultation=function(out,z){
  element('summary',tr('Optional: share all twelve palaces','可选：分享完整十二宫'),details);
  element('p',tr('The card contains your main-star placements. It omits name, birth date, time and location, but placements can still reveal clues about birth information. Only share if comfortable.','卡片包含你的主星分布，不含姓名、出生日期、时间及地点，但星曜分布仍可能透露部分生辰线索。请自行决定是否分享。'),details);
  b(details,tr('Preview twelve-palace card','预览十二宫纪念卡'),()=>{
-  if(yueSubject!=='self'||!details.isConnected)return;const data=pawChartShareSnapshot(z);if(data)openMeowShare(data,()=>destinyPage(false))
+  if(yueSubject!=='self'||!details.isConnected)return;const data=pawChartShareSnapshot(z);if(data)pawYueShareFromChart(data,null,section)
  });
  return result
 };
@@ -13983,6 +13983,45 @@ function pawYueChartComplete(grid){
  return !!grid&&grid.querySelectorAll('article:not(.blank)').length===12
 }
 /* PAW_YUE_PARCHMENT_END */
+/* PAW_YUE_SHARE_RETURN_BEGIN */
+function pawYueShareReturnMatches(origin,current){
+ return !!origin&&!!current&&origin.scene===current.scene&&current.room==='destiny'&&!current.activity&&current.subject==='self'&&origin.profile===current.profile&&origin.chart===current.chart&&origin.visit===current.visit&&current.page==='meowShare'
+}
+function pawYueShareScroll(scroll,height,client){
+ return Number.isFinite(scroll)&&Number.isFinite(height)&&Number.isFinite(client)?Math.max(0,Math.min(scroll,Math.max(0,height-client))):0
+}
+/* PAW_YUE_SHARE_RETURN_END */
+function pawYueShareFromChart(data,topic,section){
+ if(room!=='destiny')return openMeowShare(data,()=>destinyPage(false,topic));
+ if(activity||yueSubject!=='self'||!section?.isConnected)return;
+ const pane=$('page'),q=$('content');
+ if(pane.dataset.pawYueDesk!=='true'||pane.style.display!=='block')return;
+ const context=()=>({scene,room,activity,subject:yueSubject,profile:yueSessionProfiles.self,chart:yueSessionProfiles.self.chart,visit:pawHostVisit,page:activePage});
+ const origin=context(),scroll=pane.scrollTop,selected=section.querySelector('.chartTopics button[aria-pressed="true"]');
+ const chosen=Number.isInteger(topic)?topic:selected?Number(selected.dataset.topic):null;
+ const disclosures=Array.from(q.querySelectorAll('details')).map(n=>n.open);
+ const view=q.querySelector('.palaceViewTools button[aria-pressed="true"]');
+ const viewIndex=view?Array.from(view.parentElement.querySelectorAll('button')).indexOf(view):-1;
+ const expanded=pane.dataset.pawYueExpanded==='true';
+ let used=false;
+ openMeowShare(data,()=>{
+  if(used||!pawYueShareReturnMatches(origin,context()))return;
+  used=true;destinyPage(false,chosen);
+  const restored=q.querySelector('.chartConsultation'),restoredChart=yueSessionProfiles.self.chart;
+  if(!restored||!restoredChart)return;
+  requestAnimationFrame(()=>{
+   if(room!=='destiny'||activity||!restored.isConnected||pane.dataset.pawYueDesk!=='true'||yueSessionProfiles.self.chart!==restoredChart||pawHostVisit!==origin.visit)return;
+   const buttons=q.querySelectorAll('.palaceViewTools button');
+   if(viewIndex>=0&&buttons[viewIndex])buttons[viewIndex].click();
+   Array.from(q.querySelectorAll('details')).forEach((node,i)=>{if(i<disclosures.length)node.open=disclosures[i]});
+   if(!expanded&&pane.dataset.pawYueExpanded==='true')q.querySelector('.pawYueParchmentTools button')?.click();
+   const control=restored.querySelector(data.kind==='zwds_chart'?'.pawFullChartSharing button':'.pawZwdsShareButton');
+   control?.focus({preventScroll:true});
+   // Set the position after the chart's own view-change layout is applied.
+   requestAnimationFrame(()=>{if(restored.isConnected&&room==='destiny'&&!activity&&pawHostVisit===origin.visit&&yueSessionProfiles.self.chart===restoredChart)pane.scrollTop=pawYueShareScroll(scroll,pane.scrollHeight,pane.clientHeight)})
+  })
+ })
+}
 function pawYueChartParchment(q,pane,form,out){
  if(!out)return;
  let lastGrid=null,toolbar=null,expand=null,expanded=false;
