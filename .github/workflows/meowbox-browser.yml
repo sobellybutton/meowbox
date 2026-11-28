@@ -391,21 +391,35 @@ jobs:
                 await noticeReplies.locator('.wallReply').first().waitFor({state:'hidden',timeout:3000});
                 await noticeSummary.press('Space');
                 await noticeReplies.locator('.wallReply').first().waitFor({state:'visible',timeout:3000});
+                // Global language is now intentionally owned by Profile > Settings.
+                // Leave and reopen the noticeboard through real controls; retain its state.
+                const switchTownLanguage=async(language)=>{
+                  await page.locator('#content > .row button:first-child').click();
+                  await page.locator('#profileHud').click();
+                  await page.locator('.pawProfileSettingsEntry').click();
+                  const choice=page.locator('#content #townSettingsPanel .languageChoice').getByRole('button',{name:language,exact:true});
+                  await choice.click();
+                  if(await page.evaluate(()=>document.documentElement.lang)!==(language==='EN'?'en':'zh'))throw Error('Profile language did not change');
+                  await page.locator('#content > .row button:first-child').click();
+                  await page.locator('#content > .row button:first-child').click();
+                  await page.locator('#dockValley').click();
+                  await page.locator('.townWall').waitFor({state:'visible'});
+                };
                 const noticeId=await noticeReplies.getAttribute('data-notice-id');
-                await page.locator('#page').getByRole('button',{name:'中文',exact:true}).click();
+                await switchTownLanguage('中文');
                 await page.locator('.townWall').waitFor({state:'visible'});
                 const translated=page.locator('.townWall .wallReplies').filter({has:page.locator('.wallReplyToggle[aria-expanded=true]')});
                 if(!await translated.evaluateAll((els,id)=>els.some(e=>e.dataset.noticeId===id),noticeId))throw Error('Reply expansion lost on language switch');
-                await page.locator('#page').getByRole('button',{name:'EN',exact:true}).click();
+                await switchTownLanguage('EN');
                 await page.locator('.townWall').waitFor({state:'visible'});
                 const older=page.locator('.townPostNav').getByRole('button',{name:'Read older notices',exact:true});
                 if(await older.isEnabled()){await older.click();if(await page.locator('.townResidentNote').count()<=initialNotices)throw Error('Older notices did not expand')}
                 else if(!await page.locator('.townPostNav span').innerText().then(v=>/^6 \/ 6 notices$/.test(v)))throw Error('Older notices disabled despite more notices');
                 const archiveDepth=await page.locator('.townResidentNote').count();
-                await page.locator('#page').getByRole('button',{name:'中文',exact:true}).click();
+                await switchTownLanguage('中文');
                 await page.locator('.townWall').waitFor({state:'visible'});
                 if(await page.locator('.townResidentNote').count()!==archiveDepth)throw Error('Archive depth lost on language switch');
-                await page.locator('#page').getByRole('button',{name:'EN',exact:true}).click();
+                await switchTownLanguage('EN');
                 await page.locator('.townWall').waitFor({state:'visible'});
                 await page.screenshot({path:'test-results/'+name+'-town-wall.png'});
                 await page.locator('.communityTabs').getByRole('button',{name:'Tea table',exact:true}).click();
