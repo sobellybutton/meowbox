@@ -47,3 +47,27 @@ console.log('PASS '+n+' blind-box placement, reveal and layer assertions.');
   ck(assembly.includes('blind-box-reveal')&&assembly.includes('arcade-painted-runtime'),'assembly '+p);
  }
  console.log('PASS '+n+' total blind-box render, runtime lock and assembly assertions.');
+
+ // Network or decode failures must not permanently disable uploaded art.
+ async function checkPaintedPairRetry(){
+  const requests=[];
+  class FakeImage{
+   set src(path){this.path=path;requests.push(this)}
+   decode(){return Promise.resolve()}
+  }
+  const prepare=new Function('PawBlindReveal','Image',block[1]+';return pawBlindPreparePair;')(api,FakeImage);
+  const first={},second={},third={};
+  const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve()};
+  const a=prepare(first);
+  ck(requests.length===2&&prepare(first)===a,'initial pair requested only once');
+  requests[0].onerror();await flush();
+  ck(a.failed&&prepare(first)===a&&requests.length===2,'no repeated failed requests during a visit');
+  const b=prepare(second);
+  ck(b!==a&&requests.length===4,'next shelf visit retries');
+  for(const im of requests.slice(2)){im.naturalWidth=896;im.naturalHeight=671;im.onload()}
+  await flush();
+  ck(b.decoded&&!b.failed,'matching retry decoded');
+  ck(prepare(third)===b&&requests.length===4,'reuse successful pair on later visits');
+  console.log('PASS '+n+' total assertions including painted asset retry.');
+ }
+ checkPaintedPairRetry().catch(e=>{console.error(e);process.exitCode=1});
