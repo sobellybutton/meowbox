@@ -8988,6 +8988,35 @@ function pawTempleContinue(id){
   },'up'))hint('Walking to '+entry[1]+'…','正在走向'+entry[2]+'……')
  }))
 }
+/* PAW_TEMPLE_OWNER_CONTACT_BEGIN */
+function pawTempleContactScale(camera,base=1.55){
+ const c=Number.isFinite(camera)&&camera>0?camera:.65;
+ return Math.max(base,Math.min(2.15,100/(94*c)))
+}
+function pawIncenseSupply(p,held,stage,age){
+ const rack={x:p.x+p.w*.866,y:p.y+p.h*.543},count=Math.max(0,Math.min(3,Math.floor(held||0)));
+ const taking=stage==='taking'&&count<3,removed=taking&&age>=.32;
+ const slots=Array.from({length:3},(_,i)=>({x:rack.x+(i-1)*6,y:rack.y-8}));
+ return {rack,slots,count,removed,remaining:slots.slice(count+(removed?1:0)),pick:slots[Math.min(2,count)],flame:{x:rack.x+30,y:rack.y-24}}
+}
+function pawIncensePickup(hand,pick,age){
+ const f=Math.max(0,Math.min(1,age<.32?age/.32:(.72-age)/.40)),v=f*f*(3-2*f);
+ return {x:hand.x+(pick.x-hand.x)*v,y:hand.y+(pick.y-hand.y)*v}
+}
+/* PAW_TEMPLE_OWNER_CONTACT_END */
+function pawDrawIncenseSupply(supply){
+ const {rack,remaining}=supply,x=rack.x,y=rack.y;
+ ctx.save();try{
+  // A shallow lacquered box sits on the existing right counter.
+  ellipse(x,y+4,23,6,'#39291f38');
+  round(x-20,y-20,40,25,2,'#916443','#51382d');
+  round(x-17,y-19,34,12,1,'#59412e','#c9a474');
+  for(const p of remaining)incenseStem(p.x,p.y,0,false,39);
+  round(x-20,y-8,40,13,1,'#a77a4c','#60402e');
+  line(x-16,y-6,x+16,y-6,'#d4ad73',1.3);
+  const cx=x+30;ellipse(cx,y+3,6,2.4,'#5c4533');round(cx-3,y-19,6,22,1,'#bc8053','#93633d');ellipse(cx,y-24,2.7,4.8,'#ffcf81');
+ }finally{ctx.restore()}
+}
 function pawPrayerStep(){
  const blocked=document.hidden||talkOpen||transitioning||$('page').style.display==='block'||!proposal.hidden;
  // The shared quiet-activity clock already excludes covered and hidden intervals.
@@ -9004,7 +9033,7 @@ function pawPrayerStep(){
  // No second deity, table, burner, mat or furniture over the painting.
  if(pawRoomImageReady(pawHallArt())){
   const p=pawHallPlate,xy=(u,v)=>({x:p.x+p.w*u,y:p.y+p.h*v});
-  const side=xy(.72,.64),front=xy(.50,.65),offering=xy(.50,.572),rack=xy(.79,.536),burner=xy(.50,.495);
+  const side=xy(.76,.655),front=xy(.50,.65),offering=xy(.50,.572),supply=pawIncenseSupply(p,held,stage,age),rack=supply.rack,burner=xy(.50,.495);
   const blend=(a,b,v)=>({x:a.x+(b.x-a.x)*v,y:a.y+(b.y-a.y)*v});
   const ratio=duration=>poseEase(Math.max(0,Math.min(1,age/duration)));
   let foot=side,dir='right';
@@ -9013,37 +9042,33 @@ function pawPrayerStep(){
   else if(['hold','bow','offer','complete'].includes(stage)){foot=front;dir='up'}
   else if(stage==='placing'){foot=blend(front,offering,ratio(1.85));dir='up'}
   else if(stage==='returnMat'){foot=blend(offering,front,ratio(1.1));dir='down'}
-  const sc=.91,hand={x:foot.x+(dir==='left'?-15:dir==='up'?9:17),y:foot.y-47+q.bow*9};
+  const sc=pawTempleContactScale(cam.scale,1.55),hand={x:foot.x+(dir==='left'?-15:dir==='up'?9:17)*sc,y:foot.y-48*sc+q.bow*9};
   // The right-side incense supply is separate from the red fortune tube on the left.
   const reach=stage==='taking'?Math.sin(Math.PI*Math.min(1,age/.72)):stage==='lighting'?Math.sin(Math.PI*Math.min(1,age/1.65)):0;
-  const reaching=stage==='taking'&&age>=.32;
-  const supply={x:rack.x,y:rack.y+10},flame={x:rack.x+18,y:rack.y-5};
+  const reaching=stage==='taking',flame=supply.flame,pick=reaching?pawIncensePickup(hand,supply.pick,age):null;
   const lightAngle=stage==='lighting'?1.05*reach:0;
   const lightGrip={x:flame.x-Math.sin(lightAngle)*34,y:flame.y+Math.cos(lightAngle)*34};
-  const grip=stage==='placing'?blend(hand,burner,poseEase(Math.max(0,Math.min(1,(age-1.25)/.65)))):stage==='lighting'?blend(hand,lightGrip,reach):blend(hand,supply,Math.min(1,reach*.82));
-  const shown=stage==='placing'&&age>=1.98?0:Math.min(3,held+(reaching?1:0));
-  // Small incense sticks rest on the painted right counter, never in a second floating table.
-  if(['approach','collect','taking','lightReady','lighting'].includes(stage)){
-   for(let j=held+(reaching?1:0);j<3;j++){ctx.save();ctx.translate(rack.x+j*3,rack.y+10);ctx.rotate(.14);incenseStem(0,0,.03,false,25);ctx.restore()}
-   const candle={x:rack.x+18,y:rack.y+8};ellipse(candle.x,candle.y,5,2,'#5c4533');round(candle.x-2.4,candle.y-12,4.8,12,1,'#bc8053','#93633d');ellipse(candle.x,candle.y-13,2,4,'#ffcf81');
-  }
-  if(q.walking&&!shown)backHuman(foot.x,foot.y,avatar??0,true,dir,sc);
+  const grip=stage==='placing'?blend(hand,burner,poseEase(Math.max(0,Math.min(1,(age-1.25)/.65)))):stage==='lighting'?blend(hand,lightGrip,reach):hand;
+  const shown=stage==='placing'&&age>=1.98?0:Math.min(3,held);
+  // The empty supply stays on the counter throughout the ritual.
+  pawDrawIncenseSupply({...supply,remaining:['walkMat','hold','bow','offer','placing','returnMat','complete'].includes(stage)?[]:supply.remaining});
+  if(q.walking&&!shown&&!pick)backHuman(foot.x,foot.y,avatar??0,true,dir,sc);
   else{
    // During the actual bow face the altar, rather than bowing towards
    // an invented side table. Keep the incense at the traveller's hands.
    if(stage!=='bow')backHuman(foot.x,foot.y,avatar??0,q.walking,dir,sc);
    else if(stage==='bow'){ctx.save();try{ctx.translate(foot.x,foot.y);ctx.scale(1,1-.14*q.bow);backHuman(0,0,avatar??0,false,'up',sc)}finally{ctx.restore()}}
-   if(shown){
-    const shoulder={x:foot.x+(dir==='left'?-6:7),y:foot.y-48+q.bow*9};
+   if(shown||pick){
+    const shoulder={x:foot.x+(dir==='left'?-6:7)*sc,y:foot.y-48*sc+q.bow*9};
     ctx.save();try{
-     pawIncenseArm(shoulder,grip,sc,true);
-     for(let j=0;j<shown;j++)incenseStem(grip.x+(j-(shown-1)/2)*3.8,grip.y,lightAngle+(j-(shown-1)/2)*.065,lit,34,j===0);
-     pawIncenseArm(shoulder,grip,sc,false)
+     if(shown){pawIncenseArm(shoulder,grip,sc,true);for(let j=0;j<shown;j++)incenseStem(grip.x+(j-(shown-1)/2)*3.8,grip.y,lightAngle+(j-(shown-1)/2)*.065,lit,39,j===0)}
+     if(pick&&supply.removed)incenseStem(pick.x,pick.y,0,false,39);
+     pawIncenseArm(shoulder,pick||grip,sc,false)
     }finally{ctx.restore()}
    }
   }
   if(state.prayerOffered||stage==='placing'&&age>=1.98){for(let j=0;j<3;j++)incenseStem(burner.x+(j-1)*3,burner.y,0,true,25,j===1)}
-  if(stage==='collect')target(rack.x-27,rack.y-40,54,65,()=>requestIncenseAction('take'));
+  if(stage==='collect'){const size=Math.max(54,44/Math.max(.1,cam.scale));target(rack.x-size/2,rack.y-45,size,Math.max(65,size),()=>requestIncenseAction('take'),'paw-incense-supply')}
   if(stage==='lightReady')target(rack.x-25,rack.y-35,65,80,()=>requestIncenseAction('light'));
   if(stage==='hold')target(front.x-32,front.y-90,64,100,beginQuietBow);
   if(stage==='offer')target(offering.x-36,offering.y-85,72,95,()=>requestIncenseAction('offer'));
@@ -11232,13 +11257,13 @@ function pawDrawWaterPainting(){
  else if(stage===1)at=pawWaterMix(run.pawWaterFrom||g.scoop,g.rest,poseEase(Math.min(1,age/.35)));
  else if(stage===2){at=pawWaterMix(run.pawWaterFrom||g.pour,g.pour,poseEase(Math.min(1,age/.35)));angle=.58*poseEase(Math.min(1,age/.4))*(1-poseEase(Math.max(0,Math.min(1,(age-1.5)/.5))))}
  else if(stage===3)at=pawWaterMix(g.pour,g.rack,poseEase(Math.min(1,age/.55)));
- const shoulder={x:g.foot.x-10,y:g.foot.y-61},grip={x:at.x+16,y:at.y};
+ const sc=pawTempleContactScale(cam.scale,1.72),shoulder={x:g.foot.x-8*sc,y:g.foot.y-52*sc},grip={x:at.x+16,y:at.y};
  // Reuse the chosen traveller, standing in front of the real basin.
- backHuman(g.foot.x,g.foot.y,avatar??0,false,'left',1.14);
- if(stage===1||stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,.9,true);
+ backHuman(g.foot.x,g.foot.y,avatar??0,false,'left',sc);
+ if(stage===1||stage===2)pawIncenseArm({x:shoulder.x+5,y:shoulder.y+5},g.palm,sc*.80,true);
  if(stage!==3||age<.55){
   ctx.save();ctx.translate(at.x,at.y);ctx.scale(-.65,.65);waterLadleArt(0,0,-angle,stage===1||stage===2&&age<1.55);ctx.restore();
-  pawIncenseArm(shoulder,grip,.92,false)
+  pawIncenseArm(shoulder,grip,sc*.82,false)
  }
  if(stage===2&&age>.15&&age<1.8){
   const bowl={x:at.x-23*Math.cos(angle),y:at.y+23*Math.sin(angle)};
@@ -11625,6 +11650,15 @@ function pawRearGardenRoute(from,action){
  const route=[];for(let k=action;k!==origin;k=parent.get(k))route.unshift(pawRearGardenNodes[k].slice());
  return route.length?route:[pawRearGardenNodes[action].slice()]
 }
+// A seated body contacts the painted cushion at the hip, not the path.
+function pawRearBenchPose(p,scale){
+ const hip={x:p.x+p.w*.78,y:p.y+p.h*.558};
+ return {hip,x:hip.x-9*scale,y:hip.y+20*scale,scale}
+}
+function pawRearGardenSway(age,reduced=false,kind='chime'){
+ if(reduced||!Number.isFinite(age)||age<0||age>=3.2)return 0;
+ return Math.sin(age*(kind==='cats'?10:8.5))*Math.exp(-age*1.15)*(kind==='cats'?2.7:5.5)
+}
 function pawRearGardenPellet(i,age){
  if(!Number.isFinite(age)||age<0||age>.9)return null;
  const f=Math.max(0,Math.min(1,(age-i*.035)/.65));if(f<=0||f>=1)return null;
@@ -11665,13 +11699,28 @@ pawGardenChoose=function(run,kind){
  if(run.gardenSitting){gardenSeat();if(run.gardenSitting)return}
  if(pawGardenRoute(q,kind))hint(...({feed:['Walking to the pond…','走向锦鲤池……'],seat:['Walking to the bench…','走向长椅……'],chime:['Walking to the chime…','走向风铃……'],cats:['Walking to the lucky cats…','走向招财猫……']}[kind]))
 };
+// Deform a small region of the existing painted object, preserving the
+// exact image at its boundaries. No duplicate bell or floating icon.
+function pawRearGardenWarp(im,p,box,amount){
+ if(!amount||!pawRoomImageReady(im))return;
+ const [l,u,r,d]=box,x=p.x+l*p.w,y=p.y+u*p.h,w=(r-l)*p.w,h=(d-u)*p.h;
+ const iw=im.naturalWidth,ih=im.naturalHeight,cols=[0,.28,.72,1],rows=16;
+ ctx.save();try{
+  ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();
+  for(let i=0;i<rows;i++){
+   const f=i/rows,fh=1/rows,shift=amount*Math.sin(Math.PI*(f+fh/2));
+   const dest=[0,.28*w+shift,.72*w+shift,w];
+   for(let j=0;j<3;j++)ctx.drawImage(im,(l+(r-l)*cols[j])*iw,(u+(d-u)*f)*ih,(r-l)*(cols[j+1]-cols[j])*iw,(d-u)*fh*ih,x+dest[j],y+f*h,dest[j+1]-dest[j]+.25,h*fh+.25)
+  }
+ }finally{ctx.restore()}
+}
 const pawRearGardenDrawBefore=drawActivity;
 drawActivity=function(...args){
  if(!pawRearGardenActive())return pawRearGardenDrawBefore(...args);
  const run=state,q=run.pawGardenWalk,p=pawRearGardenPlate,b=livingBounds(),xy=(u,v)=>[p.x+p.w*u,p.y+p.h*v];
  const prior=q.pos.slice(),arrive=pawGardenWalkTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
  if(arrive==='feed')gardenFeed();else if(arrive==='seat')gardenSeat();else if(arrive==='chime')gardenChime();
- else if(arrive==='cats'){run.pawCatVisit=(run.pawCatVisit||0)+1;hint(...(run.pawCatVisit%2?['May the lucky cats bring you a little peace today.','愿招财猫送你一点清静。']:['They look very busy doing absolutely nothing.','它们忙着什么也不做，真让人羡慕。']))}
+ else if(arrive==='cats'){run.pawCatAt=t;run.pawCatVisit=(run.pawCatVisit||0)+1;sound(520);hint(...(run.pawCatVisit%2?['May the lucky cats bring you a little peace today.','愿招财猫送你一点清静。']:['They look very busy doing absolutely nothing.','它们忙着什么也不做，真让人羡慕。']))}
  const dx=(q.pos[0]-prior[0])*p.w,dy=(q.pos[1]-prior[1])*p.h,moving=q.route.length>0;
  if(Math.hypot(dx,dy)>.01)q.dir=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';
  continuityActivity=activity;
@@ -11685,11 +11734,19 @@ drawActivity=function(...args){
     if(f>0&&f<1){const [rx,ry]=xy(.31+j*.018,.617+(j%2)*.014);ctx.strokeStyle='rgba(242,239,207,'+(.6*(1-f))+')';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(rx,ry,2+f*17,1+f*5,0,0,TAU);ctx.stroke()}
    }
   }
-  const [x,y]=xy(...q.pos),scale=.90+Math.max(0,q.pos[1]-.54)*.65;
-  if(run.gardenSitting&&!moving)drawRitualPose(x,y,scale,{seat:1});
-  else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale);
-  // Chime is already painted onto the real eave, so do not draw a second.
-  const chimeAge=t-run.gardenChimeAt;
+  const [x,y]=xy(...q.pos),scale=pawTempleContactScale(cam.scale,1.48+Math.max(0,q.pos[1]-.54)*.55);
+  const seated=run.gardenSitting&&!moving,seatAge=Math.max(0,t-run.gardenSeatAt),seatAmount=seated?(residentReducedMotion.matches?1:poseEase(Math.min(1,seatAge/.45))):0;
+  if(seated){const a=pawRearBenchPose(p,scale),sx=x+(a.x-x)*seatAmount,sy=y+(a.y-y)*seatAmount;
+   ctx.save();try{ctx.translate(sx,sy);ctx.scale(-1,1);drawRitualPose(0,0,scale,{seat:seatAmount})}finally{ctx.restore()}
+  }else backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,q.dir||'up',scale);
+  const chimeAge=t-run.gardenChimeAt,catAge=t-run.pawCatAt,reduced=residentReducedMotion.matches;
+  pawRearGardenWarp(pawRearGardenArt(),p,[.725,.254,.825,.385],pawRearGardenSway(chimeAge,reduced));
+  pawRearGardenWarp(pawRearGardenArt(),p,[.603,.361,.645,.408],pawRearGardenSway(catAge,reduced,'cats'));
+  if(catAge>=0&&catAge<1.8){
+   const [gx,gy]=xy(.65,.390),fade=1-catAge/1.8;ctx.save();ctx.globalAlpha=fade*.7;
+   for(let j=0;j<3;j++){const a=j*TAU/3;ellipse(gx+Math.cos(a)*(13+catAge*8),gy+Math.sin(a)*(8+catAge*6),1.8,1.8,'#ffdf91')}ctx.restore()
+  }
+  // Gentle sound rings accompany actual movement of the existing painting.
   if(chimeAge>=0&&chimeAge<1.5&&!residentReducedMotion.matches){
    const [cx,cy]=xy(.78,.303),f=chimeAge/1.5;
    ctx.strokeStyle='rgba(239,223,161,'+(.5*(1-f))+')';ctx.lineWidth=.8;
