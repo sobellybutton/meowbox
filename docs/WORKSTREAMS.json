@@ -519,7 +519,18 @@
         "4257e120 + 093fa9fd + 1b1d4706: integrated original painted flat lid in live bubble tea sealing, physical transfer from counter to cup lip, cup rotation/serving attachment, character reach and per-visit fallback, no change to recipe/reward. 519 new focused exact-source checks passed; source syntax parsed. Actual hand contact, layering, device visuals and deployed revision unverified. Finished food archive remains absent from current tree; opaque takeaway cup stacks not substituted for transparent drink cup."
       ],
       "lease": null,
-      "blocker": "Dedicated ingredient, preparation, pouring, serving and tasting artwork, pose contact and actual browser verification remain outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n49 original kitchen/boba props prepared at assets/visual/painted/food-props; runtime integration, scene-specific grip/pour contact, animation and rendered acceptance remain pending. CI pending at check."
+      "blocker": "Dedicated ingredient, preparation, pouring, serving and tasting artwork, pose contact and actual browser verification remain outstanding.\n\nOwner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay.\n49 original kitchen/boba props prepared at assets/visual/painted/food-props; runtime integration, scene-specific grip/pour contact, animation and rendered acceptance remain pending. CI pending at check.",
+      "remediation": [
+        {
+          "id": "ROOM-03-physical-tea-transfer",
+          "action": "Reuse registered pearl/jelly bowls and six ingredient dishes; complete each scoop through visible transfer, deposit and return before shaking. Review actual vessel, scoop/hand and cup lip contact.",
+          "depends": [],
+          "lane": "interactive gameplay / artwork",
+          "acceptance": "Both topping types and all cooking routes in real mobile/desktop browser; no repeated inputs, hidden reward, fallback flash or mismatched art. Verify normal approach and return.",
+          "state": "partial_implementation_staged",
+          "evidence": "#100 e27bc9d4/2cb99d13/807c8f27: 107 exact checks passed, dedicated actual browser workflow staged."
+        }
+      ]
     },
     {
       "id": "ROOM-04",
@@ -1596,7 +1607,8 @@
           "depends": [],
           "lane": "interactive gameplay",
           "acceptance": "Every retained activity returns to exact station/result and ordinary gameplay without generic secondary interface; both languages and native layouts; privacy exceptions documented.",
-          "state": "open"
+          "state": "partial_implementation_staged",
+          "evidence": "PR #94: 80 actual completed-result fixture journeys passed across Chromium/WebKit, 10 result categories, two locales and two device layouts (run 46132401420, revision 697b75d9). Same-room PNG/caption and exact return, expanded notes verified. Remaining organic approach/finish, native OS share, archive and other activities, visual acceptance and integration."
         }
       ]
     },
@@ -1671,7 +1683,8 @@
           "depends": [],
           "lane": "interactive gameplay / artwork",
           "acceptance": "Rendered motion in all relevant rooms and districts, reduced-motion behavior and frame pacing verified.",
-          "state": "open"
+          "state": "partial_implementation_staged",
+          "evidence": "PR #101: aa59f522/f04d023a live reduced-motion setting, hidden rendering skip, no generic duplicate particles on mapped interiors, wind chime respects motion. 115 additional exact policy checks passed. Preserve authored lanterns/steam; reconcile #55/#96 and actual rendered motion."
         }
       ]
     },
@@ -1807,7 +1820,8 @@
           "depends": [],
           "lane": "interactive interface / artwork",
           "acceptance": "Actual exported PNG and preview reviewed for each supported kind and ratio in both languages; readable, correct, no sensitive input; accessible in-scene controls and correct cancellation.",
-          "state": "open"
+          "state": "partial_implementation_staged",
+          "evidence": "PR #79/#94: 216 actual PNGs per engine on a4e7e90c, reviewed 26 existing assets and real contact sheets; removed repetitive border, increased type, fixed orientation captions and replaced mismatched illustrations. #94 real 80 result journeys passed; latest full all-format visual review and central integration still pending."
         }
       ]
     },
@@ -2029,7 +2043,18 @@
         "Batch 02: 2f201b48 + ab1ac139: temple approach and hall admission now requires exact-source decoded artwork, not download completion; explicit doorway retry uses recovered image retry path, nearby warming requests only mapped temple approach/hall, already decoded warm visits return immediately; stale load callback rejects changed source before decode. Exact current startup parsed and 55 combined world admission assertions passed in connector harness. Other mapped room/background fallback paths, actual cold/warm browser results, hardware and final visual acceptance remain outstanding. No stage promotion."
       ],
       "lease": null,
-      "blocker": "Actual iPhone/WebKit cold/warm cache, all other room assets and visual acceptance remain open.\nEntrance crop late replacement removed; cold fallback may have original padding. Real painted gate handoff and device timing/visual verification pending."
+      "blocker": "Actual iPhone/WebKit cold/warm cache, all other room assets and visual acceptance remain open.\nEntrance crop late replacement removed; cold fallback may have original padding. Real painted gate handoff and device timing/visual verification pending.",
+      "remediation": [
+        {
+          "id": "ENT-ASSET-READY-01-park-food-art",
+          "action": "Prefetch existing care frames and food dish/bowl assets while walking to room; preserve nonblocking admission and stable per-visit art.",
+          "depends": [],
+          "lane": "interactive gameplay / artwork",
+          "acceptance": "Real cold/warm normal arrival with no mid-gesture art swap; mobile/desktop timing evidence.",
+          "state": "partial_implementation_staged",
+          "evidence": "#97 6cefd2ff/1abf3baa and #100 d3f1e190: exact prewarm checks passed, browser timing pending."
+        }
+      ]
     },
     {
       "id": "LIFE-OCCUPANCY-01",
