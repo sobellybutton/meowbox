@@ -101,4 +101,30 @@ foodClock(serving,'cook',10,false);foodClock(serving,'cook',11,true);foodClock(s
 ck(serving.pawSoupServeAt===16,'serving clock freezes during interruption');
 serving.pawSoupServed=true;serving.tasteAt=16;foodClock(serving,'cook',17,false);
 ck(serving.pawFoodClock.phase==='taste','tasting resumes original clock');
+const extension=require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/extensions.js'),'utf8');
+
+const tasteMotion=new Function(serveBlock+';return pawKitchenTasteMotion')();
+const assistBlock=startup.slice(startup.indexOf('function mb5AssistSpec('),startup.indexOf('function mb5AssistPerform('));
+const assist=new Function(assistBlock+';return mb5AssistSpec')();
+const meal={done:true,pawSoupServeMode:true};
+ck(assist('cook',meal,0).action==='serve-soup','offer serving before tasting');
+meal.pawSoupServeAt=0;ck(assist('cook',meal,1).disabled,'no duplicate action while serving');
+meal.pawSoupServed=true;ck(assist('cook',meal,2.2).action==='taste','taste after serve');
+meal.tasteAt=2.3;ck(assist('cook',meal,3).disabled,'no duplicate tasting');
+meal.tasted=true;ck(assist('cook',meal,5).action==='back','return after tasting');
+ck(assist('cook',{done:true},0).action==='taste','legacy fallback remains playable');
+for(let i=0;i<=270;i++){
+ const f=tasteMotion(i/100),r=tasteMotion(i/100,true);
+ ck(f.x>=344&&f.x<=510&&f.y>=377&&f.y<=437,'bounded sip motion');
+ ck(f.fill>=.3-1e-8&&f.fill<=1,'bounded soup fill');
+ ck(r.x===510&&r.y===437&&r.reach===null,'reduced motion stays grounded');
+}
+ck(tasteMotion(0).x===510&&tasteMotion(0).y===437,'starts at served bowl anchor');
+ck(tasteMotion(2.7).x===510&&tasteMotion(2.7).y===437,'returns to same anchor');
+ck(tasteMotion(2.7).done,'taste completes');
+ck(tasteMotion(1.3).x===344&&tasteMotion(1.3).y===377,'sip dwell');
+ck(extension.includes('const pose=pawKitchenTasteMotion(age,residentReducedMotion.matches);'),'live tasting motion used');
+ck(extension.includes('drawRitualPose(290,495,1.35,{reach:pose.reach});'),'same actor scale as serving');
+ck(startup.includes("else if(action==='serve-soup')pawKitchenServeRequest();"),'assist uses real serving action');
+
 console.log('PASS '+n+' food contact geometry, phase and source assertions; no rendered contact acceptance');
