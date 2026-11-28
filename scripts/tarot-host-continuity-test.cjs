@@ -151,6 +151,8 @@ for(const [format,[width,height,top,bottom]] of Object.entries(exportBoxes)){
    assert.equal(rotations.length,cards.filter(c=>c.rev).length);
    assert.ok(!text.some(v=>v.includes('undefined')));
    for(const card of deck){const name=card[Number(cn)];assert.ok(text.join(' ').includes(name)||text.join('').includes(name))}
+    assert.equal(text.filter(v=>v===(cn?'逆位':'Reversed')).length,cards.filter(c=>c.rev).length);
+    assert.equal(text.filter(v=>v===(cn?'正位':'Upright')).length,cards.filter(c=>!c.rev).length);
    editorialCases++;
   }
  }
