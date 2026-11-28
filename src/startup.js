@@ -12250,7 +12250,7 @@ pawRoomVisitorSpecs.wishes={count:1,points:pawWishLobbyVisitors.map(v=>v.slice()
 // The reading rooms and two-station tea lobby use individually reviewed paintings.
 // Keep the existing activity, save IDs and walking input; never draw a second
 // table or book on a table already present in the painted room.
-const pawReadingRoomIds=['tarot','destiny','quiz','story','match','tea','fish','arcade'];
+const pawReadingRoomIds=['tarot','destiny','quiz','story','match','tea','fish','arcade','park'];
 const pawReadingPlate={x:245,y:235,w:550*928/1648,h:550};
 function pawReadingWorld(point,p=pawReadingPlate){return [p.x+point[0]*p.w,p.y+point[1]*p.h]}
 function pawReadingNormalized(x,y,p=pawReadingPlate){return [(x-p.x)/p.w,(y-p.y)/p.h]}
@@ -12340,9 +12340,9 @@ indoorSegment=function(a,b,...args){return pawReadingActive()?pawReadingAPI().se
 // Use the reviewed lane for all normal inputs, not the rectangular y>=565 clamp.
 const pawPierDestinationBefore=indoorDestination;
 indoorDestination=function(x,y,goal=null,facing=null){
- if(!['fish','arcade'].includes(room)||!pawReadingActive())return pawPierDestinationBefore(x,y,goal,facing);
+ if(!['fish','arcade','park'].includes(room)||!pawReadingActive())return pawPierDestinationBefore(x,y,goal,facing);
  const route=pawReadingDestination(pawReadingAPI(),room,[indoor.x,indoor.y],x,y);
- if(!route?.length){if(goal)hint(room==='fish'?'Try the clear path beside the river.':'Try the clear aisle between the games.',room==='fish'?'请沿河边的小路走。':'请沿游戏机之间的通道走。');return false}
+ if(!route?.length){if(goal)hint(room==='fish'?'Try the clear path beside the river.':room==='park'?'Follow the stone path through the park.':'Try the clear aisle between the games.',room==='fish'?'请沿河边的小路走。':room==='park'?'请沿公园的石板路走。':'请沿游戏机之间的通道走。');return false}
  indoor.route=route;[indoor.tx,indoor.ty]=route.shift();indoor.goal=goal;indoor.goalFacing=facing;return true
 };
 function pawReadingBackdrop(){
@@ -12365,7 +12365,7 @@ riverSceneBackdrop=function(...args){if(room==='fish'&&pawReadingActive()){pawRe
 riverAuntie=function(...args){if(room==='fish'&&pawReadingActive())return;return pawPierAuntieBefore(...args)};
 const pawPierMarkBefore=markIndoorStation;
 markIndoorStation=function(id,from,anchor){
- if(['fish','arcade'].includes(room)&&pawReadingActive()){
+ if(['fish','arcade','park'].includes(room)&&pawReadingActive()){
   // Remove the generic oversized rectangle appended after the plaque. It can
   // overlap the next river activity in this narrow painting.
   const last=hit.at(-1),q=pawReadingAPI().rooms[room].stations[id];
@@ -12376,10 +12376,10 @@ markIndoorStation=function(id,from,anchor){
 const pawReadingDrawBefore=drawRoom;
 drawRoom=function(...args){if(pawReadingActive())pawReadingBackdrop();return pawReadingDrawBefore(...args)};
 function pawReadingHost(){
- const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:room==='tea'?['Auntie Mei','梅姨']:room==='fish'?['Ah Ma','阿嬷']:null;
+ const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:room==='tea'?['Auntie Mei','梅姨']:room==='fish'?['Ah Ma','阿嬷']:room==='park'?['Auntie Lin','林姨']:null;
  if(!name)return null;const record=residentArtworkRecord(name);if(!record&&room!=='fish')return null;
  const [x,y]=pawReadingWorld(room==='destiny'?[.58,.446]:pawReadingAPI().rooms[room].host);
- return {station:room==='tea'?'chat':room==='fish'?'hit':room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record?.height||112,.90),facing:room==='fish'?'right':'left'}
+ return {station:room==='tea'?'chat':room==='fish'?'hit':room==='park'?'pet':room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record?.height||112,.90),facing:room==='fish'?'right':'left'}
 }
 const pawReadingHostsBefore=roomResidentActors;
 roomResidentActors=function(){if(!pawReadingActive())return pawReadingHostsBefore();const a=pawReadingHost();return a?[a]:[]};
@@ -12419,9 +12419,25 @@ function pawDrawYueDeskPlaque(fn){
   target(place.x-place.hitW/2,place.y-place.hitH/2,place.hitW,place.hitH,fn);return true
  }finally{ctx.restore()}
 }
+/* PAW_PARK_LOBBY_BEGIN */
+function pawParkLobbyAnimal(id){
+ if(id==='pet')return {foot:[.29,.443],scale:.16};
+ if(id==='deerVisit')return {foot:[.73,.55],scale:.21};
+ return null
+}
+/* PAW_PARK_LOBBY_END */
+function pawDrawParkLobbyAnimal(id){
+ const q=pawParkLobbyAnimal(id);if(!q)return;
+ const [x,y]=pawReadingWorld(q.foot);
+ if(id==='deerVisit'){drawMeadowDeer(x,y,deerProfiles[0],0,0,q.scale);return}
+ const im=productionVisual('parkCats');if(!pawRoomImageReady(im))return;
+ const frame=parkCatFrame('idle',0,t),w=220*q.scale,h=140*q.scale;
+ ctx.drawImage(im,frame*220,0,220,140,x-w/2,y-h*120/140,w,h)
+}
 const pawReadingPropBefore=prop;
 prop=function(id,x,y){
  if(!pawReadingActive()||!Object.hasOwn(pawReadingAPI().rooms[room].stations,id))return pawReadingPropBefore(id,x,y);
+ if(room==='park')pawDrawParkLobbyAnimal(id);
  const a=pawReadingHost();if(a&&a.station===id){if(room==='destiny'){pawDrawYueAtDesk(a);pawDrawYueDeskPlaque(()=>action('destiny'))}else if(room==='fish'){if(!drawGatheringPainted(a.n,a.x,a.y,a.sc,a.facing))pawPierAuntieBefore(a.x,a.y,94*travellerRoomScale(H,cam.scale)/205)}else drawGatheringPainted(a.n,a.x,a.y,a.sc,a.facing)}
  // Artwork contains the table and props. Only the interactive sign remains.
  pawStationPlaque={room,id,x,y,spec:groundedStationSpec(room,id),at:t}
