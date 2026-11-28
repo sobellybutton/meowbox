@@ -883,7 +883,11 @@
       "resources": [
         "art:home-room",
         "src/home-layout.js",
-        "scripts/home-layout-test.cjs"
+        "scripts/home-layout-test.cjs",
+        "src/home-placement-runtime.js",
+        "index.html",
+        "scripts/build.cjs",
+        "scripts/home-placement-live-test.cjs"
       ],
       "depends": [],
       "stage": "tested",
@@ -893,7 +897,10 @@
         "83694491 + 11e92ac8: live home finish raster now samples contiguous projected source bands for each floor output row rather than skipping source texture pixels, intended to reduce distant floor stripes and aliasing. 2240 direct row checks and 6734 persisted focused mocked-canvas assertions passed against exact module; no actual screenshot/CI/build/deployment verification.",
         "2c5798d5: projected floor cell containment replaces fixed-radius selection; exact-source 5357 assertions passed for all four layouts, interior taps, outside edges and studio void. Persisted in d5c943af. Live modular floor editor hookup and rendering remain pending under HOME-CATALOGUE-LIVE-02."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-home-editor-contact",
+        "until": 1795846340007
+      },
       "blocker": "Live finish raster consumer confirmed in startup. Actual rendered surface comparison, full room geometry/placement/expansion integration, mobile/desktop performance, build and deployment remain unverified."
     },
     {
