@@ -375,12 +375,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [
-        "a7ac348a + 6518a032: visually inspected existing arcade portrait, traced safe central aisle and exact three retained station anchors, blocked tank and cabinet floor positions, 156 targeted route/camera checks passed. Runtime lobby activation still pending shared startup lease; not a visual acceptance."
+        "a7ac348a + 6518a032: visually inspected existing arcade portrait, traced safe central aisle and exact three retained station anchors, blocked tank and cabinet floor positions, 156 targeted route/camera checks passed. Runtime lobby activation still pending shared startup lease; not a visual acceptance.",
+        "c3264a19 + 2c4f4b2b: activated exact reviewed portrait arcade lobby via existing mapped admission, camera, floor, prop suppression, three retained action IDs and natural threshold return. Long aisle bypasses legacy y clamp. 17 combined focused runtime/exit checks passed; prior geometry 156 checks. Actual rendered labels, active closeups, art mismatch and device acceptance remain open."
       ],
-      "lease": {
-        "owner": "manual-20261128-arcade-food-live",
-        "until": 1795833545308
-      },
+      "lease": null,
       "blocker": "Owner iPhone feedback, 27 Nov 23:28 SGT (issue #2): Inspect actual rendered room and all retained activity backgrounds at camera extremes, entry/zoom/exit and both device orientations. Integrate matching painted art rather than flat geometry; preserve intended safe walkways, avoid characters on ponds/furniture, align interactions and check no exposed edges or incomplete HUD.\n\nOwner room-specific interaction contract: follow docs/GAME_EXPERIENCE_STANDARD.md section 11; use native scene/dialogue/physical object from approach through result and one-step return, avoid generic web redirects, preserve existing game state and actual phone/desktop acceptance. Apply venue-specific sequence, not a universal overlay."
     },
     {
@@ -626,12 +624,10 @@
       "stage": "outstanding",
       "evidence": [
         "e6908e2a + 5baafcce: avoid redundant and zero-size canvas backing-store resets; focused resize and scene admission regression executed in connector harness.",
-        "a5de7e3b: initial document renders the existing gate painting directly with restrained bilingual status, starts asynchronous assembler and ten source downloads concurrently, retains request timeout/retry/no-cache and manual recovery, records local performance marks for image/source/assembly completion. Exact inline script parsed, nine static contract checks passed. No measured navigation latency, rendered device screenshots or deployment verification yet."
+        "a5de7e3b: initial document renders the existing gate painting directly with restrained bilingual status, starts asynchronous assembler and ten source downloads concurrently, retains request timeout/retry/no-cache and manual recovery, records local performance marks for image/source/assembly completion. Exact inline script parsed, nine static contract checks passed. No measured navigation latency, rendered device screenshots or deployment verification yet.",
+        "c3264a19: removed eager kitchen/boba plate fetch from startup, retaining selected-door/nearby warming and explicit readiness admission. Actual network timing unmeasured."
       ],
-      "lease": {
-        "owner": "manual-20261128-arcade-food-live",
-        "until": 1795833545308
-      },
+      "lease": null,
       "blocker": "Actual iPhone Safari blank-screen cause, performance traces, real frame timings, deployed browser verification and artwork coverage remain unresolved.\n\nOwner device acceptance clarification (27 Nov): Record actual frame timing, asset failures, blank-screen diagnosis, iPhone Safari browser chrome and app resume/orientation, desktop resize, and device/browser/commit provenance. Distinguish simulated and physical hardware evidence. Apply section 10.\n\n28 Nov owner iPhone screenshot feedback: entrance takes too long. Current index.html gates document assembly on ten parallel source fetches with no-cache and up to two 25-second attempts per file. This is a candidate bottleneck, not measured timing. Measure navigation-to-first-painted-gate and first-interactive time separately, cold/warm cache and constrained mobile network; instrument asset decode and retry, avoid unnecessary startup dependencies, consider generated versioned bundle and defer noncritical assets. Targets: ~2s first useful gate frame, ~3s interactive on typical connection (design budgets, not observed results). Actual duration unverified.\n\nEnd-to-end critique, 28 Nov: Source boot currently requests and assembles ten source files before game starts, with bounded 25s fetch timeout and retry; measure actual waterfall, decode, memory and frame pacing before choosing optimization. Measure first usable input and first enjoyable action, not just document load. Retain recovery and state. Apply section 12.\n\nEntrance loader first refinement committed. Measure real cold/warm waterfall and first usable game input, compare same device and network against prior deployment; generated build bundle remains a candidate, not implemented. No speed claim without measurements."
     },
     {
@@ -1643,12 +1639,10 @@
         "1cc2b251: temple hall exit walks down the forecourt automatically; return can interrupt a hall/cat approach at its current position without teleporting or triggering an unwanted arrival. Repeated exit commands guarded; accessible Return remains available while approaching.",
         "463a5c5a: persisted route, interruption, reduced-motion and blocked-state tests, executed against current source.",
         "Owner iPhone feedback 28 Nov 01:08 SGT: intermittent leg flicker, blank/delayed entrance, room labels and duplicate Activities controls, and website-like Master Yue form. 24afa31d implements in-scene consultation and stable local gait; prior current code moves Yue behind desk using clipped standing art and hides touch directory; do not mark actual visual acceptance without device playthrough. A real seated Yue sprite and desk contact/close-up are still required.",
-        "6333e9ce: seven mapped painted rooms now walk to the actual threshold when Back is selected, then use existing outdoor transition. Guard repeated/stale requests and preserve activity-level back behavior; 31 route and arrival checks passed, startup parsed. Actual rendered exit and outside approach still unverified."
+        "6333e9ce: seven mapped painted rooms now walk to the actual threshold when Back is selected, then use existing outdoor transition. Guard repeated/stale requests and preserve activity-level back behavior; 31 route and arrival checks passed, startup parsed. Actual rendered exit and outside approach still unverified.",
+        "c3264a19 + 2c4f4b2b: kitchen and boba lobby Back now walks to existing safe painted doorway before outdoor transition, same guard as mapped rooms; tests cover safe/rejected positions and arrival."
       ],
-      "lease": {
-        "owner": "manual-20261128-arcade-food-live",
-        "until": 1795833545308
-      },
+      "lease": null,
       "blocker": "Full district/room exit audit, actual deployed mobile/desktop playthrough, artwork contact and visual verification remain outstanding."
     }
   ]
