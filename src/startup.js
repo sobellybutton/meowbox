@@ -9040,7 +9040,10 @@ function pawPrepareRecoveredShare(format,data){
 }
 function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
  const key=pawRecoveredLayoutKey(data,format);if(!key)return false;
- const slots=pawRecoveredLayouts[key],overlay=pawRecoveredImage('templates/'+key+'.svg');
+ const nativeSlots=pawRecoveredLayouts[key],overlay=pawRecoveredImage('templates/'+key+'.svg');
+ const scale=(box.width-box.left-box.right)/(box.width-168);
+ const mapRect=([x,y,w,h])=>[box.left+(x-84)*scale,y,w*scale,h];
+ const slots=Object.fromEntries(Object.entries(nativeSlots).map(([k,v])=>[k,Array.isArray(v[0])?v.map(mapRect):mapRect(v)]));
  if(!overlay?.complete||!overlay.naturalWidth||overlay.naturalWidth!==box.width||overlay.naturalHeight!==box.height)return false;
  const tarot=data.kind==='tarot',art=tarot?readingArtwork():pawRecoveredResultIllustration(data);
  if(!slots.score_rows&&!slots.tiles&&!slots.palace_cells&&(!art?.complete||!art.naturalWidth||!art.naturalHeight||(tarot&&(art.naturalWidth!==1024||art.naturalHeight!==2180))))return false;
@@ -9049,16 +9052,17 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
  const ink='#4d3a2c',accent='#795741',muted='#54684e';
  g.drawImage(paper,0,0,box.width,box.height);
  // Compress only the overlay and its coordinate system for social story safe margins.
- const scale=(box.width-box.left-box.right)/(box.width-168);
- g.save();g.translate(box.left,0);g.scale(scale,1);g.translate(-84,0);g.drawImage(overlay,0,0,box.width,box.height);
+ g.save();g.translate(box.left,0);g.scale(scale,1);g.translate(-84,0);g.drawImage(overlay,0,0,box.width,box.height);g.restore();
  function textIn(rect,values,initial=36,weight='normal',color=ink){
   const [x,y,w,h]=rect,pad=Math.min(16,h*.1),maxW=w-2*pad,maxH=h-2*pad;
   const v=values.filter(v=>typeof v==='string'&&v.trim());if(!v.length)return;
   let size=initial,rows=[],lh,total;
   for(;size>=16;size-=2){g.font=weight+' '+size+'px '+font;rows=v.flatMap(q=>shareTextLines(g,q,maxW));lh=size*1.22;total=rows.length*lh;if(total<=maxH||size<=17)break}
-  const shrink=Math.min(1,maxH/Math.max(1,total));
-  g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.translate(x+w/2,y+h/2);g.scale(1,shrink);g.font=weight+' '+size+'px '+font;g.textAlign='center';g.textBaseline='middle';g.fillStyle=color;
-  rows.forEach((q,i)=>g.fillText(q,0,(i-(rows.length-1)/2)*lh,maxW));g.restore()
+  const capacity=Math.max(1,Math.floor(maxH/lh));
+  g.font=weight+' '+size+'px '+font;
+  if(rows.length>capacity){rows=rows.slice(0,capacity);let last=rows.at(-1);while(last&&g.measureText(last+'…').width>maxW)last=Array.from(last).slice(0,-1).join('');rows[rows.length-1]=last+'…'}
+  g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.translate(x+w/2,y+h/2);g.textAlign='center';g.textBaseline='middle';g.fillStyle=color;
+  rows.forEach((q,i)=>g.fillText(q,0,(i-(rows.length-1)/2)*lh));g.restore()
  }
  textIn(slots.title,[locale(data.title)],format==='square'?38:46,'bold');
  if(tarot){
@@ -9095,7 +9099,7 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
   textIn(slots.summary,lines,format==='square'?30:36)
  }
  textIn(slots.footer,[(cn?'摸鱼小镇':'Pawradise')+' · '+(cn?'趣味探索，仅供反思':'For fun and reflection')],27,'normal',muted);
- g.restore();return true
+ return true
 }
 /* Share only the computed result, never individual answers or private input. */
 /* PAW_EXTRA_DISCOVERY_BEGIN */
