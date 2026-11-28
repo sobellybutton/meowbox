@@ -18,6 +18,7 @@ fs.mkdirSync(out,{recursive:true});
  }
 
  const text=(en,cn)=>zhMode?cn:en;
+ async function finishStory(){let n=0;while(await page.locator('#dialogue[data-paw-story-tap]').isVisible()){assert(++n<45,'Narrative did not reach a decision');assert.equal(await page.locator('#choices button:visible').count(),1,'Narration must not present branching choices');await page.locator('#dialogue #line').tap()}return n}
  async function tapText(en,cn){await page.locator('#dialogue').getByRole('button',{name:text(en,cn),exact:true}).tap({timeout:8000})}
  async function setup(){
   await page.goto(base,{waitUntil:'domcontentloaded'});
@@ -64,6 +65,8 @@ fs.mkdirSync(out,{recursive:true});
   await page.waitForFunction(()=>talkOpen&&$('speaker').textContent===tr('Garden keeper','守园人'),null,{timeout:8000});
   assert.match(await page.locator('#dialogue #line').textContent,zhMode?/心愿已经有了归处/:/Your wish has found its place/);
   await shot('wish-hung-returned');
+  assert.equal(await page.getByRole('button',{name:text('I’ll come back another day','改天再来'),exact:true}).count(),0,'Farewell must not interrupt the first story beat');
+  assert(await finishStory()>=2);
   await tapText('I’ll come back another day','改天再来');
   assert(await noPage());assert(await page.evaluate(()=>room==='wishes'&&!talkOpen));
   await fixture('tarot');
@@ -76,9 +79,9 @@ fs.mkdirSync(out,{recursive:true});
   await page.waitForFunction(()=>state.pawTarotSeatDrawn===true,null,{timeout:12000});
   assert(await page.evaluate(()=>{const im=pawReadingImage(pawReadingAPI(),'tarot'),p=pawReadingCoverPlate(livingBounds(),im.naturalWidth,im.naturalHeight),q=pawTarotTravellerChair(p);return q.hip.x>p.x+p.w*.8&&q.hip.y>p.y+p.h*.5&&q.hip.y<p.y+p.h*.56}),'Traveller must sit on the actual right chair');
   assert(await page.locator('#dialogue #choices').evaluate(n=>n.scrollWidth<=n.clientWidth+2),'Tarot replies must fit the screen');await page.waitForFunction(()=>readingArtwork().naturalWidth===1024&&readingArtwork().naturalHeight===2180);await shot('tarot-card-reading');
-  const more=page.locator('#dialogue').getByRole('button',{name:text('Tell me more','再说说'),exact:true});if(await more.count()){await more.tap();await shot('tarot-next-thought')}
+  assert(await finishStory()>0,'Tarot narration should advance by tapping the speech bubble');await shot('tarot-next-thought');
   assert.match(await page.locator('#dialogue #line').textContent(),zhMode?/。|？/:/[.!?]/,'Card interpretation must be dialogue');
-  await tapText('What about work?','事业呢？');assert(await noPage());await shot('tarot-work-reply');
+  await tapText('What about work?','事业呢？');assert(await noPage());await shot('tarot-work-reply');await finishStory();
   await tapText('Back to our reading','继续聊牌意');assert(await noPage());
   await tapText('Let’s look at the other cards','看看其他牌卡');await page.waitForFunction(()=>state.readStage==='cards'&&!talkOpen);
   await page.evaluate(()=>{state.readFocus=0;state.readStage='focus';readingFocusMeaning()});
@@ -86,6 +89,7 @@ fs.mkdirSync(out,{recursive:true});
   await page.waitForFunction(()=>state.readStage==='cards'&&!talkOpen);assert(await noPage());
   await fixture('destiny');
   await page.evaluate(()=>yueReadingHub());
+  await finishStory();
   await tapText('My birth chart','生辰命盘');await tapText('For me','看自己');
   const form=page.locator('#dialogue[data-paw-yue-question] .pawYueGuidedForm');
   await form.waitFor({state:'attached',timeout:10000});assert(await noPage(),'Birth questions opened external page');

@@ -13943,11 +13943,16 @@ yueReadingHub=function(...args){
  pawCloseYueDesk();$('page').style.display='none';closeTalk();
  pawYueAdoptSeatedVisit(pawHostVisit,room,activity,transitioning,()=>pawHostFamilyReady('destiny'));
  if(!pawHostVisit?.ready)pawWarmReadingHost('destiny');
- say(tr('Master Yue','月师傅'),tr("Ah, sit and have some tea. The stars are not going anywhere. What shall we explore?","来啦？坐，先喝口茶。星星又不会跑。今天想问些什么？"),[
+ const choices=[
  [tr('My year ahead','生肖流年'),()=>pawYueDeskChoose('year')],
  [tr('My birth chart','生辰命盘'),()=>pawYueDeskChoose('chart')],
- [tr('Weekly star signs','本周星座'),()=>pawYueDeskChoose('stars')],
- [tr('Thank you, Master Yue','谢谢月师傅'),closeTalk]])
+ [tr('Weekly star signs','本周星座'),()=>pawYueDeskChoose('stars')]];
+ const name=tr('Master Yue','月师傅'),question=tr('What shall we explore?','今天想问些什么？');
+ if(pawHostVisit&&pawYueStoryVisits.has(pawHostVisit))say(name,question,choices);
+ else{
+  if(pawHostVisit)pawYueStoryVisits.add(pawHostVisit);
+  pawStorySequence(name,[tr("Ah, sit and have some tea.","来啦？坐，先喝口茶。"),tr("The stars are not going anywhere.","星星又不会跑。"),question],choices)
+ }
 };
 destinyConsultMenu=function(){closeTalk();return yueReadingHub()};
 const pawYueDeskPageBefore=page;
@@ -14084,7 +14089,7 @@ function pawYueDeskPresent(kind){
  const q=$('content'),pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
  pane.dataset.pawYueDesk='true';
  q.querySelector('.yueCompactHost')?.remove();
- const nav=q.querySelector(':scope > .row button:first-child');if(nav){nav.textContent=tr('‹ Fold the parchment','‹ 收起命盘');nav.onclick=()=>yueReadingHub()}
+ const nav=q.querySelector(':scope > .row button:first-child');if(nav){nav.textContent=tr('‹ Fold the parchment','‹ 收起命盘');nav.onclick=()=>{if(kind==='chart'&&out?.querySelector('.ziGrid')){pawCloseYueDesk();pawStorySequence(tr('Master Yue','月师傅'),[tr('The chart is a guide, not a verdict.','命盘是参考，不是定论。'),tr('Take what helps you and leave the rest with the stars.','把有用的启发带走，其他的就留给星星吧。')],[[tr('May I ask something else?','我还想问点别的'),()=>yueReadingHub()],[tr('Thank you, Master Yue','谢谢月师傅'),closeTalk]])}else yueReadingHub()}}
  if(form&&['year','chart'].includes(kind)){
   pawYueQuestionSteps(form,out,kind);
   // A consultation starts with the relevant question, not repeated menus.
@@ -15457,29 +15462,35 @@ function pawTarotCardConversation(index=state.readFocus){
   say(tr('Fortune Teller','占卜师'),words,choices);
   $('dialogue').setAttribute('data-paw-tarot-conversation','true')
  }
+ function beat(words,next){
+  if(!valid())return;
+  tell(words,[[tr('Continue','继续'),next]]);
+  pawStoryTap(next);
+ }
  function topic(i,from){
-  const prompt=topicReflection(i,0);
-  tell(tr("Let's think about "+readingTopics[i][0].toLowerCase()+". "+prompt,"那我们聊聊"+readingTopics[i][1]+"吧。"+prompt),[
-   [tr('Tell me more','再说说'),()=>tell(topicReflection(i,1)+' '+topicReflection(i,2),[[tr('Back to our reading','继续聊牌意'),()=>speak(from)],[tr('Thank you','谢谢你'),leave]])],
-   [tr('Back to our reading','继续聊牌意'),()=>speak(from)],[tr('Thank you','谢谢你'),leave]]);
+  const turns=pawChatPhrases(tr("Let's think about "+readingTopics[i][0].toLowerCase()+". "+topicReflection(i,0),"那我们聊聊"+readingTopics[i][1]+"吧。"+topicReflection(i,0))).concat(pawChatPhrases(topicReflection(i,1)),pawChatPhrases(topicReflection(i,2)));
+  function next(n){if(n+1<turns.length)beat(turns[n],()=>next(n+1));else tell(turns[n]||'',[[tr('Back to our reading','继续聊牌意'),()=>speak(from)],[tr('Let’s look at the other cards','看看其他牌卡'),leave]])}
+  next(0)
  }
  function whole(){
   const entry=tarotShareSnapshot(run);
   const words=entry.cards.length===3?readingConnection(entry):tr("Take the meaning that speaks to you. What is one small thing you can try today?","留下最触动你的启发。今天有什么小事可以试着做呢？");
   const turns=pawChatPhrases(words);
-  function next(i){tell(turns[i]||words,[
-   ...(i+1<turns.length?[[tr('Tell me more','再说说'),()=>next(i+1)]]:[]),
-   [tr('View my reading keepsake','看看我的牌卡手记'),()=>{if(valid())openTarotReading(entry,()=>{if(valid())next(i)})}],
-   [tr('Let’s look at the other cards','看看其他牌卡'),leave]])}
+  function next(i){
+   if(i+1<turns.length){beat(turns[i],()=>next(i+1));return}
+   tell(turns[i]||words,[
+    [tr('View my reading keepsake','看看我的牌卡手记'),()=>{if(valid())openTarotReading(entry,()=>{if(valid())next(i)})}],
+    [tr('Let’s look at the other cards','看看其他牌卡'),leave]])
+  }
   next(0)
  }
  function speak(step){
+  if(step+1<parts.length){beat(parts[step],()=>speak(step+1));return}
   const choices=[];
-  if(step+1<parts.length)choices.push([tr('Tell me more','再说说'),()=>speak(step+1)]);
-  else if(index+1<run.readCards.length&&run.readFlip[index+1]>=0&&t-run.readFlip[index+1]>=.72)choices.push([tr('Next card','下一张牌'),()=>pawTarotCardConversation(index+1)]);
+  if(index+1<run.readCards.length&&run.readFlip[index+1]>=0&&t-run.readFlip[index+1]>=.72)choices.push([tr('Next card','下一张牌'),()=>pawTarotCardConversation(index+1)]);
   else if(run.readFlip.every(v=>v>=0&&t-v>=.72))choices.push([tr('Reflect on the whole reading','聊聊整体牌意'),whole]);
   choices.push([tr('What about work?','事业呢？'),()=>topic(1,step)],[tr('What about love?','感情呢？'),()=>topic(0,step)],[tr('Let’s look at the other cards','看看其他牌卡'),leave]);
-  tell(parts[step],choices)
+  tell(parts[step]||opening,choices)
  }
  speak(0)
 }
@@ -15822,7 +15833,7 @@ drawActivity=function(...args){
    gardenLantern(hook.x,hook.y+12*lanternScale,run.gardenSlot,lanternScale);
    const move=pawWishGroundWalk(still?4:elapsed-1.2,true),pos=at(move.point);
    backHuman(pos.x,pos.y,avatar??0,!move.done&&!still,move.dir,scale);
-   if(move.done){run.gardenStage='write';run.pawWishBlessingPending=true;queueMicrotask(()=>{if(room!=='wishes'||activity!=='wishes'||state!==run||!run.pawWishBlessingPending||talkOpen)return;run.pawWishBlessingPending=false;say(tr('Garden keeper','守园人'),tr('Your wish has found its place. Give the universe a little time to do its work.','你的心愿已经有了归处。给宇宙一点时间，让它慢慢发芽。'),[[tr('Thank you','谢谢你'),closeTalk],[tr('Another wish','再写一个心愿'),()=>{closeTalk();if(room==='wishes'&&activity==='wishes'&&state===run)gardenWrite()}],[tr('I’ll come back another day','改天再来'),closeTalk]]);})}
+   if(move.done){run.gardenStage='write';run.pawWishBlessingPending=true;queueMicrotask(()=>{if(room!=='wishes'||activity!=='wishes'||state!==run||!run.pawWishBlessingPending||talkOpen)return;run.pawWishBlessingPending=false;pawStorySequence(tr('Garden keeper','守园人'),[tr('Your wish has found its place.','你的心愿已经有了归处。'),tr('Give the universe a little time to do its work.','给宇宙一点时间，让它慢慢发芽。'),tr('Whenever you need a quiet moment, this garden will be here.','想找个安静的地方时，随时回来坐坐。')],[[tr('Another wish','再写一个心愿'),()=>{closeTalk();if(room==='wishes'&&activity==='wishes'&&state===run)gardenWrite()}],[tr('I’ll come back another day','改天再来'),closeTalk]]);})}
   }
  }
  if(stage==='write'){
@@ -16021,3 +16032,47 @@ html #game #dialogue[data-paw-chat-bar]>.pawResidentExit:focus-visible{outline:2
 `;
 document.head.append(pawResidentExitStyle);
 /* PAW_RESIDENT_CONVERSATION_EXIT_END */
+
+/* PAW_STORY_TAP_BEGIN */
+const pawYueStoryVisits=new WeakSet();
+function pawClearStoryTap(){
+ const panel=$('dialogue'),line=$('line');panel.removeAttribute('data-paw-story-tap');
+ line.removeAttribute('role');line.removeAttribute('tabindex');line.removeAttribute('aria-label');
+ if(line.pawStoryAdvance){line.removeEventListener('click',line.pawStoryAdvance);line.removeEventListener('keydown',line.pawStoryAdvance);delete line.pawStoryAdvance}
+}
+const pawStorySayBefore=say,pawStoryCloseBefore=closeTalk;
+say=function(...args){pawClearStoryTap();return pawStorySayBefore(...args)};
+closeTalk=function(...args){pawClearStoryTap();return pawStoryCloseBefore(...args)};
+function pawStoryTap(next){
+ const panel=$('dialogue'),line=$('line'),expectedRoom=room,expectedActivity=activity,expectedState=state;
+ pawClearStoryTap();let used=false;
+ function advance(event){
+  if(event?.type==='keydown'&&!['Enter',' '].includes(event.key))return;
+  if(event){event.preventDefault();event.stopPropagation()}
+  if(used||!talkOpen||room!==expectedRoom||activity!==expectedActivity||state!==expectedState)return;
+  used=true;pawClearStoryTap();next()
+ }
+ panel.dataset.pawStoryTap='true';
+ line.setAttribute('role','button');line.tabIndex=0;line.setAttribute('aria-label',line.textContent+' '+tr('Tap to continue','轻触继续'));
+ line.pawStoryAdvance=advance;line.addEventListener('click',advance);line.addEventListener('keydown',advance);
+ const button=$('choices').querySelector('button');
+ if(button){button.textContent='▾';button.setAttribute('aria-label',tr('Continue story','继续故事'));button.onclick=advance}
+}
+function pawStorySequence(name,turns,finalChoices=[]){
+ const expectedRoom=room,expectedActivity=activity,expectedState=state;
+ function step(i){
+  if(room!==expectedRoom||activity!==expectedActivity||state!==expectedState)return;
+  if(i+1<turns.length){const next=()=>step(i+1);say(name,turns[i],[[tr('Continue','继续'),next]]);pawStoryTap(next)}
+  else if(finalChoices.length)say(name,turns[i]||'',finalChoices);
+  else{say(name,turns[i]||'');pawStoryTap(closeTalk)}
+ }
+ if(turns.length)step(0)
+}
+const pawStoryTapStyle=document.createElement('style');
+pawStoryTapStyle.textContent=`
+html #game #dialogue[data-paw-story-tap] #line{cursor:pointer;min-height:44px;box-sizing:border-box}
+html #game #dialogue[data-paw-story-tap] #line:focus-visible{outline:2px solid #c8ae7d;outline-offset:2px}
+html #game #dialogue[data-paw-story-tap] #choices{display:flex!important;justify-content:flex-end!important;overflow:visible!important;margin-top:0!important}
+html #game #dialogue[data-paw-story-tap] #choices button{flex:0 0 44px!important;width:44px!important;min-width:44px!important;min-height:44px!important;background:transparent!important;color:#e5d1a7!important;border:0!important;border-radius:0!important;font-size:21px!important;text-align:center!important;padding:0!important}
+`;document.head.append(pawStoryTapStyle);
+/* PAW_STORY_TAP_END */
