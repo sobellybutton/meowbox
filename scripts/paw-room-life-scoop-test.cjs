@@ -319,3 +319,25 @@ const paceAssertions=new Function(s.slice(contextPaceA,contextPaceB)+
   'ck(pawVisitorClearance(actor,undefined,50)===2,"empty room");'+
   'return n;})()')();
 console.log('PASS '+paceAssertions+' adaptive visitor pace and clearance checks');
+
+
+/* Traveller visible padding and stop/resume continuity, Batch 4. */
+{
+ const extract=(a,b)=>s.split(a)[1].split(b)[0];
+ const factor=new Function(extract('/* PAW_WALK_VISIBLE_SCALE_BEGIN */','/* PAW_WALK_VISIBLE_SCALE_END */')+';return pawWalkVisibleFactor')();
+ const same=[{foot:230,top:22,height:244},{foot:226,top:19,height:244}];
+ if(!(factor(same)>1.1&&factor(same)<1.15))throw Error('transparent padding correction');
+ if(factor([{foot:40,top:38,height:244}])!==1||factor([])!==1)throw Error('invalid silhouette correction');
+ if(factor([{foot:200,top:60,height:200}])!==1.2)throw Error('correction must be bounded');
+ const check=new Function(extract('/* PAW_IDLE_GAIT_SYNC_BEGIN */','/* PAW_IDLE_GAIT_SYNC_END */')+`
+ let avatar=1,pawRenderedWalker=null,room='',scene='fortune',activity='',p={x:20,y:30},indoor={x:40,y:50},pawMainGaitState={key:'walk'},pawIndoorGait={},pawScriptedGait={},resets=0;
+ function pawTrackScriptedGait(){resets++}
+ pawSyncIdleGait(20,30,2);if(pawMainGaitState.key!=='walk')throw Error('different traveller reset');
+ pawRenderedWalker={};pawSyncIdleGait(20,30,1);if(pawMainGaitState.key!=='walk')throw Error('visitor reset');
+ pawRenderedWalker=null;pawSyncIdleGait(20,30,1);if(pawMainGaitState.key!=='')throw Error('outdoor idle did not reset gait');
+ room='temple';activity='sticks';pawMainGaitState.key='room';pawSyncIdleGait(40,50,1);
+ if(pawMainGaitState.key!==''||pawIndoorGait.key!=='fortune|temple'||pawIndoorGait.x!==40||resets!==1)throw Error('indoor idle state not synchronized');
+ return true`)();
+ if(!check)throw Error('idle gait checks missing');
+ console.log('PASS traveller visible-scale correction and idle gait synchronization');
+}

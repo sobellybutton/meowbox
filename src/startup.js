@@ -2217,8 +2217,38 @@ function mbArtImage(record){
  }
  const im=mbArtImages.get(record.path);return im?.complete&&im.naturalWidth===record.width&&im.naturalHeight===record.height?im:null
 }
+/* PAW_WALK_VISIBLE_SCALE_BEGIN */
+const pawWalkScaleByPath=new Map();
+function pawWalkVisibleFactor(samples){
+ const ratios=samples.map(v=>(v.foot-v.top)/v.height).filter(v=>Number.isFinite(v)&&v>=.7&&v<=1).sort((a,b)=>a-b);
+ if(ratios.length!==samples.length||!ratios.length)return 1;
+ const mid=Math.floor(ratios.length/2),median=ratios.length%2?ratios[mid]:(ratios[mid-1]+ratios[mid])/2;
+ return Math.max(1,Math.min(1.2,.96/median))
+}
+function pawCalibrateWalkFamily(walk){
+ for(const dir of ['up','down','right']){
+  const frames=walk?.[dir];if(!frames?.length||frames.every(r=>pawWalkScaleByPath.has(r.path)))continue;
+  let factor=1;
+  try{
+   const canvas=document.createElement('canvas'),g=canvas.getContext('2d',{willReadFrequently:true});
+   if(g){
+    const samples=frames.map(r=>{
+     const im=mbArtImage(r);if(!im)throw Error('frame not ready');
+     canvas.width=r.width;canvas.height=r.height;g.drawImage(im,0,0);
+     const data=g.getImageData(0,0,r.width,r.height).data;
+     let top=r.height;
+     scan:for(let y=0;y<r.height;y++)for(let x=0;x<r.width;x++)if(data[(y*r.width+x)*4+3]>=32){top=y;break scan}
+     return {foot:r.foot[1],top,height:r.height}
+    });
+    factor=pawWalkVisibleFactor(samples)
+   }
+  }catch(_){/* Keep original scale if pixels cannot be read. */}
+  for(const r of frames)pawWalkScaleByPath.set(r.path,factor)
+ }
+}
+/* PAW_WALK_VISIBLE_SCALE_END */
 function mbArtDrawFrame(record,im,x,y,scale,flip=false){
- const k=94*scale/record.height,dx=-record.foot[0]*k,dy=-record.foot[1]*k;
+ const k=94*scale*(pawWalkScaleByPath.get(record.path)||1)/record.height,dx=-record.foot[0]*k,dy=-record.foot[1]*k;
  ctx.save();try{
   ellipse(x,y,14*scale,3*scale,'#302a2438');ctx.translate(x,y);if(flip)ctx.scale(-1,1);
   ctx.drawImage(im,dx,dy,record.width*k,record.height*k)
@@ -4721,7 +4751,7 @@ backHuman=function(x,y,kind,walking,facing,scale=1){
  const actor=pawRenderedWalker||(!room&&!isPlayer?npc.find(n=>Math.hypot(x-n.x,y-n.y)<3):null);
  const indoorPlayer=!!room&&!actor&&kind===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<4;
  if(indoorPlayer){const key=scene+'|'+room;const previous=pawIndoorGait;
-  if(previous.key===key){const d=Math.hypot(x-previous.x,y-previous.y);if(d>.02&&d<60)previous.distance+=d}
+  if(previous.key===key){const d=Math.hypot(x-previous.x,y-previous.y);if(!Number.isFinite(d)||d>=60)previous.distance=0;else if(d>.02)previous.distance+=d}
   else previous.distance=0;
   previous.key=key;previous.x=x;previous.y=y
  }
@@ -14769,6 +14799,15 @@ function pawActorFamilyReady(walk,ready){
  return states.every(Boolean)
 }
 /* PAW_ACTOR_FAMILY_END */
+/* PAW_IDLE_GAIT_SYNC_BEGIN */
+function pawSyncIdleGait(x,y,kind){
+ if(kind!==avatar||pawRenderedWalker)return;
+ const main=!room?Math.hypot(x-p.x,y-p.y)<4:Math.hypot(x-indoor.x,y-indoor.y)<4;
+ if(main)pawMainGaitState.key='';
+ if(activity)pawTrackScriptedGait(pawScriptedGait,'',x,y,false);
+ if(room&&main){pawIndoorGait.key=scene+'|'+room;pawIndoorGait.x=x;pawIndoorGait.y=y}
+}
+/* PAW_IDLE_GAIT_SYNC_END */
 const pawActorFamilyChoice=new Map();
 let pawActorFamilyVisit='';
 const pawFamilyBackHuman=backHuman;
@@ -14777,11 +14816,15 @@ backHuman=function(x,y,kind,walking,facing,scale=1){
  const key=scene+'|'+(room||'outside');
  if(key!==pawActorFamilyVisit){pawActorFamilyVisit=key;pawActorFamilyChoice.clear()}
  mbArtLoad();const walk=mbArtRegistry.players[kind]?.walk;
- if(!pawActorFamilyChoice.has(kind))pawActorFamilyChoice.set(kind,pawActorFamilyReady(walk,r=>!!mbArtImage(r)));
+ if(!pawActorFamilyChoice.has(kind)){
+  const ready=pawActorFamilyReady(walk,r=>!!mbArtImage(r));
+  if(ready)pawCalibrateWalkFamily(walk);
+  pawActorFamilyChoice.set(kind,ready)
+ }
  if(pawActorFamilyChoice.get(kind)){
   const dir=facing==='left'?'right':facing,frames=walk?.[dir]||walk?.down;
   const frame=frames[walking?mbArtFrameIndex(t,frames.length,actorReduce||residentReducedMotion.matches):0],im=mbArtImage(frame);
-  if(im){if(walking)return pawFamilyBackHuman(x,y,kind,walking,facing,scale);mbArtDrawFrame(frame,im,x,y,scale,facing==='left');return}
+  if(im){if(walking)return pawFamilyBackHuman(x,y,kind,walking,facing,scale);pawSyncIdleGait(x,y,kind);mbArtDrawFrame(frame,im,x,y,scale,facing==='left');return}
  }
  // Keep the legacy illustrated family for the whole visit, even if a
  // subset of new walk directions finishes downloading during a turn.
