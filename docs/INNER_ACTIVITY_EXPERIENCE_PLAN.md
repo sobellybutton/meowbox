@@ -175,3 +175,47 @@ The table enumerates known retained activities, not an exhaustive proof of curre
 
 ### Enforce during implementation
 For each station log the actual effective dispatcher, scene renderer, input handler, action stages, entry/exit anchors, assets and every mandatory page transition before and after change. Remove legacy mandatory page transitions (zero budget), not merely style them. Preserve spending/reward/scoring/save safeguards. For each scene inspect live playback from tap to arrival to activity to visible result to walking away; include idle world animation, character scale/gait, both languages, narrow phone and desktop, cancel/retry. Test actual deployed revision; record footage/screenshots and any remaining route or device blockers. Progress is accepted per whole activity, not per isolated background or number of commits. Keep existing canonical workstreams, no second task register.
+
+## Physical continuity and prop staging requirement (owner clarification, 28 November)
+
+Every continuous visit must have a credible physical setup before the activity can be considered implemented. For each beat record where the selected character stands or sits, facing, visible body size, matching host/animal scale, support/seat/foot pivot, tool storage anchor, hand/grip pivot, contact target, object before/during/after state, actor reaction and return anchor. Verify actual asset availability and geometry against the room painting. If a required bench, box, tray, chair, counter or tool does not exist, integrate suitable existing art or add the exact missing asset to the creative queue; do not fake retrieval from thin air. Never paint an immovable duplicate of a prop that must be picked up. Keep foreground masks and shared geometry consistent with collision/hit testing; preserve prop state when entering/leaving an action closeup.
+
+### Required physical station inventory (design, not asset-completion claim)
+| Station | Physical supports, retrieval point and action target |
+| --- | --- |
+| Bell | Bell frame, suspended bell, ropes, striker; grip then release striker against centre strike point |
+| Purification | Basin, flowing water, ladle holder, ladle; pick up, rinse hands, return |
+| Incense/prayer | Real supply box with remaining stock, candle, mat, burner; pick/light/walk/bow/offer |
+| Fortune sticks | Tube, sticks, receiving tray, paper counter; shake, land, retrieve numbered stick, collect matching paper |
+| Moon blocks | Two blocks on tray; pick up, throw, settle, retrieve |
+| Fortune rack | Paper, string/tie anchor, actual rack; read, keep or attach |
+| Rear garden | Food container, pond bank, bench with actual seat, hanging chime and lucky cats; retrieve food, feed; turn/sit/stand on bench; chime/cat react in place |
+| Wish | Kiosk, blank plaques/paper, brush/pen, hanging rack; retrieve, write, attach |
+| Coin toss | Coin tray/purse, dry standing anchor, pond; take coin, aim, throw from grip, splash |
+| Tarot | Visitor chair, reader seat, desk, deck and spread; sit, discuss, deal/flip/read, stand |
+| Master Yue | Host and visitor chairs, desk, chart and notebook; consult, private entry, interpretation, leave |
+| Whack Worries | Auntie's seat, slipper storage, symbolic paper, striking surface; take slipper, strike target, return tool |
+| Bottle It Up | Writing bench/seat, paper/pen/bottle, bank; write/fold/seal, stand/walk/throw, clear transient note |
+| Shout | Lookout and safe railing/bank; approach, breath/shout and recover; no irrelevant host |
+| Tea table | Actual vacant seat, table, tea pot/cup, guests; sit/receive cup/chat/stand |
+| Noticeboard | Wall board, pinned paper, writing area; inspect/read/reply/publish only with consent |
+| Office comedy | Retained tea table conversation/props, no revived duplicate office door |
+| Cats | Resting cushion, optional suitable treat supply, safe crouch anchor; observe, offer/pet if receptive |
+| Deer | Meadow path, safe observation/feed point, appropriate feed only where supported; approach quietly/observe |
+| Cooking | Counter, ingredient storage, chopping board, tools, stove/pot, plate; retrieve/prep/cook/serve |
+| Bubble tea | Cup stack, jars, scoop, dispenser, mixer/shaker and sealing station; retrieve/scoop/pour/mix/seal |
+| Goldfish | Tank, scoop holder, collection bowl, dry standing point; dip/drag/lift/release fish |
+| Bubble Pop | Bubble station/theme-matched machine, transient bubbles with reflected light; pop in place |
+| Claw | Cabinet controls, claw/prizes/chute; operate and collect at machine |
+| Rhythm | Cabinet/control surface and local score; perform and return |
+| Blind box | Shelf, actual boxes, counter, opening/reveal surface; pick/shake/confirm/open/keep |
+| Wooden board game | Actual table/chairs/board/pieces; sit, take turns, result, stand |
+| Souvenir (if retained) | Display and shopkeeper; inspect, optional purchase, leave |
+| Inner Observatory | Visitor seat, guide desk, actual notebook/instrument; choose verbally, open notebook, answer, discuss, stand |
+| House of What If | Storyteller seat, visitor seat, illustrated storybook/object; choose premise and turn story beats, meaningful outcome, close book |
+| Heart Café | Table, real chairs/cups, host/consenting partner; choose topic, conversation, shared reflection, stand |
+| Curiosity Club | Approved host and assigned physical playful discovery props (verify content and art first); retrieve/interact/return, no duplicate generic quiz |
+| Home | Floor and furniture footprints, placement inventory/carry preview; retrieve/place/rotate/save, no phantom items |
+
+### Scale and performance calibration
+Measure the *visible* head-to-foot body in actual screenshots (not transparent sprite rectangle). Use prior 12–18% scene height only as a starting exploration calibration, not an upper limit; action camera may frame a larger full or three-quarter body, or a purposeful hand/table closeup. Use actual door, bench, table, cup, tool and relative NPC scale to decide. Never enlarge avatar blindly into furniture. Seat hips contact seat surface, feet align floor or credible support, hand meets exact grip; action tools start at storage location and move with hand, then remain at destination or return. Walk speed and stride phase must follow distance and ground perspective. Record entry, approach, pickup, contact, outcome, return and passive room life as rendered motion on phone and desktop in both languages. A static screenshot, source pass or new background alone cannot approve this. 
