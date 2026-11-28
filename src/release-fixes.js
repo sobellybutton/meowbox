@@ -768,7 +768,7 @@ function pawInstallContinuousFortune(){
  const roomPrior=drawRoom;
  drawRoom=function(...args){const v=roomPrior.apply(this,args);if(room==='temple'&&!activity)hit=hit.filter(h=>h.stationId!=='moon');return v};
  const cameraPrior=mobileRoomCamera;
- mobileRoomCamera=function(...args){return active()?pawPairedCamera(W,H,state.pawAlcovePainting?pawWaterPlate:pawHallPlate)||cameraPrior(...args):cameraPrior(...args)};
+ mobileRoomCamera=function(...args){return active()?(state.pawAlcovePainting?pawAlcoveCamera(W,H):pawPairedCamera(W,H,pawHallPlate))||cameraPrior(...args):cameraPrior(...args)};
  const nextPrior=pawFortuneNext;
  pawFortuneNext=function(q,kind,now,blocked){return q?.pawPairedRitual?pawPairedNext(q,kind,now,blocked):nextPrior(q,kind,now,blocked)};
  const movePrior=pawFortuneMove;
