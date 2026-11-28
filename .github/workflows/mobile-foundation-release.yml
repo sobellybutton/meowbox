@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   foundation:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/candidate-mobile-foundation-reconciled-20261128' || (github.head_ref == 'release/candidate-opening-bilingual-20261128' || github.head_ref == 'release/opening-bilingual-verified-20261128')
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/fullscreen-dock-passport-current-20261128' || github.head_ref == 'release/candidate-mobile-foundation-reconciled-20261128' || (github.head_ref == 'release/candidate-opening-bilingual-20261128' || github.head_ref == 'release/opening-bilingual-verified-20261128')
     runs-on: ubuntu-latest
     timeout-minutes: 12
     strategy:
@@ -22,6 +22,7 @@ jobs:
       PAW_LANGUAGE: ${{ matrix.language }}
       PAW_MOTION: no-preference
       PAW_FOUNDATION: '1'
+      PAW_FULL_BOOK: ${{ github.head_ref == 'fix/fullscreen-dock-passport-current-20261128' && '1' || '0' }}
       PAW_CHINESE_BRAND: ${{ (github.head_ref == 'release/candidate-opening-bilingual-20261128' || github.head_ref == 'release/opening-bilingual-verified-20261128') && '1' || '0' }}
       PAW_OPENING_EXPERIENCE: ${{ (github.head_ref == 'release/candidate-opening-bilingual-20261128' || github.head_ref == 'release/opening-bilingual-verified-20261128') && '1' || '0' }}
     steps:
