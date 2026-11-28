@@ -261,14 +261,16 @@ function pawInstallNativeConsultation(){
   if(!data?.cards?.length)return;
   let format=zh?'xhs':'feed',cn=zh,ready=null,version=0;
   const current=()=>room==='tarot'&&activity===kind&&state===run&&talkOpen&&panel.isConnected&&panel.closest('#dialogue')&&$('dialogue').hasAttribute('data-paw-keepsake');
-  const returnTo=()=>{closeTalk();if(back)back()};
-  say(tr('Fortune Teller','占卜师'),tr('A little keepsake from our reading.','把这次的牌意留作小小纪念。'),[[tr('Back to the table','回到牌桌'),returnTo]]);
+  const returnTo=()=>{if(!current())return;closeTalk();if(back)back()};
+  say(tr('Fortune Teller','占卜师'),tr('Choose a keepsake format. Only the result in the preview is shared.','选一个纪念卡尺寸。分享时只会包含预览中的结果。'),[[tr('Back to reading','返回解读'),returnTo]]);
   $('dialogue').setAttribute('data-paw-keepsake','');
   const panel=element('section','',$('choices'),'pawTarotKeepsake'),preview=element('canvas','',panel,'meowSharePreview');
-  preview.setAttribute('role','img');
+  preview.setAttribute('role','img');preview.hidden=true;
   const status=element('p','',panel,'meowShareStatus');status.setAttribute('role','status');
   const tabs=element('div','',panel,'meowShareTabs'),langs=element('div','',panel,'meowShareTabs');
   const actions=element('div','',panel,'pawKeepsakeActions');
+  tabs.setAttribute('role','group');tabs.setAttribute('aria-label',tr('Image format','图片尺寸'));
+  langs.setAttribute('role','group');langs.setAttribute('aria-label',tr('Image language','图片语言'));
   const saveButton=b(actions,tr('Save PNG image','保存 PNG 图片'),()=>{
    if(!ready||!current())return;
    const url=URL.createObjectURL(ready),a=document.createElement('a');a.href=url;a.download='pawradise-tarot-'+format+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)
@@ -281,14 +283,14 @@ function pawInstallNativeConsultation(){
   const keys=Object.keys(shareFormats),formatButtons=keys.map(k=>b(tabs,k==='feed'?'IG / FB':k==='xhs'?'小红书':k==='story'?'Story / TikTok':tr('WeChat','微信'),()=>{format=k;render()}));
   const languages=[b(langs,'English',()=>{cn=false;render()}),b(langs,'中文',()=>{cn=true;render()})];
   async function render(){
-   const token=++version;ready=null;saveButton.disabled=send.disabled=true;
+   const token=++version,selectedFormat=format,selectedLanguage=cn;ready=null;preview.hidden=true;panel.setAttribute('aria-busy','true');saveButton.disabled=send.disabled=true;
    formatButtons.forEach((x,i)=>x.setAttribute('aria-pressed',String(keys[i]===format)));languages.forEach((x,i)=>x.setAttribute('aria-pressed',String(i===Number(cn))));
    status.textContent=tr('Preparing your keepsake…','正在准备纪念卡……');
    try{
-    await pawPrepareRecoveredShare(format,data);if(!current()||token!==version)return;
-    shareCardArt(preview,data,format,cn);preview.setAttribute('aria-label',data.title[Number(cn)]);
-    preview.toBlob(blob=>{if(!current()||token!==version)return;if(!blob){status.textContent=tr('Try another format.','请换个尺寸重试。');return}ready=typeof File==='function'?new File([blob],'pawradise-tarot-'+format+'.png',{type:'image/png'}):blob;saveButton.disabled=send.disabled=false;status.textContent=tr('Ready to share or save.','可以分享或保存啦。')},'image/png')
-   }catch{if(current()&&token===version)status.textContent=tr('Try another format.','请换个尺寸重试。')}
+    await pawPrepareRecoveredShare(selectedFormat,data);if(!current()||token!==version)return;
+    shareCardArt(preview,data,selectedFormat,selectedLanguage);preview.setAttribute('aria-label',data.title[Number(selectedLanguage)]);
+    preview.toBlob(blob=>{if(!current()||token!==version)return;panel.setAttribute('aria-busy','false');if(!blob){status.textContent=tr('Try another format.','请换个尺寸重试。');return}ready=typeof File==='function'?new File([blob],'pawradise-tarot-'+selectedFormat+'.png',{type:'image/png'}):blob;preview.hidden=false;saveButton.disabled=send.disabled=false;status.textContent=tr('Ready to share or save.','可以分享或保存啦。')},'image/png')
+   }catch{if(current()&&token===version){panel.setAttribute('aria-busy','false');status.textContent=tr('Try another format.','请换个尺寸重试。')}}
   }
   $('choices').prepend(panel);render()
  };
@@ -304,11 +306,16 @@ function pawInstallNativeConsultation(){
  #game #page[data-paw-yue-desk] .pawYueResultNav button{min-height:44px;flex:1;min-width:0;white-space:normal;background:transparent!important;border:0!important;border-bottom:1px solid #b6a17e70!important;border-radius:0!important;box-shadow:none!important;color:#405440!important}
  #game #dialogue[data-paw-desk-dialogue] #choices button:focus-visible,#game #page[data-paw-yue-desk] .pawYueResultNav button:focus-visible{outline:2px solid #39594d!important;outline-offset:-2px}
  @media(forced-colors:active){#game #dialogue[data-paw-desk-dialogue] #choices button,#game #page[data-paw-yue-desk] .pawYueResultNav button{color:ButtonText!important;border-bottom:1px solid ButtonText!important}}
- #game #dialogue[data-paw-keepsake]{max-height:78dvh!important}
+ #game #dialogue[data-paw-keepsake]{max-height:min(82dvh,calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 24px))!important;overflow-y:auto!important;overflow-x:hidden!important}
+ #game #dialogue[data-paw-keepsake] #choices{grid-template-columns:minmax(0,1fr)!important}
+ #game #dialogue[data-paw-keepsake] #choices>button{width:100%;text-align:center!important}
+ #game #dialogue[data-paw-keepsake] .meowShareStatus{margin:0;font-size:13px;line-height:1.35;overflow-wrap:anywhere}
  #game #dialogue[data-paw-keepsake] .pawTarotKeepsake{grid-column:1/-1;display:grid;gap:5px;min-width:0}
- #game #dialogue[data-paw-keepsake] .meowSharePreview{max-height:35dvh;width:auto;max-width:100%;margin:auto}
+ #game #dialogue[data-paw-keepsake] .meowSharePreview{max-height:35dvh;width:auto;height:auto;max-width:100%;margin:auto;object-fit:contain}
+ #game #dialogue[data-paw-keepsake] .meowSharePreview[hidden]{display:none!important}
  #game #dialogue[data-paw-keepsake] .meowShareTabs,#game #dialogue[data-paw-keepsake] .pawKeepsakeActions{display:flex;gap:4px;flex-wrap:wrap}
- #game #dialogue[data-paw-keepsake] .meowShareTabs button,#game #dialogue[data-paw-keepsake] .pawKeepsakeActions button{flex:1;min-width:60px}
+ #game #dialogue[data-paw-keepsake] .meowShareTabs button,#game #dialogue[data-paw-keepsake] .pawKeepsakeActions button{flex:1 1 110px;min-width:0;white-space:normal;overflow-wrap:anywhere;text-align:center!important}
+ @media(min-width:900px) and (min-aspect-ratio:5/4){#game #dialogue[data-paw-keepsake]{left:auto!important;right:max(16px,env(safe-area-inset-right,0px))!important;transform:none!important;width:min(39vw,460px)!important;bottom:max(16px,env(safe-area-inset-bottom,0px))!important}#game #dialogue[data-paw-keepsake] .meowSharePreview{max-height:44dvh}}
  #game #dialogue[data-paw-keepsake] .meowShareTabs button[aria-pressed=true]{background:#536955!important;color:#fff2d8!important}
  @media(orientation:landscape) and (max-height:550px){#game #dialogue[data-paw-keepsake] .meowSharePreview{max-height:26dvh}}
  `;document.head.append(css)
