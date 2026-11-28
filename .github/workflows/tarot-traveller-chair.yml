@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   chair:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/tarot-right-chair-20261128'
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/tarot-right-chair-20261128' || github.head_ref == 'fix/tarot-seated-host-physical-shuffle-current-20261128' || github.head_ref == 'fix/tarot-tabletop-current-main-20261128'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +18,7 @@ jobs:
       - run: node scripts/tarot-traveller-chair-test.cjs
 
   mobile:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/tarot-right-chair-20261128'
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/tarot-right-chair-20261128' || github.head_ref == 'fix/tarot-seated-host-physical-shuffle-current-20261128' || github.head_ref == 'fix/tarot-tabletop-current-main-20261128'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
