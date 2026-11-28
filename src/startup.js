@@ -5696,34 +5696,64 @@ function pawAvatarArtSize(width,height,role){
  return Math.max(115,Math.min(340,height*.36))
 }
 /* PAW_ENTRANCE_ART_FIT_END */
+/* PAW_ENTRANCE_CROP_COMMIT_BEGIN */
+function pawEntranceCropChoice(sources,cache){
+ return sources.length>0&&sources.every(src=>cache.get(src)?.ready===true)
+}
+function pawEntranceCropSource(original,cache,useCrops){
+ const entry=cache.get(original);
+ return useCrops&&entry?.ready&&entry.src?entry.src:original
+}
+/* PAW_ENTRANCE_CROP_COMMIT_END */
 const pawAvatarCropCache=new Map();
+let pawEntranceCropFamily=null,pawEntranceWarmJob=null;
+function pawPrepareEntranceCrop(original){
+ if(!original)return Promise.resolve(null);
+ const existing=pawAvatarCropCache.get(original);if(existing)return existing.promise;
+ const entry={ready:false,src:null,promise:null};pawAvatarCropCache.set(original,entry);
+ entry.promise=new Promise(resolve=>{
+  const finish=src=>{entry.src=src;entry.ready=true;resolve(src)};
+  const source=new Image();
+  source.onload=async()=>{
+   try{
+    const w=source.naturalWidth,h=source.naturalHeight,work=document.createElement('canvas');work.width=w;work.height=h;
+    const ctx=work.getContext('2d',{willReadFrequently:true});ctx.drawImage(source,0,0);
+    const bounds=pawAvatarCropBounds(ctx.getImageData(0,0,w,h).data,w,h);
+    if(!bounds||bounds.w===w&&bounds.h===h){finish(original);return}
+    const out=document.createElement('canvas');out.width=bounds.w;out.height=bounds.h;
+    out.getContext('2d').drawImage(source,bounds.x,bounds.y,bounds.w,bounds.h,0,0,bounds.w,bounds.h);
+    const cropped=out.toDataURL('image/png'),decoded=new Image();decoded.src=cropped;
+    if(typeof decoded.decode==='function')await decoded.decode();
+    else if(!decoded.complete)await new Promise((ok,fail)=>{decoded.onload=ok;decoded.onerror=fail});
+    finish(cropped)
+   }catch{finish(original)}
+  };
+  source.onerror=()=>{pawAvatarCropCache.delete(original);resolve(null)};source.src=original
+ });
+ return entry.promise
+}
+function pawEntranceCropSources(){
+ return Array.from({length:4},(_,id)=>[0,1,2].map(dir=>ART['walker'+id+dir])).flat()
+}
+function pawWarmEntranceCrops(){
+ if(pawEntranceWarmJob)return;
+ // Warm at the ticket, after the station has already been rendered.
+ // Limit simultaneous image processing rather than blocking the first frame.
+ const sources=pawEntranceCropSources();
+ pawEntranceWarmJob=(async()=>{for(let i=0;i<sources.length;i+=3)await Promise.all(sources.slice(i,i+3).map(pawPrepareEntranceCrop))})().finally(()=>{pawEntranceWarmJob=null})
+}
 function pawCropEntranceImage(im){
  if(!im||!im.src)return;
- const original=im.getAttribute('src');
- if(!original||im.dataset.pawCropSource===original)return;
+ const original=im.getAttribute('src');if(!original||im.dataset.pawCropSource===original)return;
  im.dataset.pawCropSource=original;
- const apply=src=>{
-  if(im.isConnected&&im.getAttribute('src')===original&&src){im.src=src;im.dataset.pawArtReady='true'}
- };
- if(!pawAvatarCropCache.has(original)){
-  const ready=new Promise(resolve=>{
-   const src=new Image();
-   src.onload=()=>{
-    try{
-     const w=src.naturalWidth,h=src.naturalHeight,work=document.createElement('canvas');work.width=w;work.height=h;
-     const ctx=work.getContext('2d',{willReadFrequently:true});ctx.drawImage(src,0,0);
-     const b=pawAvatarCropBounds(ctx.getImageData(0,0,w,h).data,w,h);
-     if(!b||b.w===w&&b.h===h){resolve(original);return}
-     const out=document.createElement('canvas');out.width=b.w;out.height=b.h;
-     out.getContext('2d').drawImage(src,b.x,b.y,b.w,b.h,0,0,b.w,b.h);
-     resolve(out.toDataURL('image/png'))
-    }catch{resolve(original)}
-   };
-   src.onerror=()=>resolve(original);src.src=original;
-  });
-  pawAvatarCropCache.set(original,ready);
- }
- pawAvatarCropCache.get(original).then(apply)
+ const useCrops=[1,2].includes(proStep)?pawEntranceCropFamily===true:pawAvatarCropCache.get(original)?.ready===true;
+ const chosen=pawEntranceCropSource(original,pawAvatarCropCache,useCrops);
+ // Source assignment is synchronous and never changed by a late callback.
+ // A cold visit uses the same original art family for all three directions.
+ if(chosen!==original)im.src=chosen;
+ im.dataset.pawCropFamily=useCrops?'cropped':'original';
+ const mark=()=>{if(im.isConnected&&im.getAttribute('src')===chosen&&im.naturalWidth)im.dataset.pawArtReady='true'};
+ if(im.complete)mark();else im.addEventListener('load',mark,{once:true});
 }
 function pawEntranceResize(){
  if(proposal.hidden)return;
@@ -5737,6 +5767,8 @@ proRender=function(...args){
  const result=pawEntranceArtBefore(...args),hero=proposal.querySelector('.hero'),foot=proposal.querySelector('footer');
  if(!hero||!foot)return result;
  pawEntranceResize();
+ if(proStep===0||proStep===4){pawEntranceCropFamily=null;if(proStep===4)requestAnimationFrame(()=>{if(!proposal.hidden&&proStep===4)pawWarmEntranceCrops()})}
+ if([1,2].includes(proStep)&&pawEntranceCropFamily===null)pawEntranceCropFamily=pawEntranceCropChoice(pawEntranceCropSources(),pawAvatarCropCache);
  if(proStep===0){
   // Recovered matching native station paintings. Keep the train interior
   // for the actual ride; this scene is the station before boarding.
