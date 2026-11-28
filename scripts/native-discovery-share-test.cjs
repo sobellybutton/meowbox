@@ -1,0 +1,71 @@
+'use strict';
+// Deterministic completed-result fixtures with actual button input.
+// This does not certify full approach/interaction/finish gameplay.
+const {chromium,webkit}=require('playwright');
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const engine=process.env.MEOW_BROWSER==='webkit'?'webkit':'chromium';
+const url='http://127.0.0.1:8768/index.html';
+const out='test-results/native-keepsakes-'+engine;
+(async()=>{
+ fs.mkdirSync(out,{recursive:true});
+ const browser=await ({chromium,webkit}[engine]).launch();
+ try{
+  for(const [device,opts] of [['phone',{viewport:{width:390,height:844},hasTouch:true,isMobile:true}],['desktop',{viewport:{width:1440,height:900}}]]){
+   const page=await browser.newPage({...opts,acceptDownloads:true});
+   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+   const click=x=>opts.hasTouch?x.tap():x.click();
+   try{
+    await page.goto(url,{waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>typeof pawKeepsakeRoomRoute==='function'&&openMeowShare.toString().includes('pawKeepsakeRoomRoute'));
+    for(const cn of [false,true])for(const kind of ['cafe','story','type','motive','bigfive','care','priorities','values','attachment']){
+     const prefix=device+'-'+kind+'-'+(cn?'zh':'en');
+     await page.evaluate(({cn,kind})=>{
+      closeTalk();proposal.hidden=true;$('arrival').hidden=true;$('page').style.display='none';
+      avatar=0;zh=cn;document.documentElement.lang=cn?'zh':'en';
+      scene='wonder';transitioning=false;activity=null;state={};
+      if(kind==='cafe'){
+       room='match';start('match');cafeAnswers=cafeQuestions.map((_,i)=>i%3);cafeRound=cafeQuestions.length;
+       const scored=pawCafeAssess(cafeAnswers,cafeQuestions.length);cafeResult={index:scored.ties[0],ties:scored.ties};cafePhase='result';syncCafeQuestionSheet();
+      }else if(kind==='story'){
+       room='story';start('story');parallelNode=Object.keys(parallelEndings)[0];parallelTurning=false;syncStorySheet();
+      }else{
+       room='quiz';wonderSceneOpen(kind);
+       if(kind==='priorities'){
+        wonderSceneAnswers=wonderQuestionOrder.map(()=>0);
+       }else wonderSceneAnswers=wonderQuestionOrder.map(q=>kind==='type'?q.id%2:1);
+       wonderSceneFinish();openWonderResult(kind,wonderSceneResult);
+      }
+     },{cn,kind});
+     const resultButton=kind==='cafe'?page.locator('[data-cafe-result="share"]'):kind==='story'?page.locator('[data-story-ending="share"]'):page.locator('#choices').getByRole('button',{name:cn?'制作纪念卡':'Make a keepsake',exact:true});
+     await resultButton.waitFor({timeout:10000});
+     const before=await page.evaluate(()=>({room,activity,scene,token:activity==='match'?cafeToken:activity==='story'?parallelToken:wonderSceneToken,result:activity==='match'?cafeResult:activity==='story'?parallelNode:wonderSceneResult,line:$('line').textContent}));
+     await click(resultButton);
+     const panel=page.locator('#dialogue[data-paw-keepsake]');
+     await panel.waitFor({timeout:10000});
+     assert.equal(await page.locator('#page').isVisible(),false,'Unexpected detached share page');
+     await panel.locator('.meowShareStatus').getByText(cn?'可以分享或保存啦。':'Ready to share or save.').waitFor({timeout:15000});
+     await click(panel.getByRole('button',{name:/Story \/ TikTok/}));
+     await click(panel.getByRole('button',{name:cn?'English':'中文',exact:true}));
+     await panel.locator('.meowShareStatus').getByText(cn?'可以分享或保存啦。':'Ready to share or save.').waitFor({timeout:15000});
+     assert.deepEqual(await panel.locator('canvas').evaluate(cv=>[cv.width,cv.height]),[1080,1920]);
+     const dl=page.waitForEvent('download');
+     await click(panel.getByRole('button',{name:cn?'保存 PNG 图片':'Save PNG image',exact:true}));
+     const saved=await dl;
+     await saved.saveAs(out+'/'+prefix+'.png');
+     assert.match(saved.suggestedFilename(),new RegExp('^pawradise-'+kind+'-story\\.png$'));
+     await page.screenshot({path:out+'/'+prefix+'-preview.jpg',type:'jpeg',quality:80});
+     await click(panel.getByRole('button',{name:cn?(kind==='cafe'?'返回心得':kind==='story'?'返回故事':'返回小记'):(kind==='cafe'?'Back to reflection':kind==='story'?'Back to the story':'Back to the notebook'),exact:true}));
+     await resultButton.waitFor({timeout:10000});
+     assert.equal(await page.locator('#page').isVisible(),false);
+     const after=await page.evaluate(()=>({room,activity,scene,token:activity==='match'?cafeToken:activity==='story'?parallelToken:wonderSceneToken,result:activity==='match'?cafeResult:activity==='story'?parallelNode:wonderSceneResult,line:$('line').textContent}));
+     for(const k of ['room','activity','scene','token','result'])assert.deepEqual(after[k],before[k],prefix+' changed '+k);
+     if(kind!=='cafe'&&kind!=='story')assert.equal(after.line,before.line,'Notebook returned to wrong page');
+     await page.screenshot({path:out+'/'+prefix+'-return.jpg',type:'jpeg',quality:80});
+     console.log(prefix+': in-room preview, PNG, exact return passed');
+    }
+    assert.deepEqual(errors,[]);
+   }catch(e){await page.screenshot({path:out+'/'+device+'-failure.png'}).catch(()=>{});throw e}
+   finally{await page.close()}
+  }
+ }finally{await browser.close()}
+})().catch(e=>{console.error(e);process.exitCode=1});
