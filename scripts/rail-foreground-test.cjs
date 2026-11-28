@@ -59,3 +59,25 @@ pc(a.draw(ctx,assets,'fortune',1,390,844,false,'portrait')===false);
 pc(a.draw(ctx,{...assets,portrait:asset('wrong')},'fortune',1,390,844,false,'portrait')===false);
 pc(a.fit(390,844,'unknown')===null);
 console.log('PASS '+portraitChecks+' portrait railway checks; runtime mounting and rendered acceptance remain pending.');
+
+let kineticsChecks=0;
+const kc=(v,msg)=>{assert.ok(v,msg);kineticsChecks++};
+kc(a.travelDistance(0)===0,'stationary departure');
+kc(a.travelDistance(.65)===.325,'smooth departure ramp');
+kc(Math.abs(a.travelDistance(1.65)-1.325)<1e-9,'cruising distance');
+for(const [w,h] of [[90,900],[240,500],[320,200],[390,258],[787,509],[900,280],[1920,700]])for(const route of Object.keys(a.far)){
+ let prev=new Map(),seen=new Set();
+ for(let i=0;i<=1800;i++){
+  const t=i/100,now=new Map(a.frame(route,t,w,h).map(p=>[p.id,p]));
+  for(const [id,p] of now){
+   seen.add(id);kc(p.x<=w&&p.x+p.width>=0,'visible bounds');
+   if(prev.has(id))kc(Math.abs(p.x-prev.get(id).x)<=w*.57*.01+1e-7,'no visible teleport');
+   else if(i>0)kc(p.x>=w-w*.57*.01-1e-7,'enter from right');
+  }
+  for(const [id,p] of prev)if(!now.has(id))kc(p.x+p.width<=w*.57*.01+1e-7,'exit completely on left');
+  kc(JSON.stringify(a.frame(route,t,w,h,true))===JSON.stringify(a.frame(route,0,w,h,true)),'reduced motion');
+  prev=now;
+ }
+ kc(seen.size>=2,'route variety');
+}
+console.log('PASS '+kineticsChecks+' railway kinetics assertions; actual device rendering remains pending.');
