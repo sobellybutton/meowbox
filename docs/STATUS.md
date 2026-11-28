@@ -1261,3 +1261,10 @@ Three distinct workstreams advanced. No final visual acceptance or accepted-coun
 - QA-BUILD-01 tested: exact current extensions blob 41bb6bf2 and quality-checks blob 7de2729f passed the unmodified isolated quality-check suite in connector harness, including map sign stability. No test weakening or unnecessary rewrite. Complete build/deployment CI still unverified. 2391a716 records status and releases claim.
 
 Three workstreams advanced, two source changes and one targeted regression verified. Registry: 41 outstanding, 40 tested, 3 implemented. No final visual acceptance increase. Concurrent edits preserved; hourly schedule unchanged.
+
+
+## Whack Worries Batch 3 integration (28 November 2026)
+
+Batch 3 continuation (2fcab01c): wired original painted Auntie motion into effective pier renderer and both live/embedded assembly paths. Per-visit decoded matching asset guard, fixed host anchor, paper flattened on low block, separate body/foreground arm layers, existing .23 contact/.46 recovery clock and reduced-motion path retained. 240 isolated geometry/mock-canvas assertions passed; modified JavaScript parsed. Full build/CI, real seating/arm seam/paper and viewport visual acceptance, proper dedicated pose art and deployment unverified. No stage promotion.
+
+Next: organic entry, stool seating, three automatic strikes, cancellation and departure on mobile and desktop; inspect physical shoulder seam and paper contact, then develop missing handoff/retrieval and painted poses. No final acceptance or count change.
