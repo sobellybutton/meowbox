@@ -5932,7 +5932,7 @@ document.head.append(pawDesktopGuideStyle);
 /* Owner feedback: keep the temple keeper inside, not in the arrival street. */
 const pawKeeperInitBefore=initNPC;
 initNPC=function(...args){const result=pawKeeperInitBefore(...args);if(scene==='fortune')for(let i=npc.length-1;i>=0;i--)if(npc[i].n?.some(v=>v==='Temple keeper'||v==='庙祝'))npc.splice(i,1);return result};
-function pawFocusView(){const open=$('page').style.display==='block';if(!open||room||activity||talkOpen||transitioning||!proposal.hidden){if(pawDockRootKey){pawDockRootKey='';$('game').classList.remove('pawDockRoot')}}$('game').classList.toggle('pawInRoom',!!room||!!activity);$('game').classList.toggle('pawFocusedView',!!room||!!activity||open||talkOpen||transitioning||!proposal.hidden);$('game').classList.toggle('pawExitView',!!room&&!activity&&!open&&!talkOpen&&!transitioning&&proposal.hidden)}
+function pawFocusView(){if(room!=='destiny'&&$('page').dataset.pawYueDesk==='true')pawCloseYueDesk();const open=$('page').style.display==='block';if(!open||room||activity||talkOpen||transitioning||!proposal.hidden){if(pawDockRootKey){pawDockRootKey='';$('game').classList.remove('pawDockRoot')}}$('game').classList.toggle('pawInRoom',!!room||!!activity);$('game').classList.toggle('pawFocusedView',!!room||!!activity||open||talkOpen||transitioning||!proposal.hidden);$('game').classList.toggle('pawExitView',!!room&&!activity&&!open&&!talkOpen&&!transitioning&&proposal.hidden)}
 const pawFocusBefore=loop;
 loop=function(...args){const result=pawFocusBefore(...args);pawFocusView();return result};
 const pawFocusHUD=updateHUD;
@@ -13331,6 +13331,7 @@ function pawDrawYueAtDesk(a){
  return true
 }
 function pawDrawYueDeskPlaque(fn){
+ if(talkOpen||($('page').dataset.pawYueDesk==='true'&&$('page').style.display!=='none'))return false;
  const q=pawYueDeskPlaque(),scale=Math.max(.08,cam.scale),font=Math.max(9,12/scale),name=tr('Consult','问事');
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';
@@ -13460,6 +13461,7 @@ function pawFoodExitPlan(id,position){
 const pawMappedExitBefore=$('back').onclick;
 let pawMappedExitGoal=null;
 $('back').onclick=function(...args){
+ if(room==='destiny'&&$('page').dataset.pawYueDesk==='true'){pawCloseYueDesk();closeTalk()}
  if((!pawReadingActive()&&!pawFoodRoomActive())||!indoorReady()||continuityRoom!==room)return pawMappedExitBefore.apply(this,args);
  if(pawMappedExitGoal&&indoor.goal===pawMappedExitGoal)return;
  const expected=room,food=pawFoodRoomActive(),visit=food?pawFoodVisit:pawReadingVisit,position=[indoor.x,indoor.y],plan=food?pawFoodExitPlan(room,position):pawMappedExitPlan(pawReadingAPI(),room,position);
@@ -13583,15 +13585,21 @@ roomIntro=function(...args){
  }
  return result
 };
-const pawYueDeskHubBefore=yueReadingHub;
+function pawCloseYueDesk(){
+ const pane=$('page');if(pane.dataset.pawYueDesk!=='true')return false;
+ pawYueChartObserver?.disconnect();pawYueChartObserver=null;
+ if(pane.contains(document.activeElement))document.activeElement.blur();
+ pane.style.display='none';delete pane.dataset.pawYueDesk;delete pane.dataset.pawYueExpanded;
+ $('content').replaceChildren();return true
+}
 function pawYueDeskChoose(kind){
  if(room!=='destiny')return;
  function open(subject){if(room!=='destiny')return;yueSubject=subject;closeTalk();if(kind==='chart')destinyPage();else if(kind==='year')yueZodiacAlmanac();else starSignPage()}
  say(tr('Master Yue','月师傅'),tr('Is this reading for you, or someone else?','这次是想看看自己，还是替别人看看？'),[[tr('For me','看自己'),()=>open('self')],[tr('For someone else','帮别人看看'),()=>open('other')],[tr('Back','返回'),()=>yueReadingHub()]])
 }
 yueReadingHub=function(...args){
- if(room!=='destiny')return pawYueDeskHubBefore(...args);
- $('page').style.display='none';pawYueChartObserver?.disconnect();pawYueChartObserver=null;delete $('page').dataset.pawYueDesk;delete $('page').dataset.pawYueExpanded;closeTalk();
+ if(room!=='destiny'){pawCloseYueDesk();return}
+ pawCloseYueDesk();$('page').style.display='none';closeTalk();
  say(tr('Master Yue','月师傅'),tr("Ah, sit and have some tea. The stars are not going anywhere. What shall we explore?","来啦？坐，先喝口茶。星星又不会跑。今天想问些什么？"),[
  [tr('My year ahead','生肖流年'),()=>pawYueDeskChoose('year')],
  [tr('My birth chart','生辰命盘'),()=>pawYueDeskChoose('chart')],
@@ -13768,7 +13776,16 @@ pawYueDeskCSS.textContent=`
 #game #page[data-paw-yue-desk="true"] .pawYueGuidedForm .pawYueQuestion{font-size:clamp(17px,4.5vw,22px)!important}
 #game #page[data-paw-yue-desk="true"] #content:has(.pawYueGuidedForm)>.yueSubjectStrip{background:transparent!important;border:0!important;box-shadow:none!important;padding:8px 0!important;margin:3px 0!important}
 #game #page[data-paw-yue-desk="true"] #content:has(.pawYueGuidedForm)>.yueChartTools button{font-size:12px!important;box-shadow:none!important;background:transparent!important}
-@media(orientation:portrait){#game #page[data-paw-yue-desk="true"]:has(.pawYueGuidedForm):not([data-paw-yue-expanded="true"]){max-height:44dvh!important}}
+@media(orientation:portrait){
+ #game #page[data-paw-yue-desk="true"]:has(.pawYueGuidedForm):not([data-paw-yue-expanded="true"]){max-height:36dvh!important;padding:5px max(10px,env(safe-area-inset-left,0px)) max(8px,env(safe-area-inset-bottom,0px))!important}
+ #game #page[data-paw-yue-desk="true"]:has(.pawYueGuidedForm) #content>.row{margin:0 0 3px!important}
+ #game #page[data-paw-yue-desk="true"]:has(.pawYueGuidedForm) #content>.row button{min-height:44px!important;padding:5px 9px!important;font-size:14px!important}
+ #game #page[data-paw-yue-desk="true"] .pawYueGuidedForm{padding:3px 6px!important;gap:4px!important}
+ #game #page[data-paw-yue-desk="true"] .pawYueGuidedForm .pawYueQuestion{font-size:17px!important;margin:2px 0 4px!important}
+ #game #page[data-paw-yue-desk="true"] .pawYueGuidedForm label{gap:3px!important;margin:0!important;font-size:14px!important}
+ #game #page[data-paw-yue-desk="true"] .pawYueGuidedForm :is(input,select){min-height:44px!important;padding:7px 8px!important;margin:0!important}
+ #game #page[data-paw-yue-desk="true"] .pawYueStepNav button{padding:5px 10px!important;font-size:14px!important}
+}
 `;document.head.append(pawYueDeskCSS);
 
 
