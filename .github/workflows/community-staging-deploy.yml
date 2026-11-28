@@ -1,0 +1,77 @@
+name: Deploy Pawradise community staging
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Enter STAGING to deploy the moderated backend (does not open the game)'
+        required: true
+        type: string
+      presence:
+        description: 'Enable presence for controlled multi-client testing only'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: pawradise-community-deployment
+  cancel-in-progress: false
+jobs:
+  staging:
+    if: inputs.confirmation == 'STAGING' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify moderated service with SQLite
+        run: node --experimental-sqlite scripts/community-test.mjs
+      - name: Configure isolated Worker deployment
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PAW_DB_ID: ${{ vars.PAW_COMMUNITY_D1_ID }}
+          PAW_DB_NAME: ${{ vars.PAW_COMMUNITY_D1_NAME }}
+          PAW_RATE_SECRET: ${{ secrets.PAW_COMMUNITY_RATE_SECRET }}
+          PAW_MODERATOR_TOKEN: ${{ secrets.PAW_COMMUNITY_MODERATOR_TOKEN }}
+          PAW_PRESENCE: ${{ inputs.presence }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, re
+          env = os.environ
+          required = ['CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_API_TOKEN','PAW_DB_ID','PAW_DB_NAME','PAW_RATE_SECRET','PAW_MODERATOR_TOKEN']
+          for key in required:
+              if not env.get(key): raise SystemExit('Missing repository configuration: '+key)
+          if not re.fullmatch(r'[0-9a-fA-F]{32}', env['CLOUDFLARE_ACCOUNT_ID']): raise SystemExit('Invalid account ID format')
+          if not re.fullmatch(r'[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}', env['PAW_DB_ID']): raise SystemExit('Invalid D1 ID format')
+          if not re.fullmatch(r'[a-zA-Z0-9_-]{1,63}', env['PAW_DB_NAME']): raise SystemExit('Invalid D1 name')
+          if min(len(env['PAW_RATE_SECRET']),len(env['PAW_MODERATOR_TOKEN'])) < 32 or env['PAW_RATE_SECRET']==env['PAW_MODERATOR_TOKEN']: raise SystemExit('Independent long secrets required')
+          cfg = {'name':'pawradise-community-staging','main':'worker.mjs','compatibility_date':'2026-10-01','workers_dev':True,
+                 'vars':{'ALLOWED_ORIGIN':'https://sobellybutton.github.io','ENABLE_PRESENCE':'true' if env.get('PAW_PRESENCE')=='true' else 'false'},
+                 'd1_databases':[{'binding':'DB','database_id':env['PAW_DB_ID'],'database_name':env['PAW_DB_NAME']}],
+                 'triggers':{'crons':['0 4 * * *']}}
+          pathlib.Path('community/wrangler.deploy.json').write_text(json.dumps(cfg))
+          PY
+      - name: Apply schema and deploy staging Worker
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PAW_RATE_SECRET: ${{ secrets.PAW_COMMUNITY_RATE_SECRET }}
+          PAW_MODERATOR_TOKEN: ${{ secrets.PAW_COMMUNITY_MODERATOR_TOKEN }}
+          PAW_DB_NAME: ${{ vars.PAW_COMMUNITY_D1_NAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          secret_file="$(mktemp "$RUNNER_TEMP/paw-community.XXXXXXXX")"
+          trap 'rm -f "$secret_file" community/wrangler.deploy.json' EXIT
+          python3 - "$secret_file" <<'PY'
+          import json, os, sys
+          with open(sys.argv[1],'w') as f:
+              json.dump({'RATE_SECRET':os.environ['PAW_RATE_SECRET'],'MODERATOR_TOKEN':os.environ['PAW_MODERATOR_TOKEN']},f)
+          PY
+          npx --yes wrangler@4 d1 execute "$PAW_DB_NAME" --remote --file community/schema.sql --config community/wrangler.deploy.json
+          npx --yes wrangler@4 deploy --config community/wrangler.deploy.json
+          npx --yes wrangler@4 secret bulk "$secret_file" --config community/wrangler.deploy.json
+          echo 'Staging deployment commands finished. Verify /health, moderation and five isolated browser clients before setting the public endpoint.' >> "$GITHUB_STEP_SUMMARY"
