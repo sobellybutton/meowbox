@@ -9312,9 +9312,9 @@ function komorebiArt(id){
 }
 /* PAW_FURNITURE_PREVIEW_BEGIN */
 const pawFurnitureArtBase="assets/visual/staging/2026-11-27-b/room/";
-const pawFurniturePainted={"futon":"futon","bed":"single-bed","lamp":"paper-lamp","basicTable":"low-table","rug":"woven-rug","plant":"fern","zabuton":"floor-cushion","catBasket":"cat-bed","sakuraVase":"flower-vase","lowDesk":"desk","retroTV":"retro-tv","chineseTeaTable":"tea-table","chineseBench":"bench"};
+const pawFurniturePainted={"futon":"futon","bed":"single-bed","lamp":"paper-lamp","basicTable":"low-table","rug":"woven-rug","plant":"fern","zabuton":"floor-cushion","catBasket":"cat-bed","sakuraVase":"flower-vase","lowDesk":"desk","retroTV":"retro-tv","chineseTeaTable":"tea-table","chineseBench":"bench","shojiLamp":"floor-lantern"};
 const pawFurnitureImported=new Set(["board","frame","kotatsu","teaCabinet","bonsai","recordPlayer","readingChair","chineseScreen","chineseLantern","porcelainVase","moonShelf"]);
-const pawFurniturePreviewOnly={"shelf":"furniture/bookcase.webp","displayCabinet":"furniture/display-cabinet.webp","shojiLamp":"furniture/floor-lantern.webp","roomExtension":"shells/side-extension.webp","roomStudio":"shells/l-shaped-extension.webp"};
+const pawFurniturePreviewOnly={"shelf":"furniture/bookcase.webp","displayCabinet":"furniture/display-cabinet.webp","roomExtension":"shells/side-extension.webp","roomStudio":"shells/l-shaped-extension.webp"};
 function pawFurniturePaintedPath(id,preview=false){
  if(pawFurnitureImported.has(id))return 'assets/visual/painted/home/furniture/'+id+'.webp';
  if(Object.hasOwn(pawFurniturePainted,id))return pawFurnitureArtBase+'furniture/'+pawFurniturePainted[id]+'.webp';
@@ -9327,6 +9327,10 @@ function pawFurnitureRoomPose(id,x,y,r=0){
  const clamp=(v,a,b,f)=>Math.max(a,Math.min(b,Number.isFinite(Number(v))&&v!==null?Number(v):f));
  const left=clamp(x,8,92,50),rotation=Number.isFinite(Number(r))?Number(r):0;
  if(id==='chineseLantern')return {left:clamp(x,12,88,50),top:3.2,logicalY:35,rotation:0,anchor:'top',maxHeight:32};
+ if(id==='shojiLamp'){
+  const top=clamp(y,12,91,80);
+  return {left,top,logicalY:top,rotation,anchor:'bottom',maxHeight:38}
+ }
  if(pawFurnitureImported.has(id)){
   const wall=id==='board'||id==='frame',top=clamp(y,wall?18:12,wall?54:91,wall?35:80);
   return {left,top,logicalY:top,rotation,anchor:'bottom',maxHeight:wall?Math.min(38,top-4):38}
