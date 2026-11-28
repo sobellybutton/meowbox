@@ -9407,6 +9407,12 @@ const pawRoomAlias={daily:'tarot',news:'tea',sticks:'temple',moon:'temple'};
 const pawRoomWarmJobs=new Map();
 function pawRoomImageReady(im){return !!(im?.complete&&im.naturalWidth>0&&im.naturalHeight>0)}
 function pawRoomKnownImage(id){return (pawRoomFallbackKeys[id]||[]).map(k=>pics[k]).find(pawRoomImageReady)||null}
+// Warm the existing activity art during the actual walk to the room,
+// not at the first animation frame. Never gate walking on optional art.
+function pawRoomActivityArtKeys(id,kayaKeys){
+ if(id!=='park')return [];
+ return ['parkCats','parkCareFilledBowl','parkCareFeather',...(Array.isArray(kayaKeys)?kayaKeys:[]),'parkKayaSleep']
+}
 function pawWarmRoomAssets(id){
  id=pawRoomAlias[id]||id;
  if(!Object.hasOwn(pawRoomFallbackKeys,id)||pawRoomWarmJobs.has(id))return;
@@ -9415,6 +9421,7 @@ function pawWarmRoomAssets(id){
  try{
   add(portraitInteriorImage(id));add(landscapeRoomImage(id));
   if(productionVisualManifest[id]){productionVisual(id);add(productionVisualCache.get(id))}
+  for(const key of pawRoomActivityArtKeys(id,pawKayaKeys)){if(productionVisualManifest[key]){productionVisual(key);add(productionVisualCache.get(key))}}
   if(id==='arcade'){add(pawArcadeArt);add(pawRecoveredImage(pawCloseupPaths.blindBox))}
   if(id==='temple')add(pawRecoveredImage(pawCloseupPaths.templePaper));
   if(id==='wishes')add(pawRecoveredImage('scenes/wishing_garden_portrait.webp'));
