@@ -607,7 +607,10 @@
       "depends": [],
       "stage": "outstanding",
       "evidence": [],
-      "lease": null
+      "lease": {
+        "owner": "manual-share-final-1222",
+        "until": 1795841520000
+      }
     },
     {
       "id": "LOC-01",
