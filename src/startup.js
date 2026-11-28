@@ -1755,6 +1755,12 @@ const townSettingsRoot=$('small'),townSettingsPanel=languageChoices.parentNode;
 townSettingsPanel.classList.add('townSettingsPanel');townSettingsPanel.id='townSettingsPanel';
 const townSettingsToggle=element('button','',townSettingsRoot,'townSettingsToggle');
 townSettingsToggle.id='townSettingsToggle';townSettingsToggle.setAttribute('aria-controls','townSettingsPanel');townSettingsToggle.innerHTML='<svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4l.7 2.5 2 .9 2.3-1.2 2 3.5-1.8 1.9v2.8l1.8 1.9-2 3.5-2.3-1.2-2 .9L14 21h-4l-.7-2.5-2-.9L5 18.8l-2-3.5 1.8-1.9v-2.8L3 8.7l2-3.5 2.3 1.2 2-.9z"/><circle cx="12" cy="12" r="3.2"/></svg>';
+const townSettingsHeader=document.createElement('header');townSettingsHeader.className='pawSettingsJournalHeader';
+const townSettingsTitle=element('h1','',townSettingsHeader);townSettingsTitle.id='pawSettingsJournalTitle';
+const townSettingsClose=element('button','',townSettingsHeader);townSettingsClose.type='button';
+townSettingsClose.onclick=()=>{closeTownSettings();townSettingsToggle.focus()};
+townSettingsPanel.prepend(townSettingsHeader);
+townSettingsPanel.setAttribute('role','dialog');townSettingsPanel.setAttribute('aria-modal','true');townSettingsPanel.setAttribute('aria-labelledby',townSettingsTitle.id);
 const townSettingsExtra=element('div','',townSettingsPanel,'townSettingsExtra');
 const townSoundSettings=element('button','',townSettingsExtra),townMapLabels=element('button','',townSettingsExtra),townHelp=element('button','',townSettingsExtra);
 /* PAW_LOCAL_RESET_BEGIN */
@@ -1793,6 +1799,8 @@ function syncTownSettings(){
  townSettingsRoot.dataset.open=String(townSettingsOpen);
  townSettingsToggle.setAttribute('aria-label',tr('Settings','设置'));townSettingsToggle.title=tr('Settings','设置');townSettingsToggle.setAttribute('aria-expanded',String(townSettingsOpen));
  townSettingsPanel.hidden=!townSettingsOpen;
+ townSettingsTitle.textContent=tr('Travel journal · Settings','旅行手账 · 设置');
+ townSettingsClose.textContent=tr('Close journal','合上手账');
  if(!townSettingsOpen){townResetArmed=false;townResetFailed=false}
  townResetButton.textContent=tr('Reset data','重置游戏数据');
  townResetButton.setAttribute('aria-expanded',String(townResetArmed));
@@ -1806,13 +1814,22 @@ function syncTownSettings(){
  townHelp.textContent=tr('Walking help','行走指南');townHelp.hidden=!!room||!isRoute();
 }
 function closeTownSettings(){townSettingsOpen=false;syncTownSettings()}
-townSettingsToggle.onclick=()=>{townSettingsOpen=!townSettingsOpen;syncTownSettings()};
+townSettingsToggle.onclick=()=>{townSettingsOpen=!townSettingsOpen;syncTownSettings();if(townSettingsOpen){townSettingsPanel.scrollTop=0;townSettingsClose.focus()}else townSettingsToggle.focus()};
 townSoundSettings.onclick=()=>{$('mute').click();syncTownSettings()};
 townMapLabels.onclick=null;
 townHelp.onclick=()=>{closeTownSettings();walkHelp.click()};
 for(const [,btn] of languageButtons)btn.addEventListener('click',closeTownSettings);
 document.addEventListener('pointerdown',e=>{if(townSettingsOpen&&!townSettingsRoot.contains(e.target))closeTownSettings()},true);
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&townSettingsOpen){closeTownSettings();townSettingsToggle.focus()}});
+document.addEventListener('keydown',e=>{
+ if(!townSettingsOpen)return;
+ if(e.key==='Escape'){e.preventDefault();closeTownSettings();townSettingsToggle.focus();return}
+ if(e.key==='Tab'){
+  const controls=[...townSettingsPanel.querySelectorAll('button,input,select,textarea,a[href]')].filter(el=>!el.disabled&&el.getClientRects().length);
+  if(!controls.length)return;
+  const first=controls[0],last=controls[controls.length-1],active=document.activeElement;
+  if(!townSettingsPanel.contains(active)||(e.shiftKey&&active===first)||(!e.shiftKey&&active===last)){e.preventDefault();(e.shiftKey?last:first).focus()}
+ }
+});
 const townSettingsHUDBefore=updateHUD;updateHUD=function(...args){
  const v=townSettingsHUDBefore(...args);compactTownProfile();
  if(!proposal.hidden||talkOpen||activity)townSettingsOpen=false;
@@ -15805,24 +15822,33 @@ pawPhysicalBookletStyle.textContent=`
 /* PAW_PHYSICAL_DOCK_BOOKLETS_END */
 
 /* PAW_PAINTED_SETTINGS_COG_BEGIN */
-// Keep one accessible button and one SVG. Use original artwork only after
-// decoding; if unavailable, the existing line icon remains the fallback.
-const pawSettingsCogAsset='assets/visual/staging/2026-11-28-project-art-b10/settings-cog.webp';
-const pawSettingsCogImage=new Image();
-pawSettingsCogImage.src=pawSettingsCogAsset;
-pawSettingsCogImage.decode().then(()=>{
- const svg=townSettingsToggle.querySelector('svg');
- if(!svg||svg.querySelector('.pawSettingsPaintedCog'))return;
- for(const child of svg.children)child.classList.add('pawSettingsFallbackCog');
- const art=document.createElementNS('http://www.w3.org/2000/svg','image');
- art.setAttribute('href',pawSettingsCogAsset);art.setAttribute('width','24');art.setAttribute('height','24');art.setAttribute('preserveAspectRatio','xMidYMid meet');art.classList.add('pawSettingsPaintedCog');
- art.addEventListener('error',()=>{art.remove();svg.removeAttribute('data-paw-painted-cog')},{once:true});
- svg.append(art);svg.setAttribute('data-paw-painted-cog','true');
-}).catch(()=>{});
+// The supplied painted badge contains its own frame and green leaves.
+// Reuse the original vector cog, with a warm ink treatment, on a single
+// parchment control. Never asynchronously overlay the composite badge.
 const pawSettingsCogStyle=document.createElement('style');pawSettingsCogStyle.textContent=`
-html #game #small #townSettingsToggle[aria-label]>svg[data-paw-painted-cog]{width:33px!important;height:33px!important}
-html #game #small #townSettingsToggle[aria-label]>svg[data-paw-painted-cog]>.pawSettingsFallbackCog{display:none}
-@media(forced-colors:active){html #game #small #townSettingsToggle[aria-label]>svg[data-paw-painted-cog]>.pawSettingsFallbackCog{display:initial}html #game #small #townSettingsToggle[aria-label]>svg>.pawSettingsPaintedCog{display:none}}
+html #game #small #townSettingsToggle[aria-label]>svg{width:25px!important;height:25px!important;color:#77522e!important}
+html #game #small #townSettingsToggle[aria-label]>svg>path{fill:#c89b60;stroke:#77522e;stroke-width:1.35}
+html #game #small #townSettingsToggle[aria-label]>svg>circle{fill:#f4e8d1;stroke:#77522e;stroke-width:1.4}
+html #game #small[data-open=true]{z-index:65!important}
+html #game #small #townSettingsPanel:not([hidden]){
+ position:fixed!important;inset:0!important;width:100%!important;max-width:none!important;height:100%!important;max-height:none!important;
+ box-sizing:border-box!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:16px!important;
+ padding:max(20px,env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) max(20px,env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))!important;
+ background:#eee5d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 180px repeat!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;z-index:2!important;overflow-y:auto!important;overscroll-behavior:contain;
+ color:#514634!important;font-family:Georgia,"Songti SC",serif!important;
+}
+html #game #small #townSettingsPanel:not([hidden])>*{width:min(100%,540px)!important;max-width:540px!important;align-self:center!important;flex-shrink:0!important}
+html #game #small #townSettingsPanel .pawSettingsJournalHeader{display:flex;align-items:flex-start;flex-direction:column;gap:12px;border-bottom:1px solid #ae9874;padding-bottom:15px;background:transparent}
+html #game #small #townSettingsPanel .pawSettingsJournalHeader h1{font-size:clamp(23px,6vw,32px);line-height:1.2;margin:0;color:#405740;font-weight:600}
+html #game #small #townSettingsPanel .pawSettingsJournalHeader button{align-self:flex-end;padding:8px 14px!important;color:#405740!important}
+html #game #small #townSettingsPanel .townSettingsExtra{gap:8px!important}
+html #game #small #townSettingsPanel .townSettingsExtra button{font-size:16px!important;line-height:1.3!important;padding:10px 14px!important}
+@media(forced-colors:active){
+ html #game #small #townSettingsToggle[aria-label]>svg{color:ButtonText!important}
+ html #game #small #townSettingsToggle[aria-label]>svg>path,html #game #small #townSettingsToggle[aria-label]>svg>circle{fill:Canvas;stroke:ButtonText}
+ html #game #small #townSettingsPanel:not([hidden]){background:Canvas!important;color:CanvasText!important}
+}
 `;document.head.append(pawSettingsCogStyle);
 /* PAW_PAINTED_SETTINGS_COG_END */
 
