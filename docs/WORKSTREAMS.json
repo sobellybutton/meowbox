@@ -281,12 +281,10 @@
         "189dac0c + e76fbfad: inspected six seated pose candidates; calibrated hand/brush/deck and inset held card/parchment contact geometry; actual atlas crop and orientation draw, clipped chart callback; 182 exact-source assertions passed; runtime integration pending.",
         "bd78fa8e + 0393dc93: Ah Ma ready/windup/impact/recovery and reading house host candidates imported; assess identity and seat/hand anchor before replacing existing poses. Staging verified, not runtime accepted; refer to PROJECT_BATCHES_30.md imported creative batches.",
         "b584b628 + 83751a4c: six prepared seated poses integrated in guarded room runtime, calibrated hand/prop clipping; 79 helper checks. Actual device placement, motion and deployment unverified.",
-        "961070af + f73b3558: computed twelve-palace perimeter scroll and active-time .72s ink reveal; 27 exact-source assertions passed. Runtime hookup pending shared scene lease."
+        "961070af + f73b3558: computed twelve-palace perimeter scroll and active-time .72s ink reveal; 27 exact-source assertions passed. Runtime hookup pending shared scene lease.",
+        "4cc3834a + ec06083e: inspected existing office worker reference and all eight uploaded right-facing frames; prepared identity-locked distance-based gait, fixed source foot anchor, reduced motion and complete-set fallback, 6,059 focused source assertions passed. Not loaded in live game: no matching office-worker runtime identity found and shared source leased by ENT-ASSET-READY-01. Mirroring not approved because briefcase changes hands. Actual alpha/scale/stride and rendered acceptance pending."
       ],
-      "lease": {
-        "owner": "manual-npc-art-batch11",
-        "until": 1795846707402
-      },
+      "lease": null,
       "blocker": "Owner-approved host and character-scale requirements (28 Nov): Owner requires a cross-room and cross-map character scale audit: all human player avatars, residents, room hosts, visitors and real/fictional peers should have comparable apparent height/body proportions when standing on the same ground plane. Allow natural age/body differences and perspective depth; do not normalize seated hosts to standing height or stretch artwork. Calibrate visible alpha bounds, seated torso and furniture contact, consistent head scale and foot/seat pivots; Master Yue and tarot reader must be immediately recognisable and not miniature. Reuse approved identities; create missing seated/writing/dealing poses only after inventory review.\nSix reference-matched Master Yue and Tarot Reader sprites now prepared in painted/host pose-candidates; seven alternatives excluded. Runtime registration, seat/table occlusion, head scale, motion/contact and actual gameplay verification pending.\nSeat/table/hand clearance and actual scene activation remain pending; framing landmarks are provisional, not motion sequences. Shared source currently leased by another manual runner.\nContact-surface module now available; actual host seat, desk occlusion, frame sequence and runtime hookup still open."
     },
     {
