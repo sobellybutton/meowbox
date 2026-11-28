@@ -531,7 +531,10 @@
         "bd78fa8e + 0393dc93: Native portrait carriage foreground imported; transparent window bounds 119,322,906,831 on 1024x1536; evaluate native portrait ride, preserve landscape. Staging verified, not runtime accepted; refer to PROJECT_BATCHES_30.md imported creative batches.",
         "52e41844 + edba2787: landscape railway renderer now applies slow route-specific warm light/cool shade inside scenery window and anchored wind shear to flowers only; fixed rigid props and carriage, reduced motion freezes effects. Exact repository module and persisted script executed in connector harness: 11,770 assertions passed, including 7,217 atmosphere assertions. No real browser/deployed verification; portrait carriage still pending runtime activation."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-portrait-rail-20261128",
+        "until": 1795842979100
+      },
       "blocker": "Landscape renderer is called by startup's painted railway composite when loaded; actual rendered ride and mobile/desktop acceptance remain pending. Native portrait carriage needs runtime activation and alpha-window alignment; shared startup leased by another runner."
     },
     {
