@@ -1144,7 +1144,8 @@
         "src/shell.html",
         "browser",
         "AGENTS.md",
-        "scripts/garden-painted-test.cjs"
+        "scripts/garden-painted-test.cjs",
+        "scripts/paw-living-home-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
