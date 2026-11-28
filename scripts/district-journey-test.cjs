@@ -237,7 +237,11 @@ async function travelLoop(page,name,touch){
    await enterDoor(id);
    if(id==='quiz'){
     await station('quiz');
-    await page.locator('#choices').getByRole('button',{name:'MBTI-inspired preferences',exact:true}).waitFor();
+    // Assert the current authored Observatory dialogue, not the retired label.
+    await page.locator('#choices').getByRole('button',{name:'Four personality preferences',exact:true}).waitFor();
+    assert(await page.locator('#choices').getByRole('button',{name:'Enneagram-inspired · nine motives',exact:true}).isVisible());
+    assert(await page.locator('#choices').getByRole('button',{name:'Five personality tendencies',exact:true}).isVisible());
+    assert.equal(await page.evaluate(()=>room),'quiz','Station dialogue belongs to the Observatory');
     await press(page.locator('#choices').getByRole('button',{name:/Keep exploring/}));
    }
    await backOutside();
