@@ -249,3 +249,46 @@ pawDiscoveryReadingStyle.textContent=`
 #game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet) :is(button,summary):focus-visible{outline:2px solid #3c6654;outline-offset:-3px}
 #game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet) button:disabled{opacity:.68}
 `;document.head.append(pawDiscoveryReadingStyle);
+
+
+/* PAW_STORY_CHAPTER_TURN_BEGIN */
+function pawStoryTurnMatches(origin,current){
+ return !!origin&&!!current&&origin.run===current.run&&origin.token===current.token&&origin.node===current.node&&origin.room===current.room&&current.activity==='story'&&current.scene==='wonder'&&current.turning===true;
+}
+function pawStoryNextNode(node,index,scenes,endings){
+ if(!Number.isInteger(index)||index<0)return null;
+ const next=node?.choices?.[index]?.[2];
+ return typeof next==='string'&&(Object.hasOwn(scenes,next)||Object.hasOwn(endings,next))?next:null;
+}
+function pawStoryTurnReady(elapsed,ready,reduced,blocked){
+ return !blocked&&(ready||elapsed>=1700)&&(reduced||elapsed>=420)
+}
+/* PAW_STORY_CHAPTER_TURN_END */
+function pawStoryTurnContext(){
+ return {run:state,token:parallelToken,node:parallelNode,room,activity,scene,turning:parallelTurning}
+}
+// Hold the current illustrated chapter while the next painting prepares.
+// Do not push history or grant a keepsake until the actual chapter turns.
+parallelSelect=function(i){
+ if(activity!=='story'||scene!=='wonder'||room!=='story'||parallelTurning||pawArcadeInputBlocked())return;
+ const next=pawStoryNextNode(parallelScenes[parallelNode],i,parallelScenes,parallelEndings);if(!next)return;
+ const im=pics[parallelScenes[next]?.art||parallelEndings[next]?.[4]||'streetStation'];
+ let ready=!im||!!(im.complete&&im.naturalWidth>0);
+ if(!ready&&typeof im.decode==='function')im.decode().then(()=>ready=!!im.naturalWidth).catch(()=>{});
+ parallelTurning=true;parallelPick=i;parallelAt=t;sound(490+i*80);
+ if(!matchMedia('(prefers-reduced-motion: reduce)').matches)actorGesture('wave',i===0?-1:1);
+ const origin=pawStoryTurnContext();let elapsed=0,last=performance.now();
+ function turn(now){
+  if(!pawStoryTurnMatches(origin,pawStoryTurnContext()))return;
+  const blocked=pawArcadeInputBlocked()||document.hidden;
+  elapsed=pawCafeTurnElapsed(elapsed,last,now,blocked);last=now;
+  if(!pawStoryTurnReady(elapsed,ready||!!im?.naturalWidth,matchMedia('(prefers-reduced-motion: reduce)').matches,blocked)){requestAnimationFrame(turn);return}
+  parallelTrail.push(origin.node);parallelNode=next;parallelAt=t;parallelPick=-1;parallelTurning=false;
+  if(Object.hasOwn(parallelEndings,next)){
+   const end=parallelEndings[next];
+   if(!parallelFound.includes(next)){parallelFound.push(next);save('parallelEndingsV1',parallelFound)}
+   addItem('Parallel life: '+end[0],'平行人生：'+end[1]);sound(660)
+  }
+ }
+ requestAnimationFrame(turn)
+};
