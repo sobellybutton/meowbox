@@ -340,16 +340,19 @@ function pawRitualAdvance(){
   state.moonPending=false;physicalFx('wood',.8);
   const r=state.result;
   if(r===0)addItem('Heaven’s approval','圣杯祝福');
-  react(['Yes!','No.','Try again.'][r],['圣杯！','阴杯。','笑杯。'][r]);return
+  if(Number.isInteger(state.pawFortuneNumber)&&state.pawFortuneNumber>=1&&state.pawFortuneNumber<=12){
+   if(r===0){react('Sheng Bei! Your stick is confirmed.','圣杯！此签已获确认。');hint('Your fortune slip is ready.','可以领取签文了。')}
+   else{react(r===1?'No approval. Draw a new stick.':'Not confirmed. Draw a new stick.',r===1?'阴杯。请重新求签。':'笑杯。请重新求签。');hint('Return to the fortune sticks before trying again.','请返回签筒处重新求签。')}
+  }else react(['Yes!','No.','Try again.'][r],['圣杯！','阴杯。','笑杯。'][r]);return
  }
  if(activity!=='sticks')return;
  if(state.drawing&&t-state.stickDrawAt>=1.25){
   state.drawing=false;state.fallenStick=state.stickNumber;physicalFx('wood',.45);
-  hint('Pick up the numbered stick to receive your fortune paper.','拾起落下的签，领取签文。')
+  hint('Pick up the numbered stick and confirm it with the moon blocks.','拾起落下的签，再掷筊确认。')
  }
  if(state.stickPicked&&!state.stickDelivered&&t-state.stickPickAt>=.85){
   state.stickDelivered=true;const n=state.fallenStick;
-  addItem('Fortune stick '+n,'签文 '+n);physicalFx('paper',.55);sound(520);templePaperOpen(n)
+  physicalFx('paper',.55);sound(520);templePaperOpen(n)
  }
 }
 /* PAW_RITUAL_CLOCK_END */
@@ -2160,7 +2163,7 @@ function shakeFortuneStick(){
 function pickupFortuneStick(){
  if(activity!=='sticks'||!pawRitualInputAllowed()||state.drawing||!state.fallenStick||state.stickPicked)return false;
  state.stickPicked=true;state.stickPickAt=t;state.stickDelivered=false;
- sound(420);hint('Pick up the stick and take it to the fortune paper.','拾起竹签，去领对应的签纸。');return true
+ sound(420);hint('Take the numbered stick to the moon blocks.','拾起竹签，前往筊杯处确认。');return true
 }
 
 /* Original portrait-composed destinations. All coordinates refer to the new artwork,
