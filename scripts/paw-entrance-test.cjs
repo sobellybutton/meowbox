@@ -36,6 +36,8 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
    await shot('ticket');await go.click();
    await proposal.locator('.pawAvatarGallery').waitFor();
    const choices=proposal.locator('.pawAvatarOption');assert.equal(await choices.count(),4);
+   const chosenFamily=await proposal.locator('.pawEntranceAvatar').getAttribute('data-paw-crop-family');
+   assert(['original','cropped'].includes(chosenFamily),'Missing stable art family');
    for(let i=0;i<4;i++){
     const choice=choices.nth(i);await reachable(choice,'Avatar '+i);await choice.click();
     assert.equal(await choice.getAttribute('aria-pressed'),'true');
@@ -44,11 +46,21 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
     await image.evaluate(im=>im.decode());
     await image.evaluate(im=>im.decode());await page.waitForFunction(()=>document.querySelector('.pawEntranceAvatar')?.dataset.pawArtReady==='true');const bounds=await image.boundingBox();assert(bounds&&bounds.width>40&&bounds.height>=(width>=850?180:115),'Avatar not fully sized');const thumb=choice.locator('img');await thumb.evaluate(im=>im.decode());await page.waitForFunction(i=>document.querySelector('.pawAvatarOption[data-avatar="'+i+'"] img')?.dataset.pawArtReady==='true',i);const tb=await thumb.boundingBox();assert(tb&&tb.height>=48,'Avatar thumbnail undersized');
     assert(await proposal.evaluate(n=>n.scrollWidth<=n.clientWidth+1),'Character screen horizontal overflow');
+    assert.equal(await image.getAttribute('data-paw-crop-family'),chosenFamily,'Family changed during selection');
+    assert.equal(await thumb.getAttribute('data-paw-crop-family'),chosenFamily,'Thumbnail family differs');
+    const source=await image.getAttribute('src');
+    await page.evaluate(async()=>{if(pawEntranceWarmJob)await pawEntranceWarmJob});
+    assert.equal(await image.getAttribute('src'),source,'Displayed avatar was replaced by late crop');
     await shot('avatar-'+i);
    }
    const backTicket=proposal.locator('.pawEntranceBack');await reachable(backTicket,'Back to ticket');await backTicket.click();assert.equal(await input.inputValue(),'Traveller 旅人','Ticket signature lost');await go.click();await choices.nth(3).waitFor();assert.equal(await choices.nth(3).getAttribute('aria-pressed'),'true','Avatar lost on back');
    const turn=proposal.locator('.pawAvatarTurn button');await reachable(turn,'Turn around');await turn.click();
    assert(await page.evaluate(()=>proDir===1),'Turn did not change view');
+   const turned=proposal.locator('.pawEntranceAvatar');
+   await turned.evaluate(im=>im.decode());
+   const turnFamily=await turned.getAttribute('data-paw-crop-family');
+   assert.equal(await proposal.locator('.pawAvatarOption[data-avatar="3"] img').getAttribute('data-paw-crop-family'),turnFamily,'Turn changed artwork family');
+
    await reachable(next,'Confirm avatar');await next.click();
    const persona=proposal.locator('.pawPersonaChoices button').first();await reachable(persona,'Persona');await shot('persona');if(motion==='no-preference'){const skip=proposal.locator('.pawIntentSkip');await reachable(skip,'Optional travel intention');await skip.click()}else await persona.click();
    const arrive=proposal.locator('.rail-arrive');await arrive.waitFor({timeout:20000});await reachable(arrive,'Arrive');
