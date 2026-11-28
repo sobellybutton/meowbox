@@ -167,3 +167,27 @@ console.log('Resting ladle retry and exclusive held-tool ownership checks passed
  assert.ok(!a.pawGardenSeatAtNode({route:[[.78,.475]],pos:[.78,.475]},[.78,.475]));
  console.log('PASS 10 temple auto-arrival and garden seated ownership checks');
 }
+
+
+// Physical contact: the mirrored rotation is identical for the painted
+// ladle, the gripping hand and the stream origin, with bounded arm reach.
+const physicalWater=new Function(get('PURIFICATION_PAINT')+';return {pawWaterGeometry,pawWaterLadlePoint,pawWaterShoulder,pawWaterDragCentre,pawWaterDestination,pawWaterDropMatches}')();
+const wg=physicalWater.pawWaterGeometry(),ws=1.92,wsh=physicalWater.pawWaterShoulder(wg,ws);
+for(let i=0;i<=100;i++){
+ const angle=.58*i/100,p=physicalWater.pawWaterLadlePoint(wg.pour,angle,-25,1),b=physicalWater.pawWaterLadlePoint(wg.pour,angle,35,6);
+ assert.ok(Math.abs(Math.hypot(p.x-b.x,p.y-b.y)-.65*Math.hypot(60,5))<1e-7);
+ assert.ok(Math.hypot(p.x-wsh.x,p.y-wsh.y)<42*ws);
+ if(i)assert.ok(b.y>physicalWater.pawWaterLadlePoint(wg.pour,0,35,6).y);
+}
+for(let x=240;x<=470;x+=5)for(let y=300;y<=520;y+=5){
+ const p=physicalWater.pawWaterDragCentre({x,y},wg,ws),h=physicalWater.pawWaterLadlePoint(p,0,-25,1);
+ assert.ok(Math.hypot(h.x-wsh.x,h.y-wsh.y)<=42*ws+1e-7);
+}
+for(const stage of [0,1]){
+ const p=physicalWater.pawWaterDestination(stage,wg),q=physicalWater.pawWaterDragCentre(p,wg,ws);
+ assert.ok(Math.hypot(p.x-q.x,p.y-q.y)<1e-7);
+ assert.ok(physicalWater.pawWaterDropMatches(stage,q.x,q.y,wg));
+}
+assert.ok(src.includes('at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,pawTemplePaintedActorScale())'));
+assert.ok(src.includes('const bowl=pawWaterLadlePoint(at,angle,35,6)'));
+console.log('Purification ladle contact and bounded reach checks passed.');
