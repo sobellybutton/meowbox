@@ -2,7 +2,7 @@ name: Traveller sprite calibration
 on:
   push:
     branches: [main]
-    paths: ['assets/visual/painted/player-*/walk/**', 'assets/visual/painted/action-runtime.json', 'scripts/sprite-calibration.py', '.github/workflows/sprite-calibration.yml']
+    paths: ['assets/visual/painted/player-*/walk/**', 'assets/visual/staging/2026-11-28-final-batch1-traveller/**', 'assets/visual/staging/2026-11-28-traveller-writing/**', 'assets/visual/painted/action-runtime.json', 'scripts/sprite-calibration.py', '.github/workflows/sprite-calibration.yml']
   workflow_dispatch:
 permissions:
   contents: read
