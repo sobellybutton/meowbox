@@ -8641,7 +8641,7 @@ renderChartConsultation=function(out,z){
   const selected=section.querySelector('.chartTopics button[data-topic][aria-pressed="true"]');
   if(!selected)return;
   const topic=Number(selected.dataset.topic),data=pawZwdsTopicSnapshot(z,topic);
-  if(data)openMeowShare(data,()=>{destinyPage(false,topic)})
+  if(data)pawYueShareFromChart(data,topic,section)
  });
  btn.className='pawZwdsShareButton';
  element('small',tr('Only this palace’s main stars and reflection are included. Birth details and the full chart stay private.','仅分享此宫位主星与反思小记，不包含生辰、出生地或完整命盘。'),section,'pawZwdsShareNote');
@@ -9107,7 +9107,7 @@ renderChartConsultation=function(out,z){
  element('summary',tr('Optional: share all twelve palaces','可选：分享完整十二宫'),details);
  element('p',tr('The card contains your main-star placements. It omits name, birth date, time and location, but placements can still reveal clues about birth information. Only share if comfortable.','卡片包含你的主星分布，不含姓名、出生日期、时间及地点，但星曜分布仍可能透露部分生辰线索。请自行决定是否分享。'),details);
  b(details,tr('Preview twelve-palace card','预览十二宫纪念卡'),()=>{
-  if(yueSubject!=='self'||!details.isConnected)return;const data=pawChartShareSnapshot(z);if(data)openMeowShare(data,()=>destinyPage(false))
+  if(yueSubject!=='self'||!details.isConnected)return;const data=pawChartShareSnapshot(z);if(data)pawYueShareFromChart(data,null,section)
  });
  return result
 };
@@ -12451,6 +12451,13 @@ function pawSceneVapourFrame(id,i,now,reduced=false){
  const drift=reduced?0:Math.sin(now*1.04+i)*w*.12;
  return {u:u+Math.sin(phase*5+i)*w*.23+drift,v:v-phase*h,rx:w*(.11+.17*phase),ry:h*(.09+.09*phase),alpha:.17*Math.sin(Math.PI*phase)}
 }
+// Small moving highlights on the existing painted cascade, not a second
+// waterfall or a new prop. Coordinates traced on the Destiny portrait.
+function pawYueCascadeFrame(i,now,reduced=false){
+ if(!Number.isInteger(i)||i<0||i>=3||!Number.isFinite(now))return null;
+ const phase=reduced?(i+1)/4:((now*.68+i/3)%1+1)%1;
+ return {u:.805+i*.010,v:.330+phase*.026,rx:.0035,ry:.0075,alpha:.12*Math.sin(Math.PI*phase)}
+}
 function pawSceneAir(ctx,id,p,now,reduced=false,hidden=false){
  if(hidden||!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||p.w<=0||p.h<=0)return 0;
  const lamps=pawSceneLightFrame(id,now,reduced);if(!lamps.length)return 0;
@@ -12464,6 +12471,17 @@ function pawSceneAir(ctx,id,p,now,reduced=false,hidden=false){
     g.addColorStop(0,'rgba(255,224,151,'+q.alpha+')');g.addColorStop(1,'rgba(255,224,151,0)');
     ctx.fillStyle=g;ctx.fillRect(-1,-1,2,2);count++;
    }finally{ctx.restore()}
+  }
+  if(id==='destiny'){
+   for(let i=0;i<3;i++){
+    const q=pawYueCascadeFrame(i,now,reduced);if(!q)continue;
+    ctx.save();try{
+     ctx.translate(p.x+p.w*q.u,p.y+p.h*q.v);ctx.scale(p.w*q.rx,p.h*q.ry);
+     const g=ctx.createRadialGradient(0,0,0,0,0,1);
+     g.addColorStop(0,'rgba(225,242,239,'+q.alpha+')');g.addColorStop(1,'rgba(225,242,239,0)');
+     ctx.fillStyle=g;ctx.fillRect(-1,-1,2,2);count++;
+    }finally{ctx.restore()}
+   }
   }
   for(let i=0;i<3;i++){
    const q=pawSceneVapourFrame(id,i,now,reduced);if(!q)continue;
@@ -13036,6 +13054,15 @@ function pawReadingHostFamilyReady(id,manifest,api,ready){
  const poses=host&&manifest?.characters?.[host]?.poses;
  return !!api&&!!poses&&Object.keys(poses).length===3&&Object.entries(poses).every(([pose,a])=>!!api.contacts(manifest,host,pose,[0,0],10)&&ready(a.path,a.canvas))
 }
+// A late-decoded family is adopted only at an intentional consultation
+// boundary, never halfway through a drawing or a parchment reveal.
+function pawYueAdoptSeatedVisit(visit,id,kind,transition,ready){
+ if(!visit||visit.id!=='destiny'||id!=='destiny'||kind||transition||visit.ready||!ready())return false;
+ visit.ready=true;return true
+}
+function pawYueConsultPlaqueVisible(talking,pageOpen,transition){
+ return !talking&&!pageOpen&&!transition
+}
 /* PAW_READING_SEATED_HOST_END */
 let pawHostLibrary=null,pawHostLibraryJob=null,pawHostWarmJobs=new Map(),pawHostVisit=null;
 function pawLoadHostLibrary(){
@@ -13078,11 +13105,12 @@ function pawYueInkState(cache,grid,api,now,blocked,reduced){
  const progress=api.parchmentClock(entry.clock,now,blocked,reduced);
  return {palaces:entry.palaces,progress}
 }
+function pawYueInkBlocked(folded,hidden,covered,transition){return !!(folded||hidden||covered||transition)}
 /* PAW_YUE_INK_RUNTIME_END */
 const pawYueInkCache=new WeakMap();
 let pawYueInkCurrent=null;
 document.addEventListener('visibilitychange',()=>{
- if(pawYueInkCurrent&&pawHostLibrary?.api?.parchmentClock)pawHostLibrary.api.parchmentClock(pawYueInkCurrent.clock,performance.now()/1000,document.hidden,residentReducedMotion.matches)
+ if(pawYueInkCurrent&&pawHostLibrary?.api?.parchmentClock)pawHostLibrary.api.parchmentClock(pawYueInkCurrent.clock,performance.now()/1000,pawYueInkBlocked(pawYueInkCurrent.folded,document.hidden,!proposal.hidden,transitioning),residentReducedMotion.matches)
 });
 function pawDrawReadingSeated(id,plate){
  if(pawHostVisit?.id!==id||!pawHostVisit.ready||!pawHostLibrary)return false;
@@ -13090,8 +13118,9 @@ function pawDrawReadingSeated(id,plate){
  const activeForm=desk?$('content').querySelector('.astroForm,.yueAlmanacForm'):null;
  const editing=!!activeForm&&!activeForm.hidden&&activeForm.style.display!=='none';
  const grid=desk&&!editing?$('content').querySelector('.ziGrid'):null;
+ const folded=!!grid&&!!$('content').querySelector('.astroResult[data-paw-yue-folded]');
  const almanac=desk&&!editing?$('content').querySelector('.yueReadingFront,.signNotebookResult'):null;
- const result=!!(grid||almanac),phase=pawReadingHostPhase(id,state,activity,desk,result);
+ const result=!!(grid||almanac),phase=pawReadingHostPhase(id,state,activity,desk&&!folded,result);
  const plan=pawReadingSeatPlan(id,plate,phase);if(!plan)return false;
  const {api,manifest}=pawHostLibrary,fr=api.contacts(manifest,plan.host,plan.pose,plan.center,plan.span);
  if(!fr)return false;
@@ -13103,10 +13132,11 @@ function pawDrawReadingSeated(id,plate){
    const v=state.readCards[state.readFocus],atlas=readingArtwork();
    if(v&&Number.isInteger(v.i)&&v.i>=0&&v.i<tarotDeck.length)api.drawHeldCard(ctx,fr,atlas,[(v.i%readingFaceColumns)*readingFaceWidth,Math.floor(v.i/readingFaceColumns)*readingFaceHeight,readingFaceWidth,readingFaceHeight],v.rev);
   }
-  if(id==='destiny'&&phase==='result'&&grid){
-   const ink=pawYueInkState(pawYueInkCache,grid,api,performance.now()/1000,document.hidden||!proposal.hidden||transitioning,residentReducedMotion.matches);
+  if(id==='destiny'&&grid){
+   const ink=pawYueInkState(pawYueInkCache,grid,api,performance.now()/1000,pawYueInkBlocked(folded,document.hidden,!proposal.hidden,transitioning),residentReducedMotion.matches);
    pawYueInkCurrent=pawYueInkCache.get(grid)||null;
-   if(ink&&typeof api.paintChartPalaces==='function')api.drawHeldParchment(ctx,fr,g=>api.paintChartPalaces(g,ink.palaces,ink.progress))
+   if(pawYueInkCurrent)pawYueInkCurrent.folded=folded;
+   if(!folded&&phase==='result'&&ink&&typeof api.paintChartPalaces==='function')api.drawHeldParchment(ctx,fr,g=>api.paintChartPalaces(g,ink.palaces,ink.progress))
   }else if(id==='destiny'){pawYueInkCurrent=null}
   return true
  }finally{ctx.restore()}
@@ -13244,6 +13274,12 @@ roomResidentActors=function(){if(!pawReadingActive())return pawReadingHostsBefor
 function pawYueDeskBox(p=pawReadingPlate){
  return {x:p.x+p.w*.581,y:p.y+p.h*.447,height:p.h*.104,clipTop:p.y+p.h*.31,clipBottom:p.y+p.h*.447}
 }
+// The visible seated host, rather than a floating label alone, is tappable.
+// Keep the target inside the authored torso and face area of the portrait.
+function pawYueHostTapBox(p){
+ if(!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||p.w<=0||p.h<=0)return null;
+ return [p.x+p.w*.465,p.y+p.h*.286,p.w*.232,p.h*.161]
+}
 function pawYueDeskPlaque(p=pawReadingPlate){
  return {x:p.x+p.w*.5,y:p.y+p.h*.552}
 }
@@ -13262,6 +13298,9 @@ function pawDrawYueAtDesk(a){
  return true
 }
 function pawDrawYueDeskPlaque(fn){
+ if(!pawYueConsultPlaqueVisible(talkOpen,$('page').style.display==='block',transitioning))return false;
+ const hostBox=pawYueHostTapBox(pawReadingPlate);
+ if(hostBox)target(...hostBox,fn);
  const q=pawYueDeskPlaque(),scale=Math.max(.08,cam.scale),font=Math.max(9,12/scale),name=tr('Consult','问事');
  ctx.save();try{
   ctx.font='600 '+font+'px Georgia,"Songti SC",serif';
@@ -13517,12 +13556,15 @@ roomIntro=function(...args){
 const pawYueDeskHubBefore=yueReadingHub;
 function pawYueDeskChoose(kind){
  if(room!=='destiny')return;
+ if(kind==='stars')return starSignPage();
  function open(subject){if(room!=='destiny')return;yueSubject=subject;closeTalk();if(kind==='chart')destinyPage();else if(kind==='year')yueZodiacAlmanac();else starSignPage()}
  say(tr('Master Yue','月师傅'),tr('Is this reading for you, or someone else?','这次是想看看自己，还是替别人看看？'),[[tr('For me','看自己'),()=>open('self')],[tr('For someone else','帮别人看看'),()=>open('other')],[tr('Back','返回'),()=>yueReadingHub()]])
 }
 yueReadingHub=function(...args){
  if(room!=='destiny')return pawYueDeskHubBefore(...args);
  $('page').style.display='none';pawYueChartObserver?.disconnect();pawYueChartObserver=null;delete $('page').dataset.pawYueDesk;delete $('page').dataset.pawYueExpanded;closeTalk();
+ pawYueAdoptSeatedVisit(pawHostVisit,room,activity,transitioning,()=>pawHostFamilyReady('destiny'));
+ if(!pawHostVisit?.ready)pawWarmReadingHost('destiny');
  say(tr('Master Yue','月师傅'),tr("Ah, sit and have some tea. The stars are not going anywhere. What shall we explore?","来啦？坐，先喝口茶。星星又不会跑。今天想问些什么？"),[
  [tr('My year ahead','生肖流年'),()=>pawYueDeskChoose('year')],
  [tr('My birth chart','生辰命盘'),()=>pawYueDeskChoose('chart')],
@@ -13542,7 +13584,7 @@ function pawYueDeskQuestions(kind){
 }
 /* PAW_YUE_DESK_HUMOUR_END */
 function pawYueQuestionSteps(form,out,kind){
- if(!form||form.hidden||out?.children.length)return;
+ if(!form||form.hidden||out?.children.length||form.classList.contains('pawYueGuidedForm'))return;
  const date=form.querySelector('input[type=date]')?.closest('label'),time=form.querySelector('input[type=time]')?.closest('label'),details=form.querySelector('details'),year=form.querySelector('select')?.closest('label'),submit=form.querySelector('button[type=submit]');
  if(!date||!submit||date.hidden)return;
  const steps=kind==='year'?[[date],[year]]:[[date],[time],[details,...[...form.querySelectorAll('input[type=number]')].filter(n=>!details?.contains(n)).map(n=>n.closest('label'))]];
@@ -13555,6 +13597,13 @@ function pawYueQuestionSteps(form,out,kind){
  function show(i){if(finished)return;index=Math.max(0,Math.min(steps.length-1,i));question.textContent=tr(...questions[index]);steps.forEach((group,j)=>group.forEach(n=>n.classList.toggle('pawYueStepHidden',index!==j)));back.hidden=index===0;next.hidden=index===steps.length-1;submit.classList.toggle('pawYueStepHidden',index!==steps.length-1)}
  function advance(){if(finished||index>=steps.length-1)return;for(const field of steps[index].flatMap(n=>[...n.querySelectorAll('input,select')]))if(!field.checkValidity()){field.reportValidity();return}show(index+1)}
  form.addEventListener('keydown',e=>{if(!finished&&index<steps.length-1&&e.key==='Enter'&&e.target.matches('input')){e.preventDefault();advance()}});
+ // Bring an invalid hidden field back into view before native validation focuses it.
+ form.addEventListener('invalid',e=>{
+  if(finished)return;
+  const i=steps.findIndex(group=>group.some(node=>node.contains(e.target)));
+  if(i>=0)show(i);
+  for(let n=e.target.parentElement;n&&n!==form;n=n.parentElement)if(n.tagName==='DETAILS')n.open=true
+ },true);
  form.addEventListener('submit',()=>{if(out?.querySelector('.ziGrid,.yueReadingFront')){finished=true;form.classList.remove('pawYueGuidedForm');steps.flat().forEach(n=>n.classList.remove('pawYueStepHidden'));submit.classList.remove('pawYueStepHidden');question.remove();controls.remove()}});
  show(0)
 }
@@ -13562,15 +13611,72 @@ function pawYueQuestionSteps(form,out,kind){
 function pawYueChartComplete(grid){
  return !!grid&&grid.querySelectorAll('article:not(.blank)').length===12
 }
+// Preset locations still require the actual historical offset. Show a
+// compact verification disclosure, and always expose custom/invalid values.
+function pawYueLocationMode(place,values){
+ const preset=/^[0-7]$/.test(place||''),valid=Array.isArray(values)&&values.length===3&&values.every(v=>typeof v==='string'&&v.trim()!==''&&Number.isFinite(Number(v)));
+ if(!preset||!valid)return 'manual';
+ const [offset,lat,lon]=values.map(Number);
+ return offset>=-12&&offset<=14&&Number.isInteger(offset*4)&&lat>=-66&&lat<=66&&Math.abs(lon)<=180?'preset':'manual'
+}
+function pawYueChartVisitActive(pane,out,grid){
+ return room==='destiny'&&!activity&&pane.dataset.pawYueDesk==='true'&&pane.style.display==='block'&&out.isConnected&&!!grid&&grid.isConnected&&out.querySelector('.ziGrid')===grid&&pawYueChartComplete(grid)
+}
+// A folded parchment is a real compact state, not merely a narrower chart.
+function pawYueFoldState(requested,complete){
+ return {expanded:!!requested&&!!complete,folded:!requested&&!!complete}
+}
 /* PAW_YUE_PARCHMENT_END */
+/* PAW_YUE_SHARE_RETURN_BEGIN */
+function pawYueShareReturnMatches(origin,current){
+ return !!origin&&!!current&&origin.scene===current.scene&&current.room==='destiny'&&!current.activity&&current.subject==='self'&&origin.profile===current.profile&&origin.chart===current.chart&&origin.visit===current.visit&&current.page==='meowShare'
+}
+function pawYueShareScroll(scroll,height,client){
+ return Number.isFinite(scroll)&&Number.isFinite(height)&&Number.isFinite(client)?Math.max(0,Math.min(scroll,Math.max(0,height-client))):0
+}
+/* PAW_YUE_SHARE_RETURN_END */
+function pawYueShareFromChart(data,topic,section){
+ if(room!=='destiny')return openMeowShare(data,()=>destinyPage(false,topic));
+ if(activity||yueSubject!=='self'||!section?.isConnected)return;
+ const pane=$('page'),q=$('content');
+ if(pane.dataset.pawYueDesk!=='true'||pane.style.display!=='block')return;
+ const context=()=>({scene,room,activity,subject:yueSubject,profile:yueSessionProfiles.self,chart:yueSessionProfiles.self.chart,visit:pawHostVisit,page:activePage});
+ const origin=context(),scroll=pane.scrollTop,selected=section.querySelector('.chartTopics button[aria-pressed="true"]');
+ const chosen=Number.isInteger(topic)?topic:selected?Number(selected.dataset.topic):null;
+ const disclosures=Array.from(q.querySelectorAll('details')).map(n=>n.open);
+ const view=q.querySelector('.palaceViewTools button[aria-pressed="true"]');
+ const viewIndex=view?Array.from(view.parentElement.querySelectorAll('button')).indexOf(view):-1;
+ let used=false;
+ openMeowShare(data,()=>{
+  if(used||!pawYueShareReturnMatches(origin,context()))return;
+  used=true;destinyPage(false,chosen);
+  const restored=q.querySelector('.chartConsultation'),restoredChart=yueSessionProfiles.self.chart;
+  if(!restored||!restoredChart)return;
+  // Let the ordinary chart observer choose its default board first.
+  requestAnimationFrame(()=>{
+   if(room!=='destiny'||activity||!restored.isConnected||pane.dataset.pawYueDesk!=='true'||yueSessionProfiles.self.chart!==restoredChart||pawHostVisit!==origin.visit)return;
+   const buttons=q.querySelectorAll('.palaceViewTools button');
+   if(viewIndex>=0&&buttons[viewIndex])buttons[viewIndex].click();
+   Array.from(q.querySelectorAll('details')).forEach((node,i)=>{if(i<disclosures.length)node.open=disclosures[i]});
+   const control=restored.querySelector(data.kind==='zwds_chart'?'.pawFullChartSharing button':'.pawZwdsShareButton');
+   control?.focus({preventScroll:true});
+   pane.scrollTop=pawYueShareScroll(scroll,pane.scrollHeight,pane.clientHeight)
+  })
+ })
+}
+
 function pawYueChartParchment(q,pane,form,out){
  if(!out)return;
  let lastGrid=null,toolbar=null,expand=null,expanded=false;
  function setExpanded(value,scroll=false){
-  expanded=!!value&&pawYueChartComplete(lastGrid);
+  const next=pawYueFoldState(value,pawYueChartComplete(lastGrid));
+  expanded=next.expanded;
   if(expanded)pane.dataset.pawYueExpanded='true';else delete pane.dataset.pawYueExpanded;
+  out.toggleAttribute('data-paw-yue-folded',next.folded);
+  if(expand)expand.toggleAttribute('data-paw-yue-scroll',next.folded);
   if(expand){expand.textContent=expanded?tr('Fold the chart','收起命盘'):tr('Unfold the chart','展开命盘');expand.setAttribute('aria-expanded',String(expanded))}
-  if(scroll&&lastGrid?.isConnected)lastGrid.scrollIntoView({block:'nearest',behavior:residentReducedMotion.matches?'instant':'smooth'})
+  const focusSurface=expanded?lastGrid:toolbar;
+  if(scroll&&focusSurface?.isConnected)focusSurface.scrollIntoView({block:'nearest',behavior:residentReducedMotion.matches?'instant':'smooth'})
  }
  function sync(){
   if(room!=='destiny'||pane.dataset.pawYueDesk!=='true'||!out.isConnected)return;
@@ -13580,15 +13686,23 @@ function pawYueChartParchment(q,pane,form,out){
   }
   if(!toolbar){
    toolbar=element('div','',q,'pawYueParchmentTools');out.before(toolbar);
-   expand=b(toolbar,'',()=>setExpanded(!expanded,true));expand.type='button';
-   const ask=b(toolbar,tr('Ask Yue again','再问月师傅'),()=>yueReadingHub());ask.type='button'
+   const active=()=>toolbar.isConnected&&pawYueChartVisitActive(pane,out,lastGrid);
+   expand=b(toolbar,'',()=>{if(active())setExpanded(!expanded,true)});expand.type='button';
+   const ask=b(toolbar,tr('Ask Yue again','再问月师傅'),()=>{if(active())yueReadingHub()});ask.type='button';
+   const finish=b(toolbar,tr('Finish consultation','结束问事'),()=>{
+    if(!active())return;
+    pawYueChartObserver?.disconnect();pawYueChartObserver=null;
+    delete pane.dataset.pawYueDesk;delete pane.dataset.pawYueExpanded;
+    pane.style.display='none';q.replaceChildren();closeTalk();
+    hint('Take your time. Come back for another conversation whenever you like.','慢慢来，想再聊聊，随时来找我。')
+   });finish.type='button'
   }
   toolbar.hidden=false;
   if(lastGrid!==grid){
    lastGrid=grid;setExpanded(true);
    // Preserve the existing real palace handlers and disclosures; choose
    // the traditional overview first, with the readable-list toggle retained.
-   requestAnimationFrame(()=>{if(!grid.isConnected||lastGrid!==grid)return;const board=grid.parentElement?.querySelector('.palaceViewTools button:first-child');if(board)board.click()})
+   requestAnimationFrame(()=>{if(lastGrid!==grid||!pawYueChartVisitActive(pane,out,grid))return;const board=grid.parentElement?.querySelector('.palaceViewTools button:first-child');if(board)board.click()})
   }
  }
  pawYueChartObserver?.disconnect();
@@ -13620,8 +13734,26 @@ function pawYueDeskArrange(q,pane,form,out){
  pane.scrollTop=0
 }
 /* PAW_YUE_SINGLE_PAPER_END */
+function pawYueCompactLocation(form){
+ const outer=form?.querySelector('details'),place=outer?.querySelector('select'),fields=[...form.querySelectorAll('input[type=number]')];
+ if(!outer||!place||fields.length!==3||outer.querySelector('.pawYueLocationDetails'))return;
+ const labels=fields.map(n=>n.closest('label'));if(labels.some(n=>!n))return;
+ const advanced=element('details','',outer,'pawYueLocationDetails');
+ const summary=element('summary',tr('Verify time zone & coordinates','核对时区与经纬度'),advanced);
+ const note=outer.querySelector('.yueSessionNote');if(note)advanced.append(note);
+ labels.forEach(n=>advanced.append(n));
+ const sync=()=>{
+  const manual=pawYueLocationMode(place.value,fields.map(n=>n.value))==='manual';
+  advanced.open=manual&&!!place.value;
+  summary.textContent=tr('Verify time zone & coordinates','核对时区与经纬度');
+ };
+ place.addEventListener('change',sync);sync();
+ fields.forEach(n=>n.addEventListener('invalid',()=>{outer.open=true;advanced.open=true}));
+ form.addEventListener('submit',()=>{if(form.querySelector('.pawYueInputError:not([hidden])')){outer.open=true;advanced.open=true}},true)
+}
 function pawYueDeskPresent(kind){
  if(room!=='destiny')return;
+ pawYueAdoptSeatedVisit(pawHostVisit,room,activity,transitioning,()=>pawHostFamilyReady('destiny'));
  const q=$('content'),pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
  pane.dataset.pawYueDesk='true';
  q.querySelector('.yueCompactHost')?.remove();
@@ -13636,6 +13768,7 @@ function pawYueDeskPresent(kind){
    const details=form.querySelector('details');
    if(details)details.append(note);
   }
+  if(kind==='chart')pawYueCompactLocation(form);
   if(form.classList.contains('pawYueGuidedForm')){
    if(strip)form.after(strip);
    if(tools)(strip||form).after(tools);
@@ -13654,10 +13787,163 @@ function pawYueDeskPresent(kind){
 }
 const pawYueDeskChartBefore=destinyPage;
 destinyPage=function(...args){const result=pawYueDeskChartBefore(...args);pawYueDeskPresent('chart');return result};
+/* PAW_YUE_YEAR_DIALOGUE_BEGIN */
+// Read only the already-calculated, localized output. No date, form values,
+// storage, new fortune rules or separate zodiac calculation enter the dialogue.
+function pawYueYearSnapshot(out){
+ if(!out)return null;
+ const read=node=>node?.textContent?.trim()||'';
+ const title=read(out.querySelector('.yueReadingFront h2')),year=read(out.querySelector('.yueReadingYear'));
+ const relation=read(out.querySelector(':scope > strong')),roast=read(out.querySelector('.yueReadingRoast'));
+ const notes=Array.from(out.querySelectorAll(':scope > p:not(.yueReadingRoast)'),read).filter(Boolean);
+ const topics=Array.from(out.querySelectorAll('.yueReadingTopics article'),node=>({title:read(node.querySelector('h3')),text:read(node.querySelector('p'))}));
+ const disclaimer=read(out.querySelector(':scope > small'));
+ if(!title||!year||!relation||!roast||!notes.length||topics.length!==4||topics.some(v=>!v.title||!v.text)||!disclaimer)return null;
+ return {title,year,relation,roast,notes,topics,disclaimer}
+}
+function pawYueYearDialogue(result){
+ if(room!=='destiny'||activity||!result)return false;
+ const pane=$('page');pane.style.display='none';
+ pawYueChartObserver?.disconnect();pawYueChartObserver=null;
+ delete pane.dataset.pawYueDesk;delete pane.dataset.pawYueExpanded;
+ closeTalk();
+ let revision=0;
+ const speak=(words,options)=>{
+  const current=++revision;
+  say(tr('Master Yue','月师傅'),words,options.map(([label,action])=>[label,()=>{if(room==='destiny'&&!activity&&talkOpen&&revision===current&&pane.style.display!=='block')action()}]))
+ };
+ const hub=()=>{revision++;yueReadingHub()};
+ const finish=()=>{revision++;closeTalk();hint('Take what is useful, and enjoy the rest of your day.','有用的记在心里，剩下的日子好好过。')};
+ function overview(){
+  speak([result.title,result.year,result.relation,result.roast].join('\n\n'),[
+   [tr('What does that mean?','这是什么意思？'),()=>note(0)],
+   [tr('Explore a part of my year','看看流年的各方面'),topics],
+   [tr('Finish reading','结束问事'),conclude]
+  ])
+ }
+ function note(i){
+  if(!Number.isInteger(i)||i<0||i>=result.notes.length)return topics();
+  speak(result.notes[i],[
+   [i+1<result.notes.length?tr('Tell me more','再说一点'):tr('Explore the year','看看流年'),()=>i+1<result.notes.length?note(i+1):topics()],
+   [tr('Back to the overview','回顾流年'),overview],
+   [tr('Finish reading','结束问事'),conclude]
+  ])
+ }
+ function topics(){
+  speak(tr('Which part of the year shall we talk about?','这一年，你想先聊哪方面？'),[
+   ...result.topics.map((v,i)=>[v.title,()=>topic(i)]),
+   [tr('Finish reading','结束问事'),conclude]
+  ])
+ }
+ function topic(i){
+  const v=result.topics[i];if(!v)return topics();
+  speak(v.title+'\n\n'+v.text,[
+   [tr('Explore another topic','看看其他方面'),topics],
+   [tr('Back to the overview','回顾流年'),overview],
+   [tr('Finish reading','结束问事'),conclude]
+  ])
+ }
+ function conclude(){
+  speak(result.disclaimer+'\n\n'+tr('Shall we look at something else, or leave the stars to their tea?','还想看看别的，还是让星星也喝杯茶休息一下？'),[
+   [tr('Another year reading','再看一次流年'),()=>{revision++;closeTalk();yueZodiacAlmanac('',null,{editYear:true})}],
+   [tr('Ask something else','问点别的'),hub],
+   [tr('Thanks, Yue','谢谢月师傅'),finish]
+  ])
+ }
+ overview();return true
+}
+function pawYueYearConnect(form,out){
+ if(!form||!out||form.dataset.pawYueYearConnected==='true')return false;
+ form.dataset.pawYueYearConnected='true';
+ const pane=$('page');
+ // Capture invalid synthetic submits before the original calculator.
+ form.addEventListener('submit',e=>{
+  if(room!=='destiny'||activity||!form.isConnected||pane.dataset.pawYueDesk!=='true'||pane.style.display!=='block'||!form.checkValidity()){
+   e.preventDefault();e.stopImmediatePropagation();if(form.isConnected&&pane.style.display==='block')form.reportValidity()
+  }
+ },true);
+ const present=()=>{
+  const result=pawYueYearSnapshot(out);if(!result)return;
+  // Existing listeners finish first; a different room or replacement paper
+  // must not open a stale consultation.
+  queueMicrotask(()=>{
+   if(room!=='destiny'||activity||!form.isConnected||pane.dataset.pawYueDesk!=='true'||pane.style.display!=='block'||!out.isConnected)return;
+   const current=pawYueYearSnapshot(out);if(!current||JSON.stringify(current)!==JSON.stringify(result))return;
+   const date=form.querySelector('input[type=date]');if(date)date.value='';
+   // The conversation needs only the computed text, not the birth paper.
+   $('content').replaceChildren();
+   pawYueYearDialogue(result)
+  })
+ };
+ form.addEventListener('submit',present);
+ // The earlier session wrapper may already have computed a retained date.
+ // Route that existing result as well, without requiring duplicate submission.
+ if(pawYueYearSnapshot(out))present();
+ return true
+}
+/* PAW_YUE_YEAR_DIALOGUE_END */
 const pawYueDeskYearBefore=yueZodiacAlmanac;
-yueZodiacAlmanac=function(...args){const result=pawYueDeskYearBefore(...args);pawYueDeskPresent('year');return result};
+yueZodiacAlmanac=function(...args){
+ const result=pawYueDeskYearBefore(...args);
+ if(room==='destiny'&&!activity&&args[2]?.editYear){
+  const q=$('content'),f=q.querySelector('.yueAlmanacForm'),date=f?.querySelector('input[type=date]');
+  q.querySelector('.yueAlmanacPaper')?.replaceChildren();
+  if(date)date.closest('label').hidden=false;
+  const edit=[...q.querySelectorAll('.yueChartTools button')].find(n=>n.textContent===tr('Change birth date','修改出生日期'));if(edit)edit.hidden=true
+ }
+ pawYueDeskPresent('year');
+ if(room==='destiny'&&!activity){const q=$('content');pawYueYearConnect(q.querySelector('.yueAlmanacForm'),q.querySelector('.yueAlmanacPaper'))}
+ return result
+};
+/* PAW_YUE_STAR_DIALOGUE_BEGIN */
+const pawYueStarGroups=[[9,10,11],[0,1,2],[3,4,5],[6,7,8]];
+function pawYueStarGroup(index){
+ return Number.isInteger(index)&&index>=0&&index<pawYueStarGroups.length?pawYueStarGroups[index].slice():null
+}
+function pawYueStarDialogue(selected=null){
+ if(room!=='destiny'||activity)return false;
+ const pane=$('page');pane.style.display='none';
+ pawYueChartObserver?.disconnect();pawYueChartObserver=null;delete pane.dataset.pawYueDesk;delete pane.dataset.pawYueExpanded;
+ closeTalk();
+ let revision=0;
+ const speak=(words,options)=>{
+  const current=++revision;
+  say(tr('Master Yue','月师傅'),words,options.map(([label,action])=>[label,()=>{if(room==='destiny'&&!activity&&talkOpen&&revision===current&&pane.style.display!=='block')action()}]))
+ };
+ const finish=()=>{revision++;closeTalk();hint('Enjoy your tea. You can ask again whenever you like.','慢慢喝茶，想问什么随时来。')};
+ const hub=()=>{revision++;yueReadingHub()};
+ function groups(){
+  const options=pawYueStarGroups.map((_,g)=>{
+   const ids=pawYueStarGroup(g),first=signNotebook[ids[0]],last=signNotebook[ids.at(-1)];
+   return [tr(...first.name)+' / '+tr(...signNotebook[ids[1]].name)+' / '+tr(...last.name),()=>choose(g)]
+  });
+  options.push([tr('Ask something else','问点别的'),hub]);
+  speak(tr('Which sign shall we look at? No birth details needed.','想看看哪个星座？不用填生辰资料。'),options)
+ }
+ function choose(group){
+  const ids=pawYueStarGroup(group);if(!ids)return;
+  const options=ids.map(i=>[tr(...signNotebook[i].name)+' · '+signNotebook[i].dates,()=>result(i)]);
+  options.push([tr('Other signs','其他星座'),groups]);
+  speak(tr('Pick the sign you know. The dates are only approximate.','选你熟悉的星座就好，日期仅供参考。'),options)
+ }
+ function result(index){
+  if(!Number.isInteger(index)||!signNotebook[index])return groups();
+  const r=signReading(index);
+  speak(tr(...r.sign.name)+' · '+tr(...r.sign.theme)+'\n\n'+tr(...r.line)+'\n\n'+tr('A little reflection for the week, not a prediction.','本周给自己的一点小提醒，并非预测。'),[
+   [tr('Read another sign','看看其他星座'),groups],
+   [tr('Ask something else','问点别的'),hub],
+   [tr('Thanks, Yue','谢谢月师傅'),finish]
+  ])
+ }
+ if(Number.isInteger(selected)&&signNotebook[selected])result(selected);else groups();
+ return true
+}
+/* PAW_YUE_STAR_DIALOGUE_END */
 const pawYueDeskStarsBefore=starSignPage;
-starSignPage=function(...args){const result=pawYueDeskStarsBefore(...args);pawYueDeskPresent('stars');return result};
+starSignPage=function(selected=null,...args){
+ if(room==='destiny'&&!activity)return pawYueStarDialogue(selected);
+ return pawYueDeskStarsBefore(selected,...args)
+};
 const pawYueDeskCSS=document.createElement('style');
 pawYueDeskCSS.textContent=`
 #game #page[data-paw-yue-desk="true"]{position:absolute!important;inset:auto 0 0!important;height:auto!important;max-height:64dvh!important;min-height:0!important;max-width:none!important;width:100%!important;overflow:auto!important;overscroll-behavior:contain;padding:8px max(12px,env(safe-area-inset-left,0px)) max(12px,env(safe-area-inset-bottom,0px))!important;background:#f0e4cdeb url('assets/visual/painted/recovered/ui/paper_texture.webp') repeat!important;border-radius:10px 10px 0 0;border-top:2px solid #b69a70;box-shadow:0 -5px 24px #251e1950}
@@ -13685,6 +13971,9 @@ pawYueDeskCSS.textContent=`
 #game #page[data-paw-yue-desk="true"] #content>.yueCompactIntro[hidden],#game #page[data-paw-yue-desk="true"] #content>button[hidden]{display:none!important}
 
 #game #page[data-paw-yue-desk="true"] .pawYueParchmentTools button{flex:1;min-height:44px}
+#game #page[data-paw-yue-desk="true"] [data-paw-yue-folded]{display:none!important}
+#game #page[data-paw-yue-desk="true"] button[data-paw-yue-scroll]{display:flex;align-items:center;justify-content:center;gap:5px;flex:1 1 100%;min-height:58px}
+#game #page[data-paw-yue-desk="true"] button[data-paw-yue-scroll]::before{content:'';display:block;flex:0 0 86px;height:55px;background:url('assets/visual/staging/2026-11-28-consolidated/atlases/destiny-study-props.webp') -81.6px -85.2px / 289.6px 217.2px no-repeat;pointer-events:none}
 #game #page[data-paw-yue-expanded="true"] .ziGrid article:not(.blank){overflow-wrap:anywhere;min-width:0}
 #game #pawRoomGuideToggle:not(:focus-visible),#destinyAccess:not(:focus-visible){clip-path:inset(50%)!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;overflow:hidden!important;pointer-events:none!important;padding:0!important;border:0!important}
 
