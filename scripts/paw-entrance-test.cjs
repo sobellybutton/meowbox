@@ -134,6 +134,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       const book=page.locator('#page[data-paw-full-book]');await book.waitFor({state:'visible'});
       const bounds=await book.boundingBox();assert(bounds.x<=1&&bounds.y<=1&&bounds.width>=width-2&&bounds.height>=height-2,'Book does not fill viewport');
       assert(await book.evaluate(n=>n.scrollWidth<=n.clientWidth+1),'Book has horizontal overflow');
+      assert(await book.evaluate(n=>{const style=getComputedStyle(n);return style.backgroundImage.includes('/ui/paper_texture.webp')&&!style.backgroundImage.includes('/worlds/')&&!style.backgroundImage.includes('/town-hall/')&&style.backgroundColor!=='rgba(0, 0, 0, 0)'}),'Book background must be opaque paper, not underlying map artwork');
       const close=page.locator('.pawFullBookClose');await close.waitFor({state:'visible'});
       assert(await close.locator('img').evaluate(async im=>{await im.decode();return im.naturalWidth>0}),'Original illustrated cover did not decode');
       assert.equal(await dockRoot.locator('.dockIcon:visible').count(),0,'Dock should be bookmarks inside book');
@@ -153,7 +154,10 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       const board=page.locator('.pawTownHotspot').first();
       await (width<900?board.tap():board.click());
       await page.locator('.townWall').waitFor({state:'visible',timeout:8000});
-      if(process.env.PAW_FULL_BOOK==='1')assert.equal(await page.locator('#page').getAttribute('data-paw-full-book'),'town','Noticeboard left book presentation');
+      if(process.env.PAW_FULL_BOOK==='1'){
+       assert.equal(await page.locator('#page').getAttribute('data-paw-full-book'),'town','Noticeboard left book presentation');
+       assert(await page.locator('#page').evaluate(n=>getComputedStyle(n).backgroundImage.includes('/ui/paper_texture.webp')&&!getComputedStyle(n).backgroundImage.includes('/town-hall/')),'Nested noticeboard background must be paper');
+      }
       const notices=page.locator('.townResidentNote');
       assert.equal(await notices.count(),10,'Only ten resident notices are shown');
       assert.equal(await page.locator('.townPostNav button').count(),0,'No archive pagination or invisible older notices button');
@@ -169,6 +173,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
        const spot=page.locator('.pawTownHotspot').nth(index);
        await (width<900?spot.tap():spot.click());
        await page.locator(target).waitFor({state:'visible',timeout:8000});
+       if(process.env.PAW_FULL_BOOK==='1')assert(await page.locator('#page').evaluate(n=>getComputedStyle(n).backgroundImage.includes('/ui/paper_texture.webp')&&!getComputedStyle(n).backgroundImage.includes('/rooms/tea/')),'Nested book must not restore full scene wallpaper');
        await shot(index===1?'town-tea-chat':'town-little-joys');
        const contextualBack=page.locator('#content > .row button').first();
        await (width<900?contextualBack.tap():contextualBack.click());
