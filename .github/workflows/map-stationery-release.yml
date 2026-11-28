@@ -1,0 +1,35 @@
+name: Pawradise independent painted map visual gate
+on:
+  pull_request:
+    branches: [main]
+    paths: ['src/shell.html','scripts/settings-mobile-release-test.cjs','.github/workflows/map-stationery-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile-map:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/live-map-stationery-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: test -s assets/visual/painted/recovered/ui/paper_texture.webp && test -s assets/visual/painted/signage/wood-grain.webp && test -s assets/visual/staging/2026-11-28-project-art-b10/avatar-frame.webp
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Organic mobile map composition and settings
+        env:
+          PAW_MAP_STATIONERY: '1'
+        run: |
+          mkdir -p test-results
+          python3 -m http.server 8765 >/tmp/map-stationery.log 2>&1 &
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8765/index.html >/dev/null && break; sleep 1; done
+          node scripts/settings-mobile-release-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: painted-map-composition
+          path: test-results
