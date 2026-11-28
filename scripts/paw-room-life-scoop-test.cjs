@@ -48,7 +48,7 @@ ck(pawGaitPhase(-10,1)===0,'negative distance');
 return 'PASS '+n+' art availability and gait checks';`)());
 if(/\bguestAtlasIndex\b|\bdrawGuestAtlasActor\b/.test(s))throw Error('Removed atlas dependency returned');
 
-const pawSelectA=s.indexOf('/* PAW_OWNER_TAROT_CHOICE_BEGIN */'),pawSelectB=s.indexOf('/* PAW_OWNER_TAROT_CHOICE_END */');if(pawSelectA<0||pawSelectB<=pawSelectA)throw Error('Missing choice helpers');console.log('PASS '+new Function(s.slice(pawSelectA,pawSelectB)+"let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};for(const length of [22,78]){const p=pawTarotPool(length,()=>.4);ck(p.length===12&&new Set(p.map(v=>v.i)).size===12,'unique cards');for(const size of [1,3,5]){let picks=[];for(let i=0;i<size;i++)picks=pawTarotPick(p,picks,i,size);ck(picks.length===size,'correct spread size');ck(pawTarotPick(p,picks,11,size)===null,'limit');ck(pawTarotPick(p,[0],0,size)===null,'no duplicate card')}}for(const portrait of [true,false]){const slots=pawTarotChoiceSlots(portrait);ck(slots.length===12,'12 visible slots');ck(slots.every(a=>slots.every(b=>a===b||Math.abs(a.x-b.x)>=(a.w+b.w)/2||Math.abs(a.y-b.y)>=(a.h+b.h)/2)),'no overlapping cards')}return n;")()+' tarot selection cases');
+const pawSelectA=s.indexOf('/* PAW_OWNER_TAROT_CHOICE_BEGIN */'),pawSelectB=s.indexOf('/* PAW_OWNER_TAROT_CHOICE_END */');if(pawSelectA<0||pawSelectB<=pawSelectA)throw Error('Missing choice helpers');console.log('PASS '+new Function(s.slice(pawSelectA,pawSelectB)+"let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};for(const length of [22,78]){const p=pawTarotPool(length,()=>.4);ck(p.length===12&&new Set(p.map(v=>v.i)).size===12,'unique cards');for(const size of [1,3,5]){let picks=[];for(let i=0;i<size;i++)picks=pawTarotPick(p,picks,i,size);ck(picks.length===size,'correct spread size');ck(pawTarotPick(p,picks,11,size)===null,'limit');ck(pawTarotPick(p,[0],0,size)===null,'no duplicate card')}}for(const portrait of [true,false]){const slots=pawTarotChoiceSlots(portrait);ck(slots.length===12,'12 visible slots');ck(slots.every(a=>slots.every(b=>a===b||Math.abs(a.x-b.x)>=(a.hitW+b.hitW)/2||Math.abs(a.y-b.y)>=(a.h+b.h)/2)),'no overlapping card touch targets')}return n;")()+' tarot selection cases');
 
 const pawParkA=s.indexOf('/* PAW_PARK_ARCADE_RELEASE_BEGIN */'),pawParkB=s.indexOf('/* PAW_PARK_ARCADE_RELEASE_END */');if(pawParkA<0||pawParkB<=pawParkA)throw Error('Missing park/arcade helpers');console.log('PASS '+new Function(s.slice(pawParkA,pawParkB)+"let n=0;const ck=(ok,m)=>{if(!ok)throw Error(m);n++};ck(pawMissingStations([['a'],['b']],new Set(['a']))[0][0]==='b','missing activity visible in guide');ck(pawMissingStations([['a']],new Set(['a'])).length===0,'no redundant guide');ck(pawHerdSlots().length===6,'six background deer');ck(pawHerdSlots().every(p=>p.length===3&&p.every(Number.isFinite)),'valid herd slots');ck(pawHerdTemperament('mugi').bow&&!pawHerdTemperament('koyo').bow,'different temperament');ck(pawFishTechnique(.7,10,1).ideal,'steady scoop');ck(!pawFishTechnique(.7,300,1).steady&&pawFishTechnique(.7,300,1).extraWear>0,'fast movement damages net');ck(!pawFishTechnique(.15,0,0).ideal&&!pawFishTechnique(2,0,0).ideal,'timing matters');ck(pawFishTechnique(1,0,4).bonus===20,'bounded streak');ck(pawResidentVisitPool([{id:'a'},{id:'b'},{id:'c'}],['a'],1).map(v=>v.id).join(',')==='c,b','rotate non-host art');return n")()+' park, label, visitor and fish checks');
 
@@ -366,4 +366,40 @@ console.log('PASS '+paceAssertions+' adaptive visitor pace and clearance checks'
  ck(pawIndoorFacing('left',0,0)==='left','idle retains direction');
  return {wide,narrow,near}`)();
  console.log('PASS adaptive room pace and facing',verify);
+}
+
+/* Independent NPCs must not change sprite family while walking as an image
+   finishes decoding. Admission is reset only at a new start, turn, context
+   or discontinuity. Test the actual helper used by backHuman. */
+{
+ const gaitSrc=require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/startup.js'),'utf8');
+ const block=gaitSrc.split('/* PAW_NPC_GAIT_ADMISSION_BEGIN */')[1]?.split('/* PAW_NPC_GAIT_ADMISSION_END */')[0];
+ const assert=require('node:assert/strict');
+ assert.ok(block);
+ const {admit,idle}=new Function(block+';return {admit:pawNpcGaitAdmission,idle:pawNpcGaitIdle}')();
+ let count=0;const eq=(actual,expected)=>{assert.equal(actual,expected);count++};
+ for(const dir of ['up','down','right'])for(const context of ['fortune|outside|0','island|kitchen|1','wonder|tarot|3']){
+  const state=new WeakMap(),a={},b={};
+  eq(admit(state,a,context,dir,0,false),false);
+  eq(admit(state,b,context,dir,0,true),true);
+  for(let distance=1;distance<=120;distance++){
+   eq(admit(state,a,context,dir,distance,true),false);
+   eq(admit(state,b,context,dir,distance,true),true);
+  }
+  idle(state,a);eq(admit(state,a,context,dir,120,true),true);
+  eq(admit(state,b,context,dir,121,false),false);
+  eq(admit(state,b,context,dir,122,true),false);
+  eq(admit(state,b,context,dir==='up'?'right':'up',123,true),true);
+  eq(admit(state,b,context,dir==='up'?'right':'up',124,false),false);
+  eq(admit(state,b,context+'|next',dir,125,true),true);
+  eq(admit(state,b,context+'|next',dir,126,false),false);
+  eq(admit(state,b,context+'|next',dir,200,true),true);
+  eq(admit(state,b,context+'|next',dir,NaN,true),false);
+  eq(admit(state,b,context+'|next',dir,0,true),true);
+ }
+ eq(admit(new WeakMap(),null,'room','up',0,true),false);
+ assert.ok(gaitSrc.includes('const npcReady=actor?pawNpcGaitAdmission(pawNpcGaitState,actor,'));
+ assert.ok(gaitSrc.includes('if(npcReady){const i=reduced?0:'));
+ assert.ok(gaitSrc.includes('pawNpcGaitIdle(pawNpcGaitState,idleActor)'));
+ console.log('PASS '+count+' NPC directional sprite-admission and identity isolation assertions');
 }

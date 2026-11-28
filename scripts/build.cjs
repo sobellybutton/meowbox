@@ -11,7 +11,7 @@ for(let i=0;i<original.length;i++){
  if(!extracted.equals(Buffer.from(original[i][1],'base64')))throw Error('Artwork differs: '+name);
  bytes+=extracted.length;
 }
-const scripts=['engine','extensions','release-fixes','town-polish','town-access','resident-remarks','paw-motion-audio','paw-economy','blind-box-reveal','arcade-painted-runtime','painted-lobby-runtime','home-placement-runtime','startup'].map(x=>read('src/'+x+'.js')),shell=read('src/shell.html');
+const scripts=['engine','extensions','release-fixes','town-polish','town-access','resident-remarks','paw-motion-audio','paw-economy','blind-box-reveal','arcade-painted-runtime','painted-lobby-runtime','home-placement-runtime','startup','compact-town-home'].map(x=>read('src/'+x+'.js')),shell=read('src/shell.html');
 require('./quality-checks.cjs')(scripts[1]);
 const painted=JSON.parse(read('assets/visual/painted/runtime.json')),crypto=require('node:crypto');
 if(painted.version!==1||!painted.residents||Array.isArray(painted.residents)||typeof painted.residents!=='object')throw Error('Invalid painted runtime manifest');
@@ -85,7 +85,7 @@ for(const [id,owner] of [['temple','fortune'],['station','fortune'],['fish','hom
 }
 console.log('PASS: four destinations, '+stationOwners.size+' unique base stations; temple and pier ownership correct.');
 // In-world identity is permanent; keep legacy lowercase storage/API identifiers and URLs intact.
-const visibleBrandSource=[scripts[0],scripts[1],scripts.at(-1),shell,read('index.html')].join('\n');
+const visibleBrandSource=[scripts[0],scripts[1],read('src/startup.js'),shell,read('index.html')].join('\n');
 if(/\b(?:MeowBox|MEOWBOX|BrbLife)\b|摸鱼盒|摸鱼铁路/.test(visibleBrandSource))throw Error('Outdated player-facing world name');
 if(!visibleBrandSource.includes('Pawradise'))throw Error('Missing permanent world name');
 if(!scripts[0].includes("'meowbox-preview-'")||!scripts[1].includes("'meowbox-community'"))throw Error('Legacy data or community identity changed');
@@ -94,3 +94,6 @@ const external=assembleMeowBox(shell,assembledScripts),embedded=assembleMeowBox(
 for(const html of [external,embedded])new vm.Script(html.match(/<script>([\s\S]*?)<\/script>/)[1],{filename:'meowbox-assembled.js'});
 if(process.argv[2])fs.writeFileSync(path.resolve(process.argv[2]),embedded);
 console.log('PASS: all '+MEOW_ART_COUNT+' extracted images byte-identical ('+bytes+' bytes); external and embedded game syntax valid. External HTML '+Buffer.byteLength(external)+' bytes; embedded '+Buffer.byteLength(embedded)+' bytes.');
+
+require('./compact-town-home-test.cjs');
+require('./rear-garden-seated-art-test.cjs');

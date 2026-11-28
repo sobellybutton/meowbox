@@ -8,11 +8,18 @@ on:
       - 'index.html'
       - 'scripts/rail-mobile-matrix-test.cjs'
       - '.github/workflows/rail-mobile-matrix.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'scripts/rail-mobile-matrix-test.cjs'
+      - '.github/workflows/rail-mobile-matrix.yml'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   mobile-rail:
+    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'release/candidate-')
     # Keep a running device test intact while later commits queue the latest revision.
     concurrency:
       group: railway-mobile-${{ matrix.profile }}-${{ github.ref }}
