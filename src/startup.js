@@ -9624,8 +9624,8 @@ function pawFoodActionAllowed(rendered,current,stage,kind,blocked){
 }
 function pawFoodClock(q,kind,now,blocked){
  if(!q||!Number.isFinite(now))return false;
- const phase=kind==='bubbleTea'?q.teaStage:kind==='cook'&&q.tasteAt!==undefined&&!q.tasted?'taste':null;
- const field=['pouring','seasoning','sealing','sip'].includes(phase)?'teaAt':phase==='taste'?'tasteAt':null;
+ const phase=kind==='bubbleTea'?q.teaStage:kind==='cook'?(q.pawSoupServeAt!==undefined&&!q.pawSoupServed?'serve':q.tasteAt!==undefined&&!q.tasted?'taste':null):null;
+ const field=['pouring','seasoning','sealing','sip'].includes(phase)?'teaAt':phase==='taste'?'tasteAt':phase==='serve'?'pawSoupServeAt':null;
  if(!field||!Number.isFinite(q[field])){delete q.pawFoodClock;return false}
  const prior=q.pawFoodClock;
  if(prior&&prior.phase===phase&&prior.field===field&&Number.isFinite(prior.at)&&now>=prior.at&&(blocked||prior.blocked))q[field]+=now-prior.at;
@@ -14073,6 +14073,52 @@ function pawKitchenPaintLadle(frame){
  return !!(q&&frame&&q.placement.draw(ctx,q.cache.image('kitchen_wooden_ladle'),frame.prop));
 }
 /* PAW_KITCHEN_LADLE_END */
+/* PAW_KITCHEN_SERVE_BEGIN */
+// Serving is an explicit, local phase of the existing soup visit. It has
+// no independent reward. The existing tasting and hospitality save follow.
+function pawKitchenServeMotion(age,reduced=false){
+ const p=Math.max(0,Math.min(1,Number.isFinite(age)?age/2.2:0));
+ const ease=x=>x*x*(3-2*x),mix=(a,b,u)=>a+(b-a)*u;
+ const rest=[253,536],pot=[400,481],lip=[510,410];
+ // Desired working tip; the rest endpoint is supplied by source geometry
+ // at render time. Dip, lift, carry, pour, then return to the counter.
+ let phase='rest',u=0,tip=pot.slice(),angle=-1.68,fill=0,stream=false;
+ if(p<.23){phase='scoop';u=ease(p/.23);tip=[400,481];}
+ else if(p<.55){phase='carry';u=ease((p-.23)/.32);tip=[mix(pot[0],lip[0],u),mix(pot[1],lip[1]-17,u)-(reduced?0:Math.sin(Math.PI*u)*31)];u=1;}
+ else if(p<.73){phase='pour';u=1;tip=[lip[0],lip[1]-17];angle=-1.68-.65*ease((p-.55)/.18);fill=ease((p-.55)/.18);stream=true;}
+ else {phase=p===1?'settled':'return';u=1-ease((p-.73)/.27);tip=[lip[0],lip[1]-17];angle=-2.33;fill=1;}
+ return {phase,p,u,tip,angle,fill,stream,rest,lip,done:p===1};
+}
+function pawKitchenServeAvailable(){
+ const q=pawFoodLive;
+ return !!(q&&['kitchen_wooden_ladle','kitchen_small_bowl'].every(id=>q.placement.ready(q.cache.image(id),q.manifest.assets[id].size)));
+}
+function pawKitchenServePose(age){
+ if(!pawKitchenServeAvailable())return null;
+ const q=pawFoodLive,id='kitchen_wooden_ladle',h=92,c=q.landmarks.assets[id],frame=pawKitchenServeMotion(age,residentReducedMotion.matches);
+ const rest=q.cache.geometry(id,...frame.rest,h),rt=rest.point(...c.workingTip),angle=frame.angle*frame.u;
+ const desired=[rt[0]+(frame.tip[0]-rt[0])*frame.u,rt[1]+(frame.tip[1]-rt[1])*frame.u];
+ const probe=q.cache.geometry(id,0,0,h,{anchor:c.grip,angle}),offset=probe.point(...c.workingTip);
+ const pose=q.api.utensilPose(id,[desired[0]-offset[0],desired[1]-offset[1]],h,angle);
+ return pose?{...frame,...pose}:null;
+}
+function pawKitchenPaintBowl(x,y,fill){
+ const q=pawFoodLive,id='kitchen_small_bowl',h=34;
+ if(!q)return false;
+ const g=q.cache.geometry(id,x,y,h);
+ if(!q.placement.draw(ctx,q.cache.image(id),g))return false;
+ if(fill>0){const lip=g.point(44,24);ctx.save();try{
+  ellipse(lip[0],lip[1],24*g.scale,5*g.scale,fill>.35?'#b58149':'#d0a46b');
+  if(fill>.35){ellipse(lip[0]-7*g.scale,lip[1]-g.scale,3*g.scale,1.5*g.scale,'#759353');ellipse(lip[0]+6*g.scale,lip[1]+g.scale,4*g.scale,1.5*g.scale,'#e1bb7b')}
+ }finally{ctx.restore()}}
+ return true;
+}
+function pawKitchenServeRequest(){
+ if(activity!=='cook'||!state.done||state.pawSoupServed||state.pawSoupServeAt!==undefined||pawArcadeInputBlocked())return;
+ state.pawSoupServeAt=t;closeTalk();sound(330);hint('Ladle the soup into a bowl.','把热汤盛进碗里。');
+}
+/* PAW_KITCHEN_SERVE_END */
+
 /* PAW_FOOD_LIVE_PROPS_END */
 
 /* PAW_DISCOVERY_DIALOGUE_CONTINUITY_BEGIN */
