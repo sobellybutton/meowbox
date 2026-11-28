@@ -53,10 +53,50 @@ const out='test-results/native-keepsakes-'+engine;
      await click(panel.getByRole('button',{name:cn?'English':'中文',exact:true}));
      await panel.locator('.meowShareStatus').getByText(cn?'可以分享或保存啦。':'Ready to share or save.').waitFor({timeout:15000});
      assert.deepEqual(await panel.locator('canvas').evaluate(cv=>[cv.width,cv.height]),[1080,1920]);
+     // Browser-controlled OS bridge: exercise the actual share button and
+     // exact file delivery. It cannot certify external-app posting.
+     if(kind==='cafe'){
+      const share=panel.getByRole('button',{name:cn?'分享图片':'Share image',exact:true});
+      const status=panel.locator('.meowShareStatus');
+      await page.evaluate(()=>{
+       window.__pawShareProbe={mode:'unsupported',calls:[]};
+       Object.defineProperty(navigator,'canShare',{configurable:true,value:()=>window.__pawShareProbe.mode!=='unsupported'});
+       Object.defineProperty(navigator,'share',{configurable:true,value:async payload=>{
+        const probe=window.__pawShareProbe,file=payload.files[0];
+        const bytes=new Uint8Array(await file.arrayBuffer()),view=new DataView(bytes.buffer);
+        probe.calls.push({name:file.name,type:file.type,size:file.size,width:view.getUint32(16),height:view.getUint32(20)});
+        if(probe.mode==='cancel')throw new DOMException('cancelled','AbortError');
+        if(probe.mode==='fail')throw new Error('delivery failed');
+       }});
+      });
+      await click(share);await status.filter({hasText:cn?/请保存 PNG/:/Save the PNG/}).waitFor();
+      for(const mode of ['success','cancel','fail']){
+       await page.evaluate(mode=>window.__pawShareProbe.mode=mode,mode);
+       await click(share);
+       const expected=mode==='success'?(cn?/系统分享已结束/:/Share menu finished/):mode==='cancel'?(cn?/已取消分享/:/Sharing cancelled/):(cn?/请保存 PNG/:/Save the PNG/);
+       await status.filter({hasText:expected}).waitFor();
+       assert.equal(await share.isEnabled(),true);
+       assert.equal(await panel.locator('canvas').isVisible(),true);
+      }
+      const calls=await page.evaluate(()=>window.__pawShareProbe.calls);
+      assert.equal(calls.length,3);
+      for(const file of calls){
+       assert.equal(file.name,'pawradise-cafe-story.png');assert.equal(file.type,'image/png');assert.ok(file.size>10000);assert.deepEqual([file.width,file.height],[1080,1920]);
+      }
+      await page.evaluate(()=>{delete navigator.canShare;delete navigator.share;delete window.__pawShareProbe});
+      // Every actual destination button renders the expected full-size PNG.
+      for(const [name,dims] of [['IG / FB',[1080,1350]],['小红书',[1080,1440]],[cn?'微信':'WeChat',[1080,1080]],['Story / TikTok',[1080,1920]]]){
+       await click(panel.getByRole('button',{name,exact:true}));
+       await status.getByText(cn?'可以分享或保存啦。':'Ready to share or save.').waitFor({timeout:15000});
+       assert.deepEqual(await panel.locator('canvas').evaluate(cv=>[cv.width,cv.height]),dims);
+      }
+     }
      const dl=page.waitForEvent('download');
      await click(panel.getByRole('button',{name:cn?'保存 PNG 图片':'Save PNG image',exact:true}));
      const saved=await dl;
      await saved.saveAs(out+'/'+prefix+'.png');
+     const png=fs.readFileSync(out+'/'+prefix+'.png');
+     assert.ok(png.length>10000);assert.deepEqual([png.readUInt32BE(16),png.readUInt32BE(20)],[1080,1920]);
      assert.match(saved.suggestedFilename(),new RegExp('^pawradise-'+kind+'-story\\.png$'));
      await click(panel.getByRole('button',{name:cn?'复制文案':'Copy caption',exact:true}));
      await panel.locator('.meowShareStatus').filter({hasText:cn?/文案已复制|请选择并复制/:/Caption copied|Select and copy/}).waitFor();
