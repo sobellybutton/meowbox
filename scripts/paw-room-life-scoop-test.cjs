@@ -240,7 +240,15 @@ for(const [key,p] of Object.entries(pawRailGlassOutlines)){
   ck(Math.abs(c.w/c.h-box.w/box.h)<1e-8,'no stretching')
  }
 }
-for(const mode of Object.keys(pawExtraDiscoveries)){
+const priorityRows=pawPriorityRows();
+for(let mask=0;mask<4096;mask++){
+ const answers=priorityRows.map((q,i)=>q.opts[(mask>>i)&1][2]);
+ const scores=pawExtraScore('priorities',priorityRows,answers);
+ ck(scores.length===4&&scores.reduce((a,b)=>a+b,0)===12&&scores.every(v=>v>=0&&v<=6),'paired priority scoring');
+ ck(pawExtraRows('priorities',scores).length===4,'priority result rows');
+}
+ck(pawExtraScore('priorities',priorityRows,priorityRows.map(()=>99))===null,'invalid priority choice');
+for(const mode of Object.keys(pawExtraDiscoveries).filter(v=>v!=='priorities')){
  const rows=pawExtraDiscoveries[mode].axes.flatMap((a,k)=>a.questions.map((q,j)=>({dimension:k,id:k*3+j})));
  const scores=pawExtraScore(mode,rows,rows.map(()=>1));
  ck(scores.every(v=>v===3),'balanced answers');

@@ -18,7 +18,19 @@ async function run(page,name,touch){
  async function openAssessmentDetails(){
   await page.waitForFunction(()=>at({x:486,y:623})?.fn.toString().includes('openWonderResult'));
   await world(486,623);
-  await page.locator('.readingNotes').waitFor({timeout:5000});
+  await page.locator('#choices').getByRole('button',{name:'Close the notebook',exact:true}).waitFor({timeout:5000});
+  assert.equal(await page.locator('#page').isVisible(),false,'Assessment must stay in the room');
+ }
+ const dialogueButton=name=>page.locator('#choices').getByRole('button',{name,exact:true});
+ async function liveSpread(count){
+  await dialogueButton('Back to the table').waitFor();
+  for(let i=0;i<count;i++){
+   assert.equal(await page.locator('#page').isVisible(),false,'Live spread must stay in room');
+   const card=await page.evaluate(i=>tarotDeck[state.readCards[i].i][0],i);
+   assert((await page.locator('#line').innerText()).includes(card),'Actual chosen card is missing');
+   await click(dialogueButton(i===count-1?'What does it mean together?':'Next card'));
+  }
+  await dialogueButton('Make a keepsake').waitFor();
  }
  const showGame=()=>page.evaluate(()=>{
   proposal.hidden=true;$('arrival').hidden=true;$('page').style.display='none';
@@ -44,12 +56,11 @@ async function run(page,name,touch){
  await page.waitForFunction(()=>state.readSaved);
  await page.waitForFunction(()=>readingArtwork().naturalWidth===1024&&readingArtwork().naturalHeight===2180);
  await shot('local-tarot-faces');
+ await page.waitForFunction(()=>state.readFlip.every(v=>t-v>=.72));
  await world(298,touch?755:650);
- await page.getByRole('heading',{name:'Put the cards together'}).waitFor();
- assert.equal(await page.locator('.readingNote').count(),3);
- assert.match(await page.locator('.readingAside').innerText(),/meeting invite/);
+ await liveSpread(3);
  await shot('work-reading');
- await click(page.locator('.readingNotes').getByRole('button',{name:'Share card',exact:true}));
+ await click(dialogueButton('Make a keepsake'));
  await page.locator('.meowShareStatus').getByText('Ready to share or save.').waitFor();
  assert.equal(await page.evaluate(()=>pics.tarotJournal?.naturalWidth),1200);
  const download=page.waitForEvent('download');
@@ -87,11 +98,11 @@ async function run(page,name,touch){
   await page.waitForFunction(i=>state.readFlip[i]>=0,i,{timeout:5000});
  }
  await page.waitForFunction(()=>state.readSaved);
+ await page.waitForFunction(()=>state.readFlip.every(v=>t-v>=.72));
  await world(400,touch?700:625);
- await page.getByRole('heading',{name:'Put the cards together'}).waitFor();
- assert.equal(await page.locator('.readingNote').count(),5);
+ await liveSpread(5);
  await shot('five-reading');
- await click(page.getByRole('button',{name:'Share card',exact:true}));
+ await click(dialogueButton('Make a keepsake'));
  await click(page.getByRole('button',{name:/WeChat/}));
  await page.locator('.meowShareStatus').getByText('Ready to share or save.').waitFor();
  const extendedExport=page.waitForEvent('download');
@@ -130,12 +141,15 @@ async function run(page,name,touch){
  });
  await page.waitForFunction(()=>wonderScenePhase==='result');
  await openAssessmentDetails();
- await page.getByRole('heading',{name:'Where you recharge'}).waitFor();
- const rows=await page.locator('.readingNote').allTextContents();
- assert.equal(rows.length,4);
- assert(rows.every(row=>row.includes('2/4')&&row.indexOf('2/4')!==row.lastIndexOf('2/4')));
+ await click(dialogueButton('Turn the page'));
+ await click(dialogueButton('Turn the page'));
+ for(let i=0;i<4;i++){
+  const row=await page.locator('#line').innerText();
+  assert.equal((row.match(/2\/4/g)||[]).length,2);
+  if(i<3)await click(dialogueButton('Turn the page'));
+ }
  await shot('personality-breakdown');
- await click(page.locator('.readingNotes').getByRole('button',{name:'Share keepsake',exact:true}));
+ await click(dialogueButton('Make a keepsake'));
  await page.locator('.meowShareStatus').getByText('Ready to share or save.').waitFor();
  await page.locator('.meowSharePreview').screenshot({path:'test-results/'+name+'-personality-export-preview.png'});
  await showGame();
@@ -146,8 +160,13 @@ async function run(page,name,touch){
  });
  assert.equal(await page.evaluate(()=>wonderSaved.motive.index),null);
  await openAssessmentDetails();
- assert.equal(await page.locator('.wonderMotiveScores li').count(),9);
- assert.equal(await page.locator('.readingPrompt').count(),2);
+ await click(dialogueButton('Turn the page'));
+ await click(dialogueButton('Turn the page'));
+ for(let i=0;i<9;i++){
+  assert.match(await page.locator('#line').innerText(),/\b[0-6]\/6\b/);
+  if(i<8)await click(dialogueButton('Turn the page'));
+ }
+ await click(dialogueButton('Close the notebook'));
  const valid=await page.evaluate(()=>{
   const rows=prepareWonderQuestions('type'),answers=rows.map(()=>0);
   const max=scoreWonder('type',rows,answers).scores.every(v=>v===4);
