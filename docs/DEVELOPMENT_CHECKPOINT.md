@@ -758,3 +758,7 @@ b442052c + 82d8a660 + 606b0ae0 + f2db1d4b: deck fans twelve cards from existing 
 
 ## Project batch 17: live chart ink on the held parchment (28 November)
 4cdc2bc9 + 4b147dd4: replaced generic 4x3 callback with actual twelve-palace perimeter rendering, cached per computed chart DOM node in a WeakMap and animated ink reveal from active time. Returning to editable birth fields suppresses the old chart on the held paper; hidden/transition clock guards and reduced motion retained. 33 combined persisted exact-source assertions passed, startup parsed. Actual hand/brush writing animation and rendered phone/desktop verification remain outstanding; no stage promotion.
+
+
+## Project batch 26: home surface raster allocation (28 November)
+7d808c60 + 4bf1d174 reduce the temporary mirrored wallpaper atlas from 24 to six tiles and floor atlas from 24 to 18 tiles; retain existing sample coordinates at ordinary swatch resolutions and bound future large imports to 512 pixels per tile. 1,974 exact-source mocked canvas allocation and sample bounds assertions passed across six input sizes; updated test parsed. Existing live surface consumer confirmed in startup; shared source held by READ-02, independent module only modified. No measured device speed, visual comparison, full CI or deployment claim; no stage promotion. Next actual room finish rendering and placement/expansion verification.
