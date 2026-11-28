@@ -15605,3 +15605,79 @@ html #game #dialogue[data-paw-chat-bar] .pawYuePlaceReply{display:block;color:#f
 html #game #dialogue[data-paw-chat-bar][data-paw-tarot-conversation] #choices{flex-wrap:wrap!important;overflow-x:visible!important}
 html #game #dialogue[data-paw-chat-bar][data-paw-tarot-conversation] #choices button{flex:1 1 100px!important;min-width:0!important;max-width:100%!important}`;
 document.head.append(pawGroundedRitualStyle);
+
+/* PAW_WISH_GROUNDED_BEGIN */
+// Coordinates are relative to the actual recovered garden painting, never
+// to the old abstract activity table. Feet stay beside the writing kiosk.
+const pawWishGroundFoot=[.25,.725],pawWishGroundPaper=[.13,.632];
+function pawWishRackPoint(slot){return [.754+(slot%4)*.06,.181+Math.floor(slot/4)*.036]}
+function pawWishGroundPoint(plate,point){return {x:plate.x+plate.w*point[0],y:plate.y+plate.h*point[1]}}
+function pawWishGroundSlots(records,carrying){
+ const used=new Set();return records.slice(carrying?-11:-12).map(w=>{
+  const slot=Number.isInteger(w.slot)&&w.slot>=0&&w.slot<12&&!used.has(w.slot)?w.slot:Array.from({length:12},(_,i)=>i).find(i=>!used.has(i));
+  used.add(slot);return {w,slot}
+ })
+}
+function pawWishGroundWalk(age,reverse=false){
+ const route=[[.25,.725],[.29,.64],[.235,.53],[.17,.445],[.245,.36],[.36,.325],[.57,.325],[.71,.29],[.735,.32]];
+ const q=reverse?route.slice().reverse():route,progress=Math.max(0,Math.min(q.length-1,age*2.5)),i=Math.min(q.length-2,Math.floor(progress)),f=progress-i;
+ return {point:[q[i][0]+(q[i+1][0]-q[i][0])*f,q[i][1]+(q[i+1][1]-q[i][1])*f],done:progress===q.length-1,dir:q[i+1][0]-q[i][0]>.045?'right':q[i+1][0]-q[i][0]<-.045?'left':q[i+1][1]<q[i][1]?'up':'down'}
+}
+/* PAW_WISH_GROUNDED_END */
+const pawWishGroundDrawBefore=drawActivity;
+drawActivity=function(...args){
+ if(room!=='wishes'||activity!=='wishes'||!pawRoomImageReady(pawWishLobbyArt()))return pawWishGroundDrawBefore(...args);
+ const run=state,im=pawWishLobbyArt(),b=livingBounds(),plate=pawReadingCoverPlate(b,im.naturalWidth,im.naturalHeight);
+ if(!plate)return pawWishGroundDrawBefore(...args);
+ const at=point=>pawWishGroundPoint(plate,point),still=residentReducedMotion.matches,stage=run.gardenStage;
+ continuityActivity=activity;
+ paintLivingBackdrop(im);
+ const carrying=stage==='carry',slots=pawWishGroundSlots(gardenWishes,carrying),taken=new Set(slots.map(v=>v.slot));
+ const scale=Math.max(.45,Math.min(2.1,plate.h*.105/94)),lanternScale=Math.max(.17,plate.w*.00060);
+ const foot=at(pawWishGroundFoot),paper=at(pawWishGroundPaper);
+ for(const {slot} of slots){
+  if(stage==='rise'&&slot===run.gardenSlot)continue;
+  const q=at(pawWishRackPoint(slot));gardenLantern(q.x,q.y+12*lanternScale,slot,lanternScale);
+ }
+ if(stage==='write'){
+  const pw=plate.w*.057,ph=plate.h*.031;
+  ctx.save();try{ctx.translate(paper.x,paper.y);ctx.rotate(-.16);round(-pw/2,-ph/2,pw,ph,1,'#f6e6c2','#b99a67');for(let i=0;i<3;i++)line(-pw*.34,-ph*.12+i*ph*.16,pw*.34,-ph*.12+i*ph*.16,'#c8ae82',.7)}finally{ctx.restore()}
+  backHuman(foot.x,foot.y,avatar??0,false,'left',scale);
+  if(pawWishComposer&&talkOpen){
+   const shoulder={x:foot.x-6*scale,y:foot.y-48*scale},grip={x:paper.x+pw*.2,y:paper.y};
+   if(Math.hypot(shoulder.x-grip.x,shoulder.y-grip.y)<90*scale){pawIncenseArm(shoulder,grip,scale*.7,false);line(grip.x,grip.y-7*scale,grip.x-3*scale,grip.y+4*scale,'#73543d',1.6)}
+  }
+  const hit=Math.max(42/cam.scale,plate.w*.14);target(paper.x-hit/2,paper.y-hit/2,hit,hit,gardenWrite);
+ }else if(carrying){
+  const walk=run.pawWishWalk,move=walk?pawWishGroundWalk(still?4:t-walk.at):null,q=move?at(move.point):foot,sc=scale*(move?1-.24*Math.min(1,(t-walk.at)/3):1);
+  backHuman(q.x,q.y,avatar??0,!!move&&!move.done&&!still,move?.dir||'up',sc);
+  gardenLantern(q.x+14*sc,q.y-35*sc,0,Math.max(lanternScale*1.4,.32));
+  if(move?.done){
+   const slot=walk.slot;
+   if(!taken.has(slot)&&run.pendingGardenWish){
+    gardenWishes.push({id:Date.now()+'-'+Math.random().toString(36).slice(2),text:run.pendingGardenWish,date:new Date().toLocaleDateString(),slot});
+    save('gardenWishesV1',gardenWishes);run.pendingGardenWish='';run.gardenStage='rise';run.gardenRise=t;run.gardenSlot=slot;delete run.pawWishWalk;addItem('Wishing lantern','许愿灯');sound(660);hint('Your wish has found its place.','心愿找到自己的位置了。')
+   }else delete run.pawWishWalk;
+  }
+  if(!walk){
+   for(let slot=0;slot<12;slot++)if(!taken.has(slot)){
+    const hook=at(pawWishRackPoint(slot));ctx.save();ctx.strokeStyle='#ffedbe';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(hook.x,hook.y,Math.max(3,plate.w*.008),0,TAU);ctx.stroke();ctx.restore();
+    const hw=plate.w*.03,hh=plate.h*.018;target(hook.x-hw,hook.y-hh,hw*2,hh*2,()=>{if(state===run&&run.gardenStage==='carry'&&!run.pawWishWalk&&run.pendingGardenWish)run.pawWishWalk={at:t,slot}})
+   }
+  }
+ }else if(stage==='rise'){
+  const elapsed=Math.max(0,t-run.gardenRise),q=at([.735,.32]),hook=at(pawWishRackPoint(run.gardenSlot)),sc=scale*.76;
+  if(elapsed<1.2&&!still){
+   backHuman(q.x,q.y,avatar??0,false,'up',sc);
+   const f=poseEase(Math.min(1,elapsed/1.2));gardenLantern(q.x+14*sc+(hook.x-q.x-14*sc)*f,q.y-35*sc+(hook.y-q.y+35*sc)*f,run.gardenSlot,lanternScale*(1.4-.4*f))
+  }else{
+   gardenLantern(hook.x,hook.y+12*lanternScale,run.gardenSlot,lanternScale);
+   const move=pawWishGroundWalk(still?4:elapsed-1.2,true),pos=at(move.point);
+   backHuman(pos.x,pos.y,avatar??0,!move.done&&!still,move.dir,scale);
+   if(move.done){run.gardenStage='write';react('Your little light is glowing. No follow-up email required.','心愿灯亮啦，不用再发邮件跟进。')}
+  }
+ }
+ if(stage==='write'){
+  const q=at([.21,.79]);label(tr('My lanterns','我的心愿灯')+' · '+gardenWishes.length,q.x,q.y,gardenWishBook)
+ }
+};
