@@ -33,7 +33,7 @@ let state={},parallelToken=1,parallelNode='station',room='story',activity='story
 const queue=[],items=[],saves=[],document={hidden:false},performance={now:()=>clock},requestAnimationFrame=fn=>queue.push(fn),matchMedia=()=>({matches:reduced}),pawArcadeInputBlocked=()=>blocked,sound=()=>{},actorGesture=()=>{},save=(...v)=>saves.push(v),addItem=(...v)=>items.push(v);
 const parallelScenes={station:{choices:[['yes','好','end']]}},parallelEndings={end:['Ending','结局','','','endingArt']},pics={endingArt:{complete:false,naturalWidth:0}};
 let parallelSelect;
-`+source.slice(contextStart)+`
+`+source.slice(contextStart,source.indexOf('/* PAW_MAPPED_DISCOVERY_PLATE_BEGIN */',contextStart))+`
 return {select:parallelSelect,step(ms){clock+=ms;t=clock/1000;queue.shift()?.(clock)},block(v){blocked=v},decode(){pics.endingArt.complete=true;pics.endingArt.naturalWidth=800},cancel(){parallelToken++},reduce(){reduced=true},view(){return {parallelNode,parallelTurning,trail:parallelTrail.slice(),items:items.slice(),saves:saves.slice(),queued:queue.length}}}
 `)();
 simulate.select(0);simulate.select(0);
@@ -46,3 +46,17 @@ for(let i=0;i<20;i++)simulate.step(16);
 assert.equal(simulate.view().parallelNode,'end');assert.equal(simulate.view().trail.length,1);assert.equal(simulate.view().items.length,1);assert.equal(simulate.view().saves.length,1);
 assert.equal(simulate.view().queued,0);
 console.log('Exact runtime story transition mock passed (not browser playback).');
+
+const plateStart=source.indexOf('/* PAW_MAPPED_DISCOVERY_PLATE_BEGIN */'),plateEnd=source.indexOf('/* PAW_MAPPED_DISCOVERY_PLATE_END */');
+assert.ok(plateStart>contextStart&&plateEnd>plateStart);
+const plate=new Function(source.slice(plateStart,plateEnd)+';return {pawDiscoveryPlateKind,pawDiscoveryPlateFrame};')();
+for(const district of ['wonder','fortune'])for(const id of ['quiz','story','match','tarot'])for(const act of ['wonderScene','match','story',null])for(const visit of [id,'other'])for(const ready of [true,false]){
+ const want=district==='wonder'&&visit===id&&ready?(['quiz','story','match'].includes(id)&&act==='wonderScene'?'wonder':id==='match'&&act==='match'?'cafe':null):null;
+ assert.equal(plate.pawDiscoveryPlateKind(district,id,act,visit,ready),want)
+}
+for(const [w,h] of [[320,640],[390,844],[430,932],[768,1024],[1280,720],[1440,900]]){
+ const base={s:1.2,ox:-100,oy:-150},foot=[400,620],q=plate.pawDiscoveryPlateFrame(base,foot,w,h);
+ assert.equal(q.s,base.s);
+ assert.ok(w>=900&&w/h>=1.25?Math.abs(q.ox+foot[0]*q.s-w*.34)<1e-7:q.oy+foot[1]*q.s<=h*.47+1e-7)
+}
+console.log('Mapped discovery plate selection and six viewport anchor checks passed.');
