@@ -952,12 +952,12 @@
       "remediation": [
         {
           "id": "QA-01-candidate",
-          "action": "Verify exact corrected candidate #74 (0ecd406d), including required full browser and isolated candidate jobs, and inspect screenshots. Reconcile compatible #75 Tarot choreography and #76 seated interruption corrections only in a new coherent candidate after reviewing active run status; fix any demonstrated failures and do not deploy until required gates pass.",
+          "action": "Complete exact #74 browser and district gates; then reconcile latest #75/#76/#77 (verified #75 already includes #76) with any demonstrated failure corrections, and verify exact next candidate. Preserve active jobs and inspect rendered evidence before deployment.",
           "depends": [],
           "lane": "interactive release coordinator / QA",
           "acceptance": "Successful exact-revision build and applicable normal-input CI, screenshots inspected; no skipped or cancelled failures.",
           "state": "partial_implementation_staged",
-          "evidence": "Candidate #66 4e6a270c: all four isolated jobs passed (46127381866); eight of nine broad smoke jobs passed, browser failed on inaccessible My collections at all three viewports (46127381857). Concurrent #72 corrected collections flow and combined greetings and signage. All four isolated #72 jobs failed at canonical quality-check helper extraction (46128402634). #73 0ecd406d restores actual helper and all 21 exact-source quality groups passed, including 228 sign checks. Full build and browser rerun pending. #73 actual build completed successfully on all four isolated jobs (46128525342), focused job passed; #74 created from exact same head to activate previously skipped broad smoke. Other device/district results pending at time of creation."
+          "evidence": "Candidate #66 4e6a270c: all four isolated jobs passed (46127381866); eight of nine broad smoke jobs passed, browser failed on inaccessible My collections at all three viewports (46127381857). Concurrent #72 corrected collections flow and combined greetings and signage. All four isolated #72 jobs failed at canonical quality-check helper extraction (46128402634). #73 0ecd406d restores actual helper and all 21 exact-source quality groups passed, including 228 sign checks. Full build and browser rerun pending. #73 actual build completed successfully on all four isolated jobs (46128525342), focused job passed; #74 created from exact same head to activate previously skipped broad smoke. Other device/district results pending at time of creation. #74 full browser suite active; focused, share exports and both device engine jobs passed. #75 exact home files match #76; #77 stacked on that integrated branch adds continuous retarget and registers compact home regression."
         },
         {
           "id": "QA-01-deploy",
@@ -1390,6 +1390,15 @@
           "lane": "interactive gameplay",
           "acceptance": "Player approaches and uses placed furniture without clipping, floating, invalid movement or save regression.",
           "state": "open"
+        },
+        {
+          "id": "HOME-CATALOGUE-LIVE-retarget",
+          "action": "Reconcile PR #77 on the next candidate; exercise repeated floor taps mid-walk on all three room layouts, including reversing near furniture and standing from a low seat. Verify actual smooth safe-edge retrace, no position snap or collision, and rerun candidate home regression.",
+          "depends": [],
+          "lane": "interactive gameplay / QA",
+          "acceptance": "Normal touch and mouse movement stays continuous during rapid retarget; no furniture crossing, identity or save regression, and measured rendered evidence.",
+          "state": "implementation_staged",
+          "evidence": "PR #77: 4,040 isolated assertions across 808 trajectories, syntax passed; exact #75 already contains #76 seating correction. Candidate workflow now registers compact home regression."
         }
       ]
     },
