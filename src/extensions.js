@@ -2468,6 +2468,17 @@ function pawNearbyDoorPlaque(cx,cy,w,h,bounds,blockers,near,screenWidth,approach
  }
  return best
 }
+// Prefer the painted building anchor. A temporary obstruction may move the
+// sign, but cannot permanently detach it from its facade. Wait for a clear
+// interval before returning so passing residents do not cause flicker.
+function pawArchitecturalPlaqueHome(btn,exact,now,delay=350){
+ if(!exact){btn._anchorClearAt=null;return null}
+ const offset=btn._signOffset,displaced=offset&&Math.hypot(offset.x,offset.y)>.75;
+ if(!displaced||btn.hidden){btn._anchorClearAt=null;return exact}
+ if(!Number.isFinite(btn._anchorClearAt))btn._anchorClearAt=now;
+ if(now-btn._anchorClearAt>=delay){btn._anchorClearAt=null;return exact}
+ return null
+}
 let lastDoorLayoutAt=-Infinity,lastDoorLayoutLanguage=null,lastDoorCameraKey='',lastDoorUIAt=-Infinity,lastDoorUIRects=[],lastDoorUISize='';
 syncSigns=function(){
  const show=proposal.hidden&&!room&&!transitioning&&avatar!==null&&$('page').style.display!=='block'&&$('arrival').hidden&&valleyRevealAt<0&&!quiet9;
@@ -2516,7 +2527,7 @@ syncSigns=function(){
   const sx=cam.ox+ax*cam.scale,sy=cam.oy+ay*cam.scale;
   const near=id!=='station'&&Math.hypot(p.x-x,p.y-y)<=210;
   const inView=sx>=-30&&sx<=W+30&&sy>=top-125&&sy<=bottom+70;
-  if(!inView){btn._clearAt=0;btn._signOffset=null;if(!btn.hidden)btn.hidden=true;continue}
+  if(!inView){btn._clearAt=0;btn._anchorClearAt=null;btn._signOffset=null;if(!btn.hidden)btn.hidden=true;continue}
   // Measure only when necessary; do not repeatedly unhide a blocked sign.
   if(btn._measureName!==name||btn._measureViewport!==uiSize||!btn._signSize){btn._measureViewport=uiSize;const hidden=btn.hidden;if(hidden)btn.hidden=false;btn._signSize=[Math.max(44,btn.offsetWidth),Math.max(44,btn.offsetHeight)];btn._measureName=name;if(hidden)btn.hidden=true}
   items.push({btn,sx,sy,near,approach:[cam.ox+x*cam.scale,cam.oy+y*cam.scale],w:btn._signSize[0],h:btn._signSize[1]});
@@ -2526,8 +2537,11 @@ syncSigns=function(){
  // Preserve authored map order so walking past a house cannot reshuffle the other labels.
  for(const item of items){
   const {btn,sx,sy,w,h,near,approach}=item;
-  const avoid=[...blockers,...placed],maxShift=Math.min(62,W*.16),offsetLimit=near?Math.min(120,W*.34):maxShift;let choice=null;
-  if(btn._signOffset&&Math.hypot(btn._signOffset.x,btn._signOffset.y)<=offsetLimit+.01){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
+  const avoid=[...blockers,...placed],maxShift=Math.min(62,W*.16),offsetLimit=near?Math.min(120,W*.34):maxShift;
+  const rect={left:sx-w/2-4,right:sx+w/2+4,top:sy-h/2-4,bottom:sy+h/2+4};
+  const exact=rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v))?{x:sx,y:sy,rect}:null;
+  let choice=pawArchitecturalPlaqueHome(btn,exact,now);
+  if(!choice&&btn._signOffset&&Math.hypot(btn._signOffset.x,btn._signOffset.y)<=offsetLimit+.01){const x=sx+btn._signOffset.x,y=sy+btn._signOffset.y,rect={left:x-w/2-4,right:x+w/2+4,top:y-h/2-4,bottom:y+h/2+4};if(rect.left>=6&&rect.right<=W-6&&rect.top>=top&&rect.bottom<=bottom&&!avoid.some(v=>speechOverlap(rect,v)))choice={x,y,rect}}
   if(!choice)choice=meowPlaceText(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,maxShift);
   if(!choice)choice=pawNearbyDoorPlaque(sx,sy,w,h,{left:6,right:W-6,top,bottom},avoid,near,W,approach);
   if(!choice){btn._clearAt=0;if(!btn.hidden)btn.hidden=true;continue}
