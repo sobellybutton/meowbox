@@ -154,3 +154,6 @@ Judge the complete experience as a player, not as a developer ticking individual
 
 This section is an acceptance direction and critique checklist, not a declaration that current deployed journeys pass. The initial source review identified large eager startup assembly, remaining generic page-based activity/results routes, incomplete fourth-house runtime integration, and the profile/settings material mismatch. These require measured and rendered validation rather than speculative rewrites.
 
+
+## Mandatory temple continuity gate (owner clarification, 28 November)
+Every inner game must use the temple's continuous visit model: explore, approach, contextual choice only where meaningful, act, visible reaction/result, recover at the station, explore again. Target zero mandatory generic selection/action/result pages. Purposeful physical subareas and camera closeups are permitted, optional share/export and detailed reading must return exactly. Preserve actor/host identity, scale, position, state, input, environment motion and natural navigation. Apply the per-activity continuity recipes and live visual acceptance in [INNER_ACTIVITY_EXPERIENCE_PLAN.md](INNER_ACTIVITY_EXPERIENCE_PLAN.md). No completion based on a new lobby painting, a source test or a styled legacy webpage alone.
