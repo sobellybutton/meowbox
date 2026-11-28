@@ -1814,7 +1814,7 @@ function syncTownSettings(){
  townHelp.textContent=tr('Walking help','行走指南');townHelp.hidden=!!room||!isRoute();
 }
 function closeTownSettings(){townSettingsOpen=false;syncTownSettings()}
-townSettingsToggle.onclick=()=>{townSettingsOpen=!townSettingsOpen;syncTownSettings();if(townSettingsOpen){townSettingsPanel.scrollTop=0;townSettingsClose.focus()}else townSettingsToggle.focus()};
+townSettingsToggle.onclick=()=>{townSettingsOpen=!townSettingsOpen;syncTownSettings();if(townSettingsOpen){releaseWalkKeys();joystickReset();stopRoute();p.tx=p.x;p.ty=p.y;townSettingsPanel.scrollTop=0;townSettingsClose.focus()}else townSettingsToggle.focus()};
 townSoundSettings.onclick=()=>{$('mute').click();syncTownSettings()};
 townMapLabels.onclick=null;
 townHelp.onclick=()=>{closeTownSettings();walkHelp.click()};
@@ -15830,6 +15830,11 @@ html #game #small #townSettingsToggle[aria-label]>svg{width:25px!important;heigh
 html #game #small #townSettingsToggle[aria-label]>svg>path{fill:#c89b60;stroke:#77522e;stroke-width:1.35}
 html #game #small #townSettingsToggle[aria-label]>svg>circle{fill:#f4e8d1;stroke:#77522e;stroke-width:1.4}
 html #game #small[data-open=true]{z-index:65!important}
+/* Some movement controls are attached directly to body. Suppress both
+   those and map HUD elements while reading the full-screen journal. */
+html:has(#townSettingsPanel:not([hidden])) :is(#moveGuide,#movePad,#walkHelp,#hint,#hud,#dock,#back,#worldSigns,#toast,#gameControls,#pawPlaceName,#nextStopShortcut,#lunarRibbon){visibility:hidden!important;pointer-events:none!important}
+html:has(#townSettingsPanel:not([hidden])) :is(#moveGuide,#movePad,#walkHelp){display:none!important}
+html #game #small[data-open=true] #townSettingsToggle{visibility:hidden!important;pointer-events:none!important}
 html #game #small #townSettingsPanel:not([hidden]){
  position:fixed!important;inset:0!important;width:100%!important;max-width:none!important;height:100%!important;max-height:none!important;
  box-sizing:border-box!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:16px!important;
