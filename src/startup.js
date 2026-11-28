@@ -7004,8 +7004,11 @@ function pawTarotPick(pool,chosen,index,count){
  return [...chosen,index]
 }
 function pawTarotChoiceSlots(portrait){
- const cols=portrait?4:6,rows=12/cols,w=portrait?77:68,h=portrait?111:105,dx=portrait?91:80,dy=portrait?126:125;
- return Array.from({length:cols*rows},(_,i)=>({x:400+(i%cols-(cols-1)/2)*dx,y:portrait?388+Math.floor(i/cols)*dy:420+Math.floor(i/cols)*dy,w,h}))
+ const cols=portrait?4:6,w=portrait?85:88,h=portrait?110:118,dx=portrait?76:72,dy=portrait?122:132;
+ return Array.from({length:12},(_,i)=>{
+  const u=(i%cols-(cols-1)/2)/((cols-1)/2);
+  return {x:400+u*(cols-1)/2*dx,y:(portrait?383:408)+Math.floor(i/cols)*dy+20*u*u,w,h,angle:u*.16,hitW:dx-4}
+ })
 }
 function pawTarotFrameMatches(q,frame,portrait){
  return !!(q&&frame&&q.readStage==='choose'&&q.pawCardPool===frame.pool&&q.pawChoiceFrame===frame&&frame.portrait===portrait)
@@ -7015,37 +7018,50 @@ function pawTarotFrameMatches(q,frame,portrait){
 function pawTarotFanPose(slot,index,age,reduced=false){
  if(!slot||!Number.isInteger(index)||index<0||index>=12||![slot.x,slot.y,slot.w,slot.h,age].every(Number.isFinite))return null;
  const p=reduced?1:Math.max(0,Math.min(1,(age-index*.038)/.32)),e=p*p*(3-2*p);
- return {x:400+(slot.x-400)*e,y:475+(slot.y-475)*e-14*Math.sin(Math.PI*p),w:92+(slot.w-92)*e,h:136+(slot.h-136)*e,angle:(index%2===0?-1:1)*.12*Math.sin(Math.PI*p),landed:p>=1,visible:reduced||age>=index*.038}
+ return {x:400+(slot.x-400)*e,y:475+(slot.y-475)*e-14*Math.sin(Math.PI*p),w:92+(slot.w-92)*e,h:136+(slot.h-136)*e,angle:(slot.angle||0)*e+(index%2===0?-1:1)*.08*Math.sin(Math.PI*p),landed:p>=1,visible:reduced||age>=index*.038}
 }
 function pawTarotFanSettled(q,now,reduced=false){
  return !!q&&q.readStage==='choose'&&(!q.pawFanActive||reduced||Number.isFinite(now)&&Number.isFinite(q.readAt)&&now-q.readAt>=.738)
 }
+function pawTarotWashPose(index,progress,reduced=false){
+ if(!Number.isInteger(index)||index<0||index>=12||!Number.isFinite(progress))return null;
+ const p=reduced?1:Math.max(0,Math.min(1,progress)),spread=p===0||p===1?0:Math.sin(Math.PI*p)**.85;
+ const side=index<6?-1:1,phase=(index%6)*Math.PI/3+side*p*2*Math.PI,rad=38+(index%3)*15;
+ return {x:400+(index-5.5)*1.8+spread*(side*55+rad*Math.cos(phase)),y:475-index*1.2+spread*rad*.68*Math.sin(phase),w:92,h:136,angle:spread*(side*.38+.32*Math.sin(phase)),visible:true}
+}
+function pawTarotWashComplete(q,now,reduced=false,blocked=false){
+ return !!q&&q.readStage==='shuffle'&&!blocked&&Number.isFinite(now)&&Number.isFinite(q.readAt)&&(reduced||now-q.readAt>=1.45)
+}
+function pawTarotTrayPose(slot,rank,count,portrait,progress){
+ const p=Math.max(0,Math.min(1,progress)),e=p*p*(3-2*p),x=400+(rank-(count-1)/2)*(portrait?43:55),y=portrait?713:645;
+ return {x:slot.x+(x-slot.x)*e,y:slot.y+(y-slot.y)*e,w:slot.w+(43-slot.w)*e,h:slot.h+(61-slot.h)*e,angle:(slot.angle||0)*(1-e)}
+}
+function pawTarotFinishSelection(q,count,now,reduced=false){
+ if(q.readStage!=='choose'||q.pawSelectedCards?.length!==count||!Number.isFinite(q.pawPickFinishAt)||!reduced&&now-q.pawPickFinishAt<.24)return false;
+ q.readCards=q.pawSelectedCards.map(i=>q.pawCardPool[i]);q.readFlip=Array(count).fill(-1);q.readStage='cards';q.readAt=now;q.readSaved=false;q.pawPickFinishAt=null;return true
+}
 /* PAW_TAROT_FAN_END */
 
-function pawOpenCardChoice(){
+function pawOpenCardChoice(washFirst=false){
  if(!['tarot','love'].includes(activity))return false;
  state.pawCardPool=pawTarotPool(tarotDeck.length);state.pawChoiceFrame=null;state.pawSelectedCards=[];state.readCards=[];state.readFlip=[];state.readSaved=false;
- state.readStage='choose';state.readAt=t;state.pawFanActive=true;state.readShuffle=Math.max(1,state.readShuffle||0);
+ state.readStage='choose';state.readAt=t+(washFirst&&!residentReducedMotion.matches?1.45:0);state.pawFanActive=true;state.pawPickedAt={};state.pawPickFinishAt=null;pawTarotKeyboard.delete(state);state.readShuffle=Math.max(1,state.readShuffle||0);
  const n=activity==='tarot'?1:state.readSpreadSize===5?5:3;
- hint(tr('Choose '+n+' '+(n===1?'card':'cards')+' that draw your attention.','凭直觉选 '+n+' 张牌。'),tr('Choose '+n+' cards.','凭直觉选 '+n+' 张牌。'));
+ hint('When the cards settle, choose '+n+' '+(n===1?'card':'cards')+' that draw your attention.','等牌铺好，再凭直觉选 '+n+' 张。');
  return true
 }
 function pawSelectTarotCard(index,frame=state.pawChoiceFrame){
  if(!['tarot','love'].includes(activity)||talkOpen||transitioning||document.hidden||!proposal.hidden||$('page').style.display==='block'||!pawTarotFrameMatches(state,frame,W<H)||!pawTarotFanSettled(state,t,residentReducedMotion.matches))return false;
  const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,chosen=pawTarotPick(state.pawCardPool,state.pawSelectedCards,index,count);
  if(!chosen)return false;
- state.pawSelectedCards=chosen;physicalFx('paper',.65);
- if(chosen.length===count){
-  state.readCards=chosen.map(i=>state.pawCardPool[i]);state.readFlip=Array(count).fill(-1);
-  state.readStage='cards';state.readAt=t;state.readSaved=false;
-  hint("Turn your chosen cards over. The universe has terrible handwriting, so we'll read them together.","翻开亲自选的牌吧。宇宙的字写得不太好，我们一起慢慢看。")
- }
+ state.pawSelectedCards=chosen;state.pawPickedAt??={};state.pawPickedAt[index]=t;physicalFx('paper',.65);
+ if(chosen.length===count)state.pawPickFinishAt=t;
  return true
 }
 const pawSelectStartBefore=start;
 start=function(id,...args){
  const result=pawSelectStartBefore(id,...args);
- if(id==='tarot'&&activity==='tarot'){state.tarotTone='gentle';pawOpenCardChoice()}
+ if(id==='tarot'&&activity==='tarot'){state.tarotTone='gentle';pawOpenCardChoice(true)}
  return result
 };
 const pawSelectDealBefore=readingDeal;
@@ -7055,7 +7071,18 @@ readingDeal=function(){
 };
 const pawSelectDrawBefore=drawActivity;
 drawActivity=function(...args){
- if(!['tarot','love'].includes(activity)||state.readStage!=='choose')return pawSelectDrawBefore(...args);
+ if(!['tarot','love'].includes(activity))return pawSelectDrawBefore(...args);
+ if(state.readStage==='shuffle'){
+  const age=Math.max(0,t-state.readAt),reduced=residentReducedMotion.matches;
+  ctx.save();try{
+   paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);table();
+   for(let i=0;i<12;i++){const q=pawTarotWashPose(i,age/1.45,reduced);ctx.save();try{ctx.translate(q.x,q.y);ctx.rotate(q.angle);card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}}
+   activityFitText(tr('Mixing the cards…','正在洗牌……'),400,600,20,340,'#fff0d2');
+  }finally{ctx.restore()}
+  if(pawTarotWashComplete(state,t,reduced,pawArcadeInputBlocked()))pawOpenCardChoice(false);
+  return
+ }
+ if(state.readStage!=='choose')return pawSelectDrawBefore(...args);
  const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,portrait=W<H,slots=pawTarotChoiceSlots(portrait),chosen=state.pawSelectedCards||[];
  // Keep the displayed pool identity stable across ordinary frames; invalidate
  // old hit callbacks if the deck is reshuffled or the viewport rotates.
@@ -7065,21 +7092,25 @@ drawActivity=function(...args){
   paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);
   table();
   // The deck fans out on the same mat; no card identity is assigned before selection.
-  const reduced=residentReducedMotion.matches,settled=pawTarotFanSettled(state,t,reduced),age=Math.max(0,t-state.readAt);
+  const reduced=residentReducedMotion.matches,settled=pawTarotFanSettled(state,t,reduced),age=t-state.readAt;
+  if(age<0&&!reduced){
+   for(let i=0;i<12;i++){const q=pawTarotWashPose(i,(age+1.45)/1.45);ctx.save();try{ctx.translate(q.x,q.y);ctx.rotate(q.angle);card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}}
+   activityFitText(tr('Mixing the cards…','正在洗牌……'),400,W<H?307:341,22,430,'#f6e6c8');return
+  }
   if(!settled){const remaining=slots.filter((q,i)=>!pawTarotFanPose(q,i,age,reduced).visible).length;for(let j=0;j<remaining;j++)card(354+j*.7,407-j*.65,92,136,false)}
   for(const [i,q] of slots.entries()){
-   const pose=settled?{...q,angle:0,visible:true}:pawTarotFanPose(q,i,age,reduced);
-   if(!pose.visible)continue;
-   if(!settled){ctx.save();try{ctx.translate(pose.x,pose.y);ctx.rotate(pose.angle);card(-pose.w/2,-pose.h/2,pose.w,pose.h,false)}finally{ctx.restore()}continue}
-   const picked=chosen.includes(i);
-   ctx.save();ctx.globalAlpha=picked?.34:1;
-   if(picked){round(q.x-q.w/2,q.y-q.h/2,q.w,q.h,5,'#342a45','#bda16c');txt(String(chosen.indexOf(i)+1),q.x,q.y,27,'#eedcb2')}
-   else{ctx.shadowColor='#1b152e65';ctx.shadowBlur=4;ctx.shadowOffsetY=3;card(q.x-q.w/2,q.y-q.h/2,q.w,q.h,false)}
-   ctx.restore();
-   if(!picked)target(q.x-q.w/2-3,q.y-q.h/2-3,q.w+6,q.h+6,()=>pawSelectTarotCard(i,frame),'paw-pick-card-'+i)
+   const pose=settled?{...q,visible:true}:pawTarotFanPose(q,i,age,reduced);
+   if(!pose.visible||settled&&chosen.includes(i))continue;
+   ctx.save();try{ctx.translate(pose.x,pose.y);ctx.rotate(pose.angle);ctx.shadowColor='#1b152e65';ctx.shadowBlur=4;ctx.shadowOffsetY=3;card(-pose.w/2,-pose.h/2,pose.w,pose.h,false)}finally{ctx.restore()}
+   if(settled&&chosen.length<count&&!pawArcadeInputBlocked())target(q.x-q.hitW/2,q.y-q.h/2,q.hitW,q.h,()=>pawSelectTarotCard(i,frame),'paw-pick-card-'+i)
+  }
+  if(settled)for(const [rank,i] of chosen.entries()){
+   const q=pawTarotTrayPose(slots[i],rank,count,portrait,reduced?1:(t-(state.pawPickedAt?.[i]??t))/.24);
+   ctx.save();try{ctx.translate(q.x,q.y);ctx.rotate(q.angle);card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}
   }
   activityFitText(settled?tr('Choose '+count+' '+(count===1?'card':'cards')+' · '+chosen.length+'/'+count,'选 '+count+' 张牌 · '+chosen.length+'/'+count):tr('Laying out the cards…','正在铺牌……'),400,W<H?307:341,22,430,'#f6e6c8');
-  if(settled&&!chosen.length)label(tr('Shuffle again','重新洗牌'),400,W<H?745:655,()=>{if(!pawTarotFrameMatches(state,frame,W<H)||pawArcadeInputBlocked())return;pawOpenCardChoice();physicalFx('paper',.6)})
+  if(settled&&!pawArcadeInputBlocked()&&pawTarotFinishSelection(state,count,t,reduced))hint("Let's turn them over, one at a time.","我们一张一张翻开吧。");
+  if(settled&&!chosen.length)label(tr('Shuffle again','重新洗牌'),400,W<H?745:655,()=>{if(!pawTarotFrameMatches(state,frame,W<H)||pawArcadeInputBlocked())return;pawOpenCardChoice(true);physicalFx('paper',.6)})
  }finally{ctx.restore()}
 };
 const pawSelectCameraBefore=mobileRoomCamera;
@@ -10214,11 +10245,15 @@ function pawTarotClock(q,now,blocked){
  if(prior&&now>=prior.now&&(blocked||prior.blocked)){
   const gap=now-prior.now;
   if(prior.stage===q.readStage&&prior.start===q.readAt&&Number.isFinite(q.readAt))q.readAt+=gap;
+  if(q.readStage==='choose'&&prior.stage==='choose'){
+   if(Number.isFinite(q.pawPickFinishAt)&&prior.finish===q.pawPickFinishAt)q.pawPickFinishAt+=gap;
+   for(const [i,at] of Object.entries(q.pawPickedAt||{}))if(Number.isFinite(at)&&prior.picks?.[i]===at&&prior.now-at<.24)q.pawPickedAt[i]+=gap
+  }
   if(flips&&prior.flips===flips)for(let i=0;i<flips.length;i++){
    if(Number.isFinite(flips[i])&&flips[i]>=0&&flips[i]===prior.values[i]&&prior.now-flips[i]<.73)flips[i]+=gap
   }
  }
- q.pawReadClock={now,blocked:!!blocked,stage:q.readStage,start:q.readAt,flips,values:flips?flips.slice():[]};return true
+ q.pawReadClock={now,blocked:!!blocked,stage:q.readStage,start:q.readAt,finish:q.pawPickFinishAt,picks:{...q.pawPickedAt},flips,values:flips?flips.slice():[]};return true
 }
 function pawTarotActionAllowed(rendered,current,kind,expectedKind,stage,portrait,expectedPortrait,blocked){
  return !blocked&&pawTarotActive(current,kind)&&rendered===current&&kind===expectedKind&&current.readStage===stage&&portrait===expectedPortrait
@@ -13369,7 +13404,7 @@ function pawReadingSeatPlan(id,plate,phase){
  return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.306]}
 }
 function pawReadingHostPhase(id,q,kind,desk,result){
- if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle')return 'shuffle';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
+ if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle')return 'table-wash';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
  if(id==='destiny'&&desk)return result?'result':'question';
  return 'idle'
 }
@@ -15180,7 +15215,7 @@ table=function(...args){
 };
 const pawTarotUnifiedCamera=mobileRoomCamera;
 mobileRoomCamera=function(...args){
- if(room==='tarot'&&pawTarotActive(state,activity)&&['choose','cards','focus'].includes(state.readStage)){
+ if(room==='tarot'&&pawTarotActive(state,activity)&&['deck','shuffle','choose','deal','cards','focus'].includes(state.readStage)){
   const portrait=W<H,bounds=portrait?[205,595,278,790]:[145,655,280,700],top=44,bottom=Math.max(top+80,H-60);
   const [l,r,u,d]=bounds,z=Math.max(.08,Math.min((W-20)/(r-l),(bottom-top)/(d-u)));
   return {s:z,ox:W/2-(l+r)/2*z,oy:(top+bottom)/2-(u+d)/2*z}
