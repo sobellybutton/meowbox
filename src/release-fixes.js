@@ -821,7 +821,11 @@ function pawInstallContinuousFortune(){
   continuityActivity=activity;
   ctx.save();try{
    if(run.pawAlcovePainting)pawAlcoveScene();else pawTempleScenePlate();
-   backHuman(q.pos.x,q.pos.y,avatar??0,!done&&!pawArcadeInputBlocked()&&!residentReducedMotion.matches,q.dir,run.pawAlcovePainting?pawAlcoveActorScale():.96)
+   if(run.pawAlcovePainting&&q.to==='sticks'){
+    const g=pawAlcoveGeometry();for(let i=0;i<2;i++){const m=pawMoonMotion(1,i,pawMoonFlat(run.result,i,run.count),95),pt=pawAlcoveMoonPoint(g,m);ellipse(pt.x,g.moonTray.y+5,9,2.5,'#342b2355');ctx.save();ctx.translate(pt.x,pt.y);ctx.scale(.30,.30);templeMoon(0,0,m.angle,m.flat);ctx.restore()}
+   }
+   backHuman(q.pos.x,q.pos.y,avatar??0,!done&&!pawArcadeInputBlocked()&&!residentReducedMotion.matches,q.dir,run.pawAlcovePainting?pawAlcoveActorScale():.96);
+   if(q.to==='moon'){const grip=run.pawAlcovePainting?pawAlcoveReach(q.pos).grip:{x:q.pos.x+8*.96,y:q.pos.y-48*.96};ctx.save();ctx.translate(grip.x,grip.y);round(-2.8,-17,5.6,34,1,'#d7b47c','#9c7447');line(-1,-15,-1,15,'#f1dba6',.7);ctx.restore()}
   }finally{ctx.restore()}
   if(done&&run===state&&!pawArcadeInputBlocked()){
    const n=run.pawFortuneNumber,failures=pawPairedFailures(run),painted=run.pawAlcovePainting;

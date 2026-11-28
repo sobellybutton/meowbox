@@ -55,3 +55,18 @@ console.log('PASS '+clearanceChecks+' moon clearance, contact, walk and viewport
  assert.ok(workflow.includes("state.pawPairedWalk?.to==='sticks'?state.pawPairedWalk.pos:null"));n++;
  console.log('PASS '+n+' active paired ritual route and observer assertions');
 }
+
+{
+ const rack=new Function(block('PAW_OWNER_REPAIR_2')+';return {pawRackEntries,pawRackNumbers}')();
+ assert.deepEqual(rack.pawRackEntries([]),[]);
+ assert.deepEqual(rack.pawRackEntries(null),[]);
+ assert.deepEqual(rack.pawRackEntries([0,1,12,13,'6',NaN,6]).map(v=>[v.number,v.fictional]),[[1,false],[12,false],[6,false]]);
+ assert.deepEqual(rack.pawRackNumbers(Array(23).fill(2)),Array(21).fill(2));
+ assert.ok(!s.includes('pawRackResidents'),'No seeded rack slips');
+ const source=read('src/release-fixes.js'),api=new Function(source.split('/* PAW_CONTINUOUS_FORTUNE_BEGIN */')[1].split('/* PAW_CONTINUOUS_FORTUNE_END */')[0]+';return pawPairedNext')();
+ let count=0;
+ for(const result of [1,2])for(const failures of [1,2,3])for(let i=0;i<=200;i++){const now=10+i/100,q={pawFortuneNumber:4,count:1,result,pawFortuneFailures:failures,pawFortuneSettledAt:10,tossUntil:10};assert.equal(api(q,'moon',now,false),now-10<1.2?null:failures===3?'finish':'retry');assert.equal(api(q,'moon',now,true),null);count+=2}
+ assert.ok(source.includes("q.to==='moon'){const grip="),'Carry stick along the actual approach');
+ assert.ok(source.includes("run.pawAlcovePainting&&q.to==='sticks'"),'Retain moon blocks during retry');
+ console.log('PASS local-only fortune rack and '+count+' paired hold checks');
+}

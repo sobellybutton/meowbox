@@ -6018,22 +6018,18 @@ yueZodiacAlmanac=function(...args){const result=pawYueYearBefore(...args),q=$('c
 
 
 /* PAW_OWNER_REPAIR_2_BEGIN */
-const pawRackResidents=[
- {id:'mei',name:['Auntie Mei','梅姨'],number:6},
- {id:'grandma',name:['Grandma','外婆'],number:9},
- {id:'wang',name:['Wang Laoban','王老板'],number:12},
- {id:'lin',name:['Auntie Lin','林姨'],number:11}
-];
 function pawRackNumbers(raw,max=12){return Array.isArray(raw)?raw.filter(v=>Number.isInteger(v)&&v>=1&&v<=max).slice(-21):[]}
 function pawRackEntries(raw){
- return [...pawRackResidents.map(v=>({...v,fictional:true})),...(Array.isArray(raw)?raw.filter(v=>Number.isInteger(v)&&v>=1&&v<=12):[]).map((number,i)=>({id:'local-'+i,name:['My tied fortune','我的签纸'],number,fictional:false}))]
+ return (Array.isArray(raw)?raw.filter(v=>Number.isInteger(v)&&v>=1&&v<=12):[]).map((number,i)=>({id:'local-'+i,name:['My tied fortune','我的签纸'],number,fictional:false}))
 }
 function pawRoomSpeechAllowed(room,activity,transitioning,pageOpen,talkOpen){return !!room&&!activity&&!transitioning&&!pageOpen&&!talkOpen}
 /* PAW_OWNER_REPAIR_2_END */
 function pawFortuneRackPage(){
  page(tr('Fortunes left behind','留在这里的签文'),tr('Unfold a little reminder from the town.','打开一张留在小镇的签纸。'),q=>{
   const rack=element('section','',q,'pawReadableRack');
-  for(const entry of pawRackEntries(templeTies)){
+  const entries=pawRackEntries(templeTies);
+  if(!entries.length)element('p',tr('Your rack is empty. Tie a fortune here when you are ready.','签文架还空着，愿意时再系上一张签纸吧。'),rack);
+  for(const entry of entries){
    const fortune=shrinePaperLines[entry.number-1];if(!fortune)continue;
    const slip=element('details','',rack,'pawReadableSlip');
    const label=element('summary','',slip);
@@ -6050,7 +6046,7 @@ function pawFortuneRackPage(){
 const pawRackArtBefore=drawTemplePaperRack;
 drawTemplePaperRack=function(x,y,sc=1,hideLatest=0){
  const own=templeTies;
- try{templeTies=[...pawRackResidents.map(v=>v.number),...pawRackNumbers(own)].slice(-21);return pawRackArtBefore(x,y,sc,hideLatest)}
+ try{templeTies=pawRackNumbers(own);return pawRackArtBefore(x,y,sc,hideLatest)}
  finally{templeTies=own}
 };
 const pawRackDrawBefore=drawActivity;
@@ -9796,7 +9792,8 @@ pawFortuneRackPage=function(){
  if(room!=='temple'||activity!=='templePaper')return pawRackOpenBefore();
  pawRackReturn={activity,state};
  start('templeRack');state.rackSelected=null;state.rackPage=0;state.rackAt=t;
- hint('Tap a paper slip to unfold it.','点一张签纸，展开看看。')
+ if(pawRackEntries(templeTies).length)hint('Tap a paper slip to unfold it.','点一张签纸，展开看看。');
+ else hint('Your rack is empty. Tie a fortune here when you are ready.','签文架还空着，愿意时再系上一张签纸吧。')
 };
 function pawCloseTempleRack(){
  if(activity!=='templeRack')return false;
@@ -9842,7 +9839,7 @@ function pawTempleRackDraw(){
    ctx.restore();
    label(tr('Fold the paper','收起签纸'),400,590,()=>{state.rackSelected=null})
   }else{
-   txt(tr('Choose a fortune to unfold','选一张签纸展开'),400,625,16,'#fff2d6');
+   txt(entries.length?tr('Choose a fortune to unfold','选一张签纸展开'):tr('Your rack is empty','签文架还空着'),400,625,16,'#fff2d6');
    if(pages>1){
     txt((state.rackPage+1)+' / '+pages,400,601,14,'#fff2d6');
     if(state.rackPage>0)label(tr('Previous','上一页'),245,601,()=>{state.rackPage--;state.rackSelected=null});
@@ -11280,7 +11277,7 @@ function pawPaperControlsSync(){
  if(pawPaperControlRun===run&&pawPaperControlKey===key&&el.querySelectorAll('[data-paw-paper-action]').length===actions.length){el.hidden=!actions.length;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawTemplePaperControls');
  pawPaperControlRun=run;pawPaperControlKey=key;el.hidden=!actions.length;
- const words={open:['Unfold fortune slip','展开签纸'],keep:['Keep in bag','收入背包'],tie:['Tie on rack','系上签纸'],rack:['Read other fortunes','看看其他签文'],return:['Back to hall','返回大殿']};
+ const words={open:['Unfold fortune slip','展开签纸'],keep:['Keep in bag','收入背包'],tie:['Tie on rack','系上签纸'],rack:['View tied fortunes','看看已系上的签纸'],return:['Back to hall','返回大殿']};
  const action={open:templePaperTap,keep:()=>templePaperKeep(false),tie:()=>templePaperKeep(true),rack:pawFortuneRackPage,return:()=>$('back').click()};
  for(const id of actions){const button=b(el,tr(...words[id]),()=>{
   if(pawTemplePaperAllowed(run,state,activity,t,pawArcadeInputBlocked(),id))action[id]()
@@ -12398,7 +12395,7 @@ function pawDrawCounterRack(){
   activityFitText(tr(...selected.name),g.reading.x,g.reading.y-221,22,390,'#fff1d5')
  }else{
   const slots=g.rows.flat(),active=slots[run.rackCursor];
-  if(active){ctx.save();ctx.strokeStyle='#fff0b0';ctx.lineWidth=2.2;ctx.beginPath();ctx.ellipse(active.x,active.y,13,10,0,0,TAU);ctx.stroke();ctx.restore()}
+  if(active&&data.entries.length){ctx.save();ctx.strokeStyle='#fff0b0';ctx.lineWidth=2.2;ctx.beginPath();ctx.ellipse(active.x,active.y,13,10,0,0,TAU);ctx.stroke();ctx.restore()}
   for(let i=0;i<data.entries.length;i++){
    const a=slots[i];target(a.x-9,a.y-14,18,28,()=>pawCounterRackSelect(run,i,data))
   }
