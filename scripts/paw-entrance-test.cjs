@@ -146,7 +146,7 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
       assert.equal(await page.locator('.townPostNav button').count(),0,'No archive pagination or invisible older notices button');
       const ids=await notices.evaluateAll(nodes=>nodes.map(n=>n.dataset.noticeId));
       assert.equal(new Set(ids).size,10,'No duplicate notices');
-      const reply=page.locator('.wallReplies summary').first();
+      const reply=page.locator('.wallReplies .wallReplyToggle, .wallReplies summary').first();
       if(await reply.count()){await (width<900?reply.tap():reply.click());assert.equal(await page.locator('.wallReplies[open]').count(),1,'Notice replies open normally');}
       await shot('town-noticeboard');
       const returnHall=page.locator('#content > .row button').first();
