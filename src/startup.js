@@ -12093,6 +12093,15 @@ function pawAlcoveGeometry(p=pawWaterPlate){
   moonTray:pt(.743,.508),moonFoot:pt(.56,.64),moonHand:{x:p.x+.743*p.w-13,y:p.y+.508*p.h}}
 }
 function pawAlcoveActorScale(){return 1.92}
+function pawAlcoveCamera(w,h,p=pawWaterPlate){
+ if(![w,h,p.x,p.y,p.w,p.h].every(Number.isFinite)||Math.min(w,h,p.w,p.h)<=0)return null;
+ const s=w<h?Math.max(w/p.w,h/p.h):Math.min(w/p.w,h/p.h);
+ const g=pawAlcoveGeometry(p),left=g.stickFoot.x-45,right=g.moonTray.x+46;
+ const minX=w-(p.x+p.w)*s,maxX=-p.x*s,center=(w-p.w*s)/2-p.x*s;
+ const lo=Math.max(minX,12-left*s),hi=Math.min(maxX,w-12-right*s);
+ const ox=w<h&&lo<=hi?Math.max(lo,Math.min(hi,center)):center;
+ return {s,ox,oy:(h-p.h*s)/2-p.y*s}
+}
 function pawAlcoveReach(foot,side=1){
  const scale=pawAlcoveActorScale();
  return {shoulder:{x:foot.x+side*5*scale,y:foot.y-63*scale},grip:{x:foot.x+side*8*scale,y:foot.y-48*scale},sleeve:.72*scale,maxReach:48*scale}
@@ -12147,7 +12156,7 @@ start=function(id,...args){
  return result
 };
 const pawAlcoveCameraBefore=mobileRoomCamera;
-mobileRoomCamera=function(...args){return pawAlcoveActive()?pawWaterCamera(W,H)||pawAlcoveCameraBefore(...args):pawAlcoveCameraBefore(...args)};
+mobileRoomCamera=function(...args){return pawAlcoveActive()?pawAlcoveCamera(W,H)||pawAlcoveCameraBefore(...args):pawAlcoveCameraBefore(...args)};
 function pawAlcoveScene(){
  const p=pawWaterPlate,b=livingBounds();ctx.fillStyle='#493e35';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawAlcoveArt(),p.x,p.y,p.w,p.h)
 }
@@ -13417,6 +13426,19 @@ const pawWishLobbyLivingBefore=paintLivingBackdrop;
 paintLivingBackdrop=function(...args){if(pawWishLobbyBackdrop())return;return pawWishLobbyLivingBefore(...args)};
 const pawWishLobbyWarmBefore=warmRoomArt;
 warmRoomArt=function(id,...args){return id==='wishes'&&pawWishLobbyBackdrop()?true:pawWishLobbyWarmBefore(id,...args)};
+// Keep the same illustrated garden in the writing/lantern activity, not the old generic pond.
+const pawWishPaintedActivity=()=>room==='wishes'&&activity==='wishes'&&pawRoomImageReady(pawWishLobbyArt());
+const pawWishActivityCameraBefore=mobileRoomCamera;
+mobileRoomCamera=function(...args){return pawWishPaintedActivity()?pawWishLobbyCamera(W,H)||pawWishActivityCameraBefore(...args):pawWishActivityCameraBefore(...args)};
+const pawWishActivityDrawBefore=drawActivity;
+drawActivity=function(...args){
+ if(!pawWishPaintedActivity())return pawWishActivityDrawBefore(...args);
+ const p=pawWishLobbyPlate,b=livingBounds();ctx.save();try{
+  ctx.fillStyle='#526b57';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawWishLobbyArt(),p.x,p.y,p.w,p.h);
+  const foot=pawWishLobbyStations.wishes.slice(2);backHuman(foot[0],foot[1]+22,avatar??0,false,'left',1.2);
+ }finally{ctx.restore()}
+ return pawWishActivityDrawBefore(...args)
+};
 const pawWishLobbyDrawBefore=drawRoom;
 drawRoom=function(...args){if(pawWishLobbyActive())pawWishLobbyBackdrop();return pawWishLobbyDrawBefore(...args)};
 function pawWishLobbyActor(){

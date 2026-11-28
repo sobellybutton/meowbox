@@ -254,13 +254,14 @@ function pawWishCoinOrigin(bank,pond){
 function pawWishApproach(age,reduced){
  return reduced?1:Math.max(0,Math.min(1,age/950))
 }
+function pawWishThrowLean(age,reduced){return reduced||!Number.isFinite(age)||age<0||age>470?0:Math.sin(Math.PI*age/470)*.14}
 /* PAW_WISH_BANK_END */
 wishPond9=function(){page(tr('The wishing pool','锦鲤许愿池'),tr('Hold a wish in your heart. No need to tell anyone.','在心里默默许个愿，不必告诉任何人。'),q=>{
  const pond=pond9(q);pond.classList.add('wishRitual');const stage=element('section','',q,'pawWishGarden');pond.before(stage);stage.append(pond);const koiLife=animateWishKoi(pond,()=>current());element('div','',pond,'wishBowl');const aim=element('i','',pond,'wishAim');aim.hidden=true;const coin=element('img','',pond,'ritualCoin');coin.src='assets/visual/painted/interface/paw-coin-hud.webp';coin.alt=tr('Swipe the coin toward the centre bowl','将铜钱向中央许愿碗滑动');coin.draggable=false;
  const instruction=element('p',tr('Swipe up from the coin towards the bowl. A faster swipe throws farther.','从铜钱向许愿碗滑动，滑得越快，投得越远。'),q,'wishThrowGuide');pond.before(instruction);const powerBar=element('div','',q,'wishPower');const powerFill=element('i','',powerBar);powerBar.setAttribute('aria-label',tr('Throw strength','投币力度'));const message=element('p',tr('Ready? Aim for the small bowl in the centre.','准备好了吗？瞄准中央的小碗。'),q,'wishMessage');message.setAttribute('aria-live','polite');message.setAttribute('role','status');pond.before(message);pond.before(powerBar);
  const visitRoom=room,visitActivity=activity,visitState=state;
  const current=()=>pawWishVisitCurrent(pond.isConnected,$('page').style.display,visitRoom,room,visitActivity,activity,visitState,state);
- let busy=false,done=false,misses=0,origin=null,bankReady=false,held=false,bank=null,pondBox=null,throwAt=-Infinity,approachAt=null,previousPose='';
+ let busy=false,done=false,misses=0,origin=null,bankReady=false,held=false,bank=null,pondBox=null,throwAt=-Infinity,approachAt=null,bankPose=null;
  const actor=element('canvas','',stage,'pawWishBankActors');actor.setAttribute('aria-hidden','true');
  const ag=actor.getContext('2d'),keeper=new Image();keeper.src='assets/visual/painted/garden-keeper/standing.webp';
  const k=((avatar??0)%4+4)%4;
@@ -284,23 +285,25 @@ wishPond9=function(){page(tr('The wishing pool','锦鲤许愿池'),tr('Hold a wi
   const dpr=Math.min(2,window.devicePixelRatio||1),width=Math.round(rect.width*dpr),height=Math.round(rect.height*dpr);
   if(actor.width!==width||actor.height!==height){actor.width=width;actor.height=height}
   ag.setTransform(dpr,0,0,dpr,0,0);ag.clearRect(0,0,rect.width,rect.height);
-  const H=bank.height,im=pics['walker'+k+'2'];
+  const H=bank.height,legacy=pics['walker'+k+'2'];
   mbArtLoad();const frames=mbArtRegistry.players[k]?.walk?.right||[];
-  const images=frames.map(mbArtImage),artReady=im?.complete&&im.naturalWidth>0&&im.naturalHeight>0;
+  const images=frames.map(mbArtImage);
+  if(!bankPose){if(frames[0]&&images[0])bankPose={record:frames[0],im:images[0]};else if(legacy?.complete&&legacy.naturalWidth>0&&legacy.naturalHeight>0)bankPose={record:null,im:legacy}}
+  const artReady=!!bankPose;
   if(keeper.complete&&keeper.naturalWidth){const kh=H*.93,kw=kh*keeper.naturalWidth/keeper.naturalHeight;ag.drawImage(keeper,bank.keeper.x-kw/2,bank.keeper.y-kh,kw,kh)}
   if(!artReady){bankReady=false;home();syncToss();requestAnimationFrame(drawBank);return}
   if(approachAt===null)approachAt=now;
   const f=pawWishApproach(now-approachAt,reduced),x=bank.entry.x+(bank.foot.x-bank.entry.x)*f,y=bank.entry.y+(bank.foot.y-bank.entry.y)*f;
   ag.save();ag.fillStyle='#302a2438';ag.beginPath();ag.ellipse(x,y,H*.14,H*.027,0,0,Math.PI*2);ag.fill();
-  if(f<1&&frames.length&&images.every(Boolean)){
+  if(f<1&&bankPose.record&&frames.length&&images.every(Boolean)){
    const index=Math.floor(f*frames.length*2)%frames.length,frame=frames[index],q=H/frame.height;
    ag.drawImage(images[index],x-frame.foot[0]*q,y-frame.foot[1]*q,frame.width*q,frame.height*q)
   }else{
-   const w=H*im.naturalWidth/im.naturalHeight,age=now-throwAt,lean=reduced||age<0||age>470?0:Math.sin(Math.PI*age/470)*.12;
-   // Reuse the existing illustrated side pose and torso pivot. No separate arm.
-   const split=68/94*im.naturalHeight,top=68/94*H,lower=H-top;
-   ag.drawImage(im,0,split,im.naturalWidth,im.naturalHeight-split,x-w/2,y-lower,w,lower);
-   ag.save();ag.translate(x,y-lower);ag.rotate(lean);ag.drawImage(im,0,0,im.naturalWidth,split,-w/2,-top,w,top);ag.restore()
+   const {record,im}=bankPose,sc=H/im.naturalHeight,w=im.naturalWidth*sc,lean=pawWishThrowLean(now-throwAt,reduced);
+   // Keep the complete illustrated body planted on its original foot pivot.
+   // The coin launches from the bank hand; never cut the body into two pieces.
+   const fx=record?record.foot[0]*sc:w/2,fy=record?record.foot[1]*sc:H;
+   ag.save();ag.translate(x,y);ag.rotate(lean);ag.drawImage(im,-fx,-fy,w,H);ag.restore()
   }
   ag.restore();
   if(f>=1&&!bankReady){bankReady=true;syncToss();home();message.textContent=tr('At the bank. Take out a Paw Coin.','到池边啦，取出一枚爪爪币吧。')}
