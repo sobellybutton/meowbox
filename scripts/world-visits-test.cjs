@@ -59,3 +59,20 @@ console.log('District visit and direct station boarding regression passed');
  assert.equal(position(g,130,44,[{left:0,right:390,top:0,bottom:844}]),null);
  console.log('Railway touch reachability and bounded edge placement passed');
 }
+
+// District stamps are saved and counted normally, without obscuring map plaques.
+{
+ const e=fs.readFileSync(path.resolve(__dirname,'../src/engine.js'),'utf8');
+ const start=e.indexOf('function addItem('),end=e.indexOf('let toastTimer',start);
+ assert.ok(start>=0&&end>start);
+ const run=new Function('items','save','updateHUD','toast','tr',e.slice(start,end)+';return addItem');
+ for(const chinese of [false,true]){
+  const items=[],notices=[],saves=[];let hud=0;
+  const add=run(items,(k,v)=>saves.push([k,v.length]),()=>hud++,v=>notices.push(v),(en,zh)=>chinese?zh:en);
+  for(const [en,zh] of [['Fortune Valley','解忧谷'],['Sea Breeze Island','海风岛'],['Lantern Lane','灯笼巷'],['Starlight Valley','星光谷']]){add('Arrival: '+en,zh+'入境章');add('Arrival: '+en,zh+'入境章')}
+  assert.equal(items.length,4);assert.equal(hud,4);assert.equal(saves.length,4);assert.equal(notices.length,0);
+  add('Tea keepsake','茶饮纪念品');add('Tea keepsake','茶饮纪念品');
+  assert.equal(items.length,5);assert.equal(hud,5);assert.equal(saves.length,5);assert.deepEqual(notices,[chinese?'已收藏：茶饮纪念品':'Collected: Tea keepsake']);
+ }
+ console.log('Arrival stamps preserve collection and HUD without obscuring map labels');
+}
