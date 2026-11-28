@@ -110,6 +110,15 @@ function cutawayDepth(y,layer='floor'){
  if(layer==='rug')return 2;if(layer==='wall')return 3;
  return Number.isFinite(y)?20+Math.round(y*1000):20
 }
+function cutawayDragOwner(){
+ let press=null;
+ return {
+  begin(key,e){if(press||e.button!==0||e.isPrimary===false)return false;press={key,id:e.pointerId,x:e.clientX,y:e.clientY};return true},
+  cancel(key,id){if(press?.key===key&&press.id===id)press=null},
+  clear(){press=null},
+  end(key,e){if(press?.key!==key||press.id!==e.pointerId)return false;const start=press;press=null;return Math.hypot(e.clientX-start.x,e.clientY-start.y)>=8}
+ }
+}
 function cutawayFootPivot(frame,mirrored=false){
  if(!frame||![frame.width,frame.height,...(frame.foot||[])].every(Number.isFinite)||frame.width<=0||frame.height<=0||frame.foot?.length!==2||frame.foot[0]<0||frame.foot[0]>frame.width||frame.foot[1]<0||frame.foot[1]>frame.height)return {x:50,y:100};
  // The transform origin stays on the real foot when mirroring.
@@ -310,7 +319,7 @@ function mountCutaway(q,legacyStage){
   const status=element('small','',panel,'pawCutawayStatus');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const oldHidden=legacyStage.hidden;
   function close(){
-   stop();observer.disconnect();document.removeEventListener('visibilitychange',onVisibility);panel.remove();legacyStage.hidden=oldHidden;q.classList.remove('pawCutawayOpen');reset();if(button.isConnected&&$('page').style.display==='block')button.focus({preventScroll:true})
+   stop();drag.clear();observer.disconnect();document.removeEventListener('visibilitychange',onVisibility);panel.remove();legacyStage.hidden=oldHidden;q.classList.remove('pawCutawayOpen');reset();if(button.isConnected&&$('page').style.display==='block')button.focus({preventScroll:true})
   }
   function fail(){if(!panel.isConnected)return;close();toast(tr('The painted room could not load. Your original room is unchanged.','立体小窝暂时无法载入，原本的小窝不会改变。'))}
   shell.onerror=fail;shell.onload=()=>{if(shell.naturalWidth&&shell.naturalHeight)stage.style.aspectRatio=shell.naturalWidth+'/'+shell.naturalHeight};
@@ -318,12 +327,13 @@ function mountCutaway(q,legacyStage){
   b(controls,tr('Return to original room','返回原本小窝'),close);
   const edit=b(controls,tr('Move furniture','移动家具'),()=>{stop();position(point(actor));actorArt('down',false,0);editing=!editing;selected=null;edit.textContent=editing?tr('Finish arranging','完成布置'):tr('Move furniture','移动家具');render();sayStatus()});
   let editing=false,selected=null,actor=cutawayFree(api,layout,items).at(-1),raf=0,epoch=0;
+  const drag=cutawayDragOwner();
   const lampKeys=items.filter(i=>['lamp','shojiLamp','chineseLantern'].includes(i.key)).map(i=>i.key);
   const savedLights=store?.[zone]?.fingerprint===fingerprint?store[zone].lights:null;
   const lights=new Set(Array.isArray(savedLights)?lampKeys.filter(id=>savedLights.includes(id)):lampKeys);
   const player=element('img','',stage,'pawCutawayActor');player.alt=tr('Your avatar','你的角色');actorArt('down',false,0);
   const stop=()=>{epoch++;cancelAnimationFrame(raf);raf=0};
-  const onVisibility=()=>{if(document.hidden){stop();position(point(actor));actorArt('down',false,0)}};
+  const onVisibility=()=>{if(document.hidden){drag.clear();stop();position(point(actor));actorArt('down',false,0)}};
   const observer=new MutationObserver(()=>{if(!panel.isConnected||$('page').style.display!=='block')close()});
   observer.observe($('page'),{attributes:true,attributeFilter:['style','hidden']});observer.observe(q,{childList:true});
   document.addEventListener('visibilitychange',onVisibility);
@@ -383,6 +393,7 @@ function mountCutaway(q,legacyStage){
    items=changed;persist();render();sayStatus()
   });
   function render(){
+   drag.clear();
    turnButton.hidden=!editing;turnButton.disabled=!selected;
    stage.querySelectorAll('.pawCutawayFurniture,.pawCutawayGlow').forEach(n=>n.remove());
    for(const item of items){
@@ -401,11 +412,10 @@ function mountCutaway(q,legacyStage){
     im.classList.toggle('selected',selected===item.key);im.dataset.layer=f.layer;im.style.touchAction=editing?'none':'';
     if(editing){im.tabIndex=0;im.setAttribute('role','button');im.setAttribute('aria-pressed',String(selected===item.key));
      const choose=()=>{selected=item.key;turnButton.disabled=false;for(const n of stage.querySelectorAll('.pawCutawayFurniture')){n.classList.toggle('selected',n===im);n.setAttribute('aria-pressed',String(n===im))}sayStatus()};
-     im.onclick=e=>{e.stopPropagation();choose()};im.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();stage.focus({preventScroll:true})}};
-     let press=null;
-     im.onpointerdown=e=>{if(e.button!==0)return;press={id:e.pointerId,x:e.clientX,y:e.clientY};im.setPointerCapture(e.pointerId)};
-     im.onpointercancel=im.onlostpointercapture=()=>{press=null};
-     im.onpointerup=e=>{if(!press||press.id!==e.pointerId)return;const start=press;press=null;if(Math.hypot(e.clientX-start.x,e.clientY-start.y)<8)return;choose();const rect=stage.getBoundingClientRect();move(api.nearestCell(layout,(e.clientX-rect.left)/rect.width,(e.clientY-rect.top)/rect.height))}
+     im.onclick=e=>{e.stopPropagation();if(e.isPrimary===false)return;choose()};im.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();stage.focus({preventScroll:true})}};
+     im.onpointerdown=e=>{if(!drag.begin(item.key,e))return;try{im.setPointerCapture(e.pointerId)}catch{drag.cancel(item.key,e.pointerId)}};
+     im.onpointercancel=im.onlostpointercapture=e=>drag.cancel(item.key,e.pointerId);
+     im.onpointerup=e=>{if(!drag.end(item.key,e)||!editing||!im.isConnected)return;choose();const rect=stage.getBoundingClientRect();move(api.nearestCell(layout,(e.clientX-rect.left)/rect.width,(e.clientY-rect.top)/rect.height))}
     }
    }
    position(point(actor))
