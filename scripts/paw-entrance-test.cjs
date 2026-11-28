@@ -103,7 +103,18 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
      await page.waitForFunction(()=>$('page').style.display==='block',null,{timeout:15000});
      await page.waitForFunction(id=>document.getElementById(id)?.getAttribute('aria-current')==='page',id,{timeout:8000});
      assert.equal(await dockRoot.locator('button[aria-current="page"]').count(),1,'Only the current destination is selected');
-     if(id==='dockValley')assert.equal(await page.locator('.pawTownFront').count(),1,'Town Hall root missing');
+     if(id==='dockTravel'){
+      assert.equal(await page.locator('.pawJournalDeparture .pawJournalStation').count(),1,'One station departure');
+      assert.equal(await page.locator('.pawRailWayfinding').count(),0,'Duplicate station action');
+     }
+     if(id==='dockValley'){
+      assert.equal(await page.locator('.pawPavilionScene > .pawPavilionTray').count(),1,'Town Hall opens its pavilion first');
+      assert.equal(await page.locator('.pawPavilionNews[open]').count(),0,'Long town news should begin folded');
+     }
+     if(id==='dockOwnHome'){
+      const structure=await page.evaluate(()=>{const q=$('content'),room=q.querySelector('.hideoutScene'),actions=q.querySelector('.hideoutPrimary'),expansion=q.querySelector('.pawRoomExpansionFold');return {first:!!room&&!!actions&&!!(room.compareDocumentPosition(actions)&Node.DOCUMENT_POSITION_FOLLOWING),folded:!!expansion&&!expansion.open,top:room?.getBoundingClientRect().top,visible:room?.getBoundingClientRect().height}});
+      assert(structure.first&&structure.folded&&structure.visible>0&&structure.top<height*.5,'Room should appear before administration: '+JSON.stringify(structure));
+     }
      await shot('dock-'+id);
      const back=page.locator('#content > .row button').first();
      await back.waitFor({state:'visible',timeout:8000});
