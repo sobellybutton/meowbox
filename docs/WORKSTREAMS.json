@@ -19,7 +19,9 @@
       "resources": [
         "browser",
         "scripts/paw-entrance-test.cjs",
-        "scripts/player-loop-test.cjs"
+        "scripts/player-loop-test.cjs",
+        ".github/workflows/paw-entry-recovery.yml",
+        "scripts/entry-recovery-test.cjs"
       ],
       "depends": [],
       "stage": "outstanding",
