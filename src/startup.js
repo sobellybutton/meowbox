@@ -15391,6 +15391,7 @@ function pawYueRestoreInline(){
  const visit=pawYueInline;if(!visit)return;
  pawYueInline=null;visit.observer?.disconnect();
  if(visit.anchor.isConnected)visit.anchor.replaceWith(visit.form);else visit.form.remove();
+ if(visit.languageAnchor?.isConnected)visit.languageAnchor.replaceWith(visit.language);else visit.language?.remove();
  $('dialogue').removeAttribute('data-paw-yue-question');
 }
 const pawYueInlineClose=closeTalk;
@@ -15406,7 +15407,10 @@ function pawYueInlineForm(kind){
  say(tr('Master Yue','月师傅'),'',[[tr('Return to our conversation','回到茶叙'),()=>{closeTalk();yueReadingHub()}]]);
  const panel=$('dialogue');panel.dataset.pawYueQuestion='true';
  panel.insertBefore(form,$('choices'));
- const visit={form,anchor,out,kind,observer:null,scene,room};
+ const language=q.querySelector('.pawYueDeskOptions .yueReadingLanguage');
+ const languageAnchor=language?document.createComment('Yue reading language'):null;
+ if(language){language.before(languageAnchor);$('choices').append(language)}
+ const visit={form,anchor,out,kind,observer:null,scene,room,language,languageAnchor};
  pawYueInline=visit;
  visit.observer=new MutationObserver(()=>{
   if(pawYueInline!==visit)return;
