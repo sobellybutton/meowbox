@@ -65,9 +65,10 @@ function create(placement,manifest,contacts){
   if(!spec||!pair(spec.rest)||!pair(spec.center)||!pair(spec.radius)||!spec.radius.every(v=>v>0)||!finite(spec.height)||spec.height<=0||!finite(spec.clearance)||spec.clearance<0)return null;
   const c=landmarks(manifest,contacts,spec.id);
   if(!c?.grip||!c.workingTip)return null;
+  const angle=spec.angle??.48;if(!finite(angle)||Math.abs(angle)>Math.PI)return null;
   const rest=placement.geometry(manifest,spec.id,...spec.rest,spec.height);
   if(!rest)return null;
-  return {id:spec.id,height:spec.height,rest,center:spec.center.slice(),radius:spec.radius.slice(),clearance:spec.clearance,grip:c.grip.slice(),tip:c.workingTip.slice()};
+  return {id:spec.id,height:spec.height,rest,center:spec.center.slice(),radius:spec.radius.slice(),clearance:spec.clearance,angle,grip:c.grip.slice(),tip:c.workingTip.slice()};
  }
  function stirFrame(plan,progress,gestureAngle=0,reduced=false){
   if(!plan||![progress,gestureAngle].every(finite))return null;
@@ -78,7 +79,7 @@ function create(placement,manifest,contacts){
   // Lift above the work surface during transfer. Reduced motion retains
   // exact endpoint/gesture contact without the decorative transfer arc.
   const desired=[mix(restTip[0],orbit[0],u),mix(restTip[1],orbit[1],u)-(reduced?0:Math.sin(Math.PI*u)*plan.clearance)];
-  const angle=u*.48;
+  const angle=u*plan.angle;
   const probe=placement.geometry(manifest,plan.id,0,0,plan.height,{anchor:plan.grip,angle});
   if(!probe)return null;
   const offset=probe.point(...plan.tip),hand=[desired[0]-offset[0],desired[1]-offset[1]];
