@@ -14056,7 +14056,8 @@ mobileRoomCamera=function(...args){
 };
 /* PAW_ACTOR_FAMILY_BEGIN */
 function pawActorFamilyReady(walk,ready){
- return ['up','down','right'].every(dir=>Array.isArray(walk?.[dir])&&walk[dir].length>=4&&walk[dir].every(ready))
+ const states=['up','down','right'].map(dir=>{const frames=walk?.[dir];return Array.isArray(frames)&&frames.length>=4?frames.map(ready).every(Boolean):false});
+ return states.every(Boolean)
 }
 /* PAW_ACTOR_FAMILY_END */
 const pawActorFamilyChoice=new Map();
@@ -14071,7 +14072,7 @@ backHuman=function(x,y,kind,walking,facing,scale=1){
  if(pawActorFamilyChoice.get(kind)){
   const dir=facing==='left'?'right':facing,frames=walk?.[dir]||walk?.down;
   const frame=frames[walking?mbArtFrameIndex(t,frames.length,actorReduce||residentReducedMotion.matches):0],im=mbArtImage(frame);
-  if(im){mbArtDrawFrame(frame,im,x,y,scale,facing==='left');return}
+  if(im){if(walking)return pawFamilyBackHuman(x,y,kind,walking,facing,scale);mbArtDrawFrame(frame,im,x,y,scale,facing==='left');return}
  }
  // Keep the legacy illustrated family for the whole visit, even if a
  // subset of new walk directions finishes downloading during a turn.
