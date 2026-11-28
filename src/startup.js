@@ -8924,7 +8924,12 @@ function pawPrepareRecoveredShare(format,data){
 }
 function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
  const key=pawRecoveredLayoutKey(data,format);if(!key)return false;
- const slots=pawRecoveredLayouts[key],overlay=pawRecoveredImage('templates/'+key+'.svg');
+ const nativeSlots=pawRecoveredLayouts[key],overlay=pawRecoveredImage('templates/'+key+'.svg');
+ // The decorative frame may adapt to safe margins; the art and typography
+ // must never inherit that non-uniform transform.
+ const scale=(box.width-box.left-box.right)/(box.width-168);
+ const mapRect=([x,y,w,h])=>[box.left+(x-84)*scale,y,w*scale,h];
+ const slots=Object.fromEntries(Object.entries(nativeSlots).map(([k,v])=>[k,Array.isArray(v[0])?v.map(mapRect):mapRect(v)]));
  if(!overlay?.complete||!overlay.naturalWidth||overlay.naturalWidth!==box.width||overlay.naturalHeight!==box.height)return false;
  const tarot=data.kind==='tarot',art=tarot?readingArtwork():pawRecoveredResultIllustration(data);
  if(!slots.score_rows&&!slots.tiles&&!slots.palace_cells&&(!art?.complete||!art.naturalWidth||!art.naturalHeight||(tarot&&(art.naturalWidth!==1024||art.naturalHeight!==2180))))return false;
@@ -8933,16 +8938,19 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
  const ink='#4d3a2c',accent='#795741',muted='#54684e';
  g.drawImage(paper,0,0,box.width,box.height);
  // Compress only the overlay and its coordinate system for social story safe margins.
- const scale=(box.width-box.left-box.right)/(box.width-168);
- g.save();g.translate(box.left,0);g.scale(scale,1);g.translate(-84,0);g.drawImage(overlay,0,0,box.width,box.height);
+ g.save();g.translate(box.left,0);g.scale(scale,1);g.translate(-84,0);g.drawImage(overlay,0,0,box.width,box.height);g.restore();
  function textIn(rect,values,initial=36,weight='normal',color=ink){
   const [x,y,w,h]=rect,pad=Math.min(16,h*.1),maxW=w-2*pad,maxH=h-2*pad;
   const v=values.filter(v=>typeof v==='string'&&v.trim());if(!v.length)return;
   let size=initial,rows=[],lh,total;
   for(;size>=16;size-=2){g.font=weight+' '+size+'px '+font;rows=v.flatMap(q=>shareTextLines(g,q,maxW));lh=size*1.22;total=rows.length*lh;if(total<=maxH||size<=17)break}
-  const shrink=Math.min(1,maxH/Math.max(1,total));
-  g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.translate(x+w/2,y+h/2);g.scale(1,shrink);g.font=weight+' '+size+'px '+font;g.textAlign='center';g.textBaseline='middle';g.fillStyle=color;
-  rows.forEach((q,i)=>g.fillText(q,0,(i-(rows.length-1)/2)*lh,maxW));g.restore()
+  // Keep readable glyph proportions. If a long result exceeds the allotted
+  // excerpt, show a clear ellipsis instead of vertically crushing the words.
+  const capacity=Math.max(1,Math.floor(maxH/lh));
+  g.font=weight+' '+size+'px '+font;
+  if(rows.length>capacity){rows=rows.slice(0,capacity);let last=rows.at(-1);while(last&&g.measureText(last+'…').width>maxW)last=Array.from(last).slice(0,-1).join('');rows[rows.length-1]=last+'…'}
+  g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.translate(x+w/2,y+h/2);g.textAlign='center';g.textBaseline='middle';g.fillStyle=color;
+  rows.forEach((q,i)=>g.fillText(q,0,(i-(rows.length-1)/2)*lh));g.restore()
  }
  textIn(slots.title,[locale(data.title)],format==='square'?38:46,'bold');
  if(tarot){
@@ -8978,7 +8986,7 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
   textIn(slots.summary,lines,format==='square'?30:36)
  }
  textIn(slots.footer,['Pawradise · '+(cn?'趣味探索，仅供反思':'For fun and reflection')],27,'normal',muted);
- g.restore();return true
+ return true
 }
 /* Share only the computed result, never individual answers or private input. */
 /* PAW_EXTRA_DISCOVERY_BEGIN */
@@ -10528,7 +10536,8 @@ roomIntro=function(...args){
  if(!pawForecourtPending||room!=='temple'||activity)return result;
  pawForecourtPending=false;
  start('templeForecourt');state.pawForecourt={pos:pawForecourtStart.slice(),route:[],destination:null,last:t};
- hint('Follow the stone path. The lucky cat is on your right.','沿着石阶向前走，右侧是招福猫。');
+ pawForecourtRoute(state.pawForecourt,'hall');
+ hint('Walking into the temple…','沿石阶走进大殿……');
  return result
 };
 function pawForecourtChoose(kind,run=state){
@@ -10570,8 +10579,6 @@ drawActivity=function(...args){
   const dir=moving?(Math.abs((d[0]-q.pos[0])*p.w)>Math.abs((d[1]-q.pos[1])*p.h)?(d[0]>q.pos[0]?'right':'left'):(d[1]<q.pos[1]?'up':'down')):(q.greeted?'right':'up');
   backHuman(x,y,avatar??0,moving&&!residentReducedMotion.matches,dir,.92+(q.pos[1]-.58)*1.05);
   if(!moving){
-   const cat=pawForecourtWorld([.69,.34]),catEnd=pawForecourtWorld([.97,.55]);
-   target(cat[0],cat[1],catEnd[0]-cat[0],catEnd[1]-cat[1],()=>pawForecourtChoose('cat',run),'paw-forecourt-cat');
    const landing=pawForecourtWorld([.47,.51]),left=pawForecourtWorld([.30,.46]),right=pawForecourtWorld([.65,.61]);
    target(left[0],left[1],right[0]-left[0],right[1]-left[1],()=>pawForecourtChoose('hall',run),'paw-forecourt-hall');
    // Compact directions live on the stair path, never on the cat or traveller.
@@ -10582,7 +10589,6 @@ drawActivity=function(...args){
 document.addEventListener('keydown',event=>{
  if(activity!=='templeForecourt'||pawArcadeInputBlocked()||event.repeat||event.altKey||event.ctrlKey||event.metaKey||event.target?.matches?.('input,textarea,select,button,[contenteditable=true]'))return;
  if(event.key==='Enter'||event.key==='ArrowUp'){event.preventDefault();pawForecourtChoose('hall')}
- if(event.key.toLowerCase()==='c'){event.preventDefault();pawForecourtChoose('cat')}
 });
 // Exit through the same approach and return down the actual stone path.
 const pawForecourtBackBefore=$('back').onclick;
@@ -10626,10 +10632,10 @@ function pawForecourtSyncControls(run){
  if(!el||run!==state||activity!=='templeForecourt'||!model){pawForecourtClearControls();return}
  if(pawArcadeInputBlocked()){if(el.classList.contains('pawForecourtControls'))el.hidden=true;return}
  const key=String(zh)+'|'+model.busy+'|'+model.greeted+'|'+model.canReturn;
- if(pawForecourtControlsRun===run&&pawForecourtControlsKey===key&&el.querySelectorAll('[data-paw-forecourt-control]').length===3){el.hidden=false;return}
+ if(pawForecourtControlsRun===run&&pawForecourtControlsKey===key&&el.querySelectorAll('[data-paw-forecourt-control]').length===1){el.hidden=false;return}
  el.replaceChildren();el.classList.remove('mb5ActivityAssist');el.classList.add('pawForecourtControls');el.hidden=false;
  pawForecourtControlsRun=run;pawForecourtControlsKey=key;
- for(const [id,en,cn] of [['cat',model.greeted?'Greet again':'Greet lucky cat',model.greeted?'再次招呼':'拜访招福猫'],['hall','Enter hall','进入大殿'],['exit','Return to valley','返回福运谷']]){
+ for(const [id,en,cn] of [['exit','Return to valley','返回解忧谷']]){
   const button=b(el,tr(en,cn),()=>pawForecourtChoose(id,run));button.dataset.pawForecourtControl=id;button.disabled=id==='exit'?!model.canReturn:model.busy
  }
 }
@@ -13985,7 +13991,7 @@ openTarotReading=function(entry,back){
    if(reflection)words+='\n\n'+reflection;
    const aside=tarotCommentary(d[0],c.rev,live.topic,live.tone);
    if(aside)words+='\n\n'+tr(...aside);
-   choices.push([index+1<count?tr('Next card','下一张牌'):tr('What does it mean together?','整体意味着什么？'),()=>explain(pawLiveTarotStep(count,index,1))]);
+   choices.push([index+1<count?tr('Next card','下一张牌'):count===1?tr('A thought to take with you','带走一点启发'):tr('What does it mean together?','整体意味着什么？'),()=>explain(pawLiveTarotStep(count,index,1))]);
   }else{
    words=count===5?tr('Compare what helps with the challenge card. Choose one small action from the next-step card, and keep the last card as a reminder.','对照助力牌和挑战牌。从行动牌里选一件小事，再把最后一张牌当作提醒。'):count===3?readingConnection(live):tr('Take what resonates with you. A card is a moment for reflection, not a prediction or an instruction.','把有共鸣的部分留在心里。牌意是自我反思，不是预言，也不是指令。');
    choices.push([tr('Make a keepsake','制作纪念牌卡'),()=>{if(!valid())return;closeTalk();shareReadingResult(live,()=>{if(valid())explain(index)})}]);
@@ -14055,7 +14061,8 @@ gardenWrite=function(){
  paper.append(input);$('dialogue').insertBefore(paper,$('choices'));$('dialogue').classList.add('pawWishWriting');
  composer={run,paper,input};pawWishComposer=composer;
  input.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeTalk()}else if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();fold()}});
- input.focus({preventScroll:true})
+ // Do not force the mobile keyboard over the painted writing station.
+ // The player can tap the paper when ready to begin.
 };
 const pawWishArchiveBefore=gardenWishBook;
 gardenWishBook=function(){
