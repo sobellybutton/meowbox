@@ -362,7 +362,13 @@ jobs:
                 await page.locator('#dockScoop').click();
                 await page.locator('.townFortuneSlip').waitFor({timeout:8000});
                 if(!await page.locator('#luck').isHidden())throw Error('Obsolete luck shortcut visible');
-                if(await page.locator('#dock').isVisible())throw Error('Focused Today page must not display map dock');
+                // Owner standard: four persistent destinations at safe root pages;
+                // nested screens still use their contextual return.
+                await page.locator('#game.pawDockRoot #dock').waitFor({state:'visible',timeout:4000});
+                if(await page.locator('#dock button[aria-current="page"]').count()!==1||await page.locator('#dockScoop').getAttribute('aria-current')!=='page')throw Error('Today root must select exactly its own persistent dock destination');
+                if(await page.locator('#dock > button:visible').count()!==4)throw Error('Today root must expose the four canonical dock destinations');
+                const dockFit=await page.evaluate(()=>{const d=$('dock').getBoundingClientRect(),g=$('game').getBoundingClientRect(),p=$('page');return d.left>=g.left-1&&d.right<=g.right+1&&d.bottom<=g.bottom+1&&parseFloat(getComputedStyle(p).paddingBottom)>=d.height});
+                if(!dockFit)throw Error('Today dock clips the viewport or lacks reserved page space');
                 await page.locator('#content > .row').getByRole('button',{name:/^‹ (Back(?: to game)?|Town|Profile|My room)$/}).click();
                 await page.locator('#dockValley').click();
                 await page.locator('.communityTabs').waitFor({state:'visible'});
