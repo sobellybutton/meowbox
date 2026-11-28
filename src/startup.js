@@ -12920,7 +12920,7 @@ pawApplyApprovedNames(maps,[unifiedHouseNames,housePlaqueNames],activityTitle,to
 // Matching travel stationery: existing painted paper and original head artwork.
 const pawHudCornerStyle=document.createElement('style');
 pawHudCornerStyle.textContent=`
-#game #profileHud,#game #small .townSettingsToggle{box-sizing:border-box;background:#eadbc0 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 132px repeat!important;color:#534a37!important;border:1px solid #a99573!important;box-shadow:0 2px 5px #26382f45,inset 0 0 0 2px #fff5d952!important;min-height:44px!important}
+#game #profileHud,#game #hudStats #hudCoins,#game #small .townSettingsToggle{box-sizing:border-box;background:#eadbc0 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 132px repeat!important;color:#534a37!important;border:1px solid #a99573!important;box-shadow:0 2px 5px #26382f45,inset 0 0 0 2px #fff5d952!important;min-height:44px!important}
 #game #profileHud{border-radius:13px 9px 12px 10px!important;padding:3px 8px 3px 4px!important;text-align:left;min-width:44px}
 #game #hudPortrait{width:35px!important;height:35px!important;flex:0 0 35px;background:transparent!important;border:0!important;border-radius:50%!important;object-fit:contain!important;object-position:center!important;box-shadow:none!important}
 #game #hudName,#game #hudProgress{color:#534a37!important;text-shadow:none}
@@ -12930,6 +12930,16 @@ pawHudCornerStyle.textContent=`
 #game #small .townSettingsPanel{background:#eadbc0 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 180px repeat!important;border-color:#a99573!important;border-radius:12px 9px 12px 10px!important;color:#534a37!important}
 #game #profileHud:focus-visible,#game #small .townSettingsToggle:focus-visible{outline:2px solid #39594d!important;outline-offset:2px}
 @media(max-width:380px){#game #profileHud{padding-right:5px!important}#game #hudPortrait{width:31px!important;height:31px!important;flex-basis:31px}}
+
+#game #hud{left:max(8px,env(safe-area-inset-left,0px))!important;right:max(8px,env(safe-area-inset-right,0px))!important;top:calc(env(safe-area-inset-top,0px) + 8px)!important;gap:5px!important;box-sizing:border-box}
+#game #small{right:max(8px,env(safe-area-inset-right,0px))!important}
+#game #hudStats #hudCoins{min-height:34px!important;display:inline-flex;align-items:center;border-radius:10px 8px 11px 8px!important;white-space:nowrap;line-height:1.2;box-shadow:0 2px 5px #26382f45!important}
+#game #hudStats #hudCoins.pawHudCoinPainted::before{width:22px;height:22px;flex-basis:22px}
+#game #small .townSettingsPanel{box-sizing:border-box;max-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 68px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin}
+#game #small .townSettingsPanel button{min-height:44px!important;border:1px solid #b8a17c!important;border-radius:7px!important;background:#f2e5cb!important;color:#514634!important;box-shadow:none!important}
+#game #small .townSettingsPanel button[aria-pressed=true],#game #small .townSettingsPanel .languageChoice button.active{background:#dbe0ca!important;border-color:#8c9b7c!important}
+#game #small .townSettingsPanel button:focus-visible{outline:2px solid #39594d!important;outline-offset:-2px}
+@media(max-width:380px){#game #hudStats #hudCoins.pawHudCoinPainted::before{width:19px;height:19px;flex-basis:19px}}
 `;document.head.append(pawHudCornerStyle);
 /* PAW_HUD_CORNER_STYLE_END */
 
