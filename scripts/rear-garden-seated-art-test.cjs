@@ -22,3 +22,29 @@ assert.equal(api.pawRearSeatedBox(0,{x:0,y:0},0),null);
 assert(source.includes('pawDrawRearSeated(im,id,a.hip,scale)'));
 assert(source.includes('delete run.pawRearSeatArt'));
 console.log('PASS '+(n+4)+' seat artwork identity, hip contact and visible leg geometry checks');
+
+{
+ const seat=source.slice(source.indexOf('function pawRearGardenSeatAmount('),source.indexOf('/* PAW_REAR_BENCH_QUEUE_BEGIN */'));
+ const block=source.split('/* PAW_REAR_BENCH_QUEUE_BEGIN */')[1].split('/* PAW_REAR_BENCH_QUEUE_END */')[0];
+ const next=new Function(seat+block+';return pawRearBenchNext')();
+ let checks=0;
+ const eq=(v,w)=>{assert.equal(v,w);checks++};
+ for(const reduced of [true,false])for(const intent of ['seat','feed','chime','cats'])for(const blocked of [true,false])for(const atBench of [true,false]){
+  const q={pawAfterStand:intent},r={gardenSitting:true,gardenSeatAt:10};
+  for(let i=0;i<=100;i++){
+   const now=10+i/100;
+   eq(next(r,q,now,reduced,atBench,blocked),blocked||!atBench||i<75?null:'stand');
+  }
+  r.gardenSitting=false;r.gardenSeatAt=20;
+  for(let i=0;i<=100;i++){
+   const now=20+i/100,waiting=!reduced&&i<45;
+   eq(next(r,q,now,reduced,atBench,blocked),blocked||!atBench||waiting?null:intent==='seat'?'clear':'route');
+  }
+ }
+ const q={pawAfterStand:'cats'},run={gardenSitting:false,gardenSeatAt:0};
+ eq(next(run,q,1,false,true,false),'route');q.pawAfterStand='seat';eq(next(run,q,1,false,true,false),'clear');
+ eq(next(run,{},1,false,true,false),null);
+ assert(source.includes('q.pawAfterStand=kind;'));
+ assert(source.includes("if(benchNext==='stand')gardenSeat();"));
+ console.log('PASS '+checks+' retained garden bench intent, cooldown and stand-before-route assertions');
+}
