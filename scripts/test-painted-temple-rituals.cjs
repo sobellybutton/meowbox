@@ -167,3 +167,46 @@ console.log('Resting ladle retry and exclusive held-tool ownership checks passed
  assert.ok(!a.pawGardenSeatAtNode({route:[[.78,.475]],pos:[.78,.475]},[.78,.475]));
  console.log('PASS 10 temple auto-arrival and garden seated ownership checks');
 }
+
+/* The traveller must reach the tray before the hand touches the stick.
+   Throughout retrieval, including the last frame, the prop and hand share
+   one point. No arm is painted during the approach. */
+{
+ const a=new Function(get('PURIFICATION_PAINT')+get('ALCOVE_PAINT')+';return {pawAlcoveGeometry,pawAlcoveStickPoint,pawAlcoveStickContact}')();
+ const g=a.pawAlcoveGeometry();
+ let n=0;const ck=v=>{assert.ok(v);n++};
+ for(let i=0;i<=1000;i++){
+  const pick=i/1000,p={picked:true,fall:1,pick},c=a.pawAlcoveStickContact(g,p),pt=a.pawAlcoveStickPoint(g,p);
+  ck(c.scale===1.92);ck(c.foot.x>=g.stickFoot.x&&c.foot.x<=g.stickPickFoot.x);
+  if(pick<.45){ck(c.hand===null);ck(pt.x===g.stickTray.x&&pt.y===g.stickTray.y)}
+  else{ck(!c.walking);ck(c.hand&&Math.hypot(c.hand.x-pt.x,c.hand.y-pt.y)<1e-9);ck(Math.hypot(c.hand.x-c.reach.shoulder.x,c.hand.y-c.reach.shoulder.y)<=c.reach.maxReach)}
+ }
+ ck(a.pawAlcoveStickContact(g,{picked:false,shake:false},false).hand===null);
+ ck(a.pawAlcoveStickContact(g,{picked:false,shake:true}).hand===g.tubeGrip);
+ console.log('PASS '+n+' alcove approach, reach and stick contact assertions');
+}
+
+
+
+// Physical contact: the mirrored rotation is identical for the painted
+// ladle, the gripping hand and the stream origin, with bounded arm reach.
+const physicalWater=new Function(get('PURIFICATION_PAINT')+';return {pawWaterGeometry,pawWaterLadlePoint,pawWaterShoulder,pawWaterDragCentre,pawWaterDestination,pawWaterDropMatches}')();
+const wg=physicalWater.pawWaterGeometry(),ws=1.92,wsh=physicalWater.pawWaterShoulder(wg,ws);
+for(let i=0;i<=100;i++){
+ const angle=.58*i/100,p=physicalWater.pawWaterLadlePoint(wg.pour,angle,-25,1),b=physicalWater.pawWaterLadlePoint(wg.pour,angle,35,6);
+ assert.ok(Math.abs(Math.hypot(p.x-b.x,p.y-b.y)-.65*Math.hypot(60,5))<1e-7);
+ assert.ok(Math.hypot(p.x-wsh.x,p.y-wsh.y)<42*ws);
+ if(i)assert.ok(b.y>physicalWater.pawWaterLadlePoint(wg.pour,0,35,6).y);
+}
+for(let x=240;x<=470;x+=5)for(let y=300;y<=520;y+=5){
+ const p=physicalWater.pawWaterDragCentre({x,y},wg,ws),h=physicalWater.pawWaterLadlePoint(p,0,-25,1);
+ assert.ok(Math.hypot(h.x-wsh.x,h.y-wsh.y)<=42*ws+1e-7);
+}
+for(const stage of [0,1]){
+ const p=physicalWater.pawWaterDestination(stage,wg),q=physicalWater.pawWaterDragCentre(p,wg,ws);
+ assert.ok(Math.hypot(p.x-q.x,p.y-q.y)<1e-7);
+ assert.ok(physicalWater.pawWaterDropMatches(stage,q.x,q.y,wg));
+}
+assert.ok(src.includes('at=pawWaterDragCentre(pawWaterGripPoint(drag,drag),g,pawTemplePaintedActorScale())'));
+assert.ok(src.includes('const bowl=pawWaterLadlePoint(at,angle,35,6)'));
+console.log('Purification ladle contact and bounded reach checks passed.');

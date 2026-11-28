@@ -144,8 +144,9 @@ function openWonderResult(mode,result){
    if(portrait.leaders.length>1)element('p',tr('These cats tied. There is no single winner.','这些猫灵并列，没有唯一答案。'),body);
    portrait.leaders.forEach(({index,score,opportunity})=>{const cat=soulCats[index],item=element('article','',body,'readingNote');element('h2',tr(cat[0],cat[1]),item);element('p',score+'/'+opportunity,item);element('p',tr(cat[2],cat[3]),item)});
   }else element('p',tr(...result.desc),body);
-  b(body,tr('Share keepsake','分享纪念卡'),()=>wonderSceneShare(()=>openWonderResult(mode,result)));
-  b(body,tr('Try again','再测一次'),()=>wonderSceneOpen(mode));
+  const actions=element('nav','',body,'pawReadingActions');actions.setAttribute('aria-label',tr('Reading actions','解读操作'));
+  b(actions,tr('Share keepsake','分享纪念卡'),()=>wonderSceneShare(()=>openWonderResult(mode,result)));
+  b(actions,tr('Try again','再测一次'),()=>wonderSceneOpen(mode));
  });
  journalLanguage(()=>openWonderResult(mode,result));
 }
@@ -244,10 +245,37 @@ syncStorySheet=function(...args){return pawSyncReadingSurface(storySheet,'story'
 syncCafeQuestionSheet=function(...args){return pawSyncReadingSurface(cafeQuestionSheet,'cafe',pawReleaseCafeSheet,args)};
 const pawDiscoveryReadingStyle=document.createElement('style');
 pawDiscoveryReadingStyle.textContent=`
-#game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet){background:#f0e3c9 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 180px repeat!important;box-sizing:border-box;overflow-wrap:anywhere;overscroll-behavior:contain;scrollbar-width:thin}
-#game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet) button{min-height:44px;white-space:normal;overflow-wrap:anywhere;max-width:100%}
-#game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet) :is(button,summary):focus-visible{outline:2px solid #3c6654;outline-offset:-3px}
-#game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet) button:disabled{opacity:.68}
+/* PAW_DISCOVERY_SINGLE_LEAF_BEGIN */
+html #game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet){
+ background:#f0e3c9 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 180px repeat!important;
+ box-sizing:border-box!important;overflow-wrap:anywhere;overscroll-behavior:contain;scrollbar-width:thin;
+ border:0!important;border-radius:7px!important;box-shadow:0 2px 9px #30291e35!important;
+ padding:9px 12px!important;max-width:calc(100% - 24px)!important;overflow-y:auto!important;overflow-x:hidden!important;
+}
+html #game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet)>:is(p,small,strong){min-width:0;max-width:100%;overflow-wrap:anywhere;line-height:1.4;margin-block:4px}
+html #game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet) button{
+ min-height:44px!important;min-width:0!important;white-space:normal!important;overflow-wrap:anywhere!important;max-width:100%!important;
+ background:transparent!important;border:0!important;border-bottom:1px solid #b49d785e!important;border-radius:0!important;box-shadow:none!important;
+ color:#405440!important;text-align:start!important;padding:6px 8px!important;font-size:14px!important;line-height:1.35!important;
+}
+html #game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet) button[aria-pressed=true]{background:#dbe1cb!important;color:#395846!important}
+html #game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet) :is(button,summary):focus-visible{outline:2px solid #3c6654!important;outline-offset:-3px}
+html #game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet) button:disabled{opacity:.68}
+html #game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet)[hidden]{display:none!important}
+html #game #content .readingNotes{max-width:100%!important;min-width:0!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
+html #game #content .readingNotes .readingNote{min-width:0!important;padding:10px 0!important;margin:0!important;background:none!important;border:0!important;border-bottom:1px solid #b49d785e!important;border-radius:0!important;box-shadow:none!important}
+html #game #content .readingNotes .readingNote :is(h2,p){overflow-wrap:anywhere;line-height:1.45;margin-block:4px}
+html #game #content .readingNotes .readingPrompt{background:none!important;border:0!important;box-shadow:none!important;padding:4px 0!important;color:#405440!important}
+html #game #content .readingNotes .pawReadingActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:10px 0 0}
+html #game #content .readingNotes .pawReadingActions button{min-width:0!important;min-height:44px!important;white-space:normal!important;overflow-wrap:anywhere!important;background:transparent!important;border:0!important;border-bottom:1px solid #b49d785e!important;box-shadow:none!important;border-radius:0!important;color:#405440!important}
+html #game #content .readingNotes .pawReadingActions button:focus-visible{outline:2px solid #3c6654!important;outline-offset:-3px}
+@media(max-width:480px){html #game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet)[data-paw-discovery-plate]{max-height:min(53dvh,380px)!important}}
+@media(forced-colors:active){
+ html #game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet){background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important}
+ html #game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet) button,html #game #content .readingNotes .pawReadingActions button{color:ButtonText!important;border-bottom:1px solid ButtonText!important}
+ html #game :is(#wonderQuestionSheet,#storyReadingSheet,#cafeQuestionSheet) button[aria-pressed=true]{background:Highlight!important;color:HighlightText!important}
+}
+/* PAW_DISCOVERY_SINGLE_LEAF_END */
 `;document.head.append(pawDiscoveryReadingStyle);
 
 

@@ -412,13 +412,29 @@ jobs:
                 if(!await translated.evaluateAll((els,id)=>els.some(e=>e.dataset.noticeId===id),noticeId))throw Error('Reply expansion lost on language switch');
                 await switchTownLanguage('EN');
                 await page.locator('.townWall').waitFor({state:'visible'});
-                const older=page.locator('.townPostNav').getByRole('button',{name:'Read older notices',exact:true});
-                if(await older.isEnabled()){await older.click();if(await page.locator('.townResidentNote').count()<=initialNotices)throw Error('Older notices did not expand')}
-                else if(!await page.locator('.townPostNav span').innerText().then(v=>/^6 \/ 6 notices$/.test(v)))throw Error('Older notices disabled despite more notices');
-                const archiveDepth=await page.locator('.townResidentNote').count();
+                const pager=page.locator('.townWall .pawCompactPager');
+                const pageNext=pager.getByRole('button',{name:'Next ›',exact:true});
+                if(await page.locator('.townResidentNote:visible').count()!==2)throw Error('Noticeboard must show two notices per page');
+                await pageNext.click();
+                const readVisibleNotices=()=>page.locator('.townResidentNote:visible').evaluateAll(nodes=>nodes.map(n=>n.dataset.noticeId));
+                const secondPage=await readVisibleNotices();
+                if(secondPage.length!==2||secondPage.includes(noticeId))throw Error('Noticeboard next page did not change notices');
+                const archivePage=await pager.locator('small').innerText();
+                await switchTownLanguage('中文');
+                if(await pager.locator('small').innerText()!==archivePage||JSON.stringify(await readVisibleNotices())!==JSON.stringify(secondPage))throw Error('Noticeboard page lost on language switch');
+                await switchTownLanguage('EN');
+                if(JSON.stringify(await readVisibleNotices())!==JSON.stringify(secondPage))throw Error('Noticeboard page lost returning to English');
+                while(await pageNext.isEnabled())await pageNext.click();
+                const older=page.locator('.townPostNav').getByRole('button',{name:'Read older notices',exact:true,includeHidden:true});
+                if(await older.isEnabled()){
+                  if(!await older.isVisible())throw Error('Older notices unavailable on final page');
+                  await older.click();
+                  if(await page.locator('.townResidentNote').count()<=initialNotices)throw Error('Older notices did not expand');
+                }else if(await page.locator('.townPostNav').isVisible())throw Error('Empty archive control should be hidden');
+                const archiveDepth=await page.locator('.townResidentNote').count(),archiveIds=await readVisibleNotices();
                 await switchTownLanguage('中文');
                 await page.locator('.townWall').waitFor({state:'visible'});
-                if(await page.locator('.townResidentNote').count()!==archiveDepth)throw Error('Archive depth lost on language switch');
+                if(await page.locator('.townResidentNote').count()!==archiveDepth||JSON.stringify(await readVisibleNotices())!==JSON.stringify(archiveIds))throw Error('Archive depth or page lost on language switch');
                 await switchTownLanguage('EN');
                 await page.locator('.townWall').waitFor({state:'visible'});
                 await page.screenshot({path:'test-results/'+name+'-town-wall.png'});
