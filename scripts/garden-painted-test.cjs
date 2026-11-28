@@ -190,3 +190,17 @@ assert.ok(!s.includes("'paw-rear-cat-'+i"),'No individual cat hit targets');
  assert.ok(a.includes('if(!residentReducedMotion.matches)ctx.rotate(Math.sin(t*1.45)'));
  console.log('PASS fallback garden two-control and ambient chime checks');
 }
+
+{
+ const source=fs.readFileSync(path.resolve(__dirname,'../src/extensions.js'),'utf8');
+ const a=new Function(source.split('/* PAW_WISH_CARRY_BEGIN */')[1].split('/* PAW_WISH_CARRY_END */')[0]+';return {gardenLanternCarry,gardenLanternRise}')();
+ const held=a.gardenLanternCarry([325,637],true),to={x:500,y:337};
+ assert.deepEqual(held,{x:281,y:625,sc:.78});
+ assert.deepEqual(a.gardenLanternCarry(null,false),{x:400,y:525,sc:1});
+ assert.deepEqual(a.gardenLanternRise(held,to,0),{f:0,...held});
+ for(const age of [1.6,3])assert.deepEqual(a.gardenLanternRise(held,to,age),{f:1,...to,sc:.82});
+ assert.deepEqual(a.gardenLanternRise(held,to,0,true),{f:1,...to,sc:.82});
+ assert.ok(source.includes("state.gardenCarryOrigin=gardenCarryAnchor()"));
+ assert.ok(s.includes("held.y-32*held.sc"));
+ console.log('PASS wish lantern hand origin, continuous rise and reduced motion checks');
+}

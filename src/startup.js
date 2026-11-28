@@ -13431,7 +13431,8 @@ drawActivity=function(...args){
  if(!pawWishPaintedActivity())return pawWishActivityDrawBefore(...args);
  const p=pawWishLobbyPlate,b=livingBounds();ctx.save();try{
   ctx.fillStyle='#526b57';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(pawWishLobbyArt(),p.x,p.y,p.w,p.h);
-  const foot=pawWishLobbyStations.wishes.slice(2);backHuman(foot[0],foot[1]+22,avatar??0,false,'left',1.2);
+  const foot=pawWishLobbyStations.wishes.slice(2),fy=foot[1]+22,sc=1.2;backHuman(foot[0],fy,avatar??0,false,'left',sc);
+  if(state.gardenStage==='carry'||state.gardenStage==='rise'&&t-state.gardenRise<.25){const held=state.gardenCarryOrigin||gardenCarryAnchor();pawIncenseArm({x:foot[0]-9*sc,y:fy-48*sc},{x:held.x,y:held.y-32*held.sc},sc,false)}
  }finally{ctx.restore()}
  return pawWishActivityDrawBefore(...args)
 };
