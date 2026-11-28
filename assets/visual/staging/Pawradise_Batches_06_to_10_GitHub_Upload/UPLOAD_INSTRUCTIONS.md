@@ -1,0 +1,2 @@
+# Upload Batches 6–10
+Extract the ZIP. Open https://github.com/sobellybutton/meowbox/tree/main/assets/visual/staging and choose Add file > Upload files. In Finder, open extracted assets/visual/staging and drag the five dated folders (b06 through b10) into GitHub. Commit changes to main, or merge a PR if using a branch. Do not upload the ZIP itself or outer assets folder into staging. Keep all manifest and README files. Candidate artwork only; not permission to activate untested assets.

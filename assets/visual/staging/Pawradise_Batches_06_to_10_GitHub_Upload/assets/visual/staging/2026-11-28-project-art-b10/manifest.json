@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "assets": [
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b10/avatar-frame.webp",
+      "width": 256,
+      "height": 256,
+      "sha256": "262d4b23e80844227fb9833d195086fd2a4fac88ed4bb730f4ae69768237a5da",
+      "status": "staging candidate; not activated",
+      "source": "a_clean_transparent_png_checkerboard_transparency.png",
+      "notes": "Transparent central opening; draw selected avatar below frame."
+    },
+    {
+      "path": "assets/visual/staging/2026-11-28-project-art-b10/settings-cog.webp",
+      "width": 96,
+      "height": 96,
+      "sha256": "e6eed775cebbb2e66c00a994b0d93b7c3b0e69dd698c21c2e6f451d4645bc012",
+      "status": "staging candidate; not activated",
+      "source": "a_richly_illustrated_hand_painted_watercolor_an.png",
+      "notes": "Recovered from larger board; small native resolution; validate at HUD size."
+    }
+  ]
+}
