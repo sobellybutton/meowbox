@@ -4,16 +4,17 @@ const src=fs.readFileSync(path.resolve(__dirname,'../src/startup.js'),'utf8');
 const marker=src.match(/const pawAmbientLines=(\{[\s\S]*?\});\s*const pawAmbientKey/);
 assert.ok(marker);
 const current=new Function('return '+marker[1])(),original=JSON.parse(JSON.stringify(current));
-assert.equal(api.merge(current),128);
+const expectedCounts={"temple":11,"tarot":11,"yue":11,"garden":11,"grandma":13,"mei":11,"hong":13,"wang":11,"ahma":13,"lin":11,"arcade":11,"boba":11,"souvenir":11,"lab":11,"story":11,"cafe":11};
+assert.equal(api.merge(current),182);
 assert.equal(api.merge(current),0);
 for(const id of api.profiles){
  assert.ok(original[id]);
  assert.deepEqual(current[id].slice(0,original[id].length),original[id]);
  const added=current[id].slice(original[id].length);
- assert.equal(added.length,8);
+ assert.equal(added.length,expectedCounts[id]);
  assert.equal(new Set(current[id].map(r=>r[0])).size,current[id].length);
- assert.equal(new Set(added.map(r=>r[1])).size,8);
- assert.equal(new Set(added.map(r=>r[2])).size,8);
+ assert.equal(new Set(added.map(r=>r[1])).size,expectedCounts[id]);
+ assert.equal(new Set(added.map(r=>r[2])).size,expectedCounts[id]);
  for(const [key,en,cn] of added){
   assert.ok(key.startsWith('v2:')&&en.length<=110&&cn.length<=46&&/[一-鿿]/.test(cn));
   assert.ok(!original[id].some(r=>r[1]===en||r[2]===cn));
