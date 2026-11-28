@@ -15980,7 +15980,7 @@ function pawTarotPhysicalWash(q,kind,now,reduced){
 }
 function pawTarotWashOnTable(plate,pose){
  if(!plate||!pose)return null;
- const scale=plate.w*.49/420;
+ const scale=plate.w*.29/420;
  return {x:plate.x+plate.w*.53+(pose.x-400)*scale,y:plate.y+plate.h*.465+(pose.y-475)*scale,w:pose.w*scale,h:pose.h*scale,angle:pose.angle}
 }
 /* PAW_TAROT_PHYSICAL_WASH_END */
@@ -16000,4 +16000,43 @@ drawActivity=function(...args){
   pawTarotWashLastDraw=t;
  }finally{ctx.restore()}
  if(pawTarotWashComplete(state,t,false,pawArcadeInputBlocked()))pawOpenCardChoice(false);
+};
+
+
+/* PAW_TAROT_TABLE_SELECTION_BEGIN */
+function pawTarotTableSlots(plate){
+ if(!plate||![plate.x,plate.y,plate.w,plate.h].every(Number.isFinite)||plate.w<=0||plate.h<=0)return [];
+ const dx=plate.w*.103,dy=plate.h*.051,w=Math.min(dx*.78,dy*.62),h=w*1.5;
+ return Array.from({length:12},(_,i)=>({x:plate.x+plate.w*.5+(i%4-1.5)*dx,y:plate.y+plate.h*.476+(Math.floor(i/4)-1)*dy,w,h,hitW:dx,hitH:dy}));
+}
+/* PAW_TAROT_TABLE_SELECTION_END */
+let pawTarotTableLastDraw=-Infinity;
+const pawTarotTableSelectionBefore=drawActivity;
+drawActivity=function(...args){
+ if(room!=='tarot'||!['tarot','love'].includes(activity)||state.readStage!=='choose'||pawTarotPhysicalWash(state,activity,t,residentReducedMotion.matches))return pawTarotTableSelectionBefore(...args);
+ const im=pawReadingImage(pawReadingAPI(),'tarot'),plate=pawRoomImageReady(im)&&pawReadingCoverPlate(livingBounds(),im.naturalWidth,im.naturalHeight);
+ if(!plate)return pawTarotTableSelectionBefore(...args);
+ const portrait=W<H,count=activity==='tarot'?1:state.readSpreadSize===5?5:3,chosen=state.pawSelectedCards||[],slots=pawTarotTableSlots(plate),reduced=residentReducedMotion.matches,age=t-state.readAt,settled=pawTarotFanSettled(state,t,reduced);
+ if(!pawTarotFrameMatches(state,state.pawChoiceFrame,portrait))state.pawChoiceFrame={pool:state.pawCardPool,portrait};
+ const frame=state.pawChoiceFrame,centerX=plate.x+plate.w*.5,centerY=plate.y+plate.h*.476;
+ ctx.save();try{
+  paintLivingBackdrop(im);
+  for(let i=0;i<slots.length;i++){
+   const q=slots[i];if(chosen.includes(i))continue;
+   const raw=reduced||settled?1:Math.max(0,Math.min(1,(age-i*.038)/.32)),f=raw*raw*(3-2*raw);
+   if(!reduced&&age<i*.038)continue;
+   const x=centerX+(q.x-centerX)*f,y=centerY+(q.y-centerY)*f;
+   card(x-q.w/2,y-q.h/2,q.w,q.h,false);
+   if(settled&&chosen.length<count&&!pawArcadeInputBlocked())target(q.x-q.hitW/2,q.y-q.hitH/2,q.hitW,q.hitH,()=>pawSelectTarotCard(i,frame),'paw-pick-card-'+i);
+  }
+  for(const [rank,i] of chosen.entries()){
+   const q=slots[i],f=reduced?1:Math.max(0,Math.min(1,(t-(state.pawPickedAt?.[i]??t))/.24)),x=centerX+(rank-(count-1)/2)*q.w*.7,y=plate.y+plate.h*.553;
+   card(q.x+(x-q.x)*f-q.w/2,q.y+(y-q.y)*f-q.h/2,q.w,q.h,false)
+  }
+  const size=Math.min(17/Math.max(.08,cam.scale),plate.w*.045);
+  activityFitText(settled?tr('Choose '+count+' · '+chosen.length+'/'+count,'选 '+count+' 张 · '+chosen.length+'/'+count):tr('Laying out the cards…','正在铺牌……'),centerX,plate.y+plate.h*.395,size,plate.w*.48,'#fff0d2');
+  if(settled&&!chosen.length)label(tr('Shuffle again','重新洗牌'),centerX,plate.y+plate.h*.60,()=>{if(!pawTarotFrameMatches(state,frame,W<H)||pawArcadeInputBlocked())return;pawOpenCardChoice(true);physicalFx('paper',.6)});
+  pawTarotTableLastDraw=t;
+ }finally{ctx.restore()}
+ if(settled&&!pawArcadeInputBlocked()&&pawTarotFinishSelection(state,count,t,reduced))hint("Let's turn them over, one at a time.","我们一张一张翻开吧。");
 };
