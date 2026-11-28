@@ -17,7 +17,7 @@ async function enterMap(page,click){
  await click(page.locator('#proposal .shrine-enter'));
  await page.waitForFunction(()=>proposal.hidden&&valleyRevealAt<0&&!signRoot.hidden&&!transitioning,null,{timeout:30000});
  const state=await page.evaluate(()=>({avatar,name:playerName,scene,room,coins:typeof coins==='number'?coins:null,x:p.x,y:p.y}));
- assert.equal(state.scene,'fortune');assert.equal(state.room,null);
+ assert.equal(state.scene,'fortune');assert.ok(!state.room,'Unexpected room on first map');
  const canvas=await page.locator('#c').boundingBox(),vp=page.viewportSize();
  assert.ok(canvas&&Math.abs(canvas.width-vp.width)<3&&Math.abs(canvas.height-vp.height)<3,'Map does not fill viewport');
  return {ms:Date.now()-start,state};
@@ -68,7 +68,10 @@ async function firstMovement(page,click){
    const ticket=proposal.locator('.rail-ticket'),name='Entry Recovery';
    await ticket.locator('input').fill(name);await click(ticket.locator('.ticket-confirm'));
    await click(next);await click(proposal.locator('footer .actions button').first());
-   await click(proposal.locator('.rail-arrive'));
+   const arrive=proposal.locator('.rail-arrive'),gate=proposal.locator('.shrine-enter');
+   await arrive.or(gate).first().waitFor({state:'visible',timeout:30000});
+   if(await arrive.isVisible())await click(arrive);
+   await gate.waitFor({state:'visible',timeout:30000});
    await proposal.locator('.mbGatePainting').evaluate(im=>im.decode());
    await shot('first-gate');
    const first=await enterMap(page,click);
