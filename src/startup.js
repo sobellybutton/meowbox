@@ -5767,6 +5767,30 @@ function pawRoomVisitorLook(used,start=0){
  for(let i=0;i<4;i++){const id=(start+i)%4;if(!used.includes(id))return id}
  return null
 }
+/* PAW_CONTEXT_PACE_BEGIN */
+// Speed in ground units per second. A visitor's personal baseline is retained.
+// Clearance and remaining distance influence pace, not zoom or screen size.
+function pawContextPace(base,distance,clearance,previous,dt,final=true){
+ if(!Number.isFinite(base)||base<=0||!Number.isFinite(distance)||distance<=0)return 0;
+ const gap=Number.isFinite(clearance)?Math.max(0,clearance):1;
+ const factor=gap>=1.8?1.18:gap>=1.25?1:gap>=1?.82:.62;
+ const approach=final?Math.min(1,Math.max(.36,distance/38)):1;
+ const target=base*factor*approach;
+ const old=Number.isFinite(previous)?Math.max(0,previous):0;
+ const delta=Math.max(0,Math.min(.05,Number.isFinite(dt)?dt:0));
+ // Exponential smoothing makes a 30Hz and 60Hz walk comparable.
+ return old+(target-old)*(1-Math.exp(-10*delta))
+}
+function pawVisitorClearance(actor,others,gap){
+ if(!Number.isFinite(gap)||gap<=0)return 1;
+ let nearest=Infinity;
+ for(const other of others||[]){
+  if(!other||other===actor||!Number.isFinite(other.x)||!Number.isFinite(other.y))continue;
+  nearest=Math.min(nearest,Math.hypot(actor.x-other.x,actor.y-other.y)/gap)
+ }
+ return nearest===Infinity?2:nearest
+}
+/* PAW_CONTEXT_PACE_END */
 function pawWalkStep(a,b,dt,speed=48){
  const dx=b[0]-a.x,dy=b[1]-a.y,d=Math.hypot(dx,dy);
  if(!Number.isFinite(d)||!Number.isFinite(dt)||dt<0)return {x:a.x,y:a.y,arrived:false};
@@ -6015,7 +6039,7 @@ function pawRoomWalkers(){
  pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,elapsed-dt));
  if(residentReducedMotion.matches){for(const a of pawLocalVisitors)if(a.phase==='waiting')a.phase='stationary';return pawVisitorHold(pawLocalVisitors)}
  for(const a of pawLocalVisitors){
-  a.walking=0;if(a.guest||a.visitingResident||a.phase==='gone'||a.phase==='stationary'||t<a.wait)continue;
+  a.walking=0;if(a.guest||a.visitingResident||a.phase==='gone'||a.phase==='stationary'||t<a.wait){a.motionSpeed=0;continue;}
   const others=pawLocalVisitors.filter(b=>b!==a),clearDoor=()=>pawVisitorDoorClear(door,indoor,[...others,...pawAmbientIndoor],gaps.door);
   const routeTo=(from,to)=>pawVisitorDoorRoute(from,to,stationFeet,(x,y)=>indoorSafe(x,y,obs),(f,d)=>indoorPath(f,d,obs),gaps.station,(f,d)=>indoorSegment(f,d,obs));
   if(a.phase==='waiting'){
@@ -6047,14 +6071,18 @@ function pawRoomWalkers(){
    }
    if(!found){a.wait=t+5;continue}a.route=found
   }
-  const tempo=pawResidentTempo(a.id+'|'+a.avatar),dest=a.route[0],next=pawWalkStep(a,dest,dt,tempo.speed);
+  const tempo=pawResidentTempo(a.id+'|'+a.avatar),dest=a.route[0];
+  const distanceToWaypoint=Math.hypot(dest[0]-a.x,dest[1]-a.y);
+  const clearance=pawVisitorClearance(a,[indoor,...others.filter(pawVisitorVisible),...pawAmbientIndoor],Math.max(gaps.actor,gaps.player,gaps.peer));
+  a.motionSpeed=pawContextPace(tempo.speed,distanceToWaypoint,clearance,a.motionSpeed,dt,a.route.length===1);
+  const next=pawWalkStep(a,dest,dt,a.motionSpeed);
   const transit=a.phase==='arriving'||a.phase==='departing';
-  if(!indoorSafe(next.x,next.y,obs)||!pawGuestClear(next.x,next.y,transit?stationFeet:protectedFeet,gaps.station)||!pawVisitorStepClear(a,next,pawAmbientIndoor,gaps.actor)){if(!transit)a.route=[];a.wait=t+2;continue}
-  if(!pawVisitorStepClear(a,next,[indoor],gaps.player)||!pawVisitorStepClear(a,next,others.filter(pawVisitorVisible),gaps.peer)){if(!transit)a.route=[];a.wait=t+1.1;continue}
+  if(!indoorSafe(next.x,next.y,obs)||!pawGuestClear(next.x,next.y,transit?stationFeet:protectedFeet,gaps.station)||!pawVisitorStepClear(a,next,pawAmbientIndoor,gaps.actor)){if(!transit)a.route=[];a.motionSpeed=0;a.wait=t+2;continue}
+  if(!pawVisitorStepClear(a,next,[indoor],gaps.player)||!pawVisitorStepClear(a,next,others.filter(pawVisitorVisible),gaps.peer)){if(!transit)a.route=[];a.motionSpeed=0;a.wait=t+1.1;continue}
   const distance=Math.hypot(next.x-a.x,next.y-a.y);
   if(distance>.01){a.facing=pawWalkFacing(a,dest);pawGaitTravel.set(a,(pawGaitTravel.get(a)||0)+distance);a.walking=1}
   a.x=next.x;a.y=next.y;
-  if(next.arrived){a.route.shift();if(!a.route.length){a.walking=0;if(a.phase==='departing'){a.phase='gone';continue}if(a.phase==='arriving'){a.phase='roaming';a.elapsed=0}a.wait=t+(4+(a.avatar%3)*2)*tempo.dwell}}
+  if(next.arrived){a.route.shift();if(!a.route.length){a.walking=0;a.motionSpeed=0;if(a.phase==='departing'){a.phase='gone';continue}if(a.phase==='arriving'){a.phase='roaming';a.elapsed=0}a.wait=t+(4+(a.avatar%3)*2)*tempo.dwell}}
  }
  return pawLocalVisitors
 }
