@@ -643,12 +643,13 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-fortune-failed-result.png'});
                 // Observe both actual walking routes, beginning before input.
                 await page.evaluate(()=>{
-                  const trace=window.__pawRetryTrace={samples:[],painted:pawAlcoveActive(),done:false};
+                  const trace=window.__pawRetryTrace={samples:[],mode:state.pawPairedRitual?'paired':pawAlcoveActive()?'painted':'hall',done:false};
                   const tick=()=>{
                     if(trace.done||trace.samples.length>=1000)return;
+                    const paired=activity==='moon'&&state.pawPairedWalk?.to==='sticks'?state.pawPairedWalk.pos:null;
                     const pose=activity==='moon'&&state.pawFortuneTransfer==='retry'?pawFortuneTransferFrame(state,t,pawAlcoveGeometry()):null;
                     const hall=!activity&&pawFortuneWalk?.from==='moon'&&pawFortuneWalk?.to==='sticks';
-                    if(pose||hall)trace.samples.push({x:pose?pose.x:indoor.x,y:pose?pose.y:indoor.y,mode:pose?'painted':'hall'});
+                    if(paired||pose||hall){const point=paired||pose||indoor;trace.samples.push({x:point.x,y:point.y,mode:paired?'paired':pose?'painted':'hall'})}
                     requestAnimationFrame(tick);
                   };
                   requestAnimationFrame(tick);
@@ -658,10 +659,10 @@ jobs:
                 await page.screenshot({path:'test-results/'+name+'-fortune-retry-walk.png'});
                 await page.waitForFunction(()=>activity==='sticks'&&!state.pawFortuneNumber,{},{timeout:12000});
                 const trace=await page.evaluate(()=>{const q=window.__pawRetryTrace;q.done=true;return q});
-                const points=trace.samples.filter(p=>p.mode===(trace.painted?'painted':'hall'));
+                const points=trace.samples.filter(p=>p.mode===trace.mode);
                 if(points.length<2||!points.some(p=>Math.hypot(p.x-points[0].x,p.y-points[0].y)>5))throw Error('Retry did not visibly traverse the ritual space: '+JSON.stringify(trace));
                 if(await page.evaluate(n=>items.some(x=>x[0]==='Fortune stick '+n),drawn))throw Error('Failed retry granted a slip');
-                console.log('FORTUNE_RETRY_WALK',name,trace.painted?'painted':'hall',points.length);
+                console.log('FORTUNE_RETRY_WALK',name,trace.mode,points.length);
                 drawn=await redraw();
                 await walkToMoon(drawn);
                 await toss(.05);
