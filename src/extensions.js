@@ -1502,11 +1502,14 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
  if(guestDelivery&&['sip','done'].includes(stage)){cx=guestDelivery.x;cy=guestDelivery.y;angle=guestDelivery.angle;fill=guestDelivery.fill}
  else if(stage==='done')fill=.35;
  const paintedFrame=stage==='pouring'&&typeof pawFoodPourFrame==='function'&&pawFoodLive&&pawFoodLive.placement.ready(pawFoodLive.cache.image('boba_tea_pot'),pawFoodLive.manifest.assets.boba_tea_pot.size)?pawFoodPourFrame(pawFoodLive,age,residentReducedMotion.matches):null;
- const reach=paintedFrame?{x:paintedFrame.grip[0],y:paintedFrame.grip[1]}:(stage==='sip'&&(!guestDelivery||!guestDelivery.delivered))||stage==='pouring'||drag?.id==='teaMix'?{x:cx-25,y:cy-35}:null;
+ if(stage==='seal'&&state.pawBobaLidMode===undefined)state.pawBobaLidMode=typeof pawBobaLidAvailable==='function'&&pawBobaLidAvailable();
+ const lid=state.pawBobaLidMode&&typeof pawBobaLidPose==='function'?pawBobaLidPose(stage,age,cx,cy,angle,residentReducedMotion.matches):null;
+ const reach=lid&&stage==='sealing'&&!lid.attached?{x:lid.grip[0],y:lid.grip[1]}:paintedFrame?{x:paintedFrame.grip[0],y:paintedFrame.grip[1]}:(stage==='sip'&&(!guestDelivery||!guestDelivery.delivered))||stage==='pouring'||drag?.id==='teaMix'?{x:cx-25,y:cy-35}:null;
  const wrist=drawRitualPose(260,492,1.65,{reach});
  if(stage==='sip'&&!state.teaOrder){const lift=Math.sin(Math.PI*clamp(age/2.4,0,1));cx+=(wrist.x+22-cx)*lift;cy+=(wrist.y+27-cy)*lift}
  if(['ready','sip','done'].includes(stage)&&state.teaOrder)drawPaintedResident({x:555,y:510,n:state.teaOrder.resident||['Wang Laoban','王老板']},1.18,false,'left');
  teaCup(cx,cy,1.12,state.teaBase,state.teaPearls,fill,angle);
+ const paintedLid=lid&&pawBobaPaintLid(pawBobaLidPose(stage,age,cx,cy,angle,residentReducedMotion.matches));
  if(stage==='pouring'&&!(paintedFrame&&pawPaintFoodPour(paintedFrame))){
   const f=poseEase(clamp(age/.3,0,1)),px=495-45*f,py=414-25*f;teaPitcher(px,py,state.teaBase,-.72*f);
   if(age>.25&&age<1.35){ctx.save();ctx.strokeStyle=teaChoices[state.teaBase][2];ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(px-19,py-35);ctx.quadraticCurveTo(420,py+5,420,445);ctx.stroke();ctx.restore()}
@@ -1523,7 +1526,8 @@ const foodReleaseDraw=drawActivity;drawActivity=function(){
   target(487,480,90,80,()=>{},'teaPearlScoop');
  }
  if(stage==='mix'){target(325,415,185,145,()=>{},'teaMix');const live=Math.min(100,state.teaMix+(drag?.id==='teaMix'?Math.min(36,drag.moved*.42):0));round(315,595,170,12,5,'#e8d4b7','#b99b7e');if(live>0)round(317,597,166*live/100,8,3,'#91a58b');txt(Math.round(live)+'%',400,623,16,'#fff4dc')}
- if(stage==='seal'||stage==='sealing'){
+ if((stage==='seal'||stage==='sealing')&&paintedLid){if(stage==='seal')target(480,440,104,90,()=>pearlSeal())}
+ else if(stage==='seal'||stage==='sealing'){
   const press=stage==='sealing'?Math.sin(Math.PI*clamp(age/1.25,0,1)):0;
   round(493,434,76,98,7,'#9d8071','#715b4d');round(484,421,94,22,5,'#c5a18e','#826858');line(532,444,532,492+press*22,'#745b4b',8);
   ellipse(532,492+press*22,31,6,'#e3c6aa');target(480,415,102,123,()=>pearlSeal());
