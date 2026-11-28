@@ -38,6 +38,11 @@ const out='test-results/native-keepsakes-'+engine;
      },{cn,kind});
      const resultButton=kind==='cafe'?page.locator('[data-cafe-result="share"]'):kind==='story'?page.locator('[data-story-ending="share"]'):page.locator('#choices').getByRole('button',{name:cn?'制作纪念卡':'Make a keepsake',exact:true});
      await resultButton.waitFor({timeout:10000});
+     if(kind==='cafe'||kind==='story')await page.evaluate(kind=>{
+      const sheet=kind==='cafe'?cafeQuestionSheet:storySheet;
+      sheet.querySelectorAll('details').forEach(d=>{d.open=true});
+     },kind);
+     await resultButton.scrollIntoViewIfNeeded();
      const before=await page.evaluate(()=>({room,activity,scene,token:activity==='match'?cafeToken:activity==='story'?parallelToken:wonderSceneToken,result:activity==='match'?cafeResult:activity==='story'?parallelNode:wonderSceneResult,line:$('line').textContent}));
      await click(resultButton);
      const panel=page.locator('#dialogue[data-paw-keepsake]');
@@ -58,6 +63,11 @@ const out='test-results/native-keepsakes-'+engine;
      await page.screenshot({path:out+'/'+prefix+'-preview.jpg',type:'jpeg',quality:80});
      await click(panel.getByRole('button',{name:cn?(kind==='cafe'?'返回心得':kind==='story'?'返回故事':'返回小记'):(kind==='cafe'?'Back to reflection':kind==='story'?'Back to the story':'Back to the notebook'),exact:true}));
      await resultButton.waitFor({timeout:10000});
+     if(kind==='cafe'||kind==='story')assert.ok(await page.evaluate(kind=>{
+      const sheet=kind==='cafe'?cafeQuestionSheet:storySheet;
+      const details=Array.from(sheet.querySelectorAll('details'));
+      return details.length>0&&details.every(d=>d.open)
+     },kind),'Expanded result details lost after sharing');
      assert.equal(await page.locator('#page').isVisible(),false);
      const after=await page.evaluate(()=>({room,activity,scene,token:activity==='match'?cafeToken:activity==='story'?parallelToken:wonderSceneToken,result:activity==='match'?cafeResult:activity==='story'?parallelNode:wonderSceneResult,line:$('line').textContent}));
      for(const k of ['room','activity','scene','token','result'])assert.deepEqual(after[k],before[k],prefix+' changed '+k);
