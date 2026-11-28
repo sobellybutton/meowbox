@@ -276,3 +276,39 @@ return 'PASS 5 rendered tarot selection guards';
 
 const mainGait=new Function(s.split('/* PAW_MAIN_GAIT_BEGIN */')[1].split('/* PAW_MAIN_GAIT_END */')[0]+';return pawMainGaitAdvance')();
 {const q={};let a=mainGait(q,'map','up',0,1,false);if(a.ready)throw Error('unexpected loaded mode');a=mainGait(q,'map','up',20,1,true);if(a.ready||!(a.cycle>0))throw Error('mid-stride sprite swap');let old=a.cycle;a=mainGait(q,'map','up',20,2,true);if(a.cycle!==old)throw Error('camera scale changed stride without movement');a=mainGait(q,'map','right',25,2,true);if(!a.ready||a.cycle<=old)throw Error('direction transition');a=mainGait(q,'room','right',0,1,true);if(!a.ready||a.cycle!==0)throw Error('room stride reset');}
+
+
+// Adaptive pace is intentionally scene-local and elapsed-time based.
+const contextPaceA=s.indexOf('/* PAW_CONTEXT_PACE_BEGIN */'),contextPaceB=s.indexOf('/* PAW_CONTEXT_PACE_END */');
+if(contextPaceA<0||contextPaceB<=contextPaceA)throw Error('Missing adaptive pace helpers');
+const paceAssertions=new Function(s.slice(contextPaceA,contextPaceB)+
+  'return (function(){'+
+  'let n=0;const ck=(v,m)=>{if(!v)throw Error(m);n++};'+
+  'const near=(a,b)=>Math.abs(a-b)<1e-8;'+
+  'const settle=(base,d,gap,rate,final=true)=>{let v=0;for(let i=0;i<rate;i++)v=pawContextPace(base,d,gap,v,1/rate,final);return v};'+
+  'for(const base of [27,32,40]){'+
+  'const tight=settle(base,100,.7,60),normal=settle(base,100,1.4,60),open=settle(base,100,2,60);'+
+  'ck(tight<normal&&normal<open,"clearance-dependent walking");'+
+  'ck(open<=base*1.18&&tight>=0,"bounded walking speed");'+
+  'ck(settle(base,5,2,60)<settle(base,20,2,60),"slow near final destination");'+
+  'ck(settle(base,20,2,60)<open,"final approach below cruise");'+
+  'ck(near(settle(base,5,2,60,false),open),"no artificial slowdown at intermediate waypoint");'+
+  'for(const gap of [.5,1,1.4,2])for(const d of [5,20,100]){'+
+  'ck(near(settle(base,d,gap,30),settle(base,d,gap,60)),"30 and 60 Hz equivalent");'+
+  'ck(near(settle(base,d,gap,60),settle(base,d,gap,120)),"60 and 120 Hz equivalent");'+
+  'const v=pawContextPace(base,d,gap,0,.016);ck(v>=0&&v<=base*1.18,"smooth acceleration");'+
+  '}}'+
+  'ck(pawContextPace(32,0,2,20,.016)===0,"arrived");'+
+  'ck(pawContextPace(32,-1,2,20,.016)===0,"negative distance");'+
+  'ck(pawContextPace(NaN,10,2,20,.016)===0,"invalid baseline");'+
+  'ck(pawContextPace(32,10,2,20,-1)===20,"negative elapsed time");'+
+  'ck(pawContextPace(32,10,2,20,NaN)===20,"invalid elapsed time");'+
+  'ck(near(pawContextPace(32,100,2,0,10),pawContextPace(32,100,2,0,.05)),"frame stall clamped");'+
+  'const actor={x:100,y:100};'+
+  'ck(pawVisitorClearance(actor,[actor,null,{x:NaN,y:0}],50)===2,"ignore self and invalid actors");'+
+  'ck(pawVisitorClearance(actor,[{x:130,y:140},{x:300,y:100}],50)===1,"nearest actor distance");'+
+  'ck(pawVisitorClearance(actor,[{x:100,y:100}],50)===0,"overlap is zero clearance");'+
+  'ck(pawVisitorClearance(actor,[],0)===1,"invalid clearance baseline");'+
+  'ck(pawVisitorClearance(actor,undefined,50)===2,"empty room");'+
+  'return n;})()')();
+console.log('PASS '+paceAssertions+' adaptive visitor pace and clearance checks');
