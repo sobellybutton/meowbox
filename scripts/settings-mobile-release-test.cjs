@@ -50,6 +50,10 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
    assert.ok(Math.abs(geometry.x)<=1&&Math.abs(geometry.y)<=1&&Math.abs(geometry.w-geometry.vw)<=1&&Math.abs(geometry.h-geometry.vh)<=1,'Settings journal must fill viewport: '+JSON.stringify(geometry));
    assert.ok(geometry.scrollWidth<=geometry.clientWidth+1,'No horizontal overflow');
    assert.equal(await cog.locator('svg image').count(),0,'No composite image overlay');
+   for(const selector of ['#moveGuide','#movePad','#walkHelp','#hud','#dock','#worldSigns']){
+    const node=page.locator(selector);if(await node.count())assert.equal(await node.isVisible(),false,selector+' must not overlay journal');
+   }
+   assert.equal(await cog.isVisible(),false,'Gear should not overlay the journal');
    await page.screenshot({path:'test-results/settings-'+name+'-journal.png'});
    await page.getByRole('button',{name:'Close journal',exact:true}).tap();
    await journal.waitFor({state:'hidden'});
