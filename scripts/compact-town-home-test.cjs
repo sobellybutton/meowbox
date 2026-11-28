@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const src=fs.readFileSync('src/compact-town-home.js','utf8');
 new vm.Script(src);
 const helper=src.split('// PAW_COMPACT_HELPERS_BEGIN')[1].split('// PAW_COMPACT_HELPERS_END')[0];
-const api=new Function(helper+';return {pageWindow,residentLabel,residentHeading,residentDialogue,residentPortraitPath,roomLampAnchor,roomLightState,cutawayPlan,cutawayFree,cutawayConnected,cutawayMove,cutawayRoute,cutawayApproach,cutawayArtPaths,cutawayArtReady,cutawayDepth,cutawayFootPivot,cutawayDragOwner,cutawaySeatFrame,cutawaySeatPlacement}')();
+const api=new Function(helper+';return {pageWindow,residentLabel,residentHeading,residentDialogue,residentPortraitPath,roomLampAnchor,roomLightState,cutawayPlan,cutawayFree,cutawayConnected,cutawayMove,cutawayRoute,cutawayApproach,cutawayArtPaths,cutawayArtReady,cutawayDepth,cutawayFootPivot,cutawayDragOwner,cutawaySeatFrame,cutawaySeatPlacement,cutawayContainedArt}')();
 assert.deepEqual(api.pageWindow(0,5,2),{page:0,pages:1,start:0,end:0});
 assert.deepEqual(api.pageWindow(5,9,2),{page:2,pages:3,start:4,end:5});
 assert.deepEqual(api.pageWindow(5,-1,2),{page:0,pages:3,start:0,end:2});
@@ -147,3 +147,19 @@ for(let i=0;i<4;i++){
 assert(src.includes('seatResize?.disconnect()'));
 assert(src.includes('alignSeat(item,seatStandingRatio)'));
 console.log('PASS seated full-body edge clearance and resize lifecycle');
+
+const seatManifest=JSON.parse(fs.readFileSync('assets/visual/staging/2026-11-27-extracted/manifest.json','utf8'));
+const seatCrypto=require('node:crypto');
+for(let i=0;i<4;i++){
+ const frame=api.cutawaySeatFrame(i),record=seatManifest.assets.find(a=>a.path===frame.path);
+ assert(record);assert.equal(record.width,frame.width);assert.equal(record.height,frame.height);
+ assert.equal(seatCrypto.createHash('sha256').update(fs.readFileSync(frame.path)).digest('hex'),record.sha256);
+ const stage={left:0,top:0,width:400,height:400},cushion={left:160,top:200,width:80,height:50};
+ const a=api.cutawaySeatPlacement(stage,cushion,90,frame),b=api.cutawaySeatPlacement(stage,cushion,90,frame,true);
+ assert(a&&b&&Math.abs((a.x+b.x)/2-.5)<1e-8);assert.equal(a.y,b.y);
+}
+assert.deepEqual(api.cutawayContainedArt({left:0,top:0,width:100,height:100},200,100),{left:0,top:25,width:100,height:50});
+assert.deepEqual(api.cutawayContainedArt({left:0,top:0,width:100,height:100},100,200),{left:25,top:0,width:50,height:100});
+assert.equal(api.cutawayContainedArt({left:0,top:0,width:100,height:100},0,200),null);
+assert(src.includes('decodeCutawayArt(seatFrame.path,seatFrame)'));
+console.log('PASS recovered asset integrity, image containment and mirrored cushion seam');
