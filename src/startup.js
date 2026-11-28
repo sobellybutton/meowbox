@@ -1683,29 +1683,66 @@ const compactLifeRefreshBefore=lifeHUDRefresh;
 lifeHUDRefresh=function(...args){const v=compactLifeRefreshBefore(...args);compactTownProfile();return v};
 const townSettingsRoot=$('small'),townSettingsPanel=languageChoices.parentNode;
 townSettingsPanel.classList.add('townSettingsPanel');townSettingsPanel.id='townSettingsPanel';
-const townSettingsToggle=element('button','',townSettingsRoot,'townSettingsToggle');
+const townSettingsToggle=document.createElement('button'); // Detached legacy reference; no map control.
 townSettingsToggle.id='townSettingsToggle';townSettingsToggle.setAttribute('aria-controls','townSettingsPanel');townSettingsToggle.innerHTML='<svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4l.7 2.5 2 .9 2.3-1.2 2 3.5-1.8 1.9v2.8l1.8 1.9-2 3.5-2.3-1.2-2 .9L14 21h-4l-.7-2.5-2-.9L5 18.8l-2-3.5 1.8-1.9v-2.8L3 8.7l2-3.5 2.3 1.2 2-.9z"/><circle cx="12" cy="12" r="3.2"/></svg>';
 const townSettingsExtra=element('div','',townSettingsPanel,'townSettingsExtra');
 const townSoundSettings=element('button','',townSettingsExtra),townMapLabels=element('button','',townSettingsExtra),townHelp=element('button','',townSettingsExtra);
+/* PAW_LOCAL_RESET_BEGIN */
+// Clear only this game's local progress, not other sites, language or the
+// shared community session. Snapshot first so failures can be rolled back.
+function pawLocalReset(storage){
+ const prefix='meowbox-preview-',keep=new Set([prefix+'zh',prefix+'communitySessionV1']),snapshot=[];
+ try{
+  for(let i=0;i<storage.length;i++){const key=storage.key(i);if(key?.startsWith(prefix)&&!keep.has(key))snapshot.push([key,storage.getItem(key)])}
+ }catch{return false}
+ try{for(const [key] of snapshot)storage.removeItem(key);return true}
+ catch{for(const [key,value] of snapshot){try{if(value!==null)storage.setItem(key,value)}catch{}}return false}
+}
+/* PAW_LOCAL_RESET_END */
+const townResetButton=element('button','',townSettingsExtra);
+const townResetConfirm=element('div','',townSettingsExtra,'pawResetConfirm');
+townResetConfirm.hidden=true;
+const townResetCopy=element('p','',townResetConfirm),townResetDo=element('button','',townResetConfirm),townResetCancel=element('button','',townResetConfirm);
+townResetButton.type=townResetDo.type=townResetCancel.type='button';
+townResetButton.setAttribute('aria-expanded','false');
+townResetConfirm.id='pawResetConfirm';townResetButton.setAttribute('aria-controls',townResetConfirm.id);
+let townResetArmed=false,townResetFailed=false;
+townResetButton.onclick=()=>{townResetArmed=!townResetArmed;townResetFailed=false;syncTownSettings();if(townResetArmed)townResetCancel.focus()};
+townResetCancel.onclick=()=>{townResetArmed=false;townResetFailed=false;syncTownSettings();townResetButton.focus()};
+townResetDo.onclick=()=>{
+ if(!townSettingsOpen||!townResetArmed)return;
+ let ok=false;try{ok=pawLocalReset(localStorage)}catch{}
+ if(ok){townResetArmed=false;townResetDo.disabled=true;location.reload()}
+ else{townResetFailed=true;syncTownSettings()}
+};
+const townResetStyle=document.createElement('style');
+townResetStyle.textContent='#game #small #townSettingsPanel .pawResetConfirm{display:grid;gap:4px;padding:7px;border-top:1px solid #ac9670;background:#f2e5cb;color:#514634;border-radius:5px}#game #small #townSettingsPanel .pawResetConfirm[hidden]{display:none!important}#game #small #townSettingsPanel .pawResetConfirm p{font-size:12px;line-height:1.4;margin:2px 0;white-space:normal}#game #small #townSettingsPanel .pawResetConfirm button{min-height:44px!important;white-space:normal!important}#game #small #townSettingsPanel .pawResetConfirm button:first-of-type{color:#894d3f!important}';
+document.head.append(townResetStyle);
 let townSettingsOpen=false;
 function syncTownSettings(){
  townSettingsRoot.dataset.open=String(townSettingsOpen);
  townSettingsToggle.setAttribute('aria-label',tr('Settings','设置'));townSettingsToggle.title=tr('Settings','设置');townSettingsToggle.setAttribute('aria-expanded',String(townSettingsOpen));
  townSettingsPanel.hidden=!townSettingsOpen;
+ if(!townSettingsOpen){townResetArmed=false;townResetFailed=false}
+ townResetButton.textContent=tr('Start over','重新开始');
+ townResetButton.setAttribute('aria-expanded',String(townResetArmed));
+ townResetConfirm.hidden=!townResetArmed;
+ townResetCopy.textContent=townResetFailed?tr('Could not reset local progress. Check browser storage and try again.','无法重置本地进度，请检查浏览器存储后重试。'):tr('This clears your saved traveller, coins, room, collections and local history on this browser. Close other game tabs first. Shared posts and your language setting stay.','这将清除本浏览器内的旅人、爪爪币、小窝、收藏和本地记录。请先关闭其他游戏标签页。公开留言和语言设置会保留。');
+ townResetDo.textContent=tr('Erase local progress','清除本地进度');
+ townResetCancel.textContent=tr('Keep my progress','保留我的进度');
  townSoundSettings.textContent=muted?tr('Sound off','声音已关闭'):tr('Sound on','声音已开启');
  townSoundSettings.setAttribute('aria-pressed',String(!muted));
  townMapLabels.textContent=quiet9?tr('Show map signs','显示地图路牌'):tr('Hide map signs','隐藏地图路牌');
  townMapLabels.hidden=!!room||scene!=='fortune';
  townHelp.textContent=tr('Walking help','行走指南');townHelp.hidden=!!room||!isRoute();
 }
-function closeTownSettings(){townSettingsOpen=false;syncTownSettings()}
-townSettingsToggle.onclick=()=>{townSettingsOpen=!townSettingsOpen;syncTownSettings()};
+function closeTownSettings(){townSettingsOpen=false;if(townSettingsPanel.parentNode!==townSettingsRoot)townSettingsRoot.append(townSettingsPanel);syncTownSettings()}
+townSettingsToggle.onclick=null;
 townSoundSettings.onclick=()=>{$('mute').click();syncTownSettings()};
-townMapLabels.onclick=()=>{$('quietToggle').click();closeTownSettings()};
-townHelp.onclick=()=>{closeTownSettings();walkHelp.click()};
-for(const [,btn] of languageButtons)btn.addEventListener('click',closeTownSettings);
-document.addEventListener('pointerdown',e=>{if(townSettingsOpen&&!townSettingsRoot.contains(e.target))closeTownSettings()},true);
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&townSettingsOpen){closeTownSettings();townSettingsToggle.focus()}});
+townMapLabels.onclick=()=>{$('quietToggle').click();syncTownSettings()};
+townHelp.onclick=()=>{closeTownSettings();$('page').style.display='none';walkHelp.click()};
+for(const [,btn] of languageButtons)btn.addEventListener('click',()=>{if(townSettingsOpen)pawOpenProfileSettings()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&townSettingsOpen){e.preventDefault();closeTownSettings();lifeProfile();$('content').querySelector('.pawProfileSettingsEntry')?.focus()}});
 const townSettingsHUDBefore=updateHUD;updateHUD=function(...args){
  const v=townSettingsHUDBefore(...args);compactTownProfile();
  if(!proposal.hidden||talkOpen||activity)townSettingsOpen=false;
@@ -14959,5 +14996,81 @@ pawDistrictSignStyle.textContent=`
 }
 `;document.head.append(pawDistrictSignStyle);
 /* PAW_DISTRICT_SIGN_MATERIAL_END */
+
+
+/* PAW_PROFILE_SETTINGS_BEGIN */
+// Canonical utility route: profile > settings. Keep the original storage,
+// language controls, sound and reset handlers, with no second map surface.
+function pawOpenProfileSettings(){
+ page(tr('Settings','设置'),tr('Make Pawradise your own.','按自己的节奏享受小镇。'),q=>{
+  const surface=element('section','',q,'pawProfileSettings');
+  surface.append(townSettingsPanel);
+  townSettingsOpen=true;syncTownSettings();
+  const soundRows=element('div','',surface,'pawProfileSoundRows');
+  for(const [id,en,cn] of [['ambience','Nature and room sounds','环境音'],['effects','Interaction sounds','互动音效']]){
+   const row=element('label','',soundRows);element('span',tr(en,cn),row);
+   const input=element('input','',row);input.type='checkbox';input.checked=meowSoundPrefs[id]!==false;
+   input.onchange=()=>{meowSoundPrefs[id]=input.checked;save('meowSoundPrefsV1',meowSoundPrefs);updateMeowAudioBuses()};
+  }
+ });
+ mbHomePageBack(tr('‹ Profile','‹ 返回档案'),()=>{closeTownSettings();lifeProfile();$('content').querySelector('.pawProfileSettingsEntry')?.focus()});
+}
+const pawProfileSettingsBefore=lifeProfile;
+lifeProfile=function(...args){
+ const result=pawProfileSettingsBefore(...args),q=$('content'),book=q.querySelector('.journalProfileBook');
+ if(book&&!book.querySelector('.pawProfileSettingsEntry')){
+  const entry=b(book,tr('Settings','设置'),pawOpenProfileSettings);entry.className='pawProfileSettingsEntry';
+  const identity=book.querySelector('.journalIdentity');if(identity)identity.after(entry);
+ }
+ return result
+};
+const pawProfileSettingsPagePrior=page;
+page=function(...args){
+ const result=pawProfileSettingsPagePrior(...args),q=$('content');
+ const lang=q.querySelector(':scope > .row button:nth-child(2)');
+ if(lang&&['EN','中文'].includes(lang.textContent.trim())){lang.hidden=true;lang.classList.add('pawRetiredPageLanguage')}
+ return result
+};
+const pawProfileSettingsGatePrior=proRender;
+proRender=function(...args){
+ const result=pawProfileSettingsGatePrior(...args);
+ if(shrineReturning){proposal.querySelector('.shrineLanguageMenu')?.remove();proposal.querySelector('header .languageChoice')?.remove()}
+ return result
+};
+const pawProfileBalance=$('hudStats'),pawProfileIdentity=$('hudName').parentElement;
+pawProfileIdentity.append(pawProfileBalance);
+const pawProfileSettingsHUDPrior=compactTownProfile;
+compactTownProfile=function(...args){
+ const result=pawProfileSettingsHUDPrior(...args);
+ const name=$('hudName').textContent,balance=$('hudCoins').getAttribute('aria-label')||$('hudCoins').textContent;
+ $('profileHud').setAttribute('aria-label',name+' · '+balance+' · '+tr('Open profile','查看资料'));
+ return result
+};
+const pawProfileSettingsStyle=document.createElement('style');
+pawProfileSettingsStyle.textContent=`
+html #game #small,html #game #hudProgress,html #game #content .pawRetiredPageLanguage{display:none!important}
+html #game #hud{padding-right:0!important}
+html #game #profileHud{height:auto!important;min-height:44px!important;gap:6px!important}
+html #game #profileHud>#hudStats,html #game #profileHud #hudStats{display:block!important;margin:0!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
+html #game #profileHud #hudStats #hudCoins{display:inline-flex!important;min-height:0!important;padding:0!important;gap:3px!important;background:none!important;border:0!important;box-shadow:none!important;font-size:11px!important;line-height:1.2!important}
+html #game #profileHud #hudStats #hudCoins.pawHudCoinPainted::before{width:15px!important;height:15px!important;flex-basis:15px!important}
+html #game #profileHud #hudName{display:block!important;line-height:1.25!important}
+html #game #content .pawProfileSettingsEntry{min-height:44px!important;width:100%;margin:7px 0!important;border:0!important;box-shadow:none!important;background:#e7dcc6!important;color:#514936!important}
+html #game #content .pawProfileSettings{max-width:460px;margin:auto;padding:0;border:0;background:none;box-shadow:none}
+html #game #content #townSettingsPanel:not([hidden]){display:grid!important;position:static!important;width:100%!important;max-width:none!important;gap:8px;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;overflow:visible!important;max-height:none!important}
+html #game #content #townSettingsPanel[hidden],html #game #content #townSettingsPanel #mute,html #game #content #townSettingsPanel #language,html #game #content #townSettingsPanel [hidden]{display:none!important}
+html #game #content #townSettingsPanel .languageChoice{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:0!important;background:none!important;border:0!important}
+html #game #content #townSettingsPanel .townSettingsExtra{display:grid!important;gap:0;background:none!important;border:0!important}
+html #game #content #townSettingsPanel button{min-height:44px!important;border:0!important;border-bottom:1px solid #c7b89c!important;border-radius:0!important;background:none!important;color:#514936!important;box-shadow:none!important;text-align:left!important;white-space:normal!important}
+html #game #content #townSettingsPanel .languageChoice button{text-align:center!important}
+html #game #content #townSettingsPanel button[aria-pressed=true]{background:#dbe1cb!important}
+html #game #content #townSettingsPanel .pawResetConfirm{display:grid;gap:5px;padding:8px 0;border:0;background:none;box-shadow:none}
+html #game #content #townSettingsPanel .pawResetConfirm button:first-of-type{color:#894d3f!important}
+html #game #content .pawProfileSoundRows label{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:44px;border-bottom:1px solid #c7b89c}
+html #game #content .pawProfileSoundRows input{width:24px;height:24px;accent-color:#536d58}
+html #game #content .pawProfileSettings button:focus-visible,html #game #content .pawProfileSettingsEntry:focus-visible{outline:2px solid #39594d!important;outline-offset:1px!important}
+@media(forced-colors:active){html #game #content .pawProfileSettings button,html #game #content .pawProfileSettingsEntry{background:Canvas!important;color:CanvasText!important;border-bottom:1px solid CanvasText!important}html #game #content .pawProfileSettings button[aria-pressed=true]{background:Highlight!important;color:HighlightText!important}}
+`;document.head.append(pawProfileSettingsStyle);
+/* PAW_PROFILE_SETTINGS_END */
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
