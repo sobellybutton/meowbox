@@ -1677,13 +1677,15 @@ function readingTakeaway(cards){
 }
 function readingConnection(entry){
  const [situation,attention,next]=entry.cards;
+ const first=tr(...tarotDeck[situation.i].slice(0,2)),middle=tr(...tarotDeck[attention.i].slice(0,2)),last=tr(...tarotDeck[next.i].slice(0,2));
+ const opening=tr('Look at '+first+' as a picture of where you are now. What feels familiar?', '先看看「'+first+'」。如果把它当作你现在处境的一面镜子，你看见了什么？');
  const notice=attention.rev
-  ?tr('Read the middle card as something to spot in your own habits or expectations.','把中间这张牌当成一面镜子，看看自己的习惯或期待。')
-  :tr('Read the middle card as a pattern worth noticing in the situation.','中间这张牌提醒你留意当下正在重复的某种模式。');
+  ?tr('With '+middle+' reversed, consider whether a habit or expectation of your own is making things harder.', '逆位的「'+middle+'」可以提醒你想想，自己的习惯或期待，会不会让事情变得更难。')
+  :tr('Let '+middle+' draw your attention to a pattern you might have missed.', '再看看「'+middle+'」，也许它能让你留意到之前没注意的重复模式。');
  const action=next.rev
-  ?tr('Try a smaller version of the last card’s idea. What could you pause or simplify first?','把最后一张牌的建议缩小一点。可以先暂停或简化哪件事？')
-  :tr('Pick one action from the last card that you could try today.','从最后一张牌的建议里，选一件今天就能试试的小事。');
- return tr('Start with what feels familiar in ','先想想你在哪些地方看见了')+tr(...tarotDeck[situation.i].slice(0,2))+tr('. ','。')+notice+' '+action;
+  ?tr('Finally, consider '+last+' reversed. What could you pause or simplify before taking another step?', '最后是逆位的「'+last+'」。不妨想想，继续往前之前，有什么事可以先缓一缓，或做得简单一点？')
+  :tr('Finally, what is one small action suggested by '+last+' that you could try today?', '最后，从「'+last+'」得到的启发里，有没有一件今天就能试试的小事？');
+ return [opening,notice,action,tr('Keep what feels useful. The cards cannot decide the outcome for you.','有帮助的部分就留下来。结果如何，不能由牌替你决定。')].join('\n\n');
 }
 function openTarotReading(entry,back=()=>{$('page').style.display='none'}){
  if(!entry)return;
