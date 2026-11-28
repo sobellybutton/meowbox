@@ -825,13 +825,11 @@
       ],
       "stage": "tested",
       "evidence": [
-        "845b8ee5: wide ride integration, preloaded candidate assets, portrait/failed-load fallback, reduced motion and cleanup; parsed exact startup and 10 mocked lifecycle assertions passed"
+        "845b8ee5: wide ride integration, preloaded candidate assets, portrait/failed-load fallback, reduced motion and cleanup; parsed exact startup and 10 mocked lifecycle assertions passed",
+        "9166cf77: activated native portrait carriage in existing entrance/ride compositor, independent portrait decode, correct aspect and bounded 720x1080 canvas, cold/missing portrait and missing route preserve legacy fallback; landscape renderer retained. Exact runtime mount extracted from current startup and tested in mocked DOM/canvas harness: 18 assertions passed for both orientations, animation, hidden pause, cleanup and unavailable-image fallback; no actual device/deployed verification. Source parses."
       ],
-      "lease": {
-        "owner": "manual-portrait-live-20261128",
-        "until": 1795843051413
-      },
-      "blocker": "Actual deployed wide and portrait train rides, cold loads, asset fit and mobile/desktop visual acceptance not verified."
+      "lease": null,
+      "blocker": "Native portrait and landscape source integration now present; verify actual rendered ride, viewport crop, cold route decode, pause and transition on phone and desktop before acceptance."
     },
     {
       "id": "HOME-LIVE-01",
