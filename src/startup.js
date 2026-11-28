@@ -13140,7 +13140,7 @@ indoorObstacles=function(){return pawWishLobbyActive()?[]:pawWishLobbyObstaclesB
 const pawWishLobbySafeBefore=indoorSafe;
 indoorSafe=function(x,y,...args){return pawWishLobbyActive()?pawWishLobbySafe(x,y):pawWishLobbySafeBefore(x,y,...args)};
 function pawWishLobbyBackdrop(){
- if(!pawWishLobbyActive())return false;
+ if(!(pawWishLobbyActive()||room==='wishes'&&activity==='wishes'&&pawRoomImageReady(pawWishLobbyArt())))return false;
  const p=pawWishLobbyPlate,b=livingBounds(),im=pawWishLobbyArt();
  ctx.save();try{ctx.fillStyle='#526b57';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.drawImage(im,p.x,p.y,p.w,p.h)}finally{ctx.restore()}
  return true
@@ -14073,7 +14073,8 @@ gardenWrite=function(){
  paper.append(input);$('dialogue').insertBefore(paper,$('choices'));$('dialogue').classList.add('pawWishWriting');
  composer={run,paper,input};pawWishComposer=composer;
  input.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeTalk()}else if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();fold()}});
- input.focus({preventScroll:true})
+ // The paper appears first; tapping it opens the mobile keyboard deliberately.
+ if(!('ontouchstart' in window||navigator.maxTouchPoints>0))input.focus({preventScroll:true})
 };
 const pawWishArchiveBefore=gardenWishBook;
 gardenWishBook=function(){
@@ -15144,6 +15145,113 @@ pawValleyArrivalCss.textContent=`
 }
 @media(max-height:620px) and (orientation:portrait){#proposal[data-paw-entrance-step="0"] .pawFirstRailPainting img{object-fit:contain!important;object-position:center!important}}
 `;document.head.append(pawValleyArrivalCss);
+
+
+/* PAW_IN_WORLD_CONSULTATION_BEGIN */
+let pawYueInline=null;
+function pawYueRestoreInline(){
+ const visit=pawYueInline;if(!visit)return;
+ pawYueInline=null;visit.observer?.disconnect();
+ if(visit.anchor.isConnected)visit.anchor.replaceWith(visit.form);else visit.form.remove();
+ $('dialogue').removeAttribute('data-paw-yue-question');
+}
+const pawYueInlineClose=closeTalk;
+closeTalk=function(...args){pawYueRestoreInline();return pawYueInlineClose(...args)};
+const pawYueInlineSay=say;
+say=function(...args){pawYueRestoreInline();return pawYueInlineSay(...args)};
+function pawYueInlineForm(kind){
+ const q=$('content'),pane=$('page'),form=q.querySelector(kind==='year'?'.yueAlmanacForm':'.astroForm'),out=q.querySelector(kind==='year'?'.yueAlmanacPaper':'.astroResult');
+ if(room!=='destiny'||!form||!out||form.hidden||form.style.display==='none'||!form.classList.contains('pawYueGuidedForm'))return false;
+ if(out.querySelector('.ziGrid,.yueReadingFront'))return false;
+ const anchor=document.createComment('Yue consultation paper');form.before(anchor);
+ pane.style.display='none';
+ say(tr('Master Yue','月师傅'),'',[[tr('Return to our conversation','回到茶叙'),()=>{closeTalk();yueReadingHub()}]]);
+ const panel=$('dialogue');panel.dataset.pawYueQuestion='true';
+ panel.insertBefore(form,$('choices'));
+ const visit={form,anchor,out,kind,observer:null,scene,room};
+ pawYueInline=visit;
+ visit.observer=new MutationObserver(()=>{
+  if(pawYueInline!==visit)return;
+  if(room!=='destiny'||scene!==visit.scene||!form.isConnected){closeTalk();return}
+  if(!out.querySelector('.ziGrid,.yueReadingFront'))return;
+  closeTalk();pane.dataset.pawYueDesk='true';pane.style.display='block';pane.scrollTop=0;updateHUD();
+ });
+ visit.observer.observe(out,{childList:true,subtree:true});
+ updateHUD();return true
+}
+const pawYueInlinePresent=pawYueDeskPresent;
+pawYueDeskPresent=function(kind){
+ const result=pawYueInlinePresent(kind);
+ if(kind==='year'||kind==='chart'){
+  pawYueInlineForm(kind);
+  const q=$('content');for(const button of q.querySelectorAll('button')){
+   if([tr('Edit birth details','修改生辰资料'),tr('Change birth date','修改出生日期')].includes(button.textContent))
+    button.addEventListener('click',()=>queueMicrotask(()=>{if(room==='destiny')pawYueInlineForm(kind)}));
+  }
+ }
+ return result
+};
+// Keep the brush-held host visible while the birth question is in dialogue.
+const pawYueInlineHostPhase=pawReadingHostPhase;
+pawReadingHostPhase=function(id,q,kind,desk,result){return pawYueInline&&id==='destiny'?'question':pawYueInlineHostPhase(id,q,kind,desk,result)};
+// Flipped cards remain on the painted table. Give the interpretation in
+// short conversational turns rather than a separate long reading page.
+function pawTarotCardConversation(index=state.readFocus){
+ const run=state,kind=activity,v=run.readCards?.[index],d=v&&tarotDeck[v.i];
+ if(room!=='tarot'||!['tarot','love'].includes(kind)||!d||!Number.isFinite(run.readFlip?.[index])||run.readFlip[index]<0||t-run.readFlip[index]<.72)return;
+ const valid=()=>room==='tarot'&&activity===kind&&state===run;
+ run.readFocus=index;run.readStage='focus';run.readAt=t;
+ const name=tr(d[0],d[1])+' · '+orient(v.rev);
+ const reflection=run.readCards.length===5?fiveReadingPrompt(run.readTopic,index):topicReflection(run.readTopic,index);
+ const aside=tarotCommentary(d[0],v.rev,run.readTopic,run.tarotTone);
+ const parts=[name+'\n'+arcanaReading(d,v.rev),reflection,aside&&tr(...aside)].filter(Boolean);
+ function speak(step){
+  if(!valid())return;
+  $('page').style.display='none';
+  const choices=[];
+  if(step+1<parts.length)choices.push([tr('Tell me more','再说说'),()=>speak(step+1)]);
+  else if(index+1<run.readCards.length&&run.readFlip[index+1]>=0&&t-run.readFlip[index+1]>=.72)choices.push([tr('Next card','下一张牌'),()=>pawTarotCardConversation(index+1)]);
+  else if(run.readFlip.every(v=>v>=0&&t-v>=.72))choices.push([tr('Reflect on the whole reading','聊聊整体牌意'),()=>openTarotReading(tarotShareSnapshot(run))]);
+  if(step>0)choices.push([tr('Previous thought','上一段'),()=>speak(step-1)]);
+  choices.push([tr('Back to the table','回到牌桌'),()=>{if(valid())readingReturnSpread()}]);
+  say(tr('Fortune Teller','占卜师'),parts[step],choices);
+  $('dialogue').setAttribute('data-paw-tarot-conversation','true');
+ }
+ speak(0)
+}
+readingFocusMeaning=function(){return pawTarotCardConversation(state.readFocus)};
+fiveReadingDetail=function(v,i){return pawTarotCardConversation(i)};
+const pawRitualTalkClose=closeTalk;
+closeTalk=function(...args){$('dialogue').removeAttribute('data-paw-tarot-conversation');return pawRitualTalkClose(...args)};
+const pawRitualTalkSay=say;
+say=function(...args){$('dialogue').removeAttribute('data-paw-tarot-conversation');return pawRitualTalkSay(...args)};
+const pawInWorldRitualCss=document.createElement('style');
+pawInWorldRitualCss.textContent=`
+#game #dialogue.pawWishWriting[data-paw-visit-dialogue]{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;width:min(86%,400px)!important;max-height:62dvh!important;overflow:visible!important}
+#game #dialogue.pawWishWriting #dialogueTop,#game #dialogue.pawWishWriting #line{display:none!important}
+#game #dialogue.pawWishWriting .pawWishPaper{position:relative;padding:24px 17px 18px!important;background:#f4e4bd url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat;border:1px solid #a88c62;box-shadow:2px 5px 14px #30251d55;transform:rotate(-1deg);border-radius:2px 3px 5px 2px}
+#game #dialogue.pawWishWriting .pawWishPaper::before{content:'願';position:absolute;top:5px;right:12px;color:#a56049;font:600 18px Georgia,"Songti SC",serif}
+#game #dialogue.pawWishWriting textarea{background:repeating-linear-gradient(transparent 0 25px,#bca77b66 25px 26px)!important;border:0!important;min-height:104px!important;line-height:26px!important;resize:none!important;outline-offset:2px!important;padding:0 4px!important;border-radius:0!important}
+#game #dialogue.pawWishWriting #choices{display:flex!important;justify-content:center;gap:7px;margin-top:10px}
+#game #dialogue.pawWishWriting #choices button{flex:1;text-align:center!important;background:#e8d9b7!important;border:1px solid #a88c62!important}
+#game #dialogue[data-paw-yue-question]{max-height:min(48dvh,420px)!important;width:min(calc(100% - 28px),510px)!important;padding:9px 13px!important;border-radius:5px!important}
+#game #dialogue[data-paw-yue-question] #talkPortrait,#game #dialogue[data-paw-yue-question] #line:empty{display:none!important}
+#game #dialogue[data-paw-yue-question] .pawYueGuidedForm{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:5px!important;margin:4px 0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border:0!important}
+#game #dialogue[data-paw-yue-question] .pawYueGuidedForm>*{grid-column:1/-1!important;min-width:0!important;max-width:100%!important}
+#game #dialogue[data-paw-yue-question] .pawYueStepHidden,#game #dialogue[data-paw-yue-question] button[hidden]{display:none!important}
+#game #dialogue[data-paw-yue-question] .pawYueGuidedForm label{display:grid;gap:4px;font:14px/1.3 Georgia,"Songti SC",serif}
+#game #dialogue[data-paw-yue-question] .pawYueGuidedForm :is(input,select){min-height:44px;box-sizing:border-box;width:100%;min-width:0;max-width:100%;font-size:16px;background:#f7edd6;border:1px solid #ac9776;border-radius:3px;padding:6px 9px;color:#514333}
+#game #dialogue[data-paw-yue-question] .pawYueQuestion{font:600 17px/1.4 Georgia,"Songti SC",serif;color:#455c49;margin:2px 0 5px!important}
+#game #dialogue[data-paw-yue-question] .pawYueStepNav{display:flex;justify-content:flex-end;gap:6px}
+#game #dialogue[data-paw-yue-question] .pawYueStepNav button,#game #dialogue[data-paw-yue-question] button[type=submit]{min-height:44px}
+#game #dialogue[data-paw-tarot-conversation]{width:min(calc(100% - 24px),520px)!important;max-height:40dvh!important;padding:10px 13px!important;background:#f0e5d1f5 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat!important;border-radius:5px!important;box-shadow:0 2px 10px #2c241d55!important}
+#game #dialogue[data-paw-tarot-conversation] #talkPortrait{display:none!important}
+#game #dialogue[data-paw-tarot-conversation] #line{font:15px/1.45 Georgia,"Songti SC",serif!important}
+#game #dialogue[data-paw-tarot-conversation] #choices{display:flex!important;flex-wrap:wrap;gap:5px}
+#game #dialogue[data-paw-tarot-conversation] #choices button{flex:1 1 120px;text-align:center!important}
+@media(orientation:landscape){#game #dialogue[data-paw-yue-question],#game #dialogue[data-paw-tarot-conversation]{max-height:52dvh!important}}
+`;document.head.append(pawInWorldRitualCss);
+/* PAW_IN_WORLD_CONSULTATION_END */
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
 
