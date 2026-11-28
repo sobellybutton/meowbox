@@ -8692,7 +8692,7 @@ shareCardArt=function(cv,data,format,cn){
   if(rows.length>maxLines){rows=rows.slice(0,maxLines);let last=rows.at(-1);while(last.length&&g.measureText(last+'…').width>width-76)last=last.slice(0,-1);rows[rows.length-1]=last+'…'}
   const lh=size*1.28;rows.forEach((v,k)=>line(v,y+lh*(k+.5),size,weight,color));return y+rows.length*lh;
  }
- line(pawBrand(cn)+' · '+(cn?'月师傅小记':'MASTER YUE'),top+34,27,'bold','#55694f');
+ line((cn?'摸鱼小镇':'Pawradise')+' · '+(cn?'月师傅小记':'MASTER YUE'),top+34,27,'bold','#55694f');
  const im=pics[sharePaintedKey(data)],artY=top+65,artH=Math.min(L.artH,Math.floor((end-top)*.26));
  let y=artY;
  if(im?.complete&&im.naturalWidth>0&&im.naturalHeight>0){
@@ -8977,7 +8977,7 @@ function pawDrawRecoveredLayout(cv,data,format,cn,box,paper){
   const lines=[locale(socialResultQuote(data)),...(data.lines||[]).map(locale)].filter((v,i,a)=>v&&a.indexOf(v)===i);
   textIn(slots.summary,lines,format==='square'?30:36)
  }
- textIn(slots.footer,[pawBrand(cn)+' · '+(cn?'趣味探索，仅供反思':'For fun and reflection')],27,'normal',muted);
+ textIn(slots.footer,[(cn?'摸鱼小镇':'Pawradise')+' · '+(cn?'趣味探索，仅供反思':'For fun and reflection')],27,'normal',muted);
  g.restore();return true
 }
 /* Share only the computed result, never individual answers or private input. */
@@ -9143,7 +9143,7 @@ socialResultQuote=function(data){
 const pawExtraCaptionBefore=meowSocialCaption;
 meowSocialCaption=function(data,format,cn){
  if(!pawExtraDiscoveries[data.kind])return pawExtraCaptionBefore(data,format,cn);
- const i=Number(cn);return [pawBrand(cn)+' · '+data.title[i],...(data.scoreRows||[]).map(r=>r.label[i]+' '+r.value[i]),socialResultQuote(data)[i],cn?'趣味探索，非心理诊断。':'Informal reflection, not a psychological assessment.'].join('\n')
+ const i=Number(cn);return [(cn?'摸鱼小镇':'Pawradise')+' · '+data.title[i],...(data.scoreRows||[]).map(r=>r.label[i]+' '+r.value[i]),socialResultQuote(data)[i],cn?'趣味探索，非心理诊断。':'Informal reflection, not a psychological assessment.'].join('\n')
 };
 function pawPublicWonderScores(kind,scores,labels){
  if(pawExtraDiscoveries[kind])return pawExtraRows(kind,scores);
@@ -9240,7 +9240,7 @@ shareCardArt=function(cv,data,format,cn){
   g.restore();return y+total*scale
  }
  const footer=bottom-65;
- line(pawBrand(cn)+' · '+(cn?'偷得浮生半日闲':'A LITTLE ESCAPE'),top+20,27,'bold',muted);
+ line((cn?'摸鱼小镇':'Pawradise')+' · '+(cn?'偷得浮生半日闲':'A LITTLE ESCAPE'),top+20,27,'bold',muted);
  let y=top+51;line(locale(shareKinds[data.kind]),y+13,25,'normal',accent);y+=33;
  y=block([locale(data.title)],y,Math.min(120,(bottom-top)*.16),format==='square'?46:54,'bold',ink)+10;
  if(data.kind==='tarot'&&[1,3,5].includes(data.cards.length)){
