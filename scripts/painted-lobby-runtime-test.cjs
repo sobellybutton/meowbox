@@ -85,9 +85,12 @@ console.log('PASS Tarot mobile host and route framing across eight viewport clas
  assert(!api.pawConsultPresetReady('singapore',[field(''),...values.slice(1)]));
  assert(!api.pawConsultPresetReady('singapore',[field('NaN'),...values.slice(1)]));
  assert(!api.pawConsultPresetReady('singapore',[field('8',false),...values.slice(1)]));
- assert(source.includes("Choose a card, or shuffle again."));
+ // The tabletop fan intentionally overlaps card artwork; guidance names
+ // the settling animation and the available choice count.
+ assert(source.includes("When the cards settle, choose one, or shuffle again."));
+ assert(source.includes("When the cards settle, choose '+n+', or shuffle again before choosing."));
  assert(source.includes("...readingTopics.map((topic,i)"));
  assert(source.includes("btn&&btn.disabled&&room==='destiny'"));
  assert(source.includes("pawConsultPresetReady(field.value,fields.slice(3))"));
- console.log('PASS 10 preset birthplace and next-step wiring checks');
+ console.log('PASS 11 preset birthplace and next-step wiring checks');
 }
