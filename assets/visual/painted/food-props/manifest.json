@@ -1,0 +1,940 @@
+{
+  "schema": 1,
+  "task": "ROOM-03",
+  "source": "assets/visual/staging/Pawradise_Recovered_Kitchen_Boba_Props/manifest.json",
+  "status": "prepared candidates; no runtime activation or visual acceptance",
+  "anchorConvention": "Normalized visible bottom center for stationary props only; grip and pouring anchors require scene-specific calibration.",
+  "assets": {
+    "boba_cup_empty": {
+      "file": "boba_cup_empty.png",
+      "size": [
+        118,
+        140
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        110,
+        132
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9428571428571428
+      ],
+      "sha256": "f299e818ee880de5e308388d0aab635b86ba5452dea5eb3085f32d280421876a",
+      "sourceBlob": "1d75900dd370d7712132a1bfaa438b7a0d8267e0"
+    },
+    "boba_cup_dome_lid": {
+      "file": "boba_cup_dome_lid.png",
+      "size": [
+        120,
+        166
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        112,
+        158
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9518072289156626
+      ],
+      "sha256": "3c80d85a9028a3c25adaf9c827172bc10db49e625abe7560eaf06015f0f97623",
+      "sourceBlob": "287bf3ce1894f44f4c319602e5021a45ba795b22"
+    },
+    "boba_cup_straw": {
+      "file": "boba_cup_straw.png",
+      "size": [
+        119,
+        185
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        111,
+        177
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9567567567567568
+      ],
+      "sha256": "e130985572c6d818a5f95e40852831e8409016aaff9bf23709457701e33319d4",
+      "sourceBlob": "3de33056f33fb15796465f4551a05dce7a3a6cf0"
+    },
+    "boba_shaker_closed": {
+      "file": "boba_shaker_closed.png",
+      "size": [
+        99,
+        168
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        91,
+        160
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9523809523809523
+      ],
+      "sha256": "0a4e54b5fa21ae2fdb5439384f63c32b0182b1405b24374acd09ec56f4965caf",
+      "sourceBlob": "20eaacc2a4aae90aa60ffdfb2305d5121b3a5261"
+    },
+    "boba_shaker_open": {
+      "file": "boba_shaker_open.png",
+      "size": [
+        97,
+        109
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        89,
+        101
+      ],
+      "groundAnchor": [
+        0.5,
+        0.926605504587156
+      ],
+      "sha256": "7d926322a2fb42aeeaafb8ea6140c63090964d706ed8150681d1b3dac0d1a220",
+      "sourceBlob": "b9a2e3ef6946385436d846b8f0cfdfb097d137ea"
+    },
+    "boba_shaker_ice": {
+      "file": "boba_shaker_ice.png",
+      "size": [
+        104,
+        146
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        96,
+        138
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9452054794520548
+      ],
+      "sha256": "3d5da046b98c98fbf7823f9380ca8c1e2f90bcb39c801ee9f015c5de12847cbc",
+      "sourceBlob": "dfada052bb7a4506fe634ef70e5fe8bf08683d22"
+    },
+    "boba_shaker_tilt_left": {
+      "file": "boba_shaker_tilt_left.png",
+      "size": [
+        127,
+        170
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        119,
+        162
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9529411764705882
+      ],
+      "sha256": "ac1a794dd889fee993ec1876de27bc9547602a6364b6066bcdb7ffdb42d3291f",
+      "sourceBlob": "6af5b3febc64a56db1a8bfc0625973dc1da6df36"
+    },
+    "boba_shaker_tilt_right": {
+      "file": "boba_shaker_tilt_right.png",
+      "size": [
+        163,
+        184
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        155,
+        176
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9565217391304348
+      ],
+      "sha256": "254489d7e2df4925516e1dc5e455791cfbf1deda26365e345469628d3b43f60b",
+      "sourceBlob": "82da422a864827024d8f995b286b43e4ac1b74ff"
+    },
+    "boba_shaker_rest": {
+      "file": "boba_shaker_rest.png",
+      "size": [
+        106,
+        173
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        98,
+        165
+      ],
+      "groundAnchor": [
+        0.5,
+        0.953757225433526
+      ],
+      "sha256": "ff369263dfb3de443ff666c0ab3c0f7898fc31333a4c26450760c0dab2ed096f",
+      "sourceBlob": "54a6369b196ba738d5b58927542e97ccfbffef81"
+    },
+    "boba_milk_pitcher": {
+      "file": "boba_milk_pitcher.png",
+      "size": [
+        117,
+        120
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        109,
+        112
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9333333333333333
+      ],
+      "sha256": "8aa839af346a375ccb801ab5442c08300bbc4a6d9201b7f23f86c4c77085cb57",
+      "sourceBlob": "e708c97b113f9500092ac0644bf709ad54e4cf92"
+    },
+    "boba_tea_pot": {
+      "file": "boba_tea_pot.png",
+      "size": [
+        153,
+        126
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        145,
+        118
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9365079365079365
+      ],
+      "sha256": "3052d17d55da9e50fda1a95a08ee62e76217a415c7c99bf0261b8885e20a6171",
+      "sourceBlob": "4c2cb5926092e9ea227c71fe956c476c41139ff9"
+    },
+    "boba_matcha_bowl": {
+      "file": "boba_matcha_bowl.png",
+      "size": [
+        114,
+        92
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        106,
+        84
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9130434782608695
+      ],
+      "sha256": "62ceb151833587906d5b987ea20f7066c57750ad746bd7ddecbe68160a74bf8c",
+      "sourceBlob": "6d19d8c72960d2dcdd710c12a5c301d5fd5a6728"
+    },
+    "boba_ice_bowl": {
+      "file": "boba_ice_bowl.png",
+      "size": [
+        128,
+        119
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        120,
+        111
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9327731092436975
+      ],
+      "sha256": "dc64bcd0e0f67c540320f0c22b59807644c6ff7863b58e2a3a507b6abbc1005f",
+      "sourceBlob": "1a0f32a96f1c43c50d200c09ecaf82ea61b99643"
+    },
+    "boba_pearls_jar": {
+      "file": "boba_pearls_jar.png",
+      "size": [
+        122,
+        146
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        114,
+        138
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9452054794520548
+      ],
+      "sha256": "c5171d424207db57304e621153217891236fd0d10a1f8aefcea044dd1c25fd59",
+      "sourceBlob": "adac98b69fcdab807ff5ac8ab4e675fb4c1bc0a0"
+    },
+    "boba_jelly_jar": {
+      "file": "boba_jelly_jar.png",
+      "size": [
+        114,
+        129
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        106,
+        121
+      ],
+      "groundAnchor": [
+        0.5,
+        0.937984496124031
+      ],
+      "sha256": "05b2d2aa6ac30deb49180cb4dd8c9ef6afdf68e7f255763c6e8a8f0ee29c0e0a",
+      "sourceBlob": "a3f4f540cb38088f262349ba51d1916b5a5bbdb8"
+    },
+    "boba_red_bean_jar": {
+      "file": "boba_red_bean_jar.png",
+      "size": [
+        113,
+        130
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        105,
+        122
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9384615384615385
+      ],
+      "sha256": "711549e7d4d5aafc0b8c40ae04d23921d958e7051bd23a96a91ff92ef81fca3a",
+      "sourceBlob": "d17a7495da62078511cc520e50cd5c4959377a3a"
+    },
+    "boba_mango_jar": {
+      "file": "boba_mango_jar.png",
+      "size": [
+        113,
+        130
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        105,
+        122
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9384615384615385
+      ],
+      "sha256": "5bbe9efe0ca60f9f31bab40c27e704a9291004126c0ad3a53ac5502053701e33",
+      "sourceBlob": "43f77448901741522748750032bdf9323e40e88e"
+    },
+    "boba_strawberry_jar": {
+      "file": "boba_strawberry_jar.png",
+      "size": [
+        117,
+        135
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        109,
+        127
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9407407407407408
+      ],
+      "sha256": "e84758eee5408c560145efc33675a2b265eb1ad740be1527d71cb6d45cbc6cbe",
+      "sourceBlob": "63838cdee49b00802554e0a674036ca1d1f5972f"
+    },
+    "boba_pearls_bowl": {
+      "file": "boba_pearls_bowl.png",
+      "size": [
+        104,
+        78
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        96,
+        70
+      ],
+      "groundAnchor": [
+        0.5,
+        0.8974358974358975
+      ],
+      "sha256": "d1b2d3b8e63bc8ac7829a17547fdd94bcad822429e57dacd4ac0412f8ff8cb53",
+      "sourceBlob": "d05c7432acc2e1bc6fe69c30d8c427a479dee449"
+    },
+    "boba_jelly_bowl": {
+      "file": "boba_jelly_bowl.png",
+      "size": [
+        104,
+        79
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        96,
+        71
+      ],
+      "groundAnchor": [
+        0.5,
+        0.8987341772151899
+      ],
+      "sha256": "f0f6ce762049ec018dfe424069a2f2d6657c1ec2c07f8f174c7c73b9020425cb",
+      "sourceBlob": "fd5f354f2f96a48d2d89e9564ac3e7b1de5a8680"
+    },
+    "boba_pink_jelly_bowl": {
+      "file": "boba_pink_jelly_bowl.png",
+      "size": [
+        103,
+        79
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        95,
+        71
+      ],
+      "groundAnchor": [
+        0.5,
+        0.8987341772151899
+      ],
+      "sha256": "86304f74d7618585b96f7d970989740fc98f8ed9136733881f31b4dd18572f22",
+      "sourceBlob": "00ce55c567387c1824ddef540194e1f388f5b7e7"
+    },
+    "boba_cream_bowl": {
+      "file": "boba_cream_bowl.png",
+      "size": [
+        101,
+        92
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        93,
+        84
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9130434782608695
+      ],
+      "sha256": "07c1664e4b3a4a415685f0343ca9a492a39c0b4c74ba9dc8ffa0e8248fac4131",
+      "sourceBlob": "2c0856ca98d9bccb746db1f226f94b10e77fddeb"
+    },
+    "boba_red_bean_bowl": {
+      "file": "boba_red_bean_bowl.png",
+      "size": [
+        101,
+        79
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        93,
+        71
+      ],
+      "groundAnchor": [
+        0.5,
+        0.8987341772151899
+      ],
+      "sha256": "48322402806dac29da7296c720fa018f17efb38826e31a59a02c097e1bcfc29b",
+      "sourceBlob": "68a307dccecccb0b58dc4d0649b26a891eece313"
+    },
+    "boba_mango_bowl": {
+      "file": "boba_mango_bowl.png",
+      "size": [
+        98,
+        78
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        90,
+        70
+      ],
+      "groundAnchor": [
+        0.5,
+        0.8974358974358975
+      ],
+      "sha256": "8c4ab3b43f370ffc546d972b022651ed8ca86b170af496f3b4c2b1c5cc80471e",
+      "sourceBlob": "1fae9595fe4b294c18113383c8b3bbea5d3ef924"
+    },
+    "boba_strawberry_bowl": {
+      "file": "boba_strawberry_bowl.png",
+      "size": [
+        97,
+        79
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        89,
+        71
+      ],
+      "groundAnchor": [
+        0.5,
+        0.8987341772151899
+      ],
+      "sha256": "64e88f0af2e858b2387beec44362ebea7bdef02a64cc296d902f41417080247a",
+      "sourceBlob": "890c4a31d51e8c05ec4d4b793ca4301787993662"
+    },
+    "boba_dome_lid": {
+      "file": "boba_dome_lid.png",
+      "size": [
+        125,
+        71
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        117,
+        63
+      ],
+      "groundAnchor": [
+        0.5,
+        0.8873239436619719
+      ],
+      "sha256": "54c5087958d773eb9362b8461a9365e0b438e8da3d546a0ee1c618eaa3744d39",
+      "sourceBlob": "15f3ebacc95f1dbf4a1657e650308def1e946faa"
+    },
+    "boba_flat_lid": {
+      "file": "boba_flat_lid.png",
+      "size": [
+        123,
+        55
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        115,
+        47
+      ],
+      "groundAnchor": [
+        0.5,
+        0.8545454545454545
+      ],
+      "sha256": "15ab41f0a307f6b3c96d333de663990f5e8943946697fbd64fe8edb53a86b4cc",
+      "sourceBlob": "c9b881fbececa9411398f2478c6ec2f699208dff"
+    },
+    "kitchen_worktop": {
+      "file": "kitchen_worktop.png",
+      "size": [
+        388,
+        123
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        380,
+        115
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9349593495934959
+      ],
+      "sha256": "7592b0905a8e51a2e3cc62000e6933199cb1b6222a3cf632d13089d4c74d9f06",
+      "sourceBlob": "905a9d34afb3673d973551c5bd5c9c8f85d9207b"
+    },
+    "kitchen_cutting_board": {
+      "file": "kitchen_cutting_board.png",
+      "size": [
+        208,
+        97
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        200,
+        89
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9175257731958762
+      ],
+      "sha256": "11ccfc5f7f6d9e8959e682f77a0300709b8665c7e8481d48daf385ada40fc575",
+      "sourceBlob": "5035631d11174216851fe4d5f4cfb4af14e99e31"
+    },
+    "kitchen_wooden_tray": {
+      "file": "kitchen_wooden_tray.png",
+      "size": [
+        146,
+        79
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        138,
+        71
+      ],
+      "groundAnchor": [
+        0.5,
+        0.8987341772151899
+      ],
+      "sha256": "cd71d9acd866825950bfb5ebfa6f82de967c75c7e75fe0ca0a573741b1107ce5",
+      "sourceBlob": "69c0f4c17c3d3cbaed7fae2530278d9f3b39e9ce"
+    },
+    "kitchen_round_wooden_tray": {
+      "file": "kitchen_round_wooden_tray.png",
+      "size": [
+        144,
+        93
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        136,
+        85
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9139784946236559
+      ],
+      "sha256": "fc045edac66ab644c0a5df545871c2a602d5d684671d42d8243f9ff113eea541",
+      "sourceBlob": "7e21a275200d1b22fb9517d1e2c7a65461c7f988"
+    },
+    "kitchen_folded_cloth": {
+      "file": "kitchen_folded_cloth.png",
+      "size": [
+        109,
+        98
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        101,
+        90
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9183673469387755
+      ],
+      "sha256": "c0bf952a59bbae921e63e8da880e518a584dab9db2d3616426bd27ba7ed40457",
+      "sourceBlob": "8ab9a2e5db18b1f10b4f86d8203b643fb7ea4bcd"
+    },
+    "kitchen_clay_pot_lidded": {
+      "file": "kitchen_clay_pot_lidded.png",
+      "size": [
+        174,
+        118
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        166,
+        110
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9322033898305084
+      ],
+      "sha256": "8df03284b15abe29ab91e6ec5fb2503b1412e9c456da3af133376c0f731c7434",
+      "sourceBlob": "3f389318788d69cc5abb808a2dc8718d542498a2"
+    },
+    "kitchen_frying_pan": {
+      "file": "kitchen_frying_pan.png",
+      "size": [
+        170,
+        108
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        162,
+        100
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9259259259259259
+      ],
+      "sha256": "5b73a863816a6aa8a9e6da1dc0d21e65f8fd801e528564068be1feb874d02e4b",
+      "sourceBlob": "05e0481430c1f1fa6516d519a99dd04f09128f89"
+    },
+    "kitchen_small_saucepan": {
+      "file": "kitchen_small_saucepan.png",
+      "size": [
+        167,
+        97
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        159,
+        89
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9175257731958762
+      ],
+      "sha256": "32e10f05fcdebbc29cf7e5f984872f5379931af7df7537a1f7470e0016c6bc93",
+      "sourceBlob": "692a239e94208504892cfb0c5ba14b7b5b735873"
+    },
+    "kitchen_stock_pot": {
+      "file": "kitchen_stock_pot.png",
+      "size": [
+        168,
+        126
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        160,
+        118
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9365079365079365
+      ],
+      "sha256": "7f50a11f2a3ed55605dacf150d89ffa3b6098e27d56a066392b5d0a19287955d",
+      "sourceBlob": "ccb2329e7365f81a6332dd58489feb5c343cc3ae"
+    },
+    "kitchen_bamboo_steamer": {
+      "file": "kitchen_bamboo_steamer.png",
+      "size": [
+        125,
+        122
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        117,
+        114
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9344262295081968
+      ],
+      "sha256": "0610b90b971568fa5acab5d15ac783491170677b9fe96870c844a22a36df2b99",
+      "sourceBlob": "744e509289f2c96d2b5baad4b97e5fad91ec6614"
+    },
+    "kitchen_rice_tub": {
+      "file": "kitchen_rice_tub.png",
+      "size": [
+        143,
+        128
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        135,
+        120
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9375
+      ],
+      "sha256": "6bb062dd6881e0ad32ce702262b7a6e4c0974ea25741f4f8043dccab5fc691f7",
+      "sourceBlob": "2661ee2087f60f019b6b0d8ad8780c1875e19429"
+    },
+    "kitchen_knife": {
+      "file": "kitchen_knife.png",
+      "size": [
+        142,
+        107
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        134,
+        99
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9252336448598131
+      ],
+      "sha256": "8d4021ccef088baa97c2e4aabb44e537ec064224e5a2deeb7df9478234df4f70",
+      "sourceBlob": "720d6ef0475202b4ef87a8dad7196f1b33d72bd7"
+    },
+    "kitchen_wooden_ladle": {
+      "file": "kitchen_wooden_ladle.png",
+      "size": [
+        113,
+        120
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        105,
+        112
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9333333333333333
+      ],
+      "sha256": "4f6be5895559fa574af5d2c167993997fc12453b0a780f57f7d16ce0d524b23e",
+      "sourceBlob": "c47c0b1c8e2556c4b05edaf01a5b3c10454e2f9f"
+    },
+    "kitchen_wooden_spatula": {
+      "file": "kitchen_wooden_spatula.png",
+      "size": [
+        100,
+        117
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        92,
+        109
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9316239316239316
+      ],
+      "sha256": "2f744be06cb20cb7d98e02904b31d39bab2b22a7559443e0dc7cef642e7a2171",
+      "sourceBlob": "89910b85d996beb6a1781e94bef17b60308ed773"
+    },
+    "kitchen_metal_turner": {
+      "file": "kitchen_metal_turner.png",
+      "size": [
+        96,
+        117
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        88,
+        109
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9316239316239316
+      ],
+      "sha256": "861310b0b5f20545a38d85a535219a2b4dc2debb819e842ab8acb608a361518c",
+      "sourceBlob": "cd72176211e9404699547316954c526d0d5f7a21"
+    },
+    "kitchen_whisk": {
+      "file": "kitchen_whisk.png",
+      "size": [
+        84,
+        116
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        76,
+        108
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9310344827586207
+      ],
+      "sha256": "39cfd3978e09e73810068a5efaa5445913c40d752fccb3495477a2ce29798036",
+      "sourceBlob": "f74c14c0643bcb4c8b6b29e000ca458f35939c98"
+    },
+    "kitchen_chopsticks": {
+      "file": "kitchen_chopsticks.png",
+      "size": [
+        89,
+        113
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        81,
+        105
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9292035398230089
+      ],
+      "sha256": "f6aea2081453a58a322236c60c7710c03660b791165e6915f0eac5182c48d0bc",
+      "sourceBlob": "349540c9bf4fc52e177a3035aeda44b17aeb1066"
+    },
+    "kitchen_small_ladle": {
+      "file": "kitchen_small_ladle.png",
+      "size": [
+        81,
+        93
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        73,
+        85
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9139784946236559
+      ],
+      "sha256": "0f25ac96f915c119a3633b9aecbb6a80425a08b8157f4a9f8e24b7c6546df0c8",
+      "sourceBlob": "e50fdb4b663a566736ea69a6306409c48fad6d3e"
+    },
+    "kitchen_small_bowl": {
+      "file": "kitchen_small_bowl.png",
+      "size": [
+        89,
+        64
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        81,
+        56
+      ],
+      "groundAnchor": [
+        0.5,
+        0.875
+      ],
+      "sha256": "774068164b0dd1b62de5396a4553a7022bee991d1d7f280255000763af5b1185",
+      "sourceBlob": "ca3f7568d1912f07b59103ed0246e6dd28d567e6"
+    },
+    "kitchen_mixing_bowl": {
+      "file": "kitchen_mixing_bowl.png",
+      "size": [
+        111,
+        81
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        103,
+        73
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9012345679012346
+      ],
+      "sha256": "8c2b7d4f511ef20270f4520ad84ae471478e23a34a184e394df64f0124c87627",
+      "sourceBlob": "64e9f56cba741e1a94dbbe265b0b86bf79fcb35c"
+    },
+    "kitchen_blue_bowl": {
+      "file": "kitchen_blue_bowl.png",
+      "size": [
+        103,
+        78
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        95,
+        70
+      ],
+      "groundAnchor": [
+        0.5,
+        0.8974358974358975
+      ],
+      "sha256": "598387c7b690712805a69787bbc97919ad2d73f60701f30289187b7c371d790f",
+      "sourceBlob": "7c6d06cad7bc91a5994f617ee8bc3b3a66215806"
+    },
+    "kitchen_kettle": {
+      "file": "kitchen_kettle.png",
+      "size": [
+        121,
+        123
+      ],
+      "alphaBounds": [
+        8,
+        8,
+        113,
+        115
+      ],
+      "groundAnchor": [
+        0.5,
+        0.9349593495934959
+      ],
+      "sha256": "ef6f75369845fe45a106e26abc76e86c8afb3954ee957fb3d551663cfb6f1c22",
+      "sourceBlob": "072a6812bf3b8ba02b2ffed2a532833ec2a21130"
+    }
+  }
+}
