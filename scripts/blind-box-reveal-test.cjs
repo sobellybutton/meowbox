@@ -35,6 +35,19 @@ console.log('PASS '+n+' blind-box placement, reveal and layer assertions.');
  ck(scene(locked,'opening',.7,late,false,(...a)=>drawn.push(a)),'decoded pair remains selected');
  ck(scene(locked,'result',0,late,false,(...a)=>drawn.push(a)),'result retains same carton');
  ck(drawn.length===2,'figure rises then remains visible');
+ // Fallback must retain the shake/ready carton centre, size and identity.
+ const fallbackCalls=[],fallbackCtx={globalAlpha:1,save(){fallbackCalls.push(['save']);this.saved=this.globalAlpha},restore(){fallbackCalls.push(['restore']);this.globalAlpha=this.saved}};
+ const fallbackRender=new Function('ctx','boxArt','poseEase',block[1]+';return pawBlindFallbackReveal;')(fallbackCtx,(...v)=>fallbackCalls.push(['box',...v]),x=>x);
+ let lastY=Infinity;
+ for(let i=0;i<=100;i++){
+  fallbackCalls.length=0;
+  fallbackRender({boxPick:2},{figure:i/100,lid:i/100},(...v)=>fallbackCalls.push(['figure',...v]));
+  const carton=fallbackCalls.at(-1);
+  ck(carton[0]==='box'&&carton[1]===400&&carton[2]===515&&carton[3]===1.15&&carton[4]===2,'unchanged carton anchor, size and identity');
+  if(i>0){const figure=fallbackCalls[1];ck(figure[0]==='figure'&&figure[1]===400&&figure[2]<=lastY,'figure rises from same carton behind its wall');lastY=figure[2];ck(fallbackCtx.globalAlpha===1,'canvas alpha restored')}
+ }
+ ck(source.includes('if(!painted)pawBlindFallbackReveal(state,reveal'),'fallback connected to active stage');
+ ck(!source.includes('boxArt(332,515,.82'),'retired sideways jump removed');
  const fallback={};
  ck(!scene(fallback,'opening',.1,late,false,()=>{}),'pending pair uses original renderer');
  ck(!scene(fallback,'result',0,pair,false,()=>{}),'late art cannot replace fallback');
