@@ -840,7 +840,8 @@
       "summary": "Rendered verification of existing first railway recovery",
       "resources": [
         "browser",
-        "scripts/rail-mobile-matrix-test.cjs"
+        "scripts/rail-mobile-matrix-test.cjs",
+        ".github/workflows/rail-station-diagnostic.yml"
       ],
       "depends": [],
       "stage": "tested",
@@ -852,7 +853,10 @@
         "Owner 28 Nov clarified all mobile phones, not iPhone only. 8bacfb07 + 77c7374a + 37cfaf57: added independent nine-profile railway CI across Chromium/WebKit/Firefox (compact, tall, large, Samsung-sized Android, iOS and tablet), actual touch station loop, rotate, reduced-motion, skip, screenshots, build/browser/DPR evidence. Script syntax validated; CI results and physical Android/iOS branded browser/hardware checks not yet verified. Full project-wide mobile acceptance standard updated.",
         "cf4ea6a7: strict real touch selection across physical station plaque and edge handoff; bounded retries when camera changes visibility, records candidate geometry, hit-test and visibility, no forced taps or route bypass. Exact test source parses. Prior ios-tall (140882515716) and ios-large (140883194819) WebKit jobs failed on the same disappearing station plaque. New matrix 46114041746 pending. Actual placement fix requires source coordination. No acceptance promotion."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-rail-isolated-ci",
+        "until": 1795847006445
+      },
       "blocker": "Verify new live braking and alpha correction, nine-profile CI results, actual screenshot review and physical iOS/Android mobile browsers (Safari, Chrome, Samsung Internet, Firefox) across representative phone sizes, rotation, safe areas, cold loads. Browser simulation is not physical-device acceptance."
     },
     {
