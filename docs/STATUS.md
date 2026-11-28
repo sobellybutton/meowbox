@@ -1331,3 +1331,7 @@ Reconciled #124 moon clearance and purification scale/occlusion into #125 withou
 
 ### Rear garden convergence, 28 November
 Reconciled #124 foreground paving routes, pond effects and ambient wind chime into #125 while retaining painted seated pose, stable actor scale and deferred stand/route transitions. Only feed and sit remain interactive on the painted garden. Exact JS parsed; focused garden and bench connector tests passed (asset existence checks stubbed). Rendered visual acceptance pending; no main write. Parent #123 CI preserved.
+
+
+### Entrance convergence, 28 November
+Reconciled #126 into #125: boot uses manifest-matched painted walking sprites, decodes selected artwork, avoids redundant legacy crop warmup, and shortens the gate walk to 600ms. All three changed JS files parsed; exact-source manifest/readiness checks passed: Entrance painted traveller readiness regression passed; PASS 31 current painted entrance selection and timing checks. Cold/warm browser timing and visual acceptance pending. Main unchanged; parent candidate checks remain running.
