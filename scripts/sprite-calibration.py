@@ -132,6 +132,28 @@ def summarize(rows):
     }
 
 
+def directional_review(data):
+    """Report discontinuities across every gait transition, including loop wrap."""
+    medians = {d: v["summary"]["medianVisibleHeightFraction"] for d, v in data.items()}
+    baseline = median(medians.values())
+    result = {}
+    for direction, value in data.items():
+        frames = value["frames"]
+        transitions = []
+        for i, a in enumerate(frames):
+            j = (i + 1) % len(frames)
+            b = frames[j]
+            transitions.append({"from": i, "to": j,
+                "topJumpFraction": round(abs(a["footToVisibleTopFraction"] - b["footToVisibleTopFraction"]), 5),
+                "groundJumpFraction": round(abs(a["footMinusVisibleBottomFraction"] - b["footMinusVisibleBottomFraction"]), 5)})
+        result[direction] = {"relativeMedianHeight": round(medians[direction] / baseline, 5),
+            "maxTopJumpFraction": max(t["topJumpFraction"] for t in transitions),
+            "maxGroundJumpFraction": max(t["groundJumpFraction"] for t in transitions),
+            "transitions": transitions}
+    return {"directionMedianSpread": round(max(medians.values()) - min(medians.values()), 5),
+            "directions": result}
+
+
 def self_test():
     a = Image.new("L", (100, 200), 0)
     a.paste(255, (20, 30, 80, 180))
@@ -144,6 +166,10 @@ def self_test():
     v2 = measure(a, [50, 175])
     assert v2["footMinusVisibleBottomPx"] == -5
     assert summarize([v, v2])["footToTopFractionSpread"] == .025
+    review = directional_review({"up": {"summary": summarize([v, v2]), "frames": [v, v2]}})
+    assert review["directions"]["up"]["maxTopJumpFraction"] == .025
+    assert review["directions"]["up"]["maxGroundJumpFraction"] == .025
+    assert review["directions"]["up"]["transitions"][-1]["to"] == 0
     try:
         measure(Image.new("L", (10, 10), 0), None)
     except ValueError:
@@ -207,7 +233,7 @@ def main():
             data[direction] = {"summary": summary, "frames": rows}
             print("PLAYER", player, direction, json.dumps(summary, separators=(",", ":")))
         all_rows = [r for v in data.values() for r in v["frames"]]
-        result["players"][player] = {"directions": data, "combined": summarize(all_rows)}
+        result["players"][player] = {"directions": data, "combined": summarize(all_rows), "directionalReview": directional_review(data)}
     count = sum(v["combined"]["frames"] for v in result["players"].values())
     print(f"Measured {count} registered walk frames; no artwork or runtime modified.")
     result["stagedPoseCandidates"] = staging_candidates()
