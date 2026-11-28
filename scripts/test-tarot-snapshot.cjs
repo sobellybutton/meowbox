@@ -17,3 +17,22 @@ for(const size of [1,3,5])for(let i=0;i<5;i++){
  assert.equal(key(q,String(i+1),1)?.action,i<size?size===5?'five-detail':'focus':undefined);
 }
 console.log('Tarot snapshot and keyboard regression PASS');
+
+const liveBlock=src.split('/* PAW_LIVE_TAROT_READING_BEGIN */')[1]?.split('/* PAW_LIVE_TAROT_READING_END */')[0];
+assert.ok(liveBlock);
+const route=new Function(h+liveBlock+';return pawTarotReadingRoute')();
+for(const size of [1,3,5])for(const kind of ['tarot','love']){
+ const entry={cards:cards.slice(0,size),tone:'playful',topic:2};
+ const q={readCards:entry.cards,readStage:'cards',readFlip:Array(size).fill(10),tarotTone:'playful',readTopic:2};
+ assert.equal(route(entry,q,kind,'tarot',78,11,false),'live');
+ assert.equal(route(entry,q,kind,'tarot',78,10.3,false),'wait');
+ assert.equal(route(entry,q,kind,'tarot',78,11,true),'archive');
+ assert.equal(route(entry,q,kind,'park',78,11,false),'ignore');
+ assert.equal(route(entry,{...q,readStage:'deck'},kind,'tarot',78,11,false),'wait');
+ assert.equal(route(entry,{...q,readFlip:Array(size).fill(-1)},kind,'tarot',78,11,false),'wait');
+ assert.equal(route({...entry,topic:1},q,kind,'tarot',78,11,false),'wait');
+ assert.equal(route(entry,null,null,null,78,11,true),'archive');
+ assert.equal(route(null,q,kind,'tarot',78,11,true),'ignore');
+ assert.equal(route(entry,q,kind,'tarot',78,NaN,false),'wait');
+}
+console.log('Live Tarot and archive route isolation PASS');

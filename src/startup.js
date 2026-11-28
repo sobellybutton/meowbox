@@ -12732,6 +12732,12 @@ function pawLiveTarotSnapshot(entry,q,kind,currentRoom,deckLength){
  if(!Array.isArray(q.readFlip)||q.readFlip.length!==live.cards.length||q.readFlip.some(v=>!Number.isFinite(v)||v<0))return null;
  return live
 }
+function pawTarotReadingRoute(entry,q,kind,currentRoom,deckLength,now,archive){
+ if(archive)return tarotShareSnapshot(entry,deckLength)?'archive':'ignore';
+ if(currentRoom!=='tarot'||!['tarot','love'].includes(kind))return 'ignore';
+ const live=pawLiveTarotSnapshot(entry,q,kind,currentRoom,deckLength);
+ return live&&Number.isFinite(now)&&q.readFlip.every(v=>now-v>=.72)?'live':'wait'
+}
 function pawLiveTarotStep(count,index,delta){
  if(![1,3,5].includes(count)||!Number.isInteger(index)||!Number.isInteger(delta))return 0;
  return Math.max(0,Math.min(count,index+delta))
@@ -12739,10 +12745,13 @@ function pawLiveTarotStep(count,index,delta){
 /* PAW_LIVE_TAROT_READING_END */
 const pawJournalReadingBefore=openTarotReading;
 openTarotReading=function(entry,back){
+ const route=pawTarotReadingRoute(entry,state,activity,room,tarotDeck.length,t,typeof back==='function');
+ if(route==='archive')return pawJournalReadingBefore(entry,back);
+ if(route==='wait'){hint('Let your cards finish turning before reading.','等牌完全翻开，再慢慢解读。');return}
+ if(route!=='live')return;
  const live=pawLiveTarotSnapshot(entry,state,activity,room,tarotDeck.length);
- if(!live||!state.readFlip.every(v=>t-v>=.72))return pawJournalReadingBefore(entry,back);
  const run=state,kind=activity,count=live.cards.length;
- const valid=()=>run===state&&room==='tarot'&&activity===kind;
+ const valid=()=>run===state&&room==='tarot'&&activity===kind&&pawTarotReadingRoute(live,run,kind,room,tarotDeck.length,t,false)==='live';
  const returnTable=()=>{if(!valid())return;closeTalk();$('page').style.display='none';if(run.readStage==='focus')readingReturnSpread()};
  function explain(index){
   if(!valid())return;
@@ -12759,7 +12768,7 @@ openTarotReading=function(entry,back){
    choices.push([index+1<count?tr('Next card','下一张牌'):tr('What does it mean together?','整体意味着什么？'),()=>explain(pawLiveTarotStep(count,index,1))]);
   }else{
    words=count===5?tr('Compare what helps with the challenge card. Choose one small action from the next-step card, and keep the last card as a reminder.','对照助力牌和挑战牌。从行动牌里选一件小事，再把最后一张牌当作提醒。'):count===3?readingConnection(live):tr('Take what resonates with you. A card is a moment for reflection, not a prediction or an instruction.','把有共鸣的部分留在心里。牌意是自我反思，不是预言，也不是指令。');
-   choices.push([tr('Make a keepsake','制作纪念牌卡'),()=>{if(!valid())return;closeTalk();shareReadingResult(live,()=>{if(valid())explain(index);else $('page').style.display='none'})}]);
+   choices.push([tr('Make a keepsake','制作纪念牌卡'),()=>{if(!valid())return;closeTalk();shareReadingResult(live,()=>{if(valid())explain(index)})}]);
   }
   if(index>0)choices.push([tr('Previous card','上一张牌'),()=>explain(pawLiveTarotStep(count,index,-1))]);
   choices.push([tr('Back to the table','回到牌桌'),returnTable]);
