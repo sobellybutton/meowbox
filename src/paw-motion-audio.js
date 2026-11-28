@@ -15,14 +15,21 @@
    // Never turn a teleport, large stalled frame or map change into footfalls.
    if(d>stride*2){carried=0;return null}
    carried+=d;if(carried<stride)return null;
-   carried%=stride;foot=1-foot;return {foot,surface:Object.hasOwn(surfaces,sample.surface)?sample.surface:'stone'}
+   // A delayed frame can cross two strides. Keep left/right phase correct
+   // while emitting only the latest footfall, never a burst of catch-up sounds.
+   const crossed=Math.floor(carried/stride);carried%=stride;foot=(foot+crossed)%2;
+   return {foot,surface:Object.hasOwn(surfaces,sample.surface)?sample.surface:'stone'}
   }};
  }
  function permitted(flags){return !!flags?.enabled&&!flags.muted&&!flags.hidden&&!flags.overlay&&!flags.paused}
  function createPlayer(context,bus,random=Math.random){
   let last=-Infinity,trainLast=-Infinity,buffer=null,railBeat=0;
   const active=new Set();
-  function ready(flags){return permitted(flags)&&context?.state==='running'&&bus&&Number.isFinite(context.currentTime)}
+  function silence(){for(const cancel of active)cancel()}
+  function ready(flags){
+   if(!permitted(flags)||context?.state!=='running'||!bus||!Number.isFinite(context.currentTime)){silence();return false}
+   return true
+  }
   function noise(){
    if(buffer)return buffer;
    const length=Math.ceil(context.sampleRate*.18);buffer=context.createBuffer(1,length,context.sampleRate);
@@ -53,7 +60,7 @@
    if(context.currentTime-trainLast<period)return false;
    try{const beat=railBeat%2; pulse(beat?168:132,(beat?.017:.025)*s,beat?.12:.16,'lowpass');railBeat++;trainLast=context.currentTime;return true}catch{return false}
   }
-  return {footstep,railway,reset(){for(const cancel of active)cancel();last=-Infinity;trainLast=-Infinity;railBeat=0}}
+  return {footstep,railway,reset(){silence();last=-Infinity;trainLast=-Infinity;railBeat=0}}
  }
  return Object.freeze({createStepper,createPlayer,permitted,surfaceNames:Object.keys(surfaces)});
 });
