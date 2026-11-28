@@ -179,11 +179,18 @@ function chartPalaces(grid){
 // no wall-clock timer, storage, chart recomputation or fabricated results.
 function parchmentClock(q,now,blocked=false,reduced=false){
  if(!q||!finite(now))return 0;
- if(reduced){q.elapsed=.72;q.last=now;q.blocked=!!blocked;return 1}
  const prior=q.last;
- if(finite(prior)&&now>=prior&&!blocked&&!q.blocked)q.elapsed=Math.min(.72,(finite(q.elapsed)?q.elapsed:0)+Math.min(.1,now-prior));
- q.last=now;q.blocked=!!blocked;
- return Math.max(0,Math.min(1,(q.elapsed||0)/.72))
+ q.elapsed=finite(q.elapsed)?Math.max(0,Math.min(.72,q.elapsed)):0;
+ // Hidden/covered consultations retain their current ink, even if the
+ // accessibility preference changes while the player cannot see the desk.
+ // On return, reduced motion reveals the same computed chart immediately.
+ if(blocked){q.blocked=true;q.last=finite(prior)?Math.max(prior,now):now;return q.elapsed/.72}
+ if(reduced){q.elapsed=.72;q.last=finite(prior)?Math.max(prior,now):now;q.blocked=false;return 1}
+ // A stale timestamp must not rewind the baseline and count time twice.
+ if(finite(prior)&&now<prior)return q.elapsed/.72;
+ if(finite(prior)&&!q.blocked)q.elapsed=Math.min(.72,q.elapsed+Math.min(.1,now-prior));
+ q.last=now;q.blocked=false;
+ return q.elapsed/.72
 }
 function paintChartPalaces(g,palaces,progress=1){
  if(!g||!Array.isArray(palaces)||palaces.length!==12||!finite(progress)||!palaces.every((v,i)=>v?.slot===palaceSlots[i]&&typeof v.name==='string'&&v.name.length>0)||palaces.filter(c=>c.life).length!==1)return false;

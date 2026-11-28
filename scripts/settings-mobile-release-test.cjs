@@ -21,14 +21,17 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
    await page.waitForFunction(()=>!transitioning&&!room&&scene==='fortune');
    await page.waitForFunction(()=>[...document.querySelectorAll('#worldSigns .worldSign[data-door]')].some(e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>0&&r.height>0&&r.left<innerWidth&&r.right>0&&r.top<innerHeight&&r.bottom>0&&s.visibility!=='hidden'&&s.display!=='none'&&Number(s.opacity)>0}),null,{timeout:15000});
    assert.equal(await page.evaluate(()=>localStorage.getItem('meowbox-preview-quiet9')),'false');
-   const cog=page.locator('#townSettingsToggle');await cog.waitFor({state:'visible'});
+   const cog=page.locator('#townSettingsToggle'),profile=page.locator('#profileHud');
    assert.equal(await page.locator('#quietToggle').isVisible(),false);
-   const style=await cog.evaluate(e=>({svg:[...e.querySelectorAll('svg')].filter(x=>getComputedStyle(x).display!=='none').length,images:e.querySelectorAll('img').length,before:getComputedStyle(e,'::before').content,after:getComputedStyle(e,'::after').content,w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height}));
-   assert.deepEqual([style.svg,style.images,style.before,style.after],[1,0,'none','none']);assert.ok(style.w>=44&&style.h>=44);
+   const directCog=await cog.isVisible();
+   if(directCog){
+    const style=await cog.evaluate(e=>({svg:[...e.querySelectorAll('svg')].filter(x=>getComputedStyle(x).display!=='none').length,images:e.querySelectorAll('img').length,before:getComputedStyle(e,'::before').content,after:getComputedStyle(e,'::after').content,w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height}));
+    assert.deepEqual([style.svg,style.images,style.before,style.after],[1,0,'none','none']);assert.ok(style.w>=44&&style.h>=44);
+   }else{assert.equal(await cog.count(),0,'Detached map gear must not remain in DOM');await profile.waitFor({state:'visible'});}
    await page.screenshot({path:'test-results/settings-'+name+'-map.png'});
    await page.evaluate(()=>{localStorage.setItem('meowbox-preview-resetProbe','keep until confirmed');localStorage.setItem('other-app-settings-test','preserve')});
    const language=await page.evaluate(()=>localStorage.getItem('meowbox-preview-zh'));
-   await cog.tap();
+   if(directCog)await cog.tap();else{await profile.tap();await page.locator('.pawProfileSettingsEntry').tap();}
    const reset=page.getByRole('button',{name:'Reset data',exact:true});
    await reset.tap();await page.getByRole('button',{name:'Keep my progress',exact:true}).tap();
    assert.equal(await page.locator('#pawResetConfirm').isVisible(),false);

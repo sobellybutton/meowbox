@@ -18,6 +18,24 @@ assert.equal(clear({x:60,y:0},{x:54,y:0},[{x:NaN,y:0}],55),false);
 const roster=[{wait:2,exitRetry:4},{wait:5}];
 pause(roster,9);assert.deepEqual(roster,[{wait:11,exitRetry:13},{wait:14}]);
 pause(roster,-1);pause(roster,NaN);assert.deepEqual(roster,[{wait:11,exitRetry:13},{wait:14}]);
-assert.ok(src.includes('pawVisitorStepClear(a,next,[indoor],55)'));
+// Mapped paintings use a different logical world scale. Check the actual
+// live clearance policy and exercise both distances, not an obsolete literal.
+const gapStart=src.indexOf('function pawMappedGuestGaps('),gapEnd=src.indexOf('// Select a connected set',gapStart);
+assert.ok(gapStart>=0&&gapEnd>gapStart);
+const gaps=new Function(src.slice(gapStart,gapEnd)+';return pawMappedGuestGaps')();
+assert.equal(gaps(false).player,55);assert.equal(gaps(true).player,40);
+assert.equal(gaps(false).station,52);assert.equal(gaps(true).station,34);
+for(const mapped of [false,true]){
+ const g=gaps(mapped);
+ for(let x=1;x<g.player;x++){
+  assert.equal(clear({x,y:0},{x:x+1,y:0},[p],g.player),true);
+  assert.equal(clear({x,y:0},{x:x-1,y:0},[p],g.player),false);
+ }
+ assert.equal(clear({x:g.player+1,y:0},{x:g.player-1,y:0},[p],g.player),false);
+ assert.equal(clear({x:g.player+1,y:0},{x:g.player,y:0},[p],g.player),true);
+}
+assert.ok(src.includes('pawVisitorStepClear(a,next,[indoor],gaps.player)'));
+assert.ok(src.includes('pawVisitorStepClear(a,next,others.filter(pawVisitorVisible),gaps.peer)'));
+assert.ok(src.includes('pawGuestClear(next.x,next.y,transit?stationFeet:protectedFeet,gaps.station)'));
 assert.ok(src.includes('pawVisitorPauseTimers(pawLocalVisitors,Math.max(0,elapsed-dt))'));
 console.log('Indoor visitor clearance and dwell regression passed');

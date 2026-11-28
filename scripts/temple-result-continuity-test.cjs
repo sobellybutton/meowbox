@@ -9,3 +9,64 @@ const q={pawFortuneNumber:4,count:1,result:1,pawFortuneSettledAt:10,tossUntil:10
 const g={moonFoot:{x:500,y:400},stickPickFoot:{x:350,y:390},stickFoot:{x:250,y:390}};
 for(const action of ['retry','confirm']){const q={pawFortuneNumber:3,pawFortuneTransfer:action,pawFortuneTransferAt:10,stickDelivered:true};const start=h.pawFortuneTransferFrame(q,10,g),end=h.pawFortuneTransferFrame(q,20,g);ck(start.x===(action==='retry'?500:350),'start from actual station');ck(end.x===(action==='retry'?250:500)&&end.done,'arrive at target');let prev=start.x;for(let i=1;i<=200;i++){const f=h.pawFortuneTransferFrame(q,10+i/100,g);ck(action==='retry'?f.x<=prev:f.x>=prev,'continuous directional walk');prev=f.x;ck(h.pawFortuneNext(q,action==='retry'?'moon':'sticks',10+i/100,false)===null,'prevent repeated route');}h.pawQuietClock(q,action==='retry'?'moon':'sticks',10,false);h.pawQuietClock(q,action==='retry'?'moon':'sticks',10.2,true);h.pawQuietClock(q,action==='retry'?'moon':'sticks',50,true);ck(!h.pawFortuneTransferFrame(q,50,g).done,'hidden travel pauses')}
 ck(e.includes('state.pawFortuneSettledAt=t'),'actual landing clock');ck(s.includes("key:'fortune-settled'"),'visible settled state');ck(s.includes('pawAlcoveScene();if(!pawDrawAlcoveFortuneTransfer())'),'same painted scene');ck(!s.includes("tr('Fictional resident','虚构居民')"),'no rack immersion-breaking label');ck(!e.includes('Town residents · fictional companions'),'no town banner label');ck(!engine.includes('Fictional town news'),'no news label');console.log('PASS '+checks+' temple result, physical walk and resident copy checks');
+
+// Owner reported block/character overlap. Exercise exact rendered geometry and
+// actual toss trajectories, not just the nominal tray center.
+const moonApi=new Function(block('PAW_PURIFICATION_PAINT')+block('PAW_ALCOVE_PAINT')+e.slice(e.indexOf('function pawMoonFlat('),e.indexOf('function pawRitualAdvance('))+';return {pawAlcoveGeometry,pawAlcoveMoonReach,pawAlcoveMoonPoint,pawAlcoveMoonContact,pawAlcoveMoonClearance,pawWaterCamera,pawMoonFlat,pawMoonMotion}')();
+const moonGeo=moonApi.pawAlcoveGeometry();
+let clearanceChecks=0,minClearance=Infinity;
+for(const result of [0,1,2])for(const height of [45,95,135])for(let frame=0;frame<=200;frame++){
+ const f=frame/200;
+ for(let index=0;index<2;index++){
+  const m=moonApi.pawMoonMotion(f,index,moonApi.pawMoonFlat(result,index,1),height);
+  const gap=moonApi.pawAlcoveMoonClearance(moonGeo,m);
+  assert.ok(gap>=3,'Crescent crosses traveller silhouette');minClearance=Math.min(minClearance,gap);clearanceChecks++;
+  if(index===0){const hand=moonApi.pawAlcoveMoonContact(moonGeo,f,m),reach=moonApi.pawAlcoveMoonReach(moonGeo);
+   if(hand){assert.ok(Math.hypot(hand.x-reach.shoulder.x,hand.y-reach.shoulder.y)<=reach.maxReach);clearanceChecks++}
+   if(f===0){assert.deepEqual(hand,moonApi.pawAlcoveMoonPoint(moonGeo,m));clearanceChecks++}
+  }
+ }
+}
+for(const action of ['retry','confirm'])for(let frame=0;frame<=200;frame++){
+ const pose=h.pawFortuneTransferFrame({pawFortuneTransfer:action,pawFortuneTransferAt:10},10+frame/100,moonGeo);
+ for(let index=0;index<2;index++){
+  const m=moonApi.pawMoonMotion(1,index,false,95);
+  assert.ok(moonApi.pawAlcoveMoonClearance(moonGeo,m,pose)>=3,'Retry/approach crosses blocks');clearanceChecks++;
+ }
+}
+for(const [w,h] of [[320,568],[390,844],[430,932],[768,1024],[1440,900]]){
+ const c=moonApi.pawWaterCamera(w,h);
+ assert.ok(c.ox+moonGeo.moonTray.x*c.s<w&&c.ox+moonGeo.moonFoot.x*c.s>0);clearanceChecks++;
+}
+console.log('PASS '+clearanceChecks+' moon clearance, contact, walk and viewport checks; minimum world gap '+minClearance.toFixed(2));
+
+{
+ const f=read('src/release-fixes.js'),body=f.split('/* PAW_CONTINUOUS_FORTUNE_BEGIN */')[1].split('/* PAW_CONTINUOUS_FORTUNE_END */')[0];
+ const api=new Function(body+';return {pawPairedWalkPlan,pawPairedWalkTick}')();
+ let n=0;const eq=(a,b)=>{assert.deepEqual(a,b);n++};
+ for(const painted of [true,false])for(const from of ['moon','sticks']){
+  const q=api.pawPairedWalkPlan(from,painted,moonGeo,{x:0,y:0,w:800,h:650},10),start={...q.pos},end={...q.path.at(-1)};
+  let now=10;for(let i=0;i<20;i++){now+=.02;eq(api.pawPairedWalkTick(q,now,true,false),false);eq(q.pos,start)}
+  let moved=false,done=false;
+  for(let i=0;i<1000&&!done;i++){now+=.02;const prev={...q.pos};done=api.pawPairedWalkTick(q,now,false,false);assert.ok(Math.hypot(q.pos.x-prev.x,q.pos.y-prev.y)<=2.901);n++;moved||=Math.hypot(q.pos.x-start.x,q.pos.y-start.y)>5}
+  eq(done,true);eq(moved,true);eq(q.pos,end);eq(q.to,from==='moon'?'sticks':'moon');
+ }
+ const workflow=read('.github/workflows/meowbox-browser.yml');
+ assert.ok(workflow.includes("state.pawPairedWalk?.to==='sticks'?state.pawPairedWalk.pos:null"));n++;
+ console.log('PASS '+n+' active paired ritual route and observer assertions');
+}
+
+{
+ const rack=new Function(block('PAW_OWNER_REPAIR_2')+';return {pawRackEntries,pawRackNumbers}')();
+ assert.deepEqual(rack.pawRackEntries([]),[]);
+ assert.deepEqual(rack.pawRackEntries(null),[]);
+ assert.deepEqual(rack.pawRackEntries([0,1,12,13,'6',NaN,6]).map(v=>[v.number,v.fictional]),[[1,false],[12,false],[6,false]]);
+ assert.deepEqual(rack.pawRackNumbers(Array(23).fill(2)),Array(21).fill(2));
+ assert.ok(!s.includes('pawRackResidents'),'No seeded rack slips');
+ const source=read('src/release-fixes.js'),api=new Function(source.split('/* PAW_CONTINUOUS_FORTUNE_BEGIN */')[1].split('/* PAW_CONTINUOUS_FORTUNE_END */')[0]+';return pawPairedNext')();
+ let count=0;
+ for(const result of [1,2])for(const failures of [1,2,3])for(let i=0;i<=200;i++){const now=10+i/100,q={pawFortuneNumber:4,count:1,result,pawFortuneFailures:failures,pawFortuneSettledAt:10,tossUntil:10};assert.equal(api(q,'moon',now,false),now-10<1.2?null:failures===3?'finish':'retry');assert.equal(api(q,'moon',now,true),null);count+=2}
+ assert.ok(source.includes("q.to==='moon'){const grip="),'Carry stick along the actual approach');
+ assert.ok(source.includes("run.pawAlcovePainting&&q.to==='sticks'"),'Retain moon blocks during retry');
+ console.log('PASS local-only fortune rack and '+count+' paired hold checks');
+}

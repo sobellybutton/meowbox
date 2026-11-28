@@ -5,7 +5,7 @@ const s=read('src/home-placement-runtime.js'),ext=read('src/extensions.js');
 const start=ext.indexOf('/* MBHOME_PLACEMENT_BEGIN'),end=ext.indexOf('/* MBHOME_PLACEMENT_END */');
 assert.ok(start>=0&&end>start);
 const make=new Function('editing','id','zone',ext.slice(start,end)+`
- let hideoutEditing=editing,hideoutSelected=0,komorebiZone=0,hideoutFurniture=[{id,x:20,y:80,zone}];
+ let hideoutEditing=editing,hideoutSelected=0,komorebiZone=0,hideoutFurniture=[{id,x:20,y:80,zone},{id:'desk',x:50,y:80,zone:0}];
  function furnitureZone(d){return d.zone}
  function furnitureWidth(){return 20}
  function mbHomeKind(id){return id==='frame'?'wall':'storage'}
@@ -13,7 +13,7 @@ const make=new Function('editing','id','zone',ext.slice(start,end)+`
  let pawFurniturePlacement=(id,x,y)=>({x,y});
  let pawFurnitureSuggested=(id)=>pawFurniturePlacement(id,50,80);
  `+s+`
- return {place:(x,y)=>pawFurniturePlacement(id,x,y),suggest:()=>pawFurnitureSuggested(id),set:(x,y)=>Object.assign(hideoutFurniture[0],{x,y})};
+ return {place:(x,y)=>pawFurniturePlacement(id,x,y),suggest:()=>pawFurnitureSuggested(id),select:i=>{hideoutSelected=i},set:(x,y)=>Object.assign(hideoutFurniture[0],{x,y})};
 `);
 const q=make(true,'bed',0);
 assert.deepEqual(q.place(50,80),{x:20,y:80});
@@ -23,6 +23,29 @@ q.set(37,80);
 assert.deepEqual(q.place(50,80),{x:37,y:80});
 assert.deepEqual(q.place(35,80),{x:35,y:80});
 assert.deepEqual(q.suggest(),{x:50,y:80});
+for(const invalid of [NaN,Infinity,-Infinity,undefined,null,'50']){
+ assert.deepEqual(q.place(invalid,80),{x:37,y:80});
+ assert.deepEqual(q.place(50,invalid),{x:37,y:80});
+ const rug=make(true,'rug',0);
+ assert.deepEqual(rug.place(invalid,80),{x:20,y:80});
+ assert.deepEqual(rug.place(50,invalid),{x:20,y:80});
+}
+const rug=make(true,'rug',0);
+assert.deepEqual(rug.place(50,80),{x:50,y:80});
+// A second touch changes selection while the first piece is still moving.
+const concurrent=make(true,'bed',0);
+concurrent.select(1);
+assert.deepEqual(concurrent.place(50,80),{x:20,y:80});
+assert.deepEqual(concurrent.place(30,80),{x:30,y:80});
+assert.deepEqual(concurrent.place(NaN,80),{x:20,y:80});
+assert.deepEqual(concurrent.suggest(),{x:50,y:80});
+const concurrentRug=make(true,'rug',0);
+concurrentRug.select(1);
+assert.deepEqual(concurrentRug.place(NaN,80),{x:20,y:80});
+assert.deepEqual(concurrentRug.place(50,80),{x:50,y:80});
+const recovering=make(true,'bed',0);
+recovering.set(NaN,80);
+assert.deepEqual(recovering.place(30,80),{x:30,y:80});
 for(const [editing,id,zone] of [[false,'bed',0],[true,'rug',0],[true,'frame',0],[true,'bed',1]])
  assert.deepEqual(make(editing,id,zone).place(50,80),{x:50,y:80});
 assert(ext.includes('const pos=pawFurniturePlacement(d.id,x,y);d.x=pos.x;d.y=pos.y'));

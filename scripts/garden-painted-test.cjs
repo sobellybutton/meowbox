@@ -18,7 +18,7 @@ for(const [key,point] of Object.entries(n))for(const action of Object.keys(t)){
 assert.equal(route([.1,.1],'feed'),null);assert.equal(route(n.entry,'__proto__'),null);
 const paused={painted:true,pos:n.entry.slice(),route:route(n.entry,'feed'),action:'feed',last:0};
 tick(paused,1,true);assert.deepEqual(paused.pos,n.entry);
-for(let i=0;i<5;i++)for(let age=.01;age<.9;age+=.02){const pt=pellet(i,age);if(pt){assert.ok(pt[0]>=.31&&pt[0]<=.53);assert.ok(pt[1]>.39&&pt[1]<.50)}}
+for(let i=0;i<5;i++)for(let age=.01;age<.9;age+=.02){const pt=pellet(i,age);if(pt){assert.ok(pt[0]>=.31&&pt[0]<=.53);assert.ok(pt[1]>.52&&pt[1]<.65)}}
 for(const [u,v,w,h] of Object.values(t))assert.ok(u-w/2>=0&&u+w/2<=1&&v-h/2>=0&&v+h/2<=1);
 console.log('Painted garden route, contact targets, pause and feeding geometry passed.');
 
@@ -108,3 +108,75 @@ assert.ok(catalogueReturn.pawCollectionReturnMatches(collectionOrigin,{...collec
 for(const [key,value] of Object.entries({run:{},room:'arcade',district:'home',activity:'claw'}))assert.equal(catalogueReturn.pawCollectionReturnMatches(collectionOrigin,{...collectionOrigin,[key]:value}),false);
 assert.equal(catalogueReturn.pawCollectionReturnMatches(collectionOrigin,null),false);
 console.log('Catalogue return and blind box scene ownership passed.');
+
+assert.deepEqual(Object.keys(t),['feed','seat']);
+assert.equal(route(n.entry,'cats'),null);assert.equal(route(n.entry,'chime'),null);
+assert.ok(n.feed[1]>=.60&&n.seat[1]>=.59&&n.fork[1]>=.60,'Feet stay on foreground paving');
+assert.ok(s.includes('pawRearGardenWarp(pawRearGardenArt(),p,[.75,.30,.81,.37],breeze)'),'Ambient wind without interaction');
+assert.ok(!s.includes("'paw-rear-cat-'+i"),'No individual cat hit targets');
+
+/* A throw belongs to the exact active pond visit, even while the old DOM
+   remains attached behind the room or a newer activity. */
+{
+ const src=fs.readFileSync(path.resolve(__dirname,'../src/town-access.js'),'utf8');
+ const guard=new Function(src.split('/* PAW_WISH_VISIT_BEGIN */')[1].split('/* PAW_WISH_VISIT_END */')[0]+';return pawWishVisitCurrent')();
+ let count=0;
+ for(const connected of [true,false])for(const display of ['block','none'])for(const sameRoom of [true,false])for(const sameActivity of [true,false])for(const sameState of [true,false]){
+  const run={};assert.equal(guard(connected,display,'wishes',sameRoom?'wishes':'park',null,sameActivity?null:'wishes',run,sameState?run:{}),connected&&display==='block'&&sameRoom&&sameActivity&&sameState);count++
+ }
+ for(const callback of ['function frame(now)','function rebound(at)','function finish()'])assert.ok(src.includes(callback+'{if(!current()){cancelFlight();return;}'));
+ assert.ok(src.includes("tr('Return to the garden','回到花园')"));
+ console.log('PASS '+count+' wishing-pool visit ownership combinations and 4 runtime wiring checks');
+}
+
+{
+ const source=fs.readFileSync(path.resolve(__dirname,'../src/town-access.js'),'utf8');
+ const f=new Function(source.split('/* PAW_WISH_BANK_BEGIN */')[1].split('/* PAW_WISH_BANK_END */')[0]+';return {pawWishBankGeometry,pawWishCoinOrigin,pawWishApproach}')();
+ let n=0;
+ for(const [width,height] of [[320,568],[390,844],[430,932],[768,1024],[1440,900],[844,390]]){
+  const pond={x:width*.13,y:height*.3,w:width*.74,h:height*.24},g=f.pawWishBankGeometry({width,height},pond),o=f.pawWishCoinOrigin(g,pond);
+  assert.ok(g.foot.y>pond.y+pond.h);assert.ok(g.keeper.y>pond.y+pond.h);
+  assert.ok(Math.abs(pond.x+o.x*pond.w/100-g.hand.x)<1e-8);
+  assert.ok(Math.abs(pond.y+o.y*pond.h/100-g.hand.y)<1e-8);n+=4
+ }
+ for(const [age,reduced,want] of [[-1,false,0],[475,false,.5],[950,false,1],[1500,false,1],[0,true,1]]){assert.equal(f.pawWishApproach(age,reduced),want);n++}
+ for(const needle of ["!bankReady||!held||busy||done","coin.hidden=!bankReady||!held||done","tr('Take a Paw Coin','取一枚爪爪币')","from.x+(x-from.x)*f","from.y+(y-from.y)*f","garden-keeper/standing.webp"]){assert.ok(source.includes(needle));n++}
+ console.log('PASS '+n+' bank anchor, approach, pickup and launch checks');
+}
+
+
+// Every throw input shares the same pickup/flight/completion state.
+{
+ const source=fs.readFileSync(path.resolve(__dirname,'../src/town-access.js'),'utf8');
+ const sync=source.split('const syncToss=()=>{')[1].split('};')[0];
+ const apply=new Function('busy','done','bankReady','held','gentle','takeCoin','keyboardButtons','pond',sync);
+ let n=0;
+ for(const busy of [false,true])for(const done of [false,true])for(const bankReady of [false,true])for(const held of [false,true]){
+  const gentle={},takeCoin={},keyboardButtons=Array.from({length:5},()=>({})),pond={setAttribute(k,v){this[k]=v}};
+  apply(busy,done,bankReady,held,gentle,takeCoin,keyboardButtons,pond);
+  const unavailable=busy||done||!bankReady||!held;
+  assert.equal(gentle.disabled,unavailable);n++;
+  for(const button of keyboardButtons){assert.equal(button.disabled,unavailable);n++}
+  assert.equal(takeCoin.hidden,held||done);assert.equal(takeCoin.disabled,!bankReady||busy);assert.equal(pond['aria-busy'],String(busy));n+=3
+ }
+ assert.ok(source.includes("keyboardButtons.push(btn)"));
+ assert.ok(source.includes("keyboardButtons.push(b(controls,tr('Throw','投币')"));
+ console.log('PASS '+n+' pickup/throw control state checks and keyboard wiring');
+}
+
+// Wish writing retains the garden's painting and coin throws retain a planted
+// full sprite. No artificial torso split or switch to a generic background.
+{
+ const e=fs.readFileSync(path.resolve(__dirname,'../src/extensions.js'),'utf8');
+ const a=fs.readFileSync(path.resolve(__dirname,'../src/town-access.js'),'utf8');
+ assert.ok(s.includes("room==='wishes'&&activity==='wishes'&&pawRoomImageReady(pawWishLobbyArt())"));
+ assert.ok(s.includes('pawWishPaintedActivity()?pawWishLobbyCamera(W,H)'));
+ assert.ok(s.includes('ctx.drawImage(pawWishLobbyArt(),p.x,p.y,p.w,p.h)'));
+ assert.ok(e.includes('function gardenPaperAnchor()'));
+ const lean=new Function(a.split('/* PAW_WISH_BANK_BEGIN */')[1].split('/* PAW_WISH_BANK_END */')[0]+';return pawWishThrowLean')();
+ for(let age=-10;age<500;age++){assert.ok(Math.abs(lean(age,false))<=.1400001);assert.equal(lean(age,true),0)}
+ assert.ok(lean(235,false)>.13);assert.equal(lean(0,false),0);assert.equal(lean(480,false),0);
+ assert.ok(a.includes('ag.translate(x,y);ag.rotate(lean);ag.drawImage(im,-fx,-fy,w,H)'));
+ assert.ok(!a.includes('const split=68/94*im.naturalHeight'));
+ console.log('Painted wish scene and planted coin toss checks passed');
+}

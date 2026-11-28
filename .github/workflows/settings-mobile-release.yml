@@ -13,7 +13,7 @@ permissions:
   contents: read
 jobs:
   mobile-settings:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/live-wayfinding-settings-reset-20261128'
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/live-wayfinding-settings-reset-20261128' || startsWith(github.head_ref, 'release/candidate-')
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:

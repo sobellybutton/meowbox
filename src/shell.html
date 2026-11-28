@@ -173,74 +173,201 @@ html #game>.pawRailEdge:focus-visible{
    Shared speech surface, not a replacement for the physical room or
    purpose-built writing/reading objects. Keep the actor visible above it.
    No change to dialogue control flow, focus order or rewards. */
-html #game>#dialogue:not(.pawWishWriting){
+html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting){
  box-sizing:border-box!important;
  width:min(94%,620px)!important;
  max-width:calc(100% - 24px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px))!important;
- max-height:48dvh!important;
+ max-height:min(60dvh,420px,calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 90px))!important;
  padding:12px 14px!important;
- background:#fff4dffb!important;color:#46372b!important;
- border:1px solid #ac906b!important;border-radius:9px!important;
+ background:#f4e7ce url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat!important;color:#46372b!important;
+ border:0!important;border-radius:8px!important;
  box-shadow:0 3px 12px #30291e38!important;
  overflow-y:auto!important;overflow-x:hidden!important;
  overscroll-behavior:contain;scrollbar-width:thin;
  scrollbar-color:#a98e6b transparent;
 }
-html #game>#dialogue>#dialogueTop{
+html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting)>#dialogueTop{
  align-items:center;gap:9px;min-width:0;
 }
-html #game>#dialogue #speaker{
- color:#64462f!important;font-size:16px!important;
+html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting) #speaker{
+ color:var(--paper-accent,#64462f)!important;font-size:16px!important;
  font-weight:700!important;line-height:1.3!important;overflow-wrap:anywhere;
 }
-html #game>#dialogue #line{
+html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting) #line{
  color:#46372b!important;font-size:clamp(15px,3.8vw,17px)!important;
  line-height:1.55!important;white-space:pre-line!important;
  overflow-wrap:anywhere!important;word-break:normal!important;
  margin:6px 0 10px!important;
 }
-html[lang^="zh"] #game>#dialogue #line{line-height:1.7!important}
-html #game>#dialogue #choices{gap:7px;min-width:0}
-html #game>#dialogue #choices button{
+html[lang^="zh"] #game>#dialogue:not(.characterSpeech):not(.pawWishWriting) #line{line-height:1.7!important}
+html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting) #choices{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr))!important;gap:2px 8px!important;min-width:0;margin-top:4px!important}
+html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting) #choices button{
  min-height:44px!important;min-width:44px!important;
  max-width:100%!important;white-space:normal!important;
  overflow-wrap:anywhere!important;line-height:1.4!important;
  font-size:14px!important;font-weight:600!important;
- padding:9px 10px!important;
+ padding:5px 6px!important;text-align:start!important;
+ background:transparent!important;border:0!important;border-bottom:1px solid #b49d785e!important;border-radius:0!important;box-shadow:none!important;color:#405440!important;
 }
-html #game>#dialogue #choices button:focus-visible{
+html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting) #choices button:focus-visible{
  outline:2px solid #39594d!important;outline-offset:-3px!important;
 }
 @media(max-width:480px){
- html #game>#dialogue:not(.pawWishWriting){padding:10px 12px!important}
- html #game>#dialogue #choices button{flex:1 1 100%;text-align:start}
+ html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting){padding:9px 11px!important;max-height:min(58dvh,420px)!important}
+ html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting) #talkPortrait{width:36px!important;height:36px!important;border:0!important;box-shadow:none!important}
+ html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting) #line{font-size:14px!important;line-height:1.4!important;margin:4px 0 6px!important}
+ html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting) #speaker{font-size:15px!important}
+ html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting) #choices button{min-width:0!important;min-height:44px!important;font-size:13px!important;line-height:1.25!important;text-align:start}
 }
 @media(max-height:500px) and (orientation:landscape){
- html #game>#dialogue:not(.pawWishWriting){max-height:52dvh!important;padding:8px 12px!important}
- html #game>#dialogue #line{font-size:15px!important;margin:4px 0 8px!important}
+ html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting){max-height:min(66dvh,calc(100dvh - 86px))!important;padding:8px 12px!important}
+ html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting) #line{font-size:15px!important;margin:4px 0 8px!important}
 }
 @media(forced-colors:active){
- html #game>#dialogue #choices button:focus-visible{outline-color:Highlight!important}
+ html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting){background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important}
+ html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting) #choices button{color:ButtonText!important;border-bottom:1px solid ButtonText!important}
+ html #game>#dialogue:not(.characterSpeech):not(.pawWishWriting) #choices button:focus-visible{outline-color:Highlight!important}
+}
+
+/* Short resident speech uses the existing measured and actor-anchored washi
+   artwork. Do not turn it into a full-width panel or clip its paper tail.
+   Keep the original placement calculation and natural choice flow. */
+html #game>#dialogue.characterSpeech:not(.pawWishWriting){
+ box-sizing:border-box!important;width:min(245px,72vw)!important;
+ max-width:calc(100% - 32px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px))!important;
+ max-height:none!important;padding:10px 13px!important;
+ overflow:visible!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important;
+}
+html #game>#dialogue.characterSpeech #speaker{
+ font-size:13px!important;line-height:1.3!important;color:var(--paper-accent,#80593d)!important;
+}
+html #game>#dialogue.characterSpeech #line{
+ font-size:14px!important;line-height:1.45!important;white-space:pre-line!important;overflow-wrap:anywhere;
+ margin:5px 0 6px!important;
+}
+html[lang^="zh"] #game>#dialogue.characterSpeech #line{line-height:1.55!important}
+html #game>#dialogue.characterSpeech #choices{gap:4px;min-width:0}
+html #game>#dialogue.characterSpeech #choices button{
+ flex:1 1 auto;min-width:44px!important;min-height:44px!important;max-width:100%;
+ white-space:normal!important;overflow-wrap:anywhere;font-size:13px!important;line-height:1.3!important;
+}
+html #game>#dialogue.characterSpeech #choices button:focus-visible{outline:2px solid #39594d!important;outline-offset:1px}
+@media(forced-colors:active){
+ html #game>#dialogue.characterSpeech:not(.pawWishWriting){background:Canvas!important;border:1px solid CanvasText!important;color:CanvasText!important}
+ html #game>#dialogue.characterSpeech .washiSpeechArt{display:none!important}
+ html #game>#dialogue.characterSpeech #choices button:focus-visible{outline-color:Highlight!important}
 }
 /* PAW_DIALOGUE_READABILITY_END */
 
 
 
 /* PAW_PAINTED_HUD_ASSETS_BEGIN */
-/* Use purpose-built circular HUD art, not the competing floral alternate.
-   Keep the selected player's existing image and all existing event handlers. */
-html #game #profileHud>.pawPaintedPortrait{position:relative!important;display:block!important;flex:0 0 46px!important;width:46px!important;height:46px!important;min-width:46px!important;isolation:isolate;pointer-events:none}
-html #game #profileHud>.pawPaintedPortrait>#hudPortrait{position:absolute!important;inset:4px!important;width:38px!important;height:38px!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;object-fit:contain!important;object-position:center!important;background:#eadbc0!important}
-html #game #profileHud>.pawPaintedPortrait:after{content:"";position:absolute;inset:0;pointer-events:none;background:url('assets/visual/staging/2026-11-28-project-art-b10/avatar-frame.webp') center/contain no-repeat}
-/* A single accessible settings glyph, without a second painted image or ornamental box. */
-html #game #small button.townSettingsToggle[aria-label]{position:relative!important;min-width:44px!important;min-height:44px!important;width:44px!important;height:44px!important;display:grid!important;place-items:center!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#65503a!important}
+/* One visual per control. Let the watercolor map breathe; use a small warm
+   backing for contrast rather than a separate ornamental frame per button. */
+html #game #profileHud,html #game #hudStats #hudCoins,html #game #small button.townSettingsToggle[aria-label]{
+ box-sizing:border-box!important;border:0!important;box-shadow:none!important;
+ background:#f5ead5ed!important;color:#514936!important;border-radius:12px!important
+}
+html #game #profileHud{height:44px!important;min-height:44px!important;min-width:44px!important;gap:6px!important;padding:3px 8px 3px 3px!important}
+html #game #profileHud>.pawPaintedPortrait{position:relative!important;display:block!important;flex:0 0 36px!important;width:36px!important;height:36px!important;min-width:36px!important;isolation:isolate;pointer-events:none}
+html #game #profileHud>.pawPaintedPortrait>#hudPortrait{position:absolute!important;inset:0!important;width:36px!important;height:36px!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;object-fit:contain!important;object-position:center!important;background:transparent!important;box-shadow:none!important}
+html #game #profileHud>.pawPaintedPortrait:after{content:none!important;display:none!important}
+html #game #hudStats #hudCoins{min-height:34px!important;padding:4px 7px!important;gap:4px!important;font-variant-numeric:tabular-nums}
+html #game #small button.townSettingsToggle[aria-label]{
+ position:relative!important;min-width:44px!important;min-height:44px!important;width:44px!important;height:44px!important;
+ display:grid!important;place-items:center!important;padding:0!important
+}
+/* The existing inline SVG is the only gear, in every browser/color mode. */
 html #game #small button.townSettingsToggle[aria-label]::before,html #game #small button.townSettingsToggle[aria-label]::after{content:none!important;display:none!important;background:none!important}
-html #game #small button.townSettingsToggle[aria-label]>svg{display:block!important;width:28px!important;height:28px!important;pointer-events:none}
-html #game #quietToggle{display:none!important}
-@media(forced-colors:active){html #game #small button.townSettingsToggle[aria-label]{background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important}}
-@media(max-width:360px){html #game #profileHud>.pawPaintedPortrait{flex-basis:40px!important;width:40px!important;height:40px!important;min-width:40px!important}html #game #profileHud>.pawPaintedPortrait>#hudPortrait{inset:4px!important;width:32px!important;height:32px!important}}
-@media(forced-colors:active){html #game #small button.townSettingsToggle[aria-label]:before,html #game #profileHud>.pawPaintedPortrait:after{display:none}}
+html #game #small button.townSettingsToggle[aria-label]>svg{display:block!important;width:36px!important;height:36px!important;stroke:currentColor!important;stroke-width:1.25!important;pointer-events:none}
+html #game #small button.townSettingsToggle[aria-expanded=true]{background:#dbe1cb!important}
+html #game #dock{
+ background:#f5ead5f2!important;border:0!important;box-shadow:0 2px 8px #302a2026!important;
+ border-radius:14px!important;padding:4px!important;gap:2px!important
+}
+html #game #dock>button:not([hidden]){background:transparent!important;border:0!important;box-shadow:none!important;border-radius:10px!important;min-height:50px!important}
+html #game #dock>button.pawDockSelected:not([hidden]),html #game #dock>button[aria-current=page]:not([hidden]){background:#dbe1cb!important;color:#395846!important}
+html #game #dock .dockIcon{width:26px!important;height:26px!important;display:grid!important;place-items:center!important}
+html #game #dock .dockIcon svg{width:24px!important;height:24px!important;display:block!important}
+html #game #dock>button:not([hidden])>span:last-child{font-size:clamp(11px,2.9vw,13px)!important}
+html #game #profileHud:focus-visible,html #game #small button.townSettingsToggle:focus-visible,html #game #dock>button:focus-visible{outline:2px solid #39594d!important;outline-offset:2px!important}
+@media(max-width:360px){
+ html #game #profileHud{gap:4px!important;padding-right:5px!important}
+ html #game #profileHud>.pawPaintedPortrait{flex-basis:32px!important;width:32px!important;height:32px!important;min-width:32px!important}
+ html #game #profileHud>.pawPaintedPortrait>#hudPortrait{width:32px!important;height:32px!important}
+ html #game #small button.townSettingsToggle[aria-label]>svg{width:32px!important;height:32px!important}
+}
+@media(forced-colors:active){
+ html #game #profileHud,html #game #hudStats #hudCoins,html #game #small button.townSettingsToggle[aria-label],html #game #dock{background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important}
+ html #game #dock>button.pawDockSelected:not([hidden]),html #game #small button.townSettingsToggle[aria-expanded=true]{background:Highlight!important;color:HighlightText!important}
+ html #game #profileHud:focus-visible,html #game #small button.townSettingsToggle:focus-visible,html #game #dock>button:focus-visible{outline-color:Highlight!important}
+}
+/* The settings popover is one surface, not a stack of bordered cards. */
+html #game #small #townSettingsPanel:not([hidden]){
+ width:min(230px,calc(100vw - 24px))!important;box-sizing:border-box!important;
+ padding:8px!important;gap:5px!important;border:0!important;border-radius:12px!important;
+ background:#f5ead5fa!important;color:#514936!important;box-shadow:0 3px 12px #302a2033!important;
+ max-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 72px)!important;
+ overflow-y:auto!important;overscroll-behavior:contain!important
+}
+html #game #small #townSettingsPanel[hidden]{display:none!important}
+html #game #small #townSettingsPanel>.languageChoice{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px!important;
+ padding:3px!important;background:#e8dbc4!important;border:0!important;border-radius:9px!important;
+}
+html #game #small #townSettingsPanel .languageChoice button{
+ min-height:44px!important;border:0!important;border-radius:7px!important;
+ box-shadow:none!important;background:transparent!important;color:#514936!important;outline:none
+}
+html #game #small #townSettingsPanel .languageChoice button[aria-pressed=true]{
+ background:#dbe1cb!important;color:#395846!important;font-weight:600!important
+}
+html #game #small #townSettingsPanel .townSettingsExtra{gap:1px!important;padding-top:3px!important;background:none!important;border:0!important}
+html #game #small #townSettingsPanel .townSettingsExtra button:not([hidden]){
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ min-height:44px!important;padding:7px 9px!important;border:0!important;border-radius:7px!important;
+ background:transparent!important;color:#514936!important;box-shadow:none!important;text-align:left!important
+}
+html #game #small #townSettingsPanel .townSettingsExtra button[hidden]{display:none!important}
+html #game #small #townSettingsPanel .townSettingsExtra button[aria-pressed]::after{
+ content:"";display:block;flex:0 0 8px;width:8px;height:8px;margin-left:8px;border-radius:50%;background:#a49a88
+}
+html #game #small #townSettingsPanel .townSettingsExtra button[aria-pressed=true]::after{background:#62846b}
+@media(hover:hover){html #game #small #townSettingsPanel .townSettingsExtra button:not([hidden]):hover{background:#e8dbc4!important}}
+html #game #small #townSettingsPanel button:focus-visible{outline:2px solid #39594d!important;outline-offset:-2px!important}
+@media(forced-colors:active){
+ html #game #small #townSettingsPanel:not([hidden]){background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important}
+ html #game #small #townSettingsPanel .languageChoice button[aria-pressed=true]{background:Highlight!important;color:HighlightText!important}
+ html #game #small #townSettingsPanel .townSettingsExtra button[aria-pressed]::after{display:none!important}
+ html #game #small #townSettingsPanel button:focus-visible{outline-color:Highlight!important}
+}
 /* PAW_PAINTED_HUD_ASSETS_END */
+/* PAW_FLAT_COLLECTION_FILTERS_BEGIN
+   Keep all six category controls reachable without a horizontal carousel.
+   Use one cabinet and one selected-state wash, not a bordered card per filter. */
+html #game #content .travellerBagV2{min-width:0!important;max-width:100%!important}
+html #game #content .travellerBagV2 :is(.bagModes,.bagCategories){
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:3px!important;
+ min-width:0!important;max-width:100%!important;overflow:visible!important;
+ background:none!important;border:0!important;box-shadow:none!important;padding:0!important
+}
+html #game #content .travellerBagV2 :is(.bagModes,.bagCategories)>button{
+ min-width:0!important;min-height:44px!important;max-width:100%!important;
+ padding:4px 3px!important;white-space:normal!important;overflow-wrap:anywhere!important;
+ background:transparent!important;border:0!important;border-bottom:1px solid #b49d785e!important;border-radius:0!important;box-shadow:none!important;color:#514936!important;font-size:12px!important
+}
+html #game #content .travellerBagV2 :is(.bagModes,.bagCategories)>button[aria-pressed=true]{
+ background:#dbe1cb!important;color:#395846!important;font-weight:650!important
+}
+html #game #content .travellerBagV2 .bagTools{
+ display:grid!important;grid-template-columns:minmax(0,1fr) minmax(76px,auto)!important;gap:5px!important;min-width:0!important;max-width:100%!important
+}
+html #game #content .travellerBagV2 .bagTools :is(input,select){width:100%!important;min-width:0!important;max-width:100%!important;min-height:44px!important}
+html #game #content .travellerBagV2 :is(.bagModes,.bagCategories)>button:focus-visible{outline:2px solid #39594d!important;outline-offset:-2px!important}
+@media(min-width:720px){html #game #content .travellerBagV2 .bagCategories{grid-template-columns:repeat(6,minmax(0,1fr))!important}}
+@media(forced-colors:active){html #game #content .travellerBagV2 :is(.bagModes,.bagCategories)>button{background:Canvas!important;color:CanvasText!important;border-bottom:1px solid CanvasText!important}html #game #content .travellerBagV2 :is(.bagModes,.bagCategories)>button[aria-pressed=true]{background:Highlight!important;color:HighlightText!important}}
+/* PAW_FLAT_COLLECTION_FILTERS_END */
+
 
 
 /* First boarding uses the same full-bleed framing as inter-district rides.

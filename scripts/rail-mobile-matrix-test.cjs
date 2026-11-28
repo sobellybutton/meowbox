@@ -22,6 +22,59 @@ const routes=['home','island','wonder','fortune'];
 // that was visible at lookup can disappear while the camera settles after
 // rotation. Never force a tap, inject a route, or bypass the railway.
 // Keep actionable hit-test evidence when neither affordance can be used.
+async function approachStation(page,records,leg){
+ await page.waitForFunction(()=>proposal.hidden&&!transitioning&&!room&&!activity&&!pending&&!signRoot.hidden,null,{timeout:30000});
+ const before=await page.evaluate(()=>({scene,x:p.x,y:p.y,near:pawRailNearStation(p,maps[scene].st.find(v=>v[0]==='station'))}));
+ if(!before.near){
+  assert.equal(await page.locator(visibleStation).count(),0,'Distant railway label should not preempt exploration');
+  // Walk by real touch on the painted path. Read only camera and route
+  // geometry; do not set player coordinates, keys, pending or route state.
+  const samples=[],deadline=Date.now()+55000;
+  while(Date.now()<deadline){
+   const view=await page.evaluate(()=>{
+    const station=maps[scene].st.find(v=>v[0]==='station'),points=pawDistrictSpines[scene],rect=$('c').getBoundingClientRect();
+    const near=pawRailNearStation(p,station),direction=Math.sign(station[2]-p.y)||-1;
+    const candidates=[];
+    if(!near&&points&&cam.scale>0&&!pending&&!transitioning&&!room&&!activity&&!talkOpen){
+     for(const distance of [180,140,100,70,40]){
+      const y=Math.max(minY(),Math.min(maxY(),p.y+direction*distance)),lane=pawStairLane(y,points);
+      for(const offset of [0,-.32,.32,-.7,.7]){
+       const x=lane.x+lane.half*offset,sx=rect.left+cam.ox+x*cam.scale,sy=rect.top+cam.oy+y*cam.scale;
+       if(sx<rect.left+8||sx>rect.right-8||sy<rect.top+8||sy>rect.bottom-8)continue;
+       if(document.elementFromPoint(sx,sy)!==$('c'))continue;
+       // A canvas point can still be an invisible door or resident hit area.
+       // Only an actual unoccupied path tap counts as walking.
+       if(at({x,y}))continue;
+       // A resident can move between browser evaluation and the physical
+       // tap. Reserve a small world-space margin around all existing hit
+       // rectangles and the current residents' body/chat envelopes.
+       if(hit.some(h=>x>=h.x-18&&x<=h.x+h.w+18&&y>=h.y-18&&y<=h.y+h.h+18))continue;
+       if(npc.some(n=>Math.abs(x-n.x)<68&&y>=n.y-150&&y<=n.y+25))continue;
+       if(Math.abs(y-p.y)<18)continue;
+       candidates.push({sx,sy,x,y});
+      }
+     }
+    }
+    return {scene,x:p.x,y:p.y,near,pending,room,activity,talkOpen,transitioning,candidates};
+   });
+   samples.push({...view,candidates:view.candidates.slice(0,2)});
+   if(view.scene!==before.scene||view.room||view.activity||view.pending||view.talkOpen){records.push({approachTrace:leg,samples});throw Error('Unexpected interaction during station approach: '+JSON.stringify(view))}
+   if(view.near)break;
+   const target=view.candidates[0];
+   if(!target){await page.waitForTimeout(180);continue}
+   await page.touchscreen.tap(target.sx,target.sy);
+   await page.waitForTimeout(450);
+   await page.waitForFunction(v=>Math.abs(p.y-v.y)>15||!!pending||!!room||!!activity||pawRailNearStation(p,maps[scene].st.find(s=>s[0]==='station')),view,{timeout:2500}).catch(()=>{});
+  }
+  records.push({approachTrace:leg,samples});
+  const reached=await page.evaluate(()=>pawRailNearStation(p,maps[scene].st.find(v=>v[0]==='station')));
+  assert(reached,'Real touch walking did not reach station: '+JSON.stringify(samples.slice(-4)));
+ }
+ const after=await page.evaluate(()=>({x:p.x,y:p.y,near:pawRailNearStation(p,maps[scene].st.find(v=>v[0]==='station'))}));
+ assert(after.near,'Traveller must approach the station before boarding');
+ if(!before.near)assert(after.y<before.y,'Traveller must actually walk up the district');
+ records.push({approachLeg:leg,before,after});
+}
 async function tapReachableStation(page,records,leg){
  const deadline=Date.now()+15000,samples=[],origin=leg===0?'fortune':routes[leg-1];
  let attempts=0;
@@ -79,7 +132,7 @@ async function main(){
   await skip.or(gate).first().waitFor({state:'visible',timeout:45000});
   if(await skip.isVisible())await tap(skip);
   await tap(gate);
-  await page.locator(visibleStation).first().waitFor({state:'visible',timeout:45000});
+  await page.waitForFunction(()=>proposal.hidden&&!transitioning&&valleyRevealAt<0&&!signRoot.hidden,null,{timeout:45000});
   await shot('first-map');
   for(let i=0;i<routes.length;i++){
    // First and second journeys exercise portrait and landscape. Third uses
@@ -87,6 +140,7 @@ async function main(){
    const landscape=i===1;
    await page.setViewportSize(landscape?{width:p.height,height:p.width}:{width:p.width,height:p.height});
    await page.emulateMedia({reducedMotion:i===2?'reduce':'no-preference'});
+   await approachStation(page,records,i);
    await tapReachableStation(page,records,i);
    const ride=page.locator('.pawRailJourney');
    await ride.waitFor({state:'visible',timeout:45000});
