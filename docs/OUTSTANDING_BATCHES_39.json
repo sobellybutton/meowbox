@@ -1,0 +1,203 @@
+{
+  "schema": 1,
+  "baseline": "2026-11-28",
+  "source_blob": "ffbd6273c9b021229f9a340059862ae67222ceb9",
+  "rule": "Owner requested exactly one fixed numbered batch per outstanding workstream. Do not renumber or inflate completion. Each batch maps to one canonical WORKSTREAMS.json ID. Continue next not-yet-closed batch; if blocked record exact reason and move on, without calling it complete. Tested/implemented/accepted statuses are separate; physical device/deployment acceptance remains required. Concurrent completion of a batch may be credited only from actual evidence. New defects are tracked in canonical register separately, never silently added to this fixed denominator. This queue supersedes project-wide 30 batch scheduling for this owner's continuation; historical map retained.",
+  "batches": [
+    {
+      "batch": 1,
+      "id": "ENT-01",
+      "title": "Entrance journey and return rendered acceptance"
+    },
+    {
+      "batch": 2,
+      "id": "ENT-ASSET-READY-01",
+      "title": "P0: eliminate old icon/art/avatar flash and pause on entrance and all scene transitions; predecode correct assets and atomically reveal coherent first frame"
+    },
+    {
+      "batch": 3,
+      "id": "PERF-01",
+      "title": "Measure loading, memory and frame pacing"
+    },
+    {
+      "batch": 4,
+      "id": "ART-01",
+      "title": "Directional traveller art recovery and frame correction"
+    },
+    {
+      "batch": 5,
+      "id": "ART-02",
+      "title": "Illustrated seated, waving and contact poses"
+    },
+    {
+      "batch": 6,
+      "id": "ROOM-01",
+      "title": "Temple dedicated ritual art and spatial contact"
+    },
+    {
+      "batch": 7,
+      "id": "ROOM-03",
+      "title": "Kitchen and tea preparation art"
+    },
+    {
+      "batch": 8,
+      "id": "ROOM-04",
+      "title": "Arcade and retained game art"
+    },
+    {
+      "batch": 9,
+      "id": "ROOM-05",
+      "title": "Park and distinct animal art"
+    },
+    {
+      "batch": 10,
+      "id": "ROOM-06",
+      "title": "Pier, discovery and reading interiors"
+    },
+    {
+      "batch": 11,
+      "id": "ART-03",
+      "title": "Distinct cameo and resident art"
+    },
+    {
+      "batch": 12,
+      "id": "ART-INTEGRATION",
+      "title": "Integrate finished room and actor assets, verify visible poses and contact"
+    },
+    {
+      "batch": 13,
+      "id": "WORLD-STORY-FLOW-01",
+      "title": "Owner approved theme-led bilingual naming convention and coherent voluntary four-district railway journey; audit all district, venue, activity and signage names, especially discovery assessments/stories/relationship café"
+    },
+    {
+      "batch": 14,
+      "id": "UX-SIGN-ART-01",
+      "title": "Audit and select/create coherent district-specific painted signage families, railway wayfinding, NPC names, speech, action prompts and HUD iconography; reusable materials and bilingual text safe zones"
+    },
+    {
+      "batch": 15,
+      "id": "UX-SIGN-LIVE-01",
+      "title": "Replace generic plaques with context-aware painted signs physically registered to doors/gates/stations; preserve stable accessible targets, typography, localised names, occlusion and offscreen route guidance"
+    },
+    {
+      "batch": 16,
+      "id": "UX-WAYFINDING-INTERACTION-01",
+      "title": "Reconcile words, labels, signs, exits, actor identities and interactions with actual scene geometry; natural walk-out at real door and outside return"
+    },
+    {
+      "batch": 17,
+      "id": "SCENE-BLOCKING-01",
+      "title": "Author actual room-specific entrances, safe ground, approach and return positions, orientation, perspective, depth and physically authentic kneeling, sitting, bowing and prop contact"
+    },
+    {
+      "batch": 18,
+      "id": "SCENE-CAMERA-01",
+      "title": "Author purposeful camera framing and action closeups, readable result shots and continuous returns for each activity; independent mobile and desktop composition"
+    },
+    {
+      "batch": 19,
+      "id": "DISCOVERY-ASSESSMENTS-01",
+      "title": "Distribute planned assessments across the four approved Starlight Valley houses; differentiated question banks, scoring, bilingual results and share templates"
+    },
+    {
+      "batch": 20,
+      "id": "DISCOVERY-PARALLEL-LIVE-02",
+      "title": "Rebuild weak Parallel Lives as illustrated interactive alternative-life stories and values/priorities reflections with real branching consequences and different endings"
+    },
+    {
+      "batch": 21,
+      "id": "DISCOVERY-CAFE-LIVE-02",
+      "title": "Rebuild weak Compatibility Cafe as inhabited conversation-led relationship assessment and optional mutual comparison experience for human and fictional partners"
+    },
+    {
+      "batch": 22,
+      "id": "STORY-DEPTH-01",
+      "title": "Deepen Parallel Lives and other retained narrative encounters with authored choices, distinct endings, contextual clues and meaningful keepsakes; preserve curated destinations"
+    },
+    {
+      "batch": 23,
+      "id": "GAME-DEPTH-01",
+      "title": "Strengthen each retained physical activity through distinct meaningful input, reactions, optional mastery and satisfying results; start with temple, pier and kitchen, then arcade, park and decorating"
+    },
+    {
+      "batch": 24,
+      "id": "DISCOVERY-01",
+      "title": "Introduce optional environmental discoveries, rare fictional visitors, hidden keepsakes and seasonal encounters inside existing places, linked to existing collections rather than chores"
+    },
+    {
+      "batch": 25,
+      "id": "HOME-CATALOGUE-LIVE-02",
+      "title": "Apply complete reviewed art to shop, purchase, tray, room placement and finishes; fix title overlap and cold-load fallback"
+    },
+    {
+      "batch": 26,
+      "id": "LIFE-OCCUPANCY-01",
+      "title": "Populate every public room and district with appropriate computer-controlled inhabitants even with zero human visitors; blend actual opted-in peers naturally"
+    },
+    {
+      "batch": 27,
+      "id": "LIFE-AMBIENCE-01",
+      "title": "Owner-approved living atmosphere: varied coherent clear/rain/mist/breeze, day/sunset/night lighting and seasonal accents; animated painted lanterns, foliage, curtains, water and inhabited interiors"
+    },
+    {
+      "batch": 28,
+      "id": "LIFE-RELATIONSHIPS-01",
+      "title": "Implement persistent optional resident memories, recurring relationships and contextual callbacks using stable authored bilingual dialogue and existing saves"
+    },
+    {
+      "batch": 29,
+      "id": "SOCIAL-DAILY-01",
+      "title": "Enable natural tap-to-approach, greet, wave and converse with NPCs and consenting human peers; make existing daily social task discoverable and achievable with either actor type"
+    },
+    {
+      "batch": 30,
+      "id": "COMM-TOWN-LIFE-01",
+      "title": "Keep lobby, noticeboard and comments alive with refreshed authored NPC messages, replies, events and contextual conversations alongside genuine moderated human posts"
+    },
+    {
+      "batch": 31,
+      "id": "COMM-MIXED-LIVE-01",
+      "title": "Activate actual human plus computer-controlled social play, using moderated existing Worker and optional room-scoped presence"
+    },
+    {
+      "batch": 32,
+      "id": "LOC-01",
+      "title": "Independent English and Chinese creative editorial review, bilingual terminology, satire, clarity and rendered typography"
+    },
+    {
+      "batch": 33,
+      "id": "UX-02",
+      "title": "Focus, keyboard, accessible equivalents and safe areas"
+    },
+    {
+      "batch": 34,
+      "id": "UX-COHESION-01",
+      "title": "Finish shared painted design system for all HUD, icons, controls, dialogs, journals, collections, purchase screens, results and empty/loading/error states; coordinate district signage and desktop tasks"
+    },
+    {
+      "batch": 35,
+      "id": "UX-DESKTOP-01",
+      "title": "Redesign native desktop and landscape experience across entrance, four districts, interiors, gameplay, railway, dock and all nested screens; dedicated framing and interaction layout, not enlarged mobile or narrow webpage"
+    },
+    {
+      "batch": 36,
+      "id": "UX-FLOW-01",
+      "title": "Audit and implement every complete player journey and nested page, remove redundant clicks/holding screens, use contextual in-world transitions and restore correct parent scroll/filter/selection/room state; verify in both languages on phone and desktop"
+    },
+    {
+      "batch": 37,
+      "id": "QA-SPATIAL-01",
+      "title": "Eliminate unintended overlapping text, labels, actors, props and controls across scenes, changing cameras and nested screens in both languages"
+    },
+    {
+      "batch": 38,
+      "id": "QA-PLAYER-LOOP-01",
+      "title": "Run first-time and returning player journeys as complete enjoyable vertical slices, including intentional pauses, cancellation, repeat visits and optional discoveries; capture actual deployed screenshots"
+    },
+    {
+      "batch": 39,
+      "id": "QA-01",
+      "title": "Current main organic journeys, screenshots and deployment verification"
+    }
+  ]
+}
