@@ -9582,6 +9582,14 @@ function pawIncensePickup(hand,pick,age){
  const f=Math.max(0,Math.min(1,age<.32?age/.32:(.72-age)/.40)),v=f*f*(3-2*f);
  return {x:hand.x+(pick.x-hand.x)*v,y:hand.y+(pick.y-hand.y)*v}
 }
+// Hold the actual lit tip at the painted flame through the ignition window.
+function pawIncenseLighting(hand,flame,age){
+ const ease=v=>{v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)};
+ const reach=age<.65?ease(age/.65):age<=1.05?1:ease((1.65-age)/.6);
+ const angle=1.05*reach,length=39;
+ const contact={x:flame.x-Math.sin(angle)*length,y:flame.y+Math.cos(angle)*length};
+ return {angle,reach,grip:{x:hand.x+(contact.x-hand.x)*reach,y:hand.y+(contact.y-hand.y)*reach}};
+}
 /* PAW_TEMPLE_OWNER_CONTACT_END */
 function pawDrawIncenseSupply(supply){
  const {rack,remaining}=supply,x=rack.x,y=rack.y;
@@ -9623,11 +9631,10 @@ function pawPrayerStep(){
   else if(stage==='returnMat'){foot=pawIncenseReturnFoot(p,age);dir=age<.75?'down':'left'}
   const sc=pawTempleContactScale(cam.scale,1.55),hand={x:foot.x+(dir==='left'?-15:dir==='up'?9:17)*sc,y:foot.y-48*sc+q.bow*9};
   // The right-side incense supply is separate from the red fortune tube on the left.
-  const reach=stage==='taking'?Math.sin(Math.PI*Math.min(1,age/.72)):stage==='lighting'?Math.sin(Math.PI*Math.min(1,age/1.65)):0;
-  const reaching=stage==='taking',flame=supply.flame,pick=reaching?pawIncensePickup(hand,supply.pick,age):null;
-  const lightAngle=stage==='lighting'?1.05*reach:0;
-  const lightGrip={x:flame.x-Math.sin(lightAngle)*39,y:flame.y+Math.cos(lightAngle)*39};
-  const grip=stage==='placing'?blend(hand,burner,poseEase(Math.max(0,Math.min(1,(age-1.25)/.65)))):stage==='lighting'?blend(hand,lightGrip,reach):hand;
+  const reaching=stage==='taking',pick=reaching?pawIncensePickup(hand,supply.pick,age):null;
+  const lighting=stage==='lighting'?pawIncenseLighting(hand,supply.flame,age):{angle:0,grip:hand};
+  const lightAngle=lighting.angle;
+  const grip=stage==='placing'?blend(hand,burner,poseEase(Math.max(0,Math.min(1,(age-1.25)/.65)))):lighting.grip;
   const placed=!!state.prayerOffered||stage==='placing'&&age>=1.98;
   const shown=placed||['returnMat','complete'].includes(stage)?0:Math.min(3,held);
   // The empty supply stays on the counter throughout the ritual.
@@ -15272,7 +15279,7 @@ drawActivity=function(...args){
  if(room==='tarot'&&['tarot','love'].includes(activity)&&state.readStage==='focus'&&talkOpen&&$('dialogue').hasAttribute('data-paw-tarot-conversation')){
   const v=state.readCards?.[state.readFocus],im=pawReadingImage(pawReadingAPI(),'tarot');
   if(v&&pawRoomImageReady(im)){
-   const b=livingBounds(),w=Math.min(b.w*.34,b.h*.22),h=w*218/128,x=b.x+b.w*.69-w/2,y=b.y+b.h*.33-h/2;
+   const b=livingBounds(),w=Math.min(b.w*.34,b.h*.22),h=w*218/128,x=b.x+b.w*.5-w/2,y=b.y+b.h*.30-h/2;
    ctx.save();try{paintLivingBackdrop(im);ctx.save();ctx.shadowColor='#29282280';ctx.shadowBlur=8;round(x-2,y-2,w+4,h+4,2,'#e5d1a6','#a78c64');ctx.restore();paintReadingArtwork(x,y,w,h,v.i,v.rev)}finally{ctx.restore()}
    return
   }
@@ -15443,6 +15450,58 @@ html[lang^="zh"] #proposal .pawOpeningWordmark,html[lang^="zh"] #proposal .pawGa
 @media(prefers-reduced-motion:reduce){#proposal[data-paw-opening-enter="true"] .pawFirstRailPainting img,#proposal[data-paw-opening-enter="true"] .rail-ticket{animation:none!important}}
 `;document.head.append(pawOpeningSceneStyle);
 /* PAW_OPENING_EXPERIENCE_END */
+
+/* PAW_TAROT_TRAVELLER_SEAT_BEGIN */
+const pawTarotChairRecords=[{w:206,h:280,hip:[71,214]},{w:215,h:283,hip:[82,225]},{w:222,h:280,hip:[82,223]},{w:239,h:279,hip:[88,225]}];
+function pawTarotChairBox(p,id){
+ const r=pawTarotChairRecords[id];if(!r||!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||Math.min(p.w,p.h)<=0)return null;
+ const h=p.h*.16,k=h/r.h,w=r.w*k,hipX=p.x+p.w*.852,hipY=p.y+p.h*.531;
+ return {x:hipX-(r.w-r.hip[0])*k,y:hipY-r.hip[1]*k,w,h,k,hipX,hipY}
+}
+function pawTarotChairAt(x,y,p){return Math.hypot(x-p.x-p.w*.75,y-p.y-p.h*.69)<=4}
+function pawTarotChairProgress(age,reduced){return reduced?1:Math.max(0,Math.min(1,age/.68))}
+/* PAW_TAROT_TRAVELLER_SEAT_END */
+const pawTarotChairImages=new Map();
+function pawTarotChairImage(id){
+ if(!pawTarotChairRecords[id])return null;
+ if(!pawTarotChairImages.has(id)){const im=new Image();im.decoding='async';im.src='assets/visual/staging/2026-11-27-extracted/players/'+id+'/seated.webp';pawTarotChairImages.set(id,im)}
+ return pawTarotChairImages.get(id)
+}
+function pawTarotChairDraw(p,id){
+ const b=pawTarotChairBox(p,id),r=pawTarotChairRecords[id],im=pawTarotChairImage(id);
+ if(!b||!r||!pawRoomImageReady(im)||im.naturalWidth!==r.w||im.naturalHeight!==r.h)return false;
+ ctx.save();try{ctx.translate(b.x+b.w,b.y);ctx.scale(-1,1);ctx.drawImage(im,0,0,b.w,b.h)}finally{ctx.restore()}
+ const art=pawReadingImage(pawReadingAPI(),'tarot');
+ if(pawRoomImageReady(art)){ctx.save();try{
+  const poly=[[.866,.496],[.892,.495],[.932,.485],[.957,.469],[.973,.46],[.977,.472],[.952,.501],[.91,.514],[.881,.514],[.876,.543],[.861,.542]];
+  ctx.beginPath();poly.forEach(([u,v],i)=>i?ctx.lineTo(p.x+u*p.w,p.y+v*p.h):ctx.moveTo(p.x+u*p.w,p.y+v*p.h));ctx.closePath();ctx.clip();ctx.drawImage(art,p.x,p.y,p.w,p.h)
+ }finally{ctx.restore()}}
+ return true
+}
+let pawTarotChairVisit=null,pawTarotChairAtTime=null;
+const pawTarotChairWalkBefore=walkDoor;
+walkDoor=function(id,...args){if(id==='tarot'){const im=pawTarotChairImage(avatar??0);if(im&&!pawPictureDecoded(im))pawReadyPicture(im,4500)}return pawTarotChairWalkBefore(id,...args)};
+const pawTarotChairHumanBefore=backHuman;
+backHuman=function(x,y,id,walking,facing,scale=1){
+ if(room==='tarot'&&!activity&&pawReadingActive()&&id===avatar&&Math.hypot(x-indoor.x,y-indoor.y)<.01){
+  if(pawTarotChairVisit!==pawHostVisit){pawTarotChairVisit=pawHostVisit;pawTarotChairAtTime=null}
+  if(!walking&&pawTarotChairAt(x,y,pawReadingPlate)){
+   if(pawTarotChairAtTime===null)pawTarotChairAtTime=t;
+   const f=pawTarotChairProgress(t-pawTarotChairAtTime,residentReducedMotion.matches),b=pawTarotChairBox(pawReadingPlate,id);
+   if(f>=1&&pawTarotChairDraw(pawReadingPlate,id))return;
+   if(f<1&&b)return pawTarotChairHumanBefore(x+(b.hipX-x)*f,y+(pawReadingPlate.y+pawReadingPlate.h*.613-y)*f,id,true,'left',scale)
+  }else pawTarotChairAtTime=null
+ }
+ return pawTarotChairHumanBefore(x,y,id,walking,facing,scale)
+};
+const pawTarotChairBackdropBefore=paintLivingBackdrop;
+paintLivingBackdrop=function(...args){
+ const result=pawTarotChairBackdropBefore(...args);
+ if(room==='tarot'&&pawReadingVisit==='tarot'&&['tarot','love'].includes(activity)){
+  const art=pawReadingImage(pawReadingAPI(),'tarot');if(pawRoomImageReady(art)){const p=pawReadingCoverPlate(livingBounds(),art.naturalWidth,art.naturalHeight);if(p)pawTarotChairDraw(p,avatar??0)}
+ }
+ return result
+};
 
 if(!maps[scene])scene='fortune';if(!load('routeV5',false)){scene='fortune';save('scene',scene);save('routeV5',true)}resetPosition();initNPC();updateHUD();hint(isRoute()?'Tap a doorway to walk inside, or swipe to explore.':'Tap a place to enter, or the path to walk.',isRoute()?'点击门口走进去，或滑动探索。':'点击地点进入，点击道路行走。');entryStory();requestAnimationFrame(loop);
 
