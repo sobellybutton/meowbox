@@ -2,13 +2,13 @@ name: Pawradise independent painted map visual gate
 on:
   pull_request:
     branches: [main]
-    paths: ['src/shell.html','scripts/settings-mobile-release-test.cjs','.github/workflows/map-stationery-release.yml']
+    paths: ['src/shell.html','src/startup.js','src/town-polish.js','scripts/settings-mobile-release-test.cjs','.github/workflows/map-stationery-release.yml']
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   mobile-map:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/live-map-stationery-20261128'
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/live-map-stationery-20261128' || github.head_ref == 'fix/entrance-dock-valley-continuity-20261128' || github.head_ref == 'fix/valley-continuity-integrated-20261128'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -23,6 +23,7 @@ jobs:
       - name: Organic mobile map composition and settings
         env:
           PAW_MAP_STATIONERY: '1'
+          PAW_VALLEY_CONTINUITY: '1'
         run: |
           mkdir -p test-results
           python3 -m http.server 8765 >/tmp/map-stationery.log 2>&1 &

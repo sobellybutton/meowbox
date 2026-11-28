@@ -314,6 +314,16 @@ html #game:has(#moveGuide:not([hidden])) #hint{visibility:hidden!important}
  html #game[data-paw-sign-material]>#worldSigns>.worldSign[data-door]>.doorPlaque,html #game[data-paw-sign-material][data-recovered-plaque="true"]>#worldSigns>.worldSign[data-door]>.doorPlaque{background:ButtonFace!important;color:ButtonText!important;border:1px solid ButtonText!important;box-shadow:none!important}
  html #game #dock>button.pawDockSelected:not([hidden]),html #game #dock>button[aria-current=page]:not([hidden]){background:Highlight!important;color:HighlightText!important}
 }
+/* A compact paper navigation strip, not four separate floating cards. */
+html #game #dock{gap:2px!important;padding:3px 4px!important;box-sizing:border-box!important;bottom:max(6px,env(safe-area-inset-bottom,0px))!important;width:min(392px,calc(100% - 18px))!important}
+html #game #dock>button:not([hidden]){display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px!important;min-height:46px!important;padding:3px 2px!important}
+html #game #dock>button:not([hidden])>.dockIcon{display:grid;place-items:center;width:24px;height:24px;flex:0 0 24px;line-height:1}
+html #game #dock>button:not([hidden])>.dockIcon>svg{display:block;width:23px!important;height:23px!important}
+html #game #dock>button:not([hidden])>span:last-child{font-size:clamp(10px,2.8vw,12px)!important;line-height:1.2!important}
+/* Reserve genuine remaining HUD width for the traveller's name. A short
+   name must not be clipped by an arbitrary mobile cap. Long names still elide. */
+html #game #hud #profileHud:where(button){max-width:calc(100% - 86px)!important}
+html #game #hud #profileHud>span:last-child #hudName{max-width:clamp(110px,34vw,156px)!important;white-space:nowrap!important;text-overflow:ellipsis!important;overflow:hidden!important}
 /* PAW_MAP_STATIONERY_END */
 
 /* PAW_MAP_CHROME_FIT_BEGIN: reserve the three real controls, not three
