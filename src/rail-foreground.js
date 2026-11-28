@@ -23,14 +23,26 @@
   const scale=Math.max(w/iw,h/ih),sw=w/scale,sh=h/scale;
   return {x:(iw-sw)*Math.max(0,Math.min(1,progress)),y:(ih-sh)*.5,w:sw,h:sh}
  }
+ // Integrate a smooth acceleration ramp: distance and velocity are continuous
+ // at departure, then settle into the same width-scaled cruising speed.
+ function travelDistance(seconds){
+  if(!Number.isFinite(seconds))return 0;
+  const t=Math.max(0,seconds),ramp=.65,u=Math.min(1,t/ramp);
+  return ramp*(u*u*u-.5*u*u*u*u)+Math.max(0,t-ramp);
+ }
  function frame(route,seconds,w,h,reduced=false){
   if(!Object.hasOwn(routes,route)||![seconds,w,h].every(Number.isFinite)||w<=0||h<=0)return [];
-  const t=reduced?0:Math.max(0,seconds),span=w*1.5;
-  const result=[];
-  for(const [id,offset,ratio] of routes[route]){
-   const asset=sprites[id],height=h*ratio,width=height*asset.width/asset.height;
-   // Width-scaled track speed stays independent of the far panorama.
-   const x=(((offset*span-t*w*.57)%span+span)%span)-w*.22;
+  const distance=reduced?0:travelDistance(seconds);
+  const items=routes[route].map(([id,offset,ratio])=>{
+   const asset=sprites[id],height=h*ratio;
+   return {id,offset,height,width:height*asset.width/asset.height}
+  });
+  // Allow even wide sprites to leave entirely before recycling. A shared
+  // span preserves the spacing between props at every viewport aspect.
+  const margin=Math.max(w*.22,...items.map(p=>p.width))+w*.02;
+  const span=Math.max(w*1.5,w+margin+w*.02),result=[];
+  for(const {id,offset,height,width} of items){
+   const x=(((offset*span-distance*w*.57)%span+span)%span)-margin;
    if(x+width>=0&&x<=w)result.push({id,x,y:h*.99-height,width,height})
   }
   return result
@@ -74,7 +86,7 @@
   const box=fit(w,h,layout),foreground=layout==='portrait'?assets?.portrait:assets?.carriage;
   if(!box||!foreground?.naturalWidth||!assets?.far?.naturalWidth||!Object.hasOwn(routes,route)||!Number.isFinite(seconds))return false;
   if(layout==='portrait'&&(foreground.naturalWidth!==portrait.width||foreground.naturalHeight!==portrait.height))return false;
-  const im=assets.far,progress=reduced?.5:Math.max(0,Math.min(1,seconds/9)),win=windowBox(box,layout);
+  const im=assets.far,progress=reduced?.5:Math.min(1,travelDistance(seconds)/travelDistance(9)),win=windowBox(box,layout);
   const glass=cover(im.naturalWidth,im.naturalHeight,win.w,win.h,progress);
   if(!glass)return false;
   ctx.save();try{
@@ -91,5 +103,5 @@
   }finally{ctx.restore()}
   return true
  }
- return Object.freeze({carriage,portrait,sprites,far,cover,fit,windowBox,frame,atmosphere,draw});
+ return Object.freeze({carriage,portrait,sprites,far,cover,fit,windowBox,frame,atmosphere,travelDistance,draw});
 });
