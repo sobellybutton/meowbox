@@ -3769,6 +3769,15 @@ function townPublishedNotices(now=Date.now()){
  const count=Math.max(0,Math.min(townNoticeEditions.length,1+Math.floor((now-townNoticeStart)/townNoticeInterval)));
  return [...townNoticeEditions.slice(0,count).map((thread,i)=>({thread,date:townNoticeStart+i*townNoticeInterval,id:'edition-'+i})),...pawSerialPublished(now),...wallThreads.map((thread,i)=>({thread,date:0,id:'archive-'+i})).reverse()].sort((a,b)=>b.date-a.date)
 }
+function pawDailyNoticeSelection(entries,now=Date.now()){
+ const day=Math.floor((now+8*3600000)/86400000),cutoff=day*86400000-8*3600000;
+ const seen=new Set(),eligible=entries.filter(v=>v&&typeof v.id==='string'&&v.date<=cutoff&&!seen.has(v.id)&&seen.add(v.id));
+ const fresh=eligible.filter(v=>v.date>0&&v.date>cutoff-86400000).sort((a,b)=>b.date-a.date||a.id.localeCompare(b.id)).slice(0,3);
+ const picked=new Set(fresh.map(v=>v.id)),pool=eligible.filter(v=>!picked.has(v.id)).sort((a,b)=>a.id.localeCompare(b.id));
+ const count=Math.min(10-fresh.length,pool.length),offset=pool.length?((day*10)%pool.length+pool.length)%pool.length:0;
+ return fresh.concat(Array.from({length:count},(_,i)=>pool[(offset+i)%pool.length]));
+}
+function pawDailyTownNotices(now=Date.now()){return pawDailyNoticeSelection(townPublishedNotices(now),now)}
 const pawWeekNotes=[
  ['Sunday: Tomorrow is a problem for tomorrow’s human.','周日：明天的烦恼交给明天的人类。'],
  ['Monday: The town accepts your resignation from pretending to enjoy Mondays.','周一：小镇批准你辞去假装喜欢周一的职务。'],
@@ -3782,25 +3791,24 @@ function pawWeekNote(now=Date.now()){const day=new Date(now+8*3600000).getUTCDay
 function renderResidentNoticeboard(q){
  const wrap=element('section','',q,'townWall');
  element('h2',tr('Overheard in town','摸鱼留言墙'),wrap,'board-heading');
- element('p',tr('New town notices arrive over time. Old favourites stay in the archive.','小镇见闻陆续更新，旧瓜也能慢慢翻。'),wrap,'wallIntro');
+ element('p',tr('A little town chatter for today. Come back tomorrow for a different selection.','今天的小镇新鲜事，明天再来看看别的留言。'),wrap,'wallIntro');
  element('p',tr(...pawWeekNote()),wrap,'pawWeeklyNotice');
  element('small',tr('Notes from around town. The shared square is a separate public space.','来自小镇的留言。共享广场是另一个公共空间。'),wrap,'wallDisclosure');
  const publicBtn=b(wrap,communityURL()?tr('Read or leave a real visitor post','看看真人留言 / 留句话'):tr('Shared square · not open yet','共享广场 · 尚未开放'),()=>{communityTab='public';townChatPage()});publicBtn.className='townBoardPublicLink';
  const list=element('div','',wrap,'townPostList'),nav=element('div','',wrap,'townPostNav');
- let shown=6,lastCount=-1,lastNoticeSignature='';
+ let lastNoticeSignature='';
  function render(){
   const open=new Set([...list.querySelectorAll('.wallReplies[open]')].map(el=>el.dataset.noticeId));
-  const entries=townPublishedNotices();lastCount=entries.length;lastNoticeSignature=entries.map(v=>v.id).join('|');list.replaceChildren();nav.replaceChildren();
-  for(const {thread:m,date,id} of entries.slice(0,shown)){const post=element('article','',list,'townResidentNote');post.dataset.noticeId=id;
+  const entries=pawDailyTownNotices();lastNoticeSignature=entries.map(v=>v.id).join('|');list.replaceChildren();nav.replaceChildren();
+  for(const {thread:m,date,id} of entries){const post=element('article','',list,'townResidentNote');post.dataset.noticeId=id;
    element('strong',tr(...m[0]),post);if(date)element('small',new Date(date).toLocaleDateString(zh?'zh-CN':'en-SG',{month:'short',day:'numeric',timeZone:'Asia/Singapore'}),post,'townNoticeDate');element('p',tr(...m[1]),post);
    if(!m[2].length)continue;
    const replies=element('details','',post,'wallReplies');replies.dataset.noticeId=id;replies.open=open.has(id);element('summary',tr('Read replies','看看楼下怎么说')+' ('+m[2].length+')',replies);
    for(const reply of m[2]){const row=element('div','',replies,'wallReply');element('strong',tr(reply[0],reply[1]),row);element('p',tr(reply[2],reply[3]),row)}
   }
-  element('span',Math.min(shown,entries.length)+' / '+entries.length+' '+tr('notices','条见闻'),nav);
-  const more=b(nav,tr('Read older notices','翻翻以前的留言'),()=>{shown+=6;render()});more.disabled=shown>=entries.length;
+  element('span',entries.length+' '+tr('notices today','条今日留言'),nav);
  }render();
- const timer=setInterval(()=>{if(!wrap.isConnected||$('page').style.display!=='block'){clearInterval(timer);return}const next=townPublishedNotices(),n=next.length;if(n!==lastCount||next.map(v=>v.id).join('|')!==lastNoticeSignature){shown+=Math.max(0,n-lastCount);render()}},60000)
+ const timer=setInterval(()=>{if(!wrap.isConnected||$('page').style.display!=='block'){clearInterval(timer);return}const next=pawDailyTownNotices();if(next.map(v=>v.id).join('|')!==lastNoticeSignature)render()},60000)
 }
 
 /* A local character lounge, not a simulated online-player population.
