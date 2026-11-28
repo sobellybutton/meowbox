@@ -20,9 +20,13 @@ function pawHomeContactPosition(candidate,previous,objects,width,kind,gap){
 const pawHomeContactPlacementBefore=pawFurniturePlacement;
 pawFurniturePlacement=function(id,x,y){
  const candidate=pawHomeContactPlacementBefore(id,x,y);
- if(pawHomeSuggesting||!hideoutEditing||id==='rug')return candidate;
+ if(pawHomeSuggesting||!hideoutEditing)return candidate;
  const selected=hideoutFurniture[hideoutSelected];
  if(!selected||selected.id!==id||furnitureZone(selected)!==komorebiZone)return candidate;
  const previous={x:Number(selected.x),y:Number(selected.y)};
+ // An interrupted or malformed drag must not use the placement helper's
+ // default centre coordinates and unexpectedly move an already placed item.
+ if([previous.x,previous.y].every(Number.isFinite)&&![x,y,candidate?.x,candidate?.y].every(Number.isFinite))return previous;
+ if(id==='rug')return candidate;
  return pawHomeContactPosition(candidate,previous,mbHomeObjects(komorebiZone,hideoutSelected),furnitureWidth(id),mbHomeKind(id),mbHomeGap)
 };
