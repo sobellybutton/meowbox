@@ -740,7 +740,10 @@
         "49ddeb3b repairs isolated recovered share geometry harness missing soulCats fixture and adds all eight exact charm routes, neutral tie and non-soul behavior. Full affected script passed against current startup source in connector harness (including 9458 recovered artwork/rail/gait assertions). Real browser rerun pending.",
         "ba560687/4767539c/5f1eadee/ae214c75 persist mandatory fortune and garden regressions; source parse and focused harness passed. New browser run not yet checked."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-native-journey-qa",
+        "until": 1795842725224
+      },
       "blocker": "Browser connector unavailable for this attempt; actual mobile/desktop playthrough and visual acceptance remain unverified.\n\nOwner device acceptance clarification (27 Nov): Final deployed verification must record exact commit, browser/OS, dimensions, DPR, language, input, evidence and pass/fail/blocked per complete desktop and genuine phone journey. Actual physical iPhone Safari and Android Chrome evidence distinct from Playwright emulation; inaccessible hardware remains blocked.\n\nEnd-to-end critique, 28 Nov: Use section 12 prioritized journeys and P0/P1/P2 severity, including first enjoyable action, actual return state, and current deployed commit; never conflate phone emulation with real hardware.\nChromium purification and temple entry failures in run 46096584043 still require diagnosis; native reading browser rerun pending."
     },
     {
