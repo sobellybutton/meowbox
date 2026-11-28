@@ -24,3 +24,25 @@ for(const t of [0,419,420,1699,1700,10000])for(const ready of [true,false])for(c
 const scenes={station:{choices:[['a','甲','second'],['b','乙','end'],['c','丙','__proto__']]},second:{}},ends={end:[]};
 for(const [i,want] of [[0,'second'],[1,'end'],[2,null],[-1,null],[3,null],[.5,null],['0',null]])assert.equal(story.pawStoryNextNode(scenes.station,i,scenes,ends),want);
 console.log('Story chapter preparation, active turn and branch guards passed.');
+
+
+const contextStart=source.indexOf('function pawStoryTurnContext()');
+assert.ok(contextStart>storyEnd);
+const simulate=new Function(source.slice(start,end)+source.slice(storyStart,storyEnd)+`
+let state={},parallelToken=1,parallelNode='station',room='story',activity='story',scene='wonder',parallelTurning=false,parallelPick=-1,parallelAt=0,parallelTrail=[],parallelFound=[],t=0,clock=0,blocked=false,reduced=false;
+const queue=[],items=[],saves=[],document={hidden:false},performance={now:()=>clock},requestAnimationFrame=fn=>queue.push(fn),matchMedia=()=>({matches:reduced}),pawArcadeInputBlocked=()=>blocked,sound=()=>{},actorGesture=()=>{},save=(...v)=>saves.push(v),addItem=(...v)=>items.push(v);
+const parallelScenes={station:{choices:[['yes','好','end']]}},parallelEndings={end:['Ending','结局','','','endingArt']},pics={endingArt:{complete:false,naturalWidth:0}};
+let parallelSelect;
+`+source.slice(contextStart)+`
+return {select:parallelSelect,step(ms){clock+=ms;t=clock/1000;queue.shift()?.(clock)},block(v){blocked=v},decode(){pics.endingArt.complete=true;pics.endingArt.naturalWidth=800},cancel(){parallelToken++},reduce(){reduced=true},view(){return {parallelNode,parallelTurning,trail:parallelTrail.slice(),items:items.slice(),saves:saves.slice(),queued:queue.length}}}
+`)();
+simulate.select(0);simulate.select(0);
+for(let i=0;i<10;i++)simulate.step(16);
+assert.equal(simulate.view().parallelNode,'station');assert.equal(simulate.view().trail.length,0);
+simulate.block(true);simulate.step(10000);simulate.decode();simulate.step(16);
+assert.equal(simulate.view().parallelNode,'station');assert.equal(simulate.view().items.length,0);
+simulate.block(false);
+for(let i=0;i<20;i++)simulate.step(16);
+assert.equal(simulate.view().parallelNode,'end');assert.equal(simulate.view().trail.length,1);assert.equal(simulate.view().items.length,1);assert.equal(simulate.view().saves.length,1);
+assert.equal(simulate.view().queued,0);
+console.log('Exact runtime story transition mock passed (not browser playback).');
