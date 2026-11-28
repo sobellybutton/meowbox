@@ -151,3 +151,17 @@ console.log('Resting ladle retry and exclusive held-tool ownership checks passed
  ck(fixes.includes('queueMicrotask(pawInstallContinuousFortune)'),'late runtime installation');
  console.log('PASS '+n+' paired ritual route, failure gate, shared camera and garden entry checks');
 }
+
+{
+ const fixes=fs.readFileSync(path.join(root,'src/release-fixes.js'),'utf8');
+ const code=fixes.split('/* PAW_TEMPLE_AUTO_ARRIVAL_BEGIN */')[1].split('/* PAW_TEMPLE_AUTO_ARRIVAL_END */')[0];
+ const a=new Function(code+';return {pawTempleAutoArrival,pawGardenSeatAtNode}')();
+ const q={route:[],pos:[.49,.82],destination:null};
+ assert.ok(a.pawTempleAutoArrival(q,false));
+ for(const patch of [{pawAutoArrival:true},{destination:'exit'},{route:[[.47,.73]]},{greeted:true},{catVisited:true}])assert.ok(!a.pawTempleAutoArrival({...q,...patch},false));
+ assert.ok(!a.pawTempleAutoArrival(q,true));
+ assert.ok(a.pawGardenSeatAtNode({route:[],pos:[.78,.475]},[.78,.475]));
+ assert.ok(!a.pawGardenSeatAtNode({route:[],pos:[.48,.78]},[.78,.475]));
+ assert.ok(!a.pawGardenSeatAtNode({route:[[.78,.475]],pos:[.78,.475]},[.78,.475]));
+ console.log('PASS 10 temple auto-arrival and garden seated ownership checks');
+}
