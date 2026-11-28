@@ -5029,12 +5029,55 @@ function parkCatFrame(phase,age,clock,assisted=false,moving=false,trust=50){
  return 0
 }
 function pawCatDirection(a){if(a.phase==='return')return a.returnFromX>400?-1:1;if(a.phase==='feed')return -1;if(a.phase==='water')return 1;if(a.phase==='play'&&a.drag&&Number.isFinite(a.drag.x))return a.drag.x<a.x?-1:1;if(a.phase==='play'&&a.assisted&&Number.isFinite(a.x)&&Number.isFinite(a.pawPreviousX))return a.x<a.pawPreviousX?-1:a.x>a.pawPreviousX?1:(a.pawFacing||1);return a.pawFacing||1}
+/* PAW_KAYA_PAINTED_BEGIN */
+const pawKayaDurations=Object.freeze([120,100,100,120,280,120,100,120]);
+const pawKayaKeys=pawKayaDurations.map((_,i)=>'parkKayaPet'+i);
+for(let i=0;i<pawKayaKeys.length;i++)productionVisualManifest[pawKayaKeys[i]]={path:'assets/visual/staging/2026-11-28-park-cat-recovery/petting-'+String(i).padStart(2,'0')+'.webp',width:480,height:480};
+productionVisualManifest.parkKayaSleep={path:'assets/visual/staging/2026-11-28-park-cat-rest/ginger-tabby-sleep.webp',width:480,height:480};
+function pawKayaPrepare(){
+ const images=[...pawKayaKeys,'parkKayaSleep'].map(productionVisual);
+ return images.every(im=>im?.naturalWidth===480&&im?.naturalHeight===480)?images:null
+}
+function pawKayaFrame(phase,elapsed,contact,reduced=false){
+ if(phase==='rest')return 8;
+ if(phase!=='pet'||!contact)return 0;
+ if(reduced)return 4;
+ let ms=Math.max(0,Number.isFinite(elapsed)?elapsed*1000:0);
+ for(let i=0;i<pawKayaDurations.length;i++){if(ms<pawKayaDurations[i])return i;ms-=pawKayaDurations[i]}
+ return 7;
+}
+function pawKayaBox(x,y,frame,clock,reduced=false){
+ const k=184/480,breath=frame===8&&!reduced?1+.009*Math.sin(clock*2):1;
+ return {x:x-252*k,y:y-440*k*breath,w:480*k,h:480*k*breath}
+}
+function pawDrawKaya(a,kind,phase,age,dir,reduced){
+ if(kind!==0)return false;
+ // Keep the same selected art for the whole visit. Never swap after decode
+ // in the middle of a stroke. Other cats always keep their original row.
+ if(!Object.hasOwn(a,'pawKayaImages'))a.pawKayaImages=pawKayaPrepare();
+ if(!a.pawKayaImages)return false;
+ const stationaryReturn=phase==='return'&&Math.abs((a.returnFromX??400)-400)<1&&Math.abs((a.returnFromY??535)-535)<1;
+ if(!['idle','pet','rest'].includes(phase)&&!stationaryReturn){a.pawKayaContactAt=null;return false}
+ const contact=phase==='pet'&&!!a.traveller&&!a.traveller.moving&&a.traveller.kneel>.25;
+ if(!contact)a.pawKayaContactAt=null;else if(a.pawKayaContactAt==null)a.pawKayaContactAt=age;
+ const frame=pawKayaFrame(phase,age-(a.pawKayaContactAt??age),contact,reduced);
+ const b=pawKayaBox(0,0,frame,t,reduced);
+ ctx.save();try{
+  ctx.translate(a.x,a.y);ellipse(0,3,frame===8?63:65,frame===8?10:12,'#393d2f38');
+  ctx.scale(dir,1);ctx.drawImage(a.pawKayaImages[frame],b.x,b.y,b.w,b.h);
+ }finally{ctx.restore()}
+ return true
+}
+const pawKayaIntroBefore=roomIntro;
+roomIntro=function(...args){if(room==='park'&&!activity)pawKayaPrepare();return pawKayaIntroBefore(...args)};
+/* PAW_KAYA_PAINTED_END */
 const catArtDraft=careCatArt;
 careCatArt=function(a){
  const im=productionVisual('parkCats');if(!im)return catArtDraft(a);
  const kind=Math.max(0,Math.min(4,state.petKind??0)),rawAge=pawCareActionAge(a,t),age=Math.max(0,rawAge),phase=rawAge<0?'idle':a.phase;
  const frame=residentReducedMotion.matches?(phase==='rest'?6:['feed','water'].includes(phase)&&age>=.9?4:phase==='pet'?1:0):parkCatFrame(phase,age,t,a.assisted,!!a.drag,a.values.trust);
  const dir=pawCatDirection(a);a.pawFacing=dir;a.pawPreviousX=a.x;
+ if(pawDrawKaya(a,kind,phase,age,dir,residentReducedMotion.matches))return;
  const resting=frame===6,pounce=frame===7,bob=pounce?-Math.abs(Math.sin(age*5))*5:resting?Math.sin(t*2)*.6:0;
  ctx.save();ctx.translate(a.x,a.y);ellipse(0,3,resting?58:72,resting?10:12,'#393d2f38');ctx.scale(dir,1);
  ctx.drawImage(im,frame*220,kind*140,220,140,-110,-120+bob,220,140);
