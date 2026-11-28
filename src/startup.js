@@ -7241,9 +7241,9 @@ festivalLift=function(...args){
   g.streak=(g.streak||0)+1;g.bestStreak=Math.max(g.bestStreak||0,g.streak);
   const rare=g.caught.at(-1)===4,points=10+(quality.ideal?10:0)+(rare?15:0)+Math.min(3,g.streak-1)*5;
   g.score=(g.score||0)+points;g.perfect=(g.perfect||0)+(quality.ideal?1:0);
-  g.feedback=[(quality.ideal?'Perfect scoop! ':'Nice catch! ')+'+'+points+' points. '+(g.streak>1?g.streak+' in a row. ':'')+'Back to the water!',(quality.ideal?'完美捞鱼！':'捞到了！')+' +'+points+' 分。'+(g.streak>1?'连续 '+g.streak+' 次！':'')+'小鱼回水啦！'];
+  g.feedback=[(quality.ideal?'Perfect scoop! ':'Nice catch! ')+'+'+points+' points. '+(g.streak>1?g.streak+' in a row. ':'')+(rare?'Golden guest! Back to the tank.':'Fish clocked out. Back to the tank.'),(quality.ideal?'完美捞鱼！':'捞到了！')+' +'+points+' 分。'+(g.streak>1?'连续 '+g.streak+' 次！':'')+(rare?'金元宝来啦！送它回水池。':'小鱼打卡下班，回水池啦！')];
  }else{
-  g.streak=0;if(!quality.steady)g.feedback=['Too much swishing! A steady scoop protects the paper.','纸网晃得太厉害啦！稳稳地捞，才不容易破。']
+  g.streak=0;if(!quality.steady)g.feedback=['Too much swishing! This is a paper net, not a washing machine. Move gently.','晃太厉害啦！这是纸网，不是洗衣机。轻轻捞。']
  }
  refreshControls();return result
 };
@@ -10568,7 +10568,7 @@ const pawOriginalFortunePaper=templePaperOpen;
 templePaperOpen=function(n){
  if(room==='temple'&&activity==='sticks'&&state.stickDelivered&&pawFortuneSlipNumber(n)){
   state.pawFortuneNumber=n;
-  hint('Take your numbered stick to the moon blocks for confirmation.','已拾到签号，请前往筊杯处掷筊确认。');
+  hint('Number collected. Take the stick to the moon blocks for confirmation, one step at a time.','签号拿到了。去掷筊确认，一步一步来，不急。');
   mb5AssistSync(true);return
  }
  return false
@@ -10595,7 +10595,7 @@ function pawFortuneRestoreWalk(q){
  if(pawFortuneWalk!==q||state!==q.hallState||room!=='temple'||activity)return;
  pawFortuneWalk=null;
  activity=q.from;state=q.run;updateHUD();mb5AssistSync(true);
- if(q.from==='moon')hint("This draw wasn't confirmed. Go back to the stick holder and draw a fresh stick. There is no slip to collect yet.","这次没有掷到圣杯。请回签筒重新摇签，这一支暂时不能领取签文。");
+ if(q.from==='moon')hint("No Sheng Bei this time. Return to the holder and draw a new stick; there is no slip yet. Take your time.","这次没有圣杯，暂时不能领签。回签筒重新摇签吧，不着急。");
  else hint("Keep your numbered stick. Take it to the moon blocks to confirm the draw.","先留好手中的签，再去掷筊确认。")
 }
 function pawFortuneWalkTick(){
