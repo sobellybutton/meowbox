@@ -1355,7 +1355,10 @@
         "22101d9e: four original painted wood/paper material crops uploaded with provenance and blob hashes; inspected source art. 310fb150: compact district-specific bilingual sign styles, shared railway identity and 44px touch targets applied in shell without touching current garden runner. Controlled browser CSS probe at 360x640 and 1440x900 confirmed sample EN/ZH labels fit and 44px button targets; first visual probe corrected for synthetic layout positioning. Pages run 46016588647 reports success for this revision.",
         "77b2b535: anchored signs excluded from generic press scale, painted brightness feedback and inset accessible focus added; 11 static checks passed."
       ],
-      "lease": null,
+      "lease": {
+        "owner": "manual-starlight-sign-1318",
+        "until": 1795844186742
+      },
       "blocker": "Actual device touch/keyboard focus, sign collision and appearance remain unverified. Final district-specific illustrations outstanding."
     },
     {
