@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   rituals:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/three-ritual-room-presentation-20261128' || github.head_ref == 'fix/ritual-visual-composition-20261128' || github.head_ref == 'fix/illustrated-ritual-chat-bar-20261128' || github.head_ref == 'fix/yue-physical-desk-current-20261128' || github.head_ref == 'fix/yue-share-return-current-20261128' || github.head_ref == 'fix/yue-export-png-evidence-20261128' || github.head_ref == 'fix/yue-grounded-host-export-composition-20261128' || github.head_ref == 'fix/yue-visitor-seated-existing-art-20261128'
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/three-ritual-room-presentation-20261128' || github.head_ref == 'fix/ritual-visual-composition-20261128' || github.head_ref == 'fix/illustrated-ritual-chat-bar-20261128' || github.head_ref == 'fix/yue-physical-desk-current-20261128' || github.head_ref == 'fix/yue-share-return-current-20261128' || github.head_ref == 'fix/yue-export-png-evidence-20261128' || github.head_ref == 'fix/yue-grounded-host-export-composition-20261128' || github.head_ref == 'fix/yue-visitor-seated-existing-art-20261128' || github.head_ref == 'fix/yue-scroll-seating-integrated-20261128'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     strategy:
@@ -34,7 +34,7 @@ jobs:
         with:
           node-version: '22'
       - run: node scripts/build.cjs
-      - if: github.head_ref == 'fix/yue-physical-desk-current-20261128' || github.head_ref == 'fix/yue-grounded-host-export-composition-20261128' || github.head_ref == 'fix/yue-visitor-seated-existing-art-20261128'
+      - if: github.head_ref == 'fix/yue-physical-desk-current-20261128' || github.head_ref == 'fix/yue-grounded-host-export-composition-20261128' || github.head_ref == 'fix/yue-visitor-seated-existing-art-20261128' || github.head_ref == 'fix/yue-scroll-seating-integrated-20261128'
         run: node scripts/yue-current-desk-contact-test.cjs
       - if: github.head_ref == 'fix/yue-share-return-current-20261128'
         run: node scripts/yue-share-return-test.cjs
