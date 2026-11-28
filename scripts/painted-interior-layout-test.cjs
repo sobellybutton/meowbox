@@ -84,3 +84,17 @@ assert.ok(!api.safe('arcade',[.18,.52]),'do not walk inside the cabinets');
 assert.ok(api.safe('arcade',arcade.entry));
 for(const s of Object.values(arcade.stations))assert.ok(api.route('arcade',arcade.entry,s.approach));
 console.log('Arcade painted floor, three curated stations and fixture exclusion checks passed.');
+
+assert.ok(helpers.pawReadingCompatible(api,'arcade',[['bubbleArcade'],['goldfishScoop'],['blindBox']]));
+assert.ok(!helpers.pawReadingCompatible(api,'arcade',[['claw'],['rhythm'],['blindBox']]));
+const foodStart=source.indexOf('/* PAW_FOOD_PAINT_BEGIN */'),foodEnd=source.indexOf('/* PAW_FOOD_PAINT_END */'),exitStart=source.indexOf('/* PAW_MAPPED_EXIT_BEGIN */'),exitEnd=source.indexOf('/* PAW_MAPPED_EXIT_END */');
+const exits=new Function(source.slice(foodStart,foodEnd)+source.slice(start,end)+source.slice(exitStart,exitEnd)+';return {pawMappedExitPlan,pawFoodExitPlan};')();
+const arcadeSpec=helpers.pawReadingSpec(api,'arcade');
+for(const p of [arcadeSpec.arrival,...Object.values(arcadeSpec.stations).map(v=>v.slice(2))])assert.ok(exits.pawMappedExitPlan(api,'arcade',p));
+assert.equal(exits.pawMappedExitPlan(api,'arcade',arcadeSpec.entry).arrived,true);
+for(const id of ['kitchen','boba']){
+ for(const point of [[400,690],[400,675],[400,735]])assert.ok(exits.pawFoodExitPlan(id,point));
+ assert.equal(exits.pawFoodExitPlan(id,[400,735]).arrived,true);
+ assert.equal(exits.pawFoodExitPlan(id,[100,400]),null);
+}
+console.log('Arcade runtime compatibility and painted food shop exit plans passed.');
