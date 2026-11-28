@@ -200,6 +200,13 @@ const cv={getContext(){return g}},atlas={complete:true,naturalWidth:1024,natural
 function readingArtwork(){return atlas}
 function pawRecoveredImage(){return {complete:true,naturalWidth:1080,naturalHeight:size}}
 const pics={valleyClean:{complete:true,naturalWidth:1440,naturalHeight:810}};
+// Real bilingual result labels are supplied by extensions.js in the browser.
+// This isolated geometry harness supplies an explicit fixture, not a global dependency.
+const soulCats=[['Cloud Poet','云朵诗人'],['Professional Napper','咸鱼猫'],['Rooftop Explorer','屋顶探险家'],['Midnight Stargazer','午夜观星猫'],['Matcha Companion','抹茶暖暖猫'],['Gossip Detective','吃瓜猫'],['Clear-eyed Cat','人间清醒猫'],['Lucky Opportunist','好运招财猫']];
+const soulCharms=['sakura','sleepy','guardian','moonlight','pink-love','classic-white','black','gold'];
+for(let i=0;i<soulCats.length;i++)ck(pawSoulShareArt({kind:'soul',title:soulCats[i]},soulCats)==='fortune-cats/'+soulCharms[i]+'.webp','correct soul charm');
+ck(pawSoulShareArt({kind:'soul',title:['Mixed','并列']},soulCats)==='fortune-cats/classic-white.webp','neutral soul charm');
+ck(pawSoulShareArt({kind:'cafe',title:soulCats[0]},soulCats)===null,'non-soul art unchanged');
 function sharePaintedKey(){return 'valleyClean'}
 function shareTextLines(g,v,w){return [v]}
 const tarotDeck=Array.from({length:78},(_,i)=>['Card '+i,'牌 '+i]);
