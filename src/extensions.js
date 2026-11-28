@@ -5005,7 +5005,7 @@ table=function(){
  const serving=state.pawSoupServeMode&&state.pawSoupServeAt!==undefined&&!state.pawSoupServed;
  const ladle=!serving&&typeof pawKitchenLadleFrame==='function'?pawKitchenLadleFrame():null;
  state.pawKitchenPaintFrame=ladle;
- if(!state.done&&(W<H||ladle)){const stirring=drag?.id==='stir',reach=ladle&&state.pawKitchenLadle.travel>0?{x:ladle.hand[0],y:ladle.hand[1]}:stirring?{x:310,y:425}:null;drawRitualPose(270,450,1.22,{reach,bow:stirring?.10:0})}
+ if(!state.pawSteam&&!state.done&&(W<H||ladle)){const stirring=drag?.id==='stir',reach=ladle&&state.pawKitchenLadle.travel>0?{x:ladle.hand[0],y:ladle.hand[1]}:stirring?{x:310,y:425}:null;drawRitualPose(270,450,1.22,{reach,bow:stirring?.10:0})}
  if(ladle&&state.pawKitchenLadle.travel===0)pawKitchenPaintLadle(ladle);
  ctx.restore()
 };
