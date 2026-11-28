@@ -39,3 +39,11 @@ for(const [w,h] of [[320,568],[390,844],[430,932],[768,1024],[1440,900]]){
  assert.ok(c.ox+moonGeo.moonTray.x*c.s<w&&c.ox+moonGeo.moonFoot.x*c.s>0);clearanceChecks++;
 }
 console.log('PASS '+clearanceChecks+' moon clearance, contact, walk and viewport checks; minimum world gap '+minClearance.toFixed(2));
+
+// The converged candidate installs a later paired-ritual runtime. Test its actual guard and route, not only the older startup fallback.
+const pairedSource=read('src/release-fixes.js').split('/* PAW_CONTINUOUS_FORTUNE_BEGIN */')[1].split('/* PAW_CONTINUOUS_FORTUNE_END */')[0];
+const paired=new Function(pairedSource+';return {pawPairedNext,pawPairedWalkPlan,pawPairedWalkTick}')();
+let pairedChecks=0;
+for(const result of [1,2])for(const failures of [1,2,3])for(let i=0;i<=200;i++){const now=10+i/100,q={pawFortuneNumber:4,count:1,result,pawFortuneFailures:failures,pawFortuneSettledAt:10,tossUntil:10};assert.equal(paired.pawPairedNext(q,'moon',now,false),now-10<1.2?null:failures===3?'finish':'retry');pairedChecks++;assert.equal(paired.pawPairedNext(q,'moon',now,true),null);pairedChecks++}
+for(const painted of [true,false])for(const from of ['moon','sticks']){const plan=paired.pawPairedWalkPlan(from,painted,moonGeo,{x:0,y:0,w:800,h:600},10),origin={...plan.pos},end={...plan.path[plan.path.length-1]};assert.equal(paired.pawPairedWalkTick(plan,20,true,false),false);assert.deepEqual(plan.pos,origin);pairedChecks+=2;let done=false,moved=false;for(let i=1;i<=500&&!done;i++){const old={...plan.pos};done=paired.pawPairedWalkTick(plan,20+i*.02,false,false);const distance=Math.hypot(plan.pos.x-old.x,plan.pos.y-old.y);assert.ok(distance<=145*.02001);moved||=distance>0;pairedChecks++}assert.ok(done&&moved);assert.deepEqual(plan.pos,end);pairedChecks+=2}
+console.log('PASS '+pairedChecks+' effective paired-ritual pause, blocked movement and route checks');
