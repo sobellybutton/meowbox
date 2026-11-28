@@ -5579,7 +5579,7 @@ pawJournalRender=function(district=scene){
 // Keep interaction text tied to its actual scene. The existing scenery
 // remains shared, pending original route-specific painted landscapes.
 const pawRailRouteNotes={
- fortune:['Into the hills','开往山间'],home:['Towards the tea room district','开往茶香小镇'],island:['Towards Lantern Lane','开往灯火小街'],wonder:['Towards Starlight Valley','开往星语谷']
+ fortune:['Into the hills','开往山间'],home:['Towards Sea Breeze Island','开往海风岛'],island:['Towards Lantern Lane','开往灯火小街'],wonder:['Towards Starlight Valley','开往星语谷']
 };
 const pawRailContextBefore=mbTransferHolding;
 mbTransferHolding=function(from,to){
@@ -11406,7 +11406,11 @@ function pawMountPaintedRailComposite(stage,layout,host,mode,layers){
  let elapsed=0,raf=0,last=null,lastDraw=-Infinity,dead=false,frames=0;
  function draw(){
   g.clearRect(0,0,canvas.width,canvas.height);
-  const ok=candidate.api.draw(g,assets,destination,elapsed,canvas.width,canvas.height,reduce.matches,layout);
+  // Read on every draw: the journey controller sets rideSeconds after mounting.
+  const seconds=Number(host.dataset.rideSeconds);
+  const duration=mode==='ride'?(Number.isFinite(seconds)&&seconds>0?seconds:3.6):undefined;
+  const ok=candidate.api.draw(g,assets,destination,elapsed,canvas.width,canvas.height,reduce.matches,layout,duration);
+  if(ok&&duration)canvas.dataset.rideDuration=String(duration);
   if(ok){canvas.dataset.frame=String(++frames);canvas.dataset.travel=elapsed.toFixed(3)}
   return ok
  }
