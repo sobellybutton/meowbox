@@ -13401,9 +13401,9 @@ function pawReadingSeatPlan(id,plate,phase){
  const tarot=id==='tarot',yue=id==='destiny';if(!tarot&&!yue)return null;
  const host=tarot?'fortune-teller':'master-yue';
  const pose=tarot?(phase==='shuffle'?'seated-shuffle-held':phase==='focus'?'seated-present-card':'seated-idle'):(phase==='result'?'seated-present-blank-parchment':phase==='question'?'seated-brush-held':'seated-welcome-explain');
- const eye=tarot?[.135,.399]:[.581,.218],span=plate.h*(tarot?.0165:.017);
+ const eye=tarot?[.135,.399]:[.581,.365],span=plate.h*(tarot?.0165:.017);
  const center=[plate.x+plate.w*eye[0],plate.y+plate.h*eye[1]];
- return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.306]}
+ return {host,pose,center,span,clip:tarot?[plate.x,plate.y,plate.w*.245,plate.h]:[plate.x,plate.y,plate.w,plate.h*.445]}
 }
 function pawReadingHostPhase(id,q,kind,desk,result){
  if(id==='tarot'&&['tarot','love'].includes(kind)&&q){if(q.readStage==='shuffle')return 'table-wash';if(q.readStage==='focus'&&Number.isInteger(q.readFocus)&&q.readCards?.[q.readFocus])return 'focus'}
@@ -13619,7 +13619,7 @@ drawRoom=function(...args){if(pawReadingActive())pawReadingBackdrop();return paw
 function pawReadingHost(){
  const name=room==='tarot'?['Fortune Teller','占卜师']:room==='destiny'?['Master Yue','月师傅']:room==='tea'?['Auntie Mei','梅姨']:room==='fish'?['Ah Ma','阿嬷']:room==='park'?['Auntie Lin','林姨']:room==='arcade'?['Arcade keeper','游戏厅店主']:null;
  if(!name)return null;const record=residentArtworkRecord(name);if(!record&&room!=='fish')return null;
- const [x,y]=pawReadingWorld(room==='destiny'?[.58,.306]:room==='tarot'&&pawHostVisit?.ready?[.135,.61]:pawReadingAPI().rooms[room].host);
+ const [x,y]=pawReadingWorld(room==='destiny'?[.58,.445]:room==='tarot'&&pawHostVisit?.ready?[.135,.61]:pawReadingAPI().rooms[room].host);
  return {station:room==='tea'?'chat':room==='fish'?'hit':room==='park'?'pet':room==='arcade'?'bubbleArcade':room,n:name,x,y,sc:pawHallActorScale(94*travellerRoomScale(H,cam.scale),record?.height||112,.90),facing:room==='fish'?'right':'left'}
 }
 const pawReadingHostsBefore=roomResidentActors;
@@ -13630,11 +13630,11 @@ roomResidentActors=function(){if(!pawReadingActive())return pawReadingHostsBefor
 // Until the proper seated sprite is registered this is a desk-occlusion
 // treatment, not a new animation pose.
 function pawYueDeskBox(p=pawReadingPlate){
- return {x:p.x+p.w*.581,y:p.y+p.h*.306,height:p.h*.215,clipTop:p.y+p.h*.165,clipBottom:p.y+p.h*.306}
+ return {x:p.x+p.w*.581,y:p.y+p.h*.445,height:p.h*.215,clipTop:p.y+p.h*.30,clipBottom:p.y+p.h*.445}
 }
 function pawYueHostTapBox(p){
  if(!p||![p.x,p.y,p.w,p.h].every(Number.isFinite)||p.w<=0||p.h<=0)return null;
- return [p.x+p.w*.465,p.y+p.h*.175,p.w*.232,p.h*.130]
+ return [p.x+p.w*.465,p.y+p.h*.31,p.w*.232,p.h*.135]
 }
 function pawYueDeskPlaque(p=pawReadingPlate){
  return {x:p.x+p.w*.5,y:p.y+p.h*.552}
