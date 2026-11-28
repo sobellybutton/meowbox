@@ -17,6 +17,20 @@ const q={};ck(api.parchmentClock(q,0)===0,'begin');
 for(let i=1;i<=4;i++)api.parchmentClock(q,i*.1);
 const before=q.elapsed;api.parchmentClock(q,1,true);api.parchmentClock(q,20,false);ck(q.elapsed===before,'pause and resume');
 ck(api.parchmentClock(q,21,false,true)===1,'reduced');
+// The visibilitychange listener can run with reduced motion enabled.
+const hidden={};ck(api.parchmentClock(hidden,1,true,true)===0,'hidden first frame does not reveal');
+ck(api.parchmentClock(hidden,60,true,true)===0,'hidden clock stays paused');
+ck(api.parchmentClock(hidden,61,false,true)===1,'reduced motion reveals when visible');
+const partial={};api.parchmentClock(partial,0);
+for(let i=1;i<=3;i++)api.parchmentClock(partial,i/10);
+const held=partial.elapsed;
+for(let i=1;i<=100;i++)ck(api.parchmentClock(partial,1+i,true,i%2===0)===held/.72,'hidden setting changes do not consume ink');
+ck(api.parchmentClock(partial,102,false,false)===held/.72,'resume keeps previous ink');
+ck(api.parchmentClock(partial,101,false,false)===held/.72&&partial.last===102,'stale frame ignored');
+ck(api.parchmentClock(partial,102,false,false)===held/.72,'no duplicated elapsed time');
+ck(api.parchmentClock(partial,103,false,true)===1,'visible reduced motion completes');
+ck(api.parchmentClock(partial,104,false,false)===1,'completed ink does not rewind');
+for(const invalid of [NaN,Infinity,-1]){const q={elapsed:invalid};ck(api.parchmentClock(q,0)===0,'invalid elapsed normalized')}
 console.log('PASS '+n+' parchment clock and computed palace surface checks');
 
 const source=require('node:fs').readFileSync('src/startup.js','utf8');
