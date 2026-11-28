@@ -5355,7 +5355,12 @@ function pawHomeStageBlocks(stage){
  }
  return blocks
 }
+function pawHomeActorHeight(y){return Math.max(23,Math.min(29,23+(Number.isFinite(y)?y-68:0)*6/26))}
 function pawHomeActorPosition(player,stage,point){
+ player.style.setProperty('--paw-home-height',pawHomeActorHeight(point.y)+'%');
+ let shadow=stage.querySelector('.pawHomeContactShadow');
+ if(!shadow){shadow=element('span','',stage,'pawHomeContactShadow');shadow.setAttribute('aria-hidden','true')}
+ shadow.style.left=point.x+'%';shadow.style.top=point.y+'%';shadow.style.zIndex=String(pawHomeLayer(point.y)-1);
  player.style.left=point.x+'%';player.style.top=point.y+'%';player.style.right='auto';player.style.bottom='auto';
  player.style.zIndex=String(pawHomeLayer(point.y));
 }
@@ -5430,7 +5435,7 @@ hideoutPage=function(...args){
    const anchor={x:parseFloat(item.style.left),y:parseFloat(item.style.top)};
    if(!Number.isFinite(anchor.x)||!Number.isFinite(anchor.y)||anchor.y<pawHomeBounds.u||Math.hypot(anchor.x-point.x,anchor.y-point.y)<13){pawHomeStop();return old.apply(this,args)}
    const goal=pawHomeObjectApproach(point,anchor,pawHomeStageBlocks(stage));
-   if(!goal||!pawHomeMoveTo(stage,player,point,key,goal,note,()=>old.apply(item,args))){pawHomeStop();return old.apply(this,args)}
+   if(!goal||!pawHomeMoveTo(stage,player,point,key,goal,note,()=>old.apply(item,args))){pawHomeStop();note.textContent=tr('Move a little furniture to reach this spot.','挪一挪家具，才能走到这里。');return}
   }
  }
  stage.addEventListener('keydown',e=>{
@@ -11703,7 +11708,7 @@ hideoutPage=function(...args){
  const section=element('section','',fold,'pawHomeExpansion');
  element('p',tr('Unlock extra rooms with Paw Coins. Your existing furniture stays yours.','用爪爪币解锁更多房间，原有家具会保留。'),section);
  const tabs=q.querySelector('.komorebiRoomTabs');
- if(tabs&&tabs.parentElement===stage.parentElement)tabs.after(stage);else actions.before(stage);
+ if(tabs&&tabs.parentElement===stage.parentElement){stage.after(tabs);if(komorebiZones()===1){fold.append(tabs);tabs.querySelector('[aria-pressed=true]')?.remove()}}else actions.before(stage);
  stage.after(actions);actions.after(fold);
  pawLoadHomePaintings().then(api=>{if(api&&section.isConnected&&$('content').contains(section))pawRenderExpansionPlans(section,api)});
  return result
@@ -15382,7 +15387,7 @@ pawHallHomeComposition.textContent=`
 #game #content .pawHallExtras .pawTownTextLink{color:#f8edcf!important;text-shadow:0 1px 3px #231c15;min-height:44px}
 #game #content:has(.pawPavilionScene)>p{margin:4px 0!important}
 #game #content:has(.pawPavilionScene)>h1{margin:6px 0!important}
-#game #content .hideoutScene .hideoutPlayer{width:22%!important;height:auto!important;max-height:34%!important;object-fit:contain!important;filter:drop-shadow(0 4px 2px #33271e55)!important}
+#game #content .hideoutScene .hideoutPlayer{width:auto!important;height:var(--paw-home-height,27%)!important;max-height:30%!important;max-width:28%!important;object-fit:contain!important;filter:none!important}
 #game #content .hideoutRoomView .hideoutScene{margin:4px 0!important}
 #game #content .komorebiRoomTabs{margin:4px 0!important;gap:6px}
 #game #content .komorebiRoomTabs button{min-height:44px!important;font-size:13px!important;padding:5px 9px!important}
@@ -15390,3 +15395,19 @@ pawHallHomeComposition.textContent=`
 @media(orientation:landscape) and (max-height:540px){#game #content .pawPavilionScene>.pawTownFrontPhoto{width:min(100%,55dvh);margin:0 auto!important}}
 `;document.head.append(pawHallHomeComposition);
 /* PAW_HALL_HOME_COMPOSITION_END */
+
+/* PAW_ROOM_GROUNDING_AND_DOCK_BEGIN */
+const pawRoomGroundingStyle=document.createElement('style');
+pawRoomGroundingStyle.textContent=`
+#game #content .pawHomeContactShadow{position:absolute;width:10%;height:2.5%;border-radius:50%;background:radial-gradient(ellipse,#3f2c235c,transparent 72%);transform:translate(-50%,-50%);pointer-events:none}
+#game #content .hideoutRoomView>h1{margin:5px 0!important}
+#game #content .hideoutRoomView>p.hideoutIntro{margin:2px 0 4px!important}
+#game #content .hideoutRoomView .pawRoomExpansionFold .komorebiRoomTabs{display:flex;flex-wrap:wrap;margin:8px 0!important}
+#game #dock{gap:2px!important;padding:3px!important;border-radius:12px!important}
+#game #dock>button:not([hidden]){min-height:44px!important;border:0!important;padding:3px 2px!important;box-shadow:none!important}
+#game #dock>button.pawDockSelected{background:#d9ddbd80!important;box-shadow:inset 0 -2px #657d59!important;color:#36533f!important;border-radius:8px!important}
+#game #dock>button .dockIcon{width:22px!important;height:22px!important}
+#game #dock>button:not([hidden])>span:last-child{font-weight:600!important;font-size:clamp(10px,2.8vw,12px)!important}
+@media(forced-colors:active){#game #dock>button[aria-current="page"]{outline:2px solid Highlight!important}}
+`;document.head.append(pawRoomGroundingStyle);
+/* PAW_ROOM_GROUNDING_AND_DOCK_END */
