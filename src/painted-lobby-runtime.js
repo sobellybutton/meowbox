@@ -97,6 +97,20 @@ function pawKeepsakeShareMode(nav,file){
  if(!file||typeof nav?.share!=='function'||typeof nav?.canShare!=='function')return false;
  try{return nav.canShare({files:[file]})===true}catch{return false}
 }
+// Route only completed, live in-room results. Deliberate archive shares
+// keep their existing interface. Never return to a different visit.
+function pawKeepsakeRoomRoute(v,resultKind,hasBack){
+ if(!v||v.page)return null;
+ if(v.room==='tarot'&&['tarot','love'].includes(v.activity)&&resultKind==='tarot'&&hasBack)return {id:'tarot',speaker:['Fortune Teller','占卜师'],back:['Back to reading','返回解读']};
+ if(v.scene!=='wonder'||v.phase!=='result')return null;
+ if(v.activity==='match'&&v.room==='match'&&resultKind==='cafe')return {id:'cafe',speaker:['Heart Café','心语咖啡馆'],back:['Back to reflection','返回心得']};
+ if(v.activity==='story'&&v.room==='story'&&resultKind==='story')return {id:'story',speaker:['House of What If','如果人生馆'],back:['Back to the story','返回故事']};
+ if(v.activity==='wonderScene'&&['quiz','curiosity','observatory'].includes(v.room)&&resultKind===v.mode&&hasBack&&v.result)return {id:'notebook',speaker:v.room==='curiosity'?['Curiosity Club','奇想俱乐部']:['Inner Observatory','心灵观星台'],back:['Back to the notebook','返回小记']};
+ return null
+}
+function pawKeepsakeVisitOwns(origin,live){
+ return !!origin&&!!live&&['room','activity','scene','phase','run','token','mode','result'].every(k=>origin[k]===live[k])&&!live.page
+}
 /* PAW_NATIVE_CONSULT_END */
 function pawInstallNativeConsultation(){
  const scalePrior=travellerRoomScale;
@@ -267,13 +281,21 @@ function pawInstallNativeConsultation(){
  // without entering the generic share page. Archive sharing stays unchanged.
  const sharePrior=openMeowShare;
  openMeowShare=function(raw,back=null){
-  if(room!=='tarot'||!['tarot','love'].includes(activity)||raw?.kind!=='tarot'||$('page').style.display==='block')return sharePrior(raw,back);
-  const data=sharePublicData(raw),run=state,kind=activity;
-  if(!data?.cards?.length)return;
+  const visit=()=>{
+   const base={room,activity,run:state,page:$('page').style.display==='block'};
+   if(activity==='match')return {...base,scene,phase:cafePhase,token:cafeToken,result:cafeResult};
+   if(activity==='story')return {...base,scene,phase:parallelEndings[parallelNode]&&!parallelTurning?'result':null,token:parallelToken,result:parallelNode};
+   if(activity==='wonderScene')return {...base,scene,phase:wonderScenePhase,token:wonderSceneToken,mode:wonderSceneMode,result:wonderSceneResult};
+   return base
+  };
+  const origin=visit(),route=pawKeepsakeRoomRoute(origin,raw?.kind,typeof back==='function');
+  if(!route)return sharePrior(raw,back);
+  const data=sharePublicData(raw);
+  if(!data||data.kind!==raw.kind||route.id==='tarot'&&!data.cards?.length)return;
   let format=zh?'xhs':'feed',cn=zh,ready=null,version=0;
-  const current=()=>room==='tarot'&&activity===kind&&state===run&&talkOpen&&panel.isConnected&&panel.closest('#dialogue')&&$('dialogue').hasAttribute('data-paw-keepsake');
-  const returnTo=()=>{if(!current())return;closeTalk();if(back)back()};
-  say(tr('Fortune Teller','占卜师'),tr('Choose a keepsake format. Only the result in the preview is shared.','选一个纪念卡尺寸。分享时只会包含预览中的结果。'),[[tr('Back to reading','返回解读'),returnTo]]);
+  const current=()=>pawKeepsakeVisitOwns(origin,visit())&&talkOpen&&panel.isConnected&&panel.closest('#dialogue')&&$('dialogue').hasAttribute('data-paw-keepsake');
+  const returnTo=()=>{if(!current())return;closeTalk();if(back)back();else if(route.id==='cafe')syncCafeQuestionSheet();else if(route.id==='story')syncStorySheet()};
+  say(tr(...route.speaker),tr('Choose a keepsake format. Only the result in the preview is shared.','选一个纪念卡尺寸。分享时只会包含预览中的结果。'),[[tr(...route.back),returnTo]]);
   $('dialogue').setAttribute('data-paw-keepsake','');
   const panel=element('section','',$('choices'),'pawTarotKeepsake'),preview=element('canvas','',panel,'meowSharePreview');
   preview.setAttribute('role','img');preview.hidden=true;
@@ -286,7 +308,7 @@ function pawInstallNativeConsultation(){
   langs.setAttribute('role','group');langs.setAttribute('aria-label',tr('Image language','图片语言'));
   const saveButton=b(actions,tr('Save PNG image','保存 PNG 图片'),()=>{
    if(!ready||!current())return;
-   const url=URL.createObjectURL(ready),a=document.createElement('a');a.href=url;a.download='pawradise-tarot-'+format+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)
+   const url=URL.createObjectURL(ready),a=document.createElement('a');a.href=url;a.download='pawradise-'+data.kind+'-'+format+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)
   });
   const send=b(actions,tr('Share image','分享图片'),async()=>{
    if(!ready||!current())return;
@@ -305,7 +327,7 @@ function pawInstallNativeConsultation(){
    try{
     await pawPrepareRecoveredShare(selectedFormat,data);if(!current()||token!==version)return;
     shareCardArt(preview,data,selectedFormat,selectedLanguage);preview.setAttribute('aria-label',data.title[Number(selectedLanguage)]);
-    preview.toBlob(blob=>{if(!current()||token!==version)return;panel.setAttribute('aria-busy','false');if(!blob){status.textContent=tr('Try another format.','请换个尺寸重试。');return}ready=typeof File==='function'?new File([blob],'pawradise-tarot-'+selectedFormat+'.png',{type:'image/png'}):blob;preview.hidden=false;saveButton.disabled=send.disabled=false;status.textContent=tr('Ready to share or save.','可以分享或保存啦。')},'image/png')
+    preview.toBlob(blob=>{if(!current()||token!==version)return;panel.setAttribute('aria-busy','false');if(!blob){status.textContent=tr('Try another format.','请换个尺寸重试。');return}ready=typeof File==='function'?new File([blob],'pawradise-'+data.kind+'-'+selectedFormat+'.png',{type:'image/png'}):blob;preview.hidden=false;saveButton.disabled=send.disabled=false;status.textContent=tr('Ready to share or save.','可以分享或保存啦。')},'image/png')
    }catch{if(current()&&token===version){panel.setAttribute('aria-busy','false');status.textContent=tr('Try another format.','请换个尺寸重试。')}}
   }
   $('choices').prepend(panel);render()
