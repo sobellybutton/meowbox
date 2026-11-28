@@ -81,3 +81,24 @@ for(const [w,h] of [[90,900],[240,500],[320,200],[390,258],[787,509],[900,280],[
  kc(seen.size>=2,'route variety');
 }
 console.log('PASS '+kineticsChecks+' railway kinetics assertions; actual device rendering remains pending.');
+
+let brakingChecks=0;
+const bc=(v,msg)=>{assert.ok(v,msg);brakingChecks++};
+for(const d of [.1,.65,1,2,3.6,6,9,30]){
+ let prev=0;const dt=d/1000;
+ for(let i=0;i<=1000;i++){
+  const dist=a.travelDistance(i*dt,d);
+  bc(dist>=prev-1e-10,'monotonic distance');bc(dist-prev<=dt+1e-10,'velocity cap');prev=dist;
+ }
+ const end=a.travelDistance(d,d),eps=d/10000;
+ bc(end>0&&end<d,'bounded travel');
+ bc(a.travelDistance(d+5,d)===end,'stationary at arrival');
+ bc((end-a.travelDistance(d-eps,d))/eps<.001,'zero arrival velocity');
+ bc(a.travelDistance(eps,d)/eps<.001,'zero departure velocity');
+}
+for(const d of [1,3.6,6])for(const route of Object.keys(a.far))for(const [w,h] of [[390,260],[900,280],[90,900]]){
+ const end=a.frame(route,d,w,h,false,d);
+ bc(JSON.stringify(end)===JSON.stringify(a.frame(route,d+2,w,h,false,d)),'no trackside drift after arrival');
+ for(let i=0;i<100;i++)bc(JSON.stringify(a.frame(route,i*.05,w,h,true,d))===JSON.stringify(a.frame(route,0,w,h,true,d)),'reduced motion stable');
+}
+console.log('PASS '+brakingChecks+' railway braking assertions; finite ride integration and visual acceptance separate.');
