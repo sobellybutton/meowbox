@@ -70,7 +70,8 @@ console.log('Tarot host presentation: '+focusChecks+' focused reading and summar
 
 async function shareRegression(){
  const block=source.slice(source.indexOf(' const sharePrior=openMeowShare;'),source.indexOf(' const css=document.createElement'));
- const make=new Function(block.replace(' const sharePrior=openMeowShare;',`
+ const helpers=source.slice(source.indexOf('function pawKeepsakeFormatGuide'),source.indexOf('/* PAW_NATIVE_CONSULT_END */'));
+ const make=new Function(helpers+block.replace(' const sharePrior=openMeowShare;',`
  let room='tarot',activity='tarot',state={},talkOpen=true,zh=false,openMeowShare=()=>{},backCalls=0;
  const tr=(a,b)=>zh?b:a,shareFormats={feed:[1080,1350],xhs:[1080,1440],story:[1080,1920],square:[1080,1080]};
  const pending=[],blobs=[],draws=[],controls=[],nodes=[];
@@ -84,6 +85,7 @@ async function shareRegression(){
  const pawPrepareRecoveredShare=()=>new Promise(resolve=>pending.push(resolve));
  const shareCardArt=(cv,data,format,cn)=>draws.push([format,cn]);
  const File=class{constructor(parts,name){this.name=name}};
+ const navigator={canShare:()=>false};
  `)+`
  openMeowShare({kind:'tarot',title:['A','甲'],cards:[{i:1}]},()=>backCalls++);
  return {pending,blobs,draws,controls,nodes,goBack:()=>goBack(),backCalls:()=>backCalls}
@@ -101,6 +103,8 @@ async function shareRegression(){
  m.blobs[0]({});assert.ok(preview.hidden&&save.disabled);
  m.pending[3]();await Promise.resolve();m.blobs[1]({});
  assert.ok(!preview.hidden&&!save.disabled&&!share.disabled);
+ assert.ok(m.nodes.find(n=>n.className==='pawKeepsakeGuide').textContent.includes('1080 × 1920'));
+ await share.click();assert.ok(m.nodes.find(n=>n.className==='meowShareStatus').textContent.includes('upload'));
  m.controls.find(n=>n.textContent==='IG / FB').click();
  assert.ok(preview.hidden&&save.disabled);
  m.goBack();m.goBack();assert.equal(m.backCalls(),1);
@@ -108,3 +112,15 @@ async function shareRegression(){
  console.log('Tarot share: stale format/language, export readiness and return lifecycle passed');
 }
 shareRegression().catch(e=>{console.error(e);process.exitCode=1});
+
+const shareHelpers=new Function(source.slice(source.indexOf('function pawKeepsakeFormatGuide'),source.indexOf('/* PAW_NATIVE_CONSULT_END */'))+';return {pawKeepsakeFormatGuide,pawKeepsakeShareMode}')();
+const sizes={feed:[1080,1350],xhs:[1080,1440],story:[1080,1920],square:[1080,1080]};
+for(const [i,k] of Object.keys(sizes).entries())for(const cn of [false,true]){
+ const text=shareHelpers.pawKeepsakeFormatGuide(k,cn,sizes);
+ assert.ok(text.includes(['4:5','3:4','9:16','1:1'][i])&&text.includes(sizes[k].join(' × ')));
+}
+assert.equal(shareHelpers.pawKeepsakeFormatGuide('bad',false,sizes),'');
+assert.equal(shareHelpers.pawKeepsakeShareMode({share(){},canShare(){return true}},{}),true);
+assert.equal(shareHelpers.pawKeepsakeShareMode({share(){},canShare(){throw Error('unsupported')}},{}),false);
+assert.equal(shareHelpers.pawKeepsakeShareMode({share(){}},{}),false);
+console.log('Tarot share destination guide: eight locale/format cases and four invalid/support cases passed');
