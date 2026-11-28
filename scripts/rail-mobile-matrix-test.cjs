@@ -23,32 +23,39 @@ const routes=['home','island','wonder','fortune'];
 // rotation. Never force a tap, inject a route, or bypass the railway.
 // Keep actionable hit-test evidence when neither affordance can be used.
 async function tapReachableStation(page,records,leg){
- const deadline=Date.now()+15000,samples=[];
- let lastError='';
+ const deadline=Date.now()+15000,samples=[],origin=leg===0?'fortune':routes[leg-1];
+ let attempts=0;
  while(Date.now()<deadline){
-  if(await page.locator('.pawRailJourney').isVisible())return;
   const state=await page.evaluate(()=>{
    const g=document.querySelector('#game')?.getBoundingClientRect();
-   return [...document.querySelectorAll('.pawRailEdge,button[data-door="station"]')].map(el=>{
+   const candidates=[...document.querySelectorAll('.pawRailEdge,button[data-door="station"]')].map(el=>{
     const r=el.getBoundingClientRect(),style=getComputedStyle(el),x=r.left+r.width/2,y=r.top+r.height/2;
     const inside=!!g&&r.width>0&&r.height>0&&r.left>=g.left-1&&r.right<=g.right+1&&r.top>=g.top-1&&r.bottom<=g.bottom+1;
     const hit=inside?document.elementFromPoint(x,y):null;
-    return {edge:el.classList.contains('pawRailEdge'),hidden:el.hidden,display:style.display,visibility:style.visibility,rect:[r.left,r.top,r.width,r.height],hit:hit?.className?.baseVal||String(hit?.className||''),ready:!el.hidden&&!el.disabled&&style.display!=='none'&&style.visibility==='visible'&&inside&&!!hit&&el.contains(hit)};
+    return {edge:el.classList.contains('pawRailEdge'),hidden:el.hidden,display:style.display,visibility:style.visibility,rect:[r.left,r.top,r.width,r.height],point:[x,y],hit:hit?.className?.baseVal||String(hit?.className||''),ready:!el.hidden&&!el.disabled&&style.display!=='none'&&style.visibility==='visible'&&inside&&!!hit&&el.contains(hit)};
    });
+   return {scene,pending,transitioning,ride:!!document.querySelector('.pawRailJourney'),candidates};
   });
-  if(samples.length<40)samples.push(state);
-  const candidate=state.find(v=>v.ready);
-  if(candidate){
-   const station=page.locator(candidate.edge?'.pawRailEdge:visible':'button[data-door="station"]:visible');
-   try{
-    await station.tap({timeout:Math.max(1,Math.min(700,deadline-Date.now()))});
-    records.push({stationLeg:leg,affordance:candidate.edge?'edge':'plaque',samples});return;
-   }catch(e){lastError=String(e.message).slice(0,300)}
+  if(samples.length<80)samples.push(state);
+  if(state.ride||state.pending==='station'||state.transitioning&&attempts>0){
+   records.push({stationLeg:leg,origin,attempts,accepted:state,samples});return;
   }
-  await page.waitForTimeout(120);
+  // If a touch already changed the scene, never tap the next station.
+  // Non-reduced rides must still be observed by the caller's strict checks.
+  if(state.scene!==origin){
+   records.push({stationLeg:leg,origin,attempts,unexpectedScene:state.scene,samples});
+   throw Error('Station touch changed district before its ride was observed: '+origin+' -> '+state.scene);
+  }
+  const candidate=state.candidates.find(v=>v.ready);
+  if(candidate&&!state.transitioning&&!state.pending){
+   // Real browser touch at the currently hit-tested target; unlike locator
+   // stability polling this never waits for the animated map to stop moving.
+   await page.touchscreen.tap(...candidate.point);attempts++;
+   await page.waitForTimeout(120);
+  }else await page.waitForTimeout(100);
  }
- records.push({stationLeg:leg,failure:'No reachable railway control',lastError,samples});
- throw Error('No reachable railway control for leg '+leg+'; '+lastError+'; last state '+JSON.stringify(samples.at(-1)));
+ records.push({stationLeg:leg,origin,attempts,failure:'No accepted railway touch',samples});
+ throw Error('No accepted railway touch for leg '+leg+'; last state '+JSON.stringify(samples.at(-1)));
 }
 async function main(){
  fs.mkdirSync(output,{recursive:true});
