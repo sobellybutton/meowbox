@@ -1,0 +1,39 @@
+name: Pawradise independent entrance and arrival gate
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'src/engine.js'
+      - 'scripts/boot-entrance-art-test.cjs'
+      - 'scripts/world-visits-test.cjs'
+      - '.github/workflows/entrance-arrival-release.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile-entrance:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/live-entrance-arrival-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: node scripts/boot-entrance-art-test.cjs
+      - run: node scripts/world-visits-test.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Organic mobile entrance, labels and settings regression
+        run: |
+          mkdir -p test-results
+          python3 -m http.server 8765 >/tmp/entrance-server.log 2>&1 &
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8765/index.html >/dev/null && break; sleep 1; done
+          node scripts/settings-mobile-release-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-entrance-arrival-evidence
+          path: test-results
