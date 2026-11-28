@@ -15818,7 +15818,7 @@ pawResidentReplyTurnStyle.textContent=`
 html #game #dialogue[data-paw-yue-reply][data-paw-chat-bar]{max-height:44dvh!important;overflow:visible!important;padding-top:8px!important;background:linear-gradient(180deg,transparent,#1d2927c9 48%,#1b2928fa 100%)!important}
 html #game #dialogue[data-paw-yue-reply] #dialogueTop{margin:0 0 3px!important}
 html #game #dialogue[data-paw-yue-reply] #line{display:block!important;width:fit-content;max-width:94%;box-sizing:border-box;background:#f1e6cf!important;color:#3d4b3d!important;border:1px solid #b6a17b;border-radius:11px 11px 11px 3px;padding:8px 11px!important;margin:0 0 6px!important;font:15px/1.35 var(--paw-body,system-ui,sans-serif)!important;box-shadow:0 2px 6px #252b2440!important}
-html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm{display:contents!important}
+html #game #dialogue[data-paw-chat-bar][data-paw-yue-question][data-paw-yue-reply] .pawYueGuidedForm{display:contents!important}
 html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm .pawYueQuestion{display:none!important}
 html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm>label:not(.pawYueStepHidden),html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm>details:not(.pawYueStepHidden){width:min(100%,300px)!important;max-width:100%!important;margin:0 0 0 auto!important}
 html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm details summary{display:none!important}
@@ -15826,7 +15826,7 @@ html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm :is(input,select){bor
 html #game #dialogue[data-paw-yue-reply] .pawYueStepNav{justify-content:flex-end!important}
 html #game #dialogue[data-paw-yue-reply] #choices{justify-content:flex-end!important}
 html #game #dialogue[data-paw-yue-reply] #choices button{background:transparent!important;color:#ead9b7!important;border-color:#c6b68b80!important;font-size:11px!important}
-html #game #dialogue[data-paw-yue-reply] .pawYueGuidedForm[data-paw-birth-preset="false"]:has(select option[value="custom"]:checked){display:grid!important;max-height:31dvh;overflow:auto}
+html #game #dialogue[data-paw-chat-bar][data-paw-yue-question][data-paw-yue-reply] .pawYueGuidedForm[data-paw-birth-preset="false"]:has(select option[value="custom"]:checked){display:grid!important;max-height:31dvh;overflow:auto}
 @media(orientation:landscape){html #game #dialogue[data-paw-yue-reply][data-paw-chat-bar]{max-height:65dvh!important}}
 @media(forced-colors:active){html #game #dialogue[data-paw-yue-reply] #line{background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText}}
 `;document.head.append(pawResidentReplyTurnStyle);
