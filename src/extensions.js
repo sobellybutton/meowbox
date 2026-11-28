@@ -1121,7 +1121,7 @@ function trShareStory(n){return [
  ['Someone left an empty seat for me at the tea shop. I still remember how that felt.','有人曾在茶馆给我留了一个空位。那种感觉，我到现在还记得。']
  ][n.cameo%4]}
 /* PAW_KITCHEN_INPUT_BEGIN */
-function pawKitchenCanAdd(q,i){return !!q&&!q.done&&q.tasteAt===undefined&&Array.isArray(q.ingredients)&&Number.isInteger(i)&&i>=0&&i<3&&!q.ingredients.includes(i)}
+function pawKitchenCanAdd(q,i){return !!q&&!q.pawSteam&&!q.pawStockPickup&&!q.done&&q.tasteAt===undefined&&Array.isArray(q.ingredients)&&Number.isInteger(i)&&i>=0&&i<3&&!q.ingredients.includes(i)}
 /* PAW_KITCHEN_INPUT_END */
 function kitchenActualRecipe(){let i=state.ingredients||[],veg=state.vegetarian;if(veg)return i.includes(0)&&i.includes(2)?['Mushroom and tofu soup','香菇豆腐汤']:i.includes(1)?['Garden greens soup','田园青菜汤']:['Simple vegetarian broth','清淡素汤'];if(i.includes(0)&&i.includes(2))return ['Tomato and egg soup','番茄蛋汤'];if(i.includes(0)&&i.includes(1))return ['Tomato and greens soup','番茄青菜汤'];return i.includes(2)?['Silky egg soup','滑蛋汤']:i.includes(1)?['Garden greens soup','田园青菜汤']:['Slow cooked tomato soup','慢炖番茄汤']}
 const deeperPot=pot;pot=function(x,y){deeperPot(x,y);if(activity!=='cook'||!state.ingredients?.length)return;ctx.save();ctx.beginPath();ctx.ellipse(x,y-10,77,20,0,0,TAU);ctx.clip();let energy=Math.max(0,1-(t-(state.stirAt||-10))*1.3),rotation=(state.stirAngle||0)+t*.12+energy*t*.22;for(let i of state.ingredients){for(let j=0;j<3;j++){let angle=i*2.1+j*.7+rotation;ctx.save();ctx.translate(x+Math.cos(angle)*54,y-10+Math.sin(angle)*12);ctx.rotate(angle);round(-7,-3,14,6,2,(state.vegetarian?['#947256','#92ad69','#eee0b4']:['#cf7956','#92ad69','#f0dd99'])[i]);ctx.restore()}}ctx.restore()};
@@ -4979,7 +4979,8 @@ const kitchenDishNames=['tomatoes','greens','eggs','mushrooms','tofu','empty'];
 const vegetarianDishNames=['mushrooms','greens','tofu'];
 for(const id of kitchenDishNames)ART['kitchenDish-'+id]='assets/visual/painted/kitchen/'+id+'.webp';
 kitchenIngredientArt=function(x,y,i,veg,used=false){
- const id=used?'empty':(veg?vegetarianDishNames:kitchenDishNames)[i];
+ const pending=activity==='cook'&&!state.pawSteam&&state.pawStockPickup?.i===i;
+ const id=used||pending?'empty':(veg?vegetarianDishNames:kitchenDishNames)[i];
  const painted=pics['kitchenDish-'+id];
  if(painted?.naturalWidth){
   const scale=Math.min(92/painted.naturalWidth,68/painted.naturalHeight);
@@ -5002,6 +5003,7 @@ table=function(){
  // Stove top, low cast iron trivet and visible burner; no floating pot.
  const stove=ctx.createLinearGradient(0,450,0,555);stove.addColorStop(0,'#7e8179');stove.addColorStop(1,'#464b48');
  ctx.fillStyle=stove;ctx.beginPath();ctx.moveTo(313,449);ctx.lineTo(487,449);ctx.lineTo(535,559);ctx.lineTo(265,559);ctx.closePath();ctx.fill();ctx.strokeStyle='#454b45';ctx.lineWidth=2;ctx.stroke();ellipse(400,516,103,35,'#3f4440');ellipse(400,517,81,24,'#676f65');for(const x of [312,488]){ellipse(x,542,14,8,'#414a43');ellipse(x,539,10,5,'#a29e88')}
+ if(typeof pawKitchenStockPaint==='function')pawKitchenStockPaint();
  const serving=state.pawSoupServeMode&&state.pawSoupServeAt!==undefined&&!state.pawSoupServed;
  const ladle=!serving&&typeof pawKitchenLadleFrame==='function'?pawKitchenLadleFrame():null;
  state.pawKitchenPaintFrame=ladle;
