@@ -187,6 +187,8 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
        await tabs.nth(1).tap();
        await page.waitForFunction(n=>Number($('game').dataset.pawBookMotionSerial)>n,previousMotion);
        assert.equal(await page.locator('#game').getAttribute('data-paw-book-last-motion'),'turn','Same chapter should visibly turn a page');
+       const turningLeaf=page.locator('.pawPassportMotion[data-motion="turn"] .pawPassportMovingLeaf');
+       if(await turningLeaf.count())assert(await turningLeaf.evaluate(n=>n.offsetWidth<=innerWidth*.35),'Page turn must not obscure the whole new leaf');
        await tabs.nth(0).tap();
        await page.locator('.pawPassportMotion').waitFor({state:'detached',timeout:2500});
        const fold=page.locator('.pawBookFold').filter({has:page.locator('.pawSketchPlaces')});const foldSerial=await page.locator('#game').getAttribute('data-paw-book-motion-serial');await fold.locator('summary').click();assert(await fold.evaluate(n=>n.open),'Places fold did not open');await fold.locator('summary').click();assert.equal(await page.locator('#game').getAttribute('data-paw-book-motion-serial'),foldSerial,'Folding content should not replay a page turn');
@@ -228,6 +230,11 @@ fs.mkdirSync('test-results/entrance',{recursive:true});
        const contextualBack=page.locator('#content > .row button').first();
        await (width<900?contextualBack.tap():contextualBack.click());
        await page.locator('.pawTownHotspot').first().waitFor({state:'visible',timeout:8000});
+       if(process.env.PAW_FULL_BOOK==='1'){
+        await page.locator('.pawPassportMotion').waitFor({state:'detached',timeout:2500});
+        assert(await page.locator('#page').evaluate(n=>n.scrollTop<=2),'Return to Town Hall must show the top of the new page');
+        assert(await page.locator('.pawPavilionScene .pawTownFrontPhoto img').evaluate(im=>{const r=im.getBoundingClientRect();return im.naturalWidth>0&&r.top<innerHeight&&r.bottom>0}),'Town Hall illustration must be in the viewport after returning');
+       }
       }
      }
      if(id==='dockOwnHome'){
