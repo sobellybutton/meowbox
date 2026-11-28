@@ -3,11 +3,15 @@ on:
   push:
     branches: [main]
     paths: ['src/engine.js','src/release-fixes.js','src/startup.js','src/town-access.js','src/extensions.js','scripts/build.cjs','scripts/test-yue-input.cjs','scripts/yue-journey-test.cjs','.github/workflows/yue-journey.yml']
+  pull_request:
+    branches: [main]
+    paths: ['src/startup.js','assets/visual/painted/reading-host-framing.js','scripts/yue-journey-test.cjs','.github/workflows/yue-journey.yml']
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   consultation:
+    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'dev/read-02-yue-')
     concurrency:
       group: paw-yue-${{ matrix.engine }}-${{ github.ref }}
       cancel-in-progress: false
@@ -25,6 +29,12 @@ jobs:
       - name: Validate input and build the current game
         run: |
           node scripts/test-yue-input.cjs
+          node scripts/yue-parchment-test.cjs
+          node scripts/reading-host-scene-test.cjs
+          node scripts/scene-ambience-test.cjs
+          node scripts/yue-desk-contact-test.cjs
+          node scripts/yue-year-dialogue-test.cjs
+          node scripts/yue-star-dialogue-test.cjs
           node scripts/build.cjs
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps ${{ matrix.engine }}
