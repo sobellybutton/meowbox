@@ -6,11 +6,31 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-concurrency:
-  group: meowbox-browser-${{ github.ref }}
-  cancel-in-progress: false
+# Separate the slow visual audit from short regression queues. Each job
+# keeps one running and one latest pending revision of its own kind.
 jobs:
+  focused-regressions:
+    concurrency:
+      group: meowbox-focused-${{ github.ref }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: node scripts/test-tarot-snapshot.cjs
+      - run: node scripts/test-purification-painting.cjs
+      - run: node scripts/resident-chat-callback-test.cjs
+      - run: node scripts/painted-interior-layout-test.cjs
+      - run: node scripts/home-layout-test.cjs
+      - run: node scripts/forecourt-return-test.cjs
   browser:
+    concurrency:
+      group: meowbox-browser-${{ github.ref }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -959,6 +979,9 @@ jobs:
           path: test-results/
 
   share-exports:
+    concurrency:
+      group: meowbox-share-${{ github.ref }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -981,6 +1004,9 @@ jobs:
           path: test-results/
 
   shrine-repair:
+    concurrency:
+      group: meowbox-shrine-${{ matrix.engine }}-${{ github.ref }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 18
     strategy:
@@ -1015,6 +1041,9 @@ jobs:
           path: test-results/
 
   visual-experiences:
+    concurrency:
+      group: meowbox-visual-${{ github.ref }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
