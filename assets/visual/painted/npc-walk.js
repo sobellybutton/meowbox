@@ -20,8 +20,31 @@ function box(x,y,height){
  const scale=height/420;
  return {x:x-foot[0]*scale,y:y-foot[1]*scale,w:size[0]*scale,h:size[1]*scale}
 }
-function ready(images){
+// Require the entire sequence to be decoded before switching from fallback.
+const decodedSets=new WeakSet();
+function dimensions(images){
  return Array.isArray(images)&&images.length===assets.length&&images.every(im=>im?.complete&&im.naturalWidth===size[0]&&im.naturalHeight===size[1])
+}
+function ready(images){return dimensions(images)&&decodedSets.has(images)}
+async function decodeSequence(images){
+ if(!Array.isArray(images)||images.length!==assets.length)return false;
+ try{
+  await Promise.all(images.map(im=>typeof im?.decode==='function'?im.decode():Promise.reject(Error('Missing decoder'))));
+  if(!dimensions(images))return false;
+  decodedSets.add(images);return true
+ }catch{return false}
+}
+function createLoader(ImageCtor){
+ let entry=null;
+ return function prepare(visit){
+  if(entry&&(entry.status!=='failed'||entry.visit===visit))return entry;
+  const current={visit,status:'loading',images:[]};entry=current;
+  try{
+   current.images=assets.map(path=>{const im=new ImageCtor();im.decoding='async';im.src=path;return im});
+   current.promise=decodeSequence(current.images).then(ok=>{current.status=ok?'ready':'failed';return ok})
+  }catch{current.status='failed';current.promise=Promise.resolve(false)}
+  return current
+ }
 }
 function plan(actor,images,height,reduced=false){
  // The candidate sheet is right-facing only. Do not reflect the briefcase
@@ -34,5 +57,5 @@ function draw(ctx,actor,images,height,reduced=false){
  const q=plan(actor,images,height,reduced);if(!q||!ctx)return false;
  const b=q.bounds;ctx.drawImage(images[q.index],b.x,b.y,b.w,b.h);return true
 }
-return Object.freeze({assets,size,foot,frame,box,ready,plan,draw})
+return Object.freeze({assets,size,foot,frame,box,ready,decodeSequence,createLoader,plan,draw})
 });
