@@ -283,3 +283,19 @@ return n;`)()+' accessible fortune paper state assertions');
  `)();
  console.log('PASS: '+run+' entrance artwork family and image lifecycle assertions');
 }
+
+console.log(new Function(pawSlice('function pawDailyNoticeSelection','const pawWeekNotes')+`
+const pool=Array.from({length:73},(_,i)=>({id:'archive-'+i,date:0}));
+const now=Date.UTC(2026,10,28,1),day=86400000;
+const assert=(v,m)=>{if(!v)throw Error(m)};
+const one=pawDailyNoticeSelection(pool,now),two=pawDailyNoticeSelection(pool,now+day);
+assert(one.length===10&&new Set(one.map(v=>v.id)).size===10,'ten unique notices');
+assert(JSON.stringify(one)===JSON.stringify(pawDailyNoticeSelection(pool,now+7200000)),'stable daily selection');
+assert(!two.some(v=>one.some(w=>v.id===w.id)),'rotate next day');
+const all=new Set();for(let i=0;i<8;i++)for(const v of pawDailyNoticeSelection(pool,now+i*day))all.add(v.id);
+assert(all.size===73,'reuse entire archive');
+const fresh={id:'new',date:Date.UTC(2026,10,27,15)},future={id:'future',date:now+1};
+assert(pawDailyNoticeSelection([...pool,fresh,future],now)[0].id==='new','recent note first');
+assert(pawDailyNoticeSelection([future],now).length===0&&pawDailyNoticeSelection(pool.slice(0,3),now).length===3,'publication cutoff and small pool');
+return 'PASS: daily notice cap, rotation, publication and full archive coverage';
+`)());
