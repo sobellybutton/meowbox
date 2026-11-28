@@ -282,8 +282,28 @@ function townConnectionInfo(q){
  };
  const observer=new MutationObserver(refresh);observer.observe(status,{childList:true,characterData:true,subtree:true});refresh();
 }
+// The pavilion is the destination, not a photograph pasted into a menu.
+// Keep the original action buttons and their handlers, using one foreground
+// notice surface while the painted scene remains visible behind it.
+function presentTownPavilion(q){
+ const front=q.querySelector('.pawTownFront');
+ if(!front||front.querySelector('.pawPavilionTray'))return;
+ const photo=front.querySelector(':scope > .pawTownFrontPhoto');
+ const sections=[...front.querySelectorAll(':scope > .pawTownSection')];
+ if(!photo||!sections.length)return;
+ const tray=element('div','',front,'pawPavilionTray');
+ sections.forEach(section=>tray.append(section));
+ const news=tray.querySelector('.pawTownPinned');
+ const previews=news&&[...news.querySelectorAll(':scope > .pawTownWeek,:scope > .pawTownPreview')];
+ if(previews?.length){
+  const fold=element('details','',news,'pawPavilionNews');
+  element('summary',tr('A glimpse of today’s news','今日小镇见闻'),fold);
+  previews[0].before(fold);previews.forEach(node=>fold.append(node));
+ }
+ front.classList.add('pawPavilionScene');
+}
 const pageBefore=page;
-page=function(...args){$('content')?.classList.remove('pawCutawayOpen');const result=pageBefore(...args),q=$('content');naturalTownLabels(q);return result};
+page=function(...args){$('content')?.classList.remove('pawCutawayOpen');const result=pageBefore(...args),q=$('content');naturalTownLabels(q);presentTownPavilion(q);return result};
 const sayBefore=say;
 say=function(name,words,...rest){return sayBefore.call(this,residentDialogue(name),words,...rest)};
 function dressTeaTable(q){
@@ -655,5 +675,28 @@ const style=document.createElement('style');style.textContent=`
 #game #content .pawRoomExpansionFold summary{min-height:44px;align-content:center;cursor:pointer;color:#4c6248}
 #game #content .pawRoomExpansionFold .pawHomeExpansion{margin:0!important}
 @media(max-height:480px) and (orientation:landscape){#game #content .pawRoomFirst{width:min(100%,300px)!important}}
+
+/* One continuous pavilion setting with one foreground reading/action surface.
+   No duplicate copy of the background inside the paper. */
+#game #page:has(#content .pawPavilionScene) #content{background:transparent!important;border:0!important;box-shadow:none!important;padding:clamp(8px,2vw,18px)!important}
+#game #content:has(.pawPavilionScene)>h1,#game #content:has(.pawPavilionScene)>p{color:#fff7e4!important;text-shadow:0 1px 5px #241d14,0 1px 2px #241d14}
+#game #content .pawPavilionScene{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:6px!important;align-items:start}
+#game #content .pawPavilionScene>.pawTownFrontPhoto{grid-column:auto!important;aspect-ratio:auto!important;height:clamp(130px,30dvh,280px);background:transparent!important;box-shadow:none!important;border:0!important;outline:0!important}
+#game #content .pawPavilionScene>.pawTownFrontPhoto img{display:none!important}
+#game #content .pawPavilionScene>.pawTownFrontPhoto figcaption{background:linear-gradient(transparent,#302b22b8)!important;text-shadow:0 1px 2px #302b22}
+#game #content .pawPavilionTray{min-width:0;padding:8px 14px;background:#f5e9d2 url('assets/visual/painted/recovered/ui/paper_texture.webp') center/auto 190px repeat;border-radius:6px;color:#493f31;box-shadow:0 3px 12px #30261d44}
+#game #content .pawPavilionTray>.pawTownSection{padding:5px 0!important;margin:0!important}
+#game #content .pawPavilionTray>.pawTownPinned{background:none!important;border:0!important;border-bottom:1px dashed #b6a17c!important;box-shadow:none!important}
+#game #content .pawPavilionTray>.pawTownSection:last-child{border-bottom:0!important}
+#game #content .pawPavilionTray .pawTownLink{min-height:44px!important;padding:5px 2px!important}
+#game #content .pawPavilionTray .pawTownSection h2{font-size:clamp(17px,4.4vw,21px)!important}
+#game #content .pawPavilionNews summary{cursor:pointer;min-height:44px;align-content:center;color:#536346}
+@media(min-width:700px) and (orientation:landscape){
+ #game #content .pawPavilionScene{grid-template-columns:minmax(0,1fr) minmax(280px,1fr)!important;gap:16px!important}
+ #game #content .pawPavilionScene>.pawTownFrontPhoto{height:clamp(220px,60dvh,560px)}
+}
+@media(forced-colors:active){
+ #game #content:has(.pawPavilionScene)>h1,#game #content:has(.pawPavilionScene)>p,#game #content .pawPavilionTray{color:CanvasText!important;background:Canvas!important;text-shadow:none!important}
+}
 `;document.head.append(style);
 })();
