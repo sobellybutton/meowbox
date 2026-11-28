@@ -1354,12 +1354,10 @@
       "stage": "tested",
       "evidence": [
         "22101d9e: four original painted wood/paper material crops uploaded with provenance and blob hashes; inspected source art. 310fb150: compact district-specific bilingual sign styles, shared railway identity and 44px touch targets applied in shell without touching current garden runner. Controlled browser CSS probe at 360x640 and 1440x900 confirmed sample EN/ZH labels fit and 44px button targets; first visual probe corrected for synthetic layout positioning. Pages run 46016588647 reports success for this revision.",
-        "77b2b535: anchored signs excluded from generic press scale, painted brightness feedback and inset accessible focus added; 11 static checks passed."
+        "77b2b535: anchored signs excluded from generic press scale, painted brightness feedback and inset accessible focus added; 11 static checks passed.",
+        "60841667: four Starlight house IDs including curiosity now share existing indigo/brass plaque CSS, phone width min(132px,34vw), narrower padding at <=375px. Exact shell CSS in isolated Chromium DOM fixture, 40 sign cases across 320/360/390/430/1440 widths and EN/ZH, correct computed ink, width, no overflow and >=44px targets. Fixture explicitly uses inline-block plaque spans; no actual map route, production deployment or screenshot acceptance."
       ],
-      "lease": {
-        "owner": "manual-starlight-sign-1318",
-        "until": 1795844186742
-      },
+      "lease": null,
       "blocker": "Actual device touch/keyboard focus, sign collision and appearance remain unverified. Final district-specific illustrations outstanding."
     },
     {
