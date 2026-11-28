@@ -2,6 +2,7 @@
 const assert=require('node:assert/strict'),{chromium}=require('playwright');
 (async()=>{
  const browser=await chromium.launch();
+ const failures=[];
  try{for(const [name,width,height] of [['compact',360,640],['tall',390,844]]){
   const page=await browser.newPage({viewport:{width,height},isMobile:true,hasTouch:true,deviceScaleFactor:1});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -63,8 +64,31 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
     assert.equal(after.scene,before.scene);assert(Math.hypot(after.x-before.x,after.y-before.y)<3,'Dock moved traveller');
    }
    // A real touch on an in-view local plaque must cause a physical approach.
-   const chosen=await page.evaluate(()=>[...document.querySelectorAll('#worldSigns .worldSign[data-door]')].find(e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return e.dataset.door!=='station'&&!e.hidden&&r.width>=30&&r.height>=30&&r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&s.visibility!=='hidden'&&s.display!=='none'&&e.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2))})?.dataset.door);
-   assert(chosen,'No reachable local building plaque');
+   const plaqueProbe=()=>[...document.querySelectorAll('#worldSigns .worldSign[data-door]')].map(e=>{
+    const r=e.getBoundingClientRect(),s=getComputedStyle(e),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+    return {id:e.dataset.door,hidden:e.hidden,width:r.width,height:r.height,left:r.left,right:r.right,top:r.top,bottom:r.bottom,hit:hit?.id||hit?.className,reachable:e.dataset.door!=='station'&&!e.hidden&&r.width>=44&&r.height>=44&&r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&s.visibility!=='hidden'&&s.display!=='none'&&e.contains(hit)};
+   });
+   let chosen;
+   // Returning from the dock can legitimately need the existing 125ms sign
+   // clearance window. Wait for that real UI; then walk if a sign is not in view.
+   for(let attempt=0;attempt<5&&!chosen;attempt++){
+    await page.waitForTimeout(350);
+    const signs=await page.evaluate(plaqueProbe);chosen=signs.find(v=>v.reachable)?.id;
+    console.log('Map plaque probe',name,attempt,JSON.stringify(signs));
+    if(chosen)break;
+    const before=await page.evaluate(()=>({x:p.x,y:p.y}));
+    const target=await page.evaluate(()=>{
+     const r=c.getBoundingClientRect(),goalY=p.y-150,points=pawFortunePainting.player;
+     const point=points.reduce((a,b)=>Math.abs(a[0]-goalY)<Math.abs(b[0]-goalY)?a:b);
+     const x=r.left+cam.ox+point[1]*cam.scale,y=r.top+cam.oy+point[0]*cam.scale;
+     return {x,y,clear:document.elementFromPoint(x,y)===c};
+    });
+    if(target.clear)await page.touchscreen.tap(target.x,target.y);
+    else {await page.keyboard.down('ArrowUp');await page.waitForTimeout(650);await page.keyboard.up('ArrowUp')}
+    await page.waitForFunction(prev=>Math.hypot(p.x-prev.x,p.y-prev.y)>8,before,{timeout:8000});
+    await page.waitForFunction(()=>!p.walk&&!transitioning,null,{timeout:8000});
+   }
+   assert(chosen,'No reachable local building plaque after map settles and normal walking');
    const beforeWalk=await page.evaluate(()=>({x:p.x,y:p.y}));
    await page.locator('#worldSigns .worldSign[data-door="'+chosen+'"]').tap();
    await page.waitForFunction(before=>Math.hypot(p.x-before.x,p.y-before.y)>8,beforeWalk,{timeout:12000});
@@ -72,6 +96,7 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
    await page.waitForFunction(()=>!!room,null,{timeout:30000});
    await page.screenshot({path:'test-results/wayfinding-'+name+'-room.png'});
    assert.deepEqual(errors,[]);console.log('PASS real dock returns and first-map touch approach '+name);
-  }catch(e){await page.screenshot({path:'test-results/settings-'+name+'-failure.png'}).catch(()=>{});throw e}finally{await page.close()}
+  }catch(e){await page.screenshot({path:'test-results/settings-'+name+'-failure.png'}).catch(()=>{});failures.push(name+': '+e.message);console.error(name,e)}finally{await page.close()}
  }}finally{await browser.close()}
+ if(failures.length)throw Error(failures.join('\\n'));
 })().catch(e=>{console.error(e);process.exitCode=1});
