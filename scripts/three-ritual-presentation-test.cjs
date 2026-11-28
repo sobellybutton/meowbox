@@ -77,6 +77,23 @@ fs.mkdirSync(out,{recursive:true});
  }
  try{
   await setup();
+  const greetingCoverage=await page.evaluate(()=>{
+    return Object.keys(pawValleyDailyVoices).map(id=>{
+      let prior,last;const daily=new Set();
+      for(let n=1;n<=12;n++){
+        const day='2026-11-'+String(n).padStart(2,'0');
+        const first=pawValleyWelcomePick(id,day,prior);
+        if(!first||first.pair[0]===last||first.pair.length!==2)throw Error('Daily greeting repeated '+id);
+        last=first.pair[0];daily.add(last);
+        let repeat=first;const seen=new Set();
+        for(let i=0;i<4;i++){repeat=pawValleyWelcomePick(id,day,repeat.row);if(repeat.pair[0]===last)throw Error('First greeting reused '+id);seen.add(repeat.pair[0])}
+        if(seen.size!==4)throw Error('Revisit variation '+id);
+        prior=repeat.row;
+      }
+      return {id,daily:daily.size};
+    });
+  });
+  assert.equal(greetingCoverage.length,4);assert(greetingCoverage.every(v=>v.daily===12));
   await fixture('wishes');
   await page.evaluate(()=>{start('wishes');gardenWrite()});
   const paper=page.locator('#dialogue.pawWishWriting .pawWishPaper textarea');
@@ -95,11 +112,13 @@ fs.mkdirSync(out,{recursive:true});
   const more=page.locator('#dialogue').getByRole('button',{name:text('Tell me more','再说说'),exact:true});if(await more.count()){await more.tap();await shot('tarot-next-thought')}
   await tapText('Back to the table','回到牌桌');await page.waitForFunction(()=>state.readStage==='cards'&&!talkOpen);
   await fixture('destiny');
+  const expectedGreeting=await page.evaluate(()=>tr(...pawValleyWelcomePick('yue',shrineClock().day,residentHospitality.welcomes.yue).pair));
   await page.evaluate(()=>{const q=pawReadingAPI().rooms.destiny.stations.destiny;const goal=pawReadingWorld(q.approach);if(!indoorDestination(...goal,()=>yueReadingHub(),'up'))throw Error('Cannot reach consultation chair')});
   await page.waitForFunction(()=>talkOpen&&t-pawYueVisitorLastDraw<.3,null,{timeout:15000});
   assert(await page.evaluate(()=>pawRoomWalkers().length===0),'Private study has unrelated visitors');
   const visibleChoices=await page.locator('#dialogue #choices').evaluate(e=>{const r=e.getBoundingClientRect();return [...e.querySelectorAll('button')].filter(b=>!b.hidden).every(b=>{const q=b.getBoundingClientRect();return q.width>=44&&q.height>=44&&q.left>=r.left-1&&q.right<=r.right+1})});
   assert(visibleChoices,'Consultation replies are horizontally clipped');
+  assert((await page.locator('#dialogue').innerText()).includes(expectedGreeting),'Daily greeting missing from the actual consultation');
   await shot('yue-seated-welcome');
   await tapText('My birth chart','生辰命盘');await tapText('For me','看自己');
   const form=page.locator('#dialogue[data-paw-yue-question] .pawYueGuidedForm');
