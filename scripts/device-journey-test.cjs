@@ -55,34 +55,31 @@ const assert=(value,message)=>{if(!value)throw Error(message)};
     await click(page.locator('#back'));await page.waitForFunction(()=>room===null&&!transitioning,null,{timeout:15000});
     assert(await page.locator('#profileHud').isVisible(),'Compact profile missing after returning to map');
     assert(/Lv\. \d+/.test(await page.locator('#hudProgress').innerText()),'Visible level missing');
-    // Regression for the owner screenshot: painted and SVG gears must
-    // never appear together, including after returning from a room.
-    const settingsIconState=()=>page.locator('#townSettingsToggle').evaluate(el=>{
-     const art=getComputedStyle(el,'::before'),svg=el.querySelector('svg'),r=el.getBoundingClientRect();
-     return {painted:art.content!=='none'&&art.content!=='normal'&&art.display!=='none'&&art.backgroundImage!=='none',svg:!!svg&&getComputedStyle(svg).display!=='none'&&svg.getBoundingClientRect().width>0,width:r.width,height:r.height,label:el.getAttribute('aria-label')};
-    });
-    const normalCog=await settingsIconState();
-    assert(normalCog.painted!==normalCog.svg,'Exactly one settings icon required: '+JSON.stringify(normalCog));
-    assert(normalCog.width>=44&&normalCog.height>=44&&normalCog.label,'Settings control lacks accessible touch target or name');
-    // Forced-colors emulation is browser-engine dependent; Chromium
-    // exercises the high-contrast fallback without requiring WebKit support.
-    if(engine.name()==='chromium'){
-     await page.emulateMedia({forcedColors:'active'});
-     try{
-      assert(await page.evaluate(()=>matchMedia('(forced-colors: active)').matches),'Forced-colors emulation did not activate');
-      const contrastCog=await settingsIconState();
-      assert(!contrastCog.painted&&contrastCog.svg,'Forced-colors settings fallback missing: '+JSON.stringify(contrastCog));
-     }finally{await page.emulateMedia({forcedColors:'none'})}
-    }
+    // The settings entry now lives in the traveller profile, not the map.
+    assert(await page.locator('#townSettingsToggle').isHidden(),'Obsolete map settings gear visible');
     await page.screenshot({path:'test-results/'+name+'-map-hud.png'});
-    await click(page.locator('#townSettingsToggle'));
-    await click(page.locator('#small .languageChoice').getByRole('button',{name:'中文',exact:true}));
-    assert(await page.locator('#townSettingsPanel').isHidden(),'Language chooser did not collapse');
+    await click(page.locator('#profileHud'));
+    const settings=page.locator('.pawProfileSettingsLink');
+    assert(await settings.count()===1,'Expected one profile settings entry');
+    const bounds=await settings.boundingBox();assert(bounds&&bounds.height>=44,'Profile settings touch target too small');
+    await click(settings);
+    const panel=page.locator('.pawProfileSettings'),languages=panel.locator('.pawProfileLanguages');
+    await panel.waitFor({state:'visible'});
+    await click(languages.getByRole('button',{name:'中文',exact:true}));
     assert(await page.evaluate(()=>zh===true&&document.documentElement.lang==='zh'),'Chinese switch failed');
-    await click(page.locator('#townSettingsToggle'));
-    await click(page.locator('#small .languageChoice').getByRole('button',{name:'EN',exact:true}));
-    assert(await page.locator('#townSettingsPanel').isHidden(),'Language chooser did not collapse');
+    assert(await languages.getByRole('button',{name:'中文',exact:true}).getAttribute('aria-pressed')==='true','Chinese selection not reflected');
+    await click(languages.getByRole('button',{name:'English',exact:true}));
     assert(await page.evaluate(()=>zh===false&&document.documentElement.lang==='en'),'English switch failed');
+    const reset=panel.getByRole('button',{name:'Start over',exact:true});
+    await click(reset);await panel.locator('.pawProfileReset').waitFor({state:'visible'});
+    await click(panel.getByRole('button',{name:'Keep my progress',exact:true}));
+    assert(await panel.locator('.pawProfileReset').isHidden(),'Reset warning remained after cancel');
+    assert(await page.evaluate(v=>avatar===v.avatar&&playerName===v.playerName,before),'Cancel reset altered identity');
+    await page.screenshot({path:'test-results/'+name+'-profile-settings.png'});
+    await click(panel.getByRole('button',{name:'Back to profile',exact:true}));
+    await settings.waitFor({state:'visible'});
+    await click(page.locator('#content > .row button:first-child'));
+    await page.waitForFunction(()=>$('page').style.display!=='block');
     // Fixture grants all existing materials without spending the player's
     // real coins. Every material selection below uses the visible editor.
     await page.evaluate(()=>{
