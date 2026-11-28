@@ -947,13 +947,22 @@ drawActivity=function(){
  const f=clamp((t-stressSwingAt)/.46,0,1),impact=(1-f)*Math.sin(f*13),swing=Math.sin(Math.PI*f);
  paperWorryAt(381,494,impact);
  const playerX=490,playerY=572;
- // Face left towards the paper. Tool pivot follows the wrist instead of hiding the body.
- const wrist=mirrorRitualPose(playerX,playerY,1.38,{reach:{x:playerX-20-42*swing,y:playerY-55-36*swing},bow:.13*swing});
- ctx.save();ctx.translate(wrist.x-9,wrist.y-6);ctx.scale(.43,.43);stressSlipper(0,0,-.40+1.45*swing);ctx.restore();
+ if(room==='fish'){
+  // Customer seat: actual support behind the seated visitor. The old
+  // procedural stool is interim art pending the painted station asset.
+  const seatY=playerY-20*1.38;
+  line(playerX-23,seatY+3,playerX-26,playerY,'#70513c',5);
+  line(playerX+23,seatY+3,playerX+26,playerY,'#70513c',5);
+  ellipse(playerX,seatY,30,6,stoolWood);ellipse(playerX,seatY-2,29,4,'#b4956c');
+  ctx.save();try{ctx.translate(playerX,playerY);ctx.scale(-1,1);drawRitualPose(0,0,1.38,{seat:1,bow:.055*swing})}finally{ctx.restore()}
+ }else{
+  const wrist=mirrorRitualPose(playerX,playerY,1.38,{reach:{x:playerX-20-42*swing,y:playerY-55-36*swing},bow:.13*swing});
+  ctx.save();ctx.translate(wrist.x-9,wrist.y-6);ctx.scale(.43,.43);stressSlipper(0,0,-.40+1.45*swing);ctx.restore();
+ }
  target(333,445,95,112,()=>{},'hit');
  stressPieces=stressPieces.filter(v=>t-v.at<.65);for(const v of stressPieces){const d=t-v.at;ctx.save();ctx.globalAlpha=1-d/.65;ctx.translate(v.x-19+v.vx*d*.6,v.y+20+v.vy*d*.6+70*d*d);ctx.rotate(v.angle+d*3);ctx.fillStyle='#f0d8a3';ctx.fillRect(-2,-1.5,4,3);ctx.restore()}
  wonderSceneText(tr(...stressTargets[stressTarget]),400,580,220,15,'#fff0d4',1);
- txt(tr('Worries released: ','打走的烦恼：')+state.count,400,605,17,'#fff0d4');
+ if(room!=='fish')txt(tr('Worries released: ','打走的烦恼：')+state.count,400,605,17,'#fff0d4');
  ctx.restore()
 };
 
@@ -3439,7 +3448,7 @@ refreshControls=function(){
  el.classList.toggle('paperRitualControls',activity==='hit');
  if(activity!=='hit')return;
  el.replaceChildren();el.hidden=false;
- const hitButton=b(el,tr('Whack!','打走烦恼！'),()=>smack());hitButton.className='paperWhack';
+ const hitButton=b(el,room==='fish'?tr('Ask Ah Ma to begin','请阿嬷开始'):tr('Whack!','打走烦恼！'),()=>room==='fish'?pawAuntieBeginRound():smack());hitButton.className='paperWhack';
  const change=b(el,tr('Choose a worry','选个烦恼'),openStressChoices);
  const slipper=b(el,tr('Change slipper','换只拖鞋'),()=>{stressTool=1-stressTool;sound(430)});
 };
