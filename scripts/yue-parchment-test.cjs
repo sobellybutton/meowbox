@@ -43,3 +43,20 @@ for(const place of ['0','1','2','3','4','5','6','7','custom','',null,'99']){
  }
 }
 console.log('PASS '+locationChecks+' birthplace disclosure mode checks');
+
+ // A complete chart is actionable only during its own visible consultation.
+const visitChecks=new Function(locationBlock+`
+let room,activity,n=0;
+for(const goodRoom of [true,false])for(const idle of [true,false])for(const desk of [true,false])for(const visible of [true,false])for(const outConnected of [true,false])for(const gridConnected of [true,false])for(const same of [true,false])for(const full of [true,false]){
+ room=goodRoom?'destiny':'tea';activity=idle?null:'other';
+ const grid={isConnected:gridConnected,querySelectorAll:()=>Array(full?12:11)};
+ const out={isConnected:outConnected,querySelector:()=>same?grid:{}};
+ const pane={dataset:{pawYueDesk:desk?'true':''},style:{display:visible?'block':'none'}};
+ const actual=pawYueChartVisitActive(pane,out,grid),expected=goodRoom&&idle&&desk&&visible&&outConnected&&gridConnected&&same&&full;
+ if(actual!==expected)throw Error('chart visit ownership mismatch');n++;
+}
+return n`)();
+assert.equal(visitChecks,256);
+assert.ok(source.includes('if(active())setExpanded(!expanded,true)'),'fold control guarded');
+assert.ok(source.includes('if(lastGrid!==grid||!pawYueChartVisitActive(pane,out,grid))return'),'deferred board selection guarded');
+console.log('PASS '+visitChecks+' chart visit ownership combinations and 2 runtime wiring assertions');

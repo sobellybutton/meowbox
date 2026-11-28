@@ -13578,6 +13578,9 @@ function pawYueLocationMode(place,values){
  const [offset,lat,lon]=values.map(Number);
  return offset>=-12&&offset<=14&&Number.isInteger(offset*4)&&lat>=-66&&lat<=66&&Math.abs(lon)<=180?'preset':'manual'
 }
+function pawYueChartVisitActive(pane,out,grid){
+ return room==='destiny'&&!activity&&pane.dataset.pawYueDesk==='true'&&pane.style.display==='block'&&out.isConnected&&!!grid&&grid.isConnected&&out.querySelector('.ziGrid')===grid&&pawYueChartComplete(grid)
+}
 /* PAW_YUE_PARCHMENT_END */
 function pawYueChartParchment(q,pane,form,out){
  if(!out)return;
@@ -13596,15 +13599,15 @@ function pawYueChartParchment(q,pane,form,out){
   }
   if(!toolbar){
    toolbar=element('div','',q,'pawYueParchmentTools');out.before(toolbar);
-   expand=b(toolbar,'',()=>setExpanded(!expanded,true));expand.type='button';
-   const active=()=>room==='destiny'&&!activity&&toolbar.isConnected&&pane.dataset.pawYueDesk==='true'&&pane.style.display==='block'&&pawYueChartComplete(lastGrid);
+   const active=()=>toolbar.isConnected&&pawYueChartVisitActive(pane,out,lastGrid);
+   expand=b(toolbar,'',()=>{if(active())setExpanded(!expanded,true)});expand.type='button';
    const ask=b(toolbar,tr('Ask Yue again','再问月师傅'),()=>{if(active())yueReadingHub()});ask.type='button';
    const finish=b(toolbar,tr('Finish consultation','结束问事'),()=>{
     if(!active())return;
     pawYueChartObserver?.disconnect();pawYueChartObserver=null;
     delete pane.dataset.pawYueDesk;delete pane.dataset.pawYueExpanded;
     pane.style.display='none';q.replaceChildren();closeTalk();
-    hint('Take your time. Your chart is here if you want to look again.','慢慢来，想再看命盘，随时来找我。')
+    hint('Take your time. Come back for another conversation whenever you like.','慢慢来，想再聊聊，随时来找我。')
    });finish.type='button'
   }
   toolbar.hidden=false;
@@ -13612,7 +13615,7 @@ function pawYueChartParchment(q,pane,form,out){
    lastGrid=grid;setExpanded(true);
    // Preserve the existing real palace handlers and disclosures; choose
    // the traditional overview first, with the readable-list toggle retained.
-   requestAnimationFrame(()=>{if(!grid.isConnected||lastGrid!==grid)return;const board=grid.parentElement?.querySelector('.palaceViewTools button:first-child');if(board)board.click()})
+   requestAnimationFrame(()=>{if(lastGrid!==grid||!pawYueChartVisitActive(pane,out,grid))return;const board=grid.parentElement?.querySelector('.palaceViewTools button:first-child');if(board)board.click()})
   }
  }
  pawYueChartObserver?.disconnect();
