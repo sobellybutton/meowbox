@@ -200,7 +200,7 @@ destinyPage=function(){
  let choose=()=>{let title=a.querySelector('strong')?.textContent||'',p=prompts.find(x=>title.startsWith(tr(x[0],x[1])));if(!p)return;grid.querySelectorAll('[aria-pressed]').forEach(el=>el.setAttribute('aria-pressed','false'));a.setAttribute('aria-pressed','true');panel.replaceChildren();element('strong',tr(p[0],p[1]),panel);element('p',a.querySelector('span')?.textContent||'',panel);element('p',tr(p[2],p[3]),panel);sound(440+i*18)};
  a.onclick=choose;a.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose()}};
  });
- let saveScroll=b(out,tr('Tie the destiny scroll and keep it','系好命理卷轴，收入背包'),()=>{addItem('Observatory destiny scroll','星月命理卷轴');saveScroll.textContent=tr('Scroll collected','卷轴已收藏');saveScroll.disabled=true;sound(660)});saveScroll.className='destinySave';
+ let saveScroll=b(out,tr('Tie the destiny scroll and keep it','系好命理卷轴，收入背包'),()=>{addItem('Observatory destiny scroll','星月命理卷轴');saveScroll.textContent=tr('Scroll collected','卷轴已收藏');saveScroll.disabled=true;sound(660);if(room==='destiny'&&$('page').dataset.pawYueDesk==='true'){pawCloseYueDesk();say(tr('Master Yue','月师傅'),tr('There, your scroll is safely tucked away. Shall we look at another reading, or leave the stars to rest?','好啦，卷轴已经收入背包。还想看看别的命理，还是让星星休息一会儿？'),[[tr('Another reading','再看一项'),()=>yueReadingHub()],[tr('Finish for now','今天先到这里'),closeTalk]]);updateHUD()}});saveScroll.className='destinySave';
  });
 };
 
