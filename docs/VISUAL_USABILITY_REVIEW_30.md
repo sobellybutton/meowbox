@@ -59,3 +59,61 @@
 
 ## Acceptance order
 P0: actual mobile/desktop walkthrough, repair route/interaction blockers, no runtime errors, image decode and regression validation. P1: complete one full illustrated vertical slice (pier), then temple and kitchen with dedicated avatar poses. P2: finish other existing room art, NPC sheets, typography, inventory and hideout; QA on all four maps, both languages and supported screen sizes. P3: invited pilot, observe first minute without coaching, refine based on behaviour, verify deployed version. Do not add unrelated destinations or advertise unverified completion. Real shared community can be separately phased.
+
+## Owner-approved story-led execution overlay (28 November 2026)
+
+Use these eight execution packages to coordinate the fixed 39 batches and existing cross-cutting workstreams. All 85 IDs from the current register are covered; stage, lease, dependency, evidence and fixed batch numbering remain authoritative. Packages are not new workstream IDs or a progress tally. Check current main and current active claims before starting. The original 30 lenses remain the acceptance checks, not 30 additional tasks. Apply the full-scene rules in GAME_EXPERIENCE_STANDARD.md and INNER_ACTIVITY_EXPERIENCE_PLAN.md; PR #191 contains the first ritual dialogue implementation and owner clarification, pending integration. No feature expansion from illustrative sports examples.
+
+| Priority | Execution package | Fixed queue IDs | Existing cross-cutting IDs to reverify | Required deliverable |
+|---|---|---|---|---|
+| P0 | First impression | ENT-01, ENT-ASSET-READY-01, PERF-01 | ENT-02, ENT-GROUND-02, RAIL-04, RAIL-RECOVERY, RAIL-LIVE-01, RAIL-DIRECT-01 | Ticket and selection in world; decoded first frame, train arrival, first movement; no flash or redundant confirmation. |
+| P0 | World navigation | WORLD-STORY-FLOW-01, UX-SIGN-ART-01, UX-SIGN-LIVE-01, UX-WAYFINDING-INTERACTION-01, SCENE-CAMERA-01 | MAP-01, MAP-02, MAP-03, MAP-04, MAP-05, WORLD-INTEGRATION-FORTUNE, WORLD-INTEGRATION-HOME, WORLD-INTEGRATION-ISLAND, WORLD-INTEGRATION-WONDER, WORLD-VISITS-01, UX-SIGN-PREVIEW-02, RAIL-DESTINATION-COPY-01 | Four maps, approachable real doors and stations, no premature labels; coherent dock routes, immediate parent and physical departure. |
+| P0 | Story and interaction | UX-FLOW-01, STORY-DEPTH-01, DISCOVERY-PARALLEL-LIVE-02, DISCOVERY-CAFE-LIVE-02 | CONTENT-RESIDENT-01, NPC-01, NPC-02, NPC-03, READ-01, READ-02, READ-03 | Tap-only narration, nonblocking ambient remarks, real choice points, typed replies, optional host reaction and late farewells; reusable dialogue lifecycle. |
+| P1 | Physical gameplay | ROOM-01, ROOM-03, ROOM-04, ROOM-05, ROOM-06, GAME-DEPTH-01, SCENE-BLOCKING-01, DISCOVERY-ASSESSMENTS-01 | ROOM-02, GAME-01, ROOM-FOOD-LIVE-01, TEMPLE-WATER-01, TEMPLE-ALCOVE-01, TEMPLE-SLIP-01, ROOM-TAROT-PORTRAIT-FIX | Complete every retained room/inner activity: approach, pose, physical input, contact, result, recover, repeat and walk out. |
+| P1 | Artwork and animation | ART-01, ART-02, ART-03, ART-INTEGRATION, LIFE-AMBIENCE-01, LIFE-OCCUPANCY-01 | HOME-ASSET-01, HOME-CATALOGUE-ART-02, HOME-FURNITURE-IMPORT-LIVE-01 | Inspect real assets before generating; register exact path, crop, seat/foot/grip/occlusion anchors; integrate unused suitable layers and inspect motion. |
+| P1 | In-world interfaces | HOME-CATALOGUE-LIVE-02, UX-COHESION-01, UX-DESKTOP-01, UX-02, LOC-01 | UX-01, HOME-LIVE-01, HOME-PREVIEW-03, HOME-CATALOGUE-AUDIT-01, SHARE-01 | Themed physical objects for detailed pages only; coherent HUD, bilingual typography, accessible controls and independent actual export inspection in all supported formats. |
+| P1 | Living world | DISCOVERY-01, LIFE-RELATIONSHIPS-01, SOCIAL-DAILY-01, COMM-TOWN-LIFE-01, COMM-MIXED-LIVE-01 | ECON-01, SOUND-01 | Optional varied resident encounters, contextual humour, living ambience, transparent rewards, genuine opted-in community, no fabricated human posts. |
+| P0 continuous | Release and testing | QA-SPATIAL-01, QA-PLAYER-LOOP-01, QA-01 | QA-RAIL-HOME-01, QA-BUILD-01, QA-WATER-02, MODULE-LIVE-01 | Actual input and rendering before/during/after, both languages, small/tall phones first, desktop, exports, reload, interruptions, live revision. Keep stable release lane. |
+
+### All 30 lenses mapped to implementation and acceptance
+
+| Lens | Canonical IDs | Required evidence/check |
+|---|---|---|
+| 1. First impression | ENT-01, ENT-ASSET-READY-01 | Show coherent entrance and first enjoyable action. |
+| 2. Loading | PERF-01, ENT-ASSET-READY-01 | Measure cold/warm, decoded art, slow/failure retry. |
+| 3. Discovery | UX-SIGN-LIVE-01, DISCOVERY-01 | Recognizable prop/door, contextual labels; no premature destination. |
+| 4. Movement | ART-01, SCENE-BLOCKING-01 | Touch/keyboard movement, obstacle routing, grounded approach. |
+| 5. Outdoor doors | UX-WAYFINDING-INTERACTION-01 | Physical threshold entry/exit and return. |
+| 6. Indoor staging | SCENE-BLOCKING-01, ROOM-06 | Actual chair/table/door geometry and contact. |
+| 7. Mobile reach | UX-02, QA-SPATIAL-01 | Safe areas, reachable controls, keyboard, 44px targets. |
+| 8. Discoverable actions | GAME-DEPTH-01, UX-SIGN-LIVE-01 | Recognizable physical object and immediate feedback. |
+| 9. Continuity | UX-FLOW-01, QA-PLAYER-LOOP-01 | Tap beats, meaningful choices, input, interrupt/return, no stale overlay. |
+| 10. HUD | UX-COHESION-01, UX-FLOW-01 | Four dock roots, themed nested sheets, no duplicate controls. |
+| 11. Art consistency | ART-INTEGRATION, UX-COHESION-01 | Inspect existing assets, use coherent illustrated materials. |
+| 12. Scale | SCENE-BLOCKING-01, QA-SPATIAL-01 | Actual perspective, body/door/furniture proportions. |
+| 13. Identity | ART-01, ART-02 | Selected avatar remains recognizable in all poses. |
+| 14. NPC diversity | ART-03, LIFE-OCCUPANCY-01 | Distinct residents, purposeful placement and routines. |
+| 15. Action animation | ART-02, GAME-DEPTH-01 | Grip, seat, feet, action and recovery; no duplicate props. |
+| 16. Depth | SCENE-BLOCKING-01, QA-SPATIAL-01 | Foreground masks, occlusion, shadows and depth sorting. |
+| 17. Interior architecture | ROOM-01, ROOM-03, ROOM-04, ROOM-05, ROOM-06 | Real scene-specific rooms and props, not generic pages. |
+| 18. Camera | SCENE-CAMERA-01, UX-DESKTOP-01 | Establish, approach, close-up and continuous return. |
+| 19. Lighting | LIFE-AMBIENCE-01 | Local light, weather, water, smoke, reduced motion. |
+| 20. Typography | LOC-01, UX-COHESION-01 | Natural EN/ZH, themed readable text and no clipping. |
+| 21. Purpose | GAME-DEPTH-01, DISCOVERY-ASSESSMENTS-01 | Distinct retained activities, meaningful choices only. |
+| 22. Feedback | GAME-DEPTH-01, UX-FLOW-01 | Input affects visible outcome and resident reaction. |
+| 23. Skill | GAME-DEPTH-01 | Fair optional mastery; no filler or repetitive farming. |
+| 24. Residents | LIFE-RELATIONSHIPS-01, LIFE-OCCUPANCY-01, SOCIAL-DAILY-01 | Distinct voice, optional conversation and recognition. |
+| 25. Humour | LOC-01, STORY-DEPTH-01 | Natural, varied bilingual jokes and physical reactions. |
+| 26. Payoff | GAME-DEPTH-01, STORY-DEPTH-01, SHARE-01 | Satisfying result, late farewell, coherent keepsake/export. |
+| 27. Return | DISCOVERY-01, LIFE-RELATIONSHIPS-01, QA-PLAYER-LOOP-01 | Shorter repeat visits, saved state, variation. |
+| 28. Rewards | ECON-01, GAME-DEPTH-01 | No duplicate rewards or unclear spending. |
+| 29. Community | COMM-TOWN-LIFE-01, COMM-MIXED-LIVE-01 | Genuine moderated human activity, distinguish fictional residents. |
+| 30. Audio | SOUND-01, LIFE-AMBIENCE-01 | Timed contact sound, gentle ambience, mute and visibility. |
+
+### Required per-scene to-do (use existing workstream evidence, no separate backlog)
+
+For every reachable entrance, map, doorway, room, inner activity, dock tab, nested sheet, result and share format: (1) identify current runtime route and existing art file paths; (2) lay out full scene entry/approach/facing/seat or standing pivot/host/props/camera and exit; (3) author short tap-to-advance story beats and optional nonblocking ambient lines; (4) only offer choices that actually change topic/action/result or obtain consent, with a single typed reply where necessary; (5) implement physical contact, anticipation/action/reaction/recovery, themed readable results and natural farewell; (6) integrate suitable existing assets, identify exact missing artwork only when necessary; (7) build and test by actual input, both languages, mobile first and desktop, interruption/replay/reload, actual exported file inspection; (8) record tested SHA, rendered evidence, blockers and integration/deployment revision. Use existing branch scope and guard concurrent changes. If one eligible mobile release passes, follow the release coordinator gate rather than waiting for unrelated desktop work; desktop remains outstanding. Do not mark complete based on code, a document or a successful isolated fixture alone. Do not repeatedly redesign already satisfactory scenes. Preserve save data. Continue independent work if a dependency blocks one scene.
+
+### Priority sequence
+
+First integrate and verify current entrance/dock/first-map and Fortune Valley candidates (including #191); keep stable release lane. Next finish existing rooms as full vertical slices: temple and garden, Tarot/Master Yue, pier, tea house, kitchen/drinks, arcade/park, discovery houses, home and railway. Reuse the same resident dialogue and physical scene conventions throughout. Close detailed pages and exports within the corresponding canonical UX/share workstreams. Then consolidate compatible branches, test and verify the actual live deployment. Work in parallel on unclaimed scopes where possible; do not treat all eight packages as sequential release blockers.
