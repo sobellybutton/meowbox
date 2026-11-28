@@ -11,7 +11,7 @@ for(let i=0;i<original.length;i++){
  if(!extracted.equals(Buffer.from(original[i][1],'base64')))throw Error('Artwork differs: '+name);
  bytes+=extracted.length;
 }
-const scripts=['engine','extensions','release-fixes','town-polish','town-access','resident-remarks','paw-motion-audio','paw-economy','blind-box-reveal','arcade-painted-runtime','painted-lobby-runtime','startup'].map(x=>read('src/'+x+'.js')),shell=read('src/shell.html');
+const scripts=['engine','extensions','release-fixes','town-polish','town-access','resident-remarks','paw-motion-audio','paw-economy','blind-box-reveal','arcade-painted-runtime','painted-lobby-runtime','home-placement-runtime','startup'].map(x=>read('src/'+x+'.js')),shell=read('src/shell.html');
 require('./quality-checks.cjs')(scripts[1]);
 const painted=JSON.parse(read('assets/visual/painted/runtime.json')),crypto=require('node:crypto');
 if(painted.version!==1||!painted.residents||Array.isArray(painted.residents)||typeof painted.residents!=='object')throw Error('Invalid painted runtime manifest');
