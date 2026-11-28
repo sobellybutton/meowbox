@@ -19,11 +19,31 @@ function residentDialogue(text){
  if(typeof text!=='string')return text;
  return text.replace(/\s*\(Fictional guest\)\s*$/,'').replace(/\s*（虚构客串角色）\s*$/,'').replace(/(\d+ \/ \d+ · )Fictional resident notices/g,'$1Town noticeboard').replace(/(\d+ \/ \d+ · )虚构居民留言/g,'$1小镇留言')
 }
+const residentPortraits=[
+ ['Temple keeper','庙祝','temple-keeper'],['Master Yue','月师傅','master-yue'],['Fortune Teller','占卜师','fortune-teller'],
+ ['Auntie Mei','梅姨','auntie-mei'],['Wang Laoban','王老板','wang-laoban'],['Grandma','外婆','grandma'],
+ ['Grumpy Ah Ma','暴躁阿嬷','ah-ma'],['Auntie Lin','林姨','auntie-lin'],['Auntie Hong','红姐','auntie-hong']
+];
+function residentPortraitPath(name){
+ const entry=residentPortraits.find(v=>v[0]===name||v[1]===name);
+ return entry?'assets/visual/painted/'+entry[2]+'/expressions/warm.webp':null
+}
 // PAW_COMPACT_HELPERS_END
 function replaceExact(root,selector,oldEN,oldZH,en,cn){
  for(const node of root.querySelectorAll(selector)){
   if(node.textContent===oldEN||node.textContent===oldZH)node.textContent=tr(en,cn)
  }
+}
+// Portraits are tied to authored names in local scenes only. Do not infer a
+// human participant's avatar from their chosen name.
+function addResidentPortrait(card){
+ const name=card.querySelector(':scope > strong');
+ if(!name||card.querySelector(':scope > .pawTownPortrait'))return;
+ const path=residentPortraitPath(name.textContent);
+ if(!path)return;
+ const im=document.createElement('img');im.className='pawTownPortrait';im.alt='';im.decoding='async';im.loading='lazy';
+ im.onerror=()=>{im.remove();card.classList.remove('pawTownWithPortrait')};
+ card.prepend(im);card.classList.add('pawTownWithPortrait');im.src=path
 }
 function attachPager(list,selector,size,olderNav=null,clean=null){
  if(!list||!list.parentNode)return;
@@ -62,13 +82,13 @@ function compactBoard(q){
  const disclosure=wall.querySelector('.wallDisclosure');if(disclosure)disclosure.textContent=tr('Catch up on the latest town news.','来看看小镇最近的新鲜事。');
  if(story){const refresh=()=>{replaceExact(story,'.pawStoryKicker','Resident stories · fictional town','居民小故事 · 虚构小镇','Town stories','小镇故事');replaceExact(story,'.pawStoryKicker','Resident story · fictional town','居民小故事 · 虚构小镇','Town story','小镇故事')};refresh();new MutationObserver(refresh).observe(story,{childList:true})}
  const roster=guests?.querySelector('p');if(roster)roster.textContent=tr('Meet these neighbours as you explore '+maps[scene].n[0]+'.','逛逛'+maps[scene].n[1]+'，也许就能遇见他们。');
- attachPager(wall.querySelector('.townPostList'),'.townResidentNote',2,wall.querySelector('.townPostNav'),card=>{const name=card.querySelector(':scope > strong');if(name){const clean=residentHeading(name.textContent);if(clean!==name.textContent)name.textContent=clean}});select(boardSection);
+ attachPager(wall.querySelector('.townPostList'),'.townResidentNote',2,wall.querySelector('.townPostNav'),card=>{const name=card.querySelector(':scope > strong');if(name){const clean=residentHeading(name.textContent);if(clean!==name.textContent)name.textContent=clean}addResidentPortrait(card)});select(boardSection);
 }
 function compactJoy(q){
  const wall=q.querySelector('.pawJoyWall'),list=wall?.querySelector('.pawJoyNotes'),form=wall?.querySelector('.pawJoyForm');if(!list||!form)return;
  const status=form.querySelector('small');if(status)status.textContent=tr('Your notes stay on this device.','便签仅保存在本设备。');
  const explanation=element('small',tr('Little joys from your neighbours.','小镇邻居的小确幸。'),wall,'pawCompactJoyDisclosure');list.before(explanation);
- const pager=attachPager(list,'.pawJoyNote',1,null,card=>{for(const label of card.querySelectorAll(':scope > small'))if(residentLabel(label.textContent))label.remove()});
+ const pager=attachPager(list,'.pawJoyNote',1,null,card=>{for(const label of card.querySelectorAll(':scope > small'))if(residentLabel(label.textContent))label.remove();addResidentPortrait(card)});
  form.addEventListener('submit',()=>queueMicrotask(()=>pager?.reset()));
 }
 // Only touch known authored interface labels. Never rewrite visitor or player messages.
@@ -105,6 +125,11 @@ const pageBefore=page;
 page=function(...args){const result=pageBefore(...args),q=$('content');naturalTownLabels(q);return result};
 const sayBefore=say;
 say=function(name,words,...rest){return sayBefore.call(this,residentDialogue(name),residentDialogue(words),...rest)};
+function dressTeaTable(q){
+ const log=q.querySelector('.townChatTranscript');if(!log)return;
+ const paint=()=>{for(const row of log.querySelectorAll('.townChatLine:not(.self)'))addResidentPortrait(row)};
+ const observer=new MutationObserver(paint);observer.observe(log,{childList:true});paint()
+}
 const townBefore=townChatPage;
 townChatPage=function(...args){
  const result=townBefore(...args),q=$('content');
@@ -112,6 +137,7 @@ townChatPage=function(...args){
  if(communityTab==='board')compactBoard(q);
  if(communityTab==='gratitude')compactJoy(q);
  if(communityTab==='public')townConnectionInfo(q);
+ if(communityTab==='lounge')dressTeaTable(q);
  return result
 };
 const goodBefore=goodCompanyPage;
@@ -124,14 +150,34 @@ goodCompanyPage=function(q,...args){
 const homeBefore=hideoutPage;
 hideoutPage=function(...args){
  const result=homeBefore(...args),q=$('content'),stage=q.querySelector('.hideoutScene');
- if(!stage||hideoutEditing)return result;
- stage.classList.add('pawRoomFirst');
+ if(!stage)return result;
+ stage.classList.add('pawRoomFirst');stage.dataset.roomEditing=String(!!hideoutEditing);
  const ribbon=q.querySelector('.hideoutRibbon'),tabs=q.querySelector('.komorebiRoomTabs');
  // Keep the scene's parent, hit geometry, furniture transforms and existing controls.
  const caption=q.querySelector('.hideoutRoomCaption'),hint=q.querySelector('.pawHomeWalkHint');
  let anchor=hint||caption||stage;
  if(ribbon){anchor.after(ribbon);anchor=ribbon}
  if(tabs){anchor.after(tabs);anchor=tabs}
+ if(hideoutEditing){
+  // Keep the selection and movement controls next to the room. Only secondary
+  // renovation materials are tucked away; the owned furniture tray stays open.
+  const tools=q.querySelector('.hideoutTools'),selection=q.querySelector('.mbHomeSelection');
+  if(tools){stage.after(tools);if(selection)tools.after(selection)}
+  const materials=[...q.querySelectorAll('.komorebiBook')].find(n=>n.querySelector('.komorebiFinishChoices'));
+  if(materials){const fold=element('details','',q,'pawRoomExpansionFold');element('summary',tr('Wallpaper & flooring','墙纸与地板'),fold);materials.before(fold);fold.append(materials)}
+  return result
+ }
+ // Keep a compact room-side tray for optional collections and purchases.
+ const primary=q.querySelector('.hideoutPrimary');
+ if(primary){
+  const buttons=[...primary.querySelectorAll(':scope > button')];
+  const decorate=buttons.find(v=>v.textContent===tr('Decorate room','布置小窝'));
+  const extras=buttons.filter(v=>v!==decorate);
+  if(decorate&&extras.length){
+   const fold=element('details','',primary,'pawRoomExtras');element('summary',tr('Room belongings','小窝物品'),fold);
+   const tray=element('div','',fold,'pawRoomExtraTray');extras.forEach(btn=>tray.append(btn))
+  }
+ }
  const expansion=q.querySelector('.pawHomeExpansion');
  if(expansion){
   const fold=element('details','',q,'pawRoomExpansionFold');element('summary',tr('Room expansions','小窝扩建'),fold);expansion.before(fold);fold.append(expansion)
@@ -139,6 +185,15 @@ hideoutPage=function(...args){
  return result
 };
 const style=document.createElement('style');style.textContent=`
+#game #content .pawTownWithPortrait{position:relative;min-height:64px;padding-left:62px!important}
+#game #content .pawTownPortrait{position:absolute;top:12px;left:8px;width:44px;height:44px;object-fit:cover;object-position:center 35%;border-radius:50%;background:#e8d9bb;border:1px solid #ae9774;box-sizing:border-box}
+#game #content .pawTownWithPortrait>strong{min-height:20px}
+#game #content .pawRoomExtras{flex:1 1 120px;min-width:0}
+#game #content .pawRoomExtras summary{min-height:44px;align-content:center;text-align:center;cursor:pointer;background:#e7d8b8;border:1px solid #b6a17d;color:#4b5e48;padding:4px 8px;box-sizing:border-box;border-radius:4px}
+#game #content .pawRoomExtraTray{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+#game #content .pawRoomExtraTray button{min-height:44px;flex:1 1 120px}
+#game #content .pawRoomFirst[data-room-editing=true]{width:min(100%,clamp(200px,calc(72dvh - 130px),530px))!important}
+
 #game #content .pawTownConnectionInfo{margin:12px 0 0;border-top:1px dashed #bda582;padding-top:6px;font-size:12px;color:#675943}
 #game #content .pawTownConnectionInfo summary{cursor:pointer;min-height:44px;align-content:center}
 #game #content .pawCompactBoard{margin:6px 0 0}
