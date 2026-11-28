@@ -1,0 +1,36 @@
+name: Pawradise independent first-map and dock journey
+on:
+  pull_request:
+    branches: [main]
+    paths: ['src/engine.js','src/startup.js','src/shell.html','scripts/world-visits-test.cjs','scripts/first-map-wayfinding-release-test.cjs','.github/workflows/first-map-wayfinding-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile-first-map:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/candidate-mobile-foundation-reconciled-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: node scripts/world-visits-test.cjs
+      - run: test -s assets/visual/painted/recovered/ui/paper_texture.webp && test -s assets/visual/painted/signage/wood-grain.webp && test -s assets/visual/staging/2026-11-28-project-art-b10/avatar-frame.webp
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Organic mobile arrival, four dock returns and doorway walking
+        env:
+          PAW_MAP_STATIONERY: '1'
+        run: |
+          mkdir -p test-results
+          python3 -m http.server 8765 >/tmp/map-stationery.log 2>&1 &
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8765/index.html >/dev/null && break; sleep 1; done
+          node scripts/first-map-wayfinding-release-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: first-map-dock-journey
+          path: test-results
