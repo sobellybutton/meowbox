@@ -341,3 +341,29 @@ console.log('PASS '+paceAssertions+' adaptive visitor pace and clearance checks'
  if(!check)throw Error('idle gait checks missing');
  console.log('PASS traveller visible-scale correction and idle gait synchronization');
 }
+
+
+/* Room walking pace and directional stability, Batch 4. */
+{
+ const ext=fs.readFileSync(path.join(__dirname,'../src/extensions.js'),'utf8');
+ const part=ext.split('/* PAW_INDOOR_PACE_BEGIN */')[1].split('/* PAW_INDOOR_PACE_END */')[0];
+ const verify=new Function(part+`
+ const ck=(v,m)=>{if(!v)throw Error(m)};
+ const wall={l:30,r:50,u:-20,d:20},a={x:0,y:0,motionSpeed:0};
+ const settle=(dist,obs,rate,final=true)=>{const q={...a};for(let i=0;i<rate;i++)q.motionSpeed=pawIndoorPace(q,dist,1/rate,obs,final);return q.motionSpeed};
+ const wide=settle(200,[],60),narrow=settle(200,[wall],60),near=settle(8,[],60);
+ ck(wide>170&&wide<=180,'open floor pace');
+ ck(narrow<wide&&narrow>100,'furniture clearance');
+ ck(near<narrow&&near>=30,'arrival deceleration');
+ ck(Math.abs(settle(200,[],30)-wide)<.01,'frame-rate independent pace');
+ ck(settle(8,[],60,false)>near,'no unnecessary waypoint stop');
+ ck(pawIndoorPace(a,0,.016,[])===0,'arrived');
+ ck(pawIndoorPace(a,NaN,.016,[])===0,'invalid distance');
+ ck(pawIndoorPace(a,200,0,[])===0,'no elapsed time');
+ ck(pawIndoorPace(a,200,8,[])===pawIndoorPace(a,200,.05,[]),'stalled frame bounded');
+ ck(pawIndoorFacing('up',8,-9)==='up'&&pawIndoorFacing('right',8,-9)==='right','diagonal hysteresis');
+ ck(pawIndoorFacing('up',40,2)==='right'&&pawIndoorFacing('right',-40,0)==='left','decisive turn');
+ ck(pawIndoorFacing('left',0,0)==='left','idle retains direction');
+ return {wide,narrow,near}`)();
+ console.log('PASS adaptive room pace and facing',verify);
+}

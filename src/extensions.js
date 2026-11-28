@@ -1871,12 +1871,38 @@ function indoorDestination(x,y,goal=null,facing=null){
 function markIndoorStation(id,from,anchor){
  for(const h of hit.slice(from)){h.stationId=id;h.approach=anchor}
 }
+/* PAW_INDOOR_PACE_BEGIN */
+function pawIndoorPace(actor,dist,dt,obstacles,final=true){
+ if(!Number.isFinite(dist)||dist<=2)return 0;
+ const delta=Math.max(0,Math.min(.05,Number.isFinite(dt)?dt:0));
+ const old=Number.isFinite(actor.motionSpeed)?Math.max(0,actor.motionSpeed):0;
+ let clearance=Infinity;
+ for(const o of obstacles||[]){
+  if(![o.l,o.r,o.u,o.d].every(Number.isFinite))continue;
+  const x=Math.max(o.l-13-actor.x,0,actor.x-o.r-13);
+  const y=Math.max(o.u-12-actor.y,0,actor.y-o.d-12);
+  clearance=Math.min(clearance,Math.hypot(x,y))
+ }
+ const space=Number.isFinite(clearance)?Math.max(0,Math.min(1,clearance/85)):1;
+ const cruise=105+75*space;
+ const target=final?Math.min(cruise,Math.max(32,dist*4)):cruise;
+ return Math.min(180,old+(target-old)*(1-Math.exp(-12*delta)))
+}
+function pawIndoorFacing(previous,dx,dy){
+ if(Math.hypot(dx,dy)<.035)return previous||'up';
+ const ax=Math.abs(dx),ay=Math.abs(dy);
+ if(ax>ay*1.18)return dx<0?'left':'right';
+ if(ay>ax*1.18)return dy<0?'up':'down';
+ if(previous==='left'&&dx<0||previous==='right'&&dx>0||previous==='up'&&dy<0||previous==='down'&&dy>0)return previous;
+ return ax>ay?(dx<0?'left':'right'):(dy<0?'up':'down')
+}
+/* PAW_INDOOR_PACE_END */
 const continuityRoomDraw=drawRoom;
 drawRoom=function(){
  const first=hit.length;if(room==='fish'){riverSceneBackdrop();riverAuntie(159,474,.78)}continuityRoomDraw();
  if(!room||avatar===null)return;
  if(continuityRoom!==room){continuityRoom=room;const spec=indoorSpec();indoor={x:spec.entry[0],y:spec.entry[1],tx:spec.entry[0],ty:spec.entry[1],facing:'up',last:t,goal:null,route:[]};indoorDestination(...spec.arrival)}
- if(continuityActivity!==null){continuityActivity=null;indoor.last=t;indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y}
+ if(continuityActivity!==null){continuityActivity=null;indoor.last=t;indoor.goal=null;indoor.route=[];indoor.tx=indoor.x;indoor.ty=indoor.y;indoor.motionSpeed=0}
  const delta=Math.max(0,Math.min(.05,t-indoor.last));indoor.last=t;
  for(let h of hit.slice(first)){
   const fn=h.fn;
@@ -1888,14 +1914,14 @@ drawRoom=function(){
   let dx=Number(!!(keys.ArrowRight||keys.d))-Number(!!(keys.ArrowLeft||keys.a)),dy=Number(!!(keys.ArrowDown||keys.s))-Number(!!(keys.ArrowUp||keys.w));
   if(dx||dy){let norm=Math.hypot(dx,dy);indoorDestination(indoor.x+dx/norm*45,indoor.y+dy/norm*45)}
   let vx=indoor.tx-indoor.x,vy=indoor.ty-indoor.y,dist=Math.hypot(vx,vy);
-  if(dist>2){indoor.facing=Math.abs(vy)>Math.abs(vx)?(vy<0?'up':'down'):(vx<0?'left':'right');let amount=Math.min(dist,delta*Math.min(235,Math.max(65,dist*5)));indoor.x+=vx/dist*amount;indoor.y+=vy/dist*amount}
+  if(dist>2){indoor.facing=pawIndoorFacing(indoor.facing,vx,vy);indoor.motionSpeed=pawIndoorPace(indoor,dist,delta,indoorObstacles(),!indoor.route.length);let amount=Math.min(dist,delta*indoor.motionSpeed);indoor.x+=vx/dist*amount;indoor.y+=vy/dist*amount}
   if(dist<=3){
    indoor.x=indoor.tx;indoor.y=indoor.ty;
    if(indoor.route.length){[indoor.tx,indoor.ty]=indoor.route.shift()}
-   else if(indoor.goal){const fn=indoor.goal,expectedRoom=room;indoor.goal=null;indoor.facing=indoor.goalFacing||'up';if(indoorReady()&&room===expectedRoom)fn()}
+   else {indoor.motionSpeed=0;if(indoor.goal){const fn=indoor.goal,expectedRoom=room;indoor.goal=null;indoor.facing=indoor.goalFacing||'up';if(indoorReady()&&room===expectedRoom)fn()}}
   }
   // Movement destination is communicated by the walking character, not a floating marker.
- }
+ }else indoor.motionSpeed=0;
  const scale=travellerRoomScale(H,cam.scale);
  ctx.save();const visitors=[...sharedTownActors().filter(a=>a.room===room&&indoorSafe(a.x,a.y)),...(typeof pawRoomWalkers==='function'?pawRoomWalkers():[])];const drawSelf=()=>backHuman(indoor.x,indoor.y,avatar,Math.hypot(indoor.tx-indoor.x,indoor.ty-indoor.y)>3,indoor.facing,scale);
  for(const a of visitors.filter(a=>a.y<indoor.y).sort((a,b)=>a.y-b.y))drawSharedRoomActor(a,scale);drawSelf();for(const a of visitors.filter(a=>a.y>=indoor.y).sort((a,b)=>a.y-b.y))drawSharedRoomActor(a,scale);ctx.restore();
