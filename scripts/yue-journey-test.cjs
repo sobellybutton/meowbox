@@ -11,8 +11,43 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
   try{
    await p.goto('http://127.0.0.1:8770/index.html',{waitUntil:'domcontentloaded'});
    await p.waitForFunction(()=>typeof yueReadingHub==='function'&&typeof entryStory==='function',null,{timeout:45000});
-   // Isolate the consultation; do not claim this verifies the journey to the house.
-   await p.evaluate(()=>{proposal.hidden=true;scene='fortune';room='destiny';activity=null;zh=false;document.documentElement.lang='en';destinyConsultMenu()});
+   // Enter through the actual first-visit journey, with no injected game state.
+   await click(p.locator('#proposal .languageChoice').getByRole('button',{name:'EN',exact:true}));
+   await click(p.locator('#proposal footer button.next'));
+   await p.locator('#proposal .rail-ticket input').fill('Yue Journey');
+   await click(p.locator('#proposal .ticket-confirm'));
+   await click(p.locator('#proposal footer button.next'));
+   await click(p.locator('#proposal footer .actions button').first());
+   await p.locator('#proposal .rail-arrive').waitFor({timeout:25000});
+   await click(p.locator('#proposal .rail-arrive'));
+   await p.locator('#proposal .shrine-enter').waitFor({timeout:25000});
+   await click(p.locator('#proposal .shrine-enter'));
+   await p.waitForFunction(()=>proposal.hidden&&valleyRevealAt<0&&!signRoot.hidden,null,{timeout:25000});
+   const door=p.locator('#worldSigns .worldSign[data-door="destiny"]');
+   await door.waitFor({state:'visible',timeout:25000});
+   await click(door);
+   await p.waitForFunction(()=>room==='destiny'&&pawReadingActive()&&!transitioning,null,{timeout:30000});
+   await p.waitForFunction(()=>Math.hypot(indoor.x-indoor.tx,indoor.y-indoor.ty)<3&&!indoor.route.length,null,{timeout:15000});
+   await p.screenshot({path:'test-results/'+name+'-yue-lobby.png'});
+   const beforeApproach=await p.evaluate(()=>[indoor.x,indoor.y]);
+   // Inspect actual canvas target and project its center; use ordinary mouse/touch.
+   const host=await p.waitForFunction(()=>{
+    const box=pawYueHostTapBox(pawReadingPlate),x=box[0]+box[2]/2,y=box[1]+box[3]/2,h=at({x,y}),rect=c.getBoundingClientRect(),sx=rect.left+cam.ox+x*cam.scale,sy=rect.top+cam.oy+y*cam.scale;
+    return h?.stationId==='destiny'&&document.elementFromPoint(sx,sy)===c?{x:sx,y:sy}:false
+   },null,{timeout:10000});
+   const pos=await host.jsonValue();
+   await (opts.hasTouch?p.touchscreen.tap(pos.x,pos.y):p.mouse.click(pos.x,pos.y));
+   await p.waitForFunction(()=>talkOpen&&room==='destiny',null,{timeout:15000});
+   const arrived=await p.evaluate(()=>({x:indoor.x,y:indoor.y,anchor:indoorSpec().stations.destiny.slice(2),hostReady:!!pawHostVisit?.ready}));
+   assert(Math.hypot(arrived.x-beforeApproach[0],arrived.y-beforeApproach[1])>5,'Traveller did not walk toward Master Yue');
+   assert(Math.hypot(arrived.x-arrived.anchor[0],arrived.y-arrived.anchor[1])<5,'Consultation opened before arrival at desk');
+   assert(arrived.hostReady,'Existing seated host artwork not ready');
+   await p.screenshot({path:'test-results/'+name+'-yue-desk-arrival.png'});
+   // Physical visitor seating is an explicit acceptance gate. It must not
+   // be inferred from the seated host or the presence of a chair in the background.
+   const visitorSeating=await p.evaluate(()=>typeof pawYueTravellerSeat!=='undefined'&&!!pawYueTravellerSeat?.seated);
+   console.log(name+': visitor physical seating '+(visitorSeating?'observed runtime seated state; inspect screenshot contact':'BLOCKED: raised-chair traveller artwork/runtime absent'));
+   if(process.env.PAW_STRICT_SEATING==='1')assert(visitorSeating,'Traveller not physically seated at desk');
    await p.getByRole('button',{name:'My birth chart',exact:true}).waitFor();
    await p.screenshot({path:'test-results/'+name+'-yue-welcome.png'});
    await click(p.getByRole('button',{name:'My birth chart',exact:true}));
@@ -97,6 +132,16 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
    await click(p.locator('.chartFollowReply button').last());
    assert(await p.locator('.chartTopics [data-topic="10"]').getAttribute('aria-pressed')==='true','Rest topic not selected');
    await p.screenshot({path:'test-results/'+name+'-yue-follow-up.png'});
+   const priorShare=await p.evaluate(()=>({topic:document.querySelector('.chartTopics [aria-pressed="true"]')?.dataset.topic,scroll:$('page').scrollTop,x:indoor.x,y:indoor.y}));
+   await click(p.locator('.pawZwdsShareButton'));
+   await p.locator('.meowShareStatus').getByText('Ready to share or save.').waitFor({timeout:15000});
+   await p.screenshot({path:'test-results/'+name+'-yue-share.png'});
+   await click(p.locator('#content .row button').first());
+   await p.locator('.chartConsultation').waitFor();
+   await p.waitForFunction(()=>document.querySelector('.chartTopics [data-topic="10"]')?.getAttribute('aria-pressed')==='true');
+   assert(await p.evaluate(q=>room==='destiny'&&Math.hypot(indoor.x-q.x,indoor.y-q.y)<2,priorShare),'Share return moved traveller');
+   assert(await p.locator('.chartTopics [data-topic="10"]').getAttribute('aria-pressed')==='true','Share return lost selected palace');
+   await p.screenshot({path:'test-results/'+name+'-yue-share-return.png'});
 
    await openOptions();
    await click(p.locator('.yueInlinePeople').getByRole('button',{name:'Someone else',exact:true}));
@@ -146,6 +191,10 @@ const assert=(v,m)=>{if(!v)throw Error(m)};
    await p.getByRole('button',{name:'Finish consultation',exact:true}).waitFor();
    await click(p.getByRole('button',{name:'Finish consultation',exact:true}));
    assert(await p.locator('#page').isHidden(),'Chart finish did not return to room');
+   await click(p.locator('#back'));
+   await p.waitForFunction(()=>!room&&!transitioning,null,{timeout:25000});
+   await door.waitFor({state:'visible',timeout:20000});
+   await p.screenshot({path:'test-results/'+name+'-yue-departure.png'});
    assert(await p.evaluate(()=>!JSON.stringify(localStorage).includes('1990-06-15')&&!JSON.stringify(localStorage).includes('1995-05-06')),'Birth details persisted');
    assert(errors.length===0,errors.join('; '));
    console.log(name+': Master Yue click-through PASS');
