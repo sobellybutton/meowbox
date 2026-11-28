@@ -605,12 +605,12 @@
         "src/shell.html"
       ],
       "depends": [],
-      "stage": "outstanding",
-      "evidence": [],
-      "lease": {
-        "owner": "manual-share-final-1222",
-        "until": 1795841520000
-      }
+      "stage": "implemented",
+      "evidence": [
+        "GitHub Actions run 46106525787 share-exports job 140860418234 passed 192 card combinations each on mobile and desktop, PNG encoding, privacy stripping, reading/journal and result details. Downloaded artifact 15248165478 and visually inspected 14 export/preview images; tarot and preference rows fit in sampled layouts, Soul Cat had incorrect town picture. 22652618 fixes it with eight inspected existing symbolic painted cat charms, exact public bilingual result matching and neutral unknown-result charm; 17 helper assertions and startup parse passed. cb8f680f adds browser regression requiring all eight actual decoded art paths; test parses."
+      ],
+      "lease": null,
+      "blocker": "New browser regression, updated exported screenshots, text legibility at actual device size and final deployed revision remain unverified. Cat charms are symbolic existing artwork, not dedicated new archetype portraits. No visual acceptance claimed."
     },
     {
       "id": "LOC-01",
