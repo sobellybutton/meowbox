@@ -12509,6 +12509,16 @@ function pawRearGardenSeatAmount(run,now,reduced,atBench){
  const f=Math.max(0,Math.min(1,(now-run.gardenSeatAt)/.45)),e=f*f*(3-2*f);
  return run.gardenSitting?e:1-e
 }
+/* PAW_REAR_BENCH_QUEUE_BEGIN */
+// Record the latest intent, including a plain stand request. The original
+// 750ms seat cooldown must never discard an activity chosen just after sitting.
+function pawRearBenchNext(run,q,now,reduced,atBench,blocked){
+ if(blocked||!atBench||!q?.pawAfterStand||!Number.isFinite(now)||!Number.isFinite(run?.gardenSeatAt))return null;
+ if(run.gardenSitting)return now-run.gardenSeatAt>=.75?'stand':null;
+ if(pawRearGardenSeatAmount(run,now,reduced,atBench)>0)return null;
+ return q.pawAfterStand==='seat'?'clear':'route'
+}
+/* PAW_REAR_BENCH_QUEUE_END */
 function pawRearGardenAtBench(q,seat=pawRearGardenNodes.seat){
  return !!q&&!q.route?.length&&Array.isArray(q.pos)&&q.pos.length===2&&Math.hypot(q.pos[0]-seat[0],q.pos[1]-seat[1])<.002
 }
@@ -12573,13 +12583,11 @@ pawGardenChoose=function(run,kind){
  if(!run?.pawRearGarden)return pawRearGardenChooseBefore(run,kind);
  if(run!==state||!pawRearGardenActive()||pawArcadeInputBlocked())return;
  const q=run.pawGardenWalk;if(!q||q.route.length)return;
- if(run.gardenSitting){
-  gardenSeat();if(run.gardenSitting)return;
-  if(kind!=='seat')q.pawAfterStand=kind;
-  return
- }
- if(pawRearGardenSeatAmount(run,t,residentReducedMotion.matches,pawRearGardenAtBench(q))>0){
-  if(kind!=='seat')q.pawAfterStand=kind;
+ if(!Object.hasOwn(pawRearGardenTargets,kind))return;
+ if(run.gardenSitting||pawRearGardenSeatAmount(run,t,residentReducedMotion.matches,pawRearGardenAtBench(q))>0){
+  q.pawAfterStand=kind;
+  // Immediate when eligible, otherwise retain intent until cooldown ends.
+  if(pawRearBenchNext(run,q,t,residentReducedMotion.matches,pawRearGardenAtBench(q),false)==='stand')gardenSeat();
   return
  }
  delete q.pawAfterStand;
@@ -12604,7 +12612,10 @@ const pawRearGardenDrawBefore=drawActivity;
 drawActivity=function(...args){
  if(!pawRearGardenActive())return pawRearGardenDrawBefore(...args);
  const run=state,q=run.pawGardenWalk,p=pawRearGardenPlate,b=livingBounds(),xy=(u,v)=>[p.x+p.w*u,p.y+p.h*v];
- if(q.pawAfterStand&&!run.gardenSitting&&!pawArcadeInputBlocked()&&pawRearGardenSeatAmount(run,t,residentReducedMotion.matches,pawRearGardenAtBench(q))===0){
+ const benchNext=pawRearBenchNext(run,q,t,residentReducedMotion.matches,pawRearGardenAtBench(q),pawArcadeInputBlocked());
+ if(benchNext==='stand')gardenSeat();
+ else if(benchNext==='clear')delete q.pawAfterStand;
+ else if(benchNext==='route'){
   const next=q.pawAfterStand;delete q.pawAfterStand;pawGardenChoose(run,next)
  }
  const prior=q.pos.slice(),arrive=pawGardenWalkTick(q,t,pawArcadeInputBlocked(),residentReducedMotion.matches);
