@@ -234,3 +234,17 @@ for(const stage of [0,1])for(const dx of [-45,0,45])for(const dy of [-30,0,30])f
 assert.ok(src.includes("if(gesture?.id==='templeLadle')a=pawWaterDragCentre(a,g,pawWaterActorScale())"));
 console.log('PASS '+releaseCases+' actual ladle release and render agreement cases');
 console.log('Purification ladle contact and bounded reach checks passed.');
+
+// Portrait alcove fills the viewport while both stations remain reachable.
+{
+ const a=new Function(get('PURIFICATION_PAINT')+get('ALCOVE_PAINT')+';return {pawAlcoveCamera,pawAlcoveGeometry,pawWaterPlate}')();
+ const p=a.pawWaterPlate,g=a.pawAlcoveGeometry();let n=0;
+ for(const [w,h] of [[320,568],[360,780],[390,844],[430,932],[768,1024],[844,390],[1440,900]]){
+  const c=a.pawAlcoveCamera(w,h);assert.ok(c.s>0);
+  if(w<h){assert.ok(p.w*c.s>=w-.01&&p.h*c.s>=h-.01);n++}
+  for(const v of [g.tube,g.stickTray,g.stickFoot,g.stickPickFoot,g.moonFoot,g.moonTray]){assert.ok(c.ox+v.x*c.s>=0&&c.ox+v.x*c.s<=w&&c.oy+v.y*c.s>=0&&c.oy+v.y*c.s<=h);n++}
+ }
+ assert.equal(a.pawAlcoveCamera(0,844),null);
+ assert.ok(src.includes('pawAlcoveActive()?pawAlcoveCamera(W,H)'));
+ console.log('PASS '+n+' portrait coverage and ritual station checks');
+}
