@@ -6932,8 +6932,11 @@ function pawTarotPick(pool,chosen,index,count){
  return [...chosen,index]
 }
 function pawTarotChoiceSlots(portrait){
- const cols=portrait?4:6,rows=12/cols,w=portrait?77:68,h=portrait?111:105,dx=portrait?91:80,dy=portrait?126:125;
- return Array.from({length:cols*rows},(_,i)=>({x:400+(i%cols-(cols-1)/2)*dx,y:portrait?388+Math.floor(i/cols)*dy:420+Math.floor(i/cols)*dy,w,h}))
+ const cols=portrait?4:6,w=portrait?85:88,h=portrait?110:118,dx=portrait?76:72,dy=portrait?122:132;
+ return Array.from({length:12},(_,i)=>{
+  const u=(i%cols-(cols-1)/2)/((cols-1)/2);
+  return {x:400+u*(cols-1)/2*dx,y:(portrait?383:408)+Math.floor(i/cols)*dy+20*u*u,w,h,angle:u*.16,hitW:dx-4}
+ })
 }
 function pawTarotFrameMatches(q,frame,portrait){
  return !!(q&&frame&&q.readStage==='choose'&&q.pawCardPool===frame.pool&&q.pawChoiceFrame===frame&&frame.portrait===portrait)
@@ -6943,17 +6946,28 @@ function pawTarotFrameMatches(q,frame,portrait){
 function pawTarotFanPose(slot,index,age,reduced=false){
  if(!slot||!Number.isInteger(index)||index<0||index>=12||![slot.x,slot.y,slot.w,slot.h,age].every(Number.isFinite))return null;
  const p=reduced?1:Math.max(0,Math.min(1,(age-index*.038)/.32)),e=p*p*(3-2*p);
- return {x:400+(slot.x-400)*e,y:475+(slot.y-475)*e-14*Math.sin(Math.PI*p),w:92+(slot.w-92)*e,h:136+(slot.h-136)*e,angle:(index%2===0?-1:1)*.12*Math.sin(Math.PI*p),landed:p>=1,visible:reduced||age>=index*.038}
+ return {x:400+(slot.x-400)*e,y:475+(slot.y-475)*e-14*Math.sin(Math.PI*p),w:92+(slot.w-92)*e,h:136+(slot.h-136)*e,angle:(slot.angle||0)*e+(index%2===0?-1:1)*.08*Math.sin(Math.PI*p),landed:p>=1,visible:reduced||age>=index*.038}
 }
 function pawTarotFanSettled(q,now,reduced=false){
  return !!q&&q.readStage==='choose'&&(!q.pawFanActive||reduced||Number.isFinite(now)&&Number.isFinite(q.readAt)&&now-q.readAt>=.738)
+}
+// Visual-only tabletop wash: spread, circulate on the cloth, gather.
+function pawTarotWashPose(index,progress,reduced=false){
+ if(!Number.isInteger(index)||index<0||index>=12||!Number.isFinite(progress))return null;
+ const p=reduced?1:Math.max(0,Math.min(1,progress)),spread=p===0||p===1?0:Math.sin(Math.PI*p)**.85;
+ const side=index<6?-1:1,phase=(index%6)*Math.PI/3+side*p*2*Math.PI,rad=38+(index%3)*15;
+ return {x:400+(index-5.5)*1.8+spread*(side*55+rad*Math.cos(phase)),y:475-index*1.2+spread*rad*.68*Math.sin(phase),w:92,h:136,angle:spread*(side*.38+.32*Math.sin(phase)),visible:true}
+}
+function pawTarotTrayPose(slot,rank,count,portrait,progress){
+ const p=Math.max(0,Math.min(1,progress)),e=p*p*(3-2*p),x=400+(rank-(count-1)/2)*(portrait?43:55),y=portrait?713:645;
+ return {x:slot.x+(x-slot.x)*e,y:slot.y+(y-slot.y)*e,w:slot.w+(43-slot.w)*e,h:slot.h+(61-slot.h)*e,angle:(slot.angle||0)*(1-e)}
 }
 /* PAW_TAROT_FAN_END */
 
 function pawOpenCardChoice(){
  if(!['tarot','love'].includes(activity))return false;
  state.pawCardPool=pawTarotPool(tarotDeck.length);state.pawChoiceFrame=null;state.pawSelectedCards=[];state.readCards=[];state.readFlip=[];state.readSaved=false;
- state.readStage='choose';state.readAt=t;state.pawFanActive=true;state.readShuffle=Math.max(1,state.readShuffle||0);
+ state.readStage='choose';state.readAt=t;state.pawFanActive=true;state.pawPickedAt={};state.readShuffle=Math.max(1,state.readShuffle||0);
  const n=activity==='tarot'?1:state.readSpreadSize===5?5:3;
  hint(tr('Choose '+n+' '+(n===1?'card':'cards')+' that draw your attention.','凭直觉选 '+n+' 张牌。'),tr('Choose '+n+' cards.','凭直觉选 '+n+' 张牌。'));
  return true
@@ -6962,7 +6976,7 @@ function pawSelectTarotCard(index,frame=state.pawChoiceFrame){
  if(!['tarot','love'].includes(activity)||talkOpen||transitioning||document.hidden||!proposal.hidden||$('page').style.display==='block'||!pawTarotFrameMatches(state,frame,W<H)||!pawTarotFanSettled(state,t,residentReducedMotion.matches))return false;
  const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,chosen=pawTarotPick(state.pawCardPool,state.pawSelectedCards,index,count);
  if(!chosen)return false;
- state.pawSelectedCards=chosen;physicalFx('paper',.65);
+ state.pawSelectedCards=chosen;state.pawPickedAt??={};state.pawPickedAt[index]=t;physicalFx('paper',.65);
  if(chosen.length===count){
   state.readCards=chosen.map(i=>state.pawCardPool[i]);state.readFlip=Array(count).fill(-1);
   state.readStage='cards';state.readAt=t;state.readSaved=false;
@@ -6983,7 +6997,18 @@ readingDeal=function(){
 };
 const pawSelectDrawBefore=drawActivity;
 drawActivity=function(...args){
- if(!['tarot','love'].includes(activity)||state.readStage!=='choose')return pawSelectDrawBefore(...args);
+ if(!['tarot','love'].includes(activity))return pawSelectDrawBefore(...args);
+ if(state.readStage==='shuffle'){
+  const age=Math.max(0,t-state.readAt),reduced=residentReducedMotion.matches;
+  ctx.save();try{
+   paintLivingBackdrop(pics.readingInterior||pics.tarot||pics.tea);table();
+   for(let i=0;i<12;i++){const q=pawTarotWashPose(i,age/1.45,reduced);ctx.save();try{ctx.translate(q.x,q.y);ctx.rotate(q.angle);ctx.shadowColor='#1b152e55';ctx.shadowBlur=3;ctx.shadowOffsetY=2;card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}}
+   activityFitText(tr('Mixing the cards…','正在洗牌……'),400,600,20,340,'#fff0d2');
+  }finally{ctx.restore()}
+  if(age>=1.45||reduced){state.readStage='deck';state.readAt=t;hint('The cards are ready. Shall we spread them?','牌洗好了，来铺牌吧？')}
+  return
+ }
+ if(state.readStage!=='choose')return pawSelectDrawBefore(...args);
  const count=activity==='tarot'?1:state.readSpreadSize===5?5:3,portrait=W<H,slots=pawTarotChoiceSlots(portrait),chosen=state.pawSelectedCards||[];
  // Keep the displayed pool identity stable across ordinary frames; invalidate
  // old hit callbacks if the deck is reshuffled or the viewport rotates.
@@ -6996,15 +7021,15 @@ drawActivity=function(...args){
   const reduced=residentReducedMotion.matches,settled=pawTarotFanSettled(state,t,reduced),age=Math.max(0,t-state.readAt);
   if(!settled){const remaining=slots.filter((q,i)=>!pawTarotFanPose(q,i,age,reduced).visible).length;for(let j=0;j<remaining;j++)card(354+j*.7,407-j*.65,92,136,false)}
   for(const [i,q] of slots.entries()){
-   const pose=settled?{...q,angle:0,visible:true}:pawTarotFanPose(q,i,age,reduced);
-   if(!pose.visible)continue;
-   if(!settled){ctx.save();try{ctx.translate(pose.x,pose.y);ctx.rotate(pose.angle);card(-pose.w/2,-pose.h/2,pose.w,pose.h,false)}finally{ctx.restore()}continue}
-   const picked=chosen.includes(i);
-   ctx.save();ctx.globalAlpha=picked?.34:1;
-   if(picked){round(q.x-q.w/2,q.y-q.h/2,q.w,q.h,5,'#342a45','#bda16c');txt(String(chosen.indexOf(i)+1),q.x,q.y,27,'#eedcb2')}
-   else{ctx.shadowColor='#1b152e65';ctx.shadowBlur=4;ctx.shadowOffsetY=3;card(q.x-q.w/2,q.y-q.h/2,q.w,q.h,false)}
-   ctx.restore();
-   if(!picked)target(q.x-q.w/2-3,q.y-q.h/2-3,q.w+6,q.h+6,()=>pawSelectTarotCard(i,frame),'paw-pick-card-'+i)
+   const pose=settled?{...q,visible:true}:pawTarotFanPose(q,i,age,reduced);
+   if(!pose.visible||settled&&chosen.includes(i))continue;
+   ctx.save();try{ctx.translate(pose.x,pose.y);ctx.rotate(pose.angle);ctx.shadowColor='#1b152e65';ctx.shadowBlur=4;ctx.shadowOffsetY=3;card(-pose.w/2,-pose.h/2,pose.w,pose.h,false)}finally{ctx.restore()}
+   if(settled)target(q.x-q.hitW/2,q.y-q.h/2,q.hitW,q.h,()=>pawSelectTarotCard(i,frame),'paw-pick-card-'+i)
+  }
+  // Physical selected cards slide to the traveller's edge.
+  if(settled)for(const [rank,i] of chosen.entries()){
+   const q=pawTarotTrayPose(slots[i],rank,count,portrait,reduced?1:(t-(state.pawPickedAt?.[i]??t))/.24);
+   ctx.save();try{ctx.translate(q.x,q.y);ctx.rotate(q.angle);ctx.shadowColor='#1b152e65';ctx.shadowBlur=3;ctx.shadowOffsetY=2;card(-q.w/2,-q.h/2,q.w,q.h,false)}finally{ctx.restore()}
   }
   activityFitText(settled?tr('Choose '+count+' '+(count===1?'card':'cards')+' · '+chosen.length+'/'+count,'选 '+count+' 张牌 · '+chosen.length+'/'+count):tr('Laying out the cards…','正在铺牌……'),400,W<H?307:341,22,430,'#f6e6c8');
   if(settled&&!chosen.length)label(tr('Shuffle again','重新洗牌'),400,W<H?745:655,()=>{if(!pawTarotFrameMatches(state,frame,W<H)||pawArcadeInputBlocked())return;pawOpenCardChoice();physicalFx('paper',.6)})
@@ -10208,7 +10233,7 @@ drawActivity=function(...args){
  if(pawTarotActive(state,activity)&&state.readStage==='choose'&&pawTarotFanSettled(state,t,residentReducedMotion.matches)&&pawTarotKeyboard.has(state)){
   const index=pawTarotKeyboard.get(state),q=pawTarotChoiceSlots(W<H)[index];
   if(q&&!state.pawSelectedCards?.includes(index)){
-   ctx.save();try{ctx.strokeStyle='#fff3bf';ctx.lineWidth=3;ctx.strokeRect(q.x-q.w/2-5,q.y-q.h/2-5,q.w+10,q.h+10)}finally{ctx.restore()}
+   ctx.save();try{ctx.strokeStyle='#fff3bf';ctx.lineWidth=3;ctx.translate(q.x,q.y);ctx.rotate(q.angle||0);ctx.strokeRect(-q.w/2-4,-q.h/2-4,q.w+8,q.h+8)}finally{ctx.restore()}
   }
  }
  return result
