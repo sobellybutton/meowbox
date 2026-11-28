@@ -535,7 +535,7 @@ function pawTeaReadBoard(){
   const body=reply>=0?entry.replies[reply]:null;
   const author=body?tr(body[0],body[1]):tr(...entry.author);
   const words=body?tr(body[2],body[3]):tr(...entry.body);
-  const heading=(index+1)+' / '+rows.length+' · '+tr('Fictional resident notices','虚构居民留言');
+  const heading=(index+1)+' / '+rows.length+' · '+tr('Notes from around town','小镇街坊留言');
   if(body){
    if(reply+1<entry.replies.length)choices.push(choice('Next reply','下一条回复',()=>display(index,reply+1)));
    choices.push(choice('Back to notice','回到原留言',()=>display(index)))

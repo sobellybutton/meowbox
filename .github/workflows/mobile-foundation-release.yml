@@ -1,0 +1,44 @@
+name: Pawradise mobile foundation release
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  foundation:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/candidate-mobile-foundation-20261128'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+        viewport: ['320x568', '390x844']
+        language: ['EN', '中文']
+    env:
+      PAW_BROWSER: ${{ matrix.browser }}
+      PAW_VIEWPORT: ${{ matrix.viewport }}
+      PAW_LANGUAGE: ${{ matrix.language }}
+      PAW_MOTION: no-preference
+      PAW_FOUNDATION: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.cjs
+      - run: node scripts/entrance-traveller-readiness-test.cjs
+      - run: node scripts/local-progress-reset-test.cjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Real entrance, first map, four dock routes and returning player
+        run: |
+          python3 -m http.server 8772 >/tmp/foundation-server.log 2>&1 &
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8772/index.html >/dev/null && break; sleep 1; done
+          node scripts/paw-entrance-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-foundation-${{ matrix.browser }}-${{ matrix.viewport }}-${{ matrix.language }}
+          path: test-results/entrance

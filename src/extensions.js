@@ -2947,7 +2947,7 @@ function cameoOpenConversation(a,continuing=false){
  say(tr(a[0],a[1]),tr(...reply),[[tr('Keep chatting','再聊会儿'),()=>cameoOpenConversation(a,true)],[tr('See you around','下次见'),closeTalk]])
  }]);
  opts.push([tr('See you around','下次见'),closeTalk]);
- say(tr(a[0],a[1]),intro+' '+tr('(Fictional guest)','（虚构客串角色）'),opts)
+ say(tr(a[0],a[1]),intro,opts)
 }
 cameo9=function(place=scene){
  const pool=cast9.filter(a=>a[2]===place),list=pool.length?pool:cast9;
@@ -3258,7 +3258,7 @@ const localCameoReplies={
   [['Drink first. The tea is hot, and so is the gossip.','先喝茶，瓜还烫着呢。']]
  ],
  'Dragon King Meow':[
-  [['I own nine imaginary companies. None will pay my cat food bill.','本喵坐拥九大虚构集团，猫粮还得自己买。']],
+  [['I own nine imaginary companies. None will pay my cat food bill.','本喵坐拥九大集团，猫粮还得自己买。']],
   [['My assistant booked me a nap. Finally, competent management.','助理给本喵安排了午睡，终于会办事了。']],
   [['You have entered my territory. Admission fee: one compliment.','此乃本喵地盘，入场费一句夸奖。']],
   [['You may sit beside me. Do not make it a strategic partnership.','准你坐旁边，别谈战略合作。']]
@@ -3481,7 +3481,7 @@ function syncStorySheet(){
   element('small',tr('A life remembered','收藏一段人生')+' · '+parallelFound.filter(id=>Object.hasOwn(parallelEndings,id)).length+'/'+Object.keys(parallelEndings).length,storySheet);
   element('h3',tr(ending[0],ending[1]),storySheet);element('p',tr(ending[2],ending[3]),storySheet);
   const epilogue=parallelEpilogues[nodeId];if(epilogue)element('p',tr(...epilogue),storySheet,'parallelEpilogue');
-  element('p',tr('This is a fictional ending shaped by your choices, not a personality result or prediction. Your keepsake is in the Wonder Valley chapter.','这是由你的选择决定的虚构故事结局，不是性格测试或未来预测。纪念品已收入奇遇谷章节。'),storySheet,'mbStoryIntro');
+  element('p',tr('This story ends the way you chose. It is not a personality result or prediction. Your keepsake is in the Wonder Valley chapter.','这是由你的选择决定的故事结局，不是性格测试或未来预测。纪念品已收入奇遇谷章节。'),storySheet,'mbStoryIntro');
   const again=b(storySheet,tr('Another life','再试一种人生'),()=>{if(current())start('story')});again.dataset.storyEnding='again';
   const share=b(storySheet,tr('Share memory','分享回忆'),()=>{if(current())openMeowShare({kind:'story',title:ending.slice(0,2),lines:[ending.slice(2,4)],accent:'#869e9b'})});share.dataset.storyEnding='share';
   const recap=parallelChoiceRecap(parallelTrail,nodeId);
@@ -4188,7 +4188,7 @@ passport=function(){
  popGuestPassportBefore();const book=$('content').querySelector('.travelAlbum');if(!book)return;
  const section=element('section','',book,'popGuestAlbum');
  element('h2',tr('Unexpected encounters','偶遇小名人'),section);
- element('p',tr('Fictional pop-culture parodies. Catch different guests around town each day.','原创流行文化趣味客串，每天逛小镇都有不同偶遇。'),section);
+ element('p',tr('Familiar faces and unexpected visitors. See who is around town each day.','熟悉的面孔，意外的来客。每天逛小镇都有新的偶遇。'),section);
  const count=popGuestStories.filter(g=>popGuestRecord(g)).length;
  element('small',count+' / '+popGuestStories.length+' '+tr('guests met','位已偶遇'),section);
  for(const g of popGuestStories.filter(g=>popGuestRecord(g))){
@@ -6240,7 +6240,7 @@ refreshControls=function(){
  const busy=g.board.some(Boolean)&&!g.result;
  const opponent=b(el,g.opponent==='cat'?tr('Mochi · Casual','麻薯 · 轻松'):tr('Ah Ma · Expert','阿嬷 · 高手'),()=>reset(g.opponent==='cat'?'auntie':'cat'));opponent.disabled=busy;opponent.title=tr('Tap to change opponent','点击切换对手');
  const restart=b(el,g.result?tr('Again','再来一局'):tr('New round','重新开局'),()=>reset(g.opponent));
- const status=element('span',g.result?(g.result.who===1?tr('You win!','你赢啦！'):g.result.who===2?tr('NPC wins','对手赢啦'):tr('A draw','平局')):g.thinking?tr('Thinking…','思考中……'):tr('Your turn','轮到你'),el);status.setAttribute('role','status');
+ const status=element('span',g.result?(g.result.who===1?tr('You win!','你赢啦！'):g.result.who===2?tr('Your opponent wins!','对手赢啦！'):tr('A draw','平局')):g.thinking?tr('Thinking…','思考中……'):tr('Your turn','轮到你'),el);status.setAttribute('role','status');
 };
 const threeStyle=document.createElement('style');threeStyle.textContent='#gameControls.threeControls{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:5px;max-width:95vw}#gameControls.threeControls button{min-height:44px;font-size:13px;white-space:normal}#gameControls.threeControls button[aria-pressed=true]{background:#536a5a;color:#fff3d9}#gameControls.threeControls span{padding:3px 8px;font-size:12px;color:#fff0ce;background:#493e34;border-radius:8px}';document.head.append(threeStyle);
 const threeDrawBefore=drawActivity;
@@ -6260,7 +6260,7 @@ drawActivity=function(){
  threeBoard(286,388,228,g.board,g);
  threeToken(254,566,1,.52);threeToken(546,566,2,.52);
  txt(tr('You','你'),254,590,13,'#fff1d0');txt(g.opponent==='auntie'?tr('Ah Ma','阿嬷'):tr('Mochi','麻薯'),546,590,13,'#fff1d0');
- if(g.result){round(299,626,202,34,8,'#e7d5aa','#b18a57');txt(g.result.who===1?tr('You win!','你赢啦！'):g.result.who===2?tr('NPC wins','对手赢啦'):tr('A draw','平局'),400,643,18,'#554337')}
+ if(g.result){round(299,626,202,34,8,'#e7d5aa','#b18a57');txt(g.result.who===1?tr('You win!','你赢啦！'):g.result.who===2?tr('Your opponent wins!','对手赢啦！'):tr('A draw','平局'),400,643,18,'#554337')}
  else txt(g.thinking?tr('Thinking…','正在思考……'):tr('Three in a row','三个连成一线'),400,641,18,'#fff2d4');
  ctx.restore()
 };
@@ -6418,7 +6418,7 @@ function lifeProfile(){
  element('p',v.next?tr('Next rank at ','下一级需要 ')+v.next+' '+tr('points','积分'):tr('You have reached the highest rank. Take a nap.','已满级。安心去睡个午觉吧。'),book,'lifeNote');
  element('h2',tr('My attributes','我的属性'),book);
  for(const [key,a] of Object.entries(lifeAttributes)){const row=element('section','',book,'lifeAttribute');const label=element('div','',row,'lifeAttrName');element('strong',tr(...a.label),label);element('span',(lifeJournal.points[key]||0)+'/100',label);const meter=element('progress','',row);meter.max=100;meter.value=lifeJournal.points[key]||0;meter.style.accentColor=a.color;meter.setAttribute('aria-label',tr(...a.label));element('small',tr(...a.desc),row)}
- element('p',tr('These are fictional game scores, not real measures of your happiness or abilities. Scores never fall when you take a break.','这些是游戏属性，不代表真实的快乐程度或能力。休息多久都不会扣分。'),book,'lifeNote');
+ element('p',tr('These little milestones belong to your time in Pawradise. They do not measure your real happiness or abilities, and taking a break never sets you back.','这些是你在小镇留下的成长足迹，不代表现实中的快乐程度或能力。休息多久都不会退步。'),book,'lifeNote');
  element('h2',tr('People I know','我的小镇好友'),book);
  const friends=Object.values(lifeJournal.friends).sort((a,b)=>b.count-a.count);
  if(!friends.length)element('p',tr('Say hello to someone in town. No networking event required.','跟小镇居民打个招呼，不用参加社交局。'),book);
@@ -7315,7 +7315,7 @@ function sharedTownRefreshPanel(){
 function sharedTownPage(q){
  const panel=element('section','',q,'communityWelcome');panel.id='sharedTownPanel';
  element('h2',tr('A little company, no small talk required','有个伴，不必尬聊'),panel);
- element('p',tr('Share your avatar, position in public areas and preset gestures only when you opt in. Private activities are not shared. Residents are fictional. Leave anytime.','自愿分享角色、公共区域位置及预设动作。私人体验不会分享。居民均为虚构，随时可退出。'),panel);
+ element('p',tr('Share your avatar, position in public areas and preset gestures only when you opt in. Private activities are not shared. Town residents are part of Pawradise’s story, not other online visitors. Leave anytime.','自愿分享角色、公共区域位置及预设动作。私人体验不会分享。小镇居民属于小镇故事，并非其他在线旅人。随时可退出。'),panel);
  const status=element('p','',panel,'communityMuted');status.dataset.sharedStatus='';status.setAttribute('role','status');
  const toggle=b(panel,'',()=>sharedTownEnable(!sharedTown.enabled));toggle.dataset.sharedToggle='';
  const prompt=element('p','',panel);prompt.dataset.sharedPrompt='';
