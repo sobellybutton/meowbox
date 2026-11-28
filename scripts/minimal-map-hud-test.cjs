@@ -4,7 +4,7 @@ const root=path.join(__dirname,'..'),read=p=>fs.readFileSync(path.join(root,p),'
 const shell=read('src/shell.html'),startup=read('src/startup.js'),extensions=read('src/extensions.js');
 const css=shell.split('/* PAW_PAINTED_HUD_ASSETS_BEGIN */')[1].split('/* PAW_PAINTED_HUD_ASSETS_END */')[0];
 assert.ok(css.includes('::before,html #game #small button.townSettingsToggle[aria-label]::after{content:none!important;display:none!important;background:none!important}'));
-assert.ok(css.includes('>svg{display:block!important;width:23px!important;height:23px!important'));
+assert.ok(css.includes('>svg{display:block!important;width:36px!important;height:36px!important'));
 assert.ok(!css.includes('settings-cog.webp'));
 assert.ok(!css.includes('avatar-frame.webp'));
 assert.ok(css.includes('.pawPaintedPortrait:after{content:none!important;display:none!important}'));
@@ -14,6 +14,8 @@ assert.ok(css.includes('button.pawDockSelected:not([hidden])'));
 assert.ok(css.includes('button:focus-visible'));
 assert.ok(css.includes('@media(forced-colors:active)'));
 assert.ok(css.includes('@media(max-width:360px)'));
+assert.ok(css.includes('html #game #profileHud{height:44px!important;min-height:44px!important'));
+assert.ok(css.includes('townSettingsToggle[aria-label]>svg{width:32px!important;height:32px!important}'));
 assert.equal((startup.match(/const townSettingsToggle=element\(/g)||[]).length,1);
 assert.ok(startup.includes("townSettingsToggle.setAttribute('aria-controls','townSettingsPanel')"));
 assert.ok(startup.includes("townSettingsToggle.setAttribute('aria-expanded',String(townSettingsOpen))"));
@@ -23,4 +25,4 @@ assert.ok(startup.includes("$('dock').append($('dockTravel'),$('dockScoop'),pawT
 assert.ok(startup.includes("$('dockRoom').hidden=true;$('dockPassport').hidden=true"));
 assert.ok(extensions.includes('const travelTabIllustrations='));
 assert.ok(shell.includes('id="profileHud"')&&shell.includes('id="hudPortrait"'));
-console.log('PASS 20 map HUD single-icon, accessible control and navigation source checks');
+console.log('PASS 22 map HUD single-icon, accessible control and navigation source checks');
