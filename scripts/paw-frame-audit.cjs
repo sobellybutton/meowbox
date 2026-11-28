@@ -44,13 +44,10 @@ async function attachFrameAudit(page,out,prefix){
        if(visible(plaque)&&overlaps(actor,localRect(plaque)))issues.push('projected-player-overlap:sign:'+plaque.closest('.worldSign')?.dataset.door);
       }
      }
-     const settings=document.getElementById('townSettingsToggle');
-     if(visible(settings)){
-      const paintedCog=getComputedStyle(settings,'::before'),svg=settings.querySelector('svg');
-      const cogVisible=paintedCog.content!=='none'&&paintedCog.content!=='normal'&&paintedCog.display!=='none'&&paintedCog.backgroundImage!=='none';
-      if(cogVisible&&visible(svg))issues.push('duplicate-settings-icon');
-      if(!cogVisible&&!visible(svg))issues.push('missing-settings-icon');
-     }
+     if(visible(document.getElementById('townSettingsToggle')))issues.push('obsolete-map-settings-control');
+     if(visible(document.getElementById('hudProgress')))issues.push('obsolete-map-level');
+     const wallet=document.getElementById('hudCoins'),profile=document.getElementById('profileHud');
+     if(visible(profile)&&(!visible(wallet)||!profile.contains(wallet)))issues.push('profile-coin-placement');
     }
     const labels=room&&!activity&&!overlay&&!intro&&!transitioning&&!talkOpen&&typeof roomGuideEntries==='function'?roomGuideEntries().map(v=>v[0]):[];
     const missing=labels.filter(id=>!hit.some(h=>h.stationId===id&&typeof h.fn==='function'));
